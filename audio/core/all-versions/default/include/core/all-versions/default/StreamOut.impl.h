@@ -547,8 +547,24 @@ Return<void> StreamOut::debug(const hidl_handle& fd, const hidl_vec<hidl_string>
 }
 
 #ifdef AUDIO_HAL_VERSION_4_0
-Return<void> StreamOut::updateSourceMetadata(const SourceMetadata& /*sourceMetadata*/) {
-    return Void();  // TODO: propagate to legacy
+Return<void> StreamOut::updateSourceMetadata(const SourceMetadata& sourceMetadata) {
+    if (mStream->update_source_metadata == nullptr) {
+        return Void();  // not supported by the HAL
+    }
+    std::vector<playback_track_metadata> halTracks;
+    halTracks.reserve(sourceMetadata.tracks.size());
+    for (auto& metadata : sourceMetadata.tracks) {
+        halTracks.push_back({
+            .usage = static_cast<audio_usage_t>(metadata.usage),
+            .content_type = static_cast<audio_content_type_t>(metadata.contentType),
+            .gain = metadata.gain,
+        });
+    }
+    const source_metadata_t halMetadata = {
+        .track_count = halTracks.size(), .tracks = halTracks.data(),
+    };
+    mStream->update_source_metadata(mStream, &halMetadata);
+    return Void();
 }
 Return<Result> StreamOut::selectPresentation(int32_t /*presentationId*/, int32_t /*programId*/) {
     return Result::NOT_SUPPORTED;  // TODO: propagate to legacy

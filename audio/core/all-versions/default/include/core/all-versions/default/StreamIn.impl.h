@@ -451,8 +451,21 @@ Return<void> StreamIn::debug(const hidl_handle& fd, const hidl_vec<hidl_string>&
 }
 
 #ifdef AUDIO_HAL_VERSION_4_0
-Return<void> StreamIn::updateSinkMetadata(const SinkMetadata& /*sinkMetadata*/) {
-    return Void();  // TODO: propagate to legacy
+Return<void> StreamIn::updateSinkMetadata(const SinkMetadata& sinkMetadata) {
+    if (mStream->update_sink_metadata == nullptr) {
+        return Void();  // not supported by the HAL
+    }
+    std::vector<record_track_metadata> halTracks;
+    halTracks.reserve(sinkMetadata.tracks.size());
+    for (auto& metadata : sinkMetadata.tracks) {
+        halTracks.push_back(
+            {.source = static_cast<audio_source_t>(metadata.source), .gain = metadata.gain});
+    }
+    const sink_metadata_t halMetadata = {
+        .track_count = halTracks.size(), .tracks = halTracks.data(),
+    };
+    mStream->update_sink_metadata(mStream, &halMetadata);
+    return Void();
 }
 
 Return<void> StreamIn::getActiveMicrophones(getActiveMicrophones_cb _hidl_cb) {
