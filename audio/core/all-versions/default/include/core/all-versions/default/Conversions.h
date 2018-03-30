@@ -30,6 +30,11 @@ using ::android::hardware::audio::AUDIO_HAL_VERSION::DeviceAddress;
 
 std::string deviceAddressToHal(const DeviceAddress& address);
 
+#ifdef AUDIO_HAL_VERSION_4_0
+bool halToMicrophoneCharacteristics(MicrophoneInfo* pDst,
+                                    const struct audio_microphone_characteristic_t& src);
+#endif
+
 }  // namespace implementation
 }  // namespace AUDIO_HAL_VERSION
 }  // namespace audio
