@@ -43,7 +43,6 @@ hidl_interface {
         "VehicleAreaWindow",
         "VehicleAreaZone",
         "VehicleDisplay",
-        "VehicleDrivingStatus",
         "VehicleGear",
         "VehicleHvacFanDirection",
         "VehicleHwKeyInputAction",
