@@ -67,6 +67,8 @@ private:
 
     StatusCode handleGenerateFakeDataRequest(const VehiclePropValue& request);
     void onFakeValueGenerated(int32_t propId, float value);
+    VehiclePropValuePtr createHwInputKeyProp(VehicleHwKeyInputAction action, int32_t keyCode,
+                                             int32_t targetDisplay);
 
     void onContinuousPropertyTimer(const std::vector<int32_t>& properties);
     bool isContinuousProperty(int32_t propId) const;
