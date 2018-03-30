@@ -127,6 +127,8 @@ VehicleHal::VehiclePropValuePtr EmulatedVehicleHal::get(
 }
 
 StatusCode EmulatedVehicleHal::set(const VehiclePropValue& propValue) {
+    static constexpr bool shouldUpdateStatus = false;
+
     if (propValue.prop == kGenerateFakeDataControllingProperty) {
         StatusCode status = handleGenerateFakeDataRequest(propValue);
         if (status != StatusCode::OK) {
@@ -177,7 +179,7 @@ StatusCode EmulatedVehicleHal::set(const VehiclePropValue& propValue) {
         return StatusCode::NOT_AVAILABLE;
     }
 
-    if (!mPropStore->writeValue(propValue)) {
+    if (!mPropStore->writeValue(propValue, shouldUpdateStatus)) {
         return StatusCode::INVALID_ARG;
     }
 
@@ -199,6 +201,8 @@ static bool isDiagnosticProperty(VehiclePropConfig propConfig) {
 
 // Parse supported properties list and generate vector of property values to hold current values.
 void EmulatedVehicleHal::onCreate() {
+    static constexpr bool shouldUpdateStatus = true;
+
     for (auto& it : kVehicleProperties) {
         VehiclePropConfig cfg = it.config;
         int32_t numAreas = cfg.areaConfigs.size();
@@ -240,7 +244,7 @@ void EmulatedVehicleHal::onCreate() {
             } else {
                 prop.value = it.initialValue;
             }
-            mPropStore->writeValue(prop);
+            mPropStore->writeValue(prop, shouldUpdateStatus);
         }
     }
     initObd2LiveFrame(*mPropStore->getConfigOrDie(OBD2_LIVE_FRAME));
@@ -300,6 +304,8 @@ bool EmulatedVehicleHal::isContinuousProperty(int32_t propId) const {
 }
 
 bool EmulatedVehicleHal::setPropertyFromVehicle(const VehiclePropValue& propValue) {
+    static constexpr bool shouldUpdateStatus = true;
+
     if (propValue.prop == kGenerateFakeDataControllingProperty) {
         StatusCode status = handleGenerateFakeDataRequest(propValue);
         if (status != StatusCode::OK) {
@@ -307,7 +313,7 @@ bool EmulatedVehicleHal::setPropertyFromVehicle(const VehiclePropValue& propValu
         }
     }
 
-    if (mPropStore->writeValue(propValue)) {
+    if (mPropStore->writeValue(propValue, shouldUpdateStatus)) {
         doHalEvent(getValuePool()->obtain(propValue));
         return true;
     } else {
@@ -391,6 +397,8 @@ VehicleHal::VehiclePropValuePtr EmulatedVehicleHal::createHwInputKeyProp(
 }
 
 void EmulatedVehicleHal::onFakeValueGenerated(int32_t propId, float value) {
+    static constexpr bool shouldUpdateStatus = false;
+
     VehiclePropValuePtr updatedPropValue {};
     switch (getPropType(propId)) {
         case VehiclePropertyType::FLOAT:
@@ -410,7 +418,7 @@ void EmulatedVehicleHal::onFakeValueGenerated(int32_t propId, float value) {
         updatedPropValue->areaId = 0;  // Add area support if necessary.
         updatedPropValue->timestamp = elapsedRealtimeNano();
         updatedPropValue->status = VehiclePropertyStatus::AVAILABLE;
-        mPropStore->writeValue(*updatedPropValue);
+        mPropStore->writeValue(*updatedPropValue, shouldUpdateStatus);
         auto changeMode = mPropStore->getConfigOrDie(propId)->changeMode;
         if (VehiclePropertyChangeMode::ON_CHANGE == changeMode) {
             doHalEvent(move(updatedPropValue));
@@ -439,16 +447,20 @@ void EmulatedVehicleHal::initStaticConfig() {
 }
 
 void EmulatedVehicleHal::initObd2LiveFrame(const VehiclePropConfig& propConfig) {
+    static constexpr bool shouldUpdateStatus = true;
+
     auto liveObd2Frame = createVehiclePropValue(VehiclePropertyType::MIXED, 0);
     auto sensorStore = fillDefaultObd2Frame(static_cast<size_t>(propConfig.configArray[0]),
                                             static_cast<size_t>(propConfig.configArray[1]));
     sensorStore->fillPropValue("", liveObd2Frame.get());
     liveObd2Frame->prop = OBD2_LIVE_FRAME;
 
-    mPropStore->writeValue(*liveObd2Frame);
+    mPropStore->writeValue(*liveObd2Frame, shouldUpdateStatus);
 }
 
 void EmulatedVehicleHal::initObd2FreezeFrame(const VehiclePropConfig& propConfig) {
+    static constexpr bool shouldUpdateStatus = true;
+
     auto sensorStore = fillDefaultObd2Frame(static_cast<size_t>(propConfig.configArray[0]),
                                             static_cast<size_t>(propConfig.configArray[1]));
 
@@ -460,7 +472,7 @@ void EmulatedVehicleHal::initObd2FreezeFrame(const VehiclePropConfig& propConfig
         sensorStore->fillPropValue(dtc, freezeFrame.get());
         freezeFrame->prop = OBD2_FREEZE_FRAME;
 
-        mPropStore->writeValue(*freezeFrame);
+        mPropStore->writeValue(*freezeFrame, shouldUpdateStatus);
     }
 }
 
