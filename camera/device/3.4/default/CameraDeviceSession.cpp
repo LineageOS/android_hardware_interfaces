@@ -51,6 +51,32 @@ CameraDeviceSession::CameraDeviceSession(
             }
         }
     }
+
+    camera_metadata_entry_t capabilities =
+            mDeviceInfo.find(ANDROID_REQUEST_AVAILABLE_CAPABILITIES);
+    bool isLogicalMultiCamera = false;
+    for (size_t i = 0; i < capabilities.count; i++) {
+        if (capabilities.data.u8[i] ==
+                ANDROID_REQUEST_AVAILABLE_CAPABILITIES_LOGICAL_MULTI_CAMERA) {
+            isLogicalMultiCamera = true;
+            break;
+        }
+    }
+    if (isLogicalMultiCamera) {
+        camera_metadata_entry entry =
+                mDeviceInfo.find(ANDROID_LOGICAL_MULTI_CAMERA_PHYSICAL_IDS);
+        const uint8_t* ids = entry.data.u8;
+        size_t start = 0;
+        for (size_t i = 0; i < entry.count; ++i) {
+            if (ids[i] == '\0') {
+                if (start != i) {
+                    const char* physicalId = reinterpret_cast<const char*>(ids+start);
+                    mPhysicalCameraIds.emplace(physicalId);
+                }
+                start = i + 1;
+            }
+        }
+    }
 }
 
 CameraDeviceSession::~CameraDeviceSession() {
@@ -456,9 +482,19 @@ void CameraDeviceSession::sProcessCaptureResult_3_4(
         return;
     }
 
+    if (hal_result->num_physcam_metadata > d->mPhysicalCameraIds.size()) {
+        ALOGE("%s: Fatal: Invalid num_physcam_metadata %u", __FUNCTION__,
+                hal_result->num_physcam_metadata);
+        return;
+    }
     result.physicalCameraMetadata.resize(hal_result->num_physcam_metadata);
     for (uint32_t i = 0; i < hal_result->num_physcam_metadata; i++) {
         std::string physicalId = hal_result->physcam_ids[i];
+        if (d->mPhysicalCameraIds.find(physicalId) == d->mPhysicalCameraIds.end()) {
+            ALOGE("%s: Fatal: Invalid physcam_ids[%u]: %s", __FUNCTION__,
+                  i, hal_result->physcam_ids[i]);
+            return;
+        }
         V3_2::CameraMetadata physicalMetadata;
         V3_2::implementation::convertToHidl(hal_result->physcam_metadata[i], &physicalMetadata);
         PhysicalCameraMetadata physicalCameraMetadata = {
