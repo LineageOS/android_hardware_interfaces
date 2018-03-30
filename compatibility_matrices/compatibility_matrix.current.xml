@@ -274,14 +274,16 @@
     </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.radio</name>
-        <version>1.0-1</version>
+        <version>1.0-2</version>
         <interface>
             <name>IRadio</name>
-            <regex-instance>slot[0-9]+</regex-instance>
+            <instance>slot1</instance>
+            <instance>slot2</instance>
+            <instance>slot3</instance>
         </interface>
         <interface>
             <name>ISap</name>
-            <regex-instance>slot[0-9]+</regex-instance>
+            <instance>slot1</instance>
         </interface>
     </hal>
     <hal format="hidl" optional="true">
