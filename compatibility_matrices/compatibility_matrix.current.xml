@@ -76,7 +76,7 @@
         <version>2.4</version>
         <interface>
             <name>ICameraProvider</name>
-            <instance>legacy/0</instance>
+            <regex-instance>[^/]+/[0-9]+</regex-instance>
         </interface>
     </hal>
     <hal format="hidl" optional="true">
@@ -103,16 +103,28 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="false">
+    <hal format="hidl" optional="true">
         <name>android.hardware.drm</name>
         <version>1.0</version>
         <interface>
             <name>ICryptoFactory</name>
-            <instance>default</instance>
+            <regex-instance>.*</regex-instance>
         </interface>
         <interface>
             <name>IDrmFactory</name>
-            <instance>default</instance>
+            <regex-instance>.*</regex-instance>
+        </interface>
+    </hal>
+    <hal format="hidl" optional="false">
+        <name>android.hardware.drm</name>
+        <version>1.1</version>
+        <interface>
+            <name>ICryptoFactory</name>
+            <regex-instance>.*</regex-instance>
+        </interface>
+        <interface>
+            <name>IDrmFactory</name>
+            <regex-instance>.*</regex-instance>
         </interface>
     </hal>
     <hal format="hidl" optional="true">
@@ -225,8 +237,7 @@
         <version>1.0</version>
         <interface>
             <name>IDevice</name>
-            <!-- TODO(b/73738616): This should be * (match any) -->
-            <instance>hvx</instance>
+            <regex-instance>.*</regex-instance>
         </interface>
     </hal>
     <hal format="hidl" optional="true">
@@ -258,11 +269,11 @@
         <version>1.0-1</version>
         <interface>
             <name>IRadio</name>
-            <instance>slot1</instance>
+            <regex-instance>slot[0-9]+</regex-instance>
         </interface>
         <interface>
             <name>ISap</name>
-            <instance>slot1</instance>
+            <regex-instance>slot[0-9]+</regex-instance>
         </interface>
     </hal>
     <hal format="hidl" optional="true">

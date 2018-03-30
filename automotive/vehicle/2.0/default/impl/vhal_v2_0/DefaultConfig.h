@@ -46,17 +46,34 @@ constexpr int ALL_WHEELS =
  *
  * It has the following format:
  *
- * int32Values[0] - command (1 - start fake data generation, 0 - stop)
+ * int32Values[0] - command (see FakeDataCommand below for possible values)
  * int32Values[1] - VehicleProperty to which command applies
- *
- * For start command, additional data should be provided:
- *   int64Values[0] - periodic interval in nanoseconds
- *   floatValues[0] - initial value
- *   floatValues[1] - dispersion defines min and max range relative to initial value
- *   floatValues[2] - increment, with every timer tick the value will be incremented by this amount
  */
 const int32_t kGenerateFakeDataControllingProperty =
     0x0666 | VehiclePropertyGroup::VENDOR | VehicleArea::GLOBAL | VehiclePropertyType::MIXED;
+
+enum class FakeDataCommand : int32_t {
+    /** Stops generating of fake data that was triggered by Start command */
+    Stop = 0,
+
+    /**
+     * Starts fake data generation.  Caller must provide additional data:
+     *     int64Values[0] - periodic interval in nanoseconds
+     *     floatValues[0] - initial value
+     *     floatValues[1] - dispersion defines min and max range relative to initial value
+     *     floatValues[2] - increment, with every timer tick the value will be incremented by this
+     * amount
+     */
+    Start = 1,
+
+    /**
+     * Injects key press event (HAL incorporates UP/DOWN acction and triggers 2 HAL events for every
+     * key-press). Caller must provide the following data: int32Values[2] - Android key code
+     *     int32Values[3] - target display (0 - for main display, 1 - for instrument cluster, see
+     * VehicleDisplay)
+     */
+    KeyPress = 2,
+};
 
 const int32_t kHvacPowerProperties[] = {
     toInt(VehicleProperty::HVAC_FAN_SPEED),

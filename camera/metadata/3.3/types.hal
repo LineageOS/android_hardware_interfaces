@@ -33,6 +33,8 @@ enum CameraMetadataSection : @3.2::CameraMetadataSection {
     ANDROID_LOGICAL_MULTI_CAMERA =
         android.hardware.camera.metadata@3.2::CameraMetadataSection:ANDROID_SECTION_COUNT,
 
+    ANDROID_DISTORTION_CORRECTION,
+
     ANDROID_SECTION_COUNT_3_3,
 
     VENDOR_SECTION_3_3 = 0x8000,
@@ -45,6 +47,8 @@ enum CameraMetadataSection : @3.2::CameraMetadataSection {
  */
 enum CameraMetadataSectionStart : android.hardware.camera.metadata@3.2::CameraMetadataSectionStart {
     ANDROID_LOGICAL_MULTI_CAMERA_START = CameraMetadataSection:ANDROID_LOGICAL_MULTI_CAMERA << 16,
+
+    ANDROID_DISTORTION_CORRECTION_START = CameraMetadataSection:ANDROID_DISTORTION_CORRECTION << 16,
 
     VENDOR_SECTION_START_3_3 = CameraMetadataSection:VENDOR_SECTION_3_3 << 16,
 
@@ -164,6 +168,23 @@ enum CameraMetadataTag : @3.2::CameraMetadataTag {
 
     ANDROID_LOGICAL_MULTI_CAMERA_END_3_3,
 
+    /** android.distortionCorrection.mode [dynamic, enum, public]
+     *
+     * <p>Mode of operation for the lens distortion correction block.</p>
+     */
+    ANDROID_DISTORTION_CORRECTION_MODE = CameraMetadataSectionStart:ANDROID_DISTORTION_CORRECTION_START,
+
+    /** android.distortionCorrection.availableModes [static, byte[], public]
+     *
+     * <p>List of distortion correction modes for ANDROID_DISTORTION_CORRECTION_MODE that are
+     * supported by this camera device.</p>
+     *
+     * @see ANDROID_DISTORTION_CORRECTION_MODE
+     */
+    ANDROID_DISTORTION_CORRECTION_AVAILABLE_MODES,
+
+    ANDROID_DISTORTION_CORRECTION_END_3_3,
+
 };
 
 /*
@@ -209,6 +230,7 @@ enum CameraMetadataEnumAndroidRequestAvailableCapabilities :
         @3.2::CameraMetadataEnumAndroidRequestAvailableCapabilities {
     ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MOTION_TRACKING,
     ANDROID_REQUEST_AVAILABLE_CAPABILITIES_LOGICAL_MULTI_CAMERA,
+    ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MONOCHROME,
 };
 
 /** android.statistics.oisDataMode enumeration values
@@ -233,4 +255,13 @@ enum CameraMetadataEnumAndroidInfoSupportedHardwareLevel :
 enum CameraMetadataEnumAndroidLogicalMultiCameraSensorSyncType : uint32_t {
     ANDROID_LOGICAL_MULTI_CAMERA_SENSOR_SYNC_TYPE_APPROXIMATE,
     ANDROID_LOGICAL_MULTI_CAMERA_SENSOR_SYNC_TYPE_CALIBRATED,
+};
+
+/** android.distortionCorrection.mode enumeration values
+ * @see ANDROID_DISTORTION_CORRECTION_MODE
+ */
+enum CameraMetadataEnumAndroidDistortionCorrectionMode : uint32_t {
+    ANDROID_DISTORTION_CORRECTION_MODE_OFF,
+    ANDROID_DISTORTION_CORRECTION_MODE_FAST,
+    ANDROID_DISTORTION_CORRECTION_MODE_HIGH_QUALITY,
 };

@@ -85,11 +85,6 @@ static std::unique_ptr<Obd2SensorStore> fillDefaultObd2Frame(size_t numVendorInt
     return sensorStore;
 }
 
-enum class FakeDataCommand : int32_t {
-    Stop = 0,
-    Start = 1,
-};
-
 EmulatedVehicleHal::EmulatedVehicleHal(VehiclePropertyStore* propStore)
     : mPropStore(propStore),
       mHvacPowerProps(std::begin(kHvacPowerProperties), std::end(kHvacPowerProperties)),
@@ -360,16 +355,39 @@ StatusCode EmulatedVehicleHal::handleGenerateFakeDataRequest(const VehiclePropVa
             break;
         }
         case FakeDataCommand::Stop: {
-            ALOGI("%s, FakeDataCommandStop", __func__);
+            ALOGI("%s, FakeDataCommand::Stop", __func__);
             mFakeValueGenerator.stopGeneratingHalEvents(propId);
             break;
         }
+        case FakeDataCommand::KeyPress: {
+            ALOGI("%s, FakeDataCommand::KeyPress", __func__);
+            int32_t keyCode = request.value.int32Values[2];
+            int32_t display = request.value.int32Values[3];
+            doHalEvent(
+                createHwInputKeyProp(VehicleHwKeyInputAction::ACTION_DOWN, keyCode, display));
+            doHalEvent(createHwInputKeyProp(VehicleHwKeyInputAction::ACTION_UP, keyCode, display));
+            break;
+        }
+
         default: {
             ALOGE("%s: unexpected command: %d", __func__, command);
             return StatusCode::INVALID_ARG;
         }
     }
     return StatusCode::OK;
+}
+
+VehicleHal::VehiclePropValuePtr EmulatedVehicleHal::createHwInputKeyProp(
+    VehicleHwKeyInputAction action, int32_t keyCode, int32_t targetDisplay) {
+    auto keyEvent = getValuePool()->obtain(VehiclePropertyType::INT32_VEC, 3);
+    keyEvent->prop = toInt(VehicleProperty::HW_KEY_INPUT);
+    keyEvent->areaId = 0;
+    keyEvent->timestamp = elapsedRealtimeNano();
+    keyEvent->status = VehiclePropertyStatus::AVAILABLE;
+    keyEvent->value.int32Values[0] = toInt(action);
+    keyEvent->value.int32Values[1] = keyCode;
+    keyEvent->value.int32Values[2] = targetDisplay;
+    return keyEvent;
 }
 
 void EmulatedVehicleHal::onFakeValueGenerated(int32_t propId, float value) {
