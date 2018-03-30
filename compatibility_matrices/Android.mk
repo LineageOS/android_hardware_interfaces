@@ -21,8 +21,9 @@ BUILD_FRAMEWORK_COMPATIBILITY_MATRIX := $(LOCAL_PATH)/compatibility_matrix.mk
 # Clear potential input variables to BUILD_FRAMEWORK_COMPATIBILITY_MATRIX
 LOCAL_ADD_VBMETA_VERSION :=
 LOCAL_ASSEMBLE_VINTF_ENV_VARS :=
+LOCAL_ASSEMBLE_VINTF_ENV_VARS_OVERRIDE :=
+LOCAL_ASSEMBLE_VINTF_ERROR_MESSAGE :=
 LOCAL_ASSEMBLE_VINTF_FLAGS :=
-LOCAL_WARN_REQUIRED_HALS :=
 LOCAL_KERNEL_VERSIONS :=
 LOCAL_GEN_FILE_DEPENDENCIES :=
 
@@ -30,18 +31,21 @@ LOCAL_GEN_FILE_DEPENDENCIES :=
 
 
 include $(CLEAR_VARS)
+LOCAL_MODULE := framework_compatibility_matrix.legacy.xml
 LOCAL_MODULE_STEM := compatibility_matrix.legacy.xml
 LOCAL_SRC_FILES := $(LOCAL_MODULE_STEM)
 LOCAL_KERNEL_VERSIONS := 3.18.0 4.4.0 4.9.0
 include $(BUILD_FRAMEWORK_COMPATIBILITY_MATRIX)
 
 include $(CLEAR_VARS)
+LOCAL_MODULE := framework_compatibility_matrix.1.xml
 LOCAL_MODULE_STEM := compatibility_matrix.1.xml
 LOCAL_SRC_FILES := $(LOCAL_MODULE_STEM)
 LOCAL_KERNEL_VERSIONS := 3.18.0 4.4.0 4.9.0
 include $(BUILD_FRAMEWORK_COMPATIBILITY_MATRIX)
 
 include $(CLEAR_VARS)
+LOCAL_MODULE := framework_compatibility_matrix.2.xml
 LOCAL_MODULE_STEM := compatibility_matrix.2.xml
 LOCAL_SRC_FILES := $(LOCAL_MODULE_STEM)
 LOCAL_KERNEL_VERSIONS := 3.18.0 4.4.0 4.9.0
@@ -50,6 +54,7 @@ include $(BUILD_FRAMEWORK_COMPATIBILITY_MATRIX)
 # TODO(b/72409164): STOPSHIP: update kernel version requirements
 
 include $(CLEAR_VARS)
+LOCAL_MODULE := framework_compatibility_matrix.current.xml
 LOCAL_MODULE_STEM := compatibility_matrix.current.xml
 LOCAL_SRC_FILES := $(LOCAL_MODULE_STEM)
 LOCAL_KERNEL_VERSIONS := 4.4.0 4.9.0
@@ -58,9 +63,9 @@ include $(BUILD_FRAMEWORK_COMPATIBILITY_MATRIX)
 # Framework Compatibility Matrix (common to all FCM versions)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE_STEM := compatibility_matrix.device.xml
-# define LOCAL_MODULE and LOCAL_MODULE_CLASS for local-generated-sources-dir.
 LOCAL_MODULE := framework_compatibility_matrix.device.xml
+LOCAL_MODULE_STEM := compatibility_matrix.device.xml
+# define LOCAL_MODULE_CLASS for local-generated-sources-dir.
 LOCAL_MODULE_CLASS := ETC
 
 ifndef DEVICE_FRAMEWORK_COMPATIBILITY_MATRIX_FILE
@@ -78,7 +83,7 @@ my_gen_check_manifest := $(local-generated-sources-dir)/manifest.check.xml
 $(my_gen_check_manifest): PRIVATE_SRC_FILE := $(my_manifest_src_file)
 $(my_gen_check_manifest): $(my_manifest_src_file) $(HOST_OUT_EXECUTABLES)/assemble_vintf
 	BOARD_SEPOLICY_VERS=$(BOARD_SEPOLICY_VERS) \
-	IGNORE_TARGET_FCM_VERSION=true \
+	VINTF_IGNORE_TARGET_FCM_VERSION=true \
 		$(HOST_OUT_EXECUTABLES)/assemble_vintf -i $(PRIVATE_SRC_FILE) -o $@
 
 LOCAL_GEN_FILE_DEPENDENCIES += $(my_gen_check_manifest)
@@ -95,7 +100,8 @@ LOCAL_ASSEMBLE_VINTF_ENV_VARS := \
     PLATFORM_SEPOLICY_VERSION \
     PLATFORM_SEPOLICY_COMPAT_VERSIONS
 
-LOCAL_WARN_REQUIRED_HALS := \
+LOCAL_ASSEMBLE_VINTF_ENV_VARS_OVERRIDE := PRODUCT_ENFORCE_VINTF_MANIFEST=true
+LOCAL_ASSEMBLE_VINTF_ERROR_MESSAGE := \
     "Error: DEVICE_FRAMEWORK_COMPATIBILITY_MATRIX cannot contain required HALs."
 
 include $(BUILD_FRAMEWORK_COMPATIBILITY_MATRIX)
@@ -120,6 +126,14 @@ LOCAL_ASSEMBLE_VINTF_FLAGS += -c "$(BUILT_VENDOR_MANIFEST)"
 endif
 
 LOCAL_ASSEMBLE_VINTF_ENV_VARS := PRODUCT_ENFORCE_VINTF_MANIFEST
+
+# TODO(b/65028233): Enforce no "unused HALs" for devices that does not define
+# DEVICE_FRAMEWORK_COMPATIBILITY_MATRIX_FILE as well
+ifeq (true,$(strip $(PRODUCT_ENFORCE_VINTF_MANIFEST)))
+ifdef DEVICE_FRAMEWORK_COMPATIBILITY_MATRIX_FILE
+LOCAL_ASSEMBLE_VINTF_ENV_VARS_OVERRIDE := VINTF_ENFORCE_NO_UNUSED_HALS=true
+endif
+endif
 
 include $(BUILD_FRAMEWORK_COMPATIBILITY_MATRIX)
 BUILT_SYSTEM_COMPATIBILITY_MATRIX := $(LOCAL_BUILT_MODULE)
