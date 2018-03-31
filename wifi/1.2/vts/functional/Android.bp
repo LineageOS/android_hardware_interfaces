@@ -20,6 +20,7 @@ cc_test {
     srcs: [
         "VtsHalWifiV1_2TargetTest.cpp",
         "wifi_chip_hidl_test.cpp",
+        "wifi_sta_iface_hidl_test.cpp",
     ],
     static_libs: [
         "VtsHalWifiV1_0TargetTestUtil",
