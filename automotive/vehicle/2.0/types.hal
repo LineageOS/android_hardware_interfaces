@@ -467,19 +467,6 @@ enum VehicleProperty: int32_t {
         | VehicleArea:GLOBAL),
 
     /**
-     * Driving status policy.
-     *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ
-     * @data_enum VehicleDrivingStatus
-     */
-    DRIVING_STATUS = (
-        0x0404
-        | VehiclePropertyGroup:SYSTEM
-        | VehiclePropertyType:INT32
-        | VehicleArea:GLOBAL),
-
-    /**
      * Warning for fuel low level.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
@@ -2166,20 +2153,6 @@ enum VehiclePropertyStatus : int32_t {
     UNAVAILABLE = 0x01,
     /** There is an error with this property. */
     ERROR       = 0x02,
-};
-
-/**
- * Car states.
- *
- * The driving states determine what features of the UI will be accessible.
- */
-enum VehicleDrivingStatus : int32_t {
-    UNRESTRICTED = 0x00,
-    NO_VIDEO = 0x01,
-    NO_KEYBOARD_INPUT = 0x02,
-    NO_VOICE_INPUT = 0x04,
-    NO_CONFIG = 0x08,
-    LIMIT_MESSAGE_LEN = 0x10,
 };
 
 /**

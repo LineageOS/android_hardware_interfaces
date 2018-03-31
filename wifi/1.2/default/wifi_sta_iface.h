@@ -21,6 +21,8 @@
 #include <android/hardware/wifi/1.0/IWifiStaIfaceEventCallback.h>
 #include <android/hardware/wifi/1.2/IWifiStaIface.h>
 
+#include <wifi_system/interface_tool.h>
+
 #include "hidl_callback_util.h"
 #include "wifi_legacy_hal.h"
 
@@ -103,6 +105,8 @@ class WifiStaIface : public V1_2::IWifiStaIface {
         getDebugTxPacketFates_cb hidl_status_cb) override;
     Return<void> getDebugRxPacketFates(
         getDebugRxPacketFates_cb hidl_status_cb) override;
+    Return<void> setMacAddress(const hidl_array<uint8_t, 6>& mac,
+                               setMacAddress_cb hidl_status_cb) override;
 
    private:
     // Corresponding worker functions for the HIDL methods.
@@ -146,12 +150,14 @@ class WifiStaIface : public V1_2::IWifiStaIface {
     getDebugTxPacketFatesInternal();
     std::pair<WifiStatus, std::vector<WifiDebugRxPacketFateReport>>
     getDebugRxPacketFatesInternal();
+    WifiStatus setMacAddressInternal(const std::array<uint8_t, 6>& mac);
 
     std::string ifname_;
     std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal_;
     bool is_valid_;
     hidl_callback_util::HidlCallbackHandler<IWifiStaIfaceEventCallback>
         event_cb_handler_;
+    wifi_system::InterfaceTool iface_tool_;
 
     DISALLOW_COPY_AND_ASSIGN(WifiStaIface);
 };

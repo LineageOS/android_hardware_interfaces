@@ -41,7 +41,8 @@ void VehiclePropertyStore::registerProperty(const VehiclePropConfig& config,
     mConfigs.insert({ config.prop, RecordConfig { config, tokenFunc } });
 }
 
-bool VehiclePropertyStore::writeValue(const VehiclePropValue& propValue) {
+bool VehiclePropertyStore::writeValue(const VehiclePropValue& propValue,
+                                        bool updateStatus) {
     MuxGuard g(mLock);
     if (!mConfigs.count(propValue.prop)) return false;
 
@@ -52,7 +53,9 @@ bool VehiclePropertyStore::writeValue(const VehiclePropValue& propValue) {
     } else {
         valueToUpdate->timestamp = propValue.timestamp;
         valueToUpdate->value = propValue.value;
-        valueToUpdate->status = propValue.status;
+        if (updateStatus) {
+            valueToUpdate->status = propValue.status;
+        }
     }
     return true;
 }
