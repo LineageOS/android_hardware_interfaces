@@ -351,10 +351,16 @@ struct ProgramInfo {
      * related content (i.e. DAB soft-links). This field is a list of pointers
      * to other programs on the program list.
      *
-     * Please note, that these identifiers does not have to exist on the program
+     * This is not a list of programs that carry the same content (i.e.
+     * DAB hard-links, RDS AF). Switching to programs from this list usually
+     * require user action.
+     *
+     * Please note, that these identifiers do not have to exist on the program
      * list - i.e. DAB tuner may provide information on FM RDS alternatives
      * despite not supporting FM RDS. If the system has multiple tuners, another
      * one may have it on its list.
+     *
+     * This field is optional (can be empty).
      */
     vec<ProgramIdentifier> relatedContent;
 
