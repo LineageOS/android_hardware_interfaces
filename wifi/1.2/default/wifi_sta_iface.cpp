@@ -241,6 +241,13 @@ Return<void> WifiStaIface::getDebugRxPacketFates(
                            hidl_status_cb);
 }
 
+Return<void> WifiStaIface::setMacAddress(const hidl_array<uint8_t, 6>& mac,
+                                         setMacAddress_cb hidl_status_cb) {
+    return validateAndCall(this, WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
+                           &WifiStaIface::setMacAddressInternal, hidl_status_cb,
+                           mac);
+}
+
 std::pair<WifiStatus, std::string> WifiStaIface::getNameInternal() {
     return {createWifiStatus(WifiStatusCode::SUCCESS), ifname_};
 }
@@ -592,6 +599,26 @@ WifiStaIface::getDebugRxPacketFatesInternal() {
         return {createWifiStatus(WifiStatusCode::ERROR_UNKNOWN), {}};
     }
     return {createWifiStatus(WifiStatusCode::SUCCESS), hidl_fates};
+}
+
+WifiStatus WifiStaIface::setMacAddressInternal(
+    const std::array<uint8_t, 6>& mac) {
+    if (!iface_tool_.SetWifiUpState(false)) {
+        LOG(ERROR) << "SetWifiUpState(false) failed.";
+        return createWifiStatus(WifiStatusCode::ERROR_UNKNOWN);
+    }
+
+    if (!iface_tool_.SetMacAddress(ifname_.c_str(), mac)) {
+        LOG(ERROR) << "SetMacAddress failed.";
+        return createWifiStatus(WifiStatusCode::ERROR_UNKNOWN);
+    }
+
+    if (!iface_tool_.SetWifiUpState(true)) {
+        LOG(ERROR) << "SetWifiUpState(true) failed.";
+        return createWifiStatus(WifiStatusCode::ERROR_UNKNOWN);
+    }
+    LOG(DEBUG) << "Successfully SetMacAddress.";
+    return createWifiStatus(WifiStatusCode::SUCCESS);
 }
 
 }  // namespace implementation
