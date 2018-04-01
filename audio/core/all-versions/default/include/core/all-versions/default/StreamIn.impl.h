@@ -26,6 +26,8 @@
 
 using ::android::hardware::audio::AUDIO_HAL_VERSION::MessageQueueFlagBits;
 using ::android::hardware::audio::all_versions::implementation::isGainNormalized;
+#include "Conversions.h"
+#include "Util.h"
 
 namespace android {
 namespace hardware {
@@ -449,12 +451,39 @@ Return<void> StreamIn::debug(const hidl_handle& fd, const hidl_vec<hidl_string>&
 }
 
 #ifdef AUDIO_HAL_VERSION_4_0
-Return<void> StreamIn::updateSinkMetadata(const SinkMetadata& /*sinkMetadata*/) {
-    return Void();  // TODO: propagate to legacy
+Return<void> StreamIn::updateSinkMetadata(const SinkMetadata& sinkMetadata) {
+    if (mStream->update_sink_metadata == nullptr) {
+        return Void();  // not supported by the HAL
+    }
+    std::vector<record_track_metadata> halTracks;
+    halTracks.reserve(sinkMetadata.tracks.size());
+    for (auto& metadata : sinkMetadata.tracks) {
+        halTracks.push_back(
+            {.source = static_cast<audio_source_t>(metadata.source), .gain = metadata.gain});
+    }
+    const sink_metadata_t halMetadata = {
+        .track_count = halTracks.size(), .tracks = halTracks.data(),
+    };
+    mStream->update_sink_metadata(mStream, &halMetadata);
+    return Void();
 }
 
 Return<void> StreamIn::getActiveMicrophones(getActiveMicrophones_cb _hidl_cb) {
-    _hidl_cb(Result::NOT_SUPPORTED, {});  // TODO: retrieve from legacy
+    Result retval = Result::NOT_SUPPORTED;
+    size_t actual_mics = AUDIO_MICROPHONE_MAX_COUNT;
+    audio_microphone_characteristic_t mic_array[AUDIO_MICROPHONE_MAX_COUNT];
+
+    hidl_vec<MicrophoneInfo> microphones;
+    if (mStream->get_active_microphones != NULL &&
+        mStream->get_active_microphones(mStream, &mic_array[0], &actual_mics) == 0) {
+        microphones.resize(actual_mics);
+        for (size_t i = 0; i < actual_mics; ++i) {
+            halToMicrophoneCharacteristics(&microphones[i], mic_array[i]);
+        }
+        retval = Result::OK;
+    }
+
+    _hidl_cb(retval, microphones);
     return Void();
 }
 #endif

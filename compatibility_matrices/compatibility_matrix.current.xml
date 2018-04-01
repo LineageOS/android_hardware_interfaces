@@ -56,6 +56,14 @@
         </interface>
     </hal>
     <hal format="hidl" optional="true">
+        <name>android.hardware.bluetooth.a2dp</name>
+        <version>1.0</version>
+        <interface>
+            <name>IBluetoothAudioOffload</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="hidl" optional="true">
         <name>android.hardware.boot</name>
         <version>1.0</version>
         <interface>
@@ -145,7 +153,7 @@
     </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.gnss</name>
-        <version>1.0</version>
+        <version>1.0-1</version>
         <interface>
             <name>IGnss</name>
             <instance>default</instance>
@@ -242,7 +250,7 @@
     </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.nfc</name>
-        <version>1.0</version>
+        <version>1.0-1</version>
         <interface>
             <name>INfc</name>
             <instance>default</instance>
@@ -266,14 +274,16 @@
     </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.radio</name>
-        <version>1.0-1</version>
+        <version>1.0-2</version>
         <interface>
             <name>IRadio</name>
-            <regex-instance>slot[0-9]+</regex-instance>
+            <instance>slot1</instance>
+            <instance>slot2</instance>
+            <instance>slot3</instance>
         </interface>
         <interface>
             <name>ISap</name>
-            <regex-instance>slot[0-9]+</regex-instance>
+            <instance>slot1</instance>
         </interface>
     </hal>
     <hal format="hidl" optional="true">
@@ -289,7 +299,8 @@
         <version>1.0</version>
         <interface>
             <name>ISecureElement</name>
-            <instance>eSE1</instance>
+            <regex-instance>eSE[1-9][0-9]*</regex-instance>
+            <regex-instance>SIM[1-9][0-9]*</regex-instance>
         </interface>
     </hal>
     <hal format="hidl" optional="true">
