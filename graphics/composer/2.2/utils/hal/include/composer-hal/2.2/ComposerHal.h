@@ -30,6 +30,8 @@ namespace hal {
 
 using common::V1_0::Dataspace;
 using common::V1_0::PixelFormat;
+using common::V1_1::ColorMode;
+using common::V1_1::RenderIntent;
 using V2_1::Display;
 using V2_1::Error;
 using V2_1::Layer;
@@ -41,10 +43,21 @@ class ComposerHal : public V2_1::hal::ComposerHal {
         return setPowerMode_2_2(display, static_cast<IComposerClient::PowerMode>(mode));
     }
 
+    // superceded by getColorModes_2_2
+    Error getColorModes(Display display, hidl_vec<common::V1_0::ColorMode>* outModes) override {
+        return getColorModes_2_2(display, reinterpret_cast<hidl_vec<ColorMode>*>(outModes));
+    }
+
+    // superceded by setColorMode_2_2
+    Error setColorMode(Display display, common::V1_0::ColorMode mode) override {
+        return setColorMode_2_2(display, static_cast<ColorMode>(mode), RenderIntent::COLORIMETRIC);
+    }
+
     virtual Error getPerFrameMetadataKeys(
         Display display, std::vector<IComposerClient::PerFrameMetadataKey>* outKeys) = 0;
-    virtual Error setPerFrameMetadata(
-        Display display, const std::vector<IComposerClient::PerFrameMetadata>& metadata) = 0;
+    virtual Error setLayerPerFrameMetadata(
+        Display display, Layer layer,
+        const std::vector<IComposerClient::PerFrameMetadata>& metadata) = 0;
 
     virtual Error getReadbackBufferAttributes(Display display, PixelFormat* outFormat,
                                               Dataspace* outDataspace) = 0;
@@ -56,6 +69,13 @@ class ComposerHal : public V2_1::hal::ComposerHal {
 
     virtual Error setLayerFloatColor(Display display, Layer layer,
                                      IComposerClient::FloatColor color) = 0;
+
+    virtual Error getColorModes_2_2(Display display, hidl_vec<ColorMode>* outModes) = 0;
+    virtual Error getRenderIntents(Display display, ColorMode mode,
+                                   std::vector<RenderIntent>* outIntents) = 0;
+    virtual Error setColorMode_2_2(Display display, ColorMode mode, RenderIntent intent) = 0;
+
+    virtual std::array<float, 16> getDataspaceSaturationMatrix(Dataspace dataspace) = 0;
 };
 
 }  // namespace hal
