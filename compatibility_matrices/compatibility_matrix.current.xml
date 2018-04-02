@@ -24,6 +24,14 @@
         </interface>
     </hal>
     <hal format="hidl" optional="true">
+        <name>android.hardware.automotive.audiocontrol</name>
+        <version>1.0</version>
+        <interface>
+            <name>IAudioControl</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="hidl" optional="true">
         <name>android.hardware.automotive.evs</name>
         <version>1.0</version>
         <interface>
