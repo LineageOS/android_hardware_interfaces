@@ -26,7 +26,14 @@ cc_library_static {
         "android.hardware.graphics.composer@2.1-vts",
         "android.hardware.graphics.composer@2.2",
     ],
+    export_static_lib_headers: [
+        "android.hardware.graphics.composer@2.1-vts",
+    ],
     header_libs: [
+        "android.hardware.graphics.composer@2.1-command-buffer",
+        "android.hardware.graphics.composer@2.2-command-buffer",
+    ],
+    export_header_lib_headers: [
         "android.hardware.graphics.composer@2.1-command-buffer",
         "android.hardware.graphics.composer@2.2-command-buffer",
     ],
