@@ -40,7 +40,7 @@ std::vector<std::unique_ptr<Keymaster>> enumerateDevices(
     serviceManager->listByInterface(descriptor, [&](const hidl_vec<hidl_string>& names) {
         for (auto& name : names) {
             if (name == "default") foundDefault = true;
-            auto device = Wrapper::WrappedIKeymasterDevice::getService();
+            auto device = Wrapper::WrappedIKeymasterDevice::getService(name);
             CHECK(device) << "Failed to get service for " << descriptor << " with interface name "
                           << name;
             result.push_back(std::unique_ptr<Keymaster>(new Wrapper(device, name)));
