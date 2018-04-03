@@ -28,7 +28,7 @@ interface IExecutionCallback {
      * ErrorStatus resulting from the execution. If the asynchronous task
      * is not launched, notify must be invoked with the appropriate error.
      *
-     * @return param Error status returned from launching the asynchronous task
+     * @param status Error status returned from launching the asynchronous task
      *               (if the launch fails) or from the asynchronous task itself
      *               (if the launch succeeds). Must be:
      *               - NONE if the asynchronous execution was successful
