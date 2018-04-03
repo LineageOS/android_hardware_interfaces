@@ -106,7 +106,7 @@ StatusCode SubscriptionManager::addOrUpdateSubscription(
 
         addClientToPropMapLocked(opts.propId, client);
 
-        if (SubscribeFlags::HAL_EVENT & opts.flags) {
+        if (SubscribeFlags::EVENTS_FROM_CAR & opts.flags) {
             SubscribeOptions updated;
             if (updateHalEventSubscriptionLocked(opts, &updated)) {
                 outUpdatedSubscriptions->push_back(updated);
