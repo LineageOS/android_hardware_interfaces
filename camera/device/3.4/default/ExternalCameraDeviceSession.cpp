@@ -2149,6 +2149,13 @@ int ExternalCameraDeviceSession::configureV4l2StreamLocked(
     }
     uint32_t bufferSize = fmt.fmt.pix.sizeimage;
     ALOGI("%s: V4L2 buffer size is %d", __FUNCTION__, bufferSize);
+    uint32_t expectedMaxBufferSize = kMaxBytesPerPixel * fmt.fmt.pix.width * fmt.fmt.pix.height;
+    if ((bufferSize == 0) || (bufferSize > expectedMaxBufferSize)) {
+        ALOGE("%s: V4L2 buffer size: %u looks invalid. Expected maximum size: %u", __FUNCTION__,
+                bufferSize, expectedMaxBufferSize);
+        return -EINVAL;
+    }
+    mMaxV4L2BufferSize = bufferSize;
 
     const double kDefaultFps = 30.0;
     double fps = 1000.0;
@@ -2294,6 +2301,12 @@ sp<V4L2Frame> ExternalCameraDeviceSession::dequeueV4l2FrameLocked(/*out*/nsecs_t
     if (buffer.flags & V4L2_BUF_FLAG_ERROR) {
         ALOGE("%s: v4l2 buf error! buf flag 0x%x", __FUNCTION__, buffer.flags);
         // TODO: try to dequeue again
+    }
+
+    if (buffer.bytesused > mMaxV4L2BufferSize) {
+        ALOGE("%s: v4l2 buffer bytes used: %u maximum %u", __FUNCTION__, buffer.bytesused,
+                mMaxV4L2BufferSize);
+        return ret;
     }
 
     if (buffer.flags & V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC) {
