@@ -54,8 +54,8 @@ include $(BUILD_FRAMEWORK_COMPATIBILITY_MATRIX)
 # TODO(b/72409164): STOPSHIP: update kernel version requirements
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := framework_compatibility_matrix.current.xml
-LOCAL_MODULE_STEM := compatibility_matrix.current.xml
+LOCAL_MODULE := framework_compatibility_matrix.3.xml
+LOCAL_MODULE_STEM := compatibility_matrix.3.xml
 LOCAL_SRC_FILES := $(LOCAL_MODULE_STEM)
 LOCAL_KERNEL_VERSIONS := 4.4.0 4.9.0
 include $(BUILD_FRAMEWORK_COMPATIBILITY_MATRIX)
@@ -116,7 +116,7 @@ LOCAL_REQUIRED_MODULES := \
     framework_compatibility_matrix.legacy.xml \
     framework_compatibility_matrix.1.xml \
     framework_compatibility_matrix.2.xml \
-    framework_compatibility_matrix.current.xml \
+    framework_compatibility_matrix.3.xml \
     framework_compatibility_matrix.device.xml
 LOCAL_GENERATED_SOURCES := $(call module-installed-files,$(LOCAL_REQUIRED_MODULES))
 
