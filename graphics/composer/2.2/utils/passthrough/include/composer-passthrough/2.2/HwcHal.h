@@ -34,9 +34,9 @@ namespace passthrough {
 
 namespace detail {
 
-using common::V1_0::Dataspace;
-using common::V1_0::PixelFormat;
 using common::V1_1::ColorMode;
+using common::V1_1::Dataspace;
+using common::V1_1::PixelFormat;
 using common::V1_1::RenderIntent;
 using V2_1::Display;
 using V2_1::Error;
@@ -132,6 +132,19 @@ class HwcHalImpl : public V2_1::passthrough::detail::HwcHalImpl<Hal> {
         int32_t error = mDispatch.getReadbackBufferFence(mDevice, display, &fenceFd);
         outFenceFd->reset(fenceFd);
         return static_cast<Error>(error);
+    }
+
+    Error createVirtualDisplay_2_2(uint32_t width, uint32_t height, PixelFormat* format,
+                                   Display* outDisplay) override {
+        return createVirtualDisplay(
+            width, height, reinterpret_cast<common::V1_0::PixelFormat*>(format), outDisplay);
+    }
+
+    Error getClientTargetSupport_2_2(Display display, uint32_t width, uint32_t height,
+                                     PixelFormat format, Dataspace dataspace) override {
+        return getClientTargetSupport(display, width, height,
+                                      static_cast<common::V1_0::PixelFormat>(format),
+                                      static_cast<common::V1_0::Dataspace>(dataspace));
     }
 
     Error setPowerMode_2_2(Display display, IComposerClient::PowerMode mode) override {
@@ -271,6 +284,8 @@ class HwcHalImpl : public V2_1::passthrough::detail::HwcHalImpl<Hal> {
     using BaseType2_1::getColorModes;
     using BaseType2_1::mDevice;
     using BaseType2_1::setColorMode;
+    using BaseType2_1::createVirtualDisplay;
+    using BaseType2_1::getClientTargetSupport;
     using BaseType2_1::setPowerMode;
 };
 

@@ -43,6 +43,13 @@ static_assert(sizeof(OldBufferDescriptorInfo) == sizeof(IMapper::BufferDescripto
                       offsetof(IMapper::BufferDescriptorInfo, usage),
               "");
 
+Gralloc::Gralloc() : V2_0::vts::Gralloc() {
+    if (::testing::Test::HasFatalFailure()) {
+        return;
+    }
+    init();
+}
+
 Gralloc::Gralloc(const std::string& allocatorServiceName, const std::string& mapperServiceName)
     : V2_0::vts::Gralloc(allocatorServiceName, mapperServiceName) {
     if (::testing::Test::HasFatalFailure()) {
