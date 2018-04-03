@@ -36,10 +36,11 @@ namespace composer {
 namespace V2_2 {
 namespace vts {
 
-using android::hardware::graphics::common::V1_0::ColorMode;
-using android::hardware::graphics::common::V1_0::Dataspace;
 using android::hardware::graphics::common::V1_0::Hdr;
-using android::hardware::graphics::common::V1_0::PixelFormat;
+using android::hardware::graphics::common::V1_1::ColorMode;
+using android::hardware::graphics::common::V1_1::Dataspace;
+using android::hardware::graphics::common::V1_1::PixelFormat;
+using android::hardware::graphics::common::V1_1::RenderIntent;
 using android::hardware::graphics::composer::V2_2::IComposer;
 using android::hardware::graphics::composer::V2_2::IComposerClient;
 
@@ -66,11 +67,21 @@ class ComposerClient_v2_2
 
     std::vector<IComposerClient::PerFrameMetadataKey> getPerFrameMetadataKeys(Display display);
 
+    Display createVirtualDisplay_2_2(uint32_t width, uint32_t height, PixelFormat formatHint,
+                                     uint32_t outputBufferSlotCount, PixelFormat* outFormat);
+    bool getClientTargetSupport_2_2(Display display, uint32_t width, uint32_t height,
+                                    PixelFormat format, Dataspace dataspace);
     void setPowerMode_2_2(Display display, V2_2::IComposerClient::PowerMode mode);
     void setReadbackBuffer(Display display, const native_handle_t* buffer, int32_t releaseFence);
     void getReadbackBufferAttributes(Display display, PixelFormat* outPixelFormat,
                                      Dataspace* outDataspace);
     void getReadbackBufferFence(Display display, int32_t* outFence);
+
+    std::vector<ColorMode> getColorModes(Display display);
+    std::vector<RenderIntent> getRenderIntents(Display display, ColorMode mode);
+    void setColorMode(Display display, ColorMode mode, RenderIntent intent);
+
+    std::array<float, 16> getDataspaceSaturationMatrix(Dataspace dataspace);
 
    private:
     sp<V2_2::IComposerClient> mClient_v2_2;

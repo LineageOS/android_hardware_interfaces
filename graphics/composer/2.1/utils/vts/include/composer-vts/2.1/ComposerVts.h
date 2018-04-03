@@ -104,9 +104,7 @@ class ComposerClient {
 
     void execute(TestCommandReader* reader, CommandWriterBase* writer);
 
-   private:
-    sp<IComposerClient> mClient;
-
+   protected:
     // Keep track of all virtual displays and layers.  When a test fails with
     // ASSERT_*, the destructor will clean up the resources for the test.
     struct DisplayResource {
@@ -116,6 +114,9 @@ class ComposerClient {
         std::unordered_set<Layer> layers;
     };
     std::unordered_map<Display, DisplayResource> mDisplayResources;
+
+   private:
+    sp<IComposerClient> mClient;
 };
 
 }  // namespace vts
