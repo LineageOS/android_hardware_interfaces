@@ -72,8 +72,9 @@ class CommandWriterBase : public V2_1::CommandWriterBase {
         endCommand();
     }
 
-    void setPerFrameMetadata(const hidl_vec<IComposerClient::PerFrameMetadata>& metadataVec) {
-        beginCommand_2_2(IComposerClient::Command::SET_PER_FRAME_METADATA, metadataVec.size() * 2);
+    void setLayerPerFrameMetadata(const hidl_vec<IComposerClient::PerFrameMetadata>& metadataVec) {
+        beginCommand_2_2(IComposerClient::Command::SET_LAYER_PER_FRAME_METADATA,
+                         metadataVec.size() * 2);
         for (const auto& metadata : metadataVec) {
             writeSigned(static_cast<int32_t>(metadata.key));
             writeFloat(metadata.value);

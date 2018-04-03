@@ -16,9 +16,10 @@
 
 package android.hardware.graphics.common@1.1;
 
-import @1.0::PixelFormat;
 import @1.0::BufferUsage;
+import @1.0::ColorMode;
 import @1.0::Dataspace;
+import @1.0::PixelFormat;
 
 /**
  * Pixel formats for graphics buffers.
@@ -129,15 +130,165 @@ enum BufferUsage : @1.0::BufferUsage {
 @export(name="android_dataspace_v1_1_t", value_prefix="HAL_DATASPACE_",
         export_parent="false")
 enum Dataspace : @1.0::Dataspace {
+    /*
+     * @1.0::Dataspace defines six legacy dataspaces
+     *
+     *   SRGB_LINEAR = 0x200, // deprecated, use V0_SRGB_LINEAR
+     *   SRGB = 0x201, // deprecated, use V0_SRGB
+     *   JFIF = 0x101, // deprecated, use V0_JFIF
+     *   BT601_625 = 0x102, // deprecated, use V0_BT601_625
+     *   BT601_525 = 0x103, // deprecated, use V0_BT601_525
+     *   BT709 = 0x104, // deprecated, use V0_BT709
+     *
+     * The difference between the legacy dataspaces and their modern
+     * counterparts is that, with legacy dataspaces, the pixel values may have
+     * been desaturated by the content creator in an unspecified way.
+     *
+     * When colorimetric mapping is required, the legacy dataspaces must be
+     * treated as their modern counterparts (e.g., SRGB must be treated as
+     * V0_SRGB) and no re-saturation is allowed. When non-colorimetric mapping
+     * is allowed, the pixel values can be interpreted freely by
+     * implementations for the purpose of re-saturation, and the re-saturated
+     * pixel values are in the respective modern dataspaces.
+     *
+     * This is also true when UNKNOWN is treated as a legacy dataspace.
+     */
+
     /**
      * ITU-R Recommendation 2020 (BT.2020)
      *
      * Ultra High-definition television
      *
-     * Use limited range, SMPTE 2084 (PQ) transfer and BT2020 standard
-     * limited range is the preferred / normative definition for BT.2020
+     * Use limited range, BT.709 transfer and BT2020 standard
      */
     BT2020_ITU = STANDARD_BT2020 | TRANSFER_SMPTE_170M | RANGE_LIMITED,
 
+    /**
+     * ITU-R Recommendation 2100 (BT.2100)
+     *
+     * High dynamic range television
+     *
+     * Use limited/full range, PQ/HLG transfer, and BT2020 standard
+     * limited range is the preferred / normative definition for BT.2100
+     */
     BT2020_ITU_PQ = STANDARD_BT2020 | TRANSFER_ST2084 | RANGE_LIMITED,
+    BT2020_ITU_HLG = STANDARD_BT2020 | TRANSFER_HLG | RANGE_LIMITED,
+    BT2020_HLG = STANDARD_BT2020 | TRANSFER_HLG | RANGE_FULL,
+};
+
+@export(name="android_color_mode_v1_1_t", value_prefix="HAL_COLOR_MODE_",
+        export_parent="false")
+enum ColorMode : @1.0::ColorMode {
+    /**
+     * BT2020 corresponds with display settings that implement the ITU-R
+     * Recommendation BT.2020 / Rec. 2020 for UHDTV.
+     *
+     * Primaries:
+     *                  x       y
+     *  green           0.170   0.797
+     *  blue            0.131   0.046
+     *  red             0.708   0.292
+     *  white (D65)     0.3127  0.3290
+     *
+     * Inverse Gamma Correction (IGC): V represents normalized (with [0 to 1]
+     * range) value of R, G, or B.
+     *
+     *  if Vnonlinear < b * 4.5
+     *    Vlinear = Vnonlinear / 4.5
+     *  else
+     *    Vlinear = ((Vnonlinear + (a - 1)) / a) ^ (1/0.45)
+     *
+     * Gamma Correction (GC):
+     *
+     *  if Vlinear < b
+     *    Vnonlinear = 4.5 * Vlinear
+     *  else
+     *    Vnonlinear = a * Vlinear ^ 0.45 - (a - 1)
+     *
+     * where
+     *
+     *   a = 1.09929682680944, b = 0.018053968510807
+     *
+     * For practical purposes, these a/b values can be used instead
+     *
+     *   a = 1.099, b = 0.018 for 10-bit display systems
+     *   a = 1.0993, b = 0.0181 for 12-bit display systems
+     */
+    BT2020 = 10,
+
+    /**
+     * BT2100_PQ and BT2100_HLG correspond with display settings that
+     * implement the ITU-R Recommendation BT.2100 / Rec. 2100 for HDR TV.
+     *
+     * Primaries:
+     *                  x       y
+     *  green           0.170   0.797
+     *  blue            0.131   0.046
+     *  red             0.708   0.292
+     *  white (D65)     0.3127  0.3290
+     *
+     * For BT2100_PQ, the transfer function is Perceptual Quantizer (PQ). For
+     * BT2100_HLG, the transfer function is Hybrid Log-Gamma (HLG).
+     */
+    BT2100_PQ = 11,
+    BT2100_HLG = 12,
+};
+
+/**
+ * RenderIntent defines the mapping from color mode colors to display colors.
+ *
+ * A render intent must not change how it maps colors when the color mode
+ * changes. That is to say that when a render intent maps color C to color C',
+ * the fact that color C can have different pixel values in different color
+ * modes should not affect the mapping.
+ *
+ * RenderIntent overrides the render intents defined for individual color
+ * modes. It is ignored when the color mode is ColorMode::NATIVE, because
+ * ColorMode::NATIVE colors are already display colors.
+ */
+@export(name="android_render_intent_v1_1_t", value_prefix="HAL_RENDER_INTENT_",
+        export_parent="false")
+enum RenderIntent : int32_t {
+    /**
+     * Colors in the display gamut are unchanged. Colors out of the display
+     * gamut are hard-clipped.
+     *
+     * This implies that the display must have been calibrated unless
+     * ColorMode::NATIVE is the only supported color mode.
+     */
+    COLORIMETRIC = 0,
+
+    /**
+     * Enhance colors that are in the display gamut. Colors out of the display
+     * gamut are hard-clipped.
+     *
+     * The enhancement typically picks the biggest standard color space (e.g.
+     * DCI-P3) that is narrower than the display gamut and stretches it to the
+     * display gamut. The stretching is recommended to preserve skin tones.
+     */
+    ENHANCE = 1,
+
+    /**
+     * Tone map high-dynamic-range colors to the display's dynamic range. The
+     * dynamic range of the colors are communicated separately. After tone
+     * mapping, the mapping to the display gamut is as defined in
+     * COLORIMETRIC.
+     */
+    TONE_MAP_COLORIMETRIC = 2,
+
+    /**
+     * Tone map high-dynamic-range colors to the display's dynamic range. The
+     * dynamic range of the colors are communicated separately. After tone
+     * mapping, the mapping to the display gamut is as defined in ENHANCE.
+     *
+     * The tone mapping step and the enhancing step must match
+     * TONE_MAP_COLORIMETRIC and ENHANCE respectively when they are also
+     * supported.
+     */
+    TONE_MAP_ENHANCE = 3,
+
+    /*
+     * Vendors are recommended to use 0x100 - 0x1FF for their own values, and
+     * that must be done with subtypes defined by vendor extensions.
+     */
 };

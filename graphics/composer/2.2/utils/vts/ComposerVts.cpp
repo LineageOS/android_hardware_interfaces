@@ -119,6 +119,41 @@ void ComposerClient_v2_2::getReadbackBufferFence(Display display, int32_t* outFe
     *outFence = 0;
 }
 
+std::vector<ColorMode> ComposerClient_v2_2::getColorModes(Display display) {
+    std::vector<ColorMode> modes;
+    mClient_v2_2->getColorModes_2_2(display, [&](const auto& tmpError, const auto& tmpModes) {
+        ASSERT_EQ(Error::NONE, tmpError) << "failed to get color modes";
+        modes = tmpModes;
+    });
+    return modes;
+}
+
+std::vector<RenderIntent> ComposerClient_v2_2::getRenderIntents(Display display, ColorMode mode) {
+    std::vector<RenderIntent> intents;
+    mClient_v2_2->getRenderIntents(
+        display, mode, [&](const auto& tmpError, const auto& tmpIntents) {
+            ASSERT_EQ(Error::NONE, tmpError) << "failed to get render intents";
+            intents = tmpIntents;
+        });
+    return intents;
+}
+
+void ComposerClient_v2_2::setColorMode(Display display, ColorMode mode, RenderIntent intent) {
+    Error error = mClient_v2_2->setColorMode_2_2(display, mode, intent);
+    ASSERT_TRUE(error == Error::NONE || error == Error::UNSUPPORTED) << "failed to set color mode";
+}
+
+std::array<float, 16> ComposerClient_v2_2::getDataspaceSaturationMatrix(Dataspace dataspace) {
+    std::array<float, 16> matrix;
+    mClient_v2_2->getDataspaceSaturationMatrix(
+        dataspace, [&](const auto& tmpError, const auto& tmpMatrix) {
+            ASSERT_EQ(Error::NONE, tmpError) << "failed to get datasapce saturation matrix";
+            std::copy_n(tmpMatrix.data(), matrix.size(), matrix.begin());
+        });
+
+    return matrix;
+}
+
 }  // namespace vts
 }  // namespace V2_2
 }  // namespace composer
