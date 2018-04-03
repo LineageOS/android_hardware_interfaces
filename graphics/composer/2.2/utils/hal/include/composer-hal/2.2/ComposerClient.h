@@ -99,6 +99,25 @@ class ComposerClientImpl : public V2_1::hal::detail::ComposerClientImpl<Interfac
         return mHal->setReadbackBuffer(display, readbackBuffer, std::move(fenceFd));
     }
 
+    Return<void> createVirtualDisplay_2_2(
+        uint32_t width, uint32_t height, PixelFormat formatHint, uint32_t outputBufferSlotCount,
+        IComposerClient::createVirtualDisplay_2_2_cb hidl_cb) override {
+        Display display = 0;
+        Error err = mHal->createVirtualDisplay_2_2(width, height, &formatHint, &display);
+        if (err == Error::NONE) {
+            mResources->addVirtualDisplay(display, outputBufferSlotCount);
+        }
+
+        hidl_cb(err, display, formatHint);
+        return Void();
+    }
+
+    Return<Error> getClientTargetSupport_2_2(Display display, uint32_t width, uint32_t height,
+                                             PixelFormat format, Dataspace dataspace) override {
+        Error err = mHal->getClientTargetSupport_2_2(display, width, height, format, dataspace);
+        return err;
+    }
+
     Return<Error> setPowerMode_2_2(Display display, IComposerClient::PowerMode mode) override {
         return mHal->setPowerMode_2_2(display, mode);
     }

@@ -47,8 +47,8 @@ namespace V2_2 {
 
 using android::hardware::MessageQueue;
 using android::hardware::graphics::common::V1_0::ColorTransform;
-using android::hardware::graphics::common::V1_0::Dataspace;
 using android::hardware::graphics::common::V1_0::Transform;
+using android::hardware::graphics::common::V1_1::Dataspace;
 using android::hardware::graphics::composer::V2_1::Config;
 using android::hardware::graphics::composer::V2_1::Display;
 using android::hardware::graphics::composer::V2_1::Error;
@@ -63,6 +63,16 @@ using CommandQueueType = MessageQueue<uint32_t, kSynchronizedReadWrite>;
 class CommandWriterBase : public V2_1::CommandWriterBase {
    public:
     CommandWriterBase(uint32_t initialMaxSize) : V2_1::CommandWriterBase(initialMaxSize) {}
+
+    void setClientTarget(uint32_t slot, const native_handle_t* target, int acquireFence,
+                         Dataspace dataspace, const std::vector<IComposerClient::Rect>& damage) {
+        setClientTargetInternal(slot, target, acquireFence, static_cast<int32_t>(dataspace),
+                                damage);
+    }
+
+    void setLayerDataspace(Dataspace dataspace) {
+        setLayerDataspaceInternal(static_cast<int32_t>(dataspace));
+    }
 
     static constexpr uint16_t kSetLayerFloatColorLength = 4;
     void setLayerFloatColor(IComposerClient::FloatColor color) {

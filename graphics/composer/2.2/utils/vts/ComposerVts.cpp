@@ -87,6 +87,33 @@ void ComposerClient_v2_2::execute_v2_2(V2_1::vts::TestCommandReader* reader,
                                   });
 }
 
+Display ComposerClient_v2_2::createVirtualDisplay_2_2(uint32_t width, uint32_t height,
+                                                      PixelFormat formatHint,
+                                                      uint32_t outputBufferSlotCount,
+                                                      PixelFormat* outFormat) {
+    Display display = 0;
+    mClient_v2_2->createVirtualDisplay_2_2(
+        width, height, formatHint, outputBufferSlotCount,
+        [&](const auto& tmpError, const auto& tmpDisplay, const auto& tmpFormat) {
+            ASSERT_EQ(Error::NONE, tmpError) << "failed to create virtual display";
+            display = tmpDisplay;
+            *outFormat = tmpFormat;
+
+            ASSERT_TRUE(mDisplayResources.insert({display, DisplayResource(true)}).second)
+                << "duplicated virtual display id " << display;
+        });
+
+    return display;
+}
+
+bool ComposerClient_v2_2::getClientTargetSupport_2_2(Display display, uint32_t width,
+                                                     uint32_t height, PixelFormat format,
+                                                     Dataspace dataspace) {
+    Error error =
+        mClient_v2_2->getClientTargetSupport_2_2(display, width, height, format, dataspace);
+    return error == Error::NONE;
+}
+
 void ComposerClient_v2_2::setPowerMode_2_2(Display display, V2_2::IComposerClient::PowerMode mode) {
     Error error = mClient_v2_2->setPowerMode_2_2(display, mode);
     ASSERT_TRUE(error == Error::NONE || error == Error::UNSUPPORTED) << "failed to set power mode";

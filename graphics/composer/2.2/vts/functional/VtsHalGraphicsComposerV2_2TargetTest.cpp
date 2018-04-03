@@ -22,7 +22,7 @@
 #include <composer-vts/2.1/GraphicsComposerCallback.h>
 #include <composer-vts/2.1/TestCommandReader.h>
 #include <composer-vts/2.2/ComposerVts.h>
-#include <mapper-vts/2.0/MapperVts.h>
+#include <mapper-vts/2.1/MapperVts.h>
 
 namespace android {
 namespace hardware {
@@ -34,14 +34,14 @@ namespace {
 
 using android::hardware::graphics::common::V1_0::BufferUsage;
 using android::hardware::graphics::common::V1_0::ColorTransform;
-using android::hardware::graphics::common::V1_0::Dataspace;
-using android::hardware::graphics::common::V1_0::PixelFormat;
 using android::hardware::graphics::common::V1_0::Transform;
 using android::hardware::graphics::common::V1_1::ColorMode;
+using android::hardware::graphics::common::V1_1::Dataspace;
+using android::hardware::graphics::common::V1_1::PixelFormat;
 using android::hardware::graphics::common::V1_1::RenderIntent;
 using android::hardware::graphics::composer::V2_2::IComposerClient;
-using android::hardware::graphics::mapper::V2_0::IMapper;
-using android::hardware::graphics::mapper::V2_0::vts::Gralloc;
+using android::hardware::graphics::mapper::V2_1::IMapper;
+using android::hardware::graphics::mapper::V2_1::vts::Gralloc;
 using GrallocError = android::hardware::graphics::mapper::V2_0::Error;
 
 // Test environment for graphics.composer
@@ -193,6 +193,55 @@ TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_PER_FRAME_METADATA) {
 TEST_F(GraphicsComposerHidlTest, GetPerFrameMetadataKeys) {
     mComposerClient->getPerFrameMetadataKeys(mPrimaryDisplay);
 }
+
+/**
+ * Test IComposerClient::createVirtualDisplay_2_2 and
+ * IComposerClient::destroyVirtualDisplay.
+ *
+ * Test that virtual displays can be created and has the correct display type.
+ */
+TEST_F(GraphicsComposerHidlTest, CreateVirtualDisplay_2_2) {
+    if (mComposerClient->getMaxVirtualDisplayCount() == 0) {
+        GTEST_SUCCEED() << "no virtual display support";
+        return;
+    }
+
+    Display display;
+    PixelFormat format;
+    ASSERT_NO_FATAL_FAILURE(
+        display = mComposerClient->createVirtualDisplay_2_2(
+            64, 64, PixelFormat::IMPLEMENTATION_DEFINED, kBufferSlotCount, &format));
+
+    // test display type
+    IComposerClient::DisplayType type = mComposerClient->getDisplayType(display);
+    EXPECT_EQ(IComposerClient::DisplayType::VIRTUAL, type);
+
+    mComposerClient->destroyVirtualDisplay(display);
+}
+
+/**
+ * Test IComposerClient::getClientTargetSupport_2_2.
+ *
+ * Test that IComposerClient::getClientTargetSupport returns true for the
+ * required client targets.
+ */
+TEST_F(GraphicsComposerHidlTest, GetClientTargetSupport_2_2) {
+    std::vector<Config> configs = mComposerClient->getDisplayConfigs(mPrimaryDisplay);
+    for (auto config : configs) {
+        int32_t width = mComposerClient->getDisplayAttribute(mPrimaryDisplay, config,
+                                                             IComposerClient::Attribute::WIDTH);
+        int32_t height = mComposerClient->getDisplayAttribute(mPrimaryDisplay, config,
+                                                              IComposerClient::Attribute::HEIGHT);
+        ASSERT_LT(0, width);
+        ASSERT_LT(0, height);
+
+        mComposerClient->setActiveConfig(mPrimaryDisplay, config);
+
+        ASSERT_TRUE(mComposerClient->getClientTargetSupport_2_2(
+            mPrimaryDisplay, width, height, PixelFormat::RGBA_8888, Dataspace::UNKNOWN));
+    }
+}
+
 /**
  * Test IComposerClient::setPowerMode_2_2.
  */
