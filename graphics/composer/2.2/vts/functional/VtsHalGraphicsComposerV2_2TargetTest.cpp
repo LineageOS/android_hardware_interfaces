@@ -22,7 +22,7 @@
 #include <composer-vts/2.1/GraphicsComposerCallback.h>
 #include <composer-vts/2.1/TestCommandReader.h>
 #include <composer-vts/2.2/ComposerVts.h>
-#include <mapper-vts/2.0/MapperVts.h>
+#include <mapper-vts/2.1/MapperVts.h>
 
 namespace android {
 namespace hardware {
@@ -33,14 +33,15 @@ namespace vts {
 namespace {
 
 using android::hardware::graphics::common::V1_0::BufferUsage;
-using android::hardware::graphics::common::V1_0::ColorMode;
 using android::hardware::graphics::common::V1_0::ColorTransform;
-using android::hardware::graphics::common::V1_0::Dataspace;
-using android::hardware::graphics::common::V1_0::PixelFormat;
 using android::hardware::graphics::common::V1_0::Transform;
+using android::hardware::graphics::common::V1_1::ColorMode;
+using android::hardware::graphics::common::V1_1::Dataspace;
+using android::hardware::graphics::common::V1_1::PixelFormat;
+using android::hardware::graphics::common::V1_1::RenderIntent;
 using android::hardware::graphics::composer::V2_2::IComposerClient;
-using android::hardware::graphics::mapper::V2_0::IMapper;
-using android::hardware::graphics::mapper::V2_0::vts::Gralloc;
+using android::hardware::graphics::mapper::V2_1::IMapper;
+using android::hardware::graphics::mapper::V2_1::vts::Gralloc;
 using GrallocError = android::hardware::graphics::mapper::V2_0::Error;
 
 // Test environment for graphics.composer
@@ -146,9 +147,9 @@ class GraphicsComposerHidlCommandTest : public GraphicsComposerHidlTest {
 };
 
 /**
- * Test IComposerClient::Command::SET_PER_FRAME_METADATA.
+ * Test IComposerClient::Command::SET_LAYER_PER_FRAME_METADATA.
  */
-TEST_F(GraphicsComposerHidlCommandTest, SET_PER_FRAME_METADATA) {
+TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_PER_FRAME_METADATA) {
     Layer layer;
     ASSERT_NO_FATAL_FAILURE(layer =
                                 mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount));
@@ -182,7 +183,7 @@ TEST_F(GraphicsComposerHidlCommandTest, SET_PER_FRAME_METADATA) {
     hidlMetadata.push_back({IComposerClient::PerFrameMetadataKey::MAX_CONTENT_LIGHT_LEVEL, 78.0});
     hidlMetadata.push_back(
         {IComposerClient::PerFrameMetadataKey::MAX_FRAME_AVERAGE_LIGHT_LEVEL, 62.0});
-    mWriter->setPerFrameMetadata(hidlMetadata);
+    mWriter->setLayerPerFrameMetadata(hidlMetadata);
     execute();
 }
 
@@ -192,6 +193,55 @@ TEST_F(GraphicsComposerHidlCommandTest, SET_PER_FRAME_METADATA) {
 TEST_F(GraphicsComposerHidlTest, GetPerFrameMetadataKeys) {
     mComposerClient->getPerFrameMetadataKeys(mPrimaryDisplay);
 }
+
+/**
+ * Test IComposerClient::createVirtualDisplay_2_2 and
+ * IComposerClient::destroyVirtualDisplay.
+ *
+ * Test that virtual displays can be created and has the correct display type.
+ */
+TEST_F(GraphicsComposerHidlTest, CreateVirtualDisplay_2_2) {
+    if (mComposerClient->getMaxVirtualDisplayCount() == 0) {
+        GTEST_SUCCEED() << "no virtual display support";
+        return;
+    }
+
+    Display display;
+    PixelFormat format;
+    ASSERT_NO_FATAL_FAILURE(
+        display = mComposerClient->createVirtualDisplay_2_2(
+            64, 64, PixelFormat::IMPLEMENTATION_DEFINED, kBufferSlotCount, &format));
+
+    // test display type
+    IComposerClient::DisplayType type = mComposerClient->getDisplayType(display);
+    EXPECT_EQ(IComposerClient::DisplayType::VIRTUAL, type);
+
+    mComposerClient->destroyVirtualDisplay(display);
+}
+
+/**
+ * Test IComposerClient::getClientTargetSupport_2_2.
+ *
+ * Test that IComposerClient::getClientTargetSupport returns true for the
+ * required client targets.
+ */
+TEST_F(GraphicsComposerHidlTest, GetClientTargetSupport_2_2) {
+    std::vector<Config> configs = mComposerClient->getDisplayConfigs(mPrimaryDisplay);
+    for (auto config : configs) {
+        int32_t width = mComposerClient->getDisplayAttribute(mPrimaryDisplay, config,
+                                                             IComposerClient::Attribute::WIDTH);
+        int32_t height = mComposerClient->getDisplayAttribute(mPrimaryDisplay, config,
+                                                              IComposerClient::Attribute::HEIGHT);
+        ASSERT_LT(0, width);
+        ASSERT_LT(0, height);
+
+        mComposerClient->setActiveConfig(mPrimaryDisplay, config);
+
+        ASSERT_TRUE(mComposerClient->getClientTargetSupport_2_2(
+            mPrimaryDisplay, width, height, PixelFormat::RGBA_8888, Dataspace::UNKNOWN));
+    }
+}
+
 /**
  * Test IComposerClient::setPowerMode_2_2.
  */
@@ -233,6 +283,56 @@ TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_FLOAT_COLOR) {
     mWriter->selectLayer(layer);
     mWriter->setLayerFloatColor(IComposerClient::FloatColor{1.0, 1.0, 1.0, 1.0});
     mWriter->setLayerFloatColor(IComposerClient::FloatColor{0.0, 0.0, 0.0, 0.0});
+}
+
+/**
+ * Test IComposerClient::getDataspaceSaturationMatrix.
+ */
+TEST_F(GraphicsComposerHidlTest, getDataspaceSaturationMatrix) {
+    auto matrix = mComposerClient->getDataspaceSaturationMatrix(Dataspace::SRGB_LINEAR);
+    // the last row is known
+    ASSERT_EQ(0.0f, matrix[12]);
+    ASSERT_EQ(0.0f, matrix[13]);
+    ASSERT_EQ(0.0f, matrix[14]);
+    ASSERT_EQ(1.0f, matrix[15]);
+}
+
+/**
+ * Test IComposerClient::getColorMode_2_2.
+ */
+TEST_F(GraphicsComposerHidlTest, GetColorMode_2_2) {
+    std::vector<ColorMode> modes = mComposerClient->getColorModes(mPrimaryDisplay);
+
+    auto nativeMode = std::find(modes.cbegin(), modes.cend(), ColorMode::NATIVE);
+    EXPECT_NE(modes.cend(), nativeMode);
+}
+
+/**
+ * Test IComposerClient::getRenderIntent.
+ */
+TEST_F(GraphicsComposerHidlTest, GetRenderIntent) {
+    std::vector<ColorMode> modes = mComposerClient->getColorModes(mPrimaryDisplay);
+    for (auto mode : modes) {
+        std::vector<RenderIntent> intents =
+            mComposerClient->getRenderIntents(mPrimaryDisplay, mode);
+        auto colorimetricIntent =
+            std::find(intents.cbegin(), intents.cend(), RenderIntent::COLORIMETRIC);
+        EXPECT_NE(intents.cend(), colorimetricIntent);
+    }
+}
+
+/**
+ * Test IComposerClient::setColorMode_2_2.
+ */
+TEST_F(GraphicsComposerHidlTest, SetColorMode_2_2) {
+    std::vector<ColorMode> modes = mComposerClient->getColorModes(mPrimaryDisplay);
+    for (auto mode : modes) {
+        std::vector<RenderIntent> intents =
+            mComposerClient->getRenderIntents(mPrimaryDisplay, mode);
+        for (auto intent : intents) {
+            mComposerClient->setColorMode(mPrimaryDisplay, mode, intent);
+        }
+    }
 }
 
 }  // namespace

@@ -27,6 +27,7 @@
 #include <hidl/Status.h>
 #include <deque>
 #include <map>
+#include <unordered_set>
 #include <unordered_map>
 #include "CameraMetadata.h"
 #include "HandleImporter.h"
@@ -110,6 +111,10 @@ protected:
 
     // Whether this camera device session is created with version 3.4 callback.
     bool mHasCallback_3_4;
+
+    // Physical camera ids for the logical multi-camera. Empty if this
+    // is not a logical multi-camera.
+    std::unordered_set<std::string> mPhysicalCameraIds;
 private:
 
     struct TrampolineSessionInterface_3_4 : public ICameraDeviceSession {

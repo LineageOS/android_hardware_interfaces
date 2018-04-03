@@ -16,11 +16,14 @@
 
 package android.hardware.graphics.composer@2.2;
 
-import android.hardware.graphics.common@1.0::PixelFormat;
-import android.hardware.graphics.common@1.0::Dataspace;
+import android.hardware.graphics.common@1.1::ColorMode;
+import android.hardware.graphics.common@1.1::Dataspace;
+import android.hardware.graphics.common@1.1::PixelFormat;
+import android.hardware.graphics.common@1.1::RenderIntent;
 import @2.1::IComposerClient;
 import @2.1::Display;
 import @2.1::Error;
+import @2.1::IComposerClient;
 
 interface IComposerClient extends @2.1::IComposerClient {
 
@@ -90,16 +93,20 @@ interface IComposerClient extends @2.1::IComposerClient {
 
     enum Command : @2.1::IComposerClient.Command {
         /**
-         * setPerFrameMetadata(Display display, vec<PerFrameMetadata> data)
+         * SET_LAYER_PER_FRAME_METADATA has this pseudo prototype
+         *
+         *   setLayerPerFrameMetadata(Display display, Layer layer,
+         *                            vec<PerFrameMetadata> data);
+         *
          * Sets the PerFrameMetadata for the display. This metadata must be used
          * by the implementation to better tone map content to that display.
          *
          * This is a method that may be called every frame. Thus it's
          * implemented using buffered transport.
-         * SET_PER_FRAME_METADATA is the command used by the buffered transport
+         * SET_LAYER_PER_FRAME_METADATA is the command used by the buffered transport
          * mechanism.
          */
-        SET_PER_FRAME_METADATA = 0x207 << @2.1::IComposerClient.Command:OPCODE_SHIFT,
+        SET_LAYER_PER_FRAME_METADATA = 0x303 << @2.1::IComposerClient.Command:OPCODE_SHIFT,
 
         /**
          * SET_LAYER_COLOR has this pseudo prototype
@@ -242,6 +249,65 @@ interface IComposerClient extends @2.1::IComposerClient {
     setReadbackBuffer(Display display, handle buffer, handle releaseFence) generates (Error error);
 
     /**
+     * createVirtualDisplay_2_2
+     * Creates a new virtual display with the given width and height. The
+     * format passed into this function is the default format requested by the
+     * consumer of the virtual display output buffers.
+     *
+     * The display must be assumed to be on from the time the first frame is
+     * presented until the display is destroyed.
+     *
+     * @param width is the width in pixels.
+     * @param height is the height in pixels.
+     * @param formatHint is the default output buffer format selected by
+     *        the consumer.
+     * @param outputBufferSlotCount is the number of output buffer slots to be
+     *        reserved.
+     * @return error is NONE upon success. Otherwise,
+     *         UNSUPPORTED when the width or height is too large for the
+     *                     device to be able to create a virtual display.
+     *         NO_RESOURCES when the device is unable to create a new virtual
+     *                      display at this time.
+     * @return display is the newly-created virtual display.
+     * @return format is the format of the buffer the device will produce.
+     */
+    @callflow(next="*")
+    createVirtualDisplay_2_2(uint32_t width,
+                             uint32_t height,
+                             PixelFormat formatHint,
+                             uint32_t outputBufferSlotCount)
+                  generates (Error error,
+                             Display display,
+                             PixelFormat format);
+
+    /**
+     * getClientTargetSupport_2_2
+     * Returns whether a client target with the given properties can be
+     * handled by the device.
+     *
+     * This function must return true for a client target with width and
+     * height equal to the active display configuration dimensions,
+     * PixelFormat::RGBA_8888, and Dataspace::UNKNOWN. It is not required to
+     * return true for any other configuration.
+     *
+     * @param display is the display to query.
+     * @param width is the client target width in pixels.
+     * @param height is the client target height in pixels.
+     * @param format is the client target format.
+     * @param dataspace is the client target dataspace, as described in
+     *        setLayerDataspace.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     *         UNSUPPORTED when the given configuration is not supported.
+     */
+    @callflow(next="*")
+    getClientTargetSupport_2_2(Display display,
+                               uint32_t width,
+                               uint32_t height,
+                               PixelFormat format,
+                               Dataspace dataspace)
+                    generates (Error error);
+    /**
      * setPowerMode_2_2
      * Sets the power mode of the given display. The transition must be
      * complete when this function returns. It is valid to call this function
@@ -260,4 +326,118 @@ interface IComposerClient extends @2.1::IComposerClient {
      */
     setPowerMode_2_2(Display display, PowerMode mode) generates (Error error);
 
+    /**
+     * Returns the color modes supported on this display.
+     *
+     * All devices must support at least ColorMode::NATIVE.
+     *
+     * @param display is the display to query.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     * @return modes is an array of color modes.
+     */
+    getColorModes_2_2(Display display)
+           generates (Error error,
+                      vec<ColorMode> modes);
+
+    /**
+     * Returns the render intents supported by the specified display and color
+     * mode.
+     *
+     * RenderIntent::COLORIMETRIC is always supported.
+     *
+     * @param display is the display to query.
+     * @param mode is the color mode to query.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     *         BAD_PARAMETER when an invalid color mode was passed in.
+     * @return intents is an array of render intents.
+     */
+    getRenderIntents(Display display, ColorMode mode)
+          generates (Error error,
+                     vec<RenderIntent> intents);
+
+    /**
+     * Sets the color mode and render intent of the given display.
+     *
+     * The color mode and render intent change must take effect on next
+     * presentDisplay.
+     *
+     * All devices must support at least ColorMode::NATIVE and
+     * RenderIntent::COLORIMETRIC, and displays are assumed to be in this mode
+     * upon hotplug.
+     *
+     * @param display is the display to which the color mode is set.
+     * @param mode is the color mode to set to.
+     * @param intent is the render intent to set to.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     *         BAD_PARAMETER when mode or intent is invalid
+     *         UNSUPPORTED when mode or intent is not supported on this
+     *                     display.
+     */
+    setColorMode_2_2(Display display, ColorMode mode, RenderIntent intent)
+          generates (Error error);
+
+    /*
+     * By default, layer dataspaces are mapped to the current color mode
+     * colorimetrically with a few exceptions.
+     *
+     * When the layer dataspace is a legacy sRGB dataspace
+     * (Dataspace::SRGB_LINEAR, Dataspace::SRGB, or Dataspace::UNKNOWN when
+     * treated as such) and the display render intent is
+     * RenderIntent::ENHANCE, the pixel values can go through an
+     * implementation-defined saturation transform before being mapped to the
+     * current color mode colorimetrically.
+     *
+     * Colors that are out of the gamut of the current color mode are
+     * hard-clipped.
+     */
+
+    /**
+     * Returns the saturation matrix of the specified legacy dataspace.
+     *
+     * The saturation matrix can be used to approximate the legacy dataspace
+     * saturation transform. It is to be applied on linear pixel values like
+     * this:
+     *
+     *   (in GLSL)
+     *   linearSrgb = clamp(saturationMatrix * linearSrgb, 0.0, 1.0);
+     *
+     * @param dataspace must be Dataspace::SRGB_LINEAR.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_PARAMETER when an invalid dataspace was passed in.
+     * @return matrix is the 4x4 column-major matrix used to approximate the
+     *         legacy dataspace saturation operation. The last row must be
+     *         [0.0, 0.0, 0.0, 1.0].
+     */
+    getDataspaceSaturationMatrix(Dataspace dataspace)
+                      generates (Error error,
+                                 float[4][4] matrix);
+
+    /**
+     * Executes commands from the input command message queue. Return values
+     * generated by the input commands are written to the output command
+     * message queue in the form of value commands.
+     *
+     * @param inLength is the length of input commands.
+     * @param inHandles is an array of handles referenced by the input
+     *        commands.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_PARAMETER when inLength is not equal to the length of
+     *                       commands in the input command message queue.
+     *         NO_RESOURCES when the output command message queue was not
+     *                      properly drained.
+     * @param outQueueChanged indicates whether the output command message
+     *        queue has changed.
+     * @param outLength is the length of output commands.
+     * @param outHandles is an array of handles referenced by the output
+     *        commands.
+     */
+    executeCommands_2_2(uint32_t inLength,
+                        vec<handle> inHandles)
+             generates (Error error,
+                        bool outQueueChanged,
+                        uint32_t outLength,
+                        vec<handle> outHandles);
 };

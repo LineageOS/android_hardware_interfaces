@@ -87,6 +87,33 @@ void ComposerClient_v2_2::execute_v2_2(V2_1::vts::TestCommandReader* reader,
                                   });
 }
 
+Display ComposerClient_v2_2::createVirtualDisplay_2_2(uint32_t width, uint32_t height,
+                                                      PixelFormat formatHint,
+                                                      uint32_t outputBufferSlotCount,
+                                                      PixelFormat* outFormat) {
+    Display display = 0;
+    mClient_v2_2->createVirtualDisplay_2_2(
+        width, height, formatHint, outputBufferSlotCount,
+        [&](const auto& tmpError, const auto& tmpDisplay, const auto& tmpFormat) {
+            ASSERT_EQ(Error::NONE, tmpError) << "failed to create virtual display";
+            display = tmpDisplay;
+            *outFormat = tmpFormat;
+
+            ASSERT_TRUE(mDisplayResources.insert({display, DisplayResource(true)}).second)
+                << "duplicated virtual display id " << display;
+        });
+
+    return display;
+}
+
+bool ComposerClient_v2_2::getClientTargetSupport_2_2(Display display, uint32_t width,
+                                                     uint32_t height, PixelFormat format,
+                                                     Dataspace dataspace) {
+    Error error =
+        mClient_v2_2->getClientTargetSupport_2_2(display, width, height, format, dataspace);
+    return error == Error::NONE;
+}
+
 void ComposerClient_v2_2::setPowerMode_2_2(Display display, V2_2::IComposerClient::PowerMode mode) {
     Error error = mClient_v2_2->setPowerMode_2_2(display, mode);
     ASSERT_TRUE(error == Error::NONE || error == Error::UNSUPPORTED) << "failed to set power mode";
@@ -117,6 +144,41 @@ void ComposerClient_v2_2::getReadbackBufferFence(Display display, int32_t* outFe
         handle = tmpHandle;
     });
     *outFence = 0;
+}
+
+std::vector<ColorMode> ComposerClient_v2_2::getColorModes(Display display) {
+    std::vector<ColorMode> modes;
+    mClient_v2_2->getColorModes_2_2(display, [&](const auto& tmpError, const auto& tmpModes) {
+        ASSERT_EQ(Error::NONE, tmpError) << "failed to get color modes";
+        modes = tmpModes;
+    });
+    return modes;
+}
+
+std::vector<RenderIntent> ComposerClient_v2_2::getRenderIntents(Display display, ColorMode mode) {
+    std::vector<RenderIntent> intents;
+    mClient_v2_2->getRenderIntents(
+        display, mode, [&](const auto& tmpError, const auto& tmpIntents) {
+            ASSERT_EQ(Error::NONE, tmpError) << "failed to get render intents";
+            intents = tmpIntents;
+        });
+    return intents;
+}
+
+void ComposerClient_v2_2::setColorMode(Display display, ColorMode mode, RenderIntent intent) {
+    Error error = mClient_v2_2->setColorMode_2_2(display, mode, intent);
+    ASSERT_TRUE(error == Error::NONE || error == Error::UNSUPPORTED) << "failed to set color mode";
+}
+
+std::array<float, 16> ComposerClient_v2_2::getDataspaceSaturationMatrix(Dataspace dataspace) {
+    std::array<float, 16> matrix;
+    mClient_v2_2->getDataspaceSaturationMatrix(
+        dataspace, [&](const auto& tmpError, const auto& tmpMatrix) {
+            ASSERT_EQ(Error::NONE, tmpError) << "failed to get datasapce saturation matrix";
+            std::copy_n(tmpMatrix.data(), matrix.size(), matrix.begin());
+        });
+
+    return matrix;
 }
 
 }  // namespace vts

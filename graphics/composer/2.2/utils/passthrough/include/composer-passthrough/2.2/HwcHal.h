@@ -34,8 +34,10 @@ namespace passthrough {
 
 namespace detail {
 
-using common::V1_0::Dataspace;
-using common::V1_0::PixelFormat;
+using common::V1_1::ColorMode;
+using common::V1_1::Dataspace;
+using common::V1_1::PixelFormat;
+using common::V1_1::RenderIntent;
 using V2_1::Display;
 using V2_1::Error;
 using V2_1::Layer;
@@ -72,9 +74,10 @@ class HwcHalImpl : public V2_1::passthrough::detail::HwcHalImpl<Hal> {
         return Error::NONE;
     }
 
-    Error setPerFrameMetadata(
-        Display display, const std::vector<IComposerClient::PerFrameMetadata>& metadata) override {
-        if (!mDispatch.setPerFrameMetadata) {
+    Error setLayerPerFrameMetadata(
+        Display display, Layer layer,
+        const std::vector<IComposerClient::PerFrameMetadata>& metadata) override {
+        if (!mDispatch.setLayerPerFrameMetadata) {
             return Error::UNSUPPORTED;
         }
 
@@ -87,8 +90,8 @@ class HwcHalImpl : public V2_1::passthrough::detail::HwcHalImpl<Hal> {
             values.push_back(m.value);
         }
 
-        int32_t error = mDispatch.setPerFrameMetadata(mDevice, display, metadata.size(),
-                                                      keys.data(), values.data());
+        int32_t error = mDispatch.setLayerPerFrameMetadata(mDevice, display, layer, metadata.size(),
+                                                           keys.data(), values.data());
         return static_cast<Error>(error);
     }
 
@@ -131,6 +134,19 @@ class HwcHalImpl : public V2_1::passthrough::detail::HwcHalImpl<Hal> {
         return static_cast<Error>(error);
     }
 
+    Error createVirtualDisplay_2_2(uint32_t width, uint32_t height, PixelFormat* format,
+                                   Display* outDisplay) override {
+        return createVirtualDisplay(
+            width, height, reinterpret_cast<common::V1_0::PixelFormat*>(format), outDisplay);
+    }
+
+    Error getClientTargetSupport_2_2(Display display, uint32_t width, uint32_t height,
+                                     PixelFormat format, Dataspace dataspace) override {
+        return getClientTargetSupport(display, width, height,
+                                      static_cast<common::V1_0::PixelFormat>(format),
+                                      static_cast<common::V1_0::Dataspace>(dataspace));
+    }
+
     Error setPowerMode_2_2(Display display, IComposerClient::PowerMode mode) override {
         if (mode == IComposerClient::PowerMode::ON_SUSPEND) {
             return Error::UNSUPPORTED;
@@ -147,6 +163,69 @@ class HwcHalImpl : public V2_1::passthrough::detail::HwcHalImpl<Hal> {
         int32_t error = mDispatch.setLayerFloatColor(
             mDevice, display, layer, hwc_float_color{color.r, color.g, color.b, color.a});
         return static_cast<Error>(error);
+    }
+
+    Error getColorModes_2_2(Display display, hidl_vec<ColorMode>* outModes) override {
+        return getColorModes(display,
+                             reinterpret_cast<hidl_vec<common::V1_0::ColorMode>*>(outModes));
+    }
+
+    Error getRenderIntents(Display display, ColorMode mode,
+                           std::vector<RenderIntent>* outIntents) override {
+        if (!mDispatch.getRenderIntents) {
+            *outIntents = std::vector<RenderIntent>({RenderIntent::COLORIMETRIC});
+            return Error::NONE;
+        }
+
+        uint32_t count = 0;
+        int32_t error =
+            mDispatch.getRenderIntents(mDevice, display, int32_t(mode), &count, nullptr);
+        if (error != HWC2_ERROR_NONE) {
+            return static_cast<Error>(error);
+        }
+
+        std::vector<RenderIntent> intents(count);
+        error = mDispatch.getRenderIntents(
+            mDevice, display, int32_t(mode), &count,
+            reinterpret_cast<std::underlying_type<RenderIntent>::type*>(intents.data()));
+        if (error != HWC2_ERROR_NONE) {
+            return static_cast<Error>(error);
+        }
+        intents.resize(count);
+
+        *outIntents = std::move(intents);
+        return Error::NONE;
+    }
+
+    Error setColorMode_2_2(Display display, ColorMode mode, RenderIntent intent) override {
+        if (!mDispatch.setColorModeWithRenderIntent) {
+            if (intent != RenderIntent::COLORIMETRIC) {
+                return Error::UNSUPPORTED;
+            }
+            return setColorMode(display, static_cast<common::V1_0::ColorMode>(mode));
+        }
+
+        int32_t err = mDispatch.setColorModeWithRenderIntent(
+            mDevice, display, static_cast<int32_t>(mode), static_cast<int32_t>(intent));
+        return static_cast<Error>(err);
+    }
+
+    std::array<float, 16> getDataspaceSaturationMatrix(Dataspace dataspace) override {
+        std::array<float, 16> matrix;
+
+        int32_t error = HWC2_ERROR_UNSUPPORTED;
+        if (mDispatch.getDataspaceSaturationMatrix) {
+            error = mDispatch.getDataspaceSaturationMatrix(mDevice, static_cast<int32_t>(dataspace),
+                                                           matrix.data());
+        }
+        if (error != HWC2_ERROR_NONE) {
+            return std::array<float, 16>{
+                1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+                0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+            };
+        }
+
+        return matrix;
     }
 
    protected:
@@ -168,7 +247,8 @@ class HwcHalImpl : public V2_1::passthrough::detail::HwcHalImpl<Hal> {
 
         initOptionalDispatch(HWC2_FUNCTION_SET_LAYER_FLOAT_COLOR, &mDispatch.setLayerFloatColor);
 
-        initOptionalDispatch(HWC2_FUNCTION_SET_PER_FRAME_METADATA, &mDispatch.setPerFrameMetadata);
+        initOptionalDispatch(HWC2_FUNCTION_SET_LAYER_PER_FRAME_METADATA,
+                             &mDispatch.setLayerPerFrameMetadata);
         initOptionalDispatch(HWC2_FUNCTION_GET_PER_FRAME_METADATA_KEYS,
                              &mDispatch.getPerFrameMetadataKeys);
 
@@ -178,21 +258,34 @@ class HwcHalImpl : public V2_1::passthrough::detail::HwcHalImpl<Hal> {
         initOptionalDispatch(HWC2_FUNCTION_GET_READBACK_BUFFER_FENCE,
                              &mDispatch.getReadbackBufferFence);
 
+        initOptionalDispatch(HWC2_FUNCTION_GET_RENDER_INTENTS, &mDispatch.getRenderIntents);
+        initOptionalDispatch(HWC2_FUNCTION_SET_COLOR_MODE_WITH_RENDER_INTENT,
+                             &mDispatch.setColorModeWithRenderIntent);
+        initOptionalDispatch(HWC2_FUNCTION_GET_DATASPACE_SATURATION_MATRIX,
+                             &mDispatch.getDataspaceSaturationMatrix);
+
         return true;
     }
 
     struct {
         HWC2_PFN_SET_LAYER_FLOAT_COLOR setLayerFloatColor;
-        HWC2_PFN_SET_PER_FRAME_METADATA setPerFrameMetadata;
+        HWC2_PFN_SET_LAYER_PER_FRAME_METADATA setLayerPerFrameMetadata;
         HWC2_PFN_GET_PER_FRAME_METADATA_KEYS getPerFrameMetadataKeys;
         HWC2_PFN_SET_READBACK_BUFFER setReadbackBuffer;
         HWC2_PFN_GET_READBACK_BUFFER_ATTRIBUTES getReadbackBufferAttributes;
         HWC2_PFN_GET_READBACK_BUFFER_FENCE getReadbackBufferFence;
+        HWC2_PFN_GET_RENDER_INTENTS getRenderIntents;
+        HWC2_PFN_SET_COLOR_MODE_WITH_RENDER_INTENT setColorModeWithRenderIntent;
+        HWC2_PFN_GET_DATASPACE_SATURATION_MATRIX getDataspaceSaturationMatrix;
     } mDispatch = {};
 
    private:
     using BaseType2_1 = V2_1::passthrough::detail::HwcHalImpl<Hal>;
+    using BaseType2_1::getColorModes;
     using BaseType2_1::mDevice;
+    using BaseType2_1::setColorMode;
+    using BaseType2_1::createVirtualDisplay;
+    using BaseType2_1::getClientTargetSupport;
     using BaseType2_1::setPowerMode;
 };
 
