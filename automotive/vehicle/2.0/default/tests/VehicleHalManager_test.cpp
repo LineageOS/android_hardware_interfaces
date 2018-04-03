@@ -241,10 +241,7 @@ TEST_F(VehicleHalManagerTest, halErrorEvent) {
     sp<MockedVehicleCallback> cb = new MockedVehicleCallback();
 
     hidl_vec<SubscribeOptions> options = {
-        SubscribeOptions {
-            .propId = PROP,
-            .flags = SubscribeFlags::DEFAULT
-        },
+        SubscribeOptions{.propId = PROP, .flags = SubscribeFlags::EVENTS_FROM_CAR},
     };
 
     StatusCode res = manager->subscribe(cb, options);
@@ -259,11 +256,7 @@ TEST_F(VehicleHalManagerTest, subscribe) {
     sp<MockedVehicleCallback> cb = new MockedVehicleCallback();
 
     hidl_vec<SubscribeOptions> options = {
-        SubscribeOptions {
-            .propId = PROP,
-            .flags = SubscribeFlags::DEFAULT
-        }
-    };
+        SubscribeOptions{.propId = PROP, .flags = SubscribeFlags::EVENTS_FROM_CAR}};
 
     StatusCode res = manager->subscribe(cb, options);
     ASSERT_EQ(StatusCode::OK, res);
@@ -301,18 +294,14 @@ TEST_F(VehicleHalManagerTest, subscribe_WriteOnly) {
     sp<MockedVehicleCallback> cb = new MockedVehicleCallback();
 
     hidl_vec<SubscribeOptions> options = {
-        SubscribeOptions {
-            .propId = PROP,
-            .flags = SubscribeFlags::HAL_EVENT
-        },
+        SubscribeOptions{.propId = PROP, .flags = SubscribeFlags::EVENTS_FROM_CAR},
     };
 
     StatusCode res = manager->subscribe(cb, options);
     // Unable to subscribe on Hal Events for write-only properties.
     ASSERT_EQ(StatusCode::INVALID_ARG, res);
 
-
-    options[0].flags = SubscribeFlags::SET_CALL;
+    options[0].flags = SubscribeFlags::EVENTS_FROM_ANDROID;
 
     res = manager->subscribe(cb, options);
     // OK to subscribe on SET method call for write-only properties.
@@ -396,8 +385,8 @@ TEST_F(VehicleHalManagerTest, set_DifferentAreas) {
     const auto PROP = toInt(VehicleProperty::HVAC_FAN_SPEED);
     const auto VAL1 = 1;
     const auto VAL2 = 2;
-    const auto AREA1 = toInt(VehicleAreaZone::ROW_1_LEFT);
-    const auto AREA2 = toInt(VehicleAreaZone::ROW_1_RIGHT);
+    const auto AREA1 = toInt(VehicleAreaSeat::ROW_1_LEFT);
+    const auto AREA2 = toInt(VehicleAreaSeat::ROW_1_RIGHT);
 
     {
         auto expectedValue1 = hal->getValuePool()->obtainInt32(VAL1);
