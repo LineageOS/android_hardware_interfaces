@@ -46,15 +46,17 @@ interface IGnss extends @1.0::IGnss {
      * @param minIntervalMs Represents the time between fixes in milliseconds.
      * @param preferredAccuracyMeters Represents the requested fix accuracy in meters.
      * @param preferredTimeMs Represents the requested time to first fix in milliseconds.
-     * @param lowPowerMode When true, HAL must make strong tradeoffs to substantially restrict power
-     *     use. Specifically, in the case of a several second long minIntervalMs, the GNSS chipset
-     *     must not, on average, run power hungry operations like RF and signal searches for more
-     *     than one second per interval, and must make exactly one call to gnssSvStatusCb(), and
-     *     either zero or one call to GnssLocationCb() at each interval. When false, HAL must
-     *     operate in the nominal mode (similar to V1.0 where this flag wasn't present) and is
-     *     expected to make power and performance tradoffs such as duty-cycling when signal
-     *     conditions are good and more active searches to reacquire GNSS signals when no signals
-     *     are present.
+     * @param lowPowerMode When true, and IGnss.hal is the only client to the GNSS hardware, the
+     *     GNSS hardware must make strong tradeoffs to substantially restrict power use.
+     *     Specifically, in the case of a several second long minIntervalMs, the GNSS hardware must
+     *     not, on average, run power hungry operations like RF and signal searches for more than
+     *     one second per interval, and must make exactly one call to gnssSvStatusCb(), and either
+     *     zero or one call to GnssLocationCb() at each interval. When false, HAL must operate in
+     *     the nominal mode (similar to V1.0 where this flag wasn't present) and is expected to make
+     *     power and performance tradoffs such as duty-cycling when signal conditions are good and
+     *     more active searches to reacquire GNSS signals when no signals are present.
+     *     When there are additional clients using the GNSS hardware other than IGnss.hal, the GNSS
+     *     hardware may operate in a higher power mode, on behalf of those clients.
      *
      * @return success Returns true if successful.
      */

@@ -33,10 +33,11 @@ interface IGnssMeasurement extends @1.0::IGnssMeasurement {
      * @param callback Handle to GnssMeasurement callback interface.
      * @param enableFullTracking If true, GNSS chipset must switch off duty cycling. In such mode
      *     no clock discontinuities are expected and, when supported, carrier phase should be
-     *     continuous in good signal conditions. All constellations and frequency bands that the
-     *     chipset supports must be reported in this mode. The GNSS chipset is allowed to consume
-     *     more power in this mode. If false, API must behave as in HAL V1_0, optimizing power via
-     *     duty cycling, constellations and frequency limits, etc.
+     *     continuous in good signal conditions. All non-blacklisted, healthy constellations,
+     *     satellites and frequency bands that the chipset supports must be reported in this mode.
+     *     The GNSS chipset is allowed to consume more power in this mode. If false, API must behave
+     *     as in HAL V1_0, optimizing power via duty cycling, constellations and frequency limits,
+     *     etc.
      *
      * @return initRet Returns SUCCESS if successful. Returns ERROR_ALREADY_INIT if a callback has
      *     already been registered without a corresponding call to 'close'. Returns ERROR_GENERIC
