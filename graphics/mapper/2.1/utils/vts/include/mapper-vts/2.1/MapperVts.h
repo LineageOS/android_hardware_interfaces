@@ -32,6 +32,7 @@ using V2_0::BufferDescriptor;
 // A wrapper to IAllocator and IMapper.
 class Gralloc : public V2_0::vts::Gralloc {
    public:
+    Gralloc();
     Gralloc(const std::string& allocatorServiceName, const std::string& mapperServiceName);
 
     sp<IMapper> getMapper() const;
