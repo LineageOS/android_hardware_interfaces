@@ -300,6 +300,9 @@ protected:
     const std::vector<SupportedV4L2Format> mSupportedFormats;
     const CroppingType mCroppingType;
     const std::string& mCameraId;
+
+    // Not protected by mLock, this is almost a const.
+    // Setup in constructor, reset in close() after OutputThread is joined
     unique_fd mV4l2Fd;
 
     // device is closed either
@@ -327,6 +330,8 @@ protected:
 
     // Stream ID -> Camera3Stream cache
     std::unordered_map<int, Stream> mStreamMap;
+
+    std::mutex mInflightFramesLock; // protect mInflightFrames
     std::unordered_set<uint32_t>  mInflightFrames;
 
     // buffers currently circulating between HAL and camera service
@@ -338,6 +343,7 @@ protected:
     // Stream ID -> circulating buffers map
     std::map<int, CirculatingBuffers> mCirculatingBuffers;
 
+    std::mutex mAfTriggerLock; // protect mAfTrigger
     bool mAfTrigger = false;
 
     static HandleImporter sHandleImporter;
