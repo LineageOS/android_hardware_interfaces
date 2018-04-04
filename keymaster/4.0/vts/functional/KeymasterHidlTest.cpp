@@ -462,6 +462,7 @@ void KeymasterHidlTest::CheckTripleDesTestVector(KeyPurpose purpose, BlockMode b
     auto authset = AuthorizationSetBuilder()
                        .TripleDesEncryptionKey(key.size() * 7)
                        .BlockMode(block_mode)
+                       .Authorization(TAG_NO_AUTH_REQUIRED)
                        .Padding(padding_mode);
     if (iv.size()) authset.Authorization(TAG_CALLER_NONCE);
     ASSERT_EQ(ErrorCode::OK, ImportKey(authset, KeyFormat::RAW, key));
@@ -535,7 +536,7 @@ string KeymasterHidlTest::EncryptMessage(const string& message, BlockMode block_
     EXPECT_EQ(1U, out_params.size());
     auto ivVal = out_params.GetTagValue(TAG_NONCE);
     EXPECT_TRUE(ivVal.isOk());
-    *iv_out = ivVal.value();
+    if (ivVal.isOk()) *iv_out = ivVal.value();
     return ciphertext;
 }
 
