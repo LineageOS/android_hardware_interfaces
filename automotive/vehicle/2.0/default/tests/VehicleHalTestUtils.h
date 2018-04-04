@@ -40,64 +40,38 @@ const VehiclePropConfig kVehicleProperties[] = {
         .configString = "Some=config,options=if,you=have_any",
     },
 
-    {
-        .prop = toInt(VehicleProperty::HVAC_FAN_SPEED),
-        .access = VehiclePropertyAccess::READ_WRITE,
-        .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-        .areaConfigs = {
-            VehicleAreaConfig {
-                .areaId = toInt(VehicleAreaZone::ROW_1_LEFT),
-                .minInt32Value = 1,
-                .maxInt32Value = 7},
-            VehicleAreaConfig {
-                .areaId = toInt(VehicleAreaZone::ROW_1_RIGHT),
-                .minInt32Value = 1,
-                .maxInt32Value = 5,
-            }
-        }
-    },
+    {.prop = toInt(VehicleProperty::HVAC_FAN_SPEED),
+     .access = VehiclePropertyAccess::READ_WRITE,
+     .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+     .areaConfigs =
+         {VehicleAreaConfig{
+              .areaId = toInt(VehicleAreaSeat::ROW_1_LEFT), .minInt32Value = 1, .maxInt32Value = 7},
+          VehicleAreaConfig{
+              .areaId = toInt(VehicleAreaSeat::ROW_1_RIGHT), .minInt32Value = 1, .maxInt32Value = 5,
+          }}},
 
     // Write-only property
-    {
-        .prop = toInt(VehicleProperty::HVAC_SEAT_TEMPERATURE),
-        .access = VehiclePropertyAccess::WRITE,
-        .changeMode = VehiclePropertyChangeMode::ON_SET,
-        .areaConfigs = {
-            VehicleAreaConfig {
-                .areaId = toInt(VehicleAreaZone::ROW_1_LEFT),
-                .minInt32Value = 64,
-                .maxInt32Value = 80},
-            VehicleAreaConfig {
-                .areaId = toInt(VehicleAreaZone::ROW_1_RIGHT),
-                .minInt32Value = 64,
-                .maxInt32Value = 80,
-            }
-        }
-    },
+    {.prop = toInt(VehicleProperty::HVAC_SEAT_TEMPERATURE),
+     .access = VehiclePropertyAccess::WRITE,
+     .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+     .areaConfigs = {VehicleAreaConfig{.areaId = toInt(VehicleAreaSeat::ROW_1_LEFT),
+                                       .minInt32Value = 64,
+                                       .maxInt32Value = 80},
+                     VehicleAreaConfig{
+                         .areaId = toInt(VehicleAreaSeat::ROW_1_RIGHT),
+                         .minInt32Value = 64,
+                         .maxInt32Value = 80,
+                     }}},
 
-    {
-        .prop = toInt(VehicleProperty::INFO_FUEL_CAPACITY),
-        .access = VehiclePropertyAccess::READ,
-        .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-        .areaConfigs = {
-            VehicleAreaConfig {
-                .minFloatValue = 0,
-                .maxFloatValue = 1.0
-            }
-        }
-    },
+    {.prop = toInt(VehicleProperty::INFO_FUEL_CAPACITY),
+     .access = VehiclePropertyAccess::READ,
+     .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+     .areaConfigs = {VehicleAreaConfig{.minFloatValue = 0, .maxFloatValue = 1.0}}},
 
-    {
-        .prop = toInt(VehicleProperty::DISPLAY_BRIGHTNESS),
-        .access = VehiclePropertyAccess::READ_WRITE,
-        .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-        .areaConfigs = {
-            VehicleAreaConfig {
-                .minInt32Value = 0,
-                .maxInt32Value = 10
-            }
-        }
-    },
+    {.prop = toInt(VehicleProperty::DISPLAY_BRIGHTNESS),
+     .access = VehiclePropertyAccess::READ_WRITE,
+     .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+     .areaConfigs = {VehicleAreaConfig{.minInt32Value = 0, .maxInt32Value = 10}}},
 
     {
         .prop = toInt(VehicleProperty::MIRROR_FOLD),
@@ -107,12 +81,9 @@ const VehiclePropConfig kVehicleProperties[] = {
     },
 
     // Complex data type.
-    {
-        .prop = kCustomComplexProperty,
-        .access = VehiclePropertyAccess::READ_WRITE,
-        .changeMode = VehiclePropertyChangeMode::ON_CHANGE
-    }
-};
+    {.prop = kCustomComplexProperty,
+     .access = VehiclePropertyAccess::READ_WRITE,
+     .changeMode = VehiclePropertyChangeMode::ON_CHANGE}};
 
 constexpr auto kTimeout = std::chrono::milliseconds(500);
 
