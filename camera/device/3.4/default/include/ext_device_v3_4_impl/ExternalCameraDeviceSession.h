@@ -108,6 +108,7 @@ struct ExternalCameraDeviceSession : public virtual RefBase {
 
     static const int kMaxProcessedStream = 2;
     static const int kMaxStallStream = 1;
+    static const uint32_t kMaxBytesPerPixel = 2;
 
 protected:
 
@@ -319,6 +320,7 @@ protected:
     std::mutex mV4l2BufferLock; // protect the buffer count and condition below
     std::condition_variable mV4L2BufferReturned;
     size_t mNumDequeuedV4l2Buffers = 0;
+    uint32_t mMaxV4L2BufferSize = 0;
 
     // Not protected by mLock (but might be used when mLock is locked)
     sp<OutputThread> mOutputThread;
