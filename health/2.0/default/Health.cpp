@@ -16,6 +16,7 @@
 #define LOG_TAG "android.hardware.health@2.0-impl"
 #include <android-base/logging.h>
 
+#include <android-base/file.h>
 #include <health2/Health.h>
 
 #include <hal_conversion.h>
@@ -189,6 +190,17 @@ Return<void> Health::debug(const hidl_handle& handle, const hidl_vec<hidl_string
     if (handle != nullptr && handle->numFds >= 1) {
         int fd = handle->data[0];
         battery_monitor_->dumpState(fd);
+
+        getHealthInfo([fd](auto res, const auto& info) {
+            android::base::WriteStringToFd("\ngetHealthInfo -> ", fd);
+            if (res == Result::SUCCESS) {
+                android::base::WriteStringToFd(toString(info), fd);
+            } else {
+                android::base::WriteStringToFd(toString(res), fd);
+            }
+            android::base::WriteStringToFd("\n", fd);
+        });
+
         fsync(fd);
     }
     return Void();
