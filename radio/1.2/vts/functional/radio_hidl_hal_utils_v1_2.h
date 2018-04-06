@@ -52,6 +52,8 @@ class RadioResponse_v1_2 : public ::android::hardware::radio::V1_2::IRadioRespon
     RadioHidlTest_v1_2& parent_v1_2;
 
    public:
+    hidl_vec<RadioBandMode> radioBandModes;
+
     RadioResponseInfo rspInfo;
 
     RadioResponse_v1_2(RadioHidlTest_v1_2& parent_v1_2);
