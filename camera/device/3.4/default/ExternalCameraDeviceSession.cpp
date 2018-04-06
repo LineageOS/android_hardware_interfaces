@@ -49,7 +49,7 @@ const int kBadFramesAfterStreamOn = 1; // drop x frames after streamOn to get ri
                                        // method
 constexpr int MAX_RETRY = 15; // Allow retry some ioctl failures a few times to account for some
                              // webcam showing temporarily ioctl failures.
-constexpr int IOCTL_RETRY_SLEEP_US = 33000; // 33ms * MAX_RETRY = 5 seconds
+constexpr int IOCTL_RETRY_SLEEP_US = 33000; // 33ms * MAX_RETRY = 0.5 seconds
 
 // Constants for tryLock during dumpstate
 static constexpr int kDumpLockRetries = 50;
@@ -114,6 +114,35 @@ bool ExternalCameraDeviceSession::initialize() {
         ALOGE("%s: invalid v4l2 device fd %d!", __FUNCTION__, mV4l2Fd.get());
         return true;
     }
+
+    struct v4l2_capability capability;
+    int ret = ioctl(mV4l2Fd.get(), VIDIOC_QUERYCAP, &capability);
+    std::string make, model;
+    if (ret < 0) {
+        ALOGW("%s v4l2 QUERYCAP failed", __FUNCTION__);
+        make = "Generic UVC webcam";
+        model = "Generic UVC webcam";
+    } else {
+        // capability.card is UTF-8 encoded
+        char card[32];
+        int j = 0;
+        for (int i = 0; i < 32; i++) {
+            if (capability.card[i] < 128) {
+                card[j++] = capability.card[i];
+            }
+            if (capability.card[i] == '\0') {
+                break;
+            }
+        }
+        if (j == 0 || card[j - 1] != '\0') {
+            make = "Generic UVC webcam";
+            model = "Generic UVC webcam";
+        } else {
+            make = card;
+            model = card;
+        }
+    }
+    mOutputThread->setExifMakeModel(make, model);
 
     status_t status = initDefaultRequests();
     if (status != OK) {
@@ -825,6 +854,12 @@ ExternalCameraDeviceSession::OutputThread::OutputThread(
         CroppingType ct) : mParent(parent), mCroppingType(ct) {}
 
 ExternalCameraDeviceSession::OutputThread::~OutputThread() {}
+
+void ExternalCameraDeviceSession::OutputThread::setExifMakeModel(
+        const std::string& make, const std::string& model) {
+    mExifMake = make;
+    mExifModel = model;
+}
 
 uint32_t ExternalCameraDeviceSession::OutputThread::getFourCcFromLayout(
         const YCbCrLayout& layout) {
@@ -1611,6 +1646,8 @@ int ExternalCameraDeviceSession::OutputThread::createJpegLocked(
     utils->initialize();
 
     utils->setFromMetadata(meta, jpegSize.width, jpegSize.height);
+    utils->setMake(mExifMake);
+    utils->setModel(mExifModel);
 
     ret = utils->generateApp1(outputThumbnail ? &thumbCode[0] : 0, thumbCodeSize);
 
@@ -2150,7 +2187,7 @@ int ExternalCameraDeviceSession::configureV4l2StreamLocked(
         int numAttempt = 0;
         while (ret < 0) {
             ALOGW("%s: VIDIOC_S_FMT failed, wait 33ms and try again", __FUNCTION__);
-            usleep(IOCTL_RETRY_SLEEP_US); // sleep 100 ms and try again
+            usleep(IOCTL_RETRY_SLEEP_US); // sleep and try again
             ret = TEMP_FAILURE_RETRY(ioctl(mV4l2Fd.get(), VIDIOC_S_FMT, &fmt));
             if (numAttempt == MAX_RETRY) {
                 break;
