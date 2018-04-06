@@ -42,6 +42,9 @@ const std::array<uint32_t, /*size*/1> kSupportedFourCCs {{
     V4L2_PIX_FMT_MJPEG
 }}; // double braces required in C++11
 
+constexpr int MAX_RETRY = 5; // Allow retry v4l2 open failures a few times.
+constexpr int OPEN_RETRY_SLEEP_US = 100000; // 100ms * MAX_RETRY = 0.5 seconds
+
 } // anonymous namespace
 
 ExternalCameraDevice::ExternalCameraDevice(
@@ -122,11 +125,22 @@ Return<void> ExternalCameraDevice::open(
 
     unique_fd fd(::open(mCameraId.c_str(), O_RDWR));
     if (fd.get() < 0) {
-        ALOGE("%s: v4l2 device open %s failed: %s",
-                __FUNCTION__, mCameraId.c_str(), strerror(errno));
-        mLock.unlock();
-        _hidl_cb(Status::INTERNAL_ERROR, nullptr);
-        return Void();
+        int numAttempt = 0;
+        do {
+            ALOGW("%s: v4l2 device %s open failed, wait 33ms and try again",
+                    __FUNCTION__, mCameraId.c_str());
+            usleep(OPEN_RETRY_SLEEP_US); // sleep and try again
+            fd.reset(::open(mCameraId.c_str(), O_RDWR));
+            numAttempt++;
+        } while (fd.get() < 0 && numAttempt <= MAX_RETRY);
+
+        if (fd.get() < 0) {
+            ALOGE("%s: v4l2 device open %s failed: %s",
+                    __FUNCTION__, mCameraId.c_str(), strerror(errno));
+            mLock.unlock();
+            _hidl_cb(Status::INTERNAL_ERROR, nullptr);
+            return Void();
+        }
     }
 
     session = new ExternalCameraDeviceSession(

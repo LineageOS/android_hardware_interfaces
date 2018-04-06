@@ -164,29 +164,35 @@ void ExternalCameraProvider::addExternalCamera(const char* devName) {
 }
 
 void ExternalCameraProvider::deviceAdded(const char* devName) {
-    int fd = -1;
-    if ((fd = ::open(devName, O_RDWR)) < 0) {
-        ALOGE("%s open v4l2 device %s failed:%s", __FUNCTION__, devName, strerror(errno));
-        return;
-    }
+    {
+        base::unique_fd fd(::open(devName, O_RDWR));
+        if (fd.get() < 0) {
+            ALOGE("%s open v4l2 device %s failed:%s", __FUNCTION__, devName, strerror(errno));
+            return;
+        }
 
-    do {
         struct v4l2_capability capability;
-        int ret = ioctl(fd, VIDIOC_QUERYCAP, &capability);
+        int ret = ioctl(fd.get(), VIDIOC_QUERYCAP, &capability);
         if (ret < 0) {
             ALOGE("%s v4l2 QUERYCAP %s failed", __FUNCTION__, devName);
-            break;
+            return;
         }
 
         if (!(capability.device_caps & V4L2_CAP_VIDEO_CAPTURE)) {
             ALOGW("%s device %s does not support VIDEO_CAPTURE", __FUNCTION__, devName);
-            break;
+            return;
         }
+    }
+    // See if we can initialize ExternalCameraDevice correctly
+    sp<device::V3_4::implementation::ExternalCameraDevice> deviceImpl =
+            new device::V3_4::implementation::ExternalCameraDevice(devName, mCfg);
+    if (deviceImpl == nullptr || deviceImpl->isInitFailed()) {
+        ALOGW("%s: Attempt to init camera device %s failed!", __FUNCTION__, devName);
+        return;
+    }
+    deviceImpl.clear();
 
-        addExternalCamera(devName);
-    } while (0);
-
-    close(fd);
+    addExternalCamera(devName);
     return;
 }
 
