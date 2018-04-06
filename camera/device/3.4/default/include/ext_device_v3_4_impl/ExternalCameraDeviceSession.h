@@ -108,6 +108,7 @@ struct ExternalCameraDeviceSession : public virtual RefBase {
 
     static const int kMaxProcessedStream = 2;
     static const int kMaxStallStream = 1;
+    static const uint32_t kMaxBytesPerPixel = 2;
 
 protected:
 
@@ -299,6 +300,9 @@ protected:
     const std::vector<SupportedV4L2Format> mSupportedFormats;
     const CroppingType mCroppingType;
     const std::string& mCameraId;
+
+    // Not protected by mLock, this is almost a const.
+    // Setup in constructor, reset in close() after OutputThread is joined
     unique_fd mV4l2Fd;
 
     // device is closed either
@@ -319,12 +323,15 @@ protected:
     std::mutex mV4l2BufferLock; // protect the buffer count and condition below
     std::condition_variable mV4L2BufferReturned;
     size_t mNumDequeuedV4l2Buffers = 0;
+    uint32_t mMaxV4L2BufferSize = 0;
 
     // Not protected by mLock (but might be used when mLock is locked)
     sp<OutputThread> mOutputThread;
 
     // Stream ID -> Camera3Stream cache
     std::unordered_map<int, Stream> mStreamMap;
+
+    std::mutex mInflightFramesLock; // protect mInflightFrames
     std::unordered_set<uint32_t>  mInflightFrames;
 
     // buffers currently circulating between HAL and camera service
@@ -336,6 +343,7 @@ protected:
     // Stream ID -> circulating buffers map
     std::map<int, CirculatingBuffers> mCirculatingBuffers;
 
+    std::mutex mAfTriggerLock; // protect mAfTrigger
     bool mAfTrigger = false;
 
     static HandleImporter sHandleImporter;

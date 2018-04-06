@@ -57,10 +57,10 @@ class Composer {
     std::unique_ptr<ComposerClient> createClient();
 
    protected:
-    sp<IComposer> mComposer;
+    explicit Composer(const sp<IComposer>& composer);
 
    private:
-    void init();
+    const sp<IComposer> mComposer;
 
     std::unordered_set<IComposer::Capability> mCapabilities;
 };
@@ -68,7 +68,7 @@ class Composer {
 // A wrapper to IComposerClient.
 class ComposerClient {
    public:
-    ComposerClient(const sp<IComposerClient>& client);
+    explicit ComposerClient(const sp<IComposerClient>& client);
     ~ComposerClient();
 
     sp<IComposerClient> getRaw() const;
@@ -116,7 +116,7 @@ class ComposerClient {
     std::unordered_map<Display, DisplayResource> mDisplayResources;
 
    private:
-    sp<IComposerClient> mClient;
+    const sp<IComposerClient> mClient;
 };
 
 }  // namespace vts

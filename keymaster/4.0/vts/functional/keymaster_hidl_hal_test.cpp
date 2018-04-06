@@ -1819,24 +1819,26 @@ TEST_F(ImportKeyTest, HmacKeySuccess) {
 }
 
 auto wrapped_key = hex2str(
-    "30820173020100048201006F5C273914D9E7EAB667FE62456A57DE64BED4A57DB3EFBB77E6907C82CC36B0BD12CB8A"
-    "85F3F8BC08A26C58186DB5C35636063388A04AE5579D3BDC057F9BB0EB6FDDA5E836DBB1F18A4546A64BA06E3D0132"
-    "AAA3306676638C786FAF0722E6E4145E0C91B009C422691F9F42F9F179DA93E16E7793DE5960E77A387433F0B43E49"
-    "3A7CF77ECA25BA724CC02F916D5792CAA76BC0756D3DB5D110D209B8B30285E9653D91FD89E953F351D82ACE1422CC"
-    "A146F8BD0C2F4CC32D1F81D894F4650043DB46109869696319A1A011BB003F2EBD8FA20B4A43F3226C1F182A39AE81"
-    "A35B9B7590A48B6A6874C9CC0EE0CD9528FB908688B4111932DF478CD7A92B50040CD796B02C370F1FA4CC0124F130"
-    "280201033023A1083106020100020101A203020120A30402020100A4053103020101A60531030201400420CCD54085"
-    "5F833A5E1480BFD2D36FAF3AEEE15DF5BEABE2691BC82DDE2A7AA91004107CB81BDDCD09E8F4DF575726279F3229");
+    "3082017902010004820100A0E69B1395D382354FC0E7F74AC068C5818279D76D46745C7274997D045BAA8B9763B3F3"
+    "09E5E59ECA99273AAAE0A37449DA9B1E67B66EC4E42BB62C25346683A43A9F2ACBCA6D350B25551CC53CE0721D29BE"
+    "90F60686877478F82B3BB111C5EAC0BAE9310D7AD11F5A82948B31C322820F24E20DDB0FBD07D1566DAEAA058D4645"
+    "2607352699E1F631D2ABAF60B13E41ED5EDBB90D252331BDB9CDB1B672E871F37CAC009FE9028B3B1E0ACE8F6F0678"
+    "3F581B860620BDD478969EDE3101AAEFF65C6DB03E143E586167DC87D0CCE39E9119782F7B60A7A1CF2B7EE234E013"
+    "E3DE6C56F0D51F30C389D31FA37C5F2875ACB44434E82EF40B316C93DE129BA0040CD796B02C370F1FA4CC0124F130"
+    "2E0201033029A1083106020100020101A203020120A30402020100A4053103020101A6053103020140BF8377020500"
+    "0420CCD540855F833A5E1480BFD2D36FAF3AEEE15DF5BEABE2691BC82DDE2A7AA910041064C9F689C60FF6223AB6E6"
+    "999E0EB6E5");
 
 auto wrapped_key_masked = hex2str(
-    "30820173020100048201009059BB6E48F8036ABE1800D9C74F3DB5F20448F035C2C78AFBCC28AF26581061298CAC78"
-    "A8CA5B79721B60B74490555168488ED696C8930D00463C6FC81BF0B6E4E26C93E018D0E3DC8754C6B261E0A7C3A6DA"
-    "1A223EB59ACA8E13348F14B9E944AF3C224906C1ABFE21ADDEE81FC641D45E092C6B0A75A9BA56C05529AE47ECA0D5"
-    "CD3568501CF04D47391FC695EDE19A3022B347D1BDC6C792A08AA014F87DD4BBD44777B14D7D2273191DDCFE4E8512"
-    "EFA677A14E68E5D820C5513331D687C08B6317FA64D404231D05C74CDD9AEB89D253FBE07154B2080CF4ACA5E1EFCB"
-    "53EB193E8A01DD5F9634B65EF9B49899003E245FDA6A3B137FAC1263E55A6E1D040C6D9721D08589581AB49204A330"
-    "280201033023A1083106020100020101A203020120A30402020100A4053103020101A60531030201400420A61C6E24"
-    "7E25B3E6E69AA78EB03C2D4AC20D1F99A9A024A76F35C8E2CAB9B68D04101FF7A0E793B9EE4AECEBB9AC4C545254");
+    "30820179020100048201001EF5320D3C920D7614688A439409ACE4318C48395ABB7247A68671BD4B7156A7773B31A4"
+    "4459B73858625988A312E4D8855138F555678F525E4C52D91444FDC936BE6AEB63FD73FD84201EF46F88A0B622F528"
+    "956C92C9C731EB65BCBC6A03BEAB45959B54A768E2842D2CE174EE542EF2A15DCAA7542F3574BEEB1A991F95439466"
+    "E1960A9CE9E4CBC77DB23765191E4758C850908BCC74E158B77AB774141F171262C1AC771FDFA2E942F2F7633E97E8"
+    "0BD492C3E821361AC6B4F568DE351C816C8C997212C707F728FB3BCAAA796EA6B8E7A80BE010970B380122940277E9"
+    "4C5E9288F7CB6878A4C4CC1E83AB85A81FD68E43B14F1F81AD21E0D3545D70EE040C6D9721D08589581AB49204A330"
+    "2E0201033029A1083106020100020101A203020120A30402020100A4053103020101A6053103020140BF8377020500"
+    "0420A61C6E247E25B3E6E69AA78EB03C2D4AC20D1F99A9A024A76F35C8E2CAB9B68D04102560C70109AE67C030F00B"
+    "98B512A670");
 
 auto wrapping_key = hex2str(
     "308204be020100300d06092a864886f70d0101010500048204a8308204a40201000282010100aec367931d8900ce56"
@@ -3226,11 +3228,10 @@ TEST_F(EncryptionOperationsTest, AesGcmCorruptTag) {
  * Verifies that 3DES is basically functional.
  */
 TEST_F(EncryptionOperationsTest, TripleDesEcbRoundTripSuccess) {
-    std::cout << "Hello" << std::endl;
-
     auto auths = AuthorizationSetBuilder()
                      .TripleDesEncryptionKey(168)
                      .BlockMode(BlockMode::ECB)
+                     .Authorization(TAG_NO_AUTH_REQUIRED)
                      .Padding(PaddingMode::NONE);
 
     ASSERT_EQ(ErrorCode::OK, GenerateKey(auths));
@@ -3259,6 +3260,7 @@ TEST_F(EncryptionOperationsTest, TripleDesEcbNotAuthorized) {
     ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
                                              .TripleDesEncryptionKey(168)
                                              .BlockMode(BlockMode::CBC)
+                                             .Authorization(TAG_NO_AUTH_REQUIRED)
                                              .Padding(PaddingMode::NONE)));
 
     auto inParams = AuthorizationSetBuilder().BlockMode(BlockMode::ECB).Padding(PaddingMode::NONE);
@@ -3274,6 +3276,7 @@ TEST_F(EncryptionOperationsTest, TripleDesEcbPkcs7Padding) {
     ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
                                              .TripleDesEncryptionKey(168)
                                              .BlockMode(BlockMode::ECB)
+                                             .Authorization(TAG_NO_AUTH_REQUIRED)
                                              .Padding(PaddingMode::PKCS7)));
 
     for (size_t i = 0; i < 32; ++i) {
@@ -3296,6 +3299,7 @@ TEST_F(EncryptionOperationsTest, TripleDesEcbNoPaddingKeyWithPkcs7Padding) {
     ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
                                              .TripleDesEncryptionKey(168)
                                              .BlockMode(BlockMode::ECB)
+                                             .Authorization(TAG_NO_AUTH_REQUIRED)
                                              .Padding(PaddingMode::NONE)));
     for (size_t i = 0; i < 32; ++i) {
         auto inParams =
@@ -3313,6 +3317,7 @@ TEST_F(EncryptionOperationsTest, TripleDesEcbPkcs7PaddingCorrupted) {
     ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
                                              .TripleDesEncryptionKey(168)
                                              .BlockMode(BlockMode::ECB)
+                                             .Authorization(TAG_NO_AUTH_REQUIRED)
                                              .Padding(PaddingMode::PKCS7)));
 
     string message = "a";
@@ -3443,6 +3448,7 @@ TEST_F(EncryptionOperationsTest, TripleDesCbcRoundTripSuccess) {
     ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
                                              .TripleDesEncryptionKey(168)
                                              .BlockMode(BlockMode::CBC)
+                                             .Authorization(TAG_NO_AUTH_REQUIRED)
                                              .Padding(PaddingMode::NONE)));
     // Two-block message.
     string message = "1234567890123456";
@@ -3471,6 +3477,7 @@ TEST_F(EncryptionOperationsTest, TripleDesCallerIv) {
     ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
                                              .TripleDesEncryptionKey(168)
                                              .BlockMode(BlockMode::CBC)
+                                             .Authorization(TAG_NO_AUTH_REQUIRED)
                                              .Authorization(TAG_CALLER_NONCE)
                                              .Padding(PaddingMode::NONE)));
     string message = "1234567890123456";
@@ -3505,6 +3512,7 @@ TEST_F(EncryptionOperationsTest, TripleDesCallerNonceProhibited) {
     ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
                                              .TripleDesEncryptionKey(168)
                                              .BlockMode(BlockMode::CBC)
+                                             .Authorization(TAG_NO_AUTH_REQUIRED)
                                              .Padding(PaddingMode::NONE)));
 
     string message = "12345678901234567890123456789012";
@@ -3536,6 +3544,7 @@ TEST_F(EncryptionOperationsTest, TripleDesCbcNotAuthorized) {
     ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
                                              .TripleDesEncryptionKey(168)
                                              .BlockMode(BlockMode::ECB)
+                                             .Authorization(TAG_NO_AUTH_REQUIRED)
                                              .Padding(PaddingMode::NONE)));
     // Two-block message.
     string message = "1234567890123456";
@@ -3553,6 +3562,7 @@ TEST_F(EncryptionOperationsTest, TripleDesCbcNoPaddingWrongInputSize) {
     ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
                                              .TripleDesEncryptionKey(168)
                                              .BlockMode(BlockMode::CBC)
+                                             .Authorization(TAG_NO_AUTH_REQUIRED)
                                              .Padding(PaddingMode::NONE)));
     // Message is slightly shorter than two blocks.
     string message = "123456789012345";
@@ -3574,6 +3584,7 @@ TEST_F(EncryptionOperationsTest, TripleDesCbcPkcs7Padding) {
     ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
                                              .TripleDesEncryptionKey(168)
                                              .BlockMode(BlockMode::CBC)
+                                             .Authorization(TAG_NO_AUTH_REQUIRED)
                                              .Padding(PaddingMode::PKCS7)));
 
     // Try various message lengths; all should work.
@@ -3596,6 +3607,7 @@ TEST_F(EncryptionOperationsTest, TripleDesCbcNoPaddingKeyWithPkcs7Padding) {
     ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
                                              .TripleDesEncryptionKey(168)
                                              .BlockMode(BlockMode::CBC)
+                                             .Authorization(TAG_NO_AUTH_REQUIRED)
                                              .Padding(PaddingMode::NONE)));
 
     // Try various message lengths; all should fail.
@@ -3615,6 +3627,7 @@ TEST_F(EncryptionOperationsTest, TripleDesCbcPkcs7PaddingCorrupted) {
     ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
                                              .TripleDesEncryptionKey(168)
                                              .BlockMode(BlockMode::CBC)
+                                             .Authorization(TAG_NO_AUTH_REQUIRED)
                                              .Padding(PaddingMode::PKCS7)));
 
     string message = "a";
@@ -3645,6 +3658,7 @@ TEST_F(EncryptionOperationsTest, TripleDesCbcIncrementalNoPadding) {
     ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
                                              .TripleDesEncryptionKey(168)
                                              .BlockMode(BlockMode::CBC)
+                                             .Authorization(TAG_NO_AUTH_REQUIRED)
                                              .Padding(PaddingMode::NONE)));
 
     int increment = 7;

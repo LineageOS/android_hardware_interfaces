@@ -32,17 +32,15 @@ namespace V2_2 {
 namespace vts {
 namespace {
 
-using android::hardware::graphics::common::V1_0::BufferUsage;
-using android::hardware::graphics::common::V1_0::ColorTransform;
-using android::hardware::graphics::common::V1_0::Transform;
-using android::hardware::graphics::common::V1_1::ColorMode;
-using android::hardware::graphics::common::V1_1::Dataspace;
-using android::hardware::graphics::common::V1_1::PixelFormat;
-using android::hardware::graphics::common::V1_1::RenderIntent;
-using android::hardware::graphics::composer::V2_2::IComposerClient;
-using android::hardware::graphics::mapper::V2_1::IMapper;
-using android::hardware::graphics::mapper::V2_1::vts::Gralloc;
-using GrallocError = android::hardware::graphics::mapper::V2_0::Error;
+using common::V1_0::BufferUsage;
+using common::V1_0::ColorTransform;
+using common::V1_0::Transform;
+using common::V1_1::ColorMode;
+using common::V1_1::Dataspace;
+using common::V1_1::PixelFormat;
+using common::V1_1::RenderIntent;
+using mapper::V2_1::IMapper;
+using mapper::V2_1::vts::Gralloc;
 
 // Test environment for graphics.composer
 class GraphicsComposerHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
@@ -65,9 +63,9 @@ class GraphicsComposerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
    protected:
     void SetUp() override {
         ASSERT_NO_FATAL_FAILURE(
-            mComposer = std::make_unique<Composer_v2_2>(
+            mComposer = std::make_unique<Composer>(
                 GraphicsComposerHidlEnvironment::Instance()->getServiceName<IComposer>()));
-        ASSERT_NO_FATAL_FAILURE(mComposerClient = mComposer->createClient_v2_2());
+        ASSERT_NO_FATAL_FAILURE(mComposerClient = mComposer->createClient());
 
         mComposerCallback = new V2_1::vts::GraphicsComposerCallback;
         mComposerClient->registerCallback(mComposerCallback);
@@ -91,8 +89,8 @@ class GraphicsComposerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     // use the slot count usually set by SF
     static constexpr uint32_t kBufferSlotCount = 64;
 
-    std::unique_ptr<Composer_v2_2> mComposer;
-    std::unique_ptr<ComposerClient_v2_2> mComposerClient;
+    std::unique_ptr<Composer> mComposer;
+    std::unique_ptr<ComposerClient> mComposerClient;
     sp<V2_1::vts::GraphicsComposerCallback> mComposerCallback;
     // the first display and is assumed never to be removed
     Display mPrimaryDisplay;
@@ -119,7 +117,7 @@ class GraphicsComposerHidlCommandTest : public GraphicsComposerHidlTest {
 
         ASSERT_NO_FATAL_FAILURE(mGralloc = std::make_unique<Gralloc>());
 
-        mWriter = std::make_unique<V2_2::CommandWriterBase>(1024);
+        mWriter = std::make_unique<CommandWriterBase>(1024);
         mReader = std::make_unique<V2_1::vts::TestCommandReader>();
     }
 
@@ -137,9 +135,9 @@ class GraphicsComposerHidlCommandTest : public GraphicsComposerHidlTest {
         return mGralloc->allocate(info);
     }
 
-    void execute() { mComposerClient->execute_v2_2(mReader.get(), mWriter.get()); }
+    void execute() { mComposerClient->execute(mReader.get(), mWriter.get()); }
 
-    std::unique_ptr<V2_2::CommandWriterBase> mWriter;
+    std::unique_ptr<CommandWriterBase> mWriter;
     std::unique_ptr<V2_1::vts::TestCommandReader> mReader;
 
    private:
