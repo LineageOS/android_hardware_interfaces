@@ -42,6 +42,7 @@ exit_group: 1
 rt_sigreturn: 1
 getrlimit: 1
 madvise: 1
+getdents64: 1
 clock_gettime: 1
 
 # used during process crash by crash_dump to dump process info
