@@ -1,11 +1,18 @@
 Upgrading from health@1.0 HAL
 
-0. Remove android.hardware.health@1.0* from PRDOUCT_PACKAGES
+0. Remove android.hardware.health@1.0* from PRODUCT_PACKAGES
    in device/<manufacturer>/<device>/device.mk
 
 1. If the device does not have a vendor-specific libhealthd AND does not
-   implement storage-related APIs, just add the following to PRODUCT_PACKAGES:
-   android.hardware.health@2.0-service
+   implement storage-related APIs, just do the following:
+
+    1.1 (recommended) To remove healthd from the build,
+        PRODUCT_PACKAGES += android.hardware.health@2.0-service.override
+        DEVICE_FRAMEWORK_MANIFEST_FILE += \
+            system/libhidl/vintfdata/manifest_healthd_exclude.xml
+    1.2 To keep healthd in the build,
+        PRODUCT_PACKAGES += android.hardware.health@2.0-service
+
    Otherwise, continue to Step 2.
 
 2. Create directory
@@ -45,7 +52,18 @@ cc_binary {
     ],
 
     header_libs: ["libhealthd_headers"],
+
+    // Uncomment the following to remove healthd from the build.
+    // overrides: [
+    //     "healthd",
+    // ],
 }
+
+    3.1 (recommended) To remove healthd from the build, keep "overrides"
+          section, and include the following in device.mk:
+            DEVICE_FRAMEWORK_MANIFEST_FILE += \
+                system/libhidl/vintfdata/manifest_healthd_exclude.xml
+    3.2 To keep healthd in the build, remove "overrides" section.
 
 4. Create device/<manufacturer>/<device>/health/android.hardware.health@2.0-service.<device>.rc
 
@@ -53,6 +71,7 @@ service vendor.health-hal-2-0 /vendor/bin/hw/android.hardware.health@2.0-service
     class hal
     user system
     group system
+    file /dev/kmsg w
 
 5. Create device/<manufacturer>/<device>/health/HealthService.cpp:
 

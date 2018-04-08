@@ -231,6 +231,7 @@ protected:
         void dump(int fd);
         virtual bool threadLoop() override;
 
+        void setExifMakeModel(const std::string& make, const std::string& model);
     private:
         static const uint32_t FLEX_YUV_GENERIC = static_cast<uint32_t>('F') |
                 static_cast<uint32_t>('L') << 8 | static_cast<uint32_t>('E') << 16 |
@@ -288,6 +289,9 @@ protected:
         std::unordered_map<Size, sp<AllocatedFrame>, SizeHasher> mScaledYu12Frames;
         YCbCrLayout mYu12FrameLayout;
         YCbCrLayout mYu12ThumbFrameLayout;
+
+        std::string mExifMake;
+        std::string mExifModel;
     };
 
     // Protect (most of) HIDL interface methods from synchronized-entering
