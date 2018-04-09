@@ -31,19 +31,8 @@ namespace cas {
 namespace V1_0 {
 namespace implementation {
 
-struct CasImpl::PluginHolder : public RefBase {
-public:
-    explicit PluginHolder(CasPlugin *plugin) : mPlugin(plugin) {}
-    ~PluginHolder() { if (mPlugin != NULL) delete mPlugin; }
-    CasPlugin* get() { return mPlugin; }
-
-private:
-    CasPlugin *mPlugin;
-    DISALLOW_EVIL_CONSTRUCTORS(PluginHolder);
-};
-
 CasImpl::CasImpl(const sp<ICasListener> &listener)
-    : mPluginHolder(NULL), mListener(listener) {
+    : mListener(listener) {
     ALOGV("CTOR");
 }
 
@@ -69,7 +58,8 @@ void CasImpl::OnEvent(
 
 void CasImpl::init(const sp<SharedLibrary>& library, CasPlugin *plugin) {
     mLibrary = library;
-    mPluginHolder = new PluginHolder(plugin);
+    std::shared_ptr<CasPlugin> holder(plugin);
+    std::atomic_store(&mPluginHolder, holder);
 }
 
 void CasImpl::onEvent(
@@ -88,21 +78,22 @@ void CasImpl::onEvent(
 
 Return<Status> CasImpl::setPrivateData(const HidlCasData& pvtData) {
     ALOGV("%s", __FUNCTION__);
-    sp<PluginHolder> holder = mPluginHolder;
-    if (holder == NULL) {
+    std::shared_ptr<CasPlugin> holder = std::atomic_load(&mPluginHolder);
+    if (holder.get() == nullptr) {
         return toStatus(INVALID_OPERATION);
     }
-    return toStatus(holder->get()->setPrivateData(pvtData));
+    return toStatus(holder->setPrivateData(pvtData));
 }
 
 Return<void> CasImpl::openSession(openSession_cb _hidl_cb) {
     ALOGV("%s", __FUNCTION__);
     CasSessionId sessionId;
 
-    sp<PluginHolder> holder = mPluginHolder;
+    std::shared_ptr<CasPlugin> holder = std::atomic_load(&mPluginHolder);
     status_t err = INVALID_OPERATION;
-    if (holder != NULL) {
-        err = holder->get()->openSession(&sessionId);
+    if (holder.get() != nullptr) {
+        err = holder->openSession(&sessionId);
+        holder.reset();
     }
 
     _hidl_cb(toStatus(err), sessionId);
@@ -114,87 +105,87 @@ Return<Status> CasImpl::setSessionPrivateData(
         const HidlCasSessionId &sessionId, const HidlCasData& pvtData) {
     ALOGV("%s: sessionId=%s", __FUNCTION__,
             sessionIdToString(sessionId).string());
-    sp<PluginHolder> holder = mPluginHolder;
-    if (holder == NULL) {
+    std::shared_ptr<CasPlugin> holder = std::atomic_load(&mPluginHolder);
+    if (holder.get() == nullptr) {
         return toStatus(INVALID_OPERATION);
     }
-    return toStatus(
-            holder->get()->setSessionPrivateData(
-                    sessionId, pvtData));
+    return toStatus(holder->setSessionPrivateData(sessionId, pvtData));
 }
 
 Return<Status> CasImpl::closeSession(const HidlCasSessionId &sessionId) {
     ALOGV("%s: sessionId=%s", __FUNCTION__,
             sessionIdToString(sessionId).string());
-    sp<PluginHolder> holder = mPluginHolder;
-    if (holder == NULL) {
+    std::shared_ptr<CasPlugin> holder = std::atomic_load(&mPluginHolder);
+    if (holder.get() == nullptr) {
         return toStatus(INVALID_OPERATION);
     }
-    return toStatus(holder->get()->closeSession(sessionId));
+    return toStatus(holder->closeSession(sessionId));
 }
 
 Return<Status> CasImpl::processEcm(
         const HidlCasSessionId &sessionId, const HidlCasData& ecm) {
     ALOGV("%s: sessionId=%s", __FUNCTION__,
             sessionIdToString(sessionId).string());
-    sp<PluginHolder> holder = mPluginHolder;
-    if (holder == NULL) {
+    std::shared_ptr<CasPlugin> holder = std::atomic_load(&mPluginHolder);
+    if (holder.get() == nullptr) {
         return toStatus(INVALID_OPERATION);
     }
 
-    return toStatus(holder->get()->processEcm(sessionId, ecm));
+    return toStatus(holder->processEcm(sessionId, ecm));
 }
 
 Return<Status> CasImpl::processEmm(const HidlCasData& emm) {
     ALOGV("%s", __FUNCTION__);
-    sp<PluginHolder> holder = mPluginHolder;
-    if (holder == NULL) {
+    std::shared_ptr<CasPlugin> holder = std::atomic_load(&mPluginHolder);
+    if (holder.get() == nullptr) {
         return toStatus(INVALID_OPERATION);
     }
 
-    return toStatus(holder->get()->processEmm(emm));
+    return toStatus(holder->processEmm(emm));
 }
 
 Return<Status> CasImpl::sendEvent(
         int32_t event, int32_t arg,
         const HidlCasData& eventData) {
     ALOGV("%s", __FUNCTION__);
-    sp<PluginHolder> holder = mPluginHolder;
-    if (holder == NULL) {
+    std::shared_ptr<CasPlugin> holder = std::atomic_load(&mPluginHolder);
+    if (holder.get() == nullptr) {
         return toStatus(INVALID_OPERATION);
     }
 
-    status_t err = holder->get()->sendEvent(event, arg, eventData);
+    status_t err = holder->sendEvent(event, arg, eventData);
     return toStatus(err);
 }
 
 Return<Status> CasImpl::provision(const hidl_string& provisionString) {
     ALOGV("%s: provisionString=%s", __FUNCTION__, provisionString.c_str());
-    sp<PluginHolder> holder = mPluginHolder;
-    if (holder == NULL) {
+    std::shared_ptr<CasPlugin> holder = std::atomic_load(&mPluginHolder);
+    if (holder.get() == nullptr) {
         return toStatus(INVALID_OPERATION);
     }
 
-    return toStatus(holder->get()->provision(String8(provisionString.c_str())));
+    return toStatus(holder->provision(String8(provisionString.c_str())));
 }
 
 Return<Status> CasImpl::refreshEntitlements(
         int32_t refreshType,
         const HidlCasData& refreshData) {
     ALOGV("%s", __FUNCTION__);
-    sp<PluginHolder> holder = mPluginHolder;
-    if (holder == NULL) {
+    std::shared_ptr<CasPlugin> holder = std::atomic_load(&mPluginHolder);
+    if (holder.get() == nullptr) {
         return toStatus(INVALID_OPERATION);
     }
 
-    status_t err = holder->get()->refreshEntitlements(refreshType, refreshData);
+    status_t err = holder->refreshEntitlements(refreshType, refreshData);
     return toStatus(err);
 }
 
 Return<Status> CasImpl::release() {
-    ALOGV("%s: plugin=%p", __FUNCTION__,
-            mPluginHolder != NULL ? mPluginHolder->get() : NULL);
-    mPluginHolder.clear();
+    ALOGV("%s: plugin=%p", __FUNCTION__, mPluginHolder.get());
+
+    std::shared_ptr<CasPlugin> holder(nullptr);
+    std::atomic_store(&mPluginHolder, holder);
+
     return Status::OK;
 }
 
