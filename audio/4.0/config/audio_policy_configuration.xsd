@@ -218,24 +218,20 @@
 
             <xs:enumeration value="AUDIO_DEVICE_OUT_EARPIECE"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_SPEAKER"/>
-            <xs:enumeration value="AUDIO_DEVICE_OUT_SPEAKER_SAFE"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_WIRED_HEADSET"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_WIRED_HEADPHONE"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_BLUETOOTH_SCO"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_BLUETOOTH_SCO_HEADSET"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_BLUETOOTH_SCO_CARKIT"/>
-            <xs:enumeration value="AUDIO_DEVICE_OUT_ALL_SCO"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_BLUETOOTH_A2DP"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_BLUETOOTH_A2DP_HEADPHONES"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_BLUETOOTH_A2DP_SPEAKER"/>
-            <xs:enumeration value="AUDIO_DEVICE_OUT_ALL_A2DP"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_AUX_DIGITAL"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_HDMI"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_ANLG_DOCK_HEADSET"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_DGTL_DOCK_HEADSET"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_USB_ACCESSORY"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_USB_DEVICE"/>
-            <xs:enumeration value="AUDIO_DEVICE_OUT_ALL_USB"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_REMOTE_SUBMIX"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_TELEPHONY_TX"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_LINE"/>
@@ -243,10 +239,13 @@
             <xs:enumeration value="AUDIO_DEVICE_OUT_SPDIF"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_FM"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_AUX_LINE"/>
+            <xs:enumeration value="AUDIO_DEVICE_OUT_SPEAKER_SAFE"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_IP"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_BUS"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_PROXY"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_USB_HEADSET"/>
+            <xs:enumeration value="AUDIO_DEVICE_OUT_HEARING_AID"/>
+            <xs:enumeration value="AUDIO_DEVICE_OUT_ECHO_CANCELLER"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_DEFAULT"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_STUB"/>
 
@@ -255,19 +254,17 @@
             <xs:enumeration value="AUDIO_DEVICE_IN_AMBIENT"/>
             <xs:enumeration value="AUDIO_DEVICE_IN_BUILTIN_MIC"/>
             <xs:enumeration value="AUDIO_DEVICE_IN_BLUETOOTH_SCO_HEADSET"/>
-            <xs:enumeration value="AUDIO_DEVICE_IN_ALL_SCO"/>
             <xs:enumeration value="AUDIO_DEVICE_IN_WIRED_HEADSET"/>
             <xs:enumeration value="AUDIO_DEVICE_IN_AUX_DIGITAL"/>
             <xs:enumeration value="AUDIO_DEVICE_IN_HDMI"/>
-            <xs:enumeration value="AUDIO_DEVICE_IN_TELEPHONY_RX"/>
             <xs:enumeration value="AUDIO_DEVICE_IN_VOICE_CALL"/>
+            <xs:enumeration value="AUDIO_DEVICE_IN_TELEPHONY_RX"/>
             <xs:enumeration value="AUDIO_DEVICE_IN_BACK_MIC"/>
             <xs:enumeration value="AUDIO_DEVICE_IN_REMOTE_SUBMIX"/>
             <xs:enumeration value="AUDIO_DEVICE_IN_ANLG_DOCK_HEADSET"/>
             <xs:enumeration value="AUDIO_DEVICE_IN_DGTL_DOCK_HEADSET"/>
             <xs:enumeration value="AUDIO_DEVICE_IN_USB_ACCESSORY"/>
             <xs:enumeration value="AUDIO_DEVICE_IN_USB_DEVICE"/>
-            <xs:enumeration value="AUDIO_DEVICE_IN_ALL_USB"/>
             <xs:enumeration value="AUDIO_DEVICE_IN_FM_TUNER"/>
             <xs:enumeration value="AUDIO_DEVICE_IN_TV_TUNER"/>
             <xs:enumeration value="AUDIO_DEVICE_IN_LINE"/>
@@ -278,6 +275,7 @@
             <xs:enumeration value="AUDIO_DEVICE_IN_BUS"/>
             <xs:enumeration value="AUDIO_DEVICE_IN_PROXY"/>
             <xs:enumeration value="AUDIO_DEVICE_IN_USB_HEADSET"/>
+            <xs:enumeration value="AUDIO_DEVICE_IN_BLUETOOTH_BLE"/>
             <xs:enumeration value="AUDIO_DEVICE_IN_DEFAULT"/>
             <xs:enumeration value="AUDIO_DEVICE_IN_STUB"/>
         </xs:restriction>
