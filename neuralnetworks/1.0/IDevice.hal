@@ -36,7 +36,7 @@ interface IDevice {
     /**
      * Gets the supported operations in a model.
      *
-     * getSupportedSubgraph indicates which operations of a model are fully
+     * getSupportedOperations indicates which operations of a model are fully
      * supported by the vendor driver. If an operation may not be supported for
      * any reason, getSupportedOperations must return false for that operation.
      *
