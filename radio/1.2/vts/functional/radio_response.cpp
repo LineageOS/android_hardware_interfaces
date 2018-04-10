@@ -732,3 +732,13 @@ Return<void> RadioResponse_v1_2::getCellInfoListResponse_1_2(
     parent_v1_2.notify();
     return Void();
 }
+
+Return<void> RadioResponse_v1_2::getVoiceRegistrationStateResponse_1_2(
+    const RadioResponseInfo& /*info*/, const V1_2::VoiceRegStateResult& /*voiceRegResponse*/) {
+    return Void();
+}
+
+Return<void> RadioResponse_v1_2::getDataRegistrationStateResponse_1_2(
+    const RadioResponseInfo& /*info*/, const V1_2::DataRegStateResult& /*dataRegResponse*/) {
+    return Void();
+}
