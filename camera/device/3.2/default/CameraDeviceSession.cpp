@@ -645,7 +645,10 @@ void CameraDeviceSession::ResultBatcher::invokeProcessCaptureResultCallback(
                     result.fmqResultSize = result.result.size();
                     result.result.resize(0);
                 } else {
-                    ALOGW("%s: couldn't utilize fmq, fall back to hwbinder", __FUNCTION__);
+                    ALOGW("%s: couldn't utilize fmq, fall back to hwbinder, result size: %zu,"
+                    "shared message queue available size: %zu",
+                        __FUNCTION__, result.result.size(),
+                        mResultMetadataQueue->availableToWrite());
                     result.fmqResultSize = 0;
                 }
             }

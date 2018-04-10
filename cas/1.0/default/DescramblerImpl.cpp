@@ -50,12 +50,12 @@ CHECK_SUBSAMPLE_DEF(CryptoPlugin);
 
 DescramblerImpl::DescramblerImpl(
         const sp<SharedLibrary>& library, DescramblerPlugin *plugin) :
-        mLibrary(library), mPlugin(plugin) {
-    ALOGV("CTOR: mPlugin=%p", mPlugin);
+        mLibrary(library), mPluginHolder(plugin) {
+    ALOGV("CTOR: plugin=%p", mPluginHolder.get());
 }
 
 DescramblerImpl::~DescramblerImpl() {
-    ALOGV("DTOR: mPlugin=%p", mPlugin);
+    ALOGV("DTOR: plugin=%p", mPluginHolder.get());
     release();
 }
 
@@ -63,12 +63,22 @@ Return<Status> DescramblerImpl::setMediaCasSession(const HidlCasSessionId& sessi
     ALOGV("%s: sessionId=%s", __FUNCTION__,
             sessionIdToString(sessionId).string());
 
-    return toStatus(mPlugin->setMediaCasSession(sessionId));
+    std::shared_ptr<DescramblerPlugin> holder = std::atomic_load(&mPluginHolder);
+    if (holder.get() == nullptr) {
+        return toStatus(INVALID_OPERATION);
+    }
+
+    return toStatus(holder->setMediaCasSession(sessionId));
 }
 
 Return<bool> DescramblerImpl::requiresSecureDecoderComponent(
         const hidl_string& mime) {
-    return mPlugin->requiresSecureDecoderComponent(String8(mime.c_str()));
+    std::shared_ptr<DescramblerPlugin> holder = std::atomic_load(&mPluginHolder);
+    if (holder.get() == nullptr) {
+        return false;
+    }
+
+    return holder->requiresSecureDecoderComponent(String8(mime.c_str()));
 }
 
 static inline bool validateRangeForSize(
@@ -86,12 +96,23 @@ Return<void> DescramblerImpl::descramble(
         descramble_cb _hidl_cb) {
     ALOGV("%s", __FUNCTION__);
 
+    // Get a local copy of the shared_ptr for the plugin. Note that before
+    // calling the HIDL callback, this shared_ptr must be manually reset,
+    // since the client side could proceed as soon as the callback is called
+    // without waiting for this method to go out of scope.
+    std::shared_ptr<DescramblerPlugin> holder = std::atomic_load(&mPluginHolder);
+    if (holder.get() == nullptr) {
+        _hidl_cb(toStatus(INVALID_OPERATION), 0, NULL);
+        return Void();
+    }
+
     sp<IMemory> srcMem = mapMemory(srcBuffer.heapBase);
 
     // Validate if the offset and size in the SharedBuffer is consistent with the
     // mapped ashmem, since the offset and size is controlled by client.
     if (srcMem == NULL) {
         ALOGE("Failed to map src buffer.");
+        holder.reset();
         _hidl_cb(toStatus(BAD_VALUE), 0, NULL);
         return Void();
     }
@@ -100,6 +121,7 @@ Return<void> DescramblerImpl::descramble(
         ALOGE("Invalid src buffer range: offset %llu, size %llu, srcMem size %llu",
                 srcBuffer.offset, srcBuffer.size, (uint64_t)srcMem->getSize());
         android_errorWriteLog(0x534e4554, "67962232");
+        holder.reset();
         _hidl_cb(toStatus(BAD_VALUE), 0, NULL);
         return Void();
     }
@@ -117,6 +139,7 @@ Return<void> DescramblerImpl::descramble(
                 "srcOffset %llu, totalBytesInSubSamples %llu, srcBuffer size %llu",
                 srcOffset, totalBytesInSubSamples, srcBuffer.size);
         android_errorWriteLog(0x534e4554, "67962232");
+        holder.reset();
         _hidl_cb(toStatus(BAD_VALUE), 0, NULL);
         return Void();
     }
@@ -135,6 +158,7 @@ Return<void> DescramblerImpl::descramble(
                     "dstOffset %llu, totalBytesInSubSamples %llu, srcBuffer size %llu",
                     dstOffset, totalBytesInSubSamples, srcBuffer.size);
             android_errorWriteLog(0x534e4554, "67962232");
+            holder.reset();
             _hidl_cb(toStatus(BAD_VALUE), 0, NULL);
             return Void();
         }
@@ -146,7 +170,7 @@ Return<void> DescramblerImpl::descramble(
     // Casting hidl SubSample to DescramblerPlugin::SubSample, but need
     // to ensure structs are actually idential
 
-    int32_t result = mPlugin->descramble(
+    int32_t result = holder->descramble(
             dstBuffer.type != BufferType::SHARED_MEMORY,
             (DescramblerPlugin::ScramblingControl)scramblingControl,
             subSamples.size(),
@@ -157,17 +181,17 @@ Return<void> DescramblerImpl::descramble(
             dstOffset,
             NULL);
 
+    holder.reset();
     _hidl_cb(toStatus(result >= 0 ? OK : result), result, NULL);
     return Void();
 }
 
 Return<Status> DescramblerImpl::release() {
-    ALOGV("%s: mPlugin=%p", __FUNCTION__, mPlugin);
+    ALOGV("%s: plugin=%p", __FUNCTION__, mPluginHolder.get());
 
-    if (mPlugin != NULL) {
-        delete mPlugin;
-        mPlugin = NULL;
-    }
+    std::shared_ptr<DescramblerPlugin> holder(nullptr);
+    std::atomic_store(&mPluginHolder, holder);
+
     return Status::OK;
 }
 
