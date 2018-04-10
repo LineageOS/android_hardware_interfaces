@@ -38,10 +38,6 @@ using ::android::sp;
  * "notify". This "notify" call awakens any client threads waiting on the
  * callback object.
  *
- * callback object. When the asynchronous task has finished its workload or has
- * failed to launch, it must immediately call "notify", awakening any client
- * threads waiting on the callback object.
- *
  * The CallbackBase class implements some of the base synchronization common to
  * both PrepareModelCallback and ExecutionCallback. For consistency, any HIDL
  * callback class must inherit from CallbackBase as well as the HIDL callback
