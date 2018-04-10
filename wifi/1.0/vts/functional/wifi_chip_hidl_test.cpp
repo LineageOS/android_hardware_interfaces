@@ -88,7 +88,10 @@ class WifiChipHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     uint32_t configureChipForStaIfaceAndGetCapabilities() {
         configureChipForIfaceType(IfaceType::STA, true);
         const auto& status_and_caps = HIDL_INVOKE(wifi_chip_, getCapabilities);
-        EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_caps.first.code);
+        if (status_and_caps.first.code != WifiStatusCode::SUCCESS) {
+            EXPECT_EQ(WifiStatusCode::ERROR_NOT_SUPPORTED, status_and_caps.first.code);
+            return 0;
+        }
         return status_and_caps.second;
     }
 
@@ -193,7 +196,10 @@ TEST_F(WifiChipHidlTest, ConfigureChip) {
 TEST_F(WifiChipHidlTest, GetCapabilities) {
     configureChipForIfaceType(IfaceType::STA, true);
     const auto& status_and_caps = HIDL_INVOKE(wifi_chip_, getCapabilities);
-    EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_caps.first.code);
+    if (status_and_caps.first.code != WifiStatusCode::SUCCESS) {
+        EXPECT_EQ(WifiStatusCode::ERROR_NOT_SUPPORTED, status_and_caps.first.code);
+        return;
+    }
     EXPECT_NE(0u, status_and_caps.second);
 }
 
