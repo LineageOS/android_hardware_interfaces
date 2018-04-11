@@ -1081,7 +1081,11 @@ struct Operand {
     vec<uint32_t> dimensions;
 
     /**
-     * The number of operations that use this operand as input.
+     * The number of times this operand appears as an operation input.
+     *
+     * (For example, if this operand appears once in one operation's
+     * input list, and three times in another operation's input list,
+     * then numberOfConsumers = 4.)
      */
     uint32_t numberOfConsumers;
 
