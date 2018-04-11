@@ -48,6 +48,13 @@
 #include <system/camera_metadata.h>
 #include <ui/GraphicBuffer.h>
 
+#include <android/hardware/graphics/allocator/2.0/IAllocator.h>
+#include <android/hardware/graphics/mapper/2.0/IMapper.h>
+#include <android/hardware/graphics/mapper/2.0/types.h>
+#include <android/hidl/allocator/1.0/IAllocator.h>
+#include <android/hidl/memory/1.0/IMapper.h>
+#include <android/hidl/memory/1.0/IMemory.h>
+
 #include <VtsHalHidlTargetTestBase.h>
 #include <VtsHalHidlTargetTestEnvBase.h>
 
@@ -105,6 +112,9 @@ using ::android::hardware::camera::device::V1_0::FrameCallbackFlag;
 using ::android::hardware::camera::device::V1_0::HandleTimestampMessage;
 using ::android::hardware::MessageQueue;
 using ::android::hardware::kSynchronizedReadWrite;
+using ::android::hidl::allocator::V1_0::IAllocator;
+using ::android::hidl::memory::V1_0::IMemory;
+using ::android::hidl::memory::V1_0::IMapper;
 using ResultMetadataQueue = MessageQueue<uint8_t, kSynchronizedReadWrite>;
 using ::android::hidl::manager::V1_0::IServiceManager;
 
@@ -621,6 +631,8 @@ public:
     void setParameters(
             const sp<::android::hardware::camera::device::V1_0::ICameraDevice> &device,
             const CameraParameters &cameraParams);
+    void allocateGraphicBuffer(uint32_t width, uint32_t height, uint64_t usage,
+            PixelFormat format, hidl_handle *buffer_handle /*out*/);
     void waitForFrameLocked(DataCallbackMsg msgFrame,
             std::unique_lock<std::mutex> &l);
     void openEmptyDeviceSession(const std::string &name,
@@ -3297,15 +3309,15 @@ TEST_F(CameraHidlTest, processCaptureRequestPreview) {
                                                        });
         ASSERT_TRUE(ret.isOk());
 
-        sp<GraphicBuffer> gb = new GraphicBuffer(
-            previewStream.width, previewStream.height,
-            static_cast<int32_t>(halStreamConfig.streams[0].overrideFormat), 1,
-            android_convertGralloc1To0Usage(halStreamConfig.streams[0].producerUsage,
-                                            halStreamConfig.streams[0].consumerUsage));
-        ASSERT_NE(nullptr, gb.get());
+        hidl_handle buffer_handle;
+        allocateGraphicBuffer(previewStream.width, previewStream.height,
+                android_convertGralloc1To0Usage(halStreamConfig.streams[0].producerUsage,
+                    halStreamConfig.streams[0].consumerUsage),
+                halStreamConfig.streams[0].overrideFormat, &buffer_handle);
+
         StreamBuffer outputBuffer = {halStreamConfig.streams[0].id,
                                      bufferId,
-                                     hidl_handle(gb->getNativeBuffer()->handle),
+                                     buffer_handle,
                                      BufferStatus::OK,
                                      nullptr,
                                      nullptr};
@@ -3497,20 +3509,20 @@ TEST_F(CameraHidlTest, processMultiCaptureRequestPreview) {
         InFlightRequest inflightReq = {static_cast<ssize_t> (halStreamConfig.streams.size()), false,
             supportsPartialResults, partialResultCount, resultQueue};
 
-        std::vector<sp<GraphicBuffer>> graphicBuffers;
+        std::vector<hidl_handle> graphicBuffers;
         graphicBuffers.reserve(halStreamConfig.streams.size());
         ::android::hardware::hidl_vec<StreamBuffer> outputBuffers;
         outputBuffers.resize(halStreamConfig.streams.size());
         size_t k = 0;
         for (const auto& halStream : halStreamConfig.streams) {
-            sp<GraphicBuffer> gb = new GraphicBuffer(previewStream.width, previewStream.height,
-                    static_cast<int32_t>(halStream.v3_3.v3_2.overrideFormat), 1,
-                    android_convertGralloc1To0Usage(
-                        halStream.v3_3.v3_2.producerUsage, halStream.v3_3.v3_2.consumerUsage));
-            ASSERT_NE(nullptr, gb.get());
-            graphicBuffers.push_back(gb);
-            outputBuffers[k] = {halStream.v3_3.v3_2.id, bufferId,
-                hidl_handle(gb->getNativeBuffer()->handle), BufferStatus::OK, nullptr, nullptr};
+            hidl_handle buffer_handle;
+            allocateGraphicBuffer(previewStream.width, previewStream.height,
+                    android_convertGralloc1To0Usage(halStream.v3_3.v3_2.producerUsage,
+                        halStream.v3_3.v3_2.consumerUsage),
+                    halStream.v3_3.v3_2.overrideFormat, &buffer_handle);
+            graphicBuffers.push_back(buffer_handle);
+            outputBuffers[k] = {halStream.v3_3.v3_2.id, bufferId, buffer_handle,
+                BufferStatus::OK, nullptr, nullptr};
             bufferId++;
             k++;
         }
@@ -3689,7 +3701,7 @@ TEST_F(CameraHidlTest, processCaptureRequestBurstISO) {
 
         ::android::hardware::camera::common::V1_0::helper::CameraMetadata requestMeta;
         StreamBuffer emptyInputBuffer = {-1, 0, nullptr, BufferStatus::ERROR, nullptr, nullptr};
-        sp<GraphicBuffer> buffers[kBurstFrameCount];
+        hidl_handle buffers[kBurstFrameCount];
         StreamBuffer outputBuffers[kBurstFrameCount];
         CaptureRequest requests[kBurstFrameCount];
         InFlightRequest inflightReqs[kBurstFrameCount];
@@ -3699,15 +3711,13 @@ TEST_F(CameraHidlTest, processCaptureRequestBurstISO) {
             std::unique_lock<std::mutex> l(mLock);
 
             isoValues[i] = ((i % 2) == 0) ? isoRange.data.i32[0] : isoRange.data.i32[1];
-            buffers[i] = new GraphicBuffer( previewStream.width, previewStream.height,
-                static_cast<int32_t>(halStreamConfig.streams[0].overrideFormat), 1,
-                android_convertGralloc1To0Usage( halStreamConfig.streams[0].producerUsage,
-                    halStreamConfig.streams[0].consumerUsage));
-            ASSERT_NE(nullptr, buffers[i].get());
+            allocateGraphicBuffer(previewStream.width, previewStream.height,
+                    android_convertGralloc1To0Usage(halStreamConfig.streams[0].producerUsage,
+                        halStreamConfig.streams[0].consumerUsage),
+                    halStreamConfig.streams[0].overrideFormat, &buffers[i]);
 
             outputBuffers[i] = {halStreamConfig.streams[0].id, bufferId + i,
-                hidl_handle( buffers[i]->getNativeBuffer()->handle), BufferStatus::OK, nullptr,
-                nullptr};
+                buffers[i], BufferStatus::OK, nullptr, nullptr};
             requestMeta.append(reinterpret_cast<camera_metadata_t *> (settings.data()));
 
             // Disable all 3A routines
@@ -3795,15 +3805,15 @@ TEST_F(CameraHidlTest, processCaptureRequestInvalidSinglePreview) {
                 &supportsPartialResults /*out*/,
                 &partialResultCount /*out*/);
 
-        sp<GraphicBuffer> gb = new GraphicBuffer(
-            previewStream.width, previewStream.height,
-            static_cast<int32_t>(halStreamConfig.streams[0].overrideFormat), 1,
-            android_convertGralloc1To0Usage(halStreamConfig.streams[0].producerUsage,
-                                            halStreamConfig.streams[0].consumerUsage));
+        hidl_handle buffer_handle;
+        allocateGraphicBuffer(previewStream.width, previewStream.height,
+                android_convertGralloc1To0Usage(halStreamConfig.streams[0].producerUsage,
+                    halStreamConfig.streams[0].consumerUsage),
+                halStreamConfig.streams[0].overrideFormat, &buffer_handle);
 
         StreamBuffer outputBuffer = {halStreamConfig.streams[0].id,
                                      bufferId,
-                                     hidl_handle(gb->getNativeBuffer()->handle),
+                                     buffer_handle,
                                      BufferStatus::OK,
                                      nullptr,
                                      nullptr};
@@ -3953,15 +3963,15 @@ TEST_F(CameraHidlTest, flushPreviewRequest) {
                                                        });
         ASSERT_TRUE(ret.isOk());
 
-        sp<GraphicBuffer> gb = new GraphicBuffer(
-            previewStream.width, previewStream.height,
-            static_cast<int32_t>(halStreamConfig.streams[0].overrideFormat), 1,
-            android_convertGralloc1To0Usage(halStreamConfig.streams[0].producerUsage,
-                                            halStreamConfig.streams[0].consumerUsage));
-        ASSERT_NE(nullptr, gb.get());
+        hidl_handle buffer_handle;
+        allocateGraphicBuffer(previewStream.width, previewStream.height,
+                android_convertGralloc1To0Usage(halStreamConfig.streams[0].producerUsage,
+                    halStreamConfig.streams[0].consumerUsage),
+                halStreamConfig.streams[0].overrideFormat, &buffer_handle);
+
         StreamBuffer outputBuffer = {halStreamConfig.streams[0].id,
                                      bufferId,
-                                     hidl_handle(gb->getNativeBuffer()->handle),
+                                     buffer_handle,
                                      BufferStatus::OK,
                                      nullptr,
                                      nullptr};
@@ -4792,6 +4802,44 @@ void CameraHidlTest::setParameters(
             cameraParams.flatten().string());
     ASSERT_TRUE(returnStatus.isOk());
     ASSERT_EQ(Status::OK, returnStatus);
+}
+
+void CameraHidlTest::allocateGraphicBuffer(uint32_t width, uint32_t height, uint64_t usage,
+        PixelFormat format, hidl_handle *buffer_handle /*out*/) {
+    ASSERT_NE(buffer_handle, nullptr);
+
+    sp<android::hardware::graphics::allocator::V2_0::IAllocator> allocator =
+        android::hardware::graphics::allocator::V2_0::IAllocator::getService();
+    ASSERT_NE(nullptr, allocator.get());
+
+    sp<android::hardware::graphics::mapper::V2_0::IMapper> mapper =
+        android::hardware::graphics::mapper::V2_0::IMapper::getService();
+    ASSERT_NE(mapper.get(), nullptr);
+
+    android::hardware::graphics::mapper::V2_0::IMapper::BufferDescriptorInfo descriptorInfo {};
+    descriptorInfo.width = width;
+    descriptorInfo.height = height;
+    descriptorInfo.layerCount = 1;
+    descriptorInfo.format = format;
+    descriptorInfo.usage = usage;
+
+    ::android::hardware::hidl_vec<uint32_t> descriptor;
+    auto ret = mapper->createDescriptor(
+        descriptorInfo, [&descriptor](android::hardware::graphics::mapper::V2_0::Error err,
+                            ::android::hardware::hidl_vec<uint32_t> desc) {
+            ASSERT_EQ(err, android::hardware::graphics::mapper::V2_0::Error::NONE);
+            descriptor = desc;
+        });
+    ASSERT_TRUE(ret.isOk());
+
+    ret = allocator->allocate(descriptor, 1u,
+        [&](android::hardware::graphics::mapper::V2_0::Error err, uint32_t /*stride*/,
+            const ::android::hardware::hidl_vec<::android::hardware::hidl_handle>& buffers) {
+            ASSERT_EQ(android::hardware::graphics::mapper::V2_0::Error::NONE, err);
+            ASSERT_EQ(buffers.size(), 1u);
+            *buffer_handle = buffers[0];
+        });
+    ASSERT_TRUE(ret.isOk());
 }
 
 int main(int argc, char **argv) {
