@@ -16,13 +16,14 @@
 
 #include <radio_hidl_hal_utils_v1_2.h>
 
-CardStatus cardStatus;
+::android::hardware::radio::V1_2::CardStatus cardStatus;
 
 RadioResponse_v1_2::RadioResponse_v1_2(RadioHidlTest_v1_2& parent) : parent_v1_2(parent) {}
 
 /* 1.0 Apis */
-Return<void> RadioResponse_v1_2::getIccCardStatusResponse(const RadioResponseInfo& /*info*/,
-                                                          const CardStatus& /*card_status*/) {
+Return<void> RadioResponse_v1_2::getIccCardStatusResponse(
+    const RadioResponseInfo& /*info*/,
+    const ::android::hardware::radio::V1_0::CardStatus& /*card_status*/) {
     return Void();
 }
 
@@ -62,7 +63,8 @@ Return<void> RadioResponse_v1_2::supplyNetworkDepersonalizationResponse(
 }
 
 Return<void> RadioResponse_v1_2::getCurrentCallsResponse(
-    const RadioResponseInfo& /*info*/, const ::android::hardware::hidl_vec<Call>& /*calls*/) {
+    const RadioResponseInfo& /*info*/,
+    const ::android::hardware::hidl_vec<::android::hardware::radio::V1_0::Call>& /*calls*/) {
     return Void();
 }
 
@@ -107,18 +109,21 @@ Return<void> RadioResponse_v1_2::getLastCallFailCauseResponse(
     return Void();
 }
 
-Return<void> RadioResponse_v1_2::getSignalStrengthResponse(const RadioResponseInfo& /*info*/,
-                                                           const SignalStrength& /*sig_strength*/) {
+Return<void> RadioResponse_v1_2::getSignalStrengthResponse(
+    const RadioResponseInfo& /*info*/,
+    const ::android::hardware::radio::V1_0::SignalStrength& /*sig_strength*/) {
     return Void();
 }
 
 Return<void> RadioResponse_v1_2::getVoiceRegistrationStateResponse(
-    const RadioResponseInfo& /*info*/, const VoiceRegStateResult& /*voiceRegResponse*/) {
+    const RadioResponseInfo& /*info*/,
+    const ::android::hardware::radio::V1_0::VoiceRegStateResult& /*voiceRegResponse*/) {
     return Void();
 }
 
 Return<void> RadioResponse_v1_2::getDataRegistrationStateResponse(
-    const RadioResponseInfo& /*info*/, const DataRegStateResult& /*dataRegResponse*/) {
+    const RadioResponseInfo& /*info*/,
+    const ::android::hardware::radio::V1_0::DataRegStateResult& /*dataRegResponse*/) {
     return Void();
 }
 
@@ -515,7 +520,7 @@ Return<void> RadioResponse_v1_2::getVoiceRadioTechnologyResponse(const RadioResp
 
 Return<void> RadioResponse_v1_2::getCellInfoListResponse(
     const RadioResponseInfo& /*info*/,
-    const ::android::hardware::hidl_vec<CellInfo>& /*cellInfo*/) {
+    const ::android::hardware::hidl_vec<::android::hardware::radio::V1_0::CellInfo>& /*cellInfo*/) {
     return Void();
 }
 
@@ -704,8 +709,9 @@ Return<void> RadioResponse_v1_2::setLinkCapacityReportingCriteriaResponse(
     return Void();
 }
 
-Return<void> RadioResponse_v1_2::getIccCardStatusResponse_1_2(const RadioResponseInfo& info,
-                                                              const CardStatus& card_status) {
+Return<void> RadioResponse_v1_2::getIccCardStatusResponse_1_2(
+    const RadioResponseInfo& info,
+    const ::android::hardware::radio::V1_2::CardStatus& card_status) {
     rspInfo = info;
     cardStatus = card_status;
     parent_v1_2.notify();
@@ -713,32 +719,37 @@ Return<void> RadioResponse_v1_2::getIccCardStatusResponse_1_2(const RadioRespons
 }
 
 Return<void> RadioResponse_v1_2::getCurrentCallsResponse_1_2(
-    const RadioResponseInfo& info, const ::android::hardware::hidl_vec<Call>& /*calls*/) {
+    const RadioResponseInfo& info,
+    const ::android::hardware::hidl_vec<::android::hardware::radio::V1_2::Call>& /*calls*/) {
     rspInfo = info;
     parent_v1_2.notify();
     return Void();
 }
 
 Return<void> RadioResponse_v1_2::getSignalStrengthResponse_1_2(
-    const RadioResponseInfo& info, const SignalStrength& /*sig_strength*/) {
+    const RadioResponseInfo& info,
+    const ::android::hardware::radio::V1_2::SignalStrength& /*sig_strength*/) {
     rspInfo = info;
     parent_v1_2.notify();
     return Void();
 }
 
 Return<void> RadioResponse_v1_2::getCellInfoListResponse_1_2(
-    const RadioResponseInfo& info, const ::android::hardware::hidl_vec<CellInfo>& /*cellInfo*/) {
+    const RadioResponseInfo& info,
+    const ::android::hardware::hidl_vec<::android::hardware::radio::V1_2::CellInfo>& /*cellInfo*/) {
     rspInfo = info;
     parent_v1_2.notify();
     return Void();
 }
 
 Return<void> RadioResponse_v1_2::getVoiceRegistrationStateResponse_1_2(
-    const RadioResponseInfo& /*info*/, const V1_2::VoiceRegStateResult& /*voiceRegResponse*/) {
+    const RadioResponseInfo& /*info*/,
+    const ::android::hardware::radio::V1_2::VoiceRegStateResult& /*voiceRegResponse*/) {
     return Void();
 }
 
 Return<void> RadioResponse_v1_2::getDataRegistrationStateResponse_1_2(
-    const RadioResponseInfo& /*info*/, const V1_2::DataRegStateResult& /*dataRegResponse*/) {
+    const RadioResponseInfo& /*info*/,
+    const ::android::hardware::radio::V1_2::DataRegStateResult& /*dataRegResponse*/) {
     return Void();
 }
