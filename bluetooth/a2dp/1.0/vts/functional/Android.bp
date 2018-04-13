@@ -15,32 +15,12 @@
 //
 
 cc_test {
-    name: "VtsHalWifiV1_2TargetTest",
+    name: "VtsHalBluetoothA2dpV1_0TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
-    srcs: [
-        "VtsHalWifiV1_2TargetTest.cpp",
-        "wifi_chip_hidl_test.cpp",
-        "wifi_sta_iface_hidl_test.cpp",
-    ],
+    srcs: ["VtsHalBluetoothA2dpV1_0TargetTest.cpp"],
     static_libs: [
-        "VtsHalWifiV1_0TargetTestUtil",
-        "android.hardware.wifi@1.0",
-        "android.hardware.wifi@1.1",
-        "android.hardware.wifi@1.2",
-    ],
-}
-
-cc_test {
-    name: "VtsHalWifiNanV1_2TargetTest",
-    defaults: ["VtsHalTargetTestDefaults"],
-    srcs: [
-        "VtsHalWifiV1_2TargetTest.cpp",
-        "wifi_nan_iface_hidl_test.cpp",
-    ],
-    static_libs: [
-        "VtsHalWifiV1_0TargetTestUtil",
-        "android.hardware.wifi@1.0",
-        "android.hardware.wifi@1.1",
-        "android.hardware.wifi@1.2",
+        "android.hardware.bluetooth@1.0",
+        "android.hardware.bluetooth.a2dp@1.0",
+        "libbluetooth-types",
     ],
 }

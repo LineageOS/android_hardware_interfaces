@@ -200,16 +200,16 @@ enum EffectFlags : int32_t {
  * enumeration of the effect engines present in a library.
  */
 struct EffectDescriptor {
-    Uuid type;             // UUID of to the OpenSL ES interface implemented
-                           // by this effect
-    Uuid uuid;             // UUID for this particular implementation
-    EffectFlags flags;     // effect engine capabilities/requirements flags
-    uint16_t cpuLoad;      // CPU load indication expressed in 0.1 MIPS units
-                           // as estimated on an ARM9E core (ARMv5TE) with 0 WS
-    uint16_t memoryUsage;  // data memory usage expressed in KB and includes
-                           // only dynamically allocated memory
-    uint8_t[64] name;      // human readable effect name
-    uint8_t[64] implementor;  // human readable effect implementor name
+    Uuid type;                   // UUID of to the OpenSL ES interface implemented
+                                 // by this effect
+    Uuid uuid;                   // UUID for this particular implementation
+    bitfield<EffectFlags> flags; // effect engine capabilities/requirements flags
+    uint16_t cpuLoad;            // CPU load indication expressed in 0.1 MIPS units
+                                 // as estimated on an ARM9E core (ARMv5TE) with 0 WS
+    uint16_t memoryUsage;        // data memory usage expressed in KB and includes
+                                 // only dynamically allocated memory
+    uint8_t[64] name;            // human readable effect name
+    uint8_t[64] implementor;     // human readable effect implementor name
 };
 
 /**

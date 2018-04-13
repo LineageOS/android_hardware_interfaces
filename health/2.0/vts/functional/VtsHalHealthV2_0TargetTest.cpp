@@ -190,18 +190,6 @@ bool verifyStorageInfo(const hidl_vec<struct StorageInfo>& info) {
     return true;
 }
 
-bool verifyDiskStats(const hidl_vec<struct DiskStats>& stats) {
-    for (size_t i = 0; i < stats.size(); i++) {
-        if (!(stats[i].reads > 0 && stats[i].readMerges > 0 && stats[i].readSectors > 0 &&
-              stats[i].readTicks > 0 && stats[i].writes > 0 && stats[i].writeMerges > 0 &&
-              stats[i].writeSectors > 0 && stats[i].writeTicks > 0 && stats[i].ioTicks > 0)) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
 template <typename T>
 bool verifyEnum(T value) {
     for (auto it : hidl_enum_iterator<T>()) {
@@ -214,7 +202,7 @@ bool verifyEnum(T value) {
 }
 
 bool verifyHealthInfo(const HealthInfo& health_info) {
-    if (!verifyStorageInfo(health_info.storageInfos) || !verifyDiskStats(health_info.diskStats)) {
+    if (!verifyStorageInfo(health_info.storageInfos)) {
         return false;
     }
 
@@ -264,7 +252,7 @@ TEST_F(HealthHidlTest, Properties) {
         EXPECT_VALID_OR_UNSUPPORTED_PROP(result, toString(value), verifyStorageInfo(value));
     }));
     EXPECT_OK(mHealth->getDiskStats([](auto result, auto& value) {
-        EXPECT_VALID_OR_UNSUPPORTED_PROP(result, toString(value), verifyDiskStats(value));
+        EXPECT_VALID_OR_UNSUPPORTED_PROP(result, toString(value), true);
     }));
     EXPECT_OK(mHealth->getHealthInfo([](auto result, auto& value) {
         EXPECT_VALID_OR_UNSUPPORTED_PROP(result, toString(value), verifyHealthInfo(value));

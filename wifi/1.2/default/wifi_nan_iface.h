@@ -132,7 +132,7 @@ class WifiNanIface : public V1_2::IWifiNanIface {
                                                 uint32_t ndpInstanceId);
 
     WifiStatus registerEventCallback_1_2Internal(
-        const sp<IWifiNanIfaceEventCallback>& callback);
+        const sp<V1_2::IWifiNanIfaceEventCallback>& callback);
     WifiStatus enableRequest_1_2Internal(
         uint16_t cmd_id, const NanEnableRequest& msg1,
         const NanConfigRequestSupplemental& msg2);
@@ -140,13 +140,18 @@ class WifiNanIface : public V1_2::IWifiNanIface {
         uint16_t cmd_id, const NanConfigRequest& msg,
         const NanConfigRequestSupplemental& msg2);
 
-    std::set<sp<IWifiNanIfaceEventCallback>> getEventCallbacks();
+    // all 1_0 and descendant callbacks
+    std::set<sp<V1_0::IWifiNanIfaceEventCallback>> getEventCallbacks();
+    // all 1_2 and descendant callbacks
+    std::set<sp<V1_2::IWifiNanIfaceEventCallback>> getEventCallbacks_1_2();
 
     std::string ifname_;
     std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal_;
     bool is_valid_;
-    hidl_callback_util::HidlCallbackHandler<IWifiNanIfaceEventCallback>
+    hidl_callback_util::HidlCallbackHandler<V1_0::IWifiNanIfaceEventCallback>
         event_cb_handler_;
+    hidl_callback_util::HidlCallbackHandler<V1_2::IWifiNanIfaceEventCallback>
+        event_cb_handler_1_2_;
 
     DISALLOW_COPY_AND_ASSIGN(WifiNanIface);
 };

@@ -136,6 +136,7 @@ TEST_F(HmacKeySharingTest, ComputeSharedHmac) {
 
     responses = computeSharedHmac(all_keymasters(), params);
     ASSERT_GT(responses.size(), 0U);
+    ASSERT_EQ(32U, responses[0].sharing_check.size());
     verifyResponses(responses[0].sharing_check, responses);
 }
 
@@ -216,7 +217,11 @@ TEST_F(HmacKeySharingTest, ComputeSharedHmacCorruptSeed) {
     // matter what value is in the additional byte; it changes the seed regardless.
     auto param_to_tweak = rand() % params.size();
     auto& to_tweak = params[param_to_tweak].seed;
-    to_tweak.resize(to_tweak.size() + 1);
+    ASSERT_TRUE(to_tweak.size() == 32 || to_tweak.size() == 0);
+    if (!to_tweak.size()) {
+        to_tweak.resize(32);  // Contents don't matter; a little randomization is nice.
+    }
+    to_tweak[0]++;
 
     responses = computeSharedHmac(all_keymasters(), params);
     for (size_t i = 0; i < responses.size(); ++i) {
