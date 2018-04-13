@@ -34,30 +34,47 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := framework_compatibility_matrix.legacy.xml
 LOCAL_MODULE_STEM := compatibility_matrix.legacy.xml
 LOCAL_SRC_FILES := $(LOCAL_MODULE_STEM)
-LOCAL_KERNEL_VERSIONS := 3.18.0 4.4.0 4.9.0
+LOCAL_KERNEL_VERSIONS := \
+    3.18.0 \
+    4.4.0 \
+    4.9.0 \
+    4.14.0 \
+
 include $(BUILD_FRAMEWORK_COMPATIBILITY_MATRIX)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := framework_compatibility_matrix.1.xml
 LOCAL_MODULE_STEM := compatibility_matrix.1.xml
 LOCAL_SRC_FILES := $(LOCAL_MODULE_STEM)
-LOCAL_KERNEL_VERSIONS := 3.18.0 4.4.0 4.9.0
+LOCAL_KERNEL_VERSIONS := \
+    3.18.0 \
+    4.4.0 \
+    4.9.0 \
+    4.14.0 \
+
 include $(BUILD_FRAMEWORK_COMPATIBILITY_MATRIX)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := framework_compatibility_matrix.2.xml
 LOCAL_MODULE_STEM := compatibility_matrix.2.xml
 LOCAL_SRC_FILES := $(LOCAL_MODULE_STEM)
-LOCAL_KERNEL_VERSIONS := 3.18.0 4.4.0 4.9.0
-include $(BUILD_FRAMEWORK_COMPATIBILITY_MATRIX)
+LOCAL_KERNEL_VERSIONS := \
+    3.18.0 \
+    4.4.0 \
+    4.9.0 \
+    4.14.0 \
 
-# TODO(b/72409164): STOPSHIP: update kernel version requirements
+include $(BUILD_FRAMEWORK_COMPATIBILITY_MATRIX)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := framework_compatibility_matrix.3.xml
 LOCAL_MODULE_STEM := compatibility_matrix.3.xml
 LOCAL_SRC_FILES := $(LOCAL_MODULE_STEM)
-LOCAL_KERNEL_VERSIONS := 4.4.0 4.9.0
+LOCAL_KERNEL_VERSIONS := \
+    4.4.0 \
+    4.9.0 \
+    4.14.0 \
+
 include $(BUILD_FRAMEWORK_COMPATIBILITY_MATRIX)
 
 # Framework Compatibility Matrix (common to all FCM versions)
