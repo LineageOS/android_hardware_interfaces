@@ -102,6 +102,8 @@ interface IDevice extends @1.0::IDevice {
      * Multiple threads can call prepareModel on the same model concurrently.
      *
      * @param model The model to be prepared for execution.
+     * @param preference Indicates the intended execution behavior of a prepared
+     *                   model.
      * @param callback A callback object used to return the error status of
      *                 preparing the model for execution and the prepared model
      *                 if successful, nullptr otherwise. The callback object's
@@ -115,6 +117,7 @@ interface IDevice extends @1.0::IDevice {
      *                - INVALID_ARGUMENT if one of the input arguments is
      *                  invalid
      */
-    prepareModel_1_1(Model model, IPreparedModelCallback callback)
+    prepareModel_1_1(Model model, ExecutionPreference preference,
+                     IPreparedModelCallback callback)
           generates (ErrorStatus status);
 };
