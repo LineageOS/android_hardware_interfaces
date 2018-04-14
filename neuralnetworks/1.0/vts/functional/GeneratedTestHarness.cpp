@@ -72,37 +72,30 @@ void Execute(const sp<IDevice>& device, std::function<Model(void)> create_model,
     Model model = create_model();
 
     // see if service can handle model
-    ErrorStatus supportedStatus;
     bool fullySupportsModel = false;
     Return<void> supportedCall = device->getSupportedOperations(
-        model, [&](ErrorStatus status, const hidl_vec<bool>& supported) {
-            supportedStatus = status;
+        model, [&fullySupportsModel](ErrorStatus status, const hidl_vec<bool>& supported) {
+            ASSERT_EQ(ErrorStatus::NONE, status);
             ASSERT_NE(0ul, supported.size());
             fullySupportsModel =
                 std::all_of(supported.begin(), supported.end(), [](bool valid) { return valid; });
         });
     ASSERT_TRUE(supportedCall.isOk());
-    ASSERT_EQ(ErrorStatus::NONE, supportedStatus);
 
     // launch prepare model
     sp<PreparedModelCallback> preparedModelCallback = new PreparedModelCallback();
     ASSERT_NE(nullptr, preparedModelCallback.get());
     Return<ErrorStatus> prepareLaunchStatus = device->prepareModel(model, preparedModelCallback);
     ASSERT_TRUE(prepareLaunchStatus.isOk());
+    ASSERT_EQ(ErrorStatus::NONE, static_cast<ErrorStatus>(prepareLaunchStatus));
 
     // retrieve prepared model
     preparedModelCallback->wait();
     ErrorStatus prepareReturnStatus = preparedModelCallback->getStatus();
     sp<IPreparedModel> preparedModel = preparedModelCallback->getPreparedModel();
-    if (fullySupportsModel) {
-        EXPECT_EQ(ErrorStatus::NONE, prepareReturnStatus);
-    } else {
-        EXPECT_TRUE(prepareReturnStatus == ErrorStatus::NONE ||
-                    prepareReturnStatus == ErrorStatus::GENERAL_FAILURE);
-    }
 
     // early termination if vendor service cannot fully prepare model
-    if (!fullySupportsModel && prepareReturnStatus == ErrorStatus::GENERAL_FAILURE) {
+    if (!fullySupportsModel && prepareReturnStatus != ErrorStatus::NONE) {
         ASSERT_EQ(nullptr, preparedModel.get());
         LOG(INFO) << "NN VTS: Early termination of test because vendor service cannot "
                      "prepare model that it does not support.";
@@ -111,6 +104,7 @@ void Execute(const sp<IDevice>& device, std::function<Model(void)> create_model,
                   << std::endl;
         return;
     }
+    EXPECT_EQ(ErrorStatus::NONE, prepareReturnStatus);
     ASSERT_NE(nullptr, preparedModel.get());
 
     int example_no = 1;

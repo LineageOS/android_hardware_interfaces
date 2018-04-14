@@ -74,8 +74,6 @@ class NeuralnetworksHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     void SetUp() override;
     void TearDown() override;
 
-    sp<IPreparedModel> doPrepareModelShortcut();
-
     sp<IDevice> device;
 };
 
