@@ -298,7 +298,8 @@ bool CameraProvider::initialize() {
         return true;
     }
 
-    mPreferredHal3MinorVersion = property_get_int32("ro.camera.wrapper.hal3TrebleMinorVersion", 3);
+    mPreferredHal3MinorVersion =
+        property_get_int32("ro.vendor.camera.wrapper.hal3TrebleMinorVersion", 3);
     ALOGV("Preferred HAL 3 minor version is %d", mPreferredHal3MinorVersion);
     switch(mPreferredHal3MinorVersion) {
         case 2:

@@ -716,3 +716,33 @@ TEST_F(RadioHidlTest_v1_2, getDataRegistrationState) {
         radioRsp_v1_2->rspInfo.error,
         {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::NOT_PROVISIONED}));
 }
+
+/*
+ * Test IRadio.getAvailableBandModes() for the response returned.
+ */
+TEST_F(RadioHidlTest_v1_2, getAvailableBandModes) {
+    int serial = GetRandomSerialNumber();
+
+    Return<void> res = radio_v1_2->getAvailableBandModes(serial);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_2->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_2->rspInfo.serial);
+    ALOGI("getAvailableBandModes, rspInfo.error = %s\n",
+          toString(radioRsp_v1_2->rspInfo.error).c_str());
+    ASSERT_TRUE(
+        CheckAnyOfErrors(radioRsp_v1_2->rspInfo.error,
+                         {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::MODEM_ERR,
+                          RadioError::INTERNAL_ERR,
+                          // If REQUEST_NOT_SUPPORTED is returned, then it should also be returned
+                          // for setRandMode().
+                          RadioError::REQUEST_NOT_SUPPORTED}));
+    bool hasUnspecifiedBandMode = false;
+    if (radioRsp_v1_2->rspInfo.error == RadioError::NONE) {
+        for (const RadioBandMode& mode : radioRsp_v1_2->radioBandModes) {
+            // Automatic mode selection must be supported
+            if (mode == RadioBandMode::BAND_MODE_UNSPECIFIED) hasUnspecifiedBandMode = true;
+        }
+        ASSERT_TRUE(hasUnspecifiedBandMode);
+    }
+}

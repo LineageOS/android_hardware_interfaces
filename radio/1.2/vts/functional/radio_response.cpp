@@ -317,8 +317,10 @@ Return<void> RadioResponse_v1_2::setBandModeResponse(const RadioResponseInfo& /*
 }
 
 Return<void> RadioResponse_v1_2::getAvailableBandModesResponse(
-    const RadioResponseInfo& /*info*/,
-    const ::android::hardware::hidl_vec<RadioBandMode>& /*bandModes*/) {
+    const RadioResponseInfo& info, const ::android::hardware::hidl_vec<RadioBandMode>& bandModes) {
+    rspInfo = info;
+    radioBandModes = bandModes;
+    parent_v1_2.notify();
     return Void();
 }
 
