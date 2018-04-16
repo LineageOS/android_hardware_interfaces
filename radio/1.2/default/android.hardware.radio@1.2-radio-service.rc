@@ -1,0 +1,4 @@
+service vendor.radio-1-2 /vendor/bin/hw/android.hardware.radio@1.2-radio-service
+    class hal
+    user system
+    group system
