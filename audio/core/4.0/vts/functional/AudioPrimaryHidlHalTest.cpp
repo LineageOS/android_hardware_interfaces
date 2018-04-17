@@ -63,6 +63,7 @@ using ::android::hardware::audio::V4_0::AudioDrain;
 using ::android::hardware::audio::V4_0::DeviceAddress;
 using ::android::hardware::audio::V4_0::IDevice;
 using ::android::hardware::audio::V4_0::IPrimaryDevice;
+using Rotation = ::android::hardware::audio::V4_0::IPrimaryDevice::Rotation;
 using TtyMode = ::android::hardware::audio::V4_0::IPrimaryDevice::TtyMode;
 using ::android::hardware::audio::V4_0::IDevicesFactory;
 using ::android::hardware::audio::V4_0::IStream;
@@ -94,6 +95,11 @@ using ::android::hardware::audio::common::V4_0::ThreadInfo;
 using ::android::hardware::audio::common::utils::mkBitfield;
 
 using namespace ::android::hardware::audio::common::test::utility;
+
+// Typical accepted results from interface methods
+static auto okOrNotSupported = {Result::OK, Result::NOT_SUPPORTED};
+static auto okOrNotSupportedOrInvalidArgs = {Result::OK, Result::NOT_SUPPORTED,
+                                             Result::INVALID_ARGUMENTS};
 
 class AudioHidlTestEnvironment : public ::Environment {
    public:
@@ -439,11 +445,7 @@ INSTANTIATE_TEST_CASE_P(
 TEST_F(AudioPrimaryHidlTest, setScreenState) {
     doc::test("Check that the hal can receive the screen state");
     for (bool turnedOn : {false, true, true, false, false}) {
-        auto ret = device->setScreenState(turnedOn);
-        ASSERT_IS_OK(ret);
-        Result result = ret;
-        auto okOrNotSupported = {Result::OK, Result::NOT_SUPPORTED};
-        ASSERT_RESULT(okOrNotSupported, result);
+        ASSERT_RESULT(okOrNotSupported, device->setScreenState(turnedOn));
     }
 }
 
@@ -783,7 +785,7 @@ TEST_IO_STREAM(SupportedFormat, "Check that the stream format is declared as sup
                testCapabilityGetter("getSupportedFormat", stream.get(), &getSupportedFormats,
                                     &IStream::getFormat, &IStream::setFormat))
 
-static void testGetDevice(IStream* stream, AudioDevice expectedDevice) {
+static void testGetDevices(IStream* stream, AudioDevice expectedDevice) {
     hidl_vec<DeviceAddress> devices;
     Result res;
     ASSERT_OK(stream->getDevices(returnIn(res, devices)));
@@ -798,11 +800,11 @@ static void testGetDevice(IStream* stream, AudioDevice expectedDevice) {
         << "\n  Actual: " << ::testing::PrintToString(device);
 }
 
-TEST_IO_STREAM(GetDevice, "Check that the stream device == the one it was opened with",
+TEST_IO_STREAM(GetDevices, "Check that the stream device == the one it was opened with",
                areAudioPatchesSupported() ? doc::partialTest("Audio patches are supported")
-                                          : testGetDevice(stream.get(), address.device))
+                                          : testGetDevices(stream.get(), address.device))
 
-static void testSetDevice(IStream* stream, const DeviceAddress& address) {
+static void testSetDevices(IStream* stream, const DeviceAddress& address) {
     DeviceAddress otherAddress = address;
     otherAddress.device = (address.device & AudioDevice::BIT_IN) == 0 ? AudioDevice::OUT_SPEAKER
                                                                       : AudioDevice::IN_BUILTIN_MIC;
@@ -811,9 +813,9 @@ static void testSetDevice(IStream* stream, const DeviceAddress& address) {
     ASSERT_OK(stream->setDevices({address}));  // Go back to the original value
 }
 
-TEST_IO_STREAM(SetDevice, "Check that the stream can be rerouted to SPEAKER or BUILTIN_MIC",
+TEST_IO_STREAM(SetDevices, "Check that the stream can be rerouted to SPEAKER or BUILTIN_MIC",
                areAudioPatchesSupported() ? doc::partialTest("Audio patches are supported")
-                                          : testSetDevice(stream.get(), address))
+                                          : testSetDevices(stream.get(), address))
 
 static void testGetAudioProperties(IStream* stream, AudioConfig expectedConfig) {
     uint32_t sampleRateHz;
@@ -833,10 +835,8 @@ TEST_IO_STREAM(GetAudioProperties,
                "Check that the stream audio properties == the ones it was opened with",
                testGetAudioProperties(stream.get(), audioConfig))
 
-static auto invalidArgsOrNotSupportedOrOK = {Result::INVALID_ARGUMENTS, Result::NOT_SUPPORTED,
-                                             Result::OK};
 TEST_IO_STREAM(SetHwAvSync, "Try to set hardware sync to an invalid value",
-               ASSERT_RESULT(invalidArgsOrNotSupportedOrOK, stream->setHwAvSync(666)))
+               ASSERT_RESULT(okOrNotSupportedOrInvalidArgs, stream->setHwAvSync(666)))
 
 static void checkGetHwAVSync(IDevice* device) {
     Result res;
@@ -882,7 +882,7 @@ TEST_IO_STREAM(setNonExistingParameter, "Set the values of an non existing param
                // error code when a key is not supported.
                // To allow implementation to just wrapped the legacy one, consider OK as a
                // valid result for setting a non existing parameter.
-               ASSERT_RESULT(invalidArgsOrNotSupportedOrOK,
+               ASSERT_RESULT(okOrNotSupportedOrInvalidArgs,
                              stream->setParameters({}, {{"non existing key", "0"}})))
 
 TEST_IO_STREAM(DebugDump, "Check that a stream can dump its state without error",
@@ -1147,7 +1147,6 @@ static bool isAsyncModeSupported(IStreamOut* stream) {
     auto res = stream->setCallback(new MockOutCallbacks);
     stream->clearCallback();  // try to restore the no callback state, ignore
                               // any error
-    auto okOrNotSupported = {Result::OK, Result::NOT_SUPPORTED};
     EXPECT_RESULT(okOrNotSupported, res);
     return res.isOk() ? res == Result::OK : false;
 }
@@ -1257,6 +1256,11 @@ TEST_P(OutputStreamTest, GetPresentationPositionStop) {
     ASSERT_PRED2([](auto c, auto m) { return c - m < 1e+6; }, currentTime, mesureTime);
 }
 
+TEST_P(OutputStreamTest, SelectPresentation) {
+    doc::test("Verify that presentation selection does not crash");
+    ASSERT_RESULT(okOrNotSupported, stream->selectPresentation(0, 0));
+}
+
 //////////////////////////////////////////////////////////////////////////////
 /////////////////////////////// PrimaryDevice ////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
@@ -1283,6 +1287,42 @@ TEST_F(AudioPrimaryHidlTest, setMode) {
     }
 }
 
+TEST_F(AudioPrimaryHidlTest, setBtHfpSampleRate) {
+    doc::test(
+        "Make sure setBtHfpSampleRate either succeeds or "
+        "indicates that it is not supported at all, or that the provided value is invalid");
+    for (auto samplingRate : {8000, 16000, 22050, 24000}) {
+        ASSERT_RESULT(okOrNotSupportedOrInvalidArgs, device->setBtHfpSampleRate(samplingRate));
+    }
+}
+
+TEST_F(AudioPrimaryHidlTest, setBtHfpVolume) {
+    doc::test(
+        "Make sure setBtHfpVolume is either not supported or "
+        "only succeed if volume is in [0,1]");
+    auto ret = device->setBtHfpVolume(0.0);
+    if (ret == Result::NOT_SUPPORTED) {
+        doc::partialTest("setBtHfpVolume is not supported");
+        return;
+    }
+    testUnitaryGain([](float volume) { return device->setBtHfpVolume(volume); });
+}
+
+TEST_F(AudioPrimaryHidlTest, setBtScoHeadsetDebugName) {
+    doc::test(
+        "Make sure setBtScoHeadsetDebugName either succeeds or "
+        "indicates that it is not supported");
+    ASSERT_RESULT(okOrNotSupported, device->setBtScoHeadsetDebugName("test"));
+}
+
+TEST_F(AudioPrimaryHidlTest, updateRotation) {
+    doc::test("Check that the hal can receive the current rotation");
+    for (Rotation rotation : {Rotation::DEG_0, Rotation::DEG_90, Rotation::DEG_180,
+                              Rotation::DEG_270, Rotation::DEG_0}) {
+        ASSERT_RESULT(okOrNotSupported, device->updateRotation(rotation));
+    }
+}
+
 TEST_F(BoolAccessorPrimaryHidlTest, BtScoNrecEnabled) {
     doc::test("Query and set the BT SCO NR&EC state");
     testOptionalAccessors("BtScoNrecEnabled", {true, false, true},
@@ -1295,6 +1335,12 @@ TEST_F(BoolAccessorPrimaryHidlTest, setGetBtScoWidebandEnabled) {
     testOptionalAccessors("BtScoWideband", {true, false, true},
                           &IPrimaryDevice::setBtScoWidebandEnabled,
                           &IPrimaryDevice::getBtScoWidebandEnabled);
+}
+
+TEST_F(BoolAccessorPrimaryHidlTest, setGetBtHfpEnabled) {
+    doc::test("Query and set the BT HFP state");
+    testOptionalAccessors("BtHfpEnabled", {true, false, true}, &IPrimaryDevice::setBtHfpEnabled,
+                          &IPrimaryDevice::getBtHfpEnabled);
 }
 
 using TtyModeAccessorPrimaryHidlTest = AccessorPrimaryHidlTest<TtyMode>;
