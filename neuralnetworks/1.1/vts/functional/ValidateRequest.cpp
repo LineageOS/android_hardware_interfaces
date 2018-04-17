@@ -36,9 +36,9 @@ namespace functional {
 using ::android::hardware::neuralnetworks::V1_0::implementation::ExecutionCallback;
 using ::android::hardware::neuralnetworks::V1_0::implementation::PreparedModelCallback;
 using ::android::hidl::memory::V1_0::IMemory;
-using generated_tests::MixedTyped;
-using generated_tests::MixedTypedExampleType;
-using generated_tests::for_all;
+using test_helper::MixedTyped;
+using test_helper::MixedTypedExampleType;
+using test_helper::for_all;
 
 ///////////////////////// UTILITY FUNCTIONS /////////////////////////
 
