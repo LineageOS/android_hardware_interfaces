@@ -42,38 +42,66 @@ constexpr int WHEEL_TICK = (int)VehicleProperty::WHEEL_TICK;
 constexpr int ALL_WHEELS =
     (int)(Wheel::LEFT_FRONT | Wheel::RIGHT_FRONT | Wheel::LEFT_REAR | Wheel::RIGHT_REAR);
 
-/*
- * This property is used for test purpose to generate fake events.
- *
- * It has the following format:
- *
- * int32Values[0] - command (see FakeDataCommand below for possible values)
- * int32Values[1] - VehicleProperty to which command applies
+/**
+ * This property is used for test purpose to generate fake events. Here is the test package that
+ * is referencing this property definition: packages/services/Car/tests/vehiclehal_test
  */
 const int32_t kGenerateFakeDataControllingProperty =
     0x0666 | VehiclePropertyGroup::VENDOR | VehicleArea::GLOBAL | VehiclePropertyType::MIXED;
 
+/**
+ * FakeDataCommand enum defines the supported command type for kGenerateFakeDataControllingProperty.
+ * All those commands can be send independently with each other. And each will override the one sent
+ * previously.
+ *
+ * The controlling property has the following format:
+ *
+ *     int32Values[0] - command enum defined in FakeDataCommand
+ *
+ * The format of the arguments is defined for each command type as below:
+ */
 enum class FakeDataCommand : int32_t {
-    /** Stops generating of fake data that was triggered by Start command */
-    Stop = 0,
-
     /**
-     * Starts fake data generation.  Caller must provide additional data:
+     * Starts linear fake data generation. Caller must provide additional data:
+     *     int32Values[1] - VehicleProperty to which command applies
      *     int64Values[0] - periodic interval in nanoseconds
      *     floatValues[0] - initial value
-     *     floatValues[1] - dispersion defines min and max range relative to initial value
+     *     floatValues[1] - dispersion defines the min/max value relative to initial value, where
+     *                      max = initial_value + dispersion, min = initial_value - dispersion.
+     *                      Dispersion should be non-negative, otherwise the behavior is undefined.
      *     floatValues[2] - increment, with every timer tick the value will be incremented by this
-     * amount
+     *                      amount. When reaching to max value, the current value will be set to min.
+     *                      It should be non-negative, otherwise the behavior is undefined.
      */
-    Start = 1,
+    StartLinear = 0,
+
+    /** Stops generating of fake data that was triggered by Start commands.
+     *     int32Values[1] - VehicleProperty to which command applies. VHAL will stop the
+     *                      corresponding linear generation for that property.
+     */
+    StopLinear = 1,
+
+    /**
+     * Starts JSON-based fake data generation. Caller must provide a string value specifying
+     * the path to fake value JSON file:
+     *     stringValue    - path to the fake values JSON file
+     */
+    StartJson = 2,
+
+    /**
+     * Stops JSON-based fake data generation. No additional arguments needed.
+     */
+    StopJson = 3,
 
     /**
      * Injects key press event (HAL incorporates UP/DOWN acction and triggers 2 HAL events for every
-     * key-press). Caller must provide the following data: int32Values[2] - Android key code
+     * key-press). We set the enum with high number to leave space for future start/stop commands.
+     * Caller must provide the following data:
+     *     int32Values[2] - Android key code
      *     int32Values[3] - target display (0 - for main display, 1 - for instrument cluster, see
-     * VehicleDisplay)
+     *                      VehicleDisplay)
      */
-    KeyPress = 2,
+    KeyPress = 100,
 };
 
 const int32_t kHvacPowerProperties[] = {
