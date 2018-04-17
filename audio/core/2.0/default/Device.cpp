@@ -21,7 +21,7 @@
 #include "core/2.0/default/Conversions.h"
 #include "core/2.0/default/StreamIn.h"
 #include "core/2.0/default/StreamOut.h"
-#include "core/all-versions/default/Util.h"
+#include "core/2.0/default/Util.h"
 
 #define AUDIO_HAL_VERSION V2_0
 #include <core/all-versions/default/Device.impl.h>
