@@ -18,7 +18,6 @@ cc_library_static {
     name: "VtsHalNeuralnetworksTest_utils",
     srcs: [
         "Callbacks.cpp",
-        "Models.cpp",
         "GeneratedTestHarness.cpp",
     ],
     defaults: ["VtsHalTargetTestDefaults"],
@@ -41,14 +40,17 @@ cc_library_static {
 cc_test {
     name: "VtsHalNeuralnetworksV1_0TargetTest",
     srcs: [
-        "VtsHalNeuralnetworksV1_0.cpp",
-        "VtsHalNeuralnetworksV1_0BasicTest.cpp",
-        "VtsHalNeuralnetworksV1_0GeneratedTest.cpp",
+        "BasicTests.cpp",
+        "GeneratedTests.cpp",
+        "ValidateModel.cpp",
+        "ValidateRequest.cpp",
+        "ValidationTests.cpp",
+        "VtsHalNeuralnetworks.cpp",
     ],
     defaults: ["VtsHalTargetTestDefaults"],
     static_libs: [
-        "android.hardware.neuralnetworks@1.0",
         "android.hardware.neuralnetworks@1.1",
+        "android.hardware.neuralnetworks@1.0",
         "android.hidl.allocator@1.0",
         "android.hidl.memory@1.0",
         "libhidlmemory",

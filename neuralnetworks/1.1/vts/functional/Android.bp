@@ -17,9 +17,12 @@
 cc_test {
     name: "VtsHalNeuralnetworksV1_1TargetTest",
     srcs: [
-        "VtsHalNeuralnetworksV1_1.cpp",
-        "VtsHalNeuralnetworksV1_1BasicTest.cpp",
-        "VtsHalNeuralnetworksV1_1GeneratedTest.cpp",
+        "BasicTests.cpp",
+        "GeneratedTests.cpp",
+        "ValidateModel.cpp",
+        "ValidateRequest.cpp",
+        "ValidationTests.cpp",
+        "VtsHalNeuralnetworks.cpp",
     ],
     defaults: ["VtsHalTargetTestDefaults"],
     static_libs: [
@@ -36,4 +39,13 @@ cc_test {
         "libneuralnetworks_generated_test_harness_headers",
         "libneuralnetworks_generated_tests",
     ],
+    // Bug: http://b/74200014 - Disable arm32 asan since it triggers internal
+    // error in ld.gold.
+    arch: {
+        arm: {
+            sanitize: {
+                never: true,
+            },
+        },
+    },
 }

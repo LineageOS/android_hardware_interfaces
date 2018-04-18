@@ -17,65 +17,71 @@
 #ifndef VTS_HAL_NEURALNETWORKS_V1_1_H
 #define VTS_HAL_NEURALNETWORKS_V1_1_H
 
-#include <android/hardware/neuralnetworks/1.0/IExecutionCallback.h>
-#include <android/hardware/neuralnetworks/1.0/IPreparedModel.h>
-#include <android/hardware/neuralnetworks/1.0/IPreparedModelCallback.h>
+#include <android/hardware/neuralnetworks/1.0/types.h>
 #include <android/hardware/neuralnetworks/1.1/IDevice.h>
 #include <android/hardware/neuralnetworks/1.1/types.h>
-#include <android/hidl/allocator/1.0/IAllocator.h>
 
 #include <VtsHalHidlTargetTestBase.h>
 #include <VtsHalHidlTargetTestEnvBase.h>
+
+#include <android-base/macros.h>
 #include <gtest/gtest.h>
-#include <string>
+#include <iostream>
+#include <vector>
 
 namespace android {
 namespace hardware {
 namespace neuralnetworks {
 namespace V1_1 {
+
+using V1_0::Request;
+using V1_0::DeviceStatus;
+using V1_0::ErrorStatus;
+
 namespace vts {
 namespace functional {
-hidl_memory allocateSharedMemory(int64_t size);
 
 // A class for test environment setup
 class NeuralnetworksHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
+    DISALLOW_COPY_AND_ASSIGN(NeuralnetworksHidlEnvironment);
     NeuralnetworksHidlEnvironment();
-    NeuralnetworksHidlEnvironment(const NeuralnetworksHidlEnvironment&) = delete;
-    NeuralnetworksHidlEnvironment(NeuralnetworksHidlEnvironment&&) = delete;
-    NeuralnetworksHidlEnvironment& operator=(const NeuralnetworksHidlEnvironment&) = delete;
-    NeuralnetworksHidlEnvironment& operator=(NeuralnetworksHidlEnvironment&&) = delete;
+    ~NeuralnetworksHidlEnvironment() override;
 
    public:
-    ~NeuralnetworksHidlEnvironment() override;
     static NeuralnetworksHidlEnvironment* getInstance();
     void registerTestServices() override;
 };
 
 // The main test class for NEURALNETWORKS HIDL HAL.
 class NeuralnetworksHidlTest : public ::testing::VtsHalHidlTargetTestBase {
+    DISALLOW_COPY_AND_ASSIGN(NeuralnetworksHidlTest);
+
    public:
+    NeuralnetworksHidlTest();
     ~NeuralnetworksHidlTest() override;
     void SetUp() override;
     void TearDown() override;
 
-    sp<V1_1::IDevice> device;
+   protected:
+    sp<IDevice> device;
 };
+
+// Tag for the validation tests
+class ValidationTest : public NeuralnetworksHidlTest {
+   protected:
+    void validateModel(const Model& model);
+    void validateRequests(const Model& model, const std::vector<Request>& request);
+};
+
+// Tag for the generated tests
+class GeneratedTest : public NeuralnetworksHidlTest {};
+
 }  // namespace functional
 }  // namespace vts
 
 // pretty-print values for error messages
-
-template <typename CharT, typename Traits>
-::std::basic_ostream<CharT, Traits>& operator<<(::std::basic_ostream<CharT, Traits>& os,
-                                                V1_0::ErrorStatus errorStatus) {
-    return os << toString(errorStatus);
-}
-
-template <typename CharT, typename Traits>
-::std::basic_ostream<CharT, Traits>& operator<<(::std::basic_ostream<CharT, Traits>& os,
-                                                V1_0::DeviceStatus deviceStatus) {
-    return os << toString(deviceStatus);
-}
+::std::ostream& operator<<(::std::ostream& os, ErrorStatus errorStatus);
+::std::ostream& operator<<(::std::ostream& os, DeviceStatus deviceStatus);
 
 }  // namespace V1_1
 }  // namespace neuralnetworks
