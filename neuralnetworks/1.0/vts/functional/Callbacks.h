@@ -17,14 +17,6 @@ namespace neuralnetworks {
 namespace V1_0 {
 namespace implementation {
 
-using ::android::hardware::hidl_array;
-using ::android::hardware::hidl_memory;
-using ::android::hardware::hidl_string;
-using ::android::hardware::hidl_vec;
-using ::android::hardware::Return;
-using ::android::hardware::Void;
-using ::android::sp;
-
 /**
  * The CallbackBase class is used internally by the NeuralNetworks runtime to
  * synchronize between different threads. An asynchronous task is launched
