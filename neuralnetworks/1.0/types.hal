@@ -84,6 +84,7 @@ enum OperationType : int32_t {
      *     output.dimension = {5, 4, 3, 2}
      *
      * Supported tensor types: {@link OperandType::TENSOR_FLOAT32}
+     *                         {@link OperandType::TENSOR_QUANT8_ASYMM}
      * Supported tensor rank: up to 4
      *
      * Inputs:
@@ -645,6 +646,7 @@ enum OperationType : int32_t {
      * input operands. It starts with the trailing dimensions, and works its way forward.
      *
      * Supported tensor types: {@link OperandType::TENSOR_FLOAT32}
+     *                         {@link OperandType::TENSOR_QUANT8_ASYMM}
      * Supported tensor rank: up to 4
      *
      * Inputs:
