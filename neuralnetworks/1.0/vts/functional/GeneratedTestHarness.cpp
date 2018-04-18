@@ -242,8 +242,8 @@ void Execute(const sp<V1_1::IDevice>& device, std::function<V1_1::Model(void)> c
     // launch prepare model
     sp<PreparedModelCallback> preparedModelCallback = new PreparedModelCallback();
     ASSERT_NE(nullptr, preparedModelCallback.get());
-    Return<ErrorStatus> prepareLaunchStatus =
-        device->prepareModel_1_1(model, preparedModelCallback);
+    Return<ErrorStatus> prepareLaunchStatus = device->prepareModel_1_1(
+        model, ExecutionPreference::FAST_SINGLE_ANSWER, preparedModelCallback);
     ASSERT_TRUE(prepareLaunchStatus.isOk());
     ASSERT_EQ(ErrorStatus::NONE, static_cast<ErrorStatus>(prepareLaunchStatus));
 

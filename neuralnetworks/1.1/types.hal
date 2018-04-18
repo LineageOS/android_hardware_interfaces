@@ -382,3 +382,24 @@ struct Model {
      */
     bool relaxComputationFloat32toFloat16;
 };
+
+/**
+ * Execution preferences.
+ */
+enum ExecutionPreference : int32_t {
+    /**
+     * Prefer executing in a way that minimizes battery drain.
+     * This is desirable for compilations that will be executed often.
+     */
+    LOW_POWER = 0,
+    /**
+     * Prefer returning a single answer as fast as possible, even if this causes
+     * more power consumption.
+     */
+    FAST_SINGLE_ANSWER = 1,
+    /**
+     * Prefer maximizing the throughput of successive frames, for example when
+     * processing successive frames coming from the camera.
+     */
+    SUSTAINED_SPEED = 2,
+};
