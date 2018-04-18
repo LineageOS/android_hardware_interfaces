@@ -444,10 +444,11 @@ enum OperationType : int32_t {
      * Supported tensor rank: up to 4.
      *
      * Inputs:
-     * * 0: A tensor, specifying the input. If rank is greater than 2, then it gets flattened to
-     *      a 2-D Tensor. The 2-D Tensor is handled as if dimensions corresponded to shape
-     *      [batch_size, input_size], where “batch_size” corresponds to the batching dimension,
-     *      and “input_size” is the size of the input.
+     * * 0: A tensor of at least rank 2, specifying the input. If rank is greater than 2,
+     *      then it gets flattened to a 2-D Tensor. The (flattened) 2-D Tensor is reshaped
+     *      (if necessary) to [batch_size, input_size], where "input_size" corresponds to
+     *      the number of inputs to the layer, matching the second dimension of weights, and
+     *      "batch_size" is calculated by dividing the number of elements by "input_size".
      * * 1: A 2-D tensor, specifying the weights, of shape [num_units, input_size], where
      *      "num_units" corresponds to the number of output nodes.
      * * 2: A 1-D tensor, of shape [num_units], specifying the bias.
@@ -728,9 +729,11 @@ enum OperationType : int32_t {
      *   \f{eqnarray*}{
      *   i_t = 1 - f_t
      *   \f}
-     * * The cell-to-input weights (\f$W_{ci}\f$), cell-to-forget weights (\f$W_{cf}\f$), and cell-to-output
-     *   weights (\f$W_{co}\f$) either all have values or none of them have values.
-     *   If they have values, the peephole optimization is used.
+     * * The cell-to-forget weights (\f$W_{cf}\f$) and cell-to-output
+     *   weights (\f$W_{co}\f$) either both have values or neither of them have values.
+     *   If they have values, the peephole optimization is used. Additionally,
+     *   if CIFG is not used, cell-to-input weights (\f$W_{ci}\f$) is also
+     *   required to have values for peephole optimization.
      * * The projection weights (\f$W_{proj}\f$) is required only for the recurrent projection
      *   layer, and should otherwise have no value.
      * * The projection bias (\f$b_{proj}\f$) may (but not required to) have a value if the
@@ -1008,7 +1011,8 @@ enum OperationType : int32_t {
      * Resizes images to given size using the bilinear interpretation.
      *
      * Resized images must be distorted if their output aspect ratio is not the same as
-     * input aspect ratio.
+     * input aspect ratio. The corner pixels of output may not be the same as
+     * corner pixels of input.
      *
      * Supported tensor types:
      * * {@link OperandType::TENSOR_FLOAT32}

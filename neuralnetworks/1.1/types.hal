@@ -214,6 +214,13 @@ enum OperationType : @1.0::OperationType {
      *    tensor to be sliced. The length must be of rank(input0).
      * 3: A 1-D Tensor of type TENSOR_INT32, the strides of the dimensions of the input
      *    tensor to be sliced. The length must be of rank(input0).
+     * 4: An INT32 value, begin_mask. If the ith bit of begin_mask is set, begin[i] is ignored
+     *    and the fullest possible range in that dimension is used instead.
+     * 5: An INT32 value, end_mask. If the ith bit of end_mask is set, end[i] is ignored and
+     *    the fullest possible range in that dimension is used instead.
+     * 6: An INT32 value, shrink_axis_mask. An int32 mask. If the ith bit of shrink_axis_mask is
+     *    set, it implies that the ith specification shrinks the dimensionality by 1. A slice of
+     *    size 1 starting from begin[i] in the dimension must be preserved.
      *
      * Outputs:
      * 0: A tensor of the same type as input0.
