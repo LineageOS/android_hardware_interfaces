@@ -15,7 +15,6 @@
  */
 
 #include "core/4.0/default/ParametersUtil.h"
-#include "core/4.0/default/Util.h"
 
 #define AUDIO_HAL_VERSION V4_0
 #include <core/all-versions/default/ParametersUtil.impl.h>
