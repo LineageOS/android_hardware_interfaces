@@ -1,6 +1,6 @@
 Upgrading from health@1.0 HAL
 
-0. Remove android.hardware.health@1.0* from PRDOUCT_PACKAGES
+0. Remove android.hardware.health@1.0* from PRODUCT_PACKAGES
    in device/<manufacturer>/<device>/device.mk
 
 1. If the device does not have a vendor-specific libhealthd AND does not
