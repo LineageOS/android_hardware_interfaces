@@ -654,7 +654,8 @@ enum VehicleProperty : int32_t {
      * HVAC current temperature.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @access VehiclePropertyAccess:READ
+     * @unit VehicleUnit:CELSIUS
      */
     HVAC_TEMPERATURE_CURRENT = (
         0x0502
@@ -667,6 +668,7 @@ enum VehicleProperty : int32_t {
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
+     * @unit VehicleUnit:CELSIUS
      */
     HVAC_TEMPERATURE_SET = (
         0x0503
@@ -791,7 +793,7 @@ enum VehicleProperty : int32_t {
         | VehicleArea:SEAT),
 
     /**
-     * Seat temperature
+     * Seat heating/cooling
      *
      * Negative values indicate cooling.
      * 0 indicates off.
@@ -847,9 +849,11 @@ enum VehicleProperty : int32_t {
     /**
      * Temperature units for display
      *
-     * Indicates whether the temperature is in Celsius, Fahrenheit, or a
-     * different unit from VehicleUnit enum.  This parameter MAY be used for
-     * displaying any HVAC temperature in the system.
+     * Indicates whether the vehicle is displaying temperature to the user as
+     * Celsius or Fahrenheit.
+     * This parameter MAY be used for displaying any HVAC temperature in the system.
+     * Values must be one of VehicleUnit::CELSIUS or VehicleUnit::FAHRENHEIT
+     * Note that internally, all temperatures are represented in floating point Celsius.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
@@ -1629,8 +1633,8 @@ enum VehicleProperty : int32_t {
     /**
      * Window Position
      *
-     * Max = window up / closed
-     * Min = window down / open
+     * Min = window up / closed
+     * Max = window down / open
      *
      * For a window that may open out of plane (i.e. vent mode of sunroof) this
      * parameter will work with negative values as follows:
@@ -1652,25 +1656,25 @@ enum VehicleProperty : int32_t {
     /**
      * Window Move
      *
-     * Max = window up / closed
-     * Min = window down / open
-     * Magnitude denotes relative speed.  I.e. +2 is faster than +1 in raising
+     * Max = Open the window as fast as possible
+     * Min = Close the window as fast as possible
+     * Magnitude denotes relative speed.  I.e. +2 is faster than +1 in closing
      * the window.
      *
      * For a window that may open out of plane (i.e. vent mode of sunroof) this
      * parameter will work as follows:
      *
-     *  If sunroof is open:
-     *    Max = open the sunroof further, automatically stop when fully open.
-     *    Min = close the sunroof, automatically stop when sunroof is closed.
+     * If sunroof is open:
+     *   Max = open the sunroof further, automatically stop when fully open.
+     *   Min = close the sunroof, automatically stop when sunroof is closed.
      *
      * If vent is open:
-     *  Max = close the vent, automatically stop when vent is closed.
-     *  Min = open the vent further, automatically stop when vent is fully open.
+     *   Max = close the vent, automatically stop when vent is closed.
+     *   Min = open the vent further, automatically stop when vent is fully open.
      *
-     * If window is in the closed position:
-     *  Max = open the sunroof, automatically stop when sunroof is fully open.
-     *  Min = open the vent, automatically stop when vent is fully open.
+     * If sunroof is in the closed position:
+     *   Max = open the sunroof, automatically stop when sunroof is fully open.
+     *   Min = open the vent, automatically stop when vent is fully open.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
