@@ -32,6 +32,7 @@ namespace AUDIO_HAL_VERSION {
 namespace implementation {
 
 using ::android::hardware::audio::common::AUDIO_HAL_VERSION::ThreadInfo;
+using ::android::hardware::audio::all_versions::implementation::isGainNormalized;
 
 namespace {
 
