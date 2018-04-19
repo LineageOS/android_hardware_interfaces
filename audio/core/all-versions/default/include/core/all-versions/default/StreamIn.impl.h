@@ -25,7 +25,9 @@
 #include <memory>
 
 using ::android::hardware::audio::AUDIO_HAL_VERSION::MessageQueueFlagBits;
+using ::android::hardware::audio::all_versions::implementation::isGainNormalized;
 #include "Conversions.h"
+#include "Util.h"
 
 namespace android {
 namespace hardware {
