@@ -155,7 +155,7 @@ Return<void> RadioResponse_v1_2::sendSMSExpectMoreResponse(const RadioResponseIn
 Return<void> RadioResponse_v1_2::setupDataCallResponse(const RadioResponseInfo& info,
                                                        const SetupDataCallResult& /*dcResponse*/) {
     rspInfo = info;
-    parent_v1_2.notify();
+    parent_v1_2.notify(info.serial);
     return Void();
 }
 
@@ -211,7 +211,7 @@ Return<void> RadioResponse_v1_2::acceptCallResponse(const RadioResponseInfo& /*i
 
 Return<void> RadioResponse_v1_2::deactivateDataCallResponse(const RadioResponseInfo& info) {
     rspInfo = info;
-    parent_v1_2.notify();
+    parent_v1_2.notify(info.serial);
     return Void();
 }
 
@@ -320,7 +320,7 @@ Return<void> RadioResponse_v1_2::getAvailableBandModesResponse(
     const RadioResponseInfo& info, const ::android::hardware::hidl_vec<RadioBandMode>& bandModes) {
     rspInfo = info;
     radioBandModes = bandModes;
-    parent_v1_2.notify();
+    parent_v1_2.notify(info.serial);
     return Void();
 }
 
@@ -677,13 +677,13 @@ Return<void> RadioResponse_v1_2::setSimCardPowerResponse_1_1(const RadioResponse
 
 Return<void> RadioResponse_v1_2::startNetworkScanResponse(const RadioResponseInfo& info) {
     rspInfo = info;
-    parent_v1_2.notify();
+    parent_v1_2.notify(info.serial);
     return Void();
 }
 
 Return<void> RadioResponse_v1_2::stopNetworkScanResponse(const RadioResponseInfo& info) {
     rspInfo = info;
-    parent_v1_2.notify();
+    parent_v1_2.notify(info.serial);
     return Void();
 }
 
@@ -700,14 +700,14 @@ Return<void> RadioResponse_v1_2::stopKeepaliveResponse(const RadioResponseInfo& 
 Return<void> RadioResponse_v1_2::setSignalStrengthReportingCriteriaResponse(
     const RadioResponseInfo& info) {
     rspInfo = info;
-    parent_v1_2.notify();
+    parent_v1_2.notify(info.serial);
     return Void();
 }
 
 Return<void> RadioResponse_v1_2::setLinkCapacityReportingCriteriaResponse(
     const RadioResponseInfo& info) {
     rspInfo = info;
-    parent_v1_2.notify();
+    parent_v1_2.notify(info.serial);
     return Void();
 }
 
@@ -716,7 +716,7 @@ Return<void> RadioResponse_v1_2::getIccCardStatusResponse_1_2(
     const ::android::hardware::radio::V1_2::CardStatus& card_status) {
     rspInfo = info;
     cardStatus = card_status;
-    parent_v1_2.notify();
+    parent_v1_2.notify(info.serial);
     return Void();
 }
 
@@ -724,7 +724,7 @@ Return<void> RadioResponse_v1_2::getCurrentCallsResponse_1_2(
     const RadioResponseInfo& info,
     const ::android::hardware::hidl_vec<::android::hardware::radio::V1_2::Call>& /*calls*/) {
     rspInfo = info;
-    parent_v1_2.notify();
+    parent_v1_2.notify(info.serial);
     return Void();
 }
 
@@ -732,7 +732,7 @@ Return<void> RadioResponse_v1_2::getSignalStrengthResponse_1_2(
     const RadioResponseInfo& info,
     const ::android::hardware::radio::V1_2::SignalStrength& /*sig_strength*/) {
     rspInfo = info;
-    parent_v1_2.notify();
+    parent_v1_2.notify(info.serial);
     return Void();
 }
 
@@ -740,7 +740,7 @@ Return<void> RadioResponse_v1_2::getCellInfoListResponse_1_2(
     const RadioResponseInfo& info,
     const ::android::hardware::hidl_vec<::android::hardware::radio::V1_2::CellInfo>& /*cellInfo*/) {
     rspInfo = info;
-    parent_v1_2.notify();
+    parent_v1_2.notify(info.serial);
     return Void();
 }
 

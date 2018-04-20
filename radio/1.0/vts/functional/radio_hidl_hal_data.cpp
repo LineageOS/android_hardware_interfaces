@@ -22,7 +22,7 @@ using namespace ::android::hardware::radio::V1_0;
  * Test IRadio.getDataRegistrationState() for the response returned.
  */
 TEST_F(RadioHidlTest, getDataRegistrationState) {
-    int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
 
     radio->getDataRegistrationState(serial);
 
@@ -39,7 +39,7 @@ TEST_F(RadioHidlTest, getDataRegistrationState) {
  * Test IRadio.setupDataCall() for the response returned.
  */
 TEST_F(RadioHidlTest, setupDataCall) {
-    int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
 
     RadioTechnology radioTechnology = RadioTechnology::LTE;
 
@@ -70,7 +70,7 @@ TEST_F(RadioHidlTest, setupDataCall) {
     radio->setupDataCall(serial, radioTechnology, dataProfileInfo, modemCognitive, roamingAllowed,
                          isRoaming);
 
-    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(std::cv_status::no_timeout, wait(300));
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp->rspInfo.type);
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
@@ -87,7 +87,7 @@ TEST_F(RadioHidlTest, setupDataCall) {
  * Test IRadio.deactivateDataCall() for the response returned.
  */
 TEST_F(RadioHidlTest, deactivateDataCall) {
-    int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
     int cid = 1;
     bool reasonRadioShutDown = false;
 
@@ -109,7 +109,7 @@ TEST_F(RadioHidlTest, deactivateDataCall) {
  * Test IRadio.getDataCallList() for the response returned.
  */
 TEST_F(RadioHidlTest, getDataCallList) {
-    int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
 
     radio->getDataCallList(serial);
 
@@ -128,7 +128,7 @@ TEST_F(RadioHidlTest, getDataCallList) {
  * Test IRadio.setInitialAttachApn() for the response returned.
  */
 TEST_F(RadioHidlTest, setInitialAttachApn) {
-    int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
 
     DataProfileInfo dataProfileInfo;
     memset(&dataProfileInfo, 0, sizeof(dataProfileInfo));
@@ -171,7 +171,7 @@ TEST_F(RadioHidlTest, setInitialAttachApn) {
  * Test IRadio.setDataAllowed() for the response returned.
  */
 TEST_F(RadioHidlTest, setDataAllowed) {
-    int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
     bool allow = true;
 
     radio->setDataAllowed(serial, allow);
@@ -189,7 +189,7 @@ TEST_F(RadioHidlTest, setDataAllowed) {
  * Test IRadio.setDataProfile() for the response returned.
  */
 TEST_F(RadioHidlTest, setDataProfile) {
-    int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
 
     // Create a dataProfileInfo
     DataProfileInfo dataProfileInfo;

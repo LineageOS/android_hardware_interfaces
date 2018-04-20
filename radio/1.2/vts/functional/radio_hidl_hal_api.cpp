@@ -23,7 +23,7 @@
  * Test IRadio.startNetworkScan() for the response returned.
  */
 TEST_F(RadioHidlTest_v1_2, startNetworkScan) {
-    const int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
 
     RadioAccessSpecifier specifier = {
         .radioAccessNetwork = RadioAccessNetworks::GERAN,
@@ -51,7 +51,7 @@ TEST_F(RadioHidlTest_v1_2, startNetworkScan) {
  * Test IRadio.startNetworkScan() with invalid specifier.
  */
 TEST_F(RadioHidlTest_v1_2, startNetworkScan_InvalidArgument) {
-    const int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
 
     ::android::hardware::radio::V1_2::NetworkScanRequest request = {.type = ScanType::ONE_SHOT,
                                                                     .interval = 60};
@@ -77,7 +77,7 @@ TEST_F(RadioHidlTest_v1_2, startNetworkScan_InvalidArgument) {
  * Test IRadio.startNetworkScan() with invalid interval (lower boundary).
  */
 TEST_F(RadioHidlTest_v1_2, startNetworkScan_InvalidInterval1) {
-    const int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
 
     RadioAccessSpecifier specifier = {
         .radioAccessNetwork = RadioAccessNetworks::GERAN,
@@ -113,7 +113,7 @@ TEST_F(RadioHidlTest_v1_2, startNetworkScan_InvalidInterval1) {
  * Test IRadio.startNetworkScan() with invalid interval (upper boundary).
  */
 TEST_F(RadioHidlTest_v1_2, startNetworkScan_InvalidInterval2) {
-    const int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
 
     RadioAccessSpecifier specifier = {
         .radioAccessNetwork = RadioAccessNetworks::GERAN,
@@ -149,7 +149,7 @@ TEST_F(RadioHidlTest_v1_2, startNetworkScan_InvalidInterval2) {
  * Test IRadio.startNetworkScan() with invalid max search time (lower boundary).
  */
 TEST_F(RadioHidlTest_v1_2, startNetworkScan_InvalidMaxSearchTime1) {
-    const int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
 
     RadioAccessSpecifier specifier = {
         .radioAccessNetwork = RadioAccessNetworks::GERAN,
@@ -185,7 +185,7 @@ TEST_F(RadioHidlTest_v1_2, startNetworkScan_InvalidMaxSearchTime1) {
  * Test IRadio.startNetworkScan() with invalid max search time (upper boundary).
  */
 TEST_F(RadioHidlTest_v1_2, startNetworkScan_InvalidMaxSearchTime2) {
-    const int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
 
     RadioAccessSpecifier specifier = {
         .radioAccessNetwork = RadioAccessNetworks::GERAN,
@@ -221,7 +221,7 @@ TEST_F(RadioHidlTest_v1_2, startNetworkScan_InvalidMaxSearchTime2) {
  * Test IRadio.startNetworkScan() with invalid periodicity (lower boundary).
  */
 TEST_F(RadioHidlTest_v1_2, startNetworkScan_InvalidPeriodicity1) {
-    const int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
 
     RadioAccessSpecifier specifier = {
         .radioAccessNetwork = RadioAccessNetworks::GERAN,
@@ -257,7 +257,7 @@ TEST_F(RadioHidlTest_v1_2, startNetworkScan_InvalidPeriodicity1) {
  * Test IRadio.startNetworkScan() with invalid periodicity (upper boundary).
  */
 TEST_F(RadioHidlTest_v1_2, startNetworkScan_InvalidPeriodicity2) {
-    const int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
 
     RadioAccessSpecifier specifier = {
         .radioAccessNetwork = RadioAccessNetworks::GERAN,
@@ -293,7 +293,7 @@ TEST_F(RadioHidlTest_v1_2, startNetworkScan_InvalidPeriodicity2) {
  * Test IRadio.startNetworkScan() with valid periodicity
  */
 TEST_F(RadioHidlTest_v1_2, startNetworkScan_GoodRequest1) {
-    const int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
 
     RadioAccessSpecifier specifier = {
         .radioAccessNetwork = RadioAccessNetworks::GERAN,
@@ -328,7 +328,7 @@ TEST_F(RadioHidlTest_v1_2, startNetworkScan_GoodRequest1) {
  * Test IRadio.startNetworkScan() with valid periodicity and plmns
  */
 TEST_F(RadioHidlTest_v1_2, startNetworkScan_GoodRequest2) {
-    const int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
 
     RadioAccessSpecifier specifier = {
         .radioAccessNetwork = RadioAccessNetworks::GERAN,
@@ -364,7 +364,7 @@ TEST_F(RadioHidlTest_v1_2, startNetworkScan_GoodRequest2) {
  * Test IRadio.setIndicationFilter_1_2()
  */
 TEST_F(RadioHidlTest_v1_2, setIndicationFilter_1_2) {
-    const int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
 
     Return<void> res = radio_v1_2->setIndicationFilter_1_2(
         serial, static_cast<int>(::android::hardware::radio::V1_2::IndicationFilter::ALL));
@@ -382,7 +382,7 @@ TEST_F(RadioHidlTest_v1_2, setIndicationFilter_1_2) {
  * Test IRadio.setSignalStrengthReportingCriteria() with invalid hysteresisDb
  */
 TEST_F(RadioHidlTest_v1_2, setSignalStrengthReportingCriteria_invalidHysteresisDb) {
-    const int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
 
     Return<void> res = radio_v1_2->setSignalStrengthReportingCriteria(
         serial, 5000,
@@ -402,7 +402,7 @@ TEST_F(RadioHidlTest_v1_2, setSignalStrengthReportingCriteria_invalidHysteresisD
  * Test IRadio.setSignalStrengthReportingCriteria() with empty parameters
  */
 TEST_F(RadioHidlTest_v1_2, setSignalStrengthReportingCriteria_EmptyParams) {
-    const int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
 
     Return<void> res = radio_v1_2->setSignalStrengthReportingCriteria(
         serial, 0, 0, {}, ::android::hardware::radio::V1_2::AccessNetwork::GERAN);
@@ -420,7 +420,7 @@ TEST_F(RadioHidlTest_v1_2, setSignalStrengthReportingCriteria_EmptyParams) {
  * Test IRadio.setSignalStrengthReportingCriteria() for GERAN
  */
 TEST_F(RadioHidlTest_v1_2, setSignalStrengthReportingCriteria_Geran) {
-    const int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
 
     Return<void> res = radio_v1_2->setSignalStrengthReportingCriteria(
         serial, 5000, 2, {-109, -103, -97, -89},
@@ -439,7 +439,7 @@ TEST_F(RadioHidlTest_v1_2, setSignalStrengthReportingCriteria_Geran) {
  * Test IRadio.setSignalStrengthReportingCriteria() for UTRAN
  */
 TEST_F(RadioHidlTest_v1_2, setSignalStrengthReportingCriteria_Utran) {
-    const int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
 
     Return<void> res = radio_v1_2->setSignalStrengthReportingCriteria(
         serial, 5000, 2, {-110, -97, -73, -49, -25},
@@ -458,7 +458,7 @@ TEST_F(RadioHidlTest_v1_2, setSignalStrengthReportingCriteria_Utran) {
  * Test IRadio.setSignalStrengthReportingCriteria() for EUTRAN
  */
 TEST_F(RadioHidlTest_v1_2, setSignalStrengthReportingCriteria_Eutran) {
-    const int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
 
     Return<void> res = radio_v1_2->setSignalStrengthReportingCriteria(
         serial, 5000, 2, {-140, -128, -118, -108, -98, -44},
@@ -477,7 +477,7 @@ TEST_F(RadioHidlTest_v1_2, setSignalStrengthReportingCriteria_Eutran) {
  * Test IRadio.setSignalStrengthReportingCriteria() for CDMA2000
  */
 TEST_F(RadioHidlTest_v1_2, setSignalStrengthReportingCriteria_Cdma2000) {
-    const int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
 
     Return<void> res = radio_v1_2->setSignalStrengthReportingCriteria(
         serial, 5000, 2, {-105, -90, -75, -65},
@@ -496,7 +496,7 @@ TEST_F(RadioHidlTest_v1_2, setSignalStrengthReportingCriteria_Cdma2000) {
  * Test IRadio.setLinkCapacityReportingCriteria() invalid hysteresisDlKbps
  */
 TEST_F(RadioHidlTest_v1_2, setLinkCapacityReportingCriteria_invalidHysteresisDlKbps) {
-    const int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
 
     Return<void> res = radio_v1_2->setLinkCapacityReportingCriteria(
         serial, 5000,
@@ -517,7 +517,7 @@ TEST_F(RadioHidlTest_v1_2, setLinkCapacityReportingCriteria_invalidHysteresisDlK
  * Test IRadio.setLinkCapacityReportingCriteria() invalid hysteresisUlKbps
  */
 TEST_F(RadioHidlTest_v1_2, setLinkCapacityReportingCriteria_invalidHysteresisUlKbps) {
-    const int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
 
     Return<void> res = radio_v1_2->setLinkCapacityReportingCriteria(
         serial, 5000, 500,
@@ -538,7 +538,7 @@ TEST_F(RadioHidlTest_v1_2, setLinkCapacityReportingCriteria_invalidHysteresisUlK
  * Test IRadio.setLinkCapacityReportingCriteria() empty params
  */
 TEST_F(RadioHidlTest_v1_2, setLinkCapacityReportingCriteria_emptyParams) {
-    const int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
 
     Return<void> res = radio_v1_2->setLinkCapacityReportingCriteria(
         serial, 0, 0, 0, {}, {}, ::android::hardware::radio::V1_2::AccessNetwork::GERAN);
@@ -556,7 +556,7 @@ TEST_F(RadioHidlTest_v1_2, setLinkCapacityReportingCriteria_emptyParams) {
  * Test IRadio.setLinkCapacityReportingCriteria() GERAN
  */
 TEST_F(RadioHidlTest_v1_2, setLinkCapacityReportingCriteria_Geran) {
-    const int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
 
     Return<void> res = radio_v1_2->setLinkCapacityReportingCriteria(
         serial, 5000, 500, 100, {1000, 5000, 10000, 20000}, {500, 1000, 5000, 10000},
@@ -575,7 +575,7 @@ TEST_F(RadioHidlTest_v1_2, setLinkCapacityReportingCriteria_Geran) {
  * Test IRadio.setupDataCall_1_2() for the response returned.
  */
 TEST_F(RadioHidlTest_v1_2, setupDataCall_1_2) {
-    const int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
 
     ::android::hardware::radio::V1_2::AccessNetwork accessNetwork =
         ::android::hardware::radio::V1_2::AccessNetwork::EUTRAN;
@@ -635,7 +635,7 @@ TEST_F(RadioHidlTest_v1_2, setupDataCall_1_2) {
  * Test IRadio.deactivateDataCall_1_2() for the response returned.
  */
 TEST_F(RadioHidlTest_v1_2, deactivateDataCall_1_2) {
-    const int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
     int cid = 1;
     ::android::hardware::radio::V1_2::DataRequestReason reason =
         ::android::hardware::radio::V1_2::DataRequestReason::NORMAL;

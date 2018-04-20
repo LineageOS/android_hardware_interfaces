@@ -613,11 +613,17 @@ class RadioHidlTest_v1_2 : public ::testing::VtsHalHidlTargetTestBase {
     std::condition_variable cv_;
     int count_;
 
+    /* Serial number for radio request */
+    int serial;
+
+    /* Update Sim Card Status */
+    void updateSimCardStatus();
+
    public:
     virtual void SetUp() override;
 
     /* Used as a mechanism to inform the test about data/event callback */
-    void notify();
+    void notify(int receivedSerial);
 
     /* Test code calls this function to wait for response */
     std::cv_status wait();
