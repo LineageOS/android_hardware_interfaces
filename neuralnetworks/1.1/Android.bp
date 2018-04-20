@@ -16,6 +16,7 @@ hidl_interface {
     ],
     types: [
         "Capabilities",
+        "ExecutionPreference",
         "Model",
         "Operation",
         "OperationType",
