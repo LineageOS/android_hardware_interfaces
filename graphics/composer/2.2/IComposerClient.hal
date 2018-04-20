@@ -383,9 +383,8 @@ interface IComposerClient extends @2.1::IComposerClient {
      * By default, layer dataspaces are mapped to the current color mode
      * colorimetrically with a few exceptions.
      *
-     * When the layer dataspace is a legacy sRGB dataspace
-     * (Dataspace::SRGB_LINEAR, Dataspace::SRGB, or Dataspace::UNKNOWN when
-     * treated as such) and the display render intent is
+     * When the layer dataspace is a legacy dataspace (see
+     * common@1.1::Dataspace) and the display render intent is
      * RenderIntent::ENHANCE, the pixel values can go through an
      * implementation-defined saturation transform before being mapped to the
      * current color mode colorimetrically.
@@ -402,7 +401,7 @@ interface IComposerClient extends @2.1::IComposerClient {
      * this:
      *
      *   (in GLSL)
-     *   linearSrgb = clamp(saturationMatrix * linearSrgb, 0.0, 1.0);
+     *   linearSrgb = saturationMatrix * linearSrgb;
      *
      * @param dataspace must be Dataspace::SRGB_LINEAR.
      * @return error is NONE upon success. Otherwise,
