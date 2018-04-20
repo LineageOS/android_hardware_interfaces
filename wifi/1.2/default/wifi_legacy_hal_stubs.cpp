@@ -130,6 +130,7 @@ bool initHalFuncTableWithStubs(wifi_hal_fn* hal_fn) {
     populateStubFor(&hal_fn->wifi_nan_data_end);
     populateStubFor(&hal_fn->wifi_get_packet_filter_capabilities);
     populateStubFor(&hal_fn->wifi_set_packet_filter);
+    populateStubFor(&hal_fn->wifi_read_packet_filter);
     populateStubFor(&hal_fn->wifi_get_roaming_capabilities);
     populateStubFor(&hal_fn->wifi_enable_firmware_roaming);
     populateStubFor(&hal_fn->wifi_configure_roaming);
