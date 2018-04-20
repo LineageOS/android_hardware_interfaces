@@ -21,13 +21,13 @@ SapCallback::SapCallback(SapHidlTest& parent) : parent(parent) {}
 Return<void> SapCallback::connectResponse(int32_t token, SapConnectRsp /*sapConnectRsp*/,
                                           int32_t /*maxMsgSize*/) {
     sapResponseToken = token;
-    parent.notify();
+    parent.notify(token);
     return Void();
 }
 
 Return<void> SapCallback::disconnectResponse(int32_t token) {
     sapResponseToken = token;
-    parent.notify();
+    parent.notify(token);
     return Void();
 }
 
@@ -40,7 +40,7 @@ Return<void> SapCallback::apduResponse(int32_t token, SapResultCode resultCode,
                                        const ::android::hardware::hidl_vec<uint8_t>& /*apduRsp*/) {
     sapResponseToken = token;
     sapResultCode = resultCode;
-    parent.notify();
+    parent.notify(token);
     return Void();
 }
 
@@ -49,21 +49,21 @@ Return<void> SapCallback::transferAtrResponse(
     const ::android::hardware::hidl_vec<uint8_t>& /*atr*/) {
     sapResponseToken = token;
     sapResultCode = resultCode;
-    parent.notify();
+    parent.notify(token);
     return Void();
 }
 
 Return<void> SapCallback::powerResponse(int32_t token, SapResultCode resultCode) {
     sapResponseToken = token;
     sapResultCode = resultCode;
-    parent.notify();
+    parent.notify(token);
     return Void();
 }
 
 Return<void> SapCallback::resetSimResponse(int32_t token, SapResultCode resultCode) {
     sapResponseToken = token;
     sapResultCode = resultCode;
-    parent.notify();
+    parent.notify(token);
     return Void();
 }
 
@@ -75,7 +75,7 @@ Return<void> SapCallback::transferCardReaderStatusResponse(int32_t token, SapRes
                                                            int32_t /*cardReaderStatus*/) {
     sapResponseToken = token;
     sapResultCode = resultCode;
-    parent.notify();
+    parent.notify(token);
     return Void();
 }
 
@@ -86,6 +86,6 @@ Return<void> SapCallback::errorResponse(int32_t /*token*/) {
 Return<void> SapCallback::transferProtocolResponse(int32_t token, SapResultCode resultCode) {
     sapResponseToken = token;
     sapResultCode = resultCode;
-    parent.notify();
+    parent.notify(token);
     return Void();
 }

@@ -22,7 +22,7 @@ using namespace ::android::hardware::radio::V1_0;
  * Test IRadio.setGsmBroadcastConfig() for the response returned.
  */
 TEST_F(RadioHidlTest, setGsmBroadcastConfig) {
-    int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
 
     // Create GsmBroadcastSmsConfigInfo #1
     GsmBroadcastSmsConfigInfo gbSmsConfig1;
@@ -85,7 +85,7 @@ TEST_F(RadioHidlTest, setGsmBroadcastConfig) {
  * Test IRadio.getGsmBroadcastConfig() for the response returned.
  */
 TEST_F(RadioHidlTest, getGsmBroadcastConfig) {
-    int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
 
     radio->getGsmBroadcastConfig(serial);
 
@@ -105,7 +105,7 @@ TEST_F(RadioHidlTest, getGsmBroadcastConfig) {
  * Test IRadio.setCdmaBroadcastConfig() for the response returned.
  */
 TEST_F(RadioHidlTest, setCdmaBroadcastConfig) {
-    int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
 
     CdmaBroadcastSmsConfigInfo cbSmsConfig;
     cbSmsConfig.serviceCategory = 4096;
@@ -132,7 +132,7 @@ TEST_F(RadioHidlTest, setCdmaBroadcastConfig) {
  * Test IRadio.getCdmaBroadcastConfig() for the response returned.
  */
 TEST_F(RadioHidlTest, getCdmaBroadcastConfig) {
-    int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
 
     radio->getCdmaBroadcastConfig(serial);
 
@@ -150,7 +150,7 @@ TEST_F(RadioHidlTest, getCdmaBroadcastConfig) {
  * Test IRadio.setCdmaBroadcastActivation() for the response returned.
  */
 TEST_F(RadioHidlTest, setCdmaBroadcastActivation) {
-    int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
     bool activate = false;
 
     radio->setCdmaBroadcastActivation(serial, activate);
@@ -170,7 +170,7 @@ TEST_F(RadioHidlTest, setCdmaBroadcastActivation) {
  * Test IRadio.setGsmBroadcastActivation() for the response returned.
  */
 TEST_F(RadioHidlTest, setGsmBroadcastActivation) {
-    int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
     bool activate = false;
 
     radio->setGsmBroadcastActivation(serial, activate);
