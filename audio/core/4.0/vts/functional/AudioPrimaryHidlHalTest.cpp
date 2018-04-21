@@ -727,11 +727,12 @@ static void testCapabilityGetter(const string& name, IStream* stream,
     ASSERT_OK(ret);
 
     if (currentMustBeSupported) {
+        ASSERT_NE(0U, capabilities.size()) << name << " must not return an empty list";
         Property currentValue = extract((stream->*getter)());
-        EXPECT_NE(std::find(capabilities.begin(), capabilities.end(), currentValue),
-                  capabilities.end())
-            << "current " << name << " is not in the list of the supported ones "
-            << toString(capabilities);
+        EXPECT_TRUE(std::find(capabilities.begin(), capabilities.end(), currentValue) !=
+                    capabilities.end())
+            << "value returned by " << name << "() = " << testing::PrintToString(currentValue)
+            << " is not in the list of the supported ones " << toString(capabilities);
     }
 
     // Check that all declared supported values are indeed supported

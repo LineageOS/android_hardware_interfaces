@@ -48,6 +48,7 @@ namespace common {
 namespace AUDIO_HAL_VERSION {
 DEFINE_GTEST_PRINT_TO(AudioConfig)
 DEFINE_GTEST_PRINT_TO(AudioDevice)
+DEFINE_GTEST_PRINT_TO(AudioFormat)
 DEFINE_GTEST_PRINT_TO(AudioChannelMask)
 }  // namespace AUDIO_HAL_VERSION
 }  // namespace common
