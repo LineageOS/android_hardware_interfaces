@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "StreamHAL"
+#ifndef ANDROID_HARDWARE_AUDIO_V2_0_UTIL_H
+#define ANDROID_HARDWARE_AUDIO_V2_0_UTIL_H
 
-#include "core/2.0/default/Stream.h"
-#include "common/all-versions/default/EffectMap.h"
-#include "core/2.0/default/Conversions.h"
-#include "core/2.0/default/Util.h"
+#include <android/hardware/audio/2.0/types.h>
 
 #define AUDIO_HAL_VERSION V2_0
-#include <core/all-versions/default/Stream.impl.h>
+#include <core/all-versions/default/Util.h>
 #undef AUDIO_HAL_VERSION
+
+#endif  // ANDROID_HARDWARE_AUDIO_V2_0_UTIL_H
