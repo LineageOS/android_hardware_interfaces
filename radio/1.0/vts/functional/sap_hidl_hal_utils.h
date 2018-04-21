@@ -92,7 +92,7 @@ class SapHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     virtual void TearDown() override;
 
     /* Used as a mechanism to inform the test about data/event callback */
-    void notify();
+    void notify(int receivedToken);
 
     /* Test code calls this function to wait for response */
     std::cv_status wait();
@@ -102,4 +102,7 @@ class SapHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 
     /* Sap Callback object */
     sp<SapCallback> sapCb;
+
+    /* Token for sap request */
+    int32_t token;
 };
