@@ -25,7 +25,6 @@
 #include <android/log.h>
 
 using ::android::hardware::audio::common::AUDIO_HAL_VERSION::HidlUtils;
-using ::android::hardware::audio::all_versions::implementation::isGainNormalized;
 
 namespace android {
 namespace hardware {

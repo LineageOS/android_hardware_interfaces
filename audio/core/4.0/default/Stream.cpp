@@ -19,6 +19,7 @@
 #include "core/4.0/default/Stream.h"
 #include "common/all-versions/default/EffectMap.h"
 #include "core/4.0/default/Conversions.h"
+#include "core/4.0/default/Util.h"
 
 #define AUDIO_HAL_VERSION V4_0
 #include <core/all-versions/default/Stream.impl.h>
