@@ -1272,19 +1272,16 @@ TEST_F(AudioPrimaryHidlTest, setVoiceVolume) {
 }
 
 TEST_F(AudioPrimaryHidlTest, setMode) {
-    doc::test(
-        "Make sure setMode always succeeds if mode is valid "
-        "and fails otherwise");
+    doc::test("Make sure setMode always succeeds if mode is valid and fails otherwise");
     // Test Invalid values
-    for (int mode : {-1, 0, int(AudioMode::IN_COMMUNICATION) + 1}) {
-        SCOPED_TRACE("mode=" + to_string(mode));
-        ASSERT_RESULT(Result::INVALID_ARGUMENTS, device->setMode(AudioMode(mode)));
+    for (int mode : {-2, -1, int(AudioMode::IN_COMMUNICATION) + 1}) {
+        ASSERT_RESULT(Result::INVALID_ARGUMENTS, device->setMode(AudioMode(mode)))
+            << "mode=" << mode;
     }
     // Test valid values
     for (AudioMode mode : {AudioMode::IN_CALL, AudioMode::IN_COMMUNICATION, AudioMode::RINGTONE,
                            AudioMode::NORMAL /* Make sure to leave the test in normal mode */}) {
-        SCOPED_TRACE("mode=" + toString(mode));
-        ASSERT_OK(device->setMode(mode));
+        ASSERT_OK(device->setMode(mode)) << "mode=" << toString(mode);
     }
 }
 
