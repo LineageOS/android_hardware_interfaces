@@ -22,7 +22,7 @@ using namespace ::android::hardware::radio::V1_0;
  * Test IRadio.getClir() for the response returned.
  */
 TEST_F(RadioHidlTest, getClir) {
-    int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
 
     radio->getClir(serial);
 
@@ -40,7 +40,7 @@ TEST_F(RadioHidlTest, getClir) {
  * Test IRadio.setClir() for the response returned.
  */
 TEST_F(RadioHidlTest, setClir) {
-    int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
     int32_t status = 1;
 
     radio->setClir(serial, status);
@@ -58,7 +58,7 @@ TEST_F(RadioHidlTest, setClir) {
  * Test IRadio.getFacilityLockForApp() for the response returned.
  */
 TEST_F(RadioHidlTest, getFacilityLockForApp) {
-    int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
     std::string facility = "";
     std::string password = "";
     int32_t serviceClass = 1;
@@ -81,7 +81,7 @@ TEST_F(RadioHidlTest, getFacilityLockForApp) {
  * Test IRadio.setFacilityLockForApp() for the response returned.
  */
 TEST_F(RadioHidlTest, setFacilityLockForApp) {
-    int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
     std::string facility = "";
     bool lockState = false;
     std::string password = "";
@@ -105,7 +105,7 @@ TEST_F(RadioHidlTest, setFacilityLockForApp) {
  * Test IRadio.setBarringPassword() for the response returned.
  */
 TEST_F(RadioHidlTest, setBarringPassword) {
-    int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
     std::string facility = "";
     std::string oldPassword = "";
     std::string newPassword = "";
@@ -128,7 +128,7 @@ TEST_F(RadioHidlTest, setBarringPassword) {
  * Test IRadio.getClip() for the response returned.
  */
 TEST_F(RadioHidlTest, getClip) {
-    int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
 
     radio->getClip(serial);
 
@@ -146,7 +146,7 @@ TEST_F(RadioHidlTest, getClip) {
  * Test IRadio.setSuppServiceNotifications() for the response returned.
  */
 TEST_F(RadioHidlTest, setSuppServiceNotifications) {
-    int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
     bool enable = false;
 
     radio->setSuppServiceNotifications(serial, enable);
@@ -165,7 +165,7 @@ TEST_F(RadioHidlTest, setSuppServiceNotifications) {
  * Test IRadio.requestIsimAuthentication() for the response returned.
  */
 TEST_F(RadioHidlTest, requestIsimAuthentication) {
-    int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
     std::string challenge = "";
 
     radio->requestIsimAuthentication(serial, challenge);
@@ -187,7 +187,7 @@ TEST_F(RadioHidlTest, requestIsimAuthentication) {
  * Test IRadio.getImsRegistrationState() for the response returned.
  */
 TEST_F(RadioHidlTest, getImsRegistrationState) {
-    int serial = GetRandomSerialNumber();
+    serial = GetRandomSerialNumber();
 
     radio->getImsRegistrationState(serial);
 

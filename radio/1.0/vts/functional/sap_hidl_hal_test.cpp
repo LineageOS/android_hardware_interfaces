@@ -31,10 +31,12 @@ void SapHidlTest::SetUp() {
 
 void SapHidlTest::TearDown() {}
 
-void SapHidlTest::notify() {
+void SapHidlTest::notify(int receivedToken) {
     std::unique_lock<std::mutex> lock(mtx);
     count++;
-    cv.notify_one();
+    if (token == receivedToken) {
+        cv.notify_one();
+    }
 }
 
 std::cv_status SapHidlTest::wait() {
