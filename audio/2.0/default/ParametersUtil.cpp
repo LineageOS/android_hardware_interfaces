@@ -15,6 +15,7 @@
  */
 
 #include "ParametersUtil.h"
+#include "Util.h"
 
 namespace android {
 namespace hardware {
@@ -141,12 +142,7 @@ Result ParametersUtil::setParametersImpl(
 
 Result ParametersUtil::setParams(const AudioParameter& param) {
     int halStatus = halSetParameters(param.toString().string());
-    if (halStatus == OK)
-        return Result::OK;
-    else if (halStatus == -ENOSYS)
-        return Result::INVALID_STATE;
-    else
-        return Result::INVALID_ARGUMENTS;
+    return util::analyzeStatus(halStatus);
 }
 
 }  // namespace implementation
