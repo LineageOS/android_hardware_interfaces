@@ -758,7 +758,7 @@ Result getSupportedChannelMasks(IStream* stream,
                                 hidl_vec<hidl_bitfield<AudioChannelMask>>& channels) {
     Result res;
     EXPECT_OK(
-        stream->getSupportedSampleRates(extract(stream->getFormat()), returnIn(res, channels)));
+        stream->getSupportedChannelMasks(extract(stream->getFormat()), returnIn(res, channels)));
     return res;
 }
 
