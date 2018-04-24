@@ -142,7 +142,7 @@ TEST_F(RadioHidlTest, getAvailableNetworks) {
     int serial = GetRandomSerialNumber();
 
     radio->getAvailableNetworks(serial);
-    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(std::cv_status::no_timeout, wait(300));
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
     ASSERT_TRUE(radioRsp->rspInfo.type == RadioResponseType::SOLICITED ||
                 radioRsp->rspInfo.type == RadioResponseType::SOLICITED_ACK_EXP);
