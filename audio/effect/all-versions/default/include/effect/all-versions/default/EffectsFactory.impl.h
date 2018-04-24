@@ -172,6 +172,11 @@ Return<void> EffectsFactory::createEffect(const Uuid& uid, int32_t session, int3
 }
 
 Return<void> EffectsFactory::debugDump(const hidl_handle& fd) {
+    return debug(fd, {} /* options */);
+}
+
+Return<void> EffectsFactory::debug(const hidl_handle& fd,
+                                   const hidl_vec<hidl_string>& /* options */) {
     if (fd.getNativeHandle() != nullptr && fd->numFds == 1) {
         EffectDumpEffects(fd->data[0]);
     }
