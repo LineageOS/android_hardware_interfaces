@@ -494,10 +494,6 @@ wifi_error WifiLegacyHal::setPacketFilter(const std::string& iface_name,
 
 std::pair<wifi_error, std::vector<uint8_t>>
 WifiLegacyHal::readApfPacketFilterData(const std::string& iface_name) {
-    if (global_func_table_.wifi_read_packet_filter == nullptr) {
-        return {WIFI_ERROR_NOT_SUPPORTED, {}};
-    }
-
     PacketFilterCapabilities caps;
     wifi_error status = global_func_table_.wifi_get_packet_filter_capabilities(
         getIfaceHandle(iface_name), &caps.version, &caps.max_len);
