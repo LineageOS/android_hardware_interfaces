@@ -55,6 +55,7 @@ using std::vector;
 using ::android::sp;
 using ::android::hardware::Return;
 using ::android::hardware::hidl_bitfield;
+using ::android::hardware::hidl_enum_iterator;
 using ::android::hardware::hidl_handle;
 using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
@@ -81,6 +82,7 @@ using ::android::hardware::audio::V4_0::SourceMetadata;
 using ::android::hardware::audio::V4_0::SinkMetadata;
 using ::android::hardware::audio::common::V4_0::AudioChannelMask;
 using ::android::hardware::audio::common::V4_0::AudioConfig;
+using ::android::hardware::audio::common::V4_0::AudioContentType;
 using ::android::hardware::audio::common::V4_0::AudioDevice;
 using ::android::hardware::audio::common::V4_0::AudioFormat;
 using ::android::hardware::audio::common::V4_0::AudioHandleConsts;
@@ -91,6 +93,7 @@ using ::android::hardware::audio::common::V4_0::AudioMode;
 using ::android::hardware::audio::common::V4_0::AudioOffloadInfo;
 using ::android::hardware::audio::common::V4_0::AudioOutputFlag;
 using ::android::hardware::audio::common::V4_0::AudioSource;
+using ::android::hardware::audio::common::V4_0::AudioUsage;
 using ::android::hardware::audio::common::V4_0::ThreadInfo;
 using ::android::hardware::audio::common::utils::mkBitfield;
 
@@ -140,16 +143,29 @@ class AudioHidlTest : public HidlTest {
 sp<IDevicesFactory> AudioHidlTest::devicesFactory;
 
 TEST_F(AudioHidlTest, GetAudioDevicesFactoryService) {
-    doc::test("test the getService (called in SetUp)");
+    doc::test("Test the getService (called in SetUp)");
 }
 
 TEST_F(AudioHidlTest, OpenDeviceInvalidParameter) {
-    doc::test("test passing an invalid parameter to openDevice");
+    doc::test("Test passing an invalid parameter to openDevice");
     Result result;
     sp<IDevice> device;
     ASSERT_OK(devicesFactory->openDevice("Non existing device", returnIn(result, device)));
     ASSERT_EQ(Result::INVALID_ARGUMENTS, result);
     ASSERT_TRUE(device == nullptr);
+}
+
+TEST_F(AudioHidlTest, OpenPrimaryDeviceUsingGetDevice) {
+    doc::test("Calling openDevice(\"primary\") should return the primary device.");
+    Result result;
+    sp<IDevice> baseDevice;
+    ASSERT_OK(devicesFactory->openDevice("primary", returnIn(result, baseDevice)));
+    ASSERT_OK(result);
+    ASSERT_TRUE(baseDevice != nullptr);
+
+    Return<sp<IPrimaryDevice>> primaryDevice = IPrimaryDevice::castFrom(baseDevice);
+    ASSERT_TRUE(primaryDevice.isOk());
+    ASSERT_TRUE(sp<IPrimaryDevice>(primaryDevice) != nullptr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -165,14 +181,11 @@ class AudioPrimaryHidlTest : public AudioHidlTest {
 
         if (device == nullptr) {
             Result result;
-            sp<IDevice> baseDevice;
-            ASSERT_OK(devicesFactory->openDevice("primary", returnIn(result, baseDevice)));
+            ASSERT_OK(devicesFactory->openPrimaryDevice(returnIn(result, device)));
             ASSERT_OK(result);
-            ASSERT_TRUE(baseDevice != nullptr);
+            ASSERT_TRUE(device != nullptr);
 
             environment->registerTearDown([] { device.clear(); });
-            device = IPrimaryDevice::castFrom(baseDevice);
-            ASSERT_TRUE(device != nullptr);
         }
     }
 
@@ -600,13 +613,17 @@ class OutputStreamTest : public OpenStreamTest<IStreamOut> {
         const AudioConfig& config = GetParam();
         // TODO: test all flag combination
         auto flags = hidl_bitfield<AudioOutputFlag>(AudioOutputFlag::NONE);
-        SourceMetadata metadata = {{{}}};  // create on track metadata
         testOpen(
             [&](AudioIoHandle handle, AudioConfig config, auto cb) {
-                return device->openOutputStream(handle, address, config, flags, metadata, cb);
+                return device->openOutputStream(handle, address, config, flags, initialMetadata,
+                                                cb);
             },
             config);
     }
+
+   protected:
+    const SourceMetadata initialMetadata = {
+        {{AudioUsage::MEDIA, AudioContentType::MUSIC, 1 /* gain */}}};
 };
 TEST_P(OutputStreamTest, OpenOutputStreamTest) {
     doc::test(
@@ -637,13 +654,15 @@ class InputStreamTest : public OpenStreamTest<IStreamIn> {
         const AudioConfig& config = GetParam();
         // TODO: test all supported flags and source
         auto flags = hidl_bitfield<AudioInputFlag>(AudioInputFlag::NONE);
-        SinkMetadata metadata = {{{AudioSource::DEFAULT, 1}}};
         testOpen(
             [&](AudioIoHandle handle, AudioConfig config, auto cb) {
-                return device->openInputStream(handle, address, config, flags, metadata, cb);
+                return device->openInputStream(handle, address, config, flags, initialMetadata, cb);
             },
             config);
     }
+
+   protected:
+    const SinkMetadata initialMetadata = {{{AudioSource::DEFAULT, 1 /* gain */}}};
 };
 
 TEST_P(InputStreamTest, OpenInputStreamTest) {
@@ -1040,8 +1059,30 @@ TEST_P(InputStreamTest, getCapturePosition) {
     ASSERT_RESULT(invalidStateOrNotSupported, res);
 }
 
+TEST_P(InputStreamTest, updateSinkMetadata) {
+    doc::test("The HAL should not crash on metadata change");
+
+    hidl_enum_iterator<AudioSource> range;
+    // Test all possible track configuration
+    for (AudioSource source : range) {
+        for (float volume : {0.0, 0.5, 1.0}) {
+            const SinkMetadata metadata = {{{source, volume}}};
+            ASSERT_OK(stream->updateSinkMetadata(metadata))
+                << "source=" << toString(source) << ", volume=" << volume;
+        }
+    }
+
+    // Do not test concurrent capture as this is not officially supported
+
+    // Set no metadata as if all stream track had stopped
+    ASSERT_OK(stream->updateSinkMetadata({}));
+
+    // Restore initial
+    ASSERT_OK(stream->updateSinkMetadata(initialMetadata));
+}
+
 //////////////////////////////////////////////////////////////////////////////
-///////////////////////////////// StreamIn ///////////////////////////////////
+///////////////////////////////// StreamOut //////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
 TEST_P(OutputStreamTest, getLatency) {
@@ -1260,6 +1301,37 @@ TEST_P(OutputStreamTest, GetPresentationPositionStop) {
 TEST_P(OutputStreamTest, SelectPresentation) {
     doc::test("Verify that presentation selection does not crash");
     ASSERT_RESULT(okOrNotSupported, stream->selectPresentation(0, 0));
+}
+
+TEST_P(OutputStreamTest, updateSourceMetadata) {
+    doc::test("The HAL should not crash on metadata change");
+
+    hidl_enum_iterator<AudioUsage> usageRange;
+    hidl_enum_iterator<AudioContentType> contentRange;
+    // Test all possible track configuration
+    for (auto usage : usageRange) {
+        for (auto content : contentRange) {
+            for (float volume : {0.0, 0.5, 1.0}) {
+                const SourceMetadata metadata = {{{usage, content, volume}}};
+                ASSERT_OK(stream->updateSourceMetadata(metadata))
+                    << "usage=" << toString(usage) << ", content=" << toString(content)
+                    << ", volume=" << volume;
+            }
+        }
+    }
+
+    // Set many track of different configuration
+    ASSERT_OK(stream->updateSourceMetadata(
+        {{{AudioUsage::MEDIA, AudioContentType::MUSIC, 0.1},
+          {AudioUsage::VOICE_COMMUNICATION, AudioContentType::SPEECH, 1.0},
+          {AudioUsage::ALARM, AudioContentType::SONIFICATION, 0.0},
+          {AudioUsage::ASSISTANT, AudioContentType::UNKNOWN, 0.3}}}));
+
+    // Set no metadata as if all stream track had stopped
+    ASSERT_OK(stream->updateSourceMetadata({}));
+
+    // Restore initial
+    ASSERT_OK(stream->updateSourceMetadata(initialMetadata));
 }
 
 //////////////////////////////////////////////////////////////////////////////
