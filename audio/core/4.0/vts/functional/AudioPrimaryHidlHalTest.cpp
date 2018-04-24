@@ -1196,7 +1196,7 @@ TEST_P(OutputStreamTest, Pause) {
         doc::partialTest("The output stream does not support pause");
         return;
     }
-    ASSERT_RESULT(Result::INVALID_STATE, stream->resume());
+    ASSERT_RESULT(Result::INVALID_STATE, stream->pause());
 }
 
 static void testDrain(IStreamOut* stream, AudioDrain type) {
