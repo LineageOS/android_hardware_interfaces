@@ -1,0 +1,191 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.biometrics.face@1.0;
+
+import IBiometricsFaceClientCallback;
+
+// TODO(b/78538290): Update comments with state machine transitions when ready.
+// TODO(b/78537981): Update comments with callback interaction contract.
+// TODO(b/79496983): Update comments with status returns fully enumerated.
+/**
+ * The HAL interface for biometric face authentication.
+ */
+interface IBiometricsFace {
+
+    /**
+     * Sets the current client callback.
+     *
+     * Registers a user function that must receive notifications from the HAL.
+     * There is usually only one client (FaceService). This call must block
+     * if the HAL state machine is in busy state until the HAL leaves the
+     * busy state.
+     *
+     * All callback methods pass a deviceId to differentiate callback
+     * invocations in the case where multiple sensors exist.
+     *
+     * @param clientCallback The client defined callback to register.
+     * @return result, with its "value" parameter representing a "deviceId",
+     *     which must be unique for a given sensor.
+     */
+    @callflow(next={"setActiveUser"})
+    @entry
+    setCallback(IBiometricsFaceClientCallback clientCallback)
+        generates (OptionalUint64 result);
+
+    /**
+     * Sets the active user, which all subsequent HAL operations are applied to.
+     *
+     * HAL service implementors must ensure that operations are restricted to
+     * the given user. Clients must not call any part of this interface, except
+     * for setCallback(), without first having set an active user. The
+     * implementation is responsible for cancelling the current operation and
+     * returning to the idle state. Calling this method with the same userId
+     * should have no effect on the state machine.
+     *
+     * @param userId A non-negative user identifier that must be unique and
+     *     persistent for a given user.
+     * @param storePath filesystem path to the template storage directory.
+     */
+    @callflow(next={"authenticate", "preEnroll", "enumerate", "remove"})
+    setActiveUser(int32_t userId, string storePath) generates (Status status);
+
+    /**
+     * Begins a pre-enrollment request.
+     *
+     * Generates a unique and cryptographically secure random token used to
+     * indicate the start of an enrollment transaction. preEnroll() and
+     * postEnroll() specify a pin/pattern/password cleared time window where
+     * enrollment is allowed.
+     *
+     * preEnroll() generates a challenge which must then be wrapped by the
+     * gatekeeper after verifying a successful strong authentication attempt,
+     * which generates a Hardware Authentication Token. The challenge prevents
+     * spoofing and replay attacks and ensures that we only update a user’s face
+     * template if the operation was preceded by some kind of strong credential
+     * confirmation (e.g. device password).
+     *
+     * @return result, with its "value" parameter representing a "challenge": a
+     *     unique and cryptographically secure random token.
+     */
+    @callflow(next={"enroll", "postEnroll"})
+    preEnroll() generates (OptionalUint64 result);
+
+    /**
+     * Enrolls a user's face.
+     *
+     * Note that this interface permits implementations where multiple faces can
+     * be enrolled for a single user. However, allowing multiple faces to be
+     * enrolled can be a severe security vulnerability and hence, most
+     * implementations must ensure that only a single face be enrolled at a
+     * given time. Multi-enrollment must only be used where there is a clear
+     * necessity for a shared use case, e.g. TVs or cars.
+     *
+     * Note that the Hardware Authentication Token must still be valid after
+     * this call, and must be explicitly invalidated by a call to postEnroll().
+     * This allows clients to immediately reattempt enrollment (for example, if
+     * a user wasn’t satisfied with their enrollment) without having to go
+     * through another strong authentication flow.
+     *
+     * This method triggers the IBiometricsFaceClientCallback#onEnrollResult()
+     * method.
+     *
+     * @param hat A valid Hardware Authentication Token, generated as a result
+     *     of a preEnroll() challenge being wrapped by the gatekeeper after a
+     *     sucessful strong authentication request.
+     * @param timeoutSec A timeout in seconds, after which this enrollment
+     *     attempt is cancelled. Note that the client still needs to
+     *     call postEnroll() to terminate the enrollment session.
+     * @return status The status of this method call.
+     */
+    @callflow(next={"cancel", "enroll", "postEnroll", "remove"})
+    enroll(vec<uint8_t> hat, uint32_t timeoutSec) generates (Status status);
+
+    /**
+     * Finishes the enrollment session and invalidates the challenge generated
+     * by preEnroll().
+     *
+     * Clients must call this method once enrollment is complete, and the user's
+     * face template no longer needs to be updated.
+     *
+     * @return status The status of this method call.
+     */
+    @callflow(next={"authenticate", "setActiveUser", "enumerate", "remove"})
+    postEnroll() generates (Status status);
+
+    /**
+     * Returns an identifier associated with the current face set.
+     *
+     * The authenticator ID must change whenever a new face is enrolled. The
+     * authenticator ID must not be changed when a face is deleted. The
+     * authenticator ID must be an entropy-encoded random number which all
+     * current templates are tied to. The authenticator ID must be immutable
+     * outside of an active enrollment window to prevent replay attacks.
+     *
+     * @return result, with its value parameter representing an
+     *     "authenticatorId": an identifier associated to the user's current
+     *     face enrollment.
+     */
+    @callflow(next={"authenticate"})
+    getAuthenticatorId() generates (OptionalUint64 result);
+
+    /**
+     * Cancels a pending enrollment or authentication request.
+     *
+     * @return status The status of this method call.
+     */
+    @callflow(next={"authenticate", "enroll", "enumerate", "remove",
+        "setActiveUser"})
+    cancel() generates (Status status);
+
+    /**
+     * Enumerates all face templates associated with the active user.
+     *
+     * The onEnumerate() callback method is invoked once for each face template
+     * found.
+     *
+     * @return status The status of this method call.
+     */
+    @callflow(next={"remove", "enroll", "authenticate", "setActiveUser"})
+    enumerate() generates (Status status);
+
+    /**
+     * Removes a face template or all face templates associated with the active
+     * user.
+     *
+     * This method triggers the IBiometricsFaceClientCallback#onRemoved() method.
+     *
+     * @param faceId The id correpsonding to the face to be removed; or 0 if all
+     *    faces are to be removed.
+     * @return status The status of this method call.
+     */
+    @callflow(next={"enumerate", "authenticate", "cancel", "getAuthenticatorId",
+        "setActiveUser"})
+    remove(uint32_t faceId) generates (Status status);
+
+    /**
+     * Authenticates the active user.
+     *
+     * An optional operationId can be specified as a token from the transaction
+     * being authorized.
+     *
+     * @param operationId A non-zero operation id associated with a crypto
+     * object instance; or 0 if not being used.
+     * @return status The status of this method call.
+     */
+    @callflow(next={"cancel", "preEnroll", "remove"})
+    authenticate(uint64_t operationId) generates (Status status);
+};
