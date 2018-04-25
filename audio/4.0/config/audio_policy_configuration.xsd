@@ -525,6 +525,7 @@
             <xs:enumeration value="DEVICE_CATEGORY_SPEAKER"/>
             <xs:enumeration value="DEVICE_CATEGORY_EARPIECE"/>
             <xs:enumeration value="DEVICE_CATEGORY_EXT_MEDIA"/>
+            <xs:enumeration value="DEVICE_CATEGORY_HEARING_AID"/>
         </xs:restriction>
     </xs:simpleType>
     <xs:complexType name="volume">
