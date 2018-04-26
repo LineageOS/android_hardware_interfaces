@@ -31,7 +31,7 @@ namespace hardware {
 namespace neuralnetworks {
 
 namespace generated_tests {
-using ::generated_tests::MixedTypedExampleType;
+using ::test_helper::MixedTypedExampleType;
 extern void Execute(const sp<V1_0::IDevice>&, std::function<V1_0::Model(void)>,
                     std::function<bool(int)>, const std::vector<MixedTypedExampleType>&);
 }  // namespace generated_tests
@@ -45,7 +45,7 @@ using ::android::hardware::neuralnetworks::V1_0::implementation::PreparedModelCa
 using ::android::nn::allocateSharedMemory;
 
 // Mixed-typed examples
-typedef generated_tests::MixedTypedExampleType MixedTypedExample;
+typedef test_helper::MixedTypedExampleType MixedTypedExample;
 
 // in frameworks/ml/nn/runtime/tests/generated/
 #include "all_generated_V1_0_vts_tests.cpp"
