@@ -31,7 +31,7 @@ namespace V1_1 {
 namespace vts {
 namespace functional {
 
-using MixedTypedExample = generated_tests::MixedTypedExampleType;
+using MixedTypedExample = test_helper::MixedTypedExampleType;
 
 #define FOR_EACH_TEST_MODEL(FN)                                  \
     FN(add)                                                      \
