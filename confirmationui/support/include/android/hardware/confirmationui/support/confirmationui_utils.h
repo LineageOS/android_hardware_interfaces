@@ -58,7 +58,8 @@ class NullOr {
 
    public:
     NullOr() : value_(initializer_t<ValueT>::init()), null_(true) {}
-    NullOr(ValueT&& value) : value_(std::forward<ValueT>(value)), null_(false) {}
+    template <typename T>
+    NullOr(T&& value) : value_(std::forward<T>(value)), null_(false) {}
 
     bool isOk() const { return !null_; }
 
