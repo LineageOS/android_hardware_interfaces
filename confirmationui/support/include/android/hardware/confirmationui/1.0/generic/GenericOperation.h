@@ -99,7 +99,8 @@ class Operation {
 
     void setPending() { error_ = ResponseCode::OK; }
 
-    void setHmacKey(const uint8_t (&key)[32]) { hmacKey_ = {key}; }
+    void setHmacKey(const auth_token_key_t& key) { hmacKey_ = key; }
+    NullOr<auth_token_key_t> hmacKey() const { return hmacKey_; }
 
     void abort() {
         if (isPending()) {
@@ -112,7 +113,7 @@ class Operation {
         if (isPending()) error_ = ResponseCode::Canceled;
     }
 
-    void finalize(const uint8_t key[32]) {
+    void finalize(const auth_token_key_t& key) {
         if (error_ == ResponseCode::Ignored) return;
         resultCB_->result(error_, getMessage(), userConfirm(key));
         error_ = ResponseCode::Ignored;
@@ -127,11 +128,7 @@ class Operation {
     }
 
     ResponseCode deliverSecureInputEvent(const HardwareAuthToken& secureInputToken) {
-        constexpr uint8_t testKeyByte = static_cast<uint8_t>(TestKeyBits::BYTE);
-        constexpr uint8_t testKey[32] = {testKeyByte, testKeyByte, testKeyByte, testKeyByte,
-                                         testKeyByte, testKeyByte, testKeyByte, testKeyByte,
-                                         testKeyByte, testKeyByte, testKeyByte, testKeyByte,
-                                         testKeyByte, testKeyByte, testKeyByte, testKeyByte};
+        const auth_token_key_t testKey(static_cast<uint8_t>(TestKeyBits::BYTE));
 
         auto hmac = HMacer::hmac256(testKey, "\0", bytes_cast(secureInputToken.challenge),
                                     bytes_cast(secureInputToken.userId),
@@ -171,7 +168,7 @@ class Operation {
         result.setToExternal(formattedMessageBuffer_, formattedMessageLength_);
         return result;
     }
-    hidl_vec<uint8_t> userConfirm(const uint8_t key[32]) {
+    hidl_vec<uint8_t> userConfirm(const auth_token_key_t& key) {
         if (error_ != ResponseCode::OK) return {};
         confirmationTokenScratchpad_ = HMacer::hmac256(key, "confirmation token", getMessage());
         if (!confirmationTokenScratchpad_.isOk()) {
@@ -188,10 +185,10 @@ class Operation {
     uint8_t formattedMessageBuffer_[uint32_t(MessageSize::MAX)];
     char promptStringBuffer_[uint32_t(MessageSize::MAX)];
     size_t formattedMessageLength_ = 0;
-    NullOr<array<uint8_t, 32>> confirmationTokenScratchpad_;
+    NullOr<hmac_t> confirmationTokenScratchpad_;
     Callback resultCB_;
     typename TimeStamper::TimeStamp startTime_;
-    NullOr<array<uint8_t, 32>> hmacKey_;
+    NullOr<auth_token_key_t> hmacKey_;
 };
 
 }  // namespace

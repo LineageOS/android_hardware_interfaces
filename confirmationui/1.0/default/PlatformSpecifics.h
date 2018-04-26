@@ -48,8 +48,9 @@ struct MonotonicClockTimeStamper {
 
 class HMacImplementation {
    public:
-    static support::NullOr<support::array<uint8_t, 32>> hmac256(
-        const uint8_t key[32], std::initializer_list<support::ByteBufferProxy> buffers);
+    static support::NullOr<support::hmac_t> hmac256(
+        const support::auth_token_key_t& key,
+        std::initializer_list<support::ByteBufferProxy> buffers);
 };
 
 class MyOperation : public generic::Operation<sp<IConfirmationResultCallback>,
