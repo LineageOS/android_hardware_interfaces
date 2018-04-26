@@ -2003,30 +2003,32 @@ enum VehicleLightSwitch : int32_t {
 
 /**
  * Used by INFO_EV_CONNECTOR_TYPE to enumerate the type of connectors
- * available to charge the vehicle.  Consistent with projection protocol.
+ * available to charge the vehicle.
  */
 enum EvConnectorType : int32_t {
     /**
      * Default type if the vehicle does not know or report the EV connector
      * type.
      */
-    EV_CONNECTOR_TYPE_UNKNOWN = 0,
-    EV_CONNECTOR_TYPE_J1772 = 1,
-    EV_CONNECTOR_TYPE_MENNEKES = 2,
-    EV_CONNECTOR_TYPE_CHADEMO = 3,
-    EV_CONNECTOR_TYPE_COMBO_1 = 4,
-    EV_CONNECTOR_TYPE_COMBO_2 = 5,
-    EV_CONNECTOR_TYPE_TESLA_ROADSTER = 6,
-    EV_CONNECTOR_TYPE_TESLA_HPWC = 7,
-    EV_CONNECTOR_TYPE_TESLA_SUPERCHARGER = 8,
-    EV_CONNECTOR_TYPE_GBT = 9,
+    UNKNOWN = 0,
+    IEC_TYPE_1_AC = 1,              // aka Yazaki
+    IEC_TYPE_2_AC = 2,              // aka Mennekes
+    IEC_TYPE_3_AC = 3,              // aka Scame
+    IEC_TYPE_4_DC = 4,              // aka CHAdeMO
+    IEC_TYPE_1_CCS_DC = 5,          // aka Combo 1
+    IEC_TYPE_2_CCS_DC = 6,          // aka Combo 2
+    TESLA_ROADSTER = 7,
+    TESLA_HPWC = 8,
+    TESLA_SUPERCHARGER = 9,
+    GBT_AC = 10,
+    GBT_DC = 11,
 
     /**
      * Connector type to use when no other types apply. Before using this
      * value, work with Google to see if the EvConnectorType enum can be
      * extended with an appropriate value.
      */
-    EV_CONNECTOR_TYPE_OTHER = 101,
+    OTHER = 101,
 };
 
 /**
