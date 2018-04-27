@@ -58,7 +58,8 @@ class NullOr {
 
    public:
     NullOr() : value_(initializer_t<ValueT>::init()), null_(true) {}
-    NullOr(ValueT&& value) : value_(std::forward<ValueT>(value)), null_(false) {}
+    template <typename T>
+    NullOr(T&& value) : value_(std::forward<T>(value)), null_(false) {}
 
     bool isOk() const { return !null_; }
 
@@ -81,16 +82,22 @@ class array {
    public:
     array() : data_{} {}
     array(const T (&data)[elements]) { std::copy(data, data + elements, data_); }
+    explicit array(const T& v) { fill(v); }
 
     T* data() { return data_; }
     const T* data() const { return data_; }
     constexpr size_t size() const { return elements; }
-    operator const array_type&() const { return data_; }
 
     T* begin() { return data_; }
     T* end() { return data_ + elements; }
     const T* begin() const { return data_; }
     const T* end() const { return data_ + elements; }
+
+    void fill(const T& v) {
+        for (size_t i = 0; i < elements; ++i) {
+            data_[i] = v;
+        }
+    }
 
    private:
     array_type data_;
@@ -157,6 +164,11 @@ class ByteBufferProxy {
     size_t size_;
 };
 
+constexpr uint8_t auth_token_key_size = 32;
+constexpr uint8_t hmac_size_bytes = support::auth_token_key_size;
+using auth_token_key_t = array<uint8_t, auth_token_key_size>;
+using hmac_t = auth_token_key_t;
+
 /**
  * Implementer are expected to provide an implementation with the following prototype:
  *  static NullOr<array<uint8_t, 32>> hmac256(const uint8_t key[32],
@@ -166,7 +178,7 @@ template <typename Impl>
 class HMac {
    public:
     template <typename... Data>
-    static NullOr<array<uint8_t, 32>> hmac256(const uint8_t key[32], const Data&... data) {
+    static NullOr<hmac_t> hmac256(const auth_token_key_t& key, const Data&... data) {
         return Impl::hmac256(key, {data...});
     }
 };

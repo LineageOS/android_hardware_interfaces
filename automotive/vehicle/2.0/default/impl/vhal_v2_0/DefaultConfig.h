@@ -242,17 +242,18 @@ const ConfigDeclaration kVehicleProperties[]{
          },
      .initialValue = {.int32Values = {0, 0, 0}}},
 
-    {.config =
-         {
-             .prop = toInt(VehicleProperty::HVAC_POWER_ON),
-             .access = VehiclePropertyAccess::READ_WRITE,
-             .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-             .areaConfigs = {VehicleAreaConfig{
-                 .areaId = (VehicleAreaSeat::ROW_1_LEFT | VehicleAreaSeat::ROW_1_RIGHT)}},
-             // TODO(bryaneyler): Ideally, this is generated dynamically from
-             // kHvacPowerProperties.
-             .configString = "0x12400500,0x12400501"  // HVAC_FAN_SPEED,HVAC_FAN_DIRECTION
-         },
+    {.config = {.prop = toInt(VehicleProperty::HVAC_POWER_ON),
+                .access = VehiclePropertyAccess::READ_WRITE,
+                .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                .areaConfigs = {VehicleAreaConfig{
+                    .areaId = (VehicleAreaSeat::ROW_1_LEFT | VehicleAreaSeat::ROW_1_RIGHT)}},
+                // TODO(bryaneyler): Ideally, this is generated dynamically from
+                // kHvacPowerProperties.
+                .configArray =
+                    {
+                        0x12400500,  // HVAC_FAN_SPEED
+                        0x12400501   // HVAC_FAN_DIRECTION
+                    }},
      .initialValue = {.int32Values = {1}}},
 
     {

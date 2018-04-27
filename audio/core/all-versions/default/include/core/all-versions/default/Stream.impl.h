@@ -101,11 +101,15 @@ Return<void> Stream::getSupportedSampleRates(AudioFormat format,
         halSampleRates =
             samplingRatesFromString(halListValue.string(), AudioParameter::valueListSeparator);
         sampleRates.setToExternal(halSampleRates.editArray(), halSampleRates.size());
+        // Legacy get_parameter does not return a status_t, thus can not advertise of failure.
+        // Note that this method must succeed (non empty list) if the format is supported.
+        if (sampleRates.size() == 0) {
+            result = Result::NOT_SUPPORTED;
+        }
     }
 #ifdef AUDIO_HAL_VERSION_2_0
     _hidl_cb(sampleRates);
-#endif
-#ifdef AUDIO_HAL_VERSION_4_0
+#elif AUDIO_HAL_VERSION_4_0
     _hidl_cb(result, sampleRates);
 #endif
     return Void();
@@ -125,6 +129,11 @@ Return<void> Stream::getSupportedChannelMasks(AudioFormat format,
         channelMasks.resize(halChannelMasks.size());
         for (size_t i = 0; i < halChannelMasks.size(); ++i) {
             channelMasks[i] = AudioChannelBitfield(halChannelMasks[i]);
+        }
+        // Legacy get_parameter does not return a status_t, thus can not advertise of failure.
+        // Note that this method must succeed (non empty list) if the format is supported.
+        if (channelMasks.size() == 0) {
+            result = Result::NOT_SUPPORTED;
         }
     }
 #ifdef AUDIO_HAL_VERSION_2_0
