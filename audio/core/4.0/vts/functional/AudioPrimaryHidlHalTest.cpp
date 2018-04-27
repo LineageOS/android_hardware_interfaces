@@ -74,6 +74,7 @@ using ReadParameters = ::android::hardware::audio::V4_0::IStreamIn::ReadParamete
 using ReadStatus = ::android::hardware::audio::V4_0::IStreamIn::ReadStatus;
 using ::android::hardware::audio::V4_0::IStreamOut;
 using ::android::hardware::audio::V4_0::IStreamOutCallback;
+using ::android::hardware::audio::V4_0::MicrophoneInfo;
 using ::android::hardware::audio::V4_0::MmapBufferInfo;
 using ::android::hardware::audio::V4_0::MmapPosition;
 using ::android::hardware::audio::V4_0::ParameterValue;
@@ -475,6 +476,17 @@ TEST_F(AudioPrimaryHidlTest, getParameters) {
     ASSERT_OK(device->setParameters(context, values));
     values.resize(0);
     ASSERT_OK(device->setParameters(context, values));
+}
+
+//////////////////////////////////////////////////////////////////////////////
+/////////////////////////////// getMicrophones ///////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+
+TEST_F(AudioPrimaryHidlTest, GetMicrophonesTest) {
+    doc::test("Make sure getMicrophones always succeeds");
+    hidl_vec<MicrophoneInfo> microphones;
+    ASSERT_OK(device->getMicrophones(returnIn(res, microphones)));
+    ASSERT_OK(res);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1079,6 +1091,14 @@ TEST_P(InputStreamTest, updateSinkMetadata) {
 
     // Restore initial
     ASSERT_OK(stream->updateSinkMetadata(initialMetadata));
+}
+
+TEST_P(InputStreamTest, getActiveMicrophones) {
+    doc::test("Getting active microphones should always succeed");
+    hidl_vec<MicrophoneInfo> microphones;
+    ASSERT_OK(device->getMicrophones(returnIn(res, microphones)));
+    ASSERT_OK(res);
+    ASSERT_TRUE(microphones.size() > 0);
 }
 
 //////////////////////////////////////////////////////////////////////////////
