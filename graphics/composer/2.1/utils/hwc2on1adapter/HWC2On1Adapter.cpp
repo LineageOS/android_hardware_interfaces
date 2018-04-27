@@ -2094,8 +2094,7 @@ std::string HWC2On1Adapter::Layer::dump() const {
     } else if (mCompositionType == HWC2::Composition::Sideband) {
         output << "  Handle: " << mSidebandStream << '\n';
     } else {
-        output << "  Buffer: " << mBuffer.getBuffer() << "/" <<
-                mBuffer.getFence() << '\n';
+        output << "  Buffer: " << mBuffer.getBuffer() << '\n';
         output << fill << "  Display frame [LTRB]: " <<
                 rectString(mDisplayFrame) << '\n';
         output << fill << "  Source crop: " <<
