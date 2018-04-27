@@ -299,7 +299,7 @@ static void mutateOperationOperandTypeTest(const sp<IDevice>& device, const V1_1
         if (mutateOperationOperandTypeSkip(operand, model)) {
             continue;
         }
-        for (OperandType invalidOperandType : hidl_enum_iterator<OperandType>{}) {
+        for (OperandType invalidOperandType : hidl_enum_range<OperandType>{}) {
             // Do not test OEM types
             if (invalidOperandType == model.operands[operand].type ||
                 invalidOperandType == OperandType::OEM ||
