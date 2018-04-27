@@ -249,5 +249,5 @@ c8bc853546dd55584611def2a9fa1d99f657e3366c976d2f60fe6b8aa6d2cb87 android.hardwar
 # Future changes to HALs
 5804ca86611d72e5481f022b3a0c1b334217f2e4988dad25730c42af2d1f4d1c android.hardware.neuralnetworks@1.0::IDevice
 12e8dca4ab7d8aadd0ef8f1b438021938e2396139e85db2ed65783b08800aa52 android.hardware.neuralnetworks@1.0::IExecutionCallback
-702f9a4cd3b7486a4b04f7155b737757ac2ca4b3548976d5782ad3cae9ff9780 android.hardware.neuralnetworks@1.0::types
+18e6885e184fe48401c2c53f1d1b8bfb07240f40c81ae6b9d2e336fca6efdbb7 android.hardware.neuralnetworks@1.0::types
 
