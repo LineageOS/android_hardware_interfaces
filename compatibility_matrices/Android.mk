@@ -18,68 +18,64 @@ LOCAL_PATH := $(call my-dir)
 
 BUILD_FRAMEWORK_COMPATIBILITY_MATRIX := $(LOCAL_PATH)/compatibility_matrix.mk
 
-# Clear potential input variables to BUILD_FRAMEWORK_COMPATIBILITY_MATRIX
-LOCAL_ADD_VBMETA_VERSION :=
-LOCAL_ASSEMBLE_VINTF_ENV_VARS :=
-LOCAL_ASSEMBLE_VINTF_ENV_VARS_OVERRIDE :=
-LOCAL_ASSEMBLE_VINTF_ERROR_MESSAGE :=
-LOCAL_ASSEMBLE_VINTF_FLAGS :=
-LOCAL_KERNEL_VERSIONS :=
-LOCAL_GEN_FILE_DEPENDENCIES :=
+my_kernel_config_data := kernel/configs
 
 # Install all compatibility_matrix.*.xml to /system/etc/vintf
 
-
 include $(CLEAR_VARS)
+include $(LOCAL_PATH)/clear_vars.mk
 LOCAL_MODULE := framework_compatibility_matrix.legacy.xml
 LOCAL_MODULE_STEM := compatibility_matrix.legacy.xml
 LOCAL_SRC_FILES := $(LOCAL_MODULE_STEM)
-LOCAL_KERNEL_VERSIONS := \
-    3.18.0 \
-    4.4.0 \
-    4.9.0 \
-    4.14.0 \
+LOCAL_KERNEL_CONFIG_DATA_PATHS := \
+    3.18.0:$(my_kernel_config_data)/o/android-3.18 \
+    4.4.0:$(my_kernel_config_data)/o/android-4.4 \
+    4.9.0:$(my_kernel_config_data)/o/android-4.9 \
 
 include $(BUILD_FRAMEWORK_COMPATIBILITY_MATRIX)
 
 include $(CLEAR_VARS)
+include $(LOCAL_PATH)/clear_vars.mk
 LOCAL_MODULE := framework_compatibility_matrix.1.xml
 LOCAL_MODULE_STEM := compatibility_matrix.1.xml
 LOCAL_SRC_FILES := $(LOCAL_MODULE_STEM)
-LOCAL_KERNEL_VERSIONS := \
-    3.18.0 \
-    4.4.0 \
-    4.9.0 \
-    4.14.0 \
+LOCAL_KERNEL_CONFIG_DATA_PATHS := \
+    3.18.0:$(my_kernel_config_data)/o/android-3.18 \
+    4.4.0:$(my_kernel_config_data)/o/android-4.4 \
+    4.9.0:$(my_kernel_config_data)/o/android-4.9 \
 
 include $(BUILD_FRAMEWORK_COMPATIBILITY_MATRIX)
 
 include $(CLEAR_VARS)
+include $(LOCAL_PATH)/clear_vars.mk
 LOCAL_MODULE := framework_compatibility_matrix.2.xml
 LOCAL_MODULE_STEM := compatibility_matrix.2.xml
 LOCAL_SRC_FILES := $(LOCAL_MODULE_STEM)
-LOCAL_KERNEL_VERSIONS := \
-    3.18.0 \
-    4.4.0 \
-    4.9.0 \
-    4.14.0 \
+LOCAL_KERNEL_CONFIG_DATA_PATHS := \
+    3.18.0:$(my_kernel_config_data)/o-mr1/android-3.18 \
+    4.4.0:$(my_kernel_config_data)/o-mr1/android-4.4 \
+    4.9.0:$(my_kernel_config_data)/o-mr1/android-4.9 \
 
 include $(BUILD_FRAMEWORK_COMPATIBILITY_MATRIX)
 
 include $(CLEAR_VARS)
+include $(LOCAL_PATH)/clear_vars.mk
 LOCAL_MODULE := framework_compatibility_matrix.3.xml
 LOCAL_MODULE_STEM := compatibility_matrix.3.xml
 LOCAL_SRC_FILES := $(LOCAL_MODULE_STEM)
-LOCAL_KERNEL_VERSIONS := \
-    4.4.0 \
-    4.9.0 \
-    4.14.0 \
+LOCAL_KERNEL_CONFIG_DATA_PATHS := \
+    4.4.0:$(my_kernel_config_data)/android-4.4 \
+    4.9.0:$(my_kernel_config_data)/android-4.9 \
+    4.14.0:$(my_kernel_config_data)/android-4.14 \
 
 include $(BUILD_FRAMEWORK_COMPATIBILITY_MATRIX)
+
+my_kernel_config_data :=
 
 # Framework Compatibility Matrix (common to all FCM versions)
 
 include $(CLEAR_VARS)
+include $(LOCAL_PATH)/clear_vars.mk
 LOCAL_MODULE := framework_compatibility_matrix.device.xml
 LOCAL_MODULE_STEM := compatibility_matrix.device.xml
 # define LOCAL_MODULE_CLASS for local-generated-sources-dir.
@@ -126,6 +122,7 @@ include $(BUILD_FRAMEWORK_COMPATIBILITY_MATRIX)
 # Framework Compatibility Matrix
 
 include $(CLEAR_VARS)
+include $(LOCAL_PATH)/clear_vars.mk
 LOCAL_MODULE := framework_compatibility_matrix.xml
 LOCAL_MODULE_STEM := compatibility_matrix.xml
 LOCAL_MODULE_PATH := $(TARGET_OUT)
