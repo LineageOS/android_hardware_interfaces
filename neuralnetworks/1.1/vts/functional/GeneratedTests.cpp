@@ -31,7 +31,7 @@ namespace hardware {
 namespace neuralnetworks {
 
 namespace generated_tests {
-using ::generated_tests::MixedTypedExampleType;
+using ::test_helper::MixedTypedExampleType;
 extern void Execute(const sp<V1_1::IDevice>&, std::function<V1_1::Model(void)>,
                     std::function<bool(int)>, const std::vector<MixedTypedExampleType>&);
 }  // namespace generated_tests

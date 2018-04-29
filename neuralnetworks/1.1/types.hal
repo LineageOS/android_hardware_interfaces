@@ -29,87 +29,95 @@ enum OperationType : @1.0::OperationType {
     /**
      * BatchToSpace for N-dimensional tensors.
      *
-     * This operation reshapes the batch dimension (dimension 0) into M + 1 dimensions of shape
-     * block_shape + [batch], interleaves these blocks back into the grid defined by the
-     * spatial dimensions [1, ..., M], to obtain a result with the same rank as the input.
+     * This operation reshapes the batch dimension (dimension 0) into M + 1
+     * dimensions of shape block_shape + [batch], interleaves these blocks back
+     * into the grid defined by the spatial dimensions [1, ..., M], to obtain a
+     * result with the same rank as the input.
      *
      * This is the reverse of SpaceToBatch.
      *
-     * Supported tensor types:
+     * Supported tensor {@link OperandType}:
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
      *
      * Supported tensor rank: 4
      *
      * Inputs:
-     * 0: An n-D tensor, specifying the tensor to be reshaped
-     * 1: A 1-D Tensor of type TENSOR_INT32, the block sizes for each spatial dimension of the
-     *    input tensor. All values must be >= 1.
+     * * 0: An n-D tensor, specifying the tensor to be reshaped
+     * * 1: A 1-D Tensor of {@link OperandType::TENSOR_INT32}, the block
+     *      sizes for each spatial dimension of the input tensor. All values
+     *      must be >= 1.
      *
      * Outputs:
-     * 0: A tensor of the same type as input0.
+     * * 0: A tensor of the same {@link OperandType} as input0.
      */
     BATCH_TO_SPACE_ND = 29,
 
     /**
      * Element-wise division of two tensors.
      *
-     * Takes two input tensors of identical type and compatible dimensions. The output
-     * is the result of dividing the first input tensor by the second, optionally
-     * modified by an activation function.
+     * Takes two input tensors of identical {@link OperandType} and compatible
+     * dimensions. The output is the result of dividing the first input tensor
+     * by the second, optionally modified by an activation function.
      *
      * Two dimensions are compatible when:
      *     1. they are equal, or
      *     2. one of them is 1
      *
-     * The size of the output is the maximum size along each dimension of the input operands.
-     * It starts with the trailing dimensions, and works its way forward.
+     * The size of the output is the maximum size along each dimension of the
+     * input operands. It starts with the trailing dimensions, and works its way
+     * forward.
      *
      * Example:
      *     input1.dimension =    {4, 1, 2}
      *     input2.dimension = {5, 4, 3, 1}
      *     output.dimension = {5, 4, 3, 2}
      *
-     * Supported tensor types:
+     * Supported tensor {@link OperandType}:
      * * {@link OperandType::TENSOR_FLOAT32}
      *
      * Supported tensor rank: up to 4
      *
      * Inputs:
-     * 0: An n-D tensor, specifying the first input.
-     * 1: A tensor of the same type, and compatible dimensions as input0.
-     * 2: An INT32 value, and has to be one of the {@link FusedActivationFunc} values.
-     *    Specifies the activation to invoke on the result of each addition.
+     * * 0: An n-D tensor, specifying the first input.
+     * * 1: A tensor of the same {@link OperandType}, and compatible dimensions
+     *      as input0.
+     * * 2: An {@link OperandType::INT32} scalar, and has to be one of the
+     *      {@link FusedActivationFunc} values. Specifies the activation to
+     *      invoke on the result.
      *
      * Outputs:
-     * 0: A tensor of the same type as input0.
+     * * 0: A tensor of the same {@link OperandType} as input0.
      */
     DIV = 30,
 
     /**
      * Computes the mean of elements across dimensions of a tensor.
      *
-     * Reduces the input tensor along the given dimensions to reduce. Unless keep_dims
-     * is true, the rank of the tensor is reduced by 1 for each entry in axis.
-     * If keep_dims is true, the reduced dimensions are retained with length 1.
+     * Reduces the input tensor along the given dimensions to reduce. Unless
+     * keep_dims is true, the rank of the tensor is reduced by 1 for each entry
+     * in axis. If keep_dims is true, the reduced dimensions are retained with
+     * length 1.
      *
-     * If dimensions to reduce have no entries, all dimensions are reduced, and a tensor with
-     * a single element is returned.
+     * If dimensions to reduce have no entries, all dimensions are reduced, and
+     * a tensor with a single element is returned.
      *
-     * Supported tensor types:
+     * Supported tensor {@link OperandType}:
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
      *
      * Supported tensor rank: up to 4
      *
      * Inputs:
-     * 0: A tensor, specifying the input.
-     * 1: A 1-D Tensor of type TENSOR_INT32. The dimensions to reduce. If None (the default),
-     *    reduces all dimensions. Must be in the range [-rank(input_tensor), rank(input_tensor)).
-     * 2: An INT32 value, keep_dims. If positive, retains reduced dimensions with length 1.
+     * * 0: A tensor, specifying the input.
+     * * 1: A 1-D Tensor of {@link OperandType::TENSOR_INT32}. The dimensions
+     *      to reduce. If None (the default), reduces all dimensions. Must be in
+     *      the range [-rank(input_tensor), rank(input_tensor)).
+     * * 2: An {@link OperandType::INT32} scalar, keep_dims. If positive,
+     *      retains reduced dimensions with length 1.
      *
      * Outputs:
-     * 0: A tensor of the same type as input0.
+     * * 0: A tensor of the same {@link OperandType} as input0.
      */
     MEAN = 31,
 
@@ -118,163 +126,193 @@ enum OperationType : @1.0::OperationType {
      *
      * This operation pads a tensor according to the specified paddings.
      *
-     * Supported tensor types:
+     * Supported tensor {@link OperandType}:
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
      *
      * Supported tensor rank: up to 4
      *
      * Inputs:
-     * 0: An n-D tensor, specifying the tensor to be padded.
-     * 1: A 2-D Tensor of type TENSOR_INT32, the paddings for each spatial dimension of the
-     *    input tensor. The shape of the tensor must be {rank(input0), 2}.
-     *    padding[i, 0] specifies the number of element to be padded in the front of dimension i.
-     *    padding[i, 1] specifies the number of element to be padded after the end of dimension i.
+     * * 0: An n-D tensor, specifying the tensor to be padded.
+     * * 1: A 2-D Tensor of {@link OperandType::TENSOR_INT32}, the paddings
+     *      for each spatial dimension of the input tensor. The shape of the
+     *      tensor must be {rank(input0), 2}.
+     *      padding[i, 0] specifies the number of element to be padded in the
+     *      front of dimension i.
+     *      padding[i, 1] specifies the number of element to be padded after the
+     *      end of dimension i.
      *
      * Outputs:
-     * 0: A tensor of the same type as input0.
+     * * 0: A tensor of the same {@link OperandType} as input0.
      */
     PAD = 32,
 
     /**
      * SpaceToBatch for N-Dimensional tensors.
      *
-     * This operation divides "spatial" dimensions [1, ..., M] of the input into a grid of blocks
-     * of shape block_shape, and interleaves these blocks with the "batch" dimension (0) such that
-     * in the output, the spatial dimensions [1, ..., M] correspond to the position within the grid,
-     * and the batch dimension combines both the position within a spatial block and the original
-     * batch position. Prior to division into blocks, the spatial dimensions of the input are
-     * optionally zero padded according to paddings.
+     * This operation divides "spatial" dimensions [1, ..., M] of the input into
+     * a grid of blocks of shape block_shape, and interleaves these blocks with
+     * the "batch" dimension (0) such that in the output, the spatial dimensions
+     * [1, ..., M] correspond to the position within the grid, and the batch
+     * dimension combines both the position within a spatial block and the
+     * original batch position. Prior to division into blocks, the spatial
+     * dimensions of the input are optionally zero padded according to paddings.
      *
-     * Supported tensor types:
+     * Supported tensor {@link OperandType}:
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
      *
      * Supported tensor rank: 4
      *
      * Inputs:
-     * 0: An n-D tensor, specifying the input.
-     * 1: A 1-D Tensor of type TENSOR_INT32, the block sizes for each spatial dimension of the
-     *    input tensor. All values must be >= 1.
-     * 2: A 2-D Tensor of type TENSOR_INT32, the paddings for each spatial diemension of the
-     *    input tensor. All values must be >= 0. The shape of the tensor must be {rank(input0), 2}.
-     *    padding[i, 0] specifies the number of element to be padded in the front of dimension i.
-     *    padding[i, 1] specifies the number of element to be padded after the end of dimension i.
+     * * 0: An n-D tensor, specifying the input.
+     * * 1: A 1-D Tensor of {@link OperandType::TENSOR_INT32}, the block
+     *      sizes for each spatial dimension of the input tensor. All values
+     *      must be >= 1.
+     * * 2: A 2-D Tensor of {@link OperandType::TENSOR_INT32}, the paddings
+     *      for each spatial dimension of the input tensor. All values must be
+     *      >= 0. The shape of the tensor must be {rank(input0), 2}.
+     *      padding[i, 0] specifies the number of element to be padded in the
+     *      front of dimension i.
+     *      padding[i, 1] specifies the number of element to be padded after the
+     *      end of dimension i.
      *
      * Outputs:
-     * 0: A tensor of the same type as input0.
+     * * 0: A tensor of the same {@link OperandType} as input0.
      */
     SPACE_TO_BATCH_ND = 33,
 
     /**
      * Removes dimensions of size 1 from the shape of a tensor.
      *
-     * Given a tensor input, this operation returns a tensor of the same type with all
-     * dimensions of size 1 removed. If you don't want to remove all size 1 dimensions,
-     * you can remove specific size 1 dimensions by specifying the axes (input1).
+     * Given a tensor input, this operation returns a tensor of the same
+     * {@link OperandType} with all dimensions of size 1 removed. If you don't
+     * want to remove all size 1 dimensions, you can remove specific size 1
+     * dimensions by specifying the axes (input1).
      *
-     * Supported tensor types:
+     * Supported tensor {@link OperandType}:
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
      *
      * Supported tensor rank: up to 4
      *
      * Inputs:
-     * 0: An n-D tensor, the tensor to be squeezed.
-     * 1: An optional 1-D tensor of type TENSOR_INT32. The dimensions to squeeze. If specified
-     *    only squeezes the dimensions listed. Otherwise, squeezes all dimensions.
-     *    The dimension index starts at 0. An error must be reported if squeezing a dimension that
-     *    is not 1.
+     * * 0: An n-D tensor, the tensor to be squeezed.
+     * * 1: An optional 1-D tensor of {@link OperandType::TENSOR_INT32}. The
+     *      dimensions to squeeze. If specified only squeezes the dimensions
+     *      listed. Otherwise, squeezes all dimensions. The dimension index
+     *      starts at 0. An error must be reported if squeezing a dimension that
+     *      is not 1.
      *
      * Outputs:
-     * 0: A tensor of the same type as input0. Contains the same data as input, but has one or more
-     *    dimensions of size 1 removed.
+     * * 0: A tensor of the same {@link OperandType} as input0. Contains the
+     *      same data as input, but has one or more dimensions of size 1
+     *      removed.
      */
     SQUEEZE = 34,
 
     /**
      * Extracts a strided slice of a tensor.
      *
-     * Roughly speaking, this op extracts a slice of size (end - begin) / stride from the given
-     * input tensor. Starting at the location specified by begin the slice continues by adding
-     * stride to the index until all dimensions are not less than end. Note that a stride can
-     * be negative, which causes a reverse slice.
+     * Roughly speaking, this op extracts a slice of size (end - begin) / stride
+     * from the given input tensor. Starting at the location specified by begin
+     * the slice continues by adding stride to the index until all dimensions
+     * are not less than end. Note that a stride can be negative, which causes a
+     * reverse slice.
      *
-     * Supported tensor types:
+     * Supported tensor {@link OperandType}:
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
      *
      * Supported tensor rank: up to 4
      *
      * Inputs:
-     * 0: An n-D tensor, specifying the tensor to be sliced.
-     * 1: A 1-D Tensor of type TENSOR_INT32, the starts of the dimensions of the input
-     *    tensor to be sliced. The length must be of rank(input0).
-     * 2: A 1-D Tensor of type TENSOR_INT32, the ends of the dimensions of the input
-     *    tensor to be sliced. The length must be of rank(input0).
-     * 3: A 1-D Tensor of type TENSOR_INT32, the strides of the dimensions of the input
-     *    tensor to be sliced. The length must be of rank(input0).
+     * * 0: An n-D tensor, specifying the tensor to be sliced.
+     * * 1: A 1-D Tensor of {@link OperandType::TENSOR_INT32}, the starts of
+     *      the dimensions of the input tensor to be sliced. The length must be
+     *      of rank(input0).
+     * * 2: A 1-D Tensor of {@link OperandType::TENSOR_INT32}, the ends of
+     *      the dimensions of the input tensor to be sliced. The length must be
+     *      of rank(input0).
+     * * 3: A 1-D Tensor of {@link OperandType::TENSOR_INT32}, the strides of
+     *      the dimensions of the input tensor to be sliced. The length must be
+     *      of rank(input0).
+     * * 4: An {@link OperandType::INT32} scalar, begin_mask. If the ith bit
+     *      of begin_mask is set, begin[i] is ignored and the fullest possible
+     *      range in that dimension is used instead.
+     * * 5: An {@link OperandType::INT32} scalar, end_mask. If the ith bit of
+     *      end_mask is set, end[i] is ignored and the fullest possible range in
+     *      that dimension is used instead.
+     * * 6: An {@link OperandType::INT32} scalar, shrink_axis_mask. An int32
+     *      mask. If the ith bit of shrink_axis_mask is set, it implies that the
+     *      ith specification shrinks the dimensionality by 1. A slice of size 1
+     *      starting from begin[i] in the dimension must be preserved.
      *
      * Outputs:
-     * 0: A tensor of the same type as input0.
+     * * 0: A tensor of the same {@link OperandType} as input0.
      */
     STRIDED_SLICE = 35,
 
     /**
      * Element-wise subtraction of two tensors.
      *
-     * Takes two input tensors of identical type and compatible dimensions. The output
-     * is the result of subtracting the second input tensor from the first one, optionally
-     * modified by an activation function.
+     * Takes two input tensors of identical {@link OperandType} and compatible
+     * dimensions. The output is the result of subtracting the second input
+     * tensor from the first one, optionally modified by an activation function.
      *
      * Two dimensions are compatible when:
      *     1. they are equal, or
      *     2. one of them is 1
      *
-     * The size of the output is the maximum size along each dimension of the input operands.
-     * It starts with the trailing dimensions, and works its way forward.
+     * The size of the output is the maximum size along each dimension of the
+     * input operands. It starts with the trailing dimensions, and works its way
+     * forward.
      *
      * Example:
      *     input1.dimension =    {4, 1, 2}
      *     input2.dimension = {5, 4, 3, 1}
      *     output.dimension = {5, 4, 3, 2}
      *
-     * Supported tensor types:
+     * Supported tensor {@link OperandType}:
      * * {@link OperandType::TENSOR_FLOAT32}
      *
      * Supported tensor rank: up to 4
      *
      * Inputs:
-     * 0: An n-D tensor, specifying the first input.
-     * 1: A tensor of the same type, and compatible dimensions as input0.
-     * 2: An INT32 value, and has to be one of the {@link FusedActivationFunc} values.
-     *    Specifies the activation to invoke on the result of each addition.
+     * * 0: An n-D tensor, specifying the first input.
+     * * 1: A tensor of the same {@link OperandType}, and compatible dimensions
+     *      as input0.
+     * * 2: An {@link OperandType::INT32} scalar, and has to be one of the
+     *      {@link FusedActivationFunc} values. Specifies the activation to
+     *      invoke on the result.
      *
      * Outputs:
-     * 0: A tensor of the same type as input0.
+     * * 0: A tensor of the same {@link OperandType} as input0.
      */
     SUB = 36,
 
     /**
-     * Transposes the input tensor, permuting the dimensions according to the perm tensor.
+     * Transposes the input tensor, permuting the dimensions according to the
+     * perm tensor.
      *
-     * The returned tensor's dimension i corresponds to the input dimension perm[i].
-     * If perm is not given, it is set to (n-1...0), where n is the rank of the input tensor.
-     * Hence by default, this operation performs a regular matrix transpose on 2-D input Tensors.
+     * The returned tensor's dimension i corresponds to the input dimension
+     * perm[i]. If perm is not given, it is set to (n-1...0), where n is the
+     * rank of the input tensor. Hence by default, this operation performs a
+     * regular matrix transpose on 2-D input Tensors.
      *
-     * Supported tensor types:
+     * Supported tensor {@link OperandType}:
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
      *
      * Supported tensor rank: up to 4
      *
      * Inputs:
-     * 0: An n-D tensor, specifying the tensor to be transposed.
-     * 1: An optional 1-D Tensor of type TENSOR_INT32, the permutation of the dimensions of the
-     *    input tensor.
+     * * 0: An n-D tensor, specifying the tensor to be transposed.
+     * * 1: An optional 1-D Tensor of {@link OperandType::TENSOR_INT32},
+     *      the permutation of the dimensions of the input tensor.
      *
      * Outputs:
-     * 0: A tensor of the same type as input0.
+     * * 0: A tensor of the same {@link OperandType} as input0.
      */
     TRANSPOSE = 37,
 };

@@ -36,11 +36,11 @@ MonotonicClockTimeStamper::TimeStamp MonotonicClockTimeStamper::now() {
     }
 }
 
-support::NullOr<support::array<uint8_t, 32>> HMacImplementation::hmac256(
-    const uint8_t key[32], std::initializer_list<support::ByteBufferProxy> buffers) {
+support::NullOr<support::hmac_t> HMacImplementation::hmac256(
+    const support::auth_token_key_t& key, std::initializer_list<support::ByteBufferProxy> buffers) {
     HMAC_CTX hmacCtx;
     HMAC_CTX_init(&hmacCtx);
-    if (!HMAC_Init_ex(&hmacCtx, key, 32, EVP_sha256(), nullptr)) {
+    if (!HMAC_Init_ex(&hmacCtx, key.data(), key.size(), EVP_sha256(), nullptr)) {
         return {};
     }
     for (auto& buffer : buffers) {
@@ -48,7 +48,7 @@ support::NullOr<support::array<uint8_t, 32>> HMacImplementation::hmac256(
             return {};
         }
     }
-    support::array<uint8_t, 32> result;
+    support::hmac_t result;
     if (!HMAC_Final(&hmacCtx, result.data(), nullptr)) {
         return {};
     }
