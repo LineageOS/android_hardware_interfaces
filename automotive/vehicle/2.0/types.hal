@@ -966,19 +966,6 @@ enum VehicleProperty : int32_t {
         | VehicleArea:GLOBAL),
 
     /**
-     * Cabin temperature
-     *
-     * @change_mode VehiclePropertyChangeMode:CONTINUOUS
-     * @access VehiclePropertyAccess:READ
-     * @unit VehicleUnit:CELSIUS
-     */
-    ENV_CABIN_TEMPERATURE = (
-        0x0704
-        | VehiclePropertyGroup:SYSTEM
-        | VehiclePropertyType:FLOAT
-        | VehicleArea:SEAT),
-
-    /**
      * Property to control power state of application processor
      *
      * It is assumed that AP's power state is controller by separate power
