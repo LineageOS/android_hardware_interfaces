@@ -18,6 +18,8 @@
 
 #include <stdio.h>
 
+#include <log/log.h>
+
 namespace android {
 namespace hardware {
 namespace audio {
@@ -108,6 +110,9 @@ AudioMicrophoneChannelMapping halToChannelMapping(audio_microphone_channel_mappi
             return AudioMicrophoneChannelMapping::DIRECT;
         case AUDIO_MICROPHONE_CHANNEL_MAPPING_PROCESSED:
             return AudioMicrophoneChannelMapping::PROCESSED;
+        default:
+            ALOGE("Invalid channel mapping type: %d", mapping);
+            return AudioMicrophoneChannelMapping::UNUSED;
     }
 }
 
