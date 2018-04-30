@@ -66,6 +66,8 @@ static constexpr auto programListScan = 5min;
 
 }  // namespace timeout
 
+static constexpr auto gTuneWorkaround = 200ms;
+
 static const ConfigFlag gConfigFlagValues[] = {
     ConfigFlag::FORCE_MONO,
     ConfigFlag::FORCE_ANALOG,
@@ -414,7 +416,7 @@ TEST_F(BroadcastRadioHalTest, FmTune) {
      * This sleep workaround will fix default implementation, but the real HW tests will still be
      * flaky. We probably need to implement egmock alternative based on actions.
      */
-    std::this_thread::sleep_for(100ms);
+    std::this_thread::sleep_for(gTuneWorkaround);
 
     // try tuning
     ProgramInfo infoCb = {};
@@ -500,7 +502,7 @@ TEST_F(BroadcastRadioHalTest, Scan) {
     ASSERT_TRUE(openSession());
 
     // TODO(b/69958777): see FmTune workaround
-    std::this_thread::sleep_for(100ms);
+    std::this_thread::sleep_for(gTuneWorkaround);
 
     EXPECT_TIMEOUT_CALL(*mCallback, onCurrentProgramInfoChanged_, _);
     auto result = mSession->scan(true /* up */, true /* skip subchannel */);
@@ -525,7 +527,7 @@ TEST_F(BroadcastRadioHalTest, Step) {
     ASSERT_TRUE(openSession());
 
     // TODO(b/69958777): see FmTune workaround
-    std::this_thread::sleep_for(100ms);
+    std::this_thread::sleep_for(gTuneWorkaround);
 
     EXPECT_TIMEOUT_CALL(*mCallback, onCurrentProgramInfoChanged_, _).Times(AnyNumber());
     auto result = mSession->step(true /* up */);
