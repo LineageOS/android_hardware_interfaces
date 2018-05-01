@@ -37,6 +37,8 @@ namespace support {
  */
 class Keymaster : public IKeymasterDevice {
    public:
+    using KeymasterSet = std::vector<std::unique_ptr<Keymaster>>;
+
     Keymaster(const hidl_string& descriptor, const hidl_string& instanceName)
         : descriptor_(descriptor), instanceName_(instanceName) {}
     virtual ~Keymaster() {}
@@ -55,20 +57,32 @@ class Keymaster : public IKeymasterDevice {
         }
     };
 
-    virtual const VersionResult& halVersion() = 0;
-    const hidl_string& descriptor() { return descriptor_; }
-    const hidl_string& instanceName() { return instanceName_; }
+    virtual const VersionResult& halVersion() const = 0;
+    const hidl_string& descriptor() const { return descriptor_; }
+    const hidl_string& instanceName() const { return instanceName_; }
 
     /**
      * Returns all available Keymaster3 and Keymaster4 instances, in order of most secure to least
      * secure (as defined by VersionResult::operator<).
      */
-    static std::vector<std::unique_ptr<Keymaster>> enumerateAvailableDevices();
+    static KeymasterSet enumerateAvailableDevices();
+
+    /**
+     * Ask provided Keymaster instances to compute a shared HMAC key using
+     * getHmacSharingParameters() and computeSharedHmac().  This computation is idempotent as long
+     * as the same set of Keymaster instances is used each time (and if all of the instances work
+     * correctly).  It must be performed once per boot, but should do no harm to be repeated.
+     *
+     * If key agreement fails, this method will crash the process (with CHECK).
+     */
+    static void performHmacKeyAgreement(const KeymasterSet& keymasters);
 
    private:
     hidl_string descriptor_;
     hidl_string instanceName_;
 };
+
+std::ostream& operator<<(std::ostream& os, const Keymaster& keymaster);
 
 }  // namespace support
 }  // namespace V4_0
