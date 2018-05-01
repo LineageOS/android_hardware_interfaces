@@ -34,7 +34,7 @@
 using namespace ::android::hardware::automotive::audiocontrol::V1_0;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
-using ::android::hardware::hidl_enum_iterator;
+using ::android::hardware::hidl_enum_range;
 using ::android::hardware::hidl_handle;
 using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
@@ -132,7 +132,7 @@ TEST_F(CarAudioControlHidlTest, ContextMapping) {
     int bus = -1;
 
     // For each defined context, query the driver for the BUS on which it should be delivered
-    for (const auto& ctxt : hidl_enum_iterator<ContextNumber>()) {
+    for (const auto& ctxt : hidl_enum_range<ContextNumber>()) {
          bus = pAudioControl->getBusForContext(ctxt);
 
          if (ctxt == ContextNumber::INVALID) {
@@ -147,8 +147,8 @@ TEST_F(CarAudioControlHidlTest, ContextMapping) {
     }
 
     // Try asking about an invalid context one beyond the last defined to see that it gets back a -1
-    int contextRange = std::distance(hidl_enum_iterator<ContextNumber>().begin(),
-                                     hidl_enum_iterator<ContextNumber>().end());
+    int contextRange = std::distance(hidl_enum_range<ContextNumber>().begin(),
+                                     hidl_enum_range<ContextNumber>().end());
     bus = pAudioControl->getBusForContext((ContextNumber)contextRange);
     EXPECT_EQ(bus, -1);
 

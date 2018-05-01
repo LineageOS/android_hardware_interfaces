@@ -28,7 +28,7 @@ using ::android::hardware::vibrator::V1_0::Status;
 using ::android::hardware::vibrator::V1_0::EffectStrength;
 using ::android::hardware::vibrator::V1_2::Effect;
 using ::android::hardware::vibrator::V1_2::IVibrator;
-using ::android::hardware::hidl_enum_iterator;
+using ::android::hardware::hidl_enum_range;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
 using ::android::sp;
@@ -86,8 +86,8 @@ static void validatePerformEffectBadInput(Status status, uint32_t lengthMs) {
  * a valid duration, or are unsupported and return UNSUPPORTED_OPERATION with a duration of 0.
  */
 TEST_F(VibratorHidlTest_1_2, PerformEffect_1_2) {
-    for (const auto& effect : hidl_enum_iterator<Effect>()) {
-        for (const auto& strength : hidl_enum_iterator<EffectStrength>()) {
+    for (const auto& effect : hidl_enum_range<Effect>()) {
+        for (const auto& strength : hidl_enum_range<EffectStrength>()) {
             EXPECT_OK(vibrator->perform_1_2(effect, strength, validatePerformEffect));
         }
     }
@@ -97,7 +97,7 @@ TEST_F(VibratorHidlTest_1_2, PerformEffect_1_2) {
  * Test to make sure effect values above the valid range are rejected.
  */
 TEST_F(VibratorHidlTest_1_2, PerformEffect_1_2_BadEffects_AboveValidRange) {
-    Effect effect = *std::prev(hidl_enum_iterator<Effect>().end());
+    Effect effect = *std::prev(hidl_enum_range<Effect>().end());
     Effect badEffect = static_cast<Effect>(static_cast<int32_t>(effect) + 1);
     EXPECT_OK(
         vibrator->perform_1_2(badEffect, EffectStrength::LIGHT, validatePerformEffectBadInput));
@@ -107,7 +107,7 @@ TEST_F(VibratorHidlTest_1_2, PerformEffect_1_2_BadEffects_AboveValidRange) {
  * Test to make sure effect values below the valid range are rejected.
  */
 TEST_F(VibratorHidlTest_1_2, PerformEffect_1_2_BadEffects_BelowValidRange) {
-    Effect effect = *hidl_enum_iterator<Effect>().begin();
+    Effect effect = *hidl_enum_range<Effect>().begin();
     Effect badEffect = static_cast<Effect>(static_cast<int32_t>(effect) - 1);
     EXPECT_OK(
         vibrator->perform_1_2(badEffect, EffectStrength::LIGHT, validatePerformEffectBadInput));
@@ -117,7 +117,7 @@ TEST_F(VibratorHidlTest_1_2, PerformEffect_1_2_BadEffects_BelowValidRange) {
  * Test to make sure strength values above the valid range are rejected.
  */
 TEST_F(VibratorHidlTest_1_2, PerformEffect_1_2_BadStrength_AboveValidRange) {
-    EffectStrength strength = *std::prev(hidl_enum_iterator<EffectStrength>().end());
+    EffectStrength strength = *std::prev(hidl_enum_range<EffectStrength>().end());
     EffectStrength badStrength = static_cast<EffectStrength>(static_cast<int32_t>(strength) + 1);
     EXPECT_OK(vibrator->perform_1_2(Effect::THUD, badStrength, validatePerformEffectBadInput));
 }
@@ -126,7 +126,7 @@ TEST_F(VibratorHidlTest_1_2, PerformEffect_1_2_BadStrength_AboveValidRange) {
  * Test to make sure strength values below the valid range are rejected.
  */
 TEST_F(VibratorHidlTest_1_2, PerformEffect_1_2_BadStrength_BelowValidRange) {
-    EffectStrength strength = *hidl_enum_iterator<EffectStrength>().begin();
+    EffectStrength strength = *hidl_enum_range<EffectStrength>().begin();
     EffectStrength badStrength = static_cast<EffectStrength>(static_cast<int32_t>(strength) - 1);
     EXPECT_OK(vibrator->perform_1_2(Effect::THUD, badStrength, validatePerformEffectBadInput));
 }
