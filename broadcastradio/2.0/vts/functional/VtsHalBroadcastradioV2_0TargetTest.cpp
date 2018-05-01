@@ -20,6 +20,7 @@
 
 #include <VtsHalHidlTargetTestBase.h>
 #include <android-base/logging.h>
+#include <android-base/strings.h>
 #include <android/hardware/broadcastradio/2.0/IBroadcastRadio.h>
 #include <android/hardware/broadcastradio/2.0/ITunerCallback.h>
 #include <android/hardware/broadcastradio/2.0/ITunerSession.h>
@@ -158,6 +159,14 @@ Return<void> TunerCallbackMock::onCurrentProgramInfoChanged(const ProgramInfo& i
                     (physically >= IdentifierType::VENDOR_START &&
                      physically <= IdentifierType::VENDOR_END) ||
                     physically > IdentifierType::SXM_CHANNEL);
+    }
+
+    if (logically == IdentifierType::AMFM_FREQUENCY) {
+        auto ps = utils::getMetadataString(info, MetadataKey::RDS_PS);
+        if (ps.has_value()) {
+            EXPECT_NE("", android::base::Trim(*ps))
+                << "Don't use empty RDS_PS as an indicator of missing RSD PS data.";
+        }
     }
 
     return onCurrentProgramInfoChanged_(info);
