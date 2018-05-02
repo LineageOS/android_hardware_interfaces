@@ -1,0 +1,45 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.graphics.composer@2.3;
+
+import @2.2::IComposerClient;
+import @2.1::Display;
+import @2.1::Error;
+
+interface IComposerClient extends @2.2::IComposerClient {
+
+    /**
+     * Returns the port and data that describe a physical display. The port is
+     * a unique number that identifies a physical connector (e.g. eDP, HDMI)
+     * for display output. The data blob is parsed to determine its format,
+     * typically EDID 1.3 as specified in VESA E-EDID Standard Release A
+     * Revision 1.
+     *
+     * @param display is the display to query.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     *         UNSUPPORTED when identification data is unavailable.
+     * @return port is the connector to which the display is connected.
+     * @return data is the EDID 1.3 blob identifying the display.
+     */
+    @callflow(next="*")
+    getDisplayIdentificationData(Display display)
+               generates (Error error,
+                          uint8_t port,
+                          vec<uint8_t> data);
+
+};
