@@ -31,6 +31,7 @@ class WifiFeatureFlags {
 
     virtual bool isAwareSupported();
     virtual bool isDualInterfaceSupported();
+    virtual bool isApDisabled();
 };
 
 }  // namespace feature_flags

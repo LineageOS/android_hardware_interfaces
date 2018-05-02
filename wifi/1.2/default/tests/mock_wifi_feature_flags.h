@@ -34,6 +34,7 @@ class MockWifiFeatureFlags : public WifiFeatureFlags {
 
     MOCK_METHOD0(isAwareSupported, bool());
     MOCK_METHOD0(isDualInterfaceSupported, bool());
+    MOCK_METHOD0(isApDisabled, bool());
 };
 
 }  // namespace feature_flags
