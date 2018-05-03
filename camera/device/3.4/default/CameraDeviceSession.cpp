@@ -52,6 +52,8 @@ CameraDeviceSession::CameraDeviceSession(
         }
     }
 
+    mResultBatcher_3_4.setNumPartialResults(mNumPartialResults);
+
     camera_metadata_entry_t capabilities =
             mDeviceInfo.find(ANDROID_REQUEST_AVAILABLE_CAPABILITIES);
     bool isLogicalMultiCamera = false;
