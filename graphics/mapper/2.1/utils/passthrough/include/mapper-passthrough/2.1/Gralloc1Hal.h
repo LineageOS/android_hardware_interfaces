@@ -28,6 +28,7 @@ namespace passthrough {
 
 using V2_0::BufferDescriptor;
 using V2_0::Error;
+using android::hardware::graphics::common::V1_0::BufferUsage;
 
 namespace detail {
 
@@ -38,48 +39,19 @@ class Gralloc1HalImpl : public V2_0::passthrough::detail::Gralloc1HalImpl<Hal> {
     Error validateBufferSize(const native_handle_t* bufferHandle,
                              const IMapper::BufferDescriptorInfo& descriptorInfo,
                              uint32_t stride) override {
-        uint32_t bufferWidth;
-        uint32_t bufferHeight;
-        uint32_t bufferLayerCount;
-        int32_t bufferFormat;
-        uint64_t bufferProducerUsage;
-        uint64_t bufferConsumerUsage;
-        uint32_t bufferStride;
+        gralloc1_buffer_descriptor_info_t bufferDescriptorInfo;
 
-        int32_t error = mDispatch.getDimensions(mDevice, bufferHandle, &bufferWidth, &bufferHeight);
-        if (error != GRALLOC1_ERROR_NONE) {
-            return toError(error);
-        }
-        error = mDispatch.getLayerCount(mDevice, bufferHandle, &bufferLayerCount);
-        if (error != GRALLOC1_ERROR_NONE) {
-            return toError(error);
-        }
-        error = mDispatch.getFormat(mDevice, bufferHandle, &bufferFormat);
-        if (error != GRALLOC1_ERROR_NONE) {
-            return toError(error);
-        }
-        error = mDispatch.getProducerUsage(mDevice, bufferHandle, &bufferProducerUsage);
-        if (error != GRALLOC1_ERROR_NONE) {
-            return toError(error);
-        }
-        error = mDispatch.getConsumerUsage(mDevice, bufferHandle, &bufferConsumerUsage);
-        if (error != GRALLOC1_ERROR_NONE) {
-            return toError(error);
-        }
-        error = mDispatch.getStride(mDevice, bufferHandle, &bufferStride);
-        if (error != GRALLOC1_ERROR_NONE) {
-            return toError(error);
-        }
+        bufferDescriptorInfo.width = descriptorInfo.width;
+        bufferDescriptorInfo.height = descriptorInfo.height;
+        bufferDescriptorInfo.layerCount = descriptorInfo.layerCount;
+        bufferDescriptorInfo.format = static_cast<android_pixel_format_t>(descriptorInfo.format);
+        bufferDescriptorInfo.consumerUsage = toConsumerUsage(descriptorInfo.usage);
+        bufferDescriptorInfo.producerUsage = toProducerUsage(descriptorInfo.usage);
 
-        // TODO format? usage? width > stride?
-        // need a gralloc1 extension to really validate
-        (void)bufferFormat;
-        (void)bufferProducerUsage;
-        (void)bufferConsumerUsage;
-
-        if (descriptorInfo.width > bufferWidth || descriptorInfo.height > bufferHeight ||
-            descriptorInfo.layerCount > bufferLayerCount || stride > bufferStride) {
-            return Error::BAD_VALUE;
+        int32_t error =
+            mDispatch.validateBufferSize(mDevice, bufferHandle, &bufferDescriptorInfo, stride);
+        if (error != GRALLOC1_ERROR_NONE) {
+            return toError(error);
         }
 
         return Error::NONE;
@@ -87,10 +59,15 @@ class Gralloc1HalImpl : public V2_0::passthrough::detail::Gralloc1HalImpl<Hal> {
 
     Error getTransportSize(const native_handle_t* bufferHandle, uint32_t* outNumFds,
                            uint32_t* outNumInts) override {
-        // need a gralloc1 extension to get the transport size
-        *outNumFds = bufferHandle->numFds;
-        *outNumInts = bufferHandle->numInts;
-        return Error::NONE;
+        int32_t error = mDispatch.getTransportSize(mDevice, bufferHandle, outNumFds, outNumInts);
+        return toError(error);
+    }
+
+    Error importBuffer(const native_handle_t* rawHandle,
+                       native_handle_t** outBufferHandle) override {
+        int32_t error = mDispatch.importBuffer(
+            mDevice, rawHandle, const_cast<const native_handle_t**>(outBufferHandle));
+        return toError(error);
     }
 
     Error createDescriptor_2_1(const IMapper::BufferDescriptorInfo& descriptorInfo,
@@ -109,12 +86,9 @@ class Gralloc1HalImpl : public V2_0::passthrough::detail::Gralloc1HalImpl<Hal> {
             return false;
         }
 
-        if (!initDispatch(GRALLOC1_FUNCTION_GET_DIMENSIONS, &mDispatch.getDimensions) ||
-            !initDispatch(GRALLOC1_FUNCTION_GET_LAYER_COUNT, &mDispatch.getLayerCount) ||
-            !initDispatch(GRALLOC1_FUNCTION_GET_FORMAT, &mDispatch.getFormat) ||
-            !initDispatch(GRALLOC1_FUNCTION_GET_PRODUCER_USAGE, &mDispatch.getProducerUsage) ||
-            !initDispatch(GRALLOC1_FUNCTION_GET_CONSUMER_USAGE, &mDispatch.getConsumerUsage) ||
-            !initDispatch(GRALLOC1_FUNCTION_GET_STRIDE, &mDispatch.getStride)) {
+        if (!initDispatch(GRALLOC1_FUNCTION_VALIDATE_BUFFER_SIZE, &mDispatch.validateBufferSize) ||
+            !initDispatch(GRALLOC1_FUNCTION_GET_TRANSPORT_SIZE, &mDispatch.getTransportSize) ||
+            !initDispatch(GRALLOC1_FUNCTION_IMPORT_BUFFER, &mDispatch.importBuffer)) {
             return false;
         }
 
@@ -122,13 +96,72 @@ class Gralloc1HalImpl : public V2_0::passthrough::detail::Gralloc1HalImpl<Hal> {
     }
 
     struct {
-        GRALLOC1_PFN_GET_DIMENSIONS getDimensions;
-        GRALLOC1_PFN_GET_LAYER_COUNT getLayerCount;
-        GRALLOC1_PFN_GET_FORMAT getFormat;
-        GRALLOC1_PFN_GET_PRODUCER_USAGE getProducerUsage;
-        GRALLOC1_PFN_GET_CONSUMER_USAGE getConsumerUsage;
-        GRALLOC1_PFN_GET_STRIDE getStride;
+        GRALLOC1_PFN_VALIDATE_BUFFER_SIZE validateBufferSize;
+        GRALLOC1_PFN_GET_TRANSPORT_SIZE getTransportSize;
+        GRALLOC1_PFN_IMPORT_BUFFER importBuffer;
     } mDispatch = {};
+
+    static uint64_t toProducerUsage(uint64_t usage) {
+        // this is potentially broken as we have no idea which private flags
+        // should be filtered out
+        uint64_t producerUsage = usage & ~static_cast<uint64_t>(BufferUsage::CPU_READ_MASK |
+                                                                BufferUsage::CPU_WRITE_MASK |
+                                                                BufferUsage::GPU_DATA_BUFFER);
+
+        switch (usage & BufferUsage::CPU_WRITE_MASK) {
+            case static_cast<uint64_t>(BufferUsage::CPU_WRITE_RARELY):
+                producerUsage |= GRALLOC1_PRODUCER_USAGE_CPU_WRITE;
+                break;
+            case static_cast<uint64_t>(BufferUsage::CPU_WRITE_OFTEN):
+                producerUsage |= GRALLOC1_PRODUCER_USAGE_CPU_WRITE_OFTEN;
+                break;
+            default:
+                break;
+        }
+
+        switch (usage & BufferUsage::CPU_READ_MASK) {
+            case static_cast<uint64_t>(BufferUsage::CPU_READ_RARELY):
+                producerUsage |= GRALLOC1_PRODUCER_USAGE_CPU_READ;
+                break;
+            case static_cast<uint64_t>(BufferUsage::CPU_READ_OFTEN):
+                producerUsage |= GRALLOC1_PRODUCER_USAGE_CPU_READ_OFTEN;
+                break;
+            default:
+                break;
+        }
+
+        // BufferUsage::GPU_DATA_BUFFER is always filtered out
+
+        return producerUsage;
+    }
+
+    static uint64_t toConsumerUsage(uint64_t usage) {
+        // this is potentially broken as we have no idea which private flags
+        // should be filtered out
+        uint64_t consumerUsage =
+            usage &
+            ~static_cast<uint64_t>(BufferUsage::CPU_READ_MASK | BufferUsage::CPU_WRITE_MASK |
+                                   BufferUsage::SENSOR_DIRECT_DATA | BufferUsage::GPU_DATA_BUFFER);
+
+        switch (usage & BufferUsage::CPU_READ_MASK) {
+            case static_cast<uint64_t>(BufferUsage::CPU_READ_RARELY):
+                consumerUsage |= GRALLOC1_CONSUMER_USAGE_CPU_READ;
+                break;
+            case static_cast<uint64_t>(BufferUsage::CPU_READ_OFTEN):
+                consumerUsage |= GRALLOC1_CONSUMER_USAGE_CPU_READ_OFTEN;
+                break;
+            default:
+                break;
+        }
+
+        // BufferUsage::SENSOR_DIRECT_DATA is always filtered out
+
+        if (usage & BufferUsage::GPU_DATA_BUFFER) {
+            consumerUsage |= GRALLOC1_CONSUMER_USAGE_GPU_DATA_BUFFER;
+        }
+
+        return consumerUsage;
+    }
 
    private:
     using BaseType2_0 = V2_0::passthrough::detail::Gralloc1HalImpl<Hal>;
