@@ -41,6 +41,7 @@ hidl_interface {
         "VehicleAreaDoor",
         "VehicleAreaMirror",
         "VehicleAreaSeat",
+        "VehicleAreaWheel",
         "VehicleAreaWindow",
         "VehicleDisplay",
         "VehicleGear",
@@ -68,7 +69,6 @@ hidl_interface {
         "VmsOfferingMessageIntegerValuesIndex",
         "VmsPublisherInformationIntegerValuesIndex",
         "VmsSubscriptionsStateIntegerValuesIndex",
-        "Wheel",
     ],
     gen_java: true,
 }
