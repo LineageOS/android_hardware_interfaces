@@ -269,6 +269,9 @@ class WifiChip : public V1_3::IWifiChip {
     hidl_callback_util::HidlCallbackHandler<V1_2::IWifiChipEventCallback>
         event_cb_handler_;
 
+    std::vector<sp<WifiApIface>> created_ap_ifaces_;
+    std::vector<sp<WifiStaIface>> created_sta_ifaces_;
+
     DISALLOW_COPY_AND_ASSIGN(WifiChip);
 };
 
