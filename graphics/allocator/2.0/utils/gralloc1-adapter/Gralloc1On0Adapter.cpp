@@ -161,6 +161,11 @@ gralloc1_function_pointer_t Gralloc1On0Adapter::doGetFunction(
         case GRALLOC1_FUNCTION_INVALID:
             ALOGE("Invalid function descriptor");
             return nullptr;
+        case GRALLOC1_FUNCTION_VALIDATE_BUFFER_SIZE:
+        case GRALLOC1_FUNCTION_GET_TRANSPORT_SIZE:
+        case GRALLOC1_FUNCTION_IMPORT_BUFFER:
+            ALOGW("Not supported by gralloc 0");
+            return nullptr;
     }
 
     ALOGE("Unknown function descriptor: %d", intDescriptor);

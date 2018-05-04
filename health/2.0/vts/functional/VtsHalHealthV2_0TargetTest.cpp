@@ -192,7 +192,7 @@ bool verifyStorageInfo(const hidl_vec<struct StorageInfo>& info) {
 
 template <typename T>
 bool verifyEnum(T value) {
-    for (auto it : hidl_enum_iterator<T>()) {
+    for (auto it : hidl_enum_range<T>()) {
         if (it == value) {
             return true;
         }
