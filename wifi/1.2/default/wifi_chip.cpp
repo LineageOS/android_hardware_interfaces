@@ -105,6 +105,12 @@ std::string getP2pIfaceName() {
     return buffer.data();
 }
 
+std::string getApIfaceName() {
+    std::array<char, PROPERTY_VALUE_MAX> buffer;
+    property_get("persist.vendor.wifi.softap.interface", buffer.data(), "");
+    return buffer.data();
+}
+
 // delete files that meet either conditions:
 // 1. older than a predefined time in the wifi tombstone dir.
 // 2. Files in excess to a predefined amount, starting from the oldest ones
@@ -744,7 +750,9 @@ std::pair<WifiStatus, sp<IWifiApIface>> WifiChip::createApIfaceInternal() {
     if (!canCurrentModeSupportIfaceOfType(IfaceType::AP)) {
         return {createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE), {}};
     }
-    std::string ifname = allocateApOrStaIfaceName();
+    std::string ifname = getApIfaceName();
+    if (ifname.empty())
+        ifname = allocateApOrStaIfaceName();
     sp<WifiApIface> iface = new WifiApIface(ifname, legacy_hal_);
     ap_ifaces_.push_back(iface);
     for (const auto& callback : event_cb_handler_.getCallbacks()) {
