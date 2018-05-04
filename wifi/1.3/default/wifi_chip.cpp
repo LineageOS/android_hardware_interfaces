@@ -107,6 +107,12 @@ std::string getP2pIfaceName() {
     return buffer.data();
 }
 
+std::string getApIfaceName() {
+    std::array<char, PROPERTY_VALUE_MAX> buffer;
+    property_get("persist.vendor.wifi.softap.interface", buffer.data(), "");
+    return buffer.data();
+}
+
 void setActiveWlanIfaceNameProperty(const std::string& ifname) {
     auto res = property_set(kActiveWlanIfaceNameProperty, ifname.data());
     if (res != 0) {
@@ -805,7 +811,9 @@ std::pair<WifiStatus, sp<IWifiApIface>> WifiChip::createApIfaceInternal() {
     if (!canCurrentModeSupportIfaceOfTypeWithCurrentIfaces(IfaceType::AP)) {
         return {createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE), {}};
     }
-    std::string ifname = allocateApIfaceName();
+    std::string ifname = getApIfaceName();
+    if (ifname.empty())
+        ifname = allocateApIfaceName();
     sp<WifiApIface> iface =
         new WifiApIface(ifname, legacy_hal_, iface_util_, feature_flags_);
     ap_ifaces_.push_back(iface);
