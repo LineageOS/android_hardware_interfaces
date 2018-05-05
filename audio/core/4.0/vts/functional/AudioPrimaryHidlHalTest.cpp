@@ -22,6 +22,7 @@
 #include <cstdio>
 #include <initializer_list>
 #include <limits>
+#include <list>
 #include <string>
 #include <vector>
 
@@ -51,6 +52,7 @@ using std::initializer_list;
 using std::string;
 using std::to_string;
 using std::vector;
+using std::list;
 
 using ::android::sp;
 using ::android::hardware::Return;
@@ -104,6 +106,7 @@ using namespace ::android::hardware::audio::common::test::utility;
 static auto okOrNotSupported = {Result::OK, Result::NOT_SUPPORTED};
 static auto okOrNotSupportedOrInvalidArgs = {Result::OK, Result::NOT_SUPPORTED,
                                              Result::INVALID_ARGUMENTS};
+static auto invalidArgsOrNotSupported = {Result::INVALID_ARGUMENTS, Result::NOT_SUPPORTED};
 
 class AudioHidlTestEnvironment : public ::Environment {
    public:
@@ -212,53 +215,59 @@ TEST_F(AudioPrimaryHidlTest, Init) {
 template <class Property>
 class AccessorPrimaryHidlTest : public AudioPrimaryHidlTest {
    protected:
-    /** Test a property getter and setter. */
-    template <class Getter, class Setter>
-    void testAccessors(const string& propertyName, const vector<Property>& valuesToTest,
-                       Setter setter, Getter getter, const vector<Property>& invalidValues = {}) {
-        Property initialValue;  // Save initial value to restore it at the end
-                                // of the test
-        ASSERT_OK((device.get()->*getter)(returnIn(res, initialValue)));
-        ASSERT_OK(res);
+    enum Optionality { REQUIRED, OPTIONAL };
+    struct Initial {  // Initial property value
+        Initial(Property value, Optionality check = REQUIRED) : value(value), check(check) {}
+        Property value;
+        Optionality check;  // If this initial value should be checked
+    };
+    /** Test a property getter and setter.
+     *  The getter and/or the setter may return NOT_SUPPORTED if optionality == OPTIONAL.
+     */
+    template <Optionality optionality = REQUIRED, class Getter, class Setter>
+    void testAccessors(const string& propertyName, const Initial expectedInitial,
+                       list<Property> valuesToTest, Setter setter, Getter getter,
+                       const vector<Property>& invalidValues = {}) {
+        const auto expectedResults = {Result::OK,
+                                      optionality == OPTIONAL ? Result::NOT_SUPPORTED : Result::OK};
 
+        Property initialValue = expectedInitial.value;
+        ASSERT_OK((device.get()->*getter)(returnIn(res, initialValue)));
+        ASSERT_RESULT(expectedResults, res);
+        if (res == Result::OK && expectedInitial.check == REQUIRED) {
+            EXPECT_EQ(expectedInitial.value, initialValue);
+        }
+
+        valuesToTest.push_front(expectedInitial.value);
+        valuesToTest.push_back(initialValue);
         for (Property setValue : valuesToTest) {
             SCOPED_TRACE("Test " + propertyName + " getter and setter for " +
                          testing::PrintToString(setValue));
-            ASSERT_OK((device.get()->*setter)(setValue));
+            auto ret = (device.get()->*setter)(setValue);
+            ASSERT_RESULT(expectedResults, ret);
+            if (ret == Result::NOT_SUPPORTED) {
+                doc::partialTest(propertyName + " setter is not supported");
+                break;
+            }
             Property getValue;
             // Make sure the getter returns the same value just set
             ASSERT_OK((device.get()->*getter)(returnIn(res, getValue)));
-            ASSERT_OK(res);
+            ASSERT_RESULT(expectedResults, res);
+            if (res == Result::NOT_SUPPORTED) {
+                doc::partialTest(propertyName + " getter is not supported");
+                continue;
+            }
             EXPECT_EQ(setValue, getValue);
         }
 
         for (Property invalidValue : invalidValues) {
             SCOPED_TRACE("Try to set " + propertyName + " with the invalid value " +
                          testing::PrintToString(invalidValue));
-            EXPECT_RESULT(Result::INVALID_ARGUMENTS, (device.get()->*setter)(invalidValue));
+            EXPECT_RESULT(invalidArgsOrNotSupported, (device.get()->*setter)(invalidValue));
         }
 
-        ASSERT_OK((device.get()->*setter)(initialValue));  // restore initial value
-    }
-
-    /** Test the getter and setter of an optional feature. */
-    template <class Getter, class Setter>
-    void testOptionalAccessors(const string& propertyName, const vector<Property>& valuesToTest,
-                               Setter setter, Getter getter,
-                               const vector<Property>& invalidValues = {}) {
-        doc::test("Test the optional " + propertyName + " getters and setter");
-        {
-            SCOPED_TRACE("Test feature support by calling the getter");
-            Property initialValue;
-            ASSERT_OK((device.get()->*getter)(returnIn(res, initialValue)));
-            if (res == Result::NOT_SUPPORTED) {
-                doc::partialTest(propertyName + " getter is not supported");
-                return;
-            }
-            ASSERT_OK(res);  // If it is supported it must succeed
-        }
-        // The feature is supported, test it
-        testAccessors(propertyName, valuesToTest, setter, getter, invalidValues);
+        // Restore initial value
+        EXPECT_RESULT(expectedResults, (device.get()->*setter)(initialValue));
     }
 };
 
@@ -266,24 +275,22 @@ using BoolAccessorPrimaryHidlTest = AccessorPrimaryHidlTest<bool>;
 
 TEST_F(BoolAccessorPrimaryHidlTest, MicMuteTest) {
     doc::test("Check that the mic can be muted and unmuted");
-    testAccessors("mic mute", {true, false, true}, &IDevice::setMicMute, &IDevice::getMicMute);
+    testAccessors("mic mute", Initial{false}, {true}, &IDevice::setMicMute, &IDevice::getMicMute);
     // TODO: check that the mic is really muted (all sample are 0)
 }
 
 TEST_F(BoolAccessorPrimaryHidlTest, MasterMuteTest) {
-    doc::test(
-        "If master mute is supported, try to mute and unmute the master "
-        "output");
-    testOptionalAccessors("master mute", {true, false, true}, &IDevice::setMasterMute,
-                          &IDevice::getMasterMute);
+    doc::test("If master mute is supported, try to mute and unmute the master output");
+    testAccessors<OPTIONAL>("master mute", Initial{false}, {true}, &IDevice::setMasterMute,
+                            &IDevice::getMasterMute);
     // TODO: check that the master volume is really muted
 }
 
 using FloatAccessorPrimaryHidlTest = AccessorPrimaryHidlTest<float>;
 TEST_F(FloatAccessorPrimaryHidlTest, MasterVolumeTest) {
     doc::test("Test the master volume if supported");
-    testOptionalAccessors(
-        "master volume", {0, 0.5, 1}, &IDevice::setMasterVolume, &IDevice::getMasterVolume,
+    testAccessors<OPTIONAL>(
+        "master volume", Initial{1}, {0, 0.5}, &IDevice::setMasterVolume, &IDevice::getMasterVolume,
         {-0.1, 1.1, NAN, INFINITY, -INFINITY, 1 + std::numeric_limits<float>::epsilon()});
     // TODO: check that the master volume is really changed
 }
@@ -957,7 +964,6 @@ TEST_IO_STREAM(close, "Make sure a stream can be closed", ASSERT_OK(closeStream(
 TEST_IO_STREAM(closeTwice, "Make sure a stream can not be closed twice", ASSERT_OK(closeStream());
                ASSERT_RESULT(Result::INVALID_STATE, closeStream()))
 
-static auto invalidArgsOrNotSupported = {Result::INVALID_ARGUMENTS, Result::NOT_SUPPORTED};
 static void testCreateTooBigMmapBuffer(IStream* stream) {
     MmapBufferInfo info;
     Result res;
@@ -1415,35 +1421,36 @@ TEST_F(AudioPrimaryHidlTest, updateRotation) {
 
 TEST_F(BoolAccessorPrimaryHidlTest, BtScoNrecEnabled) {
     doc::test("Query and set the BT SCO NR&EC state");
-    testOptionalAccessors("BtScoNrecEnabled", {true, false, true},
-                          &IPrimaryDevice::setBtScoNrecEnabled,
-                          &IPrimaryDevice::getBtScoNrecEnabled);
+    testAccessors<OPTIONAL>("BtScoNrecEnabled", Initial{false, OPTIONAL}, {true},
+                            &IPrimaryDevice::setBtScoNrecEnabled,
+                            &IPrimaryDevice::getBtScoNrecEnabled);
 }
 
 TEST_F(BoolAccessorPrimaryHidlTest, setGetBtScoWidebandEnabled) {
     doc::test("Query and set the SCO whideband state");
-    testOptionalAccessors("BtScoWideband", {true, false, true},
-                          &IPrimaryDevice::setBtScoWidebandEnabled,
-                          &IPrimaryDevice::getBtScoWidebandEnabled);
+    testAccessors<OPTIONAL>("BtScoWideband", Initial{false, OPTIONAL}, {true},
+                            &IPrimaryDevice::setBtScoWidebandEnabled,
+                            &IPrimaryDevice::getBtScoWidebandEnabled);
 }
 
 TEST_F(BoolAccessorPrimaryHidlTest, setGetBtHfpEnabled) {
     doc::test("Query and set the BT HFP state");
-    testOptionalAccessors("BtHfpEnabled", {true, false, true}, &IPrimaryDevice::setBtHfpEnabled,
-                          &IPrimaryDevice::getBtHfpEnabled);
+    testAccessors<OPTIONAL>("BtHfpEnabled", Initial{false, OPTIONAL}, {true},
+                            &IPrimaryDevice::setBtHfpEnabled, &IPrimaryDevice::getBtHfpEnabled);
 }
 
 using TtyModeAccessorPrimaryHidlTest = AccessorPrimaryHidlTest<TtyMode>;
 TEST_F(TtyModeAccessorPrimaryHidlTest, setGetTtyMode) {
     doc::test("Query and set the TTY mode state");
-    testOptionalAccessors("TTY mode", {TtyMode::OFF, TtyMode::HCO, TtyMode::VCO, TtyMode::FULL},
-                          &IPrimaryDevice::setTtyMode, &IPrimaryDevice::getTtyMode);
+    testAccessors<OPTIONAL>("TTY mode", Initial{TtyMode::OFF},
+                            {TtyMode::HCO, TtyMode::VCO, TtyMode::FULL},
+                            &IPrimaryDevice::setTtyMode, &IPrimaryDevice::getTtyMode);
 }
 
 TEST_F(BoolAccessorPrimaryHidlTest, setGetHac) {
     doc::test("Query and set the HAC state");
-    testOptionalAccessors("HAC", {true, false, true}, &IPrimaryDevice::setHacEnabled,
-                          &IPrimaryDevice::getHacEnabled);
+    testAccessors<OPTIONAL>("HAC", Initial{false}, {true}, &IPrimaryDevice::setHacEnabled,
+                            &IPrimaryDevice::getHacEnabled);
 }
 
 //////////////////////////////////////////////////////////////////////////////
