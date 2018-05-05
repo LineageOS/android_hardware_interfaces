@@ -41,6 +41,7 @@ namespace audio {
     inline void PrintTo(const T& val, ::std::ostream* os) { *os << toString(val); }
 
 namespace AUDIO_HAL_VERSION {
+DEFINE_GTEST_PRINT_TO(IPrimaryDevice::TtyMode)
 DEFINE_GTEST_PRINT_TO(Result)
 }  // namespace AUDIO_HAL_VERSION
 
