@@ -36,16 +36,16 @@ namespace neuralnetworks {
 namespace generated_tests {
 using ::android::hardware::neuralnetworks::V1_0::implementation::ExecutionCallback;
 using ::android::hardware::neuralnetworks::V1_0::implementation::PreparedModelCallback;
-using ::generated_tests::filter;
-using ::generated_tests::for_all;
-using ::generated_tests::for_each;
-using ::generated_tests::resize_accordingly;
-using ::generated_tests::MixedTyped;
-using ::generated_tests::MixedTypedExampleType;
-using ::generated_tests::Float32Operands;
-using ::generated_tests::Int32Operands;
-using ::generated_tests::Quant8Operands;
-using ::generated_tests::compare;
+using ::test_helper::filter;
+using ::test_helper::for_all;
+using ::test_helper::for_each;
+using ::test_helper::resize_accordingly;
+using ::test_helper::MixedTyped;
+using ::test_helper::MixedTypedExampleType;
+using ::test_helper::Float32Operands;
+using ::test_helper::Int32Operands;
+using ::test_helper::Quant8Operands;
+using ::test_helper::compare;
 
 template <typename T>
 void copy_back_(MixedTyped* dst, const std::vector<RequestArgument>& ra, char* src) {
