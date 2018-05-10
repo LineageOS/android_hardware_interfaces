@@ -62,6 +62,8 @@ cc_library_static {
         "impl/vhal_v2_0/VehicleEmulator.cpp",
         "impl/vhal_v2_0/PipeComm.cpp",
         "impl/vhal_v2_0/SocketComm.cpp",
+        "impl/vhal_v2_0/LinearFakeValueGenerator.cpp",
+        "impl/vhal_v2_0/JsonFakeValueGenerator.cpp",
     ],
     local_include_dirs: ["common/include/vhal_v2_0"],
     export_include_dirs: ["impl"],
@@ -71,6 +73,7 @@ cc_library_static {
         "libprotobuf-cpp-lite",
     ],
     static_libs: [
+        "libjsoncpp",
         "libqemu_pipe",
         "android.hardware.automotive.vehicle@2.0-libproto-native",
     ],
@@ -107,6 +110,7 @@ cc_binary {
         "android.hardware.automotive.vehicle@2.0-manager-lib",
         "android.hardware.automotive.vehicle@2.0-default-impl-lib",
         "android.hardware.automotive.vehicle@2.0-libproto-native",
+        "libjsoncpp",
         "libqemu_pipe",
     ],
 }
