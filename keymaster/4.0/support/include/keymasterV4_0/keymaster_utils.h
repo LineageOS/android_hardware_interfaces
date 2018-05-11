@@ -23,6 +23,14 @@ namespace android {
 namespace hardware {
 namespace keymaster {
 namespace V4_0 {
+
+/**
+ * Define a lexicographical ordering on HmacSharingParameters.  The parameters to
+ * IKeymasterDevice::computeSharedHmac are required to be delivered in the order specified by this
+ * comparison operator.
+ */
+bool operator<(const HmacSharingParameters& a, const HmacSharingParameters& b);
+
 namespace support {
 
 inline static hidl_vec<uint8_t> blob2hidlVec(const uint8_t* data, const size_t length,
