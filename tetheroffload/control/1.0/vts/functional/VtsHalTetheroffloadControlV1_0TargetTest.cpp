@@ -281,7 +281,7 @@ TEST_F(OffloadControlHidlTestBase, AdditionalStopsWithInitReturnFalse) {
         return;
     }
     SCOPED_TRACE("Expecting stopOffload to succeed");
-    stopOffload(ExpectBoolean::True);  // balance out initOffload(true)
+    stopOffload(ExpectBoolean::Ignored);  // balance out initOffload(true)
     SCOPED_TRACE("Expecting stopOffload to fail the first time");
     stopOffload(ExpectBoolean::False);
     SCOPED_TRACE("Expecting stopOffload to fail the second time");
