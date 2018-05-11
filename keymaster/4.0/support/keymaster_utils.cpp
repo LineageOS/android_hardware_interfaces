@@ -19,8 +19,24 @@
 
 namespace android {
 namespace hardware {
+
+inline static bool operator<(const hidl_vec<uint8_t>& a, const hidl_vec<uint8_t>& b) {
+    return memcmp(a.data(), b.data(), std::min(a.size(), b.size())) == -1;
+}
+
+template <size_t SIZE>
+inline static bool operator<(const hidl_array<uint8_t, SIZE>& a,
+                             const hidl_array<uint8_t, SIZE>& b) {
+    return memcmp(a.data(), b.data(), SIZE) == -1;
+}
+
 namespace keymaster {
 namespace V4_0 {
+
+bool operator<(const HmacSharingParameters& a, const HmacSharingParameters& b) {
+    return std::tie(a.seed, a.nonce) < std::tie(b.seed, b.nonce);
+}
+
 namespace support {
 
 template <typename T, typename InIter>
