@@ -37,8 +37,8 @@ class Keymaster4 : public Keymaster {
           haveVersion_(false),
           dev_(km4_dev) {}
 
-    const VersionResult& halVersion() override {
-        getVersionIfNeeded();
+    const VersionResult& halVersion() const override {
+        const_cast<Keymaster4*>(this)->getVersionIfNeeded();
         return version_;
     }
 
