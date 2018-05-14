@@ -26,7 +26,6 @@
 #include <android/hardware/tetheroffload/control/1.0/types.h>
 #include <linux/netfilter/nfnetlink.h>
 #include <linux/netlink.h>
-#include <log/log.h>
 #include <net/if.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -57,20 +56,16 @@ enum class ExpectBoolean {
 constexpr const char* TEST_IFACE = "rmnet_data0";
 
 // We use #defines here so as to get local lamba captures and error message line numbers
-#define ASSERT_TRUE_CALLBACK                            \
-    [&](bool success, std::string errMsg) {             \
-        if (!success) {                                 \
-            ALOGI("Error message: %s", errMsg.c_str()); \
-        }                                               \
-        ASSERT_TRUE(success);                           \
+#define ASSERT_TRUE_CALLBACK                                                    \
+    [&](bool success, std::string errMsg) {                                     \
+        std::string msg = StringPrintf("unexpected error: %s", errMsg.c_str()); \
+        ASSERT_TRUE(success) << msg;                                            \
     }
 
-#define ASSERT_FALSE_CALLBACK                           \
-    [&](bool success, std::string errMsg) {             \
-        if (!success) {                                 \
-            ALOGI("Error message: %s", errMsg.c_str()); \
-        }                                               \
-        ASSERT_FALSE(success);                          \
+#define ASSERT_FALSE_CALLBACK                                                 \
+    [&](bool success, std::string errMsg) {                                   \
+        std::string msg = StringPrintf("expected error: %s", errMsg.c_str()); \
+        ASSERT_FALSE(success) << msg;                                         \
     }
 
 #define ASSERT_ZERO_BYTES_CALLBACK            \
@@ -188,10 +183,9 @@ class OffloadControlHidlTestBase : public testing::VtsHalHidlTargetTestBase {
 
     void initOffload(const bool expected_result) {
         auto init_cb = [&](bool success, std::string errMsg) {
-            if (!success) {
-                ALOGI("Error message: %s", errMsg.c_str());
-            }
-            ASSERT_EQ(expected_result, success);
+            std::string msg = StringPrintf("Unexpectedly %s to init offload: %s",
+                                           success ? "succeeded" : "failed", errMsg.c_str());
+            ASSERT_EQ(expected_result, success) << msg;
         };
         const Return<void> ret = control->initOffload(control_cb, init_cb);
         ASSERT_TRUE(ret.isOk());
@@ -204,15 +198,12 @@ class OffloadControlHidlTestBase : public testing::VtsHalHidlTargetTestBase {
 
     void stopOffload(const ExpectBoolean value) {
         auto cb = [&](bool success, const hidl_string& errMsg) {
-            if (!success) {
-                ALOGI("Error message: %s", errMsg.c_str());
-            }
             switch (value) {
                 case ExpectBoolean::False:
-                    ASSERT_EQ(false, success);
+                    ASSERT_EQ(false, success) << "Unexpectedly able to stop offload: " << errMsg;
                     break;
                 case ExpectBoolean::True:
-                    ASSERT_EQ(true, success);
+                    ASSERT_EQ(true, success) << "Unexpectedly failed to stop offload: " << errMsg;
                     break;
                 case ExpectBoolean::Ignored:
                     break;
@@ -289,8 +280,11 @@ TEST_F(OffloadControlHidlTestBase, AdditionalStopsWithInitReturnFalse) {
     if (!interfaceIsUp(TEST_IFACE)) {
         return;
     }
-    stopOffload(ExpectBoolean::True);  // balance out initOffload(true)
+    SCOPED_TRACE("Expecting stopOffload to succeed");
+    stopOffload(ExpectBoolean::Ignored);  // balance out initOffload(true)
+    SCOPED_TRACE("Expecting stopOffload to fail the first time");
     stopOffload(ExpectBoolean::False);
+    SCOPED_TRACE("Expecting stopOffload to fail the second time");
     stopOffload(ExpectBoolean::False);
 }
 
