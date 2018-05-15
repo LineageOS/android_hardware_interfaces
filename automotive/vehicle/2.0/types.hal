@@ -42,6 +42,9 @@ enum VehiclePropertyType : int32_t {
 };
 
 /**
+ * Vehicle Areas
+ * Used to construct property IDs in the VehicleProperty enum.
+ *
  * Some properties may be associated with particular vehicle areas. For
  * example, VehicleProperty:DOOR_LOCK property must be associated with
  * particular door, thus this property must be marked with
@@ -50,8 +53,34 @@ enum VehiclePropertyType : int32_t {
  * Other properties may not be associated with particular vehicle area,
  * these kind of properties must have VehicleArea:GLOBAL flag.
  *
- * Used to create property ID in VehicleProperty enum.
- */
+ * [Definition] Area: An area represents a unique element of an AreaType.
+ *   For instance, if AreaType is WINDOW, then an area may be FRONT_WINDSHIELD.
+ *
+ * [Definition] AreaID: An AreaID is a combination of one or more areas,
+ *   and is represented using a bitmask of Area enums. Different AreaTypes may
+ *   not be mixed in a single AreaID. For instance, a window area cannot be
+ *   combined with a seat area in an AreaID.
+ *
+ * Rules for mapping a zoned property to AreaIDs:
+ *  - A property must be mapped to an array of AreaIDs that are impacted when
+ *    the property value changes.
+ *  - Each element in the array must represent an AreaID, in which, the
+ *    property value can only be changed together in all the areas within
+ *    an AreaID and never independently. That is, when the property value
+ *    changes in one of the areas in an AreaID in the array, then it must
+ *    automatically change in all other areas in the AreaID.
+ *  - The property value must be independently controllable in any two
+ *    different AreaIDs in the array.
+ *  - An area must only appear once in the array of AreaIDs. That is, an
+ *    area must only be part of a single AreaID in the array.
+ *
+ * [Definition] Global Property: A property that applies to the entire car
+ *   and is not associated with a specific area. For example, FUEL_LEVEL,
+ *   HVAC_STEERING_WHEEL_HEAT.
+ *
+ * Rules for mapping a global property to AreaIDs:
+ *  - A global property must not be mapped to AreaIDs.
+*/
 enum VehicleArea : int32_t {
     GLOBAL      = 0x01000000,
     /** WINDOW maps to enum VehicleAreaWindow */
@@ -331,15 +360,15 @@ enum VehicleProperty : int32_t {
     /**
      * Reports wheel ticks
      *
-     * The first four elements represent ticks for individual wheels in the
+     * The first element in the vector is a reset count.  A reset indicates
+     * previous tick counts are not comparable with this and future ones.  Some
+     * sort of discontinuity in tick counting has occurred.
+     *
+     * The next four elements represent ticks for individual wheels in the
      * following order: front left, front right, rear right, rear left.  All
      * tick counts are cumulative.  Tick counts increment when the vehicle
      * moves forward, and decrement when vehicles moves in reverse.  The ticks
      * should be reset to 0 when the vehicle is started by the user.
-     *
-     * The next element in the vector is a reset count.  A reset indicates
-     * previous tick counts are not comparable with this and future ones.  Some
-     * sort of discontinuity in tick counting has occurred.
      *
      *  int64Values[0] = reset count
      *  int64Values[1] = front left ticks
@@ -489,6 +518,12 @@ enum VehicleProperty : int32_t {
      *
      * This is the gear selected by the user.
      *
+     * Values in the config data must represent the list of supported gears
+     * for this vehicle.  For example, config data for an automatic transmission
+     * must contain {GEAR_NEUTRAL, GEAR_REVERSE, GEAR_PARK, GEAR_DRIVE,
+     * GEAR_1, GEAR_2,...} and for manual transmission the list must be
+     * {GEAR_NEUTRAL, GEAR_REVERSE, GEAR_1, GEAR_2,...}
+     *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ
      * @data_enum VehicleGear
@@ -500,8 +535,17 @@ enum VehicleProperty : int32_t {
         | VehicleArea:GLOBAL),
 
     /**
-     * Current gear. In non-manual case, selected gear does not necessarily
-     * match the current gear.
+     * Current gear. In non-manual case, selected gear may not
+     * match the current gear. For example, if the selected gear is GEAR_DRIVE,
+     * the current gear will be one of GEAR_1, GEAR_2 etc, which reflects
+     * the actual gear the transmission is currently running in.
+     *
+     * Values in the config data must represent the list of supported gears
+     * for this vehicle.  For example, config data for an automatic transmission
+     * must contain {GEAR_NEUTRAL, GEAR_REVERSE, GEAR_PARK, GEAR_1, GEAR_2,...}
+     * and for manual transmission the list must be
+     * {GEAR_NEUTRAL, GEAR_REVERSE, GEAR_1, GEAR_2,...}. This list need not be the
+     * same as that of the supported gears reported in GEAR_SELECTION.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ
@@ -624,6 +668,41 @@ enum VehicleProperty : int32_t {
         | VehiclePropertyGroup:SYSTEM
         | VehiclePropertyType:BOOLEAN
         | VehicleArea:GLOBAL),
+
+    /*
+     * HVAC Properties
+     *
+     * Additional rules for mapping a zoned HVAC property to AreaIDs:
+     *  - Every seat in VehicleAreaSeat that is available in the car, must be
+     *    part of an AreaID in the AreaID array.
+     *
+     * Example 1: A car has two front seats (ROW_1_LEFT, ROW_1_RIGHT) and three
+     *  back seats (ROW_2_LEFT, ROW_2_CENTER, ROW_2_RIGHT). There are two
+     *  temperature control units -- driver side and passenger side.
+     *   - A valid mapping set of AreaIDs for HVAC_TEMPERATURE_SET would be a
+     *     two element array:
+     *      - ROW_1_LEFT  | ROW_2_LEFT
+     *      - ROW_1_RIGHT | ROW_2_CENTER | ROW_2_RIGHT
+     *   - An alternative mapping for the same hardware configuration would be:
+     *      - ROW_1_LEFT  | ROW_2_CENTER | ROW_2_LEFT
+     *      - ROW_1_RIGHT | ROW_2_RIGHT
+     *  The temperature controllers are assigned to the seats which they
+     *  "most influence", but every seat must be included exactly once. The
+     *  assignment of the center rear seat to the left or right AreaID may seem
+     *  arbitrary, but the inclusion of every seat in exactly one AreaID ensures
+     *  that the seats in the car are all expressed and that a "reasonable" way
+     *  to affect each seat is available.
+     *
+     * Example 2: A car has three seat rows with two seats in the front row (ROW_1_LEFT,
+     *  ROW_1_RIGHT) and three seats in the second (ROW_2_LEFT, ROW_2_CENTER,
+     *  ROW_2_RIGHT) and third rows (ROW_3_LEFT, ROW_3_CENTER, ROW_3_RIGHT). There
+     *  are three temperature control units -- driver side, passenger side, and rear.
+     *   - A reasonable way to map HVAC_TEMPERATURE_SET to AreaIDs is a three
+     *     element array:
+     *     - ROW_1_LEFT
+     *     - ROW_1_RIGHT
+     *     - ROW_2_LEFT | ROW_2_CENTER | ROW_2_RIGHT | ROW_3_LEFT | ROW_3_CENTER | ROW_3_RIGHT
+     */
 
     /**
      * Fan speed setting
@@ -754,22 +833,34 @@ enum VehicleProperty : int32_t {
         | VehicleArea:SEAT),
 
     /**
-     * Enable temperature coupling between zones.
+     * Enable temperature coupling between areas.
      *
-     * The areaId for this property must include the zones that are coupled
-     * together.  Typically, the front two zones (ROW_1_LEFT and ROW_1_RIGHT)
-     * are coupled together when this property is enabled.  Thus, the areaId
-     * shall be (ROW_1_LEFT | ROW_1_RIGHT).  When the property is enabled, the
-     * ECU may synchronize the temperature for the affected zones.  Any
-     * parameters modified as a side effect of turning on/off the DUAL_ON
-     * parameter shall generate onPropertyEvent() callbacks to the VHAL.  In
-     * addition, if setting a temperature (i.e. driver's temp) changes another
-     * temperature (i.e. front passenger's temp), then the appropriate
+     * The AreaIDs for HVAC_DUAL_ON property shall contain a combination of
+     * HVAC_TEMPERATURE_SET AreaIDs that can be coupled together. If
+     * HVAC_TEMPERATURE_SET is mapped to AreaIDs [a_1, a_2, ..., a_n], and if
+     * HVAC_DUAL_ON can be enabled to couple a_i and a_j, then HVAC_DUAL_ON
+     * property must be mapped to [a_i | a_j]. Further, if a_k and a_l can also
+     * be coupled together separately then HVAC_DUAL_ON must be mapped to
+     * [a_i | a_j, a_k | a_l].
+     *
+     * Example: A car has two front seats (ROW_1_LEFT, ROW_1_RIGHT) and three
+     *  back seats (ROW_2_LEFT, ROW_2_CENTER, ROW_2_RIGHT). There are two
+     *  temperature control units -- driver side and passenger side -- which can
+     *  be optionally synchronized. This may be expressed in the AreaIDs this way:
+     *  - HVAC_TEMPERATURE_SET->[ROW_1_LEFT | ROW_2_LEFT, ROW_1_RIGHT | ROW_2_CENTER | ROW_2_RIGHT]
+     *  - HVAC_DUAL_ON->[ROW_1_LEFT | ROW_2_LEFT | ROW_1_RIGHT | ROW_2_CENTER | ROW_2_RIGHT]
+     *
+     * When the property is enabled, the ECU must synchronize the temperature
+     * for the affected areas. Any parameters modified as a side effect
+     * of turning on/off the DUAL_ON parameter shall generate
+     * onPropertyEvent() callbacks to the VHAL. In addition, if setting
+     * a temperature (i.e. driver's temperature) changes another temperature
+     * (i.e. front passenger's temperature), then the appropriate
      * onPropertyEvent() callbacks must be generated.  If a user changes a
      * temperature that breaks the coupling (e.g. setting the passenger
      * temperature independently) then the VHAL must send the appropriate
      * onPropertyEvent() callbacks (i.e. HVAC_DUAL_ON = false,
-     * HVAC_TEMPERATURE_SET[zone] = xxx, etc).
+     * HVAC_TEMPERATURE_SET[AreaID] = xxx, etc).
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
@@ -877,13 +968,41 @@ enum VehicleProperty : int32_t {
         | VehicleArea:SEAT),
 
     /**
-     * Represents global power state for HVAC.  Setting this property to false
+     * Represents global power state for HVAC. Setting this property to false
      * MAY mark some properties that control individual HVAC features/subsystems
      * to UNAVAILABLE state. Setting this property to true MAY mark some
      * properties that control individual HVAC features/subsystems to AVAILABLE
      * state (unless any/all of them are UNAVAILABLE on their own individual
-     * merits).  The list of properties affected by HVAC_POWER_ON must be set
-     * in the VehiclePropConfig.configArray.
+     * merits).
+     *
+     * [Definition] HvacPower_DependentProperties: Properties that need HVAC to be
+     *   powered on in order to enable their functionality. For example, in some cars,
+     *   in order to turn on the AC, HVAC must be powered on first.
+     *
+     * HvacPower_DependentProperties list must be set in the
+     * VehiclePropConfig.configArray. HvacPower_DependentProperties must only contain
+     * properties that are associated with VehicleArea:SEAT. Properties that are not
+     * associated with VehicleArea:SEAT, for example, HVAC_DEFROSTER, must never
+     * depend on HVAC_POWER_ON property and must never be part of
+     * HvacPower_DependentProperties list.
+     *
+     * AreaID mapping for HVAC_POWER_ON property must contain all AreaIDs that
+     * HvacPower_DependentProperties are mapped to.
+     *
+     * Example 1: A car has two front seats (ROW_1_LEFT, ROW_1_RIGHT) and three back
+     *  seats (ROW_2_LEFT, ROW_2_CENTER, ROW_2_RIGHT). If the HVAC features (AC,
+     *  Temperature etc.) throughout the car are dependent on a single HVAC power
+     *  controller then HVAC_POWER_ON must be mapped to
+     *  [ROW_1_LEFT | ROW_1_RIGHT | ROW_2_LEFT | ROW_2_CENTER | ROW_2_RIGHT].
+     *
+     * Example 2: A car has two seats in the front row (ROW_1_LEFT, ROW_1_RIGHT) and
+     *   three seats in the second (ROW_2_LEFT, ROW_2_CENTER, ROW_2_RIGHT) and third
+     *   rows (ROW_3_LEFT, ROW_3_CENTER, ROW_3_RIGHT). If the car has temperature
+     *   controllers in the front row which can operate entirely independently of
+     *   temperature controllers in the back of the vehicle, then HVAC_POWER_ON
+     *   must be mapped to a two element array:
+     *   - ROW_1_LEFT | ROW_1_RIGHT
+     *   - ROW_2_LEFT | ROW_2_CENTER | ROW_2_RIGHT | ROW_3_LEFT | ROW_3_CENTER | ROW_3_RIGHT
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
