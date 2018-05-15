@@ -25,10 +25,9 @@ cc_test {
         "android.hardware.audio.common.test.utility",
         "android.hardware.audio@4.0",
         "android.hardware.audio.common@4.0",
-        "libxml2",
-    ],
-    shared_libs: [
         "libicuuc",
+        "libicuuc_stubdata",
+        "libxml2",
     ],
     header_libs: [
         "android.hardware.audio.common.util@all-versions",
