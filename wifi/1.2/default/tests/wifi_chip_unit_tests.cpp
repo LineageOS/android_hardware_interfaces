@@ -48,6 +48,8 @@ class WifiChipTest : public Test {
             .WillRepeatedly(testing::Return(false));
         EXPECT_CALL(*feature_flags_, isDualInterfaceSupported())
             .WillRepeatedly(testing::Return(false));
+        EXPECT_CALL(*feature_flags_, isApDisabled())
+            .WillRepeatedly(testing::Return(false));
     }
 
     void setupV1_AwareIfaceCombination() {
@@ -55,12 +57,34 @@ class WifiChipTest : public Test {
             .WillRepeatedly(testing::Return(true));
         EXPECT_CALL(*feature_flags_, isDualInterfaceSupported())
             .WillRepeatedly(testing::Return(false));
+        EXPECT_CALL(*feature_flags_, isApDisabled())
+            .WillRepeatedly(testing::Return(false));
+    }
+
+    void setupV1_AwareDisabledApIfaceCombination() {
+        EXPECT_CALL(*feature_flags_, isAwareSupported())
+            .WillRepeatedly(testing::Return(true));
+        EXPECT_CALL(*feature_flags_, isDualInterfaceSupported())
+            .WillRepeatedly(testing::Return(false));
+        EXPECT_CALL(*feature_flags_, isApDisabled())
+            .WillRepeatedly(testing::Return(true));
     }
 
     void setupV2_AwareIfaceCombination() {
         EXPECT_CALL(*feature_flags_, isAwareSupported())
             .WillRepeatedly(testing::Return(true));
         EXPECT_CALL(*feature_flags_, isDualInterfaceSupported())
+            .WillRepeatedly(testing::Return(true));
+        EXPECT_CALL(*feature_flags_, isApDisabled())
+            .WillRepeatedly(testing::Return(false));
+    }
+
+    void setupV2_AwareDisabledApIfaceCombination() {
+        EXPECT_CALL(*feature_flags_, isAwareSupported())
+            .WillRepeatedly(testing::Return(true));
+        EXPECT_CALL(*feature_flags_, isDualInterfaceSupported())
+            .WillRepeatedly(testing::Return(true));
+        EXPECT_CALL(*feature_flags_, isApDisabled())
             .WillRepeatedly(testing::Return(true));
     }
 
@@ -515,6 +539,39 @@ TEST_F(WifiChipV2_AwareIfaceCombinationTest,
     ASSERT_FALSE(ap_iface_name.empty());
     ASSERT_NE(sta_iface_name, ap_iface_name);
 }
+
+////////// V1 Iface Combinations when AP creation is disabled //////////
+class WifiChipV1_AwareDisabledApIfaceCombinationTest : public WifiChipTest {
+ public:
+  void SetUp() override {
+    setupV1_AwareDisabledApIfaceCombination();
+    WifiChipTest::SetUp();
+  }
+};
+
+TEST_F(WifiChipV1_AwareDisabledApIfaceCombinationTest,
+       StaMode_CreateSta_ShouldSucceed) {
+  findModeAndConfigureForIfaceType(IfaceType::STA);
+  ASSERT_FALSE(createIface(IfaceType::STA).empty());
+  ASSERT_TRUE(createIface(IfaceType::AP).empty());
+}
+
+////////// V2 Iface Combinations when AP creation is disabled //////////
+class WifiChipV2_AwareDisabledApIfaceCombinationTest: public WifiChipTest {
+ public:
+  void SetUp() override {
+    setupV2_AwareDisabledApIfaceCombination();
+    WifiChipTest::SetUp();
+  }
+};
+
+TEST_F(WifiChipV2_AwareDisabledApIfaceCombinationTest,
+       CreateSta_ShouldSucceed) {
+  findModeAndConfigureForIfaceType(IfaceType::STA);
+  ASSERT_FALSE(createIface(IfaceType::STA).empty());
+  ASSERT_TRUE(createIface(IfaceType::AP).empty());
+}
+
 }  // namespace implementation
 }  // namespace V1_2
 }  // namespace wifi
