@@ -152,6 +152,11 @@ interface IComposerClient extends @2.1::IComposerClient {
      * output of the display remains the same (subject to the note about protected
      * content in the description of setReadbackBuffer).
      *
+     * If the active configuration or color mode of this display has changed
+     * since a previous call to this function, it must be called again prior to
+     * setting a readback buffer such that the returned format and dataspace can
+     * be updated accordingly.
+     *
      * Parameters:
      * @param display - the display on which to create the layer.
      *
@@ -203,7 +208,13 @@ interface IComposerClient extends @2.1::IComposerClient {
      *       must be non-NULL
      * @return error - is HWC2_ERROR_NONE or one of the following errors:
      *         BAD_DISPLAY - an invalid display handle was passed in
-     *         UNSUPPORTED if not supported on underlying HAL
+     *         NO_RESOURCES - the readback operation was successful, but
+     *                        resulted in a different validate result than would
+     *                        have occurred without readback
+     *         UNSUPPORTED - the readback operation was unsuccessful because of
+     *                       resource constraints, the presence of protected
+     *                       content, or other reasons; -1 must be returned for
+     *                       acquireFence
      *
      * See also:
      *   getReadbackBufferAttributes
