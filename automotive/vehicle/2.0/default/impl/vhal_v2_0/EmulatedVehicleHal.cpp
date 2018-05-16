@@ -139,10 +139,11 @@ StatusCode EmulatedVehicleHal::set(const VehiclePropValue& propValue) {
             return status;
         }
     } else if (mHvacPowerProps.count(propValue.prop)) {
-        // TODO(75328113): this should be handled by property status
         auto hvacPowerOn = mPropStore->readValueOrNull(
             toInt(VehicleProperty::HVAC_POWER_ON),
-            (VehicleAreaSeat::ROW_1_LEFT | VehicleAreaSeat::ROW_1_RIGHT));
+            (VehicleAreaSeat::ROW_1_LEFT | VehicleAreaSeat::ROW_1_RIGHT |
+             VehicleAreaSeat::ROW_2_LEFT | VehicleAreaSeat::ROW_2_CENTER |
+             VehicleAreaSeat::ROW_2_RIGHT));
 
         if (hvacPowerOn && hvacPowerOn->value.int32Values.size() == 1
                 && hvacPowerOn->value.int32Values[0] == 0) {
