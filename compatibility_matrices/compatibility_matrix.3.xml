@@ -88,6 +88,14 @@
         </interface>
     </hal>
     <hal format="hidl" optional="true">
+        <name>android.hardware.broadcastradio</name>
+        <version>2.0</version>
+        <interface>
+            <name>IBroadcastRadio</name>
+            <regex-instance>.*</regex-instance>
+        </interface>
+    </hal>
+    <hal format="hidl" optional="true">
         <name>android.hardware.camera.provider</name>
         <version>2.4</version>
         <interface>
@@ -185,7 +193,7 @@
     </hal>
     <hal format="hidl" optional="false">
         <name>android.hardware.graphics.composer</name>
-        <version>2.1</version>
+        <version>2.1-2</version>
         <interface>
             <name>IComposer</name>
             <instance>default</instance>
@@ -193,7 +201,7 @@
     </hal>
     <hal format="hidl" optional="false">
         <name>android.hardware.graphics.mapper</name>
-        <version>2.0</version>
+        <version>2.0-1</version>
         <interface>
             <name>IMapper</name>
             <instance>default</instance>
@@ -258,7 +266,7 @@
     </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.neuralnetworks</name>
-        <version>1.0</version>
+        <version>1.0-1</version>
         <interface>
             <name>IDevice</name>
             <regex-instance>.*</regex-instance>

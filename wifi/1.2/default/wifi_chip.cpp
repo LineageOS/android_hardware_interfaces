@@ -1211,10 +1211,17 @@ void WifiChip::populateModes() {
             {chip_iface_combination_limit_1, chip_iface_combination_limit_2}};
         const IWifiChip::ChipIfaceCombination chip_iface_combination_2 = {
             {chip_iface_combination_limit_1, chip_iface_combination_limit_3}};
-        const IWifiChip::ChipMode chip_mode = {
+        if (feature_flags_.lock()->isApDisabled()) {
+          const IWifiChip::ChipMode chip_mode = {
+              kV2ChipModeId,
+              {chip_iface_combination_2}};
+          modes_ = {chip_mode};
+        } else {
+          const IWifiChip::ChipMode chip_mode = {
             kV2ChipModeId,
             {chip_iface_combination_1, chip_iface_combination_2}};
-        modes_ = {chip_mode};
+          modes_ = {chip_mode};
+        }
     } else {
         // V1 Iface combinations for Mode Id = 0. (STA Mode)
         const IWifiChip::ChipIfaceCombinationLimit
@@ -1238,7 +1245,11 @@ void WifiChip::populateModes() {
             {ap_chip_iface_combination_limit}};
         const IWifiChip::ChipMode ap_chip_mode = {kV1ApChipModeId,
                                                   {ap_chip_iface_combination}};
-        modes_ = {sta_chip_mode, ap_chip_mode};
+        if (feature_flags_.lock()->isApDisabled()) {
+          modes_ = {sta_chip_mode};
+        } else {
+          modes_ = {sta_chip_mode, ap_chip_mode};
+        }
     }
 }
 
