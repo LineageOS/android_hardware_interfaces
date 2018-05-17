@@ -546,7 +546,7 @@ interface IGraphicBufferProducer {
      */
     disconnect(
             int32_t api,
-            DisconnectMode mode /** = DisconnectMode::API */
+            DisconnectMode mode /* = DisconnectMode::API */
         ) generates (
             Status status
         );

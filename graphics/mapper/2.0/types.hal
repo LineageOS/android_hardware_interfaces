@@ -17,14 +17,14 @@
 package android.hardware.graphics.mapper@2.0;
 
 enum Error : int32_t {
-    NONE            = 0, /** no error */
-    BAD_DESCRIPTOR  = 1, /** invalid BufferDescriptor */
-    BAD_BUFFER      = 2, /** invalid buffer handle */
-    BAD_VALUE       = 3, /** invalid width, height, etc. */
+    NONE            = 0, /* no error */
+    BAD_DESCRIPTOR  = 1, /* invalid BufferDescriptor */
+    BAD_BUFFER      = 2, /* invalid buffer handle */
+    BAD_VALUE       = 3, /* invalid width, height, etc. */
     /* 4 is reserved */
-    NO_RESOURCES    = 5, /** temporary failure due to resource contention */
+    NO_RESOURCES    = 5, /* temporary failure due to resource contention */
     /* 6 is reserved */
-    UNSUPPORTED     = 7, /** permanent failure */
+    UNSUPPORTED     = 7, /* permanent failure */
 };
 
 /**
