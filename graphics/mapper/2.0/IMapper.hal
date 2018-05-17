@@ -155,7 +155,7 @@ interface IMapper {
      * @param cpuUsage specifies one or more CPU usage flags to request.
      * @param accessRegion is the portion of the buffer that the client
      *        intends to access.
-     * @param acquireFence, when non-empty, is a handle containing a file
+     * @param acquireFence when non-empty, is a handle containing a file
      *        descriptor referring to a sync fence object, which will be
      *        signaled when it is safe for the mapper to lock the buffer. If
      *        it is already safe to lock, acquireFence is empty.
@@ -191,7 +191,7 @@ interface IMapper {
      * @param cpuUsage specifies one or more CPU usage flags to request.
      * @param accessRegion is the portion of the buffer that the client
      *        intends to access.
-     * @param acquireFence, when non-empty, is a handle containing a file
+     * @param acquireFence when non-empty, is a handle containing a file
      *        descriptor referring to a sync fence object, which will be
      *        signaled when it is safe for the mapper to lock the buffer. If
      *        it is already safe to lock, acquireFence is empty.

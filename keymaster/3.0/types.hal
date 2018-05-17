@@ -17,17 +17,17 @@
 package android.hardware.keymaster@3.0;
 
 enum TagType : uint32_t {
-    INVALID = 0 << 28, /** Invalid type, used to designate a tag as uninitialized */
+    INVALID = 0 << 28, /* Invalid type, used to designate a tag as uninitialized */
     ENUM = 1 << 28,
-    ENUM_REP = 2 << 28, /** Repeatable enumeration value. */
+    ENUM_REP = 2 << 28, /* Repeatable enumeration value. */
     UINT = 3 << 28,
-    UINT_REP = 4 << 28, /** Repeatable integer value */
+    UINT_REP = 4 << 28, /* Repeatable integer value */
     ULONG = 5 << 28,
     DATE = 6 << 28,
     BOOL = 7 << 28,
     BIGNUM = 8 << 28,
     BYTES = 9 << 28,
-    ULONG_REP = 10 << 28, /** Repeatable long value */
+    ULONG_REP = 10 << 28, /* Repeatable long value */
 };
 
 enum Tag : uint32_t {
@@ -254,12 +254,12 @@ enum KeyBlobUsageRequirements : uint32_t {
  * Possible purposes of a key (or pair).
  */
 enum KeyPurpose : uint32_t {
-    ENCRYPT = 0,    /** Usable with RSA, EC and AES keys. */
-    DECRYPT = 1,    /** Usable with RSA, EC and AES keys. */
-    SIGN = 2,       /** Usable with RSA, EC and HMAC keys. */
-    VERIFY = 3,     /** Usable with RSA, EC and HMAC keys. */
-    DERIVE_KEY = 4, /** Usable with EC keys. */
-    WRAP_KEY = 5,   /** Usable with wrapping keys. */
+    ENCRYPT = 0,    /* Usable with RSA, EC and AES keys. */
+    DECRYPT = 1,    /* Usable with RSA, EC and AES keys. */
+    SIGN = 2,       /* Usable with RSA, EC and HMAC keys. */
+    VERIFY = 3,     /* Usable with RSA, EC and HMAC keys. */
+    DERIVE_KEY = 4, /* Usable with EC keys. */
+    WRAP_KEY = 5,   /* Usable with wrapping keys. */
 };
 
 /**
