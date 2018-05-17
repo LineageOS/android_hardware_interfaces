@@ -1013,6 +1013,10 @@ bool CameraHidlTest::DeviceCb::processCaptureResultLocked(const CaptureResult& r
 
         isPartialResult =
             (results.partialResult < request->numPartialResults);
+    } else if (resultSize > 0) {
+        request->collectedResult.append(reinterpret_cast<const camera_metadata_t*>(
+                    resultMetadata.data()));
+        isPartialResult = false;
     }
 
     hasInputBufferInRequest = request->hasInputBuffer;
