@@ -64,9 +64,9 @@ LOCAL_MODULE := framework_compatibility_matrix.3.xml
 LOCAL_MODULE_STEM := compatibility_matrix.3.xml
 LOCAL_SRC_FILES := $(LOCAL_MODULE_STEM)
 LOCAL_KERNEL_CONFIG_DATA_PATHS := \
-    4.4.0:$(my_kernel_config_data)/p/android-4.4 \
-    4.9.0:$(my_kernel_config_data)/p/android-4.9 \
-    4.14.0:$(my_kernel_config_data)/p/android-4.14 \
+    4.4.107:$(my_kernel_config_data)/p/android-4.4 \
+    4.9.84:$(my_kernel_config_data)/p/android-4.9 \
+    4.14.40:$(my_kernel_config_data)/p/android-4.14 \
 
 include $(BUILD_FRAMEWORK_COMPATIBILITY_MATRIX)
 
