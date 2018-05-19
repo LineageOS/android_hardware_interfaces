@@ -193,7 +193,7 @@ enum OptionKey : int32_t {
      */
     SYSTEM_CEC_CONTROL = 3,
 
-    /** Option 4 not used */
+    /* Option 4 not used */
 };
 
 struct CecMessage {

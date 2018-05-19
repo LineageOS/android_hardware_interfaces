@@ -136,7 +136,8 @@ struct Properties {
     uint32_t        numAudioSources;
     /** the hardware supports capture of audio source from audio HAL */
     bool            supportsCapture;
-    vec<BandConfig> bands; /** band descriptors */
+    /** band descriptors */
+    vec<BandConfig> bands;
 };
 
 enum MetadataType : int32_t {
@@ -229,6 +230,7 @@ struct ProgramInfo {
      */
     uint32_t signalStrength;
 
-    vec<MetaData> metadata; /** Metadata: PTY, song title etc. */
+    /** Metadata: PTY, song title etc. */
+    vec<MetaData> metadata;
 };
 
