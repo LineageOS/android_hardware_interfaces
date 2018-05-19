@@ -1138,7 +1138,7 @@ interface IComposerClient {
         SET_LAYER_Z_ORDER                  = 0x40a << OPCODE_SHIFT,
         SET_PRESENT_OR_VALIDATE_DISPLAY_RESULT = 0x40b << OPCODE_SHIFT,
 
-        /** 0x800 - 0xfff are reserved for vendor extensions */
-        /** 0x1000 - 0xffff are reserved */
+        /* 0x800 - 0xfff are reserved for vendor extensions */
+        /* 0x1000 - 0xffff are reserved */
     };
 };

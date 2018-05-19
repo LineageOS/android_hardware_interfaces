@@ -18,15 +18,15 @@ package android.hardware.graphics.composer@2.1;
 
 /** Return codes from all functions. */
 enum Error : int32_t {
-    NONE            = 0, /** no error */
-    BAD_CONFIG      = 1, /** invalid Config */
-    BAD_DISPLAY     = 2, /** invalid Display */
-    BAD_LAYER       = 3, /** invalid Layer */
-    BAD_PARAMETER   = 4, /** invalid width, height, etc. */
-    /** 5 is reserved */
-    NO_RESOURCES    = 6, /** temporary failure due to resource contention */
-    NOT_VALIDATED   = 7, /** validateDisplay has not been called */
-    UNSUPPORTED     = 8, /** permanent failure */
+    NONE            = 0, /* no error */
+    BAD_CONFIG      = 1, /* invalid Config */
+    BAD_DISPLAY     = 2, /* invalid Display */
+    BAD_LAYER       = 3, /* invalid Layer */
+    BAD_PARAMETER   = 4, /* invalid width, height, etc. */
+    /* 5 is reserved */
+    NO_RESOURCES    = 6, /* temporary failure due to resource contention */
+    NOT_VALIDATED   = 7, /* validateDisplay has not been called */
+    UNSUPPORTED     = 8, /* permanent failure */
 };
 
 typedef uint32_t Config;
