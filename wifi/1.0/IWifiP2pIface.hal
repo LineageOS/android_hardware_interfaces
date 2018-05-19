@@ -21,6 +21,4 @@ import IWifiIface;
 /**
  * Interface used to represent a single NAN iface.
  */
-interface IWifiP2pIface extends IWifiIface {
-  /** TODO(rpius): Add methods to the interface. */
-};
+interface IWifiP2pIface extends IWifiIface {};

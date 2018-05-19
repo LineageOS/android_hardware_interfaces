@@ -124,7 +124,7 @@ enum BufferUsage : @1.0::BufferUsage {
     /** buffer contains a complete mipmap hierarchy */
     GPU_MIPMAP_COMPLETE   = 1ULL << 26,
 
-    /** bits 27 and 32-47 must be zero and are reserved for future versions */
+    /* bits 27 and 32-47 must be zero and are reserved for future versions */
 };
 
 @export(name="android_dataspace_v1_1_t", value_prefix="HAL_DATASPACE_",

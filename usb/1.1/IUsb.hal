@@ -18,11 +18,9 @@ package android.hardware.usb@1.1;
 
 import android.hardware.usb@1.0;
 
-interface IUsb extends android.hardware.usb@1.0::IUsb {
-    /**
-     * The setCallback function in V1_0 is used to register the V1_1
-     * IUsbCallback object as well. The implementation can use the
-     * castFrom method to cast the IUsbCallback object.
-     */
-};
-
+/*
+ * The setCallback function in V1_0 is used to register the V1_1
+ * IUsbCallback object as well. The implementation can use the
+ * castFrom method to cast the IUsbCallback object.
+ */
+interface IUsb extends android.hardware.usb@1.0::IUsb {};
