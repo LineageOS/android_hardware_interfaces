@@ -184,9 +184,9 @@ struct AudioMicrophoneCoordinate {
  * Simple processing as constant gain adjustment must be DIRECT.
  */
 enum AudioMicrophoneChannelMapping : uint32_t {
-    UNUSED      = 0, /** Channel not used */
-    DIRECT      = 1, /** Channel used and signal not processed */
-    PROCESSED   = 2, /** Channel used and signal has some process */
+    UNUSED      = 0, /* Channel not used */
+    DIRECT      = 1, /* Channel used and signal not processed */
+    PROCESSED   = 2, /* Channel used and signal has some process */
 };
 
 /**

@@ -27,11 +27,10 @@ cc_test {
         "android.hardware.audio.effect@4.0",
         "android.hidl.allocator@1.0",
         "android.hidl.memory@1.0",
-        "libxml2",
-    ],
-    shared_libs: [
         "libeffectsconfig",
         "libicuuc",
+        "libicuuc_stubdata",
+        "libxml2",
     ],
     header_libs: [
         "android.hardware.audio.common.util@all-versions",
