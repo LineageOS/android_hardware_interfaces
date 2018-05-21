@@ -484,8 +484,7 @@ const ConfigDeclaration kVehicleProperties[]{
 
     {.config = {.prop = toInt(VehicleProperty::AP_POWER_STATE_REPORT),
                 .access = VehiclePropertyAccess::WRITE,
-                .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-                .configArray = {3}},
+                .changeMode = VehiclePropertyChangeMode::ON_CHANGE},
      .initialValue = {.int32Values = {toInt(VehicleApPowerStateReport::BOOT_COMPLETE), 0}}},
 
     {.config = {.prop = toInt(VehicleProperty::DISPLAY_BRIGHTNESS),
