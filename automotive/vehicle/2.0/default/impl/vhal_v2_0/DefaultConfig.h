@@ -40,7 +40,8 @@ constexpr int TRACTION_CONTROL_ACTIVE = (int)VehicleProperty::TRACTION_CONTROL_A
 constexpr int VEHICLE_MAP_SERVICE = (int)VehicleProperty::VEHICLE_MAP_SERVICE;
 constexpr int WHEEL_TICK = (int)VehicleProperty::WHEEL_TICK;
 constexpr int ALL_WHEELS =
-    (int)(Wheel::LEFT_FRONT | Wheel::RIGHT_FRONT | Wheel::LEFT_REAR | Wheel::RIGHT_REAR);
+    (int)(VehicleAreaWheel::LEFT_FRONT | VehicleAreaWheel::RIGHT_FRONT |
+          VehicleAreaWheel::LEFT_REAR | VehicleAreaWheel::RIGHT_REAR);
 constexpr int HVAC_LEFT = (int)(VehicleAreaSeat::ROW_1_LEFT | VehicleAreaSeat::ROW_2_LEFT |
                                 VehicleAreaSeat::ROW_2_CENTER);
 constexpr int HVAC_RIGHT = (int)(VehicleAreaSeat::ROW_1_RIGHT | VehicleAreaSeat::ROW_2_RIGHT);

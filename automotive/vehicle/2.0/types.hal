@@ -91,7 +91,7 @@ enum VehicleArea : int32_t {
     SEAT        = 0x05000000,
     /** DOOR maps to enum VehicleAreaDoor */
     DOOR        = 0x06000000,
-    /** WHEEL maps to enum Wheel */
+    /** WHEEL maps to enum VehicleAreaWheel */
     WHEEL       = 0x07000000,
 
     MASK        = 0x0f000000,
@@ -2746,7 +2746,7 @@ enum StatusCode : int32_t {
     INTERNAL_ERROR = 5,
 };
 
-enum Wheel : int32_t {
+enum VehicleAreaWheel : int32_t {
     UNKNOWN = 0x0,
 
     LEFT_FRONT = 0x1,
