@@ -1,4 +1,4 @@
-Copyright 2017 The Android Open Source Project
+Copyright 2018 The Android Open Source Project
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,11 +14,14 @@ limitations under the License.
 
 # Wi-Fi Aware (NAN) HAL API Usage
 
-The Wi-Fi Aware (NAN) HAL API is defined in (<i>hardware/interfaces/wifi/1.0/</i>):
+The Wi-Fi Aware (NAN) HAL API is defined in (<i>hardware/interfaces/wifi/1.0/</i> and
+<i>hardware/interfaces/wifi/1.2/</i>):
 
 * IWifiNanIface.hal
 * IWifiNanIfaceEventCallback.hal
 * types.hal (structure definitions)
+
+Note that the <i>1.2</i> HAL is supplemental to the <i>1.0</i> HAL - not a replacement.
 
 The Wi-Fi Aware (NAN) HAL API surface is very large - only a subset is used from the framework.
 
@@ -48,9 +51,9 @@ to 0.
 
 APIs:
 
-* registerEventCallback(IWifiNanIfaceEventCallback callback)
+* registerEventCallback_1_2(IWifiNanIfaceEventCallback_1_2 callback)
 * getCapabilitiesRequest
-* enableRequest
+* enableRequest_1_2
   * NanEnableRequest
     * bool[2] operateInBand
         * Index [NanBandIndex.NAN_BAND_24GHZ] = <b>true</b>
@@ -104,8 +107,13 @@ APIs:
         * bool[2] useBeaconsInBandVal = <i>N/A</i>
         * bool validUseSdfInBandVal = <b>false</b>
         * bool[2] useSdfInBandVal = <i>N/A</i>
-* configRequest
-    * NanConfigRequest: same as for <i>enableRequest</i>
+  * NanConfigRequestSupplemental
+    * uint32_t discoveryBeaconIntervalMs = <b>0</b>
+    * uint32_t numberOfSpatialStreamsInDiscovery = <b>0</b>
+    * bool enableDiscoveryWindowEarlyTermination = <b>false</b>
+    * bool enableRanging = <b>true</b>
+* configRequest_1_2
+    * NanConfigRequest: same as for <i>enableRequest_1_2</i>
 * disableRequest
 * startPublishRequest
     * NanPublishRequest
@@ -118,7 +126,7 @@ APIs:
             * NanMatchAlg discoveryMatchIndicator = <b>NanMatchAlg.MATCH_NEVER</b>
             * vec<uint8_t> serviceSpecificInfo = <i>variable</i>
             * vec<uint8_t> extendedServiceSpecificInfo = <i>N/A</i>
-            * vec<uint8_t> rxMatchFilter = <i>variable</i>
+            e vec<uint8_t> rxMatchFilter = <i>variable</i>
             * vec<uint8_t> txMatchFilter = <i>variable</i>
             * bool useRssiThreshold = <b>false</b>
             * bool disableDiscoveryTerminationIndication = <i>variable</i>
@@ -180,7 +188,7 @@ APIs:
         * vec<uint8_t> serviceNameOutOfBand = <i>variable</i>
 * terminateDataPathRequest
 
-## IWifiNanIfaceEventCallback
+## IWifiNanIfaceEventCallback_1_2
 
 Format:
 * Parameters whose values are <i>ignored</i> will be flagged, otherwise the parameter value is used
@@ -217,5 +225,7 @@ API:
 * eventDataPathConfirm
     * NanDataPathConfirmInd (all parameters are used except those listed below)
         * vec<uint8_t> appInfo: <i>ignored</i>
+* eventDataPathScheduleUpdate
+    * NanDataPathScheduleUpdateInd
 * eventDataPathTerminated
 
