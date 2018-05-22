@@ -44,6 +44,10 @@ std::unique_ptr<ComposerClient> Composer::createClient() {
     return client;
 }
 
+sp<IComposerClient> ComposerClient::getRaw() const {
+    return mClient;
+}
+
 std::vector<IComposerClient::PerFrameMetadataKey> ComposerClient::getPerFrameMetadataKeys(
     Display display) {
     std::vector<IComposerClient::PerFrameMetadataKey> keys;
