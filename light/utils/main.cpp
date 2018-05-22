@@ -55,5 +55,6 @@ int main() {
         }
     });
 
-    return 0;
+    // b/77934844: Avoid running static destructors.
+    _exit(1);
 }
