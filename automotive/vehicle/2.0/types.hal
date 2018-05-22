@@ -91,7 +91,7 @@ enum VehicleArea : int32_t {
     SEAT        = 0x05000000,
     /** DOOR maps to enum VehicleAreaDoor */
     DOOR        = 0x06000000,
-    /** WHEEL maps to enum Wheel */
+    /** WHEEL maps to enum VehicleAreaWheel */
     WHEEL       = 0x07000000,
 
     MASK        = 0x0f000000,
@@ -1090,8 +1090,8 @@ enum VehicleProperty : int32_t {
      * It is assumed that AP's power state is controller by separate power
      * controller.
      *
-     * For configuration information, VehiclePropConfig.configFlags can
-     * have bit flag combining values in VehicleApPowerStateConfigFlag.
+     * For configuration information, VehiclePropConfig.configArray can have bit flag combining
+     * values in VehicleApPowerStateConfigFlag.
      *
      *   int32Values[0] : VehicleApPowerStateReq enum value
      *   int32Values[1] : additional parameter relevant for each state,
@@ -2582,14 +2582,6 @@ struct VehiclePropConfig {
      */
     vec<VehicleAreaConfig> areaConfigs;
 
-    /**
-     * Configuration flags for this property.
-     *
-     * For example, it may store the number of presets that are stored by the
-     * radio module.
-     */
-    int32_t configFlags;
-
     /** Contains additional configuration parameters */
     vec<int32_t> configArray;
 
@@ -2754,7 +2746,7 @@ enum StatusCode : int32_t {
     INTERNAL_ERROR = 5,
 };
 
-enum Wheel : int32_t {
+enum VehicleAreaWheel : int32_t {
     UNKNOWN = 0x0,
 
     LEFT_FRONT = 0x1,
