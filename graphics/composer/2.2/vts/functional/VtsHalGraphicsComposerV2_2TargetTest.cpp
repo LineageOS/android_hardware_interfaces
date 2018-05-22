@@ -78,6 +78,11 @@ class GraphicsComposerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         // explicitly disable vsync
         mComposerClient->setVsyncEnabled(mPrimaryDisplay, false);
         mComposerCallback->setVsyncAllowed(false);
+
+        mComposerClient->getRaw()->getReadbackBufferAttributes(
+            mPrimaryDisplay, [&](const auto& tmpError, const auto&, const auto&) {
+                mHasReadbackBuffer = tmpError == Error::NONE;
+            });
     }
 
     void TearDown() override {
@@ -96,6 +101,7 @@ class GraphicsComposerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     sp<V2_1::vts::GraphicsComposerCallback> mComposerCallback;
     // the first display and is assumed never to be removed
     Display mPrimaryDisplay;
+    bool mHasReadbackBuffer;
 
    private:
     Display waitForFirstDisplay() {
@@ -257,18 +263,44 @@ TEST_F(GraphicsComposerHidlTest, setPowerMode_2_2) {
 }
 
 TEST_F(GraphicsComposerHidlTest, setReadbackBuffer) {
-    mComposerClient->setReadbackBuffer(mPrimaryDisplay, nullptr, -1);
-}
+    if (!mHasReadbackBuffer) {
+        return;
+    }
 
-TEST_F(GraphicsComposerHidlTest, getReadbackBufferFence) {
-    int32_t fence;
-    mComposerClient->getReadbackBufferFence(mPrimaryDisplay, &fence);
-}
-
-TEST_F(GraphicsComposerHidlTest, getReadbackBufferAttributes) {
     PixelFormat pixelFormat;
     Dataspace dataspace;
     mComposerClient->getReadbackBufferAttributes(mPrimaryDisplay, &pixelFormat, &dataspace);
+    ASSERT_LT(static_cast<PixelFormat>(0), pixelFormat);
+    ASSERT_NE(Dataspace::UNKNOWN, dataspace);
+
+    IMapper::BufferDescriptorInfo info{};
+    Config config = mComposerClient->getActiveConfig(mPrimaryDisplay);
+    info.width = mComposerClient->getDisplayAttribute(mPrimaryDisplay, config,
+                                                      IComposerClient::Attribute::WIDTH);
+    info.height = mComposerClient->getDisplayAttribute(mPrimaryDisplay, config,
+                                                       IComposerClient::Attribute::HEIGHT);
+    info.layerCount = 1;
+    info.format = pixelFormat;
+    // BufferUsage::COMPOSER_OUTPUT is missing
+    info.usage = static_cast<uint64_t>(BufferUsage::COMPOSER_OVERLAY | BufferUsage::CPU_READ_OFTEN);
+
+    std::unique_ptr<Gralloc> gralloc;
+    const native_handle_t* buffer;
+    ASSERT_NO_FATAL_FAILURE(gralloc = std::make_unique<Gralloc>());
+    ASSERT_NO_FATAL_FAILURE(buffer = gralloc->allocate(info));
+
+    mComposerClient->setReadbackBuffer(mPrimaryDisplay, buffer, -1);
+}
+
+TEST_F(GraphicsComposerHidlTest, getReadbackBufferFenceInactive) {
+    if (!mHasReadbackBuffer) {
+        return;
+    }
+
+    mComposerClient->getRaw()->getReadbackBufferFence(
+        mPrimaryDisplay, [&](const auto& tmpError, const auto&) {
+            ASSERT_EQ(Error::UNSUPPORTED, tmpError) << "readback buffer is active";
+        });
 }
 
 /**
