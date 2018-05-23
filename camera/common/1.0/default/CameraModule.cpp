@@ -306,7 +306,7 @@ int CameraModule::getCameraInfo(int cameraId, struct camera_info *info) {
             return ret;
         }
         CameraMetadata m;
-        m = rawInfo.static_camera_characteristics;
+        m.append(rawInfo.static_camera_characteristics);
         deriveCameraCharacteristicsKeys(rawInfo.device_version, m);
         cameraInfo = rawInfo;
         cameraInfo.static_camera_characteristics = m.release();
