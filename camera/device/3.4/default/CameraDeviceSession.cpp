@@ -479,31 +479,40 @@ void CameraDeviceSession::sProcessCaptureResult_3_4(
             const_cast<CameraDeviceSession*>(static_cast<const CameraDeviceSession*>(cb));
 
     CaptureResult result = {};
-    status_t ret = d->constructCaptureResult(result.v3_2, hal_result);
+    camera3_capture_result shadowResult;
+    bool handlePhysCam = (d->mDeviceVersion >= CAMERA_DEVICE_API_VERSION_3_5);
+    std::vector<::android::hardware::camera::common::V1_0::helper::CameraMetadata> compactMds;
+    std::vector<const camera_metadata_t*> physCamMdArray;
+    sShrinkCaptureResult(&shadowResult, hal_result, &compactMds, &physCamMdArray, handlePhysCam);
+
+    status_t ret = d->constructCaptureResult(result.v3_2, &shadowResult);
     if (ret != OK) {
         return;
     }
 
-    if (hal_result->num_physcam_metadata > d->mPhysicalCameraIds.size()) {
-        ALOGE("%s: Fatal: Invalid num_physcam_metadata %u", __FUNCTION__,
-                hal_result->num_physcam_metadata);
-        return;
-    }
-    result.physicalCameraMetadata.resize(hal_result->num_physcam_metadata);
-    for (uint32_t i = 0; i < hal_result->num_physcam_metadata; i++) {
-        std::string physicalId = hal_result->physcam_ids[i];
-        if (d->mPhysicalCameraIds.find(physicalId) == d->mPhysicalCameraIds.end()) {
-            ALOGE("%s: Fatal: Invalid physcam_ids[%u]: %s", __FUNCTION__,
-                  i, hal_result->physcam_ids[i]);
+    if (handlePhysCam) {
+        if (shadowResult.num_physcam_metadata > d->mPhysicalCameraIds.size()) {
+            ALOGE("%s: Fatal: Invalid num_physcam_metadata %u", __FUNCTION__,
+                    shadowResult.num_physcam_metadata);
             return;
         }
-        V3_2::CameraMetadata physicalMetadata;
-        V3_2::implementation::convertToHidl(hal_result->physcam_metadata[i], &physicalMetadata);
-        PhysicalCameraMetadata physicalCameraMetadata = {
-                .fmqMetadataSize = 0,
-                .physicalCameraId = physicalId,
-                .metadata = physicalMetadata };
-        result.physicalCameraMetadata[i] = physicalCameraMetadata;
+        result.physicalCameraMetadata.resize(shadowResult.num_physcam_metadata);
+        for (uint32_t i = 0; i < shadowResult.num_physcam_metadata; i++) {
+            std::string physicalId = shadowResult.physcam_ids[i];
+            if (d->mPhysicalCameraIds.find(physicalId) == d->mPhysicalCameraIds.end()) {
+                ALOGE("%s: Fatal: Invalid physcam_ids[%u]: %s", __FUNCTION__,
+                      i, shadowResult.physcam_ids[i]);
+                return;
+            }
+            V3_2::CameraMetadata physicalMetadata;
+            V3_2::implementation::convertToHidl(
+                    shadowResult.physcam_metadata[i], &physicalMetadata);
+            PhysicalCameraMetadata physicalCameraMetadata = {
+                    .fmqMetadataSize = 0,
+                    .physicalCameraId = physicalId,
+                    .metadata = physicalMetadata };
+            result.physicalCameraMetadata[i] = physicalCameraMetadata;
+        }
     }
     d->mResultBatcher_3_4.processCaptureResult_3_4(result);
 }
