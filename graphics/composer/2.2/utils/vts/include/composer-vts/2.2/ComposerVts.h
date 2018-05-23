@@ -63,6 +63,8 @@ class ComposerClient_v2_2
     ComposerClient_v2_2(const sp<IComposerClient>& client)
         : V2_1::vts::ComposerClient(client), mClient_v2_2(client){};
 
+    sp<V2_2::IComposerClient> getRaw() const;
+
     void execute_v2_2(V2_1::vts::TestCommandReader* reader, V2_2::CommandWriterBase* writer);
 
     std::vector<IComposerClient::PerFrameMetadataKey> getPerFrameMetadataKeys(Display display);
