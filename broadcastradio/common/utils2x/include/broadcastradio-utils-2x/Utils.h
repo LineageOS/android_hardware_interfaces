@@ -69,9 +69,6 @@ class IdentifierIterator
     size_t mPos = 0;
 };
 
-IdentifierIterator begin(const V2_0::ProgramSelector& sel);
-IdentifierIterator end(const V2_0::ProgramSelector& sel);
-
 /**
  * Guesses band from the frequency value.
  *
@@ -153,6 +150,13 @@ std::optional<std::string> getMetadataString(const V2_0::ProgramInfo& info,
 V2_0::ProgramIdentifier make_hdradio_station_name(const std::string& name);
 
 }  // namespace utils
+
+namespace V2_0 {
+
+utils::IdentifierIterator begin(const ProgramSelector& sel);
+utils::IdentifierIterator end(const ProgramSelector& sel);
+
+}  // namespace V2_0
 }  // namespace broadcastradio
 }  // namespace hardware
 }  // namespace android
