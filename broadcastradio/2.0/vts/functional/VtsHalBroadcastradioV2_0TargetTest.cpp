@@ -137,29 +137,30 @@ TunerCallbackMock::TunerCallbackMock() {
 }
 
 Return<void> TunerCallbackMock::onCurrentProgramInfoChanged(const ProgramInfo& info) {
-    auto logically = utils::getType(info.logicallyTunedTo);
-    if (logically != IdentifierType::INVALID) {
-        EXPECT_TRUE(logically == IdentifierType::AMFM_FREQUENCY ||
-                    logically == IdentifierType::RDS_PI ||
-                    logically == IdentifierType::HD_STATION_ID_EXT ||
-                    logically == IdentifierType::DAB_SID_EXT ||
-                    logically == IdentifierType::DRMO_SERVICE_ID ||
-                    logically == IdentifierType::SXM_SERVICE_ID ||
-                    (logically >= IdentifierType::VENDOR_START &&
-                     logically <= IdentifierType::VENDOR_END) ||
-                    logically > IdentifierType::SXM_CHANNEL);
+    for (auto&& id : info.selector) {
+        EXPECT_NE(IdentifierType::INVALID, utils::getType(id));
     }
 
+    auto logically = utils::getType(info.logicallyTunedTo);
+    /* This field is required for currently tuned program and should be INVALID
+     * for entries from the program list.
+     */
+    EXPECT_TRUE(
+        logically == IdentifierType::AMFM_FREQUENCY || logically == IdentifierType::RDS_PI ||
+        logically == IdentifierType::HD_STATION_ID_EXT ||
+        logically == IdentifierType::DAB_SID_EXT || logically == IdentifierType::DRMO_SERVICE_ID ||
+        logically == IdentifierType::SXM_SERVICE_ID ||
+        (logically >= IdentifierType::VENDOR_START && logically <= IdentifierType::VENDOR_END) ||
+        logically > IdentifierType::SXM_CHANNEL);
+
     auto physically = utils::getType(info.physicallyTunedTo);
-    if (physically != IdentifierType::INVALID) {
-        EXPECT_TRUE(physically == IdentifierType::AMFM_FREQUENCY ||
-                    physically == IdentifierType::DAB_ENSEMBLE ||
-                    physically == IdentifierType::DRMO_FREQUENCY ||
-                    physically == IdentifierType::SXM_CHANNEL ||
-                    (physically >= IdentifierType::VENDOR_START &&
-                     physically <= IdentifierType::VENDOR_END) ||
-                    physically > IdentifierType::SXM_CHANNEL);
-    }
+    // ditto (see "logically" above)
+    EXPECT_TRUE(
+        physically == IdentifierType::AMFM_FREQUENCY ||
+        physically == IdentifierType::DAB_ENSEMBLE ||
+        physically == IdentifierType::DRMO_FREQUENCY || physically == IdentifierType::SXM_CHANNEL ||
+        (physically >= IdentifierType::VENDOR_START && physically <= IdentifierType::VENDOR_END) ||
+        physically > IdentifierType::SXM_CHANNEL);
 
     if (logically == IdentifierType::AMFM_FREQUENCY) {
         auto ps = utils::getMetadataString(info, MetadataKey::RDS_PS);
