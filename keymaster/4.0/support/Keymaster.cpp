@@ -156,17 +156,19 @@ static void computeHmac(const Keymaster::KeymasterSet& keymasters,
     for (auto& keymaster : keymasters) {
         if (keymaster->halVersion().majorVersion < 4) continue;
         LOG(DEBUG) << "Computing HMAC for " << *keymaster;
-        auto rc = keymaster->computeSharedHmac(params, [&](auto error, auto& curSharingCheck) {
-            CHECK(error == ErrorCode::OK)
-                << "Failed to get HMAC parameters from " << *keymaster << " error " << error;
-            if (firstKeymaster) {
-                sharingCheck = curSharingCheck;
-                firstKeymaster = false;
-            }
-            // TODO: Validate that curSharingCheck == sharingCheck.  b/77588764
-            // CHECK(curSharingCheck == sharingCheck) << "HMAC computation failed for " <<
-            // *keymaster;
-        });
+        auto rc = keymaster->computeSharedHmac(
+            params, [&](ErrorCode error, const hidl_vec<uint8_t>& curSharingCheck) {
+                CHECK(error == ErrorCode::OK)
+                    << "Failed to get HMAC parameters from " << *keymaster << " error " << error;
+                if (firstKeymaster) {
+                    sharingCheck = curSharingCheck;
+                    firstKeymaster = false;
+                }
+                CHECK(curSharingCheck == sharingCheck)
+                    << "HMAC computation failed for " << *keymaster  //
+                    << " Expected: " << sharingCheck                 //
+                    << " got: " << curSharingCheck;
+            });
         CHECK(rc.isOk()) << "Failed to communicate with " << *keymaster
                          << " error: " << rc.description();
     }
