@@ -1,17 +1,17 @@
-#ifndef ANDROID_HARDWARE_CONFIGSTORE_V1_0_SURFACEFLINGERCONFIGS_H
-#define ANDROID_HARDWARE_CONFIGSTORE_V1_0_SURFACEFLINGERCONFIGS_H
+#ifndef ANDROID_HARDWARE_CONFIGSTORE_V1_1_SURFACEFLINGERCONFIGS_H
+#define ANDROID_HARDWARE_CONFIGSTORE_V1_1_SURFACEFLINGERCONFIGS_H
 
-#include <android/hardware/configstore/1.0/ISurfaceFlingerConfigs.h>
+#include <android/hardware/configstore/1.1/ISurfaceFlingerConfigs.h>
 #include <hidl/MQDescriptor.h>
 #include <hidl/Status.h>
 
 namespace android {
 namespace hardware {
 namespace configstore {
-namespace V1_0 {
+namespace V1_1 {
 namespace implementation {
 
-using ::android::hardware::configstore::V1_0::ISurfaceFlingerConfigs;
+using ::android::hardware::configstore::V1_1::ISurfaceFlingerConfigs;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
 using ::android::sp;
@@ -32,13 +32,17 @@ struct SurfaceFlingerConfigs : public ISurfaceFlingerConfigs {
     Return<void> maxFrameBufferAcquiredBuffers(maxFrameBufferAcquiredBuffers_cb _hidl_cb) override;
     Return<void> startGraphicsAllocatorService(startGraphicsAllocatorService_cb _hidl_cb) override;
 
+    // Methods from
+    // ::android::hardware::configstore::V1_1::ISurfaceFlingerConfigs follow.
+    Return<void> primaryDisplayOrientation(primaryDisplayOrientation_cb _hidl_cb) override;
+
     // Methods from ::android::hidl::base::V1_0::IBase follow.
 };
 
 }  // namespace implementation
-}  // namespace V1_0
+}  // namespace V1_1
 }  // namespace configstore
 }  // namespace hardware
 }  // namespace android
 
-#endif  // ANDROID_HARDWARE_CONFIGSTORE_V1_0_SURFACEFLINGERCONFIGS_H
+#endif  // ANDROID_HARDWARE_CONFIGSTORE_V1_1_SURFACEFLINGERCONFIGS_H

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.1 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,13 @@
 
 #include "SurfaceFlingerConfigs.h"
 
+#include <android/hardware/configstore/1.1/types.h>
+#include <log/log.h>
+
 namespace android {
 namespace hardware {
 namespace configstore {
-namespace V1_0 {
+namespace V1_1 {
 namespace implementation {
 
 // Methods from ::android::hardware::configstore::V1_0::ISurfaceFlingerConfigs
@@ -139,10 +142,59 @@ Return<void> SurfaceFlingerConfigs::startGraphicsAllocatorService(
     return Void();
 }
 
+// Methods from ::android::hardware::configstore::V1_1::ISurfaceFlingerConfigs
+// follow.
+
+#ifdef PRIMARY_DISPLAY_ORIENTATION
+static_assert(PRIMARY_DISPLAY_ORIENTATION == 0 || PRIMARY_DISPLAY_ORIENTATION == 90 ||
+                  PRIMARY_DISPLAY_ORIENTATION == 180 || PRIMARY_DISPLAY_ORIENTATION == 270,
+              "Primary display orientation must be 0/90/180/270");
+#endif
+
+Return<void> SurfaceFlingerConfigs::primaryDisplayOrientation(
+    primaryDisplayOrientation_cb _hidl_cb) {
+    using ::android::hardware::configstore::V1_1::DisplayOrientation;
+
+    bool specified = false;
+    DisplayOrientation value = DisplayOrientation::ORIENTATION_0;
+
+    int orientation = 0;
+#ifdef PRIMARY_DISPLAY_ORIENTATION
+    specified = true;
+    orientation = PRIMARY_DISPLAY_ORIENTATION;
+#endif
+
+    switch (orientation) {
+        case 0: {
+            value = DisplayOrientation::ORIENTATION_0;
+            break;
+        }
+        case 90: {
+            value = DisplayOrientation::ORIENTATION_90;
+            break;
+        }
+        case 180: {
+            value = DisplayOrientation::ORIENTATION_180;
+            break;
+        }
+        case 270: {
+            value = DisplayOrientation::ORIENTATION_270;
+            break;
+        }
+        default: {
+            // statically checked above -> memory corruption
+            LOG_ALWAYS_FATAL("Invalid orientation %d", orientation);
+        }
+    }
+
+    _hidl_cb({specified, value});
+    return Void();
+}
+
 // Methods from ::android::hidl::base::V1_0::IBase follow.
 
 }  // namespace implementation
-}  // namespace V1_0
+}  // namespace V1_1
 }  // namespace configstore
 }  // namespace hardware
 }  // namespace android
