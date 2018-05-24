@@ -217,8 +217,8 @@ interface IKeymasterDevice {
      * must be a TEE Keymaster as well.  The HMAC key used to MAC and verify authentication tokens
      * (HardwareAuthToken, VerificationToken and ConfirmationToken all use this HMAC key) must be
      * shared between TEE and StrongBox so they can each validate tokens produced by the other.
-     * This method is the first step in the process for for agreeing on a shared key.  It is called
-     * by Android during startup.  The system calls it on each of the HAL instances and collects the
+     * This method is the first step in the process for agreeing on a shared key.  It is called by
+     * Android during startup.  The system calls it on each of the HAL instances and collects the
      * results in preparation for the second step.
      *
      * @return error ErrorCode::OK on success, ErrorCode::UNIMPLEMENTED if HMAC agreement is not
@@ -324,7 +324,7 @@ interface IKeymasterDevice {
      *             sharingCheck = HMAC(H, "Keymaster HMAC Verification")
      *
      *         The string is UTF-8 encoded, 27 bytes in length.  If the returned values of all
-     *         IKeymasterDevice instances don't match, Keystore will assume that HMAC agreement
+     *         IKeymasterDevice instances don't match, clients must assume that HMAC agreement
      *         failed.
      */
     computeSharedHmac(vec<HmacSharingParameters> params)
@@ -718,16 +718,19 @@ interface IKeymasterDevice {
      * AuthorizationList ::= SEQUENCE {
      *     purpose                    [1] EXPLICIT SET OF INTEGER OPTIONAL,
      *     algorithm                  [2] EXPLICIT INTEGER OPTIONAL,
-     *     keySize                    [3] EXPLICIT INTEGER OPTIONAL.
+     *     keySize                    [3] EXPLICIT INTEGER OPTIONAL,
      *     blockMode                  [4] EXPLICIT SET OF INTEGER OPTIONAL,
      *     digest                     [5] EXPLICIT SET OF INTEGER OPTIONAL,
      *     padding                    [6] EXPLICIT SET OF INTEGER OPTIONAL,
+     *     callerNonce                [7] EXPLICIT NULL OPTIONAL,
+     *     minMacLength               [8] EXPLICIT INTEGER OPTIONAL,
      *     ecCurve                    [10] EXPLICIT INTEGER OPTIONAL,
      *     rsaPublicExponent          [200] EXPLICIT INTEGER OPTIONAL,
      *     rollbackResistance         [303] EXPLICIT NULL OPTIONAL,
-     *     activeDateTime             [400] EXPLICIT INTEGER OPTIONAL
-     *     originationExpireDateTime  [401] EXPLICIT INTEGER OPTIONAL
-     *     usageExpireDateTime        [402] EXPLICIT INTEGER OPTIONAL
+     *     activeDateTime             [400] EXPLICIT INTEGER OPTIONAL,
+     *     originationExpireDateTime  [401] EXPLICIT INTEGER OPTIONAL,
+     *     usageExpireDateTime        [402] EXPLICIT INTEGER OPTIONAL,
+     *     userSecureId               [502] EXPLICIT INTEGER OPTIONAL,
      *     noAuthRequired             [503] EXPLICIT NULL OPTIONAL,
      *     userAuthType               [504] EXPLICIT INTEGER OPTIONAL,
      *     authTimeout                [505] EXPLICIT INTEGER OPTIONAL,
@@ -735,15 +738,11 @@ interface IKeymasterDevice {
      *     trustedUserPresenceReq     [507] EXPLICIT NULL OPTIONAL,
      *     trustedConfirmationReq     [508] EXPLICIT NULL OPTIONAL,
      *     unlockedDeviceReq          [509] EXPLICIT NULL OPTIONAL,
-     *     allApplications            [600] EXPLICIT NULL OPTIONAL,
-     *     applicationId              [601] EXPLICIT OCTET_STRING OPTIONAL,
      *     creationDateTime           [701] EXPLICIT INTEGER OPTIONAL,
      *     origin                     [702] EXPLICIT INTEGER OPTIONAL,
-     *     rollbackResistant          [703] EXPLICIT NULL OPTIONAL,
      *     rootOfTrust                [704] EXPLICIT RootOfTrust OPTIONAL,
      *     osVersion                  [705] EXPLICIT INTEGER OPTIONAL,
      *     osPatchLevel               [706] EXPLICIT INTEGER OPTIONAL,
-     *     attestationChallenge       [708] EXPLICIT OCTET_STRING OPTIONAL,
      *     attestationApplicationId   [709] EXPLICIT OCTET_STRING OPTIONAL,
      *     attestationIdBrand         [710] EXPLICIT OCTET_STRING OPTIONAL,
      *     attestationIdDevice        [711] EXPLICIT OCTET_STRING OPTIONAL,
