@@ -28,11 +28,13 @@ cc_library_shared {
 
     shared_libs: [
         "android.hardware.configstore@1.0",
+        "android.hardware.configstore@1.1",
         "libbase",
         "libhidlbase"
     ],
     export_shared_lib_headers: [
         "android.hardware.configstore@1.0",
+        "android.hardware.configstore@1.1",
         "libbase",
         "libhidlbase"
     ],

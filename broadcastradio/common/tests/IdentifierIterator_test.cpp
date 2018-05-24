@@ -33,8 +33,8 @@ TEST(IdentifierIteratorTest, singleSecondary) {
     };
     // clang-format on
 
-    auto it = utils::begin(sel);
-    auto end = utils::end(sel);
+    auto it = V2_0::begin(sel);
+    auto end = V2_0::end(sel);
 
     ASSERT_NE(end, it);
     EXPECT_EQ(sel.primaryId, *it);
@@ -46,8 +46,8 @@ TEST(IdentifierIteratorTest, singleSecondary) {
 TEST(IdentifierIteratorTest, empty) {
     V2_0::ProgramSelector sel{};
 
-    auto it = utils::begin(sel);
-    auto end = utils::end(sel);
+    auto it = V2_0::begin(sel);
+    auto end = V2_0::end(sel);
 
     ASSERT_NE(end, it++);  // primary id is always present
     ASSERT_EQ(end, it);
@@ -57,8 +57,8 @@ TEST(IdentifierIteratorTest, twoSelectors) {
     V2_0::ProgramSelector sel1{};
     V2_0::ProgramSelector sel2{};
 
-    auto it1 = utils::begin(sel1);
-    auto it2 = utils::begin(sel2);
+    auto it1 = V2_0::begin(sel1);
+    auto it2 = V2_0::begin(sel2);
 
     EXPECT_NE(it1, it2);
 }
@@ -66,8 +66,8 @@ TEST(IdentifierIteratorTest, twoSelectors) {
 TEST(IdentifierIteratorTest, increments) {
     V2_0::ProgramSelector sel{{}, {{}, {}}};
 
-    auto it = utils::begin(sel);
-    auto end = utils::end(sel);
+    auto it = V2_0::begin(sel);
+    auto end = V2_0::end(sel);
     auto pre = it;
     auto post = it;
 
@@ -102,8 +102,8 @@ TEST(IdentifierIteratorTest, findType) {
     auto isRdsPi = std::bind(typeEquals, _1, IdentifierType::RDS_PI);
     auto isFreq = std::bind(typeEquals, _1, IdentifierType::AMFM_FREQUENCY);
 
-    auto end = utils::end(sel);
-    auto it = std::find_if(utils::begin(sel), end, isRdsPi);
+    auto end = V2_0::end(sel);
+    auto it = std::find_if(V2_0::begin(sel), end, isRdsPi);
     ASSERT_NE(end, it);
     EXPECT_EQ(rds_pi1, it->value);
 
@@ -111,13 +111,26 @@ TEST(IdentifierIteratorTest, findType) {
     ASSERT_NE(end, it);
     EXPECT_EQ(rds_pi2, it->value);
 
-    it = std::find_if(utils::begin(sel), end, isFreq);
+    it = std::find_if(V2_0::begin(sel), end, isFreq);
     ASSERT_NE(end, it);
     EXPECT_EQ(freq1, it->value);
 
     it = std::find_if(++it, end, isFreq);
     ASSERT_NE(end, it);
     EXPECT_EQ(freq2, it->value);
+}
+
+TEST(IdentifierIteratorTest, rangeLoop) {
+    V2_0::ProgramSelector sel{{}, {{}, {}, {}}};
+
+    unsigned count = 0;
+    for (auto&& id : sel) {
+        ASSERT_EQ(0u, id.type);
+        count++;
+    }
+
+    const auto expectedCount = 1 + sel.secondaryIds.size();
+    ASSERT_EQ(expectedCount, count);
 }
 
 }  // anonymous namespace
