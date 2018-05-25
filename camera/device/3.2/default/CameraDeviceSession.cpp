@@ -18,6 +18,7 @@
 #include <android/log.h>
 
 #include <set>
+#include <cutils/properties.h>
 #include <utils/Trace.h>
 #include <hardware/gralloc.h>
 #include <hardware/gralloc1.h>
@@ -31,9 +32,9 @@ namespace V3_2 {
 namespace implementation {
 
 // Size of request metadata fast message queue. Change to 0 to always use hwbinder buffer.
-static constexpr size_t CAMERA_REQUEST_METADATA_QUEUE_SIZE = 1 << 20 /* 1MB */;
+static constexpr int32_t CAMERA_REQUEST_METADATA_QUEUE_SIZE = 1 << 20 /* 1MB */;
 // Size of result metadata fast message queue. Change to 0 to always use hwbinder buffer.
-static constexpr size_t CAMERA_RESULT_METADATA_QUEUE_SIZE  = 1 << 20 /* 1MB */;
+static constexpr int32_t CAMERA_RESULT_METADATA_QUEUE_SIZE  = 1 << 20 /* 1MB */;
 
 // Metadata sent by HAL will be replaced by a compact copy
 // if their (total size >= compact size + METADATA_SHRINK_ABS_THRESHOLD &&
@@ -95,14 +96,30 @@ bool CameraDeviceSession::initialize() {
         return true;
     }
 
+    int32_t reqFMQSize = property_get_int32("ro.camera.req.fmq.size", /*default*/-1);
+    if (reqFMQSize < 0) {
+        reqFMQSize = CAMERA_REQUEST_METADATA_QUEUE_SIZE;
+    } else {
+        ALOGV("%s: request FMQ size overridden to %d", __FUNCTION__, reqFMQSize);
+    }
+
     mRequestMetadataQueue = std::make_unique<RequestMetadataQueue>(
-            CAMERA_REQUEST_METADATA_QUEUE_SIZE, false /* non blocking */);
+            static_cast<size_t>(reqFMQSize),
+            false /* non blocking */);
     if (!mRequestMetadataQueue->isValid()) {
         ALOGE("%s: invalid request fmq", __FUNCTION__);
         return true;
     }
+
+    int32_t resFMQSize = property_get_int32("ro.camera.res.fmq.size", /*default*/-1);
+    if (resFMQSize < 0) {
+        resFMQSize = CAMERA_RESULT_METADATA_QUEUE_SIZE;
+    } else {
+        ALOGV("%s: result FMQ size overridden to %d", __FUNCTION__, resFMQSize);
+    }
     mResultMetadataQueue = std::make_shared<RequestMetadataQueue>(
-            CAMERA_RESULT_METADATA_QUEUE_SIZE, false /* non blocking */);
+            static_cast<size_t>(resFMQSize),
+            false /* non blocking */);
     if (!mResultMetadataQueue->isValid()) {
         ALOGE("%s: invalid result fmq", __FUNCTION__);
         return true;
