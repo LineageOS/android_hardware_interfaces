@@ -24,6 +24,7 @@
 using android::hardware::keymaster::V4_0::SecurityLevel;
 
 int main() {
+    ::android::hardware::configureRpcThreadpool(1, true /* willJoinThreadpool */);
     auto keymaster = ::keymaster::V4_0::ng::CreateKeymasterDevice(SecurityLevel::SOFTWARE);
     auto status = keymaster->registerAsService();
     if (status != android::OK) {

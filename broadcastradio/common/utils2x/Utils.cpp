@@ -81,14 +81,6 @@ bool IdentifierIterator::operator==(const IdentifierIterator& rhs) const {
     return mPos == rhs.mPos;
 }
 
-IdentifierIterator begin(const V2_0::ProgramSelector& sel) {
-    return IdentifierIterator(sel);
-}
-
-IdentifierIterator end(const V2_0::ProgramSelector& sel) {
-    return IdentifierIterator(sel) + 1 /* primary id */ + sel.secondaryIds.size();
-}
-
 FrequencyBand getBand(uint64_t freq) {
     // keep in sync with
     // frameworks/base/services/core/java/com/android/server/broadcastradio/hal2/Utils.java
@@ -411,6 +403,18 @@ V2_0::ProgramIdentifier make_hdradio_station_name(const std::string& name) {
 }
 
 }  // namespace utils
+
+namespace V2_0 {
+
+utils::IdentifierIterator begin(const ProgramSelector& sel) {
+    return utils::IdentifierIterator(sel);
+}
+
+utils::IdentifierIterator end(const ProgramSelector& sel) {
+    return utils::IdentifierIterator(sel) + 1 /* primary id */ + sel.secondaryIds.size();
+}
+
+}  // namespace V2_0
 }  // namespace broadcastradio
 }  // namespace hardware
 }  // namespace android

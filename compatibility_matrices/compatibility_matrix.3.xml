@@ -113,7 +113,7 @@
     </hal>
     <hal format="hidl" optional="false">
         <name>android.hardware.configstore</name>
-        <version>1.0</version>
+        <version>1.0-1</version>
         <interface>
             <name>ISurfaceFlingerConfigs</name>
             <instance>default</instance>
