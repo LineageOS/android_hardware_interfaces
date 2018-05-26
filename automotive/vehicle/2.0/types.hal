@@ -501,7 +501,8 @@ enum VehicleProperty : int32_t {
     /**
      * Tire pressure
      *
-     * The min/max range is used to indicate the recommended tire pressure.
+     * min/max value indicates tire pressure sensor range.  Each tire will have a separate min/max
+     * value denoted by its areaConfig.areaId.
      *
      * @change_mode VehiclePropertyChangeMode:CONTINUOUS
      * @access VehiclePropertyAccess:READ
@@ -510,7 +511,7 @@ enum VehicleProperty : int32_t {
     TIRE_PRESSURE = (
         0x0309
         | VehiclePropertyGroup:SYSTEM
-        | VehiclePropertyType:MIXED
+        | VehiclePropertyType:FLOAT
         | VehicleArea:WHEEL),
 
     /**

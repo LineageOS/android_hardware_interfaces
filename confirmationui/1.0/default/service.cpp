@@ -27,6 +27,7 @@ using android::hardware::joinRpcThreadpool;
 using android::hardware::confirmationui::V1_0::implementation::ConfirmationUI;
 
 int main() {
+    ::android::hardware::configureRpcThreadpool(1, true /*willJoinThreadpool*/);
     auto confirmationui = new ConfirmationUI();
     auto status = confirmationui->registerAsService();
     if (status != android::OK) {
