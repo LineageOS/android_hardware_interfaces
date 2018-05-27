@@ -94,6 +94,51 @@ void setupPCMPort(sp<IOmxNode> omxNode, OMX_U32 portIndex, int32_t nChannels,
             param.eChannelMapping[0] = OMX_AUDIO_ChannelLF;
             param.eChannelMapping[1] = OMX_AUDIO_ChannelRF;
             break;
+        case 3:
+            param.eChannelMapping[0] = OMX_AUDIO_ChannelLF;
+            param.eChannelMapping[1] = OMX_AUDIO_ChannelRF;
+            param.eChannelMapping[2] = OMX_AUDIO_ChannelCF;
+            break;
+        case 4:
+            param.eChannelMapping[0] = OMX_AUDIO_ChannelLF;
+            param.eChannelMapping[1] = OMX_AUDIO_ChannelRF;
+            param.eChannelMapping[2] = OMX_AUDIO_ChannelLR;
+            param.eChannelMapping[3] = OMX_AUDIO_ChannelRR;
+            break;
+        case 5:
+            param.eChannelMapping[0] = OMX_AUDIO_ChannelLF;
+            param.eChannelMapping[1] = OMX_AUDIO_ChannelRF;
+            param.eChannelMapping[2] = OMX_AUDIO_ChannelCF;
+            param.eChannelMapping[3] = OMX_AUDIO_ChannelLR;
+            param.eChannelMapping[4] = OMX_AUDIO_ChannelRR;
+            break;
+        case 6:
+            param.eChannelMapping[0] = OMX_AUDIO_ChannelLF;
+            param.eChannelMapping[1] = OMX_AUDIO_ChannelRF;
+            param.eChannelMapping[2] = OMX_AUDIO_ChannelCF;
+            param.eChannelMapping[3] = OMX_AUDIO_ChannelLFE;
+            param.eChannelMapping[4] = OMX_AUDIO_ChannelLR;
+            param.eChannelMapping[5] = OMX_AUDIO_ChannelRR;
+            break;
+        case 7:
+            param.eChannelMapping[0] = OMX_AUDIO_ChannelLF;
+            param.eChannelMapping[1] = OMX_AUDIO_ChannelRF;
+            param.eChannelMapping[2] = OMX_AUDIO_ChannelCF;
+            param.eChannelMapping[3] = OMX_AUDIO_ChannelLFE;
+            param.eChannelMapping[4] = OMX_AUDIO_ChannelLR;
+            param.eChannelMapping[5] = OMX_AUDIO_ChannelRR;
+            param.eChannelMapping[6] = OMX_AUDIO_ChannelCS;
+            break;
+        case 8:
+            param.eChannelMapping[0] = OMX_AUDIO_ChannelLF;
+            param.eChannelMapping[1] = OMX_AUDIO_ChannelRF;
+            param.eChannelMapping[2] = OMX_AUDIO_ChannelCF;
+            param.eChannelMapping[3] = OMX_AUDIO_ChannelLFE;
+            param.eChannelMapping[4] = OMX_AUDIO_ChannelLR;
+            param.eChannelMapping[5] = OMX_AUDIO_ChannelRR;
+            param.eChannelMapping[6] = OMX_AUDIO_ChannelLS;
+            param.eChannelMapping[7] = OMX_AUDIO_ChannelRS;
+            break;
         default:
             EXPECT_TRUE(false);
     }
