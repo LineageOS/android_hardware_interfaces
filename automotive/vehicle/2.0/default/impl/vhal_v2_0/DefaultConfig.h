@@ -32,6 +32,8 @@ namespace impl {
 constexpr int ABS_ACTIVE = (int)VehicleProperty::ABS_ACTIVE;
 constexpr int AP_POWER_STATE_REQ = (int)VehicleProperty::AP_POWER_STATE_REQ;
 constexpr int AP_POWER_STATE_REPORT = (int)VehicleProperty::AP_POWER_STATE_REPORT;
+constexpr int DOOR_1_LEFT = (int)VehicleAreaDoor::ROW_1_LEFT;
+constexpr int DOOR_1_RIGHT = (int)VehicleAreaDoor::ROW_1_RIGHT;
 constexpr int OBD2_LIVE_FRAME = (int)VehicleProperty::OBD2_LIVE_FRAME;
 constexpr int OBD2_FREEZE_FRAME = (int)VehicleProperty::OBD2_FREEZE_FRAME;
 constexpr int OBD2_FREEZE_FRAME_INFO = (int)VehicleProperty::OBD2_FREEZE_FRAME_INFO;
@@ -440,13 +442,13 @@ const ConfigDeclaration kVehicleProperties[]{
             },
     },
 
-    {.config =
-         {
-             .prop = toInt(VehicleProperty::DOOR_LOCK),
-             .access = VehiclePropertyAccess::READ,
-             .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-         },
-     .initialValue = {.int32Values = {1}}},
+    {.config = {.prop = toInt(VehicleProperty::DOOR_LOCK),
+                .access = VehiclePropertyAccess::READ,
+                .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                .areaConfigs = {VehicleAreaConfig{.areaId = DOOR_1_LEFT},
+                                VehicleAreaConfig{.areaId = DOOR_1_RIGHT}}},
+     .initialAreaValues = {{DOOR_1_LEFT, {.int32Values = {1}}},
+                           {DOOR_1_RIGHT, {.int32Values = {1}}}}},
 
     {.config =
          {
@@ -459,23 +461,15 @@ const ConfigDeclaration kVehicleProperties[]{
          },
      .initialValue = {.int64Values = {0, 100000, 200000, 300000, 400000}}},
 
-    {
-        .config =
-            {
-                .prop = ABS_ACTIVE,
+    {.config = {.prop = ABS_ACTIVE,
                 .access = VehiclePropertyAccess::READ,
-                .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-            },
-    },
+                .changeMode = VehiclePropertyChangeMode::ON_CHANGE},
+     .initialValue = {.int32Values = {0}}},
 
-    {
-        .config =
-            {
-                .prop = TRACTION_CONTROL_ACTIVE,
+    {.config = {.prop = TRACTION_CONTROL_ACTIVE,
                 .access = VehiclePropertyAccess::READ,
-                .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-            },
-    },
+                .changeMode = VehiclePropertyChangeMode::ON_CHANGE},
+     .initialValue = {.int32Values = {0}}},
 
     {.config = {.prop = toInt(VehicleProperty::AP_POWER_STATE_REQ),
                 .access = VehiclePropertyAccess::READ,
