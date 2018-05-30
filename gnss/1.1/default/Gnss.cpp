@@ -227,7 +227,9 @@ Return<GnssSvStatus> Gnss::getMockSvStatus() const {
         getSvInfo(5, GnssConstellationType::GPS, 27.0, 29.0, 56.5),
         getSvInfo(17, GnssConstellationType::GPS, 30.5, 71.0, 77.0),
         getSvInfo(26, GnssConstellationType::GPS, 24.1, 28.0, 253.0),
-        getSvInfo(30, GnssConstellationType::GPS, 20.5, 11.5, 116.0),
+        getSvInfo(5, GnssConstellationType::GLONASS, 20.5, 11.5, 116.0),
+        getSvInfo(17, GnssConstellationType::GLONASS, 21.5, 28.5, 186.0),
+        getSvInfo(18, GnssConstellationType::GLONASS, 28.3, 38.8, 69.0),
         getSvInfo(10, GnssConstellationType::GLONASS, 25.0, 66.0, 247.0)};
 
     GnssSvStatus svStatus = {.numSvs = sizeof(mockGnssSvInfoList) / sizeof(GnssSvInfo)};
