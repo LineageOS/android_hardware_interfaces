@@ -84,15 +84,15 @@ TEST_F(GnssHalTest, GetLocationLowPower) {
 }
 
 /*
- * FindStrongFrequentSource:
+ * FindStrongFrequentNonGpsSource:
  *
- * Search through a GnssSvStatus list for the strongest satellite observed enough times
+ * Search through a GnssSvStatus list for the strongest non-GPS satellite observed enough times
  *
  * returns the strongest source,
  *         or a source with constellation == UNKNOWN if none are found sufficient times
  */
 
-IGnssConfiguration::BlacklistedSource FindStrongFrequentSource(
+IGnssConfiguration::BlacklistedSource FindStrongFrequentNonGpsSource(
     const list<IGnssCallback::GnssSvStatus> list_gnss_sv_status, const int min_observations) {
     struct ComparableBlacklistedSource {
         IGnssConfiguration::BlacklistedSource id;
@@ -113,7 +113,8 @@ IGnssConfiguration::BlacklistedSource FindStrongFrequentSource(
     for (const auto& gnss_sv_status : list_gnss_sv_status) {
         for (uint32_t iSv = 0; iSv < gnss_sv_status.numSvs; iSv++) {
             const auto& gnss_sv = gnss_sv_status.gnssSvList[iSv];
-            if (gnss_sv.svFlag & IGnssCallback::GnssSvFlags::USED_IN_FIX) {
+            if ((gnss_sv.svFlag & IGnssCallback::GnssSvFlags::USED_IN_FIX) &&
+                (gnss_sv.constellation != GnssConstellationType::GPS)) {
                 ComparableBlacklistedSource source;
                 source.id.svid = gnss_sv.svid;
                 source.id.constellation = gnss_sv.constellation;
@@ -187,8 +188,12 @@ TEST_F(GnssHalTest, BlacklistIndividualSatellites) {
      */
 
     IGnssConfiguration::BlacklistedSource source_to_blacklist =
-        FindStrongFrequentSource(list_gnss_sv_status_, kLocationsToAwait - 1);
-    EXPECT_NE(source_to_blacklist.constellation, GnssConstellationType::UNKNOWN);
+        FindStrongFrequentNonGpsSource(list_gnss_sv_status_, kLocationsToAwait - 1);
+
+    if (source_to_blacklist.constellation == GnssConstellationType::UNKNOWN) {
+        // Cannot find a non-GPS satellite. Let the test pass.
+        return;
+    }
 
     // Stop locations, blacklist the common SV
     StopAndClearLocations();
