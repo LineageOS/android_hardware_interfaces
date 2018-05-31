@@ -293,7 +293,7 @@ TEST_F(GraphicsComposerHidlTest, SetActiveConfig) {
  */
 TEST_F(GraphicsComposerHidlTest, SetColorMode) {
     std::unordered_set<ColorMode> validModes;
-    for (auto mode : hidl_enum_iterator<ColorMode>()) {
+    for (auto mode : hidl_enum_range<ColorMode>()) {
         validModes.insert(mode);
     }
 
