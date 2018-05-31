@@ -292,9 +292,16 @@ TEST_F(GraphicsComposerHidlTest, SetActiveConfig) {
  * Test that IComposerClient::setColorMode succeeds for all color modes.
  */
 TEST_F(GraphicsComposerHidlTest, SetColorMode) {
+    std::unordered_set<ColorMode> validModes;
+    for (auto mode : hidl_enum_iterator<ColorMode>()) {
+        validModes.insert(mode);
+    }
+
     std::vector<ColorMode> modes = mComposerClient->getColorModes(mPrimaryDisplay);
     for (auto mode : modes) {
-        mComposerClient->setColorMode(mPrimaryDisplay, mode);
+        if (validModes.count(mode)) {
+            mComposerClient->setColorMode(mPrimaryDisplay, mode);
+        }
     }
 }
 

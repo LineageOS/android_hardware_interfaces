@@ -347,9 +347,22 @@ TEST_F(GraphicsComposerHidlTest, GetRenderIntent) {
     for (auto mode : modes) {
         std::vector<RenderIntent> intents =
             mComposerClient->getRenderIntents(mPrimaryDisplay, mode);
-        auto colorimetricIntent =
-            std::find(intents.cbegin(), intents.cend(), RenderIntent::COLORIMETRIC);
-        EXPECT_NE(intents.cend(), colorimetricIntent);
+
+        bool isHdr;
+        switch (mode) {
+            case ColorMode::BT2100_PQ:
+            case ColorMode::BT2100_HLG:
+                isHdr = true;
+                break;
+            default:
+                isHdr = false;
+                break;
+        }
+        RenderIntent requiredIntent =
+            isHdr ? RenderIntent::TONE_MAP_COLORIMETRIC : RenderIntent::COLORIMETRIC;
+
+        auto iter = std::find(intents.cbegin(), intents.cend(), requiredIntent);
+        EXPECT_NE(intents.cend(), iter);
     }
 }
 
