@@ -355,7 +355,8 @@ interface IComposerClient extends @2.1::IComposerClient {
      * Returns the render intents supported by the specified display and color
      * mode.
      *
-     * RenderIntent::COLORIMETRIC is always supported.
+     * For SDR color modes, RenderIntent::COLORIMETRIC must be supported. For
+     * HDR color modes, RenderIntent::TONE_MAP_COLORIMETRIC must be supported.
      *
      * @param display is the display to query.
      * @param mode is the color mode to query.
