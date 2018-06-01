@@ -86,6 +86,11 @@ class AudioEncHidlTest : public ::testing::VtsHalHidlTargetTestBase {
                                this->omxNode = _nl;
                            })
                         .isOk());
+        if (status == android::hardware::media::omx::V1_0::Status::NAME_NOT_FOUND) {
+            disableTest = true;
+            std::cout << "[   WARN   ] Test Disabled, component not present\n";
+            return;
+        }
         ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
         ASSERT_NE(omxNode, nullptr);
         ASSERT_NE(gEnv->getRole().empty(), true) << "Invalid Component Role";
