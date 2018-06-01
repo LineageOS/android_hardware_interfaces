@@ -191,7 +191,7 @@ void GnssHalTest::CheckLocation(GnssLocation& location, bool check_speed) {
 void GnssHalTest::StartAndCheckLocations(int count) {
     const int kMinIntervalMsec = 500;
     const int kLocationTimeoutSubsequentSec = 2;
-    const bool kLowPowerMode = true;
+    const bool kLowPowerMode = false;
 
     SetPositionMode(kMinIntervalMsec, kLowPowerMode);
 
