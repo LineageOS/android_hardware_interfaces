@@ -460,6 +460,8 @@ enum Tag : uint32_t {
      * called on one key with TRUSTED_USER_PRESENCE_REQUIRED, and another begin() comes in for that
      * key or another with TRUSTED_USER_PRESENCE_REQUIRED, Keymaster must return
      * ErrorCode::CONCURRENT_PROOF_OF_PRESENCE_REQUESTED.
+     *
+     * Must be hardware-enforced.
      */
     TRUSTED_USER_PRESENCE_REQUIRED = TagType:BOOL | 507,
 
@@ -470,11 +472,17 @@ enum Tag : uint32_t {
      *
      * If an attempt to use a key with this tag does not have a cryptographically valid
      * CONFIRMATION_TOKEN provided to finish() or if the data provided to update()/finish() does not
-     * match the data described in the token, keymaster must return NO_USER_CONFIRMATION. */
+     * match the data described in the token, keymaster must return NO_USER_CONFIRMATION.
+     *
+     * Must be hardware-enforced.
+     */
     TRUSTED_CONFIRMATION_REQUIRED = TagType:BOOL | 508,
 
     /**
+     * Tag::UNLOCKED_DEVICE_REQUIRED specifies that the key may only be used when the device is
+     * unlocked.
      *
+     * Must be software-enforced.
      */
     UNLOCKED_DEVICE_REQUIRED = TagType:BOOL | 509,
 
@@ -490,7 +498,7 @@ enum Tag : uint32_t {
      * access to the tag content to decrypt the key without brute-forcing the tag content, which
      * applications can prevent by specifying sufficiently high-entropy content.
      *
-     * Must be hardware-enforced.
+     * Must never appear in KeyCharacteristics.
      */
     APPLICATION_ID = TagType:BYTES | 601,
 
@@ -511,7 +519,7 @@ enum Tag : uint32_t {
      * access to the tag content to decrypt the key without brute-forcing the tag content, which
      * applications can prevent by specifying sufficiently high-entropy content.
      *
-     * Must be hardware-enforced.
+     * Must never appear in KeyCharacteristics.
      */
     APPLICATION_DATA = TagType:BYTES | 700,
 
@@ -557,11 +565,12 @@ enum Tag : uint32_t {
      * key generated on Android version 4.0.3, the value would be 040003.
      *
      * The IKeymasterDevice HAL must read the current OS version from the system property
-     * ro.build.id and deliver it to the secure environment when the HAL is first loaded (mechanism
-     * is implementation-defined).  The secure environment must not accept another version until
-     * after the next boot.  If the content of ro.build.id has additional version information after
-     * the sub-minor version number, it must not be included in Tag::OS_VERSION.  If the content is
-     * non-numeric, the secure environment must use 0 as the system version.
+     * ro.build.version.release and deliver it to the secure environment when the HAL is first
+     * loaded (mechanism is implementation-defined).  The secure environment must not accept another
+     * version until after the next boot.  If the content of ro.build.version.release has additional
+     * version information after the sub-minor version number, it must not be included in
+     * Tag::OS_VERSION.  If the content is non-numeric, the secure environment must use 0 as the
+     * system version.
      *
      * Must be hardware-enforced.
      */
@@ -659,8 +668,8 @@ enum Tag : uint32_t {
 
     /**
      * Tag::ATTESTATION_ID_BRAND provides the device's brand name, as returned by Build.BRAND in
-     * Android, to attestKey().  This field is set only when requesting attestation of the device's
-     * identifiers.
+     * Android, to attestKey().  This field must be set only when requesting attestation of the
+     * device's identifiers.
      *
      * If the device does not support ID attestation (or destroyAttestationIds() was previously
      * called and the device can no longer attest its IDs), any key attestation request that
@@ -672,8 +681,8 @@ enum Tag : uint32_t {
 
     /**
      * Tag::ATTESTATION_ID_DEVICE provides the device's device name, as returned by Build.DEVICE in
-     * Android, to attestKey().  This field is set only when requesting attestation of the device's
-     * identifiers.
+     * Android, to attestKey().  This field must be set only when requesting attestation of the
+     * device's identifiers.
      *
      * If the device does not support ID attestation (or destroyAttestationIds() was previously
      * called and the device can no longer attest its IDs), any key attestation request that
@@ -685,7 +694,7 @@ enum Tag : uint32_t {
 
     /**
      * Tag::ATTESTATION_ID_PRODUCT provides the device's product name, as returned by Build.PRODUCT
-     * in Android, to attestKey().  This field is set only when requesting attestation of the
+     * in Android, to attestKey().  This field must be set only when requesting attestation of the
      * device's identifiers.
      *
      * If the device does not support ID attestation (or destroyAttestationIds() was previously
@@ -697,7 +706,7 @@ enum Tag : uint32_t {
     ATTESTATION_ID_PRODUCT = TagType:BYTES | 712,
 
     /**
-     * Tag::ATTESTATION_ID_SERIAL the device's serial number.  This field is set only when
+     * Tag::ATTESTATION_ID_SERIAL the device's serial number.  This field must be set only when
      * requesting attestation of the device's identifiers.
      *
      * If the device does not support ID attestation (or destroyAttestationIds() was previously
@@ -710,7 +719,7 @@ enum Tag : uint32_t {
 
     /**
      * Tag::ATTESTATION_ID_IMEI provides the IMEIs for all radios on the device to attestKey().
-     * This field is set only when requesting attestation of the device's identifiers.
+     * This field must be set only when requesting attestation of the device's identifiers.
      *
      * If the device does not support ID attestation (or destroyAttestationIds() was previously
      * called and the device can no longer attest its IDs), any key attestation request that
@@ -723,7 +732,7 @@ enum Tag : uint32_t {
 
     /**
      * Tag::ATTESTATION_ID_MEID provides the MEIDs for all radios on the device to attestKey().
-     * This field will only be set when requesting attestation of the device's identifiers.
+     * This field must be set only when requesting attestation of the device's identifiers.
      *
      * If the device does not support ID attestation (or destroyAttestationIds() was previously
      * called and the device can no longer attest its IDs), any key attestation request that
@@ -736,7 +745,7 @@ enum Tag : uint32_t {
 
     /**
      * Tag::ATTESTATION_ID_MANUFACTURER provides the device's manufacturer name, as returned by
-     * Build.MANUFACTURER in Android, to attstKey().  This field is set only when requesting
+     * Build.MANUFACTURER in Android, to attstKey().  This field must be set only when requesting
      * attestation of the device's identifiers.
      *
      * If the device does not support ID attestation (or destroyAttestationIds() was previously
@@ -749,8 +758,8 @@ enum Tag : uint32_t {
 
     /**
      * Tag::ATTESTATION_ID_MODEL provides the device's model name, as returned by Build.MODEL in
-     * Android, to attestKey().  This field is set only when requesting attestation of the device's
-     * identifiers.
+     * Android, to attestKey().  This field must be set only when requesting attestation of the
+     * device's identifiers.
      *
      * If the device does not support ID attestation (or destroyAttestationIds() was previously
      * called and the device can no longer attest its IDs), any key attestation request that
@@ -815,7 +824,7 @@ enum Tag : uint32_t {
      * Tag::NONCE is used to provide or return a nonce or Initialization Vector (IV) for AES-GCM,
      * AES-CBC, AES-CTR, or 3DES-CBC encryption or decryption.  This tag is provided to begin during
      * encryption and decryption operations.  It is only provided to begin if the key has
-     * Tag::CALLER_NONCE.  If not provided, an appropriate nonce or IV will be randomly generated by
+     * Tag::CALLER_NONCE.  If not provided, an appropriate nonce or IV must be randomly generated by
      * Keymaster and returned from begin.
      *
      * The value is a blob, an arbitrary-length array of bytes.  Allowed lengths depend on the mode:
