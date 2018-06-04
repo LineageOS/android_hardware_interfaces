@@ -68,33 +68,39 @@ const int32_t kGenerateFakeDataControllingProperty =
 enum class FakeDataCommand : int32_t {
     /**
      * Starts linear fake data generation. Caller must provide additional data:
-     *     int32Values[1] - VehicleProperty to which command applies
+     *     int32Values[1] - vehicle property to which command applies
      *     int64Values[0] - periodic interval in nanoseconds
      *     floatValues[0] - initial value
      *     floatValues[1] - dispersion defines the min/max value relative to initial value, where
      *                      max = initial_value + dispersion, min = initial_value - dispersion.
      *                      Dispersion should be non-negative, otherwise the behavior is undefined.
      *     floatValues[2] - increment, with every timer tick the value will be incremented by this
-     *                      amount. When reaching to max value, the current value will be set to min.
-     *                      It should be non-negative, otherwise the behavior is undefined.
+     *                      amount. When reaching to max value, the current value will be set to
+     *                      min. It should be non-negative, otherwise the behavior is undefined.
      */
     StartLinear = 0,
 
-    /** Stops generating of fake data that was triggered by Start commands.
-     *     int32Values[1] - VehicleProperty to which command applies. VHAL will stop the
+    /** Stops linear fake data generation that was triggered by StartLinear commands.
+     *     int32Values[1] - vehicle property to which command applies. VHAL will stop the
      *                      corresponding linear generation for that property.
      */
     StopLinear = 1,
 
     /**
-     * Starts JSON-based fake data generation. Caller must provide a string value specifying
-     * the path to fake value JSON file:
+     * Starts JSON-based fake data generation. It iterates through JSON-encoded VHAL events from a
+     * file and inject them to VHAL. The iteration can be repeated multiple times or infinitely.
+     * Caller must provide additional data:
+     *     int32Values[1] - number of iterations. If it is not provided or -1. The iteration will be
+     *                      repeated infinite times.
      *     stringValue    - path to the fake values JSON file
      */
     StartJson = 2,
 
     /**
-     * Stops JSON-based fake data generation. No additional arguments needed.
+     * Stops JSON-based fake data generation. As multiple JSON-based generation can happen at the
+     * same time. Caller must provide the path of fake value JSON file to stop the corresponding
+     * generation:
+     *     stringValue    - path to the fake values JSON file
      */
     StopJson = 3,
 
