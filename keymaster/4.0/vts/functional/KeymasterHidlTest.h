@@ -208,6 +208,15 @@ class KeymasterHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     static bool IsSecure() { return securityLevel_ != SecurityLevel::SOFTWARE; }
     static SecurityLevel SecLevel() { return securityLevel_; }
 
+    std::vector<uint32_t> ValidKeySizes(Algorithm algorithm);
+    std::vector<uint32_t> InvalidKeySizes(Algorithm algorithm);
+
+    std::vector<EcCurve> ValidCurves();
+    std::vector<EcCurve> InvalidCurves();
+
+    std::initializer_list<Digest> ValidDigests(bool withNone, bool withMD5);
+    std::vector<Digest> InvalidDigests();
+
     HidlBuf key_blob_;
     KeyCharacteristics key_characteristics_;
     OperationHandle op_handle_ = kOpHandleSentinel;
