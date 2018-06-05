@@ -111,16 +111,16 @@ std::string getP2pIfaceName() {
 bool removeOldFilesInternal() {
     time_t now = time(0);
     const time_t delete_files_before = now - kMaxRingBufferFileAgeSeconds;
-    DIR* dir_dump = opendir(kTombstoneFolderPath);
+    std::unique_ptr<DIR, decltype(&closedir)> dir_dump(
+        opendir(kTombstoneFolderPath), closedir);
     if (!dir_dump) {
         LOG(ERROR) << "Failed to open directory: " << strerror(errno);
         return false;
     }
-    unique_fd dir_auto_closer(dirfd(dir_dump));
     struct dirent* dp;
     bool success = true;
     std::list<std::pair<const time_t, std::string>> valid_files;
-    while ((dp = readdir(dir_dump))) {
+    while ((dp = readdir(dir_dump.get()))) {
         if (dp->d_type != DT_REG) {
             continue;
         }
@@ -246,13 +246,13 @@ bool cpioWriteFileTrailer(int out_fd) {
 size_t cpioArchiveFilesInDir(int out_fd, const char* input_dir) {
     struct dirent* dp;
     size_t n_error = 0;
-    DIR* dir_dump = opendir(input_dir);
+    std::unique_ptr<DIR, decltype(&closedir)> dir_dump(opendir(input_dir),
+                                                       closedir);
     if (!dir_dump) {
         LOG(ERROR) << "Failed to open directory: " << strerror(errno);
         return ++n_error;
     }
-    unique_fd dir_auto_closer(dirfd(dir_dump));
-    while ((dp = readdir(dir_dump))) {
+    while ((dp = readdir(dir_dump.get()))) {
         if (dp->d_type != DT_REG) {
             continue;
         }
