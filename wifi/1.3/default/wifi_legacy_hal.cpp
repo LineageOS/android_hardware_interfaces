@@ -18,6 +18,7 @@
 #include <chrono>
 
 #include <android-base/logging.h>
+#include <cutils/properties.h>
 
 #include "hidl_sync_util.h"
 #include "wifi_legacy_hal.h"
@@ -35,6 +36,7 @@ static constexpr uint32_t kLinkLayerStatsDataMpduSizeThreshold = 128;
 static constexpr uint32_t kMaxWakeReasonStatsArraySize = 32;
 static constexpr uint32_t kMaxRingBuffers = 10;
 static constexpr uint32_t kMaxStopCompleteWaitMs = 100;
+static constexpr char kDriverPropName[] = "wlan.driver.status";
 
 // Helper function to create a non-const char* for legacy Hal API's.
 std::vector<char> makeCharVec(const std::string& str) {
@@ -366,6 +368,8 @@ wifi_error WifiLegacyHal::start() {
         LOG(ERROR) << "Timed out awaiting driver ready";
         return status;
     }
+    property_set(kDriverPropName, "ok");
+
     LOG(DEBUG) << "Starting legacy HAL";
     if (!iface_tool_.SetWifiUpState(true)) {
         LOG(ERROR) << "Failed to set WiFi interface up";
