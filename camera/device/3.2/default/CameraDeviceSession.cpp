@@ -1391,6 +1391,8 @@ void CameraDeviceSession::sShrinkCaptureResult(
         std::vector<const camera_metadata_t*>* physCamMdArray,
         bool handlePhysCam) {
     *dst = *src;
+    // Reserve maximum number of entries to avoid metadata re-allocation.
+    mds->reserve(1 + (handlePhysCam ? src->num_physcam_metadata : 0));
     if (sShouldShrink(src->result)) {
         mds->emplace_back(sCreateCompactCopy(src->result));
         dst->result = mds->back().getAndLock();
