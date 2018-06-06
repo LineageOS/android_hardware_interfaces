@@ -745,13 +745,17 @@ Return<void> RadioResponse_v1_2::getCellInfoListResponse_1_2(
 }
 
 Return<void> RadioResponse_v1_2::getVoiceRegistrationStateResponse_1_2(
-    const RadioResponseInfo& /*info*/,
+    const RadioResponseInfo& info,
     const ::android::hardware::radio::V1_2::VoiceRegStateResult& /*voiceRegResponse*/) {
+    rspInfo = info;
+    parent_v1_2.notify(info.serial);
     return Void();
 }
 
 Return<void> RadioResponse_v1_2::getDataRegistrationStateResponse_1_2(
-    const RadioResponseInfo& /*info*/,
+    const RadioResponseInfo& info,
     const ::android::hardware::radio::V1_2::DataRegStateResult& /*dataRegResponse*/) {
+    rspInfo = info;
+    parent_v1_2.notify(info.serial);
     return Void();
 }
