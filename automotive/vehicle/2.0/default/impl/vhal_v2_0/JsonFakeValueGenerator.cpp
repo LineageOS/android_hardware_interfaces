@@ -31,57 +31,48 @@ namespace V2_0 {
 
 namespace impl {
 
-JsonFakeValueGenerator::JsonFakeValueGenerator(const OnHalEvent& onHalEvent)
-    : mOnHalEvent(onHalEvent), mThread(&JsonFakeValueGenerator::loop, this) {}
-
-JsonFakeValueGenerator::~JsonFakeValueGenerator() {
-    mStopRequested = true;
-    {
-        MuxGuard g(mLock);
-        mGenCfg.index = 0;
-        mGenCfg.events.clear();
-    }
-    mCond.notify_one();
-    if (mThread.joinable()) {
-        mThread.join();
-    }
-}
-
-StatusCode JsonFakeValueGenerator::start(const VehiclePropValue& request) {
+JsonFakeValueGenerator::JsonFakeValueGenerator(const VehiclePropValue& request) {
     const auto& v = request.value;
-    if (v.stringValue.empty()) {
-        ALOGE("%s: path to JSON file is missing", __func__);
-        return StatusCode::INVALID_ARG;
-    }
     const char* file = v.stringValue.c_str();
     std::ifstream ifs(file);
     if (!ifs) {
         ALOGE("%s: couldn't open %s for parsing.", __func__, file);
-        return StatusCode::INTERNAL_ERROR;
     }
-    std::vector<VehiclePropValue> fakeVhalEvents = parseFakeValueJson(ifs);
-
-    {
-        MuxGuard g(mLock);
-        mGenCfg = {0, fakeVhalEvents};
-    }
-    mCond.notify_one();
-    return StatusCode::OK;
+    mGenCfg = {
+        .index = 0,
+        .events = parseFakeValueJson(ifs),
+    };
+    // Iterate infinitely if repetition number is not provided
+    mNumOfIterations = v.int32Values.size() < 2 ? -1 : v.int32Values[1];
 }
 
-StatusCode JsonFakeValueGenerator::stop(const VehiclePropValue& request) {
-    const auto& v = request.value;
-    if (!v.stringValue.empty()) {
-        ALOGI("%s: %s", __func__, v.stringValue.c_str());
+VehiclePropValue JsonFakeValueGenerator::nextEvent() {
+    VehiclePropValue generatedValue;
+    if (!hasNext()) {
+        return generatedValue;
     }
+    TimePoint eventTime = Clock::now();
+    if (mGenCfg.index != 0) {
+        // All events (start from 2nd one) are supposed to happen in the future with a delay
+        // equals to the duration between previous and current event.
+        eventTime += Nanos(mGenCfg.events[mGenCfg.index].timestamp -
+                           mGenCfg.events[mGenCfg.index - 1].timestamp);
+    }
+    generatedValue = mGenCfg.events[mGenCfg.index];
+    generatedValue.timestamp = eventTime.time_since_epoch().count();
 
-    {
-        MuxGuard g(mLock);
+    mGenCfg.index++;
+    if (mGenCfg.index == mGenCfg.events.size()) {
         mGenCfg.index = 0;
-        mGenCfg.events.clear();
+        if (mNumOfIterations > 0) {
+            mNumOfIterations--;
+        }
     }
-    mCond.notify_one();
-    return StatusCode::OK;
+    return generatedValue;
+}
+
+bool JsonFakeValueGenerator::hasNext() {
+    return mNumOfIterations != 0 && mGenCfg.events.size() > 0;
 }
 
 std::vector<VehiclePropValue> JsonFakeValueGenerator::parseFakeValueJson(std::istream& is) {
@@ -139,30 +130,6 @@ std::vector<VehiclePropValue> JsonFakeValueGenerator::parseFakeValueJson(std::is
         fakeVhalEvents.push_back(event);
     }
     return fakeVhalEvents;
-}
-
-void JsonFakeValueGenerator::loop() {
-    static constexpr auto kInvalidTime = TimePoint(Nanos::max());
-
-    while (!mStopRequested) {
-        auto nextEventTime = kInvalidTime;
-        {
-            MuxGuard g(mLock);
-            if (mGenCfg.index < mGenCfg.events.size()) {
-                mOnHalEvent(mGenCfg.events[mGenCfg.index]);
-            }
-            if (!mGenCfg.events.empty() && mGenCfg.index < mGenCfg.events.size() - 1) {
-                Nanos intervalNano =
-                    static_cast<Nanos>(mGenCfg.events[mGenCfg.index + 1].timestamp -
-                                       mGenCfg.events[mGenCfg.index].timestamp);
-                nextEventTime = Clock::now() + intervalNano;
-            }
-            mGenCfg.index++;
-        }
-
-        std::unique_lock<std::mutex> g(mLock);
-        mCond.wait_until(g, nextEventTime);
-    }
 }
 
 }  // namespace impl

@@ -30,8 +30,7 @@
 #include "vhal_v2_0/VehiclePropertyStore.h"
 
 #include "DefaultConfig.h"
-#include "FakeValueGenerator.h"
-
+#include "GeneratorHub.h"
 #include "VehicleEmulator.h"
 
 namespace android {
@@ -85,8 +84,7 @@ private:
     VehiclePropertyStore* mPropStore;
     std::unordered_set<int32_t> mHvacPowerProps;
     RecurrentTimer mRecurrentTimer;
-    std::unique_ptr<FakeValueGenerator> mLinearFakeValueGenerator;
-    std::unique_ptr<FakeValueGenerator> mJsonFakeValueGenerator;
+    GeneratorHub mGeneratorHub;
 };
 
 }  // impl
