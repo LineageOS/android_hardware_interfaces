@@ -21,6 +21,7 @@
 #include <cutils/properties.h>
 #include <sys/stat.h>
 #include <sys/sysmacros.h>
+#include <net/if.h>
 
 #include "hidl_return_util.h"
 #include "hidl_struct_util.h"
@@ -664,7 +665,36 @@ Return<void> WifiChip::registerEventCallback_1_4(
                            hidl_status_cb, event_callback);
 }
 
+void WifiChip::QcRemoveAndClearDynamicIfaces() {
+    for (const auto& iface : created_ap_ifaces_) {
+        std::string ifname = iface->getName();
+        legacy_hal::wifi_error legacy_status =
+            legacy_hal_.lock()->deleteVirtualInterface(ifname);
+        if (legacy_status != legacy_hal::WIFI_SUCCESS) {
+            LOG(ERROR) << "Failed to remove interface: " << ifname << " "
+                       << legacyErrorToString(legacy_status);
+        }
+    }
+
+    for (const auto& iface : created_sta_ifaces_) {
+        std::string ifname = iface->getName();
+        legacy_hal::wifi_error legacy_status =
+            legacy_hal_.lock()->deleteVirtualInterface(ifname);
+        if (legacy_status != legacy_hal::WIFI_SUCCESS) {
+            LOG(ERROR) << "Failed to remove interface: " << ifname << " "
+                       << legacyErrorToString(legacy_status);
+        }
+    }
+
+    // created_ap/sta_ifaces are also part of sta/ap_ifaces.
+    // Do no invalidate here.
+
+    created_ap_ifaces_.clear();
+    created_sta_ifaces_.clear();
+}
+
 void WifiChip::invalidateAndRemoveAllIfaces() {
+    QcRemoveAndClearDynamicIfaces();
     invalidateAndClearAll(ap_ifaces_);
     invalidateAndClearAll(nan_ifaces_);
     invalidateAndClearAll(p2p_ifaces_);
@@ -824,18 +854,24 @@ std::pair<WifiStatus, sp<IWifiApIface>> WifiChip::createApIfaceInternal() {
     if (!canCurrentModeSupportIfaceOfTypeWithCurrentIfaces(IfaceType::AP)) {
         return {createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE), {}};
     }
+
+    bool iface_created = false;
     std::string ifname = allocateApIfaceName();
-    legacy_hal::wifi_error legacy_status =
-        legacy_hal_.lock()->createVirtualInterface(
-            ifname,
-            hidl_struct_util::convertHidlIfaceTypeToLegacy(IfaceType::AP));
-    if (legacy_status != legacy_hal::WIFI_SUCCESS) {
-        LOG(ERROR) << "Failed to add interface: " << ifname << " "
-                   << legacyErrorToString(legacy_status);
-        return {createWifiStatusFromLegacyError(legacy_status), {}};
+    if (!if_nametoindex(ifname.c_str())) {
+        legacy_hal::wifi_error legacy_status =
+            legacy_hal_.lock()->createVirtualInterface(
+                ifname,
+                hidl_struct_util::convertHidlIfaceTypeToLegacy(IfaceType::AP));
+        if (legacy_status != legacy_hal::WIFI_SUCCESS) {
+            LOG(ERROR) << "Failed to add interface: " << ifname << " "
+                       << legacyErrorToString(legacy_status);
+            return {createWifiStatusFromLegacyError(legacy_status), {}};
+        }
+        iface_created = true;
     }
     sp<WifiApIface> iface = new WifiApIface(ifname, legacy_hal_, iface_util_);
     ap_ifaces_.push_back(iface);
+    if (iface_created) created_ap_ifaces_.push_back(iface);
     for (const auto& callback : event_cb_handler_.getCallbacks()) {
         if (!callback->onIfaceAdded(IfaceType::AP, ifname).isOk()) {
             LOG(ERROR) << "Failed to invoke onIfaceAdded callback";
@@ -872,11 +908,15 @@ WifiStatus WifiChip::removeApIfaceInternal(const std::string& ifname) {
     // nan/rtt objects over AP iface. But, there is no harm to do it
     // here and not make that assumption all over the place.
     invalidateAndRemoveDependencies(ifname);
-    legacy_hal::wifi_error legacy_status =
-        legacy_hal_.lock()->deleteVirtualInterface(ifname);
-    if (legacy_status != legacy_hal::WIFI_SUCCESS) {
-        LOG(ERROR) << "Failed to remove interface: " << ifname << " "
-                   << legacyErrorToString(legacy_status);
+    if (findUsingName(created_ap_ifaces_, ifname) != nullptr) {
+        iface_util_.lock()->setUpState(ifname, false);
+        legacy_hal::wifi_error legacy_status =
+            legacy_hal_.lock()->deleteVirtualInterface(ifname);
+        if (legacy_status != legacy_hal::WIFI_SUCCESS) {
+            LOG(ERROR) << "Failed to remove interface: " << ifname << " "
+                       << legacyErrorToString(legacy_status);
+        }
+        invalidateAndClear(created_ap_ifaces_, iface);
     }
     invalidateAndClear(ap_ifaces_, iface);
     for (const auto& callback : event_cb_handler_.getCallbacks()) {
@@ -993,18 +1033,23 @@ WifiChip::createStaIfaceInternal() {
     if (!canCurrentModeSupportIfaceOfTypeWithCurrentIfaces(IfaceType::STA)) {
         return {createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE), {}};
     }
+    bool iface_created = false;
     std::string ifname = allocateStaIfaceName();
-    legacy_hal::wifi_error legacy_status =
-        legacy_hal_.lock()->createVirtualInterface(
-            ifname,
-            hidl_struct_util::convertHidlIfaceTypeToLegacy(IfaceType::STA));
-    if (legacy_status != legacy_hal::WIFI_SUCCESS) {
-        LOG(ERROR) << "Failed to add interface: " << ifname << " "
-                   << legacyErrorToString(legacy_status);
-        return {createWifiStatusFromLegacyError(legacy_status), {}};
+    if (!if_nametoindex(ifname.c_str())) {
+        legacy_hal::wifi_error legacy_status =
+            legacy_hal_.lock()->createVirtualInterface(
+                ifname,
+                hidl_struct_util::convertHidlIfaceTypeToLegacy(IfaceType::STA));
+        if (legacy_status != legacy_hal::WIFI_SUCCESS) {
+            LOG(ERROR) << "Failed to add interface: " << ifname << " "
+                       << legacyErrorToString(legacy_status);
+            return {createWifiStatusFromLegacyError(legacy_status), {}};
+        }
+        iface_created = true;
     }
     sp<WifiStaIface> iface = new WifiStaIface(ifname, legacy_hal_, iface_util_);
     sta_ifaces_.push_back(iface);
+    if (iface_created) created_sta_ifaces_.push_back(iface);
     for (const auto& callback : event_cb_handler_.getCallbacks()) {
         if (!callback->onIfaceAdded(IfaceType::STA, ifname).isOk()) {
             LOG(ERROR) << "Failed to invoke onIfaceAdded callback";
@@ -1038,11 +1083,15 @@ WifiStatus WifiChip::removeStaIfaceInternal(const std::string& ifname) {
     }
     // Invalidate & remove any dependent objects first.
     invalidateAndRemoveDependencies(ifname);
-    legacy_hal::wifi_error legacy_status =
-        legacy_hal_.lock()->deleteVirtualInterface(ifname);
-    if (legacy_status != legacy_hal::WIFI_SUCCESS) {
-        LOG(ERROR) << "Failed to remove interface: " << ifname << " "
-                   << legacyErrorToString(legacy_status);
+    if (findUsingName(created_sta_ifaces_, ifname) != nullptr) {
+        iface_util_.lock()->setUpState(ifname, false);
+        legacy_hal::wifi_error legacy_status =
+            legacy_hal_.lock()->deleteVirtualInterface(ifname);
+        if (legacy_status != legacy_hal::WIFI_SUCCESS) {
+            LOG(ERROR) << "Failed to remove interface: " << ifname << " "
+                       << legacyErrorToString(legacy_status);
+        }
+        invalidateAndClear(created_sta_ifaces_, iface);
     }
     invalidateAndClear(sta_ifaces_, iface);
     for (const auto& callback : event_cb_handler_.getCallbacks()) {
