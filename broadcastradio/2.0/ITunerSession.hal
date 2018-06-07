@@ -19,7 +19,7 @@ interface ITunerSession {
     /**
      * Tune to a specified program.
      *
-     * Automatically cancels pending scan, step or tune.
+     * Automatically cancels pending tune(), scan() or step().
      * If the method returns OK, tuneFailed or currentProgramInfoChanged
      * callback must be called.
      *
@@ -33,9 +33,16 @@ interface ITunerSession {
     tune(ProgramSelector program) generates (Result result);
 
     /**
-     * Tune to the next valid program.
+     * Tune (seek) to the next valid program on the "air".
      *
-     * Automatically cancels pending scan, step or tune.
+     * This might more naturally be called "seek" but for legacy reasons, the
+     * entry point remains "scan". This should not be confused with the actual
+     * scan operation (where the radio seeks through programs in a loop until
+     * user chooses to stay on one of them) nor background scan operation (that
+     * a tuner may do in order to locate all available programs.  This function
+     * is meant to advance to the next detected program and stay there.
+     *
+     * Automatically cancels pending tune(), scan() or step().
      * If the method returns OK, tuneFailed or currentProgramInfoChanged
      * callback must be called.
      *
@@ -44,20 +51,20 @@ interface ITunerSession {
      *  - DAB secondary service.
      *
      * As an implementation detail, the HAL has the option to perform an actual
-     * scan or select the next program from the list retrieved in the
+     * seek or select the next program from the list retrieved in the
      * background, if one is not stale.
      *
      * @param directionUp True to change towards higher numeric values
      *                    (frequency, channel number), false towards lower.
      * @param skipSubChannel Don't tune to subchannels.
-     * @return result OK if the scan has successfully started.
+     * @return result OK if the operation has successfully started.
      */
     scan(bool directionUp, bool skipSubChannel) generates (Result result);
 
     /**
      * Tune to the adjacent channel, which may not be occupied by any program.
      *
-     * Automatically cancels pending scan, step or tune.
+     * Automatically cancels pending tune(), scan() or step().
      * If the method returns OK, tuneFailed or currentProgramInfoChanged
      * callback must be called.
      *
@@ -70,7 +77,7 @@ interface ITunerSession {
     step(bool directionUp) generates (Result result);
 
     /**
-     * Cancel a scan, step or tune operation.
+     * Cancel a pending tune(), scan() or step().
      *
      * If there is no such operation running, the call must be ignored.
      */

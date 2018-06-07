@@ -184,18 +184,20 @@ struct AmFmRegionConfig {
  * lowerBound + channelNumber * spacing, up to upperBound.
  */
 struct AmFmBandRange {
-    /** The frequency of the first channel within the range. */
+    /** The frequency (in kHz) of the first channel within the range. */
     uint32_t lowerBound;
 
-    /** The frequency of the last channel within the range. */
+    /** The frequency (in kHz) of the last channel within the range. */
     uint32_t upperBound;
 
-    /** Channel grid resolution, how far apart are the channels. */
+    /** Channel grid resolution (in kHz), how far apart are the channels. */
     uint32_t spacing;
 
     /**
-     * Spacing used when scanning for channels. It's a multiply of spacing and
-     * allows to skip some channels when scanning to make it faster.
+     * Channel spacing (in kHz) used to speed up seeking to the next station
+     * via the ITunerSession::scan() operation.
+     *
+     * It must be a multiple of channel grid resolution.
      *
      * Tuner may first quickly check every n-th channel and if it detects echo
      * from a station, it fine-tunes to find the exact frequency.
@@ -415,9 +417,10 @@ enum ProgramInfoFlags : uint32_t {
     TRAFFIC_ANNOUNCEMENT = 1 << 3,
 
     /**
-     * Tuned to a program (not playing a static).
+     * Tuned to a program (not playing static).
      *
-     * It's the same condition that would stop scan() operation.
+     * It's the same condition that would stop a seek operation
+     * (ie: ITunerSession::scan()).
      *
      * By definition, this flag must be set for all items on the program list.
      */
