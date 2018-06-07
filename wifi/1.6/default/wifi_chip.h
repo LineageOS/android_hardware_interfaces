@@ -275,6 +275,7 @@ class WifiChip : public V1_6::IWifiChip {
     void deleteApIface(const std::string& if_name);
     bool findUsingNameFromBridgedApInstances(const std::string& name);
     WifiStatus triggerSubsystemRestartInternal();
+    void QcRemoveAndClearDynamicIfaces();
     std::pair<WifiStatus, sp<V1_6::IWifiRttController>> createRttControllerInternal_1_6(
             const sp<IWifiIface>& bound_iface);
     std::pair<WifiStatus, std::vector<V1_6::WifiUsableChannel>> getUsableChannelsInternal_1_6(
@@ -305,6 +306,10 @@ class WifiChip : public V1_6::IWifiChip {
 
     const std::function<void(const std::string&)> subsystemCallbackHandler_;
     std::map<std::string, std::vector<std::string>> br_ifaces_ap_instances_;
+
+    std::vector<sp<WifiApIface>> created_ap_ifaces_;
+    std::vector<sp<WifiStaIface>> created_sta_ifaces_;
+
     DISALLOW_COPY_AND_ASSIGN(WifiChip);
 };
 
