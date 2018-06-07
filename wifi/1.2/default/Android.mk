@@ -30,6 +30,9 @@ endif
 ifdef WIFI_HIDL_FEATURE_DISABLE_AP
 LOCAL_CPPFLAGS += -DWIFI_HIDL_FEATURE_DISABLE_AP
 endif
+ifdef QC_WIFI_HIDL_FEATURE_DUAL_AP
+LOCAL_CPPFLAGS += -DQC_WIFI_HIDL_FEATURE_DUAL_AP
+endif
 LOCAL_SRC_FILES := \
     hidl_struct_util.cpp \
     hidl_sync_util.cpp \

@@ -32,6 +32,11 @@ static const bool wifiHidlFeatureDisableAp = true;
 #else
 static const bool wifiHidlFeatureDisableAp = false;
 #endif  // WIFI_HIDL_FEATURE_DISABLE_AP
+#ifdef QC_WIFI_HIDL_FEATURE_DUAL_AP
+static const bool qcWifiHidlFeatureDualAp = true;
+#else
+static const bool qcWifiHidlFeatureDualAp = false;
+#endif  // QC_WIFI_HIDL_FEATURE_DUAL_AP
 
 }  // namespace
 
@@ -49,6 +54,9 @@ bool WifiFeatureFlags::isDualInterfaceSupported() {
 }
 bool WifiFeatureFlags::isApDisabled() {
   return wifiHidlFeatureDisableAp;
+}
+bool WifiFeatureFlags::isQcDualApSupported() {
+  return qcWifiHidlFeatureDualAp;
 }
 
 }  // namespace feature_flags
