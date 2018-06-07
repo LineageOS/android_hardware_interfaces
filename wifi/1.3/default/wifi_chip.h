@@ -245,6 +245,7 @@ class WifiChip : public V1_3::IWifiChip {
     std::string allocateApOrStaIfaceName(uint32_t start_idx);
     std::string allocateApIfaceName();
     std::string allocateStaIfaceName();
+    std::string qcAllocateApIfaceName();
     bool writeRingbufferFilesInternal();
 
     ChipId chip_id_;
@@ -268,6 +269,8 @@ class WifiChip : public V1_3::IWifiChip {
     bool debug_ring_buffer_cb_registered_;
     hidl_callback_util::HidlCallbackHandler<V1_2::IWifiChipEventCallback>
         event_cb_handler_;
+
+    std::vector<sp<WifiApIface>> created_ap_ifaces_;
 
     DISALLOW_COPY_AND_ASSIGN(WifiChip);
 };
