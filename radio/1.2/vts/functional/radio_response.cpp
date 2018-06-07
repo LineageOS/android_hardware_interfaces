@@ -653,7 +653,9 @@ Return<void> RadioResponse_v1_2::sendDeviceStateResponse(const RadioResponseInfo
     return Void();
 }
 
-Return<void> RadioResponse_v1_2::setIndicationFilterResponse(const RadioResponseInfo& /*info*/) {
+Return<void> RadioResponse_v1_2::setIndicationFilterResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_v1_2.notify(info.serial);
     return Void();
 }
 
