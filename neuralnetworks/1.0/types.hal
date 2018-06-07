@@ -1519,6 +1519,41 @@ struct Operand {
 
     /**
      * Dimensions of the operand.
+     *
+     * For a scalar operand, dimensions.size() must be 0.
+     *
+     * For a tensor operand, dimensions.size() must be at least 1;
+     * however, any of the dimensions may be unspecified.
+     *
+     * A tensor operand with all dimensions specified has "fully
+     * specified" dimensions. Whenever possible (i.e., whenever the
+     * dimensions are known at model construction time), a tensor
+     * operand should have (but is not required to have) fully
+     * specified dimensions, in order to enable the best possible
+     * performance.
+     *
+     * If a tensor operand's dimensions are not fully specified, the
+     * dimensions of the operand are deduced from the operand
+     * dimensions and values of the operation for which that operand
+     * is an output.
+     *
+     * In the following situations, a tensor operand's dimensions must
+     * be fully specified:
+     *
+     *     . The operand has lifetime CONSTANT_COPY or
+     *       CONSTANT_REFERENCE.
+     *
+     *     . The operand has lifetime MODEL_INPUT or MODEL_OUTPUT. Fully
+     *       specified dimensions must either be present in the
+     *       Operand or they must be provided in the corresponding
+     *       RequestArgument.
+     *       EXCEPTION: If the input or output is optional and omitted
+     *       (by setting the hasNoValue field of the corresponding
+     *       RequestArgument to true) then it need not have fully
+     *       specified dimensions.
+     *
+     * A tensor operand with some number of unspecified dimensions is
+     * represented by setting each unspecified dimension to 0.
      */
     vec<uint32_t> dimensions;
 
@@ -1662,10 +1697,19 @@ struct RequestArgument {
     /**
      * Updated dimension information.
      *
-     * If dimensions.size() > 0, dimension information was provided along with
-     * the argument. This can be the case for models that accept inputs of
-     * varying size. This can't change the rank, just the value of the
-     * dimensions that were unspecified in the model.
+     * If dimensions.size() > 0, dimension information was provided
+     * along with the argument. This can be the case for models that
+     * accept inputs of varying size. This can't change the rank, just
+     * the value of the dimensions that were unspecified in the
+     * model. If dimensions.size() > 0, then all dimensions must be
+     * specified here; and any dimension that was specified in the
+     * model must have the same value here.
+     *
+     * If the dimensions in the model are not fully specified, then
+     * they must be fully specified here, unless hasNoValue is set to
+     * true. If the dimensions in the model are fully specified, then
+     * either dimensions.size() may be 0, or the dimensions in the
+     * model must be identical to the dimensions here.
      */
     vec<uint32_t> dimensions;
 };
