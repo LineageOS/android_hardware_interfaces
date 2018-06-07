@@ -1668,8 +1668,7 @@ struct Model {
     vec<uint8_t> operandValues;
 
     /**
-     * A collection of shared memory pools containing operand data that were
-     * registered by the model.
+     * A collection of shared memory pools containing operand values.
      *
      * An operand's value must be located here if and only if Operand::lifetime
      * equals OperandLifeTime::CONSTANT_REFERENCE.
@@ -1721,6 +1720,9 @@ struct RequestArgument {
  * 1) Provides the input and output data to be used when executing the model.
  * 2) Specifies any updates to the input operand metadata that were left
  *    unspecified at model preparation time.
+ *
+ * An output must not overlap with any other output, with an input, or
+ * with an operand of lifetime CONSTANT_REFERENCE.
  */
 struct Request {
     /**

@@ -42,6 +42,12 @@ interface IPreparedModel {
      * execute function. This callback must be provided with the ErrorStatus of
      * the execution.
      *
+     * If the prepared model was prepared from a model wherein all
+     * tensor operands have fully specified dimensions, and the inputs
+     * to the function are valid, then the execution should launch
+     * and complete successfully (ErrorStatus::NONE). There must be
+     * no failure unless the device itself is in a bad state.
+     *
      * Multiple threads can call the execute function on the same IPreparedModel
      * object concurrently with different requests.
      *
