@@ -404,8 +404,7 @@ struct Model {
     vec<uint8_t> operandValues;
 
     /**
-     * A collection of shared memory pools containing operand data that were
-     * registered by the model.
+     * A collection of shared memory pools containing operand values.
      *
      * An operand's value must be located here if and only if Operand::lifetime
      * equals OperandLifeTime::CONSTANT_REFERENCE.
