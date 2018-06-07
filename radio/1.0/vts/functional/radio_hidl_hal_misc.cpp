@@ -36,15 +36,19 @@ TEST_F(RadioHidlTest, getSignalStrength) {
  * Test IRadio.getVoiceRegistrationState() for the response returned.
  */
 TEST_F(RadioHidlTest, getVoiceRegistrationState) {
-    serial = GetRandomSerialNumber();
+    // The IRadio/IRadioResponse pair of this function is upgraded in 1.2.
+    // For radio version < 1.2, skip to test this function.
+    if (versionIRadio < v1_2) {
+        serial = GetRandomSerialNumber();
 
-    radio->getVoiceRegistrationState(serial);
-    EXPECT_EQ(std::cv_status::no_timeout, wait());
-    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp->rspInfo.type);
-    EXPECT_EQ(serial, radioRsp->rspInfo.serial);
+        radio->getVoiceRegistrationState(serial);
+        EXPECT_EQ(std::cv_status::no_timeout, wait());
+        EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp->rspInfo.type);
+        EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
-    if (cardStatus.cardState == CardState::ABSENT) {
-        EXPECT_EQ(RadioError::NONE, radioRsp->rspInfo.error);
+        if (cardStatus.cardState == CardState::ABSENT) {
+            EXPECT_EQ(RadioError::NONE, radioRsp->rspInfo.error);
+        }
     }
 }
 

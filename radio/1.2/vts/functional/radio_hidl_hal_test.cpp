@@ -30,6 +30,10 @@ void RadioHidlTest_v1_2::SetUp() {
                 ->getServiceName<::android::hardware::radio::V1_2::IRadio>(
                     hidl_string(RADIO_SERVICE_NAME)));
     }
+
+    versionIRadio = getIRadioVersion(radio_v1_2);
+    ASSERT_FALSE(unknown == versionIRadio);
+
     ASSERT_NE(nullptr, radio_v1_2.get());
 
     radioRsp_v1_2 = new (std::nothrow) RadioResponse_v1_2(*this);

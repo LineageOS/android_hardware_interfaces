@@ -14,12 +14,20 @@
  * limitations under the License.
  */
 
+#ifndef VTS_TEST_UTIL_H
+#define VTS_TEST_UTIL_H 1
+
 #include <android-base/logging.h>
 
 #include <VtsHalHidlTargetTestBase.h>
 
+#include <android/hardware/radio/1.0/IRadio.h>
 #include <android/hardware/radio/1.0/types.h>
+#include <android/hardware/radio/1.1/IRadio.h>
+#include <android/hardware/radio/1.2/IRadio.h>
 
+using ::android::sp;
+using ::android::hardware::hidl_version;
 using ::android::hardware::radio::V1_0::RadioError;
 using ::android::hardware::radio::V1_0::SapResultCode;
 using namespace std;
@@ -31,6 +39,14 @@ enum CheckFlag {
     CHECK_OEM_AND_GENERAL_ERROR = 3,
     CHECK_SAP_ERROR = 4,
 };
+
+/*
+ * Radio hidl version parameters.
+ */
+const hidl_version v1_0(1, 0);
+const hidl_version v1_1(1, 1);
+const hidl_version v1_2(1, 2);
+const hidl_version unknown(0, 0);
 
 /*
  * Generate random serial number for radio test
@@ -48,3 +64,10 @@ int GetRandomSerialNumber();
  * vendor/devices implementations.
  */
 ::testing::AssertionResult CheckAnyOfErrors(SapResultCode err, std::vector<SapResultCode> errors);
+
+/*
+ * Get the radio service version.
+ */
+hidl_version getIRadioVersion(sp<::android::hardware::radio::V1_0::IRadio> radio);
+
+#endif /*VTS_TEST_UTIL_H*/
