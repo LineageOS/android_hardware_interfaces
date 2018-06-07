@@ -3480,11 +3480,10 @@ TEST_F(CameraHidlTest, processMultiCaptureRequestPreview) {
         ret = session->close();
         ASSERT_TRUE(ret.isOk());
 
+        // Leave only 2 physical devices in the id set.
         auto it = physicalIds.begin();
-        string physicalDeviceId = *it;
-        // Leave only the first physical device in the id set and insert the logical device.
+        string physicalDeviceId = *it; it++;
         physicalIds.erase(++it, physicalIds.end());
-        physicalIds.emplace(deviceId);
         ASSERT_EQ(physicalIds.size(), 2u);
 
         V3_4::HalStreamConfiguration halStreamConfig;
