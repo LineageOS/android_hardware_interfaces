@@ -259,6 +259,7 @@ class WifiChip : public V1_4::IWifiChip {
     std::string allocateApIfaceName();
     std::string allocateStaIfaceName();
     bool writeRingbufferFilesInternal();
+    void QcRemoveAndClearDynamicIfaces();
 
     ChipId chip_id_;
     std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal_;
@@ -281,6 +282,9 @@ class WifiChip : public V1_4::IWifiChip {
     bool debug_ring_buffer_cb_registered_;
     hidl_callback_util::HidlCallbackHandler<IWifiChipEventCallback>
         event_cb_handler_;
+
+    std::vector<sp<WifiApIface>> created_ap_ifaces_;
+    std::vector<sp<WifiStaIface>> created_sta_ifaces_;
 
     DISALLOW_COPY_AND_ASSIGN(WifiChip);
 };
