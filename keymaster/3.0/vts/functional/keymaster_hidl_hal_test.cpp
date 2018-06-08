@@ -294,7 +294,7 @@ X509* parse_cert_blob(const hidl_vec<uint8_t>& blob) {
 }
 
 bool verify_chain(const hidl_vec<hidl_vec<uint8_t>>& chain) {
-    for (size_t i = 0; i < chain.size() - 1; ++i) {
+    for (size_t i = 0; i < chain.size(); ++i) {
         X509_Ptr key_cert(parse_cert_blob(chain[i]));
         X509_Ptr signing_cert;
         if (i < chain.size() - 1) {
