@@ -1,0 +1,870 @@
+/* Copyright (C) 2017 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.broadcastradio@2.0;
+
+/** Constants used by broadcast radio HAL. */
+enum Constants : int32_t {
+    /** Invalid identifier for IBroadcastRadio::getImage. */
+    INVALID_IMAGE = 0,
+
+    /**
+     * If the antenna is disconnected from the beginning, the
+     * onAntennaStateChange callback must be called within this time.
+     */
+    ANTENNA_DISCONNECTED_TIMEOUT_MS = 100,
+
+    LIST_COMPLETE_TIMEOUT_MS = 300000,
+};
+
+enum Result : int32_t {
+    OK,
+    UNKNOWN_ERROR,
+    INTERNAL_ERROR,
+    INVALID_ARGUMENTS,
+    INVALID_STATE,
+    NOT_SUPPORTED,
+    TIMEOUT,
+};
+
+/**
+ * Configuration flags to be used with isConfigFlagSet and setConfigFlag methods
+ * of ITunerSession.
+ */
+enum ConfigFlag : uint32_t {
+    /**
+     * Forces mono audio stream reception.
+     *
+     * Analog broadcasts can recover poor reception conditions by jointing
+     * stereo channels into one. Mainly for, but not limited to AM/FM.
+     */
+    FORCE_MONO = 1,
+
+    /**
+     * Forces the analog playback for the supporting radio technology.
+     *
+     * User may disable digital playback for FM HD Radio or hybrid FM/DAB with
+     * this option. This is purely user choice, ie. does not reflect digital-
+     * analog handover state managed from the HAL implementation side.
+     *
+     * Some radio technologies may not support this, ie. DAB.
+     */
+    FORCE_ANALOG,
+
+    /**
+     * Forces the digital playback for the supporting radio technology.
+     *
+     * User may disable digital-analog handover that happens with poor
+     * reception conditions. With digital forced, the radio will remain silent
+     * instead of switching to analog channel if it's available. This is purely
+     * user choice, it does not reflect the actual state of handover.
+     */
+    FORCE_DIGITAL,
+
+    /**
+     * RDS Alternative Frequencies.
+     *
+     * If set and the currently tuned RDS station broadcasts on multiple
+     * channels, radio tuner automatically switches to the best available
+     * alternative.
+     */
+    RDS_AF,
+
+    /**
+     * RDS region-specific program lock-down.
+     *
+     * Allows user to lock to the current region as they move into the
+     * other region.
+     */
+    RDS_REG,
+
+    /** Enables DAB-DAB hard- and implicit-linking (the same content). */
+    DAB_DAB_LINKING,
+
+    /** Enables DAB-FM hard- and implicit-linking (the same content). */
+    DAB_FM_LINKING,
+
+    /** Enables DAB-DAB soft-linking (related content). */
+    DAB_DAB_SOFT_LINKING,
+
+    /** Enables DAB-FM soft-linking (related content). */
+    DAB_FM_SOFT_LINKING,
+};
+
+/**
+ * A key-value pair for vendor-specific information to be passed as-is through
+ * Android framework to the front-end application.
+ */
+struct VendorKeyValue {
+    /**
+     * Key must start with unique vendor Java-style namespace,
+     * eg. 'com.somecompany.parameter1'.
+     */
+    string key;
+
+    /**
+     * Value must be passed through the framework without any changes.
+     * Format of this string can vary across vendors.
+     */
+    string value;
+};
+
+/**
+ * A supported or configured RDS variant.
+ *
+ * Both might be set for hardware capabilities check (with full=true when
+ * calling getAmFmRegionConfig), but only one (or none) for specific
+ * region settings.
+ */
+enum Rds : uint8_t {
+    /** Standard variant, used everywhere except North America. */
+    RDS = 1 << 0,
+
+    /** Variant used in North America. */
+    RBDS = 1 << 1,
+};
+
+/**
+ * FM de-emphasis filter supported or configured.
+ *
+ * Both might be set for hardware capabilities check (with full=true when
+ * calling getAmFmRegionConfig), but exactly one for specific region settings.
+ */
+enum Deemphasis : uint8_t {
+    D50 = 1 << 0,
+    D75 = 1 << 1,
+};
+
+/**
+ * Regional configuration for AM/FM.
+ *
+ * For hardware capabilities check (with full=true when calling
+ * getAmFmRegionConfig), HAL implementation fills entire supported range of
+ * frequencies and features.
+ *
+ * When checking current configuration, at most one bit in each bitfield
+ * can be set.
+ */
+struct AmFmRegionConfig {
+    /**
+     * All supported or configured AM/FM bands.
+     *
+     * AM/FM bands are identified by frequency value
+     * (see IdentifierType::AMFM_FREQUENCY).
+     *
+     * With typical configuration, it's expected to have two frequency ranges
+     * for capabilities check (AM and FM) and four ranges for specific region
+     * configuration (AM LW, AM MW, AM SW, FM).
+     */
+    vec<AmFmBandRange> ranges;
+
+    /** De-emphasis filter supported/configured. */
+    bitfield<Deemphasis> fmDeemphasis;
+
+    /** RDS/RBDS variant supported/configured. */
+    bitfield<Rds> fmRds;
+};
+
+/**
+ * AM/FM band range for region configuration.
+ *
+ * Defines channel grid: each possible channel is set at
+ * lowerBound + channelNumber * spacing, up to upperBound.
+ */
+struct AmFmBandRange {
+    /** The frequency (in kHz) of the first channel within the range. */
+    uint32_t lowerBound;
+
+    /** The frequency (in kHz) of the last channel within the range. */
+    uint32_t upperBound;
+
+    /** Channel grid resolution (in kHz), how far apart are the channels. */
+    uint32_t spacing;
+
+    /**
+     * Channel spacing (in kHz) used to speed up seeking to the next station
+     * via the ITunerSession::scan() operation.
+     *
+     * It must be a multiple of channel grid resolution.
+     *
+     * Tuner may first quickly check every n-th channel and if it detects echo
+     * from a station, it fine-tunes to find the exact frequency.
+     *
+     * It's ignored for capabilities check (with full=true when calling
+     * getAmFmRegionConfig).
+     */
+    uint32_t scanSpacing;
+};
+
+/**
+ * An entry in regional configuration for DAB.
+ *
+ * Defines a frequency table row for ensembles.
+ */
+struct DabTableEntry {
+    /**
+     * Channel name, i.e. 5A, 7B.
+     *
+     * It must match the following regular expression:
+     * /^[A-Z0-9][A-Z0-9 ]{0,5}[A-Z0-9]$/ (2-7 uppercase alphanumeric characters
+     * without spaces allowed at the beginning nor end).
+     */
+    string label;
+
+    /** Frequency, in kHz. */
+    uint32_t frequency;
+};
+
+/**
+ * Properties of a given broadcast radio module.
+ */
+struct Properties {
+    /**
+     * A company name who made the radio module. Must be a valid, registered
+     * name of the company itself.
+     *
+     * It must be opaque to the Android framework.
+     */
+    string maker;
+
+    /**
+     * A product name. Must be unique within the company.
+     *
+     * It must be opaque to the Android framework.
+     */
+    string product;
+
+    /**
+     * Version of the hardware module.
+     *
+     * It must be opaque to the Android framework.
+     */
+    string version;
+
+    /**
+     * Hardware serial number (for subscription services).
+     *
+     * It must be opaque to the Android framework.
+     */
+    string serial;
+
+    /**
+     * A list of supported IdentifierType values.
+     *
+     * If an identifier is supported by radio module, it means it can use it for
+     * tuning to ProgramSelector with either primary or secondary Identifier of
+     * a given type.
+     *
+     * Support for VENDOR identifier type does not guarantee compatibility, as
+     * other module properties (implementor, product, version) must be checked.
+     */
+    vec<uint32_t> supportedIdentifierTypes;
+
+    /**
+     * Vendor-specific information.
+     *
+     * It may be used for extra features, not supported by the platform,
+     * for example: com.me.preset-slots=6; com.me.ultra-hd-capable=false.
+     */
+    vec<VendorKeyValue> vendorInfo;
+};
+
+/**
+ * Program (channel, station) information.
+ *
+ * Carries both user-visible information (like station name) and technical
+ * details (tuning selector).
+ */
+struct ProgramInfo {
+    /**
+     * An identifier used to point at the program (primarily to tune to it).
+     *
+     * This field is required - its type field must not be set to
+     * IdentifierType::INVALID.
+     */
+    ProgramSelector selector;
+
+    /**
+     * Identifier currently used for program selection.
+     *
+     * It allows to determine which technology is currently used for reception.
+     *
+     * Some program selectors contain tuning information for different radio
+     * technologies (i.e. FM RDS and DAB). For example, user may tune using
+     * a ProgramSelector with RDS_PI primary identifier, but the tuner hardware
+     * may choose to use DAB technology to make actual tuning. This identifier
+     * must reflect that.
+     *
+     * This field is required for currently tuned program only.
+     * For all other items on the program list, its type field must be
+     * initialized to IdentifierType::INVALID.
+     *
+     * Only primary identifiers for a given radio technology are valid:
+     *  - AMFM_FREQUENCY for analog AM/FM;
+     *  - RDS_PI for FM RDS;
+     *  - HD_STATION_ID_EXT;
+     *  - DAB_SID_EXT;
+     *  - DRMO_SERVICE_ID;
+     *  - SXM_SERVICE_ID;
+     *  - VENDOR_*;
+     *  - more might come in next minor versions of this HAL.
+     */
+    ProgramIdentifier logicallyTunedTo;
+
+    /**
+     * Identifier currently used by hardware to physically tune to a channel.
+     *
+     * Some radio technologies broadcast the same program on multiple channels,
+     * i.e. with RDS AF the same program may be broadcasted on multiple
+     * alternative frequencies; the same DAB program may be broadcast on
+     * multiple ensembles. This identifier points to the channel to which the
+     * radio hardware is physically tuned to.
+     *
+     * This field is required for currently tuned program only.
+     * For all other items on the program list, its type field must be
+     * initialized to IdentifierType::INVALID.
+     *
+     * Only physical identifiers are valid:
+     *  - AMFM_FREQUENCY;
+     *  - DAB_ENSEMBLE;
+     *  - DRMO_FREQUENCY;
+     *  - SXM_CHANNEL;
+     *  - VENDOR_*;
+     *  - more might come in next minor versions of this HAL.
+     */
+    ProgramIdentifier physicallyTunedTo;
+
+    /**
+     * Primary identifiers of related contents.
+     *
+     * Some radio technologies provide pointers to other programs that carry
+     * related content (i.e. DAB soft-links). This field is a list of pointers
+     * to other programs on the program list.
+     *
+     * This is not a list of programs that carry the same content (i.e.
+     * DAB hard-links, RDS AF). Switching to programs from this list usually
+     * require user action.
+     *
+     * Please note, that these identifiers do not have to exist on the program
+     * list - i.e. DAB tuner may provide information on FM RDS alternatives
+     * despite not supporting FM RDS. If the system has multiple tuners, another
+     * one may have it on its list.
+     *
+     * This field is optional (can be empty).
+     */
+    vec<ProgramIdentifier> relatedContent;
+
+    bitfield<ProgramInfoFlags> infoFlags;
+
+    /**
+     * Signal quality measured in 0% to 100% range to be shown in the UI.
+     *
+     * The purpose of this field is primarily informative, must not be used to
+     * determine to which frequency should it tune to.
+     */
+    uint32_t signalQuality;
+
+    /**
+     * Program metadata (station name, PTY, song title).
+     */
+    vec<Metadata> metadata;
+
+    /**
+     * Vendor-specific information.
+     *
+     * It may be used for extra features, not supported by the platform,
+     * for example: paid-service=true; bitrate=320kbps.
+     */
+    vec<VendorKeyValue> vendorInfo;
+};
+
+enum ProgramInfoFlags : uint32_t {
+    /**
+     * Set when the program is currently playing live stream.
+     * This may result in a slightly altered reception parameters,
+     * usually targetted at reduced latency.
+     */
+    LIVE = 1 << 0,
+
+    /**
+     * Radio stream is not playing, ie. due to bad reception conditions or
+     * buffering. In this state volume knob MAY be disabled to prevent user
+     * increasing volume too much.
+     */
+    MUTED = 1 << 1,
+
+    /**
+     * Station broadcasts traffic information regularly,
+     * but not necessarily right now.
+     */
+    TRAFFIC_PROGRAM = 1 << 2,
+
+    /**
+     * Station is broadcasting traffic information at the very moment.
+     */
+    TRAFFIC_ANNOUNCEMENT = 1 << 3,
+
+    /**
+     * Tuned to a program (not playing static).
+     *
+     * It's the same condition that would stop a seek operation
+     * (ie: ITunerSession::scan()).
+     *
+     * By definition, this flag must be set for all items on the program list.
+     */
+    TUNED = 1 << 4,
+
+    /**
+     * Audio stream is MONO if this bit is not set.
+     */
+    STEREO = 1 << 5,
+};
+
+/**
+ * Type of program identifier component.
+ *
+ * Each identifier type corresponds to exactly one radio technology,
+ * i.e. DAB_ENSEMBLE is specifically for DAB.
+ *
+ * VENDOR identifier types must be opaque to the framework.
+ *
+ * The value format for each (but VENDOR_*) identifier is strictly defined
+ * to maintain interoperability between devices made by different vendors.
+ *
+ * All other values are reserved for future use.
+ * Values not matching any enumerated constant must be ignored.
+ */
+enum IdentifierType : uint32_t {
+    /**
+     * Primary/secondary identifier for vendor-specific radio technology.
+     * The value format is determined by a vendor.
+     *
+     * The vendor identifiers have limited serialization capabilities - see
+     * ProgramSelector description.
+     */
+    VENDOR_START = 1000,
+
+    /** See VENDOR_START */
+    VENDOR_END = 1999,
+
+    INVALID = 0,
+
+    /**
+     * Primary identifier for analogue (without RDS) AM/FM stations:
+     * frequency in kHz.
+     *
+     * This identifier also contains band information:
+     *  - <500kHz: AM LW;
+     *  - 500kHz - 1705kHz: AM MW;
+     *  - 1.71MHz - 30MHz: AM SW;
+     *  - >60MHz: FM.
+     */
+    AMFM_FREQUENCY,
+
+    /**
+     * 16bit primary identifier for FM RDS station.
+     */
+    RDS_PI,
+
+    /**
+     * 64bit compound primary identifier for HD Radio.
+     *
+     * Consists of (from the LSB):
+     * - 32bit: Station ID number;
+     * - 4bit: HD Radio subchannel;
+     * - 18bit: AMFM_FREQUENCY.
+     *
+     * While station ID number should be unique globally, it sometimes get
+     * abused by broadcasters (i.e. not being set at all). To ensure local
+     * uniqueness, AMFM_FREQUENCY was added here. Global uniqueness is
+     * a best-effort - see HD_STATION_NAME.
+     *
+     * HD Radio subchannel is a value in range 0-7.
+     * This index is 0-based (where 0 is MPS and 1..7 are SPS),
+     * as opposed to HD Radio standard (where it's 1-based).
+     *
+     * The remaining bits should be set to zeros when writing on the chip side
+     * and ignored when read.
+     */
+    HD_STATION_ID_EXT,
+
+    /**
+     * 64bit additional identifier for HD Radio.
+     *
+     * Due to Station ID abuse, some HD_STATION_ID_EXT identifiers may be not
+     * globally unique. To provide a best-effort solution, a short version of
+     * station name may be carried as additional identifier and may be used
+     * by the tuner hardware to double-check tuning.
+     *
+     * The name is limited to the first 8 A-Z0-9 characters (lowercase letters
+     * must be converted to uppercase). Encoded in little-endian ASCII:
+     * the first character of the name is the LSB.
+     *
+     * For example: "Abc" is encoded as 0x434241.
+     */
+    HD_STATION_NAME,
+
+    /**
+     * 28bit compound primary identifier for Digital Audio Broadcasting.
+     *
+     * Consists of (from the LSB):
+     * - 16bit: SId;
+     * - 8bit: ECC code;
+     * - 4bit: SCIdS.
+     *
+     * SCIdS (Service Component Identifier within the Service) value
+     * of 0 represents the main service, while 1 and above represents
+     * secondary services.
+     *
+     * The remaining bits should be set to zeros when writing on the chip side
+     * and ignored when read.
+     */
+    DAB_SID_EXT,
+
+    /** 16bit */
+    DAB_ENSEMBLE,
+
+    /** 12bit */
+    DAB_SCID,
+
+    /** kHz (see AMFM_FREQUENCY) */
+    DAB_FREQUENCY,
+
+    /**
+     * 24bit primary identifier for Digital Radio Mondiale.
+     */
+    DRMO_SERVICE_ID,
+
+    /** kHz (see AMFM_FREQUENCY) */
+    DRMO_FREQUENCY,
+
+    /**
+     * 32bit primary identifier for SiriusXM Satellite Radio.
+     */
+    SXM_SERVICE_ID = DRMO_FREQUENCY + 2,
+
+    /** 0-999 range */
+    SXM_CHANNEL,
+};
+
+/**
+ * A single program identifier component, i.e. frequency or channel ID.
+ */
+struct ProgramIdentifier {
+    /**
+     * Maps to IdentifierType enum. The enum may be extended in future versions
+     * of the HAL. Values out of the enum range must not be used when writing
+     * and ignored when reading.
+     */
+    uint32_t type;
+
+    /**
+     * The uint64_t value field holds the value in format described in comments
+     * for IdentifierType enum.
+     */
+    uint64_t value;
+};
+
+/**
+ * A set of identifiers necessary to tune to a given station.
+ *
+ * This can hold a combination of various identifiers, like:
+ * - AM/FM frequency,
+ * - HD Radio subchannel,
+ * - DAB service ID.
+ *
+ * The type of radio technology is determined by the primary identifier - if the
+ * primary identifier is for DAB, the program is DAB. However, a program of a
+ * specific radio technology may have additional secondary identifiers for other
+ * technologies, i.e. a satellite program may have FM fallback frequency,
+ * if a station broadcasts both via satellite and FM.
+ *
+ * The identifiers from VENDOR_START..VENDOR_END range have limited
+ * serialization capabilities: they are serialized locally, but ignored by the
+ * cloud services. If a program has primary id from vendor range, it's not
+ * synchronized with other devices at all.
+ */
+struct ProgramSelector {
+    /**
+     * Primary program identifier.
+     *
+     * This identifier uniquely identifies a station and can be used for
+     * equality check.
+     *
+     * It can hold only a subset of identifier types, one per each
+     * radio technology:
+     *  - analogue AM/FM: AMFM_FREQUENCY;
+     *  - FM RDS: RDS_PI;
+     *  - HD Radio: HD_STATION_ID_EXT;
+     *  - DAB: DAB_SID_EXT;
+     *  - Digital Radio Mondiale: DRMO_SERVICE_ID;
+     *  - SiriusXM: SXM_SERVICE_ID;
+     *  - vendor-specific: VENDOR_START..VENDOR_END.
+     *
+     * The list may change in future versions, so the implementation must obey,
+     * but not rely on it.
+     */
+    ProgramIdentifier primaryId;
+
+    /**
+     * Secondary program identifiers.
+     *
+     * These identifiers are supplementary and can speed up tuning process,
+     * but the primary ID must be sufficient (i.e. RDS PI is enough to select
+     * a station from the list after a full band scan).
+     *
+     * Two selectors with different secondary IDs, but the same primary ID are
+     * considered equal. In particular, secondary IDs vector may get updated for
+     * an entry on the program list (ie. when a better frequency for a given
+     * station is found).
+     */
+    vec<ProgramIdentifier> secondaryIds;
+};
+
+enum MetadataKey : int32_t {
+    /** RDS PS (string) */
+    RDS_PS = 1,
+
+    /** RDS PTY (uint8_t) */
+    RDS_PTY,
+
+    /** RBDS PTY (uint8_t) */
+    RBDS_PTY,
+
+    /** RDS RT (string) */
+    RDS_RT,
+
+    /** Song title (string) */
+    SONG_TITLE,
+
+    /** Artist name (string) */
+    SONG_ARTIST,
+
+    /** Album name (string) */
+    SONG_ALBUM,
+
+    /** Station icon (uint32_t, see IBroadcastRadio::getImage) */
+    STATION_ICON,
+
+    /** Album art (uint32_t, see IBroadcastRadio::getImage) */
+    ALBUM_ART,
+
+    /**
+     * Station name.
+     *
+     * This is a generic field to cover any radio technology.
+     *
+     * If the PROGRAM_NAME has the same content as DAB_*_NAME or RDS_PS,
+     * it may not be present, to preserve space - framework must repopulate
+     * it on the client side.
+     */
+    PROGRAM_NAME,
+
+    /** DAB ensemble name (string) */
+    DAB_ENSEMBLE_NAME,
+
+    /**
+     * DAB ensemble name abbreviated (string).
+     *
+     * The string must be up to 8 characters long.
+     *
+     * If the short variant is present, the long (DAB_ENSEMBLE_NAME) one must be
+     * present as well.
+     */
+    DAB_ENSEMBLE_NAME_SHORT,
+
+    /** DAB service name (string) */
+    DAB_SERVICE_NAME,
+
+    /** DAB service name abbreviated (see DAB_ENSEMBLE_NAME_SHORT) (string) */
+    DAB_SERVICE_NAME_SHORT,
+
+    /** DAB component name (string) */
+    DAB_COMPONENT_NAME,
+
+    /** DAB component name abbreviated (see DAB_ENSEMBLE_NAME_SHORT) (string) */
+    DAB_COMPONENT_NAME_SHORT,
+};
+
+/**
+ * An element of metadata vector.
+ *
+ * Contains one of the entries explained in MetadataKey.
+ *
+ * Depending on a type described in the comment for a specific key, either the
+ * intValue or stringValue field must be populated.
+ */
+struct Metadata {
+    /**
+     * Maps to MetadataKey enum. The enum may be extended in future versions
+     * of the HAL. Values out of the enum range must not be used when writing
+     * and ignored when reading.
+     */
+    uint32_t key;
+
+    int64_t intValue;
+    string stringValue;
+};
+
+/**
+ * An update packet of the program list.
+ *
+ * The order of entries in the vectors is unspecified.
+ */
+struct ProgramListChunk {
+    /**
+     * Treats all previously added entries as removed.
+     *
+     * This is meant to save binder transaction bandwidth on 'removed' vector
+     * and provide a clear empty state.
+     *
+     * If set, 'removed' vector must be empty.
+     *
+     * The client may wait with taking action on this until it received the
+     * chunk with complete flag set (to avoid part of stations temporarily
+     * disappearing from the list).
+     */
+    bool purge;
+
+    /**
+     * If false, it means there are still programs not transmitted,
+     * due for transmission in following updates.
+     *
+     * Used by UIs that wait for complete list instead of displaying
+     * programs while scanning.
+     *
+     * After the whole channel range was scanned and all discovered programs
+     * were transmitted, the last chunk must have set this flag to true.
+     * This must happen within Constants::LIST_COMPLETE_TIMEOUT_MS from the
+     * startProgramListUpdates call. If it doesn't, client may assume the tuner
+     * came into a bad state and display error message.
+     */
+    bool complete;
+
+    /**
+     * Added or modified program list entries.
+     *
+     * Two entries with the same primaryId (ProgramSelector member)
+     * are considered the same.
+     */
+    vec<ProgramInfo> modified;
+
+    /**
+     * Removed program list entries.
+     *
+     * Contains primaryId (ProgramSelector member) of a program to remove.
+     */
+    vec<ProgramIdentifier> removed;
+};
+
+/**
+ * Large-grain filter to the program list.
+ *
+ * This is meant to reduce binder transaction bandwidth, not for fine-grained
+ * filtering user might expect.
+ *
+ * The filter is designed as conjunctive normal form: the entry that passes the
+ * filter must satisfy all the clauses (members of this struct). Vector clauses
+ * are disjunctions of literals. In other words, there is AND between each
+ * high-level group and OR inside it.
+ */
+struct ProgramFilter {
+    /**
+     * List of identifier types that satisfy the filter.
+     *
+     * If the program list entry contains at least one identifier of the type
+     * listed, it satisfies this condition.
+     *
+     * Empty list means no filtering on identifier type.
+     */
+    vec<uint32_t> identifierTypes;
+
+    /**
+     * List of identifiers that satisfy the filter.
+     *
+     * If the program list entry contains at least one listed identifier,
+     * it satisfies this condition.
+     *
+     * Empty list means no filtering on identifier.
+     */
+    vec<ProgramIdentifier> identifiers;
+
+    /**
+     * Includes non-tunable entries that define tree structure on the
+     * program list (i.e. DAB ensembles).
+     */
+    bool includeCategories;
+
+    /**
+     * Disable updates on entry modifications.
+     *
+     * If true, 'modified' vector of ProgramListChunk must contain list
+     * additions only. Once the program is added to the list, it's not
+     * updated anymore.
+     */
+    bool excludeModifications;
+};
+
+/**
+ * Type of an announcement.
+ *
+ * It maps to different announcement types per each radio technology.
+ */
+enum AnnouncementType : uint8_t {
+    /** DAB alarm, RDS emergency program type (PTY 31). */
+    EMERGENCY = 1,
+
+    /** DAB warning. */
+    WARNING,
+
+    /** DAB road traffic, RDS TA, HD Radio transportation. */
+    TRAFFIC,
+
+    /** Weather. */
+    WEATHER,
+
+    /** News. */
+    NEWS,
+
+    /** DAB event, special event. */
+    EVENT,
+
+    /** DAB sport report, RDS sports. */
+    SPORT,
+
+    /** All others. */
+    MISC,
+};
+
+/**
+ * A pointer to a station broadcasting active announcement.
+ */
+struct Announcement {
+    /**
+     * Program selector to tune to the announcement.
+     */
+    ProgramSelector selector;
+
+    /** Announcement type. */
+    AnnouncementType type;
+
+    /**
+     * Vendor-specific information.
+     *
+     * It may be used for extra features, not supported by the platform,
+     * for example: com.me.hdradio.urgency=100; com.me.hdradio.certainity=50.
+     */
+    vec<VendorKeyValue> vendorInfo;
+};

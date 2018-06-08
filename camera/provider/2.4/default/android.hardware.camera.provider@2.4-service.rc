@@ -1,4 +1,4 @@
-service camera-provider-2-4 /vendor/bin/hw/android.hardware.camera.provider@2.4-service
+service vendor.camera-provider-2-4 /vendor/bin/hw/android.hardware.camera.provider@2.4-service
     class hal
     user cameraserver
     group audio camera input drmrpc

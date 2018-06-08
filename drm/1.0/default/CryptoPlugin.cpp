@@ -99,8 +99,8 @@ namespace implementation {
         legacyPattern.mEncryptBlocks = pattern.encryptBlocks;
         legacyPattern.mSkipBlocks = pattern.skipBlocks;
 
-        android::CryptoPlugin::SubSample *legacySubSamples =
-            new android::CryptoPlugin::SubSample[subSamples.size()];
+        std::unique_ptr<android::CryptoPlugin::SubSample[]> legacySubSamples =
+                std::make_unique<android::CryptoPlugin::SubSample[]>(subSamples.size());
 
         for (size_t i = 0; i < subSamples.size(); i++) {
             legacySubSamples[i].mNumBytesOfClearData
@@ -145,10 +145,8 @@ namespace implementation {
             destPtr = static_cast<void *>(handle);
         }
         ssize_t result = mLegacyPlugin->decrypt(secure, keyId.data(), iv.data(),
-                legacyMode, legacyPattern, srcPtr, legacySubSamples,
+                legacyMode, legacyPattern, srcPtr, legacySubSamples.get(),
                 subSamples.size(), destPtr, &detailMessage);
-
-        delete[] legacySubSamples;
 
         uint32_t status;
         uint32_t bytesWritten;

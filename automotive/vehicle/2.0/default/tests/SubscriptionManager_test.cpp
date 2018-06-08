@@ -51,30 +51,16 @@ public:
     }
 
     hidl_vec<SubscribeOptions> subscrToProp1 = {
-        SubscribeOptions {
-            .propId = PROP1,
-            .vehicleAreas = toInt(VehicleAreaZone::ROW_1_LEFT),
-            .flags = SubscribeFlags::HAL_EVENT
-        },
+        SubscribeOptions{.propId = PROP1, .flags = SubscribeFlags::EVENTS_FROM_CAR},
     };
 
     hidl_vec<SubscribeOptions> subscrToProp2 = {
-        SubscribeOptions {
-            .propId = PROP2,
-            .flags = SubscribeFlags::HAL_EVENT
-        },
+        SubscribeOptions{.propId = PROP2, .flags = SubscribeFlags::EVENTS_FROM_CAR},
     };
 
     hidl_vec<SubscribeOptions> subscrToProp1and2 = {
-        SubscribeOptions {
-            .propId = PROP1,
-            .vehicleAreas = toInt(VehicleAreaZone::ROW_1_LEFT),
-            .flags = SubscribeFlags::HAL_EVENT
-        },
-        SubscribeOptions {
-            .propId = PROP2,
-            .flags = SubscribeFlags::HAL_EVENT
-        },
+        SubscribeOptions{.propId = PROP1, .flags = SubscribeFlags::EVENTS_FROM_CAR},
+        SubscribeOptions{.propId = PROP2, .flags = SubscribeFlags::EVENTS_FROM_CAR},
     };
 
     static std::list<sp<IVehicleCallback>> extractCallbacks(
@@ -87,14 +73,11 @@ public:
     }
 
     std::list<sp<HalClient>> clientsToProp1() {
-        return manager.getSubscribedClients(PROP1,
-                                            toInt(VehicleAreaZone::ROW_1_LEFT),
-                                            SubscribeFlags::DEFAULT);
+        return manager.getSubscribedClients(PROP1, SubscribeFlags::EVENTS_FROM_CAR);
     }
 
     std::list<sp<HalClient>> clientsToProp2() {
-        return manager.getSubscribedClients(PROP2, 0,
-                                            SubscribeFlags::DEFAULT);
+        return manager.getSubscribedClients(PROP2, SubscribeFlags::EVENTS_FROM_CAR);
     }
 
     void onPropertyUnsubscribed(int propertyId) {
@@ -124,10 +107,7 @@ TEST_F(SubscriptionManagerTest, multipleClients) {
     ASSERT_EQ(StatusCode::OK,
               manager.addOrUpdateSubscription(2, cb2, subscrToProp1, &updatedOptions));
 
-    auto clients = manager.getSubscribedClients(
-            PROP1,
-            toInt(VehicleAreaZone::ROW_1_LEFT),
-            SubscribeFlags::HAL_EVENT);
+    auto clients = manager.getSubscribedClients(PROP1, SubscribeFlags::EVENTS_FROM_CAR);
 
     ASSERT_ALL_EXISTS({cb1, cb2}, extractCallbacks(clients));
 }
@@ -137,25 +117,13 @@ TEST_F(SubscriptionManagerTest, negativeCases) {
     ASSERT_EQ(StatusCode::OK,
               manager.addOrUpdateSubscription(1, cb1, subscrToProp1, &updatedOptions));
 
-    // Wrong zone
-    auto clients = manager.getSubscribedClients(
-            PROP1,
-            toInt(VehicleAreaZone::ROW_2_LEFT),
-            SubscribeFlags::HAL_EVENT);
-    ASSERT_TRUE(clients.empty());
-
     // Wrong prop
-    clients = manager.getSubscribedClients(
-            toInt(VehicleProperty::AP_POWER_BOOTUP_REASON),
-            toInt(VehicleAreaZone::ROW_1_LEFT),
-            SubscribeFlags::HAL_EVENT);
+    auto clients = manager.getSubscribedClients(toInt(VehicleProperty::AP_POWER_BOOTUP_REASON),
+                                                SubscribeFlags::EVENTS_FROM_CAR);
     ASSERT_TRUE(clients.empty());
 
     // Wrong flag
-    clients = manager.getSubscribedClients(
-            PROP1,
-            toInt(VehicleAreaZone::ROW_1_LEFT),
-            SubscribeFlags::SET_CALL);
+    clients = manager.getSubscribedClients(PROP1, SubscribeFlags::EVENTS_FROM_ANDROID);
     ASSERT_TRUE(clients.empty());
 }
 
@@ -164,31 +132,22 @@ TEST_F(SubscriptionManagerTest, mulipleSubscriptions) {
     ASSERT_EQ(StatusCode::OK, manager.addOrUpdateSubscription(1, cb1, subscrToProp1,
                                                               &updatedOptions));
 
-    auto clients = manager.getSubscribedClients(
-            PROP1,
-            toInt(VehicleAreaZone::ROW_1_LEFT),
-            SubscribeFlags::DEFAULT);
+    auto clients = manager.getSubscribedClients(PROP1, SubscribeFlags::EVENTS_FROM_CAR);
     ASSERT_EQ((size_t) 1, clients.size());
     ASSERT_EQ(cb1, clients.front()->getCallback());
 
     // Same property, but different zone, to make sure we didn't unsubscribe
     // from previous zone.
-    ASSERT_EQ(StatusCode::OK, manager.addOrUpdateSubscription(1, cb1, {
-        SubscribeOptions {
-                .propId = PROP1,
-                .vehicleAreas = toInt(VehicleAreaZone::ROW_2),
-                .flags = SubscribeFlags::DEFAULT
-            }
-        }, &updatedOptions));
+    ASSERT_EQ(
+        StatusCode::OK,
+        manager.addOrUpdateSubscription(
+            1, cb1, {SubscribeOptions{.propId = PROP1, .flags = SubscribeFlags::EVENTS_FROM_CAR}},
+            &updatedOptions));
 
-    clients = manager.getSubscribedClients(PROP1,
-                                           toInt(VehicleAreaZone::ROW_1_LEFT),
-                                           SubscribeFlags::DEFAULT);
+    clients = manager.getSubscribedClients(PROP1, SubscribeFlags::EVENTS_FROM_CAR);
     ASSERT_ALL_EXISTS({cb1}, extractCallbacks(clients));
 
-    clients = manager.getSubscribedClients(PROP1,
-                                           toInt(VehicleAreaZone::ROW_2),
-                                           SubscribeFlags::DEFAULT);
+    clients = manager.getSubscribedClients(PROP1, SubscribeFlags::EVENTS_FROM_CAR);
     ASSERT_ALL_EXISTS({cb1}, extractCallbacks(clients));
 }
 

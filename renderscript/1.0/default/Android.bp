@@ -12,7 +12,7 @@ cc_library_shared {
     ],
     shared_libs: [
         "libdl",
-        "liblog",
+        "libbase",
         "libhidlbase",
         "libhidltransport",
         "libutils",

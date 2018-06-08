@@ -164,7 +164,8 @@ class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
           EXPECT_EQ(location_called_count_, 1);
       }
       if (location_called_count_ > 0) {
-          CheckLocation(last_location_, checkAccuracies);
+          // don't require speed on first fix
+          CheckLocation(last_location_, checkAccuracies, false);
           return true;
       }
       return false;
@@ -193,20 +194,24 @@ class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
 
   /*
    * CheckLocation:
-   * Helper function to vet Location fields
+   *   Helper function to vet Location fields
    */
-  void CheckLocation(GnssLocation& location, bool checkAccuracies) {
+  void CheckLocation(GnssLocation& location, bool checkAccuracies, bool checkSpeed) {
       EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_LAT_LONG);
       EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_ALTITUDE);
-      EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_SPEED);
+      if (checkSpeed) {
+          EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_SPEED);
+      }
       EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_HORIZONTAL_ACCURACY);
       // New uncertainties available in O must be provided,
       // at least when paired with modern hardware (2017+)
       if (checkAccuracies) {
           EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_VERTICAL_ACCURACY);
-          EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_SPEED_ACCURACY);
-          if (location.gnssLocationFlags & GnssLocationFlags::HAS_BEARING) {
-              EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_BEARING_ACCURACY);
+          if (checkSpeed) {
+              EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_SPEED_ACCURACY);
+              if (location.gnssLocationFlags & GnssLocationFlags::HAS_BEARING) {
+                  EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_BEARING_ACCURACY);
+              }
           }
       }
       EXPECT_GE(location.latitudeDegrees, -90.0);
@@ -215,12 +220,14 @@ class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
       EXPECT_LE(location.longitudeDegrees, 180.0);
       EXPECT_GE(location.altitudeMeters, -1000.0);
       EXPECT_LE(location.altitudeMeters, 30000.0);
-      EXPECT_GE(location.speedMetersPerSec, 0.0);
-      EXPECT_LE(location.speedMetersPerSec, 5.0);  // VTS tests are stationary.
+      if (checkSpeed) {
+          EXPECT_GE(location.speedMetersPerSec, 0.0);
+          EXPECT_LE(location.speedMetersPerSec, 5.0);  // VTS tests are stationary.
 
-      // Non-zero speeds must be reported with an associated bearing
-      if (location.speedMetersPerSec > 0.0) {
-          EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_BEARING);
+          // Non-zero speeds must be reported with an associated bearing
+          if (location.speedMetersPerSec > 0.0) {
+              EXPECT_TRUE(location.gnssLocationFlags & GnssLocationFlags::HAS_BEARING);
+          }
       }
 
       /*
@@ -373,7 +380,7 @@ TEST_F(GnssHalTest, GetLocation) {
     for (int i = 1; i < LOCATIONS_TO_CHECK; i++) {
         EXPECT_EQ(std::cv_status::no_timeout, wait(LOCATION_TIMEOUT_SUBSEQUENT_SEC));
         EXPECT_EQ(location_called_count_, i + 1);
-        CheckLocation(last_location_, checkMoreAccuracies);
+        CheckLocation(last_location_, checkMoreAccuracies, true);
     }
   }
 

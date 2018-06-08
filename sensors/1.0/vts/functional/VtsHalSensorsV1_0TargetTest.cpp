@@ -956,6 +956,7 @@ void SensorsHidlTest::testStreamingOperation(SensorType type,
                                              std::chrono::seconds duration,
                                              const SensorEventsChecker &checker) {
   std::vector<Event> events;
+  std::vector<Event> sensorEvents;
 
   const int64_t samplingPeriodInNs = samplingPeriod.count();
   const int64_t batchingPeriodInNs = 0; // no batching
@@ -985,7 +986,6 @@ void SensorsHidlTest::testStreamingOperation(SensorType type,
 
   ASSERT_GT(events.size(), 0u);
 
-  size_t nRealEvent = 0;
   bool handleMismatchReported = false;
   bool metaSensorTypeErrorReported = false;
   for (auto & e : events) {
@@ -996,7 +996,7 @@ void SensorsHidlTest::testStreamingOperation(SensorType type,
             << (handleMismatchReported = true,
                 "Event of the same type must come from the sensor registered");
       }
-      ++ nRealEvent;
+      sensorEvents.push_back(e);
     } else {
       // avoid generating hundreds of error
       if (!metaSensorTypeErrorReported) {
@@ -1008,9 +1008,10 @@ void SensorsHidlTest::testStreamingOperation(SensorType type,
   }
 
   std::string s;
-  EXPECT_TRUE(checker.check(events, &s)) << s;
+  EXPECT_TRUE(checker.check(sensorEvents, &s)) << s;
 
-  EXPECT_GE(nRealEvent, minNEvent / 2); // make sure returned events are not all meta
+  EXPECT_GE(sensorEvents.size(),
+            minNEvent / 2);  // make sure returned events are not all meta
 }
 
 // Test if sensor hal can do UI speed accelerometer streaming properly
@@ -1367,15 +1368,23 @@ void SensorsHidlTest::testDirectReportOperation(
   bool typeErrorReported = false;
   bool tokenErrorReported = false;
   bool timestampErrorReported = false;
+  std::vector<Event> sensorEvents;
   for (auto &e : events) {
-    if (!typeErrorReported) {
-      EXPECT_EQ(type, e.sensorType)
-          << (typeErrorReported = true, "Type in event does not match type of sensor registered.");
-    }
     if (!tokenErrorReported) {
       EXPECT_EQ(eventToken, e.sensorHandle)
           << (tokenErrorReported = true,
             "Event token does not match that retured from configDirectReport");
+    }
+
+    if (isMetaSensorType(e.sensorType)) {
+        continue;
+    }
+    sensorEvents.push_back(e);
+
+    if (!typeErrorReported) {
+      EXPECT_EQ(type, e.sensorType)
+          << (typeErrorReported = true,
+              "Type in event does not match type of sensor registered.");
     }
     if (!timestampErrorReported) {
       EXPECT_GT(e.timestamp, lastTimestamp)
@@ -1385,7 +1394,7 @@ void SensorsHidlTest::testDirectReportOperation(
   }
 
   std::string s;
-  EXPECT_TRUE(checker.check(events, &s)) << s;
+  EXPECT_TRUE(checker.check(sensorEvents, &s)) << s;
 
   // stop sensor and unregister channel
   configDirectReport(sensor.sensorHandle, channelHandle, RateLevel::STOP,

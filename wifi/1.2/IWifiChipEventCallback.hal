@@ -1,0 +1,71 @@
+/*
+ * Copyright 2017 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.wifi@1.2;
+
+import @1.0::IWifiChipEventCallback;
+import @1.0::WifiBand;
+
+/**
+ * Wifi chip event callbacks.
+ */
+interface IWifiChipEventCallback extends @1.0::IWifiChipEventCallback {
+    /**
+     * Struct describing the state of each iface operating on the radio chain
+     * (hardware MAC) on the device.
+     */
+    struct IfaceInfo {
+        /** Name of the interface (For ex: "wlan0"). */
+        string name;
+        /** Wifi channel on which this interface is operating. */
+        uint32_t channel;
+    };
+
+    /**
+     * Struct describing the state of each hardware radio chain (hardware MAC)
+     * on the device.
+     */
+    struct RadioModeInfo {
+        /**
+         * Identifier for this radio chain. This is vendor dependent & used
+         * only for debugging purposes.
+         */
+        uint32_t radioId;
+        /**
+         * List of bands on which this radio chain is operating.
+         * Can be one of:
+         * a) WifiBand.BAND_24GHZ => 2.4Ghz.
+         * b) WifiBand.BAND_5GHZ => 5Ghz.
+         * c) WifiBand.BAND_24GHZ_5GHZ = 2.4Ghz + 5Ghz (Radio is time sharing
+         * across the 2 bands).
+         */
+        WifiBand bandInfo;
+        /** List of interfaces on this radio chain (hardware MAC). */
+        vec<IfaceInfo> ifaceInfos;
+    };
+
+    /**
+     * Asynchronous callback indicating a radio mode change.
+     * Radio mode change could be a result of:
+     * a) Bringing up concurrent interfaces (For ex: STA + AP).
+     * b) Change in operating band of one of the concurrent interfaces (For ex:
+     * STA connection moved from 2.4G to 5G)
+     *
+     * @param radioModeInfos List of RadioModeInfo structures for each
+     * radio chain (hardware MAC) on the device.
+     */
+    oneway onRadioModeChange(vec<RadioModeInfo> radioModeInfos);
+};

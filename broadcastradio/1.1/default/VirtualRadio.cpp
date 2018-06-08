@@ -18,7 +18,7 @@
 
 #include "VirtualRadio.h"
 
-#include <broadcastradio-utils/Utils.h>
+#include <broadcastradio-utils-1x/Utils.h>
 #include <log/log.h>
 
 namespace android {
@@ -29,6 +29,7 @@ namespace implementation {
 
 using V1_0::Band;
 using V1_0::Class;
+using V1_1::ProgramSelector;
 
 using std::lock_guard;
 using std::move;

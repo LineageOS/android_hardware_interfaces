@@ -15,9 +15,9 @@
 //
 
 cc_library_static {
-    name: "libVtsHalGraphicsMapperTestUtils",
+    name: "android.hardware.graphics.mapper@2.0-vts",
     defaults: ["VtsHalTargetTestDefaults"],
-    srcs: ["VtsHalGraphicsMapperTestUtils.cpp"],
+    srcs: ["MapperVts.cpp"],
     cflags: [
         "-O0",
         "-g",
@@ -30,5 +30,5 @@ cc_library_static {
         "android.hardware.graphics.allocator@2.0",
         "android.hardware.graphics.mapper@2.0",
     ],
-    export_include_dirs: ["."],
+    export_include_dirs: ["include"],
 }

@@ -30,8 +30,9 @@
 #include "vhal_v2_0/VehiclePropertyStore.h"
 
 #include "DefaultConfig.h"
-#include "VehicleEmulator.h"
 #include "FakeValueGenerator.h"
+
+#include "VehicleEmulator.h"
 
 namespace android {
 namespace hardware {
@@ -53,7 +54,7 @@ public:
     VehiclePropValuePtr get(const VehiclePropValue& requestedPropValue,
                             StatusCode* outStatus) override;
     StatusCode set(const VehiclePropValue& propValue) override;
-    StatusCode subscribe(int32_t property, int32_t areas, float sampleRate) override;
+    StatusCode subscribe(int32_t property, float sampleRate) override;
     StatusCode unsubscribe(int32_t property) override;
 
     //  Methods from EmulatedVehicleHalIface
@@ -66,7 +67,9 @@ private:
     }
 
     StatusCode handleGenerateFakeDataRequest(const VehiclePropValue& request);
-    void onFakeValueGenerated(int32_t propId, float value);
+    void onFakeValueGenerated(const VehiclePropValue& value);
+    VehiclePropValuePtr createHwInputKeyProp(VehicleHwKeyInputAction action, int32_t keyCode,
+                                             int32_t targetDisplay);
 
     void onContinuousPropertyTimer(const std::vector<int32_t>& properties);
     bool isContinuousProperty(int32_t propId) const;
@@ -82,7 +85,8 @@ private:
     VehiclePropertyStore* mPropStore;
     std::unordered_set<int32_t> mHvacPowerProps;
     RecurrentTimer mRecurrentTimer;
-    FakeValueGenerator mFakeValueGenerator;
+    std::unique_ptr<FakeValueGenerator> mLinearFakeValueGenerator;
+    std::unique_ptr<FakeValueGenerator> mJsonFakeValueGenerator;
 };
 
 }  // impl

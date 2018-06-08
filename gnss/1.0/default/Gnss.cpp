@@ -508,7 +508,7 @@ Return<sp<IAGnssRil>> Gnss::getExtensionAGnssRil()  {
         const AGpsRilInterface* agpsRilIface = static_cast<const AGpsRilInterface*>(
                 mGnssIface->get_extension(AGPS_RIL_INTERFACE));
         if (agpsRilIface == nullptr) {
-            ALOGE("%s GnssRil interface not implemented by GNSS HAL", __func__);
+            ALOGI("%s: GnssRil interface not implemented by HAL", __func__);
         } else {
             mGnssRil = new AGnssRil(agpsRilIface);
         }
@@ -528,7 +528,7 @@ Return<sp<IGnssConfiguration>> Gnss::getExtensionGnssConfiguration()  {
                         mGnssIface->get_extension(GNSS_CONFIGURATION_INTERFACE));
 
         if (gnssConfigIface == nullptr) {
-            ALOGE("%s GnssConfiguration interface not implemented by GNSS HAL", __func__);
+            ALOGE("%s: GnssConfiguration interface not implemented by HAL", __func__);
         } else {
             mGnssConfig = new GnssConfiguration(gnssConfigIface);
         }
@@ -548,7 +548,7 @@ Return<sp<IGnssGeofencing>> Gnss::getExtensionGnssGeofencing()  {
                         mGnssIface->get_extension(GPS_GEOFENCING_INTERFACE));
 
         if (gpsGeofencingIface == nullptr) {
-            ALOGE("%s GnssGeofencing interface not implemented by GNSS HAL", __func__);
+            ALOGE("%s: GnssGeofencing interface not implemented by HAL", __func__);
         } else {
             mGnssGeofencingIface = new GnssGeofencing(gpsGeofencingIface);
         }
@@ -567,7 +567,7 @@ Return<sp<IAGnss>> Gnss::getExtensionAGnss()  {
         const AGpsInterface* agpsIface = static_cast<const AGpsInterface*>(
                 mGnssIface->get_extension(AGPS_INTERFACE));
         if (agpsIface == nullptr) {
-            ALOGE("%s AGnss interface not implemented by GNSS HAL", __func__);
+            ALOGE("%s: AGnss interface not implemented by HAL", __func__);
         } else {
             mAGnssIface = new AGnss(agpsIface);
         }
@@ -585,7 +585,7 @@ Return<sp<IGnssNi>> Gnss::getExtensionGnssNi()  {
         const GpsNiInterface* gpsNiIface = static_cast<const GpsNiInterface*>(
                 mGnssIface->get_extension(GPS_NI_INTERFACE));
         if (gpsNiIface == nullptr) {
-            ALOGE("%s GnssNi interface not implemented by GNSS HAL", __func__);
+            ALOGI("%s: GnssNi interface not implemented by HAL", __func__);
         } else {
             mGnssNi = new GnssNi(gpsNiIface);
         }
@@ -605,7 +605,7 @@ Return<sp<IGnssMeasurement>> Gnss::getExtensionGnssMeasurement() {
                         mGnssIface->get_extension(GPS_MEASUREMENT_INTERFACE));
 
         if (gpsMeasurementIface == nullptr) {
-            ALOGE("%s GnssMeasurement interface not implemented by GNSS HAL", __func__);
+            ALOGE("%s: GnssMeasurement interface not implemented by HAL", __func__);
         } else {
             mGnssMeasurement = new GnssMeasurement(gpsMeasurementIface);
         }
@@ -625,8 +625,7 @@ Return<sp<IGnssNavigationMessage>> Gnss::getExtensionGnssNavigationMessage() {
                         mGnssIface->get_extension(GPS_NAVIGATION_MESSAGE_INTERFACE));
 
         if (gpsNavigationMessageIface == nullptr) {
-            ALOGE("%s GnssNavigationMessage interface not implemented by GNSS HAL",
-                  __func__);
+            ALOGI("%s: GnssNavigationMessage interface not implemented by HAL", __func__);
         } else {
             mGnssNavigationMessage = new GnssNavigationMessage(gpsNavigationMessageIface);
         }
@@ -646,7 +645,7 @@ Return<sp<IGnssXtra>> Gnss::getExtensionXtra()  {
                 mGnssIface->get_extension(GPS_XTRA_INTERFACE));
 
         if (gpsXtraIface == nullptr) {
-            ALOGE("%s GnssXtra interface not implemented by HAL", __func__);
+            ALOGI("%s: GnssXtra interface not implemented by HAL", __func__);
         } else {
             mGnssXtraIface = new GnssXtra(gpsXtraIface);
         }
@@ -666,7 +665,7 @@ Return<sp<IGnssDebug>> Gnss::getExtensionGnssDebug()  {
                 mGnssIface->get_extension(GPS_DEBUG_INTERFACE));
 
         if (gpsDebugIface == nullptr) {
-            ALOGE("%s: GnssDebug interface is not implemented by HAL", __func__);
+            ALOGI("%s: GnssDebug interface not implemented by HAL", __func__);
         } else {
             mGnssDebug = new GnssDebug(gpsDebugIface);
         }

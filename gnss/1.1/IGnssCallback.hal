@@ -1,0 +1,62 @@
+/*
+ * Copyright (C) 2017 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.gnss@1.1;
+
+import @1.0::IGnssCallback;
+
+/**
+ * The interface is required for the HAL to communicate certain information
+ * like status and location info back to the platform, the platform implements
+ * the interfaces and passes a handle to the HAL.
+ */
+interface IGnssCallback extends @1.0::IGnssCallback {
+    /**
+     * Callback to inform framework of the GNSS HAL implementation model & version name.
+     *
+     * This is a user-visible string that identifies the model and version of the GNSS HAL.
+     * For example "ABC Co., Baseband Part 1234, RF Part 567, Software version 3.14.159"
+     *
+     * For privacy reasons, this string must not contain any device-specific serial number or other
+     * identifier that uniquely identifies an individual device.
+     *
+     * This must be called in response to IGnss::setCallback
+     *
+     * @param name String providing the name of the GNSS HAL implementation
+     */
+    gnssNameCb(string name);
+
+    /**
+     * Callback for requesting Location.
+     *
+     * HAL implementation must call this when it wants the framework to provide locations to assist
+     * with GNSS HAL operation, for example, to assist with time to first fix, error recovery, or to
+     * supplement GNSS location for other clients of the GNSS HAL.
+     *
+     * If a request is made with independentFromGnss set to true, the framework must avoid
+     * providing locations derived from GNSS locations (such as "fused" location), to help improve
+     * information independence for situations such as error recovery.
+     *
+     * In response to this method call, GNSS HAL can expect zero, one, or more calls to
+     * IGnss::injectLocation or IGnss::injectBestLocation, dependent on availability of location
+     * from other sources, which may happen at some arbitrary delay. Generally speaking, HAL
+     * implementations must be able to handle calls to IGnss::injectLocation or
+     * IGnss::injectBestLocation at any time.
+     *
+     * @param independentFromGnss True if requesting a location that is independent from GNSS.
+     */
+    gnssRequestLocationCb(bool independentFromGnss);
+};

@@ -49,7 +49,7 @@ public:
     }
 
     void addOrUpdateSubscription(const SubscribeOptions &opts);
-    bool isSubscribed(int32_t propId, int32_t areaId, SubscribeFlags flags);
+    bool isSubscribed(int32_t propId, SubscribeFlags flags);
     std::vector<int32_t> getSubscribedProperties() const;
 
 private:
@@ -87,8 +87,7 @@ public:
     /**
      * Constructs SubscriptionManager
      *
-     * @param onPropertyUnsubscribed - this callback function will be called when there are no
-     *                                    more client subscribed to particular property.
+     * @param onPropertyUnsubscribed - called when no more clients are subscribed to the property.
      */
     SubscriptionManager(const OnPropertyUnsubscribed& onPropertyUnsubscribed)
             : mOnPropertyUnsubscribed(onPropertyUnsubscribed),
@@ -115,9 +114,7 @@ public:
             const std::vector<recyclable_ptr<VehiclePropValue>>& propValues,
             SubscribeFlags flags) const;
 
-    std::list<sp<HalClient>> getSubscribedClients(int32_t propId,
-                                                  int32_t area,
-                                                  SubscribeFlags flags) const;
+    std::list<sp<HalClient>> getSubscribedClients(int32_t propId, SubscribeFlags flags) const;
     /**
      * If there are no clients subscribed to given properties than callback function provided
      * in the constructor will be called.
@@ -125,10 +122,9 @@ public:
     void unsubscribe(ClientId clientId, int32_t propId);
 private:
     std::list<sp<HalClient>> getSubscribedClientsLocked(int32_t propId,
-                                                        int32_t area,
                                                         SubscribeFlags flags) const;
 
-    bool updateHalEventSubscriptionLocked(const SubscribeOptions &opts, SubscribeOptions* out);
+    bool updateHalEventSubscriptionLocked(const SubscribeOptions& opts, SubscribeOptions* out);
 
     void addClientToPropMapLocked(int32_t propId, const sp<HalClient>& client);
 

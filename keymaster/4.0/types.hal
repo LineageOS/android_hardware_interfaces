@@ -1,0 +1,1323 @@
+/*
+ * Copyright (C) 2017 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.keymaster@4.0;
+
+/**
+ * Time in milliseconds since some arbitrary point in time.  Time must be monotonically increasing,
+ * and a secure environment's notion of "current time" must not repeat until the Android device
+ * reboots, or until at least 50 million years have elapsed (note that this requirement is satisfied
+ * by setting the clock to zero during each boot, and then counting time accurately).
+ */
+typedef uint64_t Timestamp;
+
+/**
+ * A place to define any needed constants.
+ */
+enum Constants : uint32_t {
+    AUTH_TOKEN_MAC_LENGTH = 32,
+};
+
+enum TagType : uint32_t {
+    /** Invalid type, used to designate a tag as uninitialized. */
+    INVALID = 0 << 28,
+    /** Enumeration value. */
+    ENUM = 1 << 28,
+    /** Repeatable enumeration value. */
+    ENUM_REP = 2 << 28,
+    /** 32-bit unsigned integer. */
+    UINT = 3 << 28,
+    /** Repeatable 32-bit unsigned integer. */
+    UINT_REP = 4 << 28,
+    /** 64-bit unsigned integer. */
+    ULONG = 5 << 28,
+    /** 64-bit unsigned integer representing a date and time, in milliseconds since 1 Jan 1970. */
+    DATE = 6 << 28,
+    /** Boolean.  If a tag with this type is present, the value is "true".  If absent, "false". */
+    BOOL = 7 << 28,
+    /** Byte string containing an arbitrary-length integer, big-endian ordering. */
+    BIGNUM = 8 << 28,
+    /** Byte string */
+    BYTES = 9 << 28,
+    /** Repeatable 64-bit unsigned integer */
+    ULONG_REP = 10 << 28,
+};
+
+enum Tag : uint32_t {
+    INVALID = TagType:INVALID | 0,
+
+    /**
+     * Tag::PURPOSE specifies the set of purposes for which the key may be used.  Possible values
+     * are defined in the KeyPurpose enumeration.
+     *
+     * This tag is repeatable; keys may be generated with multiple values, although an operation has
+     * a single purpose.  When begin() is called to start an operation, the purpose of the operation
+     * is specified.  If the purpose specified for the operation is not authorized by the key (the
+     * key didn't have a corresponding Tag::PURPOSE provided during generation/import), the
+     * operation must fail with ErrorCode::INCOMPATIBLE_PURPOSE.
+     *
+     * Must be hardware-enforced.
+     */
+    PURPOSE = TagType:ENUM_REP | 1,
+
+    /**
+     * Tag::ALGORITHM specifies the cryptographic algorithm with which the key is used.  This tag
+     * must be provided to generateKey and importKey, and must be specified in the wrapped key
+     * provided to importWrappedKey.
+     *
+     * Must be hardware-enforced.
+     */
+    ALGORITHM = TagType:ENUM | 2,
+
+    /**
+     * Tag::KEY_SIZE pecifies the size, in bits, of the key, measuring in the normal way for the
+     * key's algorithm.  For example, for RSA keys, Tag::KEY_SIZE specifies the size of the public
+     * modulus.  For AES keys it specifies the length of the secret key material.  For 3DES keys it
+     * specifies the length of the key material, not counting parity bits (though parity bits must
+     * be provided for import, etc.).  Since only three-key 3DES keys are supported, 3DES
+     * Tag::KEY_SIZE must be 168.
+     *
+     * Must be hardware-enforced.
+     */
+    KEY_SIZE = TagType:UINT | 3,
+
+    /**
+     * Tag::BLOCK_MODE specifies the block cipher mode(s) with which the key may be used.  This tag
+     * is only relevant to AES and 3DES keys.  Possible values are defined by the BlockMode enum.
+     *
+     * This tag is repeatable for key generation/import.  For AES and 3DES operations the caller
+     * must specify a Tag::BLOCK_MODE in the additionalParams argument of begin().  If the mode is
+     * missing or the specified mode is not in the modes specified for the key during
+     * generation/import, the operation must fail with ErrorCode::INCOMPATIBLE_BLOCK_MODE.
+     *
+     * Must be hardware-enforced.
+     */
+    BLOCK_MODE = TagType:ENUM_REP | 4, /* BlockMode. */
+
+    /**
+     * Tag::DIGEST specifies the digest algorithms that may be used with the key to perform signing
+     * and verification operations.  This tag is relevant to RSA, ECDSA and HMAC keys.  Possible
+     * values are defined by the Digest enum.
+     *
+     * This tag is repeatable for key generation/import.  For signing and verification operations,
+     * the caller must specify a digest in the additionalParams argument of begin().  If the digest
+     * is missing or the specified digest is not in the digests associated with the key, the
+     * operation must fail with ErrorCode::INCOMPATIBLE_DIGEST.
+     *
+     * Must be hardware-enforced.
+     */
+    DIGEST = TagType:ENUM_REP | 5,
+
+    /**
+     * Tag::PADDING specifies the padding modes that may be used with the key.  This tag is relevant
+     * to RSA, AES and 3DES keys.  Possible values are defined by the PaddingMode enum.
+     *
+     * PaddingMode::RSA_OAEP and PaddingMode::RSA_PKCS1_1_5_ENCRYPT are used only for RSA
+     * encryption/decryption keys and specify RSA OAEP padding and RSA PKCS#1 v1.5 randomized
+     * padding, respectively.  PaddingMode::RSA_PSS and PaddingMode::RSA_PKCS1_1_5_SIGN are used
+     * only for RSA signing/verification keys and specify RSA PSS padding and RSA PKCS#1 v1.5
+     * deterministic padding, respectively.
+     *
+     * PaddingMode::NONE may be used with either RSA, AES or 3DES keys.  For AES or 3DES keys, if
+     * PaddingMode::NONE is used with block mode ECB or CBC and the data to be encrypted or
+     * decrypted is not a multiple of the AES block size in length, the call to finish() must fail
+     * with ErrorCode::INVALID_INPUT_LENGTH.
+     *
+     * PaddingMode::PKCS7 may only be used with AES and 3DES keys, and only with ECB and CBC modes.
+     *
+     * In any case, if the caller specifies a padding mode that is not usable with the key's
+     * algorithm, the generation or import method must return ErrorCode::INCOMPATIBLE_PADDING_MODE.
+     *
+     * This tag is repeatable.  A padding mode must be specified in the call to begin().  If the
+     * specified mode is not authorized for the key, the operation must fail with
+     * ErrorCode::INCOMPATIBLE_BLOCK_MODE.
+     *
+     * Must be hardware-enforced.
+     */
+    PADDING = TagType:ENUM_REP | 6,
+
+    /**
+     * Tag::CALLER_NONCE specifies that the caller can provide a nonce for nonce-requiring
+     * operations.  This tag is boolean, so the possible values are true (if the tag is present) and
+     * false (if the tag is not present).
+     *
+     * This tag is used only for AES and 3DES keys, and is only relevant for CBC, CTR and GCM block
+     * modes.  If the tag is not present in a key's authorization list, implementations must reject
+     * any operation that provides Tag::NONCE to begin() with ErrorCode::CALLER_NONCE_PROHIBITED.
+     *
+     * Must be hardware-enforced.
+     */
+    CALLER_NONCE = TagType:BOOL | 7,
+
+    /**
+     * Tag::MIN_MAC_LENGTH specifies the minimum length of MAC that can be requested or verified
+     * with this key for HMAC keys and AES keys that support GCM mode.
+     *
+     * This value is the minimum MAC length, in bits.  It must be a multiple of 8 bits.  For HMAC
+     * keys, the value must be least 64 and no more than 512.  For GCM keys, the value must be at
+     * least 96 and no more than 128.  If the provided value violates these requirements,
+     * generateKey() or importKey() must return ErrorCode::UNSUPPORTED_KEY_SIZE.
+     *
+     * Must be hardware-enforced.
+     */
+    MIN_MAC_LENGTH = TagType:UINT | 8,
+
+    // Tag 9 reserved
+
+    /**
+     * Tag::EC_CURVE specifies the elliptic curve.  EC key generation requests may have
+     * Tag:EC_CURVE, Tag::KEY_SIZE, or both.  If both are provided and the size and curve do not
+     * match, IKeymasterDevice must return ErrorCode::INVALID_ARGUMENT.
+     *
+     * Must be hardware-enforced.
+     */
+    EC_CURVE = TagType:ENUM | 10,
+
+    /**
+     * Tag::RSA_PUBLIC_EXPONENT specifies the value of the public exponent for an RSA key pair.
+     * This tag is relevant only to RSA keys, and is required for all RSA keys.
+     *
+     * The value is a 64-bit unsigned integer that satisfies the requirements of an RSA public
+     * exponent.  This value must be a prime number.  IKeymasterDevice implementations must support
+     * the value 2^16+1 and may support other reasonable values.  If no exponent is specified or if
+     * the specified exponent is not supported, key generation must fail with
+     * ErrorCode::INVALID_ARGUMENT.
+     *
+     * Must be hardware-enforced.
+     */
+    RSA_PUBLIC_EXPONENT = TagType:ULONG | 200,
+
+    // Tag 201 reserved
+
+    /**
+     * Tag::INCLUDE_UNIQUE_ID is specified during key generation to indicate that an attestation
+     * certificate for the generated key should contain an application-scoped and time-bounded
+     * device-unique ID.  See Tag::UNIQUE_ID.
+     *
+     * Must be hardware-enforced.
+     */
+    INCLUDE_UNIQUE_ID = TagType:BOOL | 202,
+
+    /**
+     * Tag::BLOB_USAGE_REQUIREMENTS specifies the necessary system environment conditions for the
+     * generated key to be used.  Possible values are defined by the KeyBlobUsageRequirements enum.
+     *
+     * This tag is specified by the caller during key generation or import to require that the key
+     * is usable in the specified condition.  If the caller specifies Tag::BLOB_USAGE_REQUIREMENTS
+     * with value KeyBlobUsageRequirements::STANDALONE the IKeymasterDevice must return a key blob
+     * that can be used without file system support.  This is critical for devices with encrypted
+     * disks, where the file system may not be available until after a Keymaster key is used to
+     * decrypt the disk.
+     *
+     * Must be hardware-enforced.
+     */
+    BLOB_USAGE_REQUIREMENTS = TagType:ENUM | 301,
+
+    /**
+     * Tag::BOOTLOADER_ONLY specifies only the bootloader can use the key.
+     *
+     * Any attempt to use a key with Tag::BOOTLOADER_ONLY from the Android system must fail with
+     * ErrorCode::INVALID_KEY_BLOB.
+     *
+     * Must be hardware-enforced.
+     */
+    BOOTLOADER_ONLY = TagType:BOOL | 302,
+
+    /**
+     * Tag::ROLLBACK_RESISTANCE specifies that the key has rollback resistance, meaning that when
+     * deleted with deleteKey() or deleteAllKeys(), the key is guaranteed to be permanently deleted
+     * and unusable.  It's possible that keys without this tag could be deleted and then restored
+     * from backup.
+     *
+     * This tag is specified by the caller during key generation or import to require.  If the
+     * IKeymasterDevice cannot guarantee rollback resistance for the specified key, it must return
+     * ErrorCode::ROLLBACK_RESISTANCE_UNAVAILABLE.  IKeymasterDevice implementations are not
+     * required to support rollback resistance.
+     *
+     * Must be hardwared-enforced.
+     */
+    ROLLBACK_RESISTANCE = TagType:BOOL | 303,
+
+    // Reserved for future use.
+    HARDWARE_TYPE = TagType:ENUM | 304,
+
+    /**
+     * Tag::ACTIVE_DATETIME specifies the date and time at which the key becomes active, in
+     * milliseconds since Jan 1, 1970.  If a key with this tag is used prior to the specified date
+     * and time, IKeymasterDevice::begin() must return ErrorCode::KEY_NOT_YET_VALID;
+     *
+     * Need not be hardware-enforced.
+     */
+    ACTIVE_DATETIME = TagType:DATE | 400, /* Start of validity. */
+
+    /**
+     * Tag::ORIGINATION_EXPIRE_DATETIME specifies the date and time at which the key expires for
+     * signing and encryption purposes.  After this time, any attempt to use a key with
+     * KeyPurpose::SIGN or KeyPurpose::ENCRYPT provided to begin() must fail with
+     * ErrorCode::KEY_EXPIRED.
+     *
+     * The value is a 64-bit integer representing milliseconds since January 1, 1970.
+     *
+     * Need not be hardware-enforced.
+     */
+    ORIGINATION_EXPIRE_DATETIME = TagType:DATE | 401,
+
+    /**
+     * Tag::USAGE_EXPIRE_DATETIME specifies the date and time at which the key expires for
+     * verification and decryption purposes.  After this time, any attempt to use a key with
+     * KeyPurpose::VERIFY or KeyPurpose::DECRYPT provided to begin() must fail with
+     * ErrorCode::KEY_EXPIRED.
+     *
+     * The value is a 64-bit integer representing milliseconds since January 1, 1970.
+     *
+     * Need not be hardware-enforced.
+     */
+    USAGE_EXPIRE_DATETIME = TagType:DATE | 402,
+
+    /**
+     * Tag::MIN_SECONDS_BETWEEN_OPS specifies the minimum amount of time that elapses between
+     * allowed operations using a key.  This can be used to rate-limit uses of keys in contexts
+     * where unlimited use may enable brute force attacks.
+     *
+     * The value is a 32-bit integer representing seconds between allowed operations.
+     *
+     * When a key with this tag is used in an operation, the IKeymasterDevice must start a timer
+     * during the finish() or abort() call.  Any call to begin() that is received before the timer
+     * indicates that the interval specified by Tag::MIN_SECONDS_BETWEEN_OPS has elapsed must fail
+     * with ErrorCode::KEY_RATE_LIMIT_EXCEEDED.  This implies that the IKeymasterDevice must keep a
+     * table of use counters for keys with this tag.  Because memory is often limited, this table
+     * may have a fixed maximum size and Keymaster may fail operations that attempt to use keys with
+     * this tag when the table is full.  The table must acommodate at least 8 in-use keys and
+     * aggressively reuse table slots when key minimum-usage intervals expire.  If an operation
+     * fails because the table is full, Keymaster returns ErrorCode::TOO_MANY_OPERATIONS.
+     *
+     * Must be hardware-enforced.
+     */
+    MIN_SECONDS_BETWEEN_OPS = TagType:UINT | 403,
+
+    /**
+     * Tag::MAX_USES_PER_BOOT specifies the maximum number of times that a key may be used between
+     * system reboots.  This is another mechanism to rate-limit key use.
+     *
+     * The value is a 32-bit integer representing uses per boot.
+     *
+     * When a key with this tag is used in an operation, a key-associated counter must be
+     * incremented during the begin() call.  After the key counter has exceeded this value, all
+     * subsequent attempts to use the key must fail with ErrorCode::MAX_OPS_EXCEEDED, until the
+     * device is restarted.  This implies that the IKeymasterDevice must keep a table of use
+     * counters for keys with this tag.  Because Keymaster memory is often limited, this table can
+     * have a fixed maximum size and Keymaster can fail operations that attempt to use keys with
+     * this tag when the table is full.  The table needs to acommodate at least 8 keys.  If an
+     * operation fails because the table is full, IKeymasterDevice must
+     * ErrorCode::TOO_MANY_OPERATIONS.
+     *
+     * Must be hardware-enforced.
+     */
+    MAX_USES_PER_BOOT = TagType:UINT | 404,
+
+    /**
+     * Tag::USER_ID specifies the ID of the Android user that is permitted to use the key.
+     *
+     * Must not be hardware-enforced.
+     */
+    USER_ID = TagType:UINT | 501,
+
+    /**
+     * Tag::USER_SECURE_ID specifies that a key may only be used under a particular secure user
+     * authentication state.  This tag is mutually exclusive with Tag::NO_AUTH_REQUIRED.
+     *
+     * The value is a 64-bit integer specifying the authentication policy state value which must be
+     * present in the userId or authenticatorId field of a HardwareAuthToken provided to begin(),
+     * update(), or finish().  If a key with Tag::USER_SECURE_ID is used without a HardwareAuthToken
+     * with the matching userId or authenticatorId, the IKeymasterDevice must return
+     * ErrorCode::KEY_USER_NOT_AUTHENTICATED.
+     *
+     * Tag::USER_SECURE_ID interacts with Tag::AUTH_TIMEOUT in a very important way.  If
+     * Tag::AUTH_TIMEOUT is present in the key's characteristics then the key is a "timeout-based"
+     * key, and may only be used if the difference between the current time when begin() is called
+     * and the timestamp in the HardwareAuthToken is less than the value in Tag::AUTH_TIMEOUT * 1000
+     * (the multiplier is because Tag::AUTH_TIMEOUT is in seconds, but the HardwareAuthToken
+     * timestamp is in milliseconds).  Otherwise the IKeymasterDevice must returrn
+     * ErrorCode::KEY_USER_NOT_AUTHENTICATED.
+     *
+     * If Tag::AUTH_TIMEOUT is not present, then the key is an "auth-per-operation" key.  In this
+     * case, begin() must not require a HardwareAuthToken with appropriate contents.  Instead,
+     * update() and finish() must receive a HardwareAuthToken with Tag::USER_SECURE_ID value in
+     * userId or authenticatorId fields, and the current operation's operation handle in the
+     * challenge field.  Otherwise the IKeymasterDevice must returrn
+     * ErrorCode::KEY_USER_NOT_AUTHENTICATED.
+     *
+     * This tag is repeatable.  If repeated, and any one of the values matches the HardwareAuthToken
+     * as described above, the key is authorized for use.  Otherwise the operation must fail with
+     * ErrorCode::KEY_USER_NOT_AUTHENTICATED.
+     *
+     * Must be hardware-enforced.
+     */
+    USER_SECURE_ID = TagType:ULONG_REP | 502, /* Secure ID of authorized user or authenticator(s).
+                                                 * Disallowed if NO_AUTH_REQUIRED is present. */
+
+    /**
+     * Tag::NO_AUTH_REQUIRED specifies that no authentication is required to use this key.  This tag
+     * is mutually exclusive with Tag::USER_SECURE_ID.
+     *
+     * Must be hardware-enforced.
+     */
+    NO_AUTH_REQUIRED = TagType:BOOL | 503, /* If key is usable without authentication. */
+
+    /**
+     * Tag::USER_AUTH_TYPE specifies the types of user authenticators that may be used to authorize
+     * this key.
+     *
+     * The value is one or more values from HardwareAuthenticatorType, ORed together.
+     *
+     * When IKeymasterDevice is requested to perform an operation with a key with this tag, it must
+     * receive a HardwareAuthToken and one or more bits must be set in both the HardwareAuthToken's
+     * authenticatorType field and the Tag::USER_AUTH_TYPE value.  That is, it must be true that
+     *
+     *    (token.authenticatorType & tag_user_auth_type) != 0
+     *
+     * where token.authenticatorType is the authenticatorType field of the HardwareAuthToken and
+     * tag_user_auth_type is the value of Tag:USER_AUTH_TYPE.
+     *
+     * Must be hardware-enforced.
+     */
+    USER_AUTH_TYPE = TagType:ENUM | 504,
+
+    /**
+     * Tag::AUTH_TIMEOUT specifies the time in seconds for which the key is authorized for use,
+     * after user authentication.  If
+     * Tag::USER_SECURE_ID is present and this tag is not, then the key requies authentication for
+     * every usage (see begin() for the details of the authentication-per-operation flow).
+     *
+     * The value is a 32-bit integer specifying the time in seconds after a successful
+     * authentication of the user specified by Tag::USER_SECURE_ID with the authentication method
+     * specified by Tag::USER_AUTH_TYPE that the key can be used.
+     *
+     * Must be hardware-enforced.
+     */
+    AUTH_TIMEOUT = TagType:UINT | 505,
+
+    /**
+     * Tag::ALLOW_WHILE_ON_BODY specifies that the key may be used after authentication timeout if
+     * device is still on-body (requires on-body sensor).
+     *
+     * Cannot be hardware-enforced.
+     */
+    ALLOW_WHILE_ON_BODY = TagType:BOOL | 506,
+
+    /**
+     * TRUSTED_USER_PRESENCE_REQUIRED is an optional feature that specifies that this key must be
+     * unusable except when the user has provided proof of physical presence.  Proof of physical
+     * presence must be a signal that cannot be triggered by an attacker who doesn't have one of:
+     *
+     *    a) Physical control of the device or
+     *
+     *    b) Control of the secure environment that holds the key.
+     *
+     * For instance, proof of user identity may be considered proof of presence if it meets the
+     * requirements.  However, proof of identity established in one security domain (e.g. TEE) does
+     * not constitute proof of presence in another security domain (e.g. StrongBox), and no
+     * mechanism analogous to the authentication token is defined for communicating proof of
+     * presence across security domains.
+     *
+     * Some examples:
+     *
+     *     A hardware button hardwired to a pin on a StrongBox device in such a way that nothing
+     *     other than a button press can trigger the signal constitutes proof of physical presence
+     *     for StrongBox keys.
+     *
+     *     Fingerprint authentication provides proof of presence (and identity) for TEE keys if the
+     *     TEE has exclusive control of the fingerprint scanner and performs fingerprint matching.
+     *
+     *     Password authentication does not provide proof of presence to either TEE or StrongBox,
+     *     even if TEE or StrongBox does the password matching, because password input is handled by
+     *     the non-secure world, which means an attacker who has compromised Android can spoof
+     *     password authentication.
+     *
+     * Note that no mechanism is defined for delivering proof of presence to an IKeymasterDevice,
+     * except perhaps as implied by an auth token.  This means that Keymaster must be able to check
+     * proof of presence some other way.  Further, the proof of presence must be performed between
+     * begin() and the first call to update() or finish().  If the first update() or the finish()
+     * call is made without proof of presence, the keymaster method must return
+     * ErrorCode::PROOF_OF_PRESENCE_REQUIRED and abort the operation.  The caller must delay the
+     * update() or finish() call until proof of presence has been provided, which means the caller
+     * must also have some mechanism for verifying that the proof has been provided.
+     *
+     * Only one operation requiring TUP may be in flight at a time.  If begin() has already been
+     * called on one key with TRUSTED_USER_PRESENCE_REQUIRED, and another begin() comes in for that
+     * key or another with TRUSTED_USER_PRESENCE_REQUIRED, Keymaster must return
+     * ErrorCode::CONCURRENT_PROOF_OF_PRESENCE_REQUESTED.
+     *
+     * Must be hardware-enforced.
+     */
+    TRUSTED_USER_PRESENCE_REQUIRED = TagType:BOOL | 507,
+
+    /** Tag::TRUSTED_CONFIRMATION_REQUIRED is only applicable to keys with KeyPurpose SIGN, and
+     *  specifies that this key must not be usable unless the user provides confirmation of the data
+     *  to be signed.  Confirmation is proven to keymaster via an approval token.  See
+     *  CONFIRMATION_TOKEN, as well as the ConfirmatinUI HAL.
+     *
+     * If an attempt to use a key with this tag does not have a cryptographically valid
+     * CONFIRMATION_TOKEN provided to finish() or if the data provided to update()/finish() does not
+     * match the data described in the token, keymaster must return NO_USER_CONFIRMATION.
+     *
+     * Must be hardware-enforced.
+     */
+    TRUSTED_CONFIRMATION_REQUIRED = TagType:BOOL | 508,
+
+    /**
+     * Tag::UNLOCKED_DEVICE_REQUIRED specifies that the key may only be used when the device is
+     * unlocked.
+     *
+     * Must be software-enforced.
+     */
+    UNLOCKED_DEVICE_REQUIRED = TagType:BOOL | 509,
+
+    /**
+     * Tag::APPLICATION_ID.  When provided to generateKey or importKey, this tag specifies data
+     * that is necessary during all uses of the key.  In particular, calls to exportKey() and
+     * getKeyCharacteristics() must provide the same value to the clientId parameter, and calls to
+     * begin must provide this tag and the same associated data as part of the inParams set.  If
+     * the correct data is not provided, the method must return ErrorCode::INVALID_KEY_BLOB.
+     *
+     * The content of this tag must be bound to the key cryptographically, meaning it must not be
+     * possible for an adversary who has access to all of the secure world secrets but does not have
+     * access to the tag content to decrypt the key without brute-forcing the tag content, which
+     * applications can prevent by specifying sufficiently high-entropy content.
+     *
+     * Must never appear in KeyCharacteristics.
+     */
+    APPLICATION_ID = TagType:BYTES | 601,
+
+    /*
+     * Semantically unenforceable tags, either because they have no specific meaning or because
+     * they're informational only.
+     */
+
+    /**
+     * Tag::APPLICATION_DATA.  When provided to generateKey or importKey, this tag specifies data
+     * that is necessary during all uses of the key.  In particular, calls to exportKey() and
+     * getKeyCharacteristics() must provide the same value to the appData parameter, and calls to
+     * begin must provide this tag and the same associated data as part of the inParams set.  If
+     * the correct data is not provided, the method must return ErrorCode::INVALID_KEY_BLOB.
+     *
+     * The content of this tag msut be bound to the key cryptographically, meaning it must not be
+     * possible for an adversary who has access to all of the secure world secrets but does not have
+     * access to the tag content to decrypt the key without brute-forcing the tag content, which
+     * applications can prevent by specifying sufficiently high-entropy content.
+     *
+     * Must never appear in KeyCharacteristics.
+     */
+    APPLICATION_DATA = TagType:BYTES | 700,
+
+    /**
+     * Tag::CREATION_DATETIME specifies the date and time the key was created, in milliseconds since
+     * January 1, 1970.  This tag is optional and informational only.
+     *
+     * Tag::CREATED is informational only, and not enforced by anything.  Must be in the
+     * software-enforced list, if provided.
+     */
+    CREATION_DATETIME = TagType:DATE | 701,
+
+    /**
+     * Tag::ORIGIN specifies where the key was created, if known.  This tag must not be specified
+     * during key generation or import, and must be added to the key characteristics by the
+     * IKeymasterDevice.  The possible values are defined in the KeyOrigin enum.
+     *
+     * Must be hardware-enforced.
+     */
+    ORIGIN = TagType:ENUM | 702,
+
+    // 703 is unused.
+
+    /**
+     * Tag::ROOT_OF_TRUST specifies the root of trust, the key used by verified boot to validate the
+     * operating system booted (if any).  This tag is never provided to or returned from Keymaster
+     * in the key characteristics.  It exists only to define the tag for use in the attestation
+     * record.
+     *
+     * Must never appear in KeyCharacteristics.
+     */
+    ROOT_OF_TRUST = TagType:BYTES | 704,
+
+    /**
+     * Tag::OS_VERSION specifies the system OS version with which the key may be used.  This tag is
+     * never sent to the IKeymasterDevice, but is added to the hardware-enforced authorization list
+     * by the TA.  Any attempt to use a key with a Tag::OS_VERSION value different from the
+     * currently-running OS version must cause begin(), getKeyCharacteristics() or exportKey() to
+     * return ErrorCode::KEY_REQUIRES_UPGRADE.  See upgradeKey() for details.
+     *
+     * The value of the tag is an integer of the form MMmmss, where MM is the major version number,
+     * mm is the minor version number, and ss is the sub-minor version number.  For example, for a
+     * key generated on Android version 4.0.3, the value would be 040003.
+     *
+     * The IKeymasterDevice HAL must read the current OS version from the system property
+     * ro.build.version.release and deliver it to the secure environment when the HAL is first
+     * loaded (mechanism is implementation-defined).  The secure environment must not accept another
+     * version until after the next boot.  If the content of ro.build.version.release has additional
+     * version information after the sub-minor version number, it must not be included in
+     * Tag::OS_VERSION.  If the content is non-numeric, the secure environment must use 0 as the
+     * system version.
+     *
+     * Must be hardware-enforced.
+     */
+    OS_VERSION = TagType:UINT | 705,
+
+    /**
+     * Tag::OS_PATCHLEVEL specifies the system security patch level with which the key may be used.
+     * This tag is never sent to the keymaster TA, but is added to the hardware-enforced
+     * authorization list by the TA.  Any attempt to use a key with a Tag::OS_PATCHLEVEL value
+     * different from the currently-running system patchlevel must cause begin(),
+     * getKeyCharacteristics() or exportKey() to return ErrorCode::KEY_REQUIRES_UPGRADE.  See
+     * upgradeKey() for details.
+     *
+     * The value of the tag is an integer of the form YYYYMM, where YYYY is the four-digit year of
+     * the last update and MM is the two-digit month of the last update.  For example, for a key
+     * generated on an Android device last updated in December 2015, the value would be 201512.
+     *
+     * The IKeymasterDevice HAL must read the current system patchlevel from the system property
+     * ro.build.version.security_patch and deliver it to the secure environment when the HAL is
+     * first loaded (mechanism is implementation-defined).  The secure environment must not accept
+     * another patchlevel until after the next boot.
+     *
+     * Must be hardware-enforced.
+     */
+    OS_PATCHLEVEL = TagType:UINT | 706,
+
+    /**
+     * Tag::UNIQUE_ID specifies a unique, time-based identifier.  This tag is never provided to or
+     * returned from Keymaster in the key characteristics.  It exists only to define the tag for use
+     * in the attestation record.
+     *
+     * When a key with Tag::INCLUDE_UNIQUE_ID is attested, the unique ID is added to the attestation
+     * record.  The value is a 128-bit hash that is unique per device and per calling application,
+     * and changes monthly and on most password resets.  It is computed with:
+     *
+     *    HMAC_SHA256(T || C || R, HBK)
+     *
+     * Where:
+     *
+     *    T is the "temporal counter value", computed by dividing the value of
+     *      Tag::CREATION_DATETIME by 2592000000, dropping any remainder.  T changes every 30 days
+     *      (2592000000 = 30 * 24 * 60 * 60 * 1000).
+     *
+     *    C is the value of Tag::ATTESTATION_APPLICATION_ID that is provided to attestKey().
+     *
+     *    R is 1 if Tag::RESET_SINCE_ID_ROTATION was provided to attestKey or 0 if the tag was not
+     *      provided.
+     *
+     *    HBK is a unique hardware-bound secret known to the secure environment and never revealed
+     *    by it.  The secret must contain at least 128 bits of entropy and be unique to the
+     *    individual device (probabilistic uniqueness is acceptable).
+     *
+     *    HMAC_SHA256 is the HMAC function, with SHA-2-256 as the hash.
+     *
+     * The output of the HMAC function must be truncated to 128 bits.
+     *
+     * Must be hardware-enforced.
+     */
+    UNIQUE_ID = TagType:BYTES | 707,
+
+    /**
+     * Tag::ATTESTATION_CHALLENGE is used to deliver a "challenge" value to the attestKey() method,
+     * which must place the value in the KeyDescription SEQUENCE of the attestation extension.  See
+     * attestKey().
+     *
+     * Must never appear in KeyCharacteristics.
+     */
+    ATTESTATION_CHALLENGE = TagType:BYTES | 708, /* Used to provide challenge in attestation */
+
+    /**
+     * Tag::ATTESTATION_APPLICATION_ID identifies the set of applications which may use a key, used
+     * only with attestKey().
+     *
+     * The content of Tag::ATTESTATION_APPLICATION_ID is a DER-encoded ASN.1 structure, with the
+     * following schema:
+     *
+     * AttestationApplicationId ::= SEQUENCE {
+     *     packageInfoRecords SET OF PackageInfoRecord,
+     *     signatureDigests   SET OF OCTET_STRING,
+     * }
+     *
+     * PackageInfoRecord ::= SEQUENCE {
+     *     packageName        OCTET_STRING,
+     *     version            INTEGER,
+     * }
+     *
+     * See system/security/keystore/keystore_attestation_id.cpp for details of construction.
+     * IKeymasterDevice implementers do not need to create or parse the ASN.1 structure, but only
+     * copy the tag value into the attestation record.  The DER-encoded string must not exceed 1 KiB
+     * in length.
+     *
+     * Cannot be hardware-enforced.
+     */
+    ATTESTATION_APPLICATION_ID = TagType:BYTES | 709,
+
+    /**
+     * Tag::ATTESTATION_ID_BRAND provides the device's brand name, as returned by Build.BRAND in
+     * Android, to attestKey().  This field must be set only when requesting attestation of the
+     * device's identifiers.
+     *
+     * If the device does not support ID attestation (or destroyAttestationIds() was previously
+     * called and the device can no longer attest its IDs), any key attestation request that
+     * includes this tag must fail with ErrorCode::CANNOT_ATTEST_IDS.
+     *
+     * Must never appear in KeyCharacteristics.
+     */
+    ATTESTATION_ID_BRAND = TagType:BYTES | 710,
+
+    /**
+     * Tag::ATTESTATION_ID_DEVICE provides the device's device name, as returned by Build.DEVICE in
+     * Android, to attestKey().  This field must be set only when requesting attestation of the
+     * device's identifiers.
+     *
+     * If the device does not support ID attestation (or destroyAttestationIds() was previously
+     * called and the device can no longer attest its IDs), any key attestation request that
+     * includes this tag must fail with ErrorCode::CANNOT_ATTEST_IDS.
+     *
+     * Must never appear in KeyCharacteristics.
+     */
+    ATTESTATION_ID_DEVICE = TagType:BYTES | 711,
+
+    /**
+     * Tag::ATTESTATION_ID_PRODUCT provides the device's product name, as returned by Build.PRODUCT
+     * in Android, to attestKey().  This field must be set only when requesting attestation of the
+     * device's identifiers.
+     *
+     * If the device does not support ID attestation (or destroyAttestationIds() was previously
+     * called and the device can no longer attest its IDs), any key attestation request that
+     * includes this tag must fail with ErrorCode::CANNOT_ATTEST_IDS.
+     *
+     * Must never appear in KeyCharacteristics.
+     */
+    ATTESTATION_ID_PRODUCT = TagType:BYTES | 712,
+
+    /**
+     * Tag::ATTESTATION_ID_SERIAL the device's serial number.  This field must be set only when
+     * requesting attestation of the device's identifiers.
+     *
+     * If the device does not support ID attestation (or destroyAttestationIds() was previously
+     * called and the device can no longer attest its IDs), any key attestation request that
+     * includes this tag must fail with ErrorCode::CANNOT_ATTEST_IDS.
+     *
+     * Must never appear in KeyCharacteristics.
+     */
+    ATTESTATION_ID_SERIAL = TagType:BYTES | 713,
+
+    /**
+     * Tag::ATTESTATION_ID_IMEI provides the IMEIs for all radios on the device to attestKey().
+     * This field must be set only when requesting attestation of the device's identifiers.
+     *
+     * If the device does not support ID attestation (or destroyAttestationIds() was previously
+     * called and the device can no longer attest its IDs), any key attestation request that
+     * includes this tag must fail with ErrorCode::CANNOT_ATTEST_IDS.
+     *
+     * Must never appear in KeyCharacteristics.
+     */
+    ATTESTATION_ID_IMEI = TagType:BYTES | 714, /* Used to provide the device's IMEI to be included
+                                                  * in attestation */
+
+    /**
+     * Tag::ATTESTATION_ID_MEID provides the MEIDs for all radios on the device to attestKey().
+     * This field must be set only when requesting attestation of the device's identifiers.
+     *
+     * If the device does not support ID attestation (or destroyAttestationIds() was previously
+     * called and the device can no longer attest its IDs), any key attestation request that
+     * includes this tag must fail with ErrorCode::CANNOT_ATTEST_IDS.
+     *
+     * Must never appear in KeyCharacteristics.
+     */
+    ATTESTATION_ID_MEID = TagType:BYTES | 715, /* Used to provide the device's MEID to be included
+                                                  * in attestation */
+
+    /**
+     * Tag::ATTESTATION_ID_MANUFACTURER provides the device's manufacturer name, as returned by
+     * Build.MANUFACTURER in Android, to attstKey().  This field must be set only when requesting
+     * attestation of the device's identifiers.
+     *
+     * If the device does not support ID attestation (or destroyAttestationIds() was previously
+     * called and the device can no longer attest its IDs), any key attestation request that
+     * includes this tag must fail with ErrorCode::CANNOT_ATTEST_IDS.
+     *
+     * Must never appear in KeyCharacteristics.
+     */
+    ATTESTATION_ID_MANUFACTURER = TagType:BYTES | 716,
+
+    /**
+     * Tag::ATTESTATION_ID_MODEL provides the device's model name, as returned by Build.MODEL in
+     * Android, to attestKey().  This field must be set only when requesting attestation of the
+     * device's identifiers.
+     *
+     * If the device does not support ID attestation (or destroyAttestationIds() was previously
+     * called and the device can no longer attest its IDs), any key attestation request that
+     * includes this tag must fail with ErrorCode::CANNOT_ATTEST_IDS.
+     *
+     * Must never appear in KeyCharacteristics.
+     */
+    ATTESTATION_ID_MODEL = TagType:BYTES | 717,
+
+    /**
+     * Tag::VENDOR_PATCHLEVEL specifies the vendor image security patch level with which the key may
+     * be used.  This tag is never sent to the keymaster TA, but is added to the hardware-enforced
+     * authorization list by the TA.  Any attempt to use a key with a Tag::VENDOR_PATCHLEVEL value
+     * different from the currently-running system patchlevel must cause begin(),
+     * getKeyCharacteristics() or exportKey() to return ErrorCode::KEY_REQUIRES_UPGRADE.  See
+     * upgradeKey() for details.
+     *
+     * The value of the tag is an integer of the form YYYYMMDD, where YYYY is the four-digit year of
+     * the last update, MM is the two-digit month and DD is the two-digit day of the last
+     * update.  For example, for a key generated on an Android device last updated on June 5, 2018,
+     * the value would be 20180605.
+     *
+     * The IKeymasterDevice HAL must read the current vendor patchlevel from the system property
+     * ro.vendor.build.security_patch and deliver it to the secure environment when the HAL is first
+     * loaded (mechanism is implementation-defined).  The secure environment must not accept another
+     * patchlevel until after the next boot.
+     *
+     * Must be hardware-enforced.
+     */
+    VENDOR_PATCHLEVEL = TagType:UINT | 718,
+
+    /**
+     * Tag::BOOT_PATCHLEVEL specifies the boot image (kernel) security patch level with which the
+     * key may be used.  This tag is never sent to the keymaster TA, but is added to the
+     * hardware-enforced authorization list by the TA.  Any attempt to use a key with a
+     * Tag::BOOT_PATCHLEVEL value different from the currently-running system patchlevel must
+     * cause begin(), getKeyCharacteristics() or exportKey() to return
+     * ErrorCode::KEY_REQUIRES_UPGRADE.  See upgradeKey() for details.
+     *
+     * The value of the tag is an integer of the form YYYYMMDD, where YYYY is the four-digit year of
+     * the last update, MM is the two-digit month and DD is the two-digit day of the last
+     * update.  For example, for a key generated on an Android device last updated on June 5, 2018,
+     * the value would be 20180605.  If the day is not known, 00 may be substituted.
+     *
+     * During each boot, the bootloader must provide the patch level of the boot image to the secure
+     * envirionment (mechanism is implementation-defined).
+     *
+     * Must be hardware-enforced.
+     */
+    BOOT_PATCHLEVEL = TagType:UINT | 719,
+
+    /**
+     * Tag::ASSOCIATED_DATA Provides "associated data" for AES-GCM encryption or decryption.  This
+     * tag is provided to update and specifies data that is not encrypted/decrypted, but is used in
+     * computing the GCM tag.
+     *
+     * Must never appear KeyCharacteristics.
+     */
+    ASSOCIATED_DATA = TagType:BYTES | 1000,
+
+    /**
+     * Tag::NONCE is used to provide or return a nonce or Initialization Vector (IV) for AES-GCM,
+     * AES-CBC, AES-CTR, or 3DES-CBC encryption or decryption.  This tag is provided to begin during
+     * encryption and decryption operations.  It is only provided to begin if the key has
+     * Tag::CALLER_NONCE.  If not provided, an appropriate nonce or IV must be randomly generated by
+     * Keymaster and returned from begin.
+     *
+     * The value is a blob, an arbitrary-length array of bytes.  Allowed lengths depend on the mode:
+     * GCM nonces are 12 bytes in length; AES-CBC and AES-CTR IVs are 16 bytes in length, 3DES-CBC
+     * IVs are 8 bytes in length.
+     *
+     * Must never appear in KeyCharacteristics.
+     */
+    NONCE = TagType:BYTES | 1001,
+
+    /**
+     * Tag::MAC_LENGTH provides the requested length of a MAC or GCM authentication tag, in bits.
+     *
+     * The value is the MAC length in bits.  It must be a multiple of 8 and at least as large as the
+     * value of Tag::MIN_MAC_LENGTH associated with the key.  Otherwise, begin() must return
+     * ErrorCode::INVALID_MAC_LENGTH.
+     *
+     * Must never appear in KeyCharacteristics.
+     */
+    MAC_LENGTH = TagType:UINT | 1003,
+
+    /**
+     * Tag::RESET_SINCE_ID_ROTATION specifies whether the device has been factory reset since the
+     * last unique ID rotation.  Used for key attestation.
+     *
+     * Must never appear in KeyCharacteristics.
+     */
+    RESET_SINCE_ID_ROTATION = TagType:BOOL | 1004,
+
+    /**
+     * Tag::CONFIRMATION_TOKEN is used to deliver a cryptographic token proving that the user
+     * confirmed a signing request.  The content is a full-length HMAC-SHA256 value.  See the
+     * ConfirmationUI HAL for details of token computation.
+     *
+     * Must never appear in KeyCharacteristics.
+     */
+    CONFIRMATION_TOKEN = TagType:BYTES | 1005,
+};
+
+/**
+ * Algorithms provided by IKeymasterDevice implementations.
+ */
+enum Algorithm : uint32_t {
+    /** Asymmetric algorithms. */
+    RSA = 1,
+    // 2 removed, do not reuse.
+    EC = 3,
+
+    /** Block cipher algorithms */
+    AES = 32,
+    TRIPLE_DES = 33,
+
+    /** MAC algorithms */
+    HMAC = 128,
+};
+
+/**
+ * Symmetric block cipher modes provided by keymaster implementations.
+ */
+enum BlockMode : uint32_t {
+    /*
+     * Unauthenticated modes, usable only for encryption/decryption and not generally recommended
+     * except for compatibility with existing other protocols.
+     */
+    ECB = 1,
+    CBC = 2,
+    CTR = 3,
+
+    /*
+     * Authenticated modes, usable for encryption/decryption and signing/verification.  Recommended
+     * over unauthenticated modes for all purposes.
+     */
+    GCM = 32,
+};
+
+/**
+ * Padding modes that may be applied to plaintext for encryption operations.  This list includes
+ * padding modes for both symmetric and asymmetric algorithms.  Note that implementations should not
+ * provide all possible combinations of algorithm and padding, only the
+ * cryptographically-appropriate pairs.
+ */
+enum PaddingMode : uint32_t {
+    NONE = 1, /* deprecated */
+    RSA_OAEP = 2,
+    RSA_PSS = 3,
+    RSA_PKCS1_1_5_ENCRYPT = 4,
+    RSA_PKCS1_1_5_SIGN = 5,
+    PKCS7 = 64,
+};
+
+/**
+ * Digests provided by keymaster implementations.
+ */
+enum Digest : uint32_t {
+    NONE = 0,
+    MD5 = 1,
+    SHA1 = 2,
+    SHA_2_224 = 3,
+    SHA_2_256 = 4,
+    SHA_2_384 = 5,
+    SHA_2_512 = 6,
+};
+
+/**
+ * Supported EC curves, used in ECDSA
+ */
+enum EcCurve : uint32_t {
+    P_224 = 0,
+    P_256 = 1,
+    P_384 = 2,
+    P_521 = 3,
+};
+
+/**
+ * The origin of a key (or pair), i.e. where it was generated.  Note that ORIGIN can be found in
+ * either the hardware-enforced or software-enforced list for a key, indicating whether the key is
+ * hardware or software-based.  Specifically, a key with GENERATED in the hardware-enforced list
+ * must be guaranteed never to have existed outide the secure hardware.
+ */
+enum KeyOrigin : uint32_t {
+    /** Generated in keymaster.  Should not exist outside the TEE. */
+    GENERATED = 0,
+
+    /** Derived inside keymaster.  Likely exists off-device. */
+    DERIVED = 1,
+
+    /** Imported into keymaster.  Existed as cleartext in Android. */
+    IMPORTED = 2,
+
+    /**
+     * Keymaster did not record origin.  This value can only be seen on keys in a keymaster0
+     * implementation.  The keymaster0 adapter uses this value to document the fact that it is
+     * unkown whether the key was generated inside or imported into keymaster.
+     */
+    UNKNOWN = 3,
+
+    /**
+     * Securely imported into Keymaster.  Was created elsewhere, and passed securely through Android
+     * to secure hardware.
+     */
+    SECURELY_IMPORTED = 4,
+};
+
+/**
+ * Usability requirements of key blobs.  This defines what system functionality must be available
+ * for the key to function.  For example, key "blobs" which are actually handles referencing
+ * encrypted key material stored in the file system cannot be used until the file system is
+ * available, and should have BLOB_REQUIRES_FILE_SYSTEM.
+ */
+enum KeyBlobUsageRequirements : uint32_t {
+    STANDALONE = 0,
+    REQUIRES_FILE_SYSTEM = 1,
+};
+
+/**
+ * Possible purposes of a key (or pair).
+ */
+enum KeyPurpose : uint32_t {
+    ENCRYPT = 0, /* Usable with RSA, EC and AES keys. */
+    DECRYPT = 1, /* Usable with RSA, EC and AES keys. */
+    SIGN = 2,    /* Usable with RSA, EC and HMAC keys. */
+    VERIFY = 3,  /* Usable with RSA, EC and HMAC keys. */
+    /* 4 is reserved */
+    WRAP_KEY = 5, /* Usable with wrapping keys. */
+};
+
+/**
+ * Keymaster error codes.
+ */
+enum ErrorCode : int32_t {
+    OK = 0,
+    ROOT_OF_TRUST_ALREADY_SET = -1,
+    UNSUPPORTED_PURPOSE = -2,
+    INCOMPATIBLE_PURPOSE = -3,
+    UNSUPPORTED_ALGORITHM = -4,
+    INCOMPATIBLE_ALGORITHM = -5,
+    UNSUPPORTED_KEY_SIZE = -6,
+    UNSUPPORTED_BLOCK_MODE = -7,
+    INCOMPATIBLE_BLOCK_MODE = -8,
+    UNSUPPORTED_MAC_LENGTH = -9,
+    UNSUPPORTED_PADDING_MODE = -10,
+    INCOMPATIBLE_PADDING_MODE = -11,
+    UNSUPPORTED_DIGEST = -12,
+    INCOMPATIBLE_DIGEST = -13,
+    INVALID_EXPIRATION_TIME = -14,
+    INVALID_USER_ID = -15,
+    INVALID_AUTHORIZATION_TIMEOUT = -16,
+    UNSUPPORTED_KEY_FORMAT = -17,
+    INCOMPATIBLE_KEY_FORMAT = -18,
+    UNSUPPORTED_KEY_ENCRYPTION_ALGORITHM = -19,   /** For PKCS8 & PKCS12 */
+    UNSUPPORTED_KEY_VERIFICATION_ALGORITHM = -20, /** For PKCS8 & PKCS12 */
+    INVALID_INPUT_LENGTH = -21,
+    KEY_EXPORT_OPTIONS_INVALID = -22,
+    DELEGATION_NOT_ALLOWED = -23,
+    KEY_NOT_YET_VALID = -24,
+    KEY_EXPIRED = -25,
+    KEY_USER_NOT_AUTHENTICATED = -26,
+    OUTPUT_PARAMETER_NULL = -27,
+    INVALID_OPERATION_HANDLE = -28,
+    INSUFFICIENT_BUFFER_SPACE = -29,
+    VERIFICATION_FAILED = -30,
+    TOO_MANY_OPERATIONS = -31,
+    UNEXPECTED_NULL_POINTER = -32,
+    INVALID_KEY_BLOB = -33,
+    IMPORTED_KEY_NOT_ENCRYPTED = -34,
+    IMPORTED_KEY_DECRYPTION_FAILED = -35,
+    IMPORTED_KEY_NOT_SIGNED = -36,
+    IMPORTED_KEY_VERIFICATION_FAILED = -37,
+    INVALID_ARGUMENT = -38,
+    UNSUPPORTED_TAG = -39,
+    INVALID_TAG = -40,
+    MEMORY_ALLOCATION_FAILED = -41,
+    IMPORT_PARAMETER_MISMATCH = -44,
+    SECURE_HW_ACCESS_DENIED = -45,
+    OPERATION_CANCELLED = -46,
+    CONCURRENT_ACCESS_CONFLICT = -47,
+    SECURE_HW_BUSY = -48,
+    SECURE_HW_COMMUNICATION_FAILED = -49,
+    UNSUPPORTED_EC_FIELD = -50,
+    MISSING_NONCE = -51,
+    INVALID_NONCE = -52,
+    MISSING_MAC_LENGTH = -53,
+    KEY_RATE_LIMIT_EXCEEDED = -54,
+    CALLER_NONCE_PROHIBITED = -55,
+    KEY_MAX_OPS_EXCEEDED = -56,
+    INVALID_MAC_LENGTH = -57,
+    MISSING_MIN_MAC_LENGTH = -58,
+    UNSUPPORTED_MIN_MAC_LENGTH = -59,
+    UNSUPPORTED_KDF = -60,
+    UNSUPPORTED_EC_CURVE = -61,
+    KEY_REQUIRES_UPGRADE = -62,
+    ATTESTATION_CHALLENGE_MISSING = -63,
+    KEYMASTER_NOT_CONFIGURED = -64,
+    ATTESTATION_APPLICATION_ID_MISSING = -65,
+    CANNOT_ATTEST_IDS = -66,
+    ROLLBACK_RESISTANCE_UNAVAILABLE = -67,
+    HARDWARE_TYPE_UNAVAILABLE = -68,
+    PROOF_OF_PRESENCE_REQUIRED = -69,
+    CONCURRENT_PROOF_OF_PRESENCE_REQUESTED = -70,
+    NO_USER_CONFIRMATION = -71,
+    DEVICE_LOCKED = -72,
+
+    UNIMPLEMENTED = -100,
+    VERSION_MISMATCH = -101,
+
+    UNKNOWN_ERROR = -1000,
+
+    // Implementer's namespace for error codes starts at -10000.
+};
+
+/**
+ * Key derivation functions, mostly used in ECIES.
+ */
+enum KeyDerivationFunction : uint32_t {
+    /** Do not apply a key derivation function; use the raw agreed key */
+    NONE = 0,
+    /** HKDF defined in RFC 5869 with SHA256 */
+    RFC5869_SHA256 = 1,
+    /** KDF1 defined in ISO 18033-2 with SHA1 */
+    ISO18033_2_KDF1_SHA1 = 2,
+    /** KDF1 defined in ISO 18033-2 with SHA256 */
+    ISO18033_2_KDF1_SHA256 = 3,
+    /** KDF2 defined in ISO 18033-2 with SHA1 */
+    ISO18033_2_KDF2_SHA1 = 4,
+    /** KDF2 defined in ISO 18033-2 with SHA256 */
+    ISO18033_2_KDF2_SHA256 = 5,
+};
+
+/**
+ * Hardware authentication type, used by HardwareAuthTokens to specify the mechanism used to
+ * authentiate the user, and in KeyCharacteristics to specify the allowable mechanisms for
+ * authenticating to activate a key.
+ */
+enum HardwareAuthenticatorType : uint32_t {
+    NONE = 0,
+    PASSWORD = 1 << 0,
+    FINGERPRINT = 1 << 1,
+    // Additional entries must be powers of 2.
+    ANY = 0xFFFFFFFF,
+};
+
+/**
+ * Device security levels.
+ */
+enum SecurityLevel : uint32_t {
+    SOFTWARE = 0,
+    TRUSTED_ENVIRONMENT = 1,
+    /**
+     * STRONGBOX specifies that the secure hardware satisfies the requirements specified in CDD
+     * 9.11.2.
+     */
+    STRONGBOX = 2,
+};
+
+/**
+ * Formats for key import and export.
+ */
+enum KeyFormat : uint32_t {
+    /** X.509 certificate format, for public key export. */
+    X509 = 0,
+    /** PCKS#8 format, asymmetric key pair import. */
+    PKCS8 = 1,
+    /** Raw bytes, for symmetric key import. */
+    RAW = 3,
+};
+
+struct KeyParameter {
+    /**
+     * Discriminates the union/blob field used.  The blob cannot be placed in the union, but only
+     * one of "f" and "blob" may ever be used at a time.
+     */
+    Tag tag;
+
+    union IntegerParams {
+        /* Enum types */
+        Algorithm algorithm;
+        BlockMode blockMode;
+        PaddingMode paddingMode;
+        Digest digest;
+        EcCurve ecCurve;
+        KeyOrigin origin;
+        KeyBlobUsageRequirements keyBlobUsageRequirements;
+        KeyPurpose purpose;
+        KeyDerivationFunction keyDerivationFunction;
+        HardwareAuthenticatorType hardwareAuthenticatorType;
+        SecurityLevel hardwareType;
+
+        /* Other types */
+        bool boolValue;  // Always true, if a boolean tag is present.
+        uint32_t integer;
+        uint64_t longInteger;
+        uint64_t dateTime;
+    };
+    IntegerParams f;  // Hidl does not support anonymous unions, so we have to name it.
+    vec<uint8_t> blob;
+};
+
+/**
+ * KeyCharacteristics defines the attributes of a key, including cryptographic parameters, and usage
+ * restrictions.  It consits of two vectors of KeyParameters, one for "softwareEnforced" attributes
+ * and one for "hardwareEnforced" attributes.
+ *
+ * KeyCharacteristics objects are returned by generateKey, importKey, importWrappedKey and
+ * getKeyCharacteristics.  The IKeymasterDevice secure environment is responsible for allocating the
+ * parameters, all of which are Tags with associated values, to the correct vector.  The
+ * hardwareEnforced vector must contain only those attributes which are enforced by secure hardware.
+ * All others should be in the softwareEnforced vector.  See the definitions of individual Tag enums
+ * for specification of which must be hardware-enforced, which may be software-enforced and which
+ * must never appear in KeyCharacteristics.
+ */
+struct KeyCharacteristics {
+    vec<KeyParameter> softwareEnforced;
+    vec<KeyParameter> hardwareEnforced;
+};
+
+/**
+ * HardwareAuthToken is used to prove successful user authentication, to unlock the use of a key.
+ *
+ * HardwareAuthTokens are produced by other secure environment applications, notably GateKeeper and
+ * Fingerprint, in response to successful user authentication events.  These tokens are passed to
+ * begin(), update(), and finish() to prove that authentication occurred.  See those methods for
+ * more details.  It is up to the caller to determine which of the generated auth tokens is
+ * appropriate for a given key operation.
+ */
+struct HardwareAuthToken {
+    /**
+     * challenge is a value that's used to enable authentication tokens to authorize specific
+     * events.  The primary use case for challenge is to authorize an IKeymasterDevice cryptographic
+     * operation, for keys that require authentication per operation. See begin() for details.
+     */
+    uint64_t challenge;
+
+    /**
+     *  userId is the a "secure" user ID.  It is not related to any Android user ID or UID, but is
+     *  created in the Gatekeeper application in the secure environment.
+     */
+    uint64_t userId;
+
+    /**
+     *  authenticatorId is the a "secure" user ID.  It is not related to any Android user ID or UID,
+     *  but is created in an authentication application in the secure environment, such as the
+     *  Fingerprint application.
+     */
+    uint64_t authenticatorId;  // Secure authenticator ID.
+
+    /**
+     * authenticatorType describes the type of authentication that took place, e.g. password or
+     * fingerprint.
+     */
+    HardwareAuthenticatorType authenticatorType;
+
+    /**
+     * timestamp indicates when the user authentication took place, in milliseconds since some
+     * starting point (generally the most recent device boot) which all of the applications within
+     * one secure environment must agree upon.  This timestamp is used to determine whether or not
+     * the authentication occurred recently enough to unlock a key (see Tag::AUTH_TIMEOUT).
+     */
+    Timestamp timestamp;
+
+    /**
+     * MACs are computed with a backward-compatible method, used by Keymaster 3.0, Gatekeeper 1.0
+     * and Fingerprint 1.0, as well as pre-treble HALs.
+     *
+     * The MAC is Constants::AUTH_TOKEN_MAC_LENGTH bytes in length and is computed as follows:
+     *
+     *     HMAC_SHA256(
+     *         H, 0 || challenge || user_id || authenticator_id || authenticator_type || timestamp)
+     *
+     * where ``||'' represents concatenation, the leading zero is a single byte, and all integers
+     * are represented as unsigned values, the full width of the type.  The challenge, userId and
+     * authenticatorId values are in machine order, but authenticatorType and timestamp are in
+     * network order (big-endian).  This odd construction is compatible with the hw_auth_token_t
+     * structure,
+     *
+     * Note that mac is a vec rather than an array, not because it's actually variable-length but
+     * because it could be empty.  As documented in the IKeymasterDevice::begin,
+     * IKeymasterDevice::update and IKeymasterDevice::finish doc comments, an empty mac indicates
+     * that this auth token is empty.
+     */
+    vec<uint8_t> mac;
+};
+
+typedef uint64_t OperationHandle;
+
+/**
+ * HmacSharingParameters holds the data used in the process of establishing a shared HMAC key
+ * between multiple Keymaster instances.  Sharing parameters are returned in this struct by
+ * getHmacSharingParameters() and send to computeSharedHmac().  See the named methods in IKeymaster
+ * for details of usage.
+ */
+struct HmacSharingParameters {
+    /**
+     * Either empty or contains a persistent value that is associated with the pre-shared HMAC
+     * agreement key (see documentation of computeSharedHmac in @4.0::IKeymaster).  It is either
+     * empty or 32 bytes in length.
+     */
+    vec<uint8_t> seed;
+
+    /**
+     * A 32-byte value which is guaranteed to be different each time
+     * getHmacSharingParameters() is called.  Probabilistic uniqueness (i.e. random) is acceptable,
+     * though a stronger uniqueness guarantee (e.g. counter) is recommended where possible.
+     */
+    uint8_t[32] nonce;
+};
+
+/**
+ * VerificationToken enables one Keymaster instance to validate authorizations for another.  See
+ * verifyAuthorizations() in IKeymaster for details.
+ */
+struct VerificationToken {
+    /**
+     * The operation handle, used to ensure freshness.
+     */
+    uint64_t challenge;
+
+    /**
+     * The current time of the secure environment that generates the VerificationToken.  This can be
+     * checked against auth tokens generated by the same secure environment, which avoids needing to
+     * synchronize clocks.
+     */
+    Timestamp timestamp;
+
+    /**
+     * A list of the parameters verified.  Empty if the only parameters verified are time-related.
+     * In that case the timestamp is the payload.
+     */
+    vec<KeyParameter> parametersVerified;
+
+    /**
+     * SecurityLevel of the secure environment that generated the token.
+     */
+    SecurityLevel securityLevel;
+
+    /**
+     * 32-byte HMAC-SHA256 of the above values, computed as:
+     *
+     *    HMAC(H,
+     *         "Auth Verification" || challenge || timestamp || securityLevel || parametersVerified)
+     *
+     * where:
+     *
+     *   ``HMAC'' is the shared HMAC key (see computeSharedHmac() in IKeymaster).
+     *
+     *   ``||'' represents concatenation
+     *
+     * The representation of challenge and timestamp is as 64-bit unsigned integers in big-endian
+     * order.  securityLevel is represented as a 32-bit unsigned integer in big-endian order.
+     *
+     * If parametersVerified is non-empty, the representation of parametersVerified is an ASN.1 DER
+     * encoded representation of the values.  The ASN.1 schema used is the AuthorizationList schema
+     * from the Keystore attestation documentation.  If parametersVerified is empty, it is simply
+     * omitted from the HMAC computation.
+     */
+    vec<uint8_t> mac;
+};

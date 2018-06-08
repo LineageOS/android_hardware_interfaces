@@ -43,7 +43,7 @@ interface IVehicle {
    * For VehiclePropertyChangeMode::ON_CHANGE properties, it must return the
    * latest available value.
    *
-   * Some properties like AUDIO_VOLUME requires to pass additional data in
+   * Some properties like RADIO_PRESET requires to pass additional data in
    * GET request in VehiclePropValue object.
    *
    * If there is no data available yet, which can happen during initial stage,

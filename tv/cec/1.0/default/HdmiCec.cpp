@@ -264,8 +264,7 @@ static_assert(HDMI_OPTION_SYSTEM_CEC_CONTROL == static_cast<int>(OptionKey::SYST
 
 sp<IHdmiCecCallback> HdmiCec::mCallback = nullptr;
 
-HdmiCec::HdmiCec(hdmi_cec_device_t* device) : mDevice(device) {
-}
+HdmiCec::HdmiCec(hdmi_cec_device_t* device) : mDevice(device) {}
 
 // Methods from ::android::hardware::tv::cec::V1_0::IHdmiCec follow.
 Return<Result> HdmiCec::addLogicalAddress(CecLogicalAddress addr) {
@@ -319,8 +318,16 @@ Return<SendMessageResult> HdmiCec::sendMessage(const CecMessage& message) {
 }
 
 Return<void> HdmiCec::setCallback(const sp<IHdmiCecCallback>& callback) {
-    mCallback = callback;
-    mDevice->register_event_callback(mDevice, eventCallback, nullptr);
+    if (mCallback != nullptr) {
+        mCallback->unlinkToDeath(this);
+        mCallback = nullptr;
+    }
+
+    if (callback != nullptr) {
+        mCallback = callback;
+        mCallback->linkToDeath(this, 0 /*cookie*/);
+        mDevice->register_event_callback(mDevice, eventCallback, nullptr);
+    }
     return Void();
 }
 

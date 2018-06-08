@@ -49,10 +49,6 @@
             <xs:selector xpath="modules/module"/>
             <xs:field xpath="@name"/>
         </xs:key>
-        <xs:key name="devicePortNameGlobalKey">
-            <xs:selector xpath="modules/module/devicePorts/devicePort"/>
-            <xs:field xpath="@tagName"/>
-        </xs:key>
         <xs:unique name="volumeTargetUniqueness">
             <xs:selector xpath="volumes/volume"/>
             <xs:field xpath="@stream"/>
@@ -73,14 +69,28 @@
     <!-- Enum values of IDevicesFactory::Device
          TODO: generate from hidl to avoid manual sync. -->
     <xs:simpleType name="halName">
-        <xs:restriction base="xs:string">
-            <xs:enumeration value="primary"/>
-            <xs:enumeration value="a2dp"/>
-            <xs:enumeration value="usb"/>
-            <xs:enumeration value="r_submix"/>
-            <xs:enumeration value="codec_offload"/>
-            <xs:enumeration value="stub"/>
-        </xs:restriction>
+        <xs:union>
+            <xs:simpleType>
+                <xs:restriction base="xs:string">
+                    <xs:enumeration value="primary"/>
+                    <xs:enumeration value="a2dp"/>
+                    <xs:enumeration value="usb"/>
+                    <xs:enumeration value="r_submix"/>
+                    <xs:enumeration value="codec_offload"/>
+                    <xs:enumeration value="stub"/>
+                </xs:restriction>
+            </xs:simpleType>
+            <xs:simpleType>
+                <!-- Vendor eXtension names must be in the vx namespace.
+                     Vendor are encouraged to namespace their module names.
+                     Example for an hypothetical Google virtual reality HAL:
+                        <module name="vx_google_vr" halVersion="3.0">
+                -->
+                <xs:restriction base="xs:string">
+                    <xs:pattern value="vx_[_a-zA-Z0-9]+"/>
+                </xs:restriction>
+            </xs:simpleType>
+        </xs:union>
     </xs:simpleType>
     <xs:complexType name="modules">
         <xs:annotation>
@@ -127,13 +137,15 @@
                     <xs:selector xpath="mixPorts/mixPort"/>
                     <xs:field xpath="@name"/>
                 </xs:unique>
-                <!-- Although this key constraint is redundant with devicePortNameGlobalKey,
-                     the set is used to constraint defaultOutputDevice and attachedDevice
-                     to reference a devicePort of the same module. -->
                 <xs:key name="devicePortNameKey">
                     <xs:selector xpath="devicePorts/devicePort"/>
                     <xs:field xpath="@tagName"/>
                 </xs:key>
+                <xs:unique name="devicePortUniqueness">
+                    <xs:selector xpath="devicePorts/devicePort"/>
+                    <xs:field xpath="@type"/>
+                    <xs:field xpath="@address"/>
+                </xs:unique>
                 <xs:keyref name="defaultOutputDeviceRef" refer="devicePortNameKey">
                     <xs:selector xpath="defaultOutputDevice"/>
                     <xs:field xpath="."/>
@@ -405,7 +417,7 @@
                     <xs:attribute name="tagName" type="xs:token" use="required"/>
                     <xs:attribute name="type" type="audioDevice" use="required"/>
                     <xs:attribute name="role" type="role" use="required"/>
-                    <xs:attribute name="address" type="xs:string" use="optional"/>
+                    <xs:attribute name="address" type="xs:string" use="optional" default=""/>
                 </xs:complexType>
                 <xs:unique name="devicePortProfileUniqueness">
                     <xs:selector xpath="profile"/>

@@ -1,0 +1,294 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.graphics.common@1.1;
+
+import @1.0::BufferUsage;
+import @1.0::ColorMode;
+import @1.0::Dataspace;
+import @1.0::PixelFormat;
+
+/**
+ * Pixel formats for graphics buffers.
+ */
+@export(name="android_pixel_format_v1_1_t", value_prefix="HAL_PIXEL_FORMAT_",
+        export_parent="false")
+enum PixelFormat : @1.0::PixelFormat {
+    /**
+     * 16-bit format that has a single 16-bit depth component.
+     *
+     * The component values are unsigned normalized to the range [0, 1], whose
+     * interpretation is defined by the dataspace.
+     */
+    DEPTH_16           = 0x30,
+
+    /**
+     * 32-bit format that has a single 24-bit depth component and, optionally,
+     * 8 bits that are unused.
+     *
+     * The component values are unsigned normalized to the range [0, 1], whose
+     * interpretation is defined by the dataspace.
+     */
+    DEPTH_24           = 0x31,
+
+    /**
+     * 32-bit format that has a 24-bit depth component and an 8-bit stencil
+     * component packed into 32-bits.
+     *
+     * The depth component values are unsigned normalized to the range [0, 1],
+     * whose interpretation is defined by the dataspace. The stencil values are
+     * unsigned integers, whose interpretation is defined by the dataspace.
+     */
+    DEPTH_24_STENCIL_8  = 0x32,
+
+    /**
+     * 32-bit format that has a single 32-bit depth component.
+     *
+     * The component values are signed floats, whose interpretation is defined
+     * by the dataspace.
+     */
+    DEPTH_32F           = 0x33,
+
+    /**
+     * Two-component format that has a 32-bit depth component, an 8-bit stencil
+     * component, and optionally 24-bits unused.
+     *
+     * The depth component values are signed floats, whose interpretation is
+     * defined by the dataspace. The stencil bits are unsigned integers, whose
+     * interpretation is defined by the dataspace.
+     */
+    DEPTH_32F_STENCIL_8 = 0x34,
+
+    /**
+     * 8-bit format that has a single 8-bit stencil component.
+     *
+     * The component values are unsigned integers, whose interpretation is
+     * defined by the dataspace.
+     */
+    STENCIL_8           = 0x35,
+
+    /**
+     * P010 is a 4:2:0 YCbCr semiplanar format comprised of a WxH Y plane
+     * followed immediately by a Wx(H/2) CbCr plane. Each sample is
+     * represented by a 16-bit little-endian value, with the lower 6 bits set
+     * to zero.
+     *
+     * This format assumes
+     * - an even height
+     * - a vertical stride equal to the height
+     *
+     *   stride_in_bytes = stride * 2
+     *   y_size = stride_in_bytes * height
+     *   cbcr_size = stride_in_bytes * (height / 2)
+     *   cb_offset = y_size
+     *   cr_offset = cb_offset + 2
+     *
+     * This format must be accepted by the allocator when used with the
+     * following usage flags:
+     *
+     *    - BufferUsage::VIDEO_*
+     *    - BufferUsage::CPU_*
+     *    - BufferUsage::GPU_TEXTURE
+     *
+     * The component values are unsigned normalized to the range [0, 1], whose
+     * interpretation is defined by the dataspace.
+     *
+     * This format is appropriate for 10bit video content.
+     *
+     * Buffers with this format must be locked with IMapper::lockYCbCr
+     * or with IMapper::lock.
+     */
+    YCBCR_P010          = 0x36,
+};
+
+/**
+ * Buffer usage definitions.
+ */
+enum BufferUsage : @1.0::BufferUsage {
+    /** buffer is used as a cube map texture */
+    GPU_CUBE_MAP          = 1ULL << 25,
+
+    /** buffer contains a complete mipmap hierarchy */
+    GPU_MIPMAP_COMPLETE   = 1ULL << 26,
+
+    /* bits 27 and 32-47 must be zero and are reserved for future versions */
+};
+
+@export(name="android_dataspace_v1_1_t", value_prefix="HAL_DATASPACE_",
+        export_parent="false")
+enum Dataspace : @1.0::Dataspace {
+    /*
+     * @1.0::Dataspace defines six legacy dataspaces
+     *
+     *   SRGB_LINEAR = 0x200, // deprecated, use V0_SRGB_LINEAR
+     *   SRGB = 0x201, // deprecated, use V0_SRGB
+     *   JFIF = 0x101, // deprecated, use V0_JFIF
+     *   BT601_625 = 0x102, // deprecated, use V0_BT601_625
+     *   BT601_525 = 0x103, // deprecated, use V0_BT601_525
+     *   BT709 = 0x104, // deprecated, use V0_BT709
+     *
+     * The difference between the legacy dataspaces and their modern
+     * counterparts is that, with legacy dataspaces, the pixel values may have
+     * been desaturated by the content creator in an unspecified way.
+     *
+     * When colorimetric mapping is required, the legacy dataspaces must be
+     * treated as their modern counterparts (e.g., SRGB must be treated as
+     * V0_SRGB) and no re-saturation is allowed. When non-colorimetric mapping
+     * is allowed, the pixel values can be interpreted freely by
+     * implementations for the purpose of re-saturation, and the re-saturated
+     * pixel values are in the respective modern dataspaces.
+     *
+     * This is also true when UNKNOWN is treated as a legacy dataspace.
+     */
+
+    /**
+     * ITU-R Recommendation 2020 (BT.2020)
+     *
+     * Ultra High-definition television
+     *
+     * Use limited range, BT.709 transfer and BT2020 standard
+     */
+    BT2020_ITU = STANDARD_BT2020 | TRANSFER_SMPTE_170M | RANGE_LIMITED,
+
+    /**
+     * ITU-R Recommendation 2100 (BT.2100)
+     *
+     * High dynamic range television
+     *
+     * Use limited/full range, PQ/HLG transfer, and BT2020 standard
+     * limited range is the preferred / normative definition for BT.2100
+     */
+    BT2020_ITU_PQ = STANDARD_BT2020 | TRANSFER_ST2084 | RANGE_LIMITED,
+    BT2020_ITU_HLG = STANDARD_BT2020 | TRANSFER_HLG | RANGE_LIMITED,
+    BT2020_HLG = STANDARD_BT2020 | TRANSFER_HLG | RANGE_FULL,
+};
+
+@export(name="android_color_mode_v1_1_t", value_prefix="HAL_COLOR_MODE_",
+        export_parent="false")
+enum ColorMode : @1.0::ColorMode {
+    /**
+     * BT2020 corresponds with display settings that implement the ITU-R
+     * Recommendation BT.2020 / Rec. 2020 for UHDTV.
+     *
+     * Primaries:
+     *                  x       y
+     *  green           0.170   0.797
+     *  blue            0.131   0.046
+     *  red             0.708   0.292
+     *  white (D65)     0.3127  0.3290
+     *
+     * Inverse Gamma Correction (IGC): V represents normalized (with [0 to 1]
+     * range) value of R, G, or B.
+     *
+     *  if Vnonlinear < b * 4.5
+     *    Vlinear = Vnonlinear / 4.5
+     *  else
+     *    Vlinear = ((Vnonlinear + (a - 1)) / a) ^ (1/0.45)
+     *
+     * Gamma Correction (GC):
+     *
+     *  if Vlinear < b
+     *    Vnonlinear = 4.5 * Vlinear
+     *  else
+     *    Vnonlinear = a * Vlinear ^ 0.45 - (a - 1)
+     *
+     * where
+     *
+     *   a = 1.09929682680944, b = 0.018053968510807
+     *
+     * For practical purposes, these a/b values can be used instead
+     *
+     *   a = 1.099, b = 0.018 for 10-bit display systems
+     *   a = 1.0993, b = 0.0181 for 12-bit display systems
+     */
+    BT2020 = 10,
+
+    /**
+     * BT2100_PQ and BT2100_HLG correspond with display settings that
+     * implement the ITU-R Recommendation BT.2100 / Rec. 2100 for HDR TV.
+     *
+     * Primaries:
+     *                  x       y
+     *  green           0.170   0.797
+     *  blue            0.131   0.046
+     *  red             0.708   0.292
+     *  white (D65)     0.3127  0.3290
+     *
+     * For BT2100_PQ, the transfer function is Perceptual Quantizer (PQ). For
+     * BT2100_HLG, the transfer function is Hybrid Log-Gamma (HLG).
+     */
+    BT2100_PQ = 11,
+    BT2100_HLG = 12,
+};
+
+/**
+ * RenderIntent defines the mapping from color mode colors to display colors.
+ *
+ * A render intent must not change how it maps colors when the color mode
+ * changes. That is to say that when a render intent maps color C to color C',
+ * the fact that color C can have different pixel values in different color
+ * modes should not affect the mapping.
+ *
+ * RenderIntent overrides the render intents defined for individual color
+ * modes. It is ignored when the color mode is ColorMode::NATIVE, because
+ * ColorMode::NATIVE colors are already display colors.
+ */
+@export(name="android_render_intent_v1_1_t", value_prefix="HAL_RENDER_INTENT_",
+        export_parent="false")
+enum RenderIntent : int32_t {
+    /**
+     * Colors in the display gamut are unchanged. Colors out of the display
+     * gamut are hard-clipped.
+     *
+     * This implies that the display must have been calibrated unless
+     * ColorMode::NATIVE is the only supported color mode.
+     */
+    COLORIMETRIC = 0,
+
+    /**
+     * Enhance colors that are in the display gamut. Colors out of the display
+     * gamut are hard-clipped.
+     *
+     * The enhancement typically picks the biggest standard color space (e.g.
+     * DCI-P3) that is narrower than the display gamut and stretches it to the
+     * display gamut. The stretching is recommended to preserve skin tones.
+     */
+    ENHANCE = 1,
+
+    /**
+     * Tone map high-dynamic-range colors to the display's dynamic range. The
+     * dynamic range of the colors are communicated separately. After tone
+     * mapping, the mapping to the display gamut is as defined in
+     * COLORIMETRIC.
+     */
+    TONE_MAP_COLORIMETRIC = 2,
+
+    /**
+     * Tone map high-dynamic-range colors to the display's dynamic range. The
+     * dynamic range of the colors are communicated separately. After tone
+     * mapping, the mapping to the display gamut is as defined in ENHANCE.
+     *
+     * The tone mapping step and the enhancing step must match
+     * TONE_MAP_COLORIMETRIC and ENHANCE respectively when they are also
+     * supported.
+     */
+    TONE_MAP_ENHANCE = 3,
+
+    /*
+     * Vendors are recommended to use 0x100 - 0x1FF for their own values, and
+     * that must be done with subtypes defined by vendor extensions.
+     */
+};

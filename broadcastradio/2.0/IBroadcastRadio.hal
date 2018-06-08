@@ -1,0 +1,129 @@
+/* Copyright (C) 2017 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.broadcastradio@2.0;
+
+import IAnnouncementListener;
+import ICloseHandle;
+import ITunerCallback;
+import ITunerSession;
+
+/**
+ * Represents a hardware broadcast radio module. A single module may contain
+ * multiple hardware tuners (i.e. with an additional background tuner), but the
+ * layers above the HAL see them as a single logical unit.
+ */
+interface IBroadcastRadio {
+    /**
+     * Returns module properties: a description of a module and its
+     * capabilities. This method must not fail.
+     *
+     * @return properties Module description.
+     */
+    getProperties() generates (Properties properties);
+
+    /**
+     * Fetches current or possible AM/FM region configuration.
+     *
+     * @param full If true, returns full hardware capabilities.
+     *             If false, returns current regional configuration.
+     * @return result OK in case of success.
+     *                NOT_SUPPORTED if the tuner doesn't support AM/FM.
+     * @return config Hardware capabilities (full=true) or
+     *                current configuration (full=false).
+     */
+    getAmFmRegionConfig(bool full)
+            generates (Result result, AmFmRegionConfig config);
+
+    /**
+     * Fetches current DAB region configuration.
+     *
+     * @return result OK in case of success.
+     *                NOT_SUPPORTED if the tuner doesn't support DAB.
+     * @return config Current configuration.
+     */
+    getDabRegionConfig() generates (Result result, vec<DabTableEntry> config);
+
+    /**
+     * Opens a new tuner session.
+     *
+     * There may be only one session active at a time. If the new session was
+     * requested when the old one was active, the old must be terminated
+     * (aggressive open).
+     *
+     * @param callback The callback interface.
+     * @return result OK in case of success.
+     * @return session The session interface.
+     */
+    openSession(ITunerCallback callback)
+        generates (Result result, ITunerSession session);
+
+    /**
+     * Fetch image from radio module cache.
+     *
+     * This is out-of-band transport mechanism for images carried with metadata.
+     * The metadata vector only passes the identifier, so the client may cache
+     * images or even not fetch them.
+     *
+     * The identifier may be any arbitrary number (i.e. sha256 prefix) selected
+     * by the vendor. It must be stable across sessions so the application may
+     * cache it.
+     *
+     * The data must be a valid PNG, JPEG, GIF or BMP file.
+     * Image data with an invalid format must be handled gracefully in the same
+     * way as a missing image.
+     *
+     * The image identifier may become invalid after some time from passing it
+     * with metadata struct (due to resource cleanup at the HAL implementation).
+     * However, it must remain valid for a currently tuned program at least
+     * until onCurrentProgramInfoChanged is called.
+     *
+     * There is still a race condition possible between
+     * onCurrentProgramInfoChanged callback and the HAL implementation eagerly
+     * clearing the cache (because the next onCurrentProgramInfoChanged came).
+     * In such case, client application may expect the new
+     * onCurrentProgramInfoChanged callback with updated image identifier.
+     *
+     * @param id Identifier of an image (value of Constants::INVALID_IMAGE is
+     *           reserved and must be treated as invalid image).
+     * @return image A binary blob with image data
+     *               or a zero-length vector if identifier doesn't exist.
+     */
+    getImage(uint32_t id) generates (vec<uint8_t> image);
+
+    /**
+     * Registers announcement listener.
+     *
+     * If there is at least one observer registered, HAL implementation must
+     * notify about announcements even if no sessions are active.
+     *
+     * If the observer dies, the HAL implementation must unregister observer
+     * automatically.
+     *
+     * @param enabled The list of announcement types to watch for.
+     * @param listener The listener interface.
+     * @return result OK in case of success.
+     *                NOT_SUPPORTED if the tuner doesn't support announcements.
+     * @return closeHandle A handle to unregister observer,
+     *                     nullptr if result was not OK.
+     */
+    registerAnnouncementListener(
+            vec<AnnouncementType> enabled,
+            IAnnouncementListener listener
+        ) generates (
+            Result result,
+            ICloseHandle closeHandle
+        );
+};

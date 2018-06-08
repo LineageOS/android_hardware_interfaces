@@ -1,0 +1,290 @@
+/*
+ * Copyright (C) 2017 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.camera.device@3.4;
+
+import @3.2::RequestTemplate;
+import @3.2::StreamConfigurationMode;
+import @3.2::Stream;
+import @3.3::HalStream;
+import @3.2::CameraMetadata;
+import @3.2::CaptureRequest;
+import @3.2::CaptureResult;
+
+/**
+ * Stream:
+ *
+ * A descriptor for a single camera input or output stream. A stream is defined
+ * by the framework by its buffer resolution and format, and additionally by the
+ * HAL with the gralloc usage flags and the maximum in-flight buffer count.
+ *
+ * This version extends the @3.2 Stream with the physicalCameraId and bufferSize field.
+ */
+struct Stream {
+    /**
+     * The definition of Stream from the prior version
+     */
+    @3.2::Stream v3_2;
+
+    /**
+     * The physical camera id this stream belongs to.
+     *
+     * If the camera device is not a logical multi camera, or if the camera is a logical
+     * multi camera but the stream is not a physical output stream, this field will point to a
+     * 0-length string.
+     *
+     * A logical multi camera is a camera device backed by multiple physical cameras that
+     * are also exposed to the application. And for a logical multi camera, a physical output
+     * stream is an output stream specifically requested on an underlying physical camera.
+     *
+     * A logical camera is a camera device backed by multiple physical camera
+     * devices. And a physical stream is a stream specifically requested on a
+     * underlying physical camera device.
+     *
+     * For an input stream, this field is guaranteed to be a 0-length string.
+     *
+     * When not empty, this field is the <id> field of one of the full-qualified device
+     * instance names returned by getCameraIdList().
+     */
+    string physicalCameraId;
+
+    /**
+     * The size of a buffer from this Stream, in bytes.
+     *
+     * For non PixelFormat::BLOB formats, this entry must be 0 and HAL should use
+     * android.hardware.graphics.mapper lockYCbCr API to get buffer layout.
+     *
+     * For BLOB format with dataSpace Dataspace::DEPTH, this must be zero and and HAL must
+     * determine the buffer size based on ANDROID_DEPTH_MAX_DEPTH_SAMPLES.
+     *
+     * For BLOB format with dataSpace Dataspace::JFIF, this must be non-zero and represent the
+     * maximal size HAL can lock using android.hardware.graphics.mapper lock API.
+     *
+     */
+    uint32_t bufferSize;
+};
+
+/**
+ * StreamConfiguration:
+ *
+ * Identical to @3.2::StreamConfiguration, except that it contains session
+ * parameters, and the streams vector contains @3.4::Stream.
+ */
+struct StreamConfiguration {
+    /**
+     * An array of camera stream pointers, defining the input/output
+     * configuration for the camera HAL device.
+     */
+    vec<Stream> streams;
+
+    /**
+     * The definition of operation mode from prior version.
+     *
+     */
+    StreamConfigurationMode operationMode;
+
+    /**
+     * Session wide camera parameters.
+     *
+     * The session parameters contain the initial values of any request keys that were
+     * made available via ANDROID_REQUEST_AVAILABLE_SESSION_KEYS. The Hal implementation
+     * can advertise any settings that can potentially introduce unexpected delays when
+     * their value changes during active process requests. Typical examples are
+     * parameters that trigger time-consuming HW re-configurations or internal camera
+     * pipeline updates. The field is optional, clients can choose to ignore it and avoid
+     * including any initial settings. If parameters are present, then hal must examine
+     * their values and configure the internal camera pipeline accordingly.
+     */
+    CameraMetadata sessionParams;
+};
+
+/**
+ * HalStream:
+ *
+ * The camera HAL's response to each requested stream configuration.
+ *
+ * This version extends the @3.3 HalStream with the physicalCameraId
+ * field
+ */
+struct HalStream {
+    /**
+     * The definition of HalStream from the prior version.
+     */
+    @3.3::HalStream v3_3;
+
+    /**
+     * The physical camera id the current Hal stream belongs to.
+     *
+     * If current camera device isn't a logical camera, or the Hal stream isn't
+     * from a physical camera of the logical camera, this must be an empty
+     * string.
+     *
+     * A logical camera is a camera device backed by multiple physical camera
+     * devices.
+     *
+     * When not empty, this field is the <id> field of one of the full-qualified device
+     * instance names returned by getCameraIdList().
+     */
+    string physicalCameraId;
+};
+
+/**
+ * HalStreamConfiguration:
+ *
+ * Identical to @3.3::HalStreamConfiguration, except that it contains @3.4::HalStream entries.
+ *
+ */
+struct HalStreamConfiguration {
+    vec<HalStream> streams;
+};
+
+/**
+ * PhysicalCameraSetting:
+ *
+ * Individual camera settings for logical camera backed by multiple physical devices.
+ * Clients are allowed to pass separate settings for each physical device that has
+ * corresponding configured HalStream and the respective stream id is present in the
+ * output buffers of the capture request.
+ */
+struct PhysicalCameraSetting {
+    /**
+     * If non-zero, read settings from request queue instead
+     * (see ICameraDeviceSession.getCaptureRequestMetadataQueue).
+     * If zero, read settings from .settings field.
+     */
+    uint64_t fmqSettingsSize;
+
+    /**
+     * Contains the physical device camera id. Any settings passed by client here
+     * should be applied for this physical device. In case the physical id is invalid or
+     * it is not present among the last configured streams, Hal should fail the process
+     * request and return Status::ILLEGAL_ARGUMENT.
+     */
+    string physicalCameraId;
+
+    /**
+     * If fmqSettingsSize is zero, the settings buffer contains the capture and
+     * processing parameters for the physical device with id 'physicalCameraId'.
+     * As a special case, an empty settings buffer indicates that the
+     * settings are identical to the most-recently submitted capture request.
+     * An empty buffer cannot be used as the first submitted request after
+     * a configureStreams() call.
+     *
+     * This field must be used if fmqSettingsSize is zero. It must not be used
+     * if fmqSettingsSize is non-zero.
+     */
+    CameraMetadata settings;
+};
+
+/**
+ * CaptureRequest:
+ *
+ * A single request for image capture/buffer reprocessing, sent to the Camera
+ * HAL device by the framework in processCaptureRequest().
+ *
+ * The request contains the settings to be used for this capture, and the set of
+ * output buffers to write the resulting image data in. It may optionally
+ * contain an input buffer, in which case the request is for reprocessing that
+ * input buffer instead of capturing a new image with the camera sensor. The
+ * capture is identified by the frameNumber.
+ *
+ * In response, the camera HAL device must send a CaptureResult
+ * structure asynchronously to the framework, using the processCaptureResult()
+ * callback.
+ *
+ * Identical to @3.2::CaptureRequest, except that it contains @3.4::physCamSettings vector.
+ *
+ */
+struct CaptureRequest {
+    /**
+     * The definition of CaptureRequest from prior version.
+     */
+    @3.2::CaptureRequest v3_2;
+
+    /**
+     * A vector containing individual camera settings for logical camera backed by multiple physical
+     * devices. In case the vector is empty, Hal should use the settings field in 'v3_2'. The
+     * individual settings should only be honored for physical devices that have respective Hal
+     * stream. Physical devices that have a corresponding Hal stream but don't have attached
+     * settings here should use the settings field in 'v3_2'.
+     * If any of the physical settings in the array are applied on one or more devices, then the
+     * visual effect on any Hal streams attached to the logical camera is undefined.
+     */
+    vec<PhysicalCameraSetting> physicalCameraSettings;
+};
+
+/**
+ * PhysicalCameraMetadata:
+ *
+ * Individual camera metadata for a physical camera as part of a logical
+ * multi-camera. Camera HAL should return one such metadata for each physical
+ * camera being requested on.
+ */
+struct PhysicalCameraMetadata {
+    /**
+     * If non-zero, read metadata from result metadata queue instead
+     * (see ICameraDeviceSession.getCaptureResultMetadataQueue).
+     * If zero, read metadata from .metadata field.
+     */
+    uint64_t fmqMetadataSize;
+
+    /**
+     * Contains the physical device camera id. As long as the corresponding
+     * processCaptureRequest requests on a particular physical camera stream,
+     * the metadata for that physical camera should be generated for the capture
+     * result. */
+    string physicalCameraId;
+
+    /**
+     * If fmqMetadataSize is zero, the metadata buffer contains the metadata
+     * for the physical device with physicalCameraId.
+     *
+     * The v3_2 CaptureResult metadata is read first from the FMQ, followed by
+     * the physical cameras' metadata starting from index 0.
+     */
+    CameraMetadata metadata;
+};
+
+/**
+ * CaptureResult:
+ *
+ * Identical to @3.2::CaptureResult, except that it contains a list of
+ * physical camera metadata.
+ *
+ * Physical camera metadata needs to be generated if and only if a
+ * request is pending on a stream from that physical camera. For example,
+ * if the processCaptureRequest call doesn't request on physical camera
+ * streams, the physicalCameraMetadata field of the CaptureResult being returned
+ * should be an 0-size vector. If the processCaptureRequest call requests on
+ * streams from one of the physical camera, the physicalCameraMetadata field
+ * should contain one metadata describing the capture from that physical camera.
+ *
+ * For a CaptureResult that contains physical camera metadata, its
+ * partialResult field must be android.request.partialResultCount. In other
+ * words, the physicalCameraMetadata must only be contained in a final capture
+ * result.
+ */
+struct CaptureResult {
+    /**
+     * The definition of CaptureResult from the prior version.
+     */
+    @3.2::CaptureResult v3_2;
+
+    /**
+     * The physical metadata for logical multi-camera.
+     */
+    vec<PhysicalCameraMetadata> physicalCameraMetadata;
+};

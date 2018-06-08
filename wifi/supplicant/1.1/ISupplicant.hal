@@ -1,0 +1,65 @@
+/*
+ * Copyright 2016 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.wifi.supplicant@1.1;
+
+import @1.0::ISupplicant;
+import @1.0::ISupplicantIface;
+import @1.0::SupplicantStatus;
+
+/**
+ * Interface exposed by the supplicant HIDL service registered
+ * with the hardware service manager.
+ * This is the root level object for any the supplicant interactions.
+ */
+interface ISupplicant extends @1.0::ISupplicant {
+    /**
+     * Registers a wireless interface in supplicant.
+     *
+     * @param ifaceInfo Combination of the interface type and name(e.g wlan0).
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_IFACE_EXISTS|
+     * @return iface HIDL interface object representing the interface if
+     *         successful, null otherwise.
+     */
+    addInterface(IfaceInfo ifaceInfo)
+        generates (SupplicantStatus status, ISupplicantIface iface);
+
+    /**
+     * Deregisters a wireless interface from supplicant.
+     *
+     * @param ifaceInfo Combination of the interface type and name(e.g wlan0).
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_IFACE_UNKOWN|
+     */
+    removeInterface(IfaceInfo ifaceInfo) generates (SupplicantStatus status);
+
+    /**
+     * Terminate the service.
+     * This must de-register the service and clear all state. If this HAL
+     * supports the lazy HAL protocol, then this may trigger daemon to exit and
+     * wait to be restarted.
+     */
+    oneway terminate();
+};

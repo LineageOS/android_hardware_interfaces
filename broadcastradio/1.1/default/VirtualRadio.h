@@ -40,7 +40,7 @@ class VirtualRadio {
     VirtualRadio(const std::vector<VirtualProgram> initialList);
 
     std::vector<VirtualProgram> getProgramList();
-    bool getProgram(const ProgramSelector& selector, VirtualProgram& program);
+    bool getProgram(const V1_1::ProgramSelector& selector, VirtualProgram& program);
 
    private:
     std::mutex mMut;

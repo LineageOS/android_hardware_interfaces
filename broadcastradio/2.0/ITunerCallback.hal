@@ -1,0 +1,85 @@
+/* Copyright (C) 2017 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.broadcastradio@2.0;
+
+interface ITunerCallback {
+    /**
+     * Method called by the HAL when a tuning operation fails asynchronously
+     * following ITunerSession::tune(), ITunerSession::scan() or
+     * ITunerSession::step().
+     *
+     * This callback is only called when the step(), scan() or tune() command
+     * returned OK at first.
+     *
+     * @param result TIMEOUT in case of time out.
+     * @param selector A ProgramSelector structure passed from tune() call;
+     *                 empty for step() and scan().
+     */
+    oneway onTuneFailed(Result result, ProgramSelector selector);
+
+    /**
+     * Method called by the HAL when current program information (including
+     * metadata) is updated.
+     *
+     * This is also called when the radio tuned to the static (not a valid
+     * station), see the TUNED flag of ProgramInfoFlags.
+     *
+     * @param info Current program information.
+     */
+    oneway onCurrentProgramInfoChanged(ProgramInfo info);
+
+    /**
+     * A delta update of the program list, called whenever there's a change in
+     * the list.
+     *
+     * If there are frequent changes, HAL implementation must throttle the rate
+     * of the updates.
+     *
+     * There is a hard limit on binder transaction buffer, and the list must
+     * not exceed it. For large lists, HAL implementation must split them to
+     * multiple chunks, no larger than 500kiB each.
+     *
+     * @param chunk A chunk of the program list update.
+     */
+    oneway onProgramListUpdated(ProgramListChunk chunk);
+
+    /**
+     * Method called by the HAL when the antenna gets connected or disconnected.
+     *
+     * For a new tuner session, client must assume the antenna is connected.
+     * If it's not, then antennaStateChange must be called within
+     * Constants::ANTENNA_DISCONNECTED_TIMEOUT_MS to indicate that.
+     *
+     * @param connected True if the antenna is now connected, false otherwise.
+     */
+    oneway onAntennaStateChange(bool connected);
+
+    /**
+     * Generic callback for passing updates to vendor-specific parameter values.
+     * The framework does not interpret the parameters, they are passed
+     * in an opaque manner between a vendor application and HAL.
+     *
+     * It's up to the HAL implementation if and how to implement this callback,
+     * as long as it obeys the prefix rule. In particular, only selected keys
+     * may be notified this way. However, setParameters must not trigger
+     * this callback, while an internal event can change parameters
+     * asynchronously.
+     *
+     * @param parameters Vendor-specific key-value pairs,
+     *                   opaque to Android framework.
+     */
+    oneway onParametersUpdated(vec<VendorKeyValue> parameters);
+};

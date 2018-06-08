@@ -18,11 +18,13 @@
 
 void RadioConfigHidlTest::SetUp() {
     radioConfig = ::testing::VtsHalHidlTargetTestBase::getService<IRadioConfig>(
-        hidl_string(RADIO_SERVICE_NAME));
+        RadioConfigHidlEnvironment::Instance()->getServiceName<IRadioConfig>(
+            hidl_string(RADIO_SERVICE_NAME)));
     if (radioConfig == NULL) {
         sleep(60);
         radioConfig = ::testing::VtsHalHidlTargetTestBase::getService<IRadioConfig>(
-            hidl_string(RADIO_SERVICE_NAME));
+            RadioConfigHidlEnvironment::Instance()->getServiceName<IRadioConfig>(
+                hidl_string(RADIO_SERVICE_NAME)));
     }
     ASSERT_NE(nullptr, radioConfig.get());
 

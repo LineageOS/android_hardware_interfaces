@@ -69,7 +69,7 @@ interface IHealth {
      *                NOT_SUPPORTED if this property is not supported
      *                 (e.g. the file that stores this property does not exist),
      *                UNKNOWN for other errors.
-     * @return value battery capacity, or INT32_MIN if not successful.
+     * @return value battery capacity, or 0 if not successful.
      */
     getChargeCounter() generates (Result result, int32_t value);
 
@@ -84,7 +84,7 @@ interface IHealth {
      *                NOT_SUPPORTED if this property is not supported
      *                 (e.g. the file that stores this property does not exist),
      *                UNKNOWN for other errors.
-     * @return value instantaneous battery current, or INT32_MIN if not
+     * @return value instantaneous battery current, or 0 if not
      *               successful.
      */
     getCurrentNow() generates (Result result, int32_t value);
@@ -101,7 +101,7 @@ interface IHealth {
      *                NOT_SUPPORTED if this property is not supported
      *                 (e.g. the file that stores this property does not exist),
      *                UNKNOWN for other errors.
-     * @return value average battery current, or INT32_MIN if not successful.
+     * @return value average battery current, or 0 if not successful.
      */
     getCurrentAverage() generates (Result result, int32_t value);
 
@@ -113,7 +113,7 @@ interface IHealth {
      *                NOT_SUPPORTED if this property is not supported
      *                 (e.g. the file that stores this property does not exist),
      *                UNKNOWN for other errors.
-     * @return value remaining battery capacity, or INT32_MIN if not successful.
+     * @return value remaining battery capacity, or 0 if not successful.
      */
     getCapacity() generates (Result result, int32_t value);
 
@@ -123,7 +123,7 @@ interface IHealth {
      * @return result SUCCESS if successful,
      *                NOT_SUPPORTED if this property is not supported,
      *                UNKNOWN for other errors.
-     * @return value remaining energy, or INT64_MIN if not successful.
+     * @return value remaining energy, or 0 if not successful.
      */
     getEnergyCounter() generates (Result result, int64_t value);
 
@@ -137,4 +137,38 @@ interface IHealth {
      * @return value charge status, or UNKNOWN if not successful.
      */
     getChargeStatus() generates (Result result, BatteryStatus value);
+
+    /**
+     * Get storage info.
+     *
+     * @return result SUCCESS if successful,
+     *                NOT_SUPPORTED if this property is not supported,
+     *                UNKNOWN other errors.
+     * @return value vector of StorageInfo structs, to be ignored if result is not
+     *               SUCCESS.
+     */
+    getStorageInfo() generates (Result result, vec<StorageInfo> value);
+
+    /**
+     * Gets disk statistics (number of reads/writes processed, number of I/O
+     * operations in flight etc).
+     *
+     * @return result SUCCESS if successful,
+     *                NOT_SUPPORTED if this property is not supported,
+     *                UNKNOWN other errors.
+     * @return value vector of disk statistics, to be ignored if result is not SUCCESS.
+     *               The mapping is index 0->sda, 1->sdb and so on.
+     */
+    getDiskStats() generates (Result result, vec<DiskStats> value);
+
+    /**
+     * Get Health Information.
+     *
+     * @return result SUCCESS if successful,
+     *                NOT_SUPPORTED if this API is not supported,
+     *                UNKNOWN for other errors.
+     * @return value  Health information, to be ignored if result is not
+     *                SUCCESS.
+     */
+    getHealthInfo() generates (Result result, @2.0::HealthInfo value);
 };

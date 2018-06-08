@@ -15,7 +15,7 @@
  */
 #include "VirtualProgram.h"
 
-#include <broadcastradio-utils/Utils.h>
+#include <broadcastradio-utils-1x/Utils.h>
 
 #include "resources.h"
 
@@ -30,6 +30,9 @@ using std::vector;
 using V1_0::MetaData;
 using V1_0::MetadataKey;
 using V1_0::MetadataType;
+using V1_1::IdentifierType;
+using V1_1::ProgramInfo;
+using V1_1::VendorKeyValue;
 using utils::HalRevision;
 
 static MetaData createDemoBitmap(MetadataKey key, HalRevision halRev) {
@@ -79,13 +82,6 @@ bool operator<(const VirtualProgram& lhs, const VirtualProgram& rhs) {
     if (l.programType != r.programType) return l.programType < r.programType;
     if (l.primaryId.type != r.primaryId.type) return l.primaryId.type < r.primaryId.type;
     if (l.primaryId.value != r.primaryId.value) return l.primaryId.value < r.primaryId.value;
-
-    // A little exception for HD Radio subchannel - we check secondary ID too.
-    if (utils::hasId(l, IdentifierType::HD_SUBCHANNEL) &&
-        utils::hasId(r, IdentifierType::HD_SUBCHANNEL)) {
-        return utils::getId(l, IdentifierType::HD_SUBCHANNEL) <
-               utils::getId(r, IdentifierType::HD_SUBCHANNEL);
-    }
 
     return false;
 }

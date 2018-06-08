@@ -17,15 +17,17 @@
 #define LOG_TAG "broadcastradio.vts"
 
 #include <VtsHalHidlTargetTestBase.h>
+#include <android-base/logging.h>
 #include <android/hardware/broadcastradio/1.1/IBroadcastRadio.h>
 #include <android/hardware/broadcastradio/1.1/IBroadcastRadioFactory.h>
 #include <android/hardware/broadcastradio/1.1/ITuner.h>
 #include <android/hardware/broadcastradio/1.1/ITunerCallback.h>
 #include <android/hardware/broadcastradio/1.1/types.h>
-#include <android-base/logging.h>
-#include <broadcastradio-utils/Utils.h>
+#include <broadcastradio-utils-1x/Utils.h>
 #include <broadcastradio-vts-utils/call-barrier.h>
+#include <broadcastradio-vts-utils/environment-utils.h>
 #include <broadcastradio-vts-utils/mock-timeout.h>
+#include <broadcastradio-vts-utils/pointer-utils.h>
 #include <cutils/native_handle.h>
 #include <cutils/properties.h>
 #include <gmock/gmock.h>
@@ -56,8 +58,8 @@ using V1_0::MetaData;
 using V1_0::MetadataKey;
 using V1_0::MetadataType;
 
-using std::chrono::steady_clock;
-using std::this_thread::sleep_for;
+using broadcastradio::vts::clearAndWait;
+using broadcastradio::vts::BroadcastRadioHidlEnvironment;
 
 static constexpr auto kConfigTimeout = 10s;
 static constexpr auto kConnectModuleTimeout = 1s;
@@ -91,6 +93,8 @@ struct TunerCallbackMock : public ITunerCallback {
     MOCK_TIMEOUT_METHOD1(currentProgramInfoChanged, Return<void>(const ProgramInfo&));
 };
 
+static BroadcastRadioHidlEnvironment<IBroadcastRadioFactory>* gEnv = nullptr;
+
 class BroadcastRadioHalTest : public ::testing::VtsHalHidlTargetTestBase,
                               public ::testing::WithParamInterface<Class> {
    protected:
@@ -115,32 +119,12 @@ class BroadcastRadioHalTest : public ::testing::VtsHalHidlTargetTestBase,
     hidl_vec<BandConfig> mBands;
 };
 
-/**
- * Clears strong pointer and waits until the object gets destroyed.
- *
- * @param ptr The pointer to get cleared.
- * @param timeout Time to wait for other references.
- */
-template <typename T>
-static void clearAndWait(sp<T>& ptr, std::chrono::milliseconds timeout) {
-    wp<T> wptr = ptr;
-    ptr.clear();
-    auto limit = steady_clock::now() + timeout;
-    while (wptr.promote() != nullptr) {
-        constexpr auto step = 10ms;
-        if (steady_clock::now() + step > limit) {
-            FAIL() << "Pointer was not released within timeout";
-            break;
-        }
-        sleep_for(step);
-    }
-}
-
 void BroadcastRadioHalTest::SetUp() {
     radioClass = GetParam();
 
     // lookup HIDL service
-    auto factory = getService<IBroadcastRadioFactory>();
+    auto factory =
+        getService<IBroadcastRadioFactory>(gEnv->getServiceName<IBroadcastRadioFactory>());
     ASSERT_NE(nullptr, factory.get());
 
     // connect radio module
@@ -525,6 +509,98 @@ TEST_P(BroadcastRadioHalTest, AnalogForcedSwitch) {
     ASSERT_FALSE(forced);
 }
 
+static void verifyIdentifier(const ProgramIdentifier& id) {
+    EXPECT_NE(id.type, 0u);
+    auto val = id.value;
+
+    switch (static_cast<IdentifierType>(id.type)) {
+        case IdentifierType::AMFM_FREQUENCY:
+        case IdentifierType::DAB_FREQUENCY:
+        case IdentifierType::DRMO_FREQUENCY:
+            EXPECT_GT(val, 100u) << "Expected f > 100kHz";
+            EXPECT_LT(val, 10000000u) << "Expected f < 10GHz";
+            break;
+        case IdentifierType::RDS_PI:
+            EXPECT_GT(val, 0u);
+            EXPECT_LE(val, 0xFFFFu) << "Expected 16bit id";
+            break;
+        case IdentifierType::HD_STATION_ID_EXT: {
+            auto stationId = val & 0xFFFFFFFF;  // 32bit
+            val >>= 32;
+            auto subchannel = val & 0xF;  // 4bit
+            val >>= 4;
+            auto freq = val & 0x3FFFF;  // 18bit
+            EXPECT_GT(stationId, 0u);
+            EXPECT_LT(subchannel, 8u) << "Expected ch < 8";
+            EXPECT_GT(freq, 100u) << "Expected f > 100kHz";
+            EXPECT_LT(freq, 10000000u) << "Expected f < 10GHz";
+            break;
+        }
+        case IdentifierType::HD_SUBCHANNEL:
+            EXPECT_LT(val, 8u) << "Expected ch < 8";
+            break;
+        case IdentifierType::DAB_SIDECC: {
+            auto sid = val & 0xFFFF;  // 16bit
+            val >>= 16;
+            auto ecc = val & 0xFF;  // 8bit
+            EXPECT_NE(sid, 0u);
+            EXPECT_GE(ecc, 0xA0u) << "Invalid ECC, see ETSI TS 101 756 V2.1.1";
+            EXPECT_LE(ecc, 0xF6u) << "Invalid ECC, see ETSI TS 101 756 V2.1.1";
+            break;
+        }
+        case IdentifierType::DAB_ENSEMBLE:
+            EXPECT_GT(val, 0u);
+            EXPECT_LE(val, 0xFFFFu) << "Expected 16bit id";
+            break;
+        case IdentifierType::DAB_SCID:
+            EXPECT_GT(val, 0xFu) << "Expected 12bit SCId (not 4bit SCIdS)";
+            EXPECT_LE(val, 0xFFFu) << "Expected 12bit id";
+            break;
+        case IdentifierType::DRMO_SERVICE_ID:
+            EXPECT_GT(val, 0u);
+            EXPECT_LE(val, 0xFFFFFFu) << "Expected 24bit id";
+            break;
+        case IdentifierType::DRMO_MODULATION:
+            EXPECT_GE(val, static_cast<uint32_t>(Modulation::AM));
+            EXPECT_LE(val, static_cast<uint32_t>(Modulation::FM));
+            break;
+        case IdentifierType::SXM_SERVICE_ID:
+            EXPECT_GT(val, 0u);
+            EXPECT_LE(val, 0xFFFFFFFFu) << "Expected 32bit id";
+            break;
+        case IdentifierType::SXM_CHANNEL:
+            EXPECT_LT(val, 1000u);
+            break;
+        case IdentifierType::VENDOR_PRIMARY_START:
+        case IdentifierType::VENDOR_PRIMARY_END:
+            // skip
+            break;
+    }
+}
+
+/**
+ * Test ProgramIdentifier format.
+ *
+ * Verifies that:
+ * - values of ProgramIdentifier match their definitions at IdentifierType.
+ */
+TEST_P(BroadcastRadioHalTest, VerifyIdentifiersFormat) {
+    if (skipped) return;
+    ASSERT_TRUE(openTuner());
+
+    do {
+        auto getCb = [&](const hidl_vec<ProgramInfo>& list) {
+            for (auto&& program : list) {
+                verifyIdentifier(program.selector.primaryId);
+                for (auto&& id : program.selector.secondaryIds) {
+                    verifyIdentifier(id);
+                }
+            }
+        };
+        getProgramList(getCb);
+    } while (nextBand());
+}
+
 INSTANTIATE_TEST_CASE_P(BroadcastRadioHalTestCases, BroadcastRadioHalTest,
                         ::testing::Values(Class::AM_FM, Class::SAT, Class::DT));
 
@@ -535,8 +611,14 @@ INSTANTIATE_TEST_CASE_P(BroadcastRadioHalTestCases, BroadcastRadioHalTest,
 }  // namespace android
 
 int main(int argc, char** argv) {
-  ::testing::InitGoogleTest(&argc, argv);
-  int status = RUN_ALL_TESTS();
-  ALOGI("Test result = %d", status);
-  return status;
+    using android::hardware::broadcastradio::V1_1::vts::gEnv;
+    using android::hardware::broadcastradio::V1_1::IBroadcastRadioFactory;
+    using android::hardware::broadcastradio::vts::BroadcastRadioHidlEnvironment;
+    gEnv = new BroadcastRadioHidlEnvironment<IBroadcastRadioFactory>;
+    ::testing::AddGlobalTestEnvironment(gEnv);
+    ::testing::InitGoogleTest(&argc, argv);
+    gEnv->init(&argc, argv);
+    int status = RUN_ALL_TESTS();
+    ALOGI("Test result = %d", status);
+    return status;
 }
