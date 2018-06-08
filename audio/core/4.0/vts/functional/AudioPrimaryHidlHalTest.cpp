@@ -1100,11 +1100,10 @@ TEST_P(InputStreamTest, updateSinkMetadata) {
 }
 
 TEST_P(InputStreamTest, getActiveMicrophones) {
-    doc::test("Getting active microphones should always succeed");
+    doc::test("Active microphones of a non started stream may not be retrievable");
     hidl_vec<MicrophoneInfo> microphones;
-    ASSERT_OK(device->getMicrophones(returnIn(res, microphones)));
-    ASSERT_OK(res);
-    ASSERT_TRUE(microphones.size() > 0);
+    ASSERT_OK(stream->getActiveMicrophones(returnIn(res, microphones)));
+    ASSERT_RESULT(okOrNotSupported, res);
 }
 
 //////////////////////////////////////////////////////////////////////////////
