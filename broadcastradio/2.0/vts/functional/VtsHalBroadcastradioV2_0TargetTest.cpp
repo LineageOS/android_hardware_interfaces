@@ -308,7 +308,7 @@ static bool supportsFM(const AmFmRegionConfig& config) {
  *  - there is at least one AM/FM band configured;
  *  - FM Deemphasis and RDS are correctly configured for FM-capable radio;
  *  - all channel grids (frequency ranges and spacings) are valid;
- *  - scan spacing is a multiply of manual spacing value.
+ *  - seek spacing is a multiple of the manual spacing value.
  */
 TEST_F(BroadcastRadioHalTest, GetAmFmRegionConfig) {
     AmFmRegionConfig config;
@@ -341,7 +341,7 @@ TEST_F(BroadcastRadioHalTest, GetAmFmRegionConfig) {
  *  - there is at least one AM/FM range supported;
  *  - there is at least one de-emphasis filter mode supported for FM-capable radio;
  *  - all channel grids (frequency ranges and spacings) are valid;
- *  - scan spacing is not set.
+ *  - seek spacing is not set.
  */
 TEST_F(BroadcastRadioHalTest, GetAmFmRegionConfigCapabilities) {
     AmFmRegionConfig config;
@@ -501,14 +501,14 @@ TEST_F(BroadcastRadioHalTest, TuneFailsWithEmpty) {
 }
 
 /**
- * Test scanning to next/prev station.
+ * Test seeking to next/prev station via ITunerSession::scan().
  *
  * Verifies that:
  *  - the method succeeds;
  *  - the program info is changed within timeout::tune;
  *  - works both directions and with or without skipping sub-channel.
  */
-TEST_F(BroadcastRadioHalTest, Scan) {
+TEST_F(BroadcastRadioHalTest, Seek) {
     ASSERT_TRUE(openSession());
 
     // TODO(b/69958777): see FmTune workaround
@@ -564,8 +564,8 @@ TEST_F(BroadcastRadioHalTest, Cancel) {
     ASSERT_TRUE(openSession());
 
     for (int i = 0; i < 10; i++) {
-        auto scanResult = mSession->scan(true /* up */, true /* skip subchannel */);
-        ASSERT_EQ(Result::OK, scanResult);
+        auto result = mSession->scan(true /* up */, true /* skip subchannel */);
+        ASSERT_EQ(Result::OK, result);
 
         auto cancelResult = mSession->cancel();
         ASSERT_TRUE(cancelResult.isOk());

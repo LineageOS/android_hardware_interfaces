@@ -42,7 +42,7 @@ using std::vector;
 
 namespace delay {
 
-static constexpr auto scan = 200ms;
+static constexpr auto seek = 200ms;
 static constexpr auto step = 100ms;
 static constexpr auto tune = 150ms;
 static constexpr auto list = 1s;
@@ -131,11 +131,11 @@ Return<Result> TunerSession::scan(bool directionUp, bool /* skipSubChannel */) {
     if (list.empty()) {
         mIsTuneCompleted = false;
         auto task = [this, directionUp]() {
-            ALOGI("Performing failed scan up=%d", directionUp);
+            ALOGI("Performing failed seek up=%d", directionUp);
 
             mCallback->onTuneFailed(Result::TIMEOUT, {});
         };
-        mThread.schedule(task, delay::scan);
+        mThread.schedule(task, delay::seek);
 
         return Result::OK;
     }
@@ -162,12 +162,12 @@ Return<Result> TunerSession::scan(bool directionUp, bool /* skipSubChannel */) {
 
     mIsTuneCompleted = false;
     auto task = [this, tuneTo, directionUp]() {
-        ALOGI("Performing scan up=%d", directionUp);
+        ALOGI("Performing seek up=%d", directionUp);
 
         lock_guard<mutex> lk(mMut);
         tuneInternalLocked(tuneTo);
     };
-    mThread.schedule(task, delay::scan);
+    mThread.schedule(task, delay::seek);
 
     return Result::OK;
 }
