@@ -18,7 +18,8 @@ package android.hardware.broadcastradio@2.0;
 interface ITunerCallback {
     /**
      * Method called by the HAL when a tuning operation fails asynchronously
-     * following a step(), scan() or tune() command.
+     * following ITunerSession::tune(), ITunerSession::scan() or
+     * ITunerSession::step().
      *
      * This callback is only called when the step(), scan() or tune() command
      * returned OK at first.
