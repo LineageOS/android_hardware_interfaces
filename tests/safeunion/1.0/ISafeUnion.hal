@@ -1,0 +1,38 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.tests.safeunion@1.0;
+
+interface ISafeUnion {
+    newLargeSafeUnion() generates (LargeSafeUnion myUnion);
+    setA(LargeSafeUnion myUnion, int8_t a) generates (LargeSafeUnion myUnion);
+    setB(LargeSafeUnion myUnion, uint16_t b) generates (LargeSafeUnion myUnion);
+    setC(LargeSafeUnion myUnion, int32_t c) generates (LargeSafeUnion myUnion);
+    setD(LargeSafeUnion myUnion, uint64_t d) generates (LargeSafeUnion myUnion);
+    setE(LargeSafeUnion myUnion, int8_t[13] e) generates (LargeSafeUnion myUnion);
+    setF(LargeSafeUnion myUnion, int64_t[5] f) generates (LargeSafeUnion myUnion);
+    setG(LargeSafeUnion myUnion, string g) generates (LargeSafeUnion myUnion);
+    setH(LargeSafeUnion myUnion, vec<bool> h) generates (LargeSafeUnion myUnion);
+    setI(LargeSafeUnion myUnion, vec<uint64_t> i) generates (LargeSafeUnion myUnion);
+    setJ(LargeSafeUnion myUnion, J j) generates (LargeSafeUnion myUnion);
+    setK(LargeSafeUnion myUnion, K k) generates (LargeSafeUnion myUnion);
+    setL(LargeSafeUnion myUnion, SmallSafeUnion l) generates (LargeSafeUnion myUnion);
+
+    newMiscTypesSafeUnion() generates (MiscTypesSafeUnion myUnion);
+    setMiscA(MiscTypesSafeUnion myUnion, memory a) generates (MiscTypesSafeUnion myUnion);
+    setMiscB(MiscTypesSafeUnion myUnion, handle b) generates (MiscTypesSafeUnion myUnion);
+    setMiscC(MiscTypesSafeUnion myUnion, bitfield<BitField> c) generates (MiscTypesSafeUnion myUnion);
+};
