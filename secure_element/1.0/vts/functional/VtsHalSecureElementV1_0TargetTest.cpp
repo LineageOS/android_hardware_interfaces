@@ -134,6 +134,7 @@ TEST_F(SecureElementHidlTest, transmit) {
     EXPECT_LE((unsigned int)2, response.selectResponse.size());
     EXPECT_LE(1, response.channelNumber);
     std::vector<uint8_t> command = DATA_APDU;
+    command[0] |= response.channelNumber;
     std::vector<uint8_t> transmitResponse;
     se_->transmit(command, [&transmitResponse](std::vector<uint8_t> res) {
         transmitResponse.resize(res.size());
@@ -168,7 +169,8 @@ TEST_F(SecureElementHidlTest, openBasicChannel) {
                               }
                           });
     if (statusReturned == SecureElementStatus::SUCCESS) {
-        EXPECT_LE((unsigned int)3, response.size());
+        EXPECT_LE((unsigned int)2, response.size());
+        se_->closeChannel(0);
         return;
     }
     EXPECT_EQ(SecureElementStatus::UNSUPPORTED_OPERATION, statusReturned);
