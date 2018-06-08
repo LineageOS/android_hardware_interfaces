@@ -32,6 +32,8 @@ namespace impl {
 constexpr int ABS_ACTIVE = (int)VehicleProperty::ABS_ACTIVE;
 constexpr int AP_POWER_STATE_REQ = (int)VehicleProperty::AP_POWER_STATE_REQ;
 constexpr int AP_POWER_STATE_REPORT = (int)VehicleProperty::AP_POWER_STATE_REPORT;
+constexpr int DOOR_1_LEFT = (int)VehicleAreaDoor::ROW_1_LEFT;
+constexpr int DOOR_1_RIGHT = (int)VehicleAreaDoor::ROW_1_RIGHT;
 constexpr int OBD2_LIVE_FRAME = (int)VehicleProperty::OBD2_LIVE_FRAME;
 constexpr int OBD2_FREEZE_FRAME = (int)VehicleProperty::OBD2_FREEZE_FRAME;
 constexpr int OBD2_FREEZE_FRAME_INFO = (int)VehicleProperty::OBD2_FREEZE_FRAME_INFO;
@@ -68,33 +70,39 @@ const int32_t kGenerateFakeDataControllingProperty =
 enum class FakeDataCommand : int32_t {
     /**
      * Starts linear fake data generation. Caller must provide additional data:
-     *     int32Values[1] - VehicleProperty to which command applies
+     *     int32Values[1] - vehicle property to which command applies
      *     int64Values[0] - periodic interval in nanoseconds
      *     floatValues[0] - initial value
      *     floatValues[1] - dispersion defines the min/max value relative to initial value, where
      *                      max = initial_value + dispersion, min = initial_value - dispersion.
      *                      Dispersion should be non-negative, otherwise the behavior is undefined.
      *     floatValues[2] - increment, with every timer tick the value will be incremented by this
-     *                      amount. When reaching to max value, the current value will be set to min.
-     *                      It should be non-negative, otherwise the behavior is undefined.
+     *                      amount. When reaching to max value, the current value will be set to
+     *                      min. It should be non-negative, otherwise the behavior is undefined.
      */
     StartLinear = 0,
 
-    /** Stops generating of fake data that was triggered by Start commands.
-     *     int32Values[1] - VehicleProperty to which command applies. VHAL will stop the
+    /** Stops linear fake data generation that was triggered by StartLinear commands.
+     *     int32Values[1] - vehicle property to which command applies. VHAL will stop the
      *                      corresponding linear generation for that property.
      */
     StopLinear = 1,
 
     /**
-     * Starts JSON-based fake data generation. Caller must provide a string value specifying
-     * the path to fake value JSON file:
+     * Starts JSON-based fake data generation. It iterates through JSON-encoded VHAL events from a
+     * file and inject them to VHAL. The iteration can be repeated multiple times or infinitely.
+     * Caller must provide additional data:
+     *     int32Values[1] - number of iterations. If it is not provided or -1. The iteration will be
+     *                      repeated infinite times.
      *     stringValue    - path to the fake values JSON file
      */
     StartJson = 2,
 
     /**
-     * Stops JSON-based fake data generation. No additional arguments needed.
+     * Stops JSON-based fake data generation. As multiple JSON-based generation can happen at the
+     * same time. Caller must provide the path of fake value JSON file to stop the corresponding
+     * generation:
+     *     stringValue    - path to the fake values JSON file
      */
     StopJson = 3,
 
@@ -440,13 +448,13 @@ const ConfigDeclaration kVehicleProperties[]{
             },
     },
 
-    {.config =
-         {
-             .prop = toInt(VehicleProperty::DOOR_LOCK),
-             .access = VehiclePropertyAccess::READ,
-             .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-         },
-     .initialValue = {.int32Values = {1}}},
+    {.config = {.prop = toInt(VehicleProperty::DOOR_LOCK),
+                .access = VehiclePropertyAccess::READ,
+                .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                .areaConfigs = {VehicleAreaConfig{.areaId = DOOR_1_LEFT},
+                                VehicleAreaConfig{.areaId = DOOR_1_RIGHT}}},
+     .initialAreaValues = {{DOOR_1_LEFT, {.int32Values = {1}}},
+                           {DOOR_1_RIGHT, {.int32Values = {1}}}}},
 
     {.config =
          {
@@ -459,23 +467,15 @@ const ConfigDeclaration kVehicleProperties[]{
          },
      .initialValue = {.int64Values = {0, 100000, 200000, 300000, 400000}}},
 
-    {
-        .config =
-            {
-                .prop = ABS_ACTIVE,
+    {.config = {.prop = ABS_ACTIVE,
                 .access = VehiclePropertyAccess::READ,
-                .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-            },
-    },
+                .changeMode = VehiclePropertyChangeMode::ON_CHANGE},
+     .initialValue = {.int32Values = {0}}},
 
-    {
-        .config =
-            {
-                .prop = TRACTION_CONTROL_ACTIVE,
+    {.config = {.prop = TRACTION_CONTROL_ACTIVE,
                 .access = VehiclePropertyAccess::READ,
-                .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-            },
-    },
+                .changeMode = VehiclePropertyChangeMode::ON_CHANGE},
+     .initialValue = {.int32Values = {0}}},
 
     {.config = {.prop = toInt(VehicleProperty::AP_POWER_STATE_REQ),
                 .access = VehiclePropertyAccess::READ,
