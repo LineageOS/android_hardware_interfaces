@@ -336,6 +336,10 @@ void VendorInterface::OnFirmwareConfigured(uint8_t result) {
     initialize_complete_cb_(result == 0);
     initialize_complete_cb_ = nullptr;
   }
+  
+#ifndef TARGET_USES_BT_SCO
+  lib_interface_->op(BT_VND_OP_SCO_CFG, nullptr);
+#endif
 
   lib_interface_->op(BT_VND_OP_GET_LPM_IDLE_TIMEOUT, &lpm_timeout_ms);
   ALOGI("%s: lpm_timeout_ms %d", __func__, lpm_timeout_ms);
