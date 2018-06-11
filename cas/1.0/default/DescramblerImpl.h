@@ -55,7 +55,7 @@ public:
 
 private:
     sp<SharedLibrary> mLibrary;
-    DescramblerPlugin *mPlugin;
+    std::shared_ptr<DescramblerPlugin> mPluginHolder;
 
     DISALLOW_EVIL_CONSTRUCTORS(DescramblerImpl);
 };
