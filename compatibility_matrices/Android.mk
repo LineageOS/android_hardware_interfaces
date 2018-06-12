@@ -115,19 +115,25 @@ LOCAL_ASSEMBLE_VINTF_ENV_VARS := \
 
 include $(BUILD_FRAMEWORK_COMPATIBILITY_MATRIX)
 
-# Framework Compatibility Matrix
-
-include $(CLEAR_VARS)
-include $(LOCAL_PATH)/clear_vars.mk
-LOCAL_MODULE := framework_compatibility_matrix.xml
-LOCAL_MODULE_STEM := compatibility_matrix.xml
-LOCAL_MODULE_PATH := $(TARGET_OUT)
-LOCAL_REQUIRED_MODULES := \
+my_system_matrix_deps := \
     framework_compatibility_matrix.legacy.xml \
     framework_compatibility_matrix.1.xml \
     framework_compatibility_matrix.2.xml \
     framework_compatibility_matrix.current.xml \
     framework_compatibility_matrix.device.xml
+
+# Phony target that installs all framework compatibility matrix files
+include $(CLEAR_VARS)
+LOCAL_MODULE := framework_compatibility_matrix.xml
+LOCAL_REQUIRED_MODULES := $(my_system_matrix_deps)
+include $(BUILD_PHONY_PACKAGE)
+
+# Final Framework Compatibility Matrix
+include $(CLEAR_VARS)
+include $(LOCAL_PATH)/clear_vars.mk
+LOCAL_MODULE := verified_assembled_system_matrix.xml
+LOCAL_MODULE_PATH := $(PRODUCT_OUT)
+LOCAL_REQUIRED_MODULES := $(my_system_matrix_deps)
 LOCAL_GENERATED_SOURCES := $(call module-installed-files,$(LOCAL_REQUIRED_MODULES))
 
 ifdef BUILT_VENDOR_MANIFEST
@@ -138,4 +144,5 @@ endif
 include $(BUILD_FRAMEWORK_COMPATIBILITY_MATRIX)
 BUILT_SYSTEM_MATRIX := $(LOCAL_BUILT_MODULE)
 
+my_system_matrix_deps :=
 BUILD_FRAMEWORK_COMPATIBILITY_MATRIX :=
