@@ -19,6 +19,7 @@ cc_defaults {
     // Lists all dependencies that can *not* be expected on the device.
     static_libs: [
         "VtsHalHidlTargetTestBase",
+        "libhidl-gen-utils",
     ],
     group_static_libs: true,
 
