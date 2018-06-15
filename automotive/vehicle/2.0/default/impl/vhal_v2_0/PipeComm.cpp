@@ -33,23 +33,28 @@ namespace V2_0 {
 
 namespace impl {
 
-PipeComm::PipeComm() {
-    // Initialize member vars
-    mPipeFd = -1;
-}
+PipeComm::PipeComm(MessageProcessor* messageProcessor) : CommConn(messageProcessor), mPipeFd(-1) {}
 
-
-int PipeComm::open() {
+void PipeComm::start() {
     int fd = qemu_pipe_open(CAR_SERVICE_NAME);
 
     if (fd < 0) {
         ALOGE("%s: Could not open connection to service: %s %d", __FUNCTION__, strerror(errno), fd);
-        return -errno;
+        return;
     }
 
-    ALOGI("%s: OPENED PIPE, fd=%d", __FUNCTION__, fd);
+    ALOGI("%s: Starting pipe connection, fd=%d", __FUNCTION__, fd);
     mPipeFd = fd;
-    return 0;
+
+    CommConn::start();
+}
+
+void PipeComm::stop() {
+    if (mPipeFd > 0) {
+        ::close(mPipeFd);
+        mPipeFd = -1;
+    }
+    CommConn::stop();
 }
 
 std::vector<uint8_t> PipeComm::read() {
@@ -60,16 +65,13 @@ std::vector<uint8_t> PipeComm::read() {
     numBytes = qemu_pipe_frame_recv(mPipeFd, msg.data(), msg.size());
 
     if (numBytes == MAX_RX_MSG_SZ) {
-        ALOGE("%s:  Received max size = %d", __FUNCTION__, MAX_RX_MSG_SZ);
+        ALOGE("%s: Received max size = %d", __FUNCTION__, MAX_RX_MSG_SZ);
     } else if (numBytes > 0) {
         msg.resize(numBytes);
         return msg;
     } else {
         ALOGD("%s: Connection terminated on pipe %d, numBytes=%d", __FUNCTION__, mPipeFd, numBytes);
-        {
-            std::lock_guard<std::mutex> lock(mMutex);
-            mPipeFd = -1;
-        }
+        mPipeFd = -1;
     }
 
     return std::vector<uint8_t>();
@@ -78,11 +80,8 @@ std::vector<uint8_t> PipeComm::read() {
 int PipeComm::write(const std::vector<uint8_t>& data) {
     int retVal = 0;
 
-    {
-        std::lock_guard<std::mutex> lock(mMutex);
-        if (mPipeFd != -1) {
-            retVal = qemu_pipe_frame_send(mPipeFd, data.data(), data.size());
-        }
+    if (mPipeFd != -1) {
+        retVal = qemu_pipe_frame_send(mPipeFd, data.data(), data.size());
     }
 
     if (retVal < 0) {
