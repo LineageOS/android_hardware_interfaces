@@ -54,5 +54,3 @@ socket: arg0 == 1
 connect: 1
 recvmsg: 1
 rt_tgsigqueueinfo: 1
-
-@include /system/etc/seccomp_policy/crash_dump.arm64.policy
