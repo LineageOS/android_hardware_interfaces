@@ -21,7 +21,9 @@ namespace android {
 namespace hardware {
 
 inline static bool operator<(const hidl_vec<uint8_t>& a, const hidl_vec<uint8_t>& b) {
-    return memcmp(a.data(), b.data(), std::min(a.size(), b.size())) == -1;
+    auto result = memcmp(a.data(), b.data(), std::min(a.size(), b.size()));
+    if (!result) return a.size() < b.size();
+    return result < 0;
 }
 
 template <size_t SIZE>
