@@ -6,12 +6,7 @@ Upgrading from health@1.0 HAL
 1. If the device does not have a vendor-specific libhealthd AND does not
    implement storage-related APIs, just do the following:
 
-    1.1 (recommended) To remove healthd from the build,
-        PRODUCT_PACKAGES += android.hardware.health@2.0-service.override
-        DEVICE_FRAMEWORK_MANIFEST_FILE += \
-            system/libhidl/vintfdata/manifest_healthd_exclude.xml
-    1.2 To keep healthd in the build,
-        PRODUCT_PACKAGES += android.hardware.health@2.0-service
+    PRODUCT_PACKAGES += android.hardware.health@2.0-service
 
    Otherwise, continue to Step 2.
 
