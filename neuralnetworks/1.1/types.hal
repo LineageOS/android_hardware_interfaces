@@ -137,13 +137,19 @@ enum OperationType : @1.0::OperationType {
      * * 1: A 2-D Tensor of {@link OperandType::TENSOR_INT32}, the paddings
      *      for each spatial dimension of the input tensor. The shape of the
      *      tensor must be {rank(input0), 2}.
-     *      padding[i, 0] specifies the number of element to be padded in the
+     *      padding[i, 0] specifies the number of elements to be padded in the
      *      front of dimension i.
-     *      padding[i, 1] specifies the number of element to be padded after the
+     *      padding[i, 1] specifies the number of elements to be padded after the
      *      end of dimension i.
      *
      * Outputs:
-     * * 0: A tensor of the same {@link OperandType} as input0.
+     * * 0: A tensor of the same {@link OperandType} as input0. The
+     *      output tensor has the same rank as input0, and each
+     *      dimension of the output tensor has the same size as the
+     *      corresponding dimension of the input tensor plus the size
+     *      of the padding:
+     *          output0.dimension[i] =
+     *              padding[i, 0] + input0.dimension[i] + padding[i, 1]
      */
     PAD = 32,
 
@@ -377,19 +383,21 @@ struct Model {
     /**
      * All operations included in the model.
      *
-     * The operations are sorted into execution order.
+     * The operations are sorted into execution order. Every operand
+     * with lifetime MODEL_OUTPUT or TEMPORARY_VARIABLE must be
+     * written before it is read.
      */
     vec<Operation> operations;
 
     /**
-     * Input indexes of the model.
+     * Input indexes of the model. There must be at least one.
      *
      * Each value corresponds to the index of the operand in "operands".
      */
     vec<uint32_t> inputIndexes;
 
     /**
-     * Output indexes of the model.
+     * Output indexes of the model. There must be at least one.
      *
      * Each value corresponds to the index of the operand in "operands".
      */
@@ -404,8 +412,7 @@ struct Model {
     vec<uint8_t> operandValues;
 
     /**
-     * A collection of shared memory pools containing operand data that were
-     * registered by the model.
+     * A collection of shared memory pools containing operand values.
      *
      * An operand's value must be located here if and only if Operand::lifetime
      * equals OperandLifeTime::CONSTANT_REFERENCE.

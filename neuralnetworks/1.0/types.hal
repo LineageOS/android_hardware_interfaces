@@ -596,8 +596,8 @@ enum OperationType : int32_t {
      * * 0: A 4-D tensor, of shape [batches, height, width, depth].
      *
      * Outputs:
-     * * 0: The output 4-D tensor, of shape
-     *      [batches, out_height, out_width, depth].
+     * * 0: The output 4-D tensor, of the same shape as input
+     *      [batches, height, width, depth].
      */
     L2_NORMALIZATION = 11,
 
@@ -1282,8 +1282,8 @@ enum OperationType : int32_t {
      *      input height and width.
      *
      * Outputs:
-     * * 0: The output 4-D tensor, of shape [batch, height/block_size,
-     *      width/block_size, depth*block_size*block_size].
+     * * 0: The output 4-D tensor, of shape [batches, height/block_size,
+     *      width/block_size, depth_in*block_size*block_size].
      */
     SPACE_TO_DEPTH = 26,
 
@@ -1410,28 +1410,36 @@ enum FusedActivationFunc : int32_t {
 enum OperandLifeTime : int32_t {
     /**
      * The operand is internal to the model. It's created by an operation and
-     * consumed by other operations.
+     * consumed by other operations. It must be an output operand of
+     * exactly one operation.
      */
     TEMPORARY_VARIABLE,
 
     /**
-     * The operand is an input of the model. An operand can't be both
-     * input and output of a model.
+     * The operand is an input of the model. It must not be an output
+     * operand of any operation.
+     *
+     * An operand can't be both input and output of a model.
      */
     MODEL_INPUT,
 
     /**
-     * The operand is an output of the model.
+     * The operand is an output of the model. It must be an output
+     * operand of exactly one operation.
+     *
+     * An operand can't be both input and output of a model.
      */
     MODEL_OUTPUT,
 
     /**
-     * The operand is a constant found in Model.operandValues.
+     * The operand is a constant found in Model.operandValues. It must
+     * not be an output operand of any operation.
      */
     CONSTANT_COPY,
 
     /**
-     * The operand is a constant that was specified via a Memory object.
+     * The operand is a constant that was specified via a Memory
+     * object. It must not be an output operand of any operation.
      */
     CONSTANT_REFERENCE,
 
@@ -1641,19 +1649,21 @@ struct Model {
     /**
      * All operations included in the model.
      *
-     * The operations are sorted into execution order.
+     * The operations are sorted into execution order. Every operand
+     * with lifetime MODEL_OUTPUT or TEMPORARY_VARIABLE must be
+     * written before it is read.
      */
     vec<Operation> operations;
 
     /**
-     * Input indexes of the model.
+     * Input indexes of the model. There must be at least one.
      *
      * Each value corresponds to the index of the operand in "operands".
      */
     vec<uint32_t> inputIndexes;
 
     /**
-     * Output indexes of the model.
+     * Output indexes of the model. There must be at least one.
      *
      * Each value corresponds to the index of the operand in "operands".
      */
@@ -1668,8 +1678,7 @@ struct Model {
     vec<uint8_t> operandValues;
 
     /**
-     * A collection of shared memory pools containing operand data that were
-     * registered by the model.
+     * A collection of shared memory pools containing operand values.
      *
      * An operand's value must be located here if and only if Operand::lifetime
      * equals OperandLifeTime::CONSTANT_REFERENCE.
@@ -1721,6 +1730,9 @@ struct RequestArgument {
  * 1) Provides the input and output data to be used when executing the model.
  * 2) Specifies any updates to the input operand metadata that were left
  *    unspecified at model preparation time.
+ *
+ * An output must not overlap with any other output, with an input, or
+ * with an operand of lifetime CONSTANT_REFERENCE.
  */
 struct Request {
     /**
