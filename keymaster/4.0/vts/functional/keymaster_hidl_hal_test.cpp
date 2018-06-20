@@ -182,7 +182,7 @@ X509* parse_cert_blob(const hidl_vec<uint8_t>& blob) {
 }
 
 bool verify_chain(const hidl_vec<hidl_vec<uint8_t>>& chain) {
-    for (size_t i = 0; i < chain.size() - 1; ++i) {
+    for (size_t i = 0; i < chain.size(); ++i) {
         X509_Ptr key_cert(parse_cert_blob(chain[i]));
         X509_Ptr signing_cert;
         if (i < chain.size() - 1) {
@@ -246,8 +246,7 @@ bool tag_in_list(const KeyParameter& entry) {
     // Attestations don't contain everything in key authorization lists, so we need to filter
     // the key lists to produce the lists that we expect to match the attestations.
     auto tag_list = {
-        Tag::INCLUDE_UNIQUE_ID, Tag::BLOB_USAGE_REQUIREMENTS,
-        Tag::EC_CURVE /* Tag::EC_CURVE will be included by KM2 implementations */,
+        Tag::INCLUDE_UNIQUE_ID, Tag::BLOB_USAGE_REQUIREMENTS, Tag::EC_CURVE, Tag::HARDWARE_TYPE,
     };
     return std::find(tag_list.begin(), tag_list.end(), entry.tag) != tag_list.end();
 }
@@ -271,7 +270,7 @@ std::string make_string(const uint8_t (&a)[N]) {
 
 bool verify_attestation_record(const string& challenge, const string& app_id,
                                AuthorizationSet expected_sw_enforced,
-                               AuthorizationSet expected_tee_enforced,
+                               AuthorizationSet expected_tee_enforced, SecurityLevel security_level,
                                const hidl_vec<uint8_t>& attestation_cert) {
     X509_Ptr cert(parse_cert_blob(attestation_cert));
     EXPECT_TRUE(!!cert.get());
@@ -290,29 +289,27 @@ bool verify_attestation_record(const string& challenge, const string& app_id,
     HidlBuf att_challenge;
     HidlBuf att_unique_id;
     HidlBuf att_app_id;
-    EXPECT_EQ(ErrorCode::OK,
-              parse_attestation_record(attest_rec->data,                 //
-                                       attest_rec->length,               //
-                                       &att_attestation_version,         //
-                                       &att_attestation_security_level,  //
-                                       &att_keymaster_version,           //
-                                       &att_keymaster_security_level,    //
-                                       &att_challenge,                   //
-                                       &att_sw_enforced,                 //
-                                       &att_tee_enforced,                //
-                                       &att_unique_id));
 
-    EXPECT_TRUE(att_attestation_version == 1 || att_attestation_version == 2);
+    auto error = parse_attestation_record(attest_rec->data,                 //
+                                          attest_rec->length,               //
+                                          &att_attestation_version,         //
+                                          &att_attestation_security_level,  //
+                                          &att_keymaster_version,           //
+                                          &att_keymaster_security_level,    //
+                                          &att_challenge,                   //
+                                          &att_sw_enforced,                 //
+                                          &att_tee_enforced,                //
+                                          &att_unique_id);
+    EXPECT_EQ(ErrorCode::OK, error);
+    if (error != ErrorCode::OK) return false;
+
+    EXPECT_TRUE(att_attestation_version == 3);
 
     expected_sw_enforced.push_back(TAG_ATTESTATION_APPLICATION_ID, HidlBuf(app_id));
 
     EXPECT_GE(att_keymaster_version, 3U);
-    EXPECT_EQ(KeymasterHidlTest::IsSecure() ? SecurityLevel::TRUSTED_ENVIRONMENT
-                                            : SecurityLevel::SOFTWARE,
-              att_keymaster_security_level);
-    EXPECT_EQ(KeymasterHidlTest::IsSecure() ? SecurityLevel::TRUSTED_ENVIRONMENT
-                                            : SecurityLevel::SOFTWARE,
-              att_attestation_security_level);
+    EXPECT_EQ(security_level, att_keymaster_security_level);
+    EXPECT_EQ(security_level, att_attestation_security_level);
 
     EXPECT_EQ(challenge.length(), att_challenge.size());
     EXPECT_EQ(0, memcmp(challenge.data(), att_challenge.data(), challenge.length()));
@@ -3827,7 +3824,7 @@ TEST_F(AttestationTest, RsaAttestation) {
     EXPECT_TRUE(verify_attestation_record("challenge", "foo",                     //
                                           key_characteristics_.softwareEnforced,  //
                                           key_characteristics_.hardwareEnforced,  //
-                                          cert_chain[0]));
+                                          SecLevel(), cert_chain[0]));
 }
 
 /*
@@ -3874,7 +3871,7 @@ TEST_F(AttestationTest, EcAttestation) {
     EXPECT_TRUE(verify_attestation_record("challenge", "foo",                     //
                                           key_characteristics_.softwareEnforced,  //
                                           key_characteristics_.hardwareEnforced,  //
-                                          cert_chain[0]));
+                                          SecLevel(), cert_chain[0]));
 }
 
 /*
