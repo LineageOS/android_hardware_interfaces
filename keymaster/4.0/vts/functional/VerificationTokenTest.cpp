@@ -111,8 +111,9 @@ TEST_F(VerificationTokenTest, TestCreation) {
 
     EXPECT_GE(host_time_delta, time_to_sleep)
         << "We slept for " << time_to_sleep << " ms, the clock must have advanced by that much";
-    EXPECT_LE(host_time_delta, time_to_sleep + 10)
-        << "The verifyAuthorization call took more than 10 ms?  That's awful!";
+    EXPECT_LE(host_time_delta, time_to_sleep + 20)
+        << "The verifyAuthorization call took " << (host_time_delta - time_to_sleep)
+        << " ms?  That's awful!";
 
     auto km_time_delta = result2.token.timestamp - result1.token.timestamp;
 
