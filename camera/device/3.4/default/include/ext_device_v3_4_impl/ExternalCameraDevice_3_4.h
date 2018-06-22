@@ -96,7 +96,8 @@ protected:
     // Get candidate supported formats list of input cropping type.
     static std::vector<SupportedV4L2Format> getCandidateSupportedFormatsLocked(
             int fd, CroppingType cropType,
-            const std::vector<ExternalCameraConfig::FpsLimitation>& fpsLimits);
+            const std::vector<ExternalCameraConfig::FpsLimitation>& fpsLimits,
+            const Size& minStreamSize);
     // Trim supported format list by the cropping type. Also sort output formats by width/height
     static void trimSupportedFormats(CroppingType cropType,
             /*inout*/std::vector<SupportedV4L2Format>* pFmts);
