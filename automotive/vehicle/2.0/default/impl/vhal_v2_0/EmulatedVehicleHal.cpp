@@ -431,7 +431,7 @@ void EmulatedVehicleHal::onFakeValueGenerated(const VehiclePropValue& value) {
         mPropStore->writeValue(*updatedPropValue, shouldUpdateStatus);
         auto changeMode = mPropStore->getConfigOrDie(value.prop)->changeMode;
         if (VehiclePropertyChangeMode::ON_CHANGE == changeMode) {
-            doHalEvent(move(updatedPropValue));
+            doHalEvent(std::move(updatedPropValue));
         }
     }
 }
