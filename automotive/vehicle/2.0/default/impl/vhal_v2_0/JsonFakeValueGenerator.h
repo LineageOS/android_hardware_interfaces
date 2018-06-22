@@ -49,6 +49,14 @@ public:
 
 private:
     std::vector<VehiclePropValue> parseFakeValueJson(std::istream& is);
+    void copyMixedValueJson(VehiclePropValue::RawValue& dest, const Json::Value& jsonValue);
+
+    template <typename T>
+    void copyJsonArray(hidl_vec<T>& dest, const Json::Value& jsonArray);
+
+    bool isDiagnosticProperty(int32_t prop);
+    hidl_vec<uint8_t> generateDiagnosticBytes(const VehiclePropValue::RawValue& diagnosticValue);
+    void setBit(hidl_vec<uint8_t>& bytes, size_t idx);
 
 private:
     GeneratorCfg mGenCfg;
