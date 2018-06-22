@@ -77,6 +77,9 @@ struct ExternalCameraConfig {
     };
     std::vector<FpsLimitation> fpsLimits;
 
+    // Minimum output stream size
+    Size minStreamSize;
+
 private:
     ExternalCameraConfig();
 };
