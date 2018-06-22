@@ -290,7 +290,7 @@
     </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.power</name>
-        <version>1.0-2</version>
+        <version>1.0-3</version>
         <interface>
             <name>IPower</name>
             <instance>default</instance>
