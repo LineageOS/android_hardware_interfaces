@@ -124,7 +124,8 @@ struct Device : public IDevice, public ParametersUtil {
     Return<void> debug(const hidl_handle& fd, const hidl_vec<hidl_string>& options) override;
 
     // Utility methods for extending interfaces.
-    Result analyzeStatus(const char* funcName, int status);
+    Result analyzeStatus(const char* funcName, int status,
+                         const std::vector<int>& ignoreErrors = {});
     void closeInputStream(audio_stream_in_t* stream);
     void closeOutputStream(audio_stream_out_t* stream);
     audio_hw_device_t* device() const { return mDevice; }

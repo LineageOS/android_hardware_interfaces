@@ -40,8 +40,9 @@ Device::~Device() {
     mDevice = nullptr;
 }
 
-Result Device::analyzeStatus(const char* funcName, int status) {
-    return util::analyzeStatus("Device", funcName, status);
+Result Device::analyzeStatus(const char* funcName, int status,
+                             const std::vector<int>& ignoreErrors) {
+    return util::analyzeStatus("Device", funcName, status, ignoreErrors);
 }
 
 void Device::closeInputStream(audio_stream_in_t* stream) {
@@ -155,7 +156,8 @@ Return<void> Device::openOutputStream(int32_t ioHandle, const DeviceAddress& dev
     }
     AudioConfig suggestedConfig;
     HidlUtils::audioConfigFromHal(halConfig, &suggestedConfig);
-    _hidl_cb(analyzeStatus("open_output_stream", status), streamOut, suggestedConfig);
+    _hidl_cb(analyzeStatus("open_output_stream", status, {EINVAL} /* ignore */), streamOut,
+             suggestedConfig);
     return Void();
 }
 
@@ -183,7 +185,8 @@ Return<void> Device::openInputStream(int32_t ioHandle, const DeviceAddress& devi
     }
     AudioConfig suggestedConfig;
     HidlUtils::audioConfigFromHal(halConfig, &suggestedConfig);
-    _hidl_cb(analyzeStatus("open_input_stream", status), streamIn, suggestedConfig);
+    _hidl_cb(analyzeStatus("open_input_stream", status, {EINVAL} /* ignore */), streamIn,
+             suggestedConfig);
     return Void();
 }
 

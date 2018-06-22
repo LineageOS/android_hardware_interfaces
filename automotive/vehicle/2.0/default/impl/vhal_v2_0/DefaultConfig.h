@@ -34,6 +34,8 @@ constexpr int AP_POWER_STATE_REQ = (int)VehicleProperty::AP_POWER_STATE_REQ;
 constexpr int AP_POWER_STATE_REPORT = (int)VehicleProperty::AP_POWER_STATE_REPORT;
 constexpr int DOOR_1_LEFT = (int)VehicleAreaDoor::ROW_1_LEFT;
 constexpr int DOOR_1_RIGHT = (int)VehicleAreaDoor::ROW_1_RIGHT;
+constexpr int DOOR_2_LEFT = (int)VehicleAreaDoor::ROW_2_LEFT;
+constexpr int DOOR_2_RIGHT = (int)VehicleAreaDoor::ROW_2_RIGHT;
 constexpr int OBD2_LIVE_FRAME = (int)VehicleProperty::OBD2_LIVE_FRAME;
 constexpr int OBD2_FREEZE_FRAME = (int)VehicleProperty::OBD2_FREEZE_FRAME;
 constexpr int OBD2_FREEZE_FRAME_INFO = (int)VehicleProperty::OBD2_FREEZE_FRAME_INFO;
@@ -48,6 +50,14 @@ constexpr int HVAC_LEFT = (int)(VehicleAreaSeat::ROW_1_LEFT | VehicleAreaSeat::R
                                 VehicleAreaSeat::ROW_2_CENTER);
 constexpr int HVAC_RIGHT = (int)(VehicleAreaSeat::ROW_1_RIGHT | VehicleAreaSeat::ROW_2_RIGHT);
 constexpr int HVAC_ALL = HVAC_LEFT | HVAC_RIGHT;
+constexpr int VENDOR_EXTENSION_BOOLEAN_PROPERTY =
+    (int)(0x101 | VehiclePropertyGroup::VENDOR | VehiclePropertyType::BOOLEAN | VehicleArea::DOOR);
+constexpr int VENDOR_EXTENSION_FLOAT_PROPERTY =
+    (int)(0x102 | VehiclePropertyGroup::VENDOR | VehiclePropertyType::FLOAT | VehicleArea::SEAT);
+constexpr int VENDOR_EXTENSION_INT_PROPERTY =
+    (int)(0x103 | VehiclePropertyGroup::VENDOR | VehiclePropertyType::INT32 | VehicleArea::WINDOW);
+constexpr int VENDOR_EXTENSION_STRING_PROPERTY =
+    (int)(0x104 | VehiclePropertyGroup::VENDOR | VehiclePropertyType::STRING | VehicleArea::GLOBAL);
 
 /**
  * This property is used for test purpose to generate fake events. Here is the test package that
@@ -372,10 +382,14 @@ const ConfigDeclaration kVehicleProperties[]{
                 .access = VehiclePropertyAccess::READ_WRITE,
                 .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
                 .areaConfigs = {VehicleAreaConfig{
-                                    .areaId = HVAC_LEFT, .minFloatValue = 16, .maxFloatValue = 32,
+                                    .areaId = HVAC_LEFT,
+                                    .minFloatValue = 16,
+                                    .maxFloatValue = 32,
                                 },
                                 VehicleAreaConfig{
-                                    .areaId = HVAC_RIGHT, .minFloatValue = 16, .maxFloatValue = 32,
+                                    .areaId = HVAC_RIGHT,
+                                    .minFloatValue = 16,
+                                    .maxFloatValue = 32,
                                 }}},
      .initialAreaValues = {{HVAC_LEFT, {.floatValues = {16}}},
                            {HVAC_RIGHT, {.floatValues = {20}}}}},
@@ -529,6 +543,51 @@ const ConfigDeclaration kVehicleProperties[]{
     {.config = {.prop = VEHICLE_MAP_SERVICE,
                 .access = VehiclePropertyAccess::READ_WRITE,
                 .changeMode = VehiclePropertyChangeMode::ON_CHANGE}},
+
+    // Example Vendor Extension properties for testing
+    {.config = {.prop = VENDOR_EXTENSION_BOOLEAN_PROPERTY,
+                .access = VehiclePropertyAccess::READ_WRITE,
+                .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                .areaConfigs = {VehicleAreaConfig{.areaId = DOOR_1_LEFT},
+                                VehicleAreaConfig{.areaId = DOOR_1_RIGHT},
+                                VehicleAreaConfig{.areaId = DOOR_2_LEFT},
+                                VehicleAreaConfig{.areaId = DOOR_2_RIGHT}}},
+     .initialAreaValues = {{DOOR_1_LEFT, {.int32Values = {1}}},
+                           {DOOR_1_RIGHT, {.int32Values = {1}}},
+                           {DOOR_2_LEFT, {.int32Values = {0}}},
+                           {DOOR_2_RIGHT, {.int32Values = {0}}}}},
+
+    {.config = {.prop = VENDOR_EXTENSION_FLOAT_PROPERTY,
+                .access = VehiclePropertyAccess::READ_WRITE,
+                .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                .areaConfigs = {VehicleAreaConfig{
+                                    .areaId = HVAC_LEFT, .minFloatValue = -10, .maxFloatValue = 10},
+                                VehicleAreaConfig{.areaId = HVAC_RIGHT,
+                                                  .minFloatValue = -10,
+                                                  .maxFloatValue = 10}}},
+     .initialAreaValues = {{HVAC_LEFT, {.floatValues = {1}}}, {HVAC_RIGHT, {.floatValues = {2}}}}},
+
+    {.config = {.prop = VENDOR_EXTENSION_INT_PROPERTY,
+                .access = VehiclePropertyAccess::READ_WRITE,
+                .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                .areaConfigs = {VehicleAreaConfig{
+                                    .areaId = (int)VehicleAreaWindow::FRONT_WINDSHIELD,
+                                    .minInt32Value = -100,
+                                    .maxInt32Value = 100},
+                                VehicleAreaConfig{.areaId = (int)VehicleAreaWindow::REAR_WINDSHIELD,
+                                                  .minInt32Value = -100,
+                                                  .maxInt32Value = 100},
+                                VehicleAreaConfig{.areaId = (int)VehicleAreaWindow::ROOF_TOP_1,
+                                                  .minInt32Value = -100,
+                                                  .maxInt32Value = 100}}},
+     .initialAreaValues = {{(int)VehicleAreaWindow::FRONT_WINDSHIELD, {.int32Values = {1}}},
+                           {(int)VehicleAreaWindow::REAR_WINDSHIELD, {.int32Values = {0}}},
+                           {(int)VehicleAreaWindow::ROOF_TOP_1, {.int32Values = {-1}}}}},
+
+    {.config = {.prop = VENDOR_EXTENSION_STRING_PROPERTY,
+                .access = VehiclePropertyAccess::READ_WRITE,
+                .changeMode = VehiclePropertyChangeMode::ON_CHANGE},
+     .initialValue = {.stringValue = "Vendor String Property"}},
 };
 
 }  // impl
