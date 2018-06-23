@@ -17,6 +17,8 @@
 #define LOG_TAG "JsonFakeValueGenerator"
 
 #include <fstream>
+#include <type_traits>
+#include <typeinfo>
 
 #include <log/log.h>
 #include <vhal_v2_0/VehicleUtils.h>
@@ -122,14 +124,73 @@ std::vector<VehiclePropValue> JsonFakeValueGenerator::parseFakeValueJson(std::is
             case VehiclePropertyType::STRING:
                 value.stringValue = rawEventValue.asString();
                 break;
+            case VehiclePropertyType::MIXED:
+                copyMixedValueJson(value, rawEventValue);
+                if (isDiagnosticProperty(event.prop)) {
+                    value.bytes = generateDiagnosticBytes(value);
+                }
+                break;
             default:
-                ALOGE("%s: unsupported type for property: 0x%x with value: %s", __func__,
-                      event.prop, rawEventValue.asString().c_str());
+                ALOGE("%s: unsupported type for property: 0x%x", __func__, event.prop);
                 continue;
         }
         fakeVhalEvents.push_back(event);
     }
     return fakeVhalEvents;
+}
+
+void JsonFakeValueGenerator::copyMixedValueJson(VehiclePropValue::RawValue& dest,
+                                                const Json::Value& jsonValue) {
+    copyJsonArray(dest.int32Values, jsonValue["int32Values"]);
+    copyJsonArray(dest.int64Values, jsonValue["int64Values"]);
+    copyJsonArray(dest.floatValues, jsonValue["floatValues"]);
+    dest.stringValue = jsonValue["stringValue"].asString();
+}
+
+template <typename T>
+void JsonFakeValueGenerator::copyJsonArray(hidl_vec<T>& dest, const Json::Value& jsonArray) {
+    dest.resize(jsonArray.size());
+    for (Json::Value::ArrayIndex i = 0; i < jsonArray.size(); i++) {
+        if (std::is_same<T, int32_t>::value) {
+            dest[i] = jsonArray[i].asInt();
+        } else if (std::is_same<T, int64_t>::value) {
+            dest[i] = jsonArray[i].asInt64();
+        } else if (std::is_same<T, float>::value) {
+            dest[i] = jsonArray[i].asFloat();
+        }
+    }
+}
+
+bool JsonFakeValueGenerator::isDiagnosticProperty(int32_t prop) {
+    return prop == (int32_t)VehicleProperty::OBD2_LIVE_FRAME ||
+           prop == (int32_t)VehicleProperty::OBD2_FREEZE_FRAME;
+}
+
+hidl_vec<uint8_t> JsonFakeValueGenerator::generateDiagnosticBytes(
+    const VehiclePropValue::RawValue& diagnosticValue) {
+    size_t byteSize = ((size_t)DiagnosticIntegerSensorIndex::LAST_SYSTEM_INDEX +
+                       (size_t)DiagnosticFloatSensorIndex::LAST_SYSTEM_INDEX + 2);
+    hidl_vec<uint8_t> bytes(byteSize % 8 == 0 ? byteSize / 8 : byteSize / 8 + 1);
+
+    auto& int32Values = diagnosticValue.int32Values;
+    for (size_t i = 0; i < int32Values.size(); i++) {
+        if (int32Values[i] != 0) {
+            setBit(bytes, i);
+        }
+    }
+
+    auto& floatValues = diagnosticValue.floatValues;
+    for (size_t i = 0; i < floatValues.size(); i++) {
+        if (floatValues[i] != 0.0) {
+            setBit(bytes, i + (size_t)DiagnosticIntegerSensorIndex::LAST_SYSTEM_INDEX + 1);
+        }
+    }
+    return bytes;
+}
+
+void JsonFakeValueGenerator::setBit(hidl_vec<uint8_t>& bytes, size_t idx) {
+    uint8_t mask = 1 << (idx % 8);
+    bytes[idx / 8] |= mask;
 }
 
 }  // namespace impl
