@@ -25,6 +25,10 @@ void RadioHidlTest::SetUp() {
             RadioHidlEnvironment::Instance()->getServiceName<IRadio>(
                 hidl_string(RADIO_SERVICE_NAME)));
     }
+
+    versionIRadio = getIRadioVersion(radio);
+    ASSERT_FALSE(unknown == versionIRadio);
+
     ASSERT_NE(nullptr, radio.get());
 
     radioRsp = new (std::nothrow) RadioResponse(*this);

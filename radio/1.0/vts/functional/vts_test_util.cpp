@@ -54,3 +54,21 @@ int GetRandomSerialNumber() {
     }
     return testing::AssertionFailure() << "SapError:" + toString(err) + " is returned";
 }
+
+hidl_version getIRadioVersion(sp<::android::hardware::radio::V1_0::IRadio> radio) {
+    if (::android::hardware::radio::V1_2::IRadio::castFrom(radio).withDefault(nullptr) != nullptr) {
+        ALOGI("Radio service version: 1.2");
+        return v1_2;
+    } else if (::android::hardware::radio::V1_1::IRadio::castFrom(radio).withDefault(nullptr) !=
+               nullptr) {
+        ALOGI("Radio service version: 1.1");
+        return v1_1;
+    } else if (::android::hardware::radio::V1_0::IRadio::castFrom(radio).withDefault(nullptr) !=
+               nullptr) {
+        ALOGI("Radio service version: 1.0");
+        return v1_0;
+    } else {
+        ALOGI("Radio service version: unknown");
+        return unknown;
+    }
+}
