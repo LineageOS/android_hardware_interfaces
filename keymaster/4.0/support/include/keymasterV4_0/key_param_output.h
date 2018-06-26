@@ -53,6 +53,10 @@ inline ::std::ostream& operator<<(::std::ostream& os, PaddingMode value) {
     return os << toString(value);
 }
 
+inline ::std::ostream& operator<<(::std::ostream& os, SecurityLevel value) {
+    return os << toString(value);
+}
+
 template <typename ValueT>
 ::std::ostream& operator<<(::std::ostream& os, const NullOr<ValueT>& value) {
     if (!value.isOk()) {

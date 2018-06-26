@@ -49,12 +49,14 @@ typedef struct km_root_of_trust {
     ASN1_OCTET_STRING* verified_boot_key;
     ASN1_BOOLEAN* device_locked;
     ASN1_ENUMERATED* verified_boot_state;
+    ASN1_OCTET_STRING* verified_boot_hash;
 } KM_ROOT_OF_TRUST;
 
 ASN1_SEQUENCE(KM_ROOT_OF_TRUST) = {
     ASN1_SIMPLE(KM_ROOT_OF_TRUST, verified_boot_key, ASN1_OCTET_STRING),
     ASN1_SIMPLE(KM_ROOT_OF_TRUST, device_locked, ASN1_BOOLEAN),
     ASN1_SIMPLE(KM_ROOT_OF_TRUST, verified_boot_state, ASN1_ENUMERATED),
+    ASN1_SIMPLE(KM_ROOT_OF_TRUST, verified_boot_hash, ASN1_OCTET_STRING),
 } ASN1_SEQUENCE_END(KM_ROOT_OF_TRUST);
 IMPLEMENT_ASN1_FUNCTIONS(KM_ROOT_OF_TRUST);
 
@@ -77,11 +79,16 @@ typedef struct km_auth_list {
     ASN1_OCTET_STRING* application_id;
     ASN1_INTEGER* creation_date_time;
     ASN1_INTEGER* origin;
-    ASN1_NULL* rollback_resistant;
+    ASN1_NULL* rollback_resistance;
     KM_ROOT_OF_TRUST* root_of_trust;
     ASN1_INTEGER* os_version;
     ASN1_INTEGER* os_patchlevel;
     ASN1_OCTET_STRING* attestation_application_id;
+    ASN1_NULL* trusted_user_presence_required;
+    ASN1_NULL* trusted_confirmation_required;
+    ASN1_NULL* unlocked_device_required;
+    ASN1_INTEGER* vendor_patchlevel;
+    ASN1_INTEGER* boot_patchlevel;
 } KM_AUTH_LIST;
 
 ASN1_SEQUENCE(KM_AUTH_LIST) = {
@@ -93,6 +100,7 @@ ASN1_SEQUENCE(KM_AUTH_LIST) = {
     ASN1_EXP_OPT(KM_AUTH_LIST, ec_curve, ASN1_INTEGER, TAG_EC_CURVE.maskedTag()),
     ASN1_EXP_OPT(KM_AUTH_LIST, rsa_public_exponent, ASN1_INTEGER,
                  TAG_RSA_PUBLIC_EXPONENT.maskedTag()),
+    ASN1_EXP_OPT(KM_AUTH_LIST, rollback_resistance, ASN1_NULL, TAG_ROLLBACK_RESISTANCE.maskedTag()),
     ASN1_EXP_OPT(KM_AUTH_LIST, active_date_time, ASN1_INTEGER, TAG_ACTIVE_DATETIME.maskedTag()),
     ASN1_EXP_OPT(KM_AUTH_LIST, origination_expire_date_time, ASN1_INTEGER,
                  TAG_ORIGINATION_EXPIRE_DATETIME.maskedTag()),
@@ -102,13 +110,19 @@ ASN1_SEQUENCE(KM_AUTH_LIST) = {
     ASN1_EXP_OPT(KM_AUTH_LIST, user_auth_type, ASN1_INTEGER, TAG_USER_AUTH_TYPE.maskedTag()),
     ASN1_EXP_OPT(KM_AUTH_LIST, auth_timeout, ASN1_INTEGER, TAG_AUTH_TIMEOUT.maskedTag()),
     ASN1_EXP_OPT(KM_AUTH_LIST, allow_while_on_body, ASN1_NULL, TAG_ALLOW_WHILE_ON_BODY.maskedTag()),
-    ASN1_EXP_OPT(KM_AUTH_LIST, application_id, ASN1_OCTET_STRING, TAG_APPLICATION_ID.maskedTag()),
+    ASN1_EXP_OPT(KM_AUTH_LIST, trusted_user_presence_required, ASN1_NULL,
+                 TAG_TRUSTED_USER_PRESENCE_REQUIRED.maskedTag()),
+    ASN1_EXP_OPT(KM_AUTH_LIST, trusted_confirmation_required, ASN1_NULL,
+                 TAG_TRUSTED_CONFIRMATION_REQUIRED.maskedTag()),
+    ASN1_EXP_OPT(KM_AUTH_LIST, unlocked_device_required, ASN1_NULL,
+                 TAG_UNLOCKED_DEVICE_REQUIRED.maskedTag()),
     ASN1_EXP_OPT(KM_AUTH_LIST, creation_date_time, ASN1_INTEGER, TAG_CREATION_DATETIME.maskedTag()),
     ASN1_EXP_OPT(KM_AUTH_LIST, origin, ASN1_INTEGER, TAG_ORIGIN.maskedTag()),
-    ASN1_EXP_OPT(KM_AUTH_LIST, rollback_resistant, ASN1_NULL, TAG_ROLLBACK_RESISTANCE.maskedTag()),
     ASN1_EXP_OPT(KM_AUTH_LIST, root_of_trust, KM_ROOT_OF_TRUST, TAG_ROOT_OF_TRUST.maskedTag()),
     ASN1_EXP_OPT(KM_AUTH_LIST, os_version, ASN1_INTEGER, TAG_OS_VERSION.maskedTag()),
     ASN1_EXP_OPT(KM_AUTH_LIST, os_patchlevel, ASN1_INTEGER, TAG_OS_PATCHLEVEL.maskedTag()),
+    ASN1_EXP_OPT(KM_AUTH_LIST, vendor_patchlevel, ASN1_INTEGER, TAG_VENDOR_PATCHLEVEL.maskedTag()),
+    ASN1_EXP_OPT(KM_AUTH_LIST, boot_patchlevel, ASN1_INTEGER, TAG_BOOT_PATCHLEVEL.maskedTag()),
     ASN1_EXP_OPT(KM_AUTH_LIST, attestation_application_id, ASN1_OCTET_STRING,
                  TAG_ATTESTATION_APPLICATION_ID.maskedTag()),
 } ASN1_SEQUENCE_END(KM_AUTH_LIST);
@@ -237,11 +251,18 @@ static ErrorCode extract_auth_list(const KM_AUTH_LIST* record, AuthorizationSet*
     copyAuthTag(record->os_version, TAG_OS_VERSION, auth_list);
     copyAuthTag(record->padding, TAG_PADDING, auth_list);
     copyAuthTag(record->purpose, TAG_PURPOSE, auth_list);
-    copyAuthTag(record->rollback_resistant, TAG_ROLLBACK_RESISTANCE, auth_list);
+    copyAuthTag(record->rollback_resistance, TAG_ROLLBACK_RESISTANCE, auth_list);
     copyAuthTag(record->rsa_public_exponent, TAG_RSA_PUBLIC_EXPONENT, auth_list);
     copyAuthTag(record->usage_expire_date_time, TAG_USAGE_EXPIRE_DATETIME, auth_list);
     copyAuthTag(record->user_auth_type, TAG_USER_AUTH_TYPE, auth_list);
     copyAuthTag(record->attestation_application_id, TAG_ATTESTATION_APPLICATION_ID, auth_list);
+    copyAuthTag(record->vendor_patchlevel, TAG_VENDOR_PATCHLEVEL, auth_list);
+    copyAuthTag(record->boot_patchlevel, TAG_BOOT_PATCHLEVEL, auth_list);
+    copyAuthTag(record->trusted_user_presence_required, TAG_TRUSTED_USER_PRESENCE_REQUIRED,
+                auth_list);
+    copyAuthTag(record->trusted_confirmation_required, TAG_TRUSTED_CONFIRMATION_REQUIRED,
+                auth_list);
+    copyAuthTag(record->unlocked_device_required, TAG_UNLOCKED_DEVICE_REQUIRED, auth_list);
 
     return ErrorCode::OK;
 }
