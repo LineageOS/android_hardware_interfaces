@@ -3008,6 +3008,7 @@ TEST_F(EncryptionOperationsTest, AesGcmAadNoData) {
  * Verifies that AES GCM mode works when provided additional authenticated data in multiple chunks.
  */
 TEST_F(EncryptionOperationsTest, AesGcmMultiPartAad) {
+    const size_t tag_bits = 128;
     ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
                                              .Authorization(TAG_NO_AUTH_REQUIRED)
                                              .AesEncryptionKey(128)
@@ -3019,7 +3020,7 @@ TEST_F(EncryptionOperationsTest, AesGcmMultiPartAad) {
     auto begin_params = AuthorizationSetBuilder()
                             .BlockMode(BlockMode::GCM)
                             .Padding(PaddingMode::NONE)
-                            .Authorization(TAG_MAC_LENGTH, 128);
+                            .Authorization(TAG_MAC_LENGTH, tag_bits);
     AuthorizationSet begin_out_params;
 
     auto update_params =
@@ -3041,10 +3042,11 @@ TEST_F(EncryptionOperationsTest, AesGcmMultiPartAad) {
     EXPECT_EQ(ErrorCode::OK, Update(op_handle_, update_params, message, &update_out_params,
                                     &ciphertext, &input_consumed));
     EXPECT_EQ(message.size(), input_consumed);
-    EXPECT_EQ(message.size(), ciphertext.size());
     EXPECT_TRUE(update_out_params.empty());
 
     EXPECT_EQ(ErrorCode::OK, Finish("" /* input */, &ciphertext));
+    // Expect 128-bit (16-byte) tag appended to ciphertext.
+    EXPECT_EQ(message.size() + (tag_bits >> 3), ciphertext.size());
 
     // Grab nonce.
     begin_params.push_back(begin_out_params);
@@ -3100,7 +3102,6 @@ TEST_F(EncryptionOperationsTest, AesGcmAadOutOfOrder) {
     EXPECT_EQ(ErrorCode::OK, Update(op_handle_, update_params, message, &update_out_params,
                                     &ciphertext, &input_consumed));
     EXPECT_EQ(message.size(), input_consumed);
-    EXPECT_EQ(message.size(), ciphertext.size());
     EXPECT_TRUE(update_out_params.empty());
 
     // More AAD
