@@ -269,6 +269,12 @@ class WifiChip : public V1_3::IWifiChip {
     hidl_callback_util::HidlCallbackHandler<V1_2::IWifiChipEventCallback>
         event_cb_handler_;
 
+<<<<<<< HEAD   (924346 keymasterV4_0: Tags support for FBE wrapped key.)
+=======
+    std::vector<sp<WifiApIface>> created_ap_ifaces_;
+    std::vector<sp<WifiStaIface>> created_sta_ifaces_;
+
+>>>>>>> CHANGE (e3afd0 wifi: Add logic to create secondary interface for STA mode t)
     DISALLOW_COPY_AND_ASSIGN(WifiChip);
 };
 
