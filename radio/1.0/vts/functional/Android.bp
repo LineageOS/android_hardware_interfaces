@@ -31,8 +31,6 @@ cc_test {
            "VtsHalRadioV1_0TargetTest.cpp",
            "vts_test_util.cpp"],
     static_libs: [
-        "android.hardware.radio@1.2",
-        "android.hardware.radio@1.1",
         "android.hardware.radio@1.0",
     ],
 }
@@ -46,8 +44,6 @@ cc_test {
            "VtsHalSapV1_0TargetTest.cpp",
            "vts_test_util.cpp"],
     static_libs: [
-        "android.hardware.radio@1.2",
-        "android.hardware.radio@1.1",
         "android.hardware.radio@1.0",
     ],
 }
@@ -59,8 +55,6 @@ cc_library_static {
         "vts_test_util.cpp"
     ],
     shared_libs: [
-        "android.hardware.radio@1.2",
-        "android.hardware.radio@1.1",
         "android.hardware.radio@1.0",
     ],
 }

@@ -33,7 +33,6 @@ using namespace ::android::hardware::radio::V1_0;
 
 using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
-using ::android::hardware::hidl_version;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
 using ::android::sp;
@@ -536,9 +535,6 @@ class RadioHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 
     /* Serial number for radio request */
     int serial;
-
-    /* Version of radio service */
-    hidl_version versionIRadio{0, 0};
 
     /* Update Sim Card Status */
     void updateSimCardStatus();

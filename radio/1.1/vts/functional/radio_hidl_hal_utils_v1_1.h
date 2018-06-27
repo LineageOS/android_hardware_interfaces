@@ -561,9 +561,6 @@ class RadioHidlTest_v1_1 : public ::testing::VtsHalHidlTargetTestBase {
     /* Serial number for radio request */
     int serial;
 
-    /* Version of radio service */
-    hidl_version versionIRadio{0, 0};
-
     /* Update Sim Card Status */
     void updateSimCardStatus();
 
