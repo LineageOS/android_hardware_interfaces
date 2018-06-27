@@ -24,7 +24,9 @@
 
 #include "vhal_v2_0/VehicleHal.h"
 
-#include "CommBase.h"
+#include "CommConn.h"
+#include "PipeComm.h"
+#include "SocketComm.h"
 #include "VehicleHalProto.pb.h"
 
 namespace android {
@@ -61,48 +63,36 @@ private:
     VehicleEmulator* mEmulator;
 };
 
-struct CommFactory {
-    static std::unique_ptr<CommBase> create();
-};
-
 /**
  * Emulates vehicle by providing controlling interface from host side either through ADB or Pipe.
  */
-class VehicleEmulator {
-public:
-    VehicleEmulator(EmulatedVehicleHalIface* hal,
-                    std::unique_ptr<CommBase> comm = CommFactory::create())
-            : mHal { hal },
-              mComm(comm.release()),
-              mThread { &VehicleEmulator::rxThread, this} {
-        mHal->registerEmulator(this);
-    }
+class VehicleEmulator : public MessageProcessor {
+   public:
+    VehicleEmulator(EmulatedVehicleHalIface* hal);
     virtual ~VehicleEmulator();
 
     void doSetValueFromClient(const VehiclePropValue& propValue);
+    void processMessage(emulator::EmulatorMessage const& rxMsg,
+                        emulator::EmulatorMessage& respMsg) override;
 
-private:
+   private:
+    friend class ConnectionThread;
     using EmulatorMessage = emulator::EmulatorMessage;
 
-    void doGetConfig(EmulatorMessage& rxMsg, EmulatorMessage& respMsg);
-    void doGetConfigAll(EmulatorMessage& rxMsg, EmulatorMessage& respMsg);
-    void doGetProperty(EmulatorMessage& rxMsg, EmulatorMessage& respMsg);
-    void doGetPropertyAll(EmulatorMessage& rxMsg, EmulatorMessage& respMsg);
-    void doSetProperty(EmulatorMessage& rxMsg, EmulatorMessage& respMsg);
-    void txMsg(emulator::EmulatorMessage& txMsg);
-    void parseRxProtoBuf(std::vector<uint8_t>& msg);
+    void doGetConfig(EmulatorMessage const& rxMsg, EmulatorMessage& respMsg);
+    void doGetConfigAll(EmulatorMessage const& rxMsg, EmulatorMessage& respMsg);
+    void doGetProperty(EmulatorMessage const& rxMsg, EmulatorMessage& respMsg);
+    void doGetPropertyAll(EmulatorMessage const& rxMsg, EmulatorMessage& respMsg);
+    void doSetProperty(EmulatorMessage const& rxMsg, EmulatorMessage& respMsg);
     void populateProtoVehicleConfig(emulator::VehiclePropConfig* protoCfg,
                                     const VehiclePropConfig& cfg);
     void populateProtoVehiclePropValue(emulator::VehiclePropValue* protoVal,
                                        const VehiclePropValue* val);
-    void rxMsg();
-    void rxThread();
 
 private:
-    std::atomic<bool> mExit { false };
     EmulatedVehicleHalIface* mHal;
-    std::unique_ptr<CommBase> mComm;
-    std::thread mThread;
+    std::unique_ptr<SocketComm> mSocketComm;
+    std::unique_ptr<PipeComm> mPipeComm;
 };
 
 }  // impl

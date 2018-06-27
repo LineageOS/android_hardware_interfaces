@@ -18,8 +18,9 @@
 #define android_hardware_automotive_vehicle_V2_0_impl_SocketComm_H_
 
 #include <mutex>
+#include <thread>
 #include <vector>
-#include "CommBase.h"
+#include "CommConn.h"
 
 namespace android {
 namespace hardware {
@@ -29,29 +30,60 @@ namespace V2_0 {
 
 namespace impl {
 
+class SocketConn;
+
 /**
- * SocketComm opens a socket via adb's TCP port forwarding to enable a Host PC to connect to
- * the VehicleHAL.
+ * SocketComm opens a socket, and listens for connections from clients. Typically the client will be
+ * adb's TCP port-forwarding to enable a host PC to connect to the VehicleHAL.
  */
-class SocketComm : public CommBase {
-public:
-    SocketComm();
+class SocketComm {
+   public:
+    SocketComm(MessageProcessor* messageProcessor);
     virtual ~SocketComm();
 
+    void start();
+    void stop();
+
     /**
-     * Creates a connection to the other side.
+     * Serialized and send the given message to all connected clients.
+     */
+    void sendMessage(emulator::EmulatorMessage const& msg);
+
+   private:
+    int mListenFd;
+    std::unique_ptr<std::thread> mListenThread;
+    std::vector<std::unique_ptr<SocketConn>> mOpenConnections;
+    MessageProcessor* mMessageProcessor;
+    std::mutex mMutex;
+
+    /**
+     * Opens the socket and begins listening.
+     *
+     * @return bool Returns true on success.
+     */
+    bool listen();
+
+    /**
+     * Blocks and waits for a connection from a client, returns a new SocketConn with the connection
+     * or null, if the connection has been closed.
      *
      * @return int Returns fd or socket number if connection is successful.
      *              Otherwise, returns -1 if no connection is availble.
      */
-    int connect() override;
+    SocketConn* accept();
 
-    /**
-     * Opens a socket and begins listening.
-     *
-     * @return int Returns 0 on success.
-     */
-    int open() override;
+    void listenThread();
+
+    void removeClosedConnections();
+};
+
+/**
+ * SocketConn represents a single connection to a client.
+ */
+class SocketConn : public CommConn {
+   public:
+    SocketConn(MessageProcessor* messageProcessor, int sfd);
+    virtual ~SocketConn() = default;
 
     /**
      * Blocking call to read data from the connection.
@@ -75,10 +107,9 @@ public:
      */
     int write(const std::vector<uint8_t>& data) override;
 
-private:
-    int mCurSockFd;
-    std::atomic<int> mExit;
-    std::mutex mMutex;
+    inline bool isOpen() override { return mSockFd > 0; }
+
+   private:
     int mSockFd;
 };
 
