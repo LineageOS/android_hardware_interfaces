@@ -60,24 +60,46 @@ TEST_F(GnssHalTest, TestGnssMeasurementCallback) {
  */
 TEST_F(GnssHalTest, GetLocationLowPower) {
     const int kMinIntervalMsec = 5000;
-    const int kLocationTimeoutSubsequentSec = (kMinIntervalMsec / 1000) + 1;
-    const int kNoLocationPeriodSec = 2;
+    const int kLocationTimeoutSubsequentSec = (kMinIntervalMsec / 1000) * 2;
+    const int kNoLocationPeriodSec = (kMinIntervalMsec / 1000) / 2;
     const int kLocationsToCheck = 5;
     const bool kLowPowerMode = true;
 
+    // Warmup period - VTS doesn't have AGPS access via GnssLocationProvider
+    StartAndCheckLocations(5);
+    StopAndClearLocations();
+
+    // Start of Low Power Mode test
     SetPositionMode(kMinIntervalMsec, kLowPowerMode);
 
-    EXPECT_TRUE(StartAndGetSingleLocation());
+    // Don't expect true - as without AGPS access
+    if (!StartAndCheckFirstLocation()) {
+        ALOGW("GetLocationLowPower test - no first low power location received.");
+    }
 
     for (int i = 1; i < kLocationsToCheck; i++) {
         // Verify that kMinIntervalMsec is respected by waiting kNoLocationPeriodSec and
         // ensure that no location is received yet
+
         wait(kNoLocationPeriodSec);
-        EXPECT_EQ(location_called_count_, i);
-        EXPECT_EQ(std::cv_status::no_timeout,
-                  wait(kLocationTimeoutSubsequentSec - kNoLocationPeriodSec));
-        EXPECT_EQ(location_called_count_, i + 1);
-        CheckLocation(last_location_, true);
+        // Tolerate (ignore) one extra location right after the first one
+        // to handle startup edge case scheduling limitations in some implementations
+        if ((i == 1) && (location_called_count_ == 2)) {
+            CheckLocation(last_location_, true);
+            continue;  // restart the quiet wait period after this too-fast location
+        }
+        EXPECT_LE(location_called_count_, i);
+        if (location_called_count_ != i) {
+            ALOGW("GetLocationLowPower test - not enough locations received. %d vs. %d expected ",
+                  location_called_count_, i);
+        }
+
+        if (std::cv_status::no_timeout !=
+            wait(kLocationTimeoutSubsequentSec - kNoLocationPeriodSec)) {
+            ALOGW("GetLocationLowPower test - timeout awaiting location %d", i);
+        } else {
+            CheckLocation(last_location_, true);
+        }
     }
 
     StopAndClearLocations();
@@ -236,7 +258,6 @@ TEST_F(GnssHalTest, BlacklistIndividualSatellites) {
     ASSERT_TRUE(result.isOk());
     EXPECT_TRUE(result);
 
-    location_called_count_ = 0;
     StopAndClearLocations();
     list_gnss_sv_status_.clear();
 
