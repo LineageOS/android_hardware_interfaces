@@ -555,11 +555,11 @@ TEST_F(AudioPrimaryHidlTest, SetConnectedState) {
             address.device = deviceType;
             auto ret = device->setConnectedState(address, state);
             ASSERT_TRUE(ret.isOk());
-            if (res == Result::NOT_SUPPORTED) {
+            if (ret == Result::NOT_SUPPORTED) {
                 doc::partialTest("setConnectedState is not supported");
                 return;
             }
-            ASSERT_OK(res);
+            ASSERT_OK(ret);
         }
     }
 }
