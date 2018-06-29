@@ -358,23 +358,8 @@ TEST_F(GnssHalTest, BlacklistConstellation) {
  * Ensure successfully injecting a location.
  */
 TEST_F(GnssHalTest, InjectBestLocation) {
-    GnssLocation gnssLocation = {.gnssLocationFlags = 0,  // set below
-                                 .latitudeDegrees = 43.0,
-                                 .longitudeDegrees = -180,
-                                 .altitudeMeters = 1000,
-                                 .speedMetersPerSec = 0,
-                                 .bearingDegrees = 0,
-                                 .horizontalAccuracyMeters = 0.1,
-                                 .verticalAccuracyMeters = 0.1,
-                                 .speedAccuracyMetersPerSecond = 0.1,
-                                 .bearingAccuracyDegrees = 0.1,
-                                 .timestamp = 1534567890123L};
-    gnssLocation.gnssLocationFlags |=
-        GnssLocationFlags::HAS_LAT_LONG | GnssLocationFlags::HAS_ALTITUDE |
-        GnssLocationFlags::HAS_SPEED | GnssLocationFlags::HAS_HORIZONTAL_ACCURACY |
-        GnssLocationFlags::HAS_VERTICAL_ACCURACY | GnssLocationFlags::HAS_SPEED_ACCURACY |
-        GnssLocationFlags::HAS_BEARING | GnssLocationFlags::HAS_BEARING_ACCURACY;
-
+    StartAndCheckLocations(1);
+    GnssLocation gnssLocation = last_location_;
     CheckLocation(gnssLocation, true);
 
     auto result = gnss_hal_->injectBestLocation(gnssLocation);
@@ -382,7 +367,7 @@ TEST_F(GnssHalTest, InjectBestLocation) {
     ASSERT_TRUE(result.isOk());
     EXPECT_TRUE(result);
 
-    auto resultVoid = gnss_hal_->deleteAidingData(IGnss::GnssAidingData::DELETE_ALL);
+    auto resultVoid = gnss_hal_->deleteAidingData(IGnss::GnssAidingData::DELETE_POSITION);
 
     ASSERT_TRUE(resultVoid.isOk());
 }
