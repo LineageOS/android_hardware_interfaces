@@ -58,6 +58,7 @@ cc_library_static {
     vendor: true,
     defaults: ["vhal_v2_0_defaults"],
     srcs: [
+        "impl/vhal_v2_0/CommConn.cpp",
         "impl/vhal_v2_0/EmulatedVehicleHal.cpp",
         "impl/vhal_v2_0/VehicleEmulator.cpp",
         "impl/vhal_v2_0/PipeComm.cpp",
