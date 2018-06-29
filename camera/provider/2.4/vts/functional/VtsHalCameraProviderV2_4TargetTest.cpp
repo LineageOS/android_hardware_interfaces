@@ -3643,6 +3643,7 @@ TEST_F(CameraHidlTest, processCaptureRequestBurstISO) {
                                         static_cast<int32_t>(PixelFormat::IMPLEMENTATION_DEFINED)};
     uint64_t bufferId = 1;
     uint32_t frameNumber = 1;
+    float isoTol = .03f;
     ::android::hardware::hidl_vec<uint8_t> settings;
 
     for (const auto& name : cameraDeviceNames) {
@@ -3772,7 +3773,8 @@ TEST_F(CameraHidlTest, processCaptureRequestBurstISO) {
             ASSERT_TRUE(inflightReqs[i].collectedResult.exists(ANDROID_SENSOR_SENSITIVITY));
             camera_metadata_entry_t isoResult = inflightReqs[i].collectedResult.find(
                     ANDROID_SENSOR_SENSITIVITY);
-            ASSERT_TRUE(isoResult.data.i32[0] == isoValues[i]);
+            ASSERT_TRUE(std::abs(isoResult.data.i32[0] - isoValues[i]) <=
+                        std::round(isoValues[i]*isoTol));
         }
 
         ret = session->close();
