@@ -753,7 +753,7 @@ interface IKeymasterDevice {
      *     attestationIdManufacturer  [716] EXPLICIT OCTET_STRING OPTIONAL,
      *     attestationIdModel         [717] EXPLICIT OCTET_STRING OPTIONAL,
      *     vendorPatchLevel           [718] EXPLICIT INTEGER OPTIONAL,
-     *     bootPatchLevel             [718] EXPLICIT INTEGER OPTIONAL,
+     *     bootPatchLevel             [719] EXPLICIT INTEGER OPTIONAL,
      * }
      *
      * The above schema is mostly a straightforward translation of the IKeymasterDevice tag/value
