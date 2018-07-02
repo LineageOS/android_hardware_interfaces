@@ -177,7 +177,8 @@ TEST_F(GnssHalTest, BlacklistIndividualSatellites) {
 
     StartAndCheckLocations(kLocationsToAwait);
 
-    EXPECT_GE((int)list_gnss_sv_status_.size(), kLocationsToAwait);
+    // Tolerate 1 less sv status to handle edge cases in reporting.
+    EXPECT_GE((int)list_gnss_sv_status_.size() + 1, kLocationsToAwait);
     ALOGD("Observed %d GnssSvStatus, while awaiting %d Locations", (int)list_gnss_sv_status_.size(),
           kLocationsToAwait);
 
@@ -217,7 +218,8 @@ TEST_F(GnssHalTest, BlacklistIndividualSatellites) {
     location_called_count_ = 0;
     StartAndCheckLocations(kLocationsToAwait);
 
-    EXPECT_GE((int)list_gnss_sv_status_.size(), kLocationsToAwait);
+    // Tolerate 1 less sv status to handle edge cases in reporting.
+    EXPECT_GE((int)list_gnss_sv_status_.size() + 1, kLocationsToAwait);
     ALOGD("Observed %d GnssSvStatus, while awaiting %d Locations", (int)list_gnss_sv_status_.size(),
           kLocationsToAwait);
     for (const auto& gnss_sv_status : list_gnss_sv_status_) {
@@ -242,7 +244,8 @@ TEST_F(GnssHalTest, BlacklistIndividualSatellites) {
 
     StartAndCheckLocations(kLocationsToAwait);
 
-    EXPECT_GE((int)list_gnss_sv_status_.size(), kLocationsToAwait);
+    // Tolerate 1 less sv status to handle edge cases in reporting.
+    EXPECT_GE((int)list_gnss_sv_status_.size() + 1, kLocationsToAwait);
     ALOGD("Observed %d GnssSvStatus, while awaiting %d Locations", (int)list_gnss_sv_status_.size(),
           kLocationsToAwait);
 
@@ -278,7 +281,8 @@ TEST_F(GnssHalTest, BlacklistConstellation) {
 
     StartAndCheckLocations(kLocationsToAwait);
 
-    EXPECT_GE((int)list_gnss_sv_status_.size(), kLocationsToAwait);
+    // Tolerate 1 less sv status to handle edge cases in reporting.
+    EXPECT_GE((int)list_gnss_sv_status_.size() + 1, kLocationsToAwait);
     ALOGD("Observed %d GnssSvStatus, while awaiting %d Locations", (int)list_gnss_sv_status_.size(),
           kLocationsToAwait);
 
@@ -328,7 +332,8 @@ TEST_F(GnssHalTest, BlacklistConstellation) {
     location_called_count_ = 0;
     StartAndCheckLocations(kLocationsToAwait);
 
-    EXPECT_GE((int)list_gnss_sv_status_.size(), kLocationsToAwait);
+    // Tolerate 1 less sv status to handle edge cases in reporting.
+    EXPECT_GE((int)list_gnss_sv_status_.size() + 1, kLocationsToAwait);
     ALOGD("Observed %d GnssSvStatus, while awaiting %d Locations", (int)list_gnss_sv_status_.size(),
           kLocationsToAwait);
     for (const auto& gnss_sv_status : list_gnss_sv_status_) {
