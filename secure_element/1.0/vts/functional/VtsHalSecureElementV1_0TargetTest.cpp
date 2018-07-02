@@ -173,7 +173,7 @@ TEST_F(SecureElementHidlTest, openBasicChannel) {
         se_->closeChannel(0);
         return;
     }
-    EXPECT_EQ(SecureElementStatus::UNSUPPORTED_OPERATION, statusReturned);
+    EXPECT_EQ(SecureElementStatus::CHANNEL_NOT_AVAILABLE, statusReturned);
 }
 
 /*
