@@ -187,6 +187,7 @@ StatusCode EmulatedVehicleHal::set(const VehiclePropValue& propValue) {
     }
 
     getEmulatorOrDie()->doSetValueFromClient(propValue);
+    doHalEvent(getValuePool()->obtain(propValue));
 
     return StatusCode::OK;
 }
