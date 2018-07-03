@@ -290,8 +290,14 @@ status_t ExternalCameraDevice::initDefaultCharsKeys(
     UPDATE(ANDROID_HOT_PIXEL_AVAILABLE_HOT_PIXEL_MODES, &hotPixelMode, 1);
 
     // android.jpeg
-    // TODO: b/72261675 See if we can provide thumbnail size for all jpeg aspect ratios
-    const int32_t jpegAvailableThumbnailSizes[] = {0, 0, 240, 180};
+    const int32_t jpegAvailableThumbnailSizes[] = {0, 0,
+                                                  176, 144,
+                                                  240, 144,
+                                                  256, 144,
+                                                  240, 160,
+                                                  256, 154,
+                                                  240, 240,
+                                                  320, 240};
     UPDATE(ANDROID_JPEG_AVAILABLE_THUMBNAIL_SIZES, jpegAvailableThumbnailSizes,
            ARRAY_SIZE(jpegAvailableThumbnailSizes));
 
