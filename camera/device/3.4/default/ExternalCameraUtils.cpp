@@ -267,6 +267,15 @@ ExternalCameraConfig ExternalCameraConfig::loadFromCfg(const char* cfgPath) {
         ret.fpsLimits = limits;
     }
 
+    XMLElement *minStreamSize = deviceCfg->FirstChildElement("MinimumStreamSize");
+    if (minStreamSize == nullptr) {
+       ALOGI("%s: no minimum stream size specified", __FUNCTION__);
+    } else {
+        ret.minStreamSize = {
+                minStreamSize->UnsignedAttribute("width", /*Default*/0),
+                minStreamSize->UnsignedAttribute("height", /*Default*/0)};
+    }
+
     ALOGI("%s: external camera cfg loaded: maxJpgBufSize %d,"
             " num video buffers %d, num still buffers %d",
             __FUNCTION__, ret.maxJpegBufSize,
@@ -275,6 +284,8 @@ ExternalCameraConfig ExternalCameraConfig::loadFromCfg(const char* cfgPath) {
         ALOGI("%s: fpsLimitList: %dx%d@%f", __FUNCTION__,
                 limit.size.width, limit.size.height, limit.fpsUpperBound);
     }
+    ALOGI("%s: minStreamSize: %dx%d" , __FUNCTION__,
+         ret.minStreamSize.width, ret.minStreamSize.height);
     return ret;
 }
 
@@ -285,6 +296,7 @@ ExternalCameraConfig::ExternalCameraConfig() :
     fpsLimits.push_back({/*Size*/{ 640,  480}, /*FPS upper bound*/30.0});
     fpsLimits.push_back({/*Size*/{1280,  720}, /*FPS upper bound*/7.5});
     fpsLimits.push_back({/*Size*/{1920, 1080}, /*FPS upper bound*/5.0});
+    minStreamSize = {0, 0};
 }
 
 

@@ -793,7 +793,8 @@ void ExternalCameraDevice::trimSupportedFormats(
 std::vector<SupportedV4L2Format>
 ExternalCameraDevice::getCandidateSupportedFormatsLocked(
         int fd, CroppingType cropType,
-        const std::vector<ExternalCameraConfig::FpsLimitation>& fpsLimits) {
+        const std::vector<ExternalCameraConfig::FpsLimitation>& fpsLimits,
+        const Size& minStreamSize) {
     std::vector<SupportedV4L2Format> outFmts;
     struct v4l2_fmtdesc fmtdesc {
         .index = 0,
@@ -826,6 +827,11 @@ ExternalCameraDevice::getCandidateSupportedFormatsLocked(
                         // Disregard h > w formats so all aspect ratio (h/w) <= 1.0
                         // This will simplify the crop/scaling logic down the road
                         if (frameSize.discrete.height > frameSize.discrete.width) {
+                            continue;
+                        }
+                        // Discard all formats which is smaller than minStreamSize
+                        if (frameSize.discrete.width < minStreamSize.width
+                            || frameSize.discrete.height < minStreamSize.height) {
                             continue;
                         }
                         SupportedV4L2Format format {
@@ -870,9 +876,9 @@ ExternalCameraDevice::getCandidateSupportedFormatsLocked(
 void ExternalCameraDevice::initSupportedFormatsLocked(int fd) {
 
     std::vector<SupportedV4L2Format> horizontalFmts =
-            getCandidateSupportedFormatsLocked(fd, HORIZONTAL, mCfg.fpsLimits);
+            getCandidateSupportedFormatsLocked(fd, HORIZONTAL, mCfg.fpsLimits, mCfg.minStreamSize);
     std::vector<SupportedV4L2Format> verticalFmts =
-            getCandidateSupportedFormatsLocked(fd, VERTICAL, mCfg.fpsLimits);
+            getCandidateSupportedFormatsLocked(fd, VERTICAL, mCfg.fpsLimits, mCfg.minStreamSize);
 
     size_t horiSize = horizontalFmts.size();
     size_t vertSize = verticalFmts.size();
