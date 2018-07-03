@@ -25,9 +25,15 @@ cc_binary {
       "libhidltransport",
       "liblog",
       "libutils",
+      "libhwbinder"
     ],
     header_libs: [
       "libstagefright_foundation_headers",
       "media_plugin_headers",
     ],
+    arch: {
+        arm: {
+            cflags: ["-DARCH_ARM_32"],
+        },
+    },
 }
