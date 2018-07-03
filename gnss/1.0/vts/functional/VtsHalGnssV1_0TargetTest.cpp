@@ -404,7 +404,11 @@ TEST_F(GnssHalTest, InjectDelete) {
   ASSERT_TRUE(result.isOk());
   EXPECT_TRUE(result);
 
-  auto resultVoid = gnss_hal_->deleteAidingData(IGnss::GnssAidingData::DELETE_ALL);
+  auto resultVoid = gnss_hal_->deleteAidingData(IGnss::GnssAidingData::DELETE_POSITION);
+
+  ASSERT_TRUE(resultVoid.isOk());
+
+  resultVoid = gnss_hal_->deleteAidingData(IGnss::GnssAidingData::DELETE_TIME);
 
   ASSERT_TRUE(resultVoid.isOk());
 
