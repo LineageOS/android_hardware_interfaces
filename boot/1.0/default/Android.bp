@@ -31,6 +31,13 @@ cc_binary {
         "libhidltransport",
         "libutils",
         "android.hardware.boot@1.0",
+        "libhwbinder",
     ],
-
+    arch: {
+        arm: {
+            cflags: [
+                "-DARCH_ARM_32"
+            ],
+        },
+    },
 }

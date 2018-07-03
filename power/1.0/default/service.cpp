@@ -18,10 +18,16 @@
 
 #include <android/hardware/power/1.0/IPower.h>
 #include <hidl/LegacySupport.h>
+#ifdef ARCH_ARM_32
+#include <hwbinder/ProcessState.h>
+#endif
 
 using android::hardware::power::V1_0::IPower;
 using android::hardware::defaultPassthroughServiceImplementation;
 
 int main() {
+    #ifdef ARCH_ARM_32
+        android::hardware::ProcessState::initWithMmapSize((size_t)16384);
+    #endif
     return defaultPassthroughServiceImplementation<IPower>();
 }

@@ -22,6 +22,7 @@
 
 #include <binder/ProcessState.h>
 #include <hidl/LegacySupport.h>
+#include <hwbinder/ProcessState.h>
 
 using android::hardware::graphics::composer::V2_1::IComposer;
 using android::hardware::defaultPassthroughServiceImplementation;
@@ -39,6 +40,10 @@ int main() {
                 &param) != 0) {
         ALOGE("Couldn't set SCHED_FIFO: %d", errno);
     }
+
+#ifdef ARCH_ARM_32
+    android::hardware::ProcessState::initWithMmapSize((size_t)(32768));
+#endif
 
     return defaultPassthroughServiceImplementation<IComposer>(4);
 }
