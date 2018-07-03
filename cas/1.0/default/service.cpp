@@ -23,12 +23,20 @@
 
 #include "MediaCasService.h"
 
+#ifdef ARCH_ARM_32
+#include <hwbinder/ProcessState.h>
+#endif
+
 using android::hardware::configureRpcThreadpool;
 using android::hardware::joinRpcThreadpool;
 using android::hardware::cas::V1_0::implementation::MediaCasService;
 using android::hardware::cas::V1_0::IMediaCasService;
 
 int main() {
+    #ifdef ARCH_ARM_32
+        android::hardware::ProcessState::initWithMmapSize((size_t)16384);
+    #endif
+
     ALOGD("android.hardware.cas@1.0-service starting...");
 
     // The CAS HAL may communicate to other vendor components via

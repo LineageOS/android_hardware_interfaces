@@ -18,10 +18,14 @@
 
 #include <android/hardware/light/2.0/ILight.h>
 #include <hidl/LegacySupport.h>
+#include <hwbinder/ProcessState.h>
 
 using android::hardware::light::V2_0::ILight;
 using android::hardware::defaultPassthroughServiceImplementation;
 
 int main() {
+#ifdef ARCH_ARM_32
+    android::hardware::ProcessState::initWithMmapSize((size_t)(32768));
+#endif
     return defaultPassthroughServiceImplementation<ILight>();
 }

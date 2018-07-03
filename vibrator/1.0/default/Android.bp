@@ -44,5 +44,13 @@ cc_binary {
         "libutils",
         "libhardware",
         "android.hardware.vibrator@1.0",
+        "libhwbinder",
     ],
+    arch: {
+        arm: {
+            cflags: [
+                "-DARCH_ARM_32"
+            ],
+        },
+    },
 }
