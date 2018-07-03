@@ -56,6 +56,12 @@ cc_binary {
         "libhidlbase",
         "libhidltransport",
         "android.hardware.power@1.0",
+        "libhwbinder"
     ],
 
+    arch: {
+        arm: {
+            cflags: ["-DARCH_ARM_32"],
+        },
+    },
 }
