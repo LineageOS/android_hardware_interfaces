@@ -35,8 +35,10 @@ LOCAL_SHARED_LIBRARIES := \
     libhidlbase \
     libhidltransport \
     liblog \
+    libcutils \
     libutils \
     libhardware \
+    libhwbinder \
     android.hardware.audio@2.0 \
     android.hardware.audio@4.0 \
     android.hardware.audio.common@2.0 \
@@ -53,6 +55,10 @@ ifeq ($(strip $(AUDIOSERVER_MULTILIB)),)
 LOCAL_MULTILIB := 32
 else
 LOCAL_MULTILIB := $(AUDIOSERVER_MULTILIB)
+endif
+
+ifeq ($(TARGET_ARCH),arm)
+    LOCAL_CFLAGS += -DARCH_ARM_32
 endif
 
 include $(BUILD_EXECUTABLE)

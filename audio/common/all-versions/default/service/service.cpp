@@ -27,10 +27,31 @@
 #include <hidl/HidlTransportSupport.h>
 #include <hidl/LegacySupport.h>
 
+#ifdef ARCH_ARM_32
+#include <hwbinder/ProcessState.h>
+#include <cutils/properties.h>
+#endif
+
 using namespace android::hardware;
 using android::OK;
 
+#ifdef ARCH_ARM_32
+// default h/w binder memsize is 1 MB
+#define DEFAULT_HW_BINDER_MEM_SIZE_KB 1024
+
+size_t getHWBinderMmapSize(){
+    int32_t value = DEFAULT_HW_BINDER_MEM_SIZE_KB;
+    value = property_get_int32("persist.vendor.audio.hw.binder.size_kbyte", value);
+    ALOGD("Init hw binder with mem  size = %d  ", value);
+    return 1024 * value;
+}
+#endif
+
 int main(int /* argc */, char* /* argv */ []) {
+#ifdef ARCH_ARM_32
+    android::hardware::ProcessState::initWithMmapSize(getHWBinderMmapSize());
+#endif
+
     android::ProcessState::initWithDriver("/dev/vndbinder");
     // start a threadpool for vndbinder interactions
     android::ProcessState::self()->startThreadPool();

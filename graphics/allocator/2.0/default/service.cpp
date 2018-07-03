@@ -20,9 +20,17 @@
 
 #include <hidl/LegacySupport.h>
 
+#ifdef ARCH_ARM_32
+#include <hwbinder/ProcessState.h>
+#endif
+
 using android::hardware::defaultPassthroughServiceImplementation;
 using android::hardware::graphics::allocator::V2_0::IAllocator;
 
 int main() {
+#ifdef ARCH_ARM_32
+    android::hardware::ProcessState::initWithMmapSize((size_t)(32768));
+#endif
+
     return defaultPassthroughServiceImplementation<IAllocator>(4);
 }

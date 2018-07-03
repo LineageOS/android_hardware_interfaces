@@ -36,6 +36,7 @@ cc_binary {
     init_rc: ["android.hardware.graphics.composer@2.1-service.rc"],
     shared_libs: [
         "android.hardware.graphics.composer@2.1",
+        "libhwbinder",
         "libbinder",
         "libhidlbase",
         "libhidltransport",
@@ -43,4 +44,11 @@ cc_binary {
         "libsync",
         "libutils",
     ],
+    arch: {
+        arm: {
+            cflags: [
+                "-DARCH_ARM_32"
+            ],
+        },
+    },
 }

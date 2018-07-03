@@ -23,10 +23,18 @@
 #include <binder/ProcessState.h>
 #include <hidl/LegacySupport.h>
 
+#ifdef ARCH_ARM_32
+#include <hwbinder/ProcessState.h>
+#endif
+
 using android::hardware::graphics::composer::V2_1::IComposer;
 using android::hardware::defaultPassthroughServiceImplementation;
 
 int main() {
+#ifdef ARCH_ARM_32
+    android::hardware::ProcessState::initWithMmapSize((size_t)(32768));
+#endif
+
     // the conventional HAL might start binder services
     android::ProcessState::initWithDriver("/dev/vndbinder");
     android::ProcessState::self()->setThreadPoolMaxThreadCount(4);

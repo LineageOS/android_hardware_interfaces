@@ -48,6 +48,7 @@ cc_binary {
     relative_install_path: "hw",
     vendor: true,
     init_rc: ["android.hardware.sensors@1.0-service.rc"],
+    defaults: ["hidl_defaults"],
     srcs: ["service.cpp"],
 
     shared_libs: [
@@ -59,5 +60,11 @@ cc_binary {
         "libhidlbase",
         "libhidltransport",
         "android.hardware.sensors@1.0",
+        "libhwbinder",
     ],
+    arch: {
+        arm: {
+            cflags: ["-DARCH_ARM_32"],
+        },
+    },
 }
