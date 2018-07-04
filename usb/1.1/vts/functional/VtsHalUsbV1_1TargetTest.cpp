@@ -31,8 +31,8 @@
 #include <condition_variable>
 #include <mutex>
 
+using ::android::hardware::usb::V1_1::IUsb;
 using ::android::hardware::usb::V1_1::IUsbCallback;
-using ::android::hardware::usb::V1_0::IUsb;
 using ::android::hardware::usb::V1_0::PortDataRole;
 using ::android::hardware::usb::V1_0::PortMode;
 using ::android::hardware::usb::V1_1::PortMode_1_1;
