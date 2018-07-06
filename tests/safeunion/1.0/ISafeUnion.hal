@@ -16,7 +16,66 @@
 
 package android.hardware.tests.safeunion@1.0;
 
+import IOtherInterface;
+
 interface ISafeUnion {
+
+    enum BitField : uint8_t {
+        V0 = 1 << 0,
+        V1 = 1 << 1,
+        V2 = 1 << 2,
+        V3 = 1 << 3,
+    };
+
+    struct J {
+        vec<uint32_t> j1;
+        uint8_t[65] j2;
+        string j3;
+    };
+
+    safe_union EmptySafeUnion {
+    };
+
+    safe_union SmallSafeUnion {
+        uint8_t a;
+    };
+
+    safe_union LargeSafeUnion {
+        int8_t a;
+        uint16_t b;
+        int32_t c;
+        uint64_t d;
+
+        int8_t[13] e;
+        int64_t[5] f;
+
+        string g;
+        vec<bool> h;
+        vec<uint64_t> i;
+
+        J j;
+        struct K {
+            uint8_t k1;
+            uint64_t k2;
+        } k;
+
+        SmallSafeUnion l;
+    };
+
+    // TODO(b/110269925): Test more HIDL types. Missing:
+    // death_recipient, fmq_{sync,unsync}, pointer, ref.
+    safe_union MiscTypesSafeUnion {
+        memory a;
+        handle b;
+        bitfield<BitField> c;
+    };
+
+    safe_union InterfaceTypeSafeUnion {
+        uint32_t a;
+        int8_t[7] b;
+        IOtherInterface c;
+    };
+
     newLargeSafeUnion() generates (LargeSafeUnion myUnion);
     setA(LargeSafeUnion myUnion, int8_t a) generates (LargeSafeUnion myUnion);
     setB(LargeSafeUnion myUnion, uint16_t b) generates (LargeSafeUnion myUnion);
@@ -28,11 +87,16 @@ interface ISafeUnion {
     setH(LargeSafeUnion myUnion, vec<bool> h) generates (LargeSafeUnion myUnion);
     setI(LargeSafeUnion myUnion, vec<uint64_t> i) generates (LargeSafeUnion myUnion);
     setJ(LargeSafeUnion myUnion, J j) generates (LargeSafeUnion myUnion);
-    setK(LargeSafeUnion myUnion, K k) generates (LargeSafeUnion myUnion);
+    setK(LargeSafeUnion myUnion, LargeSafeUnion.K k) generates (LargeSafeUnion myUnion);
     setL(LargeSafeUnion myUnion, SmallSafeUnion l) generates (LargeSafeUnion myUnion);
 
     newMiscTypesSafeUnion() generates (MiscTypesSafeUnion myUnion);
     setMiscA(MiscTypesSafeUnion myUnion, memory a) generates (MiscTypesSafeUnion myUnion);
     setMiscB(MiscTypesSafeUnion myUnion, handle b) generates (MiscTypesSafeUnion myUnion);
     setMiscC(MiscTypesSafeUnion myUnion, bitfield<BitField> c) generates (MiscTypesSafeUnion myUnion);
+
+    newInterfaceTypeSafeUnion() generates (InterfaceTypeSafeUnion myUnion);
+    setInterfaceA(InterfaceTypeSafeUnion myUnion, uint32_t a) generates (InterfaceTypeSafeUnion myUnion);
+    setInterfaceB(InterfaceTypeSafeUnion myUnion, int8_t[7] b) generates (InterfaceTypeSafeUnion myUnion);
+    setInterfaceC(InterfaceTypeSafeUnion myUnion, IOtherInterface c) generates (InterfaceTypeSafeUnion myUnion);
 };

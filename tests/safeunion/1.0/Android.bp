@@ -4,17 +4,11 @@ hidl_interface {
     name: "android.hardware.tests.safeunion@1.0",
     root: "android.hardware",
     srcs: [
-        "types.hal",
+        "IOtherInterface.hal",
         "ISafeUnion.hal",
     ],
     interfaces: [
         "android.hidl.base@1.0",
-    ],
-    types: [
-        "EmptySafeUnion",
-        "SmallSafeUnion",
-        "LargeSafeUnion",
-        "MiscTypesSafeUnion",
     ],
     gen_java: false,
 }
