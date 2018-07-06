@@ -73,7 +73,7 @@ Return<void> SafeUnion::setD(const LargeSafeUnion& myUnion, uint64_t d, setD_cb 
     return Void();
 }
 
-Return<void> SafeUnion::setE(const ::android::hardware::tests::safeunion::V1_0::LargeSafeUnion& myUnion, const hidl_array<int8_t, 13>& e, setE_cb _hidl_cb) {
+Return<void> SafeUnion::setE(const LargeSafeUnion& myUnion, const hidl_array<int8_t, 13>& e, setE_cb _hidl_cb) {
     LOG(INFO) << "SERVER(SafeUnion) setE(myUnion, " << toString(e) << ")";
 
     LargeSafeUnion myNewUnion = myUnion;
@@ -83,7 +83,7 @@ Return<void> SafeUnion::setE(const ::android::hardware::tests::safeunion::V1_0::
     return Void();
 }
 
-Return<void> SafeUnion::setF(const ::android::hardware::tests::safeunion::V1_0::LargeSafeUnion& myUnion, const hidl_array<int64_t, 5>& f, setF_cb _hidl_cb) {
+Return<void> SafeUnion::setF(const LargeSafeUnion& myUnion, const hidl_array<int64_t, 5>& f, setF_cb _hidl_cb) {
     LOG(INFO) << "SERVER(SafeUnion) setF(myUnion, " << toString(f) << ")";
 
     LargeSafeUnion myNewUnion = myUnion;
@@ -93,7 +93,7 @@ Return<void> SafeUnion::setF(const ::android::hardware::tests::safeunion::V1_0::
     return Void();
 }
 
-Return<void> SafeUnion::setG(const ::android::hardware::tests::safeunion::V1_0::LargeSafeUnion& myUnion, const hidl_string& g, setG_cb _hidl_cb) {
+Return<void> SafeUnion::setG(const LargeSafeUnion& myUnion, const hidl_string& g, setG_cb _hidl_cb) {
     LOG(INFO) << "SERVER(SafeUnion) setG(myUnion, " << toString(g) << ")";
 
     LargeSafeUnion myNewUnion = myUnion;
@@ -103,7 +103,7 @@ Return<void> SafeUnion::setG(const ::android::hardware::tests::safeunion::V1_0::
     return Void();
 }
 
-Return<void> SafeUnion::setH(const ::android::hardware::tests::safeunion::V1_0::LargeSafeUnion& myUnion, const hidl_vec<bool>& h, setH_cb _hidl_cb) {
+Return<void> SafeUnion::setH(const LargeSafeUnion& myUnion, const hidl_vec<bool>& h, setH_cb _hidl_cb) {
     LOG(INFO) << "SERVER(SafeUnion) setH(myUnion, " << toString(h) << ")";
 
     LargeSafeUnion myNewUnion = myUnion;
@@ -113,7 +113,7 @@ Return<void> SafeUnion::setH(const ::android::hardware::tests::safeunion::V1_0::
     return Void();
 }
 
-Return<void> SafeUnion::setI(const ::android::hardware::tests::safeunion::V1_0::LargeSafeUnion& myUnion, const hidl_vec<uint64_t>& i, setI_cb _hidl_cb) {
+Return<void> SafeUnion::setI(const LargeSafeUnion& myUnion, const hidl_vec<uint64_t>& i, setI_cb _hidl_cb) {
     LOG(INFO) << "SERVER(SafeUnion) setI(myUnion, " << toString(i) << ")";
 
     LargeSafeUnion myNewUnion = myUnion;
@@ -123,7 +123,7 @@ Return<void> SafeUnion::setI(const ::android::hardware::tests::safeunion::V1_0::
     return Void();
 }
 
-Return<void> SafeUnion::setJ(const ::android::hardware::tests::safeunion::V1_0::LargeSafeUnion& myUnion, const J& j, setJ_cb _hidl_cb) {
+Return<void> SafeUnion::setJ(const LargeSafeUnion& myUnion, const J& j, setJ_cb _hidl_cb) {
     LOG(INFO) << "SERVER(SafeUnion) setJ(myUnion, " << toString(j) << ")";
 
     LargeSafeUnion myNewUnion = myUnion;
@@ -133,7 +133,7 @@ Return<void> SafeUnion::setJ(const ::android::hardware::tests::safeunion::V1_0::
     return Void();
 }
 
-Return<void> SafeUnion::setK(const ::android::hardware::tests::safeunion::V1_0::LargeSafeUnion& myUnion, const LargeSafeUnion::K& k, setK_cb _hidl_cb) {
+Return<void> SafeUnion::setK(const LargeSafeUnion& myUnion, const LargeSafeUnion::K& k, setK_cb _hidl_cb) {
     LOG(INFO) << "SERVER(SafeUnion) setK(myUnion, " << toString(k) << ")";
 
     LargeSafeUnion myNewUnion = myUnion;
@@ -143,7 +143,7 @@ Return<void> SafeUnion::setK(const ::android::hardware::tests::safeunion::V1_0::
     return Void();
 }
 
-Return<void> SafeUnion::setL(const ::android::hardware::tests::safeunion::V1_0::LargeSafeUnion& myUnion, const ::android::hardware::tests::safeunion::V1_0::SmallSafeUnion& l, setL_cb _hidl_cb) {
+Return<void> SafeUnion::setL(const LargeSafeUnion& myUnion, const SmallSafeUnion& l, setL_cb _hidl_cb) {
     LOG(INFO) << "SERVER(SafeUnion) setL(myUnion, " << toString(l) << ")";
 
     LargeSafeUnion myNewUnion = myUnion;
@@ -161,7 +161,7 @@ Return<void> SafeUnion::newMiscTypesSafeUnion(newMiscTypesSafeUnion_cb _hidl_cb)
     return Void();
 }
 
-Return<void> SafeUnion::setMiscA(const ::android::hardware::tests::safeunion::V1_0::MiscTypesSafeUnion& myUnion, const hidl_memory& a, setMiscA_cb _hidl_cb) {
+Return<void> SafeUnion::setMiscA(const MiscTypesSafeUnion& myUnion, const hidl_memory& a, setMiscA_cb _hidl_cb) {
     LOG(INFO) << "SERVER(SafeUnion) setMiscA(myUnion, " << toString(a) << ")";
 
     MiscTypesSafeUnion myNewUnion = myUnion;
@@ -171,7 +171,7 @@ Return<void> SafeUnion::setMiscA(const ::android::hardware::tests::safeunion::V1
     return Void();
 }
 
-Return<void> SafeUnion::setMiscB(const ::android::hardware::tests::safeunion::V1_0::MiscTypesSafeUnion& myUnion, const hidl_handle& b, setMiscB_cb _hidl_cb) {
+Return<void> SafeUnion::setMiscB(const MiscTypesSafeUnion& myUnion, const hidl_handle& b, setMiscB_cb _hidl_cb) {
     LOG(INFO) << "SERVER(SafeUnion) setMiscB(myUnion, " << toString(b) << ")";
 
     MiscTypesSafeUnion myNewUnion = myUnion;
@@ -181,7 +181,7 @@ Return<void> SafeUnion::setMiscB(const ::android::hardware::tests::safeunion::V1
     return Void();
 }
 
-Return<void> SafeUnion::setMiscC(const ::android::hardware::tests::safeunion::V1_0::MiscTypesSafeUnion& myUnion, hidl_bitfield<BitField> c, setMiscC_cb _hidl_cb) {
+Return<void> SafeUnion::setMiscC(const MiscTypesSafeUnion& myUnion, hidl_bitfield<BitField> c, setMiscC_cb _hidl_cb) {
     LOG(INFO) << "SERVER(SafeUnion) setMiscC(myUnion, " << c << ")";
 
     MiscTypesSafeUnion myNewUnion = myUnion;
@@ -191,6 +191,43 @@ Return<void> SafeUnion::setMiscC(const ::android::hardware::tests::safeunion::V1
     return Void();
 }
 
+Return<void> SafeUnion::newInterfaceTypeSafeUnion(newInterfaceTypeSafeUnion_cb _hidl_cb) {
+    LOG(INFO) << "SERVER(SafeUnion) newInterfaceTypeSafeUnion()";
+
+    InterfaceTypeSafeUnion ret;
+    _hidl_cb(ret);
+    return Void();
+}
+
+Return<void> SafeUnion::setInterfaceA(const InterfaceTypeSafeUnion& myUnion, uint32_t a, setInterfaceA_cb _hidl_cb) {
+    LOG(INFO) << "SERVER(SafeUnion) setInterfaceA(myUnion, " << a << ")";
+
+    InterfaceTypeSafeUnion myNewUnion = myUnion;
+    myNewUnion.a(a);
+
+    _hidl_cb(myNewUnion);
+    return Void();
+}
+
+Return<void> SafeUnion::setInterfaceB(const InterfaceTypeSafeUnion& myUnion, const hidl_array<int8_t, 7>& b, setInterfaceB_cb _hidl_cb) {
+    LOG(INFO) << "SERVER(SafeUnion) setInterfaceB(myUnion, " << toString(b) << ")";
+
+    InterfaceTypeSafeUnion myNewUnion = myUnion;
+    myNewUnion.b(b);
+
+    _hidl_cb(myNewUnion);
+    return Void();
+}
+
+Return<void> SafeUnion::setInterfaceC(const InterfaceTypeSafeUnion& myUnion, const sp<::android::hardware::tests::safeunion::V1_0::IOtherInterface>& c, setInterfaceC_cb _hidl_cb) {
+    LOG(INFO) << "SERVER(SafeUnion) setInterfaceC(myUnion, " << toString(c) << ")";
+
+    InterfaceTypeSafeUnion myNewUnion = myUnion;
+    myNewUnion.c(c);
+
+    _hidl_cb(myNewUnion);
+    return Void();
+}
 
 ISafeUnion* HIDL_FETCH_ISafeUnion(const char* /* name */) {
     return new SafeUnion();

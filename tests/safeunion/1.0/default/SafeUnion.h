@@ -30,9 +30,7 @@ namespace implementation {
 
 using ::android::hardware::Return;
 using ::android::hardware::Void;
-using ::android::hardware::tests::safeunion::V1_0::SmallSafeUnion;
-using ::android::hardware::tests::safeunion::V1_0::LargeSafeUnion;
-using ::android::hardware::tests::safeunion::V1_0::MiscTypesSafeUnion;
+using ::android::hardware::tests::safeunion::V1_0::ISafeUnion;
 
 struct SafeUnion : public ISafeUnion {
     // Methods from ::android::hardware::tests::safeunion::V1_0::ISafeUnion follow.
@@ -51,9 +49,14 @@ struct SafeUnion : public ISafeUnion {
     Return<void> setL(const LargeSafeUnion& myUnion, const SmallSafeUnion& l, setL_cb _hidl_cb) override;
 
     Return<void> newMiscTypesSafeUnion(newMiscTypesSafeUnion_cb _hidl_cb) override;
-    Return<void> setMiscA(const ::android::hardware::tests::safeunion::V1_0::MiscTypesSafeUnion& myUnion, const hidl_memory& a, setMiscA_cb _hidl_cb) override;
-    Return<void> setMiscB(const ::android::hardware::tests::safeunion::V1_0::MiscTypesSafeUnion& myUnion, const hidl_handle& b, setMiscB_cb _hidl_cb) override;
-    Return<void> setMiscC(const ::android::hardware::tests::safeunion::V1_0::MiscTypesSafeUnion& myUnion, hidl_bitfield<BitField> c, setMiscC_cb _hidl_cb) override;
+    Return<void> setMiscA(const MiscTypesSafeUnion& myUnion, const hidl_memory& a, setMiscA_cb _hidl_cb) override;
+    Return<void> setMiscB(const MiscTypesSafeUnion& myUnion, const hidl_handle& b, setMiscB_cb _hidl_cb) override;
+    Return<void> setMiscC(const MiscTypesSafeUnion& myUnion, hidl_bitfield<BitField> c, setMiscC_cb _hidl_cb) override;
+
+    Return<void> newInterfaceTypeSafeUnion(newInterfaceTypeSafeUnion_cb _hidl_cb) override;
+    Return<void> setInterfaceA(const InterfaceTypeSafeUnion& myUnion, uint32_t a, setInterfaceA_cb _hidl_cb) override;
+    Return<void> setInterfaceB(const InterfaceTypeSafeUnion& myUnion, const hidl_array<int8_t, 7>& b, setInterfaceB_cb _hidl_cb) override;
+    Return<void> setInterfaceC(const InterfaceTypeSafeUnion& myUnion, const sp<::android::hardware::tests::safeunion::V1_0::IOtherInterface>& c, setInterfaceC_cb _hidl_cb) override;
 };
 
 extern "C" ISafeUnion* HIDL_FETCH_ISafeUnion(const char* name);
