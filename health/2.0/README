@@ -107,3 +107,49 @@ void get_disk_stats(std::vector<struct DiskStats>& stats) {
 # device/<manufacturer>/<device>/sepolicy/vendor/hal_health_default.te
 # Add device specific permissions to hal_health_default domain, especially
 # if Step 6.1 or Step 7.2 is done.
+
+9. Implementing health HAL in recovery. The health HAL is used for battery
+status checks during OTA for non-A/B devices. If the health HAL is not
+implemented in recovery, is_battery_ok() will always return true.
+
+9.1 If the device does not have a vendor-specific libhealthd, nothing needs to
+be done. A "backup" implementation is provided in
+android.hardware.health@2.0-impl-default, which is always installed to recovery
+image by default.
+
+9.2 If the device do have a vendor-specific libhealthd, implement the following
+module and include it in PRODUCT_PACKAGES (replace <device> with appropriate
+strings):
+
+// Android.bp
+cc_library_shared {
+    name: "android.hardware.health@2.0-impl-<device>",
+    recovery_available: true,
+    relative_install_path: "hw",
+    static_libs: [
+        "android.hardware.health@2.0-impl",
+        "libhealthd.<device>"
+        // Include the following if Step 7.1, otherwise do Step 7.2
+        "libhealthstoragedefault",
+    ],
+    srcs: [
+        "HealthImpl.cpp",
+    ],
+    overrides: [
+        "android.hardware.health@2.0-impl-default",
+    ],
+}
+
+// HealthImpl.cpp
+#include <health2/Health.h>
+#include <healthd/healthd.h>
+using android::hardware::health::V2_0::IHealth;
+using android::hardware::health::V2_0::implementation::Health;
+extern "C" IHealth* HIDL_FETCH_IHealth(const char* name) {
+    const static std::string providedInstance{"default"};
+    if (providedInstance != name) return nullptr;
+    return Health::initInstance(&gHealthdConfig).get();
+}
+
+# device.mk
+PRODUCT_PACKAGES += android.hardware.health@2.0-impl-<device>
