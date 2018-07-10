@@ -174,9 +174,9 @@ void HidlUtils::audioPortConfigFromHal(const struct audio_port_config& halConfig
             config->ext.mix.hwModule = halConfig.ext.mix.hw_module;
             config->ext.mix.ioHandle = halConfig.ext.mix.handle;
             if (halConfig.role == AUDIO_PORT_ROLE_SOURCE) {
-                config->ext.mix.useCase.source = AudioSource(halConfig.ext.mix.usecase.source);
-            } else if (halConfig.role == AUDIO_PORT_ROLE_SINK) {
                 config->ext.mix.useCase.stream = AudioStreamType(halConfig.ext.mix.usecase.stream);
+            } else if (halConfig.role == AUDIO_PORT_ROLE_SINK) {
+                config->ext.mix.useCase.source = AudioSource(halConfig.ext.mix.usecase.source);
             }
             break;
         }
@@ -212,11 +212,11 @@ void HidlUtils::audioPortConfigToHal(const AudioPortConfig& config,
             halConfig->ext.mix.hw_module = config.ext.mix.hwModule;
             halConfig->ext.mix.handle = config.ext.mix.ioHandle;
             if (config.role == AudioPortRole::SOURCE) {
-                halConfig->ext.mix.usecase.source =
-                    static_cast<audio_source_t>(config.ext.mix.useCase.source);
-            } else if (config.role == AudioPortRole::SINK) {
                 halConfig->ext.mix.usecase.stream =
                     static_cast<audio_stream_type_t>(config.ext.mix.useCase.stream);
+            } else if (config.role == AudioPortRole::SINK) {
+                halConfig->ext.mix.usecase.source =
+                    static_cast<audio_source_t>(config.ext.mix.useCase.source);
             }
             break;
         }
