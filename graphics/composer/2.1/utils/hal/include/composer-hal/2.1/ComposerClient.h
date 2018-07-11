@@ -102,6 +102,7 @@ class ComposerClientImpl : public Interface {
         }
 
         void onRefresh(Display display) {
+            mResources->setDisplayMustValidateState(display, true);
             auto ret = mCallback->onRefresh(display);
             ALOGE_IF(!ret.isOk(), "failed to send onRefresh: %s", ret.description().c_str());
         }
