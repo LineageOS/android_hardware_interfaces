@@ -111,7 +111,6 @@ class HwcHalImpl : public Hal {
     }
 
     void registerEventCallback(hal::ComposerHal::EventCallback* callback) override {
-        mMustValidateDisplay = true;
         mEventCallback = callback;
 
         mDispatch.registerCallback(mDevice, HWC2_CALLBACK_HOTPLUG, this,
@@ -331,7 +330,6 @@ class HwcHalImpl : public Hal {
         uint32_t typesCount = 0;
         uint32_t reqsCount = 0;
         int32_t err = mDispatch.validateDisplay(mDevice, display, &typesCount, &reqsCount);
-        mMustValidateDisplay = false;
 
         if (err != HWC2_ERROR_NONE && err != HWC2_ERROR_HAS_CHANGES) {
             return static_cast<Error>(err);
@@ -384,10 +382,6 @@ class HwcHalImpl : public Hal {
 
     Error presentDisplay(Display display, int32_t* outPresentFence, std::vector<Layer>* outLayers,
                          std::vector<int32_t>* outReleaseFences) override {
-        if (mMustValidateDisplay) {
-            return Error::NOT_VALIDATED;
-        }
-
         *outPresentFence = -1;
         int32_t err = mDispatch.presentDisplay(mDevice, display, outPresentFence);
         if (err != HWC2_ERROR_NONE) {
@@ -593,7 +587,6 @@ class HwcHalImpl : public Hal {
 
     static void refreshHook(hwc2_callback_data_t callbackData, hwc2_display_t display) {
         auto hal = static_cast<HwcHalImpl*>(callbackData);
-        hal->mMustValidateDisplay = true;
         hal->mEventCallback->onRefresh(display);
     }
 
@@ -654,8 +647,6 @@ class HwcHalImpl : public Hal {
     } mDispatch = {};
 
     hal::ComposerHal::EventCallback* mEventCallback = nullptr;
-
-    std::atomic<bool> mMustValidateDisplay{true};
 };
 
 }  // namespace detail
