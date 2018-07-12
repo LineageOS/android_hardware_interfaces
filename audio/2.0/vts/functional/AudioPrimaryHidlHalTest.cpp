@@ -124,7 +124,7 @@ class Environment : public ::testing::Environment {
    public:
     using TearDownFunc = std::function<void()>;
     void registerTearDown(TearDownFunc&& tearDown) {
-        tearDowns.push_back(std::move(tearDown));
+        tearDowns.push_front(std::move(tearDown));
     }
 
    private:
