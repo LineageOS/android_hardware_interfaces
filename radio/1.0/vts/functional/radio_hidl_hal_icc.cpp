@@ -44,7 +44,9 @@ TEST_F(RadioHidlTest, supplyIccPinForApp) {
             EXPECT_EQ(std::cv_status::no_timeout, wait());
             EXPECT_EQ(serial, radioRsp->rspInfo.serial);
             EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp->rspInfo.type);
-            EXPECT_EQ(RadioError::PASSWORD_INCORRECT, radioRsp->rspInfo.error);
+            ASSERT_TRUE(CheckAnyOfErrors(
+                radioRsp->rspInfo.error,
+                {RadioError::PASSWORD_INCORRECT, RadioError::REQUEST_NOT_SUPPORTED}));
         }
     }
 }
@@ -91,8 +93,10 @@ TEST_F(RadioHidlTest, supplyIccPin2ForApp) {
             EXPECT_EQ(std::cv_status::no_timeout, wait());
             EXPECT_EQ(serial, radioRsp->rspInfo.serial);
             EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp->rspInfo.type);
-            ASSERT_TRUE(CheckAnyOfErrors(radioRsp->rspInfo.error,
-                                         {RadioError::PASSWORD_INCORRECT, RadioError::SIM_PUK2}));
+            ASSERT_TRUE(
+                CheckAnyOfErrors(radioRsp->rspInfo.error,
+                                 {RadioError::PASSWORD_INCORRECT, RadioError::REQUEST_NOT_SUPPORTED,
+                                  RadioError::SIM_PUK2}));
         }
     }
 }
