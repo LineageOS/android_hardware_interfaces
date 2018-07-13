@@ -191,6 +191,26 @@ Return<void> SafeUnion::setInterfaceC(const InterfaceTypeSafeUnion& myUnion, con
     return Void();
 }
 
+Return<void> SafeUnion::setInterfaceD(const ::android::hardware::tests::safeunion::V1_0::ISafeUnion::InterfaceTypeSafeUnion& myUnion, const hidl_string& d, setInterfaceD_cb _hidl_cb) {
+    LOG(INFO) << "SERVER(SafeUnion) setInterfaceD(myUnion, " << toString(d) << ")";
+
+    InterfaceTypeSafeUnion myNewUnion = myUnion;
+    myNewUnion.d(d);
+
+    _hidl_cb(myNewUnion);
+    return Void();
+}
+
+Return<void> SafeUnion::setInterfaceE(const ::android::hardware::tests::safeunion::V1_0::ISafeUnion::InterfaceTypeSafeUnion& myUnion, const hidl_vec<hidl_string>& e, setInterfaceE_cb _hidl_cb) {
+    LOG(INFO) << "SERVER(SafeUnion) setInterfaceE(myUnion, " << toString(e) << ")";
+
+    InterfaceTypeSafeUnion myNewUnion = myUnion;
+    myNewUnion.e(e);
+
+    _hidl_cb(myNewUnion);
+    return Void();
+}
+
 ISafeUnion* HIDL_FETCH_ISafeUnion(const char* /* name */) {
     return new SafeUnion();
 }
