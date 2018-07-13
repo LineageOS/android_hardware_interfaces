@@ -225,6 +225,15 @@ class AudioDecHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         framesReceived = 0;
         timestampUs = 0;
         timestampDevTest = false;
+        isSecure = false;
+        size_t suffixLen = strlen(".secure");
+        if (strlen(gEnv->getComponent().c_str()) >= suffixLen) {
+            isSecure =
+                !strcmp(gEnv->getComponent().c_str() +
+                            strlen(gEnv->getComponent().c_str()) - suffixLen,
+                        ".secure");
+        }
+        if (isSecure) disableTest = true;
         if (disableTest) std::cout << "[   WARN   ] Test Disabled \n";
     }
 
@@ -321,6 +330,7 @@ class AudioDecHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     OMX_AUDIO_CODINGTYPE eEncoding;
     bool disableTest;
     bool eosFlag;
+    bool isSecure;
     uint32_t framesReceived;
     uint64_t timestampUs;
     ::android::List<uint64_t> timestampUslist;
