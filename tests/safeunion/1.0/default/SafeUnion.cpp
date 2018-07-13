@@ -153,44 +153,6 @@ Return<void> SafeUnion::setL(const LargeSafeUnion& myUnion, const SmallSafeUnion
     return Void();
 }
 
-Return<void> SafeUnion::newMiscTypesSafeUnion(newMiscTypesSafeUnion_cb _hidl_cb) {
-    LOG(INFO) << "SERVER(SafeUnion) newMiscTypesSafeUnion()";
-
-    MiscTypesSafeUnion ret;
-    _hidl_cb(ret);
-    return Void();
-}
-
-Return<void> SafeUnion::setMiscA(const MiscTypesSafeUnion& myUnion, const hidl_memory& a, setMiscA_cb _hidl_cb) {
-    LOG(INFO) << "SERVER(SafeUnion) setMiscA(myUnion, " << toString(a) << ")";
-
-    MiscTypesSafeUnion myNewUnion = myUnion;
-    myNewUnion.a(a);
-
-    _hidl_cb(myNewUnion);
-    return Void();
-}
-
-Return<void> SafeUnion::setMiscB(const MiscTypesSafeUnion& myUnion, const hidl_handle& b, setMiscB_cb _hidl_cb) {
-    LOG(INFO) << "SERVER(SafeUnion) setMiscB(myUnion, " << toString(b) << ")";
-
-    MiscTypesSafeUnion myNewUnion = myUnion;
-    myNewUnion.b(b);
-
-    _hidl_cb(myNewUnion);
-    return Void();
-}
-
-Return<void> SafeUnion::setMiscC(const MiscTypesSafeUnion& myUnion, hidl_bitfield<BitField> c, setMiscC_cb _hidl_cb) {
-    LOG(INFO) << "SERVER(SafeUnion) setMiscC(myUnion, " << c << ")";
-
-    MiscTypesSafeUnion myNewUnion = myUnion;
-    myNewUnion.c(c);
-
-    _hidl_cb(myNewUnion);
-    return Void();
-}
-
 Return<void> SafeUnion::newInterfaceTypeSafeUnion(newInterfaceTypeSafeUnion_cb _hidl_cb) {
     LOG(INFO) << "SERVER(SafeUnion) newInterfaceTypeSafeUnion()";
 
