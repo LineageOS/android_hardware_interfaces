@@ -48,11 +48,6 @@ struct SafeUnion : public ISafeUnion {
     Return<void> setK(const LargeSafeUnion& myUnion, const LargeSafeUnion::K& k, setK_cb _hidl_cb) override;
     Return<void> setL(const LargeSafeUnion& myUnion, const SmallSafeUnion& l, setL_cb _hidl_cb) override;
 
-    Return<void> newMiscTypesSafeUnion(newMiscTypesSafeUnion_cb _hidl_cb) override;
-    Return<void> setMiscA(const MiscTypesSafeUnion& myUnion, const hidl_memory& a, setMiscA_cb _hidl_cb) override;
-    Return<void> setMiscB(const MiscTypesSafeUnion& myUnion, const hidl_handle& b, setMiscB_cb _hidl_cb) override;
-    Return<void> setMiscC(const MiscTypesSafeUnion& myUnion, hidl_bitfield<BitField> c, setMiscC_cb _hidl_cb) override;
-
     Return<void> newInterfaceTypeSafeUnion(newInterfaceTypeSafeUnion_cb _hidl_cb) override;
     Return<void> setInterfaceA(const InterfaceTypeSafeUnion& myUnion, uint32_t a, setInterfaceA_cb _hidl_cb) override;
     Return<void> setInterfaceB(const InterfaceTypeSafeUnion& myUnion, const hidl_array<int8_t, 7>& b, setInterfaceB_cb _hidl_cb) override;

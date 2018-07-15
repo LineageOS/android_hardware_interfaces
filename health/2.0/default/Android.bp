@@ -1,6 +1,9 @@
+// Helper library for implementing health HAL. It is recommended that a health
+// service or passthrough HAL link to this library.
 cc_library_static {
     name: "android.hardware.health@2.0-impl",
     vendor_available: true,
+    recovery_available: true,
     srcs: [
         "Health.cpp",
         "healthd_common.cpp",

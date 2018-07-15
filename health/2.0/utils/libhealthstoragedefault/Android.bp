@@ -21,6 +21,7 @@ cc_library_static {
     srcs: ["StorageHealthDefault.cpp"],
     name: "libhealthstoragedefault",
     vendor_available: true,
+    recovery_available: true,
     cflags: ["-Werror"],
     shared_libs: [
         "android.hardware.health@2.0",

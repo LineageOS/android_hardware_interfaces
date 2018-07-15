@@ -258,7 +258,7 @@ status_t VendorTagDescriptor::createDescriptorFromOps(const vendor_tag_ops_t* vO
 
     for (size_t i = 0; i < static_cast<size_t>(tagCount); ++i) {
         uint32_t tag = tagArray[i];
-        String8 sectionString = tagToSectionMap.valueFor(tag);
+        const String8& sectionString = tagToSectionMap.valueFor(tag);
 
         // Set up tag to section index map
         ssize_t index = sections.indexOf(sectionString);
