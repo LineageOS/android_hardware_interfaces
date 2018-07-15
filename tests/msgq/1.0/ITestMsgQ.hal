@@ -24,14 +24,14 @@ interface ITestMsgQ {
 
     /**
      * This method requests the service to set up a synchronous read/write
-     * wait-free FMQ with the client as reader.
+     * wait-free FMQ using the input descriptor with the client as reader.
+     *
+     * @param mqDesc This structure describes the FMQ that was set up by the
+     * client. Server uses this descriptor to set up a FMQ object at its end.
      *
      * @return ret True if the setup is successful.
-     * @return mqDesc This structure describes the FMQ that was
-     * set up by the service. Client can use it to set up the FMQ at its end.
      */
-    configureFmqSyncReadWrite()
-        generates(bool ret, fmq_sync<uint16_t> mqDesc);
+    configureFmqSyncReadWrite(fmq_sync<uint16_t> mqDesc) generates(bool ret);
 
     /**
      * This method requests the service to return an MQDescriptor to

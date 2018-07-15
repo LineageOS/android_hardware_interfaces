@@ -55,7 +55,7 @@ struct TestMsgQ : public ITestMsgQ {
     TestMsgQ() : mFmqSynchronized(nullptr), mFmqUnsynchronized(nullptr) {}
 
     // Methods from ::android::hardware::tests::msgq::V1_0::ITestMsgQ follow.
-    Return<void> configureFmqSyncReadWrite(configureFmqSyncReadWrite_cb _hidl_cb) override;
+    Return<bool> configureFmqSyncReadWrite(const MQDescriptorSync<uint16_t>& mqDesc) override;
     Return<void> getFmqUnsyncWrite(bool configureFmq, getFmqUnsyncWrite_cb _hidl_cb) override;
     Return<bool> requestWriteFmqSync(int32_t count) override;
     Return<bool> requestReadFmqSync(int32_t count) override;
