@@ -52,6 +52,8 @@ struct SafeUnion : public ISafeUnion {
     Return<void> setInterfaceA(const InterfaceTypeSafeUnion& myUnion, uint32_t a, setInterfaceA_cb _hidl_cb) override;
     Return<void> setInterfaceB(const InterfaceTypeSafeUnion& myUnion, const hidl_array<int8_t, 7>& b, setInterfaceB_cb _hidl_cb) override;
     Return<void> setInterfaceC(const InterfaceTypeSafeUnion& myUnion, const sp<::android::hardware::tests::safeunion::V1_0::IOtherInterface>& c, setInterfaceC_cb _hidl_cb) override;
+    Return<void> setInterfaceD(const InterfaceTypeSafeUnion& myUnion, const hidl_string& d, setInterfaceD_cb _hidl_cb) override;
+    Return<void> setInterfaceE(const InterfaceTypeSafeUnion& myUnion, const hidl_vec<hidl_string>& e, setInterfaceE_cb _hidl_cb) override;
 };
 
 extern "C" ISafeUnion* HIDL_FETCH_ISafeUnion(const char* name);
