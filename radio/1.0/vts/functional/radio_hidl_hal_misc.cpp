@@ -689,7 +689,8 @@ TEST_F(RadioHidlTest, startLceService) {
         ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::RADIO_NOT_AVAILABLE ||
                     radioRsp->rspInfo.error == RadioError::LCE_NOT_SUPPORTED ||
                     radioRsp->rspInfo.error == RadioError::INTERNAL_ERR ||
-                    radioRsp->rspInfo.error == RadioError::SIM_ABSENT);
+                    radioRsp->rspInfo.error == RadioError::SIM_ABSENT ||
+                    radioRsp->rspInfo.error == RadioError::NONE);
     }
 }
 
@@ -726,7 +727,8 @@ TEST_F(RadioHidlTest, pullLceData) {
     if (cardStatus.cardState == CardState::ABSENT) {
         ASSERT_TRUE(radioRsp->rspInfo.error == RadioError::RADIO_NOT_AVAILABLE || CheckOEMError() ||
                     radioRsp->rspInfo.error == RadioError::INTERNAL_ERR ||
-                    radioRsp->rspInfo.error == RadioError::NONE);
+                    radioRsp->rspInfo.error == RadioError::NONE ||
+                    radioRsp->rspInfo.error == RadioError::SIM_ABSENT);
     }
 }
 
