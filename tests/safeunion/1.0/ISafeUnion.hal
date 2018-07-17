@@ -66,6 +66,8 @@ interface ISafeUnion {
         uint32_t a;
         int8_t[7] b;
         IOtherInterface c;
+        string d;
+        vec<string> e;
     };
 
     newLargeSafeUnion() generates (LargeSafeUnion myUnion);
@@ -86,4 +88,6 @@ interface ISafeUnion {
     setInterfaceA(InterfaceTypeSafeUnion myUnion, uint32_t a) generates (InterfaceTypeSafeUnion myUnion);
     setInterfaceB(InterfaceTypeSafeUnion myUnion, int8_t[7] b) generates (InterfaceTypeSafeUnion myUnion);
     setInterfaceC(InterfaceTypeSafeUnion myUnion, IOtherInterface c) generates (InterfaceTypeSafeUnion myUnion);
+    setInterfaceD(InterfaceTypeSafeUnion myUnion, string d) generates (InterfaceTypeSafeUnion myUnion);
+    setInterfaceE(InterfaceTypeSafeUnion myUnion, vec<string> e) generates (InterfaceTypeSafeUnion myUnion);
 };
