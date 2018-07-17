@@ -46,6 +46,8 @@ constexpr int WHEEL_TICK = (int)VehicleProperty::WHEEL_TICK;
 constexpr int ALL_WHEELS =
     (int)(VehicleAreaWheel::LEFT_FRONT | VehicleAreaWheel::RIGHT_FRONT |
           VehicleAreaWheel::LEFT_REAR | VehicleAreaWheel::RIGHT_REAR);
+constexpr int SEAT_1_LEFT = (int)(VehicleAreaSeat::ROW_1_LEFT);
+constexpr int SEAT_1_RIGHT = (int)(VehicleAreaSeat::ROW_1_RIGHT);
 constexpr int HVAC_LEFT = (int)(VehicleAreaSeat::ROW_1_LEFT | VehicleAreaSeat::ROW_2_LEFT |
                                 VehicleAreaSeat::ROW_2_CENTER);
 constexpr int HVAC_RIGHT = (int)(VehicleAreaSeat::ROW_1_RIGHT | VehicleAreaSeat::ROW_2_RIGHT);
@@ -376,6 +378,17 @@ const ConfigDeclaration kVehicleProperties[]{
                 .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
                 .areaConfigs = {VehicleAreaConfig{
                     .areaId = (0), .minInt32Value = -2, .maxInt32Value = 2}}},
+     .initialValue = {.int32Values = {0}}},  // +ve values for heating and -ve for cooling
+
+    {.config = {.prop = toInt(VehicleProperty::HVAC_SEAT_TEMPERATURE),
+                .access = VehiclePropertyAccess::READ_WRITE,
+                .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                .areaConfigs = {VehicleAreaConfig{
+                                    .areaId = SEAT_1_LEFT, .minInt32Value = -2, .maxInt32Value = 2,
+                                },
+                                VehicleAreaConfig{
+                                    .areaId = SEAT_1_RIGHT, .minInt32Value = -2, .maxInt32Value = 2,
+                                }}},
      .initialValue = {.int32Values = {0}}},  // +ve values for heating and -ve for cooling
 
     {.config = {.prop = toInt(VehicleProperty::HVAC_TEMPERATURE_SET),
