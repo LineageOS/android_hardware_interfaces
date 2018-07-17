@@ -48,16 +48,12 @@ cc_binary {
 
     header_libs: ["libhealthd_headers"],
 
-    // Uncomment the following to remove healthd from the build.
-    // overrides: [
-    //     "healthd",
-    // ],
+    overrides: [
+        "healthd",
+    ],
 }
 
-    3.1 (recommended) To remove healthd from the build, keep "overrides"
-          section, and include the following in device.mk:
-            DEVICE_FRAMEWORK_MANIFEST_FILE += \
-                system/libhidl/vintfdata/manifest_healthd_exclude.xml
+    3.1 (recommended) To remove healthd from the build, keep "overrides" section.
     3.2 To keep healthd in the build, remove "overrides" section.
 
 4. Create device/<manufacturer>/<device>/health/android.hardware.health@2.0-service.<device>.rc
