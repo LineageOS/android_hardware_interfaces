@@ -70,6 +70,9 @@ interface IBaz extends IBase {
 
     struct StructWithInterface {
         int32_t number;
+        int8_t[7] array;
+        string oneString;
+        vec<string> vectorOfStrings;
         IBase dummy;
     };
     oneway doThis(float param);
