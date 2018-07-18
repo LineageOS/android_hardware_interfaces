@@ -436,6 +436,17 @@ const ConfigDeclaration kVehicleProperties[]{
                 .areaConfigs = {VehicleAreaConfig{.areaId = HVAC_ALL}}},
      .initialValue = {.int32Values = {toInt(VehicleHvacFanDirection::FACE)}}},
 
+    {.config = {.prop = toInt(VehicleProperty::HVAC_SEAT_VENTILATION),
+                .access = VehiclePropertyAccess::READ_WRITE,
+                .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                .areaConfigs = {VehicleAreaConfig{
+                                    .areaId = SEAT_1_LEFT, .minInt32Value = 0, .maxInt32Value = 3,
+                                },
+                                VehicleAreaConfig{
+                                    .areaId = SEAT_1_RIGHT, .minInt32Value = 0, .maxInt32Value = 3,
+                                }}},
+     .initialValue = {.int32Values = {0}}},  // 0 is off and +ve values indicate ventilation level.
+
     {.config = {.prop = toInt(VehicleProperty::HVAC_STEERING_WHEEL_HEAT),
                 .access = VehiclePropertyAccess::READ_WRITE,
                 .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
