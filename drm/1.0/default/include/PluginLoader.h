@@ -85,7 +85,10 @@ class PluginLoader {
                 libraries.push(library);
                 T* result = createFactoryFunc();
                 return  result;
-           }
+            } else {
+                ALOGE("Failed to lookup symbol %s in library %s: %s",
+                        entry, path, library->lastError());
+            }
         }
         return NULL;
     }
