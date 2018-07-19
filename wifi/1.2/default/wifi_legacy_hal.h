@@ -25,6 +25,12 @@
 
 #include <wifi_system/interface_tool.h>
 
+// HACK: The include inside the namespace below also transitively includes a
+// bunch of libc headers into the namespace, which leads to functions like
+// socketpair being defined in android::hardware::wifi::V1_1::implementation::legacy_hal.
+// Include this one particular header as a hacky workaround until that's fixed.
+#include <sys/socket.h>
+
 namespace android {
 namespace hardware {
 namespace wifi {
