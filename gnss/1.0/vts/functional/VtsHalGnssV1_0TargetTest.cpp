@@ -404,7 +404,11 @@ TEST_F(GnssHalTest, InjectDelete) {
   ASSERT_TRUE(result.isOk());
   EXPECT_TRUE(result);
 
-  auto resultVoid = gnss_hal_->deleteAidingData(IGnss::GnssAidingData::DELETE_ALL);
+  auto resultVoid = gnss_hal_->deleteAidingData(IGnss::GnssAidingData::DELETE_POSITION);
+
+  ASSERT_TRUE(resultVoid.isOk());
+
+  resultVoid = gnss_hal_->deleteAidingData(IGnss::GnssAidingData::DELETE_TIME);
 
   ASSERT_TRUE(resultVoid.isOk());
 
@@ -470,6 +474,16 @@ TEST_F(GnssHalTest, MeasurementCapabilites) {
   if (info_called_count_ > 0 && last_info_.yearOfHw >= 2016) {
     EXPECT_TRUE(last_capabilities_ & IGnssCallback::Capabilities::MEASUREMENTS);
   }
+}
+
+/*
+ * SchedulingCapabilities:
+ * Verifies that 2018+ hardware supports Scheduling capabilities.
+ */
+TEST_F(GnssHalTest, SchedulingCapabilities) {
+    if (info_called_count_ > 0 && last_info_.yearOfHw >= 2018) {
+        EXPECT_TRUE(last_capabilities_ & IGnssCallback::Capabilities::SCHEDULING);
+    }
 }
 
 int main(int argc, char** argv) {

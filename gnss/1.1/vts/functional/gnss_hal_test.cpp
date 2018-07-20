@@ -83,6 +83,7 @@ void GnssHalTest::StopAndClearLocations() {
      */
     while (wait(TIMEOUT_SEC) == std::cv_status::no_timeout) {
     }
+    location_called_count_ = 0;
 }
 
 void GnssHalTest::SetPositionMode(const int min_interval_msec, const bool low_power_mode) {
@@ -97,17 +98,17 @@ void GnssHalTest::SetPositionMode(const int min_interval_msec, const bool low_po
     EXPECT_TRUE(result);
 }
 
-bool GnssHalTest::StartAndGetSingleLocation() {
+bool GnssHalTest::StartAndCheckFirstLocation() {
     auto result = gnss_hal_->start();
 
     EXPECT_TRUE(result.isOk());
     EXPECT_TRUE(result);
 
     /*
-     * GPS signals initially optional for this test, so don't expect fast fix,
-     * or no timeout, unless signal is present
+     * GnssLocationProvider support of AGPS SUPL & XtraDownloader is not available in VTS,
+     * so allow time to demodulate ephemeris over the air.
      */
-    const int kFirstGnssLocationTimeoutSeconds = 15;
+    const int kFirstGnssLocationTimeoutSeconds = 75;
 
     wait(kFirstGnssLocationTimeoutSeconds);
     EXPECT_EQ(location_called_count_, 1);
@@ -195,7 +196,7 @@ void GnssHalTest::StartAndCheckLocations(int count) {
 
     SetPositionMode(kMinIntervalMsec, kLowPowerMode);
 
-    EXPECT_TRUE(StartAndGetSingleLocation());
+    EXPECT_TRUE(StartAndCheckFirstLocation());
 
     for (int i = 1; i < count; i++) {
         EXPECT_EQ(std::cv_status::no_timeout, wait(kLocationTimeoutSubsequentSec));

@@ -164,10 +164,10 @@ static void computeHmac(const Keymaster::KeymasterSet& keymasters,
                     sharingCheck = curSharingCheck;
                     firstKeymaster = false;
                 }
-                CHECK(curSharingCheck == sharingCheck)
-                    << "HMAC computation failed for " << *keymaster  //
-                    << " Expected: " << sharingCheck                 //
-                    << " got: " << curSharingCheck;
+                if (curSharingCheck != sharingCheck)
+                    LOG(WARNING) << "HMAC computation failed for " << *keymaster  //
+                                 << " Expected: " << sharingCheck                 //
+                                 << " got: " << curSharingCheck;
             });
         CHECK(rc.isOk()) << "Failed to communicate with " << *keymaster
                          << " error: " << rc.description();
