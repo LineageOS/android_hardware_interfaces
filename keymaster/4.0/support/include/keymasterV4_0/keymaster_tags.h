@@ -73,6 +73,9 @@ namespace V4_0 {
 static const int32_t KM_TAG_DIGEST_OLD = static_cast<int32_t>(TagType::ENUM) | 5;
 static const int32_t KM_TAG_PADDING_OLD = static_cast<int32_t>(TagType::ENUM) | 7;
 
+static const int32_t KM_TAG_FBE_ICE = static_cast<int32_t>(TagType::BOOL) | 16201;
+static const int32_t KM_TAG_KEY_TYPE = static_cast<int32_t>(TagType::UINT) | 16202;
+
 constexpr TagType typeFromTag(Tag tag) {
     return static_cast<TagType>(static_cast<uint32_t>(tag) & static_cast<uint32_t>(0xf0000000));
 }
