@@ -198,7 +198,8 @@ bool verify_chain(const hidl_vec<hidl_vec<uint8_t>>& chain) {
         if (!signing_pubkey.get()) return false;
 
         EXPECT_EQ(1, X509_verify(key_cert.get(), signing_pubkey.get()))
-            << "Verification of certificate " << i << " failed";
+            << "Verification of certificate " << i << " failed "
+            << "OpenSSL error string: " << ERR_error_string(ERR_get_error(), NULL);
 
         char* cert_issuer =  //
             X509_NAME_oneline(X509_get_issuer_name(key_cert.get()), nullptr, 0);
@@ -535,10 +536,16 @@ TEST_F(NewKeyGenerationTest, EcdsaAllValidSizes) {
  * Verifies that keymaster does not support any curve designated as unsupported.
  */
 TEST_F(NewKeyGenerationTest, EcdsaAllValidCurves) {
+    Digest digest;
+    if (SecLevel() == SecurityLevel::STRONGBOX) {
+        digest = Digest::SHA_2_256;
+    } else {
+        digest = Digest::SHA_2_512;
+    }
     for (auto curve : ValidCurves()) {
         EXPECT_EQ(
             ErrorCode::OK,
-            GenerateKey(AuthorizationSetBuilder().EcdsaSigningKey(curve).Digest(Digest::SHA_2_512)))
+            GenerateKey(AuthorizationSetBuilder().EcdsaSigningKey(curve).Digest(digest)))
             << "Failed to generate key on curve: " << curve;
         CheckCharacteristics(key_blob_, key_characteristics_);
         CheckedDeleteKey();
@@ -828,6 +835,7 @@ TEST_F(SigningOperationsTest, RsaPkcs1NoDigestTooLong) {
  * 1024-bit key.
  */
 TEST_F(SigningOperationsTest, RsaPssSha512TooSmallKey) {
+    if (SecLevel() == SecurityLevel::STRONGBOX) return;
     ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
                                              .RsaSigningKey(1024, 65537)
                                              .Digest(Digest::SHA_2_512)
@@ -1185,10 +1193,12 @@ TEST_F(SigningOperationsTest, HmacRfc4231TestCase3) {
         0xbe, 0xe8, 0x94, 0x26, 0x74, 0x27, 0x88, 0x59, 0xe1, 0x32, 0x92, 0xfb,
     };
 
-    CheckHmacTestVector(key, message, Digest::SHA_2_224, make_string(sha_224_expected));
     CheckHmacTestVector(key, message, Digest::SHA_2_256, make_string(sha_256_expected));
-    CheckHmacTestVector(key, message, Digest::SHA_2_384, make_string(sha_384_expected));
-    CheckHmacTestVector(key, message, Digest::SHA_2_512, make_string(sha_512_expected));
+    if (SecLevel() != SecurityLevel::STRONGBOX) {
+        CheckHmacTestVector(key, message, Digest::SHA_2_224, make_string(sha_224_expected));
+        CheckHmacTestVector(key, message, Digest::SHA_2_384, make_string(sha_384_expected));
+        CheckHmacTestVector(key, message, Digest::SHA_2_512, make_string(sha_512_expected));
+    }
 }
 
 /*
@@ -1217,10 +1227,12 @@ TEST_F(SigningOperationsTest, HmacRfc4231TestCase5) {
         0x1d, 0x41, 0x79, 0xbc, 0x89, 0x1d, 0x87, 0xa6,
     };
 
-    CheckHmacTestVector(key, message, Digest::SHA_2_224, make_string(sha_224_expected));
     CheckHmacTestVector(key, message, Digest::SHA_2_256, make_string(sha_256_expected));
-    CheckHmacTestVector(key, message, Digest::SHA_2_384, make_string(sha_384_expected));
-    CheckHmacTestVector(key, message, Digest::SHA_2_512, make_string(sha_512_expected));
+    if (SecLevel() != SecurityLevel::STRONGBOX) {
+        CheckHmacTestVector(key, message, Digest::SHA_2_224, make_string(sha_224_expected));
+        CheckHmacTestVector(key, message, Digest::SHA_2_384, make_string(sha_384_expected));
+        CheckHmacTestVector(key, message, Digest::SHA_2_512, make_string(sha_512_expected));
+    }
 }
 
 /*
@@ -1255,10 +1267,12 @@ TEST_F(SigningOperationsTest, HmacRfc4231TestCase6) {
         0xf6, 0x3f, 0x0a, 0xec, 0x8b, 0x91, 0x5a, 0x98, 0x5d, 0x78, 0x65, 0x98,
     };
 
-    CheckHmacTestVector(key, message, Digest::SHA_2_224, make_string(sha_224_expected));
     CheckHmacTestVector(key, message, Digest::SHA_2_256, make_string(sha_256_expected));
-    CheckHmacTestVector(key, message, Digest::SHA_2_384, make_string(sha_384_expected));
-    CheckHmacTestVector(key, message, Digest::SHA_2_512, make_string(sha_512_expected));
+    if (SecLevel() != SecurityLevel::STRONGBOX) {
+        CheckHmacTestVector(key, message, Digest::SHA_2_224, make_string(sha_224_expected));
+        CheckHmacTestVector(key, message, Digest::SHA_2_384, make_string(sha_384_expected));
+        CheckHmacTestVector(key, message, Digest::SHA_2_512, make_string(sha_512_expected));
+    }
 }
 
 /*
@@ -1296,10 +1310,12 @@ TEST_F(SigningOperationsTest, HmacRfc4231TestCase7) {
         0x6d, 0xe0, 0x44, 0x60, 0x65, 0xc9, 0x74, 0x40, 0xfa, 0x8c, 0x6a, 0x58,
     };
 
-    CheckHmacTestVector(key, message, Digest::SHA_2_224, make_string(sha_224_expected));
     CheckHmacTestVector(key, message, Digest::SHA_2_256, make_string(sha_256_expected));
-    CheckHmacTestVector(key, message, Digest::SHA_2_384, make_string(sha_384_expected));
-    CheckHmacTestVector(key, message, Digest::SHA_2_512, make_string(sha_512_expected));
+    if (SecLevel() != SecurityLevel::STRONGBOX) {
+        CheckHmacTestVector(key, message, Digest::SHA_2_224, make_string(sha_224_expected));
+        CheckHmacTestVector(key, message, Digest::SHA_2_384, make_string(sha_384_expected));
+        CheckHmacTestVector(key, message, Digest::SHA_2_512, make_string(sha_512_expected));
+    }
 }
 
 typedef KeymasterHidlTest VerificationOperationsTest;
@@ -1511,7 +1527,7 @@ TEST_F(VerificationOperationsTest, HmacSigningKeyCannotVerify) {
                             .Authorization(TAG_NO_AUTH_REQUIRED)
                             .Authorization(TAG_ALGORITHM, Algorithm::HMAC)
                             .Authorization(TAG_PURPOSE, KeyPurpose::SIGN)
-                            .Digest(Digest::SHA1)
+                            .Digest(Digest::SHA_2_256)
                             .Authorization(TAG_MIN_MAC_LENGTH, 160),
                         KeyFormat::RAW, key_material, &signing_key, &signing_key_chars));
     EXPECT_EQ(ErrorCode::OK,
@@ -1519,24 +1535,24 @@ TEST_F(VerificationOperationsTest, HmacSigningKeyCannotVerify) {
                             .Authorization(TAG_NO_AUTH_REQUIRED)
                             .Authorization(TAG_ALGORITHM, Algorithm::HMAC)
                             .Authorization(TAG_PURPOSE, KeyPurpose::VERIFY)
-                            .Digest(Digest::SHA1)
+                            .Digest(Digest::SHA_2_256)
                             .Authorization(TAG_MIN_MAC_LENGTH, 160),
                         KeyFormat::RAW, key_material, &verification_key, &verification_key_chars));
 
     string message = "This is a message.";
     string signature = SignMessage(
         signing_key, message,
-        AuthorizationSetBuilder().Digest(Digest::SHA1).Authorization(TAG_MAC_LENGTH, 160));
+        AuthorizationSetBuilder().Digest(Digest::SHA_2_256).Authorization(TAG_MAC_LENGTH, 160));
 
     // Signing key should not work.
     AuthorizationSet out_params;
     EXPECT_EQ(ErrorCode::INCOMPATIBLE_PURPOSE,
-              Begin(KeyPurpose::VERIFY, signing_key, AuthorizationSetBuilder().Digest(Digest::SHA1),
+              Begin(KeyPurpose::VERIFY, signing_key, AuthorizationSetBuilder().Digest(Digest::SHA_2_256),
                     &out_params, &op_handle_));
 
     // Verification key should work.
     VerifyMessage(verification_key, message, signature,
-                  AuthorizationSetBuilder().Digest(Digest::SHA1));
+                  AuthorizationSetBuilder().Digest(Digest::SHA_2_256));
 
     CheckedDeleteKey(&signing_key);
     CheckedDeleteKey(&verification_key);
@@ -1895,14 +1911,14 @@ class ImportWrappedKeyTest : public KeymasterHidlTest {};
 TEST_F(ImportWrappedKeyTest, Success) {
     auto wrapping_key_desc = AuthorizationSetBuilder()
                                  .RsaEncryptionKey(2048, 65537)
-                                 .Digest(Digest::SHA1)
+                                 .Digest(Digest::SHA_2_256)
                                  .Padding(PaddingMode::RSA_OAEP)
                                  .Authorization(TAG_PURPOSE, KeyPurpose::WRAP_KEY);
 
     ASSERT_EQ(ErrorCode::OK,
               ImportWrappedKey(
                   wrapped_key, wrapping_key, wrapping_key_desc, zero_masking_key,
-                  AuthorizationSetBuilder().Digest(Digest::SHA1).Padding(PaddingMode::RSA_OAEP)));
+                  AuthorizationSetBuilder().Digest(Digest::SHA_2_256).Padding(PaddingMode::RSA_OAEP)));
 
     string message = "Hello World!";
     auto params = AuthorizationSetBuilder().BlockMode(BlockMode::ECB).Padding(PaddingMode::PKCS7);
@@ -1914,39 +1930,39 @@ TEST_F(ImportWrappedKeyTest, Success) {
 TEST_F(ImportWrappedKeyTest, SuccessMasked) {
     auto wrapping_key_desc = AuthorizationSetBuilder()
                                  .RsaEncryptionKey(2048, 65537)
-                                 .Digest(Digest::SHA1)
+                                 .Digest(Digest::SHA_2_256)
                                  .Padding(PaddingMode::RSA_OAEP)
                                  .Authorization(TAG_PURPOSE, KeyPurpose::WRAP_KEY);
 
     ASSERT_EQ(ErrorCode::OK,
               ImportWrappedKey(
                   wrapped_key_masked, wrapping_key, wrapping_key_desc, masking_key,
-                  AuthorizationSetBuilder().Digest(Digest::SHA1).Padding(PaddingMode::RSA_OAEP)));
+                  AuthorizationSetBuilder().Digest(Digest::SHA_2_256).Padding(PaddingMode::RSA_OAEP)));
 }
 
 TEST_F(ImportWrappedKeyTest, WrongMask) {
     auto wrapping_key_desc = AuthorizationSetBuilder()
                                  .RsaEncryptionKey(2048, 65537)
-                                 .Digest(Digest::SHA1)
+                                 .Digest(Digest::SHA_2_256)
                                  .Padding(PaddingMode::RSA_OAEP)
                                  .Authorization(TAG_PURPOSE, KeyPurpose::WRAP_KEY);
 
     ASSERT_EQ(ErrorCode::VERIFICATION_FAILED,
               ImportWrappedKey(
                   wrapped_key_masked, wrapping_key, wrapping_key_desc, zero_masking_key,
-                  AuthorizationSetBuilder().Digest(Digest::SHA1).Padding(PaddingMode::RSA_OAEP)));
+                  AuthorizationSetBuilder().Digest(Digest::SHA_2_256).Padding(PaddingMode::RSA_OAEP)));
 }
 
 TEST_F(ImportWrappedKeyTest, WrongPurpose) {
     auto wrapping_key_desc = AuthorizationSetBuilder()
                                  .RsaEncryptionKey(2048, 65537)
-                                 .Digest(Digest::SHA1)
+                                 .Digest(Digest::SHA_2_256)
                                  .Padding(PaddingMode::RSA_OAEP);
 
     ASSERT_EQ(ErrorCode::INCOMPATIBLE_PURPOSE,
               ImportWrappedKey(
                   wrapped_key_masked, wrapping_key, wrapping_key_desc, zero_masking_key,
-                  AuthorizationSetBuilder().Digest(Digest::SHA1).Padding(PaddingMode::RSA_OAEP)));
+                  AuthorizationSetBuilder().Digest(Digest::SHA_2_256).Padding(PaddingMode::RSA_OAEP)));
 }
 
 typedef KeymasterHidlTest EncryptionOperationsTest;
@@ -2140,11 +2156,13 @@ TEST_F(EncryptionOperationsTest, RsaOaepInvalidDigest) {
  * different digest than was used to encrypt.
  */
 TEST_F(EncryptionOperationsTest, RsaOaepDecryptWithWrongDigest) {
+    if (SecLevel() == SecurityLevel::STRONGBOX) return;
+
     ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
                                              .Authorization(TAG_NO_AUTH_REQUIRED)
                                              .RsaEncryptionKey(1024, 65537)
                                              .Padding(PaddingMode::RSA_OAEP)
-                                             .Digest(Digest::SHA_2_256, Digest::SHA_2_224)));
+                                             .Digest(Digest::SHA_2_224, Digest::SHA_2_256)));
     string message = "Hello World!";
     string ciphertext = EncryptMessage(
         message,
@@ -2170,13 +2188,13 @@ TEST_F(EncryptionOperationsTest, RsaOaepTooLarge) {
                                              .Authorization(TAG_NO_AUTH_REQUIRED)
                                              .RsaEncryptionKey(1024, 65537)
                                              .Padding(PaddingMode::RSA_OAEP)
-                                             .Digest(Digest::SHA1)));
-    constexpr size_t digest_size = 160 /* SHA1 */ / 8;
+                                             .Digest(Digest::SHA_2_256)));
+    constexpr size_t digest_size = 256 /* SHA_2_256 */ / 8;
     constexpr size_t oaep_overhead = 2 * digest_size + 2;
     string message(1024 / 8 - oaep_overhead + 1, 'a');
     EXPECT_EQ(ErrorCode::OK,
               Begin(KeyPurpose::ENCRYPT,
-                    AuthorizationSetBuilder().Padding(PaddingMode::RSA_OAEP).Digest(Digest::SHA1)));
+                    AuthorizationSetBuilder().Padding(PaddingMode::RSA_OAEP).Digest(Digest::SHA_2_256)));
     string result;
     EXPECT_EQ(ErrorCode::INVALID_ARGUMENT, Finish(message, &result));
     EXPECT_EQ(0U, result.size());
