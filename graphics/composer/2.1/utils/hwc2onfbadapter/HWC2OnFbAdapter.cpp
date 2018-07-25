@@ -32,6 +32,8 @@
 #include <log/log.h>
 #include <sync/sync.h>
 
+using namespace HWC2;
+
 namespace android {
 
 namespace {
@@ -629,9 +631,10 @@ hwc2_function_pointer_t getFunctionHook(hwc2_device_t* /*device*/, int32_t descr
     }
 }
 
-void getCapabilitiesHook(hwc2_device_t* /*device*/, uint32_t* outCount,
-                         int32_t* /*outCapabilities*/) {
-    *outCount = 0;
+void getCapabilitiesHook(hwc2_device_t* device, uint32_t* outCount,
+                         int32_t* outCapabilities) {
+    auto& adapter = HWC2OnFbAdapter::cast(device);
+    adapter.getCapabilities(outCount, outCapabilities);
 }
 
 int closeHook(hw_device_t* device) {
@@ -655,6 +658,10 @@ HWC2OnFbAdapter::HWC2OnFbAdapter(framebuffer_device_t* fbDevice)
     mFbInfo.vsync_period_ns = int(1e9 / mFbDevice->fps);
     mFbInfo.xdpi_scaled = int(mFbDevice->xdpi * 1000.0f);
     mFbInfo.ydpi_scaled = int(mFbDevice->ydpi * 1000.0f);
+
+    // Present fences aren't supported, always indicate PresentFenceIsNotReliable
+    // for FB devices
+    mCapabilities.insert(Capability::PresentFenceIsNotReliable);
 
     mVsyncThread.start(0, mFbInfo.vsync_period_ns);
 }
@@ -789,6 +796,23 @@ void HWC2OnFbAdapter::setVsyncCallback(HWC2_PFN_VSYNC callback, hwc2_callback_da
 
 void HWC2OnFbAdapter::enableVsync(bool enable) {
     mVsyncThread.enableCallback(enable);
+}
+
+void HWC2OnFbAdapter::getCapabilities(uint32_t* outCount,
+                                      int32_t* outCapabilities) {
+    if (outCapabilities == nullptr) {
+        *outCount = mCapabilities.size();
+        return;
+    }
+
+    auto capabilityIter = mCapabilities.cbegin();
+    for (size_t written = 0; written < *outCount; ++written) {
+        if (capabilityIter == mCapabilities.cend()) {
+            return;
+        }
+        outCapabilities[written] = static_cast<int32_t>(*capabilityIter);
+        ++capabilityIter;
+    }
 }
 
 int64_t HWC2OnFbAdapter::VsyncThread::now() {
