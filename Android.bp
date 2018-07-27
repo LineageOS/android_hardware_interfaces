@@ -1,6 +1,5 @@
 hidl_package_root {
     name: "android.hardware",
-    path: "hardware/interfaces",
 }
 
 cc_defaults {
