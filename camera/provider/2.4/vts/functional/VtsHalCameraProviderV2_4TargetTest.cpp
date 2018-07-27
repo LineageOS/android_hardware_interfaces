@@ -87,7 +87,6 @@ using ::android::hardware::camera::device::V3_2::ICameraDevice;
 using ::android::hardware::camera::device::V3_2::BufferCache;
 using ::android::hardware::camera::device::V3_2::CaptureRequest;
 using ::android::hardware::camera::device::V3_2::CaptureResult;
-using ::android::hardware::camera::device::V3_2::ICameraDeviceCallback;
 using ::android::hardware::camera::device::V3_2::ICameraDeviceSession;
 using ::android::hardware::camera::device::V3_2::NotifyMsg;
 using ::android::hardware::camera::device::V3_2::RequestTemplate;
@@ -532,10 +531,17 @@ public:
 
  hidl_vec<hidl_string> getCameraDeviceNames(sp<ICameraProvider> provider);
 
- struct EmptyDeviceCb : public ICameraDeviceCallback {
+ struct EmptyDeviceCb : public V3_4::ICameraDeviceCallback {
      virtual Return<void> processCaptureResult(
          const hidl_vec<CaptureResult>& /*results*/) override {
          ALOGI("processCaptureResult callback");
+         ADD_FAILURE();  // Empty callback should not reach here
+         return Void();
+     }
+
+     virtual Return<void> processCaptureResult_3_4(
+         const hidl_vec<V3_4::CaptureResult>& /*results*/) override {
+         ALOGI("processCaptureResult_3_4 callback");
          ADD_FAILURE();  // Empty callback should not reach here
          return Void();
      }
@@ -4040,10 +4046,10 @@ TEST_F(CameraHidlTest, flushPreviewRequest) {
                                << static_cast<uint32_t>(inflightReq.errorCode);
                 }
             }
-
-            ret = session->close();
-            ASSERT_TRUE(ret.isOk());
         }
+
+        ret = session->close();
+        ASSERT_TRUE(ret.isOk());
     }
 }
 
