@@ -191,7 +191,8 @@ Return<void> SafeUnion::setInterfaceC(const InterfaceTypeSafeUnion& myUnion, con
     return Void();
 }
 
-Return<void> SafeUnion::setInterfaceD(const ::android::hardware::tests::safeunion::V1_0::ISafeUnion::InterfaceTypeSafeUnion& myUnion, const hidl_string& d, setInterfaceD_cb _hidl_cb) {
+Return<void> SafeUnion::setInterfaceD(const InterfaceTypeSafeUnion& myUnion, const hidl_string& d,
+                                      setInterfaceD_cb _hidl_cb) {
     LOG(INFO) << "SERVER(SafeUnion) setInterfaceD(myUnion, " << toString(d) << ")";
 
     InterfaceTypeSafeUnion myNewUnion = myUnion;
@@ -201,11 +202,76 @@ Return<void> SafeUnion::setInterfaceD(const ::android::hardware::tests::safeunio
     return Void();
 }
 
-Return<void> SafeUnion::setInterfaceE(const ::android::hardware::tests::safeunion::V1_0::ISafeUnion::InterfaceTypeSafeUnion& myUnion, const hidl_vec<hidl_string>& e, setInterfaceE_cb _hidl_cb) {
+Return<void> SafeUnion::setInterfaceE(const InterfaceTypeSafeUnion& myUnion,
+                                      const hidl_vec<hidl_string>& e, setInterfaceE_cb _hidl_cb) {
     LOG(INFO) << "SERVER(SafeUnion) setInterfaceE(myUnion, " << toString(e) << ")";
 
     InterfaceTypeSafeUnion myNewUnion = myUnion;
     myNewUnion.e(e);
+
+    _hidl_cb(myNewUnion);
+    return Void();
+}
+
+Return<void> SafeUnion::setInterfaceF(const InterfaceTypeSafeUnion& myUnion, const hidl_handle& f,
+                                      setInterfaceF_cb _hidl_cb) {
+    LOG(INFO) << "SERVER(SafeUnion) setInterfaceF(myUnion, " << toString(f) << ")";
+
+    InterfaceTypeSafeUnion myNewUnion = myUnion;
+    myNewUnion.f(f);
+
+    _hidl_cb(myNewUnion);
+    return Void();
+}
+
+Return<void> SafeUnion::setInterfaceG(const InterfaceTypeSafeUnion& myUnion,
+                                      const hidl_vec<hidl_handle>& g, setInterfaceG_cb _hidl_cb) {
+    LOG(INFO) << "SERVER(SafeUnion) setInterfaceG(myUnion, " << toString(g) << ")";
+
+    InterfaceTypeSafeUnion myNewUnion = myUnion;
+    myNewUnion.g(g);
+
+    _hidl_cb(myNewUnion);
+    return Void();
+}
+
+Return<void> SafeUnion::newHandleTypeSafeUnion(newHandleTypeSafeUnion_cb _hidl_cb) {
+    LOG(INFO) << "SERVER(SafeUnion) newHandleTypeSafeUnion()";
+
+    HandleTypeSafeUnion ret;
+    _hidl_cb(ret);
+    return Void();
+}
+
+Return<void> SafeUnion::setHandleA(
+    const ::android::hardware::tests::safeunion::V1_0::ISafeUnion::HandleTypeSafeUnion& myUnion,
+    const hidl_handle& a, setHandleA_cb _hidl_cb) {
+    LOG(INFO) << "SERVER(SafeUnion) setHandleA(myUnion, " << toString(a) << ")";
+
+    HandleTypeSafeUnion myNewUnion = myUnion;
+    myNewUnion.a(a);
+
+    _hidl_cb(myNewUnion);
+    return Void();
+}
+
+Return<void> SafeUnion::setHandleB(const HandleTypeSafeUnion& myUnion,
+                                   const hidl_array<hidl_handle, 5>& b, setHandleB_cb _hidl_cb) {
+    LOG(INFO) << "SERVER(SafeUnion) setHandleB(myUnion, " << toString(b) << ")";
+
+    HandleTypeSafeUnion myNewUnion = myUnion;
+    myNewUnion.b(b);
+
+    _hidl_cb(myNewUnion);
+    return Void();
+}
+
+Return<void> SafeUnion::setHandleC(const HandleTypeSafeUnion& myUnion,
+                                   const hidl_vec<hidl_handle>& c, setHandleC_cb _hidl_cb) {
+    LOG(INFO) << "SERVER(SafeUnion) setHandleC(myUnion, " << toString(c) << ")";
+
+    HandleTypeSafeUnion myNewUnion = myUnion;
+    myNewUnion.c(c);
 
     _hidl_cb(myNewUnion);
     return Void();

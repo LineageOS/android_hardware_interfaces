@@ -68,6 +68,11 @@ interface IBaz extends IBase {
         bitfield<BitField> bf;
     };
 
+    struct MyHandle {
+        handle h;
+        int32_t guard;
+    };
+
     struct StructWithInterface {
         int32_t number;
         int8_t[7] array;
