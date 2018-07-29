@@ -18,33 +18,9 @@ if [ -z $ANDROID_BUILD_TOP ]; then
   echo "You need to source and lunch before you can use this script"
   exit 1
 fi
+set -e
 
-echo "Running tests"
-set -e # fail early
-
-#NOTE We can't actually run these commands, since they rely on functions added by
-#build / envsetup.sh to the bash shell environment.
-echo "+ mmma -j32 $ANDROID_BUILD_TOP/"
-make -j32 -C $ANDROID_BUILD_TOP -f build/core/main.mk \
-    MODULES-IN-hardware-interfaces-wifi-1.2-default
-
-set -x # print commands
-
-adb wait-for-device
+$ANDROID_BUILD_TOP/build/soong/soong_ui.bash --make-mode android.hardware.wifi@1.0-service-tests
 adb root
-adb wait-for-device
-
-#'disable-verity' will appear in 'adb remount' output if
-#dm - verity is enabled and needs to be disabled.
-if adb remount | grep 'disable-verity'; then
-  adb disable-verity
-  adb reboot
-  adb wait-for-device
-  adb root
-  adb wait-for-device
-  adb remount
-fi
-
-adb sync
-
+adb sync data
 adb shell /data/nativetest/vendor/android.hardware.wifi@1.0-service-tests/android.hardware.wifi@1.0-service-tests
