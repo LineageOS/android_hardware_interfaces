@@ -306,6 +306,22 @@ enum VehicleProperty : int32_t {
         | VehicleArea:GLOBAL),
 
     /**
+     * Speed of the vehicle for displays
+     *
+     * Some cars display a slightly slower speed than the actual speed.  This is
+     * usually displayed on the speedometer.
+     *
+     * @change_mode VehiclePropertyChangeMode:CONTINUOUS
+     * @access VehiclePropertyAccess:READ
+     * @unit VehicleUnit:METER_PER_SEC
+     */
+    PERF_VEHICLE_SPEED_DISPLAY = (
+        0x0208
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:FLOAT
+        | VehicleArea:GLOBAL),
+
+    /**
      * Temperature of engine coolant
      *
      * @change_mode VehiclePropertyChangeMode:CONTINUOUS
