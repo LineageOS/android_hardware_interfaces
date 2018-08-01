@@ -650,9 +650,8 @@ TEST_F(RadioHidlTest_v1_2, setupDataCall_1_2) {
     if (cardStatus.base.cardState == CardState::ABSENT) {
         ASSERT_TRUE(CheckAnyOfErrors(
             radioRsp_v1_2->rspInfo.error,
-            {RadioError::NONE, RadioError::SIM_ABSENT, RadioError::RADIO_NOT_AVAILABLE,
-             RadioError::INVALID_ARGUMENTS, RadioError::OP_NOT_ALLOWED_BEFORE_REG_TO_NW,
-             RadioError::REQUEST_NOT_SUPPORTED}));
+            {RadioError::SIM_ABSENT, RadioError::RADIO_NOT_AVAILABLE, RadioError::INVALID_ARGUMENTS,
+             RadioError::OP_NOT_ALLOWED_BEFORE_REG_TO_NW, RadioError::REQUEST_NOT_SUPPORTED}));
     } else if (cardStatus.base.cardState == CardState::PRESENT) {
         ASSERT_TRUE(CheckAnyOfErrors(
             radioRsp_v1_2->rspInfo.error,
