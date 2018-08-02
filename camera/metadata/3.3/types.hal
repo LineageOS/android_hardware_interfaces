@@ -109,8 +109,8 @@ enum CameraMetadataTag : @3.2::CameraMetadataTag {
 
     /** android.statistics.oisDataMode [dynamic, enum, public]
      *
-     * <p>A control for selecting whether OIS position information is included in output
-     * result metadata.</p>
+     * <p>A control for selecting whether optical stabilization (OIS) position
+     * information is included in output result metadata.</p>
      */
     ANDROID_STATISTICS_OIS_DATA_MODE = android.hardware.camera.metadata@3.2::CameraMetadataTag:ANDROID_STATISTICS_END,
 
