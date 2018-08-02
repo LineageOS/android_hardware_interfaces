@@ -779,20 +779,27 @@ TEST_F(RadioHidlTest, setAllowedCarriers) {
                                      {RadioError::NONE, RadioError::REQUEST_NOT_SUPPORTED}));
     }
 
-    /* Setting to carrier restriction needs some time */
-    updateSimCardStatus();
-    auto startTime = std::chrono::system_clock::now();
-    while (cardStatus.cardState != CardState::RESTRICTED &&
-           std::chrono::duration_cast<chrono::seconds>(std::chrono::system_clock::now() - startTime)
-                   .count() < 10) {
-        /* Set 2 seconds as interval to check card status */
-        sleep(2);
+    if (radioRsp->rspInfo.error == RadioError::NONE) {
+        /* Setting to carrier restriction needs some time */
         updateSimCardStatus();
+        auto startTime = std::chrono::system_clock::now();
+        while (cardStatus.cardState != CardState::RESTRICTED &&
+               std::chrono::duration_cast<chrono::seconds>(std::chrono::system_clock::now() -
+                                                           startTime)
+                       .count() < 10) {
+            /* Set 2 seconds as interval to check card status */
+            sleep(2);
+            updateSimCardStatus();
+        }
+        EXPECT_EQ(CardState::RESTRICTED, cardStatus.cardState);
     }
-    EXPECT_EQ(CardState::RESTRICTED, cardStatus.cardState);
     sleep(10);
 
-    /* Reset back to no carrier restriction */
+    /** 
+     * Another test case of the API to cover to allow carrier.
+     * If the API is supported, this is also used to reset to no carrier restriction
+     * status for cardStatus. 
+     */
     memset(&carriers, 0, sizeof(carriers));
     carriers.allowedCarriers.resize(0);
     carriers.excludedCarriers.resize(0);
@@ -808,18 +815,21 @@ TEST_F(RadioHidlTest, setAllowedCarriers) {
                                      {RadioError::NONE, RadioError::REQUEST_NOT_SUPPORTED}));
     }
 
-    /* Resetting back to no carrier restriction needs some time */
-    updateSimCardStatus();
-    startTime = std::chrono::system_clock::now();
-    while (cardStatus.cardState == CardState::RESTRICTED &&
-           std::chrono::duration_cast<chrono::seconds>(std::chrono::system_clock::now() - startTime)
-                   .count() < 10) {
-        /* Set 2 seconds as interval to check card status */
-        sleep(2);
+    if (radioRsp->rspInfo.error == RadioError::NONE) {
+        /* Resetting back to no carrier restriction needs some time */
         updateSimCardStatus();
+        auto startTime = std::chrono::system_clock::now();
+        while (cardStatus.cardState == CardState::RESTRICTED &&
+               std::chrono::duration_cast<chrono::seconds>(std::chrono::system_clock::now() -
+                                                           startTime)
+                       .count() < 10) {
+            /* Set 2 seconds as interval to check card status */
+            sleep(2);
+            updateSimCardStatus();
+        }
+        EXPECT_NE(CardState::RESTRICTED, cardStatus.cardState);
+        sleep(10);
     }
-    EXPECT_NE(CardState::RESTRICTED, cardStatus.cardState);
-    sleep(10);
 }
 
 /*
