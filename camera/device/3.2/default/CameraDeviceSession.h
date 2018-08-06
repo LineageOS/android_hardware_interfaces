@@ -120,6 +120,8 @@ protected:
             hidl_vec<camera3_stream_t*> *streams /*out*/);
     void postProcessConfigurationLocked(const StreamConfiguration& requestedConfiguration);
 
+    void postProcessConfigurationFailureLocked(const StreamConfiguration& requestedConfiguration);
+
 protected:
 
     // protecting mClosed/mDisconnected/mInitFail
@@ -142,6 +144,7 @@ protected:
 
     camera3_device_t* mDevice;
     const uint32_t mDeviceVersion;
+    const bool mFreeBufEarly;
     bool mIsAELockAvailable;
     bool mDerivePostRawSensKey;
     uint32_t mNumPartialResults;
@@ -292,6 +295,8 @@ protected:
     std::vector<int> mVideoStreamIds;
 
     bool initialize();
+
+    static bool shouldFreeBufEarly();
 
     Status initStatus() const;
 

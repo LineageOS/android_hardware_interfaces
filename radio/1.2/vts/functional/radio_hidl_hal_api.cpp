@@ -48,8 +48,11 @@ TEST_F(RadioHidlTest_v1_2, startNetworkScan) {
         // error for now. This should be fixed correctly, possibly in a future version of the hal
         // (b/110421924). This is being allowed because some vendors do not support
         // this request on dual sim devices.
+        // OPERATION_NOT_ALLOWED should not be allowed; however, some vendors do not support the
+        // required manual GSM search functionality. This is tracked in b/112206766.
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_2->rspInfo.error,
-                                     {RadioError::NONE, RadioError::REQUEST_NOT_SUPPORTED}));
+                                     {RadioError::NONE, RadioError::REQUEST_NOT_SUPPORTED,
+                                      RadioError::OPERATION_NOT_ALLOWED}));
     }
 }
 
@@ -317,7 +320,9 @@ TEST_F(RadioHidlTest_v1_2, startNetworkScan_GoodRequest1) {
         .type = ScanType::ONE_SHOT,
         .interval = 60,
         .specifiers = {specifier},
-        .maxSearchTime = 600,
+        // Some vendor may not support max search time of 360s.
+        // This issue is tracked in b/112205669.
+        .maxSearchTime = 300,
         .incrementalResults = false,
         .incrementalResultsPeriodicity = 10};
 
@@ -333,8 +338,9 @@ TEST_F(RadioHidlTest_v1_2, startNetworkScan_GoodRequest1) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_2->rspInfo.error,
                                      {RadioError::NONE, RadioError::SIM_ABSENT}));
     } else if (cardStatus.base.cardState == CardState::PRESENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_2->rspInfo.error,
-                                     {RadioError::NONE, RadioError::REQUEST_NOT_SUPPORTED}));
+        ASSERT_TRUE(CheckAnyOfErrors(
+            radioRsp_v1_2->rspInfo.error,
+            {RadioError::NONE, RadioError::REQUEST_NOT_SUPPORTED}));
     }
 }
 
@@ -353,7 +359,9 @@ TEST_F(RadioHidlTest_v1_2, startNetworkScan_GoodRequest2) {
         .type = ScanType::ONE_SHOT,
         .interval = 60,
         .specifiers = {specifier},
-        .maxSearchTime = 600,
+        // Some vendor may not support max search time of 360s.
+        // This issue is tracked in b/112205669.
+        .maxSearchTime = 300,
         .incrementalResults = false,
         .incrementalResultsPeriodicity = 10,
         .mccMncs = {"310410"}};
@@ -370,8 +378,9 @@ TEST_F(RadioHidlTest_v1_2, startNetworkScan_GoodRequest2) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_2->rspInfo.error,
                                      {RadioError::NONE, RadioError::SIM_ABSENT}));
     } else if (cardStatus.base.cardState == CardState::PRESENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_2->rspInfo.error,
-                                     {RadioError::NONE, RadioError::REQUEST_NOT_SUPPORTED}));
+        ASSERT_TRUE(CheckAnyOfErrors(
+            radioRsp_v1_2->rspInfo.error,
+            {RadioError::NONE, RadioError::REQUEST_NOT_SUPPORTED}));
     }
 }
 
