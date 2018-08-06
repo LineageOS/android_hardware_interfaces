@@ -14,7 +14,7 @@ limitations under the License.
 
 # Wi-Fi Aware (NAN) HAL API Usage
 
-The Wi-Fi Aware (NAN) HAL API is defined in (<i>hardware/interfaces/wifi/\<version\>/</i>):
+The Wi-Fi Aware (NAN) HAL API is defined in (<i>hardware/interfaces/wifi/1.0/</i>):
 
 * IWifiNanIface.hal
 * IWifiNanIfaceEventCallback.hal
@@ -23,7 +23,7 @@ The Wi-Fi Aware (NAN) HAL API is defined in (<i>hardware/interfaces/wifi/\<versi
 The Wi-Fi Aware (NAN) HAL API surface is very large - only a subset is used from the framework.
 
 Understanding of the HAL API subset which is actively used by the Android framework can be deduced
-by reviewing framework code, specifically (<i>frameworks/opt/net/wif/</i>):
+by reviewing framework code, specifically (<i>frameworks/opt/net/wifi/</i>):
 
 * WifiAwareNativeApi.java
 * WifiAwareNativeCallback.java
@@ -41,7 +41,7 @@ the new HAL API only. To understand the mapping between new and legacy HALs plea
 
 Format:
 * Hard-coded values are in <b>bold</b>, e.g. <b>true</b> or <b>5</b>
-* Assigned but not fixed value are specified using the <i>variable</i> keyword, possibly with some
+* Assigned but not fixed values are specified using the <i>variable</i> keyword, possibly with some
 details/constraints
 * Unassigned values are specified using the <i>N/A</i> keyword. Unassigned usually means initialized
 to 0.

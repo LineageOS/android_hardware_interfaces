@@ -16,6 +16,9 @@
 
 #define LOG_TAG "dumpstate_hidl_hal_test"
 
+#include <fcntl.h>
+#include <unistd.h>
+
 #include <android/hardware/dumpstate/1.0/IDumpstateDevice.h>
 #include <cutils/native_handle.h>
 #include <log/log.h>
@@ -72,50 +75,40 @@ TEST_F(DumpstateHidlTest, TestHandleWithNoFd) {
 
 // Positive test: make sure dumpstateBoard() writes something to the FD.
 TEST_F(DumpstateHidlTest, TestOk) {
-    FILE* file = tmpfile();
-
-    ASSERT_NE(nullptr, file) << "Could not create temp file: " << strerror(errno);
+    // Index 0 corresponds to the read end of the pipe; 1 to the write end.
+    int fds[2];
+    ASSERT_EQ(0, pipe2(fds, O_NONBLOCK)) << errno;
 
     native_handle_t* handle = native_handle_create(1, 0);
     ASSERT_NE(handle, nullptr) << "Could not create native_handle";
-    handle->data[0] = fileno(file);
+    handle->data[0] = fds[1];
 
     Return<void> status = dumpstate->dumpstateBoard(handle);
     ASSERT_TRUE(status.isOk()) << "Status should be ok: " << status.description();
 
     // Check that at least one byte was written
-    rewind(file);  // can not fail
     char buff;
-    int read = fread(&buff, sizeof(buff), 1, file);
-    ASSERT_EQ(1, read) << "dumped nothing";
-
-    EXPECT_EQ(0, fclose(file)) << errno;
+    ASSERT_EQ(1, read(fds[0], &buff, 1)) << "dumped nothing";
 
     native_handle_close(handle);
-    native_handle_delete(handle);
 }
 
 // Positive test: make sure dumpstateBoard() doesn't crash with two FDs.
 TEST_F(DumpstateHidlTest, TestHandleWithTwoFds) {
-    FILE* file1 = tmpfile();
-    FILE* file2 = tmpfile();
-
-    ASSERT_NE(nullptr, file1) << "Could not create temp file #1: " << strerror(errno);
-    ASSERT_NE(nullptr, file2) << "Could not create temp file #2: " << strerror(errno);
+    int fds1[2];
+    int fds2[2];
+    ASSERT_EQ(0, pipe2(fds1, O_NONBLOCK)) << errno;
+    ASSERT_EQ(0, pipe2(fds2, O_NONBLOCK)) << errno;
 
     native_handle_t* handle = native_handle_create(2, 0);
     ASSERT_NE(handle, nullptr) << "Could not create native_handle";
-    handle->data[0] = fileno(file1);
-    handle->data[1] = fileno(file2);
+    handle->data[0] = fds1[1];
+    handle->data[1] = fds2[1];
 
     Return<void> status = dumpstate->dumpstateBoard(handle);
     ASSERT_TRUE(status.isOk()) << "Status should be ok: " << status.description();
 
-    EXPECT_EQ(0, fclose(file1)) << errno;
-    EXPECT_EQ(0, fclose(file2)) << errno;
-
     native_handle_close(handle);
-    native_handle_delete(handle);
 }
 
 int main(int argc, char** argv) {

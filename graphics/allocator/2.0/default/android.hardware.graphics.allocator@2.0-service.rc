@@ -1,4 +1,4 @@
-service gralloc-2-0 /vendor/bin/hw/android.hardware.graphics.allocator@2.0-service
+service vendor.gralloc-2-0 /vendor/bin/hw/android.hardware.graphics.allocator@2.0-service
     class hal animation
     user system
     group graphics drmrpc

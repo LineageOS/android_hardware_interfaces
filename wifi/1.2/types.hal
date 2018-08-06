@@ -1,0 +1,116 @@
+/*
+ * Copyright 2017 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.wifi@1.2;
+
+import @1.0::MacAddress;
+import @1.0::NanDataPathConfirmInd;
+import @1.0::WifiChannelInMhz;
+import @1.0::WifiChannelWidthInMhz;
+
+/**
+ * NAN configuration request parameters added in the 1.2 HAL. These are supplemental to previous
+ * versions.
+ */
+struct NanConfigRequestSupplemental {
+    /**
+     * Specify the Discovery Beacon interval in ms. Specification only applicable if the device
+     * transmits Discovery Beacons (based on the Wi-Fi Aware protocol selection criteria). The value
+     * can be increased to reduce power consumption (on devices which would transmit Discovery
+     * Beacons), however - cluster synchronization time will likely increase.
+     * Values are:
+     *  - A value of 0 indicates that the HAL sets the interval to a default (implementation specific)
+     *  - A positive value
+     */
+    uint32_t discoveryBeaconIntervalMs;
+    /**
+     * The number of spatial streams to be used for transmitting NAN management frames (does NOT apply
+     * to data-path packets). A small value may reduce power consumption for small discovery packets.
+     * Values are:
+     *  - A value of 0 indicates that the HAL sets the number to a default (implementation specific)
+     *  - A positive value
+     */
+    uint32_t numberOfSpatialStreamsInDiscovery;
+    /**
+     * Controls whether the device may terminate listening on a Discovery Window (DW) earlier than the
+     * DW termination (16ms) if no information is received. Enabling the feature will result in
+     * lower power consumption, but may result in some missed messages and hence increased latency.
+     */
+    bool enableDiscoveryWindowEarlyTermination;
+    /**
+     * Controls whether NAN RTT (ranging) is permitted. Global flag on any NAN RTT operations are
+     * allowed. Controls ranging in the context of discovery as well as direct RTT.
+     */
+    bool enableRanging;
+};
+
+/**
+ * NAN data path channel information provided to the framework.
+ */
+struct NanDataPathChannelInfo {
+    /**
+     * Channel frequency in MHz.
+     */
+    WifiChannelInMhz channelFreq;
+    /**
+     * Channel bandwidth in MHz.
+     */
+    WifiChannelWidthInMhz channelBandwidth;
+    /**
+     * Number of spatial streams used in the channel.
+     */
+    uint32_t numSpatialStreams;
+};
+
+/**
+ * NAN Data path confirmation Indication structure.
+ * Event indication is received on both initiator and responder side when negotiation for a
+ * data-path finish: on success or failure.
+ */
+struct NanDataPathConfirmInd {
+    /**
+     * Baseline information as defined in HAL 1.0.
+     */
+    @1.0::NanDataPathConfirmInd V1_0;
+    /**
+     * The channel(s) on which the NDP is scheduled to operate.
+     * Updates to the operational channels are provided using the |eventDataPathScheduleUpdate|
+     * event.
+     */
+    vec<NanDataPathChannelInfo> channelInfo;
+};
+
+/**
+ * NAN data path channel information update indication structure.
+ * Event indication is received by all NDP owners whenever the channels on which the NDP operates
+ * are updated.
+ * Note: multiple NDPs may share the same schedule, the indication specifies all NDPs to which it
+ * applies.
+ */
+struct NanDataPathScheduleUpdateInd {
+    /**
+     * The discovery address (NMI) of the peer to which the NDP is connected.
+     */
+    MacAddress peerDiscoveryAddress;
+    /**
+     * The updated channel(s) information.
+     */
+    vec<NanDataPathChannelInfo> channelInfo;
+    /**
+     * The list of NDPs to which this update applies.
+     */
+    vec<uint32_t> ndpInstanceIds;
+};

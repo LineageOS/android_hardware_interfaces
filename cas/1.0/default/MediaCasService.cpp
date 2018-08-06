@@ -69,7 +69,7 @@ Return<sp<ICas>> MediaCasService::createPlugin(
     if (mCasLoader.findFactoryForScheme(CA_system_id, &library, &factory)) {
         CasPlugin *plugin = NULL;
         sp<CasImpl> casImpl = new CasImpl(listener);
-        if (factory->createPlugin(CA_system_id, (uint64_t)casImpl.get(),
+        if (factory->createPlugin(CA_system_id, casImpl.get(),
                 &CasImpl::OnEvent, &plugin) == OK && plugin != NULL) {
             casImpl->init(library, plugin);
             result = casImpl;

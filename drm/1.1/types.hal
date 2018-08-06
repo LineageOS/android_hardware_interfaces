@@ -1,0 +1,219 @@
+/**
+ * Copyright (C) 2017 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.drm@1.1;
+
+import @1.0::KeyRequestType;
+
+/**
+ * This message contains plugin-specific metrics made available to the client.
+ * The message is used for making vendor-specific metrics available to an
+ * application. The framework is not consuming any of the information.
+ *
+ * Metrics are grouped in instances of DrmMetricGroup. Each group contains
+ * multiple instances of Metric.
+ *
+ * Example:
+ *
+ * Capture the timing information of a buffer copy event, "buf_copy", broken
+ * out by the "size" of the buffer.
+ *
+ * DrmMetricGroup {
+ *   metrics[0] {
+ *     name: "buf_copy"
+ *     attributes[0] {
+ *       name: "size"
+ *       type: INT64_TYPE
+ *       int64Value: 1024
+ *     }
+ *     values[0] {
+ *       componentName: "operation_count"
+ *       type: INT64_TYPE
+ *       int64Value: 75
+ *     }
+ *     values[1] {
+ *       component_name: "average_time_seconds"
+ *       type: DOUBLE_TYPE
+ *       doubleValue: 0.00000042
+ *     }
+ *   }
+ * }
+ */
+struct DrmMetricGroup {
+    /**
+     * Used to discriminate the type of value being stored in the structs
+     * below.
+     */
+    enum ValueType : uint8_t {
+        INT64_TYPE,
+        DOUBLE_TYPE,
+        STRING_TYPE,
+    };
+
+    /**
+     * A detail about the metric being captured. The fields of an Attribute
+     * are opaque to the framework.
+     */
+    struct Attribute {
+        string name;
+        /**
+         * The type field indicates which of the following values is used.
+         */
+        ValueType type;
+        int64_t int64Value;
+        double doubleValue;
+        string stringValue;
+    };
+
+    /**
+     * A value of the metric. A metric may have multiple values. The
+     * component name may be left empty if there is only supposed to be
+     * one value for the given metric. The fields of the Value are
+     * opaque to the framework.
+     */
+    struct Value {
+        string componentName;
+        /**
+         * The type field indicates which of the following values is used.
+         */
+        ValueType type;
+        int64_t int64Value;
+        double doubleValue;
+        string stringValue;
+    };
+
+    /**
+     * The metric being captured. A metric must have a name and at least one
+     * value. A metric may have 0 or more attributes. The fields of a Metric
+     * are opaque to the framework.
+     */
+    struct Metric {
+        string name;
+        vec<Attribute> attributes;
+        // A Metric may have one or more values. Multiple values are useful
+        // for capturing different aspects of the same metric. E.g. capture
+        // the min, max, average, count, and stdev of a particular metric.
+        vec<Value> values;
+    };
+
+    /**
+     * The list of metrics to be captured.
+     */
+    vec<Metric> metrics;
+};
+
+/**
+ * HDCP specifications are defined by Digital Content Protection LLC (DCP).
+ *   "HDCP Specification Rev. 2.2 Interface Independent Adaptation"
+ *   "HDCP 2.2 on HDMI Specification"
+ */
+enum HdcpLevel : uint32_t {
+    /**
+     * Unable to determine the HDCP level
+     */
+    HDCP_UNKNOWN,
+
+    /**
+     * No HDCP, output is unprotected
+     */
+    HDCP_NONE,
+
+    /**
+     * HDCP version 1.0
+     */
+    HDCP_V1,
+
+    /**
+     * HDCP version 2.0 Type 1.
+     */
+    HDCP_V2,
+
+    /**
+     * HDCP version 2.1 Type 1.
+     */
+    HDCP_V2_1,
+
+    /**
+     *  HDCP version 2.2 Type 1.
+     */
+    HDCP_V2_2,
+
+    /**
+     * No digital output, implicitly secure
+     */
+    HDCP_NO_OUTPUT
+};
+
+/**
+ * KeyRequestTypes (in addition to those from 1.0) which allow an app
+ * to determine the type of a key request returned from getKeyRequest.
+ */
+enum KeyRequestType : @1.0::KeyRequestType {
+    /**
+     * Keys are already loaded. No key request is needed.
+     */
+    NONE,
+
+    /**
+     * Keys have previously been loaded. An additional (non-renewal) license
+     * request is needed.
+     */
+    UPDATE,
+};
+
+enum SecurityLevel : uint32_t {
+    /**
+     * Unable to determine the security level
+     */
+    UNKNOWN,
+
+    /**
+     * Software-based whitebox crypto
+     */
+    SW_SECURE_CRYPTO,
+
+    /**
+     * Software-based whitebox crypto and an obfuscated decoder
+     */
+    SW_SECURE_DECODE,
+
+    /**
+     * DRM key management and crypto operations are performed within a
+     * hardware backed trusted execution environment
+     */
+    HW_SECURE_CRYPTO,
+
+    /**
+     * DRM key management, crypto operations and decoding of content
+     * are performed within a hardware backed trusted execution environment
+     */
+    HW_SECURE_DECODE,
+
+    /**
+     * DRM key management, crypto operations, decoding of content and all
+     * handling of the media (compressed and uncompressed) is handled within
+     * a hardware backed trusted execution environment.
+     */
+    HW_SECURE_ALL,
+};
+
+/**
+ * Encapsulates a secure stop release opaque object
+ */
+struct SecureStopRelease {
+    vec<uint8_t> opaqueData;
+};
+

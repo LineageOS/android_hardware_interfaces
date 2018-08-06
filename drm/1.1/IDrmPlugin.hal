@@ -1,0 +1,244 @@
+/**
+ * Copyright (C) 2017 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package android.hardware.drm@1.1;
+
+import @1.0::IDrmPlugin;
+import @1.0::IDrmPluginListener;
+import @1.0::KeyedVector;
+import @1.0::KeyType;
+import @1.0::Status;
+import @1.1::DrmMetricGroup;
+import @1.1::HdcpLevel;
+import @1.1::KeyRequestType;
+import @1.0::SecureStopId;
+import @1.1::SecureStopRelease;
+import @1.1::SecurityLevel;
+import @1.0::SessionId;
+
+/**
+ * IDrmPlugin is used to interact with a specific drm plugin that was created by
+ * IDrm::createPlugin. A drm plugin provides methods for obtaining drm keys that
+ * may be used by a codec to decrypt protected video content.
+ */
+interface IDrmPlugin extends @1.0::IDrmPlugin {
+    /**
+     * Open a new session at a requested security level. The security level
+     * represents the robustness of the device's DRM implementation. By default,
+     * sessions are opened at the native security level of the device which is
+     * the maximum level that can be supported. Overriding the security level is
+     * necessary when the decrypted frames need to be manipulated, such as for
+     * image compositing. The security level parameter must be equal to or lower
+     * than the native level. If the requested level is not supported, the next
+     * lower supported security level must be set. The level can be queried
+     * using {@link #getSecurityLevel}. A session ID is returned.  When the
+     * drm@1.0 openSession is called, which has no securityLevel parameter, the
+     * security level is defaulted to the native security level of the device.
+     *
+     * @return status the status of the call. The status must be OK or one of
+     *     the following errors: ERROR_DRM_NOT_PROVISIONED if the device
+     *     requires provisioning before it can open a session,
+     *     ERROR_DRM_RESOURCE_BUSY if there are insufficent resources available
+     *     to open a session, ERROR_DRM_CANNOT_HANDLE if the requested security
+     *     level is higher than the native level or lower than the lowest
+     *     supported level or if openSession is not supported at the time of
+     *     the call, or ERROR_DRM_INVALID_STATE if the HAL is in a state where
+     *     a session cannot be opened.
+     * @param level the requested security level
+     * @return sessionId the session ID for the newly opened session
+     */
+    openSession_1_1(SecurityLevel securityLevel) generates (Status status,
+            SessionId sessionId);
+
+    /**
+     * A key request/response exchange occurs between the app and a License
+     * Server to obtain the keys required to decrypt the content.
+     * getKeyRequest_1_1() is used to obtain an opaque key request blob that is
+     * delivered to the license server.
+     *
+     * getKeyRequest_1_1() only differs from getKeyRequest() in that additional
+     * values are returned in 1.1::KeyRequestType as compared to
+     * 1.0::KeyRequestType
+     *
+     * @param scope may be a sessionId or a keySetId, depending on the
+     *        specified keyType. When the keyType is OFFLINE or STREAMING,
+     *        scope should be set to the sessionId the keys will be provided
+     *        to. When the keyType is RELEASE, scope should be set to the
+     *        keySetId of the keys being released.
+     * @param initData container-specific data, its meaning is interpreted
+     *        based on the mime type provided in the mimeType parameter.
+     *        It could contain, for example, the content ID, key ID or
+     *        other data obtained from the content metadata that is
+     *        required to generate the key request. initData may be empty
+     *        when keyType is RELEASE.
+     * @param mimeType identifies the mime type of the content
+     * @param keyType specifies if the keys are to be used for streaming,
+     *        offline or a release
+     * @param optionalParameters included in the key request message to
+     *        allow a client application to provide additional message
+     *        parameters to the server.
+     * @return status the status of the call. The status must be OK or one of
+     *         the following errors: ERROR_DRM_SESSION_NOT_OPENED if the
+     *         session is not opened, ERROR_DRM_NOT_PROVISIONED if the device
+     *         requires provisioning before it can generate a key request,
+     *         ERROR_DRM_CANNOT_HANDLE if getKeyRequest is not supported
+     *         at the time of the call, BAD_VALUE if any parameters are
+     *         invalid or ERROR_DRM_INVALID_STATE if the HAL is in a
+     *         state where a key request cannot be generated.
+     * @return request if successful, the opaque key request blob is returned
+     * @return requestType indicates type information about the returned
+     *         request. The type may be one of INITIAL, RENEWAL, RELEASE,
+     *         NONE or UPDATE. An INITIAL request is the first key request
+     *         for a license. RENEWAL is a subsequent key request used to
+     *         refresh the keys in a license. RELEASE corresponds to a
+     *         keyType of RELEASE, which indicates keys are being released.
+     *         NONE indicates that no request is needed because the keys are
+     *         already loaded. UPDATE indicates that the keys need to be
+     *         refetched after the initial license request.
+     * @return defaultUrl the URL that the request may be sent to, if
+     *         provided by the drm HAL. The app may choose to override this URL.
+     */
+    getKeyRequest_1_1(vec<uint8_t> scope, vec<uint8_t> initData,
+            string mimeType, KeyType keyType, KeyedVector optionalParameters)
+        generates (Status status, vec<uint8_t> request,
+                KeyRequestType requestType, string defaultUrl);
+
+    /**
+     * Return the currently negotiated and max supported HDCP levels.
+     *
+     * The current level is based on the display(s) the device is connected to.
+     * If multiple HDCP-capable displays are simultaneously connected to
+     * separate interfaces, this method returns the lowest negotiated HDCP level
+     * of all interfaces.
+     *
+     * The maximum HDCP level is the highest level that can potentially be
+     * negotiated. It is a constant for any device, i.e. it does not depend on
+     * downstream receiving devices that could be connected. For example, if
+     * the device has HDCP 1.x keys and is capable of negotiating HDCP 1.x, but
+     * does not have HDCP 2.x keys, then the maximum HDCP capability would be
+     * reported as 1.x. If multiple HDCP-capable interfaces are present, it
+     * indicates the highest of the maximum HDCP levels of all interfaces.
+     *
+     * This method should only be used for informational purposes, not for
+     * enforcing compliance with HDCP requirements. Trusted enforcement of HDCP
+     * policies must be handled by the DRM system.
+     *
+     * @return status the status of the call. The status must be OK or
+     *         ERROR_DRM_INVALID_STATE if the HAL is in a state where the HDCP
+     *         level cannot be queried.
+     * @return connectedLevel the lowest HDCP level for any connected
+     *         displays
+     * @return maxLevel the highest HDCP level that can be supported
+     *         by the device
+     */
+    getHdcpLevels() generates (Status status, HdcpLevel connectedLevel,
+            HdcpLevel maxLevel);
+
+    /**
+     * Return the current number of open sessions and the maximum number of
+     * sessions that may be opened simultaneosly among all DRM instances for the
+     * active DRM scheme.
+     *
+     * @return status the status of the call. The status must be OK or
+     *         ERROR_DRM_INVALID_STATE if the HAL is in a state where number of
+     *         sessions cannot be queried.
+     * @return currentSessions the number of currently opened sessions
+     * @return maxSessions the maximum number of sessions that the device
+     *         can support
+     */
+    getNumberOfSessions() generates (Status status, uint32_t currentSessions,
+             uint32_t maxSessions);
+
+    /**
+     * Return the current security level of a session. A session has an initial
+     * security level determined by the robustness of the DRM system's
+     * implementation on the device.
+     *
+     * @param sessionId the session id the call applies to
+     * @return status the status of the call. The status must be OK or one of
+     *         the following errors: ERROR_DRM_SESSION_NOT_OPENED if the
+     *         session is not opened, BAD_VALUE if the sessionId is invalid or
+     *         ERROR_DRM_INVALID_STATE if the HAL is in a state where the
+     *         security level cannot be queried.
+     * @return level the current security level for the session
+     */
+    getSecurityLevel(vec<uint8_t> sessionId) generates(Status status,
+            SecurityLevel level);
+
+    /**
+     * Returns the plugin-specific metrics. Multiple metric groups may be
+     * returned in one call to getMetrics(). The scope and definition of the
+     * metrics is defined by the plugin.
+     *
+     * @return status the status of the call. The status must be OK or
+     *         ERROR_DRM_INVALID_STATE if the metrics are not available to be
+     *         returned.
+     * @return metric_groups the collection of metric groups provided by the
+     *         plugin.
+     */
+    getMetrics() generates (Status status, vec<DrmMetricGroup> metric_groups);
+
+    /**
+     * Get the IDs of all secure stops on the device
+     *
+     * @return status the status of the call. The status must be OK or
+     * ERROR_DRM_INVALID_STATE if the HAL is in a state where the secure stop
+     * IDs cannot be returned.
+     * @return secureStopIds a list of the IDs
+     */
+    getSecureStopIds() generates
+        (Status status, vec<SecureStopId> secureStopIds);
+
+    /**
+     * Release secure stops given a release message from the key server
+     *
+     * @param ssRelease the secure stop release message identifying one or more
+     * secure stops to release. ssRelease is opaque, it is passed directly from
+     * a DRM license server through the app and media framework to the vendor
+     * HAL module. The format and content of ssRelease must be defined by the
+     * DRM scheme being implemented according to this HAL. The DRM scheme
+     * can be identified by its UUID which can be queried using
+     * IDrmFactory::isCryptoSchemeSupported.
+     *
+     * @return status the status of the call. The status must be OK or one of
+     * the following errors: BAD_VALUE if ssRelease is invalid or
+     * ERROR_DRM_INVALID_STATE if the HAL is in a state where the secure stop
+     * cannot be released.
+     */
+    releaseSecureStops(SecureStopRelease ssRelease) generates (Status status);
+
+    /**
+     * Remove a secure stop given its secure stop ID, without requiring
+     * a secure stop release response message from the key server.
+     *
+     * @param secureStopId the ID of the secure stop to release.
+     *
+     * @return status the status of the call. The status must be OK or one of
+     * the following errors: BAD_VALUE if the secureStopId is invalid or
+     * ERROR_DRM_INVALID_STATE if the HAL is in a state where the secure stop
+     * cannot be released.
+     */
+    removeSecureStop(SecureStopId secureStopId) generates (Status status);
+
+    /**
+     * Remove all secure stops on the device without requiring a secure
+     * stop release response message from the key server.
+     *
+     * @return status the status of the call. The status must be OK or
+     * ERROR_DRM_INVALID_STATE if the HAL is in a state where the secure
+     * stops cannot be removed.
+     */
+    removeAllSecureStops() generates (Status status);
+};

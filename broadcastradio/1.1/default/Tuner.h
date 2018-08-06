@@ -28,8 +28,11 @@ namespace broadcastradio {
 namespace V1_1 {
 namespace implementation {
 
+struct BroadcastRadio;
+
 struct Tuner : public ITuner {
-    Tuner(V1_0::Class classId, const sp<V1_0::ITunerCallback>& callback);
+    Tuner(const sp<BroadcastRadio> module, V1_0::Class classId,
+          const sp<V1_0::ITunerCallback>& callback);
 
     void forceClose();
 
@@ -39,13 +42,13 @@ struct Tuner : public ITuner {
     virtual Return<Result> scan(V1_0::Direction direction, bool skipSubChannel) override;
     virtual Return<Result> step(V1_0::Direction direction, bool skipSubChannel) override;
     virtual Return<Result> tune(uint32_t channel, uint32_t subChannel) override;
-    virtual Return<Result> tuneByProgramSelector(const ProgramSelector& program) override;
+    virtual Return<Result> tuneByProgramSelector(const V1_1::ProgramSelector& program) override;
     virtual Return<Result> cancel() override;
     virtual Return<Result> cancelAnnouncement() override;
     virtual Return<void> getProgramInformation(getProgramInformation_cb _hidl_cb) override;
     virtual Return<void> getProgramInformation_1_1(getProgramInformation_1_1_cb _hidl_cb) override;
-    virtual Return<ProgramListResult> startBackgroundScan() override;
-    virtual Return<void> getProgramList(const hidl_vec<VendorKeyValue>& filter,
+    virtual Return<V1_1::ProgramListResult> startBackgroundScan() override;
+    virtual Return<void> getProgramList(const hidl_vec<V1_1::VendorKeyValue>& filter,
                                         getProgramList_cb _hidl_cb) override;
     virtual Return<Result> setAnalogForced(bool isForced) override;
     virtual Return<void> isAnalogForced(isAnalogForced_cb _hidl_cb) override;
@@ -55,6 +58,7 @@ struct Tuner : public ITuner {
     WorkerThread mThread;
     bool mIsClosed = false;
 
+    const sp<BroadcastRadio> mModule;
     V1_0::Class mClassId;
     const sp<V1_0::ITunerCallback> mCallback;
     const sp<V1_1::ITunerCallback> mCallback1_1;
@@ -63,12 +67,14 @@ struct Tuner : public ITuner {
     bool mIsAmfmConfigSet = false;
     V1_0::BandConfig mAmfmConfig;
     bool mIsTuneCompleted = false;
-    ProgramSelector mCurrentProgram = {};
-    ProgramInfo mCurrentProgramInfo = {};
+    V1_1::ProgramSelector mCurrentProgram = {};
+    V1_1::ProgramInfo mCurrentProgramInfo = {};
     std::atomic<bool> mIsAnalogForced;
 
     utils::HalRevision getHalRev() const;
-    void tuneInternalLocked(const ProgramSelector& sel);
+    void setConfigurationInternalLocked(const V1_0::BandConfig& config);
+    void tuneInternalLocked(const V1_1::ProgramSelector& sel);
+    bool autoConfigureLocked(uint64_t frequency);
 };
 
 }  // namespace implementation

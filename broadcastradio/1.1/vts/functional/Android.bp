@@ -21,8 +21,8 @@ cc_test {
     static_libs: [
         "android.hardware.broadcastradio@1.0",
         "android.hardware.broadcastradio@1.1",
-        "android.hardware.broadcastradio@1.1-utils-lib",
-        "android.hardware.broadcastradio@1.1-vts-utils-lib",
+        "android.hardware.broadcastradio@common-utils-1x-lib",
+        "android.hardware.broadcastradio@vts-utils-lib",
         "libgmock",
     ],
 }

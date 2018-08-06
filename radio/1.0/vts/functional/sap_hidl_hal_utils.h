@@ -17,6 +17,7 @@
 #include <android-base/logging.h>
 
 #include <VtsHalHidlTargetTestBase.h>
+#include <VtsHalHidlTargetTestEnvBase.h>
 #include <chrono>
 #include <condition_variable>
 #include <mutex>
@@ -77,6 +78,20 @@ class SapCallback : public ISapCallback {
     Return<void> errorResponse(int32_t token);
 
     Return<void> transferProtocolResponse(int32_t token, SapResultCode resultCode);
+};
+
+// Test environment for Sap HIDL HAL.
+class SapHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
+   public:
+    // get the test environment singleton
+    static SapHidlEnvironment* Instance() {
+        static SapHidlEnvironment* instance = new SapHidlEnvironment;
+        return instance;
+    }
+    virtual void registerTestServices() override { registerTestService<ISap>(); }
+
+   private:
+    SapHidlEnvironment() {}
 };
 
 // The main test class for Sap HIDL.

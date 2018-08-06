@@ -36,10 +36,6 @@ static const vector<Class> gAllClasses = {
     Class::AM_FM, Class::SAT, Class::DT,
 };
 
-IBroadcastRadioFactory* HIDL_FETCH_IBroadcastRadioFactory(const char* name __unused) {
-    return new BroadcastRadioFactory();
-}
-
 BroadcastRadioFactory::BroadcastRadioFactory() {
     for (auto&& classId : gAllClasses) {
         if (!BroadcastRadio::isSupported(classId)) continue;

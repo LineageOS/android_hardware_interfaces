@@ -1,6 +1,7 @@
 #include "Context.h"
 #include "Device.h"
 
+#include <android-base/logging.h>
 #include <android/dlext.h>
 #include <dlfcn.h>
 
@@ -54,12 +55,18 @@ dispatchTable loadHAL() {
                 .flags = ANDROID_DLEXT_USE_NAMESPACE, .library_namespace = rsNamespace,
             };
             handle = android_dlopen_ext(filename, RTLD_LAZY | RTLD_LOCAL, &dlextinfo);
+            if (handle == nullptr) {
+                LOG(WARNING) << "android_dlopen_ext(" << filename << ") failed: " << dlerror();
+            }
         }
     }
     if (handle == nullptr) {
         // if there is no "rs" namespace (in case when this HAL impl is loaded
         // into a vendor process), then use the plain dlopen.
         handle = dlopen(filename, RTLD_LAZY | RTLD_LOCAL);
+        if (handle == nullptr) {
+            LOG(FATAL) << "dlopen(" << filename << ") failed: " << dlerror();
+        }
     }
 
     dispatchTable dispatchHal = {

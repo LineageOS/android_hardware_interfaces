@@ -116,11 +116,11 @@ const char* VendorTagDescriptor::getTagName(uint32_t tag) const {
 }
 
 int VendorTagDescriptor::getTagType(uint32_t tag) const {
-    ssize_t index = mTagToNameMap.indexOfKey(tag);
-    if (index < 0) {
+    auto iter = mTagToTypeMap.find(tag);
+    if (iter == mTagToTypeMap.end()) {
         return VENDOR_TAG_TYPE_ERR;
     }
-    return mTagToTypeMap.valueFor(tag);
+    return iter->second;
 }
 
 const SortedVector<String8>* VendorTagDescriptor::getAllSectionNames() const {
@@ -167,7 +167,7 @@ void VendorTagDescriptor::dump(int fd, int verbosity, int indentation) const {
         String8 name = mTagToNameMap.valueAt(i);
         uint32_t sectionId = mTagToSectionMap.valueFor(tag);
         String8 sectionName = mSections[sectionId];
-        int type = mTagToTypeMap.valueFor(tag);
+        int type = mTagToTypeMap.at(tag);
         const char* typeName = (type >= 0 && type < NUM_TYPES) ?
                 camera_metadata_type_names[type] : "UNKNOWN";
         dprintf(fd, "%*s0x%x (%s) with type %d (%s) defined in section %s\n", indentation + 2,
@@ -251,7 +251,7 @@ status_t VendorTagDescriptor::createDescriptorFromOps(const vendor_tag_ops_t* vO
             ALOGE("%s: tag type %d from vendor ops does not exist.", __FUNCTION__, tagType);
             return BAD_VALUE;
         }
-        desc->mTagToTypeMap.add(tag, tagType);
+        desc->mTagToTypeMap.insert(std::make_pair(tag, tagType));
     }
 
     desc->mSections = sections;

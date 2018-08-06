@@ -88,7 +88,10 @@ class WifiChipHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     uint32_t configureChipForStaIfaceAndGetCapabilities() {
         configureChipForIfaceType(IfaceType::STA, true);
         const auto& status_and_caps = HIDL_INVOKE(wifi_chip_, getCapabilities);
-        EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_caps.first.code);
+        if (status_and_caps.first.code != WifiStatusCode::SUCCESS) {
+            EXPECT_EQ(WifiStatusCode::ERROR_NOT_SUPPORTED, status_and_caps.first.code);
+            return 0;
+        }
         return status_and_caps.second;
     }
 
@@ -193,7 +196,10 @@ TEST_F(WifiChipHidlTest, ConfigureChip) {
 TEST_F(WifiChipHidlTest, GetCapabilities) {
     configureChipForIfaceType(IfaceType::STA, true);
     const auto& status_and_caps = HIDL_INVOKE(wifi_chip_, getCapabilities);
-    EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_caps.first.code);
+    if (status_and_caps.first.code != WifiStatusCode::SUCCESS) {
+        EXPECT_EQ(WifiStatusCode::ERROR_NOT_SUPPORTED, status_and_caps.first.code);
+        return;
+    }
     EXPECT_NE(0u, status_and_caps.second);
 }
 
@@ -441,8 +447,8 @@ TEST_F(WifiChipHidlTest, RemoveApIface) {
  * succeeds. The 2nd iface creation should be rejected.
  */
 TEST_F(WifiChipHidlTest, CreateNanIface) {
-    configureChipForIfaceType(IfaceType::NAN, gEnv->isNanOn);
     if (!gEnv->isNanOn) return;
+    configureChipForIfaceType(IfaceType::NAN, gEnv->isNanOn);
 
     sp<IWifiNanIface> iface;
     ASSERT_EQ(WifiStatusCode::SUCCESS, createNanIface(&iface));
@@ -458,8 +464,8 @@ TEST_F(WifiChipHidlTest, CreateNanIface) {
  * iface name is returned via the list.
  */
 TEST_F(WifiChipHidlTest, GetNanIfaceNames) {
-    configureChipForIfaceType(IfaceType::NAN, gEnv->isNanOn);
     if (!gEnv->isNanOn) return;
+    configureChipForIfaceType(IfaceType::NAN, gEnv->isNanOn);
 
     const auto& status_and_iface_names1 =
         HIDL_INVOKE(wifi_chip_, getNanIfaceNames);
@@ -491,8 +497,8 @@ TEST_F(WifiChipHidlTest, GetNanIfaceNames) {
  * doesn't retrieve an iface object.
  */
 TEST_F(WifiChipHidlTest, GetNanIface) {
-    configureChipForIfaceType(IfaceType::NAN, gEnv->isNanOn);
     if (!gEnv->isNanOn) return;
+    configureChipForIfaceType(IfaceType::NAN, gEnv->isNanOn);
 
     sp<IWifiNanIface> nan_iface;
     EXPECT_EQ(WifiStatusCode::SUCCESS, createNanIface(&nan_iface));
@@ -518,8 +524,8 @@ TEST_F(WifiChipHidlTest, GetNanIface) {
  * doesn't remove the iface.
  */
 TEST_F(WifiChipHidlTest, RemoveNanIface) {
-    configureChipForIfaceType(IfaceType::NAN, gEnv->isNanOn);
     if (!gEnv->isNanOn) return;
+    configureChipForIfaceType(IfaceType::NAN, gEnv->isNanOn);
 
     sp<IWifiNanIface> nan_iface;
     EXPECT_EQ(WifiStatusCode::SUCCESS, createNanIface(&nan_iface));

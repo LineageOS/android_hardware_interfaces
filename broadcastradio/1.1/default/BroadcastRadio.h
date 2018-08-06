@@ -29,8 +29,8 @@ namespace implementation {
 
 struct AmFmBandConfig {
     V1_0::Band type;
-    uint32_t lowerLimit;  // kHz
-    uint32_t upperLimit;  // kHz
+    uint32_t lowerLimit;             // kHz
+    uint32_t upperLimit;             // kHz
     std::vector<uint32_t> spacings;  // kHz
 };
 
@@ -64,6 +64,8 @@ struct BroadcastRadio : public V1_1::IBroadcastRadio {
                            const sp<V1_0::ITunerCallback>& callback,
                            openTuner_cb _hidl_cb) override;
     Return<void> getImage(int32_t id, getImage_cb _hidl_cb);
+
+    std::vector<V1_0::BandConfig> getAmFmBands() const;
 
    private:
     std::mutex mMut;

@@ -152,7 +152,7 @@ private:
  *   VehiclePropValuePool pool;
  *   auto v = pool.obtain(VehiclePropertyType::INT32);
  *   v->propId = VehicleProperty::HVAC_FAN_SPEED;
- *   v->areaId = VehicleAreaZone::ROW_1_LEFT;
+ *   v->areaId = VehicleAreaSeat::ROW_1_LEFT;
  *   v->timestamp = elapsedRealtimeNano();
  *   v->value->int32Values[0] = 42;
  *
@@ -191,9 +191,8 @@ public:
     VehiclePropValuePool& operator=(VehiclePropValuePool&) = delete;
 private:
     bool isDisposable(VehiclePropertyType type, size_t vecSize) const {
-        return vecSize > mMaxRecyclableVectorSize ||
-               VehiclePropertyType::STRING == type ||
-               VehiclePropertyType::COMPLEX == type;
+        return vecSize > mMaxRecyclableVectorSize || VehiclePropertyType::STRING == type ||
+               VehiclePropertyType::MIXED == type;
     }
 
     RecyclableType obtainDisposable(VehiclePropertyType valueType,

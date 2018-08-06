@@ -1,0 +1,96 @@
+/*
+ * Copyright 2017 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.wifi@1.2;
+
+import @1.0::CommandIdShort;
+import @1.0::IWifiNanIface;
+import @1.0::NanConfigRequest;
+import @1.0::NanEnableRequest;
+import @1.0::WifiStatus;
+import IWifiNanIfaceEventCallback;
+
+/**
+ * Interface used to represent a single NAN (Neighbour Aware Network) iface.
+ *
+ * References to "NAN Spec" are to the Wi-Fi Alliance "Wi-Fi Neighbor Awareness
+ * Networking (NAN) Technical Specification".
+ */
+interface IWifiNanIface extends @1.0::IWifiNanIface {
+    /**
+     * Requests notifications of significant events on this iface. Multiple calls
+     * to this must register multiple callbacks each of which must receive all
+     * events.
+     *
+     * Note: supersedes the @1.0::IWifiNanIface.registerEventCallback() method which is deprecated
+     * as of HAL version 1.2.
+     *
+     * @param callback An instance of the |IWifiNanIfaceEventCallback| HIDL interface
+     *        object.
+     * @return status WifiStatus of the operation.
+     *         Possible status codes:
+     *         |WifiStatusCode.SUCCESS|,
+     *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|
+     */
+    registerEventCallback_1_2(IWifiNanIfaceEventCallback callback)
+        generates (WifiStatus status);
+
+    /**
+     * Enable NAN: configures and activates NAN clustering (does not start
+     * a discovery session or set up data-interfaces or data-paths). Use the
+     * |IWifiNanIface.configureRequest| method to change the configuration of an already enabled
+     * NAN interface.
+     * Asynchronous response is with |IWifiNanIfaceEventCallback.notifyEnableResponse|.
+     *
+     * Note: supersedes the @1.0::IWifiNanIface.enableRequest() method which is deprecated as of
+     * HAL version 1.2.
+     *
+     * @param cmdId command Id to use for this invocation.
+     * @param msg1 Instance of |NanEnableRequest|.
+     * @param msg2 Instance of |NanConfigRequestSupplemental|.
+     * @return status WifiStatus of the operation.
+     *         Possible status codes:
+     *         |WifiStatusCode.SUCCESS|,
+     *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+     *         |WifiStatusCode.ERROR_INVALID_ARGS|,
+     *         |WifiStatusCode.ERROR_UNKNOWN|
+     */
+    enableRequest_1_2(CommandIdShort cmdId, NanEnableRequest msg1,
+                      NanConfigRequestSupplemental msg2)
+        generates (WifiStatus status);
+
+    /**
+     * Configure NAN: configures an existing NAN functionality (i.e. assumes
+     * |IWifiNanIface.enableRequest| already submitted and succeeded).
+     * Asynchronous response is with |IWifiNanIfaceEventCallback.notifyConfigResponse|.
+     *
+     * Note: supersedes the @1.0::IWifiNanIface.configRequest() method which is deprecated as of
+     * HAL version 1.2.
+     *
+     * @param cmdId command Id to use for this invocation.
+     * @param msg1 Instance of |NanConfigRequest|.
+     * @param msg1 Instance of |NanConfigRequestSupplemental|.
+     * @return status WifiStatus of the operation.
+     *         Possible status codes:
+     *         |WifiStatusCode.SUCCESS|,
+     *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+     *         |WifiStatusCode.ERROR_INVALID_ARGS|,
+     *         |WifiStatusCode.ERROR_UNKNOWN|
+     */
+    configRequest_1_2(CommandIdShort cmdId, NanConfigRequest msg1,
+                      NanConfigRequestSupplemental msg2)
+        generates (WifiStatus status);
+};

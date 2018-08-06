@@ -17,7 +17,7 @@
 #define ANDROID_HARDWARE_BROADCASTRADIO_V1_1_VIRTUALPROGRAM_H
 
 #include <android/hardware/broadcastradio/1.1/types.h>
-#include <broadcastradio-utils/Utils.h>
+#include <broadcastradio-utils-1x/Utils.h>
 
 namespace android {
 namespace hardware {
@@ -32,19 +32,19 @@ namespace implementation {
  * not an entry for a captured station in the radio tuner memory.
  */
 struct VirtualProgram {
-    ProgramSelector selector;
+    V1_1::ProgramSelector selector;
 
     std::string programName = "";
     std::string songArtist = "";
     std::string songTitle = "";
 
-    ProgramInfo getProgramInfo(utils::HalRevision halRev) const;
+    V1_1::ProgramInfo getProgramInfo(utils::HalRevision halRev) const;
 
     friend bool operator<(const VirtualProgram& lhs, const VirtualProgram& rhs);
 };
 
-std::vector<ProgramInfo> getProgramInfoVector(const std::vector<VirtualProgram>& vec,
-                                              utils::HalRevision halRev);
+std::vector<V1_1::ProgramInfo> getProgramInfoVector(const std::vector<VirtualProgram>& vec,
+                                                    utils::HalRevision halRev);
 
 }  // namespace implementation
 }  // namespace V1_1

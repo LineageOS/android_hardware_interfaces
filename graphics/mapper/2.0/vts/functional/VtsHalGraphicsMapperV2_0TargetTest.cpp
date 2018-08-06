@@ -18,24 +18,41 @@
 
 #include <VtsHalHidlTargetTestBase.h>
 #include <android-base/logging.h>
-#include <sync/sync.h>
-#include "VtsHalGraphicsMapperTestUtils.h"
+#include <mapper-vts/2.0/MapperVts.h>
 
 namespace android {
 namespace hardware {
 namespace graphics {
 namespace mapper {
 namespace V2_0 {
-namespace tests {
+namespace vts {
 namespace {
 
 using android::hardware::graphics::common::V1_0::BufferUsage;
 using android::hardware::graphics::common::V1_0::PixelFormat;
 
+// Test environment for graphics.mapper.
+class GraphicsMapperHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
+   public:
+    // get the test environment singleton
+    static GraphicsMapperHidlEnvironment* Instance() {
+        static GraphicsMapperHidlEnvironment* instance = new GraphicsMapperHidlEnvironment;
+        return instance;
+    }
+
+    virtual void registerTestServices() override {
+        registerTestService<IAllocator>();
+        registerTestService<IMapper>();
+    }
+};
+
 class GraphicsMapperHidlTest : public ::testing::VtsHalHidlTargetTestBase {
    protected:
     void SetUp() override {
-        ASSERT_NO_FATAL_FAILURE(mGralloc = std::make_unique<Gralloc>());
+        ASSERT_NO_FATAL_FAILURE(
+            mGralloc = std::make_unique<Gralloc>(
+                GraphicsMapperHidlEnvironment::Instance()->getServiceName<IAllocator>(),
+                GraphicsMapperHidlEnvironment::Instance()->getServiceName<IMapper>()));
 
         mDummyDescriptorInfo.width = 64;
         mDummyDescriptorInfo.height = 64;
@@ -167,7 +184,10 @@ TEST_F(GraphicsMapperHidlTest, ImportFreeBufferSingleton) {
 
     // free the imported handle with another mapper
     std::unique_ptr<Gralloc> anotherGralloc;
-    ASSERT_NO_FATAL_FAILURE(anotherGralloc = std::make_unique<Gralloc>());
+    ASSERT_NO_FATAL_FAILURE(
+        anotherGralloc = std::make_unique<Gralloc>(
+            GraphicsMapperHidlEnvironment::Instance()->getServiceName<IAllocator>(),
+            GraphicsMapperHidlEnvironment::Instance()->getServiceName<IMapper>()));
     Error error = mGralloc->getMapper()->freeBuffer(importedHandle);
     ASSERT_EQ(Error::NONE, error);
 
@@ -373,7 +393,7 @@ TEST_F(GraphicsMapperHidlTest, UnlockNegative) {
 }
 
 }  // namespace
-}  // namespace tests
+}  // namespace vts
 }  // namespace V2_0
 }  // namespace mapper
 }  // namespace graphics
@@ -381,7 +401,7 @@ TEST_F(GraphicsMapperHidlTest, UnlockNegative) {
 }  // namespace android
 
 int main(int argc, char** argv) {
-    using android::hardware::graphics::mapper::V2_0::tests::GraphicsMapperHidlEnvironment;
+    using android::hardware::graphics::mapper::V2_0::vts::GraphicsMapperHidlEnvironment;
     ::testing::AddGlobalTestEnvironment(GraphicsMapperHidlEnvironment::Instance());
     ::testing::InitGoogleTest(&argc, argv);
     GraphicsMapperHidlEnvironment::Instance()->init(&argc, argv);

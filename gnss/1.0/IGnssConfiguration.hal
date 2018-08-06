@@ -78,9 +78,13 @@ interface IGnssConfiguration {
      */
 
      /**
-      * This method enables or disables emergency SUPL.
+      * This method enables or disables NI emergency SUPL restrictions.
       *
-      * @param enabled True if emergency SUPL is to be enabled.
+      * @param enabled True if the device must only accept NI Emergency SUPL requests when the
+      *                     device is truly in emergency mode (e.g. the user has dialed 911, 112,
+      *                     etc...)
+      *                False if the device must accept NI Emergency SUPL any time they are
+      *                      received
       *
       * @return success True if operation was successful.
       */

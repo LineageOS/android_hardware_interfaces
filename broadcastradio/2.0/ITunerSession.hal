@@ -1,0 +1,196 @@
+/* Copyright (C) 2017 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.broadcastradio@2.0;
+
+interface ITunerSession {
+    /**
+     * Tune to a specified program.
+     *
+     * Automatically cancels pending tune(), scan() or step().
+     * If the method returns OK, tuneFailed or currentProgramInfoChanged
+     * callback must be called.
+     *
+     * @param program Program to tune to.
+     * @return result OK if successfully started tuning.
+     *                NOT_SUPPORTED if the program selector doesn't contain any
+     *                supported identifier.
+     *                INVALID_ARGUMENTS if the program selector contains
+     *                identifiers in invalid format (i.e. out of range).
+     */
+    tune(ProgramSelector program) generates (Result result);
+
+    /**
+     * Tune (seek) to the next valid program on the "air".
+     *
+     * This might more naturally be called "seek" but for legacy reasons, the
+     * entry point remains "scan". This should not be confused with the actual
+     * scan operation (where the radio seeks through programs in a loop until
+     * user chooses to stay on one of them) nor background scan operation (that
+     * a tuner may do in order to locate all available programs.  This function
+     * is meant to advance to the next detected program and stay there.
+     *
+     * Automatically cancels pending tune(), scan() or step().
+     * If the method returns OK, tuneFailed or currentProgramInfoChanged
+     * callback must be called.
+     *
+     * The skipSubChannel parameter is used to skip digital radio subchannels:
+     *  - HD Radio SPS;
+     *  - DAB secondary service.
+     *
+     * As an implementation detail, the HAL has the option to perform an actual
+     * seek or select the next program from the list retrieved in the
+     * background, if one is not stale.
+     *
+     * @param directionUp True to change towards higher numeric values
+     *                    (frequency, channel number), false towards lower.
+     * @param skipSubChannel Don't tune to subchannels.
+     * @return result OK if the operation has successfully started.
+     */
+    scan(bool directionUp, bool skipSubChannel) generates (Result result);
+
+    /**
+     * Tune to the adjacent channel, which may not be occupied by any program.
+     *
+     * Automatically cancels pending tune(), scan() or step().
+     * If the method returns OK, tuneFailed or currentProgramInfoChanged
+     * callback must be called.
+     *
+     * @param directionUp True to change towards higher numeric values
+     *                    (frequency, channel number), false towards lower.
+     * @return result OK successfully started tuning.
+     *                NOT_SUPPORTED if tuning to an unoccupied channel is not
+     *                supported (i.e. for satellite radio).
+     */
+    step(bool directionUp) generates (Result result);
+
+    /**
+     * Cancel a pending tune(), scan() or step().
+     *
+     * If there is no such operation running, the call must be ignored.
+     */
+    cancel();
+
+    /**
+     * Applies a filter to the program list and starts sending program list
+     * updates over onProgramListUpdated callback.
+     *
+     * There may be only one updates stream active at the moment. Calling this
+     * method again must result in cancelling the previous update request.
+     *
+     * This call clears the program list on the client side, the HAL must send
+     * the whole list again.
+     *
+     * If the program list scanning hardware (i.e. background tuner) is
+     * unavailable at the moment, the call must succeed and start updates
+     * when it becomes available.
+     *
+     * @param filter Filter to apply on the fetched program list.
+     * @return result OK successfully started fetching list updates.
+     *                NOT_SUPPORTED program list scanning is not supported
+     *                by the hardware.
+     */
+    startProgramListUpdates(ProgramFilter filter) generates (Result result);
+
+    /**
+     * Stops sending program list updates.
+     */
+    stopProgramListUpdates();
+
+    /**
+     * Fetches the current setting of a given config flag.
+     *
+     * The success/failure result must be consistent with setConfigFlag.
+     *
+     * @param flag Flag to fetch.
+     * @return result OK successfully fetched the flag.
+     *                INVALID_STATE if the flag is not applicable right now.
+     *                NOT_SUPPORTED if the flag is not supported at all.
+     * @return value The current value of the flag, if result is OK.
+     */
+    isConfigFlagSet(ConfigFlag flag) generates (Result result, bool value);
+
+    /**
+     * Sets the config flag.
+     *
+     * The success/failure result must be consistent with isConfigFlagSet.
+     *
+     * @param flag Flag to set.
+     * @param value The new value of a given flag.
+     * @return result OK successfully set the flag.
+     *                INVALID_STATE if the flag is not applicable right now.
+     *                NOT_SUPPORTED if the flag is not supported at all.
+     */
+    setConfigFlag(ConfigFlag flag, bool value) generates (Result result);
+
+    /**
+     * Generic method for setting vendor-specific parameter values.
+     * The framework does not interpret the parameters, they are passed
+     * in an opaque manner between a vendor application and HAL.
+     *
+     * Framework does not make any assumptions on the keys or values, other than
+     * ones stated in VendorKeyValue documentation (a requirement of key
+     * prefixes).
+     *
+     * For each pair in the result vector, the key must be one of the keys
+     * contained in the input (possibly with wildcards expanded), and the value
+     * must be a vendor-specific result status (i.e. the string "OK" or an error
+     * code). The implementation may choose to return an empty vector, or only
+     * return a status for a subset of the provided inputs, at its discretion.
+     *
+     * Application and HAL must not use keys with unknown prefix. In particular,
+     * it must not place a key-value pair in results vector for unknown key from
+     * parameters vector - instead, an unknown key should simply be ignored.
+     * In other words, results vector may contain a subset of parameter keys
+     * (however, the framework doesn't enforce a strict subset - the only
+     * formal requirement is vendor domain prefix for keys).
+     *
+     * @param parameters Vendor-specific key-value pairs.
+     * @return results Operation completion status for parameters being set.
+     */
+    setParameters(vec<VendorKeyValue> parameters)
+        generates (vec<VendorKeyValue> results);
+
+    /**
+     * Generic method for retrieving vendor-specific parameter values.
+     * The framework does not interpret the parameters, they are passed
+     * in an opaque manner between a vendor application and HAL.
+     *
+     * Framework does not cache set/get requests, so it's allowed for
+     * getParameter to return a different value than previous setParameter call.
+     *
+     * The syntax and semantics of keys are up to the vendor (as long as prefix
+     * rules are obeyed). For instance, vendors may include some form of
+     * wildcard support. In such case, result vector may be of different size
+     * than requested keys vector. However, wildcards are not recognized by
+     * framework and they are passed as-is to the HAL implementation.
+     *
+     * Unknown keys must be ignored and not placed into results vector.
+     *
+     * @param keys Parameter keys to fetch.
+     * @return parameters Vendor-specific key-value pairs.
+     */
+    getParameters(vec<string> keys) generates (vec<VendorKeyValue> parameters);
+
+    /**
+     * Closes the session.
+     *
+     * The call must not fail and must only be issued once.
+     *
+     * After the close call is executed, no other calls to this interface
+     * are allowed.
+     */
+    close();
+};

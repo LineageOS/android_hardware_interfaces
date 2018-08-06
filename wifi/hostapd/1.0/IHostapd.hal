@@ -1,0 +1,168 @@
+/*
+ * Copyright 2017 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.wifi.hostapd@1.0;
+
+import android.hardware.wifi.supplicant@1.0::Ssid;
+
+/**
+ * Top-level object for managing SoftAPs.
+ */
+interface IHostapd {
+    /**
+     * Size limits for some of the params used in this interface.
+     */
+    enum ParamSizeLimits : uint32_t {
+        /** Max length of SSID param. */
+        SSID_MAX_LEN_IN_BYTES = 32,
+
+        /** Min length of PSK passphrase param. */
+        WPA2_PSK_PASSPHRASE_MIN_LEN_IN_BYTES = 8,
+
+        /** Max length of PSK passphrase param. */
+        WPA2_PSK_PASSPHRASE_MAX_LEN_IN_BYTES = 63,
+    };
+
+    /** Possble Security types. */
+    enum EncryptionType : uint32_t {
+        NONE,
+        WPA,
+        WPA2
+    };
+
+    /**
+     * Band to use for the SoftAp operations.
+     * When using ACS, special value |BAND_ANY| can be
+     * used to indicate that any supported band can be used. This special
+     * case is currently supported only with drivers with which
+     * offloaded ACS is used.
+     */
+    enum Band : uint32_t {
+        BAND_2_4_GHZ,
+        BAND_5_GHZ,
+        BAND_ANY
+    };
+
+    /**
+     * Parameters to control the HW mode for the interface.
+     */
+    struct HwModeParams {
+        /**
+         * Whether IEEE 802.11n (HT) is enabled or not.
+         * Note: hwMode=G (2.4 GHz) and hwMode=A (5 GHz) is used to specify
+         * the band.
+         */
+        bool enable80211N;
+         /**
+          * Whether IEEE 802.11ac (VHT) is enabled or not.
+          * Note: hw_mode=a is used to specify that 5 GHz band is used with VHT.
+          */
+        bool enable80211AC;
+    };
+
+    /**
+     * Parameters to control the channel selection for the interface.
+     */
+    struct ChannelParams {
+        /**
+         * Whether to enable ACS (Automatic Channel Selection) or not.
+         * The channel can be selected automatically at run time by setting
+         * this flag, which must enable the ACS survey based algorithm.
+         */
+        bool enableAcs;
+        /**
+         * This option can be used to exclude all DFS channels from the ACS
+         * channel list in cases where the driver supports DFS channels.
+         **/
+        bool acsShouldExcludeDfs;
+        /**
+         * Channel number (IEEE 802.11) to use for the interface.
+         * If ACS is enabled, this field is ignored.
+         */
+        uint32_t channel;
+        /**
+         * Band to use for the SoftAp operations.
+         */
+        Band band;
+    };
+
+    /**
+     * Parameters to use for setting up the access point interface.
+     */
+    struct IfaceParams {
+        /** Name of the interface */
+        string ifaceName;
+        /** Hw mode params for the interface */
+        HwModeParams hwModeParams;
+        /** Chanel params for the interface */
+        ChannelParams channelParams;
+    };
+
+    /**
+     * Parameters to use for setting up the access point network.
+     */
+    struct NetworkParams {
+        /** SSID to set for the network */
+        Ssid ssid;
+        /** Whether the network needs to be hidden or not. */
+        bool isHidden;
+        /** Key management mask for the network. */
+        EncryptionType encryptionType;
+        /** Passphrase for WPA_PSK network. */
+        string pskPassphrase;
+    };
+
+    /**
+     * Adds a new access point for hostapd to control.
+     *
+     * This should trigger the setup of an access point with the specified
+     * interface and network params.
+     *
+     * @param ifaceParams AccessPoint Params for the access point.
+     * @param nwParams Network Params for the access point.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |HostapdStatusCode.SUCCESS|,
+     *         |HostapdStatusCode.FAILURE_ARGS_INVALID|,
+     *         |HostapdStatusCode.FAILURE_UNKNOWN|,
+     *         |HostapdStatusCode.FAILURE_IFACE_EXISTS|
+     */
+    addAccessPoint(IfaceParams ifaceParams, NetworkParams nwParams)
+        generates(HostapdStatus status);
+
+    /**
+     * Removes an existing access point from hostapd.
+     *
+     * This should bring down the access point previously setup on the
+     * interface.
+     *
+     * @param ifaceName Name of the interface.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |HostapdStatusCode.SUCCESS|,
+     *         |HostapdStatusCode.FAILURE_UNKNOWN|,
+     *         |HostapdStatusCode.FAILURE_IFACE_UNKNOWN|
+     */
+    removeAccessPoint(string ifaceName) generates(HostapdStatus status);
+
+    /**
+     * Terminate the service.
+     * This must de-register the service and clear all state. If this HAL
+     * supports the lazy HAL protocol, then this may trigger daemon to exit and
+     * wait to be restarted.
+     */
+    oneway terminate();
+};

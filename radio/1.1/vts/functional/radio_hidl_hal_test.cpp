@@ -19,7 +19,17 @@
 void RadioHidlTest_v1_1::SetUp() {
     radio_v1_1 =
         ::testing::VtsHalHidlTargetTestBase::getService<::android::hardware::radio::V1_1::IRadio>(
-            hidl_string(RADIO_SERVICE_NAME));
+            RadioHidlEnvironment::Instance()
+                ->getServiceName<::android::hardware::radio::V1_1::IRadio>(
+                    hidl_string(RADIO_SERVICE_NAME)));
+    if (radio_v1_1 == NULL) {
+        sleep(60);
+        radio_v1_1 = ::testing::VtsHalHidlTargetTestBase::getService<
+            ::android::hardware::radio::V1_1::IRadio>(
+            RadioHidlEnvironment::Instance()
+                ->getServiceName<::android::hardware::radio::V1_1::IRadio>(
+                    hidl_string(RADIO_SERVICE_NAME)));
+    }
     ASSERT_NE(nullptr, radio_v1_1.get());
 
     radioRsp_v1_1 = new (std::nothrow) RadioResponse_v1_1(*this);
