@@ -126,6 +126,118 @@ TEST_F(HidlStructUtilTest, CanConvertLegacyWifiMacInfosToHidlWithTwoMac) {
     EXPECT_EQ(static_cast<uint32_t>(legacy_iface_info2.channel),
               hidl_iface_info2.channel);
 }
+
+TEST_F(HidlStructUtilTest, canConvertLegacyLinkLayerStatsToHidl) {
+    legacy_hal::LinkLayerStats legacy_stats{};
+    legacy_stats.radios.push_back(legacy_hal::LinkLayerRadioStats{});
+    legacy_stats.radios.push_back(legacy_hal::LinkLayerRadioStats{});
+    legacy_stats.iface.beacon_rx = rand();
+    legacy_stats.iface.rssi_mgmt = rand();
+    legacy_stats.iface.ac[legacy_hal::WIFI_AC_BE].rx_mpdu = rand();
+    legacy_stats.iface.ac[legacy_hal::WIFI_AC_BE].tx_mpdu = rand();
+    legacy_stats.iface.ac[legacy_hal::WIFI_AC_BE].mpdu_lost = rand();
+    legacy_stats.iface.ac[legacy_hal::WIFI_AC_BE].retries = rand();
+
+    legacy_stats.iface.ac[legacy_hal::WIFI_AC_BK].rx_mpdu = rand();
+    legacy_stats.iface.ac[legacy_hal::WIFI_AC_BK].tx_mpdu = rand();
+    legacy_stats.iface.ac[legacy_hal::WIFI_AC_BK].mpdu_lost = rand();
+    legacy_stats.iface.ac[legacy_hal::WIFI_AC_BK].retries = rand();
+
+    legacy_stats.iface.ac[legacy_hal::WIFI_AC_VI].rx_mpdu = rand();
+    legacy_stats.iface.ac[legacy_hal::WIFI_AC_VI].tx_mpdu = rand();
+    legacy_stats.iface.ac[legacy_hal::WIFI_AC_VI].mpdu_lost = rand();
+    legacy_stats.iface.ac[legacy_hal::WIFI_AC_VI].retries = rand();
+
+    legacy_stats.iface.ac[legacy_hal::WIFI_AC_VO].rx_mpdu = rand();
+    legacy_stats.iface.ac[legacy_hal::WIFI_AC_VO].tx_mpdu = rand();
+    legacy_stats.iface.ac[legacy_hal::WIFI_AC_VO].mpdu_lost = rand();
+    legacy_stats.iface.ac[legacy_hal::WIFI_AC_VO].retries = rand();
+
+    for (auto& radio : legacy_stats.radios) {
+        radio.stats.on_time = rand();
+        radio.stats.tx_time = rand();
+        radio.stats.rx_time = rand();
+        radio.stats.on_time_scan = rand();
+        radio.stats.on_time_nbd = rand();
+        radio.stats.on_time_gscan = rand();
+        radio.stats.on_time_roam_scan = rand();
+        radio.stats.on_time_pno_scan = rand();
+        radio.stats.on_time_hs20 = rand();
+        for (int i = 0; i < 4; i++) {
+            radio.tx_time_per_levels.push_back(rand());
+        }
+    }
+
+    V1_3::StaLinkLayerStats converted{};
+    hidl_struct_util::convertLegacyLinkLayerStatsToHidl(legacy_stats,
+                                                        &converted);
+    EXPECT_EQ(legacy_stats.iface.beacon_rx, converted.iface.beaconRx);
+    EXPECT_EQ(legacy_stats.iface.rssi_mgmt, converted.iface.avgRssiMgmt);
+    EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_BE].rx_mpdu,
+              converted.iface.wmeBePktStats.rxMpdu);
+    EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_BE].tx_mpdu,
+              converted.iface.wmeBePktStats.txMpdu);
+    EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_BE].mpdu_lost,
+              converted.iface.wmeBePktStats.lostMpdu);
+    EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_BE].retries,
+              converted.iface.wmeBePktStats.retries);
+
+    EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_BK].rx_mpdu,
+              converted.iface.wmeBkPktStats.rxMpdu);
+    EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_BK].tx_mpdu,
+              converted.iface.wmeBkPktStats.txMpdu);
+    EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_BK].mpdu_lost,
+              converted.iface.wmeBkPktStats.lostMpdu);
+    EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_BK].retries,
+              converted.iface.wmeBkPktStats.retries);
+
+    EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_VI].rx_mpdu,
+              converted.iface.wmeViPktStats.rxMpdu);
+    EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_VI].tx_mpdu,
+              converted.iface.wmeViPktStats.txMpdu);
+    EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_VI].mpdu_lost,
+              converted.iface.wmeViPktStats.lostMpdu);
+    EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_VI].retries,
+              converted.iface.wmeViPktStats.retries);
+
+    EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_VO].rx_mpdu,
+              converted.iface.wmeVoPktStats.rxMpdu);
+    EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_VO].tx_mpdu,
+              converted.iface.wmeVoPktStats.txMpdu);
+    EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_VO].mpdu_lost,
+              converted.iface.wmeVoPktStats.lostMpdu);
+    EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_VO].retries,
+              converted.iface.wmeVoPktStats.retries);
+
+    EXPECT_EQ(legacy_stats.radios.size(), converted.radios.size());
+    for (int i = 0; i < legacy_stats.radios.size(); i++) {
+        EXPECT_EQ(legacy_stats.radios[i].stats.on_time,
+                  converted.radios[i].V1_0.onTimeInMs);
+        EXPECT_EQ(legacy_stats.radios[i].stats.tx_time,
+                  converted.radios[i].V1_0.txTimeInMs);
+        EXPECT_EQ(legacy_stats.radios[i].stats.rx_time,
+                  converted.radios[i].V1_0.rxTimeInMs);
+        EXPECT_EQ(legacy_stats.radios[i].stats.on_time_scan,
+                  converted.radios[i].V1_0.onTimeInMsForScan);
+        EXPECT_EQ(legacy_stats.radios[i].tx_time_per_levels.size(),
+                  converted.radios[i].V1_0.txTimeInMsPerLevel.size());
+        for (int j = 0; j < legacy_stats.radios[i].tx_time_per_levels.size();
+             j++) {
+            EXPECT_EQ(legacy_stats.radios[i].tx_time_per_levels[j],
+                      converted.radios[i].V1_0.txTimeInMsPerLevel[j]);
+        }
+        EXPECT_EQ(legacy_stats.radios[i].stats.on_time_nbd,
+                  converted.radios[i].onTimeInMsForNanScan);
+        EXPECT_EQ(legacy_stats.radios[i].stats.on_time_gscan,
+                  converted.radios[i].onTimeInMsForBgScan);
+        EXPECT_EQ(legacy_stats.radios[i].stats.on_time_roam_scan,
+                  converted.radios[i].onTimeInMsForRoamScan);
+        EXPECT_EQ(legacy_stats.radios[i].stats.on_time_pno_scan,
+                  converted.radios[i].onTimeInMsForPnoScan);
+        EXPECT_EQ(legacy_stats.radios[i].stats.on_time_hs20,
+                  converted.radios[i].onTimeInMsForHs20Scan);
+    }
+}
 }  // namespace implementation
 }  // namespace V1_3
 }  // namespace wifi
