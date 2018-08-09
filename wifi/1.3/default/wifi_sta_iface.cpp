@@ -255,6 +255,13 @@ Return<void> WifiStaIface::setMacAddress(const hidl_array<uint8_t, 6>& mac,
                            mac);
 }
 
+Return<void> WifiStaIface::getFactoryMacAddress(
+    getFactoryMacAddress_cb hidl_status_cb) {
+    return validateAndCall(this, WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
+                           &WifiStaIface::getFactoryMacAddressInternal,
+                           hidl_status_cb);
+}
+
 std::pair<WifiStatus, std::string> WifiStaIface::getNameInternal() {
     return {createWifiStatus(WifiStatusCode::SUCCESS), ifname_};
 }
@@ -631,6 +638,13 @@ WifiStatus WifiStaIface::setMacAddressInternal(
     }
     LOG(DEBUG) << "Successfully SetMacAddress.";
     return createWifiStatus(WifiStatusCode::SUCCESS);
+}
+
+std::pair<WifiStatus, std::array<uint8_t, 6>>
+WifiStaIface::getFactoryMacAddressInternal() {
+    std::array<uint8_t, 6> mac =
+        iface_tool_.GetFactoryMacAddress(ifname_.c_str());
+    return {createWifiStatus(WifiStatusCode::SUCCESS), mac};
 }
 
 }  // namespace implementation
