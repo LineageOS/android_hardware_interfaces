@@ -18,11 +18,11 @@
 
 #include <VtsHalHidlTargetTestBase.h>
 #include <android-base/logging.h>
-#include <android/hardware/graphics/mapper/2.1/IMapper.h>
+#include <android/hardware/graphics/mapper/2.0/IMapper.h>
 #include <composer-vts/2.1/GraphicsComposerCallback.h>
 #include <composer-vts/2.1/TestCommandReader.h>
 #include <composer-vts/2.2/ComposerVts.h>
-#include <mapper-vts/2.1/MapperVts.h>
+#include <mapper-vts/2.0/MapperVts.h>
 
 namespace android {
 namespace hardware {
@@ -39,8 +39,8 @@ using common::V1_1::ColorMode;
 using common::V1_1::Dataspace;
 using common::V1_1::PixelFormat;
 using common::V1_1::RenderIntent;
-using mapper::V2_1::IMapper;
-using mapper::V2_1::vts::Gralloc;
+using mapper::V2_0::IMapper;
+using mapper::V2_0::vts::Gralloc;
 
 // Test environment for graphics.composer
 class GraphicsComposerHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
@@ -134,7 +134,7 @@ class GraphicsComposerHidlCommandTest : public GraphicsComposerHidlTest {
         info.width = 64;
         info.height = 64;
         info.layerCount = 1;
-        info.format = PixelFormat::RGBA_8888;
+        info.format = static_cast<common::V1_0::PixelFormat>(PixelFormat::RGBA_8888);
         info.usage =
             static_cast<uint64_t>(BufferUsage::CPU_WRITE_OFTEN | BufferUsage::CPU_READ_OFTEN);
 
@@ -278,7 +278,7 @@ TEST_F(GraphicsComposerHidlTest, setReadbackBuffer) {
     info.height = mComposerClient->getDisplayAttribute(mPrimaryDisplay, config,
                                                        IComposerClient::Attribute::HEIGHT);
     info.layerCount = 1;
-    info.format = pixelFormat;
+    info.format = static_cast<common::V1_0::PixelFormat>(pixelFormat);
     // BufferUsage::COMPOSER_OUTPUT is missing
     info.usage = static_cast<uint64_t>(BufferUsage::COMPOSER_OVERLAY | BufferUsage::CPU_READ_OFTEN);
 
