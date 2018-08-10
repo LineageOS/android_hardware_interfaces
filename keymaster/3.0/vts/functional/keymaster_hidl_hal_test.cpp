@@ -20,6 +20,7 @@
 #include <iostream>
 
 #include <openssl/evp.h>
+#include <openssl/mem.h>
 #include <openssl/x509.h>
 
 #include <android/hardware/keymaster/3.0/IKeymasterDevice.h>
@@ -322,11 +323,11 @@ bool verify_chain(const hidl_vec<hidl_vec<uint8_t>>& chain) {
             char* cert_sub = X509_NAME_oneline(X509_get_subject_name(key_cert.get()), nullptr, 0);
             EXPECT_STREQ("/CN=Android Keystore Key", cert_sub)
                 << "Cert " << i << " has wrong subject.  (Possibly b/38394614)";
-            free(cert_sub);
+            OPENSSL_free(cert_sub);
         }
 
-        free(cert_issuer);
-        free(signer_subj);
+        OPENSSL_free(cert_issuer);
+        OPENSSL_free(signer_subj);
 
         if (dump_Attestations) std::cout << bin2hex(chain[i]) << std::endl;
     }
