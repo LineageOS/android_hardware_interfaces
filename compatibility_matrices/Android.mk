@@ -133,6 +133,7 @@ LOCAL_REQUIRED_MODULES := \
     framework_compatibility_matrix.3.xml \
     framework_compatibility_matrix.device.xml
 LOCAL_GENERATED_SOURCES := $(call module-installed-files,$(LOCAL_REQUIRED_MODULES))
+LOCAL_ADD_VBMETA_VERSION_OVERRIDE := true
 
 ifdef BUILT_VENDOR_MANIFEST
 LOCAL_GEN_FILE_DEPENDENCIES += $(BUILT_VENDOR_MANIFEST)
