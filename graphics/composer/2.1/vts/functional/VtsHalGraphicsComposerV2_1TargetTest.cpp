@@ -85,6 +85,13 @@ class GraphicsComposerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         // explicitly disable vsync
         mComposerClient->setVsyncEnabled(mPrimaryDisplay, false);
         mComposerCallback->setVsyncAllowed(false);
+
+        mInvalidDisplayId = GetInvalidDisplayId();
+
+        // Although 0 could be an invalid display, a return value of 0
+        // from GetInvalidDisplayId means all other ids are in use, a condition which
+        // we are assuming a device will never have
+        ASSERT_NE(0, mInvalidDisplayId);
     }
 
     void TearDown() override {
@@ -95,6 +102,23 @@ class GraphicsComposerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         }
     }
 
+    // returns an invalid display id (one that has not been registered to a
+    // display.  Currently assuming that a device will never have close to
+    // std::numeric_limit<uint64_t>::max() displays registered while running tests
+    Display GetInvalidDisplayId() {
+        std::vector<Display> validDisplays = mComposerCallback->getDisplays();
+
+        uint64_t id = std::numeric_limits<uint64_t>::max();
+        while (id > 0) {
+            if (std::find(validDisplays.begin(), validDisplays.end(), id) == validDisplays.end()) {
+                return id;
+            }
+            id--;
+        }
+
+        return 0;
+    }
+
     // use the slot count usually set by SF
     static constexpr uint32_t kBufferSlotCount = 64;
 
@@ -103,6 +127,7 @@ class GraphicsComposerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     sp<GraphicsComposerCallback> mComposerCallback;
     // the first display and is assumed never to be removed
     Display mPrimaryDisplay;
+    Display mInvalidDisplayId;
 
    private:
     Display waitForFirstDisplay() {
@@ -172,6 +197,22 @@ TEST_F(GraphicsComposerHidlTest, CreateVirtualDisplay) {
 }
 
 /**
+ * Test IComposerClient::destroyVirtualDisplay
+ *
+ * Test that passing a bad display handle to destroyVirtualDisplay
+ * returns a BAD_DISPLAY error
+ */
+TEST_F(GraphicsComposerHidlTest, DestroyVirtualDisplayBadDisplay) {
+    if (mComposerClient->getMaxVirtualDisplayCount() == 0) {
+        GTEST_SUCCEED() << "no virtual display support";
+        return;
+    }
+
+    Error error = mComposerClient->getRaw()->destroyVirtualDisplay(mInvalidDisplayId);
+    ASSERT_EQ(Error::BAD_DISPLAY, error);
+}
+
+/**
  * Test IComposerClient::createLayer and IComposerClient::destroyLayer.
  *
  * Test that layers can be created and destroyed.
@@ -182,6 +223,89 @@ TEST_F(GraphicsComposerHidlTest, CreateLayer) {
                                 mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount));
 
     mComposerClient->destroyLayer(mPrimaryDisplay, layer);
+}
+
+/**
+ * Test IComposerClient::createLayer
+ *
+ * Test that passing in an invalid display handle to createLayer returns
+ * BAD_DISPLAY.
+ */
+TEST_F(GraphicsComposerHidlTest, CreateLayerBadDisplay) {
+    Error error;
+    mComposerClient->getRaw()->createLayer(
+        mInvalidDisplayId, kBufferSlotCount,
+        [&](const auto& tmpOutError, const auto&) { error = tmpOutError; });
+    ASSERT_EQ(Error::BAD_DISPLAY, error);
+}
+
+/**
+ * Test IComposerClient::destroyLayer
+ *
+ * Test that passing in an invalid display handle to destroyLayer returns
+ * BAD_DISPLAY
+ */
+TEST_F(GraphicsComposerHidlTest, DestroyLayerBadDisplay) {
+    Error error;
+    Layer layer;
+    ASSERT_NO_FATAL_FAILURE(layer =
+                                mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount));
+
+    error = mComposerClient->getRaw()->destroyLayer(mInvalidDisplayId, layer);
+
+    EXPECT_EQ(Error::BAD_DISPLAY, error);
+
+    ASSERT_NO_FATAL_FAILURE(mComposerClient->destroyLayer(mPrimaryDisplay, layer));
+}
+
+/**
+ * Test IComposerClient::destroyLayer
+ *
+ * Test that passing in an invalid layer handle to destroyLayer returns
+ * BAD_LAYER
+ */
+TEST_F(GraphicsComposerHidlTest, DestroyLayerBadLayerError) {
+    // We haven't created any layers yet, so any id should be invalid
+    Error error = mComposerClient->getRaw()->destroyLayer(mPrimaryDisplay, 1);
+
+    EXPECT_EQ(Error::BAD_LAYER, error);
+}
+
+/**
+ * Test IComposerClient::getActiveConfig
+ *
+ * Test that passing in a bad display handle to getActiveConfig generates a
+ * BAD_DISPLAY error
+ */
+TEST_F(GraphicsComposerHidlTest, GetActiveConfigBadDisplay) {
+    Error error;
+    mComposerClient->getRaw()->getActiveConfig(
+        mInvalidDisplayId, [&](const auto& tmpOutError, const auto&) { error = tmpOutError; });
+    ASSERT_EQ(Error::BAD_DISPLAY, error);
+}
+
+/**
+ * Test IComposerClient::getDisplayConfigs
+ *
+ * Test IComposerClient::getDisplayConfigs returns no error
+ * when passed in a valid display
+ */
+TEST_F(GraphicsComposerHidlTest, GetDisplayConfig) {
+    std::vector<Config> configs;
+    ASSERT_NO_FATAL_FAILURE(configs = mComposerClient->getDisplayConfigs(mPrimaryDisplay));
+}
+
+/**
+ * Test IComposerClient::getDisplayConfigs
+ *
+ * Test IComposerClient::getDisplayConfigs returns BAD_DISPLAY
+ * when passed in an invalid display handle
+ */
+TEST_F(GraphicsComposerHidlTest, GetDisplayConfigBadDisplay) {
+    Error error;
+    mComposerClient->getRaw()->getDisplayConfigs(
+        mInvalidDisplayId, [&](const auto& tmpOutError, const auto&) { error = tmpOutError; });
+    ASSERT_EQ(Error::BAD_DISPLAY, error);
 }
 
 /**
@@ -222,6 +346,30 @@ TEST_F(GraphicsComposerHidlTest, GetClientTargetSupport) {
 
         ASSERT_TRUE(mComposerClient->getClientTargetSupport(
             mPrimaryDisplay, width, height, PixelFormat::RGBA_8888, Dataspace::UNKNOWN));
+    }
+}
+
+/**
+ * Test IComposerClient::getClientTargetSupport
+ *
+ * Test that IComposerClient::getClientTargetSupport returns BAD_DISPLAY when
+ * passed an invalid display handle
+ */
+TEST_F(GraphicsComposerHidlTest, GetClientTargetSupportBadDisplay) {
+    std::vector<Config> configs = mComposerClient->getDisplayConfigs(mPrimaryDisplay);
+    for (auto config : configs) {
+        int32_t width = mComposerClient->getDisplayAttribute(mPrimaryDisplay, config,
+                                                             IComposerClient::Attribute::WIDTH);
+        int32_t height = mComposerClient->getDisplayAttribute(mPrimaryDisplay, config,
+                                                              IComposerClient::Attribute::HEIGHT);
+        ASSERT_LT(0, width);
+        ASSERT_LT(0, height);
+
+        mComposerClient->setActiveConfig(mPrimaryDisplay, config);
+
+        Error error = mComposerClient->getRaw()->getClientTargetSupport(
+            mInvalidDisplayId, width, height, PixelFormat::RGBA_8888, Dataspace::UNKNOWN);
+        EXPECT_EQ(Error::BAD_DISPLAY, error);
     }
 }
 
@@ -287,6 +435,43 @@ TEST_F(GraphicsComposerHidlTest, SetActiveConfig) {
 }
 
 /**
+ * Test IComposerClient::setActiveConfig
+ *
+ * Test that config set during IComposerClient::setActiveConfig is maintained
+ * during a display on/off power cycle
+ */
+TEST_F(GraphicsComposerHidlTest, SetActiveConfigPowerCycle) {
+    ASSERT_NO_FATAL_FAILURE(
+        mComposerClient->setPowerMode(mPrimaryDisplay, IComposerClient::PowerMode::OFF));
+    ASSERT_NO_FATAL_FAILURE(
+        mComposerClient->setPowerMode(mPrimaryDisplay, IComposerClient::PowerMode::ON));
+
+    std::vector<Config> configs = mComposerClient->getDisplayConfigs(mPrimaryDisplay);
+    for (auto config : configs) {
+        mComposerClient->setActiveConfig(mPrimaryDisplay, config);
+        ASSERT_EQ(config, mComposerClient->getActiveConfig(mPrimaryDisplay));
+
+        ASSERT_NO_FATAL_FAILURE(
+            mComposerClient->setPowerMode(mPrimaryDisplay, IComposerClient::PowerMode::OFF));
+        ASSERT_NO_FATAL_FAILURE(
+            mComposerClient->setPowerMode(mPrimaryDisplay, IComposerClient::PowerMode::ON));
+        ASSERT_EQ(config, mComposerClient->getActiveConfig(mPrimaryDisplay));
+    }
+}
+
+/**
+ * Test IComposerClient::getColorMode
+ *
+ * Test that IComposerClient::getColorMode always returns ColorMode::NATIVE
+ */
+TEST_F(GraphicsComposerHidlTest, GetColorModes) {
+    std::vector<ColorMode> modes = mComposerClient->getColorModes(mPrimaryDisplay);
+    auto nativeModeLocation = std::find(modes.begin(), modes.end(), ColorMode::NATIVE);
+
+    ASSERT_NE(modes.end(), nativeModeLocation);
+}
+
+/**
  * Test IComposerClient::setColorMode.
  *
  * Test that IComposerClient::setColorMode succeeds for all color modes.
@@ -303,6 +488,45 @@ TEST_F(GraphicsComposerHidlTest, SetColorMode) {
             mComposerClient->setColorMode(mPrimaryDisplay, mode);
         }
     }
+}
+
+/**
+ * Test IComposerClient::setColorMode
+ *
+ * Test that IComposerClient::setColorMode returns BAD_DISPLAY for
+ * an invalid display handle
+ */
+TEST_F(GraphicsComposerHidlTest, SetColorModeBadDisplay) {
+    std::vector<ColorMode> modes = mComposerClient->getColorModes(mPrimaryDisplay);
+    for (auto mode : modes) {
+        Error error = mComposerClient->getRaw()->setColorMode(mInvalidDisplayId, mode);
+        EXPECT_EQ(Error::BAD_DISPLAY, error);
+    }
+}
+
+/**
+ * Test IComposerClient::setColorMode
+ *
+ * Test that IComposerClient::setColorMode returns BAD_PARAMETER when passed in
+ * an invalid color mode
+ */
+TEST_F(GraphicsComposerHidlTest, SetColorModeBadParameter) {
+    Error error =
+        mComposerClient->getRaw()->setColorMode(mPrimaryDisplay, static_cast<ColorMode>(-1));
+    ASSERT_EQ(Error::BAD_PARAMETER, error);
+}
+
+/**
+ * Test IComposerClient::getDozeSupport
+ *
+ * Test that IComposerClient::getDozeSupport returns
+ * BAD_DISPLAY when passed an invalid display handle
+ */
+TEST_F(GraphicsComposerHidlTest, GetDozeSupportBadDisplay) {
+    Error error;
+    mComposerClient->getRaw()->getDozeSupport(
+        mInvalidDisplayId, [&](const auto& tmpOutError, const auto&) { error = tmpOutError; });
+    ASSERT_EQ(Error::BAD_DISPLAY, error);
 }
 
 /**
@@ -325,6 +549,99 @@ TEST_F(GraphicsComposerHidlTest, SetPowerMode) {
     for (auto mode : modes) {
         mComposerClient->setPowerMode(mPrimaryDisplay, mode);
     }
+}
+
+/**
+ * Test IComposerClient::setPowerMode
+ *
+ * Test IComposerClient::setPowerMode succeeds with different
+ * orderings of power modes
+ */
+TEST_F(GraphicsComposerHidlTest, SetPowerModeVariations) {
+    std::vector<IComposerClient::PowerMode> modes;
+    modes.push_back(IComposerClient::PowerMode::OFF);
+    modes.push_back(IComposerClient::PowerMode::ON);
+    modes.push_back(IComposerClient::PowerMode::OFF);
+    for (auto mode : modes) {
+        ASSERT_NO_FATAL_FAILURE(mComposerClient->setPowerMode(mPrimaryDisplay, mode));
+    }
+
+    modes.clear();
+
+    modes.push_back(IComposerClient::PowerMode::OFF);
+    modes.push_back(IComposerClient::PowerMode::OFF);
+    for (auto mode : modes) {
+        ASSERT_NO_FATAL_FAILURE(mComposerClient->setPowerMode(mPrimaryDisplay, mode));
+    }
+
+    modes.clear();
+
+    modes.push_back(IComposerClient::PowerMode::ON);
+    modes.push_back(IComposerClient::PowerMode::ON);
+    for (auto mode : modes) {
+        ASSERT_NO_FATAL_FAILURE(mComposerClient->setPowerMode(mPrimaryDisplay, mode));
+    }
+
+    modes.clear();
+    if (mComposerClient->getDozeSupport(mPrimaryDisplay)) {
+        modes.push_back(IComposerClient::PowerMode::DOZE);
+        modes.push_back(IComposerClient::PowerMode::DOZE);
+
+        for (auto mode : modes) {
+            ASSERT_NO_FATAL_FAILURE(mComposerClient->setPowerMode(mPrimaryDisplay, mode));
+        }
+
+        modes.clear();
+
+        modes.push_back(IComposerClient::PowerMode::DOZE_SUSPEND);
+        modes.push_back(IComposerClient::PowerMode::DOZE_SUSPEND);
+
+        for (auto mode : modes) {
+            ASSERT_NO_FATAL_FAILURE(mComposerClient->setPowerMode(mPrimaryDisplay, mode));
+        }
+    }
+}
+
+/**
+ * Test IComposerClient::setPowerMode
+ *
+ * Test IComposerClient::setPowerMode returns BAD_DISPLAY when passed an invalid
+ * display handle
+ */
+TEST_F(GraphicsComposerHidlTest, SetPowerModeBadDisplay) {
+    Error error =
+        mComposerClient->getRaw()->setPowerMode(mInvalidDisplayId, IComposerClient::PowerMode::ON);
+    ASSERT_EQ(Error::BAD_DISPLAY, error);
+}
+
+/**
+ * Test IComposerClient::setPowerMode
+ *
+ * Test that IComposerClient::setPowerMode returns UNSUPPORTED when passed DOZE
+ * or DOZE_SUSPEND on devices that do not support DOZE/DOZE_SUSPEND
+ */
+TEST_F(GraphicsComposerHidlTest, SetPowerModeUnsupported) {
+    if (!mComposerClient->getDozeSupport(mPrimaryDisplay)) {
+        Error error = mComposerClient->getRaw()->setPowerMode(mPrimaryDisplay,
+                                                              IComposerClient::PowerMode::DOZE);
+        EXPECT_EQ(Error::UNSUPPORTED, error);
+
+        error = mComposerClient->getRaw()->setPowerMode(mPrimaryDisplay,
+                                                        IComposerClient::PowerMode::DOZE_SUSPEND);
+        EXPECT_EQ(Error::UNSUPPORTED, error);
+    }
+}
+
+/**
+ * Test IComposerClient::setPowerMode
+ *
+ * Tests that IComposerClient::setPowerMode returns BAD_PARAMETER when passed an invalid
+ * PowerMode
+ */
+TEST_F(GraphicsComposerHidlTest, SetPowerModeBadParameter) {
+    Error error = mComposerClient->getRaw()->setPowerMode(
+        mPrimaryDisplay, static_cast<IComposerClient::PowerMode>(-1));
+    ASSERT_EQ(Error::BAD_PARAMETER, error);
 }
 
 /**
