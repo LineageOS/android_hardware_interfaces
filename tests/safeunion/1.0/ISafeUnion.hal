@@ -68,6 +68,14 @@ interface ISafeUnion {
         IOtherInterface c;
         string d;
         vec<string> e;
+        handle f;
+        vec<handle> g;
+    };
+
+    safe_union HandleTypeSafeUnion {
+        handle a;
+        handle[5] b;
+        vec<handle> c;
     };
 
     newLargeSafeUnion() generates (LargeSafeUnion myUnion);
@@ -90,4 +98,11 @@ interface ISafeUnion {
     setInterfaceC(InterfaceTypeSafeUnion myUnion, IOtherInterface c) generates (InterfaceTypeSafeUnion myUnion);
     setInterfaceD(InterfaceTypeSafeUnion myUnion, string d) generates (InterfaceTypeSafeUnion myUnion);
     setInterfaceE(InterfaceTypeSafeUnion myUnion, vec<string> e) generates (InterfaceTypeSafeUnion myUnion);
+    setInterfaceF(InterfaceTypeSafeUnion myUnion, handle f) generates (InterfaceTypeSafeUnion myUnion);
+    setInterfaceG(InterfaceTypeSafeUnion myUnion, vec<handle> g) generates (InterfaceTypeSafeUnion myUnion);
+
+    newHandleTypeSafeUnion() generates (HandleTypeSafeUnion myUnion);
+    setHandleA(HandleTypeSafeUnion myUnion, handle a) generates (HandleTypeSafeUnion myUnion);
+    setHandleB(HandleTypeSafeUnion myUnion, handle[5] b) generates (HandleTypeSafeUnion myUnion);
+    setHandleC(HandleTypeSafeUnion myUnion, vec<handle> c) generates (HandleTypeSafeUnion myUnion);
 };
