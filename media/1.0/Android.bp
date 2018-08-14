@@ -17,6 +17,6 @@ hidl_interface {
         "AnwBufferAttributes",
         "Rect",
     ],
-    gen_java: false,
+    gen_java: true,
 }
 

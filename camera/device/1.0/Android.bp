@@ -29,6 +29,6 @@ hidl_interface {
         "NotifyCallbackMsg",
         "VideoFrameMessage",
     ],
-    gen_java: false,
+    gen_java: true,
 }
 
