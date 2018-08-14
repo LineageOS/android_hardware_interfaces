@@ -141,13 +141,14 @@ LOCAL_MODULE := framework_compatibility_matrix.xml
 LOCAL_REQUIRED_MODULES := $(my_system_matrix_deps)
 include $(BUILD_PHONY_PACKAGE)
 
-# Final Framework Compatibility Matrix
+# Final Framework Compatibility Matrix for OTA
 include $(CLEAR_VARS)
 include $(LOCAL_PATH)/clear_vars.mk
 LOCAL_MODULE := verified_assembled_system_matrix.xml
 LOCAL_MODULE_PATH := $(PRODUCT_OUT)
 LOCAL_REQUIRED_MODULES := $(my_system_matrix_deps)
 LOCAL_GENERATED_SOURCES := $(call module-installed-files,$(LOCAL_REQUIRED_MODULES))
+LOCAL_ADD_VBMETA_VERSION_OVERRIDE := true
 
 ifdef BUILT_VENDOR_MANIFEST
 LOCAL_GEN_FILE_DEPENDENCIES += $(BUILT_VENDOR_MANIFEST)
