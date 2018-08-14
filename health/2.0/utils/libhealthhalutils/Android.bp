@@ -21,6 +21,7 @@ cc_library_static {
     srcs: ["HealthHalUtils.cpp"],
     cflags: ["-Wall", "-Werror"],
     vendor_available: true,
+    recovery_available: true,
     export_include_dirs: ["include"],
     shared_libs: [
         "android.hardware.health@2.0",
