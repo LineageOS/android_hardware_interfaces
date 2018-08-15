@@ -694,9 +694,10 @@ TEST_F(RadioHidlTest, startLceService) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(radioRsp->rspInfo.error,
-                                     {RadioError::INTERNAL_ERR, RadioError::LCE_NOT_SUPPORTED,
-                                      RadioError::RADIO_NOT_AVAILABLE, RadioError::SIM_ABSENT}));
+        ASSERT_TRUE(CheckAnyOfErrors(
+            radioRsp->rspInfo.error,
+            {RadioError::INTERNAL_ERR, RadioError::LCE_NOT_SUPPORTED,
+             RadioError::RADIO_NOT_AVAILABLE, RadioError::SIM_ABSENT, RadioError::NONE}));
     }
 }
 
@@ -730,10 +731,10 @@ TEST_F(RadioHidlTest, pullLceData) {
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
 
     if (cardStatus.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(
-            radioRsp->rspInfo.error,
-            {RadioError::NONE, RadioError::INTERNAL_ERR, RadioError::RADIO_NOT_AVAILABLE},
-            CHECK_OEM_ERROR));
+        ASSERT_TRUE(CheckAnyOfErrors(radioRsp->rspInfo.error,
+                                     {RadioError::NONE, RadioError::INTERNAL_ERR,
+                                      RadioError::RADIO_NOT_AVAILABLE, RadioError::SIM_ABSENT},
+                                     CHECK_OEM_ERROR));
     }
 }
 
