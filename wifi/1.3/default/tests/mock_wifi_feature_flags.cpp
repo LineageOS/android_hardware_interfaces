@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,22 @@
  * limitations under the License.
  */
 
-// Convenience library for (hwbinder) clients to choose the correct health
-// service instance.
-cc_library_static {
-    name: "libhealthhalutils",
-    srcs: ["HealthHalUtils.cpp"],
-    cflags: ["-Wall", "-Werror"],
-    vendor_available: true,
-    recovery_available: true,
-    export_include_dirs: ["include"],
-    shared_libs: [
-        "android.hardware.health@2.0",
-        "libbase",
-        "libhidlbase",
-    ],
-}
+#include <gmock/gmock.h>
+
+#include "mock_wifi_feature_flags.h"
+
+namespace android {
+namespace hardware {
+namespace wifi {
+namespace V1_3 {
+namespace implementation {
+namespace feature_flags {
+
+MockWifiFeatureFlags::MockWifiFeatureFlags() {}
+
+}  // namespace feature_flags
+}  // namespace implementation
+}  // namespace V1_3
+}  // namespace wifi
+}  // namespace hardware
+}  // namespace android
