@@ -1083,7 +1083,7 @@ class NewKeyGenerationTest : public KeymasterHidlTest {
         AuthorizationSet auths(keyCharacteristics.teeEnforced);
         auths.push_back(AuthorizationSet(keyCharacteristics.softwareEnforced));
 
-        if (!SupportsSymmetric() && asymmetric) {
+        if (IsSecure() && !SupportsSymmetric() && asymmetric) {
             EXPECT_TRUE(auths.Contains(TAG_ORIGIN, KeyOrigin::UNKNOWN));
         } else {
             EXPECT_TRUE(auths.Contains(TAG_ORIGIN, KeyOrigin::GENERATED));
