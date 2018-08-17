@@ -56,6 +56,9 @@ class RadioResponse_v1_2 : public ::android::hardware::radio::V1_2::IRadioRespon
 
     RadioResponseInfo rspInfo;
 
+    // Data
+    ::android::hardware::radio::V1_2::DataRegStateResult dataRegResp;
+
     RadioResponse_v1_2(RadioHidlTest_v1_2& parent_v1_2);
     virtual ~RadioResponse_v1_2() = default;
 

@@ -756,8 +756,9 @@ Return<void> RadioResponse_v1_2::getVoiceRegistrationStateResponse_1_2(
 
 Return<void> RadioResponse_v1_2::getDataRegistrationStateResponse_1_2(
     const RadioResponseInfo& info,
-    const ::android::hardware::radio::V1_2::DataRegStateResult& /*dataRegResponse*/) {
+    const ::android::hardware::radio::V1_2::DataRegStateResult& dataRegResponse) {
     rspInfo = info;
+    dataRegResp = dataRegResponse;
     parent_v1_2.notify(info.serial);
     return Void();
 }
