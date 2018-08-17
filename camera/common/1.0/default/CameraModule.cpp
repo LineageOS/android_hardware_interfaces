@@ -319,6 +319,41 @@ int CameraModule::getCameraInfo(int cameraId, struct camera_info *info) {
     return OK;
 }
 
+int CameraModule::getPhysicalCameraInfo(int physicalCameraId, camera_metadata_t **physicalInfo) {
+    ATRACE_CALL();
+    Mutex::Autolock lock(mCameraInfoLock);
+    if (physicalCameraId < 0) {
+        ALOGE("%s: Invalid physical camera ID %d", __FUNCTION__, physicalCameraId);
+        return -EINVAL;
+    }
+
+    // Only query physical camera info for 2.5 version for newer
+    int apiVersion = mModule->common.module_api_version;
+    if (apiVersion < CAMERA_MODULE_API_VERSION_2_5) {
+        ALOGE("%s: Module version must be at least 2.5 to handle getPhysicalCameraInfo",
+                __FUNCTION__);
+        return -ENODEV;
+    }
+
+    ssize_t index = mPhysicalCameraInfoMap.indexOfKey(physicalCameraId);
+    if (index == NAME_NOT_FOUND) {
+        // Get physical camera characteristics, and cache it
+        camera_metadata_t *info = nullptr;
+        ATRACE_BEGIN("camera_module->get_physical_camera_info");
+        int ret = mModule->get_physical_camera_info(physicalCameraId, &info);
+        ATRACE_END();
+        if (ret != 0) {
+            return ret;
+        }
+
+        index = mPhysicalCameraInfoMap.add(physicalCameraId, info);
+    }
+
+    assert(index != NAME_NOT_FOUND);
+    *physicalInfo = mPhysicalCameraInfoMap[index];
+    return OK;
+}
+
 int CameraModule::getDeviceVersion(int cameraId) {
     ssize_t index = mDeviceVersionMap.indexOfKey(cameraId);
     if (index == NAME_NOT_FOUND) {
