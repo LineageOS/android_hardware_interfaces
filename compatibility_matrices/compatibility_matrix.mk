@@ -86,7 +86,7 @@ endif
 
 ifneq (,$(strip $(LOCAL_KERNEL_CONFIG_DATA_PATHS)))
 $(GEN): PRIVATE_KERNEL_CONFIG_DATA_PATHS := $(LOCAL_KERNEL_CONFIG_DATA_PATHS)
-$(GEN): $(foreach pair,$(PRIVATE_KERNEL_CONFIG_DATA_PATHS),\
+$(GEN): $(foreach pair,$(LOCAL_KERNEL_CONFIG_DATA_PATHS),\
     $(wildcard $(call word-colon,2,$(pair))/android-base*.config))
 $(GEN): PRIVATE_FLAGS += $(foreach pair,$(PRIVATE_KERNEL_CONFIG_DATA_PATHS),\
 	--kernel=$(call word-colon,1,$(pair)):$(call normalize-path-list,\
