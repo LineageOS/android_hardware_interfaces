@@ -169,6 +169,8 @@ Return<void> StreamMmap<T>::createMmapBuffer(int32_t minSizeFrames, size_t frame
             bool applicationShareable =
                 halInfo.flags & AUDIO_MMAP_APPLICATION_SHAREABLE || halInfo.buffer_size_frames < 0;
             halInfo.buffer_size_frames = abs(halInfo.buffer_size_frames);
+            info.sharedMemory =  // hidl_memory size must always be positive
+                hidl_memory("audio_buffer", hidlHandle, frameSize * halInfo.buffer_size_frames);
 #ifdef AUDIO_HAL_VERSION_2_0
             if (applicationShareable) {
                 halInfo.buffer_size_frames *= -1;
@@ -178,9 +180,6 @@ Return<void> StreamMmap<T>::createMmapBuffer(int32_t minSizeFrames, size_t frame
                 halInfo.flags | (applicationShareable ? MmapBufferFlag::APPLICATION_SHAREABLE
                                                       : MmapBufferFlag::NONE);
 #endif
-
-            info.sharedMemory =
-                hidl_memory("audio_buffer", hidlHandle, frameSize * halInfo.buffer_size_frames);
             info.bufferSizeFrames = halInfo.buffer_size_frames;
             info.burstSizeFrames = halInfo.burst_size_frames;
         }
