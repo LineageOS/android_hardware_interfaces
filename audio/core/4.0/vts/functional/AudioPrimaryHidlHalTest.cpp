@@ -38,6 +38,8 @@
 #include <android/hardware/audio/4.0/IPrimaryDevice.h>
 #include <android/hardware/audio/4.0/types.h>
 #include <android/hardware/audio/common/4.0/types.h>
+#include <fmq/EventFlag.h>
+#include <fmq/MessageQueue.h>
 
 #include <common/all-versions/VersionUtils.h>
 
@@ -55,13 +57,16 @@ using std::vector;
 using std::list;
 
 using ::android::sp;
-using ::android::hardware::Return;
+using ::android::hardware::EventFlag;
 using ::android::hardware::hidl_bitfield;
 using ::android::hardware::hidl_enum_range;
 using ::android::hardware::hidl_handle;
 using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
+using ::android::hardware::kSynchronizedReadWrite;
+using ::android::hardware::MessageQueue;
 using ::android::hardware::MQDescriptorSync;
+using ::android::hardware::Return;
 using ::android::hardware::audio::V4_0::AudioDrain;
 using ::android::hardware::audio::V4_0::DeviceAddress;
 using ::android::hardware::audio::V4_0::IDevice;
@@ -71,6 +76,7 @@ using TtyMode = ::android::hardware::audio::V4_0::IPrimaryDevice::TtyMode;
 using ::android::hardware::audio::V4_0::IDevicesFactory;
 using ::android::hardware::audio::V4_0::IStream;
 using ::android::hardware::audio::V4_0::IStreamIn;
+using ::android::hardware::audio::V4_0::MessageQueueFlagBits;
 using ::android::hardware::audio::V4_0::TimeSpec;
 using ReadParameters = ::android::hardware::audio::V4_0::IStreamIn::ReadParameters;
 using ReadStatus = ::android::hardware::audio::V4_0::IStreamIn::ReadStatus;
@@ -489,7 +495,7 @@ TEST_F(AudioPrimaryHidlTest, getParameters) {
 }
 
 //////////////////////////////////////////////////////////////////////////////
-/////////////////////////////// getMicrophones ///////////////////////////////
+/////////////////////////// get(Active)Microphones ///////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
 TEST_F(AudioPrimaryHidlTest, GetMicrophonesTest) {
@@ -497,6 +503,76 @@ TEST_F(AudioPrimaryHidlTest, GetMicrophonesTest) {
     hidl_vec<MicrophoneInfo> microphones;
     ASSERT_OK(device->getMicrophones(returnIn(res, microphones)));
     ASSERT_OK(res);
+    if (microphones.size() > 0) {
+        // When there is microphone on the phone, try to open an input stream
+        // and query for the active microphones.
+        doc::test(
+            "Make sure getMicrophones always succeeds"
+            "and getActiveMicrophones always succeeds when recording from these microphones.");
+        AudioIoHandle ioHandle = (AudioIoHandle)AudioHandleConsts::AUDIO_IO_HANDLE_NONE;
+        AudioConfig config{};
+        config.channelMask = mkBitfield(AudioChannelMask::IN_MONO);
+        config.sampleRateHz = 8000;
+        config.format = AudioFormat::PCM_16_BIT;
+        auto flags = hidl_bitfield<AudioInputFlag>(AudioInputFlag::NONE);
+        const SinkMetadata initialMetadata = {{{AudioSource::MIC, 1 /* gain */}}};
+        EventFlag* efGroup;
+        for (auto microphone : microphones) {
+            if (microphone.deviceAddress.device != AudioDevice::IN_BUILTIN_MIC) {
+                continue;
+            }
+            sp<IStreamIn> stream;
+            AudioConfig suggestedConfig{};
+            ASSERT_OK(device->openInputStream(ioHandle, microphone.deviceAddress, config, flags,
+                                              initialMetadata,
+                                              returnIn(res, stream, suggestedConfig)));
+            if (res != Result::OK) {
+                ASSERT_TRUE(stream == nullptr);
+                AudioConfig suggestedConfigRetry{};
+                ASSERT_OK(device->openInputStream(ioHandle, microphone.deviceAddress,
+                                                  suggestedConfig, flags, initialMetadata,
+                                                  returnIn(res, stream, suggestedConfigRetry)));
+            }
+            ASSERT_OK(res);
+            hidl_vec<MicrophoneInfo> activeMicrophones;
+            Result readRes;
+            typedef MessageQueue<ReadParameters, kSynchronizedReadWrite> CommandMQ;
+            typedef MessageQueue<uint8_t, kSynchronizedReadWrite> DataMQ;
+            std::unique_ptr<CommandMQ> commandMQ;
+            std::unique_ptr<DataMQ> dataMQ;
+            size_t frameSize = stream->getFrameSize();
+            size_t frameCount = stream->getBufferSize() / frameSize;
+            ASSERT_OK(stream->prepareForReading(
+                frameSize, frameCount, [&](auto r, auto& c, auto& d, auto&, auto&) {
+                    readRes = r;
+                    if (readRes == Result::OK) {
+                        commandMQ.reset(new CommandMQ(c));
+                        dataMQ.reset(new DataMQ(d));
+                        if (dataMQ->isValid() && dataMQ->getEventFlagWord()) {
+                            EventFlag::createEventFlag(dataMQ->getEventFlagWord(), &efGroup);
+                        }
+                    }
+                }));
+            ASSERT_OK(readRes);
+            ReadParameters params;
+            params.command = IStreamIn::ReadCommand::READ;
+            ASSERT_TRUE(commandMQ != nullptr);
+            ASSERT_TRUE(commandMQ->isValid());
+            ASSERT_TRUE(commandMQ->write(&params));
+            efGroup->wake(static_cast<uint32_t>(MessageQueueFlagBits::NOT_FULL));
+            uint32_t efState = 0;
+            efGroup->wait(static_cast<uint32_t>(MessageQueueFlagBits::NOT_EMPTY), &efState);
+            if (efState & static_cast<uint32_t>(MessageQueueFlagBits::NOT_EMPTY)) {
+                ASSERT_OK(stream->getActiveMicrophones(returnIn(res, activeMicrophones)));
+                ASSERT_OK(res);
+                ASSERT_NE(0U, activeMicrophones.size());
+            }
+            stream->close();
+            if (efGroup) {
+                EventFlag::deleteEventFlag(&efGroup);
+            }
+        }
+    }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1102,13 +1178,6 @@ TEST_P(InputStreamTest, updateSinkMetadata) {
 
     // Restore initial
     ASSERT_OK(stream->updateSinkMetadata(initialMetadata));
-}
-
-TEST_P(InputStreamTest, getActiveMicrophones) {
-    doc::test("Active microphones of a non started stream may not be retrievable");
-    hidl_vec<MicrophoneInfo> microphones;
-    ASSERT_OK(stream->getActiveMicrophones(returnIn(res, microphones)));
-    ASSERT_RESULT(okOrNotSupported, res);
 }
 
 //////////////////////////////////////////////////////////////////////////////

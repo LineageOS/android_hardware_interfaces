@@ -177,7 +177,10 @@ protected:
     Status initStatus() const;
     status_t initDefaultRequests();
     status_t fillCaptureResult(common::V1_0::helper::CameraMetadata& md, nsecs_t timestamp);
-    Status configureStreams(const V3_2::StreamConfiguration&, V3_3::HalStreamConfiguration* out);
+    Status configureStreams(const V3_2::StreamConfiguration&,
+            V3_3::HalStreamConfiguration* out,
+            // Only filled by configureStreams_3_4, and only one blob stream supported
+            uint32_t blobBufferSize = 0);
     // fps = 0.0 means default, which is
     // slowest fps that is at least 30, or fastest fps if 30 is not supported
     int configureV4l2StreamLocked(const SupportedV4L2Format& fmt, double fps = 0.0);
@@ -225,7 +228,8 @@ protected:
 
         Status allocateIntermediateBuffers(
                 const Size& v4lSize, const Size& thumbSize,
-                const hidl_vec<Stream>& streams);
+                const hidl_vec<Stream>& streams,
+                uint32_t blobBufferSize);
         Status submitRequest(const std::shared_ptr<HalRequest>&);
         void flush();
         void dump(int fd);
@@ -289,6 +293,7 @@ protected:
         std::unordered_map<Size, sp<AllocatedFrame>, SizeHasher> mScaledYu12Frames;
         YCbCrLayout mYu12FrameLayout;
         YCbCrLayout mYu12ThumbFrameLayout;
+        uint32_t mBlobBufferSize = 0; // 0 -> HAL derive buffer size, else: use given size
 
         std::string mExifMake;
         std::string mExifModel;
