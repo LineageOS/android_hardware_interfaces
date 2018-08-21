@@ -603,7 +603,13 @@ enum VehicleProperty : int32_t {
      *
      * This property corresponds to the low fuel warning on the dashboard.
      * Once FUEL_LEVEL_LOW is set, it should not be cleared until more fuel is
-     * added to the vehicle.
+     * added to the vehicle.  This property may take into account all fuel
+     * sources for a vehicle - for example:
+     *
+     *   For a gas powered vehicle, this property is based soley on gas level.
+     *   For a battery powered vehicle, this property is based solely on battery level.
+     *   For a hybrid vehicle, this property may be based on the combination of gas and battery
+     *      levels, at the OEM's discretion.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ
