@@ -26,23 +26,53 @@ namespace V2_1 {
 namespace vts {
 
 void TestCommandReader::parse() {
+    mCompositionChanges.clear();
     while (!isEmpty()) {
         IComposerClient::Command command;
         uint16_t length;
         ASSERT_TRUE(beginCommand(&command, &length));
 
         switch (command) {
+            case IComposerClient::Command::SELECT_DISPLAY:
+                ASSERT_EQ(2, length);
+                read64();  // display
+                break;
             case IComposerClient::Command::SET_ERROR: {
                 ASSERT_EQ(2, length);
                 auto loc = read();
                 auto err = readSigned();
                 GTEST_FAIL() << "unexpected error " << err << " at location " << loc;
             } break;
-            case IComposerClient::Command::SELECT_DISPLAY:
             case IComposerClient::Command::SET_CHANGED_COMPOSITION_TYPES:
+                ASSERT_EQ(0, length % 3);
+                for (uint16_t count = 0; count < length / 3; ++count) {
+                    uint64_t layerId = read64();
+                    uint32_t composition = read();
+
+                    std::pair<uint64_t, uint32_t> compositionChange(layerId, composition);
+                    mCompositionChanges.push_back(compositionChange);
+                }
+                break;
             case IComposerClient::Command::SET_DISPLAY_REQUESTS:
+                ASSERT_EQ(1, length % 3);
+                read();  // displayRequests, ignored for now
+                for (uint16_t count = 0; count < (length - 1) / 3; ++count) {
+                    read64();  // layer
+                    // silently eat requests to clear the client target, since we won't be testing
+                    // client composition anyway
+                    ASSERT_EQ(1u, read());
+                }
+                break;
             case IComposerClient::Command::SET_PRESENT_FENCE:
+                ASSERT_EQ(1, length);
+                close(readFence());
+                break;
             case IComposerClient::Command::SET_RELEASE_FENCES:
+                ASSERT_EQ(0, length % 3);
+                for (uint16_t count = 0; count < length / 3; ++count) {
+                    read64();
+                    close(readFence());
+                }
                 break;
             default:
                 GTEST_FAIL() << "unexpected return command " << std::hex
