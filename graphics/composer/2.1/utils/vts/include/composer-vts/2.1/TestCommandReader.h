@@ -32,6 +32,8 @@ class TestCommandReader : public CommandReaderBase {
     // Parse all commands in the return command queue.  Call GTEST_FAIL() for
     // unexpected errors or commands.
     void parse();
+
+    std::vector<std::pair<uint64_t, uint32_t>> mCompositionChanges;
 };
 
 }  // namespace vts

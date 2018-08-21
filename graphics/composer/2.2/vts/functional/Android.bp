@@ -17,12 +17,15 @@
 cc_test {
     name: "VtsHalGraphicsComposerV2_2TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
-    srcs: ["VtsHalGraphicsComposerV2_2TargetTest.cpp"],
+    srcs: [
+        "VtsHalGraphicsComposerV2_2ReadbackTest.cpp",
+        "VtsHalGraphicsComposerV2_2TargetTest.cpp",
+    ],
 
     // TODO(b/64437680): Assume these libs are always available on the device.
     shared_libs: [
         "libfmq",
-	"libhidltransport",
+        "libhidltransport",
         "libsync",
     ],
     static_libs: [
