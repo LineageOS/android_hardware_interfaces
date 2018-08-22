@@ -61,11 +61,16 @@ interface ISurfaceFlingerConfigs {
     hasWideColorDisplay() generates (OptionalBool value);
 
     /**
-     * hwHdrDisplay indicates that the device has
-     * or can support an HDR (High Dynamic Range) display.
-     * Typically an HDR display is also wide-color.
+     * hwHdrDisplay indicates that the device has an High Dynamic Range display.
+     * A display is considered High Dynamic Range if it
+     *
+     *     1. is a wide color gamut display, typically DCI-P3 or lager
+     *     2. has high luminance capability, typically 540 nits or higher at 10% OPR
+     *
      * Indicate support for this feature by setting
      * TARGET_HAS_HDR_DISPLAY to true in BoardConfig.mk
+     * TARGET_HAS_WIDE_COLOR_DISPLAY must be set to true when
+     * TARGET_HAS_HDR_DISPLAY is true.
      */
     hasHDRDisplay() generates (OptionalBool value);
 
