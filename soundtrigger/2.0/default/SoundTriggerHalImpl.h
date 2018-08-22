@@ -167,8 +167,11 @@ class SoundTriggerHalImpl : public RefBase {
     static void recognitionCallback(struct sound_trigger_recognition_event* halEvent, void* cookie);
 
     const char* mModuleName;
-    struct sound_trigger_hw_device* mHwDevice;
+
     volatile atomic_uint_fast32_t mNextModelId;
+
+   protected:
+    struct sound_trigger_hw_device* mHwDevice;
     DefaultKeyedVector<int32_t, sp<SoundModelClient> > mClients;
     Mutex mLock;
 };
