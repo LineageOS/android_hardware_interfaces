@@ -22,11 +22,10 @@
 namespace android {
 namespace hardware {
 namespace configstore {
-namespace V1_1 {
+namespace V1_2 {
 namespace implementation {
 
-// Methods from ::android::hardware::configstore::V1_0::ISurfaceFlingerConfigs
-// follow.
+// ::android::hardware::configstore::V1_0::ISurfaceFlingerConfigs implementation.
 Return<void> SurfaceFlingerConfigs::vsyncEventPhaseOffsetNs(vsyncEventPhaseOffsetNs_cb _hidl_cb) {
 #ifdef VSYNC_EVENT_PHASE_OFFSET_NS
     _hidl_cb({true, VSYNC_EVENT_PHASE_OFFSET_NS});
@@ -142,8 +141,7 @@ Return<void> SurfaceFlingerConfigs::startGraphicsAllocatorService(
     return Void();
 }
 
-// Methods from ::android::hardware::configstore::V1_1::ISurfaceFlingerConfigs
-// follow.
+// ::android::hardware::configstore::V1_1::ISurfaceFlingerConfigs implementation.
 
 #ifdef PRIMARY_DISPLAY_ORIENTATION
 static_assert(PRIMARY_DISPLAY_ORIENTATION == 0 || PRIMARY_DISPLAY_ORIENTATION == 90 ||
@@ -191,10 +189,18 @@ Return<void> SurfaceFlingerConfigs::primaryDisplayOrientation(
     return Void();
 }
 
-// Methods from ::android::hidl::base::V1_0::IBase follow.
+// ::android::hardware::configstore::V1_2::ISurfaceFlingerConfigs implementation.
+Return<void> SurfaceFlingerConfigs::useColorManagement(useColorManagement_cb _hidl_cb) {
+#if defined(USE_COLOR_MANAGEMENT) || defined(HAS_WIDE_COLOR_DISPLAY) || defined(HAS_HDR_DISPLAY)
+    _hidl_cb({true, true});
+#else
+    _hidl_cb({true, false});
+#endif
+    return Void();
+}
 
 }  // namespace implementation
-}  // namespace V1_1
+}  // namespace V1_2
 }  // namespace configstore
 }  // namespace hardware
 }  // namespace android
