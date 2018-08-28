@@ -45,29 +45,37 @@ namespace utility {
                         xmlFilePath, xsdFilePath)
 
 /** Validate an XML according to an xsd.
- * The XML file must be in at least one of the provided locations.
- * If multiple are found, all are validated.
+ * All file named xmlFileName in each xmlFileLocations folder must be valid if present.
+ * @tparam atLeastOneRequired If true, at least one file has to be found.
+ *                           If false, no found file is a success.
  */
+template <bool atLeastOneRequired = true>
 ::testing::AssertionResult validateXmlMultipleLocations(
     const char* xmlFileNameExpr, const char* xmlFileLocationsExpr, const char* xsdFilePathExpr,
     const char* xmlFileName, std::vector<const char*> xmlFileLocations, const char* xsdFilePath);
 
-/** ASSERT that an XML is valid according to an xsd.
- * The XML file must be in at least one of the provided locations.
- * If multiple are found, all are validated.
- */
-#define ASSERT_ONE_VALID_XML_MULTIPLE_LOCATIONS(xmlFileName, xmlFileLocations, xsdFilePath) \
-    ASSERT_PRED_FORMAT3(                                                                    \
-        ::android::hardware::audio::common::test::utility::validateXmlMultipleLocations,    \
+/** ASSERT that all found XML are valid according to an xsd. */
+#define ASSERT_VALID_XML_MULTIPLE_LOCATIONS(xmlFileName, xmlFileLocations, xsdFilePath)         \
+    ASSERT_PRED_FORMAT3(                                                                        \
+        ::android::hardware::audio::common::test::utility::validateXmlMultipleLocations<false>, \
         xmlFileName, xmlFileLocations, xsdFilePath)
 
-/** EXPECT an XML to be valid according to an xsd.
- * The XML file must be in at least one of the provided locations.
- * If multiple are found, all are validated.
- */
-#define EXPECT_ONE_VALID_XML_MULTIPLE_LOCATIONS(xmlFileName, xmlFileLocations, xsdFilePath) \
-    EXPECT_PRED_FORMAT3(                                                                    \
-        ::android::hardware::audio::common::test::utility::validateXmlMultipleLocations,    \
+/** EXPECT that all found XML are valid according to an xsd. */
+#define EXPECT_VALID_XML_MULTIPLE_LOCATIONS(xmlFileName, xmlFileLocations, xsdFilePath)         \
+    EXPECT_PRED_FORMAT3(                                                                        \
+        ::android::hardware::audio::common::test::utility::validateXmlMultipleLocations<false>, \
+        xmlFileName, xmlFileLocations, xsdFilePath)
+
+/** ASSERT that all found XML are valid according to an xsd. At least one must be found. */
+#define ASSERT_ONE_VALID_XML_MULTIPLE_LOCATIONS(xmlFileName, xmlFileLocations, xsdFilePath)    \
+    ASSERT_PRED_FORMAT3(                                                                       \
+        ::android::hardware::audio::common::test::utility::validateXmlMultipleLocations<true>, \
+        xmlFileName, xmlFileLocations, xsdFilePath)
+
+/** EXPECT that all found XML are valid according to an xsd. At least one must be found. */
+#define EXPECT_ONE_VALID_XML_MULTIPLE_LOCATIONS(xmlFileName, xmlFileLocations, xsdFilePath)    \
+    EXPECT_PRED_FORMAT3(                                                                       \
+        ::android::hardware::audio::common::test::utility::validateXmlMultipleLocations<true>, \
         xmlFileName, xmlFileLocations, xsdFilePath)
 
 }  // namespace utility
