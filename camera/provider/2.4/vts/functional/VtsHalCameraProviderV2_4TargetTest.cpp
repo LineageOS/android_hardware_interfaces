@@ -4046,10 +4046,10 @@ TEST_F(CameraHidlTest, flushPreviewRequest) {
                                << static_cast<uint32_t>(inflightReq.errorCode);
                 }
             }
-
-            ret = session->close();
-            ASSERT_TRUE(ret.isOk());
         }
+
+        ret = session->close();
+        ASSERT_TRUE(ret.isOk());
     }
 }
 
