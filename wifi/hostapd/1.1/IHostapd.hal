@@ -1,0 +1,45 @@
+/*
+ * Copyright 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.wifi.hostapd@1.1;
+
+import @1.0::IHostapd;
+import @1.0::HostapdStatus;
+
+import IHostapdCallback;
+
+/**
+ * Top-level object for managing SoftAPs.
+ */
+interface IHostapd extends @1.0::IHostapd {
+    /**
+     * Register for callbacks from the hostapd service.
+     *
+     * These callbacks are invoked for global events that are not specific
+     * to any interface or network. Registration of multiple callback
+     * objects is supported. These objects must be deleted when the corresponding
+     * client process is dead.
+     *
+     * @param callback An instance of the |IHostapdCallback| HIDL interface
+     *     object.
+     * @return status Status of the operation.
+     *     Possible status codes:
+     *     |HostapdStatusCode.SUCCESS|,
+     *     |HostapdStatusCode.FAILURE_UNKNOWN|
+     */
+    registerCallback(IHostapdCallback callback)
+        generates (HostapdStatus status);
+};
