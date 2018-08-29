@@ -204,6 +204,19 @@ class WifiChipTest : public Test {
         }
     }
 
+    bool createRttController() {
+        bool success = false;
+        chip_->createRttController(
+            NULL, [&success](const WifiStatus& status,
+                             const sp<IWifiRttController>& rtt) {
+                if (WifiStatusCode::SUCCESS == status.code) {
+                    ASSERT_NE(rtt.get(), nullptr);
+                    success = true;
+                }
+            });
+        return success;
+    }
+
    public:
     void SetUp() override {
         chip_ = new WifiChip(chip_id_, legacy_hal_, mode_controller_,
@@ -386,6 +399,29 @@ TEST_F(WifiChipV1_AwareIfaceCombinationTest, ApMode_CreateNan_ShouldFail) {
     ASSERT_TRUE(createIface(IfaceType::NAN).empty());
 }
 
+TEST_F(WifiChipV1IfaceCombinationTest, RttControllerFlowStaModeNoSta) {
+    findModeAndConfigureForIfaceType(IfaceType::STA);
+    ASSERT_TRUE(createRttController());
+}
+
+TEST_F(WifiChipV1IfaceCombinationTest, RttControllerFlowStaModeWithSta) {
+    findModeAndConfigureForIfaceType(IfaceType::STA);
+    ASSERT_FALSE(createIface(IfaceType::STA).empty());
+    ASSERT_TRUE(createRttController());
+}
+
+TEST_F(WifiChipV1IfaceCombinationTest, RttControllerFlowApToSta) {
+    findModeAndConfigureForIfaceType(IfaceType::AP);
+    const auto ap_iface_name = createIface(IfaceType::AP);
+    ASSERT_FALSE(ap_iface_name.empty());
+    ASSERT_FALSE(createRttController());
+
+    removeIface(IfaceType::AP, ap_iface_name);
+
+    findModeAndConfigureForIfaceType(IfaceType::STA);
+    ASSERT_TRUE(createRttController());
+}
+
 ////////// V2 + Aware Iface Combinations ////////////
 // Mode 1 - STA + STA/AP
 //        - STA + P2P/NAN
@@ -538,6 +574,24 @@ TEST_F(WifiChipV2_AwareIfaceCombinationTest,
     ASSERT_FALSE(sta_iface_name.empty());
     ASSERT_FALSE(ap_iface_name.empty());
     ASSERT_NE(sta_iface_name, ap_iface_name);
+}
+
+TEST_F(WifiChipV2_AwareIfaceCombinationTest, RttControllerFlowStaModeNoSta) {
+    findModeAndConfigureForIfaceType(IfaceType::STA);
+    ASSERT_TRUE(createRttController());
+}
+
+TEST_F(WifiChipV2_AwareIfaceCombinationTest, RttControllerFlowStaModeWithSta) {
+    findModeAndConfigureForIfaceType(IfaceType::STA);
+    ASSERT_FALSE(createIface(IfaceType::STA).empty());
+    ASSERT_TRUE(createRttController());
+}
+
+TEST_F(WifiChipV2_AwareIfaceCombinationTest, RttControllerFlow) {
+    findModeAndConfigureForIfaceType(IfaceType::STA);
+    ASSERT_FALSE(createIface(IfaceType::STA).empty());
+    ASSERT_FALSE(createIface(IfaceType::AP).empty());
+    ASSERT_TRUE(createRttController());
 }
 
 ////////// V1 Iface Combinations when AP creation is disabled //////////
