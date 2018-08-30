@@ -68,7 +68,6 @@ void ComposerClient::execute(V2_1::vts::TestCommandReader* reader, CommandWriter
     if (queueChanged) {
         auto ret = mClient->setInputCommandQueue(*writer->getMQDescriptor());
         ASSERT_EQ(Error::NONE, static_cast<Error>(ret));
-        return;
     }
 
     mClient->executeCommands(commandLength, commandHandles,

@@ -672,7 +672,10 @@ class GraphicsComposerHidlCommandTest : public GraphicsComposerHidlTest {
         mReader = std::make_unique<TestCommandReader>();
     }
 
-    void TearDown() override { ASSERT_NO_FATAL_FAILURE(GraphicsComposerHidlTest::TearDown()); }
+    void TearDown() override {
+        ASSERT_EQ(0, mReader->mErrors.size());
+        ASSERT_NO_FATAL_FAILURE(GraphicsComposerHidlTest::TearDown());
+    }
 
     const native_handle_t* allocate() {
         IMapper::BufferDescriptorInfo info{};
