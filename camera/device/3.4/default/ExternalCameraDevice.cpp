@@ -90,7 +90,7 @@ Return<void> ExternalCameraDevice::getCameraCharacteristics(
 }
 
 Return<Status> ExternalCameraDevice::setTorchMode(TorchMode) {
-    return Status::METHOD_NOT_SUPPORTED;
+    return Status::OPERATION_NOT_SUPPORTED;
 }
 
 Return<void> ExternalCameraDevice::open(

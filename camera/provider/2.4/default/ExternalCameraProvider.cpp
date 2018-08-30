@@ -105,8 +105,9 @@ Return<void> ExternalCameraProvider::getCameraIdList(getCameraIdList_cb _hidl_cb
 
 Return<void> ExternalCameraProvider::isSetTorchModeSupported(
         isSetTorchModeSupported_cb _hidl_cb) {
-    // No torch mode support for USB camera
-    _hidl_cb (Status::OK, false);
+    // setTorchMode API is supported, though right now no external camera device
+    // has a flash unit.
+    _hidl_cb (Status::OK, true);
     return Void();
 }
 
