@@ -109,10 +109,20 @@ interface IBiometricsFace {
      * @param timeoutSec A timeout in seconds, after which this enrollment
      *     attempt is cancelled. Note that the client still needs to
      *     call postEnroll() to terminate the enrollment session.
+     * @param requireAttention When set to true, requires user attention (e.g.
+     *     eyes open and looking at the device) for enrollment to complete, as
+     *     well as subsequent authentication. This is expected to be enabled by
+     *     default to improve security and decrease falsing (unintentional face
+     *     detection). This feature can be disabled at the user's request
+     *     during enrollment, e.g. for accessibility reasons. When enabled,
+     *     the FaceAcquiredInfo#POOR_GAZE message must be sent when the user's
+     *     attention has not been established. The UI should inform the user
+     *     to look at the device.
      * @return status The status of this method call.
      */
     @callflow(next={"cancel", "enroll", "postEnroll", "remove"})
-    enroll(vec<uint8_t> hat, uint32_t timeoutSec) generates (Status status);
+    enroll(vec<uint8_t> hat, uint32_t timeoutSec, bool requireAttention)
+        generates (Status status);
 
     /**
      * Finishes the enrollment session and invalidates the challenge generated
