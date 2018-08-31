@@ -33,6 +33,7 @@ class TestCommandReader : public CommandReaderBase {
     // unexpected errors or commands.
     void parse();
 
+    std::vector<std::pair<uint32_t, uint32_t>> mErrors;
     std::vector<std::pair<uint64_t, uint32_t>> mCompositionChanges;
 };
 
