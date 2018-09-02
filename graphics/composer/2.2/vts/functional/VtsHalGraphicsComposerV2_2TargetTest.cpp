@@ -127,7 +127,10 @@ class GraphicsComposerHidlCommandTest : public GraphicsComposerHidlTest {
         mReader = std::make_unique<V2_1::vts::TestCommandReader>();
     }
 
-    void TearDown() override { ASSERT_NO_FATAL_FAILURE(GraphicsComposerHidlTest::TearDown()); }
+    void TearDown() override {
+        ASSERT_EQ(0, mReader->mErrors.size());
+        ASSERT_NO_FATAL_FAILURE(GraphicsComposerHidlTest::TearDown());
+    }
 
     const native_handle_t* allocate() {
         IMapper::BufferDescriptorInfo info{};
@@ -189,6 +192,12 @@ TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_PER_FRAME_METADATA) {
         {IComposerClient::PerFrameMetadataKey::MAX_FRAME_AVERAGE_LIGHT_LEVEL, 62.0});
     mWriter->setLayerPerFrameMetadata(hidlMetadata);
     execute();
+
+    if (mReader->mErrors.size() == 1 &&
+        static_cast<Error>(mReader->mErrors[0].second) == Error::UNSUPPORTED) {
+        mReader->mErrors.clear();
+        GTEST_SUCCEED() << "SetLayerPerFrameMetadata is not supported";
+    }
 }
 
 /**
@@ -313,6 +322,14 @@ TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_FLOAT_COLOR) {
     mWriter->selectLayer(layer);
     mWriter->setLayerFloatColor(IComposerClient::FloatColor{1.0, 1.0, 1.0, 1.0});
     mWriter->setLayerFloatColor(IComposerClient::FloatColor{0.0, 0.0, 0.0, 0.0});
+    execute();
+
+    if (mReader->mErrors.size() == 2 &&
+        static_cast<Error>(mReader->mErrors[0].second) == Error::UNSUPPORTED &&
+        static_cast<Error>(mReader->mErrors[1].second) == Error::UNSUPPORTED) {
+        mReader->mErrors.clear();
+        GTEST_SUCCEED() << "SetLayerFloatColor is not supported";
+    }
 }
 
 /**

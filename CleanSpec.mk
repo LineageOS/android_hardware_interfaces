@@ -68,3 +68,4 @@ $(call add-clean-step, find $(PRODUCT_OUT)/system $(PRODUCT_OUT)/vendor -type f 
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/etc/seccomp_policy/configstore@1.0.policy)
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/etc/seccomp_policy/configstore@1.1.policy)
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/bin/hw/android.hardware.configstore@1.1-service)
+$(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/etc/init/android.hardware.configstore@1.1-service.rc)

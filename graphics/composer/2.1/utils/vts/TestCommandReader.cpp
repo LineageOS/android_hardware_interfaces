@@ -26,6 +26,7 @@ namespace V2_1 {
 namespace vts {
 
 void TestCommandReader::parse() {
+    mErrors.clear();
     mCompositionChanges.clear();
     while (!isEmpty()) {
         IComposerClient::Command command;
@@ -41,7 +42,8 @@ void TestCommandReader::parse() {
                 ASSERT_EQ(2, length);
                 auto loc = read();
                 auto err = readSigned();
-                GTEST_FAIL() << "unexpected error " << err << " at location " << loc;
+                std::pair<uint32_t, uint32_t> error(loc, err);
+                mErrors.push_back(error);
             } break;
             case IComposerClient::Command::SET_CHANGED_COMPOSITION_TYPES:
                 ASSERT_EQ(0, length % 3);
