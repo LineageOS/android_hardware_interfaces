@@ -60,6 +60,9 @@ class RadioResponse : public IRadioResponse {
     uint32_t writeSmsToSimIndex;
     uint32_t writeSmsToRuimIndex;
 
+    // Data
+    DataRegStateResult dataRegResp;
+
     RadioResponse(RadioHidlTest& parent);
 
     virtual ~RadioResponse() = default;
