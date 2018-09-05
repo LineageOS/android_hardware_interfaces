@@ -753,6 +753,56 @@ TEST_F(RadioHidlTest_v1_2, getDataRegistrationState) {
     ASSERT_TRUE(CheckAnyOfErrors(
         radioRsp_v1_2->rspInfo.error,
         {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::NOT_PROVISIONED}));
+
+    // Check the mcc [0, 999] and mnc [0, 999].
+    string hidl_mcc;
+    string hidl_mnc;
+    int totalIdentitySizeExpected = 1;
+    ::android::hardware::radio::V1_2::CellIdentity cellIdentities =
+        radioRsp_v1_2->dataRegResp.cellIdentity;
+    CellInfoType cellInfoType = cellIdentities.cellInfoType;
+
+    if (cellInfoType == CellInfoType::NONE) {
+        // All the fields are 0
+        totalIdentitySizeExpected = 0;
+    } else if (cellInfoType == CellInfoType::GSM) {
+        EXPECT_EQ(1, cellIdentities.cellIdentityGsm.size());
+        ::android::hardware::radio::V1_2::CellIdentityGsm cig = cellIdentities.cellIdentityGsm[0];
+        hidl_mcc = cig.base.mcc;
+        hidl_mnc = cig.base.mnc;
+    } else if (cellInfoType == CellInfoType::LTE) {
+        EXPECT_EQ(1, cellIdentities.cellIdentityLte.size());
+        ::android::hardware::radio::V1_2::CellIdentityLte cil = cellIdentities.cellIdentityLte[0];
+        hidl_mcc = cil.base.mcc;
+        hidl_mnc = cil.base.mnc;
+    } else if (cellInfoType == CellInfoType::WCDMA) {
+        EXPECT_EQ(1, cellIdentities.cellIdentityWcdma.size());
+        ::android::hardware::radio::V1_2::CellIdentityWcdma ciw =
+            cellIdentities.cellIdentityWcdma[0];
+        hidl_mcc = ciw.base.mcc;
+        hidl_mnc = ciw.base.mnc;
+    } else if (cellInfoType == CellInfoType::TD_SCDMA) {
+        EXPECT_EQ(1, cellIdentities.cellIdentityTdscdma.size());
+        ::android::hardware::radio::V1_2::CellIdentityTdscdma cit =
+            cellIdentities.cellIdentityTdscdma[0];
+        hidl_mcc = cit.base.mcc;
+        hidl_mnc = cit.base.mnc;
+    } else {
+        // CellIndentityCdma has no mcc and mnc.
+        EXPECT_EQ(CellInfoType::CDMA, cellInfoType);
+        EXPECT_EQ(1, cellIdentities.cellIdentityCdma.size());
+    }
+
+    // Check only one CellIdentity is size 1, and others must be 0.
+    EXPECT_EQ(totalIdentitySizeExpected,
+              cellIdentities.cellIdentityGsm.size() + cellIdentities.cellIdentityCdma.size() +
+                  cellIdentities.cellIdentityLte.size() + cellIdentities.cellIdentityWcdma.size() +
+                  cellIdentities.cellIdentityTdscdma.size());
+
+    int mcc = stoi(hidl_mcc);
+    int mnc = stoi(hidl_mnc);
+    EXPECT_TRUE(mcc >= 0 && mcc <= 999);
+    EXPECT_TRUE(mnc >= 0 && mnc <= 999);
 }
 
 /*

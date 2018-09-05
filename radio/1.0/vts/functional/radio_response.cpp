@@ -157,8 +157,9 @@ Return<void> RadioResponse::getVoiceRegistrationStateResponse(
 }
 
 Return<void> RadioResponse::getDataRegistrationStateResponse(
-    const RadioResponseInfo& info, const DataRegStateResult& /*dataRegResponse*/) {
+    const RadioResponseInfo& info, const DataRegStateResult& dataRegResponse) {
     rspInfo = info;
+    dataRegResp = dataRegResponse;
     parent.notify(info.serial);
     return Void();
 }
