@@ -24,3 +24,60 @@ enum AccessNetwork : @1.2::AccessNetwork {
      */
     UNKNOWN = 0,
 };
+
+/**
+ * Emergency number contains information of number, one or more service category(s), and mobile
+ * country code (mcc).
+ *
+ * If the source of the emergency number is associated with country, field ‘mcc’ must be
+ * provided; otherwise the field ‘mcc’ must be an empty string.
+ *
+ * A unique EmergencyNumber has a unique combination of ‘number’ and ‘mcc’ fields.
+ * Multiple @1.3::EmergencyServiceCategory should be merged into the bitfield for the same
+ * EmergencyNumber.
+ *
+ * Reference: 3GPP TS 22.101 version 9.1.0 Release 9
+ */
+struct EmergencyNumber{
+    /**
+     * The emergency number. The character in the number string should only be the dial pad
+     * character('0'-'9', '*', or '#'). For example: 911.
+     */
+    string number;
+    /**
+     * 3-digit Mobile Country Code, 0..999. Empty string if not applicable.
+     */
+    string mcc;
+    /**
+     * The bitfield of @1.3::EmergencyServiceCategory(s). See @1.3::EmergencyServiceCategory for
+     * the value of each bit.
+     */
+    bitfield<EmergencyServiceCategory> categories;
+};
+
+/**
+ * Defining Emergency Service Category as follows:
+ * - General emergency call, all categories;
+ * - Police;
+ * - Ambulance;
+ * - Fire Brigade;
+ * - Marine Guard;
+ * - Mountain Rescue;
+ * - Manually Initiated eCall (MIeC);
+ * - Automatically Initiated eCall (AIeC);
+ *
+ * Type GENERIC (General emergency call, all categories) is considered to use if the reported type
+ * is not any of the other specific types.
+ *
+ * Reference: 3GPP TS 22.101 version 9.1.0 Release 9
+ */
+enum EmergencyServiceCategory : int32_t {
+    GENERIC = 0, // General emergency call, all categories
+    POLICE = 1 << 0,
+    AMBULANCE = 1 << 1,
+    FIRE_BRIGADE = 1 << 2,
+    MARINE_GUARD = 1 << 3,
+    MOUNTAIN_RESCUE = 1 << 4,
+    MIEC = 1 << 5, // Manually Initiated eCall (MIeC)
+    AIEC = 1 << 6, // Automatically Initiated eCall (AIeC)
+};
