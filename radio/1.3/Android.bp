@@ -9,6 +9,8 @@ hidl_interface {
     srcs: [
         "types.hal",
         "IRadio.hal",
+        "IRadioIndication.hal",
+        "IRadioResponse.hal",
     ],
     interfaces: [
         "android.hardware.radio@1.0",
@@ -18,6 +20,8 @@ hidl_interface {
     ],
     types: [
         "AccessNetwork",
+        "EmergencyNumber",
+        "EmergencyServiceCategory",
     ],
     gen_java: true,
 }
