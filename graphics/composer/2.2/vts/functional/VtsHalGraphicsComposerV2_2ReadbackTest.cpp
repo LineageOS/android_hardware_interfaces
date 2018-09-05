@@ -289,8 +289,6 @@ TEST_F(GraphicsComposerReadbackTest, SingleSolidColorLayer) {
     int32_t fenceHandle;
     mComposerClient->getReadbackBufferFence(mPrimaryDisplay, &fenceHandle);
 
-    base::unique_fd fence(fenceHandle);
-
     // lock buffer
     // Create Rect accessRegion to specify reading the entire buffer
     IMapper::Rect accessRegion;
@@ -299,8 +297,17 @@ TEST_F(GraphicsComposerReadbackTest, SingleSolidColorLayer) {
     accessRegion.width = info.width;
     accessRegion.height = info.height;
 
-    void* bufData = mGralloc->lock(buffer, info.usage, accessRegion, fence);
+    void* bufData = mGralloc->lock(buffer, info.usage, accessRegion, fenceHandle);
     checkReadbackBuffer(info, stride, bufData, expectedColors);
+    int unlockFence = mGralloc->unlock(buffer);
+
+    if (unlockFence != -1) {
+        close(unlockFence);
+    }
+
+    mWriter->validateDisplay();
+    mWriter->presentDisplay();
+    execute();
 }
 
 }  // anonymous namespace
