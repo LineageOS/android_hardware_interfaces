@@ -36,11 +36,24 @@ interface ICameraDevice extends @3.2::ICameraDevice {
      * this logical camera device. This information may not change between consecutive calls.
      *
      * Note that HAL must support this function for physical camera IDs that are
-     * not exposed via ICameraProvider::getCameraIdList().
+     * not exposed via ICameraProvider::getCameraIdList(). Calling
+     * getCameraDeviceInterface_V3_x() on these camera IDs must return ILLEGAL_ARGUMENT.
+     *
+     * The characteristics of all cameras returned by
+     * ICameraProvider::getCameraIdList() must be queried via
+     * getCameraCharacteristics(). Calling getPhysicalCameraCharacteristics() on
+     * those cameras must return ILLEGAL_ARGUMENT.
+     *
+     * @param physicalCameraId The physical camera id parsed from the logical
+     *     camera's ANDROID_LOGICAL_MULTI_CAMERA_PHYSICAL_IDS static metadata
+     *     key. The framework assumes that this ID is just the <id> part of fully
+     *     qualified camera device name "device@<major>.<minor>/<type>/<id>". And
+     *     the physical camera must be of the same version and type as the parent
+     *     logical camera device.
      *
      * @return status Status code for the operation, one of:
      *     OK:
-     *         On a successful query of the camera device characteristics
+     *         On a successful query of the physical camera device characteristics
      *     INTERNAL_ERROR:
      *         The camera device cannot be opened due to an internal
      *         error.
@@ -50,6 +63,9 @@ interface ICameraDevice extends @3.2::ICameraDevice {
      *         instance must be acquired if the device is reconnected. All
      *         subsequent calls on this interface must return
      *         CAMERA_DISCONNECTED.
+     *     ILLEGAL_ARGUMENT:
+     *         If the physicalCameraId is not a valid physical camera Id outside
+     *         of ICameraProvider::getCameraIdList().
      *
      * @return cameraCharacteristics
      *     The static metadata for this logical camera device's physical device, or an empty

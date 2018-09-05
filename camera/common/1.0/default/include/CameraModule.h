@@ -75,6 +75,7 @@ private:
             int32_t keyTag, const Vector<int32_t>& appendKeys);
     status_t filterOpenErrorCode(status_t err);
     camera_module_t *mModule;
+    int mNumberOfCameras;
     KeyedVector<int, camera_info> mCameraInfoMap;
     KeyedVector<int, int> mDeviceVersionMap;
     KeyedVector<int, camera_metadata_t*> mPhysicalCameraInfoMap;
