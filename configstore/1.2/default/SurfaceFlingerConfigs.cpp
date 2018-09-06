@@ -17,6 +17,7 @@
 #include "SurfaceFlingerConfigs.h"
 
 #include <android/hardware/configstore/1.1/types.h>
+#include <android/hardware/graphics/common/1.1/types.h>
 #include <log/log.h>
 
 namespace android {
@@ -24,6 +25,9 @@ namespace hardware {
 namespace configstore {
 namespace V1_2 {
 namespace implementation {
+
+using ::android::hardware::graphics::common::V1_1::Dataspace;
+using ::android::hardware::graphics::common::V1_1::PixelFormat;
 
 // ::android::hardware::configstore::V1_0::ISurfaceFlingerConfigs implementation.
 Return<void> SurfaceFlingerConfigs::vsyncEventPhaseOffsetNs(vsyncEventPhaseOffsetNs_cb _hidl_cb) {
@@ -196,6 +200,25 @@ Return<void> SurfaceFlingerConfigs::useColorManagement(useColorManagement_cb _hi
 #else
     _hidl_cb({true, false});
 #endif
+    return Void();
+}
+
+#ifdef COMPOSITION_DATA_SPACE
+static_assert(COMPOSITION_DATA_SPACE != 0, "Expected composition data space must not be UNKNOWN");
+#endif
+
+Return<void> SurfaceFlingerConfigs::getCompositionPreference(getCompositionPreference_cb _hidl_cb) {
+    Dataspace dataSpace = Dataspace::V0_SRGB;
+    PixelFormat pixelFormat = PixelFormat::RGBA_8888;
+
+#ifdef COMPOSITION_DATA_SPACE
+    dataSpace = static_cast<Dataspace>(COMPOSITION_DATA_SPACE);
+#endif
+
+#ifdef COMPOSITION_PIXEL_FORMAT
+    pixelFormat = static_cast<PixelFormat>(COMPOSITION_PIXEL_FORMAT);
+#endif
+    _hidl_cb(dataSpace, pixelFormat);
     return Void();
 }
 

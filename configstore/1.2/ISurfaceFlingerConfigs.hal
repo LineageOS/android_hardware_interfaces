@@ -15,6 +15,8 @@
  */
 package android.hardware.configstore@1.2;
 
+import android.hardware.graphics.common@1.1::Dataspace;
+import android.hardware.graphics.common@1.1::PixelFormat;
 import @1.1::ISurfaceFlingerConfigs;
 import @1.0::OptionalBool;
 
@@ -30,4 +32,27 @@ interface ISurfaceFlingerConfigs extends @1.1::ISurfaceFlingerConfigs {
      * return true.
      */
     useColorManagement() generates (OptionalBool value);
+
+    /**
+     * Returns the default data space and default pixel format that
+     * SurfaceFlinger expects to receive and output.
+     * To determine the default data space and default pixel format,
+     * there are a few things we recommend to consider:
+     *
+     *   1. Hardware composer's capability to composite contents with the
+     *      data space and pixel format efficiently;
+     *   2. Hardware composer's ability to composite contents when sRGB contents
+     *      and the chosen data space contents coexist;
+     *   3. For better blending, consider using pixel format where the alpha
+     *      channel has as many bits as the RGB color channel.
+     *
+     * @return dataSpace is the default data space that SurfaceFlinger expects.
+     *         The data space must not be Dataspace::UNKNOWN, if unspecified,
+     *         the default data space is Dataspace::V0_SRGB;
+     * @return pixelFormat is the default pixel format that SurfaceFlinger
+     *         expects. If unspecified, the default pixel format is
+     *         PixelFormat::RGBA_8888.
+     */
+    getCompositionPreference()
+        generates (Dataspace dataSpace, PixelFormat pixelFormat);
 };
