@@ -48,7 +48,7 @@ interface ISensors {
      * Activate/de-activate one sensor.
      *
      * After sensor de-activation, existing sensor events that have not
-     * been picked up by poll() must be abandoned immediately so that
+     * been written to the event queue must be abandoned immediately so that
      * subsequent activations do not get stale sensor events (events
      * that are generated prior to the latter activation).
      *
@@ -59,28 +59,58 @@ interface ISensors {
     activate(int32_t sensorHandle, bool enabled) generates (Result result);
 
     /**
-     * Generate a vector of sensor events containing at most "maxCount"
-     * entries.
+     * Initialize the Fast Message Queues (FMQ) that are used to send data
+     * between the framework and the HAL.
      *
-     * Additionally a vector of SensorInfos is returned for any dynamic sensors
-     * connected as notified by returned events of type DYNAMIC_SENSOR_META.
+     * The Event FMQ is used to transport sensor events from the HAL to the
+     * framework. The Event FMQ is created using the eventQueueDescriptor.
+     * Data may only be written to the Event FMQ. Data must not be read from
+     * the Event FMQ since the framework is the only reader. Upon receiving
+     * sensor events, the HAL should write the sensor events to the Event FMQ.
      *
-     * If there is no sensor event when this function is being called, block
-     * until there are sensor events available.
+     * The Wake Lock FMQ is used by the framework to notify the HAL when it is
+     * safe to release its wake_lock. When the framework receives WAKE_UP events
+     * from the Event FMQ and the framework has acquired a wake_lock, the
+     * framework must write a WakeLockEvent to the Wake Lock FMQ with the number
+     * of WAKE_UP events processed. When the HAL reads the WakeLockEvent from
+     * the Wake Lock FMQ, the HAL should decrement its current count of
+     * unprocessed WAKE_UP events and release its wake_lock if the current
+     * count of unprocessed WAKE_UP events is zero.
      *
-     * @param maxCount max number of samples can be returned, must be > 0.
-     *     Actual number of events returned in data must be <= maxCount and > 0
-     * @return result OK on success or BAD_VALUE if maxCount <= 0.
-     * @return data vector of Event contains sensor events.
-     * @return dynamicSensorsAdded vector of SensorInfo contains dynamic sensor
-     *     added. Each element corresponds to a dynamic sensor meta events in
-     *     data.
+     * The name of any wake_lock acquired by the Sensors HAL for WAKE_UP events
+     * must begin with "SensorsHAL_WAKEUP".
+     *
+     * If WAKE_LOCK_TIMEOUT_SECONDS has elapsed since the most recent WAKE_UP
+     * event was written to the Event FMQ without receiving a message on the
+     * Wake Lock FMQ, then any held wake_lock for WAKE_UP events must be
+     * released.
+     *
+     * If either the Event FMQ or the Wake Lock FMQ is already initialized when
+     * initializeMessageQueues is invoked, then both existing FMQs must be
+     * discarded and the new descriptors must be used to create new FMQs within
+     * the HAL. The number of outstanding WAKE_UP events should also be reset to
+     * zero, and any outstanding wake_locks held as a result of WAKE_UP events
+     * should be released.
+     *
+     * initializeMessageQueues must be thread safe and prevent concurrent calls
+     * to initializeMessageQueues from simultaneously modifying state.
+     *
+     * @param eventQueueDescriptor Fast Message Queue descriptor that is used to
+     *     create the Event FMQ which is where sensor events are written. The
+     *     descriptor is obtained from the framework's FMQ that is used to read
+     *     sensor events.
+     * @param wakeLockDescriptor Fast Message Queue descriptor that is used to
+     *     create the Wake Lock FMQ which is where wake_lock events are read
+     *     from. The descriptor is obtained from the framework's FMQ that is
+     *     used to write wake_lock events.
+     * @return result OK on success; BAD_VALUE if descriptor is invalid (such
+     *     as null)
      */
-    poll(int32_t maxCount)
-        generates (
-         Result result,
-         vec<Event> data,
-         vec<SensorInfo> dynamicSensorsAdded);
+    @entry
+    @callflow(next = {"getSensorsList"})
+    initializeMessageQueues(fmq_sync<Event> eventQueueDescriptor,
+                            fmq_sync<uint32_t> wakeLockDescriptor)
+                 generates (Result result);
 
     /**
      * Sets a sensor’s parameters, including sampling frequency and maximum
@@ -132,7 +162,7 @@ interface ISensors {
      * injecting sensor events.
      *
      * Regardless of OperationMode, injected SensorType::ADDITIONAL_INFO
-     * type events should not be routed back to poll() function.
+     * type events should not be routed back to the sensor event queue.
      *
      * @see AdditionalInfoType
      * @see OperationMode

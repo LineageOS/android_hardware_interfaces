@@ -7,11 +7,15 @@ hidl_interface {
         enabled: true,
     },
     srcs: [
+        "types.hal",
         "ISensors.hal",
     ],
     interfaces: [
         "android.hardware.sensors@1.0",
         "android.hidl.base@1.0",
+    ],
+    types: [
+        "SensorTimeout",
     ],
     gen_java: false,
 }
