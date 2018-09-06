@@ -149,9 +149,8 @@ interface ICameraDeviceSession {
      *           - Including too many output streams of a certain format.
      *           - Unsupported rotation configuration
      *           - Stream sizes/formats don't satisfy the
-     *             camera3_stream_configuration_t->operation_mode requirements
-     *             for non-NORMAL mode, or the requested operation_mode is not
-     *             supported by the HAL.
+     *             StreamConfigurationMode requirements for non-NORMAL mode, or
+     *             the requested operation_mode is not supported by the HAL.
      *           - Unsupported usage flag
      *         The camera service cannot filter out all possible illegal stream
      *         configurations, since some devices may support more simultaneous
