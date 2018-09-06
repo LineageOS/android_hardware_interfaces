@@ -1,0 +1,832 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.media.c2@1.0;
+
+import android.hardware.media.bufferpool@2.0::BufferStatusMessage;
+
+/**
+ * Common return values for Codec2 operations.
+ */
+enum Status : int32_t {
+    /** Operation completed successfully. */
+    OK        = 0,
+
+    // bad input
+
+    /** Argument has invalid value (user error). */
+    BAD_VALUE = -22,
+    /** Argument uses invalid index (user error). */
+    BAD_INDEX = -75,
+    /** Argument/Index is valid but not possible. */
+    CANNOT_DO = -2147483646,
+
+    // bad sequencing of events
+
+    /** Object already exists. */
+    DUPLICATE = -17,
+    /** Object not found. */
+    NOT_FOUND = -2,
+    /** Operation is not permitted in the current state. */
+    BAD_STATE = -38,
+    /** Operation would block but blocking is not permitted. */
+    BLOCKING  = -9930,
+
+    // bad environment
+
+    /** Not enough memory to complete operation. */
+    NO_MEMORY = -12,
+    /** Missing permission to complete operation. */
+    REFUSED   = -1,
+
+    /** Operation did not complete within timeout. */
+    TIMED_OUT = -110,
+
+    // missing functionality
+
+    /** Operation is not implemented/supported (optional only). */
+    OMITTED   = -74,
+
+    // unknown fatal
+
+    /** Some unexpected error prevented the operation. */
+    CORRUPTED = -2147483648,
+
+    // uninitialized
+
+    /** Status has not been initialized. */
+    NO_INIT   = -19,
+};
+
+/**
+ * C2Param structure index.
+ *
+ * This is a number that is unique for each C2Param structure type.
+ *
+ * @sa Codec 2.0 standard.
+ */
+typedef uint32_t ParamIndex;
+
+/**
+ * Flattened representation of C2Param objects.
+ *
+ * The `Params` type is an array of bytes made up by concatenating a list of
+ * C2Param objects. The start index (offset into @ref Params) of each C2Param
+ * object in the list is divisible by 8. Up to 7 padding bytes may be added
+ * after each C2Param object to achieve this 64-bit alignment.
+ *
+ * Each C2Param object has the following layout:
+ * - 4 bytes: C2Param structure index (of type @ref ParamIndex) identifying the
+ *   type of the C2Param object.
+ * - 4 bytes: size of the C2Param object (unsigned 4-byte integer).
+ * - (size - 8) bytes: data of the C2Param object.
+ *
+ * In order to interpret each C2Param object correctly, its structure must be
+ * described by IComponentStore::getStructDescriptors().
+ *
+ * @note Please refer to the Codec 2.0 standard for the list of standard
+ * parameter structures.
+ *
+ * @sa Codec 2.0 standard.
+ */
+typedef vec<uint8_t> Params;
+
+/**
+ * Identifying information of a field relative to a known C2Param structure.
+ *
+ * Within a given C2Param structure, each field is uniquely identified by @ref
+ * FieldId.
+ */
+struct FieldId {
+    /** Offset of the field in bytes. */
+    uint32_t offset;
+    /** Size of the field in bytes. */
+    uint32_t size;
+};
+
+/**
+ * Reference to a field in a C2Param structure.
+ */
+struct ParamField {
+    /** Index of the C2Param structure. */
+    ParamIndex index;
+    /** Identifier of the field inside the C2Param structure. */
+    FieldId fieldId;
+};
+
+/**
+ * Usage description of a C2Param structure.
+ *
+ * @ref ParamDescriptor is returned by IConfigurable::querySupportedParams().
+ */
+struct ParamDescriptor {
+    /**
+     * Index of the C2Param structure being described.
+     */
+    ParamIndex index;
+
+    enum Attrib : uint32_t {
+        /**
+         * The parameter is required to be specified.
+         */
+        REQUIRED   = 1u << 0,
+        /**
+         * The parameter retains its value.
+         */
+        PERSISTENT = 1u << 1,
+        /**
+         * The parameter is strict.
+         */
+        STRICT     = 1u << 2,
+        /**
+         * The parameter is publicly read-only.
+         */
+        READ_ONLY  = 1u << 3,
+        /**
+         * The parameter must not be visible to clients.
+         */
+        HIDDEN     = 1u << 4,
+        /**
+         * The parameter must not be used by framework (other than testing).
+         */
+        INTERNAL   = 1u << 5,
+        /**
+         * The parameter is publicly constant (hence read-only).
+         */
+        CONST      = 1u << 6,
+    };
+    bitfield<Attrib> attrib;
+
+    /**
+     * Name of the structure. This must be unique for each structure.
+     */
+    string name;
+
+    /**
+     * Indices of other C2Param structures that this C2Param structure depends
+     * on.
+     */
+    vec<ParamIndex> dependencies;
+};
+
+// Generic way to describe supported numeric values for Codec2 interfaces.
+
+/**
+ * An untyped value that can fit in 64 bits, the type of which is communicated
+ * via a separate channel (@ref FieldSupportedValues.type).
+ */
+typedef uint64_t PrimitiveValue;
+
+/*
+ * Description of supported values for a field.
+ *
+ * This can be a continuous range or a discrete set of values.
+ */
+struct FieldSupportedValues {
+    /**
+     * Used if #type is `RANGE`.
+     *
+     * If the `step` member is 0, and `num` and `denom` are both 1, the `Range`
+     * structure represents a closed interval bounded by `min` and `max`.
+     *
+     * Otherwise, the #Range structure represents a finite sequence of numbers
+     * produced from the following recurrence relation:
+     *
+     * @code
+     * v[0] = min
+     * v[i] = v[i - 1] * num / denom + step ; i >= 1
+     * @endcode
+     *
+     * Both the ratio `num / denom` and the value `step` must be positive. The
+     * last number in the sequence described by this #Range structure is the
+     * largest number in the sequence that is smaller than or equal to `max`.
+     *
+     * @note
+     * The division in the formula may truncate the result if the data type of
+     * these values is an integral type.
+     */
+    struct Range {
+        /**
+         * Lower end of the range (inclusive).
+         */
+        PrimitiveValue min;
+        /**
+         * Upper end of the range (inclusive).
+         */
+        PrimitiveValue max;
+        /**
+         * The non-homogeneous term in the recurrence relation.
+         */
+        PrimitiveValue step;
+        /**
+         * The numerator of the scale coefficient in the recurrence relation.
+         */
+        PrimitiveValue num;
+        /**
+         * The denominator of the scale coefficient in the recurrence relation.
+         */
+        PrimitiveValue denom;
+    };
+
+    enum Type : int32_t {
+        /** No supported values */
+        EMPTY = 0,
+        /** Numeric range, described in a #Range structure */
+        RANGE,
+        /** List of values */
+        VALUES,
+        /** List of flags that can be OR-ed */
+        FLAGS,
+    };
+    /**
+     * Type of the supported values.
+     */
+    Type type;
+
+    /**
+     * When #type is #Type.RANGE, #range shall specify the range of possible
+     * values.
+     *
+     * The intended type of members of #range shall be clear in the context
+     * where `FieldSupportedValues` is used.
+     */
+    Range range;
+
+    /**
+     * When #type is #Type.VALUES or #Type.FLAGS, #value shall list supported
+     * values/flags.
+     *
+     * The intended type of components of #value shall be clear in the context
+     * where `FieldSupportedValues` is used.
+     */
+    vec<PrimitiveValue> values;
+};
+
+/**
+ * Supported values for a field.
+ *
+ * This is a pair of the field specifier together with an optional supported
+ * values object. This structure is used when reporting parameter configuration
+ * failures and conflicts.
+ */
+struct ParamFieldValues {
+    /**
+     * Reference to a field or a C2Param structure.
+     */
+    ParamField paramOrField;
+
+    /**
+     * Optional supported values for the field if #paramOrField specifies an
+     * actual field that is numeric (non struct, blob or string). Supported
+     * values for arrays (including string and blobs) describe the supported
+     * values for each element (character for string, and bytes for blobs). It
+     * is optional for read-only strings and blobs.
+     */
+    vec<FieldSupportedValues> values;
+};
+
+/**
+ * Description of a field inside a C2Param structure.
+ */
+struct FieldDescriptor {
+
+    /** Location of the field in the C2Param structure */
+    FieldId fieldId;
+
+    /**
+     * Possible types of the field.
+     */
+    enum Type : uint32_t {
+        NO_INIT = 0,
+        INT32,
+        UINT32,
+        CNTR32,
+        INT64,
+        UINT64,
+        CNTR64,
+        FLOAT,
+        /**
+         * Fixed-size string (POD).
+         */
+        STRING = 0x100,
+        /**
+         * A blob has no sub-elements and can be thought of as an array of
+         * bytes. However, bytes cannot be individually addressed by clients.
+         */
+        BLOB,
+        /**
+         * The field is a structure that may contain other fields.
+         */
+        STRUCT = 0x20000,
+    };
+    /**
+     * Type of the field.
+     */
+    bitfield<Type> type;
+
+    /**
+     * If #type is #Type.STRUCT, #structIndex is the C2Param structure index;
+     * otherwise, #structIndex is not used.
+     */
+    ParamIndex structIndex;
+
+    /**
+     * Extent of the field.
+     * - For a non-array field, #extent is 1.
+     * - For a fixed-length array field, #extent is the length. An array field
+     *   of length 1 is indistinguishable from a non-array field.
+     * - For a variable-length array field, #extent is 0. This can only occur as
+     *   the last member of a C2Param structure.
+     */
+    uint32_t extent;
+
+    /**
+     * Name of the field. This must be unique for each field in the same
+     * structure.
+     */
+    string name;
+
+    /**
+     * Named value type. This is used for defining an enum value for a numeric
+     * type.
+     */
+    struct NamedValue {
+        /**
+         * Name of the enum value. This must be unique for each enum value in
+         * the same field.
+         */
+        string name;
+        /**
+         * Underlying value of the enum value. Multiple enum names may have the
+         * same underlying value.
+         */
+        PrimitiveValue value;
+    };
+    /**
+     * List of enum values. This is not used when #type is not one of the
+     * numeric types.
+     */
+    vec<NamedValue> namedValues;
+};
+
+/**
+ * Description of a C2Param structure. It consists of an index and a list of
+ * `FieldDescriptor`s.
+ */
+struct StructDescriptor {
+    /**
+     * Index of the structure.
+     */
+    ParamIndex type;
+    /**
+     * List of fields in the structure.
+     *
+     * Fields are ordered by their offsets. A field that is a structure is
+     * ordered before its members.
+     */
+    vec<FieldDescriptor> fields;
+};
+
+/**
+ * Information describing the reason the parameter settings may fail, or may be
+ * overridden.
+ */
+struct SettingResult {
+    /** Failure code */
+    enum Failure : uint32_t {
+        /** Parameter is not supported. */
+        BAD_TYPE,
+        /** Parameter is not supported on the specific port. */
+        BAD_PORT,
+        /** Parameter is not supported on the specific stream. */
+        BAD_INDEX,
+        /** Parameter is read-only and cannot be set. */
+        READ_ONLY,
+        /** Parameter mismatches input data. */
+        MISMATCH,
+        /** Strict parameter does not accept value for the field at all. */
+        BAD_VALUE,
+        /**
+         * Strict parameter field value is in conflict with an/other
+         * setting(s).
+         */
+        CONFLICT,
+        /**
+         * Parameter field is out of range due to other settings. (This failure
+         * mode can only be used for strict calculated parameters.)
+         */
+        UNSUPPORTED,
+        /**
+         * Field does not access the requested parameter value at all. It has
+         * been corrected to the closest supported value. This failure mode is
+         * provided to give guidance as to what are the currently supported
+         * values for this field (which may be a subset of the at-all-potential
+         * values).
+         */
+        INFO_BAD_VALUE,
+        /**
+         * Requested parameter value is in conflict with an/other setting(s)
+         * and has been corrected to the closest supported value. This failure
+         * mode is given to provide guidance as to what are the currently
+         * supported values as well as to optionally provide suggestion to the
+         * client as to how to enable the requested parameter value.
+         */
+        INFO_CONFLICT,
+    };
+    Failure failure;
+
+    /**
+     * Failing (or corrected) field or parameter and optionally, currently
+     * supported values for the field. Values must only be set for field
+     * failures other than `BAD_VALUE`, and only if they are different from the
+     * globally supported values (e.g. due to restrictions by another parameter
+     * or input data).
+     */
+    ParamFieldValues field;
+
+    /**
+     * Conflicting parameters or fields with (optional) suggested values for any
+     * conflicting fields to avoid the conflict. Values must only be set for
+     * `CONFLICT`, `UNSUPPORTED` or `INFO_CONFLICT` failure code.
+     */
+    vec<ParamFieldValues> conflicts;
+};
+
+/**
+ * Ordering information of @ref FrameData objects. Each member is used for
+ * comparing urgency: a smaller difference from a reference value indicates that
+ * the associated Work object is more urgent. The reference value for each
+ * member is initialized the first time it is communicated between the client
+ * and the codec, and it may be updated to later values that are communicated.
+ *
+ * Each member of `WorkOrdinal` is stored as an unsigned integer, but the actual
+ * order it represents is derived by subtracting the reference value, then
+ * interpreting the result as a signed number with the same storage size (using
+ * two's complement).
+ *
+ * @note `WorkOrdinal` is the HIDL counterpart of `C2WorkOrdinalStruct` in the
+ * Codec 2.0 standard.
+ */
+struct WorkOrdinal {
+    /**
+     * Timestamp in microseconds.
+     */
+    uint64_t timestampUs;
+    /**
+     * Frame index.
+     */
+    uint64_t frameIndex;
+    /**
+     * Component specific frame ordinal.
+     */
+    uint64_t customOrdinal;
+};
+
+/**
+ * Storage type for `BaseBlock`.
+ *
+ * A `BaseBlock` is a representation of a codec memory block. Coded data,
+ * decoded data, codec-specific data, and other codec-related data are all sent
+ * in the form of BaseBlocks.
+ */
+safe_union BaseBlock {
+    /**
+     * #nativeBlock is the opaque representation of a buffer.
+     */
+    handle nativeBlock;
+    /**
+     * #pooledBlock is a reference to a buffer handled by a BufferPool.
+     */
+    BufferStatusMessage pooledBlock;
+};
+
+/**
+ * Reference to a @ref BaseBlock within a @ref WorkBundle.
+ *
+ * `Block` contains additional attributes that `BaseBlock` does not. These
+ * attributes may differ among `Block` objects that refer to the same
+ * `BaseBlock` in the same `WorkBundle`.
+ */
+struct Block {
+    /**
+     * Identity of a `BaseBlock` within a `WorkBundle`. This is an index into
+     * #WorkBundle.baseBlocks.
+     */
+    uint32_t index;
+    /**
+     * Metadata associated with this `Block`.
+     */
+    Params meta;
+    /**
+     * Fence for synchronizing `Block` access.
+     */
+    handle fence;
+};
+
+/**
+ * A codec buffer, which is a collection of @ref Block objects and metadata.
+ *
+ * This is a part of @ref FrameData.
+ */
+struct Buffer {
+    /**
+     * Metadata associated with the buffer.
+     */
+    Params info;
+    /**
+     * Blocks contained in the buffer.
+     */
+    vec<Block> blocks;
+};
+
+/**
+ * An extension of @ref Buffer that also contains a C2Param structure index.
+ *
+ * This is a part of @ref FrameData.
+ */
+struct InfoBuffer {
+    /**
+     * A C2Param structure index.
+     */
+    ParamIndex index;
+    /**
+     * Associated @ref Buffer object.
+     */
+    Buffer buffer;
+};
+
+/**
+ * Data for an input frame or an output frame.
+ *
+ * This structure represents a @e frame with its metadata. A @e frame consists
+ * of an ordered set of buffers, configuration changes, and info buffers along
+ * with some non-configuration metadata.
+ *
+ * @note `FrameData` is the HIDL counterpart of `C2FrameData` in the Codec 2.0
+ * standard.
+ */
+struct FrameData {
+    enum Flags : uint32_t {
+        /**
+         * For input frames: no output frame shall be generated when processing
+         * this frame, but metadata must still be processed.
+         *
+         * For output frames: this frame must be discarded but metadata is still
+         * valid.
+         */
+        DROP_FRAME    = (1 << 0),
+        /**
+         * This frame is the last frame of the current stream. Further frames
+         * are part of a new stream.
+         */
+        END_OF_STREAM = (1 << 1),
+        /**
+         * This frame must be discarded with its metadata.
+         *
+         * This flag is only set by components, e.g. as a response to the flush
+         * command.
+         */
+        DISCARD_FRAME = (1 << 2),
+        /**
+         * This frame is not the last frame produced for the input.
+         *
+         * This flag is normally set by the component - e.g. when an input frame
+         * results in multiple output frames, this flag is set on all but the
+         * last output frame.
+         *
+         * Also, when components are chained, this flag should be propagated
+         * down the work chain. That is, if set on an earlier frame of a
+         * work-chain, it should be propagated to all later frames in that
+         * chain. Additionally, components down the chain could set this flag
+         * even if not set earlier, e.g. if multiple output frames are generated
+         * at that component for the input frame.
+         */
+        FLAG_INCOMPLETE = (1 << 3),
+        /**
+         * This frame contains only codec-specific configuration data, and no
+         * actual access unit.
+         *
+         * @deprecated Pass codec configuration with the codec-specific
+         * configuration info together with the access unit.
+         */
+        CODEC_CONFIG  = (1u << 31),
+    };
+
+    /**
+     * Frame flags, as described in #Flags.
+     */
+    bitfield<Flags> flags;
+
+    /**
+     * @ref WorkOrdinal of the frame.
+     */
+    WorkOrdinal ordinal;
+
+    /**
+     * List of frame buffers.
+     */
+    vec<Buffer> buffers;
+
+    /**
+     * List of configuration updates.
+     */
+    Params configUpdate;
+
+    /**
+     * List of info buffers.
+     */
+    vec<InfoBuffer> infoBuffers;
+};
+
+/**
+ * In/out structure containing some instructions for and results from output
+ * processing.
+ *
+ * This is a part of @ref Work. One `Worklet` corresponds to one output
+ * @ref FrameData. The client must construct an original `Worklet` object inside
+ * a @ref Work object for each expected output before calling
+ * IComponent::queue().
+ */
+struct Worklet {
+    /**
+     * Component id. (Input)
+     *
+     * This is used only when tunneling is enabled.
+     *
+     * When used, this must match the return value from IConfigurable::getId().
+     */
+    uint32_t componentId;
+
+    /**
+     * List of C2Param objects describing tunings to be applied before
+     * processing this `Worklet`. (Input)
+     */
+    Params tunings;
+
+    /**
+     * Flag determining whether this `Worklet` has output or not.
+     */
+    bool hasOutput;
+
+    /**
+     * List of failures. (Output)
+     */
+    vec<SettingResult> failures;
+
+    /**
+     * Output frame data. (Output)
+     */
+    FrameData output;
+};
+
+/**
+ * A collection of input data to and output data from the component.
+ *
+ * A `Work` object holds information about a single work item. It is created by
+ * the client and passed to the component via IComponent::queue(). The component
+ * has two ways of returning a `Work` object to the client:
+ *   1. If the queued `Work` object has been successfully processed,
+ *      IComponentListener::onWorkDone() shall be called to notify the listener,
+ *      and the output shall be included in the returned `Work` object.
+ *   2. If the client calls IComponent::flush(), a `Work` object that has not
+ *      been processed shall be returned.
+ *
+ * `Work` is a part of @ref WorkBundle.
+ */
+struct Work {
+    /**
+     * Additional work chain info not part of this work.
+     */
+    Params chainInfo;
+
+    /**
+     * @ref FrameData for the input.
+     */
+    FrameData input;
+
+    /**
+     * The chain of `Worklet`s.
+     *
+     * The length of #worklets is 1 when tunneling is not enabled.
+     *
+     * If #worklets has more than a single element, the tunnels between
+     * successive components of the work chain must have been successfully
+     * pre-registered at the time that the `Work` is submitted. Allocating the
+     * output buffers in the `Worklet`s is the responsibility of each component
+     * in the chain.
+     *
+     * Upon `Work` submission, #worklets must be an appropriately sized vector
+     * containing `Worklet`s with @ref Worklet.hasOutput set to `false`. After a
+     * successful processing, all but the final `Worklet` in the returned
+     * #worklets must have @ref Worklet.hasOutput set to `false`.
+     */
+    vec<Worklet> worklets;
+
+    /**
+     * The number of `Worklet`s successfully processed in this chain.
+     *
+     * This must be initialized to 0 by the client when the `Work` is submitted,
+     * and it must contain the number of `Worklet`s that were successfully
+     * processed when the `Work` is returned to the client.
+     *
+     * #workletsProcessed cannot exceed the length of #worklets. If
+     * #workletsProcessed is smaller than the length of #worklets, #result
+     * cannot be `OK`.
+     */
+    uint32_t workletsProcessed;
+
+    /**
+     * The final outcome of the `Work` (corresponding to #workletsProcessed).
+     *
+     * The value of @ref Status.OK implies that all `Worklet`s have been
+     * successfully processed.
+     */
+    Status result;
+};
+
+/**
+ * List of `Work` objects.
+ *
+ * `WorkBundle` is used in IComponent::queue(), IComponent::flush() and
+ * IComponentListener::onWorkDone(). A `WorkBundle` object consists of a list of
+ * `Work` objects and a list of `BaseBlock` objects. Bundling multiple `Work`
+ * objects together provides two benefits:
+ *   1. Batching of `Work` objects can reduce the number of IPC calls.
+ *   2. If multiple `Work` objects contain `Block`s that refer to the same
+ *      `BaseBlock`, the number of `BaseBlock`s that is sent between processes
+ *      is also reduced.
+ *
+ * @note `WorkBundle` is the HIDL counterpart of the vector of `C2Work` in the
+ * Codec 2.0 standard. The presence of #baseBlocks helps with minimizing the
+ * data transferred over an IPC.
+ */
+struct WorkBundle {
+    /**
+     * A list of Work items.
+     */
+    vec<Work> works;
+    /**
+     * A list of blocks indexed by elements of #works.
+     */
+    vec<BaseBlock> baseBlocks;
+};
+
+/**
+ * Query information for supported values of a field. This is used as input to
+ * IConfigurable::querySupportedValues().
+ */
+struct FieldSupportedValuesQuery {
+    /**
+     * Identity of the field to query.
+     */
+    ParamField field;
+
+    enum Type : uint32_t {
+        /** Query all possible values regardless of other settings. */
+        POSSIBLE,
+        /** Query currently possible values given dependent settings. */
+        CURRENT,
+    };
+    /**
+     * Type of the query. See #Type for more information.
+     */
+    Type type;
+};
+
+/**
+ * This structure is used to hold the result from
+ * IConfigurable::querySupportedValues().
+ */
+struct FieldSupportedValuesQueryResult {
+    /**
+     * Result of the query. Possible values are
+     * - `OK`: The query was successful.
+     * - `BAD_STATE`: The query was requested when the `IConfigurable` instance
+     *   was in a bad state.
+     * - `BAD_INDEX`: The requested field was not recognized.
+     * - `TIMED_OUT`: The query could not be completed in a timely manner.
+     * - `BLOCKING`: The query must block, but the parameter `mayBlock` in the
+     *   call to `querySupportedValues()` was `false`.
+     * - `CORRUPTED`: Some unknown error occurred.
+     */
+    Status status;
+
+    /**
+     * Supported values. This is meaningful only when #status is `OK`.
+     */
+    FieldSupportedValues values;
+};
+
