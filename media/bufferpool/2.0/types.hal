@@ -91,3 +91,19 @@ struct BufferStatusMessage {
      */
     int64_t timestampUs;
 };
+
+/*
+ * Buffer pool sends a buffer invalidation message to clients in order to
+ * ensure fast reclamation of the buffers. Clients must free the invalidated
+ * buffers as soon as possible upon receiving the message.
+ */
+struct BufferInvalidationMessage {
+    /**
+     * Buffers from fromBufferId to toBufferId must be invalidated.
+     * Both of fromBufferId and toBufferId are inclusive.
+     * If fromBufferId > toBufferID, wrap happens. In that case
+     * the wrap is based on UINT32_MAX.
+     */
+    uint32_t fromBufferId;
+    uint32_t toBufferId;
+};
