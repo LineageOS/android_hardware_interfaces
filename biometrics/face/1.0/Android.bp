@@ -17,6 +17,7 @@ hidl_interface {
     types: [
         "FaceAcquiredInfo",
         "FaceError",
+        "OptionalBool",
         "OptionalUint64",
         "Status",
         "UserHandle",

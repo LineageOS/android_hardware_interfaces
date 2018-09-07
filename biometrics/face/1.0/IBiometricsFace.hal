@@ -60,18 +60,18 @@ interface IBiometricsFace {
      *     persistent for a given user.
      * @param storePath filesystem path to the template storage directory.
      */
-    @callflow(next={"authenticate", "preEnroll", "enumerate", "remove"})
+    @callflow(next={"authenticate", "generateChallenge", "enumerate", "remove"})
     setActiveUser(int32_t userId, string storePath) generates (Status status);
 
     /**
-     * Begins a pre-enrollment request.
+     * Begins a secure transaction request, e.g. enrollment.
      *
      * Generates a unique and cryptographically secure random token used to
-     * indicate the start of an enrollment transaction. preEnroll() and
-     * postEnroll() specify a pin/pattern/password cleared time window where
-     * enrollment is allowed.
+     * indicate the start of a secure transaction. generateChallenge() and
+     * revokeChallenge() specify a pin/pattern/password cleared time window where
+     * the secure transaction is allowed.
      *
-     * preEnroll() generates a challenge which must then be wrapped by the
+     * generateChallenge() generates a challenge which must then be wrapped by the
      * gatekeeper after verifying a successful strong authentication attempt,
      * which generates a Hardware Authentication Token. The challenge prevents
      * spoofing and replay attacks and ensures that we only update a user’s face
@@ -81,8 +81,8 @@ interface IBiometricsFace {
      * @return result, with its "value" parameter representing a "challenge": a
      *     unique and cryptographically secure random token.
      */
-    @callflow(next={"enroll", "postEnroll"})
-    preEnroll() generates (OptionalUint64 result);
+    @callflow(next={"enroll", "revokeChallenge", "setRequireAttention"})
+    generateChallenge() generates (OptionalUint64 result);
 
     /**
      * Enrolls a user's face.
@@ -95,28 +95,38 @@ interface IBiometricsFace {
      * necessity for a shared use case, e.g. TVs or cars.
      *
      * Note that the Hardware Authentication Token must still be valid after
-     * this call, and must be explicitly invalidated by a call to postEnroll().
-     * This allows clients to immediately reattempt enrollment (for example, if
-     * a user wasn’t satisfied with their enrollment) without having to go
-     * through another strong authentication flow.
+     * this call, and must be explicitly invalidated by a call to
+     * revokeChallenge(). This allows clients to immediately reattempt
+     * enrollment (for example, if a user wasn’t satisfied with their enrollment)
+     * without having to go through another strong authentication flow.
      *
      * This method triggers the IBiometricsFaceClientCallback#onEnrollResult()
      * method.
      *
      * @param hat A valid Hardware Authentication Token, generated as a result
-     *     of a preEnroll() challenge being wrapped by the gatekeeper after a
-     *     sucessful strong authentication request.
+     *     of a generateChallenge() challenge being wrapped by the gatekeeper
+     *     after a sucessful strong authentication request.
      * @param timeoutSec A timeout in seconds, after which this enrollment
      *     attempt is cancelled. Note that the client still needs to
-     *     call postEnroll() to terminate the enrollment session.
+     *     call revokeChallenge() to terminate the enrollment session.
+     * @param requireAttention When set to true, requires user attention (e.g.
+     *     eyes open and looking at the device) for enrollment to complete, as
+     *     well as subsequent authentication. This is expected to be enabled by
+     *     default to improve security and decrease falsing (unintentional face
+     *     detection). This feature can be disabled at the user's request
+     *     during enrollment, e.g. for accessibility reasons. When enabled,
+     *     the FaceAcquiredInfo#POOR_GAZE message must be sent when the user's
+     *     attention has not been established. The UI should inform the user
+     *     to look at the device.
      * @return status The status of this method call.
      */
-    @callflow(next={"cancel", "enroll", "postEnroll", "remove"})
-    enroll(vec<uint8_t> hat, uint32_t timeoutSec) generates (Status status);
+    @callflow(next={"cancel", "enroll", "revokeChallenge", "remove"})
+    enroll(vec<uint8_t> hat, uint32_t timeoutSec, bool requireAttention)
+        generates (Status status);
 
     /**
-     * Finishes the enrollment session and invalidates the challenge generated
-     * by preEnroll().
+     * Finishes the secure transaction by invalidating the challenge generated
+     * by generateChallenge().
      *
      * Clients must call this method once enrollment is complete, and the user's
      * face template no longer needs to be updated.
@@ -124,7 +134,38 @@ interface IBiometricsFace {
      * @return status The status of this method call.
      */
     @callflow(next={"authenticate", "setActiveUser", "enumerate", "remove"})
-    postEnroll() generates (Status status);
+    revokeChallenge() generates (Status status);
+
+    /**
+     * Requires that all subsequent authenticate calls to first have the
+     * user's attention. This method does not affect enroll, which has its
+     * own requireAttention parameter.
+     *
+     * Changes the state of previous enrollment setting. Because this may
+     * decrease security, the user must enter their password before this method
+     * is invoked (see @param HAT). The driver must verify the HAT before
+     * changing the requireAttention state.
+     * Note: In some cases it may not be possible to change the state of this
+     * flag without re-enrolling. For example, if the user didn't provide
+     * attention during the original enrollment. This flag reflects the same
+     * persistent state as the one passed to enroll().
+     *
+     * @param requireAttention When set to true, requires user attention for
+     *     authentication to succeed.
+     * @param hat A valid Hardware Authentication Token, generated as a result
+     *     of getChallenge().
+     * @return status The status of this method call.
+     */
+    setRequireAttention(bool requireAttention, vec<uint8_t> hat)
+        generates(Status status);
+
+    /**
+     * Retrieves the current requireAttention state.
+     *
+     * @return result, with its value parameter representing the current
+     *     requireAttention state.
+     */
+    getRequireAttention(vec<uint8_t> hat) generates (OptionalBool result);
 
     /**
      * Returns an identifier associated with the current face set.
@@ -186,6 +227,6 @@ interface IBiometricsFace {
      * object instance; or 0 if not being used.
      * @return status The status of this method call.
      */
-    @callflow(next={"cancel", "preEnroll", "remove"})
+    @callflow(next={"cancel", "generateChallenge", "remove"})
     authenticate(uint64_t operationId) generates (Status status);
 };
