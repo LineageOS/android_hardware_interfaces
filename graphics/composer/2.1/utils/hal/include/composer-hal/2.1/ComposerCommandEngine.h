@@ -258,6 +258,7 @@ class ComposerCommandEngine : protected CommandReaderBase {
 
         auto err = mHal->validateDisplay(mCurrentDisplay, &changedLayers, &compositionTypes,
                                          &displayRequestMask, &requestedLayers, &requestMasks);
+        mResources->setDisplayMustValidateState(mCurrentDisplay, false);
         if (err == Error::NONE) {
             mWriter.setChangedCompositionTypes(changedLayers, compositionTypes);
             mWriter.setDisplayRequests(displayRequestMask, requestedLayers, requestMasks);
@@ -278,7 +279,9 @@ class ComposerCommandEngine : protected CommandReaderBase {
             int presentFence = -1;
             std::vector<Layer> layers;
             std::vector<int> fences;
-            auto err = mHal->presentDisplay(mCurrentDisplay, &presentFence, &layers, &fences);
+            auto err = mResources->mustValidateDisplay(mCurrentDisplay)
+                           ? Error::NOT_VALIDATED
+                           : mHal->presentDisplay(mCurrentDisplay, &presentFence, &layers, &fences);
             if (err == Error::NONE) {
                 mWriter.setPresentOrValidateResult(1);
                 mWriter.setPresentFence(presentFence);
@@ -296,6 +299,7 @@ class ComposerCommandEngine : protected CommandReaderBase {
 
         auto err = mHal->validateDisplay(mCurrentDisplay, &changedLayers, &compositionTypes,
                                          &displayRequestMask, &requestedLayers, &requestMasks);
+        mResources->setDisplayMustValidateState(mCurrentDisplay, false);
         if (err == Error::NONE) {
             mWriter.setPresentOrValidateResult(0);
             mWriter.setChangedCompositionTypes(changedLayers, compositionTypes);
