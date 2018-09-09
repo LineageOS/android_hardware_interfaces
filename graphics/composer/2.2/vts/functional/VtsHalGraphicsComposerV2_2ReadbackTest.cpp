@@ -119,10 +119,10 @@ class GraphicsComposerReadbackTest : public ::testing::VtsHalHidlTargetTestBase 
         // assume the first display is primary and is never removed
         mPrimaryDisplay = waitForFirstDisplay();
         Config activeConfig = mComposerClient->getActiveConfig(mPrimaryDisplay);
-        width = mComposerClient->getDisplayAttribute(mPrimaryDisplay, activeConfig,
-                                                     IComposerClient::Attribute::WIDTH);
-        height = mComposerClient->getDisplayAttribute(mPrimaryDisplay, activeConfig,
-                                                      IComposerClient::Attribute::HEIGHT);
+        mDisplayWidth = mComposerClient->getDisplayAttribute(mPrimaryDisplay, activeConfig,
+                                                             IComposerClient::Attribute::WIDTH);
+        mDisplayHeight = mComposerClient->getDisplayAttribute(mPrimaryDisplay, activeConfig,
+                                                              IComposerClient::Attribute::HEIGHT);
 
         // explicitly disable vsync
         mComposerClient->setVsyncEnabled(mPrimaryDisplay, false);
@@ -132,6 +132,11 @@ class GraphicsComposerReadbackTest : public ::testing::VtsHalHidlTargetTestBase 
         mWriter = std::make_shared<CommandWriterBase>(1024);
         mReader = std::make_unique<TestCommandReader>();
         mGralloc = std::make_unique<Gralloc>();
+
+        mComposerClient->getRaw()->getReadbackBufferAttributes(
+            mPrimaryDisplay, [&](const auto& tmpError, const auto&, const auto&) {
+                mHasReadbackBuffer = tmpError == Error::NONE;
+            });
     }
 
     ~GraphicsComposerReadbackTest() override {
@@ -166,7 +171,7 @@ class GraphicsComposerReadbackTest : public ::testing::VtsHalHidlTargetTestBase 
     }
 
     bool readbackSupported(const PixelFormat& pixelFormat, const Dataspace& dataspace,
-                           const Error& error) {
+                           const Error error) {
         if (error == Error::UNSUPPORTED) {
             return false;
         }
@@ -181,19 +186,12 @@ class GraphicsComposerReadbackTest : public ::testing::VtsHalHidlTargetTestBase 
     }
 
     void getReadbackBufferAttributes(Display display, PixelFormat* outPixelFormat,
-                                     Dataspace* outDataspace, Error* outError) {
+                                     Dataspace* outDataspace) {
         mComposerClient->getRaw()->getReadbackBufferAttributes(
-            display,
-            [&](const auto& tmpError, const auto& tmpOutPixelFormat, const auto& tmpOutDataspace) {
-                *outError = tmpError;
+            display, [&](const auto&, const auto& tmpOutPixelFormat, const auto& tmpOutDataspace) {
                 *outPixelFormat = tmpOutPixelFormat;
                 *outDataspace = tmpOutDataspace;
             });
-
-        // Not all devices support readback.  Pass test if this is the case
-        if (!readbackSupported(*outPixelFormat, *outDataspace, *outError)) {
-            GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
-        }
     }
 
     void checkReadbackBuffer(IMapper::BufferDescriptorInfo info, uint32_t stride, void* bufferData,
@@ -202,9 +200,9 @@ class GraphicsComposerReadbackTest : public ::testing::VtsHalHidlTargetTestBase 
         ASSERT_NE(-1, bytesPerPixel)
             << "unexpected pixel format " << static_cast<int32_t>(info.format)
             << "(expected RGBA_8888 or RGB_888)";
-        for (int row = 0; row < height; row++) {
-            for (int col = 0; col < width; col++) {
-                int pixel = row * width + col;
+        for (int row = 0; row < mDisplayHeight; row++) {
+            for (int col = 0; col < mDisplayWidth; col++) {
+                int pixel = row * mDisplayWidth + col;
                 int offset = (row * stride + col) * bytesPerPixel;
                 uint8_t* pixelColor = (uint8_t*)bufferData + offset;
 
@@ -221,11 +219,13 @@ class GraphicsComposerReadbackTest : public ::testing::VtsHalHidlTargetTestBase 
     sp<V2_1::vts::GraphicsComposerCallback> mComposerCallback;
     // the first display and is assumed never to be removed
     Display mPrimaryDisplay;
-    int32_t width;
-    int32_t height;
+    int32_t mDisplayWidth;
+    int32_t mDisplayHeight;
     std::shared_ptr<CommandWriterBase> mWriter;
     std::unique_ptr<TestCommandReader> mReader;
     std::unique_ptr<Gralloc> mGralloc;
+
+    bool mHasReadbackBuffer;
 
    private:
     Display waitForFirstDisplay() {
@@ -241,6 +241,10 @@ class GraphicsComposerReadbackTest : public ::testing::VtsHalHidlTargetTestBase 
 };
 
 TEST_F(GraphicsComposerReadbackTest, SingleSolidColorLayer) {
+    if (!mHasReadbackBuffer) {
+        GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
+        return;
+    }
     mWriter->selectDisplay(mPrimaryDisplay);
     mComposerClient->setPowerMode(mPrimaryDisplay, PowerMode::ON);
     mComposerClient->setColorMode(mPrimaryDisplay, ColorMode::SRGB, RenderIntent::COLORIMETRIC);
@@ -255,10 +259,10 @@ TEST_F(GraphicsComposerReadbackTest, SingleSolidColorLayer) {
     std::vector<std::shared_ptr<TestLayer>> layers = {layer};
 
     // expected color for each pixel
-    std::vector<IComposerClient::Color> expectedColors(width * height);
-    for (int row = 0; row < height; row++) {
-        for (int col = 0; col < width; col++) {
-            int pixel = row * width + col;
+    std::vector<IComposerClient::Color> expectedColors(mDisplayWidth * mDisplayHeight);
+    for (int row = 0; row < mDisplayHeight; row++) {
+        for (int col = 0; col < mDisplayWidth; col++) {
+            int pixel = row * mDisplayWidth + col;
             if (row >= coloredSquare.top && row < coloredSquare.bottom &&
                 col >= coloredSquare.left && col < coloredSquare.right) {
                 expectedColors[pixel] = color;
@@ -270,12 +274,12 @@ TEST_F(GraphicsComposerReadbackTest, SingleSolidColorLayer) {
 
     PixelFormat pixelFormat;
     Dataspace dataspace;
-    Error error;
-    getReadbackBufferAttributes(mPrimaryDisplay, &pixelFormat, &dataspace, &error);
+
+    getReadbackBufferAttributes(mPrimaryDisplay, &pixelFormat, &dataspace);
 
     IMapper::BufferDescriptorInfo info;
-    info.width = width;
-    info.height = height;
+    info.width = mDisplayWidth;
+    info.height = mDisplayHeight;
     info.layerCount = 1;
     info.format = pixelFormat;
     info.usage = static_cast<uint64_t>(BufferUsage::CPU_READ_OFTEN | BufferUsage::GPU_TEXTURE);

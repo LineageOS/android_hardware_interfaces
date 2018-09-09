@@ -48,7 +48,13 @@ enum Status : uint32_t {
     /**
      * The HAL has encountered an internal error and cannot complete the request.
      */
-    INTERNAL_ERROR = 3
+    INTERNAL_ERROR = 3,
+
+    /**
+     * The operation could not be completed because there are no enrolled
+     * templates.
+     */
+    NOT_ENROLLED = 4
 };
 
 /**
@@ -252,4 +258,20 @@ struct OptionalUint64 {
      * This value is only meaningful if status is OK.
      */
     uint64_t value;
+};
+
+/**
+ * Result structure with an addition bool field. See documentation in
+ * getRequireAttention() for usage of the value.
+ */
+struct OptionalBool {
+    /**
+     * The return status.
+     */
+    Status status;
+
+    /**
+     * This value is only meaningful if status is OK.
+     */
+    bool value;
 };

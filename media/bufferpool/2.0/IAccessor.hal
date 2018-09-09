@@ -59,10 +59,14 @@ interface IAccessor {
      *     to get shared buffers from the buffer pool.
      * @return connectionId Id of IConnection. The Id identifies
      *     sender and receiver in FMQ messages during buffer transfer.
-     * @return mqDesc FMQ descriptor. The descriptor can be used to
-     *     send/receive FMQ messages.
+     * @return toFmqDesc FMQ descriptor. The descriptor is used to
+     *     post buffer status messages.
+     * @return fromFmqDesc FMQ descriptor. The descriptor is used to
+     *     receive buffer invalidation messages from the buffer pool.
      */
     connect()
         generates (ResultStatus status, IConnection connection,
-                   int64_t connectionId, fmq_sync<BufferStatusMessage> mqDesc);
+                   int64_t connectionId,
+                   fmq_sync<BufferStatusMessage> toFmqDesc,
+                   fmq_sync<BufferInvalidationMessage> fromFmqDesc);
 };
