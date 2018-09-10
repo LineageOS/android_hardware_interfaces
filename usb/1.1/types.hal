@@ -18,6 +18,8 @@ package android.hardware.usb@1.1;
 
 import android.hardware.usb@1.0;
 
+// NOTE: suffix '_1_1' is for legacy ABI compatibility. It cannot be
+// changed to 'PortMode' which the convention dictates.
 @export
 enum PortMode_1_1 : PortMode {
     /*
@@ -37,6 +39,8 @@ enum PortMode_1_1 : PortMode {
  * Used as the container to report data back to the caller.
  * Represents the current connection status of a single USB port.
  */
+// NOTE: suffix '_1_1' is for legacy ABI compatibility. It cannot be
+// changed to 'PortStatus' which the convention dictates.
 struct PortStatus_1_1 {
     /*
      * The supportedModes and the currentMode fields of the status
