@@ -18,6 +18,8 @@ package android.hardware.vibrator@1.1;
 
 import @1.0::Effect;
 
+// NOTE: suffix '_1_1' is for legacy ABI compatibility. It cannot be
+// changed to 'Effect' which the convention dictates.
 @export
 enum Effect_1_1 : @1.0::Effect {
     /**
