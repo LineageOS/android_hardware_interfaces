@@ -161,6 +161,116 @@ interface IComposerClient extends @2.2::IComposerClient {
                                Dataspace dataspace)
                     generates (Error error);
 
+    enum FormatColorComponent : uint8_t {
+        /* The first component  (eg, for RGBA_8888, this is R) */
+        FORMAT_COMPONENT_0 = 1 << 0,
+        /* The second component (eg, for RGBA_8888, this is G) */
+        FORMAT_COMPONENT_1 = 1 << 1,
+        /* The third component  (eg, for RGBA_8888, this is B) */
+        FORMAT_COMPONENT_2 = 1 << 2,
+        /* The fourth component (eg, for RGBA_8888, this is A) */
+        FORMAT_COMPONENT_3 = 1 << 3,
+    };
+
+    /**
+     * Query for what types of color sampling the hardware supports.
+     *
+     * @param  display        is the display where the samples are collected.
+     * @return error          is NONE upon success. Otherwise,
+     *                        BAD_DISPLAY when an invalid display was passed in, or
+     *                        UNSUPPORTED when there is no efficient way to sample.
+     * @return format         The format of the sampled pixels.
+     * @return dataspace      The dataspace of the sampled pixels.
+     * @return componentMask  The mask of which components can be sampled.
+     */
+    getDisplayedContentSamplingAttributes(Display display)
+               generates (Error error,
+                          PixelFormat format,
+                          Dataspace dataspace,
+                          bitfield<FormatColorComponent> componentMask);
+
+    /** DisplayedContentSampling values passed to setDisplayedContentSamplingEnabled. */
+    enum DisplayedContentSampling : int32_t {
+        INVALID = 0,
+
+        /** Enable content sampling. */
+        ENABLE = 1,
+
+        /** Disable content sampling. */
+        DISABLE = 2,
+    };
+
+    /**
+     * Enables or disables the collection of color content statistics
+     * on this display.
+     *
+     * Sampling occurs on the contents of the final composition on this display
+     * (i.e., the contents presented on screen). Samples should be collected after all
+     * color transforms have been applied.
+     *
+     * Sampling support is optional, and is set to DISABLE by default.
+     * On each call to ENABLE, all collected statistics must be reset.
+     *
+     * Sample data can be queried via getDisplayedContentSample().
+     *
+     * @param display        is the display to which the sampling mode is set.
+     * @param enabled        indicates whether to enable or disable sampling.
+     * @param componentMask  The mask of which components should be sampled. If zero, all supported
+     *                       components are to be enabled.
+     * @param maxFrames      is the maximum number of frames that should be stored before discard.
+     *                       The sample represents the most-recently posted frames.
+     * @return error      is NONE upon success. Otherwise,
+     *                    BAD_DISPLAY when an invalid display handle was passed in,
+     *                    BAD_PARAMETER when enabled was an invalid value, or
+     *                    NO_RESOURCES when the requested ringbuffer size via maxFrames was
+     *                                 not available.
+     *                    UNSUPPORTED when there is no efficient way to sample.
+     */
+    setDisplayedContentSamplingEnabled(
+        Display display, DisplayedContentSampling enable,
+        bitfield<FormatColorComponent> componentMask, uint64_t maxFrames)
+        generates (Error error);
+
+    /**
+     * Collects the results of display content color sampling for display.
+     *
+     * Collection of data can occur whether the sampling is in ENABLE or
+     * DISABLE state.
+     *
+     * @param  display     is the display to which the sampling is collected.
+     * @param  maxFrames   is the maximum number of frames that should be represented in the sample.
+     *                     The sample represents the most-recently posted frames.
+     *                     If maxFrames is 0, all frames are to be represented by the sample.
+     * @param  timestamp   is the timestamp after which any frames were posted that should be
+     *                     included in the sample. Timestamp is CLOCK_MONOTONIC.
+     *                     If timestamp is 0, do not filter from the sample by time.
+     * @return error       is NONE upon success. Otherwise,
+     *                     BAD_DISPLAY   when an invalid display was passed in, or
+     *                     UNSUPPORTED   when there is no efficient way to sample, or
+     *                     BAD_PARAMETER when the component is not supported by the hardware.
+     * @return frameCount  The number of frames represented by this sample.
+     * @return sampleComponent0 is a histogram counting how many times a pixel of a given value
+     *                     was displayed onscreen for FORMAT_COMPONENT_0.
+     *                     The buckets of the histogram are evenly weighted, the number of buckets
+     *                     is device specific.
+     *                     eg, for RGBA_8888, if sampleComponent0 is {10, 6, 4, 1} this means that
+     *                     10 red pixels were displayed onscreen in range 0x00->0x3F, 6 red pixels
+     *                     were displayed onscreen in range 0x40->0x7F, etc.
+     * @return sampleComponent1 is the same sample definition as sampleComponent0,
+     *                     but for FORMAT_COMPONENT_1.
+     * @return sampleComponent2 is the same sample definition as sampleComponent0,
+     *                     but for FORMAT_COMPONENT_2.
+     * @return sampleComponent3 is the same sample definition as sampleComponent0,
+     *                     but for FORMAT_COMPONENT_3.
+     */
+    getDisplayedContentSample(Display display, uint64_t maxFrames, uint64_t timestamp)
+               generates (Error error,
+                          uint64_t frameCount,
+                          vec<uint64_t> sampleComponent0,
+                          vec<uint64_t> sampleComponent1,
+                          vec<uint64_t> sampleComponent2,
+                          vec<uint64_t> sampleComponent3);
+
     /**
      * Executes commands from the input command message queue. Return values
      * generated by the input commands are written to the output command

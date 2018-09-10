@@ -104,6 +104,65 @@ class HwcHalImpl : public V2_2::passthrough::detail::HwcHalImpl<Hal> {
         return static_cast<Error>(err);
     }
 
+    Error getDisplayedContentSamplingAttributes(
+        uint64_t display, PixelFormat& format, Dataspace& dataspace,
+        hidl_bitfield<IComposerClient::FormatColorComponent>& componentMask) override {
+        if (!mDispatch.getDisplayedContentSamplingAttributes) {
+            return Error::UNSUPPORTED;
+        }
+        int32_t formatRaw = 0;
+        int32_t dataspaceRaw = 0;
+        uint8_t componentMaskRaw = 0;
+        int32_t errorRaw = mDispatch.getDisplayedContentSamplingAttributes(
+            mDevice, display, &formatRaw, &dataspaceRaw, &componentMaskRaw);
+        auto error = static_cast<Error>(errorRaw);
+        if (error == Error::NONE) {
+            format = static_cast<PixelFormat>(formatRaw);
+            dataspace = static_cast<Dataspace>(dataspaceRaw);
+            componentMask =
+                static_cast<hidl_bitfield<IComposerClient::FormatColorComponent>>(componentMaskRaw);
+        }
+        return error;
+    };
+
+    Error setDisplayedContentSamplingEnabled(
+        uint64_t display, IComposerClient::DisplayedContentSampling enable,
+        hidl_bitfield<IComposerClient::FormatColorComponent> componentMask,
+        uint64_t maxFrames) override {
+        if (!mDispatch.setDisplayedContentSamplingEnabled) {
+            return Error::UNSUPPORTED;
+        }
+        return static_cast<Error>(mDispatch.setDisplayedContentSamplingEnabled(
+            mDevice, display, static_cast<int32_t>(enable), componentMask, maxFrames));
+    }
+
+    Error getDisplayedContentSample(uint64_t display, uint64_t maxFrames, uint64_t timestamp,
+                                    uint64_t& frameCount, hidl_vec<uint64_t>& sampleComponent0,
+                                    hidl_vec<uint64_t>& sampleComponent1,
+                                    hidl_vec<uint64_t>& sampleComponent2,
+                                    hidl_vec<uint64_t>& sampleComponent3) override {
+        if (!mDispatch.getDisplayedContentSample) {
+            return Error::UNSUPPORTED;
+        }
+
+        int32_t size[4] = {0};
+        auto errorRaw = mDispatch.getDisplayedContentSample(mDevice, display, maxFrames, timestamp,
+                                                            &frameCount, size, nullptr);
+        if (errorRaw != HWC2_ERROR_NONE) {
+            return static_cast<Error>(errorRaw);
+        }
+
+        sampleComponent0.resize(size[0]);
+        sampleComponent1.resize(size[1]);
+        sampleComponent2.resize(size[2]);
+        sampleComponent3.resize(size[3]);
+        uint64_t* samples[] = {sampleComponent0.data(), sampleComponent1.data(),
+                               sampleComponent2.data(), sampleComponent3.data()};
+        errorRaw = mDispatch.getDisplayedContentSample(mDevice, display, maxFrames, timestamp,
+                                                       &frameCount, size, samples);
+        return static_cast<Error>(errorRaw);
+    }
+
    protected:
     bool initDispatch() override {
         if (!BaseType2_2::initDispatch()) {
@@ -114,6 +173,12 @@ class HwcHalImpl : public V2_2::passthrough::detail::HwcHalImpl<Hal> {
                                    &mDispatch.getDisplayIdentificationData);
         this->initOptionalDispatch(HWC2_FUNCTION_SET_LAYER_COLOR_TRANSFORM,
                                    &mDispatch.setLayerColorTransform);
+        this->initOptionalDispatch(HWC2_FUNCTION_GET_DISPLAYED_CONTENT_SAMPLING_ATTRIBUTES,
+                                   &mDispatch.getDisplayedContentSamplingAttributes);
+        this->initOptionalDispatch(HWC2_FUNCTION_SET_DISPLAYED_CONTENT_SAMPLING_ENABLED,
+                                   &mDispatch.setDisplayedContentSamplingEnabled);
+        this->initOptionalDispatch(HWC2_FUNCTION_GET_DISPLAYED_CONTENT_SAMPLE,
+                                   &mDispatch.getDisplayedContentSample);
         return true;
     }
 
@@ -121,6 +186,9 @@ class HwcHalImpl : public V2_2::passthrough::detail::HwcHalImpl<Hal> {
     struct {
         HWC2_PFN_GET_DISPLAY_IDENTIFICATION_DATA getDisplayIdentificationData;
         HWC2_PFN_SET_LAYER_COLOR_TRANSFORM setLayerColorTransform;
+        HWC2_PFN_GET_DISPLAYED_CONTENT_SAMPLING_ATTRIBUTES getDisplayedContentSamplingAttributes;
+        HWC2_PFN_SET_DISPLAYED_CONTENT_SAMPLING_ENABLED setDisplayedContentSamplingEnabled;
+        HWC2_PFN_GET_DISPLAYED_CONTENT_SAMPLE getDisplayedContentSample;
     } mDispatch = {};
 
     using BaseType2_2 = V2_2::passthrough::detail::HwcHalImpl<Hal>;
