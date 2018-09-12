@@ -19,6 +19,7 @@
 #include <android/hardware/configstore/1.1/ISurfaceFlingerConfigs.h>
 #include <hidl/HidlTransportSupport.h>
 #include <hwminijail/HardwareMinijail.h>
+#include <hwbinder/ProcessState.h>
 
 #include "SurfaceFlingerConfigs.h"
 
@@ -35,6 +36,10 @@ int main() {
     configureRpcThreadpool(10, true);
 
     SetupMinijail("/vendor/etc/seccomp_policy/configstore@1.1.policy");
+
+#ifdef ARCH_ARM_32
+    android::hardware::ProcessState::initWithMmapSize((size_t)(32768));
+#endif
 
     sp<ISurfaceFlingerConfigs> surfaceFlingerConfigs = new SurfaceFlingerConfigs;
     status_t status = surfaceFlingerConfigs->registerAsService();

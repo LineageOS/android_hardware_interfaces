@@ -32,7 +32,15 @@ cc_binary {
         "android.hardware.graphics.allocator@2.0",
         "libhidlbase",
         "libhidltransport",
+        "libhwbinder",
         "liblog",
         "libutils",
     ],
+    arch: {
+        arm: {
+            cflags: [
+                "-DARCH_ARM_32"
+            ],
+        },
+    },
 }
