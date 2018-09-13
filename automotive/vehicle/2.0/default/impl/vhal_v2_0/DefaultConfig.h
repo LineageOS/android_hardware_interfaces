@@ -227,6 +227,16 @@ const ConfigDeclaration kVehicleProperties[]{
 
     {.config =
          {
+             .prop = toInt(VehicleProperty::INFO_DRIVER_SEAT),
+             .access = VehiclePropertyAccess::READ,
+             .changeMode = VehiclePropertyChangeMode::STATIC,
+             // this was a zoned property on an old vhal, but it is meant to be global
+             .areaConfigs = {VehicleAreaConfig{.areaId = (0)}},
+         },
+     .initialValue = {.int32Values = {SEAT_1_LEFT}}},
+
+    {.config =
+         {
              .prop = toInt(VehicleProperty::PERF_ODOMETER),
              .access = VehiclePropertyAccess::READ,
              .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
