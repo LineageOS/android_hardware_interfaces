@@ -9,6 +9,7 @@ hidl_interface {
     srcs: [
         "types.hal",
         "IFileSystem.hal",
+        "IGarbageCollectCallback.hal",
     ],
     interfaces: [
         "android.hidl.base@1.0",
