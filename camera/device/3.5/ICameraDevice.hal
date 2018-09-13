@@ -1,0 +1,62 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.camera.device@3.5;
+
+import android.hardware.camera.common@1.0::Status;
+import @3.2::CameraMetadata;
+import @3.2::ICameraDevice;
+
+/**
+ * Camera device interface
+ *
+ * Supports the android.hardware.Camera API, and the android.hardware.camera2
+ * API at LIMITED or better hardware level.
+ *
+ */
+interface ICameraDevice extends @3.2::ICameraDevice {
+
+    /**
+     * getPhysicalCameraCharacteristics:
+     *
+     * Return the static camera information for a physical camera ID backing
+     * this logical camera device. This information may not change between consecutive calls.
+     *
+     * Note that HAL must support this function for physical camera IDs that are
+     * not exposed via ICameraProvider::getCameraIdList().
+     *
+     * @return status Status code for the operation, one of:
+     *     OK:
+     *         On a successful query of the camera device characteristics
+     *     INTERNAL_ERROR:
+     *         The camera device cannot be opened due to an internal
+     *         error.
+     *     CAMERA_DISCONNECTED:
+     *         An external camera device has been disconnected, and is no longer
+     *         available. This camera device interface is now stale, and a new
+     *         instance must be acquired if the device is reconnected. All
+     *         subsequent calls on this interface must return
+     *         CAMERA_DISCONNECTED.
+     *
+     * @return cameraCharacteristics
+     *     The static metadata for this logical camera device's physical device, or an empty
+     *     metadata structure if status is not OK.
+     *
+     */
+    getPhysicalCameraCharacteristics(string physicalCameraId)
+            generates (Status status, CameraMetadata cameraCharacteristics);
+
+};
