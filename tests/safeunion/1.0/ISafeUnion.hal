@@ -60,6 +60,9 @@ interface ISafeUnion {
         } k;
 
         SmallSafeUnion l;
+
+        BitField m;
+        bitfield<BitField> n;
     };
 
     safe_union InterfaceTypeSafeUnion {
@@ -91,6 +94,8 @@ interface ISafeUnion {
     setJ(LargeSafeUnion myUnion, J j) generates (LargeSafeUnion myUnion);
     setK(LargeSafeUnion myUnion, LargeSafeUnion.K k) generates (LargeSafeUnion myUnion);
     setL(LargeSafeUnion myUnion, SmallSafeUnion l) generates (LargeSafeUnion myUnion);
+    setM(LargeSafeUnion myUnion, BitField m) generates (LargeSafeUnion myUnion);
+    setN(LargeSafeUnion myUnion, bitfield<BitField> m) generates (LargeSafeUnion myUnion);
 
     newInterfaceTypeSafeUnion() generates (InterfaceTypeSafeUnion myUnion);
     setInterfaceA(InterfaceTypeSafeUnion myUnion, uint32_t a) generates (InterfaceTypeSafeUnion myUnion);
