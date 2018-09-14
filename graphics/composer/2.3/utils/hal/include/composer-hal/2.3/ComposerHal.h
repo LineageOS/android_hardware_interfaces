@@ -27,11 +27,13 @@ namespace hal {
 
 using V2_1::Display;
 using V2_1::Error;
+using V2_1::Layer;
 
 class ComposerHal : public V2_2::hal::ComposerHal {
    public:
     virtual Error getDisplayIdentificationData(Display display, uint8_t* outPort,
                                                std::vector<uint8_t>* outData) = 0;
+    virtual Error setLayerColorTransform(Display display, Layer layer, const float* matrix) = 0;
 };
 
 }  // namespace hal
