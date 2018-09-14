@@ -153,6 +153,27 @@ Return<void> SafeUnion::setL(const LargeSafeUnion& myUnion, const SmallSafeUnion
     return Void();
 }
 
+Return<void> SafeUnion::setM(const LargeSafeUnion& myUnion, BitField m, setL_cb _hidl_cb) {
+    LOG(INFO) << "SERVER(SafeUnion) setM(myUnion, " << toString(m) << ")";
+
+    LargeSafeUnion myNewUnion = myUnion;
+    myNewUnion.m(m);
+
+    _hidl_cb(myNewUnion);
+    return Void();
+}
+
+Return<void> SafeUnion::setN(const LargeSafeUnion& myUnion, hidl_bitfield<BitField> n,
+                             setL_cb _hidl_cb) {
+    LOG(INFO) << "SERVER(SafeUnion) setN(myUnion, " << n << ")";
+
+    LargeSafeUnion myNewUnion = myUnion;
+    myNewUnion.n(n);
+
+    _hidl_cb(myNewUnion);
+    return Void();
+}
+
 Return<void> SafeUnion::newInterfaceTypeSafeUnion(newInterfaceTypeSafeUnion_cb _hidl_cb) {
     LOG(INFO) << "SERVER(SafeUnion) newInterfaceTypeSafeUnion()";
 
