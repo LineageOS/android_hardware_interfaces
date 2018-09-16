@@ -322,6 +322,21 @@ enum VehicleProperty : int32_t {
         | VehicleArea:GLOBAL),
 
     /**
+     * Steering angle of the vehicle
+     *
+     * Angle is in degrees.  Left is negative.
+     *
+     * @change_mode VehiclePropertyChangeMode:CONTINUOUS
+     * @access VehiclePropertyAccess:READ
+     * @unit VehicleUnit:DEGREES
+     */
+    PERF_STEERING_ANGLE = (
+        0x0209
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:FLOAT
+        | VehicleArea:GLOBAL),
+
+    /**
      * Temperature of engine coolant
      *
      * @change_mode VehiclePropertyChangeMode:CONTINUOUS
@@ -2421,13 +2436,15 @@ enum VehicleUnit : int32_t {
     NANO_SECS      = 0x50,
     SECS           = 0x53,
     YEAR           = 0x59,
-    KILOPASCAL     = 0x70,
 
     // Electrical Units
     WATT_HOUR      = 0x60,
     MILLIAMPERE    = 0x61,
     MILLIVOLT      = 0x62,
     MILLIWATTS     = 0x63,
+
+    KILOPASCAL     = 0x70,
+    DEGREES        = 0x80,
 };
 
 /**

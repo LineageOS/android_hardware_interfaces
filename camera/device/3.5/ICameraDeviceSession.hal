@@ -14,22 +14,16 @@
  * limitations under the License.
  */
 
-package android.hardware.health.filesystem@1.0;
+package android.hardware.camera.device@3.5;
+
+import android.hardware.camera.common@1.0::Status;
+import @3.4::ICameraDeviceSession;
 
 /**
- * Status values for HAL methods.
+ * Camera device active session interface.
+ *
+ * Obtained via ICameraDevice::open(), this interface contains the methods to
+ * configure and request captures from an active camera device.
  */
-enum Result : uint32_t {
-    /**
-     * Execution of the method is successful.
-     */
-    SUCCESS = 0,
-    /**
-     * An IO error is encountered when the HAL communicates with the device.
-     */
-    IO_ERROR,
-    /**
-     * An unknown error is encountered.
-     */
-    UNKNOWN_ERROR,
+interface ICameraDeviceSession extends @3.4::ICameraDeviceSession {
 };

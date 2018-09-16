@@ -14,22 +14,12 @@
  * limitations under the License.
  */
 
-package android.hardware.health.filesystem@1.0;
+package android.hardware.sensors@2.0;
 
-/**
- * Status values for HAL methods.
- */
-enum Result : uint32_t {
+enum SensorTimeout : int32_t {
     /**
-     * Execution of the method is successful.
+     * The maximum number of seconds to wait for a message on the Wake Lock FMQ
+     * before automatically releasing any wake_lock held for a WAKE_UP event.
      */
-    SUCCESS = 0,
-    /**
-     * An IO error is encountered when the HAL communicates with the device.
-     */
-    IO_ERROR,
-    /**
-     * An unknown error is encountered.
-     */
-    UNKNOWN_ERROR,
+    WAKE_LOCK_SECONDS = 1,
 };
