@@ -311,6 +311,8 @@ void ComposerClient::execute(TestCommandReader* reader, CommandWriterBase* write
                                  ASSERT_TRUE(reader->readQueue(tmpOutLength, tmpOutHandles));
                                  reader->parse();
                              });
+    reader->reset();
+    writer->reset();
 }
 
 }  // namespace vts
