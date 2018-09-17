@@ -86,6 +86,8 @@ void ComposerClient::execute(V2_1::vts::TestCommandReader* reader, CommandWriter
                                  ASSERT_TRUE(reader->readQueue(tmpOutLength, tmpOutHandles));
                                  reader->parse();
                              });
+    reader->reset();
+    writer->reset();
 }
 
 Display ComposerClient::createVirtualDisplay_2_2(uint32_t width, uint32_t height,
