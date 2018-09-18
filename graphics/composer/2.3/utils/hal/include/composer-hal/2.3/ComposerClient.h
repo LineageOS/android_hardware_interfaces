@@ -22,6 +22,7 @@
 
 #include <android/hardware/graphics/composer/2.3/IComposerClient.h>
 #include <composer-hal/2.3/ComposerClient.h>
+#include <composer-hal/2.3/ComposerCommandEngine.h>
 #include <composer-hal/2.3/ComposerHal.h>
 
 namespace android {
@@ -55,10 +56,27 @@ class ComposerClientImpl : public V2_2::hal::detail::ComposerClientImpl<Interfac
         return Void();
     }
 
+    Return<void> executeCommands_2_3(uint32_t inLength, const hidl_vec<hidl_handle>& inHandles,
+                                     IComposerClient::executeCommands_2_2_cb hidl_cb) override {
+        std::lock_guard<std::mutex> lock(mCommandEngineMutex);
+        bool outChanged = false;
+        uint32_t outLength = 0;
+        hidl_vec<hidl_handle> outHandles;
+        Error error =
+            mCommandEngine->execute(inLength, inHandles, &outChanged, &outLength, &outHandles);
+
+        hidl_cb(error, outChanged, outLength, outHandles);
+
+        mCommandEngine->reset();
+
+        return Void();
+    }
+
    private:
     using BaseType2_2 = V2_2::hal::detail::ComposerClientImpl<Interface, Hal>;
     using BaseType2_1 = V2_1::hal::detail::ComposerClientImpl<Interface, Hal>;
-
+    using BaseType2_1::mCommandEngine;
+    using BaseType2_1::mCommandEngineMutex;
     using BaseType2_1::mHal;
 };
 

@@ -66,6 +66,14 @@ class HwcHalImpl : public V2_2::passthrough::detail::HwcHalImpl<Hal> {
         return Error::NONE;
     }
 
+    Error setLayerColorTransform(Display display, Layer layer, const float* matrix) override {
+        if (!mDispatch.setLayerColorTransform) {
+            return Error::UNSUPPORTED;
+        }
+        int32_t err = mDispatch.setLayerColorTransform(mDevice, display, layer, matrix);
+        return static_cast<Error>(err);
+    }
+
    protected:
     bool initDispatch() override {
         if (!BaseType2_2::initDispatch()) {
@@ -74,12 +82,15 @@ class HwcHalImpl : public V2_2::passthrough::detail::HwcHalImpl<Hal> {
 
         this->initOptionalDispatch(HWC2_FUNCTION_GET_DISPLAY_IDENTIFICATION_DATA,
                                    &mDispatch.getDisplayIdentificationData);
+        this->initOptionalDispatch(HWC2_FUNCTION_SET_LAYER_COLOR_TRANSFORM,
+                                   &mDispatch.setLayerColorTransform);
         return true;
     }
 
    private:
     struct {
         HWC2_PFN_GET_DISPLAY_IDENTIFICATION_DATA getDisplayIdentificationData;
+        HWC2_PFN_SET_LAYER_COLOR_TRANSFORM setLayerColorTransform;
     } mDispatch = {};
 
     using BaseType2_2 = V2_2::passthrough::detail::HwcHalImpl<Hal>;

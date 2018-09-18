@@ -31,6 +31,7 @@ cc_library_static {
     header_libs: [
         "android.hardware.graphics.composer@2.1-command-buffer",
         "android.hardware.graphics.composer@2.2-command-buffer",
+        "android.hardware.graphics.composer@2.3-command-buffer",
     ],
     cflags: [
         "-O0",

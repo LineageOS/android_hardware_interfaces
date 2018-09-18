@@ -20,7 +20,9 @@
 
 #include <VtsHalHidlTargetTestBase.h>
 #include <android-base/logging.h>
+#include <composer-command-buffer/2.3/ComposerCommandBuffer.h>
 #include <composer-vts/2.1/GraphicsComposerCallback.h>
+#include <composer-vts/2.1/TestCommandReader.h>
 #include <composer-vts/2.3/ComposerVts.h>
 
 namespace android {
@@ -65,6 +67,9 @@ class GraphicsComposerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         // explicitly disable vsync
         mComposerClient->setVsyncEnabled(mPrimaryDisplay, false);
         mComposerCallback->setVsyncAllowed(false);
+
+        mWriter = std::make_unique<CommandWriterBase>(1024);
+        mReader = std::make_unique<V2_1::vts::TestCommandReader>();
     }
 
     void TearDown() override {
@@ -75,11 +80,18 @@ class GraphicsComposerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         }
     }
 
+    void execute() { mComposerClient->execute(mReader.get(), mWriter.get()); }
+
+    // use the slot count usually set by SF
+    static constexpr uint32_t kBufferSlotCount = 64;
+
     std::unique_ptr<Composer> mComposer;
     std::unique_ptr<ComposerClient> mComposerClient;
     sp<V2_1::vts::GraphicsComposerCallback> mComposerCallback;
     // the first display and is assumed never to be removed
     Display mPrimaryDisplay;
+    std::unique_ptr<CommandWriterBase> mWriter;
+    std::unique_ptr<V2_1::vts::TestCommandReader> mReader;
 
    private:
     Display waitForFirstDisplay() {
@@ -113,6 +125,31 @@ TEST_F(GraphicsComposerHidlTest, GetDisplayIdentificationData) {
                     std::equal(data0.begin(), data0.end(), data1.begin()))
             << "data is not stable";
     }
+}
+
+/**
+ * Test IComposerClient::Command::SET_LAYER_COLOR_TRANSFORM.
+ * TODO Add color to the layer, use matrix to keep only red component,
+ * and check.
+ */
+TEST_F(GraphicsComposerHidlTest, SetLayerColorTransform) {
+    Layer layer;
+    ASSERT_NO_FATAL_FAILURE(layer =
+                                mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount));
+    mWriter->selectDisplay(mPrimaryDisplay);
+    mWriter->selectLayer(layer);
+
+    // clang-format off
+    const std::array<float, 16> matrix = {{
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f,
+    }};
+    // clang-format on
+
+    mWriter->setLayerColorTransform(matrix.data());
+    execute();
 }
 
 }  // namespace
