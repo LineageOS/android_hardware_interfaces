@@ -23,3 +23,10 @@ enum SensorTimeout : int32_t {
      */
     WAKE_LOCK_SECONDS = 1,
 };
+
+enum EventQueueFlagBits : uint32_t {
+    /**
+     * Used to notify the Event FMQ that events should be read and processed.
+     */
+    READ_AND_PROCESS = 1 << 0,
+};
