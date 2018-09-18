@@ -1402,6 +1402,7 @@ TEST_F(AudioPrimaryHidlTest, setBtHfpVolume) {
         "Make sure setBtHfpVolume is either not supported or "
         "only succeed if volume is in [0,1]");
     auto ret = device->setBtHfpVolume(0.0);
+    ASSERT_TRUE(ret.isOk());
     if (ret == Result::NOT_SUPPORTED) {
         doc::partialTest("setBtHfpVolume is not supported");
         return;
