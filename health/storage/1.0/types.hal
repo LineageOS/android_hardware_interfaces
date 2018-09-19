@@ -13,18 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.hardware.health.filesystem@1.0;
+
+package android.hardware.health.storage@1.0;
 
 /**
- * Callback interface to IFileSystem.garbageCollect.
+ * Status values for HAL methods.
  */
-interface IGarbageCollectCallback {
+enum Result : uint32_t {
     /**
-     * When garbage collection has finished, the implementation must
-     * invoke this function to indicate the result of the garbage collection.
-     *
-     * @return result Execution result. See documentation for Result for
-     *     details.
+     * Execution of the method is successful.
      */
-    oneway onFinish(Result result);
+    SUCCESS = 0,
+    /**
+     * An IO error is encountered when the HAL communicates with the device.
+     */
+    IO_ERROR,
+    /**
+     * An unknown error is encountered.
+     */
+    UNKNOWN_ERROR,
 };

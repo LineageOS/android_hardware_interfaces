@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package android.hardware.health.filesystem@1.0;
+package android.hardware.health.storage@1.0;
 
 import IGarbageCollectCallback;
 
 /**
- * IFileSystem is an interface that provides operations on underlying storage
+ * IStorage is an interface that provides operations on underlying storage
  * devices, including flash memory.
  */
-interface IFileSystem {
+interface IStorage {
     /**
      * Start garbage collection on the driver of storage devices.
      *
