@@ -216,10 +216,10 @@
         </interface>
     </hal>
     <hal format="hidl" optional="true">
-        <name>android.hardware.health.filesystem</name>
+        <name>android.hardware.health.storage</name>
         <version>1.0</version>
         <interface>
-            <name>IFileSystem</name>
+            <name>IStorage</name>
             <instance>default</instance>
         </interface>
     </hal>
