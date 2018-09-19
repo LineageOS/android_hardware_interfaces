@@ -26,7 +26,9 @@ import @1.1::OperationType;
  * The type of an operation in a model.
  */
 enum OperationType : @1.1::OperationType {
-
+    // TODO: Sync docs.
+    ARGMAX = 38,
+    ARGMIN = 39,
 };
 
 /**
