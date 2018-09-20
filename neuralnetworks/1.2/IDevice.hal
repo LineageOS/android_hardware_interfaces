@@ -56,6 +56,26 @@ interface IDevice extends @1.1::IDevice {
     getVersionString() generates (ErrorStatus status, string version);
 
     /**
+     * Get the type of a given device.
+     *
+     * The device type can be used to help application developers to distribute
+     * Machine Learning workloads and other workloads such as graphical rendering.
+     * E.g., for an app which renders AR scenes based on real time object detection
+     * results, the developer could choose an ACCELERATOR type device for ML
+     * workloads, and reserve GPU for graphical rendering.
+     *
+     * @param status Error status returned from querying the device type. Must be:
+     *               - NONE if the query was successful
+     *               - DEVICE_UNAVAILABLE if driver is offline or busy
+     *               - GENERAL_FAILURE if the query resulted in an
+     *                 unspecified error
+     * @param type The DeviceType of the device. Please note, this is not a
+     *             bitfield of DeviceTypes. Each device must only be of a
+     *             single DeviceType.
+     */
+    getType() generates (ErrorStatus status, DeviceType type);
+
+    /**
      * Gets the supported operations in a model.
      *
      * getSupportedOperations indicates which operations of a model are fully
