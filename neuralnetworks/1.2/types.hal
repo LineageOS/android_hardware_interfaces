@@ -29,6 +29,7 @@ enum OperationType : @1.1::OperationType {
     // TODO: Sync docs.
     ARGMAX = 38,
     ARGMIN = 39,
+    PAD_V2 = 40,
 };
 
 /**
