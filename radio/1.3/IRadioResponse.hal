@@ -71,4 +71,18 @@ interface IRadioResponse extends @1.2::IRadioResponse {
      *   RadioError:CANCELLED
      */
     oneway emergencyDialResponse(RadioResponseInfo info);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     * @param dataRegResponse Current Data registration response as defined by DataRegStateResult in
+     *        types.hal
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:NOT_PROVISIONED
+     */
+    oneway getDataRegistrationStateResponse_1_3(RadioResponseInfo info,
+            DataRegStateResult dataRegResponse);
 };
