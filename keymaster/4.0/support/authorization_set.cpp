@@ -523,8 +523,7 @@ AuthorizationSetBuilder& AuthorizationSetBuilder::BlockMode(
     return *this;
 }
 
-AuthorizationSetBuilder& AuthorizationSetBuilder::Digest(
-    std::initializer_list<V4_0::Digest> digests) {
+AuthorizationSetBuilder& AuthorizationSetBuilder::Digest(std::vector<V4_0::Digest> digests) {
     for (auto digest : digests) {
         push_back(TAG_DIGEST, digest);
     }

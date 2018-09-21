@@ -214,7 +214,7 @@ class KeymasterHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     std::vector<EcCurve> ValidCurves();
     std::vector<EcCurve> InvalidCurves();
 
-    std::initializer_list<Digest> ValidDigests(bool withNone, bool withMD5);
+    std::vector<Digest> ValidDigests(bool withNone, bool withMD5);
     std::vector<Digest> InvalidDigests();
 
     HidlBuf key_blob_;
