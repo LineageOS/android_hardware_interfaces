@@ -16,7 +16,10 @@
 
 package android.hardware.radio@1.3;
 
+import @1.0::RegState;
 import @1.2::AccessNetwork;
+import @1.2::CellIdentity;
+import @1.2::DataRegStateResult;
 
 enum AccessNetwork : @1.2::AccessNetwork {
     /**
@@ -80,4 +83,40 @@ enum EmergencyServiceCategory : int32_t {
     MOUNTAIN_RESCUE = 1 << 4,
     MIEC = 1 << 5, // Manually Initiated eCall (MIeC)
     AIEC = 1 << 6, // Automatically Initiated eCall (AIeC)
+};
+
+/**
+ * Type to define the LTE specific network capabilities for voice over PS including
+ * emergency and normal voice calls.
+ */
+struct LteVopsInfo {
+    /**
+     * This indicates if camped network support VoLTE services. This information is received
+     * from LTE network during LTE NAS registration procedure through LTE ATTACH ACCEPT/TAU
+     * ACCEPT. Refer 3GPP 24.301 EPS network feature support -> IMS VoPS
+     */
+    bool isVopsSupported;
+    /**
+     * This indicates if camped network support VoLTE emergency bearers. This information
+     * is received from LTE network through two sources:
+     * a. During LTE NAS registration procedure through LTE ATTACH ACCEPT/TAU ACCEPT. Refer
+     *    3GPP 24.301 EPS network feature support -> EMC BS
+     * b. In case device is not registered on network. Refer 3GPP 25.331 LTE RRC
+     *    SIB1 : ims-EmergencySupport-r9
+     * If device is registered on LTE, then this field indicates (a).
+     * In case of limited service on LTE this field indicates (b).
+     */
+    bool isEmcBearerSupported;
+};
+
+struct DataRegStateResult {
+    @1.2::DataRegStateResult base;
+    /**
+     * Network capabilities for voice over PS services. This info is valid only
+     * on LTE network and must be present when device is camped on LTE. vopsInfo
+     * will be empty when device is camped only on 2G/3G .
+     */
+    safe_union VopsInfo {
+        LteVopsInfo lteVopsInfo; // LTE network capability
+    } vopsInfo;
 };
