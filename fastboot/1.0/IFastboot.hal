@@ -29,14 +29,4 @@ interface IFastboot {
      *     reformatting.
      */
     getPartitionType(string partitionName) generates (FileSystemType type, Result result);
-
-    /**
-     * Executes a fastboot OEM command.
-     *
-     * @param oemCmdArgs The oem command that is passed to the fastboot HAL.
-     * @response result Returns the status SUCCESS if the operation is successful,
-     *     INVALID_ARGUMENT for bad arguments,
-     *     FAILURE_UNKNOWN for an invalid/unsupported command.
-     */
-    doOemCommand(string oemCmd) generates (Result result);
 };
