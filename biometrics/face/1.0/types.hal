@@ -212,8 +212,10 @@ enum FaceAcquiredInfo : int32_t {
     FACE_TOO_LEFT = 9,
 
     /**
-     * The user's face was directed away from the sensor. The user should be
-     * informed to face the sensor when this is returned.
+     * The user's eyes have strayed away from the sensor. If this message is
+     * sent, the user should be informed to look at the device. If the user
+     * can't be found in the frame, one of the other acquisition messages
+     * must be sent, e.g. NOT_DETECTED.
      */
     POOR_GAZE = 10,
 
@@ -234,7 +236,11 @@ enum FaceAcquiredInfo : int32_t {
     TOO_MUCH_MOTION = 12,
 
     /**
-     * The sensor needs to be recalibrated.
+     * The sensor needs to be re-calibrated. This is an unexpected condition,
+     * and must only be sent if a serious, uncorrectable, and unrecoverable
+     * calibration issue is detected which requires user intervention, e.g.
+     * re-enrolling. The expected response to this message is to direct the
+     * user to re-enroll.
      */
     RECALIBRATE = 13,
 

@@ -71,6 +71,7 @@ class GraphicsComposerHidlEnvironment : public ::testing::VtsHalHidlTargetTestEn
 class GraphicsComposerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
    protected:
     void SetUp() override {
+        VtsHalHidlTargetTestBase::SetUp();
         ASSERT_NO_FATAL_FAILURE(
             mComposer = std::make_unique<Composer>(
                 GraphicsComposerHidlEnvironment::Instance()->getServiceName<IComposer>()));
@@ -100,6 +101,7 @@ class GraphicsComposerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
             EXPECT_EQ(0, mComposerCallback->getInvalidRefreshCount());
             EXPECT_EQ(0, mComposerCallback->getInvalidVsyncCount());
         }
+        VtsHalHidlTargetTestBase::TearDown();
     }
 
     // returns an invalid display id (one that has not been registered to a
@@ -668,6 +670,11 @@ class GraphicsComposerHidlCommandTest : public GraphicsComposerHidlTest {
 
         ASSERT_NO_FATAL_FAILURE(mGralloc = std::make_unique<Gralloc>());
 
+        Config activeConfig = mComposerClient->getActiveConfig(mPrimaryDisplay);
+        mDisplayWidth = mComposerClient->getDisplayAttribute(mPrimaryDisplay, activeConfig,
+                                                             IComposerClient::Attribute::WIDTH);
+        mDisplayHeight = mComposerClient->getDisplayAttribute(mPrimaryDisplay, activeConfig,
+                                                              IComposerClient::Attribute::HEIGHT);
         mWriter = std::make_unique<CommandWriterBase>(1024);
         mReader = std::make_unique<TestCommandReader>();
     }
@@ -679,12 +686,13 @@ class GraphicsComposerHidlCommandTest : public GraphicsComposerHidlTest {
 
     const native_handle_t* allocate() {
         IMapper::BufferDescriptorInfo info{};
-        info.width = 64;
-        info.height = 64;
+        info.width = mDisplayWidth;
+        info.height = mDisplayHeight;
         info.layerCount = 1;
         info.format = PixelFormat::RGBA_8888;
         info.usage =
-            static_cast<uint64_t>(BufferUsage::CPU_WRITE_OFTEN | BufferUsage::CPU_READ_OFTEN);
+            static_cast<uint64_t>(BufferUsage::CPU_WRITE_OFTEN | BufferUsage::CPU_READ_OFTEN |
+                                  BufferUsage::COMPOSER_OVERLAY);
 
         return mGralloc->allocate(info);
     }
@@ -693,6 +701,8 @@ class GraphicsComposerHidlCommandTest : public GraphicsComposerHidlTest {
 
     std::unique_ptr<CommandWriterBase> mWriter;
     std::unique_ptr<TestCommandReader> mReader;
+    int32_t mDisplayWidth;
+    int32_t mDisplayHeight;
 
    private:
     std::unique_ptr<Gralloc> mGralloc;
@@ -774,6 +784,60 @@ TEST_F(GraphicsComposerHidlCommandTest, ACCEPT_DISPLAY_CHANGES) {
 TEST_F(GraphicsComposerHidlCommandTest, PRESENT_DISPLAY) {
     mWriter->selectDisplay(mPrimaryDisplay);
     mWriter->validateDisplay();
+    mWriter->presentDisplay();
+    execute();
+}
+
+/**
+ * Test IComposerClient::Command::PRESENT_DISPLAY
+ *
+ * Test that IComposerClient::Command::PRESENT_DISPLAY works without
+ * additional call to validateDisplay when only the layer buffer handle and
+ * surface damage have been set
+ */
+TEST_F(GraphicsComposerHidlCommandTest, PRESENT_DISPLAY_NO_LAYER_STATE_CHANGES) {
+    mWriter->selectDisplay(mPrimaryDisplay);
+    mComposerClient->setPowerMode(mPrimaryDisplay, IComposerClient::PowerMode::ON);
+    mComposerClient->setColorMode(mPrimaryDisplay, ColorMode::SRGB);
+
+    auto handle = allocate();
+    ASSERT_NE(nullptr, handle);
+
+    IComposerClient::Rect displayFrame{0, 0, mDisplayWidth, mDisplayHeight};
+
+    Layer layer;
+    ASSERT_NO_FATAL_FAILURE(layer =
+                                mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount));
+    mWriter->selectLayer(layer);
+    mWriter->setLayerCompositionType(IComposerClient::Composition::DEVICE);
+    mWriter->setLayerDisplayFrame(displayFrame);
+    mWriter->setLayerPlaneAlpha(1);
+    mWriter->setLayerSourceCrop({0, 0, (float)mDisplayWidth, (float)mDisplayHeight});
+    mWriter->setLayerTransform(static_cast<Transform>(0));
+    mWriter->setLayerVisibleRegion(std::vector<IComposerClient::Rect>(1, displayFrame));
+    mWriter->setLayerZOrder(10);
+    mWriter->setLayerBlendMode(IComposerClient::BlendMode::NONE);
+    mWriter->setLayerSurfaceDamage(std::vector<IComposerClient::Rect>(1, displayFrame));
+    mWriter->setLayerBuffer(0, handle, -1);
+    mWriter->setLayerDataspace(Dataspace::UNKNOWN);
+
+    mWriter->validateDisplay();
+    execute();
+    if (mReader->mCompositionChanges.size() != 0) {
+        GTEST_SUCCEED() << "Composition change requested, skipping test";
+        return;
+    }
+
+    ASSERT_EQ(0, mReader->mErrors.size());
+    mWriter->presentDisplay();
+    execute();
+    ASSERT_EQ(0, mReader->mErrors.size());
+
+    mWriter->selectLayer(layer);
+    auto handle2 = allocate();
+    ASSERT_NE(nullptr, handle2);
+    mWriter->setLayerBuffer(0, handle2, -1);
+    mWriter->setLayerSurfaceDamage(std::vector<IComposerClient::Rect>(1, {0, 0, 10, 10}));
     mWriter->presentDisplay();
     execute();
 }

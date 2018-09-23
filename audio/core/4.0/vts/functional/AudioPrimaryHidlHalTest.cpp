@@ -29,6 +29,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include <hwbinder/IPCThreadState.h>
+
 #include <VtsHalHidlTargetTestBase.h>
 
 #include <android-base/logging.h>
@@ -63,6 +65,7 @@ using ::android::hardware::hidl_enum_range;
 using ::android::hardware::hidl_handle;
 using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
+using ::android::hardware::IPCThreadState;
 using ::android::hardware::kSynchronizedReadWrite;
 using ::android::hardware::MessageQueue;
 using ::android::hardware::MQDescriptorSync;
@@ -170,15 +173,25 @@ TEST_F(AudioHidlTest, OpenDeviceInvalidParameter) {
 
 TEST_F(AudioHidlTest, OpenPrimaryDeviceUsingGetDevice) {
     doc::test("Calling openDevice(\"primary\") should return the primary device.");
-    Result result;
-    sp<IDevice> baseDevice;
-    ASSERT_OK(devicesFactory->openDevice("primary", returnIn(result, baseDevice)));
-    ASSERT_OK(result);
-    ASSERT_TRUE(baseDevice != nullptr);
+    {
+        Result result;
+        sp<IDevice> baseDevice;
+        ASSERT_OK(devicesFactory->openDevice("primary", returnIn(result, baseDevice)));
+        ASSERT_OK(result);
+        ASSERT_TRUE(baseDevice != nullptr);
 
-    Return<sp<IPrimaryDevice>> primaryDevice = IPrimaryDevice::castFrom(baseDevice);
-    ASSERT_TRUE(primaryDevice.isOk());
-    ASSERT_TRUE(sp<IPrimaryDevice>(primaryDevice) != nullptr);
+        Return<sp<IPrimaryDevice>> primaryDevice = IPrimaryDevice::castFrom(baseDevice);
+        ASSERT_TRUE(primaryDevice.isOk());
+        ASSERT_TRUE(sp<IPrimaryDevice>(primaryDevice) != nullptr);
+    }  // Destroy local IDevice proxy
+    // FIXME: there is no way to know when the remote IDevice is being destroyed
+    //        Binder does not support testing if an object is alive, thus
+    //        wait for 100ms to let the binder destruction propagates and
+    //        the remote device has the time to be destroyed.
+    //        flushCommand makes sure all local command are sent, thus should reduce
+    //        the latency between local and remote destruction.
+    IPCThreadState::self()->flushCommands();
+    usleep(100);
 }
 
 //////////////////////////////////////////////////////////////////////////////
