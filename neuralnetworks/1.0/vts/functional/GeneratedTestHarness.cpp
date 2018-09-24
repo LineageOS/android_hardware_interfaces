@@ -275,6 +275,58 @@ void Execute(const sp<V1_1::IDevice>& device, std::function<V1_1::Model(void)> c
     EvaluatePreparedModel(preparedModel, is_ignored, examples, fpAtol, fpRtol);
 }
 
+// TODO: Reduce code duplication.
+void Execute(const sp<V1_2::IDevice>& device, std::function<V1_2::Model(void)> create_model,
+             std::function<bool(int)> is_ignored,
+             const std::vector<MixedTypedExampleType>& examples) {
+    V1_2::Model model = create_model();
+
+    // see if service can handle model
+    bool fullySupportsModel = false;
+    Return<void> supportedCall = device->getSupportedOperations_1_2(
+        model, [&fullySupportsModel](ErrorStatus status, const hidl_vec<bool>& supported) {
+            ASSERT_EQ(ErrorStatus::NONE, status);
+            ASSERT_NE(0ul, supported.size());
+            fullySupportsModel =
+                std::all_of(supported.begin(), supported.end(), [](bool valid) { return valid; });
+        });
+    ASSERT_TRUE(supportedCall.isOk());
+
+    // launch prepare model
+    sp<PreparedModelCallback> preparedModelCallback = new PreparedModelCallback();
+    ASSERT_NE(nullptr, preparedModelCallback.get());
+    Return<ErrorStatus> prepareLaunchStatus = device->prepareModel_1_2(
+        model, ExecutionPreference::FAST_SINGLE_ANSWER, preparedModelCallback);
+    ASSERT_TRUE(prepareLaunchStatus.isOk());
+    ASSERT_EQ(ErrorStatus::NONE, static_cast<ErrorStatus>(prepareLaunchStatus));
+
+    // retrieve prepared model
+    preparedModelCallback->wait();
+    ErrorStatus prepareReturnStatus = preparedModelCallback->getStatus();
+    sp<IPreparedModel> preparedModel = preparedModelCallback->getPreparedModel();
+
+    // early termination if vendor service cannot fully prepare model
+    if (!fullySupportsModel && prepareReturnStatus != ErrorStatus::NONE) {
+        ASSERT_EQ(nullptr, preparedModel.get());
+        LOG(INFO) << "NN VTS: Early termination of test because vendor service cannot "
+                     "prepare model that it does not support.";
+        std::cout << "[          ]   Early termination of test because vendor service cannot "
+                     "prepare model that it does not support."
+                  << std::endl;
+        return;
+    }
+    EXPECT_EQ(ErrorStatus::NONE, prepareReturnStatus);
+    ASSERT_NE(nullptr, preparedModel.get());
+
+    // TODO: Adjust the error limit based on testing.
+    // If in relaxed mode, set the absolute tolerance to be 5ULP of FP16.
+    float fpAtol = !model.relaxComputationFloat32toFloat16 ? 1e-5f : 5.0f * 0.0009765625f;
+    // Set the relative tolerance to be 5ULP of the corresponding FP precision.
+    float fpRtol = !model.relaxComputationFloat32toFloat16 ? 5.0f * 1.1920928955078125e-7f
+                                                           : 5.0f * 0.0009765625f;
+    EvaluatePreparedModel(preparedModel, is_ignored, examples, fpAtol, fpRtol);
+}
+
 }  // namespace generated_tests
 
 }  // namespace neuralnetworks

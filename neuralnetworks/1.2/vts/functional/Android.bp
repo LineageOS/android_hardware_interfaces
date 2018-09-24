@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2017 The Android Open Source Project
+// Copyright (C) 2018 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,32 +14,8 @@
 // limitations under the License.
 //
 
-cc_library_static {
-    name: "VtsHalNeuralnetworksTest_utils",
-    srcs: [
-        "Callbacks.cpp",
-        "GeneratedTestHarness.cpp",
-    ],
-    defaults: ["VtsHalTargetTestDefaults"],
-    export_include_dirs: ["."],
-    static_libs: [
-        "android.hardware.neuralnetworks@1.0",
-        "android.hardware.neuralnetworks@1.1",
-        "android.hardware.neuralnetworks@1.2",
-        "android.hidl.allocator@1.0",
-        "android.hidl.memory@1.0",
-        "libhidlmemory",
-        "libneuralnetworks_utils",
-    ],
-    header_libs: [
-        "libneuralnetworks_headers",
-        "libneuralnetworks_generated_test_harness_headers",
-        "libneuralnetworks_generated_tests",
-    ],
-}
-
 cc_test {
-    name: "VtsHalNeuralnetworksV1_0TargetTest",
+    name: "VtsHalNeuralnetworksV1_2TargetTest",
     srcs: [
         "BasicTests.cpp",
         "GeneratedTests.cpp",
@@ -64,4 +40,13 @@ cc_test {
         "libneuralnetworks_generated_test_harness_headers",
         "libneuralnetworks_generated_tests",
     ],
+    // Bug: http://b/74200014 - Disable arm32 asan since it triggers internal
+    // error in ld.gold.
+    arch: {
+        arm: {
+            sanitize: {
+                never: true,
+            },
+        },
+    },
 }
