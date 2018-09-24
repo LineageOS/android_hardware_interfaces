@@ -26,6 +26,7 @@ import @1.1::OperationType;
  * The type of an operation in a model.
  */
 enum OperationType : @1.1::OperationType {
+
 };
 
 /**

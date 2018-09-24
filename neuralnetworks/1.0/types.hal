@@ -68,6 +68,7 @@ enum OperandType : int32_t {
  * The type of an operation in a model.
  */
 enum OperationType : int32_t {
+
     /**
      * Adds two tensors, element-wise.
      *
@@ -105,6 +106,8 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: The sum, a tensor of the same {@link OperandType} as input0.
+     *
+     * Available since API level 27.
      */
     ADD = 0,
 
@@ -116,8 +119,10 @@ enum OperationType : int32_t {
      *
      * The values in the output tensor are computed as:
      *
-     *     output[batch, row, col, channel] =
-     *         sum_{i, j}(input[batch, row + i, col + j, channel]) / sum(1)
+     *     output[b, i, j, channel] =
+     *         sum_{di, dj}(
+     *             input[b, strides[1] * i + di, strides[2] * j + dj, channel]
+     *         ) / sum(1)
      *
      * Supported tensor {@link OperandType}:
      * * {@link OperandType::TENSOR_FLOAT32}
@@ -171,7 +176,9 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: The output 4-D tensor, of shape
-            [batches, out_height, out_width, depth].
+     *      [batches, out_height, out_width, depth].
+     *
+     * Available since API level 27.
      */
     AVERAGE_POOL_2D = 1,
 
@@ -198,6 +205,8 @@ enum OperationType : int32_t {
      * Outputs:
      * * 0: The output, a tensor of the same {@link OperandType} as the input
      *      tensors. The output shape is [D0, D1, ..., sum(Daxis(i)), ..., Dm].
+     *
+     * Available since API level 27.
      */
     CONCATENATION = 2,
 
@@ -213,12 +222,11 @@ enum OperationType : int32_t {
      *
      * The values in the output tensor are computed as:
      *
-     *     output[batch, row, col, channel] =
-     *         sum_{i, j} (
-     *             input[batch, row + i, col + j, k] *
-     *             filter[channel, row + i, col + j, k] +
-     *             bias[channel]
-     *         )
+     *     output[b, i, j, channel] =
+     *         sum_{di, dj, k} (
+     *             input[b, strides[1] * i + di, strides[2] * j + dj, k] *
+     *             filter[channel, di, dj, k]
+     *         ) + bias[channel]
      *
      * Supported tensor {@link OperandType}:
      * * {@link OperandType::TENSOR_FLOAT32}
@@ -274,7 +282,7 @@ enum OperationType : int32_t {
      * * 4: An {@link OperandType::INT32} scalar, specifying the stride when
      *      walking through input in the ‘width’ dimension.
      * * 5: An {@link OperandType::INT32} scalar, specifying the stride when
-    *       walking through input in the ‘height’ dimension.
+     *      walking through input in the ‘height’ dimension.
      * * 6: An {@link OperandType::INT32} scalar, and has to be one of the
      *      {@link FusedActivationFunc} values. Specifies the activation to
      *      invoke on the result.
@@ -284,6 +292,8 @@ enum OperationType : int32_t {
      *      [batches, out_height, out_width, depth_out]. For output tensor of
      *      {@link OperandType::TENSOR_QUANT8_ASYMM}, the following condition
      *      must be satisfied: output_scale > input_scale * filter_scale.
+     *
+     * Available since API level 27.
      */
     CONV_2D = 3,
 
@@ -307,7 +317,7 @@ enum OperationType : int32_t {
      *         sum_{di, dj} (
      *             input[b, strides[1] * i + di, strides[2] * j + dj, k] *
      *             filter[1, di, dj, k * channel_multiplier + q]
-     *         )
+     *         ) + bias[k * channel_multiplier + q]
      *
      * Supported tensor {@link OperandType}:
      * * {@link OperandType::TENSOR_FLOAT32}
@@ -375,6 +385,8 @@ enum OperationType : int32_t {
      *      [batches, out_height, out_width, depth_out]. For output tensor of
      *      {@link OperandType::TENSOR_QUANT8_ASYMM}, the following condition
      *      must be satisfied: output_scale > input_scale * filter_scale.
+     *
+     * Available since API level 27.
      */
     DEPTHWISE_CONV_2D = 4,
 
@@ -409,6 +421,8 @@ enum OperationType : int32_t {
      * Outputs:
      * * 0: The output 4-D tensor, of shape [batch, height*block_size,
      *      width*block_size, depth/(block_size*block_size)].
+     *
+     * Available since API level 27.
      */
     DEPTH_TO_SPACE = 5,
 
@@ -430,6 +444,8 @@ enum OperationType : int32_t {
      * Outputs:
      * * 0: The output tensor of same shape as input0, but with
      *      {@link OperandType::TENSOR_FLOAT32}.
+     *
+     * Available since API level 27.
      */
     DEQUANTIZE = 6,
 
@@ -463,6 +479,8 @@ enum OperationType : int32_t {
      * * 0: A n-D tensor with the same rank and shape as the Values
      *      tensor, except for the first dimension which has the same size
      *      as Lookups' only dimension.
+     *
+     * Available since API level 27.
      */
     EMBEDDING_LOOKUP = 7,
 
@@ -480,6 +498,8 @@ enum OperationType : int32_t {
      * Outputs:
      * * 0: The output tensor, of the same {@link OperandType} and dimensions as
      *      the input tensor.
+     *
+     * Available since API level 27.
      */
     FLOOR = 8,
 
@@ -523,6 +543,8 @@ enum OperationType : int32_t {
      *      tensor of {@link OperandType::TENSOR_QUANT8_ASYMM}, the following
      *      condition must be satisfied:
      *      output_scale > input_scale * filter_scale.
+     *
+     * Available since API level 27.
      */
     FULLY_CONNECTED = 9,
 
@@ -571,6 +593,8 @@ enum OperationType : int32_t {
      *      Stored as {@link OperandType::TENSOR_QUANT8_ASYMM} with offset 0
      *      and scale 1.0f.
      *      A non-zero byte represents True, a hit. A zero indicates otherwise.
+     *
+     * Available since API level 27.
      */
     HASHTABLE_LOOKUP = 10,
 
@@ -598,6 +622,8 @@ enum OperationType : int32_t {
      * Outputs:
      * * 0: The output 4-D tensor, of the same shape as input
      *      [batches, height, width, depth].
+     *
+     * Available since API level 27.
      */
     L2_NORMALIZATION = 11,
 
@@ -609,8 +635,8 @@ enum OperationType : int32_t {
      *
      * The values in the output tensor are computed as:
      *
-     *     output[batch, row, col, channel] =
-     *         sqrt(sum_{i, j} pow(input[batch, row + i, col + j, channel], 2) /
+     *     output[b, i, j, c] =
+     *         sqrt(sum_{di, dj} pow(input[b, strides[1] * i + di, strides[2] * j + dj, c], 2) /
      *              sum(1))
      *
      * Supported tensor {@link OperandType}:
@@ -664,6 +690,8 @@ enum OperationType : int32_t {
      * Outputs:
      * * 0: The output 4-D tensor, of shape
      *      [batches, out_height, out_width, depth].
+     *
+     * Available since API level 27.
      */
     L2_POOL_2D = 12,
 
@@ -700,6 +728,8 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: The output tensor of same shape as input0.
+     *
+     * Available since API level 27.
      */
     LOCAL_RESPONSE_NORMALIZATION = 13,
 
@@ -723,6 +753,8 @@ enum OperationType : int32_t {
      * * 0: The output tensor of same shape as input0.
      *      For {@link OperandType::TENSOR_QUANT8_ASYMM},
      *      the scale must be 1.f / 256 and the zeroPoint must be 0.
+     *
+     * Available since API level 27.
      */
     LOGISTIC = 14,
 
@@ -758,6 +790,8 @@ enum OperationType : int32_t {
      *      If the projection type is Dense:
      *        Output.Dim == { Tensor[0].Dim[0] * Tensor[0].Dim[1] }
      *        A flattened tensor that represents projected bit vectors.
+     *
+     * Available since API level 27.
      */
     LSH_PROJECTION = 15,
 
@@ -952,6 +986,8 @@ enum OperationType : int32_t {
      *      A 2-D tensor of {@link OperandType::TENSOR_FLOAT32}, of shape
      *      [batch_size, output_size]. This is effectively the same as the
      *      current “output state (out)” value.
+     *
+     * Available since API level 27.
      */
     LSTM = 16,
 
@@ -963,8 +999,10 @@ enum OperationType : int32_t {
      *
      * The values in the output tensor are computed as:
      *
-     *     output[batch, row, col, channel] =
-     *         max_{i, j} (input[batch, row + i, col + j, channel])
+     *     output[b, i, j, channel] =
+     *         max_{di, dj} (
+     *             input[b, strides[1] * i + di, strides[2] * j + dj, channel]
+     *         )
      *
      * Supported tensor {@link OperandType}:
      * * {@link OperandType::TENSOR_FLOAT32}
@@ -1018,6 +1056,8 @@ enum OperationType : int32_t {
      * Outputs:
      * * 0: The output 4-D tensor, of shape
      *      [batches, out_height, out_width, depth].
+     *
+     * Available since API level 27.
      */
     MAX_POOL_2D = 17,
 
@@ -1055,6 +1095,8 @@ enum OperationType : int32_t {
      *      For output tensor of {@link OperandType::TENSOR_QUANT8_ASYMM},
      *      the following condition must be satisfied:
      *      output_scale > input1_scale * input2_scale.
+     *
+     * Available since API level 27.
      */
     MUL = 18,
 
@@ -1076,6 +1118,8 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: The output tensor of same shape as input0.
+     *
+     * Available since API level 27.
      */
     RELU = 19,
 
@@ -1097,6 +1141,8 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: The output tensor of same shape as input0.
+     *
+     * Available since API level 27.
      */
     RELU1 = 20,
 
@@ -1118,6 +1164,8 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: The output tensor of same shape as input0.
+     *
+     * Available since API level 27.
      */
     RELU6 = 21,
 
@@ -1141,6 +1189,8 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: The output tensor, of shape specified by the input shape.
+     *
+     * Available since API level 27.
      */
     RESHAPE = 22,
 
@@ -1167,6 +1217,8 @@ enum OperationType : int32_t {
      * Outputs:
      * * 0: The output 4-D tensor, of shape
      *      [batches, new_height, new_width, depth].
+     *
+     * Available since API level 27.
      */
     RESIZE_BILINEAR = 23,
 
@@ -1222,6 +1274,8 @@ enum OperationType : int32_t {
      *      A 2-D tensor of {@link OperandType::TENSOR_FLOAT32}, of shape
      *      [batch_size, num_units]. This is effectively the same as the
      *      current state value.
+     *
+     * Available since API level 27.
      */
     RNN = 24,
 
@@ -1251,6 +1305,8 @@ enum OperationType : int32_t {
      * * 0: The output tensor of same shape as input0.
      *      For {@link OperandType::TENSOR_QUANT8_ASYMM},
      *      the scale must be 1.f / 256 and the zeroPoint must be 0.
+     *
+     * Available since API level 27.
      */
     SOFTMAX = 25,
 
@@ -1284,6 +1340,8 @@ enum OperationType : int32_t {
      * Outputs:
      * * 0: The output 4-D tensor, of shape [batches, height/block_size,
      *      width/block_size, depth_in*block_size*block_size].
+     *
+     * Available since API level 27.
      */
     SPACE_TO_DEPTH = 26,
 
@@ -1361,7 +1419,9 @@ enum OperationType : int32_t {
      *      [batch_size, (memory_size - 1) * num_units * rank].
      * * 1: output.
      *      A 2-D tensor of {@link OperandType::TENSOR_FLOAT32}, of shape
-         *      [batch_size, num_units].
+     *      [batch_size, num_units].
+     *
+     * Available since API level 27.
      */
     SVDF = 27,
 
@@ -1382,6 +1442,8 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: The output tensor of same shape as input0.
+     *
+     * Available since API level 27.
      */
     TANH = 28,
 
