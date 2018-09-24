@@ -15,6 +15,7 @@ hidl_interface {
         "android.hidl.base@1.0",
     ],
     types: [
+        "EventQueueFlagBits",
         "SensorTimeout",
     ],
     gen_java: false,
