@@ -611,23 +611,18 @@ const ConfigDeclaration kVehicleProperties[]{
                 .access = VehiclePropertyAccess::READ,
                 .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
                 .configArray = {3}},
-     .initialValue = {.int32Values = {toInt(VehicleApPowerStateReq::ON_FULL), 0}}},
+     .initialValue = {.int32Values = {toInt(VehicleApPowerStateReq::ON), 0}}},
 
     {.config = {.prop = toInt(VehicleProperty::AP_POWER_STATE_REPORT),
                 .access = VehiclePropertyAccess::WRITE,
                 .changeMode = VehiclePropertyChangeMode::ON_CHANGE},
-     .initialValue = {.int32Values = {toInt(VehicleApPowerStateReport::BOOT_COMPLETE), 0}}},
+     .initialValue = {.int32Values = {toInt(VehicleApPowerStateReport::WAIT_FOR_VHAL), 0}}},
 
     {.config = {.prop = toInt(VehicleProperty::DISPLAY_BRIGHTNESS),
                 .access = VehiclePropertyAccess::READ_WRITE,
                 .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
                 .areaConfigs = {VehicleAreaConfig{.minInt32Value = 0, .maxInt32Value = 100}}},
      .initialValue = {.int32Values = {100}}},
-
-    {.config = {.prop = toInt(VehicleProperty::AP_POWER_BOOTUP_REASON),
-                .access = VehiclePropertyAccess::READ,
-                .changeMode = VehiclePropertyChangeMode::STATIC},
-     .initialValue = {.int32Values = {toInt(VehicleApPowerBootupReason::USER_POWER_ON)}}},
 
     {
         .config = {.prop = OBD2_LIVE_FRAME,
