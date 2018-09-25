@@ -61,7 +61,7 @@ interface ISurfaceFlingerConfigs {
     hasWideColorDisplay() generates (OptionalBool value);
 
     /**
-     * hwHdrDisplay indicates that the device has an High Dynamic Range display.
+     * hwHDRDisplay indicates that the device has an High Dynamic Range display.
      * A display is considered High Dynamic Range if it
      *
      *     1. is a wide color gamut display, typically DCI-P3 or lager
