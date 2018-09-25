@@ -70,6 +70,18 @@ LOCAL_KERNEL_CONFIG_DATA_PATHS := \
 
 include $(BUILD_FRAMEWORK_COMPATIBILITY_MATRIX)
 
+include $(CLEAR_VARS)
+include $(LOCAL_PATH)/clear_vars.mk
+LOCAL_MODULE := framework_compatibility_matrix.current.xml
+LOCAL_MODULE_STEM := compatibility_matrix.current.xml
+LOCAL_SRC_FILES := $(LOCAL_MODULE_STEM)
+LOCAL_KERNEL_CONFIG_DATA_PATHS := \
+    4.4.0:$(my_kernel_config_data)/android-4.4 \
+    4.9.0:$(my_kernel_config_data)/android-4.9 \
+    4.14.0:$(my_kernel_config_data)/android-4.14 \
+
+include $(BUILD_FRAMEWORK_COMPATIBILITY_MATRIX)
+
 my_kernel_config_data :=
 
 # Framework Compatibility Matrix (common to all FCM versions)
@@ -120,6 +132,7 @@ my_system_matrix_deps := \
     framework_compatibility_matrix.1.xml \
     framework_compatibility_matrix.2.xml \
     framework_compatibility_matrix.3.xml \
+    framework_compatibility_matrix.current.xml \
     framework_compatibility_matrix.device.xml
 
 # Phony target that installs all framework compatibility matrix files
