@@ -78,11 +78,15 @@ interface IBiometricsFace {
      * template if the operation was preceded by some kind of strong credential
      * confirmation (e.g. device password).
      *
+     * @param challengeTimeoutSec A timeout in seconds, after which the driver
+     *     must invalidate the challenge. This is to prevent bugs or crashes in
+     *     the system from leaving a challenge enabled indefinitely.
      * @return result, with its "value" parameter representing a "challenge": a
      *     unique and cryptographically secure random token.
      */
     @callflow(next={"enroll", "revokeChallenge", "setRequireAttention"})
-    generateChallenge() generates (OptionalUint64 result);
+    generateChallenge(uint32_t challengeTimeoutSec)
+        generates (OptionalUint64 result);
 
     /**
      * Enrolls a user's face.
