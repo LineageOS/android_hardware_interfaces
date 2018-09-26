@@ -18,6 +18,7 @@ cc_test {
     name: "VtsHalSensorsV1_0TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: [
+        "SensorsHidlEnvironmentV1_0.cpp",
         "VtsHalSensorsV1_0TargetTest.cpp"
     ],
     static_libs: [
