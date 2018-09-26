@@ -44,8 +44,23 @@ enum CameraMetadataTag : @3.3::CameraMetadataTag {
 
     ANDROID_REQUEST_END_3_4,
 
+    /** android.info.supportedBufferManagementVersion [static, enum, system]
+     *
+     * <p>The version of buffer management API this camera device supports and opts into.</p>
+     */
+    ANDROID_INFO_SUPPORTED_BUFFER_MANAGEMENT_VERSION = android.hardware.camera.metadata@3.3::CameraMetadataTag:ANDROID_INFO_END_3_3,
+
+    ANDROID_INFO_END_3_4,
+
 };
 
 /*
  * Enumeration definitions for the various entries that need them
  */
+
+/** android.info.supportedBufferManagementVersion enumeration values
+ * @see ANDROID_INFO_SUPPORTED_BUFFER_MANAGEMENT_VERSION
+ */
+enum CameraMetadataEnumAndroidInfoSupportedBufferManagementVersion : uint32_t {
+    ANDROID_INFO_SUPPORTED_BUFFER_MANAGEMENT_VERSION_HIDL_DEVICE_3_5,
+};
