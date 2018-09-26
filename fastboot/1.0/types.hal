@@ -53,9 +53,9 @@ enum FileSystemType : uint8_t {
 struct Result {
     Status status;
     /**
-     * Error message pertaining to the status. It must be a failure message for
+     * Message pertaining to the status. It must be a failure message for
      * Status FAILURE_UNKNOWN/NOT_SUPPORTED or an informative message for
      * Status SUCCESS.
      */
-    string error;
+    string message;
 };
