@@ -9,6 +9,7 @@ hidl_interface {
     srcs: [
         "types.hal",
         "ISensors.hal",
+        "ISensorsCallback.hal",
     ],
     interfaces: [
         "android.hardware.sensors@1.0",

@@ -2080,6 +2080,14 @@ TEST_F(CameraHidlTest, getCameraCharacteristics) {
                     } else {
                         ADD_FAILURE() << "Get camera hardware level failed!";
                     }
+
+                    entry.count = 0;
+                    retcode = find_camera_metadata_ro_entry(metadata,
+                            ANDROID_REQUEST_CHARACTERISTIC_KEYS_NEEDING_PERMISSION, &entry);
+                    if ((0 == retcode) || (entry.count > 0)) {
+                        ADD_FAILURE() << "ANDROID_REQUEST_CHARACTERISTIC_KEYS_NEEDING_PERMISSION "
+                            << " per API contract should never be set by Hal!";
+                    }
                 });
                 ASSERT_TRUE(ret.isOk());
             }
