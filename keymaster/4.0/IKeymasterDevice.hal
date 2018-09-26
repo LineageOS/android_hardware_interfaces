@@ -168,7 +168,7 @@ import android.hardware.keymaster@3.0::KeyFormat;
  * startup, preferably by the bootloader.  This bitstring must be cryptographically bound to every
  * key managed by the IKeymasterDevice.  As above, the recommended mechanism for this cryptographic
  * binding is to include the Root of Trust data in the input to the key derivation function used to
- * derive a key that is used to encryp the private/secret key material.
+ * derive a key that is used to encrypt the private/secret key material.
  *
  * The root of trust consists of a bitstring that must be derived from the public key used by
  * Verified Boot to verify the signature on the boot image and from the the lock state of the
@@ -386,7 +386,7 @@ interface IKeymasterDevice {
      * Generates a new cryptographic key, specifying associated parameters, which must be
      * cryptographically bound to the key.  IKeymasterDevice implementations must disallow any use
      * of a key in any way inconsistent with the authorizations specified at generation time.  With
-     * respect to parameters that the secure environment cannot enforce, the secure envionment's
+     * respect to parameters that the secure environment cannot enforce, the secure environment's
      * obligation is limited to ensuring that the unenforceable parameters associated with the key
      * cannot be modified, so that every call to getKeyCharacteristics returns the original
      * values.  In addition, the characteristics returned by generateKey places parameters correctly
@@ -433,7 +433,7 @@ interface IKeymasterDevice {
      *   supported for RSA keys.
      *
      * o Tag::DIGEST specifies digest algorithms that may be used with the new key.  TEE
-     *   IKeymasterDevice implementatiosn must support all Digest values (see types.hal) for RSA
+     *   IKeymasterDevice implementations must support all Digest values (see types.hal) for RSA
      *   keys.  StrongBox IKeymasterDevice implementations must support SHA_2_256.
      *
      * o Tag::PADDING specifies the padding modes that may be used with the new
@@ -495,13 +495,13 @@ interface IKeymasterDevice {
      *
      * @param keyFormat The format of the key material to import.  See KeyFormat in types.hal.
      *
-     * @pram keyData The key material to import, in the format specifed in keyFormat.
+     * @pram keyData The key material to import, in the format specified in keyFormat.
      *
      * @return keyBlob Opaque descriptor of the imported key.  The recommended implementation
      *         strategy is to include an encrypted copy of the key material, wrapped in a key
      *         unavailable outside secure hardware.
      *
-     * @return keyCharacteristics Decription of the generated key.  See the getKeyCharacteristics
+     * @return keyCharacteristics Description of the generated key.  See the getKeyCharacteristics
      *         method below.
      */
     importKey(vec<KeyParameter> keyParams, KeyFormat keyFormat, vec<uint8_t> keyData)
@@ -615,7 +615,7 @@ interface IKeymasterDevice {
      *        value, it must be computationally infeasible for the secure hardware to obtain the key
      *        material.
      *
-     * @return keyCharacteristics Decription of the generated key.  See KeyCharacteristics in
+     * @return keyCharacteristics Description of the generated key.  See KeyCharacteristics in
      *         types.hal.
      */
     getKeyCharacteristics(vec<uint8_t> keyBlob, vec<uint8_t> clientId, vec<uint8_t> appData)
@@ -815,7 +815,7 @@ interface IKeymasterDevice {
      * any one of them is higher than the corresponding current device value upgradeKey() must
      * return ErrorCode::INVALID_ARGUMENT.  There is one exception: it is always permissible to
      * "downgrade" from any OS_VERSION number to OS_VERSION 0.  For example, if the key has
-     * OS_VERSION 080001, it is permisible to upgrade the key if the current system version is
+     * OS_VERSION 080001, it is permissible to upgrade the key if the current system version is
      * 080100, because the new version is larger, or if the current system version is 0, because
      * upgrades to 0 are always allowed.  If the system version were 080000, however, keymaster must
      * return ErrorCode::INVALID_ARGUMENT because that value is smaller than 080001.  Values other
@@ -1040,7 +1040,7 @@ interface IKeymasterDevice {
      * authorizations contain Tag::CALLER_NONCE, then the caller may provide an IV/nonce with
      * Tag::NONCE in inParams.  If a nonce is provided when Tag::CALLER_NONCE is not authorized,
      * begin() must return ErrorCode::CALLER_NONCE_PROHIBITED.  If a nonce is not provided when
-     * Tag::CALLER_NONCE is authorized, IKeymasterDevice msut generate a random IV/nonce.
+     * Tag::CALLER_NONCE is authorized, IKeymasterDevice must generate a random IV/nonce.
      *
      * -- HMAC keys --
      *
@@ -1082,7 +1082,7 @@ interface IKeymasterDevice {
 
     /**
      * Provides data to, and possibly receives output from, an ongoing cryptographic operation begun
-     * with begin().  The operation is specified by the operationHandle paramater.
+     * with begin().  The operation is specified by the operationHandle parameter.
      *
      * If operationHandle is invalid, update() must return ErrorCode::INVALID_OPERATION_HANDLE.
      *
