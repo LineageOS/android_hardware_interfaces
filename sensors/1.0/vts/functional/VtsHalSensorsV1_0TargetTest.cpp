@@ -365,9 +365,7 @@ class SensorsHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     return S()->configDirectReport(sensorHandle, channelHandle, rate, _hidl_cb);
   }
 
-  inline sp<ISensors>& S() {
-    return SensorsHidlEnvironment::Instance()->sensors;
-  }
+  inline sp<ISensors>& S() { return SensorsHidlEnvironmentV1_0::Instance()->sensors; }
 
   inline static SensorFlagBits extractReportMode(uint64_t flag) {
     return (SensorFlagBits) (flag
@@ -453,10 +451,10 @@ std::vector<Event> SensorsHidlTest::collectEvents(useconds_t timeLimitUs, size_t
         nEventLimit, timeLimitUs, clearBeforeStart);
 
   if (changeCollection) {
-    SensorsHidlEnvironment::Instance()->setCollection(true);
+      SensorsHidlEnvironmentV1_0::Instance()->setCollection(true);
   }
   if (clearBeforeStart) {
-    SensorsHidlEnvironment::Instance()->catEvents(nullptr);
+      SensorsHidlEnvironmentV1_0::Instance()->catEvents(nullptr);
   }
 
   while (timeLimitUs > 0) {
@@ -464,7 +462,7 @@ std::vector<Event> SensorsHidlTest::collectEvents(useconds_t timeLimitUs, size_t
     usleep(duration);
     timeLimitUs -= duration;
 
-    SensorsHidlEnvironment::Instance()->catEvents(&events);
+    SensorsHidlEnvironmentV1_0::Instance()->catEvents(&events);
     if (events.size() >= nEventLimit) {
       break;
     }
@@ -473,7 +471,7 @@ std::vector<Event> SensorsHidlTest::collectEvents(useconds_t timeLimitUs, size_t
   }
 
   if (changeCollection) {
-    SensorsHidlEnvironment::Instance()->setCollection(false);
+      SensorsHidlEnvironmentV1_0::Instance()->setCollection(false);
   }
   return events;
 }
@@ -1068,7 +1066,7 @@ void SensorsHidlTest::testBatchingOperation(SensorType type) {
   // since collection is not enabled all events will go down the drain
   usleep(batchingPeriodInNs / 1000 * 8 / 10);
 
-  SensorsHidlEnvironment::Instance()->setCollection(true);
+  SensorsHidlEnvironmentV1_0::Instance()->setCollection(true);
   // clean existing collections
   collectEvents(0 /*timeLimitUs*/, 0/*nEventLimit*/,
         true /*clearBeforeStart*/, false /*change collection*/);
@@ -1081,7 +1079,7 @@ void SensorsHidlTest::testBatchingOperation(SensorType type) {
   events = collectEvents(allowedBatchDeliverTimeNs / 1000,
         minFifoCount, false /*clearBeforeStart*/, false /*change collection*/);
 
-  SensorsHidlEnvironment::Instance()->setCollection(false);
+  SensorsHidlEnvironmentV1_0::Instance()->setCollection(false);
   ASSERT_EQ(activate(handle, 0), Result::OK);
 
   size_t nEvent = 0;
@@ -1337,11 +1335,11 @@ TEST_F(SensorsHidlTest, MagnetometerGrallocDirectReportOperationVeryFast) {
 }
 
 int main(int argc, char **argv) {
-  ::testing::AddGlobalTestEnvironment(SensorsHidlEnvironment::Instance());
-  ::testing::InitGoogleTest(&argc, argv);
-  SensorsHidlEnvironment::Instance()->init(&argc, argv);
-  int status = RUN_ALL_TESTS();
-  ALOGI("Test result = %d", status);
-  return status;
+    ::testing::AddGlobalTestEnvironment(SensorsHidlEnvironmentV1_0::Instance());
+    ::testing::InitGoogleTest(&argc, argv);
+    SensorsHidlEnvironmentV1_0::Instance()->init(&argc, argv);
+    int status = RUN_ALL_TESTS();
+    ALOGI("Test result = %d", status);
+    return status;
 }
 // vim: set ts=2 sw=2

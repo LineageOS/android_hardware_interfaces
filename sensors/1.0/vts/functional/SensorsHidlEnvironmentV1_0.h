@@ -17,62 +17,43 @@
 #ifndef ANDROID_SENSORS_HIDL_ENVIRONMENT_V1_0_H
 #define ANDROID_SENSORS_HIDL_ENVIRONMENT_V1_0_H
 
-#include <VtsHalHidlTargetTestEnvBase.h>
+#include "sensors-vts-utils/SensorsHidlEnvironmentBase.h"
+
 #include <android/hardware/sensors/1.0/ISensors.h>
 #include <android/hardware/sensors/1.0/types.h>
 #include <utils/StrongPointer.h>
 
 #include <atomic>
 #include <memory>
-#include <mutex>
-#include <thread>
-#include <vector>
 
 using ::android::sp;
 
 class SensorsHidlTest;
-class SensorsHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
+class SensorsHidlEnvironmentV1_0 : public SensorsHidlEnvironmentBase {
    public:
     using Event = ::android::hardware::sensors::V1_0::Event;
     // get the test environment singleton
-    static SensorsHidlEnvironment* Instance() {
-        static SensorsHidlEnvironment* instance = new SensorsHidlEnvironment();
+    static SensorsHidlEnvironmentV1_0* Instance() {
+        static SensorsHidlEnvironmentV1_0* instance = new SensorsHidlEnvironmentV1_0();
         return instance;
     }
-
-    virtual void HidlSetUp() override;
-    virtual void HidlTearDown() override;
 
     virtual void registerTestServices() override {
         registerTestService<android::hardware::sensors::V1_0::ISensors>();
     }
-
-    // Get and clear all events collected so far (like "cat" shell command).
-    // If output is nullptr, it clears all collected events.
-    void catEvents(std::vector<Event>* output);
-
-    // set sensor event collection status
-    void setCollection(bool enable);
 
    private:
     friend SensorsHidlTest;
     // sensors hidl service
     sp<android::hardware::sensors::V1_0::ISensors> sensors;
 
-    SensorsHidlEnvironment() {}
+    SensorsHidlEnvironmentV1_0() {}
 
-    void addEvent(const Event& ev);
-    void startPollingThread();
-    void resetHal();
-    static void pollingThread(SensorsHidlEnvironment* env, std::atomic_bool& stop);
+    bool resetHal() override;
+    void startPollingThread() override;
+    static void pollingThread(SensorsHidlEnvironmentV1_0* env, std::atomic_bool& stop);
 
-    bool collectionEnabled;
-    std::atomic_bool stopThread;
-    std::thread pollThread;
-    std::vector<Event> events;
-    std::mutex events_mutex;
-
-    GTEST_DISALLOW_COPY_AND_ASSIGN_(SensorsHidlEnvironment);
+    GTEST_DISALLOW_COPY_AND_ASSIGN_(SensorsHidlEnvironmentV1_0);
 };
 
 #endif  // ANDROID_SENSORS_HIDL_ENVIRONMENT_V1_0_H
