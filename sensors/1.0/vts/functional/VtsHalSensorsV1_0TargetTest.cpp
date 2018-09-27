@@ -18,6 +18,7 @@
 
 #include "SensorsHidlEnvironmentV1_0.h"
 #include "sensors-vts-utils/GrallocWrapper.h"
+#include "sensors-vts-utils/SensorEventsChecker.h"
 
 #include <VtsHalHidlTargetTestBase.h>
 #include <VtsHalHidlTargetTestEnvBase.h>
@@ -248,58 +249,6 @@ SensorsTestSharedMemory* SensorsTestSharedMemory::create(SharedMemType type, siz
   }
   return m;
 }
-
-class SensorEventsChecker {
- public:
-  virtual bool check(const std::vector<Event> &events, std::string *out) const = 0;
-  virtual ~SensorEventsChecker() {}
-};
-
-class NullChecker : public SensorEventsChecker {
- public:
-  virtual bool check(const std::vector<Event> &, std::string *) const {
-    return true;
-  }
-};
-
-class SensorEventPerEventChecker : public SensorEventsChecker {
- public:
-  virtual bool checkEvent(const Event &event, std::string *out) const = 0;
-  virtual bool check(const std::vector<Event> &events, std::string *out) const {
-    for (const auto &e : events) {
-      if (!checkEvent(e, out)) {
-        return false;
-      }
-    }
-    return true;
-  }
-};
-
-class Vec3NormChecker : public SensorEventPerEventChecker {
- public:
-  Vec3NormChecker(float min, float max) : mRange(min, max) {}
-  static Vec3NormChecker byNominal(float nominal, float allowedError) {
-    return Vec3NormChecker(nominal - allowedError, nominal + allowedError);
-  }
-
-  virtual bool checkEvent(const Event &event, std::string *out) const {
-    Vec3 v = event.u.vec3;
-    float norm = std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
-    if (norm < mRange.first || norm > mRange.second) {
-      if (out != nullptr) {
-        std::ostringstream ss;
-        ss << "Event @ " << event.timestamp << " (" << v.x << ", " << v.y << ", " << v.z << ")"
-           << " has norm " << norm << ", which is beyond range"
-           << " [" << mRange.first << ", " << mRange.second << "]";
-        *out = ss.str();
-      }
-      return false;
-    }
-    return true;
-  }
- protected:
-  std::pair<float, float> mRange;
-};
 
 // The main test class for SENSORS HIDL HAL.
 class SensorsHidlTest : public ::testing::VtsHalHidlTargetTestBase {
