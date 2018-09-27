@@ -50,4 +50,13 @@ interface IFastboot {
      */
     getVariant() generates (string variant, Result result);
 
+    /**
+     * Returns whether off-mode-charging is enabled. If enabled, the device
+     * autoboots into a special mode when power is applied.
+     *
+     * @response state Returns whether off mode charging is enabled.
+     * @response result Returns the status SUCCESS if the operation is successful,
+     *     FAILURE_UNKNOWN otherwise.
+     */
+    getOffModeChargeState() generates (bool state, Result result);
 };
