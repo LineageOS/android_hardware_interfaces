@@ -39,6 +39,22 @@ CameraDevice::CameraDevice(sp<CameraModule> module, const std::string& cameraId,
 CameraDevice::~CameraDevice() {
 }
 
+sp<V3_2::implementation::CameraDeviceSession> CameraDevice::createSession(camera3_device_t* device,
+        const camera_metadata_t* deviceInfo,
+        const sp<V3_2::ICameraDeviceCallback>& callback) {
+    sp<CameraDeviceSession> session = new CameraDeviceSession(device, deviceInfo, callback);
+    IF_ALOGV() {
+        session->getInterface()->interfaceChain([](
+            ::android::hardware::hidl_vec<::android::hardware::hidl_string> interfaceChain) {
+                ALOGV("Session interface chain:");
+                for (auto iface : interfaceChain) {
+                    ALOGV("  %s", iface.c_str());
+                }
+            });
+    }
+    return session;
+}
+
 Return<void> CameraDevice::getPhysicalCameraCharacteristics(const hidl_string& physicalCameraId,
         V3_5::ICameraDevice::getPhysicalCameraCharacteristics_cb _hidl_cb) {
     Status status = initStatus();

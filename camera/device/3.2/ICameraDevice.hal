@@ -148,7 +148,9 @@ interface ICameraDevice {
      * session handle for active operations.
      *
      * @param callback Interface to invoke by the HAL for device asynchronous
-     *     events.
+     *     events. For HALs newer than version 3.2, HAL must use castFrom
+     *     method to check the exact version of callback sent by camera service.
+     *
      * @return status Status code for the operation, one of:
      *     OK:
      *         On a successful open of the camera device.

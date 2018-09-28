@@ -552,6 +552,7 @@ Return<void> CameraProvider::getCameraDeviceInterface_V3_x(
         return Void();
     }
 
+    // ICameraDevice 3.4 or upper
     sp<android::hardware::camera::device::V3_2::implementation::CameraDevice> deviceImpl;
     if (deviceVersion >= kHAL3_4) {
         ALOGV("Constructing v3.4 camera device");
@@ -580,6 +581,7 @@ Return<void> CameraProvider::getCameraDeviceInterface_V3_x(
         return Void();
     }
 
+    // ICameraDevice 3.2 and 3.3
     // Since some Treble HAL revisions can map to the same legacy HAL version(s), we default
     // to the newest possible Treble HAL revision, but allow for override if needed via
     // system property.

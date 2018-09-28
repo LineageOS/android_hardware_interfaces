@@ -27,6 +27,7 @@ cc_library_shared {
     vendor: true,
     srcs: [
         "CameraDevice.cpp",
+        "CameraDeviceSession.cpp",
     ],
     shared_libs: [
         "libhidlbase",
