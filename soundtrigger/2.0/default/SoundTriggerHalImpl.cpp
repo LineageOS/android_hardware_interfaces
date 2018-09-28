@@ -247,7 +247,7 @@ exit:
 }
 
 SoundTriggerHalImpl::SoundTriggerHalImpl()
-    : mModuleName("primary"), mNextModelId(1), mHwDevice(NULL) {}
+    : mModuleName("primary"), mHwDevice(NULL), mNextModelId(1) {}
 
 void SoundTriggerHalImpl::onFirstRef() {
     const hw_module_t* mod;
