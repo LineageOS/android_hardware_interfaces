@@ -68,14 +68,14 @@ enum OperationType : @1.1::OperationType {
     SELECT = 76,
     SIN = 77,
     SLICE = 78,
-    SPARSE_TO_DENSE = 78,
-    SPLIT = 79,
-    SQRT = 80,
-    TILE = 81,
-    TOPK_V2 = 82,
-    TRANSPOSE_CONV_2D = 83,
-    UNIDIRECTIONAL_SEQUENCE_LSTM = 84,
-    UNIDIRECTIONAL_SEQUENCE_RNN = 85,
+    SPARSE_TO_DENSE = 79,
+    SPLIT = 80,
+    SQRT = 81,
+    TILE = 82,
+    TOPK_V2 = 83,
+    TRANSPOSE_CONV_2D = 84,
+    UNIDIRECTIONAL_SEQUENCE_LSTM = 85,
+    UNIDIRECTIONAL_SEQUENCE_RNN = 86,
 };
 
 /**
