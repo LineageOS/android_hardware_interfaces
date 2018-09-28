@@ -39,4 +39,15 @@ interface IFastboot {
      *     FAILURE_UNKNOWN for an invalid/unsupported command.
      */
     doOemCommand(string oemCmd) generates (Result result);
+
+    /**
+     * Returns an OEM-defined string indicating the variant of the device, for
+     * example, US and ROW.
+     *
+     * @response variant Indicates the device variant.
+     * @response result Returns the status SUCCESS if the operation is successful,
+     *     FAILURE_UNKNOWN otherwise.
+     */
+    getVariant() generates (string variant, Result result);
+
 };
