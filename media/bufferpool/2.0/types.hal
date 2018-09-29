@@ -100,7 +100,7 @@ struct BufferStatusMessage {
 struct BufferInvalidationMessage {
     /**
      * Buffers from fromBufferId to toBufferId must be invalidated.
-     * Both of fromBufferId and toBufferId are inclusive.
+     * fromBufferId is inclusive, but toBufferId is not inclusive.
      * If fromBufferId > toBufferID, wrap happens. In that case
      * the wrap is based on UINT32_MAX.
      */
