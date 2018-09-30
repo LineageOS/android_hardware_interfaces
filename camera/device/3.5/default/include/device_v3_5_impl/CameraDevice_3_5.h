@@ -17,7 +17,7 @@
 #ifndef ANDROID_HARDWARE_CAMERA_DEVICE_V3_5_CAMERADEVICE_H
 #define ANDROID_HARDWARE_CAMERA_DEVICE_V3_5_CAMERADEVICE_H
 
-#include "CameraModule.h"
+#include "CameraDeviceSession.h"
 #include <../../../../3.4/default/include/device_v3_4_impl/CameraDevice_3_4.h>
 
 #include <android/hardware/camera/device/3.5/ICameraDevice.h>
@@ -57,6 +57,10 @@ struct CameraDevice : public V3_4::implementation::CameraDevice {
     }
 
 protected:
+    virtual sp<V3_2::implementation::CameraDeviceSession> createSession(camera3_device_t*,
+            const camera_metadata_t* deviceInfo,
+            const sp<V3_2::ICameraDeviceCallback>&) override;
+
     Return<void> getPhysicalCameraCharacteristics(const hidl_string& physicalCameraId,
             V3_5::ICameraDevice::getPhysicalCameraCharacteristics_cb _hidl_cb);
 

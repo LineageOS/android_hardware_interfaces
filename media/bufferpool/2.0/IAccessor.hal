@@ -68,5 +68,5 @@ interface IAccessor {
         generates (ResultStatus status, IConnection connection,
                    int64_t connectionId,
                    fmq_sync<BufferStatusMessage> toFmqDesc,
-                   fmq_sync<BufferInvalidationMessage> fromFmqDesc);
+                   fmq_unsync<BufferInvalidationMessage> fromFmqDesc);
 };
