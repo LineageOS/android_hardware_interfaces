@@ -30,6 +30,18 @@ enum OperandType : @1.0::OperandType {
      * represents false; any other value represents true.
      */
     BOOL = 6,
+    /**
+     * A tensor of 16 bit signed integers that represent real numbers.
+     *
+     * Attached to this tensor are two numbers that are used to convert the 16
+     * bit integer to the real value and vice versa. These two numbers are:
+     * - scale: a 32 bit floating point value greater than zero.
+     * - zeroPoint: a 32 bit integer, in range [-32768, 32767].
+     *
+     * The formula is:
+     * realValue = (integerValue - zeroPoint) * scale.
+     */
+    TENSOR_QUANT16_ASYMM = 7,
 };
 
 /**
