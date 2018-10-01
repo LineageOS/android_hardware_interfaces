@@ -119,6 +119,11 @@ IGnssConfiguration::BlacklistedSource FindStrongFrequentNonGpsSource(
     struct ComparableBlacklistedSource {
         IGnssConfiguration::BlacklistedSource id;
 
+        ComparableBlacklistedSource() {
+            id.constellation = GnssConstellationType::UNKNOWN;
+            id.svid = 0;
+        }
+
         bool operator<(const ComparableBlacklistedSource& compare) const {
             return ((id.svid < compare.id.svid) || ((id.svid == compare.id.svid) &&
                                                     (id.constellation < compare.id.constellation)));
@@ -191,18 +196,21 @@ IGnssConfiguration::BlacklistedSource FindStrongFrequentNonGpsSource(
  * 3) Restart location, wait for 3 locations, ensuring they are valid, and checks corresponding
  * GnssStatus does not use those satellites.
  * 4a & b) Turns off location, and send in empty blacklist.
- * 5) Restart location, wait for 3 locations, ensuring they are valid, and checks corresponding
+ * 5a) Restart location, wait for 3 locations, ensuring they are valid, and checks corresponding
  * GnssStatus does re-use at least the previously strongest satellite
+ * 5b) Retry a few times, in case GNSS search strategy takes a while to reacquire even the
+ * formerly strongest satellite
  */
 TEST_F(GnssHalTest, BlacklistIndividualSatellites) {
     const int kLocationsToAwait = 3;
+    const int kRetriesToUnBlacklist = 10;
 
     StartAndCheckLocations(kLocationsToAwait);
 
     // Tolerate 1 less sv status to handle edge cases in reporting.
     EXPECT_GE((int)list_gnss_sv_status_.size() + 1, kLocationsToAwait);
-    ALOGD("Observed %d GnssSvStatus, while awaiting %d Locations", (int)list_gnss_sv_status_.size(),
-          kLocationsToAwait);
+    ALOGD("Observed %d GnssSvStatus, while awaiting %d Locations (%d received)",
+          (int)list_gnss_sv_status_.size(), kLocationsToAwait, location_called_count_);
 
     /*
      * Identify strongest SV seen at least kLocationsToAwait -1 times
@@ -237,13 +245,18 @@ TEST_F(GnssHalTest, BlacklistIndividualSatellites) {
     // retry and ensure satellite not used
     list_gnss_sv_status_.clear();
 
-    location_called_count_ = 0;
     StartAndCheckLocations(kLocationsToAwait);
+
+    // early exit if test is being run with insufficient signal
+    if (location_called_count_ == 0) {
+        ALOGE("0 Gnss locations received - ensure sufficient signal and retry");
+    }
+    ASSERT_TRUE(location_called_count_ > 0);
 
     // Tolerate 1 less sv status to handle edge cases in reporting.
     EXPECT_GE((int)list_gnss_sv_status_.size() + 1, kLocationsToAwait);
-    ALOGD("Observed %d GnssSvStatus, while awaiting %d Locations", (int)list_gnss_sv_status_.size(),
-          kLocationsToAwait);
+    ALOGD("Observed %d GnssSvStatus, while awaiting %d Locations (%d received)",
+          (int)list_gnss_sv_status_.size(), kLocationsToAwait, location_called_count_);
     for (const auto& gnss_sv_status : list_gnss_sv_status_) {
         for (uint32_t iSv = 0; iSv < gnss_sv_status.numSvs; iSv++) {
             const auto& gnss_sv = gnss_sv_status.gnssSvList[iSv];
@@ -260,28 +273,40 @@ TEST_F(GnssHalTest, BlacklistIndividualSatellites) {
     ASSERT_TRUE(result.isOk());
     EXPECT_TRUE(result);
 
-    StopAndClearLocations();
-    list_gnss_sv_status_.clear();
-
-    StartAndCheckLocations(kLocationsToAwait);
-
-    // Tolerate 1 less sv status to handle edge cases in reporting.
-    EXPECT_GE((int)list_gnss_sv_status_.size() + 1, kLocationsToAwait);
-    ALOGD("Observed %d GnssSvStatus, while awaiting %d Locations", (int)list_gnss_sv_status_.size(),
-          kLocationsToAwait);
-
     bool strongest_sv_is_reobserved = false;
-    for (const auto& gnss_sv_status : list_gnss_sv_status_) {
-        for (uint32_t iSv = 0; iSv < gnss_sv_status.numSvs; iSv++) {
-            const auto& gnss_sv = gnss_sv_status.gnssSvList[iSv];
-            if ((gnss_sv.svid == source_to_blacklist.svid) &&
-                (gnss_sv.constellation == source_to_blacklist.constellation) &&
-                (gnss_sv.svFlag & IGnssCallback::GnssSvFlags::USED_IN_FIX)) {
-                strongest_sv_is_reobserved = true;
-                break;
-            }
+    // do several loops awaiting a few locations, allowing non-immediate reacquisition strategies
+    int unblacklist_loops_remaining = kRetriesToUnBlacklist;
+    while (!strongest_sv_is_reobserved && (unblacklist_loops_remaining-- > 0)) {
+        StopAndClearLocations();
+        list_gnss_sv_status_.clear();
+
+        StartAndCheckLocations(kLocationsToAwait);
+
+        // early exit loop if test is being run with insufficient signal
+        if (location_called_count_ == 0) {
+            ALOGE("0 Gnss locations received - ensure sufficient signal and retry");
         }
-        if (strongest_sv_is_reobserved) break;
+        ASSERT_TRUE(location_called_count_ > 0);
+
+        // Tolerate 1 less sv status to handle edge cases in reporting.
+        EXPECT_GE((int)list_gnss_sv_status_.size() + 1, kLocationsToAwait);
+        ALOGD(
+            "Clear blacklist, observed %d GnssSvStatus, while awaiting %d Locations"
+            ", tries remaining %d",
+            (int)list_gnss_sv_status_.size(), kLocationsToAwait, unblacklist_loops_remaining);
+
+        for (const auto& gnss_sv_status : list_gnss_sv_status_) {
+            for (uint32_t iSv = 0; iSv < gnss_sv_status.numSvs; iSv++) {
+                const auto& gnss_sv = gnss_sv_status.gnssSvList[iSv];
+                if ((gnss_sv.svid == source_to_blacklist.svid) &&
+                    (gnss_sv.constellation == source_to_blacklist.constellation) &&
+                    (gnss_sv.svFlag & IGnssCallback::GnssSvFlags::USED_IN_FIX)) {
+                    strongest_sv_is_reobserved = true;
+                    break;
+                }
+            }
+            if (strongest_sv_is_reobserved) break;
+        }
     }
     EXPECT_TRUE(strongest_sv_is_reobserved);
     StopAndClearLocations();
@@ -304,8 +329,8 @@ TEST_F(GnssHalTest, BlacklistConstellation) {
 
     // Tolerate 1 less sv status to handle edge cases in reporting.
     EXPECT_GE((int)list_gnss_sv_status_.size() + 1, kLocationsToAwait);
-    ALOGD("Observed %d GnssSvStatus, while awaiting %d Locations", (int)list_gnss_sv_status_.size(),
-          kLocationsToAwait);
+    ALOGD("Observed %d GnssSvStatus, while awaiting %d Locations (%d received)",
+          (int)list_gnss_sv_status_.size(), kLocationsToAwait, location_called_count_);
 
     // Find first non-GPS constellation to blacklist
     GnssConstellationType constellation_to_blacklist = GnssConstellationType::UNKNOWN;
