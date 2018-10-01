@@ -27,6 +27,13 @@ import @2.0::ISensorsCallback;
 interface ISensors {
     /**
      * Enumerate all available (static) sensors.
+     *
+     * The SensorInfo for each sensor returned by getSensorsList must be stable
+     * from the initial call to getSensorsList after a device boot until the
+     * entire system restarts. The SensorInfo for each sensor must not change
+     * between subsequent calls to getSensorsList, even across restarts of the
+     * HAL and its dependencies (for example, the sensor handle for a given
+     * sensor must not change across HAL restarts).
      */
     getSensorsList() generates (vec<SensorInfo> list);
 
