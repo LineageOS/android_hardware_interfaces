@@ -46,7 +46,7 @@ class AuthorizationSet {
     AuthorizationSet(const AuthorizationSet& other) : data_(other.data_) {}
 
     // Move constructor.
-    AuthorizationSet(AuthorizationSet&& other) : data_(std::move(other.data_)) {}
+    AuthorizationSet(AuthorizationSet&& other) noexcept : data_(std::move(other.data_)) {}
 
     // Constructor from hidl_vec<KeyParameter>
     AuthorizationSet(const hidl_vec<KeyParameter>& other) { *this = other; }
@@ -58,7 +58,7 @@ class AuthorizationSet {
     }
 
     // Move assignment.
-    AuthorizationSet& operator=(AuthorizationSet&& other) {
+    AuthorizationSet& operator=(AuthorizationSet&& other) noexcept {
         data_ = std::move(other.data_);
         return *this;
     }
