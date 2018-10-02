@@ -142,7 +142,7 @@ Return<void> Health::getChargeStatus(getChargeStatus_cb _hidl_cb) {
 Return<Result> Health::update() {
     if (!healthd_mode_ops || !healthd_mode_ops->battery_update) {
         LOG(WARNING) << "health@2.0: update: not initialized. "
-                     << "update() should not be called in charger / recovery.";
+                     << "update() should not be called in charger";
         return Result::UNKNOWN;
     }
 

@@ -46,9 +46,32 @@ int healthd_board_battery_update(struct android::BatteryProperties*) {
     return 0;
 }
 
+void healthd_mode_default_impl_init(struct healthd_config*) {
+    // noop
+}
+
+int healthd_mode_default_impl_preparetowait(void) {
+    return -1;
+}
+
+void healthd_mode_default_impl_heartbeat(void) {
+    // noop
+}
+
+void healthd_mode_default_impl_battery_update(struct android::BatteryProperties*) {
+    // noop
+}
+
+static struct healthd_mode_ops healthd_mode_default_impl_ops = {
+    .init = healthd_mode_default_impl_init,
+    .preparetowait = healthd_mode_default_impl_preparetowait,
+    .heartbeat = healthd_mode_default_impl_heartbeat,
+    .battery_update = healthd_mode_default_impl_battery_update,
+};
+
 extern "C" IHealth* HIDL_FETCH_IHealth(const char* name) {
     const static std::string providedInstance{"backup"};
-
+    healthd_mode_ops = &healthd_mode_default_impl_ops;
     if (providedInstance == name) {
         // use defaults
         // Health class stores static instance
