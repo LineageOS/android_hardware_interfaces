@@ -1172,6 +1172,14 @@ TEST_F(CameraHidlTest, noHal1AfterP) {
     }
     ASSERT_GT(firstApiLevel, 0); // first_api_level must exist
 
+    // all devices with first API level == 28 and <= 1GB of RAM must set low_ram
+    // and thus be allowed to continue using HAL1
+    if ((firstApiLevel == HAL1_PHASE_OUT_API_LEVEL) &&
+        (property_get_bool("ro.config.low_ram", /*default*/ false))) {
+        ALOGI("Hal1 allowed for low ram device");
+        return;
+    }
+
     if (firstApiLevel >= HAL1_PHASE_OUT_API_LEVEL) {
         hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
         for (const auto& name : cameraDeviceNames) {
