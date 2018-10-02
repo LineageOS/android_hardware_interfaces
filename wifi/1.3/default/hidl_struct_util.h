@@ -24,6 +24,7 @@
 #include <android/hardware/wifi/1.2/IWifiChip.h>
 #include <android/hardware/wifi/1.2/IWifiChipEventCallback.h>
 #include <android/hardware/wifi/1.2/types.h>
+#include <android/hardware/wifi/1.3/types.h>
 
 #include "wifi_legacy_hal.h"
 
@@ -89,7 +90,7 @@ bool convertLegacyVectorOfCachedGscanResultsToHidl(
     std::vector<StaScanData>* hidl_scan_datas);
 bool convertLegacyLinkLayerStatsToHidl(
     const legacy_hal::LinkLayerStats& legacy_stats,
-    StaLinkLayerStats* hidl_stats);
+    V1_3::StaLinkLayerStats* hidl_stats);
 bool convertLegacyRoamingCapabilitiesToHidl(
     const legacy_hal::wifi_roaming_capabilities& legacy_caps,
     StaRoamingCapabilities* hidl_caps);
