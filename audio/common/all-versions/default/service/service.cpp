@@ -24,16 +24,26 @@
 #include <android/hardware/soundtrigger/2.0/ISoundTriggerHw.h>
 #include <android/hardware/soundtrigger/2.1/ISoundTriggerHw.h>
 #include <binder/ProcessState.h>
+#include <cutils/properties.h>
 #include <hidl/HidlTransportSupport.h>
 #include <hidl/LegacySupport.h>
+#include <hwbinder/ProcessState.h>
 
 using namespace android::hardware;
 using android::OK;
 
 int main(int /* argc */, char* /* argv */ []) {
-    android::ProcessState::initWithDriver("/dev/vndbinder");
+    ::android::ProcessState::initWithDriver("/dev/vndbinder");
     // start a threadpool for vndbinder interactions
-    android::ProcessState::self()->startThreadPool();
+    ::android::ProcessState::self()->startThreadPool();
+
+    const int32_t defaultValue = -1;
+    int32_t value =
+        property_get_int32("persist.vendor.audio.service.hwbinder.size_kbyte", defaultValue);
+    if (value != defaultValue) {
+        ALOGD("Configuring hwbinder with mmap size %d KBytes", value);
+        ProcessState::initWithMmapSize(static_cast<size_t>(value) * 1024);
+    }
     configureRpcThreadpool(16, true /*callerWillJoin*/);
 
     bool fail = registerPassthroughServiceImplementation<audio::V4_0::IDevicesFactory>() != OK &&
