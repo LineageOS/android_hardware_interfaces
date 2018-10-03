@@ -2,7 +2,7 @@ cc_library_shared {
     name: "android.hardware.boot@1.0-impl",
     defaults: ["hidl_defaults"],
     relative_install_path: "hw",
-    vendor_available: true,
+    vendor: true,
     recovery_available: true,
     srcs: ["BootControl.cpp"],
 
