@@ -64,6 +64,10 @@ struct Health : public IHealth, hidl_death_recipient {
     std::unique_ptr<BatteryMonitor> battery_monitor_;
 
     bool unregisterCallbackInternal(const sp<IBase>& cb);
+
+    // update() and only notify the given callback, but none of the other callbacks.
+    // If cb is null, do not notify any callback at all.
+    Return<Result> updateAndNotify(const sp<IHealthInfoCallback>& cb);
 };
 
 }  // namespace implementation
