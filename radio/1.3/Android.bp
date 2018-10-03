@@ -22,6 +22,7 @@ hidl_interface {
         "AccessNetwork",
         "DataRegStateResult",
         "EmergencyNumber",
+        "EmergencyNumberSource",
         "EmergencyServiceCategory",
         "LteVopsInfo",
     ],

@@ -29,14 +29,14 @@ enum AccessNetwork : @1.2::AccessNetwork {
 };
 
 /**
- * Emergency number contains information of number, one or more service category(s), and mobile
- * country code (mcc).
+ * Emergency number contains information of number, one or more service category(s), mobile country
+ * code (mcc), and source(s) that indicate where it comes from.
  *
  * If the source of the emergency number is associated with country, field ‘mcc’ must be
  * provided; otherwise the field ‘mcc’ must be an empty string.
  *
- * A unique EmergencyNumber has a unique combination of ‘number’ and ‘mcc’ fields.
- * Multiple @1.3::EmergencyServiceCategory should be merged into the bitfield for the same
+ * A unique EmergencyNumber has a unique combination of ‘number’, ‘mcc’ and 'categories' fields.
+ * Multiple @1.3::EmergencyNumberSource should be merged into the bitfield for the same
  * EmergencyNumber.
  *
  * Reference: 3GPP TS 22.101 version 9.1.0 Release 9
@@ -56,6 +56,11 @@ struct EmergencyNumber{
      * the value of each bit.
      */
     bitfield<EmergencyServiceCategory> categories;
+    /**
+     * The bitfield of @1.3::EmergencyNumberSource(s). See @1.3::EmergencyNumberSource for the
+     * value of each bit.
+     */
+    bitfield<EmergencyNumberSource> sources;
 };
 
 /**
@@ -69,20 +74,55 @@ struct EmergencyNumber{
  * - Manually Initiated eCall (MIeC);
  * - Automatically Initiated eCall (AIeC);
  *
- * Type GENERIC (General emergency call, all categories) is considered to use if the reported type
- * is not any of the other specific types.
+ * Category UNSPECIFIED (General emergency call, all categories) indicates that no specific
+ * services are associated with this emergency number.
  *
- * Reference: 3GPP TS 22.101 version 9.1.0 Release 9
+ * Reference: 3gpp 22.101, Section 10 - Emergency Calls
  */
 enum EmergencyServiceCategory : int32_t {
-    GENERIC = 0, // General emergency call, all categories
+    /**
+     * General emergency call, all categories
+     */
+    UNSPECIFIED = 0,
     POLICE = 1 << 0,
     AMBULANCE = 1 << 1,
     FIRE_BRIGADE = 1 << 2,
     MARINE_GUARD = 1 << 3,
     MOUNTAIN_RESCUE = 1 << 4,
-    MIEC = 1 << 5, // Manually Initiated eCall (MIeC)
-    AIEC = 1 << 6, // Automatically Initiated eCall (AIeC)
+    /**
+     * Manually Initiated eCall (MIeC)
+     */
+    MIEC = 1 << 5,
+    /**
+     * Automatically Initiated eCall (AIeC)
+     */
+    AIEC = 1 << 6,
+};
+
+/**
+ * The source to tell where the corresponding @1.3::EmergencyNumber comes from.
+ *
+ * Reference: 3gpp 22.101, Section 10 - Emergency Calls
+ */
+enum EmergencyNumberSource : int32_t {
+    /**
+     * Indicates the number is from the network signal.
+     */
+    NETWORK_SIGNALING = 1 << 0,
+    /**
+     * Indicates the number is from the sim card.
+     */
+    SIM = 1 << 1,
+    /**
+     * Indicates the number is from the modem config.
+     */
+    MODEM_CONFIG = 1 << 2,
+    /**
+     * Indicates the number is available as default. Per the reference, 112, 911 must always be
+     * available; additionally, 000, 08, 110, 999, 118 and 119 must be available when sim is not
+     * present.
+     */
+    DEFAULT = 1 << 3,
 };
 
 /**
