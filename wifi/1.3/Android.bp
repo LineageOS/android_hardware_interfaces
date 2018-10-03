@@ -7,13 +7,19 @@ hidl_interface {
         enabled: true,
     },
     srcs: [
+        "types.hal",
         "IWifi.hal",
+        "IWifiStaIface.hal",
     ],
     interfaces: [
         "android.hardware.wifi@1.0",
         "android.hardware.wifi@1.1",
         "android.hardware.wifi@1.2",
         "android.hidl.base@1.0",
+    ],
+    types: [
+      "StaLinkLayerRadioStats",
+      "StaLinkLayerStats",
     ],
     gen_java: true,
 }

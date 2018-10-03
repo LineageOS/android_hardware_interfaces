@@ -785,7 +785,7 @@ bool convertLegacyVectorOfDebugRxPacketFateToHidl(
 
 bool convertLegacyLinkLayerStatsToHidl(
     const legacy_hal::LinkLayerStats& legacy_stats,
-    StaLinkLayerStats* hidl_stats) {
+    V1_3::StaLinkLayerStats* hidl_stats) {
     if (!hidl_stats) {
         return false;
     }
@@ -826,16 +826,26 @@ bool convertLegacyLinkLayerStatsToHidl(
     hidl_stats->iface.wmeVoPktStats.retries =
         legacy_stats.iface.ac[legacy_hal::WIFI_AC_VO].retries;
     // radio legacy_stats conversion.
-    std::vector<StaLinkLayerRadioStats> hidl_radios_stats;
+    std::vector<V1_3::StaLinkLayerRadioStats> hidl_radios_stats;
     for (const auto& legacy_radio_stats : legacy_stats.radios) {
-        StaLinkLayerRadioStats hidl_radio_stats;
-        hidl_radio_stats.onTimeInMs = legacy_radio_stats.stats.on_time;
-        hidl_radio_stats.txTimeInMs = legacy_radio_stats.stats.tx_time;
-        hidl_radio_stats.rxTimeInMs = legacy_radio_stats.stats.rx_time;
-        hidl_radio_stats.onTimeInMsForScan =
+        V1_3::StaLinkLayerRadioStats hidl_radio_stats;
+        hidl_radio_stats.V1_0.onTimeInMs = legacy_radio_stats.stats.on_time;
+        hidl_radio_stats.V1_0.txTimeInMs = legacy_radio_stats.stats.tx_time;
+        hidl_radio_stats.V1_0.rxTimeInMs = legacy_radio_stats.stats.rx_time;
+        hidl_radio_stats.V1_0.onTimeInMsForScan =
             legacy_radio_stats.stats.on_time_scan;
-        hidl_radio_stats.txTimeInMsPerLevel =
+        hidl_radio_stats.V1_0.txTimeInMsPerLevel =
             legacy_radio_stats.tx_time_per_levels;
+        hidl_radio_stats.onTimeInMsForNanScan =
+            legacy_radio_stats.stats.on_time_nbd;
+        hidl_radio_stats.onTimeInMsForBgScan =
+            legacy_radio_stats.stats.on_time_gscan;
+        hidl_radio_stats.onTimeInMsForRoamScan =
+            legacy_radio_stats.stats.on_time_roam_scan;
+        hidl_radio_stats.onTimeInMsForPnoScan =
+            legacy_radio_stats.stats.on_time_pno_scan;
+        hidl_radio_stats.onTimeInMsForHs20Scan =
+            legacy_radio_stats.stats.on_time_hs20;
         hidl_radios_stats.push_back(hidl_radio_stats);
     }
     hidl_stats->radios = hidl_radios_stats;
