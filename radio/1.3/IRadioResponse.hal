@@ -25,30 +25,6 @@ import @1.2::IRadioResponse;
 interface IRadioResponse extends @1.2::IRadioResponse {
     /**
      * @param info Response info struct containing response type, serial no. and error
-     * @param emergencyNumberList List of current Emergency Number information known to radio.
-     *
-     * Radio must collect all sources of the emergency number to build the response. For example,
-     * network operator signals, sim card information, modem configuration, OEM configuration (for
-     * example, OEM system properties), always-available emergency numbers and sim-absence
-     * emergency numbers, etc.
-     *
-     * The returned list of emergency numbers must not have duplicate @1.3::EmergencyNumber. Please
-     * refer the document of @1.3::EmergencyNumber to construct each emergency number to be
-     * returned.
-     *
-     * Reference: 3GPP TS 22.101 version 9.1.0 Release 9
-     *
-     * Valid errors returned:
-     *   RadioError:NONE
-     *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:NO_MEMORY
-     *   RadioError:MODEM_ERR
-     */
-    oneway getCurrentEmergencyNumberListResponse(RadioResponseInfo info,
-            vec<EmergencyNumber> emergencyNumberList);
-
-    /**
-     * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
      *   RadioError:NONE
