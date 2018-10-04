@@ -193,9 +193,6 @@ class GraphicsComposerReadbackTest : public ::testing::VtsHalHidlTargetTestBase 
     }
 
     void TearDown() override {
-        mWriter->validateDisplay();
-        mWriter->presentDisplay();
-        execute();
         ASSERT_NO_FATAL_FAILURE(mComposerClient->setPowerMode(mPrimaryDisplay, PowerMode::OFF));
         EXPECT_EQ(0, mReader->mErrors.size());
         EXPECT_EQ(0, mReader->mCompositionChanges.size());
@@ -205,6 +202,11 @@ class GraphicsComposerReadbackTest : public ::testing::VtsHalHidlTargetTestBase 
             EXPECT_EQ(0, mComposerCallback->getInvalidVsyncCount());
         }
         VtsHalHidlTargetTestBase::TearDown();
+    }
+
+    void clearCommandReaderState() {
+        mReader->mCompositionChanges.clear();
+        mReader->mErrors.clear();
     }
 
     void execute() {
@@ -489,6 +491,7 @@ TEST_F(GraphicsComposerReadbackTest, SingleSolidColorLayer) {
     // if hwc cannot handle and asks for composition change,
     // just succeed the test
     if (mReader->mCompositionChanges.size() != 0) {
+        clearCommandReaderState();
         GTEST_SUCCEED();
         return;
     }
@@ -533,6 +536,7 @@ TEST_F(GraphicsComposerReadbackTest, SetLayerBuffer) {
     execute();
 
     if (mReader->mCompositionChanges.size() != 0) {
+        clearCommandReaderState();
         GTEST_SUCCEED();
         return;
     }
@@ -586,6 +590,7 @@ TEST_F(GraphicsComposerReadbackTest, SetLayerBufferNoEffect) {
     execute();
 
     if (mReader->mCompositionChanges.size() != 0) {
+        clearCommandReaderState();
         GTEST_SUCCEED();
         return;
     }
@@ -760,6 +765,7 @@ TEST_F(GraphicsComposerReadbackTest, DeviceAndClientComposition) {
     mWriter->validateDisplay();
     execute();
     if (mReader->mCompositionChanges.size() != 0) {
+        clearCommandReaderState();
         GTEST_SUCCEED();
         return;
     }
@@ -801,6 +807,7 @@ TEST_F(GraphicsComposerReadbackTest, SetLayerDamage) {
     mWriter->validateDisplay();
     execute();
     if (mReader->mCompositionChanges.size() != 0) {
+        clearCommandReaderState();
         GTEST_SUCCEED();
         return;
     }
@@ -864,6 +871,7 @@ TEST_F(GraphicsComposerReadbackTest, SetLayerPlaneAlpha) {
     mWriter->validateDisplay();
     execute();
     if (mReader->mCompositionChanges.size() != 0) {
+        clearCommandReaderState();
         GTEST_SUCCEED();
         return;
     }
@@ -912,6 +920,7 @@ TEST_F(GraphicsComposerReadbackTest, SetLayerSourceCrop) {
     mWriter->validateDisplay();
     execute();
     if (mReader->mCompositionChanges.size() != 0) {
+        clearCommandReaderState();
         GTEST_SUCCEED();
         return;
     }
@@ -962,6 +971,7 @@ TEST_F(GraphicsComposerReadbackTest, SetLayerZOrder) {
     mWriter->validateDisplay();
     execute();
     if (mReader->mCompositionChanges.size() != 0) {
+        clearCommandReaderState();
         GTEST_SUCCEED();
         return;
     }
@@ -1094,6 +1104,7 @@ TEST_P(GraphicsComposerBlendModeReadbackTest, None) {
     mWriter->validateDisplay();
     execute();
     if (mReader->mCompositionChanges.size() != 0) {
+        clearCommandReaderState();
         GTEST_SUCCEED();
         return;
     }
@@ -1131,6 +1142,7 @@ TEST_P(GraphicsComposerBlendModeReadbackTest, DISABLED_Coverage) {
     mWriter->validateDisplay();
     execute();
     if (mReader->mCompositionChanges.size() != 0) {
+        clearCommandReaderState();
         GTEST_SUCCEED();
         return;
     }
@@ -1164,6 +1176,7 @@ TEST_P(GraphicsComposerBlendModeReadbackTest, Premultiplied) {
     mWriter->validateDisplay();
     execute();
     if (mReader->mCompositionChanges.size() != 0) {
+        clearCommandReaderState();
         GTEST_SUCCEED();
         return;
     }
@@ -1181,10 +1194,6 @@ class GraphicsComposerTransformReadbackTest : public GraphicsComposerReadbackTes
    protected:
     void SetUp() override {
         GraphicsComposerReadbackTest::SetUp();
-        if (!mHasReadbackBuffer) {
-            GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
-            return;
-        }
 
         mWriter->selectDisplay(mPrimaryDisplay);
         ASSERT_NO_FATAL_FAILURE(mComposerClient->setColorMode(mPrimaryDisplay, ColorMode::SRGB,
@@ -1222,6 +1231,10 @@ class GraphicsComposerTransformReadbackTest : public GraphicsComposerReadbackTes
 };
 
 TEST_F(GraphicsComposerTransformReadbackTest, FLIP_H) {
+    if (!mHasReadbackBuffer) {
+        GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
+        return;
+    }
     ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mGralloc, mDisplayWidth,
                                   mDisplayHeight, mPixelFormat, mDataspace);
     ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
@@ -1237,6 +1250,7 @@ TEST_F(GraphicsComposerTransformReadbackTest, FLIP_H) {
     mWriter->validateDisplay();
     execute();
     if (mReader->mCompositionChanges.size() != 0) {
+        clearCommandReaderState();
         GTEST_SUCCEED();
         return;
     }
@@ -1249,6 +1263,10 @@ TEST_F(GraphicsComposerTransformReadbackTest, FLIP_H) {
 }
 
 TEST_F(GraphicsComposerTransformReadbackTest, FLIP_V) {
+    if (!mHasReadbackBuffer) {
+        GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
+        return;
+    }
     ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mGralloc, mDisplayWidth,
                                   mDisplayHeight, mPixelFormat, mDataspace);
     ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
@@ -1266,6 +1284,7 @@ TEST_F(GraphicsComposerTransformReadbackTest, FLIP_V) {
     mWriter->validateDisplay();
     execute();
     if (mReader->mCompositionChanges.size() != 0) {
+        clearCommandReaderState();
         GTEST_SUCCEED();
         return;
     }
@@ -1277,6 +1296,10 @@ TEST_F(GraphicsComposerTransformReadbackTest, FLIP_V) {
 }
 
 TEST_F(GraphicsComposerTransformReadbackTest, ROT_180) {
+    if (!mHasReadbackBuffer) {
+        GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
+        return;
+    }
     ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mGralloc, mDisplayWidth,
                                   mDisplayHeight, mPixelFormat, mDataspace);
     ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
@@ -1293,6 +1316,7 @@ TEST_F(GraphicsComposerTransformReadbackTest, ROT_180) {
     mWriter->validateDisplay();
     execute();
     if (mReader->mCompositionChanges.size() != 0) {
+        clearCommandReaderState();
         GTEST_SUCCEED();
         return;
     }
