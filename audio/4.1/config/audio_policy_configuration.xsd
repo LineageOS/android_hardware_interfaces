@@ -42,6 +42,7 @@
                 <xs:element name="globalConfiguration" type="globalConfiguration"/>
                 <xs:element name="modules" type="modules" maxOccurs="unbounded"/>
                 <xs:element name="volumes" type="volumes" maxOccurs="unbounded"/>
+                <xs:element name="surroundSound" type="surroundSound" />
             </xs:sequence>
             <xs:attribute name="version" type="version"/>
         </xs:complexType>
@@ -344,6 +345,12 @@
             <xs:enumeration value="AUDIO_FORMAT_APTX_HD"/>
             <xs:enumeration value="AUDIO_FORMAT_AC4"/>
             <xs:enumeration value="AUDIO_FORMAT_LDAC"/>
+            <xs:enumeration value="AUDIO_FORMAT_E_AC3_JOC"/>
+            <xs:enumeration value="AUDIO_FORMAT_MAT_1_0"/>
+            <xs:enumeration value="AUDIO_FORMAT_MAT_2_0"/>
+            <xs:enumeration value="AUDIO_FORMAT_MAT_2_1"/>
+            <xs:enumeration value="AUDIO_FORMAT_AAC_XHE"/>
+            <xs:enumeration value="AUDIO_FORMAT_AAC_ADTS_XHE"/>
         </xs:restriction>
     </xs:simpleType>
     <!-- Enum values of audio::common::4_0::AudioUsage
@@ -560,5 +567,29 @@
             <xs:element name="point" type="volumePoint" minOccurs="2" maxOccurs="unbounded"/>
         </xs:sequence>
         <xs:attribute name="name" type="xs:token" use="required"/>
+    </xs:complexType>
+    <xs:complexType name="surroundSound">
+        <xs:annotation>
+            <xs:documentation xml:lang="en">
+                Surround Sound section provides configuration related to handling of
+                multi-channel formats.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="formats" type="surroundFormats"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:simpleType name="surroundFormatsList">
+        <xs:list itemType="audioFormat" />
+    </xs:simpleType>
+    <xs:complexType name="surroundFormats">
+        <xs:sequence>
+            <xs:element name="format" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:attribute name="name" type="audioFormat" use="required"/>
+                    <xs:attribute name="subformats" type="surroundFormatsList" />
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
     </xs:complexType>
 </xs:schema>
