@@ -31,12 +31,10 @@ struct Health : public IHealth, hidl_death_recipient {
     // Should only be called by implementation itself (-impl, -service).
     // Clients should not call this function. Instead, initInstance() initializes and returns the
     // global instance that has fewer functions.
-    // TODO(b/62229583): clean up and hide these functions after update() logic is simplified.
     static sp<Health> getImplementation();
 
     Health(struct healthd_config* c);
 
-    // TODO(b/62229583): clean up and hide these functions after update() logic is simplified.
     void notifyListeners(HealthInfo* info);
 
     // Methods from IHealth follow.
@@ -61,11 +59,15 @@ struct Health : public IHealth, hidl_death_recipient {
    private:
     static sp<Health> instance_;
 
-    std::mutex callbacks_lock_;
+    std::recursive_mutex callbacks_lock_;
     std::vector<sp<IHealthInfoCallback>> callbacks_;
     std::unique_ptr<BatteryMonitor> battery_monitor_;
 
     bool unregisterCallbackInternal(const sp<IBase>& cb);
+
+    // update() and only notify the given callback, but none of the other callbacks.
+    // If cb is null, do not notify any callback at all.
+    Return<Result> updateAndNotify(const sp<IHealthInfoCallback>& cb);
 };
 
 }  // namespace implementation

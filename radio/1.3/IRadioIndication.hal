@@ -24,29 +24,28 @@ import @1.2::IRadioIndication;
  */
 interface IRadioIndication extends @1.2::IRadioIndication {
     /**
-     * Indicate and update all of the current Emergency Number information known to the radio,
-     * when any of the Emergency Number sources (For example, network operator signals, sim card
-     * information, modem configuration, OEM configuration or system properties, etc.) change the
-     * list of emergency numbers.
+     * Report the current list of emergency numbers
      *
-     * 112, 911 are always available. Besides, 000, 08, 110, 999, 118 and 119 should be available
-     * when sim is not present.
+     * Each emergency number (@1.3::EmergencyNumber) in the emergency number list contains a
+     * dialing number, zero or more service category(s), mobile country code, and source(s) that
+     * indicate where it comes from.
      *
-     * This should be the same information as returned by getCurrentEmergencyNumberList() in
-     * 1.3::IRadio.
+     * Radio must report all the valid emergency numbers with known mobile country code and
+     * emergency service categories from all available sources including network signaling, sim,
+     * modem/oem configuration, and default configuration (112 and 911 must be always available;
+     * additionally, 000, 08, 110, 999, 118 and 119 must be available when sim is not present).
+     * Radio shall not report emergency numbers that are invalid in the current locale. The
+     * reported emergency number list must not have duplicate @1.3::EmergencyNumber entries. Please
+     * refer the documentation of @1.3::EmergencyNumber to construct each emergency number to
+     * report.
      *
-     * The indicated list of emergency numbers should not have duplicate @1.3::EmergencyNumber.
-     * Please refer the document of @1.3::EmergencyNumber to construct each emergency number to be
-     * returned.
+     * Radio must report the complete list of emergency numbers whenever the emergency numbers in
+     * the list are changed or whenever the client and the radio server are connected.
      *
-     * Reference: 3GPP TS 22.101 version 9.1.0 Release 9
+     * Reference: 3gpp 22.101, Section 10 - Emergency Calls
      *
      * @param type Type of radio indication
-     * @param emergencyNumberList List of current Emergency Number information
-     *     (@1.3::EmergencyNumber) known to radio. Radio must collect all sources of the emergency
-     *     numbers to build the indication. For example, network operator signals, sim card
-     *     information, modem configuration, OEM configuration (for example, OEM specific system
-     *     properties), always-available emergency numbers and sim-absence emergency numbers, etc.
+     * @param emergencyNumberList Current list of emergency numbers known to radio.
      */
     oneway currentEmergencyNumberList(RadioIndicationType type,
             vec<EmergencyNumber> emergencyNumberList);
