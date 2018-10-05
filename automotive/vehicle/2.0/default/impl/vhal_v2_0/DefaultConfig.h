@@ -569,7 +569,7 @@ const ConfigDeclaration kVehicleProperties[]{
     },
 
     {.config = {.prop = toInt(VehicleProperty::DOOR_LOCK),
-                .access = VehiclePropertyAccess::READ,
+                .access = VehiclePropertyAccess::READ_WRITE,
                 .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
                 .areaConfigs = {VehicleAreaConfig{.areaId = DOOR_1_LEFT},
                                 VehicleAreaConfig{.areaId = DOOR_1_RIGHT}}},
