@@ -79,6 +79,10 @@ Return<void> CameraDevice::getPhysicalCameraCharacteristics(const hidl_string& p
                 int ret = mModule->getPhysicalCameraInfo((int)id, &physicalInfo);
                 if (ret == OK) {
                     V3_2::implementation::convertToHidl(physicalInfo, &cameraCharacteristics);
+                } else if (ret == -EINVAL) {
+                    ALOGE("%s: %s is not a valid physical camera Id outside of getCameraIdList()",
+                            __FUNCTION__, physicalCameraId.c_str());
+                    status = Status::ILLEGAL_ARGUMENT;
                 } else {
                     ALOGE("%s: Failed to get physical camera %s info: %s (%d)!", __FUNCTION__,
                             physicalCameraId.c_str(), strerror(-ret), ret);
