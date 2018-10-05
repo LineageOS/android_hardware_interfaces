@@ -121,6 +121,10 @@ interface IFoo {
         bitfield<BitField> bf;
     };
 
+    struct WithFmq {
+        fmq_sync<uint8_t> descSync;
+    };
+
     enum Discriminator : uint8_t {
         BOOL,
         INT,
@@ -204,4 +208,6 @@ interface IFoo {
     createMyHandle() generates (MyHandle h);
     createHandles(uint32_t size) generates (vec<handle> handles);
     closeHandles();
+
+    repeatWithFmq(WithFmq withFmq) generates (WithFmq withFmq);
 };
