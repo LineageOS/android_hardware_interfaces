@@ -65,6 +65,8 @@ enum BufferStatus : int32_t {
     TRANSFER_OK         = 7,
     /** Buffer transaction failure. */
     TRANSFER_ERROR      = 8,
+    /** Buffer invalidation ack. */
+    INVALIDATION_ACK    = 9,
 };
 
 /**
@@ -98,6 +100,7 @@ struct BufferStatusMessage {
  * buffers as soon as possible upon receiving the message.
  */
 struct BufferInvalidationMessage {
+    uint32_t messageId;
     /**
      * Buffers from fromBufferId to toBufferId must be invalidated.
      * fromBufferId is inclusive, but toBufferId is not inclusive.

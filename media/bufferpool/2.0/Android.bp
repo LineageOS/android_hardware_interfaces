@@ -11,12 +11,14 @@ hidl_interface {
         "IAccessor.hal",
         "IClientManager.hal",
         "IConnection.hal",
+        "IObserver.hal",
     ],
     interfaces: [
         "android.hidl.base@1.0",
     ],
     types: [
         "Buffer",
+        "BufferInvalidationMessage",
         "BufferStatus",
         "BufferStatusMessage",
         "ResultStatus",

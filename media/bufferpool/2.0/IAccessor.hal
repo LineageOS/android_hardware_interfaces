@@ -17,6 +17,7 @@
 package android.hardware.media.bufferpool@2.0;
 
 import IConnection;
+import IObserver;
 /**
  * IAccessor creates IConnection which is used from IClientManager in order to
  * use functionality of the specified buffer pool.
@@ -49,6 +50,13 @@ interface IAccessor {
      * made and kept private. Also part of transaction ID is a sender ID in
      * order to prevent fake transactions from other clients. This must be
      * verified with an FMQ message from a buffer pool.
+
+     * @param observer The buffer pool event observer from the client.
+     *     Observer is provided to ensure FMQ messages are processed even when
+     *     client processes are idle. Buffer invalidation caused by
+     *     reconfiguration does not call observer. Buffer invalidation caused
+     *     by termination of pipeline call observer in order to ensure
+     *     invalidation is done after pipeline completion.
      *
      * @return status The status of the call.
      *     OK               - A connection is made successfully.
@@ -64,7 +72,7 @@ interface IAccessor {
      * @return fromFmqDesc FMQ descriptor. The descriptor is used to
      *     receive buffer invalidation messages from the buffer pool.
      */
-    connect()
+    connect(IObserver observer)
         generates (ResultStatus status, IConnection connection,
                    int64_t connectionId,
                    fmq_sync<BufferStatusMessage> toFmqDesc,
