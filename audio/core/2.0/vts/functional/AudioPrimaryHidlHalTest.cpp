@@ -661,8 +661,8 @@ static R extract(Return<R> ret) {
         code;                                          \
     }
 
-TEST_IO_STREAM(GetFrameCount, "Check that the stream frame count == the one it was opened with",
-               ASSERT_EQ(audioConfig.frameCount, extract(stream->getFrameCount())))
+TEST_IO_STREAM(GetFrameCount, "Check that getting stream frame count does not crash the HAL.",
+               ASSERT_TRUE(stream->getFrameCount().isOk()))
 
 TEST_IO_STREAM(GetSampleRate, "Check that the stream sample rate == the one it was opened with",
                ASSERT_EQ(audioConfig.sampleRateHz, extract(stream->getSampleRate())))
