@@ -20,6 +20,7 @@ hidl_interface {
     ],
     types: [
         "AccessNetwork",
+        "DataProfileInfo",
         "DataRegStateResult",
         "EmergencyNumber",
         "EmergencyNumberSource",
