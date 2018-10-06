@@ -16,6 +16,11 @@
 
 package android.hardware.radio@1.3;
 
+import @1.0::ApnAuthType;
+import @1.0::ApnTypes;
+import @1.0::DataProfileId;
+import @1.0::DataProfileInfoType;
+import @1.0::RadioAccessFamily;
 import @1.0::RegState;
 import @1.2::AccessNetwork;
 import @1.2::CellIdentity;
@@ -159,4 +164,72 @@ struct DataRegStateResult {
     safe_union VopsInfo {
         LteVopsInfo lteVopsInfo; // LTE network capability
     } vopsInfo;
+};
+
+/**
+ * Overwritten from @1.0::DataProfileInfo in order to deprecate 'mvnoType', 'mvnoMatchData',
+ * 'maxConnsTime', and 'maxConns'. In the future, this must be extended instead of overwritten.
+ * Added 'preferred' and 'persistent' in this version.
+ */
+struct DataProfileInfo {
+    /** id of the data profile */
+    DataProfileId profileId;
+
+    /** The APN name */
+    string apn;
+
+    /**
+     * One of the PDP_type values in TS 27.007 section 10.1.1. For example, "IP", "IPV6", "IPV4V6",
+     * or "PPP".
+     */
+    string protocol;
+
+    /**
+     * one of the PDP_type values in TS 27.007 section 10.1.1 used on roaming network. For example,
+     * "IP", "IPV6", "IPV4V6", or "PPP".
+     */
+    string roamingProtocol;
+
+    /** APN authentication type */
+    ApnAuthType authType;
+
+    /** The username for APN, or empty string */
+    string user;
+
+    /** The password for APN, or empty string */
+    string password;
+
+    /** Data profile technology type */
+    DataProfileInfoType type;
+
+    /**
+     * The required wait time in seconds after a successful UE initiated disconnect of a given PDN
+     * connection before the device can send a new PDN connection request for that given PDN.
+     */
+    int32_t waitTime;
+
+    /** True to enable the profile, false to disable */
+    bool enabled;
+
+    /** Supported APN types bitmap. See ApnTypes for the value of each bit. */
+    bitfield<ApnTypes> supportedApnTypesBitmap;
+
+    /** The bearer bitmap. See RadioAccessFamily for the value of each bit. */
+    bitfield<RadioAccessFamily> bearerBitmap;
+
+    /** Maximum transmission unit (MTU) size in bytes */
+    int32_t mtu;
+
+    /**
+     * True if this data profile was used to bring up the last default (i.e internet) data
+     * connection successfully.
+     */
+    bool preferred;
+
+    /**
+     * If true, modem must persist this data profile and profileId must not be
+     * set to DataProfileId.INVALID. If the same data profile exists, this data profile must
+     * overwrite it.
+     */
+    bool persistent;
 };
