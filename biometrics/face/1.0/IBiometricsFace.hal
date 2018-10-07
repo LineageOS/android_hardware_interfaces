@@ -225,7 +225,10 @@ interface IBiometricsFace {
      * Authenticates the active user.
      *
      * An optional operationId can be specified as a token from the transaction
-     * being authorized.
+     * being authorized. The hardware may enter a standby state during
+     * authentication, where the device is idle to conserve power while
+     * authenticating, e.g. after 3 seconds without finding a face. See
+     * IBiometricsFace#userActivity() for more info.
      *
      * @param operationId A non-zero operation id associated with a crypto
      * object instance; or 0 if not being used.
@@ -233,4 +236,17 @@ interface IBiometricsFace {
      */
     @callflow(next={"cancel", "generateChallenge", "remove"})
     authenticate(uint64_t operationId) generates (Status status);
+
+    /**
+     * A hint to the HAL to continue looking for faces.
+     *
+     * This method should only be used when the HAL is in the authenticating
+     * or standby state. Using this method when the HAL is not in one of the
+     * mentioned states must return OPERATION_NOT_SUPPORTED. Calling this
+     * method while the HAL is already authenticating may extend the duration
+     * where it's looking for a face.
+     *
+     * @return status The status of this method call.
+     */
+    userActivity() generates (Status status);
 };

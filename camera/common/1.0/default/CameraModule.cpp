@@ -235,7 +235,7 @@ void CameraModule::appendAvailableKeys(CameraMetadata &chars,
     chars.update(keyTag, availableKeys);
 }
 
-CameraModule::CameraModule(camera_module_t *module) {
+CameraModule::CameraModule(camera_module_t *module) : mNumberOfCameras(0) {
     if (module == NULL) {
         ALOGE("%s: camera hardware module must not be null", __FUNCTION__);
         assert(0);
@@ -264,7 +264,8 @@ int CameraModule::init() {
         res = mModule->init();
         ATRACE_END();
     }
-    mCameraInfoMap.setCapacity(getNumberOfCameras());
+    mNumberOfCameras = getNumberOfCameras();
+    mCameraInfoMap.setCapacity(mNumberOfCameras);
     return res;
 }
 
@@ -322,7 +323,7 @@ int CameraModule::getCameraInfo(int cameraId, struct camera_info *info) {
 int CameraModule::getPhysicalCameraInfo(int physicalCameraId, camera_metadata_t **physicalInfo) {
     ATRACE_CALL();
     Mutex::Autolock lock(mCameraInfoLock);
-    if (physicalCameraId < 0) {
+    if (physicalCameraId < mNumberOfCameras) {
         ALOGE("%s: Invalid physical camera ID %d", __FUNCTION__, physicalCameraId);
         return -EINVAL;
     }
@@ -333,6 +334,10 @@ int CameraModule::getPhysicalCameraInfo(int physicalCameraId, camera_metadata_t 
         ALOGE("%s: Module version must be at least 2.5 to handle getPhysicalCameraInfo",
                 __FUNCTION__);
         return -ENODEV;
+    }
+    if (mModule->get_physical_camera_info == nullptr) {
+        ALOGE("%s: get_physical_camera is NULL for module version 2.5", __FUNCTION__);
+        return -EINVAL;
     }
 
     ssize_t index = mPhysicalCameraInfoMap.indexOfKey(physicalCameraId);
