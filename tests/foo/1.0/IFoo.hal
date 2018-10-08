@@ -103,7 +103,6 @@ interface IFoo {
         union U {
             int8_t number;
             int8_t[1][2] multidimArray;
-            pointer p;
             Fumble anotherStruct;
             bitfield<BitField> bf;
         } u;
