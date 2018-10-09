@@ -37,6 +37,14 @@ TEST_F(NeuralnetworksHidlTest, StatusTest) {
     EXPECT_EQ(DeviceStatus::AVAILABLE, static_cast<DeviceStatus>(status));
 }
 
+// device version test
+TEST_F(NeuralnetworksHidlTest, GetDeviceVersionStringTest) {
+    Return<void> ret = device->getVersionString([](ErrorStatus status, const hidl_string& version) {
+        EXPECT_EQ(ErrorStatus::NONE, status);
+        EXPECT_LT(0, version.size());
+    });
+    EXPECT_TRUE(ret.isOk());
+}
 }  // namespace functional
 }  // namespace vts
 }  // namespace V1_2
