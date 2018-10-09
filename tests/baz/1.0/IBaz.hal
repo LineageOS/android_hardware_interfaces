@@ -36,6 +36,17 @@ interface IBaz extends IBase {
     typedef SomeOtherEnum thisIsAnAlias;
     typedef IBaz anIBazByAnyOtherName;
 
+    struct NastyNester {
+        struct NestersNasty {
+            struct NestersNastyNester {
+                IBaz baz;
+                vec<NestersNasty> nasties;
+            };
+        };
+
+        IBaz baz;
+    };
+
     enum SomeEnum : SomeOtherEnum {
         quux = 33,
         goober = 192,
