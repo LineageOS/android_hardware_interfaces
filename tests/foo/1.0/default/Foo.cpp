@@ -379,6 +379,11 @@ Return<void> Foo::echoNullInterface(const sp<IFooCallback> &cb, echoNullInterfac
     return Void();
 }
 
+Return<void> Foo::repeatWithFmq(const IFoo::WithFmq& withFmq, repeatWithFmq_cb _hidl_cb) {
+    _hidl_cb(withFmq);
+    return Void();
+}
+
 IFoo* HIDL_FETCH_IFoo(const char* /* name */) {
     return new Foo();
 }
