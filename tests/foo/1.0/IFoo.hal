@@ -122,7 +122,14 @@ interface IFoo {
     };
 
     struct WithFmq {
-        fmq_sync<uint8_t> descSync;
+        struct ScatterGather {
+            fmq_sync<uint8_t> descSync;
+        } scatterGathered;
+
+        struct ContainsPointer {
+            fmq_sync<uint8_t> descSync;
+            interface foo;
+        } containsPointer;
     };
 
     enum Discriminator : uint8_t {
