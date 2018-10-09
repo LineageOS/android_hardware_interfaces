@@ -15,6 +15,9 @@
  */
 
 #define LOG_TAG "sensors_hidl_hal_test"
+
+#include "sensors-vts-utils/GrallocWrapper.h"
+
 #include <VtsHalHidlTargetTestBase.h>
 #include <VtsHalHidlTargetTestEnvBase.h>
 #include <android-base/logging.h>
@@ -24,7 +27,6 @@
 #include <hardware/sensors.h>  // for sensor type strings
 #include <log/log.h>
 #include <utils/SystemClock.h>
-#include "GrallocWrapper.h"
 
 #include <algorithm>
 #include <cinttypes>
