@@ -34,6 +34,7 @@ namespace composer {
 namespace V2_3 {
 
 using android::hardware::MessageQueue;
+using android::hardware::graphics::common::V1_2::Dataspace;
 using android::hardware::graphics::composer::V2_1::Error;
 using android::hardware::graphics::composer::V2_1::IComposerCallback;
 using android::hardware::graphics::composer::V2_1::Layer;
@@ -43,6 +44,16 @@ using android::hardware::graphics::composer::V2_3::IComposerClient;
 // units of uint32_t's.
 class CommandWriterBase : public V2_2::CommandWriterBase {
    public:
+    void setLayerDataspace(Dataspace dataspace) {
+        setLayerDataspaceInternal(static_cast<int32_t>(dataspace));
+    }
+
+    void setClientTarget(uint32_t slot, const native_handle_t* target, int acquireFence,
+                         Dataspace dataspace, const std::vector<IComposerClient::Rect>& damage) {
+        setClientTargetInternal(slot, target, acquireFence, static_cast<int32_t>(dataspace),
+                                damage);
+    }
+
     CommandWriterBase(uint32_t initialMaxSize) : V2_2::CommandWriterBase(initialMaxSize) {}
 
     static constexpr uint16_t kSetLayerColorTransformLength = 16;

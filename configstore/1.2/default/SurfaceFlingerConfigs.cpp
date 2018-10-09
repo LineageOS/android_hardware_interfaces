@@ -26,8 +26,8 @@ namespace configstore {
 namespace V1_2 {
 namespace implementation {
 
-using ::android::hardware::graphics::common::V1_1::Dataspace;
 using ::android::hardware::graphics::common::V1_1::PixelFormat;
+using ::android::hardware::graphics::common::V1_2::Dataspace;
 
 // ::android::hardware::configstore::V1_0::ISurfaceFlingerConfigs implementation.
 Return<void> SurfaceFlingerConfigs::vsyncEventPhaseOffsetNs(vsyncEventPhaseOffsetNs_cb _hidl_cb) {
