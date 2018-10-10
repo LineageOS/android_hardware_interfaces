@@ -124,6 +124,12 @@ interface IGnssMeasurementCallback {
         /**
          * A set of flags indicating the validity of the fields in this data
          * structure.
+         *
+         * Fields for which there is no corresponding flag must be filled in
+         * with a valid value.  For convenience, these are marked as mandatory.
+         *
+         * Others fields may have invalid information in them, if not marked as
+         * valid by the corresponding bit in gnssClockFlags.
          */
         bitfield<GnssClockFlags> gnssClockFlags;
 
@@ -155,7 +161,7 @@ interface IGnssMeasurementCallback {
          * Sub-nanosecond accuracy can be provided by means of the 'biasNs' field.
          * The value contains the timeUncertaintyNs in it.
          *
-         * This field is mandatory.
+         * This value is mandatory.
          */
         int64_t timeNs;
 
@@ -172,29 +178,31 @@ interface IGnssMeasurementCallback {
 
         /**
          * The difference between hardware clock ('time' field) inside GNSS receiver
-         * and the true GNSS time since 0000Z, January 6, 1980, in nanoseconds.
+         * and the true GPS time since 0000Z, January 6, 1980, in nanoseconds.
          *
          * The sign of the value is defined by the following equation:
-         *      local estimate of GNSS time = timeNs - (fullBiasNs + biasNs)
+         *      local estimate of GPS time = timeNs - (fullBiasNs + biasNs)
          *
-         * This value is mandatory if the receiver has estimated GNSS time. If the
-         * computed time is for a non-GNSS constellation, the time offset of that
-         * constellation to GNSS has to be applied to fill this value. The error
-         * estimate for the sum of this and the biasNs is the biasUncertaintyNs,
-         * and the caller is responsible for using this uncertainty (it can be very
-         * large before the GNSS time has been solved for.) If the data is available
-         * gnssClockFlags must contain HAS_FULL_BIAS.
+         * If receiver has computed time for a non-GPS constellation, the time offset of
+         * that constellation versus GPS time must be applied to fill this value.
+         *
+         * The error estimate for the sum of this and the biasNs is the biasUncertaintyNs.
+         *
+         * If the data is available gnssClockFlags must contain HAS_FULL_BIAS.
+         *
+         * This value is mandatory if the receiver has estimated GPS time.
          */
         int64_t fullBiasNs;
 
         /**
-         * Sub-nanosecond bias.
+         * Sub-nanosecond bias - used with fullBiasNS, see fullBiasNs for details.
+         *
          * The error estimate for the sum of this and the fullBiasNs is the
          * biasUncertaintyNs.
          *
-         * If the data is available gnssClockFlags must contain HAS_BIAS. If GNSS
-         * has computed a position fix. This value is mandatory if the receiver has
-         * estimated GNSS time.
+         * If the data is available gnssClockFlags must contain HAS_BIAS.
+         *
+         * This value is mandatory if the receiver has estimated GPS time.
          */
         double biasNs;
 
@@ -203,9 +211,12 @@ interface IGnssMeasurementCallback {
          * bias) in nanoseconds. The uncertainty is represented as an absolute
          * (single sided) value.
          *
-         * If the data is available gnssClockFlags must contain
-         * HAS_BIAS_UNCERTAINTY. This value is mandatory if the receiver
-         * has estimated GNSS time.
+         * The caller is responsible for using this uncertainty (it can be very
+         * large before the GPS time has been fully resolved.)
+         *
+         * If the data is available gnssClockFlags must contain HAS_BIAS_UNCERTAINTY.
+         *
+         * This value is mandatory if the receiver has estimated GPS time.
          */
         double biasUncertaintyNs;
 
@@ -216,10 +227,9 @@ interface IGnssMeasurementCallback {
          * frequency, and that the (fullBiasNs + biasNs) is growing more positive
          * over time.
          *
-         * The value contains the 'drift uncertainty' in it.
          * If the data is available gnssClockFlags must contain HAS_DRIFT.
          *
-         * This value is mandatory if the receiver has estimated GNSS time.
+         * This value is mandatory if the receiver has estimated GPS time.
          */
         double driftNsps;
 
@@ -228,15 +238,15 @@ interface IGnssMeasurementCallback {
          * second).
          * The uncertainty is represented as an absolute (single sided) value.
          *
-         * If the data is available gnssClockFlags must contain
-         * HAS_DRIFT_UNCERTAINTY. If GNSS has computed a position fix this
-         * field is mandatory and must be populated.
+         * If the data is available gnssClockFlags must contain HAS_DRIFT_UNCERTAINTY.
+         *
+         * This value is mandatory if the receiver has estimated GPS time.
          */
         double driftUncertaintyNsps;
 
         /**
-         * When there are any discontinuities in the HW clock, this field is
-         * mandatory.
+         * This field must be incremented, when there are discontinuities in the
+         * hardware clock.
          *
          * A "discontinuity" is meant to cover the case of a switch from one source
          * of clock to another.  A single free-running crystal oscillator (XO)
@@ -262,6 +272,8 @@ interface IGnssMeasurementCallback {
          * as this avoids the need to use (waste) a GNSS measurement to fully
          * re-solve for the GNSS clock bias and drift, when using the accompanying
          * measurements, from consecutive GnssData reports.
+         *
+         * This value is mandatory.
          */
         uint32_t hwClockDiscontinuityCount;
 
@@ -280,17 +292,26 @@ interface IGnssMeasurementCallback {
         /**
          * A set of flags indicating the validity of the fields in this data
          * structure.
+         *
+         * Fields for which there is no corresponding flag must be filled in
+         * with a valid value.  For convenience, these are marked as mandatory.
+         *
+         * Others fields may have invalid information in them, if not marked as
+         * valid by the corresponding bit in flags.
          */
         bitfield<GnssMeasurementFlags> flags;
 
         /**
          * Satellite vehicle ID number, as defined in GnssSvInfo::svid
-         * This is a mandatory value.
+         *
+         * This value is mandatory.
          */
         int16_t svid;
 
         /**
          * Defines the constellation of the given SV.
+         *
+         * This value is mandatory.
          */
         GnssConstellationType constellation;
 
@@ -302,8 +323,10 @@ interface IGnssMeasurementCallback {
          *      measurement time = GnssClock::timeNs + timeOffsetNs
          *
          * It provides an individual time-stamp for the measurement, and allows
-         * sub-nanosecond accuracy.
-         * This is a mandatory value.
+         * sub-nanosecond accuracy. It may be zero if all measurements are
+         * aligned to a common time.
+         *
+         * This value is mandatory.
          */
         double timeOffsetNs;
 
@@ -313,7 +336,7 @@ interface IGnssMeasurementCallback {
          * Based on the sync state, the 'received GNSS tow' field must be interpreted
          * accordingly.
          *
-         * This is a mandatory value.
+         * This value is mandatory.
          */
         bitfield<GnssMeasurementState> state;
 
@@ -413,7 +436,7 @@ interface IGnssMeasurementCallback {
          * Carrier-to-noise density in dB-Hz, typically in the range [0, 63].
          * It contains the measured C/N0 value for the signal at the antenna port.
          *
-         * This is a mandatory value.
+         * This value is mandatory.
          */
         double cN0DbHz;
 
@@ -449,7 +472,7 @@ interface IGnssMeasurementCallback {
          * 1-Sigma uncertainty of the pseudorangeRateMps.
          * The uncertainty is represented as an absolute (single sided) value.
          *
-         * This is a mandatory value.
+         * This value is mandatory.
          */
         double pseudorangeRateUncertaintyMps;
 
@@ -457,7 +480,7 @@ interface IGnssMeasurementCallback {
          * Accumulated delta range's state. It indicates whether ADR is reset or
          * there is a cycle slip(indicating loss of lock).
          *
-         * This is a mandatory value.
+         * This value is mandatory.
          */
         bitfield<GnssAccumulatedDeltaRangeState> accumulatedDeltaRangeState;
 
