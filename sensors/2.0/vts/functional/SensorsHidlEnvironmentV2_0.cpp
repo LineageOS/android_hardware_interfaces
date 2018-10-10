@@ -16,44 +16,65 @@
 
 #include "SensorsHidlEnvironmentV2_0.h"
 
+#include <android/hardware/sensors/2.0/types.h>
 #include <log/log.h>
 
+#include <algorithm>
 #include <vector>
 
+using ::android::hardware::EventFlag;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::sensors::V1_0::Result;
 using ::android::hardware::sensors::V1_0::SensorInfo;
+using ::android::hardware::sensors::V2_0::EventQueueFlagBits;
 using ::android::hardware::sensors::V2_0::ISensors;
 
+template <typename EnumType>
+constexpr typename std::underlying_type<EnumType>::type asBaseType(EnumType value) {
+    return static_cast<typename std::underlying_type<EnumType>::type>(value);
+}
+
+constexpr size_t SensorsHidlEnvironmentV2_0::MAX_RECEIVE_BUFFER_EVENT_COUNT;
+
 bool SensorsHidlEnvironmentV2_0::resetHal() {
-    std::string step;
     bool succeed = false;
     do {
-        step = "getService()";
-        sensors = ISensors::getService(
+        mSensors = ISensors::getService(
             SensorsHidlEnvironmentV2_0::Instance()->getServiceName<ISensors>());
-        if (sensors == nullptr) {
+        if (mSensors == nullptr) {
             break;
         }
 
-        step = "getSensorList";
+        // Initialize FMQs
+        mEventQueue = std::make_unique<EventMessageQueue>(MAX_RECEIVE_BUFFER_EVENT_COUNT,
+                                                          true /* configureEventFlagWord */);
+
+        mWakeLockQueue = std::make_unique<WakeLockQueue>(MAX_RECEIVE_BUFFER_EVENT_COUNT,
+                                                         true /* configureEventFlagWord */);
+
+        if (mEventQueue == nullptr || mWakeLockQueue == nullptr) {
+            break;
+        }
+
+        EventFlag::deleteEventFlag(&mEventQueueFlag);
+        EventFlag::createEventFlag(mEventQueue->getEventFlagWord(), &mEventQueueFlag);
+        if (mEventQueueFlag == nullptr) {
+            break;
+        }
+
+        mSensors->initialize(*mEventQueue->getDesc(), *mWakeLockQueue->getDesc(),
+                             nullptr /* TODO: callback */);
+
         std::vector<SensorInfo> sensorList;
-        if (!sensors
-                 ->getSensorsList([&](const hidl_vec<SensorInfo>& list) {
-                     sensorList.reserve(list.size());
-                     for (size_t i = 0; i < list.size(); ++i) {
-                         sensorList.push_back(list[i]);
-                     }
-                 })
+        if (!mSensors->getSensorsList([&](const hidl_vec<SensorInfo>& list) { sensorList = list; })
                  .isOk()) {
             break;
         }
 
         // stop each sensor individually
-        step = "stop each sensor";
         bool ok = true;
         for (const auto& i : sensorList) {
-            if (!sensors->activate(i.sensorHandle, false).isOk()) {
+            if (!mSensors->activate(i.sensorHandle, false).isOk()) {
                 ok = false;
                 break;
             }
@@ -63,31 +84,58 @@ bool SensorsHidlEnvironmentV2_0::resetHal() {
         }
 
         // mark it done
-        step = "done";
         succeed = true;
     } while (0);
 
-    if (succeed) {
-        return true;
+    if (!succeed) {
+        mSensors = nullptr;
     }
 
-    sensors = nullptr;
-    return false;
+    return succeed;
+}
+
+void SensorsHidlEnvironmentV2_0::HidlTearDown() {
+    stopThread = true;
+
+    // Wake up the event queue so the poll thread can exit
+    mEventQueueFlag->wake(asBaseType(EventQueueFlagBits::READ_AND_PROCESS));
+    pollThread.join();
+
+    EventFlag::deleteEventFlag(&mEventQueueFlag);
 }
 
 void SensorsHidlEnvironmentV2_0::startPollingThread() {
     stopThread = false;
-    pollThread = std::thread(pollingThread, this, std::ref(stopThread));
-    events.reserve(128);
+    pollThread = std::thread(pollingThread, this);
+    events.reserve(MAX_RECEIVE_BUFFER_EVENT_COUNT);
 }
 
-void SensorsHidlEnvironmentV2_0::pollingThread(SensorsHidlEnvironmentV2_0* /*env*/,
-                                               std::atomic_bool& stop) {
+void SensorsHidlEnvironmentV2_0::readEvents() {
+    size_t availableEvents = mEventQueue->availableToRead();
+
+    if (availableEvents == 0) {
+        uint32_t eventFlagState = 0;
+
+        mEventQueueFlag->wait(asBaseType(EventQueueFlagBits::READ_AND_PROCESS), &eventFlagState);
+        availableEvents = mEventQueue->availableToRead();
+    }
+
+    size_t eventsToRead = std::min(availableEvents, mEventBuffer.size());
+    if (eventsToRead > 0) {
+        if (mEventQueue->read(mEventBuffer.data(), eventsToRead)) {
+            for (const auto& e : mEventBuffer) {
+                addEvent(e);
+            }
+        }
+    }
+}
+
+void SensorsHidlEnvironmentV2_0::pollingThread(SensorsHidlEnvironmentV2_0* env) {
     ALOGD("polling thread start");
 
-    while (!stop) {
-        // TODO: implement reading event queue
-        stop = true;
+    while (!env->stopThread.load()) {
+        env->readEvents();
     }
+
     ALOGD("polling thread end");
 }
