@@ -149,6 +149,10 @@ Return<void> Bar::closeHandles() {
     return mFoo->closeHandles();
 }
 
+Return<void> Bar::repeatWithFmq(const IFoo::WithFmq& withFmq, repeatWithFmq_cb _hidl_cb) {
+    return mFoo->repeatWithFmq(withFmq, _hidl_cb);
+}
+
 Return<void> Bar::echoNullInterface(const sp<IFooCallback> &cb, echoNullInterface_cb _hidl_cb) {
     return mFoo->echoNullInterface(cb, _hidl_cb);
 }

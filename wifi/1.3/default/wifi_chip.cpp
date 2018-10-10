@@ -930,6 +930,12 @@ WifiStatus WifiChip::removeStaIfaceInternal(const std::string& ifname) {
 
 std::pair<WifiStatus, sp<IWifiRttController>>
 WifiChip::createRttControllerInternal(const sp<IWifiIface>& bound_iface) {
+    if (sta_ifaces_.size() == 0 &&
+        !canCurrentModeSupportIfaceOfType(IfaceType::STA)) {
+        LOG(ERROR) << "createRttControllerInternal: Chip cannot support STAs "
+                      "(and RTT by extension)";
+        return {createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE), {}};
+    }
     sp<WifiRttController> rtt =
         new WifiRttController(getWlan0IfaceName(), bound_iface, legacy_hal_);
     rtt_controllers_.emplace_back(rtt);
