@@ -101,6 +101,7 @@ restart:
                 case -ENOENT: {
                     // No more effects available.
                     result.resize(i);
+                    break;
                 }
                 default: {
                     result.resize(0);
