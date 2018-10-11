@@ -19,6 +19,8 @@ cc_library_static {
     srcs: [
         "GrallocWrapper.cpp",
         "SensorsHidlEnvironmentBase.cpp",
+        "SensorsHidlTestBase.cpp",
+        "SensorsTestSharedMemory.cpp",
     ],
     export_include_dirs: [
         "include",
@@ -33,4 +35,3 @@ cc_library_static {
         "VtsHalHidlTargetTestBase",
     ],
 }
-
