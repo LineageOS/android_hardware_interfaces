@@ -26,6 +26,8 @@ import @1.2::AccessNetwork;
 import @1.2::CellIdentity;
 import @1.2::DataRegStateResult;
 
+import android.hidl.safe_union@1.0::Monostate;
+
 enum AccessNetwork : @1.2::AccessNetwork {
     /**
      * Unknown access network
@@ -162,6 +164,8 @@ struct DataRegStateResult {
      * will be empty when device is camped only on 2G/3G .
      */
     safe_union VopsInfo {
+        Monostate noinit;
+
         LteVopsInfo lteVopsInfo; // LTE network capability
     } vopsInfo;
 };
