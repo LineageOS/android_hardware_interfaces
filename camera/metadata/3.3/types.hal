@@ -100,7 +100,7 @@ enum CameraMetadataTag : @3.2::CameraMetadataTag {
 
     /** android.request.availablePhysicalCameraRequestKeys [static, int32[], hidden]
      *
-     * <p>A subset of the available request keys that can be overriden for
+     * <p>A subset of the available request keys that can be overridden for
      * physical devices backing a logical multi-camera.</p>
      */
     ANDROID_REQUEST_AVAILABLE_PHYSICAL_CAMERA_REQUEST_KEYS,
