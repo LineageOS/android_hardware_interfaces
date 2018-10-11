@@ -17,6 +17,7 @@ hidl_interface {
         "android.hardware.radio@1.1",
         "android.hardware.radio@1.2",
         "android.hidl.base@1.0",
+        "android.hidl.safe_union@1.0",
     ],
     types: [
         "AccessNetwork",
