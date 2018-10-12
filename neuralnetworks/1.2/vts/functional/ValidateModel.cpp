@@ -157,6 +157,7 @@ static uint32_t getInvalidRank(OperandType type) {
         case OperandType::UINT32:
         case OperandType::BOOL:
             return 1;
+        case OperandType::TENSOR_FLOAT16:
         case OperandType::TENSOR_FLOAT32:
         case OperandType::TENSOR_INT32:
         case OperandType::TENSOR_QUANT8_ASYMM:
@@ -186,6 +187,7 @@ static float getInvalidScale(OperandType type) {
         case OperandType::INT32:
         case OperandType::UINT32:
         case OperandType::BOOL:
+        case OperandType::TENSOR_FLOAT16:
         case OperandType::TENSOR_FLOAT32:
             return 1.0f;
         case OperandType::TENSOR_INT32:
@@ -217,6 +219,7 @@ static std::vector<int32_t> getInvalidZeroPoints(OperandType type) {
         case OperandType::INT32:
         case OperandType::UINT32:
         case OperandType::BOOL:
+        case OperandType::TENSOR_FLOAT16:
         case OperandType::TENSOR_FLOAT32:
         case OperandType::TENSOR_INT32:
             return {1};
@@ -262,6 +265,7 @@ static void mutateOperand(Operand* operand, OperandType type) {
             newOperand.scale = 0.0f;
             newOperand.zeroPoint = 0;
             break;
+        case OperandType::TENSOR_FLOAT16:
         case OperandType::TENSOR_FLOAT32:
             newOperand.dimensions =
                 operand->dimensions.size() > 0 ? operand->dimensions : hidl_vec<uint32_t>({1});
