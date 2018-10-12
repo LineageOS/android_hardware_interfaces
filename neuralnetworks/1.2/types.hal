@@ -42,6 +42,8 @@ enum OperandType : @1.0::OperandType {
      * realValue = (integerValue - zeroPoint) * scale.
      */
     TENSOR_QUANT16_ASYMM = 7,
+    /** A tensor of 16 bit floating point values. */
+    TENSOR_FLOAT16 = 8,
 };
 
 /**
