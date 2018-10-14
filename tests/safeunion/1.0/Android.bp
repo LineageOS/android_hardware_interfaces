@@ -9,6 +9,7 @@ hidl_interface {
     ],
     interfaces: [
         "android.hidl.base@1.0",
+        "android.hidl.safe_union@1.0",
     ],
     gen_java: true,
 }
