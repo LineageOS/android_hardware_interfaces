@@ -171,9 +171,9 @@ struct DataRegStateResult {
 };
 
 /**
- * Overwritten from @1.0::DataProfileInfo in order to deprecate 'mvnoType', 'mvnoMatchData',
- * 'maxConnsTime', and 'maxConns'. In the future, this must be extended instead of overwritten.
- * Added 'preferred' and 'persistent' in this version.
+ * Overwritten from @1.0::DataProfileInfo in order to deprecate 'mvnoType', and 'mvnoMatchData'.
+ * In the future, this must be extended instead of overwritten.
+ * Also added 'preferred' and 'persistent' in this version.
  */
 struct DataProfileInfo {
     /** id of the data profile */
@@ -205,6 +205,12 @@ struct DataProfileInfo {
 
     /** Data profile technology type */
     DataProfileInfoType type;
+
+    /** The period in seconds to limit the maximum connections */
+    int32_t maxConnsTime;
+
+    /** The maximum connections during maxConnsTime */
+    int32_t maxConns;
 
     /**
      * The required wait time in seconds after a successful UE initiated disconnect of a given PDN
