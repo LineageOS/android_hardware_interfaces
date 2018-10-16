@@ -18,8 +18,6 @@ LOCAL_PATH := $(call my-dir)
 
 BUILD_FRAMEWORK_COMPATIBILITY_MATRIX := $(LOCAL_PATH)/compatibility_matrix.mk
 
-my_kernel_config_data := kernel/configs
-
 # Framework Compatibility Matrix (common to all FCM versions)
 
 include $(CLEAR_VARS)
