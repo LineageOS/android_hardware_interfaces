@@ -1737,7 +1737,11 @@ bool ExternalCameraDeviceSession::OutputThread::threadLoop() {
     // TODO: see if we can save some computation by converting to YV12 here
     uint8_t* inData;
     size_t inDataSize;
-    req->frameIn->map(&inData, &inDataSize);
+    if (req->frameIn->map(&inData, &inDataSize) != 0) {
+        lk.unlock();
+        return onDeviceError("%s: V4L2 buffer map failed", __FUNCTION__);
+    }
+
     // TODO: in some special case maybe we can decode jpg directly to gralloc output?
     ATRACE_BEGIN("MJPGtoI420");
     int res = libyuv::MJPGToI420(
