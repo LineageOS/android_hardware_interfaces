@@ -129,10 +129,10 @@ static uint32_t addOperand(Model* model, OperandLifeTime lifetime) {
 ///////////////////////// VALIDATE MODEL OPERAND TYPE /////////////////////////
 
 static const int32_t invalidOperandTypes[] = {
-    static_cast<int32_t>(OperandType::FLOAT32) - 1,          // lower bound fundamental
-    static_cast<int32_t>(OperandType::BOOL) + 1,             // upper bound fundamental
-    static_cast<int32_t>(OperandType::OEM) - 1,              // lower bound OEM
-    static_cast<int32_t>(OperandType::TENSOR_OEM_BYTE) + 1,  // upper bound OEM
+    static_cast<int32_t>(OperandType::FLOAT32) - 1,               // lower bound fundamental
+    static_cast<int32_t>(OperandType::TENSOR_QUANT16_ASYMM) + 1,  // upper bound fundamental
+    static_cast<int32_t>(OperandType::OEM) - 1,                   // lower bound OEM
+    static_cast<int32_t>(OperandType::TENSOR_OEM_BYTE) + 1,       // upper bound OEM
 };
 
 static void mutateOperandTypeTest(const sp<IDevice>& device, const Model& model) {
@@ -160,6 +160,7 @@ static uint32_t getInvalidRank(OperandType type) {
         case OperandType::TENSOR_FLOAT32:
         case OperandType::TENSOR_INT32:
         case OperandType::TENSOR_QUANT8_ASYMM:
+        case OperandType::TENSOR_QUANT16_ASYMM:
             return 0;
         default:
             return 0;
@@ -190,6 +191,7 @@ static float getInvalidScale(OperandType type) {
         case OperandType::TENSOR_INT32:
             return -1.0f;
         case OperandType::TENSOR_QUANT8_ASYMM:
+        case OperandType::TENSOR_QUANT16_ASYMM:
             return 0.0f;
         default:
             return 0.0f;
@@ -219,6 +221,7 @@ static std::vector<int32_t> getInvalidZeroPoints(OperandType type) {
         case OperandType::TENSOR_INT32:
             return {1};
         case OperandType::TENSOR_QUANT8_ASYMM:
+        case OperandType::TENSOR_QUANT16_ASYMM:
             return {-1, 256};
         default:
             return {};
@@ -271,6 +274,7 @@ static void mutateOperand(Operand* operand, OperandType type) {
             newOperand.zeroPoint = 0;
             break;
         case OperandType::TENSOR_QUANT8_ASYMM:
+        case OperandType::TENSOR_QUANT16_ASYMM:
             newOperand.dimensions =
                 operand->dimensions.size() > 0 ? operand->dimensions : hidl_vec<uint32_t>({1});
             newOperand.scale = operand->scale != 0.0f ? operand->scale : 1.0f;
