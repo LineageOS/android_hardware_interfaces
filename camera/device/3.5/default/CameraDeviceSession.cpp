@@ -48,11 +48,9 @@ CameraDeviceSession::~CameraDeviceSession() {
 }
 
 Return<void> CameraDeviceSession::configureStreams_3_5(
-        const StreamConfiguration& /*requestedConfiguration*/,
+        const StreamConfiguration& requestedConfiguration,
         ICameraDeviceSession::configureStreams_3_5_cb _hidl_cb)  {
-    HalStreamConfiguration outStreams;
-    _hidl_cb(Status::OPERATION_NOT_SUPPORTED, outStreams);
-    return Void();
+    return configureStreams_3_4(requestedConfiguration.v3_4, _hidl_cb);
 }
 
 Return<void> CameraDeviceSession::signalStreamFlush(
