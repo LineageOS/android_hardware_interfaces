@@ -2074,6 +2074,7 @@ bool ExternalCameraDeviceSession::isSupported(const Stream& stream) {
                 ALOGI("%s: BLOB format does not support dataSpace %x", __FUNCTION__, ds);
                 return false;
             }
+            break;
         case PixelFormat::IMPLEMENTATION_DEFINED:
         case PixelFormat::YCBCR_420_888:
         case PixelFormat::YV12:
