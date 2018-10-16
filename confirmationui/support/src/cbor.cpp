@@ -36,11 +36,14 @@ WriteState writeBytes(WriteState state, uint64_t value, uint8_t size) {
             *pos++ = getByte(value, 6);
             *pos++ = getByte(value, 5);
             *pos++ = getByte(value, 4);
+            [[fallthrough]];
         case 4:
             *pos++ = getByte(value, 3);
             *pos++ = getByte(value, 2);
+            [[fallthrough]];
         case 2:
             *pos++ = getByte(value, 1);
+            [[fallthrough]];
         case 1:
             *pos++ = value;
             break;
