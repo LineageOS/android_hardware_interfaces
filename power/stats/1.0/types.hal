@@ -1,0 +1,46 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package android.hardware.power.stats@1.0;
+
+enum Status : uint32_t {
+    SUCCESS = 0,
+    NOT_SUPPORTED = 1,
+    INVALID_INPUT = 2,
+    FILESYSTEM_ERROR = 3,
+};
+
+struct RailInfo {
+    /** Index corresponding to the rail */
+    uint32_t index;
+    /** Name of the rail */
+    string railName;
+    /** Name of the subsystem to which this rail belongs */
+    string subsysName;
+    /** Hardware sampling rate */
+    uint32_t samplingRate;
+};
+
+struct EnergyData {
+    /**
+     * Index corrensponding to the rail. This index matches
+     * the index returned in RailInfo
+     */
+    uint32_t index;
+    /** Time since device boot(CLOCK_BOOTTIME) in milli-seconds */
+    uint64_t timestamp;
+    /** Accumulated energy since device boot in microwatt-seconds (uWs) */
+    uint64_t energy;
+};
