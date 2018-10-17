@@ -14,9 +14,10 @@ hidl_interface {
         "android.hidl.base@1.0",
     ],
     types: [
-        "Status",
+        "FileSystemType",
         "Result",
+        "Status",
     ],
-    gen_java: false,
+    gen_java: true,
 }
 
