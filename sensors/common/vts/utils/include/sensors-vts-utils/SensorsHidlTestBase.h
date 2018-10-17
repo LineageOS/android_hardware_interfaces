@@ -31,7 +31,18 @@ using ::android::sp;
 using ::android::hardware::hidl_string;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
-using namespace ::android::hardware::sensors::V1_0;
+
+using ::android::sp;
+using ::android::hardware::hidl_string;
+using ::android::hardware::sensors::V1_0::Event;
+using ::android::hardware::sensors::V1_0::ISensors;
+using ::android::hardware::sensors::V1_0::RateLevel;
+using ::android::hardware::sensors::V1_0::Result;
+using ::android::hardware::sensors::V1_0::SensorFlagBits;
+using ::android::hardware::sensors::V1_0::SensorInfo;
+using ::android::hardware::sensors::V1_0::SensorType;
+using ::android::hardware::sensors::V1_0::SharedMemInfo;
+using ::android::hardware::sensors::V1_0::SharedMemType;
 
 class SensorsHidlTestBase : public ::testing::VtsHalHidlTargetTestBase {
    public:

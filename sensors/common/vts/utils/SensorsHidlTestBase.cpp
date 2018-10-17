@@ -29,7 +29,8 @@ using ::android::sp;
 using ::android::hardware::hidl_string;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
-using namespace ::android::hardware::sensors::V1_0;
+using ::android::hardware::sensors::V1_0::SensorFlagShift;
+using ::android::hardware::sensors::V1_0::SensorsEventFormatOffset;
 
 const Vec3NormChecker SensorsHidlTestBase::sAccelNormChecker(
     Vec3NormChecker::byNominal(GRAVITY_EARTH, 1.0f /*m/s^2*/));
