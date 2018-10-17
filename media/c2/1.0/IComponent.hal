@@ -1,0 +1,365 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.media.c2@1.0;
+
+import android.hardware.graphics.bufferqueue@1.0::IGraphicBufferProducer;
+import android.hardware.media.omx@1.0::IGraphicBufferSource;
+
+import IConfigurable;
+import IComponentInterface;
+import IComponentListener;
+import IInputSurface;
+import IInputSurfaceConnection;
+
+/**
+ * Interface for a Codec2 component corresponding to API level 1.0 or below.
+ * Components have two states: stopped and running. The running state has three
+ * sub-states: executing, tripped and error.
+ *
+ * All methods in `IComponent` must not block. If a method call cannot be
+ * completed in a timely manner, it must return `TIMED_OUT` in the return
+ * status.
+ */
+interface IComponent {
+
+    // METHODS AVAILABLE WHEN RUNNING
+    // =========================================================================
+
+    /**
+     * Queues up work for the component.
+     *
+     * This method must be supported in running (including tripped) states.
+     *
+     * It is acceptable for this method to return `OK` and return an error value
+     * using the IComponentListener::onWorkDone() callback.
+     *
+     * @param workBundle `WorkBundle` object containing a list of `Work` objects
+     *     to queue to the component.
+     * @return status Status of the call, which may be
+     *   - `OK`        - Works in @p workBundle were successfully queued.
+     *   - `BAD_INDEX` - Some component id in some `Worklet` is not valid.
+     *   - `CANNOT_DO` - The components are not tunneled but some `Work` object
+     *                   contains tunneling information.
+     *   - `NO_MEMORY` - Not enough memory to queue @p workBundle.
+     *   - `TIMED_OUT` - The operation cannot be finished in a timely manner.
+     *   - `CORRUPTED` - Some unknown error occurred.
+     */
+    queue(WorkBundle workBundle) generates (Status status);
+
+    /**
+     * Discards and abandons any pending `Work` items for the component.
+     *
+     * This method must be supported in running (including tripped) states.
+     *
+     * `Work` that could be immediately abandoned/discarded must be returned in
+     * @p flushedWorkBundle. The order in which queued `Work` items are
+     * discarded can be arbitrary.
+     *
+     * `Work` that could not be abandoned or discarded immediately must be
+     * marked to be discarded at the earliest opportunity, and must be returned
+     * via IComponentListener::onWorkDone(). This must be completed within
+     * 500ms.
+     *
+     * @return status Status of the call, which may be
+     *   - `OK`        - The component has been successfully flushed.
+     *   - `TIMED_OUT` - The operation cannot be finished in a timely manner.
+     *   - `CORRUPTED` - Some unknown error occurred.
+     * @return flushedWorkBundle `WorkBundle` object containing flushed `Work`
+     *     items.
+     */
+    flush(
+        ) generates (
+            Status status,
+            WorkBundle flushedWorkBundle
+        );
+
+    /**
+     * Drains the component, and optionally downstream components. This is a
+     * signalling method; as such it does not wait for any work completion.
+     *
+     * The last `Work` item is marked as "drain-till-here", so the component is
+     * notified not to wait for further `Work` before it processes what is
+     * already queued. This method can also be used to set the end-of-stream
+     * flag after `Work` has been queued. Client can continue to queue further
+     * `Work` immediately after this method returns.
+     *
+     * This method must be supported in running (including tripped) states.
+     *
+     * `Work` that is completed must be returned via
+     * IComponentListener::onWorkDone().
+     *
+     * @param withEos Whether to drain the component with marking end-of-stream.
+     * @return status Status of the call, which may be
+     *   - `OK`        - The drain request has been successfully recorded.
+     *   - `TIMED_OUT` - The operation cannot be finished in a timely manner.
+     *   - `CORRUPTED` - Some unknown error occurred.
+     */
+    drain(bool withEos) generates (Status status);
+
+    /**
+     * Starts using a surface for output.
+     *
+     * This method must not block.
+     *
+     * @param blockPoolId Id of the `C2BlockPool` to be associated with the
+     *     output surface.
+     * @param surface Output surface.
+     * @return status Status of the call, which may be
+     *   - `OK`        - The operation completed successfully.
+     *   - `CANNOT_DO` - The component does not support an output surface.
+     *   - `REFUSED`   - The output surface cannot be accessed.
+     *   - `TIMED_OUT` - The operation cannot be finished in a timely manner.
+     *   - `CORRUPTED` - Some unknown error occurred.
+     */
+    setOutputSurface(
+            uint64_t blockPoolId,
+            IGraphicBufferProducer surface
+        ) generates (
+            Status status
+        );
+
+    /**
+     * Starts using an input surface.
+     *
+     * The component must be in running state.
+     *
+     * @param inputSurface Input surface to connect to.
+     * @return status Status of the call, which may be
+     *   - `OK`        - The operation completed successfully.
+     *   - `CANNOT_DO` - The component does not support an input surface.
+     *   - `BAD_STATE` - The component is not in running state.
+     *   - `DUPLICATE` - The component is already connected to an input surface.
+     *   - `REFUSED`   - The input surface is already in use.
+     *   - `NO_MEMORY` - Not enough memory to start the component.
+     *   - `TIMED_OUT` - The operation cannot be finished in a timely manner.
+     *   - `CORRUPTED` - Some unknown error occurred.
+     * @return connection `IInputSurfaceConnection` object, which can be used to
+     *     query and configure properties of the connection. This cannot be
+     *     null.
+     */
+    connectToInputSurface(
+            IInputSurface inputSurface
+        ) generates (
+            Status status,
+            IInputSurfaceConnection connection
+        );
+
+    /**
+     * Starts using an OMX input surface.
+     *
+     * The component must be in running state.
+     *
+     * This method is similar to connectToInputSurface(), but it takes an OMX
+     * input surface (as a pair of `IGraphicBufferProducer` and
+     * `IGraphicBufferSource`) instead of Codec2's own `IInputSurface`.
+     *
+     * @param producer Producer component of an OMX input surface.
+     * @param source Source component of an OMX input surface.
+     * @return status Status of the call, which may be
+     *   - `OK`        - The operation completed successfully.
+     *   - `CANNOT_DO` - The component does not support an OMX input surface.
+     *   - `BAD_STATE` - The component is not in running state.
+     *   - `DUPLICATE` - The component is already connected to an input surface.
+     *   - `REFUSED`   - The input surface is already in use.
+     *   - `NO_MEMORY` - Not enough memory to start the component.
+     *   - `TIMED_OUT` - The operation cannot be finished in a timely manner.
+     *   - `CORRUPTED` - Some unknown error occurred.
+     * @return connection `IInputSurfaceConnection` object, which can be used to
+     *     query and configure properties of the connection. This cannot be
+     *     null.
+     */
+    connectToOmxInputSurface(
+            IGraphicBufferProducer producer,
+            IGraphicBufferSource source
+        ) generates (
+            Status status,
+            IInputSurfaceConnection connection
+        );
+
+    /**
+     * Stops using an input surface.
+     *
+     * The component must be in running state.
+     *
+     * @return status Status of the call, which may be
+     *   - `OK`        - The operation completed successfully.
+     *   - `CANNOT_DO` - The component does not support an input surface.
+     *   - `BAD_STATE` - The component is not in running state.
+     *   - `NOT_FOUND` - The component is not connected to an input surface.
+     *   - `TIMED_OUT` - The operation cannot be finished in a timely manner.
+     *   - `CORRUPTED` - Some unknown error occurred.
+     */
+    disconnectFromInputSurface() generates (Status Status);
+
+    /**
+     * Creates a local `C2BlockPool` backed by the given allocator and returns
+     * its id.
+     *
+     * The returned @p blockPoolId is the only way the client can refer to a
+     * `C2BlockPool` object in the component. The id can be passed to
+     * setOutputSurface() or used in some C2Param objects later.
+     *
+     * The created `C2BlockPool` object can be destroyed by calling
+     * destroyBlockPool(), reset() or release(). reset() and release() must
+     * destroy all `C2BlockPool` objects that have been created.
+     *
+     * @param allocatorId Id of a `C2Allocator`.
+     * @return status Status of the call, which may be
+     *   - `OK`        - The operation completed successfully.
+     *   - `NO_MEMORY` - Not enough memory to create the pool.
+     *   - `BAD_VALUE` - @p allocatorId is not recognized.
+     *   - `TIMED_OUT` - The operation cannot be finished in a timely manner.
+     *   - `CORRUPTED` - Some unknown error occurred.
+     * @return blockPoolId Id of the created C2BlockPool object. This may be
+     *     used in setOutputSurface() if the allocator
+     * @return configurable Configuration interface for the created pool. This
+     *     must not be null.
+     */
+    createBlockPool(uint32_t allocatorId) generates (
+        Status status,
+        uint64_t blockPoolId,
+        IConfigurable configurable
+    );
+
+    /**
+     * Destroys a local block pool previously created by createBlockPool().
+     *
+     * @param blockPoolId Id of a `C2BlockPool` that was previously returned by
+     *      createBlockPool().
+     * @return status Status of the call, which may be
+     *   - `OK`        - The operation completed successfully.
+     *   - `NOT_FOUND` - The supplied blockPoolId is not valid.
+     *   - `TIMED_OUT` - The operation cannot be finished in a timely manner.
+     *   - `CORRUPTED` - Some unknown error occurred.
+     */
+    destroyBlockPool(uint64_t blockPoolId) generates (Status status);
+
+    // STATE CHANGE METHODS
+    // =========================================================================
+
+    /**
+     * Starts the component.
+     *
+     * This method must be supported in stopped state as well as tripped state.
+     *
+     * If the return value is `OK`, the component must be in the running state.
+     * If the return value is `BAD_STATE` or `DUPLICATE`, no state change is
+     * expected as a response to this call. Otherwise, the component must be in
+     * the stopped state.
+     *
+     * If a component is in the tripped state and start() is called while the
+     * component configuration still results in a trip, start() must succeed and
+     * a new onTripped() callback must be used to communicate the configuration
+     * conflict that results in the new trip.
+     *
+     * @return status Status of the call, which may be
+     *   - `OK`        - The component has started successfully.
+     *   - `BAD_STATE` - Component is not in stopped or tripped state.
+     *   - `DUPLICATE` - When called during another start call from another
+     *                   thread.
+     *   - `NO_MEMORY` - Not enough memory to start the component.
+     *   - `TIMED_OUT` - The operation cannot be finished in a timely manner.
+     *   - `CORRUPTED` - Some unknown error occurred.
+     */
+    start() generates (Status status);
+
+    /**
+     * Stops the component.
+     *
+     * This method must be supported in running (including tripped) state.
+     *
+     * This method must return withing 500ms.
+     *
+     * Upon this call, all pending `Work` must be abandoned.
+     *
+     * If the return value is `BAD_STATE` or `DUPLICATE`, no state change is
+     * expected as a response to this call. For all other return values, the
+     * component must be in the stopped state.
+     *
+     * This does not alter any settings and tunings that may have resulted in a
+     * tripped state.
+     *
+     * @return status Status of the call, which may be
+     *   - `OK`        - The component has stopped successfully.
+     *   - `BAD_STATE` - Component is not in running state.
+     *   - `DUPLICATE` - When called during another stop call from another
+     *                   thread.
+     *   - `TIMED_OUT` - The operation cannot be finished in a timely manner.
+     *   - `CORRUPTED` - Some unknown error occurred.
+     */
+    stop() generates (Status status);
+
+    /**
+     * Resets the component.
+     *
+     * This method must be supported in all (including tripped) states other
+     * than released.
+     *
+     * This method must be supported during any other blocking call.
+     *
+     * This method must return withing 500ms.
+     *
+     * When this call returns, if @p status is `OK`, all `Work` items must
+     * have been abandoned, and all resources (including `C2BlockPool` objects
+     * previously created by createBlockPool()) must have been released.
+     *
+     * If the return value is `BAD_STATE` or `DUPLICATE`, no state change is
+     * expected as a response to this call. For all other return values, the
+     * component must be in the stopped state.
+     *
+     * This brings settings back to their default, "guaranteeing" no tripped
+     * state.
+     *
+     * @return status Status of the call, which may be
+     *   - `OK`        - The component has been reset.
+     *   - `BAD_STATE` - Component is in released state.
+     *   - `DUPLICATE` - When called during another reset call from another
+     *                   thread.
+     *   - `TIMED_OUT` - The operation cannot be finished in a timely manner.
+     *   - `CORRUPTED` - Some unknown error occurred.
+     */
+    reset() generates (Status status);
+
+    /**
+     * Releases the component.
+     *
+     * This method must be supported in stopped state.
+     *
+     * This method destroys the component. Upon return, if @p status is `OK` or
+     * `DUPLICATE`, all resources must have been released.
+     *
+     * @return status Status of the call, which may be
+     *   - `OK`        - The component has been released.
+     *   - `BAD_STATE` - The component is running.
+     *   - `DUPLICATE` - The component is already released.
+     *   - `TIMED_OUT` - The operation cannot be finished in a timely manner.
+     *   - `CORRUPTED` - Some unknown error occurred.
+     */
+    release() generates (Status status);
+
+    /**
+     * Returns the @ref IComponentInterface instance associated to this
+     * component.
+     *
+     * An @p IConfigurable instance for the component can be obtained by calling
+     * IComponentInterface::getConfigurable() on the returned @p intf.
+     *
+     * @return intf `IComponentInterface` instance. This must not be null.
+     */
+    getInterface() generates (IComponentInterface intf);
+};
+
