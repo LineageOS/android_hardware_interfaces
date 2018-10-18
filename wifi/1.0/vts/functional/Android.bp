@@ -45,6 +45,8 @@ cc_test {
     static_libs: [
         "VtsHalWifiV1_0TargetTestUtil",
         "android.hardware.wifi@1.0",
+        "android.hardware.wifi@1.2",
+        "android.hardware.wifi@1.3",
     ],
 }
 
