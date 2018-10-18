@@ -30,7 +30,6 @@ hidl_interface {
         "StatusCode",
         "SubscribeFlags",
         "SubscribeOptions",
-        "VehicleApPowerBootupReason",
         "VehicleApPowerStateConfigFlag",
         "VehicleApPowerStateReport",
         "VehicleApPowerStateReq",
