@@ -1,0 +1,224 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.media.c2@1.0;
+
+import android.hardware.media.bufferpool@2.0::IClientManager;
+import IComponentInterface;
+import IComponentListener;
+import IComponent;
+import IConfigurable;
+import IInputSurface;
+
+/**
+ * Entry point for Codec2 HAL.
+ *
+ * All methods in `IComponentStore` must not block. If a method call cannot be
+ * completed in a timely manner, it must return `TIMED_OUT` in the return
+ * status. The only exceptions are getPoolClientManager() and getConfigurable(),
+ * which must always return immediately.
+ */
+interface IComponentStore {
+
+    /**
+     * Creates a component by name.
+     *
+     * @param name Name of the component to create. This must match one of the
+     *     names returned by listComponents().
+     * @param listener Callback receiver.
+     * @param pool `IClientManager` object of the BufferPool in the client
+     *     process. This may be null if the client does not own a BufferPool.
+     * @return status Status of the call, which may be
+     *   - `OK`        - The component was created successfully.
+     *   - `NOT_FOUND` - There is no component with the given name.
+     *   - `NO_MEMORY` - Not enough memory to create the component.
+     *   - `TIMED_OUT` - The operation cannot be finished in a timely manner.
+     *   - `CORRUPTED` - Some unknown error occurred.
+     * @return comp The created component if @p status is `OK`.
+     *
+     * @sa IComponentListener.
+     */
+    createComponent(
+            string name,
+            IComponentListener listener,
+            IClientManager pool
+        ) generates (
+            Status status,
+            IComponent comp
+        );
+
+    /**
+     * Creates a component interface by name.
+     *
+     * @param name Name of the component interface to create. This should match
+     *     one of the names returned by listComponents().
+     * @return status Status of the call, which may be
+     *   - `OK         - The component interface was created successfully.
+     *   - `NOT_FOUND` - There is no component interface with the given name.
+     *   - `NO_MEMORY` - Not enough memory to create the component interface.
+     *   - `TIMED_OUT` - The operation cannot be finished in a timely manner.
+     *   - `CORRUPTED` - Some unknown error occurred.
+     * @return compIntf The created component interface if @p status is `OK`.
+     */
+    createInterface(
+            string name
+        ) generates (
+            Status status,
+            IComponentInterface compIntf
+        );
+
+    /**
+     * Component traits.
+     */
+    struct ComponentTraits {
+        /**
+         * Name of the component. This must be unique for each component.
+         *
+         * This name is use to identify the component to create in
+         * createComponent() and createComponentInterface().
+         */
+        string name;
+
+        enum Domain : uint32_t {
+            OTHER = 0,
+            VIDEO,
+            AUDIO,
+            IMAGE,
+        };
+        /**
+         * Component domain.
+         */
+        Domain domain;
+
+        enum Kind : uint32_t {
+            OTHER = 0,
+            DECODER,
+            ENCODER,
+        };
+        /**
+         * Component kind.
+         */
+        Kind kind;
+
+        /**
+         * Rank used by `MediaCodecList` to determine component ordering. Lower
+         * value means higher priority.
+         */
+        uint32_t rank;
+
+        /**
+         * MIME type.
+         */
+        string mediaType;
+
+        /**
+         * Aliases for component name for backward compatibility.
+         *
+         * Multiple components can have the same alias (but not the same
+         * component name) as long as their media types differ.
+         */
+        vec<string> aliases;
+    };
+
+    /**
+     * Returns the list of components supported by this component store.
+     *
+     * @return status Status of the call, which may be
+     *   - `OK         - The operation was successful.
+     *   - `NO_MEMORY` - Not enough memory to complete this method.
+     *   - `TIMED_OUT` - The operation cannot be finished in a timely manner.
+     *   - `CORRUPTED` - Some unknown error occurred.
+     * @return traits List of component traits for all components supported by
+     *     this store (in no particular order).
+     */
+    listComponents() generates (
+            Status status,
+            vec<ComponentTraits> traits
+        );
+
+    /**
+     * Creates a persistent input surface that can be used as an input surface
+     * for any IComponent instance
+     *
+     * @return status Status of the call, which may be
+     *   - `OK         - The operation was successful.
+     *   - `NO_MEMORY` - Not enough memory to complete this method.
+     *   - `TIMED_OUT` - The operation cannot be finished in a timely manner.
+     *   - `CORRUPTED` - Some unknown error occurred.
+     * @return surface A persistent input surface. This may be null to indicate
+     *     an error.
+     */
+    createInputSurface() generates (
+            Status status,
+            IInputSurface surface
+        );
+
+    /**
+     * Returns a list of `StructDescriptor` objects for a set of requested
+     * C2Param structure indices that this store is aware of.
+     *
+     * This operation must be performed at best effort, e.g. the component
+     * store must simply ignore all struct indices that it is not aware of.
+     *
+     * @param indices Indices of C2Param structures to describe.
+     * @return status Status of the call, which may be
+     *   - `OK`        - The operation completed successfully.
+     *   - `NOT_FOUND` - Some indices were not known.
+     *   - `NO_MEMORY` - Not enough memory to complete this method.
+     *   - `TIMED_OUT` - The operation cannot be finished in a timely manner.
+     *   - `CORRUPTED` - Some unknown error occurred.
+     * @return structs List of `StructDescriptor` objects.
+     */
+    getStructDescriptors(
+            vec<ParamIndex> indices
+        ) generates (
+            Status status,
+            vec<StructDescriptor> structs
+        );
+
+    /**
+     * Copies the contents of @p src into @p dst without changing the format of
+     * @p dst.
+     *
+     * @param src Source buffer.
+     * @param dst Destination buffer.
+     * @return status Status of the call, which may be
+     *   - `OK`        - The copy is successful.
+     *   - `CANNOT_DO` - @p src and @p dst are not compatible.
+     *   - `REFUSED`   - No permission to copy.
+     *   - `TIMED_OUT` - The operation cannot be finished in a timely manner.
+     *   - `CORRUPTED` - Some unknown error occurred.
+     */
+    copyBuffer(Buffer src, Buffer dst) generates (Status status);
+
+    /**
+     * Returns the `IClientManager` object for the component's BufferPool.
+     *
+     * @return pool If the component store supports receiving buffers via
+     *     BufferPool API, @p pool must be a valid `IClientManager` instance.
+     *     Otherwise, @p pool must be null.
+     */
+    getPoolClientManager() generates (IClientManager pool);
+
+    /**
+     * Returns the @ref IConfigurable instance associated to this component
+     * store.
+     *
+     * @return configurable `IConfigurable` instance. This must not be null.
+     */
+    getConfigurable() generates (IConfigurable configurable);
+};
+
