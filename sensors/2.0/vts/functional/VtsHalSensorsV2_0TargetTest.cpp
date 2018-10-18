@@ -42,36 +42,38 @@ class SensorsHidlTest : public SensorsHidlTestBase {
     std::vector<SensorInfo> getSensorsList();
     // implementation wrapper
     Return<void> getSensorsList(ISensors::getSensorsList_cb _hidl_cb) override {
-        return S()->getSensorsList(_hidl_cb);
+        return getSensors()->getSensorsList(_hidl_cb);
     }
 
     Return<Result> activate(int32_t sensorHandle, bool enabled) override;
 
     Return<Result> batch(int32_t sensorHandle, int64_t samplingPeriodNs,
                          int64_t maxReportLatencyNs) override {
-        return S()->batch(sensorHandle, samplingPeriodNs, maxReportLatencyNs);
+        return getSensors()->batch(sensorHandle, samplingPeriodNs, maxReportLatencyNs);
     }
 
-    Return<Result> flush(int32_t sensorHandle) override { return S()->flush(sensorHandle); }
+    Return<Result> flush(int32_t sensorHandle) override {
+        return getSensors()->flush(sensorHandle);
+    }
 
     Return<Result> injectSensorData(const Event& event) override {
-        return S()->injectSensorData(event);
+        return getSensors()->injectSensorData(event);
     }
 
     Return<void> registerDirectChannel(const SharedMemInfo& mem,
                                        ISensors::registerDirectChannel_cb _hidl_cb) override;
 
     Return<Result> unregisterDirectChannel(int32_t channelHandle) override {
-        return S()->unregisterDirectChannel(channelHandle);
+        return getSensors()->unregisterDirectChannel(channelHandle);
     }
 
     Return<void> configDirectReport(int32_t sensorHandle, int32_t channelHandle, RateLevel rate,
                                     ISensors::configDirectReport_cb _hidl_cb) override {
-        return S()->configDirectReport(sensorHandle, channelHandle, rate, _hidl_cb);
+        return getSensors()->configDirectReport(sensorHandle, channelHandle, rate, _hidl_cb);
     }
 
-    inline sp<::android::hardware::sensors::V2_0::ISensors>& S() {
-        return SensorsHidlEnvironmentV2_0::Instance()->sensors;
+    inline sp<::android::hardware::sensors::V2_0::ISensors>& getSensors() {
+        return SensorsHidlEnvironmentV2_0::Instance()->mSensors;
     }
 
     SensorsHidlEnvironmentBase* getEnvironment() override {
@@ -87,7 +89,7 @@ Return<Result> SensorsHidlTest::activate(int32_t sensorHandle, bool enabled) {
     if (enabled) {
         mSensorHandles.insert(sensorHandle);
     }
-    return S()->activate(sensorHandle, enabled);
+    return getSensors()->activate(sensorHandle, enabled);
 }
 
 Return<void> SensorsHidlTest::registerDirectChannel(const SharedMemInfo& mem,
@@ -95,7 +97,7 @@ Return<void> SensorsHidlTest::registerDirectChannel(const SharedMemInfo& mem,
     // If registeration of a channel succeeds, add the handle of channel to a set so that it can be
     // unregistered when test fails. Unregister a channel does not remove the handle on purpose.
     // Unregistering a channel more than once should not have negative effect.
-    S()->registerDirectChannel(mem, [&](auto result, auto channelHandle) {
+    getSensors()->registerDirectChannel(mem, [&](auto result, auto channelHandle) {
         if (result == Result::OK) {
             mDirectChannelHandles.insert(channelHandle);
         }
@@ -108,7 +110,7 @@ SensorInfo SensorsHidlTest::defaultSensorByType(SensorType type) {
     SensorInfo ret;
 
     ret.type = (SensorType)-1;
-    S()->getSensorsList([&](const auto& list) {
+    getSensors()->getSensorsList([&](const auto& list) {
         const size_t count = list.size();
         for (size_t i = 0; i < count; ++i) {
             if (list[i].type == type) {
@@ -124,7 +126,7 @@ SensorInfo SensorsHidlTest::defaultSensorByType(SensorType type) {
 std::vector<SensorInfo> SensorsHidlTest::getSensorsList() {
     std::vector<SensorInfo> ret;
 
-    S()->getSensorsList([&](const auto& list) {
+    getSensors()->getSensorsList([&](const auto& list) {
         const size_t count = list.size();
         ret.reserve(list.size());
         for (size_t i = 0; i < count; ++i) {
@@ -137,7 +139,7 @@ std::vector<SensorInfo> SensorsHidlTest::getSensorsList() {
 
 // Test if sensor list returned is valid
 TEST_F(SensorsHidlTest, SensorListValid) {
-    S()->getSensorsList([&](const auto& list) {
+    getSensors()->getSensorsList([&](const auto& list) {
         const size_t count = list.size();
         for (size_t i = 0; i < count; ++i) {
             const auto& s = list[i];
@@ -191,9 +193,9 @@ TEST_F(SensorsHidlTest, SetOperationMode) {
         return;
     }
 
-    ASSERT_EQ(Result::OK, S()->setOperationMode(OperationMode::NORMAL));
-    ASSERT_EQ(Result::OK, S()->setOperationMode(OperationMode::DATA_INJECTION));
-    ASSERT_EQ(Result::OK, S()->setOperationMode(OperationMode::NORMAL));
+    ASSERT_EQ(Result::OK, getSensors()->setOperationMode(OperationMode::NORMAL));
+    ASSERT_EQ(Result::OK, getSensors()->setOperationMode(OperationMode::DATA_INJECTION));
+    ASSERT_EQ(Result::OK, getSensors()->setOperationMode(OperationMode::NORMAL));
 }
 
 // Test if sensor list returned is valid
@@ -213,8 +215,8 @@ TEST_F(SensorsHidlTest, InjectSensorEventData) {
         return;
     }
 
-    ASSERT_EQ(Result::OK, S()->setOperationMode(OperationMode::NORMAL));
-    ASSERT_EQ(Result::OK, S()->setOperationMode(OperationMode::DATA_INJECTION));
+    ASSERT_EQ(Result::OK, getSensors()->setOperationMode(OperationMode::NORMAL));
+    ASSERT_EQ(Result::OK, getSensors()->setOperationMode(OperationMode::DATA_INJECTION));
 
     for (const auto& s : sensorSupportInjection) {
         switch (s.type) {
@@ -230,14 +232,14 @@ TEST_F(SensorsHidlTest, InjectSensorEventData) {
                 Vec3 v = {1, 2, 3, SensorStatus::ACCURACY_HIGH};
                 dummy.u.vec3 = v;
 
-                EXPECT_EQ(Result::OK, S()->injectSensorData(dummy));
+                EXPECT_EQ(Result::OK, getSensors()->injectSensorData(dummy));
                 break;
             }
             default:
                 break;
         }
     }
-    ASSERT_EQ(Result::OK, S()->setOperationMode(OperationMode::NORMAL));
+    ASSERT_EQ(Result::OK, getSensors()->setOperationMode(OperationMode::NORMAL));
 }
 
 // Test if sensor hal can do UI speed accelerometer streaming properly

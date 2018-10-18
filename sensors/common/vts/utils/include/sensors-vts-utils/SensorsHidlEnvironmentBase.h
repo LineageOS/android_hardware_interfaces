@@ -30,8 +30,8 @@
 class SensorsHidlEnvironmentBase : public ::testing::VtsHalHidlTargetTestEnvBase {
    public:
     using Event = ::android::hardware::sensors::V1_0::Event;
-    void HidlSetUp() override;
-    void HidlTearDown() override;
+    virtual void HidlSetUp() override;
+    virtual void HidlTearDown() override;
 
     // Get and clear all events collected so far (like "cat" shell command).
     // If output is nullptr, it clears all collected events.
