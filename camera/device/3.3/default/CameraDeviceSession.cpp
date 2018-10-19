@@ -92,6 +92,8 @@ Return<void> CameraDeviceSession::configureStreams_3_3(
     // the corresponding resources of the deleted streams.
     if (ret == OK) {
         postProcessConfigurationLocked(requestedConfiguration);
+    } else {
+        postProcessConfigurationFailureLocked(requestedConfiguration);
     }
 
     if (ret == -EINVAL) {

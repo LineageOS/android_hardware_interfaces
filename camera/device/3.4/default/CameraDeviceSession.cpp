@@ -154,6 +154,8 @@ Return<void> CameraDeviceSession::configureStreams_3_4(
     // the corresponding resources of the deleted streams.
     if (ret == OK) {
         postProcessConfigurationLocked_3_4(requestedConfiguration);
+    } else {
+        postProcessConfigurationFailureLocked_3_4(requestedConfiguration);
     }
 
     if (ret == -EINVAL) {
@@ -215,6 +217,23 @@ bool CameraDeviceSession::preProcessConfigurationLocked_3_4(
         (*streams)[i] = &mStreamMap[id];
     }
 
+    if (mFreeBufEarly) {
+        // Remove buffers of deleted streams
+        for(auto it = mStreamMap.begin(); it != mStreamMap.end(); it++) {
+            int id = it->first;
+            bool found = false;
+            for (const auto& stream : requestedConfiguration.streams) {
+                if (id == stream.v3_2.id) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                // Unmap all buffers of deleted stream
+                cleanupBuffersLocked(id);
+            }
+        }
+    }
     return true;
 }
 
@@ -236,7 +255,9 @@ void CameraDeviceSession::postProcessConfigurationLocked_3_4(
             // Unmap all buffers of deleted stream
             // in case the configuration call succeeds and HAL
             // is able to release the corresponding resources too.
-            cleanupBuffersLocked(id);
+            if (!mFreeBufEarly) {
+                cleanupBuffersLocked(id);
+            }
             it = mStreamMap.erase(it);
         } else {
             ++it;
@@ -253,6 +274,26 @@ void CameraDeviceSession::postProcessConfigurationLocked_3_4(
         }
     }
     mResultBatcher_3_4.setBatchedStreams(mVideoStreamIds);
+}
+
+void CameraDeviceSession::postProcessConfigurationFailureLocked_3_4(
+        const StreamConfiguration& requestedConfiguration) {
+    if (mFreeBufEarly) {
+        // Re-build the buf cache entry for deleted streams
+        for(auto it = mStreamMap.begin(); it != mStreamMap.end(); it++) {
+            int id = it->first;
+            bool found = false;
+            for (const auto& stream : requestedConfiguration.streams) {
+                if (id == stream.v3_2.id) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                mCirculatingBuffers.emplace(id, CirculatingBuffers{});
+            }
+        }
+    }
 }
 
 Return<void> CameraDeviceSession::processCaptureRequest_3_4(
