@@ -156,6 +156,29 @@ StatusCode EmulatedVehicleHal::set(const VehiclePropValue& propValue) {
                 // Placeholder for future implementation of VMS property in the default hal. For
                 // now, just returns OK; otherwise, hal clients crash with property not supported.
                 return StatusCode::OK;
+            case AP_POWER_STATE_REPORT:
+                switch (propValue.value.int32Values[0]) {
+                    case toInt(VehicleApPowerStateReport::DEEP_SLEEP_EXIT):
+                    case toInt(VehicleApPowerStateReport::SHUTDOWN_CANCELLED):
+                    case toInt(VehicleApPowerStateReport::WAIT_FOR_VHAL):
+                        // CPMS is in WAIT_FOR_VHAL state, simply move to ON
+                        doHalEvent(createApPowerStateReq(VehicleApPowerStateReq::ON, 0));
+                        break;
+                    case toInt(VehicleApPowerStateReport::DEEP_SLEEP_ENTRY):
+                    case toInt(VehicleApPowerStateReport::SHUTDOWN_START):
+                        // CPMS is in WAIT_FOR_FINISH state, send the FINISHED command
+                        doHalEvent(createApPowerStateReq(VehicleApPowerStateReq::FINISHED, 0));
+                        break;
+                    case toInt(VehicleApPowerStateReport::ON):
+                    case toInt(VehicleApPowerStateReport::SHUTDOWN_POSTPONE):
+                    case toInt(VehicleApPowerStateReport::SHUTDOWN_PREPARE):
+                        // Do nothing
+                        break;
+                    default:
+                        // Unknown state
+                        break;
+                }
+                break;
         }
     }
 
@@ -399,6 +422,18 @@ StatusCode EmulatedVehicleHal::handleGenerateFakeDataRequest(const VehiclePropVa
         }
     }
     return StatusCode::OK;
+}
+
+VehicleHal::VehiclePropValuePtr EmulatedVehicleHal::createApPowerStateReq(
+    VehicleApPowerStateReq state, int32_t param) {
+    auto req = getValuePool()->obtain(VehiclePropertyType::INT32_VEC, 2);
+    req->prop = toInt(VehicleProperty::AP_POWER_STATE_REQ);
+    req->areaId = 0;
+    req->timestamp = elapsedRealtimeNano();
+    req->status = VehiclePropertyStatus::AVAILABLE;
+    req->value.int32Values[0] = toInt(state);
+    req->value.int32Values[1] = param;
+    return req;
 }
 
 VehicleHal::VehiclePropValuePtr EmulatedVehicleHal::createHwInputKeyProp(
