@@ -103,21 +103,19 @@ Return<Result> Sensors::injectSensorData(const Event& /* event */) {
 }
 
 Return<void> Sensors::registerDirectChannel(const SharedMemInfo& /* mem */,
-                                            registerDirectChannel_cb /* _hidl_cb */) {
-    // TODO implement
-    return Void();
+                                            registerDirectChannel_cb _hidl_cb) {
+    _hidl_cb(Result::INVALID_OPERATION, 0 /* channelHandle */);
+    return Return<void>();
 }
 
 Return<Result> Sensors::unregisterDirectChannel(int32_t /* channelHandle */) {
-    // TODO implement
-    return Result{};
+    return Result::INVALID_OPERATION;
 }
 
 Return<void> Sensors::configDirectReport(int32_t /* sensorHandle */, int32_t /* channelHandle */,
-                                         RateLevel /* rate */,
-                                         configDirectReport_cb /* _hidl_cb */) {
-    // TODO implement
-    return Void();
+                                         RateLevel /* rate */, configDirectReport_cb _hidl_cb) {
+    _hidl_cb(Result::INVALID_OPERATION, 0 /* reportToken */);
+    return Return<void>();
 }
 
 void Sensors::deleteEventFlag() {
