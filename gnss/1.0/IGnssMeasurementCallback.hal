@@ -436,6 +436,10 @@ interface IGnssMeasurementCallback {
          * Carrier-to-noise density in dB-Hz, typically in the range [0, 63].
          * It contains the measured C/N0 value for the signal at the antenna port.
          *
+         * If a signal has separate components (e.g. Pilot and Data channels) and
+         * the receiver only processes one of the components, then the reported
+         * cN0DbHz reflects only the component that is processed.
+         *
          * This value is mandatory.
          */
         double cN0DbHz;
