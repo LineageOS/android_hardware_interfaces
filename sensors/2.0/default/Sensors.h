@@ -18,8 +18,11 @@
 #define ANDROID_HARDWARE_SENSORS_V2_0_SENSORS_H
 
 #include <android/hardware/sensors/2.0/ISensors.h>
+#include <fmq/MessageQueue.h>
 #include <hidl/MQDescriptor.h>
 #include <hidl/Status.h>
+
+#include <memory>
 
 namespace android {
 namespace hardware {
@@ -28,10 +31,13 @@ namespace V2_0 {
 namespace implementation {
 
 using ::android::sp;
+using ::android::hardware::EventFlag;
 using ::android::hardware::hidl_array;
 using ::android::hardware::hidl_memory;
 using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
+using ::android::hardware::MessageQueue;
+using ::android::hardware::MQDescriptor;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
 
@@ -41,6 +47,9 @@ struct Sensors : public ISensors {
     using RateLevel = ::android::hardware::sensors::V1_0::RateLevel;
     using Result = ::android::hardware::sensors::V1_0::Result;
     using SharedMemInfo = ::android::hardware::sensors::V1_0::SharedMemInfo;
+
+    Sensors();
+    virtual ~Sensors();
 
     // Methods from ::android::hardware::sensors::V2_0::ISensors follow.
     Return<void> getSensorsList(getSensorsList_cb _hidl_cb) override;
@@ -68,6 +77,35 @@ struct Sensors : public ISensors {
 
     Return<void> configDirectReport(int32_t sensorHandle, int32_t channelHandle, RateLevel rate,
                                     configDirectReport_cb _hidl_cb) override;
+
+   private:
+    /**
+     * Utility function to delete the Event Flag
+     */
+    void deleteEventFlag();
+
+    using EventMessageQueue = MessageQueue<Event, kSynchronizedReadWrite>;
+    using WakeLockMessageQueue = MessageQueue<uint32_t, kSynchronizedReadWrite>;
+
+    /**
+     * The Event FMQ where sensor events are written
+     */
+    std::unique_ptr<EventMessageQueue> mEventQueue;
+
+    /**
+     * The Wake Lock FMQ that is read to determine when the framework has handled WAKE_UP events
+     */
+    std::unique_ptr<WakeLockMessageQueue> mWakeLockQueue;
+
+    /**
+     * Event Flag to signal to the framework when sensor events are available to be read
+     */
+    EventFlag* mEventQueueFlag;
+
+    /**
+     * Callback for asynchronous events, such as dynamic sensor connections.
+     */
+    sp<ISensorsCallback> mCallback;
 };
 
 }  // namespace implementation
