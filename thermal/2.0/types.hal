@@ -1,0 +1,155 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.thermal@2.0;
+
+import android.hardware.thermal@1.0::types;
+
+/** Device temperature types */
+enum TemperatureType : @1.0::TemperatureType {
+    USB_PORT = 4,
+    POWER_AMPLIFIER = 5,
+};
+
+
+/** Device cooling device types */
+enum CoolingType : uint32_t {
+    FAN,
+    BATTERY,
+    CPU,
+    GPU,
+    MODEM,
+    NPU,
+    COMPONENT, // for the rest of components
+};
+
+/** Device throttling severity */
+enum ThrottlingSeverity : uint32_t {
+    /**
+     * Not under throttling.
+     */
+    NONE = 0,
+    /**
+     * Light throttling where UX is not impacted.
+     */
+    LIGHT,
+    /**
+     * Moderate throttling where UX is not largily impacted.
+     */
+    MODERATE,
+    /**
+     * Severe throttling where UX is largely impacted.
+     * Similar to 1.0 throttlingThreshold.
+     */
+    SEVERE,
+    /**
+     * Platform has done everything to reduce power.
+     */
+    CRITICAL,
+    /**
+     * User should be warned before shutdown.
+     */
+    WARNING,
+    /**
+     * Need shutdown immediately.
+     */
+    SHUTDOWN,
+};
+
+enum ThrottlingSeverityCount : uint32_t {NUM_THROTTLING_LEVELS = 7};
+
+struct TemperatureThreshold {
+    /**
+     * This temperature's type.
+     */
+    TemperatureType type;
+
+    /**
+     * Name of this temperature matching the Temperature struct.
+     * All temperatures of the same "type" must have a different "name",
+     * e.g., cpu0, battery. Clients use it to match Temperature struct.
+     */
+    string name;
+
+    /**
+     * Hot throttling temperature constant for this temperature sensor in
+     * level defined in ThrottlingSeverity including shutdown. Throttling
+     * happens when temperature >= threshold. If not available, set to NAN.
+     */
+    float[ThrottlingSeverityCount:NUM_THROTTLING_LEVELS] hotThrottlingThresholds;
+
+    /**
+     * Cold throttling temperature constant for this temperature sensor in
+     * level defined in ThrottlingSeverity including shutdown. Throttling
+     * happens when temperature <= threshold. If not available, set to NAN.
+     */
+    float[ThrottlingSeverityCount:NUM_THROTTLING_LEVELS] coldThrottlingThresholds;
+
+    /**
+     * Threshold temperature above which the VR mode clockrate minimums cannot
+     * be maintained for this device.
+     * If not available, set by HAL to NAN.
+     */
+    float vrThrottlingThreshold;
+};
+
+struct Temperature {
+    /**
+     * This temperature's type.
+     */
+    TemperatureType type;
+
+    /**
+     * Name of this temperature matching the TemperatureThreshold.
+     * All temperatures of the same "type" must have a different "name",
+     * e.g., cpu0, battery. Clients use it to match with TemperatureThreshold
+     * struct.
+     */
+    string name;
+
+    /**
+     * Current temperature in Celsius. If not available set by HAL to NAN.
+     */
+    float value;
+
+    /**
+     * The current throttling level of the sensor.
+     */
+    ThrottlingSeverity throttlingStatus;
+};
+
+struct CoolingDevice {
+    /**
+     * This cooling device type, CPU, GPU, BATTERY, and etc.
+     */
+    CoolingType type;
+
+    /**
+     * Name of this cooling device.
+     * All cooling devices of the same "type" must have a different "name".
+     * The name is usually defined in kernel device tree, and this is for client
+     * logging purpose.
+     */
+    string name;
+
+    /**
+     * Current throttle state of the cooling device. The value can any unsigned integer
+     * numbers between 0 and max_state defined in its driver, usually representing the
+     * associated device's power state. 0 means device is not in throttling, higher value
+     * means deeper throttling.
+     */
+    uint64_t value;
+};
