@@ -12,22 +12,24 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
-cc_test {
-    name: "VtsHalSensorsV2_0TargetTest",
-    defaults: ["VtsHalTargetTestDefaults"],
+cc_binary {
+    name: "android.hardware.thermal@2.0-service",
+    defaults: ["hidl_defaults"],
+    relative_install_path: "hw",
+    vendor: true,
+    init_rc: ["android.hardware.thermal@2.0-service.rc"],
+    vintf_fragments: ["android.hardware.thermal@2.0-service.xml"],
     srcs: [
-        "SensorsHidlEnvironmentV2_0.cpp",
-        "VtsHalSensorsV2_0TargetTest.cpp"
+        "Thermal.cpp",
+        "service.cpp"
     ],
-    static_libs: [
-        "android.hardware.graphics.allocator@2.0",
-        "android.hardware.graphics.mapper@2.0",
-        "android.hardware.sensors@1.0",
-        "android.hardware.sensors@2.0",
-        "libfmq",
-        "VtsHalSensorsTargetTestUtils",
+    shared_libs: [
+        "libbase",
+        "libhidlbase",
+        "libhidltransport",
+        "libutils",
+        "android.hardware.thermal@2.0",
+        "android.hardware.thermal@1.0",
     ],
 }
-

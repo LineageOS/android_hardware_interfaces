@@ -156,13 +156,6 @@ StatusCode EmulatedVehicleHal::set(const VehiclePropValue& propValue) {
                 // Placeholder for future implementation of VMS property in the default hal. For
                 // now, just returns OK; otherwise, hal clients crash with property not supported.
                 return StatusCode::OK;
-            case AP_POWER_STATE_REPORT:
-                // This property has different behavior between get/set.  When it is set, the value
-                //  goes to the vehicle but is NOT updated in the property store back to Android.
-                // Commented out for now, because it may mess up automated testing that use the
-                //  emulator interface.
-                // getEmulatorOrDie()->doSetValueFromClient(propValue);
-                return StatusCode::OK;
         }
     }
 

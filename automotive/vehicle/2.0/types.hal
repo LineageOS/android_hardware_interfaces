@@ -1125,7 +1125,7 @@ enum VehicleProperty : int32_t {
     /**
      * Property to control power state of application processor
      *
-     * It is assumed that AP's power state is controller by separate power
+     * It is assumed that AP's power state is controlled by a separate power
      * controller.
      *
      * For configuration information, VehiclePropConfig.configArray can have bit flag combining
@@ -1136,7 +1136,7 @@ enum VehicleProperty : int32_t {
      *                    0 if not used.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VEHICLE_PROP_ACCESS_READ
+     * @access VehiclePropertyAccess:READ
      */
     AP_POWER_STATE_REQ = (
         0x0A00
@@ -1155,7 +1155,7 @@ enum VehicleProperty : int32_t {
 
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VEHICLE_PROP_ACCESS_WRITE
+     * @access VehiclePropertyAccess:WRITE
      */
     AP_POWER_STATE_REPORT = (
         0x0A01
@@ -2267,17 +2267,8 @@ enum VehicleApPowerStateConfigFlag : int32_t /* NOTE: type is guessed */ {
 };
 
 enum VehicleApPowerStateReq : int32_t {
-    /** vehicle HAL will never publish this state to AP */
-    OFF = 0,
-
-    /** vehicle HAL will never publish this state to AP */
-    DEEP_SLEEP = 1,
-
-    /** AP is on but display must be off. */
-    ON_DISP_OFF = 2,
-
-    /** AP is on with display on. This state allows full user interaction. */
-    ON_FULL = 3,
+    /** Transition Android from WAIT_FOR_VHAL to ON state */
+    ON = 0,
 
     /**
      * The power controller has requested AP to shutdown. AP can either enter
@@ -2287,8 +2278,16 @@ enum VehicleApPowerStateReq : int32_t {
      * system.
      *
      * int32Values[1] : one of enum_vehicle_ap_power_state_shutdown_param_type
+     *
+     * SHUTDOWN_PRPARE may be requested from either WAIT_FOR_VHAL or ON states.
      */
-    SHUTDOWN_PREPARE = 4,
+    SHUTDOWN_PREPARE = 1,
+
+    /** Cancel the shutdown and transition from SHUTDOWN_PREPARE to WAIT_FOR_VHAL state */
+    CANCEL_SHUTDOWN = 2,
+
+    /** VHAL is finished with shutdown procedures and ready for Android to suspend/shutdown */
+    FINISHED = 3,
 };
 
 /**
@@ -2314,26 +2313,30 @@ enum VehicleApPowerStateShutdownParam : int32_t {
 
 enum VehicleApPowerStateReport : int32_t {
     /**
-     * AP has finished boot up, and can start shutdown if requested by power
-     * controller.
+     * Device has booted, CarService has initialized and is ready to accept commands from VHAL.
+     * Device starts in WAIT_FOR_VHAL state.  The user is not logged in, and vendor apps/services
+     * are expected to control the display and audio.
      */
-    BOOT_COMPLETE = 0x1,
+    WAIT_FOR_VHAL = 0x1,
 
     /**
-     * AP is entering deep sleep state. How this state is implemented may vary
-     * depending on each H/W, but AP's power must be kept in this state.
+     * AP is ready to suspend and has entered WAIT_FOR_FINISHED state.
+     *
+     * int32Values[1]: Time to turn on AP in secs. Power controller may turn on
+     *                 AP after specified time so that AP can run tasks like
+     *                 update. If it is set to 0, there is no wake up, and power
+     *                 controller may not necessarily support wake-up.
      */
     DEEP_SLEEP_ENTRY = 0x2,
 
     /**
-     * AP is exiting from deep sleep state, and is in
-     * VehicleApPowerState#SHUTDOWN_PREPARE state.
-     * The power controller may change state to other ON states based on the
-     * current state.
+     * AP is exiting from deep sleep state, and is in WAIT_FOR_VHAL state.
      */
     DEEP_SLEEP_EXIT = 0x3,
 
     /**
+     * AP remains in SHUTDOWN_PREPARE state as idle and cleanup tasks execute.
+     *
      * int32Values[1]: Time to postpone shutdown in ms. Maximum value can be
      *                 5000 ms.
      *                 If AP needs more time, it will send another POSTPONE
@@ -2342,63 +2345,31 @@ enum VehicleApPowerStateReport : int32_t {
     SHUTDOWN_POSTPONE = 0x4,
 
     /**
-     * AP is starting shutting down. When system completes shutdown, everything
-     * will stop in AP as kernel will stop all other contexts. It is
-     * responsibility of vehicle HAL or lower level to synchronize that state
-     * with external power controller. As an example, some kind of ping
-     * with timeout in power controller can be a solution.
+     * AP is ready to shutdown and has entered WAIT_FOR_FINISHED state.
      *
      * int32Values[1]: Time to turn on AP in secs. Power controller may turn on
      *                 AP after specified time so that AP can run tasks like
      *                 update. If it is set to 0, there is no wake up, and power
-     *                 controller may not necessarily support wake-up. If power
-     *                 controller turns on AP due to timer, it must start with
-     *                 VehicleApPowerState#ON_DISP_OFF state, and after
-     *                 receiving VehicleApPowerSetState#BOOT_COMPLETE, it shall
-     *                 do state transition to
-     *                 VehicleApPowerState#SHUTDOWN_PREPARE.
+     *                 controller may not necessarily support wake-up.
      */
     SHUTDOWN_START = 0x5,
 
     /**
-     * User has requested to turn off headunit's display, which is detected in
-     * android side.
-     * The power controller may change the power state to
-     * VehicleApPowerState#ON_DISP_OFF.
+     * AP has transitioned from WAIT_FOR_VHAL state to ON.
      */
-    DISPLAY_OFF = 0x6,
+    ON = 0x6,
 
     /**
-     * User has requested to turn on headunit's display, most probably from power
-     * key input which is attached to headunit. The power controller may change
-     * the power state to VehicleApPowerState#ON_FULL.
+     * AP has transitions to SHUTDOWN_PREPARE state.  In this state, Garage Mode will execute idle
+     * tasks, and other services that have registered for this state transition may execute
+     * cleanup activities.
      */
-    DISPLAY_ON = 0x7,
-};
-
-/**
- * Enum to represent bootup reason.
- */
-enum VehicleApPowerBootupReason : int32_t {
-    /**
-     * Power on due to user's pressing of power key or rotating of ignition
-     * switch.
-     */
-    USER_POWER_ON = 0,
+    SHUTDOWN_PREPARE = 0x7,
 
     /**
-     * Automatic power on triggered by door unlock or any other kind of automatic
-     * user detection.
+     * AP has transitioned from SHUTDOWN_PREPARE state to WAIT_FOR_VHAL.
      */
-    USER_UNLOCK = 1,
-
-    /**
-     * Automatic power on triggered by timer. This only happens when AP has asked
-     * wake-up after
-     * certain time through time specified in
-     * VehicleApPowerSetState#SHUTDOWN_START.
-     */
-    TIMER = 2,
+    SHUTDOWN_CANCELLED = 0x8,
 };
 
 enum VehicleHwKeyInputAction : int32_t {

@@ -15,19 +15,12 @@
 //
 
 cc_test {
-    name: "VtsHalSensorsV2_0TargetTest",
+    name: "VtsHalThermalV2_0TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
-    srcs: [
-        "SensorsHidlEnvironmentV2_0.cpp",
-        "VtsHalSensorsV2_0TargetTest.cpp"
-    ],
+    srcs: ["VtsHalThermalV2_0TargetTest.cpp"],
     static_libs: [
-        "android.hardware.graphics.allocator@2.0",
-        "android.hardware.graphics.mapper@2.0",
-        "android.hardware.sensors@1.0",
-        "android.hardware.sensors@2.0",
-        "libfmq",
-        "VtsHalSensorsTargetTestUtils",
+        "android.hardware.thermal@1.0",
+        "android.hardware.thermal@2.0",
     ],
 }
 
