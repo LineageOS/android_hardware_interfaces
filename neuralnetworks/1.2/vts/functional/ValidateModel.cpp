@@ -479,8 +479,22 @@ static void removeOperationOutputTest(const sp<IDevice>& device, const Model& mo
 
 ///////////////////////// ADD OPERATION INPUT /////////////////////////
 
+static bool addOperationInputSkip(const Operation& operation) {
+    // Skip addOperationInputTest for the following operations.
+    // L2_NORMALIZATION, LOCAL_RESPONSE_NORMALIZATION, SOFTMAX can have an optional axis parameter.
+    if (operation.type == OperationType::L2_NORMALIZATION ||
+        operation.type == OperationType::LOCAL_RESPONSE_NORMALIZATION ||
+        operation.type == OperationType::SOFTMAX) {
+        return true;
+    }
+    return false;
+}
+
 static void addOperationInputTest(const sp<IDevice>& device, const Model& model) {
     for (size_t operation = 0; operation < model.operations.size(); ++operation) {
+        if (addOperationInputSkip(model.operations[operation])) {
+            continue;
+        }
         const std::string message = "addOperationInputTest: operation " + std::to_string(operation);
         validate(device, message, model, [operation](Model* model) {
             uint32_t index = addOperand(model, OperandLifeTime::MODEL_INPUT);
