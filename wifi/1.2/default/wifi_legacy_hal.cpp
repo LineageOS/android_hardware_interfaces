@@ -550,6 +550,7 @@ wifi_error WifiLegacyHal::startGscan(
                 }
                 // Fall through if failed. Failure to retrieve cached scan
                 // results should trigger a background scan failure.
+                [[fallthrough]];
                 case WIFI_SCAN_FAILED:
                     on_failure_user_callback(id);
                     on_gscan_event_internal_callback = nullptr;
