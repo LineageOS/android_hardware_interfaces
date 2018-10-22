@@ -21,6 +21,10 @@
 #include <hardware/boot_control.h>
 #include "BootControl.h"
 
+#ifdef BOOT_CONTROL_RECOVERY
+extern const hw_module_t HAL_MODULE_INFO_SYM;
+#endif
+
 namespace android {
 namespace hardware {
 namespace boot {
@@ -92,7 +96,23 @@ Return<void> BootControl::getSuffix(uint32_t slot, getSuffix_cb _hidl_cb)  {
     return Void();
 }
 
+#ifdef BOOT_CONTROL_RECOVERY
+IBootControl* HIDL_FETCH_IBootControl(const char * /* hal */) {
+    boot_control_module_t* module;
 
+    // For devices that don't build a standalone libhardware bootctrl impl for recovery,
+    // we simulate the hw_get_module() by accessing it from the current process directly.
+    const hw_module_t* hw_module = &HAL_MODULE_INFO_SYM;
+    if (!hw_module ||
+        strcmp(BOOT_CONTROL_HARDWARE_MODULE_ID, hw_module->id) != 0) {
+        ALOGE("Error loading boot_control HAL implementation: %d.", -EINVAL);
+        return nullptr;
+    }
+    module = reinterpret_cast<boot_control_module_t*>(const_cast<hw_module_t*>(hw_module));
+    module->init(module);
+    return new BootControl(module);
+}
+#else
 IBootControl* HIDL_FETCH_IBootControl(const char* /* hal */) {
     int ret = 0;
     boot_control_module_t* module = NULL;
@@ -106,7 +126,7 @@ IBootControl* HIDL_FETCH_IBootControl(const char* /* hal */) {
     module->init(module);
     return new BootControl(module);
 }
-
+#endif
 } // namespace implementation
 }  // namespace V1_0
 }  // namespace boot
