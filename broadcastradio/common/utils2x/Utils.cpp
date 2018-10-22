@@ -215,7 +215,7 @@ bool isValid(const ProgramIdentifier& id) {
             break;
         case IdentifierType::DAB_FREQUENCY:
             expect(val > 100000u, "f > 100MHz");
-        // fallthrough
+            [[fallthrough]];
         case IdentifierType::AMFM_FREQUENCY:
         case IdentifierType::DRMO_FREQUENCY:
             expect(val > 100u, "f > 100kHz");
