@@ -25,12 +25,50 @@ namespace composer {
 namespace V2_3 {
 namespace hal {
 
+using common::V1_1::PixelFormat;
+using common::V1_1::RenderIntent;
+using common::V1_2::ColorMode;
+using common::V1_2::Dataspace;
 using V2_1::Display;
 using V2_1::Error;
 using V2_1::Layer;
 
 class ComposerHal : public V2_2::hal::ComposerHal {
    public:
+    Error setColorMode_2_2(Display display, common::V1_1::ColorMode mode,
+                           RenderIntent intent) override {
+        return setColorMode_2_3(display, static_cast<ColorMode>(mode), intent);
+    }
+
+    Error getColorModes_2_2(Display display, hidl_vec<common::V1_1::ColorMode>* outModes) override {
+        return getColorModes_2_3(display, reinterpret_cast<hidl_vec<ColorMode>*>(outModes));
+    }
+
+    Error getClientTargetSupport_2_2(Display display, uint32_t width, uint32_t height,
+                                     common::V1_1::PixelFormat format,
+                                     common::V1_1::Dataspace dataspace) override {
+        return getClientTargetSupport_2_3(display, width, height, static_cast<PixelFormat>(format),
+                                          static_cast<Dataspace>(dataspace));
+    }
+
+    Error getReadbackBufferAttributes(Display display, common::V1_1::PixelFormat* outFormat,
+                                      common::V1_1::Dataspace* outDataspace) override {
+        return getReadbackBufferAttributes_2_3(display, reinterpret_cast<PixelFormat*>(outFormat),
+                                               reinterpret_cast<Dataspace*>(outDataspace));
+    }
+
+    virtual Error setColorMode_2_3(Display display, ColorMode mode, RenderIntent intent) = 0;
+
+    virtual Error getRenderIntents_2_3(Display display, ColorMode mode,
+                                       std::vector<RenderIntent>* outIntents) = 0;
+
+    virtual Error getColorModes_2_3(Display display, hidl_vec<ColorMode>* outModes) = 0;
+
+    virtual Error getClientTargetSupport_2_3(Display display, uint32_t width, uint32_t height,
+                                             PixelFormat format, Dataspace dataspace) = 0;
+    virtual Error getReadbackBufferAttributes_2_3(Display display, PixelFormat* outFormat,
+                                                  Dataspace* outDataspace) = 0;
+
     virtual Error getDisplayIdentificationData(Display display, uint8_t* outPort,
                                                std::vector<uint8_t>* outData) = 0;
     virtual Error setLayerColorTransform(Display display, Layer layer, const float* matrix) = 0;

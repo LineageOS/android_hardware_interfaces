@@ -16,6 +16,10 @@
 
 package android.hardware.graphics.composer@2.3;
 
+import android.hardware.graphics.common@1.1::RenderIntent;
+import android.hardware.graphics.common@1.1::PixelFormat;
+import android.hardware.graphics.common@1.2::ColorMode;
+import android.hardware.graphics.common@1.2::Dataspace;
 import android.hardware.graphics.composer@2.1::IComposerClient.Command;
 import @2.2::IComposerClient;
 import @2.1::Display;
@@ -87,6 +91,75 @@ interface IComposerClient extends @2.2::IComposerClient {
                generates (Error error,
                           uint8_t port,
                           vec<uint8_t> data);
+    /**
+     * getReadbackBufferAttributes_2_3
+     * Returns the format which should be used when allocating a buffer for use by
+     * device readback as well as the dataspace in which its contents must be
+     * interpreted.
+     *
+     * The width and height of this buffer must be those of the currently-active
+     * display configuration, and the usage flags must consist of the following:
+     *   BufferUsage::CPU_READ | BufferUsage::GPU_TEXTURE |
+     *   BufferUsage::COMPOSER_OUTPUT
+     *
+     * The format and dataspace provided must be sufficient such that if a
+     * correctly-configured buffer is passed into setReadbackBuffer, filled by
+     * the device, and then displayed by the client as a full-screen buffer, the
+     * output of the display remains the same (subject to the note about protected
+     * content in the description of setReadbackBuffer).
+     *
+     * If the active configuration or color mode of this display has changed
+     * since a previous call to this function, it must be called again prior to
+     * setting a readback buffer such that the returned format and dataspace will
+     * be updated accordingly.
+     *
+     * Parameters:
+     * @param display - the display on which to create the layer.
+     *
+     * @return format - the format the client should use when allocating a device
+     *     readback buffer
+     * @return dataspace - the dataspace to use when interpreting the
+     *     contents of a device readback buffer
+     * @return error is NONE upon success. Otherwise,
+     *     BAD_DISPLAY when an invalid display handle was passed in.
+     *     UNSUPPORTED if not supported on underlying HAL
+     *
+     * See also:
+     *   setReadbackBuffer
+     *   getReadbackBufferFence
+     */
+    getReadbackBufferAttributes_2_3(Display display)
+        generates (Error error,
+                   PixelFormat format,
+                   Dataspace dataspace);
+
+    /**
+     * getClientTargetSupport_2_3
+     * Returns whether a client target with the given properties can be
+     * handled by the device.
+     *
+     * This function must return true for a client target with width and
+     * height equal to the active display configuration dimensions,
+     * PixelFormat::RGBA_8888, and Dataspace::UNKNOWN. It is not required to
+     * return true for any other configuration.
+     *
+     * @param display is the display to query.
+     * @param width is the client target width in pixels.
+     * @param height is the client target height in pixels.
+     * @param format is the client target format.
+     * @param dataspace is the client target dataspace, as described in
+     *     setLayerDataspace.
+     * @return error is NONE upon success. Otherwise,
+     *     BAD_DISPLAY when an invalid display handle was passed in.
+     *     UNSUPPORTED when the given configuration is not supported.
+     */
+    @callflow(next="*")
+    getClientTargetSupport_2_3(Display display,
+                               uint32_t width,
+                               uint32_t height,
+                               PixelFormat format,
+                               Dataspace dataspace)
+                    generates (Error error);
 
     /**
      * Executes commands from the input command message queue. Return values
@@ -113,4 +186,58 @@ interface IComposerClient extends @2.2::IComposerClient {
                         bool outQueueChanged,
                         uint32_t outLength,
                         vec<handle> outHandles);
+
+    /**
+     * Returns the render intents supported by the specified display and color
+     * mode.
+     *
+     * For SDR color modes, RenderIntent::COLORIMETRIC must be supported. For
+     * HDR color modes, RenderIntent::TONE_MAP_COLORIMETRIC must be supported.
+     *
+     * @param display is the display to query.
+     * @param mode is the color mode to query.
+     * @return error is NONE upon success. Otherwise,
+     *     BAD_DISPLAY when an invalid display handle was passed in.
+     *     BAD_PARAMETER when an invalid color mode was passed in.
+     * @return intents is an array of render intents.
+     */
+    getRenderIntents_2_3(Display display, ColorMode mode)
+          generates (Error error,
+                     vec<RenderIntent> intents);
+
+    /**
+     * Returns the color modes supported on this display.
+     *
+     * All devices must support at least ColorMode::NATIVE.
+     *
+     * @param display is the display to query.
+     * @return error is NONE upon success. Otherwise,
+     *     BAD_DISPLAY when an invalid display handle was passed in.
+     * @return modes is an array of color modes.
+     */
+    getColorModes_2_3(Display display)
+           generates (Error error,
+                      vec<ColorMode> modes);
+
+    /**
+     * Sets the color mode and render intent of the given display.
+     *
+     * The color mode and render intent change must take effect on next
+     * presentDisplay.
+     *
+     * All devices must support at least ColorMode::NATIVE and
+     * RenderIntent::COLORIMETRIC, and displays are assumed to be in this mode
+     * upon hotplug.
+     *
+     * @param display is the display to which the color mode is set.
+     * @param mode is the color mode to set to.
+     * @param intent is the render intent to set to.
+     * @return error is NONE upon success. Otherwise,
+     *     BAD_DISPLAY when an invalid display handle was passed in.
+     *     BAD_PARAMETER when mode or intent is invalid
+     *     UNSUPPORTED when mode or intent is not supported on this
+     *         display.
+     */
+    setColorMode_2_3(Display display, ColorMode mode, RenderIntent intent)
+          generates (Error error);
 };
