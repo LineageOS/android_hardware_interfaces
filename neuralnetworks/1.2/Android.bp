@@ -17,6 +17,8 @@ hidl_interface {
     ],
     types: [
         "Model",
+        "Operand",
+        "OperandType",
         "Operation",
         "OperationType",
     ],
