@@ -67,6 +67,7 @@ private:
 
     StatusCode handleGenerateFakeDataRequest(const VehiclePropValue& request);
     void onFakeValueGenerated(const VehiclePropValue& value);
+    VehiclePropValuePtr createApPowerStateReq(VehicleApPowerStateReq req, int32_t param);
     VehiclePropValuePtr createHwInputKeyProp(VehicleHwKeyInputAction action, int32_t keyCode,
                                              int32_t targetDisplay);
 
