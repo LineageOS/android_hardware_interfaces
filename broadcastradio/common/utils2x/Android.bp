@@ -22,6 +22,7 @@ cc_library_static {
         "-Wall",
         "-Wextra",
         "-Werror",
+        "-Wno-error=implicit-fallthrough",
     ],
     cppflags: [
         "-std=c++1z",
