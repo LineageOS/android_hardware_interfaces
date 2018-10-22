@@ -16,9 +16,35 @@
 
 package android.hardware.neuralnetworks@1.2;
 
-import @1.0::Operand;
+import @1.0::DataLocation;
+import @1.0::OperandLifeTime;
+import @1.0::OperandType;
 import @1.0::PerformanceInfo;
 import @1.1::OperationType;
+
+enum OperandType : @1.0::OperandType {
+    /**
+     * An 8 bit boolean scalar value.
+     *
+     * Values of this operand type are either true or false. A zero value
+     * represents false; any other value represents true.
+     */
+    BOOL = 6,
+    /**
+     * A tensor of 16 bit signed integers that represent real numbers.
+     *
+     * Attached to this tensor are two numbers that are used to convert the 16
+     * bit integer to the real value and vice versa. These two numbers are:
+     * - scale: a 32 bit floating point value greater than zero.
+     * - zeroPoint: a 32 bit integer, in range [-32768, 32767].
+     *
+     * The formula is:
+     * realValue = (integerValue - zeroPoint) * scale.
+     */
+    TENSOR_QUANT16_ASYMM = 7,
+    /** A tensor of 16 bit floating point values. */
+    TENSOR_FLOAT16 = 8,
+};
 
 /**
  * Operation types.
@@ -99,6 +125,101 @@ struct Operation {
      * operation. The offset is the index in the operandIndexes table.
      */
     vec<uint32_t> outputs;
+};
+
+/**
+ * Describes one operand of the model's graph.
+ */
+struct Operand {
+    /**
+     * Data type of the operand.
+     */
+    OperandType type;
+
+    /**
+     * Dimensions of the operand.
+     *
+     * For a scalar operand, dimensions.size() must be 0.
+     *
+     * For a tensor operand, dimensions.size() must be at least 1;
+     * however, any of the dimensions may be unspecified.
+     *
+     * A tensor operand with all dimensions specified has "fully
+     * specified" dimensions. Whenever possible (i.e., whenever the
+     * dimensions are known at model construction time), a tensor
+     * operand should have (but is not required to have) fully
+     * specified dimensions, in order to enable the best possible
+     * performance.
+     *
+     * If a tensor operand's dimensions are not fully specified, the
+     * dimensions of the operand are deduced from the operand
+     * dimensions and values of the operation for which that operand
+     * is an output.
+     *
+     * In the following situations, a tensor operand's dimensions must
+     * be fully specified:
+     *
+     *     . The operand has lifetime CONSTANT_COPY or
+     *       CONSTANT_REFERENCE.
+     *
+     *     . The operand has lifetime MODEL_INPUT or MODEL_OUTPUT. Fully
+     *       specified dimensions must either be present in the
+     *       Operand or they must be provided in the corresponding
+     *       RequestArgument.
+     *       EXCEPTION: If the input or output is optional and omitted
+     *       (by setting the hasNoValue field of the corresponding
+     *       RequestArgument to true) then it need not have fully
+     *       specified dimensions.
+     *
+     * A tensor operand with some number of unspecified dimensions is
+     * represented by setting each unspecified dimension to 0.
+     */
+    vec<uint32_t> dimensions;
+
+    /**
+     * The number of times this operand appears as an operation input.
+     *
+     * (For example, if this operand appears once in one operation's
+     * input list, and three times in another operation's input list,
+     * then numberOfConsumers = 4.)
+     */
+    uint32_t numberOfConsumers;
+
+    /**
+     * Quantized scale of the operand.
+     *
+     * Only applicable if the operand is of type TENSOR_QUANT8_ASYMM or
+     * TENSOR_INT32.
+     */
+    float scale;
+
+    /**
+     * Quantized zero-point offset of the operand.
+     *
+     * Only applicable if the operand is of type TENSOR_QUANT8_ASYMM.
+     */
+    int32_t zeroPoint;
+
+    /**
+     * How the operand is used.
+     */
+    OperandLifeTime lifetime;
+
+    /**
+     * Where to find the data for this operand.
+     * If the lifetime is TEMPORARY_VARIABLE, MODEL_INPUT, MODEL_OUTPUT, or
+     * NO_VALUE:
+     * - All the fields must be 0.
+     * If the lifetime is CONSTANT_COPY:
+     * - location.poolIndex is 0.
+     * - location.offset is the offset in bytes into Model.operandValues.
+     * - location.length is set.
+     * If the lifetime is CONSTANT_REFERENCE:
+     * - location.poolIndex is set.
+     * - location.offset is the offset in bytes into the specified pool.
+     * - location.length is set.
+     */
+    DataLocation location;
 };
 
 /**
