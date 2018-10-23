@@ -17,6 +17,8 @@
 #ifndef ANDROID_HARDWARE_SENSORS_V2_0_SENSORS_H
 #define ANDROID_HARDWARE_SENSORS_V2_0_SENSORS_H
 
+#include "Sensor.h"
+
 #include <android/hardware/sensors/2.0/ISensors.h>
 #include <fmq/MessageQueue.h>
 #include <hidl/MQDescriptor.h>
@@ -106,6 +108,11 @@ struct Sensors : public ISensors {
      * Callback for asynchronous events, such as dynamic sensor connections.
      */
     sp<ISensorsCallback> mCallback;
+
+    /**
+     * A map of the available sensors
+     */
+    std::map<int32_t, std::shared_ptr<Sensor>> mSensors;
 };
 
 }  // namespace implementation
