@@ -43,7 +43,7 @@ using ::android::hardware::MQDescriptor;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
 
-struct Sensors : public ISensors {
+struct Sensors : public ISensors, public ISensorsEventCallback {
     using Event = ::android::hardware::sensors::V1_0::Event;
     using OperationMode = ::android::hardware::sensors::V1_0::OperationMode;
     using RateLevel = ::android::hardware::sensors::V1_0::RateLevel;
@@ -80,6 +80,8 @@ struct Sensors : public ISensors {
     Return<void> configDirectReport(int32_t sensorHandle, int32_t channelHandle, RateLevel rate,
                                     configDirectReport_cb _hidl_cb) override;
 
+    void postEvents(const std::vector<Event>& events) override;
+
    private:
     /**
      * Utility function to delete the Event Flag
@@ -113,6 +115,11 @@ struct Sensors : public ISensors {
      * A map of the available sensors
      */
     std::map<int32_t, std::shared_ptr<Sensor>> mSensors;
+
+    /**
+     * Lock to protect writes and reads to the FMQs
+     */
+    std::mutex mLock;
 };
 
 }  // namespace implementation

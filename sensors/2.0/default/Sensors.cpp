@@ -100,12 +100,12 @@ Return<Result> Sensors::initialize(
 
 Return<Result> Sensors::batch(int32_t sensorHandle, int64_t samplingPeriodNs,
                               int64_t /* maxReportLatencyNs */) {
-    Result result = Result::BAD_VALUE;
     auto sensor = mSensors.find(sensorHandle);
-    if (sensor != mSensors.end() && sensor->second->batch(samplingPeriodNs)) {
-        result = Result::OK;
+    if (sensor != mSensors.end()) {
+        sensor->second->batch(samplingPeriodNs);
+        return Result::OK;
     }
-    return result;
+    return Result::BAD_VALUE;
 }
 
 Return<Result> Sensors::flush(int32_t /* sensorHandle */) {
@@ -132,6 +132,17 @@ Return<void> Sensors::configDirectReport(int32_t /* sensorHandle */, int32_t /* 
                                          RateLevel /* rate */, configDirectReport_cb _hidl_cb) {
     _hidl_cb(Result::INVALID_OPERATION, 0 /* reportToken */);
     return Return<void>();
+}
+
+void Sensors::postEvents(const std::vector<Event>& events) {
+    std::lock_guard<std::mutex> l(mLock);
+
+    // TODO: read events from the Wake Lock FMQ in the right place
+    std::vector<uint32_t> tmp(mWakeLockQueue->availableToRead());
+    mWakeLockQueue->read(tmp.data(), mWakeLockQueue->availableToRead());
+
+    mEventQueue->write(events.data(), events.size());
+    mEventQueueFlag->wake(static_cast<uint32_t>(EventQueueFlagBits::READ_AND_PROCESS));
 }
 
 void Sensors::deleteEventFlag() {
