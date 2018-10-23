@@ -24,6 +24,7 @@ namespace sensors {
 namespace V2_0 {
 namespace implementation {
 
+using ::android::hardware::sensors::V1_0::SensorFlagBits;
 using ::android::hardware::sensors::V1_0::SensorStatus;
 
 Sensor::Sensor(ISensorsEventCallback* callback)
@@ -105,6 +106,24 @@ std::vector<Event> Sensor::readEvents() {
     events.push_back(event);
     return events;
 }
+
+AccelSensor::AccelSensor(int32_t sensorHandle, ISensorsEventCallback* callback) : Sensor(callback) {
+    mSensorInfo.sensorHandle = sensorHandle;
+    mSensorInfo.name = "Accel Sensor";
+    mSensorInfo.vendor = "Vendor String";
+    mSensorInfo.version = 1;
+    mSensorInfo.type = SensorType::ACCELEROMETER;
+    mSensorInfo.typeAsString = "";
+    mSensorInfo.maxRange = 78.4f;  // +/- 8g
+    mSensorInfo.resolution = 1.52e-5;
+    mSensorInfo.power = 0.001f;          // mA
+    mSensorInfo.minDelay = 20 * 1000;    // microseconds
+    mSensorInfo.maxDelay = 1000 * 1000;  // microseconds
+    mSensorInfo.fifoReservedEventCount = 0;
+    mSensorInfo.fifoMaxEventCount = 0;
+    mSensorInfo.requiredPermission = "";
+    mSensorInfo.flags = static_cast<uint32_t>(SensorFlagBits::WAKE_UP);
+};
 
 }  // namespace implementation
 }  // namespace V2_0

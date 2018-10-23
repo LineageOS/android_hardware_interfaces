@@ -31,7 +31,11 @@ using ::android::hardware::sensors::V1_0::RateLevel;
 using ::android::hardware::sensors::V1_0::Result;
 using ::android::hardware::sensors::V1_0::SharedMemInfo;
 
-Sensors::Sensors() : mEventQueueFlag(nullptr) {}
+Sensors::Sensors() : mEventQueueFlag(nullptr) {
+    std::shared_ptr<AccelSensor> accel =
+        std::make_shared<AccelSensor>(1 /* sensorHandle */, this /* callback */);
+    mSensors[accel->getSensorInfo().sensorHandle] = accel;
+}
 
 Sensors::~Sensors() {
     deleteEventFlag();
