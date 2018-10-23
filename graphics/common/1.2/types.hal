@@ -1,0 +1,53 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.graphics.common@1.2;
+
+import @1.1::BufferUsage;
+import @1.1::ColorMode;
+import @1.1::Dataspace;
+import @1.1::PixelFormat;
+
+@export(name="android_dataspace_v1_2_t", value_prefix="HAL_DATASPACE_",
+        export_parent="false")
+enum Dataspace : @1.1::Dataspace {
+    /**
+     * ITU-R Recommendation 2020 (BT.2020)
+     *
+     * Ultra High-definition television
+     *
+     * Use full range, sRGB transfer and BT2020 standard
+     */
+    DISPLAY_BT2020 = STANDARD_BT2020 | TRANSFER_SRGB | RANGE_FULL,
+};
+
+enum ColorMode : @1.1::ColorMode {
+    /**
+     * DISPLAY_BT2020 corresponds with display settings that implement the ITU-R
+     * Recommendation BT.2020 / Rec. 2020 for UHDTV, but specifies an SRGB
+     * transfer function.
+     *
+     * Primaries:
+     *                  x       y
+     *  green           0.170   0.797
+     *  blue            0.131   0.046
+     *  red             0.708   0.292
+     *  white (D65)     0.3127  0.3290
+     *
+     * Transfer Function is sRGB
+     */
+    DISPLAY_BT2020 = 13,
+};

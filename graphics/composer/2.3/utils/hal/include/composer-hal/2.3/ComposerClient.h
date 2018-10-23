@@ -38,6 +38,52 @@ namespace detail {
 template <typename Interface, typename Hal>
 class ComposerClientImpl : public V2_2::hal::detail::ComposerClientImpl<Interface, Hal> {
    public:
+    Return<Error> setColorMode_2_3(Display display, ColorMode mode, RenderIntent intent) override {
+#ifndef USES_DISPLAY_RENDER_INTENTS
+        if (intent != RenderIntent::COLORIMETRIC) {
+            return Error::BAD_PARAMETER;
+        }
+#endif
+        return mHal->setColorMode_2_3(display, mode, intent);
+    }
+
+    Return<void> getRenderIntents_2_3(Display display, ColorMode mode,
+                                      IComposerClient::getRenderIntents_2_3_cb hidl_cb) override {
+#ifdef USES_DISPLAY_RENDER_INTENTS
+        std::vector<RenderIntent> intents;
+        Error err = mHal->getRenderIntents_2_3(display, mode, &intents);
+        hidl_cb(err, intents);
+#else
+        (void)display;
+        (void)mode;
+        hidl_cb(Error::NONE, hidl_vec<RenderIntent>({RenderIntent::COLORIMETRIC}));
+#endif
+        return Void();
+    }
+
+    Return<void> getColorModes_2_3(Display display,
+                                   IComposerClient::getColorModes_2_3_cb hidl_cb) override {
+        hidl_vec<ColorMode> modes;
+        Error err = mHal->getColorModes_2_3(display, &modes);
+        hidl_cb(err, modes);
+        return Void();
+    }
+
+    Return<void> getReadbackBufferAttributes_2_3(
+        Display display, IComposerClient::getReadbackBufferAttributes_2_3_cb hidl_cb) override {
+        PixelFormat format = PixelFormat::RGB_888;
+        Dataspace dataspace = Dataspace::UNKNOWN;
+        Error error = mHal->getReadbackBufferAttributes_2_3(display, &format, &dataspace);
+        hidl_cb(error, format, dataspace);
+        return Void();
+    }
+
+    Return<Error> getClientTargetSupport_2_3(Display display, uint32_t width, uint32_t height,
+                                             PixelFormat format, Dataspace dataspace) override {
+        Error err = mHal->getClientTargetSupport_2_3(display, width, height, format, dataspace);
+        return err;
+    }
+
     static std::unique_ptr<ComposerClientImpl> create(Hal* hal) {
         auto client = std::make_unique<ComposerClientImpl>(hal);
         return client->init() ? std::move(client) : nullptr;
