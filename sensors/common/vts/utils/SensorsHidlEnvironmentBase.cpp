@@ -50,4 +50,18 @@ void SensorsHidlEnvironmentBase::addEvent(const Event& ev) {
     if (collectionEnabled) {
         events.push_back(ev);
     }
+
+    if (mCallback != nullptr) {
+        mCallback->onEvent(ev);
+    }
+}
+
+void SensorsHidlEnvironmentBase::registerCallback(IEventCallback* callback) {
+    std::lock_guard<std::mutex> lock(events_mutex);
+    mCallback = callback;
+}
+
+void SensorsHidlEnvironmentBase::unregisterCallback() {
+    std::lock_guard<std::mutex> lock(events_mutex);
+    mCallback = nullptr;
 }
