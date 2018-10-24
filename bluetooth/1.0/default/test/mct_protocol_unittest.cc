@@ -36,8 +36,8 @@ namespace bluetooth {
 namespace V1_0 {
 namespace implementation {
 
-using ::testing::Eq;
 using hci::MctProtocol;
+using ::testing::Eq;
 
 static char sample_data1[100] = "A point is that which has no part.";
 static char sample_data2[100] = "A line is breadthless length.";

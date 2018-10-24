@@ -418,13 +418,12 @@ extern const bt_vendor_interface_t BLUETOOTH_VENDOR_LIB_INTERFACE;
 // DIRECTORIES.
 // ONLY USED INSIDE transmit_cb.
 // DO NOT USE IN NEW HAL IMPLEMENTATIONS GOING FORWARD
-typedef struct
-{
-    uint16_t          event;
-    uint16_t          len;
-    uint16_t          offset;
-    uint16_t          layer_specific;
-    uint8_t           data[];
+typedef struct {
+  uint16_t event;
+  uint16_t len;
+  uint16_t offset;
+  uint16_t layer_specific;
+  uint8_t data[];
 } HC_BT_HDR;
 // /MODIFICATION
 
