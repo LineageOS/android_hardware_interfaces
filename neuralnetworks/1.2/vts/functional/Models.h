@@ -32,7 +32,7 @@ namespace V1_2 {
 namespace vts {
 namespace functional {
 
-using MixedTypedExample = test_helper::MixedTypedExampleType;
+using MixedTypedExample = test_helper::MixedTypedExample;
 
 #define FOR_EACH_TEST_MODEL(FN)                                  \
     FN(add)                                                      \
@@ -243,6 +243,7 @@ using MixedTypedExample = test_helper::MixedTypedExampleType;
     FN(pad_float_1)                                              \
     FN(pad_float_1_relaxed)                                      \
     FN(pad_relaxed)                                              \
+    FN(random_multinomial)                                       \
     FN(relu1_float_1)                                            \
     FN(relu1_float_1_relaxed)                                    \
     FN(relu1_float_2)                                            \

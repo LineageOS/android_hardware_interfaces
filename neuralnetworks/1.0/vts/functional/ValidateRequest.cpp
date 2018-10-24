@@ -36,9 +36,9 @@ namespace functional {
 using ::android::hardware::neuralnetworks::V1_0::implementation::ExecutionCallback;
 using ::android::hardware::neuralnetworks::V1_0::implementation::PreparedModelCallback;
 using ::android::hidl::memory::V1_0::IMemory;
-using test_helper::MixedTyped;
-using test_helper::MixedTypedExampleType;
 using test_helper::for_all;
+using test_helper::MixedTyped;
+using test_helper::MixedTypedExample;
 
 ///////////////////////// UTILITY FUNCTIONS /////////////////////////
 
@@ -151,15 +151,15 @@ static void removeOutputTest(const sp<IPreparedModel>& preparedModel, const Requ
 
 ///////////////////////////// ENTRY POINT //////////////////////////////////
 
-std::vector<Request> createRequests(const std::vector<MixedTypedExampleType>& examples) {
+std::vector<Request> createRequests(const std::vector<MixedTypedExample>& examples) {
     const uint32_t INPUT = 0;
     const uint32_t OUTPUT = 1;
 
     std::vector<Request> requests;
 
-    for (auto& example : examples) {
-        const MixedTyped& inputs = example.first;
-        const MixedTyped& outputs = example.second;
+    for (const MixedTypedExample& example : examples) {
+        const MixedTyped& inputs = example.operands.first;
+        const MixedTyped& outputs = example.operands.second;
 
         std::vector<RequestArgument> inputs_info, outputs_info;
         uint32_t inputSize = 0, outputSize = 0;
