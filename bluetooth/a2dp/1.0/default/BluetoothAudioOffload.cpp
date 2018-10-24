@@ -23,47 +23,52 @@ namespace a2dp {
 namespace V1_0 {
 namespace implementation {
 
-IBluetoothAudioOffload* HIDL_FETCH_IBluetoothAudioOffload(const char* /* name */) {
-    return new BluetoothAudioOffload();
+IBluetoothAudioOffload* HIDL_FETCH_IBluetoothAudioOffload(
+    const char* /* name */) {
+  return new BluetoothAudioOffload();
 }
 
-// Methods from ::android::hardware::bluetooth::a2dp::V1_0::IBluetoothAudioOffload follow.
-Return<::android::hardware::bluetooth::a2dp::V1_0::Status> BluetoothAudioOffload::startSession(
-    const sp<::android::hardware::bluetooth::a2dp::V1_0::IBluetoothAudioHost>& hostIf __unused,
-    const ::android::hardware::bluetooth::a2dp::V1_0::CodecConfiguration& codecConfig __unused) {
-    /**
-     * Initialize the audio platform if codecConfiguration is supported.
-     * Save the the IBluetoothAudioHost interface, so that it can be used
-     * later to send stream control commands to the HAL client, based on
-     * interaction with Audio framework.
-     */
-    return ::android::hardware::bluetooth::a2dp::V1_0::Status::FAILURE;
+// Methods from
+// ::android::hardware::bluetooth::a2dp::V1_0::IBluetoothAudioOffload follow.
+Return<::android::hardware::bluetooth::a2dp::V1_0::Status>
+BluetoothAudioOffload::startSession(
+    const sp<::android::hardware::bluetooth::a2dp::V1_0::IBluetoothAudioHost>&
+        hostIf __unused,
+    const ::android::hardware::bluetooth::a2dp::V1_0::CodecConfiguration&
+        codecConfig __unused) {
+  /**
+   * Initialize the audio platform if codecConfiguration is supported.
+   * Save the the IBluetoothAudioHost interface, so that it can be used
+   * later to send stream control commands to the HAL client, based on
+   * interaction with Audio framework.
+   */
+  return ::android::hardware::bluetooth::a2dp::V1_0::Status::FAILURE;
 }
 
 Return<void> BluetoothAudioOffload::streamStarted(
     ::android::hardware::bluetooth::a2dp::V1_0::Status status __unused) {
-    /**
-     * Streaming on control path has started,
-     * HAL server should start the streaming on data path.
-     */
-    return Void();
+  /**
+   * Streaming on control path has started,
+   * HAL server should start the streaming on data path.
+   */
+  return Void();
 }
 
 Return<void> BluetoothAudioOffload::streamSuspended(
     ::android::hardware::bluetooth::a2dp::V1_0::Status status __unused) {
-    /**
-     * Streaming on control path has suspend,
-     * HAL server should suspend the streaming on data path.
-     */
-    return Void();
+  /**
+   * Streaming on control path has suspend,
+   * HAL server should suspend the streaming on data path.
+   */
+  return Void();
 }
 
 Return<void> BluetoothAudioOffload::endSession() {
-    /**
-     * Cleanup the audio platform as remote A2DP Sink device is no
-     * longer active
-     */
-    return Void();
+  /**
+   * Cleanup the audio platform as remote A2DP Sink device is no
+   * longer active
+   */
+  return Void();
 }
 
 }  // namespace implementation

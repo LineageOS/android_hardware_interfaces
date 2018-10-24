@@ -60,8 +60,7 @@ class AsyncFdWatcher {
   std::chrono::milliseconds timeout_ms_;
 };
 
-
-} // namespace async
-} // namespace bluetooth
-} // namespace hardware
-} // namespace android
+}  // namespace async
+}  // namespace bluetooth
+}  // namespace hardware
+}  // namespace android

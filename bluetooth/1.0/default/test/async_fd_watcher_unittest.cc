@@ -252,13 +252,13 @@ TEST_F(AsyncFdWatcherSocketTest, TimedOutSchedulesTimeout) {
   });
 
   // Set a timeout flag in each callback.
-  conn_watcher.ConfigureTimeout(
-      std::chrono::milliseconds(500),
-      [&conn_watcher, &timed_out, &timed_out2]() {
-        timed_out = true;
-        conn_watcher.ConfigureTimeout(std::chrono::seconds(1),
+  conn_watcher.ConfigureTimeout(std::chrono::milliseconds(500),
+                                [&conn_watcher, &timed_out, &timed_out2]() {
+                                  timed_out = true;
+                                  conn_watcher.ConfigureTimeout(
+                                      std::chrono::seconds(1),
                                       [&timed_out2]() { timed_out2 = true; });
-      });
+                                });
   EXPECT_FALSE(timed_out);
   EXPECT_FALSE(timed_out2);
   sleep(1);
@@ -385,8 +385,8 @@ TEST_F(AsyncFdWatcherSocketTest, RepeatedTimeOutTest) {
   CleanUpServer();
 }
 
-} // namespace implementation
-} // namespace V1_0
-} // namespace bluetooth
-} // namespace hardware
-} // namespace android
+}  // namespace implementation
+}  // namespace V1_0
+}  // namespace bluetooth
+}  // namespace hardware
+}  // namespace android
