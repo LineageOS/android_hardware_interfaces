@@ -51,3 +51,39 @@ enum ColorMode : @1.1::ColorMode {
      */
     DISPLAY_BT2020 = 13,
 };
+
+/**
+ * HIDL counterpart of `AHardwareBuffer_Desc`.
+ *
+ * An `AHardwareBuffer_Desc` object can be converted to and from a
+ * `HardwareBufferDescription` object by `memcpy()`.
+ *
+ * @sa +ndk libnativewindow#AHardwareBuffer_Desc.
+ */
+typedef uint32_t[10] HardwareBufferDescription;
+
+/**
+ * HIDL counterpart of `AHardwareBuffer`.
+ *
+ * AHardwareBuffer_createFromHandle() can be used to convert a `HardwareBuffer`
+ * object to an `AHardwareBuffer` object.
+ *
+ * Conversely, AHardwareBuffer_getNativeHandle() can be used to extract a native
+ * handle from an `AHardwareBuffer` object. Paired with `AHardwareBuffer_Desc`,
+ * AHardwareBuffer_getNativeHandle() can be used to convert between
+ * `HardwareBuffer` and `AHardwareBuffer`.
+ *
+ * @sa +ndk libnativewindow#AHardwareBuffer".
+ */
+struct HardwareBuffer {
+    HardwareBufferDescription description;
+    handle nativeHandle;
+};
+
+/**
+ * HIDL counterpart of `ARect`.
+ *
+ * @sa +ndk libarect_headers#ARect.
+ */
+typedef int32_t[4] Rect;
+
