@@ -30,7 +30,7 @@ namespace V1_0 {
 namespace vts {
 namespace functional {
 
-using MixedTypedExample = test_helper::MixedTypedExampleType;
+using MixedTypedExample = test_helper::MixedTypedExample;
 
 #define FOR_EACH_TEST_MODEL(FN)                          \
     FN(add_broadcast_quant8)                             \

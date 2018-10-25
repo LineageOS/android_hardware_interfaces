@@ -50,10 +50,13 @@ interface IPowerStats {
      * asynchronous.
      *
      * @param timeMs Time(in ms) for which energyData should be streamed
-     * @return mqDesc Unsynchronous Fast Message Queue descriptor - One
-     *     writer(power.stats HAL) multiple readers are supported. Reader
-     *     should read faster than writer otherwise data might be
-     *     overwritten. Data is present in following format in the queue:
+     * @param samplingRate Frequency(in Hz) at which samples should be
+     *     captured. If the requested sampling rate is not supported then
+     *     SUCCESS is returned and numSamples are reported back according
+     *     to the supported sampling rate.
+     * @return mqDesc Blocking Synchronous Fast Message Queue descriptor - One
+     *     writer(power.stats HAL) and one reader are supported. Data is
+     *     present in the following format in the queue:
      *     +-----------------------+       <--
      *     | EnergyData for rail 1 |         |
      *     +-----------------------+         |
@@ -87,9 +90,10 @@ interface IPowerStats {
      * @return numSamples Number of samples which will be generated in timeMs.
      * @return railsPerSample Number of rails measured per sample.
      * @return status SUCCESS on success or FILESYSTEM_ERROR on filesystem
-     *     nodes access or NOT_SUPPORTED if feature is not enabled.
+     *     nodes access or NOT_SUPPORTED if feature is not enabled or
+     *     INSUFFICIENT_RESOURCES if there are not enough resources.
      */
-    streamEnergyData(uint32_t timeMs)
-        generates(fmq_unsync<EnergyData> mqDesc, uint32_t numSamples,
+    streamEnergyData(uint32_t timeMs, uint32_t samplingRate)
+        generates(fmq_sync<EnergyData> mqDesc, uint32_t numSamples,
                 uint32_t railsPerSample, Status status);
 };

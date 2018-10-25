@@ -27,7 +27,7 @@ namespace vts {
 namespace functional {
 
 // forward declarations
-std::vector<Request> createRequests(const std::vector<MixedTypedExample>& examples);
+std::vector<Request> createRequests(const std::vector<::test_helper::MixedTypedExample>& examples);
 
 // generate validation tests
 #define VTS_CURRENT_TEST_CASE(TestName)                                           \
