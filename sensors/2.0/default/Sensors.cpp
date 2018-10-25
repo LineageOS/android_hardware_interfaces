@@ -16,6 +16,8 @@
 
 #include "Sensors.h"
 
+#include <log/log.h>
+
 namespace android {
 namespace hardware {
 namespace sensors {
@@ -27,6 +29,12 @@ using ::android::hardware::sensors::V1_0::OperationMode;
 using ::android::hardware::sensors::V1_0::RateLevel;
 using ::android::hardware::sensors::V1_0::Result;
 using ::android::hardware::sensors::V1_0::SharedMemInfo;
+
+Sensors::Sensors() : mEventQueueFlag(nullptr) {}
+
+Sensors::~Sensors() {
+    deleteEventFlag();
+}
 
 // Methods from ::android::hardware::sensors::V2_0::ISensors follow.
 Return<void> Sensors::getSensorsList(getSensorsList_cb /* _hidl_cb */) {
@@ -45,11 +53,37 @@ Return<Result> Sensors::activate(int32_t /* sensorHandle */, bool /* enabled */)
 }
 
 Return<Result> Sensors::initialize(
-    const ::android::hardware::MQDescriptorSync<Event>& /* eventQueueDescriptor */,
-    const ::android::hardware::MQDescriptorSync<uint32_t>& /* wakeLockDescriptor */,
-    const sp<ISensorsCallback>& /* sensorsCallback */) {
-    // TODO implement
-    return Result{};
+    const ::android::hardware::MQDescriptorSync<Event>& eventQueueDescriptor,
+    const ::android::hardware::MQDescriptorSync<uint32_t>& wakeLockDescriptor,
+    const sp<ISensorsCallback>& sensorsCallback) {
+    Result result = Result::OK;
+
+    // Save a reference to the callback
+    mCallback = sensorsCallback;
+
+    // Create the Event FMQ from the eventQueueDescriptor. Reset the read/write positions.
+    mEventQueue =
+        std::make_unique<EventMessageQueue>(eventQueueDescriptor, true /* resetPointers */);
+
+    // Ensure that any existing EventFlag is properly deleted
+    deleteEventFlag();
+
+    // Create the EventFlag that is used to signal to the framework that sensor events have been
+    // written to the Event FMQ
+    if (EventFlag::createEventFlag(mEventQueue->getEventFlagWord(), &mEventQueueFlag) != OK) {
+        result = Result::BAD_VALUE;
+    }
+
+    // Create the Wake Lock FMQ that is used by the framework to communicate whenever WAKE_UP
+    // events have been successfully read and handled by the framework.
+    mWakeLockQueue =
+        std::make_unique<WakeLockMessageQueue>(wakeLockDescriptor, true /* resetPointers */);
+
+    if (!mCallback || !mEventQueue || !mWakeLockQueue || mEventQueueFlag == nullptr) {
+        result = Result::BAD_VALUE;
+    }
+
+    return result;
 }
 
 Return<Result> Sensors::batch(int32_t /* sensorHandle */, int64_t /* samplingPeriodNs */,
@@ -84,6 +118,13 @@ Return<void> Sensors::configDirectReport(int32_t /* sensorHandle */, int32_t /* 
                                          configDirectReport_cb /* _hidl_cb */) {
     // TODO implement
     return Void();
+}
+
+void Sensors::deleteEventFlag() {
+    status_t status = EventFlag::deleteEventFlag(&mEventQueueFlag);
+    if (status != OK) {
+        ALOGI("Failed to delete event flag: %d", status);
+    }
 }
 
 }  // namespace implementation
