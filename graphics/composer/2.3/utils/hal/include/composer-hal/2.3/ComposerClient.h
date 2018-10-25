@@ -39,25 +39,14 @@ template <typename Interface, typename Hal>
 class ComposerClientImpl : public V2_2::hal::detail::ComposerClientImpl<Interface, Hal> {
    public:
     Return<Error> setColorMode_2_3(Display display, ColorMode mode, RenderIntent intent) override {
-#ifndef USES_DISPLAY_RENDER_INTENTS
-        if (intent != RenderIntent::COLORIMETRIC) {
-            return Error::BAD_PARAMETER;
-        }
-#endif
         return mHal->setColorMode_2_3(display, mode, intent);
     }
 
     Return<void> getRenderIntents_2_3(Display display, ColorMode mode,
                                       IComposerClient::getRenderIntents_2_3_cb hidl_cb) override {
-#ifdef USES_DISPLAY_RENDER_INTENTS
         std::vector<RenderIntent> intents;
         Error err = mHal->getRenderIntents_2_3(display, mode, &intents);
         hidl_cb(err, intents);
-#else
-        (void)display;
-        (void)mode;
-        hidl_cb(Error::NONE, hidl_vec<RenderIntent>({RenderIntent::COLORIMETRIC}));
-#endif
         return Void();
     }
 
