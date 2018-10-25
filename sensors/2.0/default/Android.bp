@@ -20,6 +20,7 @@ cc_binary {
     relative_install_path: "hw",
     srcs: [
         "service.cpp",
+        "Sensor.cpp",
         "Sensors.cpp",
     ],
     init_rc: ["android.hardware.sensors@2.0-service.rc"],

@@ -16,6 +16,7 @@
 
 #include "Sensors.h"
 
+#include <android/hardware/sensors/2.0/types.h>
 #include <log/log.h>
 
 namespace android {
@@ -37,8 +38,15 @@ Sensors::~Sensors() {
 }
 
 // Methods from ::android::hardware::sensors::V2_0::ISensors follow.
-Return<void> Sensors::getSensorsList(getSensorsList_cb /* _hidl_cb */) {
-    // TODO implement
+Return<void> Sensors::getSensorsList(getSensorsList_cb _hidl_cb) {
+    std::vector<SensorInfo> sensors;
+    for (const auto& sensor : mSensors) {
+        sensors.push_back(sensor.second->getSensorInfo());
+    }
+
+    // Call the HIDL callback with the SensorInfo
+    _hidl_cb(sensors);
+
     return Void();
 }
 
@@ -47,9 +55,13 @@ Return<Result> Sensors::setOperationMode(OperationMode /* mode */) {
     return Result{};
 }
 
-Return<Result> Sensors::activate(int32_t /* sensorHandle */, bool /* enabled */) {
-    // TODO implement
-    return Result{};
+Return<Result> Sensors::activate(int32_t sensorHandle, bool enabled) {
+    auto sensor = mSensors.find(sensorHandle);
+    if (sensor != mSensors.end()) {
+        sensor->second->activate(enabled);
+        return Result::OK;
+    }
+    return Result::BAD_VALUE;
 }
 
 Return<Result> Sensors::initialize(
@@ -86,10 +98,14 @@ Return<Result> Sensors::initialize(
     return result;
 }
 
-Return<Result> Sensors::batch(int32_t /* sensorHandle */, int64_t /* samplingPeriodNs */,
+Return<Result> Sensors::batch(int32_t sensorHandle, int64_t samplingPeriodNs,
                               int64_t /* maxReportLatencyNs */) {
-    // TODO implement
-    return Result{};
+    Result result = Result::BAD_VALUE;
+    auto sensor = mSensors.find(sensorHandle);
+    if (sensor != mSensors.end() && sensor->second->batch(samplingPeriodNs)) {
+        result = Result::OK;
+    }
+    return result;
 }
 
 Return<Result> Sensors::flush(int32_t /* sensorHandle */) {
@@ -103,21 +119,19 @@ Return<Result> Sensors::injectSensorData(const Event& /* event */) {
 }
 
 Return<void> Sensors::registerDirectChannel(const SharedMemInfo& /* mem */,
-                                            registerDirectChannel_cb /* _hidl_cb */) {
-    // TODO implement
-    return Void();
+                                            registerDirectChannel_cb _hidl_cb) {
+    _hidl_cb(Result::INVALID_OPERATION, 0 /* channelHandle */);
+    return Return<void>();
 }
 
 Return<Result> Sensors::unregisterDirectChannel(int32_t /* channelHandle */) {
-    // TODO implement
-    return Result{};
+    return Result::INVALID_OPERATION;
 }
 
 Return<void> Sensors::configDirectReport(int32_t /* sensorHandle */, int32_t /* channelHandle */,
-                                         RateLevel /* rate */,
-                                         configDirectReport_cb /* _hidl_cb */) {
-    // TODO implement
-    return Void();
+                                         RateLevel /* rate */, configDirectReport_cb _hidl_cb) {
+    _hidl_cb(Result::INVALID_OPERATION, 0 /* reportToken */);
+    return Return<void>();
 }
 
 void Sensors::deleteEventFlag() {
