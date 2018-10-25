@@ -34,7 +34,8 @@ size_t H4Protocol::Send(uint8_t type, const uint8_t* data, size_t length) {
                         {const_cast<uint8_t*>(data), length}};
   ssize_t ret = 0;
   do {
-    ret = TEMP_FAILURE_RETRY(writev(uart_fd_, iov, sizeof(iov) / sizeof(iov[0])));
+    ret =
+        TEMP_FAILURE_RETRY(writev(uart_fd_, iov, sizeof(iov) / sizeof(iov[0])));
   } while (-1 == ret && EAGAIN == errno);
 
   if (ret == -1) {
