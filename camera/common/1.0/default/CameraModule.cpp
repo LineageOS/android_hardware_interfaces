@@ -466,8 +466,8 @@ status_t CameraModule::filterOpenErrorCode(status_t err) {
 }
 
 void CameraModule::removeCamera(int cameraId) {
-    free_camera_metadata(
-        const_cast<camera_metadata_t*>(mCameraInfoMap[cameraId].static_camera_characteristics));
+    free_camera_metadata(const_cast<camera_metadata_t*>(
+        mCameraInfoMap.valueFor(cameraId).static_camera_characteristics));
     mCameraInfoMap.removeItem(cameraId);
     mDeviceVersionMap.removeItem(cameraId);
 }
