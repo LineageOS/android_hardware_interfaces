@@ -47,7 +47,7 @@ class SensorsHidlEnvironmentV2_0 : public SensorsHidlEnvironmentBase {
 
     virtual void HidlTearDown() override;
 
-   private:
+   protected:
     friend SensorsHidlTest;
 
     SensorsHidlEnvironmentV2_0() : mEventQueueFlag(nullptr) {}
