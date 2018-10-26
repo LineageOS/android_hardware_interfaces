@@ -796,6 +796,12 @@ wifi_error WifiLegacyHal::resetTxPowerScenario(const std::string& iface_name) {
         getIfaceHandle(iface_name));
 }
 
+wifi_error WifiLegacyHal::setLatencyMode(const std::string& iface_name,
+                                         wifi_latency_mode mode) {
+    return global_func_table_.wifi_set_latency_mode(getIfaceHandle(iface_name),
+                                                    mode);
+}
+
 std::pair<wifi_error, uint32_t> WifiLegacyHal::getLoggerSupportedFeatureSet(
     const std::string& iface_name) {
     uint32_t supported_feature_flags;

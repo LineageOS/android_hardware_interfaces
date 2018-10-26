@@ -69,9 +69,9 @@ convertLegacyLoggerFeatureToHidlStaIfaceCapability(uint32_t feature) {
     return {};
 }
 
-V1_2::IWifiChip::ChipCapabilityMask convertLegacyFeatureToHidlChipCapability(
+V1_3::IWifiChip::ChipCapabilityMask convertLegacyFeatureToHidlChipCapability(
     uint32_t feature) {
-    using HidlChipCaps = V1_2::IWifiChip::ChipCapabilityMask;
+    using HidlChipCaps = V1_3::IWifiChip::ChipCapabilityMask;
     switch (feature) {
         case WIFI_FEATURE_SET_TX_POWER_LIMIT:
             return HidlChipCaps::SET_TX_POWER_LIMIT;
@@ -81,6 +81,8 @@ V1_2::IWifiChip::ChipCapabilityMask convertLegacyFeatureToHidlChipCapability(
             return HidlChipCaps::D2D_RTT;
         case WIFI_FEATURE_D2AP_RTT:
             return HidlChipCaps::D2AP_RTT;
+        case WIFI_FEATURE_SET_LATENCY_MODE:
+            return HidlChipCaps::SET_LATENCY_MODE;
     };
     CHECK(false) << "Unknown legacy feature: " << feature;
     return {};
@@ -141,7 +143,8 @@ bool convertLegacyFeaturesToHidlChipCapabilities(
     }
     for (const auto feature :
          {WIFI_FEATURE_SET_TX_POWER_LIMIT, WIFI_FEATURE_USE_BODY_HEAD_SAR,
-          WIFI_FEATURE_D2D_RTT, WIFI_FEATURE_D2AP_RTT}) {
+          WIFI_FEATURE_D2D_RTT, WIFI_FEATURE_D2AP_RTT,
+          WIFI_FEATURE_SET_LATENCY_MODE}) {
         if (feature & legacy_feature_set) {
             *hidl_caps |= convertLegacyFeatureToHidlChipCapability(feature);
         }
@@ -289,6 +292,17 @@ legacy_hal::wifi_power_scenario convertHidlTxPowerScenarioToLegacy_1_2(
         case V1_2::IWifiChip::TxPowerScenario::ON_BODY_CELL_ON:
             return legacy_hal::WIFI_POWER_SCENARIO_ON_BODY_CELL_ON;
     };
+    CHECK(false);
+}
+
+legacy_hal::wifi_latency_mode convertHidlLatencyModeToLegacy(
+    IWifiChip::LatencyMode hidl_latency_mode) {
+    switch (hidl_latency_mode) {
+        case IWifiChip::LatencyMode::NORMAL:
+            return legacy_hal::WIFI_LATENCY_MODE_NORMAL;
+        case IWifiChip::LatencyMode::LOW:
+            return legacy_hal::WIFI_LATENCY_MODE_LOW;
+    }
     CHECK(false);
 }
 
