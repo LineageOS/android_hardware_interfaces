@@ -40,6 +40,8 @@
 #include PATH(android/hardware/audio/FILE_VERSION/IPrimaryDevice.h)
 #include PATH(android/hardware/audio/FILE_VERSION/types.h)
 #include PATH(android/hardware/audio/common/FILE_VERSION/types.h)
+
+#include <Serializer.h>
 #include <fmq/EventFlag.h>
 #include <fmq/MessageQueue.h>
 
@@ -50,6 +52,7 @@
 #include "utility/EnvironmentTearDown.h"
 #include "utility/PrettyPrintAudioTypes.h"
 #include "utility/ReturnIn.h"
+#include "utility/ValidateXml.h"
 
 /** Provide version specific functions that are used in the generic tests */
 #if MAJOR_VERSION == 2
@@ -64,7 +67,12 @@ using std::string;
 using std::to_string;
 using std::vector;
 
+using ::android::AudioPolicyConfig;
+using ::android::HwModule;
+using ::android::NO_INIT;
+using ::android::OK;
 using ::android::sp;
+using ::android::status_t;
 using ::android::hardware::EventFlag;
 using ::android::hardware::hidl_bitfield;
 using ::android::hardware::hidl_enum_range;
@@ -120,6 +128,10 @@ static auto okOrInvalidStateOrNotSupported = {Result::OK, Result::INVALID_STATE,
 static auto invalidArgsOrNotSupported = {Result::INVALID_ARGUMENTS, Result::NOT_SUPPORTED};
 static auto invalidStateOrNotSupported = {Result::INVALID_STATE, Result::NOT_SUPPORTED};
 
+//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////// Environment /////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+
 class AudioHidlTestEnvironment : public ::Environment {
    public:
     virtual void registerTestServices() override { registerTestService<IDevicesFactory>(); }
@@ -135,11 +147,103 @@ class HidlTest : public ::testing::VtsHalHidlTargetTestBase {
 };
 
 //////////////////////////////////////////////////////////////////////////////
+////////////////////////// Audio policy configuration ////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+
+static const std::vector<const char*> kConfigLocations = {"/odm/etc", "/vendor/etc", "/system/etc"};
+static constexpr char kConfigFileName[] = "audio_policy_configuration.xml";
+
+// Stringify the argument.
+#define QUOTE(x) #x
+#define STRINGIFY(x) QUOTE(x)
+
+TEST(CheckConfig, audioPolicyConfigurationValidation) {
+    RecordProperty("description",
+                   "Verify that the audio policy configuration file "
+                   "is valid according to the schema");
+
+    const char* xsd = "/data/local/tmp/audio_policy_configuration_" STRINGIFY(CPP_VERSION) ".xsd";
+    EXPECT_ONE_VALID_XML_MULTIPLE_LOCATIONS(kConfigFileName, kConfigLocations, xsd);
+}
+
+struct PolicyConfigData {
+    android::HwModuleCollection hwModules;
+    android::DeviceVector availableOutputDevices;
+    android::DeviceVector availableInputDevices;
+    sp<android::DeviceDescriptor> defaultOutputDevice;
+    android::VolumeCurvesCollection volumes;
+};
+
+class PolicyConfig : private PolicyConfigData, public AudioPolicyConfig {
+   public:
+    PolicyConfig()
+        : AudioPolicyConfig(hwModules, availableOutputDevices, availableInputDevices,
+                            defaultOutputDevice, &volumes) {
+        for (const char* location : kConfigLocations) {
+            std::string path = std::string(location) + '/' + kConfigFileName;
+            if (access(path.c_str(), F_OK) == 0) {
+                mFilePath = path;
+                break;
+            }
+        }
+        mStatus = android::deserializeAudioPolicyFile(mFilePath.c_str(), this);
+        if (mStatus == OK) {
+            mPrimaryModule = getHwModules().getModuleFromName("primary");
+        }
+    }
+    status_t getStatus() const { return mStatus; }
+    std::string getError() const {
+        if (mFilePath.empty()) {
+            return std::string{"Could not find "} + kConfigFileName +
+                   " file in: " + testing::PrintToString(kConfigLocations);
+        } else {
+            return "Invalid config file: " + mFilePath;
+        }
+    }
+    const std::string& getFilePath() const { return mFilePath; }
+    sp<const HwModule> getPrimaryModule() const { return mPrimaryModule; }
+
+   private:
+    status_t mStatus = NO_INIT;
+    std::string mFilePath;
+    sp<HwModule> mPrimaryModule = nullptr;
+};
+
+// Cached policy config after parsing for faster test startup
+const PolicyConfig& getCachedPolicyConfig() {
+    static std::unique_ptr<PolicyConfig> policyConfig = [] {
+        auto config = std::make_unique<PolicyConfig>();
+        environment->registerTearDown([] { policyConfig.reset(); });
+        return config;
+    }();
+    return *policyConfig;
+}
+
+class AudioPolicyConfigTest : public HidlTest {
+   public:
+    void SetUp() override {
+        ASSERT_NO_FATAL_FAILURE(HidlTest::SetUp());  // setup base
+
+        auto& policyConfig = getCachedPolicyConfig();
+        ASSERT_EQ(0, policyConfig.getStatus()) << policyConfig.getError();
+
+        mPrimaryConfig = policyConfig.getPrimaryModule();
+        ASSERT_TRUE(mPrimaryConfig) << "Could not find primary module in configuration file: "
+                                    << policyConfig.getFilePath();
+    }
+    sp<const HwModule> mPrimaryConfig = nullptr;
+};
+
+TEST_F(AudioPolicyConfigTest, LoadAudioPolicyXMLConfiguration) {
+    doc::test("Test parsing audio_policy_configuration.xml (called in SetUp)");
+}
+
+//////////////////////////////////////////////////////////////////////////////
 ////////////////////// getService audio_devices_factory //////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
 // Test all audio devices
-class AudioHidlTest : public HidlTest {
+class AudioHidlTest : public AudioPolicyConfigTest {
    public:
     void SetUp() override {
         ASSERT_NO_FATAL_FAILURE(HidlTest::SetUp());  // setup base
@@ -346,6 +450,20 @@ TEST_F(AudioPatchPrimaryHidlTest, AudioPatches) {
 
 class AudioConfigPrimaryTest : public AudioPatchPrimaryHidlTest {
    public:
+    // for retro compatibility only test the primary device IN_BUILTIN_MIC
+    // FIXME: in the next audio HAL version, test all available devices
+    static bool primaryHasMic() {
+        auto& policyConfig = getCachedPolicyConfig();
+        if (policyConfig.getStatus() != OK || policyConfig.getPrimaryModule() == nullptr) {
+            return true;  // Could not get the information, run all tests
+        }
+        auto getMic = [](auto& devs) { return devs.getDevice(AUDIO_DEVICE_IN_BUILTIN_MIC, {}); };
+        auto primaryMic = getMic(policyConfig.getPrimaryModule()->getDeclaredDevices());
+        auto availableMic = getMic(policyConfig.getAvailableInputDevices());
+
+        return primaryMic != nullptr && primaryMic->equals(availableMic);
+    }
+
     // Cache result ?
     static const vector<AudioConfig> getRequiredSupportPlaybackAudioConfig() {
         return combineAudioConfig({AudioChannelMask::OUT_STEREO, AudioChannelMask::OUT_MONO},
@@ -365,10 +483,12 @@ class AudioConfigPrimaryTest : public AudioPatchPrimaryHidlTest {
     }
 
     static const vector<AudioConfig> getRequiredSupportCaptureAudioConfig() {
+        if (!primaryHasMic()) return {};
         return combineAudioConfig({AudioChannelMask::IN_MONO}, {8000, 11025, 16000, 44100},
                                   {AudioFormat::PCM_16_BIT});
     }
     static const vector<AudioConfig> getRecommendedSupportCaptureAudioConfig() {
+        if (!primaryHasMic()) return {};
         return combineAudioConfig({AudioChannelMask::IN_STEREO}, {22050, 48000},
                                   {AudioFormat::PCM_16_BIT});
     }
