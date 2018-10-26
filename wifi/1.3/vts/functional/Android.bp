@@ -19,6 +19,7 @@ cc_test {
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: [
         "VtsHalWifiV1_3TargetTest.cpp",
+        "wifi_chip_hidl_test.cpp",
     ],
     static_libs: [
         "VtsHalWifiV1_0TargetTestUtil",
