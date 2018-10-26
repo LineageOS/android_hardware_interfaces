@@ -23,6 +23,7 @@
 #include <VtsHalHidlTargetTestEnvBase.h>
 
 using ::android::sp;
+using ::android::hardware::hidl_enum_range;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
@@ -183,9 +184,8 @@ TEST_F(ThermalHidlTest, TemperatureTest) {
                                              EXPECT_NE(ThermalStatusCode::SUCCESS, status.code);
                                          }
                                      });
-    for (int i = static_cast<int>(TemperatureType::UNKNOWN);
-         i <= static_cast<int>(TemperatureType::POWER_AMPLIFIER); ++i) {
-        auto type = static_cast<TemperatureType>(i);
+    auto types = hidl_enum_range<TemperatureType>();
+    for (const auto& type : types) {
         mThermal->getCurrentTemperatures(
             true, type, [&type](ThermalStatus status, hidl_vec<Temperature> temperatures) {
                 if (temperatures.size()) {
