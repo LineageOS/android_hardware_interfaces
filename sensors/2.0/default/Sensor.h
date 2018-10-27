@@ -66,6 +66,11 @@ class Sensor {
     ISensorsEventCallback* mCallback;
 };
 
+class AccelSensor : public Sensor {
+   public:
+    AccelSensor(int32_t sensorHandle, ISensorsEventCallback* callback);
+};
+
 }  // namespace implementation
 }  // namespace V2_0
 }  // namespace sensors
