@@ -19,7 +19,14 @@
 
 #include <android/hardware/sensors/1.0/types.h>
 
+#include <condition_variable>
+#include <memory>
+#include <thread>
+#include <vector>
+
+using ::android::hardware::sensors::V1_0::Event;
 using ::android::hardware::sensors::V1_0::SensorInfo;
+using ::android::hardware::sensors::V1_0::SensorType;
 
 namespace android {
 namespace hardware {
@@ -27,18 +34,36 @@ namespace sensors {
 namespace V2_0 {
 namespace implementation {
 
+class ISensorsEventCallback {
+   public:
+    virtual ~ISensorsEventCallback(){};
+    virtual void postEvents(const std::vector<Event>& events) = 0;
+};
+
 class Sensor {
    public:
-    Sensor();
+    Sensor(ISensorsEventCallback* callback);
+    virtual ~Sensor();
 
     const SensorInfo& getSensorInfo() const;
-    bool batch(int32_t samplingPeriodNs);
+    void batch(int32_t samplingPeriodNs);
     void activate(bool enable);
 
    protected:
+    void run();
+    virtual std::vector<Event> readEvents();
+    static void startThread(Sensor* sensor);
+
     bool mIsEnabled;
     int64_t mSamplingPeriodNs;
+    int64_t mLastSampleTimeNs;
     SensorInfo mSensorInfo;
+
+    std::atomic_bool mStopThread;
+    std::condition_variable mWaitCV;
+    std::thread mRunThread;
+
+    ISensorsEventCallback* mCallback;
 };
 
 }  // namespace implementation
