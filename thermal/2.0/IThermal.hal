@@ -42,7 +42,7 @@ interface IThermal extends @1.0::IThermal {
         generates (ThermalStatus status, vec<Temperature> temperatures);
 
     /**
-     * Retrieves temperature thresholds in Celsius.
+     * Retrieves static temperature thresholds in Celsius.
      *
      * @param filterType whether to filter the result for a given type.
      * @param type the TemperatureType such as battery or skin.
@@ -54,7 +54,11 @@ interface IThermal extends @1.0::IThermal {
      *    devices (such as CPUs, GPUs and etc.) in the list must be kept
      *    the same regardless of the number of calls to this method even if
      *    they go offline, if these devices exist on boot. The method
-     *    always returns and never removes such temperatures.
+     *    always returns and never removes such temperatures. The thresholds
+     *    are returned as static values and must not change across calls. The actual
+     *    throttling state is determined in driver and HAL and must not be simply
+     *    compared with these thresholds. To get accurate throttling status, use
+     *    getCurrentTemperatures or registerThermalChangedCallback and listen.
      */
     getTemperatureThresholds(bool filterType, TemperatureType type)
         generates (ThermalStatus status, vec<TemperatureThreshold> temperatureThresholds);

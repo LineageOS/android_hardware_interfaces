@@ -22,6 +22,12 @@ import android.hardware.thermal@1.0::types;
 enum TemperatureType : @1.0::TemperatureType {
     USB_PORT = 4,
     POWER_AMPLIFIER = 5,
+    /**
+     * Battery Charge Limit - virtual thermal sensors
+     */
+    BCL_VOLTAGE = 6,
+    BCL_CURRENT = 7,
+    BCL_PERCENTAGE = 8,
 };
 
 
@@ -88,6 +94,7 @@ struct TemperatureThreshold {
      * Hot throttling temperature constant for this temperature sensor in
      * level defined in ThrottlingSeverity including shutdown. Throttling
      * happens when temperature >= threshold. If not available, set to NAN.
+     * Unit is same as Temperature's value.
      */
     float[ThrottlingSeverityCount:NUM_THROTTLING_LEVELS] hotThrottlingThresholds;
 
@@ -95,13 +102,14 @@ struct TemperatureThreshold {
      * Cold throttling temperature constant for this temperature sensor in
      * level defined in ThrottlingSeverity including shutdown. Throttling
      * happens when temperature <= threshold. If not available, set to NAN.
+     * Unit is same as Temperature's value.
      */
     float[ThrottlingSeverityCount:NUM_THROTTLING_LEVELS] coldThrottlingThresholds;
 
     /**
      * Threshold temperature above which the VR mode clockrate minimums cannot
-     * be maintained for this device.
-     * If not available, set by HAL to NAN.
+     * be maintained for this device. If not available, set by HAL to NAN.
+     * Unit is same as Temperature's value.
      */
     float vrThrottlingThreshold;
 };
@@ -121,7 +129,10 @@ struct Temperature {
     string name;
 
     /**
-     * Current temperature in Celsius. If not available set by HAL to NAN.
+     * For BCL, this is the current reading of the virtual sensor and the unit is
+     * millivolt, milliamp, percentage for BCL_VOLTAGE, BCL_CURRENT and BCL_PERCENTAGE
+     * respectively. For everything else, this is the current temperature in Celsius.
+     * If not available set by HAL to NAN.
      */
     float value;
 
