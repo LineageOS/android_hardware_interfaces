@@ -85,6 +85,10 @@ class SensorsHidlTestBase : public ::testing::VtsHalHidlTargetTestBase {
 
     std::vector<Event> collectEvents(useconds_t timeLimitUs, size_t nEventLimit,
                                      bool clearBeforeStart = true, bool changeCollection = true);
+    static std::vector<Event> collectEvents(useconds_t timeLimitUs, size_t nEventLimit,
+                                            SensorsHidlEnvironmentBase* environment,
+                                            bool clearBeforeStart = true,
+                                            bool changeCollection = true);
 
     inline static SensorFlagBits extractReportMode(uint64_t flag) {
         return (SensorFlagBits)(flag & ((uint64_t)SensorFlagBits::CONTINUOUS_MODE |

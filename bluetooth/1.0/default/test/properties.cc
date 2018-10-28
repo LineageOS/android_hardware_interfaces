@@ -36,7 +36,7 @@ int num_properties = 0;
 struct property properties[MAX_PROPERTIES];
 
 // Find the correct entry.
-static int property_find(const char *key) {
+static int property_find(const char* key) {
   for (int i = 0; i < num_properties; i++) {
     if (strncmp(properties[i].key, key, PROP_KEY_MAX) == 0) {
       return i;
@@ -45,7 +45,7 @@ static int property_find(const char *key) {
   return MAX_PROPERTIES;
 }
 
-int property_set(const char *key, const char *value) {
+int property_set(const char* key, const char* value) {
   if (strnlen(value, PROP_VALUE_MAX) > PROP_VALUE_MAX) return -1;
 
   // Check to see if the property exists.
@@ -63,7 +63,7 @@ int property_set(const char *key, const char *value) {
   return 0;
 }
 
-int property_get(const char *key, char *value, const char *default_value) {
+int property_get(const char* key, char* value, const char* default_value) {
   // This doesn't mock the behavior of default value
   if (default_value != NULL) ALOGE("%s: default_value is ignored!", __func__);
 

@@ -79,6 +79,9 @@ class SensorsHidlTest : public SensorsHidlTestBase {
     SensorsHidlEnvironmentBase* getEnvironment() override {
         return SensorsHidlEnvironmentV2_0::Instance();
     }
+
+    // Helper functions
+    void activateAllSensors(bool enable);
 };
 
 Return<Result> SensorsHidlTest::activate(int32_t sensorHandle, bool enabled) {
@@ -435,6 +438,54 @@ TEST_F(SensorsHidlTest, MagnetometerGrallocDirectReportOperationFast) {
 TEST_F(SensorsHidlTest, MagnetometerGrallocDirectReportOperationVeryFast) {
     testDirectReportOperation(SensorType::MAGNETIC_FIELD, SharedMemType::GRALLOC,
                               RateLevel::VERY_FAST, NullChecker());
+}
+
+void SensorsHidlTest::activateAllSensors(bool enable) {
+    for (const SensorInfo& sensorInfo : getSensorsList()) {
+        if (isValidType(sensorInfo.type)) {
+            batch(sensorInfo.sensorHandle, sensorInfo.minDelay, 0 /* maxReportLatencyNs */);
+            activate(sensorInfo.sensorHandle, enable);
+        }
+    }
+}
+
+// Test that if initialize is called twice, then the HAL writes events to the FMQs from the second
+// call to the function.
+TEST_F(SensorsHidlTest, CallInitializeTwice) {
+    // Create a helper class so that a second environment is able to be instantiated
+    class SensorsHidlEnvironmentTest : public SensorsHidlEnvironmentV2_0 {};
+
+    if (getSensorsList().size() == 0) {
+        // No sensors
+        return;
+    }
+
+    constexpr useconds_t kCollectionTimeoutUs = 1000 * 1000;  // 1s
+    constexpr int32_t kNumEvents = 1;
+
+    // Create a new environment that calls initialize()
+    std::unique_ptr<SensorsHidlEnvironmentTest> newEnv =
+        std::make_unique<SensorsHidlEnvironmentTest>();
+    newEnv->HidlSetUp();
+
+    activateAllSensors(true);
+    // Verify that the old environment does not receive any events
+    ASSERT_EQ(collectEvents(kCollectionTimeoutUs, kNumEvents, getEnvironment()).size(), 0);
+    // Verify that the new event queue receives sensor events
+    ASSERT_GE(collectEvents(kCollectionTimeoutUs, kNumEvents, newEnv.get()).size(), kNumEvents);
+    activateAllSensors(false);
+
+    // Cleanup the test environment
+    newEnv->HidlTearDown();
+
+    // Restore the test environment for future tests
+    SensorsHidlEnvironmentV2_0::Instance()->HidlTearDown();
+    SensorsHidlEnvironmentV2_0::Instance()->HidlSetUp();
+
+    // Ensure that the original environment is receiving events
+    activateAllSensors(true);
+    ASSERT_GE(collectEvents(kCollectionTimeoutUs, kNumEvents).size(), kNumEvents);
+    activateAllSensors(false);
 }
 
 int main(int argc, char** argv) {

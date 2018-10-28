@@ -46,9 +46,7 @@ namespace hardware {
 namespace bluetooth {
 namespace hci {
 
-const hidl_vec<uint8_t>& HciPacketizer::GetPacket() const {
-  return packet_;
-}
+const hidl_vec<uint8_t>& HciPacketizer::GetPacket() const { return packet_; }
 
 void HciPacketizer::OnDataReady(int fd, HciPacketType packet_type) {
   switch (state_) {

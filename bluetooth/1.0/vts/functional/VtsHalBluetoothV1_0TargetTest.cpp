@@ -28,13 +28,13 @@
 #include <VtsHalHidlTargetTestEnvBase.h>
 #include <queue>
 
-using ::android::hardware::bluetooth::V1_0::IBluetoothHci;
-using ::android::hardware::bluetooth::V1_0::IBluetoothHciCallbacks;
-using ::android::hardware::bluetooth::V1_0::Status;
+using ::android::sp;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
-using ::android::sp;
+using ::android::hardware::bluetooth::V1_0::IBluetoothHci;
+using ::android::hardware::bluetooth::V1_0::IBluetoothHciCallbacks;
+using ::android::hardware::bluetooth::V1_0::Status;
 
 #define HCI_MINIMUM_HCI_VERSION 5  // Bluetooth Core Specification 3.0 + HS
 #define HCI_MINIMUM_LMP_VERSION 5  // Bluetooth Core Specification 3.0 + HS
@@ -191,12 +191,12 @@ class BluetoothHidlTest : public ::testing::VtsHalHidlTargetTestBase {
   }
 
   virtual void TearDown() override {
-      // Should not be checked in production code
-      ASSERT_TRUE(bluetooth->close().isOk());
-      handle_no_ops();
-      EXPECT_EQ(static_cast<size_t>(0), event_queue.size());
-      EXPECT_EQ(static_cast<size_t>(0), sco_queue.size());
-      EXPECT_EQ(static_cast<size_t>(0), acl_queue.size());
+    // Should not be checked in production code
+    ASSERT_TRUE(bluetooth->close().isOk());
+    handle_no_ops();
+    EXPECT_EQ(static_cast<size_t>(0), event_queue.size());
+    EXPECT_EQ(static_cast<size_t>(0), sco_queue.size());
+    EXPECT_EQ(static_cast<size_t>(0), acl_queue.size());
   }
 
   void setBufferSizes();
@@ -659,10 +659,11 @@ TEST_F(BluetoothHidlTest, LoopbackModeSinglePackets) {
     EXPECT_LT(0, max_sco_data_packet_length);
     sendAndCheckSCO(1, max_sco_data_packet_length, sco_connection_handles[0]);
     int sco_packets_sent = 1;
-    int completed_packets = wait_for_completed_packets_event(sco_connection_handles[0]);
+    int completed_packets =
+        wait_for_completed_packets_event(sco_connection_handles[0]);
     if (sco_packets_sent != completed_packets) {
-        ALOGW("%s: packets_sent (%d) != completed_packets (%d)", __func__, sco_packets_sent,
-              completed_packets);
+      ALOGW("%s: packets_sent (%d) != completed_packets (%d)", __func__,
+            sco_packets_sent, completed_packets);
     }
   }
 
@@ -670,10 +671,11 @@ TEST_F(BluetoothHidlTest, LoopbackModeSinglePackets) {
     EXPECT_LT(0, max_acl_data_packet_length);
     sendAndCheckACL(1, max_acl_data_packet_length, acl_connection_handles[0]);
     int acl_packets_sent = 1;
-    int completed_packets = wait_for_completed_packets_event(acl_connection_handles[0]);
+    int completed_packets =
+        wait_for_completed_packets_event(acl_connection_handles[0]);
     if (acl_packets_sent != completed_packets) {
-        ALOGW("%s: packets_sent (%d) != completed_packets (%d)", __func__, acl_packets_sent,
-              completed_packets);
+      ALOGW("%s: packets_sent (%d) != completed_packets (%d)", __func__,
+            acl_packets_sent, completed_packets);
     }
   }
 }
@@ -695,10 +697,11 @@ TEST_F(BluetoothHidlTest, LoopbackModeBandwidth) {
     sendAndCheckSCO(NUM_SCO_PACKETS_BANDWIDTH, max_sco_data_packet_length,
                     sco_connection_handles[0]);
     int sco_packets_sent = NUM_SCO_PACKETS_BANDWIDTH;
-    int completed_packets = wait_for_completed_packets_event(sco_connection_handles[0]);
+    int completed_packets =
+        wait_for_completed_packets_event(sco_connection_handles[0]);
     if (sco_packets_sent != completed_packets) {
-        ALOGW("%s: packets_sent (%d) != completed_packets (%d)", __func__, sco_packets_sent,
-              completed_packets);
+      ALOGW("%s: packets_sent (%d) != completed_packets (%d)", __func__,
+            sco_packets_sent, completed_packets);
     }
   }
 
@@ -707,10 +710,11 @@ TEST_F(BluetoothHidlTest, LoopbackModeBandwidth) {
     sendAndCheckACL(NUM_ACL_PACKETS_BANDWIDTH, max_acl_data_packet_length,
                     acl_connection_handles[0]);
     int acl_packets_sent = NUM_ACL_PACKETS_BANDWIDTH;
-    int completed_packets = wait_for_completed_packets_event(acl_connection_handles[0]);
+    int completed_packets =
+        wait_for_completed_packets_event(acl_connection_handles[0]);
     if (acl_packets_sent != completed_packets) {
-        ALOGW("%s: packets_sent (%d) != completed_packets (%d)", __func__, acl_packets_sent,
-              completed_packets);
+      ALOGW("%s: packets_sent (%d) != completed_packets (%d)", __func__,
+            acl_packets_sent, completed_packets);
     }
   }
 }

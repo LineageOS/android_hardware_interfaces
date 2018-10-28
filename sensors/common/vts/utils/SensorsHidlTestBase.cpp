@@ -40,6 +40,14 @@ const Vec3NormChecker SensorsHidlTestBase::sGyroNormChecker(
 std::vector<Event> SensorsHidlTestBase::collectEvents(useconds_t timeLimitUs, size_t nEventLimit,
                                                       bool clearBeforeStart,
                                                       bool changeCollection) {
+    return collectEvents(timeLimitUs, nEventLimit, getEnvironment(), clearBeforeStart,
+                         changeCollection);
+}
+
+std::vector<Event> SensorsHidlTestBase::collectEvents(useconds_t timeLimitUs, size_t nEventLimit,
+                                                      SensorsHidlEnvironmentBase* environment,
+                                                      bool clearBeforeStart,
+                                                      bool changeCollection) {
     std::vector<Event> events;
     constexpr useconds_t SLEEP_GRANULARITY = 100 * 1000;  // granularity 100 ms
 
@@ -47,10 +55,10 @@ std::vector<Event> SensorsHidlTestBase::collectEvents(useconds_t timeLimitUs, si
           clearBeforeStart);
 
     if (changeCollection) {
-        getEnvironment()->setCollection(true);
+        environment->setCollection(true);
     }
     if (clearBeforeStart) {
-        getEnvironment()->catEvents(nullptr);
+        environment->catEvents(nullptr);
     }
 
     while (timeLimitUs > 0) {
@@ -58,7 +66,7 @@ std::vector<Event> SensorsHidlTestBase::collectEvents(useconds_t timeLimitUs, si
         usleep(duration);
         timeLimitUs -= duration;
 
-        getEnvironment()->catEvents(&events);
+        environment->catEvents(&events);
         if (events.size() >= nEventLimit) {
             break;
         }
@@ -67,7 +75,7 @@ std::vector<Event> SensorsHidlTestBase::collectEvents(useconds_t timeLimitUs, si
     }
 
     if (changeCollection) {
-        getEnvironment()->setCollection(false);
+        environment->setCollection(false);
     }
     return events;
 }
