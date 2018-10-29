@@ -39,12 +39,21 @@ using ::android::hardware::sensors::V1_0::Vec3;
 
 class EventCallback : public IEventCallback {
    public:
+    void reset() {
+        mFlushMap.clear();
+        mEventMap.clear();
+    }
+
     void onEvent(const ::android::hardware::sensors::V1_0::Event& event) override {
         if (event.sensorType == SensorType::ADDITIONAL_INFO &&
             event.u.meta.what == MetaDataEventType::META_DATA_FLUSH_COMPLETE) {
             std::unique_lock<std::recursive_mutex> lock(mFlushMutex);
             mFlushMap[event.sensorHandle]++;
             mFlushCV.notify_all();
+        } else if (event.sensorType != SensorType::ADDITIONAL_INFO) {
+            std::unique_lock<std::recursive_mutex> lock(mEventMutex);
+            mEventMap[event.sensorHandle].push_back(event);
+            mEventCV.notify_all();
         }
     }
 
@@ -60,6 +69,17 @@ class EventCallback : public IEventCallback {
                           [&] { return flushesReceived(sensorsToWaitFor, numCallsToFlush); });
     }
 
+    const std::vector<Event> getEvents(int32_t sensorHandle) {
+        std::unique_lock<std::recursive_mutex> lock(mEventMutex);
+        return mEventMap[sensorHandle];
+    }
+
+    void waitForEvents(const std::vector<SensorInfo>& sensorsToWaitFor, int32_t timeoutMs) {
+        std::unique_lock<std::recursive_mutex> lock(mEventMutex);
+        mEventCV.wait_for(lock, std::chrono::milliseconds(timeoutMs),
+                          [&] { return eventsReceived(sensorsToWaitFor); });
+    }
+
    protected:
     bool flushesReceived(const std::vector<SensorInfo>& sensorsToWaitFor, int32_t numCallsToFlush) {
         for (const SensorInfo& sensor : sensorsToWaitFor) {
@@ -70,9 +90,22 @@ class EventCallback : public IEventCallback {
         return true;
     }
 
+    bool eventsReceived(const std::vector<SensorInfo>& sensorsToWaitFor) {
+        for (const SensorInfo& sensor : sensorsToWaitFor) {
+            if (getEvents(sensor.sensorHandle).size() == 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     std::map<int32_t, int32_t> mFlushMap;
     std::recursive_mutex mFlushMutex;
     std::condition_variable_any mFlushCV;
+
+    std::map<int32_t, std::vector<Event>> mEventMap;
+    std::recursive_mutex mEventMutex;
+    std::condition_variable_any mEventCV;
 };
 
 // The main test class for SENSORS HIDL HAL.
@@ -679,6 +712,81 @@ TEST_F(SensorsHidlTest, Batch) {
     sensor.sensorHandle = getInvalidSensorHandle();
     ASSERT_EQ(batch(sensor.sensorHandle, sensor.minDelay, 0 /* maxReportLatencyNs */),
               Result::BAD_VALUE);
+}
+
+TEST_F(SensorsHidlTest, Activate) {
+    if (getSensorsList().size() == 0) {
+        return;
+    }
+
+    // Verify that sensor events are generated when activate is called
+    for (const SensorInfo& sensor : getSensorsList()) {
+        batch(sensor.sensorHandle, sensor.minDelay, 0 /* maxReportLatencyNs */);
+        ASSERT_EQ(activate(sensor.sensorHandle, true), Result::OK);
+
+        // Call activate on a sensor that is already activated
+        ASSERT_EQ(activate(sensor.sensorHandle, true), Result::OK);
+
+        // Deactivate the sensor
+        ASSERT_EQ(activate(sensor.sensorHandle, false), Result::OK);
+
+        // Call deactivate on a sensor that is already deactivated
+        ASSERT_EQ(activate(sensor.sensorHandle, false), Result::OK);
+    }
+
+    // Attempt to activate an invalid sensor
+    int32_t invalidHandle = getInvalidSensorHandle();
+    ASSERT_EQ(activate(invalidHandle, true), Result::BAD_VALUE);
+    ASSERT_EQ(activate(invalidHandle, false), Result::BAD_VALUE);
+}
+
+TEST_F(SensorsHidlTest, NoStaleEvents) {
+    constexpr int64_t kFiveHundredMilliseconds = 500 * 1000;
+    constexpr int64_t kOneSecond = 1000 * 1000;
+
+    // Register the callback to receive sensor events
+    EventCallback callback;
+    getEnvironment()->registerCallback(&callback);
+
+    const std::vector<SensorInfo> sensors = getSensorsList();
+    int32_t maxMinDelay = 0;
+    for (const SensorInfo& sensor : getSensorsList()) {
+        maxMinDelay = std::max(maxMinDelay, sensor.minDelay);
+    }
+
+    // Activate the sensors so that they start generating events
+    activateAllSensors(true);
+
+    // According to the CDD, the first sample must be generated within 400ms + 2 * sample_time
+    // and the maximum reporting latency is 100ms + 2 * sample_time. Wait a sufficient amount
+    // of time to guarantee that a sample has arrived.
+    callback.waitForEvents(sensors, kFiveHundredMilliseconds + (5 * maxMinDelay));
+    activateAllSensors(false);
+
+    // Save the last received event for each sensor
+    std::map<int32_t, int64_t> lastEventTimestampMap;
+    for (const SensorInfo& sensor : sensors) {
+        ASSERT_GE(callback.getEvents(sensor.sensorHandle).size(), 1);
+        lastEventTimestampMap[sensor.sensorHandle] =
+            callback.getEvents(sensor.sensorHandle).back().timestamp;
+    }
+
+    // Allow some time to pass, reset the callback, then reactivate the sensors
+    usleep(kOneSecond + (5 * maxMinDelay));
+    callback.reset();
+    activateAllSensors(true);
+    callback.waitForEvents(sensors, kFiveHundredMilliseconds + (5 * maxMinDelay));
+    activateAllSensors(false);
+
+    for (const SensorInfo& sensor : sensors) {
+        // Ensure that the first event received is not stale by ensuring that its timestamp is
+        // sufficiently different from the previous event
+        const Event newEvent = callback.getEvents(sensor.sensorHandle).front();
+        int64_t delta = newEvent.timestamp - lastEventTimestampMap[sensor.sensorHandle];
+        ASSERT_GE(delta, kFiveHundredMilliseconds + (3 * sensor.minDelay));
+    }
+
+    getEnvironment()->unregisterCallback();
 }
 
 int main(int argc, char** argv) {
