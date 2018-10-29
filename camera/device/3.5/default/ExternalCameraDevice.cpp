@@ -86,6 +86,27 @@ status_t ExternalCameraDevice::initDefaultCharsKeys(
     return OK;
 }
 
+Return<void> ExternalCameraDevice::isStreamCombinationSupported(
+        const V3_4::StreamConfiguration& streams,
+        V3_5::ICameraDevice::isStreamCombinationSupported_cb _hidl_cb) {
+
+    if (isInitFailed()) {
+        ALOGE("%s: camera %s. camera init failed!", __FUNCTION__, mCameraId.c_str());
+        _hidl_cb(Status::INTERNAL_ERROR, false);
+        return Void();
+    }
+
+    hidl_vec<V3_2::Stream> streamsV3_2(streams.streams.size());
+    size_t i = 0;
+    for (const auto& it : streams.streams) {
+        streamsV3_2[i++] = it.v3_2;
+    }
+    V3_2::StreamConfiguration streamConfig = {streamsV3_2, streams.operationMode};
+    auto status = ExternalCameraDeviceSession::isStreamCombinationSupported(streamConfig,
+            mSupportedFormats);
+    _hidl_cb(Status::OK, Status::OK == status);
+    return Void();
+}
 #undef UPDATE
 
 }  // namespace implementation

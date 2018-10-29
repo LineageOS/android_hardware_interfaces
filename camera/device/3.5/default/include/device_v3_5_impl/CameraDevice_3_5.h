@@ -64,6 +64,10 @@ protected:
     Return<void> getPhysicalCameraCharacteristics(const hidl_string& physicalCameraId,
             V3_5::ICameraDevice::getPhysicalCameraCharacteristics_cb _hidl_cb);
 
+    Return<void> isStreamCombinationSupported(
+            const V3_4::StreamConfiguration& streams,
+            V3_5::ICameraDevice::isStreamCombinationSupported_cb _hidl_cb);
+
 private:
     struct TrampolineDeviceInterface_3_5 : public ICameraDevice {
         TrampolineDeviceInterface_3_5(sp<CameraDevice> parent) :
@@ -96,6 +100,13 @@ private:
                 V3_5::ICameraDevice::getPhysicalCameraCharacteristics_cb _hidl_cb) override {
             return mParent->getPhysicalCameraCharacteristics(physicalCameraId, _hidl_cb);
         }
+
+        virtual Return<void> isStreamCombinationSupported(
+                const V3_4::StreamConfiguration& streams,
+                V3_5::ICameraDevice::isStreamCombinationSupported_cb _hidl_cb) override {
+            return mParent->isStreamCombinationSupported(streams, _hidl_cb);
+        }
+
     private:
         sp<CameraDevice> mParent;
     };

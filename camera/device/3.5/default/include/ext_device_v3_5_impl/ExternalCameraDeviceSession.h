@@ -90,6 +90,12 @@ struct ExternalCameraDeviceSession : public V3_4::implementation::ExternalCamera
         return new TrampolineSessionInterface_3_5(this);
     }
 
+    static Status isStreamCombinationSupported(const V3_2::StreamConfiguration& config,
+            const std::vector<SupportedV4L2Format>& supportedFormats) {
+        return V3_4::implementation::ExternalCameraDeviceSession::isStreamCombinationSupported(
+                config, supportedFormats);
+    }
+
 protected:
     // Methods from v3.4 and earlier will trampoline to inherited implementation
     Return<void> configureStreams_3_5(

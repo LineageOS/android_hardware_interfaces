@@ -2163,7 +2163,8 @@ void ExternalCameraDeviceSession::updateBufferCaches(const hidl_vec<BufferCache>
     }
 }
 
-bool ExternalCameraDeviceSession::isSupported(const Stream& stream) {
+bool ExternalCameraDeviceSession::isSupported(const Stream& stream,
+        const std::vector<SupportedV4L2Format>& supportedFormats) {
     int32_t ds = static_cast<int32_t>(stream.dataSpace);
     PixelFormat fmt = stream.format;
     uint32_t width = stream.width;
@@ -2206,7 +2207,7 @@ bool ExternalCameraDeviceSession::isSupported(const Stream& stream) {
     // Assume we can convert any V4L2 format to any of supported output format for now, i.e,
     // ignoring v4l2Fmt.fourcc for now. Might need more subtle check if we support more v4l format
     // in the futrue.
-    for (const auto& v4l2Fmt : mSupportedFormats) {
+    for (const auto& v4l2Fmt : supportedFormats) {
         if (width == v4l2Fmt.width && height == v4l2Fmt.height) {
             return true;
         }
@@ -2541,11 +2542,9 @@ void ExternalCameraDeviceSession::enqueueV4l2Frame(const sp<V4L2Frame>& frame) {
     mV4L2BufferReturned.notify_one();
 }
 
-Status ExternalCameraDeviceSession::configureStreams(
+Status ExternalCameraDeviceSession::isStreamCombinationSupported(
         const V3_2::StreamConfiguration& config,
-        V3_3::HalStreamConfiguration* out,
-        uint32_t blobBufferSize) {
-    ATRACE_CALL();
+        const std::vector<SupportedV4L2Format>& supportedFormats) {
     if (config.operationMode != StreamConfigurationMode::NORMAL_MODE) {
         ALOGE("%s: unsupported operation mode: %d", __FUNCTION__, config.operationMode);
         return Status::ILLEGAL_ARGUMENT;
@@ -2560,7 +2559,7 @@ Status ExternalCameraDeviceSession::configureStreams(
     int numStallStream = 0;
     for (const auto& stream : config.streams) {
         // Check if the format/width/height combo is supported
-        if (!isSupported(stream)) {
+        if (!isSupported(stream, supportedFormats)) {
             return Status::ILLEGAL_ARGUMENT;
         }
         if (stream.format == PixelFormat::BLOB) {
@@ -2582,7 +2581,21 @@ Status ExternalCameraDeviceSession::configureStreams(
         return Status::ILLEGAL_ARGUMENT;
     }
 
-    Status status = initStatus();
+    return Status::OK;
+}
+
+Status ExternalCameraDeviceSession::configureStreams(
+        const V3_2::StreamConfiguration& config,
+        V3_3::HalStreamConfiguration* out,
+        uint32_t blobBufferSize) {
+    ATRACE_CALL();
+
+    Status status = isStreamCombinationSupported(config, mSupportedFormats);
+    if (status != Status::OK) {
+        return status;
+    }
+
+    status = initStatus();
     if (status != Status::OK) {
         return status;
     }
