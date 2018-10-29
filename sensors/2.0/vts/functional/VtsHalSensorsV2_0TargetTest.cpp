@@ -654,6 +654,33 @@ TEST_F(SensorsHidlTest, FlushNonexistentSensor) {
                        0 /* expectedFlushCount */, Result::BAD_VALUE);
 }
 
+TEST_F(SensorsHidlTest, Batch) {
+    if (getSensorsList().size() == 0) {
+        return;
+    }
+
+    activateAllSensors(false /* enable */);
+    for (const SensorInfo& sensor : getSensorsList()) {
+        // Call batch on inactive sensor
+        ASSERT_EQ(batch(sensor.sensorHandle, sensor.minDelay, 0 /* maxReportLatencyNs */),
+                  Result::OK);
+
+        // Activate the sensor
+        activate(sensor.sensorHandle, true /* enabled */);
+
+        // Call batch on an active sensor
+        ASSERT_EQ(batch(sensor.sensorHandle, sensor.maxDelay, 0 /* maxReportLatencyNs */),
+                  Result::OK);
+    }
+    activateAllSensors(false /* enable */);
+
+    // Call batch on an invalid sensor
+    SensorInfo sensor = getSensorsList().front();
+    sensor.sensorHandle = getInvalidSensorHandle();
+    ASSERT_EQ(batch(sensor.sensorHandle, sensor.minDelay, 0 /* maxReportLatencyNs */),
+              Result::BAD_VALUE);
+}
+
 int main(int argc, char** argv) {
     ::testing::AddGlobalTestEnvironment(SensorsHidlEnvironmentV2_0::Instance());
     ::testing::InitGoogleTest(&argc, argv);
