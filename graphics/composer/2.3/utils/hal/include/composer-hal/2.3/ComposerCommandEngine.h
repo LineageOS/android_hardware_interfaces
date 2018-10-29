@@ -43,6 +43,8 @@ class ComposerCommandEngine : public V2_2::hal::ComposerCommandEngine {
         switch (static_cast<IComposerClient::Command>(command)) {
             case IComposerClient::Command::SET_LAYER_COLOR_TRANSFORM:
                 return executeSetLayerColorTransform(length);
+            case IComposerClient::Command::SET_LAYER_PER_FRAME_METADATA_BLOBS:
+                return executeSetLayerPerFrameMetadataBlobs(length);
             default:
                 return BaseType2_2::executeCommand(command, length);
         }
@@ -63,6 +65,48 @@ class ComposerCommandEngine : public V2_2::hal::ComposerCommandEngine {
         }
 
         return true;
+    }
+
+    bool executeSetLayerPerFrameMetadataBlobs(uint16_t length) {
+        // must have at least one metadata blob
+        // of at least size 1 in queue (i.e {/*numBlobs=*/1, key, size, blob})
+        if (length < 4) {
+            return false;
+        }
+
+        uint32_t numBlobs = read();
+        length--;
+
+        std::vector<IComposerClient::PerFrameMetadataBlob> metadata;
+
+        for (size_t i = 0; i < numBlobs; i++) {
+            IComposerClient::PerFrameMetadataKey key =
+                static_cast<IComposerClient::PerFrameMetadataKey>(readSigned());
+            uint32_t blobSize = read();
+
+            length -= 2;
+
+            if (length * sizeof(uint32_t) < blobSize) {
+                return false;
+            }
+
+            metadata.push_back({key, std::vector<uint8_t>()});
+            IComposerClient::PerFrameMetadataBlob& metadataBlob = metadata.back();
+            metadataBlob.blob.resize(blobSize);
+            readBlob(blobSize, metadataBlob.blob.data());
+        }
+        auto err = mHal->setLayerPerFrameMetadataBlobs(mCurrentDisplay, mCurrentLayer, metadata);
+        if (err != Error::NONE) {
+            mWriter.setError(getCommandLoc(), err);
+        }
+        return true;
+    }
+
+    void readBlob(uint32_t size, void* blob) {
+        memcpy(blob, &mData[mDataRead], size);
+        uint32_t numElements = size / sizeof(uint32_t);
+        mDataRead += numElements;
+        mDataRead += (size - numElements * sizeof(uint32_t) != 0) ? 1 : 0;
     }
 
    private:

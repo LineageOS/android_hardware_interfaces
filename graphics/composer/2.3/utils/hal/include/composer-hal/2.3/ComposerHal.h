@@ -29,12 +29,19 @@ using common::V1_1::PixelFormat;
 using common::V1_1::RenderIntent;
 using common::V1_2::ColorMode;
 using common::V1_2::Dataspace;
+using common::V1_2::Hdr;
 using V2_1::Display;
 using V2_1::Error;
 using V2_1::Layer;
 
 class ComposerHal : public V2_2::hal::ComposerHal {
    public:
+    Error getPerFrameMetadataKeys(
+        Display display, std::vector<V2_2::IComposerClient::PerFrameMetadataKey>* outKeys) {
+        return getPerFrameMetadataKeys_2_3(
+            display, reinterpret_cast<std::vector<IComposerClient::PerFrameMetadataKey>*>(outKeys));
+    }
+
     Error setColorMode_2_2(Display display, common::V1_1::ColorMode mode,
                            RenderIntent intent) override {
         return setColorMode_2_3(display, static_cast<ColorMode>(mode), intent);
@@ -57,6 +64,24 @@ class ComposerHal : public V2_2::hal::ComposerHal {
                                                reinterpret_cast<Dataspace*>(outDataspace));
     }
 
+    Error getHdrCapabilities(Display display, hidl_vec<common::V1_0::Hdr>* outTypes,
+                             float* outMaxLuminance, float* outMaxAverageLuminance,
+                             float* outMinLuminance) override {
+        return getHdrCapabilities_2_3(display, reinterpret_cast<hidl_vec<Hdr>*>(outTypes),
+                                      outMaxLuminance, outMaxAverageLuminance, outMinLuminance);
+    }
+
+    Error setLayerPerFrameMetadata(
+        Display display, Layer layer,
+        const std::vector<V2_2::IComposerClient::PerFrameMetadata>& metadata) override {
+        return setLayerPerFrameMetadata_2_3(
+            display, layer,
+            reinterpret_cast<const std::vector<IComposerClient::PerFrameMetadata>&>(metadata));
+    }
+
+    virtual Error getPerFrameMetadataKeys_2_3(
+        Display display, std::vector<IComposerClient::PerFrameMetadataKey>* outKeys) = 0;
+
     virtual Error setColorMode_2_3(Display display, ColorMode mode, RenderIntent intent) = 0;
 
     virtual Error getRenderIntents_2_3(Display display, ColorMode mode,
@@ -68,7 +93,12 @@ class ComposerHal : public V2_2::hal::ComposerHal {
                                              PixelFormat format, Dataspace dataspace) = 0;
     virtual Error getReadbackBufferAttributes_2_3(Display display, PixelFormat* outFormat,
                                                   Dataspace* outDataspace) = 0;
-
+    virtual Error getHdrCapabilities_2_3(Display display, hidl_vec<Hdr>* outTypes,
+                                         float* outMaxLuminance, float* outMaxAverageLuminance,
+                                         float* outMinLuminance) = 0;
+    virtual Error setLayerPerFrameMetadata_2_3(
+        Display display, Layer layer,
+        const std::vector<IComposerClient::PerFrameMetadata>& metadata) = 0;
     virtual Error getDisplayIdentificationData(Display display, uint8_t* outPort,
                                                std::vector<uint8_t>* outData) = 0;
     virtual Error setLayerColorTransform(Display display, Layer layer, const float* matrix) = 0;
@@ -86,6 +116,9 @@ class ComposerHal : public V2_2::hal::ComposerHal {
                                             hidl_vec<uint64_t>& sampleComponent3) = 0;
     virtual Error getDisplayCapabilities(
         Display display, hidl_vec<IComposerClient::DisplayCapability>* outCapabilities) = 0;
+    virtual Error setLayerPerFrameMetadataBlobs(
+        Display display, Layer layer,
+        std::vector<IComposerClient::PerFrameMetadataBlob>& blobs) = 0;
 };
 
 }  // namespace hal

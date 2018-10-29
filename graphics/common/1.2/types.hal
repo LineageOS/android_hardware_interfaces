@@ -16,10 +16,19 @@
 
 package android.hardware.graphics.common@1.2;
 
+import @1.0::Hdr;
 import @1.1::BufferUsage;
 import @1.1::ColorMode;
 import @1.1::Dataspace;
 import @1.1::PixelFormat;
+
+/**
+ * Hdr
+ */
+@export(name="android_hdr_v1_2_t", value_prefix="HAL_HDR_")
+enum Hdr : @1.0::Hdr {
+    HDR10_PLUS = 4,
+};
 
 @export(name="android_dataspace_v1_2_t", value_prefix="HAL_DATASPACE_",
         export_parent="false")

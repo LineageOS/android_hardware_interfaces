@@ -20,10 +20,12 @@
 
 #include <VtsHalHidlTargetTestBase.h>
 #include <android-base/logging.h>
+#include <android/hardware/graphics/mapper/2.0/IMapper.h>
 #include <composer-command-buffer/2.3/ComposerCommandBuffer.h>
 #include <composer-vts/2.1/GraphicsComposerCallback.h>
 #include <composer-vts/2.1/TestCommandReader.h>
 #include <composer-vts/2.3/ComposerVts.h>
+#include <mapper-vts/2.0/MapperVts.h>
 
 namespace android {
 namespace hardware {
@@ -33,10 +35,13 @@ namespace V2_3 {
 namespace vts {
 namespace {
 
+using common::V1_0::BufferUsage;
 using common::V1_1::PixelFormat;
 using common::V1_1::RenderIntent;
 using common::V1_2::ColorMode;
 using common::V1_2::Dataspace;
+using mapper::V2_0::IMapper;
+using mapper::V2_0::vts::Gralloc;
 
 // Test environment for graphics.composer
 class GraphicsComposerHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
@@ -80,6 +85,8 @@ class GraphicsComposerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     }
 
     void TearDown() override {
+        ASSERT_EQ(0, mReader->mErrors.size());
+        ASSERT_EQ(0, mReader->mCompositionChanges.size());
         if (mComposerCallback != nullptr) {
             EXPECT_EQ(0, mComposerCallback->getInvalidHotplugCount());
             EXPECT_EQ(0, mComposerCallback->getInvalidRefreshCount());
@@ -131,6 +138,44 @@ class GraphicsComposerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     }
 };
 
+// Tests for IComposerClient::Command.
+class GraphicsComposerHidlCommandTest : public GraphicsComposerHidlTest {
+   protected:
+    void SetUp() override {
+        ASSERT_NO_FATAL_FAILURE(GraphicsComposerHidlTest::SetUp());
+
+        ASSERT_NO_FATAL_FAILURE(mGralloc = std::make_unique<Gralloc>());
+
+        mWriter = std::make_unique<CommandWriterBase>(1024);
+        mReader = std::make_unique<V2_1::vts::TestCommandReader>();
+    }
+
+    void TearDown() override {
+        ASSERT_EQ(0, mReader->mErrors.size());
+        ASSERT_NO_FATAL_FAILURE(GraphicsComposerHidlTest::TearDown());
+    }
+
+    const native_handle_t* allocate() {
+        IMapper::BufferDescriptorInfo info{};
+        info.width = 64;
+        info.height = 64;
+        info.layerCount = 1;
+        info.format = static_cast<common::V1_0::PixelFormat>(PixelFormat::RGBA_8888);
+        info.usage =
+            static_cast<uint64_t>(BufferUsage::CPU_WRITE_OFTEN | BufferUsage::CPU_READ_OFTEN);
+
+        return mGralloc->allocate(info);
+    }
+
+    void execute() { mComposerClient->execute(mReader.get(), mWriter.get()); }
+
+    std::unique_ptr<CommandWriterBase> mWriter;
+    std::unique_ptr<V2_1::vts::TestCommandReader> mReader;
+
+   private:
+    std::unique_ptr<Gralloc> mGralloc;
+};
+
 /**
  * Test IComposerClient::getDisplayIdentificationData.
  *
@@ -149,6 +194,57 @@ TEST_F(GraphicsComposerHidlTest, GetDisplayIdentificationData) {
                     std::equal(data0.begin(), data0.end(), data1.begin()))
             << "data is not stable";
     }
+}
+
+/**
+ * Test IComposerClient::Command::SET_LAYER_PER_FRAME_METADATA.
+ */
+TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_PER_FRAME_METADATA) {
+    Layer layer;
+    ASSERT_NO_FATAL_FAILURE(layer =
+                                mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount));
+
+    mWriter->selectDisplay(mPrimaryDisplay);
+    mWriter->selectLayer(layer);
+
+    /**
+     * DISPLAY_P3 is a color space that uses the DCI_P3 primaries,
+     * the D65 white point and the SRGB transfer functions.
+     * Rendering Intent: Colorimetric
+     * Primaries:
+     *                  x       y
+     *  green           0.265   0.690
+     *  blue            0.150   0.060
+     *  red             0.680   0.320
+     *  white (D65)     0.3127  0.3290
+     */
+
+    std::vector<IComposerClient::PerFrameMetadata> hidlMetadata;
+    hidlMetadata.push_back({IComposerClient::PerFrameMetadataKey::DISPLAY_RED_PRIMARY_X, 0.680});
+    hidlMetadata.push_back({IComposerClient::PerFrameMetadataKey::DISPLAY_RED_PRIMARY_Y, 0.320});
+    hidlMetadata.push_back({IComposerClient::PerFrameMetadataKey::DISPLAY_GREEN_PRIMARY_X, 0.265});
+    hidlMetadata.push_back({IComposerClient::PerFrameMetadataKey::DISPLAY_GREEN_PRIMARY_Y, 0.690});
+    hidlMetadata.push_back({IComposerClient::PerFrameMetadataKey::DISPLAY_BLUE_PRIMARY_X, 0.150});
+    hidlMetadata.push_back({IComposerClient::PerFrameMetadataKey::DISPLAY_BLUE_PRIMARY_Y, 0.060});
+    hidlMetadata.push_back({IComposerClient::PerFrameMetadataKey::WHITE_POINT_X, 0.3127});
+    hidlMetadata.push_back({IComposerClient::PerFrameMetadataKey::WHITE_POINT_Y, 0.3290});
+    hidlMetadata.push_back({IComposerClient::PerFrameMetadataKey::MAX_LUMINANCE, 100.0});
+    hidlMetadata.push_back({IComposerClient::PerFrameMetadataKey::MIN_LUMINANCE, 0.1});
+    hidlMetadata.push_back({IComposerClient::PerFrameMetadataKey::MAX_CONTENT_LIGHT_LEVEL, 78.0});
+    hidlMetadata.push_back(
+        {IComposerClient::PerFrameMetadataKey::MAX_FRAME_AVERAGE_LIGHT_LEVEL, 62.0});
+    mWriter->setLayerPerFrameMetadata(hidlMetadata);
+    execute();
+
+    if (mReader->mErrors.size() == 1 &&
+        static_cast<Error>(mReader->mErrors[0].second) == Error::UNSUPPORTED) {
+        mReader->mErrors.clear();
+        GTEST_SUCCEED() << "SetLayerPerFrameMetadata is not supported";
+        ASSERT_NO_FATAL_FAILURE(mComposerClient->destroyLayer(mPrimaryDisplay, layer));
+        return;
+    }
+
+    ASSERT_NO_FATAL_FAILURE(mComposerClient->destroyLayer(mPrimaryDisplay, layer));
 }
 
 /**
@@ -353,6 +449,13 @@ TEST_F(GraphicsComposerHidlTest, SetLayerColorTransform) {
 
     mWriter->setLayerColorTransform(matrix.data());
     execute();
+
+    if (mReader->mErrors.size() == 1 &&
+        static_cast<Error>(mReader->mErrors[0].second) == Error::UNSUPPORTED) {
+        mReader->mErrors.clear();
+        GTEST_SUCCEED() << "setLayerColorTransform is not supported";
+        return;
+    }
 }
 
 TEST_F(GraphicsComposerHidlTest, GetDisplayedContentSamplingAttributes) {
@@ -442,6 +545,29 @@ TEST_F(GraphicsComposerHidlTest, getDisplayCapabilitiesBadDisplay) {
     mComposerClient->getRaw()->getDisplayCapabilities(
         mInvalidDisplayId,
         [&](const auto& tmpError, const auto&) { EXPECT_EQ(Error::BAD_DISPLAY, tmpError); });
+}
+
+TEST_F(GraphicsComposerHidlTest, SetLayerPerFrameMetadataBlobs) {
+    Layer layer;
+    ASSERT_NO_FATAL_FAILURE(layer =
+                                mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount));
+
+    mWriter->selectDisplay(mPrimaryDisplay);
+    mWriter->selectLayer(layer);
+
+    std::vector<IComposerClient::PerFrameMetadataBlob> metadata;
+    metadata.push_back(
+        {IComposerClient::PerFrameMetadataKey::HDR10_PLUS_SEI, std::vector<uint8_t>(1, 0xff)});
+
+    mWriter->setLayerPerFrameMetadataBlobs(metadata);
+    execute();
+
+    if (mReader->mErrors.size() == 1 &&
+        static_cast<Error>(mReader->mErrors[0].second) == Error::UNSUPPORTED) {
+        mReader->mErrors.clear();
+        GTEST_SUCCEED() << "setLayerDynamicPerFrameMetadata is not supported";
+        return;
+    }
 }
 
 }  // namespace
