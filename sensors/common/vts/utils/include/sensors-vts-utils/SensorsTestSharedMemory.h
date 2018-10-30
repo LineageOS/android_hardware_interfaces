@@ -33,6 +33,7 @@ class SensorsTestSharedMemory {
     static SensorsTestSharedMemory* create(SharedMemType type, size_t size);
     SharedMemInfo getSharedMemInfo() const;
     char* getBuffer() const;
+    size_t getSize() const;
     std::vector<Event> parseEvents(int64_t lastCounter = -1, size_t offset = 0) const;
     virtual ~SensorsTestSharedMemory();
 
