@@ -735,10 +735,10 @@ TEST_F(WifiChipHidlTest, RemoveStaIface) {
  * CreateRttController
  */
 TEST_F(WifiChipHidlTest, CreateRttController) {
-    configureChipForIfaceType(IfaceType::AP, true);
+    configureChipForIfaceType(IfaceType::STA, true);
 
-    sp<IWifiApIface> iface;
-    EXPECT_EQ(WifiStatusCode::SUCCESS, createApIface(&iface));
+    sp<IWifiStaIface> iface;
+    EXPECT_EQ(WifiStatusCode::SUCCESS, createStaIface(&iface));
     EXPECT_NE(nullptr, iface.get());
 
     const auto& status_and_rtt_controller =
