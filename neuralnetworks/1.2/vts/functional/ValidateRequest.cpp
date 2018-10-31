@@ -33,8 +33,8 @@ namespace V1_2 {
 namespace vts {
 namespace functional {
 
-using ::android::hardware::neuralnetworks::V1_0::implementation::ExecutionCallback;
-using ::android::hardware::neuralnetworks::V1_0::implementation::PreparedModelCallback;
+using ::android::hardware::neuralnetworks::V1_2::implementation::ExecutionCallback;
+using ::android::hardware::neuralnetworks::V1_2::implementation::PreparedModelCallback;
 using ::android::hidl::memory::V1_0::IMemory;
 using test_helper::for_all;
 using test_helper::MixedTyped;
@@ -68,7 +68,7 @@ static void createPreparedModel(const sp<IDevice>& device, const Model& model,
     // retrieve prepared model
     preparedModelCallback->wait();
     ErrorStatus prepareReturnStatus = preparedModelCallback->getStatus();
-    *preparedModel = preparedModelCallback->getPreparedModel();
+    *preparedModel = getPreparedModel_1_2(preparedModelCallback);
 
     // The getSupportedOperations_1_2 call returns a list of operations that are
     // guaranteed not to fail if prepareModel_1_2 is called, and
@@ -101,7 +101,8 @@ static void validate(const sp<IPreparedModel>& preparedModel, const std::string&
 
     sp<ExecutionCallback> executionCallback = new ExecutionCallback();
     ASSERT_NE(nullptr, executionCallback.get());
-    Return<ErrorStatus> executeLaunchStatus = preparedModel->execute(request, executionCallback);
+    Return<ErrorStatus> executeLaunchStatus =
+        preparedModel->execute_1_2(request, executionCallback);
     ASSERT_TRUE(executeLaunchStatus.isOk());
     ASSERT_EQ(ErrorStatus::INVALID_ARGUMENT, static_cast<ErrorStatus>(executeLaunchStatus));
 

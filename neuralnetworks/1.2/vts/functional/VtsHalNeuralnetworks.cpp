@@ -58,6 +58,12 @@ void NeuralnetworksHidlTest::TearDown() {
     ::testing::VtsHalHidlTargetTestBase::TearDown();
 }
 
+sp<IPreparedModel> getPreparedModel_1_2(
+    const sp<V1_2::implementation::PreparedModelCallback>& callback) {
+    sp<V1_0::IPreparedModel> preparedModelV1_0 = callback->getPreparedModel();
+    return V1_2::IPreparedModel::castFrom(preparedModelV1_0).withDefault(nullptr);
+}
+
 }  // namespace functional
 }  // namespace vts
 
