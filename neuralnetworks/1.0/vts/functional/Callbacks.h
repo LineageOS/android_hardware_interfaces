@@ -1,21 +1,41 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #ifndef ANDROID_HARDWARE_NEURALNETWORKS_V1_0_CALLBACKS_H
 #define ANDROID_HARDWARE_NEURALNETWORKS_V1_0_CALLBACKS_H
 
 #include <android/hardware/neuralnetworks/1.0/IExecutionCallback.h>
 #include <android/hardware/neuralnetworks/1.0/IPreparedModelCallback.h>
+#include <android/hardware/neuralnetworks/1.2/IExecutionCallback.h>
+#include <android/hardware/neuralnetworks/1.2/IPreparedModelCallback.h>
+#include <hidl/MQDescriptor.h>
+#include <hidl/Status.h>
 #include <chrono>
 #include <condition_variable>
 #include <functional>
-#include <hidl/MQDescriptor.h>
-#include <hidl/Status.h>
 #include <mutex>
 #include <thread>
 
 namespace android {
 namespace hardware {
 namespace neuralnetworks {
-namespace V1_0 {
+namespace V1_2 {
 namespace implementation {
+
+using V1_0::ErrorStatus;
 
 /**
  * The CallbackBase class is used internally by the NeuralNetworks runtime to
@@ -156,11 +176,11 @@ class CallbackBase {
  * asynchronously with respect to the runtime. If a calling thread calls wait*
  * or get* on a PreparedModelCallback object and the corresponding asynchronous
  * task has not finished preparing the model, the calling thread will block
- * until the asynchronous task has called notify. For more information on the
- * synchronization behavior, refer to the CallbackBase class.
+ * until the asynchronous task has either called notify or notify_1_2. For more
+ * information on the synchronization behavior, refer to the CallbackBase class.
  *
  * This class inherits the basic blocking and signaling calls from
- * CallbackBase, and implements the HIDL notify call from
+ * CallbackBase, and implements the HIDL notify and notify_1_2 calls from
  * IPreparedModelCallback. This callback object is passed as an argument to
  * IDevice::prepareModel.
  */
@@ -170,15 +190,15 @@ class PreparedModelCallback : public CallbackBase, public IPreparedModelCallback
     ~PreparedModelCallback() override;
 
     /**
-     * IPreparedModelCallback::notify marks the callback object with the return
-     * status of the asynchronous model preparation along with the prepared
-     * model, and calls CallbackBase::notify, enabling all prior and future
-     * wait* calls on the PreparedModelCallback object to proceed. For more
-     * information on the synchronization behavior, refer to the CallbackBase
-     * class.
+     * IPreparedModelCallback::notify and IPreparedModelCallback::notify_1_2
+     * mark the callback object with the return status of the asynchronous
+     * model preparation along with the prepared model, and call
+     * CallbackBase::notify, enabling all prior and future wait* calls on the
+     * PreparedModelCallback object to proceed. For more information on the
+     * synchronization behavior, refer to the CallbackBase class.
      *
-     * IPreparedModelCallback::notify must be called exactly once on a given
-     * PreparedModelCallback object.
+     * Either IPreparedModelCallback::notify or IPreparedModelCallback::notify_1_2
+     * must be called exactly once on a given PreparedModelCallback object.
      *
      * @param status Error status returned from asynchronously preparing the
      *               model; will be:
@@ -189,7 +209,9 @@ class PreparedModelCallback : public CallbackBase, public IPreparedModelCallback
      * @param preparedModel Returned model that has been prepared for execution,
      *                      nullptr if the model was unable to be prepared.
      */
-    Return<void> notify(ErrorStatus status, const sp<IPreparedModel>& preparedModel) override;
+    Return<void> notify(ErrorStatus status, const sp<V1_0::IPreparedModel>& preparedModel) override;
+    Return<void> notify_1_2(ErrorStatus status,
+                            const sp<V1_2::IPreparedModel>& preparedModel) override;
 
     /**
      * Retrieves the error status returned from the asynchronous task launched
@@ -217,11 +239,11 @@ class PreparedModelCallback : public CallbackBase, public IPreparedModelCallback
      *                       execution, nullptr if the model was unable to be
      *                       prepared.
      */
-    sp<IPreparedModel> getPreparedModel();
+    sp<V1_0::IPreparedModel> getPreparedModel();
 
- private:
+   private:
     ErrorStatus        mErrorStatus;
-    sp<IPreparedModel> mPreparedModel;
+    sp<V1_0::IPreparedModel> mPreparedModel;
 };
 
 /**
@@ -229,12 +251,12 @@ class PreparedModelCallback : public CallbackBase, public IPreparedModelCallback
  * execution from a task executing asynchronously with respect to the runtime.
  * If a calling thread calls wait* or get* on a PreparedModelCallback object and
  * the corresponding asynchronous task has not finished the execution, the
- * calling thread will block until the asynchronous task has called notify. For
- * more information on the synchronization behavior, refer to the CallbackBase
- * class.
+ * calling thread will block until the asynchronous task has either called notify
+ * or notify_1_2. For more information on the synchronization behavior, refer to
+ * the CallbackBase class.
  *
  * This class inherits the basic blocking and signaling calls from
- * CallbackBase, and implements the HIDL notify call from
+ * CallbackBase, and implements the HIDL notify and notify_1_2 calls from
  * IExecutionCallback. This callback object is passed as an argument to
  * IPreparedModel::execute.
  */
@@ -244,14 +266,14 @@ class ExecutionCallback : public CallbackBase,  public IExecutionCallback {
     ~ExecutionCallback() override;
 
     /**
-     * IExecutionCallback::notify marks the callback object with the return
-     * status of the asynchronous execution that held this callback and enables
-     * all prior and future wait* calls on the ExecutionCallback object to
-     * proceed. For more information on the synchronization behavior, refer to
-     * the CallbackBase class.
+     * IExecutionCallback::notify and IExecutionCallback::notify_1_2 mark the
+     * callback object with the return status of the asynchronous execution that
+     * held this callback and enable all prior and future wait* calls on the
+     * ExecutionCallback object to proceed. For more information on the
+     * synchronization behavior, refer to the CallbackBase class.
      *
-     * IExecutionCallback::notify must be called exactly once on a given
-     * ExecutionCallback object.
+     * Either IExecutionCallback::notify or IExecutionCallback::notify_1_2 must
+     * be called exactly once on a given ExecutionCallback object.
      *
      * @param status Error status returned from asynchronously preparing the
      *               model; will be:
@@ -263,6 +285,7 @@ class ExecutionCallback : public CallbackBase,  public IExecutionCallback {
      *               - INVALID_ARGUMENT if the input request is invalid
      */
     Return<void> notify(ErrorStatus status) override;
+    Return<void> notify_1_2(ErrorStatus status) override;
 
     /**
      * Retrieves the error status returned from the asynchronous task launched
@@ -299,7 +322,7 @@ std::cv_status CallbackBase::wait_for(const std::chrono::duration<Rep,Period>& t
 }
 
 }  // namespace implementation
-}  // namespace V1_0
+}  // namespace V1_2
 }  // namespace neuralnetworks
 }  // namespace hardware
 }  // namespace android
