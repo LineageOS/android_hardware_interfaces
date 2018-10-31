@@ -36,7 +36,7 @@ struct RailInfo {
 
 struct EnergyData {
     /**
-     * Index corrensponding to the rail. This index matches
+     * Index corresponding to the rail. This index matches
      * the index returned in RailInfo
      */
     uint32_t index;
@@ -44,4 +44,86 @@ struct EnergyData {
     uint64_t timestamp;
     /** Accumulated energy since device boot in microwatt-seconds (uWs) */
     uint64_t energy;
+};
+
+enum PowerEntityType : uint32_t {
+    /**
+     * A subsystem is a self-contained compute unit. Some examples include
+     * application processor, DSP, GPU.
+     */
+    SUBSYSTEM = 0,
+    /**
+     * A peripheral is an auxiliary device that connects to and works with a
+     * compute unit. Some examples include simple sensors, camera, display.
+     */
+    PERIPHERAL = 1,
+    /**
+     * A power domain is a single subsystem or a collection of subsystems
+     * that is controlled by a single voltage rail.
+     */
+    POWER_DOMAIN = 2,
+};
+
+/**
+ * PowerEntityInfo contains information, such as the ID, name, and type of a
+ * given PowerEntity.
+ */
+struct PowerEntityInfo {
+    /** ID corresponding to the PowerEntity */
+    uint32_t powerEntityId;
+    /**
+     * Name of the PowerEntity. This is unique and opaque to the
+     * Android framework
+     */
+    string powerEntityName;
+    /** Type of the PowerEntity */
+    PowerEntityType type;
+};
+
+struct PowerEntityStateInfo {
+    /** ID corresponding to the state */
+    uint32_t powerEntityStateId;
+    /** Name of the state */
+    string powerEntityStateName;
+};
+
+/**
+ * PowerEntityStateSpace contains the state space information of a given
+ * PowerEntity. The state space, is the set of possible states that a given
+ * PowerEntity provides residency data for.
+ */
+struct PowerEntityStateSpace {
+    /** ID of the corresponding PowerEntity */
+    uint32_t powerEntityId;
+
+    /** List of states that the PowerEntity may reside in */
+    vec<PowerEntityStateInfo> states;
+};
+
+/** Contains residency data for a single state */
+struct PowerEntityStateResidencyData {
+    /** ID of the corresponding PowerEntityStateInfo */
+    uint32_t powerEntityStateId;
+    /**
+     * Total time in milliseconds that the corresponding PowerEntity resided
+     * in this state since the PowerEntity was reset
+     */
+    uint64_t totalTimeInStateMs;
+    /**
+     * Total number of times that the state was entered since the corresponding
+     * PowerEntity was reset
+     */
+    uint64_t totalStateEntryCount;
+    /**
+     * Last time this state was entered. Time in milliseconds since the
+     * corresponding PowerEntity was reset
+     */
+    uint64_t lastEntryTimestampMs;
+};
+
+struct PowerEntityStateResidencyResult {
+    /** ID of the corresponding PowerEntity */
+    uint32_t powerEntityId;
+    /** Residency data for each state the PowerEntity's state space */
+    vec<PowerEntityStateResidencyData> stateResidencyData;
 };
