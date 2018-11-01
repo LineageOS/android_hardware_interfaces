@@ -24,6 +24,7 @@ namespace sensors {
 namespace V2_0 {
 namespace implementation {
 
+using ::android::hardware::sensors::V1_0::MetaDataEventType;
 using ::android::hardware::sensors::V1_0::SensorFlagBits;
 using ::android::hardware::sensors::V1_0::SensorStatus;
 
@@ -62,6 +63,25 @@ void Sensor::activate(bool enable) {
         mIsEnabled = enable;
         mWaitCV.notify_all();
     }
+}
+
+Result Sensor::flush() {
+    // Only generate a flush complete event if the sensor is enabled and if the sensor is not a
+    // one-shot sensor.
+    if (!mIsEnabled || (mSensorInfo.flags & static_cast<uint32_t>(SensorFlagBits::ONE_SHOT_MODE))) {
+        return Result::BAD_VALUE;
+    }
+
+    // Note: If a sensor supports batching, write all of the currently batched events for the sensor
+    // to the Event FMQ prior to writing the flush complete event.
+    Event ev;
+    ev.sensorHandle = mSensorInfo.sensorHandle;
+    ev.sensorType = SensorType::ADDITIONAL_INFO;
+    ev.u.meta.what = MetaDataEventType::META_DATA_FLUSH_COMPLETE;
+    std::vector<Event> evs{ev};
+    mCallback->postEvents(evs);
+
+    return Result::OK;
 }
 
 void Sensor::startThread(Sensor* sensor) {

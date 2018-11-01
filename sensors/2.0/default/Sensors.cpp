@@ -112,9 +112,12 @@ Return<Result> Sensors::batch(int32_t sensorHandle, int64_t samplingPeriodNs,
     return Result::BAD_VALUE;
 }
 
-Return<Result> Sensors::flush(int32_t /* sensorHandle */) {
-    // TODO implement
-    return Result{};
+Return<Result> Sensors::flush(int32_t sensorHandle) {
+    auto sensor = mSensors.find(sensorHandle);
+    if (sensor != mSensors.end()) {
+        return sensor->second->flush();
+    }
+    return Result::BAD_VALUE;
 }
 
 Return<Result> Sensors::injectSensorData(const Event& /* event */) {

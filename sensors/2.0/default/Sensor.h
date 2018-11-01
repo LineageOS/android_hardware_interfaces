@@ -25,6 +25,7 @@
 #include <vector>
 
 using ::android::hardware::sensors::V1_0::Event;
+using ::android::hardware::sensors::V1_0::Result;
 using ::android::hardware::sensors::V1_0::SensorInfo;
 using ::android::hardware::sensors::V1_0::SensorType;
 
@@ -48,6 +49,7 @@ class Sensor {
     const SensorInfo& getSensorInfo() const;
     void batch(int32_t samplingPeriodNs);
     void activate(bool enable);
+    Result flush();
 
    protected:
     void run();
