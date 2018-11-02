@@ -37,8 +37,8 @@ using android::hardware::wifi::V1_0::IfaceType;
 using android::hardware::wifi::V1_0::IWifiChip;
 
 constexpr char kCpioMagic[] = "070701";
-constexpr size_t kMaxBufferSizeBytes = 1024 * 1024;
-constexpr uint32_t kMaxRingBufferFileAgeSeconds = 60 * 60;
+constexpr size_t kMaxBufferSizeBytes = 1024 * 1024 * 3;
+constexpr uint32_t kMaxRingBufferFileAgeSeconds = 60 * 60 * 10;
 constexpr uint32_t kMaxRingBufferFileNum = 20;
 constexpr char kTombstoneFolderPath[] = "/data/vendor/tombstones/wifi/";
 
@@ -513,6 +513,13 @@ Return<void> WifiChip::forceDumpToDebugRingBuffer(
     return validateAndCall(this, WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
                            &WifiChip::forceDumpToDebugRingBufferInternal,
                            hidl_status_cb, ring_name);
+}
+
+Return<void> WifiChip::flushRingBufferToFile(
+    flushRingBufferToFile_cb hidl_status_cb) {
+    return validateAndCall(this, WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
+                           &WifiChip::flushRingBufferToFileInternal,
+                           hidl_status_cb);
 }
 
 Return<void> WifiChip::stopLoggingToDebugRingBuffer(
@@ -998,6 +1005,14 @@ WifiStatus WifiChip::forceDumpToDebugRingBufferInternal(
         legacy_hal_.lock()->getRingBufferData(getWlan0IfaceName(), ring_name);
 
     return createWifiStatusFromLegacyError(legacy_status);
+}
+
+WifiStatus WifiChip::flushRingBufferToFileInternal() {
+    if (!writeRingbufferFilesInternal()) {
+        LOG(ERROR) << "Error writing files to flash";
+        return createWifiStatus(WifiStatusCode::ERROR_UNKNOWN);
+    }
+    return createWifiStatus(WifiStatusCode::SUCCESS);
 }
 
 WifiStatus WifiChip::stopLoggingToDebugRingBufferInternal() {

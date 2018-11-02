@@ -66,4 +66,17 @@ interface IWifiChip extends @1.2::IWifiChip {
      * as gaming and virtual reality applications.
      */
     setLatencyMode(LatencyMode mode) generates (WifiStatus status);
+
+    /**
+     * API to flush debug ring buffer data to files.
+     *
+     * Force flush debug ring buffer using IBase::debug.
+     * This API help to collect firmware/driver/pkt logs.
+     *
+     * @return status WifiStatus of the operation.
+     *         Possible status codes:
+     *         |WifiStatusCode.SUCCESS|,
+     *         |WifiStatusCode.UNKNOWN|
+     */
+    flushRingBufferToFile() generates (WifiStatus status);
 };
