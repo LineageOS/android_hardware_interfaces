@@ -203,22 +203,41 @@ Return<void> SurfaceFlingerConfigs::useColorManagement(useColorManagement_cb _hi
     return Void();
 }
 
-#ifdef COMPOSITION_DATA_SPACE
-static_assert(COMPOSITION_DATA_SPACE != 0, "Expected composition data space must not be UNKNOWN");
+#ifdef DEFAULT_COMPOSITION_DATA_SPACE
+static_assert(DEFAULT_COMPOSITION_DATA_SPACE != 0,
+              "Default composition data space must not be UNKNOWN");
+#endif
+
+#ifdef WCG_COMPOSITION_DATA_SPACE
+static_assert(WCG_COMPOSITION_DATA_SPACE != 0,
+              "Wide color gamut composition data space must not be UNKNOWN");
 #endif
 
 Return<void> SurfaceFlingerConfigs::getCompositionPreference(getCompositionPreference_cb _hidl_cb) {
-    Dataspace dataSpace = Dataspace::V0_SRGB;
-    PixelFormat pixelFormat = PixelFormat::RGBA_8888;
+    Dataspace defaultDataspace = Dataspace::V0_SRGB;
+    PixelFormat defaultPixelFormat = PixelFormat::RGBA_8888;
 
-#ifdef COMPOSITION_DATA_SPACE
-    dataSpace = static_cast<Dataspace>(COMPOSITION_DATA_SPACE);
+#ifdef DEFAULT_COMPOSITION_DATA_SPACE
+    defaultDataspace = static_cast<Dataspace>(DEFAULT_COMPOSITION_DATA_SPACE);
 #endif
 
-#ifdef COMPOSITION_PIXEL_FORMAT
-    pixelFormat = static_cast<PixelFormat>(COMPOSITION_PIXEL_FORMAT);
+#ifdef DEFAULT_COMPOSITION_PIXEL_FORMAT
+    defaultPixelFormat = static_cast<PixelFormat>(DEFAULT_COMPOSITION_PIXEL_FORMAT);
 #endif
-    _hidl_cb(dataSpace, pixelFormat);
+
+    Dataspace wideColorGamutDataspace = Dataspace::V0_SRGB;
+    PixelFormat wideColorGamutPixelFormat = PixelFormat::RGBA_8888;
+
+#ifdef WCG_COMPOSITION_DATA_SPACE
+    wideColorGamutDataspace = static_cast<Dataspace>(WCG_COMPOSITION_DATA_SPACE);
+#endif
+
+#ifdef WCG_COMPOSITION_PIXEL_FORMAT
+    wideColorGamutPixelFormat = static_cast<PixelFormat>(WCG_COMPOSITION_PIXEL_FORMAT);
+#endif
+
+    _hidl_cb(defaultDataspace, defaultPixelFormat, wideColorGamutDataspace,
+             wideColorGamutPixelFormat);
     return Void();
 }
 
