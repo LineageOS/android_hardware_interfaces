@@ -48,24 +48,31 @@ constexpr int OPEN_RETRY_SLEEP_US = 100000; // 100ms * MAX_RETRY = 0.5 seconds
 } // anonymous namespace
 
 ExternalCameraDevice::ExternalCameraDevice(
-            const std::string& cameraId, const ExternalCameraConfig& cfg) :
+        const std::string& cameraId, const ExternalCameraConfig& cfg) :
         mCameraId(cameraId),
-        mCfg(cfg) {
-
-    status_t ret = initCameraCharacteristics();
-    if (ret != OK) {
-        ALOGE("%s: init camera characteristics failed: errorno %d", __FUNCTION__, ret);
-        mInitFailed = true;
-    }
-}
+        mCfg(cfg) {}
 
 ExternalCameraDevice::~ExternalCameraDevice() {}
 
 bool ExternalCameraDevice::isInitFailed() {
+    Mutex::Autolock _l(mLock);
+    return isInitFailedLocked();
+}
+
+bool ExternalCameraDevice::isInitFailedLocked() {
+    if (!mInitialized) {
+        status_t ret = initCameraCharacteristics();
+        if (ret != OK) {
+            ALOGE("%s: init camera characteristics failed: errorno %d", __FUNCTION__, ret);
+            mInitFailed = true;
+        }
+        mInitialized = true;
+    }
     return mInitFailed;
 }
 
-Return<void> ExternalCameraDevice::getResourceCost(getResourceCost_cb _hidl_cb) {
+Return<void> ExternalCameraDevice::getResourceCost(
+        ICameraDevice::getResourceCost_cb _hidl_cb) {
     CameraResourceCost resCost;
     resCost.resourceCost = 100;
     _hidl_cb(Status::OK, resCost);
@@ -73,11 +80,11 @@ Return<void> ExternalCameraDevice::getResourceCost(getResourceCost_cb _hidl_cb) 
 }
 
 Return<void> ExternalCameraDevice::getCameraCharacteristics(
-        getCameraCharacteristics_cb _hidl_cb) {
+        ICameraDevice::getCameraCharacteristics_cb _hidl_cb) {
     Mutex::Autolock _l(mLock);
     V3_2::CameraMetadata hidlChars;
 
-    if (isInitFailed()) {
+    if (isInitFailedLocked()) {
         _hidl_cb(Status::INTERNAL_ERROR, hidlChars);
         return Void();
     }
@@ -94,7 +101,7 @@ Return<Status> ExternalCameraDevice::setTorchMode(TorchMode) {
 }
 
 Return<void> ExternalCameraDevice::open(
-        const sp<ICameraDeviceCallback>& callback, open_cb _hidl_cb) {
+        const sp<ICameraDeviceCallback>& callback, ICameraDevice::open_cb _hidl_cb) {
     Status status = Status::OK;
     sp<ExternalCameraDeviceSession> session = nullptr;
 
@@ -143,7 +150,7 @@ Return<void> ExternalCameraDevice::open(
         }
     }
 
-    session = new ExternalCameraDeviceSession(
+    session = createSession(
             callback, mCfg, mSupportedFormats, mCroppingType,
             mCameraCharacteristics, mCameraId, std::move(fd));
     if (session == nullptr) {
@@ -479,52 +486,9 @@ status_t ExternalCameraDevice::initDefaultCharsKeys(
     UPDATE(ANDROID_REQUEST_AVAILABLE_RESULT_KEYS, availableResultKeys,
            ARRAY_SIZE(availableResultKeys));
 
-    const int32_t availableCharacteristicsKeys[] = {
-        ANDROID_COLOR_CORRECTION_AVAILABLE_ABERRATION_MODES,
-        ANDROID_CONTROL_AE_AVAILABLE_ANTIBANDING_MODES,
-        ANDROID_CONTROL_AE_AVAILABLE_MODES,
-        ANDROID_CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES,
-        ANDROID_CONTROL_AE_COMPENSATION_RANGE,
-        ANDROID_CONTROL_AE_COMPENSATION_STEP,
-        ANDROID_CONTROL_AE_LOCK_AVAILABLE,
-        ANDROID_CONTROL_AF_AVAILABLE_MODES,
-        ANDROID_CONTROL_AVAILABLE_EFFECTS,
-        ANDROID_CONTROL_AVAILABLE_MODES,
-        ANDROID_CONTROL_AVAILABLE_SCENE_MODES,
-        ANDROID_CONTROL_AVAILABLE_VIDEO_STABILIZATION_MODES,
-        ANDROID_CONTROL_AWB_AVAILABLE_MODES,
-        ANDROID_CONTROL_AWB_LOCK_AVAILABLE,
-        ANDROID_CONTROL_MAX_REGIONS,
-        ANDROID_FLASH_INFO_AVAILABLE,
-        ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL,
-        ANDROID_JPEG_AVAILABLE_THUMBNAIL_SIZES,
-        ANDROID_LENS_FACING,
-        ANDROID_LENS_INFO_AVAILABLE_OPTICAL_STABILIZATION,
-        ANDROID_LENS_INFO_FOCUS_DISTANCE_CALIBRATION,
-        ANDROID_NOISE_REDUCTION_AVAILABLE_NOISE_REDUCTION_MODES,
-        ANDROID_REQUEST_AVAILABLE_CAPABILITIES,
-        ANDROID_REQUEST_MAX_NUM_INPUT_STREAMS,
-        ANDROID_REQUEST_MAX_NUM_OUTPUT_STREAMS,
-        ANDROID_REQUEST_PARTIAL_RESULT_COUNT,
-        ANDROID_REQUEST_PIPELINE_MAX_DEPTH,
-        ANDROID_SCALER_AVAILABLE_MAX_DIGITAL_ZOOM,
-        ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS,
-        ANDROID_SCALER_CROPPING_TYPE,
-        ANDROID_SENSOR_INFO_ACTIVE_ARRAY_SIZE,
-        ANDROID_SENSOR_INFO_MAX_FRAME_DURATION,
-        ANDROID_SENSOR_INFO_PIXEL_ARRAY_SIZE,
-        ANDROID_SENSOR_INFO_PRE_CORRECTION_ACTIVE_ARRAY_SIZE,
-        ANDROID_SENSOR_INFO_TIMESTAMP_SOURCE,
-        ANDROID_SENSOR_ORIENTATION,
-        ANDROID_SHADING_AVAILABLE_MODES,
-        ANDROID_STATISTICS_INFO_AVAILABLE_FACE_DETECT_MODES,
-        ANDROID_STATISTICS_INFO_AVAILABLE_HOT_PIXEL_MAP_MODES,
-        ANDROID_STATISTICS_INFO_AVAILABLE_LENS_SHADING_MAP_MODES,
-        ANDROID_STATISTICS_INFO_MAX_FACE_COUNT,
-        ANDROID_SYNC_MAX_LATENCY};
     UPDATE(ANDROID_REQUEST_AVAILABLE_CHARACTERISTICS_KEYS,
-           availableCharacteristicsKeys,
-           ARRAY_SIZE(availableCharacteristicsKeys));
+           AVAILABLE_CHARACTERISTICS_KEYS_3_4.data(),
+           AVAILABLE_CHARACTERISTICS_KEYS_3_4.size());
 
     return OK;
 }
@@ -929,6 +893,18 @@ void ExternalCameraDevice::initSupportedFormatsLocked(int fd) {
             mCroppingType = VERTICAL;
         }
     }
+}
+
+sp<ExternalCameraDeviceSession> ExternalCameraDevice::createSession(
+        const sp<ICameraDeviceCallback>& cb,
+        const ExternalCameraConfig& cfg,
+        const std::vector<SupportedV4L2Format>& sortedFormats,
+        const CroppingType& croppingType,
+        const common::V1_0::helper::CameraMetadata& chars,
+        const std::string& cameraId,
+        unique_fd v4l2Fd) {
+    return new ExternalCameraDeviceSession(
+            cb, cfg, sortedFormats, croppingType, chars, cameraId, std::move(v4l2Fd));
 }
 
 }  // namespace implementation

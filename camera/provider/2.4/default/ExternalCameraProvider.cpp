@@ -24,6 +24,8 @@
 #include <linux/videodev2.h>
 #include "ExternalCameraProvider.h"
 #include "ExternalCameraDevice_3_4.h"
+#include "ExternalCameraDevice_3_5.h"
+#include <cutils/properties.h>
 
 namespace android {
 namespace hardware {
@@ -62,6 +64,21 @@ ExternalCameraProvider::ExternalCameraProvider() :
         mCfg(ExternalCameraConfig::loadFromCfg()),
         mHotPlugThread(this) {
     mHotPlugThread.run("ExtCamHotPlug", PRIORITY_BACKGROUND);
+
+    mPreferredHal3MinorVersion =
+        property_get_int32("ro.vendor.camera.external.hal3TrebleMinorVersion", 4);
+    ALOGV("Preferred HAL 3 minor version is %d", mPreferredHal3MinorVersion);
+    switch(mPreferredHal3MinorVersion) {
+        case 4:
+        case 5:
+            // OK
+            break;
+        default:
+            ALOGW("Unknown minor camera device HAL version %d in property "
+                    "'camera.external.hal3TrebleMinorVersion', defaulting to 4",
+                    mPreferredHal3MinorVersion);
+            mPreferredHal3MinorVersion = 4;
+    }
 }
 
 ExternalCameraProvider::~ExternalCameraProvider() {
@@ -136,20 +153,43 @@ Return<void> ExternalCameraProvider::getCameraDeviceInterface_V3_x(
         return Void();
     }
 
-    ALOGV("Constructing v3.4 external camera device");
-    sp<device::V3_2::ICameraDevice> device;
-    sp<device::V3_4::implementation::ExternalCameraDevice> deviceImpl =
-            new device::V3_4::implementation::ExternalCameraDevice(
+    sp<device::V3_4::implementation::ExternalCameraDevice> deviceImpl;
+    switch (mPreferredHal3MinorVersion) {
+        case 4: {
+            ALOGV("Constructing v3.4 external camera device");
+            deviceImpl = new device::V3_4::implementation::ExternalCameraDevice(
                     cameraId, mCfg);
+            break;
+        }
+        case 5: {
+            ALOGV("Constructing v3.5 external camera device");
+            deviceImpl = new device::V3_5::implementation::ExternalCameraDevice(
+                    cameraId, mCfg);
+            break;
+        }
+        default:
+            ALOGE("%s: Unknown HAL minor version %d!", __FUNCTION__, mPreferredHal3MinorVersion);
+            _hidl_cb(Status::INTERNAL_ERROR, nullptr);
+            return Void();
+    }
+
     if (deviceImpl == nullptr || deviceImpl->isInitFailed()) {
         ALOGE("%s: camera device %s init failed!", __FUNCTION__, cameraId.c_str());
-        device = nullptr;
         _hidl_cb(Status::INTERNAL_ERROR, nullptr);
         return Void();
     }
-    device = deviceImpl;
 
-    _hidl_cb (Status::OK, device);
+    IF_ALOGV() {
+        deviceImpl->getInterface()->interfaceChain([](
+            ::android::hardware::hidl_vec<::android::hardware::hidl_string> interfaceChain) {
+                ALOGV("Device interface chain:");
+                for (auto iface : interfaceChain) {
+                    ALOGV("  %s", iface.c_str());
+                }
+            });
+    }
+
+    _hidl_cb (Status::OK, deviceImpl->getInterface());
 
     return Void();
 }
@@ -157,7 +197,12 @@ Return<void> ExternalCameraProvider::getCameraDeviceInterface_V3_x(
 void ExternalCameraProvider::addExternalCamera(const char* devName) {
     ALOGI("ExtCam: adding %s to External Camera HAL!", devName);
     Mutex::Autolock _l(mLock);
-    std::string deviceName = std::string("device@3.4/external/") + devName;
+    std::string deviceName;
+    if (mPreferredHal3MinorVersion == 5) {
+        deviceName = std::string("device@3.5/external/") + devName;
+    } else {
+        deviceName = std::string("device@3.4/external/") + devName;
+    }
     mCameraStatusMap[deviceName] = CameraDeviceStatus::PRESENT;
     if (mCallbacks != nullptr) {
         mCallbacks->cameraDeviceStatusChange(deviceName, CameraDeviceStatus::PRESENT);
@@ -199,7 +244,12 @@ void ExternalCameraProvider::deviceAdded(const char* devName) {
 
 void ExternalCameraProvider::deviceRemoved(const char* devName) {
     Mutex::Autolock _l(mLock);
-    std::string deviceName = std::string("device@3.4/external/") + devName;
+    std::string deviceName;
+    if (mPreferredHal3MinorVersion == 5) {
+        deviceName = std::string("device@3.5/external/") + devName;
+    } else {
+        deviceName = std::string("device@3.4/external/") + devName;
+    }
     if (mCameraStatusMap.find(deviceName) != mCameraStatusMap.end()) {
         mCameraStatusMap.erase(deviceName);
         if (mCallbacks != nullptr) {
