@@ -30,8 +30,16 @@ using ::android::hardware::sensors::V1_0::OperationMode;
 using ::android::hardware::sensors::V1_0::RateLevel;
 using ::android::hardware::sensors::V1_0::Result;
 using ::android::hardware::sensors::V1_0::SharedMemInfo;
+using ::android::hardware::sensors::V2_0::SensorTimeout;
 
-Sensors::Sensors() : mEventQueueFlag(nullptr) {
+constexpr const char* kWakeLockName = "SensorsHAL_WAKEUP";
+
+Sensors::Sensors()
+    : mEventQueueFlag(nullptr),
+      mOutstandingWakeUpEvents(0),
+      mReadWakeLockQueueRun(false),
+      mAutoReleaseWakeLockTime(0),
+      mHasWakeLock(false) {
     std::shared_ptr<AccelSensor> accel =
         std::make_shared<AccelSensor>(1 /* sensorHandle */, this /* callback */);
     mSensors[accel->getSensorInfo().sensorHandle] = accel;
@@ -39,6 +47,8 @@ Sensors::Sensors() : mEventQueueFlag(nullptr) {
 
 Sensors::~Sensors() {
     deleteEventFlag();
+    mReadWakeLockQueueRun = false;
+    mWakeLockThread.join();
 }
 
 // Methods from ::android::hardware::sensors::V2_0::ISensors follow.
@@ -101,6 +111,10 @@ Return<Result> Sensors::initialize(
         result = Result::BAD_VALUE;
     }
 
+    // Start the thread to read events from the Wake Lock FMQ
+    mReadWakeLockQueueRun = true;
+    mWakeLockThread = std::thread(startReadWakeLockThread, this);
+
     return result;
 }
 
@@ -147,15 +161,67 @@ Return<void> Sensors::configDirectReport(int32_t /* sensorHandle */, int32_t /* 
     return Return<void>();
 }
 
-void Sensors::postEvents(const std::vector<Event>& events) {
-    std::lock_guard<std::mutex> l(mLock);
+void Sensors::postEvents(const std::vector<Event>& events, bool wakeup) {
+    std::lock_guard<std::mutex> lock(mWriteLock);
+    if (mEventQueue->write(events.data(), events.size())) {
+        mEventQueueFlag->wake(static_cast<uint32_t>(EventQueueFlagBits::READ_AND_PROCESS));
 
-    // TODO: read events from the Wake Lock FMQ in the right place
-    std::vector<uint32_t> tmp(mWakeLockQueue->availableToRead());
-    mWakeLockQueue->read(tmp.data(), mWakeLockQueue->availableToRead());
+        if (wakeup) {
+            // Keep track of the number of outstanding WAKE_UP events in order to properly hold
+            // a wake lock until the framework has secured a wake lock
+            updateWakeLock(events.size(), 0 /* eventsHandled */);
+        }
+    }
+}
 
-    mEventQueue->write(events.data(), events.size());
-    mEventQueueFlag->wake(static_cast<uint32_t>(EventQueueFlagBits::READ_AND_PROCESS));
+void Sensors::updateWakeLock(int32_t eventsWritten, int32_t eventsHandled) {
+    std::lock_guard<std::mutex> lock(mWakeLockLock);
+    int32_t newVal = mOutstandingWakeUpEvents + eventsWritten - eventsHandled;
+    if (newVal < 0) {
+        mOutstandingWakeUpEvents = 0;
+    } else {
+        mOutstandingWakeUpEvents = newVal;
+    }
+
+    if (eventsWritten > 0) {
+        // Update the time at which the last WAKE_UP event was sent
+        mAutoReleaseWakeLockTime = ::android::uptimeMillis() +
+                                   static_cast<uint32_t>(SensorTimeout::WAKE_LOCK_SECONDS) * 1000;
+    }
+
+    if (!mHasWakeLock && mOutstandingWakeUpEvents > 0 &&
+        acquire_wake_lock(PARTIAL_WAKE_LOCK, kWakeLockName) == 0) {
+        mHasWakeLock = true;
+    } else if (mHasWakeLock) {
+        // Check if the wake lock should be released automatically if
+        // SensorTimeout::WAKE_LOCK_SECONDS has elapsed since the last WAKE_UP event was written to
+        // the Wake Lock FMQ.
+        if (::android::uptimeMillis() > mAutoReleaseWakeLockTime) {
+            ALOGD("No events read from wake lock FMQ for %d seconds, auto releasing wake lock",
+                  SensorTimeout::WAKE_LOCK_SECONDS);
+            mOutstandingWakeUpEvents = 0;
+        }
+
+        if (mOutstandingWakeUpEvents == 0 && release_wake_lock(kWakeLockName) == 0) {
+            mHasWakeLock = false;
+        }
+    }
+}
+
+void Sensors::readWakeLockFMQ() {
+    while (mReadWakeLockQueueRun.load()) {
+        constexpr int64_t kReadTimeoutNs = 500 * 1000 * 1000;  // 500 ms
+        uint32_t eventsHandled = 0;
+
+        // Read events from the Wake Lock FMQ. Timeout after a reasonable amount of time to ensure
+        // that any held wake lock is able to be released if it is held for too long.
+        mWakeLockQueue->readBlocking(&eventsHandled, 1 /* count */, kReadTimeoutNs);
+        updateWakeLock(0 /* eventsWritten */, eventsHandled);
+    }
+}
+
+void Sensors::startReadWakeLockThread(Sensors* sensors) {
+    sensors->readWakeLockFMQ();
 }
 
 void Sensors::deleteEventFlag() {
