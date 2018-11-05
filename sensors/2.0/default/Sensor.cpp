@@ -29,14 +29,20 @@ using ::android::hardware::sensors::V1_0::SensorFlagBits;
 using ::android::hardware::sensors::V1_0::SensorStatus;
 
 Sensor::Sensor(ISensorsEventCallback* callback)
-    : mIsEnabled(false), mSamplingPeriodNs(0), mLastSampleTimeNs(0), mCallback(callback) {
+    : mIsEnabled(false),
+      mSamplingPeriodNs(0),
+      mLastSampleTimeNs(0),
+      mCallback(callback),
+      mMode(OperationMode::NORMAL) {
     mRunThread = std::thread(startThread, this);
 }
 
 Sensor::~Sensor() {
+    std::unique_lock<std::mutex> lock(mRunMutex);
     mStopThread = true;
     mIsEnabled = false;
     mWaitCV.notify_all();
+    lock.release();
     mRunThread.join();
 }
 
@@ -60,6 +66,7 @@ void Sensor::batch(int32_t samplingPeriodNs) {
 
 void Sensor::activate(bool enable) {
     if (mIsEnabled != enable) {
+        std::unique_lock<std::mutex> lock(mRunMutex);
         mIsEnabled = enable;
         mWaitCV.notify_all();
     }
@@ -89,13 +96,14 @@ void Sensor::startThread(Sensor* sensor) {
 }
 
 void Sensor::run() {
-    std::mutex runMutex;
-    std::unique_lock<std::mutex> runLock(runMutex);
+    std::unique_lock<std::mutex> runLock(mRunMutex);
     constexpr int64_t kNanosecondsInSeconds = 1000 * 1000 * 1000;
 
     while (!mStopThread) {
-        if (!mIsEnabled) {
-            mWaitCV.wait(runLock, [&] { return mIsEnabled || mStopThread; });
+        if (!mIsEnabled || mMode == OperationMode::DATA_INJECTION) {
+            mWaitCV.wait(runLock, [&] {
+                return ((mIsEnabled && mMode == OperationMode::NORMAL) || mStopThread);
+            });
         } else {
             timespec curTime;
             clock_gettime(CLOCK_REALTIME, &curTime);
@@ -127,6 +135,33 @@ std::vector<Event> Sensor::readEvents() {
     return events;
 }
 
+void Sensor::setOperationMode(OperationMode mode) {
+    if (mMode != mode) {
+        std::unique_lock<std::mutex> lock(mRunMutex);
+        mMode = mode;
+        mWaitCV.notify_all();
+    }
+}
+
+bool Sensor::supportsDataInjection() const {
+    return mSensorInfo.flags & static_cast<uint32_t>(SensorFlagBits::DATA_INJECTION);
+}
+
+Result Sensor::injectEvent(const Event& event) {
+    Result result = Result::OK;
+    if (event.sensorType == SensorType::ADDITIONAL_INFO) {
+        // When in OperationMode::NORMAL, SensorType::ADDITIONAL_INFO is used to push operation
+        // environment data into the device.
+    } else if (!supportsDataInjection()) {
+        result = Result::INVALID_OPERATION;
+    } else if (mMode == OperationMode::DATA_INJECTION) {
+        mCallback->postEvents(std::vector<Event>{event});
+    } else {
+        result = Result::BAD_VALUE;
+    }
+    return result;
+}
+
 AccelSensor::AccelSensor(int32_t sensorHandle, ISensorsEventCallback* callback) : Sensor(callback) {
     mSensorInfo.sensorHandle = sensorHandle;
     mSensorInfo.name = "Accel Sensor";
@@ -142,7 +177,8 @@ AccelSensor::AccelSensor(int32_t sensorHandle, ISensorsEventCallback* callback) 
     mSensorInfo.fifoReservedEventCount = 0;
     mSensorInfo.fifoMaxEventCount = 0;
     mSensorInfo.requiredPermission = "";
-    mSensorInfo.flags = static_cast<uint32_t>(SensorFlagBits::WAKE_UP);
+    mSensorInfo.flags =
+        static_cast<uint32_t>(SensorFlagBits::WAKE_UP | SensorFlagBits::DATA_INJECTION);
 };
 
 }  // namespace implementation

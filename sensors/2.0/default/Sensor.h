@@ -21,10 +21,12 @@
 
 #include <condition_variable>
 #include <memory>
+#include <mutex>
 #include <thread>
 #include <vector>
 
 using ::android::hardware::sensors::V1_0::Event;
+using ::android::hardware::sensors::V1_0::OperationMode;
 using ::android::hardware::sensors::V1_0::Result;
 using ::android::hardware::sensors::V1_0::SensorInfo;
 using ::android::hardware::sensors::V1_0::SensorType;
@@ -51,6 +53,10 @@ class Sensor {
     void activate(bool enable);
     Result flush();
 
+    void setOperationMode(OperationMode mode);
+    bool supportsDataInjection() const;
+    Result injectEvent(const Event& event);
+
    protected:
     void run();
     virtual std::vector<Event> readEvents();
@@ -63,9 +69,12 @@ class Sensor {
 
     std::atomic_bool mStopThread;
     std::condition_variable mWaitCV;
+    std::mutex mRunMutex;
     std::thread mRunThread;
 
     ISensorsEventCallback* mCallback;
+
+    OperationMode mMode;
 };
 
 class AccelSensor : public Sensor {
