@@ -50,6 +50,18 @@ interface ISupplicantStaNetwork extends @1.1::ISupplicantStaNetwork {
         GCMP_256 = 1 << 8,
     };
 
+    /** Possble mask of values for GroupMgmtCipher param. */
+    enum GroupMgmtCipherMask : uint32_t {
+        /** BIP_GMAC-128 Group Management Cipher */
+        BIP_GMAC_128 = 1 << 11,
+
+        /** BIP_GMAC-256 Group Management Cipher */
+        BIP_GMAC_256 = 1 << 12,
+
+        /** BIP_CMAC-256 Group Management Cipher */
+        BIP_CMAC_256 = 1 << 13,
+    };
+
     /**
      * Set key management mask for the network.
      *
@@ -131,6 +143,34 @@ interface ISupplicantStaNetwork extends @1.1::ISupplicantStaNetwork {
     getGroupCipher_1_2()
         generates (SupplicantStatus status,
             bitfield<GroupCipherMask> groupCipherMask);
+
+    /**
+     * Set group management cipher mask for the network.
+     *
+     * @param groupMgmtCipherMask value to set.
+     *        Combination of |GroupMgmtCipherMask| values.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     */
+    setGroupMgmtCipher(bitfield<GroupMgmtCipherMask> groupMgmtCipherMask)
+        generates (SupplicantStatus status);
+
+    /**
+     * Get the group management cipher mask set for the network.
+     *
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     * @return groupMgmtCipherMask Combination of |GroupMgmtCipherMask| values.
+     */
+    getGroupMgmtCipher()
+        generates (SupplicantStatus status,
+            bitfield<GroupMgmtCipherMask> groupMgmtCipherMask);
 
     /**
      * Enable TLS Suite-B in EAP Phase1
