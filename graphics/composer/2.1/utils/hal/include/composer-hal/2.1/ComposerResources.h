@@ -186,6 +186,8 @@ class ComposerLayerResource {
         : mBufferCache(importer, ComposerHandleCache::HandleType::BUFFER, bufferCacheSize),
           mSidebandStreamCache(importer, ComposerHandleCache::HandleType::STREAM, 1) {}
 
+    virtual ~ComposerLayerResource() = default;
+
     Error getBuffer(uint32_t slot, bool fromCache, const native_handle_t* inHandle,
                     const native_handle_t** outHandle, const native_handle** outReplacedHandle) {
         return mBufferCache.getHandle(slot, fromCache, inHandle, outHandle, outReplacedHandle);
@@ -210,6 +212,8 @@ class ComposerDisplayResource {
         PHYSICAL,
         VIRTUAL,
     };
+
+    virtual ~ComposerDisplayResource() = default;
 
     ComposerDisplayResource(DisplayType type, ComposerHandleImporter& importer,
                             uint32_t outputBufferCacheSize)
