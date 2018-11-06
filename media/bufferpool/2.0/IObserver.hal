@@ -29,6 +29,7 @@ interface IObserver {
      * message.
      *
      * @param connectionId the connection Id of the specific buffer pool client
+     * @param msgId Id of the most recent message
      */
-    oneway onMessage(int64_t connectionId);
+    oneway onMessage(int64_t connectionId, uint32_t msgId);
 };
