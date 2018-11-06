@@ -59,19 +59,30 @@ interface IRadio extends @1.1::IRadio {
     /**
      * Sets the signal strength reporting criteria.
      *
-     * The resulting reporting criteria are the AND of all the supplied criteria.
+     * The resulting reporting rules are the AND of all the supplied criteria. For each RAN
+     * The thresholdsDbm and hysteresisDb apply to only the following measured quantities:
+     * -GERAN    - RSSI
+     * -CDMA2000 - RSSI
+     * -UTRAN    - RSCP
+     * -EUTRAN   - RSRP
      *
-     * Note: Reporting criteria must be individually set for each RAN. If unset, reporting criteria
-     * for that RAN are implementation-defined.
+     * Note: Reporting criteria must be individually set for each RAN. For any unset reporting
+     * criteria, the value is implementation-defined.
      *
-     * Response callback is IRadioResponse.setSignalStrengthReportingCriteriaResponse().
+     * Note: As this mechanism generally only constrains reports based on one measured quantity per
+     * RAN, if multiple measured quantities must be used to trigger a report for a given RAN, the
+     * only valid field may be hysteresisMs: hysteresisDb and thresholdsDbm must be set to zero and
+     * length zero respectively. If either hysteresisDb or thresholdsDbm is set, then reports shall
+     * only be triggered by the respective measured quantity, subject to the applied constraints.
+     *
+     * Response callback is IRadioResponse.setSignalStrengthReportingCriteriaResponse()
      *
      * @param serial Serial number of request.
      * @param hysteresisMs A hysteresis time in milliseconds to prevent flapping. A value of 0
      *     disables hysteresis.
      * @param hysteresisDb An interval in dB defining the required magnitude change between reports.
-     *     hysteresisDb must be smaller than the smallest threshold delta. An
-     *     interval value of 0 disables hysteresis.
+     *     hysteresisDb must be smaller than the smallest threshold delta. An interval value of 0
+     *     disables hysteresis.
      * @param thresholdsDbm A vector of trigger thresholds in dBm. A vector size of 0 disables the
      *     use of thresholds for reporting.
      * @param accessNetwork The type of network for which to apply these thresholds.
