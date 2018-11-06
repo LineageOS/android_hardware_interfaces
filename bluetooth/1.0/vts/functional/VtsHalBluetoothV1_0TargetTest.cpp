@@ -29,6 +29,7 @@
 #include <queue>
 
 using ::android::sp;
+using ::android::hardware::hidl_death_recipient;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
@@ -157,6 +158,11 @@ class BluetoothHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     ALOGI("%s: getService() for bluetooth is %s", __func__,
           bluetooth->isRemote() ? "remote" : "local");
 
+    bluetooth_hci_death_recipient = new BluetoothHciDeathRecipient();
+    ASSERT_NE(bluetooth_hci_death_recipient, nullptr);
+    ASSERT_TRUE(
+        bluetooth->linkToDeath(bluetooth_hci_death_recipient, 0).isOk());
+
     bluetooth_cb = new BluetoothHciCallbacks(*this);
     ASSERT_NE(bluetooth_cb, nullptr);
 
@@ -214,6 +220,15 @@ class BluetoothHidlTest : public ::testing::VtsHalHidlTargetTestBase {
   void wait_for_command_complete_event(hidl_vec<uint8_t> cmd);
   int wait_for_completed_packets_event(uint16_t handle);
 
+  class BluetoothHciDeathRecipient : public hidl_death_recipient {
+   public:
+    virtual void serviceDied(
+        uint64_t /*cookie*/,
+        const android::wp<::android::hidl::base::V1_0::IBase>& /*who*/) {
+      FAIL();
+    }
+  };
+
   // A simple test implementation of BluetoothHciCallbacks.
   class BluetoothHciCallbacks
       : public ::testing::VtsHalHidlTargetCallbackBase<BluetoothHidlTest>,
@@ -260,6 +275,7 @@ class BluetoothHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 
   sp<IBluetoothHci> bluetooth;
   sp<BluetoothHciCallbacks> bluetooth_cb;
+  sp<BluetoothHciDeathRecipient> bluetooth_hci_death_recipient;
   std::queue<hidl_vec<uint8_t>> event_queue;
   std::queue<hidl_vec<uint8_t>> acl_queue;
   std::queue<hidl_vec<uint8_t>> sco_queue;
