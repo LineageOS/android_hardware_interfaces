@@ -16,6 +16,24 @@
       "revId": "5c8cc3264227eaf69f1be91afbbfdad97fcf26c3",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "e3d4ead6_65ddb2fd",
+        "filename": "configstore/1.1/default/service.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 41,
+      "author": {
+        "id": 13648
+      },
+      "writtenOn": "2018-11-07T17:26:38Z",
+      "side": 1,
+      "message": "Gotcha! https://source.codeaurora.org/quic/la/platform/hardware/interfaces/commit/configstore?h\u003dLA.UM.7.3.r1-06100-sdm845.0\u0026id\u003de9323ca2ef5547b86987305f6f801c8dfe3665c9",
+      "parentUuid": "21902bb8_65c9fcc7",
+      "revId": "5c8cc3264227eaf69f1be91afbbfdad97fcf26c3",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
     }
   ]
 }
