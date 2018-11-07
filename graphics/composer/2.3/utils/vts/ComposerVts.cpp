@@ -108,6 +108,48 @@ bool ComposerClient::getClientTargetSupport_2_3(Display display, uint32_t width,
     return error == Error::NONE;
 }
 
+Error ComposerClient::getDisplayedContentSamplingAttributes(
+    uint64_t display, PixelFormat& format, Dataspace& dataspace,
+    hidl_bitfield<IComposerClient::FormatColorComponent>& componentMask) {
+    auto error = Error::BAD_PARAMETER;
+    mClient->getDisplayedContentSamplingAttributes(
+        display, [&](const auto& tmpError, const auto& tmpFormat, const auto& tmpDataspace,
+                     const auto& tmpComponentMask) {
+            error = tmpError;
+            format = tmpFormat;
+            dataspace = tmpDataspace;
+            componentMask = tmpComponentMask;
+        });
+    return error;
+}
+
+Error ComposerClient::setDisplayedContentSamplingEnabled(
+    uint64_t display, IComposerClient::DisplayedContentSampling enable,
+    hidl_bitfield<IComposerClient::FormatColorComponent> componentMask, uint64_t maxFrames) {
+    return mClient->setDisplayedContentSamplingEnabled(display, enable, componentMask, maxFrames);
+}
+
+Error ComposerClient::getDisplayedContentSample(uint64_t display, uint64_t maxFrames,
+                                                uint64_t timestamp, uint64_t& frameCount,
+                                                hidl_vec<uint64_t>& sampleComponent0,
+                                                hidl_vec<uint64_t>& sampleComponent1,
+                                                hidl_vec<uint64_t>& sampleComponent2,
+                                                hidl_vec<uint64_t>& sampleComponent3) {
+    auto error = Error::BAD_PARAMETER;
+    mClient->getDisplayedContentSample(
+        display, maxFrames, timestamp,
+        [&](const auto& tmpError, const auto& tmpFrameCount, const auto& tmpSamples0,
+            const auto& tmpSamples1, const auto& tmpSamples2, const auto& tmpSamples3) {
+            error = tmpError;
+            frameCount = tmpFrameCount;
+            sampleComponent0 = tmpSamples0;
+            sampleComponent1 = tmpSamples1;
+            sampleComponent2 = tmpSamples2;
+            sampleComponent3 = tmpSamples3;
+        });
+    return error;
+}
+
 }  // namespace vts
 }  // namespace V2_3
 }  // namespace composer

@@ -72,6 +72,18 @@ class ComposerHal : public V2_2::hal::ComposerHal {
     virtual Error getDisplayIdentificationData(Display display, uint8_t* outPort,
                                                std::vector<uint8_t>* outData) = 0;
     virtual Error setLayerColorTransform(Display display, Layer layer, const float* matrix) = 0;
+    virtual Error getDisplayedContentSamplingAttributes(
+        uint64_t display, PixelFormat& format, Dataspace& dataspace,
+        hidl_bitfield<IComposerClient::FormatColorComponent>& componentMask) = 0;
+    virtual Error setDisplayedContentSamplingEnabled(
+        uint64_t display, IComposerClient::DisplayedContentSampling enable,
+        hidl_bitfield<IComposerClient::FormatColorComponent> componentMask, uint64_t maxFrames) = 0;
+    virtual Error getDisplayedContentSample(uint64_t display, uint64_t maxFrames,
+                                            uint64_t timestamp, uint64_t& frameCount,
+                                            hidl_vec<uint64_t>& sampleComponent0,
+                                            hidl_vec<uint64_t>& sampleComponent1,
+                                            hidl_vec<uint64_t>& sampleComponent2,
+                                            hidl_vec<uint64_t>& sampleComponent3) = 0;
 };
 
 }  // namespace hal
