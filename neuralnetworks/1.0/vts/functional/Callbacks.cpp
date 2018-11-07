@@ -139,8 +139,10 @@ Return<void> ExecutionCallback::notify(ErrorStatus errorStatus) {
     return Void();
 }
 
-Return<void> ExecutionCallback::notify_1_2(ErrorStatus errorStatus) {
+Return<void> ExecutionCallback::notify_1_2(ErrorStatus errorStatus,
+                                           const hidl_vec<OutputShape>& outputShapes) {
     mErrorStatus = errorStatus;
+    mOutputShapes = outputShapes;
     CallbackBase::notify();
     return Void();
 }
@@ -148,6 +150,11 @@ Return<void> ExecutionCallback::notify_1_2(ErrorStatus errorStatus) {
 ErrorStatus ExecutionCallback::getStatus() {
     wait();
     return mErrorStatus;
+}
+
+const std::vector<OutputShape>& ExecutionCallback::getOutputShapes() {
+    wait();
+    return mOutputShapes;
 }
 
 }  // namespace implementation
