@@ -21,13 +21,12 @@
 
 #include "TestHarness.h"
 
-#include <android/hardware/neuralnetworks/1.0/types.h>
-#include <android/hardware/neuralnetworks/1.1/types.h>
+#include <android/hardware/neuralnetworks/1.2/types.h>
 
 namespace android {
 namespace hardware {
 namespace neuralnetworks {
-namespace V1_1 {
+namespace V1_2 {
 namespace vts {
 namespace functional {
 
@@ -223,9 +222,9 @@ FOR_EACH_TEST_MODEL(FORWARD_DECLARE_GENERATED_OBJECTS)
 
 }  // namespace functional
 }  // namespace vts
-}  // namespace V1_1
+}  // namespace V1_2
 }  // namespace neuralnetworks
 }  // namespace hardware
 }  // namespace android
 
-#endif  // VTS_HAL_NEURALNETWORKS_V1_1_VTS_FUNCTIONAL_MODELS_H
+#endif  // VTS_HAL_NEURALNETWORKS_V1_2_VTS_FUNCTIONAL_MODELS_V1_1_H

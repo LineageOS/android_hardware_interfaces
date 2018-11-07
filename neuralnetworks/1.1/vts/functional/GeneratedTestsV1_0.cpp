@@ -32,11 +32,11 @@ namespace neuralnetworks {
 
 namespace generated_tests {
 using ::test_helper::MixedTypedExample;
-extern void Execute(const sp<V1_2::IDevice>&, std::function<V1_2::Model(void)>,
+extern void Execute(const sp<V1_1::IDevice>&, std::function<V1_1::Model(void)>,
                     std::function<bool(int)>, const std::vector<MixedTypedExample>&);
 }  // namespace generated_tests
 
-namespace V1_2 {
+namespace V1_1 {
 namespace vts {
 namespace functional {
 
@@ -46,11 +46,11 @@ using ::android::nn::allocateSharedMemory;
 using ::test_helper::MixedTypedExample;
 
 // in frameworks/ml/nn/runtime/tests/generated/
-#include "all_generated_V1_2_vts_tests.cpp"
+#include "all_generated_V1_0_vts_tests.cpp"
 
 }  // namespace functional
 }  // namespace vts
-}  // namespace V1_2
+}  // namespace V1_1
 }  // namespace neuralnetworks
 }  // namespace hardware
 }  // namespace android

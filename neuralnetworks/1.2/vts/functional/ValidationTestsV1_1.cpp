@@ -16,37 +16,31 @@
 
 #define LOG_TAG "neuralnetworks_hidl_hal_test"
 
+#include "ModelsV1_1.h"
 #include "VtsHalNeuralnetworks.h"
-
-#include "Callbacks.h"
-#include "TestHarness.h"
-#include "Utils.h"
-
-#include <android-base/logging.h>
-#include <android/hidl/memory/1.0/IMemory.h>
-#include <hidlmemory/mapping.h>
 
 namespace android {
 namespace hardware {
 namespace neuralnetworks {
-
-namespace generated_tests {
-using ::test_helper::MixedTypedExample;
-extern void Execute(const sp<V1_2::IDevice>&, std::function<V1_2::Model(void)>,
-                    std::function<bool(int)>, const std::vector<MixedTypedExample>&);
-}  // namespace generated_tests
-
 namespace V1_2 {
 namespace vts {
 namespace functional {
 
-using ::android::hardware::neuralnetworks::V1_0::implementation::ExecutionCallback;
-using ::android::hardware::neuralnetworks::V1_0::implementation::PreparedModelCallback;
-using ::android::nn::allocateSharedMemory;
-using ::test_helper::MixedTypedExample;
+// forward declarations
+std::vector<Request> createRequests(const std::vector<MixedTypedExample>& examples);
 
-// in frameworks/ml/nn/runtime/tests/generated/
-#include "all_generated_V1_2_vts_tests.cpp"
+// generate validation tests
+#define VTS_CURRENT_TEST_CASE(TestName)                                           \
+    TEST_F(ValidationTest, TestName) {                                            \
+        const Model model = TestName::createTestModel();                          \
+        const std::vector<Request> requests = createRequests(TestName::examples); \
+        validateModel(model);                                                     \
+        validateRequests(model, requests);                                        \
+    }
+
+FOR_EACH_TEST_MODEL(VTS_CURRENT_TEST_CASE)
+
+#undef VTS_CURRENT_TEST_CASE
 
 }  // namespace functional
 }  // namespace vts
