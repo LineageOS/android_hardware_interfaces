@@ -58,6 +58,16 @@ enum CameraMetadataTag : @3.3::CameraMetadataTag {
  * Enumeration definitions for the various entries that need them
  */
 
+/** android.scaler.availableFormats enumeration values added since v3.2
+ * @see ANDROID_SCALER_AVAILABLE_FORMATS
+ */
+enum CameraMetadataEnumAndroidScalerAvailableFormats :
+        @3.2::CameraMetadataEnumAndroidScalerAvailableFormats {
+    ANDROID_SCALER_AVAILABLE_FORMATS_RAW10                      = 0x25,
+    ANDROID_SCALER_AVAILABLE_FORMATS_RAW12                      = 0x26,
+    ANDROID_SCALER_AVAILABLE_FORMATS_Y8                         = 0x20203859,
+};
+
 /** android.info.supportedBufferManagementVersion enumeration values
  * @see ANDROID_INFO_SUPPORTED_BUFFER_MANAGEMENT_VERSION
  */
