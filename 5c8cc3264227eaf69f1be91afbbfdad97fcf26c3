@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "21902bb8_65c9fcc7",
+        "filename": "configstore/1.1/default/service.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 41,
+      "author": {
+        "id": 13648
+      },
+      "writtenOn": "2018-11-07T17:11:26Z",
+      "side": 1,
+      "message": "This seems to be problematic... https://gist.github.com/bgcngm/2acf3743844127365fc9e82a2fa4b7a5",
+      "revId": "5c8cc3264227eaf69f1be91afbbfdad97fcf26c3",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    }
+  ]
+}
