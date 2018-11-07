@@ -123,8 +123,8 @@ void SensorsHidlEnvironmentV2_0::readEvents() {
     size_t eventsToRead = std::min(availableEvents, mEventBuffer.size());
     if (eventsToRead > 0) {
         if (mEventQueue->read(mEventBuffer.data(), eventsToRead)) {
-            for (const auto& e : mEventBuffer) {
-                addEvent(e);
+            for (size_t i = 0; i < eventsToRead; i++) {
+                addEvent(mEventBuffer[i]);
             }
         }
     }
