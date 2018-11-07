@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9178a954_765b17cd",
+        "filename": "audio/common/all-versions/default/service/service.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 30,
+      "author": {
+        "id": 13589
+      },
+      "writtenOn": "2018-11-07T23:39:24Z",
+      "side": 1,
+      "message": "These are randomly wrapped with #ifdef ARCH_ARM_32 or not",
+      "revId": "54b4707ef38b8533aedc512eae00b4ed9caf724f",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    }
+  ]
+}
