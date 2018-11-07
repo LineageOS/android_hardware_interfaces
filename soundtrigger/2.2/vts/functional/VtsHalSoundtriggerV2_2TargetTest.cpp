@@ -74,21 +74,14 @@ class SoundTriggerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
  * Test ISoundTriggerHw::getModelState() method
  *
  * Verifies that:
- *  - the implementation returns -EINVAL with invalid model handle
+ *  - the implementation returns -ENOSYS with invalid model handle
  *
  */
 TEST_F(SoundTriggerHidlTest, GetModelStateInvalidModel) {
-    int ret = android::OK;
-    ::android::hardware::soundtrigger::V2_0::ISoundTriggerHwCallback::RecognitionEvent event;
     SoundModelHandle handle = 0;
-    Return<void> hidlReturn =
-        mSoundTriggerHal->getModelState(handle, [&](int32_t retval, auto res) {
-            ret = retval;
-            event = res;
-        });
-
+    Return<int32_t> hidlReturn = mSoundTriggerHal->getModelState(handle);
     EXPECT_TRUE(hidlReturn.isOk());
-    EXPECT_EQ(-ENOSYS, ret);
+    EXPECT_EQ(-ENOSYS, hidlReturn);
 }
 
 int main(int argc, char** argv) {
