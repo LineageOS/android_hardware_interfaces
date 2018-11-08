@@ -681,6 +681,7 @@ public:
             const CameraMetadata& chars, int deviceVersion,
             const hidl_vec<hidl_string>& deviceNames);
     void verifyCameraCharacteristics(Status status, const CameraMetadata& chars);
+    void verifyRecommendedConfigs(const CameraMetadata& metadata);
 
     static Status getAvailableOutputStreams(camera_metadata_t *staticMeta,
             std::vector<AvailableStream> &outputStreams,
@@ -698,7 +699,7 @@ public:
             /*out*/);
     static Status pickConstrainedModeSize(camera_metadata_t *staticMeta,
             AvailableStream &hfrStream);
-    static Status isZSLModeAvailable(camera_metadata_t *staticMeta);
+    static Status isZSLModeAvailable(const camera_metadata_t *staticMeta);
     static Status getZSLInputOutputMap(camera_metadata_t *staticMeta,
             std::vector<AvailableZSLInputOutput> &inputOutputMap);
     static Status findLargestSize(
@@ -2079,7 +2080,7 @@ TEST_F(CameraHidlTest, getCameraCharacteristics) {
 
                 ret = device3_x->getCameraCharacteristics([&](auto status, const auto& chars) {
                     verifyCameraCharacteristics(status, chars);
-
+                    verifyRecommendedConfigs(chars);
                     verifyLogicalCameraMetadata(name, device3_x, chars, deviceVersion,
                             cameraDeviceNames);
                 });
@@ -4323,7 +4324,7 @@ Status CameraHidlTest::pickConstrainedModeSize(camera_metadata_t *staticMeta,
 
 // Check whether ZSL is available using the static camera
 // characteristics.
-Status CameraHidlTest::isZSLModeAvailable(camera_metadata_t *staticMeta) {
+Status CameraHidlTest::isZSLModeAvailable(const camera_metadata_t *staticMeta) {
     Status ret = Status::METHOD_NOT_SUPPORTED;
     if (nullptr == staticMeta) {
         return Status::ILLEGAL_ARGUMENT;
@@ -4976,6 +4977,94 @@ void CameraHidlTest::allocateGraphicBuffer(uint32_t width, uint32_t height, uint
             *buffer_handle = buffers[0];
         });
     ASSERT_TRUE(ret.isOk());
+}
+
+void CameraHidlTest::verifyRecommendedConfigs(const CameraMetadata& chars) {
+    size_t CONFIG_ENTRY_SIZE = 5;
+    size_t CONFIG_ENTRY_TYPE_OFFSET = 3;
+    size_t CONFIG_ENTRY_BITFIELD_OFFSET = 4;
+    uint32_t maxPublicUsecase =
+            ANDROID_SCALER_AVAILABLE_RECOMMENDED_STREAM_CONFIGURATIONS_PUBLIC_END;
+    uint32_t vendorUsecaseStart =
+            ANDROID_SCALER_AVAILABLE_RECOMMENDED_STREAM_CONFIGURATIONS_VENDOR_START;
+    uint32_t usecaseMask = (1 << vendorUsecaseStart) - 1;
+    usecaseMask &= ~((1 << maxPublicUsecase) - 1);
+
+    const camera_metadata_t* metadata = reinterpret_cast<const camera_metadata_t*> (chars.data());
+
+    camera_metadata_ro_entry recommendedConfigsEntry, recommendedDepthConfigsEntry, ioMapEntry;
+    recommendedConfigsEntry.count = recommendedDepthConfigsEntry.count = ioMapEntry.count = 0;
+    int retCode = find_camera_metadata_ro_entry(metadata,
+            ANDROID_SCALER_AVAILABLE_RECOMMENDED_STREAM_CONFIGURATIONS, &recommendedConfigsEntry);
+    int depthRetCode = find_camera_metadata_ro_entry(metadata,
+            ANDROID_DEPTH_AVAILABLE_RECOMMENDED_DEPTH_STREAM_CONFIGURATIONS,
+            &recommendedDepthConfigsEntry);
+    int ioRetCode = find_camera_metadata_ro_entry(metadata,
+            ANDROID_SCALER_AVAILABLE_RECOMMENDED_INPUT_OUTPUT_FORMATS_MAP, &ioMapEntry);
+    if ((0 != retCode) && (0 != depthRetCode)) {
+        //In case both regular and depth recommended configurations are absent,
+        //I/O should be absent as well.
+        ASSERT_NE(ioRetCode, 0);
+        return;
+    }
+
+    camera_metadata_ro_entry availableKeysEntry;
+    retCode = find_camera_metadata_ro_entry(metadata,
+            ANDROID_REQUEST_AVAILABLE_CHARACTERISTICS_KEYS, &availableKeysEntry);
+    ASSERT_TRUE((0 == retCode) && (availableKeysEntry.count > 0));
+    std::vector<int32_t> availableKeys;
+    availableKeys.reserve(availableKeysEntry.count);
+    availableKeys.insert(availableKeys.end(), availableKeysEntry.data.i32,
+            availableKeysEntry.data.i32 + availableKeysEntry.count);
+
+    if (recommendedConfigsEntry.count > 0) {
+        ASSERT_NE(std::find(availableKeys.begin(), availableKeys.end(),
+                    ANDROID_SCALER_AVAILABLE_RECOMMENDED_STREAM_CONFIGURATIONS),
+                availableKeys.end());
+        ASSERT_EQ((recommendedConfigsEntry.count % CONFIG_ENTRY_SIZE), 0);
+        for (size_t i = 0; i < recommendedConfigsEntry.count; i += CONFIG_ENTRY_SIZE) {
+            int32_t entryType =
+                recommendedConfigsEntry.data.i32[i + CONFIG_ENTRY_TYPE_OFFSET];
+            uint32_t bitfield =
+                recommendedConfigsEntry.data.i32[i + CONFIG_ENTRY_BITFIELD_OFFSET];
+            ASSERT_TRUE((entryType ==
+                     ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT) ||
+                    (entryType ==
+                     ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_INPUT));
+            ASSERT_TRUE((bitfield & usecaseMask) == 0);
+        }
+    }
+
+    if (recommendedDepthConfigsEntry.count > 0) {
+        ASSERT_NE(std::find(availableKeys.begin(), availableKeys.end(),
+                    ANDROID_DEPTH_AVAILABLE_RECOMMENDED_DEPTH_STREAM_CONFIGURATIONS),
+                availableKeys.end());
+        ASSERT_EQ((recommendedDepthConfigsEntry.count % CONFIG_ENTRY_SIZE), 0);
+        for (size_t i = 0; i < recommendedDepthConfigsEntry.count; i += CONFIG_ENTRY_SIZE) {
+            int32_t entryType =
+                recommendedDepthConfigsEntry.data.i32[i + CONFIG_ENTRY_TYPE_OFFSET];
+            uint32_t bitfield =
+                recommendedDepthConfigsEntry.data.i32[i + CONFIG_ENTRY_BITFIELD_OFFSET];
+            ASSERT_TRUE((entryType ==
+                     ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT) ||
+                    (entryType ==
+                     ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_INPUT));
+            ASSERT_TRUE((bitfield & usecaseMask) == 0);
+        }
+
+        if (recommendedConfigsEntry.count == 0) {
+            //In case regular recommended configurations are absent but suggested depth
+            //configurations are present, I/O should be absent.
+            ASSERT_NE(ioRetCode, 0);
+        }
+    }
+
+    if ((ioRetCode == 0) && (ioMapEntry.count > 0)) {
+        ASSERT_NE(std::find(availableKeys.begin(), availableKeys.end(),
+                    ANDROID_SCALER_AVAILABLE_RECOMMENDED_INPUT_OUTPUT_FORMATS_MAP),
+                availableKeys.end());
+        ASSERT_EQ(isZSLModeAvailable(metadata), Status::OK);
+    }
 }
 
 int main(int argc, char **argv) {

@@ -44,6 +44,21 @@ enum CameraMetadataTag : @3.3::CameraMetadataTag {
 
     ANDROID_REQUEST_END_3_4,
 
+    /** android.scaler.availableRecommendedStreamConfigurations [static, enum[], ndk_public]
+     *
+     * <p>Recommended stream configurations for common client use cases.</p>
+     */
+    ANDROID_SCALER_AVAILABLE_RECOMMENDED_STREAM_CONFIGURATIONS = android.hardware.camera.metadata@3.2::CameraMetadataTag:ANDROID_SCALER_END,
+
+    /** android.scaler.availableRecommendedInputOutputFormatsMap [static, int32, ndk_public]
+     *
+     * <p>Recommended mappings of image formats that are supported by this
+     * camera device for input streams, to their corresponding output formats.</p>
+     */
+    ANDROID_SCALER_AVAILABLE_RECOMMENDED_INPUT_OUTPUT_FORMATS_MAP,
+
+    ANDROID_SCALER_END_3_4,
+
     /** android.info.supportedBufferManagementVersion [static, enum, system]
      *
      * <p>The version of buffer management API this camera device supports and opts into.</p>
@@ -52,11 +67,51 @@ enum CameraMetadataTag : @3.3::CameraMetadataTag {
 
     ANDROID_INFO_END_3_4,
 
+    /** android.depth.availableRecommendedDepthStreamConfigurations [static, int32[], ndk_public]
+     *
+     * <p>Recommended depth stream configurations for common client use cases.</p>
+     */
+    ANDROID_DEPTH_AVAILABLE_RECOMMENDED_DEPTH_STREAM_CONFIGURATIONS = android.hardware.camera.metadata@3.2::CameraMetadataTag:ANDROID_DEPTH_END,
+
+    ANDROID_DEPTH_END_3_4,
+
 };
 
 /*
  * Enumeration definitions for the various entries that need them
  */
+
+/** android.scaler.availableFormats enumeration values added since v3.2
+ * @see ANDROID_SCALER_AVAILABLE_FORMATS
+ */
+enum CameraMetadataEnumAndroidScalerAvailableFormats :
+        @3.2::CameraMetadataEnumAndroidScalerAvailableFormats {
+    ANDROID_SCALER_AVAILABLE_FORMATS_RAW10                      = 0x25,
+    ANDROID_SCALER_AVAILABLE_FORMATS_RAW12                      = 0x26,
+    ANDROID_SCALER_AVAILABLE_FORMATS_Y8                         = 0x20203859,
+};
+
+/** android.scaler.availableRecommendedStreamConfigurations enumeration values
+ * @see ANDROID_SCALER_AVAILABLE_RECOMMENDED_STREAM_CONFIGURATIONS
+ */
+enum CameraMetadataEnumAndroidScalerAvailableRecommendedStreamConfigurations : uint32_t {
+    ANDROID_SCALER_AVAILABLE_RECOMMENDED_STREAM_CONFIGURATIONS_PREVIEW
+                                                                 = 0x0,
+    ANDROID_SCALER_AVAILABLE_RECOMMENDED_STREAM_CONFIGURATIONS_RECORD
+                                                                 = 0x1,
+    ANDROID_SCALER_AVAILABLE_RECOMMENDED_STREAM_CONFIGURATIONS_VIDEO_SNAPSHOT
+                                                                 = 0x2,
+    ANDROID_SCALER_AVAILABLE_RECOMMENDED_STREAM_CONFIGURATIONS_SNAPSHOT
+                                                                 = 0x3,
+    ANDROID_SCALER_AVAILABLE_RECOMMENDED_STREAM_CONFIGURATIONS_ZSL
+                                                                 = 0x4,
+    ANDROID_SCALER_AVAILABLE_RECOMMENDED_STREAM_CONFIGURATIONS_RAW
+                                                                 = 0x5,
+    ANDROID_SCALER_AVAILABLE_RECOMMENDED_STREAM_CONFIGURATIONS_PUBLIC_END
+                                                                 = 0x6,
+    ANDROID_SCALER_AVAILABLE_RECOMMENDED_STREAM_CONFIGURATIONS_VENDOR_START
+                                                                 = 0x18,
+};
 
 /** android.info.supportedBufferManagementVersion enumeration values
  * @see ANDROID_INFO_SUPPORTED_BUFFER_MANAGEMENT_VERSION

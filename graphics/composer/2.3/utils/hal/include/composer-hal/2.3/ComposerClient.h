@@ -91,6 +91,42 @@ class ComposerClientImpl : public V2_2::hal::detail::ComposerClientImpl<Interfac
         return Void();
     }
 
+    Return<void> getDisplayedContentSamplingAttributes(
+        uint64_t display,
+        IComposerClient::getDisplayedContentSamplingAttributes_cb hidl_cb) override {
+        common::V1_1::PixelFormat format;
+        common::V1_2::Dataspace dataspace;
+        hidl_bitfield<IComposerClient::FormatColorComponent> componentMask;
+        Error error =
+            mHal->getDisplayedContentSamplingAttributes(display, format, dataspace, componentMask);
+        hidl_cb(error, format, dataspace, componentMask);
+        return Void();
+    }
+
+    Return<Error> setDisplayedContentSamplingEnabled(
+        uint64_t display, IComposerClient::DisplayedContentSampling enable,
+        hidl_bitfield<IComposerClient::FormatColorComponent> componentMask,
+        uint64_t maxFrames) override {
+        return mHal->setDisplayedContentSamplingEnabled(display, enable, componentMask, maxFrames);
+    }
+
+    Return<void> getDisplayedContentSample(
+        uint64_t display, uint64_t maxFrames, uint64_t timestamp,
+        IComposerClient::getDisplayedContentSample_cb hidl_cb) override {
+        uint64_t frameCount;
+        hidl_vec<uint64_t> sampleComponent0;
+        hidl_vec<uint64_t> sampleComponent1;
+        hidl_vec<uint64_t> sampleComponent2;
+        hidl_vec<uint64_t> sampleComponent3;
+
+        Error error = mHal->getDisplayedContentSample(display, maxFrames, timestamp, frameCount,
+                                                      sampleComponent0, sampleComponent1,
+                                                      sampleComponent2, sampleComponent3);
+        hidl_cb(error, frameCount, sampleComponent0, sampleComponent1, sampleComponent2,
+                sampleComponent3);
+        return Void();
+    }
+
     Return<void> executeCommands_2_3(uint32_t inLength, const hidl_vec<hidl_handle>& inHandles,
                                      IComposerClient::executeCommands_2_2_cb hidl_cb) override {
         std::lock_guard<std::mutex> lock(mCommandEngineMutex);

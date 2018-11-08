@@ -27,6 +27,12 @@
 #include <thread>
 #include <vector>
 
+class IEventCallback {
+   public:
+    virtual ~IEventCallback() = default;
+    virtual void onEvent(const ::android::hardware::sensors::V1_0::Event& event) = 0;
+};
+
 class SensorsHidlEnvironmentBase : public ::testing::VtsHalHidlTargetTestEnvBase {
    public:
     using Event = ::android::hardware::sensors::V1_0::Event;
@@ -40,8 +46,11 @@ class SensorsHidlEnvironmentBase : public ::testing::VtsHalHidlTargetTestEnvBase
     // set sensor event collection status
     void setCollection(bool enable);
 
+    void registerCallback(IEventCallback* callback);
+    void unregisterCallback();
+
    protected:
-    SensorsHidlEnvironmentBase() {}
+    SensorsHidlEnvironmentBase() : collectionEnabled(false), mCallback(nullptr) {}
 
     void addEvent(const Event& ev);
 
@@ -53,6 +62,8 @@ class SensorsHidlEnvironmentBase : public ::testing::VtsHalHidlTargetTestEnvBase
     std::thread pollThread;
     std::vector<Event> events;
     std::mutex events_mutex;
+
+    IEventCallback* mCallback;
 
     GTEST_DISALLOW_COPY_AND_ASSIGN_(SensorsHidlEnvironmentBase);
 };

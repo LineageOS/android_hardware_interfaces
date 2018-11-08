@@ -355,6 +355,78 @@ TEST_F(GraphicsComposerHidlTest, SetLayerColorTransform) {
     execute();
 }
 
+TEST_F(GraphicsComposerHidlTest, GetDisplayedContentSamplingAttributes) {
+    using common::V1_1::PixelFormat;
+    using common::V1_2::Dataspace;
+
+    int constexpr invalid = -1;
+    auto format = static_cast<PixelFormat>(invalid);
+    auto dataspace = static_cast<Dataspace>(invalid);
+    auto componentMask = static_cast<hidl_bitfield<IComposerClient::FormatColorComponent>>(invalid);
+    auto error = mComposerClient->getDisplayedContentSamplingAttributes(mPrimaryDisplay, format,
+                                                                        dataspace, componentMask);
+
+    if (error == Error::UNSUPPORTED) {
+        SUCCEED() << "Device does not support optional extension. Test skipped";
+        return;
+    }
+
+    EXPECT_EQ(error, Error::NONE);
+    EXPECT_NE(format, static_cast<PixelFormat>(invalid));
+    EXPECT_NE(dataspace, static_cast<Dataspace>(invalid));
+    EXPECT_NE(componentMask,
+              static_cast<hidl_bitfield<IComposerClient::FormatColorComponent>>(invalid));
+};
+
+TEST_F(GraphicsComposerHidlTest, SetDisplayedContentSamplingEnabled) {
+    auto const maxFrames = 10;
+    auto const enableAllComponents = 0;
+    auto error = mComposerClient->setDisplayedContentSamplingEnabled(
+        mPrimaryDisplay, IComposerClient::DisplayedContentSampling::ENABLE, enableAllComponents,
+        maxFrames);
+    if (error == Error::UNSUPPORTED) {
+        SUCCEED() << "Device does not support optional extension. Test skipped";
+        return;
+    }
+    EXPECT_EQ(error, Error::NONE);
+
+    error = mComposerClient->setDisplayedContentSamplingEnabled(
+        mPrimaryDisplay, IComposerClient::DisplayedContentSampling::DISABLE, enableAllComponents,
+        maxFrames);
+    EXPECT_EQ(error, Error::NONE);
+}
+
+TEST_F(GraphicsComposerHidlTest, GetDisplayedContentSample) {
+    int constexpr invalid = -1;
+    auto format = static_cast<PixelFormat>(invalid);
+    auto dataspace = static_cast<Dataspace>(invalid);
+    auto componentMask = static_cast<hidl_bitfield<IComposerClient::FormatColorComponent>>(invalid);
+    auto error = mComposerClient->getDisplayedContentSamplingAttributes(mPrimaryDisplay, format,
+                                                                        dataspace, componentMask);
+
+    uint64_t maxFrames = 10;
+    uint64_t timestamp = 0;
+    uint64_t frameCount = 0;
+    hidl_array<hidl_vec<uint64_t>, 4> histogram;
+    error = mComposerClient->getDisplayedContentSample(mPrimaryDisplay, maxFrames, timestamp,
+                                                       frameCount, histogram[0], histogram[1],
+                                                       histogram[2], histogram[3]);
+    if (error == Error::UNSUPPORTED) {
+        SUCCEED() << "Device does not support optional extension. Test skipped";
+        return;
+    }
+
+    EXPECT_EQ(error, Error::NONE);
+    EXPECT_LE(frameCount, maxFrames);
+    for (auto i = 0; i < histogram.size(); i++) {
+        if (componentMask & (1 << i)) {
+            EXPECT_NE(histogram[i].size(), 0);
+        } else {
+            EXPECT_EQ(histogram[i].size(), 0);
+        }
+    }
+}
+
 }  // namespace
 }  // namespace vts
 }  // namespace V2_3
