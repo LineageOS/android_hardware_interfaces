@@ -50,6 +50,17 @@ interface IRadioResponse extends @1.2::IRadioResponse {
 
     /**
      * @param info Response info struct containing response type, serial no. and error
+     * @param cellInfo List of current cell information known to radio
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INTERNAL_ERR
+     */
+    oneway getCellInfoListResponse_1_3(RadioResponseInfo info, vec<CellInfo> cellInfo);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
      * @param dataRegResponse Current Data registration response as defined by DataRegStateResult in
      *        types.hal
      *

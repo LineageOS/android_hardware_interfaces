@@ -49,4 +49,17 @@ interface IRadioIndication extends @1.2::IRadioIndication {
      */
     oneway currentEmergencyNumberList(RadioIndicationType type,
             vec<EmergencyNumber> emergencyNumberList);
+
+    /**
+     * Request all of the current cell information known to the radio.
+     *
+     * @param type Type of radio indication
+     * @param records Current cell information
+     */
+    oneway cellInfoList_1_3(RadioIndicationType type, vec<CellInfo> records);
+
+    /**
+     * Incremental network scan results
+     */
+    oneway networkScanResult_1_3(RadioIndicationType type, NetworkScanResult result);
 };
