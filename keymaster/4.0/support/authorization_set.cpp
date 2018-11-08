@@ -18,6 +18,8 @@
 
 #include <assert.h>
 
+#include <android-base/logging.h>
+
 namespace android {
 namespace hardware {
 namespace keymaster {
@@ -97,10 +99,10 @@ void AuthorizationSet::Deduplicate() {
         if (prev->tag == Tag::INVALID) continue;
 
         if (!keyParamEqual(*prev, *curr)) {
-            result.emplace_back(std::move(*prev));
+            result.push_back(std::move(*prev));
         }
     }
-    result.emplace_back(std::move(*prev));
+    result.push_back(std::move(*prev));
 
     std::swap(data_, result);
 }
@@ -125,6 +127,16 @@ void AuthorizationSet::Subtract(const AuthorizationSet& other) {
         } while (pos != -1);
         ++i;
     }
+}
+
+void AuthorizationSet::Filter(std::function<bool(const KeyParameter&)> doKeep) {
+    std::vector<KeyParameter> result;
+    for (auto& param : data_) {
+        if (doKeep(param)) {
+            result.push_back(std::move(param));
+        }
+    }
+    std::swap(data_, result);
 }
 
 KeyParameter& AuthorizationSet::operator[](int at) {
@@ -248,7 +260,12 @@ struct choose_serializer<MetaList<Tags...>> {
 
 template <>
 struct choose_serializer<> {
-    static OutStreams& serialize(OutStreams& out, const KeyParameter&) { return out; }
+    static OutStreams& serialize(OutStreams& out, const KeyParameter& param) {
+        LOG(FATAL) << "Trying to serialize unknown tag " << unsigned(param.tag)
+                   << ". Did you forget to add it to all_tags_t?";
+        abort();
+        return out;
+    }
 };
 
 template <TagType tag_type, Tag tag, typename... Tail>
