@@ -163,6 +163,7 @@ static uint32_t getInvalidRank(OperandType type) {
         case OperandType::TENSOR_INT32:
         case OperandType::TENSOR_QUANT8_ASYMM:
         case OperandType::TENSOR_QUANT16_SYMM:
+        case OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL:
             return 0;
         default:
             return 0;
@@ -191,6 +192,7 @@ static float getInvalidScale(OperandType type) {
         case OperandType::BOOL:
         case OperandType::TENSOR_FLOAT16:
         case OperandType::TENSOR_FLOAT32:
+        case OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL:
             return 1.0f;
         case OperandType::TENSOR_INT32:
             return -1.0f;
@@ -225,6 +227,7 @@ static std::vector<int32_t> getInvalidZeroPoints(OperandType type) {
         case OperandType::TENSOR_FLOAT16:
         case OperandType::TENSOR_FLOAT32:
         case OperandType::TENSOR_INT32:
+        case OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL:
             return {1};
         case OperandType::TENSOR_QUANT8_ASYMM:
             return {-1, 256};
@@ -288,6 +291,21 @@ static void mutateOperand(Operand* operand, OperandType type) {
                 operand->dimensions.size() > 0 ? operand->dimensions : hidl_vec<uint32_t>({1});
             newOperand.scale = operand->scale != 0.0f ? operand->scale : 1.0f;
             break;
+        case OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL: {
+            newOperand.dimensions =
+                operand->dimensions.size() > 0 ? operand->dimensions : hidl_vec<uint32_t>({1});
+            newOperand.scale = 0.0f;
+            newOperand.zeroPoint = 0;
+
+            SymmPerChannelQuantParams channelQuant;
+            channelQuant.channelDim = 0;
+            channelQuant.scales = hidl_vec<float>(
+                operand->dimensions.size() > 0 ? static_cast<size_t>(operand->dimensions[0]) : 0);
+            for (size_t i = 0; i < channelQuant.scales.size(); ++i) {
+                channelQuant.scales[i] = 1.0f;
+            }
+            newOperand.extraParams.channelQuant(std::move(channelQuant));
+        } break;
         case OperandType::OEM:
         case OperandType::TENSOR_OEM_BYTE:
         default:
