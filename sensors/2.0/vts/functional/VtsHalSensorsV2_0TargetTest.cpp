@@ -25,14 +25,55 @@
 #include <utils/SystemClock.h>
 
 #include <cinttypes>
+#include <condition_variable>
+#include <map>
 #include <vector>
 
 using ::android::sp;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
+using ::android::hardware::sensors::V1_0::MetaDataEventType;
 using ::android::hardware::sensors::V1_0::OperationMode;
 using ::android::hardware::sensors::V1_0::SensorStatus;
 using ::android::hardware::sensors::V1_0::Vec3;
+
+class EventCallback : public IEventCallback {
+   public:
+    void onEvent(const ::android::hardware::sensors::V1_0::Event& event) override {
+        if (event.sensorType == SensorType::ADDITIONAL_INFO &&
+            event.u.meta.what == MetaDataEventType::META_DATA_FLUSH_COMPLETE) {
+            std::unique_lock<std::recursive_mutex> lock(mFlushMutex);
+            mFlushMap[event.sensorHandle]++;
+            mFlushCV.notify_all();
+        }
+    }
+
+    int32_t getFlushCount(int32_t sensorHandle) {
+        std::unique_lock<std::recursive_mutex> lock(mFlushMutex);
+        return mFlushMap[sensorHandle];
+    }
+
+    void waitForFlushEvents(const std::vector<SensorInfo>& sensorsToWaitFor,
+                            int32_t numCallsToFlush, int64_t timeoutMs) {
+        std::unique_lock<std::recursive_mutex> lock(mFlushMutex);
+        mFlushCV.wait_for(lock, std::chrono::milliseconds(timeoutMs),
+                          [&] { return flushesReceived(sensorsToWaitFor, numCallsToFlush); });
+    }
+
+   protected:
+    bool flushesReceived(const std::vector<SensorInfo>& sensorsToWaitFor, int32_t numCallsToFlush) {
+        for (const SensorInfo& sensor : sensorsToWaitFor) {
+            if (getFlushCount(sensor.sensorHandle) < numCallsToFlush) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    std::map<int32_t, int32_t> mFlushMap;
+    std::recursive_mutex mFlushMutex;
+    std::condition_variable_any mFlushCV;
+};
 
 // The main test class for SENSORS HIDL HAL.
 
@@ -80,8 +121,17 @@ class SensorsHidlTest : public SensorsHidlTestBase {
         return SensorsHidlEnvironmentV2_0::Instance();
     }
 
+    // Test helpers
+    void runSingleFlushTest(const std::vector<SensorInfo>& sensors, bool activateSensor,
+                            int32_t expectedFlushCount, Result expectedResponse);
+    void runFlushTest(const std::vector<SensorInfo>& sensors, bool activateSensor,
+                      int32_t flushCalls, int32_t expectedFlushCount, Result expectedResponse);
+
     // Helper functions
     void activateAllSensors(bool enable);
+    std::vector<SensorInfo> getNonOneShotSensors();
+    std::vector<SensorInfo> getOneShotSensors();
+    int32_t getInvalidSensorHandle();
 };
 
 Return<Result> SensorsHidlTest::activate(int32_t sensorHandle, bool enabled) {
@@ -138,6 +188,35 @@ std::vector<SensorInfo> SensorsHidlTest::getSensorsList() {
     });
 
     return ret;
+}
+
+std::vector<SensorInfo> SensorsHidlTest::getNonOneShotSensors() {
+    std::vector<SensorInfo> sensors;
+    for (const SensorInfo& info : getSensorsList()) {
+        if (extractReportMode(info.flags) != SensorFlagBits::ONE_SHOT_MODE) {
+            sensors.push_back(info);
+        }
+    }
+    return sensors;
+}
+
+std::vector<SensorInfo> SensorsHidlTest::getOneShotSensors() {
+    std::vector<SensorInfo> sensors;
+    for (const SensorInfo& info : getSensorsList()) {
+        if (extractReportMode(info.flags) == SensorFlagBits::ONE_SHOT_MODE) {
+            sensors.push_back(info);
+        }
+    }
+    return sensors;
+}
+
+int32_t SensorsHidlTest::getInvalidSensorHandle() {
+    // Find a sensor handle that does not exist in the sensor list
+    int32_t maxHandle = 0;
+    for (const SensorInfo& sensor : getSensorsList()) {
+        maxHandle = max(maxHandle, sensor.sensorHandle);
+    }
+    return maxHandle + 1;
 }
 
 // Test if sensor list returned is valid
@@ -486,6 +565,120 @@ TEST_F(SensorsHidlTest, CallInitializeTwice) {
     activateAllSensors(true);
     ASSERT_GE(collectEvents(kCollectionTimeoutUs, kNumEvents).size(), kNumEvents);
     activateAllSensors(false);
+}
+
+void SensorsHidlTest::runSingleFlushTest(const std::vector<SensorInfo>& sensors,
+                                         bool activateSensor, int32_t expectedFlushCount,
+                                         Result expectedResponse) {
+    runFlushTest(sensors, activateSensor, 1 /* flushCalls */, expectedFlushCount, expectedResponse);
+}
+
+void SensorsHidlTest::runFlushTest(const std::vector<SensorInfo>& sensors, bool activateSensor,
+                                   int32_t flushCalls, int32_t expectedFlushCount,
+                                   Result expectedResponse) {
+    EventCallback callback;
+    getEnvironment()->registerCallback(&callback);
+
+    for (const SensorInfo& sensor : sensors) {
+        // Configure and activate the sensor
+        batch(sensor.sensorHandle, sensor.maxDelay, 0 /* maxReportLatencyNs */);
+        activate(sensor.sensorHandle, activateSensor);
+
+        // Flush the sensor
+        for (int32_t i = 0; i < flushCalls; i++) {
+            Result flushResult = flush(sensor.sensorHandle);
+            ASSERT_EQ(flushResult, expectedResponse);
+        }
+        activate(sensor.sensorHandle, false);
+    }
+
+    // Wait up to one second for the flush events
+    callback.waitForFlushEvents(sensors, flushCalls, 1000 /* timeoutMs */);
+    getEnvironment()->unregisterCallback();
+
+    // Check that the correct number of flushes are present for each sensor
+    for (const SensorInfo& sensor : sensors) {
+        ASSERT_EQ(callback.getFlushCount(sensor.sensorHandle), expectedFlushCount);
+    }
+}
+
+TEST_F(SensorsHidlTest, FlushSensor) {
+    // Find a sensor that is not a one-shot sensor
+    std::vector<SensorInfo> sensors = getNonOneShotSensors();
+    if (sensors.size() == 0) {
+        return;
+    }
+
+    constexpr int32_t kFlushes = 5;
+    runSingleFlushTest(sensors, true /* activateSensor */, 1 /* expectedFlushCount */, Result::OK);
+    runFlushTest(sensors, true /* activateSensor */, kFlushes, kFlushes, Result::OK);
+}
+
+TEST_F(SensorsHidlTest, FlushOneShotSensor) {
+    // Find a sensor that is a one-shot sensor
+    std::vector<SensorInfo> sensors = getOneShotSensors();
+    if (sensors.size() == 0) {
+        return;
+    }
+
+    runSingleFlushTest(sensors, true /* activateSensor */, 0 /* expectedFlushCount */,
+                       Result::BAD_VALUE);
+}
+
+TEST_F(SensorsHidlTest, FlushInactiveSensor) {
+    // Attempt to find a non-one shot sensor, then a one-shot sensor if necessary
+    std::vector<SensorInfo> sensors = getNonOneShotSensors();
+    if (sensors.size() == 0) {
+        sensors = getOneShotSensors();
+        if (sensors.size() == 0) {
+            return;
+        }
+    }
+
+    runSingleFlushTest(sensors, false /* activateSensor */, 0 /* expectedFlushCount */,
+                       Result::BAD_VALUE);
+}
+
+TEST_F(SensorsHidlTest, FlushNonexistentSensor) {
+    SensorInfo sensor;
+    std::vector<SensorInfo> sensors = getNonOneShotSensors();
+    if (sensors.size() == 0) {
+        sensors = getOneShotSensors();
+        if (sensors.size() == 0) {
+            return;
+        }
+    }
+    sensor = sensors.front();
+    sensor.sensorHandle = getInvalidSensorHandle();
+    runSingleFlushTest(std::vector<SensorInfo>{sensor}, false /* activateSensor */,
+                       0 /* expectedFlushCount */, Result::BAD_VALUE);
+}
+
+TEST_F(SensorsHidlTest, Batch) {
+    if (getSensorsList().size() == 0) {
+        return;
+    }
+
+    activateAllSensors(false /* enable */);
+    for (const SensorInfo& sensor : getSensorsList()) {
+        // Call batch on inactive sensor
+        ASSERT_EQ(batch(sensor.sensorHandle, sensor.minDelay, 0 /* maxReportLatencyNs */),
+                  Result::OK);
+
+        // Activate the sensor
+        activate(sensor.sensorHandle, true /* enabled */);
+
+        // Call batch on an active sensor
+        ASSERT_EQ(batch(sensor.sensorHandle, sensor.maxDelay, 0 /* maxReportLatencyNs */),
+                  Result::OK);
+    }
+    activateAllSensors(false /* enable */);
+
+    // Call batch on an invalid sensor
+    SensorInfo sensor = getSensorsList().front();
+    sensor.sensorHandle = getInvalidSensorHandle();
+    ASSERT_EQ(batch(sensor.sensorHandle, sensor.minDelay, 0 /* maxReportLatencyNs */),
+              Result::BAD_VALUE);
 }
 
 int main(int argc, char** argv) {
