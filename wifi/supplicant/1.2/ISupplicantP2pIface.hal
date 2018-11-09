@@ -1,0 +1,71 @@
+/*
+ * Copyright 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.wifi.supplicant@1.2;
+
+import @1.0::ISupplicantP2pIface;
+import @1.0::MacAddress;
+import @1.0::Ssid;
+import @1.0::SupplicantStatus;
+
+/**
+ * Interface exposed by the supplicant for each P2P mode network
+ * interface (e.g p2p0) it controls.
+ * To use 1.2 features you must cast specific interfaces returned from the
+ * 1.2 HAL. For example V1_2::ISupplicant::addIface() adds V1_2::ISupplicantIface,
+ * which can be cast to V1_2::ISupplicantP2pIface.
+ */
+interface ISupplicantP2pIface extends @1.0::ISupplicantP2pIface {
+    /**
+     * Set up a P2P group owner or join a group as a group client
+     * with the specified configuration.
+     *
+     * If joinExistingGroup is false, this device sets up a P2P group owner manually (i.e.,
+     * without group owner negotiation with a specific peer) with the specified SSID,
+     * passphrase, persistent mode, and frequency/band.
+     *
+     * If joinExistingGroup is true, this device acts as a group client and joins the group
+     * whose network name and group owner's MAC address matches the specified SSID
+     * and peer address without WPS process. If peerAddress is 00:00:00:00:00:00, the first found
+     * group whose network name matches the specified SSID is joined.
+     *
+     * @param ssid The SSID of this group.
+     * @param pskPassphrase The passphrase of this group.
+     * @param persistent Used to request a persistent group to be formed,
+     *        only applied for the group owner.
+     * @param freq The required frequency or band for this group.
+     *        only applied for the group owner.
+     *        The following values are supported:
+     *        0: automatic channel selection,
+     *        2: for 2.4GHz channels
+     *        5: for 5GHz channels
+     *        specific frequency, i.e., 2412, 5500, etc.
+     *        If an invalid band or unsupported frequency are specified, it fails.
+     * @param peerAddress the group owner's MAC address, only applied for the group client.
+     *        If the MAC is "00:00:00:00:00:00", the device must try to find a peer
+     *        whose network name matches the specified SSID.
+     * @param joinExistingGroup if true, join a group as a group client; otherwise,
+     *        create a group as a group owner.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+     */
+    addGroup_1_2(Ssid ssid, string pskPassphrase, bool persistent,
+                 uint32_t freq, MacAddress peerAddress, bool joinExistingGroup)
+        generates (SupplicantStatus status);
+};
