@@ -7,6 +7,8 @@ hidl_interface {
         enabled: true,
     },
     srcs: [
+        "ISupplicant.hal",
+        "ISupplicantStaIface.hal",
         "ISupplicantStaNetwork.hal",
     ],
     interfaces: [

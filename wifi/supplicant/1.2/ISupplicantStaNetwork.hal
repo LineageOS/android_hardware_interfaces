@@ -256,17 +256,4 @@ interface ISupplicantStaNetwork extends @1.1::ISupplicantStaNetwork {
      */
     setSaePasswordId(string saePasswordId)
         generates (SupplicantStatus status);
-
-    /**
-     * Get Key management capabilities of the device
-     *
-     * @return status Status of the operation, and a string.
-     *         Possible status codes:
-     *         |SupplicantStatusCode.SUCCESS|,
-     *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
-     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
-     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
-     */
-    getKeyMgmtCapabilities()
-        generates (SupplicantStatus status, bitfield<KeyMgmtMask> keyMgmtMask);
 };
