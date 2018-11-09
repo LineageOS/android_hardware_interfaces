@@ -201,7 +201,7 @@ class AuthorizationSet {
     void push_back(TypedTag<TagType::BYTES, tag> ttag, const uint8_t* data, size_t data_length) {
         hidl_vec<uint8_t> new_blob;
         new_blob.setToExternal(const_cast<uint8_t*>(data), data_length);
-        push_back(ttag, std::move(new_blob));
+        push_back(ttag, new_blob);
     }
 
     /**
@@ -225,8 +225,7 @@ class AuthorizationSet {
     }
 
     hidl_vec<KeyParameter> hidl_data() const {
-        hidl_vec<KeyParameter> result;
-        result.setToExternal(const_cast<KeyParameter*>(data()), size());
+        hidl_vec<KeyParameter> result(begin(), end());
         return result;
     }
 
@@ -252,7 +251,7 @@ class AuthorizationSetBuilder : public AuthorizationSet {
                                            size_t data_length) {
         hidl_vec<uint8_t> new_blob;
         new_blob.setToExternal(const_cast<uint8_t*>(data), data_length);
-        push_back(ttag, std::move(new_blob));
+        push_back(ttag, new_blob);
         return *this;
     }
 
