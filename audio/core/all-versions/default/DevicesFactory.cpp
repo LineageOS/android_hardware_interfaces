@@ -47,7 +47,7 @@ Return<void> DevicesFactory::openDevice(IDevicesFactory::Device device, openDevi
     _hidl_cb(Result::INVALID_ARGUMENTS, nullptr);
     return Void();
 }
-#elif MAJOR_VERSION == 4
+#elif MAJOR_VERSION >= 4
 Return<void> DevicesFactory::openDevice(const hidl_string& moduleName, openDevice_cb _hidl_cb) {
     if (moduleName == AUDIO_HARDWARE_MODULE_ID_PRIMARY) {
         return openDevice<PrimaryDevice>(moduleName.c_str(), _hidl_cb);

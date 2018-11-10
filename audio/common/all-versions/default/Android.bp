@@ -93,3 +93,17 @@ cc_library_shared {
         "-include common/all-versions/VersionMacro.h",
     ]
 }
+
+cc_library_shared {
+    name: "android.hardware.audio.common@5.0-util",
+    defaults: ["android.hardware.audio.common-util_default"],
+
+    shared_libs: [
+        "android.hardware.audio.common@5.0",
+    ],
+    cflags: [
+        "-DMAJOR_VERSION=5",
+        "-DMINOR_VERSION=0",
+        "-include common/all-versions/VersionMacro.h",
+    ]
+}

@@ -58,7 +58,7 @@ std::string deviceAddressToHal(const DeviceAddress& address) {
     return halAddress;
 }
 
-#if MAJOR_VERSION == 4
+#if MAJOR_VERSION >= 4
 status_t deviceAddressFromHal(audio_devices_t device, const char* halAddress,
                               DeviceAddress* address) {
     if (address == nullptr) {

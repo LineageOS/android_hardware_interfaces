@@ -31,7 +31,7 @@ typedef common::CPP_VERSION::AudioDevice AudioDeviceBitfield;
 typedef common::CPP_VERSION::AudioChannelMask AudioChannelBitfield;
 typedef common::CPP_VERSION::AudioOutputFlag AudioOutputFlagBitfield;
 typedef common::CPP_VERSION::AudioInputFlag AudioInputFlagBitfield;
-#elif MAJOR_VERSION == 4
+#elif MAJOR_VERSION >= 4
 typedef hidl_bitfield<common::CPP_VERSION::AudioDevice> AudioDeviceBitfield;
 typedef hidl_bitfield<common::CPP_VERSION::AudioChannelMask> AudioChannelBitfield;
 typedef hidl_bitfield<common::CPP_VERSION::AudioOutputFlag> AudioOutputFlagBitfield;

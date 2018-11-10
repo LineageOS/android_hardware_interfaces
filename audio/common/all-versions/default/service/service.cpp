@@ -18,8 +18,10 @@
 
 #include <android/hardware/audio/2.0/IDevicesFactory.h>
 #include <android/hardware/audio/4.0/IDevicesFactory.h>
+#include <android/hardware/audio/5.0/IDevicesFactory.h>
 #include <android/hardware/audio/effect/2.0/IEffectsFactory.h>
 #include <android/hardware/audio/effect/4.0/IEffectsFactory.h>
+#include <android/hardware/audio/effect/5.0/IEffectsFactory.h>
 #include <android/hardware/bluetooth/a2dp/1.0/IBluetoothAudioOffload.h>
 #include <android/hardware/soundtrigger/2.0/ISoundTriggerHw.h>
 #include <android/hardware/soundtrigger/2.1/ISoundTriggerHw.h>
@@ -46,13 +48,15 @@ int main(int /* argc */, char* /* argv */ []) {
     }
     configureRpcThreadpool(16, true /*callerWillJoin*/);
 
-    bool fail = registerPassthroughServiceImplementation<audio::V4_0::IDevicesFactory>() != OK &&
+    bool fail = registerPassthroughServiceImplementation<audio::V5_0::IDevicesFactory>() != OK &&
+                registerPassthroughServiceImplementation<audio::V4_0::IDevicesFactory>() != OK &&
                 registerPassthroughServiceImplementation<audio::V2_0::IDevicesFactory>() != OK;
-    LOG_ALWAYS_FATAL_IF(fail, "Could not register audio core API 2.0 nor 4.0");
+    LOG_ALWAYS_FATAL_IF(fail, "Could not register audio core API 2, 4 nor 5");
 
-    fail = registerPassthroughServiceImplementation<audio::effect::V4_0::IEffectsFactory>() != OK &&
+    fail = registerPassthroughServiceImplementation<audio::effect::V5_0::IEffectsFactory>() != OK &&
+           registerPassthroughServiceImplementation<audio::effect::V4_0::IEffectsFactory>() != OK &&
            registerPassthroughServiceImplementation<audio::effect::V2_0::IEffectsFactory>() != OK,
-    LOG_ALWAYS_FATAL_IF(fail, "Could not register audio effect API 2.0 nor 4.0");
+    LOG_ALWAYS_FATAL_IF(fail, "Could not register audio effect API 2, 4 nor 5");
 
     fail = registerPassthroughServiceImplementation<soundtrigger::V2_1::ISoundTriggerHw>() != OK &&
            registerPassthroughServiceImplementation<soundtrigger::V2_0::ISoundTriggerHw>() != OK,

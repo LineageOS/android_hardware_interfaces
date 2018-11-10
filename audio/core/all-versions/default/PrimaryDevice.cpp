@@ -19,7 +19,7 @@
 #include "core/default/PrimaryDevice.h"
 #include "core/default/Util.h"
 
-#if MAJOR_VERSION == 4
+#if MAJOR_VERSION >= 4
 #include <cmath>
 #endif
 
@@ -80,7 +80,7 @@ Return<void> PrimaryDevice::openInputStream(int32_t ioHandle, const DeviceAddres
                                             AudioSource source, openInputStream_cb _hidl_cb) {
     return mDevice->openInputStream(ioHandle, device, config, flags, source, _hidl_cb);
 }
-#elif MAJOR_VERSION == 4
+#elif MAJOR_VERSION >= 4
 Return<void> PrimaryDevice::openOutputStream(int32_t ioHandle, const DeviceAddress& device,
                                              const AudioConfig& config,
                                              AudioOutputFlagBitfield flags,
@@ -140,7 +140,7 @@ Return<Result> PrimaryDevice::setParameters(const hidl_vec<ParameterValue>& para
 Return<void> PrimaryDevice::debugDump(const hidl_handle& fd) {
     return mDevice->debugDump(fd);
 }
-#elif MAJOR_VERSION == 4
+#elif MAJOR_VERSION >= 4
 Return<void> PrimaryDevice::getHwAvSync(getHwAvSync_cb _hidl_cb) {
     return mDevice->getHwAvSync(_hidl_cb);
 }
@@ -274,7 +274,7 @@ Return<Result> PrimaryDevice::setHacEnabled(bool enabled) {
     return mDevice->setParam(AUDIO_PARAMETER_KEY_HAC, enabled);
 }
 
-#if MAJOR_VERSION == 4
+#if MAJOR_VERSION >= 4
 Return<Result> PrimaryDevice::setBtScoHeadsetDebugName(const hidl_string& name) {
     return mDevice->setParam(AUDIO_PARAMETER_KEY_BT_SCO_HEADSET_NAME, name.c_str());
 }

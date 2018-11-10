@@ -63,3 +63,18 @@ cc_test {
         "-include common/all-versions/VersionMacro.h",
     ]
 }
+
+cc_test {
+    name: "VtsHalAudioEffectV5_0TargetTest",
+    defaults: ["VtsHalAudioEffectTargetTest_default"],
+    static_libs: [
+        "android.hardware.audio.common@5.0",
+        "android.hardware.audio.effect@5.0",
+    ],
+    cflags: [
+        "-DMAJOR_VERSION=5",
+        "-DMINOR_VERSION=0",
+        "-include common/all-versions/VersionMacro.h",
+    ]
+}
+

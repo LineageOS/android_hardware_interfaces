@@ -57,7 +57,7 @@
 /** Provide version specific functions that are used in the generic tests */
 #if MAJOR_VERSION == 2
 #include "2.0/AudioPrimaryHidlHalUtils.h"
-#elif MAJOR_VERSION == 4
+#elif MAJOR_VERSION >= 4
 #include "4.0/AudioPrimaryHidlHalUtils.h"
 #endif
 
@@ -272,7 +272,7 @@ TEST_F(AudioHidlTest, OpenDeviceInvalidParameter) {
     sp<IDevice> device;
 #if MAJOR_VERSION == 2
     auto invalidDevice = IDevicesFactory::Device(-1);
-#elif MAJOR_VERSION == 4
+#elif MAJOR_VERSION >= 4
     auto invalidDevice = "Non existing device";
 #endif
     ASSERT_OK(devicesFactory->openDevice(invalidDevice, returnIn(result, device)));
@@ -743,13 +743,13 @@ class OutputStreamTest : public OpenStreamTest<IStreamOut> {
             [&](AudioIoHandle handle, AudioConfig config, auto cb) {
 #if MAJOR_VERSION == 2
                 return device->openOutputStream(handle, address, config, flags, cb);
-#elif MAJOR_VERSION == 4
+#elif MAJOR_VERSION >= 4
                 return device->openOutputStream(handle, address, config, flags, initMetadata, cb);
 #endif
             },
             config);
     }
-#if MAJOR_VERSION == 4
+#if MAJOR_VERSION >= 4
 
    protected:
     const SourceMetadata initMetadata = {
@@ -797,7 +797,7 @@ class InputStreamTest : public OpenStreamTest<IStreamIn> {
    protected:
 #if MAJOR_VERSION == 2
     const AudioSource initMetadata = AudioSource::DEFAULT;
-#elif MAJOR_VERSION == 4
+#elif MAJOR_VERSION >= 4
     const SinkMetadata initMetadata = {{{AudioSource::DEFAULT, 1 /* gain */}}};
 #endif
 };
