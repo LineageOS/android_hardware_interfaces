@@ -108,7 +108,7 @@ Return<void> Stream::getSupportedSampleRates(AudioFormat format,
     }
 #ifdef AUDIO_HAL_VERSION_2_0
     _hidl_cb(sampleRates);
-#elif AUDIO_HAL_VERSION_4_0
+#elif defined(AUDIO_HAL_VERSION_4_0)
     _hidl_cb(result, sampleRates);
 #endif
     return Void();

@@ -15,7 +15,6 @@
  */
 
 #include <common/all-versions/IncludeGuard.h>
-#include <core/all-versions/default/Conversions.h>
 #include <system/audio.h>
 
 namespace android {

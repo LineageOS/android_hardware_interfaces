@@ -25,15 +25,13 @@
 #include <memory>
 
 using ::android::hardware::audio::AUDIO_HAL_VERSION::MessageQueueFlagBits;
-#include "Conversions.h"
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::ThreadInfo;
 
 namespace android {
 namespace hardware {
 namespace audio {
 namespace AUDIO_HAL_VERSION {
 namespace implementation {
-
-using ::android::hardware::audio::common::AUDIO_HAL_VERSION::ThreadInfo;
 
 namespace {
 

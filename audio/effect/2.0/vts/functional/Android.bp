@@ -18,7 +18,7 @@ cc_test {
     name: "VtsHalAudioEffectV2_0TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: [
-        "VtsHalAudioEffectV2_0TargetTest.cpp",
+        "VtsHalAudioEffectTargetTest.cpp",
         "ValidateAudioEffectsConfiguration.cpp"
     ],
     static_libs: [
