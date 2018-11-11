@@ -19,7 +19,7 @@
 void SensorsHidlEnvironmentBase::HidlSetUp() {
     ASSERT_TRUE(resetHal()) << "could not get hidl service";
 
-    collectionEnabled = false;
+    mCollectionEnabled = false;
     startPollingThread();
 
     // In case framework just stopped for test and there is sensor events in the pipe,
@@ -28,27 +28,27 @@ void SensorsHidlEnvironmentBase::HidlSetUp() {
 }
 
 void SensorsHidlEnvironmentBase::HidlTearDown() {
-    stopThread = true;
-    pollThread.detach();
+    mStopThread = true;
+    mPollThread.detach();
 }
 
 void SensorsHidlEnvironmentBase::catEvents(std::vector<Event>* output) {
-    std::lock_guard<std::mutex> lock(events_mutex);
+    std::lock_guard<std::mutex> lock(mEventsMutex);
     if (output) {
-        output->insert(output->end(), events.begin(), events.end());
+        output->insert(output->end(), mEvents.begin(), mEvents.end());
     }
-    events.clear();
+    mEvents.clear();
 }
 
 void SensorsHidlEnvironmentBase::setCollection(bool enable) {
-    std::lock_guard<std::mutex> lock(events_mutex);
-    collectionEnabled = enable;
+    std::lock_guard<std::mutex> lock(mEventsMutex);
+    mCollectionEnabled = enable;
 }
 
 void SensorsHidlEnvironmentBase::addEvent(const Event& ev) {
-    std::lock_guard<std::mutex> lock(events_mutex);
-    if (collectionEnabled) {
-        events.push_back(ev);
+    std::lock_guard<std::mutex> lock(mEventsMutex);
+    if (mCollectionEnabled) {
+        mEvents.push_back(ev);
     }
 
     if (mCallback != nullptr) {
@@ -57,11 +57,11 @@ void SensorsHidlEnvironmentBase::addEvent(const Event& ev) {
 }
 
 void SensorsHidlEnvironmentBase::registerCallback(IEventCallback* callback) {
-    std::lock_guard<std::mutex> lock(events_mutex);
+    std::lock_guard<std::mutex> lock(mEventsMutex);
     mCallback = callback;
 }
 
 void SensorsHidlEnvironmentBase::unregisterCallback() {
-    std::lock_guard<std::mutex> lock(events_mutex);
+    std::lock_guard<std::mutex> lock(mEventsMutex);
     mCallback = nullptr;
 }

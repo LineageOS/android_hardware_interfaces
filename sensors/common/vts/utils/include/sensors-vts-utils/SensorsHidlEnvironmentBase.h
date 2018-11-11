@@ -50,18 +50,18 @@ class SensorsHidlEnvironmentBase : public ::testing::VtsHalHidlTargetTestEnvBase
     void unregisterCallback();
 
    protected:
-    SensorsHidlEnvironmentBase() : collectionEnabled(false), mCallback(nullptr) {}
+    SensorsHidlEnvironmentBase() : mCollectionEnabled(false), mCallback(nullptr) {}
 
     void addEvent(const Event& ev);
 
     virtual void startPollingThread() = 0;
     virtual bool resetHal() = 0;
 
-    bool collectionEnabled;
-    std::atomic_bool stopThread;
-    std::thread pollThread;
-    std::vector<Event> events;
-    std::mutex events_mutex;
+    bool mCollectionEnabled;
+    std::atomic_bool mStopThread;
+    std::thread mPollThread;
+    std::vector<Event> mEvents;
+    std::mutex mEventsMutex;
 
     IEventCallback* mCallback;
 

@@ -94,9 +94,9 @@ bool SensorsHidlEnvironmentV1_0::resetHal() {
 }
 
 void SensorsHidlEnvironmentV1_0::startPollingThread() {
-    stopThread = false;
-    pollThread = std::thread(pollingThread, this, std::ref(stopThread));
-    events.reserve(128);
+    mStopThread = false;
+    mPollThread = std::thread(pollingThread, this, std::ref(mStopThread));
+    mEvents.reserve(128);
 }
 
 void SensorsHidlEnvironmentV1_0::pollingThread(SensorsHidlEnvironmentV1_0* env,

@@ -46,7 +46,7 @@ using ::android::nn::allocateSharedMemory;
 using ::test_helper::MixedTypedExample;
 
 // in frameworks/ml/nn/runtime/tests/generated/
-#include "all_generated_V1_2_vts_tests.cpp"
+#include "all_generated_V1_1_vts_tests.cpp"
 
 }  // namespace functional
 }  // namespace vts
