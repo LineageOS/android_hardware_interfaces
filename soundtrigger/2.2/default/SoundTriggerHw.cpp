@@ -690,45 +690,26 @@ void SoundTriggerHw::SoundModelClient_2_1::soundModelCallback(
 
 // Begin V2_2 implementation
 
-Return<void> SoundTriggerHw::getModelState(int32_t modelHandle, getModelState_cb hidl_cb) {
-    int ret = 0;
-    V2_0::ISoundTriggerHwCallback::RecognitionEvent event;
-    struct sound_trigger_recognition_event* halEvent = NULL;
+Return<int32_t> SoundTriggerHw::getModelState(int32_t modelHandle) {
     sp<SoundModelClient> client;
     if (mHwDevice == NULL) {
-        ret = -ENODEV;
-        goto exit;
+        return -ENODEV;
     }
 
     {
         AutoMutex lock(mLock);
         client = mClients.valueFor(modelHandle);
         if (client == 0) {
-            ret = -ENOSYS;
-            goto exit;
+            return -ENOSYS;
         }
     }
 
     if (mHwDevice->get_model_state == NULL) {
         ALOGE("Failed to get model state from device, no such method");
-        ret = -ENODEV;
-        goto exit;
+        return -ENODEV;
     }
 
-    // Get the state from the device (as a recognition event)
-    halEvent = mHwDevice->get_model_state(mHwDevice, client->getHalHandle());
-    if (halEvent == NULL) {
-        ALOGE("Failed to get model state from device");
-        ret = -ENODEV;
-        goto exit;
-    }
-
-    convertRecognitionEventFromHal(&event, halEvent);
-
-exit:
-    hidl_cb(ret, event);
-    free(halEvent);
-    return Void();
+    return mHwDevice->get_model_state(mHwDevice, client->getHalHandle());
 }
 
 // Methods from ::android::hidl::base::V1_0::IBase follow.

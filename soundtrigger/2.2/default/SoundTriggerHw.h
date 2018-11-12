@@ -82,7 +82,7 @@ struct SoundTriggerHw : public ISoundTriggerHw {
                                          int32_t cookie) override;
 
     // Methods from V2_2::ISoundTriggerHw follow.
-    Return<void> getModelState(int32_t modelHandle, getModelState_cb _hidl_cb) override;
+    Return<int32_t> getModelState(int32_t modelHandle) override;
 
     SoundTriggerHw();
 
