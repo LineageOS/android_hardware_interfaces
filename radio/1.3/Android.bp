@@ -24,6 +24,7 @@ hidl_interface {
         "CellConfigLte",
         "CellInfo",
         "CellInfoLte",
+        "CardStatus",
         "DataProfileInfo",
         "DataRegStateResult",
         "EmergencyNumber",
