@@ -45,6 +45,8 @@ using ::android::hardware::neuralnetworks::V1_0::implementation::PreparedModelCa
 using ::android::nn::allocateSharedMemory;
 using ::test_helper::MixedTypedExample;
 
+std::vector<Request> createRequests(const std::vector<MixedTypedExample>& examples);
+
 // in frameworks/ml/nn/runtime/tests/generated/
 #include "all_generated_V1_2_vts_tests.cpp"
 
