@@ -53,10 +53,10 @@
 #include "utility/ReturnIn.h"
 
 using std::initializer_list;
+using std::list;
 using std::string;
 using std::to_string;
 using std::vector;
-using std::list;
 
 using ::android::sp;
 using ::android::hardware::EventFlag;
@@ -83,15 +83,7 @@ using ::android::hardware::audio::V4_0::MessageQueueFlagBits;
 using ::android::hardware::audio::V4_0::TimeSpec;
 using ReadParameters = ::android::hardware::audio::V4_0::IStreamIn::ReadParameters;
 using ReadStatus = ::android::hardware::audio::V4_0::IStreamIn::ReadStatus;
-using ::android::hardware::audio::V4_0::IStreamOut;
-using ::android::hardware::audio::V4_0::IStreamOutCallback;
-using ::android::hardware::audio::V4_0::MicrophoneInfo;
-using ::android::hardware::audio::V4_0::MmapBufferInfo;
-using ::android::hardware::audio::V4_0::MmapPosition;
-using ::android::hardware::audio::V4_0::ParameterValue;
-using ::android::hardware::audio::V4_0::Result;
-using ::android::hardware::audio::V4_0::SourceMetadata;
-using ::android::hardware::audio::V4_0::SinkMetadata;
+using ::android::hardware::audio::common::utils::mkBitfield;
 using ::android::hardware::audio::common::V4_0::AudioChannelMask;
 using ::android::hardware::audio::common::V4_0::AudioConfig;
 using ::android::hardware::audio::common::V4_0::AudioContentType;
@@ -107,7 +99,15 @@ using ::android::hardware::audio::common::V4_0::AudioOutputFlag;
 using ::android::hardware::audio::common::V4_0::AudioSource;
 using ::android::hardware::audio::common::V4_0::AudioUsage;
 using ::android::hardware::audio::common::V4_0::ThreadInfo;
-using ::android::hardware::audio::common::utils::mkBitfield;
+using ::android::hardware::audio::V4_0::IStreamOut;
+using ::android::hardware::audio::V4_0::IStreamOutCallback;
+using ::android::hardware::audio::V4_0::MicrophoneInfo;
+using ::android::hardware::audio::V4_0::MmapBufferInfo;
+using ::android::hardware::audio::V4_0::MmapPosition;
+using ::android::hardware::audio::V4_0::ParameterValue;
+using ::android::hardware::audio::V4_0::Result;
+using ::android::hardware::audio::V4_0::SinkMetadata;
+using ::android::hardware::audio::V4_0::SourceMetadata;
 
 using namespace ::android::hardware::audio::common::test::utility;
 

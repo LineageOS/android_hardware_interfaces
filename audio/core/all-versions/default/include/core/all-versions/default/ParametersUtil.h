@@ -28,11 +28,11 @@ namespace audio {
 namespace AUDIO_HAL_VERSION {
 namespace implementation {
 
+using ::android::hardware::hidl_string;
+using ::android::hardware::hidl_vec;
 using ::android::hardware::audio::AUDIO_HAL_VERSION::DeviceAddress;
 using ::android::hardware::audio::AUDIO_HAL_VERSION::ParameterValue;
 using ::android::hardware::audio::AUDIO_HAL_VERSION::Result;
-using ::android::hardware::hidl_string;
-using ::android::hardware::hidl_vec;
 
 class ParametersUtil {
    public:

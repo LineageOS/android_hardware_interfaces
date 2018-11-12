@@ -342,7 +342,6 @@ Return<void> StreamIn::prepareForReading(uint32_t frameSize, uint32_t framesCoun
     auto sendError = [&threadInfo, &_hidl_cb](Result result) {
         _hidl_cb(result, CommandMQ::Descriptor(), DataMQ::Descriptor(), StatusMQ::Descriptor(),
                  threadInfo);
-
     };
 
     // Create message queues.
@@ -460,7 +459,8 @@ Return<void> StreamIn::updateSinkMetadata(const SinkMetadata& sinkMetadata) {
             {.source = static_cast<audio_source_t>(metadata.source), .gain = metadata.gain});
     }
     const sink_metadata_t halMetadata = {
-        .track_count = halTracks.size(), .tracks = halTracks.data(),
+        .track_count = halTracks.size(),
+        .tracks = halTracks.data(),
     };
     mStream->update_sink_metadata(mStream, &halMetadata);
     return Void();

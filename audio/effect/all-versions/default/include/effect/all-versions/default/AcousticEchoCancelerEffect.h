@@ -29,13 +29,13 @@ namespace effect {
 namespace AUDIO_HAL_VERSION {
 namespace implementation {
 
-using ::android::hardware::audio::effect::AUDIO_HAL_VERSION::IAcousticEchoCancelerEffect;
-using ::android::hardware::audio::effect::AUDIO_HAL_VERSION::Result;
+using ::android::sp;
+using ::android::hardware::hidl_string;
+using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
-using ::android::hardware::hidl_vec;
-using ::android::hardware::hidl_string;
-using ::android::sp;
+using ::android::hardware::audio::effect::AUDIO_HAL_VERSION::IAcousticEchoCancelerEffect;
+using ::android::hardware::audio::effect::AUDIO_HAL_VERSION::Result;
 
 struct AcousticEchoCancelerEffect : public IAcousticEchoCancelerEffect {
     explicit AcousticEchoCancelerEffect(effect_handle_t handle);

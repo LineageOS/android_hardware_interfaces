@@ -42,7 +42,6 @@ Result Stream::analyzeStatus(const char* funcName, int status) {
     return util::analyzeStatus("stream", funcName, status);
 }
 
-
 // static
 Result Stream::analyzeStatus(const char* funcName, int status,
                              const std::vector<int>& ignoreErrors) {

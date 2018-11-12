@@ -31,9 +31,11 @@ namespace audio {
 namespace AUDIO_HAL_VERSION {
 namespace implementation {
 
-using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioChannelMask;
-using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioDevice;
-using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioFormat;
+using ::android::sp;
+using ::android::hardware::hidl_string;
+using ::android::hardware::hidl_vec;
+using ::android::hardware::Return;
+using ::android::hardware::Void;
 using ::android::hardware::audio::AUDIO_HAL_VERSION::AudioDrain;
 using ::android::hardware::audio::AUDIO_HAL_VERSION::DeviceAddress;
 using ::android::hardware::audio::AUDIO_HAL_VERSION::IStream;
@@ -42,11 +44,9 @@ using ::android::hardware::audio::AUDIO_HAL_VERSION::IStreamOutCallback;
 using ::android::hardware::audio::AUDIO_HAL_VERSION::ParameterValue;
 using ::android::hardware::audio::AUDIO_HAL_VERSION::Result;
 using ::android::hardware::audio::AUDIO_HAL_VERSION::TimeSpec;
-using ::android::hardware::Return;
-using ::android::hardware::Void;
-using ::android::hardware::hidl_vec;
-using ::android::hardware::hidl_string;
-using ::android::sp;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioChannelMask;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioDevice;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioFormat;
 
 struct StreamOut : public IStreamOut {
     typedef MessageQueue<WriteCommand, kSynchronizedReadWrite> CommandMQ;

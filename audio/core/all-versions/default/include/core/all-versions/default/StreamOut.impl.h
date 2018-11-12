@@ -326,7 +326,6 @@ Return<void> StreamOut::prepareForWriting(uint32_t frameSize, uint32_t framesCou
     auto sendError = [&threadInfo, &_hidl_cb](Result result) {
         _hidl_cb(result, CommandMQ::Descriptor(), DataMQ::Descriptor(), StatusMQ::Descriptor(),
                  threadInfo);
-
     };
 
     // Create message queues.
@@ -560,7 +559,8 @@ Return<void> StreamOut::updateSourceMetadata(const SourceMetadata& sourceMetadat
         });
     }
     const source_metadata_t halMetadata = {
-        .track_count = halTracks.size(), .tracks = halTracks.data(),
+        .track_count = halTracks.size(),
+        .tracks = halTracks.data(),
     };
     mStream->update_source_metadata(mStream, &halMetadata);
     return Void();

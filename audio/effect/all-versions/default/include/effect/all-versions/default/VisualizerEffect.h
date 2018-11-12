@@ -29,6 +29,11 @@ namespace effect {
 namespace AUDIO_HAL_VERSION {
 namespace implementation {
 
+using ::android::sp;
+using ::android::hardware::hidl_string;
+using ::android::hardware::hidl_vec;
+using ::android::hardware::Return;
+using ::android::hardware::Void;
 using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioDevice;
 using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioMode;
 using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioSource;
@@ -41,11 +46,6 @@ using ::android::hardware::audio::effect::AUDIO_HAL_VERSION::IEffect;
 using ::android::hardware::audio::effect::AUDIO_HAL_VERSION::IEffectBufferProviderCallback;
 using ::android::hardware::audio::effect::AUDIO_HAL_VERSION::IVisualizerEffect;
 using ::android::hardware::audio::effect::AUDIO_HAL_VERSION::Result;
-using ::android::hardware::Return;
-using ::android::hardware::Void;
-using ::android::hardware::hidl_vec;
-using ::android::hardware::hidl_string;
-using ::android::sp;
 
 struct VisualizerEffect : public IVisualizerEffect {
     explicit VisualizerEffect(effect_handle_t handle);

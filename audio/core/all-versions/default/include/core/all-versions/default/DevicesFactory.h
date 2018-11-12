@@ -27,14 +27,14 @@ namespace audio {
 namespace AUDIO_HAL_VERSION {
 namespace implementation {
 
+using ::android::sp;
+using ::android::hardware::hidl_string;
+using ::android::hardware::hidl_vec;
+using ::android::hardware::Return;
+using ::android::hardware::Void;
 using ::android::hardware::audio::AUDIO_HAL_VERSION::IDevice;
 using ::android::hardware::audio::AUDIO_HAL_VERSION::IDevicesFactory;
 using ::android::hardware::audio::AUDIO_HAL_VERSION::Result;
-using ::android::hardware::Return;
-using ::android::hardware::Void;
-using ::android::hardware::hidl_vec;
-using ::android::hardware::hidl_string;
-using ::android::sp;
 
 struct DevicesFactory : public IDevicesFactory {
 #ifdef AUDIO_HAL_VERSION_2_0

@@ -33,6 +33,17 @@ namespace audio {
 namespace AUDIO_HAL_VERSION {
 namespace implementation {
 
+using ::android::sp;
+using ::android::hardware::hidl_string;
+using ::android::hardware::hidl_vec;
+using ::android::hardware::Return;
+using ::android::hardware::Void;
+using ::android::hardware::audio::AUDIO_HAL_VERSION::DeviceAddress;
+using ::android::hardware::audio::AUDIO_HAL_VERSION::IDevice;
+using ::android::hardware::audio::AUDIO_HAL_VERSION::IStreamIn;
+using ::android::hardware::audio::AUDIO_HAL_VERSION::IStreamOut;
+using ::android::hardware::audio::AUDIO_HAL_VERSION::ParameterValue;
+using ::android::hardware::audio::AUDIO_HAL_VERSION::Result;
 using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioConfig;
 using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioHwSync;
 using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioInputFlag;
@@ -44,21 +55,10 @@ using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioSource;
 using ::android::hardware::audio::common::AUDIO_HAL_VERSION::implementation::AudioInputFlagBitfield;
 using ::android::hardware::audio::common::AUDIO_HAL_VERSION::implementation::
     AudioOutputFlagBitfield;
-using ::android::hardware::audio::AUDIO_HAL_VERSION::DeviceAddress;
-using ::android::hardware::audio::AUDIO_HAL_VERSION::IDevice;
-using ::android::hardware::audio::AUDIO_HAL_VERSION::IStreamIn;
-using ::android::hardware::audio::AUDIO_HAL_VERSION::IStreamOut;
-using ::android::hardware::audio::AUDIO_HAL_VERSION::ParameterValue;
-using ::android::hardware::audio::AUDIO_HAL_VERSION::Result;
-using ::android::hardware::Return;
-using ::android::hardware::Void;
-using ::android::hardware::hidl_vec;
-using ::android::hardware::hidl_string;
-using ::android::sp;
 
 #ifdef AUDIO_HAL_VERSION_4_0
-using ::android::hardware::audio::AUDIO_HAL_VERSION::SourceMetadata;
 using ::android::hardware::audio::AUDIO_HAL_VERSION::SinkMetadata;
+using ::android::hardware::audio::AUDIO_HAL_VERSION::SourceMetadata;
 #endif
 
 struct Device : public IDevice, public ParametersUtil {

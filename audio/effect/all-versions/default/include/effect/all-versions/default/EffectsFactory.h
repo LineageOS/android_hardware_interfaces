@@ -29,16 +29,16 @@ namespace effect {
 namespace AUDIO_HAL_VERSION {
 namespace implementation {
 
+using ::android::sp;
+using ::android::hardware::hidl_string;
+using ::android::hardware::hidl_vec;
+using ::android::hardware::Return;
+using ::android::hardware::Void;
 using ::android::hardware::audio::common::AUDIO_HAL_VERSION::Uuid;
 using ::android::hardware::audio::effect::AUDIO_HAL_VERSION::EffectDescriptor;
 using ::android::hardware::audio::effect::AUDIO_HAL_VERSION::IEffect;
 using ::android::hardware::audio::effect::AUDIO_HAL_VERSION::IEffectsFactory;
 using ::android::hardware::audio::effect::AUDIO_HAL_VERSION::Result;
-using ::android::hardware::Return;
-using ::android::hardware::Void;
-using ::android::hardware::hidl_vec;
-using ::android::hardware::hidl_string;
-using ::android::sp;
 
 struct EffectsFactory : public IEffectsFactory {
     // Methods from ::android::hardware::audio::effect::AUDIO_HAL_VERSION::IEffectsFactory follow.
@@ -46,7 +46,8 @@ struct EffectsFactory : public IEffectsFactory {
     Return<void> getDescriptor(const Uuid& uid, getDescriptor_cb _hidl_cb) override;
     Return<void> createEffect(const Uuid& uid, int32_t session, int32_t ioHandle,
                               createEffect_cb _hidl_cb) override;
-    Return<void> debugDump(const hidl_handle& fd); //< in V2_0::IEffectsFactory only, alias of debug
+    Return<void> debugDump(
+        const hidl_handle& fd);  //< in V2_0::IEffectsFactory only, alias of debug
     Return<void> debug(const hidl_handle& fd, const hidl_vec<hidl_string>& options) override;
 
    private:

@@ -22,6 +22,7 @@
 
 #include <system/audio.h>
 
+using ::android::hardware::hidl_vec;
 using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioConfig;
 using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioGain;
 using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioGainConfig;
@@ -29,7 +30,6 @@ using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioOffloadInfo;
 using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioPort;
 using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioPortConfig;
 using ::android::hardware::audio::common::AUDIO_HAL_VERSION::Uuid;
-using ::android::hardware::hidl_vec;
 
 namespace android {
 namespace hardware {

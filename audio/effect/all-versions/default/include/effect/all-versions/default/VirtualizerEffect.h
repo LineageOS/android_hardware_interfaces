@@ -29,6 +29,11 @@ namespace effect {
 namespace AUDIO_HAL_VERSION {
 namespace implementation {
 
+using ::android::sp;
+using ::android::hardware::hidl_string;
+using ::android::hardware::hidl_vec;
+using ::android::hardware::Return;
+using ::android::hardware::Void;
 using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioChannelMask;
 using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioDevice;
 using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioMode;
@@ -43,11 +48,6 @@ using ::android::hardware::audio::effect::AUDIO_HAL_VERSION::IEffect;
 using ::android::hardware::audio::effect::AUDIO_HAL_VERSION::IEffectBufferProviderCallback;
 using ::android::hardware::audio::effect::AUDIO_HAL_VERSION::IVirtualizerEffect;
 using ::android::hardware::audio::effect::AUDIO_HAL_VERSION::Result;
-using ::android::hardware::Return;
-using ::android::hardware::Void;
-using ::android::hardware::hidl_vec;
-using ::android::hardware::hidl_string;
-using ::android::sp;
 
 struct VirtualizerEffect : public IVirtualizerEffect {
     explicit VirtualizerEffect(effect_handle_t handle);

@@ -51,11 +51,11 @@ using std::to_string;
 using std::vector;
 
 using ::android::sp;
-using ::android::hardware::Return;
 using ::android::hardware::hidl_handle;
 using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::MQDescriptorSync;
+using ::android::hardware::Return;
 using ::android::hardware::audio::V2_0::AudioDrain;
 using ::android::hardware::audio::V2_0::DeviceAddress;
 using ::android::hardware::audio::V2_0::IDevice;
@@ -67,12 +67,6 @@ using ::android::hardware::audio::V2_0::IStreamIn;
 using ::android::hardware::audio::V2_0::TimeSpec;
 using ReadParameters = ::android::hardware::audio::V2_0::IStreamIn::ReadParameters;
 using ReadStatus = ::android::hardware::audio::V2_0::IStreamIn::ReadStatus;
-using ::android::hardware::audio::V2_0::IStreamOut;
-using ::android::hardware::audio::V2_0::IStreamOutCallback;
-using ::android::hardware::audio::V2_0::MmapBufferInfo;
-using ::android::hardware::audio::V2_0::MmapPosition;
-using ::android::hardware::audio::V2_0::ParameterValue;
-using ::android::hardware::audio::V2_0::Result;
 using ::android::hardware::audio::common::V2_0::AudioChannelMask;
 using ::android::hardware::audio::common::V2_0::AudioConfig;
 using ::android::hardware::audio::common::V2_0::AudioDevice;
@@ -85,6 +79,12 @@ using ::android::hardware::audio::common::V2_0::AudioOffloadInfo;
 using ::android::hardware::audio::common::V2_0::AudioOutputFlag;
 using ::android::hardware::audio::common::V2_0::AudioSource;
 using ::android::hardware::audio::common::V2_0::ThreadInfo;
+using ::android::hardware::audio::V2_0::IStreamOut;
+using ::android::hardware::audio::V2_0::IStreamOutCallback;
+using ::android::hardware::audio::V2_0::MmapBufferInfo;
+using ::android::hardware::audio::V2_0::MmapPosition;
+using ::android::hardware::audio::V2_0::ParameterValue;
+using ::android::hardware::audio::V2_0::Result;
 
 using namespace ::android::hardware::audio::common::test::utility;
 

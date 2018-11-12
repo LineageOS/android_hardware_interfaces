@@ -31,20 +31,20 @@ namespace audio {
 namespace AUDIO_HAL_VERSION {
 namespace implementation {
 
-using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioChannelMask;
-using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioDevice;
-using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioFormat;
-using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioSource;
+using ::android::sp;
+using ::android::hardware::hidl_string;
+using ::android::hardware::hidl_vec;
+using ::android::hardware::Return;
+using ::android::hardware::Void;
 using ::android::hardware::audio::AUDIO_HAL_VERSION::DeviceAddress;
 using ::android::hardware::audio::AUDIO_HAL_VERSION::IStream;
 using ::android::hardware::audio::AUDIO_HAL_VERSION::IStreamIn;
 using ::android::hardware::audio::AUDIO_HAL_VERSION::ParameterValue;
 using ::android::hardware::audio::AUDIO_HAL_VERSION::Result;
-using ::android::hardware::Return;
-using ::android::hardware::Void;
-using ::android::hardware::hidl_vec;
-using ::android::hardware::hidl_string;
-using ::android::sp;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioChannelMask;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioDevice;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioFormat;
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::AudioSource;
 
 struct StreamIn : public IStreamIn {
     typedef MessageQueue<ReadParameters, kSynchronizedReadWrite> CommandMQ;
