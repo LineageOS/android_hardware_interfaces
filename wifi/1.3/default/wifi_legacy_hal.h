@@ -61,6 +61,7 @@ struct PacketFilterCapabilities {
 struct LinkLayerRadioStats {
     wifi_radio_stat stats;
     std::vector<uint32_t> tx_time_per_levels;
+    std::vector<wifi_channel_stat> channel_stats;
 };
 
 struct LinkLayerStats {

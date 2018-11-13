@@ -652,6 +652,8 @@ std::pair<wifi_error, LinkLayerStats> WifiLegacyHal::getLinkLayerStats(
         [&link_stats_ptr](wifi_request_id /* id */,
                           wifi_iface_stat* iface_stats_ptr, int num_radios,
                           wifi_radio_stat* radio_stats_ptr) {
+            wifi_radio_stat* l_radio_stats_ptr;
+
             if (iface_stats_ptr != nullptr) {
                 link_stats_ptr->iface = *iface_stats_ptr;
                 link_stats_ptr->iface.num_peers = 0;
@@ -662,20 +664,35 @@ std::pair<wifi_error, LinkLayerStats> WifiLegacyHal::getLinkLayerStats(
                 LOG(ERROR) << "Invalid radio stats in link layer stats";
                 return;
             }
+            l_radio_stats_ptr = radio_stats_ptr;
             for (int i = 0; i < num_radios; i++) {
                 LinkLayerRadioStats radio;
-                radio.stats = radio_stats_ptr[i];
+
+                radio.stats = *l_radio_stats_ptr;
                 // Copy over the tx level array to the separate vector.
-                if (radio_stats_ptr[i].num_tx_levels > 0 &&
-                    radio_stats_ptr[i].tx_time_per_levels != nullptr) {
+                if (l_radio_stats_ptr->num_tx_levels > 0 &&
+                    l_radio_stats_ptr->tx_time_per_levels != nullptr) {
                     radio.tx_time_per_levels.assign(
-                        radio_stats_ptr[i].tx_time_per_levels,
-                        radio_stats_ptr[i].tx_time_per_levels +
-                            radio_stats_ptr[i].num_tx_levels);
+                        l_radio_stats_ptr->tx_time_per_levels,
+                        l_radio_stats_ptr->tx_time_per_levels +
+                            l_radio_stats_ptr->num_tx_levels);
                 }
                 radio.stats.num_tx_levels = 0;
                 radio.stats.tx_time_per_levels = nullptr;
+                /* Copy over the channel stat to separate vector */
+                if (l_radio_stats_ptr->num_channels > 0) {
+                    /* Copy the channel stats */
+                    radio.channel_stats.assign(
+                        l_radio_stats_ptr->channels,
+                        l_radio_stats_ptr->channels +
+                            l_radio_stats_ptr->num_channels);
+                }
                 link_stats_ptr->radios.push_back(radio);
+                l_radio_stats_ptr =
+                    (wifi_radio_stat*)((u8*)l_radio_stats_ptr +
+                                       sizeof(wifi_radio_stat) +
+                                       (sizeof(wifi_channel_stat) *
+                                        l_radio_stats_ptr->num_channels));
             }
         };
 
