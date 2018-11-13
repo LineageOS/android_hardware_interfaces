@@ -40,6 +40,9 @@ using android::hardware::Return;
 using android::hardware::Void;
 using android::hardware::power::stats::V1_0::EnergyData;
 using android::hardware::power::stats::V1_0::IPowerStats;
+using android::hardware::power::stats::V1_0::PowerEntityInfo;
+using android::hardware::power::stats::V1_0::PowerEntityStateResidencyResult;
+using android::hardware::power::stats::V1_0::PowerEntityStateSpace;
 using android::hardware::power::stats::V1_0::RailInfo;
 using android::hardware::power::stats::V1_0::Status;
 
@@ -68,8 +71,280 @@ class PowerStatsHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 
     virtual void TearDown() override {}
 
+    void getInfos(hidl_vec<PowerEntityInfo>& infos);
+    void getStateSpaces(hidl_vec<PowerEntityStateSpace>& stateSpaces,
+                        const std::vector<uint32_t>& ids);
+    void getResidencyResults(hidl_vec<PowerEntityStateResidencyResult>& results,
+                             const std::vector<uint32_t>& ids);
+    void getRandomIds(std::vector<uint32_t>& ids);
+
     sp<IPowerStats> service_;
 };
+
+void PowerStatsHidlTest::getInfos(hidl_vec<PowerEntityInfo>& infos) {
+    Status status;
+    Return<void> ret = service_->getPowerEntityInfo([&status, &infos](auto rInfos, auto rStatus) {
+        status = rStatus;
+        infos = rInfos;
+    });
+    ASSERT_TRUE(ret.isOk());
+
+    if (status == Status::SUCCESS) {
+        ASSERT_NE(infos.size(), 0) << "powerEntityInfos must have entries if supported";
+    } else {
+        ASSERT_EQ(status, Status::NOT_SUPPORTED);
+        ASSERT_EQ(infos.size(), 0);
+        LOG(INFO) << "getPowerEntityInfo not supported";
+    }
+}
+
+void PowerStatsHidlTest::getStateSpaces(hidl_vec<PowerEntityStateSpace>& stateSpaces,
+                                        const std::vector<uint32_t>& ids = {}) {
+    Status status;
+    Return<void> ret = service_->getPowerEntityStateInfo(
+        ids, [&status, &stateSpaces](auto rStateSpaces, auto rStatus) {
+            status = rStatus;
+            stateSpaces = rStateSpaces;
+        });
+    ASSERT_TRUE(ret.isOk());
+
+    if (status == Status::SUCCESS) {
+        ASSERT_NE(stateSpaces.size(), 0) << "powerEntityStateSpaces must have entries if supported";
+    } else {
+        ASSERT_EQ(status, Status::NOT_SUPPORTED);
+        ASSERT_EQ(stateSpaces.size(), 0);
+        LOG(INFO) << "getPowerEntityStateInfo not supported";
+    }
+}
+
+void PowerStatsHidlTest::getResidencyResults(hidl_vec<PowerEntityStateResidencyResult>& results,
+                                             const std::vector<uint32_t>& ids = {}) {
+    Status status;
+    Return<void> ret = service_->getPowerEntityStateResidencyData(
+        ids, [&status, &results](auto rResults, auto rStatus) {
+            status = rStatus;
+            results = rResults;
+        });
+    ASSERT_TRUE(ret.isOk());
+
+    if (status == Status::SUCCESS) {
+        ASSERT_NE(results.size(), 0);
+    } else {
+        ASSERT_EQ(status, Status::NOT_SUPPORTED);
+        ASSERT_EQ(results.size(), 0);
+        LOG(INFO) << "getPowerEntityStateResidencyData not supported";
+    }
+}
+
+void PowerStatsHidlTest::getRandomIds(std::vector<uint32_t>& ids) {
+    hidl_vec<PowerEntityStateSpace> stateSpaces;
+    getStateSpaces(stateSpaces);
+
+    if (stateSpaces.size() == 0) {
+        return;
+    }
+
+    for (auto stateSpace : stateSpaces) {
+        ids.push_back(stateSpace.powerEntityId);
+    }
+
+    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+    auto gen = std::default_random_engine(seed);
+    std::uniform_int_distribution<uint32_t> dist(1, stateSpaces.size());
+
+    std::shuffle(ids.begin(), ids.end(), gen);
+    ids.resize(dist(gen));
+}
+
+// Each PowerEntity must have a valid name
+TEST_F(PowerStatsHidlTest, ValidatePowerEntityNames) {
+    hidl_vec<PowerEntityInfo> infos;
+    getInfos(infos);
+    for (auto info : infos) {
+        ASSERT_NE(info.powerEntityName, "");
+    }
+}
+
+// Each PowerEntity must have a unique ID
+TEST_F(PowerStatsHidlTest, ValidatePowerEntityIds) {
+    hidl_vec<PowerEntityInfo> infos;
+    getInfos(infos);
+
+    set<uint32_t> ids;
+    for (auto info : infos) {
+        ASSERT_TRUE(ids.insert(info.powerEntityId).second);
+    }
+}
+
+// Each PowerEntityStateSpace must have an associated PowerEntityInfo
+TEST_F(PowerStatsHidlTest, ValidateStateInfoAssociation) {
+    hidl_vec<PowerEntityInfo> infos;
+    getInfos(infos);
+
+    hidl_vec<PowerEntityStateSpace> stateSpaces;
+    getStateSpaces(stateSpaces);
+
+    std::set<uint32_t> ids;
+    for (auto info : infos) {
+        ids.insert(info.powerEntityId);
+    }
+
+    for (auto stateSpace : stateSpaces) {
+        ASSERT_NE(ids.count(stateSpace.powerEntityId), 0);
+    }
+}
+
+// Each state must have a valid name
+TEST_F(PowerStatsHidlTest, ValidateStateNames) {
+    hidl_vec<PowerEntityStateSpace> stateSpaces;
+    getStateSpaces(stateSpaces);
+
+    for (auto stateSpace : stateSpaces) {
+        for (auto state : stateSpace.states) {
+            ASSERT_NE(state.powerEntityStateName, "");
+        }
+    }
+}
+
+// Each state must have an ID that is unique to the PowerEntityStateSpace
+TEST_F(PowerStatsHidlTest, ValidateStateUniqueIds) {
+    hidl_vec<PowerEntityStateSpace> stateSpaces;
+    getStateSpaces(stateSpaces);
+
+    for (auto stateSpace : stateSpaces) {
+        set<uint32_t> stateIds;
+        for (auto state : stateSpace.states) {
+            ASSERT_TRUE(stateIds.insert(state.powerEntityStateId).second);
+        }
+    }
+}
+
+// getPowerEntityStateInfo must support passing in requested IDs
+// Results must contain state space information for all requested IDs
+TEST_F(PowerStatsHidlTest, ValidateStateInfoAssociationSelect) {
+    std::vector<uint32_t> randomIds;
+    getRandomIds(randomIds);
+
+    if (randomIds.empty()) {
+        return;
+    }
+
+    hidl_vec<PowerEntityStateSpace> stateSpaces;
+    getStateSpaces(stateSpaces, randomIds);
+
+    ASSERT_EQ(stateSpaces.size(), randomIds.size());
+
+    std::set<uint32_t> ids;
+    for (auto id : randomIds) {
+        ids.insert(id);
+    }
+    for (auto stateSpace : stateSpaces) {
+        ASSERT_NE(ids.count(stateSpace.powerEntityId), 0);
+    }
+}
+
+// Requested state space info must match initially obtained stateinfos
+TEST_F(PowerStatsHidlTest, ValidateStateInfoSelect) {
+    hidl_vec<PowerEntityStateSpace> stateSpaces;
+    getStateSpaces(stateSpaces);
+    if (stateSpaces.size() == 0) {
+        return;
+    }
+
+    std::vector<uint32_t> randomIds;
+    getRandomIds(randomIds);
+    ASSERT_FALSE(randomIds.empty());
+
+    hidl_vec<PowerEntityStateSpace> selectedStateSpaces;
+    getStateSpaces(selectedStateSpaces, randomIds);
+
+    std::map<uint32_t, PowerEntityStateSpace> stateSpaceMap;
+    for (auto stateSpace : stateSpaces) {
+        stateSpaceMap[stateSpace.powerEntityId] = stateSpace;
+    }
+
+    for (auto stateSpace : selectedStateSpaces) {
+        auto it = stateSpaceMap.find(stateSpace.powerEntityId);
+        ASSERT_NE(it, stateSpaceMap.end());
+
+        ASSERT_EQ(stateSpace.states.size(), it->second.states.size());
+        for (auto i = 0; i < stateSpace.states.size(); i++) {
+            ASSERT_EQ(stateSpace.states[i].powerEntityStateId,
+                      it->second.states[i].powerEntityStateId);
+            ASSERT_EQ(stateSpace.states[i].powerEntityStateName,
+                      it->second.states[i].powerEntityStateName);
+        }
+    }
+}
+
+// stateResidencyResults must contain results for every PowerEntityStateSpace
+// returned by getPowerEntityStateInfo
+TEST_F(PowerStatsHidlTest, ValidateResidencyResultsAssociation) {
+    hidl_vec<PowerEntityStateSpace> stateSpaces;
+    getStateSpaces(stateSpaces);
+
+    hidl_vec<PowerEntityStateResidencyResult> results;
+    getResidencyResults(results);
+
+    std::map<uint32_t, PowerEntityStateResidencyResult> resultsMap;
+    for (auto result : results) {
+        resultsMap[result.powerEntityId] = result;
+    }
+
+    for (auto stateSpace : stateSpaces) {
+        auto it = resultsMap.find(stateSpace.powerEntityId);
+        ASSERT_NE(it, resultsMap.end());
+
+        ASSERT_EQ(stateSpace.states.size(), it->second.stateResidencyData.size());
+
+        std::set<uint32_t> stateIds;
+        for (auto residency : it->second.stateResidencyData) {
+            stateIds.insert(residency.powerEntityStateId);
+        }
+
+        for (auto state : stateSpace.states) {
+            ASSERT_NE(stateIds.count(state.powerEntityStateId), 0);
+        }
+    }
+}
+
+// getPowerEntityStateResidencyData must support passing in requested IDs
+// stateResidencyResults must contain results for each PowerEntityStateSpace
+// returned by getPowerEntityStateInfo
+TEST_F(PowerStatsHidlTest, ValidateResidencyResultsAssociationSelect) {
+    std::vector<uint32_t> randomIds;
+    getRandomIds(randomIds);
+    if (randomIds.empty()) {
+        return;
+    }
+
+    hidl_vec<PowerEntityStateSpace> stateSpaces;
+    getStateSpaces(stateSpaces, randomIds);
+
+    hidl_vec<PowerEntityStateResidencyResult> results;
+    getResidencyResults(results, randomIds);
+
+    std::map<uint32_t, PowerEntityStateResidencyResult> resultsMap;
+    for (auto result : results) {
+        resultsMap[result.powerEntityId] = result;
+    }
+
+    for (auto stateSpace : stateSpaces) {
+        auto it = resultsMap.find(stateSpace.powerEntityId);
+        ASSERT_NE(it, resultsMap.end());
+
+        ASSERT_EQ(stateSpace.states.size(), it->second.stateResidencyData.size());
+
+        std::set<uint32_t> stateIds;
+        for (auto residency : it->second.stateResidencyData) {
+            stateIds.insert(residency.powerEntityStateId);
+        }
+
+        for (auto state : stateSpace.states) {
+            ASSERT_NE(stateIds.count(state.powerEntityStateId), 0);
+        }
+    }
+}
 
 TEST_F(PowerStatsHidlTest, ValidateRailInfo) {
     hidl_vec<RailInfo> rails[2];
@@ -299,7 +574,6 @@ int main(int argc, char** argv) {
     LOG(INFO) << "Test result = " << status;
     return status;
 }
-
 }  // namespace vts
 }  // namespace stats
 }  // namespace power
