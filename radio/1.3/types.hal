@@ -18,11 +18,21 @@ package android.hardware.radio@1.3;
 
 import @1.0::ApnAuthType;
 import @1.0::ApnTypes;
+import @1.0::CellInfoType;
 import @1.0::DataProfileId;
 import @1.0::DataProfileInfoType;
 import @1.0::RadioAccessFamily;
+import @1.0::RadioError;
 import @1.0::RegState;
+import @1.0::TimeStampType;
+import @1.1::ScanStatus;
 import @1.2::AccessNetwork;
+import @1.2::CellInfo;
+import @1.2::CellInfoCdma;
+import @1.2::CellInfoGsm;
+import @1.2::CellInfoLte;
+import @1.2::CellInfoTdscdma;
+import @1.2::CellInfoWcdma;
 import @1.2::CellIdentity;
 import @1.2::DataRegStateResult;
 
@@ -168,6 +178,78 @@ struct DataRegStateResult {
 
         LteVopsInfo lteVopsInfo; // LTE network capability
     } vopsInfo;
+
+    /**
+     * True if use of dual connectivity with NR is restricted.
+     * Reference: 3GPP TS 24.301 v15.03 section 9.3.3.12A.
+     */
+    bool isDcNrRestricted;
+
+    /**
+     * True if the bit N is in the PLMN-InfoList-r15 is true and the selected PLMN is present in
+     * plmn-IdentityList at position N.
+     * Reference: 3GPP TS 36.331 v15.2.2 section 6.3.1 PLMN-InfoList-r15.
+     *            3GPP TS 36.331 v15.2.2 section 6.2.2 SystemInformationBlockType1 message.
+     */
+    bool isNrAvailable;
+};
+
+/** Contains the configuration of the LTE cell tower. */
+struct CellConfigLte {
+    /**
+     * Indicates that if E-UTRA-NR Dual Connectivity (EN-DC) is supported by the LTE cell.
+     *
+     * True if the plmn-InfoList-r15 is present in SIB2 and at least one bit in this list is true,
+     * otherwise this value should be false.
+     *
+     * Reference: 3GPP TS 36.331 v15.2.2 6.3.1 System information blocks.
+     */
+    bool isEndcAvailable;
+};
+
+/** Inherits from @1.2::CellInfoLte, in order to add the LTE configuration. */
+struct CellInfoLte {
+    @1.2::CellInfoLte base;
+    CellConfigLte cellConfig;
+};
+
+/** Overwritten from @1.2::CellInfo in order to update the CellInfoLte to 1.3 version. */
+struct CellInfo {
+    /** Cell type for selecting from union CellInfo. */
+    CellInfoType cellInfoType;
+
+    /**
+     * True if the phone is registered to a mobile network that provides service on this cell and
+     * this cell is being used or would be used for network signaling.
+     */
+    bool isRegistered;
+
+    /** CellInfo details, cellInfoType can tell which cell info should be used. */
+    safe_union Info {
+        CellInfoGsm gsm;
+        CellInfoCdma cdma;
+        CellInfoWcdma wcdma;
+        CellInfoTdscdma tdscdma;
+        CellInfoLte lte;
+    } info;
+};
+
+/** Overwritten from @1.2::NetworkScanResult in order to update the CellInfo to 1.3 version. */
+struct NetworkScanResult {
+    /**
+     * The status of the scan.
+     */
+    ScanStatus status;
+
+    /**
+     * The error code of the incremental result.
+     */
+    RadioError error;
+
+    /**
+     * List of network information as CellInfo.
+     */
+    vec<CellInfo> networkInfos;
 };
 
 /**
