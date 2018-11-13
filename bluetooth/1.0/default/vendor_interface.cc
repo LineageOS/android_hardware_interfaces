@@ -294,6 +294,7 @@ void VendorInterface::Close() {
     lib_interface_->op(BT_VND_OP_POWER_CTRL, &power_state);
 
     lib_interface_->cleanup();
+    lib_interface_ = nullptr;
   }
 
   if (lib_handle_ != nullptr) {
