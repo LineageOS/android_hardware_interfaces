@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#define LOG_TAG "BcRadioDef.service"
-
 #include <android-base/logging.h>
 #include <hidl/HidlTransportSupport.h>
 
@@ -26,7 +24,9 @@ using android::hardware::joinRpcThreadpool;
 using android::hardware::broadcastradio::V2_0::implementation::BroadcastRadio;
 using android::hardware::broadcastradio::V2_0::implementation::gAmFmRadio;
 
-int main(int /* argc */, char** /* argv */) {
+int main() {
+    android::base::SetDefaultTag("BcRadioDef");
+    android::base::SetMinimumLogSeverity(android::base::VERBOSE);
     configureRpcThreadpool(4, true);
 
     BroadcastRadio broadcastRadio(gAmFmRadio);

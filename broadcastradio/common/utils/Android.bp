@@ -29,7 +29,6 @@ cc_library_static {
     export_include_dirs: ["include"],
     shared_libs: [
         "libbase",
-        "liblog",
         "libutils",
     ],
 }

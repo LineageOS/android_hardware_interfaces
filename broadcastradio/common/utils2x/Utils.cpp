@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 #define LOG_TAG "BcRadioDef.utils"
-//#define LOG_NDEBUG 0
 
 #include <broadcastradio-utils-2x/Utils.h>
 
 #include <android-base/logging.h>
-#include <log/log.h>
 
 namespace android {
 namespace hardware {
@@ -130,7 +128,7 @@ bool tunesTo(const ProgramSelector& a, const ProgramSelector& b) {
         case IdentifierType::SXM_SERVICE_ID:
             return haveEqualIds(a, b, IdentifierType::SXM_SERVICE_ID);
         default:  // includes all vendor types
-            ALOGW("Unsupported program type: %s", toString(type).c_str());
+            LOG(WARNING) << "unsupported program type: " << toString(type);
             return false;
     }
 }
@@ -166,7 +164,7 @@ uint64_t getId(const ProgramSelector& sel, const IdentifierType type) {
         return val;
     }
 
-    ALOGW("Identifier %s not found", toString(type).c_str());
+    LOG(WARNING) << "identifier not found: " << toString(type);
     return 0;
 }
 
@@ -205,7 +203,7 @@ bool isValid(const ProgramIdentifier& id) {
     auto expect = [&valid](bool condition, std::string message) {
         if (!condition) {
             valid = false;
-            ALOGE("Identifier not valid, expected %s", message.c_str());
+            LOG(ERROR) << "identifier not valid, expected " << message;
         }
     };
 
