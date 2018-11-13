@@ -21,12 +21,19 @@
 
 #include "utility/ValidateXml.h"
 
+// Stringify the argument.
+#define QUOTE(x) #x
+#define STRINGIFY(x) QUOTE(x)
+
+#define AUDIO_HAL_VERSION V2_0
+
 TEST(CheckConfig, audioEffectsConfigurationValidation) {
     RecordProperty("description",
                    "Verify that the effects configuration file is valid according to the schema");
     using namespace android::effectsConfig;
 
     std::vector<const char*> locations(std::begin(DEFAULT_LOCATIONS), std::end(DEFAULT_LOCATIONS));
-    EXPECT_VALID_XML_MULTIPLE_LOCATIONS(DEFAULT_NAME, locations,
-                                        "/data/local/tmp/audio_effects_conf_V2_0.xsd");
+    const char* xsd = "/data/local/tmp/audio_effects_conf_" STRINGIFY(AUDIO_HAL_VERSION) ".xsd";
+    // In V2, audio effect XML is not required. .conf is still allowed though deprecated
+    EXPECT_VALID_XML_MULTIPLE_LOCATIONS(DEFAULT_NAME, locations, xsd);
 }

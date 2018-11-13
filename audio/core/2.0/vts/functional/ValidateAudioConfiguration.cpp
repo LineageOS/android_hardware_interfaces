@@ -19,12 +19,19 @@
 
 #include "utility/ValidateXml.h"
 
+// Stringify the argument.
+#define QUOTE(x) #x
+#define STRINGIFY(x) QUOTE(x)
+
+#define AUDIO_HAL_VERSION V2_0
+
 TEST(CheckConfig, audioPolicyConfigurationValidation) {
     RecordProperty("description",
                    "Verify that the audio policy configuration file "
                    "is valid according to the schema");
 
     std::vector<const char*> locations = {"/odm/etc", "/vendor/etc", "/system/etc"};
-    EXPECT_ONE_VALID_XML_MULTIPLE_LOCATIONS("audio_policy_configuration.xml", locations,
-                                            "/data/local/tmp/audio_policy_configuration.xsd");
+    const char* xsd =
+        "/data/local/tmp/audio_policy_configuration_" STRINGIFY(AUDIO_HAL_VERSION) ".xsd";
+    EXPECT_ONE_VALID_XML_MULTIPLE_LOCATIONS("audio_policy_configuration.xml", locations, xsd);
 }

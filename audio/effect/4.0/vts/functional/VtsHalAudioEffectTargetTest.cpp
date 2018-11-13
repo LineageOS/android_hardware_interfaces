@@ -39,7 +39,7 @@ using android::hardware::hidl_vec;
 using android::hardware::MQDescriptorSync;
 using android::hardware::Return;
 using android::hardware::Void;
-using android::hardware::audio::common::utils::mkBitfield;
+using android::hardware::audio::common::utils::mkEnumBitfield;
 using android::hardware::audio::common::V4_0::AudioDevice;
 using android::hardware::audio::common::V4_0::AudioHandleConsts;
 using android::hardware::audio::common::V4_0::AudioMode;
@@ -399,7 +399,7 @@ TEST_F(AudioEffectHidlTest, DisableEnableDisable) {
 
 TEST_F(AudioEffectHidlTest, SetDevice) {
     description("Verify that SetDevice works for an output chain effect");
-    Return<Result> ret = effect->setDevice(mkBitfield(AudioDevice::OUT_SPEAKER));
+    Return<Result> ret = effect->setDevice(mkEnumBitfield(AudioDevice::OUT_SPEAKER));
     EXPECT_TRUE(ret.isOk());
     EXPECT_EQ(Result::OK, ret);
 }
@@ -449,7 +449,7 @@ TEST_F(AudioEffectHidlTest, SetConfigReverse) {
 
 TEST_F(AudioEffectHidlTest, SetInputDevice) {
     description("Verify that SetInputDevice does not crash");
-    Return<Result> ret = effect->setInputDevice(mkBitfield(AudioDevice::IN_BUILTIN_MIC));
+    Return<Result> ret = effect->setInputDevice(mkEnumBitfield(AudioDevice::IN_BUILTIN_MIC));
     EXPECT_TRUE(ret.isOk());
 }
 

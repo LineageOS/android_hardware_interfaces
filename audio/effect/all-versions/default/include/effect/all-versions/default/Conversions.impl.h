@@ -22,7 +22,7 @@
 #include <common/all-versions/VersionUtils.h>
 
 using ::android::hardware::audio::common::AUDIO_HAL_VERSION::HidlUtils;
-using ::android::hardware::audio::common::utils::mkEnumConverter;
+using ::android::hardware::audio::common::utils::EnumBitfield;
 
 namespace android {
 namespace hardware {
@@ -35,7 +35,7 @@ void effectDescriptorFromHal(const effect_descriptor_t& halDescriptor,
                              EffectDescriptor* descriptor) {
     HidlUtils::uuidFromHal(halDescriptor.type, &descriptor->type);
     HidlUtils::uuidFromHal(halDescriptor.uuid, &descriptor->uuid);
-    descriptor->flags = mkEnumConverter<EffectFlags>(halDescriptor.flags);
+    descriptor->flags = EnumBitfield<EffectFlags>(halDescriptor.flags);
     descriptor->cpuLoad = halDescriptor.cpuLoad;
     descriptor->memoryUsage = halDescriptor.memoryUsage;
     memcpy(descriptor->name.data(), halDescriptor.name, descriptor->name.size());

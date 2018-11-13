@@ -32,5 +32,8 @@ cc_test {
         "libicuuc_stubdata",
         "libxml2",
     ],
+    header_libs: [
+        "android.hardware.audio.common.util@all-versions",
+    ],
     test_suites: ["general-tests"],
 }
