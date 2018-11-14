@@ -18,8 +18,11 @@
 
 #include "Gnss.h"
 #include <log/log.h>
+#include "AGnss.h"
 #include "AGnssRil.h"
 #include "GnssMeasurement.h"
+
+using ::android::hardware::Status;
 
 namespace android {
 namespace hardware {
@@ -178,6 +181,10 @@ Return<bool> Gnss::injectBestLocation(const V1_0::GnssLocation&) {
 }
 
 // Methods from V2_0::IGnss follow.
+Return<sp<V2_0::IAGnss>> Gnss::getExtensionAGnss_2_0() {
+    return new AGnss{};
+}
+
 Return<sp<V2_0::IAGnssRil>> Gnss::getExtensionAGnssRil_2_0() {
     return new AGnssRil{};
 }

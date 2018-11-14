@@ -21,6 +21,7 @@ import @1.1::IGnss;
 
 import IGnssCallback;
 import IGnssMeasurement;
+import IAGnss;
 import IAGnssRil;
 
 /** Represents the standard GNSS (Global Navigation Satellite System) interface. */
@@ -34,6 +35,16 @@ interface IGnss extends @1.1::IGnss {
      * @return success Returns true on success.
      */
     setCallback_2_0(IGnssCallback callback) generates (bool success);
+
+    /**
+     * This method returns the IAGnss Interface.
+     *
+     * The getExtensionAGnss() must return nullptr as the @1.0::IAGnss interface is
+     * deprecated.
+     *
+     * @return aGnssIface Handle to the IAGnss interface.
+     */
+    getExtensionAGnss_2_0() generates (IAGnss aGnssIface);
 
     /**
      * This method returns the IAGnssRil Interface.

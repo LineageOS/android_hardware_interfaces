@@ -25,6 +25,10 @@ using IAGnssRil_2_0 = android::hardware::gnss::V2_0::IAGnssRil;
 using IGnssMeasurement_2_0 = android::hardware::gnss::V2_0::IGnssMeasurement;
 using IGnssMeasurement_1_1 = android::hardware::gnss::V1_1::IGnssMeasurement;
 using IGnssMeasurement_1_0 = android::hardware::gnss::V1_0::IGnssMeasurement;
+using IAGnssRil_2_0 = android::hardware::gnss::V2_0::IAGnssRil;
+using IAGnss_2_0 = android::hardware::gnss::V2_0::IAGnss;
+using IAGnss_1_0 = android::hardware::gnss::V1_0::IAGnss;
+using IAGnssCallback_2_0 = android::hardware::gnss::V2_0::IAGnssCallback;
 
 /*
  * SetupTeardownCreateCleanup:
@@ -60,7 +64,9 @@ TEST_F(GnssHalTest, TestGnssMeasurementCallback) {
  * Gets the AGnssRilExtension and verifies that it returns an actual extension.
  *
  * The GNSS HAL 2.0 implementation must support @2.0::IAGnssRil interface due to the deprecation
- * of framework network API methods needed to support the @1::IAGnssRil interface.
+ * of framework network API methods needed to support the @1.0::IAGnssRil interface.
+ *
+ * TODO (b/121287858): Enforce gnss@2.0 HAL package is supported on devices launced with Q or later.
  */
 TEST_F(GnssHalTest, TestAGnssRilExtension) {
     auto agnssRil = gnss_hal_->getExtensionAGnssRil_2_0();
@@ -71,8 +77,8 @@ TEST_F(GnssHalTest, TestAGnssRilExtension) {
 
 /*
  * TestAGnssRilUpdateNetworkState_2_0:
- * 1. Update GNSS HAL that a network has connected.
- * 2. Update GNSS HAL that network has disconnected.
+ * 1. Updates GNSS HAL that a network has connected.
+ * 2. Updates GNSS HAL that network has disconnected.
  */
 TEST_F(GnssHalTest, TestAGnssRilUpdateNetworkState_2_0) {
     auto agnssRil = gnss_hal_->getExtensionAGnssRil_2_0();
@@ -80,7 +86,7 @@ TEST_F(GnssHalTest, TestAGnssRilUpdateNetworkState_2_0) {
     sp<IAGnssRil_2_0> iAGnssRil = agnssRil;
     ASSERT_NE(iAGnssRil, nullptr);
 
-    // Update GNSS HAL that a network is connected.
+    // Update GNSS HAL that a network has connected.
     IAGnssRil_2_0::NetworkAttributes networkAttributes = {
         .networkHandle = static_cast<uint64_t>(7700664333),
         .isConnected = true,
@@ -132,4 +138,39 @@ TEST_F(GnssHalTest, TestGnssMeasurementCodeType) {
     }
 
     iGnssMeasurement->close();
+}
+
+/*
+ * TestAGnssExtension:
+ * Gets the AGnssExtension and verifies that it supports @2.0::IAGnss interface by invoking
+ * a method.
+ *
+ * The GNSS HAL 2.0 implementation must support @2.0::IAGnss interface due to the deprecation
+ * of framework network API methods needed to support the @1.0::IAGnss interface.
+ *
+ * TODO (b/121287858): Enforce gnss@2.0 HAL package is supported on devices launced with Q or later.
+ */
+TEST_F(GnssHalTest, TestAGnssExtension) {
+    // Verify IAGnss 2.0 is supported.
+    auto agnss = gnss_hal_->getExtensionAGnss_2_0();
+    ASSERT_TRUE(agnss.isOk());
+    sp<IAGnss_2_0> iAGnss = agnss;
+    ASSERT_NE(iAGnss, nullptr);
+
+    // Set SUPL server host/port
+    auto result = iAGnss->setServer(IAGnssCallback_2_0::AGnssType::SUPL, "supl.google.com", 7275);
+    ASSERT_TRUE(result.isOk());
+    EXPECT_TRUE(result);
+}
+
+/*
+ * TestAGnssExtension_1_0_Deprecation:
+ * Gets the @1.0::IAGnss extension and verifies that it is a nullptr.
+ *
+ * TODO (b/121287858): Enforce gnss@2.0 HAL package is supported on devices launced with Q or later.
+ */
+TEST_F(GnssHalTest, TestAGnssExtension_1_0_Deprecation) {
+    // Verify IAGnss 1.0 is not supported.
+    auto agnss_1_0 = gnss_hal_->getExtensionAGnss();
+    ASSERT_TRUE(!agnss_1_0.isOk() || ((sp<IAGnss_1_0>)agnss_1_0) == nullptr);
 }
