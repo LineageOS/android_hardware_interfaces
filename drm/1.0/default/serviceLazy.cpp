@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Android Open Source Project
+ * Copyright 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,20 +24,17 @@
 
 using android::hardware::configureRpcThreadpool;
 using android::hardware::joinRpcThreadpool;
-using android::hardware::registerPassthroughServiceImplementation;
+using android::hardware::registerLazyPassthroughServiceImplementation;
 
 using android::hardware::drm::V1_0::ICryptoFactory;
 using android::hardware::drm::V1_0::IDrmFactory;
 
 int main() {
     configureRpcThreadpool(8, true /* callerWillJoin */);
-    android::status_t status = registerPassthroughServiceImplementation<IDrmFactory>();
-    LOG_ALWAYS_FATAL_IF(
-        status != android::OK,
-        "Error while registering drm service: %d", status);
-    status = registerPassthroughServiceImplementation<ICryptoFactory>();
-    LOG_ALWAYS_FATAL_IF(
-        status != android::OK,
-        "Error while registering crypto service: %d", status);
+    android::status_t status = registerLazyPassthroughServiceImplementation<IDrmFactory>();
+    LOG_ALWAYS_FATAL_IF(status != android::OK, "Error while registering drm service: %d", status);
+    status = registerLazyPassthroughServiceImplementation<ICryptoFactory>();
+    LOG_ALWAYS_FATAL_IF(status != android::OK, "Error while registering crypto service: %d",
+                        status);
     joinRpcThreadpool();
 }
