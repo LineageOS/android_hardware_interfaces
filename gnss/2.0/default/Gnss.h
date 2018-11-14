@@ -72,6 +72,7 @@ struct Gnss : public IGnss {
     Return<bool> injectBestLocation(const V1_0::GnssLocation& location) override;
 
     // Methods from V2_0::IGnss follow.
+    Return<sp<V2_0::IAGnssRil>> getExtensionAGnssRil_2_0() override;
     Return<sp<V2_0::IGnssMeasurement>> getExtensionGnssMeasurement_2_0() override;
     Return<bool> setCallback_2_0(const sp<V2_0::IGnssCallback>& callback) override;
     Return<sp<measurement_corrections::V1_0::IMeasurementCorrections>>

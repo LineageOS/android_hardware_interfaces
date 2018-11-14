@@ -14,25 +14,7 @@
  * limitations under the License.
  */
 
-cc_binary {
-    name: "android.hardware.gnss@2.0-service",
-    init_rc: ["android.hardware.gnss@2.0-service.rc"],
-    relative_install_path: "hw",
-    vendor: true,
-    srcs: [
-        "AGnssRil.cpp",
-        "Gnss.cpp",
-        "GnssMeasurement.cpp",
-        "service.cpp"
-    ],
-    shared_libs: [
-        "libhidlbase",
-        "libhidltransport",
-        "libutils",
-        "liblog",
-        "android.hardware.gnss@2.0",
-        "android.hardware.gnss.measurement_corrections@1.0",
-        "android.hardware.gnss@1.0",
-        "android.hardware.gnss@1.1",
-    ],
-}
+package android.hardware.gnss@2.0;
+
+/** Network handle type. */
+typedef uint64_t net_handle_t;

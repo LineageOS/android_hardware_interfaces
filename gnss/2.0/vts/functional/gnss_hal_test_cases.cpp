@@ -23,6 +23,7 @@ using android::hardware::hidl_vec;
 
 using IGnssMeasurement_2_0 = android::hardware::gnss::V2_0::IGnssMeasurement;
 using IGnssMeasurement_1_1 = android::hardware::gnss::V1_1::IGnssMeasurement;
+using IAGnssRil_2_0 = android::hardware::gnss::V2_0::IAGnssRil;
 
 /*
  * SetupTeardownCreateCleanup:
@@ -46,4 +47,46 @@ TEST_F(GnssHalTest, TestGnssMeasurementCallback) {
         // Exactly one interface is non-null.
         ASSERT_TRUE((iGnssMeas_1_1 != nullptr) != (iGnssMeas_2_0 != nullptr));
     }
+}
+
+/*
+ * TestAGnssRilExtension:
+ * Gets the AGnssRilExtension and verifies that it returns an actual extension.
+ *
+ * The GNSS HAL 2.0 implementation must support @2.0::IAGnssRil interface due to the deprecation
+ * of framework network API methods needed to support the @1::IAGnssRil interface.
+ */
+TEST_F(GnssHalTest, TestAGnssRilExtension) {
+    auto agnssRil = gnss_hal_->getExtensionAGnssRil_2_0();
+    ASSERT_TRUE(agnssRil.isOk());
+    sp<IAGnssRil_2_0> iAGnssRil = agnssRil;
+    ASSERT_NE(iAGnssRil, nullptr);
+}
+
+/*
+ * TestAGnssRilUpdateNetworkState_2_0:
+ * 1. Update GNSS HAL that a network has connected.
+ * 2. Update GNSS HAL that network has disconnected.
+ */
+TEST_F(GnssHalTest, TestAGnssRilUpdateNetworkState_2_0) {
+    auto agnssRil = gnss_hal_->getExtensionAGnssRil_2_0();
+    ASSERT_TRUE(agnssRil.isOk());
+    sp<IAGnssRil_2_0> iAGnssRil = agnssRil;
+    ASSERT_NE(iAGnssRil, nullptr);
+
+    // Update GNSS HAL that a network is connected.
+    IAGnssRil_2_0::NetworkAttributes networkAttributes = {
+        .networkHandle = static_cast<uint64_t>(7700664333),
+        .isConnected = true,
+        .capabilities = static_cast<uint16_t>(IAGnssRil_2_0::NetworkCapability::NOT_ROAMING),
+        .apn = "dummy-apn"};
+    auto result = iAGnssRil->updateNetworkState_2_0(networkAttributes);
+    ASSERT_TRUE(result.isOk());
+    EXPECT_TRUE(result);
+
+    // Update GNSS HAL that network has disconnected.
+    networkAttributes.isConnected = false;
+    result = iAGnssRil->updateNetworkState_2_0(networkAttributes);
+    ASSERT_TRUE(result.isOk());
+    EXPECT_TRUE(result);
 }
