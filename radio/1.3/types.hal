@@ -33,6 +33,7 @@ import @1.2::CellInfoGsm;
 import @1.2::CellInfoLte;
 import @1.2::CellInfoTdscdma;
 import @1.2::CellInfoWcdma;
+import @1.2::CardStatus;
 import @1.2::CellIdentity;
 import @1.2::DataRegStateResult;
 
@@ -324,4 +325,16 @@ struct DataProfileInfo {
      * overwrite it.
      */
     bool persistent;
+};
+
+struct CardStatus {
+    @1.2::CardStatus base;
+    /**
+     * The EID is the eUICC identifier. The EID shall be stored within the ECASD and can be
+     * retrieved by the Device at any time using the standard GlobalPlatform GET DATA command.
+     *
+     * This data is mandatory and applicable only when cardState is CardState:PRESENT and SIM card
+     * supports eUICC.
+     */
+    string eid;
 };
