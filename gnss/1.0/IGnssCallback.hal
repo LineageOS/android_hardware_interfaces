@@ -115,9 +115,9 @@ interface IGnssCallback {
         /**
          * Carrier frequency of the signal tracked, for example it can be the
          * GPS central frequency for L1 = 1575.45 MHz, or L2 = 1227.60 MHz, L5 =
-         * 1176.45 MHz, varying GLO channels, etc. If the field is not set, it
-         * is the primary common use central frequency, e.g. L1 = 1575.45 MHz
-         * for GPS.
+         * 1176.45 MHz, varying GLO channels, etc. If the field is zero, it is
+         * the primary common use central frequency, e.g. L1 = 1575.45 MHz for
+         * GPS.
          *
          * For an L1, L5 receiver tracking a satellite on L1 and L5 at the same
          * time, two GnssSvInfo structs must be reported for this same
@@ -125,8 +125,7 @@ interface IGnssCallback {
          * to L1 must be filled, and in the other all of the values related to
          * L5 must be filled.
          *
-         * If the data is available, gnssClockFlags must contain
-         * HAS_CARRIER_FREQUENCY.
+         * If the data is available, svFlag must contain HAS_CARRIER_FREQUENCY.
          */
         float carrierFrequencyHz;
 
