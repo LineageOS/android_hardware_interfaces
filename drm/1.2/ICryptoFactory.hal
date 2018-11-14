@@ -1,0 +1,35 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package android.hardware.drm@1.2;
+
+import @1.1::ICryptoFactory;
+
+/**
+ * ICryptoFactory is the main entry point for interacting with a vendor's
+ * crypto HAL to create crypto plugins. Crypto plugins create crypto sessions
+ * which are used by a codec to decrypt protected video content.
+ *
+ * The 1.2 factory must always create 1.2 ICryptoPlugin interfaces, which are
+ * returned via the 1.0 createPlugin method.
+ *
+ * To use 1.2 features the caller must cast the returned interface to a
+ * 1.2 HAL, using V1_2::IDrmPlugin::castFrom().
+ *
+ * The ICryptoFactory hal is required because all top-level interfaces
+ * have to be updated in a minor uprev.
+ */
+interface ICryptoFactory extends @1.1::ICryptoFactory {
+};

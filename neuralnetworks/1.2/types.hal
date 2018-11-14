@@ -47,6 +47,18 @@ enum OperandType : @1.0::OperandType {
 };
 
 /**
+ * The range of values in the OperandType enum.
+ *
+ * THE MAX VALUES MUST BE UPDATED WHEN ADDING NEW TYPES to the OperandType enum.
+ */
+enum OperandTypeRange : uint32_t {
+    OPERAND_FUNDAMENTAL_MIN = 0,
+    OPERAND_FUNDAMENTAL_MAX = 8,
+    OPERAND_OEM_MIN     = 10000,
+    OPERAND_OEM_MAX     = 10001,
+};
+
+/**
  * Operation types.
  *
  * The type of an operation in a model.
@@ -103,6 +115,18 @@ enum OperationType : @1.1::OperationType {
     UNIDIRECTIONAL_SEQUENCE_LSTM = 85,
     UNIDIRECTIONAL_SEQUENCE_RNN = 86,
     ROTATED_BBOX_TRANSFORM = 87,
+};
+
+/**
+ * The range of values in the OperationType enum.
+ *
+ * THE MAX VALUES MUST BE UPDATED WHEN ADDING NEW TYPES to the OperationType enum.
+ */
+enum OperationTypeRange : uint32_t {
+    OPERATION_FUNDAMENTAL_MIN = 0,
+    OPERATION_FUNDAMENTAL_MAX = 87,
+    OPERATION_OEM_MIN = 10000,
+    OPERATION_OEM_MAX = 10000,
 };
 
 /**

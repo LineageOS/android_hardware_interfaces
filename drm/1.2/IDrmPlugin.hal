@@ -1,0 +1,94 @@
+/**
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package android.hardware.drm@1.2;
+
+import @1.1::IDrmPlugin;
+import @1.0::Status;
+
+/**
+ * IDrmPlugin is used to interact with a specific drm plugin that was created by
+ * IDrm::createPlugin. A drm plugin provides methods for obtaining drm keys that
+ * may be used by a codec to decrypt protected video content.
+ */
+interface IDrmPlugin extends @1.1::IDrmPlugin {
+
+    /**
+     * The keys in an offline license allow protected content to be
+     * played even if the device is not connected to a network.
+     * Offline licenses are stored on the device after a key
+     * request/response exchange when the key request KeyType is
+     * OFFLINE. Normally each app is responsible for keeping track of
+     * the KeySetIds it has created. In some situations however, it
+     * may be necessary to request the list of stored offline license
+     * KeySetIds. If an app loses the KeySetId for any stored licenses
+     * that it created, for example, it must be able to recover the
+     * stored KeySetIds so those licenses can be removed when they
+     * expire or when the app is uninstalled.
+     * <p>
+     * This method returns a list of the KeySetIds for all offline
+     * licenses. The offline license KeySetId may be used to query
+     * the status of an offline license or remove it.
+     *
+     * @return status the status of the call. May be OK or
+     *     ERROR_DRM_INVALID_STATE if the HAL is in a state where the
+     *     KeySetIds can't be returned.
+     * @return a list of offline license keySetIds. If there are no offline
+     *     licenses, the list must be empty and OK must be returned as the
+     *     status.
+     */
+    getOfflineLicenseKeySetIds() generates (Status status, vec<KeySetId> keySetIds);
+
+    /**
+     * Normally offline licenses are released using a key
+     * request/response exchange using getKeyRequest where the KeyType
+     * is RELEASE, followed by provideKeyResponse. This allows the
+     * server to cryptographically confirm that the license has been
+     * removed and then adjust the count of offline licenses allocated
+     * to the device.
+     * <p>
+     * In some exceptional situations it may be necessary to directly
+     * remove offline licenses without notifying the server, which may
+     * be performed using this method.
+     *
+     * @param keySetId the id of the offline license to remove
+     * @return status the status of the call. May be one of OK on
+     *     success, BAD_VALUE if the license is not found or
+     *     ERROR_DRM_INVALID_STATE if the HAL is in a state where the
+     *     KeySetIds can't be returned.
+     */
+    removeOfflineLicense(KeySetId keySetId) generates (Status status);
+
+    /**
+     * Request the state of an offline license. An offline license may
+     * be usable or inactive. The keys in a usable offline license are
+     * available for decryption. When the offline license state is
+     * inactive, the keys have been marked for release using
+     * getKeyRequest with KeyType RELEASE but the key response has not
+     * been received. The keys in an inactive offline license are not
+     * usable for decryption.
+     *
+     * @param keySetId the id of the offline license
+     * @return status the status of the call. May be one of OK on
+     *     success, BAD_VALUE if the license is not found or
+     *     ERROR_DRM_INVALID_STATE if the HAL is in a state where the
+     *     offline license state can't be queried.
+     * @return the offline license state, one of USABLE or INACTIVE.
+     *     If the return status is not OK then state must be set to
+     *     UNKNOWN.
+     */
+    getOfflineLicenseState(KeySetId keySetId) generates (Status status,
+            OfflineLicenseState state);
+};

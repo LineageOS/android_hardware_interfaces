@@ -128,16 +128,16 @@ static uint32_t addOperand(Model* model, OperandLifeTime lifetime) {
 
 ///////////////////////// VALIDATE MODEL OPERAND TYPE /////////////////////////
 
-static const int32_t invalidOperandTypes[] = {
-    static_cast<int32_t>(OperandType::FLOAT32) - 1,               // lower bound fundamental
-    static_cast<int32_t>(OperandType::TENSOR_QUANT16_ASYMM) + 1,  // upper bound fundamental
-    static_cast<int32_t>(OperandType::OEM) - 1,                   // lower bound OEM
-    static_cast<int32_t>(OperandType::TENSOR_OEM_BYTE) + 1,       // upper bound OEM
+static const uint32_t invalidOperandTypes[] = {
+    static_cast<uint32_t>(OperandTypeRange::OPERAND_FUNDAMENTAL_MIN) - 1,
+    static_cast<uint32_t>(OperandTypeRange::OPERAND_FUNDAMENTAL_MAX) + 1,
+    static_cast<uint32_t>(OperandTypeRange::OPERAND_OEM_MIN) - 1,
+    static_cast<uint32_t>(OperandTypeRange::OPERAND_OEM_MAX) + 1,
 };
 
 static void mutateOperandTypeTest(const sp<IDevice>& device, const Model& model) {
     for (size_t operand = 0; operand < model.operands.size(); ++operand) {
-        for (int32_t invalidOperandType : invalidOperandTypes) {
+        for (uint32_t invalidOperandType : invalidOperandTypes) {
             const std::string message = "mutateOperandTypeTest: operand " +
                                         std::to_string(operand) + " set to value " +
                                         std::to_string(invalidOperandType);
@@ -329,16 +329,16 @@ static void mutateOperationOperandTypeTest(const sp<IDevice>& device, const Mode
 
 ///////////////////////// VALIDATE MODEL OPERATION TYPE /////////////////////////
 
-static const int32_t invalidOperationTypes[] = {
-    static_cast<int32_t>(OperationType::ADD) - 1,            // lower bound fundamental
-    static_cast<int32_t>(OperationType::TRANSPOSE) + 1,      // upper bound fundamental
-    static_cast<int32_t>(OperationType::OEM_OPERATION) - 1,  // lower bound OEM
-    static_cast<int32_t>(OperationType::OEM_OPERATION) + 1,  // upper bound OEM
+static const uint32_t invalidOperationTypes[] = {
+    static_cast<uint32_t>(OperationTypeRange::OPERATION_FUNDAMENTAL_MIN) - 1,
+    static_cast<uint32_t>(OperationTypeRange::OPERATION_FUNDAMENTAL_MAX) + 1,
+    static_cast<uint32_t>(OperationTypeRange::OPERATION_OEM_MIN) - 1,
+    static_cast<uint32_t>(OperationTypeRange::OPERATION_OEM_MAX) + 1,
 };
 
 static void mutateOperationTypeTest(const sp<IDevice>& device, const Model& model) {
     for (size_t operation = 0; operation < model.operations.size(); ++operation) {
-        for (int32_t invalidOperationType : invalidOperationTypes) {
+        for (uint32_t invalidOperationType : invalidOperationTypes) {
             const std::string message = "mutateOperationTypeTest: operation " +
                                         std::to_string(operation) + " set to value " +
                                         std::to_string(invalidOperationType);

@@ -21,12 +21,16 @@ hidl_interface {
     ],
     types: [
         "AccessNetwork",
+        "CellConfigLte",
+        "CellInfo",
+        "CellInfoLte",
         "DataProfileInfo",
         "DataRegStateResult",
         "EmergencyNumber",
         "EmergencyNumberSource",
         "EmergencyServiceCategory",
         "LteVopsInfo",
+        "NetworkScanResult",
     ],
     gen_java: true,
 }
