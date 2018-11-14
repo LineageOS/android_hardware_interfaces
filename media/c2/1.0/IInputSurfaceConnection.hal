@@ -16,22 +16,20 @@
 
 package android.hardware.media.c2@1.0;
 
-import IConfigurable;
-
-/**
- * Connection between a component and an input surface.
- *
- * An instance of `IInputSurfaceConnection` contains an `IConfigurable`
- * interface for querying and configuring properties of the connection.
- */
 interface IInputSurfaceConnection {
+
     /**
-     * Returns the @ref IConfigurable instance associated to this connection.
+     * Disconnects this input surface from the component.
      *
-     * This can be used to customize the connection.
+     * This call must return within 100 ms.
      *
-     * @return configurable `IConfigurable` instance. This must not be null.
+     * @return status Status of the call, which may be
+     *   - OK        - The operation succeeded.
+     *   - BAD_STATE - The component is not in running state.
+     *   - NOT_FOUND - The surface is not connected to a component.
+     *   - CORRUPTED - Some unknown error prevented the connection. (unexpected)
      */
-    getConfigurable() generates (IConfigurable configurable);
+    disconnect() generates (Status status);
+
 };
 
