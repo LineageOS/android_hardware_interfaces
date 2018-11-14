@@ -79,6 +79,8 @@ struct Gnss : public IGnss {
     Return<bool> setCallback_2_0(const sp<V2_0::IGnssCallback>& callback) override;
     Return<sp<measurement_corrections::V1_0::IMeasurementCorrections>>
     getExtensionMeasurementCorrections() override;
+    Return<sp<visibility_control::V1_0::IGnssVisibilityControl>> getExtensionVisibilityControl()
+            override;
 
    private:
     static sp<V2_0::IGnssCallback> sGnssCallback_2_0;

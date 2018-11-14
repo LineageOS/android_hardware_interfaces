@@ -17,6 +17,7 @@
 package android.hardware.gnss@2.0;
 
 import android.hardware.gnss.measurement_corrections@1.0::IMeasurementCorrections;
+import android.hardware.gnss.visibility_control@1.0::IGnssVisibilityControl;
 import @1.1::IGnss;
 
 import IGnssCallback;
@@ -25,7 +26,15 @@ import IGnssMeasurement;
 import IAGnss;
 import IAGnssRil;
 
-/** Represents the standard GNSS (Global Navigation Satellite System) interface. */
+/**
+ * Represents the standard GNSS (Global Navigation Satellite System) interface.
+ *
+ * Due to the introduction of new GNSS HAL package android.hardware.gnss.visibility_control@1.0
+ * the interface @1.0::IGnssNi.hal and @1.0::IGnssNiCallback.hal are deprecated in this version
+ * and are not supported by the framework. The GNSS HAL implementation of this interface
+ * must return nullptr for the following @1.0::IGnss method.
+ *      getExtensionGnssNi() generates (IGnssNi gnssNiIface);
+ */
 interface IGnss extends @1.1::IGnss {
     /**
      * Opens the interface and provides the callback routines to the implementation of this
@@ -76,6 +85,13 @@ interface IGnss extends @1.1::IGnss {
      *
      * @return measurementCorrectionsIface Handle to the IMeasurementCorrections interface.
      */
-     getExtensionMeasurementCorrections()
+    getExtensionMeasurementCorrections()
             generates (IMeasurementCorrections measurementCorrectionsIface);
+
+    /**
+     * This method returns the IGnssVisibilityControl interface.
+     *
+     * @return visibilityControlIface Handle to the IGnssVisibilityControl interface.
+     */
+    getExtensionVisibilityControl() generates (IGnssVisibilityControl visibilityControlIface);
 };
