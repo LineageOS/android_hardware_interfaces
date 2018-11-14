@@ -203,6 +203,7 @@ NullOr<const KeyParameter&> AuthorizationSet::GetEntry(Tag tag) const {
 struct OutStreams {
     std::ostream& indirect;
     std::ostream& elements;
+    size_t skipped;
 };
 
 OutStreams& serializeParamValue(OutStreams& out, const hidl_vec<uint8_t>& blob) {
@@ -241,6 +242,7 @@ OutStreams& serializeParamValue(OutStreams& out, const T& value) {
 
 OutStreams& serialize(TAG_INVALID_t&&, OutStreams& out, const KeyParameter&) {
     // skip invalid entries.
+    ++out.skipped;
     return out;
 }
 template <typename T>
@@ -261,8 +263,9 @@ struct choose_serializer<MetaList<Tags...>> {
 template <>
 struct choose_serializer<> {
     static OutStreams& serialize(OutStreams& out, const KeyParameter& param) {
-        LOG(ERROR) << "Trying to serialize unknown tag " << unsigned(param.tag)
-                   << ". Did you forget to add it to all_tags_t?";
+        LOG(WARNING) << "Trying to serialize unknown tag " << unsigned(param.tag)
+                     << ". Did you forget to add it to all_tags_t?";
+        ++out.skipped;
         return out;
     }
 };
@@ -285,7 +288,7 @@ OutStreams& serialize(OutStreams& out, const KeyParameter& param) {
 std::ostream& serialize(std::ostream& out, const std::vector<KeyParameter>& params) {
     std::stringstream indirect;
     std::stringstream elements;
-    OutStreams streams = {indirect, elements};
+    OutStreams streams = {indirect, elements, 0};
     for (const auto& param : params) {
         serialize(streams, param);
     }
@@ -305,7 +308,7 @@ std::ostream& serialize(std::ostream& out, const std::vector<KeyParameter>& para
         return out;
     }
     uint32_t elements_size = pos;
-    uint32_t element_count = params.size();
+    uint32_t element_count = params.size() - streams.skipped;
 
     out.write(reinterpret_cast<const char*>(&indirect_size), sizeof(uint32_t));
 
@@ -326,6 +329,7 @@ std::ostream& serialize(std::ostream& out, const std::vector<KeyParameter>& para
 struct InStreams {
     std::istream& indirect;
     std::istream& elements;
+    size_t invalids;
 };
 
 InStreams& deserializeParamValue(InStreams& in, hidl_vec<uint8_t>* blob) {
@@ -347,6 +351,7 @@ InStreams& deserializeParamValue(InStreams& in, T* value) {
 
 InStreams& deserialize(TAG_INVALID_t&&, InStreams& in, KeyParameter*) {
     // there should be no invalid KeyParamaters but if handle them as zero sized.
+    ++in.invalids;
     return in;
 }
 
@@ -414,12 +419,27 @@ std::istream& deserialize(std::istream& in, std::vector<KeyParameter>* params) {
     // TODO write one-shot stream buffer to avoid copying here
     std::stringstream indirect(indirect_buffer);
     std::stringstream elements(elements_buffer);
-    InStreams streams = {indirect, elements};
+    InStreams streams = {indirect, elements, 0};
 
     params->resize(element_count);
 
     for (uint32_t i = 0; i < element_count; ++i) {
         deserialize(streams, &(*params)[i]);
+    }
+
+    /*
+     * There are legacy blobs which have invalid tags in them due to a bug during serialization.
+     * This makes sure that invalid tags are filtered from the result before it is returned.
+     */
+    if (streams.invalids > 0) {
+        std::vector<KeyParameter> filtered(element_count - streams.invalids);
+        auto ifiltered = filtered.begin();
+        for (auto& p : *params) {
+            if (p.tag != Tag::INVALID) {
+                *ifiltered++ = std::move(p);
+            }
+        }
+        *params = std::move(filtered);
     }
     return in;
 }
