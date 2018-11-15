@@ -115,6 +115,8 @@ enum OperationType : @1.1::OperationType {
     UNIDIRECTIONAL_SEQUENCE_LSTM = 85,
     UNIDIRECTIONAL_SEQUENCE_RNN = 86,
     ROTATED_BBOX_TRANSFORM = 87,
+    ABS = 88,
+    ROI_POOLING = 89,
 };
 
 /**
