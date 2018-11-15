@@ -33,25 +33,19 @@ bool operator<(const HmacSharingParameters& a, const HmacSharingParameters& b);
 
 namespace support {
 
-inline static hidl_vec<uint8_t> blob2hidlVec(const uint8_t* data, const size_t length,
-                                             bool inPlace = true) {
-    hidl_vec<uint8_t> result;
-    result.setToExternal(const_cast<unsigned char*>(data), length, !inPlace);
+inline static hidl_vec<uint8_t> blob2hidlVec(const uint8_t* data, const size_t length) {
+    hidl_vec<uint8_t> result(data, data + length);
     return result;
 }
 
-inline static hidl_vec<uint8_t> blob2hidlVec(const std::string& value, bool inPlace = true) {
-    hidl_vec<uint8_t> result;
-    result.setToExternal(const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(value.data())),
-                         static_cast<size_t>(value.size()), !inPlace);
+inline static hidl_vec<uint8_t> blob2hidlVec(const std::string& value) {
+    hidl_vec<uint8_t> result(reinterpret_cast<const uint8_t*>(value.data()),
+                             reinterpret_cast<const uint8_t*>(value.data()) + value.size());
     return result;
 }
 
-inline static hidl_vec<uint8_t> blob2hidlVec(const std::vector<uint8_t>& blob,
-                                             bool inPlace = true) {
-    hidl_vec<uint8_t> result;
-    result.setToExternal(const_cast<uint8_t*>(blob.data()), static_cast<size_t>(blob.size()),
-                         !inPlace);
+inline static hidl_vec<uint8_t> blob2hidlVec(const std::vector<uint8_t>& blob) {
+    hidl_vec<uint8_t> result(blob.data(), blob.data() + static_cast<size_t>(blob.size()));
     return result;
 }
 
