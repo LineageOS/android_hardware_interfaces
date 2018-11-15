@@ -164,6 +164,7 @@ class SensorsHidlTest : public SensorsHidlTestBase {
     void activateAllSensors(bool enable);
     std::vector<SensorInfo> getNonOneShotSensors();
     std::vector<SensorInfo> getOneShotSensors();
+    std::vector<SensorInfo> getInjectEventSensors();
     int32_t getInvalidSensorHandle();
 };
 
@@ -243,6 +244,16 @@ std::vector<SensorInfo> SensorsHidlTest::getOneShotSensors() {
     return sensors;
 }
 
+std::vector<SensorInfo> SensorsHidlTest::getInjectEventSensors() {
+    std::vector<SensorInfo> sensors;
+    for (const SensorInfo& info : getSensorsList()) {
+        if (info.flags & static_cast<uint32_t>(SensorFlagBits::DATA_INJECTION)) {
+            sensors.push_back(info);
+        }
+    }
+    return sensors;
+}
+
 int32_t SensorsHidlTest::getInvalidSensorHandle() {
     // Find a sensor handle that does not exist in the sensor list
     int32_t maxHandle = 0;
@@ -297,63 +308,71 @@ TEST_F(SensorsHidlTest, SensorListValid) {
     });
 }
 
-// Test if sensor list returned is valid
+// Test that SetOperationMode returns the expected value
 TEST_F(SensorsHidlTest, SetOperationMode) {
-    std::vector<SensorInfo> sensorList = getSensorsList();
-
-    bool needOperationModeSupport =
-        std::any_of(sensorList.begin(), sensorList.end(),
-                    [](const auto& s) { return (s.flags & SensorFlagBits::DATA_INJECTION) != 0; });
-    if (!needOperationModeSupport) {
-        return;
+    std::vector<SensorInfo> sensors = getInjectEventSensors();
+    if (getInjectEventSensors().size() > 0) {
+        ASSERT_EQ(Result::OK, getSensors()->setOperationMode(OperationMode::NORMAL));
+        ASSERT_EQ(Result::OK, getSensors()->setOperationMode(OperationMode::DATA_INJECTION));
+        ASSERT_EQ(Result::OK, getSensors()->setOperationMode(OperationMode::NORMAL));
+    } else {
+        ASSERT_EQ(Result::BAD_VALUE, getSensors()->setOperationMode(OperationMode::DATA_INJECTION));
     }
-
-    ASSERT_EQ(Result::OK, getSensors()->setOperationMode(OperationMode::NORMAL));
-    ASSERT_EQ(Result::OK, getSensors()->setOperationMode(OperationMode::DATA_INJECTION));
-    ASSERT_EQ(Result::OK, getSensors()->setOperationMode(OperationMode::NORMAL));
 }
 
-// Test if sensor list returned is valid
+// Test that an injected event is written back to the Event FMQ
 TEST_F(SensorsHidlTest, InjectSensorEventData) {
-    std::vector<SensorInfo> sensorList = getSensorsList();
-    std::vector<SensorInfo> sensorSupportInjection;
-
-    bool needOperationModeSupport =
-        std::any_of(sensorList.begin(), sensorList.end(), [&sensorSupportInjection](const auto& s) {
-            bool ret = (s.flags & SensorFlagBits::DATA_INJECTION) != 0;
-            if (ret) {
-                sensorSupportInjection.push_back(s);
-            }
-            return ret;
-        });
-    if (!needOperationModeSupport) {
+    std::vector<SensorInfo> sensors = getInjectEventSensors();
+    if (sensors.size() == 0) {
         return;
     }
 
-    ASSERT_EQ(Result::OK, getSensors()->setOperationMode(OperationMode::NORMAL));
     ASSERT_EQ(Result::OK, getSensors()->setOperationMode(OperationMode::DATA_INJECTION));
 
-    for (const auto& s : sensorSupportInjection) {
-        switch (s.type) {
-            case SensorType::ACCELEROMETER:
-            case SensorType::GYROSCOPE:
-            case SensorType::MAGNETIC_FIELD: {
-                usleep(100000);  // sleep 100ms
+    EventCallback callback;
+    getEnvironment()->registerCallback(&callback);
 
-                Event dummy;
-                dummy.timestamp = android::elapsedRealtimeNano();
-                dummy.sensorType = s.type;
-                dummy.sensorHandle = s.sensorHandle;
-                Vec3 v = {1, 2, 3, SensorStatus::ACCURACY_HIGH};
-                dummy.u.vec3 = v;
+    // AdditionalInfo event should not be sent to Event FMQ
+    Event additionalInfoEvent;
+    additionalInfoEvent.sensorType = SensorType::ADDITIONAL_INFO;
+    additionalInfoEvent.timestamp = android::elapsedRealtimeNano();
 
-                EXPECT_EQ(Result::OK, getSensors()->injectSensorData(dummy));
-                break;
-            }
-            default:
-                break;
-        }
+    Event injectedEvent;
+    injectedEvent.timestamp = android::elapsedRealtimeNano();
+    Vec3 data = {1, 2, 3, SensorStatus::ACCURACY_HIGH};
+    injectedEvent.u.vec3 = data;
+
+    for (const auto& s : sensors) {
+        additionalInfoEvent.sensorHandle = s.sensorHandle;
+        EXPECT_EQ(Result::OK, getSensors()->injectSensorData(additionalInfoEvent));
+
+        injectedEvent.sensorType = s.type;
+        injectedEvent.sensorHandle = s.sensorHandle;
+        EXPECT_EQ(Result::OK, getSensors()->injectSensorData(injectedEvent));
     }
+
+    // Wait for events to be written back to the Event FMQ
+    callback.waitForEvents(sensors, 1000 /* timeoutMs */);
+
+    for (const auto& s : sensors) {
+        auto events = callback.getEvents(s.sensorHandle);
+        auto lastEvent = events.back();
+
+        // Verify that only a single event has been received
+        ASSERT_EQ(events.size(), 1);
+
+        // Verify that the event received matches the event injected and is not the additional
+        // info event
+        ASSERT_EQ(lastEvent.sensorType, s.type);
+        ASSERT_EQ(lastEvent.sensorType, s.type);
+        ASSERT_EQ(lastEvent.timestamp, injectedEvent.timestamp);
+        ASSERT_EQ(lastEvent.u.vec3.x, injectedEvent.u.vec3.x);
+        ASSERT_EQ(lastEvent.u.vec3.y, injectedEvent.u.vec3.y);
+        ASSERT_EQ(lastEvent.u.vec3.z, injectedEvent.u.vec3.z);
+        ASSERT_EQ(lastEvent.u.vec3.status, injectedEvent.u.vec3.status);
+    }
+
+    getEnvironment()->unregisterCallback();
     ASSERT_EQ(Result::OK, getSensors()->setOperationMode(OperationMode::NORMAL));
 }
 
