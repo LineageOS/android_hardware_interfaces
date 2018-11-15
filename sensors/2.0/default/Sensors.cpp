@@ -54,9 +54,11 @@ Return<void> Sensors::getSensorsList(getSensorsList_cb _hidl_cb) {
     return Void();
 }
 
-Return<Result> Sensors::setOperationMode(OperationMode /* mode */) {
-    // TODO implement
-    return Result{};
+Return<Result> Sensors::setOperationMode(OperationMode mode) {
+    for (auto sensor : mSensors) {
+        sensor.second->setOperationMode(mode);
+    }
+    return Result::OK;
 }
 
 Return<Result> Sensors::activate(int32_t sensorHandle, bool enabled) {
@@ -120,9 +122,13 @@ Return<Result> Sensors::flush(int32_t sensorHandle) {
     return Result::BAD_VALUE;
 }
 
-Return<Result> Sensors::injectSensorData(const Event& /* event */) {
-    // TODO implement
-    return Result{};
+Return<Result> Sensors::injectSensorData(const Event& event) {
+    auto sensor = mSensors.find(event.sensorHandle);
+    if (sensor != mSensors.end()) {
+        return sensor->second->injectEvent(event);
+    }
+
+    return Result::BAD_VALUE;
 }
 
 Return<void> Sensors::registerDirectChannel(const SharedMemInfo& /* mem */,

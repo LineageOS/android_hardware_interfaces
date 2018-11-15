@@ -145,7 +145,7 @@
     </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.drm</name>
-        <version>1.0</version>
+        <version>1.0-1</version>
         <interface>
             <name>ICryptoFactory</name>
             <regex-instance>.*</regex-instance>
@@ -157,7 +157,7 @@
     </hal>
     <hal format="hidl" optional="false">
         <name>android.hardware.drm</name>
-        <version>1.1</version>
+        <version>1.2</version>
         <interface>
             <name>ICryptoFactory</name>
             <regex-instance>.*</regex-instance>
