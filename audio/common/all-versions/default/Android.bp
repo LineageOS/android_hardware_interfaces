@@ -38,3 +38,73 @@ cc_library_shared {
         "android.hardware.audio.common.util@all-versions",
     ]
 }
+
+cc_library_shared {
+    name: "android.hardware.audio.common@2.0-util",
+    defaults: ["hidl_defaults"],
+    vendor_available: true,
+    srcs: [
+        "HidlUtils.cpp",
+    ],
+
+    export_include_dirs: ["."],
+
+    static_libs: [
+    ],
+
+    shared_libs: [
+        "liblog",
+        "libutils",
+        "libhidlbase",
+        "android.hardware.audio.common-util",
+        "android.hardware.audio.common@2.0",
+    ],
+    export_shared_lib_headers: [
+        "android.hardware.audio.common-util"
+    ],
+
+    header_libs: [
+        "libaudio_system_headers",
+        "libhardware_headers",
+    ],
+    cflags: [
+        "-DMAJOR_VERSION=2",
+        "-DMINOR_VERSION=0",
+        "-include common/all-versions/VersionMacro.h",
+    ]
+}
+
+cc_library_shared {
+    name: "android.hardware.audio.common@4.0-util",
+    defaults: ["hidl_defaults"],
+    vendor_available: true,
+    srcs: [
+        "HidlUtils.cpp",
+    ],
+
+    export_include_dirs: ["."],
+
+    static_libs: [
+    ],
+
+    shared_libs: [
+        "liblog",
+        "libutils",
+        "libhidlbase",
+        "android.hardware.audio.common-util",
+        "android.hardware.audio.common@4.0",
+    ],
+    export_shared_lib_headers: [
+        "android.hardware.audio.common-util"
+    ],
+
+    header_libs: [
+        "libaudio_system_headers",
+        "libhardware_headers",
+    ],
+    cflags: [
+        "-DMAJOR_VERSION=4",
+        "-DMINOR_VERSION=0",
+        "-include common/all-versions/VersionMacro.h",
+    ]
+}

@@ -1,7 +1,18 @@
-cc_library_headers {
-    name: "android.hardware.audio.core@all-versions-impl",
+cc_library_shared {
+    name: "android.hardware.audio@2.0-impl",
     relative_install_path: "hw",
+    proprietary: true,
     vendor: true,
+    srcs: [
+        "Conversions.cpp",
+        "Device.cpp",
+        "DevicesFactory.cpp",
+        "ParametersUtil.cpp",
+        "PrimaryDevice.cpp",
+        "Stream.cpp",
+        "StreamIn.cpp",
+        "StreamOut.cpp",
+    ],
 
     defaults: ["hidl_defaults"],
 
@@ -16,14 +27,81 @@ cc_library_headers {
         "libhidltransport",
         "liblog",
         "libutils",
+        "android.hardware.audio@2.0",
+        "android.hardware.audio.common@2.0",
+        "android.hardware.audio.common@2.0-util",
         "android.hardware.audio.common-util",
     ],
 
     header_libs: [
+        "android.hardware.audio.common.util@all-versions",
         "libaudioclient_headers",
         "libaudio_system_headers",
         "libhardware_headers",
         "libmedia_headers",
-         "android.hardware.audio.common.util@all-versions",
     ],
+
+    whole_static_libs: [
+        "libmedia_helper",
+    ],
+
+    cflags: [
+        "-DMAJOR_VERSION=2",
+        "-DMINOR_VERSION=0",
+        "-include common/all-versions/VersionMacro.h",
+    ]
+}
+
+cc_library_shared {
+    name: "android.hardware.audio@4.0-impl",
+    relative_install_path: "hw",
+    proprietary: true,
+    vendor: true,
+    srcs: [
+        "Conversions.cpp",
+        "Device.cpp",
+        "DevicesFactory.cpp",
+        "ParametersUtil.cpp",
+        "PrimaryDevice.cpp",
+        "Stream.cpp",
+        "StreamIn.cpp",
+        "StreamOut.cpp",
+    ],
+
+    defaults: ["hidl_defaults"],
+
+    export_include_dirs: ["include"],
+
+    shared_libs: [
+        "libbase",
+        "libcutils",
+        "libfmq",
+        "libhardware",
+        "libhidlbase",
+        "libhidltransport",
+        "liblog",
+        "libutils",
+        "android.hardware.audio@4.0",
+        "android.hardware.audio.common@4.0",
+        "android.hardware.audio.common@4.0-util",
+        "android.hardware.audio.common-util",
+    ],
+
+    header_libs: [
+        "android.hardware.audio.common.util@all-versions",
+        "libaudioclient_headers",
+        "libaudio_system_headers",
+        "libhardware_headers",
+        "libmedia_headers",
+    ],
+
+    whole_static_libs: [
+        "libmedia_helper",
+    ],
+
+    cflags: [
+        "-DMAJOR_VERSION=4",
+        "-DMINOR_VERSION=0",
+        "-include common/all-versions/VersionMacro.h",
+    ]
 }
