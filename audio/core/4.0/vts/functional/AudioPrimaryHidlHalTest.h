@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "VtsHalAudioV2_0TargetTest"
+#define LOG_TAG "VtsHalAudioV4_0TargetTest"
 
 #include <algorithm>
 #include <cmath>
@@ -35,11 +35,11 @@
 
 #include <android-base/logging.h>
 
-#include <android/hardware/audio/2.0/IDevice.h>
-#include <android/hardware/audio/2.0/IDevicesFactory.h>
-#include <android/hardware/audio/2.0/IPrimaryDevice.h>
-#include <android/hardware/audio/2.0/types.h>
-#include <android/hardware/audio/common/2.0/types.h>
+#include <android/hardware/audio/4.0/IDevice.h>
+#include <android/hardware/audio/4.0/IDevicesFactory.h>
+#include <android/hardware/audio/4.0/IPrimaryDevice.h>
+#include <android/hardware/audio/4.0/types.h>
+#include <android/hardware/audio/common/4.0/types.h>
 #include <fmq/EventFlag.h>
 #include <fmq/MessageQueue.h>
 
@@ -48,9 +48,12 @@
 #include "utility/AssertOk.h"
 #include "utility/Documentation.h"
 #include "utility/EnvironmentTearDown.h"
-#define AUDIO_HAL_VERSION V2_0
+#define AUDIO_HAL_VERSION V4_0
 #include "utility/PrettyPrintAudioTypes.h"
 #include "utility/ReturnIn.h"
+
+/** Provide version specific functions that are used in the generic tests */
+#include "4.0/AudioPrimaryHidlHalUtils.h"
 
 using std::initializer_list;
 using std::list;
@@ -70,38 +73,38 @@ using ::android::hardware::kSynchronizedReadWrite;
 using ::android::hardware::MessageQueue;
 using ::android::hardware::MQDescriptorSync;
 using ::android::hardware::Return;
-using ::android::hardware::audio::V2_0::AudioDrain;
-using ::android::hardware::audio::V2_0::DeviceAddress;
-using ::android::hardware::audio::V2_0::IDevice;
-using ::android::hardware::audio::V2_0::IPrimaryDevice;
-using TtyMode = ::android::hardware::audio::V2_0::IPrimaryDevice::TtyMode;
-using ::android::hardware::audio::V2_0::IDevicesFactory;
-using ::android::hardware::audio::V2_0::IStream;
-using ::android::hardware::audio::V2_0::IStreamIn;
-using ::android::hardware::audio::V2_0::MessageQueueFlagBits;
-using ::android::hardware::audio::V2_0::TimeSpec;
-using ReadParameters = ::android::hardware::audio::V2_0::IStreamIn::ReadParameters;
-using ReadStatus = ::android::hardware::audio::V2_0::IStreamIn::ReadStatus;
+using ::android::hardware::audio::V4_0::AudioDrain;
+using ::android::hardware::audio::V4_0::DeviceAddress;
+using ::android::hardware::audio::V4_0::IDevice;
+using ::android::hardware::audio::V4_0::IPrimaryDevice;
+using TtyMode = ::android::hardware::audio::V4_0::IPrimaryDevice::TtyMode;
+using ::android::hardware::audio::V4_0::IDevicesFactory;
+using ::android::hardware::audio::V4_0::IStream;
+using ::android::hardware::audio::V4_0::IStreamIn;
+using ::android::hardware::audio::V4_0::MessageQueueFlagBits;
+using ::android::hardware::audio::V4_0::TimeSpec;
+using ReadParameters = ::android::hardware::audio::V4_0::IStreamIn::ReadParameters;
+using ReadStatus = ::android::hardware::audio::V4_0::IStreamIn::ReadStatus;
 using ::android::hardware::audio::common::utils::mkEnumBitfield;
-using ::android::hardware::audio::common::V2_0::AudioChannelMask;
-using ::android::hardware::audio::common::V2_0::AudioConfig;
-using ::android::hardware::audio::common::V2_0::AudioDevice;
-using ::android::hardware::audio::common::V2_0::AudioFormat;
-using ::android::hardware::audio::common::V2_0::AudioHandleConsts;
-using ::android::hardware::audio::common::V2_0::AudioHwSync;
-using ::android::hardware::audio::common::V2_0::AudioInputFlag;
-using ::android::hardware::audio::common::V2_0::AudioIoHandle;
-using ::android::hardware::audio::common::V2_0::AudioMode;
-using ::android::hardware::audio::common::V2_0::AudioOffloadInfo;
-using ::android::hardware::audio::common::V2_0::AudioOutputFlag;
-using ::android::hardware::audio::common::V2_0::AudioSource;
-using ::android::hardware::audio::common::V2_0::ThreadInfo;
-using ::android::hardware::audio::V2_0::IStreamOut;
-using ::android::hardware::audio::V2_0::IStreamOutCallback;
-using ::android::hardware::audio::V2_0::MmapBufferInfo;
-using ::android::hardware::audio::V2_0::MmapPosition;
-using ::android::hardware::audio::V2_0::ParameterValue;
-using ::android::hardware::audio::V2_0::Result;
+using ::android::hardware::audio::common::V4_0::AudioChannelMask;
+using ::android::hardware::audio::common::V4_0::AudioConfig;
+using ::android::hardware::audio::common::V4_0::AudioDevice;
+using ::android::hardware::audio::common::V4_0::AudioFormat;
+using ::android::hardware::audio::common::V4_0::AudioHandleConsts;
+using ::android::hardware::audio::common::V4_0::AudioHwSync;
+using ::android::hardware::audio::common::V4_0::AudioInputFlag;
+using ::android::hardware::audio::common::V4_0::AudioIoHandle;
+using ::android::hardware::audio::common::V4_0::AudioMode;
+using ::android::hardware::audio::common::V4_0::AudioOffloadInfo;
+using ::android::hardware::audio::common::V4_0::AudioOutputFlag;
+using ::android::hardware::audio::common::V4_0::AudioSource;
+using ::android::hardware::audio::common::V4_0::ThreadInfo;
+using ::android::hardware::audio::V4_0::IStreamOut;
+using ::android::hardware::audio::V4_0::IStreamOutCallback;
+using ::android::hardware::audio::V4_0::MmapBufferInfo;
+using ::android::hardware::audio::V4_0::MmapPosition;
+using ::android::hardware::audio::V4_0::ParameterValue;
+using ::android::hardware::audio::V4_0::Result;
 
 using namespace ::android::hardware::audio::common::test::utility;
 
@@ -160,7 +163,7 @@ TEST_F(AudioHidlTest, OpenDeviceInvalidParameter) {
     doc::test("Test passing an invalid parameter to openDevice");
     Result result;
     sp<IDevice> device;
-    auto invalidDevice = IDevicesFactory::Device(-1);
+    auto invalidDevice = "Non existing device";
     ASSERT_OK(devicesFactory->openDevice(invalidDevice, returnIn(result, device)));
     ASSERT_EQ(Result::INVALID_ARGUMENTS, result);
     ASSERT_TRUE(device == nullptr);
@@ -191,13 +194,8 @@ class AudioPrimaryHidlTest : public AudioHidlTest {
    private:
     void initPrimaryDevice() {
         Result result;
-        sp<IDevice> baseDevice;
-        ASSERT_OK(devicesFactory->openDevice(IDevicesFactory::Device::PRIMARY,
-                                             returnIn(result, baseDevice)));
+        ASSERT_OK(devicesFactory->openPrimaryDevice(returnIn(result, device)));
         ASSERT_OK(result);
-        ASSERT_TRUE(baseDevice != nullptr);
-
-        device = IPrimaryDevice::castFrom(baseDevice);
     }
 };
 sp<IPrimaryDevice> AudioPrimaryHidlTest::device;
@@ -477,17 +475,6 @@ TEST_F(AudioPrimaryHidlTest, setScreenState) {
 //////////////////////////// {get,set}Parameters /////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
-struct Parameters {
-    template <class T, class ReturnIn>
-    static auto get(T t, hidl_vec<hidl_string> keys, ReturnIn returnIn) {
-        return t->getParameters(keys, returnIn);
-    }
-    template <class T>
-    static auto set(T t, hidl_vec<ParameterValue> values) {
-        return t->setParameters(values);
-    }
-};
-
 TEST_F(AudioPrimaryHidlTest, getParameters) {
     doc::test("Check that the hal can set and get parameters");
     hidl_vec<ParameterValue> context;
@@ -535,11 +522,6 @@ static void testDebugDump(DebugDump debugDump) {
     }
     EXPECT_EQ(0, close(fds[0])) << errno;
     EXPECT_EQ(0, close(fds[1])) << errno;
-}
-
-template <class T>
-auto dump(T t, hidl_handle handle) {
-    return t->debugDump(handle);
 }
 
 TEST_F(AudioPrimaryHidlTest, DebugDump) {
@@ -622,10 +604,14 @@ class OutputStreamTest : public OpenStreamTest<IStreamOut> {
         auto flags = mkEnumBitfield(AudioOutputFlag::NONE);
         testOpen(
             [&](AudioIoHandle handle, AudioConfig config, auto cb) {
-                return device->openOutputStream(handle, address, config, flags, cb);
+                return device->openOutputStream(handle, address, config, flags, initMetadata, cb);
             },
             config);
     }
+
+   protected:
+    const SourceMetadata initMetadata = {
+        {{AudioUsage::MEDIA, AudioContentType::MUSIC, 1 /* gain */}}};
 };
 TEST_P(OutputStreamTest, OpenOutputStreamTest) {
     doc::test(
@@ -664,7 +650,7 @@ class InputStreamTest : public OpenStreamTest<IStreamIn> {
     }
 
    protected:
-    const AudioSource initMetadata = AudioSource::DEFAULT;
+    const SinkMetadata initMetadata = {{{AudioSource::DEFAULT, 1 /* gain */}}};
 };
 
 TEST_P(InputStreamTest, OpenInputStreamTest) {
@@ -770,33 +756,6 @@ static void testCapabilityGetter(const string& name, IStream* stream,
     }
 }
 
-// The default hal should probably return a NOT_SUPPORTED if the hal
-// does not expose
-// capability retrieval. For now it returns an empty list if not
-// implemented
-struct GetSupported {
-    template <class Vec>
-    static Result convertToResult(const Vec& vec) {
-        return vec.size() == 0 ? Result::NOT_SUPPORTED : Result::OK;
-    }
-
-    static Result sampleRates(IStream* stream, hidl_vec<uint32_t>& rates) {
-        EXPECT_OK(stream->getSupportedSampleRates(returnIn(rates)));
-        return convertToResult(rates);
-    }
-
-    static Result channelMasks(IStream* stream, hidl_vec<AudioChannelMask>& channels) {
-        EXPECT_OK(stream->getSupportedChannelMasks(returnIn(channels)));
-        return convertToResult(channels);
-    }
-
-    static Result formats(IStream* stream, hidl_vec<AudioFormat>& capabilities) {
-        EXPECT_OK(stream->getSupportedFormats(returnIn(capabilities)));
-        // TODO: this should be an optional function
-        return Result::OK;
-    }
-};
-
 TEST_IO_STREAM(SupportedSampleRate, "Check that the stream sample rate is declared as supported",
                testCapabilityGetter("getSupportedSampleRate", stream.get(),
                                     &GetSupported::sampleRates, &IStream::getSampleRate,
@@ -814,35 +773,6 @@ TEST_IO_STREAM(SupportedChannelMask, "Check that the stream channel mask is decl
 TEST_IO_STREAM(SupportedFormat, "Check that the stream format is declared as supported",
                testCapabilityGetter("getSupportedFormat", stream.get(), &GetSupported::formats,
                                     &IStream::getFormat, &IStream::setFormat))
-
-static void testGetDevice(IStream* stream, AudioDevice expectedDevice) {
-    // Unfortunately the interface does not allow the implementation to return
-    // NOT_SUPPORTED
-    // Thus allow NONE as signaling that the call is not supported.
-    auto ret = stream->getDevice();
-    ASSERT_IS_OK(ret);
-    AudioDevice device = ret;
-    ASSERT_TRUE(device == expectedDevice || device == AudioDevice::NONE)
-        << "Expected: " << ::testing::PrintToString(expectedDevice)
-        << "\n  Actual: " << ::testing::PrintToString(device);
-}
-
-TEST_IO_STREAM(GetDevice, "Check that the stream device == the one it was opened with",
-               areAudioPatchesSupported() ? doc::partialTest("Audio patches are supported")
-                                          : testGetDevice(stream.get(), address.device))
-
-static void testSetDevice(IStream* stream, const DeviceAddress& address) {
-    DeviceAddress otherAddress = address;
-    otherAddress.device = (address.device & AudioDevice::BIT_IN) == 0 ? AudioDevice::OUT_SPEAKER
-                                                                      : AudioDevice::IN_BUILTIN_MIC;
-    EXPECT_OK(stream->setDevice(otherAddress));
-
-    ASSERT_OK(stream->setDevice(address));  // Go back to the original value
-}
-
-TEST_IO_STREAM(SetDevice, "Check that the stream can be rerouted to SPEAKER or BUILTIN_MIC",
-               areAudioPatchesSupported() ? doc::partialTest("Audio patches are supported")
-                                          : testSetDevice(stream.get(), address))
 
 static void testGetAudioProperties(IStream* stream, AudioConfig expectedConfig) {
     uint32_t sampleRateHz;
@@ -864,23 +794,6 @@ TEST_IO_STREAM(GetAudioProperties,
 
 TEST_IO_STREAM(SetHwAvSync, "Try to set hardware sync to an invalid value",
                ASSERT_RESULT(okOrNotSupportedOrInvalidArgs, stream->setHwAvSync(666)))
-
-static void testConnectedState(IStream* stream) {
-    DeviceAddress address = {};
-    using AD = AudioDevice;
-    for (auto device : {AD::OUT_HDMI, AD::OUT_WIRED_HEADPHONE, AD::IN_USB_HEADSET}) {
-        address.device = device;
-
-        ASSERT_OK(stream->setConnectedState(address, true));
-        ASSERT_OK(stream->setConnectedState(address, false));
-    }
-}
-TEST_IO_STREAM(SetConnectedState,
-               "Check that the stream can be notified of device connection and "
-               "deconnection",
-               testConnectedState(stream.get()))
-
-TEST_IO_STREAM(GetHwAvSync, "Get hardware sync can not fail", ASSERT_IS_OK(device->getHwAvSync()));
 
 static void checkGetNoParameter(IStream* stream, hidl_vec<hidl_string> keys,
                                 initializer_list<Result> expectedResults) {
@@ -1296,21 +1209,6 @@ TEST_P(OutputStreamTest, GetPresentationPositionStop) {
 TEST_F(AudioPrimaryHidlTest, setVoiceVolume) {
     doc::test("Make sure setVoiceVolume only succeed if volume is in [0,1]");
     testUnitaryGain([](float volume) { return device->setVoiceVolume(volume); });
-}
-
-TEST_F(AudioPrimaryHidlTest, setMode) {
-    doc::test("Make sure setMode always succeeds if mode is valid and fails otherwise");
-    // Test Invalid values
-    for (AudioMode mode : {AudioMode::INVALID, AudioMode::CURRENT, AudioMode::CNT}) {
-        SCOPED_TRACE("mode=" + toString(mode));
-        ASSERT_RESULT(Result::INVALID_ARGUMENTS, device->setMode(mode));
-    }
-    // Test valid values
-    for (AudioMode mode : {AudioMode::IN_CALL, AudioMode::IN_COMMUNICATION, AudioMode::RINGTONE,
-                           AudioMode::NORMAL /* Make sure to leave the test in normal mode */}) {
-        SCOPED_TRACE("mode=" + toString(mode));
-        ASSERT_OK(device->setMode(mode));
-    }
 }
 
 TEST_F(BoolAccessorPrimaryHidlTest, BtScoNrecEnabled) {
