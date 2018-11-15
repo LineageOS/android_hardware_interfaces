@@ -44,48 +44,77 @@ namespace implementation {
 class WifiChipTest : public Test {
    protected:
     void setupV1IfaceCombination() {
-        EXPECT_CALL(*feature_flags_, isAwareSupported())
-            .WillRepeatedly(testing::Return(false));
-        EXPECT_CALL(*feature_flags_, isDualInterfaceSupported())
-            .WillRepeatedly(testing::Return(false));
-        EXPECT_CALL(*feature_flags_, isApDisabled())
-            .WillRepeatedly(testing::Return(false));
+        // clang-format off
+        const hidl_vec<V1_0::IWifiChip::ChipIfaceCombination> combinationsSta = {
+            {{{{IfaceType::STA}, 1}, {{IfaceType::P2P}, 1}}}
+        };
+        const hidl_vec<V1_0::IWifiChip::ChipIfaceCombination> combinationsAp = {
+            {{{{IfaceType::AP}, 1}}}
+        };
+        const std::vector<V1_0::IWifiChip::ChipMode> modes = {
+            {feature_flags::chip_mode_ids::kV1Sta, combinationsSta},
+            {feature_flags::chip_mode_ids::kV1Ap, combinationsAp}
+        };
+        // clang-format on
+        EXPECT_CALL(*feature_flags_, getChipModes())
+            .WillRepeatedly(testing::Return(modes));
     }
 
     void setupV1_AwareIfaceCombination() {
-        EXPECT_CALL(*feature_flags_, isAwareSupported())
-            .WillRepeatedly(testing::Return(true));
-        EXPECT_CALL(*feature_flags_, isDualInterfaceSupported())
-            .WillRepeatedly(testing::Return(false));
-        EXPECT_CALL(*feature_flags_, isApDisabled())
-            .WillRepeatedly(testing::Return(false));
+        // clang-format off
+        const hidl_vec<V1_0::IWifiChip::ChipIfaceCombination> combinationsSta = {
+            {{{{IfaceType::STA}, 1}, {{IfaceType::P2P, IfaceType::NAN}, 1}}}
+        };
+        const hidl_vec<V1_0::IWifiChip::ChipIfaceCombination> combinationsAp = {
+            {{{{IfaceType::AP}, 1}}}
+        };
+        const std::vector<V1_0::IWifiChip::ChipMode> modes = {
+            {feature_flags::chip_mode_ids::kV1Sta, combinationsSta},
+            {feature_flags::chip_mode_ids::kV1Ap, combinationsAp}
+        };
+        // clang-format on
+        EXPECT_CALL(*feature_flags_, getChipModes())
+            .WillRepeatedly(testing::Return(modes));
     }
 
     void setupV1_AwareDisabledApIfaceCombination() {
-        EXPECT_CALL(*feature_flags_, isAwareSupported())
-            .WillRepeatedly(testing::Return(true));
-        EXPECT_CALL(*feature_flags_, isDualInterfaceSupported())
-            .WillRepeatedly(testing::Return(false));
-        EXPECT_CALL(*feature_flags_, isApDisabled())
-            .WillRepeatedly(testing::Return(true));
+        // clang-format off
+        const hidl_vec<V1_0::IWifiChip::ChipIfaceCombination> combinationsSta = {
+            {{{{IfaceType::STA}, 1}, {{IfaceType::P2P, IfaceType::NAN}, 1}}}
+        };
+        const std::vector<V1_0::IWifiChip::ChipMode> modes = {
+            {feature_flags::chip_mode_ids::kV1Sta, combinationsSta}
+        };
+        // clang-format on
+        EXPECT_CALL(*feature_flags_, getChipModes())
+            .WillRepeatedly(testing::Return(modes));
     }
 
     void setupV2_AwareIfaceCombination() {
-        EXPECT_CALL(*feature_flags_, isAwareSupported())
-            .WillRepeatedly(testing::Return(true));
-        EXPECT_CALL(*feature_flags_, isDualInterfaceSupported())
-            .WillRepeatedly(testing::Return(true));
-        EXPECT_CALL(*feature_flags_, isApDisabled())
-            .WillRepeatedly(testing::Return(false));
+        // clang-format off
+        const hidl_vec<V1_0::IWifiChip::ChipIfaceCombination> combinations = {
+            {{{{IfaceType::STA}, 1}, {{IfaceType::AP}, 1}}},
+            {{{{IfaceType::STA}, 1}, {{IfaceType::P2P, IfaceType::NAN}, 1}}}
+        };
+        const std::vector<V1_0::IWifiChip::ChipMode> modes = {
+            {feature_flags::chip_mode_ids::kV3, combinations}
+        };
+        // clang-format on
+        EXPECT_CALL(*feature_flags_, getChipModes())
+            .WillRepeatedly(testing::Return(modes));
     }
 
     void setupV2_AwareDisabledApIfaceCombination() {
-        EXPECT_CALL(*feature_flags_, isAwareSupported())
-            .WillRepeatedly(testing::Return(true));
-        EXPECT_CALL(*feature_flags_, isDualInterfaceSupported())
-            .WillRepeatedly(testing::Return(true));
-        EXPECT_CALL(*feature_flags_, isApDisabled())
-            .WillRepeatedly(testing::Return(true));
+        // clang-format off
+        const hidl_vec<V1_0::IWifiChip::ChipIfaceCombination> combinations = {
+            {{{{IfaceType::STA}, 1}, {{IfaceType::P2P, IfaceType::NAN}, 1}}}
+        };
+        const std::vector<V1_0::IWifiChip::ChipMode> modes = {
+            {feature_flags::chip_mode_ids::kV3, combinations}
+        };
+        // clang-format on
+        EXPECT_CALL(*feature_flags_, getChipModes())
+            .WillRepeatedly(testing::Return(modes));
     }
 
     void assertNumberOfModes(uint32_t num_modes) {

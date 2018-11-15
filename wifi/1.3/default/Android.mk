@@ -21,6 +21,9 @@ LOCAL_MODULE := android.hardware.wifi@1.0-service-lib
 LOCAL_MODULE_RELATIVE_PATH := hw
 LOCAL_PROPRIETARY_MODULE := true
 LOCAL_CPPFLAGS := -Wall -Werror -Wextra
+ifdef WIFI_HAL_INTERFACE_COMBINATIONS
+LOCAL_CPPFLAGS += -DWIFI_HAL_INTERFACE_COMBINATIONS="$(WIFI_HAL_INTERFACE_COMBINATIONS)"
+endif
 ifdef WIFI_HIDL_FEATURE_AWARE
 LOCAL_CPPFLAGS += -DWIFI_HIDL_FEATURE_AWARE
 endif
@@ -100,6 +103,7 @@ include $(BUILD_EXECUTABLE)
 include $(CLEAR_VARS)
 LOCAL_MODULE := android.hardware.wifi@1.0-service-tests
 LOCAL_PROPRIETARY_MODULE := true
+LOCAL_CPPFLAGS := -Wall -Werror -Wextra
 LOCAL_SRC_FILES := \
     tests/hidl_struct_util_unit_tests.cpp \
     tests/main.cpp \

@@ -222,7 +222,7 @@ TEST_F(HidlStructUtilTest, canConvertLegacyLinkLayerStatsToHidl) {
               converted.iface.wmeVoPktStats.retries);
 
     EXPECT_EQ(legacy_stats.radios.size(), converted.radios.size());
-    for (int i = 0; i < legacy_stats.radios.size(); i++) {
+    for (size_t i = 0; i < legacy_stats.radios.size(); i++) {
         EXPECT_EQ(legacy_stats.radios[i].stats.on_time,
                   converted.radios[i].V1_0.onTimeInMs);
         EXPECT_EQ(legacy_stats.radios[i].stats.tx_time,
@@ -233,7 +233,7 @@ TEST_F(HidlStructUtilTest, canConvertLegacyLinkLayerStatsToHidl) {
                   converted.radios[i].V1_0.onTimeInMsForScan);
         EXPECT_EQ(legacy_stats.radios[i].tx_time_per_levels.size(),
                   converted.radios[i].V1_0.txTimeInMsPerLevel.size());
-        for (int j = 0; j < legacy_stats.radios[i].tx_time_per_levels.size();
+        for (size_t j = 0; j < legacy_stats.radios[i].tx_time_per_levels.size();
              j++) {
             EXPECT_EQ(legacy_stats.radios[i].tx_time_per_levels[j],
                       converted.radios[i].V1_0.txTimeInMsPerLevel[j]);
@@ -250,21 +250,20 @@ TEST_F(HidlStructUtilTest, canConvertLegacyLinkLayerStatsToHidl) {
                   converted.radios[i].onTimeInMsForHs20Scan);
         EXPECT_EQ(legacy_stats.radios[i].channel_stats.size(),
                   converted.radios[i].channelStats.size());
-        for (int k = 0; k < legacy_stats.radios[i].channel_stats.size(); k++) {
+        for (size_t k = 0; k < legacy_stats.radios[i].channel_stats.size();
+             k++) {
+            auto& legacy_channel_st = legacy_stats.radios[i].channel_stats[k];
             EXPECT_EQ(WifiChannelWidthInMhz::WIDTH_20,
                       converted.radios[i].channelStats[k].channel.width);
-            EXPECT_EQ(
-                legacy_stats.radios[i].channel_stats[k].channel.center_freq,
-                converted.radios[i].channelStats[k].channel.centerFreq);
-            EXPECT_EQ(
-                legacy_stats.radios[i].channel_stats[k].channel.center_freq0,
-                converted.radios[i].channelStats[k].channel.centerFreq0);
-            EXPECT_EQ(
-                legacy_stats.radios[i].channel_stats[k].channel.center_freq1,
-                converted.radios[i].channelStats[k].channel.centerFreq1);
-            EXPECT_EQ(legacy_stats.radios[i].channel_stats[k].cca_busy_time,
+            EXPECT_EQ(WifiChannelInMhz(legacy_channel_st.channel.center_freq),
+                      converted.radios[i].channelStats[k].channel.centerFreq);
+            EXPECT_EQ(WifiChannelInMhz(legacy_channel_st.channel.center_freq0),
+                      converted.radios[i].channelStats[k].channel.centerFreq0);
+            EXPECT_EQ(WifiChannelInMhz(legacy_channel_st.channel.center_freq1),
+                      converted.radios[i].channelStats[k].channel.centerFreq1);
+            EXPECT_EQ(legacy_channel_st.cca_busy_time,
                       converted.radios[i].channelStats[k].ccaBusyTimeInMs);
-            EXPECT_EQ(legacy_stats.radios[i].channel_stats[k].on_time,
+            EXPECT_EQ(legacy_channel_st.on_time,
                       converted.radios[i].channelStats[k].onTimeInMs);
         }
     }
