@@ -13,6 +13,7 @@ hidl_interface {
         "IComponentListener.hal",
         "IComponentStore.hal",
         "IConfigurable.hal",
+        "IInputSink.hal",
         "IInputSurface.hal",
         "IInputSurfaceConnection.hal",
     ],
