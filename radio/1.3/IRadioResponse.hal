@@ -72,4 +72,19 @@ interface IRadioResponse extends @1.2::IRadioResponse {
      */
     oneway getDataRegistrationStateResponse_1_3(RadioResponseInfo info,
             DataRegStateResult dataRegResponse);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     * @param cardStatus ICC card status as defined by CardStatus in types.hal
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:NO_MEMORY
+     *   RadioError:NO_RESOURCES
+     *   RadioError:CANCELLED
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     */
+    oneway getIccCardStatusResponse_1_3(RadioResponseInfo info, CardStatus cardStatus);
 };
