@@ -147,7 +147,7 @@ Return<Result> Sensors::injectSensorData(const Event& event) {
 
 Return<void> Sensors::registerDirectChannel(const SharedMemInfo& /* mem */,
                                             registerDirectChannel_cb _hidl_cb) {
-    _hidl_cb(Result::INVALID_OPERATION, 0 /* channelHandle */);
+    _hidl_cb(Result::INVALID_OPERATION, -1 /* channelHandle */);
     return Return<void>();
 }
 
