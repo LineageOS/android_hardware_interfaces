@@ -33,15 +33,13 @@ enum OperandType : @1.0::OperandType {
     /**
      * A tensor of 16 bit signed integers that represent real numbers.
      *
-     * Attached to this tensor are two numbers that are used to convert the 16
-     * bit integer to the real value and vice versa. These two numbers are:
-     * - scale: a 32 bit floating point value greater than zero.
-     * - zeroPoint: a 32 bit integer, in range [-32768, 32767].
+     * Attached to this tensor is a number representing real value scale that is
+     * used to convert the 16 bit number to a real value in the following way:
+     * realValue = integerValue * scale.
      *
-     * The formula is:
-     * realValue = (integerValue - zeroPoint) * scale.
+     * scale is a 32 bit floating point with value greater then zero.
      */
-    TENSOR_QUANT16_ASYMM = 7,
+    TENSOR_QUANT16_SYMM = 7,
     /** A tensor of 16 bit floating point values. */
     TENSOR_FLOAT16 = 8,
 };
