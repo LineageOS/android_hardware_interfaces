@@ -1,5 +1,6 @@
 cc_binary {
     name: "android.hardware.cas@1.0-service",
+    vintf_fragments: ["android.hardware.cas@1.0-service.xml"],
     defaults: ["hidl_defaults"],
     vendor: true,
     relative_install_path: "hw",
