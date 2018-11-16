@@ -14,17 +14,14 @@
 // limitations under the License.
 //
 
-cc_test {
-    name: "VtsHalAudioV2_0TargetTest",
+cc_defaults {
+    name: "VtsHalAudioTargetTest_defaults",
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: [
-        "2.0/AudioPrimaryHidlHalTest.cpp",
         "ValidateAudioConfiguration.cpp"
     ],
     static_libs: [
         "android.hardware.audio.common.test.utility",
-        "android.hardware.audio@2.0",
-        "android.hardware.audio.common@2.0",
         "libicuuc",
         "libicuuc_stubdata",
         "libxml2",
@@ -36,6 +33,18 @@ cc_test {
         "android.hardware.audio.common.util@all-versions",
     ],
     test_suites: ["general-tests"],
+}
+
+cc_test {
+    name: "VtsHalAudioV2_0TargetTest",
+    defaults: ["VtsHalAudioTargetTest_defaults"],
+    srcs: [
+        "2.0/AudioPrimaryHidlHalTest.cpp",
+    ],
+    static_libs: [
+        "android.hardware.audio@2.0",
+        "android.hardware.audio.common@2.0",
+    ],
     cflags: [
         "-DMAJOR_VERSION=2",
         "-DMINOR_VERSION=0",
@@ -45,26 +54,14 @@ cc_test {
 
 cc_test {
     name: "VtsHalAudioV4_0TargetTest",
-    defaults: ["VtsHalTargetTestDefaults"],
+    defaults: ["VtsHalAudioTargetTest_defaults"],
     srcs: [
         "4.0/AudioPrimaryHidlHalTest.cpp",
-        "ValidateAudioConfiguration.cpp"
     ],
     static_libs: [
-        "android.hardware.audio.common.test.utility",
         "android.hardware.audio@4.0",
         "android.hardware.audio.common@4.0",
-        "libicuuc",
-        "libicuuc_stubdata",
-        "libxml2",
     ],
-    shared_libs: [
-        "libfmq",
-    ],
-    header_libs: [
-        "android.hardware.audio.common.util@all-versions",
-    ],
-    test_suites: ["general-tests"],
     cflags: [
         "-DMAJOR_VERSION=4",
         "-DMINOR_VERSION=0",

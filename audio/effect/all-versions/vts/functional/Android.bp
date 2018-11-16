@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-cc_test {
-    name: "VtsHalAudioEffectV2_0TargetTest",
+cc_defaults {
+    name: "VtsHalAudioEffectTargetTest_default",
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: [
         "VtsHalAudioEffectTargetTest.cpp",
@@ -23,8 +23,6 @@ cc_test {
     ],
     static_libs: [
         "android.hardware.audio.common.test.utility",
-        "android.hardware.audio.common@2.0",
-        "android.hardware.audio.effect@2.0",
         "android.hidl.allocator@1.0",
         "android.hidl.memory@1.0",
         "libeffectsconfig",
@@ -36,6 +34,15 @@ cc_test {
         "android.hardware.audio.common.util@all-versions",
     ],
     test_suites: ["general-tests"],
+}
+
+cc_test {
+    name: "VtsHalAudioEffectV2_0TargetTest",
+    defaults: ["VtsHalAudioEffectTargetTest_default"],
+    static_libs: [
+        "android.hardware.audio.common@2.0",
+        "android.hardware.audio.effect@2.0",
+    ],
     cflags: [
         "-DMAJOR_VERSION=2",
         "-DMINOR_VERSION=0",
@@ -45,26 +52,11 @@ cc_test {
 
 cc_test {
     name: "VtsHalAudioEffectV4_0TargetTest",
-    defaults: ["VtsHalTargetTestDefaults"],
-    srcs: [
-        "VtsHalAudioEffectTargetTest.cpp",
-        "ValidateAudioEffectsConfiguration.cpp"
-    ],
+    defaults: ["VtsHalAudioEffectTargetTest_default"],
     static_libs: [
-        "android.hardware.audio.common.test.utility",
         "android.hardware.audio.common@4.0",
         "android.hardware.audio.effect@4.0",
-        "android.hidl.allocator@1.0",
-        "android.hidl.memory@1.0",
-        "libeffectsconfig",
-        "libicuuc",
-        "libicuuc_stubdata",
-        "libxml2",
     ],
-    header_libs: [
-        "android.hardware.audio.common.util@all-versions",
-    ],
-    test_suites: ["general-tests"],
     cflags: [
         "-DMAJOR_VERSION=4",
         "-DMINOR_VERSION=0",
