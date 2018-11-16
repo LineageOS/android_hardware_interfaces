@@ -20,6 +20,12 @@ cc_library_headers {
     export_include_dirs: ["include/device_v3_5_impl"]
 }
 
+cc_library_headers {
+    name: "camera.device@3.5-external-impl_headers",
+    vendor: true,
+    export_include_dirs: ["include/ext_device_v3_5_impl"]
+}
+
 cc_library_shared {
     name: "camera.device@3.5-impl",
     defaults: ["hidl_defaults"],
@@ -51,4 +57,46 @@ cc_library_shared {
         "android.hardware.camera.common@1.0-helper",
     ],
     local_include_dirs: ["include/device_v3_5_impl"],
+}
+
+cc_library_shared {
+    name: "camera.device@3.5-external-impl",
+    defaults: ["hidl_defaults"],
+    proprietary: true,
+    vendor: true,
+    srcs: [
+        "ExternalCameraDevice.cpp",
+        "ExternalCameraDeviceSession.cpp",
+    ],
+    shared_libs: [
+        "libhidlbase",
+        "libhidltransport",
+        "libutils",
+        "libcutils",
+        "camera.device@3.2-impl",
+        "camera.device@3.3-impl",
+        "camera.device@3.4-external-impl",
+        "android.hardware.camera.device@3.2",
+        "android.hardware.camera.device@3.3",
+        "android.hardware.camera.device@3.4",
+        "android.hardware.camera.device@3.5",
+        "android.hardware.camera.provider@2.4",
+        "android.hardware.graphics.mapper@2.0",
+        "liblog",
+        "libhardware",
+        "libcamera_metadata",
+        "libfmq",
+        "libsync",
+        "libyuv",
+        "libjpeg",
+        "libexif",
+        "libtinyxml2"
+    ],
+    static_libs: [
+        "android.hardware.camera.common@1.0-helper",
+    ],
+    local_include_dirs: ["include/ext_device_v3_5_impl"],
+    export_shared_lib_headers: [
+        "libfmq",
+    ],
 }

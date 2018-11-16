@@ -25,6 +25,8 @@
 #include <hidl/MQDescriptor.h>
 #include "ExternalCameraDeviceSession.h"
 
+#include <vector>
+
 namespace android {
 namespace hardware {
 namespace camera {
@@ -49,7 +51,7 @@ using ::android::sp;
 /*
  * The camera device HAL implementation is opened lazily (via the open call)
  */
-struct ExternalCameraDevice : public ICameraDevice {
+struct ExternalCameraDevice : public virtual RefBase {
 
     // Called by external camera provider HAL.
     // Provider HAL must ensure the uniqueness of CameraDevice object per cameraId, or there could
@@ -57,33 +59,54 @@ struct ExternalCameraDevice : public ICameraDevice {
     // to keep track of all CameraDevice objects in order to notify CameraDevice when the underlying
     // camera is detached.
     ExternalCameraDevice(const std::string& cameraId, const ExternalCameraConfig& cfg);
-    ~ExternalCameraDevice();
+    virtual ~ExternalCameraDevice();
+
+    // Retrieve the HIDL interface, split into its own class to avoid inheritance issues when
+    // dealing with minor version revs and simultaneous implementation and interface inheritance
+    virtual sp<ICameraDevice> getInterface() {
+        return new TrampolineDeviceInterface_3_4(this);
+    }
 
     // Caller must use this method to check if CameraDevice ctor failed
     bool isInitFailed();
+    bool isInitFailedLocked();
 
     /* Methods from ::android::hardware::camera::device::V3_2::ICameraDevice follow. */
     // The following method can be called without opening the actual camera device
-    Return<void> getResourceCost(getResourceCost_cb _hidl_cb) override;
+    Return<void> getResourceCost(ICameraDevice::getResourceCost_cb _hidl_cb);
 
-    Return<void> getCameraCharacteristics(getCameraCharacteristics_cb _hidl_cb) override;
+    Return<void> getCameraCharacteristics(
+            ICameraDevice::getCameraCharacteristics_cb _hidl_cb);
 
-    Return<Status> setTorchMode(TorchMode) override;
+    Return<Status> setTorchMode(TorchMode);
 
     // Open the device HAL and also return a default capture session
-    Return<void> open(const sp<ICameraDeviceCallback>&, open_cb) override;
+    Return<void> open(const sp<ICameraDeviceCallback>&, ICameraDevice::open_cb);
 
     // Forward the dump call to the opened session, or do nothing
-    Return<void> dumpState(const ::android::hardware::hidl_handle&) override;
+    Return<void> dumpState(const ::android::hardware::hidl_handle&);
     /* End of Methods from ::android::hardware::camera::device::V3_2::ICameraDevice */
 
 protected:
+    // Overridden by child implementations for returning different versions of
+    // ExternalCameraDeviceSession
+    virtual sp<ExternalCameraDeviceSession> createSession(
+            const sp<ICameraDeviceCallback>&,
+            const ExternalCameraConfig& cfg,
+            const std::vector<SupportedV4L2Format>& sortedFormats,
+            const CroppingType& croppingType,
+            const common::V1_0::helper::CameraMetadata& chars,
+            const std::string& cameraId,
+            unique_fd v4l2Fd);
+
     // Init supported w/h/format/fps in mSupportedFormats. Caller still owns fd
     void initSupportedFormatsLocked(int fd);
 
+    // Calls into virtual member function. Do not use it in constructor
     status_t initCameraCharacteristics();
     // Init non-device dependent keys
-    status_t initDefaultCharsKeys(::android::hardware::camera::common::V1_0::helper::CameraMetadata*);
+    virtual status_t initDefaultCharsKeys(
+            ::android::hardware::camera::common::V1_0::helper::CameraMetadata*);
     // Init camera control chars keys. Caller still owns fd
     status_t initCameraControlsCharsKeys(int fd,
             ::android::hardware::camera::common::V1_0::helper::CameraMetadata*);
@@ -103,6 +126,7 @@ protected:
             /*inout*/std::vector<SupportedV4L2Format>* pFmts);
 
     Mutex mLock;
+    bool mInitialized = false;
     bool mInitFailed = false;
     std::string mCameraId;
     const ExternalCameraConfig& mCfg;
@@ -112,6 +136,84 @@ protected:
     wp<ExternalCameraDeviceSession> mSession = nullptr;
 
     ::android::hardware::camera::common::V1_0::helper::CameraMetadata mCameraCharacteristics;
+
+    const std::vector<int32_t> AVAILABLE_CHARACTERISTICS_KEYS_3_4 = {
+        ANDROID_COLOR_CORRECTION_AVAILABLE_ABERRATION_MODES,
+        ANDROID_CONTROL_AE_AVAILABLE_ANTIBANDING_MODES,
+        ANDROID_CONTROL_AE_AVAILABLE_MODES,
+        ANDROID_CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES,
+        ANDROID_CONTROL_AE_COMPENSATION_RANGE,
+        ANDROID_CONTROL_AE_COMPENSATION_STEP,
+        ANDROID_CONTROL_AE_LOCK_AVAILABLE,
+        ANDROID_CONTROL_AF_AVAILABLE_MODES,
+        ANDROID_CONTROL_AVAILABLE_EFFECTS,
+        ANDROID_CONTROL_AVAILABLE_MODES,
+        ANDROID_CONTROL_AVAILABLE_SCENE_MODES,
+        ANDROID_CONTROL_AVAILABLE_VIDEO_STABILIZATION_MODES,
+        ANDROID_CONTROL_AWB_AVAILABLE_MODES,
+        ANDROID_CONTROL_AWB_LOCK_AVAILABLE,
+        ANDROID_CONTROL_MAX_REGIONS,
+        ANDROID_FLASH_INFO_AVAILABLE,
+        ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL,
+        ANDROID_JPEG_AVAILABLE_THUMBNAIL_SIZES,
+        ANDROID_LENS_FACING,
+        ANDROID_LENS_INFO_AVAILABLE_OPTICAL_STABILIZATION,
+        ANDROID_LENS_INFO_FOCUS_DISTANCE_CALIBRATION,
+        ANDROID_NOISE_REDUCTION_AVAILABLE_NOISE_REDUCTION_MODES,
+        ANDROID_REQUEST_AVAILABLE_CAPABILITIES,
+        ANDROID_REQUEST_MAX_NUM_INPUT_STREAMS,
+        ANDROID_REQUEST_MAX_NUM_OUTPUT_STREAMS,
+        ANDROID_REQUEST_PARTIAL_RESULT_COUNT,
+        ANDROID_REQUEST_PIPELINE_MAX_DEPTH,
+        ANDROID_SCALER_AVAILABLE_MAX_DIGITAL_ZOOM,
+        ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS,
+        ANDROID_SCALER_CROPPING_TYPE,
+        ANDROID_SENSOR_INFO_ACTIVE_ARRAY_SIZE,
+        ANDROID_SENSOR_INFO_MAX_FRAME_DURATION,
+        ANDROID_SENSOR_INFO_PIXEL_ARRAY_SIZE,
+        ANDROID_SENSOR_INFO_PRE_CORRECTION_ACTIVE_ARRAY_SIZE,
+        ANDROID_SENSOR_INFO_TIMESTAMP_SOURCE,
+        ANDROID_SENSOR_ORIENTATION,
+        ANDROID_SHADING_AVAILABLE_MODES,
+        ANDROID_STATISTICS_INFO_AVAILABLE_FACE_DETECT_MODES,
+        ANDROID_STATISTICS_INFO_AVAILABLE_HOT_PIXEL_MAP_MODES,
+        ANDROID_STATISTICS_INFO_AVAILABLE_LENS_SHADING_MAP_MODES,
+        ANDROID_STATISTICS_INFO_MAX_FACE_COUNT,
+        ANDROID_SYNC_MAX_LATENCY};
+
+private:
+
+    struct TrampolineDeviceInterface_3_4 : public ICameraDevice {
+        TrampolineDeviceInterface_3_4(sp<ExternalCameraDevice> parent) :
+            mParent(parent) {}
+
+        virtual Return<void> getResourceCost(V3_2::ICameraDevice::getResourceCost_cb _hidl_cb)
+                override {
+            return mParent->getResourceCost(_hidl_cb);
+        }
+
+        virtual Return<void> getCameraCharacteristics(
+                V3_2::ICameraDevice::getCameraCharacteristics_cb _hidl_cb) override {
+            return mParent->getCameraCharacteristics(_hidl_cb);
+        }
+
+        virtual Return<Status> setTorchMode(TorchMode mode) override {
+            return mParent->setTorchMode(mode);
+        }
+
+        virtual Return<void> open(const sp<V3_2::ICameraDeviceCallback>& callback,
+                V3_2::ICameraDevice::open_cb _hidl_cb) override {
+            return mParent->open(callback, _hidl_cb);
+        }
+
+        virtual Return<void> dumpState(const hidl_handle& fd) override {
+            return mParent->dumpState(fd);
+        }
+
+    private:
+        sp<ExternalCameraDevice> mParent;
+    };
+
 };
 
 }  // namespace implementation

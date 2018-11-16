@@ -95,6 +95,7 @@ private:
     std::unordered_map<std::string, CameraDeviceStatus> mCameraStatusMap; // camera id -> status
     const ExternalCameraConfig mCfg;
     HotplugThread mHotPlugThread;
+    int mPreferredHal3MinorVersion;
 };
 
 
