@@ -21,10 +21,13 @@
 
 #include <android/hardware/sensors/2.0/ISensors.h>
 #include <fmq/MessageQueue.h>
+#include <hardware_legacy/power.h>
 #include <hidl/MQDescriptor.h>
 #include <hidl/Status.h>
 
+#include <atomic>
 #include <memory>
+#include <thread>
 
 namespace android {
 namespace hardware {
@@ -80,13 +83,25 @@ struct Sensors : public ISensors, public ISensorsEventCallback {
     Return<void> configDirectReport(int32_t sensorHandle, int32_t channelHandle, RateLevel rate,
                                     configDirectReport_cb _hidl_cb) override;
 
-    void postEvents(const std::vector<Event>& events) override;
+    void postEvents(const std::vector<Event>& events, bool wakeup) override;
 
    private:
     /**
      * Utility function to delete the Event Flag
      */
     void deleteEventFlag();
+
+    /**
+     * Function to read the Wake Lock FMQ and release the wake lock when appropriate
+     */
+    void readWakeLockFMQ();
+
+    static void startReadWakeLockThread(Sensors* sensors);
+
+    /**
+     * Responsible for acquiring and releasing a wake lock when there are unhandled WAKE_UP events
+     */
+    void updateWakeLock(int32_t eventsWritten, int32_t eventsHandled);
 
     using EventMessageQueue = MessageQueue<Event, kSynchronizedReadWrite>;
     using WakeLockMessageQueue = MessageQueue<uint32_t, kSynchronizedReadWrite>;
@@ -117,9 +132,39 @@ struct Sensors : public ISensors, public ISensorsEventCallback {
     std::map<int32_t, std::shared_ptr<Sensor>> mSensors;
 
     /**
-     * Lock to protect writes and reads to the FMQs
+     * Lock to protect writes to the FMQs
      */
-    std::mutex mLock;
+    std::mutex mWriteLock;
+
+    /**
+     * Lock to protect acquiring and releasing the wake lock
+     */
+    std::mutex mWakeLockLock;
+
+    /**
+     * Track the number of WAKE_UP events that have not been handled by the framework
+     */
+    uint32_t mOutstandingWakeUpEvents;
+
+    /**
+     * A thread to read the Wake Lock FMQ
+     */
+    std::thread mWakeLockThread;
+
+    /**
+     * Flag to indicate that the Wake Lock Thread should continue to run
+     */
+    std::atomic_bool mReadWakeLockQueueRun;
+
+    /**
+     * Track the time when the wake lock should automatically be released
+     */
+    int64_t mAutoReleaseWakeLockTime;
+
+    /**
+     * Flag to indicate if a wake lock has been acquired
+     */
+    bool mHasWakeLock;
 };
 
 }  // namespace implementation

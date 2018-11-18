@@ -86,7 +86,7 @@ Result Sensor::flush() {
     ev.sensorType = SensorType::ADDITIONAL_INFO;
     ev.u.meta.what = MetaDataEventType::META_DATA_FLUSH_COMPLETE;
     std::vector<Event> evs{ev};
-    mCallback->postEvents(evs);
+    mCallback->postEvents(evs, isWakeUpSensor());
 
     return Result::OK;
 }
@@ -113,12 +113,16 @@ void Sensor::run() {
             if (now >= nextSampleTime) {
                 mLastSampleTimeNs = now;
                 nextSampleTime = mLastSampleTimeNs + mSamplingPeriodNs;
-                mCallback->postEvents(readEvents());
+                mCallback->postEvents(readEvents(), isWakeUpSensor());
             }
 
             mWaitCV.wait_for(runLock, std::chrono::nanoseconds(nextSampleTime - now));
         }
     }
+}
+
+bool Sensor::isWakeUpSensor() {
+    return mSensorInfo.flags & static_cast<uint32_t>(SensorFlagBits::WAKE_UP);
 }
 
 std::vector<Event> Sensor::readEvents() {
@@ -155,7 +159,7 @@ Result Sensor::injectEvent(const Event& event) {
     } else if (!supportsDataInjection()) {
         result = Result::INVALID_OPERATION;
     } else if (mMode == OperationMode::DATA_INJECTION) {
-        mCallback->postEvents(std::vector<Event>{event});
+        mCallback->postEvents(std::vector<Event>{event}, isWakeUpSensor());
     } else {
         result = Result::BAD_VALUE;
     }

@@ -142,6 +142,11 @@ struct AvailableZSLInputOutput {
     int32_t outputFormat;
 };
 
+enum ReprocessType {
+    PRIV_REPROCESS,
+    YUV_REPROCESS,
+};
+
 namespace {
     // "device@<version>/legacy/<id>"
     const char *kDeviceNameRE = "device@([0-9]+\\.[0-9]+)/%s/(.+)";
@@ -559,7 +564,8 @@ public:
     };
 
     struct DeviceCb : public V3_4::ICameraDeviceCallback {
-        DeviceCb(CameraHidlTest *parent) : mParent(parent) {}
+        DeviceCb(CameraHidlTest *parent, bool checkMonochromeResult) : mParent(parent),
+                mCheckMonochromeResult(checkMonochromeResult) {}
         Return<void> processCaptureResult_3_4(
                 const hidl_vec<V3_4::CaptureResult>& results) override;
         Return<void> processCaptureResult(const hidl_vec<CaptureResult>& results) override;
@@ -569,6 +575,7 @@ public:
         bool processCaptureResultLocked(const CaptureResult& results);
 
         CameraHidlTest *mParent;               // Parent object
+        bool mCheckMonochromeResult;
     };
 
     struct TorchProviderCb : public ICameraProviderCallback {
@@ -682,6 +689,9 @@ public:
             const hidl_vec<hidl_string>& deviceNames);
     void verifyCameraCharacteristics(Status status, const CameraMetadata& chars);
     void verifyRecommendedConfigs(const CameraMetadata& metadata);
+    void verifyMonochromeCharacteristics(const CameraMetadata& chars, int deviceVersion);
+    void verifyMonochromeCameraResult(
+            const ::android::hardware::camera::common::V1_0::helper::CameraMetadata& metadata);
 
     static Status getAvailableOutputStreams(camera_metadata_t *staticMeta,
             std::vector<AvailableStream> &outputStreams,
@@ -700,6 +710,7 @@ public:
     static Status pickConstrainedModeSize(camera_metadata_t *staticMeta,
             AvailableStream &hfrStream);
     static Status isZSLModeAvailable(const camera_metadata_t *staticMeta);
+    static Status isZSLModeAvailable(const camera_metadata_t *staticMeta, ReprocessType reprocType);
     static Status getZSLInputOutputMap(camera_metadata_t *staticMeta,
             std::vector<AvailableZSLInputOutput> &inputOutputMap);
     static Status findLargestSize(
@@ -707,6 +718,7 @@ public:
             int32_t format, AvailableStream &result);
     static Status isAutoFocusModeAvailable(
             CameraParameters &cameraParams, const char *mode) ;
+    static Status isMonochromeCamera(const camera_metadata_t *staticMeta);
 
 protected:
 
@@ -1050,6 +1062,11 @@ bool CameraHidlTest::DeviceCb::processCaptureResultLocked(const CaptureResult& r
         }
         request->haveResultMetadata = true;
         request->collectedResult.sort();
+
+        // Verify final result metadata
+        if (mCheckMonochromeResult) {
+            mParent->verifyMonochromeCameraResult(request->collectedResult);
+        }
     }
 
     uint32_t numBuffersReturned = results.outputBuffers.size();
@@ -2080,6 +2097,7 @@ TEST_F(CameraHidlTest, getCameraCharacteristics) {
 
                 ret = device3_x->getCameraCharacteristics([&](auto status, const auto& chars) {
                     verifyCameraCharacteristics(status, chars);
+                    verifyMonochromeCharacteristics(chars, deviceVersion);
                     verifyRecommendedConfigs(chars);
                     verifyLogicalCameraMetadata(name, device3_x, chars, deviceVersion,
                             cameraDeviceNames);
@@ -2777,13 +2795,34 @@ TEST_F(CameraHidlTest, configureStreamsZSLInputOutputs) {
         ASSERT_EQ(Status::OK, getZSLInputOutputMap(staticMeta, inputOutputMap));
         ASSERT_NE(0u, inputOutputMap.size());
 
+        bool supportMonoY8 = false;
+        if (Status::OK == isMonochromeCamera(staticMeta)) {
+            for (auto& it : inputStreams) {
+                if (it.format == static_cast<uint32_t>(PixelFormat::Y8)) {
+                    supportMonoY8 = true;
+                    break;
+                }
+            }
+        }
+
         int32_t streamId = 0;
+        bool hasPrivToY8 = false, hasY8ToY8 = false, hasY8ToBlob = false;
         for (auto& inputIter : inputOutputMap) {
             AvailableStream input;
             ASSERT_EQ(Status::OK, findLargestSize(inputStreams, inputIter.inputFormat,
                     input));
             ASSERT_NE(0u, inputStreams.size());
 
+            if (inputIter.inputFormat == static_cast<uint32_t>(PixelFormat::IMPLEMENTATION_DEFINED)
+                    && inputIter.outputFormat == static_cast<uint32_t>(PixelFormat::Y8)) {
+                hasPrivToY8 = true;
+            } else if (inputIter.inputFormat == static_cast<uint32_t>(PixelFormat::Y8)) {
+                if (inputIter.outputFormat == static_cast<uint32_t>(PixelFormat::BLOB)) {
+                    hasY8ToBlob = true;
+                } else if (inputIter.outputFormat == static_cast<uint32_t>(PixelFormat::Y8)) {
+                    hasY8ToY8 = true;
+                }
+            }
             AvailableStream outputThreshold = {INT32_MAX, INT32_MAX,
                                                inputIter.outputFormat};
             std::vector<AvailableStream> outputStreams;
@@ -2842,6 +2881,16 @@ TEST_F(CameraHidlTest, configureStreamsZSLInputOutputs) {
                             });
                 }
                 ASSERT_TRUE(ret.isOk());
+            }
+        }
+
+        if (supportMonoY8) {
+            if (Status::OK == isZSLModeAvailable(staticMeta, PRIV_REPROCESS)) {
+                ASSERT_TRUE(hasPrivToY8);
+            }
+            if (Status::OK == isZSLModeAvailable(staticMeta, YUV_REPROCESS)) {
+                ASSERT_TRUE(hasY8ToY8);
+                ASSERT_TRUE(hasY8ToBlob);
             }
         }
 
@@ -4325,6 +4374,16 @@ Status CameraHidlTest::pickConstrainedModeSize(camera_metadata_t *staticMeta,
 // Check whether ZSL is available using the static camera
 // characteristics.
 Status CameraHidlTest::isZSLModeAvailable(const camera_metadata_t *staticMeta) {
+    if (Status::OK == isZSLModeAvailable(staticMeta, PRIV_REPROCESS)) {
+        return Status::OK;
+    } else {
+        return isZSLModeAvailable(staticMeta, YUV_REPROCESS);
+    }
+}
+
+Status CameraHidlTest::isZSLModeAvailable(const camera_metadata_t *staticMeta,
+        ReprocessType reprocType) {
+
     Status ret = Status::METHOD_NOT_SUPPORTED;
     if (nullptr == staticMeta) {
         return Status::ILLEGAL_ARGUMENT;
@@ -4338,10 +4397,34 @@ Status CameraHidlTest::isZSLModeAvailable(const camera_metadata_t *staticMeta) {
     }
 
     for (size_t i = 0; i < entry.count; i++) {
-        if ((ANDROID_REQUEST_AVAILABLE_CAPABILITIES_PRIVATE_REPROCESSING ==
-                entry.data.u8[i]) ||
-                (ANDROID_REQUEST_AVAILABLE_CAPABILITIES_YUV_REPROCESSING ==
-                        entry.data.u8[i]) ){
+        if ((reprocType == PRIV_REPROCESS &&
+                ANDROID_REQUEST_AVAILABLE_CAPABILITIES_PRIVATE_REPROCESSING == entry.data.u8[i]) ||
+                (reprocType == YUV_REPROCESS &&
+                ANDROID_REQUEST_AVAILABLE_CAPABILITIES_YUV_REPROCESSING == entry.data.u8[i])) {
+            ret = Status::OK;
+            break;
+        }
+    }
+
+    return ret;
+}
+
+// Check whether this is a monochrome camera using the static camera characteristics.
+Status CameraHidlTest::isMonochromeCamera(const camera_metadata_t *staticMeta) {
+    Status ret = Status::METHOD_NOT_SUPPORTED;
+    if (nullptr == staticMeta) {
+        return Status::ILLEGAL_ARGUMENT;
+    }
+
+    camera_metadata_ro_entry entry;
+    int rc = find_camera_metadata_ro_entry(staticMeta,
+            ANDROID_REQUEST_AVAILABLE_CAPABILITIES, &entry);
+    if (0 != rc) {
+        return Status::ILLEGAL_ARGUMENT;
+    }
+
+    for (size_t i = 0; i < entry.count; i++) {
+        if (ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MONOCHROME == entry.data.u8[i]) {
             ret = Status::OK;
             break;
         }
@@ -4460,22 +4543,6 @@ void CameraHidlTest::configurePreviewStreams3_4(const std::string &name, int32_t
         });
     ASSERT_TRUE(ret.isOk());
 
-    sp<DeviceCb> cb = new DeviceCb(this);
-    sp<ICameraDeviceSession> session;
-    ret = device3_x->open(
-        cb,
-        [&session](auto status, const auto& newSession) {
-            ALOGI("device::open returns status:%d", (int)status);
-            ASSERT_EQ(Status::OK, status);
-            ASSERT_NE(newSession, nullptr);
-            session = newSession;
-        });
-    ASSERT_TRUE(ret.isOk());
-
-    sp<device::V3_3::ICameraDeviceSession> session3_3;
-    castSession(session, deviceVersion, &session3_3, session3_4);
-    ASSERT_NE(nullptr, session3_4);
-
     camera_metadata_t *staticMeta;
     ret = device3_x->getCameraCharacteristics([&] (Status s,
             CameraMetadata metadata) {
@@ -4493,6 +4560,24 @@ void CameraHidlTest::configurePreviewStreams3_4(const std::string &name, int32_t
         *partialResultCount = entry.data.i32[0];
         *supportsPartialResults = (*partialResultCount > 1);
     }
+
+    bool checkMonochromeResultTags = Status::OK == isMonochromeCamera(staticMeta) &&
+            deviceVersion >= CAMERA_DEVICE_API_VERSION_3_5;
+    sp<DeviceCb> cb = new DeviceCb(this, checkMonochromeResultTags);
+    sp<ICameraDeviceSession> session;
+    ret = device3_x->open(
+        cb,
+        [&session](auto status, const auto& newSession) {
+            ALOGI("device::open returns status:%d", (int)status);
+            ASSERT_EQ(Status::OK, status);
+            ASSERT_NE(newSession, nullptr);
+            session = newSession;
+        });
+    ASSERT_TRUE(ret.isOk());
+
+    sp<device::V3_3::ICameraDeviceSession> session3_3;
+    castSession(session, deviceVersion, &session3_3, session3_4);
+    ASSERT_NE(nullptr, session3_4);
 
     outputPreviewStreams.clear();
     auto rc = getAvailableOutputStreams(staticMeta,
@@ -4563,21 +4648,6 @@ void CameraHidlTest::configurePreviewStream(const std::string &name, int32_t dev
         });
     ASSERT_TRUE(ret.isOk());
 
-    sp<DeviceCb> cb = new DeviceCb(this);
-    ret = device3_x->open(
-        cb,
-        [&](auto status, const auto& newSession) {
-            ALOGI("device::open returns status:%d", (int)status);
-            ASSERT_EQ(Status::OK, status);
-            ASSERT_NE(newSession, nullptr);
-            *session = newSession;
-        });
-    ASSERT_TRUE(ret.isOk());
-
-    sp<device::V3_3::ICameraDeviceSession> session3_3;
-    sp<device::V3_4::ICameraDeviceSession> session3_4;
-    castSession(*session, deviceVersion, &session3_3, &session3_4);
-
     camera_metadata_t *staticMeta;
     ret = device3_x->getCameraCharacteristics([&] (Status s,
             CameraMetadata metadata) {
@@ -4595,6 +4665,23 @@ void CameraHidlTest::configurePreviewStream(const std::string &name, int32_t dev
         *partialResultCount = entry.data.i32[0];
         *supportsPartialResults = (*partialResultCount > 1);
     }
+
+    bool checkMonochromeResultTags = Status::OK == isMonochromeCamera(staticMeta) &&
+            deviceVersion >= CAMERA_DEVICE_API_VERSION_3_5;
+    sp<DeviceCb> cb = new DeviceCb(this, checkMonochromeResultTags);
+    ret = device3_x->open(
+        cb,
+        [&](auto status, const auto& newSession) {
+            ALOGI("device::open returns status:%d", (int)status);
+            ASSERT_EQ(Status::OK, status);
+            ASSERT_NE(newSession, nullptr);
+            *session = newSession;
+        });
+    ASSERT_TRUE(ret.isOk());
+
+    sp<device::V3_3::ICameraDeviceSession> session3_3;
+    sp<device::V3_4::ICameraDeviceSession> session3_4;
+    castSession(*session, deviceVersion, &session3_3, &session3_4);
 
     outputPreviewStreams.clear();
     auto rc = getAvailableOutputStreams(staticMeta,
@@ -4723,6 +4810,7 @@ void CameraHidlTest::verifyLogicalCameraMetadata(const std::string& cameraName,
         Return<void> ret = device3_5->getPhysicalCameraCharacteristics(physicalId,
                 [&](auto status, const auto& chars) {
             verifyCameraCharacteristics(status, chars);
+            verifyMonochromeCharacteristics(chars, deviceVersion);
         });
         ASSERT_TRUE(ret.isOk());
 
@@ -4773,6 +4861,149 @@ void CameraHidlTest::verifyCameraCharacteristics(Status status, const CameraMeta
             << " per API contract should never be set by Hal!";
     }
 }
+
+void CameraHidlTest::verifyMonochromeCharacteristics(const CameraMetadata& chars,
+        int deviceVersion) {
+    const camera_metadata_t* metadata = (camera_metadata_t*)chars.data();
+    Status rc = isMonochromeCamera(metadata);
+    if (Status::METHOD_NOT_SUPPORTED == rc) {
+        return;
+    }
+    ASSERT_EQ(Status::OK, rc);
+
+    camera_metadata_ro_entry entry;
+    // Check capabilities
+    int retcode = find_camera_metadata_ro_entry(metadata,
+                ANDROID_REQUEST_AVAILABLE_CAPABILITIES, &entry);
+    if ((0 == retcode) && (entry.count > 0)) {
+        ASSERT_EQ(std::find(entry.data.u8, entry.data.u8 + entry.count,
+                ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MANUAL_POST_PROCESSING),
+                entry.data.u8 + entry.count);
+        if (deviceVersion < CAMERA_DEVICE_API_VERSION_3_5) {
+            ASSERT_EQ(std::find(entry.data.u8, entry.data.u8 + entry.count,
+                    ANDROID_REQUEST_AVAILABLE_CAPABILITIES_RAW),
+                    entry.data.u8 + entry.count);
+        }
+    }
+
+    if (deviceVersion >= CAMERA_DEVICE_API_VERSION_3_5) {
+        // Check Cfa
+        retcode = find_camera_metadata_ro_entry(metadata,
+                ANDROID_SENSOR_INFO_COLOR_FILTER_ARRANGEMENT, &entry);
+        if ((0 == retcode) && (entry.count == 1)) {
+            ASSERT_TRUE(entry.data.i32[0] == ANDROID_SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_MONO
+                    || entry.data.i32[0] == ANDROID_SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_NIR);
+        }
+
+        // Check availableRequestKeys
+        retcode = find_camera_metadata_ro_entry(metadata,
+                ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS, &entry);
+        if ((0 == retcode) && (entry.count > 0)) {
+            for (size_t i = 0; i < entry.count; i++) {
+                ASSERT_NE(entry.data.i32[i], ANDROID_COLOR_CORRECTION_MODE);
+                ASSERT_NE(entry.data.i32[i], ANDROID_COLOR_CORRECTION_TRANSFORM);
+                ASSERT_NE(entry.data.i32[i], ANDROID_COLOR_CORRECTION_GAINS);
+            }
+        } else {
+            ADD_FAILURE() << "Get camera availableRequestKeys failed!";
+        }
+
+        // Check availableResultKeys
+        retcode = find_camera_metadata_ro_entry(metadata,
+                ANDROID_REQUEST_AVAILABLE_RESULT_KEYS, &entry);
+        if ((0 == retcode) && (entry.count > 0)) {
+            for (size_t i = 0; i < entry.count; i++) {
+                ASSERT_NE(entry.data.i32[i], ANDROID_SENSOR_GREEN_SPLIT);
+                ASSERT_NE(entry.data.i32[i], ANDROID_SENSOR_NEUTRAL_COLOR_POINT);
+                ASSERT_NE(entry.data.i32[i], ANDROID_COLOR_CORRECTION_MODE);
+                ASSERT_NE(entry.data.i32[i], ANDROID_COLOR_CORRECTION_TRANSFORM);
+                ASSERT_NE(entry.data.i32[i], ANDROID_COLOR_CORRECTION_GAINS);
+            }
+        } else {
+            ADD_FAILURE() << "Get camera availableResultKeys failed!";
+        }
+
+        // Check availableCharacteristicKeys
+        retcode = find_camera_metadata_ro_entry(metadata,
+                ANDROID_REQUEST_AVAILABLE_CHARACTERISTICS_KEYS, &entry);
+        if ((0 == retcode) && (entry.count > 0)) {
+            for (size_t i = 0; i < entry.count; i++) {
+                ASSERT_NE(entry.data.i32[i], ANDROID_SENSOR_REFERENCE_ILLUMINANT1);
+                ASSERT_NE(entry.data.i32[i], ANDROID_SENSOR_REFERENCE_ILLUMINANT2);
+                ASSERT_NE(entry.data.i32[i], ANDROID_SENSOR_CALIBRATION_TRANSFORM1);
+                ASSERT_NE(entry.data.i32[i], ANDROID_SENSOR_CALIBRATION_TRANSFORM2);
+                ASSERT_NE(entry.data.i32[i], ANDROID_SENSOR_COLOR_TRANSFORM1);
+                ASSERT_NE(entry.data.i32[i], ANDROID_SENSOR_COLOR_TRANSFORM2);
+                ASSERT_NE(entry.data.i32[i], ANDROID_SENSOR_FORWARD_MATRIX1);
+                ASSERT_NE(entry.data.i32[i], ANDROID_SENSOR_FORWARD_MATRIX2);
+            }
+        } else {
+            ADD_FAILURE() << "Get camera availableResultKeys failed!";
+        }
+
+        // Check blackLevelPattern
+        retcode = find_camera_metadata_ro_entry(metadata,
+                ANDROID_SENSOR_BLACK_LEVEL_PATTERN, &entry);
+        if ((0 == retcode) && (entry.count > 0)) {
+            ASSERT_EQ(entry.count, 4);
+            for (size_t i = 1; i < entry.count; i++) {
+                ASSERT_EQ(entry.data.i32[i], entry.data.i32[0]);
+            }
+        }
+    }
+}
+
+void CameraHidlTest::verifyMonochromeCameraResult(
+        const ::android::hardware::camera::common::V1_0::helper::CameraMetadata& metadata) {
+    camera_metadata_ro_entry entry;
+
+    // Check tags that are not applicable for monochrome camera
+    ASSERT_FALSE(metadata.exists(ANDROID_SENSOR_GREEN_SPLIT));
+    ASSERT_FALSE(metadata.exists(ANDROID_SENSOR_NEUTRAL_COLOR_POINT));
+    ASSERT_FALSE(metadata.exists(ANDROID_COLOR_CORRECTION_MODE));
+    ASSERT_FALSE(metadata.exists(ANDROID_COLOR_CORRECTION_TRANSFORM));
+    ASSERT_FALSE(metadata.exists(ANDROID_COLOR_CORRECTION_GAINS));
+
+    // Check dynamicBlackLevel
+    entry = metadata.find(ANDROID_SENSOR_DYNAMIC_BLACK_LEVEL);
+    if (entry.count > 0) {
+        ASSERT_EQ(entry.count, 4);
+        for (size_t i = 1; i < entry.count; i++) {
+            ASSERT_FLOAT_EQ(entry.data.f[i], entry.data.f[0]);
+        }
+    }
+
+    // Check noiseProfile
+    entry = metadata.find(ANDROID_SENSOR_NOISE_PROFILE);
+    if (entry.count > 0) {
+        ASSERT_EQ(entry.count, 2);
+    }
+
+    // Check lensShadingMap
+    entry = metadata.find(ANDROID_STATISTICS_LENS_SHADING_MAP);
+    if (entry.count > 0) {
+        ASSERT_EQ(entry.count % 4, 0);
+        for (size_t i = 0; i < entry.count/4; i++) {
+            ASSERT_FLOAT_EQ(entry.data.f[i*4+1], entry.data.f[i*4]);
+            ASSERT_FLOAT_EQ(entry.data.f[i*4+2], entry.data.f[i*4]);
+            ASSERT_FLOAT_EQ(entry.data.f[i*4+3], entry.data.f[i*4]);
+        }
+    }
+
+    // Check tonemapCurve
+    camera_metadata_ro_entry curveRed = metadata.find(ANDROID_TONEMAP_CURVE_RED);
+    camera_metadata_ro_entry curveGreen = metadata.find(ANDROID_TONEMAP_CURVE_GREEN);
+    camera_metadata_ro_entry curveBlue = metadata.find(ANDROID_TONEMAP_CURVE_BLUE);
+    if (curveRed.count > 0 && curveGreen.count > 0 && curveBlue.count > 0) {
+        ASSERT_EQ(curveRed.count, curveGreen.count);
+        ASSERT_EQ(curveRed.count, curveBlue.count);
+        for (size_t i = 0; i < curveRed.count; i++) {
+            ASSERT_FLOAT_EQ(curveGreen.data.f[i], curveRed.data.f[i]);
+            ASSERT_FLOAT_EQ(curveBlue.data.f[i], curveRed.data.f[i]);
+        }
+    }
+}
+
 
 // Open a device session with empty callbacks and return static metadata.
 void CameraHidlTest::openEmptyDeviceSession(const std::string &name,

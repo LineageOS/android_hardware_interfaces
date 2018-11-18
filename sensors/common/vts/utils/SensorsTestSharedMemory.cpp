@@ -35,6 +35,10 @@ char* SensorsTestSharedMemory::getBuffer() const {
     return mBuffer;
 }
 
+size_t SensorsTestSharedMemory::getSize() const {
+    return mSize;
+}
+
 std::vector<Event> SensorsTestSharedMemory::parseEvents(int64_t lastCounter, size_t offset) const {
     constexpr size_t kEventSize = static_cast<size_t>(SensorsEventFormatOffset::TOTAL_LENGTH);
     constexpr size_t kOffsetSize = static_cast<size_t>(SensorsEventFormatOffset::SIZE_FIELD);

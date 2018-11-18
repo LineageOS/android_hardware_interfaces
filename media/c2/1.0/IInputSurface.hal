@@ -19,33 +19,43 @@ package android.hardware.media.c2@1.0;
 import android.hardware.graphics.bufferqueue@1.0::IGraphicBufferProducer;
 
 import IConfigurable;
+import IComponent;
+import IInputSurfaceConnection;
 
 /**
- * Input surface for a Codec2 component.
- *
- * An <em>input surface</em> is an instance of `IInputSurface`, which may be
- * created by calling IComponentStore::createInputSurface(). Once created, the
- * client may
- *   1. write data to it via the `IGraphicBufferProducer` interface; and
- *   2. use it as input to a Codec2 encoder.
- *
- * @sa IInputSurfaceConnection, IComponentStore::createInputSurface(),
- *     IComponent::connectToInputSurface().
+ * Input surface that can be configured for the IComponent.
  */
-interface IInputSurface {
-    /**
-     * Returns the producer interface into the internal buffer queue.
-     *
-     * @return producer `IGraphicBufferProducer` instance. This must not be
-     * null.
-     */
-    getGraphicBufferProducer() generates (IGraphicBufferProducer producer);
+interface IInputSurface extends IGraphicBufferProducer {
 
     /**
-     * Returns the @ref IConfigurable instance associated to this input surface.
+     * Connects this input surface to a component.
      *
-     * @return configurable `IConfigurable` instance. This must not be null.
+     * This call must return within 100 ms.
+     *
+     * @param component The component to connect to. This must have type
+     *     IComponent.
+     * @return status Status of the call, which may be
+     *   - OK        - The operation succeeded.
+     *   - BAD_STATE - The component is in running state.
+     *   - DUPLICATE - The surface is already connected to a component.
+     *   - NO_MEMORY - Could not allocate memory to connect to the component.
+     *   - CORRUPTED - Some unknown error prevented the connection. (unexpected)
+     * @return connection Connection object that is used to disconnect
+     *     from the component.
+     */
+    connectToComponent(
+            IComponent component
+        ) generates (
+            Status status,
+            IInputSurfaceConnection connection
+        );
+
+    /**
+     * Returns the Codec 2.0 configuration object for this surface.
+     *
+     * @return configurable The configuration object for this surface.
      */
     getConfigurable() generates (IConfigurable configurable);
+
 };
 

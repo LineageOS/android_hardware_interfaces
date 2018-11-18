@@ -40,7 +40,7 @@ namespace implementation {
 class ISensorsEventCallback {
    public:
     virtual ~ISensorsEventCallback(){};
-    virtual void postEvents(const std::vector<Event>& events) = 0;
+    virtual void postEvents(const std::vector<Event>& events, bool wakeup) = 0;
 };
 
 class Sensor {
@@ -61,6 +61,8 @@ class Sensor {
     void run();
     virtual std::vector<Event> readEvents();
     static void startThread(Sensor* sensor);
+
+    bool isWakeUpSensor();
 
     bool mIsEnabled;
     int64_t mSamplingPeriodNs;

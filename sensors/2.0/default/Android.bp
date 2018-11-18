@@ -32,6 +32,7 @@ cc_binary {
         "libhidlbase",
         "libhidltransport",
         "liblog",
+        "libpower",
         "libutils",
     ],
 }
