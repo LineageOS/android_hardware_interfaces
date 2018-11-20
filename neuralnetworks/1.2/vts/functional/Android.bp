@@ -21,6 +21,9 @@ cc_test {
     srcs: [
         "GeneratedTestsV1_0.cpp",
     ],
+    cflags: [
+        "-DNN_TEST_DYNAMIC_OUTPUT_SHAPE"
+    ],
     test_suites: ["general-tests"],
 }
 
@@ -30,6 +33,9 @@ cc_test {
     defaults: ["VtsHalNeuralNetworksTargetTestDefaults"],
     srcs: [
         "GeneratedTestsV1_1.cpp",
+    ],
+    cflags: [
+        "-DNN_TEST_DYNAMIC_OUTPUT_SHAPE"
     ],
     test_suites: ["general-tests"],
 }
@@ -41,6 +47,9 @@ cc_test {
     srcs: [
         "BasicTests.cpp",
         "GeneratedTests.cpp",
+    ],
+    cflags: [
+        "-DNN_TEST_DYNAMIC_OUTPUT_SHAPE"
     ],
     test_suites: ["general-tests"],
 }
