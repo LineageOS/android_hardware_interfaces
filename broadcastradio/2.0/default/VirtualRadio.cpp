@@ -13,13 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#define LOG_TAG "BcRadioDef.VirtualRadio"
-//#define LOG_NDEBUG 0
-
 #include "VirtualRadio.h"
 
 #include <broadcastradio-utils-2x/Utils.h>
-#include <log/log.h>
 
 namespace android {
 namespace hardware {
