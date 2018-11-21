@@ -1,0 +1,428 @@
+package audio.policy.configuration.V5_0 {
+
+  public class AttachedDevices {
+    ctor public AttachedDevices();
+    method public java.util.List<java.lang.String> getItem();
+  }
+
+  public final class AudioDevice extends java.lang.Enum {
+    method public java.lang.String getRawName();
+    method public static audio.policy.configuration.V5_0.AudioDevice valueOf(java.lang.String);
+    method public static final audio.policy.configuration.V5_0.AudioDevice[] values();
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_IN_AMBIENT;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_IN_ANLG_DOCK_HEADSET;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_IN_AUX_DIGITAL;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_IN_BACK_MIC;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_IN_BLUETOOTH_A2DP;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_IN_BLUETOOTH_BLE;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_IN_BLUETOOTH_SCO_HEADSET;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_IN_BUILTIN_MIC;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_IN_BUS;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_IN_COMMUNICATION;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_IN_DEFAULT;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_IN_DGTL_DOCK_HEADSET;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_IN_FM_TUNER;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_IN_HDMI;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_IN_IP;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_IN_LINE;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_IN_LOOPBACK;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_IN_PROXY;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_IN_REMOTE_SUBMIX;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_IN_SPDIF;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_IN_STUB;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_IN_TELEPHONY_RX;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_IN_TV_TUNER;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_IN_USB_ACCESSORY;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_IN_USB_DEVICE;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_IN_USB_HEADSET;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_IN_VOICE_CALL;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_IN_WIRED_HEADSET;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_NONE;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_OUT_ANLG_DOCK_HEADSET;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_OUT_AUX_DIGITAL;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_OUT_AUX_LINE;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_OUT_BLUETOOTH_A2DP;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_OUT_BLUETOOTH_A2DP_HEADPHONES;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_OUT_BLUETOOTH_A2DP_SPEAKER;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_OUT_BLUETOOTH_SCO;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_OUT_BLUETOOTH_SCO_CARKIT;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_OUT_BLUETOOTH_SCO_HEADSET;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_OUT_BUS;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_OUT_DEFAULT;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_OUT_DGTL_DOCK_HEADSET;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_OUT_EARPIECE;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_OUT_ECHO_CANCELLER;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_OUT_FM;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_OUT_HDMI;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_OUT_HDMI_ARC;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_OUT_HEARING_AID;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_OUT_IP;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_OUT_LINE;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_OUT_PROXY;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_OUT_REMOTE_SUBMIX;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_OUT_SPDIF;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_OUT_SPEAKER;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_OUT_SPEAKER_SAFE;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_OUT_STUB;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_OUT_TELEPHONY_TX;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_OUT_USB_ACCESSORY;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_OUT_USB_DEVICE;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_OUT_USB_HEADSET;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_OUT_WIRED_HEADPHONE;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_OUT_WIRED_HEADSET;
+  }
+
+  public final class AudioFormat extends java.lang.Enum {
+    method public java.lang.String getRawName();
+    method public static audio.policy.configuration.V5_0.AudioFormat valueOf(java.lang.String);
+    method public static final audio.policy.configuration.V5_0.AudioFormat[] values();
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_AAC;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_AAC_ADIF;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_AAC_ADTS;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_AAC_ADTS_ELD;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_AAC_ADTS_ERLC;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_AAC_ADTS_HE_V1;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_AAC_ADTS_HE_V2;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_AAC_ADTS_LC;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_AAC_ADTS_LD;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_AAC_ADTS_LTP;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_AAC_ADTS_MAIN;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_AAC_ADTS_SCALABLE;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_AAC_ADTS_SSR;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_AAC_ADTS_XHE;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_AAC_ELD;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_AAC_ERLC;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_AAC_HE_V1;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_AAC_HE_V2;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_AAC_LC;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_AAC_LD;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_AAC_LTP;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_AAC_MAIN;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_AAC_SCALABLE;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_AAC_SSR;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_AAC_XHE;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_AC3;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_AC4;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_ALAC;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_AMR_NB;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_AMR_WB;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_AMR_WB_PLUS;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_APE;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_APTX;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_APTX_HD;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_DOLBY_TRUEHD;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_DSD;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_DTS;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_DTS_HD;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_EVRC;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_EVRCB;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_EVRCNW;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_EVRCWB;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_E_AC3;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_E_AC3_JOC;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_FLAC;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_HE_AAC_V1;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_HE_AAC_V2;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_IEC61937;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_LDAC;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_MAT_1_0;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_MAT_2_0;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_MAT_2_1;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_MP2;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_MP3;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_OPUS;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_PCM_16_BIT;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_PCM_24_BIT_PACKED;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_PCM_32_BIT;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_PCM_8_24_BIT;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_PCM_8_BIT;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_PCM_FLOAT;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_QCELP;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_SBC;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_VORBIS;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_WMA;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_WMA_PRO;
+  }
+
+  public class AudioPolicyConfiguration {
+    ctor public AudioPolicyConfiguration();
+    method public audio.policy.configuration.V5_0.GlobalConfiguration getGlobalConfiguration();
+    method public java.util.List<audio.policy.configuration.V5_0.Modules> getModules();
+    method public audio.policy.configuration.V5_0.SurroundSound getSurroundSound();
+    method public audio.policy.configuration.V5_0.Version getVersion();
+    method public java.util.List<audio.policy.configuration.V5_0.Volumes> getVolumes();
+    method public void setGlobalConfiguration(audio.policy.configuration.V5_0.GlobalConfiguration);
+    method public void setSurroundSound(audio.policy.configuration.V5_0.SurroundSound);
+    method public void setVersion(audio.policy.configuration.V5_0.Version);
+  }
+
+  public final class AudioUsage extends java.lang.Enum {
+    method public java.lang.String getRawName();
+    method public static audio.policy.configuration.V5_0.AudioUsage valueOf(java.lang.String);
+    method public static final audio.policy.configuration.V5_0.AudioUsage[] values();
+    enum_constant public static final audio.policy.configuration.V5_0.AudioUsage AUDIO_USAGE_ALARM;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioUsage AUDIO_USAGE_ASSISTANCE_ACCESSIBILITY;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioUsage AUDIO_USAGE_ASSISTANCE_NAVIGATION_GUIDANCE;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioUsage AUDIO_USAGE_ASSISTANCE_SONIFICATION;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioUsage AUDIO_USAGE_ASSISTANT;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioUsage AUDIO_USAGE_GAME;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioUsage AUDIO_USAGE_MEDIA;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioUsage AUDIO_USAGE_NOTIFICATION;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioUsage AUDIO_USAGE_NOTIFICATION_TELEPHONY_RINGTONE;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioUsage AUDIO_USAGE_UNKNOWN;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioUsage AUDIO_USAGE_VIRTUAL_SOURCE;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioUsage AUDIO_USAGE_VOICE_COMMUNICATION;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioUsage AUDIO_USAGE_VOICE_COMMUNICATION_SIGNALLING;
+  }
+
+  public final class DeviceCategory extends java.lang.Enum {
+    method public java.lang.String getRawName();
+    method public static audio.policy.configuration.V5_0.DeviceCategory valueOf(java.lang.String);
+    method public static final audio.policy.configuration.V5_0.DeviceCategory[] values();
+    enum_constant public static final audio.policy.configuration.V5_0.DeviceCategory DEVICE_CATEGORY_EARPIECE;
+    enum_constant public static final audio.policy.configuration.V5_0.DeviceCategory DEVICE_CATEGORY_EXT_MEDIA;
+    enum_constant public static final audio.policy.configuration.V5_0.DeviceCategory DEVICE_CATEGORY_HEADSET;
+    enum_constant public static final audio.policy.configuration.V5_0.DeviceCategory DEVICE_CATEGORY_HEARING_AID;
+    enum_constant public static final audio.policy.configuration.V5_0.DeviceCategory DEVICE_CATEGORY_SPEAKER;
+  }
+
+  public class DevicePorts {
+    ctor public DevicePorts();
+    method public java.util.List<audio.policy.configuration.V5_0.DevicePorts.DevicePort> getDevicePort();
+  }
+
+  public static class DevicePorts.DevicePort {
+    ctor public DevicePorts.DevicePort();
+    method public java.lang.String getAddress();
+    method public audio.policy.configuration.V5_0.Gains getGains();
+    method public java.util.List<audio.policy.configuration.V5_0.Profile> getProfile();
+    method public audio.policy.configuration.V5_0.Role getRole();
+    method public java.lang.String getTagName();
+    method public java.lang.String getType();
+    method public boolean get_default();
+    method public void setAddress(java.lang.String);
+    method public void setGains(audio.policy.configuration.V5_0.Gains);
+    method public void setRole(audio.policy.configuration.V5_0.Role);
+    method public void setTagName(java.lang.String);
+    method public void setType(java.lang.String);
+    method public void set_default(boolean);
+  }
+
+  public final class GainMode extends java.lang.Enum {
+    method public java.lang.String getRawName();
+    method public static audio.policy.configuration.V5_0.GainMode valueOf(java.lang.String);
+    method public static final audio.policy.configuration.V5_0.GainMode[] values();
+    enum_constant public static final audio.policy.configuration.V5_0.GainMode AUDIO_GAIN_MODE_CHANNELS;
+    enum_constant public static final audio.policy.configuration.V5_0.GainMode AUDIO_GAIN_MODE_JOINT;
+    enum_constant public static final audio.policy.configuration.V5_0.GainMode AUDIO_GAIN_MODE_RAMP;
+  }
+
+  public class Gains {
+    ctor public Gains();
+    method public java.util.List<audio.policy.configuration.V5_0.Gains.Gain> getGain();
+  }
+
+  public static class Gains.Gain {
+    ctor public Gains.Gain();
+    method public java.lang.String getChannel_mask();
+    method public int getDefaultValueMB();
+    method public int getMaxRampMs();
+    method public int getMaxValueMB();
+    method public int getMinRampMs();
+    method public int getMinValueMB();
+    method public audio.policy.configuration.V5_0.GainMode getMode();
+    method public java.lang.String getName();
+    method public int getStepValueMB();
+    method public void setChannel_mask(java.lang.String);
+    method public void setDefaultValueMB(int);
+    method public void setMaxRampMs(int);
+    method public void setMaxValueMB(int);
+    method public void setMinRampMs(int);
+    method public void setMinValueMB(int);
+    method public void setMode(audio.policy.configuration.V5_0.GainMode);
+    method public void setName(java.lang.String);
+    method public void setStepValueMB(int);
+  }
+
+  public class GlobalConfiguration {
+    ctor public GlobalConfiguration();
+    method public boolean getSpeaker_drc_enabled();
+    method public void setSpeaker_drc_enabled(boolean);
+  }
+
+  public final class HalVersion extends java.lang.Enum {
+    method public java.lang.String getRawName();
+    method public static audio.policy.configuration.V5_0.HalVersion valueOf(java.lang.String);
+    method public static final audio.policy.configuration.V5_0.HalVersion[] values();
+    enum_constant public static final audio.policy.configuration.V5_0.HalVersion _2_0;
+    enum_constant public static final audio.policy.configuration.V5_0.HalVersion _3_0;
+  }
+
+  public class MixPorts {
+    ctor public MixPorts();
+    method public java.util.List<audio.policy.configuration.V5_0.MixPorts.MixPort> getMixPort();
+  }
+
+  public static class MixPorts.MixPort {
+    ctor public MixPorts.MixPort();
+    method public java.lang.String getFlags();
+    method public audio.policy.configuration.V5_0.Gains getGains();
+    method public long getMaxActiveCount();
+    method public long getMaxOpenCount();
+    method public java.lang.String getName();
+    method public java.util.List<audio.policy.configuration.V5_0.AudioUsage> getPreferredUsage();
+    method public java.util.List<audio.policy.configuration.V5_0.Profile> getProfile();
+    method public audio.policy.configuration.V5_0.Role getRole();
+    method public void setFlags(java.lang.String);
+    method public void setGains(audio.policy.configuration.V5_0.Gains);
+    method public void setMaxActiveCount(long);
+    method public void setMaxOpenCount(long);
+    method public void setName(java.lang.String);
+    method public void setPreferredUsage(java.util.List<audio.policy.configuration.V5_0.AudioUsage>);
+    method public void setRole(audio.policy.configuration.V5_0.Role);
+  }
+
+  public final class MixType extends java.lang.Enum {
+    method public java.lang.String getRawName();
+    method public static audio.policy.configuration.V5_0.MixType valueOf(java.lang.String);
+    method public static final audio.policy.configuration.V5_0.MixType[] values();
+    enum_constant public static final audio.policy.configuration.V5_0.MixType mix;
+    enum_constant public static final audio.policy.configuration.V5_0.MixType mux;
+  }
+
+  public class Modules {
+    ctor public Modules();
+    method public java.util.List<audio.policy.configuration.V5_0.Modules.Module> getModule();
+  }
+
+  public static class Modules.Module {
+    ctor public Modules.Module();
+    method public audio.policy.configuration.V5_0.AttachedDevices getAttachedDevices();
+    method public java.lang.String getDefaultOutputDevice();
+    method public audio.policy.configuration.V5_0.DevicePorts getDevicePorts();
+    method public audio.policy.configuration.V5_0.HalVersion getHalVersion();
+    method public audio.policy.configuration.V5_0.MixPorts getMixPorts();
+    method public java.lang.String getName();
+    method public audio.policy.configuration.V5_0.Routes getRoutes();
+    method public void setAttachedDevices(audio.policy.configuration.V5_0.AttachedDevices);
+    method public void setDefaultOutputDevice(java.lang.String);
+    method public void setDevicePorts(audio.policy.configuration.V5_0.DevicePorts);
+    method public void setHalVersion(audio.policy.configuration.V5_0.HalVersion);
+    method public void setMixPorts(audio.policy.configuration.V5_0.MixPorts);
+    method public void setName(java.lang.String);
+    method public void setRoutes(audio.policy.configuration.V5_0.Routes);
+  }
+
+  public class Profile {
+    ctor public Profile();
+    method public java.lang.String getChannelMasks();
+    method public java.lang.String getFormat();
+    method public java.lang.String getName();
+    method public java.lang.String getSamplingRates();
+    method public void setChannelMasks(java.lang.String);
+    method public void setFormat(java.lang.String);
+    method public void setName(java.lang.String);
+    method public void setSamplingRates(java.lang.String);
+  }
+
+  public class Reference {
+    ctor public Reference();
+    method public java.lang.String getName();
+    method public java.util.List<java.lang.String> getPoint();
+    method public void setName(java.lang.String);
+  }
+
+  public final class Role extends java.lang.Enum {
+    method public java.lang.String getRawName();
+    method public static audio.policy.configuration.V5_0.Role valueOf(java.lang.String);
+    method public static final audio.policy.configuration.V5_0.Role[] values();
+    enum_constant public static final audio.policy.configuration.V5_0.Role sink;
+    enum_constant public static final audio.policy.configuration.V5_0.Role source;
+  }
+
+  public class Routes {
+    ctor public Routes();
+    method public java.util.List<audio.policy.configuration.V5_0.Routes.Route> getRoute();
+  }
+
+  public static class Routes.Route {
+    ctor public Routes.Route();
+    method public java.lang.String getSink();
+    method public java.lang.String getSources();
+    method public audio.policy.configuration.V5_0.MixType getType();
+    method public void setSink(java.lang.String);
+    method public void setSources(java.lang.String);
+    method public void setType(audio.policy.configuration.V5_0.MixType);
+  }
+
+  public final class Stream extends java.lang.Enum {
+    method public java.lang.String getRawName();
+    method public static audio.policy.configuration.V5_0.Stream valueOf(java.lang.String);
+    method public static final audio.policy.configuration.V5_0.Stream[] values();
+    enum_constant public static final audio.policy.configuration.V5_0.Stream AUDIO_STREAM_ACCESSIBILITY;
+    enum_constant public static final audio.policy.configuration.V5_0.Stream AUDIO_STREAM_ALARM;
+    enum_constant public static final audio.policy.configuration.V5_0.Stream AUDIO_STREAM_BLUETOOTH_SCO;
+    enum_constant public static final audio.policy.configuration.V5_0.Stream AUDIO_STREAM_DTMF;
+    enum_constant public static final audio.policy.configuration.V5_0.Stream AUDIO_STREAM_ENFORCED_AUDIBLE;
+    enum_constant public static final audio.policy.configuration.V5_0.Stream AUDIO_STREAM_MUSIC;
+    enum_constant public static final audio.policy.configuration.V5_0.Stream AUDIO_STREAM_NOTIFICATION;
+    enum_constant public static final audio.policy.configuration.V5_0.Stream AUDIO_STREAM_PATCH;
+    enum_constant public static final audio.policy.configuration.V5_0.Stream AUDIO_STREAM_REROUTING;
+    enum_constant public static final audio.policy.configuration.V5_0.Stream AUDIO_STREAM_RING;
+    enum_constant public static final audio.policy.configuration.V5_0.Stream AUDIO_STREAM_SYSTEM;
+    enum_constant public static final audio.policy.configuration.V5_0.Stream AUDIO_STREAM_TTS;
+    enum_constant public static final audio.policy.configuration.V5_0.Stream AUDIO_STREAM_VOICE_CALL;
+  }
+
+  public class SurroundFormats {
+    ctor public SurroundFormats();
+    method public java.util.List<audio.policy.configuration.V5_0.SurroundFormats.Format> getFormat();
+  }
+
+  public static class SurroundFormats.Format {
+    ctor public SurroundFormats.Format();
+    method public audio.policy.configuration.V5_0.AudioFormat getName();
+    method public java.util.List<audio.policy.configuration.V5_0.AudioFormat> getSubformats();
+    method public void setName(audio.policy.configuration.V5_0.AudioFormat);
+    method public void setSubformats(java.util.List<audio.policy.configuration.V5_0.AudioFormat>);
+  }
+
+  public class SurroundSound {
+    ctor public SurroundSound();
+    method public audio.policy.configuration.V5_0.SurroundFormats getFormats();
+    method public void setFormats(audio.policy.configuration.V5_0.SurroundFormats);
+  }
+
+  public final class Version extends java.lang.Enum {
+    method public java.lang.String getRawName();
+    method public static audio.policy.configuration.V5_0.Version valueOf(java.lang.String);
+    method public static final audio.policy.configuration.V5_0.Version[] values();
+    enum_constant public static final audio.policy.configuration.V5_0.Version _1_0;
+  }
+
+  public class Volume {
+    ctor public Volume();
+    method public audio.policy.configuration.V5_0.DeviceCategory getDeviceCategory();
+    method public java.util.List<java.lang.String> getPoint();
+    method public java.lang.String getRef();
+    method public audio.policy.configuration.V5_0.Stream getStream();
+    method public void setDeviceCategory(audio.policy.configuration.V5_0.DeviceCategory);
+    method public void setRef(java.lang.String);
+    method public void setStream(audio.policy.configuration.V5_0.Stream);
+  }
+
+  public class Volumes {
+    ctor public Volumes();
+    method public java.util.List<audio.policy.configuration.V5_0.Reference> getReference();
+    method public java.util.List<audio.policy.configuration.V5_0.Volume> getVolume();
+  }
+
+  public class XmlParser {
+    ctor public XmlParser();
+    method public static audio.policy.configuration.V5_0.AudioPolicyConfiguration read(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
+    method public static java.lang.String readText(org.xmlpull.v1.XmlPullParser) throws java.io.IOException, org.xmlpull.v1.XmlPullParserException;
+    method public static void skip(org.xmlpull.v1.XmlPullParser) throws java.io.IOException, org.xmlpull.v1.XmlPullParserException;
+  }
+
+}
+
