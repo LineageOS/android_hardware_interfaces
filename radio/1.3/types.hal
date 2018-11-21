@@ -23,6 +23,7 @@ import @1.0::DataProfileId;
 import @1.0::DataProfileInfoType;
 import @1.0::RadioAccessFamily;
 import @1.0::RadioError;
+import @1.0::RadioTechnology;
 import @1.0::RegState;
 import @1.0::TimeStampType;
 import @1.1::ScanStatus;
@@ -36,6 +37,7 @@ import @1.2::CellInfoWcdma;
 import @1.2::CardStatus;
 import @1.2::CellIdentity;
 import @1.2::DataRegStateResult;
+import @1.2::PhysicalChannelConfig;
 
 import android.hidl.safe_union@1.0::Monostate;
 
@@ -141,6 +143,65 @@ enum EmergencyNumberSource : int32_t {
      * present.
      */
     DEFAULT = 1 << 3,
+};
+
+enum RadioTechnology : @1.0::RadioTechnology {
+    /** 5G NR. */
+    NR = 20,
+};
+
+/** Mapping the frequency to a rough range. */
+enum FrequencyRange : int32_t {
+    /** Indicates the frequency range is below 1GHz. */
+    LOW = 1,
+
+    /** Indicates the frequency range is between 1GHz and 3GHz. */
+    MID = 2,
+
+    /** Indicates the frequency range is between 3GHz and 6GHz. */
+    HIGH = 3,
+
+    /** Indicates the frequency range is above 6GHz (millimeter wave frequency). */
+    MMWAVE = 4,
+};
+
+safe_union RadioFrequencyInfo {
+    /** A rough frequency range. */
+    FrequencyRange range;
+
+    /** The Absolute Radio Frequency Channel Number. */
+    int32_t channelNumber;
+};
+
+struct PhysicalChannelConfig {
+    @1.2::PhysicalChannelConfig base;
+
+    /** The radio technology for this physical channel. */
+    RadioTechnology rat;
+
+    /** The radio frequency info. */
+    RadioFrequencyInfo rfInfo;
+
+    /**
+     * A list of data calls mapped to this physical channel. The context id must match the cid of
+     * @1.0::SetupDataCallResult. An empty list means the physical channel has no data call mapped
+     * to it.
+     */
+    vec<int32_t> contextIds;
+
+    /**
+     * The physical cell identifier for this cell.
+     *
+     * In UTRAN, this value is primary scrambling code. The range is [0, 511].
+     * Reference: 3GPP TS 25.213 section 5.2.2.
+     *
+     * In EUTRAN, this value is physical layer cell identity. The range is [0, 503].
+     * Reference: 3GPP TS 36.211 section 6.11.
+     *
+     * In 5G RAN, this value is physical layer cell identity. The range is [0, 1008].
+     * Reference: 3GPP TS 38.211 section 7.4.2.1.
+     */
+    uint32_t physicalCellId;
 };
 
 /**
