@@ -60,9 +60,12 @@ using ::android::hardware::audio::CPP_VERSION::IStreamOut;
 using ::android::hardware::audio::CPP_VERSION::ParameterValue;
 using ::android::hardware::audio::CPP_VERSION::Result;
 
-#if MAJOR_VERSION >= 4
+#if MAJOR_VERSION == 4
 using ::android::hardware::audio::CPP_VERSION::SinkMetadata;
 using ::android::hardware::audio::CPP_VERSION::SourceMetadata;
+#elif MAJOR_VERSION >= 5
+using ::android::hardware::audio::common::CPP_VERSION::SinkMetadata;
+using ::android::hardware::audio::common::CPP_VERSION::SourceMetadata;
 #endif
 
 struct Device : public IDevice, public ParametersUtil {

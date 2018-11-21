@@ -35,8 +35,13 @@ using Rotation = ::android::hardware::audio::CPP_VERSION::IPrimaryDevice::Rotati
 using ::android::hardware::audio::common::CPP_VERSION::AudioContentType;
 using ::android::hardware::audio::common::CPP_VERSION::AudioUsage;
 using ::android::hardware::audio::CPP_VERSION::MicrophoneInfo;
+#if MAJOR_VERSION < 5
 using ::android::hardware::audio::CPP_VERSION::SinkMetadata;
 using ::android::hardware::audio::CPP_VERSION::SourceMetadata;
+#else
+using ::android::hardware::audio::common::CPP_VERSION::SinkMetadata;
+using ::android::hardware::audio::common::CPP_VERSION::SourceMetadata;
+#endif
 
 struct Parameters {
     template <class T, class ReturnIn>
