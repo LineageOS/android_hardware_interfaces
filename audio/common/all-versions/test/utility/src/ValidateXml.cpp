@@ -162,8 +162,8 @@ template <bool atLeastOneRequired>
            << "\n                 Which is: " << xmlFileName
            << "\n In the following folders: " << xmlFileLocationsExpr
            << "\n                 Which is: " << ::testing::PrintToString(xmlFileLocations)
-           << (atLeastOneRequired ? "Where at least one file must be found."
-                                  : "Where no file might exist.");
+           << (atLeastOneRequired ? "\nWhere at least one file must be found."
+                                  : "\nWhere no file might exist.");
 }
 
 template ::testing::AssertionResult validateXmlMultipleLocations<true>(const char*, const char*,
