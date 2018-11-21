@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2017 The Android Open Source Project
+// Copyright (C) 2018 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,21 +14,25 @@
 // limitations under the License.
 //
 
-cc_library_static {
-    name: "android.hardware.broadcastradio@common-utils-lib",
-    vendor_available: true,
-    relative_install_path: "hw",
-    cflags: [
-        "-Wall",
-        "-Wextra",
-        "-Werror",
+cc_test {
+    name: "VtsHalPowerStatsV1_0TargetTest",
+    defaults: [
+        "VtsHalTargetTestDefaults"
     ],
     srcs: [
-        "WorkerThread.cpp",
+        "VtsHalPowerStatsV1_0TargetTest.cpp"
     ],
-    export_include_dirs: ["include"],
+    static_libs: [
+        "android.hardware.power.stats@1.0"
+    ],
     shared_libs: [
         "libbase",
+        "libcutils",
+        "liblog",
+        "libhidlbase",
+        "libfmq",
+        "libhidltransport",
+        "libhwbinder",
         "libutils",
     ],
 }

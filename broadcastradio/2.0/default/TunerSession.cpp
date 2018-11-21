@@ -14,15 +14,12 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "BcRadioDef.tuner"
-#define LOG_NDEBUG 0
-
 #include "TunerSession.h"
 
 #include "BroadcastRadio.h"
 
+#include <android-base/logging.h>
 #include <broadcastradio-utils-2x/Utils.h>
-#include <log/log.h>
 
 namespace android {
 namespace hardware {
@@ -68,7 +65,7 @@ static ProgramInfo makeDummyProgramInfo(const ProgramSelector& selector) {
 }
 
 void TunerSession::tuneInternalLocked(const ProgramSelector& sel) {
-    ALOGV("%s(%s)", __func__, toString(sel).c_str());
+    LOG(VERBOSE) << "tune (internal) to " << toString(sel);
 
     VirtualProgram virtualProgram;
     ProgramInfo programInfo;
@@ -93,17 +90,18 @@ const VirtualRadio& TunerSession::virtualRadio() const {
 }
 
 Return<Result> TunerSession::tune(const ProgramSelector& sel) {
-    ALOGV("%s(%s)", __func__, toString(sel).c_str());
+    LOG(DEBUG) << "tune to " << toString(sel);
+
     lock_guard<mutex> lk(mMut);
     if (mIsClosed) return Result::INVALID_STATE;
 
     if (!utils::isSupported(module().mProperties, sel)) {
-        ALOGW("Selector not supported");
+        LOG(WARNING) << "selector not supported: " << toString(sel);
         return Result::NOT_SUPPORTED;
     }
 
     if (!utils::isValid(sel)) {
-        ALOGE("ProgramSelector is not valid");
+        LOG(ERROR) << "selector is not valid: " << toString(sel);
         return Result::INVALID_ARGUMENTS;
     }
 
@@ -119,8 +117,9 @@ Return<Result> TunerSession::tune(const ProgramSelector& sel) {
     return Result::OK;
 }
 
-Return<Result> TunerSession::scan(bool directionUp, bool /* skipSubChannel */) {
-    ALOGV("%s", __func__);
+Return<Result> TunerSession::scan(bool directionUp, bool skipSubChannel) {
+    LOG(DEBUG) << "seek up=" << directionUp << " skipSubChannel=" << skipSubChannel;
+
     lock_guard<mutex> lk(mMut);
     if (mIsClosed) return Result::INVALID_STATE;
 
@@ -130,8 +129,8 @@ Return<Result> TunerSession::scan(bool directionUp, bool /* skipSubChannel */) {
 
     if (list.empty()) {
         mIsTuneCompleted = false;
-        auto task = [this, directionUp]() {
-            ALOGI("Performing failed seek up=%d", directionUp);
+        auto task = [this]() {
+            LOG(DEBUG) << "program list is empty, seek couldn't stop";
 
             mCallback->onTuneFailed(Result::TIMEOUT, {});
         };
@@ -162,7 +161,7 @@ Return<Result> TunerSession::scan(bool directionUp, bool /* skipSubChannel */) {
 
     mIsTuneCompleted = false;
     auto task = [this, tuneTo, directionUp]() {
-        ALOGI("Performing seek up=%d", directionUp);
+        LOG(VERBOSE) << "executing seek up=" << directionUp;
 
         lock_guard<mutex> lk(mMut);
         tuneInternalLocked(tuneTo);
@@ -173,21 +172,21 @@ Return<Result> TunerSession::scan(bool directionUp, bool /* skipSubChannel */) {
 }
 
 Return<Result> TunerSession::step(bool directionUp) {
-    ALOGV("%s", __func__);
+    LOG(DEBUG) << "step up=" << directionUp;
     lock_guard<mutex> lk(mMut);
     if (mIsClosed) return Result::INVALID_STATE;
 
     cancelLocked();
 
     if (!utils::hasId(mCurrentProgram, IdentifierType::AMFM_FREQUENCY)) {
-        ALOGE("Can't step in anything else than AM/FM");
+        LOG(WARNING) << "can't step in anything else than AM/FM";
         return Result::NOT_SUPPORTED;
     }
 
     auto stepTo = utils::getId(mCurrentProgram, IdentifierType::AMFM_FREQUENCY);
     auto range = getAmFmRangeLocked();
     if (!range) {
-        ALOGE("Can't find current band");
+        LOG(ERROR) << "can't find current band";
         return Result::INTERNAL_ERROR;
     }
 
@@ -201,7 +200,7 @@ Return<Result> TunerSession::step(bool directionUp) {
 
     mIsTuneCompleted = false;
     auto task = [this, stepTo]() {
-        ALOGI("Performing step to %s", std::to_string(stepTo).c_str());
+        LOG(VERBOSE) << "executing step to " << stepTo;
 
         lock_guard<mutex> lk(mMut);
 
@@ -213,7 +212,7 @@ Return<Result> TunerSession::step(bool directionUp) {
 }
 
 void TunerSession::cancelLocked() {
-    ALOGV("%s", __func__);
+    LOG(VERBOSE) << "cancelling current operations...";
 
     mThread.cancelAll();
     if (utils::getType(mCurrentProgram.primaryId) != IdentifierType::INVALID) {
@@ -222,7 +221,6 @@ void TunerSession::cancelLocked() {
 }
 
 Return<void> TunerSession::cancel() {
-    ALOGV("%s", __func__);
     lock_guard<mutex> lk(mMut);
     if (mIsClosed) return {};
 
@@ -232,7 +230,7 @@ Return<void> TunerSession::cancel() {
 }
 
 Return<Result> TunerSession::startProgramListUpdates(const ProgramFilter& filter) {
-    ALOGV("%s(%s)", __func__, toString(filter).c_str());
+    LOG(DEBUG) << "requested program list updates, filter=" << toString(filter);
     lock_guard<mutex> lk(mMut);
     if (mIsClosed) return Result::INVALID_STATE;
 
@@ -259,41 +257,37 @@ Return<Result> TunerSession::startProgramListUpdates(const ProgramFilter& filter
 }
 
 Return<void> TunerSession::stopProgramListUpdates() {
-    ALOGV("%s", __func__);
+    LOG(DEBUG) << "requested program list updates to stop";
     return {};
 }
 
 Return<void> TunerSession::isConfigFlagSet(ConfigFlag flag, isConfigFlagSet_cb _hidl_cb) {
-    ALOGV("%s(%s)", __func__, toString(flag).c_str());
+    LOG(VERBOSE) << __func__ << " " << toString(flag);
 
     _hidl_cb(Result::NOT_SUPPORTED, false);
     return {};
 }
 
 Return<Result> TunerSession::setConfigFlag(ConfigFlag flag, bool value) {
-    ALOGV("%s(%s, %d)", __func__, toString(flag).c_str(), value);
+    LOG(VERBOSE) << __func__ << " " << toString(flag) << " " << value;
 
     return Result::NOT_SUPPORTED;
 }
 
 Return<void> TunerSession::setParameters(const hidl_vec<VendorKeyValue>& /* parameters */,
                                          setParameters_cb _hidl_cb) {
-    ALOGV("%s", __func__);
-
     _hidl_cb({});
     return {};
 }
 
 Return<void> TunerSession::getParameters(const hidl_vec<hidl_string>& /* keys */,
                                          getParameters_cb _hidl_cb) {
-    ALOGV("%s", __func__);
-
     _hidl_cb({});
     return {};
 }
 
 Return<void> TunerSession::close() {
-    ALOGV("%s", __func__);
+    LOG(DEBUG) << "closing session...";
     lock_guard<mutex> lk(mMut);
     if (mIsClosed) return {};
 
@@ -304,7 +298,7 @@ Return<void> TunerSession::close() {
 
 std::optional<AmFmBandRange> TunerSession::getAmFmRangeLocked() const {
     if (!mIsTuneCompleted) {
-        ALOGW("tune operation in process");
+        LOG(WARNING) << "tune operation is in process";
         return {};
     }
     if (!utils::hasId(mCurrentProgram, IdentifierType::AMFM_FREQUENCY)) return {};
