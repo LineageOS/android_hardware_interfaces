@@ -75,6 +75,14 @@ enum CameraMetadataTag : @3.3::CameraMetadataTag {
 
     ANDROID_DEPTH_END_3_4,
 
+    /** android.logicalMultiCamera.activePhysicalId [dynamic, byte, public]
+     *
+     * <p>String containing the ID of the underlying active physical camera.</p>
+     */
+    ANDROID_LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_ID = android.hardware.camera.metadata@3.3::CameraMetadataTag:ANDROID_LOGICAL_MULTI_CAMERA_END_3_3,
+
+    ANDROID_LOGICAL_MULTI_CAMERA_END_3_4,
+
 };
 
 /*
