@@ -21,6 +21,7 @@
 #include <android-base/logging.h>
 #include <android/hardware/configstore/1.0/types.h>
 #include <android/hardware/configstore/1.2/ISurfaceFlingerConfigs.h>
+#include <android/hardware/configstore/1.2/types.h>
 #include <unistd.h>
 
 using ::android::sp;
@@ -31,6 +32,7 @@ using ::android::hardware::configstore::V1_0::OptionalBool;
 using ::android::hardware::configstore::V1_0::OptionalInt64;
 using ::android::hardware::configstore::V1_0::OptionalUInt64;
 using ::android::hardware::configstore::V1_2::ISurfaceFlingerConfigs;
+using ::android::hardware::configstore::V1_2::DisplayPrimaries;
 using ::android::hardware::graphics::common::V1_1::PixelFormat;
 using ::android::hardware::graphics::common::V1_2::Dataspace;
 
@@ -123,6 +125,43 @@ TEST_F(ConfigstoreHidlTest, TestGetCompositionPreference) {
     if (hasWideColorDisplay) {
         ASSERT_TRUE(isSupportedWideColorGamut(wcgDataspace));
     }
+}
+
+TEST_F(ConfigstoreHidlTest, TestGetDisplayNativePrimaries) {
+    DisplayPrimaries primaries;
+
+    Return<void> status = sfConfigs->getDisplayNativePrimaries(
+        [&](DisplayPrimaries tmpPrimaries) {
+            primaries.red = tmpPrimaries.red;
+            primaries.green = tmpPrimaries.green;
+            primaries.blue = tmpPrimaries.blue;
+            primaries.white = tmpPrimaries.white;
+        });
+    EXPECT_OK(status);
+
+    // Display primaries should be greater than or equal to zero.
+    // Or it returns defualt value if there is no definition.
+    // RED
+    EXPECT_GE(primaries.red.X, 0.0);
+    EXPECT_GE(primaries.red.Y, 0.0);
+    EXPECT_GE(primaries.red.Z, 0.0);
+
+    // GREEN
+    EXPECT_GE(primaries.green.X, 0.0);
+    EXPECT_GE(primaries.green.Y, 0.0);
+    EXPECT_GE(primaries.green.Z, 0.0);
+
+
+    // BLUE
+    EXPECT_GE(primaries.blue.X, 0.0);
+    EXPECT_GE(primaries.blue.Y, 0.0);
+    EXPECT_GE(primaries.blue.Z, 0.0);
+
+
+    // WHITE
+    EXPECT_GE(primaries.white.X, 0.0);
+    EXPECT_GE(primaries.white.Y, 0.0);
+    EXPECT_GE(primaries.white.Z, 0.0);
 }
 
 int main(int argc, char** argv) {
