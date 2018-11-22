@@ -205,14 +205,13 @@ class AudioPrimaryHidlTest : public AudioHidlTest {
         sp<IDevice> baseDevice;
         ASSERT_OK(devicesFactory->openDevice(IDevicesFactory::Device::PRIMARY,
                                              returnIn(result, baseDevice)));
-#elif MAJOR_VERSION == 4
-        ASSERT_OK(devicesFactory->openPrimaryDevice(returnIn(result, device)));
-#endif
         ASSERT_OK(result);
-#if MAJOR_VERSION == 2
         ASSERT_TRUE(baseDevice != nullptr);
 
         device = IPrimaryDevice::castFrom(baseDevice);
+#elif MAJOR_VERSION >= 4
+        ASSERT_OK(devicesFactory->openPrimaryDevice(returnIn(result, device)));
+        ASSERT_OK(result);
 #endif
     }
 };
