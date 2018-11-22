@@ -16,6 +16,17 @@
 
 #include "AudioPrimaryHidlHalTest.h"
 
+static void waitForDeviceDestruction() {
+    // FIXME: there is no way to know when the remote IDevice is being destroyed
+    //        Binder does not support testing if an object is alive, thus
+    //        wait for 100ms to let the binder destruction propagates and
+    //        the remote device has the time to be destroyed.
+    //        flushCommand makes sure all local command are sent, thus should reduce
+    //        the latency between local and remote destruction.
+    IPCThreadState::self()->flushCommands();
+    usleep(100);
+}
+
 TEST_F(AudioHidlTest, OpenPrimaryDeviceUsingGetDevice) {
     doc::test("Calling openDevice(\"primary\") should return the primary device.");
     {
@@ -29,14 +40,7 @@ TEST_F(AudioHidlTest, OpenPrimaryDeviceUsingGetDevice) {
         ASSERT_TRUE(primaryDevice.isOk());
         ASSERT_TRUE(sp<IPrimaryDevice>(primaryDevice) != nullptr);
     }  // Destroy local IDevice proxy
-    // FIXME: there is no way to know when the remote IDevice is being destroyed
-    //        Binder does not support testing if an object is alive, thus
-    //        wait for 100ms to let the binder destruction propagates and
-    //        the remote device has the time to be destroyed.
-    //        flushCommand makes sure all local command are sent, thus should reduce
-    //        the latency between local and remote destruction.
-    IPCThreadState::self()->flushCommands();
-    usleep(100);
+    waitForDeviceDestruction();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -133,11 +137,17 @@ TEST_F(AudioPrimaryHidlTest, SetConnectedState) {
             ASSERT_TRUE(ret.isOk());
             if (ret == Result::NOT_SUPPORTED) {
                 doc::partialTest("setConnectedState is not supported");
-                return;
+                break;  // other deviceType might be supported
             }
             ASSERT_OK(ret);
         }
     }
+
+    // Because there is no way of knowing if the devices were connected before
+    // calling setConnectedState, there is no way to restore the HAL to its
+    // initial state. To workaround this, destroy the HAL at the end of this test.
+    device.clear();
+    waitForDeviceDestruction();
 }
 
 static void testGetDevices(IStream* stream, AudioDevice expectedDevice) {
