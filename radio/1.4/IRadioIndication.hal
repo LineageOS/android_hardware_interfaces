@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-package android.hardware.radio@1.3;
+package android.hardware.radio@1.4;
 
 import @1.0::RadioIndicationType;
-import @1.2::IRadioIndication;
+import @1.3::IRadioIndication;
 
 /**
  * Interface declaring unsolicited radio indications.
  */
-interface IRadioIndication extends @1.2::IRadioIndication {
+interface IRadioIndication extends @1.3::IRadioIndication {
     /**
      * Report the current list of emergency numbers
      *
-     * Each emergency number (@1.3::EmergencyNumber) in the emergency number list contains a
+     * Each emergency number (@1.4::EmergencyNumber) in the emergency number list contains a
      * dialing number, zero or more service category(s), mobile country code, and source(s) that
      * indicate where it comes from.
      *
@@ -35,8 +35,8 @@ interface IRadioIndication extends @1.2::IRadioIndication {
      * modem/oem configuration, and default configuration (112 and 911 must be always available;
      * additionally, 000, 08, 110, 999, 118 and 119 must be available when sim is not present).
      * Radio shall not report emergency numbers that are invalid in the current locale. The
-     * reported emergency number list must not have duplicate @1.3::EmergencyNumber entries. Please
-     * refer the documentation of @1.3::EmergencyNumber to construct each emergency number to
+     * reported emergency number list must not have duplicate @1.4::EmergencyNumber entries. Please
+     * refer the documentation of @1.4::EmergencyNumber to construct each emergency number to
      * report.
      *
      * Radio must report the complete list of emergency numbers whenever the emergency numbers in
@@ -56,12 +56,12 @@ interface IRadioIndication extends @1.2::IRadioIndication {
      * @param type Type of radio indication
      * @param records Current cell information
      */
-    oneway cellInfoList_1_3(RadioIndicationType type, vec<CellInfo> records);
+    oneway cellInfoList_1_4(RadioIndicationType type, vec<CellInfo> records);
 
     /**
      * Incremental network scan results
      */
-    oneway networkScanResult_1_3(RadioIndicationType type, NetworkScanResult result);
+    oneway networkScanResult_1_4(RadioIndicationType type, NetworkScanResult result);
 
     /**
      * Indicates physical channel configurations.
@@ -71,6 +71,6 @@ interface IRadioIndication extends @1.2::IRadioIndication {
      * @param type Type of radio indication
      * @param configs Vector of PhysicalChannelConfigs
      */
-    oneway currentPhysicalChannelConfigs_1_3(RadioIndicationType type,
+    oneway currentPhysicalChannelConfigs_1_4(RadioIndicationType type,
             vec<PhysicalChannelConfig> configs);
 };

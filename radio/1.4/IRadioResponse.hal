@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package android.hardware.radio@1.3;
+package android.hardware.radio@1.4;
 
 import @1.0::RadioResponseInfo;
-import @1.2::IRadioResponse;
+import @1.3::IRadioResponse;
 
 /**
  * Interface declaring response functions to solicited radio requests.
  */
-interface IRadioResponse extends @1.2::IRadioResponse {
+interface IRadioResponse extends @1.3::IRadioResponse {
     /**
      * @param info Response info struct containing response type, serial no. and error
      *
@@ -57,7 +57,7 @@ interface IRadioResponse extends @1.2::IRadioResponse {
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
      */
-    oneway getCellInfoListResponse_1_3(RadioResponseInfo info, vec<CellInfo> cellInfo);
+    oneway getCellInfoListResponse_1_4(RadioResponseInfo info, vec<CellInfo> cellInfo);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -70,7 +70,7 @@ interface IRadioResponse extends @1.2::IRadioResponse {
      *   RadioError:INTERNAL_ERR
      *   RadioError:NOT_PROVISIONED
      */
-    oneway getDataRegistrationStateResponse_1_3(RadioResponseInfo info,
+    oneway getDataRegistrationStateResponse_1_4(RadioResponseInfo info,
             DataRegStateResult dataRegResponse);
 
     /**
@@ -86,5 +86,5 @@ interface IRadioResponse extends @1.2::IRadioResponse {
      *   RadioError:CANCELLED
      *   RadioError:REQUEST_NOT_SUPPORTED
      */
-    oneway getIccCardStatusResponse_1_3(RadioResponseInfo info, CardStatus cardStatus);
+    oneway getIccCardStatusResponse_1_4(RadioResponseInfo info, CardStatus cardStatus);
 };
