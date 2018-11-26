@@ -381,8 +381,8 @@ const ConfigDeclaration kVehicleProperties[]{
                 // kHvacPowerProperties.
                 .configArray =
                     {
-                        0x12400500,  // HVAC_FAN_SPEED
-                        0x12400501   // HVAC_FAN_DIRECTION
+                        toInt(VehicleProperty::HVAC_FAN_SPEED),
+                        toInt(VehicleProperty::HVAC_FAN_DIRECTION)
                     }},
      .initialValue = {.int32Values = {1}}},
 
