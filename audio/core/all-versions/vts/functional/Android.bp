@@ -22,6 +22,7 @@ cc_defaults {
         "libaudiopolicycomponents",
         "libicuuc",
         "libicuuc_stubdata",
+        "libandroidicu",
         "libmedia_helper",
         "libxml2",
     ],
