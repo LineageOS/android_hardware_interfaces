@@ -16,26 +16,10 @@
 
 package android.hardware.radio.config@1.1;
 
-import android.hardware.radio@1.0::RadioResponseInfo;
 import @1.0::IRadioConfigResponse;
-import @1.1::SimSlotStatus;
 
 /**
  * Interface declaring response functions to solicited radio config requests.
  */
 interface IRadioConfigResponse extends @1.0::IRadioConfigResponse {
-
-    /**
-     * @param info Response info struct containing response type, serial no. and error
-     * @param slotStatus Sim slot struct containing all the physical SIM slots info with size
-     *        equal to the number of physical slots on the device
-     *
-     * Valid errors returned:
-     *   RadioError:NONE
-     *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:NO_MEMORY
-     *   RadioError:INTERNAL_ERR
-     *   RadioError:MODEM_ERR
-     */
-    oneway getSimSlotsStatusResponse_1_1(RadioResponseInfo info, vec<SimSlotStatus> slotStatus);
 };
