@@ -81,4 +81,5 @@ cc_test {
         "BasicTests.cpp",
         "GeneratedTests.cpp",
     ],
+    test_suites: ["general-tests"],
 }
