@@ -16,75 +16,10 @@
 
 package android.hardware.radio@1.3;
 
-import @1.0::RadioResponseInfo;
 import @1.2::IRadioResponse;
 
 /**
  * Interface declaring response functions to solicited radio requests.
  */
 interface IRadioResponse extends @1.2::IRadioResponse {
-    /**
-     * @param info Response info struct containing response type, serial no. and error
-     *
-     * Valid errors returned:
-     *   RadioError:NONE
-     *   RadioError:RADIO_NOT_AVAILABLE (radio resetting)
-     *   RadioError:DIAL_MODIFIED_TO_USSD
-     *   RadioError:DIAL_MODIFIED_TO_SS
-     *   RadioError:DIAL_MODIFIED_TO_DIAL
-     *   RadioError:INVALID_ARGUMENTS
-     *   RadioError:NO_MEMORY
-     *   RadioError:NO_RESOURCES
-     *   RadioError:INTERNAL_ERR
-     *   RadioError:FDN_CHECK_FAILURE
-     *   RadioError:MODEM_ERR
-     *   RadioError:NO_SUBSCRIPTION
-     *   RadioError:NO_NETWORK_FOUND
-     *   RadioError:INVALID_CALL_ID
-     *   RadioError:DEVICE_IN_USE
-     *   RadioError:ABORTED
-     *   RadioError:INVALID_MODEM_STATE
-     *   RadioError:CANCELLED
-     */
-    oneway emergencyDialResponse(RadioResponseInfo info);
-
-    /**
-     * @param info Response info struct containing response type, serial no. and error
-     * @param cellInfo List of current cell information known to radio
-     *
-     * Valid errors returned:
-     *   RadioError:NONE
-     *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:INTERNAL_ERR
-     */
-    oneway getCellInfoListResponse_1_3(RadioResponseInfo info, vec<CellInfo> cellInfo);
-
-    /**
-     * @param info Response info struct containing response type, serial no. and error
-     * @param dataRegResponse Current Data registration response as defined by DataRegStateResult in
-     *        types.hal
-     *
-     * Valid errors returned:
-     *   RadioError:NONE
-     *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:INTERNAL_ERR
-     *   RadioError:NOT_PROVISIONED
-     */
-    oneway getDataRegistrationStateResponse_1_3(RadioResponseInfo info,
-            DataRegStateResult dataRegResponse);
-
-    /**
-     * @param info Response info struct containing response type, serial no. and error
-     * @param cardStatus ICC card status as defined by CardStatus in types.hal
-     *
-     * Valid errors returned:
-     *   RadioError:NONE
-     *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:INTERNAL_ERR
-     *   RadioError:NO_MEMORY
-     *   RadioError:NO_RESOURCES
-     *   RadioError:CANCELLED
-     *   RadioError:REQUEST_NOT_SUPPORTED
-     */
-    oneway getIccCardStatusResponse_1_3(RadioResponseInfo info, CardStatus cardStatus);
 };
