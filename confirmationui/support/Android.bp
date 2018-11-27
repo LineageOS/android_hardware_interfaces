@@ -46,6 +46,7 @@ cc_test {
         "android.hardware.keymaster@4.0",
         "libhidlbase",
     ],
+    test_suites: ["general-tests"],
     clang: true,
     cflags: [ "-O0" ],
 }

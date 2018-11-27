@@ -44,4 +44,5 @@ cc_test {
         "android.hardware.graphics.composer@2.1-command-buffer",
         "android.hardware.graphics.composer@2.2-command-buffer",
     ],
+    test_suites: ["general-tests"],
 }

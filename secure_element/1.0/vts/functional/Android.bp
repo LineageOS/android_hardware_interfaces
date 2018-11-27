@@ -21,4 +21,5 @@ cc_test {
     static_libs: [
         "android.hardware.secure_element@1.0",
     ],
+    test_suites: ["general-tests"],
 }

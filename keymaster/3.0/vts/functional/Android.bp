@@ -29,4 +29,5 @@ cc_test {
         "libcrypto",
         "libsoftkeymasterdevice",
     ],
+    test_suites: ["general-tests"],
 }

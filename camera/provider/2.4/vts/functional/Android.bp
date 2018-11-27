@@ -46,4 +46,5 @@ cc_test {
         "libgrallocusage",
         "libhidlmemory",
     ],
+    test_suites: ["general-tests"],
 }

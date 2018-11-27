@@ -35,4 +35,5 @@ cc_test {
     header_libs: [
         "android.hardware.audio.common.util@all-versions",
     ],
+    test_suites: ["general-tests"],
 }

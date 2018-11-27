@@ -36,6 +36,7 @@ cc_test {
         "android.hardware.broadcastradio@1.1",
         "android.hardware.broadcastradio@2.0",
     ],
+    test_suites: ["general-tests"],
 }
 
 cc_test {
@@ -59,6 +60,7 @@ cc_test {
     shared_libs: [
         "android.hardware.broadcastradio@2.0",
     ],
+    test_suites: ["general-tests"],
 }
 
 cc_test {
@@ -73,4 +75,5 @@ cc_test {
         "WorkerThread_test.cpp",
     ],
     static_libs: ["android.hardware.broadcastradio@common-utils-lib"],
+    test_suites: ["general-tests"],
 }
