@@ -17,23 +17,9 @@
 package android.hardware.radio.config@1.1;
 
 import @1.0::IRadioConfigIndication;
-import android.hardware.radio@1.0::RadioIndicationType;
 
 /**
  * Interface declaring unsolicited radio config indications.
  */
 interface IRadioConfigIndication extends @1.0::IRadioConfigIndication {
-
-    /**
-     * Indicates SIM slot status change.
-     *
-     * This indication must be sent by the modem whenever there is any slot status change, even the
-     * slot is inactive. For example, this indication must be triggered if a SIM card is inserted
-     * into an inactive slot.
-     *
-     * @param type Type of radio indication
-     * @param slotStatus new slot status info with size equals to the number of physical slots on
-     *        the device
-     */
-    oneway simSlotsStatusChanged_1_1(RadioIndicationType type, vec<SimSlotStatus> slotStatus);
 };
