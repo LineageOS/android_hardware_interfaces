@@ -49,4 +49,5 @@ cc_test {
         "libwifi-system",
         "libwifi-system-iface",
     ],
+    test_suites: ["general-tests"],
 }

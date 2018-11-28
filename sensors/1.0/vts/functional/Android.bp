@@ -27,5 +27,6 @@ cc_test {
         "android.hardware.sensors@1.0",
         "VtsHalSensorsTargetTestUtils",
     ],
+    test_suites: ["general-tests"],
 }
 

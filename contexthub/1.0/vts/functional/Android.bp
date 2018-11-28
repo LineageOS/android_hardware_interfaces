@@ -19,5 +19,6 @@ cc_test {
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: ["VtsHalContexthubV1_0TargetTest.cpp"],
     static_libs: ["android.hardware.contexthub@1.0"],
+    test_suites: ["general-tests"],
 }
 
