@@ -7,7 +7,6 @@ hidl_interface {
         enabled: true,
     },
     srcs: [
-        "types.hal",
         "IRadioConfigIndication.hal",
         "IRadioConfigResponse.hal",
     ],
@@ -15,9 +14,6 @@ hidl_interface {
         "android.hardware.radio@1.0",
         "android.hardware.radio.config@1.0",
         "android.hidl.base@1.0",
-    ],
-    types: [
-        "SimSlotStatus",
     ],
     gen_java: true,
 }
