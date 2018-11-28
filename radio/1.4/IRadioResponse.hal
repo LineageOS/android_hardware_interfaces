@@ -18,6 +18,13 @@ package android.hardware.radio@1.4;
 
 import @1.0::RadioResponseInfo;
 import @1.3::IRadioResponse;
+import @1.4::CardStatus;
+import @1.4::CarrierRestrictionsWithPriority;
+import @1.4::CellInfo;
+import @1.4::DataRegStateResult;
+import @1.4::RadioAccessFamily;
+import @1.4::SetupDataCallResult;
+import @1.4::SimLockMultiSimPolicy;
 
 /**
  * Interface declaring response functions to solicited radio requests.
@@ -181,4 +188,31 @@ interface IRadioResponse extends @1.3::IRadioResponse {
      *   RadioError:SIM_ABSENT
      */
     oneway setupDataCallResponse_1_4(RadioResponseInfo info, SetupDataCallResult dcResponse);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INVALID_ARGUMENTS
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     */
+    oneway setAllowedCarriersResponse_1_4(RadioResponseInfo info);
+
+    /**
+     * Expected modem behavior:
+     *  Return list of allowed carriers, and if all carriers are allowed.
+     *
+     * @param info Response info struct containing response type, serial no. and error
+     * @param carriers Carrier restriction information.
+     * @param multiSimPolicy Policy used for devices with multiple SIM cards.
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     */
+    oneway getAllowedCarriersResponse_1_4(RadioResponseInfo info,
+            CarrierRestrictionsWithPriority carriers, SimLockMultiSimPolicy multiSimPolicy);
 };
