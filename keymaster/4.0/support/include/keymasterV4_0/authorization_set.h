@@ -251,6 +251,12 @@ class AuthorizationSetBuilder : public AuthorizationSet {
         return Authorization(ttag, reinterpret_cast<const uint8_t*>(data), data_length);
     }
 
+    template <Tag tag>
+    AuthorizationSetBuilder& Authorization(TypedTag<TagType::BYTES, tag> ttag, char* data,
+                                           size_t data_length) {
+        return Authorization(ttag, reinterpret_cast<const uint8_t*>(data), data_length);
+    }
+
     AuthorizationSetBuilder& Authorizations(const AuthorizationSet& set) {
         for (const auto& entry : set) {
             push_back(entry);
