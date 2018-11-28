@@ -300,8 +300,9 @@ static bool mutateOperationOperandTypeSkip(size_t operand, OperandType type, con
     for (const Operation& operation : model.operations) {
         // Skip mutateOperationOperandTypeTest for the following operations.
         // - LSH_PROJECTION's second argument is allowed to have any type.
-        // - ARGMIN and ARGMAX's first argument can be any of TENSOR_(FLOAT32|INT32|QUANT8_ASYMM).
-        // - CAST's argument can be any of TENSOR_(FLOAT32|INT32|QUANT8_ASYMM).
+        // - ARGMIN and ARGMAX's first argument can be any of
+        // TENSOR_(FLOAT16|FLOAT32|INT32|QUANT8_ASYMM).
+        // - CAST's argument can be any of TENSOR_(FLOAT16|FLOAT32|INT32|QUANT8_ASYMM).
         switch (operation.type) {
             case OperationType::LSH_PROJECTION: {
                 if (operand == operation.inputs[1]) {
@@ -311,8 +312,8 @@ static bool mutateOperationOperandTypeSkip(size_t operand, OperandType type, con
             case OperationType::CAST:
             case OperationType::ARGMAX:
             case OperationType::ARGMIN: {
-                if (type == OperandType::TENSOR_FLOAT32 || type == OperandType::TENSOR_INT32 ||
-                    type == OperandType::TENSOR_QUANT8_ASYMM) {
+                if (type == OperandType::TENSOR_FLOAT16 || type == OperandType::TENSOR_FLOAT32 ||
+                    type == OperandType::TENSOR_INT32 || type == OperandType::TENSOR_QUANT8_ASYMM) {
                     return true;
                 }
             } break;
