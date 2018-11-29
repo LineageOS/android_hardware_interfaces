@@ -113,6 +113,15 @@ enum CameraMetadataEnumAndroidScalerAvailableRecommendedStreamConfigurations : u
                                                                  = 0x18,
 };
 
+/** android.sensor.info.colorFilterArrangement enumeration values added since v3.2
+ * @see ANDROID_SENSOR_INFO_COLOR_FILTER_ARRANGEMENT
+ */
+enum CameraMetadataEnumAndroidSensorInfoColorFilterArrangement :
+        @3.2::CameraMetadataEnumAndroidSensorInfoColorFilterArrangement {
+    ANDROID_SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_MONO,
+    ANDROID_SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_NIR,
+};
+
 /** android.info.supportedBufferManagementVersion enumeration values
  * @see ANDROID_INFO_SUPPORTED_BUFFER_MANAGEMENT_VERSION
  */

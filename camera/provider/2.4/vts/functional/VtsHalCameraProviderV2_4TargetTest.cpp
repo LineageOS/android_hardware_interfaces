@@ -33,6 +33,7 @@
 #include <android/hardware/camera/device/3.4/ICameraDeviceSession.h>
 #include <android/hardware/camera/device/3.4/ICameraDeviceCallback.h>
 #include <android/hardware/camera/provider/2.4/ICameraProvider.h>
+#include <android/hardware/camera/metadata/3.4/types.h>
 #include <android/hidl/manager/1.0/IServiceManager.h>
 #include <binder/MemoryHeapBase.h>
 #include <CameraMetadata.h>
@@ -110,6 +111,7 @@ using ::android::hardware::camera::device::V1_0::CameraFrameMetadata;
 using ::android::hardware::camera::device::V1_0::ICameraDevicePreviewCallback;
 using ::android::hardware::camera::device::V1_0::FrameCallbackFlag;
 using ::android::hardware::camera::device::V1_0::HandleTimestampMessage;
+using ::android::hardware::camera::metadata::V3_4::CameraMetadataEnumAndroidSensorInfoColorFilterArrangement;
 using ::android::hardware::MessageQueue;
 using ::android::hardware::kSynchronizedReadWrite;
 using ::android::hidl::allocator::V1_0::IAllocator;
@@ -4891,8 +4893,10 @@ void CameraHidlTest::verifyMonochromeCharacteristics(const CameraMetadata& chars
         retcode = find_camera_metadata_ro_entry(metadata,
                 ANDROID_SENSOR_INFO_COLOR_FILTER_ARRANGEMENT, &entry);
         if ((0 == retcode) && (entry.count == 1)) {
-            ASSERT_TRUE(entry.data.i32[0] == ANDROID_SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_MONO
-                    || entry.data.i32[0] == ANDROID_SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_NIR);
+            ASSERT_TRUE(entry.data.i32[0] == static_cast<int32_t>(
+                    CameraMetadataEnumAndroidSensorInfoColorFilterArrangement::ANDROID_SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_MONO)
+                    || entry.data.i32[0] == static_cast<int32_t>(
+                    CameraMetadataEnumAndroidSensorInfoColorFilterArrangement::ANDROID_SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_NIR));
         }
 
         // Check availableRequestKeys
