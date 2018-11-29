@@ -14,7 +14,10 @@ cc_defaults {
 // VTS tests must link to HAL definition libraries statically.
 cc_defaults {
     name: "VtsHalTargetTestDefaults",
-    defaults: ["hidl_defaults"],
+    defaults: [
+        "vts_target_tests_defaults",
+        "hidl_defaults",
+    ],
 
     // Lists all dependencies that can *not* be expected on the device.
     static_libs: [
