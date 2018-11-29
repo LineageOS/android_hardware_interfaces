@@ -1,6 +1,5 @@
-cc_binary {
-    name: "android.hardware.cas@1.0-service",
-    vintf_fragments: ["android.hardware.cas@1.0-service.xml"],
+cc_defaults {
+    name: "cas_service_defaults",
     defaults: ["hidl_defaults"],
     vendor: true,
     relative_install_path: "hw",
@@ -14,7 +13,6 @@ cc_binary {
     ],
 
     compile_multilib: "32",
-    init_rc: ["android.hardware.cas@1.0-service.rc"],
 
     shared_libs: [
       "android.hardware.cas@1.0",
@@ -31,4 +29,20 @@ cc_binary {
       "libstagefright_foundation_headers",
       "media_plugin_headers",
     ],
+}
+
+cc_binary {
+    name: "android.hardware.cas@1.0-service",
+    vintf_fragments: ["android.hardware.cas@1.0-service.xml"],
+    defaults: ["cas_service_defaults"],
+    init_rc: ["android.hardware.cas@1.0-service.rc"],
+}
+
+cc_binary {
+    name: "android.hardware.cas@1.0-service-lazy",
+    vintf_fragments: ["android.hardware.cas@1.0-service-lazy.xml"],
+    overrides: ["android.hardware.cas@1.0-service"],
+    defaults: ["cas_service_defaults"],
+    init_rc: ["android.hardware.cas@1.0-service-lazy.rc"],
+    cflags: ["-DLAZY_SERVICE"],
 }
