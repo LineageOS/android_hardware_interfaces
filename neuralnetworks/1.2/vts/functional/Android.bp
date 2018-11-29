@@ -20,7 +20,8 @@ cc_test {
     defaults: ["VtsHalNeuralNetworksTargetTestDefaults"],
     srcs: [
         "GeneratedTestsV1_0.cpp",
-    ]
+    ],
+    test_suites: ["general-tests"],
 }
 
 // Tests for V1_1 models using the V1_2 HAL.
@@ -30,6 +31,7 @@ cc_test {
     srcs: [
         "GeneratedTestsV1_1.cpp",
     ],
+    test_suites: ["general-tests"],
 }
 
 // Tests for V1_2 models.
@@ -40,4 +42,5 @@ cc_test {
         "BasicTests.cpp",
         "GeneratedTests.cpp",
     ],
+    test_suites: ["general-tests"],
 }

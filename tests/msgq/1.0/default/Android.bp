@@ -54,6 +54,7 @@ cc_test {
         "libutils",
         "android.hardware.tests.msgq@1.0"
     ],
+    test_suites: ["general-tests"],
 }
 
 cc_test {
@@ -80,4 +81,5 @@ cc_test {
     // libs should be used on device.
     static_libs: ["android.hardware.tests.msgq@1.0"],
     whole_static_libs: ["android.hardware.tests.msgq@1.0-impl"],
+    test_suites: ["general-tests"],
 }

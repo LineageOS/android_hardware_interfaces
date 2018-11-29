@@ -16,16 +16,14 @@
 
 cc_test {
     name: "VtsHalAudioControlV1_0TargetTest",
-
     srcs: [
         "VtsHalAudioControlV1_0TargetTest.cpp",
     ],
-
     defaults: [
         "VtsHalTargetTestDefaults",
     ],
-
     static_libs: [
         "android.hardware.automotive.audiocontrol@1.0",
     ],
+    test_suites: ["general-tests"],
 }

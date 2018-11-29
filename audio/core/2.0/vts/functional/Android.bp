@@ -29,4 +29,5 @@ cc_test {
         "libicuuc_stubdata",
         "libxml2",
     ],
+    test_suites: ["general-tests"],
 }

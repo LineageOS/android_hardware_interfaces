@@ -95,6 +95,7 @@ cc_test {
         "tests/VmsUtils_test.cpp",
     ],
     header_libs: ["libbase_headers"],
+    test_suites: ["general-tests"],
 }
 
 cc_binary {

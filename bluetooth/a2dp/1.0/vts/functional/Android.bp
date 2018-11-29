@@ -23,4 +23,5 @@ cc_test {
         "android.hardware.bluetooth.a2dp@1.0",
         "libbluetooth-types",
     ],
+    test_suites: ["general-tests"],
 }
