@@ -44,7 +44,9 @@ TEST_F(RadioHidlTest, supplyIccPinForApp) {
             EXPECT_EQ(std::cv_status::no_timeout, wait());
             EXPECT_EQ(serial, radioRsp->rspInfo.serial);
             EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp->rspInfo.type);
-            EXPECT_EQ(RadioError::PASSWORD_INCORRECT, radioRsp->rspInfo.error);
+            ASSERT_TRUE(CheckAnyOfErrors(
+                radioRsp->rspInfo.error,
+                {RadioError::PASSWORD_INCORRECT, RadioError::REQUEST_NOT_SUPPORTED}));
         }
     }
 }
@@ -67,7 +69,8 @@ TEST_F(RadioHidlTest, supplyIccPukForApp) {
             EXPECT_EQ(std::cv_status::no_timeout, wait());
             EXPECT_EQ(serial, radioRsp->rspInfo.serial);
             EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp->rspInfo.type);
-            EXPECT_EQ(RadioError::PASSWORD_INCORRECT, radioRsp->rspInfo.error);
+            ASSERT_TRUE(CheckAnyOfErrors(radioRsp->rspInfo.error, {RadioError::PASSWORD_INCORRECT,
+                                                                   RadioError::INVALID_SIM_STATE}));
         }
     }
 }
@@ -90,7 +93,10 @@ TEST_F(RadioHidlTest, supplyIccPin2ForApp) {
             EXPECT_EQ(std::cv_status::no_timeout, wait());
             EXPECT_EQ(serial, radioRsp->rspInfo.serial);
             EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp->rspInfo.type);
-            EXPECT_EQ(RadioError::PASSWORD_INCORRECT, radioRsp->rspInfo.error);
+            ASSERT_TRUE(
+                CheckAnyOfErrors(radioRsp->rspInfo.error,
+                                 {RadioError::PASSWORD_INCORRECT, RadioError::REQUEST_NOT_SUPPORTED,
+                                  RadioError::SIM_PUK2}));
         }
     }
 }
@@ -113,7 +119,8 @@ TEST_F(RadioHidlTest, supplyIccPuk2ForApp) {
             EXPECT_EQ(std::cv_status::no_timeout, wait());
             EXPECT_EQ(serial, radioRsp->rspInfo.serial);
             EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp->rspInfo.type);
-            EXPECT_EQ(RadioError::PASSWORD_INCORRECT, radioRsp->rspInfo.error);
+            ASSERT_TRUE(CheckAnyOfErrors(radioRsp->rspInfo.error, {RadioError::PASSWORD_INCORRECT,
+                                                                   RadioError::INVALID_SIM_STATE}));
         }
     }
 }
@@ -161,9 +168,10 @@ TEST_F(RadioHidlTest, changeIccPin2ForApp) {
             EXPECT_EQ(std::cv_status::no_timeout, wait());
             EXPECT_EQ(serial, radioRsp->rspInfo.serial);
             EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp->rspInfo.type);
-            ASSERT_TRUE(CheckAnyOfErrors(
-                radioRsp->rspInfo.error,
-                {RadioError::PASSWORD_INCORRECT, RadioError::REQUEST_NOT_SUPPORTED}));
+            ASSERT_TRUE(
+                CheckAnyOfErrors(radioRsp->rspInfo.error,
+                                 {RadioError::PASSWORD_INCORRECT, RadioError::REQUEST_NOT_SUPPORTED,
+                                  RadioError::SIM_PUK2}));
         }
     }
 }
@@ -184,7 +192,8 @@ TEST_F(RadioHidlTest, getImsiForApp) {
             EXPECT_EQ(std::cv_status::no_timeout, wait());
             EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp->rspInfo.type);
             EXPECT_EQ(serial, radioRsp->rspInfo.serial);
-            EXPECT_EQ(RadioError::NONE, radioRsp->rspInfo.error);
+            ASSERT_TRUE(
+                CheckAnyOfErrors(radioRsp->rspInfo.error, {RadioError::NONE}, CHECK_GENERAL_ERROR));
 
             // IMSI (MCC+MNC+MSIN) is at least 6 digits, but not more than 15
             if (radioRsp->rspInfo.error == RadioError::NONE) {

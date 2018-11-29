@@ -106,7 +106,10 @@ using namespace ::android::hardware::audio::common::test::utility;
 static auto okOrNotSupported = {Result::OK, Result::NOT_SUPPORTED};
 static auto okOrNotSupportedOrInvalidArgs = {Result::OK, Result::NOT_SUPPORTED,
                                              Result::INVALID_ARGUMENTS};
+static auto okOrInvalidStateOrNotSupported = {Result::OK, Result::INVALID_STATE,
+                                              Result::NOT_SUPPORTED};
 static auto invalidArgsOrNotSupported = {Result::INVALID_ARGUMENTS, Result::NOT_SUPPORTED};
+static auto invalidStateOrNotSupported = {Result::INVALID_STATE, Result::NOT_SUPPORTED};
 
 class AudioHidlTestEnvironment : public ::Environment {
    public:
@@ -555,11 +558,11 @@ TEST_F(AudioPrimaryHidlTest, SetConnectedState) {
             address.device = deviceType;
             auto ret = device->setConnectedState(address, state);
             ASSERT_TRUE(ret.isOk());
-            if (res == Result::NOT_SUPPORTED) {
+            if (ret == Result::NOT_SUPPORTED) {
                 doc::partialTest("setConnectedState is not supported");
                 return;
             }
-            ASSERT_OK(res);
+            ASSERT_OK(ret);
         }
     }
 }
@@ -949,8 +952,6 @@ TEST_IO_STREAM(RemoveNonExistingEffect, "Removing a non existing effect should f
 TEST_IO_STREAM(standby, "Make sure the stream can be put in stanby",
                ASSERT_OK(stream->standby()))  // can not fail
 
-static constexpr auto invalidStateOrNotSupported = {Result::INVALID_STATE, Result::NOT_SUPPORTED};
-
 TEST_IO_STREAM(startNoMmap, "Starting a mmaped stream before mapping it should fail",
                ASSERT_RESULT(invalidStateOrNotSupported, stream->start()))
 
@@ -1070,11 +1071,15 @@ TEST_P(InputStreamTest, GetInputFramesLost) {
 TEST_P(InputStreamTest, getCapturePosition) {
     doc::test(
         "The capture position of a non prepared stream should not be "
-        "retrievable");
+        "retrievable or 0");
     uint64_t frames;
     uint64_t time;
     ASSERT_OK(stream->getCapturePosition(returnIn(res, frames, time)));
-    ASSERT_RESULT(invalidStateOrNotSupported, res);
+    ASSERT_RESULT(okOrInvalidStateOrNotSupported, res);
+    if (res == Result::OK) {
+        ASSERT_EQ(0U, frames);
+        ASSERT_LE(0U, time);
+    }
 }
 
 TEST_P(InputStreamTest, updateSinkMetadata) {

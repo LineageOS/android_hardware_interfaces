@@ -87,7 +87,6 @@ using ::android::hardware::camera::device::V3_2::ICameraDevice;
 using ::android::hardware::camera::device::V3_2::BufferCache;
 using ::android::hardware::camera::device::V3_2::CaptureRequest;
 using ::android::hardware::camera::device::V3_2::CaptureResult;
-using ::android::hardware::camera::device::V3_2::ICameraDeviceCallback;
 using ::android::hardware::camera::device::V3_2::ICameraDeviceSession;
 using ::android::hardware::camera::device::V3_2::NotifyMsg;
 using ::android::hardware::camera::device::V3_2::RequestTemplate;
@@ -532,10 +531,17 @@ public:
 
  hidl_vec<hidl_string> getCameraDeviceNames(sp<ICameraProvider> provider);
 
- struct EmptyDeviceCb : public ICameraDeviceCallback {
+ struct EmptyDeviceCb : public V3_4::ICameraDeviceCallback {
      virtual Return<void> processCaptureResult(
          const hidl_vec<CaptureResult>& /*results*/) override {
          ALOGI("processCaptureResult callback");
+         ADD_FAILURE();  // Empty callback should not reach here
+         return Void();
+     }
+
+     virtual Return<void> processCaptureResult_3_4(
+         const hidl_vec<V3_4::CaptureResult>& /*results*/) override {
+         ALOGI("processCaptureResult_3_4 callback");
          ADD_FAILURE();  // Empty callback should not reach here
          return Void();
      }
@@ -3643,6 +3649,7 @@ TEST_F(CameraHidlTest, processCaptureRequestBurstISO) {
                                         static_cast<int32_t>(PixelFormat::IMPLEMENTATION_DEFINED)};
     uint64_t bufferId = 1;
     uint32_t frameNumber = 1;
+    float isoTol = .03f;
     ::android::hardware::hidl_vec<uint8_t> settings;
 
     for (const auto& name : cameraDeviceNames) {
@@ -3772,7 +3779,8 @@ TEST_F(CameraHidlTest, processCaptureRequestBurstISO) {
             ASSERT_TRUE(inflightReqs[i].collectedResult.exists(ANDROID_SENSOR_SENSITIVITY));
             camera_metadata_entry_t isoResult = inflightReqs[i].collectedResult.find(
                     ANDROID_SENSOR_SENSITIVITY);
-            ASSERT_TRUE(isoResult.data.i32[0] == isoValues[i]);
+            ASSERT_TRUE(std::abs(isoResult.data.i32[0] - isoValues[i]) <=
+                        std::round(isoValues[i]*isoTol));
         }
 
         ret = session->close();
@@ -4038,10 +4046,10 @@ TEST_F(CameraHidlTest, flushPreviewRequest) {
                                << static_cast<uint32_t>(inflightReq.errorCode);
                 }
             }
-
-            ret = session->close();
-            ASSERT_TRUE(ret.isOk());
         }
+
+        ret = session->close();
+        ASSERT_TRUE(ret.isOk());
     }
 }
 
