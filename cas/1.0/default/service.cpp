@@ -15,7 +15,11 @@
  */
 
 //#define LOG_NDEBUG 0
+#ifdef LAZY_SERVICE
+#define LOG_TAG "android.hardware.cas@1.0-service-lazy"
+#else
 #define LOG_TAG "android.hardware.cas@1.0-service"
+#endif
 
 #include <binder/ProcessState.h>
 #include <hidl/HidlTransportSupport.h>
@@ -25,24 +29,30 @@
 
 using android::hardware::configureRpcThreadpool;
 using android::hardware::joinRpcThreadpool;
-using android::hardware::cas::V1_0::implementation::MediaCasService;
+using android::hardware::LazyServiceRegistrar;
 using android::hardware::cas::V1_0::IMediaCasService;
+using android::hardware::cas::V1_0::implementation::MediaCasService;
+
+#ifdef LAZY_SERVICE
+const bool kLazyService = true;
+#else
+const bool kLazyService = false;
+#endif
 
 int main() {
-    ALOGD("android.hardware.cas@1.0-service starting...");
-
-    // The CAS HAL may communicate to other vendor components via
-    // /dev/vndbinder
-    android::ProcessState::initWithDriver("/dev/vndbinder");
-
     configureRpcThreadpool(8, true /* callerWillJoin */);
 
     // Setup hwbinder service
     android::sp<IMediaCasService> service = new MediaCasService();
-    android::status_t status = service->registerAsService();
-    LOG_ALWAYS_FATAL_IF(
-            status != android::OK,
-            "Error while registering cas service: %d", status);
+    android::status_t status;
+    if (kLazyService) {
+        auto serviceRegistrar = std::make_shared<LazyServiceRegistrar>();
+        status = serviceRegistrar->registerServiceWithCallback(service);
+    } else {
+        status = service->registerAsService();
+    }
+    LOG_ALWAYS_FATAL_IF(status != android::OK, "Error while registering cas service: %d", status);
+
     joinRpcThreadpool();
     return 0;
 }
