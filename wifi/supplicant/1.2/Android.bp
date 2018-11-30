@@ -8,6 +8,7 @@ hidl_interface {
     },
     srcs: [
         "ISupplicant.hal",
+        "ISupplicantP2pIface.hal",
         "ISupplicantStaIface.hal",
         "ISupplicantStaNetwork.hal",
     ],
