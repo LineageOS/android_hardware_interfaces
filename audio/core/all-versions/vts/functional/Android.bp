@@ -17,13 +17,12 @@
 cc_defaults {
     name: "VtsHalAudioTargetTest_defaults",
     defaults: ["VtsHalTargetTestDefaults"],
-    srcs: [
-        "ValidateAudioConfiguration.cpp"
-    ],
     static_libs: [
         "android.hardware.audio.common.test.utility",
+        "libaudiopolicycomponents",
         "libicuuc",
         "libicuuc_stubdata",
+        "libmedia_helper",
         "libxml2",
     ],
     shared_libs: [
