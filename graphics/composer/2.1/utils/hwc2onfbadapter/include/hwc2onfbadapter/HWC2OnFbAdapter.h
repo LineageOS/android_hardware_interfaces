@@ -23,7 +23,11 @@
 #include <thread>
 #include <unordered_set>
 
+#define HWC2_INCLUDE_STRINGIFICATION
+#define HWC2_USE_CPP11
 #include <hardware/hwcomposer2.h>
+#undef HWC2_INCLUDE_STRINGIFICATION
+#undef HWC2_USE_CPP11
 
 struct framebuffer_device_t;
 
@@ -75,6 +79,7 @@ public:
 
     void setVsyncCallback(HWC2_PFN_VSYNC callback, hwc2_callback_data_t data);
     void enableVsync(bool enable);
+    void getCapabilities(uint32_t* outCount, int32_t* outCapabilities);
 
 private:
     framebuffer_device_t* mFbDevice{nullptr};
@@ -89,6 +94,8 @@ private:
     std::unordered_set<hwc2_layer_t> mDirtyLayers;
 
     buffer_handle_t mBuffer{nullptr};
+
+    std::unordered_set<HWC2::Capability> mCapabilities;
 
     class VsyncThread {
     public:

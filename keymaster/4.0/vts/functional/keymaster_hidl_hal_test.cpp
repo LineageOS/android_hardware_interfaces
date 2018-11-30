@@ -182,7 +182,7 @@ X509* parse_cert_blob(const hidl_vec<uint8_t>& blob) {
 }
 
 bool verify_chain(const hidl_vec<hidl_vec<uint8_t>>& chain) {
-    for (size_t i = 0; i < chain.size() - 1; ++i) {
+    for (size_t i = 0; i < chain.size(); ++i) {
         X509_Ptr key_cert(parse_cert_blob(chain[i]));
         X509_Ptr signing_cert;
         if (i < chain.size() - 1) {
@@ -198,7 +198,8 @@ bool verify_chain(const hidl_vec<hidl_vec<uint8_t>>& chain) {
         if (!signing_pubkey.get()) return false;
 
         EXPECT_EQ(1, X509_verify(key_cert.get(), signing_pubkey.get()))
-            << "Verification of certificate " << i << " failed";
+            << "Verification of certificate " << i << " failed "
+            << "OpenSSL error string: " << ERR_error_string(ERR_get_error(), NULL);
 
         char* cert_issuer =  //
             X509_NAME_oneline(X509_get_issuer_name(key_cert.get()), nullptr, 0);
@@ -246,8 +247,7 @@ bool tag_in_list(const KeyParameter& entry) {
     // Attestations don't contain everything in key authorization lists, so we need to filter
     // the key lists to produce the lists that we expect to match the attestations.
     auto tag_list = {
-        Tag::INCLUDE_UNIQUE_ID, Tag::BLOB_USAGE_REQUIREMENTS,
-        Tag::EC_CURVE /* Tag::EC_CURVE will be included by KM2 implementations */,
+        Tag::INCLUDE_UNIQUE_ID, Tag::BLOB_USAGE_REQUIREMENTS, Tag::EC_CURVE, Tag::HARDWARE_TYPE,
     };
     return std::find(tag_list.begin(), tag_list.end(), entry.tag) != tag_list.end();
 }
@@ -271,7 +271,7 @@ std::string make_string(const uint8_t (&a)[N]) {
 
 bool verify_attestation_record(const string& challenge, const string& app_id,
                                AuthorizationSet expected_sw_enforced,
-                               AuthorizationSet expected_tee_enforced,
+                               AuthorizationSet expected_tee_enforced, SecurityLevel security_level,
                                const hidl_vec<uint8_t>& attestation_cert) {
     X509_Ptr cert(parse_cert_blob(attestation_cert));
     EXPECT_TRUE(!!cert.get());
@@ -290,29 +290,27 @@ bool verify_attestation_record(const string& challenge, const string& app_id,
     HidlBuf att_challenge;
     HidlBuf att_unique_id;
     HidlBuf att_app_id;
-    EXPECT_EQ(ErrorCode::OK,
-              parse_attestation_record(attest_rec->data,                 //
-                                       attest_rec->length,               //
-                                       &att_attestation_version,         //
-                                       &att_attestation_security_level,  //
-                                       &att_keymaster_version,           //
-                                       &att_keymaster_security_level,    //
-                                       &att_challenge,                   //
-                                       &att_sw_enforced,                 //
-                                       &att_tee_enforced,                //
-                                       &att_unique_id));
 
-    EXPECT_TRUE(att_attestation_version == 1 || att_attestation_version == 2);
+    auto error = parse_attestation_record(attest_rec->data,                 //
+                                          attest_rec->length,               //
+                                          &att_attestation_version,         //
+                                          &att_attestation_security_level,  //
+                                          &att_keymaster_version,           //
+                                          &att_keymaster_security_level,    //
+                                          &att_challenge,                   //
+                                          &att_sw_enforced,                 //
+                                          &att_tee_enforced,                //
+                                          &att_unique_id);
+    EXPECT_EQ(ErrorCode::OK, error);
+    if (error != ErrorCode::OK) return false;
+
+    EXPECT_TRUE(att_attestation_version == 3);
 
     expected_sw_enforced.push_back(TAG_ATTESTATION_APPLICATION_ID, HidlBuf(app_id));
 
-    EXPECT_GE(att_keymaster_version, 3U);
-    EXPECT_EQ(KeymasterHidlTest::IsSecure() ? SecurityLevel::TRUSTED_ENVIRONMENT
-                                            : SecurityLevel::SOFTWARE,
-              att_keymaster_security_level);
-    EXPECT_EQ(KeymasterHidlTest::IsSecure() ? SecurityLevel::TRUSTED_ENVIRONMENT
-                                            : SecurityLevel::SOFTWARE,
-              att_attestation_security_level);
+    EXPECT_EQ(att_keymaster_version, 4U);
+    EXPECT_EQ(security_level, att_keymaster_security_level);
+    EXPECT_EQ(security_level, att_attestation_security_level);
 
     EXPECT_EQ(challenge.length(), att_challenge.size());
     EXPECT_EQ(0, memcmp(challenge.data(), att_challenge.data(), challenge.length()));
@@ -538,10 +536,16 @@ TEST_F(NewKeyGenerationTest, EcdsaAllValidSizes) {
  * Verifies that keymaster does not support any curve designated as unsupported.
  */
 TEST_F(NewKeyGenerationTest, EcdsaAllValidCurves) {
+    Digest digest;
+    if (SecLevel() == SecurityLevel::STRONGBOX) {
+        digest = Digest::SHA_2_256;
+    } else {
+        digest = Digest::SHA_2_512;
+    }
     for (auto curve : ValidCurves()) {
         EXPECT_EQ(
             ErrorCode::OK,
-            GenerateKey(AuthorizationSetBuilder().EcdsaSigningKey(curve).Digest(Digest::SHA_2_512)))
+            GenerateKey(AuthorizationSetBuilder().EcdsaSigningKey(curve).Digest(digest)))
             << "Failed to generate key on curve: " << curve;
         CheckCharacteristics(key_blob_, key_characteristics_);
         CheckedDeleteKey();
@@ -831,6 +835,7 @@ TEST_F(SigningOperationsTest, RsaPkcs1NoDigestTooLong) {
  * 1024-bit key.
  */
 TEST_F(SigningOperationsTest, RsaPssSha512TooSmallKey) {
+    if (SecLevel() == SecurityLevel::STRONGBOX) return;
     ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
                                              .RsaSigningKey(1024, 65537)
                                              .Digest(Digest::SHA_2_512)
@@ -1188,10 +1193,12 @@ TEST_F(SigningOperationsTest, HmacRfc4231TestCase3) {
         0xbe, 0xe8, 0x94, 0x26, 0x74, 0x27, 0x88, 0x59, 0xe1, 0x32, 0x92, 0xfb,
     };
 
-    CheckHmacTestVector(key, message, Digest::SHA_2_224, make_string(sha_224_expected));
     CheckHmacTestVector(key, message, Digest::SHA_2_256, make_string(sha_256_expected));
-    CheckHmacTestVector(key, message, Digest::SHA_2_384, make_string(sha_384_expected));
-    CheckHmacTestVector(key, message, Digest::SHA_2_512, make_string(sha_512_expected));
+    if (SecLevel() != SecurityLevel::STRONGBOX) {
+        CheckHmacTestVector(key, message, Digest::SHA_2_224, make_string(sha_224_expected));
+        CheckHmacTestVector(key, message, Digest::SHA_2_384, make_string(sha_384_expected));
+        CheckHmacTestVector(key, message, Digest::SHA_2_512, make_string(sha_512_expected));
+    }
 }
 
 /*
@@ -1220,10 +1227,12 @@ TEST_F(SigningOperationsTest, HmacRfc4231TestCase5) {
         0x1d, 0x41, 0x79, 0xbc, 0x89, 0x1d, 0x87, 0xa6,
     };
 
-    CheckHmacTestVector(key, message, Digest::SHA_2_224, make_string(sha_224_expected));
     CheckHmacTestVector(key, message, Digest::SHA_2_256, make_string(sha_256_expected));
-    CheckHmacTestVector(key, message, Digest::SHA_2_384, make_string(sha_384_expected));
-    CheckHmacTestVector(key, message, Digest::SHA_2_512, make_string(sha_512_expected));
+    if (SecLevel() != SecurityLevel::STRONGBOX) {
+        CheckHmacTestVector(key, message, Digest::SHA_2_224, make_string(sha_224_expected));
+        CheckHmacTestVector(key, message, Digest::SHA_2_384, make_string(sha_384_expected));
+        CheckHmacTestVector(key, message, Digest::SHA_2_512, make_string(sha_512_expected));
+    }
 }
 
 /*
@@ -1258,10 +1267,12 @@ TEST_F(SigningOperationsTest, HmacRfc4231TestCase6) {
         0xf6, 0x3f, 0x0a, 0xec, 0x8b, 0x91, 0x5a, 0x98, 0x5d, 0x78, 0x65, 0x98,
     };
 
-    CheckHmacTestVector(key, message, Digest::SHA_2_224, make_string(sha_224_expected));
     CheckHmacTestVector(key, message, Digest::SHA_2_256, make_string(sha_256_expected));
-    CheckHmacTestVector(key, message, Digest::SHA_2_384, make_string(sha_384_expected));
-    CheckHmacTestVector(key, message, Digest::SHA_2_512, make_string(sha_512_expected));
+    if (SecLevel() != SecurityLevel::STRONGBOX) {
+        CheckHmacTestVector(key, message, Digest::SHA_2_224, make_string(sha_224_expected));
+        CheckHmacTestVector(key, message, Digest::SHA_2_384, make_string(sha_384_expected));
+        CheckHmacTestVector(key, message, Digest::SHA_2_512, make_string(sha_512_expected));
+    }
 }
 
 /*
@@ -1299,10 +1310,12 @@ TEST_F(SigningOperationsTest, HmacRfc4231TestCase7) {
         0x6d, 0xe0, 0x44, 0x60, 0x65, 0xc9, 0x74, 0x40, 0xfa, 0x8c, 0x6a, 0x58,
     };
 
-    CheckHmacTestVector(key, message, Digest::SHA_2_224, make_string(sha_224_expected));
     CheckHmacTestVector(key, message, Digest::SHA_2_256, make_string(sha_256_expected));
-    CheckHmacTestVector(key, message, Digest::SHA_2_384, make_string(sha_384_expected));
-    CheckHmacTestVector(key, message, Digest::SHA_2_512, make_string(sha_512_expected));
+    if (SecLevel() != SecurityLevel::STRONGBOX) {
+        CheckHmacTestVector(key, message, Digest::SHA_2_224, make_string(sha_224_expected));
+        CheckHmacTestVector(key, message, Digest::SHA_2_384, make_string(sha_384_expected));
+        CheckHmacTestVector(key, message, Digest::SHA_2_512, make_string(sha_512_expected));
+    }
 }
 
 typedef KeymasterHidlTest VerificationOperationsTest;
@@ -1514,7 +1527,7 @@ TEST_F(VerificationOperationsTest, HmacSigningKeyCannotVerify) {
                             .Authorization(TAG_NO_AUTH_REQUIRED)
                             .Authorization(TAG_ALGORITHM, Algorithm::HMAC)
                             .Authorization(TAG_PURPOSE, KeyPurpose::SIGN)
-                            .Digest(Digest::SHA1)
+                            .Digest(Digest::SHA_2_256)
                             .Authorization(TAG_MIN_MAC_LENGTH, 160),
                         KeyFormat::RAW, key_material, &signing_key, &signing_key_chars));
     EXPECT_EQ(ErrorCode::OK,
@@ -1522,24 +1535,24 @@ TEST_F(VerificationOperationsTest, HmacSigningKeyCannotVerify) {
                             .Authorization(TAG_NO_AUTH_REQUIRED)
                             .Authorization(TAG_ALGORITHM, Algorithm::HMAC)
                             .Authorization(TAG_PURPOSE, KeyPurpose::VERIFY)
-                            .Digest(Digest::SHA1)
+                            .Digest(Digest::SHA_2_256)
                             .Authorization(TAG_MIN_MAC_LENGTH, 160),
                         KeyFormat::RAW, key_material, &verification_key, &verification_key_chars));
 
     string message = "This is a message.";
     string signature = SignMessage(
         signing_key, message,
-        AuthorizationSetBuilder().Digest(Digest::SHA1).Authorization(TAG_MAC_LENGTH, 160));
+        AuthorizationSetBuilder().Digest(Digest::SHA_2_256).Authorization(TAG_MAC_LENGTH, 160));
 
     // Signing key should not work.
     AuthorizationSet out_params;
     EXPECT_EQ(ErrorCode::INCOMPATIBLE_PURPOSE,
-              Begin(KeyPurpose::VERIFY, signing_key, AuthorizationSetBuilder().Digest(Digest::SHA1),
+              Begin(KeyPurpose::VERIFY, signing_key, AuthorizationSetBuilder().Digest(Digest::SHA_2_256),
                     &out_params, &op_handle_));
 
     // Verification key should work.
     VerifyMessage(verification_key, message, signature,
-                  AuthorizationSetBuilder().Digest(Digest::SHA1));
+                  AuthorizationSetBuilder().Digest(Digest::SHA_2_256));
 
     CheckedDeleteKey(&signing_key);
     CheckedDeleteKey(&verification_key);
@@ -2143,11 +2156,13 @@ TEST_F(EncryptionOperationsTest, RsaOaepInvalidDigest) {
  * different digest than was used to encrypt.
  */
 TEST_F(EncryptionOperationsTest, RsaOaepDecryptWithWrongDigest) {
+    if (SecLevel() == SecurityLevel::STRONGBOX) return;
+
     ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
                                              .Authorization(TAG_NO_AUTH_REQUIRED)
                                              .RsaEncryptionKey(1024, 65537)
                                              .Padding(PaddingMode::RSA_OAEP)
-                                             .Digest(Digest::SHA_2_256, Digest::SHA_2_224)));
+                                             .Digest(Digest::SHA_2_224, Digest::SHA_2_256)));
     string message = "Hello World!";
     string ciphertext = EncryptMessage(
         message,
@@ -2173,13 +2188,13 @@ TEST_F(EncryptionOperationsTest, RsaOaepTooLarge) {
                                              .Authorization(TAG_NO_AUTH_REQUIRED)
                                              .RsaEncryptionKey(1024, 65537)
                                              .Padding(PaddingMode::RSA_OAEP)
-                                             .Digest(Digest::SHA1)));
-    constexpr size_t digest_size = 160 /* SHA1 */ / 8;
+                                             .Digest(Digest::SHA_2_256)));
+    constexpr size_t digest_size = 256 /* SHA_2_256 */ / 8;
     constexpr size_t oaep_overhead = 2 * digest_size + 2;
     string message(1024 / 8 - oaep_overhead + 1, 'a');
     EXPECT_EQ(ErrorCode::OK,
               Begin(KeyPurpose::ENCRYPT,
-                    AuthorizationSetBuilder().Padding(PaddingMode::RSA_OAEP).Digest(Digest::SHA1)));
+                    AuthorizationSetBuilder().Padding(PaddingMode::RSA_OAEP).Digest(Digest::SHA_2_256)));
     string result;
     EXPECT_EQ(ErrorCode::INVALID_ARGUMENT, Finish(message, &result));
     EXPECT_EQ(0U, result.size());
@@ -3008,6 +3023,7 @@ TEST_F(EncryptionOperationsTest, AesGcmAadNoData) {
  * Verifies that AES GCM mode works when provided additional authenticated data in multiple chunks.
  */
 TEST_F(EncryptionOperationsTest, AesGcmMultiPartAad) {
+    const size_t tag_bits = 128;
     ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
                                              .Authorization(TAG_NO_AUTH_REQUIRED)
                                              .AesEncryptionKey(128)
@@ -3019,7 +3035,7 @@ TEST_F(EncryptionOperationsTest, AesGcmMultiPartAad) {
     auto begin_params = AuthorizationSetBuilder()
                             .BlockMode(BlockMode::GCM)
                             .Padding(PaddingMode::NONE)
-                            .Authorization(TAG_MAC_LENGTH, 128);
+                            .Authorization(TAG_MAC_LENGTH, tag_bits);
     AuthorizationSet begin_out_params;
 
     auto update_params =
@@ -3041,10 +3057,11 @@ TEST_F(EncryptionOperationsTest, AesGcmMultiPartAad) {
     EXPECT_EQ(ErrorCode::OK, Update(op_handle_, update_params, message, &update_out_params,
                                     &ciphertext, &input_consumed));
     EXPECT_EQ(message.size(), input_consumed);
-    EXPECT_EQ(message.size(), ciphertext.size());
     EXPECT_TRUE(update_out_params.empty());
 
     EXPECT_EQ(ErrorCode::OK, Finish("" /* input */, &ciphertext));
+    // Expect 128-bit (16-byte) tag appended to ciphertext.
+    EXPECT_EQ(message.size() + (tag_bits >> 3), ciphertext.size());
 
     // Grab nonce.
     begin_params.push_back(begin_out_params);
@@ -3100,7 +3117,6 @@ TEST_F(EncryptionOperationsTest, AesGcmAadOutOfOrder) {
     EXPECT_EQ(ErrorCode::OK, Update(op_handle_, update_params, message, &update_out_params,
                                     &ciphertext, &input_consumed));
     EXPECT_EQ(message.size(), input_consumed);
-    EXPECT_EQ(message.size(), ciphertext.size());
     EXPECT_TRUE(update_out_params.empty());
 
     // More AAD
@@ -3827,7 +3843,7 @@ TEST_F(AttestationTest, RsaAttestation) {
     EXPECT_TRUE(verify_attestation_record("challenge", "foo",                     //
                                           key_characteristics_.softwareEnforced,  //
                                           key_characteristics_.hardwareEnforced,  //
-                                          cert_chain[0]));
+                                          SecLevel(), cert_chain[0]));
 }
 
 /*
@@ -3874,7 +3890,7 @@ TEST_F(AttestationTest, EcAttestation) {
     EXPECT_TRUE(verify_attestation_record("challenge", "foo",                     //
                                           key_characteristics_.softwareEnforced,  //
                                           key_characteristics_.hardwareEnforced,  //
-                                          cert_chain[0]));
+                                          SecLevel(), cert_chain[0]));
 }
 
 /*

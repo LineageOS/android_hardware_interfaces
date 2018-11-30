@@ -234,7 +234,7 @@
       <xs:field xpath="@library"/>
     </xs:keyref>
     <xs:key name="effectName">
-      <xs:selector xpath="aec:effects/aec:effect"/>
+      <xs:selector xpath="aec:effects/aec:effect|aec:effects/aec:effectProxy"/>
       <xs:field xpath="@name"/>
     </xs:key>
     <xs:keyref name="effectNamePreRef" refer="aec:effectName">
