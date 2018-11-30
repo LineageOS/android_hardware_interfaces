@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -162,8 +162,8 @@ template <bool atLeastOneRequired>
            << "\n                 Which is: " << xmlFileName
            << "\n In the following folders: " << xmlFileLocationsExpr
            << "\n                 Which is: " << ::testing::PrintToString(xmlFileLocations)
-           << (atLeastOneRequired ? "Where at least one file must be found."
-                                  : "Where no file might exist.");
+           << (atLeastOneRequired ? "\nWhere at least one file must be found."
+                                  : "\nWhere no file might exist.");
 }
 
 template ::testing::AssertionResult validateXmlMultipleLocations<true>(const char*, const char*,

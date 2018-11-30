@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef AUDIO_HAL_VERSION
-#error "AUDIO_HAL_VERSION must be set before including this file."
-#endif
 
 #ifndef ANDROID_HARDWARE_AUDIO_COMMON_TEST_UTILITY_PRETTY_PRINT_AUDIO_TYPES_H
 #define ANDROID_HARDWARE_AUDIO_COMMON_TEST_UTILITY_PRETTY_PRINT_AUDIO_TYPES_H
@@ -40,19 +36,19 @@ namespace audio {
 #define DEFINE_GTEST_PRINT_TO(T) \
     inline void PrintTo(const T& val, ::std::ostream* os) { *os << toString(val); }
 
-namespace AUDIO_HAL_VERSION {
+namespace CPP_VERSION {
 DEFINE_GTEST_PRINT_TO(IPrimaryDevice::TtyMode)
 DEFINE_GTEST_PRINT_TO(Result)
-}  // namespace AUDIO_HAL_VERSION
+}  // namespace CPP_VERSION
 
 namespace common {
-namespace AUDIO_HAL_VERSION {
+namespace CPP_VERSION {
 DEFINE_GTEST_PRINT_TO(AudioConfig)
 DEFINE_GTEST_PRINT_TO(AudioMode)
 DEFINE_GTEST_PRINT_TO(AudioDevice)
 DEFINE_GTEST_PRINT_TO(AudioFormat)
 DEFINE_GTEST_PRINT_TO(AudioChannelMask)
-}  // namespace AUDIO_HAL_VERSION
+}  // namespace CPP_VERSION
 }  // namespace common
 
 #undef DEFINE_GTEST_PRINT_TO
