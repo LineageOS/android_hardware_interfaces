@@ -19,8 +19,10 @@ hidl_interface {
         "Model",
         "Operand",
         "OperandType",
+        "OperandTypeRange",
         "Operation",
         "OperationType",
+        "OperationTypeRange",
     ],
     gen_java: false,
 }
