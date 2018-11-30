@@ -48,27 +48,33 @@ enum ThrottlingSeverity : uint32_t {
      * Not under throttling.
      */
     NONE = 0,
+
     /**
      * Light throttling where UX is not impacted.
      */
     LIGHT,
+
     /**
-     * Moderate throttling where UX is not largily impacted.
+     * Moderate throttling where UX is not largely impacted.
      */
     MODERATE,
+
     /**
      * Severe throttling where UX is largely impacted.
      * Similar to 1.0 throttlingThreshold.
      */
     SEVERE,
+
     /**
      * Platform has done everything to reduce power.
      */
     CRITICAL,
+
     /**
      * User should be warned before shutdown.
      */
     WARNING,
+
     /**
      * Need shutdown immediately.
      */
