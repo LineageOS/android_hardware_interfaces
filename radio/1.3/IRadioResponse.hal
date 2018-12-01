@@ -17,9 +17,33 @@
 package android.hardware.radio@1.3;
 
 import @1.2::IRadioResponse;
+import @1.0::RadioResponseInfo;
 
 /**
+ * Note: IRadio 1.3 is an intermediate layer between Android P and Android Q. It's specifically
+ * designed for CBRS related interfaces. All other interfaces for Q are added in IRadio 1.4.
+ *
  * Interface declaring response functions to solicited radio requests.
  */
 interface IRadioResponse extends @1.2::IRadioResponse {
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:INVALID_ARGUMENTS
+     */
+    oneway setSystemSelectionChannelsResponse(RadioResponseInfo info);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INTERNAL_ERR
+     */
+    oneway enableModemResponse(RadioResponseInfo info);
 };
