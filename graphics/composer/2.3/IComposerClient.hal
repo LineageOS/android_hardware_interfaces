@@ -27,6 +27,42 @@ import @2.1::Error;
 
 interface IComposerClient extends @2.2::IComposerClient {
 
+    // TODO: Move this enum to LLNDK after we decide where to put graphic types.
+    /**
+     * Required capabilities which are supported by the display. The
+     * particular set of supported capabilities for a given display may be
+     * retrieved using getDisplayCapabilities.
+     */
+    enum DisplayCapability : uint32_t {
+        INVALID = 0,
+
+        /**
+         * Specifies that the display must a color transform even when
+         * either the client or the device has chosen that all layers should
+         * be composed by the client. This prevents the client from applying
+         * the color transform during its composition step.
+         * If getDisplayCapabilities is supported, the global capability
+         * SKIP_CLIENT_COLOR_TRANSFORM is ignored.
+         * If getDisplayCapabilities is not supported, and the global capability
+         * SKIP_CLIENT_COLOR_TRANSFORM is returned by getCapabilities,
+         * then all displays must be treated as having
+         * SKIP_CLIENT_COLOR_TRANSFORM.
+         */
+        SKIP_CLIENT_COLOR_TRANSFORM = 1,
+
+        /**
+         * Specifies that the display supports PowerMode::DOZE and
+         * PowerMode::DOZE_SUSPEND. DOZE_SUSPEND may not provide any benefit
+         * over DOZE (see the definition of PowerMode for more information),
+         * but if both DOZE and DOZE_SUSPEND are no different from
+         * PowerMode::ON, the device must not claim support.
+         * Must be returned by getDisplayCapabilities when getDozeSupport
+         * indicates the display supports PowerMode::DOZE and
+         * PowerMode::DOZE_SUSPEND.
+         */
+        DOZE = 2,
+    };
+
     enum Command : @2.2::IComposerClient.Command {
         /**
          * SET_LAYER_COLOR_TRANSFORM has this pseudo prototype
@@ -350,4 +386,17 @@ interface IComposerClient extends @2.2::IComposerClient {
      */
     setColorMode_2_3(Display display, ColorMode mode, RenderIntent intent)
           generates (Error error);
+
+    /**
+     * Provides a list of supported capabilities (as described in the
+     * definition of DisplayCapability above). This list must not change after
+     * initialization.
+     *
+     * @return error is NONE upon success. Otherwise,
+     *     BAD_DISPLAY when an invalid display handle was passed in.
+     * @return capabilities is a list of supported capabilities.
+     */
+    getDisplayCapabilities(Display display)
+              generates (Error error,
+                         vec<DisplayCapability> capabilities);
 };

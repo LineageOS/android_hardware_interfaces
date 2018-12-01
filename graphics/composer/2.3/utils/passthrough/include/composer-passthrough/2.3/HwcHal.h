@@ -163,6 +163,29 @@ class HwcHalImpl : public V2_2::passthrough::detail::HwcHalImpl<Hal> {
         return static_cast<Error>(errorRaw);
     }
 
+    Error getDisplayCapabilities(
+        Display display, hidl_vec<IComposerClient::DisplayCapability>* outCapabilities) override {
+        if (!mDispatch.getDisplayCapabilities) {
+            return Error::UNSUPPORTED;
+        }
+
+        uint32_t count = 0;
+        int32_t error = mDispatch.getDisplayCapabilities(mDevice, display, &count, nullptr);
+        if (error != HWC2_ERROR_NONE) {
+            return static_cast<Error>(error);
+        }
+        outCapabilities->resize(count);
+        error = mDispatch.getDisplayCapabilities(
+            mDevice, display, &count,
+            reinterpret_cast<std::underlying_type<IComposerClient::DisplayCapability>::type*>(
+                outCapabilities->data()));
+        if (error != HWC2_ERROR_NONE) {
+            *outCapabilities = hidl_vec<IComposerClient::DisplayCapability>();
+            return static_cast<Error>(error);
+        }
+        return Error::NONE;
+    }
+
    protected:
     bool initDispatch() override {
         if (!BaseType2_2::initDispatch()) {
@@ -179,6 +202,8 @@ class HwcHalImpl : public V2_2::passthrough::detail::HwcHalImpl<Hal> {
                                    &mDispatch.setDisplayedContentSamplingEnabled);
         this->initOptionalDispatch(HWC2_FUNCTION_GET_DISPLAYED_CONTENT_SAMPLE,
                                    &mDispatch.getDisplayedContentSample);
+        this->initOptionalDispatch(HWC2_FUNCTION_GET_DISPLAY_CAPABILITIES,
+                                   &mDispatch.getDisplayCapabilities);
         return true;
     }
 
@@ -189,6 +214,7 @@ class HwcHalImpl : public V2_2::passthrough::detail::HwcHalImpl<Hal> {
         HWC2_PFN_GET_DISPLAYED_CONTENT_SAMPLING_ATTRIBUTES getDisplayedContentSamplingAttributes;
         HWC2_PFN_SET_DISPLAYED_CONTENT_SAMPLING_ENABLED setDisplayedContentSamplingEnabled;
         HWC2_PFN_GET_DISPLAYED_CONTENT_SAMPLE getDisplayedContentSample;
+        HWC2_PFN_GET_DISPLAY_CAPABILITIES getDisplayCapabilities;
     } mDispatch = {};
 
     using BaseType2_2 = V2_2::passthrough::detail::HwcHalImpl<Hal>;

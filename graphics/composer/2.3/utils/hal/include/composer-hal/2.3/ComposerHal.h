@@ -84,6 +84,8 @@ class ComposerHal : public V2_2::hal::ComposerHal {
                                             hidl_vec<uint64_t>& sampleComponent1,
                                             hidl_vec<uint64_t>& sampleComponent2,
                                             hidl_vec<uint64_t>& sampleComponent3) = 0;
+    virtual Error getDisplayCapabilities(
+        Display display, hidl_vec<IComposerClient::DisplayCapability>* outCapabilities) = 0;
 };
 
 }  // namespace hal
