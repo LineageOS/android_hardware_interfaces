@@ -25,7 +25,8 @@ namespace gnss {
 namespace V2_0 {
 namespace implementation {
 
-sp<V1_1::IGnssCallback> Gnss::sGnssCallback = nullptr;
+sp<V2_0::IGnssCallback> Gnss::sGnssCallback_2_0 = nullptr;
+sp<V1_1::IGnssCallback> Gnss::sGnssCallback_1_1 = nullptr;
 
 // Methods from V1_0::IGnss follow.
 Return<bool> Gnss::setCallback(const sp<V1_0::IGnssCallback>&) {
@@ -128,23 +129,23 @@ Return<bool> Gnss::setCallback_1_1(const sp<V1_1::IGnssCallback>& callback) {
         return false;
     }
 
-    sGnssCallback = callback;
+    sGnssCallback_1_1 = callback;
 
     uint32_t capabilities = 0x0;
-    auto ret = sGnssCallback->gnssSetCapabilitesCb(capabilities);
+    auto ret = sGnssCallback_1_1->gnssSetCapabilitesCb(capabilities);
     if (!ret.isOk()) {
         ALOGE("%s: Unable to invoke callback", __func__);
     }
 
     V1_1::IGnssCallback::GnssSystemInfo gnssInfo = {.yearOfHw = 2019};
 
-    ret = sGnssCallback->gnssSetSystemInfoCb(gnssInfo);
+    ret = sGnssCallback_1_1->gnssSetSystemInfoCb(gnssInfo);
     if (!ret.isOk()) {
         ALOGE("%s: Unable to invoke callback", __func__);
     }
 
     auto gnssName = "Google Mock GNSS Implementation v2.0";
-    ret = sGnssCallback->gnssNameCb(gnssName);
+    ret = sGnssCallback_1_1->gnssNameCb(gnssName);
     if (!ret.isOk()) {
         ALOGE("%s: Unable to invoke callback", __func__);
     }
@@ -178,6 +179,43 @@ Return<bool> Gnss::injectBestLocation(const V1_0::GnssLocation&) {
 Return<sp<V2_0::IGnssMeasurement>> Gnss::getExtensionGnssMeasurement_2_0() {
     // TODO implement
     return sp<V2_0::IGnssMeasurement>{};
+}
+
+Return<sp<measurement_corrections::V1_0::IMeasurementCorrections>>
+Gnss::getExtensionMeasurementCorrections() {
+    // TODO implement
+    return sp<measurement_corrections::V1_0::IMeasurementCorrections>{};
+}
+
+Return<bool> Gnss::setCallback_2_0(const sp<V2_0::IGnssCallback>& callback) {
+    ALOGD("Gnss::setCallback_2_0");
+    if (callback == nullptr) {
+        ALOGE("%s: Null callback ignored", __func__);
+        return false;
+    }
+
+    sGnssCallback_2_0 = callback;
+
+    uint32_t capabilities = 0x0;
+    auto ret = sGnssCallback_2_0->gnssSetCapabilitesCb(capabilities);
+    if (!ret.isOk()) {
+        ALOGE("%s: Unable to invoke callback", __func__);
+    }
+
+    V1_1::IGnssCallback::GnssSystemInfo gnssInfo = {.yearOfHw = 2019};
+
+    ret = sGnssCallback_2_0->gnssSetSystemInfoCb(gnssInfo);
+    if (!ret.isOk()) {
+        ALOGE("%s: Unable to invoke callback", __func__);
+    }
+
+    auto gnssName = "Google Mock GNSS Implementation v2.0";
+    ret = sGnssCallback_2_0->gnssNameCb(gnssName);
+    if (!ret.isOk()) {
+        ALOGE("%s: Unable to invoke callback", __func__);
+    }
+
+    return true;
 }
 
 }  // namespace implementation
