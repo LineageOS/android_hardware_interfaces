@@ -17,12 +17,8 @@
 package android.hardware.radio@1.3;
 
 import @1.2::IRadio;
-import @1.1::RadioAccessSpecifier;
 
 /**
- * Note: IRadio 1.3 is an intermediate layer between Android P and Android Q. It's specifically
- * designed for CBRS related interfaces. All other interfaces for Q are added in IRadio 1.4.
- *
  * This interface is used by telephony and telecom to talk to cellular radio.
  * All the functions have minimum one parameter:
  * serial: which corresponds to serial no. of request. Serial numbers must only be memorized for the
@@ -31,33 +27,4 @@ import @1.1::RadioAccessSpecifier;
  * setResponseFunctions must work with @1.1::IRadioResponse and @1.1::IRadioIndication.
  */
 interface IRadio extends @1.2::IRadio {
-    /**
-     * Specify which bands modem's background scan must act on.
-     * If specifyChannels is true, it only scans bands specified in specifiers.
-     * If specifyChannels is false, it scans all bands.
-     *
-     * For example, CBRS is only on LTE band 48. By specifying this band,
-     * modem saves more power.
-     *
-     * @param serial Serial number of request.
-     * @param specifyChannels whether to scan bands defined in specifiers.
-     * @param specifiers which bands to scan. Only used if specifyChannels is true.
-     *
-     * Response callback is IRadioResponse.setSystemSelectionChannelsResponse()
-     */
-    oneway setSystemSelectionChannels(int32_t serial, bool specifyChannels,
-            vec<RadioAccessSpecifier> specifiers);
-
-   /**
-    * Toggle logical modem on and off. It should put the logical modem in low power
-    * mode without any activity, while the SIM card remains visible. The difference
-    * with setRadioPower is, setRadioPower affects all logical modem while this controls
-    * just one.
-    *
-    * @param serial Serial number of request.
-    * @param on True to turn on the logical modem, otherwise turn it off.
-    *
-    * Response function is IRadioResponse.enableModemResponse()
-    */
-    oneway enableModem(int32_t serial, bool on);
 };
