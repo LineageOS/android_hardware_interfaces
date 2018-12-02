@@ -150,6 +150,15 @@ Error ComposerClient::getDisplayedContentSample(uint64_t display, uint64_t maxFr
     return error;
 }
 
+std::vector<IComposerClient::DisplayCapability> ComposerClient::getDisplayCapabilities(
+    Display display) {
+    std::vector<IComposerClient::DisplayCapability> capabilities;
+    mClient->getDisplayCapabilities(
+        display, [&](const auto&, const auto& tmpCapabilities) { capabilities = tmpCapabilities; });
+
+    return capabilities;
+}
+
 }  // namespace vts
 }  // namespace V2_3
 }  // namespace composer

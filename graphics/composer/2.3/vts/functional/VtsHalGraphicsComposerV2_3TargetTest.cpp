@@ -427,6 +427,23 @@ TEST_F(GraphicsComposerHidlTest, GetDisplayedContentSample) {
     }
 }
 
+/*
+ * getDisplayCapabilities is required in composer 2.3
+ * Test some constraints.
+ */
+TEST_F(GraphicsComposerHidlTest, getDisplayCapabilitiesBasic) {
+    auto capabilities = mComposerClient->getDisplayCapabilities(mPrimaryDisplay);
+    bool hasDozeSupport = std::find(capabilities.begin(), capabilities.end(),
+                                    IComposerClient::DisplayCapability::DOZE) != capabilities.end();
+    EXPECT_EQ(mComposerClient->getDozeSupport(mPrimaryDisplay), hasDozeSupport);
+}
+
+TEST_F(GraphicsComposerHidlTest, getDisplayCapabilitiesBadDisplay) {
+    mComposerClient->getRaw()->getDisplayCapabilities(
+        mInvalidDisplayId,
+        [&](const auto& tmpError, const auto&) { EXPECT_EQ(Error::BAD_DISPLAY, tmpError); });
+}
+
 }  // namespace
 }  // namespace vts
 }  // namespace V2_3
