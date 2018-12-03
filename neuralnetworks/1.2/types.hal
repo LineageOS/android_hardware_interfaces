@@ -42,6 +42,13 @@ enum OperandType : @1.0::OperandType {
     TENSOR_QUANT16_SYMM = 7,
     /** A tensor of 16 bit floating point values. */
     TENSOR_FLOAT16 = 8,
+    /**
+     * A tensor of 8 bit boolean values.
+     *
+     * Values of this operand type are either true or false. A zero value
+     * represents false; any other value represents true.
+     */
+    TENSOR_BOOL8 = 9,
 };
 
 /**
@@ -51,7 +58,7 @@ enum OperandType : @1.0::OperandType {
  */
 enum OperandTypeRange : uint32_t {
     OPERAND_FUNDAMENTAL_MIN = 0,
-    OPERAND_FUNDAMENTAL_MAX = 8,
+    OPERAND_FUNDAMENTAL_MAX = 9,
     OPERAND_OEM_MIN     = 10000,
     OPERAND_OEM_MAX     = 10001,
 };
