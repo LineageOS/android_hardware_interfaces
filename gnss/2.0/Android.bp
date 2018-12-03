@@ -8,14 +8,17 @@ hidl_interface {
     },
     srcs: [
         "IGnss.hal",
+        "IGnssCallback.hal",
         "IGnssMeasurement.hal",
         "IGnssMeasurementCallback.hal",
     ],
     interfaces: [
+        "android.hardware.gnss.measurement_corrections@1.0",
         "android.hardware.gnss@1.0",
         "android.hardware.gnss@1.1",
         "android.hidl.base@1.0",
     ],
     gen_java: true,
+    gen_java_constants: true,
 }
 
