@@ -80,6 +80,5 @@ cc_test {
     srcs: [
         "BasicTests.cpp",
         "GeneratedTests.cpp",
-        "ValidationTests.cpp",
     ],
 }
