@@ -272,7 +272,7 @@ Return<Result> StreamOut::setParameters(const hidl_vec<ParameterValue>& paramete
 Return<void> StreamOut::debugDump(const hidl_handle& fd) {
     return mStreamCommon->debugDump(fd);
 }
-#elif MAJOR_VERSION == 4
+#elif MAJOR_VERSION >= 4
 Return<void> StreamOut::getDevices(getDevices_cb _hidl_cb) {
     return mStreamCommon->getDevices(_hidl_cb);
 }
@@ -547,7 +547,7 @@ Return<void> StreamOut::debug(const hidl_handle& fd, const hidl_vec<hidl_string>
     return mStreamCommon->debug(fd, options);
 }
 
-#if MAJOR_VERSION == 4
+#if MAJOR_VERSION >= 4
 Return<void> StreamOut::updateSourceMetadata(const SourceMetadata& sourceMetadata) {
     if (mStream->update_source_metadata == nullptr) {
         return Void();  // not supported by the HAL

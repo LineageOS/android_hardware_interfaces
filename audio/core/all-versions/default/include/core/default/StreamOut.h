@@ -89,7 +89,7 @@ struct StreamOut : public IStreamOut {
                                getParameters_cb _hidl_cb) override;
     Return<Result> setParameters(const hidl_vec<ParameterValue>& parameters) override;
     Return<Result> setConnectedState(const DeviceAddress& address, bool connected) override;
-#elif MAJOR_VERSION == 4
+#elif MAJOR_VERSION >= 4
     Return<void> getDevices(getDevices_cb _hidl_cb) override;
     Return<Result> setDevices(const hidl_vec<DeviceAddress>& devices) override;
     Return<void> getParameters(const hidl_vec<ParameterValue>& context,
@@ -126,7 +126,7 @@ struct StreamOut : public IStreamOut {
     Return<Result> stop() override;
     Return<void> createMmapBuffer(int32_t minSizeFrames, createMmapBuffer_cb _hidl_cb) override;
     Return<void> getMmapPosition(getMmapPosition_cb _hidl_cb) override;
-#if MAJOR_VERSION == 4
+#if MAJOR_VERSION >= 4
     Return<void> updateSourceMetadata(const SourceMetadata& sourceMetadata) override;
     Return<Result> selectPresentation(int32_t presentationId, int32_t programId) override;
 #endif

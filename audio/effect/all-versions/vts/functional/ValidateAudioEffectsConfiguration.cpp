@@ -35,7 +35,7 @@ TEST(CheckConfig, audioEffectsConfigurationValidation) {
 #if MAJOR_VERSION == 2
     // In V2, audio effect XML is not required. .conf is still allowed though deprecated
     EXPECT_VALID_XML_MULTIPLE_LOCATIONS(DEFAULT_NAME, locations, xsd);
-#elif MAJOR_VERSION == 4
+#elif MAJOR_VERSION >= 4
     // Starting with V4, audio effect XML is required
     EXPECT_ONE_VALID_XML_MULTIPLE_LOCATIONS(DEFAULT_NAME, locations, xsd);
 #endif

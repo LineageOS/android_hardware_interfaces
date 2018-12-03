@@ -164,7 +164,7 @@ TEST_F(AudioEffectsFactoryHidlTest, DebugDumpInvalidArgument) {
     description("Verify that debugDump doesn't crash on invalid arguments");
 #if MAJOR_VERSION == 2
     Return<void> ret = effectsFactory->debugDump(hidl_handle());
-#elif MAJOR_VERSION == 4
+#elif MAJOR_VERSION >= 4
     Return<void> ret = effectsFactory->debug(hidl_handle(), {});
 #endif
     ASSERT_TRUE(ret.isOk());
