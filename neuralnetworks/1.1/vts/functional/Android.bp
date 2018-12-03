@@ -20,7 +20,6 @@ cc_test {
     defaults: ["VtsHalNeuralNetworksTargetTestDefaults"],
     srcs: [
         "GeneratedTestsV1_0.cpp",
-        "ValidationTestsV1_0.cpp",
     ],
 }
 
@@ -31,6 +30,5 @@ cc_test {
     srcs: [
         "BasicTests.cpp",
         "GeneratedTests.cpp",
-        "ValidationTests.cpp",
     ],
 }
