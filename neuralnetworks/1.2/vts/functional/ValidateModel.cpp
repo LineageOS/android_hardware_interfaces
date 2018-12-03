@@ -224,8 +224,9 @@ static std::vector<int32_t> getInvalidZeroPoints(OperandType type) {
         case OperandType::TENSOR_INT32:
             return {1};
         case OperandType::TENSOR_QUANT8_ASYMM:
-        case OperandType::TENSOR_QUANT16_ASYMM:
             return {-1, 256};
+        case OperandType::TENSOR_QUANT16_ASYMM:
+            return {-32769, 32768};
         default:
             return {};
     }
@@ -291,15 +292,33 @@ static void mutateOperand(Operand* operand, OperandType type) {
     *operand = newOperand;
 }
 
-static bool mutateOperationOperandTypeSkip(size_t operand, const Model& model) {
-    // LSH_PROJECTION's second argument is allowed to have any type. This is the
-    // only operation that currently has a type that can be anything independent
-    // from any other type. Changing the operand type to any other type will
-    // result in a valid model for LSH_PROJECTION. If this is the case, skip the
-    // test.
+static bool mutateOperationOperandTypeSkip(size_t operand, OperandType type, const Model& model) {
+    // Do not test OEM types
+    if (type == model.operands[operand].type || type == OperandType::OEM ||
+        type == OperandType::TENSOR_OEM_BYTE) {
+        return true;
+    }
     for (const Operation& operation : model.operations) {
-        if (operation.type == OperationType::LSH_PROJECTION && operand == operation.inputs[1]) {
-            return true;
+        // Skip mutateOperationOperandTypeTest for the following operations.
+        // - LSH_PROJECTION's second argument is allowed to have any type.
+        // - ARGMIN and ARGMAX's first argument can be any of TENSOR_(FLOAT32|INT32|QUANT8_ASYMM).
+        // - CAST's argument can be any of TENSOR_(FLOAT32|INT32|QUANT8_ASYMM).
+        switch (operation.type) {
+            case OperationType::LSH_PROJECTION: {
+                if (operand == operation.inputs[1]) {
+                    return true;
+                }
+            } break;
+            case OperationType::CAST:
+            case OperationType::ARGMAX:
+            case OperationType::ARGMIN: {
+                if (type == OperandType::TENSOR_FLOAT32 || type == OperandType::TENSOR_INT32 ||
+                    type == OperandType::TENSOR_QUANT8_ASYMM) {
+                    return true;
+                }
+            } break;
+            default:
+                break;
         }
     }
     return false;
@@ -307,14 +326,8 @@ static bool mutateOperationOperandTypeSkip(size_t operand, const Model& model) {
 
 static void mutateOperationOperandTypeTest(const sp<IDevice>& device, const Model& model) {
     for (size_t operand = 0; operand < model.operands.size(); ++operand) {
-        if (mutateOperationOperandTypeSkip(operand, model)) {
-            continue;
-        }
         for (OperandType invalidOperandType : hidl_enum_range<OperandType>{}) {
-            // Do not test OEM types
-            if (invalidOperandType == model.operands[operand].type ||
-                invalidOperandType == OperandType::OEM ||
-                invalidOperandType == OperandType::TENSOR_OEM_BYTE) {
+            if (mutateOperationOperandTypeSkip(operand, invalidOperandType, model)) {
                 continue;
             }
             const std::string message = "mutateOperationOperandTypeTest: operand " +
@@ -406,8 +419,26 @@ static void removeOperand(Model* model, uint32_t index) {
     removeValueAndDecrementGreaterValues(&model->outputIndexes, index);
 }
 
+static bool removeOperandSkip(size_t operand, const Model& model) {
+    for (const Operation& operation : model.operations) {
+        // Skip removeOperandTest for the following operations.
+        // - SPLIT's outputs are not checked during prepareModel.
+        if (operation.type == OperationType::SPLIT) {
+            for (const size_t outOprand : operation.outputs) {
+                if (operand == outOprand) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
 static void removeOperandTest(const sp<IDevice>& device, const Model& model) {
     for (size_t operand = 0; operand < model.operands.size(); ++operand) {
+        if (removeOperandSkip(operand, model)) {
+            continue;
+        }
         const std::string message = "removeOperandTest: operand " + std::to_string(operand);
         validate(device, message, model,
                  [operand](Model* model) { removeOperand(model, operand); });
@@ -433,15 +464,76 @@ static void removeOperationTest(const sp<IDevice>& device, const Model& model) {
 
 ///////////////////////// REMOVE OPERATION INPUT /////////////////////////
 
+static bool removeOperationInputSkip(const Operation& op, size_t input) {
+    // Skip removeOperationInputTest for the following operations.
+    // - CONCATENATION has at least 2 inputs, with the last element being INT32.
+    // - CONV_2D, DEPTHWISE_CONV_2D, MAX_POOL_2D, AVERAGE_POOL_2D, L2_POOL_2D, RESIZE_BILINEAR,
+    //   SPACE_TO_DEPTH, SPACE_TO_DEPTH, SPACE_TO_BATCH_ND, BATCH_TO_SPACE_ND can have an optional
+    //   layout parameter.
+    // - L2_NORMALIZATION, LOCAL_RESPONSE_NORMALIZATION, SOFTMAX can have an optional axis
+    //   parameter.
+    switch (op.type) {
+        case OperationType::CONCATENATION: {
+            if (op.inputs.size() > 2 && input != op.inputs.size() - 1) {
+                return true;
+            }
+        } break;
+        case OperationType::DEPTHWISE_CONV_2D: {
+            if ((op.inputs.size() == 12 && input == 11) || (op.inputs.size() == 9 && input == 8)) {
+                return true;
+            }
+        } break;
+        case OperationType::CONV_2D:
+        case OperationType::AVERAGE_POOL_2D:
+        case OperationType::MAX_POOL_2D:
+        case OperationType::L2_POOL_2D: {
+            if ((op.inputs.size() == 11 && input == 10) || (op.inputs.size() == 8 && input == 7)) {
+                return true;
+            }
+        } break;
+        case OperationType::RESIZE_BILINEAR: {
+            if (op.inputs.size() == 4 && input == 3) {
+                return true;
+            }
+        } break;
+        case OperationType::SPACE_TO_DEPTH:
+        case OperationType::DEPTH_TO_SPACE:
+        case OperationType::BATCH_TO_SPACE_ND: {
+            if (op.inputs.size() == 3 && input == 2) {
+                return true;
+            }
+        } break;
+        case OperationType::SPACE_TO_BATCH_ND: {
+            if (op.inputs.size() == 4 && input == 3) {
+                return true;
+            }
+        } break;
+        case OperationType::L2_NORMALIZATION: {
+            if (op.inputs.size() == 2 && input == 1) {
+                return true;
+            }
+        } break;
+        case OperationType::LOCAL_RESPONSE_NORMALIZATION: {
+            if (op.inputs.size() == 6 && input == 5) {
+                return true;
+            }
+        } break;
+        case OperationType::SOFTMAX: {
+            if (op.inputs.size() == 3 && input == 2) {
+                return true;
+            }
+        } break;
+        default:
+            break;
+    }
+    return false;
+}
+
 static void removeOperationInputTest(const sp<IDevice>& device, const Model& model) {
     for (size_t operation = 0; operation < model.operations.size(); ++operation) {
         for (size_t input = 0; input < model.operations[operation].inputs.size(); ++input) {
             const Operation& op = model.operations[operation];
-            // CONCATENATION has at least 2 inputs, with the last element being
-            // INT32. Skip this test if removing one of CONCATENATION's
-            // inputs still produces a valid model.
-            if (op.type == OperationType::CONCATENATION && op.inputs.size() > 2 &&
-                input != op.inputs.size() - 1) {
+            if (removeOperationInputSkip(op, input)) {
                 continue;
             }
             const std::string message = "removeOperationInputTest: operation " +
@@ -479,12 +571,13 @@ static void removeOperationOutputTest(const sp<IDevice>& device, const Model& mo
 
 ///////////////////////// ADD OPERATION INPUT /////////////////////////
 
-static bool addOperationInputSkip(const Operation& operation) {
+static bool addOperationInputSkip(const Operation& op) {
     // Skip addOperationInputTest for the following operations.
-    // L2_NORMALIZATION, LOCAL_RESPONSE_NORMALIZATION, SOFTMAX can have an optional axis parameter.
-    if (operation.type == OperationType::L2_NORMALIZATION ||
-        operation.type == OperationType::LOCAL_RESPONSE_NORMALIZATION ||
-        operation.type == OperationType::SOFTMAX) {
+    // - L2_NORMALIZATION, LOCAL_RESPONSE_NORMALIZATION, SOFTMAX can have an optional INT32 axis
+    //   parameter.
+    if ((op.type == OperationType::L2_NORMALIZATION && op.inputs.size() == 1) ||
+        (op.type == OperationType::LOCAL_RESPONSE_NORMALIZATION && op.inputs.size() == 5) ||
+        (op.type == OperationType::SOFTMAX && op.inputs.size() == 2)) {
         return true;
     }
     return false;
