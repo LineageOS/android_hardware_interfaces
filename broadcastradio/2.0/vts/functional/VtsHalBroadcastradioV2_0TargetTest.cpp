@@ -512,12 +512,12 @@ TEST_F(BroadcastRadioHalTest, Seek) {
     // TODO(b/69958777): see FmTune workaround
     std::this_thread::sleep_for(gTuneWorkaround);
 
-    EXPECT_TIMEOUT_CALL(*mCallback, onCurrentProgramInfoChanged_, _);
+    EXPECT_TIMEOUT_CALL(*mCallback, onCurrentProgramInfoChanged_, _).Times(AnyNumber());
     auto result = mSession->scan(true /* up */, true /* skip subchannel */);
     EXPECT_EQ(Result::OK, result);
     EXPECT_TIMEOUT_CALL_WAIT(*mCallback, onCurrentProgramInfoChanged_, timeout::tune);
 
-    EXPECT_TIMEOUT_CALL(*mCallback, onCurrentProgramInfoChanged_, _);
+    EXPECT_TIMEOUT_CALL(*mCallback, onCurrentProgramInfoChanged_, _).Times(AnyNumber());
     result = mSession->scan(false /* down */, false /* don't skip subchannel */);
     EXPECT_EQ(Result::OK, result);
     EXPECT_TIMEOUT_CALL_WAIT(*mCallback, onCurrentProgramInfoChanged_, timeout::tune);
@@ -546,7 +546,7 @@ TEST_F(BroadcastRadioHalTest, Step) {
     EXPECT_EQ(Result::OK, result);
     EXPECT_TIMEOUT_CALL_WAIT(*mCallback, onCurrentProgramInfoChanged_, timeout::tune);
 
-    EXPECT_TIMEOUT_CALL(*mCallback, onCurrentProgramInfoChanged_, _);
+    EXPECT_TIMEOUT_CALL(*mCallback, onCurrentProgramInfoChanged_, _).Times(AnyNumber());
     result = mSession->step(false /* down */);
     EXPECT_EQ(Result::OK, result);
     EXPECT_TIMEOUT_CALL_WAIT(*mCallback, onCurrentProgramInfoChanged_, timeout::tune);
