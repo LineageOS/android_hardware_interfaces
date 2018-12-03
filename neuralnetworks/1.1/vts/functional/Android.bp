@@ -14,40 +14,21 @@
 // limitations under the License.
 //
 
+// Tests for V1_0 models using the V1_1 HAL.
+cc_test {
+    name: "VtsHalNeuralnetworksV1_1CompatV1_0TargetTest",
+    defaults: ["VtsHalNeuralNetworksTargetTestDefaults"],
+    srcs: [
+        "GeneratedTestsV1_0.cpp",
+    ],
+}
+
+// Tests for V1_1 models.
 cc_test {
     name: "VtsHalNeuralnetworksV1_1TargetTest",
+    defaults: ["VtsHalNeuralNetworksTargetTestDefaults"],
     srcs: [
         "BasicTests.cpp",
         "GeneratedTests.cpp",
-        "ValidateModel.cpp",
-        "ValidateRequest.cpp",
-        "ValidationTests.cpp",
-        "VtsHalNeuralnetworks.cpp",
     ],
-    defaults: ["VtsHalTargetTestDefaults"],
-    static_libs: [
-        "android.hardware.neuralnetworks@1.0",
-        "android.hardware.neuralnetworks@1.1",
-        "android.hardware.neuralnetworks@1.2",
-        "android.hidl.allocator@1.0",
-        "android.hidl.memory@1.0",
-        "libgmock",
-        "libhidlmemory",
-        "libneuralnetworks_utils",
-        "VtsHalNeuralnetworksTest_utils",
-    ],
-    header_libs: [
-        "libneuralnetworks_headers",
-        "libneuralnetworks_generated_test_harness_headers",
-        "libneuralnetworks_generated_tests",
-    ],
-    // Bug: http://b/74200014 - Disable arm32 asan since it triggers internal
-    // error in ld.gold.
-    arch: {
-        arm: {
-            sanitize: {
-                never: true,
-            },
-        },
-    },
 }

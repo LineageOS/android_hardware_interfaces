@@ -39,17 +39,14 @@ cc_library_static {
     ],
 }
 
-cc_test {
-    name: "VtsHalNeuralnetworksV1_0TargetTest",
+cc_defaults {
+    name: "VtsHalNeuralNetworksTargetTestDefaults",
+    defaults: ["VtsHalTargetTestDefaults"],
     srcs: [
-        "BasicTests.cpp",
-        "GeneratedTests.cpp",
         "ValidateModel.cpp",
         "ValidateRequest.cpp",
-        "ValidationTests.cpp",
         "VtsHalNeuralnetworks.cpp",
     ],
-    defaults: ["VtsHalTargetTestDefaults"],
     static_libs: [
         "android.hardware.neuralnetworks@1.0",
         "android.hardware.neuralnetworks@1.1",
@@ -65,5 +62,23 @@ cc_test {
         "libneuralnetworks_headers",
         "libneuralnetworks_generated_test_harness_headers",
         "libneuralnetworks_generated_tests",
+    ],
+    // Bug: http://b/74200014 - Disable arm32 asan since it triggers internal
+    // error in ld.gold.
+    arch: {
+        arm: {
+            sanitize: {
+                never: true,
+            },
+        },
+    },
+}
+
+cc_test {
+    name: "VtsHalNeuralnetworksV1_0TargetTest",
+    defaults: ["VtsHalNeuralNetworksTargetTestDefaults"],
+    srcs: [
+        "BasicTests.cpp",
+        "GeneratedTests.cpp",
     ],
 }

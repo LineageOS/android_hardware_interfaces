@@ -16,35 +16,43 @@
 
 #define LOG_TAG "neuralnetworks_hidl_hal_test"
 
-#include "Models.h"
 #include "VtsHalNeuralnetworks.h"
+
+#include "Callbacks.h"
+#include "TestHarness.h"
+#include "Utils.h"
+
+#include <android-base/logging.h>
+#include <android/hidl/memory/1.0/IMemory.h>
+#include <hidlmemory/mapping.h>
 
 namespace android {
 namespace hardware {
 namespace neuralnetworks {
-namespace V1_0 {
+
+namespace generated_tests {
+using ::test_helper::MixedTypedExample;
+extern void Execute(const sp<V1_2::IDevice>&, std::function<V1_2::Model(void)>,
+                    std::function<bool(int)>, const std::vector<MixedTypedExample>&);
+}  // namespace generated_tests
+
+namespace V1_2 {
 namespace vts {
 namespace functional {
 
-// forward declarations
-std::vector<Request> createRequests(const std::vector<::test_helper::MixedTypedExample>& examples);
+using ::android::hardware::neuralnetworks::V1_0::implementation::ExecutionCallback;
+using ::android::hardware::neuralnetworks::V1_0::implementation::PreparedModelCallback;
+using ::android::nn::allocateSharedMemory;
+using ::test_helper::MixedTypedExample;
 
-// generate validation tests
-#define VTS_CURRENT_TEST_CASE(TestName)                                           \
-    TEST_F(ValidationTest, TestName) {                                            \
-        const Model model = TestName::createTestModel();                          \
-        const std::vector<Request> requests = createRequests(TestName::examples); \
-        validateModel(model);                                                     \
-        validateRequests(model, requests);                                        \
-    }
+std::vector<Request> createRequests(const std::vector<MixedTypedExample>& examples);
 
-FOR_EACH_TEST_MODEL(VTS_CURRENT_TEST_CASE)
-
-#undef VTS_CURRENT_TEST_CASE
+// in frameworks/ml/nn/runtime/tests/generated/
+#include "all_generated_V1_1_vts_tests.cpp"
 
 }  // namespace functional
 }  // namespace vts
-}  // namespace V1_0
+}  // namespace V1_2
 }  // namespace neuralnetworks
 }  // namespace hardware
 }  // namespace android
