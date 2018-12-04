@@ -71,9 +71,10 @@ enum ThrottlingSeverity : uint32_t {
     CRITICAL,
 
     /**
-     * User should be warned before shutdown.
+     * Key components in platform are shutting down due to thermal condition.
+     * Device functionalities will be limited.
      */
-    WARNING,
+    EMERGENCY,
 
     /**
      * Need shutdown immediately.
