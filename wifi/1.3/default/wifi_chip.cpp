@@ -561,6 +561,13 @@ Return<void> WifiChip::resetTxPowerScenario(
                            hidl_status_cb);
 }
 
+Return<void> WifiChip::setLatencyMode(LatencyMode mode,
+                                      setLatencyMode_cb hidl_status_cb) {
+    return validateAndCall(this, WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
+                           &WifiChip::setLatencyModeInternal, hidl_status_cb,
+                           mode);
+}
+
 Return<void> WifiChip::registerEventCallback_1_2(
     const sp<V1_2::IWifiChipEventCallback>& event_callback,
     registerEventCallback_cb hidl_status_cb) {
@@ -574,6 +581,12 @@ Return<void> WifiChip::selectTxPowerScenario_1_2(
     return validateAndCall(this, WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
                            &WifiChip::selectTxPowerScenarioInternal_1_2,
                            hidl_status_cb, scenario);
+}
+
+Return<void> WifiChip::getCapabilities_1_3(getCapabilities_cb hidl_status_cb) {
+    return validateAndCall(this, WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
+                           &WifiChip::getCapabilitiesInternal_1_3,
+                           hidl_status_cb);
 }
 
 Return<void> WifiChip::debug(const hidl_handle& handle,
@@ -618,6 +631,11 @@ WifiStatus WifiChip::registerEventCallbackInternal(
 }
 
 std::pair<WifiStatus, uint32_t> WifiChip::getCapabilitiesInternal() {
+    // Deprecated support for this callback.
+    return {createWifiStatus(WifiStatusCode::ERROR_NOT_SUPPORTED), 0};
+}
+
+std::pair<WifiStatus, uint32_t> WifiChip::getCapabilitiesInternal_1_3() {
     legacy_hal::wifi_error legacy_status;
     uint32_t legacy_feature_set;
     uint32_t legacy_logger_feature_set;
@@ -1055,6 +1073,13 @@ WifiStatus WifiChip::selectTxPowerScenarioInternal(
 WifiStatus WifiChip::resetTxPowerScenarioInternal() {
     auto legacy_status =
         legacy_hal_.lock()->resetTxPowerScenario(getWlan0IfaceName());
+    return createWifiStatusFromLegacyError(legacy_status);
+}
+
+WifiStatus WifiChip::setLatencyModeInternal(LatencyMode mode) {
+    auto legacy_status = legacy_hal_.lock()->setLatencyMode(
+        getWlan0IfaceName(),
+        hidl_struct_util::convertHidlLatencyModeToLegacy(mode));
     return createWifiStatusFromLegacyError(legacy_status);
 }
 
