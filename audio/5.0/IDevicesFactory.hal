@@ -1,0 +1,70 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.audio@5.0;
+
+import android.hardware.audio.common@5.0;
+import IDevice;
+import IPrimaryDevice;
+
+/** This factory allows a HAL implementation to be split in multiple independent
+ *  devices (called module in the pre-treble API).
+ *  Note that this division is arbitrary and implementation are free
+ *  to only have a Primary.
+ *  The framework will query the devices according to audio_policy_configuration.xml
+ *
+ *  Each device name is arbitrary, provided by the vendor's audio_policy_configuration.xml
+ *  and only used to identify a device in this factory.
+ *  The framework must not interpret the name, treating it as a vendor opaque data
+ *  with the following exception:
+ *  - the "r_submix" device that must be present to support policyMixes (Eg: Android projected).
+ *    Note that this Device is included by default in a build derived from AOSP.
+ *
+ *  Note that on AOSP Oreo (including MR1) the "a2dp" module is not using this API
+ *  but is loaded directly from the system partition using the legacy API
+ *  due to limitations with the Bluetooth framework.
+ */
+interface IDevicesFactory {
+
+    /**
+     * Opens an audio device. To close the device, it is necessary to release
+     * references to the returned device object.
+     *
+     * @param device device name.
+     * @return retval operation completion status. Returns INVALID_ARGUMENTS
+     *         if there is no corresponding hardware module found,
+     *         NOT_INITIALIZED if an error occured while opening the hardware
+     *         module.
+     * @return result the interface for the created device.
+     */
+    openDevice(string device) generates (Result retval, IDevice result);
+
+    /**
+     * Opens the Primary audio device that must be present.
+     * This function is not optional and must return successfully the primary device.
+     *
+     * This device must have the name "primary".
+     *
+     * The telephony stack uses this device to control the audio during a voice call.
+     *
+     * @return retval operation completion status. Must be SUCCESS.
+     *         For debuging, return INVALID_ARGUMENTS if there is no corresponding
+     *         hardware module found, NOT_INITIALIZED if an error occurred
+     *         while opening the hardware module.
+     * @return result the interface for the created device.
+     */
+    openPrimaryDevice() generates (Result retval, IPrimaryDevice result);
+};
