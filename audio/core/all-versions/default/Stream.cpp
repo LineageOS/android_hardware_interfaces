@@ -113,7 +113,7 @@ Return<void> Stream::getSupportedSampleRates(AudioFormat format,
     }
 #if MAJOR_VERSION == 2
     _hidl_cb(sampleRates);
-#elif MAJOR_VERSION == 4
+#elif MAJOR_VERSION >= 4
     _hidl_cb(result, sampleRates);
 #endif
     return Void();
@@ -142,7 +142,7 @@ Return<void> Stream::getSupportedChannelMasks(AudioFormat format,
     }
 #if MAJOR_VERSION == 2
     _hidl_cb(channelMasks);
-#elif MAJOR_VERSION == 4
+#elif MAJOR_VERSION >= 4
     _hidl_cb(result, channelMasks);
 #endif
     return Void();
@@ -246,7 +246,7 @@ Return<Result> Stream::setConnectedState(const DeviceAddress& address, bool conn
         connected ? AudioParameter::keyStreamConnect : AudioParameter::keyStreamDisconnect,
         address);
 }
-#elif MAJOR_VERSION == 4
+#elif MAJOR_VERSION >= 4
 Return<void> Stream::getDevices(getDevices_cb _hidl_cb) {
     int device = 0;
     Result retval = getParam(AudioParameter::keyRouting, &device);

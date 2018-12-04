@@ -67,3 +67,21 @@ cc_test {
         "-include common/all-versions/VersionMacro.h",
     ]
 }
+
+cc_test {
+    name: "VtsHalAudioV5_0TargetTest",
+    defaults: ["VtsHalAudioTargetTest_defaults"],
+    srcs: [
+        // for now the tests are the same as V4
+        "4.0/AudioPrimaryHidlHalTest.cpp",
+    ],
+    static_libs: [
+        "android.hardware.audio@5.0",
+        "android.hardware.audio.common@5.0",
+    ],
+    cflags: [
+        "-DMAJOR_VERSION=5",
+        "-DMINOR_VERSION=0",
+        "-include common/all-versions/VersionMacro.h",
+    ]
+}

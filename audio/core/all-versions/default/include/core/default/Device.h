@@ -63,6 +63,9 @@ using ::android::hardware::audio::CPP_VERSION::Result;
 #if MAJOR_VERSION == 4
 using ::android::hardware::audio::CPP_VERSION::SinkMetadata;
 using ::android::hardware::audio::CPP_VERSION::SourceMetadata;
+#elif MAJOR_VERSION >= 5
+using ::android::hardware::audio::common::CPP_VERSION::SinkMetadata;
+using ::android::hardware::audio::common::CPP_VERSION::SourceMetadata;
 #endif
 
 struct Device : public IDevice, public ParametersUtil {
@@ -87,7 +90,7 @@ struct Device : public IDevice, public ParametersUtil {
     Return<void> openOutputStream(int32_t ioHandle, const DeviceAddress& device,
                                   const AudioConfig& config, AudioOutputFlagBitfield flags,
                                   openOutputStream_cb _hidl_cb) override;
-#elif MAJOR_VERSION == 4
+#elif MAJOR_VERSION >= 4
     Return<void> openOutputStream(int32_t ioHandle, const DeviceAddress& device,
                                   const AudioConfig& config, AudioOutputFlagBitfield flags,
                                   const SourceMetadata& sourceMetadata,
@@ -114,7 +117,7 @@ struct Device : public IDevice, public ParametersUtil {
                                getParameters_cb _hidl_cb) override;
     Return<Result> setParameters(const hidl_vec<ParameterValue>& parameters) override;
     Return<void> debugDump(const hidl_handle& fd) override;
-#elif MAJOR_VERSION == 4
+#elif MAJOR_VERSION >= 4
     Return<void> getHwAvSync(getHwAvSync_cb _hidl_cb) override;
     Return<void> getParameters(const hidl_vec<ParameterValue>& context,
                                const hidl_vec<hidl_string>& keys,

@@ -67,7 +67,7 @@ struct PrimaryDevice : public IPrimaryDevice {
 
     Return<void> openOutputStream(int32_t ioHandle, const DeviceAddress& device,
                                   const AudioConfig& config, AudioOutputFlagBitfield flags,
-#if MAJOR_VERSION == 4
+#if MAJOR_VERSION >= 4
                                   const SourceMetadata& sourceMetadata,
 #endif
                                   openOutputStream_cb _hidl_cb) override;
@@ -75,7 +75,7 @@ struct PrimaryDevice : public IPrimaryDevice {
     Return<void> openInputStream(int32_t ioHandle, const DeviceAddress& device,
                                  const AudioConfig& config, AudioInputFlagBitfield flags,
                                  AudioSource source, openInputStream_cb _hidl_cb);
-#if MAJOR_VERSION == 4
+#if MAJOR_VERSION >= 4
     Return<void> openInputStream(int32_t ioHandle, const DeviceAddress& device,
                                  const AudioConfig& config, AudioInputFlagBitfield flags,
                                  const SinkMetadata& sinkMetadata,
@@ -98,7 +98,7 @@ struct PrimaryDevice : public IPrimaryDevice {
                                getParameters_cb _hidl_cb) override;
     Return<Result> setParameters(const hidl_vec<ParameterValue>& parameters) override;
     Return<void> debugDump(const hidl_handle& fd) override;
-#elif MAJOR_VERSION == 4
+#elif MAJOR_VERSION >= 4
     Return<void> getHwAvSync(getHwAvSync_cb _hidl_cb) override;
     Return<void> getParameters(const hidl_vec<ParameterValue>& context,
                                const hidl_vec<hidl_string>& keys,
@@ -123,7 +123,7 @@ struct PrimaryDevice : public IPrimaryDevice {
     Return<void> getHacEnabled(getHacEnabled_cb _hidl_cb) override;
     Return<Result> setHacEnabled(bool enabled) override;
 
-#if MAJOR_VERSION == 4
+#if MAJOR_VERSION >= 4
     Return<Result> setBtScoHeadsetDebugName(const hidl_string& name) override;
     Return<void> getBtHfpEnabled(getBtHfpEnabled_cb _hidl_cb) override;
     Return<Result> setBtHfpEnabled(bool enabled) override;

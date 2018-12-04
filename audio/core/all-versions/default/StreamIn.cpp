@@ -267,7 +267,7 @@ Return<Result> StreamIn::setParameters(const hidl_vec<ParameterValue>& parameter
 Return<void> StreamIn::debugDump(const hidl_handle& fd) {
     return mStreamCommon->debugDump(fd);
 }
-#elif MAJOR_VERSION == 4
+#elif MAJOR_VERSION >= 4
 Return<void> StreamIn::getDevices(getDevices_cb _hidl_cb) {
     return mStreamCommon->getDevices(_hidl_cb);
 }
@@ -449,7 +449,7 @@ Return<void> StreamIn::debug(const hidl_handle& fd, const hidl_vec<hidl_string>&
     return mStreamCommon->debug(fd, options);
 }
 
-#if MAJOR_VERSION == 4
+#if MAJOR_VERSION >= 4
 Return<void> StreamIn::updateSinkMetadata(const SinkMetadata& sinkMetadata) {
     if (mStream->update_sink_metadata == nullptr) {
         return Void();  // not supported by the HAL

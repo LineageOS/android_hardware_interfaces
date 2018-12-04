@@ -280,6 +280,19 @@
             <xs:enumeration value="AUDIO_DEVICE_IN_STUB"/>
         </xs:restriction>
     </xs:simpleType>
+    <xs:simpleType name="vendorExtension">
+        <!-- Vendor extension names must be prefixed by "VX_" to distinguish them from AOSP values.
+             Vendor are encouraged to namespace their module names to avoid conflicts.
+             Example for an hypothetical Google virtual reality device:
+                <devicePort tagName="VR" type="VX_GOOGLE_VR" role="sink">
+        -->
+        <xs:restriction base="xs:string">
+            <xs:pattern value="VX_[_a-zA-Z0-9]+"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="extendableAudioDevice">
+        <xs:union memberTypes="audioDevice vendorExtension"/>
+    </xs:simpleType>
     <!-- Enum values of audio_format_t in audio.h
          TODO: generate from hidl to avoid manual sync. -->
     <xs:simpleType name="audioFormat">
@@ -346,6 +359,9 @@
             <xs:enumeration value="AUDIO_FORMAT_LDAC"/>
         </xs:restriction>
     </xs:simpleType>
+    <xs:simpleType name="extendableAudioFormat">
+        <xs:union memberTypes="audioFormat vendorExtension"/>
+    </xs:simpleType>
     <!-- Enum values of audio::common::4_0::AudioUsage
          TODO: generate from HIDL to avoid manual sync. -->
     <xs:simpleType name="audioUsage">
@@ -388,7 +404,7 @@
     </xs:simpleType>
     <xs:complexType name="profile">
         <xs:attribute name="name" type="xs:token" use="optional"/>
-        <xs:attribute name="format" type="audioFormat" use="optional"/>
+        <xs:attribute name="format" type="extendableAudioFormat" use="optional"/>
         <xs:attribute name="samplingRates" type="samplingRates" use="optional"/>
         <xs:attribute name="channelMasks" type="channelMask" use="optional"/>
     </xs:complexType>
@@ -425,7 +441,7 @@
                         <xs:element name="gains" type="gains" minOccurs="0"/>
                     </xs:sequence>
                     <xs:attribute name="tagName" type="xs:token" use="required"/>
-                    <xs:attribute name="type" type="audioDevice" use="required"/>
+                    <xs:attribute name="type" type="extendableAudioDevice" use="required"/>
                     <xs:attribute name="role" type="role" use="required"/>
                     <xs:attribute name="address" type="xs:string" use="optional" default=""/>
                     <!-- Note that XSD 1.0 can not check that a type only has one default. -->

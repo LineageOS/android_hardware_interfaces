@@ -139,7 +139,7 @@ Return<void> Device::getInputBufferSize(const AudioConfig& config, getInputBuffe
 
 Return<void> Device::openOutputStream(int32_t ioHandle, const DeviceAddress& device,
                                       const AudioConfig& config, AudioOutputFlagBitfield flags,
-#if MAJOR_VERSION == 4
+#if MAJOR_VERSION >= 4
                                       const SourceMetadata& /* sourceMetadata */,
 #endif
                                       openOutputStream_cb _hidl_cb) {
@@ -197,7 +197,7 @@ Return<void> Device::openInputStream(int32_t ioHandle, const DeviceAddress& devi
     return Void();
 }
 
-#if MAJOR_VERSION == 4
+#if MAJOR_VERSION >= 4
 Return<void> Device::openInputStream(int32_t ioHandle, const DeviceAddress& device,
                                      const AudioConfig& config, AudioInputFlagBitfield flags,
                                      const SinkMetadata& sinkMetadata,
@@ -276,7 +276,7 @@ Return<AudioHwSync> Device::getHwAvSync() {
     Result retval = getParam(AudioParameter::keyHwAvSync, &halHwAvSync);
     return retval == Result::OK ? halHwAvSync : AUDIO_HW_SYNC_INVALID;
 }
-#elif MAJOR_VERSION == 4
+#elif MAJOR_VERSION >= 4
 Return<void> Device::getHwAvSync(getHwAvSync_cb _hidl_cb) {
     int halHwAvSync;
     Result retval = getParam(AudioParameter::keyHwAvSync, &halHwAvSync);
@@ -298,7 +298,7 @@ Return<void> Device::getParameters(const hidl_vec<hidl_string>& keys, getParamet
 Return<Result> Device::setParameters(const hidl_vec<ParameterValue>& parameters) {
     return setParametersImpl({} /* context */, parameters);
 }
-#elif MAJOR_VERSION == 4
+#elif MAJOR_VERSION >= 4
 Return<void> Device::getParameters(const hidl_vec<ParameterValue>& context,
                                    const hidl_vec<hidl_string>& keys, getParameters_cb _hidl_cb) {
     getParametersImpl(context, keys, _hidl_cb);
@@ -323,7 +323,7 @@ Return<void> Device::debug(const hidl_handle& fd, const hidl_vec<hidl_string>& /
     return Void();
 }
 
-#if MAJOR_VERSION == 4
+#if MAJOR_VERSION >= 4
 Return<void> Device::getMicrophones(getMicrophones_cb _hidl_cb) {
     Result retval = Result::NOT_SUPPORTED;
     size_t actual_mics = AUDIO_MICROPHONE_MAX_COUNT;

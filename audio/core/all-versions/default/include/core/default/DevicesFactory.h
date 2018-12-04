@@ -42,7 +42,7 @@ using ::android::hardware::audio::CPP_VERSION::Result;
 struct DevicesFactory : public IDevicesFactory {
 #if MAJOR_VERSION == 2
     Return<void> openDevice(IDevicesFactory::Device device, openDevice_cb _hidl_cb) override;
-#elif MAJOR_VERSION == 4
+#elif MAJOR_VERSION >= 4
     Return<void> openDevice(const hidl_string& device, openDevice_cb _hidl_cb) override;
     Return<void> openPrimaryDevice(openPrimaryDevice_cb _hidl_cb) override;
 #endif

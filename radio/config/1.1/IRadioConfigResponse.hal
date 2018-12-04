@@ -17,37 +17,9 @@
 package android.hardware.radio.config@1.1;
 
 import @1.0::IRadioConfigResponse;
-import @1.1::PhoneCapability;
-import android.hardware.radio@1.0::RadioResponseInfo;
 
 /**
- * Note: IRadioConfig 1.1 is an intermediate layer between Android P and Android Q.
- * It's specifically designed for CBRS related interfaces. All other interfaces
- * for Q should be added in IRadioConfig 1.2.
- *
  * Interface declaring response functions to solicited radio config requests.
  */
 interface IRadioConfigResponse extends @1.0::IRadioConfigResponse {
-    /**
-     * @param info Response info struct containing response type, serial no. and error
-     * @param phoneCapability <@1.1::PhoneCapability> it defines modem's capability for example
-     *        how many logical modems it has, how many data connections it supports.
-     *
-     * Valid errors returned:
-     *   RadioError:NONE
-     *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:INTERNAL_ERR
-     */
-    oneway getPhoneCapabilityResponse(RadioResponseInfo info, PhoneCapability phoneCapability);
-
-    /**
-     * @param info Response info struct containing response type, serial no. and error
-     *
-     * Valid errors returned:
-     *   RadioError:NONE
-     *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:INTERNAL_ERR
-     *   RadioError:INVALID_ARGUMENTS
-     */
-    oneway setPreferredDataModemResponse(RadioResponseInfo info);
 };

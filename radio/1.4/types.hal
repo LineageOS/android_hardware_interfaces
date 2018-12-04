@@ -228,18 +228,18 @@ struct LteVopsInfo {
     bool isEmcBearerSupported;
 };
 
-struct DataRegStateResult {
-    @1.2::DataRegStateResult base;
+/** The parameters of NR 5G Non-Standalone. */
+struct NrIndicators {
     /**
-     * Network capabilities for voice over PS services. This info is valid only
-     * on LTE network and must be present when device is camped on LTE. vopsInfo
-     * will be empty when device is camped only on 2G/3G .
+     * Indicates that if E-UTRA-NR Dual Connectivity (EN-DC) is supported by the primary serving
+     * cell.
+     *
+     * True the primary serving cell is LTE cell and the plmn-InfoList-r15 is present in SIB2 and
+     * at least one bit in this list is true, otherwise this value should be false.
+     *
+     * Reference: 3GPP TS 36.331 v15.2.2 6.3.1 System information blocks.
      */
-    safe_union VopsInfo {
-        Monostate noinit;
-
-        LteVopsInfo lteVopsInfo; // LTE network capability
-    } vopsInfo;
+    bool isEndcAvailable;
 
     /**
      * True if use of dual connectivity with NR is restricted.
@@ -254,6 +254,27 @@ struct DataRegStateResult {
      *            3GPP TS 36.331 v15.2.2 section 6.2.2 SystemInformationBlockType1 message.
      */
     bool isNrAvailable;
+};
+
+struct DataRegStateResult {
+    @1.2::DataRegStateResult base;
+
+    /**
+     * Network capabilities for voice over PS services. This info is valid only on LTE network and
+     * must be present when device is camped on LTE. vopsInfo must be empty when device is camped
+     * only on 2G/3G.
+     */
+    safe_union VopsInfo {
+        Monostate noinit;
+
+        LteVopsInfo lteVopsInfo; // LTE network capability
+    } vopsInfo;
+
+    /**
+     * The parameters of NR 5G Non-Standalone. This value is only valid on E-UTRAN, otherwise
+     * must be empty.
+     */
+    NrIndicators nrIndicators;
 };
 
 /** Contains the configuration of the LTE cell tower. */

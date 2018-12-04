@@ -69,19 +69,18 @@ enum PowerEntityType : uint32_t {
  * given PowerEntity.
  */
 struct PowerEntityInfo {
-    /** ID corresponding to the PowerEntity */
+    /** Unique ID corresponding to the PowerEntity */
     uint32_t powerEntityId;
-    /**
-     * Name of the PowerEntity. This is unique and opaque to the
-     * Android framework
-     */
+    /** Name of the PowerEntity */
     string powerEntityName;
     /** Type of the PowerEntity */
     PowerEntityType type;
 };
 
 struct PowerEntityStateInfo {
-    /** ID corresponding to the state */
+    /**
+     * ID corresponding to the state. Unique for a given PowerEntityStateSpace
+     */
     uint32_t powerEntityStateId;
     /** Name of the state */
     string powerEntityStateName;
@@ -93,7 +92,7 @@ struct PowerEntityStateInfo {
  * PowerEntity provides residency data for.
  */
 struct PowerEntityStateSpace {
-    /** ID of the corresponding PowerEntity */
+    /** Unique ID of the corresponding PowerEntity */
     uint32_t powerEntityId;
 
     /** List of states that the PowerEntity may reside in */
@@ -102,7 +101,7 @@ struct PowerEntityStateSpace {
 
 /** Contains residency data for a single state */
 struct PowerEntityStateResidencyData {
-    /** ID of the corresponding PowerEntityStateInfo */
+    /** Unique ID of the corresponding PowerEntityStateInfo */
     uint32_t powerEntityStateId;
     /**
      * Total time in milliseconds that the corresponding PowerEntity resided
@@ -122,7 +121,7 @@ struct PowerEntityStateResidencyData {
 };
 
 struct PowerEntityStateResidencyResult {
-    /** ID of the corresponding PowerEntity */
+    /** Unique ID of the corresponding PowerEntity */
     uint32_t powerEntityId;
     /** Residency data for each state the PowerEntity's state space */
     vec<PowerEntityStateResidencyData> stateResidencyData;

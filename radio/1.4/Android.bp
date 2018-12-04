@@ -37,6 +37,7 @@ hidl_interface {
         "PhysicalChannelConfig",
         "RadioFrequencyInfo",
         "RadioTechnology",
+        "NrIndicators",
     ],
     gen_java: true,
 }

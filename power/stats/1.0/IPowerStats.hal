@@ -105,9 +105,9 @@ interface IPowerStats {
      * consumption.
      *
      * @return powerEntityInfos List of information on each PowerEntity
-     * @return status SUCCESS on success or NOT_SUPPORTED if
-     *     feature is not enabled or FILESYSTEM_ERROR on filesystem nodes
-     *     access error.
+     * @return status SUCCESS on success, NOT_SUPPORTED if feature is not
+     *     enabled, FILESYSTEM_ERROR if there was an error accessing the
+     *     filesystem.
      */
     getPowerEntityInfo()
         generates(vec<PowerEntityInfo> powerEntityInfos, Status status);
@@ -123,12 +123,11 @@ interface IPowerStats {
      *     information for all PowerEntity(s) pass an empty vector.
      *
      * @return powerEntityStateSpaces PowerEntity state space information for
-     *     each specified PowerEntity.
-     * @return status SUCCESS if powerEntityStateInfos contains state space
-     *     information for at least one PowerEntity, NOT_SUPPORTED if feature
-     *     is not enabled, INVALID_INPUT if no requested PowerEntity(s)
-     *     provide state space information, FILESYSTEM_ERROR if no state space
-     *     information is returned due to filesystem errors.
+     *     each specified PowerEntity that provides state space information.
+     * @return status SUCCESS on success, NOT_SUPPORTED if feature is not
+     *     enabled, FILESYSTEM_ERROR if there was an error accessing the
+     *     filesystem, INVALID_INPUT if any requested PowerEntity(s) do not
+     *     provide state space information and there was not a filesystem error.
      */
     getPowerEntityStateInfo(vec<uint32_t> powerEntityIds)
         generates(vec<PowerEntityStateSpace> powerEntityStateSpaces,
@@ -148,13 +147,12 @@ interface IPowerStats {
      *     residency data is requested. PowerEntity name to ID mapping may
      *     be queried from getPowerEntityInfo(). To get state residency
      *     data for all PowerEntity(s) pass an empty vector.
-     * @return stateResidencyResults state residency data for the
-     *     specified powerEntity(s)
-     * @return status SUCCESS if stateResidencyResults contains residency
-     *     data for at least one PowerEntity, NOT_SUPPORTED if
-     *     feature is not enabled, INVALID_INPUT if no requested
-     *     PowerEntity(s) provide state residency data, FILESYSTEM_ERROR
-     *     if no data is returned due to filesystem errors.
+     * @return stateResidencyResults state residency data for each specified
+     *     PowerEntity that provides state residency data.
+     * @return status SUCCESS on success, NOT_SUPPORTED if feature is not
+     *     enabled, FILESYSTEM_ERROR if there was an error accessing the
+     *     filesystem, INVALID_INPUT if any requested PowerEntity(s) do not
+     *     provide state residency data and there was not a filesystem error.
      */
     getPowerEntityStateResidencyData(vec<uint32_t> powerEntityIds)
         generates(vec<PowerEntityStateResidencyResult> stateResidencyResults,
