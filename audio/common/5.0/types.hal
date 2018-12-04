@@ -706,6 +706,39 @@ struct AudioConfig {
     uint64_t frameCount;
 };
 
+/** Metadata of a playback track for a StreamOut. */
+struct PlaybackTrackMetadata {
+    AudioUsage usage;
+    AudioContentType contentType;
+    /**
+     * Positive linear gain applied to the track samples. 0 being muted and 1 is no attenuation,
+     * 2 means double amplification...
+     * Must not be negative.
+     */
+    float gain;
+};
+
+/** Metadatas of the source of a StreamOut. */
+struct SourceMetadata {
+    vec<PlaybackTrackMetadata> tracks;
+};
+
+/** Metadata of a record track for a StreamIn. */
+struct RecordTrackMetadata {
+    AudioSource source;
+    /**
+     * Positive linear gain applied to the track samples. 0 being muted and 1 is no attenuation,
+     * 2 means double amplification...
+     * Must not be negative.
+     */
+    float gain;
+};
+
+/** Metadatas of the source of a StreamIn. */
+struct SinkMetadata {
+    vec<RecordTrackMetadata> tracks;
+};
+
 
 /*
  *
