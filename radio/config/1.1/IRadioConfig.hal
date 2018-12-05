@@ -1,0 +1,59 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.radio.config@1.1;
+
+import @1.0::IRadioConfig;
+import @1.1::IRadioConfigResponse;
+import @1.1::PhoneCapability;
+
+/**
+ * Note: IRadioConfig 1.1 is an intermediate layer between Android P and Android Q.
+ * It's specifically designed for CBRS related interfaces. All other interfaces
+ * for Q are added in IRadioConfig 1.2.
+ *
+ * This interface is used by telephony and telecom to talk to cellular radio for the purpose of
+ * radio configuration, and it is not associated with any specific modem or slot.
+ * All the functions have minimum one parameter:
+ * serial: which corresponds to serial no. of request. Serial numbers must only be memorized for the
+ * duration of a method call. If clients provide colliding serials (including passing the same
+ * serial to different methods), multiple responses (one for each method call) must still be served.
+ */
+interface IRadioConfig extends @1.0::IRadioConfig {
+   /**
+     * Request current phone capability.
+     *
+     * @param serial Serial number of request.
+     *
+     * Response callback is IRadioResponse.getPhoneCapabilityResponse() which
+     * will return <@1.1::PhoneCapability>.
+     */
+    oneway getPhoneCapability(int32_t serial);
+
+   /**
+     * Set preferred data modem Id.
+     * In a multi-SIM device, notify modem layer which logical modem will be used primarily
+     * for data. It helps modem with resource optimization and decisions of what data connections
+     * should be satisfied.
+     *
+     * @param serial Serial number of request.
+     * @param modem Id the logical modem ID, which should match one of modem IDs returned
+     * from getPhoneCapability().
+     *
+     * Response callback is IRadioConfigResponse.setPreferredDataModemResponse()
+     */
+    oneway setPreferredDataModem(int32_t serial, uint8_t modemId);
+};
