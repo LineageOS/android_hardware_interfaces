@@ -238,6 +238,27 @@ TEST_F(HidlStructUtilTest, canConvertLegacyLinkLayerStatsToHidl) {
                   converted.radios[i].onTimeInMsForHs20Scan);
     }
 }
+
+TEST_F(HidlStructUtilTest, CanConvertLegacyFeaturesToHidl) {
+    using HidlChipCaps = V1_3::IWifiChip::ChipCapabilityMask;
+
+    uint32_t hidle_caps;
+
+    uint32_t legacy_feature_set =
+            WIFI_FEATURE_D2D_RTT | WIFI_FEATURE_SET_LATENCY_MODE;
+    uint32_t legacy_logger_feature_set =
+            legacy_hal::WIFI_LOGGER_DRIVER_DUMP_SUPPORTED;
+
+    ASSERT_TRUE(hidl_struct_util::convertLegacyFeaturesToHidlChipCapabilities(
+        legacy_feature_set, legacy_logger_feature_set, &hidle_caps));
+
+    EXPECT_EQ(HidlChipCaps::DEBUG_RING_BUFFER_VENDOR_DATA |
+                  HidlChipCaps::DEBUG_HOST_WAKE_REASON_STATS |
+                  HidlChipCaps::DEBUG_ERROR_ALERTS | HidlChipCaps::D2D_RTT |
+                  HidlChipCaps::SET_LATENCY_MODE |
+                  HidlChipCaps::DEBUG_MEMORY_DRIVER_DUMP,
+              hidle_caps);
+}
 }  // namespace implementation
 }  // namespace V1_3
 }  // namespace wifi

@@ -254,6 +254,8 @@ class WifiLegacyHal {
     wifi_error selectTxPowerScenario(const std::string& iface_name,
                                      wifi_power_scenario scenario);
     wifi_error resetTxPowerScenario(const std::string& iface_name);
+    wifi_error setLatencyMode(const std::string& iface_name,
+                              wifi_latency_mode mode);
     // Logger/debug functions.
     std::pair<wifi_error, uint32_t> getLoggerSupportedFeatureSet(
         const std::string& iface_name);

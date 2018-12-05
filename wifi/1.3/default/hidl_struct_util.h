@@ -21,9 +21,9 @@
 
 #include <android/hardware/wifi/1.0/IWifiChip.h>
 #include <android/hardware/wifi/1.0/types.h>
-#include <android/hardware/wifi/1.2/IWifiChip.h>
 #include <android/hardware/wifi/1.2/IWifiChipEventCallback.h>
 #include <android/hardware/wifi/1.2/types.h>
+#include <android/hardware/wifi/1.3/IWifiChip.h>
 #include <android/hardware/wifi/1.3/types.h>
 
 #include "wifi_legacy_hal.h"
@@ -57,6 +57,8 @@ bool convertLegacyWakeReasonStatsToHidl(
     WifiDebugHostWakeReasonStats* hidl_stats);
 legacy_hal::wifi_power_scenario convertHidlTxPowerScenarioToLegacy(
     V1_1::IWifiChip::TxPowerScenario hidl_scenario);
+legacy_hal::wifi_latency_mode convertHidlLatencyModeToLegacy(
+    V1_3::IWifiChip::LatencyMode hidl_latency_mode);
 legacy_hal::wifi_power_scenario convertHidlTxPowerScenarioToLegacy_1_2(
     V1_2::IWifiChip::TxPowerScenario hidl_scenario);
 bool convertLegacyWifiMacInfosToHidl(

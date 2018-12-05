@@ -21,7 +21,7 @@
 #include <map>
 
 #include <android-base/macros.h>
-#include <android/hardware/wifi/1.2/IWifiChip.h>
+#include <android/hardware/wifi/1.3/IWifiChip.h>
 
 #include "hidl_callback_util.h"
 #include "ringbuffer.h"
@@ -46,7 +46,7 @@ using namespace android::hardware::wifi::V1_0;
  * Since there is only a single chip instance used today, there is no
  * identifying handle information stored here.
  */
-class WifiChip : public V1_2::IWifiChip {
+class WifiChip : public V1_3::IWifiChip {
    public:
     WifiChip(
         ChipId chip_id,
@@ -137,12 +137,16 @@ class WifiChip : public V1_2::IWifiChip {
         selectTxPowerScenario_cb hidl_status_cb) override;
     Return<void> resetTxPowerScenario(
         resetTxPowerScenario_cb hidl_status_cb) override;
+    Return<void> setLatencyMode(LatencyMode mode,
+                                setLatencyMode_cb hidl_status_cb) override;
     Return<void> registerEventCallback_1_2(
         const sp<V1_2::IWifiChipEventCallback>& event_callback,
         registerEventCallback_1_2_cb hidl_status_cb) override;
     Return<void> selectTxPowerScenario_1_2(
         TxPowerScenario scenario,
         selectTxPowerScenario_cb hidl_status_cb) override;
+    Return<void> getCapabilities_1_3(
+        getCapabilities_cb hidl_status_cb) override;
     Return<void> debug(const hidl_handle& handle,
                        const hidl_vec<hidl_string>& options) override;
 
@@ -201,9 +205,11 @@ class WifiChip : public V1_2::IWifiChip {
     WifiStatus selectTxPowerScenarioInternal(
         V1_1::IWifiChip::TxPowerScenario scenario);
     WifiStatus resetTxPowerScenarioInternal();
+    WifiStatus setLatencyModeInternal(LatencyMode mode);
     WifiStatus registerEventCallbackInternal_1_2(
         const sp<V1_2::IWifiChipEventCallback>& event_callback);
     WifiStatus selectTxPowerScenarioInternal_1_2(TxPowerScenario scenario);
+    std::pair<WifiStatus, uint32_t> getCapabilitiesInternal_1_3();
     WifiStatus handleChipConfiguration(
         std::unique_lock<std::recursive_mutex>* lock, ChipModeId mode_id);
     WifiStatus registerDebugRingBufferCallback();

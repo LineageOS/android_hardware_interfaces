@@ -577,14 +577,6 @@ TEST_F(GraphicsComposerHidlTest, SetPowerModeVariations) {
     }
 
     modes.clear();
-
-    modes.push_back(IComposerClient::PowerMode::ON);
-    modes.push_back(IComposerClient::PowerMode::ON);
-    for (auto mode : modes) {
-        ASSERT_NO_FATAL_FAILURE(mComposerClient->setPowerMode(mPrimaryDisplay, mode));
-    }
-
-    modes.clear();
     if (mComposerClient->getDozeSupport(mPrimaryDisplay)) {
         modes.push_back(IComposerClient::PowerMode::DOZE);
         modes.push_back(IComposerClient::PowerMode::DOZE);
@@ -601,6 +593,14 @@ TEST_F(GraphicsComposerHidlTest, SetPowerModeVariations) {
         for (auto mode : modes) {
             ASSERT_NO_FATAL_FAILURE(mComposerClient->setPowerMode(mPrimaryDisplay, mode));
         }
+    }
+
+    modes.clear();
+
+    modes.push_back(IComposerClient::PowerMode::ON);
+    modes.push_back(IComposerClient::PowerMode::ON);
+    for (auto mode : modes) {
+        ASSERT_NO_FATAL_FAILURE(mComposerClient->setPowerMode(mPrimaryDisplay, mode));
     }
 }
 

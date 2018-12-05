@@ -3,9 +3,6 @@
 hidl_interface {
     name: "android.hardware.audio.effect@5.0",
     root: "android.hardware",
-    vndk: {
-        enabled: true,
-    },
     srcs: [
         "types.hal",
         "IAcousticEchoCancelerEffect.hal",
