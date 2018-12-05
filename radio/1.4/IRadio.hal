@@ -16,11 +16,11 @@
 
 package android.hardware.radio@1.4;
 
-import @1.4::DataProfileInfo;
 import @1.0::Dial;
 import @1.2::DataRequestReason;
 import @1.3::IRadio;
 import @1.4::AccessNetwork;
+import @1.4::DataProfileInfo;
 import @1.4::EmergencyServiceCategory;
 
 /**
