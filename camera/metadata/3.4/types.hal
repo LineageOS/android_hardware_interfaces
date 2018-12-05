@@ -26,7 +26,34 @@ package android.hardware.camera.metadata@3.4;
 import android.hardware.camera.metadata@3.2;
 import android.hardware.camera.metadata@3.3;
 
-// No new metadata sections added in this revision
+/**
+ * Top level hierarchy definitions for camera metadata. *_INFO sections are for
+ * the static metadata that can be retrived without opening the camera device.
+ */
+enum CameraMetadataSection : @3.3::CameraMetadataSection {
+    ANDROID_HEIC =
+        android.hardware.camera.metadata@3.3::CameraMetadataSection:ANDROID_SECTION_COUNT,
+
+    ANDROID_HEIC_INFO,
+
+    ANDROID_SECTION_COUNT_3_4,
+
+    VENDOR_SECTION_3_4 = 0x8000,
+
+};
+
+/**
+ * Hierarchy positions in enum space. All vendor extension sections must be
+ * defined with tag >= VENDOR_SECTION_START
+ */
+enum CameraMetadataSectionStart : android.hardware.camera.metadata@3.3::CameraMetadataSectionStart {
+    ANDROID_HEIC_START = CameraMetadataSection:ANDROID_HEIC << 16,
+
+    ANDROID_HEIC_INFO_START = CameraMetadataSection:ANDROID_HEIC_INFO << 16,
+
+    VENDOR_SECTION_START_3_4 = CameraMetadataSection:VENDOR_SECTION_3_4 << 16,
+
+};
 
 /**
  * Main enumeration for defining camera metadata tags added in this revision
@@ -105,6 +132,47 @@ enum CameraMetadataTag : @3.3::CameraMetadataTag {
 
     ANDROID_LOGICAL_MULTI_CAMERA_END_3_4,
 
+    /** android.heic.availableHeicStreamConfigurations [static, enum[], ndk_public]
+     *
+     * <p>The available HEIC (ISO/IEC 23008-12) stream
+     * configurations that this camera device supports
+     * (i.e. format, width, height, output/input stream).</p>
+     */
+    ANDROID_HEIC_AVAILABLE_HEIC_STREAM_CONFIGURATIONS = CameraMetadataSectionStart:ANDROID_HEIC_START,
+
+    /** android.heic.availableHeicMinFrameDurations [static, int64[], ndk_public]
+     *
+     * <p>This lists the minimum frame duration for each
+     * format/size combination for HEIC output formats.</p>
+     */
+    ANDROID_HEIC_AVAILABLE_HEIC_MIN_FRAME_DURATIONS,
+
+    /** android.heic.availableHeicStallDurations [static, int64[], ndk_public]
+     *
+     * <p>This lists the maximum stall duration for each
+     * output format/size combination for HEIC streams.</p>
+     */
+    ANDROID_HEIC_AVAILABLE_HEIC_STALL_DURATIONS,
+
+    ANDROID_HEIC_END_3_4,
+
+    /** android.heic.info.supported [static, enum, system]
+     *
+     * <p>Whether this camera device can support identical set of stream combinations
+     * involving HEIC image format, compared to the
+     * <a href="https://developer.android.com/reference/android/hardware/camera2/CameraDevice.html#createCaptureSession">table of combinations</a>
+     * involving JPEG image format required for the device's hardware level and capabilities.</p>
+     */
+    ANDROID_HEIC_INFO_SUPPORTED = CameraMetadataSectionStart:ANDROID_HEIC_INFO_START,
+
+    /** android.heic.info.maxJpegAppSegmentsCount [static, byte, system]
+     *
+     * <p>The maximum number of Jpeg APP segments supported by the camera HAL device.</p>
+     */
+    ANDROID_HEIC_INFO_MAX_JPEG_APP_SEGMENTS_COUNT,
+
+    ANDROID_HEIC_INFO_END_3_4,
+
 };
 
 /*
@@ -165,4 +233,20 @@ enum CameraMetadataEnumAndroidInfoSupportedBufferManagementVersion : uint32_t {
 enum CameraMetadataEnumAndroidDepthAvailableDynamicDepthStreamConfigurations : uint32_t {
     ANDROID_DEPTH_AVAILABLE_DYNAMIC_DEPTH_STREAM_CONFIGURATIONS_OUTPUT,
     ANDROID_DEPTH_AVAILABLE_DYNAMIC_DEPTH_STREAM_CONFIGURATIONS_INPUT,
+};
+
+/** android.heic.availableHeicStreamConfigurations enumeration values
+ * @see ANDROID_HEIC_AVAILABLE_HEIC_STREAM_CONFIGURATIONS
+ */
+enum CameraMetadataEnumAndroidHeicAvailableHeicStreamConfigurations : uint32_t {
+    ANDROID_HEIC_AVAILABLE_HEIC_STREAM_CONFIGURATIONS_OUTPUT,
+    ANDROID_HEIC_AVAILABLE_HEIC_STREAM_CONFIGURATIONS_INPUT,
+};
+
+/** android.heic.info.supported enumeration values
+ * @see ANDROID_HEIC_INFO_SUPPORTED
+ */
+enum CameraMetadataEnumAndroidHeicInfoSupported : uint32_t {
+    ANDROID_HEIC_INFO_SUPPORTED_FALSE,
+    ANDROID_HEIC_INFO_SUPPORTED_TRUE,
 };
