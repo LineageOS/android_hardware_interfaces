@@ -152,6 +152,7 @@ static void mutateOperandTypeTest(const sp<IDevice>& device, const Model& model)
 
 static uint32_t getInvalidRank(OperandType type) {
     switch (type) {
+        case OperandType::FLOAT16:
         case OperandType::FLOAT32:
         case OperandType::INT32:
         case OperandType::UINT32:
@@ -183,6 +184,7 @@ static void mutateOperandRankTest(const sp<IDevice>& device, const Model& model)
 
 static float getInvalidScale(OperandType type) {
     switch (type) {
+        case OperandType::FLOAT16:
         case OperandType::FLOAT32:
         case OperandType::INT32:
         case OperandType::UINT32:
@@ -215,6 +217,7 @@ static void mutateOperandScaleTest(const sp<IDevice>& device, const Model& model
 
 static std::vector<int32_t> getInvalidZeroPoints(OperandType type) {
     switch (type) {
+        case OperandType::FLOAT16:
         case OperandType::FLOAT32:
         case OperandType::INT32:
         case OperandType::UINT32:
@@ -258,6 +261,7 @@ static void mutateOperand(Operand* operand, OperandType type) {
     Operand newOperand = *operand;
     newOperand.type = type;
     switch (type) {
+        case OperandType::FLOAT16:
         case OperandType::FLOAT32:
         case OperandType::INT32:
         case OperandType::UINT32:
