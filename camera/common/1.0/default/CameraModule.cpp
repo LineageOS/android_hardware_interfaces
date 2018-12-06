@@ -452,6 +452,16 @@ int CameraModule::setTorchMode(const char* camera_id, bool enable) {
     return res;
 }
 
+int CameraModule::isStreamCombinationSupported(int cameraId, camera_stream_combination_t *streams) {
+    int res = INVALID_OPERATION;
+    if (mModule->is_stream_combination_supported != NULL) {
+        ATRACE_BEGIN("camera_module->is_stream_combination_supported");
+        res = mModule->is_stream_combination_supported(cameraId, streams);
+        ATRACE_END();
+    }
+    return res;
+}
+
 status_t CameraModule::filterOpenErrorCode(status_t err) {
     switch(err) {
         case NO_ERROR:

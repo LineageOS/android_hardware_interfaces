@@ -193,13 +193,16 @@ protected:
     int configureV4l2StreamLocked(const SupportedV4L2Format& fmt, double fps = 0.0);
     int v4l2StreamOffLocked();
     int setV4l2FpsLocked(double fps);
+    static Status isStreamCombinationSupported(const V3_2::StreamConfiguration& config,
+            const std::vector<SupportedV4L2Format>& supportedFormats);
 
     // TODO: change to unique_ptr for better tracking
     sp<V4L2Frame> dequeueV4l2FrameLocked(/*out*/nsecs_t* shutterTs); // Called with mLock hold
     void enqueueV4l2Frame(const sp<V4L2Frame>&);
 
     // Check if input Stream is one of supported stream setting on this device
-    bool isSupported(const Stream&);
+    static bool isSupported(const Stream& stream,
+            const std::vector<SupportedV4L2Format>& supportedFormats);
 
     // Validate and import request's output buffers and acquire fence
     virtual Status importRequestLocked(

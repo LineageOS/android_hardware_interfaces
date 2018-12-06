@@ -95,6 +95,57 @@ Return<void> CameraDevice::getPhysicalCameraCharacteristics(const hidl_string& p
     return Void();
 }
 
+Return<void> CameraDevice::isStreamCombinationSupported(const V3_4::StreamConfiguration& streams,
+        V3_5::ICameraDevice::isStreamCombinationSupported_cb _hidl_cb) {
+    Status status;
+    bool streamsSupported = false;
+
+    // Require module 2.5+ version.
+    if (mModule->getModuleApiVersion() < CAMERA_MODULE_API_VERSION_2_5) {
+        ALOGE("%s: is_stream_combination_supported must be called on camera module 2.5 or "\
+                "newer", __FUNCTION__);
+        status = Status::INTERNAL_ERROR;
+    } else {
+        camera_stream_combination_t streamComb{};
+        streamComb.operation_mode = static_cast<uint32_t> (streams.operationMode);
+        streamComb.num_streams = streams.streams.size();
+        camera_stream_t *streamBuffer  = new camera_stream_t[streamComb.num_streams];
+
+        size_t i = 0;
+        for (const auto &it : streams.streams) {
+            streamBuffer[i].stream_type = static_cast<int> (it.v3_2.streamType);
+            streamBuffer[i].width = it.v3_2.width;
+            streamBuffer[i].height = it.v3_2.height;
+            streamBuffer[i].format = static_cast<int> (it.v3_2.format);
+            streamBuffer[i].data_space = static_cast<android_dataspace_t> (it.v3_2.dataSpace);
+            streamBuffer[i].usage = static_cast<uint32_t> (it.v3_2.usage);
+            streamBuffer[i].physical_camera_id = it.physicalCameraId.c_str();
+            streamBuffer[i++].rotation = static_cast<int> (it.v3_2.rotation);
+        }
+        streamComb.streams = streamBuffer;
+        auto res = mModule->isStreamCombinationSupported(mCameraIdInt, &streamComb);
+        switch (res) {
+            case NO_ERROR:
+                streamsSupported = true;
+                status = Status::OK;
+                break;
+            case BAD_VALUE:
+                status = Status::OK;
+                break;
+            case INVALID_OPERATION:
+                status = Status::METHOD_NOT_SUPPORTED;
+                break;
+            default:
+                ALOGE("%s: Unexpected error: %d", __FUNCTION__, res);
+                status = Status::INTERNAL_ERROR;
+        };
+        delete [] streamBuffer;
+    }
+
+    _hidl_cb(status, streamsSupported);
+    return Void();
+}
+
 // End of methods from ::android::hardware::camera::device::V3_2::ICameraDevice.
 
 } // namespace implementation
