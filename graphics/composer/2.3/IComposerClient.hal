@@ -37,7 +37,7 @@ interface IComposerClient extends @2.2::IComposerClient {
         INVALID = 0,
 
         /**
-         * Specifies that the display must a color transform even when
+         * Indicates that the display must apply a color transform even when
          * either the client or the device has chosen that all layers should
          * be composed by the client. This prevents the client from applying
          * the color transform during its composition step.
@@ -51,7 +51,7 @@ interface IComposerClient extends @2.2::IComposerClient {
         SKIP_CLIENT_COLOR_TRANSFORM = 1,
 
         /**
-         * Specifies that the display supports PowerMode::DOZE and
+         * Indicates that the display supports PowerMode::DOZE and
          * PowerMode::DOZE_SUSPEND. DOZE_SUSPEND may not provide any benefit
          * over DOZE (see the definition of PowerMode for more information),
          * but if both DOZE and DOZE_SUSPEND are no different from
