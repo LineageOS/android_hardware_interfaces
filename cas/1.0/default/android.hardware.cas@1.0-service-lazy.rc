@@ -1,4 +1,4 @@
-service vendor.cas-hal-1-0 /vendor/bin/hw/android.hardware.cas@1.0-service
+service vendor.cas-hal-1-0 /vendor/bin/hw/android.hardware.cas@1.0-service-lazy
     interface android.hardware.cas@1.0::IMediaCasService default
     oneshot
     disabled
