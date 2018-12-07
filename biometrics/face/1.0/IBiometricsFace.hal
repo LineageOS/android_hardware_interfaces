@@ -84,7 +84,7 @@ interface IBiometricsFace {
      * @return result, with its "value" parameter representing a "challenge": a
      *     unique and cryptographically secure random token.
      */
-    @callflow(next={"enroll", "revokeChallenge", "setRequireAttention"})
+    @callflow(next={"enroll", "revokeChallenge", "setFeatureDisabled"})
     generateChallenge(uint32_t challengeTimeoutSec)
         generates (OptionalUint64 result);
 
@@ -113,19 +113,12 @@ interface IBiometricsFace {
      * @param timeoutSec A timeout in seconds, after which this enrollment
      *     attempt is cancelled. Note that the client still needs to
      *     call revokeChallenge() to terminate the enrollment session.
-     * @param requireAttention When set to true, requires user attention (e.g.
-     *     eyes open and looking at the device) for enrollment to complete, as
-     *     well as subsequent authentication. This is expected to be enabled by
-     *     default to improve security and decrease falsing (unintentional face
-     *     detection). This feature can be disabled at the user's request
-     *     during enrollment, e.g. for accessibility reasons. When enabled,
-     *     the FaceAcquiredInfo#POOR_GAZE message must be sent when the user's
-     *     attention has not been established. The UI should inform the user
-     *     to look at the device.
+     * @param disabledFeatures A list of features to be disabled during
+     *     enrollment. Note that all features are enabled by default.
      * @return status The status of this method call.
      */
     @callflow(next={"cancel", "enroll", "revokeChallenge", "remove"})
-    enroll(vec<uint8_t> hat, uint32_t timeoutSec, bool requireAttention)
+    enroll(vec<uint8_t> hat, uint32_t timeoutSec, vec<Feature> disabledFeatures)
         generates (Status status);
 
     /**
@@ -141,35 +134,33 @@ interface IBiometricsFace {
     revokeChallenge() generates (Status status);
 
     /**
-     * Requires that all subsequent authenticate calls to first have the
-     * user's attention. This method does not affect enroll, which has its
-     * own requireAttention parameter.
+     * Requires all subsequent enroll/authenticate calls to use the feature.
+     * This method does not affect enroll, which has its own feature list.
      *
      * Changes the state of previous enrollment setting. Because this may
      * decrease security, the user must enter their password before this method
      * is invoked (see @param HAT). The driver must verify the HAT before
-     * changing the requireAttention state.
+     * changing any feature state.
      * Note: In some cases it may not be possible to change the state of this
      * flag without re-enrolling. For example, if the user didn't provide
      * attention during the original enrollment. This flag reflects the same
      * persistent state as the one passed to enroll().
      *
-     * @param requireAttention When set to true, requires user attention for
-     *     authentication to succeed.
+     * @param feature The feature to be enabled or disabled.
+     * @param enabled True to enable the feature, false to disable.
      * @param hat A valid Hardware Authentication Token, generated as a result
      *     of getChallenge().
      * @return status The status of this method call.
      */
-    setRequireAttention(bool requireAttention, vec<uint8_t> hat)
+    setFeature(Feature feature, bool enabled, vec<uint8_t> hat)
         generates(Status status);
 
     /**
-     * Retrieves the current requireAttention state.
+     * Retrieves the current state of the feature.
      *
-     * @return result, with its value parameter representing the current
-     *     requireAttention state.
+     * @return enabled True if the feature is enabled, false if disabled.
      */
-    getRequireAttention(vec<uint8_t> hat) generates (OptionalBool result);
+    getFeature(Feature feature) generates (bool enabled);
 
     /**
      * Returns an identifier associated with the current face set.
