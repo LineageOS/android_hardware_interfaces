@@ -18,6 +18,7 @@ package android.hardware.wifi.supplicant@1.2;
 
 import @1.0::SupplicantStatus;
 import @1.1::ISupplicantStaIface;
+import @1.2::ISupplicantStaIfaceCallback;
 import @1.2::ISupplicantStaNetwork;
 
 /**
@@ -25,6 +26,24 @@ import @1.2::ISupplicantStaNetwork;
  * interface (e.g wlan0) it controls.
  */
 interface ISupplicantStaIface extends @1.1::ISupplicantStaIface {
+    /**
+     * Register for callbacks from this interface.
+     *
+     * These callbacks are invoked for events that are specific to this interface.
+     * Registration of multiple callback objects is supported. These objects must
+     * be automatically deleted when the corresponding client process is dead or
+     * if this interface is removed.
+     *
+     * @param callback An instance of the |ISupplicantStaIfaceCallback| HIDL
+     *        interface object.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+     */
+    registerCallback_1_2(ISupplicantStaIfaceCallback callback)
+        generates (SupplicantStatus status);
 
     /**
      * Get Key management capabilities of the device
@@ -38,5 +57,84 @@ interface ISupplicantStaIface extends @1.1::ISupplicantStaIface {
      */
     getKeyMgmtCapabilities()
         generates (SupplicantStatus status, bitfield<KeyMgmtMask> keyMgmtMask);
-};
 
+    /**
+     * Add a DPP peer URI. URI is acquired externally, e.g. by scanning a QR code
+     *
+     * @param uri Peer's DPP URI.
+     * @return status Status of the operation, and an ID for the URI.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     */
+    addDppPeerUri(string uri)
+        generates (SupplicantStatus status, uint32_t id);
+
+    /**
+     * Remove a DPP peer URI.
+     *
+     * @param id The ID of the URI, as returned by |addDppPeerUri|.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     */
+    removeDppUri(uint32_t id)
+        generates (SupplicantStatus status);
+
+    /**
+     * Start DPP in Configurator-Initiator mode.
+     *
+     * @param peerBootstrapId Peer device's URI ID.
+     * @param ownBootstrapId Local device's URI ID (0 for none, optional).
+     * @param ssid Network SSID to send to peer (SAE/PSK mode).
+     * @param password Network password to send to peer (SAE/PSK mode).
+     * @param psk Network PSK to send to peer (PSK mode only). Either password or psk should be set.
+     * @param netRole Role to configure the peer, |DppNetRole.DPP_NET_ROLE_STA| or
+     *        |DppNetRole.DPP_NET_ROLE_AP|.
+     * @param securityAkm Security AKM to use (See DppAkm).
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     */
+    startDppConfiguratorInitiator(uint32_t peerBootstrapId,
+        uint32_t ownBootstrapId, string ssid, string password,
+        string psk, DppNetRole netRole, DppAkm securityAkm)
+        generates (SupplicantStatus status);
+
+    /**
+     * Start DPP in Enrollee-Initiator mode.
+     *
+     * @param peerBootstrapId Peer device's URI ID.
+     * @param ownBootstrapId Local device's URI ID (0 for none, optional).
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     */
+    startDppEnrolleeInitiator(uint32_t peerBootstrapId,
+        uint32_t ownBootstrapId)
+        generates (SupplicantStatus status);
+
+    /**
+     * Stop DPP Initiator operation.
+     *
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     */
+     stopDppInitiator()
+        generates (SupplicantStatus status);
+};
