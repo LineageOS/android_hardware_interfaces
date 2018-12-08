@@ -52,11 +52,14 @@ enum AccessNetwork : @1.2::AccessNetwork {
  * Emergency number contains information of number, one or more service category(s), mobile country
  * code (mcc), and source(s) that indicate where it comes from.
  *
- * If the source of the emergency number is associated with country, field ‘mcc’ must be
- * provided; otherwise the field ‘mcc’ must be an empty string.
+ * If the source of the emergency number is associated with country, field ‘mcc’ must be provided;
+ * otherwise the field ‘mcc’ must be an empty string.
  *
- * A unique EmergencyNumber has a unique combination of ‘number’, ‘mcc’ and 'categories' fields.
- * Multiple @1.4::EmergencyNumberSource should be merged into the bitfield for the same
+ * If the source of the emergency number is associated with network operator, field ‘mcc’ and
+ * 'mnc' must be provided; otherwise the field ‘mnc’ must be an empty string.
+ *
+ * A unique EmergencyNumber has a unique combination of ‘number’, ‘mcc’, 'mnc' and 'categories'
+ * fields. Multiple @1.4::EmergencyNumberSource should be merged into the bitfield for the same
  * EmergencyNumber.
  *
  * Reference: 3GPP TS 22.101 version 9.1.0 Release 9
@@ -71,6 +74,10 @@ struct EmergencyNumber{
      * 3-digit Mobile Country Code, 0..999. Empty string if not applicable.
      */
     string mcc;
+    /**
+     * 2 or 3-digit Mobile Network Code, 0..999. Empty string if not applicable.
+     */
+    string mnc;
     /**
      * The bitfield of @1.4::EmergencyServiceCategory(s). See @1.4::EmergencyServiceCategory for
      * the value of each bit.
