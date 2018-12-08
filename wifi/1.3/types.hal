@@ -19,6 +19,22 @@ package android.hardware.wifi@1.3;
 import @1.0::StaLinkLayerRadioStats;
 import @1.0::StaLinkLayerIfaceStats;
 import @1.0::TimeStampInMs;
+import @1.0::WifiChannelInfo;
+
+struct WifiChannelStats {
+    /**
+    * Channel information.
+    */
+    WifiChannelInfo channel;
+    /**
+     * Total time for which the radio is awake on this channel.
+     */
+    uint32_t onTimeInMs;
+    /**
+     * Total time for which CCA is held busy on this channel.
+     */
+    uint32_t ccaBusyTimeInMs;
+};
 
 struct StaLinkLayerRadioStats {
     /**
@@ -51,6 +67,11 @@ struct StaLinkLayerRadioStats {
      * or crash.
      */
     uint32_t onTimeInMsForHs20Scan;
+
+    /**
+     * List of channel stats associated with this radio
+     */
+    vec<WifiChannelStats> channelStats;
 };
 
 /**

@@ -37,6 +37,7 @@ namespace wifi {
 namespace V1_3 {
 namespace implementation {
 using namespace android::hardware::wifi::V1_0;
+using ::android::hardware::wifi::V1_0::WifiChannelWidthInMhz;
 
 class HidlStructUtilTest : public Test {};
 
@@ -166,6 +167,17 @@ TEST_F(HidlStructUtilTest, canConvertLegacyLinkLayerStatsToHidl) {
         for (int i = 0; i < 4; i++) {
             radio.tx_time_per_levels.push_back(rand());
         }
+
+        legacy_hal::wifi_channel_stat channel_stat1 = {
+            .channel = {legacy_hal::WIFI_CHAN_WIDTH_20, 2437, 2437, 0},
+            .cca_busy_time = 0x55,
+            .on_time = 0x1111};
+        legacy_hal::wifi_channel_stat channel_stat2 = {
+            .channel = {legacy_hal::WIFI_CHAN_WIDTH_20, 5180, 5180, 0},
+            .cca_busy_time = 0x66,
+            .on_time = 0x2222};
+        radio.channel_stats.push_back(channel_stat1);
+        radio.channel_stats.push_back(channel_stat2);
     }
 
     V1_3::StaLinkLayerStats converted{};
@@ -236,6 +248,25 @@ TEST_F(HidlStructUtilTest, canConvertLegacyLinkLayerStatsToHidl) {
                   converted.radios[i].onTimeInMsForPnoScan);
         EXPECT_EQ(legacy_stats.radios[i].stats.on_time_hs20,
                   converted.radios[i].onTimeInMsForHs20Scan);
+        EXPECT_EQ(legacy_stats.radios[i].channel_stats.size(),
+                  converted.radios[i].channelStats.size());
+        for (int k = 0; k < legacy_stats.radios[i].channel_stats.size(); k++) {
+            EXPECT_EQ(WifiChannelWidthInMhz::WIDTH_20,
+                      converted.radios[i].channelStats[k].channel.width);
+            EXPECT_EQ(
+                legacy_stats.radios[i].channel_stats[k].channel.center_freq,
+                converted.radios[i].channelStats[k].channel.centerFreq);
+            EXPECT_EQ(
+                legacy_stats.radios[i].channel_stats[k].channel.center_freq0,
+                converted.radios[i].channelStats[k].channel.centerFreq0);
+            EXPECT_EQ(
+                legacy_stats.radios[i].channel_stats[k].channel.center_freq1,
+                converted.radios[i].channelStats[k].channel.centerFreq1);
+            EXPECT_EQ(legacy_stats.radios[i].channel_stats[k].cca_busy_time,
+                      converted.radios[i].channelStats[k].ccaBusyTimeInMs);
+            EXPECT_EQ(legacy_stats.radios[i].channel_stats[k].on_time,
+                      converted.radios[i].channelStats[k].onTimeInMs);
+        }
     }
 }
 
