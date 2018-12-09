@@ -20,6 +20,9 @@
 #include <android/hardware/gnss/2.0/IGnssMeasurement.h>
 #include <hidl/MQDescriptor.h>
 #include <hidl/Status.h>
+#include <atomic>
+#include <mutex>
+#include <thread>
 
 namespace android {
 namespace hardware {
@@ -35,7 +38,11 @@ using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
 
+using GnssData = V2_0::IGnssMeasurementCallback::GnssData;
+
 struct GnssMeasurement : public IGnssMeasurement {
+    GnssMeasurement();
+    ~GnssMeasurement();
     // Methods from V1_0::IGnssMeasurement follow.
     Return<V1_0::IGnssMeasurement::GnssMeasurementStatus> setCallback(
         const sp<V1_0::IGnssMeasurementCallback>& callback) override;
@@ -48,6 +55,18 @@ struct GnssMeasurement : public IGnssMeasurement {
     // Methods from V2_0::IGnssMeasurement follow.
     Return<V1_0::IGnssMeasurement::GnssMeasurementStatus> setCallback_2_0(
         const sp<V2_0::IGnssMeasurementCallback>& callback, bool enableFullTracking) override;
+
+   private:
+    void start();
+    void stop();
+    GnssData getMockMeasurement();
+    void reportMeasurement(const GnssData&);
+
+    static sp<IGnssMeasurementCallback> sCallback;
+    std::atomic<long> mMinIntervalMillis;
+    std::atomic<bool> mIsActive;
+    std::thread mThread;
+    mutable std::mutex mMutex;
 };
 
 }  // namespace implementation
