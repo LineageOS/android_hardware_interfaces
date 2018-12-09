@@ -152,6 +152,7 @@ static void mutateOperandTypeTest(const sp<IDevice>& device, const Model& model)
 
 static uint32_t getInvalidRank(OperandType type) {
     switch (type) {
+        case OperandType::FLOAT16:
         case OperandType::FLOAT32:
         case OperandType::INT32:
         case OperandType::UINT32:
@@ -183,6 +184,7 @@ static void mutateOperandRankTest(const sp<IDevice>& device, const Model& model)
 
 static float getInvalidScale(OperandType type) {
     switch (type) {
+        case OperandType::FLOAT16:
         case OperandType::FLOAT32:
         case OperandType::INT32:
         case OperandType::UINT32:
@@ -215,6 +217,7 @@ static void mutateOperandScaleTest(const sp<IDevice>& device, const Model& model
 
 static std::vector<int32_t> getInvalidZeroPoints(OperandType type) {
     switch (type) {
+        case OperandType::FLOAT16:
         case OperandType::FLOAT32:
         case OperandType::INT32:
         case OperandType::UINT32:
@@ -258,6 +261,7 @@ static void mutateOperand(Operand* operand, OperandType type) {
     Operand newOperand = *operand;
     newOperand.type = type;
     switch (type) {
+        case OperandType::FLOAT16:
         case OperandType::FLOAT32:
         case OperandType::INT32:
         case OperandType::UINT32:
@@ -304,6 +308,7 @@ static bool mutateOperationOperandTypeSkip(size_t operand, OperandType type, con
         // - ARGMIN and ARGMAX's first argument can be any of
         // TENSOR_(FLOAT16|FLOAT32|INT32|QUANT8_ASYMM).
         // - CAST's argument can be any of TENSOR_(FLOAT16|FLOAT32|INT32|QUANT8_ASYMM).
+        // - RANDOM_MULTINOMIAL's argument can be either TENSOR_FLOAT16 or TENSOR_FLOAT32.
         switch (operation.type) {
             case OperationType::LSH_PROJECTION: {
                 if (operand == operation.inputs[1]) {
@@ -315,6 +320,11 @@ static bool mutateOperationOperandTypeSkip(size_t operand, OperandType type, con
             case OperationType::ARGMIN: {
                 if (type == OperandType::TENSOR_FLOAT16 || type == OperandType::TENSOR_FLOAT32 ||
                     type == OperandType::TENSOR_INT32 || type == OperandType::TENSOR_QUANT8_ASYMM) {
+                    return true;
+                }
+            } break;
+            case OperationType::RANDOM_MULTINOMIAL: {
+                if (type == OperandType::TENSOR_FLOAT16 || type == OperandType::TENSOR_FLOAT32) {
                     return true;
                 }
             } break;

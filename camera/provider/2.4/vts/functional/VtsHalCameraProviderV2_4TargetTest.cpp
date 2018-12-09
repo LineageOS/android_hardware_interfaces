@@ -703,11 +703,14 @@ public:
     void openEmptyDeviceSession(const std::string &name,
             sp<ICameraProvider> provider,
             sp<ICameraDeviceSession> *session /*out*/,
-            camera_metadata_t **staticMeta /*out*/);
+            camera_metadata_t **staticMeta /*out*/,
+            ::android::sp<ICameraDevice> *device = nullptr/*out*/);
     void castSession(const sp<ICameraDeviceSession> &session, int32_t deviceVersion,
             sp<device::V3_3::ICameraDeviceSession> *session3_3 /*out*/,
             sp<device::V3_4::ICameraDeviceSession> *session3_4 /*out*/,
             sp<device::V3_5::ICameraDeviceSession> *session3_5 /*out*/);
+    void castDevice(const sp<device::V3_2::ICameraDevice> &device, int32_t deviceVersion,
+            sp<device::V3_5::ICameraDevice> *device3_5/*out*/);
     void createStreamConfiguration(const ::android::hardware::hidl_vec<V3_2::Stream>& streams3_2,
             StreamConfigurationMode configMode,
             ::android::hardware::camera::device::V3_2::StreamConfiguration *config3_2,
@@ -748,6 +751,9 @@ public:
     void verifyMonochromeCharacteristics(const CameraMetadata& chars, int deviceVersion);
     void verifyMonochromeCameraResult(
             const ::android::hardware::camera::common::V1_0::helper::CameraMetadata& metadata);
+    void verifyStreamCombination(sp<device::V3_5::ICameraDevice> cameraDevice3_5,
+            const ::android::hardware::camera::device::V3_4::StreamConfiguration &config3_4,
+            bool expectedStatus);
 
     void verifyBuffersReturned(sp<device::V3_2::ICameraDeviceSession> session,
             int deviceVerison, int32_t streamId, sp<DeviceCb> cb,
@@ -2769,9 +2775,12 @@ TEST_F(CameraHidlTest, configureStreamsAvailableOutputs) {
         sp<device::V3_3::ICameraDeviceSession> session3_3;
         sp<device::V3_4::ICameraDeviceSession> session3_4;
         sp<device::V3_5::ICameraDeviceSession> session3_5;
+        sp<device::V3_2::ICameraDevice> cameraDevice;
+        sp<device::V3_5::ICameraDevice> cameraDevice3_5;
         openEmptyDeviceSession(name, mProvider,
-                &session /*out*/, &staticMeta /*out*/);
+                &session /*out*/, &staticMeta /*out*/, &cameraDevice /*out*/);
         castSession(session, deviceVersion, &session3_3, &session3_4, &session3_5);
+        castDevice(cameraDevice, deviceVersion, &cameraDevice3_5);
 
         outputStreams.clear();
         ASSERT_EQ(Status::OK, getAvailableOutputStreams(staticMeta, outputStreams));
@@ -2797,6 +2806,8 @@ TEST_F(CameraHidlTest, configureStreamsAvailableOutputs) {
             createStreamConfiguration(streams3_2, StreamConfigurationMode::NORMAL_MODE,
                                       &config3_2, &config3_4, &config3_5);
             if (session3_5 != nullptr) {
+                verifyStreamCombination(cameraDevice3_5, config3_4,
+                        /*expectedStatus*/ true);
                 config3_5.streamConfigCounter = streamConfigCounter++;
                 ret = session3_5->configureStreams_3_5(config3_5,
                         [streamId](Status s, device::V3_4::HalStreamConfiguration halConfig) {
@@ -2857,8 +2868,12 @@ TEST_F(CameraHidlTest, configureStreamsInvalidOutputs) {
         sp<device::V3_3::ICameraDeviceSession> session3_3;
         sp<device::V3_4::ICameraDeviceSession> session3_4;
         sp<device::V3_5::ICameraDeviceSession> session3_5;
-        openEmptyDeviceSession(name, mProvider, &session /*out*/, &staticMeta /*out*/);
+        sp<device::V3_2::ICameraDevice> cameraDevice;
+        sp<device::V3_5::ICameraDevice> cameraDevice3_5;
+        openEmptyDeviceSession(name, mProvider, &session /*out*/, &staticMeta /*out*/,
+                &cameraDevice /*out*/);
         castSession(session, deviceVersion, &session3_3, &session3_4, &session3_5);
+        castDevice(cameraDevice, deviceVersion, &cameraDevice3_5);
 
         outputStreams.clear();
         ASSERT_EQ(Status::OK, getAvailableOutputStreams(staticMeta, outputStreams));
@@ -2881,6 +2896,7 @@ TEST_F(CameraHidlTest, configureStreamsInvalidOutputs) {
         createStreamConfiguration(streams, StreamConfigurationMode::NORMAL_MODE,
                                   &config3_2, &config3_4, &config3_5);
         if (session3_5 != nullptr) {
+            verifyStreamCombination(cameraDevice3_5, config3_4, /*expectedStatus*/ false);
             config3_5.streamConfigCounter = streamConfigCounter++;
             ret = session3_5->configureStreams_3_5(config3_5,
                     [](Status s, device::V3_4::HalStreamConfiguration) {
@@ -3044,8 +3060,12 @@ TEST_F(CameraHidlTest, configureStreamsZSLInputOutputs) {
         sp<device::V3_3::ICameraDeviceSession> session3_3;
         sp<device::V3_4::ICameraDeviceSession> session3_4;
         sp<device::V3_5::ICameraDeviceSession> session3_5;
-        openEmptyDeviceSession(name, mProvider, &session /*out*/, &staticMeta /*out*/);
+        sp<device::V3_2::ICameraDevice> cameraDevice;
+        sp<device::V3_5::ICameraDevice> cameraDevice3_5;
+        openEmptyDeviceSession(name, mProvider, &session /*out*/, &staticMeta /*out*/,
+                &cameraDevice /*out*/);
         castSession(session, deviceVersion, &session3_3, &session3_4, &session3_5);
+        castDevice(cameraDevice, deviceVersion, &cameraDevice3_5);
 
         Status rc = isZSLModeAvailable(staticMeta);
         if (Status::METHOD_NOT_SUPPORTED == rc) {
@@ -3132,6 +3152,8 @@ TEST_F(CameraHidlTest, configureStreamsZSLInputOutputs) {
                 createStreamConfiguration(streams, StreamConfigurationMode::NORMAL_MODE,
                                           &config3_2, &config3_4, &config3_5);
                 if (session3_5 != nullptr) {
+                    verifyStreamCombination(cameraDevice3_5, config3_4,
+                            /*expectedStatus*/ true);
                     config3_5.streamConfigCounter = streamConfigCounter++;
                     ret = session3_5->configureStreams_3_5(config3_5,
                             [](Status s, device::V3_4::HalStreamConfiguration halConfig) {
@@ -3304,8 +3326,12 @@ TEST_F(CameraHidlTest, configureStreamsPreviewStillOutputs) {
         sp<device::V3_3::ICameraDeviceSession> session3_3;
         sp<device::V3_4::ICameraDeviceSession> session3_4;
         sp<device::V3_5::ICameraDeviceSession> session3_5;
-        openEmptyDeviceSession(name, mProvider, &session /*out*/, &staticMeta /*out*/);
+        sp<device::V3_2::ICameraDevice> cameraDevice;
+        sp<device::V3_5::ICameraDevice> cameraDevice3_5;
+        openEmptyDeviceSession(name, mProvider, &session /*out*/, &staticMeta /*out*/,
+                &cameraDevice /*out*/);
         castSession(session, deviceVersion, &session3_3, &session3_4, &session3_5);
+        castDevice(cameraDevice, deviceVersion, &cameraDevice3_5);
 
         outputBlobStreams.clear();
         ASSERT_EQ(Status::OK,
@@ -3346,6 +3372,8 @@ TEST_F(CameraHidlTest, configureStreamsPreviewStillOutputs) {
                 createStreamConfiguration(streams, StreamConfigurationMode::NORMAL_MODE,
                                           &config3_2, &config3_4, &config3_5);
                 if (session3_5 != nullptr) {
+                    verifyStreamCombination(cameraDevice3_5, config3_4,
+                            /*expectedStatus*/ true);
                     config3_5.streamConfigCounter = streamConfigCounter++;
                     ret = session3_5->configureStreams_3_5(config3_5,
                             [](Status s, device::V3_4::HalStreamConfiguration halConfig) {
@@ -3403,8 +3431,12 @@ TEST_F(CameraHidlTest, configureStreamsConstrainedOutputs) {
         sp<device::V3_3::ICameraDeviceSession> session3_3;
         sp<device::V3_4::ICameraDeviceSession> session3_4;
         sp<device::V3_5::ICameraDeviceSession> session3_5;
-        openEmptyDeviceSession(name, mProvider, &session /*out*/, &staticMeta /*out*/);
+        sp<device::V3_2::ICameraDevice> cameraDevice;
+        sp<device::V3_5::ICameraDevice> cameraDevice3_5;
+        openEmptyDeviceSession(name, mProvider, &session /*out*/, &staticMeta /*out*/,
+                &cameraDevice /*out*/);
         castSession(session, deviceVersion, &session3_3, &session3_4, &session3_5);
+        castDevice(cameraDevice, deviceVersion, &cameraDevice3_5);
 
         Status rc = isConstrainedModeAvailable(staticMeta);
         if (Status::METHOD_NOT_SUPPORTED == rc) {
@@ -3435,6 +3467,8 @@ TEST_F(CameraHidlTest, configureStreamsConstrainedOutputs) {
         createStreamConfiguration(streams, StreamConfigurationMode::CONSTRAINED_HIGH_SPEED_MODE,
                                   &config3_2, &config3_4, &config3_5);
         if (session3_5 != nullptr) {
+            verifyStreamCombination(cameraDevice3_5, config3_4,
+                    /*expectedStatus*/ true);
             config3_5.streamConfigCounter = streamConfigCounter++;
             ret = session3_5->configureStreams_3_5(config3_5,
                     [streamId](Status s, device::V3_4::HalStreamConfiguration halConfig) {
@@ -3608,8 +3642,12 @@ TEST_F(CameraHidlTest, configureStreamsVideoStillOutputs) {
         sp<device::V3_3::ICameraDeviceSession> session3_3;
         sp<device::V3_4::ICameraDeviceSession> session3_4;
         sp<device::V3_5::ICameraDeviceSession> session3_5;
-        openEmptyDeviceSession(name, mProvider, &session /*out*/, &staticMeta /*out*/);
+        sp<device::V3_2::ICameraDevice> cameraDevice;
+        sp<device::V3_5::ICameraDevice> cameraDevice3_5;
+        openEmptyDeviceSession(name, mProvider, &session /*out*/, &staticMeta /*out*/,
+                &cameraDevice /*out*/);
         castSession(session, deviceVersion, &session3_3, &session3_4, &session3_5);
+        castDevice(cameraDevice, deviceVersion, &cameraDevice3_5);
 
         outputBlobStreams.clear();
         ASSERT_EQ(Status::OK,
@@ -3650,6 +3688,8 @@ TEST_F(CameraHidlTest, configureStreamsVideoStillOutputs) {
                 createStreamConfiguration(streams, StreamConfigurationMode::NORMAL_MODE,
                                           &config3_2, &config3_4, &config3_5);
                 if (session3_5 != nullptr) {
+                    verifyStreamCombination(cameraDevice3_5, config3_4,
+                            /*expectedStatus*/ true);
                     config3_5.streamConfigCounter = streamConfigCounter++;
                     ret = session3_5->configureStreams_3_5(config3_5,
                             [](Status s, device::V3_4::HalStreamConfiguration halConfig) {
@@ -5228,6 +5268,16 @@ void CameraHidlTest::configurePreviewStream(const std::string &name, int32_t dev
     ASSERT_TRUE(ret.isOk());
 }
 
+void CameraHidlTest::castDevice(const sp<device::V3_2::ICameraDevice> &device,
+        int32_t deviceVersion, sp<device::V3_5::ICameraDevice> *device3_5/*out*/) {
+    ASSERT_NE(nullptr, device3_5);
+    if (deviceVersion == CAMERA_DEVICE_API_VERSION_3_5) {
+        auto castResult = device::V3_5::ICameraDevice::castFrom(device);
+        ASSERT_TRUE(castResult.isOk());
+        *device3_5 = castResult;
+    }
+}
+
 //Cast camera device session to corresponding version
 void CameraHidlTest::castSession(const sp<ICameraDeviceSession> &session, int32_t deviceVersion,
         sp<device::V3_3::ICameraDeviceSession> *session3_3 /*out*/,
@@ -5259,6 +5309,21 @@ void CameraHidlTest::castSession(const sp<ICameraDeviceSession> &session, int32_
         default:
             //no-op
             return;
+    }
+}
+
+void CameraHidlTest::verifyStreamCombination(sp<device::V3_5::ICameraDevice> cameraDevice3_5,
+        const ::android::hardware::camera::device::V3_4::StreamConfiguration &config3_4,
+        bool expectedStatus) {
+    if (cameraDevice3_5.get() != nullptr) {
+        auto ret = cameraDevice3_5->isStreamCombinationSupported(config3_4,
+                [expectedStatus] (Status s, bool combStatus) {
+                    ASSERT_TRUE((Status::OK == s) || (Status::METHOD_NOT_SUPPORTED == s));
+                    if (Status::OK == s) {
+                        ASSERT_TRUE(combStatus == expectedStatus);
+                    }
+                });
+        ASSERT_TRUE(ret.isOk());
     }
 }
 
@@ -5531,10 +5596,9 @@ void CameraHidlTest::verifyBuffersReturned(
 }
 
 // Open a device session with empty callbacks and return static metadata.
-void CameraHidlTest::openEmptyDeviceSession(const std::string &name,
-        sp<ICameraProvider> provider,
-        sp<ICameraDeviceSession> *session /*out*/,
-        camera_metadata_t **staticMeta /*out*/) {
+void CameraHidlTest::openEmptyDeviceSession(const std::string &name, sp<ICameraProvider> provider,
+        sp<ICameraDeviceSession> *session /*out*/, camera_metadata_t **staticMeta /*out*/,
+        ::android::sp<ICameraDevice> *cameraDevice /*out*/) {
     ASSERT_NE(nullptr, session);
     ASSERT_NE(nullptr, staticMeta);
 
@@ -5551,6 +5615,9 @@ void CameraHidlTest::openEmptyDeviceSession(const std::string &name,
             device3_x = device;
         });
     ASSERT_TRUE(ret.isOk());
+    if (cameraDevice != nullptr) {
+        *cameraDevice = device3_x;
+    }
 
     sp<EmptyDeviceCb> cb = new EmptyDeviceCb();
     ret = device3_x->open(cb, [&](auto status, const auto& newSession) {

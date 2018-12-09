@@ -67,6 +67,10 @@ struct ExternalCameraDevice : public V3_4::implementation::ExternalCameraDevice 
     Return<void> getPhysicalCameraCharacteristics(const hidl_string& physicalCameraId,
             V3_5::ICameraDevice::getPhysicalCameraCharacteristics_cb _hidl_cb);
 
+    Return<void> isStreamCombinationSupported(
+            const V3_4::StreamConfiguration& streams,
+            V3_5::ICameraDevice::isStreamCombinationSupported_cb _hidl_cb);
+
 protected:
     virtual sp<V3_4::implementation::ExternalCameraDeviceSession> createSession(
             const sp<V3_2::ICameraDeviceCallback>&,
@@ -116,6 +120,13 @@ private:
                 V3_5::ICameraDevice::getPhysicalCameraCharacteristics_cb _hidl_cb) override {
             return mParent->getPhysicalCameraCharacteristics(physicalCameraId, _hidl_cb);
         }
+
+        virtual Return<void> isStreamCombinationSupported(
+                const V3_4::StreamConfiguration& streams,
+                V3_5::ICameraDevice::isStreamCombinationSupported_cb _hidl_cb) override {
+            return mParent->isStreamCombinationSupported(streams, _hidl_cb);
+        }
+
     private:
         sp<ExternalCameraDevice> mParent;
     };

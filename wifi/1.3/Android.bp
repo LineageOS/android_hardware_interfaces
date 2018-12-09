@@ -21,6 +21,7 @@ hidl_interface {
     types: [
       "StaLinkLayerRadioStats",
       "StaLinkLayerStats",
+      "WifiChannelStats",
     ],
     gen_java: true,
 }

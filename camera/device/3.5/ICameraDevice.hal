@@ -19,6 +19,7 @@ package android.hardware.camera.device@3.5;
 import android.hardware.camera.common@1.0::Status;
 import @3.2::CameraMetadata;
 import @3.2::ICameraDevice;
+import @3.4::StreamConfiguration;
 
 /**
  * Camera device interface
@@ -75,4 +76,41 @@ interface ICameraDevice extends @3.2::ICameraDevice {
     getPhysicalCameraCharacteristics(string physicalCameraId)
             generates (Status status, CameraMetadata cameraCharacteristics);
 
+
+    /**
+     * isStreamCombinationSupported:
+     *
+     * Check for device support of specific camera stream combination.
+     *
+     * The streamList must contain at least one output-capable stream, and may
+     * not contain more than one input-capable stream.
+     *
+     * ------------------------------------------------------------------------
+     *
+     * Preconditions:
+     *
+     * The framework can call this method at any time before, during and
+     * after active session configuration. This means that calls must not
+     * impact the performance of pending camera requests in any way. In
+     * particular there must not be any glitches or delays during normal
+     * camera streaming.
+     *
+     * Performance requirements:
+     * This call is expected to be significantly faster than stream
+     * configuration. In general HW and SW camera settings must not be
+     * changed and there must not be a user-visible impact on camera performance.
+     *
+     * @return Status Status code for the operation, one of:
+     *     OK:
+     *          On successful stream combination query.
+     *     METHOD_NOT_SUPPORTED:
+     *          The camera device does not support stream combination query.
+     *     INTERNAL_ERROR:
+     *          The stream combination query cannot complete due to internal
+     *          error.
+     * @return true in case the stream combination is supported, false otherwise.
+     *
+     */
+    isStreamCombinationSupported(@3.4::StreamConfiguration streams)
+            generates (Status status, bool queryStatus);
 };

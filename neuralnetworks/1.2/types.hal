@@ -40,7 +40,7 @@ enum OperandType : @1.0::OperandType {
      * scale is a 32 bit floating point with value greater then zero.
      */
     TENSOR_QUANT16_SYMM = 7,
-    /** A tensor of 16 bit floating point values. */
+    /** A tensor of IEEE 754 16 bit floating point values. */
     TENSOR_FLOAT16 = 8,
     /**
      * A tensor of 8 bit boolean values.
@@ -49,6 +49,8 @@ enum OperandType : @1.0::OperandType {
      * represents false; any other value represents true.
      */
     TENSOR_BOOL8 = 9,
+    /** An IEEE 754 16 bit floating point scalar value. */
+    FLOAT16 = 10,
     /* ADDING A NEW FUNDAMENTAL TYPE REQUIRES UPDATING THE VALUE OF
      * OperandTypeRange::OPERAND_FUNDAMENTAL_MAX.
      */
@@ -62,7 +64,7 @@ enum OperandType : @1.0::OperandType {
  */
 enum OperandTypeRange : uint32_t {
     OPERAND_FUNDAMENTAL_MIN = 0,
-    OPERAND_FUNDAMENTAL_MAX = 9,
+    OPERAND_FUNDAMENTAL_MAX = 10,
     OPERAND_OEM_MIN     = 10000,
     OPERAND_OEM_MAX     = 10001,
 };
@@ -126,6 +128,8 @@ enum OperationType : @1.1::OperationType {
     ROTATED_BBOX_TRANSFORM = 87,
     ABS = 88,
     ROI_POOLING = 89,
+    EQUAL = 90,
+    NOT_EQUAL = 91,
     /* ADDING A NEW FUNDAMENTAL OPERATION REQUIRES UPDATING THE VALUE OF
      * OperationTypeRange::OPERATION_FUNDAMENTAL_MAX.
      */
@@ -139,7 +143,7 @@ enum OperationType : @1.1::OperationType {
  */
 enum OperationTypeRange : uint32_t {
     OPERATION_FUNDAMENTAL_MIN = 0,
-    OPERATION_FUNDAMENTAL_MAX = 89,
+    OPERATION_FUNDAMENTAL_MAX = 91,
     OPERATION_OEM_MIN = 10000,
     OPERATION_OEM_MAX = 10000,
 };
