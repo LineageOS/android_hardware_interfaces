@@ -14,15 +14,27 @@
  * limitations under the License.
  */
 
+#ifdef LAZY_SERVICE
+#define LOG_TAG "android.hardware.camera.provider@2.4-service-lazy"
+#else
 #define LOG_TAG "android.hardware.camera.provider@2.4-service"
+#endif
 
 #include <android/hardware/camera/provider/2.4/ICameraProvider.h>
 #include <hidl/LegacySupport.h>
 
 #include <binder/ProcessState.h>
 
-using android::hardware::camera::provider::V2_4::ICameraProvider;
+using android::status_t;
+using android::hardware::defaultLazyPassthroughServiceImplementation;
 using android::hardware::defaultPassthroughServiceImplementation;
+using android::hardware::camera::provider::V2_4::ICameraProvider;
+
+#ifdef LAZY_SERVICE
+const bool kLazyService = true;
+#else
+const bool kLazyService = false;
+#endif
 
 int main()
 {
@@ -30,5 +42,13 @@ int main()
     // The camera HAL may communicate to other vendor components via
     // /dev/vndbinder
     android::ProcessState::initWithDriver("/dev/vndbinder");
-    return defaultPassthroughServiceImplementation<ICameraProvider>("legacy/0", /*maxThreads*/ 6);
+    status_t status;
+    if (kLazyService) {
+        status = defaultLazyPassthroughServiceImplementation<ICameraProvider>("legacy/0",
+                                                                              /*maxThreads*/ 6);
+    } else {
+        status = defaultPassthroughServiceImplementation<ICameraProvider>("legacy/0",
+                                                                          /*maxThreads*/ 6);
+    }
+    return status;
 }
