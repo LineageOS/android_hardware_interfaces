@@ -21,7 +21,6 @@
 #include <sys/mman.h>
 #include <linux/videodev2.h>
 #include "ExternalCameraUtils.h"
-#include "tinyxml2.h" // XML parsing
 
 namespace android {
 namespace hardware {
@@ -245,28 +244,28 @@ ExternalCameraConfig ExternalCameraConfig::loadFromCfg(const char* cfgPath) {
     if (fpsList == nullptr) {
         ALOGI("%s: no fps list specified", __FUNCTION__);
     } else {
-        std::vector<FpsLimitation> limits;
-        XMLElement *row = fpsList->FirstChildElement("Limit");
-        while (row != nullptr) {
-            FpsLimitation prevLimit {{0, 0}, 1000.0};
-            FpsLimitation limit;
-            limit.size = {
-                row->UnsignedAttribute("width", /*Default*/0),
-                row->UnsignedAttribute("height", /*Default*/0)};
-            limit.fpsUpperBound = row->DoubleAttribute("fpsBound", /*Default*/1000.0);
-            if (limit.size.width <= prevLimit.size.width ||
-                    limit.size.height <= prevLimit.size.height ||
-                    limit.fpsUpperBound >= prevLimit.fpsUpperBound) {
-                ALOGE("%s: FPS limit list must have increasing size and decreasing fps!"
-                        " Prev %dx%d@%f, Current %dx%d@%f", __FUNCTION__,
-                        prevLimit.size.width, prevLimit.size.height, prevLimit.fpsUpperBound,
-                        limit.size.width, limit.size.height, limit.fpsUpperBound);
+        if (!updateFpsList(fpsList, ret.fpsLimits)) {
+            return ret;
+        }
+    }
+
+    XMLElement *depth = deviceCfg->FirstChildElement("Depth16Supported");
+    if (depth == nullptr) {
+        ret.depthEnabled = false;
+        ALOGI("%s: depth output is not enabled", __FUNCTION__);
+    } else {
+        ret.depthEnabled = depth->BoolAttribute("enabled", false);
+    }
+
+    if(ret.depthEnabled) {
+        XMLElement *depthFpsList = deviceCfg->FirstChildElement("DepthFpsList");
+        if (depthFpsList == nullptr) {
+            ALOGW("%s: no depth fps list specified", __FUNCTION__);
+        } else {
+            if(!updateFpsList(depthFpsList, ret.depthFpsLimits)) {
                 return ret;
             }
-            limits.push_back(limit);
-            row = row->NextSiblingElement("Limit");
         }
-        ret.fpsLimits = limits;
     }
 
     XMLElement *minStreamSize = deviceCfg->FirstChildElement("MinimumStreamSize");
@@ -293,15 +292,48 @@ ExternalCameraConfig ExternalCameraConfig::loadFromCfg(const char* cfgPath) {
         ALOGI("%s: fpsLimitList: %dx%d@%f", __FUNCTION__,
                 limit.size.width, limit.size.height, limit.fpsUpperBound);
     }
+    for (const auto& limit : ret.depthFpsLimits) {
+        ALOGI("%s: depthFpsLimitList: %dx%d@%f", __FUNCTION__, limit.size.width, limit.size.height,
+              limit.fpsUpperBound);
+    }
     ALOGI("%s: minStreamSize: %dx%d" , __FUNCTION__,
          ret.minStreamSize.width, ret.minStreamSize.height);
     return ret;
+}
+
+bool ExternalCameraConfig::updateFpsList(tinyxml2::XMLElement* fpsList,
+        std::vector<FpsLimitation>& fpsLimits) {
+    using namespace tinyxml2;
+    std::vector<FpsLimitation> limits;
+    XMLElement* row = fpsList->FirstChildElement("Limit");
+    while (row != nullptr) {
+        FpsLimitation prevLimit{{0, 0}, 1000.0};
+        FpsLimitation limit;
+        limit.size = {row->UnsignedAttribute("width", /*Default*/ 0),
+                      row->UnsignedAttribute("height", /*Default*/ 0)};
+        limit.fpsUpperBound = row->DoubleAttribute("fpsBound", /*Default*/ 1000.0);
+        if (limit.size.width <= prevLimit.size.width ||
+            limit.size.height <= prevLimit.size.height ||
+            limit.fpsUpperBound >= prevLimit.fpsUpperBound) {
+            ALOGE(
+                "%s: FPS limit list must have increasing size and decreasing fps!"
+                " Prev %dx%d@%f, Current %dx%d@%f",
+                __FUNCTION__, prevLimit.size.width, prevLimit.size.height, prevLimit.fpsUpperBound,
+                limit.size.width, limit.size.height, limit.fpsUpperBound);
+            return false;
+        }
+        limits.push_back(limit);
+        row = row->NextSiblingElement("Limit");
+    }
+    fpsLimits = limits;
+    return true;
 }
 
 ExternalCameraConfig::ExternalCameraConfig() :
         maxJpegBufSize(kDefaultJpegBufSize),
         numVideoBuffers(kDefaultNumVideoBuffer),
         numStillBuffers(kDefaultNumStillBuffer),
+        depthEnabled(false),
         orientation(kDefaultOrientation) {
     fpsLimits.push_back({/*Size*/{ 640,  480}, /*FPS upper bound*/30.0});
     fpsLimits.push_back({/*Size*/{1280,  720}, /*FPS upper bound*/7.5});

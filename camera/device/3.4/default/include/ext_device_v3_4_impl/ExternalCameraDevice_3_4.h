@@ -104,6 +104,9 @@ protected:
 
     // Calls into virtual member function. Do not use it in constructor
     status_t initCameraCharacteristics();
+    // Init available capabilities keys
+    status_t initAvailableCapabilities(
+            ::android::hardware::camera::common::V1_0::helper::CameraMetadata*);
     // Init non-device dependent keys
     virtual status_t initDefaultCharsKeys(
             ::android::hardware::camera::common::V1_0::helper::CameraMetadata*);
@@ -114,13 +117,30 @@ protected:
     status_t initOutputCharsKeys(int fd,
             ::android::hardware::camera::common::V1_0::helper::CameraMetadata*);
 
+    // Helper function for initOutputCharskeys
+    template <size_t SIZE>
+    status_t initOutputCharskeysByFormat(
+            ::android::hardware::camera::common::V1_0::helper::CameraMetadata*,
+            uint32_t fourcc, const std::array<int, SIZE>& formats,
+            int scaler_stream_config_tag,
+            int stream_configuration, int min_frame_duration, int stall_duration);
+
+    bool calculateMinFps(::android::hardware::camera::common::V1_0::helper::CameraMetadata*);
+
     static void getFrameRateList(int fd, double fpsUpperBound, SupportedV4L2Format* format);
+
+    static void updateFpsBounds(int fd, CroppingType cropType,
+            const std::vector<ExternalCameraConfig::FpsLimitation>& fpsLimits,
+            SupportedV4L2Format format,
+            std::vector<SupportedV4L2Format>& outFmts);
 
     // Get candidate supported formats list of input cropping type.
     static std::vector<SupportedV4L2Format> getCandidateSupportedFormatsLocked(
             int fd, CroppingType cropType,
             const std::vector<ExternalCameraConfig::FpsLimitation>& fpsLimits,
-            const Size& minStreamSize);
+            const std::vector<ExternalCameraConfig::FpsLimitation>& depthFpsLimits,
+            const Size& minStreamSize,
+            bool depthEnabled);
     // Trim supported format list by the cropping type. Also sort output formats by width/height
     static void trimSupportedFormats(CroppingType cropType,
             /*inout*/std::vector<SupportedV4L2Format>* pFmts);
