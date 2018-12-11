@@ -22,7 +22,6 @@ hidl_interface {
         "TemperatureThreshold",
         "TemperatureType",
         "ThrottlingSeverity",
-        "ThrottlingSeverityCount",
     ],
     gen_java: true,
 }

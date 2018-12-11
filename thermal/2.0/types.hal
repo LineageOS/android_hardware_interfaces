@@ -22,12 +22,14 @@ import android.hardware.thermal@1.0::types;
 enum TemperatureType : @1.0::TemperatureType {
     USB_PORT = 4,
     POWER_AMPLIFIER = 5,
-    /**
-     * Battery Charge Limit - virtual thermal sensors
-     */
+
+    /** Battery Charge Limit - virtual thermal sensors */
     BCL_VOLTAGE = 6,
     BCL_CURRENT = 7,
     BCL_PERCENTAGE = 8,
+
+    /**  Neural Processing Unit */
+    NPU = 9,
 };
 
 
@@ -82,8 +84,6 @@ enum ThrottlingSeverity : uint32_t {
     SHUTDOWN,
 };
 
-enum ThrottlingSeverityCount : uint32_t {NUM_THROTTLING_LEVELS = 7};
-
 struct TemperatureThreshold {
     /**
      * This temperature's type.
@@ -103,7 +103,7 @@ struct TemperatureThreshold {
      * happens when temperature >= threshold. If not available, set to NAN.
      * Unit is same as Temperature's value.
      */
-    float[ThrottlingSeverityCount:NUM_THROTTLING_LEVELS] hotThrottlingThresholds;
+    float[ThrottlingSeverity#len] hotThrottlingThresholds;
 
     /**
      * Cold throttling temperature constant for this temperature sensor in
@@ -111,7 +111,7 @@ struct TemperatureThreshold {
      * happens when temperature <= threshold. If not available, set to NAN.
      * Unit is same as Temperature's value.
      */
-    float[ThrottlingSeverityCount:NUM_THROTTLING_LEVELS] coldThrottlingThresholds;
+    float[ThrottlingSeverity#len] coldThrottlingThresholds;
 
     /**
      * Threshold temperature above which the VR mode clockrate minimums cannot
