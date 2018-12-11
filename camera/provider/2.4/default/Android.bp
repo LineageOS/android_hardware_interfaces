@@ -43,14 +43,12 @@ cc_library_shared {
     ],
 }
 
-cc_binary {
-    name: "android.hardware.camera.provider@2.4-service",
+cc_defaults {
+    name: "camera_service_defaults",
     defaults: ["hidl_defaults"],
     proprietary: true,
     relative_install_path: "hw",
     srcs: ["service.cpp"],
-    compile_multilib: "32",
-    init_rc: ["android.hardware.camera.provider@2.4-service.rc"],
     shared_libs: [
         "libhidlbase",
         "libhidltransport",
@@ -67,29 +65,36 @@ cc_binary {
     ],
 }
 
+cc_binary {
+    name: "android.hardware.camera.provider@2.4-service",
+    defaults: ["camera_service_defaults"],
+    compile_multilib: "32",
+    init_rc: ["android.hardware.camera.provider@2.4-service.rc"],
+}
 
 cc_binary {
     name: "android.hardware.camera.provider@2.4-service_64",
-    defaults: ["hidl_defaults"],
-    proprietary: true,
-    relative_install_path: "hw",
-    srcs: ["service.cpp"],
+    defaults: ["camera_service_defaults"],
     compile_multilib: "64",
     init_rc: ["android.hardware.camera.provider@2.4-service_64.rc"],
-    shared_libs: [
-        "libhidlbase",
-        "libhidltransport",
-        "libbinder",
-        "liblog",
-        "libutils",
-        "android.hardware.camera.device@1.0",
-        "android.hardware.camera.device@3.2",
-        "android.hardware.camera.device@3.3",
-        "android.hardware.camera.device@3.4",
-        "android.hardware.camera.device@3.5",
-        "android.hardware.camera.provider@2.4",
-        "android.hardware.camera.common@1.0",
-    ],
+}
+
+cc_binary {
+    name: "android.hardware.camera.provider@2.4-service-lazy",
+    overrides: ["android.hardware.camera.provider@2.4-service"],
+    defaults: ["camera_service_defaults"],
+    compile_multilib: "32",
+    init_rc: ["android.hardware.camera.provider@2.4-service-lazy.rc"],
+    cflags: ["-DLAZY_SERVICE"],
+}
+
+cc_binary {
+    name: "android.hardware.camera.provider@2.4-service-lazy_64",
+    overrides: ["android.hardware.camera.provider@2.4-service_64"],
+    defaults: ["camera_service_defaults"],
+    compile_multilib: "64",
+    init_rc: ["android.hardware.camera.provider@2.4-service-lazy_64.rc"],
+    cflags: ["-DLAZY_SERVICE"],
 }
 
 cc_binary {
