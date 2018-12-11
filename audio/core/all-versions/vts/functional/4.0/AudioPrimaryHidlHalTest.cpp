@@ -64,7 +64,7 @@ TEST_F(AudioPrimaryHidlTest, GetMicrophonesTest) {
         config.sampleRateHz = 8000;
         config.format = AudioFormat::PCM_16_BIT;
         auto flags = hidl_bitfield<AudioInputFlag>(AudioInputFlag::NONE);
-        const SinkMetadata initMetadata = {{{AudioSource::MIC, 1 /* gain */}}};
+        const SinkMetadata initMetadata = {{{.source = AudioSource::MIC, .gain = 1}}};
         EventFlag* efGroup;
         for (auto microphone : microphones) {
             if (microphone.deviceAddress.device != AudioDevice::IN_BUILTIN_MIC) {
@@ -200,7 +200,7 @@ TEST_P(InputStreamTest, updateSinkMetadata) {
     // Test all possible track configuration
     for (AudioSource source : range) {
         for (float volume : {0.0, 0.5, 1.0}) {
-            const SinkMetadata metadata = {{{source, volume}}};
+            const SinkMetadata metadata = {{{.source = source, .gain = volume}}};
             ASSERT_OK(stream->updateSinkMetadata(metadata))
                 << "source=" << toString(source) << ", volume=" << volume;
         }

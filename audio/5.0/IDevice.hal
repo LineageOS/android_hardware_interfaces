@@ -133,7 +133,7 @@ interface IDevice {
      * @param config stream configuration.
      * @param flags additional flags.
      * @param sinkMetadata Description of the audio that is suggested by the client.
-     *                     May be used by implementations to configure hardware effects.
+     *                     May be used by implementations to configure processing effects.
      * @return retval operation completion status.
      * @return inStream in case of success, created input stream.
      * @return suggestedConfig in case of invalid parameters, suggested config.
