@@ -32,8 +32,6 @@
 #include "VisualizerEffect.h"
 #include "common/all-versions/default/EffectMap.h"
 
-using ::android::hardware::audio::common::CPP_VERSION::HidlUtils;
-
 #include <android/log.h>
 #include <media/EffectsFactoryApi.h>
 #include <system/audio_effects/effect_aec.h>
@@ -48,14 +46,14 @@ using ::android::hardware::audio::common::CPP_VERSION::HidlUtils;
 #include <system/audio_effects/effect_virtualizer.h>
 #include <system/audio_effects/effect_visualizer.h>
 
-using ::android::hardware::audio::common::CPP_VERSION::HidlUtils;
-
 namespace android {
 namespace hardware {
 namespace audio {
 namespace effect {
 namespace CPP_VERSION {
 namespace implementation {
+
+using ::android::hardware::audio::common::CPP_VERSION::implementation::HidlUtils;
 
 // static
 sp<IEffect> EffectsFactory::dispatchEffectInstanceCreation(const effect_descriptor_t& halDescriptor,

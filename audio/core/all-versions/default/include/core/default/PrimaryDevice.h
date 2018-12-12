@@ -36,20 +36,8 @@ using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
-using ::android::hardware::audio::common::CPP_VERSION::AudioConfig;
-using ::android::hardware::audio::common::CPP_VERSION::AudioInputFlag;
-using ::android::hardware::audio::common::CPP_VERSION::AudioMode;
-using ::android::hardware::audio::common::CPP_VERSION::AudioOutputFlag;
-using ::android::hardware::audio::common::CPP_VERSION::AudioPort;
-using ::android::hardware::audio::common::CPP_VERSION::AudioPortConfig;
-using ::android::hardware::audio::common::CPP_VERSION::AudioSource;
-using ::android::hardware::audio::CPP_VERSION::DeviceAddress;
-using ::android::hardware::audio::CPP_VERSION::IDevice;
-using ::android::hardware::audio::CPP_VERSION::IPrimaryDevice;
-using ::android::hardware::audio::CPP_VERSION::IStreamIn;
-using ::android::hardware::audio::CPP_VERSION::IStreamOut;
-using ::android::hardware::audio::CPP_VERSION::ParameterValue;
-using ::android::hardware::audio::CPP_VERSION::Result;
+using namespace ::android::hardware::audio::common::CPP_VERSION;
+using namespace ::android::hardware::audio::CPP_VERSION;
 
 struct PrimaryDevice : public IPrimaryDevice {
     explicit PrimaryDevice(audio_hw_device_t* device);

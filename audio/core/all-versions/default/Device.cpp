@@ -31,13 +31,13 @@
 
 #include <android/log.h>
 
-using ::android::hardware::audio::common::CPP_VERSION::HidlUtils;
-
 namespace android {
 namespace hardware {
 namespace audio {
 namespace CPP_VERSION {
 namespace implementation {
+
+using ::android::hardware::audio::common::CPP_VERSION::implementation::HidlUtils;
 
 Device::Device(audio_hw_device_t* device) : mDevice(device) {}
 

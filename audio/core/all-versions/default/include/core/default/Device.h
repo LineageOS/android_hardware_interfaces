@@ -43,30 +43,10 @@ using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
-using ::android::hardware::audio::common::CPP_VERSION::AudioConfig;
-using ::android::hardware::audio::common::CPP_VERSION::AudioHwSync;
-using ::android::hardware::audio::common::CPP_VERSION::AudioInputFlag;
-using ::android::hardware::audio::common::CPP_VERSION::AudioOutputFlag;
-using ::android::hardware::audio::common::CPP_VERSION::AudioPatchHandle;
-using ::android::hardware::audio::common::CPP_VERSION::AudioPort;
-using ::android::hardware::audio::common::CPP_VERSION::AudioPortConfig;
-using ::android::hardware::audio::common::CPP_VERSION::AudioSource;
 using ::android::hardware::audio::common::CPP_VERSION::implementation::AudioInputFlagBitfield;
 using ::android::hardware::audio::common::CPP_VERSION::implementation::AudioOutputFlagBitfield;
-using ::android::hardware::audio::CPP_VERSION::DeviceAddress;
-using ::android::hardware::audio::CPP_VERSION::IDevice;
-using ::android::hardware::audio::CPP_VERSION::IStreamIn;
-using ::android::hardware::audio::CPP_VERSION::IStreamOut;
-using ::android::hardware::audio::CPP_VERSION::ParameterValue;
-using ::android::hardware::audio::CPP_VERSION::Result;
-
-#if MAJOR_VERSION == 4
-using ::android::hardware::audio::CPP_VERSION::SinkMetadata;
-using ::android::hardware::audio::CPP_VERSION::SourceMetadata;
-#elif MAJOR_VERSION >= 5
-using ::android::hardware::audio::common::CPP_VERSION::SinkMetadata;
-using ::android::hardware::audio::common::CPP_VERSION::SourceMetadata;
-#endif
+using namespace ::android::hardware::audio::common::CPP_VERSION;
+using namespace ::android::hardware::audio::CPP_VERSION;
 
 struct Device : public IDevice, public ParametersUtil {
     explicit Device(audio_hw_device_t* device);

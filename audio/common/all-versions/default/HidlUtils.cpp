@@ -19,18 +19,6 @@
 #include <common/all-versions/VersionUtils.h>
 #include <string.h>
 
-using ::android::hardware::audio::common::CPP_VERSION::AudioChannelMask;
-using ::android::hardware::audio::common::CPP_VERSION::AudioDevice;
-using ::android::hardware::audio::common::CPP_VERSION::AudioFormat;
-using ::android::hardware::audio::common::CPP_VERSION::AudioGainMode;
-using ::android::hardware::audio::common::CPP_VERSION::AudioMixLatencyClass;
-using ::android::hardware::audio::common::CPP_VERSION::AudioPortConfigMask;
-using ::android::hardware::audio::common::CPP_VERSION::AudioPortRole;
-using ::android::hardware::audio::common::CPP_VERSION::AudioPortType;
-using ::android::hardware::audio::common::CPP_VERSION::AudioSource;
-using ::android::hardware::audio::common::CPP_VERSION::AudioStreamType;
-using ::android::hardware::audio::common::CPP_VERSION::AudioUsage;
-
 using ::android::hardware::audio::common::utils::EnumBitfield;
 
 namespace android {
@@ -38,6 +26,9 @@ namespace hardware {
 namespace audio {
 namespace common {
 namespace CPP_VERSION {
+namespace implementation {
+
+using namespace ::android::hardware::audio::common::CPP_VERSION;
 
 void HidlUtils::audioConfigFromHal(const audio_config_t& halConfig, AudioConfig* config) {
     config->sampleRateHz = halConfig.sample_rate;
@@ -356,6 +347,7 @@ void HidlUtils::uuidToHal(const Uuid& uuid, audio_uuid_t* halUuid) {
     memcpy(halUuid->node, uuid.node.data(), uuid.node.size());
 }
 
+}  // namespace implementation
 }  // namespace CPP_VERSION
 }  // namespace common
 }  // namespace audio
