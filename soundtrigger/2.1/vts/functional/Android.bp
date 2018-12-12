@@ -25,4 +25,5 @@ cc_test {
                  "android.hardware.soundtrigger@2.1",
                  "libhidlmemory"
                  ],
+    test_suites: ["general-tests"],
 }

@@ -25,4 +25,5 @@ cc_test {
         "android.hardware.wifi@1.0",
         "android.hardware.wifi@1.1",
     ],
+    test_suites: ["general-tests"],
 }

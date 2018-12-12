@@ -22,5 +22,6 @@ cc_test {
         "android.hardware.thermal@1.0",
         "android.hardware.thermal@1.1",
     ],
+    test_suites: ["general-tests"],
 }
 

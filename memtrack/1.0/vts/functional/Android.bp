@@ -19,4 +19,5 @@ cc_test {
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: ["VtsHalMemtrackV1_0TargetTest.cpp"],
     static_libs: ["android.hardware.memtrack@1.0"],
+    test_suites: ["general-tests"],
 }
