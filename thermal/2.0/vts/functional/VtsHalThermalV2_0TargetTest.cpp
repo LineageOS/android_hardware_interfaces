@@ -37,7 +37,6 @@ using ::android::hardware::thermal::V2_0::Temperature;
 using ::android::hardware::thermal::V2_0::TemperatureThreshold;
 using ::android::hardware::thermal::V2_0::TemperatureType;
 using ::android::hardware::thermal::V2_0::ThrottlingSeverity;
-using ::android::hardware::thermal::V2_0::ThrottlingSeverityCount;
 
 constexpr char kCallbackNameNotifyThrottling[] = "notifyThrottling";
 static const Temperature kThrottleTemp = {
