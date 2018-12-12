@@ -19,6 +19,7 @@ cc_binary {
     init_rc: ["android.hardware.gnss@2.0-service.rc"],
     relative_install_path: "hw",
     vendor: true,
+    vintf_fragments: ["android.hardware.gnss@2.0-service.xml"],
     srcs: [
         "Gnss.cpp",
         "GnssMeasurement.cpp",
