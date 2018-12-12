@@ -218,7 +218,7 @@ void VehicleHalManager::onHalPropertySetError(StatusCode errorCode,
     const auto& clients =
         mSubscriptionManager.getSubscribedClients(property, SubscribeFlags::EVENTS_FROM_CAR);
 
-    for (auto client : clients) {
+    for (const auto& client : clients) {
         client->getCallback()->onPropertySetError(errorCode, property, areaId);
     }
 }
@@ -312,7 +312,7 @@ bool VehicleHalManager::checkReadPermission(const VehiclePropConfig &config) con
 void VehicleHalManager::handlePropertySetEvent(const VehiclePropValue& value) {
     auto clients =
         mSubscriptionManager.getSubscribedClients(value.prop, SubscribeFlags::EVENTS_FROM_ANDROID);
-    for (auto client : clients) {
+    for (const auto& client : clients) {
         client->getCallback()->onPropertySet(value);
     }
 }

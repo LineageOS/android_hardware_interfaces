@@ -177,7 +177,7 @@ class DrmHalVendorFactoryTest : public testing::TestWithParam<std::string> {
 TEST_P(DrmHalVendorFactoryTest, ValidateConfigurations) {
     const char* kVendorStr = "Vendor module ";
     size_t count = 0;
-    for (auto config : contentConfigurations) {
+    for (const auto& config : contentConfigurations) {
         ASSERT_TRUE(config.name.size() > 0) << kVendorStr << "has no name";
         ASSERT_TRUE(config.serverUrl.size() > 0) << kVendorStr
                                                  << "has no serverUrl";
@@ -186,7 +186,7 @@ TEST_P(DrmHalVendorFactoryTest, ValidateConfigurations) {
         ASSERT_TRUE(config.mimeType.size() > 0) << kVendorStr
                                                 << "has no mime type";
         ASSERT_TRUE(config.keys.size() >= 1) << kVendorStr << "has no keys";
-        for (auto key : config.keys) {
+        for (const auto& key : config.keys) {
             ASSERT_TRUE(key.keyId.size() > 0) << kVendorStr
                                               << " has zero length keyId";
             ASSERT_TRUE(key.keyId.size() > 0) << kVendorStr
@@ -245,7 +245,7 @@ TEST_P(DrmHalVendorFactoryTest, InvalidContentTypeNotSupported) {
  */
 TEST_P(DrmHalVendorFactoryTest, ValidContentTypeSupported) {
     RETURN_IF_SKIPPED;
-    for (auto config : contentConfigurations) {
+    for (const auto& config : contentConfigurations) {
         EXPECT_TRUE(drmFactory->isContentTypeSupported(config.mimeType));
     }
 }
@@ -610,7 +610,7 @@ TEST_P(DrmHalVendorPluginTest, RemoveKeysNewSession) {
  */
 TEST_P(DrmHalVendorPluginTest, RestoreKeys) {
     RETURN_IF_SKIPPED;
-    for (auto config : contentConfigurations) {
+    for (const auto& config : contentConfigurations) {
         if (config.policy.allowOffline) {
             auto sessionId = openSession();
             hidl_vec<uint8_t> keySetId =
@@ -645,7 +645,7 @@ TEST_P(DrmHalVendorPluginTest, RestoreKeysNull) {
  */
 TEST_P(DrmHalVendorPluginTest, RestoreKeysClosedSession) {
     RETURN_IF_SKIPPED;
-    for (auto config : contentConfigurations) {
+    for (const auto& config : contentConfigurations) {
         if (config.policy.allowOffline) {
             auto sessionId = openSession();
             hidl_vec<uint8_t> keySetId =
@@ -1022,8 +1022,8 @@ TEST_P(DrmHalVendorPluginTest, RequiresSecureDecoderInvalidMimeType) {
  */
 TEST_P(DrmHalVendorPluginTest, RequiresSecureDecoderConfig) {
     RETURN_IF_SKIPPED;
-    for (auto config : contentConfigurations) {
-        for (auto key : config.keys) {
+    for (const auto& config : contentConfigurations) {
+        for (const auto& key : config.keys) {
             if (key.isSecure) {
                 EXPECT_TRUE(cryptoPlugin->requiresSecureDecoderComponent(config.mimeType));
                 break;
@@ -1471,7 +1471,7 @@ TEST_P(DrmHalVendorDecryptTest, QueryKeyStatusWithNoKeys) {
  */
 TEST_P(DrmHalVendorDecryptTest, QueryKeyStatus) {
     RETURN_IF_SKIPPED;
-    for (auto config : contentConfigurations) {
+    for (const auto& config : contentConfigurations) {
         auto sessionId = openSession();
         loadKeys(sessionId, config);
         auto keyStatus = queryKeyStatus(sessionId);
@@ -1485,8 +1485,8 @@ TEST_P(DrmHalVendorDecryptTest, QueryKeyStatus) {
  */
 TEST_P(DrmHalVendorDecryptTest, ClearSegmentTest) {
     RETURN_IF_SKIPPED;
-    for (auto config : contentConfigurations) {
-        for (auto key : config.keys) {
+    for (const auto& config : contentConfigurations) {
+        for (const auto& key : config.keys) {
             const size_t kSegmentSize = 1024;
             vector<uint8_t> iv(AES_BLOCK_SIZE, 0);
             const Pattern noPattern = {0, 0};
@@ -1513,8 +1513,8 @@ TEST_P(DrmHalVendorDecryptTest, ClearSegmentTest) {
  */
 TEST_P(DrmHalVendorDecryptTest, EncryptedAesCtrSegmentTest) {
     RETURN_IF_SKIPPED;
-    for (auto config : contentConfigurations) {
-        for (auto key : config.keys) {
+    for (const auto& config : contentConfigurations) {
+        for (const auto& key : config.keys) {
             const size_t kSegmentSize = 1024;
             vector<uint8_t> iv(AES_BLOCK_SIZE, 0);
             const Pattern noPattern = {0, 0};
@@ -1540,8 +1540,8 @@ TEST_P(DrmHalVendorDecryptTest, EncryptedAesCtrSegmentTest) {
  */
 TEST_P(DrmHalVendorDecryptTest, EncryptedAesCtrSegmentTestNoKeys) {
     RETURN_IF_SKIPPED;
-    for (auto config : contentConfigurations) {
-        for (auto key : config.keys) {
+    for (const auto& config : contentConfigurations) {
+        for (const auto& key : config.keys) {
             vector<uint8_t> iv(AES_BLOCK_SIZE, 0);
             const Pattern noPattern = {0, 0};
             const vector<SubSample> subSamples = {{.numBytesOfClearData = 256,
@@ -1567,8 +1567,8 @@ TEST_P(DrmHalVendorDecryptTest, EncryptedAesCtrSegmentTestNoKeys) {
  */
 TEST_P(DrmHalVendorDecryptTest, AttemptDecryptWithKeysRemoved) {
     RETURN_IF_SKIPPED;
-    for (auto config : contentConfigurations) {
-        for (auto key : config.keys) {
+    for (const auto& config : contentConfigurations) {
+        for (const auto& key : config.keys) {
             vector<uint8_t> iv(AES_BLOCK_SIZE, 0);
             const Pattern noPattern = {0, 0};
             const vector<SubSample> subSamples = {{.numBytesOfClearData = 256,
