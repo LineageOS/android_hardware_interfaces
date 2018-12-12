@@ -19,5 +19,6 @@ cc_test {
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: ["VtsHalTvInputV1_0TargetTest.cpp"],
     static_libs: ["android.hardware.tv.input@1.0"],
+    test_suites: ["general-tests"],
 }
 

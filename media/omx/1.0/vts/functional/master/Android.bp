@@ -18,5 +18,6 @@ cc_test {
     name: "VtsHalMediaOmxV1_0TargetMasterTest",
     defaults: ["VtsHalMediaOmxV1_0Defaults"],
     srcs: ["VtsHalMediaOmxV1_0TargetMasterTest.cpp"],
+    test_suites: ["general-tests"],
 }
 
