@@ -42,17 +42,8 @@ using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
-using ::android::hardware::audio::common::CPP_VERSION::AudioChannelMask;
-using ::android::hardware::audio::common::CPP_VERSION::AudioDevice;
-using ::android::hardware::audio::common::CPP_VERSION::AudioFormat;
-using ::android::hardware::audio::CPP_VERSION::AudioDrain;
-using ::android::hardware::audio::CPP_VERSION::DeviceAddress;
-using ::android::hardware::audio::CPP_VERSION::IStream;
-using ::android::hardware::audio::CPP_VERSION::IStreamOut;
-using ::android::hardware::audio::CPP_VERSION::IStreamOutCallback;
-using ::android::hardware::audio::CPP_VERSION::ParameterValue;
-using ::android::hardware::audio::CPP_VERSION::Result;
-using ::android::hardware::audio::CPP_VERSION::TimeSpec;
+using namespace ::android::hardware::audio::common::CPP_VERSION;
+using namespace ::android::hardware::audio::CPP_VERSION;
 
 struct StreamOut : public IStreamOut {
     typedef MessageQueue<WriteCommand, kSynchronizedReadWrite> CommandMQ;

@@ -35,9 +35,7 @@ using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
-using ::android::hardware::audio::CPP_VERSION::IDevice;
-using ::android::hardware::audio::CPP_VERSION::IDevicesFactory;
-using ::android::hardware::audio::CPP_VERSION::Result;
+using namespace ::android::hardware::audio::CPP_VERSION;
 
 struct DevicesFactory : public IDevicesFactory {
 #if MAJOR_VERSION == 2

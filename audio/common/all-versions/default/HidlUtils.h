@@ -24,19 +24,15 @@
 #include <system/audio.h>
 
 using ::android::hardware::hidl_vec;
-using ::android::hardware::audio::common::CPP_VERSION::AudioConfig;
-using ::android::hardware::audio::common::CPP_VERSION::AudioGain;
-using ::android::hardware::audio::common::CPP_VERSION::AudioGainConfig;
-using ::android::hardware::audio::common::CPP_VERSION::AudioOffloadInfo;
-using ::android::hardware::audio::common::CPP_VERSION::AudioPort;
-using ::android::hardware::audio::common::CPP_VERSION::AudioPortConfig;
-using ::android::hardware::audio::common::CPP_VERSION::Uuid;
 
 namespace android {
 namespace hardware {
 namespace audio {
 namespace common {
 namespace CPP_VERSION {
+namespace implementation {
+
+using namespace ::android::hardware::audio::common::CPP_VERSION;
 
 class HidlUtils {
    public:
@@ -69,6 +65,7 @@ class HidlUtils {
     static void uuidToHal(const Uuid& uuid, audio_uuid_t* halUuid);
 };
 
+}  // namespace implementation
 }  // namespace CPP_VERSION
 }  // namespace common
 }  // namespace audio
