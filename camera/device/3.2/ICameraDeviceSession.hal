@@ -91,11 +91,11 @@ interface ICameraDeviceSession {
      * later configureStreams() call by the framework, and all the gralloc
      * buffers for it must be freed after the configureStreams() call returns.
      *
-     * If the stream is new, the maxBuffer field of the stream structure must be
-     * set to 0. The usage must be set to the consumer usage flags. The HAL
-     * device must set these fields in the configureStreams() return values.
-     * These fields are then used by the framework and the platform gralloc
-     * module to allocate the gralloc buffers for each stream.
+     * If the stream is new, the client must set the consumer usage flags in
+     * requestedConfiguration. Upon return, the HAL device must set producerUsage,
+     * maxBuffers, and other fields in the configureStreams() return values. These
+     * fields are then used by the framework and the platform gralloc module to
+     * allocate the gralloc buffers for each stream.
      *
      * Newly allocated buffers may be included in a capture request at any time
      * by the framework. Once a gralloc buffer is returned to the framework
