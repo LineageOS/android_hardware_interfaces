@@ -22,4 +22,5 @@ cc_test {
         "android.hardware.power@1.0",
         "android.hardware.power@1.1",
     ],
+    test_suites: ["general-tests"],
 }

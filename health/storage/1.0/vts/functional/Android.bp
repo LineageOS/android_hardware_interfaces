@@ -22,5 +22,6 @@ cc_test {
     shared_libs: [
         "libhidltransport"
     ],
+    test_suites: ["general-tests"],
 }
 

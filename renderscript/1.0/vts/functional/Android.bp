@@ -28,4 +28,5 @@ cc_test {
         "android.hardware.renderscript@1.0",
         "libnativewindow",
     ],
+    test_suites: ["general-tests"],
 }
