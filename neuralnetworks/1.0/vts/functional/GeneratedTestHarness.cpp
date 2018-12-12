@@ -72,7 +72,8 @@ void copy_back(MixedTyped* dst, const std::vector<RequestArgument>& ra, char* sr
     copy_back_<int16_t>(dst, ra, src);
     copy_back_<_Float16>(dst, ra, src);
     copy_back_<bool8>(dst, ra, src);
-    static_assert(6 == std::tuple_size<MixedTyped>::value,
+    copy_back_<int8_t>(dst, ra, src);
+    static_assert(7 == std::tuple_size<MixedTyped>::value,
                   "Number of types in MixedTyped changed, but copy_back function wasn't updated");
 }
 
