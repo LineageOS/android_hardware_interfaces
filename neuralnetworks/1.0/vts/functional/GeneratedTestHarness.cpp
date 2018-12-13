@@ -36,6 +36,7 @@ namespace neuralnetworks {
 namespace generated_tests {
 using ::android::hardware::neuralnetworks::V1_0::implementation::ExecutionCallback;
 using ::android::hardware::neuralnetworks::V1_0::implementation::PreparedModelCallback;
+using ::test_helper::bool8;
 using ::test_helper::compare;
 using ::test_helper::expectMultinomialDistributionWithinTolerance;
 using ::test_helper::filter;
@@ -65,7 +66,8 @@ void copy_back(MixedTyped* dst, const std::vector<RequestArgument>& ra, char* sr
     copy_back_<uint8_t>(dst, ra, src);
     copy_back_<int16_t>(dst, ra, src);
     copy_back_<_Float16>(dst, ra, src);
-    static_assert(5 == std::tuple_size<MixedTyped>::value,
+    copy_back_<bool8>(dst, ra, src);
+    static_assert(6 == std::tuple_size<MixedTyped>::value,
                   "Number of types in MixedTyped changed, but copy_back function wasn't updated");
 }
 
