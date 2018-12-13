@@ -22,6 +22,8 @@ import @1.0::OperandType;
 import @1.0::PerformanceInfo;
 import @1.1::OperationType;
 
+import android.hidl.safe_union@1.0::Monostate;
+
 enum OperandType : @1.0::OperandType {
     /**
      * An 8 bit boolean scalar value.
@@ -51,6 +53,29 @@ enum OperandType : @1.0::OperandType {
     TENSOR_BOOL8 = 9,
     /** An IEEE 754 16 bit floating point scalar value. */
     FLOAT16 = 10,
+    /**
+     * A tensor of 8 bit signed integers that represent real numbers.
+     *
+     * This tensor is associated with additional fields that are
+     * used to convert the 8 bit signed integer to the real value and vice versa.
+     * These fields are:
+     * - channelDim: a 32 bit unsigned integer indicating channel dimension.
+     * - scales: an array of positive 32 bit floating point values.
+     * The size of the scales array must be equal to dimensions[channelDim].
+     * These fields are located inside Operand's extraParams union, inside the
+     * SymmPerChannelQuantParams struct.
+     *
+     * An Operand of this type must use 'channelQuant' field of its extraParams
+     * union.
+     *
+     * The channel dimension of this tensor must not be unknown (dimensions[channelDim] != 0).
+     *
+     * The formula for real values:
+     * realValue[..., C, ...] =
+     *     integerValue[..., C, ...] * scales[C]
+     * where C is an index in the Channel dimension.
+     */
+    TENSOR_QUANT8_SYMM_PER_CHANNEL = 11,
     /* ADDING A NEW FUNDAMENTAL TYPE REQUIRES UPDATING THE VALUE OF
      * OperandTypeRange::OPERAND_FUNDAMENTAL_MAX.
      */
@@ -64,7 +89,7 @@ enum OperandType : @1.0::OperandType {
  */
 enum OperandTypeRange : uint32_t {
     OPERAND_FUNDAMENTAL_MIN = 0,
-    OPERAND_FUNDAMENTAL_MAX = 10,
+    OPERAND_FUNDAMENTAL_MAX = 11,
     OPERAND_OEM_MIN     = 10000,
     OPERAND_OEM_MAX     = 10001,
 };
@@ -176,6 +201,25 @@ struct Operation {
 };
 
 /**
+ * Parameters for TENSOR_QUANT8_SYMM_PER_CHANNEL operand.
+ */
+struct SymmPerChannelQuantParams {
+    /** Array of scaling values for each channel. Each value must be greater than zero. */
+    vec<float> scales;
+    /** Index of the channel dimension */
+    uint32_t channelDim;
+};
+
+// TODO(slavash): Operand Extension support
+// /**
+//  * Parameters for an unknown (as of 1.2) operand extension. This is
+//  * a vendor-specific extension or a platform extension (backport of
+//  * functionality from newer NNAPI interface).
+//  */
+// struct OperandParamsUnknown {
+// };
+
+/**
  * Describes one operand of the model's graph.
  */
 struct Operand {
@@ -268,6 +312,28 @@ struct Operand {
      * - location.length is set.
      */
     DataLocation location;
+
+    /**
+     * Union of extra parameters, used by some types of Operands that need additional
+     * information for the complete definition of an Operand.
+     */
+    safe_union ExtraParams {
+       /**
+        * Placeholder for operand with no extra parameters.
+        */
+       Monostate none;
+
+       /**
+        * Used with TENSOR_QUANT8_SYMM_PER_CHANNEL operand type.
+        */
+       SymmPerChannelQuantParams channelQuant;
+
+       // TODO(slavash): Operand Extension support
+       // /**
+       //  * Used with Extension operand type.
+       //  */
+       // OperandParamsUnknown unknown;
+    } extraParams;
 };
 
 /**
