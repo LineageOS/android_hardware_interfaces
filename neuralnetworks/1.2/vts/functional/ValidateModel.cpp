@@ -25,15 +25,14 @@ namespace hardware {
 namespace neuralnetworks {
 namespace V1_2 {
 
-using V1_0::IPreparedModel;
 using V1_0::OperandLifeTime;
 using V1_1::ExecutionPreference;
 
 namespace vts {
 namespace functional {
 
-using ::android::hardware::neuralnetworks::V1_0::implementation::ExecutionCallback;
-using ::android::hardware::neuralnetworks::V1_0::implementation::PreparedModelCallback;
+using ::android::hardware::neuralnetworks::V1_2::implementation::ExecutionCallback;
+using ::android::hardware::neuralnetworks::V1_2::implementation::PreparedModelCallback;
 
 ///////////////////////// UTILITY FUNCTIONS /////////////////////////
 
@@ -62,7 +61,7 @@ static void validatePrepareModel(const sp<IDevice>& device, const std::string& m
     preparedModelCallback->wait();
     ErrorStatus prepareReturnStatus = preparedModelCallback->getStatus();
     ASSERT_EQ(ErrorStatus::INVALID_ARGUMENT, prepareReturnStatus);
-    sp<IPreparedModel> preparedModel = preparedModelCallback->getPreparedModel();
+    sp<IPreparedModel> preparedModel = getPreparedModel_1_2(preparedModelCallback);
     ASSERT_EQ(nullptr, preparedModel.get());
 }
 

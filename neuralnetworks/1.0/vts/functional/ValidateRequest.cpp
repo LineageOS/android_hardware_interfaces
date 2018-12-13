@@ -33,8 +33,8 @@ namespace V1_0 {
 namespace vts {
 namespace functional {
 
-using ::android::hardware::neuralnetworks::V1_0::implementation::ExecutionCallback;
-using ::android::hardware::neuralnetworks::V1_0::implementation::PreparedModelCallback;
+using ::android::hardware::neuralnetworks::V1_2::implementation::ExecutionCallback;
+using ::android::hardware::neuralnetworks::V1_2::implementation::PreparedModelCallback;
 using ::android::hidl::memory::V1_0::IMemory;
 using test_helper::for_all;
 using test_helper::MixedTyped;
