@@ -54,12 +54,12 @@ TEST_F(RenderscriptHidlTest, ScriptVarTest) {
                            [&](const hidl_vec<uint8_t>& _data){ resultI = *((int*)_data.data()); });
     EXPECT_EQ(100, resultI);
 
-    context->scriptSetVarJ(script, mExportVarIdx_var_long, 101l);
+    context->scriptSetVarJ(script, mExportVarIdx_var_long, 101L);
     int resultJ = 0;
     context->scriptGetVarV(script, mExportVarIdx_var_long, sizeof(long),
                            [&](const hidl_vec<uint8_t>& _data){
                                resultJ = *((long*)_data.data()); });
-    EXPECT_EQ(101l, resultJ);
+    EXPECT_EQ(101L, resultJ);
 
     context->scriptSetVarF(script, mExportVarIdx_var_float, 102.0f);
     int resultF = 0.0f;
@@ -140,7 +140,7 @@ TEST_F(RenderscriptHidlTest, ScriptInvokeTest) {
 
     // invoke test
     int resultI = 0;
-    long resultJ = 0l;
+    long resultJ = 0L;
     float resultF = 0.0f;
     double resultD = 0.0;
     uint32_t resultV = 0u;
@@ -165,7 +165,7 @@ TEST_F(RenderscriptHidlTest, ScriptInvokeTest) {
                                resultVE = std::vector<int>(
                                    (int*)_data.data(), (int*)_data.data() + 2); });
     EXPECT_EQ(1, resultI);
-    EXPECT_EQ(2l, resultJ);
+    EXPECT_EQ(2L, resultJ);
     EXPECT_EQ(3.0f, resultF);
     EXPECT_EQ(4.0, resultD);
     EXPECT_EQ(5u, resultV);
