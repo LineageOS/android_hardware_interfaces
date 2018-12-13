@@ -215,7 +215,6 @@ class WifiChip : public V1_3::IWifiChip {
     WifiStatus registerDebugRingBufferCallback();
     WifiStatus registerRadioModeChangeCallback();
 
-    void populateModes();
     std::vector<IWifiChip::ChipIfaceCombination>
     getCurrentModeIfaceCombinations();
     std::map<IfaceType, size_t> getCurrentIfaceCombination();

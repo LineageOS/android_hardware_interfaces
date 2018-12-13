@@ -18,6 +18,7 @@
 #define MOCK_WIFI_FEATURE_FLAGS_H_
 
 #include <gmock/gmock.h>
+#undef NAN  // This is weird, NAN is defined in bionic/libc/include/math.h:38
 
 #include "wifi_feature_flags.h"
 
@@ -32,9 +33,7 @@ class MockWifiFeatureFlags : public WifiFeatureFlags {
    public:
     MockWifiFeatureFlags();
 
-    MOCK_METHOD0(isAwareSupported, bool());
-    MOCK_METHOD0(isDualInterfaceSupported, bool());
-    MOCK_METHOD0(isApDisabled, bool());
+    MOCK_METHOD0(getChipModes, std::vector<V1_0::IWifiChip::ChipMode>());
 };
 
 }  // namespace feature_flags

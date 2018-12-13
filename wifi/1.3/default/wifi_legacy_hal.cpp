@@ -551,6 +551,7 @@ wifi_error WifiLegacyHal::startGscan(
                         on_results_user_callback(id, cached_scan_results);
                         return;
                     }
+                    FALLTHROUGH_INTENDED;
                 }
                 // Fall through if failed. Failure to retrieve cached scan
                 // results should trigger a background scan failure.
