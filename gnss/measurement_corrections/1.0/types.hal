@@ -60,8 +60,14 @@ struct SingleSatCorrection {
     /** Error estimate (1-sigma) for the Excess path length estimate */
     float excessPathLengthUncertaintyMeters;
 
-    /** Defines the reflecting plane location and azimuth information */
-    ReflectingPlane reflectingPlance;
+    /**
+     * Defines the reflecting plane characteristics such as location and azimuth
+     *
+     * The value is only valid if HAS_REFLECTING_PLANE flag is set. An invalid reflecting plane
+     * means either reflection planes serving is not supported or the satellite signal has gone
+     * through multiple reflections.
+     */
+     ReflectingPlane reflectingPlane;
 };
 
 /**
@@ -91,10 +97,12 @@ struct MeasurementCorrections {
 };
 
 /**
- * A struct containing the location and azimuth of the reflecting plane that the satellite signal
- * has bounced from.
+ * A struct containing the characteristics of the reflecting plane that the satellite signal has
+ * bounced from.
  *
- * This field is set only if the signal has bounced only once.
+ * The value is only valid if HAS_REFLECTING_PLANE flag is set. An invalid reflecting plane
+ * means either reflection planes serving is not supported or the satellite signal has gone
+ * through multiple reflections.
  */
 struct ReflectingPlane {
     /** Represents latitude of the reflecting plane in degrees. */
@@ -104,7 +112,8 @@ struct ReflectingPlane {
     double longitudeDegrees;
 
     /**
-     * Represents altitude of the reflecting plane in meters above the WGS 84 reference ellipsoid.
+     * Represents altitude of the reflecting point in the plane in meters above the WGS 84 reference
+     * ellipsoid.
      */
     double altitudeMeters;
 

@@ -19,7 +19,7 @@ hidl_interface {
     interfaces: [
         "android.hardware.graphics.bufferqueue@1.0",
         "android.hardware.graphics.common@1.0",
-        "android.hardware.media.bufferpool@1.0",
+        "android.hardware.media.bufferpool@2.0",
         "android.hardware.media.omx@1.0",
         "android.hardware.media@1.0",
         "android.hidl.base@1.0",

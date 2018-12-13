@@ -16,7 +16,7 @@
 
 package android.hardware.media.c2@1.0;
 
-import android.hardware.media.bufferpool@1.0::IClientManager;
+import android.hardware.media.bufferpool@2.0::IClientManager;
 import IComponentInterface;
 import IComponentListener;
 import IComponent;

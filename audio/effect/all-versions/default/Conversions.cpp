@@ -17,14 +17,11 @@
 #include "Conversions.h"
 #include "HidlUtils.h"
 
-using ::android::hardware::audio::common::CPP_VERSION::HidlUtils;
-
 #include <memory.h>
 #include <stdio.h>
 
 #include <common/all-versions/VersionUtils.h>
 
-using ::android::hardware::audio::common::CPP_VERSION::HidlUtils;
 using ::android::hardware::audio::common::utils::EnumBitfield;
 
 namespace android {
@@ -33,6 +30,8 @@ namespace audio {
 namespace effect {
 namespace CPP_VERSION {
 namespace implementation {
+
+using ::android::hardware::audio::common::CPP_VERSION::implementation::HidlUtils;
 
 void effectDescriptorFromHal(const effect_descriptor_t& halDescriptor,
                              EffectDescriptor* descriptor) {

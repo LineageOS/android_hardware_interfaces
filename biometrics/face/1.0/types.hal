@@ -57,6 +57,21 @@ enum Status : uint32_t {
     NOT_ENROLLED = 4
 };
 
+enum Feature : uint32_t {
+    /**
+     * Require the user to look at the device during enrollment and
+     * authentication. Note this is to accommodate people who have limited
+     * vision. Must be enabled by default.
+     */
+    REQUIRE_ATTENTION = 1,
+
+    /**
+     * Require a diverse set of poses during enrollment. Note this is to
+     * accommodate people with limited mobility. Must be enabled by default.
+     */
+    REQUIRE_DIVERSITY = 2
+};
+
 /**
  * Face errors represent events that can't be immediately recovered by user
  * intervention. These are returned in the onError callback.
@@ -112,7 +127,7 @@ enum FaceError : int32_t {
     /**
      * Used to enable a vendor-specific error message.
      */
-    VENDOR = 8,
+    VENDOR = 8
 };
 
 /**
