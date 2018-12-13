@@ -47,20 +47,9 @@ using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
-using ::android::hardware::audio::common::CPP_VERSION::AudioDevice;
-using ::android::hardware::audio::common::CPP_VERSION::AudioMode;
-using ::android::hardware::audio::common::CPP_VERSION::AudioSource;
-using ::android::hardware::audio::common::CPP_VERSION::Uuid;
 using ::android::hardware::audio::common::CPP_VERSION::implementation::AudioDeviceBitfield;
-using ::android::hardware::audio::effect::CPP_VERSION::AudioBuffer;
-using ::android::hardware::audio::effect::CPP_VERSION::EffectAuxChannelsConfig;
-using ::android::hardware::audio::effect::CPP_VERSION::EffectConfig;
-using ::android::hardware::audio::effect::CPP_VERSION::EffectDescriptor;
-using ::android::hardware::audio::effect::CPP_VERSION::EffectFeature;
-using ::android::hardware::audio::effect::CPP_VERSION::EffectOffloadParameter;
-using ::android::hardware::audio::effect::CPP_VERSION::IEffect;
-using ::android::hardware::audio::effect::CPP_VERSION::IEffectBufferProviderCallback;
-using ::android::hardware::audio::effect::CPP_VERSION::Result;
+using namespace ::android::hardware::audio::common::CPP_VERSION;
+using namespace ::android::hardware::audio::effect::CPP_VERSION;
 
 struct Effect : public IEffect {
     typedef MessageQueue<Result, kSynchronizedReadWrite> StatusMQ;
