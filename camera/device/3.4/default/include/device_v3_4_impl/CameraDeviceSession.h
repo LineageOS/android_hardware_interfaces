@@ -84,6 +84,8 @@ protected:
             camera3_stream_configuration_t *stream_list /*out*/,
             hidl_vec<camera3_stream_t*> *streams /*out*/);
     void postProcessConfigurationLocked_3_4(const StreamConfiguration& requestedConfiguration);
+    void postProcessConfigurationFailureLocked_3_4(
+            const StreamConfiguration& requestedConfiguration);
 
     Return<void> processCaptureRequest_3_4(
             const hidl_vec<V3_4::CaptureRequest>& requests,
