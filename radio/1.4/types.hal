@@ -22,6 +22,8 @@ import @1.0::CellInfoType;
 import @1.0::DataProfileId;
 import @1.0::DataProfileInfoType;
 import @1.0::RadioAccessFamily;
+import @1.0::RadioCapabilityPhase;
+import @1.0::RadioCapabilityStatus ;
 import @1.0::RadioError;
 import @1.0::RadioTechnology;
 import @1.0::RegState;
@@ -148,6 +150,11 @@ enum EmergencyNumberSource : int32_t {
 enum RadioTechnology : @1.0::RadioTechnology {
     /** 5G NR. */
     NR = 20,
+};
+
+enum RadioAccessFamily : @1.0::RadioAccessFamily {
+    /** 5G NR. */
+    NR = 1 << RadioTechnology:NR,
 };
 
 /** Mapping the frequency to a rough range. */
@@ -419,4 +426,23 @@ struct CardStatus {
      * supports eUICC.
      */
     string eid;
+};
+
+/** Overwritten from @1.0::RadioCapability in order to use the latest RadioAccessFamily. */
+struct RadioCapability {
+    /** Unique session value defined by fr amework returned in all "responses/unslo". */
+    int32_t session;
+
+    RadioCapabilityPhase phase;
+
+    /** 32-bit bitmap of RadioAccessFamily. */
+    bitfield<RadioAccessFamily> raf;
+
+    /**
+     * A UUID typically "com.xxxx.lmX" where X is the logical modem.
+     * RadioConst:MAX_UUID_LENGTH is the max length.
+     */
+    string logicalModemUuid;
+
+    RadioCapabilityStatus status;
 };

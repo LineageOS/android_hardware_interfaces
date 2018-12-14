@@ -35,6 +35,8 @@ hidl_interface {
         "LteVopsInfo",
         "NetworkScanResult",
         "PhysicalChannelConfig",
+        "RadioAccessFamily",
+        "RadioCapability",
         "RadioFrequencyInfo",
         "RadioTechnology",
         "NrIndicators",

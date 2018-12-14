@@ -22,6 +22,7 @@ import @1.3::IRadio;
 import @1.4::AccessNetwork;
 import @1.4::DataProfileInfo;
 import @1.4::EmergencyServiceCategory;
+import @1.4::RadioAccessFamily;
 
 /**
  * This interface is used by telephony and telecom to talk to cellular radio.
@@ -122,4 +123,24 @@ interface IRadio extends @1.3::IRadio {
      */
     oneway emergencyDial(int32_t serial, Dial dialInfo,
             bitfield<EmergencyServiceCategory> categories);
+
+    /**
+     * Query the preferred network type bitmap.
+     *
+     * @param serial Serial number of request.
+     *
+     * Response callback is IRadioResponse.getPreferredNetworkTypeBitmapResponse()
+     */
+    oneway getPreferredNetworkTypeBitmap(int32_t serial);
+
+    /**
+     * Requests to set the preferred network type for searching and registering.
+     *
+     * @param serial Serial number of request.
+     * @param networkTypeBitmap a 32-bit bitmap of RadioAccessFamily.
+     *
+     * Response callback is IRadioResponse.setPreferredNetworkTypeBitmapResponse()
+     */
+    oneway setPreferredNetworkTypeBitmap(
+            int32_t serial, bitfield<RadioAccessFamily> networkTypeBitmap);
 };
