@@ -84,40 +84,11 @@ using ::android::hardware::kSynchronizedReadWrite;
 using ::android::hardware::MessageQueue;
 using ::android::hardware::MQDescriptorSync;
 using ::android::hardware::Return;
-using ::android::hardware::audio::CPP_VERSION::AudioDrain;
-using ::android::hardware::audio::CPP_VERSION::DeviceAddress;
-using ::android::hardware::audio::CPP_VERSION::IDevice;
-using ::android::hardware::audio::CPP_VERSION::IPrimaryDevice;
-using TtyMode = ::android::hardware::audio::CPP_VERSION::IPrimaryDevice::TtyMode;
-using ::android::hardware::audio::CPP_VERSION::IDevicesFactory;
-using ::android::hardware::audio::CPP_VERSION::IStream;
-using ::android::hardware::audio::CPP_VERSION::IStreamIn;
-using ::android::hardware::audio::CPP_VERSION::MessageQueueFlagBits;
-using ::android::hardware::audio::CPP_VERSION::TimeSpec;
-using ReadParameters = ::android::hardware::audio::CPP_VERSION::IStreamIn::ReadParameters;
-using ReadStatus = ::android::hardware::audio::CPP_VERSION::IStreamIn::ReadStatus;
-using ::android::hardware::audio::common::CPP_VERSION::AudioChannelMask;
-using ::android::hardware::audio::common::CPP_VERSION::AudioConfig;
-using ::android::hardware::audio::common::CPP_VERSION::AudioDevice;
-using ::android::hardware::audio::common::CPP_VERSION::AudioFormat;
-using ::android::hardware::audio::common::CPP_VERSION::AudioHandleConsts;
-using ::android::hardware::audio::common::CPP_VERSION::AudioHwSync;
-using ::android::hardware::audio::common::CPP_VERSION::AudioInputFlag;
-using ::android::hardware::audio::common::CPP_VERSION::AudioIoHandle;
-using ::android::hardware::audio::common::CPP_VERSION::AudioMode;
-using ::android::hardware::audio::common::CPP_VERSION::AudioOffloadInfo;
-using ::android::hardware::audio::common::CPP_VERSION::AudioOutputFlag;
-using ::android::hardware::audio::common::CPP_VERSION::AudioSource;
-using ::android::hardware::audio::common::CPP_VERSION::ThreadInfo;
 using ::android::hardware::audio::common::utils::mkEnumBitfield;
-using ::android::hardware::audio::CPP_VERSION::IStreamOut;
-using ::android::hardware::audio::CPP_VERSION::IStreamOutCallback;
-using ::android::hardware::audio::CPP_VERSION::MmapBufferInfo;
-using ::android::hardware::audio::CPP_VERSION::MmapPosition;
-using ::android::hardware::audio::CPP_VERSION::ParameterValue;
-using ::android::hardware::audio::CPP_VERSION::Result;
 
+using namespace ::android::hardware::audio::common::CPP_VERSION;
 using namespace ::android::hardware::audio::common::test::utility;
+using namespace ::android::hardware::audio::CPP_VERSION;
 
 // Typical accepted results from interface methods
 static auto okOrNotSupported = {Result::OK, Result::NOT_SUPPORTED};
@@ -1374,12 +1345,13 @@ TEST_F(BoolAccessorPrimaryHidlTest, setGetBtScoWidebandEnabled) {
                             &IPrimaryDevice::getBtScoWidebandEnabled);
 }
 
-using TtyModeAccessorPrimaryHidlTest = AccessorPrimaryHidlTest<TtyMode>;
+using TtyModeAccessorPrimaryHidlTest = AccessorPrimaryHidlTest<IPrimaryDevice::TtyMode>;
 TEST_F(TtyModeAccessorPrimaryHidlTest, setGetTtyMode) {
     doc::test("Query and set the TTY mode state");
-    testAccessors<OPTIONAL>("TTY mode", Initial{TtyMode::OFF},
-                            {TtyMode::HCO, TtyMode::VCO, TtyMode::FULL},
-                            &IPrimaryDevice::setTtyMode, &IPrimaryDevice::getTtyMode);
+    testAccessors<OPTIONAL>(
+        "TTY mode", Initial{IPrimaryDevice::TtyMode::OFF},
+        {IPrimaryDevice::TtyMode::HCO, IPrimaryDevice::TtyMode::VCO, IPrimaryDevice::TtyMode::FULL},
+        &IPrimaryDevice::setTtyMode, &IPrimaryDevice::getTtyMode);
 }
 
 TEST_F(BoolAccessorPrimaryHidlTest, setGetHac) {

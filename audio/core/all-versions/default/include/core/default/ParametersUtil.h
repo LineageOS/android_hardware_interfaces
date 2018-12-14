@@ -33,6 +33,7 @@ namespace implementation {
 
 using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
+using namespace ::android::hardware::audio::common::CPP_VERSION;
 using namespace ::android::hardware::audio::CPP_VERSION;
 
 class ParametersUtil {

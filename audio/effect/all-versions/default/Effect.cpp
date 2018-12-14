@@ -41,8 +41,6 @@ namespace CPP_VERSION {
 namespace implementation {
 
 using ::android::hardware::audio::common::CPP_VERSION::implementation::AudioChannelBitfield;
-using namespace ::android::hardware::audio::common::CPP_VERSION;
-using namespace ::android::hardware::audio::effect::CPP_VERSION;
 
 namespace {
 
