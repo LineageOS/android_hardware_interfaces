@@ -83,6 +83,8 @@ V1_3::IWifiChip::ChipCapabilityMask convertLegacyFeatureToHidlChipCapability(
             return HidlChipCaps::D2AP_RTT;
         case WIFI_FEATURE_SET_LATENCY_MODE:
             return HidlChipCaps::SET_LATENCY_MODE;
+        case WIFI_FEATURE_P2P_RAND_MAC:
+            return HidlChipCaps::P2P_RAND_MAC;
     };
     CHECK(false) << "Unknown legacy feature: " << feature;
     return {};
@@ -141,14 +143,18 @@ bool convertLegacyFeaturesToHidlChipCapabilities(
                 convertLegacyLoggerFeatureToHidlChipCapability(feature);
         }
     }
-    for (const auto feature :
-         {WIFI_FEATURE_SET_TX_POWER_LIMIT, WIFI_FEATURE_USE_BODY_HEAD_SAR,
-          WIFI_FEATURE_D2D_RTT, WIFI_FEATURE_D2AP_RTT,
-          WIFI_FEATURE_SET_LATENCY_MODE}) {
+    std::vector<uint32_t> features = {WIFI_FEATURE_SET_TX_POWER_LIMIT,
+                                      WIFI_FEATURE_USE_BODY_HEAD_SAR,
+                                      WIFI_FEATURE_D2D_RTT,
+                                      WIFI_FEATURE_D2AP_RTT,
+                                      WIFI_FEATURE_SET_LATENCY_MODE,
+                                      WIFI_FEATURE_P2P_RAND_MAC};
+    for (const auto feature : features) {
         if (feature & legacy_feature_set) {
             *hidl_caps |= convertLegacyFeatureToHidlChipCapability(feature);
         }
     }
+
     // There are no flags for these 3 in the legacy feature set. Adding them to
     // the set because all the current devices support it.
     *hidl_caps |= HidlChipCaps::DEBUG_RING_BUFFER_VENDOR_DATA;

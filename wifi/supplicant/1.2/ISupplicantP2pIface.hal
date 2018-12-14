@@ -68,4 +68,16 @@ interface ISupplicantP2pIface extends @1.0::ISupplicantP2pIface {
     addGroup_1_2(Ssid ssid, string pskPassphrase, bool persistent,
                  uint32_t freq, MacAddress peerAddress, bool joinExistingGroup)
         generates (SupplicantStatus status);
+
+    /**
+     * Set MAC randomization enabled/disabled.
+     *
+     * @param enable true to enable, false to disable.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+     */
+    setMacRandomization(bool enable) generates (SupplicantStatus status);
 };
