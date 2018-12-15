@@ -17,6 +17,7 @@
 package android.hardware.wifi@1.3;
 
 import @1.0::WifiStatus;
+import @1.0::MacAddress;
 import @1.2::IWifiStaIface;
 
 /**
@@ -41,4 +42,15 @@ interface IWifiStaIface extends @1.2::IWifiStaIface {
      * @return stats Instance of |LinkLayerStats|.
      */
     getLinkLayerStats_1_3() generates (WifiStatus status, StaLinkLayerStats stats);
+
+    /**
+     * Gets the factory MAC address of the Sta Interface
+     * @return status WifiStatus of the operation
+     *         Possible status codes:
+     *         |WifiStatusCode.SUCCESS|,
+     *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+     *         |WifiStatusCode.ERROR_UNKNOWN|
+     * @return mac Factory MAC address of the Sta Interface
+     */
+     getFactoryMacAddress() generates (WifiStatus status, MacAddress mac);
 };

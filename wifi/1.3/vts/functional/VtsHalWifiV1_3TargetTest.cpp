@@ -19,6 +19,8 @@
 
 #include "wifi_hidl_test_utils.h"
 
+using ::android::hardware::wifi::V1_3::IWifi;
+
 // Test environment for Wifi HIDL HAL.
 class WifiHidlEnvironment_1_3 : public WifiHidlEnvironment {
    public:

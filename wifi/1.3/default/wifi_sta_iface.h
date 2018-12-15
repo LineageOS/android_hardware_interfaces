@@ -109,6 +109,8 @@ class WifiStaIface : public V1_3::IWifiStaIface {
         getDebugRxPacketFates_cb hidl_status_cb) override;
     Return<void> setMacAddress(const hidl_array<uint8_t, 6>& mac,
                                setMacAddress_cb hidl_status_cb) override;
+    Return<void> getFactoryMacAddress(
+        getFactoryMacAddress_cb hidl_status_cb) override;
 
    private:
     // Corresponding worker functions for the HIDL methods.
@@ -155,6 +157,8 @@ class WifiStaIface : public V1_3::IWifiStaIface {
     std::pair<WifiStatus, std::vector<WifiDebugRxPacketFateReport>>
     getDebugRxPacketFatesInternal();
     WifiStatus setMacAddressInternal(const std::array<uint8_t, 6>& mac);
+    std::pair<WifiStatus, std::array<uint8_t, 6>>
+    getFactoryMacAddressInternal();
 
     std::string ifname_;
     std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal_;
