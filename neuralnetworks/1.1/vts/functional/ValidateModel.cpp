@@ -33,8 +33,8 @@ using V1_0::OperandType;
 namespace vts {
 namespace functional {
 
-using ::android::hardware::neuralnetworks::V1_0::implementation::ExecutionCallback;
-using ::android::hardware::neuralnetworks::V1_0::implementation::PreparedModelCallback;
+using ::android::hardware::neuralnetworks::V1_2::implementation::ExecutionCallback;
+using ::android::hardware::neuralnetworks::V1_2::implementation::PreparedModelCallback;
 
 ///////////////////////// UTILITY FUNCTIONS /////////////////////////
 
