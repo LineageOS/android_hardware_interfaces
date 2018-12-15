@@ -67,8 +67,6 @@ static int epollfd;
 
 #define POWER_SUPPLY_SUBSYSTEM "power_supply"
 
-// epoll_create() parameter is actually unused
-#define MAX_EPOLL_EVENTS 40
 static int uevent_fd;
 static int wakealarm_fd;
 
@@ -240,9 +238,9 @@ static void healthd_mainloop(void) {
 }
 
 static int healthd_init() {
-    epollfd = epoll_create(MAX_EPOLL_EVENTS);
+    epollfd = epoll_create1(EPOLL_CLOEXEC);
     if (epollfd == -1) {
-        KLOG_ERROR(LOG_TAG, "epoll_create failed; errno=%d\n", errno);
+        KLOG_ERROR(LOG_TAG, "epoll_create1 failed; errno=%d\n", errno);
         return -1;
     }
 
