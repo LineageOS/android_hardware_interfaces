@@ -29,6 +29,7 @@ namespace audio {
 namespace CPP_VERSION {
 namespace implementation {
 
+using namespace ::android::hardware::audio::common::CPP_VERSION;
 using namespace ::android::hardware::audio::CPP_VERSION;
 
 std::string deviceAddressToHal(const DeviceAddress& address);

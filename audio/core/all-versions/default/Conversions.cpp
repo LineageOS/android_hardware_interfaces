@@ -26,8 +26,6 @@ namespace audio {
 namespace CPP_VERSION {
 namespace implementation {
 
-using namespace ::android::hardware::audio::common::CPP_VERSION;
-
 std::string deviceAddressToHal(const DeviceAddress& address) {
     // HAL assumes that the address is NUL-terminated.
     char halAddress[AUDIO_DEVICE_MAX_ADDRESS_LEN];

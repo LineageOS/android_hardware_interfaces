@@ -34,8 +34,6 @@ namespace audio {
 namespace CPP_VERSION {
 namespace implementation {
 
-using ::android::hardware::audio::common::CPP_VERSION::ThreadInfo;
-
 namespace {
 
 class WriteThread : public Thread {
