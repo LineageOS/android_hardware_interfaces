@@ -17,6 +17,8 @@
 #ifndef VTS_HAL_NEURALNETWORKS_V1_2_H
 #define VTS_HAL_NEURALNETWORKS_V1_2_H
 
+#include "Callbacks.h"
+
 #include <android/hardware/neuralnetworks/1.0/types.h>
 #include <android/hardware/neuralnetworks/1.1/types.h>
 #include <android/hardware/neuralnetworks/1.2/IDevice.h>
@@ -76,6 +78,10 @@ class ValidationTest : public NeuralnetworksHidlTest {
 
 // Tag for the generated tests
 class GeneratedTest : public NeuralnetworksHidlTest {};
+
+// Utility function to get PreparedModel from callback and downcast to V1_2.
+sp<IPreparedModel> getPreparedModel_1_2(
+    const sp<V1_2::implementation::PreparedModelCallback>& callback);
 
 }  // namespace functional
 }  // namespace vts

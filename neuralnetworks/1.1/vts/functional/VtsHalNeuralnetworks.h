@@ -36,6 +36,7 @@ namespace V1_1 {
 
 using V1_0::DeviceStatus;
 using V1_0::ErrorStatus;
+using V1_0::IPreparedModel;
 using V1_0::Operand;
 using V1_0::OperandType;
 using V1_0::Request;
