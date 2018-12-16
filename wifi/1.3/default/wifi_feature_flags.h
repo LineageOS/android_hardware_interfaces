@@ -17,6 +17,8 @@
 #ifndef WIFI_FEATURE_FLAGS_H_
 #define WIFI_FEATURE_FLAGS_H_
 
+#include <android/hardware/wifi/1.2/IWifiChip.h>
+
 namespace android {
 namespace hardware {
 namespace wifi {
@@ -24,14 +26,23 @@ namespace V1_3 {
 namespace implementation {
 namespace feature_flags {
 
+namespace chip_mode_ids {
+// These mode ID's should be unique (even across combo versions). Refer to
+// handleChipConfiguration() for it's usage.
+constexpr V1_0::ChipModeId kInvalid = UINT32_MAX;
+// Mode ID's for V1
+constexpr V1_0::ChipModeId kV1Sta = 0;
+constexpr V1_0::ChipModeId kV1Ap = 1;
+// Mode ID for V3
+constexpr V1_0::ChipModeId kV3 = 3;
+}  // namespace chip_mode_ids
+
 class WifiFeatureFlags {
    public:
     WifiFeatureFlags();
     virtual ~WifiFeatureFlags() = default;
 
-    virtual bool isAwareSupported();
-    virtual bool isDualInterfaceSupported();
-    virtual bool isApDisabled();
+    virtual std::vector<V1_0::IWifiChip::ChipMode> getChipModes();
 };
 
 }  // namespace feature_flags

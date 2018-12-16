@@ -87,4 +87,44 @@ interface IRadioResponse extends @1.3::IRadioResponse {
      *   RadioError:REQUEST_NOT_SUPPORTED
      */
     oneway getIccCardStatusResponse_1_4(RadioResponseInfo info, CardStatus cardStatus);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     * @param networkTypeBitmap a 32-bit bitmap of RadioAccessFamily.
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:NO_MEMORY
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:SYSTEM_ERR
+     *   RadioError:INVALID_ARGUMENTS
+     *   RadioError:MODEM_ERR
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:NO_RESOURCES
+     *   RadioError:CANCELLED
+     */
+    oneway getPreferredNetworkTypeBitmapResponse(RadioResponseInfo info,
+            bitfield<RadioAccessFamily> networkTypeBitmap);
+
+    /**
+     * Callback of IRadio.setPreferredNetworkTypeBitmap(int, bitfield<RadioAccessFamily>)
+     *
+     * @param info Response info struct containing response type, serial no. and error
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:OPERATION_NOT_ALLOWED
+     *   RadioError:MODE_NOT_SUPPORTED
+     *   RadioError:NO_MEMORY
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:SYSTEM_ERR
+     *   RadioError:INVALID_ARGUMENTS
+     *   RadioError:MODEM_ERR
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:NO_RESOURCES
+     *   RadioError:CANCELLED
+     */
+    oneway setPreferredNetworkTypeBitmapResponse(RadioResponseInfo info);
 };

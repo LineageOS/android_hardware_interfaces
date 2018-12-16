@@ -28,8 +28,6 @@ namespace common {
 namespace CPP_VERSION {
 namespace implementation {
 
-using namespace ::android::hardware::audio::common::CPP_VERSION;
-
 void HidlUtils::audioConfigFromHal(const audio_config_t& halConfig, AudioConfig* config) {
     config->sampleRateHz = halConfig.sample_rate;
     config->channelMask = EnumBitfield<AudioChannelMask>(halConfig.channel_mask);

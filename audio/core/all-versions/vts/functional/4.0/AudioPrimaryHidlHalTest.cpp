@@ -85,7 +85,7 @@ TEST_F(AudioPrimaryHidlTest, GetMicrophonesTest) {
             ASSERT_OK(res);
             hidl_vec<MicrophoneInfo> activeMicrophones;
             Result readRes;
-            typedef MessageQueue<ReadParameters, kSynchronizedReadWrite> CommandMQ;
+            typedef MessageQueue<IStreamIn::ReadParameters, kSynchronizedReadWrite> CommandMQ;
             typedef MessageQueue<uint8_t, kSynchronizedReadWrite> DataMQ;
             std::unique_ptr<CommandMQ> commandMQ;
             std::unique_ptr<DataMQ> dataMQ;
@@ -103,7 +103,7 @@ TEST_F(AudioPrimaryHidlTest, GetMicrophonesTest) {
                     }
                 }));
             ASSERT_OK(readRes);
-            ReadParameters params;
+            IStreamIn::ReadParameters params;
             params.command = IStreamIn::ReadCommand::READ;
             ASSERT_TRUE(commandMQ != nullptr);
             ASSERT_TRUE(commandMQ->isValid());

@@ -40,10 +40,7 @@ namespace effect {
 namespace CPP_VERSION {
 namespace implementation {
 
-using ::android::hardware::audio::common::CPP_VERSION::AudioChannelMask;
-using ::android::hardware::audio::common::CPP_VERSION::AudioFormat;
 using ::android::hardware::audio::common::CPP_VERSION::implementation::AudioChannelBitfield;
-using ::android::hardware::audio::effect::CPP_VERSION::MessageQueueFlagBits;
 
 namespace {
 

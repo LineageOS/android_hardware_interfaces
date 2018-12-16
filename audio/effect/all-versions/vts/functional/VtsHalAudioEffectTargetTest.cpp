@@ -31,33 +31,19 @@
 #include <VtsHalHidlTargetTestBase.h>
 #include <VtsHalHidlTargetTestEnvBase.h>
 
-using android::sp;
-using android::hardware::hidl_handle;
-using android::hardware::hidl_memory;
-using android::hardware::hidl_string;
-using android::hardware::hidl_vec;
-using android::hardware::MQDescriptorSync;
-using android::hardware::Return;
-using android::hardware::Void;
-using android::hardware::audio::common::CPP_VERSION::AudioDevice;
-using android::hardware::audio::common::CPP_VERSION::AudioHandleConsts;
-using android::hardware::audio::common::CPP_VERSION::AudioMode;
-using android::hardware::audio::common::CPP_VERSION::AudioSource;
-using android::hardware::audio::common::CPP_VERSION::Uuid;
-using android::hardware::audio::common::utils::mkEnumBitfield;
-using android::hardware::audio::effect::CPP_VERSION::AudioBuffer;
-using android::hardware::audio::effect::CPP_VERSION::EffectAuxChannelsConfig;
-using android::hardware::audio::effect::CPP_VERSION::EffectBufferConfig;
-using android::hardware::audio::effect::CPP_VERSION::EffectConfig;
-using android::hardware::audio::effect::CPP_VERSION::EffectDescriptor;
-using android::hardware::audio::effect::CPP_VERSION::EffectOffloadParameter;
-using android::hardware::audio::effect::CPP_VERSION::IEffect;
-using android::hardware::audio::effect::CPP_VERSION::IEffectsFactory;
-using android::hardware::audio::effect::CPP_VERSION::IEqualizerEffect;
-using android::hardware::audio::effect::CPP_VERSION::ILoudnessEnhancerEffect;
-using android::hardware::audio::effect::CPP_VERSION::Result;
-using android::hidl::allocator::V1_0::IAllocator;
-using android::hidl::memory::V1_0::IMemory;
+using ::android::sp;
+using ::android::hardware::hidl_handle;
+using ::android::hardware::hidl_memory;
+using ::android::hardware::hidl_string;
+using ::android::hardware::hidl_vec;
+using ::android::hardware::MQDescriptorSync;
+using ::android::hardware::Return;
+using ::android::hardware::Void;
+using ::android::hardware::audio::common::utils::mkEnumBitfield;
+using ::android::hidl::allocator::V1_0::IAllocator;
+using ::android::hidl::memory::V1_0::IMemory;
+using namespace ::android::hardware::audio::common::CPP_VERSION;
+using namespace ::android::hardware::audio::effect::CPP_VERSION;
 
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof(*(a)))
@@ -742,7 +728,7 @@ TEST_F(EqualizerAudioEffectHidlTest, GetSetAllProperties) {
         "Verify that setting band levels and presets works via Get / "
         "SetAllProperties for Equalizer effect");
     using AllProperties =
-        android::hardware::audio::effect::CPP_VERSION::IEqualizerEffect::AllProperties;
+        ::android::hardware::audio::effect::CPP_VERSION::IEqualizerEffect::AllProperties;
     uint16_t numBands = 0;
     getNumBands(&numBands);
     ASSERT_GT(numBands, 0);

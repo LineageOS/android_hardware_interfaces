@@ -41,11 +41,8 @@ using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
-using ::android::hardware::audio::common::CPP_VERSION::Uuid;
-using ::android::hardware::audio::effect::CPP_VERSION::EffectDescriptor;
-using ::android::hardware::audio::effect::CPP_VERSION::IEffect;
-using ::android::hardware::audio::effect::CPP_VERSION::IEffectsFactory;
-using ::android::hardware::audio::effect::CPP_VERSION::Result;
+using namespace ::android::hardware::audio::common::CPP_VERSION;
+using namespace ::android::hardware::audio::effect::CPP_VERSION;
 
 struct EffectsFactory : public IEffectsFactory {
     // Methods from ::android::hardware::audio::effect::CPP_VERSION::IEffectsFactory follow.

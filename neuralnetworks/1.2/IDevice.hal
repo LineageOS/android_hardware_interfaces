@@ -17,9 +17,9 @@
 package android.hardware.neuralnetworks@1.2;
 
 import @1.0::ErrorStatus;
-import @1.0::IPreparedModelCallback;
 import @1.1::ExecutionPreference;
 import @1.1::IDevice;
+import IPreparedModelCallback;
 
 /**
  * This interface represents a device driver.
