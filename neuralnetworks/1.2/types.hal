@@ -160,6 +160,7 @@ enum OperationType : @1.1::OperationType {
     REDUCE_MIN = 94,
     REDUCE_ANY = 95,
     REDUCE_ALL = 96,
+    INSTANCE_NORMALIZATION = 97,
     /* ADDING A NEW FUNDAMENTAL OPERATION REQUIRES UPDATING THE VALUE OF
      * OperationTypeRange::OPERATION_FUNDAMENTAL_MAX.
      */
@@ -173,7 +174,7 @@ enum OperationType : @1.1::OperationType {
  */
 enum OperationTypeRange : uint32_t {
     OPERATION_FUNDAMENTAL_MIN = 0,
-    OPERATION_FUNDAMENTAL_MAX = 96,
+    OPERATION_FUNDAMENTAL_MAX = 97,
     OPERATION_OEM_MIN = 10000,
     OPERATION_OEM_MAX = 10000,
 };
