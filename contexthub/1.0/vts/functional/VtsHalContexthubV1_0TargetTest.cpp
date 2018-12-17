@@ -83,7 +83,7 @@ std::vector<uint32_t> getHubIds() {
     sp<IContexthub> hubApi = ::testing::VtsHalHidlTargetTestBase::getService<IContexthub>();
 
     if (hubApi != nullptr) {
-      for (ContextHub hub : getHubsSync(hubApi)) {
+      for (const ContextHub& hub : getHubsSync(hubApi)) {
         hubIds.push_back(hub.hubId);
       }
     }
@@ -206,7 +206,7 @@ TEST_F(ContexthubHidlTestBase, TestGetHubs) {
   hidl_vec<ContextHub> hubs = getHubsSync(hubApi);
   ALOGD("System reports %zu hubs", hubs.size());
 
-  for (ContextHub hub : hubs) {
+  for (const ContextHub& hub : hubs) {
     ALOGD("Checking hub ID %" PRIu32, hub.hubId);
 
     EXPECT_FALSE(hub.name.empty());
