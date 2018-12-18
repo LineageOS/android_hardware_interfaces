@@ -264,7 +264,7 @@ Return<void> CameraDevice::open(const sp<ICameraDeviceCallback>& callback,
             session->getInterface()->interfaceChain([](
                 ::android::hardware::hidl_vec<::android::hardware::hidl_string> interfaceChain) {
                     ALOGV("Session interface chain:");
-                    for (auto iface : interfaceChain) {
+                    for (const auto& iface : interfaceChain) {
                         ALOGV("  %s", iface.c_str());
                     }
                 });
