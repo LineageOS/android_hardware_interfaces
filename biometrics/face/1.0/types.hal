@@ -121,13 +121,21 @@ enum FaceError : int32_t {
 
     /**
      * Face authentication is locked out due to too many unsuccessful attempts.
+     * This is a "soft" lockout, and authentication can be restarted after
+     * a period of time, generally on the order of 30 seconds.
      */
     LOCKOUT = 7,
 
     /**
      * Used to enable a vendor-specific error message.
      */
-    VENDOR = 8
+    VENDOR = 8,
+
+    /**
+     * Face authentication is disabled until the user unlocks with strong
+     * authentication (PIN/Pattern/Password).
+     */
+    LOCKOUT_PERMANENT = 9
 };
 
 /**

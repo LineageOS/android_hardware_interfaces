@@ -240,4 +240,13 @@ interface IBiometricsFace {
      * @return status The status of this method call.
      */
     userActivity() generates (Status status);
+
+    /**
+     * Reset lockout for the current user.
+     *
+     * @param hat A valid Hardware Authentication Token, generated when the
+     *     user authenticates with Pin/Pattern/Pass.
+     * @return true if lockout was reset, false otherwise.
+     */
+    resetLockout(vec<uint8_t> hat) generates (bool success);
 };
