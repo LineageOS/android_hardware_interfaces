@@ -21,9 +21,10 @@
 
 using android::hardware::hidl_vec;
 
+using IAGnssRil_2_0 = android::hardware::gnss::V2_0::IAGnssRil;
 using IGnssMeasurement_2_0 = android::hardware::gnss::V2_0::IGnssMeasurement;
 using IGnssMeasurement_1_1 = android::hardware::gnss::V1_1::IGnssMeasurement;
-using IAGnssRil_2_0 = android::hardware::gnss::V2_0::IAGnssRil;
+using IGnssMeasurement_1_0 = android::hardware::gnss::V1_0::IGnssMeasurement;
 
 /*
  * SetupTeardownCreateCleanup:
@@ -40,12 +41,17 @@ TEST_F(GnssHalTest, SetupTeardownCreateCleanup) {}
 TEST_F(GnssHalTest, TestGnssMeasurementCallback) {
     auto gnssMeasurement_2_0 = gnss_hal_->getExtensionGnssMeasurement_2_0();
     auto gnssMeasurement_1_1 = gnss_hal_->getExtensionGnssMeasurement_1_1();
-    ASSERT_TRUE(gnssMeasurement_2_0.isOk() || gnssMeasurement_1_1.isOk());
+    auto gnssMeasurement_1_0 = gnss_hal_->getExtensionGnssMeasurement();
+    ASSERT_TRUE(gnssMeasurement_2_0.isOk() || gnssMeasurement_1_1.isOk() ||
+                gnssMeasurement_1_0.isOk());
     if (last_capabilities_ & IGnssCallback::Capabilities::MEASUREMENTS) {
         sp<IGnssMeasurement_2_0> iGnssMeas_2_0 = gnssMeasurement_2_0;
         sp<IGnssMeasurement_1_1> iGnssMeas_1_1 = gnssMeasurement_1_1;
-        // Exactly one interface is non-null.
-        ASSERT_TRUE((iGnssMeas_1_1 != nullptr) != (iGnssMeas_2_0 != nullptr));
+        sp<IGnssMeasurement_1_0> iGnssMeas_1_0 = gnssMeasurement_1_0;
+        // At least one interface is non-null.
+        int numNonNull = (int)(iGnssMeas_2_0 != nullptr) + (int)(iGnssMeas_1_1 != nullptr) +
+                         (int)(iGnssMeas_1_0 != nullptr);
+        ASSERT_TRUE(numNonNull >= 1);
     }
 }
 
@@ -89,4 +95,41 @@ TEST_F(GnssHalTest, TestAGnssRilUpdateNetworkState_2_0) {
     result = iAGnssRil->updateNetworkState_2_0(networkAttributes);
     ASSERT_TRUE(result.isOk());
     EXPECT_TRUE(result);
+}
+
+/*
+ * TestGnssMeasurementCodeType:
+ * Sets a GnssMeasurementCallback, waits for a measurement, and verifies the codeType is valid.
+ */
+TEST_F(GnssHalTest, TestGnssMeasurementCodeType) {
+    const int kFirstGnssMeasurementTimeoutSeconds = 10;
+
+    auto gnssMeasurement = gnss_hal_->getExtensionGnssMeasurement_2_0();
+    if (!gnssMeasurement.isOk()) {
+        return;
+    }
+
+    sp<IGnssMeasurement_2_0> iGnssMeasurement = gnssMeasurement;
+    if (iGnssMeasurement == nullptr) {
+        return;
+    }
+
+    sp<IGnssMeasurementCallback_2_0> callback = new GnssMeasurementCallback(*this);
+
+    auto result = iGnssMeasurement->setCallback_2_0(callback, /* enableFullTracking= */ true);
+    ASSERT_TRUE(result.isOk());
+    EXPECT_EQ(result, IGnssMeasurement_1_0::GnssMeasurementStatus::SUCCESS);
+
+    wait(kFirstGnssMeasurementTimeoutSeconds);
+    EXPECT_EQ(measurement_called_count_, 1);
+    ASSERT_TRUE(last_measurement_.measurements.size() > 0);
+    for (auto measurement : last_measurement_.measurements) {
+        ASSERT_TRUE(
+            (int)measurement.codeType >=
+                (int)IGnssMeasurementCallback_2_0::GnssMeasurementCodeType::CODE_TYPE_A &&
+            (int)measurement.codeType <=
+                (int)IGnssMeasurementCallback_2_0::GnssMeasurementCodeType::CODE_TYPE_CODELESS);
+    }
+
+    iGnssMeasurement->close();
 }

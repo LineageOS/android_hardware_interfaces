@@ -38,6 +38,13 @@ void GnssHalTest::SetUp() {
 }
 
 void GnssHalTest::TearDown() {
+    // Reset counters
+    info_called_count_ = 0;
+    capabilities_called_count_ = 0;
+    location_called_count_ = 0;
+    name_called_count_ = 0;
+    measurement_called_count_ = 0;
+
     if (gnss_hal_ != nullptr) {
         gnss_hal_->cleanup();
     }
@@ -125,5 +132,14 @@ Return<void> GnssHalTest::GnssCallback::gnssSvStatusCb(
     const IGnssCallback::GnssSvStatus& svStatus) {
     ALOGI("GnssSvStatus received");
     parent_.list_gnss_sv_status_.emplace_back(svStatus);
+    return Void();
+}
+
+Return<void> GnssHalTest::GnssMeasurementCallback::gnssMeasurementCb_2_0(
+    const IGnssMeasurementCallback_2_0::GnssData& data) {
+    ALOGD("GnssMeasurement received. Size = %d", (int)data.measurements.size());
+    parent_.measurement_called_count_++;
+    parent_.last_measurement_ = data;
+    parent_.notify();
     return Void();
 }
