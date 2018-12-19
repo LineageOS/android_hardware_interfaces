@@ -21,6 +21,7 @@ cc_binary {
     vendor: true,
     vintf_fragments: ["android.hardware.gnss@2.0-service.xml"],
     srcs: [
+        "GnssConfiguration.cpp",
         "AGnss.cpp",
         "AGnssRil.cpp",
         "Gnss.cpp",
