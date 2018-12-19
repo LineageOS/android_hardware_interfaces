@@ -32,9 +32,9 @@ interface IGnssCallback extends @1.1::IGnssCallback {
         /** GNSS supports line-of-sight satellite identification measurement Corrections */
         MEASUREMENT_CORRECTIONS_LOS_SATS                        = 1 << 8,
         /** GNSS supports per satellite excess-path-length measurement Corrections */
-        MEASUREMENT_CORRECTIONS_EXCESS_PATH_LENGTH              = 1 << 10,
+        MEASUREMENT_CORRECTIONS_EXCESS_PATH_LENGTH              = 1 << 9,
         /** GNSS supports reflecting planes measurement Corrections */
-        MEASUREMENT_CORRECTIONS_REFLECTING_PLANE                = 1 << 20
+        MEASUREMENT_CORRECTIONS_REFLECTING_PLANE                = 1 << 10
     };
 
     /**
