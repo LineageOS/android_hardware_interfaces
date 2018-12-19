@@ -126,6 +126,8 @@ enum OperationType : @1.1::OperationType {
     ROTATED_BBOX_TRANSFORM = 87,
     ABS = 88,
     ROI_POOLING = 89,
+    EQUAL = 90,
+    NOT_EQUAL = 91,
     /* ADDING A NEW FUNDAMENTAL OPERATION REQUIRES UPDATING THE VALUE OF
      * OperationTypeRange::OPERATION_FUNDAMENTAL_MAX.
      */
@@ -139,7 +141,7 @@ enum OperationType : @1.1::OperationType {
  */
 enum OperationTypeRange : uint32_t {
     OPERATION_FUNDAMENTAL_MIN = 0,
-    OPERATION_FUNDAMENTAL_MAX = 89,
+    OPERATION_FUNDAMENTAL_MAX = 91,
     OPERATION_OEM_MIN = 10000,
     OPERATION_OEM_MAX = 10000,
 };
