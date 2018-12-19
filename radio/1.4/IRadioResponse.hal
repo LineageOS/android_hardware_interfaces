@@ -127,4 +127,41 @@ interface IRadioResponse extends @1.3::IRadioResponse {
      *   RadioError:CANCELLED
      */
     oneway setPreferredNetworkTypeBitmapResponse(RadioResponseInfo info);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     * @param dcResponse List of DataCallResult as defined in types.hal
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:NO_MEMORY
+     *   RadioError:NO_RESOURCES
+     *   RadioError:CANCELLED
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:SIM_ABSENT
+     */
+    oneway getDataCallListResponse_1_4(RadioResponseInfo info, vec<SetupDataCallResult> dcResponse);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     * @param dcResponse SetupDataCallResult defined in types.hal
+     *
+     * Valid errors returned:
+     *   RadioError:NONE must be returned on both success and failure of setup with the
+     *              DataCallResponse.status containing the actual status
+     *              For all other errors the DataCallResponse is ignored.
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:OP_NOT_ALLOWED_BEFORE_REG_TO_NW
+     *   RadioError:OP_NOT_ALLOWED_DURING_VOICE_CALL
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:INVALID_ARGUMENTS
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:NO_MEMORY
+     *   RadioError:NO_RESOURCES
+     *   RadioError:CANCELLED
+     *   RadioError:SIM_ABSENT
+     */
+    oneway setupDataCallResponse_1_4(RadioResponseInfo info, SetupDataCallResult dcResponse);
 };
