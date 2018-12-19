@@ -49,12 +49,16 @@ enum OperandType : @1.0::OperandType {
      * represents false; any other value represents true.
      */
     TENSOR_BOOL8 = 9,
+    /* ADDING A NEW FUNDAMENTAL TYPE REQUIRES UPDATING THE VALUE OF
+     * OperandTypeRange::OPERAND_FUNDAMENTAL_MAX.
+     */
+    /* ADDING A NEW OEM TYPE REQUIRES UPDATING THE VALUE OF
+     * OperandTypeRange::OPERAND_OEM_MAX.
+     */
 };
 
 /**
- * The range of values in the OperandType enum.
- *
- * THE MAX VALUES MUST BE UPDATED WHEN ADDING NEW TYPES to the OperandType enum.
+ * The range of operand values in the OperandType enum.
  */
 enum OperandTypeRange : uint32_t {
     OPERAND_FUNDAMENTAL_MIN = 0,
@@ -122,16 +126,20 @@ enum OperationType : @1.1::OperationType {
     ROTATED_BBOX_TRANSFORM = 87,
     ABS = 88,
     ROI_POOLING = 89,
+    /* ADDING A NEW FUNDAMENTAL OPERATION REQUIRES UPDATING THE VALUE OF
+     * OperationTypeRange::OPERATION_FUNDAMENTAL_MAX.
+     */
+    /* ADDING A NEW OEM OPERATION REQUIRES UPDATING THE VALUE OF
+     * OperationTypeRange::OPERATION_OEM_MAX.
+     */
 };
 
 /**
  * The range of values in the OperationType enum.
- *
- * THE MAX VALUES MUST BE UPDATED WHEN ADDING NEW TYPES to the OperationType enum.
  */
 enum OperationTypeRange : uint32_t {
     OPERATION_FUNDAMENTAL_MIN = 0,
-    OPERATION_FUNDAMENTAL_MAX = 87,
+    OPERATION_FUNDAMENTAL_MAX = 89,
     OPERATION_OEM_MIN = 10000,
     OPERATION_OEM_MAX = 10000,
 };
