@@ -380,8 +380,8 @@ struct sound_trigger_sound_model* SoundTriggerHw::convertSoundModelToHal(
                             "malloc failed for size %zu in convertSoundModelToHal PHRASE",
                             allocSize);
 
-        const ISoundTriggerHw::PhraseSoundModel* keyPhraseModel =
-            reinterpret_cast<const ISoundTriggerHw::PhraseSoundModel*>(soundModel);
+        const V2_0::ISoundTriggerHw::PhraseSoundModel* keyPhraseModel =
+            reinterpret_cast<const V2_0::ISoundTriggerHw::PhraseSoundModel*>(soundModel);
 
         size_t i;
         for (i = 0; i < keyPhraseModel->phrases.size() && i < SOUND_TRIGGER_MAX_PHRASES; i++) {
