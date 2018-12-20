@@ -16,6 +16,7 @@
 
 #include <android-base/logging.h>
 #include <android-base/macros.h>
+#include <cutils/properties.h>
 #include <gmock/gmock.h>
 
 #undef NAN  // This is weird, NAN is defined in bionic/libc/include/math.h:38
@@ -108,6 +109,19 @@ class WifiChipTest : public Test {
         // clang-format off
         const hidl_vec<V1_0::IWifiChip::ChipIfaceCombination> combinations = {
             {{{{IfaceType::STA}, 1}, {{IfaceType::P2P, IfaceType::NAN}, 1}}}
+        };
+        const std::vector<V1_0::IWifiChip::ChipMode> modes = {
+            {feature_flags::chip_mode_ids::kV3, combinations}
+        };
+        // clang-format on
+        EXPECT_CALL(*feature_flags_, getChipModes())
+            .WillRepeatedly(testing::Return(modes));
+    }
+
+    void setup_MultiIfaceCombination() {
+        // clang-format off
+        const hidl_vec<V1_0::IWifiChip::ChipIfaceCombination> combinations = {
+            {{{{IfaceType::STA}, 3}}}
         };
         const std::vector<V1_0::IWifiChip::ChipMode> modes = {
             {feature_flags::chip_mode_ids::kV3, combinations}
@@ -653,6 +667,58 @@ TEST_F(WifiChipV2_AwareDisabledApIfaceCombinationTest,
     findModeAndConfigureForIfaceType(IfaceType::STA);
     ASSERT_FALSE(createIface(IfaceType::STA).empty());
     ASSERT_TRUE(createIface(IfaceType::AP).empty());
+}
+
+class WifiChip_MultiIfaceTest : public WifiChipTest {
+   public:
+    void SetUp() override {
+        setup_MultiIfaceCombination();
+        WifiChipTest::SetUp();
+    }
+};
+
+TEST_F(WifiChip_MultiIfaceTest, Create3Sta) {
+    findModeAndConfigureForIfaceType(IfaceType::STA);
+    ASSERT_FALSE(createIface(IfaceType::STA).empty());
+    ASSERT_FALSE(createIface(IfaceType::STA).empty());
+    ASSERT_FALSE(createIface(IfaceType::STA).empty());
+    ASSERT_TRUE(createIface(IfaceType::STA).empty());
+}
+
+TEST_F(WifiChip_MultiIfaceTest, CreateStaWithDefaultNames) {
+    property_set("wifi.interface.0", "");
+    property_set("wifi.interface.1", "");
+    property_set("wifi.interface.2", "");
+    property_set("wifi.interface", "");
+    property_set("wifi.concurrent.interface", "");
+    findModeAndConfigureForIfaceType(IfaceType::STA);
+    ASSERT_EQ(createIface(IfaceType::STA), "wlan0");
+    ASSERT_EQ(createIface(IfaceType::STA), "wlan1");
+    ASSERT_EQ(createIface(IfaceType::STA), "wlan2");
+}
+
+TEST_F(WifiChip_MultiIfaceTest, CreateStaWithCustomNames) {
+    property_set("wifi.interface.0", "test0");
+    property_set("wifi.interface.1", "test1");
+    property_set("wifi.interface.2", "test2");
+    property_set("wifi.interface", "bad0");
+    property_set("wifi.concurrent.interface", "bad1");
+    findModeAndConfigureForIfaceType(IfaceType::STA);
+    ASSERT_EQ(createIface(IfaceType::STA), "test0");
+    ASSERT_EQ(createIface(IfaceType::STA), "test1");
+    ASSERT_EQ(createIface(IfaceType::STA), "test2");
+}
+
+TEST_F(WifiChip_MultiIfaceTest, CreateStaWithCustomAltNames) {
+    property_set("wifi.interface.0", "");
+    property_set("wifi.interface.1", "");
+    property_set("wifi.interface.2", "");
+    property_set("wifi.interface", "testA0");
+    property_set("wifi.concurrent.interface", "testA1");
+    findModeAndConfigureForIfaceType(IfaceType::STA);
+    ASSERT_EQ(createIface(IfaceType::STA), "testA0");
+    ASSERT_EQ(createIface(IfaceType::STA), "testA1");
+    ASSERT_EQ(createIface(IfaceType::STA), "wlan2");
 }
 
 }  // namespace implementation
