@@ -36,6 +36,7 @@ using common::V1_1::PixelFormat;
 using common::V1_1::RenderIntent;
 using common::V1_2::ColorMode;
 using common::V1_2::Dataspace;
+using common::V1_2::Hdr;
 using V2_1::Display;
 using V2_1::Error;
 using V2_3::IComposer;
@@ -89,9 +90,14 @@ class ComposerClient : public V2_2::vts::ComposerClient {
     void getReadbackBufferAttributes_2_3(Display display, PixelFormat* outPixelFormat,
                                          Dataspace* outDataspace);
 
+    std::vector<Hdr> getHdrCapabilities_2_3(Display display, float* outMaxLuminance,
+                                            float* outMaxAverageLuminance, float* outMinLuminance);
+
     bool getClientTargetSupport_2_3(Display display, uint32_t width, uint32_t height,
                                     PixelFormat format, Dataspace dataspace);
     std::vector<IComposerClient::DisplayCapability> getDisplayCapabilities(Display display);
+
+    std::vector<IComposerClient::PerFrameMetadataKey> getPerFrameMetadataKeys_2_3(Display display);
 
    private:
     const sp<IComposerClient> mClient;
