@@ -154,7 +154,7 @@ enum CameraMetadataTag : @3.2::CameraMetadataTag {
 
     ANDROID_INFO_END_3_3,
 
-    /** android.logicalMultiCamera.physicalIds [static, byte[], hidden]
+    /** android.logicalMultiCamera.physicalIds [static, byte[], ndk_public]
      *
      * <p>String containing the ids of the underlying physical cameras.</p>
      */
