@@ -26,6 +26,7 @@
 #include <android/hardware/graphics/composer/2.3/IComposer.h>
 #include <android/hardware/graphics/composer/2.3/IComposerClient.h>
 #include <composer-command-buffer/2.2/ComposerCommandBuffer.h>
+#include <limits>
 
 namespace android {
 namespace hardware {
@@ -44,6 +45,16 @@ using android::hardware::graphics::composer::V2_3::IComposerClient;
 // units of uint32_t's.
 class CommandWriterBase : public V2_2::CommandWriterBase {
    public:
+    void setLayerPerFrameMetadata(const hidl_vec<IComposerClient::PerFrameMetadata>& metadataVec) {
+        beginCommand_2_3(IComposerClient::Command::SET_LAYER_PER_FRAME_METADATA,
+                         metadataVec.size() * 2);
+        for (const auto& metadata : metadataVec) {
+            writeSigned(static_cast<int32_t>(metadata.key));
+            writeFloat(metadata.value);
+        }
+        endCommand();
+    }
+
     void setLayerDataspace(Dataspace dataspace) {
         setLayerDataspaceInternal(static_cast<int32_t>(dataspace));
     }
@@ -66,10 +77,58 @@ class CommandWriterBase : public V2_2::CommandWriterBase {
         endCommand();
     }
 
+    void setLayerPerFrameMetadataBlobs(
+        const hidl_vec<IComposerClient::PerFrameMetadataBlob>& metadata) {
+        size_t commandLength = 0;
+
+        if (metadata.size() > std::numeric_limits<uint32_t>::max()) {
+            LOG_FATAL("too many metadata blobs - dynamic metadata size is too large");
+            return;
+        }
+
+        // number of blobs
+        commandLength += metadata.size();
+
+        for (auto metadataBlob : metadata) {
+            commandLength += sizeof(int32_t);  // key of metadata blob
+            commandLength += 1;                // size information of metadata blob
+
+            // metadata content size
+            size_t metadataSize = metadataBlob.blob.size() / sizeof(uint32_t);
+            commandLength += metadataSize;
+            commandLength +=
+                (metadataBlob.blob.size() - (metadataSize * sizeof(uint32_t)) > 0) ? 1 : 0;
+        }
+
+        if (commandLength > std::numeric_limits<uint16_t>::max()) {
+            LOG_FATAL("dynamic metadata size is too large");
+            return;
+        }
+
+        // Blobs are written as:
+        // {numElements, key1, size1, blob1, key2, size2, blob2, key3, size3...}
+        uint16_t length = static_cast<uint16_t>(commandLength);
+        beginCommand_2_3(IComposerClient::Command::SET_LAYER_PER_FRAME_METADATA_BLOBS, length);
+        write(static_cast<uint32_t>(metadata.size()));
+        for (auto metadataBlob : metadata) {
+            writeSigned(static_cast<int32_t>(metadataBlob.key));
+            write(static_cast<uint32_t>(metadataBlob.blob.size()));
+            writeBlob(static_cast<uint32_t>(metadataBlob.blob.size()), metadataBlob.blob.data());
+        }
+        endCommand();
+    }
+
    protected:
     void beginCommand_2_3(IComposerClient::Command command, uint16_t length) {
         V2_2::CommandWriterBase::beginCommand_2_2(
             static_cast<V2_2::IComposerClient::Command>(static_cast<int32_t>(command)), length);
+    }
+
+    void writeBlob(uint32_t length, const unsigned char* blob) {
+        memcpy(&mData[mDataWritten], blob, length);
+        uint32_t numElements = length / 4;
+        mDataWritten += numElements;
+        mDataWritten += (length - (numElements * 4) > 0) ? 1 : 0;
     }
 };
 

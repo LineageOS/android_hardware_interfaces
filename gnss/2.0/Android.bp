@@ -8,6 +8,8 @@ hidl_interface {
     },
     srcs: [
         "types.hal",
+        "IAGnss.hal",
+        "IAGnssCallback.hal",
         "IAGnssRil.hal",
         "IGnss.hal",
         "IGnssCallback.hal",

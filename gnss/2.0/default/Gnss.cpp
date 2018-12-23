@@ -18,7 +18,11 @@
 
 #include "Gnss.h"
 #include <log/log.h>
+#include "AGnss.h"
 #include "AGnssRil.h"
+#include "GnssMeasurement.h"
+
+using ::android::hardware::Status;
 
 namespace android {
 namespace hardware {
@@ -93,8 +97,8 @@ Return<sp<V1_0::IGnssNi>> Gnss::getExtensionGnssNi() {
 }
 
 Return<sp<V1_0::IGnssMeasurement>> Gnss::getExtensionGnssMeasurement() {
-    // TODO implement
-    return sp<V1_0::IGnssMeasurement>{};
+    // Not supported
+    return nullptr;
 }
 
 Return<sp<V1_0::IGnssNavigationMessage>> Gnss::getExtensionGnssNavigationMessage() {
@@ -132,7 +136,7 @@ Return<bool> Gnss::setCallback_1_1(const sp<V1_1::IGnssCallback>& callback) {
 
     sGnssCallback_1_1 = callback;
 
-    uint32_t capabilities = 0x0;
+    uint32_t capabilities = (uint32_t)V1_0::IGnssCallback::Capabilities::MEASUREMENTS;
     auto ret = sGnssCallback_1_1->gnssSetCapabilitesCb(capabilities);
     if (!ret.isOk()) {
         ALOGE("%s: Unable to invoke callback", __func__);
@@ -167,8 +171,8 @@ Return<sp<V1_1::IGnssConfiguration>> Gnss::getExtensionGnssConfiguration_1_1() {
 }
 
 Return<sp<V1_1::IGnssMeasurement>> Gnss::getExtensionGnssMeasurement_1_1() {
-    // TODO implement
-    return sp<V1_1::IGnssMeasurement>{};
+    ALOGD("Gnss::getExtensionGnssMeasurement_1_1");
+    return new GnssMeasurement();
 }
 
 Return<bool> Gnss::injectBestLocation(const V1_0::GnssLocation&) {
@@ -177,13 +181,17 @@ Return<bool> Gnss::injectBestLocation(const V1_0::GnssLocation&) {
 }
 
 // Methods from V2_0::IGnss follow.
+Return<sp<V2_0::IAGnss>> Gnss::getExtensionAGnss_2_0() {
+    return new AGnss{};
+}
+
 Return<sp<V2_0::IAGnssRil>> Gnss::getExtensionAGnssRil_2_0() {
     return new AGnssRil{};
 }
 
 Return<sp<V2_0::IGnssMeasurement>> Gnss::getExtensionGnssMeasurement_2_0() {
-    // TODO implement
-    return sp<V2_0::IGnssMeasurement>{};
+    ALOGD("Gnss::getExtensionGnssMeasurement_2_0");
+    return new GnssMeasurement();
 }
 
 Return<sp<measurement_corrections::V1_0::IMeasurementCorrections>>

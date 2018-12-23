@@ -108,6 +108,33 @@ bool ComposerClient::getClientTargetSupport_2_3(Display display, uint32_t width,
     return error == Error::NONE;
 }
 
+std::vector<IComposerClient::PerFrameMetadataKey> ComposerClient::getPerFrameMetadataKeys_2_3(
+    Display display) {
+    std::vector<IComposerClient::PerFrameMetadataKey> keys;
+    mClient->getPerFrameMetadataKeys_2_3(display, [&](const auto& tmpError, const auto& tmpKeys) {
+        ASSERT_EQ(Error::NONE, tmpError) << "failed to get perFrameMetadataKeys";
+        keys = tmpKeys;
+    });
+    return keys;
+}
+
+std::vector<Hdr> ComposerClient::getHdrCapabilities_2_3(Display display, float* outMaxLuminance,
+                                                        float* outMaxAverageLuminance,
+                                                        float* outMinLuminance) {
+    std::vector<Hdr> types;
+    mClient->getHdrCapabilities_2_3(
+        display, [&](const auto& tmpError, const auto& tmpTypes, const auto& tmpMaxLuminance,
+                     const auto& tmpMaxAverageLuminance, const auto& tmpMinLuminance) {
+            ASSERT_EQ(Error::NONE, tmpError) << "failed to get HDR capabilities";
+            types = tmpTypes;
+            *outMaxLuminance = tmpMaxLuminance;
+            *outMaxAverageLuminance = tmpMaxAverageLuminance;
+            *outMinLuminance = tmpMinLuminance;
+        });
+
+    return types;
+}
+
 Error ComposerClient::getDisplayedContentSamplingAttributes(
     uint64_t display, PixelFormat& format, Dataspace& dataspace,
     hidl_bitfield<IComposerClient::FormatColorComponent>& componentMask) {

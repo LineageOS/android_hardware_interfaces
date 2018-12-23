@@ -38,6 +38,7 @@ using common::V1_1::PixelFormat;
 using common::V1_1::RenderIntent;
 using common::V1_2::ColorMode;
 using common::V1_2::Dataspace;
+using common::V1_2::Hdr;
 using V2_1::Display;
 using V2_1::Error;
 
@@ -45,6 +46,29 @@ using V2_1::Error;
 template <typename Hal>
 class HwcHalImpl : public V2_2::passthrough::detail::HwcHalImpl<Hal> {
    public:
+    Error getPerFrameMetadataKeys_2_3(
+        Display display, std::vector<IComposerClient::PerFrameMetadataKey>* outKeys) override {
+        std::vector<V2_2::IComposerClient::PerFrameMetadataKey> castKeys;
+        Error error = getPerFrameMetadataKeys(display, &castKeys);
+        if (error != Error::NONE) {
+            return error;
+        }
+        outKeys->clear();
+        for (auto key : castKeys) {
+            outKeys->push_back(static_cast<IComposerClient::PerFrameMetadataKey>(key));
+        }
+        return Error::NONE;
+    }
+
+    Error setLayerPerFrameMetadata_2_3(
+        Display display, Layer layer,
+        const std::vector<IComposerClient::PerFrameMetadata>& metadata) override {
+        return setLayerPerFrameMetadata(
+            display, layer,
+            reinterpret_cast<const std::vector<V2_2::IComposerClient::PerFrameMetadata>&>(
+                metadata));
+    }
+
     Error setColorMode_2_3(Display display, ColorMode mode, RenderIntent intent) override {
         return setColorMode_2_2(display, static_cast<common::V1_1::ColorMode>(mode), intent);
     }
@@ -57,6 +81,12 @@ class HwcHalImpl : public V2_2::passthrough::detail::HwcHalImpl<Hal> {
     Error getColorModes_2_3(Display display, hidl_vec<ColorMode>* outModes) override {
         return getColorModes_2_2(display,
                                  reinterpret_cast<hidl_vec<common::V1_1::ColorMode>*>(outModes));
+    }
+
+    Error getHdrCapabilities_2_3(Display display, hidl_vec<Hdr>* outTypes, float* outMaxLuminance,
+                                 float* outMaxAverageLuminance, float* outMinLuminance) override {
+        return getHdrCapabilities(display, reinterpret_cast<hidl_vec<common::V1_0::Hdr>*>(outTypes),
+                                  outMaxLuminance, outMaxAverageLuminance, outMinLuminance);
     }
 
     Error getClientTargetSupport_2_3(Display display, uint32_t width, uint32_t height,
@@ -186,6 +216,33 @@ class HwcHalImpl : public V2_2::passthrough::detail::HwcHalImpl<Hal> {
         return Error::NONE;
     }
 
+    Error setLayerPerFrameMetadataBlobs(
+        Display display, Layer layer,
+        std::vector<IComposerClient::PerFrameMetadataBlob>& metadata) override {
+        if (!mDispatch.setLayerPerFrameMetadataBlobs) {
+            return Error::UNSUPPORTED;
+        }
+
+        std::vector<IComposerClient::PerFrameMetadataKey> keys;
+        std::vector<uint32_t> sizes;
+        std::vector<uint8_t> blobs;
+
+        for (auto metadataBlob : metadata) {
+            keys.push_back(metadataBlob.key);
+            sizes.push_back(metadataBlob.blob.size());
+
+            int writeIndex = blobs.size();
+            blobs.resize(blobs.size() + metadataBlob.blob.size());
+            memcpy(blobs.data() + writeIndex, metadataBlob.blob.data(), metadataBlob.blob.size());
+        }
+
+        int32_t err = mDispatch.setLayerPerFrameMetadataBlobs(
+            mDevice, display, layer, static_cast<uint32_t>(metadata.size()),
+            reinterpret_cast<int32_t*>(keys.data()), reinterpret_cast<uint32_t*>(sizes.data()),
+            blobs.data());
+        return static_cast<Error>(err);
+    }
+
    protected:
     bool initDispatch() override {
         if (!BaseType2_2::initDispatch()) {
@@ -204,6 +261,8 @@ class HwcHalImpl : public V2_2::passthrough::detail::HwcHalImpl<Hal> {
                                    &mDispatch.getDisplayedContentSample);
         this->initOptionalDispatch(HWC2_FUNCTION_GET_DISPLAY_CAPABILITIES,
                                    &mDispatch.getDisplayCapabilities);
+        this->initOptionalDispatch(HWC2_FUNCTION_SET_LAYER_PER_FRAME_METADATA_BLOBS,
+                                   &mDispatch.setLayerPerFrameMetadataBlobs);
         return true;
     }
 
@@ -215,16 +274,20 @@ class HwcHalImpl : public V2_2::passthrough::detail::HwcHalImpl<Hal> {
         HWC2_PFN_SET_DISPLAYED_CONTENT_SAMPLING_ENABLED setDisplayedContentSamplingEnabled;
         HWC2_PFN_GET_DISPLAYED_CONTENT_SAMPLE getDisplayedContentSample;
         HWC2_PFN_GET_DISPLAY_CAPABILITIES getDisplayCapabilities;
+        HWC2_PFN_SET_LAYER_PER_FRAME_METADATA_BLOBS setLayerPerFrameMetadataBlobs;
     } mDispatch = {};
 
     using BaseType2_2 = V2_2::passthrough::detail::HwcHalImpl<Hal>;
     using BaseType2_1 = V2_1::passthrough::detail::HwcHalImpl<Hal>;
+    using BaseType2_1::getHdrCapabilities;
     using BaseType2_1::mDevice;
     using BaseType2_2::getClientTargetSupport_2_2;
     using BaseType2_2::getColorModes_2_2;
+    using BaseType2_2::getPerFrameMetadataKeys;
     using BaseType2_2::getReadbackBufferAttributes;
     using BaseType2_2::getRenderIntents;
     using BaseType2_2::setColorMode_2_2;
+    using BaseType2_2::setLayerPerFrameMetadata;
 };
 
 }  // namespace detail

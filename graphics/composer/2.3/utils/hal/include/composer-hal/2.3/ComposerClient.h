@@ -21,6 +21,7 @@
 #endif
 
 #include <android/hardware/graphics/composer/2.3/IComposerClient.h>
+#include <composer-hal/2.2/ComposerResources.h>
 #include <composer-hal/2.3/ComposerClient.h>
 #include <composer-hal/2.3/ComposerCommandEngine.h>
 #include <composer-hal/2.3/ComposerHal.h>
@@ -38,6 +39,14 @@ namespace detail {
 template <typename Interface, typename Hal>
 class ComposerClientImpl : public V2_2::hal::detail::ComposerClientImpl<Interface, Hal> {
    public:
+    Return<void> getPerFrameMetadataKeys_2_3(
+        Display display, IComposerClient::getPerFrameMetadataKeys_2_3_cb hidl_cb) override {
+        std::vector<IComposerClient::PerFrameMetadataKey> keys;
+        Error error = mHal->getPerFrameMetadataKeys_2_3(display, &keys);
+        hidl_cb(error, keys);
+        return Void();
+    }
+
     Return<Error> setColorMode_2_3(Display display, ColorMode mode, RenderIntent intent) override {
         return mHal->setColorMode_2_3(display, mode, intent);
     }
@@ -64,6 +73,18 @@ class ComposerClientImpl : public V2_2::hal::detail::ComposerClientImpl<Interfac
         Dataspace dataspace = Dataspace::UNKNOWN;
         Error error = mHal->getReadbackBufferAttributes_2_3(display, &format, &dataspace);
         hidl_cb(error, format, dataspace);
+        return Void();
+    }
+
+    Return<void> getHdrCapabilities_2_3(
+        Display display, IComposerClient::getHdrCapabilities_2_3_cb hidl_cb) override {
+        hidl_vec<Hdr> types;
+        float max_lumi = 0.0f;
+        float max_avg_lumi = 0.0f;
+        float min_lumi = 0.0f;
+        Error err =
+            mHal->getHdrCapabilities_2_3(display, &types, &max_lumi, &max_avg_lumi, &min_lumi);
+        hidl_cb(err, types, max_lumi, max_avg_lumi, min_lumi);
         return Void();
     }
 
@@ -151,12 +172,19 @@ class ComposerClientImpl : public V2_2::hal::detail::ComposerClientImpl<Interfac
         return Void();
     }
 
+   protected:
+    std::unique_ptr<V2_1::hal::ComposerCommandEngine> createCommandEngine() override {
+        return std::make_unique<ComposerCommandEngine>(
+            mHal, static_cast<V2_2::hal::ComposerResources*>(mResources.get()));
+    }
+
    private:
     using BaseType2_2 = V2_2::hal::detail::ComposerClientImpl<Interface, Hal>;
     using BaseType2_1 = V2_1::hal::detail::ComposerClientImpl<Interface, Hal>;
     using BaseType2_1::mCommandEngine;
     using BaseType2_1::mCommandEngineMutex;
     using BaseType2_1::mHal;
+    using BaseType2_1::mResources;
 };
 
 }  // namespace detail

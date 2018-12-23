@@ -769,7 +769,7 @@ class InputStreamTest : public OpenStreamTest<IStreamIn> {
 #if MAJOR_VERSION == 2
     const AudioSource initMetadata = AudioSource::DEFAULT;
 #elif MAJOR_VERSION >= 4
-    const SinkMetadata initMetadata = {{{AudioSource::DEFAULT, 1 /* gain */}}};
+    const SinkMetadata initMetadata = {{{.source = AudioSource::DEFAULT, .gain = 1}}};
 #endif
 };
 
