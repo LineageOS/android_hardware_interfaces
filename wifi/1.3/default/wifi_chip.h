@@ -126,6 +126,8 @@ class WifiChip : public V1_3::IWifiChip {
     Return<void> forceDumpToDebugRingBuffer(
         const hidl_string& ring_name,
         forceDumpToDebugRingBuffer_cb hidl_status_cb) override;
+    Return<void> flushRingBufferToFile(
+        flushRingBufferToFile_cb hidl_status_cb) override;
     Return<void> stopLoggingToDebugRingBuffer(
         stopLoggingToDebugRingBuffer_cb hidl_status_cb) override;
     Return<void> getDebugHostWakeReasonStats(
@@ -198,6 +200,7 @@ class WifiChip : public V1_3::IWifiChip {
         WifiDebugRingBufferVerboseLevel verbose_level,
         uint32_t max_interval_in_sec, uint32_t min_data_size_in_bytes);
     WifiStatus forceDumpToDebugRingBufferInternal(const hidl_string& ring_name);
+    WifiStatus flushRingBufferToFileInternal();
     WifiStatus stopLoggingToDebugRingBufferInternal();
     std::pair<WifiStatus, WifiDebugHostWakeReasonStats>
     getDebugHostWakeReasonStatsInternal();
