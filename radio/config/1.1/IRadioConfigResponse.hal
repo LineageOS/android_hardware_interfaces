@@ -19,6 +19,7 @@ package android.hardware.radio.config@1.1;
 import @1.0::IRadioConfigResponse;
 import @1.1::PhoneCapability;
 import android.hardware.radio@1.0::RadioResponseInfo;
+import @1.1::ModemsConfig;
 
 /**
  * Note: IRadioConfig 1.1 is an intermediate layer between Android P and Android Q.
@@ -50,4 +51,27 @@ interface IRadioConfigResponse extends @1.0::IRadioConfigResponse {
      *   RadioError:INVALID_ARGUMENTS
      */
     oneway setPreferredDataModemResponse(RadioResponseInfo info);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:INVALID_ARGUMENTS
+     */
+    oneway setModemsConfigResponse(RadioResponseInfo info);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     * @param modemsConfig <@1.1::ModemsConfig> it defines all the modems' configurations
+     *        at this time, only the number of live modems
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     */
+    oneway getModemsConfigResponse(RadioResponseInfo info, ModemsConfig modemsConfig);
 };
