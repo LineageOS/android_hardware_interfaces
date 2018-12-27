@@ -36,6 +36,9 @@ interface ISupplicantStaNetwork extends @1.1::ISupplicantStaNetwork {
 
         /** Enhacned Open (OWE) Key management */
         OWE = 1 << 22,
+
+        /** Easy Connect (DPP) Key management */
+        DPP = 1 << 23,
     };
 
     /** Possble mask of values for PairwiseCipher param. */
