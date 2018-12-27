@@ -61,3 +61,11 @@ struct PhoneCapability {
      */
     vec<ModemInfo> logicalModemList;
 };
+
+struct ModemsConfig {
+    /**
+     * variable to indicate the number of live modems i.e modems that are enabled
+     * and actively working as part of a working connectivity stack
+     */
+    uint8_t numOfLiveModems;
+};

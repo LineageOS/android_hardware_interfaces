@@ -7,10 +7,10 @@ hidl_interface {
         enabled: true,
     },
     srcs: [
+        "types.hal",
         "IRadioConfig.hal",
         "IRadioConfigIndication.hal",
         "IRadioConfigResponse.hal",
-        "types.hal",
     ],
     interfaces: [
         "android.hardware.radio.config@1.0",
@@ -19,6 +19,7 @@ hidl_interface {
     ],
     types: [
         "ModemInfo",
+        "ModemsConfig",
         "PhoneCapability",
     ],
     gen_java: true,
