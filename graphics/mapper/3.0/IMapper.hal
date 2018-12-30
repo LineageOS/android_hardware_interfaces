@@ -183,6 +183,9 @@ interface IMapper {
      * buffer content in an indeterminate state or returning an error are both
      * acceptable.
      *
+     * 1D buffers (width = size in bytes, height = 1, pixel_format = BLOB) must
+     * "lock in place". The buffers must be directly accessible via mapping.
+     *
      * The client must not modify the content of the buffer outside of
      * @p accessRegion, and the device need not guarantee that content outside
      * of @p accessRegion is valid for reading. The result of reading or writing
