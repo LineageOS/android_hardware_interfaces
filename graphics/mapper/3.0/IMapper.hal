@@ -196,6 +196,12 @@ interface IMapper {
      * memory. This address will represent the top-left corner of the entire
      * buffer, even if @p accessRegion does not begin at the top-left corner.
      *
+     * On success, bytesPerPixel must contain the number of bytes per pixel in
+     * the buffer. If the bytesPerPixel is unknown or variable, a value of -1
+     * should be returned. bytesPerStride must contain the bytes per stride of
+     * the buffer. If the bytesPerStride is unknown or variable, a value of -1
+     * should be returned.
+     *
      * @param buffer Buffer to lock.
      * @param cpuUsage CPU usage flags to request. See +ndk
      *     libnativewindow#AHardwareBuffer_UsageFlags for possible values.
@@ -214,13 +220,17 @@ interface IMapper {
      *     - `NO_RESOURCES` if the buffer cannot be locked at this time. Note
      *       that locking may succeed at a later time.
      * @return data CPU-accessible pointer to the buffer data.
+     * @return bytesPerPixel the number of bytes per pixel in the buffer
+     * @return bytesPerStride the number of bytes per stride of the buffer
      */
     lock(pointer buffer,
          uint64_t cpuUsage,
          Rect accessRegion,
          handle acquireFence)
             generates (Error error,
-                       pointer data);
+                       pointer data,
+                       int32_t bytesPerPixel,
+                       int32_t bytesPerStride);
 
     /**
      * Locks a YCbCr buffer for the specified CPU usage.

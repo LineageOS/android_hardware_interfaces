@@ -298,8 +298,15 @@ TEST_F(GraphicsMapperHidlTest, LockUnlockBasic) {
                                static_cast<int32_t>(info.height)};
     int fence = -1;
     uint8_t* data;
+    int32_t bytesPerPixel = -1;
+    int32_t bytesPerStride = -1;
     ASSERT_NO_FATAL_FAILURE(
-        data = static_cast<uint8_t*>(mGralloc->lock(bufferHandle, info.usage, region, fence)));
+            data = static_cast<uint8_t*>(mGralloc->lock(bufferHandle, info.usage, region, fence,
+                                                        &bytesPerPixel, &bytesPerStride)));
+
+    // Valid return values are -1 for unsupported or the number bytes for supported which is >=0
+    EXPECT_GT(bytesPerPixel, -1);
+    EXPECT_GT(bytesPerStride, -1);
 
     // RGBA_8888
     size_t strideInBytes = stride * 4;
@@ -312,15 +319,22 @@ TEST_F(GraphicsMapperHidlTest, LockUnlockBasic) {
 
     ASSERT_NO_FATAL_FAILURE(fence = mGralloc->unlock(bufferHandle));
 
+    bytesPerPixel = -1;
+    bytesPerStride = -1;
+
     // lock again for reading
     ASSERT_NO_FATAL_FAILURE(
-        data = static_cast<uint8_t*>(mGralloc->lock(bufferHandle, info.usage, region, fence)));
+            data = static_cast<uint8_t*>(mGralloc->lock(bufferHandle, info.usage, region, fence,
+                                                        &bytesPerPixel, &bytesPerStride)));
     for (uint32_t y = 0; y < info.height; y++) {
         for (size_t i = 0; i < writeInBytes; i++) {
             EXPECT_EQ(static_cast<uint8_t>(y), data[i]);
         }
         data += strideInBytes;
     }
+
+    EXPECT_GT(bytesPerPixel, -1);
+    EXPECT_GT(bytesPerStride, -1);
 
     ASSERT_NO_FATAL_FAILURE(fence = mGralloc->unlock(bufferHandle));
     if (fence >= 0) {
