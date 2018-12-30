@@ -285,5 +285,20 @@ interface IMapper {
      */
     unlock(pointer buffer) generates (Error error, handle releaseFence);
 
+    /**
+     * Test whether the given BufferDescriptorInfo is allocatable.
+     *
+     * If this function returns true, it means that a buffer with the given
+     * description can be allocated on this implementation, unless resource
+     * exhaustion occurs. If this function returns false, it means that the
+     * allocation of the given description will never succeed.
+     *
+     * @param description the description of the buffer
+     * @return supported whether the description is supported
+     */
+    isSupported(BufferDescriptorInfo description)
+            generates (Error error,
+                       bool supported);
+
 };
 

@@ -440,6 +440,40 @@ TEST_F(GraphicsMapperHidlTest, UnlockNegative) {
 #endif
 }
 
+/**
+ * Test IMapper::isSupported with required format RGBA_8888
+ */
+TEST_F(GraphicsMapperHidlTest, IsSupportedRGBA8888) {
+    const auto& info = mDummyDescriptorInfo;
+    bool supported = false;
+
+    ASSERT_NO_FATAL_FAILURE(supported = mGralloc->isSupported(info));
+    ASSERT_TRUE(supported);
+}
+
+/**
+ * Test IMapper::isSupported with required format YV12
+ */
+TEST_F(GraphicsMapperHidlTest, IsSupportedYV12) {
+    auto info = mDummyDescriptorInfo;
+    info.format = PixelFormat::YV12;
+    bool supported = false;
+
+    ASSERT_NO_FATAL_FAILURE(supported = mGralloc->isSupported(info));
+    ASSERT_TRUE(supported);
+}
+
+/**
+ * Test IMapper::isSupported with optional format Y16
+ */
+TEST_F(GraphicsMapperHidlTest, IsSupportedY16) {
+    auto info = mDummyDescriptorInfo;
+    info.format = PixelFormat::Y16;
+    bool supported = false;
+
+    ASSERT_NO_FATAL_FAILURE(supported = mGralloc->isSupported(info));
+}
+
 }  // namespace
 }  // namespace vts
 }  // namespace V3_0

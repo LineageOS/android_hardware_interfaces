@@ -79,6 +79,8 @@ class Gralloc {
     void getTransportSize(const native_handle_t* bufferHandle, uint32_t* outNumFds,
                           uint32_t* outNumInts);
 
+    bool isSupported(const IMapper::BufferDescriptorInfo& descriptorInfo);
+
    private:
     void init(const std::string& allocatorServiceName, const std::string& mapperServiceName);
     const native_handle_t* cloneBuffer(const hidl_handle& rawHandle);
