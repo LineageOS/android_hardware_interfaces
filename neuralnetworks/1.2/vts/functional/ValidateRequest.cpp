@@ -97,18 +97,29 @@ static void createPreparedModel(const sp<IDevice>& device, const Model& model,
 static void validate(const sp<IPreparedModel>& preparedModel, const std::string& message,
                      Request request, const std::function<void(Request*)>& mutation) {
     mutation(&request);
-    SCOPED_TRACE(message + " [execute]");
 
-    sp<ExecutionCallback> executionCallback = new ExecutionCallback();
-    ASSERT_NE(nullptr, executionCallback.get());
-    Return<ErrorStatus> executeLaunchStatus =
-        preparedModel->execute_1_2(request, executionCallback);
-    ASSERT_TRUE(executeLaunchStatus.isOk());
-    ASSERT_EQ(ErrorStatus::INVALID_ARGUMENT, static_cast<ErrorStatus>(executeLaunchStatus));
+    {
+        SCOPED_TRACE(message + " [execute_1_2]");
 
-    executionCallback->wait();
-    ErrorStatus executionReturnStatus = executionCallback->getStatus();
-    ASSERT_EQ(ErrorStatus::INVALID_ARGUMENT, executionReturnStatus);
+        sp<ExecutionCallback> executionCallback = new ExecutionCallback();
+        ASSERT_NE(nullptr, executionCallback.get());
+        Return<ErrorStatus> executeLaunchStatus =
+            preparedModel->execute_1_2(request, executionCallback);
+        ASSERT_TRUE(executeLaunchStatus.isOk());
+        ASSERT_EQ(ErrorStatus::INVALID_ARGUMENT, static_cast<ErrorStatus>(executeLaunchStatus));
+
+        executionCallback->wait();
+        ErrorStatus executionReturnStatus = executionCallback->getStatus();
+        ASSERT_EQ(ErrorStatus::INVALID_ARGUMENT, executionReturnStatus);
+    }
+
+    {
+        SCOPED_TRACE(message + " [executeSynchronously]");
+
+        Return<ErrorStatus> executeStatus = preparedModel->executeSynchronously(request);
+        ASSERT_TRUE(executeStatus.isOk());
+        ASSERT_EQ(ErrorStatus::INVALID_ARGUMENT, static_cast<ErrorStatus>(executeStatus));
+    }
 }
 
 // Delete element from hidl_vec. hidl_vec doesn't support a "remove" operation,
