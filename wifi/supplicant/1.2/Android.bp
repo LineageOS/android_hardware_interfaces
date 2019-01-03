@@ -10,12 +10,21 @@ hidl_interface {
         "ISupplicant.hal",
         "ISupplicantP2pIface.hal",
         "ISupplicantStaIface.hal",
+        "ISupplicantStaIfaceCallback.hal",
         "ISupplicantStaNetwork.hal",
+        "types.hal",
     ],
     interfaces: [
         "android.hardware.wifi.supplicant@1.0",
         "android.hardware.wifi.supplicant@1.1",
         "android.hidl.base@1.0",
+    ],
+    types: [
+        "DppAkm",
+        "DppNetRole",
+        "DppSuccessCode",
+        "DppProgressCode",
+        "DppFailureCode",
     ],
     gen_java: true,
 }

@@ -1,0 +1,51 @@
+/*
+ * Copyright 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.wifi.supplicant@1.2;
+
+import @1.1::ISupplicantStaIfaceCallback;
+import @1.0::Ssid;
+
+/**
+ * Callback Interface exposed by the supplicant service
+ * for each station mode interface (ISupplicantStaIface).
+ *
+ * Clients need to host an instance of this HIDL interface object and
+ * pass a reference of the object to the supplicant via the
+ * corresponding |ISupplicantStaIface.registerCallback_1_2| method.
+ */
+interface ISupplicantStaIfaceCallback extends @1.1::ISupplicantStaIfaceCallback {
+    /**
+     * Indicates DPP configuration received success event (Enrolee mode).
+     */
+    oneway onDppSuccessConfigReceived(Ssid ssid, string password, uint8_t[32] psk,
+        DppAkm securityAkm);
+
+    /**
+     * Indicates DPP configuration sent success event (Configurator mode).
+     */
+    oneway onDppSuccess(DppSuccessCode code);
+
+    /**
+     * Indicates a DPP progress event.
+     */
+    oneway onDppProgress(DppProgressCode code);
+
+    /**
+     * Indicates a DPP failure event.
+     */
+    oneway onDppFailure(DppFailureCode code);
+};
