@@ -97,7 +97,7 @@
 1. Storage related APIs:
 
     1. If the device does not implement `IHealth.getDiskStats` and
-        `IHealth.getStorageInfo`, add `libstoragehealthdefault` to `static_libs`.
+        `IHealth.getStorageInfo`, add `libhealthstoragedefault` to `static_libs`.
 
     1. If the device implements one of these two APIs, add and implement the
         following functions in `HealthService.cpp`:
@@ -115,7 +115,7 @@
 
     ```
     # device/<manufacturer>/<device>/sepolicy/vendor/file_contexts
-    /vendor/bin/hw/android\.hardware\.health@2\.0-service.<device> u:object_r:hal_health_default_exec:s0
+    /vendor/bin/hw/android\.hardware\.health@2\.0-service\.<device> u:object_r:hal_health_default_exec:s0
 
     # device/<manufacturer>/<device>/sepolicy/vendor/hal_health_default.te
     # Add device specific permissions to hal_health_default domain, especially
