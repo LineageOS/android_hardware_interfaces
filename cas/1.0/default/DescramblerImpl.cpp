@@ -20,6 +20,7 @@
 #include <hidlmemory/mapping.h>
 #include <media/cas/DescramblerAPI.h>
 #include <media/hardware/CryptoAPI.h>
+#include <media/stagefright/foundation/AString.h>
 #include <media/stagefright/foundation/AUtils.h>
 #include <utils/Log.h>
 
@@ -177,6 +178,7 @@ Return<void> DescramblerImpl::descramble(
     // Casting hidl SubSample to DescramblerPlugin::SubSample, but need
     // to ensure structs are actually idential
 
+    AString detailedError;
     int32_t result = holder->descramble(
             dstBuffer.type != BufferType::SHARED_MEMORY,
             (DescramblerPlugin::ScramblingControl)scramblingControl,
@@ -186,10 +188,10 @@ Return<void> DescramblerImpl::descramble(
             srcOffset,
             dstPtr,
             dstOffset,
-            NULL);
+            &detailedError);
 
     holder.reset();
-    _hidl_cb(toStatus(result >= 0 ? OK : result), result, NULL);
+    _hidl_cb(toStatus(result >= 0 ? OK : result), result, detailedError.c_str());
     return Void();
 }
 
