@@ -42,6 +42,13 @@ enum Dataspace : @1.1::Dataspace {
      * Use full range, sRGB transfer and BT2020 standard
      */
     DISPLAY_BT2020 = STANDARD_BT2020 | TRANSFER_SRGB | RANGE_FULL,
+
+    /**
+     * ISO 16684-1:2011(E)
+     *
+     * Embedded depth metadata following the dynamic depth specification.
+     */
+    DYNAMIC_DEPTH = 0x1002,
 };
 
 enum ColorMode : @1.1::ColorMode {
