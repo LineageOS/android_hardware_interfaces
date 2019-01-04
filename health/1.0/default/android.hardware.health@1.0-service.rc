@@ -2,3 +2,4 @@ service vendor.health-hal-1-0 /vendor/bin/hw/android.hardware.health@1.0-service
     class hal
     user system
     group system
+    capabilities WAKE_ALARM
