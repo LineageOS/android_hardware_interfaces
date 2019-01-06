@@ -77,11 +77,20 @@ interface ISensors {
      * framework. The Event FMQ is created using the eventQueueDescriptor.
      * Data may only be written to the Event FMQ. Data must not be read from
      * the Event FMQ since the framework is the only reader. Upon receiving
-     * sensor events, the HAL should write the sensor events to the Event FMQ.
+     * sensor events, the HAL writes the sensor events to the Event FMQ.
+     *
      * Once the HAL is finished writing sensor events to the Event FMQ, the HAL
-     * must call the Event FMQ's EventFlag wake() function with the
-     * EventQueueFlagBits::READ_AND_PROCESS mask which notifies the framework
-     * that sensor events are available to be read and processed.
+     * must notify the framework that sensor events are available to be read and
+     * processed. This is accomplished by either:
+     *     1) Calling the Event FMQ’s EventFlag::wake() function with
+              EventQueueFlagBits::READ_AND_PROCESS
+     *     2) Setting the write notification in the Event FMQ’s writeBlocking()
+     *        function to EventQueueFlagBits::READ_AND_PROCESS.
+     *
+     * If the Event FMQ’s writeBlocking() function is used, the read
+     * notification must be set to EventQueueFlagBits::EVENTS_READ in order to
+     * be notified and unblocked when the framework has successfully read events
+     * from the Event FMQ.
      *
      * The Wake Lock FMQ is used by the framework to notify the HAL when it is
      * safe to release its wake_lock. When the framework receives WAKE_UP events
@@ -109,6 +118,10 @@ interface ISensors {
      * number of outstanding WAKE_UP events should also be reset to zero, and
      * any outstanding wake_locks held as a result of WAKE_UP events should be
      * released.
+     *
+     * All active sensor requests and direct channels must be closed and
+     * properly cleaned up when initialize is called in order to ensure that the
+     * HAL and framework's state is consistent (e.g. after a runtime restart).
      *
      * initialize must be thread safe and prevent concurrent calls
      * to initialize from simultaneously modifying state.

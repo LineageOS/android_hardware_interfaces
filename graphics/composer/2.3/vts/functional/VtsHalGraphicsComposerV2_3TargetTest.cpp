@@ -248,14 +248,47 @@ TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_PER_FRAME_METADATA) {
 }
 
 /**
+ * Test IComposerClient::getHdrCapabilities_2_3
+ */
+TEST_F(GraphicsComposerHidlTest, GetHdrCapabilities_2_3) {
+    float maxLuminance;
+    float maxAverageLuminance;
+    float minLuminance;
+    ASSERT_NO_FATAL_FAILURE(mComposerClient->getHdrCapabilities_2_3(
+        mPrimaryDisplay, &maxLuminance, &maxAverageLuminance, &minLuminance));
+    ASSERT_TRUE(maxLuminance >= minLuminance);
+}
+
+/**
+ * Test IComposerClient::getPerFrameMetadataKeys_2_3
+ */
+TEST_F(GraphicsComposerHidlTest, GetPerFrameMetadataKeys_2_3) {
+    std::vector<IComposerClient::PerFrameMetadataKey> keys;
+    mComposerClient->getRaw()->getPerFrameMetadataKeys_2_3(
+        mPrimaryDisplay, [&](const auto tmpError, const auto outKeys) {
+            if (tmpError != Error::UNSUPPORTED) {
+                ASSERT_EQ(Error::NONE, tmpError);
+                keys = outKeys;
+            }
+        });
+}
+
+/**
  * TestIComposerClient::getReadbackBufferAttributes_2_3
  */
 TEST_F(GraphicsComposerHidlTest, GetReadbackBufferAttributes_2_3) {
     Dataspace dataspace;
     PixelFormat pixelFormat;
 
-    ASSERT_NO_FATAL_FAILURE(mComposerClient->getReadbackBufferAttributes_2_3(
-        mPrimaryDisplay, &pixelFormat, &dataspace));
+    mComposerClient->getRaw()->getReadbackBufferAttributes_2_3(
+        mPrimaryDisplay,
+        [&](const auto tmpError, const auto outPixelFormat, const auto outDataspace) {
+            if (tmpError != Error::UNSUPPORTED) {
+                ASSERT_EQ(Error::NONE, tmpError);
+                dataspace = outDataspace;
+                pixelFormat = outPixelFormat;
+            }
+        });
 }
 
 /**
