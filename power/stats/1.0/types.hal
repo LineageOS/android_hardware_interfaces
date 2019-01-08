@@ -1,0 +1,128 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package android.hardware.power.stats@1.0;
+
+enum Status : uint32_t {
+    SUCCESS = 0,
+    NOT_SUPPORTED = 1,
+    INVALID_INPUT = 2,
+    FILESYSTEM_ERROR = 3,
+    INSUFFICIENT_RESOURCES = 4,
+};
+
+struct RailInfo {
+    /** Index corresponding to the rail */
+    uint32_t index;
+    /** Name of the rail */
+    string railName;
+    /** Name of the subsystem to which this rail belongs */
+    string subsysName;
+    /** Hardware sampling rate */
+    uint32_t samplingRate;
+};
+
+struct EnergyData {
+    /**
+     * Index corresponding to the rail. This index matches
+     * the index returned in RailInfo
+     */
+    uint32_t index;
+    /** Time since device boot(CLOCK_BOOTTIME) in milli-seconds */
+    uint64_t timestamp;
+    /** Accumulated energy since device boot in microwatt-seconds (uWs) */
+    uint64_t energy;
+};
+
+enum PowerEntityType : uint32_t {
+    /**
+     * A subsystem is a self-contained compute unit. Some examples include
+     * application processor, DSP, GPU.
+     */
+    SUBSYSTEM = 0,
+    /**
+     * A peripheral is an auxiliary device that connects to and works with a
+     * compute unit. Some examples include simple sensors, camera, display.
+     */
+    PERIPHERAL = 1,
+    /**
+     * A power domain is a single subsystem or a collection of subsystems
+     * that is controlled by a single voltage rail.
+     */
+    POWER_DOMAIN = 2,
+};
+
+/**
+ * PowerEntityInfo contains information, such as the ID, name, and type of a
+ * given PowerEntity.
+ */
+struct PowerEntityInfo {
+    /** Unique ID corresponding to the PowerEntity */
+    uint32_t powerEntityId;
+    /** Name of the PowerEntity */
+    string powerEntityName;
+    /** Type of the PowerEntity */
+    PowerEntityType type;
+};
+
+struct PowerEntityStateInfo {
+    /**
+     * ID corresponding to the state. Unique for a given PowerEntityStateSpace
+     */
+    uint32_t powerEntityStateId;
+    /** Name of the state */
+    string powerEntityStateName;
+};
+
+/**
+ * PowerEntityStateSpace contains the state space information of a given
+ * PowerEntity. The state space, is the set of possible states that a given
+ * PowerEntity provides residency data for.
+ */
+struct PowerEntityStateSpace {
+    /** Unique ID of the corresponding PowerEntity */
+    uint32_t powerEntityId;
+
+    /** List of states that the PowerEntity may reside in */
+    vec<PowerEntityStateInfo> states;
+};
+
+/** Contains residency data for a single state */
+struct PowerEntityStateResidencyData {
+    /** Unique ID of the corresponding PowerEntityStateInfo */
+    uint32_t powerEntityStateId;
+    /**
+     * Total time in milliseconds that the corresponding PowerEntity resided
+     * in this state since the PowerEntity was reset
+     */
+    uint64_t totalTimeInStateMs;
+    /**
+     * Total number of times that the state was entered since the corresponding
+     * PowerEntity was reset
+     */
+    uint64_t totalStateEntryCount;
+    /**
+     * Last time this state was entered. Time in milliseconds since the
+     * corresponding PowerEntity was reset
+     */
+    uint64_t lastEntryTimestampMs;
+};
+
+struct PowerEntityStateResidencyResult {
+    /** Unique ID of the corresponding PowerEntity */
+    uint32_t powerEntityId;
+    /** Residency data for each state the PowerEntity's state space */
+    vec<PowerEntityStateResidencyData> stateResidencyData;
+};
