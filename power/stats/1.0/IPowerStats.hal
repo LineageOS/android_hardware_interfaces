@@ -1,0 +1,95 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package android.hardware.power.stats@1.0;
+
+interface IPowerStats {
+
+    /**
+     * Rail information:
+     * Reports information related to the rails being monitored.
+     *
+     * @return rails Information about monitored rails.
+     * @return status SUCCESS on success or NOT_SUPPORTED if
+     *     feature is not enabled or FILESYSTEM_ERROR on filesystem nodes
+     *     access error.
+     */
+    getRailInfo()
+        generates(vec<RailInfo> rails, Status status);
+
+    /**
+     * Rail level energy measurements for low frequency clients:
+     * Reports accumulated energy since boot on each rail.
+     *
+     * @param railIndices Indices of rails for which data is required.
+     *     To get data for all rails pass an empty vector. Rail name to
+     *     index mapping can be queried from getRailInfo() API.
+     * @return data Energy values since boot for all requested rails.
+     * @return status SUCCESS on success or NOT_SUPPORTED if
+     *     feature is not enabled or FILESYSTEM_ERROR on filesystem nodes
+     *     access error.
+     */
+    getEnergyData(vec<uint32_t> railIndices)
+        generates(vec<EnergyData> data, Status status);
+
+    /**
+     * Stream rail level power measurements for high frequency clients:
+     * Streams accumulated energy since boot on each rail. This API is
+     * asynchronous.
+     *
+     * @param timeMs Time(in ms) for which energyData should be streamed
+     * @return mqDesc Unsynchronous Fast Message Queue descriptor - One
+     *     writer(power.stats HAL) multiple readers are supported. Reader
+     *     should read faster than writer otherwise data might be
+     *     overwritten. Data is present in following format in the queue:
+     *     +-----------------------+       <--
+     *     | EnergyData for rail 1 |         |
+     *     +-----------------------+         |
+     *     | EnergyData for rail 2 |         |
+     *     +-----------------------+         |
+     *     |          .            |         |-- 1st Sample
+     *     |          .            |         |
+     *     |          .            |         |
+     *     +-----------------------+         |
+     *     | EnergyData for rail n |         |
+     *     +-----------------------+       <--
+     *     |          .            |
+     *     |          .            |
+     *     |          .            |
+     *     +-----------------------+       <--
+     *     | EnergyData for rail 1 |         |
+     *     +-----------------------+         |
+     *     | EnergyData for rail 2 |         |
+     *     +-----------------------+         |
+     *     |          .            |         |-- kth Sample
+     *     |          .            |         |
+     *     |          .            |         |
+     *     +-----------------------+         |
+     *     | EnergyData for rail n |         |
+     *     +-----------------------+       <--
+     *
+     *     where,
+     *     n = railsPerSample
+     *     k = numSamples
+     *
+     * @return numSamples Number of samples which will be generated in timeMs.
+     * @return railsPerSample Number of rails measured per sample.
+     * @return status SUCCESS on success or FILESYSTEM_ERROR on filesystem
+     *     nodes access or NOT_SUPPORTED if feature is not enabled.
+     */
+    streamEnergyData(uint32_t timeMs)
+        generates(fmq_unsync<EnergyData> mqDesc, uint32_t numSamples,
+                uint32_t railsPerSample, Status status);
+};
