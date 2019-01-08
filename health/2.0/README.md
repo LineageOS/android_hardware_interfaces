@@ -67,6 +67,7 @@
         class hal
         user system
         group system
+        capabilities WAKE_ALARM
         file /dev/kmsg w
     ```
 
