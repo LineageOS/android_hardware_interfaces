@@ -1,6 +1,8 @@
-service vendor.drm-hal-1-0 /vendor/bin/hw/android.hardware.drm@1.0-service
+service vendor.drm-hal-1-0 /vendor/bin/hw/android.hardware.drm@1.0-service-lazy
     interface android.hardware.drm@1.0::ICryptoFactory default
     interface android.hardware.drm@1.0::IDrmFactory default
+    oneshot
+    disabled
     class hal
     user media
     group mediadrm drmrpc
