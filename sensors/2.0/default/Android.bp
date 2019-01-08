@@ -35,4 +35,5 @@ cc_binary {
         "libpower",
         "libutils",
     ],
+    vintf_fragments: ["android.hardware.sensors@2.0.xml"],
 }
