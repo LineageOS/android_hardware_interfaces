@@ -14,9 +14,15 @@ hidl_interface {
         "android.hidl.base@1.0",
     ],
     types: [
-        "Status",
-        "RailInfo",
         "EnergyData",
+        "PowerEntityInfo",
+        "PowerEntityStateInfo",
+        "PowerEntityStateResidencyData",
+        "PowerEntityStateResidencyResult",
+        "PowerEntityStateSpace",
+        "PowerEntityType",
+        "RailInfo",
+        "Status",
     ],
     gen_java: false,
 }
