@@ -27,6 +27,7 @@ cc_test {
         "android.hardware.audio.common@2.0",
         "libicuuc",
         "libicuuc_stubdata",
+        "libandroidicu",
         "libxml2",
     ],
     test_suites: ["general-tests"],
