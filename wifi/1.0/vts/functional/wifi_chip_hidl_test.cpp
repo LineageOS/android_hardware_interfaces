@@ -17,6 +17,7 @@
 #include <android-base/logging.h>
 
 #include <android/hardware/wifi/1.0/IWifiChip.h>
+#include <android/hardware/wifi/1.3/IWifiChip.h>
 
 #include <VtsHalHidlTargetTestBase.h>
 
@@ -87,7 +88,19 @@ class WifiChipHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 
     uint32_t configureChipForStaIfaceAndGetCapabilities() {
         configureChipForIfaceType(IfaceType::STA, true);
-        const auto& status_and_caps = HIDL_INVOKE(wifi_chip_, getCapabilities);
+
+        sp<::android::hardware::wifi::V1_3::IWifiChip> chip_converted =
+            ::android::hardware::wifi::V1_3::IWifiChip::castFrom(wifi_chip_);
+
+        std::pair<WifiStatus, uint32_t> status_and_caps;
+
+        if (chip_converted != nullptr) {
+            // Call the newer HAL version
+            status_and_caps = HIDL_INVOKE(chip_converted, getCapabilities_1_3);
+        } else {
+            status_and_caps = HIDL_INVOKE(wifi_chip_, getCapabilities);
+        }
+
         if (status_and_caps.first.code != WifiStatusCode::SUCCESS) {
             EXPECT_EQ(WifiStatusCode::ERROR_NOT_SUPPORTED, status_and_caps.first.code);
             return 0;

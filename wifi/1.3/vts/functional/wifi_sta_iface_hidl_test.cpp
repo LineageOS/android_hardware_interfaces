@@ -43,6 +43,13 @@ class WifiStaIfaceHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     virtual void TearDown() override { stopWifi(); }
 
    protected:
+    bool isCapabilitySupported(IWifiStaIface::StaIfaceCapabilityMask cap_mask) {
+        const auto& status_and_caps =
+            HIDL_INVOKE(wifi_sta_iface_, getCapabilities);
+        EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_caps.first.code);
+        return (status_and_caps.second & cap_mask) != 0;
+    }
+
     sp<IWifiStaIface> wifi_sta_iface_;
 };
 
@@ -60,4 +67,31 @@ TEST_F(WifiStaIfaceHidlTest, GetFactoryMacAddress) {
     for (int i = 0; i < num_elements; i++) {
         EXPECT_NE(0, status_and_mac.second[i]);
     }
+}
+
+/*
+ * GetLinkLayerStats_1_3
+ * Ensures that calls to get link layer stats V1_3 will retrieve a non-empty
+ * StaLinkLayerStats after link layer stats collection is enabled.
+ */
+TEST_F(WifiStaIfaceHidlTest, GetLinkLayerStats_1_3) {
+    if (!isCapabilitySupported(
+            IWifiStaIface::StaIfaceCapabilityMask::LINK_LAYER_STATS)) {
+        // No-op if link layer stats is not supported.
+        return;
+    }
+
+    // Enable link layer stats collection.
+    EXPECT_EQ(WifiStatusCode::SUCCESS,
+              HIDL_INVOKE(wifi_sta_iface_, enableLinkLayerStatsCollection, true)
+                  .code);
+    // Retrieve link layer stats.
+    const auto& status_and_stats =
+        HIDL_INVOKE(wifi_sta_iface_, getLinkLayerStats_1_3);
+    EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_stats.first.code);
+    EXPECT_GT(status_and_stats.second.timeStampInMs, 0u);
+    // Disable link layer stats collection.
+    EXPECT_EQ(
+        WifiStatusCode::SUCCESS,
+        HIDL_INVOKE(wifi_sta_iface_, disableLinkLayerStatsCollection).code);
 }
