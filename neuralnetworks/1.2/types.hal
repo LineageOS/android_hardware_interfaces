@@ -111,7 +111,7 @@ enum OperationType : @1.1::OperationType {
     QUANTIZE = 70,
     QUANTIZED_16BIT_LSTM = 71,
     RANDOM_MULTINOMIAL = 72,
-    REDUCE = 73,
+    REDUCE_PROD = 73,
     ROI_ALIGN = 74,
     RSQRT = 75,
     SELECT = 76,
@@ -130,6 +130,11 @@ enum OperationType : @1.1::OperationType {
     ROI_POOLING = 89,
     EQUAL = 90,
     NOT_EQUAL = 91,
+    REDUCE_SUM = 92,
+    REDUCE_MAX = 93,
+    REDUCE_MIN = 94,
+    REDUCE_ANY = 95,
+    REDUCE_ALL = 96,
     /* ADDING A NEW FUNDAMENTAL OPERATION REQUIRES UPDATING THE VALUE OF
      * OperationTypeRange::OPERATION_FUNDAMENTAL_MAX.
      */
@@ -143,7 +148,7 @@ enum OperationType : @1.1::OperationType {
  */
 enum OperationTypeRange : uint32_t {
     OPERATION_FUNDAMENTAL_MIN = 0,
-    OPERATION_FUNDAMENTAL_MAX = 91,
+    OPERATION_FUNDAMENTAL_MAX = 96,
     OPERATION_OEM_MIN = 10000,
     OPERATION_OEM_MAX = 10000,
 };
