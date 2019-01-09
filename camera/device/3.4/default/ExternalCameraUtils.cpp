@@ -160,9 +160,11 @@ namespace external {
 namespace common {
 
 namespace {
-    const int  kDefaultJpegBufSize = 5 << 20; // 5MB
-    const int  kDefaultNumVideoBuffer = 4;
-    const int  kDefaultNumStillBuffer = 2;
+    const int kDefaultJpegBufSize = 5 << 20; // 5MB
+    const int kDefaultNumVideoBuffer = 4;
+    const int kDefaultNumStillBuffer = 2;
+    const int kDefaultOrientation = 0; // suitable for natural landscape displays like tablet/TV
+                                       // For phone devices 270 is better
 } // anonymous namespace
 
 const char* ExternalCameraConfig::kDefaultCfgPath = "/vendor/etc/external_camera_config.xml";
@@ -276,10 +278,17 @@ ExternalCameraConfig ExternalCameraConfig::loadFromCfg(const char* cfgPath) {
                 minStreamSize->UnsignedAttribute("height", /*Default*/0)};
     }
 
+    XMLElement *orientation = deviceCfg->FirstChildElement("Orientation");
+    if (orientation == nullptr) {
+        ALOGI("%s: no sensor orientation specified", __FUNCTION__);
+    } else {
+        ret.orientation = orientation->IntAttribute("degree", /*Default*/kDefaultOrientation);
+    }
+
     ALOGI("%s: external camera cfg loaded: maxJpgBufSize %d,"
-            " num video buffers %d, num still buffers %d",
+            " num video buffers %d, num still buffers %d, orientation %d",
             __FUNCTION__, ret.maxJpegBufSize,
-            ret.numVideoBuffers, ret.numStillBuffers);
+            ret.numVideoBuffers, ret.numStillBuffers, ret.orientation);
     for (const auto& limit : ret.fpsLimits) {
         ALOGI("%s: fpsLimitList: %dx%d@%f", __FUNCTION__,
                 limit.size.width, limit.size.height, limit.fpsUpperBound);
@@ -292,7 +301,8 @@ ExternalCameraConfig ExternalCameraConfig::loadFromCfg(const char* cfgPath) {
 ExternalCameraConfig::ExternalCameraConfig() :
         maxJpegBufSize(kDefaultJpegBufSize),
         numVideoBuffers(kDefaultNumVideoBuffer),
-        numStillBuffers(kDefaultNumStillBuffer) {
+        numStillBuffers(kDefaultNumStillBuffer),
+        orientation(kDefaultOrientation) {
     fpsLimits.push_back({/*Size*/{ 640,  480}, /*FPS upper bound*/30.0});
     fpsLimits.push_back({/*Size*/{1280,  720}, /*FPS upper bound*/7.5});
     fpsLimits.push_back({/*Size*/{1920, 1080}, /*FPS upper bound*/5.0});
