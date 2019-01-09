@@ -30,6 +30,7 @@ cc_test {
         "libeffectsconfig",
         "libicuuc",
         "libicuuc_stubdata",
+        "libandroidicu",
         "libxml2",
     ],
     header_libs: [
