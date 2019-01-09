@@ -24,10 +24,12 @@
 
 using ::android::hardware::EventFlag;
 using ::android::hardware::hidl_vec;
+using ::android::hardware::Return;
 using ::android::hardware::sensors::V1_0::Result;
 using ::android::hardware::sensors::V1_0::SensorInfo;
 using ::android::hardware::sensors::V2_0::EventQueueFlagBits;
 using ::android::hardware::sensors::V2_0::ISensors;
+using ::android::hardware::sensors::V2_0::ISensorsCallback;
 
 template <typename EnumType>
 constexpr typename std::underlying_type<EnumType>::type asBaseType(EnumType value) {
@@ -35,6 +37,16 @@ constexpr typename std::underlying_type<EnumType>::type asBaseType(EnumType valu
 }
 
 constexpr size_t SensorsHidlEnvironmentV2_0::MAX_RECEIVE_BUFFER_EVENT_COUNT;
+
+struct SensorsCallback : ISensorsCallback {
+    Return<void> onDynamicSensorsConnected(const hidl_vec<SensorInfo>& /* sensorInfos */) {
+        return Return<void>();
+    }
+
+    Return<void> onDynamicSensorsDisconnected(const hidl_vec<int32_t>& /* sensorHandles */) {
+        return Return<void>();
+    }
+};
 
 bool SensorsHidlEnvironmentV2_0::resetHal() {
     bool succeed = false;
@@ -63,7 +75,7 @@ bool SensorsHidlEnvironmentV2_0::resetHal() {
         }
 
         mSensors->initialize(*mEventQueue->getDesc(), *mWakeLockQueue->getDesc(),
-                             nullptr /* TODO: callback */);
+                             new SensorsCallback());
 
         std::vector<SensorInfo> sensorList;
         if (!mSensors->getSensorsList([&](const hidl_vec<SensorInfo>& list) { sensorList = list; })
