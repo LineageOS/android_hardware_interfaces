@@ -240,6 +240,14 @@
             <instance>default</instance>
         </interface>
     </hal>
+    <hal format="hidl" optional="true">
+        <name>android.hardware.input.classifier</name>
+        <version>1.0</version>
+        <interface>
+            <name>IInputClassifier</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
     <hal format="hidl" optional="false">
         <name>android.hardware.keymaster</name>
         <version>3.0</version>
