@@ -378,8 +378,12 @@ status_t ExternalCameraDevice::initDefaultCharsKeys(
     const uint8_t timestampSource = ANDROID_SENSOR_INFO_TIMESTAMP_SOURCE_UNKNOWN;
     UPDATE(ANDROID_SENSOR_INFO_TIMESTAMP_SOURCE, &timestampSource, 1);
 
-    // Orientation probably isn't useful for external facing camera?
-    const int32_t orientation = 0;
+    // Orientation is a bit odd for external camera, but consider it as the orientation
+    // between the external camera sensor (which is usually landscape) and the device's
+    // natural display orientation. For devices with natural landscape display (ex: tablet/TV), the
+    // orientation should be 0. For devices with natural portrait display (phone), the orientation
+    // should be 270.
+    const int32_t orientation = mCfg.orientation;
     UPDATE(ANDROID_SENSOR_ORIENTATION, &orientation, 1);
 
     // android.shading
