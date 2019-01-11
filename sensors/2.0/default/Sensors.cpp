@@ -31,6 +31,7 @@ using ::android::hardware::sensors::V1_0::RateLevel;
 using ::android::hardware::sensors::V1_0::Result;
 using ::android::hardware::sensors::V1_0::SharedMemInfo;
 using ::android::hardware::sensors::V2_0::SensorTimeout;
+using ::android::hardware::sensors::V2_0::WakeLockQueueFlagBits;
 
 constexpr const char* kWakeLockName = "SensorsHAL_WAKEUP";
 
@@ -215,7 +216,9 @@ void Sensors::readWakeLockFMQ() {
 
         // Read events from the Wake Lock FMQ. Timeout after a reasonable amount of time to ensure
         // that any held wake lock is able to be released if it is held for too long.
-        mWakeLockQueue->readBlocking(&eventsHandled, 1 /* count */, kReadTimeoutNs);
+        mWakeLockQueue->readBlocking(&eventsHandled, 1 /* count */, 0 /* readNotification */,
+                                     static_cast<uint32_t>(WakeLockQueueFlagBits::DATA_WRITTEN),
+                                     kReadTimeoutNs);
         updateWakeLock(0 /* eventsWritten */, eventsHandled);
     }
 }
