@@ -100,11 +100,17 @@ interface IPreparedModel extends @1.0::IPreparedModel {
      *                - NONE if execution is performed successfully
      *                - DEVICE_UNAVAILABLE if driver is offline or busy
      *                - GENERAL_FAILURE if there is an unspecified error
-     *                - OUTPUT_INSUFFICIENT_SIZE if provided output buffer is
-     *                  not large enough to store the resultant values
+     *                - OUTPUT_INSUFFICIENT_SIZE if at least one output
+     *                  operand buffer is not large enough to store the
+     *                  corresponding output
      *                - INVALID_ARGUMENT if one of the input arguments is
      *                  invalid
+     * @return outputShapes A list of shape information of model output operands.
+     *                      The index into "outputShapes" corresponds to the index
+     *                      of the output operand in the Request outputs vector.
+     *                      outputShapes must be empty unless the status is either
+     *                      NONE or OUTPUT_INSUFFICIENT_SIZE.
      */
     executeSynchronously(Request request)
-        generates (ErrorStatus status);
+        generates (ErrorStatus status, vec<OutputShape> outputShapes);
 };

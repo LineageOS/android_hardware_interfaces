@@ -110,15 +110,20 @@ static void validate(const sp<IPreparedModel>& preparedModel, const std::string&
 
         executionCallback->wait();
         ErrorStatus executionReturnStatus = executionCallback->getStatus();
+        const auto& outputShapes = executionCallback->getOutputShapes();
         ASSERT_EQ(ErrorStatus::INVALID_ARGUMENT, executionReturnStatus);
+        ASSERT_EQ(outputShapes.size(), 0);
     }
 
     {
         SCOPED_TRACE(message + " [executeSynchronously]");
 
-        Return<ErrorStatus> executeStatus = preparedModel->executeSynchronously(request);
+        Return<void> executeStatus = preparedModel->executeSynchronously(
+            request, [](ErrorStatus error, const hidl_vec<OutputShape>& outputShapes) {
+                ASSERT_EQ(ErrorStatus::INVALID_ARGUMENT, error);
+                EXPECT_EQ(outputShapes.size(), 0);
+            });
         ASSERT_TRUE(executeStatus.isOk());
-        ASSERT_EQ(ErrorStatus::INVALID_ARGUMENT, static_cast<ErrorStatus>(executeStatus));
     }
 }
 
