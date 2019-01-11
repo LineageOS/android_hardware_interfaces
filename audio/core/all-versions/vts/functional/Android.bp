@@ -20,9 +20,6 @@ cc_defaults {
     static_libs: [
         "android.hardware.audio.common.test.utility",
         "libaudiopolicycomponents",
-        "libicuuc",
-        "libicuuc_stubdata",
-        "libandroidicu",
         "libmedia_helper",
         "libxml2",
     ],
