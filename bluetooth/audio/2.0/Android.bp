@@ -1,0 +1,32 @@
+hidl_interface {
+    name: "android.hardware.bluetooth.audio@2.0",
+    root: "android.hardware",
+    vndk: {
+        enabled: true,
+    },
+    srcs: [
+        "types.hal",
+        "IBluetoothAudioPort.hal",
+        "IBluetoothAudioProvider.hal",
+        "IBluetoothAudioProvidersFactory.hal",
+    ],
+    interfaces: [
+        "android.hidl.base@1.0",
+        "android.hardware.audio.common@5.0",
+    ],
+    types: [
+        "AacObjectType",
+        "BitsPerSample",
+        "ChannelMode",
+        "CodecConfiguration",
+        "CodecType",
+        "LdacChannelMode",
+        "SampleRate",
+        "SbcChannelMode",
+        "SessionType",
+        "Status",
+        "TimeSpec",
+    ],
+    gen_java: false,
+}
+
