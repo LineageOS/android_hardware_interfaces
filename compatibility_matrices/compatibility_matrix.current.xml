@@ -314,7 +314,7 @@
     </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.radio</name>
-        <version>1.0-2</version>
+        <version>1.4</version>
         <interface>
             <name>IRadio</name>
             <instance>slot1</instance>
@@ -328,7 +328,7 @@
     </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.radio.config</name>
-        <version>1.0</version>
+        <version>1.2</version>
         <interface>
             <name>IRadioConfig</name>
             <instance>default</instance>
