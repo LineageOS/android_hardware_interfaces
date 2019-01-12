@@ -87,6 +87,17 @@ Return<Result> Sensors::initialize(
     const sp<ISensorsCallback>& sensorsCallback) {
     Result result = Result::OK;
 
+    // Ensure that all sensors are disabled
+    for (auto sensor : mSensors) {
+        sensor.second->activate(false /* enable */);
+    }
+
+    // Stop the Wake Lock thread if it is currently running
+    if (mReadWakeLockQueueRun.load()) {
+        mReadWakeLockQueueRun = false;
+        mWakeLockThread.join();
+    }
+
     // Save a reference to the callback
     mCallback = sensorsCallback;
 
