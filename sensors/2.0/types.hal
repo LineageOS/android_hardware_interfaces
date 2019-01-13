@@ -40,3 +40,11 @@ enum EventQueueFlagBits : uint32_t {
      */
      EVENTS_READ = 1 << 1,
 };
+
+enum WakeLockQueueFlagBits : uint32_t {
+    /**
+     * Used to notify the HAL that the framework has written data to the Wake
+     * Lock FMQ.
+     */
+     DATA_WRITTEN = 1 << 0,
+};

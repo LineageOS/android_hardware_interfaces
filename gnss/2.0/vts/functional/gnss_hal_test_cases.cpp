@@ -21,6 +21,7 @@
 
 using android::hardware::hidl_vec;
 
+using IGnssConfiguration_2_0 = android::hardware::gnss::V2_0::IGnssConfiguration;
 using IAGnssRil_2_0 = android::hardware::gnss::V2_0::IAGnssRil;
 using IGnssMeasurement_2_0 = android::hardware::gnss::V2_0::IGnssMeasurement;
 using IGnssMeasurement_1_1 = android::hardware::gnss::V1_1::IGnssMeasurement;
@@ -60,6 +61,56 @@ TEST_F(GnssHalTest, TestGnssMeasurementCallback) {
 }
 
 /*
+ * TestGnssConfigurationExtension:
+ * Gets the GnssConfigurationExtension and verifies that it returns an actual extension by
+ * calling a method.
+ *
+ * The GNSS HAL 2.0 implementation must support @2.0::IGnssConfiguration interface due to
+ * the deprecation of some methods in @1.0::IGnssConfiguration interface.
+ */
+TEST_F(GnssHalTest, TestGnssConfigurationExtension) {
+    auto gnssConfiguration = gnss_hal_->getExtensionGnssConfiguration_2_0();
+    ASSERT_TRUE(gnssConfiguration.isOk());
+    sp<IGnssConfiguration_2_0> iGnssConfiguration = gnssConfiguration;
+    ASSERT_NE(iGnssConfiguration, nullptr);
+
+    auto result = iGnssConfiguration->setEsExtensionSec(180);
+    ASSERT_TRUE(result.isOk());
+    // Expected result can be true or false depending on whether HAL implementation supports
+    // detecting emergency sessions without involving the framework.
+}
+
+/*
+ * TestGnssConfiguration_setSuplEs_Deprecation:
+ * Calls setSuplEs and verifies that it returns false.
+ */
+TEST_F(GnssHalTest, TestGnssConfiguration_setSuplEs_Deprecation) {
+    auto gnssConfiguration = gnss_hal_->getExtensionGnssConfiguration_2_0();
+    ASSERT_TRUE(gnssConfiguration.isOk());
+    sp<IGnssConfiguration_2_0> iGnssConfiguration = gnssConfiguration;
+    ASSERT_NE(iGnssConfiguration, nullptr);
+
+    auto result = iGnssConfiguration->setSuplEs(false);
+    ASSERT_TRUE(result.isOk());
+    EXPECT_FALSE(result);
+}
+
+/*
+ * TestGnssConfiguration_setGpsLock_Deprecation:
+ * Calls setGpsLock and verifies that it returns false.
+ */
+TEST_F(GnssHalTest, TestGnssConfiguration_setGpsLock_Deprecation) {
+    auto gnssConfiguration = gnss_hal_->getExtensionGnssConfiguration_2_0();
+    ASSERT_TRUE(gnssConfiguration.isOk());
+    sp<IGnssConfiguration_2_0> iGnssConfiguration = gnssConfiguration;
+    ASSERT_NE(iGnssConfiguration, nullptr);
+
+    auto result = iGnssConfiguration->setGpsLock(0);
+    ASSERT_TRUE(result.isOk());
+    EXPECT_FALSE(result);
+}
+
+/*
  * TestAGnssRilExtension:
  * Gets the AGnssRilExtension and verifies that it returns an actual extension.
  *
@@ -76,11 +127,11 @@ TEST_F(GnssHalTest, TestAGnssRilExtension) {
 }
 
 /*
- * TestAGnssRilUpdateNetworkState_2_0:
+ * TestAGnssRil_UpdateNetworkState_2_0:
  * 1. Updates GNSS HAL that a network has connected.
  * 2. Updates GNSS HAL that network has disconnected.
  */
-TEST_F(GnssHalTest, TestAGnssRilUpdateNetworkState_2_0) {
+TEST_F(GnssHalTest, TestAGnssRil_UpdateNetworkState_2_0) {
     auto agnssRil = gnss_hal_->getExtensionAGnssRil_2_0();
     ASSERT_TRUE(agnssRil.isOk());
     sp<IAGnssRil_2_0> iAGnssRil = agnssRil;

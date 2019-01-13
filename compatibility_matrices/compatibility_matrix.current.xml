@@ -88,6 +88,14 @@
         </interface>
     </hal>
     <hal format="hidl" optional="true">
+        <name>android.hardware.bluetooth.audio</name>
+        <version>2.0</version>
+        <interface>
+            <name>IBluetoothAudioProvidersFactory</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="hidl" optional="true">
         <name>android.hardware.boot</name>
         <version>1.0</version>
         <interface>
@@ -240,6 +248,14 @@
             <instance>default</instance>
         </interface>
     </hal>
+    <hal format="hidl" optional="true">
+        <name>android.hardware.input.classifier</name>
+        <version>1.0</version>
+        <interface>
+            <name>IInputClassifier</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
     <hal format="hidl" optional="false">
         <name>android.hardware.keymaster</name>
         <version>3.0</version>
@@ -327,7 +343,7 @@
     </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.radio</name>
-        <version>1.0-2</version>
+        <version>1.4</version>
         <interface>
             <name>IRadio</name>
             <instance>slot1</instance>
@@ -341,7 +357,7 @@
     </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.radio.config</name>
-        <version>1.0</version>
+        <version>1.2</version>
         <interface>
             <name>IRadioConfig</name>
             <instance>default</instance>
@@ -440,7 +456,7 @@
     </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.vibrator</name>
-        <version>1.0-2</version>
+        <version>1.0-3</version>
         <interface>
             <name>IVibrator</name>
             <instance>default</instance>

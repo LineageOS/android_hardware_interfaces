@@ -95,11 +95,15 @@ interface ISensors {
      * The Wake Lock FMQ is used by the framework to notify the HAL when it is
      * safe to release its wake_lock. When the framework receives WAKE_UP events
      * from the Event FMQ and the framework has acquired a wake_lock, the
-     * framework must write a WakeLockEvent to the Wake Lock FMQ with the number
-     * of WAKE_UP events processed. When the HAL reads the WakeLockEvent from
-     * the Wake Lock FMQ, the HAL should decrement its current count of
-     * unprocessed WAKE_UP events and release its wake_lock if the current
-     * count of unprocessed WAKE_UP events is zero.
+     * framework must write the number of WAKE_UP events processed to the Wake
+     * Lock FMQ. When the HAL reads the data from the Wake Lock FMQ, the HAL
+     * decrements its current count of unprocessed WAKE_UP events and releases
+     * its wake_lock if the current count of unprocessed WAKE_UP events is
+     * zero.
+     *
+     * The framework must use the WakeLockQueueFlagBits::DATA_WRITTEN value to
+     * notify the HAL that data has been written to the Wake Lock FMQ and must
+     * be read by HAL.
      *
      * The ISensorsCallback is used by the HAL to notify the framework of
      * asynchronous events, such as a dynamic sensor connection.

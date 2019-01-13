@@ -89,13 +89,24 @@ static Return<ErrorStatus> ExecutePreparedModel(sp<V1_2::IPreparedModel>& prepar
                                                 sp<ExecutionCallback>& callback) {
     return preparedModel->execute_1_2(request, callback);
 }
-static Return<ErrorStatus> ExecutePreparedModel(sp<V1_0::IPreparedModel>&, const Request&) {
+static Return<ErrorStatus> ExecutePreparedModel(sp<V1_0::IPreparedModel>&, const Request&,
+                                                hidl_vec<OutputShape>*) {
     ADD_FAILURE() << "asking for synchronous execution at V1_0";
     return ErrorStatus::GENERAL_FAILURE;
 }
 static Return<ErrorStatus> ExecutePreparedModel(sp<V1_2::IPreparedModel>& preparedModel,
-                                                const Request& request) {
-    return preparedModel->executeSynchronously(request);
+                                                const Request& request,
+                                                hidl_vec<OutputShape>* outputShapes) {
+    ErrorStatus result;
+    Return<void> ret = preparedModel->executeSynchronously(
+        request, [&result, &outputShapes](ErrorStatus error, const hidl_vec<OutputShape>& shapes) {
+            result = error;
+            *outputShapes = shapes;
+        });
+    if (!ret.isOk()) {
+        return ErrorStatus::GENERAL_FAILURE;
+    }
+    return result;
 }
 enum class Synchronously { NO, YES };
 const float kDefaultAtol = 1e-5f;
@@ -197,6 +208,8 @@ void EvaluatePreparedModel(sp<T_IPreparedModel>& preparedModel, std::function<bo
         inputMemory->commit();
         outputMemory->commit();
 
+        ErrorStatus executionStatus;
+        hidl_vec<OutputShape> outputShapes;
         if (sync == Synchronously::NO) {
             SCOPED_TRACE("asynchronous");
 
@@ -211,17 +224,23 @@ void EvaluatePreparedModel(sp<T_IPreparedModel>& preparedModel, std::function<bo
 
             // retrieve execution status
             executionCallback->wait();
-            ErrorStatus executionReturnStatus = executionCallback->getStatus();
-            EXPECT_EQ(ErrorStatus::NONE, executionReturnStatus);
+            executionStatus = executionCallback->getStatus();
+            outputShapes = executionCallback->getOutputShapes();
         } else {
             SCOPED_TRACE("synchronous");
 
             // execute
-            Return<ErrorStatus> executionStatus = ExecutePreparedModel(
-                preparedModel, {.inputs = inputs_info, .outputs = outputs_info, .pools = pools});
-            ASSERT_TRUE(executionStatus.isOk());
-            EXPECT_EQ(ErrorStatus::NONE, static_cast<ErrorStatus>(executionStatus));
+            Return<ErrorStatus> executionReturnStatus = ExecutePreparedModel(
+                preparedModel, {.inputs = inputs_info, .outputs = outputs_info, .pools = pools},
+                &outputShapes);
+            ASSERT_TRUE(executionReturnStatus.isOk());
+            executionStatus = static_cast<ErrorStatus>(executionReturnStatus);
         }
+
+        ASSERT_EQ(ErrorStatus::NONE, executionStatus);
+        // TODO(xusongw): Check if the returned output shapes match with expectation once the
+        //                sample driver implementation of dynamic output shape is finished.
+        ASSERT_EQ(outputShapes.size(), 0);
 
         // validate results
         outputMemory->read();

@@ -150,7 +150,7 @@ enum OperationType : @1.1::OperationType {
     TRANSPOSE_CONV_2D = 84,
     UNIDIRECTIONAL_SEQUENCE_LSTM = 85,
     UNIDIRECTIONAL_SEQUENCE_RNN = 86,
-    ROTATED_BBOX_TRANSFORM = 87,
+    DETECTION_POSTPROCESSING = 87,
     ABS = 88,
     ROI_POOLING = 89,
     EQUAL = 90,
@@ -234,9 +234,6 @@ struct Operand {
      *
      * For a scalar operand, dimensions.size() must be 0.
      *
-     * For a tensor operand, dimensions.size() must be at least 1;
-     * however, any of the dimensions may be unspecified.
-     *
      * A tensor operand with all dimensions specified has "fully
      * specified" dimensions. Whenever possible (i.e., whenever the
      * dimensions are known at model construction time), a tensor
@@ -255,17 +252,20 @@ struct Operand {
      *     . The operand has lifetime CONSTANT_COPY or
      *       CONSTANT_REFERENCE.
      *
-     *     . The operand has lifetime MODEL_INPUT or MODEL_OUTPUT. Fully
+     *     . The operand has lifetime MODEL_INPUT. Fully
      *       specified dimensions must either be present in the
      *       Operand or they must be provided in the corresponding
      *       RequestArgument.
-     *       EXCEPTION: If the input or output is optional and omitted
+     *       EXCEPTION: If the input is optional and omitted
      *       (by setting the hasNoValue field of the corresponding
      *       RequestArgument to true) then it need not have fully
      *       specified dimensions.
      *
      * A tensor operand with some number of unspecified dimensions is
      * represented by setting each unspecified dimension to 0.
+     *
+     * A tensor operand with unspecified rank is represented by providing
+     * an empty dimensions vector.
      */
     vec<uint32_t> dimensions;
 
@@ -396,4 +396,19 @@ struct Model {
      * range and precision of the IEEE 754 32-bit floating-point format.
      */
     bool relaxComputationFloat32toFloat16;
+};
+
+/**
+ * Describes the shape information of an output operand after execution.
+ */
+struct OutputShape {
+    /**
+     * Dimensions of the operand.
+     */
+    vec<uint32_t> dimensions;
+
+    /**
+     * Whether the provided buffer size is sufficient for the output.
+     */
+    bool isSufficient;
 };

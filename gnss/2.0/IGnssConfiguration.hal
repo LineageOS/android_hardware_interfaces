@@ -1,0 +1,45 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.gnss@2.0;
+
+import @1.1::IGnssConfiguration;
+
+/**
+ * Extended interface for GNSS Configuration support.
+ *
+ * Due to the introduction of new GNSS HAL package android.hardware.gnss.visibility_control@1.0
+ * the following methods in @1.0::IGnssConfiguration are deprecated in this version and not
+ * called by the framework.
+ *
+ * setGpsLock(bitfield<GpsLock> lock) generates (bool success);
+ * setSuplEs(bool enabled) generates (bool success);
+ */
+interface IGnssConfiguration extends @1.1::IGnssConfiguration {
+    /**
+     * This method sets the emergency session extension duration. The GNSS HAL
+     * implementation must serve emergency SUPL and Control Plane network initiated
+     * location requests for this extra duration after the user initiated emergency
+     * session ends.
+     *
+     * @param emergencyExtensionSeconds Number of seconds to extend the emergency
+     * session duration post emergency call.
+     *
+     * @return success True if the GNSS HAL implementation accepts and supports the
+     * extended duration for emergency SUPL and Control Plane location requests.
+     */
+    setEsExtensionSec(uint32_t emergencyExtensionSeconds) generates (bool success);
+};
