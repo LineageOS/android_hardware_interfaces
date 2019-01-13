@@ -1921,8 +1921,8 @@ HWC2On1Adapter::Layer::Layer(Display& display)
     mHwc1Id(0),
     mHasUnsupportedPlaneAlpha(false) {}
 
-bool HWC2On1Adapter::SortLayersByZ::operator()(
-        const std::shared_ptr<Layer>& lhs, const std::shared_ptr<Layer>& rhs) {
+bool HWC2On1Adapter::SortLayersByZ::operator()(const std::shared_ptr<Layer>& lhs,
+                                               const std::shared_ptr<Layer>& rhs) const {
     return lhs->getZ() < rhs->getZ();
 }
 
