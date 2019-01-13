@@ -130,8 +130,8 @@ private:
 
     class SortLayersByZ {
         public:
-            bool operator()(const std::shared_ptr<Layer>& lhs,
-                    const std::shared_ptr<Layer>& rhs);
+         bool operator()(const std::shared_ptr<Layer>& lhs,
+                         const std::shared_ptr<Layer>& rhs) const;
     };
 
     // The semantics of the fences returned by the device differ between
