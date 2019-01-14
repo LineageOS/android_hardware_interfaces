@@ -14,7 +14,7 @@
 // limitations under the License.
 
 cc_binary {
-    name: "android.hardware.thermal@2.0-service",
+    name: "android.hardware.thermal@2.0-service.mock",
     defaults: ["hidl_defaults"],
     relative_install_path: "hw",
     vendor: true,
