@@ -36,10 +36,12 @@ constexpr int DOOR_1_LEFT = (int)VehicleAreaDoor::ROW_1_LEFT;
 constexpr int DOOR_1_RIGHT = (int)VehicleAreaDoor::ROW_1_RIGHT;
 constexpr int DOOR_2_LEFT = (int)VehicleAreaDoor::ROW_2_LEFT;
 constexpr int DOOR_2_RIGHT = (int)VehicleAreaDoor::ROW_2_RIGHT;
+constexpr int DOOR_REAR = (int)VehicleAreaDoor::REAR;
 constexpr int WINDOW_1_LEFT = (int)VehicleAreaWindow::ROW_1_LEFT;
 constexpr int WINDOW_1_RIGHT = (int)VehicleAreaWindow::ROW_1_RIGHT;
 constexpr int WINDOW_2_LEFT = (int)VehicleAreaWindow::ROW_2_LEFT;
 constexpr int WINDOW_2_RIGHT = (int)VehicleAreaWindow::ROW_2_RIGHT;
+constexpr int WINDOW_ROOF_TOP_1 = (int)VehicleAreaWindow::ROOF_TOP_1;
 constexpr int FAN_DIRECTION_FACE = (int)VehicleHvacFanDirection::FACE;
 constexpr int FAN_DIRECTION_FLOOR = (int)VehicleHvacFanDirection::FLOOR;
 constexpr int OBD2_LIVE_FRAME = (int)VehicleProperty::OBD2_LIVE_FRAME;
@@ -581,17 +583,18 @@ const ConfigDeclaration kVehicleProperties[]{
                            {DOOR_2_LEFT, {.int32Values = {1}}},
                            {DOOR_2_RIGHT, {.int32Values = {1}}}}},
 
-    {.config = {.prop = toInt(VehicleProperty::DOOR_POS),
-                .access = VehiclePropertyAccess::READ_WRITE,
-                .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-                .areaConfigs = {VehicleAreaConfig{.areaId = DOOR_1_LEFT},
-                                VehicleAreaConfig{.areaId = DOOR_1_RIGHT},
-                                VehicleAreaConfig{.areaId = DOOR_2_LEFT},
-                                VehicleAreaConfig{.areaId = DOOR_2_RIGHT}}},
-     .initialAreaValues = {{DOOR_1_LEFT, {.int32Values = {0}}},
-                           {DOOR_1_RIGHT, {.int32Values = {0}}},
-                           {DOOR_2_LEFT, {.int32Values = {0}}},
-                           {DOOR_2_RIGHT, {.int32Values = {0}}}}},
+    {.config =
+         {
+             .prop = toInt(VehicleProperty::DOOR_POS),
+             .access = VehiclePropertyAccess::READ_WRITE,
+             .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+             .areaConfigs =
+                 {VehicleAreaConfig{.areaId = DOOR_1_LEFT, .minInt32Value = 0, .maxInt32Value = 1},
+                  VehicleAreaConfig{.areaId = DOOR_1_RIGHT, .minInt32Value = 0, .maxInt32Value = 1},
+                  VehicleAreaConfig{.areaId = DOOR_2_LEFT, .minInt32Value = 0, .maxInt32Value = 1},
+                  VehicleAreaConfig{.areaId = DOOR_2_RIGHT, .minInt32Value = 0, .maxInt32Value = 1},
+                  VehicleAreaConfig{.areaId = DOOR_REAR, .minInt32Value = 0, .maxInt32Value = 1}}},
+     .initialValue = {.int32Values = {0}}},
 
     {.config = {.prop = toInt(VehicleProperty::WINDOW_LOCK),
                 .access = VehiclePropertyAccess::READ_WRITE,
@@ -601,17 +604,19 @@ const ConfigDeclaration kVehicleProperties[]{
      .initialAreaValues = {{WINDOW_1_RIGHT | WINDOW_2_LEFT | WINDOW_2_RIGHT,
                             {.int32Values = {0}}}}},
 
-    {.config = {.prop = toInt(VehicleProperty::WINDOW_POS),
-                .access = VehiclePropertyAccess::READ_WRITE,
-                .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-                .areaConfigs = {VehicleAreaConfig{.areaId = WINDOW_1_LEFT},
-                                VehicleAreaConfig{.areaId = WINDOW_1_RIGHT},
-                                VehicleAreaConfig{.areaId = WINDOW_2_LEFT},
-                                VehicleAreaConfig{.areaId = WINDOW_2_RIGHT}}},
-     .initialAreaValues = {{WINDOW_1_LEFT, {.int32Values = {0}}},
-                           {WINDOW_1_RIGHT, {.int32Values = {0}}},
-                           {WINDOW_2_LEFT, {.int32Values = {0}}},
-                           {WINDOW_2_RIGHT, {.int32Values = {0}}}}},
+    {.config =
+         {.prop = toInt(VehicleProperty::WINDOW_POS),
+          .access =
+              VehiclePropertyAccess::READ_WRITE,
+          .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+          .areaConfigs =
+              {VehicleAreaConfig{.areaId = WINDOW_1_LEFT, .minInt32Value = 0, .maxInt32Value = 10},
+               VehicleAreaConfig{.areaId = WINDOW_1_RIGHT, .minInt32Value = 0, .maxInt32Value = 10},
+               VehicleAreaConfig{.areaId = WINDOW_2_LEFT, .minInt32Value = 0, .maxInt32Value = 10},
+               VehicleAreaConfig{.areaId = WINDOW_2_RIGHT, .minInt32Value = 0, .maxInt32Value = 10},
+               VehicleAreaConfig{
+                   .areaId = WINDOW_ROOF_TOP_1, .minInt32Value = -10, .maxInt32Value = 10}}},
+     .initialValue = {.int32Values = {0}}},
 
     {.config =
          {
