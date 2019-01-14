@@ -60,4 +60,5 @@ enum DppFailureCode : uint32_t {
     BUSY,
     TIMEOUT,
     FAILURE,
+    NOT_SUPPORTED,
 };
