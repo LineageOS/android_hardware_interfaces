@@ -1,0 +1,548 @@
+/*
+ * Copyright (C) 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.tv.cec@2.0;
+
+import android.hidl.safe_union@1.0;
+
+/**
+ * CEC device type as specified in CEC Table 11-7 of the CEC spec 2.0b.
+ */
+enum CecDeviceType : int32_t {
+    INACTIVE = -1,
+    TV = 0,
+    RECORDER = 1,
+    TUNER = 3,
+    PLAYBACK = 4,
+    AUDIO_SYSTEM = 5,
+    PURE_CEC_SWITCH = 6,
+    PROCESSOR = 7,
+    MAX = PROCESSOR,
+};
+
+/**
+ * CEC logical address as specified in CEC Table 11-9 of the CEC spec 2.0b.
+ */
+enum CecLogicalAddress : int32_t {
+    TV = 0,
+    RECORDER_1 = 1,
+    RECORDER_2 = 2,
+    TUNER_1 = 3,
+    PLAYBACK_1 = 4,
+    AUDIO_SYSTEM = 5,
+    TUNER_2 = 6,
+    TUNER_3 = 7,
+    PLAYBACK_2 = 8,
+    RECORDER_3 = 9,
+    TUNER_4 = 10,
+    PLAYBACK_3 = 11,
+    BACKUP_1 = 12, // backup1 for Playback/Recording/Tuner/Processor device
+    BACKUP_2 = 13, // backup2 for Playback/Recording/Tuner/Processor device
+    SPECIFIC_USE = 14,
+    UNREGISTERED = 15, // as Initiator address
+    BROADCAST = 15, // as Destination address
+};
+
+/**
+ * HDMI CEC message types.
+ *
+ * The assigned values represent opcode used in CEC frame as specified in
+ * Section 11.10 of the CEC spec 2.0b on top of Section CEC 15 of the CEC
+ * Spec 1.4b.
+ */
+enum CecMessageType : int32_t {
+    FEATURE_ABORT = 0x00,
+    IMAGE_VIEW_ON = 0x04,
+    TUNER_STEP_INCREMENT = 0x05,
+    TUNER_STEP_DECREMENT = 0x06,
+    TUNER_DEVICE_STATUS = 0x07,
+    GIVE_TUNER_DEVICE_STATUS = 0x08,
+    RECORD_ON = 0x09,
+    RECORD_STATUS = 0x0A,
+    RECORD_OFF = 0x0B,
+    TEXT_VIEW_ON = 0x0D,
+    RECORD_TV_SCREEN = 0x0F,
+    GIVE_DECK_STATUS = 0x1A,
+    DECK_STATUS = 0x1B,
+    SET_MENU_LANGUAGE = 0x32,
+    CLEAR_ANALOG_TIMER = 0x33,
+    SET_ANALOG_TIMER = 0x34,
+    TIMER_STATUS = 0x35,
+    STANDBY = 0x36,
+    PLAY = 0x41,
+    DECK_CONTROL = 0x42,
+    TIMER_CLEARED_STATUS = 0x43,
+    USER_CONTROL_PRESSED = 0x44,
+    USER_CONTROL_RELEASED = 0x45,
+    GIVE_OSD_NAME = 0x46,
+    SET_OSD_NAME = 0x47,
+    SET_OSD_STRING = 0x64,
+    SET_TIMER_PROGRAM_TITLE = 0x67,
+    SYSTEM_AUDIO_MODE_REQUEST = 0x70,
+    GIVE_AUDIO_STATUS = 0x71,
+    SET_SYSTEM_AUDIO_MODE = 0x72,
+    REPORT_AUDIO_STATUS = 0x7A,
+    GIVE_SYSTEM_AUDIO_MODE_STATUS = 0x7D,
+    SYSTEM_AUDIO_MODE_STATUS = 0x7E,
+    ROUTING_CHANGE = 0x80,
+    ROUTING_INFORMATION = 0x81,
+    ACTIVE_SOURCE = 0x82,
+    GIVE_PHYSICAL_ADDRESS = 0x83,
+    REPORT_PHYSICAL_ADDRESS = 0x84,
+    REQUEST_ACTIVE_SOURCE = 0x85,
+    SET_STREAM_PATH = 0x86,
+    DEVICE_VENDOR_ID = 0x87,
+    VENDOR_COMMAND = 0x89,
+    VENDOR_REMOTE_BUTTON_DOWN = 0x8A,
+    VENDOR_REMOTE_BUTTON_UP = 0x8B,
+    GIVE_DEVICE_VENDOR_ID = 0x8C,
+    MENU_REQUEST = 0x8D,
+    MENU_STATUS = 0x8E,
+    GIVE_DEVICE_POWER_STATUS = 0x8F,
+    REPORT_POWER_STATUS = 0x90,
+    GET_MENU_LANGUAGE = 0x91,
+    SELECT_ANALOG_SERVICE = 0x92,
+    SELECT_DIGITAL_SERVICE = 0x93,
+    SET_DIGITAL_TIMER = 0x97,
+    CLEAR_DIGITAL_TIMER = 0x99,
+    SET_AUDIO_RATE = 0x9A,
+    INACTIVE_SOURCE = 0x9D,
+    CEC_VERSION = 0x9E,
+    GET_CEC_VERSION = 0x9F,
+    VENDOR_COMMAND_WITH_ID = 0xA0,
+    CLEAR_EXTERNAL_TIMER = 0xA1,
+    SET_EXTERNAL_TIMER = 0xA2,
+    REPORT_SHORT_AUDIO_DESCRIPTOR = 0xA3,
+    REQUEST_SHORT_AUDIO_DESCRIPTOR = 0xA4,
+    GIVE_FEATURES = 0XA5,
+    REPORT_FEATURES = 0xA6,
+    REQUEST_CURRENT_LATENCY = 0xA7,
+    REPORT_CURRENT_LATENCY = 0xA8,
+    INITIATE_ARC = 0xC0,
+    REPORT_ARC_INITIATED = 0xC1,
+    REPORT_ARC_TERMINATED = 0xC2,
+    REQUEST_ARC_INITIATION = 0xC3,
+    REQUEST_ARC_TERMINATION = 0xC4,
+    TERMINATE_ARC = 0xC5,
+    ABORT = 0xFF,
+    POLLING_MESSAGE = 0xFFFFFF00, // used for cec polling message
+};
+
+/**
+ * Abort Reason as specified in CEC Table 29 of the CEC spec 1.4b.
+ */
+enum AbortReason : int32_t {
+    UNRECOGNIZED_MODE = 0,
+    NOT_IN_CORRECT_MODE = 1,
+    CANNOT_PROVIDE_SOURCE = 2,
+    INVALID_OPERAND = 3,
+    REFUSED = 4,
+    UNABLE_TO_DETERMINE = 5,
+};
+
+enum MaxLength : int32_t {
+    MESSAGE_BODY = 14,
+};
+
+struct CecMessage {
+    /** logical address of sender */
+    CecLogicalAddress initiator;
+
+    /** logical address of receiver */
+    CecLogicalAddress destination;
+
+    /** cec message type */
+    CecMessageType cecMessageType;
+
+    /**
+     * The maximum size of body is 14 (MaxLength::MESSAGE_BODY) as specified in
+     * the section 6 of the CEC Spec 1.4b. Overflowed data must be ignored.
+     */
+    vec<uint8_t> body;
+};
+
+/**
+ * error code used for send_message.
+ */
+enum SendMessageResult : int32_t {
+    SUCCESS = 0,
+    NACK = 1, // not acknowledged
+    BUSY = 2, // bus is busy
+    FAIL = 3,
+};
+
+/**
+ * CEC All Device Type Value as specified in Table 11-30 of the CEC spec 2.0b.
+ */
+enum CecAllDeviceTypeValue : uint8_t {
+    RESERVED_DEVICE_2 = 1 << 0,
+    RESERVED_DEVICE_1 = 1 << 1,
+    CEC_SWITCH_DEVICE = 1 << 2,
+    AUDIO_DEVICE = 1 << 3,
+    PLAYBACK_DEVICE = 1 << 4,
+    TUNER_DEVICE = 1 << 5,
+    RECORDING_DEVICE = 1 << 6,
+    TV_DEVICE   = 1 << 7,
+};
+
+/**
+ * CEC All Device Types
+ *
+ * It is a combination of all supported type from CecAllDeviceTypeValue.
+ * For example a record with tuner functionalitye,
+ * cecAllDeviceTypes = ((CecAllDeviceTypeValue::RECORDING_DEVICE)
+ *                     |(CecAllDeviceTypeValue::TUNER_DEVICE))
+ */
+typedef bitfield<CecAllDeviceTypeValue> CecAllDeviceTypes;
+
+/**
+ * CEC Versions as specified in CEC Table 11-30 of the CEC spec 2.0b.
+ */
+enum CecVersion : int32_t {
+    V_1_3_A   = 0x04,
+    V_1_4   = 0x05, // indicate CEC 1.4, 1.4a or 1.4b
+    V_2_0   = 0x06,
+};
+
+/**
+ * Device Feature
+ *
+ * It is specified in CEC Table 11-30 of the CEC spec 2.0b. As a uint32 there
+ * is room for future extensions aka DeviceFeature2 through DeviceFeature4.
+ */
+enum CecDeviceFeature : uint32_t {
+    RESERVED = 1 << 0,
+    SOURCE_SUPPORT_ARC_RX = 1 << 1,
+    SINK_SUPPORT_ARC_TX = 1 << 2,
+    SOURCE_SUPPORT_SET_AUDIO_RATE = 1 << 3,
+    SUPPORT_CONTROLLED_BY_DECK = 1 << 4,
+    TV_SUPPORT_SET_OSD_STRINGS = 1 << 5,
+    TV_SUPPORT_RECORD_TV_SCREEN = 1 << 6,
+};
+
+/**
+ * CEC Device Features
+ *
+ * It is a combination of all supported features from CecDeviceFeature.
+ * For example a TV with OSD and ARC capabilities,
+ *   CecDeviceFeatures = ((CecDeviceFeature::TV_SUPPORT_SET_OSD_STRINGS)
+ *                       |(CecDeviceFeature::SINK_SUPPORT_ARC_TX))
+ */
+typedef bitfield<CecDeviceFeature> CecDeviceFeatures;
+
+/**
+ * Remote Control Profile
+ *
+ * It is specified in CEC Table 11-30 of the CEC spec 2.0b.
+ */
+enum CecRcProfileId : uint8_t {
+    NONE = 0,   // TV doesn’t support any of these profiles
+    RC_PROFILE_1 = 0x02, // minimalistic zapper (low button count)
+    RC_PROFILE_2 = 0x06, // intermediate between profile 1 and profile 3
+    RC_PROFILE_3 = 0x0A, // typical TV remote
+    RC_PROFILE_4 = 0x0E, // extended form of profile 3
+};
+
+/**
+ * Remote Control Profile Source
+ *
+ * It is specified in CEC Table 11-30 of the CEC spec 2.0b.
+ */
+enum CecRcProfileSource : uint8_t {
+    MEDIA_CONTEXT_SENSITIVE = 1 << 0, // source can handle UI command 0x11
+    MEDIA_TO = 1 << 1, // source can handle UI command 0x10
+    CONTENTS = 1 << 2, // source can handle UI command 0x0B
+    DEVICE_SETUP = 1 << 3, // source can handle UI command 0x0A
+    DEVICE_ROOT = 1 << 4, // source can handle UI command 0x09
+    SOURCE_FLAG = 1 << 6, // Indicate the profile is for source
+};
+
+/**
+ * Remote Control Profile for either TV or Source.
+ */
+safe_union CecRcProfile1 {
+    /** CEC remote control profile for TV. */
+    CecRcProfileId profileId;
+
+    /* CEC remote control profile for source
+     *
+     * It is a combination of all supported profiles from CecRcProfileSource.
+     * For example a playback device support root menu and setup menu,
+     * profileSource = ((CecRcProfileSource::DEVICE_ROOT)
+     *                  |(CecRcProfileSource::DEVICE_SETUP)
+     *                  |(CecRcProfileSource::SOURCE_FLAG))
+     */
+    bitfield<CecRcProfileSource> profileSource;
+};
+
+/**
+ * CEC Remote Control Profiles
+ *
+ * CEC 2.0 only use one byte to represent Remote Control Profile.
+ */
+struct CecRcProfile {
+   CecRcProfile1 rcProfile1;
+};
+
+/**
+ * CEC device power states as specified in CEC Table 11-10 of the CEC spec 2.0b
+ */
+enum CecPowerState : int8_t {
+    ON = 0,
+    STANDBY = 1,
+    ON_TO_STANDBY = 2,
+    STANDBY_TO_ON = 4,
+    UNKNOWN = 0xFF, // some devices may not report power status
+};
+
+/** CEC physical address of device */
+typedef uint16_t CecPhysicalAddress;
+
+/**
+ * CEC device information
+ *
+ * It is initially built during addressing specified in CEC section 11.3 of
+ * the CEC spec 2.0b. It may be updated with cec devices's status changed.
+ */
+struct CecDeviceInfo {
+    /** CEC version which device supports */
+    CecVersion version;
+
+    /** CEC device primary type */
+    CecDeviceType devceType;
+
+    /** CEC all device types */
+    CecAllDeviceTypes allDeviceTypes;
+
+    /** CEC device features */
+    CecDeviceFeatures deviceFeatures;
+
+    /** CEC Device Remote Control Profile */
+    CecRcProfile rcProfile;
+
+    /** CEC Device Vendor ID */
+    uint32_t vendorId;
+
+    /** logical address of device */
+    CecLogicalAddress logicalAddress;
+
+    /** physical of device */
+    CecPhysicalAddress physicalAddress;
+
+    /** power status of device */
+    CecPowerState powerState;
+};
+
+/**
+ * Topology Event Type.
+ */
+enum CecTopologyEventType : int32_t {
+    DEVICE_ADDED,
+    DEVICE_REMOVED,
+    DEVICE_UPDATED,
+};
+
+/**
+ * Topology Event.
+ */
+struct CecTopologyEvent {
+    CecTopologyEventType eventType;
+    CecLogicalAddress logicalAddress;
+    CecPhysicalAddress physicalAddress;
+
+    /** true if the event is about the device which the system run on */
+    bool isHostDevice;
+};
+
+
+/**
+ * CEC UI Command Codes as specified in CEC Table 11-31 of the CEC spec 2.0b
+ */
+enum CecUICommandCodes : int32_t {
+    SELECT_OK = 0x00,
+    UP = 0x01,
+    DOWN = 0x02,
+    LEFT = 0x03,
+    RIGHT = 0x04,
+    RIGHT_UP = 0x05,
+    RIGHT_DOWN = 0x06,
+    LEFT_UP = 0x07,
+    LEFT_DOWN = 0x08,
+    DEVICE_ROOT_MENU = 0x09,
+    DEVICE_SETUP_MENU = 0x0A,
+    CONTENTS_MENU = 0x0B,
+    FAVORITE_MENU = 0x0C,
+    BACK = 0x0D,
+    MEDIA_TOP_MENU = 0x10,
+    MEDIA_CONTEXT_SENSITIVE_MENU = 0x11,
+    NUMBER_ENTRY_MODE = 0x1D,
+    NUMBER_11 = 0x1E,
+    NUMBER_12 = 0x1F,
+    NUMBER_0 = 0x20, // or NUMBER 10
+    NUMBER_1 = 0x21,
+    NUMBER_2 = 0x22,
+    NUMBER_3 = 0x23,
+    NUMBER_4 = 0x24,
+    NUMBER_5 = 0x25,
+    NUMBER_6 = 0x26,
+    NUMBER_7 = 0x27,
+    NUMBER_8 = 0x28,
+    NUMBER_9 = 0x29,
+    DOT = 0x2A,
+    ENTER = 0x2B,
+    CLEAR = 0x2C,
+    NEXT_FAVORITE = 0x2F,
+    CHANNEL_UP = 0x30,
+    CHANNEL_DOWN = 0x31,
+    PREVIOUS_CHANNEL = 0x32,
+    SOUND_SELECT = 0x33,
+    INPUT_SELECT = 0x34,
+    DISPLAY_INFORMATION = 0x35,
+    HELP = 0x36,
+    PAGE_UP = 0x37,
+    PAGE_DOWN = 0x38,
+    POWER = 0x40,
+    VOLUME_UP = 0x41,
+    VOLUME_DOWN = 0x42,
+    MUTE = 0x43,
+    PLAY = 0x44,
+    STOP = 0x45,
+    PAUSE = 0x46,
+    RECORD = 0x47,
+    REWIND = 0x48,
+    FAST_FORWARD = 0x49,
+    EJECT = 0x4A,
+    SKIP_FORWARD = 0x4B,
+    SKIP_BACKWARD = 0x4C,
+    STOP_RECORD = 0x4D,
+    PAUSE_RECORD = 0x4E,
+    ANGLE = 0x50,
+    SUB_PICTURE = 0x51,
+    VIDEO_ON_DEMAND = 0x52,
+    ELECTRONIC_PROGRAM_GUIDE = 0x53,
+    TIMER_PROGRAMMING = 0x54,
+    INITIAL_CONFIGURATION = 0x55,
+    SELECT_BROADCAST_TYPE = 0x56,
+    SELECT_SOUND_PRESENTATION = 0x57,
+    AUDIO_DESCRIPTION = 0x58,
+    INTERNET = 0x59,
+    THREE_DIMENSIONAL_MODE = 0x5A,
+    PLAY_FUNCTION = 0x60,
+    PAUSE_PLAY_FUNCTION = 0x61,
+    RECORD_FUNCTION = 0x62,
+    PAUSE_RECORD_FUNCTION = 0x63,
+    STOP_FUNCTION = 0x64,
+    MUTE_FUNCTION = 0x65,
+    RESTORE_VOLUME_FUNCTION = 0x66,
+    TUNE_FUNCTION = 0x67,
+    SELECT_MEDIA_FUNCTION = 0x68,
+    SELECT_AV_INPUT_FUNCTION = 0x69,
+    SELECT_AUDIO_INPUT_FUNCTION = 0x6A,
+    POWER_TOGGLE_FUNCTION = 0x6B,
+    POWER_OFF_FUNCTION = 0x6C,
+    POWER_ON_FUNCTION = 0x6D,
+    F1 = 0x71, // BLUE
+    F2 = 0x72, // RED
+    F3 = 0x73, // GREEN
+    F4 = 0x74, // YELLOW
+    F5 = 0x75,
+    DATA = 0x76,
+};
+
+/**
+ * HDMI port type.
+ */
+enum HdmiPortType : int32_t {
+    INPUT = 0,
+    OUTPUT = 1,
+};
+
+/**
+ * Options used for IHdmiCec.setOption()
+ */
+enum OptionKey : int32_t {
+    /**
+     * When set to false, HAL does not wake up the system upon receiving <Image
+     * View On> or <Text View On>. Used when user changes the TV settings to
+     * disable the auto TV on functionality.
+     * Deprecated since <Image View On> and <Text View On> become mandatory
+     * featrues for CEC device. Use ENABLE_CEC OptionKey to disable CEC
+     * functionality instead.
+     * True by Default
+     */
+    WAKEUP = 1,
+
+    /**
+     * When set to false, all the CEC commands are discarded. if logical address
+     * is ever used, it shall be released. Used when user changes the TV
+     * settings to disable CEC functionality.
+     * True by default.
+     *
+     */
+    ENABLE_CEC = 2,
+
+    /**
+     * Setting this flag to false means Android system must stop handling CEC
+     * service and yield the control over to the microprocessor that is powered
+     * on through the standby mode.The microprocessor shall keep current logical
+     * and physical address. It shall response POLLING_MESSAGE, GIVE_FEATURES,
+     * GIVE_DEVICE_POWER_STATUS,GIVE_DEVICE_VENDOR_ID and GIVE_PHYSICAL_ADDRESS
+     * to allow other CEC devices to build CEC devices map specified in CEC
+     * section 11.3 of the CEC spec 2.0b.
+     * When set to true, the system must gain the control over, hence telling
+     * the microprocessor to start forwarding CEC messages to Android system.
+     * For example, this may be called when system goes in and out of
+     * standby mode to notify the microprocessor that it should start/stop
+     * handling CEC commands on behalf of the system.
+     * True by default.
+     */
+    SYSTEM_CEC_CONTROL = 3,
+
+    /* Option 4 not used */
+};
+
+/**
+ * Hdmi port ID.
+ *
+ * It shall start from 1 which corresponds to HDMI "port 1".
+ */
+typedef uint32_t HdmiPortId;
+
+/** Hdmi hotplug event */
+struct HotplugEvent {
+    bool connected;
+    HdmiPortId portId;
+};
+
+/**
+ * HDMI port descriptor
+ */
+struct HdmiPortInfo {
+    HdmiPortType type;
+    HdmiPortId portId;
+    bool cecSupported;
+    bool arcSupported;
+    CecPhysicalAddress physicalAddress;
+};
+
+enum Result : int32_t {
+    SUCCESS = 0,
+    FAILURE_UNKNOWN = 1,
+    FAILURE_INVALID_ARGS = 2,
+    FAILURE_INVALID_STATE = 3,
+    FAILURE_NOT_SUPPORTED = 4,
+    FAILURE_BUSY = 5,
+};

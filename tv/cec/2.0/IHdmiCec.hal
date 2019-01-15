@@ -1,0 +1,209 @@
+/*
+ * Copyright (C) 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.tv.cec@2.0;
+
+import IHdmiCecCallback;
+
+/**
+ * HDMI-CEC HAL interface definition.
+ */
+interface IHdmiCec {
+    /**
+     * Passes Primary Device Type that must be used in this system.
+     *
+     * HAL must use it to allocate logical address as specified in CEC section
+     * 11.3.2 of the CEC spec 2.0b. Then CEC commands addressed the given
+     * logical address can be filtered in.
+     * This method shall be able to be called up to twice to support two Primary
+     * Device Type as specified in CEC Table 11-8 of the CEC spec 2.0b.
+     *
+     * @param deviceType that must be used in this system. It must be a valid
+     *        value in CecDeviceType for the call to succeed.
+     * @return result Result status of the operation. SUCCESS if successful,
+     *         FAILURE_INVALID_ARGS if the given device type is invalid,
+     *         FAILURE_BUSY if device or resource is busy
+     */
+    @callflow(next={"*"})
+    addDeviceType(CecDeviceType deviceType) generates (Result result);
+
+    /**
+     * Clears all Primary Device Types.
+     *
+     * It is used when the system plan to reconfigure Primary Device Type,
+     * hence to tell HAL to release all logical address associated to them,
+     * and change the state back to the beginning.
+     */
+    @callflow(next="addDeviceType")
+    @exit
+    clearDeviceTypes();
+
+    /**
+     * Set All Device Types for a Primary Device Type.
+     *
+     * This value must be used in REPORT_FEATURES message to response
+     * GIVE_FEATURES message in HAL.
+     *
+     * @param allDeviceTypes device all device types for a Primary Device Type.
+     */
+    @callflow(next="addDeviceType")
+    setAllDeviceTypes(CecAllDeviceTypes allDeviceTypes);
+
+    /**
+     * Set Device Features for a Primary Device Type.
+     *
+     * This value must be used in REPORT_FEATURES message to response
+     * GIVE_FEATURES message in HAL.
+     *
+     * @param deviceType The device Primary Device Type.
+     * @param deviceFeatures device features for a Primary Device Type.
+     */
+    @callflow(next="addDeviceType")
+    setDeviceFeatures(CecDeviceType deviceType,
+                      CecDeviceFeatures deviceFeatures);
+
+    /**
+     * Set Remote Control Profile for a Primary Device Type.
+     *
+     * This value must be used in REPORT_FEATURES message to response
+     * GIVE_FEATURES message in HAL.
+     *
+     * @param deviceType The device Primary Device Type.
+     * @param rcProliles remote control profiles for a Primary Device Type.
+     */
+    @callflow(next="addDeviceType")
+    setRcProfile(CecDeviceType deviceType, CecRcProfile rcProfile);
+
+    /**
+     * Retrieve CEC device information.
+     *
+     * CEC section 11.3 of the CEC spec 2.0b specify that a device should not
+     * ask for static information that another device has already supplied.
+     * Therefore, CEC 2.0 software stack need a map to store all cec
+     * devices’ information of current CEC network.
+     * The device information is broadcasted by a device after it allocates a
+     * logical address.  Messages used to send out these information are
+     * REPORT_FEATURES, REPORT_PHYSICAL_ADDRESS, DEVICE_VENDOR_ID.
+     * The spec also requires less than 1 second between REPORT_FEATURES and
+     * REPORT_PHYSICAL_ADDRESS message, and less than 2 second between
+     * REPORT_PHYSICAL_ADDRESS and DEVICE_VENDOR_ID. An Implementation of
+     * device information map in hal can help to meet the timing constraints.
+     * Logical addressing is part of the process to build this map, so the
+     * implementation shall include allocating logical address too.
+     * Whenever a device plug/unplug, the topology of CEC network changes.
+     * The hal implementation shall update devices’ information map, and
+     * send out onTopologyEvent to Android system. Then Android system
+     * will use readDeviceInfo to retreive latest devices’ information of CEC
+     * network.
+     * If SYSTEM_CEC_CONTROL is false, the hal implementation need continue to
+     * maintain and update device information map, and send out pending
+     * onTopologyEvent to Android system when SYSTEM_CEC_CONTROL is
+     * changed to true.
+     *
+     * @param logicalAddress logical address of CEC device.
+     * @param physicalAddress physical address of CEC device.
+     * @return CecDeviceInfo from device information map.
+     * @return result Result status of the operation. SUCCESS if successful,
+     *         FAILURE_INVALID_ARGS if logical or physical address is invalid.
+     *         FAILURE_INVALID_STATE if device information isn't available yet.
+     */
+    @callflow(next="onTopologyChangeEvent")
+    readDeviceInfo(CecLogicalAddress logicalAddress,
+                   CecPhysicalAddress physicalAddress)
+        generates (Result result, CecDeviceInfo deviceInfo);
+
+   /**
+     * Transmits HDMI-CEC message to other HDMI device.
+     *
+     * The method must be designed to return in a certain amount of time and not
+     * hanging forever. This method MUST complete with in 1 second.
+     *
+     * It must try retransmission at least once as specified in the section '7.1
+     * Frame Re-transmissions' of the CEC Spec 1.4b.
+     *
+     * @param message CEC message to be sent to other HDMI device.
+     * @return result Result status of the operation. SUCCESS if successful,
+     *         NACK if the sent message is not acknowledged,
+     *         BUSY if the CEC bus is busy.
+     */
+    @callflow(next="*")
+    sendMessage(CecMessage message) generates (SendMessageResult result);
+
+    /**
+     * Set the callback
+     *
+     * It is used by the framework to receive CecMessages, HDMI hotplug event
+     * and topology update event. Only one callback client is supported.
+     *
+     * @param callback Callback object to pass hdmi events to the system. The
+     *        previously registered callback must be replaced with this one.
+     */
+    @callflow(next={"*"})
+    @entry
+    setCallback(IHdmiCecCallback callback);
+
+   /**
+     * Gets the hdmi port information of underlying hardware.
+     *
+     * @return infos The list of HDMI port information
+     */
+    @callflow(next={"*"})
+    getPortInfo() generates (vec<HdmiPortInfo> infos);
+
+    /**
+     * Sets flags controlling the way HDMI-CEC service works down to HAL
+     * implementation. Those flags must be used in case the feature needs update
+     * in HAL itself, firmware or microcontroller.
+     *
+     * @param key The key of the option to be updated with a new value.
+     * @param value Value to be set.
+     */
+    @callflow(next="*")
+    setOption(OptionKey key, bool value);
+
+    /**
+     * Passes the updated language information of Android system. Contains
+     * three-letter code as defined in ISO/FDIS 639-2. Must be used for HAL to
+     * respond to <Get Menu Language> while in standby mode.
+     *
+     * @param language Three-letter code defined in ISO/FDIS 639-2. Must be
+     *        lowercase letters. (e.g., eng for English)
+     */
+    @callflow(next="*")
+    setLanguage(string language);
+
+    /**
+     * Configures ARC circuit in the hardware logic to start or stop the
+     * feature.
+     *
+     * @param portId Port id to be configured.
+     * @param enable Flag must be either true to start the feature or false to
+     *        stop it.
+     */
+    @callflow(next="*")
+    enableAudioReturnChannel(HdmiPortId portId, bool enable);
+
+    /**
+     * Gets the connection status of the specified port.
+     *
+     * It's specified in CEC section 10.8 of the CEC spec 2.0b
+     *
+     * @param portId Port id to be inspected for the connection status.
+     * @return status True if a device is connected, otherwise false.
+     */
+    @callflow(next="*")
+    isConnected(HdmiPortId portId) generates (bool connected);
+};
