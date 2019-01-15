@@ -504,7 +504,7 @@
     </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.wifi.supplicant</name>
-        <version>1.0-1</version>
+        <version>1.0-2</version>
         <interface>
             <name>ISupplicant</name>
             <instance>default</instance>
