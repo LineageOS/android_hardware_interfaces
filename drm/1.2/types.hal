@@ -16,6 +16,8 @@
 
 package android.hardware.drm@1.2;
 
+import @1.0::Status;
+
 enum OfflineLicenseState : uint32_t {
     /**
      * Offline license state is unknown
@@ -23,7 +25,7 @@ enum OfflineLicenseState : uint32_t {
     UNKNOWN,
 
     /**
-     * Offline license state is usable, the keys may be used for decryption.
+     * Offline license state is usable, the keys are usable for decryption.
      */
     USABLE,
 
@@ -33,6 +35,40 @@ enum OfflineLicenseState : uint32_t {
      * key response has not been received.
      */
     INACTIVE
+};
+
+enum Status : @1.0::Status {
+    /**
+     * The drm HAL module must return ERROR_DRM_INSUFFICIENT_SECURITY
+     * from the crypto plugin decrypt method when the security level
+     * of the device is not sufficient to meet the requirements in the
+     * license policy.
+     */
+    ERROR_DRM_INSUFFICIENT_SECURITY,
+
+    /**
+     * The drm HAL module must return ERROR_FRAME_TOO_LARGE from the
+     * decrypt method when the frame being decrypted into the secure
+     * output buffer exceeds the size of the buffer.
+     */
+    ERROR_DRM_FRAME_TOO_LARGE,
+
+    /**
+     * This error must be returned from any session method when an
+     * attempt is made to use the session after the crypto hardware
+     * state has been invalidated. Some devices are not able to
+     * retain crypto session state across device suspend/resume which
+     * results in invalid session state.
+     */
+    ERROR_DRM_SESSION_LOST_STATE,
+
+     /**
+      * The drm HAL module must return this error if client
+      * applications using the hal are temporarily exceeding the
+      * capacity of available crypto resources such that a retry of
+      * the operation is likely to succeed.
+      */
+    ERROR_DRM_RESOURCE_CONTENTION,
 };
 
 /**
