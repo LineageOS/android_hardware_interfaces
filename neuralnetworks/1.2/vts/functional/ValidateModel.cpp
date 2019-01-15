@@ -328,6 +328,7 @@ static bool mutateOperationOperandTypeSkip(size_t operand, OperandType type, con
         // - RANDOM_MULTINOMIAL's argument can be either TENSOR_FLOAT16 or TENSOR_FLOAT32.
         // - CONV_2D filter type (arg 1) can be QUANT8_ASYMM or QUANT8_SYMM_PER_CHANNEL
         // - DEPTHWISE_CONV_2D filter type (arg 1) can be QUANT8_ASYMM or QUANT8_SYMM_PER_CHANNEL
+        // - GROUPED_CONV_2D filter type (arg 1) can be QUANT8_ASYMM or QUANT8_SYMM_PER_CHANNEL
         switch (operation.type) {
             case OperationType::LSH_PROJECTION: {
                 if (operand == operation.inputs[1]) {
@@ -347,6 +348,7 @@ static bool mutateOperationOperandTypeSkip(size_t operand, OperandType type, con
                     return true;
                 }
             } break;
+            case OperationType::GROUPED_CONV_2D:
             case OperationType::DEPTHWISE_CONV_2D:
             case OperationType::CONV_2D: {
                 if (operand == 1 && (type == OperandType::TENSOR_QUANT8_ASYMM ||
