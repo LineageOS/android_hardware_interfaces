@@ -176,6 +176,93 @@ void VendorTagDescriptor::dump(int fd, int verbosity, int indentation) const {
 
 }
 
+int VendorTagDescriptorCache::getTagCount(metadata_vendor_id_t id) const {
+    int ret = 0;
+    auto desc = mVendorMap.find(id);
+    if (desc != mVendorMap.end()) {
+        ret = desc->second->getTagCount();
+    } else {
+        ALOGE("%s: Vendor descriptor id is missing!", __func__);
+    }
+
+    return ret;
+}
+
+void VendorTagDescriptorCache::getTagArray(uint32_t* tagArray, metadata_vendor_id_t id) const {
+    auto desc = mVendorMap.find(id);
+    if (desc != mVendorMap.end()) {
+        desc->second->getTagArray(tagArray);
+    } else {
+        ALOGE("%s: Vendor descriptor id is missing!", __func__);
+    }
+}
+
+const char* VendorTagDescriptorCache::getSectionName(uint32_t tag, metadata_vendor_id_t id) const {
+    const char* ret = nullptr;
+    auto desc = mVendorMap.find(id);
+    if (desc != mVendorMap.end()) {
+        ret = desc->second->getSectionName(tag);
+    } else {
+        ALOGE("%s: Vendor descriptor id is missing!", __func__);
+    }
+
+    return ret;
+}
+
+const char* VendorTagDescriptorCache::getTagName(uint32_t tag, metadata_vendor_id_t id) const {
+    const char* ret = nullptr;
+    auto desc = mVendorMap.find(id);
+    if (desc != mVendorMap.end()) {
+        ret = desc->second->getTagName(tag);
+    } else {
+        ALOGE("%s: Vendor descriptor id is missing!", __func__);
+    }
+
+    return ret;
+}
+
+int VendorTagDescriptorCache::getTagType(uint32_t tag, metadata_vendor_id_t id) const {
+    int ret = 0;
+    auto desc = mVendorMap.find(id);
+    if (desc != mVendorMap.end()) {
+        ret = desc->second->getTagType(tag);
+    } else {
+        ALOGE("%s: Vendor descriptor id is missing!", __func__);
+    }
+
+    return ret;
+}
+
+void VendorTagDescriptorCache::dump(int fd, int verbosity, int indentation) const {
+    for (const auto& desc : mVendorMap) {
+        desc.second->dump(fd, verbosity, indentation);
+    }
+}
+
+int32_t VendorTagDescriptorCache::addVendorDescriptor(
+    metadata_vendor_id_t id, sp<hardware::camera::common::V1_0::helper::VendorTagDescriptor> desc) {
+    auto entry = mVendorMap.find(id);
+    if (entry != mVendorMap.end()) {
+        ALOGE("%s: Vendor descriptor with same id already present!", __func__);
+        return BAD_VALUE;
+    }
+
+    mVendorMap.emplace(id, desc);
+    return NO_ERROR;
+}
+
+int32_t VendorTagDescriptorCache::getVendorTagDescriptor(
+    metadata_vendor_id_t id,
+    sp<hardware::camera::common::V1_0::helper::VendorTagDescriptor>* desc /*out*/) {
+    auto entry = mVendorMap.find(id);
+    if (entry == mVendorMap.end()) {
+        return NAME_NOT_FOUND;
+    }
+
+    *desc = entry->second;
+
+    return NO_ERROR;
+}
 } // namespace params
 } // namespace camera2
 
@@ -192,10 +279,17 @@ static const char* vendor_tag_descriptor_get_section_name(const vendor_tag_ops_t
 static const char* vendor_tag_descriptor_get_tag_name(const vendor_tag_ops_t* v, uint32_t tag);
 static int vendor_tag_descriptor_get_tag_type(const vendor_tag_ops_t* v, uint32_t tag);
 
+static int vendor_tag_descriptor_cache_get_tag_count(metadata_vendor_id_t id);
+static void vendor_tag_descriptor_cache_get_all_tags(uint32_t* tagArray, metadata_vendor_id_t id);
+static const char* vendor_tag_descriptor_cache_get_section_name(uint32_t tag,
+                                                                metadata_vendor_id_t id);
+static const char* vendor_tag_descriptor_cache_get_tag_name(uint32_t tag, metadata_vendor_id_t id);
+static int vendor_tag_descriptor_cache_get_tag_type(uint32_t tag, metadata_vendor_id_t id);
 } /* extern "C" */
 
 static Mutex sLock;
 static sp<VendorTagDescriptor> sGlobalVendorTagDescriptor;
+static sp<VendorTagDescriptorCache> sGlobalVendorTagDescriptorCache;
 
 status_t VendorTagDescriptor::createDescriptorFromOps(const vendor_tag_ops_t* vOps,
             /*out*/
@@ -310,6 +404,39 @@ sp<VendorTagDescriptor> VendorTagDescriptor::getGlobalVendorTagDescriptor() {
     return sGlobalVendorTagDescriptor;
 }
 
+status_t VendorTagDescriptorCache::setAsGlobalVendorTagCache(
+    const sp<VendorTagDescriptorCache>& cache) {
+    status_t res = OK;
+    Mutex::Autolock al(sLock);
+    sGlobalVendorTagDescriptorCache = cache;
+
+    struct vendor_tag_cache_ops* opsPtr = NULL;
+    if (cache != NULL) {
+        opsPtr = &(cache->mVendorCacheOps);
+        opsPtr->get_tag_count = vendor_tag_descriptor_cache_get_tag_count;
+        opsPtr->get_all_tags = vendor_tag_descriptor_cache_get_all_tags;
+        opsPtr->get_section_name = vendor_tag_descriptor_cache_get_section_name;
+        opsPtr->get_tag_name = vendor_tag_descriptor_cache_get_tag_name;
+        opsPtr->get_tag_type = vendor_tag_descriptor_cache_get_tag_type;
+    }
+    if ((res = set_camera_metadata_vendor_cache_ops(opsPtr)) != OK) {
+        ALOGE("%s: Could not set vendor tag cache, received error %s (%d).", __FUNCTION__,
+              strerror(-res), res);
+    }
+    return res;
+}
+
+void VendorTagDescriptorCache::clearGlobalVendorTagCache() {
+    Mutex::Autolock al(sLock);
+    set_camera_metadata_vendor_cache_ops(NULL);
+    sGlobalVendorTagDescriptorCache.clear();
+}
+
+sp<VendorTagDescriptorCache> VendorTagDescriptorCache::getGlobalVendorTagCache() {
+    Mutex::Autolock al(sLock);
+    return sGlobalVendorTagDescriptorCache;
+}
+
 extern "C" {
 
 int vendor_tag_descriptor_get_tag_count(const vendor_tag_ops_t* /*v*/) {
@@ -355,6 +482,50 @@ int vendor_tag_descriptor_get_tag_type(const vendor_tag_ops_t* /*v*/, uint32_t t
         return VENDOR_TAG_TYPE_ERR;
     }
     return sGlobalVendorTagDescriptor->getTagType(tag);
+}
+
+int vendor_tag_descriptor_cache_get_tag_count(metadata_vendor_id_t id) {
+    Mutex::Autolock al(sLock);
+    if (sGlobalVendorTagDescriptorCache == NULL) {
+        ALOGE("%s: Vendor tag descriptor cache not initialized.", __FUNCTION__);
+        return VENDOR_TAG_COUNT_ERR;
+    }
+    return sGlobalVendorTagDescriptorCache->getTagCount(id);
+}
+
+void vendor_tag_descriptor_cache_get_all_tags(uint32_t* tagArray, metadata_vendor_id_t id) {
+    Mutex::Autolock al(sLock);
+    if (sGlobalVendorTagDescriptorCache == NULL) {
+        ALOGE("%s: Vendor tag descriptor cache not initialized.", __FUNCTION__);
+    }
+    sGlobalVendorTagDescriptorCache->getTagArray(tagArray, id);
+}
+
+const char* vendor_tag_descriptor_cache_get_section_name(uint32_t tag, metadata_vendor_id_t id) {
+    Mutex::Autolock al(sLock);
+    if (sGlobalVendorTagDescriptorCache == NULL) {
+        ALOGE("%s: Vendor tag descriptor cache not initialized.", __FUNCTION__);
+        return VENDOR_SECTION_NAME_ERR;
+    }
+    return sGlobalVendorTagDescriptorCache->getSectionName(tag, id);
+}
+
+const char* vendor_tag_descriptor_cache_get_tag_name(uint32_t tag, metadata_vendor_id_t id) {
+    Mutex::Autolock al(sLock);
+    if (sGlobalVendorTagDescriptorCache == NULL) {
+        ALOGE("%s: Vendor tag descriptor cache not initialized.", __FUNCTION__);
+        return VENDOR_TAG_NAME_ERR;
+    }
+    return sGlobalVendorTagDescriptorCache->getTagName(tag, id);
+}
+
+int vendor_tag_descriptor_cache_get_tag_type(uint32_t tag, metadata_vendor_id_t id) {
+    Mutex::Autolock al(sLock);
+    if (sGlobalVendorTagDescriptorCache == NULL) {
+        ALOGE("%s: Vendor tag descriptor cache not initialized.", __FUNCTION__);
+        return VENDOR_TAG_NAME_ERR;
+    }
+    return sGlobalVendorTagDescriptorCache->getTagType(tag, id);
 }
 
 } /* extern "C" */
