@@ -31,16 +31,68 @@ using android::hardware::joinRpcThreadpool;
 
 // Generated HIDL files
 using android::hardware::power::stats::V1_0::IPowerStats;
+using android::hardware::power::stats::V1_0::PowerEntityStateResidencyResult;
+using android::hardware::power::stats::V1_0::PowerEntityStateSpace;
+using android::hardware::power::stats::V1_0::PowerEntityType;
+using android::hardware::power::stats::V1_0::implementation::IStateResidencyDataProvider;
 using android::hardware::power::stats::V1_0::implementation::PowerStats;
+
+class DefaultStateResidencyDataProvider : public IStateResidencyDataProvider {
+   public:
+    DefaultStateResidencyDataProvider(uint32_t id)
+        : mPowerEntityId(id), mActiveStateId(0), mSleepStateId(1) {}
+    ~DefaultStateResidencyDataProvider() = default;
+
+    bool getResults(std::unordered_map<uint32_t, PowerEntityStateResidencyResult>& results) {
+        PowerEntityStateResidencyResult result = { .powerEntityId = mPowerEntityId };
+        result.stateResidencyData.resize(2);
+
+        // Using fake numbers here for display only. A real implementation would
+        // use actual tracked stats.
+        result.stateResidencyData[0] = {
+            .powerEntityStateId = mActiveStateId,
+            .totalTimeInStateMs = 1,
+            .totalStateEntryCount = 2,
+            .lastEntryTimestampMs = 3
+        };
+        result.stateResidencyData[1] = {
+            .powerEntityStateId = mSleepStateId,
+            .totalTimeInStateMs = 4,
+            .totalStateEntryCount = 5,
+            .lastEntryTimestampMs = 6,
+        };
+        results.emplace(mPowerEntityId, result);
+        return true;
+    }
+
+    std::vector<PowerEntityStateSpace> getStateSpaces() {
+        return {{
+          .powerEntityId = mPowerEntityId,
+          .states = {
+              {.powerEntityStateId = mActiveStateId, .powerEntityStateName = "Active"},
+              {.powerEntityStateId = mSleepStateId, .powerEntityStateName = "Sleep"}
+          }
+        }};
+    }
+
+   private:
+    const uint32_t mPowerEntityId;
+    const uint32_t mActiveStateId;
+    const uint32_t mSleepStateId;
+};
 
 int main(int /* argc */, char** /* argv */) {
     ALOGI("power.stats service 1.0 is starting.");
 
-    android::sp<IPowerStats> service = new PowerStats();
+    PowerStats* service = new PowerStats();
     if (service == nullptr) {
         ALOGE("Can not create an instance of power.stats HAL Iface, exiting.");
         return 1;
     }
+
+    uint32_t defaultId = service->addPowerEntity("DefaultEntity", PowerEntityType::SUBSYSTEM);
+    auto defaultSdp = std::make_shared<DefaultStateResidencyDataProvider>(defaultId);
+    service->addStateResidencyDataProvider(std::move(defaultSdp));
 
     configureRpcThreadpool(1, true /*callerWillJoin*/);
 

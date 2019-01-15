@@ -11,7 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 
-cc_library_shared {
+cc_binary {
     name: "android.hardware.power.stats@1.0-service",
     relative_install_path: "hw",
     init_rc: ["android.hardware.power.stats@1.0-service.rc"],
