@@ -208,8 +208,70 @@ struct PhysicalCameraSetting {
  * structure asynchronously to the framework, using the processCaptureResult()
  * callback.
  *
- * Identical to @3.2::CaptureRequest, except that it contains @3.4::physCamSettings vector.
+ * Identical to @3.2::CaptureRequest, except that it contains
+ * @3.4::physCamSettings vector.
  *
+ * With 3.4 CaptureRequest, there can be multiple sources of metadata settings.
+ * The @3.2::CaptureRequest v3_2 and each of the PhysicalCameraSetting in
+ * physicalCameraSettings can contain settings, and each buffer may have
+ * metadata settings from a different source.
+ *
+ * For both @3.2::CaptureRequest and PhysicalCameraSetting, the settings can be
+ * passed from framework to HAL using either hwbinder or FMQ; both of the
+ * structs have the fields fmqSettingsSize and settings to pass the metadata.
+ * When metadata settings are passed using hwbinder, fmqSettingsSize == 0 and
+ * settings field contains the metadata for the HAL to read. When metadata
+ * settings comes from FMQ, fmqSettingsSize > 0 and HAL reads metadata from FMQ.
+ * For the purposes of selecting which settings to use, it does not matter
+ * whether it comes from hwbinder or FMQ. When the below specifications say that
+ * v3_2 has settings or a PhysicalCameraSetting has settings, it could refer to
+ * either hwbinder or FMQ, whichever is specified in the struct.
+ *
+ * Below is the logic that the HAL must follow for applying the metadata
+ * settings when it receives a CaptureRequest request in
+ * processCaptureRequest_3_4. Note that HAL must be capable of storing both the
+ * request.v3_2 settings and the PhysicalCameraSetting settings for each
+ * physical device.
+ * - Case 1 - request.v3_2 has settings, request.physicalCameraSettings vector
+ *   is empty:
+ *   - Store the request.v3_2 settings, overwriting the previously stored
+ *     request.v3_2 settings and clearing all previously stored physical device
+ *     settings.
+ *   - Apply the settings from the request.v3_2 to all buffers.
+ * - Case 2 - request.v3_2 has settings, request.physicalCameraSettings vector
+ *   is not empty:
+ *   - Store the request.v3_2 settings, overwriting the previously stored
+ *     request.v3_2 settings.
+ *   - Each PhysicalCameraSetting in request.physicalCameraSettings must have
+ *     settings; if not, return error.
+ *   - For each PhysicalCameraSetting in request.physicalCameraSettings, store
+ *     the settings, overwriting the previously stored settings for this
+ *     physical camera; apply these settings to the buffers belonging to the
+ *     stream for this device.
+ *   - If there are any stored physical camera settings which do not correspond
+ *     to one of the PhysicalCameraSetting in this request, clear them.
+ *   - Apply the request.v3_2 settings to all buffers belonging to streams not
+ *     covered by one of the PhysicalCameraSetting in this request.
+ * - Case 3 - request.v3_2 does not have settings,
+ *   request.physicalCameraSettings vector is empty:
+ *   - Clear all previously stored physical device settings.
+ *   - Apply the stored request.v3_2 settings to all buffers. If there is no
+ *     stored request.v3_2 settings, return error.
+ * - Case 4 - request.v3_2 does not have settings,
+ *   request.physicalCameraSettings vector is not empty:
+ *   - If request.physicalCameraSettings does not have the same set of physical
+ *     cameras as the stored physical camera settings, return error.
+ *   - Each PhysicalCameraSetting in request.physicalCameraSettings must not
+ *     have settings; if any do have settings, return error.
+ *   - For each PhysicalCameraSetting in request.physicalCameraSettings, apply
+ *     the previously stored settings for this physical camera to the buffers
+ *     belonging to the stream for this device.
+ *   - Apply the stored request.v3_2 settings to all buffers belonging to
+ *     streams not covered by one of the PhysicalCameraSetting in this request.
+ *     If there is no stored request.v3_2 settings, return error.
+ *
+ * For the first request received by the HAL, only Case 1 and Case 2 are
+ * allowed.
  */
 struct CaptureRequest {
     /**
