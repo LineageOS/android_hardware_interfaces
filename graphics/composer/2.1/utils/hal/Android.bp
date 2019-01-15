@@ -20,11 +20,13 @@ cc_library_headers {
     shared_libs: [
         "android.hardware.graphics.composer@2.1",
         "android.hardware.graphics.mapper@2.0",
+        "android.hardware.graphics.mapper@3.0",
         "libhardware", // TODO remove hwcomposer2.h dependency
     ],
     export_shared_lib_headers: [
         "android.hardware.graphics.composer@2.1",
         "android.hardware.graphics.mapper@2.0",
+        "android.hardware.graphics.mapper@3.0",
         "libhardware",
     ],
     header_libs: [
