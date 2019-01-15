@@ -386,6 +386,7 @@ cd4330c3196bda1d642a32abfe23a7d64ebfbda721940643af6867af3b3f0aa9 android.hardwar
 
 # ABI preserving changes to HALs during Android Q
 f72d23278af99a2f6a9c1d40352b67dbf1f582282f799f88f7235dc7c13892b5 android.hardware.camera.device@3.2::ICameraDeviceSession
+e96190f635b8458b92525bd6e040fec4ccbac22fdd4bc7274a9794ab976362f7 android.hardware.camera.device@3.4::types
 da33234403ff5d60f3473711917b9948e6484a4260b5247acdafb111193a9de2 android.hardware.configstore@1.0::ISurfaceFlingerConfigs
 21165b8e30c4b2d52980e4728f661420adc16e38bbe73476c06b2085be908f4c android.hardware.gnss@1.0::IGnssCallback
 d702fb01dc2a0733aa820b7eb65435ee3334f75632ef880bafd2fb8803a20a58 android.hardware.gnss@1.0::IGnssMeasurementCallback

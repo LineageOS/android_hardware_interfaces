@@ -164,6 +164,9 @@ struct PhysicalCameraSetting {
      * If non-zero, read settings from request queue instead
      * (see ICameraDeviceSession.getCaptureRequestMetadataQueue).
      * If zero, read settings from .settings field.
+     *
+     * The v3_2 settings metadata is read first from the FMQ, followed by
+     * the physical cameras' settings metadata starting from index 0.
      */
     uint64_t fmqSettingsSize;
 
@@ -238,6 +241,9 @@ struct PhysicalCameraMetadata {
      * If non-zero, read metadata from result metadata queue instead
      * (see ICameraDeviceSession.getCaptureResultMetadataQueue).
      * If zero, read metadata from .metadata field.
+     *
+     * The v3_2 CaptureResult metadata is read first from the FMQ, followed by
+     * the physical cameras' metadata starting from index 0.
      */
     uint64_t fmqMetadataSize;
 
@@ -251,9 +257,6 @@ struct PhysicalCameraMetadata {
     /**
      * If fmqMetadataSize is zero, the metadata buffer contains the metadata
      * for the physical device with physicalCameraId.
-     *
-     * The v3_2 CaptureResult metadata is read first from the FMQ, followed by
-     * the physical cameras' metadata starting from index 0.
      */
     CameraMetadata metadata;
 };
