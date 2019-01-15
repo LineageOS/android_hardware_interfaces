@@ -1,0 +1,41 @@
+/*
+ * Copyright (C) 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.neuralnetworks@1.2;
+
+import @1.0::ErrorStatus;
+
+/**
+ * Callback object used by a service to retreive memory objects based on unique
+ * identifiers ("slots").
+ */
+interface IBurstCallback {
+    /**
+     * Get the memory regions that correspond to slot ids. The slot ids are are
+     * unique to the burst object.
+     *
+     * @param slots Values uniquely identifying memory regions within a Burst.
+     * @return status Indicates whether the memories were successfully returned;
+     *                must be:
+     *                - NONE if the memory region was successfully retrieved
+     *                - GENERAL_FAILURE if there is an unspecified error
+     *                - INVALID_ARGUMENT if a slot number is invalid
+     * @return buffers Memory buffers corresponding to the slot numbers. If an
+     *                 error occurs, an empty vector must be returned for
+     *                 buffers, otherwise slots.size() == buffers.size().
+     */
+    getMemories(vec<int32_t> slots) generates (ErrorStatus status, vec<memory> buffers);
+};
