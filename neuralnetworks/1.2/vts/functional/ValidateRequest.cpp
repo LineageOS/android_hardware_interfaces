@@ -19,6 +19,7 @@
 #include "VtsHalNeuralnetworks.h"
 
 #include "Callbacks.h"
+#include "ExecutionBurstController.h"
 #include "TestHarness.h"
 #include "Utils.h"
 
@@ -112,6 +113,7 @@ static void validate(const sp<IPreparedModel>& preparedModel, const std::string&
     };
     MeasureTiming measure = (hash & 1) ? MeasureTiming::YES : MeasureTiming::NO;
 
+    // asynchronous
     {
         SCOPED_TRACE(message + " [execute_1_2]");
 
@@ -131,6 +133,7 @@ static void validate(const sp<IPreparedModel>& preparedModel, const std::string&
         ASSERT_TRUE(badTiming(timing));
     }
 
+    // synchronous
     {
         SCOPED_TRACE(message + " [executeSynchronously]");
 
@@ -143,6 +146,43 @@ static void validate(const sp<IPreparedModel>& preparedModel, const std::string&
                     EXPECT_TRUE(badTiming(timing));
                 });
         ASSERT_TRUE(executeStatus.isOk());
+    }
+
+    // burst
+    {
+        SCOPED_TRACE(message + " [burst]");
+
+        // create burst
+        std::unique_ptr<::android::nn::ExecutionBurstController> burst =
+                ::android::nn::createExecutionBurstController(preparedModel, /*blocking=*/true);
+        ASSERT_NE(nullptr, burst.get());
+
+        // create memory keys
+        std::vector<intptr_t> keys(request.pools.size());
+        for (size_t i = 0; i < keys.size(); ++i) {
+            keys[i] = reinterpret_cast<intptr_t>(&request.pools[i]);
+        }
+
+        // execute and verify
+        ErrorStatus error;
+        std::vector<OutputShape> outputShapes;
+        Timing timing;
+        std::tie(error, outputShapes, timing) = burst->compute(request, measure, keys);
+        EXPECT_EQ(ErrorStatus::INVALID_ARGUMENT, error);
+        EXPECT_EQ(outputShapes.size(), 0);
+        EXPECT_TRUE(badTiming(timing));
+
+        // additional burst testing
+        if (request.pools.size() > 0) {
+            // valid free
+            burst->freeMemory(keys.front());
+
+            // negative test: invalid free of unknown (blank) memory
+            burst->freeMemory(intptr_t{});
+
+            // negative test: double free of memory
+            burst->freeMemory(keys.front());
+        }
     }
 }
 
