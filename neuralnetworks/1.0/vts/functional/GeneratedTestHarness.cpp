@@ -15,6 +15,7 @@
  */
 
 #include "Callbacks.h"
+#include "ExecutionBurstController.h"
 #include "TestHarness.h"
 #include "Utils.h"
 
@@ -109,14 +110,22 @@ static Return<ErrorStatus> ExecutePreparedModel(sp<V1_2::IPreparedModel>& prepar
     }
     return result;
 }
-enum class Synchronously { NO, YES };
+static std::unique_ptr<::android::nn::ExecutionBurstController> CreateBurst(
+        const sp<V1_0::IPreparedModel>&) {
+    ADD_FAILURE() << "asking for burst execution at V1_0";
+    return nullptr;
+}
+static std::unique_ptr<::android::nn::ExecutionBurstController> CreateBurst(
+        const sp<V1_2::IPreparedModel>& preparedModel) {
+    return ::android::nn::createExecutionBurstController(preparedModel, /*blocking=*/true);
+}
+enum class Executor { ASYNC, SYNC, BURST };
 const float kDefaultAtol = 1e-5f;
 const float kDefaultRtol = 1e-5f;
 template <typename T_IPreparedModel>
 void EvaluatePreparedModel(sp<T_IPreparedModel>& preparedModel, std::function<bool(int)> is_ignored,
-                           const std::vector<MixedTypedExample>& examples,
-                           bool hasRelaxedFloat32Model, float fpAtol, float fpRtol,
-                           Synchronously sync, MeasureTiming measure, bool testDynamicOutputShape) {
+        const std::vector<MixedTypedExample>& examples, bool hasRelaxedFloat32Model, float fpAtol,
+        float fpRtol, Executor executor, MeasureTiming measure, bool testDynamicOutputShape) {
     const uint32_t INPUT = 0;
     const uint32_t OUTPUT = 1;
 
@@ -209,35 +218,62 @@ void EvaluatePreparedModel(sp<T_IPreparedModel>& preparedModel, std::function<bo
         inputMemory->commit();
         outputMemory->commit();
 
+        const Request request = {.inputs = inputs_info, .outputs = outputs_info, .pools = pools};
+
         ErrorStatus executionStatus;
         hidl_vec<OutputShape> outputShapes;
         Timing timing;
-        if (sync == Synchronously::NO) {
-            SCOPED_TRACE("asynchronous");
+        switch (executor) {
+            case Executor::ASYNC: {
+                SCOPED_TRACE("asynchronous");
 
-            // launch execution
-            sp<ExecutionCallback> executionCallback = new ExecutionCallback();
-            ASSERT_NE(nullptr, executionCallback.get());
-            Return<ErrorStatus> executionLaunchStatus = ExecutePreparedModel(
-                    preparedModel, {.inputs = inputs_info, .outputs = outputs_info, .pools = pools},
-                    measure, executionCallback);
-            ASSERT_TRUE(executionLaunchStatus.isOk());
-            EXPECT_EQ(ErrorStatus::NONE, static_cast<ErrorStatus>(executionLaunchStatus));
+                // launch execution
+                sp<ExecutionCallback> executionCallback = new ExecutionCallback();
+                ASSERT_NE(nullptr, executionCallback.get());
+                Return<ErrorStatus> executionLaunchStatus =
+                        ExecutePreparedModel(preparedModel, request, measure, executionCallback);
+                ASSERT_TRUE(executionLaunchStatus.isOk());
+                EXPECT_EQ(ErrorStatus::NONE, static_cast<ErrorStatus>(executionLaunchStatus));
 
-            // retrieve execution status
-            executionCallback->wait();
-            executionStatus = executionCallback->getStatus();
-            outputShapes = executionCallback->getOutputShapes();
-            timing = executionCallback->getTiming();
-        } else {
-            SCOPED_TRACE("synchronous");
+                // retrieve execution status
+                executionCallback->wait();
+                executionStatus = executionCallback->getStatus();
+                outputShapes = executionCallback->getOutputShapes();
+                timing = executionCallback->getTiming();
 
-            // execute
-            Return<ErrorStatus> executionReturnStatus = ExecutePreparedModel(
-                    preparedModel, {.inputs = inputs_info, .outputs = outputs_info, .pools = pools},
-                    measure, &outputShapes, &timing);
-            ASSERT_TRUE(executionReturnStatus.isOk());
-            executionStatus = static_cast<ErrorStatus>(executionReturnStatus);
+                break;
+            }
+            case Executor::SYNC: {
+                SCOPED_TRACE("synchronous");
+
+                // execute
+                Return<ErrorStatus> executionReturnStatus = ExecutePreparedModel(
+                        preparedModel, request, measure, &outputShapes, &timing);
+                ASSERT_TRUE(executionReturnStatus.isOk());
+                executionStatus = static_cast<ErrorStatus>(executionReturnStatus);
+
+                break;
+            }
+            case Executor::BURST: {
+                SCOPED_TRACE("burst");
+
+                // create burst
+                const std::unique_ptr<::android::nn::ExecutionBurstController> controller =
+                        CreateBurst(preparedModel);
+                ASSERT_NE(nullptr, controller.get());
+
+                // create memory keys
+                std::vector<intptr_t> keys(request.pools.size());
+                for (size_t i = 0; i < keys.size(); ++i) {
+                    keys[i] = reinterpret_cast<intptr_t>(&request.pools[i]);
+                }
+
+                // execute burst
+                std::tie(executionStatus, outputShapes, timing) =
+                        controller->compute(request, measure, keys);
+
+                break;
+            }
         }
 
         if (testDynamicOutputShape && executionStatus != ErrorStatus::NONE) {
@@ -285,11 +321,10 @@ void EvaluatePreparedModel(sp<T_IPreparedModel>& preparedModel, std::function<bo
 }
 template <typename T_IPreparedModel>
 void EvaluatePreparedModel(sp<T_IPreparedModel>& preparedModel, std::function<bool(int)> is_ignored,
-                           const std::vector<MixedTypedExample>& examples,
-                           bool hasRelaxedFloat32Model, Synchronously sync, MeasureTiming measure,
-                           bool testDynamicOutputShape) {
+        const std::vector<MixedTypedExample>& examples, bool hasRelaxedFloat32Model,
+        Executor executor, MeasureTiming measure, bool testDynamicOutputShape) {
     EvaluatePreparedModel(preparedModel, is_ignored, examples, hasRelaxedFloat32Model, kDefaultAtol,
-                          kDefaultRtol, sync, measure, testDynamicOutputShape);
+            kDefaultRtol, executor, measure, testDynamicOutputShape);
 }
 
 static void getPreparedModel(sp<PreparedModelCallback> callback,
@@ -345,8 +380,8 @@ void Execute(const sp<V1_0::IDevice>& device, std::function<V1_0::Model(void)> c
 
     float fpAtol = 1e-5f, fpRtol = 5.0f * 1.1920928955078125e-7f;
     EvaluatePreparedModel(preparedModel, is_ignored, examples,
-                          /*hasRelaxedFloat32Model=*/false, fpAtol, fpRtol, Synchronously::NO,
-                          MeasureTiming::NO, /*testDynamicOutputShape=*/false);
+            /*hasRelaxedFloat32Model=*/false, fpAtol, fpRtol, Executor::ASYNC, MeasureTiming::NO,
+            /*testDynamicOutputShape=*/false);
 }
 
 void Execute(const sp<V1_1::IDevice>& device, std::function<V1_1::Model(void)> create_model,
@@ -392,8 +427,8 @@ void Execute(const sp<V1_1::IDevice>& device, std::function<V1_1::Model(void)> c
     ASSERT_NE(nullptr, preparedModel.get());
 
     EvaluatePreparedModel(preparedModel, is_ignored, examples,
-                          model.relaxComputationFloat32toFloat16, 1e-5f, 1e-5f, Synchronously::NO,
-                          MeasureTiming::NO, /*testDynamicOutputShape=*/false);
+            model.relaxComputationFloat32toFloat16, 1e-5f, 1e-5f, Executor::ASYNC,
+            MeasureTiming::NO, /*testDynamicOutputShape=*/false);
 }
 
 // TODO: Reduce code duplication.
@@ -441,17 +476,23 @@ void Execute(const sp<V1_2::IDevice>& device, std::function<V1_2::Model(void)> c
     ASSERT_NE(nullptr, preparedModel.get());
 
     EvaluatePreparedModel(preparedModel, is_ignored, examples,
-                          model.relaxComputationFloat32toFloat16, Synchronously::NO,
-                          MeasureTiming::NO, testDynamicOutputShape);
+            model.relaxComputationFloat32toFloat16, Executor::ASYNC, MeasureTiming::NO,
+            testDynamicOutputShape);
     EvaluatePreparedModel(preparedModel, is_ignored, examples,
-                          model.relaxComputationFloat32toFloat16, Synchronously::YES,
-                          MeasureTiming::NO, testDynamicOutputShape);
+            model.relaxComputationFloat32toFloat16, Executor::SYNC, MeasureTiming::NO,
+            testDynamicOutputShape);
     EvaluatePreparedModel(preparedModel, is_ignored, examples,
-                          model.relaxComputationFloat32toFloat16, Synchronously::NO,
-                          MeasureTiming::YES, testDynamicOutputShape);
+            model.relaxComputationFloat32toFloat16, Executor::BURST, MeasureTiming::NO,
+            testDynamicOutputShape);
     EvaluatePreparedModel(preparedModel, is_ignored, examples,
-                          model.relaxComputationFloat32toFloat16, Synchronously::YES,
-                          MeasureTiming::YES, testDynamicOutputShape);
+            model.relaxComputationFloat32toFloat16, Executor::ASYNC, MeasureTiming::YES,
+            testDynamicOutputShape);
+    EvaluatePreparedModel(preparedModel, is_ignored, examples,
+            model.relaxComputationFloat32toFloat16, Executor::SYNC, MeasureTiming::YES,
+            testDynamicOutputShape);
+    EvaluatePreparedModel(preparedModel, is_ignored, examples,
+            model.relaxComputationFloat32toFloat16, Executor::BURST, MeasureTiming::YES,
+            testDynamicOutputShape);
 }
 
 }  // namespace generated_tests
