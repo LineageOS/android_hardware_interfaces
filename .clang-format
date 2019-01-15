@@ -22,3 +22,4 @@ ColumnLimit: 100
 TabWidth: 4
 UseTab: Never
 IndentWidth: 4
+ContinuationIndentWidth: 8
