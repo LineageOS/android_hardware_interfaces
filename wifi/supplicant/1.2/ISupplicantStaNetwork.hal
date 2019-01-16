@@ -28,6 +28,12 @@ import @1.1::ISupplicantStaNetwork;
 interface ISupplicantStaNetwork extends @1.1::ISupplicantStaNetwork {
     /** Possble mask of values for KeyMgmt param. */
     enum KeyMgmtMask : @1.0::ISupplicantStaNetwork.KeyMgmtMask {
+        /** WPA using EAP authentication with stronger SHA256-based algorithms */
+        WPA_EAP_SHA256 = 1 << 7,
+
+        /** WPA pre-shared key with stronger SHA256-based algorithms */
+        WPA_PSK_SHA256 = 1 << 8,
+
         /** WPA3-Personal SAE Key management */
         SAE = 1 << 10,
 
