@@ -137,12 +137,11 @@ Return<void> Device::getInputBufferSize(const AudioConfig& config, getInputBuffe
     return Void();
 }
 
-Return<void> Device::openOutputStream(int32_t ioHandle, const DeviceAddress& device,
-                                      const AudioConfig& config, AudioOutputFlagBitfield flags,
-#if MAJOR_VERSION >= 4
-                                      const SourceMetadata& /* sourceMetadata */,
-#endif
-                                      openOutputStream_cb _hidl_cb) {
+std::tuple<Result, sp<IStreamOut>> Device::openOutputStreamImpl(int32_t ioHandle,
+                                                                const DeviceAddress& device,
+                                                                const AudioConfig& config,
+                                                                AudioOutputFlagBitfield flags,
+                                                                AudioConfig* suggestedConfig) {
     audio_config_t halConfig;
     HidlUtils::audioConfigToHal(config, &halConfig);
     audio_stream_out_t* halStream;
@@ -161,16 +160,13 @@ Return<void> Device::openOutputStream(int32_t ioHandle, const DeviceAddress& dev
     if (status == OK) {
         streamOut = new StreamOut(this, halStream);
     }
-    AudioConfig suggestedConfig;
-    HidlUtils::audioConfigFromHal(halConfig, &suggestedConfig);
-    _hidl_cb(analyzeStatus("open_output_stream", status, {EINVAL} /* ignore */), streamOut,
-             suggestedConfig);
-    return Void();
+    HidlUtils::audioConfigFromHal(halConfig, suggestedConfig);
+    return {analyzeStatus("open_output_stream", status, {EINVAL} /*ignore*/), streamOut};
 }
 
-Return<void> Device::openInputStream(int32_t ioHandle, const DeviceAddress& device,
-                                     const AudioConfig& config, AudioInputFlagBitfield flags,
-                                     AudioSource source, openInputStream_cb _hidl_cb) {
+std::tuple<Result, sp<IStreamIn>> Device::openInputStreamImpl(
+    int32_t ioHandle, const DeviceAddress& device, const AudioConfig& config,
+    AudioInputFlagBitfield flags, AudioSource source, AudioConfig* suggestedConfig) {
     audio_config_t halConfig;
     HidlUtils::audioConfigToHal(config, &halConfig);
     audio_stream_in_t* halStream;
@@ -190,14 +186,46 @@ Return<void> Device::openInputStream(int32_t ioHandle, const DeviceAddress& devi
     if (status == OK) {
         streamIn = new StreamIn(this, halStream);
     }
+    HidlUtils::audioConfigFromHal(halConfig, suggestedConfig);
+    return {analyzeStatus("open_input_stream", status, {EINVAL} /*ignore*/), streamIn};
+}
+
+#if MAJOR_VERSION == 2
+Return<void> Device::openOutputStream(int32_t ioHandle, const DeviceAddress& device,
+                                      const AudioConfig& config, AudioOutputFlagBitfield flags,
+                                      openOutputStream_cb _hidl_cb) {
     AudioConfig suggestedConfig;
-    HidlUtils::audioConfigFromHal(halConfig, &suggestedConfig);
-    _hidl_cb(analyzeStatus("open_input_stream", status, {EINVAL} /* ignore */), streamIn,
-             suggestedConfig);
+    auto [result, streamOut] =
+        openOutputStreamImpl(ioHandle, device, config, flags, &suggestedConfig);
+    _hidl_cb(result, streamOut, suggestedConfig);
     return Void();
 }
 
-#if MAJOR_VERSION >= 4
+Return<void> Device::openInputStream(int32_t ioHandle, const DeviceAddress& device,
+                                     const AudioConfig& config, AudioInputFlagBitfield flags,
+                                     AudioSource source, openInputStream_cb _hidl_cb) {
+    AudioConfig suggestedConfig;
+    auto [result, streamIn] =
+        openInputStreamImpl(ioHandle, device, config, flags, source, &suggestedConfig);
+    _hidl_cb(result, streamIn, suggestedConfig);
+    return Void();
+}
+
+#elif MAJOR_VERSION >= 4
+Return<void> Device::openOutputStream(int32_t ioHandle, const DeviceAddress& device,
+                                      const AudioConfig& config, AudioOutputFlagBitfield flags,
+                                      const SourceMetadata& sourceMetadata,
+                                      openOutputStream_cb _hidl_cb) {
+    AudioConfig suggestedConfig;
+    auto [result, streamOut] =
+        openOutputStreamImpl(ioHandle, device, config, flags, &suggestedConfig);
+    if (streamOut) {
+        streamOut->updateSourceMetadata(sourceMetadata);
+    }
+    _hidl_cb(result, streamOut, suggestedConfig);
+    return Void();
+}
+
 Return<void> Device::openInputStream(int32_t ioHandle, const DeviceAddress& device,
                                      const AudioConfig& config, AudioInputFlagBitfield flags,
                                      const SinkMetadata& sinkMetadata,
@@ -209,11 +237,18 @@ Return<void> Device::openInputStream(int32_t ioHandle, const DeviceAddress& devi
         _hidl_cb(Result::INVALID_ARGUMENTS, nullptr, AudioConfig());
         return Void();
     }
-    // Pick the first one as the main until the legacy API is update
+    // Pick the first one as the main.
     AudioSource source = sinkMetadata.tracks[0].source;
-    return openInputStream(ioHandle, device, config, flags, source, _hidl_cb);
+    AudioConfig suggestedConfig;
+    auto [result, streamIn] =
+        openInputStreamImpl(ioHandle, device, config, flags, source, &suggestedConfig);
+    if (streamIn) {
+        streamIn->updateSinkMetadata(sinkMetadata);
+    }
+    _hidl_cb(result, streamIn, suggestedConfig);
+    return Void();
 }
-#endif
+#endif /* MAJOR_VERSION */
 
 Return<bool> Device::supportsAudioPatches() {
     return version() >= AUDIO_DEVICE_API_VERSION_3_0;

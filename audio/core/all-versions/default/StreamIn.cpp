@@ -454,8 +454,19 @@ Return<void> StreamIn::updateSinkMetadata(const SinkMetadata& sinkMetadata) {
     std::vector<record_track_metadata> halTracks;
     halTracks.reserve(sinkMetadata.tracks.size());
     for (auto& metadata : sinkMetadata.tracks) {
-        halTracks.push_back(
-            {.source = static_cast<audio_source_t>(metadata.source), .gain = metadata.gain});
+        record_track_metadata halTrackMetadata = {
+            .source = static_cast<audio_source_t>(metadata.source), .gain = metadata.gain};
+#if MAJOR_VERSION >= 5
+        if (metadata.destination.getDiscriminator() ==
+            RecordTrackMetadata::Destination::hidl_discriminator::device) {
+            halTrackMetadata.dest_device =
+                static_cast<audio_devices_t>(metadata.destination.device().device);
+            strncpy(halTrackMetadata.dest_device_address,
+                    deviceAddressToHal(metadata.destination.device()).c_str(),
+                    AUDIO_DEVICE_MAX_ADDRESS_LEN);
+        }
+#endif
+        halTracks.push_back(halTrackMetadata);
     }
     const sink_metadata_t halMetadata = {
         .track_count = halTracks.size(),

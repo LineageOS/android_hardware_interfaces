@@ -62,14 +62,21 @@ struct Device : public IDevice, public ParametersUtil {
     Return<void> getInputBufferSize(const AudioConfig& config,
                                     getInputBufferSize_cb _hidl_cb) override;
 
-    // V2 openInputStream is called by V4 input stream thus present in both versions
-    Return<void> openInputStream(int32_t ioHandle, const DeviceAddress& device,
-                                 const AudioConfig& config, AudioInputFlagBitfield flags,
-                                 AudioSource source, openInputStream_cb _hidl_cb);
+    std::tuple<Result, sp<IStreamOut>> openOutputStreamImpl(int32_t ioHandle,
+                                                            const DeviceAddress& device,
+                                                            const AudioConfig& config,
+                                                            AudioOutputFlagBitfield flags,
+                                                            AudioConfig* suggestedConfig);
+    std::tuple<Result, sp<IStreamIn>> openInputStreamImpl(
+        int32_t ioHandle, const DeviceAddress& device, const AudioConfig& config,
+        AudioInputFlagBitfield flags, AudioSource source, AudioConfig* suggestedConfig);
 #if MAJOR_VERSION == 2
     Return<void> openOutputStream(int32_t ioHandle, const DeviceAddress& device,
                                   const AudioConfig& config, AudioOutputFlagBitfield flags,
                                   openOutputStream_cb _hidl_cb) override;
+    Return<void> openInputStream(int32_t ioHandle, const DeviceAddress& device,
+                                 const AudioConfig& config, AudioInputFlagBitfield flags,
+                                 AudioSource source, openInputStream_cb _hidl_cb) override;
 #elif MAJOR_VERSION >= 4
     Return<void> openOutputStream(int32_t ioHandle, const DeviceAddress& device,
                                   const AudioConfig& config, AudioOutputFlagBitfield flags,
