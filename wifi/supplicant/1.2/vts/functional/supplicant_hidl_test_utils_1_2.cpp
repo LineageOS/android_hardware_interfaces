@@ -21,7 +21,22 @@
 #include "supplicant_hidl_test_utils_1_2.h"
 
 using ::android::sp;
+using ::android::hardware::wifi::supplicant::V1_2::ISupplicant;
 using ::android::hardware::wifi::supplicant::V1_2::ISupplicantP2pIface;
+using ::android::hardware::wifi::supplicant::V1_2::ISupplicantStaIface;
+using ::android::hardware::wifi::supplicant::V1_2::ISupplicantStaNetwork;
+
+sp<ISupplicant> getSupplicant_1_2() {
+    return ISupplicant::castFrom(getSupplicant());
+}
+
+sp<ISupplicantStaIface> getSupplicantStaIface_1_2() {
+    return ISupplicantStaIface::castFrom(getSupplicantStaIface());
+}
+
+sp<ISupplicantStaNetwork> createSupplicantStaNetwork_1_2() {
+    return ISupplicantStaNetwork::castFrom(createSupplicantStaNetwork());
+}
 
 sp<ISupplicantP2pIface> getSupplicantP2pIface_1_2() {
     return ISupplicantP2pIface::castFrom(getSupplicantP2pIface());

@@ -157,6 +157,81 @@ class VendorTagDescriptor :
 
 };
 
+} /* namespace helper */
+} /* namespace V1_0 */
+} /* namespace common */
+} /* namespace camera */
+
+namespace camera2 {
+namespace params {
+
+class VendorTagDescriptorCache {
+   public:
+    typedef android::hardware::camera::common::V1_0::helper::VendorTagDescriptor
+        VendorTagDescriptor;
+    VendorTagDescriptorCache(){};
+    int32_t addVendorDescriptor(metadata_vendor_id_t id, sp<VendorTagDescriptor> desc);
+
+    int32_t getVendorTagDescriptor(metadata_vendor_id_t id, sp<VendorTagDescriptor>* desc /*out*/);
+
+    // Returns the number of vendor tags defined.
+    int getTagCount(metadata_vendor_id_t id) const;
+
+    // Returns an array containing the id's of vendor tags defined.
+    void getTagArray(uint32_t* tagArray, metadata_vendor_id_t id) const;
+
+    // Returns the section name string for a given vendor tag id.
+    const char* getSectionName(uint32_t tag, metadata_vendor_id_t id) const;
+
+    // Returns the tag name string for a given vendor tag id.
+    const char* getTagName(uint32_t tag, metadata_vendor_id_t id) const;
+
+    // Returns the tag type for a given vendor tag id.
+    int getTagType(uint32_t tag, metadata_vendor_id_t id) const;
+
+    /**
+     * Dump the currently configured vendor tags to a file descriptor.
+     */
+    void dump(int fd, int verbosity, int indentation) const;
+
+   protected:
+    std::unordered_map<metadata_vendor_id_t, sp<VendorTagDescriptor>> mVendorMap;
+    struct vendor_tag_cache_ops mVendorCacheOps;
+};
+
+} /* namespace params */
+} /* namespace camera2 */
+
+namespace camera {
+namespace common {
+namespace V1_0 {
+namespace helper {
+
+class VendorTagDescriptorCache
+    : public ::android::hardware::camera2::params::VendorTagDescriptorCache,
+      public LightRefBase<VendorTagDescriptorCache> {
+   public:
+    /**
+     * Sets the global vendor tag descriptor cache to use for this process.
+     * Camera metadata operations that access vendor tags will use the
+     * vendor tag definitions set this way.
+     *
+     * Returns OK on success, or a negative error code.
+     */
+    static status_t setAsGlobalVendorTagCache(const sp<VendorTagDescriptorCache>& cache);
+
+    /**
+     * Returns the global vendor tag cache used by this process.
+     * This will contain NULL if no vendor tags are defined.
+     */
+    static sp<VendorTagDescriptorCache> getGlobalVendorTagCache();
+
+    /**
+     * Clears the global vendor tag cache used by this process.
+     */
+    static void clearGlobalVendorTagCache();
+};
+
 } // namespace helper
 } // namespace V1_0
 } // namespace common

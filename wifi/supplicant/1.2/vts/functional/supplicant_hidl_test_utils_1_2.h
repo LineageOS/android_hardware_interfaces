@@ -17,7 +17,19 @@
 #ifndef SUPPLICANT_HIDL_TEST_UTILS_1_2_H
 #define SUPPLICANT_HIDL_TEST_UTILS_1_2_H
 
+#include <android/hardware/wifi/supplicant/1.2/ISupplicant.h>
 #include <android/hardware/wifi/supplicant/1.2/ISupplicantP2pIface.h>
+#include <android/hardware/wifi/supplicant/1.2/ISupplicantStaIface.h>
+#include <android/hardware/wifi/supplicant/1.2/ISupplicantStaNetwork.h>
+
+android::sp<android::hardware::wifi::supplicant::V1_2::ISupplicant>
+getSupplicant_1_2();
+
+android::sp<android::hardware::wifi::supplicant::V1_2::ISupplicantStaIface>
+getSupplicantStaIface_1_2();
+
+android::sp<android::hardware::wifi::supplicant::V1_2::ISupplicantStaNetwork>
+createSupplicantStaNetwork_1_2();
 
 android::sp<android::hardware::wifi::supplicant::V1_2::ISupplicantP2pIface>
 getSupplicantP2pIface_1_2();

@@ -26,6 +26,7 @@
 #include <vector>
 
 #include <android/hardware/graphics/mapper/2.0/IMapper.h>
+#include <android/hardware/graphics/mapper/3.0/IMapper.h>
 #include <log/log.h>
 
 namespace android {
@@ -39,9 +40,16 @@ namespace hal {
 class ComposerHandleImporter {
    public:
     bool init() {
-        mMapper = mapper::V2_0::IMapper::getService();
-        ALOGE_IF(!mMapper, "failed to get mapper service");
-        return mMapper != nullptr;
+        mMapper3 = mapper::V3_0::IMapper::getService();
+        if (mMapper3) {
+            return true;
+        }
+        ALOGW_IF(!mMapper3, "failed to get mapper 3.0 service");
+
+        mMapper2 = mapper::V2_0::IMapper::getService();
+        ALOGE_IF(!mMapper2, "failed to get mapper 2.0 service");
+
+        return mMapper2 != nullptr;
     }
 
     Error importBuffer(const native_handle_t* rawHandle, const native_handle_t** outBufferHandle) {
@@ -50,14 +58,28 @@ class ComposerHandleImporter {
             return Error::NONE;
         }
 
-        mapper::V2_0::Error error;
         const native_handle_t* bufferHandle;
-        mMapper->importBuffer(rawHandle, [&](const auto& tmpError, const auto& tmpBufferHandle) {
-            error = tmpError;
-            bufferHandle = static_cast<const native_handle_t*>(tmpBufferHandle);
-        });
-        if (error != mapper::V2_0::Error::NONE) {
-            return Error::NO_RESOURCES;
+        if (mMapper2) {
+            mapper::V2_0::Error error;
+            mMapper2->importBuffer(
+                rawHandle, [&](const auto& tmpError, const auto& tmpBufferHandle) {
+                    error = tmpError;
+                    bufferHandle = static_cast<const native_handle_t*>(tmpBufferHandle);
+                });
+            if (error != mapper::V2_0::Error::NONE) {
+                return Error::NO_RESOURCES;
+            }
+        }
+        if (mMapper3) {
+            mapper::V3_0::Error error;
+            mMapper3->importBuffer(
+                rawHandle, [&](const auto& tmpError, const auto& tmpBufferHandle) {
+                    error = tmpError;
+                    bufferHandle = static_cast<const native_handle_t*>(tmpBufferHandle);
+                });
+            if (error != mapper::V3_0::Error::NONE) {
+                return Error::NO_RESOURCES;
+            }
         }
 
         *outBufferHandle = bufferHandle;
@@ -66,7 +88,13 @@ class ComposerHandleImporter {
 
     void freeBuffer(const native_handle_t* bufferHandle) {
         if (bufferHandle) {
-            mMapper->freeBuffer(static_cast<void*>(const_cast<native_handle_t*>(bufferHandle)));
+            if (mMapper2) {
+                mMapper2->freeBuffer(
+                    static_cast<void*>(const_cast<native_handle_t*>(bufferHandle)));
+            } else if (mMapper3) {
+                mMapper3->freeBuffer(
+                    static_cast<void*>(const_cast<native_handle_t*>(bufferHandle)));
+            }
         }
     }
 
@@ -91,7 +119,8 @@ class ComposerHandleImporter {
     }
 
    private:
-    sp<mapper::V2_0::IMapper> mMapper;
+    sp<mapper::V2_0::IMapper> mMapper2;
+    sp<mapper::V3_0::IMapper> mMapper3;
 };
 
 class ComposerHandleCache {

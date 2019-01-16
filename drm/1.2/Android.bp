@@ -9,8 +9,10 @@ hidl_interface {
     srcs: [
         "types.hal",
         "ICryptoFactory.hal",
+        "ICryptoPlugin.hal",
         "IDrmFactory.hal",
         "IDrmPlugin.hal",
+        "IDrmPluginListener.hal",
     ],
     interfaces: [
         "android.hardware.drm@1.0",
@@ -18,8 +20,8 @@ hidl_interface {
         "android.hidl.base@1.0",
     ],
     types: [
-        "KeySetId",
         "OfflineLicenseState",
+        "Status",
     ],
     gen_java: false,
 }
