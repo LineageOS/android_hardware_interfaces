@@ -133,7 +133,18 @@ enum AudioSource : int32_t {
      * and raw signal analysis.
      */
     UNPROCESSED         = 9,
-
+    /**
+     * Source for capturing audio meant to be processed in real time and played back for live
+     * performance (e.g karaoke). The capture path will minimize latency and coupling with
+     * playback path.
+     */
+    VOICE_PERFORMANCE    = 10,
+    /**
+     * Source for an echo canceller to capture the reference signal to be cancelled.
+     * The echo reference signal will be captured as close as possible to the DAC in order
+     * to include all post processing applied to the playback path.
+     */
+    ECHO_REFERENCE      = 1997,
     FM_TUNER            = 1998,
 };
 
@@ -598,6 +609,7 @@ enum AudioDevice : uint32_t {
     IN_PROXY                 = BIT_IN | 0x1000000,
     IN_USB_HEADSET           = BIT_IN | 0x2000000,
     IN_BLUETOOTH_BLE         = BIT_IN | 0x4000000,
+    IN_ECHO_REFERENCE        = BIT_IN | 0x10000000,
     IN_DEFAULT               = BIT_IN | BIT_DEFAULT,
 
     // Note that the 2.0 IN_ALL* have been moved to helper functions
