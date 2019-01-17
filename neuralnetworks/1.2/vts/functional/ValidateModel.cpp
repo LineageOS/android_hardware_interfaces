@@ -128,10 +128,10 @@ static uint32_t addOperand(Model* model, OperandLifeTime lifetime) {
 ///////////////////////// VALIDATE MODEL OPERAND TYPE /////////////////////////
 
 static const uint32_t invalidOperandTypes[] = {
-    static_cast<uint32_t>(OperandTypeRange::OPERAND_FUNDAMENTAL_MIN) - 1,
-    static_cast<uint32_t>(OperandTypeRange::OPERAND_FUNDAMENTAL_MAX) + 1,
-    static_cast<uint32_t>(OperandTypeRange::OPERAND_OEM_MIN) - 1,
-    static_cast<uint32_t>(OperandTypeRange::OPERAND_OEM_MAX) + 1,
+        static_cast<uint32_t>(OperandTypeRange::FUNDAMENTAL_MIN) - 1,
+        static_cast<uint32_t>(OperandTypeRange::FUNDAMENTAL_MAX) + 1,
+        static_cast<uint32_t>(OperandTypeRange::OEM_MIN) - 1,
+        static_cast<uint32_t>(OperandTypeRange::OEM_MAX) + 1,
 };
 
 static void mutateOperandTypeTest(const sp<IDevice>& device, const Model& model) {
@@ -387,10 +387,10 @@ static void mutateOperationOperandTypeTest(const sp<IDevice>& device, const Mode
 ///////////////////////// VALIDATE MODEL OPERATION TYPE /////////////////////////
 
 static const uint32_t invalidOperationTypes[] = {
-    static_cast<uint32_t>(OperationTypeRange::OPERATION_FUNDAMENTAL_MIN) - 1,
-    static_cast<uint32_t>(OperationTypeRange::OPERATION_FUNDAMENTAL_MAX) + 1,
-    static_cast<uint32_t>(OperationTypeRange::OPERATION_OEM_MIN) - 1,
-    static_cast<uint32_t>(OperationTypeRange::OPERATION_OEM_MAX) + 1,
+        static_cast<uint32_t>(OperationTypeRange::FUNDAMENTAL_MIN) - 1,
+        static_cast<uint32_t>(OperationTypeRange::FUNDAMENTAL_MAX) + 1,
+        static_cast<uint32_t>(OperationTypeRange::OEM_MIN) - 1,
+        static_cast<uint32_t>(OperationTypeRange::OEM_MAX) + 1,
 };
 
 static void mutateOperationTypeTest(const sp<IDevice>& device, const Model& model) {
