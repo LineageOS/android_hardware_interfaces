@@ -39,6 +39,7 @@ import @1.2::CellInfoTdscdma;
 import @1.2::CellInfoWcdma;
 import @1.2::CardStatus;
 import @1.2::CellIdentity;
+import @1.2::CellConnectionStatus;
 import @1.2::DataRegStateResult;
 import @1.2::PhysicalChannelConfig;
 
@@ -1530,14 +1531,14 @@ struct CellInfoLte {
 
 /** Overwritten from @1.2::CellInfo in order to update the CellInfoLte to 1.4 version. */
 struct CellInfo {
-    /** Cell type for selecting from union CellInfo. */
-    CellInfoType cellInfoType;
-
     /**
      * True if the phone is registered to a mobile network that provides service on this cell and
      * this cell is being used or would be used for network signaling.
      */
     bool isRegistered;
+
+    /** Connection status for the cell. */
+    CellConnectionStatus connectionStatus;
 
     /** CellInfo details, cellInfoType can tell which cell info should be used. */
     safe_union Info {
