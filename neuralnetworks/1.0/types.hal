@@ -55,10 +55,20 @@ enum OperandType : int32_t {
      */
     TENSOR_QUANT8_ASYMM = 5,
 
-    /** OEM specific scalar value. */
+    /**
+     * DEPRECATED. Since NNAPI 1.2, extensions are the preferred alternative to
+     * OEM operation and data types.
+     *
+     * OEM specific scalar value.
+     */
     OEM                 = 10000,
 
-    /** A tensor of OEM specific values. */
+    /**
+     * DEPRECATED. Since NNAPI 1.2, extensions are the preferred alternative to
+     * OEM operation and data types.
+     *
+     * A tensor of OEM specific values.
+     */
     TENSOR_OEM_BYTE     = 10001,
 };
 
@@ -1448,7 +1458,8 @@ enum OperationType : int32_t {
     TANH = 28,
 
     /**
-     * OEM specific operation.
+     * DEPRECATED. Since NNAPI 1.2, extensions are the preferred alternative to
+     * OEM operation and data types.
      *
      * This operation is OEM specific. It should only be used for OEM
      * applications.
