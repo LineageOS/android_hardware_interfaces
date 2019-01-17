@@ -60,4 +60,15 @@ interface IRadio extends @1.2::IRadio {
     * Response function is IRadioResponse.enableModemResponse()
     */
     oneway enableModem(int32_t serial, bool on);
+
+   /**
+    * Request status of logical modem associated with the given serial number. It returns
+    * isEnabled=true if the logical modem is in low power mode without any activity, while
+    * the SIM card remains visible.
+    *
+    * @param serial Serial number of request.
+    *
+    * Response function is IRadioResponse.getModemStackStatusResponse()
+    */
+    oneway getModemStackStatus(int32_t serial);
 };
