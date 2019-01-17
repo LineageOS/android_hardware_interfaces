@@ -69,4 +69,11 @@ interface ISurfaceFlingerConfigs extends @1.1::ISurfaceFlingerConfigs {
     getCompositionPreference()
         generates (Dataspace dataspace, PixelFormat pixelFormat,
                    Dataspace wcgDataspace, PixelFormat wcgPixelFormat);
+
+    /**
+     * Returns the native panel primary data. The data includes red, green,
+     * blue and white. The primary format is CIE 1931 XYZ color space. If
+     * unspecified, the primaries is sRGB gamut by default.
+     */
+    getDisplayNativePrimaries() generates (DisplayPrimaries primaries);
 };

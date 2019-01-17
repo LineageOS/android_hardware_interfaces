@@ -1,0 +1,6 @@
+
+xsd_config {
+    name: "audio_effects_conf",
+    srcs: ["audio_effects_conf.xsd"],
+    package_name: "audio.effects.V5_0",
+}

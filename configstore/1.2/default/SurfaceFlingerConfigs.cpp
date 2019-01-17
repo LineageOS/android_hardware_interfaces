@@ -17,6 +17,7 @@
 #include "SurfaceFlingerConfigs.h"
 
 #include <android/hardware/configstore/1.1/types.h>
+#include <android/hardware/configstore/1.2/types.h>
 #include <android/hardware/graphics/common/1.1/types.h>
 #include <log/log.h>
 
@@ -238,6 +239,85 @@ Return<void> SurfaceFlingerConfigs::getCompositionPreference(getCompositionPrefe
 
     _hidl_cb(defaultDataspace, defaultPixelFormat, wideColorGamutDataspace,
              wideColorGamutPixelFormat);
+    return Void();
+}
+
+Return<void> SurfaceFlingerConfigs::getDisplayNativePrimaries(getDisplayNativePrimaries_cb _hidl_cb) {
+    DisplayPrimaries primaries;
+    // The default XYZ is sRGB gamut in CIE1931 color space
+#ifdef TARGET_DISPLAY_PRIMARY_RED_X
+    primaries.red.X = TARGET_DISPLAY_PRIMARY_RED_X;
+#else
+    primaries.red.X = 0.4123;
+#endif
+
+#ifdef TARGET_DISPLAY_PRIMARY_RED_Y
+    primaries.red.Y = TARGET_DISPLAY_PRIMARY_RED_Y;
+#else
+    primaries.red.Y = 0.2126;
+#endif
+
+#ifdef TARGET_DISPLAY_PRIMARY_RED_Z
+    primaries.red.Z = TARGET_DISPLAY_PRIMARY_RED_Z;
+#else
+    primaries.red.Z = 0.0193;
+#endif
+
+#ifdef TARGET_DISPLAY_PRIMARY_GREEN_X
+    primaries.green.X = TARGET_DISPLAY_PRIMARY_GREEN_X;
+#else
+    primaries.green.X = 0.3576;
+#endif
+
+#ifdef TARGET_DISPLAY_PRIMARY_GREEN_Y
+    primaries.green.Y = TARGET_DISPLAY_PRIMARY_GREEN_Y;
+#else
+    primaries.green.Y = 0.7152;
+#endif
+
+#ifdef TARGET_DISPLAY_PRIMARY_GREEN_Z
+    primaries.green.Z = TARGET_DISPLAY_PRIMARY_GREEN_Z;
+#else
+    primaries.green.Z = 0.1192;
+#endif
+
+#ifdef TARGET_DISPLAY_PRIMARY_BLUE_X
+    primaries.blue.X = TARGET_DISPLAY_PRIMARY_BLUE_X;
+#else
+    primaries.blue.X = 0.1805;
+#endif
+
+#ifdef TARGET_DISPLAY_PRIMARY_BLUE_Y
+    primaries.blue.Y = TARGET_DISPLAY_PRIMARY_BLUE_Y;
+#else
+    primaries.blue.Y = 0.0722;
+#endif
+
+#ifdef TARGET_DISPLAY_PRIMARY_BLUE_Z
+    primaries.blue.Z = TARGET_DISPLAY_PRIMARY_BLUE_Z;
+#else
+    primaries.blue.Z = 0.9506;
+#endif
+
+#ifdef TARGET_DISPLAY_PRIMARY_WHITE_X
+    primaries.white.X = TARGET_DISPLAY_PRIMARY_WHITE_X;
+#else
+    primaries.white.X = 0.9505;
+#endif
+
+#ifdef TARGET_DISPLAY_PRIMARY_WHITE_Y
+    primaries.white.Y = TARGET_DISPLAY_PRIMARY_WHITE_Y;
+#else
+    primaries.white.Y = 1.0000;
+#endif
+
+#ifdef TARGET_DISPLAY_PRIMARY_WHITE_Z
+    primaries.white.Z = TARGET_DISPLAY_PRIMARY_WHITE_Z;
+#else
+    primaries.white.Z = 1.0891;
+#endif
+
+    _hidl_cb(primaries);
     return Void();
 }
 
