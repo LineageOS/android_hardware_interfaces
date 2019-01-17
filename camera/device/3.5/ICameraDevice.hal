@@ -84,6 +84,9 @@ interface ICameraDevice extends @3.2::ICameraDevice {
      *
      * The streamList must contain at least one output-capable stream, and may
      * not contain more than one input-capable stream.
+     * In contrast to regular stream configuration the framework does not create
+     * or initialize any actual streams. This means that Hal must not use or
+     * consider the stream "id" value.
      *
      * ------------------------------------------------------------------------
      *
