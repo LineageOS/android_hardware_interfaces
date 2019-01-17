@@ -30,6 +30,7 @@ hidl_interface {
         "DataConnActiveStatus",
         "DataProfileInfo",
         "DataRegStateResult",
+        "EmergencyCallRouting",
         "EmergencyNumber",
         "EmergencyNumberSource",
         "EmergencyServiceCategory",
