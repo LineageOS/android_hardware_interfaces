@@ -53,6 +53,7 @@ struct SurfaceFlingerConfigs : public ISurfaceFlingerConfigs {
     // ::android::hardware::configstore::V1_2::ISurfaceFlingerConfigs follow implementation.
     Return<void> useColorManagement(useColorManagement_cb _hidl_cb) override;
     Return<void> getCompositionPreference(getCompositionPreference_cb _hidl_cb) override;
+    Return<void> getDisplayNativePrimaries(getDisplayNativePrimaries_cb _hidl_cb) override;
 };
 
 }  // namespace implementation
