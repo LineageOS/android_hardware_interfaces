@@ -27,17 +27,17 @@ interface IRadioIndication extends @1.3::IRadioIndication {
      * Report the current list of emergency numbers
      *
      * Each emergency number (@1.4::EmergencyNumber) in the emergency number list contains a
-     * dialing number, zero or more service category(s), mobile country code, and source(s) that
-     * indicate where it comes from.
+     * dialing number, zero or more service category(s), mobile country code, mobile network code,
+     * and source(s) that indicate where it comes from.
      *
-     * Radio must report all the valid emergency numbers with known mobile country code and
-     * emergency service categories from all available sources including network signaling, sim,
-     * modem/oem configuration, and default configuration (112 and 911 must be always available;
-     * additionally, 000, 08, 110, 999, 118 and 119 must be available when sim is not present).
-     * Radio shall not report emergency numbers that are invalid in the current locale. The
-     * reported emergency number list must not have duplicate @1.4::EmergencyNumber entries. Please
-     * refer the documentation of @1.4::EmergencyNumber to construct each emergency number to
-     * report.
+     * Radio must report all the valid emergency numbers with known mobile country code, mobile
+     * network code and emergency service categories from all available sources including network
+     * signaling, sim, modem/oem configuration, and default configuration (112 and 911 must be
+     * always available; additionally, 000, 08, 110, 999, 118 and 119 must be available when sim
+     * is not present). Radio shall not report emergency numbers that are invalid in the current
+     * locale. The reported emergency number list must not have duplicate @1.4::EmergencyNumber
+     * entries. Please refer the documentation of @1.4::EmergencyNumber to construct each
+     * emergency number to report.
      *
      * Radio must report the complete list of emergency numbers whenever the emergency numbers in
      * the list are changed or whenever the client and the radio server are connected.
