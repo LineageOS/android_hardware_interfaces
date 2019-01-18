@@ -25,6 +25,7 @@
 #include <android/hardware/bluetooth/a2dp/1.0/IBluetoothAudioOffload.h>
 #include <android/hardware/soundtrigger/2.0/ISoundTriggerHw.h>
 #include <android/hardware/soundtrigger/2.1/ISoundTriggerHw.h>
+#include <android/hardware/soundtrigger/2.2/ISoundTriggerHw.h>
 #include <binder/ProcessState.h>
 #include <cutils/properties.h>
 #include <hidl/HidlTransportSupport.h>
@@ -58,9 +59,10 @@ int main(int /* argc */, char* /* argv */ []) {
            registerPassthroughServiceImplementation<audio::effect::V2_0::IEffectsFactory>() != OK,
     LOG_ALWAYS_FATAL_IF(fail, "Could not register audio effect API 2, 4 nor 5");
 
-    fail = registerPassthroughServiceImplementation<soundtrigger::V2_1::ISoundTriggerHw>() != OK &&
+    fail = registerPassthroughServiceImplementation<soundtrigger::V2_2::ISoundTriggerHw>() != OK &&
+           registerPassthroughServiceImplementation<soundtrigger::V2_1::ISoundTriggerHw>() != OK &&
            registerPassthroughServiceImplementation<soundtrigger::V2_0::ISoundTriggerHw>() != OK,
-    ALOGW_IF(fail, "Could not register soundtrigger API 2.0 nor 2.1");
+    ALOGW_IF(fail, "Could not register soundtrigger API 2.0, 2.1 nor 2.2");
 
     fail =
         registerPassthroughServiceImplementation<bluetooth::a2dp::V1_0::IBluetoothAudioOffload>() !=
