@@ -18,6 +18,7 @@ package android.hardware.radio@1.4;
 
 import @1.0::Dial;
 import @1.2::DataRequestReason;
+import @1.2::NetworkScanRequest;
 import @1.3::IRadio;
 import @1.4::AccessNetwork;
 import @1.4::DataProfileInfo;
@@ -135,6 +136,17 @@ interface IRadio extends @1.3::IRadio {
      */
     oneway emergencyDial(int32_t serial, Dial dialInfo,
             bitfield<EmergencyServiceCategory> categories, EmergencyCallRouting routing);
+
+    /**
+     * Starts a network scan
+     *
+     * @param serial Serial number of request.
+     * @param request Defines the radio networks/bands/channels which need to be scanned.
+     *
+     * Same API as @1.2::IRadio.startNetworkScan_1_2, except using the
+     * @1.4::IRadioResponse.startNetworkScanResponse_1_4 as the response.
+     */
+    oneway startNetworkScan_1_4(int32_t serial, NetworkScanRequest request);
 
     /**
      * Query the preferred network type bitmap.
