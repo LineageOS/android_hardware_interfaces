@@ -180,6 +180,26 @@ enum OperationTypeRange : uint32_t {
 };
 
 /**
+ * Device types.
+ *
+ * The type of NNAPI device.
+ */
+enum DeviceType : int32_t {
+    // Leaving 0 unused as it means unknown type in NDK NNAPI. There is no
+    // HAL equivalent of unknown type and a 1.2 HAL implementation must belong
+    // to one of the categories below.
+    /** The device does not fall into any category below. */
+    OTHER             = 1,
+    /** The device runs NNAPI models on single or multi-core CPU. */
+    CPU               = 2,
+    /** The device can run NNAPI models and also accelerate graphics APIs such
+      * as OpenGL ES and Vulkan. */
+    GPU               = 3,
+    /** Dedicated accelerator for Machine Learning workloads. */
+    ACCELERATOR       = 4,
+};
+
+/**
  * Describes one operation of the model's graph.
  */
 struct Operation {
