@@ -1,0 +1,120 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.usb@1.2;
+
+import android.hardware.usb@1.1::PortStatus_1_1;
+import android.hardware.usb@1.0::Status;
+
+enum Status : @1.0::Status {
+    /**
+     * Error value returned when the operation is not supported.
+     */
+    NOT_SUPPORTED = 4,
+};
+
+@export
+enum ContaminantDetectionStatus : uint32_t {
+    /**
+     * Contaminant presence detection is not supported.
+     */
+    NOT_SUPPORTED = 0,
+
+    /**
+     * Contaminant presence detection is supported but disabled.
+     */
+    DISABLED = 1,
+
+    /**
+     * Contaminant presence detection is enabled and contaminant not detected.
+     */
+    NOT_DETECTED = 2,
+
+    /**
+     * Contaminant presence detection is enabled and contaminant detected.
+     */
+    DETECTED = 3,
+};
+
+@export
+enum ContaminantProtectionMode : uint32_t {
+    /**
+     * No action performed upon detection of contaminant presence.
+     */
+    NONE = 0,
+
+    /**
+     * Upon detection of contaminant presence, Port is forced to sink only
+     * mode where a port shall only detect chargers until contaminant presence
+     * is no longer detected.
+     */
+    FORCE_SINK = 1 << 0,
+
+    /**
+     * Upon detection of contaminant presence, Port is forced to source only
+     * mode where a port shall only detect usb accessories such as headsets
+     * until contaminant presence is no longer detected.
+     */
+    FORCE_SOURCE = 1 << 1,
+
+    /**
+     * Upon detection of contaminant presence, port is disabled until contaminant
+     * presence is no longer detected. In the disabled state port will
+     * not respond to connection of chargers or usb accessories.
+     */
+    FORCE_DISABLE = 1 << 2,
+};
+
+@export
+enum ContaminantProtectionStatus : ContaminantProtectionMode {
+    /**
+     * Client disabled cotaminant protection by calling
+     * enableContaminantPresencePortProtection set to false. Low level drivers should
+     * not autmomously take any corrective action when contaminant presence is detected.
+     */
+    DISABLED = 1 << 3,
+};
+
+struct PortStatus {
+    PortStatus_1_1 status_1_1;
+
+    /**
+     * Contaminant presence protection modes supported by the port.
+     */
+    bitfield<ContaminantProtectionMode> supportedContaminantProtectionModes;
+
+    /**
+     * Client can enable/disable contaminant presence protection through
+     * enableContaminantPresenceProtection when true.
+     */
+    bool supportsEnableContaminantPresenceProtection;
+
+    /**
+     * Contaminant presence protection modes currently active for the port.
+     */
+    ContaminantProtectionStatus contaminantProtectionStatus;
+
+    /**
+     * Client can enable/disable contaminant presence detection through
+     * enableContaminantPresenceDetection when true.
+     */
+    bool supportsEnableContaminantPresenceDetection;
+
+    /**
+     * Current status of contaminant detection algorithm.
+     */
+    ContaminantDetectionStatus contaminantDetectionStatus;
+};
