@@ -50,6 +50,23 @@ interface IRadioResponse extends @1.3::IRadioResponse {
 
     /**
      * @param info Response info struct containing response type, serial no. and error
+     *
+     * Same API as @1.1::IRadioResponse.startNetworkScanResponse, except disallowing error codes
+     * OPERATION_NOT_ALLOWED and REQUEST_NOT_SUPPORTED.
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:DEVICE_IN_USE
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:NO_MEMORY
+     *   RadioError:MODEM_ERR
+     *   RadioError:INVALID_ARGUMENTS
+     */
+    oneway startNetworkScanResponse_1_4(RadioResponseInfo info);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
      * @param cellInfo List of current cell information known to radio
      *
      * Valid errors returned:
