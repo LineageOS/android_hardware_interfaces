@@ -1253,6 +1253,10 @@ bool convertHidlNanEnableRequestToLegacy(
         hidl_request.debugConfigs
             .useSdfInBandVal[(size_t)NanBandIndex::NAN_BAND_5GHZ];
 
+    // disable NANv3 NDPe
+    legacy_request->config_ndpe_attr = 1;
+    legacy_request->use_ndpe_attr = 0;
+
     return true;
 }
 
@@ -1763,6 +1767,10 @@ bool convertHidlNanConfigRequestToLegacy(
     legacy_request->config_dw.dw_5g_interval_val =
         hidl_request.bandSpecificConfig[(size_t)NanBandIndex::NAN_BAND_5GHZ]
             .discoveryWindowIntervalVal;
+
+    // disable NANv3 NDPe
+    legacy_request->config_ndpe_attr = 1;
+    legacy_request->use_ndpe_attr = 0;
 
     return true;
 }
