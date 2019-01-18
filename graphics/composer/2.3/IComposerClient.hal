@@ -61,6 +61,11 @@ interface IComposerClient extends @2.2::IComposerClient {
          * PowerMode::DOZE_SUSPEND.
          */
         DOZE = 2,
+
+        /**
+         * Indicates that the display supports brightness operations.
+         */
+        BRIGHTNESS = 3,
     };
 
     /**
@@ -495,4 +500,38 @@ interface IComposerClient extends @2.2::IComposerClient {
                        float maxLuminance,
                        float maxAverageLuminance,
                        float minLuminance);
+
+    /**
+     * Gets whether brightness operations are supported on a display.
+     *
+     * @param display
+     *      The display.
+     *
+     * @return error is NONE upon success. Otherwise,
+     *      BAD_DISPLAY   when the display is invalid, or
+     *      BAD_PARAMETER when the output parameter is invalid.
+     * @return support
+     *      Whether brightness operations are supported on the display.
+     */
+    getDisplayBrightnessSupport(Display display) generates (Error error, bool support);
+
+    /**
+     * Sets the brightness of a display.
+     *
+     * Ideally, the brightness change should take effect in the next frame post (so that it can be
+     * aligned with color transforms).
+     *
+     * @param display
+     *      The display whose brightness is set.
+     * @param brightness
+     *      A number between 0.0f (minimum brightness) and 1.0f (maximum brightness), or -1.0 to
+     *      turn the backlight off.
+     *
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY   when the display is invalid, or
+     *         UNSUPPORTED   when brightness operations are not supported, or
+     *         BAD_PARAMETER when the brightness is invalid, or
+     *         NO_RESOURCES  when the brightness cannot be applied.
+     */
+    setDisplayBrightness(Display display, float brightness) generates (Error error);
 };

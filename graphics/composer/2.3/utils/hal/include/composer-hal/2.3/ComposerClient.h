@@ -172,7 +172,19 @@ class ComposerClientImpl : public V2_2::hal::detail::ComposerClientImpl<Interfac
         return Void();
     }
 
-   protected:
+    Return<void> getDisplayBrightnessSupport(
+            Display display, IComposerClient::getDisplayBrightnessSupport_cb hidl_cb) override {
+        bool support = false;
+        Error error = mHal->getDisplayBrightnessSupport(display, &support);
+        hidl_cb(error, support);
+        return Void();
+    }
+
+    Return<Error> setDisplayBrightness(Display display, float brightness) override {
+        return mHal->setDisplayBrightness(display, brightness);
+    }
+
+  protected:
     std::unique_ptr<V2_1::hal::ComposerCommandEngine> createCommandEngine() override {
         return std::make_unique<ComposerCommandEngine>(
             mHal, static_cast<V2_2::hal::ComposerResources*>(mResources.get()));

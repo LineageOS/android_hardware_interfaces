@@ -245,7 +245,29 @@ class HwcHalImpl : public V2_2::passthrough::detail::HwcHalImpl<Hal> {
         return static_cast<Error>(err);
     }
 
-   protected:
+    Error getDisplayBrightnessSupport(Display display, bool* outSupport) {
+        if (!mDispatch.getDisplayBrightnessSupport) {
+            return Error::UNSUPPORTED;
+        }
+        bool support = false;
+        int32_t error = mDispatch.getDisplayBrightnessSupport(mDevice, display, &support);
+        *outSupport = support;
+        return static_cast<Error>(error);
+    }
+
+    Error setDisplayBrightness(Display display, float brightness) {
+        if (std::isnan(brightness) || brightness > 1.0f ||
+            (brightness < 0.0f && brightness != -1.0f)) {
+            return Error::BAD_PARAMETER;
+        }
+        if (!mDispatch.setDisplayBrightness) {
+            return Error::UNSUPPORTED;
+        }
+        int32_t error = mDispatch.setDisplayBrightness(mDevice, display, brightness);
+        return static_cast<Error>(error);
+    }
+
+  protected:
     bool initDispatch() override {
         if (!BaseType2_2::initDispatch()) {
             return false;
@@ -265,6 +287,10 @@ class HwcHalImpl : public V2_2::passthrough::detail::HwcHalImpl<Hal> {
                                    &mDispatch.getDisplayCapabilities);
         this->initOptionalDispatch(HWC2_FUNCTION_SET_LAYER_PER_FRAME_METADATA_BLOBS,
                                    &mDispatch.setLayerPerFrameMetadataBlobs);
+        this->initOptionalDispatch(HWC2_FUNCTION_GET_DISPLAY_BRIGHTNESS_SUPPORT,
+                                   &mDispatch.getDisplayBrightnessSupport);
+        this->initOptionalDispatch(HWC2_FUNCTION_SET_DISPLAY_BRIGHTNESS,
+                                   &mDispatch.setDisplayBrightness);
         return true;
     }
 
@@ -277,6 +303,8 @@ class HwcHalImpl : public V2_2::passthrough::detail::HwcHalImpl<Hal> {
         HWC2_PFN_GET_DISPLAYED_CONTENT_SAMPLE getDisplayedContentSample;
         HWC2_PFN_GET_DISPLAY_CAPABILITIES getDisplayCapabilities;
         HWC2_PFN_SET_LAYER_PER_FRAME_METADATA_BLOBS setLayerPerFrameMetadataBlobs;
+        HWC2_PFN_GET_DISPLAY_BRIGHTNESS_SUPPORT getDisplayBrightnessSupport;
+        HWC2_PFN_SET_DISPLAY_BRIGHTNESS setDisplayBrightness;
     } mDispatch = {};
 
     using BaseType2_2 = V2_2::passthrough::detail::HwcHalImpl<Hal>;
