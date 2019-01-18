@@ -32,7 +32,7 @@ class Globals:
 
 class Constants:
     CURRENT = 'current'
-    HAL_PATH_PATTERN = r'/((?:[a-zA-Z_]+/)*)(\d+\.\d+)/([a-zA-Z_]+).hal'
+    HAL_PATH_PATTERN = r'/((?:[a-zA-Z_][a-zA-Z0-9_]*/)*)(\d+\.\d+)/([a-zA-Z_][a-zA-Z0-9_]*).hal'
     CURRENT_TXT_PATTERN = r'(?:.*/)?([0-9]+|current).txt'
 
 def trim_trailing_comments(line):
