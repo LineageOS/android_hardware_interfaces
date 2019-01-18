@@ -17,7 +17,10 @@
 #define LOG_TAG "Gnss"
 
 #include "Gnss.h"
+
 #include <log/log.h>
+#include <utils/SystemClock.h>
+
 #include "AGnss.h"
 #include "AGnssRil.h"
 #include "GnssConfiguration.h"
@@ -40,6 +43,24 @@ using GnssSvFlags = IGnssCallback::GnssSvFlags;
 sp<V2_0::IGnssCallback> Gnss::sGnssCallback_2_0 = nullptr;
 sp<V1_1::IGnssCallback> Gnss::sGnssCallback_1_1 = nullptr;
 
+namespace {
+
+V2_0::GnssLocation getMockLocationV2_0() {
+    const ElapsedRealtime timestamp = {
+            .flags = ElapsedRealtimeFlags::HAS_TIMESTAMP_NS |
+                     ElapsedRealtimeFlags::HAS_TIME_UNCERTAINTY_NS,
+            .timestampNs = static_cast<uint64_t>(::android::elapsedRealtimeNano()),
+            // This is an hardcoded value indicating a 1ms of uncertainty between the two clocks.
+            // In an actual implementation provide an estimate of the synchronization uncertainty
+            // or don't set the field.
+            .timeUncertaintyNs = 1000000};
+
+    V2_0::GnssLocation location = {.v1_0 = Utils::getMockLocation(), .elapsedRealtime = timestamp};
+    return location;
+}
+
+}  // namespace
+
 Gnss::Gnss() : mMinIntervalMs(1000) {}
 
 Gnss::~Gnss() {
@@ -48,7 +69,7 @@ Gnss::~Gnss() {
 
 // Methods from V1_0::IGnss follow.
 Return<bool> Gnss::setCallback(const sp<V1_0::IGnssCallback>&) {
-    // TODO implement
+    // TODO(b/124012850): Implement function.
     return bool{};
 }
 
@@ -61,7 +82,7 @@ Return<bool> Gnss::start() {
     mIsActive = true;
     mThread = std::thread([this]() {
         while (mIsActive == true) {
-            const auto location = Utils::getMockLocation();
+            const auto location = getMockLocationV2_0();
             this->reportLocation(location);
 
             std::this_thread::sleep_for(std::chrono::milliseconds(mMinIntervalMs));
@@ -79,44 +100,44 @@ Return<bool> Gnss::stop() {
 }
 
 Return<void> Gnss::cleanup() {
-    // TODO implement
+    // TODO(b/124012850): Implement function.
     return Void();
 }
 
 Return<bool> Gnss::injectTime(int64_t, int64_t, int32_t) {
-    // TODO implement
+    // TODO(b/124012850): Implement function.
     return bool{};
 }
 
 Return<bool> Gnss::injectLocation(double, double, float) {
-    // TODO implement
+    // TODO(b/124012850): Implement function.
     return bool{};
 }
 
 Return<void> Gnss::deleteAidingData(V1_0::IGnss::GnssAidingData) {
-    // TODO implement
+    // TODO(b/124012850): Implement function.
     return Void();
 }
 
 Return<bool> Gnss::setPositionMode(V1_0::IGnss::GnssPositionMode,
                                    V1_0::IGnss::GnssPositionRecurrence, uint32_t, uint32_t,
                                    uint32_t) {
-    // TODO implement
+    // TODO(b/124012850): Implement function.
     return bool{};
 }
 
 Return<sp<V1_0::IAGnssRil>> Gnss::getExtensionAGnssRil() {
-    // TODO implement
+    // TODO(b/124012850): Implement function.
     return sp<V1_0::IAGnssRil>{};
 }
 
 Return<sp<V1_0::IGnssGeofencing>> Gnss::getExtensionGnssGeofencing() {
-    // TODO implement
+    // TODO(b/124012850): Implement function.
     return sp<V1_0::IGnssGeofencing>{};
 }
 
 Return<sp<V1_0::IAGnss>> Gnss::getExtensionAGnss() {
-    // TODO implement
+    // TODO(b/124012850): Implement function.
     return sp<V1_0::IAGnss>{};
 }
 
@@ -131,27 +152,27 @@ Return<sp<V1_0::IGnssMeasurement>> Gnss::getExtensionGnssMeasurement() {
 }
 
 Return<sp<V1_0::IGnssNavigationMessage>> Gnss::getExtensionGnssNavigationMessage() {
-    // TODO implement
+    // TODO(b/124012850): Implement function.
     return sp<V1_0::IGnssNavigationMessage>{};
 }
 
 Return<sp<V1_0::IGnssXtra>> Gnss::getExtensionXtra() {
-    // TODO implement
+    // TODO(b/124012850): Implement function.
     return sp<V1_0::IGnssXtra>{};
 }
 
 Return<sp<V1_0::IGnssConfiguration>> Gnss::getExtensionGnssConfiguration() {
-    // TODO implement
+    // TODO(b/124012850): Implement function.
     return sp<V1_0::IGnssConfiguration>{};
 }
 
 Return<sp<V1_0::IGnssDebug>> Gnss::getExtensionGnssDebug() {
-    // TODO implement
+    // TODO(b/124012850): Implement function.
     return sp<V1_0::IGnssDebug>{};
 }
 
 Return<sp<V1_0::IGnssBatching>> Gnss::getExtensionGnssBatching() {
-    // TODO implement
+    // TODO(b/124012850): Implement function.
     return sp<V1_0::IGnssBatching>{};
 }
 
@@ -194,7 +215,7 @@ Return<bool> Gnss::setPositionMode_1_1(V1_0::IGnss::GnssPositionMode,
 }
 
 Return<sp<V1_1::IGnssConfiguration>> Gnss::getExtensionGnssConfiguration_1_1() {
-    // TODO implement
+    // TODO(b/124012850): Implement function.
     return sp<V1_1::IGnssConfiguration>{};
 }
 
@@ -204,7 +225,7 @@ Return<sp<V1_1::IGnssMeasurement>> Gnss::getExtensionGnssMeasurement_1_1() {
 }
 
 Return<bool> Gnss::injectBestLocation(const V1_0::GnssLocation&) {
-    // TODO implement
+    // TODO(b/124012850): Implement function.
     return bool{};
 }
 
@@ -228,7 +249,7 @@ Return<sp<V2_0::IGnssMeasurement>> Gnss::getExtensionGnssMeasurement_2_0() {
 
 Return<sp<measurement_corrections::V1_0::IMeasurementCorrections>>
 Gnss::getExtensionMeasurementCorrections() {
-    // TODO implement
+    // TODO(b/124012850): Implement function.
     return sp<measurement_corrections::V1_0::IMeasurementCorrections>{};
 }
 
@@ -268,14 +289,19 @@ Return<bool> Gnss::setCallback_2_0(const sp<V2_0::IGnssCallback>& callback) {
     return true;
 }
 
-Return<void> Gnss::reportLocation(const GnssLocation& location) const {
+Return<void> Gnss::reportLocation(const V2_0::GnssLocation& location) const {
     std::unique_lock<std::mutex> lock(mMutex);
-    if (sGnssCallback_1_1 == nullptr) {
-        ALOGE("%s: sGnssCallback is null.", __func__);
+    if (sGnssCallback_2_0 == nullptr) {
+        ALOGE("%s: sGnssCallback 2.0 is null.", __func__);
         return Void();
     }
-    sGnssCallback_1_1->gnssLocationCb(location);
+    sGnssCallback_2_0->gnssLocationCb_2_0(location);
     return Void();
+}
+
+Return<bool> Gnss::injectBestLocation_2_0(const V2_0::GnssLocation&) {
+    // TODO(b/124012850): Implement function.
+    return bool{};
 }
 
 }  // namespace implementation

@@ -130,10 +130,10 @@ bool GnssHalTest::StartAndCheckFirstLocation() {
     return false;
 }
 
-void GnssHalTest::CheckLocation(const GnssLocation& location, bool check_speed) {
+void GnssHalTest::CheckLocation(const GnssLocation_2_0& location, bool check_speed) {
     const bool check_more_accuracies = (info_called_count_ > 0 && last_info_.yearOfHw >= 2017);
 
-    Utils::checkLocation(location, check_speed, check_more_accuracies);
+    Utils::checkLocation(location.v1_0, check_speed, check_more_accuracies);
 }
 
 void GnssHalTest::StartAndCheckLocations(int count) {
@@ -193,6 +193,14 @@ Return<void> GnssHalTest::GnssCallback::gnssSetCapabilitesCb(uint32_t capabiliti
     return Void();
 }
 
+Return<void> GnssHalTest::GnssCallback::gnssSetCapabilitiesCb_2_0(uint32_t capabilities) {
+    ALOGI("Capabilities (v2.0) received %d", capabilities);
+    parent_.capabilities_called_count_++;
+    parent_.last_capabilities_ = capabilities;
+    parent_.notify();
+    return Void();
+}
+
 Return<void> GnssHalTest::GnssCallback::gnssNameCb(const android::hardware::hidl_string& name) {
     ALOGI("Name received: %s", name.c_str());
     parent_.name_called_count_++;
@@ -201,8 +209,19 @@ Return<void> GnssHalTest::GnssCallback::gnssNameCb(const android::hardware::hidl
     return Void();
 }
 
-Return<void> GnssHalTest::GnssCallback::gnssLocationCb(const GnssLocation& location) {
+Return<void> GnssHalTest::GnssCallback::gnssLocationCb(const GnssLocation_1_0& location) {
     ALOGI("Location received");
+    GnssLocation_2_0 location_v2_0;
+    location_v2_0.v1_0 = location;
+    return gnssLocationCbImpl(location_v2_0);
+}
+
+Return<void> GnssHalTest::GnssCallback::gnssLocationCb_2_0(const GnssLocation_2_0& location) {
+    ALOGI("Location (v2.0) received");
+    return gnssLocationCbImpl(location);
+}
+
+Return<void> GnssHalTest::GnssCallback::gnssLocationCbImpl(const GnssLocation_2_0& location) {
     parent_.location_called_count_++;
     parent_.last_location_ = location;
     parent_.notify();
