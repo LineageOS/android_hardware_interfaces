@@ -19,6 +19,7 @@ package android.hardware.radio.config@1.1;
 import @1.0::IRadioConfig;
 import @1.1::IRadioConfigResponse;
 import @1.1::PhoneCapability;
+import @1.1::ModemsConfig;
 
 /**
  * Note: IRadioConfig 1.1 is an intermediate layer between Android P and Android Q.
@@ -56,4 +57,36 @@ interface IRadioConfig extends @1.0::IRadioConfig {
      * Response callback is IRadioConfigResponse.setPreferredDataModemResponse()
      */
     oneway setPreferredDataModem(int32_t serial, uint8_t modemId);
+
+   /**
+     * Set modems configurations by specifying the number of live modems (i.e modems that are
+     * enabled and actively working as part of a working telephony stack).
+     *
+     * Example: this interface can be used to switch to single/multi sim mode by specifying
+     * the number of live modems as 1, 2, etc
+     *
+     * Note: by setting the number of live modems in this API, that number of modems will
+     * subsequently get enabled/disabled
+     *
+     * @param serial serial number of request.
+     * @param modemsConfig ModemsConfig object including the number of live modems
+     *
+     * Response callback is IRadioResponse.setModemsConfigResponse()
+     */
+    oneway setModemsConfig(int32_t serial, ModemsConfig modemsConfig);
+
+   /**
+     * Get modems configurations. This interface is used to get modem configurations
+     * which includes the number of live modems (i.e modems that are
+     * enabled and actively working as part of a working telephony stack)
+     *
+     * Note: in order to get the overall number of modems available on the phone,
+     * refer to getPhoneCapability API
+     *
+     * @param serial Serial number of request.
+     *
+     * Response callback is IRadioResponse.getModemsConfigResponse() which
+     * will return <@1.1::ModemsConfig>.
+     */
+    oneway getModemsConfig(int32_t serial);
 };
