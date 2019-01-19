@@ -462,6 +462,17 @@ int CameraModule::isStreamCombinationSupported(int cameraId, camera_stream_combi
     return res;
 }
 
+void CameraModule::notifyDeviceStateChange(uint64_t deviceState) {
+   if (getModuleApiVersion() >= CAMERA_MODULE_API_VERSION_2_5 &&
+           mModule->notify_device_state_change != NULL) {
+       ATRACE_BEGIN("camera_module->notify_device_state_change");
+       ALOGI("%s: calling notify_device_state_change with state %" PRId64, __FUNCTION__,
+               deviceState);
+       mModule->notify_device_state_change(deviceState);
+       ATRACE_END();
+   }
+}
+
 status_t CameraModule::filterOpenErrorCode(status_t err) {
     switch(err) {
         case NO_ERROR:
