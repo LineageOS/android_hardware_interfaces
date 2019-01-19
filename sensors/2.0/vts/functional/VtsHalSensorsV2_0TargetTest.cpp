@@ -41,6 +41,8 @@ using ::android::hardware::sensors::V1_0::SensorStatus;
 using ::android::hardware::sensors::V1_0::SharedMemType;
 using ::android::hardware::sensors::V1_0::Vec3;
 
+constexpr size_t kEventSize = static_cast<size_t>(SensorsEventFormatOffset::TOTAL_LENGTH);
+
 class EventCallback : public IEventCallback {
    public:
     void reset() {
@@ -170,6 +172,7 @@ class SensorsHidlTest : public SensorsHidlTestBase {
     std::vector<SensorInfo> getOneShotSensors();
     std::vector<SensorInfo> getInjectEventSensors();
     int32_t getInvalidSensorHandle();
+    bool getDirectChannelSensor(SensorInfo* sensor, SharedMemType* memType, RateLevel* rate);
     void verifyDirectChannel(SharedMemType memType);
     void verifyRegisterDirectChannel(const SensorInfo& sensor, SharedMemType memType,
                                      std::shared_ptr<SensorsTestSharedMemory> mem,
@@ -632,6 +635,32 @@ TEST_F(SensorsHidlTest, CallInitializeTwice) {
     activateAllSensors(false);
 }
 
+TEST_F(SensorsHidlTest, CleanupConnectionsOnInitialize) {
+    activateAllSensors(true);
+
+    // Verify that events are received
+    constexpr useconds_t kCollectionTimeoutUs = 1000 * 1000;  // 1s
+    constexpr int32_t kNumEvents = 1;
+    ASSERT_GE(collectEvents(kCollectionTimeoutUs, kNumEvents, getEnvironment()).size(), kNumEvents);
+
+    // Clear the active sensor handles so they are not disabled during TearDown
+    auto handles = mSensorHandles;
+    mSensorHandles.clear();
+    getEnvironment()->TearDown();
+    getEnvironment()->SetUp();
+
+    // Verify no events are received until sensors are re-activated
+    ASSERT_EQ(collectEvents(kCollectionTimeoutUs, kNumEvents, getEnvironment()).size(), 0);
+    activateAllSensors(true);
+    ASSERT_GE(collectEvents(kCollectionTimeoutUs, kNumEvents, getEnvironment()).size(), kNumEvents);
+
+    // Disable sensors
+    activateAllSensors(false);
+
+    // Restore active sensors prior to clearing the environment
+    mSensorHandles = handles;
+}
+
 void SensorsHidlTest::runSingleFlushTest(const std::vector<SensorInfo>& sensors,
                                          bool activateSensor, int32_t expectedFlushCount,
                                          Result expectedResponse) {
@@ -893,7 +922,6 @@ void SensorsHidlTest::verifyUnregisterDirectChannel(const SensorInfo& sensor, Sh
 }
 
 void SensorsHidlTest::verifyDirectChannel(SharedMemType memType) {
-    constexpr size_t kEventSize = static_cast<size_t>(SensorsEventFormatOffset::TOTAL_LENGTH);
     constexpr size_t kNumEvents = 1;
     constexpr size_t kMemSize = kNumEvents * kEventSize;
 
@@ -917,30 +945,96 @@ TEST_F(SensorsHidlTest, DirectChannelGralloc) {
     verifyDirectChannel(SharedMemType::GRALLOC);
 }
 
-TEST_F(SensorsHidlTest, ConfigureDirectChannelWithInvalidHandle) {
-    for (const SensorInfo& sensor : getSensorsList()) {
-        if (isDirectChannelTypeSupported(sensor, SharedMemType::ASHMEM) ||
-            isDirectChannelTypeSupported(sensor, SharedMemType::GRALLOC)) {
-            // Find a supported rate level
-            RateLevel rate = RateLevel::STOP;
-            if (isDirectReportRateSupported(sensor, RateLevel::NORMAL)) {
-                rate = RateLevel::NORMAL;
-            } else if (isDirectReportRateSupported(sensor, RateLevel::FAST)) {
-                rate = RateLevel::FAST;
-            } else if (isDirectReportRateSupported(sensor, RateLevel::VERY_FAST)) {
-                rate = RateLevel::VERY_FAST;
-            }
-
-            // Ensure that at least one rate level is supported
-            ASSERT_NE(rate, RateLevel::STOP);
-
-            // Verify that an invalid channel handle produces a BAD_VALUE result
-            configDirectReport(sensor.sensorHandle, -1, rate,
-                               [](Result result, int32_t /* reportToken */) {
-                                   ASSERT_EQ(result, Result::BAD_VALUE);
-                               });
+bool SensorsHidlTest::getDirectChannelSensor(SensorInfo* sensor, SharedMemType* memType,
+                                             RateLevel* rate) {
+    bool found = false;
+    for (const SensorInfo& curSensor : getSensorsList()) {
+        if (isDirectChannelTypeSupported(curSensor, SharedMemType::ASHMEM)) {
+            *memType = SharedMemType::ASHMEM;
+            *sensor = curSensor;
+            found = true;
+            break;
+        } else if (isDirectChannelTypeSupported(curSensor, SharedMemType::GRALLOC)) {
+            *memType = SharedMemType::GRALLOC;
+            *sensor = curSensor;
+            found = true;
+            break;
         }
     }
+
+    if (found) {
+        // Find a supported rate level
+        constexpr int kNumRateLevels = 3;
+        RateLevel rates[kNumRateLevels] = {RateLevel::NORMAL, RateLevel::FAST,
+                                           RateLevel::VERY_FAST};
+        *rate = RateLevel::STOP;
+        for (int i = 0; i < kNumRateLevels; i++) {
+            if (isDirectReportRateSupported(*sensor, rates[i])) {
+                *rate = rates[i];
+            }
+        }
+
+        // At least one rate level must be supported
+        EXPECT_NE(*rate, RateLevel::STOP);
+    }
+    return found;
+}
+
+TEST_F(SensorsHidlTest, ConfigureDirectChannelWithInvalidHandle) {
+    SensorInfo sensor;
+    SharedMemType memType;
+    RateLevel rate;
+    if (!getDirectChannelSensor(&sensor, &memType, &rate)) {
+        return;
+    }
+
+    // Verify that an invalid channel handle produces a BAD_VALUE result
+    configDirectReport(sensor.sensorHandle, -1, rate, [](Result result, int32_t /* reportToken */) {
+        ASSERT_EQ(result, Result::BAD_VALUE);
+    });
+}
+
+TEST_F(SensorsHidlTest, CleanupDirectConnectionOnInitialize) {
+    constexpr size_t kNumEvents = 1;
+    constexpr size_t kMemSize = kNumEvents * kEventSize;
+
+    SensorInfo sensor;
+    SharedMemType memType;
+    RateLevel rate;
+
+    if (!getDirectChannelSensor(&sensor, &memType, &rate)) {
+        return;
+    }
+
+    std::shared_ptr<SensorsTestSharedMemory> mem(
+        SensorsTestSharedMemory::create(memType, kMemSize));
+    ASSERT_NE(mem, nullptr);
+
+    int32_t directChannelHandle = 0;
+    registerDirectChannel(mem->getSharedMemInfo(), [&](Result result, int32_t channelHandle) {
+        ASSERT_EQ(result, Result::OK);
+        directChannelHandle = channelHandle;
+    });
+
+    // Configure the channel and expect success
+    configDirectReport(
+        sensor.sensorHandle, directChannelHandle, rate,
+        [](Result result, int32_t /* reportToken */) { ASSERT_EQ(result, Result::OK); });
+
+    // Call initialize() via the environment setup to cause the HAL to re-initialize
+    // Clear the active direct connections so they are not stopped during TearDown
+    auto handles = mDirectChannelHandles;
+    mDirectChannelHandles.clear();
+    getEnvironment()->TearDown();
+    getEnvironment()->SetUp();
+
+    // Attempt to configure the direct channel and expect it to fail
+    configDirectReport(
+        sensor.sensorHandle, directChannelHandle, rate,
+        [](Result result, int32_t /* reportToken */) { ASSERT_EQ(result, Result::BAD_VALUE); });
+
+    // Restore original handles, though they should already be deactivated
+    mDirectChannelHandles = handles;
 }
 
 int main(int argc, char** argv) {
