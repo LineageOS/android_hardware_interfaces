@@ -21,6 +21,7 @@
 #include <fmq/MessageQueue.h>
 #include <hidl/MQDescriptor.h>
 #include <hidl/Status.h>
+#include <unordered_map>
 
 namespace android {
 namespace hardware {
@@ -60,8 +61,19 @@ struct OnDeviceMmt {
     std::unique_ptr<MessageQueueSync> fmqSynchronized;
 };
 
+class IStateResidencyDataProvider {
+   public:
+    virtual ~IStateResidencyDataProvider() = default;
+    virtual bool getResults(
+            std::unordered_map<uint32_t, PowerEntityStateResidencyResult>& results) = 0;
+    virtual std::vector<PowerEntityStateSpace> getStateSpaces() = 0;
+};
+
 struct PowerStats : public IPowerStats {
+   public:
     PowerStats();
+    uint32_t addPowerEntity(const std::string& name, PowerEntityType type);
+    void addStateResidencyDataProvider(std::shared_ptr<IStateResidencyDataProvider> p);
     // Methods from ::android::hardware::power::stats::V1_0::IPowerStats follow.
     Return<void> getRailInfo(getRailInfo_cb _hidl_cb) override;
     Return<void> getEnergyData(const hidl_vec<uint32_t>& railIndices,
@@ -75,12 +87,19 @@ struct PowerStats : public IPowerStats {
         const hidl_vec<uint32_t>& powerEntityIds,
         getPowerEntityStateResidencyData_cb _hidl_cb) override;
 
+    // Methods from ::android::hidl::base::V1_0::IBase follow.
+    Return<void> debug(const hidl_handle& fd, const hidl_vec<hidl_string>& args) override;
+
    private:
     OnDeviceMmt mPm;
     void findIioPowerMonitorNodes();
     size_t parsePowerRails();
     int parseIioEnergyNode(std::string devName);
     Status parseIioEnergyNodes();
+    std::vector<PowerEntityInfo> mPowerEntityInfos;
+    std::unordered_map<uint32_t, PowerEntityStateSpace> mPowerEntityStateSpaces;
+    std::unordered_map<uint32_t, std::shared_ptr<IStateResidencyDataProvider>>
+            mStateResidencyDataProviders;
 };
 
 }  // namespace implementation
