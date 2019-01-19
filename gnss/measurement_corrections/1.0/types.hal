@@ -47,8 +47,11 @@ struct SingleSatCorrection {
      */
     float carrierFrequencyHz;
 
-    /** True if the satellite is in Line-of-Sight condition */
-    bool satIsLos;
+    /**
+     * The probability that the satellite is estimated to be in Line-of-Sight condition at the given
+     * location.
+     */
+    float probSatIsLos;
 
     /**
      * Excess path length to be subtracted from pseudorange before using it in calculating location.
@@ -123,8 +126,8 @@ struct ReflectingPlane {
 
 /** Bit mask to indicate which values are valid in a SingleSatCorrection object. */
 enum GnssSingleSatCorrectionFlags : uint16_t {
-    /** GnssSingleSatCorrectionFlags has valid satellite-is-line-of-sight field. */
-    HAS_SAT_IS_LOS                           = 0x0001,
+    /** GnssSingleSatCorrectionFlags has valid satellite-is-line-of-sight-probability field. */
+    HAS_SAT_IS_LOS_PROBABILITY               = 0x0001,
     /** GnssSingleSatCorrectionFlags has valid Excess Path Length field. */
     HAS_EXCESS_PATH_LENGTH                   = 0x0002,
     /** GnssSingleSatCorrectionFlags has valid Excess Path Length Uncertainty field. */
