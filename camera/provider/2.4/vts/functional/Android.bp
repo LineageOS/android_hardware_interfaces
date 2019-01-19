@@ -40,6 +40,7 @@ cc_test {
         "android.hardware.camera.device@3.5",
 	"android.hardware.camera.metadata@3.4",
         "android.hardware.camera.provider@2.4",
+        "android.hardware.camera.provider@2.5",
         "android.hardware.graphics.allocator@2.0",
         "android.hardware.graphics.common@1.0",
         "android.hardware.graphics.mapper@2.0",
