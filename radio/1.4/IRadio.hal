@@ -21,10 +21,12 @@ import @1.2::DataRequestReason;
 import @1.2::NetworkScanRequest;
 import @1.3::IRadio;
 import @1.4::AccessNetwork;
+import @1.4::CarrierRestrictionsWithPriority;
 import @1.4::DataProfileInfo;
 import @1.4::EmergencyCallRouting;
 import @1.4::EmergencyServiceCategory;
 import @1.4::RadioAccessFamily;
+import @1.4::SimLockMultiSimPolicy;
 
 /**
  * This interface is used by telephony and telecom to talk to cellular radio.
@@ -167,4 +169,34 @@ interface IRadio extends @1.3::IRadio {
      */
     oneway setPreferredNetworkTypeBitmap(
             int32_t serial, bitfield<RadioAccessFamily> networkTypeBitmap);
+
+    /**
+     * Set carrier restrictions. Expected modem behavior:
+     *  If never receives this command:
+     *  - Must allow all carriers
+     *  Receives this command:
+     *  - Only allow carriers specified in carriers. The restriction persists across power cycles
+     *    and FDR. If a present SIM is allowed, modem must not reload the SIM. If a present SIM is
+     *    *not* allowed, modem must detach from the registered network and only keep emergency
+     *    service, and notify Android SIM refresh reset with new SIM state being
+     *    CardState:RESTRICTED. Emergency service must be enabled.
+     *
+     * @param serial Serial number of request.
+     * @param carriers CarrierRestrictionsWithPriority consisting allowed and excluded carriers
+     *        as defined in types.hal
+     * @param multiSimPolicy Policy to be used for devices with multiple SIMs.
+     *
+     * Response callback is IRadioResponse.setAllowedCarriersResponse()
+     */
+    oneway setAllowedCarriers_1_4(int32_t serial, CarrierRestrictionsWithPriority carriers,
+            SimLockMultiSimPolicy multiSimPolicy);
+
+    /**
+     * Get carrier restrictions.
+     *
+     * @param serial Serial number of request.
+     *
+     * Response callback is IRadioResponse.getAllowedCarriersResponse_1_3()
+     */
+    oneway getAllowedCarriers_1_4(int32_t serial);
 };
