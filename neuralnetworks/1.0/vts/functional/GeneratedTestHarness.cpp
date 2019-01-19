@@ -45,13 +45,10 @@ using ::test_helper::bool8;
 using ::test_helper::compare;
 using ::test_helper::expectMultinomialDistributionWithinTolerance;
 using ::test_helper::filter;
-using ::test_helper::Float32Operands;
 using ::test_helper::for_all;
 using ::test_helper::for_each;
-using ::test_helper::Int32Operands;
 using ::test_helper::MixedTyped;
 using ::test_helper::MixedTypedExample;
-using ::test_helper::Quant8Operands;
 using ::test_helper::resize_accordingly;
 
 template <typename T>
@@ -67,12 +64,13 @@ void copy_back_(std::map<int, std::vector<T>>* dst, const std::vector<RequestArg
 void copy_back(MixedTyped* dst, const std::vector<RequestArgument>& ra, char* src) {
     copy_back_(&dst->float32Operands, ra, src);
     copy_back_(&dst->int32Operands, ra, src);
-    copy_back_(&dst->quant8Operands, ra, src);
-    copy_back_(&dst->quant16Operands, ra, src);
+    copy_back_(&dst->quant8AsymmOperands, ra, src);
+    copy_back_(&dst->quant16SymmOperands, ra, src);
     copy_back_(&dst->float16Operands, ra, src);
     copy_back_(&dst->bool8Operands, ra, src);
     copy_back_(&dst->quant8ChannelOperands, ra, src);
-    static_assert(7 == MixedTyped::kNumTypes,
+    copy_back_(&dst->quant16AsymmOperands, ra, src);
+    static_assert(8 == MixedTyped::kNumTypes,
                   "Number of types in MixedTyped changed, but copy_back function wasn't updated");
 }
 
