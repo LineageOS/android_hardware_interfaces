@@ -33,7 +33,8 @@ namespace neuralnetworks {
 namespace generated_tests {
 using ::test_helper::MixedTypedExample;
 extern void Execute(const sp<V1_2::IDevice>&, std::function<V1_2::Model(void)>,
-                    std::function<bool(int)>, const std::vector<MixedTypedExample>&);
+                    std::function<bool(int)>, const std::vector<MixedTypedExample>&,
+                    bool testDynamicOutputShape = false);
 }  // namespace generated_tests
 
 namespace V1_2 {
