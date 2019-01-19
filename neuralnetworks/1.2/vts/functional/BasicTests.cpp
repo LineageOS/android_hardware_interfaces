@@ -72,6 +72,12 @@ TEST_F(NeuralnetworksHidlTest, GetDeviceSupportedExtensionsTest) {
     EXPECT_TRUE(ret.isOk());
 }
 
+// isCachingSupported test
+TEST_F(NeuralnetworksHidlTest, IsCachingSupported) {
+    Return<void> ret = device->isCachingSupported(
+            [](ErrorStatus status, bool) { EXPECT_EQ(ErrorStatus::NONE, status); });
+    EXPECT_TRUE(ret.isOk());
+}
 }  // namespace functional
 }  // namespace vts
 }  // namespace V1_2

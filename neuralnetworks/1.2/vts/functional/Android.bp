@@ -46,6 +46,7 @@ cc_test {
     defaults: ["VtsHalNeuralNetworksTargetTestDefaults"],
     srcs: [
         "BasicTests.cpp",
+        "CompilationCachingTests.cpp",
         "GeneratedTests.cpp",
     ],
     cflags: [
