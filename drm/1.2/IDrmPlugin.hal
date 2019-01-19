@@ -184,6 +184,40 @@ interface IDrmPlugin extends @1.1::IDrmPlugin {
         generates (Status status, vec<uint8_t> request, string defaultUrl);
 
     /**
+     * Return the currently negotiated and max supported HDCP levels.
+     *
+     * This method only differs from @1.1 version by the addition of
+     * support for HDCP 2.3.
+     *
+     * The current level is based on the display(s) the device is connected to.
+     * If multiple HDCP-capable displays are simultaneously connected to
+     * separate interfaces, this method returns the lowest negotiated HDCP level
+     * of all interfaces.
+     *
+     * The maximum HDCP level is the highest level that can potentially be
+     * negotiated. It is a constant for any device, i.e. it does not depend on
+     * downstream receiving devices that could be connected. For example, if
+     * the device has HDCP 1.x keys and is capable of negotiating HDCP 1.x, but
+     * does not have HDCP 2.x keys, then the maximum HDCP capability would be
+     * reported as 1.x. If multiple HDCP-capable interfaces are present, it
+     * indicates the highest of the maximum HDCP levels of all interfaces.
+     *
+     * This method should only be used for informational purposes, not for
+     * enforcing compliance with HDCP requirements. Trusted enforcement of HDCP
+     * policies must be handled by the DRM system.
+     *
+     * @return status the status of the call. The status must be OK or
+     *         ERROR_DRM_INVALID_STATE if the HAL is in a state where the HDCP
+     *         level cannot be queried.
+     * @return connectedLevel the lowest HDCP level for any connected
+     *         displays
+     * @return maxLevel the highest HDCP level that can be supported
+     *         by the device
+     */
+    getHdcpLevels_1_2() generates (Status status, HdcpLevel connectedLevel,
+            HdcpLevel maxLevel);
+
+    /**
      * Send a session lost state event to the listener. This event
      * indicates that a session's state has become invalid because the
      * device crypto hardware is incapable of retaining crypto session

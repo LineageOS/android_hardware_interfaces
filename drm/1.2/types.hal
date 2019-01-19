@@ -17,6 +17,7 @@
 package android.hardware.drm@1.2;
 
 import @1.0::Status;
+import @1.1::HdcpLevel;
 
 enum OfflineLicenseState : uint32_t {
     /**
@@ -70,6 +71,19 @@ enum Status : @1.0::Status {
       */
     ERROR_DRM_RESOURCE_CONTENTION,
 };
+
+/**
+ * HDCP specifications are defined by Digital Content Protection LLC (DCP).
+ *   "HDCP Specification Rev. 2.3 Interface Independent Adaptation"
+ *   "HDCP 2.3 on HDMI Specification"
+ */
+enum HdcpLevel : @1.1::HdcpLevel {
+    /**
+     * HDCP version 2.3 Type 1.
+     */
+    HDCP_V2_3
+};
+
 
 /**
  * KeySetId is an identifier that references a set of keys in an
