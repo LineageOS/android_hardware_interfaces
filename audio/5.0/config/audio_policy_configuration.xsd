@@ -461,6 +461,8 @@
                             </xs:documentation>
                         </xs:annotation>
                     </xs:attribute>
+                    <xs:attribute name="encodedFormats" type="audioFormatsList" use="optional"
+                                  default="" />
                 </xs:complexType>
                 <xs:unique name="devicePortProfileUniqueness">
                     <xs:selector xpath="profile"/>
@@ -595,7 +597,7 @@
             <xs:element name="formats" type="surroundFormats"/>
         </xs:sequence>
     </xs:complexType>
-    <xs:simpleType name="surroundFormatsList">
+    <xs:simpleType name="audioFormatsList">
         <xs:list itemType="audioFormat" />
     </xs:simpleType>
     <xs:complexType name="surroundFormats">
@@ -603,7 +605,7 @@
             <xs:element name="format" minOccurs="0" maxOccurs="unbounded">
                 <xs:complexType>
                     <xs:attribute name="name" type="audioFormat" use="required"/>
-                    <xs:attribute name="subformats" type="surroundFormatsList" />
+                    <xs:attribute name="subformats" type="audioFormatsList" />
                 </xs:complexType>
             </xs:element>
         </xs:sequence>
