@@ -76,6 +76,18 @@ enum OperandType : @1.0::OperandType {
      * where C is an index in the Channel dimension.
      */
     TENSOR_QUANT8_SYMM_PER_CHANNEL = 11,
+    /**
+     * A tensor of 16 bit unsigned integers that represent real numbers.
+     *
+     * Attached to this tensor are two numbers that can be used to convert the
+     * 16 bit integer to the real value and vice versa. These two numbers are:
+     * - scale: a 32 bit floating point value greater than zero.
+     * - zeroPoint: a 32 bit integer, in range [0, 65535].
+     *
+     * The formula is:
+     * real_value = (integer_value - zeroPoint) * scale.
+     */
+    TENSOR_QUANT16_ASYMM = 12,
     /* ADDING A NEW FUNDAMENTAL TYPE REQUIRES UPDATING THE VALUE OF
      * OperandTypeRange::OPERAND_FUNDAMENTAL_MAX.
      */
@@ -89,7 +101,7 @@ enum OperandType : @1.0::OperandType {
  */
 enum OperandTypeRange : uint32_t {
     OPERAND_FUNDAMENTAL_MIN = 0,
-    OPERAND_FUNDAMENTAL_MAX = 11,
+    OPERAND_FUNDAMENTAL_MAX = 12,
     OPERAND_OEM_MIN     = 10000,
     OPERAND_OEM_MAX     = 10001,
 };
@@ -177,6 +189,26 @@ enum OperationTypeRange : uint32_t {
     OPERATION_FUNDAMENTAL_MAX = 97,
     OPERATION_OEM_MIN = 10000,
     OPERATION_OEM_MAX = 10000,
+};
+
+/**
+ * Device types.
+ *
+ * The type of NNAPI device.
+ */
+enum DeviceType : int32_t {
+    // Leaving 0 unused as it means unknown type in NDK NNAPI. There is no
+    // HAL equivalent of unknown type and a 1.2 HAL implementation must belong
+    // to one of the categories below.
+    /** The device does not fall into any category below. */
+    OTHER             = 1,
+    /** The device runs NNAPI models on single or multi-core CPU. */
+    CPU               = 2,
+    /** The device can run NNAPI models and also accelerate graphics APIs such
+      * as OpenGL ES and Vulkan. */
+    GPU               = 3,
+    /** Dedicated accelerator for Machine Learning workloads. */
+    ACCELERATOR       = 4,
 };
 
 /**

@@ -704,6 +704,11 @@ Return<int32_t> SoundTriggerHw::getModelState(int32_t modelHandle) {
         }
     }
 
+    if (mHwDevice->common.version < SOUND_TRIGGER_DEVICE_API_VERSION_1_2) {
+        ALOGE("Get model state not supported");
+        return -ENODEV;
+    }
+
     if (mHwDevice->get_model_state == NULL) {
         ALOGE("Failed to get model state from device, no such method");
         return -ENODEV;

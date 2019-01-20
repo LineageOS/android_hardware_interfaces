@@ -496,6 +496,27 @@ Return<void> StreamIn::getActiveMicrophones(getActiveMicrophones_cb _hidl_cb) {
 }
 #endif
 
+#if MAJOR_VERSION >= 5
+Return<Result> StreamIn::setMicrophoneDirection(MicrophoneDirection direction) {
+    if (mStream->set_microphone_direction == nullptr) {
+        return Result::NOT_SUPPORTED;
+    }
+    return Stream::analyzeStatus(
+            "set_microphone_direction",
+            mStream->set_microphone_direction(
+                    mStream, static_cast<audio_microphone_direction_t>(direction)));
+}
+
+Return<Result> StreamIn::setMicrophoneFieldDimension(float zoom) {
+    if (mStream->set_microphone_field_dimension == nullptr) {
+        return Result::NOT_SUPPORTED;
+    }
+    return Stream::analyzeStatus("set_microphone_field_dimension",
+                                 mStream->set_microphone_field_dimension(mStream, zoom));
+}
+
+#endif
+
 }  // namespace implementation
 }  // namespace CPP_VERSION
 }  // namespace audio

@@ -45,6 +45,16 @@ TEST_F(NeuralnetworksHidlTest, GetDeviceVersionStringTest) {
     });
     EXPECT_TRUE(ret.isOk());
 }
+
+// device type test
+TEST_F(NeuralnetworksHidlTest, GetDeviceTypeTest) {
+    Return<void> ret = device->getType([](ErrorStatus status, DeviceType type) {
+        EXPECT_EQ(ErrorStatus::NONE, status);
+        EXPECT_TRUE(type == DeviceType::OTHER || type == DeviceType::CPU ||
+                    type == DeviceType::GPU || type == DeviceType::ACCELERATOR);
+    });
+    EXPECT_TRUE(ret.isOk());
+}
 }  // namespace functional
 }  // namespace vts
 }  // namespace V1_2
