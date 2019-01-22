@@ -43,7 +43,17 @@ interface IRadioResponse extends @1.2::IRadioResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:INTERNAL_ERR
+     *   RadioError:MODEM_ERR
      */
     oneway enableModemResponse(RadioResponseInfo info);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:MODEM_ERR
+     */
+    oneway getModemStackStatusResponse(RadioResponseInfo info, bool isEnabled);
 };
