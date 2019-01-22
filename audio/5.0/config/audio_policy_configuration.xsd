@@ -364,6 +364,12 @@
             <xs:enumeration value="AUDIO_FORMAT_MAT_2_1"/>
             <xs:enumeration value="AUDIO_FORMAT_AAC_XHE"/>
             <xs:enumeration value="AUDIO_FORMAT_AAC_ADTS_XHE"/>
+            <xs:enumeration value="AUDIO_FORMAT_AAC_LATM"/>
+            <xs:enumeration value="AUDIO_FORMAT_AAC_LATM_LC"/>
+            <xs:enumeration value="AUDIO_FORMAT_AAC_LATM_HE_V1"/>
+            <xs:enumeration value="AUDIO_FORMAT_AAC_LATM_HE_V2"/>
+            <xs:enumeration value="AUDIO_FORMAT_CELT"/>
+            <xs:enumeration value="AUDIO_FORMAT_APTX_ADAPTIVE"/>
         </xs:restriction>
     </xs:simpleType>
     <xs:simpleType name="extendableAudioFormat">
