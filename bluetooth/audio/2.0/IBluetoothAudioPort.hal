@@ -27,6 +27,9 @@ import android.hardware.audio.common@5.0::SourceMetadata;
  *
  * Moreover, the Audio HAL can also get the presentation position of the stream
  * and provide stream metadata.
+ *
+ * Note: For HIDL APIs with a "generates" statement, the callback parameter used
+ * for return value must be invoked synchronously before the API call returns.
  */
 interface IBluetoothAudioPort {
     /**

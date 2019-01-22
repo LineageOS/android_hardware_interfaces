@@ -23,6 +23,9 @@ import IBluetoothAudioPort;
  *
  * The Bluetooth stack calls methods in this interface to start and end audio
  * sessions and sends callback events to the Audio HAL.
+ *
+ * Note: For HIDL APIs with a "generates" statement, the callback parameter used
+ * for return value must be invoked synchronously before the API call returns.
  */
 interface IBluetoothAudioProvider {
 
@@ -35,8 +38,10 @@ interface IBluetoothAudioProvider {
      * Note: endSession() must be called to unregister this IBluetoothAudioPort
      *
      * @param hostIf An instance of IBluetoothAudioPort for stream control
-     * @param codecConfig The codec configuration negotiated with the remote
-     *    device
+     * @param audioConfig The audio configuration negotiated with the remote
+     *    device. The PCM parameters are set if software based encoding,
+     *    otherwise the correct codec configuration is used for hardware
+     *    encoding.
      *
      * @return status One of the following
      *    SUCCESS if this IBluetoothAudioPort was successfully registered with
@@ -47,10 +52,10 @@ interface IBluetoothAudioProvider {
      *        any other reason
      * @return dataMQ The fast message queue for audio data from this provider.
      *    Audio data will be in PCM format as specified by the
-     *    codecConfig.pcmDataConfiguration parameter.
-     *    nullptr if streaming is offloaded to hardware or on failure.
+     *    audioConfig.pcmConfig parameter.
+     *    Invalid if streaming is offloaded to hardware or on failure.
      */
-    startSession(IBluetoothAudioPort hostIf, CodecConfiguration codecConfig)
+    startSession(IBluetoothAudioPort hostIf, AudioConfiguration audioConfig)
                 generates (Status status, fmq_sync<uint8_t> dataMQ);
 
     /**
