@@ -22,6 +22,9 @@ cc_library_static {
     ],
     defaults: ["VtsHalTargetTestDefaults"],
     export_include_dirs: ["."],
+    shared_libs: [
+        "libnativewindow",
+    ],
     static_libs: [
         "android.hardware.neuralnetworks@1.0",
         "android.hardware.neuralnetworks@1.1",
@@ -46,6 +49,9 @@ cc_defaults {
         "ValidateModel.cpp",
         "ValidateRequest.cpp",
         "VtsHalNeuralnetworks.cpp",
+    ],
+    shared_libs: [
+        "libnativewindow",
     ],
     static_libs: [
         "android.hardware.neuralnetworks@1.0",
