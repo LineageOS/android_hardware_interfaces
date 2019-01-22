@@ -40,7 +40,6 @@ interface IRadioResponse extends @1.3::IRadioResponse {
      *   RadioError:DIAL_MODIFIED_TO_SS
      *   RadioError:DIAL_MODIFIED_TO_DIAL
      *   RadioError:INVALID_ARGUMENTS
-     *   RadioError:NO_MEMORY
      *   RadioError:NO_RESOURCES
      *   RadioError:INTERNAL_ERR
      *   RadioError:FDN_CHECK_FAILURE
@@ -51,7 +50,6 @@ interface IRadioResponse extends @1.3::IRadioResponse {
      *   RadioError:DEVICE_IN_USE
      *   RadioError:ABORTED
      *   RadioError:INVALID_MODEM_STATE
-     *   RadioError:CANCELLED
      */
     oneway emergencyDialResponse(RadioResponseInfo info);
 
@@ -66,7 +64,6 @@ interface IRadioResponse extends @1.3::IRadioResponse {
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:DEVICE_IN_USE
      *   RadioError:INTERNAL_ERR
-     *   RadioError:NO_MEMORY
      *   RadioError:MODEM_ERR
      *   RadioError:INVALID_ARGUMENTS
      */
@@ -105,9 +102,7 @@ interface IRadioResponse extends @1.3::IRadioResponse {
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
-     *   RadioError:NO_MEMORY
      *   RadioError:NO_RESOURCES
-     *   RadioError:CANCELLED
      *   RadioError:REQUEST_NOT_SUPPORTED
      */
     oneway getIccCardStatusResponse_1_4(RadioResponseInfo info, CardStatus cardStatus);
@@ -119,14 +114,11 @@ interface IRadioResponse extends @1.3::IRadioResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:NO_MEMORY
      *   RadioError:INTERNAL_ERR
-     *   RadioError:SYSTEM_ERR
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:MODEM_ERR
      *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
-     *   RadioError:CANCELLED
      */
     oneway getPreferredNetworkTypeBitmapResponse(RadioResponseInfo info,
             bitfield<RadioAccessFamily> networkTypeBitmap);
@@ -141,14 +133,11 @@ interface IRadioResponse extends @1.3::IRadioResponse {
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:OPERATION_NOT_ALLOWED
      *   RadioError:MODE_NOT_SUPPORTED
-     *   RadioError:NO_MEMORY
      *   RadioError:INTERNAL_ERR
-     *   RadioError:SYSTEM_ERR
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:MODEM_ERR
      *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
-     *   RadioError:CANCELLED
      */
     oneway setPreferredNetworkTypeBitmapResponse(RadioResponseInfo info);
 
@@ -160,9 +149,7 @@ interface IRadioResponse extends @1.3::IRadioResponse {
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
-     *   RadioError:NO_MEMORY
      *   RadioError:NO_RESOURCES
-     *   RadioError:CANCELLED
      *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:SIM_ABSENT
      */
@@ -182,9 +169,7 @@ interface IRadioResponse extends @1.3::IRadioResponse {
      *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:INTERNAL_ERR
-     *   RadioError:NO_MEMORY
      *   RadioError:NO_RESOURCES
-     *   RadioError:CANCELLED
      *   RadioError:SIM_ABSENT
      */
     oneway setupDataCallResponse_1_4(RadioResponseInfo info, SetupDataCallResult dcResponse);
