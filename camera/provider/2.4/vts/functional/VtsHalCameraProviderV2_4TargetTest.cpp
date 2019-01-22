@@ -2896,6 +2896,8 @@ TEST_F(CameraHidlTest, configureStreamsWithSessionParameters) {
             continue;
         }
 
+        outputPreviewStreams.clear();
+
         ASSERT_EQ(Status::OK, getAvailableOutputStreams(staticMetaBuffer, outputPreviewStreams,
                 &previewThreshold));
         ASSERT_NE(0u, outputPreviewStreams.size());
