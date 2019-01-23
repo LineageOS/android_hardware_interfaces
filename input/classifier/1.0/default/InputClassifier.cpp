@@ -57,6 +57,18 @@ Return<Classification> InputClassifier::classify(const MotionEvent& event) {
     return Classification::NONE;
 }
 
+Return<void> InputClassifier::reset() {
+    // We don't have any internal state in this example implementation,
+    // so no work needed here.
+    return Void();
+}
+
+Return<void> InputClassifier::resetDevice(int32_t /*deviceId*/) {
+    // We don't have any internal per-device state in this example implementation,
+    // so no work needed here.
+    return Void();
+}
+
 }  // namespace implementation
 }  // namespace V1_0
 }  // namespace classifier

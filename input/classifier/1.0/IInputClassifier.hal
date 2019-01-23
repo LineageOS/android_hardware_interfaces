@@ -26,4 +26,16 @@ interface IInputClassifier {
    */
   classify(MotionEvent event) generates (Classification classification);
 
+  /**
+   * Called by the framework to reset the HAL internal state. The reset may be called
+   * to prevent an inconsistent stream of events to be sent to the HAL.
+   */
+  reset();
+
+  /**
+   * Called by the framework to reset the HAL internal state for a specific device.
+   * The reset may be called once device reset is received by the framework.
+   */
+  resetDevice(int32_t deviceId);
+
 };

@@ -34,6 +34,9 @@ struct InputClassifier : public IInputClassifier {
 
     Return<android::hardware::input::common::V1_0::Classification> classify(
             const android::hardware::input::common::V1_0::MotionEvent& event) override;
+
+    Return<void> reset() override;
+    Return<void> resetDevice(int32_t deviceId) override;
 };
 
 }  // namespace implementation
