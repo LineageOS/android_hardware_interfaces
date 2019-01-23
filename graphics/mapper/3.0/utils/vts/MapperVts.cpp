@@ -164,7 +164,8 @@ void Gralloc::freeBuffer(const native_handle_t* bufferHandle) {
 }
 
 void* Gralloc::lock(const native_handle_t* bufferHandle, uint64_t cpuUsage,
-                    const IMapper::Rect& accessRegion, int acquireFence) {
+                    const IMapper::Rect& accessRegion, int acquireFence, int32_t* outBytesPerPixel,
+                    int32_t* outBytesPerStride) {
     auto buffer = const_cast<native_handle_t*>(bufferHandle);
 
     NATIVE_HANDLE_DECLARE_STORAGE(acquireFenceStorage, 1, 0);
@@ -175,11 +176,17 @@ void* Gralloc::lock(const native_handle_t* bufferHandle, uint64_t cpuUsage,
         acquireFenceHandle = h;
     }
 
+    *outBytesPerPixel = -1;
+    *outBytesPerStride = -1;
+
     void* data = nullptr;
     mMapper->lock(buffer, cpuUsage, accessRegion, acquireFenceHandle,
-                  [&](const auto& tmpError, const auto& tmpData) {
+                  [&](const auto& tmpError, const auto& tmpData, int32_t tmpBytesPerPixel,
+                      int32_t tmpBytesPerStride) {
                       ASSERT_EQ(Error::NONE, tmpError) << "failed to lock buffer " << buffer;
                       data = tmpData;
+                      *outBytesPerPixel = tmpBytesPerPixel;
+                      *outBytesPerStride = tmpBytesPerStride;
                   });
 
     if (acquireFence >= 0) {
@@ -262,6 +269,15 @@ void Gralloc::getTransportSize(const native_handle_t* bufferHandle, uint32_t* ou
             *outNumFds = tmpNumFds;
             *outNumInts = tmpNumInts;
         });
+}
+
+bool Gralloc::isSupported(const IMapper::BufferDescriptorInfo& descriptorInfo) {
+    bool supported = false;
+    mMapper->isSupported(descriptorInfo, [&](const auto& tmpError, const auto& tmpSupported) {
+        ASSERT_EQ(Error::NONE, tmpError) << "failed to check is supported";
+        supported = tmpSupported;
+    });
+    return supported;
 }
 
 }  // namespace vts

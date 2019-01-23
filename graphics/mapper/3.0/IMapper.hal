@@ -183,6 +183,9 @@ interface IMapper {
      * buffer content in an indeterminate state or returning an error are both
      * acceptable.
      *
+     * 1D buffers (width = size in bytes, height = 1, pixel_format = BLOB) must
+     * "lock in place". The buffers must be directly accessible via mapping.
+     *
      * The client must not modify the content of the buffer outside of
      * @p accessRegion, and the device need not guarantee that content outside
      * of @p accessRegion is valid for reading. The result of reading or writing
@@ -192,6 +195,12 @@ interface IMapper {
      * On success, @p data must be filled with a pointer to the locked buffer
      * memory. This address will represent the top-left corner of the entire
      * buffer, even if @p accessRegion does not begin at the top-left corner.
+     *
+     * On success, bytesPerPixel must contain the number of bytes per pixel in
+     * the buffer. If the bytesPerPixel is unknown or variable, a value of -1
+     * should be returned. bytesPerStride must contain the bytes per stride of
+     * the buffer. If the bytesPerStride is unknown or variable, a value of -1
+     * should be returned.
      *
      * @param buffer Buffer to lock.
      * @param cpuUsage CPU usage flags to request. See +ndk
@@ -211,13 +220,17 @@ interface IMapper {
      *     - `NO_RESOURCES` if the buffer cannot be locked at this time. Note
      *       that locking may succeed at a later time.
      * @return data CPU-accessible pointer to the buffer data.
+     * @return bytesPerPixel the number of bytes per pixel in the buffer
+     * @return bytesPerStride the number of bytes per stride of the buffer
      */
     lock(pointer buffer,
          uint64_t cpuUsage,
          Rect accessRegion,
          handle acquireFence)
             generates (Error error,
-                       pointer data);
+                       pointer data,
+                       int32_t bytesPerPixel,
+                       int32_t bytesPerStride);
 
     /**
      * Locks a YCbCr buffer for the specified CPU usage.
@@ -271,6 +284,21 @@ interface IMapper {
      *     empty fence.
      */
     unlock(pointer buffer) generates (Error error, handle releaseFence);
+
+    /**
+     * Test whether the given BufferDescriptorInfo is allocatable.
+     *
+     * If this function returns true, it means that a buffer with the given
+     * description can be allocated on this implementation, unless resource
+     * exhaustion occurs. If this function returns false, it means that the
+     * allocation of the given description will never succeed.
+     *
+     * @param description the description of the buffer
+     * @return supported whether the description is supported
+     */
+    isSupported(BufferDescriptorInfo description)
+            generates (Error error,
+                       bool supported);
 
 };
 
