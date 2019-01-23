@@ -31,7 +31,12 @@ interface IWifiChip extends @1.2::IWifiChip {
         /**
          * Set Latency Mode.
          */
-         SET_LATENCY_MODE = 1 << 12
+        SET_LATENCY_MODE = 1 << 12,
+
+        /**
+         * Support P2P MAC randomization
+         */
+        P2P_RAND_MAC = 1 << 13
     };
 
     /**
