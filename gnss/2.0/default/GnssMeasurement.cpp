@@ -115,9 +115,9 @@ GnssData GnssMeasurement::getMockMeasurement() {
         .multipathIndicator =
             V1_0::IGnssMeasurementCallback::GnssMultipathIndicator::INDICATOR_UNKNOWN};
     V1_1::IGnssMeasurementCallback::GnssMeasurement measurement_1_1 = {.v1_0 = measurement_1_0};
-    V2_0::IGnssMeasurementCallback::GnssMeasurement measurement_2_0 = {
-        .v1_1 = measurement_1_1,
-        .codeType = IGnssMeasurementCallback::GnssMeasurementCodeType::CODE_TYPE_C};
+    V2_0::IGnssMeasurementCallback::GnssMeasurement measurement_2_0 = {.v1_1 = measurement_1_1,
+            .codeType = IGnssMeasurementCallback::GnssMeasurementCodeType::C,
+            .otherCodeTypeName = ""};
 
     hidl_vec<IGnssMeasurementCallback::GnssMeasurement> measurements(1);
     measurements[0] = measurement_2_0;
