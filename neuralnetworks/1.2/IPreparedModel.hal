@@ -59,6 +59,10 @@ interface IPreparedModel extends @1.0::IPreparedModel {
      *
      * @param request The input and output information on which the prepared
      *                model is to be executed.
+     * @param measure Specifies whether or not to measure duration of the execution.
+     *                The duration runs from the time the driver sees the call
+     *                to the execute_1_2 function to the time the driver invokes
+     *                the callback.
      * @param callback A callback object used to return the error status of
      *                 the execution. The callback object's notify function must
      *                 be called exactly once, even if the execution was
@@ -72,7 +76,7 @@ interface IPreparedModel extends @1.0::IPreparedModel {
      *                - INVALID_ARGUMENT if one of the input arguments is
      *                  invalid
      */
-    execute_1_2(Request request, IExecutionCallback callback)
+    execute_1_2(Request request, MeasureTiming measure, IExecutionCallback callback)
         generates (ErrorStatus status);
 
     /**
@@ -98,6 +102,10 @@ interface IPreparedModel extends @1.0::IPreparedModel {
      *
      * @param request The input and output information on which the prepared
      *                model is to be executed.
+     * @param measure Specifies whether or not to measure duration of the execution.
+     *                The duration runs from the time the driver sees the call
+     *                to the executeSynchronously function to the time the driver
+     *                returns from the function.
      * @return status Error status of the execution, must be:
      *                - NONE if execution is performed successfully
      *                - DEVICE_UNAVAILABLE if driver is offline or busy
@@ -112,9 +120,13 @@ interface IPreparedModel extends @1.0::IPreparedModel {
      *                      of the output operand in the Request outputs vector.
      *                      outputShapes must be empty unless the status is either
      *                      NONE or OUTPUT_INSUFFICIENT_SIZE.
+     * @return Timing Duration of execution. Unless measure is YES and status is
+     *                NONE, all times must be reported as UINT64_MAX. A driver may
+     *                choose to report any time as UINT64_MAX, indicating that
+     *                measurement is not available.
      */
-    executeSynchronously(Request request)
-        generates (ErrorStatus status, vec<OutputShape> outputShapes);
+    executeSynchronously(Request request, MeasureTiming measure)
+            generates (ErrorStatus status, vec<OutputShape> outputShapes, Timing timing);
 
     /**
      * Configure a Burst object used to execute multiple inferences on a

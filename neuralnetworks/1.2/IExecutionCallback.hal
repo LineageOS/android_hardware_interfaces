@@ -18,7 +18,6 @@ package android.hardware.neuralnetworks@1.2;
 
 import @1.0::ErrorStatus;
 import @1.0::IExecutionCallback;
-import OutputShape;
 
 /**
  * IExecutionCallback must be used to return the error status result from an
@@ -50,6 +49,11 @@ interface IExecutionCallback extends @1.0::IExecutionCallback {
      *                     of the output operand in the Request outputs vector.
      *                     outputShapes must be empty unless the status is either
      *                     NONE or OUTPUT_INSUFFICIENT_SIZE.
+     * @return Timing Duration of execution. Unless MeasureTiming::YES was passed when
+     *                launching the execution and status is NONE, all times must
+     *                be reported as UINT64_MAX. A driver may choose to report
+     *                any time as UINT64_MAX, indicating that particular measurement is
+     *                not available.
      */
-    oneway notify_1_2(ErrorStatus status, vec<OutputShape> outputShapes);
+  oneway notify_1_2(ErrorStatus status, vec<OutputShape> outputShapes, Timing timing);
 };
