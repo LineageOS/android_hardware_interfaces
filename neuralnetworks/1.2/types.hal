@@ -47,7 +47,7 @@ enum OperandType : @1.0::OperandType {
      * used to convert the 16 bit number to a real value in the following way:
      * realValue = integerValue * scale.
      *
-     * scale is a 32 bit floating point with value greater then zero.
+     * scale is a 32 bit floating point with value greater than zero.
      */
     TENSOR_QUANT16_SYMM = 7,
     /** A tensor of IEEE 754 16 bit floating point values. */
@@ -97,6 +97,16 @@ enum OperandType : @1.0::OperandType {
      * real_value = (integer_value - zeroPoint) * scale.
      */
     TENSOR_QUANT16_ASYMM = 12,
+    /**
+     * A tensor of 8 bit signed integers that represent real numbers.
+     *
+     * Attached to this tensor is a number representing real value scale that is
+     * used to convert the 8 bit number to a real value in the following way:
+     * realValue = integerValue * scale.
+     *
+     * scale is a 32 bit floating point with value greater than zero.
+     */
+    TENSOR_QUANT8_SYMM = 13,
     /* ADDING A NEW FUNDAMENTAL TYPE REQUIRES UPDATING THE VALUE OF
      * OperandTypeRange::FUNDAMENTAL_MAX.
      */
@@ -111,7 +121,7 @@ enum OperandType : @1.0::OperandType {
 enum OperandTypeRange : uint32_t {
     BASE_MIN        = 0,
     FUNDAMENTAL_MIN = 0,
-    FUNDAMENTAL_MAX = 12,
+    FUNDAMENTAL_MAX = 13,
     OEM_MIN         = 10000,
     OEM_MAX         = 10001,
     BASE_MAX        = 0xFFFF,
