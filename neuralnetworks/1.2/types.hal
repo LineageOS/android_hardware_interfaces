@@ -443,8 +443,34 @@ struct OutputShape {
 };
 
 /**
- * FmqRequestDatum is a single element of a serialized representation of a
- * {@link @1.0::Request} object which is sent across FastMessageQueue.
+ * Specifies whether or not to measure timing information during execution.
+ */
+enum MeasureTiming : int32_t {
+    NO  = 0,
+    YES = 1,
+};
+
+/**
+
+ * Timing information measured during execution. Each time is a duration from
+ * the beginning of some task to the end of that task, including time when that
+ * task is not active (for example, preempted by some other task, or
+ * waiting for some resource to become available).
+ *
+ * Times are measured in microseconds.
+ * When a time is not available, it must be reported as UINT64_MAX.
+ */
+struct Timing {
+    /** Execution time on device (not driver, which runs on host processor). */
+    uint64_t timeOnDevice;
+    /** Execution time in driver (including time on device). */
+    uint64_t timeInDriver;
+};
+
+/**
+ * FmqRequestDatum is a single element of a serialized representation of an
+ * execution request (a {@link @1.0::Request} object and a {@link MeasureTiming}
+ * value) which is sent across FastMessageQueue.
  *
  * The serialized representation for a particular execution is referred to later
  * in these descriptions as a 'packet'.
@@ -452,7 +478,7 @@ struct OutputShape {
  * FastMessageQueue can only pass HIDL-defined types that do not involve nested
  * buffers, handles, or interfaces.
  *
- * The {@link @1.0::Request} is serialized as follows:
+ * The request is serialized as follows:
  * 1) 'packetInformation'
  * 2) For each input operand:
  *    2.1) 'inputOperandInformation'
@@ -464,6 +490,7 @@ struct OutputShape {
  *         3.2.1) 'outputOperandDimensionValue'
  * 4) For each pool:
  *    4.1) 'poolIdentifier'
+ * 5) 'measureTiming'
  */
 safe_union FmqRequestDatum {
     /**
@@ -557,12 +584,21 @@ safe_union FmqRequestDatum {
      * identifier.
      */
     int32_t poolIdentifier;
+
+    /**
+     * Specifies whether or not to measure duration of the execution. The
+     * duration runs from the time the driver dequeues the request from a
+     * FastMessageQueue to the time the driver enqueues results to a
+     * FastMessageQueue.
+     */
+    MeasureTiming measureTiming;
 };
 
 /**
  * FmqResultDatum is a single element of a serialized representation of the
- * values returned from an execution ({@link @1.0::ErrorStatus} and
- * vec<{@link OutputShape}>) which is returned via FastMessageQueue.
+ * values returned from an execution ({@link @1.0::ErrorStatus},
+ * vec<{@link OutputShape}>, and {@link Timing}) which is returned via
+ * FastMessageQueue.
  *
  * The serialized representation for a particular execution is referred to later
  * in these descriptions as a 'packet'.
@@ -577,6 +613,7 @@ safe_union FmqRequestDatum {
  *    2.1) 'operandInformation'
  *    2.2) For each dimension element of the operand:
  *         2.2.1) 'operandDimensionValue'
+ * 3) 'executionTiming'
  */
 safe_union FmqResultDatum {
     /**
@@ -632,4 +669,12 @@ safe_union FmqResultDatum {
      * Element of the dimensions vector.
      */
     uint32_t operandDimensionValue;
+
+    /**
+     * Duration of execution. Unless measurement was requested and execution
+     * succeeds, all times must be reported as UINT64_MAX. A driver may choose
+     * to report any time as UINT64_MAX, indicating that measurement is not
+     * available.
+     */
+    Timing executionTiming;
 };
