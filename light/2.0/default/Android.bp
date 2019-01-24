@@ -31,13 +31,11 @@ cc_library_shared {
 
 }
 
-cc_binary {
-    name: "android.hardware.light@2.0-service",
+cc_defaults {
+    name: "light_service_defaults",
     relative_install_path: "hw",
     defaults: ["hidl_defaults"],
     vendor: true,
-    init_rc: ["android.hardware.light@2.0-service.rc"],
-    srcs: ["service.cpp"],
 
     shared_libs: [
         "liblog",
@@ -49,5 +47,19 @@ cc_binary {
         "libhidltransport",
         "android.hardware.light@2.0",
     ],
+}
 
+cc_binary {
+    name: "android.hardware.light@2.0-service",
+    defaults: ["light_service_defaults"],
+    init_rc: ["android.hardware.light@2.0-service.rc"],
+    srcs: ["service.cpp"],
+}
+
+cc_binary {
+    name: "android.hardware.light@2.0-service-lazy",
+    overrides: ["android.hardware.light@2.0-service"],
+    defaults: ["light_service_defaults"],
+    init_rc: ["android.hardware.light@2.0-service-lazy.rc"],
+    srcs: ["serviceLazy.cpp"],
 }
