@@ -235,6 +235,12 @@ enum AudioFormat : uint32_t {
     LDAC                = 0x23000000UL,
     /** Dolby Metadata-enhanced Audio Transmission */
     MAT                 = 0x24000000UL,
+    AAC_LATM            = 0x25000000UL,
+    CELT                = 0x26000000UL,
+    APTX_ADAPTIVE       = 0x27000000UL,
+    LHDC                = 0x28000000UL,
+    LHDC_LL             = 0x29000000UL,
+
     /** Deprecated */
     MAIN_MASK           = 0xFF000000UL,
     SUB_MASK            = 0x00FFFFFFUL,
@@ -306,6 +312,9 @@ enum AudioFormat : uint32_t {
     MAT_1_0             = (MAT | MAT_SUB_1_0),
     MAT_2_0             = (MAT | MAT_SUB_2_0),
     MAT_2_1             = (MAT | MAT_SUB_2_1),
+    AAC_LATM_LC         = (AAC_LATM | AAC_SUB_LC),
+    AAC_LATM_HE_V1      = (AAC_LATM | AAC_SUB_HE_V1),
+    AAC_LATM_HE_V2      = (AAC_LATM | AAC_SUB_HE_V2),
 };
 
 /**

@@ -17,6 +17,7 @@
 package android.hardware.neuralnetworks@1.2;
 
 import @1.0::DataLocation;
+import @1.0::ErrorStatus;
 import @1.0::OperandLifeTime;
 import @1.0::OperandType;
 import @1.0::PerformanceInfo;
@@ -443,4 +444,196 @@ struct OutputShape {
      * Whether the provided buffer size is sufficient for the output.
      */
     bool isSufficient;
+};
+
+/**
+ * FmqRequestDatum is a single element of a serialized representation of a
+ * {@link @1.0::Request} object which is sent across FastMessageQueue.
+ *
+ * The serialized representation for a particular execution is referred to later
+ * in these descriptions as a 'packet'.
+ *
+ * FastMessageQueue can only pass HIDL-defined types that do not involve nested
+ * buffers, handles, or interfaces.
+ *
+ * The {@link @1.0::Request} is serialized as follows:
+ * 1) 'packetInformation'
+ * 2) For each input operand:
+ *    2.1) 'inputOperandInformation'
+ *    2.2) For each dimension element of the operand:
+ *         2.2.1) 'inputOperandDimensionValue'
+ * 3) For each output operand:
+ *    3.1) 'outputOperandInformation'
+ *    3.2) For each dimension element of the operand:
+ *         3.2.1) 'outputOperandDimensionValue'
+ * 4) For each pool:
+ *    4.1) 'poolIdentifier'
+ */
+safe_union FmqRequestDatum {
+    /**
+     * Type to describe the high-level layout of the packet.
+     */
+    struct PacketInformation {
+        /**
+         * How many elements the packet contains, including the
+         * "packetInformation" datum.
+         */
+        uint32_t packetSize;
+
+        /**
+         * Number of input operands.
+         */
+        uint32_t numberOfInputOperands;
+
+        /**
+         * Number of output operands.
+         */
+        uint32_t numberOfOutputOperands;
+
+        /**
+         * Number of pool identifiers.
+         */
+        uint32_t numberOfPools;
+    };
+
+    /**
+     * Type representing the information for each operand.
+     */
+    struct OperandInformation {
+        /**
+         * If true, the argument does not have a value. This can be used for
+         * operations that take optional arguments. If true, the fields of
+         * 'location' are set to 0, 'numberOfDimensions' is set to 0,  and the
+         * dimensions information is omitted from the serialization.
+         */
+        bool hasNoValue;
+
+        /**
+         * The location within one of the memory pools passed in the Request.
+         */
+        DataLocation location;
+
+        /**
+         * Number of subsequent elements that belong to the dimensions vector.
+         */
+        uint32_t numberOfDimensions;
+    };
+
+    /**
+     * packetInformation is the first element of the packet and describes the
+     * remainder of the packet.
+     */
+    PacketInformation packetInformation;
+
+    /**
+     * Information for each input operand.
+     */
+    OperandInformation inputOperandInformation;
+
+    /**
+     * Element of the dimensions vector.
+     */
+    uint32_t inputOperandDimensionValue;
+
+    /**
+     * Information for each output operand.
+     */
+    OperandInformation outputOperandInformation;
+
+    /**
+     * Element of the dimensions vector.
+     */
+    uint32_t outputOperandDimensionValue;
+
+    /**
+     * Unique identifier for a pool.
+     *
+     * A {@link @1.0::Request} passes across one or more pools of shared memory
+     * for the inputs and outputs of an execution. However, these memory pools
+     * are not able to be sent across FastMessageQueue directly. Instead, the
+     * producing side of the FMQ represents each different pool with a unique
+     * identifier, and sends this identifier across the FMQ. Whenever the
+     * consuming side of the FMQ needs the memory corresponding to this unique
+     * identifier, it can pass the identifier to
+     * {@link IBurstCallback::getMemories} to retreive the memory. Although this
+     * HIDL Binder call is expensive compared to communication across FMQ, it is
+     * only needed in the cases when the consumer does not recognize the unique
+     * identifier.
+     */
+    int32_t poolIdentifier;
+};
+
+/**
+ * FmqResultDatum is a single element of a serialized representation of the
+ * values returned from an execution ({@link @1.0::ErrorStatus} and
+ * vec<{@link OutputShape}>) which is returned via FastMessageQueue.
+ *
+ * The serialized representation for a particular execution is referred to later
+ * in these descriptions as a 'packet'.
+ *
+ * FastMessageQueue can only pass HIDL-defined types that do not involve nested
+ * buffers, handles, or interfaces.
+ *
+ * The execution return values ({@link @1.0::ErrorStatus} and
+ * vec<{@link OutputShape}>) are serialized as follows:
+ * 1) 'packetInformation'
+ * 2) For each returned operand:
+ *    2.1) 'operandInformation'
+ *    2.2) For each dimension element of the operand:
+ *         2.2.1) 'operandDimensionValue'
+ */
+safe_union FmqResultDatum {
+    /**
+     * Type to describe the high-level layout of the packet.
+     */
+    struct PacketInformation {
+        /**
+         * How many elements the packet contains, including the
+         * "packetInformation" datum.
+         */
+        uint32_t packetSize;
+
+        /**
+         * Status of the execution.
+         */
+        ErrorStatus errorStatus;
+
+        /**
+         * Number of returned operands.
+         */
+        uint32_t numberOfOperands;
+    };
+
+    /**
+     * Type representing the information for each operand.
+     */
+    struct OperandInformation {
+        /**
+         * Indicates whether the operand's output buffer is large enough to
+         * store the operand's result data.
+         */
+        bool isSufficient;
+
+        /**
+         * Number of subsequent elements that belong to the dimensions vector.
+         */
+        uint32_t numberOfDimensions;
+    };
+
+    /**
+     * packetInformation is the first element of the packet and describes the
+     * remainder of the packet. It additionally includes the status of the
+     * execution.
+     */
+    PacketInformation packetInformation;
+
+    /**
+     * Information for each returned operand.
+     */
+    OperandInformation operandInformation;
+
+    /**
+     * Element of the dimensions vector.
+     */
+    uint32_t operandDimensionValue;
 };

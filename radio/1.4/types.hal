@@ -230,7 +230,7 @@ enum DataCallFailCause : @1.0::DataCallFailCause {
      * Network has already initiated the activation, modification, or deactivation of bearer
      * resources that was requested by the UE.
      */
-    COLLISION_WITH_NW_INIT_REQ = 0x38,
+    COLLISION_WITH_NETWORK_INITIATED_REQUEST = 0x38,
     /**
      * Network supports IPv4v6 PDP type only. Non-IP type is not allowed. In LTE mode of operation,
      * this is a PDN throttling cause code, meaning the UE may throttle further requests to the
@@ -244,7 +244,7 @@ enum DataCallFailCause : @1.0::DataCallFailCause {
      */
     ONLY_NON_IP_ALLOWED = 0x3A,
     /**
-     * QCI indicated in the UE request cannot be supported.
+     * QCI (QoS Class Identifier) indicated in the UE request cannot be supported.
      */
     UNSUPPORTED_QCI_VALUE = 0x3B,
     /**
@@ -258,7 +258,7 @@ enum DataCallFailCause : @1.0::DataCallFailCause {
     /**
      * Not receiving either a PCSCF or a DNS address, one of them being mandatory.
      */
-    INVALID_PCSCF_DNS_ADDR = 0x7C,
+    INVALID_PCSCF_OR_DNS_ADDRESS = 0x7C,
     /**
      * Emergency call bring up on a different ePDG.
      */
@@ -266,128 +266,136 @@ enum DataCallFailCause : @1.0::DataCallFailCause {
     /**
      * UE performs a detach or disconnect PDN action based on TE requirements.
      */
-    UE_INIT_DETACH_OR_DISCONNECT = 0x80,
+    UE_INITIATED_DETACH_OR_DISCONNECT = 0x80,
 
     /**
-     * Reason unspecified for foreign agent rejected MIP registration.
+     * Reason unspecified for foreign agent rejected MIP (Mobile IP) registration.
      */
     MIP_FA_REASON_UNSPECIFIED = 0x7D0,
     /**
-     * Foreign agent administratively prohibited MIP registration.
+     * Foreign agent administratively prohibited MIP (Mobile IP) registration.
      */
     MIP_FA_ADMIN_PROHIBITED = 0x7D1,
     /**
-     * Foreign agent rejected MIP registration because of insufficient resources.
+     * Foreign agent rejected MIP (Mobile IP) registration because of insufficient resources.
      */
     MIP_FA_INSUFFICIENT_RESOURCES = 0x7D2,
     /**
-     * Foreign agent rejected MIP registration because of MN-AAA authenticator was wrong.
+     * Foreign agent rejected MIP (Mobile IP) registration because of MN-AAA authenticator was
+     * wrong.
      */
-    MIP_FA_MOBILE_NODE_AUTH_FAILURE = 0x7D3,
+    MIP_FA_MOBILE_NODE_AUTHENTICATION_FAILURE = 0x7D3,
     /**
-     * Foreign agent rejected MIP registration because of home agent authentication failure.
+     * Foreign agent rejected MIP (Mobile IP) registration because of home agent authentication
+     * failure.
      */
-    MIP_FA_HA_AUTH_FAILURE = 0x7D4,
+    MIP_FA_HOME_AGENT_AUTHENTICATION_FAILURE = 0x7D4,
     /**
-     * Foreign agent rejected MIP registration because of requested lifetime was too long.
+     * Foreign agent rejected MIP (Mobile IP) registration because of requested lifetime was too
+     * long.
      */
-    MIP_FA_REQ_LIFETIME_TOO_LONG = 0x7D5,
+    MIP_FA_REQUESTED_LIFETIME_TOO_LONG = 0x7D5,
     /**
-     * Foreign agent rejected MIP registration because of malformed request.
+     * Foreign agent rejected MIP (Mobile IP) registration because of malformed request.
      */
     MIP_FA_MALFORMED_REQUEST = 0x7D6,
     /**
-     * Foreign agent rejected MIP registration because of malformed reply.
+     * Foreign agent rejected MIP (Mobile IP) registration because of malformed reply.
      */
     MIP_FA_MALFORMED_REPLY = 0x7D7,
     /**
-     * Foreign agent rejected MIP registration because of requested encapsulation was unavailable.
+     * Foreign agent rejected MIP (Mobile IP) registration because of requested encapsulation was
+     * unavailable.
      */
     MIP_FA_ENCAPSULATION_UNAVAILABLE = 0x7D8,
     /**
-     * Foreign agent rejected MIP registration of VJ Header Compression was unavailable.
+     * Foreign agent rejected MIP (Mobile IP) registration of VJ Header Compression was unavailable.
      */
-    MIP_FA_VJHC_UNAVAILABLE = 0x7D9,
+    MIP_FA_VJ_HEADER_COMPRESSION_UNAVAILABLE = 0x7D9,
     /**
-     * Foreign agent rejected MIP registration because of reverse tunnel was unavailable.
+     * Foreign agent rejected MIP (Mobile IP) registration because of reverse tunnel was
+     * unavailable.
      */
-    MIP_FA_REV_TUNNEL_UNAVAILABLE = 0x7DA,
+    MIP_FA_REVERSE_TUNNEL_UNAVAILABLE = 0x7DA,
     /**
-     * Foreign agent rejected MIP registration because of reverse tunnel was mandatory but not
-     * requested by device.
+     * Foreign agent rejected MIP (Mobile IP) registration because of reverse tunnel was mandatory
+     * but not requested by device.
      */
-    MIP_FA_REV_TUNNEL_IS_MAND_AND_T_BIT_NOT_SET = 0x7DB,
+    MIP_FA_REVERSE_TUNNEL_IS_MANDATORY = 0x7DB,
     /**
-     * Foreign agent rejected MIP registration because of delivery style was not supported.
+     * Foreign agent rejected MIP (Mobile IP) registration because of delivery style was not
+     * supported.
      */
-    MIP_FA_DELIVERY_STYLE_NOT_SUPP = 0x7DC,
+    MIP_FA_DELIVERY_STYLE_NOT_SUPPORTED = 0x7DC,
     /**
-     * Foreign agent rejected MIP registration because of missing NAI.
+     * Foreign agent rejected MIP (Mobile IP) registration because of missing NAI (Network Access
+     * Identifier).
      */
     MIP_FA_MISSING_NAI = 0x7DD,
     /**
-     * Foreign agent rejected MIP registration because of missing Home Agent.
+     * Foreign agent rejected MIP (Mobile IP) registration because of missing Home Agent.
      */
-    MIP_FA_MISSING_HA = 0x7DE,
+    MIP_FA_MISSING_HOME_AGENT = 0x7DE,
     /**
-     * Foreign agent rejected MIP registration because of missing Home Address.
+     * Foreign agent rejected MIP (Mobile IP) registration because of missing Home Address.
      */
-    MIP_FA_MISSING_HOME_ADDR = 0x7DF,
+    MIP_FA_MISSING_HOME_ADDRESS = 0x7DF,
     /**
-     * Foreign agent rejected MIP registration because of unknown challenge.
+     * Foreign agent rejected MIP (Mobile IP) registration because of unknown challenge.
      */
     MIP_FA_UNKNOWN_CHALLENGE = 0x7E0,
     /**
-     * Foreign agent rejected MIP registration because of missing challenge.
+     * Foreign agent rejected MIP (Mobile IP) registration because of missing challenge.
      */
     MIP_FA_MISSING_CHALLENGE = 0x7E1,
     /**
-     * Foreign agent rejected MIP registration because of stale challenge.
+     * Foreign agent rejected MIP (Mobile IP) registration because of stale challenge.
      */
     MIP_FA_STALE_CHALLENGE = 0x7E2,
     /**
-     * Reason unspecified for home agent rejected MIP registration.
+     * Reason unspecified for home agent rejected MIP (Mobile IP) registration.
      */
     MIP_HA_REASON_UNSPECIFIED = 0x7E3,
     /**
-     * Home agent administratively prohibited MIP registration.
+     * Home agent administratively prohibited MIP (Mobile IP) registration.
      */
     MIP_HA_ADMIN_PROHIBITED = 0x7E4,
     /**
-     * Home agent rejected MIP registration because of insufficient resources.
+     * Home agent rejected MIP (Mobile IP) registration because of insufficient resources.
      */
     MIP_HA_INSUFFICIENT_RESOURCES = 0x7E5,
     /**
-     * Home agent rejected MIP registration because of MN-HA authenticator was wrong.
+     * Home agent rejected MIP (Mobile IP) registration because of MN-HA authenticator was wrong.
      */
-    MIP_HA_MOBILE_NODE_AUTH_FAILURE = 0x7E6,
+    MIP_HA_MOBILE_NODE_AUTHENTICATION_FAILURE = 0x7E6,
     /**
-     * Home agent rejected MIP registration because of foreign agent authentication failure.
+     * Home agent rejected MIP (Mobile IP) registration because of foreign agent authentication
+     * failure.
      */
-    MIP_HA_FA_AUTH_FAILURE = 0x7E7,
+    MIP_HA_FOREIGN_AGENT_AUTHENTICATION_FAILURE = 0x7E7,
     /**
-     * Home agent rejected MIP registration because of registration id mismatch.
+     * Home agent rejected MIP (Mobile IP) registration because of registration id mismatch.
      */
     MIP_HA_REGISTRATION_ID_MISMATCH = 0x7E8,
     /**
-     * Home agent rejected MIP registration because of malformed request.
+     * Home agent rejected MIP (Mobile IP) registration because of malformed request.
      */
     MIP_HA_MALFORMED_REQUEST = 0x7E9,
     /**
-     * Home agent rejected MIP registration because of unknown home agent address.
+     * Home agent rejected MIP (Mobile IP) registration because of unknown home agent address.
      */
-    MIP_HA_UNKNOWN_HA_ADDR = 0x7EA,
+    MIP_HA_UNKNOWN_HOME_AGENT_ADDRESS = 0x7EA,
     /**
-     * Home agent rejected MIP registration because of reverse tunnel was unavailable.
+     * Home agent rejected MIP (Mobile IP) registration because of reverse tunnel was unavailable.
      */
-    MIP_HA_REV_TUNNEL_UNAVAILABLE = 0x7EB,
+    MIP_HA_REVERSE_TUNNEL_UNAVAILABLE = 0x7EB,
     /**
-     * Home agent rejected MIP registration because of reverse tunnel is mandatory but not
-     * requested by device.
+     * Home agent rejected MIP (Mobile IP) registration because of reverse tunnel is mandatory but
+     * not requested by device.
      */
-    MIP_HA_REV_TUNNEL_IS_MANDATORY_AND_T_BIT_NOT_SET = 0x7EC,
+    MIP_HA_REVERSE_TUNNEL_IS_MANDATORY = 0x7EC,
     /**
-     * Home agent rejected MIP registration because of encapsulation unavailable.
+     * Home agent rejected MIP (Mobile IP) registration because of encapsulation unavailable.
      */
     MIP_HA_ENCAPSULATION_UNAVAILABLE = 0x7ED,
     /**
@@ -397,29 +405,29 @@ enum DataCallFailCause : @1.0::DataCallFailCause {
     /**
      * Brought down by the network.
      */
-    NW_INITIATED_TERMINATION = 0x7EF,
+    NETWORK_INITIATED_TERMINATION = 0x7EF,
     /**
      * Another application in modem preempts the data call.
      */
     MODEM_APP_PREEMPTED = 0x7F0,
     /**
-     * V4 PDN is in throttled state due to network providing only V6 address during the previous
+     * IPV4 PDN is in throttled state due to network providing only IPV6 address during the previous
      * VSNCP bringup (subs_limited_to_v6).
      */
-    ERR_PDN_IPV4_CALL_DISALLOWED = 0x7F1,
+    PDN_IPV4_CALL_DISALLOWED = 0x7F1,
     /**
-     * V4 PDN is in throttled state due to previous VSNCP bringup failure(s).
+     * IPV4 PDN is in throttled state due to previous VSNCP bringup failure(s).
      */
-    ERR_PDN_IPV4_CALL_THROTTLED = 0x7F2,
+    PDN_IPV4_CALL_THROTTLED = 0x7F2,
     /**
-     * V6 PDN is in throttled state due to network providing only V4 address during the previous
+     * IPV6 PDN is in throttled state due to network providing only IPV4 address during the previous
      * VSNCP bringup (subs_limited_to_v4).
      */
-    ERR_PDN_IPV6_CALL_DISALLOWED = 0x7F3,
+    PDN_IPV6_CALL_DISALLOWED = 0x7F3,
     /**
-     * V6 PDN is in throttled state due to previous VSNCP bringup failure(s).
+     * IPV6 PDN is in throttled state due to previous VSNCP bringup failure(s).
      */
-    ERR_PDN_IPV6_CALL_THROTTLED = 0x7F4,
+    PDN_IPV6_CALL_THROTTLED = 0x7F4,
     /**
      * Modem restart.
      */
@@ -435,7 +443,7 @@ enum DataCallFailCause : @1.0::DataCallFailCause {
     /**
      * Physical link is in the process of cleanup.
      */
-    PHYS_LINK_CLOSE_IN_PROGRESS = 0x7F8,
+    PHYSICAL_LINK_CLOSE_IN_PROGRESS = 0x7F8,
     /**
      * Interface bring up is attempted for an APN that is yet to be handed over to target RAT.
      */
@@ -447,11 +455,11 @@ enum DataCallFailCause : @1.0::DataCallFailCause {
     /**
      * Card was refreshed or removed.
      */
-    SIM_CARD_EVT = 0x7FB,
+    SIM_CARD_CHANGED = 0x7FB,
     /**
      * Device is going into lower power mode or powering down.
      */
-    LPM_OR_PWR_DOWN = 0x7FC,
+    LOW_POWER_MODE_OR_POWERING_DOWN = 0x7FC,
     /**
      * APN has been disabled.
      */
@@ -463,7 +471,7 @@ enum DataCallFailCause : @1.0::DataCallFailCause {
     /**
      * IPv6 address transfer failed.
      */
-    IPV6_ADDR_TRANSFER_FAILED = 0x7FF,
+    IPV6_ADDRESS_TRANSFER_FAILED = 0x7FF,
     /**
      * Target RAT swap failed.
      */
@@ -485,12 +493,12 @@ enum DataCallFailCause : @1.0::DataCallFailCause {
      * IPv4 data call bring up is rejected because the UE already maintains the allotted maximum
      * number of IPv4 data connections.
      */
-    MAX_V4_CONNECTIONS = 0x804,
+    MAX_IPV4_CONNECTIONS = 0x804,
     /**
      * IPv6 data call bring up is rejected because the UE already maintains the allotted maximum
      * number of IPv6 data connections.
      */
-    MAX_V6_CONNECTIONS = 0x805,
+    MAX_IPV6_CONNECTIONS = 0x805,
     /**
      * New PDN bring up is rejected during interface selection because the UE has already allotted
      * the available interfaces for other PDNs.
@@ -512,835 +520,834 @@ enum DataCallFailCause : @1.0::DataCallFailCause {
     /**
      * The current interface is being in use.
      */
-    IFACE_IN_USE = 0x80A,
+    INTERFACE_IN_USE = 0x80A,
     /**
      * PDN connection to the APN is disallowed on the roaming network.
      */
-    APN_DISALLOWED_ON_ROAMING = 0x80C,
+    APN_DISALLOWED_ON_ROAMING = 0x80B,
     /**
      * APN-related parameters are changed.
      */
-    APN_PARAM_CHANGED = 0x80D,
+    APN_PARAMETERS_CHANGED = 0x80C,
     /**
      * PDN is attempted to be brought up with NULL APN but NULL APN is not supported.
      */
-    NULL_APN_DISALLOWED = 0x80E,
+    NULL_APN_DISALLOWED = 0x80D,
     /**
      * Thermal level increases and causes calls to be torn down when normal mode of operation is
      * not allowed.
      */
-    THERMAL_MITIGATION = 0x80F,
+    THERMAL_MITIGATION = 0x80E,
     /**
      * PDN Connection to a given APN is disallowed because data is disabled from the device user
      * interface settings.
      */
-    DATA_SETTINGS_DISABLED = 0x810,
+    DATA_SETTINGS_DISABLED = 0x80F,
     /**
      * PDN Connection to a given APN is disallowed because data roaming is disabled from the device
      * user interface settings and the UE is roaming.
      */
-    DATA_ROAMING_SETTINGS_DISABLED = 0x811,
+    DATA_ROAMING_SETTINGS_DISABLED = 0x810,
     /**
-     * Default data subscription switch occurs.
+     * DDS (Default data subscription) switch occurs.
      */
-    DDS_CALL_ABORT = 0x812,
+    DDS_SWITCHED = 0x811,
     /**
      * PDN being brought up with an APN that is part of forbidden APN Name list.
      */
-    INVALID_APN_NAME = 0x813,
+    FORBIDDEN_APN_NAME = 0x812,
     /**
      * Default data subscription switch is in progress.
      */
-    DDS_SWITCH_IN_PROGRESS = 0x814,
+    DDS_SWITCH_IN_PROGRESS = 0x813,
     /**
      * Roaming is disallowed during call bring up.
      */
-    CALL_DISALLOWED_IN_ROAMING = 0x815,
+    CALL_DISALLOWED_IN_ROAMING = 0x814,
     /**
      * UE is unable to bring up a non-IP data call because the device is not camped on a NB1 cell.
      */
-    NON_IP_NOT_SUPPORTED = 0x816,
+    NON_IP_NOT_SUPPORTED = 0x815,
     /**
      * Non-IP PDN is in throttled state due to previous VSNCP bringup failure(s).
      */
-    ERR_PDN_NON_IP_CALL_THROTTLED = 0x817,
+    PDN_NON_IP_CALL_THROTTLED = 0x816,
     /**
      * Non-IP PDN is in disallowed state due to the network providing only an IP address.
      */
-    ERR_PDN_NON_IP_CALL_DISALLOWED = 0x818,
+    PDN_NON_IP_CALL_DISALLOWED = 0x817,
     /**
      * Device in CDMA locked state.
      */
-    CDMA_LOCK = 0x819,
+    CDMA_LOCK = 0x818,
     /**
      * Received an intercept order from the base station.
      */
-    CDMA_INTERCEPT = 0x81A,
+    CDMA_INTERCEPT = 0x819,
     /**
      * Receiving a reorder from the base station.
      */
-    CDMA_REORDER = 0x81B,
+    CDMA_REORDER = 0x81A,
     /**
-     * Receiving a release from the base station with a SO Reject reason.
+     * Receiving a release from the base station with a SO (Service Option) Reject reason.
      */
-    CDMA_REL_SO_REJ = 0x81C,
+    CDMA_RELEASE_DUE_TO_SO_REJECTION = 0x81B,
     /**
      * Receiving an incoming call from the base station.
      */
-    CDMA_INCOM_CALL = 0x81D,
+    CDMA_INCOMING_CALL = 0x81C,
     /**
-     * RL/FL fade or receiving a call release from the base station.
+     * Received an alert stop from the base station due to incoming only.
      */
-    CDMA_ALERT_STOP = 0x81E,
+    CDMA_ALERT_STOP = 0x81D,
     /**
      * Channel acquisition failures. This indicates that device has failed acquiring all the
      * channels in the PRL.
      */
-    CHANNEL_ACQUISITION_FAILURE = 0x81F,
+    CHANNEL_ACQUISITION_FAILURE = 0x81E,
     /**
      * Maximum access probes transmitted.
      */
-    MAX_ACCESS_PROBE = 0x820,
+    MAX_ACCESS_PROBE = 0x81F,
     /**
      * Concurrent service is not supported by base station.
      */
-    CCS_NOT_SUPPORTED_BY_BS = 0x821,
+    CONCURRENT_SERVICE_NOT_SUPPORTED_BY_BASE_STATION = 0x820,
     /**
      * There was no response received from the base station.
      */
-    NO_RESPONSE_FROM_BS = 0x822,
+    NO_RESPONSE_FROM_BASE_STATION = 0x821,
     /**
      * The base station rejecting the call.
      */
-    REJECTED_BY_BS = 0x823,
+    REJECTED_BY_BASE_STATION = 0x822,
     /**
      * The concurrent services requested were not compatible.
      */
-    CCS_INCOMPATIBLE = 0x824,
+    CONCURRENT_SERVICES_INCOMPATIBLE = 0x823,
     /**
      * Device does not have CDMA service.
      */
-    NO_CDMA_SRV = 0x825,
+    NO_CDMA_SERVICE = 0x824,
     /**
      * RUIM not being present.
      */
-    UIM_NOT_PRESENT = 0x826,
+    RUIM_NOT_PRESENT = 0x825,
     /**
      * Receiving a retry order from the base station.
      */
-    CDMA_RETRY_ORDER = 0x827,
+    CDMA_RETRY_ORDER = 0x826,
     /**
      * Access blocked by the base station.
      */
-    ACCESS_BLOCK = 0x828,
+    ACCESS_BLOCK = 0x827,
     /**
      * Access blocked by the base station for all mobile devices.
      */
-    ACCESS_BLOCK_ALL = 0x829,
+    ACCESS_BLOCK_ALL = 0x828,
     /**
      * Maximum access probes for the IS-707B call.
      */
-    IS707B_MAX_ACC = 0x82A,
+    IS707B_MAX_ACCESS_PROBES = 0x829,
     /**
      * Put device in thermal emergency.
      */
-    THERMAL_EMERGENCY = 0x82B,
+    THERMAL_EMERGENCY = 0x82A,
     /**
      * In favor of a voice call or SMS when concurrent voice and data are not supported.
      */
-    CCS_NOT_ALLOWED = 0x82C,
+    CONCURRENT_SERVICES_NOT_ALLOWED = 0x82B,
     /**
      * The other clients rejected incoming call.
      */
-    INCOM_REJ = 0x82D,
+    INCOMING_CALL_REJECTED = 0x82C,
     /**
      * No service on the gateway.
      */
-    NO_GATEWAY_SRV = 0x82E,
+    NO_SERVICE_ON_GATEWAY = 0x82D,
     /**
      * GPRS context is not available.
      */
-    NO_GPRS_CONTEXT = 0x82F,
+    NO_GPRS_CONTEXT = 0x82E,
     /**
      * Network refuses service to the MS because either an identity of the MS is not acceptable to
      * the network or the MS does not pass the authentication check.
      */
-    ILLEGAL_MS = 0x830,
+    ILLEGAL_MS = 0x82F,
     /**
      * ME could not be authenticated and the ME used is not acceptable to the network.
      */
-    ILLEGAL_ME = 0x831,
+    ILLEGAL_ME = 0x830,
     /**
      * Not allowed to operate either GPRS or non-GPRS services.
      */
-    GPRS_SERVICES_AND_NON_GPRS_SERVICES_NOT_ALLOWED = 0x832,
+    GPRS_SERVICES_AND_NON_GPRS_SERVICES_NOT_ALLOWED = 0x831,
     /**
      * MS is not allowed to operate GPRS services.
      */
-    GPRS_SERVICES_NOT_ALLOWED = 0x833,
+    GPRS_SERVICES_NOT_ALLOWED = 0x832,
     /**
      * No matching identity or context could be found in the network.
      */
-    MS_IDENTITY_CANNOT_BE_DERIVED_BY_THE_NETWORK = 0x834,
+    MS_IDENTITY_CANNOT_BE_DERIVED_BY_THE_NETWORK = 0x833,
     /**
-     * Mobile reachable timer has expired, or the GMM context data related to the subscription dose
+     * Mobile reachable timer has expired, or the GMM context data related to the subscription does
      * not exist in the SGSN.
      */
-    IMPLICITLY_DETACHED = 0x835,
+    IMPLICITLY_DETACHED = 0x834,
     /**
      * UE requests GPRS service, or the network initiates a detach request in a PLMN which does not
      * offer roaming for GPRS services to that MS.
      */
-    PLMN_NOT_ALLOWED = 0x836,
+    PLMN_NOT_ALLOWED = 0x835,
     /**
      * MS requests service, or the network initiates a detach request, in a location area where the
      * HPLMN determines that the MS, by subscription, is not allowed to operate.
      */
-    LA_NOT_ALLOWED = 0x837,
+    LOCATION_AREA_NOT_ALLOWED = 0x836,
     /**
      * UE requests GPRS service or the network initiates a detach request in a PLMN that does not
      * offer roaming for GPRS services.
      */
-    GPRS_SERVICES_NOT_ALLOWED_IN_THIS_PLMN = 0x838,
+    GPRS_SERVICES_NOT_ALLOWED_IN_THIS_PLMN = 0x837,
     /**
      * PDP context already exists.
      */
-    PDP_DUPLICATE = 0x839,
+    PDP_DUPLICATE = 0x838,
     /**
      * RAT change on the UE.
      */
-    UE_RAT_CHANGE = 0x83A,
+    UE_RAT_CHANGE = 0x839,
     /**
      * Network cannot serve a request from the MS due to congestion.
      */
-    CONGESTION = 0x83B,
+    CONGESTION = 0x83A,
     /**
      * MS requests an establishment of the radio access bearers for all active PDP contexts by
      * sending a service request message indicating data to the network, but the SGSN does not have
      * any active PDP context.
      */
-    NO_PDP_CONTEXT_ACTIVATED = 0x83C,
+    NO_PDP_CONTEXT_ACTIVATED = 0x83B,
     /**
      * Access class blocking restrictions for the current camped cell.
      */
-    ACCESS_CLASS_DSAC_REJECTION = 0x83D,
+    ACCESS_CLASS_DSAC_REJECTION = 0x83C,
     /**
      * SM attempts PDP activation for a maximum of four attempts.
      */
-    PDP_ACTIVATE_MAX_RETRY_FAILED = 0x83E,
+    PDP_ACTIVATE_MAX_RETRY_FAILED = 0x83D,
     /**
      * Radio access bearer failure.
      */
-    RAB_FAILURE = 0x83F,
+    RADIO_ACCESS_BEARER_FAILURE = 0x83E,
     /**
      * Invalid EPS bearer identity in the request.
      */
-    ESM_UNKNOWN_EPS_BEARER_CONTEXT = 0x840,
+    ESM_UNKNOWN_EPS_BEARER_CONTEXT = 0x83F,
     /**
      * Data radio bearer is released by the RRC.
      */
-    DRB_RELEASED_AT_RRC = 0x841,
+    DRB_RELEASED_BY_RRC = 0x840,
     /**
      * Indicate the connection was released.
      */
-    NAS_SIG_CONN_RELEASED = 0x842,
+    CONNECTION_RELEASED = 0x841,
     /**
      * UE is detached.
      */
-    EMM_DETACHED = 0x843,
+    EMM_DETACHED = 0x842,
     /**
      * Attach procedure is rejected by the network.
      */
-    EMM_ATTACH_FAILED = 0x844,
+    EMM_ATTACH_FAILED = 0x843,
     /**
      * Attach procedure is started for EMC purposes.
      */
-    EMM_ATTACH_STARTED = 0x845,
+    EMM_ATTACH_STARTED = 0x844,
     /**
      * Service request procedure failure.
      */
-    LTE_NAS_SERVICE_REQ_FAILED = 0x846,
+    LTE_NAS_SERVICE_REQUEST_FAILED = 0x845,
     /**
-     * Active dedication bearer was requested using the same default bearer ID.
+     * Active dedicated bearer was requested using the same default bearer ID.
      */
-    ESM_ACTIVE_DEDICATED_BEARER_REACTIVATED_BY_NW = 0x847,
+    DUPLICATE_BEARER_ID = 0x846,
     /**
      * Collision scenarios for the UE and network-initiated procedures.
      */
-    ESM_LOWER_LAYER_FAILURE = 0x848,
+    ESM_COLLISION_SCENARIOS = 0x847,
     /**
      * Bearer must be deactivated to synchronize with the network.
      */
-    ESM_SYNC_UP_WITH_NW = 0x849,
+    ESM_BEARER_DEACTIVATED_TO_SYNC_WITH_NETWORK = 0x848,
     /**
-     * Active dedication bearer was requested for an existing default bearer.
+     * Active dedicated bearer was requested for an existing default bearer.
      */
-    ESM_NW_ACTIVATED_DED_BEARER_WITH_ID_OF_DEF_BEARER = 0x84A,
+    ESM_NW_ACTIVATED_DED_BEARER_WITH_ID_OF_DEF_BEARER = 0x849,
     /**
      * Bad OTA message is received from the network.
      */
-    ESM_BAD_OTA_MESSAGE = 0x84B,
+    ESM_BAD_OTA_MESSAGE = 0x84A,
     /**
      * Download server rejected the call.
      */
-    ESM_DS_REJECTED_THE_CALL = 0x84C,
+    ESM_DOWNLOAD_SERVER_REJECTED_THE_CALL = 0x84B,
     /**
      * PDN was disconnected by the downlaod server due to IRAT.
      */
-    ESM_CONTEXT_TRANSFERED_DUE_TO_IRAT = 0x84D,
+    ESM_CONTEXT_TRANSFERRED_DUE_TO_IRAT = 0x84C,
     /**
      * Dedicated bearer will be deactivated regardless of the network response.
      */
-    DS_EXPLICIT_DEACT = 0x84E,
+    DS_EXPLICIT_DEACTIVATION = 0x84D,
     /**
      * No specific local cause is mentioned, usually a valid OTA cause.
      */
-    ESM_LOCAL_CAUSE_NONE = 0x84F,
+    ESM_LOCAL_CAUSE_NONE = 0x84E,
     /**
      * Throttling is not needed for this service request failure.
      */
-    LTE_NAS_SERVICE_REQ_FAILED_NO_THROTTLE = 0x850,
+    LTE_THROTTLING_NOT_REQUIRED = 0x84F,
     /**
      * Access control list check failure at the lower layer.
      */
-    ACCESS_CONTROL_LIST_CHECK_FAILURE = 0x851,
+    ACCESS_CONTROL_LIST_CHECK_FAILURE = 0x850,
     /**
      * Service is not allowed on the requested PLMN.
      */
-    LTE_NAS_SERVICE_REQ_FAILED_DS_DISALLOW = 0x852,
+    SERVICE_NOT_ALLOWED_ON_PLMN = 0x851,
     /**
      * T3417 timer expiration of the service request procedure.
      */
-    EMM_T3417_EXPIRED = 0x853,
+    EMM_T3417_EXPIRED = 0x852,
     /**
      * Extended service request fails due to expiration of the T3417 EXT timer.
      */
-    EMM_T3417_EXT_EXPIRED = 0x854,
+    EMM_T3417_EXT_EXPIRED = 0x853,
     /**
-     * Transmission failure of uplink data.
+     * Transmission failure of radio resource control (RRC) uplink data.
      */
-    LRRC_UL_DATA_CNF_FAILURE_TXN = 0x855,
+    RRC_UPLINK_DATA_TRANSMISSION_FAILURE = 0x854,
     /**
-     * Uplink data delivery failed due to a handover.
+     * Radio resource control (RRC) uplink data delivery failed due to a handover.
      */
-    LRRC_UL_DATA_CNF_FAILURE_HO = 0x856,
+    RRC_UPLINK_DELIVERY_FAILED_DUE_TO_HANDOVER = 0x855,
     /**
-     * Uplink data delivery failed due to a connection release.
+     * Radio resource control (RRC) uplink data delivery failed due to a connection release.
      */
-    LRRC_UL_DATA_CNF_FAILURE_CONN_REL = 0x857,
+    RRC_UPLINK_CONNECTION_RELEASE = 0x856,
     /**
-     * Uplink data delivery failed due to a radio link failure.
+     * Radio resource control (RRC) uplink data delivery failed due to a radio link failure.
      */
-    LRRC_UL_DATA_CNF_FAILURE_RLF = 0x858,
+    RRC_UPLINK_RADIO_LINK_FAILURE = 0x857,
     /**
-     * RRC is not connected but the NAS sends an uplink data request.
+     * Radio resource control (RRC) is not connected but the non-access stratum (NAS) sends an
+     * uplink data request.
      */
-    LRRC_UL_DATA_CNF_FAILURE_CTRL_NOT_CONN = 0x859,
+    RRC_UPLINK_ERROR_REQUEST_FROM_NAS = 0x858,
     /**
-     * Connection failure at access stratum.
+     * Radio resource control (RRC) connection failure at access stratum.
      */
-    LRRC_CONN_EST_FAILURE = 0x85A,
+    RRC_CONNECTION_ACCESS_STRATUM_FAILURE = 0x859,
     /**
-     * Connection establishment is aborted due to another procedure.
+     * Radio resource control (RRC) connection establishment is aborted due to another procedure.
      */
-    LRRC_CONN_EST_FAILURE_ABORTED = 0x85B,
+    RRC_CONNECTION_ANOTHER_PROCEDURE_IN_PROGRESS = 0x85A,
     /**
-     * Connection establishment failed due to a lower layer RRC connection failure.
+     * Radio resource control (RRC) connection establishment failed due to access barrred.
      */
-    LRRC_CONN_EST_FAILURE_ACCESS_BARRED = 0x85C,
+    RRC_CONNECTION_ACCESS_BARRED = 0x85B,
     /**
-     * Connection establishment failed due to cell reselection at access stratum.
+     * Radio resource control (RRC) connection establishment failed due to cell reselection at
+     * access stratum.
      */
-    LRRC_CONN_EST_FAILURE_CELL_RESEL = 0x85D,
+    RRC_CONNECTION_CELL_RESELECTION = 0x85C,
     /**
-     * Connection establishment failed due to configuration failure at the RRC.
+     * Connection establishment failed due to configuration failure at the radio resource control
+     * (RRC).
      */
-    LRRC_CONN_EST_FAILURE_CONFIG_FAILURE = 0x85E,
+    RRC_CONNECTION_CONFIG_FAILURE = 0x85D,
     /**
-     * Connection could not be established in the time limit.
+     * Radio resource control (RRC) connection could not be established in the time limit.
      */
-    LRRC_CONN_EST_FAILURE_TIMER_EXPIRED = 0x85F,
+    RRC_CONNECTION_TIMER_EXPIRED = 0x85E,
     /**
-     * Connection establishment failed due to a link failure at the RRC.
+     * Connection establishment failed due to a link failure at the radio resource control (RRC).
      */
-    LRRC_CONN_EST_FAILURE_LINK_FAILURE = 0x860,
+    RRC_CONNECTION_LINK_FAILURE = 0x85F,
     /**
-     * Connection establishment failed as the RRC is not camped on any cell.
+     * Connection establishment failed as the radio resource control (RRC) is not camped on any
+     * cell.
      */
-    LRRC_CONN_EST_FAILURE_NOT_CAMPED = 0x861,
+    RRC_CONNECTION_CELL_NOT_CAMPED = 0x860,
     /**
-     * Connection establishment failed due to a service interval failure at the RRC.
+     * Connection establishment failed due to a service interval failure at the radio resource
+     * control (RRC).
      */
-    LRRC_CONN_EST_FAILURE_SI_FAILURE = 0x862,
+    RRC_CONNECTION_SYSTEM_INTERVAL_FAILURE = 0x861,
     /**
-     * Connection establishment failed due to the network rejecting the UE connection request.
+     * Radio resource control (RRC) connection establishment failed due to the network rejecting the
+     * UE connection request.
      */
-    LRRC_CONN_EST_FAILURE_CONN_REJECT = 0x863,
+    RRC_CONNECTION_REJECT_BY_NETWORK = 0x862,
     /**
-     * Normal connection release.
+     * Normal radio resource control (RRC) connection release.
      */
-    LRRC_CONN_REL_NORMAL = 0x864,
+    RRC_CONNECTION_NORMAL_RELEASE = 0x863,
     /**
-     * Connection release failed due to radio link failure conditions.
+     * Radio resource control (RRC) connection release failed due to radio link failure conditions.
      */
-    LRRC_CONN_REL_RLF = 0x865,
+    RRC_CONNECTION_RADIO_LINK_FAILURE = 0x864,
     /**
-     * Connection reestablishment failure.
+     * Radio resource control (RRC) connection re-establishment failure.
      */
-    LRRC_CONN_REL_CRE_FAILURE = 0x866,
+    RRC_CONNECTION_REESTABLISHMENT_FAILURE = 0x865,
     /**
      * UE is out of service during the call register.
      */
-    LRRC_CONN_REL_OOS_DURING_CRE = 0x867,
+    RRC_CONNECTION_OUT_OF_SERVICE_DURING_CELL_REGISTER = 0x866,
     /**
-     * Connection has been released by the RRC due to an abort request.
+     * Connection has been released by the radio resource control (RRC) due to an abort request.
      */
-    LRRC_CONN_REL_ABORTED = 0x868,
+    RRC_CONNECTION_ABORT_REQUEST = 0x867,
     /**
-     * Connection released due to a system information block read error.
+     * Radio resource control (RRC) connection released due to a system information block read
+     * error.
      */
-    LRRC_CONN_REL_SIB_READ_ERROR = 0x869,
+    RRC_CONNECTION_SYSTEM_INFORMATION_BLOCK_READ_ERROR = 0x868,
     /**
      * Network-initiated detach with reattach.
      */
-    DETACH_WITH_REATTACH_LTE_NW_DETACH = 0x86A,
+    NETWORK_INITIATED_DETACH_WITH_AUTO_REATTACH = 0x869,
     /**
      * Network-initiated detach without reattach.
      */
-    DETACH_WITHOUT_REATTACH_LTE_NW_DETACH = 0x86B,
+    NETWORK_INITIATED_DETACH_NO_AUTO_REATTACH = 0x86A,
     /**
      * ESM procedure maximum attempt timeout failure.
      */
-    ESM_PROC_TIME_OUT = 0x86C,
+    ESM_PROCEDURE_TIME_OUT = 0x86B,
     /**
      * No PDP exists with the given connection ID while modifying or deactivating or activation for
      * an already active PDP.
      */
-    INVALID_CONNECTION_ID = 0x86D,
+    INVALID_CONNECTION_ID = 0x86C,
     /**
      * Maximum NSAPIs have been exceeded during PDP activation.
      */
-    INVALID_NSAPI = 0x86E,
+    MAXIMIUM_NSAPIS_EXCEEDED = 0x86D,
     /**
      * Primary context for NSAPI does not exist.
      */
-    INVALID_PRI_NSAPI = 0x86F,
+    INVALID_PRIMARY_NSAPI = 0x86E,
     /**
      * Unable to encode the OTA message for MT PDP or deactivate PDP.
      */
-    INVALID_FIELD = 0x870,
+    CANNOT_ENCODE_OTA_MESSAGE = 0x86F,
     /**
      * Radio access bearer is not established by the lower layers during activation, modification,
      * or deactivation.
      */
-    RAB_SETUP_FAILURE = 0x871,
+    RADIO_ACCESS_BEARER_SETUP_FAILURE = 0x870,
     /**
      * Expiration of the PDP establish timer with a maximum of five retries.
      */
-    PDP_ESTABLISH_MAX_TIMEOUT = 0x872,
+    PDP_ESTABLISH_TIMEOUT_EXPIRED = 0x871,
     /**
      * Expiration of the PDP modify timer with a maximum of four retries.
      */
-    PDP_MODIFY_MAX_TIMEOUT = 0x873,
+    PDP_MODIFY_TIMEOUT_EXPIRED = 0x872,
     /**
      * Expiration of the PDP deactivate timer with a maximum of four retries.
      */
-    PDP_INACTIVE_MAX_TIMEOUT = 0x874,
+    PDP_INACTIVE_TIMEOUT_EXPIRED = 0x873,
     /**
      * PDP activation failed due to RRC_ABORT or a forbidden PLMN.
      */
-    PDP_LOWERLAYER_ERROR = 0x875,
+    PDP_LOWERLAYER_ERROR = 0x874,
     /**
      * MO PDP modify collision when the MT PDP is already in progress.
      */
-    PDP_MODIFY_COLLISION = 0x876,
-    /**
-     * Radio resource is not available.
-     */
-    SM_NO_RADIO_AVAILABLE = 0x877,
-    /**
-     * Abort due to service not available.
-     */
-    SM_ABORT_SERVICE_NOT_AVAILABLE = 0x878,
+    PDP_MODIFY_COLLISION = 0x875,
     /**
      * Maximum size of the L2 message was exceeded.
      */
-    MESSAGE_EXCEED_MAX_L2_LIMIT = 0x879,
+    MAXINUM_SIZE_OF_L2_MESSAGE_EXCEEDED = 0x876,
     /**
-     * NAS request was rejected by the network.
+     * Non-access stratum (NAS) request was rejected by the network.
      */
-    SM_NAS_SRV_REQ_FAILURE = 0x87A,
+    NAS_REQUEST_REJECTED_BY_NETWORK = 0x877,
     /**
-     * RRC connection establishment failure due to an error in the request message.
+     * Radio resource control (RRC) connection establishment failure due to an error in the request
+     * message.
      */
-    RRC_CONN_EST_FAILURE_REQ_ERROR = 0x87B,
+    RRC_CONNECTION_INVALID_REQUEST = 0x878,
     /**
-     * RRC connection establishment failure due to a change in the tracking area ID.
+     * Radio resource control (RRC) connection establishment failure due to a change in the tracking
+     * area ID.
      */
-    RRC_CONN_EST_FAILURE_TAI_CHANGE = 0x87C,
+    RRC_CONNECTION_TRACKING_AREA_ID_CHANGED = 0x879,
     /**
-     * RRC connection establishment failure because the RF was unavailable.
+     * Radio resource control (RRC) connection establishment failure due to the RF was unavailable.
      */
-    RRC_CONN_EST_FAILURE_RF_UNAVAILABLE = 0x87D,
+    RRC_CONNECTION_RF_UNAVAILABLE = 0x87A,
     /**
-     * Connection was aborted before deactivating the LTE stack due to a successful LX IRAT.
-     * (e.g., after IRAT handovers)
+     * Radio resource control (RRC) connection was aborted before deactivating the LTE stack due to
+     * a successful LTE to WCDMA/GSM/TD-SCDMA IRAT change.
      */
-    RRC_CONN_REL_ABORTED_IRAT_SUCCESS = 0x87E,
+    RRC_CONNECTION_ABORTED_DUE_TO_IRAT_CHANGE = 0x87B,
     /**
-     * If the UE has an LTE radio link failure before security is established, the connection must
-     * be released and the UE must return to idle.
+     * If the UE has an LTE radio link failure before security is established, the radio resource
+     * control (RRC) connection must be released and the UE must return to idle.
      */
-    RRC_CONN_REL_RLF_SEC_NOT_ACTIVE = 0x87F,
+    RRC_CONNECTION_RELEASED_SECURITY_NOT_ACTIVE = 0x87C,
     /**
-     * Connection was aborted by the NAS after an IRAT to LTE IRAT handover.
+     * Radio resource control (RRC) connection was aborted by the non-access stratum (NAS) after an
+     * IRAT to LTE IRAT handover.
      */
-    RRC_CONN_REL_IRAT_TO_LTE_ABORTED = 0x880,
+    RRC_CONNECTION_ABORTED_AFTER_HANDOVER = 0x87D,
     /**
-     * Connection was aborted before deactivating the LTE stack after a successful LR IRAT cell
+     * Radio resource control (RRC) connection was aborted before deactivating the LTE stack after a
+     * successful LTE to GSM/EDGE IRAT cell change order procedure.
+     */
+    RRC_CONNECTION_ABORTED_AFTER_IRAT_CELL_CHANGE = 0x87E,
+    /**
+     * Radio resource control (RRC) connection was aborted in the middle of a LTE to GSM IRAT cell
      * change order procedure.
      */
-    RRC_CONN_REL_IRAT_FROM_LTE_TO_G_CCO_SUCCESS = 0x881,
-    /**
-     * Connection was aborted in the middle of a LG IRAT cell change order.
-     */
-    RRC_CONN_REL_IRAT_FROM_LTE_TO_G_CCO_ABORTED = 0x882,
+    RRC_CONNECTION_ABORTED_DURING_IRAT_CELL_CHANGE = 0x87F,
     /**
      * IMSI present in the UE is unknown in the home subscriber server.
      */
-    IMSI_UNKNOWN_IN_HSS = 0x883,
+    IMSI_UNKNOWN_IN_HOME_SUBSCRIBER_SERVER = 0x880,
     /**
      * IMEI of the UE is not accepted by the network.
      */
-    IMEI_NOT_ACCEPTED = 0x884,
+    IMEI_NOT_ACCEPTED = 0x881,
     /**
      * EPS and non-EPS services are not allowed by the network.
      */
-    EPS_SERVICES_AND_NON_EPS_SERVICES_NOT_ALLOWED = 0x885,
+    EPS_SERVICES_AND_NON_EPS_SERVICES_NOT_ALLOWED = 0x882,
     /**
      * EPS services are not allowed in the PLMN.
      */
-    EPS_SERVICES_NOT_ALLOWED_IN_PLMN = 0x886,
+    EPS_SERVICES_NOT_ALLOWED_IN_PLMN = 0x883,
     /**
      * Mobile switching center is temporarily unreachable.
      */
-    MSC_TEMPORARILY_NOT_REACHABLE = 0x887,
+    MSC_TEMPORARILY_NOT_REACHABLE = 0x884,
     /**
      * CS domain is not available.
      */
-    CS_DOMAIN_NOT_AVAILABLE = 0x888,
+    CS_DOMAIN_NOT_AVAILABLE = 0x885,
     /**
      * ESM level failure.
      */
-    ESM_FAILURE = 0x889,
+    ESM_FAILURE = 0x886,
     /**
      * MAC level failure.
      */
-    MAC_FAILURE = 0x88A,
+    MAC_FAILURE = 0x887,
     /**
      * Synchronization failure.
      */
-    SYNCH_FAILURE = 0x88B,
+    SYNCHRONIZATION_FAILURE = 0x888,
     /**
      * UE security capabilities mismatch.
      */
-    UE_SECURITY_CAPABILITIES_MISMATCH = 0x88C,
+    UE_SECURITY_CAPABILITIES_MISMATCH = 0x889,
     /**
      * Unspecified security mode reject.
      */
-    SECURITY_MODE_REJ_UNSPECIFIED = 0x88D,
+    SECURITY_MODE_REJECTED = 0x88A,
     /**
      * Unacceptable non-EPS authentication.
      */
-    NON_EPS_AUTH_UNACCEPTABLE = 0x88E,
+    UNACCEPTABLE_NON_EPS_AUTHENTICATION = 0x88B,
     /**
      * CS fallback call establishment is not allowed.
      */
-    CS_FALLBACK_CALL_EST_NOT_ALLOWED = 0x88F,
+    CS_FALLBACK_CALL_ESTABLISHMENT_NOT_ALLOWED = 0x88C,
     /**
      * No EPS bearer context was activated.
      */
-    NO_EPS_BEARER_CONTEXT_ACTIVATED = 0x890,
+    NO_EPS_BEARER_CONTEXT_ACTIVATED = 0x88D,
     /**
      * Invalid EMM state.
      */
-    EMM_INVALID_STATE = 0x891,
+    INVALID_EMM_STATE = 0x88E,
     /**
      * Non-Access Spectrum layer failure.
      */
-    NAS_LAYER_FAILURE = 0x892,
+    NAS_LAYER_FAILURE = 0x88F,
     /**
      * Multiple PDP call feature is disabled.
      */
-    MULTI_PDN_NOT_ALLOWED = 0x893,
+    MULTIPLE_PDP_CALL_NOT_ALLOWED = 0x890,
     /**
      * Data call has been brought down because EMBMS is not enabled at the RRC layer.
      */
-    EMBMS_NOT_ENABLED = 0x894,
+    EMBMS_NOT_ENABLED = 0x891,
     /**
      * Data call was unsuccessfully transferred during the IRAT handover.
      */
-    PENDING_REDIAL_CALL_CLEANUP = 0x895,
+    IRAT_HANDOVER_FAILED = 0x892,
     /**
      * EMBMS data call has been successfully brought down.
      */
-    EMBMS_REGULAR_DEACTIVATION = 0x896,
+    EMBMS_REGULAR_DEACTIVATION = 0x893,
     /**
      * Test loop-back data call has been successfully brought down.
      */
-    TLB_REGULAR_DEACTIVATION = 0x897,
+    TEST_LOOPBACK_REGULAR_DEACTIVATION = 0x894,
     /**
      * Lower layer registration failure.
      */
-    LOWER_LAYER_REGISTRATION_FAILURE = 0x898,
+    LOWER_LAYER_REGISTRATION_FAILURE = 0x895,
     /**
-     * Network initiates a detach on LTE with error cause ""data plan has been replenished or has
-     * expired.
+     * Network initiates a detach on LTE with error cause "data plan has been replenished or has
+     * expired".
      */
-    DETACH_EPS_SERVICES_NOT_ALLOWED = 0x899,
+    DATA_PLAN_EXPIRED = 0x896,
     /**
      * UMTS interface is brought down due to handover from UMTS to iWLAN.
      */
-    SM_INTERNAL_PDP_DEACTIVATION = 0x89A,
+    UMTS_HANDOVER_TO_IWLAN = 0x897,
     /**
-     * The reception of a connection deny message with a deny code of general or network busy.
+     * Received a connection deny due to general or network busy on EVDO network.
      */
-    CD_GEN_OR_BUSY = 0x89B,
+    EVDO_CONNECTION_DENY_BY_GENERAL_OR_NETWORK_BUSY = 0x898,
     /**
-     * The reception of a connection deny message with a deny code of billing failure or
-     * authentication failure.
+     * Received a connection deny due to billing or authentication failure on EVDO network.
      */
-    CD_BILL_OR_AUTH = 0x89C,
+    EVDO_CONNECTION_DENY_BY_BILLING_OR_AUTHENTICATION_FAILURE = 0x899,
     /**
      * HDR system has been changed due to redirection or the PRL was not preferred.
      */
-    HDR_CHANGED = 0x89D,
+    EVDO_HDR_CHANGED = 0x89A,
     /**
      * Device exited HDR due to redirection or the PRL was not preferred.
      */
-    HDR_EXITED = 0x89E,
+    EVDO_HDR_EXITED = 0x89B,
     /**
      * Device does not have an HDR session.
      */
-    HDR_NO_SESSION = 0x89F,
+    EVDO_HDR_NO_SESSION = 0x89C,
     /**
      * It is ending an HDR call origination in favor of a GPS fix.
      */
-    HDR_ORIG_DURING_GPS_FIX = 0x8A0,
+    EVDO_USING_GPS_FIX_INSTEAD_OF_HDR_CALL = 0x89D,
     /**
      * Connection setup on the HDR system was time out.
      */
-    HDR_CS_TIMEOUT = 0x8A1,
+    EVDO_HDR_CONNECTION_SETUP_TIMEOUT = 0x89E,
     /**
      * Device failed to acquire a co-located HDR for origination.
      */
-    COLLOC_ACQ_FAIL = 0x8A2,
+    FAILED_TO_ACQUIRE_COLOCATED_HDR = 0x89F,
     /**
      * OTASP commit is in progress.
      */
-    OTASP_COMMIT_IN_PROG = 0x8A3,
+    OTASP_COMMIT_IN_PROGRESS = 0x8A0,
     /**
      * Device has no hybrid HDR service.
      */
-    NO_HYBR_HDR_SRV = 0x8A4,
+    NO_HYBRID_HDR_SERVICE = 0x8A1,
     /**
      * HDR module could not be obtained because of the RF locked.
      */
-    HDR_NO_LOCK_GRANTED = 0x8A5,
+    HDR_NO_LOCK_GRANTED = 0x8A2,
     /**
      * DBM or SMS is in progress.
      */
-    HOLD_OTHER_IN_PROG = 0x8A6,
+    DBM_OR_SMS_IN_PROGRESS = 0x8A3,
     /**
      * HDR module released the call due to fade.
      */
-    HDR_FADE = 0x8A7,
+    HDR_FADE = 0x8A4,
     /**
      * HDR system access failure.
      */
-    HDR_ACC_FAIL = 0x8A8,
+    HDR_ACCESS_FAILURE = 0x8A5,
     /**
      * P_rev supported by 1 base station is less than 6, which is not supported for a 1X data call.
      * The UE must be in the footprint of BS which has p_rev >= 6 to support this SO33 call.
      */
-    UNSUPPORTED_1X_PREV = 0x8A9,
+    UNSUPPORTED_1X_PREV = 0x8A6,
     /**
      * Client ended the data call.
      */
-    LOCAL_END = 0x8AA,
+    LOCAL_END = 0x8A7,
     /**
      * Device has no service.
      */
-    NO_SRV = 0x8AB,
+    NO_SERVICE = 0x8A8,
     /**
      * Device lost the system due to fade.
      */
-    FADE = 0x8AC,
+    FADE = 0x8A9,
     /**
      * Receiving a release from the base station with no reason.
      */
-    REL_NORMAL = 0x8AD,
+    NORMAL_RELEASE = 0x8AA,
     /**
      * Access attempt is already in progress.
      */
-    ACC_IN_PROG = 0x8AE,
-    /**
-     * Access failure.
-     */
-    ACC_FAIL = 0x8AF,
+    ACCESS_ATTEMPT_ALREADY_IN_PROGRESS = 0x8AB,
     /**
      * Device is in the process of redirecting or handing off to a different target system.
      */
-    REDIR_OR_HANDOFF = 0x8B0,
+    REDIRECTION_OR_HANDOFF_IN_PROGRESS = 0x8AC,
     /**
      * Device is operating in Emergency mode.
      */
-    EMERGENCY_MODE = 0x8B1,
+    EMERGENCY_MODE = 0x8AD,
     /**
      * Device is in use (e.g., voice call).
      */
-    PHONE_IN_USE = 0x8B2,
+    PHONE_IN_USE = 0x8AE,
     /**
-     * Device operational mode is different from the mode requested in the traffic channel bring up
+     * Device operational mode is different from the mode requested in the traffic channel bring up.
      */
-    INVALID_MODE = 0x8B3,
+    INVALID_MODE = 0x8AF,
     /**
      * SIM was marked by the network as invalid for the circuit and/or packet service domain.
      */
-    INVALID_SIM_STATE = 0x8B4,
+    INVALID_SIM_STATE = 0x8B0,
     /**
      * There is no co-located HDR.
      */
-    NO_COLLOC_HDR = 0x8B5,
+    NO_COLLOCATED_HDR = 0x8B1,
     /**
      * UE is entering power save mode.
      */
-    EMM_DETACHED_PSM = 0x8B6,
+    UE_IS_ENTERING_POWERSAVE_MODE = 0x8B2,
     /**
      * Dual switch from single standby to dual standby is in progress.
      */
-    DUAL_SWITCH = 0x8B7,
+    DUAL_SWITCH = 0x8B3,
     /**
-     * Data call bring up fails in the PPP setup due to a timeout.
-     * (e.g., an LCP conf ack was not received from the network)
+     * Data call bring up fails in the PPP setup due to a timeout. (e.g., an LCP conf ack was not
+     * received from the network)
      */
-    PPP_TIMEOUT = 0x8B8,
+    PPP_TIMEOUT = 0x8B4,
     /**
      * Data call bring up fails in the PPP setup due to an authorization failure.
      * (e.g., authorization is required, but not negotiated with the network during an LCP phase)
      */
-    PPP_AUTH_FAILURE = 0x8B9,
+    PPP_AUTH_FAILURE = 0x8B5,
     /**
      * Data call bring up fails in the PPP setup due to an option mismatch.
      */
-    PPP_OPTION_MISMATCH = 0x8BA,
+    PPP_OPTION_MISMATCH = 0x8B6,
     /**
      * Data call bring up fails in the PPP setup due to a PAP failure.
      */
-    PPP_PAP_FAILURE = 0x8BB,
+    PPP_PAP_FAILURE = 0x8B7,
     /**
      * Data call bring up fails in the PPP setup due to a CHAP failure.
      */
-    PPP_CHAP_FAILURE = 0x8BC,
+    PPP_CHAP_FAILURE = 0x8B8,
     /**
      * Data call bring up fails in the PPP setup because the PPP is in the process of cleaning the
      * previous PPP session.
      */
-    PPP_ERR_CLOSE_IN_PROGRESS = 0x8BD,
+    PPP_CLOSE_IN_PROGRESS = 0x8B9,
     /**
      * IPv6 interface bring up fails because the network provided only the IPv4 address for the
      * upcoming PDN permanent client can reattempt a IPv6 call bring up after the IPv4 interface is
      * also brought down. However, there is no guarantee that the network will provide a IPv6
      * address.
      */
-    EHRPD_SUBS_LIMITED_TO_V4 = 0x8BE,
+    LIMITED_TO_IPV4 = 0x8BA,
     /**
      * IPv4 interface bring up fails because the network provided only the IPv6 address for the
      * upcoming PDN permanent client can reattempt a IPv4 call bring up after the IPv6 interface is
      * also brought down. However there is no guarantee that the network will provide a IPv4
      * address.
      */
-    EHRPD_SUBS_LIMITED_TO_V6 = 0x8BF,
+    LIMITED_TO_IPV6 = 0x8BB,
     /**
      * Data call bring up fails in the VSNCP phase due to a VSNCP timeout error.
      */
-    EHRPD_VSNCP_TIMEOUT = 0x8C0,
+    VSNCP_TIMEOUT = 0x8BC,
     /**
-     * Data call bring up fails in the VSNCP phase due to a general error
+     * Data call bring up fails in the VSNCP phase due to a general error. It's used when there is
+     * no other specific error code available to report the failure.
      */
-    EHRPD_VSNCP_GEN_ERROR = 0x8C1,
+    VSNCP_GEN_ERROR = 0x8BD,
     /**
      * Data call bring up fails in the VSNCP phase due to a network rejection of the VSNCP
      * configuration request because the requested APN is unauthorized.
      */
-    EHRPD_VSNCP_UNAUTH_APN = 0x8C2,
+    VSNCP_APN_UNATHORIZED = 0x8BE,
     /**
      * Data call bring up fails in the VSNCP phase due to a network rejection of the VSNCP
      * configuration request because the PDN limit has been exceeded.
      */
-    EHRPD_VSNCP_PDN_LIMIT_EXCEED = 0x8C3,
+    VSNCP_PDN_LIMIT_EXCEEDED = 0x8BF,
     /**
-     * Data call bring up fails in the VSNCP phase because the network rejected the VSNCP
-     * configuration request due to no PDN gateway.
+     * Data call bring up fails in the VSNCP phase due to the network rejected the VSNCP
+     * configuration request due to no PDN gateway address.
      */
-    EHRPD_VSNCP_NO_PDN_GW = 0x8C4,
+    VSNCP_NO_PDN_GATEWAY_ADDRESS = 0x8C0,
     /**
      * Data call bring up fails in the VSNCP phase due to a network rejection of the VSNCP
      * configuration request because the PDN gateway is unreachable.
      */
-    EHRPD_VSNCP_PDN_GW_UNREACH = 0x8C5,
+    VSNCP_PDN_GATEWAY_UNREACHABLE = 0x8C1,
     /**
      * Data call bring up fails in the VSNCP phase due to a network rejection of the VSNCP
      * configuration request due to a PDN gateway reject.
      */
-    EHRPD_VSNCP_PDN_GW_REJ = 0x8C6,
+    VSNCP_PDN_GATEWAY_REJECT = 0x8C2,
     /**
      * Data call bring up fails in the VSNCP phase due to a network rejection of the VSNCP
      * configuration request with the reason of insufficient parameter.
      */
-    EHRPD_VSNCP_INSUFF_PARAM = 0x8C7,
+    VSNCP_INSUFFICIENT_PARAMETERS = 0x8C3,
     /**
      * Data call bring up fails in the VSNCP phase due to a network rejection of the VSNCP
      * configuration request with the reason of resource unavailable.
      */
-    EHRPD_VSNCP_RESOURCE_UNAVAIL = 0x8C8,
+    VSNCP_RESOURCE_UNAVAILABLE = 0x8C4,
     /**
      * Data call bring up fails in the VSNCP phase due to a network rejection of the VSNCP
-     * configuration request with the reason of admin prohibited.
+     * configuration request with the reason of administratively prohibited at the HSGW.
      */
-    EHRPD_VSNCP_ADMIN_PROHIBIT = 0x8C9,
+    VSNCP_ADMINISTRATIVELY_PROHIBITED = 0x8C5,
     /**
      * Data call bring up fails in the VSNCP phase due to a network rejection of PDN ID in use, or
      * all existing PDNs are brought down with this end reason because one of the PDN bring up was
      * rejected by the network with the reason of PDN ID in use.
      */
-    EHRPD_VSNCP_PDN_ID_IN_USE = 0x8CA,
+    VSNCP_PDN_ID_IN_USE = 0x8C6,
     /**
      * Data call bring up fails in the VSNCP phase due to a network rejection of the VSNCP
      * configuration request for the reason of subscriber limitation.
      */
-    EHRPD_VSNCP_SUBSCR_LIMITATION = 0x8CB,
+    VSNCP_SUBSCRIBER_LIMITATION = 0x8C7,
     /**
      * Data call bring up fails in the VSNCP phase due to a network rejection of the VSNCP
      * configuration request because the PDN exists for this APN.
      */
-    EHRPD_VSNCP_PDN_EXISTS_FOR_THIS_APN = 0x8CC,
+    VSNCP_PDN_EXISTS_FOR_THIS_APN = 0x8C8,
     /**
      * Data call bring up fails in the VSNCP phase due to a network rejection of the VSNCP
      * configuration request with reconnect to this PDN not allowed, or an active data call is
      * terminated by the network because reconnection to this PDN is not allowed. Upon receiving
-     * this error code from the network, the modem infinitely throttles the PDN until the next
-     * power cycle.
+     * this error code from the network, the modem infinitely throttles the PDN until the next power
+     * cycle.
      */
-    EHRPD_VSNCP_RECONNECT_NOT_ALLOWED = 0x8CD,
+    VSNCP_RECONNECT_NOT_ALLOWED = 0x8C9,
     /**
      * Device failure to obtain the prefix from the network.
      */
-    IPV6_PREFIX_UNAVAILABLE = 0x8CE,
+    IPV6_PREFIX_UNAVAILABLE = 0x8CA,
     /**
      * System preference change back to SRAT during handoff
      */
-    HANDOFF_PREF_SYS_BACK_TO_SRAT = 0x8CF,
+    HANDOFF_PREFERENCE_CHANGED = 0x8CB,
 };
 
 /**
@@ -1390,13 +1397,9 @@ enum PdpProtocolType : int32_t {
      */
     NON_IP = 4,
     /**
-     * Ethernet protocol
-     */
-    ETHERNET = 5,
-    /**
      * Transfer of Unstructured data to the Data Network via N6
      */
-    UNSTRUCTURED = 6,
+    UNSTRUCTURED = 5,
 };
 
 safe_union RadioFrequencyInfo {

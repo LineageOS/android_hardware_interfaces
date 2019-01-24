@@ -277,6 +277,8 @@
             <xs:enumeration value="AUDIO_DEVICE_IN_PROXY"/>
             <xs:enumeration value="AUDIO_DEVICE_IN_USB_HEADSET"/>
             <xs:enumeration value="AUDIO_DEVICE_IN_BLUETOOTH_BLE"/>
+            <xs:enumeration value="AUDIO_DEVICE_IN_HDMI_ARC"/>
+            <xs:enumeration value="AUDIO_DEVICE_IN_ECHO_REFERENCE"/>
             <xs:enumeration value="AUDIO_DEVICE_IN_DEFAULT"/>
             <xs:enumeration value="AUDIO_DEVICE_IN_STUB"/>
         </xs:restriction>
@@ -364,6 +366,14 @@
             <xs:enumeration value="AUDIO_FORMAT_MAT_2_1"/>
             <xs:enumeration value="AUDIO_FORMAT_AAC_XHE"/>
             <xs:enumeration value="AUDIO_FORMAT_AAC_ADTS_XHE"/>
+            <xs:enumeration value="AUDIO_FORMAT_AAC_LATM"/>
+            <xs:enumeration value="AUDIO_FORMAT_AAC_LATM_LC"/>
+            <xs:enumeration value="AUDIO_FORMAT_AAC_LATM_HE_V1"/>
+            <xs:enumeration value="AUDIO_FORMAT_AAC_LATM_HE_V2"/>
+            <xs:enumeration value="AUDIO_FORMAT_CELT"/>
+            <xs:enumeration value="AUDIO_FORMAT_APTX_ADAPTIVE"/>
+            <xs:enumeration value="AUDIO_FORMAT_LHDC"/>
+            <xs:enumeration value="AUDIO_FORMAT_LHDC_LL"/>
         </xs:restriction>
     </xs:simpleType>
     <xs:simpleType name="extendableAudioFormat">

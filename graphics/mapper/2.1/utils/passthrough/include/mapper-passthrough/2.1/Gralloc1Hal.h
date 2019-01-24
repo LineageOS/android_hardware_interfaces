@@ -28,7 +28,7 @@ namespace passthrough {
 
 using V2_0::BufferDescriptor;
 using V2_0::Error;
-using android::hardware::graphics::common::V1_0::BufferUsage;
+using android::hardware::graphics::common::V1_1::BufferUsage;
 
 namespace detail {
 
@@ -72,6 +72,8 @@ class Gralloc1HalImpl : public V2_0::passthrough::detail::Gralloc1HalImpl<Hal> {
 
     Error createDescriptor_2_1(const IMapper::BufferDescriptorInfo& descriptorInfo,
                                BufferDescriptor* outDescriptor) override {
+        if (gralloc1UsageUnsupported(descriptorInfo.usage))
+             return Error::BAD_DESCRIPTOR;
         return createDescriptor(
             V2_0::IMapper::BufferDescriptorInfo{
                 descriptorInfo.width, descriptorInfo.height, descriptorInfo.layerCount,
@@ -161,6 +163,16 @@ class Gralloc1HalImpl : public V2_0::passthrough::detail::Gralloc1HalImpl<Hal> {
         }
 
         return consumerUsage;
+    }
+
+    static bool gralloc1UsageUnsupported(uint64_t usage) {
+        // Certain newer public usage bits should not be used with gralloc1.
+        // We use a blacklist instead of a whitelist here in order to avoid
+        // breaking private usage flags.
+        constexpr uint64_t unsupportedMask = BufferUsage::GPU_CUBE_MAP |
+                                             BufferUsage::GPU_MIPMAP_COMPLETE;
+
+        return usage & unsupportedMask;
     }
 
    private:

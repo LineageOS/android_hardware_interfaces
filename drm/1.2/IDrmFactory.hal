@@ -17,6 +17,7 @@ package android.hardware.drm@1.2;
 
 import @1.1::IDrmFactory;
 import @1.1::IDrmPlugin;
+import @1.1::SecurityLevel;
 
 /**
  * IDrmFactory is the main entry point for interacting with a vendor's
@@ -35,4 +36,16 @@ import @1.1::IDrmPlugin;
  */
 
 interface IDrmFactory extends @1.1::IDrmFactory {
+    /**
+     * Determine if a specific security level is supported by the device.
+     * This method only differs from @1.0 isCryptoSchemeSupported
+     * by the addition of a security level.
+     *
+     * @param uuid identifies the crypto scheme in question
+     * @param mimeType identifies the mime type in question
+     * @param securityLevel specifies the security level required
+     * @return isSupported must be true only if the scheme is supported
+     */
+    isCryptoSchemeSupported_1_2(uint8_t[16] uuid, string mimeType,
+            @1.1::SecurityLevel securityLevel) generates(bool isSupported);
 };

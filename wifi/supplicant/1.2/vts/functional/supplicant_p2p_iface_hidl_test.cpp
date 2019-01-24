@@ -126,3 +126,26 @@ TEST_F(SupplicantP2pIfaceHidlTest, AddGroup_1_2_FailureInvalidFrequency) {
             EXPECT_EQ(SupplicantStatusCode::FAILURE_UNKNOWN, status.code);
         });
 }
+
+/*
+ * Verify that setMacRandomization successes.
+ */
+TEST_F(SupplicantP2pIfaceHidlTest, EnableMacRandomization) {
+    p2p_iface_->setMacRandomization(true, [](const SupplicantStatus& status) {
+        EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+    });
+
+    // enable twice
+    p2p_iface_->setMacRandomization(true, [](const SupplicantStatus& status) {
+        EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+    });
+
+    p2p_iface_->setMacRandomization(false, [](const SupplicantStatus& status) {
+        EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+    });
+
+    // disable twice
+    p2p_iface_->setMacRandomization(false, [](const SupplicantStatus& status) {
+        EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+    });
+}

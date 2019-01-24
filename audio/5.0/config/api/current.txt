@@ -20,8 +20,10 @@ package audio.policy.configuration.V5_0 {
     enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_IN_COMMUNICATION;
     enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_IN_DEFAULT;
     enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_IN_DGTL_DOCK_HEADSET;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_IN_ECHO_REFERENCE;
     enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_IN_FM_TUNER;
     enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_IN_HDMI;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_IN_HDMI_ARC;
     enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_IN_IP;
     enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_IN_LINE;
     enum_constant public static final audio.policy.configuration.V5_0.AudioDevice AUDIO_DEVICE_IN_LOOPBACK;
@@ -91,6 +93,10 @@ package audio.policy.configuration.V5_0 {
     enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_AAC_ERLC;
     enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_AAC_HE_V1;
     enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_AAC_HE_V2;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_AAC_LATM;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_AAC_LATM_HE_V1;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_AAC_LATM_HE_V2;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_AAC_LATM_LC;
     enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_AAC_LC;
     enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_AAC_LD;
     enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_AAC_LTP;
@@ -106,7 +112,9 @@ package audio.policy.configuration.V5_0 {
     enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_AMR_WB_PLUS;
     enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_APE;
     enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_APTX;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_APTX_ADAPTIVE;
     enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_APTX_HD;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_CELT;
     enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_DOLBY_TRUEHD;
     enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_DSD;
     enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_DTS;
@@ -122,6 +130,8 @@ package audio.policy.configuration.V5_0 {
     enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_HE_AAC_V2;
     enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_IEC61937;
     enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_LDAC;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_LHDC;
+    enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_LHDC_LL;
     enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_MAT_1_0;
     enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_MAT_2_0;
     enum_constant public static final audio.policy.configuration.V5_0.AudioFormat AUDIO_FORMAT_MAT_2_1;
