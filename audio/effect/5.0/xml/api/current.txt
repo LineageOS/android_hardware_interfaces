@@ -74,6 +74,7 @@ package audio.effects.V5_0 {
     enum_constant public static final audio.effects.V5_0.StreamInputType voice_call;
     enum_constant public static final audio.effects.V5_0.StreamInputType voice_communication;
     enum_constant public static final audio.effects.V5_0.StreamInputType voice_downlink;
+    enum_constant public static final audio.effects.V5_0.StreamInputType voice_performance;
     enum_constant public static final audio.effects.V5_0.StreamInputType voice_recognition;
     enum_constant public static final audio.effects.V5_0.StreamInputType voice_uplink;
   }

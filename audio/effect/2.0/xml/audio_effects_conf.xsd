@@ -39,6 +39,7 @@
       <xs:enumeration value="voice_recognition"/>
       <xs:enumeration value="voice_communication"/>
       <xs:enumeration value="unprocessed"/>
+      <xs:enumeration value="voice_performance"/>
     </xs:restriction>
   </xs:simpleType>
   <xs:simpleType name="streamOutputType">
