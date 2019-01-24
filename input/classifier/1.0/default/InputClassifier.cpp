@@ -21,7 +21,7 @@
 #include <log/log.h>
 #include <utils/Timers.h>
 
-using namespace android::hardware::input::classifier::V1_0;
+using namespace android::hardware::input::common::V1_0;
 
 namespace android {
 namespace hardware {

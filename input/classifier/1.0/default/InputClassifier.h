@@ -31,8 +31,9 @@ using ::android::hardware::Return;
 
 struct InputClassifier : public IInputClassifier {
     // Methods from ::android::hardware::input::classifier::V1_0::IInputClassifier follow.
-    Return<Classification> classify(
-        const ::android::hardware::input::classifier::V1_0::MotionEvent& event) override;
+
+    Return<android::hardware::input::common::V1_0::Classification> classify(
+            const android::hardware::input::common::V1_0::MotionEvent& event) override;
 };
 
 }  // namespace implementation

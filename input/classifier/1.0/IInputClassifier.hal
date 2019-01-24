@@ -16,6 +16,9 @@
 
 package android.hardware.input.classifier@1.0;
 
+import android.hardware.input.common@1.0::Classification;
+import android.hardware.input.common@1.0::MotionEvent;
+
 interface IInputClassifier {
 
   /**
