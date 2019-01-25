@@ -130,6 +130,12 @@ void startHostapdAndWaitForHidlService() {
     ASSERT_TRUE(notification_listener->waitForHidlService(200, service_name));
 }
 
+bool is_1_1(const sp<IHostapd>& hostapd) {
+    sp<::android::hardware::wifi::hostapd::V1_1::IHostapd> hostapd_1_1 =
+        ::android::hardware::wifi::hostapd::V1_1::IHostapd::castFrom(hostapd);
+    return hostapd_1_1.get() != nullptr;
+}
+
 sp<IHostapd> getHostapd() {
     return ::testing::VtsHalHidlTargetTestBase::getService<IHostapd>(
         gEnv->getServiceName<IHostapd>());

@@ -18,6 +18,7 @@
 #define HOSTAPD_HIDL_TEST_UTILS_H
 
 #include <android/hardware/wifi/hostapd/1.0/IHostapd.h>
+#include <android/hardware/wifi/hostapd/1.1/IHostapd.h>
 
 #include <VtsHalHidlTargetTestEnvBase.h>
 
@@ -34,6 +35,8 @@ void startHostapdAndWaitForHidlService();
 // These helper functions should be modified to return vectors if we support
 // multiple instances.
 android::sp<android::hardware::wifi::hostapd::V1_0::IHostapd> getHostapd();
+bool is_1_1(const android::sp<android::hardware::wifi::hostapd::V1_0::IHostapd>&
+                hostapd);
 
 class WifiHostapdHidlEnvironment
     : public ::testing::VtsHalHidlTargetTestEnvBase {
