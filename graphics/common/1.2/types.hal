@@ -25,8 +25,7 @@ import @1.1::PixelFormat;
 /**
  * Hdr
  */
-@export(name="android_hdr_v1_2_t", value_prefix="HAL_HDR_",
-        export_parent="false")
+@export(name="android_hdr_v1_2_t", value_prefix="HAL_HDR_")
 enum Hdr : @1.0::Hdr {
     HDR10_PLUS = 4,
 };
@@ -97,18 +96,3 @@ struct HardwareBuffer {
  */
 typedef int32_t[4] Rect;
 
-/**
- * Pixel formats for graphics buffers.
- */
-@export(name="android_pixel_format_v1_2_t", value_prefix="HAL_PIXEL_FORMAT_",
-        export_parent="false")
-enum PixelFormat : @1.1::PixelFormat {
-    /**
-     * 24-bit format that has 8-bit H, S, and V components, in that order,
-     * from the lowest memory address to the highest memory address.
-     *
-     * The component values are unsigned normalized to the range [0, 1], whose
-     * interpretation is defined by the dataspace.
-    */
-    HSV_888 = 0x37,
-};
