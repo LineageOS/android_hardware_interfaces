@@ -111,6 +111,14 @@ enum CameraMetadataTag : @3.3::CameraMetadataTag {
  * Enumeration definitions for the various entries that need them
  */
 
+/** android.request.availableCapabilities enumeration values added since v3.3
+ * @see ANDROID_REQUEST_AVAILABLE_CAPABILITIES
+ */
+enum CameraMetadataEnumAndroidRequestAvailableCapabilities :
+        @3.3::CameraMetadataEnumAndroidRequestAvailableCapabilities {
+    ANDROID_REQUEST_AVAILABLE_CAPABILITIES_SECURE_IMAGE_DATA,
+};
+
 /** android.scaler.availableFormats enumeration values added since v3.2
  * @see ANDROID_SCALER_AVAILABLE_FORMATS
  */
