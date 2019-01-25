@@ -87,6 +87,16 @@ struct Sensors : public ISensors, public ISensorsEventCallback {
 
    private:
     /**
+     * Add a new sensor
+     */
+    template <class SensorType>
+    void AddSensor() {
+        std::shared_ptr<SensorType> sensor =
+                std::make_shared<SensorType>(mNextHandle++ /* sensorHandle */, this /* callback */);
+        mSensors[sensor->getSensorInfo().sensorHandle] = sensor;
+    }
+
+    /**
      * Utility function to delete the Event Flag
      */
     void deleteEventFlag();
@@ -130,6 +140,11 @@ struct Sensors : public ISensors, public ISensorsEventCallback {
      * A map of the available sensors
      */
     std::map<int32_t, std::shared_ptr<Sensor>> mSensors;
+
+    /**
+     * The next available sensor handle
+     */
+    int32_t mNextHandle;
 
     /**
      * Lock to protect writes to the FMQs

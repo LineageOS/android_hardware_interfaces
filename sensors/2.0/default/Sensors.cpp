@@ -37,13 +37,20 @@ constexpr const char* kWakeLockName = "SensorsHAL_WAKEUP";
 
 Sensors::Sensors()
     : mEventQueueFlag(nullptr),
+      mNextHandle(1),
       mOutstandingWakeUpEvents(0),
       mReadWakeLockQueueRun(false),
       mAutoReleaseWakeLockTime(0),
       mHasWakeLock(false) {
-    std::shared_ptr<AccelSensor> accel =
-        std::make_shared<AccelSensor>(1 /* sensorHandle */, this /* callback */);
-    mSensors[accel->getSensorInfo().sensorHandle] = accel;
+    AddSensor<AccelSensor>();
+    AddSensor<GyroSensor>();
+    AddSensor<AmbientTempSensor>();
+    AddSensor<DeviceTempSensor>();
+    AddSensor<PressureSensor>();
+    AddSensor<MagnetometerSensor>();
+    AddSensor<LightSensor>();
+    AddSensor<ProximitySensor>();
+    AddSensor<RelativeHumiditySensor>();
 }
 
 Sensors::~Sensors() {
