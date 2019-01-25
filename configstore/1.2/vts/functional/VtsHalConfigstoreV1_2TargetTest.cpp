@@ -31,10 +31,10 @@ using ::android::hardware::Void;
 using ::android::hardware::configstore::V1_0::OptionalBool;
 using ::android::hardware::configstore::V1_0::OptionalInt64;
 using ::android::hardware::configstore::V1_0::OptionalUInt64;
-using ::android::hardware::configstore::V1_2::ISurfaceFlingerConfigs;
 using ::android::hardware::configstore::V1_2::DisplayPrimaries;
-using ::android::hardware::graphics::common::V1_1::PixelFormat;
+using ::android::hardware::configstore::V1_2::ISurfaceFlingerConfigs;
 using ::android::hardware::graphics::common::V1_2::Dataspace;
+using ::android::hardware::graphics::common::V1_2::PixelFormat;
 
 #define ASSERT_OK(ret) ASSERT_TRUE(ret.isOk())
 #define EXPECT_OK(ret) EXPECT_TRUE(ret.isOk())

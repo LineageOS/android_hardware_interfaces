@@ -34,11 +34,11 @@ namespace passthrough {
 
 namespace detail {
 
-using common::V1_1::PixelFormat;
 using common::V1_1::RenderIntent;
 using common::V1_2::ColorMode;
 using common::V1_2::Dataspace;
 using common::V1_2::Hdr;
+using common::V1_2::PixelFormat;
 using V2_1::Display;
 using V2_1::Error;
 
@@ -91,14 +91,16 @@ class HwcHalImpl : public V2_2::passthrough::detail::HwcHalImpl<Hal> {
 
     Error getClientTargetSupport_2_3(Display display, uint32_t width, uint32_t height,
                                      PixelFormat format, Dataspace dataspace) override {
-        return getClientTargetSupport_2_2(display, width, height, format,
+        return getClientTargetSupport_2_2(display, width, height,
+                                          static_cast<common::V1_1::PixelFormat>(format),
                                           static_cast<common::V1_1::Dataspace>(dataspace));
     }
 
     Error getReadbackBufferAttributes_2_3(Display display, PixelFormat* outFormat,
                                           Dataspace* outDataspace) override {
         return getReadbackBufferAttributes(
-            display, outFormat, reinterpret_cast<common::V1_1::Dataspace*>(outDataspace));
+                display, reinterpret_cast<common::V1_1::PixelFormat*>(outFormat),
+                reinterpret_cast<common::V1_1::Dataspace*>(outDataspace));
     }
 
     Error getDisplayIdentificationData(Display display, uint8_t* outPort,

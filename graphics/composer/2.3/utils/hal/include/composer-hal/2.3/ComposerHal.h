@@ -25,11 +25,11 @@ namespace composer {
 namespace V2_3 {
 namespace hal {
 
-using common::V1_1::PixelFormat;
 using common::V1_1::RenderIntent;
 using common::V1_2::ColorMode;
 using common::V1_2::Dataspace;
 using common::V1_2::Hdr;
+using common::V1_2::PixelFormat;
 using V2_1::Display;
 using V2_1::Error;
 using V2_1::Layer;
