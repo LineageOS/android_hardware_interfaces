@@ -143,7 +143,6 @@ void CameraProvider::sCameraDeviceStatusChange(
         int new_status) {
     CameraProvider* cp = const_cast<CameraProvider*>(
             static_cast<const CameraProvider*>(callbacks));
-    bool found = false;
 
     if (cp == nullptr) {
         ALOGE("%s: callback ops is null", __FUNCTION__);
@@ -155,17 +154,23 @@ void CameraProvider::sCameraDeviceStatusChange(
     snprintf(cameraId, sizeof(cameraId), "%d", camera_id);
     std::string cameraIdStr(cameraId);
     cp->mCameraStatusMap[cameraIdStr] = (camera_device_status_t) new_status;
-    if (cp->mCallbacks != nullptr) {
-        CameraDeviceStatus status = (CameraDeviceStatus) new_status;
-        for (auto const& deviceNamePair : cp->mCameraDeviceNames) {
-            if (cameraIdStr.compare(deviceNamePair.first) == 0) {
-                cp->mCallbacks->cameraDeviceStatusChange(
-                        deviceNamePair.second, status);
-                found = true;
-            }
-        }
 
-        switch (status) {
+    if (cp->mCallbacks == nullptr) {
+        // For camera connected before mCallbacks is set, the corresponding
+        // addDeviceNames() would be called later in setCallbacks().
+        return;
+    }
+
+    bool found = false;
+    CameraDeviceStatus status = (CameraDeviceStatus)new_status;
+    for (auto const& deviceNamePair : cp->mCameraDeviceNames) {
+        if (cameraIdStr.compare(deviceNamePair.first) == 0) {
+            cp->mCallbacks->cameraDeviceStatusChange(deviceNamePair.second, status);
+            found = true;
+        }
+    }
+
+    switch (status) {
         case CameraDeviceStatus::PRESENT:
         case CameraDeviceStatus::ENUMERATING:
             if (!found) {
@@ -176,7 +181,6 @@ void CameraProvider::sCameraDeviceStatusChange(
             if (found) {
                 cp->removeDeviceNames(camera_id);
             }
-        }
     }
 }
 
@@ -439,8 +443,22 @@ bool CameraProvider::setUpVendorTags() {
 
 // Methods from ::android::hardware::camera::provider::V2_4::ICameraProvider follow.
 Return<Status> CameraProvider::setCallback(const sp<ICameraProviderCallback>& callback)  {
+    if (callback == nullptr) {
+        return Status::ILLEGAL_ARGUMENT;
+    }
+
     Mutex::Autolock _l(mCbLock);
     mCallbacks = callback;
+
+    // Add and report all presenting external cameras.
+    for (auto const& statusPair : mCameraStatusMap) {
+        int id = std::stoi(statusPair.first);
+        auto status = static_cast<CameraDeviceStatus>(statusPair.second);
+        if (id >= mNumberOfLegacyCameras && status != CameraDeviceStatus::NOT_PRESENT) {
+            addDeviceNames(id, status, true);
+        }
+    }
+
     return Status::OK;
 }
 
@@ -452,6 +470,11 @@ Return<void> CameraProvider::getVendorTags(getVendorTags_cb _hidl_cb)  {
 Return<void> CameraProvider::getCameraIdList(getCameraIdList_cb _hidl_cb)  {
     std::vector<hidl_string> deviceNameList;
     for (auto const& deviceNamePair : mCameraDeviceNames) {
+        if (std::stoi(deviceNamePair.first) >= mNumberOfLegacyCameras) {
+            // External camera devices must be reported through the device status change callback,
+            // not in this list.
+            continue;
+        }
         if (mCameraStatusMap[deviceNamePair.first] == CAMERA_DEVICE_STATUS_PRESENT) {
             deviceNameList.push_back(deviceNamePair.second);
         }
