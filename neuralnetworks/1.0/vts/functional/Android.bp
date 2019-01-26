@@ -23,6 +23,7 @@ cc_library_static {
     defaults: ["VtsHalTargetTestDefaults"],
     export_include_dirs: ["."],
     shared_libs: [
+        "libfmq",
         "libnativewindow",
     ],
     static_libs: [
@@ -51,6 +52,7 @@ cc_defaults {
         "VtsHalNeuralnetworks.cpp",
     ],
     shared_libs: [
+        "libfmq",
         "libnativewindow",
     ],
     static_libs: [
