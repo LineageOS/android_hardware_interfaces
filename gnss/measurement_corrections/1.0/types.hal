@@ -79,18 +79,35 @@ struct SingleSatCorrection {
  * toaGpsNanosecondsOfWeek
  */
 struct MeasurementCorrections {
-    /** Represents latitude in degrees. */
+    /** Represents latitude in degrees at which the corrections are computed.. */
     double latitudeDegrees;
 
-    /** Represents longitude in degrees. */
+    /** Represents longitude in degrees at which the corrections are computed.. */
     double longitudeDegrees;
 
     /**
-     * Represents altitude in meters above the WGS 84 reference ellipsoid.
+     * Represents altitude in meters above the WGS 84 reference ellipsoid at which the corrections
+     * are computed.
      */
     double altitudeMeters;
 
-    /** Time Of Applicability, GPS time of week */
+    /**
+     * Represents the horizontal uncertainty (68% confidence) in meters on the device position at
+     * which the corrections are provided.
+     *
+     * This value is useful for example to judge how accurate the provided corrections are.
+     */
+    double horizontalPositionUncertaintyMeters;
+
+    /**
+     * Represents the vertical uncertainty (68% confidence) in meters on the device position at
+     * which the corrections are provided.
+     *
+     * This value is useful for example to judge how accurate the provided corrections are.
+     */
+    double verticalPositionUncertaintyMeters;
+
+    /** Time Of Applicability, GPS time of week in nanoseconds. */
     uint64_t toaGpsNanosecondsOfWeek;
 
     /**
