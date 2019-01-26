@@ -25,6 +25,13 @@ import @1.1::OperationType;
 
 import android.hidl.safe_union@1.0::Monostate;
 
+enum Constant : uint32_t {
+    /**
+     * The byte size of the cache token.
+     */
+    BYTE_SIZE_OF_CACHE_TOKEN = 32,
+};
+
 enum OperandType : @1.0::OperandType {
     /**
      * An 8 bit boolean scalar value.
