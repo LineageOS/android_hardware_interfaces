@@ -391,7 +391,7 @@ void CameraModule::getVendorTagOps(vendor_tag_ops_t* ops) {
 }
 
 bool CameraModule::isSetTorchModeSupported() const {
-    if (getModuleApiVersion() >= CAMERA_MODULE_API_VERSION_2_4) {
+    if (getModuleApiVersion() >= CAMERA_MODULE_API_VERSION_2_3) {
         if (mModule->set_torch_mode == NULL) {
             ALOGE("%s: Module 2.4 device must support set torch API!",
                     __FUNCTION__);
