@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-#include <android/hardware/light/2.0/ILight.h>
-#include <hidl/LegacySupport.h>
+#include <VtsHalHidlTargetTestBase.h>
+#include <android-base/logging.h>
 
-using android::hardware::light::V2_0::ILight;
-using android::hardware::defaultPassthroughServiceImplementation;
+#include "hostapd_hidl_test_utils.h"
+#include "hostapd_hidl_test_utils_1_1.h"
 
-int main() {
-    return defaultPassthroughServiceImplementation<ILight>();
-}
+using ::android::sp;
+using ::android::hardware::wifi::hostapd::V1_1::IHostapd;
+
+sp<IHostapd> getHostapd_1_1() { return IHostapd::castFrom(getHostapd()); }

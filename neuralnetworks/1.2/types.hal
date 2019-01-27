@@ -25,6 +25,13 @@ import @1.1::OperationType;
 
 import android.hidl.safe_union@1.0::Monostate;
 
+enum Constant : uint32_t {
+    /**
+     * The byte size of the cache token.
+     */
+    BYTE_SIZE_OF_CACHE_TOKEN = 32,
+};
+
 enum OperandType : @1.0::OperandType {
     /**
      * An 8 bit boolean scalar value.
@@ -114,17 +121,17 @@ enum OperandTypeRange : uint32_t {
  */
 enum OperationType : @1.1::OperationType {
     // TODO(b/116445845): Sync docs when all ops are implemented.
-    ARGMAX = 38,
-    ARGMIN = 39,
-    PAD_V2 = 40,
+    ABS = 38,
+    ARGMAX = 39,
+    ARGMIN = 40,
     AXIS_ALIGNED_BBOX_TRANSFORM = 41,
     BIDIRECTIONAL_SEQUENCE_LSTM = 42,
     BIDIRECTIONAL_SEQUENCE_RNN = 43,
     BOX_WITH_NMS_LIMIT = 44,
     CAST = 45,
     CHANNEL_SHUFFLE = 46,
-    DETECTION_OUTPUT = 47,
-    EMBEDDING_LOOKUP_SPARSE = 48,
+    DETECTION_POSTPROCESSING = 47,
+    EQUAL = 48,
     EXP = 49,
     EXPAND_DIMS = 50,
     GATHER = 51,
@@ -133,47 +140,43 @@ enum OperationType : @1.1::OperationType {
     GREATER_EQUAL = 54,
     GROUPED_CONV_2D = 55,
     HEATMAP_MAX_KEYPOINT = 56,
-    LESS = 57,
-    LESS_EQUAL = 58,
-    LOG = 59,
-    LOGICAL_AND = 60,
-    LOGICAL_NOT = 61,
-    LOGICAL_OR = 62,
-    LOG_SOFTMAX = 63,
-    MAXIMUM = 64,
-    MINIMUM = 65,
-    NEG = 66,
-    POW = 67,
-    PRELU = 68,
-    PRIOR_BOX = 69,
-    QUANTIZE = 70,
-    QUANTIZED_16BIT_LSTM = 71,
-    RANDOM_MULTINOMIAL = 72,
-    REDUCE_PROD = 73,
-    ROI_ALIGN = 74,
-    RSQRT = 75,
-    SELECT = 76,
-    SIN = 77,
-    SLICE = 78,
-    SPARSE_TO_DENSE = 79,
-    SPLIT = 80,
-    SQRT = 81,
-    TILE = 82,
-    TOPK_V2 = 83,
-    TRANSPOSE_CONV_2D = 84,
-    UNIDIRECTIONAL_SEQUENCE_LSTM = 85,
-    UNIDIRECTIONAL_SEQUENCE_RNN = 86,
-    DETECTION_POSTPROCESSING = 87,
-    ABS = 88,
-    ROI_POOLING = 89,
-    EQUAL = 90,
-    NOT_EQUAL = 91,
-    REDUCE_SUM = 92,
-    REDUCE_MAX = 93,
-    REDUCE_MIN = 94,
-    REDUCE_ANY = 95,
-    REDUCE_ALL = 96,
-    INSTANCE_NORMALIZATION = 97,
+    INSTANCE_NORMALIZATION = 57,
+    LESS = 58,
+    LESS_EQUAL = 59,
+    LOG = 60,
+    LOGICAL_AND = 61,
+    LOGICAL_NOT = 62,
+    LOGICAL_OR = 63,
+    LOG_SOFTMAX = 64,
+    MAXIMUM = 65,
+    MINIMUM = 66,
+    NEG = 67,
+    NOT_EQUAL = 68,
+    PAD_V2 = 69,
+    POW = 70,
+    PRELU = 71,
+    QUANTIZE = 72,
+    QUANTIZED_16BIT_LSTM = 73,
+    RANDOM_MULTINOMIAL = 74,
+    REDUCE_ALL = 75,
+    REDUCE_ANY = 76,
+    REDUCE_MAX = 77,
+    REDUCE_MIN = 78,
+    REDUCE_PROD = 79,
+    REDUCE_SUM = 80,
+    ROI_ALIGN = 81,
+    ROI_POOLING = 82,
+    RSQRT = 83,
+    SELECT = 84,
+    SIN = 85,
+    SLICE = 86,
+    SPLIT = 87,
+    SQRT = 88,
+    TILE = 89,
+    TOPK_V2 = 90,
+    TRANSPOSE_CONV_2D = 91,
+    UNIDIRECTIONAL_SEQUENCE_LSTM = 92,
+    UNIDIRECTIONAL_SEQUENCE_RNN = 93,
     /* ADDING A NEW FUNDAMENTAL OPERATION REQUIRES UPDATING THE VALUE OF
      * OperationTypeRange::OPERATION_FUNDAMENTAL_MAX.
      */
@@ -187,7 +190,7 @@ enum OperationType : @1.1::OperationType {
  */
 enum OperationTypeRange : uint32_t {
     OPERATION_FUNDAMENTAL_MIN = 0,
-    OPERATION_FUNDAMENTAL_MAX = 97,
+    OPERATION_FUNDAMENTAL_MAX = 93,
     OPERATION_OEM_MIN = 10000,
     OPERATION_OEM_MAX = 10000,
 };
@@ -447,8 +450,34 @@ struct OutputShape {
 };
 
 /**
- * FmqRequestDatum is a single element of a serialized representation of a
- * {@link @1.0::Request} object which is sent across FastMessageQueue.
+ * Specifies whether or not to measure timing information during execution.
+ */
+enum MeasureTiming : int32_t {
+    NO  = 0,
+    YES = 1,
+};
+
+/**
+
+ * Timing information measured during execution. Each time is a duration from
+ * the beginning of some task to the end of that task, including time when that
+ * task is not active (for example, preempted by some other task, or
+ * waiting for some resource to become available).
+ *
+ * Times are measured in microseconds.
+ * When a time is not available, it must be reported as UINT64_MAX.
+ */
+struct Timing {
+    /** Execution time on device (not driver, which runs on host processor). */
+    uint64_t timeOnDevice;
+    /** Execution time in driver (including time on device). */
+    uint64_t timeInDriver;
+};
+
+/**
+ * FmqRequestDatum is a single element of a serialized representation of an
+ * execution request (a {@link @1.0::Request} object and a {@link MeasureTiming}
+ * value) which is sent across FastMessageQueue.
  *
  * The serialized representation for a particular execution is referred to later
  * in these descriptions as a 'packet'.
@@ -456,7 +485,7 @@ struct OutputShape {
  * FastMessageQueue can only pass HIDL-defined types that do not involve nested
  * buffers, handles, or interfaces.
  *
- * The {@link @1.0::Request} is serialized as follows:
+ * The request is serialized as follows:
  * 1) 'packetInformation'
  * 2) For each input operand:
  *    2.1) 'inputOperandInformation'
@@ -468,6 +497,7 @@ struct OutputShape {
  *         3.2.1) 'outputOperandDimensionValue'
  * 4) For each pool:
  *    4.1) 'poolIdentifier'
+ * 5) 'measureTiming'
  */
 safe_union FmqRequestDatum {
     /**
@@ -561,12 +591,21 @@ safe_union FmqRequestDatum {
      * identifier.
      */
     int32_t poolIdentifier;
+
+    /**
+     * Specifies whether or not to measure duration of the execution. The
+     * duration runs from the time the driver dequeues the request from a
+     * FastMessageQueue to the time the driver enqueues results to a
+     * FastMessageQueue.
+     */
+    MeasureTiming measureTiming;
 };
 
 /**
  * FmqResultDatum is a single element of a serialized representation of the
- * values returned from an execution ({@link @1.0::ErrorStatus} and
- * vec<{@link OutputShape}>) which is returned via FastMessageQueue.
+ * values returned from an execution ({@link @1.0::ErrorStatus},
+ * vec<{@link OutputShape}>, and {@link Timing}) which is returned via
+ * FastMessageQueue.
  *
  * The serialized representation for a particular execution is referred to later
  * in these descriptions as a 'packet'.
@@ -581,6 +620,7 @@ safe_union FmqRequestDatum {
  *    2.1) 'operandInformation'
  *    2.2) For each dimension element of the operand:
  *         2.2.1) 'operandDimensionValue'
+ * 3) 'executionTiming'
  */
 safe_union FmqResultDatum {
     /**
@@ -636,4 +676,12 @@ safe_union FmqResultDatum {
      * Element of the dimensions vector.
      */
     uint32_t operandDimensionValue;
+
+    /**
+     * Duration of execution. Unless measurement was requested and execution
+     * succeeds, all times must be reported as UINT64_MAX. A driver may choose
+     * to report any time as UINT64_MAX, indicating that measurement is not
+     * available.
+     */
+    Timing executionTiming;
 };

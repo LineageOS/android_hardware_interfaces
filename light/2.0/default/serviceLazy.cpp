@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Android Open Source Project
+ * Copyright 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@
 #include <android/hardware/light/2.0/ILight.h>
 #include <hidl/LegacySupport.h>
 
+using android::hardware::defaultLazyPassthroughServiceImplementation;
 using android::hardware::light::V2_0::ILight;
-using android::hardware::defaultPassthroughServiceImplementation;
 
 int main() {
-    return defaultPassthroughServiceImplementation<ILight>();
+    return defaultLazyPassthroughServiceImplementation<ILight>();
 }

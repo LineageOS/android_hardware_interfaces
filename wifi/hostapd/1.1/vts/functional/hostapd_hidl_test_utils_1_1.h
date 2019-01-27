@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,37 +14,17 @@
  * limitations under the License.
  */
 
-#ifndef HOSTAPD_HIDL_TEST_UTILS_H
-#define HOSTAPD_HIDL_TEST_UTILS_H
+#ifndef HOSTAPD_HIDL_TEST_UTILS_1_1_H
+#define HOSTAPD_HIDL_TEST_UTILS_1_1_H
 
-#include <android/hardware/wifi/hostapd/1.0/IHostapd.h>
 #include <android/hardware/wifi/hostapd/1.1/IHostapd.h>
 
 #include <VtsHalHidlTargetTestEnvBase.h>
-
-// Used to stop the android wifi framework before every test.
-void stopWifiFramework();
-void startWifiFramework();
-void stopHostapd();
-// Used to configure the chip, driver and start wpa_hostapd before every
-// test.
-void startHostapdAndWaitForHidlService();
 
 // Helper functions to obtain references to the various HIDL interface objects.
 // Note: We only have a single instance of each of these objects currently.
 // These helper functions should be modified to return vectors if we support
 // multiple instances.
-android::sp<android::hardware::wifi::hostapd::V1_0::IHostapd> getHostapd();
-bool is_1_1(const android::sp<android::hardware::wifi::hostapd::V1_0::IHostapd>&
-                hostapd);
+android::sp<android::hardware::wifi::hostapd::V1_1::IHostapd> getHostapd_1_1();
 
-class WifiHostapdHidlEnvironment
-    : public ::testing::VtsHalHidlTargetTestEnvBase {
-   public:
-    virtual void HidlSetUp() override { stopHostapd(); }
-    virtual void HidlTearDown() override {
-        startHostapdAndWaitForHidlService();
-    }
-};
-
-#endif /* HOSTAPD_HIDL_TEST_UTILS_H */
+#endif /* HOSTAPD_HIDL_TEST_UTILS_1_1_H */

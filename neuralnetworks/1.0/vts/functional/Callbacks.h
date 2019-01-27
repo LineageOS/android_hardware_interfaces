@@ -308,8 +308,20 @@ class ExecutionCallback : public CallbackBase,  public IExecutionCallback {
      *                     of the output operand in the Request outputs vector.
      *                     outputShapes must be empty unless the status is either
      *                     NONE or OUTPUT_INSUFFICIENT_SIZE.
+     * @return Timing Duration of execution. Unless MeasureTiming::YES was passed when
+     *                launching the execution and status is NONE, all times must
+     *                be reported as UINT64_MAX. A driver may choose to report
+     *                any time as UINT64_MAX, indicating that particular measurement is
+     *                not available.
      */
-    Return<void> notify_1_2(ErrorStatus status, const hidl_vec<OutputShape>& outputShapes) override;
+    Return<void> notify_1_2(ErrorStatus status, const hidl_vec<OutputShape>& outputShapes,
+                            const Timing& timing) override;
+
+    // An overload of the latest notify interface to hide the version from ExecutionBuilder.
+    Return<void> notify(ErrorStatus status, const hidl_vec<OutputShape>& outputShapes,
+                        const Timing& timing) {
+        return notify_1_2(status, outputShapes, timing);
+    }
 
     /**
      * Retrieves the error status returned from the asynchronous task launched
@@ -350,9 +362,24 @@ class ExecutionCallback : public CallbackBase,  public IExecutionCallback {
      */
     const std::vector<OutputShape>& getOutputShapes();
 
+    /**
+     * Retrieves the duration of execution ofthe asynchronous task launched
+     * by IPreparedModel::execute_1_2. If IPreparedModel::execute_1_2 has not finished
+     * asynchronously executing, this call will block until the asynchronous task
+     * notifies the object.
+     *
+     * If the asynchronous task was launched by IPreparedModel::execute, every time
+     * must be UINT64_MAX.
+     *
+     * @return timing Duration of the execution. Every time must be UINT64_MAX unless
+     *                the status is NONE.
+     */
+    Timing getTiming();
+
    private:
-    ErrorStatus mErrorStatus;
-    std::vector<OutputShape> mOutputShapes;
+    ErrorStatus mErrorStatus = ErrorStatus::GENERAL_FAILURE;
+    std::vector<OutputShape> mOutputShapes = {};
+    Timing mTiming = {};
 };
 
 
