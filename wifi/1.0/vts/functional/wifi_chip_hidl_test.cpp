@@ -365,6 +365,7 @@ TEST_F(WifiChipHidlTest, GetDebugHostWakeReasonStats) {
  * succeeds. The 2nd iface creation should be rejected.
  */
 TEST_F(WifiChipHidlTest, CreateApIface) {
+    if (!gEnv->isSoftApOn) return;
     configureChipForIfaceType(IfaceType::AP, true);
 
     sp<IWifiApIface> iface;
@@ -381,6 +382,7 @@ TEST_F(WifiChipHidlTest, CreateApIface) {
  * iface name is returned via the list.
  */
 TEST_F(WifiChipHidlTest, GetApIfaceNames) {
+    if (!gEnv->isSoftApOn) return;
     configureChipForIfaceType(IfaceType::AP, true);
 
     const auto& status_and_iface_names1 =
@@ -413,6 +415,7 @@ TEST_F(WifiChipHidlTest, GetApIfaceNames) {
  * doesn't retrieve an iface object.
  */
 TEST_F(WifiChipHidlTest, GetApIface) {
+    if (!gEnv->isSoftApOn) return;
     configureChipForIfaceType(IfaceType::AP, true);
 
     sp<IWifiApIface> ap_iface;
@@ -439,6 +442,7 @@ TEST_F(WifiChipHidlTest, GetApIface) {
  * doesn't remove the iface.
  */
 TEST_F(WifiChipHidlTest, RemoveApIface) {
+    if (!gEnv->isSoftApOn) return;
     configureChipForIfaceType(IfaceType::AP, true);
 
     sp<IWifiApIface> ap_iface;
