@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "android.hardware.power.stats@1.0-service"
+#define LOG_TAG "android.hardware.power.stats@1.0-service-mock"
 
 #include <android/log.h>
 #include <hidl/HidlTransportSupport.h>
@@ -82,7 +82,7 @@ class DefaultStateResidencyDataProvider : public IStateResidencyDataProvider {
 };
 
 int main(int /* argc */, char** /* argv */) {
-    ALOGI("power.stats service 1.0 is starting.");
+    ALOGI("power.stats service 1.0 mock is starting.");
 
     PowerStats* service = new PowerStats();
     if (service == nullptr) {
