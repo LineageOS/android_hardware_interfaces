@@ -120,12 +120,14 @@ static std::unique_ptr<::android::nn::ExecutionBurstController> CreateBurst(
     return ::android::nn::createExecutionBurstController(preparedModel, /*blocking=*/true);
 }
 enum class Executor { ASYNC, SYNC, BURST };
+enum class OutputType { FULLY_SPECIFIED, UNSPECIFIED, INSUFFICIENT };
 const float kDefaultAtol = 1e-5f;
 const float kDefaultRtol = 1e-5f;
 template <typename T_IPreparedModel>
 void EvaluatePreparedModel(sp<T_IPreparedModel>& preparedModel, std::function<bool(int)> is_ignored,
-        const std::vector<MixedTypedExample>& examples, bool hasRelaxedFloat32Model, float fpAtol,
-        float fpRtol, Executor executor, MeasureTiming measure, bool testDynamicOutputShape) {
+                           const std::vector<MixedTypedExample>& examples,
+                           bool hasRelaxedFloat32Model, float fpAtol, float fpRtol,
+                           Executor executor, MeasureTiming measure, OutputType outputType) {
     const uint32_t INPUT = 0;
     const uint32_t OUTPUT = 1;
 
@@ -173,8 +175,20 @@ void EvaluatePreparedModel(sp<T_IPreparedModel>& preparedModel, std::function<bo
 
         // Go through all outputs, initialize RequestArgument descriptors
         resize_accordingly(golden, test);
-        for_all(golden, [&outputs_info, &outputSize](int index, auto, auto s) {
+        bool sizeLargerThanOne = true;
+        for_all(golden, [&outputs_info, &outputSize, &outputType, &sizeLargerThanOne](
+                                int index, auto, auto s) {
             if (outputs_info.size() <= static_cast<size_t>(index)) outputs_info.resize(index + 1);
+            if (index == 0) {
+                // On OutputType::INSUFFICIENT, set the output operand with index 0 with
+                // buffer size one byte less than needed.
+                if (outputType == OutputType::INSUFFICIENT) {
+                    if (s > 1)
+                        s -= 1;
+                    else
+                        sizeLargerThanOne = false;
+                }
+            }
             RequestArgument arg = {
                 .location = {.poolIndex = OUTPUT, .offset = 0, .length = static_cast<uint32_t>(s)},
                 .dimensions = {},
@@ -182,6 +196,9 @@ void EvaluatePreparedModel(sp<T_IPreparedModel>& preparedModel, std::function<bo
             outputs_info[index] = arg;
             outputSize += s;
         });
+        // If output0 does not have size larger than one byte,
+        // we can not provide an insufficient buffer
+        if (!sizeLargerThanOne && outputType == OutputType::INSUFFICIENT) return;
         // Compute offset for outputs 1 and so on
         {
             size_t offset = 0;
@@ -276,15 +293,15 @@ void EvaluatePreparedModel(sp<T_IPreparedModel>& preparedModel, std::function<bo
             }
         }
 
-        if (testDynamicOutputShape && executionStatus != ErrorStatus::NONE) {
+        if (outputType != OutputType::FULLY_SPECIFIED &&
+            executionStatus == ErrorStatus::GENERAL_FAILURE) {
             LOG(INFO) << "NN VTS: Early termination of test because vendor service cannot "
                          "execute model that it does not support.";
             std::cout << "[          ]   Early termination of test because vendor service cannot "
                          "execute model that it does not support."
                       << std::endl;
-            return;
+            GTEST_SKIP();
         }
-        ASSERT_EQ(ErrorStatus::NONE, executionStatus);
         if (measure == MeasureTiming::NO) {
             EXPECT_EQ(UINT64_MAX, timing.timeOnDevice);
             EXPECT_EQ(UINT64_MAX, timing.timeInDriver);
@@ -294,9 +311,28 @@ void EvaluatePreparedModel(sp<T_IPreparedModel>& preparedModel, std::function<bo
             }
         }
 
+        switch (outputType) {
+            case OutputType::FULLY_SPECIFIED:
+                // If the model output operands are fully specified, outputShapes must be either
+                // either empty, or have the same number of elements as the number of outputs.
+                ASSERT_EQ(ErrorStatus::NONE, executionStatus);
+                ASSERT_TRUE(outputShapes.size() == 0 ||
+                            outputShapes.size() == test.operandDimensions.size());
+                break;
+            case OutputType::UNSPECIFIED:
+                // If the model output operands are not fully specified, outputShapes must have
+                // the same number of elements as the number of outputs.
+                ASSERT_EQ(ErrorStatus::NONE, executionStatus);
+                ASSERT_EQ(outputShapes.size(), test.operandDimensions.size());
+                break;
+            case OutputType::INSUFFICIENT:
+                ASSERT_EQ(ErrorStatus::OUTPUT_INSUFFICIENT_SIZE, executionStatus);
+                ASSERT_EQ(outputShapes.size(), test.operandDimensions.size());
+                ASSERT_FALSE(outputShapes[0].isSufficient);
+                return;
+        }
         // Go through all outputs, overwrite output dimensions with returned output shapes
-        if (testDynamicOutputShape) {
-            ASSERT_NE(outputShapes.size(), 0);
+        if (outputShapes.size() > 0) {
             for_each<uint32_t>(test.operandDimensions,
                                [&outputShapes](int idx, std::vector<uint32_t>& dim) {
                                    dim = outputShapes[idx].dimensions;
@@ -321,10 +357,11 @@ void EvaluatePreparedModel(sp<T_IPreparedModel>& preparedModel, std::function<bo
 }
 template <typename T_IPreparedModel>
 void EvaluatePreparedModel(sp<T_IPreparedModel>& preparedModel, std::function<bool(int)> is_ignored,
-        const std::vector<MixedTypedExample>& examples, bool hasRelaxedFloat32Model,
-        Executor executor, MeasureTiming measure, bool testDynamicOutputShape) {
+                           const std::vector<MixedTypedExample>& examples,
+                           bool hasRelaxedFloat32Model, Executor executor, MeasureTiming measure,
+                           OutputType outputType) {
     EvaluatePreparedModel(preparedModel, is_ignored, examples, hasRelaxedFloat32Model, kDefaultAtol,
-            kDefaultRtol, executor, measure, testDynamicOutputShape);
+                          kDefaultRtol, executor, measure, outputType);
 }
 
 static void getPreparedModel(sp<PreparedModelCallback> callback,
@@ -380,8 +417,8 @@ void Execute(const sp<V1_0::IDevice>& device, std::function<V1_0::Model(void)> c
 
     float fpAtol = 1e-5f, fpRtol = 5.0f * 1.1920928955078125e-7f;
     EvaluatePreparedModel(preparedModel, is_ignored, examples,
-            /*hasRelaxedFloat32Model=*/false, fpAtol, fpRtol, Executor::ASYNC, MeasureTiming::NO,
-            /*testDynamicOutputShape=*/false);
+                          /*hasRelaxedFloat32Model=*/false, fpAtol, fpRtol, Executor::ASYNC,
+                          MeasureTiming::NO, OutputType::FULLY_SPECIFIED);
 }
 
 void Execute(const sp<V1_1::IDevice>& device, std::function<V1_1::Model(void)> create_model,
@@ -427,8 +464,8 @@ void Execute(const sp<V1_1::IDevice>& device, std::function<V1_1::Model(void)> c
     ASSERT_NE(nullptr, preparedModel.get());
 
     EvaluatePreparedModel(preparedModel, is_ignored, examples,
-            model.relaxComputationFloat32toFloat16, 1e-5f, 1e-5f, Executor::ASYNC,
-            MeasureTiming::NO, /*testDynamicOutputShape=*/false);
+                          model.relaxComputationFloat32toFloat16, 1e-5f, 1e-5f, Executor::ASYNC,
+                          MeasureTiming::NO, OutputType::FULLY_SPECIFIED);
 }
 
 // TODO: Reduce code duplication.
@@ -475,24 +512,63 @@ void Execute(const sp<V1_2::IDevice>& device, std::function<V1_2::Model(void)> c
     EXPECT_EQ(ErrorStatus::NONE, prepareReturnStatus);
     ASSERT_NE(nullptr, preparedModel.get());
 
-    EvaluatePreparedModel(preparedModel, is_ignored, examples,
-            model.relaxComputationFloat32toFloat16, Executor::ASYNC, MeasureTiming::NO,
-            testDynamicOutputShape);
-    EvaluatePreparedModel(preparedModel, is_ignored, examples,
-            model.relaxComputationFloat32toFloat16, Executor::SYNC, MeasureTiming::NO,
-            testDynamicOutputShape);
-    EvaluatePreparedModel(preparedModel, is_ignored, examples,
-            model.relaxComputationFloat32toFloat16, Executor::BURST, MeasureTiming::NO,
-            testDynamicOutputShape);
-    EvaluatePreparedModel(preparedModel, is_ignored, examples,
-            model.relaxComputationFloat32toFloat16, Executor::ASYNC, MeasureTiming::YES,
-            testDynamicOutputShape);
-    EvaluatePreparedModel(preparedModel, is_ignored, examples,
-            model.relaxComputationFloat32toFloat16, Executor::SYNC, MeasureTiming::YES,
-            testDynamicOutputShape);
-    EvaluatePreparedModel(preparedModel, is_ignored, examples,
-            model.relaxComputationFloat32toFloat16, Executor::BURST, MeasureTiming::YES,
-            testDynamicOutputShape);
+    if (testDynamicOutputShape) {
+        EvaluatePreparedModel(preparedModel, is_ignored, examples,
+                              model.relaxComputationFloat32toFloat16, Executor::ASYNC,
+                              MeasureTiming::NO, OutputType::UNSPECIFIED);
+        EvaluatePreparedModel(preparedModel, is_ignored, examples,
+                              model.relaxComputationFloat32toFloat16, Executor::SYNC,
+                              MeasureTiming::NO, OutputType::UNSPECIFIED);
+        EvaluatePreparedModel(preparedModel, is_ignored, examples,
+                              model.relaxComputationFloat32toFloat16, Executor::BURST,
+                              MeasureTiming::NO, OutputType::UNSPECIFIED);
+        EvaluatePreparedModel(preparedModel, is_ignored, examples,
+                              model.relaxComputationFloat32toFloat16, Executor::ASYNC,
+                              MeasureTiming::YES, OutputType::UNSPECIFIED);
+        EvaluatePreparedModel(preparedModel, is_ignored, examples,
+                              model.relaxComputationFloat32toFloat16, Executor::SYNC,
+                              MeasureTiming::YES, OutputType::UNSPECIFIED);
+        EvaluatePreparedModel(preparedModel, is_ignored, examples,
+                              model.relaxComputationFloat32toFloat16, Executor::BURST,
+                              MeasureTiming::YES, OutputType::UNSPECIFIED);
+        EvaluatePreparedModel(preparedModel, is_ignored, examples,
+                              model.relaxComputationFloat32toFloat16, Executor::ASYNC,
+                              MeasureTiming::NO, OutputType::INSUFFICIENT);
+        EvaluatePreparedModel(preparedModel, is_ignored, examples,
+                              model.relaxComputationFloat32toFloat16, Executor::SYNC,
+                              MeasureTiming::NO, OutputType::INSUFFICIENT);
+        EvaluatePreparedModel(preparedModel, is_ignored, examples,
+                              model.relaxComputationFloat32toFloat16, Executor::BURST,
+                              MeasureTiming::NO, OutputType::INSUFFICIENT);
+        EvaluatePreparedModel(preparedModel, is_ignored, examples,
+                              model.relaxComputationFloat32toFloat16, Executor::ASYNC,
+                              MeasureTiming::YES, OutputType::INSUFFICIENT);
+        EvaluatePreparedModel(preparedModel, is_ignored, examples,
+                              model.relaxComputationFloat32toFloat16, Executor::SYNC,
+                              MeasureTiming::YES, OutputType::INSUFFICIENT);
+        EvaluatePreparedModel(preparedModel, is_ignored, examples,
+                              model.relaxComputationFloat32toFloat16, Executor::BURST,
+                              MeasureTiming::YES, OutputType::INSUFFICIENT);
+    } else {
+        EvaluatePreparedModel(preparedModel, is_ignored, examples,
+                              model.relaxComputationFloat32toFloat16, Executor::ASYNC,
+                              MeasureTiming::NO, OutputType::FULLY_SPECIFIED);
+        EvaluatePreparedModel(preparedModel, is_ignored, examples,
+                              model.relaxComputationFloat32toFloat16, Executor::SYNC,
+                              MeasureTiming::NO, OutputType::FULLY_SPECIFIED);
+        EvaluatePreparedModel(preparedModel, is_ignored, examples,
+                              model.relaxComputationFloat32toFloat16, Executor::BURST,
+                              MeasureTiming::NO, OutputType::FULLY_SPECIFIED);
+        EvaluatePreparedModel(preparedModel, is_ignored, examples,
+                              model.relaxComputationFloat32toFloat16, Executor::ASYNC,
+                              MeasureTiming::YES, OutputType::FULLY_SPECIFIED);
+        EvaluatePreparedModel(preparedModel, is_ignored, examples,
+                              model.relaxComputationFloat32toFloat16, Executor::SYNC,
+                              MeasureTiming::YES, OutputType::FULLY_SPECIFIED);
+        EvaluatePreparedModel(preparedModel, is_ignored, examples,
+                              model.relaxComputationFloat32toFloat16, Executor::BURST,
+                              MeasureTiming::YES, OutputType::FULLY_SPECIFIED);
+    }
 }
 
 }  // namespace generated_tests
