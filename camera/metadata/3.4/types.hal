@@ -73,6 +73,28 @@ enum CameraMetadataTag : @3.3::CameraMetadataTag {
      */
     ANDROID_DEPTH_AVAILABLE_RECOMMENDED_DEPTH_STREAM_CONFIGURATIONS = android.hardware.camera.metadata@3.2::CameraMetadataTag:ANDROID_DEPTH_END,
 
+    /** android.depth.availableDynamicDepthStreamConfigurations [static, enum[], ndk_public]
+     *
+     * <p>The available dynamic depth dataspace stream
+     * configurations that this camera device supports
+     * (i.e. format, width, height, output/input stream).</p>
+     */
+    ANDROID_DEPTH_AVAILABLE_DYNAMIC_DEPTH_STREAM_CONFIGURATIONS,
+
+    /** android.depth.availableDynamicDepthMinFrameDurations [static, int64[], ndk_public]
+     *
+     * <p>This lists the minimum frame duration for each
+     * format/size combination for dynamic depth output streams.</p>
+     */
+    ANDROID_DEPTH_AVAILABLE_DYNAMIC_DEPTH_MIN_FRAME_DURATIONS,
+
+    /** android.depth.availableDynamicDepthStallDurations [static, int64[], ndk_public]
+     *
+     * <p>This lists the maximum stall duration for each
+     * output format/size combination for dynamic depth streams.</p>
+     */
+    ANDROID_DEPTH_AVAILABLE_DYNAMIC_DEPTH_STALL_DURATIONS,
+
     ANDROID_DEPTH_END_3_4,
 
     /** android.logicalMultiCamera.activePhysicalId [dynamic, byte, public]
@@ -135,4 +157,12 @@ enum CameraMetadataEnumAndroidSensorInfoColorFilterArrangement :
  */
 enum CameraMetadataEnumAndroidInfoSupportedBufferManagementVersion : uint32_t {
     ANDROID_INFO_SUPPORTED_BUFFER_MANAGEMENT_VERSION_HIDL_DEVICE_3_5,
+};
+
+/** android.depth.availableDynamicDepthStreamConfigurations enumeration values
+ * @see ANDROID_DEPTH_AVAILABLE_DYNAMIC_DEPTH_STREAM_CONFIGURATIONS
+ */
+enum CameraMetadataEnumAndroidDepthAvailableDynamicDepthStreamConfigurations : uint32_t {
+    ANDROID_DEPTH_AVAILABLE_DYNAMIC_DEPTH_STREAM_CONFIGURATIONS_OUTPUT,
+    ANDROID_DEPTH_AVAILABLE_DYNAMIC_DEPTH_STREAM_CONFIGURATIONS_INPUT,
 };
