@@ -50,7 +50,7 @@ class Sensor {
 
     const SensorInfo& getSensorInfo() const;
     void batch(int32_t samplingPeriodNs);
-    void activate(bool enable);
+    virtual void activate(bool enable);
     Result flush();
 
     void setOperationMode(OperationMode mode);
@@ -79,9 +79,63 @@ class Sensor {
     OperationMode mMode;
 };
 
+class OnChangeSensor : public Sensor {
+   public:
+    OnChangeSensor(ISensorsEventCallback* callback);
+
+    virtual void activate(bool enable) override;
+
+   protected:
+    virtual std::vector<Event> readEvents() override;
+
+   protected:
+    Event mPreviousEvent;
+    bool mPreviousEventSet;
+};
+
 class AccelSensor : public Sensor {
    public:
     AccelSensor(int32_t sensorHandle, ISensorsEventCallback* callback);
+};
+
+class GyroSensor : public Sensor {
+   public:
+    GyroSensor(int32_t sensorHandle, ISensorsEventCallback* callback);
+};
+
+class AmbientTempSensor : public OnChangeSensor {
+   public:
+    AmbientTempSensor(int32_t sensorHandle, ISensorsEventCallback* callback);
+};
+
+class DeviceTempSensor : public OnChangeSensor {
+   public:
+    DeviceTempSensor(int32_t sensorHandle, ISensorsEventCallback* callback);
+};
+
+class PressureSensor : public Sensor {
+   public:
+    PressureSensor(int32_t sensorHandle, ISensorsEventCallback* callback);
+};
+
+class MagnetometerSensor : public Sensor {
+   public:
+    MagnetometerSensor(int32_t sensorHandle, ISensorsEventCallback* callback);
+};
+
+class LightSensor : public OnChangeSensor {
+   public:
+    LightSensor(int32_t sensorHandle, ISensorsEventCallback* callback);
+};
+
+class ProximitySensor : public OnChangeSensor {
+   public:
+    ProximitySensor(int32_t sensorHandle, ISensorsEventCallback* callback);
+};
+
+class RelativeHumiditySensor : public OnChangeSensor {
+   public:
+    RelativeHumiditySensor(int32_t sensorHandle, ISensorsEventCallback* callback);
 };
 
 }  // namespace implementation

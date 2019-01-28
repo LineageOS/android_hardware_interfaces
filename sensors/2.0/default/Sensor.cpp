@@ -131,9 +131,9 @@ std::vector<Event> Sensor::readEvents() {
     event.sensorHandle = mSensorInfo.sensorHandle;
     event.sensorType = mSensorInfo.type;
     event.timestamp = ::android::elapsedRealtimeNano();
-    event.u.vec3.x = 1;
-    event.u.vec3.y = 2;
-    event.u.vec3.z = 3;
+    event.u.vec3.x = 0;
+    event.u.vec3.y = 0;
+    event.u.vec3.z = 0;
     event.u.vec3.status = SensorStatus::ACCURACY_HIGH;
     events.push_back(event);
     return events;
@@ -166,6 +166,31 @@ Result Sensor::injectEvent(const Event& event) {
     return result;
 }
 
+OnChangeSensor::OnChangeSensor(ISensorsEventCallback* callback)
+    : Sensor(callback), mPreviousEventSet(false) {}
+
+void OnChangeSensor::activate(bool enable) {
+    Sensor::activate(enable);
+    if (!enable) {
+        mPreviousEventSet = false;
+    }
+}
+
+std::vector<Event> OnChangeSensor::readEvents() {
+    std::vector<Event> events = Sensor::readEvents();
+    std::vector<Event> outputEvents;
+
+    for (auto iter = events.begin(); iter != events.end(); ++iter) {
+        Event ev = *iter;
+        if (ev.u.vec3 != mPreviousEvent.u.vec3 || !mPreviousEventSet) {
+            outputEvents.push_back(ev);
+            mPreviousEvent = ev;
+            mPreviousEventSet = true;
+        }
+    }
+    return outputEvents;
+}
+
 AccelSensor::AccelSensor(int32_t sensorHandle, ISensorsEventCallback* callback) : Sensor(callback) {
     mSensorInfo.sensorHandle = sensorHandle;
     mSensorInfo.name = "Accel Sensor";
@@ -181,9 +206,161 @@ AccelSensor::AccelSensor(int32_t sensorHandle, ISensorsEventCallback* callback) 
     mSensorInfo.fifoReservedEventCount = 0;
     mSensorInfo.fifoMaxEventCount = 0;
     mSensorInfo.requiredPermission = "";
-    mSensorInfo.flags =
-        static_cast<uint32_t>(SensorFlagBits::WAKE_UP | SensorFlagBits::DATA_INJECTION);
+    mSensorInfo.flags = static_cast<uint32_t>(SensorFlagBits::DATA_INJECTION);
 };
+
+PressureSensor::PressureSensor(int32_t sensorHandle, ISensorsEventCallback* callback)
+    : Sensor(callback) {
+    mSensorInfo.sensorHandle = sensorHandle;
+    mSensorInfo.name = "Pressure Sensor";
+    mSensorInfo.vendor = "Vendor String";
+    mSensorInfo.version = 1;
+    mSensorInfo.type = SensorType::PRESSURE;
+    mSensorInfo.typeAsString = "";
+    mSensorInfo.maxRange = 1100.0f;   // hPa
+    mSensorInfo.resolution = 1.0f;    // hPa
+    mSensorInfo.power = 0.001f;       // mA
+    mSensorInfo.minDelay = 28571.0f;  // microseconds
+    mSensorInfo.maxDelay = 0.0f;      // microseconds
+    mSensorInfo.fifoReservedEventCount = 0;
+    mSensorInfo.fifoMaxEventCount = 0;
+    mSensorInfo.requiredPermission = "";
+    mSensorInfo.flags = 0;
+};
+
+MagnetometerSensor::MagnetometerSensor(int32_t sensorHandle, ISensorsEventCallback* callback)
+    : Sensor(callback) {
+    mSensorInfo.sensorHandle = sensorHandle;
+    mSensorInfo.name = "Magnetic Field Sensor";
+    mSensorInfo.vendor = "Vendor String";
+    mSensorInfo.version = 1;
+    mSensorInfo.type = SensorType::MAGNETIC_FIELD;
+    mSensorInfo.typeAsString = "";
+    mSensorInfo.maxRange = 4911.0f;
+    mSensorInfo.resolution = 1.00f;
+    mSensorInfo.power = 0.001f;       // mA
+    mSensorInfo.minDelay = 14284.0f;  // microseconds
+    mSensorInfo.maxDelay = 0.0f;      // microseconds
+    mSensorInfo.fifoReservedEventCount = 0;
+    mSensorInfo.fifoMaxEventCount = 0;
+    mSensorInfo.requiredPermission = "";
+    mSensorInfo.flags = 0;
+};
+
+LightSensor::LightSensor(int32_t sensorHandle, ISensorsEventCallback* callback)
+    : OnChangeSensor(callback) {
+    mSensorInfo.sensorHandle = sensorHandle;
+    mSensorInfo.name = "Light Sensor";
+    mSensorInfo.vendor = "Vendor String";
+    mSensorInfo.version = 1;
+    mSensorInfo.type = SensorType::LIGHT;
+    mSensorInfo.typeAsString = "";
+    mSensorInfo.maxRange = 10000.0f;
+    mSensorInfo.resolution = 10.0f;
+    mSensorInfo.power = 0.001f;           // mA
+    mSensorInfo.minDelay = 20.0f * 1000;  // microseconds
+    mSensorInfo.maxDelay = 0;             // microseconds
+    mSensorInfo.fifoReservedEventCount = 0;
+    mSensorInfo.fifoMaxEventCount = 0;
+    mSensorInfo.requiredPermission = "";
+    mSensorInfo.flags = static_cast<uint32_t>(SensorFlagBits::ON_CHANGE_MODE);
+};
+
+ProximitySensor::ProximitySensor(int32_t sensorHandle, ISensorsEventCallback* callback)
+    : OnChangeSensor(callback) {
+    mSensorInfo.sensorHandle = sensorHandle;
+    mSensorInfo.name = "Proximity Sensor";
+    mSensorInfo.vendor = "Vendor String";
+    mSensorInfo.version = 1;
+    mSensorInfo.type = SensorType::PROXIMITY;
+    mSensorInfo.typeAsString = "";
+    mSensorInfo.maxRange = 5.0f;
+    mSensorInfo.resolution = 1.0f;
+    mSensorInfo.power = 0.012f;  // mA
+    mSensorInfo.minDelay = 500;  // microseconds
+    mSensorInfo.maxDelay = 2 * mSensorInfo.minDelay;
+    mSensorInfo.fifoReservedEventCount = 0;
+    mSensorInfo.fifoMaxEventCount = 0;
+    mSensorInfo.requiredPermission = "";
+    mSensorInfo.flags =
+            static_cast<uint32_t>(SensorFlagBits::ON_CHANGE_MODE | SensorFlagBits::WAKE_UP);
+};
+
+GyroSensor::GyroSensor(int32_t sensorHandle, ISensorsEventCallback* callback) : Sensor(callback) {
+    mSensorInfo.sensorHandle = sensorHandle;
+    mSensorInfo.name = "Gyro Sensor";
+    mSensorInfo.vendor = "Vendor String";
+    mSensorInfo.version = 1;
+    mSensorInfo.type = SensorType::GYROSCOPE;
+    mSensorInfo.typeAsString = "";
+    mSensorInfo.maxRange = 8.726639f;
+    mSensorInfo.resolution = 1.0f;
+    mSensorInfo.power = 0.001f;
+    mSensorInfo.minDelay = 4444;  // microseonds
+    mSensorInfo.maxDelay = 0;     // microseconds
+    mSensorInfo.fifoReservedEventCount = 0;
+    mSensorInfo.fifoMaxEventCount = 0;
+    mSensorInfo.requiredPermission = "";
+    mSensorInfo.flags = 0;
+};
+
+AmbientTempSensor::AmbientTempSensor(int32_t sensorHandle, ISensorsEventCallback* callback)
+    : OnChangeSensor(callback) {
+    mSensorInfo.sensorHandle = sensorHandle;
+    mSensorInfo.name = "Ambient Temp Sensor";
+    mSensorInfo.vendor = "Vendor String";
+    mSensorInfo.version = 1;
+    mSensorInfo.type = SensorType::AMBIENT_TEMPERATURE;
+    mSensorInfo.typeAsString = "";
+    mSensorInfo.maxRange = 80.0f;
+    mSensorInfo.resolution = 1.0f;
+    mSensorInfo.power = 0.001f;
+    mSensorInfo.minDelay = 4444;  // microseonds
+    mSensorInfo.maxDelay = 0;     // microseconds
+    mSensorInfo.fifoReservedEventCount = 0;
+    mSensorInfo.fifoMaxEventCount = 0;
+    mSensorInfo.requiredPermission = "";
+    mSensorInfo.flags = static_cast<uint32_t>(SensorFlagBits::ON_CHANGE_MODE);
+};
+
+DeviceTempSensor::DeviceTempSensor(int32_t sensorHandle, ISensorsEventCallback* callback)
+    : OnChangeSensor(callback) {
+    mSensorInfo.sensorHandle = sensorHandle;
+    mSensorInfo.name = "Device Temp Sensor";
+    mSensorInfo.vendor = "Vendor String";
+    mSensorInfo.version = 1;
+    mSensorInfo.type = SensorType::TEMPERATURE;
+    mSensorInfo.typeAsString = "";
+    mSensorInfo.maxRange = 80.0f;
+    mSensorInfo.resolution = 1.0f;
+    mSensorInfo.power = 0.001f;
+    mSensorInfo.minDelay = 4444;  // microseonds
+    mSensorInfo.maxDelay = 0;     // microseconds
+    mSensorInfo.fifoReservedEventCount = 0;
+    mSensorInfo.fifoMaxEventCount = 0;
+    mSensorInfo.requiredPermission = "";
+    mSensorInfo.flags = static_cast<uint32_t>(SensorFlagBits::ON_CHANGE_MODE);
+}
+
+RelativeHumiditySensor::RelativeHumiditySensor(int32_t sensorHandle,
+                                               ISensorsEventCallback* callback)
+    : OnChangeSensor(callback) {
+    mSensorInfo.sensorHandle = sensorHandle;
+    mSensorInfo.name = "Relative Humidity Sensor";
+    mSensorInfo.vendor = "Vendor String";
+    mSensorInfo.version = 1;
+    mSensorInfo.type = SensorType::RELATIVE_HUMIDITY;
+    mSensorInfo.typeAsString = "";
+    mSensorInfo.maxRange = 100.0f;
+    mSensorInfo.resolution = 1.0f;
+    mSensorInfo.power = 0.001f;
+    mSensorInfo.minDelay = 4444;  // microseonds
+    mSensorInfo.maxDelay = 0;     // microseconds
+    mSensorInfo.fifoReservedEventCount = 0;
+    mSensorInfo.fifoMaxEventCount = 0;
+    mSensorInfo.requiredPermission = "";
+    mSensorInfo.flags = static_cast<uint32_t>(SensorFlagBits::ON_CHANGE_MODE);
+}
 
 }  // namespace implementation
 }  // namespace V2_0
