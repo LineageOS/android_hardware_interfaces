@@ -375,7 +375,7 @@ void Execute(const sp<V1_0::IDevice>& device, std::function<V1_0::Model(void)> c
         std::cout << "[          ]   Early termination of test because vendor service cannot "
                      "prepare model that it does not support."
                   << std::endl;
-        return;
+        GTEST_SKIP();
     }
     EXPECT_EQ(ErrorStatus::NONE, prepareReturnStatus);
     ASSERT_NE(nullptr, preparedModel.get());
@@ -423,7 +423,7 @@ void Execute(const sp<V1_1::IDevice>& device, std::function<V1_1::Model(void)> c
         std::cout << "[          ]   Early termination of test because vendor service cannot "
                      "prepare model that it does not support."
                   << std::endl;
-        return;
+        GTEST_SKIP();
     }
     EXPECT_EQ(ErrorStatus::NONE, prepareReturnStatus);
     ASSERT_NE(nullptr, preparedModel.get());
@@ -472,7 +472,7 @@ void Execute(const sp<V1_2::IDevice>& device, std::function<V1_2::Model(void)> c
         std::cout << "[          ]   Early termination of test because vendor service cannot "
                      "prepare model that it does not support."
                   << std::endl;
-        return;
+        GTEST_SKIP();
     }
     EXPECT_EQ(ErrorStatus::NONE, prepareReturnStatus);
     ASSERT_NE(nullptr, preparedModel.get());
