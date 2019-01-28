@@ -36,10 +36,10 @@ namespace vts {
 namespace {
 
 using common::V1_0::BufferUsage;
-using common::V1_1::PixelFormat;
 using common::V1_1::RenderIntent;
 using common::V1_2::ColorMode;
 using common::V1_2::Dataspace;
+using common::V1_2::PixelFormat;
 using mapper::V2_0::IMapper;
 using mapper::V2_0::vts::Gralloc;
 
@@ -492,9 +492,6 @@ TEST_F(GraphicsComposerHidlTest, SetLayerColorTransform) {
 }
 
 TEST_F(GraphicsComposerHidlTest, GetDisplayedContentSamplingAttributes) {
-    using common::V1_1::PixelFormat;
-    using common::V1_2::Dataspace;
-
     int constexpr invalid = -1;
     auto format = static_cast<PixelFormat>(invalid);
     auto dataspace = static_cast<Dataspace>(invalid);

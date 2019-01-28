@@ -15,7 +15,7 @@
  */
 package android.hardware.configstore@1.2;
 
-import android.hardware.graphics.common@1.1::PixelFormat;
+import android.hardware.graphics.common@1.2::PixelFormat;
 import android.hardware.graphics.common@1.2::Dataspace;
 import @1.1::ISurfaceFlingerConfigs;
 import @1.0::OptionalBool;
