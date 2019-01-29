@@ -42,6 +42,10 @@ using test_helper::MixedTypedExample;
 
 ///////////////////////// UTILITY FUNCTIONS /////////////////////////
 
+static bool badTiming(Timing timing) {
+    return timing.timeOnDevice == UINT64_MAX && timing.timeInDriver == UINT64_MAX;
+}
+
 static void createPreparedModel(const sp<IDevice>& device, const Model& model,
                                 sp<IPreparedModel>* preparedModel) {
     ASSERT_NE(nullptr, preparedModel);
@@ -98,31 +102,46 @@ static void validate(const sp<IPreparedModel>& preparedModel, const std::string&
                      Request request, const std::function<void(Request*)>& mutation) {
     mutation(&request);
 
+    // We'd like to test both with timing requested and without timing
+    // requested. Rather than running each test both ways, we'll decide whether
+    // to request timing by hashing the message. We do not use std::hash because
+    // it is not guaranteed stable across executions.
+    char hash = 0;
+    for (auto c : message) {
+        hash ^= c;
+    };
+    MeasureTiming measure = (hash & 1) ? MeasureTiming::YES : MeasureTiming::NO;
+
     {
         SCOPED_TRACE(message + " [execute_1_2]");
 
         sp<ExecutionCallback> executionCallback = new ExecutionCallback();
         ASSERT_NE(nullptr, executionCallback.get());
         Return<ErrorStatus> executeLaunchStatus =
-            preparedModel->execute_1_2(request, executionCallback);
+                preparedModel->execute_1_2(request, measure, executionCallback);
         ASSERT_TRUE(executeLaunchStatus.isOk());
         ASSERT_EQ(ErrorStatus::INVALID_ARGUMENT, static_cast<ErrorStatus>(executeLaunchStatus));
 
         executionCallback->wait();
         ErrorStatus executionReturnStatus = executionCallback->getStatus();
         const auto& outputShapes = executionCallback->getOutputShapes();
+        Timing timing = executionCallback->getTiming();
         ASSERT_EQ(ErrorStatus::INVALID_ARGUMENT, executionReturnStatus);
         ASSERT_EQ(outputShapes.size(), 0);
+        ASSERT_TRUE(badTiming(timing));
     }
 
     {
         SCOPED_TRACE(message + " [executeSynchronously]");
 
         Return<void> executeStatus = preparedModel->executeSynchronously(
-            request, [](ErrorStatus error, const hidl_vec<OutputShape>& outputShapes) {
-                ASSERT_EQ(ErrorStatus::INVALID_ARGUMENT, error);
-                EXPECT_EQ(outputShapes.size(), 0);
-            });
+                request, measure,
+                [](ErrorStatus error, const hidl_vec<OutputShape>& outputShapes,
+                   const Timing& timing) {
+                    ASSERT_EQ(ErrorStatus::INVALID_ARGUMENT, error);
+                    EXPECT_EQ(outputShapes.size(), 0);
+                    EXPECT_TRUE(badTiming(timing));
+                });
         ASSERT_TRUE(executeStatus.isOk());
     }
 }
