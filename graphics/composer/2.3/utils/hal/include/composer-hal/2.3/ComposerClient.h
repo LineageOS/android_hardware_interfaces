@@ -123,7 +123,7 @@ class ComposerClientImpl : public V2_2::hal::detail::ComposerClientImpl<Interfac
     Return<void> getDisplayedContentSamplingAttributes(
         uint64_t display,
         IComposerClient::getDisplayedContentSamplingAttributes_cb hidl_cb) override {
-        common::V1_1::PixelFormat format;
+        PixelFormat format;
         common::V1_2::Dataspace dataspace;
         hidl_bitfield<IComposerClient::FormatColorComponent> componentMask;
         Error error =

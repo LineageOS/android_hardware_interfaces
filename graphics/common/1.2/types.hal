@@ -25,7 +25,8 @@ import @1.1::PixelFormat;
 /**
  * Hdr
  */
-@export(name="android_hdr_v1_2_t", value_prefix="HAL_HDR_")
+@export(name="android_hdr_v1_2_t", value_prefix="HAL_HDR_",
+        export_parent="false")
 enum Hdr : @1.0::Hdr {
     HDR10_PLUS = 4,
 };
@@ -41,6 +42,13 @@ enum Dataspace : @1.1::Dataspace {
      * Use full range, sRGB transfer and BT2020 standard
      */
     DISPLAY_BT2020 = STANDARD_BT2020 | TRANSFER_SRGB | RANGE_FULL,
+
+    /**
+     * ISO 16684-1:2011(E)
+     *
+     * Embedded depth metadata following the dynamic depth specification.
+     */
+    DYNAMIC_DEPTH = 0x1002,
 };
 
 enum ColorMode : @1.1::ColorMode {
@@ -96,3 +104,18 @@ struct HardwareBuffer {
  */
 typedef int32_t[4] Rect;
 
+/**
+ * Pixel formats for graphics buffers.
+ */
+@export(name="android_pixel_format_v1_2_t", value_prefix="HAL_PIXEL_FORMAT_",
+        export_parent="false")
+enum PixelFormat : @1.1::PixelFormat {
+    /**
+     * 24-bit format that has 8-bit H, S, and V components, in that order,
+     * from the lowest memory address to the highest memory address.
+     *
+     * The component values are unsigned normalized to the range [0, 1], whose
+     * interpretation is defined by the dataspace.
+    */
+    HSV_888 = 0x37,
+};

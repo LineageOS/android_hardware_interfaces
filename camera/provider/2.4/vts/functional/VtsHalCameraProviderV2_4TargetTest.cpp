@@ -5521,6 +5521,24 @@ void CameraHidlTest::verifyCameraCharacteristics(Status status, const CameraMeta
         ADD_FAILURE() << "ANDROID_REQUEST_CHARACTERISTIC_KEYS_NEEDING_PERMISSION "
             << " per API contract should never be set by Hal!";
     }
+    retcode = find_camera_metadata_ro_entry(metadata,
+            ANDROID_DEPTH_AVAILABLE_DYNAMIC_DEPTH_STREAM_CONFIGURATIONS, &entry);
+    if ((0 == retcode) || (entry.count > 0)) {
+        ADD_FAILURE() << "ANDROID_DEPTH_AVAILABLE_DYNAMIC_DEPTH_STREAM_CONFIGURATIONS"
+            << " per API contract should never be set by Hal!";
+    }
+    retcode = find_camera_metadata_ro_entry(metadata,
+            ANDROID_DEPTH_AVAILABLE_DYNAMIC_DEPTH_MIN_FRAME_DURATIONS, &entry);
+    if ((0 == retcode) || (entry.count > 0)) {
+        ADD_FAILURE() << "ANDROID_DEPTH_AVAILABLE_DYNAMIC_DEPTH_MIN_FRAME_DURATIONS"
+            << " per API contract should never be set by Hal!";
+    }
+    retcode = find_camera_metadata_ro_entry(metadata,
+            ANDROID_DEPTH_AVAILABLE_DYNAMIC_DEPTH_STALL_DURATIONS, &entry);
+    if ((0 == retcode) || (entry.count > 0)) {
+        ADD_FAILURE() << "ANDROID_DEPTH_AVAILABLE_DYNAMIC_DEPTH_STALL_DURATIONS"
+            << " per API contract should never be set by Hal!";
+    }
 }
 
 void CameraHidlTest::verifyMonochromeCharacteristics(const CameraMetadata& chars,
