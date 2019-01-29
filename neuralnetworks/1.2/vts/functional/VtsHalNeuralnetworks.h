@@ -79,6 +79,9 @@ class ValidationTest : public NeuralnetworksHidlTest {
 // Tag for the generated tests
 class GeneratedTest : public NeuralnetworksHidlTest {};
 
+// Tag for the dynamic output shape tests
+class DynamicOutputShapeTest : public NeuralnetworksHidlTest {};
+
 // Utility function to get PreparedModel from callback and downcast to V1_2.
 sp<IPreparedModel> getPreparedModel_1_2(
     const sp<V1_2::implementation::PreparedModelCallback>& callback);
