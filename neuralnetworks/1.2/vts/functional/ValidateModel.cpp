@@ -329,6 +329,7 @@ static bool mutateOperationOperandTypeSkip(size_t operand, OperandType type, con
         // - CONV_2D filter type (arg 1) can be QUANT8_ASYMM or QUANT8_SYMM_PER_CHANNEL
         // - DEPTHWISE_CONV_2D filter type (arg 1) can be QUANT8_ASYMM or QUANT8_SYMM_PER_CHANNEL
         // - GROUPED_CONV_2D filter type (arg 1) can be QUANT8_ASYMM or QUANT8_SYMM_PER_CHANNEL
+        // - TRANSPOSE_CONV_2D filter type (arg 1) can be QUANT8_ASYMM or QUANT8_SYMM_PER_CHANNEL
         switch (operation.type) {
             case OperationType::LSH_PROJECTION: {
                 if (operand == operation.inputs[1]) {
@@ -348,6 +349,7 @@ static bool mutateOperationOperandTypeSkip(size_t operand, OperandType type, con
                     return true;
                 }
             } break;
+            case OperationType::TRANSPOSE_CONV_2D:
             case OperationType::GROUPED_CONV_2D:
             case OperationType::DEPTHWISE_CONV_2D:
             case OperationType::CONV_2D: {
