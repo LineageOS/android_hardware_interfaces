@@ -54,20 +54,27 @@ enum AccessNetwork : @1.2::AccessNetwork {
 };
 
 /**
- * Emergency number contains information of number, one or more service category(s), mobile country
- * code (mcc), mobile network country (mnc) and source(s) that indicate where it comes from.
+ * Emergency number contains information of number, one or more service category(s), zero or more
+ * emergency uniform resource names, mobile country code (mcc), mobile network country (mnc) and
+ * source(s) that indicate where it comes from.
  *
- * If the source of the emergency number is associated with country, field ‘mcc’ must be provided;
- * otherwise the field ‘mcc’ must be an empty string.
+ * If the emergency number is associated with country, field ‘mcc’ must be provided, otherwise
+ * field ‘mcc’ must be an empty string. If the emergency number is associated with network
+ * operator, field ‘mcc’ and 'mnc' must be provided, otherwise field ‘mnc’ must be an empty
+ * string. If the emergency number is specified with emergency service category(s), field
+ * 'categories' must be provided, otherwise field 'categories' must be
+ * @1.4::EmergencyServiceCategories::UNSPECIFIED. If the emergency number is specified with
+ * emergency uniform resource names (URN), field 'urns' must be provided, otherwise field 'urns'
+ * must be an empty list.
  *
- * If the source of the emergency number is associated with network operator, field ‘mcc’ and
- * 'mnc' must be provided; otherwise the field ‘mnc’ must be an empty string.
+ * A unique EmergencyNumber has a unique combination of ‘number’, ‘mcc’, 'mnc', 'categories' and
+ * 'urns' fields. Multiple @1.4::EmergencyNumberSource should be merged into one 'sources' field
+ * via bitwise-OR combination for the same EmergencyNumber.
  *
- * A unique EmergencyNumber has a unique combination of ‘number’, ‘mcc’, 'mnc' and 'categories'
- * fields. Multiple @1.4::EmergencyNumberSource should be merged into the bitfield for the same
- * EmergencyNumber.
- *
- * Reference: 3GPP TS 22.101 version 9.1.0 Release 9
+ * Reference: 3gpp 22.101, Section 10 - Emergency Calls;
+ *            3gpp 23.167, Section 6 - Functional description;
+ *            3gpp 24.503, Section 5.1.6.8.1 - General;
+ *            RFC 5031
  */
 struct EmergencyNumber{
     /**
@@ -88,6 +95,10 @@ struct EmergencyNumber{
      * the value of each bit.
      */
     bitfield<EmergencyServiceCategory> categories;
+    /**
+     * The list of emergency Uniform Resource Names (URN).
+     */
+    vec<string> urns;
     /**
      * The bitfield of @1.4::EmergencyNumberSource(s). See @1.4::EmergencyNumberSource for the
      * value of each bit.
