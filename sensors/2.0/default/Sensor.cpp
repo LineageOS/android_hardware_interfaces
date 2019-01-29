@@ -83,7 +83,7 @@ Result Sensor::flush() {
     // to the Event FMQ prior to writing the flush complete event.
     Event ev;
     ev.sensorHandle = mSensorInfo.sensorHandle;
-    ev.sensorType = SensorType::ADDITIONAL_INFO;
+    ev.sensorType = SensorType::META_DATA;
     ev.u.meta.what = MetaDataEventType::META_DATA_FLUSH_COMPLETE;
     std::vector<Event> evs{ev};
     mCallback->postEvents(evs, isWakeUpSensor());
