@@ -16,11 +16,26 @@
 
 package android.hardware.input.classifier@1.0;
 
+import android.hardware.input.common@1.0::Classification;
+import android.hardware.input.common@1.0::MotionEvent;
+
 interface IInputClassifier {
 
   /**
    * Returns the classification for the current sequence of input events.
    */
   classify(MotionEvent event) generates (Classification classification);
+
+  /**
+   * Called by the framework to reset the HAL internal state. The reset may be called
+   * to prevent an inconsistent stream of events to be sent to the HAL.
+   */
+  reset();
+
+  /**
+   * Called by the framework to reset the HAL internal state for a specific device.
+   * The reset may be called once device reset is received by the framework.
+   */
+  resetDevice(int32_t deviceId);
 
 };
