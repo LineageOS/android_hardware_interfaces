@@ -172,6 +172,9 @@ static uint32_t getInvalidRank(OperandType type) {
 static void mutateOperandRankTest(const sp<IDevice>& device, const Model& model) {
     for (size_t operand = 0; operand < model.operands.size(); ++operand) {
         const uint32_t invalidRank = getInvalidRank(model.operands[operand].type);
+        if (invalidRank == 0) {
+            continue;
+        }
         const std::string message = "mutateOperandRankTest: operand " + std::to_string(operand) +
                                     " has rank of " + std::to_string(invalidRank);
         validate(device, message, model, [operand, invalidRank](Model* model) {
