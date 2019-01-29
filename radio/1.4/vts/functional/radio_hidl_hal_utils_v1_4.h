@@ -441,6 +441,9 @@ class RadioResponse_v1_4 : public ::android::hardware::radio::V1_4::IRadioRespon
             const RadioResponseInfo& info,
             const ::android::hardware::radio::V1_2::SignalStrength& sig_strength);
 
+    Return<void> getSignalStrengthResponse_1_4(const RadioResponseInfo& info,
+            const ::android::hardware::radio::V1_4::SignalStrength& sig_strength);
+
     Return<void> getCellInfoListResponse_1_2(
             const RadioResponseInfo& info,
             const ::android::hardware::hidl_vec<::android::hardware::radio::V1_2::CellInfo>&
@@ -558,6 +561,9 @@ class RadioIndication_v1_4 : public ::android::hardware::radio::V1_4::IRadioIndi
     Return<void> currentSignalStrength_1_2(
             RadioIndicationType type,
             const ::android::hardware::radio::V1_2::SignalStrength& signalStrength);
+
+    Return<void> currentSignalStrength_1_4(RadioIndicationType type,
+            const ::android::hardware::radio::V1_4::SignalStrength& signalStrength);
 
     /* 1.1 Api */
     Return<void> carrierInfoForImsiEncryption(RadioIndicationType info);

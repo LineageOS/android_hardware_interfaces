@@ -20,12 +20,16 @@ import @1.0::ApnAuthType;
 import @1.0::ApnTypes;
 import @1.0::Carrier;
 import @1.0::CellInfoType;
+import @1.0::CdmaSignalStrength;
 import @1.0::DataCallFailCause;
 import @1.0::DataProfileId;
 import @1.0::DataProfileInfoType;
+import @1.0::EvdoSignalStrength;
+import @1.0::GsmSignalStrength;
+import @1.0::LteSignalStrength;
 import @1.0::RadioAccessFamily;
 import @1.0::RadioCapabilityPhase;
-import @1.0::RadioCapabilityStatus ;
+import @1.0::RadioCapabilityStatus;
 import @1.0::RadioError;
 import @1.0::RadioTechnology;
 import @1.0::RegState;
@@ -39,10 +43,17 @@ import @1.2::CellInfoLte;
 import @1.2::CellInfoTdscdma;
 import @1.2::CellInfoWcdma;
 import @1.2::CardStatus;
-import @1.2::CellIdentity;
 import @1.2::CellConnectionStatus;
+import @1.2::CellIdentityCdma;
+import @1.2::CellIdentityGsm;
+import @1.2::CellIdentityLte;
+import @1.2::CellIdentityTdscdma;
+import @1.2::CellIdentityWcdma;
+import @1.2::CellIdentityOperatorNames;
 import @1.2::DataRegStateResult;
 import @1.2::PhysicalChannelConfig;
+import @1.2::TdscdmaSignalStrength;
+import @1.2::WcdmaSignalStrength;
 
 import android.hidl.safe_union@1.0::Monostate;
 
@@ -188,12 +199,12 @@ enum EmergencyCallRouting : int32_t {
 };
 
 enum RadioTechnology : @1.0::RadioTechnology {
-    /** 5G NR. */
+    /** 5G NR. This is only use in 5G Standalone mode. */
     NR = 20,
 };
 
 enum RadioAccessFamily : @1.0::RadioAccessFamily {
-    /** 5G NR. */
+    /** 5G NR. This is only use in 5G Standalone mode. */
     NR = 1 << RadioTechnology:NR,
 };
 
@@ -1551,7 +1562,13 @@ struct CellInfo {
         CellInfoWcdma wcdma;
         CellInfoTdscdma tdscdma;
         CellInfoLte lte;
+        CellInfoNr nr;
     } info;
+};
+
+struct CellInfoNr {
+    NrSignalStrength signalStrength;
+    CellIdentityNr cellidentity;
 };
 
 /** Overwritten from @1.2::NetworkScanResult in order to update the CellInfo to 1.4 version. */
@@ -1769,4 +1786,132 @@ struct CarrierRestrictionsWithPriority {
      * and not in the allowed list.
      */
     bool allowedCarriersPrioritized;
+};
+
+struct CellIdentityNr {
+    /** 3-digit Mobile Country Code, in range[0, 999], INT_MAX means invalid/unreported. */
+    string mcc;
+
+    /**
+     * 2 or 3-digit Mobile Network Code, in range [0, 999], INT_MAX means invalid/unreported.
+     */
+    string mnc;
+
+    /**
+     * Physical cell id in range [0, 1007] described in 3GPP TS 38.331. This value must be valid.
+     */
+    uint32_t pci;
+
+    /** 16-bit tracking area code, INT_MAX means invalid/unreported. */
+    int32_t tac;
+
+    /**
+     * NR Absolute Radio Frequency Channel Number, in range [0, 3279165].
+     * Reference: 3GPP TS 38.101-1 and 3GPP TS 38.101-2 section 5.4.2.1.
+     * This value must be valid.
+     */
+    int32_t nrarfcn;
+
+    CellIdentityOperatorNames operatorNames;
+};
+
+struct NrSignalStrength {
+    /**
+     * SS reference signal received power, multipled by -1.
+     *
+     * Reference: 3GPP TS 38.215.
+     *
+     * Range [44, 140], INT_MAX means invalid/unreported.
+     */
+    int32_t ssRsrp;
+
+    /**
+     * SS reference signal received quality, multipled by -1.
+     *
+     * Reference: 3GPP TS 38.215.
+     *
+     * Range [3, 20], INT_MAX means invalid/unreported.
+     */
+    int32_t ssRsrq;
+
+    /**
+     * SS signal-to-noise and interference ratio.
+     *
+     * Reference: 3GPP TS 38.215 section 5.1.*, 3GPP TS 38.133 section 10.1.16.1.
+     *
+     * Range [-23, 40], INT_MAX means invalid/unreported.
+     */
+    int32_t ssSinr;
+
+    /**
+     * CSI reference signal received power, multipled by -1.
+     *
+     * Reference: 3GPP TS 38.215.
+     *
+     * Range [44, 140], INT_MAX means invalid/unreported.
+     */
+    int32_t csiRsrp;
+
+    /**
+     * CSI reference signal received quality, multipled by -1.
+     *
+     * Reference: 3GPP TS 38.215.
+     *
+     * Range [3, 20], INT_MAX means invalid/unreported.
+     */
+    int32_t csiRsrq;
+
+    /**
+     * CSI signal-to-noise and interference ratio.
+     *
+     * Reference: 3GPP TS 138.215 section 5.1.*, 3GPP TS 38.133 section 10.1.16.1.
+     *
+     * Range [-23, 40], INT_MAX means invalid/unreported.
+     */
+    int32_t csiSinr;
+};
+
+/** Overwritten from @1.2::SignalStrength in order to add signal strength for NR.  */
+struct SignalStrength {
+    /**
+     * If GSM measurements are provided, this structure must contain valid measurements; otherwise
+     * all fields should be set to INT_MAX to mark them as invalid.
+     */
+    GsmSignalStrength gsm;
+
+    /**
+     * If CDMA measurements are provided, this structure must contain valid measurements; otherwise
+     * all fields should be set to INT_MAX to mark them as invalid.
+     */
+    CdmaSignalStrength cdma;
+
+    /**
+     * If EvDO measurements are provided, this structure must contain valid measurements; otherwise
+     * all fields should be set to INT_MAX to mark them as invalid.
+     */
+    EvdoSignalStrength evdo;
+
+    /**
+     * If LTE measurements are provided, this structure must contain valid measurements; otherwise
+     * all fields should be set to INT_MAX to mark them as invalid.
+     */
+    LteSignalStrength lte;
+
+    /**
+     * If TD-SCDMA measurements are provided, this structure must contain valid measurements;
+     * otherwise all fields should be set to INT_MAX to mark them as invalid.
+     */
+    TdscdmaSignalStrength tdscdma;
+
+    /**
+     * If WCDMA measurements are provided, this structure must contain valid measurements; otherwise
+     * all fields should be set to INT_MAX to mark them as invalid.
+     */
+    WcdmaSignalStrength wcdma;
+
+    /**
+     * If NR 5G measurements are provided, this structure must contain valid measurements; otherwise
+     * all fields should be set to INT_MAX to mark them as invalid.
+     */
+    NrSignalStrength nr;
 };
