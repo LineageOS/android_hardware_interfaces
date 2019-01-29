@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 
 cc_binary {
-    name: "android.hardware.power.stats@1.0-service",
+    name: "android.hardware.power.stats@1.0-service.mock",
     relative_install_path: "hw",
     init_rc: ["android.hardware.power.stats@1.0-service.rc"],
     srcs: ["service.cpp", "PowerStats.cpp"],
@@ -31,4 +31,5 @@ cc_binary {
         "android.hardware.power.stats@1.0",
     ],
     vendor: true,
+    vintf_fragments: ["android.hardware.power.stats@1.0-service-mock.xml"],
 }
