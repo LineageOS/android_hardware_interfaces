@@ -813,7 +813,7 @@ std::pair<WifiStatus, sp<IWifiApIface>> WifiChip::createApIfaceInternal() {
     std::string ifname = allocateApIfaceName();
     if (!if_nametoindex(ifname.c_str())) {
         legacy_hal::wifi_error legacy_status =
-            legacy_hal_.lock()->QcAddInterface(getWlan0IfaceName(), ifname,
+            legacy_hal_.lock()->QcAddInterface(getWlanIfaceName(0), ifname,
                                                (uint32_t)IfaceType::AP);
         if (legacy_status != legacy_hal::WIFI_SUCCESS) {
             LOG(ERROR) << "Failed to add interface: " << ifname << " "
@@ -860,7 +860,7 @@ WifiStatus WifiChip::removeApIfaceInternal(const std::string& ifname) {
 
     if (findUsingName(created_ap_ifaces_, ifname) != nullptr) {
         legacy_hal::wifi_error legacy_status =
-            legacy_hal_.lock()->QcRemoveInterface(getWlan0IfaceName(), ifname);
+            legacy_hal_.lock()->QcRemoveInterface(getWlanIfaceName(0), ifname);
         if (legacy_status != legacy_hal::WIFI_SUCCESS) {
             LOG(ERROR) << "Failed to remove interface: " << ifname << " "
                        << legacyErrorToString(legacy_status);
@@ -983,7 +983,7 @@ std::pair<WifiStatus, sp<IWifiStaIface>> WifiChip::createStaIfaceInternal() {
     std::string ifname = allocateStaIfaceName();
     if (!if_nametoindex(ifname.c_str())) {
         legacy_hal::wifi_error legacy_status =
-            legacy_hal_.lock()->QcAddInterface(getWlan0IfaceName(), ifname,
+            legacy_hal_.lock()->QcAddInterface(getWlanIfaceName(0), ifname,
                                                (uint32_t)IfaceType::STA);
         if (legacy_status != legacy_hal::WIFI_SUCCESS) {
             LOG(ERROR) << "Failed to add interface: " << ifname << " "
@@ -1028,7 +1028,7 @@ WifiStatus WifiChip::removeStaIfaceInternal(const std::string& ifname) {
     }
     if (findUsingName(created_sta_ifaces_, ifname) != nullptr) {
         legacy_hal::wifi_error legacy_status =
-            legacy_hal_.lock()->QcRemoveInterface(getWlan0IfaceName(), ifname);
+            legacy_hal_.lock()->QcRemoveInterface(getWlanIfaceName(0), ifname);
         if (legacy_status != legacy_hal::WIFI_SUCCESS) {
             LOG(ERROR) << "Failed to remove interface: " << ifname << " "
                        << legacyErrorToString(legacy_status);
