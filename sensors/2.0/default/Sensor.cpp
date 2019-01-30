@@ -18,6 +18,8 @@
 
 #include <utils/SystemClock.h>
 
+#include <cmath>
+
 namespace android {
 namespace hardware {
 namespace sensors {
@@ -27,6 +29,8 @@ namespace implementation {
 using ::android::hardware::sensors::V1_0::MetaDataEventType;
 using ::android::hardware::sensors::V1_0::SensorFlagBits;
 using ::android::hardware::sensors::V1_0::SensorStatus;
+
+static constexpr float kDefaultMaxDelayUs = 10 * 1000 * 1000;
 
 Sensor::Sensor(ISensorsEventCallback* callback)
     : mIsEnabled(false),
@@ -202,7 +206,7 @@ AccelSensor::AccelSensor(int32_t sensorHandle, ISensorsEventCallback* callback) 
     mSensorInfo.resolution = 1.52e-5;
     mSensorInfo.power = 0.001f;          // mA
     mSensorInfo.minDelay = 20 * 1000;    // microseconds
-    mSensorInfo.maxDelay = 1000 * 1000;  // microseconds
+    mSensorInfo.maxDelay = kDefaultMaxDelayUs;
     mSensorInfo.fifoReservedEventCount = 0;
     mSensorInfo.fifoMaxEventCount = 0;
     mSensorInfo.requiredPermission = "";
@@ -218,10 +222,10 @@ PressureSensor::PressureSensor(int32_t sensorHandle, ISensorsEventCallback* call
     mSensorInfo.type = SensorType::PRESSURE;
     mSensorInfo.typeAsString = "";
     mSensorInfo.maxRange = 1100.0f;   // hPa
-    mSensorInfo.resolution = 1.0f;    // hPa
+    mSensorInfo.resolution = 0.005f;  // hPa
     mSensorInfo.power = 0.001f;       // mA
-    mSensorInfo.minDelay = 28571.0f;  // microseconds
-    mSensorInfo.maxDelay = 0.0f;      // microseconds
+    mSensorInfo.minDelay = 100 * 1000;  // microseconds
+    mSensorInfo.maxDelay = kDefaultMaxDelayUs;
     mSensorInfo.fifoReservedEventCount = 0;
     mSensorInfo.fifoMaxEventCount = 0;
     mSensorInfo.requiredPermission = "";
@@ -236,11 +240,11 @@ MagnetometerSensor::MagnetometerSensor(int32_t sensorHandle, ISensorsEventCallba
     mSensorInfo.version = 1;
     mSensorInfo.type = SensorType::MAGNETIC_FIELD;
     mSensorInfo.typeAsString = "";
-    mSensorInfo.maxRange = 4911.0f;
-    mSensorInfo.resolution = 1.00f;
+    mSensorInfo.maxRange = 1300.0f;
+    mSensorInfo.resolution = 0.01f;
     mSensorInfo.power = 0.001f;       // mA
-    mSensorInfo.minDelay = 14284.0f;  // microseconds
-    mSensorInfo.maxDelay = 0.0f;      // microseconds
+    mSensorInfo.minDelay = 20 * 1000;  // microseconds
+    mSensorInfo.maxDelay = kDefaultMaxDelayUs;
     mSensorInfo.fifoReservedEventCount = 0;
     mSensorInfo.fifoMaxEventCount = 0;
     mSensorInfo.requiredPermission = "";
@@ -255,11 +259,11 @@ LightSensor::LightSensor(int32_t sensorHandle, ISensorsEventCallback* callback)
     mSensorInfo.version = 1;
     mSensorInfo.type = SensorType::LIGHT;
     mSensorInfo.typeAsString = "";
-    mSensorInfo.maxRange = 10000.0f;
+    mSensorInfo.maxRange = 43000.0f;
     mSensorInfo.resolution = 10.0f;
     mSensorInfo.power = 0.001f;           // mA
-    mSensorInfo.minDelay = 20.0f * 1000;  // microseconds
-    mSensorInfo.maxDelay = 0;             // microseconds
+    mSensorInfo.minDelay = 200 * 1000;    // microseconds
+    mSensorInfo.maxDelay = kDefaultMaxDelayUs;
     mSensorInfo.fifoReservedEventCount = 0;
     mSensorInfo.fifoMaxEventCount = 0;
     mSensorInfo.requiredPermission = "";
@@ -277,8 +281,8 @@ ProximitySensor::ProximitySensor(int32_t sensorHandle, ISensorsEventCallback* ca
     mSensorInfo.maxRange = 5.0f;
     mSensorInfo.resolution = 1.0f;
     mSensorInfo.power = 0.012f;  // mA
-    mSensorInfo.minDelay = 500;  // microseconds
-    mSensorInfo.maxDelay = 2 * mSensorInfo.minDelay;
+    mSensorInfo.minDelay = 200 * 1000;  // microseconds
+    mSensorInfo.maxDelay = kDefaultMaxDelayUs;
     mSensorInfo.fifoReservedEventCount = 0;
     mSensorInfo.fifoMaxEventCount = 0;
     mSensorInfo.requiredPermission = "";
@@ -293,11 +297,11 @@ GyroSensor::GyroSensor(int32_t sensorHandle, ISensorsEventCallback* callback) : 
     mSensorInfo.version = 1;
     mSensorInfo.type = SensorType::GYROSCOPE;
     mSensorInfo.typeAsString = "";
-    mSensorInfo.maxRange = 8.726639f;
-    mSensorInfo.resolution = 1.0f;
+    mSensorInfo.maxRange = 1000.0f * M_PI / 180.0f;
+    mSensorInfo.resolution = 1000.0f * M_PI / (180.0f * 32768.0f);
     mSensorInfo.power = 0.001f;
-    mSensorInfo.minDelay = 4444;  // microseonds
-    mSensorInfo.maxDelay = 0;     // microseconds
+    mSensorInfo.minDelay = 2.5f * 1000;  // microseconds
+    mSensorInfo.maxDelay = kDefaultMaxDelayUs;
     mSensorInfo.fifoReservedEventCount = 0;
     mSensorInfo.fifoMaxEventCount = 0;
     mSensorInfo.requiredPermission = "";
@@ -313,10 +317,10 @@ AmbientTempSensor::AmbientTempSensor(int32_t sensorHandle, ISensorsEventCallback
     mSensorInfo.type = SensorType::AMBIENT_TEMPERATURE;
     mSensorInfo.typeAsString = "";
     mSensorInfo.maxRange = 80.0f;
-    mSensorInfo.resolution = 1.0f;
+    mSensorInfo.resolution = 0.01f;
     mSensorInfo.power = 0.001f;
-    mSensorInfo.minDelay = 4444;  // microseonds
-    mSensorInfo.maxDelay = 0;     // microseconds
+    mSensorInfo.minDelay = 40 * 1000;  // microseconds
+    mSensorInfo.maxDelay = kDefaultMaxDelayUs;
     mSensorInfo.fifoReservedEventCount = 0;
     mSensorInfo.fifoMaxEventCount = 0;
     mSensorInfo.requiredPermission = "";
@@ -332,10 +336,10 @@ DeviceTempSensor::DeviceTempSensor(int32_t sensorHandle, ISensorsEventCallback* 
     mSensorInfo.type = SensorType::TEMPERATURE;
     mSensorInfo.typeAsString = "";
     mSensorInfo.maxRange = 80.0f;
-    mSensorInfo.resolution = 1.0f;
+    mSensorInfo.resolution = 0.01f;
     mSensorInfo.power = 0.001f;
-    mSensorInfo.minDelay = 4444;  // microseonds
-    mSensorInfo.maxDelay = 0;     // microseconds
+    mSensorInfo.minDelay = 40 * 1000;  // microseconds
+    mSensorInfo.maxDelay = kDefaultMaxDelayUs;
     mSensorInfo.fifoReservedEventCount = 0;
     mSensorInfo.fifoMaxEventCount = 0;
     mSensorInfo.requiredPermission = "";
@@ -352,10 +356,10 @@ RelativeHumiditySensor::RelativeHumiditySensor(int32_t sensorHandle,
     mSensorInfo.type = SensorType::RELATIVE_HUMIDITY;
     mSensorInfo.typeAsString = "";
     mSensorInfo.maxRange = 100.0f;
-    mSensorInfo.resolution = 1.0f;
+    mSensorInfo.resolution = 0.1f;
     mSensorInfo.power = 0.001f;
-    mSensorInfo.minDelay = 4444;  // microseonds
-    mSensorInfo.maxDelay = 0;     // microseconds
+    mSensorInfo.minDelay = 40 * 1000;  // microseconds
+    mSensorInfo.maxDelay = kDefaultMaxDelayUs;
     mSensorInfo.fifoReservedEventCount = 0;
     mSensorInfo.fifoMaxEventCount = 0;
     mSensorInfo.requiredPermission = "";
