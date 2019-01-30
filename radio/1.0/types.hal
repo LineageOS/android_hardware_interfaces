@@ -1230,85 +1230,108 @@ struct LastCallFailCauseInfo {
 
 struct GsmSignalStrength {
     uint32_t signalStrength;              // Valid values are (0-61, 99) as defined in
-                                          // TS 27.007 8.69
-    uint32_t bitErrorRate;                // bit error rate (0-7, 99) as defined in TS 27.007 8.5
+                                          // TS 27.007 8.69; INT_MAX means invalid/unreported.
+    uint32_t bitErrorRate;                // bit error rate (0-7, 99) as defined in TS 27.007 8.5;
+                                          // INT_MAX means invalid/unreported.
     int32_t timingAdvance;                // Timing Advance in bit periods. 1 bit period = 48/13 us.
-                                          // INT_MAX denotes invalid value
+                                          // INT_MAX means invalid/unreported.
 };
 
 struct WcdmaSignalStrength{
     int32_t signalStrength;               // Valid values are (0-31, 99) as defined in
-                                          // TS 27.007 8.5
-    int32_t bitErrorRate;                 // bit error rate (0-7, 99) as defined in TS 27.007 8.5
+                                          // TS 27.007 8.5; INT_MAX means unreported.
+    int32_t bitErrorRate;                 // bit error rate (0-7, 99) as defined in TS 27.007 8.5;
+                                          // INT_MAX means invalid/unreported.
 };
 
 struct CdmaSignalStrength {
     uint32_t dbm;                         // This value is the actual RSSI
                                           // value multiplied by -1. Example: If the
                                           // actual RSSI is -75, then this response value will
-                                          // be 75.
+                                          // be 75. INT_MAX means invalid/unreported.
     uint32_t ecio;                        // This value is the actual
                                           // Ec/Io multiplied by -10. Example: If the
                                           // actual Ec/Io is -12.5 dB, then this response value
-                                          // will be 125.
+                                          // will be 125. INT_MAX means invalid/unreported.
 };
 
 struct EvdoSignalStrength {
     uint32_t dbm;                         // This value is the actual
                                           // RSSI value multiplied by -1.
                                           // Example: If the actual RSSI is -75,
-                                          // then this response value will be 75.
+                                          // then this response value will be 75; INT_MAX means
+                                          // invalid/unreported.
     uint32_t ecio;                        // This value is the actual
                                           // Ec/Io multiplied by -10. Example: If the
                                           // actual Ec/Io is -12.5 dB, then this response value
-                                          // will be 125.
+                                          // will be 125; INT_MAX means invalid/unreported.
     uint32_t signalNoiseRatio;            // Valid values are 0-8. 8 is the highest signal to
-                                          // noise ratio.
+                                          // noise ratio; INT_MAX means invalid/unreported.
 };
 
 struct LteSignalStrength {
     uint32_t signalStrength;              // Valid values are (0-31, 99) as defined in
-                                          // TS 27.007 8.5
+                                          // TS 27.007 8.5; INT_MAX means invalid/unreported.
     uint32_t rsrp;                        // The current Reference Signal Receive Power in dBm
                                           // multipled by -1.
-                                          // Range: 44 to 140 dBm
-                                          // INT_MAX: 0x7FFFFFFF denotes invalid value.
+                                          // Range: 44 to 140 dBm;
+                                          // INT_MAX: 0x7FFFFFFF denotes invalid/unreported value.
                                           // Reference: 3GPP TS 36.133 9.1.4
     uint32_t rsrq;                        // The current Reference Signal Receive Quality in dB
                                           // multiplied by -1.
-                                          // Range: 20 to 3 dB.
-                                          // INT_MAX: 0x7FFFFFFF denotes invalid value.
+                                          // Range: 20 to 3 dB;
+                                          // INT_MAX: 0x7FFFFFFF denotes invalid/unreported value.
                                           // Reference: 3GPP TS 36.133 9.1.7
     int32_t rssnr;                        // The current reference signal signal-to-noise ratio in
                                           // 0.1 dB units.
                                           // Range: -200 to +300 (-200 = -20.0 dB, +300 = 30dB).
-                                          // INT_MAX : 0x7FFFFFFF denotes invalid value.
+                                          // INT_MAX: 0x7FFFFFFF denotes invalid/unreported value.
                                           // Reference: 3GPP TS 36.101 8.1.1
     uint32_t cqi;                         // The current Channel Quality Indicator.
                                           // Range: 0 to 15.
-                                          // INT_MAX : 0x7FFFFFFF denotes invalid value.
+                                          // INT_MAX: 0x7FFFFFFF denotes invalid/unreported value.
                                           // Reference: 3GPP TS 36.101 9.2, 9.3, A.4
     uint32_t timingAdvance;               // timing advance in micro seconds for a one way trip
                                           // from cell to device.
                                           // Approximate distance is calculated using
                                           // 300m/us * timingAdvance.
                                           // Range: 0 to 1282 inclusive.
-                                          // INT_MAX : 0x7FFFFFFF denotes unknown value.
+                                          // INT_MAX: 0x7FFFFFFF denotes invalid/unreported value.
                                           // Reference: 3GPP 36.213 section 4.2.3
 };
 
 struct TdScdmaSignalStrength {
     uint32_t rscp;                        // The Received Signal Code Power in dBm multiplied by -1.
                                           // Range : 25 to 120
-                                          // INT_MAX: 0x7FFFFFFF denotes invalid value.
+                                          // INT_MAX: 0x7FFFFFFF denotes invalid/unreported value.
                                           // Reference: 3GPP TS 25.123, section 9.1.1.1
 };
 
 struct SignalStrength {
+    /**
+     * If GSM measurements are provided, this structure must contain valid measurements; otherwise
+     * all fields should be set to INT_MAX to mark them as invalid.
+     */
     GsmSignalStrength gw;
+    /**
+     * If CDMA measurements are provided, this structure must contain valid measurements; otherwise
+     * all fields should be set to INT_MAX to mark them as invalid.
+     */
     CdmaSignalStrength cdma;
+    /**
+     * If EvDO measurements are provided, this structure must contain valid measurements; otherwise
+     * all fields should be set to INT_MAX to mark them as invalid.
+     */
     EvdoSignalStrength evdo;
+    /**
+     * If LTE measurements are provided, this structure must contain valid measurements; otherwise
+     * all fields should be set to INT_MAX to mark them as invalid.
+     */
     LteSignalStrength lte;
+    /**
+     * If TD-SCDMA measurements are provided, this structure must contain valid measurements;
+     * otherwise all fields should be set to INT_MAX to mark them as invalid.
+     */
     TdScdmaSignalStrength tdScdma;
 };
 
