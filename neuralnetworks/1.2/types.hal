@@ -97,10 +97,10 @@ enum OperandType : @1.0::OperandType {
      */
     TENSOR_QUANT16_ASYMM = 12,
     /* ADDING A NEW FUNDAMENTAL TYPE REQUIRES UPDATING THE VALUE OF
-     * OperandTypeRange::OPERAND_FUNDAMENTAL_MAX.
+     * OperandTypeRange::FUNDAMENTAL_MAX.
      */
     /* ADDING A NEW OEM TYPE REQUIRES UPDATING THE VALUE OF
-     * OperandTypeRange::OPERAND_OEM_MAX.
+     * OperandTypeRange::OEM_MAX.
      */
 };
 
@@ -108,10 +108,10 @@ enum OperandType : @1.0::OperandType {
  * The range of operand values in the OperandType enum.
  */
 enum OperandTypeRange : uint32_t {
-    OPERAND_FUNDAMENTAL_MIN = 0,
-    OPERAND_FUNDAMENTAL_MAX = 12,
-    OPERAND_OEM_MIN     = 10000,
-    OPERAND_OEM_MAX     = 10001,
+    FUNDAMENTAL_MIN = 0,
+    FUNDAMENTAL_MAX = 12,
+    OEM_MIN     = 10000,
+    OEM_MAX     = 10001,
 };
 
 /**
@@ -178,10 +178,10 @@ enum OperationType : @1.1::OperationType {
     UNIDIRECTIONAL_SEQUENCE_LSTM = 92,
     UNIDIRECTIONAL_SEQUENCE_RNN = 93,
     /* ADDING A NEW FUNDAMENTAL OPERATION REQUIRES UPDATING THE VALUE OF
-     * OperationTypeRange::OPERATION_FUNDAMENTAL_MAX.
+     * OperationTypeRange::FUNDAMENTAL_MAX.
      */
     /* ADDING A NEW OEM OPERATION REQUIRES UPDATING THE VALUE OF
-     * OperationTypeRange::OPERATION_OEM_MAX.
+     * OperationTypeRange::OEM_MAX.
      */
 };
 
@@ -189,10 +189,10 @@ enum OperationType : @1.1::OperationType {
  * The range of values in the OperationType enum.
  */
 enum OperationTypeRange : uint32_t {
-    OPERATION_FUNDAMENTAL_MIN = 0,
-    OPERATION_FUNDAMENTAL_MAX = 93,
-    OPERATION_OEM_MIN = 10000,
-    OPERATION_OEM_MAX = 10000,
+    FUNDAMENTAL_MIN = 0,
+    FUNDAMENTAL_MAX = 93,
+    OEM_MIN = 10000,
+    OEM_MAX = 10000,
 };
 
 /**
