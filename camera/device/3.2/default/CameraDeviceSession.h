@@ -161,6 +161,7 @@ protected:
     std::map<uint32_t, bool> mInflightRawBoostPresent;
     ::android::hardware::camera::common::V1_0::helper::CameraMetadata mOverridenRequest;
 
+    static const uint64_t BUFFER_ID_NO_BUFFER = 0;
     // buffers currently ciculating between HAL and camera service
     // key: bufferId sent via HIDL interface
     // value: imported buffer_handle_t
@@ -171,6 +172,7 @@ protected:
     std::map<int, CirculatingBuffers> mCirculatingBuffers;
 
     static HandleImporter sHandleImporter;
+    static buffer_handle_t sEmptyBuffer;
 
     bool mInitFail;
     bool mFirstRequest = false;
@@ -301,10 +303,22 @@ protected:
     Status initStatus() const;
 
     // Validate and import request's input buffer and acquire fence
-    Status importRequest(
+    virtual Status importRequest(
             const CaptureRequest& request,
             hidl_vec<buffer_handle_t*>& allBufPtrs,
             hidl_vec<int>& allFences);
+
+    Status importRequestImpl(
+            const CaptureRequest& request,
+            hidl_vec<buffer_handle_t*>& allBufPtrs,
+            hidl_vec<int>& allFences,
+            // Optional argument for ICameraDeviceSession@3.5 impl
+            bool allowEmptyBuf = false);
+
+    Status importBuffer(int32_t streamId,
+            uint64_t bufId, buffer_handle_t buf,
+            /*out*/buffer_handle_t** outBufPtr,
+            bool allowEmptyBuf);
 
     static void cleanupInflightFences(
             hidl_vec<int>& allFences, size_t numFences);
@@ -331,6 +345,11 @@ protected:
      */
     static callbacks_process_capture_result_t sProcessCaptureResult;
     static callbacks_notify_t sNotify;
+
+    // By default camera service uses frameNumber/streamId pair to retrieve the buffer that
+    // was sent to HAL. Override this implementation if HAL is using buffers from buffer management
+    // APIs to send output buffer.
+    virtual uint64_t getCapResultBufferId(const buffer_handle_t& buf, int streamId);
 
     status_t constructCaptureResult(CaptureResult& result,
                                 const camera3_capture_result *hal_result);
