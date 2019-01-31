@@ -98,7 +98,6 @@ private:
 
     // extract legacy camera ID/device version from a HIDL device name
     static std::string getLegacyCameraId(const hidl_string& deviceName);
-    static int getCameraDeviceVersion(const hidl_string& deviceName);
 
     // convert conventional HAL status to HIDL Status
     static Status getHidlStatus(int);

@@ -87,6 +87,14 @@ CameraDeviceSession::~CameraDeviceSession() {
 Return<void> CameraDeviceSession::configureStreams_3_4(
         const StreamConfiguration& requestedConfiguration,
         ICameraDeviceSession::configureStreams_3_4_cb _hidl_cb)  {
+    configureStreams_3_4_Impl(requestedConfiguration, _hidl_cb);
+    return Void();
+}
+
+void CameraDeviceSession::configureStreams_3_4_Impl(
+        const StreamConfiguration& requestedConfiguration,
+        ICameraDeviceSession::configureStreams_3_4_cb _hidl_cb,
+        uint32_t streamConfigCounter)  {
     Status status = initStatus();
     HalStreamConfiguration outStreams;
 
@@ -97,7 +105,7 @@ Return<void> CameraDeviceSession::configureStreams_3_4(
                 ALOGE("%s: trying to configureStreams with physical camera id with V3.2 callback",
                         __FUNCTION__);
                 _hidl_cb(Status::INTERNAL_ERROR, outStreams);
-                return Void();
+                return;
             }
         }
     }
@@ -109,7 +117,7 @@ Return<void> CameraDeviceSession::configureStreams_3_4(
         ALOGE("%s: trying to configureStreams while there are still %zu inflight buffers!",
                 __FUNCTION__, mInflightBuffers.size());
         _hidl_cb(Status::INTERNAL_ERROR, outStreams);
-        return Void();
+        return;
     }
 
     if (!mInflightAETriggerOverrides.empty()) {
@@ -117,7 +125,7 @@ Return<void> CameraDeviceSession::configureStreams_3_4(
                 " trigger overrides!", __FUNCTION__,
                 mInflightAETriggerOverrides.size());
         _hidl_cb(Status::INTERNAL_ERROR, outStreams);
-        return Void();
+        return;
     }
 
     if (!mInflightRawBoostPresent.empty()) {
@@ -125,12 +133,12 @@ Return<void> CameraDeviceSession::configureStreams_3_4(
                 " boost overrides!", __FUNCTION__,
                 mInflightRawBoostPresent.size());
         _hidl_cb(Status::INTERNAL_ERROR, outStreams);
-        return Void();
+        return;
     }
 
     if (status != Status::OK) {
         _hidl_cb(status, outStreams);
-        return Void();
+        return;
     }
 
     const camera_metadata_t *paramBuffer = nullptr;
@@ -139,11 +147,12 @@ Return<void> CameraDeviceSession::configureStreams_3_4(
     }
 
     camera3_stream_configuration_t stream_list{};
+    stream_list.stream_configuration_counter = streamConfigCounter;
     hidl_vec<camera3_stream_t*> streams;
     stream_list.session_parameters = paramBuffer;
     if (!preProcessConfigurationLocked_3_4(requestedConfiguration, &stream_list, &streams)) {
         _hidl_cb(Status::INTERNAL_ERROR, outStreams);
-        return Void();
+        return;
     }
 
     ATRACE_BEGIN("camera3->configure_streams");
@@ -168,7 +177,7 @@ Return<void> CameraDeviceSession::configureStreams_3_4(
     }
 
     _hidl_cb(status, outStreams);
-    return Void();
+    return;
 }
 
 bool CameraDeviceSession::preProcessConfigurationLocked_3_4(

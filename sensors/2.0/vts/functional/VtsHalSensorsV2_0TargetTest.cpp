@@ -51,7 +51,7 @@ class EventCallback : public IEventCallback {
     }
 
     void onEvent(const ::android::hardware::sensors::V1_0::Event& event) override {
-        if (event.sensorType == SensorType::ADDITIONAL_INFO &&
+        if (event.sensorType == SensorType::META_DATA &&
             event.u.meta.what == MetaDataEventType::META_DATA_FLUSH_COMPLETE) {
             std::unique_lock<std::recursive_mutex> lock(mFlushMutex);
             mFlushMap[event.sensorHandle]++;
