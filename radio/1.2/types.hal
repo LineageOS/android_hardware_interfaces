@@ -427,11 +427,13 @@ struct WcdmaSignalStrength {
     /**
      * CPICH RSCP as defined in TS 25.215 5.1.1
      * Valid values are (0-96, 255) as defined in TS 27.007 8.69
+     * INT_MAX denotes that the value is invalid/unreported.
      */
     uint32_t rscp;
     /**
      * Ec/No value as defined in TS 25.215 5.1.5
      * Valid values are (0-49, 255) as defined in TS 27.007 8.69
+     * INT_MAX denotes that the value is invalid/unreported.
      */
     uint32_t ecno;
 
@@ -441,26 +443,53 @@ struct TdscdmaSignalStrength {
     /**
      * UTRA carrier RSSI as defined in TS 25.225 5.1.4
      * Valid values are (0-31, 99) as defined in TS 27.007 8.5
+     * INT_MAX denotes that the value is invalid/unreported.
      */
     uint32_t signalStrength;
     /**
      * Transport Channel BER as defined in TS 25.225 5.2.5
      * Valid values are (0-7, 99) as defined in TS 27.007 8.5
+     * INT_MAX denotes that the value is invalid/unreported.
      */
     uint32_t bitErrorRate;
     /**
      * P-CCPCH RSCP as defined in TS 25.225 5.1.1
      * Valid values are (0-96, 255) as defined in TS 27.007 8.69
+     * INT_MAX denotes that the value is invalid/unreported.
      */
     uint32_t rscp;
 };
 
 struct SignalStrength {
+    /**
+     * If GSM measurements are provided, this structure must contain valid measurements; otherwise
+     * all fields should be set to INT_MAX to mark them as invalid.
+     */
     GsmSignalStrength gsm;
+    /**
+     * If CDMA measurements are provided, this structure must contain valid measurements; otherwise
+     * all fields should be set to INT_MAX to mark them as invalid.
+     */
     CdmaSignalStrength cdma;
+    /**
+     * If EvDO measurements are provided, this structure must contain valid measurements; otherwise
+     * all fields should be set to INT_MAX to mark them as invalid.
+     */
     EvdoSignalStrength evdo;
+    /**
+     * If LTE measurements are provided, this structure must contain valid measurements; otherwise
+     * all fields should be set to INT_MAX to mark them as invalid.
+     */
     LteSignalStrength lte;
+    /**
+     * If TD-SCDMA measurements are provided, this structure must contain valid measurements;
+     * otherwise all fields should be set to INT_MAX to mark them as invalid.
+     */
     TdScdmaSignalStrength tdScdma;
+    /**
+     * If WCDMA measurements are provided, this structure must contain valid measurements; otherwise
+     * all fields should be set to INT_MAX to mark them as invalid.
+     */
     WcdmaSignalStrength wcdma;
 };
 
