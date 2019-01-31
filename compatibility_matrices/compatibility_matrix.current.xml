@@ -121,7 +121,7 @@
     </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.cas</name>
-        <version>1.0-1</version>
+        <version>1.0</version>
         <interface>
             <name>IMediaCasService</name>
             <instance>default</instance>
