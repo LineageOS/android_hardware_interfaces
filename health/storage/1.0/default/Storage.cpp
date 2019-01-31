@@ -36,27 +36,20 @@ using base::Timer;
 using base::Trim;
 using base::WriteStringToFd;
 using base::WriteStringToFile;
+using fs_mgr::Fstab;
+using fs_mgr::ReadDefaultFstab;
 
 std::string getGarbageCollectPath() {
-    std::unique_ptr<fstab, decltype(&fs_mgr_free_fstab)> fstab(fs_mgr_read_fstab_default(),
-                                                               fs_mgr_free_fstab);
-    struct fstab_rec* rec = NULL;
+    Fstab fstab;
+    ReadDefaultFstab(&fstab);
 
-    for (int i = 0; i < fstab->num_entries; i++) {
-        if (fs_mgr_has_sysfs_path(&fstab->recs[i])) {
-            rec = &fstab->recs[i];
-            break;
+    for (const auto& entry : fstab) {
+        if (!entry.sysfs_path.empty()) {
+            return entry.sysfs_path + "/manual_gc";
         }
     }
-    if (!rec) {
-        return "";
-    }
 
-    std::string path;
-    path.append(rec->sysfs_path);
-    path = path + "/manual_gc";
-
-    return path;
+    return "";
 }
 
 Return<void> Storage::garbageCollect(uint64_t timeoutSeconds,
