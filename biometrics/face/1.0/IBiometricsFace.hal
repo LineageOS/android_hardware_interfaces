@@ -18,9 +18,6 @@ package android.hardware.biometrics.face@1.0;
 
 import IBiometricsFaceClientCallback;
 
-// TODO(b/78538290): Update comments with state machine transitions when ready.
-// TODO(b/78537981): Update comments with callback interaction contract.
-// TODO(b/79496983): Update comments with status returns fully enumerated.
 /**
  * The HAL interface for biometric face authentication.
  */
