@@ -19,7 +19,7 @@
 
 #include "KeymasterDevice.h"
 
-#include <cutils/log.h>
+#include <log/log.h>
 
 #include <AndroidKeymaster3Device.h>
 #include <hardware/keymaster0.h>
