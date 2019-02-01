@@ -20,7 +20,7 @@
 #include <Gnss.h> // for wakelock consolidation
 #include <GnssUtils.h>
 
-#include <cutils/log.h>  // for ALOGE
+#include <android/log.h>  // for ALOGE
 #include <vector>
 
 namespace android {
