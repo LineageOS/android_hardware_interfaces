@@ -28,9 +28,6 @@ cc_test {
         "android.hidl.allocator@1.0",
         "android.hidl.memory@1.0",
         "libeffectsconfig",
-        "libicuuc",
-        "libicuuc_stubdata",
-        "libandroidicu",
         "libxml2",
     ],
     header_libs: [
