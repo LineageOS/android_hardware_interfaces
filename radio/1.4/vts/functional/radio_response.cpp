@@ -739,6 +739,13 @@ Return<void> RadioResponse_v1_4::getSignalStrengthResponse_1_2(
     return Void();
 }
 
+Return<void> RadioResponse_v1_4::getSignalStrengthResponse_1_4(const RadioResponseInfo& info,
+        const ::android::hardware::radio::V1_4::SignalStrength& /*sig_strength*/) {
+    rspInfo = info;
+    parent_v1_4.notify(info.serial);
+    return Void();
+}
+
 Return<void> RadioResponse_v1_4::getCellInfoListResponse_1_2(
         const RadioResponseInfo& /*info*/,
         const ::android::hardware::hidl_vec<

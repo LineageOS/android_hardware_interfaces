@@ -24,6 +24,7 @@ import @1.4::CellInfo;
 import @1.4::DataRegStateResult;
 import @1.4::RadioAccessFamily;
 import @1.4::SetupDataCallResult;
+import @1.4::SignalStrength;
 import @1.4::SimLockMultiSimPolicy;
 
 /**
@@ -200,4 +201,14 @@ interface IRadioResponse extends @1.3::IRadioResponse {
      */
     oneway getAllowedCarriersResponse_1_4(RadioResponseInfo info,
             CarrierRestrictionsWithPriority carriers, SimLockMultiSimPolicy multiSimPolicy);
+
+    /**
+     * @param signalStrength Current signal strength
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INTERNAL_ERR
+     */
+    oneway getSignalStrengthResponse_1_4(RadioResponseInfo info, SignalStrength signalStrength);
 };

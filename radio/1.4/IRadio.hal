@@ -215,4 +215,13 @@ interface IRadio extends @1.3::IRadio {
      * Response callback is IRadioResponse.getAllowedCarriersResponse_1_3()
      */
     oneway getAllowedCarriers_1_4(int32_t serial);
+
+    /**
+     * Requests current signal strength and associated information.  Must succeed if radio is on.
+     *
+     * @param serial Serial number of request.
+     *
+     * Response function is IRadioResponse.getSignalStrengthResponse_1_4()
+     */
+    oneway getSignalStrength_1_4(int32_t serial);
 };
