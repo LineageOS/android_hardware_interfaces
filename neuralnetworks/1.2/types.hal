@@ -459,7 +459,7 @@ struct Model {
      * {@link OperationTypeRange::BASE_MAX} respectively should be interpreted
      * as an extension operand. The low
      * {@link Model::ExtensionTypeEncoding::LOW_BITS_TYPE} bits of the value
-     * correspond to the value within the extension and the high
+     * correspond to the type ID within the extension and the high
      * {@link Model::ExtensionTypeEncoding::HIGH_BITS_PREFIX} bits encode
      * the "prefix", which maps uniquely to the extension name.
      *
