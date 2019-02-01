@@ -17,9 +17,9 @@
 #ifndef ANDROID_HARDWARE_GNSS_THREADCREATIONWRAPPER_H
 #define ANDROID_HARDWARE_GNSS_THREADCREATIONWRAPPER_H
 
+#include <log/log.h>
 #include <pthread.h>
 #include <vector>
-#include <cutils/log.h>
 
 typedef void (*threadEntryFunc)(void* ret);
 
