@@ -85,6 +85,11 @@ Return<void> RadioIndication_v1_4::currentSignalStrength_1_2(
     return Void();
 }
 
+Return<void> RadioIndication_v1_4::currentSignalStrength_1_4(RadioIndicationType /*type*/,
+        const ::android::hardware::radio::V1_4::SignalStrength& /*signalStrength*/) {
+    return Void();
+}
+
 /* 1.1 Apis */
 Return<void> RadioIndication_v1_4::carrierInfoForImsiEncryption(RadioIndicationType /*info*/) {
     return Void();
