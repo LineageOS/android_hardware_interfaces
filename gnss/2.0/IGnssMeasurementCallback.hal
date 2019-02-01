@@ -23,48 +23,48 @@ import @1.1::IGnssMeasurementCallback;
 interface IGnssMeasurementCallback extends @1.1::IGnssMeasurementCallback {
     /**
      * Enumeration of available values for the GNSS Measurement's code type. Similar to the
-     * Attribute field described in Rinex 3.03, e.g., in Tables 4-10, and Table A2 at the Rinex 3.03
+     * Attribute field described in RINEX 3.03, e.g., in Tables 4-10, and Table A2 at the RINEX 3.03
      * Update 1 Document.
      */
     enum GnssMeasurementCodeType : uint8_t {
         /** GALILEO E1A, GALILEO E6A, IRNSS L5A, IRNSS SA. */
-        CODE_TYPE_A = 0,
+        A = 0,
 
         /** GALILEO E1B, GALILEO E6B, IRNSS L5B, IRNSS SB. */
-        CODE_TYPE_B = 1,
+        B = 1,
 
         /**
          *  GPS L1 C/A,  GPS L2 C/A, GLONASS G1 C/A, GLONASS G2 C/A, GALILEO E1C, GALILEO E6C, SBAS
          *  L1 C/A, QZSS L1 C/A, IRNSS L5C.
          */
-        CODE_TYPE_C = 2,
+        C = 2,
 
         /**
          * GPS L5 I, GLONASS G3 I, GALILEO E5a I, GALILEO E5b I, GALILEO E5a+b I, SBAS L5 I, QZSS L5
          * I, BDS B1 I, BDS B2 I, BDS B3 I.
          */
-        CODE_TYPE_I = 3,
+        I = 3,
 
         /** GPS L1C (P), GPS L2C (L), QZSS L1C (P), QZSS L2C (L), LEX(6) L. */
-        CODE_TYPE_L = 4,
+        L = 4,
 
         /** GPS L1M, GPS L2M. */
-        CODE_TYPE_M = 5,
+        M = 5,
 
         /** GPS L1P, GPS L2P, GLONASS G1P, GLONASS G2P. */
-        CODE_TYPE_P = 6,
+        P = 6,
 
         /**
          * GPS L5 Q, GLONASS G3 Q, GALILEO E5a Q, GALILEO E5b Q, GALILEO E5a+b Q, SBAS L5 Q, QZSS L5
          * Q, BDS B1 Q, BDS B2 Q, BDS B3 Q.
          */
-        CODE_TYPE_Q = 7,
+        Q = 7,
 
         /** GPS L1C (D), GPS L2C (M), QZSS L1C (D), QZSS L2C (M), LEX(6) S. */
-        CODE_TYPE_S = 8,
+        S = 8,
 
         /** GPS L1 Z-tracking, GPS L2 Z-tracking. */
-        CODE_TYPE_W = 9,
+        W = 9,
 
         /**
          * GPS L1C (D+P), GPS L2C (M+L), GPS L5 (I+Q), GLONASS G3 (I+Q), GALILEO E1 (B+C), GALILEO
@@ -72,16 +72,25 @@ interface IGnssMeasurementCallback extends @1.1::IGnssMeasurementCallback {
          * L1C (D+P), QZSS L2C (M+L), QZSS L5 (I+Q), LEX(6) (S+L), BDS B1 (I+Q), BDS B2 (I+Q), BDS
          * B3 (I+Q), IRNSS L5 (B+C).
          */
-        CODE_TYPE_X = 10,
+        X = 10,
 
         /** GPS L1Y, GPS L2Y. */
-        CODE_TYPE_Y = 11,
+        Y = 11,
 
         /** GALILEO E1 (A+B+C), GALILEO E6 (A+B+C), QZSS L1-SAIF. */
-        CODE_TYPE_Z = 12,
+        Z = 12,
 
         /** GPS L1 codeless, GPS L2 codeless. */
-        CODE_TYPE_CODELESS = 13
+        N = 13,
+
+        /**
+         * Other code type that does not belong to any of the above code types.
+         *
+         * This code type is used in the case that the above code types do not cover all the code
+         * types introduced in a new version of RINEX standard. When this code type is set, the
+         * field GnssMeasurement.otherCodeTypeName must specify the new code type.
+         */
+        OTHER = 255
     };
 
     /**
@@ -106,6 +115,17 @@ interface IGnssMeasurementCallback extends @1.1::IGnssMeasurementCallback {
          * in-order to properly apply code specific corrections to the psuedorange measurements.
          */
         GnssMeasurementCodeType codeType;
+
+        /**
+         * The name of the code type when codeType is OTHER.
+         *
+         * This is used to specify the observation descriptor defined in GNSS Observation Data File
+         * Header Section Description in the RINEX standard (Version 3.XX). In RINEX Version 3.03,
+         * in Appendix Table A2 Attributes are listed as uppercase letters (for instance, "A" for
+         * "A channel"). In the future, if for instance a code "G" was added in the official RINEX
+         * standard, "G" could be specified here.
+         */
+        string otherCodeTypeName;
     };
 
     /**
