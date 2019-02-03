@@ -89,4 +89,12 @@ interface IRadioIndication extends @1.3::IRadioIndication {
      *        3. Unsolicited disconnect from either modem or network side.
      */
     oneway dataCallListChanged_1_4(RadioIndicationType type, vec<SetupDataCallResult> dcList);
+
+    /**
+     * Indicates current signal strength of the radio.
+     *
+     * @param type Type of radio indication
+     * @param signalStrength SignalStrength information
+     */
+    oneway currentSignalStrength_1_4(RadioIndicationType type, SignalStrength signalStrength);
 };

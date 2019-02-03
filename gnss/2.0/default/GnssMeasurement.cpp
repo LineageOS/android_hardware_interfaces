@@ -26,7 +26,7 @@ namespace implementation {
 
 using GnssConstellationType = V1_0::GnssConstellationType;
 using GnssMeasurementFlags = V1_0::IGnssMeasurementCallback::GnssMeasurementFlags;
-using GnssMeasurementState = V1_0::IGnssMeasurementCallback::GnssMeasurementState;
+using GnssMeasurementState = V2_0::IGnssMeasurementCallback::GnssMeasurementState;
 
 sp<V2_0::IGnssMeasurementCallback> GnssMeasurement::sCallback = nullptr;
 
@@ -97,11 +97,6 @@ GnssData GnssMeasurement::getMockMeasurement() {
         .svid = (int16_t)6,
         .constellation = GnssConstellationType::GLONASS,
         .timeOffsetNs = 0.0,
-        .state = GnssMeasurementState::STATE_CODE_LOCK | GnssMeasurementState::STATE_BIT_SYNC |
-                 GnssMeasurementState::STATE_SUBFRAME_SYNC |
-                 GnssMeasurementState::STATE_TOW_DECODED |
-                 GnssMeasurementState::STATE_GLO_STRING_SYNC |
-                 GnssMeasurementState::STATE_GLO_TOD_DECODED,
         .receivedSvTimeInNs = 8195997131077,
         .receivedSvTimeUncertaintyInNs = 15,
         .cN0DbHz = 30.0,
@@ -116,8 +111,14 @@ GnssData GnssMeasurement::getMockMeasurement() {
             V1_0::IGnssMeasurementCallback::GnssMultipathIndicator::INDICATOR_UNKNOWN};
     V1_1::IGnssMeasurementCallback::GnssMeasurement measurement_1_1 = {.v1_0 = measurement_1_0};
     V2_0::IGnssMeasurementCallback::GnssMeasurement measurement_2_0 = {
-        .v1_1 = measurement_1_1,
-        .codeType = IGnssMeasurementCallback::GnssMeasurementCodeType::CODE_TYPE_C};
+            .v1_1 = measurement_1_1,
+            .codeType = IGnssMeasurementCallback::GnssMeasurementCodeType::C,
+            .otherCodeTypeName = "",
+            .state = GnssMeasurementState::STATE_CODE_LOCK | GnssMeasurementState::STATE_BIT_SYNC |
+                     GnssMeasurementState::STATE_SUBFRAME_SYNC |
+                     GnssMeasurementState::STATE_TOW_DECODED |
+                     GnssMeasurementState::STATE_GLO_STRING_SYNC |
+                     GnssMeasurementState::STATE_GLO_TOD_DECODED};
 
     hidl_vec<IGnssMeasurementCallback::GnssMeasurement> measurements(1);
     measurements[0] = measurement_2_0;

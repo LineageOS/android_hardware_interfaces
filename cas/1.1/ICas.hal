@@ -1,0 +1,42 @@
+/*
+ * Copyright (C) 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package android.hardware.cas@1.1;
+
+import @1.0::HidlCasSessionId;
+import @1.0::ICas;
+import @1.0::Status;
+
+/**
+ * ICas is the API to control the cas system and is accessible from both
+ * Java and native level. It is used to manage sessions, provision/refresh
+ * the cas system, and process the EMM/ECM messages. It also allows bi-directional,
+ * scheme-specific communications between the client and the cas system.
+ */
+
+interface ICas extends @1.0::ICas {
+   /**
+     * Send an scheme-specific session event to the CasPlugin.
+     *
+     * @param sessionId the id of an opened session.
+     * @param event an integer denoting a scheme-specific event to be sent.
+     * @param arg a scheme-specific integer argument for the event.
+     * @param data a byte array containing scheme-specific data for the event.
+     * @return status the status of the call.
+     */
+    sendSessionEvent(HidlCasSessionId sessionId, int32_t event, int32_t arg,
+                     vec<uint8_t> eventData)
+          generates (Status status);
+};
