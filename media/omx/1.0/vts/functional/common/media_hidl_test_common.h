@@ -40,7 +40,7 @@
 
 /* As component is switching states (loaded<->idle<->execute), dequeueMessage()
  * expects the events to be received within this duration */
-#define DEFAULT_TIMEOUT 100000
+#define DEFAULT_TIMEOUT 150000
 /* Time interval between successive Input/Output enqueues */
 #define DEFAULT_TIMEOUT_Q 2000
 /* While the component is amidst a process call, asynchronous commands like
