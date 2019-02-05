@@ -18,11 +18,11 @@
 
 #include <VtsHalHidlTargetTestBase.h>
 #include <android-base/logging.h>
-#include <android/hardware/graphics/mapper/2.1/IMapper.h>
+#include <android/hardware/graphics/mapper/2.0/IMapper.h>
 #include <composer-vts/2.1/GraphicsComposerCallback.h>
 #include <composer-vts/2.1/TestCommandReader.h>
 #include <composer-vts/2.2/ComposerVts.h>
-#include <mapper-vts/2.1/MapperVts.h>
+#include <mapper-vts/2.0/MapperVts.h>
 
 namespace android {
 namespace hardware {
@@ -40,8 +40,8 @@ using android::hardware::graphics::common::V1_1::Dataspace;
 using android::hardware::graphics::common::V1_1::PixelFormat;
 using android::hardware::graphics::common::V1_1::RenderIntent;
 using android::hardware::graphics::composer::V2_2::IComposerClient;
-using android::hardware::graphics::mapper::V2_1::IMapper;
-using android::hardware::graphics::mapper::V2_1::vts::Gralloc;
+using android::hardware::graphics::mapper::V2_0::IMapper;
+using android::hardware::graphics::mapper::V2_0::vts::Gralloc;
 using GrallocError = android::hardware::graphics::mapper::V2_0::Error;
 
 // Test environment for graphics.composer
@@ -136,7 +136,7 @@ class GraphicsComposerHidlCommandTest : public GraphicsComposerHidlTest {
         info.width = 64;
         info.height = 64;
         info.layerCount = 1;
-        info.format = PixelFormat::RGBA_8888;
+        info.format = static_cast<common::V1_0::PixelFormat>(PixelFormat::RGBA_8888);
         info.usage =
             static_cast<uint64_t>(BufferUsage::CPU_WRITE_OFTEN | BufferUsage::CPU_READ_OFTEN);
 
@@ -280,7 +280,7 @@ TEST_F(GraphicsComposerHidlTest, setReadbackBuffer) {
     info.height = mComposerClient->getDisplayAttribute(mPrimaryDisplay, config,
                                                        IComposerClient::Attribute::HEIGHT);
     info.layerCount = 1;
-    info.format = pixelFormat;
+    info.format = static_cast<common::V1_0::PixelFormat>(pixelFormat);
     // BufferUsage::COMPOSER_OUTPUT is missing
     info.usage = static_cast<uint64_t>(BufferUsage::COMPOSER_OVERLAY | BufferUsage::CPU_READ_OFTEN);
 
