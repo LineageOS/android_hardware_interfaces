@@ -23,12 +23,12 @@ namespace android {
 namespace hardware {
 namespace details {
 
-bool wouldLogInfo() {
-    return WOULD_LOG(INFO);
+bool wouldLogVerbose() {
+    return WOULD_LOG(VERBOSE);
 }
 
-void logAlwaysInfo(const std::string& message) {
-    LOG(INFO) << message;
+void logAlwaysVerbose(const std::string& message) {
+    LOG(VERBOSE) << message;
 }
 
 void logAlwaysError(const std::string& message) {
