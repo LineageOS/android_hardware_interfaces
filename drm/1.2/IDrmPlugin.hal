@@ -74,7 +74,7 @@ interface IDrmPlugin extends @1.1::IDrmPlugin {
      * @return status the status of the call. Must be one of OK on
      *     success, BAD_VALUE if the license is not found or
      *     ERROR_DRM_INVALID_STATE if the HAL is in a state where the
-     *     KeySetIds can't be returned.
+     *     KeySetIds can't be removed.
      */
     removeOfflineLicense(KeySetId keySetId) generates (@1.0::Status status);
 
