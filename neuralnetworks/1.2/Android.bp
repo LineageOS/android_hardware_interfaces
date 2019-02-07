@@ -22,9 +22,11 @@ hidl_interface {
         "android.hidl.safe_union@1.0",
     ],
     types: [
+        "Constant",
         "DeviceType",
         "FmqRequestDatum",
         "FmqResultDatum",
+        "MeasureTiming",
         "Model",
         "Operand",
         "OperandType",
@@ -34,6 +36,7 @@ hidl_interface {
         "OperationTypeRange",
         "OutputShape",
         "SymmPerChannelQuantParams",
+        "Timing",
     ],
     gen_java: false,
 }

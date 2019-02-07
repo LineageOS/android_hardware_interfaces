@@ -1,4 +1,4 @@
-cc_library_shared {
+cc_library {
     name: "android.hardware.tests.libhwbinder@1.0-impl",
     defaults: ["hidl_defaults"],
     relative_install_path: "hw",
