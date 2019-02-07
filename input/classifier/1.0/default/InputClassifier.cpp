@@ -31,41 +31,24 @@ namespace V1_0 {
 namespace implementation {
 
 // Methods from ::android::hardware::input::classifier::V1_0::IInputClassifier follow.
-Return<Classification> InputClassifier::classify(const MotionEvent& event) {
+Return<Classification> InputClassifier::classify(const MotionEvent& /*event*/) {
     /**
-     * In this example implementation, we will see how many "pixels" inside the video frame
-     * exceed the value of 250. If more than 6 such pixels are present, then treat the event
-     * as a "DEEP_PRESS".
+     * The touchscreen data is highly device-dependent.
+     * As a result, the implementation of this method will likely be hardware-specific.
+     * Here we just report gesture as not having any classification, which means that the
+     * default action will be taken in the framework.
+     * This is equivalent to not having the InputClassifier HAL at all.
      */
-    if (event.frames.size() == 0) {
-        return Classification::NONE;
-    }
-    ALOGI("Frame(O) timestamp = %" PRIu64 ", received %zu frame(s)", event.frames[0].timestamp,
-          event.frames.size());
-    for (const VideoFrame& frame : event.frames) {
-        size_t count = 0;
-        for (size_t i = 0; i < frame.data.size(); i++) {
-            if (frame.data[i] > 250) {
-                count++;
-            }
-        }
-        if (count > 6) {
-            return Classification::DEEP_PRESS;
-        }
-    }
-
     return Classification::NONE;
 }
 
 Return<void> InputClassifier::reset() {
-    // We don't have any internal state in this example implementation,
-    // so no work needed here.
+    // We don't have any internal state, so no work needed here.
     return Void();
 }
 
 Return<void> InputClassifier::resetDevice(int32_t /*deviceId*/) {
-    // We don't have any internal per-device state in this example implementation,
-    // so no work needed here.
+    // We don't have any internal per-device state, so no work needed here.
     return Void();
 }
 
