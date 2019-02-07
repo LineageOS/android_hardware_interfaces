@@ -23,6 +23,7 @@
 #include <android/hardware/audio/effect/4.0/IEffectsFactory.h>
 #include <android/hardware/audio/effect/5.0/IEffectsFactory.h>
 #include <android/hardware/bluetooth/a2dp/1.0/IBluetoothAudioOffload.h>
+#include <android/hardware/bluetooth/audio/2.0/IBluetoothAudioProvidersFactory.h>
 #include <android/hardware/soundtrigger/2.0/ISoundTriggerHw.h>
 #include <android/hardware/soundtrigger/2.1/ISoundTriggerHw.h>
 #include <android/hardware/soundtrigger/2.2/ISoundTriggerHw.h>
@@ -64,6 +65,11 @@ int main(int /* argc */, char* /* argv */ []) {
            registerPassthroughServiceImplementation<soundtrigger::V2_0::ISoundTriggerHw>() != OK,
     ALOGW_IF(fail, "Could not register soundtrigger API 2.0, 2.1 nor 2.2");
 
+    fail = registerPassthroughServiceImplementation<
+                   bluetooth::audio::V2_0::IBluetoothAudioProvidersFactory>() != OK;
+    ALOGW_IF(fail, "Could not register Bluetooth Audio API 2.0");
+
+    // remove the old HIDL when Bluetooth Audio Hal V2 has offloading supported
     fail =
         registerPassthroughServiceImplementation<bluetooth::a2dp::V1_0::IBluetoothAudioOffload>() !=
         OK;
