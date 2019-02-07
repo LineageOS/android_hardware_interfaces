@@ -49,6 +49,32 @@ enum Dataspace : @1.1::Dataspace {
      * Embedded depth metadata following the dynamic depth specification.
      */
     DYNAMIC_DEPTH = 0x1002,
+
+    /**
+     * JPEG APP segments format as specified by JEIDA spec
+     *
+     * The buffer must only contain APP1 (Application Marker) segment followed
+     * by zero or more APPn segments, as is specified by JEITA CP-3451C section 4.5.4.
+     * The APP1 segment optionally contains a thumbnail. The buffer will not
+     * contain main compressed image.
+     *
+     * This value is valid with formats:
+     *    HAL_PIXEL_FORMAT_BLOB: JPEG APP segments optionally containing thumbnail image
+     * in APP1. BLOB buffer with this dataspace is output by HAL, and used by
+     * camera framework to encode into a HEIC image.
+     */
+    JPEG_APP_SEGMENTS = 0x1003,
+
+    /**
+     * ISO/IEC 23008-12
+     *
+     * High Efficiency Image File Format (HEIF)
+     *
+     * This value is valid with formats:
+     *    HAL_PIXEL_FORMAT_BLOB: A HEIC image encoded by HEIC or HEVC encoder
+     * according to ISO/IEC 23008-12.
+     */
+    HEIF = 0x1004,
 };
 
 enum ColorMode : @1.1::ColorMode {
@@ -67,6 +93,18 @@ enum ColorMode : @1.1::ColorMode {
      * Transfer Function is sRGB
      */
     DISPLAY_BT2020 = 13,
+};
+
+/**
+ * Buffer usage definitions.
+ */
+enum BufferUsage : @1.1::BufferUsage {
+    /**
+     * Buffer is used as input for HEIC encoder.
+     */
+    HW_IMAGE_ENCODER = 1ULL << 27,
+
+    /* bits 28 and 32-47 must be zero and are reserved for future versions */
 };
 
 /**
