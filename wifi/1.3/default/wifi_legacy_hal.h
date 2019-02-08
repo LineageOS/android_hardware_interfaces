@@ -181,6 +181,8 @@ class WifiLegacyHal {
     // using a predefined timeout.
     virtual wifi_error stop(std::unique_lock<std::recursive_mutex>* lock,
                             const std::function<void()>& on_complete_callback);
+    // Checks if legacy HAL has successfully started
+    bool isStarted();
     // Wrappers for all the functions in the legacy HAL function table.
     std::pair<wifi_error, std::string> getDriverVersion(
         const std::string& iface_name);

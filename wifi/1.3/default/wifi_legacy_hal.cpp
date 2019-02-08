@@ -424,6 +424,8 @@ wifi_error WifiLegacyHal::stop(
     return WIFI_SUCCESS;
 }
 
+bool WifiLegacyHal::isStarted() { return is_started_; }
+
 std::pair<wifi_error, std::string> WifiLegacyHal::getDriverVersion(
     const std::string& iface_name) {
     std::array<char, kMaxVersionStringLength> buffer;
