@@ -42,6 +42,13 @@ class AuthorizationSet;
  */
 static const char kAttestionRecordOid[] = "1.3.6.1.4.1.11129.2.1.17";
 
+enum keymaster_verified_boot_t {
+    KM_VERIFIED_BOOT_VERIFIED = 0,
+    KM_VERIFIED_BOOT_SELF_SIGNED = 1,
+    KM_VERIFIED_BOOT_UNVERIFIED = 2,
+    KM_VERIFIED_BOOT_FAILED = 3,
+};
+
 ErrorCode parse_attestation_record(const uint8_t* asn1_key_desc, size_t asn1_key_desc_len,
                                    uint32_t* attestation_version,  //
                                    SecurityLevel* attestation_security_level,
@@ -51,6 +58,12 @@ ErrorCode parse_attestation_record(const uint8_t* asn1_key_desc, size_t asn1_key
                                    AuthorizationSet* software_enforced,
                                    AuthorizationSet* tee_enforced,  //
                                    hidl_vec<uint8_t>* unique_id);
+
+ErrorCode parse_root_of_trust(const uint8_t* asn1_key_desc, size_t asn1_key_desc_len,
+                              hidl_vec<uint8_t>* verified_boot_key,
+                              keymaster_verified_boot_t* verified_boot_state, bool* device_locked,
+                              hidl_vec<uint8_t>* verified_boot_hash);
+
 }  // namespace V4_0
 }  // namespace keymaster
 }  // namespace hardware
