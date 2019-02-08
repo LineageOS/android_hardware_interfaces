@@ -69,3 +69,5 @@ $(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/etc/seccomp_policy/configsto
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/etc/seccomp_policy/configstore@1.1.policy)
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/bin/hw/android.hardware.configstore@1.1-service)
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/etc/init/android.hardware.configstore@1.1-service.rc)
+$(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/bin/hw/android.hardware.cas@1.0*)
+$(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/etc/init/android.hardware.cas@1.0*)
