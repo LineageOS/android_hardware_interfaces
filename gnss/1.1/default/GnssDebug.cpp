@@ -18,8 +18,10 @@
 
 #include <log/log.h>
 
-#include "GnssConstants.h"
+#include "Constants.h"
 #include "GnssDebug.h"
+
+using namespace ::android::hardware::gnss::common;
 
 namespace android {
 namespace hardware {
