@@ -1789,13 +1789,23 @@ struct CarrierRestrictionsWithPriority {
 };
 
 struct CellIdentityNr {
-    /** 3-digit Mobile Country Code, in range[0, 999], INT_MAX means invalid/unreported. */
+    /** 3-digit Mobile Country Code, in range[0, 999]; This value must be valid for registered or
+     *  camped cells; INT_MAX means invalid/unreported.
+     */
     string mcc;
 
     /**
-     * 2 or 3-digit Mobile Network Code, in range [0, 999], INT_MAX means invalid/unreported.
+     * 2 or 3-digit Mobile Network Code, in range [0, 999], This value must be valid for
+     * registered or camped cells; INT_MAX means invalid/unreported.
      */
     string mnc;
+
+    /**
+     * NR Cell Identity in range [0, 68719476735] (36 bits) described in 3GPP TS 38.331, which
+     * unambiguously identifies a cell within a PLMN. This value must be valid for registered or
+     * camped cells; LONG_MAX (2^63-1) means invalid/unreported.
+     */
+    uint64_t nci;
 
     /**
      * Physical cell id in range [0, 1007] described in 3GPP TS 38.331. This value must be valid.
