@@ -18,6 +18,7 @@ package android.hardware.camera.device@3.5;
 
 import @3.2::StreamBuffer;
 import @3.4::StreamConfiguration;
+import @3.2::CameraBlobId;
 
 /**
  * StreamConfiguration:
@@ -127,5 +128,37 @@ enum BufferRequestStatus : uint32_t {
 struct BufferRequest {
     int32_t streamId;
     uint32_t numBuffersRequested;
+};
+
+/**
+ * CameraBlob:
+ *
+ * Identical to @3.2::CameraBlob, except that it also supports transport of JPEG
+ * APP segments blob, which contains JPEG APP1 to APPn (Application Marker)
+ * segments as specified in JEITA CP-3451.
+ *
+ * To capture a JPEG APP segments blob, a stream is created using the pixel format
+ * HAL_PIXEL_FORMAT_BLOB and dataspace HAL_DATASPACE_JPEG_APP_SEGMENTS. The buffer
+ * size for the stream is calculated by the framework, based on the static
+ * metadata field android.heic.maxAppSegmentsCount.
+ *
+ * Similar to JPEG image, the JPEG APP segment images can be of variable size,
+ * so the HAL needs to include the final size of all APP segments using this
+ * structure inside the output stream buffer. The camera blob ID field must be
+ * set to CameraBlobId::JPEG_APP_SEGMENTS.
+ *
+ * The transport header must be at the end of the JPEG APP segments output stream
+ * buffer. That means the blobId must start at byte[buffer_size -
+ * sizeof(CameraBlob)], where the buffer_size is the size of gralloc
+ * buffer. The JPEG APP segments data itself starts at the beginning of the
+ * buffer and must be blobSize bytes long.
+ */
+enum CameraBlobId : @3.2::CameraBlobId {
+    JPEG_APP_SEGMENTS = 0x100,
+};
+
+struct CameraBlob {
+    CameraBlobId blobId;
+    uint32_t blobSize;
 };
 

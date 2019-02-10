@@ -53,7 +53,7 @@ interface IRadioIndication extends @1.3::IRadioIndication {
             vec<EmergencyNumber> emergencyNumberList);
 
     /**
-     * Request all of the current cell information known to the radio.
+     * Report all of the current cell information known to the radio.
      *
      * @param type Type of radio indication
      * @param records Current cell information

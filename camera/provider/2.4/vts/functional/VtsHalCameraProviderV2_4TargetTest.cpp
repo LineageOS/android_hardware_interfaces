@@ -5539,6 +5539,41 @@ void CameraHidlTest::verifyCameraCharacteristics(Status status, const CameraMeta
         ADD_FAILURE() << "ANDROID_DEPTH_AVAILABLE_DYNAMIC_DEPTH_STALL_DURATIONS"
             << " per API contract should never be set by Hal!";
     }
+
+    retcode = find_camera_metadata_ro_entry(metadata,
+            ANDROID_HEIC_AVAILABLE_HEIC_STREAM_CONFIGURATIONS, &entry);
+    if (0 == retcode || entry.count > 0) {
+        ADD_FAILURE() << "ANDROID_HEIC_AVAILABLE_HEIC_STREAM_CONFIGURATIONS "
+            << " per API contract should never be set by Hal!";
+    }
+
+    retcode = find_camera_metadata_ro_entry(metadata,
+            ANDROID_HEIC_AVAILABLE_HEIC_MIN_FRAME_DURATIONS, &entry);
+    if (0 == retcode || entry.count > 0) {
+        ADD_FAILURE() << "ANDROID_HEIC_AVAILABLE_HEIC_MIN_FRAME_DURATIONS "
+            << " per API contract should never be set by Hal!";
+    }
+
+    retcode = find_camera_metadata_ro_entry(metadata,
+            ANDROID_HEIC_AVAILABLE_HEIC_STALL_DURATIONS, &entry);
+    if (0 == retcode || entry.count > 0) {
+        ADD_FAILURE() << "ANDROID_HEIC_AVAILABLE_HEIC_STALL_DURATIONS "
+            << " per API contract should never be set by Hal!";
+    }
+
+    retcode = find_camera_metadata_ro_entry(metadata,
+            ANDROID_HEIC_INFO_SUPPORTED, &entry);
+    if (0 == retcode && entry.count > 0) {
+        retcode = find_camera_metadata_ro_entry(metadata,
+            ANDROID_HEIC_INFO_MAX_JPEG_APP_SEGMENTS_COUNT, &entry);
+        if (0 == retcode && entry.count > 0) {
+            uint8_t maxJpegAppSegmentsCount = entry.data.u8[0];
+            ASSERT_TRUE(maxJpegAppSegmentsCount >= 1 &&
+                    maxJpegAppSegmentsCount <= 16);
+        } else {
+            ADD_FAILURE() << "Get Heic maxJpegAppSegmentsCount failed!";
+        }
+    }
 }
 
 void CameraHidlTest::verifyMonochromeCharacteristics(const CameraMetadata& chars,

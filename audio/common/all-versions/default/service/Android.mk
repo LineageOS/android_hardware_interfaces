@@ -49,6 +49,7 @@ LOCAL_SHARED_LIBRARIES := \
     android.hardware.audio.effect@4.0 \
     android.hardware.audio.effect@5.0 \
     android.hardware.bluetooth.a2dp@1.0 \
+    android.hardware.bluetooth.audio@2.0 \
     android.hardware.soundtrigger@2.0 \
     android.hardware.soundtrigger@2.1 \
     android.hardware.soundtrigger@2.2
