@@ -1,27 +1,27 @@
 // Signature format: 2.0
 package audio.effects.V5_0 {
 
-  public class Audioeffectsconf {
-    ctor public Audioeffectsconf();
+  public class AudioEffectsConf {
+    ctor public AudioEffectsConf();
     method public audio.effects.V5_0.EffectsType getEffects();
     method public audio.effects.V5_0.LibrariesType getLibraries();
-    method public audio.effects.V5_0.Audioeffectsconf.Postprocess getPostprocess();
-    method public audio.effects.V5_0.Audioeffectsconf.Preprocess getPreprocess();
+    method public audio.effects.V5_0.AudioEffectsConf.Postprocess getPostprocess();
+    method public audio.effects.V5_0.AudioEffectsConf.Preprocess getPreprocess();
     method public audio.effects.V5_0.VersionType getVersion();
     method public void setEffects(audio.effects.V5_0.EffectsType);
     method public void setLibraries(audio.effects.V5_0.LibrariesType);
-    method public void setPostprocess(audio.effects.V5_0.Audioeffectsconf.Postprocess);
-    method public void setPreprocess(audio.effects.V5_0.Audioeffectsconf.Preprocess);
+    method public void setPostprocess(audio.effects.V5_0.AudioEffectsConf.Postprocess);
+    method public void setPreprocess(audio.effects.V5_0.AudioEffectsConf.Preprocess);
     method public void setVersion(audio.effects.V5_0.VersionType);
   }
 
-  public static class Audioeffectsconf.Postprocess {
-    ctor public Audioeffectsconf.Postprocess();
+  public static class AudioEffectsConf.Postprocess {
+    ctor public AudioEffectsConf.Postprocess();
     method public java.util.List<audio.effects.V5_0.StreamPostprocessType> getStream();
   }
 
-  public static class Audioeffectsconf.Preprocess {
-    ctor public Audioeffectsconf.Preprocess();
+  public static class AudioEffectsConf.Preprocess {
+    ctor public AudioEffectsConf.Preprocess();
     method public java.util.List<audio.effects.V5_0.StreamPreprocessType> getStream();
   }
 
@@ -123,7 +123,7 @@ package audio.effects.V5_0 {
 
   public class XmlParser {
     ctor public XmlParser();
-    method public static audio.effects.V5_0.Audioeffectsconf read(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
+    method public static audio.effects.V5_0.AudioEffectsConf read(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
     method public static String readText(org.xmlpull.v1.XmlPullParser) throws java.io.IOException, org.xmlpull.v1.XmlPullParserException;
     method public static void skip(org.xmlpull.v1.XmlPullParser) throws java.io.IOException, org.xmlpull.v1.XmlPullParserException;
   }
