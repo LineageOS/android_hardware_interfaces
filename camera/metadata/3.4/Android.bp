@@ -15,6 +15,9 @@ hidl_interface {
     ],
     types: [
         "CameraMetadataEnumAndroidInfoSupportedBufferManagementVersion",
+        "CameraMetadataEnumAndroidScalerAvailableFormats",
+        "CameraMetadataEnumAndroidScalerAvailableRecommendedStreamConfigurations",
+        "CameraMetadataEnumAndroidSensorInfoColorFilterArrangement",
         "CameraMetadataTag",
     ],
     gen_java: true,

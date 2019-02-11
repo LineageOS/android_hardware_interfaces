@@ -20,12 +20,13 @@
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
-#include "utils/Mutex.h"
-#include "utils/Thread.h"
-#include <android/hardware/camera/provider/2.4/ICameraProvider.h>
+#include <utils/Mutex.h>
+#include <utils/Thread.h>
 #include <hidl/Status.h>
 #include <hidl/MQDescriptor.h>
 #include "ExternalCameraUtils.h"
+
+#include "CameraProvider_2_4.h"
 
 namespace android {
 namespace hardware {
@@ -47,25 +48,32 @@ using ::android::hardware::hidl_string;
 using ::android::sp;
 using ::android::Mutex;
 
-struct ExternalCameraProvider : public ICameraProvider {
-    ExternalCameraProvider();
-    ~ExternalCameraProvider();
+/**
+ * The implementation of external webcam CameraProvider 2.4, separated
+ * from the HIDL interface layer to allow for implementation reuse by later
+ * provider versions.
+ *
+ * This camera provider supports standard UVC webcameras via the Linux V4L2
+ * UVC driver.
+ */
+struct ExternalCameraProviderImpl_2_4 {
+    ExternalCameraProviderImpl_2_4();
+    ~ExternalCameraProviderImpl_2_4();
+
+    // Caller must use this method to check if CameraProvider ctor failed
+    bool isInitFailed() { return false;}
 
     // Methods from ::android::hardware::camera::provider::V2_4::ICameraProvider follow.
-    Return<Status> setCallback(const sp<ICameraProviderCallback>& callback) override;
-
-    Return<void> getVendorTags(getVendorTags_cb _hidl_cb) override;
-
-    Return<void> getCameraIdList(getCameraIdList_cb _hidl_cb) override;
-
-    Return<void> isSetTorchModeSupported(isSetTorchModeSupported_cb _hidl_cb) override;
-
+    Return<Status> setCallback(const sp<ICameraProviderCallback>& callback);
+    Return<void> getVendorTags(ICameraProvider::getVendorTags_cb _hidl_cb);
+    Return<void> getCameraIdList(ICameraProvider::getCameraIdList_cb _hidl_cb);
+    Return<void> isSetTorchModeSupported(ICameraProvider::isSetTorchModeSupported_cb _hidl_cb);
     Return<void> getCameraDeviceInterface_V1_x(
             const hidl_string&,
-            getCameraDeviceInterface_V1_x_cb) override;
+            ICameraProvider::getCameraDeviceInterface_V1_x_cb);
     Return<void> getCameraDeviceInterface_V3_x(
             const hidl_string&,
-            getCameraDeviceInterface_V3_x_cb) override;
+            ICameraProvider::getCameraDeviceInterface_V3_x_cb);
 
 private:
 
@@ -77,13 +85,13 @@ private:
 
     class HotplugThread : public android::Thread {
     public:
-        HotplugThread(ExternalCameraProvider* parent);
+        HotplugThread(ExternalCameraProviderImpl_2_4* parent);
         ~HotplugThread();
 
         virtual bool threadLoop() override;
 
     private:
-        ExternalCameraProvider* mParent = nullptr;
+        ExternalCameraProviderImpl_2_4* mParent = nullptr;
         const std::unordered_set<std::string> mInternalDevices;
 
         int mINotifyFD = -1;
