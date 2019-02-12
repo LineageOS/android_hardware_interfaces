@@ -88,14 +88,17 @@ sp<IPreparedModel> getPreparedModel_1_2(
 
 }  // namespace functional
 }  // namespace vts
+}  // namespace V1_2
+}  // namespace neuralnetworks
+}  // namespace hardware
+}  // namespace android
+
+namespace android::hardware::neuralnetworks::V1_0 {
 
 // pretty-print values for error messages
 ::std::ostream& operator<<(::std::ostream& os, ErrorStatus errorStatus);
 ::std::ostream& operator<<(::std::ostream& os, DeviceStatus deviceStatus);
 
-}  // namespace V1_2
-}  // namespace neuralnetworks
-}  // namespace hardware
-}  // namespace android
+}  // namespace android::hardware::neuralnetworks::V1_0
 
 #endif  // VTS_HAL_NEURALNETWORKS_V1_2_H
