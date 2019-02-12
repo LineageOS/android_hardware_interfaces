@@ -73,10 +73,11 @@ enum OperandType : @1.0::OperandType {
      * These fields are located inside Operand's extraParams union, inside the
      * SymmPerChannelQuantParams struct.
      *
-     * An Operand of this type must use 'channelQuant' field of its extraParams
-     * union.
+     * An Operand of this type must use the 'channelQuant' variant of its
+     * extraParams field.
      *
-     * The channel dimension of this tensor must not be unknown (dimensions[channelDim] != 0).
+     * The channel dimension of this tensor must be known, i.e.
+     * dimensions[channelDim] must be non-zero.
      *
      * The formula for real values:
      * realValue[..., C, ...] =
@@ -108,10 +109,12 @@ enum OperandType : @1.0::OperandType {
  * The range of operand values in the OperandType enum.
  */
 enum OperandTypeRange : uint32_t {
+    BASE_MIN        = 0,
     FUNDAMENTAL_MIN = 0,
     FUNDAMENTAL_MAX = 12,
-    OEM_MIN     = 10000,
-    OEM_MAX     = 10001,
+    OEM_MIN         = 10000,
+    OEM_MAX         = 10001,
+    BASE_MAX        = 0xFFFF,
 };
 
 /**
@@ -189,10 +192,12 @@ enum OperationType : @1.1::OperationType {
  * The range of values in the OperationType enum.
  */
 enum OperationTypeRange : uint32_t {
+    BASE_MIN        = 0,
     FUNDAMENTAL_MIN = 0,
     FUNDAMENTAL_MAX = 93,
-    OEM_MIN = 10000,
-    OEM_MAX = 10000,
+    OEM_MIN         = 10000,
+    OEM_MAX         = 10000,
+    BASE_MAX        = 0xFFFF,
 };
 
 /**
@@ -221,6 +226,10 @@ enum DeviceType : int32_t {
 struct Operation {
     /**
      * The operation type.
+     *
+     * Besides the values listed in {@link OperationType}, any value above
+     * {@link OperationTypeRange::BASE_MAX} is possible and should be interpreted
+     * as an extension type according to {@link Model::extensionNameToPrefix}.
      */
     OperationType type;
 
@@ -247,21 +256,16 @@ struct SymmPerChannelQuantParams {
     uint32_t channelDim;
 };
 
-// TODO(slavash): Operand Extension support
-// /**
-//  * Parameters for an unknown (as of 1.2) operand extension. This is
-//  * a vendor-specific extension or a platform extension (backport of
-//  * functionality from newer NNAPI interface).
-//  */
-// struct OperandParamsUnknown {
-// };
-
 /**
  * Describes one operand of the model's graph.
  */
 struct Operand {
     /**
-     * Data type of the operand.
+     * The data type.
+     *
+     * Besides the values listed in {@link OperandType}, any value above
+     * {@link OperandTypeRange::BASE_MAX} is possible and should be interpreted
+     * as an extension type according to {@link Model::extensionNameToPrefix}.
      */
     OperandType type;
 
@@ -351,25 +355,28 @@ struct Operand {
     DataLocation location;
 
     /**
-     * Union of extra parameters, used by some types of Operands that need additional
-     * information for the complete definition of an Operand.
+     * Additional parameters specific to a particular operand type.
      */
     safe_union ExtraParams {
        /**
-        * Placeholder for operand with no extra parameters.
+        * No additional parameters.
         */
        Monostate none;
 
        /**
-        * Used with TENSOR_QUANT8_SYMM_PER_CHANNEL operand type.
+        * Symmetric per-channel quantization parameters.
+        *
+        * Only applicable to operands of type TENSOR_QUANT8_SYMM_PER_CHANNEL.
         */
        SymmPerChannelQuantParams channelQuant;
 
-       // TODO(slavash): Operand Extension support
-       // /**
-       //  * Used with Extension operand type.
-       //  */
-       // OperandParamsUnknown unknown;
+       /**
+        * Extension operand parameters.
+        *
+        * The framework treats this as an opaque data blob.
+        * The format is up to individual extensions.
+        */
+       vec<uint8_t> extension;
     } extraParams;
 };
 
@@ -432,6 +439,63 @@ struct Model {
      * range and precision of the IEEE 754 32-bit floating-point format.
      */
     bool relaxComputationFloat32toFloat16;
+
+    /**
+     * The mapping between extension names and prefixes of operand and
+     * operation type values.
+     *
+     * An operand or operation whose numeric type value is above
+     * {@link OperandTypeRange::BASE_MAX} or
+     * {@link OperationTypeRange::BASE_MAX} respectively should be interpreted
+     * as an extension operand. The low
+     * {@link Model::ExtensionTypeEncoding::LOW_BITS_TYPE} bits of the value
+     * correspond to the value within the extension and the high
+     * {@link Model::ExtensionTypeEncoding::HIGH_BITS_PREFIX} bits encode
+     * the "prefix", which maps uniquely to the extension name.
+     *
+     * For example, if a model contains an operation whose value is
+     * 0xAAAABBBB and extensionNameToPrefix contains an entry with
+     * prefix=0xAAAA and name="vendor.test.test_extension", then
+     * the operation should be interpreted as the operation 0xBBBB
+     * of the extension named vendor.test.test_extension.
+     *
+     * This is a one-to-one correspondence. That is, there must be at most one
+     * prefix corresponding to each extension name and at most one extension
+     * name corresponding to each prefix.
+     */
+    vec<ExtensionNameAndPrefix> extensionNameToPrefix;
+
+    /**
+     * A correspondence between an extension name and a prefix of operand and
+     * operation type values.
+     */
+    struct ExtensionNameAndPrefix {
+        /**
+         * The extension name.
+         *
+         * See {@link Extension::name}.
+         */
+        string name;
+
+        /**
+         * The unique extension identifier within the model.
+         *
+         * See {@link Model::extensionNameToPrefix}.
+         */
+        uint16_t prefix;
+    };
+
+    /**
+     * Numeric values of extension operand and operation types have the
+     * following structure:
+     * - 16 high bits represent the "prefix", which corresponds uniquely to the
+     *   extension name.
+     * - 16 low bits represent the type ID within the extension.
+     */
+    enum ExtensionTypeEncoding : uint8_t {
+        HIGH_BITS_PREFIX = 16,
+        LOW_BITS_TYPE = 16,
+    };
 };
 
 /**
@@ -684,4 +748,44 @@ safe_union FmqResultDatum {
      * available.
      */
     Timing executionTiming;
+};
+
+/**
+ * Information about an extension.
+ */
+struct Extension {
+    /**
+     * The extension name.
+     *
+     * The name must start with the reverse domain name of the vendor.
+     * Example: com.google.test_extension
+     */
+    string name;
+
+    /**
+     * Information about an extension operand type.
+     */
+    struct OperandTypeInformation {
+        /**
+         * The extension operand type.
+         */
+        uint16_t type;
+
+        /**
+         * Indicates whether the extension operand type represents a tensor or
+         * a scalar.
+         */
+        bool isTensor;
+
+        /**
+         * The byte size of the operand (if scalar) or of a single element (if
+         * tensor).
+         */
+        uint32_t byteSize;
+    };
+
+    /**
+     * Information about operand types defined by the extension.
+     */
+    vec<OperandTypeInformation> operandTypes;
 };
