@@ -128,9 +128,11 @@ interface IRadio extends @1.3::IRadio {
      * does not support the emergency service category or emergency uniform resource names, the
      * field 'categories' or 'urns' may be ignored.
      *
-     * 'fromEmergencyDialer' indicates if this request originated from emergency dialer/shortcut,
-     * which means an explicit intent from the user to dial an emergency number. The modem must
-     * treat this as an actual emergency dial and not try to disambiguate.
+     * In the scenarios that the 'address' in the 'dialInfo' field has other functions besides the
+     * emergency number function, if the 'hasKnownUserIntentEmergency' field is true, the user's
+     * intent for this dial request is emergency call, and the modem must treat this as an actual
+     * emergency dial; if the 'hasKnownUserIntentEmergency' field is false, Android does not know
+     * user's intent for this call.
      *
      * If 'isTesting' is true, this request is for testing purpose, and must not be sent to a real
      * emergency service; otherwise it's for a real emergency call request.
@@ -146,14 +148,15 @@ interface IRadio extends @1.3::IRadio {
      *     of the call.
      * @param urns the emergency Uniform Resource Names (URN)
      * @param routing @1.4::EmergencyCallRouting the emergency call routing information.
-     * @param fromEmergencyDialer Flag indicating if this request originated from emergency dialer.
+     * @param hasKnownUserIntentEmergency Flag indicating if user's intent for the emergency call
+     *     is known.
      * @param isTesting Flag indicating if this request is for testing purpose.
      *
      * Response function is IRadioResponse.emergencyDialResponse()
      */
     oneway emergencyDial(int32_t serial, Dial dialInfo,
             bitfield<EmergencyServiceCategory> categories, vec<string> urns,
-            EmergencyCallRouting routing, bool fromEmergencyDialer, bool isTesting);
+            EmergencyCallRouting routing, bool hasKnownUserIntentEmergency, bool isTesting);
 
     /**
      * Starts a network scan
