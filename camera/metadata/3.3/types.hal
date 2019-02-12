@@ -100,7 +100,7 @@ enum CameraMetadataTag : @3.2::CameraMetadataTag {
 
     /** android.request.availablePhysicalCameraRequestKeys [static, int32[], hidden]
      *
-     * <p>A subset of the available request keys that can be overriden for
+     * <p>A subset of the available request keys that can be overridden for
      * physical devices backing a logical multi-camera.</p>
      */
     ANDROID_REQUEST_AVAILABLE_PHYSICAL_CAMERA_REQUEST_KEYS,
@@ -109,8 +109,8 @@ enum CameraMetadataTag : @3.2::CameraMetadataTag {
 
     /** android.statistics.oisDataMode [dynamic, enum, public]
      *
-     * <p>A control for selecting whether OIS position information is included in output
-     * result metadata.</p>
+     * <p>A control for selecting whether optical stabilization (OIS) position
+     * information is included in output result metadata.</p>
      */
     ANDROID_STATISTICS_OIS_DATA_MODE = android.hardware.camera.metadata@3.2::CameraMetadataTag:ANDROID_STATISTICS_END,
 
@@ -154,7 +154,7 @@ enum CameraMetadataTag : @3.2::CameraMetadataTag {
 
     ANDROID_INFO_END_3_3,
 
-    /** android.logicalMultiCamera.physicalIds [static, byte[], hidden]
+    /** android.logicalMultiCamera.physicalIds [static, byte[], ndk_public]
      *
      * <p>String containing the ids of the underlying physical cameras.</p>
      */

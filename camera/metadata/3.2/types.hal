@@ -1396,7 +1396,8 @@ enum CameraMetadataTag : uint32_t {
      *
      * <p>The arrangement of color filters on sensor;
      * represents the colors in the top-left 2x2 section of
-     * the sensor, in reading order.</p>
+     * the sensor, in reading order, for a Bayer camera, or the
+     * light spectrum it captures for MONOCHROME camera.</p>
      */
     ANDROID_SENSOR_INFO_COLOR_FILTER_ARRANGEMENT,
 
