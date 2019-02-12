@@ -22,6 +22,7 @@
 #include <hardware/gralloc.h>
 #include <hardware/gralloc1.h>
 #include "CameraDeviceSession.h"
+#include "CameraModule.h"
 
 namespace android {
 namespace hardware {
@@ -29,6 +30,8 @@ namespace camera {
 namespace device {
 namespace V3_4 {
 namespace implementation {
+
+using ::android::hardware::camera::common::V1_0::helper::CameraModule;
 
 CameraDeviceSession::CameraDeviceSession(
     camera3_device_t* device,
@@ -54,31 +57,9 @@ CameraDeviceSession::CameraDeviceSession(
 
     mResultBatcher_3_4.setNumPartialResults(mNumPartialResults);
 
-    camera_metadata_entry_t capabilities =
-            mDeviceInfo.find(ANDROID_REQUEST_AVAILABLE_CAPABILITIES);
-    bool isLogicalMultiCamera = false;
-    for (size_t i = 0; i < capabilities.count; i++) {
-        if (capabilities.data.u8[i] ==
-                ANDROID_REQUEST_AVAILABLE_CAPABILITIES_LOGICAL_MULTI_CAMERA) {
-            isLogicalMultiCamera = true;
-            break;
-        }
-    }
-    if (isLogicalMultiCamera) {
-        camera_metadata_entry entry =
-                mDeviceInfo.find(ANDROID_LOGICAL_MULTI_CAMERA_PHYSICAL_IDS);
-        const uint8_t* ids = entry.data.u8;
-        size_t start = 0;
-        for (size_t i = 0; i < entry.count; ++i) {
-            if (ids[i] == '\0') {
-                if (start != i) {
-                    const char* physicalId = reinterpret_cast<const char*>(ids+start);
-                    mPhysicalCameraIds.emplace(physicalId);
-                }
-                start = i + 1;
-            }
-        }
-    }
+    // Parse and store current logical camera's physical ids.
+    (void)CameraModule::isLogicalMultiCamera(mDeviceInfo, &mPhysicalCameraIds);
+
 }
 
 CameraDeviceSession::~CameraDeviceSession() {
