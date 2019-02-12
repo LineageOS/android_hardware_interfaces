@@ -7,12 +7,12 @@ hidl_interface {
         enabled: true,
     },
     srcs: [
+        "types.hal",
         "ISupplicant.hal",
         "ISupplicantP2pIface.hal",
         "ISupplicantStaIface.hal",
         "ISupplicantStaIfaceCallback.hal",
         "ISupplicantStaNetwork.hal",
-        "types.hal",
     ],
     interfaces: [
         "android.hardware.wifi.supplicant@1.0",
@@ -21,10 +21,10 @@ hidl_interface {
     ],
     types: [
         "DppAkm",
-        "DppNetRole",
-        "DppSuccessCode",
-        "DppProgressCode",
         "DppFailureCode",
+        "DppNetRole",
+        "DppProgressCode",
+        "DppSuccessCode",
     ],
     gen_java: true,
 }

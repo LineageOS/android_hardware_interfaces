@@ -19,9 +19,9 @@ hidl_interface {
         "android.hidl.base@1.0",
     ],
     types: [
-      "StaLinkLayerRadioStats",
-      "StaLinkLayerStats",
-      "WifiChannelStats",
+        "StaLinkLayerRadioStats",
+        "StaLinkLayerStats",
+        "WifiChannelStats",
     ],
     gen_java: true,
 }
