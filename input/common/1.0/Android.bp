@@ -9,9 +9,6 @@ hidl_interface {
     srcs: [
         "types.hal",
     ],
-    interfaces: [
-        "android.hidl.base@1.0",
-    ],
     types: [
         "Action",
         "Axis",

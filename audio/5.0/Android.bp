@@ -30,6 +30,7 @@ hidl_interface {
         "AudioMicrophoneDirectionality",
         "AudioMicrophoneLocation",
         "MessageQueueFlagBits",
+        "MicrophoneDirection",
         "MicrophoneInfo",
         "MmapBufferFlag",
         "MmapBufferInfo",

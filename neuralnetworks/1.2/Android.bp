@@ -24,6 +24,7 @@ hidl_interface {
     types: [
         "Constant",
         "DeviceType",
+        "Extension",
         "FmqRequestDatum",
         "FmqResultDatum",
         "MeasureTiming",

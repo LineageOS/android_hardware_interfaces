@@ -15,6 +15,7 @@ hidl_interface {
     interfaces: [
         "android.hardware.audio.common@5.0",
         "android.hidl.base@1.0",
+        "android.hidl.safe_union@1.0",
     ],
     types: [
         "AacObjectType",

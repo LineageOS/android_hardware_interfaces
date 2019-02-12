@@ -20,6 +20,7 @@ hidl_interface {
         "android.hidl.base@1.0",
     ],
     types: [
+        "HdcpLevel",
         "OfflineLicenseState",
         "Status",
     ],

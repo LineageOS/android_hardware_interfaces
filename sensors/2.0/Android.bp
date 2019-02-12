@@ -18,6 +18,7 @@ hidl_interface {
     types: [
         "EventQueueFlagBits",
         "SensorTimeout",
+        "WakeLockQueueFlagBits",
     ],
     gen_java: false,
 }
