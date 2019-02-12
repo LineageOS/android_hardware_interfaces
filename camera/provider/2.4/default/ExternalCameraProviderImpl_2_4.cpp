@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "CamPvdr@2.4-external"
+#define LOG_TAG "CamPrvdr@2.4-external"
 //#define LOG_NDEBUG 0
 #include <log/log.h>
 
@@ -22,10 +22,10 @@
 #include <sys/inotify.h>
 #include <errno.h>
 #include <linux/videodev2.h>
-#include "ExternalCameraProvider.h"
+#include <cutils/properties.h>
+#include "ExternalCameraProviderImpl_2_4.h"
 #include "ExternalCameraDevice_3_4.h"
 #include "ExternalCameraDevice_3_5.h"
-#include <cutils/properties.h>
 
 namespace android {
 namespace hardware {
@@ -33,6 +33,8 @@ namespace camera {
 namespace provider {
 namespace V2_4 {
 namespace implementation {
+
+template struct CameraProvider<ExternalCameraProviderImpl_2_4>;
 
 namespace {
 // "device@<version>/external/<id>"
@@ -60,7 +62,7 @@ bool matchDeviceName(const hidl_string& deviceName, std::string* deviceVersion,
 
 } // anonymous namespace
 
-ExternalCameraProvider::ExternalCameraProvider() :
+ExternalCameraProviderImpl_2_4::ExternalCameraProviderImpl_2_4() :
         mCfg(ExternalCameraConfig::loadFromCfg()),
         mHotPlugThread(this) {
     mHotPlugThread.run("ExtCamHotPlug", PRIORITY_BACKGROUND);
@@ -81,12 +83,12 @@ ExternalCameraProvider::ExternalCameraProvider() :
     }
 }
 
-ExternalCameraProvider::~ExternalCameraProvider() {
+ExternalCameraProviderImpl_2_4::~ExternalCameraProviderImpl_2_4() {
     mHotPlugThread.requestExit();
 }
 
 
-Return<Status> ExternalCameraProvider::setCallback(
+Return<Status> ExternalCameraProviderImpl_2_4::setCallback(
         const sp<ICameraProviderCallback>& callback) {
     {
         Mutex::Autolock _l(mLock);
@@ -105,14 +107,16 @@ Return<Status> ExternalCameraProvider::setCallback(
     return Status::OK;
 }
 
-Return<void> ExternalCameraProvider::getVendorTags(getVendorTags_cb _hidl_cb) {
+Return<void> ExternalCameraProviderImpl_2_4::getVendorTags(
+        ICameraProvider::getVendorTags_cb _hidl_cb) {
     // No vendor tag support for USB camera
     hidl_vec<VendorTagSection> zeroSections;
     _hidl_cb(Status::OK, zeroSections);
     return Void();
 }
 
-Return<void> ExternalCameraProvider::getCameraIdList(getCameraIdList_cb _hidl_cb) {
+Return<void> ExternalCameraProviderImpl_2_4::getCameraIdList(
+        ICameraProvider::getCameraIdList_cb _hidl_cb) {
     // External camera HAL always report 0 camera, and extra cameras
     // are just reported via cameraDeviceStatusChange callbacks
     hidl_vec<hidl_string> hidlDeviceNameList;
@@ -120,25 +124,25 @@ Return<void> ExternalCameraProvider::getCameraIdList(getCameraIdList_cb _hidl_cb
     return Void();
 }
 
-Return<void> ExternalCameraProvider::isSetTorchModeSupported(
-        isSetTorchModeSupported_cb _hidl_cb) {
+Return<void> ExternalCameraProviderImpl_2_4::isSetTorchModeSupported(
+        ICameraProvider::isSetTorchModeSupported_cb _hidl_cb) {
     // setTorchMode API is supported, though right now no external camera device
     // has a flash unit.
     _hidl_cb (Status::OK, true);
     return Void();
 }
 
-Return<void> ExternalCameraProvider::getCameraDeviceInterface_V1_x(
+Return<void> ExternalCameraProviderImpl_2_4::getCameraDeviceInterface_V1_x(
         const hidl_string&,
-        getCameraDeviceInterface_V1_x_cb _hidl_cb) {
+        ICameraProvider::getCameraDeviceInterface_V1_x_cb _hidl_cb) {
     // External Camera HAL does not support HAL1
     _hidl_cb(Status::OPERATION_NOT_SUPPORTED, nullptr);
     return Void();
 }
 
-Return<void> ExternalCameraProvider::getCameraDeviceInterface_V3_x(
+Return<void> ExternalCameraProviderImpl_2_4::getCameraDeviceInterface_V3_x(
         const hidl_string& cameraDeviceName,
-        getCameraDeviceInterface_V3_x_cb _hidl_cb) {
+        ICameraProvider::getCameraDeviceInterface_V3_x_cb _hidl_cb) {
 
     std::string cameraId, deviceVersion;
     bool match = matchDeviceName(cameraDeviceName, &deviceVersion, &cameraId);
@@ -194,7 +198,7 @@ Return<void> ExternalCameraProvider::getCameraDeviceInterface_V3_x(
     return Void();
 }
 
-void ExternalCameraProvider::addExternalCamera(const char* devName) {
+void ExternalCameraProviderImpl_2_4::addExternalCamera(const char* devName) {
     ALOGI("ExtCam: adding %s to External Camera HAL!", devName);
     Mutex::Autolock _l(mLock);
     std::string deviceName;
@@ -209,7 +213,7 @@ void ExternalCameraProvider::addExternalCamera(const char* devName) {
     }
 }
 
-void ExternalCameraProvider::deviceAdded(const char* devName) {
+void ExternalCameraProviderImpl_2_4::deviceAdded(const char* devName) {
     {
         base::unique_fd fd(::open(devName, O_RDWR));
         if (fd.get() < 0) {
@@ -242,7 +246,7 @@ void ExternalCameraProvider::deviceAdded(const char* devName) {
     return;
 }
 
-void ExternalCameraProvider::deviceRemoved(const char* devName) {
+void ExternalCameraProviderImpl_2_4::deviceRemoved(const char* devName) {
     Mutex::Autolock _l(mLock);
     std::string deviceName;
     if (mPreferredHal3MinorVersion == 5) {
@@ -260,14 +264,15 @@ void ExternalCameraProvider::deviceRemoved(const char* devName) {
     }
 }
 
-ExternalCameraProvider::HotplugThread::HotplugThread(ExternalCameraProvider* parent) :
+ExternalCameraProviderImpl_2_4::HotplugThread::HotplugThread(
+        ExternalCameraProviderImpl_2_4* parent) :
         Thread(/*canCallJava*/false),
         mParent(parent),
         mInternalDevices(parent->mCfg.mInternalDevices) {}
 
-ExternalCameraProvider::HotplugThread::~HotplugThread() {}
+ExternalCameraProviderImpl_2_4::HotplugThread::~HotplugThread() {}
 
-bool ExternalCameraProvider::HotplugThread::threadLoop() {
+bool ExternalCameraProviderImpl_2_4::HotplugThread::threadLoop() {
     // Find existing /dev/video* devices
     DIR* devdir = opendir(kDevicePath);
     if(devdir == 0) {

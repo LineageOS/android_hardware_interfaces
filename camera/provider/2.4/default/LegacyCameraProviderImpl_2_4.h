@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_CAMERA_PROVIDER_V2_4_CAMERAPROVIDER_H
-#define ANDROID_HARDWARE_CAMERA_PROVIDER_V2_4_CAMERAPROVIDER_H
+#ifndef ANDROID_HARDWARE_CAMERA_PROVIDER_V2_4_LEGACYCAMERAPROVIDER_H
+#define ANDROID_HARDWARE_CAMERA_PROVIDER_V2_4_LEGACYCAMERAPROVIDER_H
 
-#include <regex>
+#include <android/hardware/camera/provider/2.4/ICameraProvider.h>
 #include "hardware/camera_common.h"
 #include "utils/Mutex.h"
 #include "utils/SortedVector.h"
-#include <android/hardware/camera/provider/2.4/ICameraProvider.h>
-#include <hidl/Status.h>
-#include <hidl/MQDescriptor.h>
+
 #include "CameraModule.h"
 #include "VendorTagDescriptor.h"
 
@@ -50,26 +48,34 @@ using ::android::hardware::hidl_string;
 using ::android::sp;
 using ::android::Mutex;
 
-struct CameraProvider : public ICameraProvider, public camera_module_callbacks_t {
-    CameraProvider();
-    ~CameraProvider();
+/**
+ * The implementation of legacy wrapper CameraProvider 2.4, separated
+ * from the HIDL interface layer to allow for implementation reuse by later
+ * provider versions.
+ *
+ * This implementation supports cameras implemented via the legacy libhardware
+ * camera HAL definitions.
+ */
+struct LegacyCameraProviderImpl_2_4 : public camera_module_callbacks_t {
+    LegacyCameraProviderImpl_2_4();
+    ~LegacyCameraProviderImpl_2_4();
 
     // Caller must use this method to check if CameraProvider ctor failed
     bool isInitFailed() { return mInitFailed; }
 
     // Methods from ::android::hardware::camera::provider::V2_4::ICameraProvider follow.
-    Return<Status> setCallback(const sp<ICameraProviderCallback>& callback) override;
-    Return<void> getVendorTags(getVendorTags_cb _hidl_cb) override;
-    Return<void> getCameraIdList(getCameraIdList_cb _hidl_cb) override;
-    Return<void> isSetTorchModeSupported(isSetTorchModeSupported_cb _hidl_cb) override;
+    Return<Status> setCallback(const sp<ICameraProviderCallback>& callback);
+    Return<void> getVendorTags(ICameraProvider::getVendorTags_cb _hidl_cb);
+    Return<void> getCameraIdList(ICameraProvider::getCameraIdList_cb _hidl_cb);
+    Return<void> isSetTorchModeSupported(ICameraProvider::isSetTorchModeSupported_cb _hidl_cb);
     Return<void> getCameraDeviceInterface_V1_x(
             const hidl_string& cameraDeviceName,
-            getCameraDeviceInterface_V1_x_cb _hidl_cb) override;
+            ICameraProvider::getCameraDeviceInterface_V1_x_cb _hidl_cb);
     Return<void> getCameraDeviceInterface_V3_x(
             const hidl_string& cameraDeviceName,
-            getCameraDeviceInterface_V3_x_cb _hidl_cb) override;
+            ICameraProvider::getCameraDeviceInterface_V3_x_cb _hidl_cb);
 
-private:
+protected:
     Mutex mCbLock;
     sp<ICameraProviderCallback> mCallbacks = nullptr;
 
@@ -115,9 +121,8 @@ private:
     void addDeviceNames(int camera_id, CameraDeviceStatus status = CameraDeviceStatus::PRESENT,
                         bool cam_new = false);
     void removeDeviceNames(int camera_id);
-};
 
-extern "C" ICameraProvider* HIDL_FETCH_ICameraProvider(const char* name);
+};
 
 }  // namespace implementation
 }  // namespace V2_4
@@ -126,4 +131,4 @@ extern "C" ICameraProvider* HIDL_FETCH_ICameraProvider(const char* name);
 }  // namespace hardware
 }  // namespace android
 
-#endif  // ANDROID_HARDWARE_CAMERA_PROVIDER_V2_4_CAMERAPROVIDER_H
+#endif  // ANDROID_HARDWARE_CAMERA_PROVIDER_V2_4_LEGACYCAMERAPROVIDER_H

@@ -21,9 +21,8 @@
 #endif
 
 #include <android/hardware/camera/provider/2.4/ICameraProvider.h>
-#include <hidl/LegacySupport.h>
-
 #include <binder/ProcessState.h>
+#include <hidl/LegacySupport.h>
 
 using android::status_t;
 using android::hardware::defaultLazyPassthroughServiceImplementation;
@@ -38,7 +37,7 @@ const bool kLazyService = false;
 
 int main()
 {
-    ALOGI("Camera provider Service is starting.");
+    ALOGI("CameraProvider@2.4 legacy service is starting.");
     // The camera HAL may communicate to other vendor components via
     // /dev/vndbinder
     android::ProcessState::initWithDriver("/dev/vndbinder");

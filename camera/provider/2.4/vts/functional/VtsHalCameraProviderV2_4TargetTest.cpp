@@ -35,6 +35,7 @@
 #include <android/hardware/camera/device/3.4/ICameraDeviceCallback.h>
 #include <android/hardware/camera/device/3.5/ICameraDeviceCallback.h>
 #include <android/hardware/camera/provider/2.4/ICameraProvider.h>
+#include <android/hardware/camera/provider/2.5/ICameraProvider.h>
 #include <android/hardware/camera/metadata/3.4/types.h>
 #include <android/hidl/manager/1.0/IServiceManager.h>
 #include <binder/MemoryHeapBase.h>
@@ -65,6 +66,7 @@
 using namespace ::android::hardware::camera::device;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
+using ::android::hardware::hidl_bitfield;
 using ::android::hardware::hidl_handle;
 using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
@@ -543,6 +545,9 @@ public:
 
      uint32_t id;
      ASSERT_TRUE(parseProviderName(service_name, &mProviderType, &id));
+
+     castProvider(mProvider, &mProvider2_5);
+     notifyDeviceState(provider::V2_5::DeviceState::NORMAL);
  }
  virtual void TearDown() override {}
 
@@ -680,6 +685,8 @@ public:
         CameraHidlTest *mParent;               // Parent object
     };
 
+    void notifyDeviceState(::android::hardware::camera::provider::V2_5::DeviceState newState);
+
     void openCameraDevice(const std::string &name, sp<ICameraProvider> provider,
             sp<::android::hardware::camera::device::V1_0::ICameraDevice> *device /*out*/);
     void setupPreviewWindow(
@@ -709,6 +716,8 @@ public:
             sp<ICameraDeviceSession> *session /*out*/,
             camera_metadata_t **staticMeta /*out*/,
             ::android::sp<ICameraDevice> *device = nullptr/*out*/);
+    void castProvider(const sp<provider::V2_4::ICameraProvider> &provider,
+            sp<provider::V2_5::ICameraProvider> *provider2_5 /*out*/);
     void castSession(const sp<ICameraDeviceSession> &session, int32_t deviceVersion,
             sp<device::V3_3::ICameraDeviceSession> *session3_3 /*out*/,
             sp<device::V3_4::ICameraDeviceSession> *session3_4 /*out*/,
@@ -898,6 +907,8 @@ protected:
 
     // Camera provider service
     sp<ICameraProvider> mProvider;
+    sp<::android::hardware::camera::provider::V2_5::ICameraProvider> mProvider2_5;
+
     // Camera provider type.
     std::string mProviderType;
 };
@@ -4681,6 +4692,13 @@ TEST_F(CameraHidlTest, flushEmpty) {
     }
 }
 
+// Test camera provider@2.5 notify method
+TEST_F(CameraHidlTest, providerDeviceStateNotification) {
+
+    notifyDeviceState(provider::V2_5::DeviceState::BACK_COVERED);
+    notifyDeviceState(provider::V2_5::DeviceState::NORMAL);
+}
+
 // Retrieve all valid output stream resolutions from the camera
 // static characteristics.
 Status CameraHidlTest::getAvailableOutputStreams(camera_metadata_t *staticMeta,
@@ -5362,6 +5380,16 @@ void CameraHidlTest::castDevice(const sp<device::V3_2::ICameraDevice> &device,
     }
 }
 
+//Cast camera provider to corresponding version if available
+void CameraHidlTest::castProvider(const sp<ICameraProvider> &provider,
+        sp<provider::V2_5::ICameraProvider> *provider2_5 /*out*/) {
+    ASSERT_NE(nullptr, provider2_5);
+    auto castResult = provider::V2_5::ICameraProvider::castFrom(provider);
+    if (castResult.isOk()) {
+        *provider2_5 = castResult;
+    }
+}
+
 //Cast camera device session to corresponding version
 void CameraHidlTest::castSession(const sp<ICameraDeviceSession> &session, int32_t deviceVersion,
         sp<device::V3_3::ICameraDeviceSession> *session3_3 /*out*/,
@@ -5807,6 +5835,13 @@ void CameraHidlTest::openEmptyDeviceSession(const std::string &name, sp<ICameraP
         ASSERT_NE(nullptr, *staticMeta);
     });
     ASSERT_TRUE(ret.isOk());
+}
+
+void CameraHidlTest::notifyDeviceState(provider::V2_5::DeviceState newState) {
+    if (mProvider2_5.get() == nullptr) return;
+
+    mProvider2_5->notifyDeviceStateChange(
+            static_cast<hidl_bitfield<provider::V2_5::DeviceState>>(newState));
 }
 
 // Open a particular camera device.

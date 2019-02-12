@@ -67,6 +67,7 @@ public:
     void removeCamera(int cameraId);
     int getPhysicalCameraInfo(int physicalCameraId, camera_metadata_t **physicalInfo);
     int isStreamCombinationSupported(int cameraId, camera_stream_combination_t *streams);
+    void notifyDeviceStateChange(uint64_t deviceState);
 
 private:
     // Derive camera characteristics keys defined after HAL device version
