@@ -55,6 +55,23 @@ TEST_F(NeuralnetworksHidlTest, GetDeviceTypeTest) {
     });
     EXPECT_TRUE(ret.isOk());
 }
+
+// device supported extensions test
+TEST_F(NeuralnetworksHidlTest, GetDeviceSupportedExtensionsTest) {
+    Return<void> ret = device->getSupportedExtensions(
+            [](ErrorStatus status, const hidl_vec<Extension>& extensions) {
+                EXPECT_EQ(ErrorStatus::NONE, status);
+                for (auto& extension : extensions) {
+                    std::string extensionName = extension.name;
+                    EXPECT_FALSE(extensionName.empty());
+                    EXPECT_NE(extensionName.find("."), std::string::npos)
+                            << "Extension name must start with the reverse domain name of the "
+                               "vendor";
+                }
+            });
+    EXPECT_TRUE(ret.isOk());
+}
+
 }  // namespace functional
 }  // namespace vts
 }  // namespace V1_2
