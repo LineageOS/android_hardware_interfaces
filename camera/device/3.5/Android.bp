@@ -23,6 +23,8 @@ hidl_interface {
     types: [
         "BufferRequest",
         "BufferRequestStatus",
+        "CameraBlob",
+        "CameraBlobId",
         "StreamBufferRequestError",
         "StreamBufferRet",
         "StreamBuffersVal",
