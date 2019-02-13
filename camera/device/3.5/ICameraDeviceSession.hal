@@ -17,6 +17,7 @@
 package android.hardware.camera.device@3.5;
 
 import android.hardware.camera.common@1.0::Status;
+import @3.2::CameraMetadata;
 import @3.4::ICameraDeviceSession;
 import @3.4::HalStreamConfiguration;
 
@@ -99,4 +100,49 @@ interface ICameraDeviceSession extends @3.4::ICameraDeviceSession {
         vec<int32_t> streamIds,
         uint32_t streamConfigCounter
     );
+
+    /**
+     * isReconfigurationRequired:
+     *
+     * Check whether complete stream reconfiguration is required for possible new session
+     * parameter values.
+     *
+     * This method must be called by the camera framework in case the client changes
+     * the value of any advertised session parameters. Depending on the specific values
+     * the HAL can decide whether a complete stream reconfiguration is required. In case
+     * the HAL returns false, the camera framework must skip the internal reconfiguration.
+     * In case Hal returns true, the framework must reconfigure the streams and pass the
+     * new session parameter values accordingly.
+     * This call may be done by the framework some time before the request with new parameters
+     * is submitted to the HAL, and the request may be cancelled before it ever gets submitted.
+     * Therefore, the HAL must not use this query as an indication to change its behavior in any
+     * way.
+     * ------------------------------------------------------------------------
+     *
+     * Preconditions:
+     *
+     * The framework can call this method at any time after active
+     * session configuration. There must be no impact on the performance of
+     * pending camera requests in any way. In particular there must not be
+     * any glitches or delays during normal camera streaming.
+     *
+     * Performance requirements:
+     * HW and SW camera settings must not be changed and there must not be
+     * a user-visible impact on camera performance.
+     *
+     * @param oldSessionParams Before session parameters, usually the current session parameters.
+     * @param newSessionParams The new session parameters which may be set by client.
+     *
+     * @return Status Status code for the operation, one of:
+     *     OK:
+     *          On successful reconfiguration required query.
+     *     METHOD_NOT_SUPPORTED:
+     *          The camera device does not support the reconfiguration query.
+     *     INTERNAL_ERROR:
+     *          The reconfiguration query cannot complete due to internal
+     *          error.
+     * @return true in case the stream reconfiguration is required, false otherwise.
+     */
+    isReconfigurationRequired(CameraMetadata oldSessionParams, CameraMetadata newSessionParams)
+            generates(Status status, bool reconfigurationNeeded);
 };

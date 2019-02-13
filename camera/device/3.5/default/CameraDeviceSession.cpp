@@ -356,6 +356,35 @@ void CameraDeviceSession::sReturnStreamBuffers(
     d->returnStreamBuffers(num_buffers, buffers);
 }
 
+Return<void> CameraDeviceSession::isReconfigurationRequired(
+        const V3_2::CameraMetadata& oldSessionParams, const V3_2::CameraMetadata& newSessionParams,
+        ICameraDeviceSession::isReconfigurationRequired_cb _hidl_cb) {
+    if (mDevice->ops->is_reconfiguration_required != nullptr) {
+        const camera_metadata_t *oldParams, *newParams;
+        V3_2::implementation::convertFromHidl(oldSessionParams, &oldParams);
+        V3_2::implementation::convertFromHidl(newSessionParams, &newParams);
+        auto ret = mDevice->ops->is_reconfiguration_required(mDevice, oldParams, newParams);
+        switch (ret) {
+            case 0:
+                _hidl_cb(Status::OK, true);
+                break;
+            case -EINVAL:
+                _hidl_cb(Status::OK, false);
+                break;
+            case -ENOSYS:
+                _hidl_cb(Status::METHOD_NOT_SUPPORTED, true);
+                break;
+            default:
+                _hidl_cb(Status::INTERNAL_ERROR, true);
+                break;
+        };
+    } else {
+        _hidl_cb(Status::METHOD_NOT_SUPPORTED, true);
+    }
+
+    return Void();
+}
+
 } // namespace implementation
 }  // namespace V3_5
 }  // namespace device

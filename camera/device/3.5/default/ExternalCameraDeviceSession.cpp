@@ -295,6 +295,15 @@ int ExternalCameraDeviceSession::OutputThread::waitForBufferRequestDone(
     return 0;
 }
 
+Return<void> ExternalCameraDeviceSession::isReconfigurationRequired(
+        const V3_2::CameraMetadata& /*oldSessionParams*/,
+        const V3_2::CameraMetadata& /*newSessionParams*/,
+        ICameraDeviceSession::isReconfigurationRequired_cb _hidl_cb) {
+    //Stub implementation
+    _hidl_cb(Status::OK, true);
+    return Void();
+}
+
 } // namespace implementation
 }  // namespace V3_5
 }  // namespace device

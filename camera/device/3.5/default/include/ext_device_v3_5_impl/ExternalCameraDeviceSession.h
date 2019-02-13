@@ -106,6 +106,10 @@ protected:
             const hidl_vec<int32_t>& requests,
             uint32_t streamConfigCounter);
 
+    Return<void> isReconfigurationRequired(const V3_2::CameraMetadata& oldSessionParams,
+            const V3_2::CameraMetadata& newSessionParams,
+            ICameraDeviceSession::isReconfigurationRequired_cb _hidl_cb);
+
     virtual void initOutputThread() override;
     virtual void closeOutputThread() override;
     void closeOutputThreadImpl();
@@ -245,6 +249,12 @@ private:
                 const hidl_vec<int32_t>& requests,
                 uint32_t streamConfigCounter) override {
             return mParent->signalStreamFlush(requests, streamConfigCounter);
+        }
+
+        virtual Return<void> isReconfigurationRequired(const V3_2::CameraMetadata& oldSessionParams,
+                const V3_2::CameraMetadata& newSessionParams,
+                ICameraDeviceSession::isReconfigurationRequired_cb _hidl_cb) override {
+            return mParent->isReconfigurationRequired(oldSessionParams, newSessionParams, _hidl_cb);
         }
 
     private:
