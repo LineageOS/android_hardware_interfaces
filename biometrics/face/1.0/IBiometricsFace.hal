@@ -242,8 +242,10 @@ interface IBiometricsFace {
      * Reset lockout for the current user.
      *
      * @param hat A valid Hardware Authentication Token, generated when the
-     *     user authenticates with Pin/Pattern/Pass.
-     * @return true if lockout was reset, false otherwise.
+     *     user authenticates with Pin/Pattern/Pass. When the Hardware
+     *     Authentication Token is verified, lockout must be reset and
+     *     onLockoutChanged must be called with duration 0.
+     * @return status The status of this method call.
      */
-    resetLockout(vec<uint8_t> hat) generates (bool success);
+    resetLockout(vec<uint8_t> hat) generates (Status status);
 };
