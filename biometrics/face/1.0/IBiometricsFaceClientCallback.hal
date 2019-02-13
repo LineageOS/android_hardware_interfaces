@@ -113,4 +113,19 @@ interface IBiometricsFaceClientCallback {
      */
     oneway onEnumerate(uint64_t deviceId, vec<uint32_t> faceIds,
         int32_t userId);
+
+    /**
+     * A callback invoked when the lockout state changes.
+     *
+     * This method must only be invoked when setActiveUser() is called,
+     * when lockout starts, and when lockout ends. When lockout starts,
+     * duration must be greater than 0, and when lockout ends, duration must
+     * be 0. This must be called before calling onError() with parameters
+     * LOCKOUT or LOCKOUT_PERMANENT. If the user is permanently locked out,
+     * the duration must be MAX_UINT64.
+     *
+     * @param duration the remaining lockout duration in milliseconds, or 0
+     *     if the user is not locked out.
+     */
+    oneway onLockoutChanged(uint64_t duration);
 };
