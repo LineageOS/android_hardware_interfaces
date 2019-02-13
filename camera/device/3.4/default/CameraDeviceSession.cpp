@@ -128,7 +128,9 @@ void CameraDeviceSession::configureStreams_3_4_Impl(
     }
 
     camera3_stream_configuration_t stream_list{};
-    stream_list.stream_configuration_counter = streamConfigCounter;
+    // Block reading mStreamConfigCounter until configureStream returns
+    Mutex::Autolock _sccl(mStreamConfigCounterLock);
+    mStreamConfigCounter = streamConfigCounter;
     hidl_vec<camera3_stream_t*> streams;
     stream_list.session_parameters = paramBuffer;
     if (!preProcessConfigurationLocked_3_4(requestedConfiguration, &stream_list, &streams)) {

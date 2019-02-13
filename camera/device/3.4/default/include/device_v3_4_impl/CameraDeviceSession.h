@@ -123,6 +123,10 @@ protected:
     // Physical camera ids for the logical multi-camera. Empty if this
     // is not a logical multi-camera.
     std::unordered_set<std::string> mPhysicalCameraIds;
+
+    Mutex    mStreamConfigCounterLock;
+    uint32_t mStreamConfigCounter = 1;
+
 private:
 
     struct TrampolineSessionInterface_3_4 : public ICameraDeviceSession {
