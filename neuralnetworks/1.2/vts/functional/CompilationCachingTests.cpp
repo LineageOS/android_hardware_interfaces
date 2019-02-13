@@ -88,13 +88,20 @@ class CompilationCachingTest : public NeuralnetworksHidlTest {
         NeuralnetworksHidlTest::SetUp();
         ASSERT_NE(device.get(), nullptr);
 
-        // Create cache directory.
+        // Create cache directory. The cache directory and cache files are always created to test
+        // the behavior of prepareModelFromCache, even when caching is not supported.
         char cacheDirTemp[] = "/data/local/tmp/TestCompilationCachingXXXXXX";
         char* cacheDir = mkdtemp(cacheDirTemp);
         ASSERT_NE(cacheDir, nullptr);
-        mCache1 = cacheDir + mCache1;
-        mCache2 = cacheDir + mCache2;
-        mCache3 = cacheDir + mCache3;
+        mCacheDir = cacheDir;
+
+        // Create empty cache files.
+        mCache1 = mCacheDir + "/cache1";
+        mCache2 = mCacheDir + "/cache2";
+        mCache3 = mCacheDir + "/cache3";
+        // A dummy handle, use AccessMode::WRITE_ONLY for createCacheHandle to create files.
+        hidl_handle handle;
+        createCacheHandle({mCache1, mCache2, mCache3}, AccessMode::WRITE_ONLY, &handle);
 
         // Check if caching is supported.
         bool isCachingSupported;
@@ -114,10 +121,18 @@ class CompilationCachingTest : public NeuralnetworksHidlTest {
                       << std::endl;
             mIsCachingSupported = false;
         }
+    }
 
-        // Create empty cache files.
-        hidl_handle handle;
-        createCacheHandle({mCache1, mCache2, mCache3}, AccessMode::WRITE_ONLY, &handle);
+    void TearDown() override {
+        // The tmp directory is only removed when the driver reports caching not supported,
+        // otherwise it is kept for debugging purpose.
+        if (!mIsCachingSupported) {
+            remove(mCache1.c_str());
+            remove(mCache2.c_str());
+            remove(mCache3.c_str());
+            rmdir(mCacheDir.c_str());
+        }
+        NeuralnetworksHidlTest::TearDown();
     }
 
     void saveModelToCache(sp<IPreparedModel> preparedModel, const hidl_handle& cache1,
@@ -164,9 +179,10 @@ class CompilationCachingTest : public NeuralnetworksHidlTest {
                                  .withDefault(nullptr);
     }
 
-    std::string mCache1 = "/cache1";
-    std::string mCache2 = "/cache2";
-    std::string mCache3 = "/cache3";
+    std::string mCacheDir;
+    std::string mCache1;
+    std::string mCache2;
+    std::string mCache3;
     uint8_t mToken[static_cast<uint32_t>(Constant::BYTE_SIZE_OF_CACHE_TOKEN)] = {};
     bool mIsCachingSupported;
 };
