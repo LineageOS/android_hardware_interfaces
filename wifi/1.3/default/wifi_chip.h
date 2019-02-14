@@ -53,6 +53,7 @@ class WifiChip : public V1_3::IWifiChip {
         const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal,
         const std::weak_ptr<mode_controller::WifiModeController>
             mode_controller,
+        const std::weak_ptr<iface_util::WifiIfaceUtil> iface_util,
         const std::weak_ptr<feature_flags::WifiFeatureFlags> feature_flags);
     // HIDL does not provide a built-in mechanism to let the server invalidate
     // a HIDL interface object after creation. If any client process holds onto
@@ -233,6 +234,7 @@ class WifiChip : public V1_3::IWifiChip {
     ChipId chip_id_;
     std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal_;
     std::weak_ptr<mode_controller::WifiModeController> mode_controller_;
+    std::weak_ptr<iface_util::WifiIfaceUtil> iface_util_;
     std::weak_ptr<feature_flags::WifiFeatureFlags> feature_flags_;
     std::vector<sp<WifiApIface>> ap_ifaces_;
     std::vector<sp<WifiNanIface>> nan_ifaces_;

@@ -313,10 +313,12 @@ using hidl_return_util::validateAndCallWithLock;
 WifiChip::WifiChip(
     ChipId chip_id, const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal,
     const std::weak_ptr<mode_controller::WifiModeController> mode_controller,
+    const std::weak_ptr<iface_util::WifiIfaceUtil> iface_util,
     const std::weak_ptr<feature_flags::WifiFeatureFlags> feature_flags)
     : chip_id_(chip_id),
       legacy_hal_(legacy_hal),
       mode_controller_(mode_controller),
+      iface_util_(iface_util),
       feature_flags_(feature_flags),
       is_valid_(true),
       current_mode_id_(feature_flags::chip_mode_ids::kInvalid),
@@ -775,7 +777,7 @@ std::pair<WifiStatus, sp<IWifiApIface>> WifiChip::createApIfaceInternal() {
         return {createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE), {}};
     }
     std::string ifname = allocateApOrStaIfaceName();
-    sp<WifiApIface> iface = new WifiApIface(ifname, legacy_hal_);
+    sp<WifiApIface> iface = new WifiApIface(ifname, legacy_hal_, iface_util_);
     ap_ifaces_.push_back(iface);
     for (const auto& callback : event_cb_handler_.getCallbacks()) {
         if (!callback->onIfaceAdded(IfaceType::AP, ifname).isOk()) {
@@ -914,7 +916,7 @@ std::pair<WifiStatus, sp<IWifiStaIface>> WifiChip::createStaIfaceInternal() {
         return {createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE), {}};
     }
     std::string ifname = allocateApOrStaIfaceName();
-    sp<WifiStaIface> iface = new WifiStaIface(ifname, legacy_hal_);
+    sp<WifiStaIface> iface = new WifiStaIface(ifname, legacy_hal_, iface_util_);
     sta_ifaces_.push_back(iface);
     for (const auto& callback : event_cb_handler_.getCallbacks()) {
         if (!callback->onIfaceAdded(IfaceType::STA, ifname).isOk()) {

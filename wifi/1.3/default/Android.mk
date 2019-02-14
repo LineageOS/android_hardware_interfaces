@@ -43,6 +43,7 @@ LOCAL_SRC_FILES := \
     wifi_ap_iface.cpp \
     wifi_chip.cpp \
     wifi_feature_flags.cpp \
+    wifi_iface_util.cpp \
     wifi_legacy_hal.cpp \
     wifi_legacy_hal_stubs.cpp \
     wifi_mode_controller.cpp \
@@ -139,6 +140,7 @@ LOCAL_SRC_FILES := \
     tests/hidl_struct_util_unit_tests.cpp \
     tests/main.cpp \
     tests/mock_wifi_feature_flags.cpp \
+    tests/mock_wifi_iface_util.cpp \
     tests/mock_wifi_legacy_hal.cpp \
     tests/mock_wifi_mode_controller.cpp \
     tests/ringbuffer_unit_tests.cpp \

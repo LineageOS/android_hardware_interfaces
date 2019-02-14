@@ -30,8 +30,12 @@ using hidl_return_util::validateAndCall;
 
 WifiApIface::WifiApIface(
     const std::string& ifname,
-    const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal)
-    : ifname_(ifname), legacy_hal_(legacy_hal), is_valid_(true) {}
+    const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal,
+    const std::weak_ptr<iface_util::WifiIfaceUtil> iface_util)
+    : ifname_(ifname),
+      legacy_hal_(legacy_hal),
+      iface_util_(iface_util),
+      is_valid_(true) {}
 
 void WifiApIface::invalidate() {
     legacy_hal_.reset();
