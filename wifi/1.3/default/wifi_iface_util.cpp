@@ -14,11 +14,23 @@
  * limitations under the License.
  */
 
+#include <cstddef>
+#include <iostream>
+#include <limits>
+#include <random>
+
 #include <android-base/logging.h>
 #include <android-base/macros.h>
 #include <private/android_filesystem_config.h>
 
+#undef NAN
 #include "wifi_iface_util.h"
+
+namespace {
+// Constants to set the local bit & clear the multicast bit.
+constexpr uint8_t kMacAddressMulticastMask = 0x01;
+constexpr uint8_t kMacAddressLocallyAssignedMask = 0x02;
+}  // namespace
 
 namespace android {
 namespace hardware {
@@ -62,8 +74,19 @@ std::array<uint8_t, 6> WifiIfaceUtil::getOrCreateRandomMacAddress() {
 }
 
 std::array<uint8_t, 6> WifiIfaceUtil::createRandomMacAddress() {
-    // TODO: Generate random MAC address here.
-    return {};
+    std::array<uint8_t, 6> address = {};
+    std::random_device rd;
+    std::default_random_engine engine(rd());
+    std::uniform_int_distribution<uint8_t> dist(
+        std::numeric_limits<uint8_t>::min(),
+        std::numeric_limits<uint8_t>::max());
+    for (size_t i = 0; i < address.size(); i++) {
+        address[i] = dist(engine);
+    }
+    // Set the local bit and clear the multicast bit.
+    address[0] |= kMacAddressLocallyAssignedMask;
+    address[0] &= ~kMacAddressMulticastMask;
+    return address;
 }
 }  // namespace iface_util
 }  // namespace implementation
