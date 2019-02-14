@@ -35,6 +35,7 @@ class MockWifiIfaceUtil : public WifiIfaceUtil {
                  std::array<uint8_t, 6>(const std::string&));
     MOCK_METHOD2(setMacAddress,
                  bool(const std::string&, const std::array<uint8_t, 6>&));
+    MOCK_METHOD0(getOrCreateRandomMacAddress, std::array<uint8_t, 6>());
 };
 }  // namespace iface_util
 }  // namespace implementation

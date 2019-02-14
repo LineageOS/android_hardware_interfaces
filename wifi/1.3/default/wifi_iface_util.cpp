@@ -27,7 +27,7 @@ namespace V1_3 {
 namespace implementation {
 namespace iface_util {
 
-WifiIfaceUtil::WifiIfaceUtil() {}
+WifiIfaceUtil::WifiIfaceUtil() : random_mac_address_(nullptr) {}
 
 std::array<uint8_t, 6> WifiIfaceUtil::getFactoryMacAddress(
     const std::string& iface_name) {
@@ -52,6 +52,19 @@ bool WifiIfaceUtil::setMacAddress(const std::string& iface_name,
     return true;
 }
 
+std::array<uint8_t, 6> WifiIfaceUtil::getOrCreateRandomMacAddress() {
+    if (random_mac_address_) {
+        return *random_mac_address_.get();
+    }
+    random_mac_address_ =
+        std::make_unique<std::array<uint8_t, 6>>(createRandomMacAddress());
+    return *random_mac_address_.get();
+}
+
+std::array<uint8_t, 6> WifiIfaceUtil::createRandomMacAddress() {
+    // TODO: Generate random MAC address here.
+    return {};
+}
 }  // namespace iface_util
 }  // namespace implementation
 }  // namespace V1_3

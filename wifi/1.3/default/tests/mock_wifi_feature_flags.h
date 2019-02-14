@@ -34,6 +34,7 @@ class MockWifiFeatureFlags : public WifiFeatureFlags {
     MockWifiFeatureFlags();
 
     MOCK_METHOD0(getChipModes, std::vector<V1_0::IWifiChip::ChipMode>());
+    MOCK_METHOD0(isApMacRandomizationDisabled, bool());
 };
 
 }  // namespace feature_flags

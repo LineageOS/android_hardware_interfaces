@@ -144,10 +144,20 @@ static const std::vector<IWifiChip::ChipMode> kChipModes{
 #undef P2P
 #undef NAN
 
+#ifdef WIFI_HIDL_FEATURE_DISABLE_AP_MAC_RANDOMIZATION
+static const bool wifiHidlFeatureDisableApMacRandomization = true;
+#else
+static const bool wifiHidlFeatureDisableApMacRandomization = false;
+#endif  // WIFI_HIDL_FEATURE_DISABLE_AP
+
 WifiFeatureFlags::WifiFeatureFlags() {}
 
 std::vector<IWifiChip::ChipMode> WifiFeatureFlags::getChipModes() {
     return kChipModes;
+}
+
+bool WifiFeatureFlags::isApMacRandomizationDisabled() {
+    return wifiHidlFeatureDisableApMacRandomization;
 }
 
 }  // namespace feature_flags

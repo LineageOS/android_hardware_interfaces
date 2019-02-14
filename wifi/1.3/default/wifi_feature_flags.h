@@ -43,6 +43,7 @@ class WifiFeatureFlags {
     virtual ~WifiFeatureFlags() = default;
 
     virtual std::vector<V1_0::IWifiChip::ChipMode> getChipModes();
+    virtual bool isApMacRandomizationDisabled();
 };
 
 }  // namespace feature_flags
