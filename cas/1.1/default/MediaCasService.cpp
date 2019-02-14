@@ -32,6 +32,34 @@ namespace cas {
 namespace V1_1 {
 namespace implementation {
 
+class Wrapper : public V1_1::ICasListener {
+  public:
+    static sp<V1_1::ICasListener> wrap(sp<V1_0::ICasListener> impl) {
+        sp<V1_1::ICasListener> cast = V1_1::ICasListener::castFrom(impl);
+        if (cast == NULL) {
+            cast = new Wrapper(impl);
+        }
+        return cast;
+    }
+
+    virtual Return<void> onEvent(int32_t event, int32_t arg,
+                                 const hidl_vec<uint8_t>& data) override {
+        mImpl->onEvent(event, arg, data);
+        return Void();
+    }
+
+    virtual Return<void> onSessionEvent(const hidl_vec<uint8_t>& /* sessionId */,
+                                        int32_t /* event */, int32_t /* arg */,
+                                        const hidl_vec<uint8_t>& /*data*/) override {
+        ALOGV("Do nothing on Session Event for cas@1.0 client in cas@1.1");
+        return Void();
+    }
+
+  private:
+    Wrapper(sp<V1_0::ICasListener> impl) : mImpl(impl){};
+    sp<V1_0::ICasListener> mImpl;
+};
+
 MediaCasService::MediaCasService()
     : mCasLoader("createCasFactory"), mDescramblerLoader("createDescramblerFactory") {}
 
@@ -53,30 +81,23 @@ Return<bool> MediaCasService::isSystemIdSupported(int32_t CA_system_id) {
     return mCasLoader.findFactoryForScheme(CA_system_id);
 }
 
-Return<sp<V1_0::ICas>> MediaCasService::createPlugin(int32_t /* CA_system_id */,
-                                                     const sp<V1_0::ICasListener>& /* listener */) {
-    ALOGE("%s:Use createPluginExt to create plugin with cas@1.1", __FUNCTION__);
+Return<sp<V1_0::ICas>> MediaCasService::createPlugin(int32_t CA_system_id,
+                                                     const sp<V1_0::ICasListener>& listener) {
+    ALOGV("%s:Use createPluginExt to create plugin in cas@1.1", __FUNCTION__);
 
-    sp<V1_0::ICas> result;
-    /*
-        CasFactory *factory;
-        sp<SharedLibrary> library;
-        if (mCasLoader.findFactoryForScheme(CA_system_id, &library, &factory)) {
-            CasPlugin *plugin = NULL;
-            sp<CasImpl> casImpl = new CasImpl(listener);
-            if (factory->createPlugin(CA_system_id, casImpl.get(),
-                    CasImpl::OnEvent, &plugin) == OK && plugin != NULL) {
-                casImpl->init(library, plugin);
-                result = casImpl;
-            }
-        }
-    */
+    sp<ICas> result;
+
+    sp<V1_1::ICasListener> listenerV1_1 = Wrapper::wrap(listener);
+
+    result = createPluginExt(CA_system_id, listenerV1_1);
+
     return result;
 }
 
 Return<sp<ICas>> MediaCasService::createPluginExt(int32_t CA_system_id,
                                                   const sp<ICasListener>& listener) {
     ALOGV("%s: CA_system_id=%d", __FUNCTION__, CA_system_id);
+    if (listener == NULL) ALOGV("%s: Listener is NULL", __FUNCTION__);
 
     sp<ICas> result;
 
