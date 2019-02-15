@@ -23,8 +23,10 @@
 #include "GnssConfiguration.h"
 #include "GnssMeasurement.h"
 #include "GnssVisibilityControl.h"
+#include "Utils.h"
 
 using ::android::hardware::Status;
+using ::android::hardware::gnss::common::Utils;
 using ::android::hardware::gnss::visibility_control::V1_0::implementation::GnssVisibilityControl;
 
 namespace android {
@@ -33,8 +35,16 @@ namespace gnss {
 namespace V2_0 {
 namespace implementation {
 
+using GnssSvFlags = IGnssCallback::GnssSvFlags;
+
 sp<V2_0::IGnssCallback> Gnss::sGnssCallback_2_0 = nullptr;
 sp<V1_1::IGnssCallback> Gnss::sGnssCallback_1_1 = nullptr;
+
+Gnss::Gnss() : mMinIntervalMs(1000) {}
+
+Gnss::~Gnss() {
+    stop();
+}
 
 // Methods from V1_0::IGnss follow.
 Return<bool> Gnss::setCallback(const sp<V1_0::IGnssCallback>&) {
@@ -43,13 +53,29 @@ Return<bool> Gnss::setCallback(const sp<V1_0::IGnssCallback>&) {
 }
 
 Return<bool> Gnss::start() {
-    // TODO implement
-    return bool{};
+    if (mIsActive) {
+        ALOGW("Gnss has started. Restarting...");
+        stop();
+    }
+
+    mIsActive = true;
+    mThread = std::thread([this]() {
+        while (mIsActive == true) {
+            const auto location = Utils::getMockLocation();
+            this->reportLocation(location);
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(mMinIntervalMs));
+        }
+    });
+    return true;
 }
 
 Return<bool> Gnss::stop() {
-    // TODO implement
-    return bool{};
+    mIsActive = false;
+    if (mThread.joinable()) {
+        mThread.join();
+    }
+    return true;
 }
 
 Return<void> Gnss::cleanup() {
@@ -164,8 +190,7 @@ Return<bool> Gnss::setCallback_1_1(const sp<V1_1::IGnssCallback>& callback) {
 Return<bool> Gnss::setPositionMode_1_1(V1_0::IGnss::GnssPositionMode,
                                        V1_0::IGnss::GnssPositionRecurrence, uint32_t, uint32_t,
                                        uint32_t, bool) {
-    // TODO implement
-    return bool{};
+    return true;
 }
 
 Return<sp<V1_1::IGnssConfiguration>> Gnss::getExtensionGnssConfiguration_1_1() {
@@ -241,6 +266,16 @@ Return<bool> Gnss::setCallback_2_0(const sp<V2_0::IGnssCallback>& callback) {
     }
 
     return true;
+}
+
+Return<void> Gnss::reportLocation(const GnssLocation& location) const {
+    std::unique_lock<std::mutex> lock(mMutex);
+    if (sGnssCallback_1_1 == nullptr) {
+        ALOGE("%s: sGnssCallback is null.", __func__);
+        return Void();
+    }
+    sGnssCallback_1_1->gnssLocationCb(location);
+    return Void();
 }
 
 }  // namespace implementation

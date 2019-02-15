@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2017 The Android Open Source Project
+// Copyright (C) 2019 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,18 +14,23 @@
 // limitations under the License.
 //
 
-cc_test {
-    name: "VtsHalGnssV1_1TargetTest",
-    defaults: ["VtsHalTargetTestDefaults"],
+cc_library_static {
+    name: "android.hardware.gnss@common-vts-lib",
+    vendor_available: true,
+    relative_install_path: "hw",
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+    ],
     srcs: [
-        "gnss_hal_test.cpp",
-        "gnss_hal_test_cases.cpp",
-        "VtsHalGnssV1_1TargetTest.cpp",
+        "Utils.cpp",
+    ],
+    export_include_dirs: ["include"],
+    shared_libs: [
+        "android.hardware.gnss@1.0",
     ],
     static_libs: [
-        "android.hardware.gnss@1.0",
-        "android.hardware.gnss@1.1",
-        "android.hardware.gnss@common-vts-lib",
+        "libgtest",
     ],
-    test_suites: ["general-tests"],
 }

@@ -130,9 +130,51 @@ class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
      */
     void SetUpGnssCallback();
 
+    /*
+     * StartAndCheckFirstLocation:
+     *   Helper function to start location, and check the first one.
+     *
+     *   <p> Note this leaves the Location request active, to enable Stop call vs. other call
+     *   reordering tests.
+     *
+     * returns  true if a location was successfully generated
+     */
+    bool StartAndCheckFirstLocation();
+
+    /*
+     * CheckLocation:
+     *   Helper function to vet Location fields
+     *
+     *   check_speed: true if speed related fields are also verified.
+     */
+    void CheckLocation(const GnssLocation& location, const bool check_speed);
+
+    /*
+     * StartAndCheckLocations:
+     *   Helper function to collect, and check a number of
+     *   normal ~1Hz locations.
+     *
+     *   Note this leaves the Location request active, to enable Stop call vs. other call
+     *   reordering tests.
+     */
+    void StartAndCheckLocations(int count);
+
+    /*
+     * StopAndClearLocations:
+     * Helper function to stop locations, and clear any remaining notifications
+     */
+    void StopAndClearLocations();
+
+    /*
+     * SetPositionMode:
+     * Helper function to set positioning mode and verify output
+     */
+    void SetPositionMode(const int min_interval_msec, const bool low_power_mode);
+
     sp<IGnss> gnss_hal_;         // GNSS HAL to call into
     sp<IGnssCallback> gnss_cb_;  // Primary callback interface
 
+    // TODO: make these variables thread-safe.
     /* Count of calls to set the following items, and the latest item (used by
      * test.)
      */

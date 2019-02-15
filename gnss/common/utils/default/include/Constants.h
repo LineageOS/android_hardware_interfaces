@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef android_hardware_gnss_V1_1_GnssConstants_H_
-#define android_hardware_gnss_V1_1_GnssConstants_H_
+#ifndef android_hardware_gnss_common_Constants_H_
+#define android_hardware_gnss_common_Constants_H_
+
+#include <cstdint>
 
 namespace android {
 namespace hardware {
 namespace gnss {
-namespace V1_1 {
-namespace implementation {
+namespace common {
 
 const float kMockLatitudeDegrees = 37.4219999;
 const float kMockLongitudeDegrees = -122.0840575;
@@ -34,10 +35,9 @@ const float kMockSpeedAccuracyMetersPerSecond = 1;
 const float kMockBearingAccuracyDegrees = 90;
 const int64_t kMockTimestamp = 1519930775453L;
 
-}  // namespace implementation
-}  // namespace V1_1
+}  // namespace common
 }  // namespace gnss
 }  // namespace hardware
 }  // namespace android
 
-#endif  // android_hardware_gnss_V1_1_GnssConstants_H_
+#endif  // android_hardware_gnss_common_Constants_H_

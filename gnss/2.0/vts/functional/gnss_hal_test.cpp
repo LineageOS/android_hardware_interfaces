@@ -17,8 +17,10 @@
 #define LOG_TAG "GnssHalTest"
 
 #include <gnss_hal_test.h>
-
 #include <chrono>
+#include "Utils.h"
+
+using ::android::hardware::gnss::common::Utils;
 
 // Implementations for the main test class for GNSS HAL
 GnssHalTest::GnssHalTest()
@@ -77,9 +79,88 @@ void GnssHalTest::SetUpGnssCallback() {
     EXPECT_EQ(name_called_count_, 1);
 }
 
+void GnssHalTest::StopAndClearLocations() {
+    const auto result = gnss_hal_->stop();
+
+    EXPECT_TRUE(result.isOk());
+    EXPECT_TRUE(result);
+
+    /*
+     * Clear notify/waiting counter, allowing up till the timeout after
+     * the last reply for final startup messages to arrive (esp. system
+     * info.)
+     */
+    while (wait(TIMEOUT_SEC) == std::cv_status::no_timeout) {
+    }
+    location_called_count_ = 0;
+}
+
+void GnssHalTest::SetPositionMode(const int min_interval_msec, const bool low_power_mode) {
+    const int kPreferredAccuracy = 0;  // Ideally perfect (matches GnssLocationProvider)
+    const int kPreferredTimeMsec = 0;  // Ideally immediate
+
+    const auto result = gnss_hal_->setPositionMode_1_1(
+            IGnss::GnssPositionMode::MS_BASED, IGnss::GnssPositionRecurrence::RECURRENCE_PERIODIC,
+            min_interval_msec, kPreferredAccuracy, kPreferredTimeMsec, low_power_mode);
+
+    ASSERT_TRUE(result.isOk());
+    EXPECT_TRUE(result);
+}
+
+bool GnssHalTest::StartAndCheckFirstLocation() {
+    const auto result = gnss_hal_->start();
+
+    EXPECT_TRUE(result.isOk());
+    EXPECT_TRUE(result);
+
+    /*
+     * GnssLocationProvider support of AGPS SUPL & XtraDownloader is not available in VTS,
+     * so allow time to demodulate ephemeris over the air.
+     */
+    const int kFirstGnssLocationTimeoutSeconds = 75;
+
+    wait(kFirstGnssLocationTimeoutSeconds);
+    EXPECT_EQ(location_called_count_, 1);
+
+    if (location_called_count_ > 0) {
+        // don't require speed on first fix
+        CheckLocation(last_location_, false);
+        return true;
+    }
+    return false;
+}
+
+void GnssHalTest::CheckLocation(const GnssLocation& location, bool check_speed) {
+    const bool check_more_accuracies = (info_called_count_ > 0 && last_info_.yearOfHw >= 2017);
+
+    Utils::checkLocation(location, check_speed, check_more_accuracies);
+}
+
+void GnssHalTest::StartAndCheckLocations(int count) {
+    const int kMinIntervalMsec = 500;
+    const int kLocationTimeoutSubsequentSec = 2;
+    const bool kLowPowerMode = false;
+
+    SetPositionMode(kMinIntervalMsec, kLowPowerMode);
+
+    EXPECT_TRUE(StartAndCheckFirstLocation());
+
+    for (int i = 1; i < count; i++) {
+        EXPECT_EQ(std::cv_status::no_timeout, wait(kLocationTimeoutSubsequentSec));
+        EXPECT_EQ(location_called_count_, i + 1);
+        // Don't cause confusion by checking details if no location yet
+        if (location_called_count_ > 0) {
+            // Should be more than 1 location by now, but if not, still don't check first fix speed
+            CheckLocation(last_location_, location_called_count_ > 1);
+        }
+    }
+}
+
 void GnssHalTest::notify() {
-    std::unique_lock<std::mutex> lock(mtx_);
-    notify_count_++;
+    {
+        std::unique_lock<std::mutex> lock(mtx_);
+        notify_count_++;
+    }
     cv_.notify_one();
 }
 

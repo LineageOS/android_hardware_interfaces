@@ -84,10 +84,7 @@ struct Gnss : public IGnss {
 
     // Methods from ::android::hidl::base::V1_0::IBase follow.
    private:
-    Return<GnssLocation> getMockLocation() const;
     Return<GnssSvStatus> getMockSvStatus() const;
-    Return<GnssSvInfo> getSvInfo(int16_t svid, GnssConstellationType type, float cN0DbHz,
-                                 float elevationDegress, float azimuthDegress) const;
     Return<void> reportLocation(const GnssLocation&) const;
     Return<void> reportSvStatus(const GnssSvStatus&) const;
 
