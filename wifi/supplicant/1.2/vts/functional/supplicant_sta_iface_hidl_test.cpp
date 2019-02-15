@@ -40,7 +40,6 @@ using ::android::hardware::wifi::supplicant::V1_2::DppAkm;
 using ::android::hardware::wifi::supplicant::V1_2::DppFailureCode;
 using ::android::hardware::wifi::supplicant::V1_2::DppNetRole;
 using ::android::hardware::wifi::supplicant::V1_2::DppProgressCode;
-using ::android::hardware::wifi::supplicant::V1_2::DppSuccessCode;
 using ::android::hardware::wifi::supplicant::V1_2::ISupplicantStaIface;
 using ::android::hardware::wifi::supplicant::V1_2::ISupplicantStaIfaceCallback;
 using ::android::hardware::wifi::supplicant::V1_2::ISupplicantStaNetwork;
@@ -64,7 +63,7 @@ class SupplicantStaIfaceHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         ANY_CALLBACK = -2,
         INVALID = -1,
 
-        EVENT_SUCCESS = 0,
+        EVENT_SUCCESS_CONFIG_SENT = 0,
         EVENT_SUCCESS_CONFIG_RECEIVED,
         EVENT_PROGRESS,
         EVENT_FAILURE,
@@ -202,9 +201,7 @@ class IfaceCallback : public ISupplicantStaIfaceCallback {
         DppAkm /* securityAkm */) override {
         return Void();
     }
-    Return<void> onDppSuccess(DppSuccessCode /* code */) override {
-        return Void();
-    }
+    Return<void> onDppSuccessConfigSent() override { return Void(); }
     Return<void> onDppProgress(DppProgressCode /* code */) override {
         return Void();
     }
@@ -226,10 +223,10 @@ class IfaceDppCallback : public IfaceCallback {
         parent_.notify();
         return Void();
     }
-    Return<void> onDppSuccess(DppSuccessCode code) override {
-        parent_.code = (uint32_t)code;
-        parent_.dppCallbackType =
-            SupplicantStaIfaceHidlTest::DppCallbackType::EVENT_SUCCESS;
+    Return<void> onDppSuccessConfigSent() override {
+        parent_.code = 0;
+        parent_.dppCallbackType = SupplicantStaIfaceHidlTest::DppCallbackType::
+            EVENT_SUCCESS_CONFIG_SENT;
         parent_.notify();
         return Void();
     }
