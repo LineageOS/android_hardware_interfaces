@@ -779,6 +779,9 @@ public:
             hidl_vec<int32_t> streamIds, sp<DeviceCb> cb,
             uint32_t streamConfigCounter = 0);
 
+    void verifySessionReconfigurationQuery(sp<device::V3_5::ICameraDeviceSession> session3_5,
+            camera_metadata* oldSessionParams, camera_metadata* newSessionParams);
+
     static Status getAvailableOutputStreams(camera_metadata_t *staticMeta,
             std::vector<AvailableStream> &outputStreams,
             const AvailableStream *threshold = nullptr);
@@ -3303,7 +3306,8 @@ TEST_F(CameraHidlTest, configureStreamsWithSessionParameters) {
         }
 
         android::hardware::camera::common::V1_0::helper::CameraMetadata previewRequestSettings;
-        android::hardware::camera::common::V1_0::helper::CameraMetadata sessionParams;
+        android::hardware::camera::common::V1_0::helper::CameraMetadata sessionParams,
+                modifiedSessionParams;
         constructFilteredSettings(session, availableSessionKeys, RequestTemplate::PREVIEW,
                 &previewRequestSettings, &sessionParams);
         if (sessionParams.isEmpty()) {
@@ -3334,13 +3338,28 @@ TEST_F(CameraHidlTest, configureStreamsWithSessionParameters) {
         ::android::hardware::camera::device::V3_5::StreamConfiguration config3_5;
         config.streams = streams;
         config.operationMode = StreamConfigurationMode::NORMAL_MODE;
-        const camera_metadata_t *sessionParamsBuffer = sessionParams.getAndLock();
-        config.sessionParams.setToExternal(
-                reinterpret_cast<uint8_t *> (const_cast<camera_metadata_t *> (sessionParamsBuffer)),
+        modifiedSessionParams = sessionParams;
+        auto sessionParamsBuffer = sessionParams.release();
+        config.sessionParams.setToExternal(reinterpret_cast<uint8_t *> (sessionParamsBuffer),
                 get_camera_metadata_size(sessionParamsBuffer));
         config3_5.v3_4 = config;
         config3_5.streamConfigCounter = 0;
         if (session3_5 != nullptr) {
+            bool newSessionParamsAvailable = false;
+            for (const auto& it : availableSessionKeys) {
+                if (modifiedSessionParams.exists(it)) {
+                    modifiedSessionParams.erase(it);
+                    newSessionParamsAvailable = true;
+                    break;
+                }
+            }
+            if (newSessionParamsAvailable) {
+                auto modifiedSessionParamsBuffer = modifiedSessionParams.release();
+                verifySessionReconfigurationQuery(session3_5, sessionParamsBuffer,
+                        modifiedSessionParamsBuffer);
+                modifiedSessionParams.acquire(modifiedSessionParamsBuffer);
+            }
+
             ret = session3_5->configureStreams_3_5(config3_5,
                     [](Status s, device::V3_4::HalStreamConfiguration halConfig) {
                         ASSERT_EQ(Status::OK, s);
@@ -3353,7 +3372,7 @@ TEST_F(CameraHidlTest, configureStreamsWithSessionParameters) {
                         ASSERT_EQ(1u, halConfig.streams.size());
                     });
         }
-
+        sessionParams.acquire(sessionParamsBuffer);
         ASSERT_TRUE(ret.isOk());
 
         free_camera_metadata(staticMetaBuffer);
@@ -6093,6 +6112,35 @@ void CameraHidlTest::verifyRecommendedConfigs(const CameraMetadata& chars) {
                     ANDROID_SCALER_AVAILABLE_RECOMMENDED_INPUT_OUTPUT_FORMATS_MAP),
                 availableKeys.end());
         ASSERT_EQ(isZSLModeAvailable(metadata), Status::OK);
+    }
+}
+
+void CameraHidlTest::verifySessionReconfigurationQuery(
+        sp<device::V3_5::ICameraDeviceSession> session3_5, camera_metadata* oldSessionParams,
+        camera_metadata* newSessionParams) {
+    ASSERT_NE(nullptr, session3_5.get());
+    ASSERT_NE(nullptr, oldSessionParams);
+    ASSERT_NE(nullptr, newSessionParams);
+
+    android::hardware::hidl_vec<uint8_t> oldParams, newParams;
+    oldParams.setToExternal(reinterpret_cast<uint8_t*>(oldSessionParams),
+            get_camera_metadata_size(oldSessionParams));
+    newParams.setToExternal(reinterpret_cast<uint8_t*>(newSessionParams),
+            get_camera_metadata_size(newSessionParams));
+    android::hardware::camera::common::V1_0::Status callStatus;
+    auto hidlCb = [&callStatus] (android::hardware::camera::common::V1_0::Status s,
+            bool /*requiredFlag*/) {
+        callStatus = s;
+    };
+    auto ret = session3_5->isReconfigurationRequired(oldParams, newParams, hidlCb);
+    ASSERT_TRUE(ret.isOk());
+    switch (callStatus) {
+        case android::hardware::camera::common::V1_0::Status::OK:
+        case android::hardware::camera::common::V1_0::Status::METHOD_NOT_SUPPORTED:
+            break;
+        case android::hardware::camera::common::V1_0::Status::INTERNAL_ERROR:
+        default:
+            ADD_FAILURE() << "Query calllback failed";
     }
 }
 

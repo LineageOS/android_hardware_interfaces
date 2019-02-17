@@ -57,7 +57,8 @@ interface IEvsEnumerator {
      *
      * There can be at most one EVS display object for the system and this function
      * requests access to it. If the EVS display is not available or is already in use,
-     * a null pointer is returned.
+     * the old instance shall be closed and give the new caller exclusive
+     * access.
      * When done using the display, the caller may release it by calling closeDisplay().
      * TODO(b/36122635) Reliance on the sp<> going out of scope is not recommended because the
      * resources may not be released right away due to asynchronos behavior in the hardware binder.

@@ -120,7 +120,9 @@ enum BufferRequestStatus : uint32_t {
 
     /**
      * Method call failed for all streams and no buffers are returned at all.
-     * Failure due to unknown reason.
+     * Failure due to unknown reason, or all streams has individual failing
+     * reason. For the latter case, check per stream status for each returned
+     * StreamBufferRet.
      */
     FAILED_UNKNOWN = 4,
 };

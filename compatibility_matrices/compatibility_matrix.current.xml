@@ -113,7 +113,7 @@
     </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.camera.provider</name>
-        <version>2.5</version>
+        <version>2.4-5</version>
         <interface>
             <name>ICameraProvider</name>
             <regex-instance>[^/]+/[0-9]+</regex-instance>
@@ -153,19 +153,7 @@
     </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.drm</name>
-        <version>1.0-1</version>
-        <interface>
-            <name>ICryptoFactory</name>
-            <regex-instance>.*</regex-instance>
-        </interface>
-        <interface>
-            <name>IDrmFactory</name>
-            <regex-instance>.*</regex-instance>
-        </interface>
-    </hal>
-    <hal format="hidl" optional="false">
-        <name>android.hardware.drm</name>
-        <version>1.2</version>
+        <version>1.0-2</version>
         <interface>
             <name>ICryptoFactory</name>
             <regex-instance>.*</regex-instance>

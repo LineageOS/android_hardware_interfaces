@@ -342,7 +342,7 @@ enum OperationType : int32_t {
      * * * input.scale * filter.scale).
      *
      * Available since API level 29:
-     * * Quantized with symetric per channel quantization for the filter:
+     * * Quantized with symmetric per channel quantization for the filter:
      * * * {@link OperandType::TENSOR_QUANT8_ASYMM} for input, and output.
      * * * {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL} for filter.
      * * * {@link OperandType::TENSOR_INT32} for bias (scale set to 0.0,
@@ -491,7 +491,7 @@ enum OperationType : int32_t {
      * * * input.scale * filter.scale).
      *
      * Available since API level 29:
-     * * Quantized with symetric per channel quantization for the filter:
+     * * Quantized with symmetric per channel quantization for the filter:
      * * * {@link OperandType::TENSOR_QUANT8_ASYMM} for input, and output.
      * * * {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL} for filter.
      * * * {@link OperandType::TENSOR_INT32} for bias (scale set to 0.0,
@@ -1528,6 +1528,7 @@ enum OperationType : int32_t {
      * Supported tensor {@link OperandType}:
      * * {@link OperandType::TENSOR_FLOAT16} (since API level 29)
      * * {@link OperandType::TENSOR_FLOAT32}
+     * * {@link OperandType::TENSOR_QUANT8_ASYMM} (since API level 29)
      *
      * Supported tensor rank: 4, with "NHWC" or "NCHW" data layout.
      * With the default data layout NHWC, the data is stored in the order of:
@@ -2212,6 +2213,7 @@ enum OperationType : int32_t {
      * Supported tensor {@link OperandType}:
      * * {@link OperandType::TENSOR_FLOAT16}
      * * {@link OperandType::TENSOR_FLOAT32}
+     * * {@link OperandType::TENSOR_QUANT16_ASYMM}
      *
      * Inputs:
      * * 0: A 2-D Tensor of shape [num_rois, 4], specifying the locations of the
@@ -2228,7 +2230,8 @@ enum OperationType : int32_t {
      *      {@link OperandType::TENSOR_QUANT16_ASYMM}, this tensor should be
      *      of {@link OperandType::TENSOR_QUANT8_ASYMM}.
      * * 2: An 1-D {@link OperandType::TENSOR_INT32} tensor, of shape
-     *      [batches], specifying the number of output boxes for each batch.
+     *      [num_rois], specifying the batch index of each box. Boxes with
+     *      the same batch index are grouped together.
      * * 3: A 2-D Tensor of shape [batches, 2], specifying the information of
      *      each image in the batch, each line with format
      *      [image_height, image_width].
@@ -2557,8 +2560,9 @@ enum OperationType : int32_t {
      *      {@link OperandType::TENSOR_QUANT8_ASYMM}, this tensor should be of
      *      {@link OperandType::TENSOR_QUANT16_ASYMM}, with zeroPoint of 0 and
      *      scale of 0.125.
-     * * 2: A 1-D Tensor of shape [batches], specifying the number of boxes
-     *      for each image in the batch.
+     * * 2: A 1-D {@link OperandType::TENSOR_INT32} tensor, of shape
+     *      [num_rois], specifying the batch index of each box. Boxes with
+     *      the same batch index are grouped together.
      * * 3: An {@link OperandType::FLOAT32} scalar, score_threshold. Boxes
      *      with scores lower than the threshold are filtered before sending
      *      to the NMS algorithm.
@@ -2584,7 +2588,8 @@ enum OperationType : int32_t {
      *      [num_output_rois], specifying the class of each output box. The
      *      sequential order of the boxes corresponds with output0.
      * * 3: A 1-D {@link OperandType::TENSOR_INT32} tensor, of shape
-     *      [batches], specifying the number of output boxes for each image.
+     *      [num_rois], specifying the batch index of each box. Boxes with
+     *      the same batch index are grouped together.
      *
      * Available since API level 29.
      */
@@ -2878,6 +2883,9 @@ enum OperationType : int32_t {
      *      {@link OperandType::TENSOR_QUANT16_SYMM}, with scale of 0.125.
      * * 3: A 2-D Tensor of shape [batches, 2], specifying the size of
      *      each image in the batch, with format [image_height, image_width].
+     *      For input0 of type {@link OperandType::TENSOR_QUANT8_ASYMM}, this
+     *      tensor should be of {@link OperandType::TENSOR_QUANT16_SYMM}, with
+     *      scale of 0.125.
      * * 4: An {@link OperandType::FLOAT32} scalar, specifying the ratio
      *      from the height of original image to the height of feature map.
      * * 5: An {@link OperandType::FLOAT32} scalar, specifying the ratio
@@ -2904,14 +2912,15 @@ enum OperationType : int32_t {
      *      each batch is not guaranteed. For type of
      *      {@link OperandType::TENSOR_QUANT8_ASYMM}, the scale and zero
      *      point must be the same as input0.
-     * * 1: A tensor of the same {@link OperandType} as input1, of shape
+     * * 1: A tensor of the same {@link OperandType} as input3, of shape
      *      [num_output_rois, 4], specifying the coordinates of each output
      *      bounding box for each class, with format [x1, y1, x2, y2].
      *      The sequential order of the boxes corresponds with output0.
      *      For type of {@link OperandType::TENSOR_QUANT16_ASYMM}, the
      *      scale must be 0.125 and the zero point must be 0.
      * * 2: A 1-D {@link OperandType::TENSOR_INT32} tensor, of shape
-     *      [batches], specifying the number of output boxes for each image.
+     *      [num_rois], specifying the batch index of each box. Boxes with
+     *      the same batch index are grouped together.
      *
      * Available since API level 29.
      */
@@ -3009,7 +3018,7 @@ enum OperationType : int32_t {
      * * * {@link OperandType::TENSOR_INT32} for bias (with scale set to
      * * * input.scale * filter.scale).
      *
-     * * Quantized with symetric per channel quantization for the filter:
+     * * Quantized with symmetric per channel quantization for the filter:
      * * * {@link OperandType::TENSOR_QUANT8_ASYMM} for input, and output.
      * * * {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL} for filter.
      * * * {@link OperandType::TENSOR_INT32} for bias (scale set to 0.0,
@@ -3904,7 +3913,8 @@ enum OperationType : int32_t {
      *      this tensor should be of {@link OperandType::TENSOR_QUANT16_ASYMM},
      *      with zeroPoint of 0 and scale of 0.125.
      * * 2: An 1-D {@link OperandType::TENSOR_INT32} tensor, of shape
-     *      [batches], specifying the number of output boxes for each batch.
+     *      [num_rois], specifying the batch index of each box. Boxes with
+     *      the same batch index are grouped together.
      * * 3: An {@link OperandType::INT32} scalar, specifying the output
      *      height of the output tensor.
      * * 4: An {@link OperandType::INT32} scalar, specifying the output
@@ -3960,7 +3970,8 @@ enum OperationType : int32_t {
      *      this tensor should be of {@link OperandType::TENSOR_QUANT16_ASYMM},
      *      with zeroPoint of 0 and scale of 0.125.
      * * 2: An 1-D {@link OperandType::TENSOR_INT32} tensor, of shape
-     *      [batches], specifying the number of output boxes for each batch.
+     *      [num_rois], specifying the batch index of each box. Boxes with
+     *      the same batch index are grouped together.
      * * 3: An {@link OperandType::INT32} scalar, specifying the output
      *      height of the output tensor.
      * * 4: An {@link OperandType::INT32} scalar, specifying the output
@@ -4193,10 +4204,21 @@ enum OperationType : int32_t {
      * The output dimensions are functions of the filter dimensions, stride, and
      * padding.
      *
-     * Supported tensor {@link OperandType}:
-     * * {@link OperandType::TENSOR_FLOAT16}
-     * * {@link OperandType::TENSOR_FLOAT32}
-     * * {@link OperandType::TENSOR_QUANT8_ASYMM}
+     * Supported tensor {@link OperandCode} configurations:
+     * * 32 bit Floating point :
+     * * * {@link OperandType::TENSOR_FLOAT32} for input, filter, output, and bias.
+     *
+     * * Quantized:
+     * * * {@link OperandType::TENSOR_QUANT8_ASYMM} for input, filter, and output.
+     * * * {@link OperandType::TENSOR_INT32} for bias (with scale set to
+     * * * input.scale * filter.scale).
+     *
+     * Available since API level 29:
+     * * Quantized with symmetric per channel quantization for the filter:
+     * * * {@link OperandType::TENSOR_QUANT8_ASYMM} for input, and output.
+     * * * {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL} for filter.
+     * * * {@link OperandType::TENSOR_INT32} for bias (scale set to 0.0,
+     * * * each value scaling is separate and equal to input.scale * filter.scales[channel]).
      *
      * Supported tensor rank: 4, with "NHWC" or "NCHW" data layout.
      * With the default data layout NHWC, the data is stored in the order of:
@@ -4210,14 +4232,20 @@ enum OperationType : int32_t {
      *      specifying the input.
      * * 1: A 4-D tensor, of shape
      *      [depth_out, filter_height, filter_width, depth_in], specifying the
-     *      filter.
+     *      filter. For tensor of type
+     *      {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL} the channel
+     *      dimension (extraParams.channelQuant.channelDim) must be set to 0.
      * * 2: A 1-D tensor, of shape [depth_out], specifying the bias. For input
      *      tensor of type {@link OperandType::TENSOR_FLOAT32} or
      *      {@link OperandType::TENSOR_FLOAT16}, the bias should be of the
      *      same type. For input tensor of type
      *      {@link OperandType::TENSOR_QUANT8_ASYMM}, the bias should be
      *      of {@link OperandType::TENSOR_INT32}, with zeroPoint of 0 and
-     *      bias_scale == input_scale * filter_scale.
+     *      bias_scale == input_scale * filter_scale. For filter tensor of
+     *      {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL}, the bias
+     *      must be of {@link OperandType::TENSOR_INT32}, with zeroPoint of
+     *      0 and bias_scale of 0. The actual scale of each value 'i' is equal
+     *      to bias_scale[i] = input_scale * filter_scale[i].
      * * 3: An {@link OperandType::INT32} scalar, specifying the padding on
      *      the left, in the ‘width’ dimension.
      * * 4: An {@link OperandType::INT32} scalar, specifying the padding on
@@ -4241,14 +4269,20 @@ enum OperationType : int32_t {
      *      specifying the input.
      * * 1: A 4-D tensor, of shape
      *      [depth_out, filter_height, filter_width, depth_in], specifying the
-     *      filter.
+     *      filter. For tensor of type
+     *      {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL} the channel
+     *      dimension (extraParams.channelQuant.channelDim) must be set to 0.
      * * 2: A 1-D tensor, of shape [depth_out], specifying the bias. For input
      *      tensor of type {@link OperandType::TENSOR_FLOAT32} or
      *      {@link OperandType::TENSOR_FLOAT16}, the bias should be of the
      *      same type. For input tensor of type
      *      {@link OperandType::TENSOR_QUANT8_ASYMM}, the bias should be
      *      of {@link OperandType::TENSOR_INT32}, with zeroPoint of 0 and
-     *      bias_scale == input_scale * filter_scale.
+     *      bias_scale == input_scale * filter_scale. For filter tensor of
+     *      {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL}, the bias
+     *      must be of {@link OperandType::TENSOR_INT32}, with zeroPoint of
+     *      0 and bias_scale of 0. The actual scale of each value 'i' is equal
+     *      to bias_scale[i] = input_scale * filter_scale[i].
      * * 3: An {@link OperandType::TENSOR_INT32} tensor, specifying the output
      *      tensor shape.
      * * 4: An {@link OperandType::INT32} scalar, specifying the implicit
@@ -4268,7 +4302,9 @@ enum OperationType : int32_t {
      * * 0: The output 4-D tensor, of shape
      *      [batches, out_height, out_width, depth_out]. For output tensor of
      *      {@link OperandType::TENSOR_QUANT8_ASYMM}, the following condition
-     *      must be satisfied: output_scale > input_scale * filter_scale.
+     *      must be satisfied: output_scale > input_scale * filter_scale (for
+     *      filter tensor of {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL}
+     *      this condition must be true for all filter scales).
      *
      * Available since API level 29.
      */
@@ -4441,6 +4477,42 @@ enum OperationType : int32_t {
      * Available since API level 29.
      */
     UNIDIRECTIONAL_SEQUENCE_RNN = 93,
+
+    /**
+     * Resizes images to given size using the nearest neighbor interpretation.
+     *
+     * Resized images must be distorted if their output aspect ratio is not the
+     * same as input aspect ratio. The corner pixels of output may not be the
+     * same as corner pixels of input.
+     *
+     * Supported tensor {@link OperandType}:
+     * * {@link OperandType::TENSOR_FLOAT16}
+     * * {@link OperandType::TENSOR_FLOAT32}
+     * * {@link OperandType::TENSOR_QUANT8_ASYMM}
+     *
+     * Supported tensor rank: 4, with "NHWC" or "NCHW" data layout.
+     * With the default data layout NHWC, the data is stored in the order of:
+     * [batch, height, width, channels]. Alternatively, the data layout could
+     * be NCHW, the data storage order of: [batch, channels, height, width].
+     *
+     * Inputs:
+     * * 0: A 4-D tensor, of shape [batches, height, width, depth], specifying
+     *      the input.
+     * * 1: An {@link OperandType::INT32} scalar, specifying the output
+     *      height of the output tensor.
+     * * 2: An {@link OperandType::INT32} scalar, specifying the output
+     *      width of the output tensor.
+     * * 3: An {@link OperandType::BOOL} scalar, default to false.
+     *      Set to true to specify NCHW data layout for input0 and output0.
+     *
+     * Outputs:
+     * * 0: The output 4-D tensor, of shape
+     *      [batches, new_height, new_width, depth].
+     *
+     * Available since API level 29.
+     */
+    RESIZE_NEAREST_NEIGHBOR = 94,
+
     /**
      * DEPRECATED. Since NNAPI 1.2, extensions are the preferred alternative to
      * OEM operation and data types.
@@ -4463,7 +4535,7 @@ enum OperationType : int32_t {
 enum OperationTypeRange : uint32_t {
     BASE_MIN        = 0,
     FUNDAMENTAL_MIN = 0,
-    FUNDAMENTAL_MAX = 93,
+    FUNDAMENTAL_MAX = 94,
     OEM_MIN         = 10000,
     OEM_MAX         = 10000,
     BASE_MAX        = 0xFFFF,

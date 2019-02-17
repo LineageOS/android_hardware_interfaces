@@ -66,6 +66,12 @@ sp<IPreparedModel> getPreparedModel_1_2(
 
 }  // namespace functional
 }  // namespace vts
+}  // namespace V1_2
+}  // namespace neuralnetworks
+}  // namespace hardware
+}  // namespace android
+
+namespace android::hardware::neuralnetworks::V1_0 {
 
 ::std::ostream& operator<<(::std::ostream& os, ErrorStatus errorStatus) {
     return os << toString(errorStatus);
@@ -75,10 +81,7 @@ sp<IPreparedModel> getPreparedModel_1_2(
     return os << toString(deviceStatus);
 }
 
-}  // namespace V1_2
-}  // namespace neuralnetworks
-}  // namespace hardware
-}  // namespace android
+}  // namespace android::hardware::neuralnetworks::V1_0
 
 using android::hardware::neuralnetworks::V1_2::vts::functional::NeuralnetworksHidlEnvironment;
 

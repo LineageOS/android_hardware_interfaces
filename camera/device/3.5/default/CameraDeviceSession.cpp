@@ -186,111 +186,118 @@ camera3_buffer_request_status_t CameraDeviceSession::requestStreamBuffers(
     }
     ATRACE_END();
 
-    if (status == BufferRequestStatus::OK || status == BufferRequestStatus::FAILED_PARTIAL) {
-        if (bufRets.size() != num_buffer_reqs) {
-            ALOGE("%s: expect %d buffer requests returned, only got %zu",
-                    __FUNCTION__, num_buffer_reqs, bufRets.size());
-            return CAMERA3_BUF_REQ_FAILED_UNKNOWN;
-        }
-
-        for (size_t i = 0; i < num_buffer_reqs; i++) {
-            // maybe we can query all streams in one call to avoid frequent locking device here?
-            Camera3Stream* stream = getStreamPointer(bufRets[i].streamId);
-            if (stream == nullptr) {
-                ALOGE("%s: unknown streamId %d", __FUNCTION__, bufRets[i].streamId);
-                return CAMERA3_BUF_REQ_FAILED_UNKNOWN;
-            }
-            returned_buf_reqs[i].stream = stream;
-        }
-
-        std::vector<int> importedFences;
-        std::vector<std::pair<buffer_handle_t, int>> importedBuffers;
-        for (size_t i = 0; i < num_buffer_reqs; i++) {
-            int streamId = bufRets[i].streamId;
-            switch (bufRets[i].val.getDiscriminator()) {
-                case StreamBuffersVal::hidl_discriminator::error:
-                    returned_buf_reqs[i].num_output_buffers = 0;
-                    switch (bufRets[i].val.error()) {
-                        case StreamBufferRequestError::NO_BUFFER_AVAILABLE:
-                            returned_buf_reqs[i].status = CAMERA3_PS_BUF_REQ_NO_BUFFER_AVAILABLE;
-                            break;
-                        case StreamBufferRequestError::MAX_BUFFER_EXCEEDED:
-                            returned_buf_reqs[i].status = CAMERA3_PS_BUF_REQ_MAX_BUFFER_EXCEEDED;
-                            break;
-                        case StreamBufferRequestError::STREAM_DISCONNECTED:
-                            returned_buf_reqs[i].status = CAMERA3_PS_BUF_REQ_STREAM_DISCONNECTED;
-                            break;
-                        case StreamBufferRequestError::UNKNOWN_ERROR:
-                            returned_buf_reqs[i].status = CAMERA3_PS_BUF_REQ_UNKNOWN_ERROR;
-                            break;
-                        default:
-                            ALOGE("%s: Unknown StreamBufferRequestError %d",
-                                    __FUNCTION__, bufRets[i].val.error());
-                            cleanupInflightBufferFences(importedFences, importedBuffers);
-                            return CAMERA3_BUF_REQ_FAILED_UNKNOWN;
-                    }
-                    break;
-                case StreamBuffersVal::hidl_discriminator::buffers: {
-                    const hidl_vec<StreamBuffer>& hBufs = bufRets[i].val.buffers();
-                    camera3_stream_buffer_t* outBufs = returned_buf_reqs[i].output_buffers;
-                    for (size_t b = 0; b < hBufs.size(); b++) {
-                        const StreamBuffer& hBuf = hBufs[b];
-                        camera3_stream_buffer_t& outBuf = outBufs[b];
-                        // maybe add importBuffers API to avoid frequent locking device?
-                        Status s = importBuffer(streamId,
-                                hBuf.bufferId, hBuf.buffer.getNativeHandle(),
-                                /*out*/&(outBuf.buffer),
-                                /*allowEmptyBuf*/false);
-                        if (s != Status::OK) {
-                            ALOGE("%s: import stream %d bufferId %" PRIu64 " failed!",
-                                    __FUNCTION__, streamId, hBuf.bufferId);
-                            cleanupInflightBufferFences(importedFences, importedBuffers);
-                            // Buffer import should never fail - restart HAL since something is very
-                            // wrong.
-                            assert(false);
-                            return CAMERA3_BUF_REQ_FAILED_UNKNOWN;
-                        }
-
-                        pushBufferId(*(outBuf.buffer), hBuf.bufferId, streamId);
-                        importedBuffers.push_back(std::make_pair(*(outBuf.buffer), streamId));
-
-                        if (!sHandleImporter.importFence(
-                                hBuf.acquireFence,
-                                outBuf.acquire_fence)) {
-                            ALOGE("%s: stream %d bufferId %" PRIu64 "acquire fence is invalid",
-                                    __FUNCTION__, streamId, hBuf.bufferId);
-                            cleanupInflightBufferFences(importedFences, importedBuffers);
-                            return CAMERA3_BUF_REQ_FAILED_UNKNOWN;
-                        }
-                        importedFences.push_back(outBuf.acquire_fence);
-                        outBuf.stream = returned_buf_reqs[i].stream;
-                        outBuf.status = CAMERA3_BUFFER_STATUS_OK;
-                        outBuf.release_fence = -1;
-                    }
-                    returned_buf_reqs[i].status = CAMERA3_PS_BUF_REQ_OK;
-                } break;
-                default:
-                    ALOGE("%s: unknown StreamBuffersVal discrimator!", __FUNCTION__);
-                    cleanupInflightBufferFences(importedFences, importedBuffers);
-                    return CAMERA3_BUF_REQ_FAILED_UNKNOWN;
-            }
-        }
-
-        *num_returned_buf_reqs = num_buffer_reqs;
-
-        return (status == BufferRequestStatus::OK) ?
-                CAMERA3_BUF_REQ_OK : CAMERA3_BUF_REQ_FAILED_PARTIAL;
-    }
-
     switch (status) {
         case BufferRequestStatus::FAILED_CONFIGURING:
             return CAMERA3_BUF_REQ_FAILED_CONFIGURING;
         case BufferRequestStatus::FAILED_ILLEGAL_ARGUMENTS:
             return CAMERA3_BUF_REQ_FAILED_ILLEGAL_ARGUMENTS;
-        case BufferRequestStatus::FAILED_UNKNOWN:
         default:
-            return CAMERA3_BUF_REQ_FAILED_UNKNOWN;
+            break; // Other status Handled by following code
     }
+
+    if (status != BufferRequestStatus::OK && status != BufferRequestStatus::FAILED_PARTIAL &&
+            status != BufferRequestStatus::FAILED_UNKNOWN) {
+        ALOGE("%s: unknown buffer request error code %d", __FUNCTION__, status);
+        return CAMERA3_BUF_REQ_FAILED_UNKNOWN;
+    }
+
+    // Only OK, FAILED_PARTIAL and FAILED_UNKNOWN reaches here
+    if (bufRets.size() != num_buffer_reqs) {
+        ALOGE("%s: expect %d buffer requests returned, only got %zu",
+                __FUNCTION__, num_buffer_reqs, bufRets.size());
+        return CAMERA3_BUF_REQ_FAILED_UNKNOWN;
+    }
+
+    *num_returned_buf_reqs = num_buffer_reqs;
+    for (size_t i = 0; i < num_buffer_reqs; i++) {
+        // maybe we can query all streams in one call to avoid frequent locking device here?
+        Camera3Stream* stream = getStreamPointer(bufRets[i].streamId);
+        if (stream == nullptr) {
+            ALOGE("%s: unknown streamId %d", __FUNCTION__, bufRets[i].streamId);
+            return CAMERA3_BUF_REQ_FAILED_UNKNOWN;
+        }
+        returned_buf_reqs[i].stream = stream;
+    }
+
+    // Handle failed streams
+    for (size_t i = 0; i < num_buffer_reqs; i++) {
+        if (bufRets[i].val.getDiscriminator() == StreamBuffersVal::hidl_discriminator::error) {
+            returned_buf_reqs[i].num_output_buffers = 0;
+            switch (bufRets[i].val.error()) {
+                case StreamBufferRequestError::NO_BUFFER_AVAILABLE:
+                    returned_buf_reqs[i].status = CAMERA3_PS_BUF_REQ_NO_BUFFER_AVAILABLE;
+                    break;
+                case StreamBufferRequestError::MAX_BUFFER_EXCEEDED:
+                    returned_buf_reqs[i].status = CAMERA3_PS_BUF_REQ_MAX_BUFFER_EXCEEDED;
+                    break;
+                case StreamBufferRequestError::STREAM_DISCONNECTED:
+                    returned_buf_reqs[i].status = CAMERA3_PS_BUF_REQ_STREAM_DISCONNECTED;
+                    break;
+                case StreamBufferRequestError::UNKNOWN_ERROR:
+                    returned_buf_reqs[i].status = CAMERA3_PS_BUF_REQ_UNKNOWN_ERROR;
+                    break;
+                default:
+                    ALOGE("%s: Unknown StreamBufferRequestError %d",
+                            __FUNCTION__, bufRets[i].val.error());
+                    return CAMERA3_BUF_REQ_FAILED_UNKNOWN;
+            }
+        }
+    }
+
+    if (status == BufferRequestStatus::FAILED_UNKNOWN) {
+        return CAMERA3_BUF_REQ_FAILED_UNKNOWN;
+    }
+
+    // Only BufferRequestStatus::OK and BufferRequestStatus::FAILED_PARTIAL reaches here
+    std::vector<int> importedFences;
+    std::vector<std::pair<buffer_handle_t, int>> importedBuffers;
+    for (size_t i = 0; i < num_buffer_reqs; i++) {
+        if (bufRets[i].val.getDiscriminator() !=
+                StreamBuffersVal::hidl_discriminator::buffers) {
+            continue;
+        }
+        int streamId = bufRets[i].streamId;
+        const hidl_vec<StreamBuffer>& hBufs = bufRets[i].val.buffers();
+        camera3_stream_buffer_t* outBufs = returned_buf_reqs[i].output_buffers;
+        for (size_t b = 0; b < hBufs.size(); b++) {
+            const StreamBuffer& hBuf = hBufs[b];
+            camera3_stream_buffer_t& outBuf = outBufs[b];
+            // maybe add importBuffers API to avoid frequent locking device?
+            Status s = importBuffer(streamId,
+                    hBuf.bufferId, hBuf.buffer.getNativeHandle(),
+                    /*out*/&(outBuf.buffer),
+                    /*allowEmptyBuf*/false);
+            if (s != Status::OK) {
+                ALOGE("%s: import stream %d bufferId %" PRIu64 " failed!",
+                        __FUNCTION__, streamId, hBuf.bufferId);
+                cleanupInflightBufferFences(importedFences, importedBuffers);
+                // Buffer import should never fail - restart HAL since something is very
+                // wrong.
+                assert(false);
+                return CAMERA3_BUF_REQ_FAILED_UNKNOWN;
+            }
+
+            pushBufferId(*(outBuf.buffer), hBuf.bufferId, streamId);
+            importedBuffers.push_back(std::make_pair(*(outBuf.buffer), streamId));
+
+            if (!sHandleImporter.importFence(
+                    hBuf.acquireFence,
+                    outBuf.acquire_fence)) {
+                ALOGE("%s: stream %d bufferId %" PRIu64 "acquire fence is invalid",
+                        __FUNCTION__, streamId, hBuf.bufferId);
+                cleanupInflightBufferFences(importedFences, importedBuffers);
+                return CAMERA3_BUF_REQ_FAILED_UNKNOWN;
+            }
+            importedFences.push_back(outBuf.acquire_fence);
+            outBuf.stream = returned_buf_reqs[i].stream;
+            outBuf.status = CAMERA3_BUFFER_STATUS_OK;
+            outBuf.release_fence = -1;
+        }
+        returned_buf_reqs[i].status = CAMERA3_PS_BUF_REQ_OK;
+    }
+
+    return (status == BufferRequestStatus::OK) ?
+            CAMERA3_BUF_REQ_OK : CAMERA3_BUF_REQ_FAILED_PARTIAL;
 }
 
 void CameraDeviceSession::returnStreamBuffers(
@@ -354,6 +361,35 @@ void CameraDeviceSession::sReturnStreamBuffers(
             const_cast<CameraDeviceSession*>(static_cast<const CameraDeviceSession*>(cb));
 
     d->returnStreamBuffers(num_buffers, buffers);
+}
+
+Return<void> CameraDeviceSession::isReconfigurationRequired(
+        const V3_2::CameraMetadata& oldSessionParams, const V3_2::CameraMetadata& newSessionParams,
+        ICameraDeviceSession::isReconfigurationRequired_cb _hidl_cb) {
+    if (mDevice->ops->is_reconfiguration_required != nullptr) {
+        const camera_metadata_t *oldParams, *newParams;
+        V3_2::implementation::convertFromHidl(oldSessionParams, &oldParams);
+        V3_2::implementation::convertFromHidl(newSessionParams, &newParams);
+        auto ret = mDevice->ops->is_reconfiguration_required(mDevice, oldParams, newParams);
+        switch (ret) {
+            case 0:
+                _hidl_cb(Status::OK, true);
+                break;
+            case -EINVAL:
+                _hidl_cb(Status::OK, false);
+                break;
+            case -ENOSYS:
+                _hidl_cb(Status::METHOD_NOT_SUPPORTED, true);
+                break;
+            default:
+                _hidl_cb(Status::INTERNAL_ERROR, true);
+                break;
+        };
+    } else {
+        _hidl_cb(Status::METHOD_NOT_SUPPORTED, true);
+    }
+
+    return Void();
 }
 
 } // namespace implementation

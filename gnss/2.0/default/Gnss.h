@@ -20,6 +20,9 @@
 #include <android/hardware/gnss/2.0/IGnss.h>
 #include <hidl/MQDescriptor.h>
 #include <hidl/Status.h>
+#include <atomic>
+#include <mutex>
+#include <thread>
 
 namespace android {
 namespace hardware {
@@ -35,7 +38,14 @@ using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
 
+using GnssConstellationType = V1_0::GnssConstellationType;
+using GnssLocation = V1_0::GnssLocation;
+using GnssSvInfo = V1_0::IGnssCallback::GnssSvInfo;
+using GnssSvStatus = V1_0::IGnssCallback::GnssSvStatus;
+
 struct Gnss : public IGnss {
+    Gnss();
+    ~Gnss();
     // Methods from V1_0::IGnss follow.
     Return<bool> setCallback(const sp<V1_0::IGnssCallback>& callback) override;
     Return<bool> start() override;
@@ -69,7 +79,7 @@ struct Gnss : public IGnss {
                                      uint32_t preferredTimeMs, bool lowPowerMode) override;
     Return<sp<V1_1::IGnssConfiguration>> getExtensionGnssConfiguration_1_1() override;
     Return<sp<V1_1::IGnssMeasurement>> getExtensionGnssMeasurement_1_1() override;
-    Return<bool> injectBestLocation(const V1_0::GnssLocation& location) override;
+    Return<bool> injectBestLocation(const GnssLocation& location) override;
 
     // Methods from V2_0::IGnss follow.
     Return<sp<V2_0::IGnssConfiguration>> getExtensionGnssConfiguration_2_0() override;
@@ -83,8 +93,13 @@ struct Gnss : public IGnss {
             override;
 
    private:
-    static sp<V2_0::IGnssCallback> sGnssCallback_2_0;
-    static sp<V1_1::IGnssCallback> sGnssCallback_1_1;
+     Return<void> reportLocation(const GnssLocation&) const;
+     static sp<V2_0::IGnssCallback> sGnssCallback_2_0;
+     static sp<V1_1::IGnssCallback> sGnssCallback_1_1;
+     std::atomic<long> mMinIntervalMs;
+     std::atomic<bool> mIsActive;
+     std::thread mThread;
+     mutable std::mutex mMutex;
 };
 
 }  // namespace implementation
