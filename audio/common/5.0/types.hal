@@ -16,6 +16,8 @@
 
 package android.hardware.audio.common@5.0;
 
+import android.hidl.safe_union@1.0;
+
 /*
  *
  *  IDs and Handles
@@ -131,7 +133,18 @@ enum AudioSource : int32_t {
      * and raw signal analysis.
      */
     UNPROCESSED         = 9,
-
+    /**
+     * Source for capturing audio meant to be processed in real time and played back for live
+     * performance (e.g karaoke). The capture path will minimize latency and coupling with
+     * playback path.
+     */
+    VOICE_PERFORMANCE    = 10,
+    /**
+     * Source for an echo canceller to capture the reference signal to be cancelled.
+     * The echo reference signal will be captured as close as possible to the DAC in order
+     * to include all post processing applied to the playback path.
+     */
+    ECHO_REFERENCE      = 1997,
     FM_TUNER            = 1998,
 };
 
@@ -222,6 +235,12 @@ enum AudioFormat : uint32_t {
     LDAC                = 0x23000000UL,
     /** Dolby Metadata-enhanced Audio Transmission */
     MAT                 = 0x24000000UL,
+    AAC_LATM            = 0x25000000UL,
+    CELT                = 0x26000000UL,
+    APTX_ADAPTIVE       = 0x27000000UL,
+    LHDC                = 0x28000000UL,
+    LHDC_LL             = 0x29000000UL,
+
     /** Deprecated */
     MAIN_MASK           = 0xFF000000UL,
     SUB_MASK            = 0x00FFFFFFUL,
@@ -293,6 +312,9 @@ enum AudioFormat : uint32_t {
     MAT_1_0             = (MAT | MAT_SUB_1_0),
     MAT_2_0             = (MAT | MAT_SUB_2_0),
     MAT_2_1             = (MAT | MAT_SUB_2_1),
+    AAC_LATM_LC         = (AAC_LATM | AAC_SUB_LC),
+    AAC_LATM_HE_V1      = (AAC_LATM | AAC_SUB_HE_V1),
+    AAC_LATM_HE_V2      = (AAC_LATM | AAC_SUB_HE_V2),
 };
 
 /**
@@ -376,6 +398,16 @@ enum AudioChannelMask : uint32_t {
     OUT_TOP_SIDE_LEFT         = 0x40000,
     OUT_TOP_SIDE_RIGHT        = 0x80000,
 
+    /**
+     * Haptic channel characteristics are specific to a device and
+     * only used to play device specific resources (eg: ringtones).
+     * The HAL can freely map A and B to haptic controllers, the
+     * framework shall not interpret those values and forward them
+     * from the device audio assets.
+     */
+    OUT_HAPTIC_A              = 0x20000000,
+    OUT_HAPTIC_B              = 0x10000000,
+
     OUT_MONO     = OUT_FRONT_LEFT,
     OUT_STEREO   = (OUT_FRONT_LEFT | OUT_FRONT_RIGHT),
     OUT_2POINT1  = (OUT_FRONT_LEFT | OUT_FRONT_RIGHT | OUT_LOW_FREQUENCY),
@@ -423,6 +455,12 @@ enum AudioChannelMask : uint32_t {
     OUT_7POINT1POINT4  = (OUT_7POINT1 |
             OUT_TOP_FRONT_LEFT | OUT_TOP_FRONT_RIGHT |
             OUT_TOP_BACK_LEFT | OUT_TOP_BACK_RIGHT),
+    OUT_MONO_HAPTIC_A = (OUT_FRONT_LEFT | OUT_HAPTIC_A),
+    OUT_STEREO_HAPTIC_A = (OUT_FRONT_LEFT | OUT_FRONT_RIGHT | OUT_HAPTIC_A),
+    OUT_HAPTIC_AB = (OUT_HAPTIC_A | OUT_HAPTIC_B),
+    OUT_MONO_HAPTIC_AB = (OUT_FRONT_LEFT | OUT_HAPTIC_A | OUT_HAPTIC_B),
+    OUT_STEREO_HAPTIC_AB = (OUT_FRONT_LEFT | OUT_FRONT_RIGHT |
+            OUT_HAPTIC_A | OUT_HAPTIC_B),
     // Note that the 2.0 OUT_ALL* have been moved to helper functions
 
     /* These are bits only, not complete values */
@@ -580,9 +618,33 @@ enum AudioDevice : uint32_t {
     IN_PROXY                 = BIT_IN | 0x1000000,
     IN_USB_HEADSET           = BIT_IN | 0x2000000,
     IN_BLUETOOTH_BLE         = BIT_IN | 0x4000000,
+    IN_ECHO_REFERENCE        = BIT_IN | 0x10000000,
     IN_DEFAULT               = BIT_IN | BIT_DEFAULT,
 
     // Note that the 2.0 IN_ALL* have been moved to helper functions
+};
+
+/**
+ * IEEE 802 MAC address.
+ */
+typedef uint8_t[6] MacAddress;
+
+/**
+ * Specifies a device address in case when several devices of the same type
+ * can be connected (e.g. BT A2DP, USB).
+ */
+struct DeviceAddress {
+    AudioDevice device;  // discriminator
+    union Address {
+        MacAddress mac;     // used for BLUETOOTH_A2DP_*
+        uint8_t[4] ipv4;    // used for IP
+        struct Alsa {
+            int32_t card;
+            int32_t device;
+        } alsa;             // used for USB_*
+    } address;
+    string busAddress;      // used for BUS
+    string rSubmixAddress;  // used for REMOTE_SUBMIX
 };
 
 /**
@@ -732,9 +794,17 @@ struct RecordTrackMetadata {
      * Must not be negative.
      */
     float gain;
+    /**
+     * Indicates the destination of an input stream, can be left unspecified.
+     */
+    safe_union Destination {
+        Monostate unspecified;
+        DeviceAddress device;
+    };
+    Destination destination;
 };
 
-/** Metadatas of the source of a StreamIn. */
+/** Metadatas of the sink of a StreamIn. */
 struct SinkMetadata {
     vec<RecordTrackMetadata> tracks;
 };
