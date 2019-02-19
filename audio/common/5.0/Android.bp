@@ -9,6 +9,9 @@ hidl_interface {
     srcs: [
         "types.hal",
     ],
+    interfaces: [
+        "android.hidl.safe_union@1.0",
+    ],
     types: [
         "AudioChannelMask",
         "AudioConfig",
@@ -38,6 +41,7 @@ hidl_interface {
         "AudioSource",
         "AudioStreamType",
         "AudioUsage",
+        "DeviceAddress",
         "FixedChannelCount",
         "PlaybackTrackMetadata",
         "RecordTrackMetadata",
