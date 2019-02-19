@@ -37,7 +37,7 @@ interface ISupplicantStaIfaceCallback extends @1.1::ISupplicantStaIfaceCallback 
     /**
      * Indicates DPP configuration sent success event (Configurator mode).
      */
-    oneway onDppSuccess(DppSuccessCode code);
+    oneway onDppSuccessConfigSent();
 
     /**
      * Indicates a DPP progress event.

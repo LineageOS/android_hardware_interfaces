@@ -24,7 +24,6 @@ hidl_interface {
         "DppFailureCode",
         "DppNetRole",
         "DppProgressCode",
-        "DppSuccessCode",
     ],
     gen_java: true,
 }
