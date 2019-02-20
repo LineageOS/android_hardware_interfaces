@@ -1,0 +1,28 @@
+{
+  "presubmit": [
+    {
+      "name": "PresubmitHalNeuralnetworksV1_0TargetTest",
+      "options": [
+        {
+          "native-test-flag": "--hal_service_instance=android.hardware.neuralnetworks@1.0::IDevice/sample-all"
+        }
+      ]
+    },
+    {
+      "name": "PresubmitHalNeuralnetworksV1_1TargetTest",
+      "options": [
+        {
+          "native-test-flag": "--hal_service_instance=android.hardware.neuralnetworks@1.1::IDevice/sample-all"
+        }
+      ]
+    },
+    {
+      "name": "PresubmitHalNeuralnetworksV1_2TargetTest",
+      "options": [
+        {
+          "native-test-flag": "--hal_service_instance=android.hardware.neuralnetworks@1.2::IDevice/sample-all"
+        }
+      ]
+    }
+  ]
+}
