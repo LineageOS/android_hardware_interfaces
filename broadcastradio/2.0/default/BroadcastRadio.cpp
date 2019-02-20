@@ -49,6 +49,7 @@ static Properties initProperties(const VirtualRadio& virtualRadio) {
         static_cast<uint32_t>(IdentifierType::AMFM_FREQUENCY),
         static_cast<uint32_t>(IdentifierType::RDS_PI),
         static_cast<uint32_t>(IdentifierType::HD_STATION_ID_EXT),
+        static_cast<uint32_t>(IdentifierType::DAB_SID_EXT),
     });
     prop.vendorInfo = hidl_vec<VendorKeyValue>({
         {"com.google.dummy", "dummy"},
