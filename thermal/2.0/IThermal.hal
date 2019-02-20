@@ -56,22 +56,24 @@ interface IThermal extends @1.0::IThermal {
      *    they go offline, if these devices exist on boot. The method
      *    always returns and never removes such temperatures. The thresholds
      *    are returned as static values and must not change across calls. The actual
-     *    throttling state is determined in driver and HAL and must not be simply
-     *    compared with these thresholds. To get accurate throttling status, use
-     *    getCurrentTemperatures or registerThermalChangedCallback and listen.
+     *    throttling state is determined in device thermal mitigation policy/agorithm
+     *    which might not be simple thresholds so these values Thermal HAL provided
+     *    may not be accurate to detemin the throttling status. To get accurate
+     *    throttling status, use getCurrentTemperatures or registerThermalChangedCallback
+     *    and listen to the callback.
      */
     getTemperatureThresholds(bool filterType, TemperatureType type)
         generates (ThermalStatus status, vec<TemperatureThreshold> temperatureThresholds);
 
    /**
     * Register an IThermalChangedCallback, used by the Thermal HAL
-    * to send thermal events when thermal mitigation status changed.
+    * to receive thermal events when thermal mitigation status changed.
     * Multiple registrations with different IThermalChangedCallback must be allowed.
     * Multiple registrations with same IThermalChangedCallback is not allowed, client
     * should unregister the given IThermalChangedCallback first.
     *
-    * @param callback the IThermalChangedCallback to use for sending
-    *    thermal events (cannot be nullptr).
+    * @param callback the IThermalChangedCallback to use for receiving
+    *    thermal events (nullptr callback will lead to failure with status code FAILURE).
     * @param filterType if filter for given sensor type.
     * @param type the type to be filtered.
     *
@@ -84,11 +86,11 @@ interface IThermal extends @1.0::IThermal {
        generates (ThermalStatus status);
 
    /**
-    * Register an IThermalChangedCallback, used by the Thermal HAL
-    * to send thermal events when thermal mitigation status changed.
+    * Unregister an IThermalChangedCallback, used by the Thermal HAL
+    * to receive thermal events when thermal mitigation status changed.
     *
-    * @param callback the IThermalChangedCallback to use for sending
-    *    thermal events, or nullptr to set no callback.
+    * @param callback the IThermalChangedCallback used for receiving
+    *    thermal events (nullptr callback will lead to failure with status code FAILURE).
     *
     * @return status Status of the operation. If status code is FAILURE,
     *    the status.debugMessage must be populated with a human-readable error message.

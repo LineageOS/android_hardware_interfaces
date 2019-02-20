@@ -132,8 +132,13 @@ TEST_F(ThermalHidlTest, NotifyThrottlingTest) {
 TEST_F(ThermalHidlTest, RegisterThermalChangedCallbackTest) {
     // Expect to fail with same callback
     auto ret = mThermal->registerThermalChangedCallback(
-        mThermalCallback, false, TemperatureType::SKIN,
-        [](ThermalStatus status) { EXPECT_NE(ThermalStatusCode::SUCCESS, status.code); });
+            mThermalCallback, false, TemperatureType::SKIN,
+            [](ThermalStatus status) { EXPECT_EQ(ThermalStatusCode::FAILURE, status.code); });
+    ASSERT_TRUE(ret.isOk());
+    // Expect to fail with null callback
+    ret = mThermal->registerThermalChangedCallback(
+            nullptr, false, TemperatureType::SKIN,
+            [](ThermalStatus status) { EXPECT_EQ(ThermalStatusCode::FAILURE, status.code); });
     ASSERT_TRUE(ret.isOk());
     sp<ThermalCallback> localThermalCallback = new (std::nothrow) ThermalCallback();
     // Expect to succeed with different callback
@@ -141,10 +146,15 @@ TEST_F(ThermalHidlTest, RegisterThermalChangedCallbackTest) {
         localThermalCallback, false, TemperatureType::SKIN,
         [](ThermalStatus status) { EXPECT_EQ(ThermalStatusCode::SUCCESS, status.code); });
     ASSERT_TRUE(ret.isOk());
-    // Remove the local callback.
+    // Remove the local callback
     ret = mThermal->unregisterThermalChangedCallback(
         localThermalCallback,
         [](ThermalStatus status) { EXPECT_EQ(ThermalStatusCode::SUCCESS, status.code); });
+    ASSERT_TRUE(ret.isOk());
+    // Expect to fail with null callback
+    ret = mThermal->unregisterThermalChangedCallback(nullptr, [](ThermalStatus status) {
+        EXPECT_EQ(ThermalStatusCode::FAILURE, status.code);
+    });
     ASSERT_TRUE(ret.isOk());
 }
 
