@@ -416,9 +416,9 @@ enum AudioChannelMask : uint32_t {
     OUT_2POINT1POINT2 = (OUT_FRONT_LEFT | OUT_FRONT_RIGHT |
                          OUT_TOP_SIDE_LEFT | OUT_TOP_SIDE_RIGHT |
                          OUT_LOW_FREQUENCY),
-    OUT_3POINT0POINT2 = (OUT_FRONT_LEFT | OUT_FRONT_CENTER | OUT_FRONT_RIGHT |
+    OUT_3POINT0POINT2 = (OUT_FRONT_LEFT | OUT_FRONT_RIGHT | OUT_FRONT_CENTER |
                          OUT_TOP_SIDE_LEFT | OUT_TOP_SIDE_RIGHT),
-    OUT_3POINT1POINT2 = (OUT_FRONT_LEFT | OUT_FRONT_CENTER | OUT_FRONT_RIGHT |
+    OUT_3POINT1POINT2 = (OUT_FRONT_LEFT | OUT_FRONT_RIGHT | OUT_FRONT_CENTER |
                         OUT_TOP_SIDE_LEFT | OUT_TOP_SIDE_RIGHT |
                         OUT_LOW_FREQUENCY),
     OUT_QUAD     = (OUT_FRONT_LEFT | OUT_FRONT_RIGHT |
@@ -517,7 +517,23 @@ enum AudioChannelMask : uint32_t {
     INDEX_MASK_5 = INDEX_HDR | ((1 << 5) - 1),
     INDEX_MASK_6 = INDEX_HDR | ((1 << 6) - 1),
     INDEX_MASK_7 = INDEX_HDR | ((1 << 7) - 1),
-    INDEX_MASK_8 = INDEX_HDR | ((1 << 8) - 1)
+    INDEX_MASK_8 = INDEX_HDR | ((1 << 8) - 1),
+    INDEX_MASK_9 = INDEX_HDR | ((1 << 9) - 1),
+    INDEX_MASK_10 = INDEX_HDR | ((1 << 10) - 1),
+    INDEX_MASK_11 = INDEX_HDR | ((1 << 11) - 1),
+    INDEX_MASK_12 = INDEX_HDR | ((1 << 12) - 1),
+    INDEX_MASK_13 = INDEX_HDR | ((1 << 13) - 1),
+    INDEX_MASK_14 = INDEX_HDR | ((1 << 14) - 1),
+    INDEX_MASK_15 = INDEX_HDR | ((1 << 15) - 1),
+    INDEX_MASK_16 = INDEX_HDR | ((1 << 16) - 1),
+    INDEX_MASK_17 = INDEX_HDR | ((1 << 17) - 1),
+    INDEX_MASK_18 = INDEX_HDR | ((1 << 18) - 1),
+    INDEX_MASK_19 = INDEX_HDR | ((1 << 19) - 1),
+    INDEX_MASK_20 = INDEX_HDR | ((1 << 20) - 1),
+    INDEX_MASK_21 = INDEX_HDR | ((1 << 21) - 1),
+    INDEX_MASK_22 = INDEX_HDR | ((1 << 22) - 1),
+    INDEX_MASK_23 = INDEX_HDR | ((1 << 23) - 1),
+    INDEX_MASK_24 = INDEX_HDR | ((1 << 24) - 1),
 };
 
 /**
