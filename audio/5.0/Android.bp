@@ -20,6 +20,7 @@ hidl_interface {
         "android.hardware.audio.common@5.0",
         "android.hardware.audio.effect@5.0",
         "android.hidl.base@1.0",
+        "android.hidl.safe_union@1.0",
     ],
     types: [
         "AudioDrain",
@@ -28,8 +29,8 @@ hidl_interface {
         "AudioMicrophoneCoordinate",
         "AudioMicrophoneDirectionality",
         "AudioMicrophoneLocation",
-        "DeviceAddress",
         "MessageQueueFlagBits",
+        "MicrophoneDirection",
         "MicrophoneInfo",
         "MmapBufferFlag",
         "MmapBufferInfo",
