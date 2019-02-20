@@ -142,7 +142,9 @@ struct BufferRequest {
  * To capture a JPEG APP segments blob, a stream is created using the pixel format
  * HAL_PIXEL_FORMAT_BLOB and dataspace HAL_DATASPACE_JPEG_APP_SEGMENTS. The buffer
  * size for the stream is calculated by the framework, based on the static
- * metadata field android.heic.maxAppSegmentsCount.
+ * metadata field android.heic.maxAppSegmentsCount, and is assigned to both
+ * @3.2::Stream::width and @3.4::Stream::bufferSize. Camera framework sets
+ * @3.2::Stream::height to 1.
  *
  * Similar to JPEG image, the JPEG APP segment images can be of variable size,
  * so the HAL needs to include the final size of all APP segments using this
