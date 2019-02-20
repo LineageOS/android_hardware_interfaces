@@ -72,6 +72,22 @@ Return<void> CameraDeviceSession::configureStreams_3_5(
 
 Return<void> CameraDeviceSession::signalStreamFlush(
         const hidl_vec<int32_t>& streamIds, uint32_t streamConfigCounter) {
+    if (mDevice->ops->signal_stream_flush == nullptr) {
+        return Void();
+    }
+
+    uint32_t currentCounter = 0;
+    {
+        Mutex::Autolock _l(mStreamConfigCounterLock);
+        currentCounter = mStreamConfigCounter;
+    }
+
+    if (streamConfigCounter < currentCounter) {
+        ALOGV("%s: streamConfigCounter %d is stale (current %d), skipping signal_stream_flush call",
+                __FUNCTION__, streamConfigCounter, mStreamConfigCounter);
+        return Void();
+    }
+
     std::vector<camera3_stream_t*> streams(streamIds.size());
     {
         Mutex::Autolock _l(mInflightLock);
@@ -84,10 +100,8 @@ Return<void> CameraDeviceSession::signalStreamFlush(
             streams[i] = &mStreamMap[id];
         }
     }
-    if (mDevice->ops->signal_stream_flush != nullptr) {
-        mDevice->ops->signal_stream_flush(mDevice,
-                streamConfigCounter, streams.size(), streams.data());
-    }
+
+    mDevice->ops->signal_stream_flush(mDevice, streams.size(), streams.data());
     return Void();
 }
 
