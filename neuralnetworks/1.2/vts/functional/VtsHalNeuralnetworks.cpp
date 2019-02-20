@@ -49,7 +49,17 @@ NeuralnetworksHidlTest::~NeuralnetworksHidlTest() {}
 void NeuralnetworksHidlTest::SetUp() {
     ::testing::VtsHalHidlTargetTestBase::SetUp();
     device = ::testing::VtsHalHidlTargetTestBase::getService<IDevice>(
-        NeuralnetworksHidlEnvironment::getInstance());
+            NeuralnetworksHidlEnvironment::getInstance());
+
+#ifdef PRESUBMIT_NOT_VTS
+    const std::string name =
+            NeuralnetworksHidlEnvironment::getInstance()->getServiceName<IDevice>();
+    const std::string sampleDriver = "sample-";
+    if (device == nullptr && name.substr(0, sampleDriver.size()) == sampleDriver) {
+        GTEST_SKIP();
+    }
+#endif  // PRESUBMIT_NOT_VTS
+
     ASSERT_NE(nullptr, device.get());
 }
 

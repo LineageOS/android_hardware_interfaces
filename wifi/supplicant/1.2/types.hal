@@ -35,13 +35,6 @@ enum DppNetRole: uint32_t {
 };
 
 /**
- * DppSuccessCode: Success codes for DPP (Easy Connect)
- */
-enum DppSuccessCode : uint32_t {
-    CONFIGURATION_SENT,
-};
-
-/**
  * DppProgressCode: Progress codes for DPP (Easy Connect)
  */
 enum DppProgressCode : uint32_t {
