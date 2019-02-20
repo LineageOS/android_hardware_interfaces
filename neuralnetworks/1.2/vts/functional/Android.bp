@@ -24,7 +24,6 @@ cc_test {
     cflags: [
         "-DNN_TEST_DYNAMIC_OUTPUT_SHAPE"
     ],
-    test_suites: ["general-tests"],
 }
 
 // Tests for V1_1 models using the V1_2 HAL.
@@ -37,7 +36,6 @@ cc_test {
     cflags: [
         "-DNN_TEST_DYNAMIC_OUTPUT_SHAPE"
     ],
-    test_suites: ["general-tests"],
 }
 
 // Tests for V1_2 models.
@@ -52,5 +50,17 @@ cc_test {
     cflags: [
         "-DNN_TEST_DYNAMIC_OUTPUT_SHAPE"
     ],
-    test_suites: ["general-tests"],
+}
+
+cc_test {
+    name: "PresubmitHalNeuralnetworksV1_2TargetTest",
+    defaults: ["VtsHalNeuralNetworksTargetTestDefaults"],
+    srcs: [
+        "BasicTests.cpp",
+        "GeneratedTests.cpp",
+    ],
+    cflags: [
+        "-DNN_TEST_DYNAMIC_OUTPUT_SHAPE",
+        "-DPRESUBMIT_NOT_VTS",
+    ],
 }
