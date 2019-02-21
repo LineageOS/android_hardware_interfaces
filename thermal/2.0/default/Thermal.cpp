@@ -155,7 +155,15 @@ Return<void> Thermal::registerThermalChangedCallback(const sp<IThermalChangedCal
                                                      bool filterType, TemperatureType type,
                                                      registerThermalChangedCallback_cb _hidl_cb) {
     ThermalStatus status;
-    status.code = ThermalStatusCode::SUCCESS;
+    if (callback == nullptr) {
+        status.code = ThermalStatusCode::FAILURE;
+        status.debugMessage = "Invalid nullptr callback";
+        LOG(ERROR) << status.debugMessage;
+        _hidl_cb(status);
+        return Void();
+    } else {
+        status.code = ThermalStatusCode::SUCCESS;
+    }
     std::lock_guard<std::mutex> _lock(thermal_callback_mutex_);
     if (std::any_of(callbacks_.begin(), callbacks_.end(), [&](const CallbackSetting& c) {
             return interfacesEqual(c.callback, callback);
@@ -175,7 +183,15 @@ Return<void> Thermal::registerThermalChangedCallback(const sp<IThermalChangedCal
 Return<void> Thermal::unregisterThermalChangedCallback(
     const sp<IThermalChangedCallback>& callback, unregisterThermalChangedCallback_cb _hidl_cb) {
     ThermalStatus status;
-    status.code = ThermalStatusCode::SUCCESS;
+    if (callback == nullptr) {
+        status.code = ThermalStatusCode::FAILURE;
+        status.debugMessage = "Invalid nullptr callback";
+        LOG(ERROR) << status.debugMessage;
+        _hidl_cb(status);
+        return Void();
+    } else {
+        status.code = ThermalStatusCode::SUCCESS;
+    }
     bool removed = false;
     std::lock_guard<std::mutex> _lock(thermal_callback_mutex_);
     callbacks_.erase(
