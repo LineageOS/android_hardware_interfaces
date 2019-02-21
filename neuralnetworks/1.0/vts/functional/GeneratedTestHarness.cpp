@@ -72,7 +72,8 @@ void copy_back(MixedTyped* dst, const std::vector<RequestArgument>& ra, char* sr
     copy_back_(&dst->bool8Operands, ra, src);
     copy_back_(&dst->quant8ChannelOperands, ra, src);
     copy_back_(&dst->quant16AsymmOperands, ra, src);
-    static_assert(8 == MixedTyped::kNumTypes,
+    copy_back_(&dst->quant8SymmOperands, ra, src);
+    static_assert(9 == MixedTyped::kNumTypes,
                   "Number of types in MixedTyped changed, but copy_back function wasn't updated");
 }
 
