@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "android.hardware.configstore@1.2-service"
+#define LOG_TAG "android.hardware.configstore@1.1-service"
 
-#include <android/hardware/configstore/1.2/ISurfaceFlingerConfigs.h>
+#include <android/hardware/configstore/1.1/ISurfaceFlingerConfigs.h>
 #include <hidl/HidlTransportSupport.h>
 #include <hwminijail/HardwareMinijail.h>
 
@@ -28,13 +28,13 @@ using android::status_t;
 using android::hardware::configureRpcThreadpool;
 using android::hardware::joinRpcThreadpool;
 using android::hardware::SetupMinijail;
-using android::hardware::configstore::V1_2::ISurfaceFlingerConfigs;
-using android::hardware::configstore::V1_2::implementation::SurfaceFlingerConfigs;
+using android::hardware::configstore::V1_1::ISurfaceFlingerConfigs;
+using android::hardware::configstore::V1_1::implementation::SurfaceFlingerConfigs;
 
 int main() {
     configureRpcThreadpool(10, true);
 
-    SetupMinijail("/vendor/etc/seccomp_policy/configstore.policy");
+    SetupMinijail("/vendor/etc/seccomp_policy/configstore@1.1.policy");
 
     sp<ISurfaceFlingerConfigs> surfaceFlingerConfigs = new SurfaceFlingerConfigs;
     status_t status = surfaceFlingerConfigs->registerAsService();
