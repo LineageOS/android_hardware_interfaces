@@ -165,6 +165,11 @@ Return<Result> AcousticEchoCancelerEffect::close() {
     return mEffect->close();
 }
 
+Return<void> AcousticEchoCancelerEffect::debug(const hidl_handle& fd,
+                                               const hidl_vec<hidl_string>& options) {
+    return mEffect->debug(fd, options);
+}
+
 // Methods from ::android::hardware::audio::effect::CPP_VERSION::IAcousticEchoCancelerEffect
 // follow.
 Return<Result> AcousticEchoCancelerEffect::setEchoDelay(uint32_t echoDelayMs) {

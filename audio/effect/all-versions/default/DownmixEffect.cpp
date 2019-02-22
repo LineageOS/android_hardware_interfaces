@@ -161,6 +161,10 @@ Return<Result> DownmixEffect::close() {
     return mEffect->close();
 }
 
+Return<void> DownmixEffect::debug(const hidl_handle& fd, const hidl_vec<hidl_string>& options) {
+    return mEffect->debug(fd, options);
+}
+
 // Methods from ::android::hardware::audio::effect::CPP_VERSION::IDownmixEffect follow.
 Return<Result> DownmixEffect::setType(IDownmixEffect::Type preset) {
     return mEffect->setParam(DOWNMIX_PARAM_TYPE, static_cast<downmix_type_t>(preset));

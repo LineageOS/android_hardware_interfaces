@@ -164,6 +164,11 @@ Return<Result> LoudnessEnhancerEffect::close() {
     return mEffect->close();
 }
 
+Return<void> LoudnessEnhancerEffect::debug(const hidl_handle& fd,
+                                           const hidl_vec<hidl_string>& options) {
+    return mEffect->debug(fd, options);
+}
+
 // Methods from ::android::hardware::audio::effect::CPP_VERSION::ILoudnessEnhancerEffect
 // follow.
 Return<Result> LoudnessEnhancerEffect::setTargetGain(int32_t targetGainMb) {
