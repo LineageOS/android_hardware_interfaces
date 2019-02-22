@@ -142,14 +142,13 @@ struct PolicyConfigData {
     android::DeviceVector availableOutputDevices;
     android::DeviceVector availableInputDevices;
     sp<android::DeviceDescriptor> defaultOutputDevice;
-    android::VolumeCurvesCollection volumes;
 };
 
 class PolicyConfig : private PolicyConfigData, public AudioPolicyConfig {
    public:
     PolicyConfig()
         : AudioPolicyConfig(hwModules, availableOutputDevices, availableInputDevices,
-                            defaultOutputDevice, &volumes) {
+                            defaultOutputDevice) {
         for (const char* location : kConfigLocations) {
             std::string path = std::string(location) + '/' + kConfigFileName;
             if (access(path.c_str(), F_OK) == 0) {
