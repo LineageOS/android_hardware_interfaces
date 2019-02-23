@@ -69,3 +69,89 @@ TEST_F(RadioConfigHidlTest, setModemsConfig_goodRequest) {
     ASSERT_TRUE(CheckAnyOfErrors(radioConfigRsp->rspInfo.error,
                                  {RadioError::NONE, RadioError::REQUEST_NOT_SUPPORTED}));
 }
+
+/*
+ * Test IRadioConfig.getPhoneCapability()
+ */
+TEST_F(RadioConfigHidlTest, getPhoneCapability) {
+    serial = GetRandomSerialNumber();
+    Return<void> res = radioConfig->getPhoneCapability(serial);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioConfigRsp->rspInfo.type);
+    EXPECT_EQ(serial, radioConfigRsp->rspInfo.serial);
+    ALOGI("getPhoneCapability, rspInfo.error = %s\n",
+          toString(radioConfigRsp->rspInfo.error).c_str());
+
+    ASSERT_TRUE(CheckAnyOfErrors(
+            radioConfigRsp->rspInfo.error,
+            {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::INTERNAL_ERR}));
+
+    if (radioConfigRsp->rspInfo.error == RadioError ::NONE) {
+        // maxActiveData should be greater than or equal to maxActiveInternetData.
+        EXPECT_GE(radioConfigRsp->phoneCap.maxActiveData,
+                  radioConfigRsp->phoneCap.maxActiveInternetData);
+        // maxActiveData and maxActiveInternetData should be 0 or positive numbers.
+        EXPECT_GE(radioConfigRsp->phoneCap.maxActiveInternetData, 0);
+    }
+}
+
+/*
+ * Test IRadioConfig.getPhoneCapability()
+ */
+TEST_F(RadioConfigHidlTest, setPreferredDataModem) {
+    serial = GetRandomSerialNumber();
+    Return<void> res = radioConfig->getPhoneCapability(serial);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioConfigRsp->rspInfo.type);
+    EXPECT_EQ(serial, radioConfigRsp->rspInfo.serial);
+    ALOGI("getPhoneCapability, rspInfo.error = %s\n",
+          toString(radioConfigRsp->rspInfo.error).c_str());
+
+    ASSERT_TRUE(CheckAnyOfErrors(
+            radioConfigRsp->rspInfo.error,
+            {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::INTERNAL_ERR}));
+
+    if (radioConfigRsp->rspInfo.error != RadioError ::NONE) {
+        return;
+    }
+
+    if (radioConfigRsp->phoneCap.logicalModemList.size() == 0) {
+        return;
+    }
+
+    // We get phoneCapability. send setPreferredDataModem command
+    serial = GetRandomSerialNumber();
+    uint8_t modemId = radioConfigRsp->phoneCap.logicalModemList[0].modemId;
+    res = radioConfig->setPreferredDataModem(serial, modemId);
+
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioConfigRsp->rspInfo.type);
+    EXPECT_EQ(serial, radioConfigRsp->rspInfo.serial);
+    ALOGI("getModemsConfig, rspInfo.error = %s\n", toString(radioConfigRsp->rspInfo.error).c_str());
+
+    ASSERT_TRUE(CheckAnyOfErrors(
+            radioConfigRsp->rspInfo.error,
+            {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::INTERNAL_ERR}));
+}
+
+/*
+ * Test IRadioConfig.getPhoneCapability()
+ */
+TEST_F(RadioConfigHidlTest, setPreferredDataModem_invalidArgument) {
+    serial = GetRandomSerialNumber();
+    uint8_t modemId = -1;
+    Return<void> res = radioConfig->setPreferredDataModem(serial, modemId);
+
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioConfigRsp->rspInfo.type);
+    EXPECT_EQ(serial, radioConfigRsp->rspInfo.serial);
+    ALOGI("getModemsConfig, rspInfo.error = %s\n", toString(radioConfigRsp->rspInfo.error).c_str());
+
+    ASSERT_TRUE(CheckAnyOfErrors(radioConfigRsp->rspInfo.error,
+                                 {RadioError::INVALID_ARGUMENTS, RadioError::RADIO_NOT_AVAILABLE,
+                                  RadioError::INTERNAL_ERR}));
+}
