@@ -769,12 +769,14 @@ Return<void> RadioResponse_v1_3::getDataRegistrationStateResponse_1_2(
 /* 1.3 Api */
 Return<void> RadioResponse_v1_3::setSystemSelectionChannelsResponse(const RadioResponseInfo& info) {
     rspInfo = info;
+    parent_v1_3.notify(info.serial);
     return Void();
 }
 
 Return<void> RadioResponse_v1_3::enableModemResponse(const RadioResponseInfo& info) {
     rspInfo = info;
     enableModemResponseToggle = !enableModemResponseToggle;
+    parent_v1_3.notify(info.serial);
     return Void();
 }
 
@@ -782,5 +784,6 @@ Return<void> RadioResponse_v1_3::getModemStackStatusResponse(const RadioResponse
                                                              const bool enabled) {
     rspInfo = info;
     isModemEnabled = enabled;
+    parent_v1_3.notify(info.serial);
     return Void();
 }
