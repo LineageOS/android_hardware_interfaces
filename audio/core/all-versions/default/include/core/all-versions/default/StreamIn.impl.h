@@ -66,6 +66,7 @@ class ReadThread : public Thread {
     std::unique_ptr<uint8_t[]> mBuffer;
     IStreamIn::ReadParameters mParameters;
     IStreamIn::ReadStatus mStatus;
+    std::mutex mLock;
 
     bool threadLoop() override;
 
@@ -96,8 +97,11 @@ void ReadThread::doRead() {
 }
 
 void ReadThread::doGetCapturePosition() {
+    std::unique_lock<std::mutex> lock(mLock);
+    mLock.lock();
     mStatus.retval = StreamIn::getCapturePositionImpl(
         mStream, &mStatus.reply.capturePosition.frames, &mStatus.reply.capturePosition.time);
+    mLock.unlock();
 }
 
 bool ReadThread::threadLoop() {
