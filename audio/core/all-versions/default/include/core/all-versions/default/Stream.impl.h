@@ -16,14 +16,16 @@
 
 #include <common/all-versions/IncludeGuard.h>
 
-#include <inttypes.h>
+//#define LOG_NDEBUG 0
+#define ATRACE_TAG ATRACE_TAG_AUDIO
 
 #include <android/log.h>
 #include <hardware/audio.h>
-#include <hardware/audio_effect.h>
-#include <media/TypeConverter.h>
-#include <utils/SortedVector.h>
-#include <utils/Vector.h>
+#include <utils/Trace.h>
+#include <memory>
+
+using ::android::hardware::audio::AUDIO_HAL_VERSION::MessageQueueFlagBits;
+#include "Conversions.h"
 
 namespace android {
 namespace hardware {
@@ -31,292 +33,460 @@ namespace audio {
 namespace AUDIO_HAL_VERSION {
 namespace implementation {
 
-Stream::Stream(audio_stream_t* stream) : mStream(stream) {}
+using ::android::hardware::audio::common::AUDIO_HAL_VERSION::ThreadInfo;
 
-Stream::~Stream() {
+namespace {
+
+class ReadThread : public Thread {
+   public:
+    // ReadThread's lifespan never exceeds StreamIn's lifespan.
+    ReadThread(std::atomic<bool>* stop, audio_stream_in_t* stream, StreamIn::CommandMQ* commandMQ,
+               StreamIn::DataMQ* dataMQ, StreamIn::StatusMQ* statusMQ, EventFlag* efGroup)
+        : Thread(false /*canCallJava*/),
+          mStop(stop),
+          mStream(stream),
+          mCommandMQ(commandMQ),
+          mDataMQ(dataMQ),
+          mStatusMQ(statusMQ),
+          mEfGroup(efGroup),
+          mBuffer(nullptr) {}
+    bool init() {
+        mBuffer.reset(new (std::nothrow) uint8_t[mDataMQ->getQuantumCount()]);
+        return mBuffer != nullptr;
+    }
+    virtual ~ReadThread() {}
+
+   private:
+    std::atomic<bool>* mStop;
+    audio_stream_in_t* mStream;
+    StreamIn::CommandMQ* mCommandMQ;
+    StreamIn::DataMQ* mDataMQ;
+    StreamIn::StatusMQ* mStatusMQ;
+    EventFlag* mEfGroup;
+    std::unique_ptr<uint8_t[]> mBuffer;
+    IStreamIn::ReadParameters mParameters;
+    IStreamIn::ReadStatus mStatus;
+    std::mutex mLock;
+
+    bool threadLoop() override;
+
+    void doGetCapturePosition();
+    void doRead();
+};
+
+void ReadThread::doRead() {
+    size_t availableToWrite = mDataMQ->availableToWrite();
+    size_t requestedToRead = mParameters.params.read;
+    if (requestedToRead > availableToWrite) {
+        ALOGW(
+            "truncating read data from %d to %d due to insufficient data queue "
+            "space",
+            (int32_t)requestedToRead, (int32_t)availableToWrite);
+        requestedToRead = availableToWrite;
+    }
+    ssize_t readResult = mStream->read(mStream, &mBuffer[0], requestedToRead);
+    mStatus.retval = Result::OK;
+    if (readResult >= 0) {
+        mStatus.reply.read = readResult;
+        if (!mDataMQ->write(&mBuffer[0], readResult)) {
+            ALOGW("data message queue write failed");
+        }
+    } else {
+        mStatus.retval = Stream::analyzeStatus("read", readResult);
+    }
+}
+
+void ReadThread::doGetCapturePosition() {
+    std::unique_lock<std::mutex> lock(mLock);
+    mLock.lock();
+    mStatus.retval = StreamIn::getCapturePositionImpl(
+        mStream, &mStatus.reply.capturePosition.frames, &mStatus.reply.capturePosition.time);
+    mLock.unlock();
+}
+
+bool ReadThread::threadLoop() {
+    // This implementation doesn't return control back to the Thread until it
+    // decides to stop,
+    // as the Thread uses mutexes, and this can lead to priority inversion.
+    while (!std::atomic_load_explicit(mStop, std::memory_order_acquire)) {
+        uint32_t efState = 0;
+        mEfGroup->wait(static_cast<uint32_t>(MessageQueueFlagBits::NOT_FULL), &efState);
+        if (!(efState & static_cast<uint32_t>(MessageQueueFlagBits::NOT_FULL))) {
+            continue;  // Nothing to do.
+        }
+        if (!mCommandMQ->read(&mParameters)) {
+            continue;  // Nothing to do.
+        }
+        mStatus.replyTo = mParameters.command;
+        switch (mParameters.command) {
+            case IStreamIn::ReadCommand::READ:
+                doRead();
+                break;
+            case IStreamIn::ReadCommand::GET_CAPTURE_POSITION:
+                doGetCapturePosition();
+                break;
+            default:
+                ALOGE("Unknown read thread command code %d", mParameters.command);
+                mStatus.retval = Result::NOT_SUPPORTED;
+                break;
+        }
+        if (!mStatusMQ->write(&mStatus)) {
+            ALOGW("status message queue write failed");
+        }
+        mEfGroup->wake(static_cast<uint32_t>(MessageQueueFlagBits::NOT_EMPTY));
+    }
+
+    return false;
+}
+
+}  // namespace
+
+StreamIn::StreamIn(const sp<Device>& device, audio_stream_in_t* stream)
+    : mIsClosed(false),
+      mDevice(device),
+      mStream(stream),
+      mStreamCommon(new Stream(&stream->common)),
+      mStreamMmap(new StreamMmap<audio_stream_in_t>(stream)),
+      mEfGroup(nullptr),
+      mStopReadThread(false) {}
+
+StreamIn::~StreamIn() {
+    ATRACE_CALL();
+    close();
+    if (mReadThread.get()) {
+        ATRACE_NAME("mReadThread->join");
+        status_t status = mReadThread->join();
+        ALOGE_IF(status, "read thread exit error: %s", strerror(-status));
+    }
+    if (mEfGroup) {
+        status_t status = EventFlag::deleteEventFlag(&mEfGroup);
+        ALOGE_IF(status, "read MQ event flag deletion error: %s", strerror(-status));
+    }
+    mDevice->closeInputStream(mStream);
     mStream = nullptr;
 }
 
-// static
-Result Stream::analyzeStatus(const char* funcName, int status) {
-    return util::analyzeStatus("stream", funcName, status);
-}
-
-
-// static
-Result Stream::analyzeStatus(const char* funcName, int status,
-                             const std::vector<int>& ignoreErrors) {
-    return util::analyzeStatus("stream", funcName, status, ignoreErrors);
-}
-
-char* Stream::halGetParameters(const char* keys) {
-    return mStream->get_parameters(mStream, keys);
-}
-
-int Stream::halSetParameters(const char* keysAndValues) {
-    return mStream->set_parameters(mStream, keysAndValues);
-}
-
 // Methods from ::android::hardware::audio::AUDIO_HAL_VERSION::IStream follow.
-Return<uint64_t> Stream::getFrameSize() {
-    // Needs to be implemented by interface subclasses. But can't be declared as pure virtual,
-    // since interface subclasses implementation do not inherit from this class.
-    LOG_ALWAYS_FATAL("Stream::getFrameSize is pure abstract");
-    return uint64_t{};
+Return<uint64_t> StreamIn::getFrameSize() {
+    return audio_stream_in_frame_size(mStream);
 }
 
-Return<uint64_t> Stream::getFrameCount() {
-    int halFrameCount;
-    Result retval = getParam(AudioParameter::keyFrameCount, &halFrameCount);
-    return retval == Result::OK ? halFrameCount : 0;
+Return<uint64_t> StreamIn::getFrameCount() {
+    return mStreamCommon->getFrameCount();
 }
 
-Return<uint64_t> Stream::getBufferSize() {
-    return mStream->get_buffer_size(mStream);
+Return<uint64_t> StreamIn::getBufferSize() {
+    return mStreamCommon->getBufferSize();
 }
 
-Return<uint32_t> Stream::getSampleRate() {
-    return mStream->get_sample_rate(mStream);
+Return<uint32_t> StreamIn::getSampleRate() {
+    return mStreamCommon->getSampleRate();
 }
 
 #ifdef AUDIO_HAL_VERSION_2_0
-Return<void> Stream::getSupportedSampleRates(getSupportedSampleRates_cb _hidl_cb) {
-    return getSupportedSampleRates(getFormat(), _hidl_cb);
+Return<void> StreamIn::getSupportedChannelMasks(getSupportedChannelMasks_cb _hidl_cb) {
+    return mStreamCommon->getSupportedChannelMasks(_hidl_cb);
 }
-Return<void> Stream::getSupportedChannelMasks(getSupportedChannelMasks_cb _hidl_cb) {
-    return getSupportedChannelMasks(getFormat(), _hidl_cb);
+Return<void> StreamIn::getSupportedSampleRates(getSupportedSampleRates_cb _hidl_cb) {
+    return mStreamCommon->getSupportedSampleRates(_hidl_cb);
 }
 #endif
 
-Return<void> Stream::getSupportedSampleRates(AudioFormat format,
-                                             getSupportedSampleRates_cb _hidl_cb) {
-    AudioParameter context;
-    context.addInt(String8(AUDIO_PARAMETER_STREAM_FORMAT), int(format));
-    String8 halListValue;
-    Result result =
-        getParam(AudioParameter::keyStreamSupportedSamplingRates, &halListValue, context);
-    hidl_vec<uint32_t> sampleRates;
-    SortedVector<uint32_t> halSampleRates;
-    if (result == Result::OK) {
-        halSampleRates =
-            samplingRatesFromString(halListValue.string(), AudioParameter::valueListSeparator);
-        sampleRates.setToExternal(halSampleRates.editArray(), halSampleRates.size());
-        // Legacy get_parameter does not return a status_t, thus can not advertise of failure.
-        // Note that this method must succeed (non empty list) if the format is supported.
-        if (sampleRates.size() == 0) {
-            result = Result::NOT_SUPPORTED;
-        }
-    }
-#ifdef AUDIO_HAL_VERSION_2_0
-    _hidl_cb(sampleRates);
-#elif AUDIO_HAL_VERSION_4_0
-    _hidl_cb(result, sampleRates);
-#endif
-    return Void();
+Return<void> StreamIn::getSupportedChannelMasks(AudioFormat format,
+                                                getSupportedChannelMasks_cb _hidl_cb) {
+    return mStreamCommon->getSupportedChannelMasks(format, _hidl_cb);
+}
+Return<void> StreamIn::getSupportedSampleRates(AudioFormat format,
+                                               getSupportedSampleRates_cb _hidl_cb) {
+    return mStreamCommon->getSupportedSampleRates(format, _hidl_cb);
 }
 
-Return<void> Stream::getSupportedChannelMasks(AudioFormat format,
-                                              getSupportedChannelMasks_cb _hidl_cb) {
-    AudioParameter context;
-    context.addInt(String8(AUDIO_PARAMETER_STREAM_FORMAT), int(format));
-    String8 halListValue;
-    Result result = getParam(AudioParameter::keyStreamSupportedChannels, &halListValue, context);
-    hidl_vec<AudioChannelBitfield> channelMasks;
-    SortedVector<audio_channel_mask_t> halChannelMasks;
-    if (result == Result::OK) {
-        halChannelMasks =
-            channelMasksFromString(halListValue.string(), AudioParameter::valueListSeparator);
-        channelMasks.resize(halChannelMasks.size());
-        for (size_t i = 0; i < halChannelMasks.size(); ++i) {
-            channelMasks[i] = AudioChannelBitfield(halChannelMasks[i]);
-        }
-        // Legacy get_parameter does not return a status_t, thus can not advertise of failure.
-        // Note that this method must succeed (non empty list) if the format is supported.
-        if (channelMasks.size() == 0) {
-            result = Result::NOT_SUPPORTED;
-        }
-    }
-#ifdef AUDIO_HAL_VERSION_2_0
-    _hidl_cb(channelMasks);
-#elif defined(AUDIO_HAL_VERSION_4_0)
-    _hidl_cb(result, channelMasks);
-#endif
-    return Void();
+Return<Result> StreamIn::setSampleRate(uint32_t sampleRateHz) {
+    return mStreamCommon->setSampleRate(sampleRateHz);
 }
 
-Return<Result> Stream::setSampleRate(uint32_t sampleRateHz) {
-    return setParam(AudioParameter::keySamplingRate, static_cast<int>(sampleRateHz));
+Return<AudioChannelBitfield> StreamIn::getChannelMask() {
+    return mStreamCommon->getChannelMask();
 }
 
-Return<AudioChannelBitfield> Stream::getChannelMask() {
-    return AudioChannelBitfield(mStream->get_channels(mStream));
+Return<Result> StreamIn::setChannelMask(AudioChannelBitfield mask) {
+    return mStreamCommon->setChannelMask(mask);
 }
 
-Return<Result> Stream::setChannelMask(AudioChannelBitfield mask) {
-    return setParam(AudioParameter::keyChannels, static_cast<int>(mask));
+Return<AudioFormat> StreamIn::getFormat() {
+    return mStreamCommon->getFormat();
 }
 
-Return<AudioFormat> Stream::getFormat() {
-    return AudioFormat(mStream->get_format(mStream));
+Return<void> StreamIn::getSupportedFormats(getSupportedFormats_cb _hidl_cb) {
+    return mStreamCommon->getSupportedFormats(_hidl_cb);
 }
 
-Return<void> Stream::getSupportedFormats(getSupportedFormats_cb _hidl_cb) {
-    String8 halListValue;
-    Result result = getParam(AudioParameter::keyStreamSupportedFormats, &halListValue);
-    hidl_vec<AudioFormat> formats;
-    Vector<audio_format_t> halFormats;
-    if (result == Result::OK) {
-        halFormats = formatsFromString(halListValue.string(), AudioParameter::valueListSeparator);
-        formats.resize(halFormats.size());
-        for (size_t i = 0; i < halFormats.size(); ++i) {
-            formats[i] = AudioFormat(halFormats[i]);
-        }
-    }
-    _hidl_cb(formats);
-    return Void();
+Return<Result> StreamIn::setFormat(AudioFormat format) {
+    return mStreamCommon->setFormat(format);
 }
 
-Return<Result> Stream::setFormat(AudioFormat format) {
-    return setParam(AudioParameter::keyFormat, static_cast<int>(format));
+Return<void> StreamIn::getAudioProperties(getAudioProperties_cb _hidl_cb) {
+    return mStreamCommon->getAudioProperties(_hidl_cb);
 }
 
-Return<void> Stream::getAudioProperties(getAudioProperties_cb _hidl_cb) {
-    uint32_t halSampleRate = mStream->get_sample_rate(mStream);
-    audio_channel_mask_t halMask = mStream->get_channels(mStream);
-    audio_format_t halFormat = mStream->get_format(mStream);
-    _hidl_cb(halSampleRate, AudioChannelBitfield(halMask), AudioFormat(halFormat));
-    return Void();
+Return<Result> StreamIn::addEffect(uint64_t effectId) {
+    return mStreamCommon->addEffect(effectId);
 }
 
-Return<Result> Stream::addEffect(uint64_t effectId) {
-    effect_handle_t halEffect = EffectMap::getInstance().get(effectId);
-    if (halEffect != NULL) {
-        return analyzeStatus("add_audio_effect", mStream->add_audio_effect(mStream, halEffect));
-    } else {
-        ALOGW("Invalid effect ID passed from client: %" PRIu64, effectId);
-        return Result::INVALID_ARGUMENTS;
-    }
+Return<Result> StreamIn::removeEffect(uint64_t effectId) {
+    return mStreamCommon->removeEffect(effectId);
 }
 
-Return<Result> Stream::removeEffect(uint64_t effectId) {
-    effect_handle_t halEffect = EffectMap::getInstance().get(effectId);
-    if (halEffect != NULL) {
-        return analyzeStatus("remove_audio_effect",
-                             mStream->remove_audio_effect(mStream, halEffect));
-    } else {
-        ALOGW("Invalid effect ID passed from client: %" PRIu64, effectId);
-        return Result::INVALID_ARGUMENTS;
-    }
+Return<Result> StreamIn::standby() {
+    return mStreamCommon->standby();
 }
 
-Return<Result> Stream::standby() {
-    return analyzeStatus("standby", mStream->standby(mStream));
-}
-
-Return<Result> Stream::setHwAvSync(uint32_t hwAvSync) {
-    return setParam(AudioParameter::keyStreamHwAvSync, static_cast<int>(hwAvSync));
+Return<Result> StreamIn::setHwAvSync(uint32_t hwAvSync) {
+    return mStreamCommon->setHwAvSync(hwAvSync);
 }
 
 #ifdef AUDIO_HAL_VERSION_2_0
-Return<AudioDevice> Stream::getDevice() {
-    int device = 0;
-    Result retval = getParam(AudioParameter::keyRouting, &device);
-    return retval == Result::OK ? static_cast<AudioDevice>(device) : AudioDevice::NONE;
+Return<Result> StreamIn::setConnectedState(const DeviceAddress& address, bool connected) {
+    return mStreamCommon->setConnectedState(address, connected);
 }
 
-Return<Result> Stream::setDevice(const DeviceAddress& address) {
-    return setParam(AudioParameter::keyRouting, address);
+Return<AudioDevice> StreamIn::getDevice() {
+    return mStreamCommon->getDevice();
 }
 
-Return<void> Stream::getParameters(const hidl_vec<hidl_string>& keys, getParameters_cb _hidl_cb) {
-    getParametersImpl({} /* context */, keys, _hidl_cb);
-    return Void();
+Return<Result> StreamIn::setDevice(const DeviceAddress& address) {
+    return mStreamCommon->setDevice(address);
 }
 
-Return<Result> Stream::setParameters(const hidl_vec<ParameterValue>& parameters) {
-    return setParametersImpl({} /* context */, parameters);
+Return<void> StreamIn::getParameters(const hidl_vec<hidl_string>& keys, getParameters_cb _hidl_cb) {
+    return mStreamCommon->getParameters(keys, _hidl_cb);
 }
 
-Return<Result> Stream::setConnectedState(const DeviceAddress& address, bool connected) {
-    return setParam(
-        connected ? AudioParameter::keyStreamConnect : AudioParameter::keyStreamDisconnect,
-        address);
+Return<Result> StreamIn::setParameters(const hidl_vec<ParameterValue>& parameters) {
+    return mStreamCommon->setParameters(parameters);
+}
+
+Return<void> StreamIn::debugDump(const hidl_handle& fd) {
+    return mStreamCommon->debugDump(fd);
 }
 #elif defined(AUDIO_HAL_VERSION_4_0)
-Return<void> Stream::getDevices(getDevices_cb _hidl_cb) {
-    int device = 0;
-    Result retval = getParam(AudioParameter::keyRouting, &device);
-    hidl_vec<DeviceAddress> devices;
+Return<void> StreamIn::getDevices(getDevices_cb _hidl_cb) {
+    return mStreamCommon->getDevices(_hidl_cb);
+}
+
+Return<Result> StreamIn::setDevices(const hidl_vec<DeviceAddress>& devices) {
+    return mStreamCommon->setDevices(devices);
+}
+Return<void> StreamIn::getParameters(const hidl_vec<ParameterValue>& context,
+                                     const hidl_vec<hidl_string>& keys, getParameters_cb _hidl_cb) {
+    return mStreamCommon->getParameters(context, keys, _hidl_cb);
+}
+
+Return<Result> StreamIn::setParameters(const hidl_vec<ParameterValue>& context,
+                                       const hidl_vec<ParameterValue>& parameters) {
+    return mStreamCommon->setParameters(context, parameters);
+}
+#endif
+
+Return<Result> StreamIn::start() {
+    return mStreamMmap->start();
+}
+
+Return<Result> StreamIn::stop() {
+    return mStreamMmap->stop();
+}
+
+Return<void> StreamIn::createMmapBuffer(int32_t minSizeFrames, createMmapBuffer_cb _hidl_cb) {
+    return mStreamMmap->createMmapBuffer(minSizeFrames, audio_stream_in_frame_size(mStream),
+                                         _hidl_cb);
+}
+
+Return<void> StreamIn::getMmapPosition(getMmapPosition_cb _hidl_cb) {
+    return mStreamMmap->getMmapPosition(_hidl_cb);
+}
+
+Return<Result> StreamIn::close() {
+    if (mIsClosed) return Result::INVALID_STATE;
+    mIsClosed = true;
+    if (mReadThread.get()) {
+        mStopReadThread.store(true, std::memory_order_release);
+    }
+    if (mEfGroup) {
+        mEfGroup->wake(static_cast<uint32_t>(MessageQueueFlagBits::NOT_FULL));
+    }
+    return Result::OK;
+}
+
+// Methods from ::android::hardware::audio::AUDIO_HAL_VERSION::IStreamIn follow.
+Return<void> StreamIn::getAudioSource(getAudioSource_cb _hidl_cb) {
+    int halSource;
+    Result retval = mStreamCommon->getParam(AudioParameter::keyInputSource, &halSource);
+    AudioSource source(AudioSource::DEFAULT);
     if (retval == Result::OK) {
-        devices.resize(1);
-        devices[0].device = static_cast<AudioDevice>(device);
+        source = AudioSource(halSource);
     }
-    _hidl_cb(retval, devices);
+    _hidl_cb(retval, source);
     return Void();
 }
 
-Return<Result> Stream::setDevices(const hidl_vec<DeviceAddress>& devices) {
-    // FIXME: can the legacy API set multiple device with address ?
-    if (devices.size() > 1) {
-        return Result::NOT_SUPPORTED;
+Return<Result> StreamIn::setGain(float gain) {
+    if (!isGainNormalized(gain)) {
+        ALOGW("Can not set a stream input gain (%f) outside [0,1]", gain);
+        return Result::INVALID_ARGUMENTS;
     }
-    DeviceAddress address;
-    if (devices.size() == 1) {
-        address = devices[0];
-    } else {
-        address.device = AudioDevice::NONE;
-    }
-    return setParam(AudioParameter::keyRouting, address);
+    return Stream::analyzeStatus("set_gain", mStream->set_gain(mStream, gain));
 }
-Return<void> Stream::getParameters(const hidl_vec<ParameterValue>& context,
-                                   const hidl_vec<hidl_string>& keys, getParameters_cb _hidl_cb) {
-    getParametersImpl(context, keys, _hidl_cb);
+
+Return<void> StreamIn::prepareForReading(uint32_t frameSize, uint32_t framesCount,
+                                         prepareForReading_cb _hidl_cb) {
+    status_t status;
+    ThreadInfo threadInfo = {0, 0};
+
+    // Wrap the _hidl_cb to return an error
+    auto sendError = [&threadInfo, &_hidl_cb](Result result) {
+        _hidl_cb(result, CommandMQ::Descriptor(), DataMQ::Descriptor(), StatusMQ::Descriptor(),
+                 threadInfo);
+
+    };
+
+    // Create message queues.
+    if (mDataMQ) {
+        ALOGE("the client attempts to call prepareForReading twice");
+        sendError(Result::INVALID_STATE);
+        return Void();
+    }
+    std::unique_ptr<CommandMQ> tempCommandMQ(new CommandMQ(1));
+
+    // Check frameSize and framesCount
+    if (frameSize == 0 || framesCount == 0) {
+        ALOGE("Null frameSize (%u) or framesCount (%u)", frameSize, framesCount);
+        sendError(Result::INVALID_ARGUMENTS);
+        return Void();
+    }
+
+    if (frameSize > Stream::MAX_BUFFER_SIZE / framesCount) {
+        ALOGE("Buffer too big: %u*%u bytes > MAX_BUFFER_SIZE (%u)", frameSize, framesCount,
+              Stream::MAX_BUFFER_SIZE);
+        sendError(Result::INVALID_ARGUMENTS);
+        return Void();
+    }
+    std::unique_ptr<DataMQ> tempDataMQ(new DataMQ(frameSize * framesCount, true /* EventFlag */));
+
+    std::unique_ptr<StatusMQ> tempStatusMQ(new StatusMQ(1));
+    if (!tempCommandMQ->isValid() || !tempDataMQ->isValid() || !tempStatusMQ->isValid()) {
+        ALOGE_IF(!tempCommandMQ->isValid(), "command MQ is invalid");
+        ALOGE_IF(!tempDataMQ->isValid(), "data MQ is invalid");
+        ALOGE_IF(!tempStatusMQ->isValid(), "status MQ is invalid");
+        sendError(Result::INVALID_ARGUMENTS);
+        return Void();
+    }
+    EventFlag* tempRawEfGroup{};
+    status = EventFlag::createEventFlag(tempDataMQ->getEventFlagWord(), &tempRawEfGroup);
+    std::unique_ptr<EventFlag, void (*)(EventFlag*)> tempElfGroup(
+        tempRawEfGroup, [](auto* ef) { EventFlag::deleteEventFlag(&ef); });
+    if (status != OK || !tempElfGroup) {
+        ALOGE("failed creating event flag for data MQ: %s", strerror(-status));
+        sendError(Result::INVALID_ARGUMENTS);
+        return Void();
+    }
+
+    // Create and launch the thread.
+    auto tempReadThread =
+        std::make_unique<ReadThread>(&mStopReadThread, mStream, tempCommandMQ.get(),
+                                     tempDataMQ.get(), tempStatusMQ.get(), tempElfGroup.get());
+    if (!tempReadThread->init()) {
+        ALOGW("failed to start reader thread: %s", strerror(-status));
+        sendError(Result::INVALID_ARGUMENTS);
+        return Void();
+    }
+    status = tempReadThread->run("reader", PRIORITY_URGENT_AUDIO);
+    if (status != OK) {
+        ALOGW("failed to start reader thread: %s", strerror(-status));
+        sendError(Result::INVALID_ARGUMENTS);
+        return Void();
+    }
+
+    mCommandMQ = std::move(tempCommandMQ);
+    mDataMQ = std::move(tempDataMQ);
+    mStatusMQ = std::move(tempStatusMQ);
+    mReadThread = tempReadThread.release();
+    mEfGroup = tempElfGroup.release();
+    threadInfo.pid = getpid();
+    threadInfo.tid = mReadThread->getTid();
+    _hidl_cb(Result::OK, *mCommandMQ->getDesc(), *mDataMQ->getDesc(), *mStatusMQ->getDesc(),
+             threadInfo);
     return Void();
 }
 
-Return<Result> Stream::setParameters(const hidl_vec<ParameterValue>& context,
-                                     const hidl_vec<ParameterValue>& parameters) {
-    return setParametersImpl(context, parameters);
-}
-#endif
-
-Return<Result> Stream::start() {
-    return Result::NOT_SUPPORTED;
+Return<uint32_t> StreamIn::getInputFramesLost() {
+    return mStream->get_input_frames_lost(mStream);
 }
 
-Return<Result> Stream::stop() {
-    return Result::NOT_SUPPORTED;
-}
-
-Return<void> Stream::createMmapBuffer(int32_t minSizeFrames __unused,
-                                      createMmapBuffer_cb _hidl_cb) {
+// static
+Result StreamIn::getCapturePositionImpl(audio_stream_in_t* stream, uint64_t* frames,
+                                        uint64_t* time) {
+    // HAL may have a stub function, always returning ENOSYS, don't
+    // spam the log in this case.
+    static const std::vector<int> ignoredErrors{ENOSYS};
     Result retval(Result::NOT_SUPPORTED);
-    MmapBufferInfo info;
-    _hidl_cb(retval, info);
-    return Void();
-}
-
-Return<void> Stream::getMmapPosition(getMmapPosition_cb _hidl_cb) {
-    Result retval(Result::NOT_SUPPORTED);
-    MmapPosition position;
-    _hidl_cb(retval, position);
-    return Void();
-}
-
-Return<Result> Stream::close() {
-    return Result::NOT_SUPPORTED;
-}
-
-Return<void> Stream::debug(const hidl_handle& fd, const hidl_vec<hidl_string>& /* options */) {
-    if (fd.getNativeHandle() != nullptr && fd->numFds == 1) {
-        analyzeStatus("dump", mStream->dump(mStream, fd->data[0]));
+    if (stream->get_capture_position == NULL) return retval;
+    int64_t halFrames, halTime;
+    retval = Stream::analyzeStatus("get_capture_position",
+                                   stream->get_capture_position(stream, &halFrames, &halTime),
+                                   ignoredErrors);
+    if (retval == Result::OK) {
+        *frames = halFrames;
+        *time = halTime;
     }
+    return retval;
+};
+
+Return<void> StreamIn::getCapturePosition(getCapturePosition_cb _hidl_cb) {
+    uint64_t frames = 0, time = 0;
+    Result retval = getCapturePositionImpl(mStream, &frames, &time);
+    _hidl_cb(retval, frames, time);
     return Void();
 }
 
-#ifdef AUDIO_HAL_VERSION_2_0
-Return<void> Stream::debugDump(const hidl_handle& fd) {
-    return debug(fd, {} /* options */);
+Return<void> StreamIn::debug(const hidl_handle& fd, const hidl_vec<hidl_string>& options) {
+    return mStreamCommon->debug(fd, options);
+}
+
+#ifdef AUDIO_HAL_VERSION_4_0
+Return<void> StreamIn::updateSinkMetadata(const SinkMetadata& sinkMetadata) {
+    if (mStream->update_sink_metadata == nullptr) {
+        return Void();  // not supported by the HAL
+    }
+    std::vector<record_track_metadata> halTracks;
+    halTracks.reserve(sinkMetadata.tracks.size());
+    for (auto& metadata : sinkMetadata.tracks) {
+        halTracks.push_back(
+            {.source = static_cast<audio_source_t>(metadata.source), .gain = metadata.gain});
+    }
+    const sink_metadata_t halMetadata = {
+        .track_count = halTracks.size(), .tracks = halTracks.data(),
+    };
+    mStream->update_sink_metadata(mStream, &halMetadata);
+    return Void();
+}
+
+Return<void> StreamIn::getActiveMicrophones(getActiveMicrophones_cb _hidl_cb) {
+    Result retval = Result::NOT_SUPPORTED;
+    size_t actual_mics = AUDIO_MICROPHONE_MAX_COUNT;
+    audio_microphone_characteristic_t mic_array[AUDIO_MICROPHONE_MAX_COUNT];
+
+    hidl_vec<MicrophoneInfo> microphones;
+    if (mStream->get_active_microphones != NULL &&
+        mStream->get_active_microphones(mStream, &mic_array[0], &actual_mics) == 0) {
+        microphones.resize(actual_mics);
+        for (size_t i = 0; i < actual_mics; ++i) {
+            halToMicrophoneCharacteristics(&microphones[i], mic_array[i]);
+        }
+        retval = Result::OK;
+    }
+
+    _hidl_cb(retval, microphones);
+    return Void();
 }
 #endif
 
