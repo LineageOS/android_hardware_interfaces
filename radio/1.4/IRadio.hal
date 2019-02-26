@@ -115,11 +115,13 @@ interface IRadio extends @1.3::IRadio {
      * PUK/PIN state of the subscription and the service state of the radio.
      *
      * Some countries or carriers require some emergency numbers that must be handled with normal
-     * call routing or emergency routing. If the 'routing' field is specified as
-     * @1.4::EmergencyNumberRouting#NORMAL, the implementation must use normal call routing to
-     * handle the call; if it is specified as @1.4::EmergencyNumberRouting#EMERGENCY, the
-     * implementation must use emergency routing to handle the call; if it is
-     * @1.4::EmergencyNumberRouting#UNKNOWN, Android does not know how to handle the call.
+     * call routing if possible or emergency routing. 1) if the 'routing' field is specified as
+     * @1.4::EmergencyNumberRouting#NORMAL, the implementation must try the full radio service to
+     * use normal call routing to handle the call; if service cannot support normal routing, the
+     * implementation must use emergency routing to handle the call. 2) if 'routing' is specified
+     * as @1.4::EmergencyNumberRouting#EMERGENCY, the implementation must use emergency routing to
+     * handle the call. 3) if 'routing' is specified as @1.4::EmergencyNumberRouting#UNKNOWN,
+     * Android does not know how to handle the call.
      *
      * If the dialed emergency number does not have a specified emergency service category, the
      * 'categories' field is set to @1.4::EmergencyServiceCategory#UNSPECIFIED; if the dialed
