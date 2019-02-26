@@ -165,4 +165,27 @@ interface IStreamIn extends IStream {
      */
     getActiveMicrophones()
                generates(Result retval, vec<MicrophoneInfo> microphones);
+
+    /**
+     * Specifies the logical microphone (for processing).
+     *
+     * Optional method
+     *
+     * @param Direction constant
+     * @return retval OK if the call is successful, an error code otherwise.
+     */
+    setMicrophoneDirection(MicrophoneDirection direction)
+               generates(Result retval);
+
+    /**
+     * Specifies the zoom factor for the selected microphone (for processing).
+     *
+     * Optional method
+     *
+     * @param the desired field dimension of microphone capture. Range is from -1 (wide angle),
+     * though 0 (no zoom) to 1 (maximum zoom).
+     *
+     * @return retval OK if the call is not successful, an error code otherwise.
+     */
+    setMicrophoneFieldDimension(float zoom) generates(Result retval);
 };
