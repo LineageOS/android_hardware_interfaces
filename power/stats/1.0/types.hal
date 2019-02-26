@@ -26,9 +26,9 @@ enum Status : uint32_t {
 struct RailInfo {
     /** Index corresponding to the rail */
     uint32_t index;
-    /** Name of the rail */
+    /** Name of the rail (opaque to the framework) */
     string railName;
-    /** Name of the subsystem to which this rail belongs */
+    /** Name of the subsystem to which this rail belongs (opaque to the framework) */
     string subsysName;
     /** Hardware sampling rate */
     uint32_t samplingRate;
@@ -71,7 +71,7 @@ enum PowerEntityType : uint32_t {
 struct PowerEntityInfo {
     /** Unique ID corresponding to the PowerEntity */
     uint32_t powerEntityId;
-    /** Name of the PowerEntity */
+    /** Name of the PowerEntity (opaque to the framework) */
     string powerEntityName;
     /** Type of the PowerEntity */
     PowerEntityType type;
@@ -82,7 +82,7 @@ struct PowerEntityStateInfo {
      * ID corresponding to the state. Unique for a given PowerEntityStateSpace
      */
     uint32_t powerEntityStateId;
-    /** Name of the state */
+    /** Name of the state (opaque to the framework) */
     string powerEntityStateName;
 };
 
