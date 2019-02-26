@@ -52,6 +52,7 @@ using ::test_helper::for_each;
 using ::test_helper::MixedTyped;
 using ::test_helper::MixedTypedExample;
 using ::test_helper::resize_accordingly;
+using HidlToken = hidl_array<uint8_t, static_cast<uint32_t>(Constant::BYTE_SIZE_OF_CACHE_TOKEN)>;
 
 template <typename T>
 void copy_back_(std::map<int, std::vector<T>>* dst, const std::vector<RequestArgument>& ra,
@@ -540,7 +541,8 @@ void PrepareModel(const sp<V1_2::IDevice>& device, const V1_2::Model& model,
     sp<PreparedModelCallback> preparedModelCallback = new PreparedModelCallback();
     ASSERT_NE(nullptr, preparedModelCallback.get());
     Return<ErrorStatus> prepareLaunchStatus = device->prepareModel_1_2(
-        model, ExecutionPreference::FAST_SINGLE_ANSWER, preparedModelCallback);
+            model, ExecutionPreference::FAST_SINGLE_ANSWER, hidl_vec<hidl_handle>(),
+            hidl_vec<hidl_handle>(), HidlToken(), preparedModelCallback);
     ASSERT_TRUE(prepareLaunchStatus.isOk());
     ASSERT_EQ(ErrorStatus::NONE, static_cast<ErrorStatus>(prepareLaunchStatus));
 

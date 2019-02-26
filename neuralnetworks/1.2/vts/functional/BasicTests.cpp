@@ -102,10 +102,15 @@ TEST_F(NeuralnetworksHidlTest, GetDeviceSupportedExtensionsTest) {
     EXPECT_TRUE(ret.isOk());
 }
 
-// isCachingSupported test
-TEST_F(NeuralnetworksHidlTest, IsCachingSupported) {
-    Return<void> ret = device->isCachingSupported(
-            [](ErrorStatus status, bool) { EXPECT_EQ(ErrorStatus::NONE, status); });
+// getNumberOfCacheFilesNeeded test
+TEST_F(NeuralnetworksHidlTest, getNumberOfCacheFilesNeeded) {
+    Return<void> ret = device->getNumberOfCacheFilesNeeded(
+            [](ErrorStatus status, uint32_t numModelCache, uint32_t numDataCache) {
+                EXPECT_EQ(ErrorStatus::NONE, status);
+                EXPECT_LE(numModelCache,
+                          static_cast<uint32_t>(Constant::MAX_NUMBER_OF_CACHE_FILES));
+                EXPECT_LE(numDataCache, static_cast<uint32_t>(Constant::MAX_NUMBER_OF_CACHE_FILES));
+            });
     EXPECT_TRUE(ret.isOk());
 }
 }  // namespace functional
