@@ -30,6 +30,11 @@ enum Constant : uint32_t {
      * The byte size of the cache token.
      */
     BYTE_SIZE_OF_CACHE_TOKEN = 32,
+
+    /**
+     * The maximum number of files for each type of cache in compilation caching.
+     */
+    MAX_NUMBER_OF_CACHE_FILES = 32,
 };
 
 enum OperandType : @1.0::OperandType {
