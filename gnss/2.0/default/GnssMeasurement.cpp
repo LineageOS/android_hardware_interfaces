@@ -16,7 +16,9 @@
 #define LOG_TAG "GnssMeasurement"
 
 #include "GnssMeasurement.h"
+
 #include <log/log.h>
+#include <utils/SystemClock.h>
 
 namespace android {
 namespace hardware {
@@ -129,7 +131,18 @@ GnssData GnssMeasurement::getMockMeasurement() {
                                                        .driftNsps = -51.757811607455452,
                                                        .driftUncertaintyNsps = 310.64968328491528,
                                                        .hwClockDiscontinuityCount = 1};
-    GnssData gnssData = {.measurements = measurements, .clock = clock};
+
+    ElapsedRealtime timestamp = {
+            .flags = ElapsedRealtimeFlags::HAS_TIMESTAMP_NS |
+                     ElapsedRealtimeFlags::HAS_TIME_UNCERTAINTY_NS,
+            .timestampNs = static_cast<uint64_t>(::android::elapsedRealtimeNano()),
+            // This is an hardcoded value indicating a 1ms of uncertainty between the two clocks.
+            // In an actual implementation provide an estimate of the synchronization uncertainty
+            // or don't set the field.
+            .timeUncertaintyNs = 1000000};
+
+    GnssData gnssData = {
+            .measurements = measurements, .clock = clock, .elapsedRealtime = timestamp};
     return gnssData;
 }
 

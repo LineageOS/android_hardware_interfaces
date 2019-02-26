@@ -31,7 +31,9 @@ using IAGnssRil_2_0 = android::hardware::gnss::V2_0::IAGnssRil;
 using IAGnss_2_0 = android::hardware::gnss::V2_0::IAGnss;
 using IAGnss_1_0 = android::hardware::gnss::V1_0::IAGnss;
 using IAGnssCallback_2_0 = android::hardware::gnss::V2_0::IAGnssCallback;
+
 using android::hardware::gnss::V1_0::IGnssNi;
+using android::hardware::gnss::V2_0::ElapsedRealtimeFlags;
 using android::hardware::gnss::visibility_control::V1_0::IGnssVisibilityControl;
 
 /*
@@ -268,4 +270,65 @@ TEST_F(GnssHalTest, TestGnssVisibilityControlExtension) {
     auto result = iGnssVisibilityControl->enableNfwLocationAccess(proxyApps);
     ASSERT_TRUE(result.isOk());
     EXPECT_TRUE(result);
+}
+
+/*
+ * TestGnssDataElapsedRealtimeFlags:
+ * Sets a GnssMeasurementCallback, waits for a GnssData object, and verifies the flags in member
+ * elapsedRealitme are valid.
+ */
+TEST_F(GnssHalTest, TestGnssDataElapsedRealtimeFlags) {
+    const int kFirstGnssMeasurementTimeoutSeconds = 10;
+
+    auto gnssMeasurement = gnss_hal_->getExtensionGnssMeasurement_2_0();
+    if (!gnssMeasurement.isOk()) {
+        return;
+    }
+
+    sp<IGnssMeasurement_2_0> iGnssMeasurement = gnssMeasurement;
+    if (iGnssMeasurement == nullptr) {
+        return;
+    }
+
+    sp<IGnssMeasurementCallback_2_0> callback = new GnssMeasurementCallback(*this);
+
+    auto result = iGnssMeasurement->setCallback_2_0(callback, /* enableFullTracking= */ true);
+    ASSERT_TRUE(result.isOk());
+    EXPECT_EQ(result, IGnssMeasurement_1_0::GnssMeasurementStatus::SUCCESS);
+
+    wait(kFirstGnssMeasurementTimeoutSeconds);
+    EXPECT_EQ(measurement_called_count_, 1);
+
+    ASSERT_TRUE((int)last_measurement_.elapsedRealtime.flags >= 0 &&
+                (int)last_measurement_.elapsedRealtime.flags <=
+                        (int)ElapsedRealtimeFlags::HAS_TIME_UNCERTAINTY_NS);
+
+    // We expect a non-zero timestamp when set.
+    if (last_measurement_.elapsedRealtime.flags & ElapsedRealtimeFlags::HAS_TIMESTAMP_NS) {
+        ASSERT_TRUE(last_measurement_.elapsedRealtime.timestampNs != 0);
+    }
+
+    iGnssMeasurement->close();
+}
+
+TEST_F(GnssHalTest, TestGnssLocationElapsedRealtime) {
+    StartAndCheckFirstLocation();
+
+    ASSERT_TRUE((int)last_location_.elapsedRealtime.flags >= 0 &&
+                (int)last_location_.elapsedRealtime.flags <=
+                        (int)ElapsedRealtimeFlags::HAS_TIME_UNCERTAINTY_NS);
+
+    // We expect a non-zero timestamp when set.
+    if (last_location_.elapsedRealtime.flags & ElapsedRealtimeFlags::HAS_TIMESTAMP_NS) {
+        ASSERT_TRUE(last_location_.elapsedRealtime.timestampNs != 0);
+    }
+
+    StopAndClearLocations();
+}
+
+// This test only verify that injectBestLocation_2_0 does not crash.
+TEST_F(GnssHalTest, TestInjectBestLocation_2_0) {
+    StartAndCheckFirstLocation();
+    gnss_hal_->injectBestLocation_2_0(last_location_);
+    StopAndClearLocations();
 }
