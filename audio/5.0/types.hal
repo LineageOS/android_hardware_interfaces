@@ -49,32 +49,9 @@ struct TimeSpec {
     uint64_t tvNSec;  // nanoseconds
 };
 
-/**
- * IEEE 802 MAC address.
- */
-typedef uint8_t[6] MacAddress;
-
 struct ParameterValue {
     string key;
     string value;
-};
-
-/**
- * Specifies a device in case when several devices of the same type
- * can be connected (e.g. BT A2DP, USB).
- */
-struct DeviceAddress {
-    AudioDevice device;  // discriminator
-    union Address {
-        MacAddress mac;     // used for BLUETOOTH_A2DP_*
-        uint8_t[4] ipv4;    // used for IP
-        struct Alsa {
-            int32_t card;
-            int32_t device;
-        } alsa;             // used for USB_*
-    } address;
-    string busAddress;      // used for BUS
-    string rSubmixAddress;  // used for REMOTE_SUBMIX
 };
 
 enum MmapBufferFlag : uint32_t {
@@ -243,4 +220,30 @@ struct MicrophoneInfo {
      *  capsule. sqrt(x^2 + y^2 + z^2) = 1
      */
     AudioMicrophoneCoordinate               orientation;
+};
+
+/**
+ * Constants used by the HAL to determine how to select microphones and process those inputs in
+ * order to optimize for capture in the specified direction.
+ *
+ * MicrophoneDirection Constants are defined in MicrophoneDirection.java.
+ */
+@export(name="audio_microphone_direction_t", value_prefix="MIC_DIRECTION_")
+enum MicrophoneDirection : int32_t {
+    /**
+     * Don't do any directionality processing of the activated microphone(s).
+     */
+    UNSPECIFIED = 0,
+    /**
+     * Optimize capture for audio coming from the screen-side of the device.
+     */
+    FRONT = 1,
+    /**
+     * Optimize capture for audio coming from the side of the device opposite the screen.
+     */
+    BACK = 2,
+    /**
+     * Optimize capture for audio coming from an off-device microphone.
+     */
+    EXTERNAL = 3,
 };

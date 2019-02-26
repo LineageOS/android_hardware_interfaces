@@ -53,6 +53,7 @@ enum Result : int32_t {
  * | Volume         | 6..8   | 0 none
  * | management     |        | 1 implements volume control
  * |                |        | 2 requires volume indication
+ * |                |        | 3 monitors requested volume
  * |                |        | 4 reserved
  * +----------------+--------+--------------------------------------------------
  * | Device         | 9..11  | 0 none
@@ -136,6 +137,7 @@ enum EffectFlags : int32_t {
     VOLUME_MASK = ((1 << VOLUME_SIZE) -1) << VOLUME_SHIFT,
     VOLUME_CTRL = 1 << VOLUME_SHIFT,
     VOLUME_IND = 2 << VOLUME_SHIFT,
+    VOLUME_MONITOR = 3 << VOLUME_SHIFT,
     VOLUME_NONE = 0 << VOLUME_SHIFT,
 
     // Device indication
