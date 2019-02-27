@@ -23,6 +23,7 @@
 #include "wifi_chip.h"
 
 #include "mock_wifi_feature_flags.h"
+#include "mock_wifi_iface_util.h"
 #include "mock_wifi_legacy_hal.h"
 #include "mock_wifi_mode_controller.h"
 
@@ -263,7 +264,7 @@ class WifiChipTest : public Test {
    public:
     void SetUp() override {
         chip_ = new WifiChip(chip_id_, legacy_hal_, mode_controller_,
-                             feature_flags_);
+                             iface_util_, feature_flags_);
 
         EXPECT_CALL(*mode_controller_, changeFirmwareMode(testing::_))
             .WillRepeatedly(testing::Return(true));
@@ -278,6 +279,8 @@ class WifiChipTest : public Test {
         new NiceMock<legacy_hal::MockWifiLegacyHal>};
     std::shared_ptr<NiceMock<mode_controller::MockWifiModeController>>
         mode_controller_{new NiceMock<mode_controller::MockWifiModeController>};
+    std::shared_ptr<NiceMock<iface_util::MockWifiIfaceUtil>> iface_util_{
+        new NiceMock<iface_util::MockWifiIfaceUtil>};
     std::shared_ptr<NiceMock<feature_flags::MockWifiFeatureFlags>>
         feature_flags_{new NiceMock<feature_flags::MockWifiFeatureFlags>};
 };

@@ -30,8 +30,12 @@ using hidl_return_util::validateAndCall;
 
 WifiStaIface::WifiStaIface(
     const std::string& ifname,
-    const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal)
-    : ifname_(ifname), legacy_hal_(legacy_hal), is_valid_(true) {
+    const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal,
+    const std::weak_ptr<iface_util::WifiIfaceUtil> iface_util)
+    : ifname_(ifname),
+      legacy_hal_(legacy_hal),
+      iface_util_(iface_util),
+      is_valid_(true) {
     // Turn on DFS channel usage for STA iface.
     legacy_hal::wifi_error legacy_status =
         legacy_hal_.lock()->setDfsFlag(ifname_, true);
@@ -622,28 +626,17 @@ WifiStaIface::getDebugRxPacketFatesInternal() {
 
 WifiStatus WifiStaIface::setMacAddressInternal(
     const std::array<uint8_t, 6>& mac) {
-    if (!iface_tool_.SetWifiUpState(false)) {
-        LOG(ERROR) << "SetWifiUpState(false) failed.";
+    bool status = iface_util_.lock()->setMacAddress(ifname_, mac);
+    if (!status) {
         return createWifiStatus(WifiStatusCode::ERROR_UNKNOWN);
     }
-
-    if (!iface_tool_.SetMacAddress(ifname_.c_str(), mac)) {
-        LOG(ERROR) << "SetMacAddress failed.";
-        return createWifiStatus(WifiStatusCode::ERROR_UNKNOWN);
-    }
-
-    if (!iface_tool_.SetWifiUpState(true)) {
-        LOG(ERROR) << "SetWifiUpState(true) failed.";
-        return createWifiStatus(WifiStatusCode::ERROR_UNKNOWN);
-    }
-    LOG(DEBUG) << "Successfully SetMacAddress.";
     return createWifiStatus(WifiStatusCode::SUCCESS);
 }
 
 std::pair<WifiStatus, std::array<uint8_t, 6>>
 WifiStaIface::getFactoryMacAddressInternal() {
     std::array<uint8_t, 6> mac =
-        iface_tool_.GetFactoryMacAddress(ifname_.c_str());
+        iface_util_.lock()->getFactoryMacAddress(ifname_);
     return {createWifiStatus(WifiStatusCode::SUCCESS), mac};
 }
 
