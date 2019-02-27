@@ -161,6 +161,11 @@ Return<Result> PresetReverbEffect::close() {
     return mEffect->close();
 }
 
+Return<void> PresetReverbEffect::debug(const hidl_handle& fd,
+                                       const hidl_vec<hidl_string>& options) {
+    return mEffect->debug(fd, options);
+}
+
 // Methods from ::android::hardware::audio::effect::CPP_VERSION::IPresetReverbEffect follow.
 Return<Result> PresetReverbEffect::setPreset(IPresetReverbEffect::Preset preset) {
     return mEffect->setParam(REVERB_PARAM_PRESET, static_cast<t_reverb_presets>(preset));

@@ -161,6 +161,10 @@ Return<Result> BassBoostEffect::close() {
     return mEffect->close();
 }
 
+Return<void> BassBoostEffect::debug(const hidl_handle& fd, const hidl_vec<hidl_string>& options) {
+    return mEffect->debug(fd, options);
+}
+
 // Methods from ::android::hardware::audio::effect::CPP_VERSION::IBassBoostEffect follow.
 Return<void> BassBoostEffect::isStrengthSupported(isStrengthSupported_cb _hidl_cb) {
     return mEffect->getIntegerParam(BASSBOOST_PARAM_STRENGTH_SUPPORTED, _hidl_cb);

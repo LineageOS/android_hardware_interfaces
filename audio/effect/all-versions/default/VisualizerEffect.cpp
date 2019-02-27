@@ -162,6 +162,10 @@ Return<Result> VisualizerEffect::close() {
     return mEffect->close();
 }
 
+Return<void> VisualizerEffect::debug(const hidl_handle& fd, const hidl_vec<hidl_string>& options) {
+    return mEffect->debug(fd, options);
+}
+
 // Methods from ::android::hardware::audio::effect::CPP_VERSION::IVisualizerEffect follow.
 Return<Result> VisualizerEffect::setCaptureSize(uint16_t captureSize) {
     Result retval = mEffect->setParam(VISUALIZER_PARAM_CAPTURE_SIZE, captureSize);

@@ -184,6 +184,10 @@ Return<Result> EqualizerEffect::close() {
     return mEffect->close();
 }
 
+Return<void> EqualizerEffect::debug(const hidl_handle& fd, const hidl_vec<hidl_string>& options) {
+    return mEffect->debug(fd, options);
+}
+
 // Methods from ::android::hardware::audio::effect::CPP_VERSION::IEqualizerEffect follow.
 Return<void> EqualizerEffect::getNumBands(getNumBands_cb _hidl_cb) {
     return mEffect->getIntegerParam(EQ_PARAM_NUM_BANDS, _hidl_cb);
