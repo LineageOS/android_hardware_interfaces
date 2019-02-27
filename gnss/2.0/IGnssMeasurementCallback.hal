@@ -18,6 +18,7 @@ package android.hardware.gnss@2.0;
 
 import @1.0::IGnssMeasurementCallback;
 import @1.1::IGnssMeasurementCallback;
+import ElapsedRealtime;
 
 /** The callback interface to report measurements from the HAL. */
 interface IGnssMeasurementCallback extends @1.1::IGnssMeasurementCallback {
@@ -492,6 +493,12 @@ interface IGnssMeasurementCallback extends @1.1::IGnssMeasurementCallback {
 
         /** The GNSS clock time reading. */
         GnssClock clock;
+
+        /**
+         * Timing information of the GNSS data synchronized with SystemClock.elapsedRealtimeNanos()
+         * clock.
+         */
+        ElapsedRealtime elapsedRealtime;
     };
 
     /**

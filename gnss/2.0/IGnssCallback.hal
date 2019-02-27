@@ -18,6 +18,7 @@ package android.hardware.gnss@2.0;
 
 import @1.0::IGnssCallback;
 import @1.1::IGnssCallback;
+import GnssLocation;
 
 /**
  * The interface is required for the HAL to communicate certain information
@@ -43,5 +44,12 @@ interface IGnssCallback extends @1.1::IGnssCallback {
      * @param capabilities Capability parameter is a bit field of the Capabilities enum.
      */
     gnssSetCapabilitiesCb_2_0(bitfield<Capabilities> capabilities);
+
+   /**
+     * Called when a GNSS location is available.
+     *
+     * @param location Location information from HAL.
+     */
+    gnssLocationCb_2_0(GnssLocation location);
 
 };

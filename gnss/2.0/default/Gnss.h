@@ -91,15 +91,16 @@ struct Gnss : public IGnss {
     getExtensionMeasurementCorrections() override;
     Return<sp<visibility_control::V1_0::IGnssVisibilityControl>> getExtensionVisibilityControl()
             override;
+    Return<bool> injectBestLocation_2_0(const V2_0::GnssLocation& location) override;
 
-   private:
-     Return<void> reportLocation(const GnssLocation&) const;
-     static sp<V2_0::IGnssCallback> sGnssCallback_2_0;
-     static sp<V1_1::IGnssCallback> sGnssCallback_1_1;
-     std::atomic<long> mMinIntervalMs;
-     std::atomic<bool> mIsActive;
-     std::thread mThread;
-     mutable std::mutex mMutex;
+  private:
+    Return<void> reportLocation(const V2_0::GnssLocation&) const;
+    static sp<V2_0::IGnssCallback> sGnssCallback_2_0;
+    static sp<V1_1::IGnssCallback> sGnssCallback_1_1;
+    std::atomic<long> mMinIntervalMs;
+    std::atomic<bool> mIsActive;
+    std::thread mThread;
+    mutable std::mutex mMutex;
 };
 
 }  // namespace implementation

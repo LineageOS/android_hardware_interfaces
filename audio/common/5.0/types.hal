@@ -643,8 +643,10 @@ struct DeviceAddress {
             int32_t device;
         } alsa;             // used for USB_*
     } address;
-    string busAddress;      // used for BUS
-    string rSubmixAddress;  // used for REMOTE_SUBMIX
+    /** Arbitrary BUS device unique address. Should not be interpreted by the framework. */
+    string busAddress;
+    /** Arbitrary REMOTE_SUBMIX device unique address. Should not be interpreted by the HAL. */
+    string rSubmixAddress;
 };
 
 /**

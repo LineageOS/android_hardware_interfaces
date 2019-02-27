@@ -18,7 +18,6 @@
 #define GNSS_HAL_TEST_H_
 
 #include <android/hardware/gnss/2.0/IGnss.h>
-
 #include <VtsHalHidlTargetTestBase.h>
 #include <VtsHalHidlTargetTestEnvBase.h>
 
@@ -29,11 +28,13 @@
 using android::hardware::Return;
 using android::hardware::Void;
 
-using android::hardware::gnss::V1_0::GnssLocation;
-
 using android::hardware::gnss::V1_0::GnssLocationFlags;
-using android::hardware::gnss::V1_1::IGnssCallback;
 using android::hardware::gnss::V2_0::IGnss;
+using android::hardware::gnss::V2_0::IGnssCallback;
+
+using GnssLocation_1_0 = android::hardware::gnss::V1_0::GnssLocation;
+using GnssLocation_2_0 = android::hardware::gnss::V2_0::GnssLocation;
+
 using IGnssMeasurementCallback_1_0 = android::hardware::gnss::V1_0::IGnssMeasurementCallback;
 using IGnssMeasurementCallback_1_1 = android::hardware::gnss::V1_1::IGnssMeasurementCallback;
 using IGnssMeasurementCallback_2_0 = android::hardware::gnss::V2_0::IGnssMeasurementCallback;
@@ -97,10 +98,15 @@ class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
         Return<void> gnssRequestTimeCb() override { return Void(); }
         // Actual (test) callback handlers
         Return<void> gnssNameCb(const android::hardware::hidl_string& name) override;
-        Return<void> gnssLocationCb(const GnssLocation& location) override;
+        Return<void> gnssLocationCb(const GnssLocation_1_0& location) override;
+        Return<void> gnssLocationCb_2_0(const GnssLocation_2_0& location) override;
         Return<void> gnssSetCapabilitesCb(uint32_t capabilities) override;
+        Return<void> gnssSetCapabilitiesCb_2_0(uint32_t capabilities) override;
         Return<void> gnssSetSystemInfoCb(const IGnssCallback::GnssSystemInfo& info) override;
         Return<void> gnssSvStatusCb(const IGnssCallback::GnssSvStatus& svStatus) override;
+
+      private:
+        Return<void> gnssLocationCbImpl(const GnssLocation_2_0& location);
     };
 
     /* Callback class for GnssMeasurement. */
@@ -147,7 +153,7 @@ class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
      *
      *   check_speed: true if speed related fields are also verified.
      */
-    void CheckLocation(const GnssLocation& location, const bool check_speed);
+    void CheckLocation(const GnssLocation_2_0& location, const bool check_speed);
 
     /*
      * StartAndCheckLocations:
@@ -186,7 +192,7 @@ class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
 
     IGnssCallback::GnssSystemInfo last_info_;
     uint32_t last_capabilities_;
-    GnssLocation last_location_;
+    GnssLocation_2_0 last_location_;
     IGnssMeasurementCallback_2_0::GnssData last_measurement_;
     android::hardware::hidl_string last_name_;
 
