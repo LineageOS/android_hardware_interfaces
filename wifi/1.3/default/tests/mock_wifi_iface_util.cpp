@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,34 +14,24 @@
  * limitations under the License.
  */
 
-#ifndef MOCK_WIFI_FEATURE_FLAGS_H_
-#define MOCK_WIFI_FEATURE_FLAGS_H_
-
+#include <android-base/logging.h>
+#include <android-base/macros.h>
 #include <gmock/gmock.h>
-#undef NAN  // This is weird, NAN is defined in bionic/libc/include/math.h:38
 
-#include "wifi_feature_flags.h"
+#undef NAN  // This is weird, NAN is defined in bionic/libc/include/math.h:38
+#include "mock_wifi_iface_util.h"
 
 namespace android {
 namespace hardware {
 namespace wifi {
 namespace V1_3 {
 namespace implementation {
-namespace feature_flags {
+namespace iface_util {
 
-class MockWifiFeatureFlags : public WifiFeatureFlags {
-   public:
-    MockWifiFeatureFlags();
-
-    MOCK_METHOD0(getChipModes, std::vector<V1_0::IWifiChip::ChipMode>());
-    MOCK_METHOD0(isApMacRandomizationDisabled, bool());
-};
-
-}  // namespace feature_flags
+MockWifiIfaceUtil::MockWifiIfaceUtil() : WifiIfaceUtil() {}
+}  // namespace iface_util
 }  // namespace implementation
 }  // namespace V1_3
 }  // namespace wifi
 }  // namespace hardware
 }  // namespace android
-
-#endif  // MOCK_WIFI_FEATURE_FLAGS_H_

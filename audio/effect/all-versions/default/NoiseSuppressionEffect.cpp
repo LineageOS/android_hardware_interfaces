@@ -173,6 +173,11 @@ Return<Result> NoiseSuppressionEffect::close() {
     return mEffect->close();
 }
 
+Return<void> NoiseSuppressionEffect::debug(const hidl_handle& fd,
+                                           const hidl_vec<hidl_string>& options) {
+    return mEffect->debug(fd, options);
+}
+
 // Methods from ::android::hardware::audio::effect::CPP_VERSION::INoiseSuppressionEffect
 // follow.
 Return<Result> NoiseSuppressionEffect::setSuppressionLevel(INoiseSuppressionEffect::Level level) {

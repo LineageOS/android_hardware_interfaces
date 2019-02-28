@@ -710,6 +710,14 @@ Return<Result> Effect::close() {
     return Result::OK;
 }
 
+Return<void> Effect::debug(const hidl_handle& fd, const hidl_vec<hidl_string>& /* options */) {
+    if (fd.getNativeHandle() != nullptr && fd->numFds == 1) {
+        uint32_t cmdData = fd->data[0];
+        (void)sendCommand(EFFECT_CMD_DUMP, "DUMP", sizeof(cmdData), &cmdData);
+    }
+    return Void();
+}
+
 }  // namespace implementation
 }  // namespace CPP_VERSION
 }  // namespace effect

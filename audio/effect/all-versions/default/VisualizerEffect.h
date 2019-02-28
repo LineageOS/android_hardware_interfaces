@@ -88,6 +88,7 @@ struct VisualizerEffect : public IVisualizerEffect {
     Return<Result> setCurrentConfigForFeature(uint32_t featureId,
                                               const hidl_vec<uint8_t>& configData) override;
     Return<Result> close() override;
+    Return<void> debug(const hidl_handle& fd, const hidl_vec<hidl_string>& options) override;
 
     // Methods from ::android::hardware::audio::effect::CPP_VERSION::IVisualizerEffect follow.
     Return<Result> setCaptureSize(uint16_t captureSize) override;

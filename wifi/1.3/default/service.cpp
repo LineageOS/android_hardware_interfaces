@@ -30,6 +30,7 @@ using android::hardware::joinRpcThreadpool;
 using android::hardware::LazyServiceRegistrar;
 using android::hardware::wifi::V1_3::implementation::feature_flags::
     WifiFeatureFlags;
+using android::hardware::wifi::V1_3::implementation::iface_util::WifiIfaceUtil;
 using android::hardware::wifi::V1_3::implementation::legacy_hal::WifiLegacyHal;
 using android::hardware::wifi::V1_3::implementation::mode_controller::
     WifiModeController;
@@ -52,6 +53,7 @@ int main(int /*argc*/, char** argv) {
         new android::hardware::wifi::V1_3::implementation::Wifi(
             std::make_shared<WifiLegacyHal>(),
             std::make_shared<WifiModeController>(),
+            std::make_shared<WifiIfaceUtil>(),
             std::make_shared<WifiFeatureFlags>());
     if (kLazyService) {
         LazyServiceRegistrar registrar;

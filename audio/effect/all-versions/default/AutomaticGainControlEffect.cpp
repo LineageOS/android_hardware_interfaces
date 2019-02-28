@@ -178,6 +178,11 @@ Return<Result> AutomaticGainControlEffect::close() {
     return mEffect->close();
 }
 
+Return<void> AutomaticGainControlEffect::debug(const hidl_handle& fd,
+                                               const hidl_vec<hidl_string>& options) {
+    return mEffect->debug(fd, options);
+}
+
 // Methods from ::android::hardware::audio::effect::CPP_VERSION::IAutomaticGainControlEffect
 // follow.
 Return<Result> AutomaticGainControlEffect::setTargetLevel(int16_t targetLevelMb) {

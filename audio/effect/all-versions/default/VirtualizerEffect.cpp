@@ -173,6 +173,10 @@ Return<Result> VirtualizerEffect::close() {
     return mEffect->close();
 }
 
+Return<void> VirtualizerEffect::debug(const hidl_handle& fd, const hidl_vec<hidl_string>& options) {
+    return mEffect->debug(fd, options);
+}
+
 // Methods from ::android::hardware::audio::effect::CPP_VERSION::IVirtualizerEffect follow.
 Return<bool> VirtualizerEffect::isStrengthSupported() {
     bool halSupported = false;

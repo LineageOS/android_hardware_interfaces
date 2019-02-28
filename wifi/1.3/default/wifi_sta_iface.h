@@ -21,9 +21,8 @@
 #include <android/hardware/wifi/1.0/IWifiStaIfaceEventCallback.h>
 #include <android/hardware/wifi/1.3/IWifiStaIface.h>
 
-#include <wifi_system/interface_tool.h>
-
 #include "hidl_callback_util.h"
+#include "wifi_iface_util.h"
 #include "wifi_legacy_hal.h"
 
 namespace android {
@@ -39,7 +38,8 @@ using namespace android::hardware::wifi::V1_0;
 class WifiStaIface : public V1_3::IWifiStaIface {
    public:
     WifiStaIface(const std::string& ifname,
-                 const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal);
+                 const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal,
+                 const std::weak_ptr<iface_util::WifiIfaceUtil> iface_util);
     // Refer to |WifiChip::invalidate()|.
     void invalidate();
     bool isValid();
@@ -162,10 +162,10 @@ class WifiStaIface : public V1_3::IWifiStaIface {
 
     std::string ifname_;
     std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal_;
+    std::weak_ptr<iface_util::WifiIfaceUtil> iface_util_;
     bool is_valid_;
     hidl_callback_util::HidlCallbackHandler<IWifiStaIfaceEventCallback>
         event_cb_handler_;
-    wifi_system::InterfaceTool iface_tool_;
 
     DISALLOW_COPY_AND_ASSIGN(WifiStaIface);
 };

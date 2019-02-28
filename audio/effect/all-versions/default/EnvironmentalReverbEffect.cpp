@@ -193,6 +193,11 @@ Return<Result> EnvironmentalReverbEffect::close() {
     return mEffect->close();
 }
 
+Return<void> EnvironmentalReverbEffect::debug(const hidl_handle& fd,
+                                              const hidl_vec<hidl_string>& options) {
+    return mEffect->debug(fd, options);
+}
+
 // Methods from ::android::hardware::audio::effect::CPP_VERSION::IEnvironmentalReverbEffect
 // follow.
 Return<Result> EnvironmentalReverbEffect::setBypass(bool bypass) {

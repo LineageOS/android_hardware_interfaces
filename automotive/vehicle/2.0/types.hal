@@ -282,7 +282,6 @@ enum VehicleProperty : int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:SEAT),
 
-
     /**
      * Current odometer value of the vehicle
      *
@@ -1112,6 +1111,91 @@ enum VehicleProperty : int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:SEAT),
 
+   /**
+     * Distance units for display
+     *
+     * Indicates which units the car is using to display distances to the user. Eg. Mile, Meter
+     * Kilometer.
+     *
+     * Distance units are defined in VehicleUnit.
+     * VehiclePropConfig.configArray is used to indicate the supported distance display units.
+     * For example: configArray[0] = 0x21 // METER
+     *              configArray[1] = 0x23 // KILOMETER
+     *              configArray[2] = 0x24 // MILE
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
+     * @data_enum VehicleUnit
+     */
+    DISTANCE_DISPLAY_UNITS = (
+        0x0600
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:INT32
+        | VehicleArea:GLOBAL),
+
+    /**
+     * Fuel volume units for display
+     *
+     * Indicates which units the car is using to display fuel volume to the user. Eg. Liter or
+     * Gallon.
+     *
+     * Distance units are defined in VehicleUnit.
+     * VehiclePropConfig.configArray is used to indicate the supported fuel volume display units.
+     * Volume units are defined in VehicleUnit.
+     * For example: configArray[0] = 0x41 // LITER
+     *              configArray[1] = 0x42 // GALLON
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
+     * @data_enum VehicleUnit
+     */
+    FUEL_VOLUME_DISPLAY_UNITS = (
+        0x0601
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:INT32
+        | VehicleArea:GLOBAL),
+
+    /**
+     * Tire pressure units for display
+     *
+     * Indicates which units the car is using to display tire pressure to the user. Eg. PSI, Bar or
+     * Kilopascal.
+     *
+     * Distance units are defined in VehicleUnit.
+     * VehiclePropConfig.configArray is used to indicate the supported pressure display units.
+     * Pressure units are defined in VehicleUnit.
+     * For example: configArray[0] = 0x70 // KILOPASCAL
+     *              configArray[1] = 0x71 // PSI
+     *              configArray[2] = 0x72 // BAR
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
+     * @data_enum VehicleUnit
+     */
+    TIRE_PRESSURE_DISPLAY_UNITS = (
+        0x0602
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:INT32
+        | VehicleArea:GLOBAL),
+
+    /**
+     * EV battery units for display
+     *
+     * Indicates which units the car is using to display EV battery information to the user. Eg.
+     * watt-hours(Wh), kilowatt-hours(kWh) or ampere-hours(Ah).
+     *
+     * Distance units are defined in VehicleUnit.
+     * VehiclePropConfig.configArray is used to indicate the supported electrical energy units.
+     * Electrical energy units are defined in VehicleUnit.
+     * For example: configArray[0] = 0x60 // watt-hours
+     *              configArray[1] = 0x64 // ampere-hours
+     *              configArray[2] = 0x65 // kilowatt-hours
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
+     * @data_enum VehicleUnit
+     */
+    EV_BATTERY_DISPLAY_UNITS = (
+        0x0603
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:INT32
+        | VehicleArea:GLOBAL),
 
     /**
      * Outside temperature
@@ -1779,6 +1863,22 @@ enum VehicleProperty : int32_t {
         | VehicleArea:SEAT),
 
     /**
+     * Seat Occupancy
+     *
+     * Indicates whether a particular seat is occupied or not, to the best of the car's ability
+     * to determine. Valid values are from the VehicleSeatOccupancyState enum.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ
+     * @data_enum VehicleSeatOccupancyState
+     */
+    SEAT_OCCUPANCY = (
+        0x0BB0
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:INT32
+        | VehicleArea:SEAT),
+
+    /**
      * Window Position
      *
      * Min = window up / closed
@@ -2113,6 +2213,83 @@ enum VehicleProperty : int32_t {
         | VehiclePropertyGroup:SYSTEM
         | VehiclePropertyType:INT32
         | VehicleArea:GLOBAL),
+
+    /**
+     * Cabin lights
+     *
+     * Return current status of cabin lights.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ
+     * @data_enum VehicleLightState
+     */
+    CABIN_LIGHTS_STATE = (
+        0x0F01
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:INT32
+        | VehicleArea:GLOBAL),
+
+    /**
+     * Cabin lights switch
+     *
+     * The position of the physical switch which controls the cabin lights.
+     * This might be different than the CABIN_LIGHTS_STATE if the lights are on because a door
+     * is open or because of a voice command.
+     * For example, while the switch is in the "off" or "automatic" position.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
+     * @data_enum VehicleLightSwitch
+     */
+    CABIN_LIGHTS_SWITCH = (
+        0x0F02
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:INT32
+        | VehicleArea:GLOBAL),
+
+    /**
+     * Reading lights
+     *
+     * Return current status of reading lights.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ
+     * @data_enum VehicleLightState
+     */
+    READING_LIGHTS_STATE = (
+        0x0F03
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:INT32
+        | VehicleArea:SEAT),
+
+    /**
+     * Reading lights switch
+     *
+     * The position of the physical switch which controls the reading lights.
+     * This might be different than the READING_LIGHTS_STATE if the lights are on because a door
+     * is open or because of a voice command.
+     * For example, while the switch is in the "off" or "automatic" position.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
+     * @data_enum VehicleLightSwitch
+     */
+    READING_LIGHTS_SWITCH = (
+        0x0F04
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:INT32
+        | VehicleArea:SEAT),
+
+};
+
+/**
+ * Used by seat occupancy to enumerate the current occupancy state of the seat.
+ */
+enum  VehicleSeatOccupancyState : int32_t {
+
+    UNKNOWN = 0,
+    VACANT = 1,
+    OCCUPIED = 2
 };
 
 /**
@@ -2404,10 +2581,13 @@ enum VehicleUnit : int32_t {
     MILLIMETER     = 0x20,
     METER          = 0x21,
     KILOMETER      = 0x23,
+    MILE           = 0x24,
     CELSIUS        = 0x30,
     FAHRENHEIT     = 0x31,
     KELVIN         = 0x32,
     MILLILITER     = 0x40,
+    LITER          = 0x41,
+    GALLON         = 0x42,
     NANO_SECS      = 0x50,
     SECS           = 0x53,
     YEAR           = 0x59,
@@ -2417,8 +2597,12 @@ enum VehicleUnit : int32_t {
     MILLIAMPERE    = 0x61,
     MILLIVOLT      = 0x62,
     MILLIWATTS     = 0x63,
+    AMPERE_HOURS   = 0x64,
+    KILOWATT_HOUR  = 0x65,
 
     KILOPASCAL     = 0x70,
+    PSI            = 0x71,
+    BAR            = 0x72,
     DEGREES        = 0x80,
 };
 
