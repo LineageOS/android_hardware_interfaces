@@ -49,10 +49,8 @@ interface IRadio extends @1.2::IRadio {
             vec<RadioAccessSpecifier> specifiers);
 
    /**
-    * Toggle logical modem on and off. It should put the logical modem in low power
-    * mode without any activity, while the SIM card remains visible. The difference
-    * with setRadioPower is, setRadioPower affects all logical modem while this controls
-    * just one.
+    * Toggle logical modem on and off. The difference with setRadioPower is,
+    * setRadioPower affects all logical modems while this controls just one.
     *
     * @param serial Serial number of request.
     * @param on True to turn on the logical modem, otherwise turn it off.
@@ -62,9 +60,8 @@ interface IRadio extends @1.2::IRadio {
     oneway enableModem(int32_t serial, bool on);
 
    /**
-    * Request status of logical modem associated with the given serial number. It returns
-    * isEnabled=true if the logical modem is in low power mode without any activity, while
-    * the SIM card remains visible.
+    * Request status of logical modem. It returns isEnabled=true if the logical modem is on.
+    * This method is the getter method for enableModem.
     *
     * @param serial Serial number of request.
     *
