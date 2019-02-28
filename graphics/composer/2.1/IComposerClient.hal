@@ -992,10 +992,10 @@ interface IComposerClient {
      *
      *   setLayerDataspace(Dataspace dataspace);
      *
-     * Sets the dataspace that the current buffer on this layer is in.
+     * Sets the dataspace of the layer.
      *
-     * The dataspace provides more information about how to interpret the
-     * buffer contents, such as the encoding standard and color transform.
+     * The dataspace provides more information about how to interpret the buffer
+     * or solid color, such as the encoding standard and color transform.
      *
      * See the values of Dataspace for more information.
      *
