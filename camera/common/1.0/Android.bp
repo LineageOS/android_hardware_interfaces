@@ -9,17 +9,6 @@ hidl_interface {
     srcs: [
         "types.hal",
     ],
-    types: [
-        "CameraDeviceStatus",
-        "CameraMetadataType",
-        "CameraResourceCost",
-        "Status",
-        "TagBoundaryId",
-        "TorchMode",
-        "TorchModeStatus",
-        "VendorTag",
-        "VendorTagSection",
-    ],
     gen_java: true,
 }
 

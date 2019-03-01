@@ -10,15 +10,6 @@ hidl_interface {
     srcs: [
         "types.hal",
     ],
-    types: [
-        "BufferUsage",
-        "ColorMode",
-        "ColorTransform",
-        "Dataspace",
-        "Hdr",
-        "PixelFormat",
-        "Transform",
-    ],
     gen_java: true,
     gen_java_constants: true,
 }

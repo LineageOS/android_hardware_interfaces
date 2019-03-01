@@ -13,13 +13,6 @@ hidl_interface {
     interfaces: [
         "android.hardware.graphics.common@1.0",
     ],
-    types: [
-        "BufferUsage",
-        "ColorMode",
-        "Dataspace",
-        "PixelFormat",
-        "RenderIntent",
-    ],
     gen_java: true,
     gen_java_constants: true,
 }
