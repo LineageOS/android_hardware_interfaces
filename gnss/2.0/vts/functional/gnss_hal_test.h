@@ -99,11 +99,17 @@ class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
         // Actual (test) callback handlers
         Return<void> gnssNameCb(const android::hardware::hidl_string& name) override;
         Return<void> gnssLocationCb(const GnssLocation_1_0& location) override;
-        Return<void> gnssLocationCb_2_0(const GnssLocation_2_0& location) override;
         Return<void> gnssSetCapabilitesCb(uint32_t capabilities) override;
-        Return<void> gnssSetCapabilitiesCb_2_0(uint32_t capabilities) override;
         Return<void> gnssSetSystemInfoCb(const IGnssCallback::GnssSystemInfo& info) override;
         Return<void> gnssSvStatusCb(const IGnssCallback::GnssSvStatus& svStatus) override;
+
+        // New in v2.0
+        Return<void> gnssLocationCb_2_0(const GnssLocation_2_0& location) override;
+        Return<void> gnssRequestLocationCb_2_0(bool /* independentFromGnss */,
+                                               bool /* isUserEmergency */) override {
+            return Void();
+        }
+        Return<void> gnssSetCapabilitiesCb_2_0(uint32_t capabilities) override;
 
       private:
         Return<void> gnssLocationCbImpl(const GnssLocation_2_0& location);

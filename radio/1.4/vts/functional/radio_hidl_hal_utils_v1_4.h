@@ -61,6 +61,9 @@ class RadioResponse_v1_4 : public ::android::hardware::radio::V1_4::IRadioRespon
     bool isModemEnabled;
     bool enableModemResponseToggle;
 
+    ::android::hardware::hidl_bitfield<::android::hardware::radio::V1_4::RadioAccessFamily>
+    networkTypeBitmapResponse;
+
     // Data
     ::android::hardware::radio::V1_4::DataRegStateResult dataRegResp;
 

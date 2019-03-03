@@ -52,4 +52,27 @@ interface IGnssCallback extends @1.1::IGnssCallback {
      */
     gnssLocationCb_2_0(GnssLocation location);
 
+    /**
+     * Callback for requesting Location.
+     *
+     * HAL implementation must call this when it wants the framework to provide locations to assist
+     * with GNSS HAL operation, for example, to assist with time to first fix, error recovery, or to
+     * supplement GNSS location for other clients of the GNSS HAL.
+     *
+     * If a request is made with independentFromGnss set to true, the framework must avoid
+     * providing locations derived from GNSS locations (such as "fused" location), to help improve
+     * information independence for situations such as error recovery.
+     *
+     * In response to this method call, GNSS HAL can expect zero, one, or more calls to
+     * IGnss::injectLocation or IGnss::injectBestLocation, dependent on availability of location
+     * from other sources, which may happen at some arbitrary delay. Generally speaking, HAL
+     * implementations must be able to handle calls to IGnss::injectLocation or
+     * IGnss::injectBestLocation at any time.
+     *
+     * @param independentFromGnss True if requesting a location that is independent from GNSS.
+     * @param isUserEmergency True if the location request is for delivery of this location to an
+     *        emergency services endpoint, during a user-initiated emergency session (e.g.
+     *        during-call to E911, or up to 5 minutes after end-of-call or text to E911).
+     */
+    gnssRequestLocationCb_2_0(bool independentFromGnss, bool isUserEmergency);
 };

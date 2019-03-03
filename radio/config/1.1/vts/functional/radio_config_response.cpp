@@ -31,7 +31,10 @@ Return<void> RadioConfigResponse::setSimSlotsMappingResponse(const RadioResponse
 }
 
 Return<void> RadioConfigResponse::getPhoneCapabilityResponse(
-    const RadioResponseInfo& /* info */, const PhoneCapability& /* phoneCapability */) {
+        const RadioResponseInfo& info, const PhoneCapability& phoneCapability) {
+    rspInfo = info;
+    phoneCap = phoneCapability;
+    parent.notify(info.serial);
     return Void();
 }
 

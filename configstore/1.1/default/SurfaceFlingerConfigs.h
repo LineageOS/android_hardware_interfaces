@@ -14,23 +14,23 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_CONFIGSTORE_V1_2_SURFACEFLINGERCONFIGS_H
-#define ANDROID_HARDWARE_CONFIGSTORE_V1_2_SURFACEFLINGERCONFIGS_H
+#ifndef ANDROID_HARDWARE_CONFIGSTORE_V1_1_SURFACEFLINGERCONFIGS_H
+#define ANDROID_HARDWARE_CONFIGSTORE_V1_1_SURFACEFLINGERCONFIGS_H
 
-#include <android/hardware/configstore/1.2/ISurfaceFlingerConfigs.h>
+#include <android/hardware/configstore/1.1/ISurfaceFlingerConfigs.h>
 #include <hidl/MQDescriptor.h>
 #include <hidl/Status.h>
 
 namespace android {
 namespace hardware {
 namespace configstore {
-namespace V1_2 {
+namespace V1_1 {
 namespace implementation {
 
 using ::android::sp;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
-using ::android::hardware::configstore::V1_2::ISurfaceFlingerConfigs;
+using ::android::hardware::configstore::V1_1::ISurfaceFlingerConfigs;
 
 struct SurfaceFlingerConfigs : public ISurfaceFlingerConfigs {
     // ::android::hardware::configstore::V1_0::ISurfaceFlingerConfigs implementation.
@@ -49,17 +49,12 @@ struct SurfaceFlingerConfigs : public ISurfaceFlingerConfigs {
 
     // ::android::hardware::configstore::V1_1::ISurfaceFlingerConfigs follow implementation.
     Return<void> primaryDisplayOrientation(primaryDisplayOrientation_cb _hidl_cb) override;
-
-    // ::android::hardware::configstore::V1_2::ISurfaceFlingerConfigs follow implementation.
-    Return<void> useColorManagement(useColorManagement_cb _hidl_cb) override;
-    Return<void> getCompositionPreference(getCompositionPreference_cb _hidl_cb) override;
-    Return<void> getDisplayNativePrimaries(getDisplayNativePrimaries_cb _hidl_cb) override;
 };
 
 }  // namespace implementation
-}  // namespace V1_2
+}  // namespace V1_1
 }  // namespace configstore
 }  // namespace hardware
 }  // namespace android
 
-#endif  // ANDROID_HARDWARE_CONFIGSTORE_V1_2_SURFACEFLINGERCONFIGS_H
+#endif  // ANDROID_HARDWARE_CONFIGSTORE_V1_1_SURFACEFLINGERCONFIGS_H
