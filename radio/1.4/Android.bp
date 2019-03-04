@@ -22,6 +22,7 @@ hidl_interface {
     ],
     types: [
         "AccessNetwork",
+        "ApnTypes",
         "CardStatus",
         "CarrierRestrictionsWithPriority",
         "CellConfigLte",
