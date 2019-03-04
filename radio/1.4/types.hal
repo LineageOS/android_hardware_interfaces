@@ -64,6 +64,15 @@ enum AccessNetwork : @1.2::AccessNetwork {
     UNKNOWN = 0,
 };
 
+enum ApnTypes : @1.0::ApnTypes {
+    /**
+     * Due to the addition of this new value, the value ALL defined in 1.0::ApnTypes is now
+     * deprecated and should not be used.
+     */
+    MCX = 1 << 10,            // APN type for Mission Critical Service
+                              // Reference: 3GPP TS 22.280 V15.3.0
+};
+
 /**
  * Emergency number contains information of number, one or more service category(s), zero or more
  * emergency uniform resource names, mobile country code (mcc), mobile network country (mnc) and
