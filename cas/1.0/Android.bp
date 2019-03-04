@@ -16,10 +16,6 @@ hidl_interface {
     interfaces: [
         "android.hidl.base@1.0",
     ],
-    types: [
-        "HidlCasPluginDescriptor",
-        "Status",
-    ],
     gen_java: true,
 }
 

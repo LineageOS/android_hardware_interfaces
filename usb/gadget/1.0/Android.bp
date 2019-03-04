@@ -14,10 +14,6 @@ hidl_interface {
     interfaces: [
         "android.hidl.base@1.0",
     ],
-    types: [
-        "GadgetFunction",
-        "Status",
-    ],
     gen_java: true,
 }
 

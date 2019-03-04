@@ -17,18 +17,6 @@ hidl_interface {
         "android.hardware.broadcastradio@1.0",
         "android.hidl.base@1.0",
     ],
-    types: [
-        "IdentifierType",
-        "Modulation",
-        "ProgramIdentifier",
-        "ProgramInfo",
-        "ProgramInfoFlags",
-        "ProgramListResult",
-        "ProgramSelector",
-        "ProgramType",
-        "Properties",
-        "VendorKeyValue",
-    ],
     gen_java: false,
 }
 

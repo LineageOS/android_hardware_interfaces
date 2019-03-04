@@ -15,12 +15,6 @@ hidl_interface {
         "android.hardware.audio.common@2.0",
         "android.hidl.base@1.0",
     ],
-    types: [
-        "ConfidenceLevel",
-        "PhraseRecognitionExtra",
-        "RecognitionMode",
-        "SoundModelType",
-    ],
     gen_java: false,
 }
 

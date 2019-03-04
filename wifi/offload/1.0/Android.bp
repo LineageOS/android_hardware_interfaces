@@ -14,20 +14,6 @@ hidl_interface {
     interfaces: [
         "android.hidl.base@1.0",
     ],
-    types: [
-        "Capability",
-        "LogRecord",
-        "NetworkInfo",
-        "OffloadStatus",
-        "OffloadStatusCode",
-        "RecordName",
-        "ScanFilter",
-        "ScanParam",
-        "ScanRecord",
-        "ScanResult",
-        "ScanStats",
-        "SecurityMode",
-    ],
     gen_java: false,
 }
 

@@ -13,15 +13,6 @@ hidl_interface {
     interfaces: [
         "android.hidl.base@1.0",
     ],
-    types: [
-        "CoolingDevice",
-        "CoolingType",
-        "CpuUsage",
-        "Temperature",
-        "TemperatureType",
-        "ThermalStatus",
-        "ThermalStatusCode",
-    ],
     gen_java: true,
     gen_java_constants: true,
 }
