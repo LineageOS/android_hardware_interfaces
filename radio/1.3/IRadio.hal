@@ -49,8 +49,13 @@ interface IRadio extends @1.2::IRadio {
             vec<RadioAccessSpecifier> specifiers);
 
    /**
-    * Toggle logical modem on and off. The difference with setRadioPower is,
-    * setRadioPower affects all logical modems while this controls just one.
+    * Toggle logical modem on/off. This is similar to @1.0::IRadio.setRadioPower(), however that
+    * does not enforce that radio power is toggled only for the corresponding radio and certain
+    * vendor implementations do it for all radios. This new API should affect only the modem for
+    * which it is called. A modem stack must be on/active only when both setRadioPower() and
+    * enableModem() are set to on for it.
+    *
+    * SIM must be read if available even if modem is off/inactive.
     *
     * @param serial Serial number of request.
     * @param on True to turn on the logical modem, otherwise turn it off.
