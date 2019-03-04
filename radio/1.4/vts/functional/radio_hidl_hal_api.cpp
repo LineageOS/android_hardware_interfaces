@@ -563,3 +563,116 @@ TEST_F(RadioHidlTest_v1_4, setupDataCall_1_4) {
                                       RadioError::OP_NOT_ALLOWED_BEFORE_REG_TO_NW}));
     }
 }
+
+/*
+ * Test IRadio.getAllowedCarriers_1_4() for the response returned.
+ */
+TEST_F(RadioHidlTest_v1_4, getAllowedCarriers_1_4) {
+    serial = GetRandomSerialNumber();
+
+    radio_v1_4->getAllowedCarriers_1_4(serial);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_4->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_4->rspInfo.serial);
+
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_4->rspInfo.error,
+                                 {RadioError::NONE, RadioError::REQUEST_NOT_SUPPORTED}));
+}
+
+/**
+ * Test IRadio.setAllowedCarriers_1_4() for the response returned.
+ */
+TEST_F(RadioHidlTest_v1_4, setAllowedCarriers_1_4) {
+    serial = GetRandomSerialNumber();
+    CarrierRestrictionsWithPriority carrierRestrictions;
+    memset(&carrierRestrictions, 0, sizeof(carrierRestrictions));
+    carrierRestrictions.allowedCarriers.resize(1);
+    carrierRestrictions.excludedCarriers.resize(0);
+    carrierRestrictions.allowedCarriers[0].mcc = hidl_string("123");
+    carrierRestrictions.allowedCarriers[0].mnc = hidl_string("456");
+    carrierRestrictions.allowedCarriers[0].matchType = CarrierMatchType::ALL;
+    carrierRestrictions.allowedCarriers[0].matchData = hidl_string();
+    carrierRestrictions.allowedCarriersPrioritized = true;
+    SimLockMultiSimPolicy multisimPolicy = SimLockMultiSimPolicy::NO_MULTISIM_POLICY;
+
+    radio_v1_4->setAllowedCarriers_1_4(serial, carrierRestrictions, multisimPolicy);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_4->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_4->rspInfo.serial);
+
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_4->rspInfo.error,
+                                 {RadioError::NONE, RadioError::REQUEST_NOT_SUPPORTED}));
+
+    if (radioRsp_v1_4->rspInfo.error == RadioError::NONE) {
+        /* Verify the update of the SIM status. This might need some time */
+        if (cardStatus.base.base.cardState != CardState::ABSENT) {
+            updateSimCardStatus();
+            auto startTime = std::chrono::system_clock::now();
+            while (cardStatus.base.base.cardState != CardState::RESTRICTED &&
+                   std::chrono::duration_cast<chrono::seconds>(std::chrono::system_clock::now() -
+                                                               startTime)
+                                   .count() < 10) {
+                /* Set 2 seconds as interval to check card status */
+                sleep(2);
+                updateSimCardStatus();
+            }
+            EXPECT_EQ(CardState::RESTRICTED, cardStatus.base.base.cardState);
+        }
+
+        /* Verify that configuration was set correctly, retrieving it from the modem */
+        serial = GetRandomSerialNumber();
+
+        radio_v1_4->getAllowedCarriers_1_4(serial);
+        EXPECT_EQ(std::cv_status::no_timeout, wait());
+        EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_4->rspInfo.type);
+        EXPECT_EQ(serial, radioRsp_v1_4->rspInfo.serial);
+        EXPECT_EQ(RadioError::NONE, radioRsp_v1_4->rspInfo.error);
+
+        EXPECT_EQ(1, radioRsp_v1_4->carrierRestrictionsResp.allowedCarriers.size());
+        EXPECT_EQ(0, radioRsp_v1_4->carrierRestrictionsResp.excludedCarriers.size());
+        ASSERT_TRUE(hidl_string("123") ==
+                    radioRsp_v1_4->carrierRestrictionsResp.allowedCarriers[0].mcc);
+        ASSERT_TRUE(hidl_string("456") ==
+                    radioRsp_v1_4->carrierRestrictionsResp.allowedCarriers[0].mnc);
+        EXPECT_EQ(CarrierMatchType::ALL,
+                  radioRsp_v1_4->carrierRestrictionsResp.allowedCarriers[0].matchType);
+        ASSERT_TRUE(radioRsp_v1_4->carrierRestrictionsResp.allowedCarriersPrioritized);
+        EXPECT_EQ(SimLockMultiSimPolicy::NO_MULTISIM_POLICY, radioRsp_v1_4->multiSimPolicyResp);
+
+        sleep(10);
+
+        /**
+         * Another test case of the API to cover to allow carrier.
+         * If the API is supported, this is also used to reset to no carrier restriction
+         * status for cardStatus.
+         */
+        memset(&carrierRestrictions, 0, sizeof(carrierRestrictions));
+        carrierRestrictions.allowedCarriers.resize(0);
+        carrierRestrictions.excludedCarriers.resize(0);
+        carrierRestrictions.allowedCarriersPrioritized = false;
+
+        serial = GetRandomSerialNumber();
+        radio_v1_4->setAllowedCarriers_1_4(serial, carrierRestrictions, multisimPolicy);
+        EXPECT_EQ(std::cv_status::no_timeout, wait());
+        EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_4->rspInfo.type);
+        EXPECT_EQ(serial, radioRsp_v1_4->rspInfo.serial);
+
+        EXPECT_EQ(RadioError::NONE, radioRsp_v1_4->rspInfo.error);
+
+        if (cardStatus.base.base.cardState != CardState::ABSENT) {
+            /* Resetting back to no carrier restriction needs some time */
+            updateSimCardStatus();
+            auto startTime = std::chrono::system_clock::now();
+            while (cardStatus.base.base.cardState == CardState::RESTRICTED &&
+                   std::chrono::duration_cast<chrono::seconds>(std::chrono::system_clock::now() -
+                                                               startTime)
+                                   .count() < 10) {
+                /* Set 2 seconds as interval to check card status */
+                sleep(2);
+                updateSimCardStatus();
+            }
+            EXPECT_NE(CardState::RESTRICTED, cardStatus.base.base.cardState);
+            sleep(10);
+        }
+    }
+}
