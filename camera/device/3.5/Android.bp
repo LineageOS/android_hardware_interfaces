@@ -20,16 +20,6 @@ hidl_interface {
         "android.hardware.graphics.common@1.0",
         "android.hidl.base@1.0",
     ],
-    types: [
-        "BufferRequest",
-        "BufferRequestStatus",
-        "CameraBlob",
-        "CameraBlobId",
-        "StreamBufferRequestError",
-        "StreamBufferRet",
-        "StreamBuffersVal",
-        "StreamConfiguration",
-    ],
     gen_java: false,
 }
 

@@ -9,23 +9,6 @@ hidl_interface {
     srcs: [
         "types.hal",
     ],
-    types: [
-        "Action",
-        "Axis",
-        "Button",
-        "Classification",
-        "EdgeFlag",
-        "Flag",
-        "Meta",
-        "MotionEvent",
-        "PointerCoords",
-        "PointerProperties",
-        "PolicyFlag",
-        "Source",
-        "SourceClass",
-        "ToolType",
-        "VideoFrame",
-    ],
     gen_java: true,
 }
 
