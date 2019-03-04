@@ -32,12 +32,6 @@ hidl_interface {
     interfaces: [
         "android.hidl.base@1.0",
     ],
-    types: [
-        "GnssConstellationType",
-        "GnssLocation",
-        "GnssLocationFlags",
-        "GnssMax",
-    ],
     gen_java: true,
     gen_java_constants: true,
 }

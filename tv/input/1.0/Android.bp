@@ -15,15 +15,6 @@ hidl_interface {
         "android.hardware.audio.common@2.0",
         "android.hidl.base@1.0",
     ],
-    types: [
-        "CableConnectionStatus",
-        "Result",
-        "TvInputDeviceInfo",
-        "TvInputEvent",
-        "TvInputEventType",
-        "TvInputType",
-        "TvStreamConfig",
-    ],
     gen_java: false,
     gen_java_constants: true,
 }

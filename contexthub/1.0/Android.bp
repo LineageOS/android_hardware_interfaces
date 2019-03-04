@@ -14,22 +14,6 @@ hidl_interface {
     interfaces: [
         "android.hidl.base@1.0",
     ],
-    types: [
-        "AsyncEventType",
-        "ContextHub",
-        "ContextHubMsg",
-        "HostEndPoint",
-        "HubAppInfo",
-        "HubMemoryFlag",
-        "HubMemoryType",
-        "MemRange",
-        "NanoAppBinary",
-        "NanoAppFlags",
-        "PhysicalSensor",
-        "Result",
-        "SensorType",
-        "TransactionResult",
-    ],
     gen_java: true,
 }
 

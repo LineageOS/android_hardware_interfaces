@@ -12,20 +12,6 @@ hidl_interface {
     interfaces: [
         "android.hardware.camera.metadata@3.2",
     ],
-    types: [
-        "CameraMetadataEnumAndroidControlAeMode",
-        "CameraMetadataEnumAndroidControlAfSceneChange",
-        "CameraMetadataEnumAndroidControlCaptureIntent",
-        "CameraMetadataEnumAndroidDistortionCorrectionMode",
-        "CameraMetadataEnumAndroidInfoSupportedHardwareLevel",
-        "CameraMetadataEnumAndroidLensPoseReference",
-        "CameraMetadataEnumAndroidLogicalMultiCameraSensorSyncType",
-        "CameraMetadataEnumAndroidRequestAvailableCapabilities",
-        "CameraMetadataEnumAndroidStatisticsOisDataMode",
-        "CameraMetadataSection",
-        "CameraMetadataSectionStart",
-        "CameraMetadataTag",
-    ],
     gen_java: true,
 }
 

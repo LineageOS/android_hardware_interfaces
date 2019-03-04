@@ -15,13 +15,6 @@ hidl_interface {
         "android.hardware.nfc@1.0",
         "android.hidl.base@1.0",
     ],
-    types: [
-        "Constant",
-        "NfcConfig",
-        "NfcEvent",
-        "PresenceCheckAlgorithm",
-        "ProtocolDiscoveryConfig",
-    ],
     gen_java: true,
 }
 

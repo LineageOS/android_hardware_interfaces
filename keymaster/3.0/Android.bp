@@ -13,26 +13,6 @@ hidl_interface {
     interfaces: [
         "android.hidl.base@1.0",
     ],
-    types: [
-        "Algorithm",
-        "BlockMode",
-        "Digest",
-        "EcCurve",
-        "ErrorCode",
-        "HardwareAuthToken",
-        "HardwareAuthenticatorType",
-        "KeyBlobUsageRequirements",
-        "KeyCharacteristics",
-        "KeyDerivationFunction",
-        "KeyFormat",
-        "KeyOrigin",
-        "KeyParameter",
-        "KeyPurpose",
-        "PaddingMode",
-        "SecurityLevel",
-        "Tag",
-        "TagType",
-    ],
     gen_java: false,
 }
 

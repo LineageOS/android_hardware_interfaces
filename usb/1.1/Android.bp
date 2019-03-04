@@ -15,10 +15,6 @@ hidl_interface {
         "android.hardware.usb@1.0",
         "android.hidl.base@1.0",
     ],
-    types: [
-        "PortMode_1_1",
-        "PortStatus_1_1",
-    ],
     gen_java: true,
     gen_java_constants: true,
 }

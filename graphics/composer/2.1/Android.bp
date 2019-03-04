@@ -16,9 +16,6 @@ hidl_interface {
         "android.hardware.graphics.common@1.0",
         "android.hidl.base@1.0",
     ],
-    types: [
-        "Error",
-    ],
     gen_java: false,
 }
 

@@ -13,11 +13,6 @@ hidl_interface {
     interfaces: [
         "android.hidl.base@1.0",
     ],
-    types: [
-        "Effect",
-        "EffectStrength",
-        "Status",
-    ],
     gen_java: true,
     gen_java_constants: true,
 }

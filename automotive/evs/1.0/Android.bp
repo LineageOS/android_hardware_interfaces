@@ -16,13 +16,6 @@ hidl_interface {
     interfaces: [
         "android.hidl.base@1.0",
     ],
-    types: [
-        "BufferDesc",
-        "CameraDesc",
-        "DisplayDesc",
-        "DisplayState",
-        "EvsResult",
-    ],
     gen_java: true,
 }
 
