@@ -207,7 +207,7 @@ interface IRadio extends @1.3::IRadio {
      *        as defined in types.hal
      * @param multiSimPolicy Policy to be used for devices with multiple SIMs.
      *
-     * Response callback is IRadioResponse.setAllowedCarriersResponse()
+     * Response callback is IRadioResponse.setAllowedCarriersResponse_1_4()
      */
     oneway setAllowedCarriers_1_4(int32_t serial, CarrierRestrictionsWithPriority carriers,
             SimLockMultiSimPolicy multiSimPolicy);
@@ -217,7 +217,7 @@ interface IRadio extends @1.3::IRadio {
      *
      * @param serial Serial number of request.
      *
-     * Response callback is IRadioResponse.getAllowedCarriersResponse_1_3()
+     * Response callback is IRadioResponse.getAllowedCarriersResponse_1_4()
      */
     oneway getAllowedCarriers_1_4(int32_t serial);
 
