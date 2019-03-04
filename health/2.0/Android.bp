@@ -15,13 +15,6 @@ hidl_interface {
         "android.hardware.health@1.0",
         "android.hidl.base@1.0",
     ],
-    types: [
-        "DiskStats",
-        "HealthInfo",
-        "Result",
-        "StorageAttribute",
-        "StorageInfo",
-    ],
     gen_java: true,
 }
 

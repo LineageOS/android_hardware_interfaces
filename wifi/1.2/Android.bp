@@ -20,12 +20,6 @@ hidl_interface {
         "android.hardware.wifi@1.1",
         "android.hidl.base@1.0",
     ],
-    types: [
-        "NanConfigRequestSupplemental",
-        "NanDataPathChannelInfo",
-        "NanDataPathConfirmInd",
-        "NanDataPathScheduleUpdateInd",
-    ],
     gen_java: true,
 }
 

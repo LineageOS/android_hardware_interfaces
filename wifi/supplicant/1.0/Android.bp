@@ -24,13 +24,6 @@ hidl_interface {
     interfaces: [
         "android.hidl.base@1.0",
     ],
-    types: [
-        "IfaceType",
-        "P2pGroupCapabilityMask",
-        "SupplicantStatus",
-        "SupplicantStatusCode",
-        "WpsConfigMethods",
-    ],
     gen_java: true,
 }
 

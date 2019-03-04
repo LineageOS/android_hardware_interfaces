@@ -17,22 +17,6 @@ hidl_interface {
     interfaces: [
         "android.hidl.base@1.0",
     ],
-    types: [
-        "BufferType",
-        "DestinationBuffer",
-        "EventType",
-        "KeyRequestType",
-        "KeyStatus",
-        "KeyStatusType",
-        "KeyType",
-        "KeyValue",
-        "Mode",
-        "Pattern",
-        "SecureStop",
-        "SharedBuffer",
-        "Status",
-        "SubSample",
-    ],
     gen_java: false,
 }
 

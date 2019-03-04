@@ -14,13 +14,6 @@ hidl_interface {
         "android.hardware.cas@1.0",
         "android.hidl.base@1.0",
     ],
-    types: [
-        "BufferType",
-        "DestinationBuffer",
-        "ScramblingControl",
-        "SharedBuffer",
-        "SubSample",
-    ],
     gen_java: false,
 }
 

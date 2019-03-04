@@ -13,12 +13,6 @@ hidl_interface {
     interfaces: [
         "android.hidl.base@1.0",
     ],
-    types: [
-        "MemtrackFlag",
-        "MemtrackRecord",
-        "MemtrackStatus",
-        "MemtrackType",
-    ],
     gen_java: true,
 }
 

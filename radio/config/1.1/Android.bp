@@ -17,11 +17,6 @@ hidl_interface {
         "android.hardware.radio@1.0",
         "android.hidl.base@1.0",
     ],
-    types: [
-        "ModemInfo",
-        "ModemsConfig",
-        "PhoneCapability",
-    ],
     gen_java: true,
 }
 

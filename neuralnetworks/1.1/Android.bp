@@ -14,13 +14,6 @@ hidl_interface {
         "android.hardware.neuralnetworks@1.0",
         "android.hidl.base@1.0",
     ],
-    types: [
-        "Capabilities",
-        "ExecutionPreference",
-        "Model",
-        "Operation",
-        "OperationType",
-    ],
     gen_java: false,
 }
 

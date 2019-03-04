@@ -18,9 +18,6 @@ hidl_interface {
         "android.hardware.radio@1.2",
         "android.hidl.base@1.0",
     ],
-    types: [
-        "RadioResponseInfoModem",
-    ],
     gen_java: true,
 }
 

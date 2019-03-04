@@ -17,18 +17,6 @@ hidl_interface {
         "android.hardware.graphics.common@1.0",
         "android.hidl.base@1.0",
     ],
-    types: [
-        "CameraFace",
-        "CameraFacing",
-        "CameraFrameMetadata",
-        "CameraInfo",
-        "CommandType",
-        "DataCallbackMsg",
-        "FrameCallbackFlag",
-        "HandleTimestampMessage",
-        "NotifyCallbackMsg",
-        "VideoFrameMessage",
-    ],
     gen_java: true,
 }
 

@@ -21,16 +21,6 @@ hidl_interface {
         "android.hardware.audio.effect@2.0",
         "android.hidl.base@1.0",
     ],
-    types: [
-        "AudioDrain",
-        "DeviceAddress",
-        "MessageQueueFlagBits",
-        "MmapBufferInfo",
-        "MmapPosition",
-        "ParameterValue",
-        "Result",
-        "TimeSpec",
-    ],
     gen_java: false,
     gen_java_constants: true,
 }

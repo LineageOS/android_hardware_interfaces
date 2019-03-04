@@ -16,23 +16,6 @@ hidl_interface {
     interfaces: [
         "android.hidl.base@1.0",
     ],
-    types: [
-        "AmBandConfig",
-        "Band",
-        "BandConfig",
-        "Class",
-        "Deemphasis",
-        "Direction",
-        "FmBandConfig",
-        "MetaData",
-        "MetaDataClock",
-        "MetadataKey",
-        "MetadataType",
-        "ProgramInfo",
-        "Properties",
-        "Rds",
-        "Result",
-    ],
     gen_java: false,
 }
 

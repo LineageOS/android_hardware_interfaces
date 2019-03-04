@@ -17,23 +17,6 @@ hidl_interface {
         "android.hardware.radio@1.0",
         "android.hidl.base@1.0",
     ],
-    types: [
-        "CardPowerState",
-        "EutranBands",
-        "GeranBands",
-        "ImsiEncryptionInfo",
-        "KeepaliveRequest",
-        "KeepaliveStatus",
-        "KeepaliveStatusCode",
-        "KeepaliveType",
-        "NetworkScanRequest",
-        "NetworkScanResult",
-        "RadioAccessNetworks",
-        "RadioAccessSpecifier",
-        "ScanStatus",
-        "ScanType",
-        "UtranBands",
-    ],
     gen_java: true,
 }
 

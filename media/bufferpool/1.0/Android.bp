@@ -15,12 +15,6 @@ hidl_interface {
     interfaces: [
         "android.hidl.base@1.0",
     ],
-    types: [
-        "Buffer",
-        "BufferStatus",
-        "BufferStatusMessage",
-        "ResultStatus",
-    ],
     gen_java: false,
 }
 
