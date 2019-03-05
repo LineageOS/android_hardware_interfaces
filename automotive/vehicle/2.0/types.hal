@@ -990,6 +990,7 @@ enum VehicleProperty : int32_t {
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
+     * @data_enum VehicleUnit
      */
     HVAC_TEMPERATURE_DISPLAY_UNITS = (
         0x050E
