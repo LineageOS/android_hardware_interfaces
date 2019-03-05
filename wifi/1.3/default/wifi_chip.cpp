@@ -86,16 +86,15 @@ std::string getWlanIfaceName(unsigned idx) {
     }
 
     std::array<char, PROPERTY_VALUE_MAX> buffer;
-    std::string propName = "wifi.interface." + std::to_string(idx);
-    auto res = property_get(propName.c_str(), buffer.data(), nullptr);
-    if (res > 0) return buffer.data();
-
     if (idx == 0 || idx == 1) {
         const char* altPropName =
             (idx == 0) ? "wifi.interface" : "wifi.concurrent.interface";
-        res = property_get(altPropName, buffer.data(), nullptr);
+        auto res = property_get(altPropName, buffer.data(), nullptr);
         if (res > 0) return buffer.data();
     }
+    std::string propName = "wifi.interface." + std::to_string(idx);
+    auto res = property_get(propName.c_str(), buffer.data(), nullptr);
+    if (res > 0) return buffer.data();
 
     return "wlan" + std::to_string(idx);
 }

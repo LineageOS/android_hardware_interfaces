@@ -862,12 +862,18 @@ Return<void> RadioResponse_v1_4::setupDataCallResponse_1_4(
     return Void();
 }
 
-Return<void> RadioResponse_v1_4::setAllowedCarriersResponse_1_4(const RadioResponseInfo& /*info*/) {
+Return<void> RadioResponse_v1_4::setAllowedCarriersResponse_1_4(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_v1_4.notify(info.serial);
     return Void();
 }
 
 Return<void> RadioResponse_v1_4::getAllowedCarriersResponse_1_4(
-        const RadioResponseInfo& /*info*/, const CarrierRestrictionsWithPriority& /*carriers*/,
-        SimLockMultiSimPolicy /*multiSimPolicy*/) {
+        const RadioResponseInfo& info, const CarrierRestrictionsWithPriority& carriers,
+        SimLockMultiSimPolicy multiSimPolicy) {
+    rspInfo = info;
+    carrierRestrictionsResp = carriers;
+    multiSimPolicyResp = multiSimPolicy;
+    parent_v1_4.notify(info.serial);
     return Void();
 }

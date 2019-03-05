@@ -15,13 +15,6 @@ hidl_interface {
         "android.hardware.keymaster@4.0",
         "android.hidl.base@1.0",
     ],
-    types: [
-        "MessageSize",
-        "ResponseCode",
-        "TestKeyBits",
-        "TestModeCommands",
-        "UIOption",
-    ],
     gen_java: false,
 }
 

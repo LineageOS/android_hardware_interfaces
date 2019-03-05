@@ -11,11 +11,6 @@ hidl_interface {
         "android.hardware.light@2.0",
         "android.hidl.base@1.0",
     ],
-    types: [
-        "Brightness",
-        "Default",
-        "LightState",
-    ],
     gen_java: true,
 }
 

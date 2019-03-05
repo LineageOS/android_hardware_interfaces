@@ -22,6 +22,7 @@ import android.hardware.media.omx@1.0::IGraphicBufferSource;
 import IConfigurable;
 import IComponentInterface;
 import IComponentListener;
+import IInputSink;
 import IInputSurface;
 import IInputSurfaceConnection;
 
@@ -355,11 +356,19 @@ interface IComponent {
      * Returns the @ref IComponentInterface instance associated to this
      * component.
      *
-     * An @p IConfigurable instance for the component can be obtained by calling
+     * An @ref IConfigurable instance for the component can be obtained by calling
      * IComponentInterface::getConfigurable() on the returned @p intf.
      *
      * @return intf `IComponentInterface` instance. This must not be null.
      */
     getInterface() generates (IComponentInterface intf);
+
+    /**
+     * Returns an @ref IInputSink instance that has the component as the
+     * underlying implementation.
+     *
+     * @return sink `IInputSink` instance.
+     */
+    asInputSink() generates (IInputSink sink);
 };
 

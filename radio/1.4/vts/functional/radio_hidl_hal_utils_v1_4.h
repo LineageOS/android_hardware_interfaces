@@ -67,6 +67,10 @@ class RadioResponse_v1_4 : public ::android::hardware::radio::V1_4::IRadioRespon
     // Data
     ::android::hardware::radio::V1_4::DataRegStateResult dataRegResp;
 
+    // SimLock status
+    ::android::hardware::radio::V1_4::CarrierRestrictionsWithPriority carrierRestrictionsResp;
+    ::android::hardware::radio::V1_4::SimLockMultiSimPolicy multiSimPolicyResp;
+
     RadioResponse_v1_4(RadioHidlTest_v1_4& parent_v1_4);
     virtual ~RadioResponse_v1_4() = default;
 
