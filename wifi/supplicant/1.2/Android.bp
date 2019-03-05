@@ -19,12 +19,6 @@ hidl_interface {
         "android.hardware.wifi.supplicant@1.1",
         "android.hidl.base@1.0",
     ],
-    types: [
-        "DppAkm",
-        "DppFailureCode",
-        "DppNetRole",
-        "DppProgressCode",
-    ],
     gen_java: true,
 }
 

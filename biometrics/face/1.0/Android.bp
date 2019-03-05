@@ -14,15 +14,6 @@ hidl_interface {
     interfaces: [
         "android.hidl.base@1.0",
     ],
-    types: [
-        "FaceAcquiredInfo",
-        "FaceError",
-        "Feature",
-        "OptionalBool",
-        "OptionalUint64",
-        "Status",
-        "UserHandle",
-    ],
     gen_java: true,
 }
 

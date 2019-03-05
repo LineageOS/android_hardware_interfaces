@@ -17,9 +17,6 @@ hidl_interface {
         "android.hardware.camera.provider@2.4",
         "android.hidl.base@1.0",
     ],
-    types: [
-        "DeviceState",
-    ],
     gen_java: false,
 }
 

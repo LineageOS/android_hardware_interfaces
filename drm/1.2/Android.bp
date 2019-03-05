@@ -19,11 +19,6 @@ hidl_interface {
         "android.hardware.drm@1.1",
         "android.hidl.base@1.0",
     ],
-    types: [
-        "HdcpLevel",
-        "OfflineLicenseState",
-        "Status",
-    ],
     gen_java: false,
 }
 
