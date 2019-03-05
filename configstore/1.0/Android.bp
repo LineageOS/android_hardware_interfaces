@@ -13,14 +13,6 @@ hidl_interface {
     interfaces: [
         "android.hidl.base@1.0",
     ],
-    types: [
-        "OptionalBool",
-        "OptionalInt32",
-        "OptionalInt64",
-        "OptionalString",
-        "OptionalUInt32",
-        "OptionalUInt64",
-    ],
     gen_java: true,
 }
 

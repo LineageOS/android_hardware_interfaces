@@ -14,10 +14,6 @@ hidl_interface {
         "android.hardware.wifi.supplicant@1.0",
         "android.hidl.base@1.0",
     ],
-    types: [
-        "HostapdStatus",
-        "HostapdStatusCode",
-    ],
     gen_java: true,
 }
 

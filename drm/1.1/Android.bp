@@ -16,13 +16,6 @@ hidl_interface {
         "android.hardware.drm@1.0",
         "android.hidl.base@1.0",
     ],
-    types: [
-        "DrmMetricGroup",
-        "HdcpLevel",
-        "KeyRequestType",
-        "SecureStopRelease",
-        "SecurityLevel",
-    ],
     gen_java: false,
 }
 

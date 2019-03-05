@@ -15,23 +15,6 @@ hidl_interface {
     interfaces: [
         "android.hidl.base@1.0",
     ],
-    types: [
-        "AllocationCubemapFace",
-        "AllocationMipmapControl",
-        "AllocationUsageType",
-        "ContextFlags",
-        "ContextType",
-        "DataKind",
-        "DataType",
-        "ForEachStrategy",
-        "MessageToClientType",
-        "MetadataSignatureBitval",
-        "SamplerValue",
-        "ScriptCall",
-        "ScriptIntrinsicID",
-        "ThreadPriorities",
-        "YuvFormat",
-    ],
     gen_java: false,
     gen_java_constants: true,
 }

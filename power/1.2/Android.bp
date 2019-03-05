@@ -15,9 +15,6 @@ hidl_interface {
         "android.hardware.power@1.1",
         "android.hidl.base@1.0",
     ],
-    types: [
-        "PowerHint",
-    ],
     gen_java: true,
 }
 

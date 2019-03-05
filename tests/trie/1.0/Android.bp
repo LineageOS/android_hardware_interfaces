@@ -10,15 +10,6 @@ hidl_interface {
     interfaces: [
         "android.hidl.base@1.0",
     ],
-    types: [
-        "A",
-        "B",
-        "E1",
-        "E2",
-        "S",
-        "TrieEdge",
-        "TrieNode",
-    ],
     gen_java: false,
 }
 
