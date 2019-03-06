@@ -246,7 +246,7 @@ class WifiLegacyHal {
                                      fw_roaming_state_t state);
     wifi_error configureNdOffload(const std::string& iface_name, bool enable);
     wifi_error startSendingOffloadedPacket(
-        const std::string& iface_name, uint32_t cmd_id,
+        const std::string& iface_name, uint32_t cmd_id, uint16_t ether_type,
         const std::vector<uint8_t>& ip_packet_data,
         const std::array<uint8_t, 6>& src_address,
         const std::array<uint8_t, 6>& dst_address, uint32_t period_in_ms);

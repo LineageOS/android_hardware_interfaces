@@ -777,7 +777,7 @@ wifi_error WifiLegacyHal::configureNdOffload(const std::string& iface_name,
 }
 
 wifi_error WifiLegacyHal::startSendingOffloadedPacket(
-    const std::string& iface_name, uint32_t cmd_id,
+    const std::string& iface_name, uint32_t cmd_id, uint16_t ether_type,
     const std::vector<uint8_t>& ip_packet_data,
     const std::array<uint8_t, 6>& src_address,
     const std::array<uint8_t, 6>& dst_address, uint32_t period_in_ms) {
@@ -787,9 +787,9 @@ wifi_error WifiLegacyHal::startSendingOffloadedPacket(
     std::vector<uint8_t> dst_address_internal(
         dst_address.data(), dst_address.data() + dst_address.size());
     return global_func_table_.wifi_start_sending_offloaded_packet(
-        cmd_id, getIfaceHandle(iface_name), ip_packet_data_internal.data(),
-        ip_packet_data_internal.size(), src_address_internal.data(),
-        dst_address_internal.data(), period_in_ms);
+        cmd_id, getIfaceHandle(iface_name), ether_type,
+        ip_packet_data_internal.data(), ip_packet_data_internal.size(),
+        src_address_internal.data(), dst_address_internal.data(), period_in_ms);
 }
 
 wifi_error WifiLegacyHal::stopSendingOffloadedPacket(
