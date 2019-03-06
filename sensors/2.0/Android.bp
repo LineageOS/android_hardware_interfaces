@@ -15,11 +15,6 @@ hidl_interface {
         "android.hardware.sensors@1.0",
         "android.hidl.base@1.0",
     ],
-    types: [
-        "EventQueueFlagBits",
-        "SensorTimeout",
-        "WakeLockQueueFlagBits",
-    ],
     gen_java: false,
 }
 

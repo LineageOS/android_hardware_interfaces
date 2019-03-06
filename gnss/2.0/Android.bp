@@ -24,11 +24,6 @@ hidl_interface {
         "android.hardware.gnss@1.1",
         "android.hidl.base@1.0",
     ],
-    types: [
-        "ElapsedRealtime",
-        "ElapsedRealtimeFlags",
-        "GnssLocation",
-    ],
     gen_java: true,
     gen_java_constants: true,
 }
