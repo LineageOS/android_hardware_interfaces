@@ -53,6 +53,10 @@ interface IBiometricsFace {
      * returning to the idle state. Calling this method with the same userId
      * should have no effect on the state machine.
      *
+     * Note that onLockoutChanged() MUST be invoked by the implementation in
+     * response to a user change in order to update the framework with the
+     * timeout of the new user (or 0 if the user is not locked out).
+     *
      * @param userId A non-negative user identifier that must be unique and
      *     persistent for a given user.
      * @param storePath filesystem path to the template storage directory.
@@ -61,19 +65,22 @@ interface IBiometricsFace {
     setActiveUser(int32_t userId, string storePath) generates (Status status);
 
     /**
-     * Begins a secure transaction request, e.g. enrollment.
+     * Begins a secure transaction request, e.g. enroll() or resetLockout().
      *
      * Generates a unique and cryptographically secure random token used to
      * indicate the start of a secure transaction. generateChallenge() and
-     * revokeChallenge() specify a pin/pattern/password cleared time window where
-     * the secure transaction is allowed.
+     * revokeChallenge() specify a window where the resulting HAT that is
+     * generated in response to checking the user's PIN/pattern/password
+     * can be used to verify/perform a secure transaction.
      *
-     * generateChallenge() generates a challenge which must then be wrapped by the
+     * generateChallenge() generates a challenge which must then be wrapped by
      * gatekeeper after verifying a successful strong authentication attempt,
      * which generates a Hardware Authentication Token. The challenge prevents
-     * spoofing and replay attacks and ensures that we only update a user’s face
-     * template if the operation was preceded by some kind of strong credential
-     * confirmation (e.g. device password).
+     * spoofing and replay attacks and ensures that only a transaction backed
+     * by a user authentication (PIN/pattern/password) can proceed.
+     *
+     * The implementation should be tolerant of revokeChallenge() being invoked
+     * after timeout has expired.
      *
      * @param challengeTimeoutSec A timeout in seconds, after which the driver
      *     must invalidate the challenge. This is to prevent bugs or crashes in
@@ -81,35 +88,35 @@ interface IBiometricsFace {
      * @return result, with its "value" parameter representing a "challenge": a
      *     unique and cryptographically secure random token.
      */
-    @callflow(next={"enroll", "revokeChallenge", "setFeatureDisabled"})
+    @callflow(next={"enroll", "revokeChallenge", "setFeature"})
     generateChallenge(uint32_t challengeTimeoutSec)
         generates (OptionalUint64 result);
 
     /**
      * Enrolls a user's face.
      *
-     * Note that this interface permits implementations where multiple faces can
-     * be enrolled for a single user. However, allowing multiple faces to be
-     * enrolled can be a severe security vulnerability and hence, most
-     * implementations must ensure that only a single face be enrolled at a
-     * given time. Multi-enrollment must only be used where there is a clear
-     * necessity for a shared use case, e.g. TVs or cars.
-     *
-     * Note that the Hardware Authentication Token must still be valid after
-     * this call, and must be explicitly invalidated by a call to
-     * revokeChallenge(). This allows clients to immediately reattempt
-     * enrollment (for example, if a user wasn’t satisfied with their enrollment)
-     * without having to go through another strong authentication flow.
+     * Note that the Hardware Authentication Token must be valid for the
+     * duration of enrollment and thus should be explicitly invalidated by a
+     * call to revokeChallenge() when enrollment is complete, to reduce the
+     * window of opportunity to re-use the challenge and HAT. For example,
+     * Settings calls generateChallenge() once to allow the user to enroll one
+     * or more faces or toggle secure settings without having to re-enter the
+     * PIN/pattern/password. Once the user completes the operation, Settings
+     * invokes revokeChallenge() to close the transaction. If the HAT is expired,
+     * the implementation must invoke onError with UNABLE_TO_PROCESS.
      *
      * This method triggers the IBiometricsFaceClientCallback#onEnrollResult()
      * method.
      *
      * @param hat A valid Hardware Authentication Token, generated as a result
      *     of a generateChallenge() challenge being wrapped by the gatekeeper
-     *     after a sucessful strong authentication request.
-     * @param timeoutSec A timeout in seconds, after which this enrollment
-     *     attempt is cancelled. Note that the client still needs to
-     *     call revokeChallenge() to terminate the enrollment session.
+     *     after a successful strong authentication request.
+     * @param timeoutSec A timeout in seconds, after which this enroll
+     *     attempt is cancelled. Note that the framework can continue
+     *     enrollment by calling this again with a valid HAT. This timeout is
+     *     expected to be used to limit power usage if the device becomes idle
+     *     during enrollment. The implementation is expected to send
+     *     ERROR_TIMEOUT if this happens.
      * @param disabledFeatures A list of features to be disabled during
      *     enrollment. Note that all features are enabled by default.
      * @return status The status of this method call.
@@ -122,8 +129,8 @@ interface IBiometricsFace {
      * Finishes the secure transaction by invalidating the challenge generated
      * by generateChallenge().
      *
-     * Clients must call this method once enrollment is complete, and the user's
-     * face template no longer needs to be updated.
+     * Clients must call this method once the secure transaction (e.g. enroll
+     * or setFeature) is completed. See generateChallenge().
      *
      * @return status The status of this method call.
      */
@@ -131,33 +138,43 @@ interface IBiometricsFace {
     revokeChallenge() generates (Status status);
 
     /**
-     * Requires all subsequent enroll/authenticate calls to use the feature.
-     * This method does not affect enroll, which has its own feature list.
-     *
      * Changes the state of previous enrollment setting. Because this may
      * decrease security, the user must enter their password before this method
      * is invoked (see @param HAT). The driver must verify the HAT before
-     * changing any feature state.
+     * changing any feature state. This method must return ILLEGAL_ARGUMENT if
+     * the HAT or faceId is invalid. This must only be invoked after
+     * setActiveUser() is called.
+     *
      * Note: In some cases it may not be possible to change the state of this
      * flag without re-enrolling. For example, if the user didn't provide
      * attention during the original enrollment. This flag reflects the same
      * persistent state as the one passed to enroll().
      *
+     * Note: This call may block for a short amount of time (few hundred
+     * milliseconds). Clients are expected to invoke this asynchronously if it
+     * takes much longer than the above limit. Also note that the result is
+     * returned solely through Status (and not onError).
+     *
      * @param feature The feature to be enabled or disabled.
      * @param enabled True to enable the feature, false to disable.
      * @param hat A valid Hardware Authentication Token, generated as a result
      *     of getChallenge().
+     * @param faceId the ID of the enrollment returned by enroll() for the
+     *     feature to update.
      * @return status The status of this method call.
      */
-    setFeature(Feature feature, bool enabled, vec<uint8_t> hat)
+    setFeature(Feature feature, bool enabled, vec<uint8_t> hat, uint32_t faceId)
         generates(Status status);
 
     /**
-     * Retrieves the current state of the feature.
+     * Retrieves the current state of the feature. If the faceId is invalid,
+     * the implementation must return ILLEGAL_ARGUMENT.
      *
-     * @return enabled True if the feature is enabled, false if disabled.
+     * @param faceId the ID of the enrollment returned by enroll().
+     * @return result with the value set to true if the feature is enabled,
+     *     false if disabled.
      */
-    getFeature(Feature feature) generates (bool enabled);
+    getFeature(Feature feature, uint32_t faceId) generates (OptionalBool result);
 
     /**
      * Returns an identifier associated with the current face set.
@@ -176,7 +193,7 @@ interface IBiometricsFace {
     getAuthenticatorId() generates (OptionalUint64 result);
 
     /**
-     * Cancels a pending enrollment or authentication request.
+     * Cancels the current enroll, authenticate, remove, or enumerate operation.
      *
      * @return status The status of this method call.
      */
@@ -241,8 +258,12 @@ interface IBiometricsFace {
     /**
      * Reset lockout for the current user.
      *
+     * Note: This call may block for a short amount of time (few hundred
+     * milliseconds). Clients are expected to invoke this asynchronously if it
+     * takes much longer than the above limit.
+     *
      * @param hat A valid Hardware Authentication Token, generated when the
-     *     user authenticates with Pin/Pattern/Pass. When the Hardware
+     *     user authenticates with PIN/pattern/pass. When the Hardware
      *     Authentication Token is verified, lockout must be reset and
      *     onLockoutChanged must be called with duration 0.
      * @return status The status of this method call.

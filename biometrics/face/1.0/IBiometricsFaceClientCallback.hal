@@ -39,7 +39,7 @@ interface IBiometricsFaceClientCallback {
      * A callback invoked when a face has been successfully authenticated.
      *
      * @param deviceId A unique id associated with the HAL implementation
-     *     service that processed this autentication attempt.
+     *     service that processed this authentication attempt.
      * @param faceId The id of the face template that passed the authentication
      *     challenge.
      * @param userId The active user id for the authenticated face.
