@@ -18,6 +18,7 @@
 
 #include <VtsHalHidlTargetTestBase.h>
 #include <gnss_hal_test.h>
+#include "Utils.h"
 
 using android::hardware::hidl_string;
 using android::hardware::hidl_vec;
@@ -32,6 +33,9 @@ using IAGnss_2_0 = android::hardware::gnss::V2_0::IAGnss;
 using IAGnss_1_0 = android::hardware::gnss::V1_0::IAGnss;
 using IAGnssCallback_2_0 = android::hardware::gnss::V2_0::IAGnssCallback;
 
+using android::hardware::gnss::common::Utils;
+using android::hardware::gnss::measurement_corrections::V1_0::IMeasurementCorrections;
+using android::hardware::gnss::measurement_corrections::V1_0::MeasurementCorrections;
 using android::hardware::gnss::V1_0::IGnssNi;
 using android::hardware::gnss::V2_0::ElapsedRealtimeFlags;
 using android::hardware::gnss::visibility_control::V1_0::IGnssVisibilityControl;
@@ -268,6 +272,24 @@ TEST_F(GnssHalTest, TestGnssVisibilityControlExtension) {
     // Set non-framework proxy apps.
     hidl_vec<hidl_string> proxyApps{"ims.example.com", "mdt.example.com"};
     auto result = iGnssVisibilityControl->enableNfwLocationAccess(proxyApps);
+    ASSERT_TRUE(result.isOk());
+    EXPECT_TRUE(result);
+}
+
+/*
+ * TestGnssMeasurementCorrections:
+ * Gets the GnssMeasurementCorrectionsExtension and verifies that it supports the
+ * gnss.measurement_corrections@1.0::IMeasurementCorrections interface by invoking a method.
+ */
+TEST_F(GnssHalTest, TestGnssMeasurementCorrections) {
+    // Verify IMeasurementCorrections is supported.
+    auto measurementCorrections = gnss_hal_->getExtensionMeasurementCorrections();
+    ASSERT_TRUE(measurementCorrections.isOk());
+    sp<IMeasurementCorrections> iMeasurementCorrections = measurementCorrections;
+    ASSERT_NE(iMeasurementCorrections, nullptr);
+
+    // Set a mock MeasurementCorrections.
+    auto result = iMeasurementCorrections->setCorrections(Utils::getMockMeasurementCorrections());
     ASSERT_TRUE(result.isOk());
     EXPECT_TRUE(result);
 }

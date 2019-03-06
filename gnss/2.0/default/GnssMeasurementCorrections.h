@@ -14,29 +14,35 @@
  * limitations under the License.
  */
 
-#ifndef android_hardware_gnss_common_vts_Utils_H_
-#define android_hardware_gnss_common_vts_Utils_H_
+#pragma once
 
-#include <android/hardware/gnss/1.0/IGnss.h>
 #include <android/hardware/gnss/measurement_corrections/1.0/IMeasurementCorrections.h>
-
-using GnssLocation = ::android::hardware::gnss::V1_0::GnssLocation;
-using namespace android::hardware::gnss::measurement_corrections::V1_0;
+#include <hidl/MQDescriptor.h>
+#include <hidl/Status.h>
 
 namespace android {
 namespace hardware {
 namespace gnss {
-namespace common {
+namespace measurement_corrections {
+namespace V1_0 {
+namespace implementation {
 
-struct Utils {
-    static void checkLocation(const GnssLocation& location, bool check_speed,
-                              bool check_more_accuracies);
-    static const MeasurementCorrections getMockMeasurementCorrections();
+using ::android::sp;
+using ::android::hardware::hidl_array;
+using ::android::hardware::hidl_memory;
+using ::android::hardware::hidl_string;
+using ::android::hardware::hidl_vec;
+using ::android::hardware::Return;
+using ::android::hardware::Void;
+
+struct GnssMeasurementCorrections : public IMeasurementCorrections {
+    // Methods from V1_0::IMeasurementCorrections follow.
+    Return<bool> setCorrections(const MeasurementCorrections& corrections) override;
 };
 
-}  // namespace common
+}  // namespace implementation
+}  // namespace V1_0
+}  // namespace measurement_corrections
 }  // namespace gnss
 }  // namespace hardware
 }  // namespace android
-
-#endif  // android_hardware_gnss_common_vts_Utils_H_
