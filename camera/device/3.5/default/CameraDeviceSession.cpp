@@ -273,6 +273,7 @@ camera3_buffer_request_status_t CameraDeviceSession::requestStreamBuffers(
         int streamId = bufRets[i].streamId;
         const hidl_vec<StreamBuffer>& hBufs = bufRets[i].val.buffers();
         camera3_stream_buffer_t* outBufs = returned_buf_reqs[i].output_buffers;
+        returned_buf_reqs[i].num_output_buffers = hBufs.size();
         for (size_t b = 0; b < hBufs.size(); b++) {
             const StreamBuffer& hBuf = hBufs[b];
             camera3_stream_buffer_t& outBuf = outBufs[b];
@@ -281,27 +282,19 @@ camera3_buffer_request_status_t CameraDeviceSession::requestStreamBuffers(
                     hBuf.bufferId, hBuf.buffer.getNativeHandle(),
                     /*out*/&(outBuf.buffer),
                     /*allowEmptyBuf*/false);
-            if (s != Status::OK) {
-                ALOGE("%s: import stream %d bufferId %" PRIu64 " failed!",
-                        __FUNCTION__, streamId, hBuf.bufferId);
-                cleanupInflightBufferFences(importedFences, importedBuffers);
-                // Buffer import should never fail - restart HAL since something is very
-                // wrong.
-                assert(false);
-                return CAMERA3_BUF_REQ_FAILED_UNKNOWN;
-            }
+            // Buffer import should never fail - restart HAL since something is very wrong.
+            LOG_ALWAYS_FATAL_IF(s != Status::OK,
+                    "%s: import stream %d bufferId %" PRIu64 " failed!",
+                    __FUNCTION__, streamId, hBuf.bufferId);
 
             pushBufferId(*(outBuf.buffer), hBuf.bufferId, streamId);
             importedBuffers.push_back(std::make_pair(*(outBuf.buffer), streamId));
 
-            if (!sHandleImporter.importFence(
-                    hBuf.acquireFence,
-                    outBuf.acquire_fence)) {
-                ALOGE("%s: stream %d bufferId %" PRIu64 "acquire fence is invalid",
+            bool succ = sHandleImporter.importFence(hBuf.acquireFence, outBuf.acquire_fence);
+            // Fence import should never fail - restart HAL since something is very wrong.
+            LOG_ALWAYS_FATAL_IF(!succ,
+                        "%s: stream %d bufferId %" PRIu64 "acquire fence is invalid",
                         __FUNCTION__, streamId, hBuf.bufferId);
-                cleanupInflightBufferFences(importedFences, importedBuffers);
-                return CAMERA3_BUF_REQ_FAILED_UNKNOWN;
-            }
             importedFences.push_back(outBuf.acquire_fence);
             outBuf.stream = returned_buf_reqs[i].stream;
             outBuf.status = CAMERA3_BUFFER_STATUS_OK;

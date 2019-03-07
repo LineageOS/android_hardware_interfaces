@@ -22,6 +22,7 @@ namespace hardware {
 namespace gnss {
 namespace common {
 
+using V1_0::GnssConstellationType;
 using V1_0::GnssLocationFlags;
 
 void Utils::checkLocation(const GnssLocation& location, bool check_speed,
@@ -89,6 +90,53 @@ void Utils::checkLocation(const GnssLocation& location, bool check_speed,
 
     // Check timestamp > 1.48e12 (47 years in msec - 1970->2017+)
     EXPECT_GT(location.timestamp, 1.48e12);
+}
+
+const MeasurementCorrections Utils::getMockMeasurementCorrections() {
+    ReflectingPlane reflectingPlane = {
+            .latitudeDegrees = 37.4220039,
+            .longitudeDegrees = -122.0840991,
+            .altitudeMeters = 250.35,
+            .azimuthDegrees = 203.0,
+    };
+
+    SingleSatCorrection singleSatCorrection1 = {
+            .singleSatCorrectionFlags = GnssSingleSatCorrectionFlags::HAS_SAT_IS_LOS_PROBABILITY |
+                                        GnssSingleSatCorrectionFlags::HAS_EXCESS_PATH_LENGTH |
+                                        GnssSingleSatCorrectionFlags::HAS_EXCESS_PATH_LENGTH_UNC |
+                                        GnssSingleSatCorrectionFlags::HAS_REFLECTING_PLANE,
+            .constellation = GnssConstellationType::GPS,
+            .svid = 12,
+            .carrierFrequencyHz = 1.59975e+09,
+            .probSatIsLos = 0.50001,
+            .excessPathLengthMeters = 137.4802,
+            .excessPathLengthUncertaintyMeters = 25.5,
+            .reflectingPlane = reflectingPlane,
+    };
+    SingleSatCorrection singleSatCorrection2 = {
+            .singleSatCorrectionFlags = GnssSingleSatCorrectionFlags::HAS_SAT_IS_LOS_PROBABILITY |
+                                        GnssSingleSatCorrectionFlags::HAS_EXCESS_PATH_LENGTH |
+                                        GnssSingleSatCorrectionFlags::HAS_EXCESS_PATH_LENGTH_UNC,
+            .constellation = GnssConstellationType::GPS,
+            .svid = 9,
+            .carrierFrequencyHz = 1.59975e+09,
+            .probSatIsLos = 0.873,
+            .excessPathLengthMeters = 26.294,
+            .excessPathLengthUncertaintyMeters = 10.0,
+    };
+
+    hidl_vec<SingleSatCorrection> singleSatCorrections = {singleSatCorrection1,
+                                                          singleSatCorrection2};
+    MeasurementCorrections mockCorrections = {
+            .latitudeDegrees = 37.4219999,
+            .longitudeDegrees = -122.0840575,
+            .altitudeMeters = 30.60062531,
+            .horizontalPositionUncertaintyMeters = 9.23542,
+            .verticalPositionUncertaintyMeters = 15.02341,
+            .toaGpsNanosecondsOfWeek = 2935633453L,
+            .satCorrections = singleSatCorrections,
+    };
+    return mockCorrections;
 }
 
 }  // namespace common

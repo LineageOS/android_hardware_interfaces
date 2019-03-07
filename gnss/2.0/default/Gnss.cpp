@@ -25,11 +25,14 @@
 #include "AGnssRil.h"
 #include "GnssConfiguration.h"
 #include "GnssMeasurement.h"
+#include "GnssMeasurementCorrections.h"
 #include "GnssVisibilityControl.h"
 #include "Utils.h"
 
 using ::android::hardware::Status;
 using ::android::hardware::gnss::common::Utils;
+using ::android::hardware::gnss::measurement_corrections::V1_0::implementation::
+        GnssMeasurementCorrections;
 using ::android::hardware::gnss::visibility_control::V1_0::implementation::GnssVisibilityControl;
 
 namespace android {
@@ -248,8 +251,8 @@ Return<sp<V2_0::IGnssMeasurement>> Gnss::getExtensionGnssMeasurement_2_0() {
 
 Return<sp<measurement_corrections::V1_0::IMeasurementCorrections>>
 Gnss::getExtensionMeasurementCorrections() {
-    // TODO(b/124012850): Implement function.
-    return sp<measurement_corrections::V1_0::IMeasurementCorrections>{};
+    ALOGD("Gnss::getExtensionMeasurementCorrections");
+    return new GnssMeasurementCorrections();
 }
 
 Return<sp<visibility_control::V1_0::IGnssVisibilityControl>> Gnss::getExtensionVisibilityControl() {
