@@ -42,7 +42,7 @@
                 <xs:element name="globalConfiguration" type="globalConfiguration"/>
                 <xs:element name="modules" type="modules" maxOccurs="unbounded"/>
                 <xs:element name="volumes" type="volumes" maxOccurs="unbounded"/>
-                <xs:element name="surroundSound" type="surroundSound" />
+                <xs:element name="surroundSound" type="surroundSound" minOccurs="0" />
             </xs:sequence>
             <xs:attribute name="version" type="version"/>
         </xs:complexType>
