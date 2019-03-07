@@ -28,7 +28,6 @@ import @2.1::Error;
 
 interface IComposerClient extends @2.2::IComposerClient {
 
-    // Bug: Move this enum to LLNDK after we decide where to put graphic types.
     /**
      * Required capabilities which are supported by the display. The
      * particular set of supported capabilities for a given display may be
@@ -64,7 +63,6 @@ interface IComposerClient extends @2.2::IComposerClient {
         DOZE = 2,
     };
 
-    //Bug: Move this enum to LLNDK after we decide where to put graphic types.
     /**
      * PerFrameMetadataKey
      *
