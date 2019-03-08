@@ -4223,7 +4223,7 @@ enum OperationType : int32_t {
     TOPK_V2 = 90,
 
     /**
-     * Performs the tranpose of 2-D convolution operation.
+     * Performs the transpose of 2-D convolution operation.
      *
      * This operation is sometimes called "deconvolution" after Deconvolutional
      * Networks, but is actually the transpose (gradient) of
