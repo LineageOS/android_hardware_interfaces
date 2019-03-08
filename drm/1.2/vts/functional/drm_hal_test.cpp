@@ -41,8 +41,8 @@ using ::android::hardware::hidl_string;
 static const char* const kVideoMp4 = "video/mp4";
 static const char* const kBadMime = "video/unknown";
 static const char* const kDrmErrorTestKey = "drmErrorTest";
-static const char* const kDrmErrorGeneric = "";
-static const char* const kResourceContentionValue = "resourceContention";
+static const char* const kDrmErrorInvalidState = "invalidState";
+static const char* const kDrmErrorResourceContention = "resourceContention";
 static const SecurityLevel kSwSecureCrypto = SecurityLevel::SW_SECURE_CRYPTO;
 
 /**
@@ -380,7 +380,7 @@ TEST_P(DrmHalClearkeyTest, BadLevelNotSupported) {
  * Test resource contention during attempt to generate key request
  */
 TEST_P(DrmHalClearkeyTest, GetKeyRequestResourceContention) {
-    Status status = drmPlugin->setPropertyString(kDrmErrorTestKey, kResourceContentionValue);
+    Status status = drmPlugin->setPropertyString(kDrmErrorTestKey, kDrmErrorResourceContention);
     EXPECT_EQ(Status::OK, status);
     auto sessionId = openSession();
     hidl_vec<uint8_t> initData;
@@ -403,7 +403,7 @@ TEST_P(DrmHalClearkeyTest, GetKeyRequestResourceContention) {
 TEST_P(DrmHalClearkeyTest, OfflineLicenseInvalidState) {
     auto sessionId = openSession();
     hidl_vec<uint8_t> keySetId = loadKeys(sessionId, KeyType::OFFLINE);
-    Status status = drmPlugin->setPropertyString(kDrmErrorTestKey, kDrmErrorGeneric);
+    Status status = drmPlugin->setPropertyString(kDrmErrorTestKey, kDrmErrorInvalidState);
     EXPECT_EQ(Status::OK, status);
 
     // everything should start failing
@@ -426,7 +426,7 @@ TEST_P(DrmHalClearkeyTest, SessionLostState) {
     auto res = drmPlugin->setListener(listener);
     EXPECT_OK(res);
 
-    Status status = drmPlugin->setPropertyString(kDrmErrorTestKey, kDrmErrorGeneric);
+    Status status = drmPlugin->setPropertyString(kDrmErrorTestKey, kDrmErrorInvalidState);
     EXPECT_EQ(Status::OK, status);
 
     auto sessionId = openSession();
