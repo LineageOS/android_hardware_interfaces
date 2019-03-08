@@ -17,6 +17,8 @@
 #define LOG_TAG "health_hidl_hal_test"
 
 #include <mutex>
+#include <set>
+#include <string>
 
 #include <VtsHalHidlTargetTestBase.h>
 #include <android-base/logging.h>
@@ -31,6 +33,39 @@ using ::testing::VtsHalHidlTargetTestBase;
 using ::testing::VtsHalHidlTargetTestEnvBase;
 
 DEFINE_bool(force, false, "Force test healthd even when the default instance is present.");
+
+// If GTEST_SKIP is not implemented, use our own skipping mechanism
+#ifndef GTEST_SKIP
+static std::mutex gSkippedTestsMutex;
+static std::set<std::string> gSkippedTests;
+static std::string GetCurrentTestName() {
+    const auto& info = ::testing::UnitTest::GetInstance()->current_test_info();
+#ifdef GTEST_REMOVE_LEGACY_TEST_CASEAPI_
+    std::string test_suite = info->test_suite_name();
+#else
+    std::string test_suite = info->test_case_name();
+#endif
+    return test_suite + "." + info->name();
+}
+
+#define GTEST_SKIP()                                           \
+    do {                                                       \
+        std::unique_lock<std::mutex> lock(gSkippedTestsMutex); \
+        gSkippedTests.insert(GetCurrentTestName());            \
+        return;                                                \
+    } while (0)
+
+#define SKIP_IF_SKIPPED()                                                      \
+    do {                                                                       \
+        std::unique_lock<std::mutex> lock(gSkippedTestsMutex);                 \
+        if (gSkippedTests.find(GetCurrentTestName()) != gSkippedTests.end()) { \
+            std::cerr << "[  SKIPPED ] " << GetCurrentTestName() << std::endl; \
+            return;                                                            \
+        }                                                                      \
+    } while (0)
+#else
+#define SKIP_IF_SKIPPED()
+#endif
 
 namespace android {
 namespace hardware {
@@ -122,6 +157,7 @@ AssertionResult isAllOk(const Return<Result>& r) {
  * unregisterCallback, and update.
  */
 TEST_F(HealthHidlTest, Callbacks) {
+    SKIP_IF_SKIPPED();
     using namespace std::chrono_literals;
     sp<Callback> firstCallback = new Callback();
     sp<Callback> secondCallback = new Callback();
@@ -158,6 +194,7 @@ TEST_F(HealthHidlTest, Callbacks) {
 }
 
 TEST_F(HealthHidlTest, UnregisterNonExistentCallback) {
+    SKIP_IF_SKIPPED();
     sp<Callback> callback = new Callback();
     auto ret = mHealth->unregisterCallback(callback);
     ASSERT_OK(ret);
@@ -239,6 +276,7 @@ bool verifyHealthInfo(const HealthInfo& health_info) {
  * interface IHealth.
  */
 TEST_F(HealthHidlTest, Properties) {
+    SKIP_IF_SKIPPED();
     EXPECT_OK(mHealth->getChargeCounter([](auto result, auto value) {
         EXPECT_VALID_OR_UNSUPPORTED_PROP(result, std::to_string(value), value > 0);
     }));
