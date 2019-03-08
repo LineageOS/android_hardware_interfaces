@@ -522,8 +522,8 @@ TEST_F(RadioHidlTest_v1_4, setupDataCall_1_4) {
     memset(&dataProfileInfo, 0, sizeof(dataProfileInfo));
     dataProfileInfo.profileId = DataProfileId::DEFAULT;
     dataProfileInfo.apn = hidl_string("internet");
-    dataProfileInfo.protocol = PdpProtocolType::IPV4V6;
-    dataProfileInfo.roamingProtocol = PdpProtocolType::IPV4V6;
+    dataProfileInfo.protocol = PdpProtocolType::IP;
+    dataProfileInfo.roamingProtocol = PdpProtocolType::IP;
     dataProfileInfo.authType = ApnAuthType::NO_PAP_NO_CHAP;
     dataProfileInfo.user = hidl_string("username");
     dataProfileInfo.password = hidl_string("password");
