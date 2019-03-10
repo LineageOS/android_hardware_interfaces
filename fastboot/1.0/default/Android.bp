@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2017 The Android Open Source Project
+// Copyright (C) 2019 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,16 +12,20 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
-cc_test {
-    name: "VtsHalHealthV2_0TargetTest",
-    defaults: ["VtsHalTargetTestDefaults"],
-    srcs: ["VtsHalHealthV2_0TargetTest.cpp"],
-    static_libs: [
-        "libgflags",
-        "android.hardware.health@1.0",
-        "android.hardware.health@2.0",
+cc_library {
+    name: "android.hardware.fastboot@1.0-impl-mock",
+    recovery: true,
+    srcs: [
+        "Fastboot.cpp",
     ],
-    test_suites: ["general-tests"],
+    relative_install_path: "hw",
+    shared_libs: [
+        "libbase",
+        "libhidlbase",
+        "libhidltransport",
+        "libutils",
+        "libcutils",
+        "android.hardware.fastboot@1.0",
+    ],
 }

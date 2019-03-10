@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2017 The Android Open Source Project
+// Copyright (C) 2019 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,13 +15,26 @@
 //
 
 cc_test {
-    name: "VtsHalHealthV2_0TargetTest",
+    name: "VtsHalDrmV1_2TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
-    srcs: ["VtsHalHealthV2_0TargetTest.cpp"],
+    srcs: [
+        "drm_hal_clearkey_module.cpp",
+        "drm_hal_common.cpp",
+        "drm_hal_test.cpp",
+        "vendor_modules.cpp",
+    ],
+    include_dirs: ["hardware/interfaces/drm/1.0/vts/functional"],
     static_libs: [
-        "libgflags",
-        "android.hardware.health@1.0",
-        "android.hardware.health@2.0",
+        "android.hardware.drm@1.0",
+        "android.hardware.drm@1.1",
+        "android.hardware.drm@1.2",
+        "android.hardware.drm@1.0-helper",
+        "android.hidl.allocator@1.0",
+        "android.hidl.memory@1.0",
+        "libhidlmemory",
+        "libnativehelper",
+        "libssl",
+        "libcrypto",
     ],
     test_suites: ["general-tests"],
 }

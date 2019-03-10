@@ -4223,7 +4223,7 @@ enum OperationType : int32_t {
     TOPK_V2 = 90,
 
     /**
-     * Performs the tranpose of 2-D convolution operation.
+     * Performs the transpose of 2-D convolution operation.
      *
      * This operation is sometimes called "deconvolution" after Deconvolutional
      * Networks, but is actually the transpose (gradient) of
@@ -4844,7 +4844,7 @@ struct Model {
         /**
          * The extension name.
          *
-         * See {@link Extension::name}.
+         * See {@link Extension::name} for the format specification.
          */
         string name;
 
@@ -5128,7 +5128,11 @@ struct Extension {
     /**
      * The extension name.
      *
+     * The name must consist of lowercase latin letters, numbers, periods, and
+     * underscore signs. The name must contain at least one period.
+     *
      * The name must start with the reverse domain name of the vendor.
+     *
      * Example: com.google.test_extension
      */
     string name;
