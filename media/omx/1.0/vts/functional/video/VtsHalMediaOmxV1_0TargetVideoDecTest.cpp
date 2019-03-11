@@ -153,7 +153,17 @@ class VideoDecHidlTest : public ::testing::VtsHalHidlTargetTestBase {
                         ".secure");
         }
         if (isSecure) disableTest = true;
+        omxNode->configureVideoTunnelMode(
+            1, OMX_TRUE, 0,
+            [&](android::hardware::media::omx::V1_0::Status _s,
+                const ::android::hardware::hidl_handle& sidebandHandle) {
+                (void)sidebandHandle;
+                if (_s == android::hardware::media::omx::V1_0::Status::OK)
+                    this->disableTest = true;
+            });
         if (disableTest) std::cout << "[   WARN   ] Test Disabled \n";
+        // NOTES: secure and tunneled components are not covered in these tests.
+        // we are disabling tests for them
     }
 
     virtual void TearDown() override {
