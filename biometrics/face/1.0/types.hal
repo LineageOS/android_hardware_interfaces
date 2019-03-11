@@ -340,9 +340,14 @@ enum FaceAcquiredInfo : int32_t {
     START = 20,
 
     /**
+     * The sensor is dirty. The user should be informed to clean the sensor.
+     */
+    SENSOR_DIRTY = 21,
+
+    /**
      * Used to enable a vendor-specific acquisition message.
      */
-    VENDOR = 21
+    VENDOR = 22
 };
 
 /**
