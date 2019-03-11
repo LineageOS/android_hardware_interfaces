@@ -69,7 +69,7 @@ struct GnssLocation {
      *
      * This clock information can be obtained from SystemClock.elapsedRealtimeNanos(), when the GNSS
      * is attached straight to the AP/SOC. When it is attached to a separate module the timestamp
-     * needs to be estimatedd by syncing the notion of time via PTP or some other mechanism. 
+     * needs to be estimated by syncing the notion of time via PTP or some other mechanism.
      */
     ElapsedRealtime elapsedRealtime;
 };
