@@ -59,7 +59,9 @@ interface IBiometricsFace {
      *
      * @param userId A non-negative user identifier that must be unique and
      *     persistent for a given user.
-     * @param storePath filesystem path to the template storage directory.
+     * @param storePath absolute filesystem path to the template storage
+     *     directory. This must be the /data/vendor_de/<user>/facedata
+     *     directory specified by the SeLinux policy.
      */
     @callflow(next={"authenticate", "generateChallenge", "enumerate", "remove"})
     setActiveUser(int32_t userId, string storePath) generates (Status status);
@@ -159,8 +161,8 @@ interface IBiometricsFace {
      * @param enabled True to enable the feature, false to disable.
      * @param hat A valid Hardware Authentication Token, generated as a result
      *     of getChallenge().
-     * @param faceId the ID of the enrollment returned by enroll() for the
-     *     feature to update.
+     * @param faceId the ID of the enrollment returned by onEnrollResult() for
+     *     the feature to update.
      * @return status The status of this method call.
      */
     setFeature(Feature feature, bool enabled, vec<uint8_t> hat, uint32_t faceId)

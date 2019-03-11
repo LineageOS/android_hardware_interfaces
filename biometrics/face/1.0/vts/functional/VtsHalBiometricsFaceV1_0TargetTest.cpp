@@ -104,7 +104,7 @@ class FaceCallbackBase : public IBiometricsFaceClientCallback {
         return Return<void>();
     }
 
-    Return<void> onRemoved(uint64_t, uint32_t, int32_t, uint32_t) override {
+    Return<void> onRemoved(uint64_t, const hidl_vec<uint32_t>&, int32_t) override {
         ALOGD("Removed callback called.");
         return Return<void>();
     }
@@ -155,12 +155,9 @@ class RemoveCallback : public FaceCallbackBase {
   public:
     explicit RemoveCallback(int32_t userId) : removeUserId(userId) {}
 
-    Return<void> onRemoved(uint64_t, uint32_t, int32_t userId, uint32_t remaining) override {
+    Return<void> onRemoved(uint64_t, const hidl_vec<uint32_t>&, int32_t userId) override {
         EXPECT_EQ(removeUserId, userId);
         promise.set_value();
-        if (remaining == 0UL) {
-            promise.set_value();
-        }
         return Return<void>();
     }
 
