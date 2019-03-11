@@ -115,6 +115,7 @@ class ComponentHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         }
         if (compClass == unknown_class) disableTest = true;
         isSecure = false;
+        mTunnel = false;
         size_t suffixLen = strlen(".secure");
         if (strlen(gEnv->getComponent().c_str()) >= suffixLen) {
             isSecure =
@@ -122,6 +123,18 @@ class ComponentHidlTest : public ::testing::VtsHalHidlTargetTestBase {
                             strlen(gEnv->getComponent().c_str()) - suffixLen,
                         ".secure");
         }
+        if (compClass == video_decoder) {
+            omxNode->configureVideoTunnelMode(
+                1, OMX_TRUE, 0,
+                [&](android::hardware::media::omx::V1_0::Status _s,
+                    const ::android::hardware::hidl_handle& sidebandHandle) {
+                    (void)sidebandHandle;
+                    if (_s == android::hardware::media::omx::V1_0::Status::OK)
+                        this->mTunnel = true;
+                });
+        }
+        // NOTES: secure components are not covered in these tests.
+        // we are disabling tests for them
         if (disableTest) std::cout << "[   WARN   ] Test Disabled \n";
     }
 
@@ -149,6 +162,7 @@ class ComponentHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     sp<CodecObserver> observer;
     sp<IOmxNode> omxNode;
     standardCompClass compClass;
+    bool mTunnel;
     bool isSecure;
     bool disableTest;
 
@@ -991,7 +1005,8 @@ TEST_F(ComponentHidlTest, PortEnableDisable_Idle) {
     ASSERT_NO_FATAL_FAILURE(
         changeStateLoadedtoIdle(omxNode, observer, &pBuffer[0], &pBuffer[1],
                                 kPortIndexInput, kPortIndexOutput, portMode));
-    for (size_t i = portBase; i < portBase + 2; i++) {
+    int range = mTunnel ? 1 : 2;
+    for (size_t i = portBase; i < portBase + range; i++) {
         status =
             omxNode->sendCommand(toRawCommandType(OMX_CommandPortDisable), i);
         ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
@@ -1104,7 +1119,8 @@ TEST_F(ComponentHidlTest, PortEnableDisable_Execute) {
             dispatchOutputBuffer(omxNode, &pBuffer[1], i, portMode[1]));
     }
 
-    for (size_t i = portBase; i < portBase + 2; i++) {
+    int range = mTunnel ? 1 : 2;
+    for (size_t i = portBase; i < portBase + range; i++) {
         status =
             omxNode->sendCommand(toRawCommandType(OMX_CommandPortDisable), i);
         ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
