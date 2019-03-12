@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "drm_hal_clearkey_test@1.2"
+#define LOG_TAG "drm_hal_test@1.2"
 
 #include <gtest/gtest.h>
 #include <hidl/HidlSupport.h>
@@ -180,19 +180,36 @@ void checkKeySetIdState(Status status, OfflineLicenseState state) {
 }
 
 /**
- * Test clearkey plugin offline key support
+ * Test drm plugin offline key support
  */
 TEST_P(DrmHalTest, OfflineLicenseTest) {
     auto sessionId = openSession();
     hidl_vec<uint8_t> keySetId = loadKeys(sessionId, KeyType::OFFLINE);
 
-    auto res = drmPlugin->getOfflineLicenseKeySetIds(checkKeySetIds<Status::OK, 1u>);
+    auto res = drmPlugin->getOfflineLicenseKeySetIds(
+            [&](Status status, const hidl_vec<KeySetId>& keySetIds) {
+                bool found = false;
+                EXPECT_EQ(Status::OK, status);
+                for (KeySetId keySetId2: keySetIds) {
+                    if (keySetId == keySetId2) {
+                        found = true;
+                        break;
+                    }
+                }
+                EXPECT_TRUE(found) << "keySetId not found";
+            });
     EXPECT_OK(res);
 
     Status err = drmPlugin->removeOfflineLicense(keySetId);
     EXPECT_EQ(Status::OK, err);
 
-    res = drmPlugin->getOfflineLicenseKeySetIds(checkKeySetIds<Status::OK, 0u>);
+    res = drmPlugin->getOfflineLicenseKeySetIds(
+            [&](Status status, const hidl_vec<KeySetId>& keySetIds) {
+                EXPECT_EQ(Status::OK, status);
+                for (KeySetId keySetId2: keySetIds) {
+                    EXPECT_NE(keySetId, keySetId2);
+                }
+            });
     EXPECT_OK(res);
 
     err = drmPlugin->removeOfflineLicense(keySetId);
@@ -202,7 +219,7 @@ TEST_P(DrmHalTest, OfflineLicenseTest) {
 }
 
 /**
- * Test clearkey plugin offline key state
+ * Test drm plugin offline key state
  */
 TEST_P(DrmHalTest, OfflineLicenseStateTest) {
     auto sessionId = openSession();
