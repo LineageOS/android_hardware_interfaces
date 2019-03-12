@@ -2215,7 +2215,7 @@ enum VehicleOilLevel : int32_t {
     ERROR = 4,
 };
 
-enum VehicleApPowerStateConfigFlag : int32_t /* NOTE: type is guessed */ {
+enum VehicleApPowerStateConfigFlag : int32_t {
     /**
      * AP can enter deep sleep state. If not set, AP will always shutdown from
      * VehicleApPowerState#SHUTDOWN_PREPARE power state.
