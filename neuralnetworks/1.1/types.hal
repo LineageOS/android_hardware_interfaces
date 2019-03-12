@@ -186,7 +186,8 @@ enum OperationType : @1.0::OperationType {
      *      must be >= 1.
      * * 2: A 2-D Tensor of {@link OperandType::TENSOR_INT32}, the paddings
      *      for each spatial dimension of the input tensor. All values must be
-     *      >= 0. The shape of the tensor must be {rank(input0), 2}.
+     *      >= 0. The shape of the tensor must be {M, 2}, where M is the number
+     *      of spatial dimensions.
      *      padding[i, 0] specifies the number of element to be padded in the
      *      front of dimension i.
      *      padding[i, 1] specifies the number of element to be padded after the
