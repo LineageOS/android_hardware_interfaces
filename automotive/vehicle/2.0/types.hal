@@ -1138,7 +1138,6 @@ enum VehicleProperty : int32_t {
      * Indicates which units the car is using to display fuel volume to the user. Eg. Liter or
      * Gallon.
      *
-     * Distance units are defined in VehicleUnit.
      * VehiclePropConfig.configArray is used to indicate the supported fuel volume display units.
      * Volume units are defined in VehicleUnit.
      * For example: configArray[0] = 0x41 // LITER
@@ -1159,7 +1158,6 @@ enum VehicleProperty : int32_t {
      * Indicates which units the car is using to display tire pressure to the user. Eg. PSI, Bar or
      * Kilopascal.
      *
-     * Distance units are defined in VehicleUnit.
      * VehiclePropConfig.configArray is used to indicate the supported pressure display units.
      * Pressure units are defined in VehicleUnit.
      * For example: configArray[0] = 0x70 // KILOPASCAL
@@ -1181,7 +1179,6 @@ enum VehicleProperty : int32_t {
      * Indicates which units the car is using to display EV battery information to the user. Eg.
      * watt-hours(Wh), kilowatt-hours(kWh) or ampere-hours(Ah).
      *
-     * Distance units are defined in VehicleUnit.
      * VehiclePropConfig.configArray is used to indicate the supported electrical energy units.
      * Electrical energy units are defined in VehicleUnit.
      * For example: configArray[0] = 0x60 // watt-hours
@@ -1195,6 +1192,22 @@ enum VehicleProperty : int32_t {
         0x0603
         | VehiclePropertyGroup:SYSTEM
         | VehiclePropertyType:INT32
+        | VehicleArea:GLOBAL),
+
+    /**
+     * Fuel consumption units for display
+     *
+     * Indicates type of units the car is using to display fuel consumption information to user
+     * True indicates units are distance over volume such as MPG.
+     * False indicates units are volume over distance such as L/100KM.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
+     */
+    FUEL_CONSUMPTION_UNITS_DISTANCE_OVER_VOLUME = (
+        0x0604
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:BOOLEAN
         | VehicleArea:GLOBAL),
 
     /**
@@ -2587,7 +2600,11 @@ enum VehicleUnit : int32_t {
     KELVIN         = 0x32,
     MILLILITER     = 0x40,
     LITER          = 0x41,
+
+    /** deprecated. Use US_GALLON instead. */
     GALLON         = 0x42,
+    US_GALLON      = 0x42,
+    IMPERIAL_GALLON= 0x43,
     NANO_SECS      = 0x50,
     SECS           = 0x53,
     YEAR           = 0x59,
