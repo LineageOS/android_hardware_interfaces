@@ -186,6 +186,19 @@ std::vector<IComposerClient::DisplayCapability> ComposerClient::getDisplayCapabi
     return capabilities;
 }
 
+bool ComposerClient::getDisplayBrightnessSupport(Display display) {
+    bool support = false;
+    mClient->getDisplayBrightnessSupport(display, [&](const auto& error, const auto& tmpSupport) {
+        ASSERT_EQ(Error::NONE, error) << "failed to get brightness support";
+        support = tmpSupport;
+    });
+    return support;
+}
+
+Error ComposerClient::setDisplayBrightness(Display display, float brightness) {
+    return mClient->setDisplayBrightness(display, brightness);
+}
+
 }  // namespace vts
 }  // namespace V2_3
 }  // namespace composer

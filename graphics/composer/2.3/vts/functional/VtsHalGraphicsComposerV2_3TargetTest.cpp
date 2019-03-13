@@ -600,6 +600,36 @@ TEST_F(GraphicsComposerHidlTest, SetLayerPerFrameMetadataBlobs) {
     }
 }
 
+/*
+ * Test that getDisplayBrightnessSupport works as expected.
+ */
+TEST_F(GraphicsComposerHidlTest, getDisplayBrightnessSupport) {
+    auto capabilities = mComposerClient->getDisplayCapabilities(mPrimaryDisplay);
+    bool brightnessSupport =
+            std::find(capabilities.begin(), capabilities.end(),
+                      IComposerClient::DisplayCapability::BRIGHTNESS) != capabilities.end();
+    EXPECT_EQ(mComposerClient->getDisplayBrightnessSupport(mPrimaryDisplay), brightnessSupport);
+}
+
+/*
+ * Test that if brightness operations are supported, setDisplayBrightness works as expected.
+ */
+TEST_F(GraphicsComposerHidlTest, setDisplayBrightness) {
+    if (!mComposerClient->getDisplayBrightnessSupport(mPrimaryDisplay)) {
+        EXPECT_EQ(mComposerClient->getRaw()->setDisplayBrightness(mPrimaryDisplay, 0.5f),
+                  Error::UNSUPPORTED);
+        GTEST_SUCCEED() << "Brightness operations are not supported";
+    }
+
+    EXPECT_EQ(mComposerClient->setDisplayBrightness(mPrimaryDisplay, 0.0f), Error::NONE);
+    EXPECT_EQ(mComposerClient->setDisplayBrightness(mPrimaryDisplay, 0.5f), Error::NONE);
+    EXPECT_EQ(mComposerClient->setDisplayBrightness(mPrimaryDisplay, 1.0f), Error::NONE);
+    EXPECT_EQ(mComposerClient->setDisplayBrightness(mPrimaryDisplay, -1.0f), Error::NONE);
+
+    EXPECT_EQ(mComposerClient->setDisplayBrightness(mPrimaryDisplay, +2.0f), Error::BAD_PARAMETER);
+    EXPECT_EQ(mComposerClient->setDisplayBrightness(mPrimaryDisplay, -2.0f), Error::BAD_PARAMETER);
+}
+
 }  // namespace
 }  // namespace vts
 }  // namespace V2_3

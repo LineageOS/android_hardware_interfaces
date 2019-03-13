@@ -119,6 +119,8 @@ class ComposerHal : public V2_2::hal::ComposerHal {
     virtual Error setLayerPerFrameMetadataBlobs(
         Display display, Layer layer,
         std::vector<IComposerClient::PerFrameMetadataBlob>& blobs) = 0;
+    virtual Error getDisplayBrightnessSupport(Display display, bool* outSupport) = 0;
+    virtual Error setDisplayBrightness(Display display, float brightness) = 0;
 };
 
 }  // namespace hal
