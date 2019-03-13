@@ -388,8 +388,9 @@ static bool mutateOperationOperandTypeSkip(size_t operand, OperandType type, con
             case OperationType::GROUPED_CONV_2D:
             case OperationType::DEPTHWISE_CONV_2D:
             case OperationType::CONV_2D: {
-                if (operand == 1 && (type == OperandType::TENSOR_QUANT8_ASYMM ||
-                                     type == OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL)) {
+                if (operand == operation.inputs[1] &&
+                    (type == OperandType::TENSOR_QUANT8_ASYMM ||
+                     type == OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL)) {
                     return true;
                 }
             } break;
