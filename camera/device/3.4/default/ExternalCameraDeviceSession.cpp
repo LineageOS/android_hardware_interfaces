@@ -853,7 +853,7 @@ Status ExternalCameraDeviceSession::processCaptureResult(std::shared_ptr<HalRequ
         result.outputBuffers[i].bufferId = req->buffers[i].bufferId;
         if (req->buffers[i].fenceTimeout) {
             result.outputBuffers[i].status = BufferStatus::ERROR;
-            if (req->buffers[i].acquireFence > 0) {
+            if (req->buffers[i].acquireFence >= 0) {
                 native_handle_t* handle = native_handle_create(/*numFds*/1, /*numInts*/0);
                 handle->data[0] = req->buffers[i].acquireFence;
                 result.outputBuffers[i].releaseFence.setTo(handle, /*shouldOwn*/false);
@@ -862,7 +862,7 @@ Status ExternalCameraDeviceSession::processCaptureResult(std::shared_ptr<HalRequ
         } else {
             result.outputBuffers[i].status = BufferStatus::OK;
             // TODO: refactor
-            if (req->buffers[i].acquireFence > 0) {
+            if (req->buffers[i].acquireFence >= 0) {
                 native_handle_t* handle = native_handle_create(/*numFds*/1, /*numInts*/0);
                 handle->data[0] = req->buffers[i].acquireFence;
                 result.outputBuffers[i].releaseFence.setTo(handle, /*shouldOwn*/false);
@@ -1778,7 +1778,7 @@ int ExternalCameraDeviceSession::OutputThread::createJpegLocked(
 
     /* Unlock the HAL jpeg code buffer */
     int relFence = sHandleImporter.unlock(*(halBuf.bufPtr));
-    if (relFence > 0) {
+    if (relFence >= 0) {
         halBuf.acquireFence = relFence;
     }
 
@@ -1882,7 +1882,7 @@ bool ExternalCameraDeviceSession::OutputThread::threadLoop() {
         if (*(halBuf.bufPtr) == nullptr) {
             ALOGW("%s: buffer for stream %d missing", __FUNCTION__, halBuf.streamId);
             halBuf.fenceTimeout = true;
-        } else if (halBuf.acquireFence != -1) {
+        } else if (halBuf.acquireFence >= 0) {
             int ret = sync_wait(halBuf.acquireFence, kSyncWaitTimeoutMs);
             if (ret) {
                 halBuf.fenceTimeout = true;
@@ -1957,7 +1957,7 @@ bool ExternalCameraDeviceSession::OutputThread::threadLoop() {
                     return onDeviceError("%s: format coversion failed!", __FUNCTION__);
                 }
                 int relFence = sHandleImporter.unlock(*(halBuf.bufPtr));
-                if (relFence > 0) {
+                if (relFence >= 0) {
                     halBuf.acquireFence = relFence;
                 }
             } break;
