@@ -22,7 +22,6 @@
 
 package android.hardware.camera.metadata@3.3;
 
-/* Include definitions from all prior minor HAL metadata revisions */
 import android.hardware.camera.metadata@3.2;
 
 /**
