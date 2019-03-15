@@ -103,7 +103,7 @@ Return<void> ExternalCameraDevice::isStreamCombinationSupported(
     }
     V3_2::StreamConfiguration streamConfig = {streamsV3_2, streams.operationMode};
     auto status = ExternalCameraDeviceSession::isStreamCombinationSupported(streamConfig,
-            mSupportedFormats);
+            mSupportedFormats, mCfg);
     _hidl_cb(Status::OK, Status::OK == status);
     return Void();
 }

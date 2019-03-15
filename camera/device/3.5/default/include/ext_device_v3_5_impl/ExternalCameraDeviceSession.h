@@ -91,9 +91,10 @@ struct ExternalCameraDeviceSession : public V3_4::implementation::ExternalCamera
     }
 
     static Status isStreamCombinationSupported(const V3_2::StreamConfiguration& config,
-            const std::vector<SupportedV4L2Format>& supportedFormats) {
+            const std::vector<SupportedV4L2Format>& supportedFormats,
+            const ExternalCameraConfig& devCfg) {
         return V3_4::implementation::ExternalCameraDeviceSession::isStreamCombinationSupported(
-                config, supportedFormats);
+                config, supportedFormats, devCfg);
     }
 
 protected:
