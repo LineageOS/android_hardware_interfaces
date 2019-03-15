@@ -1152,6 +1152,16 @@ WifiStatus WifiChip::handleChipConfiguration(
         // This probably is not a critical failure?
         LOG(ERROR) << "Failed to register radio mode change callback";
     }
+    // Extract and save the version information into property.
+    std::pair<WifiStatus, IWifiChip::ChipDebugInfo> version_info;
+    version_info = WifiChip::requestChipDebugInfoInternal();
+    if (WifiStatusCode::SUCCESS == version_info.first.code) {
+        property_set("vendor.wlan.firmware.version",
+                     version_info.second.firmwareDescription.c_str());
+        property_set("vendor.wlan.driver.version",
+                     version_info.second.driverDescription.c_str());
+    }
+
     return createWifiStatus(WifiStatusCode::SUCCESS);
 }
 
