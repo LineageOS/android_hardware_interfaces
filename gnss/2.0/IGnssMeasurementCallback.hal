@@ -22,77 +22,6 @@ import ElapsedRealtime;
 
 /** The callback interface to report measurements from the HAL. */
 interface IGnssMeasurementCallback extends @1.1::IGnssMeasurementCallback {
-    /**
-     * Enumeration of available values for the GNSS Measurement's code type. Similar to the
-     * Attribute field described in RINEX 3.03, e.g., in Tables 4-10, and Table A2 at the RINEX 3.03
-     * Update 1 Document.
-     */
-    enum GnssMeasurementCodeType : uint8_t {
-        /** GALILEO E1A, GALILEO E6A, IRNSS L5A, IRNSS SA. */
-        A = 0,
-
-        /** GALILEO E1B, GALILEO E6B, IRNSS L5B, IRNSS SB. */
-        B = 1,
-
-        /**
-         *  GPS L1 C/A,  GPS L2 C/A, GLONASS G1 C/A, GLONASS G2 C/A, GALILEO E1C, GALILEO E6C, SBAS
-         *  L1 C/A, QZSS L1 C/A, IRNSS L5C.
-         */
-        C = 2,
-
-        /**
-         * GPS L5 I, GLONASS G3 I, GALILEO E5a I, GALILEO E5b I, GALILEO E5a+b I, SBAS L5 I, QZSS L5
-         * I, BDS B1 I, BDS B2 I, BDS B3 I.
-         */
-        I = 3,
-
-        /** GPS L1C (P), GPS L2C (L), QZSS L1C (P), QZSS L2C (L), LEX(6) L. */
-        L = 4,
-
-        /** GPS L1M, GPS L2M. */
-        M = 5,
-
-        /** GPS L1P, GPS L2P, GLONASS G1P, GLONASS G2P. */
-        P = 6,
-
-        /**
-         * GPS L5 Q, GLONASS G3 Q, GALILEO E5a Q, GALILEO E5b Q, GALILEO E5a+b Q, SBAS L5 Q, QZSS L5
-         * Q, BDS B1 Q, BDS B2 Q, BDS B3 Q.
-         */
-        Q = 7,
-
-        /** GPS L1C (D), GPS L2C (M), QZSS L1C (D), QZSS L2C (M), LEX(6) S. */
-        S = 8,
-
-        /** GPS L1 Z-tracking, GPS L2 Z-tracking. */
-        W = 9,
-
-        /**
-         * GPS L1C (D+P), GPS L2C (M+L), GPS L5 (I+Q), GLONASS G3 (I+Q), GALILEO E1 (B+C), GALILEO
-         * E5a (I+Q), GALILEO E5b (I+Q), GALILEO E5a+b(I+Q), GALILEO E6 (B+C), SBAS L5 (I+Q), QZSS
-         * L1C (D+P), QZSS L2C (M+L), QZSS L5 (I+Q), LEX(6) (S+L), BDS B1 (I+Q), BDS B2 (I+Q), BDS
-         * B3 (I+Q), IRNSS L5 (B+C).
-         */
-        X = 10,
-
-        /** GPS L1Y, GPS L2Y. */
-        Y = 11,
-
-        /** GALILEO E1 (A+B+C), GALILEO E6 (A+B+C), QZSS L1-SAIF. */
-        Z = 12,
-
-        /** GPS L1 codeless, GPS L2 codeless. */
-        N = 13,
-
-        /**
-         * Other code type that does not belong to any of the above code types.
-         *
-         * This code type is used in the case that the above code types do not cover all the code
-         * types introduced in a new version of RINEX standard. When this code type is set, the
-         * field GnssMeasurement.otherCodeTypeName must specify the new code type.
-         */
-        OTHER = 255
-    };
 
     /**
      * Flags indicating the GNSS measurement state.
@@ -458,12 +387,43 @@ interface IGnssMeasurementCallback extends @1.1::IGnssMeasurementCallback {
          * The type of code that is currently being tracked in the GNSS measurement.
          *
          * For high precision applications the type of code being tracked needs to be considered
-         * in-order to properly apply code specific corrections to the psuedorange measurements.
-         */
-        GnssMeasurementCodeType codeType;
-
-        /**
-         * The name of the code type when codeType is OTHER.
+         * in-order to properly apply code specific corrections to the pseudorange measurements.
+         *
+         * Value "A" represents GALILEO E1A, GALILEO E6A, IRNSS L5A, IRNSS SA.
+         *
+         * Value "B" represents GALILEO E1B, GALILEO E6B, IRNSS L5B, IRNSS SB.
+         *
+         * Value "C" represents GPS L1 C/A,  GPS L2 C/A, GLONASS G1 C/A, GLONASS G2 C/A, GALILEO E1C,
+         * GALILEO E6C, SBAS L1 C/A, QZSS L1 C/A, IRNSS L5C.
+         *
+         * Value "I" represents GPS L5 I, GLONASS G3 I, GALILEO E5a I, GALILEO E5b I, GALILEO E5a+b I,
+         * SBAS L5 I, QZSS L5 I, BDS B1 I, BDS B2 I, BDS B3 I.
+         *
+         * Value "L" represents GPS L1C (P), GPS L2C (L), QZSS L1C (P), QZSS L2C (L), LEX(6) L.
+         *
+         * Value "M" represents GPS L1M, GPS L2M.
+         *
+         * Value "N" represents GPS L1 codeless, GPS L2 codeless.
+         *
+         * Value "P" represents GPS L1P, GPS L2P, GLONASS G1P, GLONASS G2P.
+         *
+         * Value "Q" represents GPS L5 Q, GLONASS G3 Q, GALILEO E5a Q, GALILEO E5b Q, GALILEO E5a+b Q,
+         * SBAS L5 Q, QZSS L5 Q, BDS B1 Q, BDS B2 Q, BDS B3 Q.
+         *
+         * Value "S" represents GPS L1C (D), GPS L2C (M), QZSS L1C (D), QZSS L2C (M), LEX(6) S.
+         *
+         * Value "W" represents GPS L1 Z-tracking, GPS L2 Z-tracking.
+         *
+         * Value "X" represents GPS L1C (D+P), GPS L2C (M+L), GPS L5 (I+Q), GLONASS G3 (I+Q),
+         * GALILEO E1 (B+C), GALILEO E5a (I+Q), GALILEO E5b (I+Q), GALILEO E5a+b(I+Q),
+         * GALILEO E6 (B+C), SBAS L5 (I+Q), QZSS L1C (D+P), QZSS L2C (M+L), QZSS L5 (I+Q),
+         * LEX(6) (S+L), BDS B1 (I+Q), BDS B2 (I+Q), BDS B3 (I+Q), IRNSS L5 (B+C).
+         *
+         * Value "Y" represents GPS L1Y, GPS L2Y.
+         *
+         * Value "Z" represents GALILEO E1 (A+B+C), GALILEO E6 (A+B+C), QZSS L1-SAIF.
+         *
+         * Value "UNKNOWN" represents the GNSS Measurement's code type is unknown.
          *
          * This is used to specify the observation descriptor defined in GNSS Observation Data File
          * Header Section Description in the RINEX standard (Version 3.XX). In RINEX Version 3.03,
@@ -471,7 +431,7 @@ interface IGnssMeasurementCallback extends @1.1::IGnssMeasurementCallback {
          * "A channel"). In the future, if for instance a code "G" was added in the official RINEX
          * standard, "G" could be specified here.
          */
-        string otherCodeTypeName;
+        string codeType;
 
         /**
          * Per satellite sync state. It represents the current sync state for the associated

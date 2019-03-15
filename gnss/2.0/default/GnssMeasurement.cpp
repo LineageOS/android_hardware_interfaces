@@ -114,8 +114,7 @@ GnssData GnssMeasurement::getMockMeasurement() {
     V1_1::IGnssMeasurementCallback::GnssMeasurement measurement_1_1 = {.v1_0 = measurement_1_0};
     V2_0::IGnssMeasurementCallback::GnssMeasurement measurement_2_0 = {
             .v1_1 = measurement_1_1,
-            .codeType = IGnssMeasurementCallback::GnssMeasurementCodeType::C,
-            .otherCodeTypeName = "",
+            .codeType = "C",
             .state = GnssMeasurementState::STATE_CODE_LOCK | GnssMeasurementState::STATE_BIT_SYNC |
                      GnssMeasurementState::STATE_SUBFRAME_SYNC |
                      GnssMeasurementState::STATE_TOW_DECODED |
