@@ -95,13 +95,10 @@ interface IBiometricsFaceClientCallback {
      *
      * @param deviceId A unique id associated with the HAL implementation
      *     service that processed this removal.
-     * @param faceId The id of the face template that was removed.
+     * @param removed A list of ids that were removed.
      * @param userId The active user id for the removed face template.
-     * @param remaining The number of face templates remaining after this
-     *     removal, or 0 if there are no more.
      */
-    oneway onRemoved(uint64_t deviceId, uint32_t faceId, int32_t userId,
-        uint32_t remaining);
+    oneway onRemoved(uint64_t deviceId, vec<uint32_t> removed, int32_t userId);
 
     /**
      * A callback invoked to enumerate all current face templates.

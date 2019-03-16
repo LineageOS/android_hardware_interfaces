@@ -190,17 +190,7 @@ TEST_F(GnssHalTest, TestGnssMeasurementCodeType) {
     EXPECT_EQ(measurement_called_count_, 1);
     ASSERT_TRUE(last_measurement_.measurements.size() > 0);
     for (auto measurement : last_measurement_.measurements) {
-        ASSERT_TRUE(
-                ((int)measurement.codeType >=
-                                (int)IGnssMeasurementCallback_2_0::GnssMeasurementCodeType::A &&
-                        (int)measurement.codeType <=
-                                (int)IGnssMeasurementCallback_2_0::GnssMeasurementCodeType::N) ||
-                (int)measurement.codeType ==
-                        (int)IGnssMeasurementCallback_2_0::GnssMeasurementCodeType::OTHER);
-        if ((int)measurement.codeType ==
-                (int)IGnssMeasurementCallback_2_0::GnssMeasurementCodeType::OTHER) {
-            ASSERT_NE(measurement.otherCodeTypeName, "");
-        }
+        ASSERT_NE(measurement.codeType, "");
     }
 
     iGnssMeasurement->close();

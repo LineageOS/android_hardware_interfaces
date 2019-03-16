@@ -17,12 +17,13 @@
 #ifndef ANDROID_HARDWARE_CAMERA_DEVICE_V3_4_EXTCAMUTIL_H
 #define ANDROID_HARDWARE_CAMERA_DEVICE_V3_4_EXTCAMUTIL_H
 
-#include <inttypes.h>
-#include "utils/LightRefBase.h"
-#include <mutex>
-#include <vector>
-#include <unordered_set>
 #include <android/hardware/graphics/mapper/2.0/IMapper.h>
+#include <inttypes.h>
+#include <mutex>
+#include <unordered_set>
+#include <vector>
+#include "tinyxml2.h"  // XML parsing
+#include "utils/LightRefBase.h"
 
 using android::hardware::graphics::mapper::V2_0::IMapper;
 using android::hardware::graphics::mapper::V2_0::YCbCrLayout;
@@ -71,11 +72,15 @@ struct ExternalCameraConfig {
     // Size of v4l2 buffer queue when streaming > kMaxVideoSize
     uint32_t numStillBuffers;
 
+    // Indication that the device connected supports depth output
+    bool depthEnabled;
+
     struct FpsLimitation {
         Size size;
         double fpsUpperBound;
     };
     std::vector<FpsLimitation> fpsLimits;
+    std::vector<FpsLimitation> depthFpsLimits;
 
     // Minimum output stream size
     Size minStreamSize;
@@ -85,6 +90,7 @@ struct ExternalCameraConfig {
 
 private:
     ExternalCameraConfig();
+    static bool updateFpsList(tinyxml2::XMLElement* fpsList, std::vector<FpsLimitation>& fpsLimits);
 };
 
 } // common
