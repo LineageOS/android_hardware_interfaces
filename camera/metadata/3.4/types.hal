@@ -22,7 +22,6 @@
 
 package android.hardware.camera.metadata@3.4;
 
-/* Include definitions from all prior minor HAL metadata revisions */
 import android.hardware.camera.metadata@3.2;
 import android.hardware.camera.metadata@3.3;
 
@@ -213,8 +212,10 @@ enum CameraMetadataEnumAndroidScalerAvailableRecommendedStreamConfigurations : u
                                                                  = 0x4,
     ANDROID_SCALER_AVAILABLE_RECOMMENDED_STREAM_CONFIGURATIONS_RAW
                                                                  = 0x5,
-    ANDROID_SCALER_AVAILABLE_RECOMMENDED_STREAM_CONFIGURATIONS_PUBLIC_END
+    ANDROID_SCALER_AVAILABLE_RECOMMENDED_STREAM_CONFIGURATIONS_LOW_LATENCY_SNAPSHOT
                                                                  = 0x6,
+    ANDROID_SCALER_AVAILABLE_RECOMMENDED_STREAM_CONFIGURATIONS_PUBLIC_END
+                                                                 = 0x7,
     ANDROID_SCALER_AVAILABLE_RECOMMENDED_STREAM_CONFIGURATIONS_VENDOR_START
                                                                  = 0x18,
 };
