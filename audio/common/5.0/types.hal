@@ -240,6 +240,7 @@ enum AudioFormat : uint32_t {
     APTX_ADAPTIVE       = 0x27000000UL,
     LHDC                = 0x28000000UL,
     LHDC_LL             = 0x29000000UL,
+    APTX_TWSP           = 0x2A000000UL,
 
     /** Deprecated */
     MAIN_MASK           = 0xFF000000UL,
