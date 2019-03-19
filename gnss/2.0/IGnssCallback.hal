@@ -21,7 +21,7 @@ import @1.1::IGnssCallback;
 import GnssLocation;
 
 /**
- * The interface is required for the HAL to communicate certain information
+ * This interface is required for the HAL to communicate certain information
  * like status and location info back to the platform, the platform implements
  * the interfaces and passes a handle to the HAL.
  */
@@ -29,17 +29,36 @@ interface IGnssCallback extends @1.1::IGnssCallback {
 
     /** Flags for the gnssSetCapabilities callback. */
     @export(name="", value_prefix="GPS_CAPABILITY_")
-    enum Capabilities : @1.0::IGnssCallback.Capabilities {
-        /** GNSS supports line-of-sight satellite identification measurement Corrections */
-        MEASUREMENT_CORRECTIONS_LOS_SATS                        = 1 << 8,
-        /** GNSS supports per satellite excess-path-length measurement Corrections */
-        MEASUREMENT_CORRECTIONS_EXCESS_PATH_LENGTH              = 1 << 9,
-        /** GNSS supports reflecting planes measurement Corrections */
-        MEASUREMENT_CORRECTIONS_REFLECTING_PLANE                = 1 << 10
+    enum Capabilities : uint32_t {
+        /**
+         * GNSS HAL schedules fixes for RECURRENCE_PERIODIC mode.
+         * If this is not set, then the framework will use 1000ms for
+         * minInterval and must call start() and stop() to schedule the GNSS.
+         */
+        SCHEDULING                      = 1 << 0,
+        /** GNSS supports MS-Based AGNSS mode */
+        MSB                             = 1 << 1,
+        /** GNSS supports MS-Assisted AGNSS mode */
+        MSA                             = 1 << 2,
+        /** GNSS supports single-shot fixes */
+        SINGLE_SHOT                     = 1 << 3,
+        /** GNSS supports on demand time injection */
+        ON_DEMAND_TIME                  = 1 << 4,
+        /**
+         * Values for the flags removed from IGnssCallback.hal@1.0 Capabilities
+         * enum are marked as reserved and not reused here to avoid confusion.
+         */
+        RESERVED_1                      = 1 << 5,
+        RESERVED_2                      = 1 << 6,
+        RESERVED_3                      = 1 << 7,
+        /** GNSS supports low power mode */
+        LOW_POWER_MODE                  = 1 << 8,
+        /** GNSS supports blacklisting satellites */
+        SATELLITE_BLACKLIST             = 1 << 9
     };
 
     /**
-     * Callback to inform framework of the GNSS engine's capabilities.
+     * Callback to inform framework of the GNSS HAL implementation's capabilities.
      *
      * @param capabilities Capability parameter is a bit field of the Capabilities enum.
      */

@@ -38,6 +38,7 @@ using android::hardware::gnss::measurement_corrections::V1_0::IMeasurementCorrec
 using android::hardware::gnss::measurement_corrections::V1_0::MeasurementCorrections;
 using android::hardware::gnss::V1_0::IGnssNi;
 using android::hardware::gnss::V2_0::ElapsedRealtimeFlags;
+using android::hardware::gnss::V2_0::IGnssCallback;
 using android::hardware::gnss::visibility_control::V1_0::IGnssVisibilityControl;
 
 /*
@@ -50,23 +51,21 @@ TEST_F(GnssHalTest, SetupTeardownCreateCleanup) {}
 
 /*
  * TestGnssMeasurementCallback:
- * Gets the GnssMeasurementExtension and verify that it returns an actual extension.
+ * Gets the GnssMeasurementExtension and verifies that it returns an actual extension.
  */
 TEST_F(GnssHalTest, TestGnssMeasurementCallback) {
     auto gnssMeasurement_2_0 = gnss_hal_->getExtensionGnssMeasurement_2_0();
     auto gnssMeasurement_1_1 = gnss_hal_->getExtensionGnssMeasurement_1_1();
     auto gnssMeasurement_1_0 = gnss_hal_->getExtensionGnssMeasurement();
-    ASSERT_TRUE(gnssMeasurement_2_0.isOk() || gnssMeasurement_1_1.isOk() ||
+    ASSERT_TRUE(gnssMeasurement_2_0.isOk() && gnssMeasurement_1_1.isOk() &&
                 gnssMeasurement_1_0.isOk());
-    if (last_capabilities_ & IGnssCallback::Capabilities::MEASUREMENTS) {
-        sp<IGnssMeasurement_2_0> iGnssMeas_2_0 = gnssMeasurement_2_0;
-        sp<IGnssMeasurement_1_1> iGnssMeas_1_1 = gnssMeasurement_1_1;
-        sp<IGnssMeasurement_1_0> iGnssMeas_1_0 = gnssMeasurement_1_0;
-        // At least one interface is non-null.
-        int numNonNull = (int)(iGnssMeas_2_0 != nullptr) + (int)(iGnssMeas_1_1 != nullptr) +
-                         (int)(iGnssMeas_1_0 != nullptr);
-        ASSERT_TRUE(numNonNull >= 1);
-    }
+    sp<IGnssMeasurement_2_0> iGnssMeas_2_0 = gnssMeasurement_2_0;
+    sp<IGnssMeasurement_1_1> iGnssMeas_1_1 = gnssMeasurement_1_1;
+    sp<IGnssMeasurement_1_0> iGnssMeas_1_0 = gnssMeasurement_1_0;
+    // At least one interface is non-null.
+    int numNonNull = (int)(iGnssMeas_2_0 != nullptr) + (int)(iGnssMeas_1_1 != nullptr) +
+                     (int)(iGnssMeas_1_0 != nullptr);
+    ASSERT_TRUE(numNonNull >= 1);
 }
 
 /*
@@ -267,8 +266,30 @@ TEST_F(GnssHalTest, TestGnssVisibilityControlExtension) {
 }
 
 /*
+ * TestGnssMeasurementCorrectionsCapabilities:
+ * If the GnssMeasurementCorrectionsExtension is not null, verifies that the measurement corrections
+ * capabilities are reported and the mandatory LOS_SATS or the EXCESS_PATH_LENGTH
+ * capability flag is set.
+ */
+TEST_F(GnssHalTest, TestGnssMeasurementCorrectionsCapabilities) {
+    auto measurementCorrections = gnss_hal_->getExtensionMeasurementCorrections();
+    ASSERT_TRUE(measurementCorrections.isOk());
+    sp<IMeasurementCorrections> iMeasurementCorrections = measurementCorrections;
+    if (iMeasurementCorrections == nullptr) {
+        return;
+    }
+
+    const int kMeasurementCorrectionsCapabilitiesTimeoutSeconds = 5;
+    waitForMeasurementCorrectionsCapabilities(kMeasurementCorrectionsCapabilitiesTimeoutSeconds);
+    ASSERT_TRUE(measurement_corrections_capabilities_called_count_ > 0);
+    using Capabilities = IMeasurementCorrectionsCallback::Capabilities;
+    ASSERT_TRUE((last_measurement_corrections_capabilities_ &
+                 (Capabilities::LOS_SATS | Capabilities::EXCESS_PATH_LENGTH)) != 0);
+}
+
+/*
  * TestGnssMeasurementCorrections:
- * Gets the GnssMeasurementCorrectionsExtension and verifies that it supports the
+ * If the GnssMeasurementCorrectionsExtension is not null, verifies that it supports the
  * gnss.measurement_corrections@1.0::IMeasurementCorrections interface by invoking a method.
  */
 TEST_F(GnssHalTest, TestGnssMeasurementCorrections) {
@@ -276,8 +297,13 @@ TEST_F(GnssHalTest, TestGnssMeasurementCorrections) {
     auto measurementCorrections = gnss_hal_->getExtensionMeasurementCorrections();
     ASSERT_TRUE(measurementCorrections.isOk());
     sp<IMeasurementCorrections> iMeasurementCorrections = measurementCorrections;
-    ASSERT_NE(iMeasurementCorrections, nullptr);
+    if (iMeasurementCorrections == nullptr) {
+        return;
+    }
 
+    const int kMeasurementCorrectionsCapabilitiesTimeoutSeconds = 5;
+    waitForMeasurementCorrectionsCapabilities(kMeasurementCorrectionsCapabilitiesTimeoutSeconds);
+    ASSERT_TRUE(measurement_corrections_capabilities_called_count_ > 0);
     // Set a mock MeasurementCorrections.
     auto result = iMeasurementCorrections->setCorrections(Utils::getMockMeasurementCorrections());
     ASSERT_TRUE(result.isOk());

@@ -28,6 +28,7 @@
 using android::hardware::Return;
 using android::hardware::Void;
 
+using android::hardware::gnss::measurement_corrections::V1_0::IMeasurementCorrectionsCallback;
 using android::hardware::gnss::V1_0::GnssLocationFlags;
 using android::hardware::gnss::V2_0::IGnss;
 using android::hardware::gnss::V2_0::IGnssCallback;
@@ -72,6 +73,8 @@ class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
 
     /* Test code calls this function to wait for a callback */
     std::cv_status wait(int timeout_seconds);
+
+    std::cv_status waitForMeasurementCorrectionsCapabilities(int timeout_seconds);
 
     /* Callback class for data & Event. */
     class GnssCallback : public IGnssCallback {
@@ -136,6 +139,17 @@ class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
         Return<void> gnssMeasurementCb_2_0(const IGnssMeasurementCallback_2_0::GnssData&) override;
     };
 
+    /* Callback class for GnssMeasurementCorrections. */
+    class GnssMeasurementCorrectionsCallback : public IMeasurementCorrectionsCallback {
+      public:
+        GnssHalTest& parent_;
+        GnssMeasurementCorrectionsCallback(GnssHalTest& parent) : parent_(parent){};
+        virtual ~GnssMeasurementCorrectionsCallback() = default;
+
+        // Methods from V1_0::IMeasurementCorrectionsCallback follow.
+        Return<void> setCapabilitiesCb(uint32_t capabilities) override;
+    };
+
     /*
      * SetUpGnssCallback:
      *   Set GnssCallback and verify the result.
@@ -192,12 +206,14 @@ class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
      */
     int info_called_count_;
     int capabilities_called_count_;
+    int measurement_corrections_capabilities_called_count_;
     int location_called_count_;
     int measurement_called_count_;
     int name_called_count_;
 
     IGnssCallback::GnssSystemInfo last_info_;
     uint32_t last_capabilities_;
+    uint32_t last_measurement_corrections_capabilities_;
     GnssLocation_2_0 last_location_;
     IGnssMeasurementCallback_2_0::GnssData last_measurement_;
     android::hardware::hidl_string last_name_;
