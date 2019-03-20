@@ -23,6 +23,7 @@ using android::hardware::configureRpcThreadpool;
 using android::hardware::joinRpcThreadpool;
 using android::hardware::broadcastradio::V2_0::implementation::BroadcastRadio;
 using android::hardware::broadcastradio::V2_0::implementation::gAmFmRadio;
+using android::hardware::broadcastradio::V2_0::implementation::gDabRadio;
 
 int main() {
     android::base::SetDefaultTag("BcRadioDef");
@@ -30,8 +31,13 @@ int main() {
     configureRpcThreadpool(4, true);
 
     BroadcastRadio broadcastRadio(gAmFmRadio);
-    auto status = broadcastRadio.registerAsService();
-    CHECK_EQ(status, android::OK) << "Failed to register Broadcast Radio HAL implementation";
+    auto amFmStatus = broadcastRadio.registerAsService("amfm");
+    CHECK_EQ(amFmStatus, android::OK)
+        << "Failed to register Broadcast Radio AM/FM HAL implementation";
+
+    BroadcastRadio dabRadio(gDabRadio);
+    auto dabStatus = dabRadio.registerAsService("dab");
+    CHECK_EQ(dabStatus, android::OK) << "Failed to register Broadcast Radio DAB HAL implementation";
 
     joinRpcThreadpool();
     return 1;  // joinRpcThreadpool shouldn't exit
