@@ -17,6 +17,7 @@
 package android.hardware.media.c2@1.0;
 
 import android.hardware.graphics.bufferqueue@1.0::IGraphicBufferProducer;
+import android.hardware.graphics.bufferqueue@2.0::IGraphicBufferProducer;
 import android.hardware.media.omx@1.0::IGraphicBufferSource;
 
 import IConfigurable;
@@ -128,7 +129,7 @@ interface IComponent {
      */
     setOutputSurface(
             uint64_t blockPoolId,
-            IGraphicBufferProducer surface
+            @2.0::IGraphicBufferProducer surface
         ) generates (
             Status status
         );
@@ -184,7 +185,7 @@ interface IComponent {
      *     null.
      */
     connectToOmxInputSurface(
-            IGraphicBufferProducer producer,
+            @1.0::IGraphicBufferProducer producer,
             IGraphicBufferSource source
         ) generates (
             Status status,
