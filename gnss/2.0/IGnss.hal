@@ -23,6 +23,7 @@ import @1.1::IGnss;
 import GnssLocation;
 import IGnssCallback;
 import IGnssConfiguration;
+import IGnssDebug;
 import IGnssMeasurement;
 import IAGnss;
 import IAGnssRil;
@@ -53,6 +54,13 @@ interface IGnss extends @1.1::IGnss {
      * @return gnssConfigurationIface Handle to the IGnssConfiguration interface.
      */
     getExtensionGnssConfiguration_2_0() generates (IGnssConfiguration gnssConfigurationIface);
+
+    /**
+     * This method returns the IGnssDebug interface.
+     *
+     * @return gnssDebugIface Handle to the IGnssDebug interface.
+     */
+    getExtensionGnssDebug_2_0() generates (IGnssDebug gnssDebugIface);
 
     /**
      * This method returns the IAGnss Interface.

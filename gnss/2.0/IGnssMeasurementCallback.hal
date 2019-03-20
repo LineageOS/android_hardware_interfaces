@@ -19,6 +19,7 @@ package android.hardware.gnss@2.0;
 import @1.0::IGnssMeasurementCallback;
 import @1.1::IGnssMeasurementCallback;
 import ElapsedRealtime;
+import GnssConstellationType;
 
 /** The callback interface to report measurements from the HAL. */
 interface IGnssMeasurementCallback extends @1.1::IGnssMeasurementCallback {
@@ -365,7 +366,8 @@ interface IGnssMeasurementCallback extends @1.1::IGnssMeasurementCallback {
     };
 
     /**
-     * Extends a GNSS Measurement, adding a GnssMeasurementCodeType.
+     * Extends a GNSS Measurement, adding a GnssMeasurementCodeType, a GnssMeasurementState, and
+     * replacing the GnssConstellationType.
      */
     struct GnssMeasurement {
         /**
@@ -380,6 +382,10 @@ interface IGnssMeasurementCallback extends @1.1::IGnssMeasurementCallback {
          * In this version of the HAL, the field 'state' in the v1_1.v1_0 struct is deprecated, and
          * is no longer used by the framework. The satellite sync state is instead reported in
          * @2.0::IGnssMeasurementCallback.GnssMeasurement.state.
+         *
+         * In this version of the HAL, the field 'constellation' in the v1_1.v1_0 struct is
+         * deprecated, and is no longer used by the framework. The constellation type is instead
+         * reported in @2.0::IGnssMeasurementCallback.GnssMeasurement.constellation.
          */
         @1.1::IGnssMeasurementCallback.GnssMeasurement v1_1;
 
@@ -442,6 +448,11 @@ interface IGnssMeasurementCallback extends @1.1::IGnssMeasurementCallback {
          * This value is mandatory.
          */
         bitfield<GnssMeasurementState> state;
+
+        /**
+         * The constellation type of the GNSS measurement.
+         */
+        GnssConstellationType constellation;
     };
 
     /**

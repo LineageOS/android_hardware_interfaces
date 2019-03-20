@@ -26,7 +26,7 @@ namespace gnss {
 namespace V2_0 {
 namespace implementation {
 
-using GnssConstellationType = V1_0::GnssConstellationType;
+using GnssConstellationType = V2_0::GnssConstellationType;
 using GnssMeasurementFlags = V1_0::IGnssMeasurementCallback::GnssMeasurementFlags;
 using GnssMeasurementState = V2_0::IGnssMeasurementCallback::GnssMeasurementState;
 
@@ -46,6 +46,7 @@ Return<V1_0::IGnssMeasurement::GnssMeasurementStatus> GnssMeasurement::setCallba
 }
 
 Return<void> GnssMeasurement::close() {
+    ALOGD("close");
     std::unique_lock<std::mutex> lock(mMutex);
     stop();
     sCallback = nullptr;
@@ -62,6 +63,7 @@ Return<V1_0::IGnssMeasurement::GnssMeasurementStatus> GnssMeasurement::setCallba
 // Methods from V2_0::IGnssMeasurement follow.
 Return<V1_0::IGnssMeasurement::GnssMeasurementStatus> GnssMeasurement::setCallback_2_0(
     const sp<V2_0::IGnssMeasurementCallback>& callback, bool) {
+    ALOGD("setCallback_2_0");
     std::unique_lock<std::mutex> lock(mMutex);
     sCallback = callback;
 
@@ -75,6 +77,7 @@ Return<V1_0::IGnssMeasurement::GnssMeasurementStatus> GnssMeasurement::setCallba
 }
 
 void GnssMeasurement::start() {
+    ALOGD("start");
     mIsActive = true;
     mThread = std::thread([this]() {
         while (mIsActive == true) {
@@ -87,6 +90,7 @@ void GnssMeasurement::start() {
 }
 
 void GnssMeasurement::stop() {
+    ALOGD("stop");
     mIsActive = false;
     if (mThread.joinable()) {
         mThread.join();
@@ -95,26 +99,27 @@ void GnssMeasurement::stop() {
 
 GnssData GnssMeasurement::getMockMeasurement() {
     V1_0::IGnssMeasurementCallback::GnssMeasurement measurement_1_0 = {
-        .flags = (uint32_t)GnssMeasurementFlags::HAS_CARRIER_FREQUENCY,
-        .svid = (int16_t)6,
-        .constellation = GnssConstellationType::GLONASS,
-        .timeOffsetNs = 0.0,
-        .receivedSvTimeInNs = 8195997131077,
-        .receivedSvTimeUncertaintyInNs = 15,
-        .cN0DbHz = 30.0,
-        .pseudorangeRateMps = -484.13739013671875,
-        .pseudorangeRateUncertaintyMps = 1.0379999876022339,
-        .accumulatedDeltaRangeState = (uint32_t)
-            V1_0::IGnssMeasurementCallback::GnssAccumulatedDeltaRangeState::ADR_STATE_UNKNOWN,
-        .accumulatedDeltaRangeM = 0.0,
-        .accumulatedDeltaRangeUncertaintyM = 0.0,
-        .carrierFrequencyHz = 1.59975e+09,
-        .multipathIndicator =
-            V1_0::IGnssMeasurementCallback::GnssMultipathIndicator::INDICATOR_UNKNOWN};
+            .flags = (uint32_t)GnssMeasurementFlags::HAS_CARRIER_FREQUENCY,
+            .svid = (int16_t)6,
+            .constellation = V1_0::GnssConstellationType::UNKNOWN,
+            .timeOffsetNs = 0.0,
+            .receivedSvTimeInNs = 8195997131077,
+            .receivedSvTimeUncertaintyInNs = 15,
+            .cN0DbHz = 30.0,
+            .pseudorangeRateMps = -484.13739013671875,
+            .pseudorangeRateUncertaintyMps = 1.0379999876022339,
+            .accumulatedDeltaRangeState = (uint32_t)V1_0::IGnssMeasurementCallback::
+                    GnssAccumulatedDeltaRangeState::ADR_STATE_UNKNOWN,
+            .accumulatedDeltaRangeM = 0.0,
+            .accumulatedDeltaRangeUncertaintyM = 0.0,
+            .carrierFrequencyHz = 1.59975e+09,
+            .multipathIndicator =
+                    V1_0::IGnssMeasurementCallback::GnssMultipathIndicator::INDICATOR_UNKNOWN};
     V1_1::IGnssMeasurementCallback::GnssMeasurement measurement_1_1 = {.v1_0 = measurement_1_0};
     V2_0::IGnssMeasurementCallback::GnssMeasurement measurement_2_0 = {
             .v1_1 = measurement_1_1,
             .codeType = "C",
+            .constellation = GnssConstellationType::GLONASS,
             .state = GnssMeasurementState::STATE_CODE_LOCK | GnssMeasurementState::STATE_BIT_SYNC |
                      GnssMeasurementState::STATE_SUBFRAME_SYNC |
                      GnssMeasurementState::STATE_TOW_DECODED |

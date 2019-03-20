@@ -25,16 +25,19 @@
 #include <list>
 #include <mutex>
 
+using android::hardware::hidl_vec;
 using android::hardware::Return;
 using android::hardware::Void;
 
 using android::hardware::gnss::measurement_corrections::V1_0::IMeasurementCorrectionsCallback;
 using android::hardware::gnss::V1_0::GnssLocationFlags;
 using android::hardware::gnss::V2_0::IGnss;
-using android::hardware::gnss::V2_0::IGnssCallback;
 
 using GnssLocation_1_0 = android::hardware::gnss::V1_0::GnssLocation;
 using GnssLocation_2_0 = android::hardware::gnss::V2_0::GnssLocation;
+
+using IGnssCallback_1_0 = android::hardware::gnss::V1_0::IGnssCallback;
+using IGnssCallback_2_0 = android::hardware::gnss::V2_0::IGnssCallback;
 
 using IGnssMeasurementCallback_1_0 = android::hardware::gnss::V1_0::IGnssMeasurementCallback;
 using IGnssMeasurementCallback_1_1 = android::hardware::gnss::V1_1::IGnssMeasurementCallback;
@@ -77,8 +80,8 @@ class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
     std::cv_status waitForMeasurementCorrectionsCapabilities(int timeout_seconds);
 
     /* Callback class for data & Event. */
-    class GnssCallback : public IGnssCallback {
-       public:
+    class GnssCallback : public IGnssCallback_2_0 {
+      public:
         GnssHalTest& parent_;
 
         GnssCallback(GnssHalTest& parent) : parent_(parent){};
@@ -86,7 +89,7 @@ class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
         virtual ~GnssCallback() = default;
 
         // Dummy callback handlers
-        Return<void> gnssStatusCb(const IGnssCallback::GnssStatusValue /* status */) override {
+        Return<void> gnssStatusCb(const IGnssCallback_1_0::GnssStatusValue /* status */) override {
             return Void();
         }
         Return<void> gnssNmeaCb(int64_t /* timestamp */,
@@ -103,8 +106,8 @@ class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
         Return<void> gnssNameCb(const android::hardware::hidl_string& name) override;
         Return<void> gnssLocationCb(const GnssLocation_1_0& location) override;
         Return<void> gnssSetCapabilitesCb(uint32_t capabilities) override;
-        Return<void> gnssSetSystemInfoCb(const IGnssCallback::GnssSystemInfo& info) override;
-        Return<void> gnssSvStatusCb(const IGnssCallback::GnssSvStatus& svStatus) override;
+        Return<void> gnssSetSystemInfoCb(const IGnssCallback_1_0::GnssSystemInfo& info) override;
+        Return<void> gnssSvStatusCb(const IGnssCallback_1_0::GnssSvStatus& svStatus) override;
 
         // New in v2.0
         Return<void> gnssLocationCb_2_0(const GnssLocation_2_0& location) override;
@@ -113,6 +116,8 @@ class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
             return Void();
         }
         Return<void> gnssSetCapabilitiesCb_2_0(uint32_t capabilities) override;
+        Return<void> gnssSvStatusCb_2_0(
+                const hidl_vec<IGnssCallback_2_0::GnssSvInfo>& svInfoList) override;
 
       private:
         Return<void> gnssLocationCbImpl(const GnssLocation_2_0& location);
@@ -198,7 +203,7 @@ class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
     void SetPositionMode(const int min_interval_msec, const bool low_power_mode);
 
     sp<IGnss> gnss_hal_;         // GNSS HAL to call into
-    sp<IGnssCallback> gnss_cb_;  // Primary callback interface
+    sp<IGnssCallback_2_0> gnss_cb_;  // Primary callback interface
 
     // TODO: make these variables thread-safe.
     /* Count of calls to set the following items, and the latest item (used by
@@ -211,16 +216,16 @@ class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
     int measurement_called_count_;
     int name_called_count_;
 
-    IGnssCallback::GnssSystemInfo last_info_;
+    IGnssCallback_1_0::GnssSystemInfo last_info_;
     uint32_t last_capabilities_;
     uint32_t last_measurement_corrections_capabilities_;
     GnssLocation_2_0 last_location_;
     IGnssMeasurementCallback_2_0::GnssData last_measurement_;
     android::hardware::hidl_string last_name_;
 
-    list<IGnssCallback::GnssSvStatus> list_gnss_sv_status_;
+    list<hidl_vec<IGnssCallback_2_0::GnssSvInfo>> list_vec_gnss_sv_info_;
 
-   private:
+  private:
     std::mutex mtx_;
     std::condition_variable cv_;
     int notify_count_;
