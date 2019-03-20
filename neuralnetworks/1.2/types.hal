@@ -2270,113 +2270,113 @@ enum OperationType : int32_t {
      * Inputs:
      * * 0: The input.
      *      A 3-D tensor of shape:
-     *        If time-major: [max_time, batch_size, output_size]
-     *        If batch-major: [batch_size, max_time, output_size]
+     *        If time-major: [max_time, batch_size, input_size]
+     *        If batch-major: [batch_size, max_time, input_size]
      *      where "max_time" is the number of timesteps (sequence length),
      *      "batch_size" corresponds to the batching dimension, and
      *      "input_size" is the size of the input.
      * * 1: The forward input-to-input weights. Optional.
-     *      A 2-D tensor of shape [num_units, input_size], where “num_units”
-     *      corresponds to the number of cell units.
+     *      A 2-D tensor of shape [fw_num_units, input_size], where “fw_num_units”
+     *      corresponds to the number of forward cell units.
      * * 2: The forward input-to-forget weights.
-     *      A 2-D tensor of shape [num_units, input_size].
+     *      A 2-D tensor of shape [fw_num_units, input_size].
      * * 3: The forward input-to-cell weights.
-     *      A 2-D tensor of shape [num_units, input_size].
+     *      A 2-D tensor of shape [fw_num_units, input_size].
      * * 4: The forward input-to-output weights.
-     *      A 2-D tensor of shape [num_units, input_size].
+     *      A 2-D tensor of shape [fw_num_units, input_size].
      * * 5: The forward recurrent-to-input weights. Optional.
-     *      A 2-D tensor of shape [num_units, output_size], where “output_size”
-     *      corresponds to either the number of cell units (i.e., “num_units”),
-     *      or the second dimension of the “projection_weights”, if defined.
+     *      A 2-D tensor of shape [fw_num_units, fw_output_size], where “fw_output_size”
+     *      corresponds to either the number of cell units (i.e., fw_num_units),
+     *      or the second dimension of the “fw_projection_weights”, if defined.
      * * 6: The forward recurrent-to-forget weights.
-     *      A 2-D tensor of shape [num_units, output_size].
+     *      A 2-D tensor of shape [fw_num_units, fw_output_size].
      * * 7: The forward recurrent-to-cell weights.
-     *      A 2-D tensor of shape [num_units, output_size].
+     *      A 2-D tensor of shape [fw_num_units, fw_output_size].
      * * 8: The forward recurrent-to-output weights.
-     *      A 2-D tensor of shape [num_units, output_size].
+     *      A 2-D tensor of shape [fw_num_units, fw_output_size].
      * * 9: The forward cell-to-input weights. Optional.
-     *      A 1-D tensor of shape [num_units].
+     *      A 1-D tensor of shape [fw_num_units].
      * * 10: The forward cell-to-forget weights. Optional.
-     *       A 1-D tensor of shape [num_units].
+     *       A 1-D tensor of shape [fw_num_units].
      * * 11: The forward cell-to-output weights. Optional.
-     *       A 1-D tensor of shape [num_units].
+     *       A 1-D tensor of shape [fw_num_units].
      * * 12: The forward input gate bias. Optional.
-     *       A 1-D tensor of shape [num_units].
+     *       A 1-D tensor of shape [fw_num_units].
      * * 13: The forward forget gate bias.
-     *       A 1-D tensor of shape [num_units].
+     *       A 1-D tensor of shape [fw_num_units].
      * * 14: The forward cell gate bias.
-     *       A 1-D tensor of shape [num_units].
+     *       A 1-D tensor of shape [fw_num_units].
      * * 15: The forward output gate bias.
-     *       A 1-D tensor of shape [num_units].
+     *       A 1-D tensor of shape [fw_num_units].
      * * 16: The forward projection weights. Optional.
-     *       A 2-D tensor of shape [output_size, num_units].
+     *       A 2-D tensor of shape [fw_output_size, fw_num_units].
      * * 17: The forward projection bias. Optional.
-     *       A 1-D tensor of shape [output_size].
+     *       A 1-D tensor of shape [fw_output_size].
      * * 18: The backward input-to-input weights. Optional.
-     *       A 2-D tensor of shape [num_units, input_size], where “num_units”
-     *       corresponds to the number of cell units.
+     *       A 2-D tensor of shape [bw_num_units, input_size], where “bw_num_units”
+     *       corresponds to the number of backward cell units.
      * * 19: The backward input-to-forget weights.
-     *       A 2-D tensor of shape [num_units, input_size].
+     *       A 2-D tensor of shape [bw_num_units, input_size].
      * * 20: The backward input-to-cell weights.
-     *       A 2-D tensor of shape [num_units, input_size].
+     *       A 2-D tensor of shape [bw_num_units, input_size].
      * * 21: The backward input-to-output weights.
-     *       A 2-D tensor of shape [num_units, input_size].
+     *       A 2-D tensor of shape [bw_num_units, input_size].
      * * 22: The backward recurrent-to-input weights. Optional.
-     *       A 2-D tensor of shape [num_units, output_size], where “output_size”
-     *       corresponds to either the number of cell units (i.e., “num_units”),
-     *       or the second dimension of the “projection_weights”, if defined.
+     *       A 2-D tensor of shape [bw_num_units, bw_output_size], where “bw_output_size”
+     *       corresponds to either the number of cell units (i.e., “bw_num_units”),
+     *       or the second dimension of the “bw_projection_weights”, if defined.
      * * 23: The backward recurrent-to-forget weights.
-     *       A 2-D tensor of shape [num_units, output_size].
+     *       A 2-D tensor of shape [bw_num_units, bw_output_size].
      * * 24: The backward recurrent-to-cell weights.
-     *       A 2-D tensor of shape [num_units, output_size].
+     *       A 2-D tensor of shape [bw_num_units, bw_output_size].
      * * 25: The backward recurrent-to-output weights.
-     *       A 2-D tensor of shape [num_units, output_size].
+     *       A 2-D tensor of shape [bw_num_units, bw_output_size].
      * * 26: The backward cell-to-input weights. Optional.
-     *       A 1-D tensor of shape [num_units].
+     *       A 1-D tensor of shape [bw_num_units].
      * * 27: The backward cell-to-forget weights. Optional.
-     *       A 1-D tensor of shape [num_units].
+     *       A 1-D tensor of shape [bw_num_units].
      * * 28: The backward cell-to-output weights. Optional.
-     *       A 1-D tensor of shape [num_units].
+     *       A 1-D tensor of shape [bw_num_units].
      * * 29: The backward input gate bias. Optional.
-     *       A 1-D tensor of shape [num_units].
+     *       A 1-D tensor of shape [bw_num_units].
      * * 30: The backward forget gate bias.
-     *       A 1-D tensor of shape [num_units].
+     *       A 1-D tensor of shape [bw_num_units].
      * * 31: The backward cell gate bias.
-     *       A 1-D tensor of shape [num_units].
+     *       A 1-D tensor of shape [bw_num_units].
      * * 32: The backward output gate bias.
-     *       A 1-D tensor of shape [num_units].
+     *       A 1-D tensor of shape [bw_num_units].
      * * 33: The backward projection weights. Optional.
-     *       A 2-D tensor of shape [output_size, num_units].
+     *       A 2-D tensor of shape [bw_output_size, bw_num_units].
      * * 34: The backward projection bias. Optional.
-     *       A 1-D tensor of shape [output_size].
+     *       A 1-D tensor of shape [bw_output_size].
      * * 35: The forward input activation state.
-     *       A 2-D tensor of shape [batch_size, output_size].
+     *       A 2-D tensor of shape [batch_size, bw_output_size].
      * * 36: The forward input cell state.
-     *       A 2-D tensor of shape [batch_size, num_units].
+     *       A 2-D tensor of shape [batch_size, bw_num_units].
      * * 37: The backward input activation state.
-     *       A 2-D tensor of shape [batch_size, output_size].
+     *       A 2-D tensor of shape [batch_size, bw_output_size].
      * * 38: The backward input cell state.
-     *       A 2-D tensor of shape [batch_size, num_units].
+     *       A 2-D tensor of shape [batch_size, bw_num_units].
      * * 39: The auxiliary input. Optional.
      *       A 3-D tensor of shape [max_time, batch_size, input_size], where “batch_size”
      *       corresponds to the batching dimension, and “input_size” is the size
      *       of the input.
      * * 40: The forward auxiliary input-to-input weights. Optional.
-     *       A 2-D tensor of shape [num_units, input_size].
+     *       A 2-D tensor of shape [fw_num_units, input_size].
      * * 41: The forward auxiliary input-to-forget weights. Optional.
-     *       A 2-D tensor of shape [num_units, input_size].
+     *       A 2-D tensor of shape [fw_num_units, input_size].
      * * 42: The forward auxiliary input-to-cell weights. Optional.
-     *       A 2-D tensor of shape [num_units, input_size].
+     *       A 2-D tensor of shape [fw_num_units, input_size].
      * * 43: The forward auxiliary input-to-output weights. Optional.
-     *       A 2-D tensor of shape [num_units, input_size].
+     *       A 2-D tensor of shape [fw_num_units, input_size].
      * * 44: The backward auxiliary input-to-input weights. Optional.
-     *       A 2-D tensor of shape [num_units, input_size].
+     *       A 2-D tensor of shape [bw_num_units, input_size].
      * * 45: The backward auxiliary input-to-forget weights. Optional.
-     *       A 2-D tensor of shape [num_units, input_size].
+     *       A 2-D tensor of shape [bw_num_units, input_size].
      * * 46: The backward auxiliary input-to-cell weights. Optional.
-     *       A 2-D tensor of shape [num_units, input_size].
+     *       A 2-D tensor of shape [bw_num_units, input_size].
      * * 47: The backward auxiliary input-to-output weights. Optional.
-     *       A 2-D tensor of shape [num_units, input_size].
+     *       A 2-D tensor of shape [bw_num_units, input_size].
      * * 48: The activation function.
      *       A value indicating the activation function:
      *       <ul>
@@ -2408,16 +2408,46 @@ enum OperationType : int32_t {
      * * 52: time_major
      *       An {@link OperandType::BOOL} scalar specifying the shape format
      *       of input and output tensors.
+     * * 53: The forward input layer normalization weights. Optional.
+     *       A 1-D tensor of shape [fw_num_units]. Used to rescale normalized inputs
+     *       to activation at input gate.
+     * * 54: The forward forget layer normalization weights. Optional.
+     *       A 1-D tensor of shape [fw_num_units]. Used to rescale normalized inputs
+     *       to activation at forget gate.
+     * * 55: The forward cell layer normalization weights. Optional.
+     *       A 1-D tensor of shape [fw_num_units]. Used to rescale normalized inputs
+     *       to activation at cell gate.
+     * * 56: The forward output layer normalization weights. Optional.
+     *       A 1-D tensor of shape [fw_num_units]. Used to rescale normalized inputs
+     *       to activation at output gate.
+     * * 57: The backward input layer normalization weights. Optional.
+     *       A 1-D tensor of shape [bw_num_units]. Used to rescale normalized inputs
+     *       to activation at input gate.
+     * * 58: The backward forget layer normalization weights. Optional.
+     *       A 1-D tensor of shape [bw_num_units]. Used to rescale normalized inputs
+     *       to activation at forget gate.
+     * * 59: The backward cell layer normalization weights. Optional.
+     *       A 1-D tensor of shape [bw_num_units]. Used to rescale normalized inputs
+     *       to activation at cell gate.
+     * * 60: The backward output layer normalization weights. Optional.
+     *       A 1-D tensor of shape [bw_num_units]. Used to rescale normalized inputs
+     *       to activation at output gate.
      *
      * Outputs:
      * * 0: The forward output.
      *      A 3-D tensor of shape:
-     *        If time-major: [max_time, batch_size, output_size]
-     *        If batch-major: [batch_size, max_time, output_size]
+     *        If time-major and not merge_outputs:
+     *          [max_time, batch_size, fw_output_size]
+     *        If time-major and merge_outputs:
+     *          [max_time, batch_size, fw_output_size + bw_output_size]
+     *        If batch-major and not merge_outputs:
+     *          [batch_size, max_time, fw_output_size]
+     *        If batch-major and merge_outputs:
+     *          [batch_size, max_time, fw_output_size + bw_output_size]
      * * 1: The backward output.  Unused if merge_outputs is true.
      *      A 3-D tensor of shape:
-     *        If time-major: [max_time, batch_size, output_size]
-     *        If batch-major: [batch_size, max_time, output_size]
+     *        If time-major: [max_time, batch_size, bw_output_size]
+     *        If batch-major: [batch_size, max_time, bw_output_size]
      *
      * Available since API level 29.
      */
@@ -4357,9 +4387,9 @@ enum OperationType : int32_t {
      * Inputs:
      * * 0: The input (\f$x_t\f$).
      *      A 3-D tensor of shape:
-     *        If time-major: [max_time, batch_size, output_size]
-     *        If batch-major: [batch_size, max_time, output_size]
-     *      where “max_size” is the number of timesteps (sequence length),
+     *        If time-major: [max_time, batch_size, input_size]
+     *        If batch-major: [batch_size, max_time, input_size]
+     *      where “max_time” is the number of timesteps (sequence length),
      *      “batch_size” corresponds to the batching dimension, and
      *      “input_size” is the size of the input.
      * * 1: The input-to-input weights (\f$W_{xi}\f$). Optional.
@@ -4419,16 +4449,16 @@ enum OperationType : int32_t {
      *      projection layer, such that values are bound within
      *      [-proj_clip, proj_clip]. If set to 0.0 then clipping is disabled.
      * * 23:Time-major if true, batch-major if false.
-     * * 24:The input layer normalization weights.
+     * * 24:The input layer normalization weights. Optional.
      *      A 1-D tensor of shape [num_units]. Used to rescale normalized inputs
      *      to activation at input gate.
-     * * 25:The forget layer normalization weights.
+     * * 25:The forget layer normalization weights. Optional.
      *      A 1-D tensor of shape [num_units]. Used to rescale normalized inputs
      *      to activation at forget gate.
-     * * 26:The cell layer normalization weights.
+     * * 26:The cell layer normalization weights. Optional.
      *      A 1-D tensor of shape [num_units]. Used to rescale normalized inputs
      *      to activation at cell gate.
-     * * 27:The output layer normalization weights.
+     * * 27:The output layer normalization weights. Optional.
      *      A 1-D tensor of shape [num_units]. Used to rescale normalized inputs
      *      to activation at output gate.
      *
