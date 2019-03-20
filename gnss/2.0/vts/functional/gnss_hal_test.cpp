@@ -77,6 +77,16 @@ void GnssHalTest::SetUpGnssCallback() {
     EXPECT_EQ(capabilities_called_count_, 1);
     EXPECT_EQ(info_called_count_, 1);
     EXPECT_EQ(name_called_count_, 1);
+
+    // Setup measurement corrections callback.
+    auto measurementCorrections = gnss_hal_->getExtensionMeasurementCorrections();
+    ASSERT_TRUE(measurementCorrections.isOk());
+    sp<IMeasurementCorrections> iMeasurementCorrections = measurementCorrections;
+    if (iMeasurementCorrections != nullptr) {
+        sp<IMeasurementCorrectionsCallback> iMeasurementCorrectionsCallback =
+                new GnssMeasurementCorrectionsCallback(*this);
+        iMeasurementCorrections->setCallback(iMeasurementCorrectionsCallback);
+    }
 }
 
 void GnssHalTest::StopAndClearLocations() {
@@ -176,6 +186,16 @@ std::cv_status GnssHalTest::wait(int timeout_seconds) {
     return status;
 }
 
+std::cv_status GnssHalTest::waitForMeasurementCorrectionsCapabilities(int timeout_seconds) {
+    std::unique_lock<std::mutex> lock(mtx_);
+    auto status = std::cv_status::no_timeout;
+    while (measurement_corrections_capabilities_called_count_ == 0) {
+        status = cv_.wait_for(lock, std::chrono::seconds(timeout_seconds));
+        if (status == std::cv_status::timeout) return status;
+    }
+    return status;
+}
+
 Return<void> GnssHalTest::GnssCallback::gnssSetSystemInfoCb(
     const IGnssCallback::GnssSystemInfo& info) {
     ALOGI("Info received, year %d", info.yearOfHw);
@@ -240,6 +260,15 @@ Return<void> GnssHalTest::GnssMeasurementCallback::gnssMeasurementCb_2_0(
     ALOGD("GnssMeasurement received. Size = %d", (int)data.measurements.size());
     parent_.measurement_called_count_++;
     parent_.last_measurement_ = data;
+    parent_.notify();
+    return Void();
+}
+
+Return<void> GnssHalTest::GnssMeasurementCorrectionsCallback::setCapabilitiesCb(
+        uint32_t capabilities) {
+    ALOGI("GnssMeasurementCorrectionsCallback capabilities received %d", capabilities);
+    parent_.measurement_corrections_capabilities_called_count_++;
+    parent_.last_measurement_corrections_capabilities_ = capabilities;
     parent_.notify();
     return Void();
 }

@@ -54,6 +54,19 @@ Return<bool> GnssMeasurementCorrections::setCorrections(const MeasurementCorrect
     return true;
 }
 
+Return<bool> GnssMeasurementCorrections::setCallback(
+        const sp<V1_0::IMeasurementCorrectionsCallback>& callback) {
+    using Capabilities = V1_0::IMeasurementCorrectionsCallback::Capabilities;
+    auto ret =
+            callback->setCapabilitiesCb(Capabilities::LOS_SATS | Capabilities::EXCESS_PATH_LENGTH |
+                                        Capabilities::REFLECTING_PLANE);
+    if (!ret.isOk()) {
+        ALOGE("%s: Unable to invoke callback", __func__);
+        return false;
+    }
+    return true;
+}
+
 }  // namespace implementation
 }  // namespace V1_0
 }  // namespace measurement_corrections

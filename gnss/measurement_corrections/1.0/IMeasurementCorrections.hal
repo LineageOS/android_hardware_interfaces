@@ -16,11 +16,12 @@
 
 package android.hardware.gnss.measurement_corrections@1.0;
 
+import IMeasurementCorrectionsCallback;
+
 /**
  * Interface for measurement corrections support.
  */
 interface IMeasurementCorrections {
-
     /**
      * Injects measurement corrections to be used by the HAL to improve the GNSS location output.
      *
@@ -35,5 +36,15 @@ interface IMeasurementCorrections {
      *
      * @return success Whether the HAL can accept & use these corrections.
      */
-     setCorrections(MeasurementCorrections corrections) generates (bool success);
+    setCorrections(MeasurementCorrections corrections) generates (bool success);
+
+    /**
+     * Opens the interface and provides the callback routines to the implementation of this
+     * interface.
+     *
+     * @param callback Callback interface for IMeasurementCorrections.
+     *
+     * @return success Returns true on success.
+     */
+    setCallback(IMeasurementCorrectionsCallback callback) generates (bool success);
 };

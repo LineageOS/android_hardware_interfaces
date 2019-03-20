@@ -75,12 +75,19 @@ interface IGraphicBufferProducer {
      * @param slot Slot index.
      * @return status Status of the call.
      * @return buffer New buffer associated to the given slot index.
+     * @return generationNumber Generation number of the buffer. If
+     *     requestBuffer() is called immediately after dequeueBuffer() returns
+     *     with `bufferNeedsReallocation` set to `true`, @p generationNumber must
+     *     match the current generation number of the buffer queue previously
+     *     set by setGenerationNumber(). Otherwise, @p generationNumber may not
+     *     match the current generation number of the buffer queue.
      */
     requestBuffer(
             int32_t slot
         ) generates (
             Status status,
-            HardwareBuffer buffer
+            HardwareBuffer buffer,
+            uint32_t generationNumber
         );
 
     /**
@@ -212,9 +219,9 @@ interface IGraphicBufferProducer {
      * parameter.
      *
      * @param input See #DequeueBufferInput for more information.
-     * @param status Status of the call.
-     * @param slot Slot index.
-     * @param output See #DequeueBufferOutput for more information.
+     * @return status Status of the call.
+     * @return slot Slot index.
+     * @return output See #DequeueBufferOutput for more information.
      *
      * @sa queueBuffer(), requestBuffer().
      */
@@ -286,6 +293,9 @@ interface IGraphicBufferProducer {
      * See dequeueBuffer() for conditions that may cause the call to fail.
      *
      * @param buffer Buffer to attach to the buffer queue.
+     * @param generationNumber Generation number of the buffer. If this does not
+     *     match the current generation number of the buffer queue, the call
+     *     must fail with @p status set to `BAD_VALUE`.
      * @return status Status of the call.
      * @return slot Slot index assigned to @p buffer.
      * @return releaseAllBuffers Whether the caller is expected to release all
@@ -294,7 +304,8 @@ interface IGraphicBufferProducer {
      * @sa dequeueBuffer().
      */
     attachBuffer(
-            HardwareBuffer buffer
+            HardwareBuffer buffer,
+            uint32_t generationNumber
         ) generates (
             Status status,
             int32_t slot,
