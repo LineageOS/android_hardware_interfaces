@@ -146,6 +146,7 @@ enum AudioSource : int32_t {
      */
     ECHO_REFERENCE      = 1997,
     FM_TUNER            = 1998,
+    HOTWORD             = 1999,
 };
 
 typedef int32_t AudioSession;
