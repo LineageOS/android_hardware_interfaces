@@ -26,7 +26,6 @@ using ::android::hardware::gnss::common::Utils;
 GnssHalTest::GnssHalTest()
     : info_called_count_(0),
       capabilities_called_count_(0),
-      measurement_corrections_capabilities_called_count_(0),
       location_called_count_(0),
       name_called_count_(0),
       notify_count_(0) {}
@@ -44,7 +43,6 @@ void GnssHalTest::TearDown() {
     // Reset counters
     info_called_count_ = 0;
     capabilities_called_count_ = 0;
-    measurement_corrections_capabilities_called_count_ = 0;
     location_called_count_ = 0;
     name_called_count_ = 0;
     measurement_called_count_ = 0;
