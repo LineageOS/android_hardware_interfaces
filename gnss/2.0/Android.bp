@@ -12,6 +12,8 @@ hidl_interface {
         "IAGnssCallback.hal",
         "IAGnssRil.hal",
         "IGnss.hal",
+        "IGnssBatching.hal",
+        "IGnssBatchingCallback.hal",
         "IGnssCallback.hal",
         "IGnssConfiguration.hal",
         "IGnssDebug.hal",
