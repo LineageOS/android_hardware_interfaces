@@ -27,6 +27,7 @@ import IGnssDebug;
 import IGnssMeasurement;
 import IAGnss;
 import IAGnssRil;
+import IGnssBatching;
 
 /**
  * Represents the standard GNSS (Global Navigation Satellite System) interface.
@@ -103,6 +104,13 @@ interface IGnss extends @1.1::IGnss {
      * @return visibilityControlIface Handle to the IGnssVisibilityControl interface.
      */
     getExtensionVisibilityControl() generates (IGnssVisibilityControl visibilityControlIface);
+
+    /**
+     * This method returns the IGnssBatching interface.
+     *
+     * @return batchingIface Handle to the IGnssBatching interface.
+     */
+    getExtensionGnssBatching_2_0() generates (IGnssBatching batchingIface);
 
     /**
      * Injects current location from the best available location provider.
