@@ -8,6 +8,7 @@ hidl_interface {
     },
     srcs: [
         "IVibrator.hal",
+        "types.hal",
     ],
     interfaces: [
         "android.hardware.vibrator@1.0",

@@ -74,22 +74,9 @@ Return<void> Vibrator::perform_1_1(V1_1::Effect_1_1 effect, EffectStrength stren
 
 // Methods from ::android::hardware::vibrator::V1_2::IVibrator follow.
 
-Return<void> Vibrator::perform_1_2(Effect effect, EffectStrength strength, perform_cb _hidl_cb) {
-    uint8_t amplitude;
-    uint32_t ms;
-    Status status;
-
-    ALOGI("Perform: Effect %s\n", effectToName(effect));
-
-    amplitude = strengthToAmplitude(strength);
-    setAmplitude(amplitude);
-
-    ms = effectToMs(effect);
-    status = activate(ms);
-
-    _hidl_cb(status, ms);
-
-    return Void();
+Return<void> Vibrator::perform_1_2(V1_2::Effect effect, EffectStrength strength,
+                                   perform_cb _hidl_cb) {
+    return perform_1_3(static_cast<V1_3::Effect>(effect), strength, _hidl_cb);
 }
 
 // Methods from ::android::hardware::vibrator::V1_3::IVibrator follow.
@@ -108,6 +95,24 @@ Return<Status> Vibrator::setExternalControl(bool enabled) {
         mExternalControl = enabled;
         return Status::OK;
     }
+}
+
+Return<void> Vibrator::perform_1_3(Effect effect, EffectStrength strength, perform_cb _hidl_cb) {
+    uint8_t amplitude;
+    uint32_t ms;
+    Status status;
+
+    ALOGI("Perform: Effect %s\n", effectToName(effect));
+
+    amplitude = strengthToAmplitude(strength);
+    setAmplitude(amplitude);
+
+    ms = effectToMs(effect);
+    status = activate(ms);
+
+    _hidl_cb(status, ms);
+
+    return Void();
 }
 
 // Private methods follow.
@@ -184,6 +189,7 @@ uint32_t Vibrator::effectToMs(Effect effect) {
         case Effect::DOUBLE_CLICK:
             return 15;
         case Effect::TICK:
+        case Effect::TEXTURE_TICK:
             return 5;
         case Effect::THUD:
             return 5;
