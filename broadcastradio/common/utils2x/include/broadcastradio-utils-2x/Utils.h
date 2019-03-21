@@ -126,6 +126,7 @@ bool isValid(const V2_0::ProgramSelector& sel);
 
 V2_0::ProgramIdentifier make_identifier(V2_0::IdentifierType type, uint64_t value);
 V2_0::ProgramSelector make_selector_amfm(uint32_t frequency);
+V2_0::ProgramSelector make_selector_dab(uint32_t sidExt, uint32_t ensemble);
 V2_0::Metadata make_metadata(V2_0::MetadataKey key, int64_t value);
 V2_0::Metadata make_metadata(V2_0::MetadataKey key, std::string value);
 

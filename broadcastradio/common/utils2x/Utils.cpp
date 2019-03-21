@@ -299,6 +299,20 @@ ProgramSelector make_selector_amfm(uint32_t frequency) {
     return sel;
 }
 
+ProgramSelector make_selector_dab(uint32_t sidExt, uint32_t ensemble) {
+    ProgramSelector sel = {};
+    // TODO(maryabad): Have a helper function to create the sidExt instead of
+    // passing the whole identifier here. Something like make_dab_sid_ext.
+    sel.primaryId = make_identifier(IdentifierType::DAB_SID_EXT, sidExt);
+    hidl_vec<ProgramIdentifier> secondaryIds = {
+        make_identifier(IdentifierType::DAB_ENSEMBLE, ensemble),
+        // TODO(maryabad): Include frequency here when the helper method to
+        // translate between ensemble and frequency is implemented.
+    };
+    sel.secondaryIds = secondaryIds;
+    return sel;
+}
+
 Metadata make_metadata(MetadataKey key, int64_t value) {
     Metadata meta = {};
     meta.key = static_cast<uint32_t>(key);

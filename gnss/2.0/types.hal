@@ -73,3 +73,27 @@ struct GnssLocation {
      */
     ElapsedRealtime elapsedRealtime;
 };
+
+/**
+ * GNSS constellation type
+ *
+ * This is to specify the navigation satellite system, for example, as listed in Section 3.5 in
+ * RINEX Version 3.04.
+ */
+enum GnssConstellationType : uint8_t {
+    UNKNOWN = 0,
+    /** Global Positioning System. */
+    GPS     = 1,
+    /** Satellite-Based Augmentation System. */
+    SBAS    = 2,
+    /** Global Navigation Satellite System. */
+    GLONASS = 3,
+    /** Quasi-Zenith Satellite System. */
+    QZSS    = 4,
+    /** BeiDou Navigation Satellite System. */
+    BEIDOU  = 5,
+    /** Galileo Navigation Satellite System. */
+    GALILEO = 6,
+    /** Indian Regional Navigation Satellite System. */
+    IRNSS   = 7,
+};

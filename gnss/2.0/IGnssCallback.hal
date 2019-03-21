@@ -19,6 +19,7 @@ package android.hardware.gnss@2.0;
 import @1.0::IGnssCallback;
 import @1.1::IGnssCallback;
 import GnssLocation;
+import GnssConstellationType;
 
 /**
  * This interface is required for the HAL to communicate certain information
@@ -94,4 +95,26 @@ interface IGnssCallback extends @1.1::IGnssCallback {
      *        during-call to E911, or up to 5 minutes after end-of-call or text to E911).
      */
     gnssRequestLocationCb_2_0(bool independentFromGnss, bool isUserEmergency);
+
+    /** Extends a GnssSvInfo, replacing the GnssConstellationType. */
+    struct GnssSvInfo {
+        /**
+         * GNSS satellite information for a single satellite and frequency.
+         *
+         * In this version of the HAL, the field 'constellation' in the v1_0 struct is deprecated,
+         * and is no longer used by the framework. The constellation type is instead reported in
+         * @2.0::IGnssCallback.GnssSvInfo.constellation.
+         */
+        @1.0::IGnssCallback.GnssSvInfo v1_0;
+
+        /** Defines the constellation of the given SV. */
+        GnssConstellationType constellation;
+    };
+
+    /**
+     * Callback for the HAL to pass a vector of GnssSvInfo back to the client.
+     *
+     * @param svInfo SV status information from HAL.
+     */
+    gnssSvStatusCb_2_0(vec<GnssSvInfo> svInfoList);
 };

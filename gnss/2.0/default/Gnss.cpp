@@ -236,6 +236,11 @@ Return<sp<V2_0::IGnssConfiguration>> Gnss::getExtensionGnssConfiguration_2_0() {
     return new GnssConfiguration{};
 }
 
+Return<sp<V2_0::IGnssDebug>> Gnss::getExtensionGnssDebug_2_0() {
+    // TODO(b/124012850): Implement function.
+    return sp<V2_0::IGnssDebug>{};
+}
+
 Return<sp<V2_0::IAGnss>> Gnss::getExtensionAGnss_2_0() {
     return new AGnss{};
 }
