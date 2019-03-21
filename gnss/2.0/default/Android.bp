@@ -25,7 +25,6 @@ cc_binary {
         "AGnss.cpp",
         "AGnssRil.cpp",
         "Gnss.cpp",
-	"GnssBatching.cpp",
         "GnssMeasurement.cpp",
         "GnssMeasurementCorrections.cpp",
         "GnssVisibilityControl.cpp",

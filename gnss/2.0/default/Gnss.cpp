@@ -23,7 +23,6 @@
 
 #include "AGnss.h"
 #include "AGnssRil.h"
-#include "GnssBatching.h"
 #include "GnssConfiguration.h"
 #include "GnssMeasurement.h"
 #include "GnssMeasurementCorrections.h"
@@ -264,10 +263,6 @@ Gnss::getExtensionMeasurementCorrections() {
 Return<sp<visibility_control::V1_0::IGnssVisibilityControl>> Gnss::getExtensionVisibilityControl() {
     ALOGD("Gnss::getExtensionVisibilityControl");
     return new GnssVisibilityControl();
-}
-
-Return<sp<V2_0::IGnssBatching>> Gnss::getExtensionGnssBatching_2_0() {
-    return new GnssBatching();
 }
 
 Return<bool> Gnss::setCallback_2_0(const sp<V2_0::IGnssCallback>& callback) {

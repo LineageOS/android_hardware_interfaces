@@ -33,11 +33,13 @@ Return<bool> GnssConfiguration::setSuplEs(bool enable) {
 }
 
 Return<bool> GnssConfiguration::setSuplVersion(uint32_t) {
-    return true;
+    // TODO implement
+    return bool{};
 }
 
 Return<bool> GnssConfiguration::setSuplMode(hidl_bitfield<SuplMode>) {
-    return true;
+    // TODO implement
+    return bool{};
 }
 
 Return<bool> GnssConfiguration::setGpsLock(hidl_bitfield<GpsLock> gpsLock) {
@@ -47,15 +49,18 @@ Return<bool> GnssConfiguration::setGpsLock(hidl_bitfield<GpsLock> gpsLock) {
 }
 
 Return<bool> GnssConfiguration::setLppProfile(hidl_bitfield<LppProfile>) {
-    return true;
+    // TODO implement
+    return bool{};
 }
 
 Return<bool> GnssConfiguration::setGlonassPositioningProtocol(hidl_bitfield<GlonassPosProtocol>) {
-    return true;
+    // TODO implement
+    return bool{};
 }
 
 Return<bool> GnssConfiguration::setEmergencySuplPdn(bool) {
-    return true;
+    // TODO implement
+    return bool{};
 }
 
 // Methods from ::android::hardware::gnss::V1_1::IGnssConfiguration follow.
