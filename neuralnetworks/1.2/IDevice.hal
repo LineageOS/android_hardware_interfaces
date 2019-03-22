@@ -76,6 +76,17 @@ interface IDevice extends @1.1::IDevice {
     getType() generates (ErrorStatus status, DeviceType type);
 
     /**
+     * Gets the capabilities of a driver.
+     *
+     * @return status Error status of the call, must be:
+     *                - NONE if successful
+     *                - DEVICE_UNAVAILABLE if driver is offline or busy
+     *                - GENERAL_FAILURE if there is an unspecified error
+     * @return capabilities Capabilities of the driver.
+     */
+    getCapabilities_1_2() generates (ErrorStatus status, Capabilities capabilities);
+
+    /**
      * Gets information about extensions supported by the driver implementation.
      *
      * All extension operations and operands must be fully supported for the

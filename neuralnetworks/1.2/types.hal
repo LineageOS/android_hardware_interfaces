@@ -4618,6 +4618,39 @@ enum DeviceType : int32_t {
 };
 
 /**
+ * The capabilities of a driver.
+ *
+ * Performance of an operation comes from the type of its first operand.
+ * This represents performance for non extension operand types.
+ */
+struct Capabilities {
+    /**
+     * Driver performance when operating on float32 data but performing
+     * calculations with range and/or precision as low as that of the IEEE
+     * 754 16-bit floating-point format.
+     */
+    PerformanceInfo relaxedFloat32toFloat16PerformanceScalar;
+    PerformanceInfo relaxedFloat32toFloat16PerformanceTensor;
+
+    /**
+     * Driver performance when operating on a particular data type.
+     * In the case of float32 data, this is used when the calculations
+     * are not relaxed.
+     */
+    struct OperandPerformance {
+        OperandType type;
+        PerformanceInfo info;
+    };
+
+    /**
+     * Performance by operand type. Must be sorted by OperandType.
+     * If a particular OperandType is not present in operandPerformance,
+     * its performance is treated as { .execTime = FLT_MAX, .powerUsage = FLT_MAX }.
+     */
+    vec<OperandPerformance> operandPerformance;
+};
+
+/**
  * Describes one operation of the model's graph.
  */
 struct Operation {
