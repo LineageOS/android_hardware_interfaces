@@ -169,6 +169,10 @@ interface IStreamIn extends IStream {
     /**
      * Specifies the logical microphone (for processing).
      *
+     * If the feature is not supported an error should be returned
+     * If multiple microphones are present, this should be treated as a preference
+     * for their combined direction.
+     *
      * Optional method
      *
      * @param Direction constant
@@ -179,6 +183,10 @@ interface IStreamIn extends IStream {
 
     /**
      * Specifies the zoom factor for the selected microphone (for processing).
+     *
+     * If the feature is not supported an error should be returned
+     * If multiple microphones are present, this should be treated as a preference
+     * for their combined field dimension.
      *
      * Optional method
      *
