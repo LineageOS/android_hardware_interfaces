@@ -17,6 +17,7 @@
 package android.hardware.media.c2@1.0;
 
 import android.hardware.media.bufferpool@2.0::BufferStatusMessage;
+import android.hidl.safe_union@1.0::Monostate;
 
 /**
  * Common return values for Codec2 operations.
@@ -190,89 +191,68 @@ struct ParamDescriptor {
  */
 typedef uint64_t PrimitiveValue;
 
+/**
+ * Description of a set of values.
+ *
+ * If the `step` member is 0, and `num` and `denom` are both 1, the `Range`
+ * structure represents a closed interval bounded by `min` and `max`.
+ *
+ * Otherwise, the #ValueRange structure represents a finite sequence of numbers
+ * produced from the following recurrence relation:
+ *
+ * @code
+ * v[0] = min
+ * v[i] = v[i - 1] * num / denom + step ; i >= 1
+ * @endcode
+ *
+ * Both the ratio `num / denom` and the value `step` must be positive. The
+ * last number in the sequence described by this #Range structure is the
+ * largest number in the sequence that is smaller than or equal to `max`.
+ *
+ * @note
+ * The division in the formula may truncate the result if the data type of
+ * these values is an integral type.
+ */
+struct ValueRange {
+    /**
+     * Lower end of the range (inclusive).
+     */
+    PrimitiveValue min;
+    /**
+     * Upper end of the range (inclusive).
+     */
+    PrimitiveValue max;
+    /**
+     * The non-homogeneous term in the recurrence relation.
+     */
+    PrimitiveValue step;
+    /**
+     * The numerator of the scale coefficient in the recurrence relation.
+     */
+    PrimitiveValue num;
+    /**
+     * The denominator of the scale coefficient in the recurrence relation.
+     */
+    PrimitiveValue denom;
+};
+
 /*
  * Description of supported values for a field.
  *
  * This can be a continuous range or a discrete set of values.
+ *
+ * The intended type of values must be made clear in the context where
+ * `FieldSupportedValues` is used.
  */
-struct FieldSupportedValues {
-    /**
-     * Used if #type is `RANGE`.
-     *
-     * If the `step` member is 0, and `num` and `denom` are both 1, the `Range`
-     * structure represents a closed interval bounded by `min` and `max`.
-     *
-     * Otherwise, the #Range structure represents a finite sequence of numbers
-     * produced from the following recurrence relation:
-     *
-     * @code
-     * v[0] = min
-     * v[i] = v[i - 1] * num / denom + step ; i >= 1
-     * @endcode
-     *
-     * Both the ratio `num / denom` and the value `step` must be positive. The
-     * last number in the sequence described by this #Range structure is the
-     * largest number in the sequence that is smaller than or equal to `max`.
-     *
-     * @note
-     * The division in the formula may truncate the result if the data type of
-     * these values is an integral type.
-     */
-    struct Range {
-        /**
-         * Lower end of the range (inclusive).
-         */
-        PrimitiveValue min;
-        /**
-         * Upper end of the range (inclusive).
-         */
-        PrimitiveValue max;
-        /**
-         * The non-homogeneous term in the recurrence relation.
-         */
-        PrimitiveValue step;
-        /**
-         * The numerator of the scale coefficient in the recurrence relation.
-         */
-        PrimitiveValue num;
-        /**
-         * The denominator of the scale coefficient in the recurrence relation.
-         */
-        PrimitiveValue denom;
-    };
-
-    enum Type : int32_t {
-        /** No supported values */
-        EMPTY = 0,
-        /** Numeric range, described in a #Range structure */
-        RANGE,
-        /** List of values */
-        VALUES,
-        /** List of flags that can be OR-ed */
-        FLAGS,
-    };
-    /**
-     * Type of the supported values.
-     */
-    Type type;
-
-    /**
-     * When #type is #Type.RANGE, #range shall specify the range of possible
-     * values.
-     *
-     * The intended type of members of #range shall be clear in the context
-     * where `FieldSupportedValues` is used.
-     */
-    Range range;
-
-    /**
-     * When #type is #Type.VALUES or #Type.FLAGS, #value shall list supported
-     * values/flags.
-     *
-     * The intended type of components of #value shall be clear in the context
-     * where `FieldSupportedValues` is used.
-     */
+safe_union FieldSupportedValues {
+    /** No supported values */
+    Monostate empty;
+    /** Numeric range, described in a #ValueRange structure */
+    ValueRange range;
+    /** List of values */
     vec<PrimitiveValue> values;
+    /** List of flags that can be OR-ed */
+    vec<PrimitiveValue> flags;
 };
 
 /**
