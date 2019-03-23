@@ -54,29 +54,39 @@ namespace {
 [[maybe_unused]] auto dummy_createTestModel = createTestModel_dynamic_output_shape;
 [[maybe_unused]] auto dummy_get_examples = get_examples_dynamic_output_shape;
 
-enum class AccessMode { READ_ONLY, WRITE_ONLY };
+enum class AccessMode { READ_WRITE, READ_ONLY, WRITE_ONLY };
 
-void createCacheHandle(const std::vector<std::string>& files, AccessMode mode,
-                       hidl_handle* handle) {
-    std::vector<int> fds;
-    for (const auto& file : files) {
-        int fd;
-        if (mode == AccessMode::READ_ONLY) {
-            fd = open(file.c_str(), O_RDONLY);
-        } else if (mode == AccessMode::WRITE_ONLY) {
-            fd = open(file.c_str(), O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IWUSR);
-        } else {
-            FAIL();
+// Creates cache handles based on provided file groups.
+// The outer vector corresponds to handles and the inner vector is for fds held by each handle.
+void createCacheHandles(const std::vector<std::vector<std::string>>& fileGroups,
+                        const std::vector<AccessMode>& mode, hidl_vec<hidl_handle>* handles) {
+    handles->resize(fileGroups.size());
+    for (uint32_t i = 0; i < fileGroups.size(); i++) {
+        std::vector<int> fds;
+        for (const auto& file : fileGroups[i]) {
+            int fd;
+            if (mode[i] == AccessMode::READ_ONLY) {
+                fd = open(file.c_str(), O_RDONLY);
+            } else if (mode[i] == AccessMode::WRITE_ONLY) {
+                fd = open(file.c_str(), O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
+            } else if (mode[i] == AccessMode::READ_WRITE) {
+                fd = open(file.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+            } else {
+                FAIL();
+            }
+            ASSERT_GE(fd, 0);
+            fds.push_back(fd);
         }
-        ASSERT_GE(fd, 0);
-        fds.push_back(fd);
+        native_handle_t* cacheNativeHandle = native_handle_create(fds.size(), 0);
+        ASSERT_NE(cacheNativeHandle, nullptr);
+        std::copy(fds.begin(), fds.end(), &cacheNativeHandle->data[0]);
+        (*handles)[i].setTo(cacheNativeHandle, /*shouldOwn=*/true);
     }
-    native_handle_t* cacheNativeHandle = native_handle_create(fds.size(), 0);
-    ASSERT_NE(cacheNativeHandle, nullptr);
-    for (uint32_t i = 0; i < fds.size(); i++) {
-        cacheNativeHandle->data[i] = fds[i];
-    }
-    handle->setTo(cacheNativeHandle, /*shouldOwn=*/true);
+}
+
+void createCacheHandles(const std::vector<std::vector<std::string>>& fileGroups, AccessMode mode,
+                        hidl_vec<hidl_handle>* handles) {
+    createCacheHandles(fileGroups, std::vector<AccessMode>(fileGroups.size(), mode), handles);
 }
 
 }  // namespace
@@ -88,38 +98,43 @@ class CompilationCachingTest : public NeuralnetworksHidlTest {
         NeuralnetworksHidlTest::SetUp();
         ASSERT_NE(device.get(), nullptr);
 
-        // Create cache directory. The cache directory and cache files are always created to test
-        // the behavior of prepareModelFromCache, even when caching is not supported.
+        // Create cache directory. The cache directory and a temporary cache file is always created
+        // to test the behavior of prepareModelFromCache, even when caching is not supported.
         char cacheDirTemp[] = "/data/local/tmp/TestCompilationCachingXXXXXX";
         char* cacheDir = mkdtemp(cacheDirTemp);
         ASSERT_NE(cacheDir, nullptr);
         mCacheDir = cacheDir;
+        mCacheDir.push_back('/');
 
-        // Create empty cache files.
-        mCache1 = mCacheDir + "/cache1";
-        mCache2 = mCacheDir + "/cache2";
-        mCache3 = mCacheDir + "/cache3";
-        // A dummy handle, use AccessMode::WRITE_ONLY for createCacheHandle to create files.
-        hidl_handle handle;
-        createCacheHandle({mCache1, mCache2, mCache3}, AccessMode::WRITE_ONLY, &handle);
-
-        // Check if caching is supported.
-        bool isCachingSupported;
-        Return<void> ret = device->isCachingSupported(
-                [&isCachingSupported](ErrorStatus status, bool supported) {
+        Return<void> ret = device->getNumberOfCacheFilesNeeded(
+                [this](ErrorStatus status, uint32_t numModelCache, uint32_t numDataCache) {
                     EXPECT_EQ(ErrorStatus::NONE, status);
-                    isCachingSupported = supported;
+                    mNumModelCache = numModelCache;
+                    mNumDataCache = numDataCache;
                 });
         EXPECT_TRUE(ret.isOk());
-        if (isCachingSupported) {
-            mIsCachingSupported = true;
-        } else {
+        mIsCachingSupported = mNumModelCache > 0 || mNumDataCache > 0;
+
+        // Create empty cache files.
+        mTmpCache = mCacheDir + "tmp";
+        for (uint32_t i = 0; i < mNumModelCache; i++) {
+            mModelCache.push_back({mCacheDir + "model" + std::to_string(i)});
+        }
+        for (uint32_t i = 0; i < mNumDataCache; i++) {
+            mDataCache.push_back({mCacheDir + "data" + std::to_string(i)});
+        }
+        // Dummy handles, use AccessMode::WRITE_ONLY for createCacheHandles to create files.
+        hidl_vec<hidl_handle> modelHandle, dataHandle, tmpHandle;
+        createCacheHandles(mModelCache, AccessMode::WRITE_ONLY, &modelHandle);
+        createCacheHandles(mDataCache, AccessMode::WRITE_ONLY, &dataHandle);
+        createCacheHandles({{mTmpCache}}, AccessMode::WRITE_ONLY, &tmpHandle);
+
+        if (!mIsCachingSupported) {
             LOG(INFO) << "NN VTS: Early termination of test because vendor service does not "
                          "support compilation caching.";
             std::cout << "[          ]   Early termination of test because vendor service does not "
                          "support compilation caching."
                       << std::endl;
-            mIsCachingSupported = false;
         }
     }
 
@@ -127,22 +142,49 @@ class CompilationCachingTest : public NeuralnetworksHidlTest {
         // The tmp directory is only removed when the driver reports caching not supported,
         // otherwise it is kept for debugging purpose.
         if (!mIsCachingSupported) {
-            remove(mCache1.c_str());
-            remove(mCache2.c_str());
-            remove(mCache3.c_str());
+            remove(mTmpCache.c_str());
             rmdir(mCacheDir.c_str());
         }
         NeuralnetworksHidlTest::TearDown();
     }
 
-    void saveModelToCache(sp<IPreparedModel> preparedModel, const hidl_handle& cache1,
-                          const hidl_handle& cache2, ErrorStatus* status) {
-        // Save IPreparedModel to cache.
+    void saveModelToCache(const V1_2::Model& model, const hidl_vec<hidl_handle>& modelCache,
+                          const hidl_vec<hidl_handle>& dataCache, bool* supported,
+                          sp<IPreparedModel>* preparedModel = nullptr) {
+        if (preparedModel != nullptr) *preparedModel = nullptr;
+
+        // See if service can handle model.
+        bool fullySupportsModel = false;
+        Return<void> supportedCall = device->getSupportedOperations_1_2(
+                model,
+                [&fullySupportsModel, &model](ErrorStatus status, const hidl_vec<bool>& supported) {
+                    ASSERT_EQ(ErrorStatus::NONE, status);
+                    ASSERT_EQ(supported.size(), model.operations.size());
+                    fullySupportsModel = std::all_of(supported.begin(), supported.end(),
+                                                     [](bool valid) { return valid; });
+                });
+        ASSERT_TRUE(supportedCall.isOk());
+        *supported = fullySupportsModel;
+        if (!fullySupportsModel) return;
+
+        // Launch prepare model.
+        sp<PreparedModelCallback> preparedModelCallback = new PreparedModelCallback();
+        ASSERT_NE(nullptr, preparedModelCallback.get());
         hidl_array<uint8_t, sizeof(mToken)> cacheToken(mToken);
-        Return<ErrorStatus> saveToCacheStatus =
-                preparedModel->saveToCache(cache1, cache2, cacheToken);
-        ASSERT_TRUE(saveToCacheStatus.isOk());
-        *status = static_cast<ErrorStatus>(saveToCacheStatus);
+        Return<ErrorStatus> prepareLaunchStatus =
+                device->prepareModel_1_2(model, ExecutionPreference::FAST_SINGLE_ANSWER, modelCache,
+                                         dataCache, cacheToken, preparedModelCallback);
+        ASSERT_TRUE(prepareLaunchStatus.isOk());
+        ASSERT_EQ(static_cast<ErrorStatus>(prepareLaunchStatus), ErrorStatus::NONE);
+
+        // Retrieve prepared model.
+        preparedModelCallback->wait();
+        ASSERT_EQ(preparedModelCallback->getStatus(), ErrorStatus::NONE);
+        if (preparedModel != nullptr) {
+            *preparedModel =
+                    V1_2::IPreparedModel::castFrom(preparedModelCallback->getPreparedModel())
+                            .withDefault(nullptr);
+        }
     }
 
     bool checkEarlyTermination(ErrorStatus status) {
@@ -157,14 +199,27 @@ class CompilationCachingTest : public NeuralnetworksHidlTest {
         return false;
     }
 
-    void prepareModelFromCache(const hidl_handle& cache1, const hidl_handle& cache2,
+    bool checkEarlyTermination(bool supported) {
+        if (!supported) {
+            LOG(INFO) << "NN VTS: Early termination of test because vendor service cannot "
+                         "prepare model that it does not support.";
+            std::cout << "[          ]   Early termination of test because vendor service cannot "
+                         "prepare model that it does not support."
+                      << std::endl;
+            return true;
+        }
+        return false;
+    }
+
+    void prepareModelFromCache(const hidl_vec<hidl_handle>& modelCache,
+                               const hidl_vec<hidl_handle>& dataCache,
                                sp<IPreparedModel>* preparedModel, ErrorStatus* status) {
         // Launch prepare model from cache.
         sp<PreparedModelCallback> preparedModelCallback = new PreparedModelCallback();
         ASSERT_NE(nullptr, preparedModelCallback.get());
         hidl_array<uint8_t, sizeof(mToken)> cacheToken(mToken);
-        Return<ErrorStatus> prepareLaunchStatus =
-                device->prepareModelFromCache(cache1, cache2, cacheToken, preparedModelCallback);
+        Return<ErrorStatus> prepareLaunchStatus = device->prepareModelFromCache(
+                modelCache, dataCache, cacheToken, preparedModelCallback);
         ASSERT_TRUE(prepareLaunchStatus.isOk());
         if (static_cast<ErrorStatus>(prepareLaunchStatus) != ErrorStatus::NONE) {
             *preparedModel = nullptr;
@@ -179,47 +234,52 @@ class CompilationCachingTest : public NeuralnetworksHidlTest {
                                  .withDefault(nullptr);
     }
 
+    // Absolute path to the temporary cache directory.
     std::string mCacheDir;
-    std::string mCache1;
-    std::string mCache2;
-    std::string mCache3;
+
+    // Groups of file paths for model and data cache in the tmp cache directory, initialized with
+    // outer_size = mNum{Model|Data}Cache, inner_size = 1. The outer vector corresponds to handles
+    // and the inner vector is for fds held by each handle.
+    std::vector<std::vector<std::string>> mModelCache;
+    std::vector<std::vector<std::string>> mDataCache;
+
+    // A separate temporary file path in the tmp cache directory.
+    std::string mTmpCache;
+
     uint8_t mToken[static_cast<uint32_t>(Constant::BYTE_SIZE_OF_CACHE_TOKEN)] = {};
-    bool mIsCachingSupported;
+    uint32_t mNumModelCache;
+    uint32_t mNumDataCache;
+    uint32_t mIsCachingSupported;
 };
 
 TEST_F(CompilationCachingTest, CacheSavingAndRetrieval) {
     // Create test HIDL model and compile.
     Model testModel = createTestModel();
     sp<IPreparedModel> preparedModel = nullptr;
-    generated_tests::PrepareModel(device, testModel, &preparedModel);
-    // Terminate early if the driver cannot prepare the model.
-    if (preparedModel == nullptr) return;
 
     // Save the compilation to cache.
     {
-        ErrorStatus status;
-        hidl_handle cache1, cache2;
-        createCacheHandle({mCache1}, AccessMode::WRITE_ONLY, &cache1);
-        createCacheHandle({mCache2}, AccessMode::WRITE_ONLY, &cache2);
-        saveModelToCache(preparedModel, cache1, cache2, &status);
-        if (!mIsCachingSupported) {
-            EXPECT_EQ(status, ErrorStatus::GENERAL_FAILURE);
-        } else {
-            if (checkEarlyTermination(status)) return;
-            ASSERT_EQ(status, ErrorStatus::NONE);
-        }
+        bool supported;
+        hidl_vec<hidl_handle> modelCache, dataCache;
+        createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
+        createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
+        saveModelToCache(testModel, modelCache, dataCache, &supported);
+        if (checkEarlyTermination(supported)) return;
     }
 
     // Retrieve preparedModel from cache.
     {
         preparedModel = nullptr;
         ErrorStatus status;
-        hidl_handle cache1, cache2;
-        createCacheHandle({mCache1}, AccessMode::READ_ONLY, &cache1);
-        createCacheHandle({mCache2}, AccessMode::READ_ONLY, &cache2);
-        prepareModelFromCache(cache1, cache2, &preparedModel, &status);
+        hidl_vec<hidl_handle> modelCache, dataCache;
+        createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
+        createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
+        prepareModelFromCache(modelCache, dataCache, &preparedModel, &status);
         if (!mIsCachingSupported) {
             ASSERT_EQ(status, ErrorStatus::GENERAL_FAILURE);
+            ASSERT_EQ(preparedModel, nullptr);
+            return;
+        } else if (checkEarlyTermination(status)) {
             ASSERT_EQ(preparedModel, nullptr);
             return;
         } else {
@@ -238,39 +298,52 @@ TEST_F(CompilationCachingTest, CacheSavingAndRetrievalNonZeroOffset) {
     // Create test HIDL model and compile.
     Model testModel = createTestModel();
     sp<IPreparedModel> preparedModel = nullptr;
-    generated_tests::PrepareModel(device, testModel, &preparedModel);
-    // Terminate early if the driver cannot prepare the model.
-    if (preparedModel == nullptr) return;
 
     // Save the compilation to cache.
     {
-        ErrorStatus status;
-        hidl_handle cache1, cache2;
-        createCacheHandle({mCache1}, AccessMode::WRITE_ONLY, &cache1);
-        createCacheHandle({mCache2}, AccessMode::WRITE_ONLY, &cache2);
-        saveModelToCache(preparedModel, cache1, cache2, &status);
-        if (!mIsCachingSupported) {
-            EXPECT_EQ(status, ErrorStatus::GENERAL_FAILURE);
-        } else {
-            if (checkEarlyTermination(status)) return;
-            ASSERT_EQ(status, ErrorStatus::NONE);
+        bool supported;
+        hidl_vec<hidl_handle> modelCache, dataCache;
+        createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
+        createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
+        uint8_t dummyBytes[] = {0, 0};
+        // Write a dummy integer to the cache.
+        // The driver should be able to handle non-empty cache and non-zero fd offset.
+        for (uint32_t i = 0; i < modelCache.size(); i++) {
+            ASSERT_EQ(write(modelCache[i].getNativeHandle()->data[0], &dummyBytes,
+                            sizeof(dummyBytes)),
+                      sizeof(dummyBytes));
         }
+        for (uint32_t i = 0; i < dataCache.size(); i++) {
+            ASSERT_EQ(
+                    write(dataCache[i].getNativeHandle()->data[0], &dummyBytes, sizeof(dummyBytes)),
+                    sizeof(dummyBytes));
+        }
+        saveModelToCache(testModel, modelCache, dataCache, &supported);
+        if (checkEarlyTermination(supported)) return;
     }
 
     // Retrieve preparedModel from cache.
     {
         preparedModel = nullptr;
         ErrorStatus status;
-        hidl_handle cache1, cache2;
-        createCacheHandle({mCache1}, AccessMode::READ_ONLY, &cache1);
-        createCacheHandle({mCache2}, AccessMode::READ_ONLY, &cache2);
+        hidl_vec<hidl_handle> modelCache, dataCache;
+        createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
+        createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
         uint8_t dummyByte = 0;
-        // Advance offset by one byte.
-        ASSERT_GE(read(cache1.getNativeHandle()->data[0], &dummyByte, 1), 0);
-        ASSERT_GE(read(cache2.getNativeHandle()->data[0], &dummyByte, 1), 0);
-        prepareModelFromCache(cache1, cache2, &preparedModel, &status);
+        // Advance the offset of each handle by one byte.
+        // The driver should be able to handle non-zero fd offset.
+        for (uint32_t i = 0; i < modelCache.size(); i++) {
+            ASSERT_GE(read(modelCache[i].getNativeHandle()->data[0], &dummyByte, 1), 0);
+        }
+        for (uint32_t i = 0; i < dataCache.size(); i++) {
+            ASSERT_GE(read(dataCache[i].getNativeHandle()->data[0], &dummyByte, 1), 0);
+        }
+        prepareModelFromCache(modelCache, dataCache, &preparedModel, &status);
         if (!mIsCachingSupported) {
             ASSERT_EQ(status, ErrorStatus::GENERAL_FAILURE);
+            ASSERT_EQ(preparedModel, nullptr);
+            return;
+        } else if (checkEarlyTermination(status)) {
             ASSERT_EQ(preparedModel, nullptr);
             return;
         } else {
@@ -285,231 +358,509 @@ TEST_F(CompilationCachingTest, CacheSavingAndRetrievalNonZeroOffset) {
                                            /*testDynamicOutputShape=*/false);
 }
 
+TEST_F(CompilationCachingTest, SaveToCacheInvalidNumCache) {
+    // Create test HIDL model and compile.
+    Model testModel = createTestModel();
+
+    // Test with number of model cache files greater than mNumModelCache.
+    {
+        bool supported;
+        hidl_vec<hidl_handle> modelCache, dataCache;
+        // Pass an additional cache file for model cache.
+        mModelCache.push_back({mTmpCache});
+        createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
+        createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
+        mModelCache.pop_back();
+        sp<IPreparedModel> preparedModel = nullptr;
+        saveModelToCache(testModel, modelCache, dataCache, &supported, &preparedModel);
+        if (checkEarlyTermination(supported)) return;
+        ASSERT_NE(preparedModel, nullptr);
+        // Execute and verify results.
+        generated_tests::EvaluatePreparedModel(preparedModel, [](int) { return false; },
+                                               get_examples(),
+                                               testModel.relaxComputationFloat32toFloat16,
+                                               /*testDynamicOutputShape=*/false);
+        // Check if prepareModelFromCache fails.
+        preparedModel = nullptr;
+        ErrorStatus status;
+        prepareModelFromCache(modelCache, dataCache, &preparedModel, &status);
+        if (status != ErrorStatus::INVALID_ARGUMENT) {
+            ASSERT_EQ(status, ErrorStatus::GENERAL_FAILURE);
+        }
+        ASSERT_EQ(preparedModel, nullptr);
+    }
+
+    // Test with number of model cache files smaller than mNumModelCache.
+    if (mModelCache.size() > 0) {
+        bool supported;
+        hidl_vec<hidl_handle> modelCache, dataCache;
+        // Pop out the last cache file.
+        auto tmp = mModelCache.back();
+        mModelCache.pop_back();
+        createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
+        createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
+        mModelCache.push_back(tmp);
+        sp<IPreparedModel> preparedModel = nullptr;
+        saveModelToCache(testModel, modelCache, dataCache, &supported, &preparedModel);
+        if (checkEarlyTermination(supported)) return;
+        ASSERT_NE(preparedModel, nullptr);
+        // Execute and verify results.
+        generated_tests::EvaluatePreparedModel(preparedModel, [](int) { return false; },
+                                               get_examples(),
+                                               testModel.relaxComputationFloat32toFloat16,
+                                               /*testDynamicOutputShape=*/false);
+        // Check if prepareModelFromCache fails.
+        preparedModel = nullptr;
+        ErrorStatus status;
+        prepareModelFromCache(modelCache, dataCache, &preparedModel, &status);
+        if (status != ErrorStatus::INVALID_ARGUMENT) {
+            ASSERT_EQ(status, ErrorStatus::GENERAL_FAILURE);
+        }
+        ASSERT_EQ(preparedModel, nullptr);
+    }
+
+    // Test with number of data cache files greater than mNumDataCache.
+    {
+        bool supported;
+        hidl_vec<hidl_handle> modelCache, dataCache;
+        // Pass an additional cache file for data cache.
+        mDataCache.push_back({mTmpCache});
+        createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
+        createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
+        mDataCache.pop_back();
+        sp<IPreparedModel> preparedModel = nullptr;
+        saveModelToCache(testModel, modelCache, dataCache, &supported, &preparedModel);
+        if (checkEarlyTermination(supported)) return;
+        ASSERT_NE(preparedModel, nullptr);
+        // Execute and verify results.
+        generated_tests::EvaluatePreparedModel(preparedModel, [](int) { return false; },
+                                               get_examples(),
+                                               testModel.relaxComputationFloat32toFloat16,
+                                               /*testDynamicOutputShape=*/false);
+        // Check if prepareModelFromCache fails.
+        preparedModel = nullptr;
+        ErrorStatus status;
+        prepareModelFromCache(modelCache, dataCache, &preparedModel, &status);
+        if (status != ErrorStatus::INVALID_ARGUMENT) {
+            ASSERT_EQ(status, ErrorStatus::GENERAL_FAILURE);
+        }
+        ASSERT_EQ(preparedModel, nullptr);
+    }
+
+    // Test with number of data cache files smaller than mNumDataCache.
+    if (mDataCache.size() > 0) {
+        bool supported;
+        hidl_vec<hidl_handle> modelCache, dataCache;
+        // Pop out the last cache file.
+        auto tmp = mDataCache.back();
+        mDataCache.pop_back();
+        createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
+        createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
+        mDataCache.push_back(tmp);
+        sp<IPreparedModel> preparedModel = nullptr;
+        saveModelToCache(testModel, modelCache, dataCache, &supported, &preparedModel);
+        if (checkEarlyTermination(supported)) return;
+        ASSERT_NE(preparedModel, nullptr);
+        // Execute and verify results.
+        generated_tests::EvaluatePreparedModel(preparedModel, [](int) { return false; },
+                                               get_examples(),
+                                               testModel.relaxComputationFloat32toFloat16,
+                                               /*testDynamicOutputShape=*/false);
+        // Check if prepareModelFromCache fails.
+        preparedModel = nullptr;
+        ErrorStatus status;
+        prepareModelFromCache(modelCache, dataCache, &preparedModel, &status);
+        if (status != ErrorStatus::INVALID_ARGUMENT) {
+            ASSERT_EQ(status, ErrorStatus::GENERAL_FAILURE);
+        }
+        ASSERT_EQ(preparedModel, nullptr);
+    }
+}
+
+TEST_F(CompilationCachingTest, PrepareModelFromCacheInvalidNumCache) {
+    // Create test HIDL model and compile.
+    Model testModel = createTestModel();
+
+    // Save the compilation to cache.
+    {
+        bool supported;
+        hidl_vec<hidl_handle> modelCache, dataCache;
+        createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
+        createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
+        saveModelToCache(testModel, modelCache, dataCache, &supported);
+        if (checkEarlyTermination(supported)) return;
+    }
+
+    // Test with number of model cache files greater than mNumModelCache.
+    {
+        sp<IPreparedModel> preparedModel = nullptr;
+        ErrorStatus status;
+        hidl_vec<hidl_handle> modelCache, dataCache;
+        mModelCache.push_back({mTmpCache});
+        createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
+        createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
+        mModelCache.pop_back();
+        prepareModelFromCache(modelCache, dataCache, &preparedModel, &status);
+        if (status != ErrorStatus::GENERAL_FAILURE) {
+            ASSERT_EQ(status, ErrorStatus::INVALID_ARGUMENT);
+        }
+        ASSERT_EQ(preparedModel, nullptr);
+    }
+
+    // Test with number of model cache files smaller than mNumModelCache.
+    if (mModelCache.size() > 0) {
+        sp<IPreparedModel> preparedModel = nullptr;
+        ErrorStatus status;
+        hidl_vec<hidl_handle> modelCache, dataCache;
+        auto tmp = mModelCache.back();
+        mModelCache.pop_back();
+        createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
+        createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
+        mModelCache.push_back(tmp);
+        prepareModelFromCache(modelCache, dataCache, &preparedModel, &status);
+        if (status != ErrorStatus::GENERAL_FAILURE) {
+            ASSERT_EQ(status, ErrorStatus::INVALID_ARGUMENT);
+        }
+        ASSERT_EQ(preparedModel, nullptr);
+    }
+
+    // Test with number of data cache files greater than mNumDataCache.
+    {
+        sp<IPreparedModel> preparedModel = nullptr;
+        ErrorStatus status;
+        hidl_vec<hidl_handle> modelCache, dataCache;
+        mDataCache.push_back({mTmpCache});
+        createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
+        createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
+        mDataCache.pop_back();
+        prepareModelFromCache(modelCache, dataCache, &preparedModel, &status);
+        if (status != ErrorStatus::GENERAL_FAILURE) {
+            ASSERT_EQ(status, ErrorStatus::INVALID_ARGUMENT);
+        }
+        ASSERT_EQ(preparedModel, nullptr);
+    }
+
+    // Test with number of data cache files smaller than mNumDataCache.
+    if (mDataCache.size() > 0) {
+        sp<IPreparedModel> preparedModel = nullptr;
+        ErrorStatus status;
+        hidl_vec<hidl_handle> modelCache, dataCache;
+        auto tmp = mDataCache.back();
+        mDataCache.pop_back();
+        createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
+        createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
+        mDataCache.push_back(tmp);
+        prepareModelFromCache(modelCache, dataCache, &preparedModel, &status);
+        if (status != ErrorStatus::GENERAL_FAILURE) {
+            ASSERT_EQ(status, ErrorStatus::INVALID_ARGUMENT);
+        }
+        ASSERT_EQ(preparedModel, nullptr);
+    }
+}
+
 TEST_F(CompilationCachingTest, SaveToCacheInvalidNumFd) {
     // Create test HIDL model and compile.
     Model testModel = createTestModel();
-    sp<IPreparedModel> preparedModel = nullptr;
-    generated_tests::PrepareModel(device, testModel, &preparedModel);
-    // Terminate early if the driver cannot prepare the model.
-    if (preparedModel == nullptr) return;
 
-    // cache1 with invalid NumFd.
-    {
+    // Go through each handle in model cache, test with NumFd greater than 1.
+    for (uint32_t i = 0; i < mNumModelCache; i++) {
+        bool supported;
+        hidl_vec<hidl_handle> modelCache, dataCache;
+        // Pass an invalid number of fds for handle i.
+        mModelCache[i].push_back(mTmpCache);
+        createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
+        createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
+        mModelCache[i].pop_back();
+        sp<IPreparedModel> preparedModel = nullptr;
+        saveModelToCache(testModel, modelCache, dataCache, &supported, &preparedModel);
+        if (checkEarlyTermination(supported)) return;
+        ASSERT_NE(preparedModel, nullptr);
+        // Execute and verify results.
+        generated_tests::EvaluatePreparedModel(preparedModel, [](int) { return false; },
+                                               get_examples(),
+                                               testModel.relaxComputationFloat32toFloat16,
+                                               /*testDynamicOutputShape=*/false);
+        // Check if prepareModelFromCache fails.
+        preparedModel = nullptr;
         ErrorStatus status;
-        hidl_handle cache1, cache2;
-        createCacheHandle({mCache1, mCache3}, AccessMode::WRITE_ONLY, &cache1);
-        createCacheHandle({mCache2}, AccessMode::WRITE_ONLY, &cache2);
-        saveModelToCache(preparedModel, cache1, cache2, &status);
-        if (status != ErrorStatus::GENERAL_FAILURE) {
-            ASSERT_EQ(status, ErrorStatus::INVALID_ARGUMENT);
+        prepareModelFromCache(modelCache, dataCache, &preparedModel, &status);
+        if (status != ErrorStatus::INVALID_ARGUMENT) {
+            ASSERT_EQ(status, ErrorStatus::GENERAL_FAILURE);
         }
+        ASSERT_EQ(preparedModel, nullptr);
     }
 
-    // cache2 with invalid NumFd.
-    {
+    // Go through each handle in model cache, test with NumFd equal to 0.
+    for (uint32_t i = 0; i < mNumModelCache; i++) {
+        bool supported;
+        hidl_vec<hidl_handle> modelCache, dataCache;
+        // Pass an invalid number of fds for handle i.
+        auto tmp = mModelCache[i].back();
+        mModelCache[i].pop_back();
+        createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
+        createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
+        mModelCache[i].push_back(tmp);
+        sp<IPreparedModel> preparedModel = nullptr;
+        saveModelToCache(testModel, modelCache, dataCache, &supported, &preparedModel);
+        if (checkEarlyTermination(supported)) return;
+        ASSERT_NE(preparedModel, nullptr);
+        // Execute and verify results.
+        generated_tests::EvaluatePreparedModel(preparedModel, [](int) { return false; },
+                                               get_examples(),
+                                               testModel.relaxComputationFloat32toFloat16,
+                                               /*testDynamicOutputShape=*/false);
+        // Check if prepareModelFromCache fails.
+        preparedModel = nullptr;
         ErrorStatus status;
-        hidl_handle cache1, cache2;
-        createCacheHandle({mCache1}, AccessMode::WRITE_ONLY, &cache1);
-        createCacheHandle({mCache2, mCache3}, AccessMode::WRITE_ONLY, &cache2);
-        saveModelToCache(preparedModel, cache1, cache2, &status);
-        if (status != ErrorStatus::GENERAL_FAILURE) {
-            ASSERT_EQ(status, ErrorStatus::INVALID_ARGUMENT);
+        prepareModelFromCache(modelCache, dataCache, &preparedModel, &status);
+        if (status != ErrorStatus::INVALID_ARGUMENT) {
+            ASSERT_EQ(status, ErrorStatus::GENERAL_FAILURE);
         }
+        ASSERT_EQ(preparedModel, nullptr);
+    }
+
+    // Go through each handle in data cache, test with NumFd greater than 1.
+    for (uint32_t i = 0; i < mNumDataCache; i++) {
+        bool supported;
+        hidl_vec<hidl_handle> modelCache, dataCache;
+        // Pass an invalid number of fds for handle i.
+        mDataCache[i].push_back(mTmpCache);
+        createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
+        createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
+        mDataCache[i].pop_back();
+        sp<IPreparedModel> preparedModel = nullptr;
+        saveModelToCache(testModel, modelCache, dataCache, &supported, &preparedModel);
+        if (checkEarlyTermination(supported)) return;
+        ASSERT_NE(preparedModel, nullptr);
+        // Execute and verify results.
+        generated_tests::EvaluatePreparedModel(preparedModel, [](int) { return false; },
+                                               get_examples(),
+                                               testModel.relaxComputationFloat32toFloat16,
+                                               /*testDynamicOutputShape=*/false);
+        // Check if prepareModelFromCache fails.
+        preparedModel = nullptr;
+        ErrorStatus status;
+        prepareModelFromCache(modelCache, dataCache, &preparedModel, &status);
+        if (status != ErrorStatus::INVALID_ARGUMENT) {
+            ASSERT_EQ(status, ErrorStatus::GENERAL_FAILURE);
+        }
+        ASSERT_EQ(preparedModel, nullptr);
+    }
+
+    // Go through each handle in data cache, test with NumFd equal to 0.
+    for (uint32_t i = 0; i < mNumDataCache; i++) {
+        bool supported;
+        hidl_vec<hidl_handle> modelCache, dataCache;
+        // Pass an invalid number of fds for handle i.
+        auto tmp = mDataCache[i].back();
+        mDataCache[i].pop_back();
+        createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
+        createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
+        mDataCache[i].push_back(tmp);
+        sp<IPreparedModel> preparedModel = nullptr;
+        saveModelToCache(testModel, modelCache, dataCache, &supported, &preparedModel);
+        if (checkEarlyTermination(supported)) return;
+        ASSERT_NE(preparedModel, nullptr);
+        // Execute and verify results.
+        generated_tests::EvaluatePreparedModel(preparedModel, [](int) { return false; },
+                                               get_examples(),
+                                               testModel.relaxComputationFloat32toFloat16,
+                                               /*testDynamicOutputShape=*/false);
+        // Check if prepareModelFromCache fails.
+        preparedModel = nullptr;
+        ErrorStatus status;
+        prepareModelFromCache(modelCache, dataCache, &preparedModel, &status);
+        if (status != ErrorStatus::INVALID_ARGUMENT) {
+            ASSERT_EQ(status, ErrorStatus::GENERAL_FAILURE);
+        }
+        ASSERT_EQ(preparedModel, nullptr);
     }
 }
 
 TEST_F(CompilationCachingTest, PrepareModelFromCacheInvalidNumFd) {
     // Create test HIDL model and compile.
     Model testModel = createTestModel();
-    sp<IPreparedModel> preparedModel = nullptr;
-    generated_tests::PrepareModel(device, testModel, &preparedModel);
-    // Terminate early if the driver cannot prepare the model.
-    if (preparedModel == nullptr) return;
 
     // Save the compilation to cache.
     {
-        ErrorStatus status;
-        hidl_handle cache1, cache2;
-        createCacheHandle({mCache1}, AccessMode::WRITE_ONLY, &cache1);
-        createCacheHandle({mCache2}, AccessMode::WRITE_ONLY, &cache2);
-        saveModelToCache(preparedModel, cache1, cache2, &status);
-        if (status != ErrorStatus::GENERAL_FAILURE) {
-            ASSERT_EQ(status, ErrorStatus::NONE);
-        }
+        bool supported;
+        hidl_vec<hidl_handle> modelCache, dataCache;
+        createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
+        createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
+        saveModelToCache(testModel, modelCache, dataCache, &supported);
+        if (checkEarlyTermination(supported)) return;
     }
 
-    // cache1 with invalid NumFd.
-    {
-        preparedModel = nullptr;
+    // Go through each handle in model cache, test with NumFd greater than 1.
+    for (uint32_t i = 0; i < mNumModelCache; i++) {
+        sp<IPreparedModel> preparedModel = nullptr;
         ErrorStatus status;
-        hidl_handle cache1, cache2;
-        createCacheHandle({mCache1, mCache3}, AccessMode::READ_ONLY, &cache1);
-        createCacheHandle({mCache2}, AccessMode::READ_ONLY, &cache2);
-        prepareModelFromCache(cache1, cache2, &preparedModel, &status);
+        hidl_vec<hidl_handle> modelCache, dataCache;
+        mModelCache[i].push_back(mTmpCache);
+        createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
+        createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
+        mModelCache[i].pop_back();
+        prepareModelFromCache(modelCache, dataCache, &preparedModel, &status);
         if (status != ErrorStatus::GENERAL_FAILURE) {
             ASSERT_EQ(status, ErrorStatus::INVALID_ARGUMENT);
-            ASSERT_EQ(preparedModel, nullptr);
         }
+        ASSERT_EQ(preparedModel, nullptr);
     }
 
-    // cache2 with invalid NumFd.
-    {
-        preparedModel = nullptr;
+    // Go through each handle in model cache, test with NumFd equal to 0.
+    for (uint32_t i = 0; i < mNumModelCache; i++) {
+        sp<IPreparedModel> preparedModel = nullptr;
         ErrorStatus status;
-        hidl_handle cache1, cache2;
-        createCacheHandle({mCache1}, AccessMode::READ_ONLY, &cache1);
-        createCacheHandle({mCache2, mCache3}, AccessMode::READ_ONLY, &cache2);
-        prepareModelFromCache(cache1, cache2, &preparedModel, &status);
+        hidl_vec<hidl_handle> modelCache, dataCache;
+        auto tmp = mModelCache[i].back();
+        mModelCache[i].pop_back();
+        createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
+        createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
+        mModelCache[i].push_back(tmp);
+        prepareModelFromCache(modelCache, dataCache, &preparedModel, &status);
         if (status != ErrorStatus::GENERAL_FAILURE) {
             ASSERT_EQ(status, ErrorStatus::INVALID_ARGUMENT);
-            ASSERT_EQ(preparedModel, nullptr);
         }
+        ASSERT_EQ(preparedModel, nullptr);
+    }
+
+    // Go through each handle in data cache, test with NumFd greater than 1.
+    for (uint32_t i = 0; i < mNumDataCache; i++) {
+        sp<IPreparedModel> preparedModel = nullptr;
+        ErrorStatus status;
+        hidl_vec<hidl_handle> modelCache, dataCache;
+        mDataCache[i].push_back(mTmpCache);
+        createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
+        createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
+        mDataCache[i].pop_back();
+        prepareModelFromCache(modelCache, dataCache, &preparedModel, &status);
+        if (status != ErrorStatus::GENERAL_FAILURE) {
+            ASSERT_EQ(status, ErrorStatus::INVALID_ARGUMENT);
+        }
+        ASSERT_EQ(preparedModel, nullptr);
+    }
+
+    // Go through each handle in data cache, test with NumFd equal to 0.
+    for (uint32_t i = 0; i < mNumDataCache; i++) {
+        sp<IPreparedModel> preparedModel = nullptr;
+        ErrorStatus status;
+        hidl_vec<hidl_handle> modelCache, dataCache;
+        auto tmp = mDataCache[i].back();
+        mDataCache[i].pop_back();
+        createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
+        createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
+        mDataCache[i].push_back(tmp);
+        prepareModelFromCache(modelCache, dataCache, &preparedModel, &status);
+        if (status != ErrorStatus::GENERAL_FAILURE) {
+            ASSERT_EQ(status, ErrorStatus::INVALID_ARGUMENT);
+        }
+        ASSERT_EQ(preparedModel, nullptr);
     }
 }
 
 TEST_F(CompilationCachingTest, SaveToCacheInvalidAccessMode) {
     // Create test HIDL model and compile.
     Model testModel = createTestModel();
-    sp<IPreparedModel> preparedModel = nullptr;
-    generated_tests::PrepareModel(device, testModel, &preparedModel);
-    // Terminate early if the driver cannot prepare the model.
-    if (preparedModel == nullptr) return;
+    std::vector<AccessMode> modelCacheMode(mNumModelCache, AccessMode::READ_WRITE);
+    std::vector<AccessMode> dataCacheMode(mNumDataCache, AccessMode::READ_WRITE);
 
-    // cache1 with invalid access mode.
-    {
+    // Go through each handle in model cache, test with invalid access mode.
+    for (uint32_t i = 0; i < mNumModelCache; i++) {
+        bool supported;
+        hidl_vec<hidl_handle> modelCache, dataCache;
+        modelCacheMode[i] = AccessMode::READ_ONLY;
+        createCacheHandles(mModelCache, modelCacheMode, &modelCache);
+        createCacheHandles(mDataCache, dataCacheMode, &dataCache);
+        modelCacheMode[i] = AccessMode::READ_WRITE;
+        sp<IPreparedModel> preparedModel = nullptr;
+        saveModelToCache(testModel, modelCache, dataCache, &supported, &preparedModel);
+        if (checkEarlyTermination(supported)) return;
+        ASSERT_NE(preparedModel, nullptr);
+        // Execute and verify results.
+        generated_tests::EvaluatePreparedModel(preparedModel, [](int) { return false; },
+                                               get_examples(),
+                                               testModel.relaxComputationFloat32toFloat16,
+                                               /*testDynamicOutputShape=*/false);
+        // Check if prepareModelFromCache fails.
+        preparedModel = nullptr;
         ErrorStatus status;
-        hidl_handle cache1, cache2;
-        createCacheHandle({mCache1}, AccessMode::READ_ONLY, &cache1);
-        createCacheHandle({mCache2}, AccessMode::WRITE_ONLY, &cache2);
-        saveModelToCache(preparedModel, cache1, cache2, &status);
-        ASSERT_EQ(status, ErrorStatus::GENERAL_FAILURE);
+        prepareModelFromCache(modelCache, dataCache, &preparedModel, &status);
+        if (status != ErrorStatus::INVALID_ARGUMENT) {
+            ASSERT_EQ(status, ErrorStatus::GENERAL_FAILURE);
+        }
+        ASSERT_EQ(preparedModel, nullptr);
     }
 
-    // cache2 with invalid access mode.
-    {
+    // Go through each handle in data cache, test with invalid access mode.
+    for (uint32_t i = 0; i < mNumDataCache; i++) {
+        bool supported;
+        hidl_vec<hidl_handle> modelCache, dataCache;
+        dataCacheMode[i] = AccessMode::READ_ONLY;
+        createCacheHandles(mModelCache, modelCacheMode, &modelCache);
+        createCacheHandles(mDataCache, dataCacheMode, &dataCache);
+        dataCacheMode[i] = AccessMode::READ_WRITE;
+        sp<IPreparedModel> preparedModel = nullptr;
+        saveModelToCache(testModel, modelCache, dataCache, &supported, &preparedModel);
+        if (checkEarlyTermination(supported)) return;
+        ASSERT_NE(preparedModel, nullptr);
+        // Execute and verify results.
+        generated_tests::EvaluatePreparedModel(preparedModel, [](int) { return false; },
+                                               get_examples(),
+                                               testModel.relaxComputationFloat32toFloat16,
+                                               /*testDynamicOutputShape=*/false);
+        // Check if prepareModelFromCache fails.
+        preparedModel = nullptr;
         ErrorStatus status;
-        hidl_handle cache1, cache2;
-        createCacheHandle({mCache1}, AccessMode::WRITE_ONLY, &cache1);
-        createCacheHandle({mCache2}, AccessMode::READ_ONLY, &cache2);
-        saveModelToCache(preparedModel, cache1, cache2, &status);
-        ASSERT_EQ(status, ErrorStatus::GENERAL_FAILURE);
+        prepareModelFromCache(modelCache, dataCache, &preparedModel, &status);
+        if (status != ErrorStatus::INVALID_ARGUMENT) {
+            ASSERT_EQ(status, ErrorStatus::GENERAL_FAILURE);
+        }
+        ASSERT_EQ(preparedModel, nullptr);
     }
 }
 
 TEST_F(CompilationCachingTest, PrepareModelFromCacheInvalidAccessMode) {
     // Create test HIDL model and compile.
     Model testModel = createTestModel();
-    sp<IPreparedModel> preparedModel = nullptr;
-    generated_tests::PrepareModel(device, testModel, &preparedModel);
-    // Terminate early if the driver cannot prepare the model.
-    if (preparedModel == nullptr) return;
+    std::vector<AccessMode> modelCacheMode(mNumModelCache, AccessMode::READ_WRITE);
+    std::vector<AccessMode> dataCacheMode(mNumDataCache, AccessMode::READ_WRITE);
 
     // Save the compilation to cache.
     {
-        ErrorStatus status;
-        hidl_handle cache1, cache2;
-        createCacheHandle({mCache1}, AccessMode::WRITE_ONLY, &cache1);
-        createCacheHandle({mCache2}, AccessMode::WRITE_ONLY, &cache2);
-        saveModelToCache(preparedModel, cache1, cache2, &status);
-        if (status != ErrorStatus::GENERAL_FAILURE) {
-            ASSERT_EQ(status, ErrorStatus::NONE);
-        }
+        bool supported;
+        hidl_vec<hidl_handle> modelCache, dataCache;
+        createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
+        createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
+        saveModelToCache(testModel, modelCache, dataCache, &supported);
+        if (checkEarlyTermination(supported)) return;
     }
 
-    // cache1 with invalid access mode.
-    {
-        preparedModel = nullptr;
+    // Go through each handle in model cache, test with invalid access mode.
+    for (uint32_t i = 0; i < mNumModelCache; i++) {
+        sp<IPreparedModel> preparedModel = nullptr;
         ErrorStatus status;
-        hidl_handle cache1, cache2;
-        createCacheHandle({mCache1}, AccessMode::WRITE_ONLY, &cache1);
-        createCacheHandle({mCache2}, AccessMode::READ_ONLY, &cache2);
-        prepareModelFromCache(cache1, cache2, &preparedModel, &status);
+        hidl_vec<hidl_handle> modelCache, dataCache;
+        modelCacheMode[i] = AccessMode::WRITE_ONLY;
+        createCacheHandles(mModelCache, modelCacheMode, &modelCache);
+        createCacheHandles(mDataCache, dataCacheMode, &dataCache);
+        modelCacheMode[i] = AccessMode::READ_WRITE;
+        prepareModelFromCache(modelCache, dataCache, &preparedModel, &status);
         ASSERT_EQ(status, ErrorStatus::GENERAL_FAILURE);
         ASSERT_EQ(preparedModel, nullptr);
     }
 
-    // cache2 with invalid access mode.
-    {
-        preparedModel = nullptr;
+    // Go through each handle in data cache, test with invalid access mode.
+    for (uint32_t i = 0; i < mNumDataCache; i++) {
+        sp<IPreparedModel> preparedModel = nullptr;
         ErrorStatus status;
-        hidl_handle cache1, cache2;
-        createCacheHandle({mCache1}, AccessMode::READ_ONLY, &cache1);
-        createCacheHandle({mCache2}, AccessMode::WRITE_ONLY, &cache2);
-        prepareModelFromCache(cache1, cache2, &preparedModel, &status);
+        hidl_vec<hidl_handle> modelCache, dataCache;
+        dataCacheMode[i] = AccessMode::WRITE_ONLY;
+        createCacheHandles(mModelCache, modelCacheMode, &modelCache);
+        createCacheHandles(mDataCache, dataCacheMode, &dataCache);
+        dataCacheMode[i] = AccessMode::READ_WRITE;
+        prepareModelFromCache(modelCache, dataCache, &preparedModel, &status);
         ASSERT_EQ(status, ErrorStatus::GENERAL_FAILURE);
         ASSERT_EQ(preparedModel, nullptr);
-    }
-}
-
-TEST_F(CompilationCachingTest, SaveToCacheInvalidOffset) {
-    // Create test HIDL model and compile.
-    Model testModel = createTestModel();
-    sp<IPreparedModel> preparedModel = nullptr;
-    generated_tests::PrepareModel(device, testModel, &preparedModel);
-    // Terminate early if the driver cannot prepare the model.
-    if (preparedModel == nullptr) return;
-
-    // cache1 with invalid file descriptor offset.
-    {
-        ErrorStatus status;
-        hidl_handle cache1, cache2;
-        createCacheHandle({mCache1}, AccessMode::WRITE_ONLY, &cache1);
-        createCacheHandle({mCache2}, AccessMode::WRITE_ONLY, &cache2);
-        uint8_t dummyByte = 0;
-        // Advance offset by one byte.
-        ASSERT_EQ(write(cache1.getNativeHandle()->data[0], &dummyByte, 1), 1);
-        saveModelToCache(preparedModel, cache1, cache2, &status);
-        ASSERT_EQ(status, ErrorStatus::GENERAL_FAILURE);
-    }
-
-    // cache2 with invalid file descriptor offset.
-    {
-        ErrorStatus status;
-        hidl_handle cache1, cache2;
-        createCacheHandle({mCache1}, AccessMode::WRITE_ONLY, &cache1);
-        createCacheHandle({mCache2}, AccessMode::WRITE_ONLY, &cache2);
-        uint8_t dummyByte = 0;
-        // Advance offset by one byte.
-        ASSERT_EQ(write(cache2.getNativeHandle()->data[0], &dummyByte, 1), 1);
-        saveModelToCache(preparedModel, cache1, cache2, &status);
-        ASSERT_EQ(status, ErrorStatus::GENERAL_FAILURE);
-    }
-}
-
-TEST_F(CompilationCachingTest, SaveToCacheInvalidFileSize) {
-    // Create test HIDL model and compile.
-    Model testModel = createTestModel();
-    sp<IPreparedModel> preparedModel = nullptr;
-    generated_tests::PrepareModel(device, testModel, &preparedModel);
-    // Terminate early if the driver cannot prepare the model.
-    if (preparedModel == nullptr) return;
-
-    // cache1 with invalid file size.
-    {
-        ErrorStatus status;
-        hidl_handle cache1, cache2;
-        createCacheHandle({mCache1}, AccessMode::WRITE_ONLY, &cache1);
-        createCacheHandle({mCache2}, AccessMode::WRITE_ONLY, &cache2);
-        uint8_t dummyByte = 0;
-        // Write one byte and seek back to the beginning.
-        ASSERT_EQ(write(cache1.getNativeHandle()->data[0], &dummyByte, 1), 1);
-        ASSERT_EQ(lseek(cache1.getNativeHandle()->data[0], 0, SEEK_SET), 0);
-        saveModelToCache(preparedModel, cache1, cache2, &status);
-        ASSERT_EQ(status, ErrorStatus::GENERAL_FAILURE);
-    }
-
-    // cache2 with invalid file size.
-    {
-        ErrorStatus status;
-        hidl_handle cache1, cache2;
-        createCacheHandle({mCache1}, AccessMode::WRITE_ONLY, &cache1);
-        createCacheHandle({mCache2}, AccessMode::WRITE_ONLY, &cache2);
-        uint8_t dummyByte = 0;
-        // Write one byte and seek back to the beginning.
-        ASSERT_EQ(write(cache2.getNativeHandle()->data[0], &dummyByte, 1), 1);
-        ASSERT_EQ(lseek(cache2.getNativeHandle()->data[0], 0, SEEK_SET), 0);
-        saveModelToCache(preparedModel, cache1, cache2, &status);
-        ASSERT_EQ(status, ErrorStatus::GENERAL_FAILURE);
     }
 }
 
@@ -537,44 +888,44 @@ TEST_P(CompilationCachingSecurityTest, CorruptedSecuritySensitiveCache) {
 
     // Create test HIDL model and compile.
     Model testModel = createTestModel();
-    sp<IPreparedModel> preparedModel = nullptr;
-    generated_tests::PrepareModel(device, testModel, &preparedModel);
-    // Terminate early if the driver cannot prepare the model.
-    if (preparedModel == nullptr) return;
 
-    // Save the compilation to cache.
-    {
-        ErrorStatus status;
-        hidl_handle cache1, cache2;
-        createCacheHandle({mCache1}, AccessMode::WRITE_ONLY, &cache1);
-        createCacheHandle({mCache2}, AccessMode::WRITE_ONLY, &cache2);
-        saveModelToCache(preparedModel, cache1, cache2, &status);
-        if (checkEarlyTermination(status)) return;
-        ASSERT_EQ(status, ErrorStatus::NONE);
-    }
+    for (uint32_t i = 0; i < mNumModelCache; i++) {
+        // Save the compilation to cache.
+        {
+            bool supported;
+            hidl_vec<hidl_handle> modelCache, dataCache;
+            createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
+            createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
+            saveModelToCache(testModel, modelCache, dataCache, &supported);
+            if (checkEarlyTermination(supported)) return;
+        }
 
-    // Randomly flip one single bit of the cache entry.
-    FILE* pFile = fopen(mCache1.c_str(), "r+");
-    ASSERT_EQ(fseek(pFile, 0, SEEK_END), 0);
-    long int fileSize = ftell(pFile);
-    ASSERT_GT(fileSize, 0);
-    ASSERT_EQ(fseek(pFile, getRandomInt(0l, fileSize - 1), SEEK_SET), 0);
-    int readByte = fgetc(pFile);
-    ASSERT_NE(readByte, EOF);
-    ASSERT_EQ(fseek(pFile, -1, SEEK_CUR), 0);
-    ASSERT_NE(fputc(static_cast<uint8_t>(readByte) ^ (1U << getRandomInt(0, 7)), pFile), EOF);
-    fclose(pFile);
+        // Randomly flip one single bit of the cache entry.
+        FILE* pFile = fopen(mModelCache[i][0].c_str(), "r+");
+        ASSERT_EQ(fseek(pFile, 0, SEEK_END), 0);
+        long int fileSize = ftell(pFile);
+        if (fileSize == 0) {
+            fclose(pFile);
+            continue;
+        }
+        ASSERT_EQ(fseek(pFile, getRandomInt(0l, fileSize - 1), SEEK_SET), 0);
+        int readByte = fgetc(pFile);
+        ASSERT_NE(readByte, EOF);
+        ASSERT_EQ(fseek(pFile, -1, SEEK_CUR), 0);
+        ASSERT_NE(fputc(static_cast<uint8_t>(readByte) ^ (1U << getRandomInt(0, 7)), pFile), EOF);
+        fclose(pFile);
 
-    // Retrieve preparedModel from cache, expect failure.
-    {
-        preparedModel = nullptr;
-        ErrorStatus status;
-        hidl_handle cache1, cache2;
-        createCacheHandle({mCache1}, AccessMode::READ_ONLY, &cache1);
-        createCacheHandle({mCache2}, AccessMode::READ_ONLY, &cache2);
-        prepareModelFromCache(cache1, cache2, &preparedModel, &status);
-        ASSERT_EQ(status, ErrorStatus::GENERAL_FAILURE);
-        ASSERT_EQ(preparedModel, nullptr);
+        // Retrieve preparedModel from cache, expect failure.
+        {
+            sp<IPreparedModel> preparedModel = nullptr;
+            ErrorStatus status;
+            hidl_vec<hidl_handle> modelCache, dataCache;
+            createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
+            createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
+            prepareModelFromCache(modelCache, dataCache, &preparedModel, &status);
+            ASSERT_EQ(status, ErrorStatus::GENERAL_FAILURE);
+            ASSERT_EQ(preparedModel, nullptr);
+        }
     }
 }
 
@@ -583,40 +934,37 @@ TEST_P(CompilationCachingSecurityTest, WrongLengthSecuritySensitiveCache) {
 
     // Create test HIDL model and compile.
     Model testModel = createTestModel();
-    sp<IPreparedModel> preparedModel = nullptr;
-    generated_tests::PrepareModel(device, testModel, &preparedModel);
-    // Terminate early if the driver cannot prepare the model.
-    if (preparedModel == nullptr) return;
 
-    // Save the compilation to cache.
-    {
-        ErrorStatus status;
-        hidl_handle cache1, cache2;
-        createCacheHandle({mCache1}, AccessMode::WRITE_ONLY, &cache1);
-        createCacheHandle({mCache2}, AccessMode::WRITE_ONLY, &cache2);
-        saveModelToCache(preparedModel, cache1, cache2, &status);
-        if (checkEarlyTermination(status)) return;
-        ASSERT_EQ(status, ErrorStatus::NONE);
-    }
+    for (uint32_t i = 0; i < mNumModelCache; i++) {
+        // Save the compilation to cache.
+        {
+            bool supported;
+            hidl_vec<hidl_handle> modelCache, dataCache;
+            createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
+            createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
+            saveModelToCache(testModel, modelCache, dataCache, &supported);
+            if (checkEarlyTermination(supported)) return;
+        }
 
-    // Randomly append bytes to the cache entry.
-    FILE* pFile = fopen(mCache1.c_str(), "a");
-    uint32_t appendLength = getRandomInt(1, 256);
-    for (uint32_t i = 0; i < appendLength; i++) {
-        ASSERT_NE(fputc(getRandomInt<uint8_t>(0, 255), pFile), EOF);
-    }
-    fclose(pFile);
+        // Randomly append bytes to the cache entry.
+        FILE* pFile = fopen(mModelCache[i][0].c_str(), "a");
+        uint32_t appendLength = getRandomInt(1, 256);
+        for (uint32_t i = 0; i < appendLength; i++) {
+            ASSERT_NE(fputc(getRandomInt<uint8_t>(0, 255), pFile), EOF);
+        }
+        fclose(pFile);
 
-    // Retrieve preparedModel from cache, expect failure.
-    {
-        preparedModel = nullptr;
-        ErrorStatus status;
-        hidl_handle cache1, cache2;
-        createCacheHandle({mCache1}, AccessMode::READ_ONLY, &cache1);
-        createCacheHandle({mCache2}, AccessMode::READ_ONLY, &cache2);
-        prepareModelFromCache(cache1, cache2, &preparedModel, &status);
-        ASSERT_EQ(status, ErrorStatus::GENERAL_FAILURE);
-        ASSERT_EQ(preparedModel, nullptr);
+        // Retrieve preparedModel from cache, expect failure.
+        {
+            sp<IPreparedModel> preparedModel = nullptr;
+            ErrorStatus status;
+            hidl_vec<hidl_handle> modelCache, dataCache;
+            createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
+            createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
+            prepareModelFromCache(modelCache, dataCache, &preparedModel, &status);
+            ASSERT_EQ(status, ErrorStatus::GENERAL_FAILURE);
+            ASSERT_EQ(preparedModel, nullptr);
+        }
     }
 }
 
@@ -625,20 +973,15 @@ TEST_P(CompilationCachingSecurityTest, WrongToken) {
 
     // Create test HIDL model and compile.
     Model testModel = createTestModel();
-    sp<IPreparedModel> preparedModel = nullptr;
-    generated_tests::PrepareModel(device, testModel, &preparedModel);
-    // Terminate early if the driver cannot prepare the model.
-    if (preparedModel == nullptr) return;
 
     // Save the compilation to cache.
     {
-        ErrorStatus status;
-        hidl_handle cache1, cache2;
-        createCacheHandle({mCache1}, AccessMode::WRITE_ONLY, &cache1);
-        createCacheHandle({mCache2}, AccessMode::WRITE_ONLY, &cache2);
-        saveModelToCache(preparedModel, cache1, cache2, &status);
-        if (checkEarlyTermination(status)) return;
-        ASSERT_EQ(status, ErrorStatus::NONE);
+        bool supported;
+        hidl_vec<hidl_handle> modelCache, dataCache;
+        createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
+        createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
+        saveModelToCache(testModel, modelCache, dataCache, &supported);
+        if (checkEarlyTermination(supported)) return;
     }
 
     // Randomly flip one single bit in mToken.
@@ -647,12 +990,12 @@ TEST_P(CompilationCachingSecurityTest, WrongToken) {
 
     // Retrieve the preparedModel from cache, expect failure.
     {
-        preparedModel = nullptr;
+        sp<IPreparedModel> preparedModel = nullptr;
         ErrorStatus status;
-        hidl_handle cache1, cache2;
-        createCacheHandle({mCache1}, AccessMode::READ_ONLY, &cache1);
-        createCacheHandle({mCache2}, AccessMode::READ_ONLY, &cache2);
-        prepareModelFromCache(cache1, cache2, &preparedModel, &status);
+        hidl_vec<hidl_handle> modelCache, dataCache;
+        createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
+        createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
+        prepareModelFromCache(modelCache, dataCache, &preparedModel, &status);
         ASSERT_EQ(status, ErrorStatus::GENERAL_FAILURE);
         ASSERT_EQ(preparedModel, nullptr);
     }

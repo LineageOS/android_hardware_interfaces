@@ -65,10 +65,14 @@ interface IWifiChip extends @1.2::IWifiChip {
     /**
      * API to set the wifi latency mode
      *
-     * Latency mode determines whether or not to optimize for reducing wifi
-     * latency as a tradeoff with other wifi functionality such as scanning,
-     * roaming, etc. This optimization is suitable for some applications such
-     * as gaming and virtual reality applications.
+     * The latency mode is a hint to the HAL to enable or disable Wi-Fi latency
+     * optimization. The optimization should be enabled if the mode is set to |LOW|
+     * and should be disabled if the mode is set to |NORMAL|.
+     * Wi-Fi latency optimization may trade-off latency against other Wi-Fi
+     * functionality such as scanning, roaming, etc. but it should not result in
+     * completely halting this functionality.
+     *
+     * The low latency mode targets applications such as gaming and virtual reality.
      */
     setLatencyMode(LatencyMode mode) generates (WifiStatus status);
 
