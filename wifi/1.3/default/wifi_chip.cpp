@@ -766,10 +766,10 @@ WifiChip::requestFirmwareDebugDumpInternal() {
 }
 
 std::pair<WifiStatus, sp<IWifiApIface>> WifiChip::createApIfaceInternal() {
-    if (!canCurrentModeSupportIfaceOfType(IfaceType::AP)) {
+    if (!canCurrentModeSupportIfaceOfTypeWithCurrentIfaces(IfaceType::AP)) {
         return {createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE), {}};
     }
-    std::string ifname = allocateApOrStaIfaceName();
+    std::string ifname = allocateApIfaceName();
     sp<WifiApIface> iface =
         new WifiApIface(ifname, legacy_hal_, iface_util_, feature_flags_);
     ap_ifaces_.push_back(iface);
@@ -813,7 +813,7 @@ WifiStatus WifiChip::removeApIfaceInternal(const std::string& ifname) {
 }
 
 std::pair<WifiStatus, sp<IWifiNanIface>> WifiChip::createNanIfaceInternal() {
-    if (!canCurrentModeSupportIfaceOfType(IfaceType::NAN)) {
+    if (!canCurrentModeSupportIfaceOfTypeWithCurrentIfaces(IfaceType::NAN)) {
         return {createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE), {}};
     }
     // These are still assumed to be based on wlan0.
@@ -860,7 +860,7 @@ WifiStatus WifiChip::removeNanIfaceInternal(const std::string& ifname) {
 }
 
 std::pair<WifiStatus, sp<IWifiP2pIface>> WifiChip::createP2pIfaceInternal() {
-    if (!canCurrentModeSupportIfaceOfType(IfaceType::P2P)) {
+    if (!canCurrentModeSupportIfaceOfTypeWithCurrentIfaces(IfaceType::P2P)) {
         return {createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE), {}};
     }
     std::string ifname = getP2pIfaceName();
@@ -906,10 +906,10 @@ WifiStatus WifiChip::removeP2pIfaceInternal(const std::string& ifname) {
 }
 
 std::pair<WifiStatus, sp<IWifiStaIface>> WifiChip::createStaIfaceInternal() {
-    if (!canCurrentModeSupportIfaceOfType(IfaceType::STA)) {
+    if (!canCurrentModeSupportIfaceOfTypeWithCurrentIfaces(IfaceType::STA)) {
         return {createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE), {}};
     }
-    std::string ifname = allocateApOrStaIfaceName();
+    std::string ifname = allocateStaIfaceName();
     sp<WifiStaIface> iface = new WifiStaIface(ifname, legacy_hal_, iface_util_);
     sta_ifaces_.push_back(iface);
     for (const auto& callback : event_cb_handler_.getCallbacks()) {
@@ -1298,8 +1298,9 @@ std::vector<std::map<IfaceType, size_t>> WifiChip::expandIfaceCombinations(
     return expanded_combos;
 }
 
-bool WifiChip::canExpandedIfaceCombinationSupportIfaceOfType(
-    const std::map<IfaceType, size_t>& combo, IfaceType requested_type) {
+bool WifiChip::canExpandedIfaceComboSupportIfaceOfTypeWithCurrentIfaces(
+    const std::map<IfaceType, size_t>& expanded_combo,
+    IfaceType requested_type) {
     const auto current_combo = getCurrentIfaceCombination();
 
     // Check if we have space for 1 more iface of |type| in this combo
@@ -1309,7 +1310,7 @@ bool WifiChip::canExpandedIfaceCombinationSupportIfaceOfType(
         if (type == requested_type) {
             num_ifaces_needed++;
         }
-        size_t num_ifaces_allowed = combo.at(type);
+        size_t num_ifaces_allowed = expanded_combo.at(type);
         if (num_ifaces_needed > num_ifaces_allowed) {
             return false;
         }
@@ -1320,8 +1321,10 @@ bool WifiChip::canExpandedIfaceCombinationSupportIfaceOfType(
 // This method does the following:
 // a) Enumerate all possible iface combos by expanding the current
 //    ChipIfaceCombination.
-// b) Check if the requested iface type can be added to the current mode.
-bool WifiChip::canCurrentModeSupportIfaceOfType(IfaceType type) {
+// b) Check if the requested iface type can be added to the current mode
+//    with the iface combination that is already active.
+bool WifiChip::canCurrentModeSupportIfaceOfTypeWithCurrentIfaces(
+    IfaceType requested_type) {
     if (!isValidModeId(current_mode_id_)) {
         LOG(ERROR) << "Chip not configured in a mode yet";
         return false;
@@ -1330,13 +1333,69 @@ bool WifiChip::canCurrentModeSupportIfaceOfType(IfaceType type) {
     for (const auto& combination : combinations) {
         const auto expanded_combos = expandIfaceCombinations(combination);
         for (const auto& expanded_combo : expanded_combos) {
-            if (canExpandedIfaceCombinationSupportIfaceOfType(expanded_combo,
-                                                              type)) {
+            if (canExpandedIfaceComboSupportIfaceOfTypeWithCurrentIfaces(
+                    expanded_combo, requested_type)) {
                 return true;
             }
         }
     }
     return false;
+}
+
+// Note: This does not consider ifaces already active. It only checks if the
+// provided expanded iface combination can support the requested combo.
+bool WifiChip::canExpandedIfaceComboSupportIfaceCombo(
+    const std::map<IfaceType, size_t>& expanded_combo,
+    const std::map<IfaceType, size_t>& req_combo) {
+    // Check if we have space for 1 more iface of |type| in this combo
+    for (const auto type :
+         {IfaceType::AP, IfaceType::NAN, IfaceType::P2P, IfaceType::STA}) {
+        if (req_combo.count(type) == 0) {
+            // Iface of "type" not in the req_combo.
+            continue;
+        }
+        size_t num_ifaces_needed = req_combo.at(type);
+        size_t num_ifaces_allowed = expanded_combo.at(type);
+        if (num_ifaces_needed > num_ifaces_allowed) {
+            return false;
+        }
+    }
+    return true;
+}
+// This method does the following:
+// a) Enumerate all possible iface combos by expanding the current
+//    ChipIfaceCombination.
+// b) Check if the requested iface combo can be added to the current mode.
+// Note: This does not consider ifaces already active. It only checks if the
+// current mode can support the requested combo.
+bool WifiChip::canCurrentModeSupportIfaceCombo(
+    const std::map<IfaceType, size_t>& req_combo) {
+    if (!isValidModeId(current_mode_id_)) {
+        LOG(ERROR) << "Chip not configured in a mode yet";
+        return false;
+    }
+    const auto combinations = getCurrentModeIfaceCombinations();
+    for (const auto& combination : combinations) {
+        const auto expanded_combos = expandIfaceCombinations(combination);
+        for (const auto& expanded_combo : expanded_combos) {
+            if (canExpandedIfaceComboSupportIfaceCombo(expanded_combo,
+                                                       req_combo)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+// This method does the following:
+// a) Enumerate all possible iface combos by expanding the current
+//    ChipIfaceCombination.
+// b) Check if the requested iface type can be added to the current mode.
+bool WifiChip::canCurrentModeSupportIfaceOfType(IfaceType requested_type) {
+    // Check if we can support atleast 1 iface of type.
+    std::map<IfaceType, size_t> req_iface_combo;
+    req_iface_combo[requested_type] = 1;
+    return canCurrentModeSupportIfaceCombo(req_iface_combo);
 }
 
 bool WifiChip::isValidModeId(ChipModeId mode_id) {
@@ -1348,11 +1407,20 @@ bool WifiChip::isValidModeId(ChipModeId mode_id) {
     return false;
 }
 
-// Return the first wlan (wlan0, wlan1 etc.) not already in use.
-// This doesn't check the actual presence of these interfaces.
-std::string WifiChip::allocateApOrStaIfaceName() {
-    for (unsigned i = 0; i < kMaxWlanIfaces; i++) {
-        const auto ifname = getWlanIfaceName(i);
+bool WifiChip::isStaApConcurrencyAllowedInCurrentMode() {
+    // Check if we can support atleast 1 STA & 1 AP concurrently.
+    std::map<IfaceType, size_t> req_iface_combo;
+    req_iface_combo[IfaceType::AP] = 1;
+    req_iface_combo[IfaceType::STA] = 1;
+    return canCurrentModeSupportIfaceCombo(req_iface_combo);
+}
+
+// Return the first wlan (wlan0, wlan1 etc.) starting from |start_idx|
+// not already in use.
+// Note: This doesn't check the actual presence of these interfaces.
+std::string WifiChip::allocateApOrStaIfaceName(uint32_t start_idx) {
+    for (unsigned idx = start_idx; idx < kMaxWlanIfaces; idx++) {
+        const auto ifname = getWlanIfaceName(idx);
         if (findUsingName(ap_ifaces_, ifname)) continue;
         if (findUsingName(sta_ifaces_, ifname)) continue;
         return ifname;
@@ -1360,6 +1428,19 @@ std::string WifiChip::allocateApOrStaIfaceName() {
     // This should never happen. We screwed up somewhere if it did.
     CHECK(false) << "All wlan interfaces in use already!";
     return {};
+}
+
+// AP iface names start with idx 1 for modes supporting
+// concurrent STA, else start with idx 0.
+std::string WifiChip::allocateApIfaceName() {
+    return allocateApOrStaIfaceName(
+        isStaApConcurrencyAllowedInCurrentMode() ? 1 : 0);
+}
+
+// STA iface names start with idx 0.
+// Primary STA iface will always be 0.
+std::string WifiChip::allocateStaIfaceName() {
+    return allocateApOrStaIfaceName(0);
 }
 
 bool WifiChip::writeRingbufferFilesInternal() {
