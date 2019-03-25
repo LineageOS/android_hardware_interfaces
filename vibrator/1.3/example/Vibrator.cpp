@@ -102,7 +102,7 @@ Return<void> Vibrator::perform_1_3(Effect effect, EffectStrength strength, perfo
     uint32_t ms;
     Status status;
 
-    ALOGI("Perform: Effect %s\n", effectToName(effect));
+    ALOGI("Perform: Effect %s\n", effectToName(effect).c_str());
 
     amplitude = strengthToAmplitude(strength);
     setAmplitude(amplitude);
@@ -178,8 +178,8 @@ void Vibrator::timerCallback(union sigval sigval) {
     static_cast<Vibrator*>(sigval.sival_ptr)->timeout();
 }
 
-const char* Vibrator::effectToName(Effect effect) {
-    return toString(effect).c_str();
+const std::string Vibrator::effectToName(Effect effect) {
+    return toString(effect);
 }
 
 uint32_t Vibrator::effectToMs(Effect effect) {
