@@ -1724,7 +1724,7 @@ bool ExternalCameraDeviceSession::OutputThread::threadLoop() {
         return false;
     };
 
-    if (req->frameIn->mFourcc != V4L2_PIX_FMT_MJPEG) {
+    if (req->frameIn->mFourcc != V4L2_PIX_FMT_MJPEG && req->frameIn->mFourcc != V4L2_PIX_FMT_Z16) {
         return onDeviceError("%s: do not support V4L2 format %c%c%c%c", __FUNCTION__,
                 req->frameIn->mFourcc & 0xFF,
                 (req->frameIn->mFourcc >> 8) & 0xFF,
@@ -1743,29 +1743,26 @@ bool ExternalCameraDeviceSession::OutputThread::threadLoop() {
     }
 
     // TODO: in some special case maybe we can decode jpg directly to gralloc output?
-    ATRACE_BEGIN("MJPGtoI420");
-    int res = libyuv::MJPGToI420(
-            inData, inDataSize,
-            static_cast<uint8_t*>(mYu12FrameLayout.y),
-            mYu12FrameLayout.yStride,
-            static_cast<uint8_t*>(mYu12FrameLayout.cb),
-            mYu12FrameLayout.cStride,
-            static_cast<uint8_t*>(mYu12FrameLayout.cr),
-            mYu12FrameLayout.cStride,
-            mYu12Frame->mWidth, mYu12Frame->mHeight,
-            mYu12Frame->mWidth, mYu12Frame->mHeight);
-    ATRACE_END();
+    if (req->frameIn->mFourcc == V4L2_PIX_FMT_MJPEG) {
+        ATRACE_BEGIN("MJPGtoI420");
+        int res = libyuv::MJPGToI420(
+            inData, inDataSize, static_cast<uint8_t*>(mYu12FrameLayout.y), mYu12FrameLayout.yStride,
+            static_cast<uint8_t*>(mYu12FrameLayout.cb), mYu12FrameLayout.cStride,
+            static_cast<uint8_t*>(mYu12FrameLayout.cr), mYu12FrameLayout.cStride,
+            mYu12Frame->mWidth, mYu12Frame->mHeight, mYu12Frame->mWidth, mYu12Frame->mHeight);
+        ATRACE_END();
 
-    if (res != 0) {
-        // For some webcam, the first few V4L2 frames might be malformed...
-        ALOGE("%s: Convert V4L2 frame to YU12 failed! res %d", __FUNCTION__, res);
-        lk.unlock();
-        Status st = parent->processCaptureRequestError(req);
-        if (st != Status::OK) {
-            return onDeviceError("%s: failed to process capture request error!", __FUNCTION__);
+        if (res != 0) {
+            // For some webcam, the first few V4L2 frames might be malformed...
+            ALOGE("%s: Convert V4L2 frame to YU12 failed! res %d", __FUNCTION__, res);
+            lk.unlock();
+            Status st = parent->processCaptureRequestError(req);
+            if (st != Status::OK) {
+                return onDeviceError("%s: failed to process capture request error!", __FUNCTION__);
+            }
+            signalRequestDone();
+            return true;
         }
-        signalRequestDone();
-        return true;
     }
 
     ALOGV("%s processing new request", __FUNCTION__);
@@ -1794,6 +1791,16 @@ bool ExternalCameraDeviceSession::OutputThread::threadLoop() {
                     lk.unlock();
                     return onDeviceError("%s: createJpegLocked failed with %d",
                           __FUNCTION__, ret);
+                }
+            } break;
+            case PixelFormat::Y16: {
+                void* outLayout = sHandleImporter.lock(*(halBuf.bufPtr), halBuf.usage, inDataSize);
+
+                std::memcpy(outLayout, inData, inDataSize);
+
+                int relFence = sHandleImporter.unlock(*(halBuf.bufPtr));
+                if (relFence >= 0) {
+                    halBuf.acquireFence = relFence;
                 }
             } break;
             case PixelFormat::YCBCR_420_888:
@@ -2063,11 +2070,6 @@ bool ExternalCameraDeviceSession::isSupported(const Stream& stream) {
         return false;
     }
 
-    if (ds & Dataspace::DEPTH) {
-        ALOGI("%s: does not support depth output", __FUNCTION__);
-        return false;
-    }
-
     switch (fmt) {
         case PixelFormat::BLOB:
             if (ds != static_cast<int32_t>(Dataspace::V0_JFIF)) {
@@ -2080,6 +2082,16 @@ bool ExternalCameraDeviceSession::isSupported(const Stream& stream) {
         case PixelFormat::YV12:
             // TODO: check what dataspace we can support here.
             // intentional no-ops.
+            break;
+        case PixelFormat::Y16:
+            if (!mCfg.depthEnabled) {
+                ALOGI("%s: Depth is not Enabled", __FUNCTION__);
+                return false;
+            }
+            if (!(ds & Dataspace::DEPTH)) {
+                ALOGI("%s: Y16 supports only dataSpace DEPTH", __FUNCTION__);
+                return false;
+            }
             break;
         default:
             ALOGI("%s: does not support format %x", __FUNCTION__, fmt);
@@ -2609,6 +2621,7 @@ Status ExternalCameraDeviceSession::configureStreams(
             case PixelFormat::BLOB:
             case PixelFormat::YCBCR_420_888:
             case PixelFormat::YV12: // Used by SurfaceTexture
+            case PixelFormat::Y16:
                 // No override
                 out->streams[i].v3_2.overrideFormat = config.streams[i].format;
                 break;
