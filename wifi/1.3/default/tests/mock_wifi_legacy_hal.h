@@ -39,6 +39,10 @@ class MockWifiLegacyHal : public WifiLegacyHal {
     MOCK_METHOD2(registerRadioModeChangeCallbackHandler,
                  wifi_error(const std::string&,
                             const on_radio_mode_change_callback&));
+    MOCK_METHOD1(getFirmwareVersion, std::pair<wifi_error, std::string>(
+                 const std::string& iface_name));
+    MOCK_METHOD1(getDriverVersion, std::pair<wifi_error, std::string>(
+                 const std::string& iface_name));
     MOCK_METHOD2(nanRegisterCallbackHandlers,
                  wifi_error(const std::string&, const NanCallbackHandlers&));
     MOCK_METHOD2(nanDisableRequest,
