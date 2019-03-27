@@ -27,6 +27,7 @@ hidl_interface {
         "android.hardware.media.omx@1.0",
         "android.hardware.media@1.0",
         "android.hidl.base@1.0",
+        "android.hidl.safe_union@1.0",
     ],
     gen_java: false,
 }

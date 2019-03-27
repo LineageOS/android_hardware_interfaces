@@ -100,14 +100,22 @@ Return<Status> Vibrator::setExternalControl(bool enabled) {
 Return<void> Vibrator::perform_1_3(Effect effect, EffectStrength strength, perform_cb _hidl_cb) {
     uint8_t amplitude;
     uint32_t ms;
-    Status status;
+    Status status = Status::OK;
 
-    ALOGI("Perform: Effect %s\n", effectToName(effect));
+    ALOGI("Perform: Effect %s\n", effectToName(effect).c_str());
 
-    amplitude = strengthToAmplitude(strength);
+    amplitude = strengthToAmplitude(strength, &status);
+    if (status != Status::OK) {
+        _hidl_cb(status, 0);
+        return Void();
+    }
     setAmplitude(amplitude);
 
-    ms = effectToMs(effect);
+    ms = effectToMs(effect, &status);
+    if (status != Status::OK) {
+        _hidl_cb(status, 0);
+        return Void();
+    }
     status = activate(ms);
 
     _hidl_cb(status, ms);
@@ -178,11 +186,11 @@ void Vibrator::timerCallback(union sigval sigval) {
     static_cast<Vibrator*>(sigval.sival_ptr)->timeout();
 }
 
-const char* Vibrator::effectToName(Effect effect) {
-    return toString(effect).c_str();
+const std::string Vibrator::effectToName(Effect effect) {
+    return toString(effect);
 }
 
-uint32_t Vibrator::effectToMs(Effect effect) {
+uint32_t Vibrator::effectToMs(Effect effect, Status* status) {
     switch (effect) {
         case Effect::CLICK:
             return 10;
@@ -228,9 +236,11 @@ uint32_t Vibrator::effectToMs(Effect effect) {
         case Effect::RINGTONE_15:
             return 30000;
     }
+    *status = Status::UNSUPPORTED_OPERATION;
+    return 0;
 }
 
-uint8_t Vibrator::strengthToAmplitude(EffectStrength strength) {
+uint8_t Vibrator::strengthToAmplitude(EffectStrength strength, Status* status) {
     switch (strength) {
         case EffectStrength::LIGHT:
             return 128;
@@ -239,6 +249,8 @@ uint8_t Vibrator::strengthToAmplitude(EffectStrength strength) {
         case EffectStrength::STRONG:
             return 255;
     }
+    *status = Status::UNSUPPORTED_OPERATION;
+    return 0;
 }
 
 }  // namespace implementation

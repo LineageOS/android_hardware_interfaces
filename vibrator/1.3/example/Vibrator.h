@@ -59,9 +59,9 @@ class Vibrator : public IVibrator {
     void timeout();
 
     static void timerCallback(union sigval sigval);
-    static const char* effectToName(Effect effect);
-    static uint32_t effectToMs(Effect effect);
-    static uint8_t strengthToAmplitude(EffectStrength strength);
+    static const std::string effectToName(Effect effect);
+    static uint32_t effectToMs(Effect effect, Status* status);
+    static uint8_t strengthToAmplitude(EffectStrength strength, Status* status);
 
   private:
     bool mEnabled{false};
