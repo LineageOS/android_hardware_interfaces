@@ -254,9 +254,9 @@ class WifiLegacyHal {
                                           uint32_t cmd_id);
     wifi_error setScanningMacOui(const std::string& iface_name,
                                  const std::array<uint8_t, 3>& oui);
-    wifi_error selectTxPowerScenario(const std::string& iface_name,
-                                     wifi_power_scenario scenario);
-    wifi_error resetTxPowerScenario(const std::string& iface_name);
+    virtual wifi_error selectTxPowerScenario(const std::string& iface_name,
+                                             wifi_power_scenario scenario);
+    virtual wifi_error resetTxPowerScenario(const std::string& iface_name);
     wifi_error setLatencyMode(const std::string& iface_name,
                               wifi_latency_mode mode);
     // Logger/debug functions.

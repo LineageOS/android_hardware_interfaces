@@ -641,7 +641,7 @@ std::pair<WifiStatus, uint32_t> WifiChip::getCapabilitiesInternal_1_3() {
     legacy_hal::wifi_error legacy_status;
     uint32_t legacy_feature_set;
     uint32_t legacy_logger_feature_set;
-    const auto ifname = getWlanIfaceName(0);
+    const auto ifname = getFirstActiveWlanIfaceName();
     std::tie(legacy_status, legacy_feature_set) =
         legacy_hal_.lock()->getSupportedFeatureSet(ifname);
     if (legacy_status != legacy_hal::WIFI_SUCCESS) {
@@ -709,7 +709,7 @@ WifiChip::requestChipDebugInfoInternal() {
     IWifiChip::ChipDebugInfo result;
     legacy_hal::wifi_error legacy_status;
     std::string driver_desc;
-    const auto ifname = getWlanIfaceName(0);
+    const auto ifname = getFirstActiveWlanIfaceName();
     std::tie(legacy_status, driver_desc) =
         legacy_hal_.lock()->getDriverVersion(ifname);
     if (legacy_status != legacy_hal::WIFI_SUCCESS) {
@@ -741,7 +741,8 @@ WifiChip::requestDriverDebugDumpInternal() {
     legacy_hal::wifi_error legacy_status;
     std::vector<uint8_t> driver_dump;
     std::tie(legacy_status, driver_dump) =
-        legacy_hal_.lock()->requestDriverMemoryDump(getWlanIfaceName(0));
+        legacy_hal_.lock()->requestDriverMemoryDump(
+            getFirstActiveWlanIfaceName());
     if (legacy_status != legacy_hal::WIFI_SUCCESS) {
         LOG(ERROR) << "Failed to get driver debug dump: "
                    << legacyErrorToString(legacy_status);
@@ -756,7 +757,8 @@ WifiChip::requestFirmwareDebugDumpInternal() {
     legacy_hal::wifi_error legacy_status;
     std::vector<uint8_t> firmware_dump;
     std::tie(legacy_status, firmware_dump) =
-        legacy_hal_.lock()->requestFirmwareMemoryDump(getWlanIfaceName(0));
+        legacy_hal_.lock()->requestFirmwareMemoryDump(
+            getFirstActiveWlanIfaceName());
     if (legacy_status != legacy_hal::WIFI_SUCCESS) {
         LOG(ERROR) << "Failed to get firmware debug dump: "
                    << legacyErrorToString(legacy_status);
@@ -817,7 +819,7 @@ std::pair<WifiStatus, sp<IWifiNanIface>> WifiChip::createNanIfaceInternal() {
         return {createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE), {}};
     }
     // These are still assumed to be based on wlan0.
-    std::string ifname = getWlanIfaceName(0);
+    std::string ifname = getFirstActiveWlanIfaceName();
     sp<WifiNanIface> iface = new WifiNanIface(ifname, legacy_hal_);
     nan_ifaces_.push_back(iface);
     for (const auto& callback : event_cb_handler_.getCallbacks()) {
@@ -959,8 +961,8 @@ WifiChip::createRttControllerInternal(const sp<IWifiIface>& bound_iface) {
                       "(and RTT by extension)";
         return {createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE), {}};
     }
-    sp<WifiRttController> rtt =
-        new WifiRttController(getWlanIfaceName(0), bound_iface, legacy_hal_);
+    sp<WifiRttController> rtt = new WifiRttController(
+        getFirstActiveWlanIfaceName(), bound_iface, legacy_hal_);
     rtt_controllers_.emplace_back(rtt);
     return {createWifiStatus(WifiStatusCode::SUCCESS), rtt};
 }
@@ -971,7 +973,7 @@ WifiChip::getDebugRingBuffersStatusInternal() {
     std::vector<legacy_hal::wifi_ring_buffer_status>
         legacy_ring_buffer_status_vec;
     std::tie(legacy_status, legacy_ring_buffer_status_vec) =
-        legacy_hal_.lock()->getRingBuffersStatus(getWlanIfaceName(0));
+        legacy_hal_.lock()->getRingBuffersStatus(getFirstActiveWlanIfaceName());
     if (legacy_status != legacy_hal::WIFI_SUCCESS) {
         return {createWifiStatusFromLegacyError(legacy_status), {}};
     }
@@ -993,7 +995,7 @@ WifiStatus WifiChip::startLoggingToDebugRingBufferInternal(
     }
     legacy_hal::wifi_error legacy_status =
         legacy_hal_.lock()->startRingBufferLogging(
-            getWlanIfaceName(0), ring_name,
+            getFirstActiveWlanIfaceName(), ring_name,
             static_cast<
                 std::underlying_type<WifiDebugRingBufferVerboseLevel>::type>(
                 verbose_level),
@@ -1010,7 +1012,8 @@ WifiStatus WifiChip::forceDumpToDebugRingBufferInternal(
         return status;
     }
     legacy_hal::wifi_error legacy_status =
-        legacy_hal_.lock()->getRingBufferData(getWlanIfaceName(0), ring_name);
+        legacy_hal_.lock()->getRingBufferData(getFirstActiveWlanIfaceName(),
+                                              ring_name);
 
     return createWifiStatusFromLegacyError(legacy_status);
 }
@@ -1026,7 +1029,7 @@ WifiStatus WifiChip::flushRingBufferToFileInternal() {
 WifiStatus WifiChip::stopLoggingToDebugRingBufferInternal() {
     legacy_hal::wifi_error legacy_status =
         legacy_hal_.lock()->deregisterRingBufferCallbackHandler(
-            getWlanIfaceName(0));
+            getFirstActiveWlanIfaceName());
     return createWifiStatusFromLegacyError(legacy_status);
 }
 
@@ -1035,7 +1038,7 @@ WifiChip::getDebugHostWakeReasonStatsInternal() {
     legacy_hal::wifi_error legacy_status;
     legacy_hal::WakeReasonStats legacy_stats;
     std::tie(legacy_status, legacy_stats) =
-        legacy_hal_.lock()->getWakeReasonStats(getWlanIfaceName(0));
+        legacy_hal_.lock()->getWakeReasonStats(getFirstActiveWlanIfaceName());
     if (legacy_status != legacy_hal::WIFI_SUCCESS) {
         return {createWifiStatusFromLegacyError(legacy_status), {}};
     }
@@ -1067,10 +1070,10 @@ WifiStatus WifiChip::enableDebugErrorAlertsInternal(bool enable) {
             }
         };
         legacy_status = legacy_hal_.lock()->registerErrorAlertCallbackHandler(
-            getWlanIfaceName(0), on_alert_callback);
+            getFirstActiveWlanIfaceName(), on_alert_callback);
     } else {
         legacy_status = legacy_hal_.lock()->deregisterErrorAlertCallbackHandler(
-            getWlanIfaceName(0));
+            getFirstActiveWlanIfaceName());
     }
     return createWifiStatusFromLegacyError(legacy_status);
 }
@@ -1078,20 +1081,20 @@ WifiStatus WifiChip::enableDebugErrorAlertsInternal(bool enable) {
 WifiStatus WifiChip::selectTxPowerScenarioInternal(
     V1_1::IWifiChip::TxPowerScenario scenario) {
     auto legacy_status = legacy_hal_.lock()->selectTxPowerScenario(
-        getWlanIfaceName(0),
+        getFirstActiveWlanIfaceName(),
         hidl_struct_util::convertHidlTxPowerScenarioToLegacy(scenario));
     return createWifiStatusFromLegacyError(legacy_status);
 }
 
 WifiStatus WifiChip::resetTxPowerScenarioInternal() {
     auto legacy_status =
-        legacy_hal_.lock()->resetTxPowerScenario(getWlanIfaceName(0));
+        legacy_hal_.lock()->resetTxPowerScenario(getFirstActiveWlanIfaceName());
     return createWifiStatusFromLegacyError(legacy_status);
 }
 
 WifiStatus WifiChip::setLatencyModeInternal(LatencyMode mode) {
     auto legacy_status = legacy_hal_.lock()->setLatencyMode(
-        getWlanIfaceName(0),
+        getFirstActiveWlanIfaceName(),
         hidl_struct_util::convertHidlLatencyModeToLegacy(mode));
     return createWifiStatusFromLegacyError(legacy_status);
 }
@@ -1107,7 +1110,7 @@ WifiStatus WifiChip::registerEventCallbackInternal_1_2(
 WifiStatus WifiChip::selectTxPowerScenarioInternal_1_2(
     TxPowerScenario scenario) {
     auto legacy_status = legacy_hal_.lock()->selectTxPowerScenario(
-        getWlanIfaceName(0),
+        getFirstActiveWlanIfaceName(),
         hidl_struct_util::convertHidlTxPowerScenarioToLegacy_1_2(scenario));
     return createWifiStatusFromLegacyError(legacy_status);
 }
@@ -1197,7 +1200,7 @@ WifiStatus WifiChip::registerDebugRingBufferCallback() {
         };
     legacy_hal::wifi_error legacy_status =
         legacy_hal_.lock()->registerRingBufferCallbackHandler(
-            getWlanIfaceName(0), on_ring_buffer_data_callback);
+            getFirstActiveWlanIfaceName(), on_ring_buffer_data_callback);
 
     if (legacy_status == legacy_hal::WIFI_SUCCESS) {
         debug_ring_buffer_cb_registered_ = true;
@@ -1231,7 +1234,7 @@ WifiStatus WifiChip::registerRadioModeChangeCallback() {
         };
     legacy_hal::wifi_error legacy_status =
         legacy_hal_.lock()->registerRadioModeChangeCallbackHandler(
-            getWlanIfaceName(0), on_radio_mode_change_callback);
+            getFirstActiveWlanIfaceName(), on_radio_mode_change_callback);
     return createWifiStatusFromLegacyError(legacy_status);
 }
 
@@ -1413,6 +1416,18 @@ bool WifiChip::isStaApConcurrencyAllowedInCurrentMode() {
     req_iface_combo[IfaceType::AP] = 1;
     req_iface_combo[IfaceType::STA] = 1;
     return canCurrentModeSupportIfaceCombo(req_iface_combo);
+}
+
+std::string WifiChip::getFirstActiveWlanIfaceName() {
+    for (unsigned idx = 0; idx < kMaxWlanIfaces; idx++) {
+        const auto ifname = getWlanIfaceName(idx);
+        if (findUsingName(sta_ifaces_, ifname)) return ifname;
+        if (findUsingName(ap_ifaces_, ifname)) return ifname;
+    }
+    // This could happen if the chip call is made before any STA/AP
+    // iface is created. Default to wlan0 for such cases.
+    LOG(WARNING) << "No active wlan interfaces in use!";
+    return getWlanIfaceName(0);
 }
 
 // Return the first wlan (wlan0, wlan1 etc.) starting from |start_idx|

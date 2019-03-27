@@ -261,6 +261,17 @@ class WifiChipTest : public Test {
         return success;
     }
 
+    sp<WifiChip> chip_;
+    ChipId chip_id_ = kFakeChipId;
+    std::shared_ptr<NiceMock<legacy_hal::MockWifiLegacyHal>> legacy_hal_{
+        new NiceMock<legacy_hal::MockWifiLegacyHal>};
+    std::shared_ptr<NiceMock<mode_controller::MockWifiModeController>>
+        mode_controller_{new NiceMock<mode_controller::MockWifiModeController>};
+    std::shared_ptr<NiceMock<iface_util::MockWifiIfaceUtil>> iface_util_{
+        new NiceMock<iface_util::MockWifiIfaceUtil>};
+    std::shared_ptr<NiceMock<feature_flags::MockWifiFeatureFlags>>
+        feature_flags_{new NiceMock<feature_flags::MockWifiFeatureFlags>};
+
    public:
     void SetUp() override {
         chip_ = new WifiChip(chip_id_, legacy_hal_, mode_controller_,
@@ -278,18 +289,6 @@ class WifiChipTest : public Test {
         property_set("wifi.interface", "wlan0");
         property_set("wifi.concurrent.interface", "wlan1");
     }
-
-   private:
-    sp<WifiChip> chip_;
-    ChipId chip_id_ = kFakeChipId;
-    std::shared_ptr<NiceMock<legacy_hal::MockWifiLegacyHal>> legacy_hal_{
-        new NiceMock<legacy_hal::MockWifiLegacyHal>};
-    std::shared_ptr<NiceMock<mode_controller::MockWifiModeController>>
-        mode_controller_{new NiceMock<mode_controller::MockWifiModeController>};
-    std::shared_ptr<NiceMock<iface_util::MockWifiIfaceUtil>> iface_util_{
-        new NiceMock<iface_util::MockWifiIfaceUtil>};
-    std::shared_ptr<NiceMock<feature_flags::MockWifiFeatureFlags>>
-        feature_flags_{new NiceMock<feature_flags::MockWifiFeatureFlags>};
 };
 
 ////////// V1 Iface Combinations ////////////
@@ -452,18 +451,18 @@ TEST_F(WifiChipV1_AwareIfaceCombinationTest, ApMode_CreateNan_ShouldFail) {
     ASSERT_TRUE(createIface(IfaceType::NAN).empty());
 }
 
-TEST_F(WifiChipV1IfaceCombinationTest, RttControllerFlowStaModeNoSta) {
+TEST_F(WifiChipV1_AwareIfaceCombinationTest, RttControllerFlowStaModeNoSta) {
     findModeAndConfigureForIfaceType(IfaceType::STA);
     ASSERT_TRUE(createRttController());
 }
 
-TEST_F(WifiChipV1IfaceCombinationTest, RttControllerFlowStaModeWithSta) {
+TEST_F(WifiChipV1_AwareIfaceCombinationTest, RttControllerFlowStaModeWithSta) {
     findModeAndConfigureForIfaceType(IfaceType::STA);
     ASSERT_FALSE(createIface(IfaceType::STA).empty());
     ASSERT_TRUE(createRttController());
 }
 
-TEST_F(WifiChipV1IfaceCombinationTest, RttControllerFlowApToSta) {
+TEST_F(WifiChipV1_AwareIfaceCombinationTest, RttControllerFlowApToSta) {
     findModeAndConfigureForIfaceType(IfaceType::AP);
     const auto ap_iface_name = createIface(IfaceType::AP);
     ASSERT_FALSE(ap_iface_name.empty());
@@ -473,6 +472,30 @@ TEST_F(WifiChipV1IfaceCombinationTest, RttControllerFlowApToSta) {
 
     findModeAndConfigureForIfaceType(IfaceType::STA);
     ASSERT_TRUE(createRttController());
+}
+
+TEST_F(WifiChipV1_AwareIfaceCombinationTest, SelectTxScenarioWithOnlySta) {
+    findModeAndConfigureForIfaceType(IfaceType::STA);
+    ASSERT_EQ(createIface(IfaceType::STA), "wlan0");
+    EXPECT_CALL(*legacy_hal_, selectTxPowerScenario("wlan0", testing::_))
+        .WillOnce(testing::Return(legacy_hal::WIFI_SUCCESS));
+    chip_->selectTxPowerScenario_1_2(
+        V1_2::IWifiChip::TxPowerScenario::ON_HEAD_CELL_OFF,
+        [](const WifiStatus& status) {
+            ASSERT_EQ(WifiStatusCode::SUCCESS, status.code);
+        });
+}
+
+TEST_F(WifiChipV1_AwareIfaceCombinationTest, SelectTxScenarioWithOnlyAp) {
+    findModeAndConfigureForIfaceType(IfaceType::AP);
+    ASSERT_EQ(createIface(IfaceType::AP), "wlan0");
+    EXPECT_CALL(*legacy_hal_, selectTxPowerScenario("wlan0", testing::_))
+        .WillOnce(testing::Return(legacy_hal::WIFI_SUCCESS));
+    chip_->selectTxPowerScenario_1_2(
+        V1_2::IWifiChip::TxPowerScenario::ON_HEAD_CELL_OFF,
+        [](const WifiStatus& status) {
+            ASSERT_EQ(WifiStatusCode::SUCCESS, status.code);
+        });
 }
 
 ////////// V2 + Aware Iface Combinations ////////////
@@ -651,6 +674,30 @@ TEST_F(WifiChipV2_AwareIfaceCombinationTest, RttControllerFlow) {
     ASSERT_FALSE(createIface(IfaceType::STA).empty());
     ASSERT_FALSE(createIface(IfaceType::AP).empty());
     ASSERT_TRUE(createRttController());
+}
+
+TEST_F(WifiChipV2_AwareIfaceCombinationTest, SelectTxScenarioWithOnlySta) {
+    findModeAndConfigureForIfaceType(IfaceType::STA);
+    ASSERT_EQ(createIface(IfaceType::STA), "wlan0");
+    EXPECT_CALL(*legacy_hal_, selectTxPowerScenario("wlan0", testing::_))
+        .WillOnce(testing::Return(legacy_hal::WIFI_SUCCESS));
+    chip_->selectTxPowerScenario_1_2(
+        V1_2::IWifiChip::TxPowerScenario::ON_HEAD_CELL_OFF,
+        [](const WifiStatus& status) {
+            ASSERT_EQ(WifiStatusCode::SUCCESS, status.code);
+        });
+}
+
+TEST_F(WifiChipV2_AwareIfaceCombinationTest, SelectTxScenarioWithOnlyAp) {
+    findModeAndConfigureForIfaceType(IfaceType::AP);
+    ASSERT_EQ(createIface(IfaceType::AP), "wlan1");
+    EXPECT_CALL(*legacy_hal_, selectTxPowerScenario("wlan1", testing::_))
+        .WillOnce(testing::Return(legacy_hal::WIFI_SUCCESS));
+    chip_->selectTxPowerScenario_1_2(
+        V1_2::IWifiChip::TxPowerScenario::ON_HEAD_CELL_OFF,
+        [](const WifiStatus& status) {
+            ASSERT_EQ(WifiStatusCode::SUCCESS, status.code);
+        });
 }
 
 ////////// V1 Iface Combinations when AP creation is disabled //////////
