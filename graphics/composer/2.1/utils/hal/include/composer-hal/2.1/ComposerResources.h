@@ -170,7 +170,7 @@ class ComposerHandleCache {
     }
 
     Error lookupCache(uint32_t slot, const native_handle_t** outHandle) {
-        if (slot < mHandles.size()) {
+        if (slot >= 0 && slot < mHandles.size()) {
             *outHandle = mHandles[slot];
             return Error::NONE;
         } else {
@@ -180,7 +180,7 @@ class ComposerHandleCache {
 
     Error updateCache(uint32_t slot, const native_handle_t* handle,
                       const native_handle** outReplacedHandle) {
-        if (slot < mHandles.size()) {
+        if (slot >= 0 && slot < mHandles.size()) {
             auto& cachedHandle = mHandles[slot];
             *outReplacedHandle = cachedHandle;
             cachedHandle = handle;
