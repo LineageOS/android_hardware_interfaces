@@ -190,7 +190,13 @@ struct HealthInfo {
     /** Remaining battery capacity in percent */
     int32_t batteryLevel;
 
-    /** Instantaneous battery voltage in uV */
+    /**
+     * Instantaneous battery voltage in millivolts (mV).
+     *
+     * Historically, the unit of this field is microvolts (uV), but all
+     * clients and implementations uses millivolts in practice, making it
+     * the de-facto standard.
+     */
     int32_t batteryVoltage;
 
     /** Instantaneous battery temperature in tenths of degree celcius */
