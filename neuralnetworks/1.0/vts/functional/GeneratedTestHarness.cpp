@@ -127,7 +127,7 @@ static std::unique_ptr<::android::nn::ExecutionBurstController> CreateBurst(
 }
 static std::unique_ptr<::android::nn::ExecutionBurstController> CreateBurst(
         const sp<V1_2::IPreparedModel>& preparedModel) {
-    return ::android::nn::createExecutionBurstController(preparedModel, /*blocking=*/true);
+    return ::android::nn::ExecutionBurstController::create(preparedModel, /*blocking=*/true);
 }
 enum class Executor { ASYNC, SYNC, BURST };
 enum class OutputType { FULLY_SPECIFIED, UNSPECIFIED, INSUFFICIENT };
