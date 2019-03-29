@@ -16,6 +16,7 @@
 
 package android.hardware.vibrator@1.3;
 
+import @1.0::EffectStrength;
 import @1.0::Status;
 import @1.2::IVibrator;
 
@@ -41,4 +42,18 @@ interface IVibrator extends @1.2::IVibrator {
    *                not supported by the device.
    */
   setExternalControl(bool enabled) generates (Status status);
+
+  /**
+   * Fire off a predefined haptic event.
+   *
+   * @param event The type of haptic event to trigger.
+   * @return status Whether the effect was successfully performed or not. Must
+   *     return Status::UNSUPPORTED_OPERATION if the effect is not supported.
+   * @return lengthMs The length of time the event is expected to take in
+   *     milliseconds. This doesn't need to be perfectly accurate, but should be a reasonable
+   *     approximation. Should be a positive, non-zero value if the returned status is Status::OK,
+   *     and set to 0 otherwise.
+   */
+  perform_1_3(Effect effect, EffectStrength strength)
+          generates (Status status, uint32_t lengthMs);
 };
