@@ -30,24 +30,25 @@ using ::android::hardware::atrace::V1_0::TracingCategory;
 
 struct TracingConfig {
     std::string description;
+    // path and if error on failure
     std::vector<std::pair<std::string, bool>> paths;
 };
 
 // This is a map stores categories and their sysfs paths with required flags
 const std::map<std::string, TracingConfig> kTracingMap = {
-    // gfx
-    {
-        "gfx",
-        {"Graphics",
-         {{"/sys/kernel/debug/tracing/events/mdss/enable", false},
-          {"/sys/kernel/debug/tracing/events/sde/enable", false},
-          {"/sys/kernel/debug/tracing/events/mali_systrace/enable", false}}},
-    },
-    {
-        "ion",
-        {"ION allocation",
-         {{"/sys/kernel/debug/tracing/events/kmem/ion_alloc_buffer_start/enable", true}}},
-    },
+        // gfx
+        {
+                "gfx",
+                {"Graphics",
+                 {{"/sys/kernel/debug/tracing/events/mdss/enable", false},
+                  {"/sys/kernel/debug/tracing/events/sde/enable", false},
+                  {"/sys/kernel/debug/tracing/events/mali_systrace/enable", false}}},
+        },
+        {
+                "ion",
+                {"ION allocation",
+                 {{"/sys/kernel/debug/tracing/events/kmem/ion_alloc_buffer_start/enable", false}}},
+        },
 };
 
 // Methods from ::android::hardware::atrace::V1_0::IAtraceDevice follow.
