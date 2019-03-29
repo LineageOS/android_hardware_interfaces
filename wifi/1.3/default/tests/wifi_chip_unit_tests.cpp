@@ -122,7 +122,7 @@ class WifiChipTest : public Test {
     void setup_MultiIfaceCombination() {
         // clang-format off
         const hidl_vec<V1_0::IWifiChip::ChipIfaceCombination> combinations = {
-            {{{{IfaceType::STA}, 3}}}
+            {{{{IfaceType::STA}, 3}, {{IfaceType::AP}, 1}}}
         };
         const std::vector<V1_0::IWifiChip::ChipMode> modes = {
             {feature_flags::chip_mode_ids::kV3, combinations}
@@ -261,6 +261,17 @@ class WifiChipTest : public Test {
         return success;
     }
 
+    sp<WifiChip> chip_;
+    ChipId chip_id_ = kFakeChipId;
+    std::shared_ptr<NiceMock<legacy_hal::MockWifiLegacyHal>> legacy_hal_{
+        new NiceMock<legacy_hal::MockWifiLegacyHal>};
+    std::shared_ptr<NiceMock<mode_controller::MockWifiModeController>>
+        mode_controller_{new NiceMock<mode_controller::MockWifiModeController>};
+    std::shared_ptr<NiceMock<iface_util::MockWifiIfaceUtil>> iface_util_{
+        new NiceMock<iface_util::MockWifiIfaceUtil>};
+    std::shared_ptr<NiceMock<feature_flags::MockWifiFeatureFlags>>
+        feature_flags_{new NiceMock<feature_flags::MockWifiFeatureFlags>};
+
    public:
     void SetUp() override {
         chip_ = new WifiChip(chip_id_, legacy_hal_, mode_controller_,
@@ -272,17 +283,12 @@ class WifiChipTest : public Test {
             .WillRepeatedly(testing::Return(legacy_hal::WIFI_SUCCESS));
     }
 
-   private:
-    sp<WifiChip> chip_;
-    ChipId chip_id_ = kFakeChipId;
-    std::shared_ptr<NiceMock<legacy_hal::MockWifiLegacyHal>> legacy_hal_{
-        new NiceMock<legacy_hal::MockWifiLegacyHal>};
-    std::shared_ptr<NiceMock<mode_controller::MockWifiModeController>>
-        mode_controller_{new NiceMock<mode_controller::MockWifiModeController>};
-    std::shared_ptr<NiceMock<iface_util::MockWifiIfaceUtil>> iface_util_{
-        new NiceMock<iface_util::MockWifiIfaceUtil>};
-    std::shared_ptr<NiceMock<feature_flags::MockWifiFeatureFlags>>
-        feature_flags_{new NiceMock<feature_flags::MockWifiFeatureFlags>};
+    void TearDown() override {
+        // Restore default system iface names (This should ideally be using a
+        // mock).
+        property_set("wifi.interface", "wlan0");
+        property_set("wifi.concurrent.interface", "wlan1");
+    }
 };
 
 ////////// V1 Iface Combinations ////////////
@@ -300,7 +306,7 @@ class WifiChipV1IfaceCombinationTest : public WifiChipTest {
 
 TEST_F(WifiChipV1IfaceCombinationTest, StaMode_CreateSta_ShouldSucceed) {
     findModeAndConfigureForIfaceType(IfaceType::STA);
-    ASSERT_FALSE(createIface(IfaceType::STA).empty());
+    ASSERT_EQ(createIface(IfaceType::STA), "wlan0");
 }
 
 TEST_F(WifiChipV1IfaceCombinationTest, StaMode_CreateP2p_ShouldSucceed) {
@@ -326,7 +332,7 @@ TEST_F(WifiChipV1IfaceCombinationTest, StaMode_CreateStaP2p_ShouldSucceed) {
 
 TEST_F(WifiChipV1IfaceCombinationTest, ApMode_CreateAp_ShouldSucceed) {
     findModeAndConfigureForIfaceType(IfaceType::AP);
-    ASSERT_FALSE(createIface(IfaceType::AP).empty());
+    ASSERT_EQ(createIface(IfaceType::AP), "wlan0");
 }
 
 TEST_F(WifiChipV1IfaceCombinationTest, ApMode_CreateSta_ShouldFail) {
@@ -359,7 +365,7 @@ class WifiChipV1_AwareIfaceCombinationTest : public WifiChipTest {
 
 TEST_F(WifiChipV1_AwareIfaceCombinationTest, StaMode_CreateSta_ShouldSucceed) {
     findModeAndConfigureForIfaceType(IfaceType::STA);
-    ASSERT_FALSE(createIface(IfaceType::STA).empty());
+    ASSERT_EQ(createIface(IfaceType::STA), "wlan0");
 }
 
 TEST_F(WifiChipV1_AwareIfaceCombinationTest, StaMode_CreateP2p_ShouldSucceed) {
@@ -427,7 +433,7 @@ TEST_F(WifiChipV1_AwareIfaceCombinationTest,
 
 TEST_F(WifiChipV1_AwareIfaceCombinationTest, ApMode_CreateAp_ShouldSucceed) {
     findModeAndConfigureForIfaceType(IfaceType::AP);
-    ASSERT_FALSE(createIface(IfaceType::AP).empty());
+    ASSERT_EQ(createIface(IfaceType::AP), "wlan0");
 }
 
 TEST_F(WifiChipV1_AwareIfaceCombinationTest, ApMode_CreateSta_ShouldFail) {
@@ -445,18 +451,18 @@ TEST_F(WifiChipV1_AwareIfaceCombinationTest, ApMode_CreateNan_ShouldFail) {
     ASSERT_TRUE(createIface(IfaceType::NAN).empty());
 }
 
-TEST_F(WifiChipV1IfaceCombinationTest, RttControllerFlowStaModeNoSta) {
+TEST_F(WifiChipV1_AwareIfaceCombinationTest, RttControllerFlowStaModeNoSta) {
     findModeAndConfigureForIfaceType(IfaceType::STA);
     ASSERT_TRUE(createRttController());
 }
 
-TEST_F(WifiChipV1IfaceCombinationTest, RttControllerFlowStaModeWithSta) {
+TEST_F(WifiChipV1_AwareIfaceCombinationTest, RttControllerFlowStaModeWithSta) {
     findModeAndConfigureForIfaceType(IfaceType::STA);
     ASSERT_FALSE(createIface(IfaceType::STA).empty());
     ASSERT_TRUE(createRttController());
 }
 
-TEST_F(WifiChipV1IfaceCombinationTest, RttControllerFlowApToSta) {
+TEST_F(WifiChipV1_AwareIfaceCombinationTest, RttControllerFlowApToSta) {
     findModeAndConfigureForIfaceType(IfaceType::AP);
     const auto ap_iface_name = createIface(IfaceType::AP);
     ASSERT_FALSE(ap_iface_name.empty());
@@ -466,6 +472,30 @@ TEST_F(WifiChipV1IfaceCombinationTest, RttControllerFlowApToSta) {
 
     findModeAndConfigureForIfaceType(IfaceType::STA);
     ASSERT_TRUE(createRttController());
+}
+
+TEST_F(WifiChipV1_AwareIfaceCombinationTest, SelectTxScenarioWithOnlySta) {
+    findModeAndConfigureForIfaceType(IfaceType::STA);
+    ASSERT_EQ(createIface(IfaceType::STA), "wlan0");
+    EXPECT_CALL(*legacy_hal_, selectTxPowerScenario("wlan0", testing::_))
+        .WillOnce(testing::Return(legacy_hal::WIFI_SUCCESS));
+    chip_->selectTxPowerScenario_1_2(
+        V1_2::IWifiChip::TxPowerScenario::ON_HEAD_CELL_OFF,
+        [](const WifiStatus& status) {
+            ASSERT_EQ(WifiStatusCode::SUCCESS, status.code);
+        });
+}
+
+TEST_F(WifiChipV1_AwareIfaceCombinationTest, SelectTxScenarioWithOnlyAp) {
+    findModeAndConfigureForIfaceType(IfaceType::AP);
+    ASSERT_EQ(createIface(IfaceType::AP), "wlan0");
+    EXPECT_CALL(*legacy_hal_, selectTxPowerScenario("wlan0", testing::_))
+        .WillOnce(testing::Return(legacy_hal::WIFI_SUCCESS));
+    chip_->selectTxPowerScenario_1_2(
+        V1_2::IWifiChip::TxPowerScenario::ON_HEAD_CELL_OFF,
+        [](const WifiStatus& status) {
+            ASSERT_EQ(WifiStatusCode::SUCCESS, status.code);
+        });
 }
 
 ////////// V2 + Aware Iface Combinations ////////////
@@ -483,7 +513,7 @@ class WifiChipV2_AwareIfaceCombinationTest : public WifiChipTest {
 
 TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateSta_ShouldSucceed) {
     findModeAndConfigureForIfaceType(IfaceType::STA);
-    ASSERT_FALSE(createIface(IfaceType::STA).empty());
+    ASSERT_EQ(createIface(IfaceType::STA), "wlan0");
 }
 
 TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateP2p_ShouldSucceed) {
@@ -498,19 +528,25 @@ TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateNan_ShouldSucceed) {
 
 TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateAp_ShouldSucceed) {
     findModeAndConfigureForIfaceType(IfaceType::STA);
-    ASSERT_FALSE(createIface(IfaceType::AP).empty());
+    ASSERT_EQ(createIface(IfaceType::AP), "wlan1");
 }
 
 TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateStaSta_ShouldFail) {
     findModeAndConfigureForIfaceType(IfaceType::AP);
-    ASSERT_FALSE(createIface(IfaceType::STA).empty());
+    ASSERT_EQ(createIface(IfaceType::STA), "wlan0");
     ASSERT_TRUE(createIface(IfaceType::STA).empty());
 }
 
 TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateStaAp_ShouldSucceed) {
     findModeAndConfigureForIfaceType(IfaceType::AP);
-    ASSERT_FALSE(createIface(IfaceType::AP).empty());
-    ASSERT_FALSE(createIface(IfaceType::STA).empty());
+    ASSERT_EQ(createIface(IfaceType::STA), "wlan0");
+    ASSERT_EQ(createIface(IfaceType::AP), "wlan1");
+}
+
+TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateApSta_ShouldSucceed) {
+    findModeAndConfigureForIfaceType(IfaceType::AP);
+    ASSERT_EQ(createIface(IfaceType::AP), "wlan1");
+    ASSERT_EQ(createIface(IfaceType::STA), "wlan0");
 }
 
 TEST_F(WifiChipV2_AwareIfaceCombinationTest,
@@ -640,6 +676,30 @@ TEST_F(WifiChipV2_AwareIfaceCombinationTest, RttControllerFlow) {
     ASSERT_TRUE(createRttController());
 }
 
+TEST_F(WifiChipV2_AwareIfaceCombinationTest, SelectTxScenarioWithOnlySta) {
+    findModeAndConfigureForIfaceType(IfaceType::STA);
+    ASSERT_EQ(createIface(IfaceType::STA), "wlan0");
+    EXPECT_CALL(*legacy_hal_, selectTxPowerScenario("wlan0", testing::_))
+        .WillOnce(testing::Return(legacy_hal::WIFI_SUCCESS));
+    chip_->selectTxPowerScenario_1_2(
+        V1_2::IWifiChip::TxPowerScenario::ON_HEAD_CELL_OFF,
+        [](const WifiStatus& status) {
+            ASSERT_EQ(WifiStatusCode::SUCCESS, status.code);
+        });
+}
+
+TEST_F(WifiChipV2_AwareIfaceCombinationTest, SelectTxScenarioWithOnlyAp) {
+    findModeAndConfigureForIfaceType(IfaceType::AP);
+    ASSERT_EQ(createIface(IfaceType::AP), "wlan1");
+    EXPECT_CALL(*legacy_hal_, selectTxPowerScenario("wlan1", testing::_))
+        .WillOnce(testing::Return(legacy_hal::WIFI_SUCCESS));
+    chip_->selectTxPowerScenario_1_2(
+        V1_2::IWifiChip::TxPowerScenario::ON_HEAD_CELL_OFF,
+        [](const WifiStatus& status) {
+            ASSERT_EQ(WifiStatusCode::SUCCESS, status.code);
+        });
+}
+
 ////////// V1 Iface Combinations when AP creation is disabled //////////
 class WifiChipV1_AwareDisabledApIfaceCombinationTest : public WifiChipTest {
    public:
@@ -707,8 +767,8 @@ TEST_F(WifiChip_MultiIfaceTest, CreateStaWithCustomNames) {
     property_set("wifi.interface", "bad0");
     property_set("wifi.concurrent.interface", "bad1");
     findModeAndConfigureForIfaceType(IfaceType::STA);
-    ASSERT_EQ(createIface(IfaceType::STA), "test0");
-    ASSERT_EQ(createIface(IfaceType::STA), "test1");
+    ASSERT_EQ(createIface(IfaceType::STA), "bad0");
+    ASSERT_EQ(createIface(IfaceType::STA), "bad1");
     ASSERT_EQ(createIface(IfaceType::STA), "test2");
 }
 
@@ -724,6 +784,16 @@ TEST_F(WifiChip_MultiIfaceTest, CreateStaWithCustomAltNames) {
     ASSERT_EQ(createIface(IfaceType::STA), "wlan2");
 }
 
+TEST_F(WifiChip_MultiIfaceTest, CreateApStartsWithIdx1) {
+    findModeAndConfigureForIfaceType(IfaceType::STA);
+    // First AP will be slotted to wlan1.
+    ASSERT_EQ(createIface(IfaceType::AP), "wlan1");
+    // First STA will be slotted to wlan0.
+    ASSERT_EQ(createIface(IfaceType::STA), "wlan0");
+    // All further STA will be slotted to the remaining free indices.
+    ASSERT_EQ(createIface(IfaceType::STA), "wlan2");
+    ASSERT_EQ(createIface(IfaceType::STA), "wlan3");
+}
 }  // namespace implementation
 }  // namespace V1_3
 }  // namespace wifi
