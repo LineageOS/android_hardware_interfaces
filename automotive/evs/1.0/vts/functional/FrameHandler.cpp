@@ -231,16 +231,12 @@ bool FrameHandler::copyBufferContents(const BufferDesc& tgtBuffer,
     uint8_t* srcPixels = nullptr;
     src->lock(GRALLOC_USAGE_SW_READ_OFTEN, (void**)&srcPixels);
 
-    // Lock our target buffer for writing (should be RGBA8888 format)
+    // Lock our target buffer for writing (should be either RGBA8888 or BGRA8888 format)
     uint32_t* tgtPixels = nullptr;
     tgt->lock(GRALLOC_USAGE_SW_WRITE_OFTEN, (void**)&tgtPixels);
 
     if (srcPixels && tgtPixels) {
-        if (tgtBuffer.format != HAL_PIXEL_FORMAT_RGBA_8888) {
-            // We always expect 32 bit RGB for the display output for now.  Is there a need for 565?
-            ALOGE("Diplay buffer is always expected to be 32bit RGBA");
-            success = false;
-        } else {
+        if (tgtBuffer.format == HAL_PIXEL_FORMAT_RGBA_8888) {
             if (srcBuffer.format == HAL_PIXEL_FORMAT_YCRCB_420_SP) {   // 420SP == NV21
                 copyNV21toRGB32(width, height,
                                 srcPixels,
@@ -258,7 +254,36 @@ bool FrameHandler::copyBufferContents(const BufferDesc& tgtBuffer,
                                               srcPixels, srcBuffer.stride,
                                               tgtPixels, tgtBuffer.stride,
                                               tgtBuffer.pixelSize);
+            } else {
+                ALOGE("Camera buffer format is not supported");
+                success = false;
             }
+        } else if (tgtBuffer.format == HAL_PIXEL_FORMAT_BGRA_8888) {
+            if (srcBuffer.format == HAL_PIXEL_FORMAT_YCRCB_420_SP) {   // 420SP == NV21
+                copyNV21toBGR32(width, height,
+                                srcPixels,
+                                tgtPixels, tgtBuffer.stride);
+            } else if (srcBuffer.format == HAL_PIXEL_FORMAT_YV12) { // YUV_420P == YV12
+                copyYV12toBGR32(width, height,
+                                srcPixels,
+                                tgtPixels, tgtBuffer.stride);
+            } else if (srcBuffer.format == HAL_PIXEL_FORMAT_YCBCR_422_I) { // YUYV
+                copyYUYVtoBGR32(width, height,
+                                srcPixels, srcBuffer.stride,
+                                tgtPixels, tgtBuffer.stride);
+            } else if (srcBuffer.format == tgtBuffer.format) {  // 32bit RGBA
+                copyMatchedInterleavedFormats(width, height,
+                                              srcPixels, srcBuffer.stride,
+                                              tgtPixels, tgtBuffer.stride,
+                                              tgtBuffer.pixelSize);
+            } else {
+                ALOGE("Camera buffer format is not supported");
+                success = false;
+            }
+        } else {
+            // We always expect 32 bit RGB for the display output for now.  Is there a need for 565?
+            ALOGE("Diplay buffer is always expected to be 32bit RGBA");
+            success = false;
         }
     } else {
         ALOGE("Failed to lock buffer contents for contents transfer");
