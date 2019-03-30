@@ -224,11 +224,23 @@ class WifiChip : public V1_3::IWifiChip {
     std::map<IfaceType, size_t> getCurrentIfaceCombination();
     std::vector<std::map<IfaceType, size_t>> expandIfaceCombinations(
         const IWifiChip::ChipIfaceCombination& combination);
-    bool canExpandedIfaceCombinationSupportIfaceOfType(
-        const std::map<IfaceType, size_t>& combo, IfaceType type);
-    bool canCurrentModeSupportIfaceOfType(IfaceType type);
+    bool canExpandedIfaceComboSupportIfaceOfTypeWithCurrentIfaces(
+        const std::map<IfaceType, size_t>& expanded_combo,
+        IfaceType requested_type);
+    bool canCurrentModeSupportIfaceOfTypeWithCurrentIfaces(
+        IfaceType requested_type);
+    bool canExpandedIfaceComboSupportIfaceCombo(
+        const std::map<IfaceType, size_t>& expanded_combo,
+        const std::map<IfaceType, size_t>& req_combo);
+    bool canCurrentModeSupportIfaceCombo(
+        const std::map<IfaceType, size_t>& req_combo);
+    bool canCurrentModeSupportIfaceOfType(IfaceType requested_type);
     bool isValidModeId(ChipModeId mode_id);
-    std::string allocateApOrStaIfaceName();
+    bool isStaApConcurrencyAllowedInCurrentMode();
+    std::string getFirstActiveWlanIfaceName();
+    std::string allocateApOrStaIfaceName(uint32_t start_idx);
+    std::string allocateApIfaceName();
+    std::string allocateStaIfaceName();
     bool writeRingbufferFilesInternal();
 
     ChipId chip_id_;
