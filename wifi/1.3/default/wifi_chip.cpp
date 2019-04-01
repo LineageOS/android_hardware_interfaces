@@ -41,7 +41,9 @@ constexpr size_t kMaxBufferSizeBytes = 1024 * 1024 * 3;
 constexpr uint32_t kMaxRingBufferFileAgeSeconds = 60 * 60 * 10;
 constexpr uint32_t kMaxRingBufferFileNum = 20;
 constexpr char kTombstoneFolderPath[] = "/data/vendor/tombstones/wifi/";
-constexpr unsigned kMaxWlanIfaces = 100;
+constexpr char kActiveWlanIfaceNameProperty[] = "wifi.active.interface";
+constexpr char kNoActiveWlanIfaceNamePropertyValue[] = "";
+constexpr unsigned kMaxWlanIfaces = 5;
 
 template <typename Iface>
 void invalidateAndClear(std::vector<sp<Iface>>& ifaces, sp<Iface> iface) {
@@ -103,6 +105,13 @@ std::string getP2pIfaceName() {
     std::array<char, PROPERTY_VALUE_MAX> buffer;
     property_get("wifi.direct.interface", buffer.data(), "p2p0");
     return buffer.data();
+}
+
+void setActiveWlanIfaceNameProperty(const std::string& ifname) {
+    auto res = property_set(kActiveWlanIfaceNameProperty, ifname.data());
+    if (res != 0) {
+        PLOG(ERROR) << "Failed to set active wlan iface name property";
+    }
 }
 
 // delete files that meet either conditions:
@@ -316,13 +325,16 @@ WifiChip::WifiChip(
       is_valid_(true),
       current_mode_id_(feature_flags::chip_mode_ids::kInvalid),
       modes_(feature_flags.lock()->getChipModes()),
-      debug_ring_buffer_cb_registered_(false) {}
+      debug_ring_buffer_cb_registered_(false) {
+    setActiveWlanIfaceNameProperty(kNoActiveWlanIfaceNamePropertyValue);
+}
 
 void WifiChip::invalidate() {
     if (!writeRingbufferFilesInternal()) {
         LOG(ERROR) << "Error writing files to flash";
     }
     invalidateAndRemoveAllIfaces();
+    setActiveWlanIfaceNameProperty(kNoActiveWlanIfaceNamePropertyValue);
     legacy_hal_.reset();
     event_cb_handler_.invalidate();
     is_valid_ = false;
@@ -693,6 +705,7 @@ WifiStatus WifiChip::configureChipInternal(
     }
     current_mode_id_ = mode_id;
     LOG(INFO) << "Configured chip in mode " << mode_id;
+    setActiveWlanIfaceNameProperty(getFirstActiveWlanIfaceName());
     return status;
 }
 
@@ -780,6 +793,7 @@ std::pair<WifiStatus, sp<IWifiApIface>> WifiChip::createApIfaceInternal() {
             LOG(ERROR) << "Failed to invoke onIfaceAdded callback";
         }
     }
+    setActiveWlanIfaceNameProperty(getFirstActiveWlanIfaceName());
     return {createWifiStatus(WifiStatusCode::SUCCESS), iface};
 }
 
@@ -811,6 +825,7 @@ WifiStatus WifiChip::removeApIfaceInternal(const std::string& ifname) {
             LOG(ERROR) << "Failed to invoke onIfaceRemoved callback";
         }
     }
+    setActiveWlanIfaceNameProperty(getFirstActiveWlanIfaceName());
     return createWifiStatus(WifiStatusCode::SUCCESS);
 }
 
@@ -919,6 +934,7 @@ std::pair<WifiStatus, sp<IWifiStaIface>> WifiChip::createStaIfaceInternal() {
             LOG(ERROR) << "Failed to invoke onIfaceAdded callback";
         }
     }
+    setActiveWlanIfaceNameProperty(getFirstActiveWlanIfaceName());
     return {createWifiStatus(WifiStatusCode::SUCCESS), iface};
 }
 
@@ -950,6 +966,7 @@ WifiStatus WifiChip::removeStaIfaceInternal(const std::string& ifname) {
             LOG(ERROR) << "Failed to invoke onIfaceRemoved callback";
         }
     }
+    setActiveWlanIfaceNameProperty(getFirstActiveWlanIfaceName());
     return createWifiStatus(WifiStatusCode::SUCCESS);
 }
 
