@@ -23,7 +23,7 @@ cc_binary {
         "Sensor.cpp",
         "Sensors.cpp",
     ],
-    init_rc: ["android.hardware.sensors@2.0-service.rc"],
+    init_rc: ["android.hardware.sensors@2.0-service-mock.rc"],
     shared_libs: [
         "android.hardware.sensors@1.0",
         "android.hardware.sensors@2.0",

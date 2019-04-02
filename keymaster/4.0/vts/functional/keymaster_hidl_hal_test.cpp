@@ -172,6 +172,20 @@ string ec_521_key = hex2str(
     "E78E70BEFE930DB34818EE4D5C26259F5C6B8E28A652950F9F88D7B4B2C9"
     "D9");
 
+string ec_256_key_rfc5915 =
+        hex2str("308193020100301306072a8648ce3d020106082a8648ce3d030107047930"
+                "770201010420782370a8c8ce5537baadd04dcff079c8158cfa9c67b818b3"
+                "8e8d21c9fa750c1da00a06082a8648ce3d030107a14403420004e2cc561e"
+                "e701da0ad0ef0d176bb0c919d42e79c393fdc1bd6c4010d85cf2cf8e68c9"
+                "05464666f98dad4f01573ba81078b3428570a439ba3229fbc026c550682f");
+
+string ec_256_key_sec1 =
+        hex2str("308187020100301306072a8648ce3d020106082a8648ce3d030107046d30"
+                "6b0201010420782370a8c8ce5537baadd04dcff079c8158cfa9c67b818b3"
+                "8e8d21c9fa750c1da14403420004e2cc561ee701da0ad0ef0d176bb0c919"
+                "d42e79c393fdc1bd6c4010d85cf2cf8e68c905464666f98dad4f01573ba8"
+                "1078b3428570a439ba3229fbc026c550682f");
+
 struct RSA_Delete {
     void operator()(RSA* p) { RSA_free(p); }
 };
@@ -1763,6 +1777,56 @@ TEST_F(ImportKeyTest, EcdsaSuccess) {
                                            .EcdsaSigningKey(256)
                                            .Digest(Digest::SHA_2_256),
                                        KeyFormat::PKCS8, ec_256_key));
+
+    CheckCryptoParam(TAG_ALGORITHM, Algorithm::EC);
+    CheckCryptoParam(TAG_KEY_SIZE, 256U);
+    CheckCryptoParam(TAG_DIGEST, Digest::SHA_2_256);
+    CheckCryptoParam(TAG_EC_CURVE, EcCurve::P_256);
+
+    CheckOrigin();
+
+    string message(32, 'a');
+    auto params = AuthorizationSetBuilder().Digest(Digest::SHA_2_256);
+    string signature = SignMessage(message, params);
+    VerifyMessage(message, signature, params);
+}
+
+/*
+ * ImportKeyTest.EcdsaP256RFC5915Success
+ *
+ * Verifies that importing and using an ECDSA P-256 key pair encoded using RFC5915 works correctly.
+ */
+TEST_F(ImportKeyTest, EcdsaP256RFC5915Success) {
+    ASSERT_EQ(ErrorCode::OK, ImportKey(AuthorizationSetBuilder()
+                                               .Authorization(TAG_NO_AUTH_REQUIRED)
+                                               .EcdsaSigningKey(256)
+                                               .Digest(Digest::SHA_2_256),
+                                       KeyFormat::PKCS8, ec_256_key_rfc5915));
+
+    CheckCryptoParam(TAG_ALGORITHM, Algorithm::EC);
+    CheckCryptoParam(TAG_KEY_SIZE, 256U);
+    CheckCryptoParam(TAG_DIGEST, Digest::SHA_2_256);
+    CheckCryptoParam(TAG_EC_CURVE, EcCurve::P_256);
+
+    CheckOrigin();
+
+    string message(32, 'a');
+    auto params = AuthorizationSetBuilder().Digest(Digest::SHA_2_256);
+    string signature = SignMessage(message, params);
+    VerifyMessage(message, signature, params);
+}
+
+/*
+ * ImportKeyTest.EcdsaP256SEC1Success
+ *
+ * Verifies that importing and using an ECDSA P-256 key pair encoded using SEC1 works correctly.
+ */
+TEST_F(ImportKeyTest, EcdsaP256SEC1Success) {
+    ASSERT_EQ(ErrorCode::OK, ImportKey(AuthorizationSetBuilder()
+                                               .Authorization(TAG_NO_AUTH_REQUIRED)
+                                               .EcdsaSigningKey(256)
+                                               .Digest(Digest::SHA_2_256),
+                                       KeyFormat::PKCS8, ec_256_key_sec1));
 
     CheckCryptoParam(TAG_ALGORITHM, Algorithm::EC);
     CheckCryptoParam(TAG_KEY_SIZE, 256U);

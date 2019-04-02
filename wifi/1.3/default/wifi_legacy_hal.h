@@ -184,9 +184,9 @@ class WifiLegacyHal {
     // Checks if legacy HAL has successfully started
     bool isStarted();
     // Wrappers for all the functions in the legacy HAL function table.
-    std::pair<wifi_error, std::string> getDriverVersion(
+    virtual std::pair<wifi_error, std::string> getDriverVersion(
         const std::string& iface_name);
-    std::pair<wifi_error, std::string> getFirmwareVersion(
+    virtual std::pair<wifi_error, std::string> getFirmwareVersion(
         const std::string& iface_name);
     std::pair<wifi_error, std::vector<uint8_t>> requestDriverMemoryDump(
         const std::string& iface_name);
@@ -254,9 +254,9 @@ class WifiLegacyHal {
                                           uint32_t cmd_id);
     wifi_error setScanningMacOui(const std::string& iface_name,
                                  const std::array<uint8_t, 3>& oui);
-    wifi_error selectTxPowerScenario(const std::string& iface_name,
-                                     wifi_power_scenario scenario);
-    wifi_error resetTxPowerScenario(const std::string& iface_name);
+    virtual wifi_error selectTxPowerScenario(const std::string& iface_name,
+                                             wifi_power_scenario scenario);
+    virtual wifi_error resetTxPowerScenario(const std::string& iface_name);
     wifi_error setLatencyMode(const std::string& iface_name,
                               wifi_latency_mode mode);
     // Logger/debug functions.

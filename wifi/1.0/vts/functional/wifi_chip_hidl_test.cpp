@@ -361,8 +361,8 @@ TEST_F(WifiChipHidlTest, GetDebugHostWakeReasonStats) {
 
 /*
  * CreateApIface
- * Configures the chip in AP mode and ensures that only 1 iface creation
- * succeeds. The 2nd iface creation should be rejected.
+ * Configures the chip in AP mode and ensures that at least 1 iface creation
+ * succeeds.
  */
 TEST_F(WifiChipHidlTest, CreateApIface) {
     if (!gEnv->isSoftApOn) return;
@@ -371,8 +371,6 @@ TEST_F(WifiChipHidlTest, CreateApIface) {
     sp<IWifiApIface> iface;
     EXPECT_EQ(WifiStatusCode::SUCCESS, createApIface(&iface));
     EXPECT_NE(nullptr, iface.get());
-
-    EXPECT_EQ(WifiStatusCode::ERROR_NOT_AVAILABLE, createApIface(&iface));
 }
 
 /*
@@ -460,8 +458,8 @@ TEST_F(WifiChipHidlTest, RemoveApIface) {
 
 /*
  * CreateNanIface
- * Configures the chip in NAN mode and ensures that only 1 iface creation
- * succeeds. The 2nd iface creation should be rejected.
+ * Configures the chip in NAN mode and ensures that at least 1 iface creation
+ * succeeds.
  */
 TEST_F(WifiChipHidlTest, CreateNanIface) {
     if (!gEnv->isNanOn) return;
@@ -470,8 +468,6 @@ TEST_F(WifiChipHidlTest, CreateNanIface) {
     sp<IWifiNanIface> iface;
     ASSERT_EQ(WifiStatusCode::SUCCESS, createNanIface(&iface));
     EXPECT_NE(nullptr, iface.get());
-
-    EXPECT_EQ(WifiStatusCode::ERROR_NOT_AVAILABLE, createNanIface(&iface));
 }
 
 /*
@@ -560,8 +556,8 @@ TEST_F(WifiChipHidlTest, RemoveNanIface) {
 
 /*
  * CreateP2pIface
- * Configures the chip in P2P mode and ensures that only 1 iface creation
- * succeeds. The 2nd iface creation should be rejected.
+ * Configures the chip in P2P mode and ensures that at least 1 iface creation
+ * succeeds.
  */
 TEST_F(WifiChipHidlTest, CreateP2pIface) {
     configureChipForIfaceType(IfaceType::P2P, true);
@@ -569,8 +565,6 @@ TEST_F(WifiChipHidlTest, CreateP2pIface) {
     sp<IWifiP2pIface> iface;
     EXPECT_EQ(WifiStatusCode::SUCCESS, createP2pIface(&iface));
     EXPECT_NE(nullptr, iface.get());
-
-    EXPECT_EQ(WifiStatusCode::ERROR_NOT_AVAILABLE, createP2pIface(&iface));
 }
 
 /*
@@ -655,8 +649,8 @@ TEST_F(WifiChipHidlTest, RemoveP2pIface) {
 
 /*
  * CreateStaIface
- * Configures the chip in STA mode and ensures that only 1 iface creation
- * succeeds. The 2nd iface creation should be rejected.
+ * Configures the chip in STA mode and ensures that at least 1 iface creation
+ * succeeds.
  */
 TEST_F(WifiChipHidlTest, CreateStaIface) {
     configureChipForIfaceType(IfaceType::STA, true);
@@ -664,8 +658,6 @@ TEST_F(WifiChipHidlTest, CreateStaIface) {
     sp<IWifiStaIface> iface;
     EXPECT_EQ(WifiStatusCode::SUCCESS, createStaIface(&iface));
     EXPECT_NE(nullptr, iface.get());
-
-    EXPECT_EQ(WifiStatusCode::ERROR_NOT_AVAILABLE, createStaIface(&iface));
 }
 
 /*
