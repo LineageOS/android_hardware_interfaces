@@ -758,3 +758,40 @@ TEST_F(RadioHidlTest_v1_4, setInitialAttachApn_1_4) {
                                      {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE}));
     }
 }
+
+/*
+ * Test IRadio.getDataRegistrationStateResponse_1_4() for the response returned.
+ */
+TEST_F(RadioHidlTest_v1_4, getDataRegistrationState_1_4) {
+    int rat;
+    serial = GetRandomSerialNumber();
+
+    Return<void> res = radio_v1_4->getDataRegistrationState(serial);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_4->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_4->rspInfo.serial);
+
+    ALOGI("getDataRegistrationStateResponse_1_4, rspInfo.error = %s\n",
+          toString(radioRsp_v1_4->rspInfo.error).c_str());
+
+    ASSERT_TRUE(CheckAnyOfErrors(
+        radioRsp_v1_4->rspInfo.error,
+        {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::NOT_PROVISIONED}));
+
+    rat = radioRsp_v1_4->dataRegResp.base.rat;
+    /*
+     *  - Expect Valid vopsinfo when device is on LTE
+     *  - Expect empty vopsInfo when device is not on LTE
+     */
+    if (rat == ((int )::android::hardware::radio::V1_4::RadioTechnology::LTE)
+        || (rat == (int )::android::hardware::radio::V1_4::RadioTechnology::LTE_CA)) {
+
+        EXPECT_EQ(::android::hardware::radio::V1_4::DataRegStateResult::VopsInfo::hidl_discriminator
+                  ::lteVopsInfo, radioRsp_v1_4->dataRegResp.vopsInfo.getDiscriminator());
+    } else {
+
+        EXPECT_EQ(::android::hardware::radio::V1_4::DataRegStateResult::VopsInfo::hidl_discriminator
+                  ::noinit, radioRsp_v1_4->dataRegResp.vopsInfo.getDiscriminator());
+    }
+}
