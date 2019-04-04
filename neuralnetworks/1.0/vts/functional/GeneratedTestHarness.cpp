@@ -125,7 +125,7 @@ static std::unique_ptr<::android::nn::ExecutionBurstController> CreateBurst(
     ADD_FAILURE() << "asking for burst execution at V1_0";
     return nullptr;
 }
-static std::unique_ptr<::android::nn::ExecutionBurstController> CreateBurst(
+static std::shared_ptr<::android::nn::ExecutionBurstController> CreateBurst(
         const sp<V1_2::IPreparedModel>& preparedModel) {
     return ::android::nn::ExecutionBurstController::create(preparedModel, /*blocking=*/true);
 }
@@ -286,7 +286,7 @@ void EvaluatePreparedModel(sp<T_IPreparedModel>& preparedModel, std::function<bo
                 SCOPED_TRACE("burst");
 
                 // create burst
-                const std::unique_ptr<::android::nn::ExecutionBurstController> controller =
+                const std::shared_ptr<::android::nn::ExecutionBurstController> controller =
                         CreateBurst(preparedModel);
                 ASSERT_NE(nullptr, controller.get());
 
