@@ -562,12 +562,12 @@ WifiStatus WifiStaIface::enableNdOffloadInternal(bool enable) {
 
 WifiStatus WifiStaIface::startSendingKeepAlivePacketsInternal(
     uint32_t cmd_id, const std::vector<uint8_t>& ip_packet_data,
-    uint16_t /* ether_type */, const std::array<uint8_t, 6>& src_address,
+    uint16_t ether_type, const std::array<uint8_t, 6>& src_address,
     const std::array<uint8_t, 6>& dst_address, uint32_t period_in_ms) {
     legacy_hal::wifi_error legacy_status =
         legacy_hal_.lock()->startSendingOffloadedPacket(
-            ifname_, cmd_id, ip_packet_data, src_address, dst_address,
-            period_in_ms);
+            ifname_, cmd_id, ether_type, ip_packet_data, src_address,
+            dst_address, period_in_ms);
     return createWifiStatusFromLegacyError(legacy_status);
 }
 

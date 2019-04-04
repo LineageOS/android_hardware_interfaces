@@ -38,46 +38,47 @@ using ::android::hardware::thermal::V1_0::ThermalStatusCode;
 std::set<sp<IThermalChangedCallback>> gCallbacks;
 
 static const Temperature_1_0 kTemp_1_0 = {
-    .type = static_cast<::android::hardware::thermal::V1_0::TemperatureType>(TemperatureType::CPU),
-    .name = "test temperature sensor",
-    .currentValue = 98.6,
-    .throttlingThreshold = 58,
-    .shutdownThreshold = 60.0,
-    .vrThrottlingThreshold = 59.0,
+        .type = static_cast<::android::hardware::thermal::V1_0::TemperatureType>(
+                TemperatureType::SKIN),
+        .name = "test temperature sensor",
+        .currentValue = 30.8,
+        .throttlingThreshold = 48.0,
+        .shutdownThreshold = 60.0,
+        .vrThrottlingThreshold = 49.0,
 };
 
 static const Temperature_2_0 kTemp_2_0 = {
-    .type = TemperatureType::SKIN,
-    .name = "test temperature sensor",
-    .value = 98.6,
-    .throttlingStatus = ThrottlingSeverity::CRITICAL,
+        .type = TemperatureType::SKIN,
+        .name = "test temperature sensor",
+        .value = 30.8,
+        .throttlingStatus = ThrottlingSeverity::NONE,
 };
 
 static const TemperatureThreshold kTempThreshold = {
-    .type = TemperatureType::SKIN,
-    .name = "test temperature sensor",
-    .hotThrottlingThresholds = {{NAN, NAN, NAN, NAN, NAN, NAN, NAN}},
-    .coldThrottlingThresholds = {{NAN, NAN, NAN, NAN, NAN, NAN, NAN}},
-    .vrThrottlingThreshold = NAN,
+        .type = TemperatureType::SKIN,
+        .name = "test temperature sensor",
+        .hotThrottlingThresholds = {{NAN, NAN, NAN, 48.0, NAN, NAN, 60.0}},
+        .coldThrottlingThresholds = {{NAN, NAN, NAN, NAN, NAN, NAN, NAN}},
+        .vrThrottlingThreshold = 49.0,
 };
 
 static const CoolingDevice_1_0 kCooling_1_0 = {
-    .type = ::android::hardware::thermal::V1_0::CoolingType::FAN_RPM,
-    .name = "test cooling device",
-    .currentValue = 100.0,
+        .type = ::android::hardware::thermal::V1_0::CoolingType::FAN_RPM,
+        .name = "test cooling device",
+        .currentValue = 100.0,
 };
 
 static const CoolingDevice_2_0 kCooling_2_0 = {
-    .type = CoolingType::CPU,
-    .name = "test cooling device",
-    .value = 1,
+        .type = CoolingType::FAN,
+        .name = "test cooling device",
+        .value = 100,
 };
 
 static const CpuUsage kCpuUsage = {
-    .name = "cpu_name",
-    .active = 0,
-    .total = 0,
-    .isOnline = true,
+        .name = "cpu_name",
+        .active = 0,
+        .total = 0,
+        .isOnline = true,
 };
 
 // Methods from ::android::hardware::thermal::V1_0::IThermal follow.

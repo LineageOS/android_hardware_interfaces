@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <string>
+#include <unordered_set>
 
 #include <android/hardware/automotive/vehicle/2.0/types.h>
 
@@ -42,6 +43,20 @@ struct VmsLayer {
     int type;
     int subtype;
     int version;
+    bool operator==(const VmsLayer& layer) const {
+        return this->type == layer.type && this->subtype == layer.subtype &&
+               this->version == layer.version;
+    }
+
+    // Class for hash function
+    class VmsLayerHashFunction {
+      public:
+        // Hash of the variables is returned.
+        size_t operator()(const VmsLayer& layer) const {
+            return std::hash<int>()(layer.type) ^ std::hash<int>()(layer.type) ^
+                   std::hash<int>()(layer.type);
+        }
+    };
 };
 
 struct VmsLayerAndPublisher {
@@ -66,6 +81,15 @@ struct VmsLayerOffering {
     std::vector<VmsLayer> dependencies;
 };
 
+// A VmsOffers refers to a list of layers that can be published by the publisher
+// with the specified publisher ID.
+struct VmsOffers {
+    VmsOffers(int publisher_id, std::vector<VmsLayerOffering> offerings)
+        : publisher_id(publisher_id), offerings(offerings) {}
+    int publisher_id;
+    std::vector<VmsLayerOffering> offerings;
+};
+
 // A VmsSubscriptionsState is delivered in response to a
 // VmsMessageType.SUBSCRIPTIONS_REQUEST or on the first SUBSCRIBE or last
 // UNSUBSCRIBE for a layer. It indicates which layers or associated_layers are
@@ -80,6 +104,9 @@ struct VmsAvailabilityState {
     int sequence_number;
     std::vector<VmsAssociatedLayer> associated_layers;
 };
+
+// Creates an empty base VMS message with some pre-populated default fields.
+std::unique_ptr<VehiclePropValue> createBaseVmsMessage(size_t message_size);
 
 // Creates a VehiclePropValue containing a message of type
 // VmsMessageType.SUBSCRIBE, specifying to the VMS service
@@ -106,8 +133,7 @@ std::unique_ptr<VehiclePropValue> createUnsubscribeToPublisherMessage(
 // Creates a VehiclePropValue containing a message of type
 // VmsMessageType.OFFERING, specifying to the VMS service which layers are being
 // offered and their dependencies, if any.
-std::unique_ptr<VehiclePropValue> createOfferingMessage(
-    const std::vector<VmsLayerOffering>& offering);
+std::unique_ptr<VehiclePropValue> createOfferingMessage(const VmsOffers& offers);
 
 // Creates a VehiclePropValue containing a message of type
 // VmsMessageType.AVAILABILITY_REQUEST.
@@ -143,8 +169,40 @@ VmsMessageType parseMessageType(const VehiclePropValue& value);
 // function to ParseFromString.
 std::string parseData(const VehiclePropValue& value);
 
-// TODO(aditin): Need to implement additional parsing functions per message
-// type.
+// Creates a VehiclePropValue containing a message of type
+// VmsMessageType.PUBLISHER_ID_REQUEST with the given publisher information.
+// Returns a nullptr if the input is empty.
+std::unique_ptr<VehiclePropValue> createPublisherIdRequest(
+        const std::string& vms_provider_description);
+
+// Returns the publisher ID by parsing the VehiclePropValue containing the ID.
+// Returns null if the message is invalid.
+int32_t parsePublisherIdResponse(const VehiclePropValue& publisher_id_response);
+
+// Returns true if the new sequence number is greater than the last seen
+// sequence number.
+bool isSequenceNumberNewer(const VehiclePropValue& subscription_change,
+                           const int last_seen_sequence_number);
+
+// Returns sequence number of the message.
+int32_t getSequenceNumberForSubscriptionsState(const VehiclePropValue& subscription_change);
+
+// Takes a subscription change message and returns the layers that have active
+// subscriptions of the layers that are offered by your HAL client/publisher.
+//
+// A publisher can use this function when receiving a subscription change message
+// to determine which layers to publish data on.
+// The caller of this function can optionally decide to not consume these layers
+// if the subscription change has the sequence number less than the last seen
+// sequence number.
+std::vector<VmsLayer> getSubscribedLayers(const VehiclePropValue& subscription_change,
+                                          const VmsOffers& offers);
+
+// Takes an availability change message and returns true if the parsed message implies that
+// the service has newly started or restarted.
+// If the message has a sequence number 0, it means that the service
+// has newly started or restarted.
+bool hasServiceNewlyStarted(const VehiclePropValue& availability_change);
 
 }  // namespace vms
 }  // namespace V2_0

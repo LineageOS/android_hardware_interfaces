@@ -25,7 +25,7 @@ namespace V1_2 {
 namespace vts {
 namespace functional {
 
-using V1_1::Capabilities;
+using V1_0::PerformanceInfo;
 
 // create device test
 TEST_F(NeuralnetworksHidlTest, CreateDevice) {}
@@ -35,6 +35,31 @@ TEST_F(NeuralnetworksHidlTest, StatusTest) {
     Return<DeviceStatus> status = device->getStatus();
     ASSERT_TRUE(status.isOk());
     EXPECT_EQ(DeviceStatus::AVAILABLE, static_cast<DeviceStatus>(status));
+}
+
+// initialization
+TEST_F(NeuralnetworksHidlTest, GetCapabilitiesTest) {
+    using OperandPerformance = Capabilities::OperandPerformance;
+    Return<void> ret = device->getCapabilities_1_2([](ErrorStatus status,
+                                                      const Capabilities& capabilities) {
+        EXPECT_EQ(ErrorStatus::NONE, status);
+
+        auto isPositive = [](const PerformanceInfo& perf) {
+            return perf.execTime > 0.0f && perf.powerUsage > 0.0f;
+        };
+
+        EXPECT_TRUE(isPositive(capabilities.relaxedFloat32toFloat16PerformanceScalar));
+        EXPECT_TRUE(isPositive(capabilities.relaxedFloat32toFloat16PerformanceTensor));
+        const auto& opPerf = capabilities.operandPerformance;
+        EXPECT_TRUE(std::all_of(
+                opPerf.begin(), opPerf.end(),
+                [isPositive](const OperandPerformance& a) { return isPositive(a.info); }));
+        EXPECT_TRUE(std::is_sorted(opPerf.begin(), opPerf.end(),
+                                   [](const OperandPerformance& a, const OperandPerformance& b) {
+                                       return a.type < b.type;
+                                   }));
+    });
+    EXPECT_TRUE(ret.isOk());
 }
 
 // device version test
@@ -77,10 +102,15 @@ TEST_F(NeuralnetworksHidlTest, GetDeviceSupportedExtensionsTest) {
     EXPECT_TRUE(ret.isOk());
 }
 
-// isCachingSupported test
-TEST_F(NeuralnetworksHidlTest, IsCachingSupported) {
-    Return<void> ret = device->isCachingSupported(
-            [](ErrorStatus status, bool) { EXPECT_EQ(ErrorStatus::NONE, status); });
+// getNumberOfCacheFilesNeeded test
+TEST_F(NeuralnetworksHidlTest, getNumberOfCacheFilesNeeded) {
+    Return<void> ret = device->getNumberOfCacheFilesNeeded(
+            [](ErrorStatus status, uint32_t numModelCache, uint32_t numDataCache) {
+                EXPECT_EQ(ErrorStatus::NONE, status);
+                EXPECT_LE(numModelCache,
+                          static_cast<uint32_t>(Constant::MAX_NUMBER_OF_CACHE_FILES));
+                EXPECT_LE(numDataCache, static_cast<uint32_t>(Constant::MAX_NUMBER_OF_CACHE_FILES));
+            });
     EXPECT_TRUE(ret.isOk());
 }
 }  // namespace functional

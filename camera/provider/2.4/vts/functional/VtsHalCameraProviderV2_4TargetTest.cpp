@@ -767,7 +767,7 @@ public:
             const ::android::hardware::camera::common::V1_0::helper::CameraMetadata& metadata);
     void verifyStreamCombination(sp<device::V3_5::ICameraDevice> cameraDevice3_5,
             const ::android::hardware::camera::device::V3_4::StreamConfiguration &config3_4,
-            bool expectedStatus);
+            bool expectedStatus, bool expectStreamCombQuery);
     void verifyLogicalCameraResult(const camera_metadata_t* staticMetadata,
             const ::android::hardware::camera::common::V1_0::helper::CameraMetadata& resultMetadata);
 
@@ -2877,8 +2877,9 @@ TEST_F(CameraHidlTest, configureStreamsAvailableOutputs) {
             createStreamConfiguration(streams3_2, StreamConfigurationMode::NORMAL_MODE,
                                       &config3_2, &config3_4, &config3_5, jpegBufferSize);
             if (session3_5 != nullptr) {
+                bool expectStreamCombQuery = (isLogicalMultiCamera(staticMeta) == Status::OK);
                 verifyStreamCombination(cameraDevice3_5, config3_4,
-                        /*expectedStatus*/ true);
+                        /*expectedStatus*/ true, expectStreamCombQuery);
                 config3_5.streamConfigCounter = streamConfigCounter++;
                 ret = session3_5->configureStreams_3_5(config3_5,
                         [streamId](Status s, device::V3_4::HalStreamConfiguration halConfig) {
@@ -2971,7 +2972,8 @@ TEST_F(CameraHidlTest, configureStreamsInvalidOutputs) {
         createStreamConfiguration(streams, StreamConfigurationMode::NORMAL_MODE,
                                   &config3_2, &config3_4, &config3_5, jpegBufferSize);
         if (session3_5 != nullptr) {
-            verifyStreamCombination(cameraDevice3_5, config3_4, /*expectedStatus*/ false);
+            verifyStreamCombination(cameraDevice3_5, config3_4, /*expectedStatus*/ false,
+                    /*expectStreamCombQuery*/false);
             config3_5.streamConfigCounter = streamConfigCounter++;
             ret = session3_5->configureStreams_3_5(config3_5,
                     [](Status s, device::V3_4::HalStreamConfiguration) {
@@ -3232,7 +3234,7 @@ TEST_F(CameraHidlTest, configureStreamsZSLInputOutputs) {
                                           &config3_2, &config3_4, &config3_5, jpegBufferSize);
                 if (session3_5 != nullptr) {
                     verifyStreamCombination(cameraDevice3_5, config3_4,
-                            /*expectedStatus*/ true);
+                            /*expectedStatus*/ true, /*expectStreamCombQuery*/ false);
                     config3_5.streamConfigCounter = streamConfigCounter++;
                     ret = session3_5->configureStreams_3_5(config3_5,
                             [](Status s, device::V3_4::HalStreamConfiguration halConfig) {
@@ -3483,7 +3485,7 @@ TEST_F(CameraHidlTest, configureStreamsPreviewStillOutputs) {
                                           &config3_2, &config3_4, &config3_5, jpegBufferSize);
                 if (session3_5 != nullptr) {
                     verifyStreamCombination(cameraDevice3_5, config3_4,
-                            /*expectedStatus*/ true);
+                            /*expectedStatus*/ true, /*expectStreamCombQuery*/ false);
                     config3_5.streamConfigCounter = streamConfigCounter++;
                     ret = session3_5->configureStreams_3_5(config3_5,
                             [](Status s, device::V3_4::HalStreamConfiguration halConfig) {
@@ -3578,7 +3580,7 @@ TEST_F(CameraHidlTest, configureStreamsConstrainedOutputs) {
                                   &config3_2, &config3_4, &config3_5);
         if (session3_5 != nullptr) {
             verifyStreamCombination(cameraDevice3_5, config3_4,
-                    /*expectedStatus*/ true);
+                    /*expectedStatus*/ true, /*expectStreamCombQuery*/ false);
             config3_5.streamConfigCounter = streamConfigCounter++;
             ret = session3_5->configureStreams_3_5(config3_5,
                     [streamId](Status s, device::V3_4::HalStreamConfiguration halConfig) {
@@ -3811,7 +3813,7 @@ TEST_F(CameraHidlTest, configureStreamsVideoStillOutputs) {
                                           &config3_2, &config3_4, &config3_5, jpegBufferSize);
                 if (session3_5 != nullptr) {
                     verifyStreamCombination(cameraDevice3_5, config3_4,
-                            /*expectedStatus*/ true);
+                            /*expectedStatus*/ true, /*expectStreamCombQuery*/ false);
                     config3_5.streamConfigCounter = streamConfigCounter++;
                     ret = session3_5->configureStreams_3_5(config3_5,
                             [](Status s, device::V3_4::HalStreamConfiguration halConfig) {
@@ -5535,11 +5537,12 @@ void CameraHidlTest::castSession(const sp<ICameraDeviceSession> &session, int32_
 
 void CameraHidlTest::verifyStreamCombination(sp<device::V3_5::ICameraDevice> cameraDevice3_5,
         const ::android::hardware::camera::device::V3_4::StreamConfiguration &config3_4,
-        bool expectedStatus) {
+        bool expectedStatus, bool expectMethodSupported) {
     if (cameraDevice3_5.get() != nullptr) {
         auto ret = cameraDevice3_5->isStreamCombinationSupported(config3_4,
-                [expectedStatus] (Status s, bool combStatus) {
-                    ASSERT_TRUE((Status::OK == s) || (Status::METHOD_NOT_SUPPORTED == s));
+                [expectedStatus, expectMethodSupported] (Status s, bool combStatus) {
+                    ASSERT_TRUE((Status::OK == s) ||
+                            (!expectMethodSupported && Status::METHOD_NOT_SUPPORTED == s));
                     if (Status::OK == s) {
                         ASSERT_TRUE(combStatus == expectedStatus);
                     }

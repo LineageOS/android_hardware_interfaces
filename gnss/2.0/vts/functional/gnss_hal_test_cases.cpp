@@ -32,6 +32,8 @@ using IAGnssRil_2_0 = android::hardware::gnss::V2_0::IAGnssRil;
 using IAGnss_2_0 = android::hardware::gnss::V2_0::IAGnss;
 using IAGnss_1_0 = android::hardware::gnss::V1_0::IAGnss;
 using IAGnssCallback_2_0 = android::hardware::gnss::V2_0::IAGnssCallback;
+using IGnssBatching_V1_0 = android::hardware::gnss::V1_0::IGnssBatching;
+using IGnssBatching_V2_0 = android::hardware::gnss::V2_0::IGnssBatching;
 
 using android::hardware::gnss::common::Utils;
 using android::hardware::gnss::measurement_corrections::V1_0::IMeasurementCorrections;
@@ -326,6 +328,10 @@ TEST_F(GnssHalTest, TestGnssMeasurementCorrections) {
         return;
     }
 
+    sp<IMeasurementCorrectionsCallback> iMeasurementCorrectionsCallback =
+            new GnssMeasurementCorrectionsCallback(*this);
+    iMeasurementCorrections->setCallback(iMeasurementCorrectionsCallback);
+
     const int kMeasurementCorrectionsCapabilitiesTimeoutSeconds = 5;
     waitForMeasurementCorrectionsCapabilities(kMeasurementCorrectionsCapabilitiesTimeoutSeconds);
     ASSERT_TRUE(measurement_corrections_capabilities_called_count_ > 0);
@@ -394,4 +400,21 @@ TEST_F(GnssHalTest, TestInjectBestLocation_2_0) {
     StartAndCheckFirstLocation();
     gnss_hal_->injectBestLocation_2_0(last_location_);
     StopAndClearLocations();
+}
+
+/*
+ * TestGnssBatchingExtension:
+ * Gets the GnssBatchingExtension and verifies that it supports either the @1.0::IGnssBatching
+ * or @2.0::IGnssBatching extension.
+ */
+TEST_F(GnssHalTest, TestGnssBatchingExtension) {
+    auto gnssBatching_V2_0 = gnss_hal_->getExtensionGnssBatching_2_0();
+    ASSERT_TRUE(gnssBatching_V2_0.isOk());
+
+    auto gnssBatching_V1_0 = gnss_hal_->getExtensionGnssBatching();
+    ASSERT_TRUE(gnssBatching_V1_0.isOk());
+
+    sp<IGnssBatching_V1_0> iGnssBatching_V1_0 = gnssBatching_V1_0;
+    sp<IGnssBatching_V2_0> iGnssBatching_V2_0 = gnssBatching_V2_0;
+    ASSERT_TRUE(iGnssBatching_V1_0 != nullptr || iGnssBatching_V2_0 != nullptr);
 }
