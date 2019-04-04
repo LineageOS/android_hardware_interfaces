@@ -44,7 +44,7 @@ class ComposerHandleImporter {
         if (mMapper3) {
             return true;
         }
-        ALOGW_IF(!mMapper3, "failed to get mapper 3.0 service");
+        ALOGD_IF(!mMapper3, "failed to get mapper 3.0 service, falling back to mapper 2.0");
 
         mMapper2 = mapper::V2_0::IMapper::getService();
         ALOGE_IF(!mMapper2, "failed to get mapper 2.0 service");
