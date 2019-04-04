@@ -162,7 +162,6 @@ class HwcHalImpl : public Hal {
 
     Error destroyLayer(Display display, Layer layer) override {
         int32_t err = mDispatch.destroyLayer(mDevice, display, layer);
-        onLayerDestroyed(display, layer);
         return static_cast<Error>(err);
     }
 
@@ -328,7 +327,6 @@ class HwcHalImpl : public Hal {
                           std::vector<IComposerClient::Composition>* outCompositionTypes,
                           uint32_t* outDisplayRequestMask, std::vector<Layer>* outRequestedLayers,
                           std::vector<uint32_t>* outRequestMasks) override {
-        onBeforeValidateDisplay(display);
         uint32_t typesCount = 0;
         uint32_t reqsCount = 0;
         int32_t err = mDispatch.validateDisplay(mDevice, display, &typesCount, &reqsCount);
@@ -337,15 +335,17 @@ class HwcHalImpl : public Hal {
             return static_cast<Error>(err);
         }
 
-        err = getChangedCompositionTypes(display, &typesCount, nullptr, nullptr);
+        err = mDispatch.getChangedCompositionTypes(mDevice, display, &typesCount, nullptr, nullptr);
         if (err != HWC2_ERROR_NONE) {
             return static_cast<Error>(err);
         }
 
         std::vector<Layer> changedLayers(typesCount);
         std::vector<IComposerClient::Composition> compositionTypes(typesCount);
-        err = getChangedCompositionTypes(display, &typesCount, changedLayers.data(),
-                                         compositionTypes.data());
+        err = mDispatch.getChangedCompositionTypes(
+            mDevice, display, &typesCount, changedLayers.data(),
+            reinterpret_cast<std::underlying_type<IComposerClient::Composition>::type*>(
+                compositionTypes.data()));
         if (err != HWC2_ERROR_NONE) {
             return static_cast<Error>(err);
         }
@@ -578,15 +578,6 @@ class HwcHalImpl : public Hal {
         return true;
     }
 
-    virtual int32_t getChangedCompositionTypes(Display display, uint32_t* outTypesCount,
-                                               Layer* outChangedLayers,
-                                               IComposerClient::Composition* outCompositionTypes) {
-        return getChangedCompositionTypesInternal(display, outTypesCount, outChangedLayers,
-                                                  outCompositionTypes);
-    }
-    virtual void onLayerDestroyed(Display /* display */, Layer /* layer */) {}
-    virtual void onBeforeValidateDisplay(Display /* display */) {}
-
     static void hotplugHook(hwc2_callback_data_t callbackData, hwc2_display_t display,
                             int32_t connected) {
         auto hal = static_cast<HwcHalImpl*>(callbackData);
@@ -603,15 +594,6 @@ class HwcHalImpl : public Hal {
                           int64_t timestamp) {
         auto hal = static_cast<HwcHalImpl*>(callbackData);
         hal->mEventCallback->onVsync(display, timestamp);
-    }
-
-    int32_t getChangedCompositionTypesInternal(Display display, uint32_t* outTypesCount,
-                                               Layer* outChangedLayers,
-                                               IComposerClient::Composition* outCompositionTypes) {
-        return mDispatch.getChangedCompositionTypes(
-                mDevice, display, outTypesCount, outChangedLayers,
-                reinterpret_cast<std::underlying_type<IComposerClient::Composition>::type*>(
-                        outCompositionTypes));
     }
 
     hwc2_device_t* mDevice = nullptr;
