@@ -30,32 +30,13 @@ interface IGnssCallback extends @1.1::IGnssCallback {
 
     /** Flags for the gnssSetCapabilities callback. */
     @export(name="", value_prefix="GPS_CAPABILITY_")
-    enum Capabilities : uint32_t {
-        /**
-         * GNSS HAL schedules fixes for RECURRENCE_PERIODIC mode.
-         * If this is not set, then the framework will use 1000ms for
-         * minInterval and must call start() and stop() to schedule the GNSS.
-         */
-        SCHEDULING                      = 1 << 0,
-        /** GNSS supports MS-Based AGNSS mode */
-        MSB                             = 1 << 1,
-        /** GNSS supports MS-Assisted AGNSS mode */
-        MSA                             = 1 << 2,
-        /** GNSS supports single-shot fixes */
-        SINGLE_SHOT                     = 1 << 3,
-        /** GNSS supports on demand time injection */
-        ON_DEMAND_TIME                  = 1 << 4,
-        /**
-         * Values for the flags removed from IGnssCallback.hal@1.0 Capabilities
-         * enum are marked as reserved and not reused here to avoid confusion.
-         */
-        RESERVED_1                      = 1 << 5,
-        RESERVED_2                      = 1 << 6,
-        RESERVED_3                      = 1 << 7,
+    enum Capabilities : @1.0::IGnssCallback.Capabilities {
         /** GNSS supports low power mode */
-        LOW_POWER_MODE                  = 1 << 8,
+        LOW_POWER_MODE                          = 1 << 8,
         /** GNSS supports blacklisting satellites */
-        SATELLITE_BLACKLIST             = 1 << 9
+        SATELLITE_BLACKLIST                     = 1 << 9,
+        /** GNSS supports measurement corrections */
+        MEASUREMENT_CORRECTIONS                 = 1 << 10
     };
 
     /**
