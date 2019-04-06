@@ -328,8 +328,8 @@ class HwcHalImpl : public V2_2::passthrough::detail::HwcHalImpl<Hal> {
             if (error != HWC2_ERROR_NONE) {
                 return error;
             }
-            mChangedLayersCache[display].reserve(typesCount);
-            mCompositionTypesCache[display].reserve(typesCount);
+            mChangedLayersCache[display].resize(typesCount);
+            mCompositionTypesCache[display].resize(typesCount);
             error = BaseType2_1::getChangedCompositionTypesInternal(
                     display, &typesCount, mChangedLayersCache[display].data(),
                     mCompositionTypesCache[display].data());

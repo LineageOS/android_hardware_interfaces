@@ -187,7 +187,6 @@ bool CameraDeviceSession::preProcessConfigurationLocked_3_4(
             mPhysicalCameraIdMap[id] = requestedConfiguration.streams[i].physicalCameraId;
             mStreamMap[id].data_space = mapToLegacyDataspace(
                     mStreamMap[id].data_space);
-            mStreamMap[id].physical_camera_id = mPhysicalCameraIdMap[id].c_str();
             mCirculatingBuffers.emplace(stream.mId, CirculatingBuffers{});
         } else {
             // width/height/format must not change, but usage/rotation might need to change
@@ -206,6 +205,11 @@ bool CameraDeviceSession::preProcessConfigurationLocked_3_4(
             mStreamMap[id].rotation = (int) requestedConfiguration.streams[i].v3_2.rotation;
             mStreamMap[id].usage = (uint32_t) requestedConfiguration.streams[i].v3_2.usage;
         }
+        // It is possible for the entry in 'mStreamMap' to get initialized by an older
+        // HIDL API. Make sure that the physical id is always initialized when using
+        // a more recent API call.
+        mStreamMap[id].physical_camera_id = mPhysicalCameraIdMap[id].c_str();
+
         (*streams)[i] = &mStreamMap[id];
     }
 

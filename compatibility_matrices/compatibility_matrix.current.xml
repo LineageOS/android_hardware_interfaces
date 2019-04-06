@@ -271,7 +271,16 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="false">
+    <hal format="hidl" optional="true">
+        <name>android.hardware.media.c2</name>
+        <version>1.0</version>
+        <interface>
+            <name>IComponentStore</name>
+            <regex-instance>default[0-9]*</regex-instance>
+            <regex-instance>vendor[0-9]*_software</regex-instance>
+        </interface>
+    </hal>
+    <hal format="hidl" optional="true">
         <name>android.hardware.media.omx</name>
         <version>1.0</version>
         <interface>
