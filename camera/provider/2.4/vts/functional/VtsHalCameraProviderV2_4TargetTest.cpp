@@ -1364,19 +1364,20 @@ Return<void> CameraHidlTest::DeviceCb::requestStreamBuffers(
         }
 
         hidl_vec<StreamBuffer> tmpRetBuffers(bufReq.numBuffersRequested);
-        for (size_t i = 0; i < bufReq.numBuffersRequested; i++) {
+        for (size_t j = 0; j < bufReq.numBuffersRequested; j++) {
             hidl_handle buffer_handle;
             mParent->allocateGraphicBuffer(stream.width, stream.height,
                     android_convertGralloc1To0Usage(
                             halStream.producerUsage, halStream.consumerUsage),
                     halStream.overrideFormat, &buffer_handle);
 
-            tmpRetBuffers[i] = {stream.id, mNextBufferId, buffer_handle, BufferStatus::OK,
+            tmpRetBuffers[j] = {stream.id, mNextBufferId, buffer_handle, BufferStatus::OK,
                                 nullptr, nullptr};
             mOutstandingBufferIds[idx].insert(std::make_pair(mNextBufferId++, buffer_handle));
         }
         atLeastOneStreamOk = true;
-        bufRets[0].val.buffers(std::move(tmpRetBuffers));
+        bufRets[i].streamId = stream.id;
+        bufRets[i].val.buffers(std::move(tmpRetBuffers));
     }
 
     if (allStreamOk) {

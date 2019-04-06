@@ -192,6 +192,9 @@ TEST_F(ThermalHidlTest, TemperatureTest) {
                                          } else {
                                              EXPECT_NE(ThermalStatusCode::SUCCESS, status.code);
                                          }
+                                         for (int i = 0; i < temperatures.size(); ++i) {
+                                             EXPECT_LT(0u, temperatures[i].name.size());
+                                         }
                                      });
     auto types = hidl_enum_range<TemperatureType>();
     for (const auto& type : types) {
@@ -204,6 +207,7 @@ TEST_F(ThermalHidlTest, TemperatureTest) {
                 }
                 for (int i = 0; i < temperatures.size(); ++i) {
                     EXPECT_EQ(type, temperatures[i].type);
+                    EXPECT_LT(0u, temperatures[i].name.size());
                 }
             });
     }
@@ -246,6 +250,9 @@ TEST_F(ThermalHidlTest, CoolingDeviceTest) {
             } else {
                 EXPECT_NE(ThermalStatusCode::SUCCESS, status.code);
             }
+            for (int i = 0; i < cooling_devices.size(); ++i) {
+                EXPECT_LT(0u, cooling_devices[i].name.size());
+            }
         });
     for (int i = 0; i <= static_cast<int>(CoolingType::COMPONENT); ++i) {
         auto type = static_cast<CoolingType>(i);
@@ -258,6 +265,7 @@ TEST_F(ThermalHidlTest, CoolingDeviceTest) {
                 }
                 for (int i = 0; i < cooling_devices.size(); ++i) {
                     EXPECT_EQ(type, cooling_devices[i].type);
+                    EXPECT_LT(0u, cooling_devices[i].name.size());
                 }
             });
     }
