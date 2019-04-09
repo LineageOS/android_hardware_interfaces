@@ -32,8 +32,8 @@ namespace V3_0 {
 namespace vts {
 namespace {
 
-using android::hardware::graphics::common::V1_0::BufferUsage;
-using android::hardware::graphics::common::V1_1::PixelFormat;
+using android::hardware::graphics::common::V1_2::BufferUsage;
+using android::hardware::graphics::common::V1_2::PixelFormat;
 
 // Test environment for graphics.mapper.
 class GraphicsMapperHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
