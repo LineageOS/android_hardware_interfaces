@@ -565,16 +565,19 @@ TEST_F(GraphicsComposerHidlTest, GetDisplayedContentSample) {
  * Test some constraints.
  */
 TEST_F(GraphicsComposerHidlTest, getDisplayCapabilitiesBasic) {
-    auto capabilities = mComposerClient->getDisplayCapabilities(mPrimaryDisplay);
-    bool hasDozeSupport = std::find(capabilities.begin(), capabilities.end(),
-                                    IComposerClient::DisplayCapability::DOZE) != capabilities.end();
+    std::vector<IComposerClient::DisplayCapability> capabilities;
+    const auto error = mComposerClient->getDisplayCapabilities(mPrimaryDisplay, &capabilities);
+    ASSERT_EQ(Error::NONE, error);
+    const bool hasDozeSupport =
+            std::find(capabilities.begin(), capabilities.end(),
+                      IComposerClient::DisplayCapability::DOZE) != capabilities.end();
     EXPECT_EQ(mComposerClient->getDozeSupport(mPrimaryDisplay), hasDozeSupport);
 }
 
 TEST_F(GraphicsComposerHidlTest, getDisplayCapabilitiesBadDisplay) {
-    mComposerClient->getRaw()->getDisplayCapabilities(
-        mInvalidDisplayId,
-        [&](const auto& tmpError, const auto&) { EXPECT_EQ(Error::BAD_DISPLAY, tmpError); });
+    std::vector<IComposerClient::DisplayCapability> capabilities;
+    const auto error = mComposerClient->getDisplayCapabilities(mInvalidDisplayId, &capabilities);
+    EXPECT_EQ(Error::BAD_DISPLAY, error);
 }
 
 TEST_F(GraphicsComposerHidlTest, SetLayerPerFrameMetadataBlobs) {
@@ -604,7 +607,9 @@ TEST_F(GraphicsComposerHidlTest, SetLayerPerFrameMetadataBlobs) {
  * Test that getDisplayBrightnessSupport works as expected.
  */
 TEST_F(GraphicsComposerHidlTest, getDisplayBrightnessSupport) {
-    auto capabilities = mComposerClient->getDisplayCapabilities(mPrimaryDisplay);
+    std::vector<IComposerClient::DisplayCapability> capabilities;
+    const auto error = mComposerClient->getDisplayCapabilities(mPrimaryDisplay, &capabilities);
+    ASSERT_EQ(Error::NONE, error);
     bool brightnessSupport =
             std::find(capabilities.begin(), capabilities.end(),
                       IComposerClient::DisplayCapability::BRIGHTNESS) != capabilities.end();
@@ -616,9 +621,9 @@ TEST_F(GraphicsComposerHidlTest, getDisplayBrightnessSupport) {
  */
 TEST_F(GraphicsComposerHidlTest, setDisplayBrightness) {
     if (!mComposerClient->getDisplayBrightnessSupport(mPrimaryDisplay)) {
-        EXPECT_EQ(mComposerClient->getRaw()->setDisplayBrightness(mPrimaryDisplay, 0.5f),
-                  Error::UNSUPPORTED);
+        EXPECT_EQ(mComposerClient->setDisplayBrightness(mPrimaryDisplay, 0.5f), Error::UNSUPPORTED);
         GTEST_SUCCEED() << "Brightness operations are not supported";
+        return;
     }
 
     EXPECT_EQ(mComposerClient->setDisplayBrightness(mPrimaryDisplay, 0.0f), Error::NONE);
