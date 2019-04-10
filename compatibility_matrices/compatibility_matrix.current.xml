@@ -112,6 +112,14 @@
         </interface>
     </hal>
     <hal format="hidl" optional="true">
+        <name>android.hardware.broadcastradio</name>
+        <version>2.0</version>
+        <interface>
+            <name>IBroadcastRadio</name>
+            <regex-instance>.*</regex-instance>
+        </interface>
+    </hal>
+    <hal format="hidl" optional="true">
         <name>android.hardware.camera.provider</name>
         <version>2.4-5</version>
         <interface>
