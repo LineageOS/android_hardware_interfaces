@@ -502,6 +502,10 @@ interface IComposerClient extends @2.2::IComposerClient {
                        float minLuminance);
 
     /**
+     * Use getDisplayCapabilities instead. If brightness is supported, must return
+     * DisplayCapability::BRIGHTNESS as one of the display capabilities via getDisplayCapabilities.
+     * Only use getDisplayCapabilities as the source of truth to query brightness support.
+     *
      * Gets whether brightness operations are supported on a display.
      *
      * @param display
