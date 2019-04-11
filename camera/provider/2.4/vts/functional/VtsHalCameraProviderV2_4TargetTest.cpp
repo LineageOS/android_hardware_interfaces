@@ -272,6 +272,16 @@ namespace {
         ALOGW("Unexpected HAL status code %d", s);
         return Status::OPERATION_NOT_SUPPORTED;
     }
+
+    void getFirstApiLevel(/*out*/int32_t* outApiLevel) {
+        int32_t firstApiLevel = property_get_int32("ro.product.first_api_level", /*default*/-1);
+        if (firstApiLevel < 0) {
+            firstApiLevel = property_get_int32("ro.build.version.sdk", /*default*/-1);
+        }
+        ASSERT_GT(firstApiLevel, 0); // first_api_level must exist
+        *outApiLevel = firstApiLevel;
+        return;
+    }
 }
 
 // Test environment for camera
@@ -1484,11 +1494,8 @@ hidl_vec<hidl_string> CameraHidlTest::getCameraDeviceNames(sp<ICameraProvider> p
 // Test devices with first_api_level >= P does not advertise device@1.0
 TEST_F(CameraHidlTest, noHal1AfterP) {
     constexpr int32_t HAL1_PHASE_OUT_API_LEVEL = 28;
-    int32_t firstApiLevel = property_get_int32("ro.product.first_api_level", /*default*/-1);
-    if (firstApiLevel < 0) {
-        firstApiLevel = property_get_int32("ro.build.version.sdk", /*default*/-1);
-    }
-    ASSERT_GT(firstApiLevel, 0); // first_api_level must exist
+    int32_t firstApiLevel = 0;
+    getFirstApiLevel(&firstApiLevel);
 
     // all devices with first API level == 28 and <= 1GB of RAM must set low_ram
     // and thus be allowed to continue using HAL1
@@ -1509,11 +1516,19 @@ TEST_F(CameraHidlTest, noHal1AfterP) {
 }
 
 // Test if ICameraProvider::isTorchModeSupported returns Status::OK
+// Also if first_api_level >= Q torch API must be supported.
 TEST_F(CameraHidlTest, isTorchModeSupported) {
+    constexpr int32_t API_LEVEL_Q = 29;
+    int32_t firstApiLevel = 0;
+    getFirstApiLevel(&firstApiLevel);
+
     Return<void> ret;
     ret = mProvider->isSetTorchModeSupported([&](auto status, bool support) {
         ALOGI("isSetTorchModeSupported returns status:%d supported:%d", (int)status, support);
         ASSERT_EQ(Status::OK, status);
+        if (firstApiLevel >= API_LEVEL_Q) {
+            ASSERT_EQ(true, support);
+        }
     });
     ASSERT_TRUE(ret.isOk());
 }
