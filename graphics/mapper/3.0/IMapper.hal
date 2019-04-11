@@ -16,8 +16,8 @@
 
 package android.hardware.graphics.mapper@3.0;
 
-import android.hardware.graphics.common@1.1::BufferUsage;
-import android.hardware.graphics.common@1.1::PixelFormat;
+import android.hardware.graphics.common@1.2::BufferUsage;
+import android.hardware.graphics.common@1.2::PixelFormat;
 import android.hardware.graphics.common@1.2::Rect;
 
 interface IMapper {
