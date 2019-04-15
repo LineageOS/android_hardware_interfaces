@@ -16,6 +16,7 @@
 
 #include <keymasterV4_0/attestation_record.h>
 
+#include <android-base/logging.h>
 #include <assert.h>
 
 #include <openssl/asn1t.h>
@@ -25,6 +26,8 @@
 
 #include <keymasterV4_0/authorization_set.h>
 #include <keymasterV4_0/openssl_utils.h>
+
+#define AT __FILE__ ":" << __LINE__
 
 namespace android {
 namespace hardware {
@@ -302,6 +305,61 @@ ErrorCode parse_attestation_record(const uint8_t* asn1_key_desc, size_t asn1_key
     if (error != ErrorCode::OK) return error;
 
     return extract_auth_list(record->tee_enforced, tee_enforced);
+}
+
+ErrorCode parse_root_of_trust(const uint8_t* asn1_key_desc, size_t asn1_key_desc_len,
+                              hidl_vec<uint8_t>* verified_boot_key,
+                              keymaster_verified_boot_t* verified_boot_state, bool* device_locked,
+                              hidl_vec<uint8_t>* verified_boot_hash) {
+    if (!verified_boot_key || !verified_boot_state || !device_locked || !verified_boot_hash) {
+        LOG(ERROR) << AT << "null pointer input(s)";
+        return ErrorCode::INVALID_ARGUMENT;
+    }
+    const uint8_t* p = asn1_key_desc;
+    KM_KEY_DESCRIPTION_Ptr record(d2i_KM_KEY_DESCRIPTION(nullptr, &p, asn1_key_desc_len));
+    if (!record.get()) {
+        LOG(ERROR) << AT << "Failed record parsing";
+        return ErrorCode::UNKNOWN_ERROR;
+    }
+    if (!record->tee_enforced) {
+        LOG(ERROR) << AT << "Failed hardware characteristic parsing";
+        return ErrorCode::INVALID_ARGUMENT;
+    }
+    if (!record->tee_enforced->root_of_trust) {
+        LOG(ERROR) << AT << "Failed root of trust parsing";
+        return ErrorCode::INVALID_ARGUMENT;
+    }
+    if (!record->tee_enforced->root_of_trust->verified_boot_key) {
+        LOG(ERROR) << AT << "Failed verified boot key parsing";
+        return ErrorCode::INVALID_ARGUMENT;
+    }
+    KM_ROOT_OF_TRUST* root_of_trust = record->tee_enforced->root_of_trust;
+
+    auto& vb_key = root_of_trust->verified_boot_key;
+    verified_boot_key->resize(vb_key->length);
+    memcpy(verified_boot_key->data(), vb_key->data, vb_key->length);
+
+    *verified_boot_state = static_cast<keymaster_verified_boot_t>(
+            ASN1_ENUMERATED_get(root_of_trust->verified_boot_state));
+    if (!verified_boot_state) {
+        LOG(ERROR) << AT << "Failed verified boot state parsing";
+        return ErrorCode::INVALID_ARGUMENT;
+    }
+
+    *device_locked = root_of_trust->device_locked;
+    if (!device_locked) {
+        LOG(ERROR) << AT << "Failed device locked parsing";
+        return ErrorCode::INVALID_ARGUMENT;
+    }
+
+    auto& vb_hash = root_of_trust->verified_boot_hash;
+    if (!vb_hash) {
+        LOG(ERROR) << AT << "Failed verified boot hash parsing";
+        return ErrorCode::INVALID_ARGUMENT;
+    }
+    verified_boot_hash->resize(vb_hash->length);
+    memcpy(verified_boot_hash->data(), vb_hash->data, vb_hash->length);
+    return ErrorCode::OK;  // KM_ERROR_OK;
 }
 
 }  // namespace V4_0
