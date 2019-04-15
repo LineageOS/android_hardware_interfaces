@@ -624,7 +624,7 @@ interface IKeymasterDevice {
     /**
      * Exports a public key, returning the key in the specified format.
      *
-     * @parm keyFormat The format used for export.  See KeyFormat in types.hal.
+     * @parm keyFormat The format used for export.  Must be KeyFormat::X509.
      *
      * @param keyBlob The opaque descriptor returned by generateKey() or importKey().  The
      *        referenced key must be asymmetric.
@@ -639,7 +639,7 @@ interface IKeymasterDevice {
      *        value, it must be computationally infeasible for the secure hardware to obtain the key
      *        material.
      *
-     * @return keyMaterial The public key material in PKCS#8 format.
+     * @return keyMaterial The public key material in X.509 format.
      */
     exportKey(KeyFormat keyFormat, vec<uint8_t> keyBlob, vec<uint8_t> clientId,
               vec<uint8_t> appData) generates (ErrorCode error, vec<uint8_t> keyMaterial);
@@ -1005,13 +1005,11 @@ interface IKeymasterDevice {
      *
      * -- EC Keys --
      *
-     * EC key operations must specify exactly one padding mode in inParams.  If unspecified or
-     * specified more than once, begin() must return ErrorCode::UNSUPPORTED_PADDING_MODE.
-     *
-     * Private key operations (KeyPurpose::SIGN) need authorization of digest and padding, which
-     * means that the key authorizations must contain the specified values.  If not, begin() must
-     * return ErrorCode::INCOMPATIBLE_DIGEST.  Public key operations (KeyPurpose::VERIFY) are
-     * permitted with unauthorized digest or padding.
+     * EC private key operations must specify exactly one digest in inParams.  If unspecified or
+     * specified more than once, begin() must return ErrorCode::UNSUPPORTED_DIGEST.  For private key
+     * operations, (KeyPurpose::SIGN), if the specified digest is not in the key's authorization
+     * list, begin() must return ErrorCode::INCOMPATIBLE_DIGEST.  Public key operations
+     * (KeyPurpose::VERIFY) are permitted with unauthorized digest.
      *
      * -- AES Keys --
      *
