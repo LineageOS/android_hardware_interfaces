@@ -473,3 +473,6 @@ d8e7717e8187dd7453d4142f8f331e7c325e7a6f9e8d44ac0d52b3be502bfe83 android.hardwar
 93b8102078e25057ae347ac9704e87529eb26121c2a1b419b362dd36eccefc4d android.hardware.radio.config@1.2::types
 08d439c463e4044fa78874037d8e8379aa3cabecde32f08a775897eea5a538af android.hardware.secure_element@1.1::ISecureElement
 b53ac9d61c24efb16a2d63a861cef20680f6d57adb244a03b9778c675550628b android.hardware.secure_element@1.1::ISecureElementHalCallback
+
+# ABI preserving changes to HALs during Android R
+# none yet
