@@ -57,7 +57,7 @@ class SupplicantP2pIfaceHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 TEST_F(SupplicantP2pIfaceHidlTest, AddGroup_1_2_Success) {
     std::vector<uint8_t> ssid(kTestSsid, kTestSsid + sizeof(kTestSsid));
     std::string passphrase = kTestPassphrase;
-    int freq = 5;
+    int freq = 0;
     std::array<uint8_t, 6> zero_mac_addr;
     memcpy(zero_mac_addr.data(), kTestZeroMacAddr, zero_mac_addr.size());
     bool persistent = false;
@@ -76,7 +76,7 @@ TEST_F(SupplicantP2pIfaceHidlTest, AddGroup_1_2_Success) {
 TEST_F(SupplicantP2pIfaceHidlTest, AddGroup_1_2_FailureInvalidSsid) {
     std::vector<uint8_t> ssid;
     std::string passphrase = kTestPassphrase;
-    int freq = 5;
+    int freq = 0;
     std::array<uint8_t, 6> zero_mac_addr;
     memcpy(zero_mac_addr.data(), kTestZeroMacAddr, zero_mac_addr.size());
     bool persistent = false;
@@ -95,7 +95,7 @@ TEST_F(SupplicantP2pIfaceHidlTest, AddGroup_1_2_FailureInvalidSsid) {
 TEST_F(SupplicantP2pIfaceHidlTest, AddGroup_1_2_FailureInvalidPassphrase) {
     std::vector<uint8_t> ssid(kTestSsid, kTestSsid + sizeof(kTestSsid));
     std::string passphrase = "1234";
-    int freq = 5;
+    int freq = 0;
     std::array<uint8_t, 6> zero_mac_addr;
     memcpy(zero_mac_addr.data(), kTestZeroMacAddr, zero_mac_addr.size());
     bool persistent = false;
