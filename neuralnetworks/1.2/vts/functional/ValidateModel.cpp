@@ -508,9 +508,10 @@ static bool removeOperandSkip(size_t operand, const Model& model) {
                 }
             }
         }
-        // BIDIRECTIONAL_SEQUENCE_RNN can have either on or two outputs
-        // depending on a mergeOutputs parameter
-        if (operation.type == OperationType::BIDIRECTIONAL_SEQUENCE_RNN) {
+        // BIDIRECTIONAL_SEQUENCE_LSTM and BIDIRECTIONAL_SEQUENCE_RNN can have either one or two
+        // outputs depending on their mergeOutputs parameter.
+        if (operation.type == OperationType::BIDIRECTIONAL_SEQUENCE_LSTM ||
+            operation.type == OperationType::BIDIRECTIONAL_SEQUENCE_RNN) {
             for (const size_t outOprand : operation.outputs) {
                 if (operand == outOprand) {
                     return true;
