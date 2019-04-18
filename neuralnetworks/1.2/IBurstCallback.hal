@@ -24,7 +24,7 @@ import @1.0::ErrorStatus;
  */
 interface IBurstCallback {
     /**
-     * Get the memory regions that correspond to slot ids. The slot ids are are
+     * Get the memory regions that correspond to slot ids. The slot ids are
      * unique to the burst object.
      *
      * @param slots Values uniquely identifying memory regions within a Burst.
