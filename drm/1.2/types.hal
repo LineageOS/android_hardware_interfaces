@@ -16,6 +16,7 @@
 
 package android.hardware.drm@1.2;
 
+import @1.0::KeyStatusType;
 import @1.0::Status;
 import @1.1::HdcpLevel;
 
@@ -93,3 +94,25 @@ enum HdcpLevel : @1.1::HdcpLevel {
  * set in methods that take a KeySetId as an input parameter.
  */
 typedef vec<uint8_t> KeySetId;
+
+enum KeyStatusType : @1.0::KeyStatusType {
+    /**
+     * The key is not yet usable to decrypt media because the start
+     * time is in the future. The key must become usable when
+     * its start time is reached.
+     */
+    USABLEINFUTURE
+};
+
+/**
+ * Used by sendKeysChange_1_2 to report the usability status of each key to the
+ * app.
+ *
+ * This struct only differs from @1.0 version by the addition of new
+ * KeyStatusType(s).
+ *
+ */
+struct KeyStatus {
+    KeySetId keyId;
+    KeyStatusType type;
+};

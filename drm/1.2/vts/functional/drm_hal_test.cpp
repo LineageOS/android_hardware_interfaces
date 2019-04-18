@@ -28,6 +28,8 @@ using ::android::hardware::drm::V1_1::KeyRequestType;
 using ::android::hardware::drm::V1_1::SecurityLevel;
 using ::android::hardware::drm::V1_2::HdcpLevel;
 using ::android::hardware::drm::V1_2::KeySetId;
+using ::android::hardware::drm::V1_2::KeyStatus;
+using ::android::hardware::drm::V1_2::KeyStatusType;
 using ::android::hardware::drm::V1_2::OfflineLicenseState;
 
 using ::android::hardware::drm::V1_2::vts::DrmHalClearkeyTest;
@@ -35,6 +37,7 @@ using ::android::hardware::drm::V1_2::vts::DrmHalPluginListener;
 using ::android::hardware::drm::V1_2::vts::DrmHalTest;
 using ::android::hardware::drm::V1_2::vts::DrmHidlEnvironment;
 using ::android::hardware::drm::V1_2::vts::kCallbackLostState;
+using ::android::hardware::drm::V1_2::vts::kCallbackKeysChange;
 
 using ::android::hardware::hidl_string;
 
@@ -275,6 +278,35 @@ TEST_P(DrmHalTest, GetHdcpLevels) {
 }
 
 /**
+ * Simulate the plugin sending keys change and make sure
+ * the listener gets them.
+ */
+TEST_P(DrmHalTest, ListenerKeysChange) {
+    RETURN_IF_SKIPPED;
+    sp<DrmHalPluginListener> listener = new DrmHalPluginListener();
+    auto res = drmPlugin->setListener(listener);
+    EXPECT_OK(res);
+
+    auto sessionId = openSession();
+    const hidl_vec<KeyStatus> keyStatusList = {
+        {{1}, KeyStatusType::USABLE},
+        {{2}, KeyStatusType::EXPIRED},
+        {{3}, KeyStatusType::OUTPUTNOTALLOWED},
+        {{4}, KeyStatusType::STATUSPENDING},
+        {{5}, KeyStatusType::INTERNALERROR},
+        {{6}, KeyStatusType::USABLEINFUTURE},
+    };
+
+    drmPlugin->sendKeysChange_1_2(sessionId, keyStatusList, true);
+    auto result = listener->WaitForCallback(kCallbackKeysChange);
+    EXPECT_TRUE(result.no_timeout);
+    EXPECT_TRUE(result.args);
+    EXPECT_EQ(sessionId, result.args->sessionId);
+    EXPECT_EQ(keyStatusList, result.args->keyStatusList);
+    closeSession(sessionId);
+}
+
+/**
  *  CryptoPlugin Decrypt tests
  */
 
@@ -452,7 +484,7 @@ TEST_P(DrmHalClearkeyTest, SessionLostState) {
     auto result = listener->WaitForCallback(kCallbackLostState);
     EXPECT_TRUE(result.no_timeout);
     EXPECT_TRUE(result.args);
-    EXPECT_EQ(sessionId, *(result.args));
+    EXPECT_EQ(sessionId, result.args->sessionId);
 }
 
 /**
