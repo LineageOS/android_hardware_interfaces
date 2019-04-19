@@ -19,6 +19,7 @@
 
 #include <list>
 #include <map>
+#include <mutex>
 
 #include <android-base/macros.h>
 #include <android/hardware/wifi/1.2/IWifiChip.h>
@@ -231,6 +232,7 @@ class WifiChip : public V1_2::IWifiChip {
     bool is_valid_;
     // Members pertaining to chip configuration.
     uint32_t current_mode_id_;
+    std::mutex lock_t;
     std::vector<IWifiChip::ChipMode> modes_;
     // The legacy ring buffer callback API has only a global callback
     // registration mechanism. Use this to check if we have already
