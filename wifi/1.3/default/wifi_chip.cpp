@@ -1436,14 +1436,11 @@ bool WifiChip::isStaApConcurrencyAllowedInCurrentMode() {
 }
 
 std::string WifiChip::getFirstActiveWlanIfaceName() {
-    for (unsigned idx = 0; idx < kMaxWlanIfaces; idx++) {
-        const auto ifname = getWlanIfaceName(idx);
-        if (findUsingName(sta_ifaces_, ifname)) return ifname;
-        if (findUsingName(ap_ifaces_, ifname)) return ifname;
-    }
+    if (sta_ifaces_.size() > 0) return sta_ifaces_[0]->getName();
+    if (ap_ifaces_.size() > 0) return ap_ifaces_[0]->getName();
     // This could happen if the chip call is made before any STA/AP
     // iface is created. Default to wlan0 for such cases.
-    LOG(WARNING) << "No active wlan interfaces in use!";
+    LOG(WARNING) << "No active wlan interfaces in use! Using default";
     return getWlanIfaceName(0);
 }
 
