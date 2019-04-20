@@ -41,6 +41,7 @@ constexpr int kIfaceInvalidChannel = 567;
 class HostapdHidlTest : public ::testing::VtsHalHidlTargetTestBase {
    public:
     virtual void SetUp() override {
+        stopSupplicantIfNeeded();
         startHostapdAndWaitForHidlService();
         hostapd_ = getHostapd();
         ASSERT_NE(hostapd_.get(), nullptr);
