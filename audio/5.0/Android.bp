@@ -25,4 +25,3 @@ hidl_interface {
     gen_java: false,
     gen_java_constants: true,
 }
-

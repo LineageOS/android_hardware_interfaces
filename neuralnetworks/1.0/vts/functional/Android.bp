@@ -71,15 +71,6 @@ cc_defaults {
         "libneuralnetworks_generated_test_harness_headers",
         "libneuralnetworks_generated_tests",
     ],
-    // Bug: http://b/74200014 - Disable arm32 asan since it triggers internal
-    // error in ld.gold.
-    arch: {
-        arm: {
-            sanitize: {
-                never: true,
-            },
-        },
-    },
     test_suites: ["general-tests"],
 }
 
