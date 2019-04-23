@@ -641,7 +641,9 @@ enum VehicleProperty : int32_t {
     /**
      * Night mode
      *
-     * True indicates that night mode is currently enabled.
+     * True indicates that the night mode sensor has detected that the car cabin environment has
+     * low light. The platform could use this, for example, to enable appropriate UI for
+     * better viewing in dark or low light environments.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ
@@ -983,6 +985,10 @@ enum VehicleProperty : int32_t {
      *
      * Indicates whether the vehicle is displaying temperature to the user as
      * Celsius or Fahrenheit.
+     * VehiclePropConfig.configArray is used to indicate the supported temperature display units.
+     * For example: configArray[0] = CELSIUS
+     *              configArray[1] = FAHRENHEIT
+     *
      * This parameter MAY be used for displaying any HVAC temperature in the system.
      * Values must be one of VehicleUnit::CELSIUS or VehicleUnit::FAHRENHEIT
      * Note that internally, all temperatures are represented in floating point Celsius.
@@ -2769,6 +2775,14 @@ struct VehicleAreaConfig {
      * Area id is ignored for VehiclePropertyGroup:GLOBAL properties.
      */
     int32_t areaId;
+
+    /**
+     * If the property has @data_enum, leave the range to zero.
+     *
+     * Range will be ignored in the following cases:
+     *    - The VehiclePropertyType is not INT32, INT64 or FLOAT.
+     *    - Both of min value and max value are zero.
+     */
 
     int32_t minInt32Value;
     int32_t maxInt32Value;
