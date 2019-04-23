@@ -16,21 +16,22 @@
 
 #define LOG_TAG "neuralnetworks_hidl_hal_test"
 
-#include "VtsHalNeuralnetworks.h"
+#include <android-base/logging.h>
+#include <android/hidl/memory/1.0/IMemory.h>
+#include <ftw.h>
+#include <gtest/gtest.h>
+#include <hidlmemory/mapping.h>
+#include <unistd.h>
+
+#include <cstdio>
+#include <cstdlib>
+#include <random>
 
 #include "Callbacks.h"
 #include "GeneratedTestHarness.h"
 #include "TestHarness.h"
 #include "Utils.h"
-
-#include <android-base/logging.h>
-#include <android/hidl/memory/1.0/IMemory.h>
-#include <hidlmemory/mapping.h>
-#include <cstdio>
-#include <cstdlib>
-#include <random>
-
-#include <gtest/gtest.h>
+#include "VtsHalNeuralnetworks.h"
 
 namespace android {
 namespace hardware {
@@ -46,7 +47,7 @@ using ::test_helper::MixedTypedExample;
 
 namespace {
 
-// In frameworks/ml/nn/runtime/tests/generated/, creates a hidl model of mobilenet.
+// In frameworks/ml/nn/runtime/test/generated/, creates a hidl model of mobilenet.
 #include "examples/mobilenet_224_gender_basic_fixed.example.cpp"
 #include "vts_models/mobilenet_224_gender_basic_fixed.model.cpp"
 
@@ -88,6 +89,118 @@ void createCacheHandles(const std::vector<std::vector<std::string>>& fileGroups,
                         hidl_vec<hidl_handle>* handles) {
     createCacheHandles(fileGroups, std::vector<AccessMode>(fileGroups.size(), mode), handles);
 }
+
+// Create a chain of broadcast operations. The second operand is always constant tensor [1].
+// For simplicity, activation scalar is shared. The second operand is not shared
+// in the model to let driver maintain a non-trivial size of constant data and the corresponding
+// data locations in cache.
+//
+//                --------- activation --------
+//                ↓      ↓      ↓             ↓
+// E.g. input -> ADD -> ADD -> ADD -> ... -> ADD -> output
+//                ↑      ↑      ↑             ↑
+//               [1]    [1]    [1]           [1]
+//
+Model createLargeTestModel(OperationType op, uint32_t len) {
+    // Model operations and operands.
+    std::vector<Operation> operations(len);
+    std::vector<Operand> operands(len * 2 + 2);
+
+    // The constant buffer pool. This contains the activation scalar, followed by the
+    // per-operation constant operands.
+    std::vector<uint8_t> operandValues(sizeof(int32_t) + len * sizeof(float));
+
+    // The activation scalar, value = 0.
+    operands[0] = {
+            .type = OperandType::INT32,
+            .dimensions = {},
+            .numberOfConsumers = len,
+            .scale = 0.0f,
+            .zeroPoint = 0,
+            .lifetime = OperandLifeTime::CONSTANT_COPY,
+            .location = {.poolIndex = 0, .offset = 0, .length = sizeof(int32_t)},
+    };
+    memset(operandValues.data(), 0, sizeof(int32_t));
+
+    const float floatBufferValue = 1.0f;
+    for (uint32_t i = 0; i < len; i++) {
+        const uint32_t firstInputIndex = i * 2 + 1;
+        const uint32_t secondInputIndex = firstInputIndex + 1;
+        const uint32_t outputIndex = secondInputIndex + 1;
+
+        // The first operation input.
+        operands[firstInputIndex] = {
+                .type = OperandType::TENSOR_FLOAT32,
+                .dimensions = {1},
+                .numberOfConsumers = 1,
+                .scale = 0.0f,
+                .zeroPoint = 0,
+                .lifetime = (i == 0 ? OperandLifeTime::MODEL_INPUT
+                                    : OperandLifeTime::TEMPORARY_VARIABLE),
+                .location = {},
+        };
+
+        // The second operation input, value = 1.
+        operands[secondInputIndex] = {
+                .type = OperandType::TENSOR_FLOAT32,
+                .dimensions = {1},
+                .numberOfConsumers = 1,
+                .scale = 0.0f,
+                .zeroPoint = 0,
+                .lifetime = OperandLifeTime::CONSTANT_COPY,
+                .location = {.poolIndex = 0,
+                             .offset = static_cast<uint32_t>(i * sizeof(float) + sizeof(int32_t)),
+                             .length = sizeof(float)},
+        };
+        memcpy(operandValues.data() + sizeof(int32_t) + i * sizeof(float), &floatBufferValue,
+               sizeof(float));
+
+        // The operation. All operations share the same activation scalar.
+        // The output operand is created as an input in the next iteration of the loop, in the case
+        // of all but the last member of the chain; and after the loop as a model output, in the
+        // case of the last member of the chain.
+        operations[i] = {
+                .type = op,
+                .inputs = {firstInputIndex, secondInputIndex, /*activation scalar*/ 0},
+                .outputs = {outputIndex},
+        };
+    }
+
+    // The model output.
+    operands.back() = {
+            .type = OperandType::TENSOR_FLOAT32,
+            .dimensions = {1},
+            .numberOfConsumers = 0,
+            .scale = 0.0f,
+            .zeroPoint = 0,
+            .lifetime = OperandLifeTime::MODEL_OUTPUT,
+            .location = {},
+    };
+
+    const std::vector<uint32_t> inputIndexes = {1};
+    const std::vector<uint32_t> outputIndexes = {len * 2 + 1};
+    const std::vector<hidl_memory> pools = {};
+
+    return {
+            .operands = operands,
+            .operations = operations,
+            .inputIndexes = inputIndexes,
+            .outputIndexes = outputIndexes,
+            .operandValues = operandValues,
+            .pools = pools,
+    };
+}
+
+// MixedTypedExample is defined in frameworks/ml/nn/tools/test_generator/include/TestHarness.h.
+// This function assumes the operation is always ADD.
+std::vector<MixedTypedExample> getLargeModelExamples(uint32_t len) {
+    float outputValue = 1.0f + static_cast<float>(len);
+    return {{.operands = {
+                     // Input
+                     {.operandDimensions = {{0, {1}}}, .float32Operands = {{0, {1.0f}}}},
+                     // Output
+                     {.operandDimensions = {{0, {1}}}, .float32Operands = {{0, {outputValue}}}}}}};
+};
 
 }  // namespace
 
@@ -139,11 +252,13 @@ class CompilationCachingTest : public NeuralnetworksHidlTest {
     }
 
     void TearDown() override {
-        // The tmp directory is only removed when the driver reports caching not supported,
-        // otherwise it is kept for debugging purpose.
-        if (!mIsCachingSupported) {
-            remove(mTmpCache.c_str());
-            rmdir(mCacheDir.c_str());
+        // If the test passes, remove the tmp directory.  Otherwise, keep it for debugging purposes.
+        if (!::testing::Test::HasFailure()) {
+            // Recursively remove the cache directory specified by mCacheDir.
+            auto callback = [](const char* entry, const struct stat*, int, struct FTW*) {
+                return remove(entry);
+            };
+            nftw(mCacheDir.c_str(), callback, 128, FTW_DEPTH | FTW_MOUNT | FTW_PHYS);
         }
         NeuralnetworksHidlTest::TearDown();
     }
@@ -858,6 +973,212 @@ TEST_F(CompilationCachingTest, PrepareModelFromCacheInvalidAccessMode) {
         createCacheHandles(mModelCache, modelCacheMode, &modelCache);
         createCacheHandles(mDataCache, dataCacheMode, &dataCache);
         dataCacheMode[i] = AccessMode::READ_WRITE;
+        prepareModelFromCache(modelCache, dataCache, &preparedModel, &status);
+        ASSERT_EQ(status, ErrorStatus::GENERAL_FAILURE);
+        ASSERT_EQ(preparedModel, nullptr);
+    }
+}
+
+// Copy file contents between file groups.
+// The outer vector corresponds to handles and the inner vector is for fds held by each handle.
+// The outer vector sizes must match and the inner vectors must have size = 1.
+static void copyCacheFiles(const std::vector<std::vector<std::string>>& from,
+                           const std::vector<std::vector<std::string>>& to) {
+    constexpr size_t kBufferSize = 1000000;
+    uint8_t buffer[kBufferSize];
+
+    ASSERT_EQ(from.size(), to.size());
+    for (uint32_t i = 0; i < from.size(); i++) {
+        ASSERT_EQ(from[i].size(), 1u);
+        ASSERT_EQ(to[i].size(), 1u);
+        int fromFd = open(from[i][0].c_str(), O_RDONLY);
+        int toFd = open(to[i][0].c_str(), O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
+        ASSERT_GE(fromFd, 0);
+        ASSERT_GE(toFd, 0);
+
+        ssize_t readBytes;
+        while ((readBytes = read(fromFd, &buffer, kBufferSize)) > 0) {
+            ASSERT_EQ(write(toFd, &buffer, readBytes), readBytes);
+        }
+        ASSERT_GE(readBytes, 0);
+
+        close(fromFd);
+        close(toFd);
+    }
+}
+
+// Number of operations in the large test model.
+constexpr uint32_t kLargeModelSize = 100;
+constexpr uint32_t kNumIterationsTOCTOU = 100;
+
+TEST_F(CompilationCachingTest, SaveToCache_TOCTOU) {
+    if (!mIsCachingSupported) return;
+
+    // Save the testModelMul compilation to cache.
+    Model testModelMul = createLargeTestModel(OperationType::MUL, kLargeModelSize);
+    auto modelCacheMul = mModelCache;
+    for (auto& cache : modelCacheMul) {
+        cache[0].append("_mul");
+    }
+    {
+        hidl_vec<hidl_handle> modelCache, dataCache;
+        createCacheHandles(modelCacheMul, AccessMode::READ_WRITE, &modelCache);
+        createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
+        bool supported;
+        saveModelToCache(testModelMul, modelCache, dataCache, &supported);
+        if (checkEarlyTermination(supported)) return;
+    }
+
+    // Use a different token for testModelAdd.
+    mToken[0]++;
+
+    // This test is probabilistic, so we run it multiple times.
+    Model testModelAdd = createLargeTestModel(OperationType::ADD, kLargeModelSize);
+    for (uint32_t i = 0; i < kNumIterationsTOCTOU; i++) {
+        // Save the testModelAdd compilation to cache.
+        {
+            bool supported;
+            hidl_vec<hidl_handle> modelCache, dataCache;
+            createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
+            createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
+
+            // Spawn a thread to copy the cache content concurrently while saving to cache.
+            std::thread thread(copyCacheFiles, std::cref(modelCacheMul), std::cref(mModelCache));
+            saveModelToCache(testModelAdd, modelCache, dataCache, &supported);
+            thread.join();
+            if (checkEarlyTermination(supported)) return;
+        }
+
+        // Retrieve preparedModel from cache.
+        {
+            sp<IPreparedModel> preparedModel = nullptr;
+            ErrorStatus status;
+            hidl_vec<hidl_handle> modelCache, dataCache;
+            createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
+            createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
+            prepareModelFromCache(modelCache, dataCache, &preparedModel, &status);
+
+            // The preparation may fail or succeed, but must not crash. If the preparation succeeds,
+            // the prepared model must be executed with the correct result and not crash.
+            if (status != ErrorStatus::NONE) {
+                ASSERT_EQ(preparedModel, nullptr);
+            } else {
+                ASSERT_NE(preparedModel, nullptr);
+                generated_tests::EvaluatePreparedModel(
+                        preparedModel, [](int) { return false; },
+                        getLargeModelExamples(kLargeModelSize),
+                        testModelAdd.relaxComputationFloat32toFloat16,
+                        /*testDynamicOutputShape=*/false);
+            }
+        }
+    }
+}
+
+TEST_F(CompilationCachingTest, PrepareFromCache_TOCTOU) {
+    if (!mIsCachingSupported) return;
+
+    // Save the testModelMul compilation to cache.
+    Model testModelMul = createLargeTestModel(OperationType::MUL, kLargeModelSize);
+    auto modelCacheMul = mModelCache;
+    for (auto& cache : modelCacheMul) {
+        cache[0].append("_mul");
+    }
+    {
+        hidl_vec<hidl_handle> modelCache, dataCache;
+        createCacheHandles(modelCacheMul, AccessMode::READ_WRITE, &modelCache);
+        createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
+        bool supported;
+        saveModelToCache(testModelMul, modelCache, dataCache, &supported);
+        if (checkEarlyTermination(supported)) return;
+    }
+
+    // Use a different token for testModelAdd.
+    mToken[0]++;
+
+    // This test is probabilistic, so we run it multiple times.
+    Model testModelAdd = createLargeTestModel(OperationType::ADD, kLargeModelSize);
+    for (uint32_t i = 0; i < kNumIterationsTOCTOU; i++) {
+        // Save the testModelAdd compilation to cache.
+        {
+            bool supported;
+            hidl_vec<hidl_handle> modelCache, dataCache;
+            createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
+            createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
+            saveModelToCache(testModelAdd, modelCache, dataCache, &supported);
+            if (checkEarlyTermination(supported)) return;
+        }
+
+        // Retrieve preparedModel from cache.
+        {
+            sp<IPreparedModel> preparedModel = nullptr;
+            ErrorStatus status;
+            hidl_vec<hidl_handle> modelCache, dataCache;
+            createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
+            createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
+
+            // Spawn a thread to copy the cache content concurrently while preparing from cache.
+            std::thread thread(copyCacheFiles, std::cref(modelCacheMul), std::cref(mModelCache));
+            prepareModelFromCache(modelCache, dataCache, &preparedModel, &status);
+            thread.join();
+
+            // The preparation may fail or succeed, but must not crash. If the preparation succeeds,
+            // the prepared model must be executed with the correct result and not crash.
+            if (status != ErrorStatus::NONE) {
+                ASSERT_EQ(preparedModel, nullptr);
+            } else {
+                ASSERT_NE(preparedModel, nullptr);
+                generated_tests::EvaluatePreparedModel(
+                        preparedModel, [](int) { return false; },
+                        getLargeModelExamples(kLargeModelSize),
+                        testModelAdd.relaxComputationFloat32toFloat16,
+                        /*testDynamicOutputShape=*/false);
+            }
+        }
+    }
+}
+
+TEST_F(CompilationCachingTest, ReplaceSecuritySensitiveCache) {
+    if (!mIsCachingSupported) return;
+
+    // Save the testModelMul compilation to cache.
+    Model testModelMul = createLargeTestModel(OperationType::MUL, kLargeModelSize);
+    auto modelCacheMul = mModelCache;
+    for (auto& cache : modelCacheMul) {
+        cache[0].append("_mul");
+    }
+    {
+        hidl_vec<hidl_handle> modelCache, dataCache;
+        createCacheHandles(modelCacheMul, AccessMode::READ_WRITE, &modelCache);
+        createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
+        bool supported;
+        saveModelToCache(testModelMul, modelCache, dataCache, &supported);
+        if (checkEarlyTermination(supported)) return;
+    }
+
+    // Use a different token for testModelAdd.
+    mToken[0]++;
+
+    // Save the testModelAdd compilation to cache.
+    Model testModelAdd = createLargeTestModel(OperationType::ADD, kLargeModelSize);
+    {
+        bool supported;
+        hidl_vec<hidl_handle> modelCache, dataCache;
+        createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
+        createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
+        saveModelToCache(testModelAdd, modelCache, dataCache, &supported);
+        if (checkEarlyTermination(supported)) return;
+    }
+
+    // Replace the model cache of testModelAdd with testModelMul.
+    copyCacheFiles(modelCacheMul, mModelCache);
+
+    // Retrieve the preparedModel from cache, expect failure.
+    {
+        sp<IPreparedModel> preparedModel = nullptr;
+        ErrorStatus status;
+        hidl_vec<hidl_handle> modelCache, dataCache;
+        createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
+        createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
         prepareModelFromCache(modelCache, dataCache, &preparedModel, &status);
         ASSERT_EQ(status, ErrorStatus::GENERAL_FAILURE);
         ASSERT_EQ(preparedModel, nullptr);
