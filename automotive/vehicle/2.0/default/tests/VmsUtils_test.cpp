@@ -158,7 +158,7 @@ TEST(VmsUtilsTest, emptyMessageInvalid) {
 TEST(VmsUtilsTest, invalidMessageType) {
     VmsLayer layer(1, 0, 2);
     auto message = createSubscribeMessage(layer);
-    message->value.int32Values[0] = 0;
+    message->value.int32Values[0] = -1;
 
     EXPECT_FALSE(isValidVmsMessage(*message));
 }
@@ -323,6 +323,98 @@ TEST(VmsUtilsTest, serviceNotNewlyStarted) {
 TEST(VmsUtilsTest, invalidAvailabilityChange) {
     auto message = createBaseVmsMessage(1);
     EXPECT_FALSE(hasServiceNewlyStarted(*message));
+}
+
+TEST(VmsUtilsTest, startSessionRequest) {
+    auto message = createStartSessionMessage(123, 456);
+    ASSERT_NE(message, nullptr);
+    EXPECT_TRUE(isValidVmsMessage(*message));
+    EXPECT_EQ(message->prop, toInt(VehicleProperty::VEHICLE_MAP_SERVICE));
+    EXPECT_EQ(message->value.int32Values.size(), 0x3ul);
+    EXPECT_EQ(parseMessageType(*message), VmsMessageType::START_SESSION);
+    EXPECT_EQ(message->value.int32Values[1], 123);
+    EXPECT_EQ(message->value.int32Values[2], 456);
+}
+
+TEST(VmsUtilsTest, startSessionServiceNewlyStarted) {
+    auto message = createBaseVmsMessage(3);
+    int new_service_id;
+    message->value.int32Values = hidl_vec<int32_t>{toInt(VmsMessageType::START_SESSION), 123, -1};
+    EXPECT_EQ(parseStartSessionMessage(*message, 122, 456, &new_service_id),
+              VmsSessionStatus::kNewServerSession);
+    EXPECT_EQ(new_service_id, 123);
+}
+
+TEST(VmsUtilsTest, startSessionServiceNewlyStartedEdgeCase) {
+    auto message = createBaseVmsMessage(3);
+    int new_service_id;
+    message->value.int32Values = hidl_vec<int32_t>{toInt(VmsMessageType::START_SESSION), 0, -1};
+    EXPECT_EQ(parseStartSessionMessage(*message, -1, 0, &new_service_id),
+              VmsSessionStatus::kNewServerSession);
+    EXPECT_EQ(new_service_id, 0);
+}
+
+TEST(VmsUtilsTest, startSessionClientNewlyStarted) {
+    auto message = createBaseVmsMessage(3);
+    int new_service_id;
+    message->value.int32Values = hidl_vec<int32_t>{toInt(VmsMessageType::START_SESSION), 123, 456};
+    EXPECT_EQ(parseStartSessionMessage(*message, -1, 456, &new_service_id),
+              VmsSessionStatus::kAckToNewClientSession);
+    EXPECT_EQ(new_service_id, 123);
+}
+
+TEST(VmsUtilsTest, startSessionClientNewlyStartedWithSameServerId) {
+    auto message = createBaseVmsMessage(3);
+    int new_service_id;
+    message->value.int32Values = hidl_vec<int32_t>{toInt(VmsMessageType::START_SESSION), 123, 456};
+    EXPECT_EQ(parseStartSessionMessage(*message, 123, 456, &new_service_id),
+              VmsSessionStatus::kAckToNewClientSession);
+    EXPECT_EQ(new_service_id, 123);
+}
+
+TEST(VmsUtilsTest, startSessionClientNewlyStartedEdgeCase) {
+    auto message = createBaseVmsMessage(3);
+    int new_service_id;
+    message->value.int32Values = hidl_vec<int32_t>{toInt(VmsMessageType::START_SESSION), 0, 0};
+    EXPECT_EQ(parseStartSessionMessage(*message, 0, 0, &new_service_id),
+              VmsSessionStatus::kAckToNewClientSession);
+    EXPECT_EQ(new_service_id, 0);
+}
+
+TEST(VmsUtilsTest, startSessionOldServiceId) {
+    auto message = createBaseVmsMessage(3);
+    int new_service_id;
+    message->value.int32Values = hidl_vec<int32_t>{toInt(VmsMessageType::START_SESSION), 120, 456};
+    EXPECT_EQ(parseStartSessionMessage(*message, 123, 456, &new_service_id),
+              VmsSessionStatus::kInvalidServiceId);
+    EXPECT_EQ(new_service_id, 123);
+}
+
+TEST(VmsUtilsTest, startSessionInvalidServiceIdEdgeCase) {
+    auto message = createBaseVmsMessage(3);
+    int new_service_id;
+    message->value.int32Values = hidl_vec<int32_t>{toInt(VmsMessageType::START_SESSION), -1, 456};
+    EXPECT_EQ(parseStartSessionMessage(*message, -1, 456, &new_service_id),
+              VmsSessionStatus::kInvalidServiceId);
+    EXPECT_EQ(new_service_id, -1);
+}
+
+TEST(VmsUtilsTest, startSessionInvalidClientId) {
+    auto message = createBaseVmsMessage(3);
+    int new_service_id;
+    message->value.int32Values = hidl_vec<int32_t>{toInt(VmsMessageType::START_SESSION), 123, 457};
+    EXPECT_EQ(parseStartSessionMessage(*message, 123, 456, &new_service_id),
+              VmsSessionStatus::kInvalidClientId);
+    EXPECT_EQ(new_service_id, 123);
+}
+
+TEST(VmsUtilsTest, startSessionInvalidMessageFormat) {
+    auto message = createBaseVmsMessage(2);
+    int new_service_id;
+    message->value.int32Values = hidl_vec<int32_t>{toInt(VmsMessageType::START_SESSION), 123};
+    EXPECT_EQ(parseStartSessionMessage(*message, 123, 456, &new_service_id),
+              VmsSessionStatus::kInvalidMessage);
+    EXPECT_EQ(new_service_id, 123);
 }
 
 }  // namespace
