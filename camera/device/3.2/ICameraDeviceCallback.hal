@@ -125,6 +125,21 @@ interface ICameraDeviceCallback {
      * via a SHUTTER notify() call. It is highly recommended to dispatch this
      * call as early as possible.
      *
+     * The SHUTTER notify calls for requests with android.control.enableZsl
+     * set to TRUE and ANDROID_CONTROL_CAPTURE_INTENT == STILL_CAPTURE may be
+     * out-of-order compared to SHUTTER notify for other kinds of requests
+     * (including regular, reprocess, or zero-shutter-lag requests with
+     * different capture intents).
+     *
+     * As a result, the capture results of zero-shutter-lag requests with
+     * ANDROID_CONTROL_CAPTURE_INTENT == STILL_CAPTURE may be out-of-order
+     * compared to capture results for other kinds of requests.
+     *
+     * Different SHUTTER notify calls for zero-shutter-lag requests with
+     * ANDROID_CONTROL_CAPTURE_INTENT == STILL_CAPTURE must be in order between
+     * them, as is for other kinds of requests. SHUTTER notify calls for
+     * zero-shutter-lag requests with non STILL_CAPTURE intent must be in order
+     * with SHUTTER notify calls for regular requests.
      * ------------------------------------------------------------------------
      * Performance requirements:
      *
