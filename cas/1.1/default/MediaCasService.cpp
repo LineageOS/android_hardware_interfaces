@@ -68,7 +68,7 @@ MediaCasService::~MediaCasService() {}
 Return<void> MediaCasService::enumeratePlugins(enumeratePlugins_cb _hidl_cb) {
     ALOGV("%s", __FUNCTION__);
 
-    vector<HidlCasPluginDescriptor> results;
+    hidl_vec<HidlCasPluginDescriptor> results;
     mCasLoader.enumeratePlugins(&results);
 
     _hidl_cb(results);
