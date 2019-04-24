@@ -1005,12 +1005,21 @@ enum OperationType : int32_t {
      *      the input.
      * * 1: An {@link OperandType::INT32} scalar, specifying the radius of
      *      the normalization window.
-     * * 2: An {@link OperandType::FLOAT32} scalar, specifying the bias, must
-     *      not be zero.
-     * * 3: An {@link OperandType::FLOAT32} scalar, specifying the scale
-     *      factor, alpha.
-     * * 4: An {@link OperandType::FLOAT32} scalar, specifying the exponent,
-     *      beta.
+     * * 2: A scalar, specifying the bias, must not be zero.
+     *      For input tensor of {@link OperandType::TENSOR_FLOAT16}, the bias
+     *      value must be of {@link OperandType::FLOAT16}.
+     *      For input tensor of {@link OperandType::TENSOR_FLOAT32}, the bias
+     *      value must be of {@link OperandType::FLOAT32}.
+     * * 3: A scalar, specifying the scale factor, alpha.
+     *      For input tensor of {@link OperandType::TENSOR_FLOAT16}, the alpha
+     *      value must be of {@link OperandType::FLOAT16}.
+     *      For input tensor of {@link OperandType::TENSOR_FLOAT32}, the alpha
+     *      value must be of {@link OperandType::FLOAT32}.
+     * * 4: A scalar, specifying the exponent, beta.
+     *      For input tensor of {@link OperandType::TENSOR_FLOAT16}, the beta
+     *      value must be of {@link OperandType::FLOAT16}.
+     *      For input tensor of {@link OperandType::TENSOR_FLOAT32}, the beta
+     *      value must be of {@link OperandType::FLOAT32}.
      * * 5: An optional {@link OperandType::INT32} scalar, default to -1,
      *      specifying the dimension normalization would be performed on.
      *      Negative index is used to specify axis from the end (e.g. -1 for
@@ -1548,6 +1557,11 @@ enum OperationType : int32_t {
      *      shape of the output tensor. The number of elements implied by shape
      *      must be the same as the number of elements in the input tensor.
      *
+     *      If one component of shape is the special value -1, the size of that
+     *      dimension is computed so that the total size remains constant. In
+     *      particular, a shape of [-1] flattens into 1-D. At most one component
+     *      of shape can be -1.
+     *
      * Outputs:
      * * 0: The output tensor, of shape specified by the input shape.
      *
@@ -1949,9 +1963,6 @@ enum OperationType : int32_t {
      * in axis. If keep_dims is true, the reduced dimensions are retained with
      * length 1.
      *
-     * If dimensions to reduce have no entries, all dimensions are reduced, and
-     * a tensor with a single element is returned.
-     *
      * Supported tensor {@link OperandType}:
      * * {@link OperandType::TENSOR_FLOAT16} (since API level 29)
      * * {@link OperandType::TENSOR_FLOAT32}
@@ -1962,8 +1973,14 @@ enum OperationType : int32_t {
      * Inputs:
      * * 0: A tensor, specifying the input.
      * * 1: A 1-D Tensor of {@link OperandType::TENSOR_INT32}. The dimensions
-     *      to reduce. If None (the default), reduces all dimensions. Must be in
-     *      the range [-rank(input_tensor), rank(input_tensor)).
+     *      to reduce. Must be in the range
+     *      [-rank(input_tensor), rank(input_tensor)).
+     *
+     *      NOTE: When the operation was introduced, the documentation
+     *      incorrectly stated that if dimensions were empty, the operation
+     *      would reduce across all dimensions. This behavior was never
+     *      implemented.
+     *
      * * 2: An {@link OperandType::INT32} scalar, keep_dims. If positive,
      *      retains reduced dimensions with length 1.
      *
@@ -3487,8 +3504,12 @@ enum OperationType : int32_t {
      *
      * Inputs:
      * * 0: A tensor specifying the input logits.
-     * * 1: An {@link OperandType::FLOAT32} scalar, specifying the positive
-     *      scaling factor for the exponent, beta.
+     * * 1: A scalar, specifying the positive scaling factor for the exponent,
+     *      beta.
+     *      For input tensor of {@link OperandType::TENSOR_FLOAT16}, the beta
+     *      value must be of {@link OperandType::FLOAT16}.
+     *      For input tensor of {@link OperandType::TENSOR_FLOAT32}, the beta
+     *      value must be of {@link OperandType::FLOAT32}.
      * * 2: An {@link OperandType::INT32} scalar specifying the axis to
      *      reduce across. Negative index is used to specify axis from the
      *      end (e.g. -1 for the last axis). Must be in the range [-n, n).

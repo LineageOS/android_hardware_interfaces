@@ -34,34 +34,48 @@ using V2_0::Error;
 template <typename Hal>
 class Gralloc0HalImpl : public V2_0::passthrough::detail::Gralloc0HalImpl<Hal> {
    public:
-    Error validateBufferSize(const native_handle_t* /*bufferHandle*/,
-                             const IMapper::BufferDescriptorInfo& /*descriptorInfo*/,
-                             uint32_t /*stride*/) override {
-        // need a gralloc0 extension to really validate
-        return Error::NONE;
-    }
+     Error validateBufferSize(const native_handle_t* bufferHandle,
+                              const IMapper::BufferDescriptorInfo& descriptorInfo,
+                              uint32_t stride) override {
+         if (!mModule->validateBufferSize) {
+             return Error::NONE;
+         }
 
-    Error getTransportSize(const native_handle_t* bufferHandle, uint32_t* outNumFds,
-                           uint32_t* outNumInts) override {
-        // need a gralloc0 extension to get the transport size
-        *outNumFds = bufferHandle->numFds;
-        *outNumInts = bufferHandle->numInts;
-        return Error::NONE;
+         int32_t ret = mModule->validateBufferSize(
+                 mModule, bufferHandle, descriptorInfo.width, descriptorInfo.height,
+                 static_cast<int32_t>(descriptorInfo.format),
+                 static_cast<uint64_t>(descriptorInfo.usage), stride);
+         return static_cast<Error>(ret);
+     }
+     Error getTransportSize(const native_handle_t* bufferHandle, uint32_t* outNumFds,
+                            uint32_t* outNumInts) override {
+         if (!mModule->getTransportSize) {
+             *outNumFds = bufferHandle->numFds;
+             *outNumInts = bufferHandle->numInts;
+             return Error::NONE;
+         }
+
+         int32_t ret = mModule->getTransportSize(mModule, bufferHandle, outNumFds, outNumInts);
+         return static_cast<Error>(ret);
     }
 
     Error createDescriptor_2_1(const IMapper::BufferDescriptorInfo& descriptorInfo,
                                BufferDescriptor* outDescriptor) override {
         return createDescriptor(
-            V2_0::IMapper::BufferDescriptorInfo{
-                descriptorInfo.width, descriptorInfo.height, descriptorInfo.layerCount,
-                static_cast<common::V1_0::PixelFormat>(descriptorInfo.format), descriptorInfo.usage,
-            },
-            outDescriptor);
+                V2_0::IMapper::BufferDescriptorInfo{
+                        descriptorInfo.width,
+                        descriptorInfo.height,
+                        descriptorInfo.layerCount,
+                        static_cast<common::V1_0::PixelFormat>(descriptorInfo.format),
+                        descriptorInfo.usage,
+                },
+                outDescriptor);
     }
 
    private:
     using BaseType2_0 = V2_0::passthrough::detail::Gralloc0HalImpl<Hal>;
     using BaseType2_0::createDescriptor;
+    using BaseType2_0::mModule;
 };
 
 }  // namespace detail
