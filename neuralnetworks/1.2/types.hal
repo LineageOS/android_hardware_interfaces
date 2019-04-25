@@ -3531,6 +3531,8 @@ enum OperationType : int32_t {
      * * {@link OperandType::TENSOR_INT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
      *
+     * Supported tensor rank: from 1.
+     *
      * Inputs:
      * * 0: A tensor.
      * * 1: A tensor of the same {@link OperandType} and compatible dimensions
@@ -3551,6 +3553,8 @@ enum OperationType : int32_t {
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_INT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
+     *
+     * Supported tensor rank: from 1.
      *
      * Inputs:
      * * 0: A tensor.
