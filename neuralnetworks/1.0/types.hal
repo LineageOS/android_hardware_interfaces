@@ -1197,6 +1197,11 @@ enum OperationType : int32_t {
      *      shape of the output tensor. The number of elements implied by shape
      *      must be the same as the number of elements in the input tensor.
      *
+     *      If one component of shape is the special value -1, the size of that
+     *      dimension is computed so that the total size remains constant. In
+     *      particular, a shape of [-1] flattens into 1-D. At most one component
+     *      of shape can be -1.
+     *
      * Outputs:
      * * 0: The output tensor, of shape specified by the input shape.
      *
