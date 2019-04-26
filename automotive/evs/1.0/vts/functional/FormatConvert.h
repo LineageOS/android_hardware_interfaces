@@ -21,30 +21,44 @@
 #include <stdint.h>
 
 
-// Given an image buffer in NV21 format (HAL_PIXEL_FORMAT_YCRCB_420_SP), output 32bit RGBx values.
-// The NV21 format provides a Y array of 8bit values, followed by a 1/2 x 1/2 interleaved
+// Given an image buffer in NV21 format (HAL_PIXEL_FORMAT_YCRCB_420_SP), output 32bit RGBx/BGRx
+// values.  The NV21 format provides a Y array of 8bit values, followed by a 1/2 x 1/2 interleaved
 // U/V array.  It assumes an even width and height for the overall image, and a horizontal
 // stride that is an even multiple of 16 bytes for both the Y and UV arrays.
 void copyNV21toRGB32(unsigned width, unsigned height,
                      uint8_t* src,
+                     uint32_t* dst, unsigned dstStridePixels,
+                     bool bgrxFormat = false);
+
+void copyNV21toBGR32(unsigned width, unsigned height,
+                     uint8_t* src,
                      uint32_t* dst, unsigned dstStridePixels);
 
 
-// Given an image buffer in YV12 format (HAL_PIXEL_FORMAT_YV12), output 32bit RGBx values.
+// Given an image buffer in YV12 format (HAL_PIXEL_FORMAT_YV12), output 32bit RGBx/BGRx values.
 // The YV12 format provides a Y array of 8bit values, followed by a 1/2 x 1/2 U array, followed
 // by another 1/2 x 1/2 V array.  It assumes an even width and height for the overall image,
 // and a horizontal stride that is an even multiple of 16 bytes for each of the Y, U,
 // and V arrays.
 void copyYV12toRGB32(unsigned width, unsigned height,
                      uint8_t* src,
+                     uint32_t* dst, unsigned dstStridePixels,
+                     bool bgrxFormat = false);
+
+void copyYV12toBGR32(unsigned width, unsigned height,
+                     uint8_t* src,
                      uint32_t* dst, unsigned dstStridePixels);
 
-
-// Given an image buffer in YUYV format (HAL_PIXEL_FORMAT_YCBCR_422_I), output 32bit RGBx values.
-// The NV21 format provides a Y array of 8bit values, followed by a 1/2 x 1/2 interleaved
+// Given an image buffer in YUYV format (HAL_PIXEL_FORMAT_YCBCR_422_I), output 32bit RGBx/BGRx
+// values.  The NV21 format provides a Y array of 8bit values, followed by a 1/2 x 1/2 interleaved
 // U/V array.  It assumes an even width and height for the overall image, and a horizontal
 // stride that is an even multiple of 16 bytes for both the Y and UV arrays.
 void copyYUYVtoRGB32(unsigned width, unsigned height,
+                     uint8_t* src, unsigned srcStrideBytes,
+                     uint32_t* dst, unsigned dstStrideBytes,
+                     bool bgrxFormat = false);
+
+void copyYUYVtoBGR32(unsigned width, unsigned height,
                      uint8_t* src, unsigned srcStrideBytes,
                      uint32_t* dst, unsigned dstStrideBytes);
 
