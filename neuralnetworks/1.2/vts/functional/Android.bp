@@ -20,6 +20,7 @@ cc_test {
     defaults: ["VtsHalNeuralNetworksTargetTestDefaults"],
     srcs: [
         "GeneratedTestsV1_0.cpp",
+        "ValidateBurst.cpp",
     ],
     cflags: [
         "-DNN_TEST_DYNAMIC_OUTPUT_SHAPE"
@@ -32,6 +33,7 @@ cc_test {
     defaults: ["VtsHalNeuralNetworksTargetTestDefaults"],
     srcs: [
         "GeneratedTestsV1_1.cpp",
+        "ValidateBurst.cpp",
     ],
     cflags: [
         "-DNN_TEST_DYNAMIC_OUTPUT_SHAPE"
@@ -46,6 +48,7 @@ cc_test {
         "BasicTests.cpp",
         "CompilationCachingTests.cpp",
         "GeneratedTests.cpp",
+        "ValidateBurst.cpp",
     ],
     cflags: [
         "-DNN_TEST_DYNAMIC_OUTPUT_SHAPE"
@@ -58,6 +61,7 @@ cc_test {
     srcs: [
         "BasicTests.cpp",
         "GeneratedTests.cpp",
+        "ValidateBurst.cpp",
     ],
     cflags: [
         "-DNN_TEST_DYNAMIC_OUTPUT_SHAPE",

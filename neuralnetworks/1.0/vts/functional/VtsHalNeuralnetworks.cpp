@@ -68,6 +68,11 @@ void NeuralnetworksHidlTest::TearDown() {
     ::testing::VtsHalHidlTargetTestBase::TearDown();
 }
 
+void ValidationTest::validateEverything(const Model& model, const std::vector<Request>& request) {
+    validateModel(model);
+    validateRequests(model, request);
+}
+
 }  // namespace functional
 }  // namespace vts
 }  // namespace V1_0
