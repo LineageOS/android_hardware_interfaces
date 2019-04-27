@@ -1200,34 +1200,15 @@ class CompilationCachingSecurityTest : public CompilationCachingTest,
         return dis(generator);
     }
 
-    const uint32_t kSeed = GetParam();
-    std::mt19937 generator;
-};
-
-TEST_P(CompilationCachingSecurityTest, CorruptedSecuritySensitiveCache) {
-    if (!mIsCachingSupported) return;
-
-    // Create test HIDL model and compile.
-    Model testModel = createTestModel();
-
-    for (uint32_t i = 0; i < mNumModelCache; i++) {
-        // Save the compilation to cache.
-        {
-            bool supported;
-            hidl_vec<hidl_handle> modelCache, dataCache;
-            createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
-            createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
-            saveModelToCache(testModel, modelCache, dataCache, &supported);
-            if (checkEarlyTermination(supported)) return;
-        }
-
-        // Randomly flip one single bit of the cache entry.
-        FILE* pFile = fopen(mModelCache[i][0].c_str(), "r+");
+    // Randomly flip one single bit of the cache entry.
+    void flipOneBitOfCache(const std::string& filename, bool* skip) {
+        FILE* pFile = fopen(filename.c_str(), "r+");
         ASSERT_EQ(fseek(pFile, 0, SEEK_END), 0);
         long int fileSize = ftell(pFile);
         if (fileSize == 0) {
             fclose(pFile);
-            continue;
+            *skip = true;
+            return;
         }
         ASSERT_EQ(fseek(pFile, getRandomInt(0l, fileSize - 1), SEEK_SET), 0);
         int readByte = fgetc(pFile);
@@ -1235,28 +1216,29 @@ TEST_P(CompilationCachingSecurityTest, CorruptedSecuritySensitiveCache) {
         ASSERT_EQ(fseek(pFile, -1, SEEK_CUR), 0);
         ASSERT_NE(fputc(static_cast<uint8_t>(readByte) ^ (1U << getRandomInt(0, 7)), pFile), EOF);
         fclose(pFile);
-
-        // Retrieve preparedModel from cache, expect failure.
-        {
-            sp<IPreparedModel> preparedModel = nullptr;
-            ErrorStatus status;
-            hidl_vec<hidl_handle> modelCache, dataCache;
-            createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
-            createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
-            prepareModelFromCache(modelCache, dataCache, &preparedModel, &status);
-            ASSERT_EQ(status, ErrorStatus::GENERAL_FAILURE);
-            ASSERT_EQ(preparedModel, nullptr);
-        }
+        *skip = false;
     }
-}
 
-TEST_P(CompilationCachingSecurityTest, WrongLengthSecuritySensitiveCache) {
-    if (!mIsCachingSupported) return;
+    // Randomly append bytes to the cache entry.
+    void appendBytesToCache(const std::string& filename, bool* skip) {
+        FILE* pFile = fopen(filename.c_str(), "a");
+        uint32_t appendLength = getRandomInt(1, 256);
+        for (uint32_t i = 0; i < appendLength; i++) {
+            ASSERT_NE(fputc(getRandomInt<uint8_t>(0, 255), pFile), EOF);
+        }
+        fclose(pFile);
+        *skip = false;
+    }
 
-    // Create test HIDL model and compile.
-    Model testModel = createTestModel();
+    enum class ExpectedResult { GENERAL_FAILURE, NOT_CRASH };
 
-    for (uint32_t i = 0; i < mNumModelCache; i++) {
+    // Test if the driver behaves as expected when given corrupted cache or token.
+    // The modifier will be invoked after save to cache but before prepare from cache.
+    // The modifier accepts one pointer argument "skip" as the returning value, indicating
+    // whether the test should be skipped or not.
+    void testCorruptedCache(ExpectedResult expected, std::function<void(bool*)> modifier) {
+        Model testModel = createTestModel();
+
         // Save the compilation to cache.
         {
             bool supported;
@@ -1267,15 +1249,11 @@ TEST_P(CompilationCachingSecurityTest, WrongLengthSecuritySensitiveCache) {
             if (checkEarlyTermination(supported)) return;
         }
 
-        // Randomly append bytes to the cache entry.
-        FILE* pFile = fopen(mModelCache[i][0].c_str(), "a");
-        uint32_t appendLength = getRandomInt(1, 256);
-        for (uint32_t i = 0; i < appendLength; i++) {
-            ASSERT_NE(fputc(getRandomInt<uint8_t>(0, 255), pFile), EOF);
-        }
-        fclose(pFile);
+        bool skip = false;
+        modifier(&skip);
+        if (skip) return;
 
-        // Retrieve preparedModel from cache, expect failure.
+        // Retrieve preparedModel from cache.
         {
             sp<IPreparedModel> preparedModel = nullptr;
             ErrorStatus status;
@@ -1283,43 +1261,66 @@ TEST_P(CompilationCachingSecurityTest, WrongLengthSecuritySensitiveCache) {
             createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
             createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
             prepareModelFromCache(modelCache, dataCache, &preparedModel, &status);
-            ASSERT_EQ(status, ErrorStatus::GENERAL_FAILURE);
-            ASSERT_EQ(preparedModel, nullptr);
+
+            switch (expected) {
+                case ExpectedResult::GENERAL_FAILURE:
+                    ASSERT_EQ(status, ErrorStatus::GENERAL_FAILURE);
+                    ASSERT_EQ(preparedModel, nullptr);
+                    break;
+                case ExpectedResult::NOT_CRASH:
+                    ASSERT_EQ(preparedModel == nullptr, status != ErrorStatus::NONE);
+                    break;
+                default:
+                    FAIL();
+            }
         }
+    }
+
+    const uint32_t kSeed = GetParam();
+    std::mt19937 generator;
+};
+
+TEST_P(CompilationCachingSecurityTest, CorruptedModelCache) {
+    if (!mIsCachingSupported) return;
+    for (uint32_t i = 0; i < mNumModelCache; i++) {
+        testCorruptedCache(ExpectedResult::GENERAL_FAILURE,
+                           [this, i](bool* skip) { flipOneBitOfCache(mModelCache[i][0], skip); });
+    }
+}
+
+TEST_P(CompilationCachingSecurityTest, WrongLengthModelCache) {
+    if (!mIsCachingSupported) return;
+    for (uint32_t i = 0; i < mNumModelCache; i++) {
+        testCorruptedCache(ExpectedResult::GENERAL_FAILURE,
+                           [this, i](bool* skip) { appendBytesToCache(mModelCache[i][0], skip); });
+    }
+}
+
+TEST_P(CompilationCachingSecurityTest, CorruptedDataCache) {
+    if (!mIsCachingSupported) return;
+    for (uint32_t i = 0; i < mNumDataCache; i++) {
+        testCorruptedCache(ExpectedResult::NOT_CRASH,
+                           [this, i](bool* skip) { flipOneBitOfCache(mDataCache[i][0], skip); });
+    }
+}
+
+TEST_P(CompilationCachingSecurityTest, WrongLengthDataCache) {
+    if (!mIsCachingSupported) return;
+    for (uint32_t i = 0; i < mNumDataCache; i++) {
+        testCorruptedCache(ExpectedResult::NOT_CRASH,
+                           [this, i](bool* skip) { appendBytesToCache(mDataCache[i][0], skip); });
     }
 }
 
 TEST_P(CompilationCachingSecurityTest, WrongToken) {
     if (!mIsCachingSupported) return;
-
-    // Create test HIDL model and compile.
-    Model testModel = createTestModel();
-
-    // Save the compilation to cache.
-    {
-        bool supported;
-        hidl_vec<hidl_handle> modelCache, dataCache;
-        createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
-        createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
-        saveModelToCache(testModel, modelCache, dataCache, &supported);
-        if (checkEarlyTermination(supported)) return;
-    }
-
-    // Randomly flip one single bit in mToken.
-    uint32_t ind = getRandomInt(0u, static_cast<uint32_t>(Constant::BYTE_SIZE_OF_CACHE_TOKEN) - 1);
-    mToken[ind] ^= (1U << getRandomInt(0, 7));
-
-    // Retrieve the preparedModel from cache, expect failure.
-    {
-        sp<IPreparedModel> preparedModel = nullptr;
-        ErrorStatus status;
-        hidl_vec<hidl_handle> modelCache, dataCache;
-        createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
-        createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
-        prepareModelFromCache(modelCache, dataCache, &preparedModel, &status);
-        ASSERT_EQ(status, ErrorStatus::GENERAL_FAILURE);
-        ASSERT_EQ(preparedModel, nullptr);
-    }
+    testCorruptedCache(ExpectedResult::GENERAL_FAILURE, [this](bool* skip) {
+        // Randomly flip one single bit in mToken.
+        uint32_t ind =
+                getRandomInt(0u, static_cast<uint32_t>(Constant::BYTE_SIZE_OF_CACHE_TOKEN) - 1);
+        mToken[ind] ^= (1U << getRandomInt(0, 7));
+        *skip = false;
+    });
 }
 
 INSTANTIATE_TEST_CASE_P(TestCompilationCaching, CompilationCachingSecurityTest,
