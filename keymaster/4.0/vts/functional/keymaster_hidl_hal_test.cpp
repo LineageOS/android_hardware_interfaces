@@ -414,7 +414,7 @@ bool verify_attestation_record(const string& challenge, const string& app_id,
     EXPECT_NE(strcmp(property_value, "nogood"), 0);
     string prop_string(property_value);
     EXPECT_EQ(prop_string.size(), 64);
-    EXPECT_EQ(0, memcmp(verified_boot_hash.data(), prop_string.data(), verified_boot_hash.size()));
+    EXPECT_EQ(prop_string, bin2hex(verified_boot_hash));
 
     property_get("ro.boot.vbmeta.device_state", property_value, "nogood");
     EXPECT_NE(property_value, "nogood");
