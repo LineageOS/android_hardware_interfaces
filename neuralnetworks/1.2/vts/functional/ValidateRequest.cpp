@@ -35,9 +35,7 @@ namespace vts {
 namespace functional {
 
 using ::android::hardware::neuralnetworks::V1_2::implementation::ExecutionCallback;
-using ::android::hardware::neuralnetworks::V1_2::implementation::PreparedModelCallback;
 using ::android::hidl::memory::V1_0::IMemory;
-using HidlToken = hidl_array<uint8_t, static_cast<uint32_t>(Constant::BYTE_SIZE_OF_CACHE_TOKEN)>;
 using test_helper::for_all;
 using test_helper::MixedTyped;
 using test_helper::MixedTypedExample;
@@ -46,55 +44,6 @@ using test_helper::MixedTypedExample;
 
 static bool badTiming(Timing timing) {
     return timing.timeOnDevice == UINT64_MAX && timing.timeInDriver == UINT64_MAX;
-}
-
-static void createPreparedModel(const sp<IDevice>& device, const Model& model,
-                                sp<IPreparedModel>* preparedModel) {
-    ASSERT_NE(nullptr, preparedModel);
-
-    // see if service can handle model
-    bool fullySupportsModel = false;
-    Return<void> supportedOpsLaunchStatus = device->getSupportedOperations_1_2(
-        model, [&fullySupportsModel](ErrorStatus status, const hidl_vec<bool>& supported) {
-            ASSERT_EQ(ErrorStatus::NONE, status);
-            ASSERT_NE(0ul, supported.size());
-            fullySupportsModel =
-                std::all_of(supported.begin(), supported.end(), [](bool valid) { return valid; });
-        });
-    ASSERT_TRUE(supportedOpsLaunchStatus.isOk());
-
-    // launch prepare model
-    sp<PreparedModelCallback> preparedModelCallback = new PreparedModelCallback();
-    ASSERT_NE(nullptr, preparedModelCallback.get());
-    Return<ErrorStatus> prepareLaunchStatus = device->prepareModel_1_2(
-            model, ExecutionPreference::FAST_SINGLE_ANSWER, hidl_vec<hidl_handle>(),
-            hidl_vec<hidl_handle>(), HidlToken(), preparedModelCallback);
-    ASSERT_TRUE(prepareLaunchStatus.isOk());
-    ASSERT_EQ(ErrorStatus::NONE, static_cast<ErrorStatus>(prepareLaunchStatus));
-
-    // retrieve prepared model
-    preparedModelCallback->wait();
-    ErrorStatus prepareReturnStatus = preparedModelCallback->getStatus();
-    *preparedModel = getPreparedModel_1_2(preparedModelCallback);
-
-    // The getSupportedOperations_1_2 call returns a list of operations that are
-    // guaranteed not to fail if prepareModel_1_2 is called, and
-    // 'fullySupportsModel' is true i.f.f. the entire model is guaranteed.
-    // If a driver has any doubt that it can prepare an operation, it must
-    // return false. So here, if a driver isn't sure if it can support an
-    // operation, but reports that it successfully prepared the model, the test
-    // can continue.
-    if (!fullySupportsModel && prepareReturnStatus != ErrorStatus::NONE) {
-        ASSERT_EQ(nullptr, preparedModel->get());
-        LOG(INFO) << "NN VTS: Unable to test Request validation because vendor service cannot "
-                     "prepare model that it does not support.";
-        std::cout << "[          ]   Unable to test Request validation because vendor service "
-                     "cannot prepare model that it does not support."
-                  << std::endl;
-        return;
-    }
-    ASSERT_EQ(ErrorStatus::NONE, prepareReturnStatus);
-    ASSERT_NE(nullptr, preparedModel->get());
 }
 
 // Primary validation function. This function will take a valid request, apply a
@@ -316,14 +265,8 @@ std::vector<Request> createRequests(const std::vector<MixedTypedExample>& exampl
     return requests;
 }
 
-void ValidationTest::validateRequests(const Model& model, const std::vector<Request>& requests) {
-    // create IPreparedModel
-    sp<IPreparedModel> preparedModel;
-    ASSERT_NO_FATAL_FAILURE(createPreparedModel(device, model, &preparedModel));
-    if (preparedModel == nullptr) {
-        return;
-    }
-
+void ValidationTest::validateRequests(const sp<IPreparedModel>& preparedModel,
+                                      const std::vector<Request>& requests) {
     // validate each request
     for (const Request& request : requests) {
         removeInputTest(preparedModel, request);
