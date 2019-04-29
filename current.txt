@@ -476,3 +476,4 @@ b53ac9d61c24efb16a2d63a861cef20680f6d57adb244a03b9778c675550628b android.hardwar
 
 # ABI preserving changes to HALs during Android R
 b69a7615c508acf5c5201efd1bfa3262167874fc3594e2db5a3ff93addd8ac75 android.hardware.keymaster@4.0::IKeymasterDevice
+1a6e2bd289f22931c526b21916910f1d4c436b7acb9556e4243de4ce8e6cc2e4 android.hardware.soundtrigger@2.0::ISoundTriggerHwCallback
