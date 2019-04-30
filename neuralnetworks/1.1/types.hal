@@ -138,7 +138,7 @@ enum OperationType : @1.0::OperationType {
      *
      * Supported tensor {@link OperandType}:
      * * {@link OperandType::TENSOR_FLOAT32}
-     * * {@link OperandType::TENSOR_QUANT8_ASYMM}
+     * * {@link OperandType::TENSOR_QUANT8_ASYMM} (the pad value is undefined)
      *
      * Supported tensor rank: up to 4
      *
@@ -160,6 +160,9 @@ enum OperationType : @1.0::OperationType {
      *      of the padding:
      *          output0.dimension[i] =
      *              padding[i, 0] + input0.dimension[i] + padding[i, 1]
+     *
+     *      NOTE: The pad value for {@link ANEURALNETWORKS_TENSOR_QUANT8_ASYMM}
+     *      is undefined.
      *
      * Available since API level 28.
      */
