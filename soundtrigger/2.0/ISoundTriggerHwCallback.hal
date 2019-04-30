@@ -46,7 +46,6 @@ interface ISoundTriggerHwCallback {
         int32_t           captureSession;
         /**
          * Delay in ms between end of model detection and start of audio
-        /**
          * available for capture. A negative value is possible
          * (e.g. if key phrase is also available for capture */
         int32_t           captureDelayMs;
