@@ -263,12 +263,8 @@ class CompilationCachingTest : public NeuralnetworksHidlTest {
         NeuralnetworksHidlTest::TearDown();
     }
 
-    void saveModelToCache(const V1_2::Model& model, const hidl_vec<hidl_handle>& modelCache,
-                          const hidl_vec<hidl_handle>& dataCache, bool* supported,
-                          sp<IPreparedModel>* preparedModel = nullptr) {
-        if (preparedModel != nullptr) *preparedModel = nullptr;
-
-        // See if service can handle model.
+    // See if the service can handle the model.
+    bool isModelFullySupported(const V1_2::Model& model) {
         bool fullySupportsModel = false;
         Return<void> supportedCall = device->getSupportedOperations_1_2(
                 model,
@@ -278,9 +274,14 @@ class CompilationCachingTest : public NeuralnetworksHidlTest {
                     fullySupportsModel = std::all_of(supported.begin(), supported.end(),
                                                      [](bool valid) { return valid; });
                 });
-        ASSERT_TRUE(supportedCall.isOk());
-        *supported = fullySupportsModel;
-        if (!fullySupportsModel) return;
+        EXPECT_TRUE(supportedCall.isOk());
+        return fullySupportsModel;
+    }
+
+    void saveModelToCache(const V1_2::Model& model, const hidl_vec<hidl_handle>& modelCache,
+                          const hidl_vec<hidl_handle>& dataCache,
+                          sp<IPreparedModel>* preparedModel = nullptr) {
+        if (preparedModel != nullptr) *preparedModel = nullptr;
 
         // Launch prepare model.
         sp<PreparedModelCallback> preparedModelCallback = new PreparedModelCallback();
@@ -314,8 +315,8 @@ class CompilationCachingTest : public NeuralnetworksHidlTest {
         return false;
     }
 
-    bool checkEarlyTermination(bool supported) {
-        if (!supported) {
+    bool checkEarlyTermination(const V1_2::Model& model) {
+        if (!isModelFullySupported(model)) {
             LOG(INFO) << "NN VTS: Early termination of test because vendor service cannot "
                          "prepare model that it does not support.";
             std::cout << "[          ]   Early termination of test because vendor service cannot "
@@ -369,17 +370,16 @@ class CompilationCachingTest : public NeuralnetworksHidlTest {
 
 TEST_F(CompilationCachingTest, CacheSavingAndRetrieval) {
     // Create test HIDL model and compile.
-    Model testModel = createTestModel();
+    const Model testModel = createTestModel();
+    if (checkEarlyTermination(testModel)) return;
     sp<IPreparedModel> preparedModel = nullptr;
 
     // Save the compilation to cache.
     {
-        bool supported;
         hidl_vec<hidl_handle> modelCache, dataCache;
         createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
         createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
-        saveModelToCache(testModel, modelCache, dataCache, &supported);
-        if (checkEarlyTermination(supported)) return;
+        saveModelToCache(testModel, modelCache, dataCache);
     }
 
     // Retrieve preparedModel from cache.
@@ -411,12 +411,12 @@ TEST_F(CompilationCachingTest, CacheSavingAndRetrieval) {
 
 TEST_F(CompilationCachingTest, CacheSavingAndRetrievalNonZeroOffset) {
     // Create test HIDL model and compile.
-    Model testModel = createTestModel();
+    const Model testModel = createTestModel();
+    if (checkEarlyTermination(testModel)) return;
     sp<IPreparedModel> preparedModel = nullptr;
 
     // Save the compilation to cache.
     {
-        bool supported;
         hidl_vec<hidl_handle> modelCache, dataCache;
         createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
         createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
@@ -433,8 +433,7 @@ TEST_F(CompilationCachingTest, CacheSavingAndRetrievalNonZeroOffset) {
                     write(dataCache[i].getNativeHandle()->data[0], &dummyBytes, sizeof(dummyBytes)),
                     sizeof(dummyBytes));
         }
-        saveModelToCache(testModel, modelCache, dataCache, &supported);
-        if (checkEarlyTermination(supported)) return;
+        saveModelToCache(testModel, modelCache, dataCache);
     }
 
     // Retrieve preparedModel from cache.
@@ -475,11 +474,11 @@ TEST_F(CompilationCachingTest, CacheSavingAndRetrievalNonZeroOffset) {
 
 TEST_F(CompilationCachingTest, SaveToCacheInvalidNumCache) {
     // Create test HIDL model and compile.
-    Model testModel = createTestModel();
+    const Model testModel = createTestModel();
+    if (checkEarlyTermination(testModel)) return;
 
     // Test with number of model cache files greater than mNumModelCache.
     {
-        bool supported;
         hidl_vec<hidl_handle> modelCache, dataCache;
         // Pass an additional cache file for model cache.
         mModelCache.push_back({mTmpCache});
@@ -487,8 +486,7 @@ TEST_F(CompilationCachingTest, SaveToCacheInvalidNumCache) {
         createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
         mModelCache.pop_back();
         sp<IPreparedModel> preparedModel = nullptr;
-        saveModelToCache(testModel, modelCache, dataCache, &supported, &preparedModel);
-        if (checkEarlyTermination(supported)) return;
+        saveModelToCache(testModel, modelCache, dataCache, &preparedModel);
         ASSERT_NE(preparedModel, nullptr);
         // Execute and verify results.
         generated_tests::EvaluatePreparedModel(preparedModel, [](int) { return false; },
@@ -507,7 +505,6 @@ TEST_F(CompilationCachingTest, SaveToCacheInvalidNumCache) {
 
     // Test with number of model cache files smaller than mNumModelCache.
     if (mModelCache.size() > 0) {
-        bool supported;
         hidl_vec<hidl_handle> modelCache, dataCache;
         // Pop out the last cache file.
         auto tmp = mModelCache.back();
@@ -516,8 +513,7 @@ TEST_F(CompilationCachingTest, SaveToCacheInvalidNumCache) {
         createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
         mModelCache.push_back(tmp);
         sp<IPreparedModel> preparedModel = nullptr;
-        saveModelToCache(testModel, modelCache, dataCache, &supported, &preparedModel);
-        if (checkEarlyTermination(supported)) return;
+        saveModelToCache(testModel, modelCache, dataCache, &preparedModel);
         ASSERT_NE(preparedModel, nullptr);
         // Execute and verify results.
         generated_tests::EvaluatePreparedModel(preparedModel, [](int) { return false; },
@@ -536,7 +532,6 @@ TEST_F(CompilationCachingTest, SaveToCacheInvalidNumCache) {
 
     // Test with number of data cache files greater than mNumDataCache.
     {
-        bool supported;
         hidl_vec<hidl_handle> modelCache, dataCache;
         // Pass an additional cache file for data cache.
         mDataCache.push_back({mTmpCache});
@@ -544,8 +539,7 @@ TEST_F(CompilationCachingTest, SaveToCacheInvalidNumCache) {
         createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
         mDataCache.pop_back();
         sp<IPreparedModel> preparedModel = nullptr;
-        saveModelToCache(testModel, modelCache, dataCache, &supported, &preparedModel);
-        if (checkEarlyTermination(supported)) return;
+        saveModelToCache(testModel, modelCache, dataCache, &preparedModel);
         ASSERT_NE(preparedModel, nullptr);
         // Execute and verify results.
         generated_tests::EvaluatePreparedModel(preparedModel, [](int) { return false; },
@@ -564,7 +558,6 @@ TEST_F(CompilationCachingTest, SaveToCacheInvalidNumCache) {
 
     // Test with number of data cache files smaller than mNumDataCache.
     if (mDataCache.size() > 0) {
-        bool supported;
         hidl_vec<hidl_handle> modelCache, dataCache;
         // Pop out the last cache file.
         auto tmp = mDataCache.back();
@@ -573,8 +566,7 @@ TEST_F(CompilationCachingTest, SaveToCacheInvalidNumCache) {
         createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
         mDataCache.push_back(tmp);
         sp<IPreparedModel> preparedModel = nullptr;
-        saveModelToCache(testModel, modelCache, dataCache, &supported, &preparedModel);
-        if (checkEarlyTermination(supported)) return;
+        saveModelToCache(testModel, modelCache, dataCache, &preparedModel);
         ASSERT_NE(preparedModel, nullptr);
         // Execute and verify results.
         generated_tests::EvaluatePreparedModel(preparedModel, [](int) { return false; },
@@ -594,16 +586,15 @@ TEST_F(CompilationCachingTest, SaveToCacheInvalidNumCache) {
 
 TEST_F(CompilationCachingTest, PrepareModelFromCacheInvalidNumCache) {
     // Create test HIDL model and compile.
-    Model testModel = createTestModel();
+    const Model testModel = createTestModel();
+    if (checkEarlyTermination(testModel)) return;
 
     // Save the compilation to cache.
     {
-        bool supported;
         hidl_vec<hidl_handle> modelCache, dataCache;
         createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
         createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
-        saveModelToCache(testModel, modelCache, dataCache, &supported);
-        if (checkEarlyTermination(supported)) return;
+        saveModelToCache(testModel, modelCache, dataCache);
     }
 
     // Test with number of model cache files greater than mNumModelCache.
@@ -675,11 +666,11 @@ TEST_F(CompilationCachingTest, PrepareModelFromCacheInvalidNumCache) {
 
 TEST_F(CompilationCachingTest, SaveToCacheInvalidNumFd) {
     // Create test HIDL model and compile.
-    Model testModel = createTestModel();
+    const Model testModel = createTestModel();
+    if (checkEarlyTermination(testModel)) return;
 
     // Go through each handle in model cache, test with NumFd greater than 1.
     for (uint32_t i = 0; i < mNumModelCache; i++) {
-        bool supported;
         hidl_vec<hidl_handle> modelCache, dataCache;
         // Pass an invalid number of fds for handle i.
         mModelCache[i].push_back(mTmpCache);
@@ -687,8 +678,7 @@ TEST_F(CompilationCachingTest, SaveToCacheInvalidNumFd) {
         createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
         mModelCache[i].pop_back();
         sp<IPreparedModel> preparedModel = nullptr;
-        saveModelToCache(testModel, modelCache, dataCache, &supported, &preparedModel);
-        if (checkEarlyTermination(supported)) return;
+        saveModelToCache(testModel, modelCache, dataCache, &preparedModel);
         ASSERT_NE(preparedModel, nullptr);
         // Execute and verify results.
         generated_tests::EvaluatePreparedModel(preparedModel, [](int) { return false; },
@@ -707,7 +697,6 @@ TEST_F(CompilationCachingTest, SaveToCacheInvalidNumFd) {
 
     // Go through each handle in model cache, test with NumFd equal to 0.
     for (uint32_t i = 0; i < mNumModelCache; i++) {
-        bool supported;
         hidl_vec<hidl_handle> modelCache, dataCache;
         // Pass an invalid number of fds for handle i.
         auto tmp = mModelCache[i].back();
@@ -716,8 +705,7 @@ TEST_F(CompilationCachingTest, SaveToCacheInvalidNumFd) {
         createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
         mModelCache[i].push_back(tmp);
         sp<IPreparedModel> preparedModel = nullptr;
-        saveModelToCache(testModel, modelCache, dataCache, &supported, &preparedModel);
-        if (checkEarlyTermination(supported)) return;
+        saveModelToCache(testModel, modelCache, dataCache, &preparedModel);
         ASSERT_NE(preparedModel, nullptr);
         // Execute and verify results.
         generated_tests::EvaluatePreparedModel(preparedModel, [](int) { return false; },
@@ -736,7 +724,6 @@ TEST_F(CompilationCachingTest, SaveToCacheInvalidNumFd) {
 
     // Go through each handle in data cache, test with NumFd greater than 1.
     for (uint32_t i = 0; i < mNumDataCache; i++) {
-        bool supported;
         hidl_vec<hidl_handle> modelCache, dataCache;
         // Pass an invalid number of fds for handle i.
         mDataCache[i].push_back(mTmpCache);
@@ -744,8 +731,7 @@ TEST_F(CompilationCachingTest, SaveToCacheInvalidNumFd) {
         createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
         mDataCache[i].pop_back();
         sp<IPreparedModel> preparedModel = nullptr;
-        saveModelToCache(testModel, modelCache, dataCache, &supported, &preparedModel);
-        if (checkEarlyTermination(supported)) return;
+        saveModelToCache(testModel, modelCache, dataCache, &preparedModel);
         ASSERT_NE(preparedModel, nullptr);
         // Execute and verify results.
         generated_tests::EvaluatePreparedModel(preparedModel, [](int) { return false; },
@@ -764,7 +750,6 @@ TEST_F(CompilationCachingTest, SaveToCacheInvalidNumFd) {
 
     // Go through each handle in data cache, test with NumFd equal to 0.
     for (uint32_t i = 0; i < mNumDataCache; i++) {
-        bool supported;
         hidl_vec<hidl_handle> modelCache, dataCache;
         // Pass an invalid number of fds for handle i.
         auto tmp = mDataCache[i].back();
@@ -773,8 +758,7 @@ TEST_F(CompilationCachingTest, SaveToCacheInvalidNumFd) {
         createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
         mDataCache[i].push_back(tmp);
         sp<IPreparedModel> preparedModel = nullptr;
-        saveModelToCache(testModel, modelCache, dataCache, &supported, &preparedModel);
-        if (checkEarlyTermination(supported)) return;
+        saveModelToCache(testModel, modelCache, dataCache, &preparedModel);
         ASSERT_NE(preparedModel, nullptr);
         // Execute and verify results.
         generated_tests::EvaluatePreparedModel(preparedModel, [](int) { return false; },
@@ -794,16 +778,15 @@ TEST_F(CompilationCachingTest, SaveToCacheInvalidNumFd) {
 
 TEST_F(CompilationCachingTest, PrepareModelFromCacheInvalidNumFd) {
     // Create test HIDL model and compile.
-    Model testModel = createTestModel();
+    const Model testModel = createTestModel();
+    if (checkEarlyTermination(testModel)) return;
 
     // Save the compilation to cache.
     {
-        bool supported;
         hidl_vec<hidl_handle> modelCache, dataCache;
         createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
         createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
-        saveModelToCache(testModel, modelCache, dataCache, &supported);
-        if (checkEarlyTermination(supported)) return;
+        saveModelToCache(testModel, modelCache, dataCache);
     }
 
     // Go through each handle in model cache, test with NumFd greater than 1.
@@ -875,21 +858,20 @@ TEST_F(CompilationCachingTest, PrepareModelFromCacheInvalidNumFd) {
 
 TEST_F(CompilationCachingTest, SaveToCacheInvalidAccessMode) {
     // Create test HIDL model and compile.
-    Model testModel = createTestModel();
+    const Model testModel = createTestModel();
+    if (checkEarlyTermination(testModel)) return;
     std::vector<AccessMode> modelCacheMode(mNumModelCache, AccessMode::READ_WRITE);
     std::vector<AccessMode> dataCacheMode(mNumDataCache, AccessMode::READ_WRITE);
 
     // Go through each handle in model cache, test with invalid access mode.
     for (uint32_t i = 0; i < mNumModelCache; i++) {
-        bool supported;
         hidl_vec<hidl_handle> modelCache, dataCache;
         modelCacheMode[i] = AccessMode::READ_ONLY;
         createCacheHandles(mModelCache, modelCacheMode, &modelCache);
         createCacheHandles(mDataCache, dataCacheMode, &dataCache);
         modelCacheMode[i] = AccessMode::READ_WRITE;
         sp<IPreparedModel> preparedModel = nullptr;
-        saveModelToCache(testModel, modelCache, dataCache, &supported, &preparedModel);
-        if (checkEarlyTermination(supported)) return;
+        saveModelToCache(testModel, modelCache, dataCache, &preparedModel);
         ASSERT_NE(preparedModel, nullptr);
         // Execute and verify results.
         generated_tests::EvaluatePreparedModel(preparedModel, [](int) { return false; },
@@ -908,15 +890,13 @@ TEST_F(CompilationCachingTest, SaveToCacheInvalidAccessMode) {
 
     // Go through each handle in data cache, test with invalid access mode.
     for (uint32_t i = 0; i < mNumDataCache; i++) {
-        bool supported;
         hidl_vec<hidl_handle> modelCache, dataCache;
         dataCacheMode[i] = AccessMode::READ_ONLY;
         createCacheHandles(mModelCache, modelCacheMode, &modelCache);
         createCacheHandles(mDataCache, dataCacheMode, &dataCache);
         dataCacheMode[i] = AccessMode::READ_WRITE;
         sp<IPreparedModel> preparedModel = nullptr;
-        saveModelToCache(testModel, modelCache, dataCache, &supported, &preparedModel);
-        if (checkEarlyTermination(supported)) return;
+        saveModelToCache(testModel, modelCache, dataCache, &preparedModel);
         ASSERT_NE(preparedModel, nullptr);
         // Execute and verify results.
         generated_tests::EvaluatePreparedModel(preparedModel, [](int) { return false; },
@@ -936,18 +916,17 @@ TEST_F(CompilationCachingTest, SaveToCacheInvalidAccessMode) {
 
 TEST_F(CompilationCachingTest, PrepareModelFromCacheInvalidAccessMode) {
     // Create test HIDL model and compile.
-    Model testModel = createTestModel();
+    const Model testModel = createTestModel();
+    if (checkEarlyTermination(testModel)) return;
     std::vector<AccessMode> modelCacheMode(mNumModelCache, AccessMode::READ_WRITE);
     std::vector<AccessMode> dataCacheMode(mNumDataCache, AccessMode::READ_WRITE);
 
     // Save the compilation to cache.
     {
-        bool supported;
         hidl_vec<hidl_handle> modelCache, dataCache;
         createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
         createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
-        saveModelToCache(testModel, modelCache, dataCache, &supported);
-        if (checkEarlyTermination(supported)) return;
+        saveModelToCache(testModel, modelCache, dataCache);
     }
 
     // Go through each handle in model cache, test with invalid access mode.
@@ -1014,8 +993,13 @@ constexpr uint32_t kNumIterationsTOCTOU = 100;
 TEST_F(CompilationCachingTest, SaveToCache_TOCTOU) {
     if (!mIsCachingSupported) return;
 
+    // Create test models and check if fully supported by the service.
+    const Model testModelMul = createLargeTestModel(OperationType::MUL, kLargeModelSize);
+    if (checkEarlyTermination(testModelMul)) return;
+    const Model testModelAdd = createLargeTestModel(OperationType::ADD, kLargeModelSize);
+    if (checkEarlyTermination(testModelAdd)) return;
+
     // Save the testModelMul compilation to cache.
-    Model testModelMul = createLargeTestModel(OperationType::MUL, kLargeModelSize);
     auto modelCacheMul = mModelCache;
     for (auto& cache : modelCacheMul) {
         cache[0].append("_mul");
@@ -1024,29 +1008,24 @@ TEST_F(CompilationCachingTest, SaveToCache_TOCTOU) {
         hidl_vec<hidl_handle> modelCache, dataCache;
         createCacheHandles(modelCacheMul, AccessMode::READ_WRITE, &modelCache);
         createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
-        bool supported;
-        saveModelToCache(testModelMul, modelCache, dataCache, &supported);
-        if (checkEarlyTermination(supported)) return;
+        saveModelToCache(testModelMul, modelCache, dataCache);
     }
 
     // Use a different token for testModelAdd.
     mToken[0]++;
 
     // This test is probabilistic, so we run it multiple times.
-    Model testModelAdd = createLargeTestModel(OperationType::ADD, kLargeModelSize);
     for (uint32_t i = 0; i < kNumIterationsTOCTOU; i++) {
         // Save the testModelAdd compilation to cache.
         {
-            bool supported;
             hidl_vec<hidl_handle> modelCache, dataCache;
             createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
             createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
 
             // Spawn a thread to copy the cache content concurrently while saving to cache.
             std::thread thread(copyCacheFiles, std::cref(modelCacheMul), std::cref(mModelCache));
-            saveModelToCache(testModelAdd, modelCache, dataCache, &supported);
+            saveModelToCache(testModelAdd, modelCache, dataCache);
             thread.join();
-            if (checkEarlyTermination(supported)) return;
         }
 
         // Retrieve preparedModel from cache.
@@ -1077,8 +1056,13 @@ TEST_F(CompilationCachingTest, SaveToCache_TOCTOU) {
 TEST_F(CompilationCachingTest, PrepareFromCache_TOCTOU) {
     if (!mIsCachingSupported) return;
 
+    // Create test models and check if fully supported by the service.
+    const Model testModelMul = createLargeTestModel(OperationType::MUL, kLargeModelSize);
+    if (checkEarlyTermination(testModelMul)) return;
+    const Model testModelAdd = createLargeTestModel(OperationType::ADD, kLargeModelSize);
+    if (checkEarlyTermination(testModelAdd)) return;
+
     // Save the testModelMul compilation to cache.
-    Model testModelMul = createLargeTestModel(OperationType::MUL, kLargeModelSize);
     auto modelCacheMul = mModelCache;
     for (auto& cache : modelCacheMul) {
         cache[0].append("_mul");
@@ -1087,25 +1071,20 @@ TEST_F(CompilationCachingTest, PrepareFromCache_TOCTOU) {
         hidl_vec<hidl_handle> modelCache, dataCache;
         createCacheHandles(modelCacheMul, AccessMode::READ_WRITE, &modelCache);
         createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
-        bool supported;
-        saveModelToCache(testModelMul, modelCache, dataCache, &supported);
-        if (checkEarlyTermination(supported)) return;
+        saveModelToCache(testModelMul, modelCache, dataCache);
     }
 
     // Use a different token for testModelAdd.
     mToken[0]++;
 
     // This test is probabilistic, so we run it multiple times.
-    Model testModelAdd = createLargeTestModel(OperationType::ADD, kLargeModelSize);
     for (uint32_t i = 0; i < kNumIterationsTOCTOU; i++) {
         // Save the testModelAdd compilation to cache.
         {
-            bool supported;
             hidl_vec<hidl_handle> modelCache, dataCache;
             createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
             createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
-            saveModelToCache(testModelAdd, modelCache, dataCache, &supported);
-            if (checkEarlyTermination(supported)) return;
+            saveModelToCache(testModelAdd, modelCache, dataCache);
         }
 
         // Retrieve preparedModel from cache.
@@ -1140,8 +1119,13 @@ TEST_F(CompilationCachingTest, PrepareFromCache_TOCTOU) {
 TEST_F(CompilationCachingTest, ReplaceSecuritySensitiveCache) {
     if (!mIsCachingSupported) return;
 
+    // Create test models and check if fully supported by the service.
+    const Model testModelMul = createLargeTestModel(OperationType::MUL, kLargeModelSize);
+    if (checkEarlyTermination(testModelMul)) return;
+    const Model testModelAdd = createLargeTestModel(OperationType::ADD, kLargeModelSize);
+    if (checkEarlyTermination(testModelAdd)) return;
+
     // Save the testModelMul compilation to cache.
-    Model testModelMul = createLargeTestModel(OperationType::MUL, kLargeModelSize);
     auto modelCacheMul = mModelCache;
     for (auto& cache : modelCacheMul) {
         cache[0].append("_mul");
@@ -1150,23 +1134,18 @@ TEST_F(CompilationCachingTest, ReplaceSecuritySensitiveCache) {
         hidl_vec<hidl_handle> modelCache, dataCache;
         createCacheHandles(modelCacheMul, AccessMode::READ_WRITE, &modelCache);
         createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
-        bool supported;
-        saveModelToCache(testModelMul, modelCache, dataCache, &supported);
-        if (checkEarlyTermination(supported)) return;
+        saveModelToCache(testModelMul, modelCache, dataCache);
     }
 
     // Use a different token for testModelAdd.
     mToken[0]++;
 
     // Save the testModelAdd compilation to cache.
-    Model testModelAdd = createLargeTestModel(OperationType::ADD, kLargeModelSize);
     {
-        bool supported;
         hidl_vec<hidl_handle> modelCache, dataCache;
         createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
         createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
-        saveModelToCache(testModelAdd, modelCache, dataCache, &supported);
-        if (checkEarlyTermination(supported)) return;
+        saveModelToCache(testModelAdd, modelCache, dataCache);
     }
 
     // Replace the model cache of testModelAdd with testModelMul.
@@ -1237,16 +1216,15 @@ class CompilationCachingSecurityTest : public CompilationCachingTest,
     // The modifier accepts one pointer argument "skip" as the returning value, indicating
     // whether the test should be skipped or not.
     void testCorruptedCache(ExpectedResult expected, std::function<void(bool*)> modifier) {
-        Model testModel = createTestModel();
+        const Model testModel = createTestModel();
+        if (checkEarlyTermination(testModel)) return;
 
         // Save the compilation to cache.
         {
-            bool supported;
             hidl_vec<hidl_handle> modelCache, dataCache;
             createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
             createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
-            saveModelToCache(testModel, modelCache, dataCache, &supported);
-            if (checkEarlyTermination(supported)) return;
+            saveModelToCache(testModel, modelCache, dataCache);
         }
 
         bool skip = false;
