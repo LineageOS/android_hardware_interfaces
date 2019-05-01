@@ -45,9 +45,9 @@ public:
             sp<SharedLibrary> *library = NULL,
             T** factory = NULL);
 
-    bool enumeratePlugins(hidl_vec<HidlCasPluginDescriptor>* results);
+    bool enumeratePlugins(vector<HidlCasPluginDescriptor>* results);
 
-  private:
+private:
     typedef T*(*CreateFactoryFunc)();
 
     Mutex mMapLock;
@@ -63,7 +63,9 @@ public:
             sp<SharedLibrary> *library,
             T** factory);
 
-    bool queryPluginsFromPath(const String8& path, hidl_vec<HidlCasPluginDescriptor>* results);
+    bool queryPluginsFromPath(
+            const String8 &path,
+            vector<HidlCasPluginDescriptor>* results);
 
     bool openFactory(const String8 &path);
     void closeFactory();
@@ -119,8 +121,11 @@ bool FactoryLoader<T>::findFactoryForScheme(
 }
 
 template <class T>
-bool FactoryLoader<T>::enumeratePlugins(hidl_vec<HidlCasPluginDescriptor>* results) {
+bool FactoryLoader<T>::enumeratePlugins(
+        vector<HidlCasPluginDescriptor>* results) {
     ALOGI("enumeratePlugins");
+
+    results->clear();
 
     String8 dirPath("/vendor/lib/mediacas");
     DIR* pDir = opendir(dirPath.string());
@@ -163,8 +168,8 @@ bool FactoryLoader<T>::loadFactoryForSchemeFromPath(
 }
 
 template <class T>
-bool FactoryLoader<T>::queryPluginsFromPath(const String8& path,
-                                            hidl_vec<HidlCasPluginDescriptor>* results) {
+bool FactoryLoader<T>::queryPluginsFromPath(
+        const String8 &path, vector<HidlCasPluginDescriptor>* results) {
     closeFactory();
 
     vector<CasPluginDescriptor> descriptors;
@@ -173,19 +178,11 @@ bool FactoryLoader<T>::queryPluginsFromPath(const String8& path,
         return false;
     }
 
-    results->resize(descriptors.size());
-
-    if (results->size() >= SIZE_MAX / sizeof(HidlCasPluginDescriptor)) {
-        return false;
+    for (auto it = descriptors.begin(); it != descriptors.end(); it++) {
+        results->push_back( HidlCasPluginDescriptor {
+                .caSystemId = it->CA_system_id,
+                .name = it->name.c_str()});
     }
-    memset(results->data(), 0, results->size() * sizeof(HidlCasPluginDescriptor));
-
-    for (size_t i = 0; i < results->size(); i++) {
-        HidlCasPluginDescriptor& descriptor = (*results)[i];
-        descriptor.caSystemId = descriptors[i].CA_system_id;
-        descriptor.name = descriptors[i].name.c_str();
-    }
-
     return true;
 }
 
