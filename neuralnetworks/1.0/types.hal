@@ -1225,9 +1225,9 @@ enum OperationType : int32_t {
      * * 0: A 4-D tensor, of shape [batches, height, width, depth], specifying
      *      the input.
      * * 1: An {@link OperandType::INT32} scalar, specifying the output
-     *      height of the output tensor.
-     * * 2: An {@link OperandType::INT32} scalar, specifying the output
      *      width of the output tensor.
+     * * 2: An {@link OperandType::INT32} scalar, specifying the output
+     *      height of the output tensor.
      *
      * Outputs:
      * * 0: The output 4-D tensor, of shape
