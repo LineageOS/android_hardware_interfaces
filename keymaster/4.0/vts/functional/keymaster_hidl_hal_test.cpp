@@ -371,7 +371,7 @@ bool verify_attestation_record(const string& challenge, const string& app_id,
             strptime(date.c_str(), "%Y-%m-%d", &time);
 
             // Day of the month (0-31)
-            EXPECT_GT(time.tm_mday, 0);
+            EXPECT_GE(time.tm_mday, 0);
             EXPECT_LT(time.tm_mday, 32);
             // Months since Jan (0-11)
             EXPECT_GE(time.tm_mon, 0);
