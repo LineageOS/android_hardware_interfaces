@@ -1999,7 +1999,8 @@ enum OperationType : int32_t {
      * Supported tensor {@link OperandType}:
      * * {@link OperandType::TENSOR_FLOAT16} (since API level 29)
      * * {@link OperandType::TENSOR_FLOAT32}
-     * * {@link OperandType::TENSOR_QUANT8_ASYMM}
+     * * {@link OperandType::TENSOR_QUANT8_ASYMM} (full support since API
+     *   level 29, see the output section)
      *
      * Supported tensor rank: up to 4
      *
@@ -2021,6 +2022,10 @@ enum OperationType : int32_t {
      *      of the padding:
      *          output0.dimension[i] =
      *              padding[i, 0] + input0.dimension[i] + padding[i, 1]
+     *
+     *      NOTE: Before API level 29, the pad value for
+     *      {@link ANEURALNETWORKS_TENSOR_QUANT8_ASYMM} is undefined.
+     *      Since API level 29, the pad value is always the logical zero.
      *
      * Available since API level 28.
      */
