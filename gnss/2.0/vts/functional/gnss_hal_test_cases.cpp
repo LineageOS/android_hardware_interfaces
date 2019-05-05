@@ -199,10 +199,11 @@ TEST_F(GnssHalTest, TestGnssMeasurementFields) {
     ASSERT_TRUE(result.isOk());
     EXPECT_EQ(result, IGnssMeasurement_1_0::GnssMeasurementStatus::SUCCESS);
 
-    wait(kFirstGnssMeasurementTimeoutSeconds);
-    EXPECT_EQ(measurement_called_count_, 1);
-    ASSERT_TRUE(last_measurement_.measurements.size() > 0);
-    for (auto measurement : last_measurement_.measurements) {
+    IGnssMeasurementCallback_2_0::GnssData lastMeasurement;
+    ASSERT_TRUE(measurement_cbq_.retrieve(lastMeasurement, kFirstGnssMeasurementTimeoutSeconds));
+    EXPECT_EQ(measurement_cbq_.calledCount(), 1);
+    ASSERT_TRUE(lastMeasurement.measurements.size() > 0);
+    for (auto measurement : lastMeasurement.measurements) {
         // Verify CodeType is valid.
         ASSERT_NE(measurement.codeType, "");
 
@@ -305,8 +306,10 @@ TEST_F(GnssHalTest, TestGnssMeasurementCorrectionsCapabilities) {
     iMeasurementCorrections->setCallback(iMeasurementCorrectionsCallback);
 
     const int kMeasurementCorrectionsCapabilitiesTimeoutSeconds = 5;
-    waitForMeasurementCorrectionsCapabilities(kMeasurementCorrectionsCapabilitiesTimeoutSeconds);
-    ASSERT_TRUE(measurement_corrections_capabilities_called_count_ > 0);
+    measurement_corrections_capabilities_cbq_.retrieve(
+            last_measurement_corrections_capabilities_,
+            kMeasurementCorrectionsCapabilitiesTimeoutSeconds);
+    ASSERT_TRUE(measurement_corrections_capabilities_cbq_.calledCount() > 0);
     using Capabilities = IMeasurementCorrectionsCallback::Capabilities;
     ASSERT_TRUE((last_measurement_corrections_capabilities_ &
                  (Capabilities::LOS_SATS | Capabilities::EXCESS_PATH_LENGTH)) != 0);
@@ -333,8 +336,11 @@ TEST_F(GnssHalTest, TestGnssMeasurementCorrections) {
     iMeasurementCorrections->setCallback(iMeasurementCorrectionsCallback);
 
     const int kMeasurementCorrectionsCapabilitiesTimeoutSeconds = 5;
-    waitForMeasurementCorrectionsCapabilities(kMeasurementCorrectionsCapabilitiesTimeoutSeconds);
-    ASSERT_TRUE(measurement_corrections_capabilities_called_count_ > 0);
+    measurement_corrections_capabilities_cbq_.retrieve(
+            last_measurement_corrections_capabilities_,
+            kMeasurementCorrectionsCapabilitiesTimeoutSeconds);
+    ASSERT_TRUE(measurement_corrections_capabilities_cbq_.calledCount() > 0);
+
     // Set a mock MeasurementCorrections.
     auto result = iMeasurementCorrections->setCorrections(Utils::getMockMeasurementCorrections());
     ASSERT_TRUE(result.isOk());
@@ -365,16 +371,17 @@ TEST_F(GnssHalTest, TestGnssDataElapsedRealtimeFlags) {
     ASSERT_TRUE(result.isOk());
     EXPECT_EQ(result, IGnssMeasurement_1_0::GnssMeasurementStatus::SUCCESS);
 
-    wait(kFirstGnssMeasurementTimeoutSeconds);
-    EXPECT_EQ(measurement_called_count_, 1);
+    IGnssMeasurementCallback_2_0::GnssData lastMeasurement;
+    ASSERT_TRUE(measurement_cbq_.retrieve(lastMeasurement, kFirstGnssMeasurementTimeoutSeconds));
+    EXPECT_EQ(measurement_cbq_.calledCount(), 1);
 
-    ASSERT_TRUE((int)last_measurement_.elapsedRealtime.flags <=
+    ASSERT_TRUE((int)lastMeasurement.elapsedRealtime.flags <=
                 (int)(ElapsedRealtimeFlags::HAS_TIMESTAMP_NS |
                       ElapsedRealtimeFlags::HAS_TIME_UNCERTAINTY_NS));
 
     // We expect a non-zero timestamp when set.
-    if (last_measurement_.elapsedRealtime.flags & ElapsedRealtimeFlags::HAS_TIMESTAMP_NS) {
-        ASSERT_TRUE(last_measurement_.elapsedRealtime.timestampNs != 0);
+    if (lastMeasurement.elapsedRealtime.flags & ElapsedRealtimeFlags::HAS_TIMESTAMP_NS) {
+        ASSERT_TRUE(lastMeasurement.elapsedRealtime.timestampNs != 0);
     }
 
     iGnssMeasurement->close();
