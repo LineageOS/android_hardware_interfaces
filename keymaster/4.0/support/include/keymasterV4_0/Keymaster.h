@@ -65,6 +65,12 @@ class Keymaster : public IKeymasterDevice {
     const hidl_string& instanceName() const { return instanceName_; }
 
     /**
+     * If ec is in the vendor error code range (<-10000), logs the fact to logcat.
+     * There are no side effects otherwise.
+     */
+    void logIfKeymasterVendorError(ErrorCode ec) const;
+
+    /**
      * Returns all available Keymaster3 and Keymaster4 instances, in order of most secure to least
      * secure (as defined by VersionResult::operator<).
      */
