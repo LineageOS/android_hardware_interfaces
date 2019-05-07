@@ -651,6 +651,8 @@ std::vector<uint32_t> KeymasterHidlTest::InvalidKeySizes(Algorithm algorithm) {
             return {3072, 4096};
         case Algorithm::EC:
             return {224, 384, 521};
+        case Algorithm::AES:
+            return {192};
         default:
             return {};
     }
