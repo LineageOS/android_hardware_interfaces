@@ -54,10 +54,10 @@ using android::hardware::gnss::visibility_control::V1_0::IGnssVisibilityControl;
 TEST_F(GnssHalTest, SetupTeardownCreateCleanup) {}
 
 /*
- * TestGnssMeasurementCallback:
+ * TestGnssMeasurementExtension:
  * Gets the GnssMeasurementExtension and verifies that it returns an actual extension.
  */
-TEST_F(GnssHalTest, TestGnssMeasurementCallback) {
+TEST_F(GnssHalTest, TestGnssMeasurementExtension) {
     auto gnssMeasurement_2_0 = gnss_hal_->getExtensionGnssMeasurement_2_0();
     auto gnssMeasurement_1_1 = gnss_hal_->getExtensionGnssMeasurement_1_1();
     auto gnssMeasurement_1_0 = gnss_hal_->getExtensionGnssMeasurement();
@@ -193,15 +193,15 @@ TEST_F(GnssHalTest, TestGnssMeasurementFields) {
         return;
     }
 
-    sp<IGnssMeasurementCallback_2_0> callback = new GnssMeasurementCallback(*this);
-
+    sp<GnssMeasurementCallback> callback = new GnssMeasurementCallback();
     auto result = iGnssMeasurement->setCallback_2_0(callback, /* enableFullTracking= */ true);
     ASSERT_TRUE(result.isOk());
     EXPECT_EQ(result, IGnssMeasurement_1_0::GnssMeasurementStatus::SUCCESS);
 
     IGnssMeasurementCallback_2_0::GnssData lastMeasurement;
-    ASSERT_TRUE(measurement_cbq_.retrieve(lastMeasurement, kFirstGnssMeasurementTimeoutSeconds));
-    EXPECT_EQ(measurement_cbq_.calledCount(), 1);
+    ASSERT_TRUE(callback->measurement_cbq_.retrieve(lastMeasurement,
+                                                    kFirstGnssMeasurementTimeoutSeconds));
+    EXPECT_EQ(callback->measurement_cbq_.calledCount(), 1);
     ASSERT_TRUE(lastMeasurement.measurements.size() > 0);
     for (auto measurement : lastMeasurement.measurements) {
         // Verify CodeType is valid.
@@ -291,7 +291,7 @@ TEST_F(GnssHalTest, TestGnssVisibilityControlExtension) {
  * capability flag is set.
  */
 TEST_F(GnssHalTest, TestGnssMeasurementCorrectionsCapabilities) {
-    if (!(last_capabilities_ & IGnssCallback::Capabilities::MEASUREMENT_CORRECTIONS)) {
+    if (!(gnss_cb_->last_capabilities_ & IGnssCallback::Capabilities::MEASUREMENT_CORRECTIONS)) {
         return;
     }
 
@@ -301,17 +301,15 @@ TEST_F(GnssHalTest, TestGnssMeasurementCorrectionsCapabilities) {
     ASSERT_NE(iMeasurementCorrections, nullptr);
 
     // Setup measurement corrections callback.
-    sp<IMeasurementCorrectionsCallback> iMeasurementCorrectionsCallback =
-            new GnssMeasurementCorrectionsCallback(*this);
-    iMeasurementCorrections->setCallback(iMeasurementCorrectionsCallback);
+    sp<GnssMeasurementCorrectionsCallback> callback = new GnssMeasurementCorrectionsCallback();
+    iMeasurementCorrections->setCallback(callback);
 
     const int kMeasurementCorrectionsCapabilitiesTimeoutSeconds = 5;
-    measurement_corrections_capabilities_cbq_.retrieve(
-            last_measurement_corrections_capabilities_,
-            kMeasurementCorrectionsCapabilitiesTimeoutSeconds);
-    ASSERT_TRUE(measurement_corrections_capabilities_cbq_.calledCount() > 0);
+    callback->capabilities_cbq_.retrieve(callback->last_capabilities_,
+                                         kMeasurementCorrectionsCapabilitiesTimeoutSeconds);
+    ASSERT_TRUE(callback->capabilities_cbq_.calledCount() > 0);
     using Capabilities = IMeasurementCorrectionsCallback::Capabilities;
-    ASSERT_TRUE((last_measurement_corrections_capabilities_ &
+    ASSERT_TRUE((callback->last_capabilities_ &
                  (Capabilities::LOS_SATS | Capabilities::EXCESS_PATH_LENGTH)) != 0);
 }
 
@@ -321,7 +319,7 @@ TEST_F(GnssHalTest, TestGnssMeasurementCorrectionsCapabilities) {
  * gnss.measurement_corrections@1.0::IMeasurementCorrections interface by invoking a method.
  */
 TEST_F(GnssHalTest, TestGnssMeasurementCorrections) {
-    if (!(last_capabilities_ & IGnssCallback::Capabilities::MEASUREMENT_CORRECTIONS)) {
+    if (!(gnss_cb_->last_capabilities_ & IGnssCallback::Capabilities::MEASUREMENT_CORRECTIONS)) {
         return;
     }
 
@@ -331,15 +329,13 @@ TEST_F(GnssHalTest, TestGnssMeasurementCorrections) {
     sp<IMeasurementCorrections> iMeasurementCorrections = measurementCorrections;
     ASSERT_NE(iMeasurementCorrections, nullptr);
 
-    sp<IMeasurementCorrectionsCallback> iMeasurementCorrectionsCallback =
-            new GnssMeasurementCorrectionsCallback(*this);
-    iMeasurementCorrections->setCallback(iMeasurementCorrectionsCallback);
+    sp<GnssMeasurementCorrectionsCallback> callback = new GnssMeasurementCorrectionsCallback();
+    iMeasurementCorrections->setCallback(callback);
 
     const int kMeasurementCorrectionsCapabilitiesTimeoutSeconds = 5;
-    measurement_corrections_capabilities_cbq_.retrieve(
-            last_measurement_corrections_capabilities_,
-            kMeasurementCorrectionsCapabilitiesTimeoutSeconds);
-    ASSERT_TRUE(measurement_corrections_capabilities_cbq_.calledCount() > 0);
+    callback->capabilities_cbq_.retrieve(callback->last_capabilities_,
+                                         kMeasurementCorrectionsCapabilitiesTimeoutSeconds);
+    ASSERT_TRUE(callback->capabilities_cbq_.calledCount() > 0);
 
     // Set a mock MeasurementCorrections.
     auto result = iMeasurementCorrections->setCorrections(Utils::getMockMeasurementCorrections());
@@ -365,15 +361,15 @@ TEST_F(GnssHalTest, TestGnssDataElapsedRealtimeFlags) {
         return;
     }
 
-    sp<IGnssMeasurementCallback_2_0> callback = new GnssMeasurementCallback(*this);
-
+    sp<GnssMeasurementCallback> callback = new GnssMeasurementCallback();
     auto result = iGnssMeasurement->setCallback_2_0(callback, /* enableFullTracking= */ true);
     ASSERT_TRUE(result.isOk());
     EXPECT_EQ(result, IGnssMeasurement_1_0::GnssMeasurementStatus::SUCCESS);
 
     IGnssMeasurementCallback_2_0::GnssData lastMeasurement;
-    ASSERT_TRUE(measurement_cbq_.retrieve(lastMeasurement, kFirstGnssMeasurementTimeoutSeconds));
-    EXPECT_EQ(measurement_cbq_.calledCount(), 1);
+    ASSERT_TRUE(callback->measurement_cbq_.retrieve(lastMeasurement,
+                                                    kFirstGnssMeasurementTimeoutSeconds));
+    EXPECT_EQ(callback->measurement_cbq_.calledCount(), 1);
 
     ASSERT_TRUE((int)lastMeasurement.elapsedRealtime.flags <=
                 (int)(ElapsedRealtimeFlags::HAS_TIMESTAMP_NS |
@@ -390,13 +386,13 @@ TEST_F(GnssHalTest, TestGnssDataElapsedRealtimeFlags) {
 TEST_F(GnssHalTest, TestGnssLocationElapsedRealtime) {
     StartAndCheckFirstLocation();
 
-    ASSERT_TRUE((int)last_location_.elapsedRealtime.flags <=
+    ASSERT_TRUE((int)gnss_cb_->last_location_.elapsedRealtime.flags <=
                 (int)(ElapsedRealtimeFlags::HAS_TIMESTAMP_NS |
                       ElapsedRealtimeFlags::HAS_TIME_UNCERTAINTY_NS));
 
     // We expect a non-zero timestamp when set.
-    if (last_location_.elapsedRealtime.flags & ElapsedRealtimeFlags::HAS_TIMESTAMP_NS) {
-        ASSERT_TRUE(last_location_.elapsedRealtime.timestampNs != 0);
+    if (gnss_cb_->last_location_.elapsedRealtime.flags & ElapsedRealtimeFlags::HAS_TIMESTAMP_NS) {
+        ASSERT_TRUE(gnss_cb_->last_location_.elapsedRealtime.timestampNs != 0);
     }
 
     StopAndClearLocations();
@@ -405,7 +401,7 @@ TEST_F(GnssHalTest, TestGnssLocationElapsedRealtime) {
 // This test only verify that injectBestLocation_2_0 does not crash.
 TEST_F(GnssHalTest, TestInjectBestLocation_2_0) {
     StartAndCheckFirstLocation();
-    gnss_hal_->injectBestLocation_2_0(last_location_);
+    gnss_hal_->injectBestLocation_2_0(gnss_cb_->last_location_);
     StopAndClearLocations();
 }
 
