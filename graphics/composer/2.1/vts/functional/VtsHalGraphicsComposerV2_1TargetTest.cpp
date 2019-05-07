@@ -850,10 +850,37 @@ TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_CURSOR_POSITION) {
     ASSERT_NO_FATAL_FAILURE(layer =
                                 mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount));
 
+    auto handle = allocate();
+    ASSERT_NE(nullptr, handle);
+    IComposerClient::Rect displayFrame{0, 0, mDisplayWidth, mDisplayHeight};
+
     mWriter->selectDisplay(mPrimaryDisplay);
     mWriter->selectLayer(layer);
+    mWriter->setLayerBuffer(0, handle, -1);
+    mWriter->setLayerCompositionType(IComposerClient::Composition::DEVICE);
+    mWriter->setLayerDisplayFrame(displayFrame);
+    mWriter->setLayerPlaneAlpha(1);
+    mWriter->setLayerSourceCrop({0, 0, (float)mDisplayWidth, (float)mDisplayHeight});
+    mWriter->setLayerTransform(static_cast<Transform>(0));
+    mWriter->setLayerVisibleRegion(std::vector<IComposerClient::Rect>(1, displayFrame));
+    mWriter->setLayerZOrder(10);
+    mWriter->setLayerBlendMode(IComposerClient::BlendMode::NONE);
+    mWriter->setLayerSurfaceDamage(std::vector<IComposerClient::Rect>(1, displayFrame));
+    mWriter->setLayerDataspace(Dataspace::UNKNOWN);
+    mWriter->validateDisplay();
+
+    execute();
+    if (mReader->mCompositionChanges.size() != 0) {
+        GTEST_SUCCEED() << "Composition change requested, skipping test";
+        return;
+    }
+    mWriter->presentDisplay();
+    ASSERT_EQ(0, mReader->mErrors.size());
+
     mWriter->setLayerCursorPosition(1, 1);
     mWriter->setLayerCursorPosition(0, 0);
+    mWriter->validateDisplay();
+    mWriter->presentDisplay();
     execute();
 }
 
