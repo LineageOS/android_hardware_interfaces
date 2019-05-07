@@ -857,7 +857,7 @@ TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_CURSOR_POSITION) {
     mWriter->selectDisplay(mPrimaryDisplay);
     mWriter->selectLayer(layer);
     mWriter->setLayerBuffer(0, handle, -1);
-    mWriter->setLayerCompositionType(IComposerClient::Composition::DEVICE);
+    mWriter->setLayerCompositionType(IComposerClient::Composition::CURSOR);
     mWriter->setLayerDisplayFrame(displayFrame);
     mWriter->setLayerPlaneAlpha(1);
     mWriter->setLayerSourceCrop({0, 0, (float)mDisplayWidth, (float)mDisplayHeight});
