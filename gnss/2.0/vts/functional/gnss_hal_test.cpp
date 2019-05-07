@@ -23,8 +23,6 @@
 using ::android::hardware::gnss::common::Utils;
 
 // Implementations for the main test class for GNSS HAL
-GnssHalTest::GnssHalTest() {}
-
 void GnssHalTest::SetUp() {
     gnss_hal_ = ::testing::VtsHalHidlTargetTestBase::getService<IGnss>(
         GnssHidlEnvironment::Instance()->getServiceName<IGnss>());
@@ -36,25 +34,15 @@ void GnssHalTest::SetUp() {
 void GnssHalTest::TearDown() {
     if (gnss_hal_ != nullptr) {
         gnss_hal_->cleanup();
+        gnss_hal_ = nullptr;
     }
 
-    int unprocessedEventsCount = measurement_cbq_.size() + location_cbq_.size();
-    if (unprocessedEventsCount > 0) {
-        ALOGW("%d unprocessed callbacks discarded", unprocessedEventsCount);
-    }
-
-    // Reset all callback event queues.
-    info_cbq_.reset();
-    name_cbq_.reset();
-    top_hal_capabilities_cbq_.reset();
-    measurement_corrections_capabilities_cbq_.reset();
-    measurement_cbq_.reset();
-    location_cbq_.reset();
-    sv_info_cbq_.reset();
+    // Set to nullptr to destruct the callback event queues and warn of any unprocessed events.
+    gnss_cb_ = nullptr;
 }
 
 void GnssHalTest::SetUpGnssCallback() {
-    gnss_cb_ = new GnssCallback(*this);
+    gnss_cb_ = new GnssCallback();
     ASSERT_NE(gnss_cb_, nullptr);
 
     auto result = gnss_hal_->setCallback_2_0(gnss_cb_);
@@ -68,13 +56,13 @@ void GnssHalTest::SetUpGnssCallback() {
     /*
      * All capabilities, name and systemInfo callbacks should trigger
      */
-    EXPECT_TRUE(top_hal_capabilities_cbq_.retrieve(last_capabilities_, TIMEOUT_SEC));
-    EXPECT_TRUE(info_cbq_.retrieve(last_info_, TIMEOUT_SEC));
-    EXPECT_TRUE(name_cbq_.retrieve(last_name_, TIMEOUT_SEC));
+    EXPECT_TRUE(gnss_cb_->capabilities_cbq_.retrieve(gnss_cb_->last_capabilities_, TIMEOUT_SEC));
+    EXPECT_TRUE(gnss_cb_->info_cbq_.retrieve(gnss_cb_->last_info_, TIMEOUT_SEC));
+    EXPECT_TRUE(gnss_cb_->name_cbq_.retrieve(gnss_cb_->last_name_, TIMEOUT_SEC));
 
-    EXPECT_EQ(top_hal_capabilities_cbq_.calledCount(), 1);
-    EXPECT_EQ(info_cbq_.calledCount(), 1);
-    EXPECT_EQ(name_cbq_.calledCount(), 1);
+    EXPECT_EQ(gnss_cb_->capabilities_cbq_.calledCount(), 1);
+    EXPECT_EQ(gnss_cb_->info_cbq_.calledCount(), 1);
+    EXPECT_EQ(gnss_cb_->name_cbq_.calledCount(), 1);
 }
 
 void GnssHalTest::StopAndClearLocations() {
@@ -88,8 +76,9 @@ void GnssHalTest::StopAndClearLocations() {
      * the last reply for final startup messages to arrive (esp. system
      * info.)
      */
-    location_cbq_.waitUntilEmpty(TIMEOUT_SEC);
-    location_cbq_.reset();
+    while (gnss_cb_->location_cbq_.retrieve(gnss_cb_->last_location_, TIMEOUT_SEC)) {
+    }
+    gnss_cb_->location_cbq_.reset();
 }
 
 void GnssHalTest::SetPositionMode(const int min_interval_msec, const bool low_power_mode) {
@@ -116,20 +105,22 @@ bool GnssHalTest::StartAndCheckFirstLocation() {
      */
     const int kFirstGnssLocationTimeoutSeconds = 75;
 
-    EXPECT_TRUE(location_cbq_.retrieve(last_location_, kFirstGnssLocationTimeoutSeconds));
-    int locationCalledCount = location_cbq_.calledCount();
+    EXPECT_TRUE(gnss_cb_->location_cbq_.retrieve(gnss_cb_->last_location_,
+                                                 kFirstGnssLocationTimeoutSeconds));
+    int locationCalledCount = gnss_cb_->location_cbq_.calledCount();
     EXPECT_EQ(locationCalledCount, 1);
 
     if (locationCalledCount > 0) {
         // don't require speed on first fix
-        CheckLocation(last_location_, false);
+        CheckLocation(gnss_cb_->last_location_, false);
         return true;
     }
     return false;
 }
 
 void GnssHalTest::CheckLocation(const GnssLocation_2_0& location, bool check_speed) {
-    const bool check_more_accuracies = (info_cbq_.calledCount() > 0 && last_info_.yearOfHw >= 2017);
+    const bool check_more_accuracies =
+            (gnss_cb_->info_cbq_.calledCount() > 0 && gnss_cb_->last_info_.yearOfHw >= 2017);
 
     Utils::checkLocation(location.v1_0, check_speed, check_more_accuracies);
 }
@@ -144,39 +135,47 @@ void GnssHalTest::StartAndCheckLocations(int count) {
     EXPECT_TRUE(StartAndCheckFirstLocation());
 
     for (int i = 1; i < count; i++) {
-        EXPECT_TRUE(location_cbq_.retrieve(last_location_, kLocationTimeoutSubsequentSec));
-        int locationCalledCount = location_cbq_.calledCount();
+        EXPECT_TRUE(gnss_cb_->location_cbq_.retrieve(gnss_cb_->last_location_,
+                                                     kLocationTimeoutSubsequentSec));
+        int locationCalledCount = gnss_cb_->location_cbq_.calledCount();
         EXPECT_EQ(locationCalledCount, i + 1);
         // Don't cause confusion by checking details if no location yet
         if (locationCalledCount > 0) {
             // Should be more than 1 location by now, but if not, still don't check first fix speed
-            CheckLocation(last_location_, locationCalledCount > 1);
+            CheckLocation(gnss_cb_->last_location_, locationCalledCount > 1);
         }
     }
 }
 
+GnssHalTest::GnssCallback::GnssCallback()
+    : info_cbq_("system_info"),
+      name_cbq_("name"),
+      capabilities_cbq_("capabilities"),
+      location_cbq_("location"),
+      sv_info_cbq_("sv_info") {}
+
 Return<void> GnssHalTest::GnssCallback::gnssSetSystemInfoCb(
         const IGnssCallback_1_0::GnssSystemInfo& info) {
     ALOGI("Info received, year %d", info.yearOfHw);
-    parent_.info_cbq_.store(info);
+    info_cbq_.store(info);
     return Void();
 }
 
 Return<void> GnssHalTest::GnssCallback::gnssSetCapabilitesCb(uint32_t capabilities) {
     ALOGI("Capabilities received %d", capabilities);
-    parent_.top_hal_capabilities_cbq_.store(capabilities);
+    capabilities_cbq_.store(capabilities);
     return Void();
 }
 
 Return<void> GnssHalTest::GnssCallback::gnssSetCapabilitiesCb_2_0(uint32_t capabilities) {
     ALOGI("Capabilities (v2.0) received %d", capabilities);
-    parent_.top_hal_capabilities_cbq_.store(capabilities);
+    capabilities_cbq_.store(capabilities);
     return Void();
 }
 
 Return<void> GnssHalTest::GnssCallback::gnssNameCb(const android::hardware::hidl_string& name) {
     ALOGI("Name received: %s", name.c_str());
-    parent_.name_cbq_.store(name);
+    name_cbq_.store(name);
     return Void();
 }
 
@@ -193,7 +192,7 @@ Return<void> GnssHalTest::GnssCallback::gnssLocationCb_2_0(const GnssLocation_2_
 }
 
 Return<void> GnssHalTest::GnssCallback::gnssLocationCbImpl(const GnssLocation_2_0& location) {
-    parent_.location_cbq_.store(location);
+    location_cbq_.store(location);
     return Void();
 }
 
@@ -202,23 +201,23 @@ Return<void> GnssHalTest::GnssCallback::gnssSvStatusCb(const IGnssCallback_1_0::
     return Void();
 }
 
+Return<void> GnssHalTest::GnssCallback::gnssSvStatusCb_2_0(
+        const hidl_vec<IGnssCallback_2_0::GnssSvInfo>& svInfoList) {
+    ALOGI("gnssSvStatusCb_2_0. Size = %d", (int)svInfoList.size());
+    sv_info_cbq_.store(svInfoList);
+    return Void();
+}
+
 Return<void> GnssHalTest::GnssMeasurementCallback::gnssMeasurementCb_2_0(
     const IGnssMeasurementCallback_2_0::GnssData& data) {
     ALOGD("GnssMeasurement received. Size = %d", (int)data.measurements.size());
-    parent_.measurement_cbq_.store(data);
+    measurement_cbq_.store(data);
     return Void();
 }
 
 Return<void> GnssHalTest::GnssMeasurementCorrectionsCallback::setCapabilitiesCb(
         uint32_t capabilities) {
     ALOGI("GnssMeasurementCorrectionsCallback capabilities received %d", capabilities);
-    parent_.measurement_corrections_capabilities_cbq_.store(capabilities);
-    return Void();
-}
-
-Return<void> GnssHalTest::GnssCallback::gnssSvStatusCb_2_0(
-        const hidl_vec<IGnssCallback_2_0::GnssSvInfo>& svInfoList) {
-    ALOGI("gnssSvStatusCb_2_0. Size = %d", (int)svInfoList.size());
-    parent_.sv_info_cbq_.store(svInfoList);
+    capabilities_cbq_.store(capabilities);
     return Void();
 }
