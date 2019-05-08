@@ -220,7 +220,8 @@ class HwcHalImpl : public V2_2::passthrough::detail::HwcHalImpl<Hal> {
     }
 
     Error getDisplayCapabilities(
-        Display display, hidl_vec<IComposerClient::DisplayCapability>* outCapabilities) override {
+            Display display,
+            std::vector<IComposerClient::DisplayCapability>* outCapabilities) override {
         uint32_t count = 0;
         int32_t error = mDispatch.getDisplayCapabilities(mDevice, display, &count, nullptr);
         if (error != HWC2_ERROR_NONE) {
@@ -232,7 +233,7 @@ class HwcHalImpl : public V2_2::passthrough::detail::HwcHalImpl<Hal> {
             reinterpret_cast<std::underlying_type<IComposerClient::DisplayCapability>::type*>(
                 outCapabilities->data()));
         if (error != HWC2_ERROR_NONE) {
-            *outCapabilities = hidl_vec<IComposerClient::DisplayCapability>();
+            *outCapabilities = std::vector<IComposerClient::DisplayCapability>();
             return static_cast<Error>(error);
         }
         return Error::NONE;
@@ -267,6 +268,19 @@ class HwcHalImpl : public V2_2::passthrough::detail::HwcHalImpl<Hal> {
 
     Error getDisplayBrightnessSupport(Display display, bool* outSupport) {
         if (!mDispatch.getDisplayBrightnessSupport) {
+            // Preemptively set to false.
+            *outSupport = false;
+            // Try to query from getDisplayCapabilities.
+            std::vector<IComposerClient::DisplayCapability> capabilities;
+            Error error = getDisplayCapabilities(display, &capabilities);
+            if (error != Error::NONE) {
+                // This function is not registered, always return UNSUPPORTED.
+                return Error::UNSUPPORTED;
+            }
+            *outSupport =
+                    std::find(capabilities.begin(), capabilities.end(),
+                              IComposerClient::DisplayCapability::BRIGHTNESS) != capabilities.end();
+            // This function is not registered, always return UNSUPPORTED.
             return Error::UNSUPPORTED;
         }
         bool support = false;

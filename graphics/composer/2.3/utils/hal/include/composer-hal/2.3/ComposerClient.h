@@ -95,7 +95,7 @@ class ComposerClientImpl : public V2_2::hal::detail::ComposerClientImpl<Interfac
 
     Return<void> getDisplayCapabilities(
         Display display, IComposerClient::getDisplayCapabilities_cb hidl_cb) override {
-        hidl_vec<IComposerClient::DisplayCapability> capabilities;
+        std::vector<IComposerClient::DisplayCapability> capabilities;
         Error error = mHal->getDisplayCapabilities(display, &capabilities);
         hidl_cb(error, capabilities);
         return Void();
