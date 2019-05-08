@@ -192,10 +192,8 @@ Error ComposerClient::getDisplayCapabilities(
 
 bool ComposerClient::getDisplayBrightnessSupport(Display display) {
     bool support = false;
-    mClient->getDisplayBrightnessSupport(display, [&](const auto& error, const auto& tmpSupport) {
-        ASSERT_EQ(Error::NONE, error) << "failed to get brightness support";
-        support = tmpSupport;
-    });
+    mClient->getDisplayBrightnessSupport(
+            display, [&](const auto& /*error*/, const auto& tmpSupport) { support = tmpSupport; });
     return support;
 }
 
