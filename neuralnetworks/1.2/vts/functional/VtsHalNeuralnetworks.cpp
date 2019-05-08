@@ -29,7 +29,6 @@ namespace V1_2 {
 namespace vts {
 namespace functional {
 
-using ::android::hardware::neuralnetworks::V1_2::implementation::ExecutionCallback;
 using ::android::hardware::neuralnetworks::V1_2::implementation::PreparedModelCallback;
 using HidlToken = hidl_array<uint8_t, static_cast<uint32_t>(Constant::BYTE_SIZE_OF_CACHE_TOKEN)>;
 using V1_1::ExecutionPreference;
@@ -127,7 +126,7 @@ void NeuralnetworksHidlTest::TearDown() {
     ::testing::VtsHalHidlTargetTestBase::TearDown();
 }
 
-void ValidationTest::validateEverything(const Model& model, const std::vector<Request>& request) {
+void ValidationTest::validateEverything(const Model& model, const std::vector<Request>& requests) {
     validateModel(model);
 
     // create IPreparedModel
@@ -137,8 +136,8 @@ void ValidationTest::validateEverything(const Model& model, const std::vector<Re
         return;
     }
 
-    validateRequests(preparedModel, request);
-    validateBurst(preparedModel, request);
+    validateRequests(preparedModel, requests);
+    validateBurst(preparedModel, requests);
 }
 
 sp<IPreparedModel> getPreparedModel_1_2(

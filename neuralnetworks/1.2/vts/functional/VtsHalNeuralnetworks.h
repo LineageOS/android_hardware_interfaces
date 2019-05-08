@@ -72,7 +72,7 @@ class NeuralnetworksHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 // Tag for the validation tests
 class ValidationTest : public NeuralnetworksHidlTest {
    protected:
-     void validateEverything(const Model& model, const std::vector<Request>& request);
+     void validateEverything(const Model& model, const std::vector<Request>& requests);
 
    private:
      void validateModel(const Model& model);
