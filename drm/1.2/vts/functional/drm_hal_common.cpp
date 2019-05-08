@@ -56,6 +56,7 @@ namespace V1_2 {
 namespace vts {
 
 const char *kCallbackLostState = "LostState";
+const char *kCallbackKeysChange = "KeysChange";
 
 drm_vts::VendorModules *DrmHalTest::gVendorModules = nullptr;
 
@@ -64,7 +65,19 @@ drm_vts::VendorModules *DrmHalTest::gVendorModules = nullptr;
  */
 
 Return<void> DrmHalPluginListener::sendSessionLostState(const hidl_vec<uint8_t>& sessionId) {
-    NotifyFromCallback(kCallbackLostState, sessionId);
+    ListenerEventArgs args;
+    args.sessionId = sessionId;
+    NotifyFromCallback(kCallbackLostState, args);
+    return Void();
+}
+
+Return<void> DrmHalPluginListener::sendKeysChange_1_2(const hidl_vec<uint8_t>& sessionId,
+        const hidl_vec<KeyStatus>& keyStatusList, bool hasNewUsableKey) {
+    ListenerEventArgs args;
+    args.sessionId = sessionId;
+    args.keyStatusList = keyStatusList;
+    args.hasNewUsableKey = hasNewUsableKey;
+    NotifyFromCallback(kCallbackKeysChange, args);
     return Void();
 }
 
