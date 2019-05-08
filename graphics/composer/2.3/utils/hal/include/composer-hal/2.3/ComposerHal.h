@@ -115,7 +115,7 @@ class ComposerHal : public V2_2::hal::ComposerHal {
                                             hidl_vec<uint64_t>& sampleComponent2,
                                             hidl_vec<uint64_t>& sampleComponent3) = 0;
     virtual Error getDisplayCapabilities(
-        Display display, hidl_vec<IComposerClient::DisplayCapability>* outCapabilities) = 0;
+            Display display, std::vector<IComposerClient::DisplayCapability>* outCapabilities) = 0;
     virtual Error setLayerPerFrameMetadataBlobs(
         Display display, Layer layer,
         std::vector<IComposerClient::PerFrameMetadataBlob>& blobs) = 0;
