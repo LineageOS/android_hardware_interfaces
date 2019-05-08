@@ -858,20 +858,21 @@ enum OperationType : int32_t {
      *   elements of the input matrices.
      *
      * The operation has the following independently optional inputs:
+     * * The cell-to-input weights (\f$W_{ci}\f$), cell-to-forget weights
+     *   (\f$W_{cf}\f$) and cell-to-output weights (\f$W_{co}\f$) either all
+     *   have values or neither of them have values (i.e., all set to null). If
+     *   they have values, the peephole optimization is used.
      * * The input-to-input weights (\f$W_{xi}\f$), recurrent-to-input weights
-     *   (\f$W_{hi}\f$), cell-to-input (\f$W_{ci}\f$) weights, and input gate
-     *   bias (\f$b_i\f$) either all have values, or none of them have values
-     *   (i.e., all set to null). If they have no values, coupling of input and
-     *   forget gates (CIFG) is used, in which case the input gate (\f$i_t\f$)
-     *   is calculated using the following equation instead.
+     *   (\f$W_{hi}\f$) and input gate bias (\f$b_i\f$) either all have values,
+     *   or none of them have values. If they have no values, coupling of input
+     *   and forget gates (CIFG) is used, in which case the input gate
+     *   (\f$i_t\f$) is calculated using the following equation instead.
      *   \f{eqnarray*}{
      *   i_t = 1 - f_t
      *   \f}
-     * * The cell-to-forget weights (\f$W_{cf}\f$) and cell-to-output weights
-     *   (\f$W_{co}\f$) either both have values or neither of them have values.
-     *   If they have values, the peephole optimization is used. Additionally,
-     *   if CIFG is not used, cell-to-input weights (\f$W_{ci}\f$) is also
-     *   required to have values for peephole optimization.
+     *   In case peephole optimization is used and CIFG is not used
+     *   cell-to-input (\f$W_{ci}\f$) weights must be present. Otherwise, the
+     *   cell-to-input weights must have no value.
      * * The projection weights (\f$W_{proj}\f$) is required only for the
      *   recurrent projection layer, and should otherwise have no value.
      * * The projection bias (\f$b_{proj}\f$) may (but not required to) have a
@@ -984,8 +985,8 @@ enum OperationType : int32_t {
      * Outputs:
      * * 0: The scratch buffer.
      *      A 2-D tensor of {@link OperandType::TENSOR_FLOAT32}, of shape
-     *      [batch_size, num_units * 4] with CIFG, or
-     *      [batch_size, num_units * 3] without CIFG.
+     *      [batch_size, num_units * 3] with CIFG, or
+     *      [batch_size, num_units * 4] without CIFG.
      * * 1: The output state (out) (\f$h_t\f$).
      *      A 2-D tensor of {@link OperandType::TENSOR_FLOAT32}, of shape
      *      [batch_size, output_size].
