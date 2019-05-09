@@ -36,4 +36,22 @@ interface IDrmPluginListener extends @1.0::IDrmPluginListener {
      * @param sessionId identifies the session that has been invalidated
      */
      oneway sendSessionLostState(SessionId sessionId);
+
+    /**
+     * Send a keys change event to the listener. The keys change event
+     * indicates the status of each key in the session. Keys can be
+     * indicated as being usable, expired, outputnotallowed or statuspending.
+     *
+     * This method only differs from @1.0 version by the addition of new
+     * KeyStatusType(s) in keyStatusList.
+     *
+     * @param sessionId identifies the session the event originated from
+     * @param keyStatusList indicates the status for each key ID in the
+     * session.
+     * @param hasNewUsableKey indicates if the event includes at least one
+     * key that has become usable.
+     */
+    oneway sendKeysChange_1_2(SessionId sessionId, vec<KeyStatus> keyStatusList,
+            bool hasNewUsableKey);
+
 };
