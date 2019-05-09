@@ -37,7 +37,7 @@
 
 using ::android::hardware::drm::V1_0::EventType;
 using ::android::hardware::drm::V1_0::KeyedVector;
-using ::android::hardware::drm::V1_0::KeyStatus;
+using KeyStatusV1_0 = ::android::hardware::drm::V1_0::KeyStatus;
 using ::android::hardware::drm::V1_0::KeyType;
 using ::android::hardware::drm::V1_0::Mode;
 using ::android::hardware::drm::V1_0::Pattern;
@@ -46,10 +46,6 @@ using ::android::hardware::drm::V1_0::SubSample;
 
 using ::android::hardware::drm::V1_1::ICryptoFactory;
 
-using ::android::hardware::drm::V1_2::ICryptoPlugin;
-using ::android::hardware::drm::V1_2::IDrmFactory;
-using ::android::hardware::drm::V1_2::IDrmPlugin;
-using ::android::hardware::drm::V1_2::IDrmPluginListener;
 using StatusV1_2 = ::android::hardware::drm::V1_2::Status;
 
 using ::android::hardware::hidl_array;
@@ -166,9 +162,16 @@ class DrmHalClearkeyTest : public DrmHalTest {
  *  Event Handling tests
  */
 extern const char *kCallbackLostState;
+extern const char *kCallbackKeysChange;
+
+struct ListenerEventArgs {
+    SessionId sessionId;
+    hidl_vec<KeyStatus> keyStatusList;
+    bool hasNewUsableKey;
+};
 
 class DrmHalPluginListener
-    : public ::testing::VtsHalHidlTargetCallbackBase<SessionId>,
+    : public ::testing::VtsHalHidlTargetCallbackBase<ListenerEventArgs>,
       public IDrmPluginListener {
 public:
     DrmHalPluginListener() {
@@ -183,9 +186,12 @@ public:
             int64_t) override { return Void(); }
 
     virtual Return<void> sendKeysChange(const hidl_vec<uint8_t>&,
-            const hidl_vec<KeyStatus>&, bool) override { return Void(); }
+            const hidl_vec<KeyStatusV1_0>&, bool) override { return Void(); }
 
     virtual Return<void> sendSessionLostState(const hidl_vec<uint8_t>& sessionId) override;
+
+    virtual Return<void> sendKeysChange_1_2(const hidl_vec<uint8_t>&,
+            const hidl_vec<KeyStatus>&, bool) override;
 
 };
 
