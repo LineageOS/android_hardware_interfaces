@@ -124,6 +124,65 @@ TEST_F(VerificationTokenTest, TestCreation) {
     // report if times aren't nearly always <1ms apart.
     EXPECT_LE(host_time_delta, km_time_delta + 2);
     EXPECT_LE(km_time_delta, host_time_delta + 2);
+    ASSERT_EQ(result1.token.mac.size(), result2.token.mac.size());
+    ASSERT_NE(0,
+              memcmp(result1.token.mac.data(), result2.token.mac.data(), result1.token.mac.size()));
+}
+
+/*
+ * Test that the mac changes when the time stamp changes. This is does not guarantee that the time
+ * stamp is included in the mac but on failure we know that it is not. Other than in the test
+ * case above we call verifyAuthorization with the exact same set of parameters.
+ */
+TEST_F(VerificationTokenTest, MacChangesOnChangingTimestamp) {
+    auto result1 =
+            verifyAuthorization(0 /* operation handle */,
+                                AuthorizationSet() /* paramtersToVerify */, HardwareAuthToken());
+    ASSERT_TRUE(result1.callSuccessful);
+    auto result1_time = getTime();
+
+    if (SecLevel() == SecurityLevel::STRONGBOX) {
+        // StrongBox should not implement verifyAuthorization.
+        EXPECT_EQ(ErrorCode::UNIMPLEMENTED, result1.error);
+        return;
+    }
+
+    EXPECT_EQ(ErrorCode::OK, result1.error);
+    EXPECT_EQ(0U, result1.token.challenge);
+    EXPECT_EQ(SecLevel(), result1.token.securityLevel);
+    EXPECT_EQ(0U, result1.token.parametersVerified.size())
+            << "We didn't supply any parameters to verify";
+    EXPECT_GT(result1.token.timestamp, 0U);
+
+    constexpr uint32_t time_to_sleep = 200;
+    sleep_ms(time_to_sleep);
+
+    auto result2 =
+            verifyAuthorization(0 /* operation handle */,
+                                AuthorizationSet() /* paramtersToVerify */, HardwareAuthToken());
+    ASSERT_TRUE(result2.callSuccessful);
+    auto result2_time = getTime();
+    EXPECT_EQ(ErrorCode::OK, result2.error);
+    EXPECT_EQ(0U, result2.token.challenge);
+    EXPECT_EQ(SecLevel(), result2.token.securityLevel);
+    EXPECT_EQ(0U, result2.token.parametersVerified.size())
+            << "We didn't supply any parameters to verify";
+
+    auto host_time_delta = result2_time - result1_time;
+
+    EXPECT_GE(host_time_delta, time_to_sleep)
+            << "We slept for " << time_to_sleep << " ms, the clock must have advanced by that much";
+    EXPECT_LE(host_time_delta, time_to_sleep + 20)
+            << "The verifyAuthorization call took " << (host_time_delta - time_to_sleep)
+            << " ms?  That's awful!";
+
+    auto km_time_delta = result2.token.timestamp - result1.token.timestamp;
+
+    EXPECT_LE(host_time_delta, km_time_delta + 2);
+    EXPECT_LE(km_time_delta, host_time_delta + 2);
+    ASSERT_EQ(result1.token.mac.size(), result2.token.mac.size());
+    ASSERT_NE(0,
+              memcmp(result1.token.mac.data(), result2.token.mac.data(), result1.token.mac.size()));
 }
 
 }  // namespace test
