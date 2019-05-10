@@ -15,6 +15,7 @@ cc_library_shared {
         "android.hardware.camera.common@1.0",
         "android.hardware.graphics.allocator@2.0",
         "android.hardware.graphics.mapper@2.0",
+        "android.hardware.graphics.mapper@3.0",
         "android.hardware.graphics.common@1.0",
         "android.hidl.allocator@1.0",
         "android.hidl.memory@1.0",
