@@ -36,12 +36,17 @@ import IGnssBatching;
  * the interface @1.0::IGnssNi.hal and @1.0::IGnssNiCallback.hal are deprecated in this version
  * and are not supported by the framework. The GNSS HAL implementation of this interface
  * must return nullptr for the following @1.0::IGnss method.
- *      getExtensionGnssNi() generates (IGnssNi gnssNiIface);
+ *     getExtensionGnssNi() generates (IGnssNi gnssNiIface);
  */
 interface IGnss extends @1.1::IGnss {
     /**
      * Opens the interface and provides the callback routines to the implementation of this
      * interface.
+     *
+     * The framework calls this method to instruct the GPS engine to prepare for serving requests
+     * from the framework. The GNSS HAL implementation must respond to all GNSS requests from the
+     * framework upon successful return from this method until cleanup() method is called to
+     * close this interface.
      *
      * @param callback Callback interface for IGnss.
      *
@@ -83,8 +88,9 @@ interface IGnss extends @1.1::IGnss {
     /**
      * This method returns the IGnssMeasurement interface.
      *
-     * Exactly one of getExtensionGnssMeasurement_1_1() and getExtensionGnssMeasurement_2_0() must
-     * return a non-null handle, and the other method must return nullptr.
+     * Exactly one of getExtensionGnssMeasurement(), getExtensionGnssMeasurement_1_1(), and
+     * getExtensionGnssMeasurement_2_0() methods must return a non-null handle, and the other
+     * methods must return nullptr.
      *
      * @return gnssMeasurementIface Handle to the IGnssMeasurement interface.
      */
