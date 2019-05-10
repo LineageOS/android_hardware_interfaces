@@ -45,15 +45,53 @@ using ::android::hardware::neuralnetworks::V1_2::implementation::PreparedModelCa
 using ::android::nn::allocateSharedMemory;
 using ::test_helper::MixedTypedExample;
 
-namespace {
+namespace float32_model {
 
-// In frameworks/ml/nn/runtime/test/generated/, creates a hidl model of mobilenet.
+// In frameworks/ml/nn/runtime/test/generated/, creates a hidl model of float32 mobilenet.
 #include "examples/mobilenet_224_gender_basic_fixed.example.cpp"
 #include "vts_models/mobilenet_224_gender_basic_fixed.model.cpp"
 
 // Prevent the compiler from complaining about an otherwise unused function.
 [[maybe_unused]] auto dummy_createTestModel = createTestModel_dynamic_output_shape;
 [[maybe_unused]] auto dummy_get_examples = get_examples_dynamic_output_shape;
+
+// MixedTypedExample is defined in frameworks/ml/nn/tools/test_generator/include/TestHarness.h.
+// This function assumes the operation is always ADD.
+std::vector<MixedTypedExample> getLargeModelExamples(uint32_t len) {
+    float outputValue = 1.0f + static_cast<float>(len);
+    return {{.operands = {
+                     // Input
+                     {.operandDimensions = {{0, {1}}}, .float32Operands = {{0, {1.0f}}}},
+                     // Output
+                     {.operandDimensions = {{0, {1}}}, .float32Operands = {{0, {outputValue}}}}}}};
+}
+
+}  // namespace float32_model
+
+namespace quant8_model {
+
+// In frameworks/ml/nn/runtime/test/generated/, creates a hidl model of quant8 mobilenet.
+#include "examples/mobilenet_quantized.example.cpp"
+#include "vts_models/mobilenet_quantized.model.cpp"
+
+// Prevent the compiler from complaining about an otherwise unused function.
+[[maybe_unused]] auto dummy_createTestModel = createTestModel_dynamic_output_shape;
+[[maybe_unused]] auto dummy_get_examples = get_examples_dynamic_output_shape;
+
+// MixedTypedExample is defined in frameworks/ml/nn/tools/test_generator/include/TestHarness.h.
+// This function assumes the operation is always ADD.
+std::vector<MixedTypedExample> getLargeModelExamples(uint32_t len) {
+    uint8_t outputValue = 1 + static_cast<uint8_t>(len);
+    return {{.operands = {// Input
+                          {.operandDimensions = {{0, {1}}}, .quant8AsymmOperands = {{0, {1}}}},
+                          // Output
+                          {.operandDimensions = {{0, {1}}},
+                           .quant8AsymmOperands = {{0, {outputValue}}}}}}};
+}
+
+}  // namespace quant8_model
+
+namespace {
 
 enum class AccessMode { READ_WRITE, READ_ONLY, WRITE_ONLY };
 
@@ -101,14 +139,18 @@ void createCacheHandles(const std::vector<std::vector<std::string>>& fileGroups,
 //                ↑      ↑      ↑             ↑
 //               [1]    [1]    [1]           [1]
 //
-Model createLargeTestModel(OperationType op, uint32_t len) {
+// This function assumes the operation is either ADD or MUL.
+template <typename CppType, OperandType operandType>
+Model createLargeTestModelImpl(OperationType op, uint32_t len) {
+    EXPECT_TRUE(op == OperationType::ADD || op == OperationType::MUL);
+
     // Model operations and operands.
     std::vector<Operation> operations(len);
     std::vector<Operand> operands(len * 2 + 2);
 
     // The constant buffer pool. This contains the activation scalar, followed by the
     // per-operation constant operands.
-    std::vector<uint8_t> operandValues(sizeof(int32_t) + len * sizeof(float));
+    std::vector<uint8_t> operandValues(sizeof(int32_t) + len * sizeof(CppType));
 
     // The activation scalar, value = 0.
     operands[0] = {
@@ -122,7 +164,26 @@ Model createLargeTestModel(OperationType op, uint32_t len) {
     };
     memset(operandValues.data(), 0, sizeof(int32_t));
 
-    const float floatBufferValue = 1.0f;
+    // The buffer value of the constant second operand. The logical value is always 1.0f.
+    CppType bufferValue;
+    // The scale of the first and second operand.
+    float scale1, scale2;
+    if (operandType == OperandType::TENSOR_FLOAT32) {
+        bufferValue = 1.0f;
+        scale1 = 0.0f;
+        scale2 = 0.0f;
+    } else if (op == OperationType::ADD) {
+        bufferValue = 1;
+        scale1 = 1.0f;
+        scale2 = 1.0f;
+    } else {
+        // To satisfy the constraint on quant8 MUL: input0.scale * input1.scale < output.scale,
+        // set input1 to have scale = 0.5f and bufferValue = 2, i.e. 1.0f in floating point.
+        bufferValue = 2;
+        scale1 = 1.0f;
+        scale2 = 0.5f;
+    }
+
     for (uint32_t i = 0; i < len; i++) {
         const uint32_t firstInputIndex = i * 2 + 1;
         const uint32_t secondInputIndex = firstInputIndex + 1;
@@ -130,10 +191,10 @@ Model createLargeTestModel(OperationType op, uint32_t len) {
 
         // The first operation input.
         operands[firstInputIndex] = {
-                .type = OperandType::TENSOR_FLOAT32,
+                .type = operandType,
                 .dimensions = {1},
                 .numberOfConsumers = 1,
-                .scale = 0.0f,
+                .scale = scale1,
                 .zeroPoint = 0,
                 .lifetime = (i == 0 ? OperandLifeTime::MODEL_INPUT
                                     : OperandLifeTime::TEMPORARY_VARIABLE),
@@ -142,18 +203,18 @@ Model createLargeTestModel(OperationType op, uint32_t len) {
 
         // The second operation input, value = 1.
         operands[secondInputIndex] = {
-                .type = OperandType::TENSOR_FLOAT32,
+                .type = operandType,
                 .dimensions = {1},
                 .numberOfConsumers = 1,
-                .scale = 0.0f,
+                .scale = scale2,
                 .zeroPoint = 0,
                 .lifetime = OperandLifeTime::CONSTANT_COPY,
                 .location = {.poolIndex = 0,
-                             .offset = static_cast<uint32_t>(i * sizeof(float) + sizeof(int32_t)),
-                             .length = sizeof(float)},
+                             .offset = static_cast<uint32_t>(i * sizeof(CppType) + sizeof(int32_t)),
+                             .length = sizeof(CppType)},
         };
-        memcpy(operandValues.data() + sizeof(int32_t) + i * sizeof(float), &floatBufferValue,
-               sizeof(float));
+        memcpy(operandValues.data() + sizeof(int32_t) + i * sizeof(CppType), &bufferValue,
+               sizeof(CppType));
 
         // The operation. All operations share the same activation scalar.
         // The output operand is created as an input in the next iteration of the loop, in the case
@@ -168,10 +229,10 @@ Model createLargeTestModel(OperationType op, uint32_t len) {
 
     // The model output.
     operands.back() = {
-            .type = OperandType::TENSOR_FLOAT32,
+            .type = operandType,
             .dimensions = {1},
             .numberOfConsumers = 0,
-            .scale = 0.0f,
+            .scale = scale1,
             .zeroPoint = 0,
             .lifetime = OperandLifeTime::MODEL_OUTPUT,
             .location = {},
@@ -191,22 +252,13 @@ Model createLargeTestModel(OperationType op, uint32_t len) {
     };
 }
 
-// MixedTypedExample is defined in frameworks/ml/nn/tools/test_generator/include/TestHarness.h.
-// This function assumes the operation is always ADD.
-std::vector<MixedTypedExample> getLargeModelExamples(uint32_t len) {
-    float outputValue = 1.0f + static_cast<float>(len);
-    return {{.operands = {
-                     // Input
-                     {.operandDimensions = {{0, {1}}}, .float32Operands = {{0, {1.0f}}}},
-                     // Output
-                     {.operandDimensions = {{0, {1}}}, .float32Operands = {{0, {outputValue}}}}}}};
-};
-
 }  // namespace
 
 // Tag for the compilation caching tests.
-class CompilationCachingTest : public NeuralnetworksHidlTest {
+class CompilationCachingTestBase : public NeuralnetworksHidlTest {
   protected:
+    CompilationCachingTestBase(OperandType type) : kOperandType(type) {}
+
     void SetUp() override {
         NeuralnetworksHidlTest::SetUp();
         ASSERT_NE(device.get(), nullptr);
@@ -261,6 +313,40 @@ class CompilationCachingTest : public NeuralnetworksHidlTest {
             nftw(mCacheDir.c_str(), callback, 128, FTW_DEPTH | FTW_MOUNT | FTW_PHYS);
         }
         NeuralnetworksHidlTest::TearDown();
+    }
+
+    // Model and examples creators. According to kOperandType, the following methods will return
+    // either float32 model/examples or the quant8 variant.
+    Model createTestModel() {
+        if (kOperandType == OperandType::TENSOR_FLOAT32) {
+            return float32_model::createTestModel();
+        } else {
+            return quant8_model::createTestModel();
+        }
+    }
+
+    std::vector<MixedTypedExample> get_examples() {
+        if (kOperandType == OperandType::TENSOR_FLOAT32) {
+            return float32_model::get_examples();
+        } else {
+            return quant8_model::get_examples();
+        }
+    }
+
+    Model createLargeTestModel(OperationType op, uint32_t len) {
+        if (kOperandType == OperandType::TENSOR_FLOAT32) {
+            return createLargeTestModelImpl<float, OperandType::TENSOR_FLOAT32>(op, len);
+        } else {
+            return createLargeTestModelImpl<uint8_t, OperandType::TENSOR_QUANT8_ASYMM>(op, len);
+        }
+    }
+
+    std::vector<MixedTypedExample> getLargeModelExamples(uint32_t len) {
+        if (kOperandType == OperandType::TENSOR_FLOAT32) {
+            return float32_model::getLargeModelExamples(len);
+        } else {
+            return quant8_model::getLargeModelExamples(len);
+        }
     }
 
     // See if the service can handle the model.
@@ -366,9 +452,20 @@ class CompilationCachingTest : public NeuralnetworksHidlTest {
     uint32_t mNumModelCache;
     uint32_t mNumDataCache;
     uint32_t mIsCachingSupported;
+
+    // The primary data type of the testModel.
+    const OperandType kOperandType;
 };
 
-TEST_F(CompilationCachingTest, CacheSavingAndRetrieval) {
+// A parameterized fixture of CompilationCachingTestBase. Every test will run twice, with the first
+// pass running with float32 models and the second pass running with quant8 models.
+class CompilationCachingTest : public CompilationCachingTestBase,
+                               public ::testing::WithParamInterface<OperandType> {
+  protected:
+    CompilationCachingTest() : CompilationCachingTestBase(GetParam()) {}
+};
+
+TEST_P(CompilationCachingTest, CacheSavingAndRetrieval) {
     // Create test HIDL model and compile.
     const Model testModel = createTestModel();
     if (checkEarlyTermination(testModel)) return;
@@ -409,7 +506,7 @@ TEST_F(CompilationCachingTest, CacheSavingAndRetrieval) {
                                            /*testDynamicOutputShape=*/false);
 }
 
-TEST_F(CompilationCachingTest, CacheSavingAndRetrievalNonZeroOffset) {
+TEST_P(CompilationCachingTest, CacheSavingAndRetrievalNonZeroOffset) {
     // Create test HIDL model and compile.
     const Model testModel = createTestModel();
     if (checkEarlyTermination(testModel)) return;
@@ -472,7 +569,7 @@ TEST_F(CompilationCachingTest, CacheSavingAndRetrievalNonZeroOffset) {
                                            /*testDynamicOutputShape=*/false);
 }
 
-TEST_F(CompilationCachingTest, SaveToCacheInvalidNumCache) {
+TEST_P(CompilationCachingTest, SaveToCacheInvalidNumCache) {
     // Create test HIDL model and compile.
     const Model testModel = createTestModel();
     if (checkEarlyTermination(testModel)) return;
@@ -584,7 +681,7 @@ TEST_F(CompilationCachingTest, SaveToCacheInvalidNumCache) {
     }
 }
 
-TEST_F(CompilationCachingTest, PrepareModelFromCacheInvalidNumCache) {
+TEST_P(CompilationCachingTest, PrepareModelFromCacheInvalidNumCache) {
     // Create test HIDL model and compile.
     const Model testModel = createTestModel();
     if (checkEarlyTermination(testModel)) return;
@@ -664,7 +761,7 @@ TEST_F(CompilationCachingTest, PrepareModelFromCacheInvalidNumCache) {
     }
 }
 
-TEST_F(CompilationCachingTest, SaveToCacheInvalidNumFd) {
+TEST_P(CompilationCachingTest, SaveToCacheInvalidNumFd) {
     // Create test HIDL model and compile.
     const Model testModel = createTestModel();
     if (checkEarlyTermination(testModel)) return;
@@ -776,7 +873,7 @@ TEST_F(CompilationCachingTest, SaveToCacheInvalidNumFd) {
     }
 }
 
-TEST_F(CompilationCachingTest, PrepareModelFromCacheInvalidNumFd) {
+TEST_P(CompilationCachingTest, PrepareModelFromCacheInvalidNumFd) {
     // Create test HIDL model and compile.
     const Model testModel = createTestModel();
     if (checkEarlyTermination(testModel)) return;
@@ -856,7 +953,7 @@ TEST_F(CompilationCachingTest, PrepareModelFromCacheInvalidNumFd) {
     }
 }
 
-TEST_F(CompilationCachingTest, SaveToCacheInvalidAccessMode) {
+TEST_P(CompilationCachingTest, SaveToCacheInvalidAccessMode) {
     // Create test HIDL model and compile.
     const Model testModel = createTestModel();
     if (checkEarlyTermination(testModel)) return;
@@ -914,7 +1011,7 @@ TEST_F(CompilationCachingTest, SaveToCacheInvalidAccessMode) {
     }
 }
 
-TEST_F(CompilationCachingTest, PrepareModelFromCacheInvalidAccessMode) {
+TEST_P(CompilationCachingTest, PrepareModelFromCacheInvalidAccessMode) {
     // Create test HIDL model and compile.
     const Model testModel = createTestModel();
     if (checkEarlyTermination(testModel)) return;
@@ -990,7 +1087,7 @@ static void copyCacheFiles(const std::vector<std::vector<std::string>>& from,
 constexpr uint32_t kLargeModelSize = 100;
 constexpr uint32_t kNumIterationsTOCTOU = 100;
 
-TEST_F(CompilationCachingTest, SaveToCache_TOCTOU) {
+TEST_P(CompilationCachingTest, SaveToCache_TOCTOU) {
     if (!mIsCachingSupported) return;
 
     // Create test models and check if fully supported by the service.
@@ -1053,7 +1150,7 @@ TEST_F(CompilationCachingTest, SaveToCache_TOCTOU) {
     }
 }
 
-TEST_F(CompilationCachingTest, PrepareFromCache_TOCTOU) {
+TEST_P(CompilationCachingTest, PrepareFromCache_TOCTOU) {
     if (!mIsCachingSupported) return;
 
     // Create test models and check if fully supported by the service.
@@ -1116,7 +1213,7 @@ TEST_F(CompilationCachingTest, PrepareFromCache_TOCTOU) {
     }
 }
 
-TEST_F(CompilationCachingTest, ReplaceSecuritySensitiveCache) {
+TEST_P(CompilationCachingTest, ReplaceSecuritySensitiveCache) {
     if (!mIsCachingSupported) return;
 
     // Create test models and check if fully supported by the service.
@@ -1164,11 +1261,19 @@ TEST_F(CompilationCachingTest, ReplaceSecuritySensitiveCache) {
     }
 }
 
-class CompilationCachingSecurityTest : public CompilationCachingTest,
-                                       public ::testing::WithParamInterface<uint32_t> {
+static const auto kOperandTypeChoices =
+        ::testing::Values(OperandType::TENSOR_FLOAT32, OperandType::TENSOR_QUANT8_ASYMM);
+
+INSTANTIATE_TEST_CASE_P(TestCompilationCaching, CompilationCachingTest, kOperandTypeChoices);
+
+class CompilationCachingSecurityTest
+    : public CompilationCachingTestBase,
+      public ::testing::WithParamInterface<std::tuple<OperandType, uint32_t>> {
   protected:
+    CompilationCachingSecurityTest() : CompilationCachingTestBase(std::get<0>(GetParam())) {}
+
     void SetUp() {
-        CompilationCachingTest::SetUp();
+        CompilationCachingTestBase::SetUp();
         generator.seed(kSeed);
     }
 
@@ -1254,7 +1359,7 @@ class CompilationCachingSecurityTest : public CompilationCachingTest,
         }
     }
 
-    const uint32_t kSeed = GetParam();
+    const uint32_t kSeed = std::get<1>(GetParam());
     std::mt19937 generator;
 };
 
@@ -1302,7 +1407,7 @@ TEST_P(CompilationCachingSecurityTest, WrongToken) {
 }
 
 INSTANTIATE_TEST_CASE_P(TestCompilationCaching, CompilationCachingSecurityTest,
-                        ::testing::Range(0U, 10U));
+                        ::testing::Combine(kOperandTypeChoices, ::testing::Range(0U, 10U)));
 
 }  // namespace functional
 }  // namespace vts
