@@ -44,6 +44,21 @@ std::vector<Request> createRequests(const std::vector<MixedTypedExample>& exampl
 // in frameworks/ml/nn/runtime/tests/generated/
 #include "all_generated_V1_2_vts_tests.cpp"
 
+// Generated from spec/strided_slice_invalid_output_dims.mod.py.
+// TODO(b/132155416): Make this part of all_generated_V1_2_vts_tests.cpp.
+namespace strided_slice_invalid_output_dims {
+#include "generated/strided_slice_invalid_output_dims.example.cpp"
+#include "generated/strided_slice_invalid_output_dims.model.cpp"
+}  // namespace strided_slice_invalid_output_dims
+
+// TODO(b/132155416): Make this part of all_generated_V1_2_vts_tests.cpp.
+TEST_F(ValidationTest, strided_slice_invalid_output_dims) {
+    const Model model = strided_slice_invalid_output_dims::createTestModel();
+    const std::vector<Request> requests =
+            createRequests(strided_slice_invalid_output_dims::get_examples());
+    validateFailure(model, requests);
+}
+
 }  // namespace functional
 }  // namespace vts
 }  // namespace V1_2

@@ -73,11 +73,14 @@ class NeuralnetworksHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 class ValidationTest : public NeuralnetworksHidlTest {
    protected:
      void validateEverything(const Model& model, const std::vector<Request>& requests);
+     void validateFailure(const Model& model, const std::vector<Request>& requests);
 
    private:
      void validateModel(const Model& model);
      void validateRequests(const sp<IPreparedModel>& preparedModel,
                            const std::vector<Request>& requests);
+     void validateRequestFailure(const sp<IPreparedModel>& preparedModel,
+                                 const std::vector<Request>& requests);
      void validateBurst(const sp<IPreparedModel>& preparedModel,
                         const std::vector<Request>& requests);
 };
