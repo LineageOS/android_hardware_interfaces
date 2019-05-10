@@ -94,7 +94,7 @@ Return<::android::hardware::atrace::V1_0::Status> AtraceDevice::disableAllCatego
     for (auto& c : kTracingMap) {
         for (auto& p : c.second.paths) {
             if (!android::base::WriteStringToFile("0", p.first)) {
-                LOG(ERROR) << "Failed to enable tracing on: " << p.first;
+                LOG(ERROR) << "Failed to disable tracing on: " << p.first;
                 if (p.second) {
                     ret = Status::ERROR_TRACING_POINT;
                 }
