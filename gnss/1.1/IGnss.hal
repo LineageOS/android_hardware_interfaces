@@ -29,6 +29,11 @@ interface IGnss extends @1.0::IGnss {
      * Opens the interface and provides the callback routines to the implementation of this
      * interface.
      *
+     * The framework calls this method to instruct the GPS engine to prepare for serving requests
+     * from the framework. The GNSS HAL implementation must respond to all GNSS requests from the
+     * framework upon successful return from this method until cleanup() method is called to
+     * close this interface.
+     *
      * @param callback Callback interface for IGnss.
      *
      * @return success Returns true on success.
@@ -42,7 +47,7 @@ interface IGnss extends @1.0::IGnss {
      * @param mode Parameter must be one of MS_BASED or STANDALONE. It is allowed by the platform
      *     (and it is recommended) to fallback to MS_BASED if MS_ASSISTED is passed in, and MS_BASED
      *     is supported.
-     * @param recurrence GNSS postion recurrence value, either periodic or single.
+     * @param recurrence GNSS position recurrence value, either periodic or single.
      * @param minIntervalMs Represents the time between fixes in milliseconds.
      * @param preferredAccuracyMeters Represents the requested fix accuracy in meters.
      * @param preferredTimeMs Represents the requested time to first fix in milliseconds.

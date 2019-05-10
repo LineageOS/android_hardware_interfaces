@@ -75,8 +75,13 @@ interface IGnss {
     };
 
     /**
-     * Opens the interface and provides the callback routines
-     * to the implementation of this interface.
+     * Opens the interface and provides the callback routines to the implementation of this
+     * interface.
+     *
+     * The framework calls this method to instruct the GPS engine to prepare for serving requests
+     * from the framework. The GNSS HAL implementation must respond to all GNSS requests from the
+     * framework upon successful return from this method until cleanup() method is called to
+     * close this interface.
      *
      * @param callback Callback interface for IGnss.
      *
@@ -105,6 +110,18 @@ interface IGnss {
 
     /**
      * Closes the interface.
+     *
+     * The cleanup() method is called by the framework to tell the GNSS HAL implementation to
+     * not expect any GNSS requests in the immediate future - e.g. this may be called when
+     * location is disabled by a user setting or low battery conditions. The GNSS HAL
+     * implementation must immediately stop responding to any existing requests until the
+     * setCallback() method is called again and the requests are re-initiated by the framework.
+     *
+     * After this method is called, the GNSS HAL implementation may choose to modify GNSS hardware
+     * states to save power. It is expected that when setCallback() method is called again to
+     * reopen this interface, to serve requests, there may be some minor delays in GNSS response
+     * requests as hardware readiness states are restored, not to exceed those that occur on normal
+     * device boot up.
      */
     cleanup();
 
@@ -153,7 +170,7 @@ interface IGnss {
      * @param mode  Parameter must be one of MS_BASED or STANDALONE.
      * It is allowed by the platform (and it is recommended) to fallback to
      * MS_BASED if MS_ASSISTED is passed in, and MS_BASED is supported.
-     * @recurrence GNSS postion recurrence value, either periodic or single.
+     * @recurrence GNSS position recurrence value, either periodic or single.
      * @param minIntervalMs Represents the time between fixes in milliseconds.
      * @param preferredAccuracyMeters Represents the requested fix accuracy in meters.
      * @param preferredTimeMs Represents the requested time to first fix in milliseconds.
