@@ -105,7 +105,9 @@ void SensorsHidlEnvironment::HidlTearDown() {
     if (stopThread) {
         *stopThread = true;
     }
-    pollThread.detach();
+    if (pollThread.joinable()) {
+        pollThread.detach();
+    }
 }
 
 void SensorsHidlEnvironment::resetHal() {
