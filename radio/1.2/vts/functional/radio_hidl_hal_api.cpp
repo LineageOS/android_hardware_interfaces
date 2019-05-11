@@ -22,7 +22,7 @@
 namespace {
 const RadioAccessSpecifier GERAN_SPECIFIER_P900 = {.radioAccessNetwork = RadioAccessNetworks::GERAN,
                                                    .geranBands = {GeranBands::BAND_P900},
-                                                   .channels = {512, 513}};
+                                                   .channels = {1, 2}};
 const RadioAccessSpecifier GERAN_SPECIFIER_850 = {.radioAccessNetwork = RadioAccessNetworks::GERAN,
                                                   .geranBands = {GeranBands::BAND_850},
                                                   .channels = {128, 129}};

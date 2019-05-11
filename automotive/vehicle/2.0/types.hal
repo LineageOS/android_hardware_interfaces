@@ -3249,6 +3249,16 @@ enum DiagnosticFloatSensorIndex : int32_t {
  */
 enum VmsMessageType : int32_t {
     /**
+     * A notification indicating that the sender has been reset.
+     *
+     * The receiving party must reset its internal state and respond to the
+     * sender with a START_SESSION message as acknowledgement.
+     *
+     * This message type uses enum VmsStartSessionMessageIntegerValuesIndex.
+     */
+    START_SESSION = 17,
+
+    /**
      * A request from the subscribers to the VMS service to subscribe to a layer.
      *
      * This message type uses enum VmsMessageWithLayerIntegerValuesIndex.
@@ -3364,7 +3374,7 @@ enum VmsMessageType : int32_t {
      */
     PUBLISHER_INFORMATION_RESPONSE = 16,
 
-    LAST_VMS_MESSAGE_TYPE = PUBLISHER_INFORMATION_RESPONSE,
+    LAST_VMS_MESSAGE_TYPE = START_SESSION,
 };
 
 /**
@@ -3375,6 +3385,30 @@ enum VmsMessageType : int32_t {
 enum VmsBaseMessageIntegerValuesIndex : int32_t {
     /* The message type as enumerated by VmsMessageType enum. */
     MESSAGE_TYPE = 0,
+};
+
+/*
+ * Handshake data sent as part of a VmsMessageType.START_SESSION message.
+ *
+ * A new session is initiated by sending a START_SESSION message with the
+ * sender's identifier populated and the receiver's identifier set to -1.
+ *
+ * Identifier values are independently generated, but must be non-negative, and
+ * increase monotonically between reboots.
+ *
+ * Upon receiving a START_SESSION with a mis-matching identifier, the receiver
+ * must clear any cached VMS offering or subscription state and acknowledge the
+ * new session by responding with a START_SESSION message that populates both
+ * identifier fields.
+ *
+ * Any VMS messages received between initiation and completion of the handshake
+ * must be discarded.
+ */
+enum VmsStartSessionMessageIntegerValuesIndex : VmsBaseMessageIntegerValuesIndex {
+    /* Identifier field for the Android system service. */
+    SERVICE_ID = 1,
+    /* Identifier field for the HAL client process. */
+    CLIENT_ID = 2,
 };
 
 /*
