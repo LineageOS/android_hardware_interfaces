@@ -825,6 +825,7 @@ std::pair<WifiStatus, sp<IWifiApIface>> WifiChip::createApIfaceInternal() {
                    << legacyErrorToString(legacy_status);
         return {createWifiStatusFromLegacyError(legacy_status), {}};
     }
+    iface_util_.lock()->setRandomMacAddressIndex(ap_ifaces_.size());
     sp<WifiApIface> iface = new WifiApIface(ifname, legacy_hal_, iface_util_);
     ap_ifaces_.push_back(iface);
     for (const auto& callback : event_cb_handler_.getCallbacks()) {

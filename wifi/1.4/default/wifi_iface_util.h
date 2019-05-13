@@ -17,6 +17,8 @@
 #ifndef WIFI_IFACE_UTIL_H_
 #define WIFI_IFACE_UTIL_H_
 
+#define MAX_RANDOM_MAC_ADDR_INDEX 5
+
 #include <wifi_system/interface_tool.h>
 
 #include <android/hardware/wifi/1.0/IWifi.h>
@@ -52,6 +54,7 @@ class WifiIfaceUtil {
     // daemon. (So, changes on every reboot)
     virtual std::array<uint8_t, 6> getOrCreateRandomMacAddress();
 
+    virtual void setRandomMacAddressIndex(int idx);
     // Register for any iface event callbacks for the provided interface.
     virtual void registerIfaceEventHandlers(const std::string& iface_name,
                                             IfaceEventHandlers handlers);
@@ -63,7 +66,9 @@ class WifiIfaceUtil {
     std::array<uint8_t, 6> createRandomMacAddress();
 
     std::weak_ptr<wifi_system::InterfaceTool> iface_tool_;
-    std::unique_ptr<std::array<uint8_t, 6>> random_mac_address_;
+    std::unique_ptr<std::array<uint8_t, 6>> random_mac_address_[MAX_RANDOM_MAC_ADDR_INDEX];
+
+    int random_mac_address_index_;
     std::map<std::string, IfaceEventHandlers> event_handlers_map_;
 };
 
