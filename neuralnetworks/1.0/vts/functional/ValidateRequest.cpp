@@ -16,15 +16,14 @@
 
 #define LOG_TAG "neuralnetworks_hidl_hal_test"
 
-#include "VtsHalNeuralnetworks.h"
-
-#include "Callbacks.h"
-#include "TestHarness.h"
-#include "Utils.h"
-
 #include <android-base/logging.h>
 #include <android/hidl/memory/1.0/IMemory.h>
 #include <hidlmemory/mapping.h>
+
+#include "1.0/Callbacks.h"
+#include "MemoryUtils.h"
+#include "TestHarness.h"
+#include "VtsHalNeuralnetworks.h"
 
 namespace android {
 namespace hardware {
@@ -33,7 +32,7 @@ namespace V1_0 {
 namespace vts {
 namespace functional {
 
-using ::android::hardware::neuralnetworks::V1_2::implementation::ExecutionCallback;
+using ::android::hardware::neuralnetworks::V1_0::implementation::ExecutionCallback;
 using ::android::hidl::memory::V1_0::IMemory;
 using test_helper::for_all;
 using test_helper::MixedTyped;
@@ -121,11 +120,13 @@ std::vector<Request> createRequests(const std::vector<MixedTypedExample>& exampl
         for_all(inputs, [&inputs_info, &inputSize](int index, auto, auto s) {
             if (inputs_info.size() <= static_cast<size_t>(index)) inputs_info.resize(index + 1);
             RequestArgument arg = {
-                .location = {.poolIndex = INPUT, .offset = 0, .length = static_cast<uint32_t>(s)},
-                .dimensions = {},
+                    .location = {.poolIndex = INPUT,
+                                 .offset = 0,
+                                 .length = static_cast<uint32_t>(s)},
+                    .dimensions = {},
             };
             RequestArgument arg_empty = {
-                .hasNoValue = true,
+                    .hasNoValue = true,
             };
             inputs_info[index] = s ? arg : arg_empty;
             inputSize += s;
@@ -143,8 +144,10 @@ std::vector<Request> createRequests(const std::vector<MixedTypedExample>& exampl
         for_all(outputs, [&outputs_info, &outputSize](int index, auto, auto s) {
             if (outputs_info.size() <= static_cast<size_t>(index)) outputs_info.resize(index + 1);
             RequestArgument arg = {
-                .location = {.poolIndex = OUTPUT, .offset = 0, .length = static_cast<uint32_t>(s)},
-                .dimensions = {},
+                    .location = {.poolIndex = OUTPUT,
+                                 .offset = 0,
+                                 .length = static_cast<uint32_t>(s)},
+                    .dimensions = {},
             };
             outputs_info[index] = arg;
             outputSize += s;

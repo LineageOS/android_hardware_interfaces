@@ -16,16 +16,16 @@
 
 #define LOG_TAG "neuralnetworks_hidl_hal_test"
 
-#include "VtsHalNeuralnetworks.h"
-
-#include "Callbacks.h"
-#include "GeneratedTestHarness.h"
-#include "TestHarness.h"
-#include "Utils.h"
-
 #include <android-base/logging.h>
 #include <android/hidl/memory/1.0/IMemory.h>
 #include <hidlmemory/mapping.h>
+
+#include "1.2/Callbacks.h"
+#include "GeneratedTestHarness.h"
+#include "MemoryUtils.h"
+#include "TestHarness.h"
+#include "Utils.h"
+#include "VtsHalNeuralnetworks.h"
 
 namespace android {
 namespace hardware {
