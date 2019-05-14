@@ -14,10 +14,44 @@
 // limitations under the License.
 //
 
+cc_defaults {
+    name: "VtsHalNeuralNetworksV1_2TargetTestDefaults",
+    defaults: ["VtsHalTargetTestDefaults"],
+    srcs: [
+        "ValidateModel.cpp",
+        "ValidateRequest.cpp",
+        "VtsHalNeuralnetworks.cpp",
+        "Callbacks.cpp",
+        "GeneratedTestHarness.cpp",
+    ],
+    local_include_dirs: ["include"],
+    shared_libs: [
+        "libfmq",
+        "libnativewindow",
+    ],
+    static_libs: [
+        "android.hardware.neuralnetworks@1.0",
+        "android.hardware.neuralnetworks@1.1",
+        "android.hardware.neuralnetworks@1.2",
+        "android.hidl.allocator@1.0",
+        "android.hidl.memory@1.0",
+        "libgmock",
+        "libhidlmemory",
+        "libneuralnetworks_utils",
+        "VtsHalNeuralNetworksV1_0_utils",
+    ],
+    header_libs: [
+        "libneuralnetworks_headers",
+        "libneuralnetworks_generated_test_harness_headers",
+        "libneuralnetworks_generated_tests",
+    ],
+    test_suites: ["general-tests"],
+}
+
 // Tests for V1_0 models using the V1_2 HAL.
 cc_test {
     name: "VtsHalNeuralnetworksV1_2CompatV1_0TargetTest",
-    defaults: ["VtsHalNeuralNetworksTargetTestDefaults"],
+    defaults: ["VtsHalNeuralNetworksV1_2TargetTestDefaults"],
     srcs: [
         "GeneratedTestsV1_0.cpp",
         "ValidateBurst.cpp",
@@ -30,7 +64,7 @@ cc_test {
 // Tests for V1_1 models using the V1_2 HAL.
 cc_test {
     name: "VtsHalNeuralnetworksV1_2CompatV1_1TargetTest",
-    defaults: ["VtsHalNeuralNetworksTargetTestDefaults"],
+    defaults: ["VtsHalNeuralNetworksV1_2TargetTestDefaults"],
     srcs: [
         "GeneratedTestsV1_1.cpp",
         "ValidateBurst.cpp",
@@ -43,11 +77,11 @@ cc_test {
 // Tests for V1_2 models.
 cc_test {
     name: "VtsHalNeuralnetworksV1_2TargetTest",
-    defaults: ["VtsHalNeuralNetworksTargetTestDefaults"],
+    defaults: ["VtsHalNeuralNetworksV1_2TargetTestDefaults"],
     srcs: [
         "BasicTests.cpp",
         "CompilationCachingTests.cpp",
-        "GeneratedTests.cpp",
+        "GeneratedTestsV1_2.cpp",
         "ValidateBurst.cpp",
     ],
     cflags: [
@@ -57,10 +91,10 @@ cc_test {
 
 cc_test {
     name: "PresubmitHalNeuralnetworksV1_2TargetTest",
-    defaults: ["VtsHalNeuralNetworksTargetTestDefaults"],
+    defaults: ["VtsHalNeuralNetworksV1_2TargetTestDefaults"],
     srcs: [
         "BasicTests.cpp",
-        "GeneratedTests.cpp",
+        "GeneratedTestsV1_2.cpp",
         "ValidateBurst.cpp",
     ],
     cflags: [

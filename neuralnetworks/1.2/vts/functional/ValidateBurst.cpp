@@ -18,7 +18,7 @@
 
 #include "VtsHalNeuralnetworks.h"
 
-#include "Callbacks.h"
+#include "1.2/Callbacks.h"
 #include "ExecutionBurstController.h"
 #include "ExecutionBurstServer.h"
 #include "TestHarness.h"
