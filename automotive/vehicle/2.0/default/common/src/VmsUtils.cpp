@@ -31,6 +31,7 @@ static constexpr int kPublisherIdSize = 1;
 static constexpr int kLayerNumberSize = 1;
 static constexpr int kLayerSize = 3;
 static constexpr int kLayerAndPublisherSize = 4;
+static constexpr int kSessionIdsSize = 2;
 static constexpr int kPublisherIdIndex =
         toInt(VmsPublisherInformationIntegerValuesIndex::PUBLISHER_ID);
 static constexpr int kSubscriptionStateSequenceNumberIndex =
@@ -41,9 +42,9 @@ static constexpr int kAvailabilitySequenceNumberIndex =
 // TODO(aditin): We should extend the VmsMessageType enum to include a first and
 // last, which would prevent breakages in this API. However, for all of the
 // functions in this module, we only need to guarantee that the message type is
-// between SUBSCRIBE and PUBLISHER_ID_RESPONSE.
+// between SUBSCRIBE and START_SESSION.
 static constexpr int kFirstMessageType = toInt(VmsMessageType::SUBSCRIBE);
-static constexpr int kLastMessageType = toInt(VmsMessageType::PUBLISHER_ID_RESPONSE);
+static constexpr int kLastMessageType = toInt(VmsMessageType::START_SESSION);
 
 std::unique_ptr<VehiclePropValue> createBaseVmsMessage(size_t message_size) {
     auto result = createVehiclePropValue(VehiclePropertyType::INT32, message_size);
@@ -132,6 +133,28 @@ std::unique_ptr<VehiclePropValue> createDataMessage(const std::string& bytes) {
     return result;
 }
 
+std::unique_ptr<VehiclePropValue> createPublisherIdRequest(
+        const std::string& vms_provider_description) {
+    auto result = createBaseVmsMessage(kMessageTypeSize);
+    result->value.int32Values = hidl_vec<int32_t>{
+            toInt(VmsMessageType::PUBLISHER_ID_REQUEST),
+    };
+    result->value.bytes =
+            std::vector<uint8_t>(vms_provider_description.begin(), vms_provider_description.end());
+    return result;
+}
+
+std::unique_ptr<VehiclePropValue> createStartSessionMessage(const int service_id,
+                                                            const int client_id) {
+    auto result = createBaseVmsMessage(kMessageTypeSize + kSessionIdsSize);
+    result->value.int32Values = hidl_vec<int32_t>{
+            toInt(VmsMessageType::START_SESSION),
+            service_id,
+            client_id,
+    };
+    return result;
+}
+
 bool isValidVmsProperty(const VehiclePropValue& value) {
     return (value.prop == toInt(VehicleProperty::VEHICLE_MAP_SERVICE));
 }
@@ -157,17 +180,6 @@ std::string parseData(const VehiclePropValue& value) {
     } else {
         return std::string();
     }
-}
-
-std::unique_ptr<VehiclePropValue> createPublisherIdRequest(
-        const std::string& vms_provider_description) {
-    auto result = createBaseVmsMessage(kMessageTypeSize);
-    result->value.int32Values = hidl_vec<int32_t>{
-            toInt(VmsMessageType::PUBLISHER_ID_REQUEST),
-    };
-    result->value.bytes =
-            std::vector<uint8_t>(vms_provider_description.begin(), vms_provider_description.end());
-    return result;
 }
 
 int32_t parsePublisherIdResponse(const VehiclePropValue& publisher_id_response) {
@@ -254,6 +266,31 @@ bool hasServiceNewlyStarted(const VehiclePropValue& availability_change) {
             parseMessageType(availability_change) == VmsMessageType::AVAILABILITY_CHANGE &&
             availability_change.value.int32Values.size() > kAvailabilitySequenceNumberIndex &&
             availability_change.value.int32Values[kAvailabilitySequenceNumberIndex] == 0);
+}
+
+VmsSessionStatus parseStartSessionMessage(const VehiclePropValue& start_session,
+                                          const int service_id, const int client_id,
+                                          int* new_service_id) {
+    if (isValidVmsMessage(start_session) &&
+        parseMessageType(start_session) == VmsMessageType::START_SESSION &&
+        start_session.value.int32Values.size() == kSessionIdsSize + 1) {
+        *new_service_id = start_session.value.int32Values[1];
+        const int new_client_id = start_session.value.int32Values[2];
+        if (*new_service_id < std::max(0, service_id)) {
+            *new_service_id = service_id;
+            return VmsSessionStatus::kInvalidServiceId;
+        }
+        if (new_client_id == -1) {
+            return VmsSessionStatus::kNewServerSession;
+        }
+        if (new_client_id == client_id) {
+            return VmsSessionStatus::kAckToNewClientSession;
+        }
+        *new_service_id = service_id;
+        return VmsSessionStatus::kInvalidClientId;
+    }
+    *new_service_id = service_id;
+    return VmsSessionStatus::kInvalidMessage;
 }
 
 }  // namespace vms
