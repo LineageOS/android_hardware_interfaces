@@ -757,6 +757,7 @@ TEST_F(RadioHidlTest_v1_2, getDataRegistrationState) {
     // Check the mcc [0, 999] and mnc [0, 999].
     string hidl_mcc;
     string hidl_mnc;
+    bool checkMccMnc = true;
     int totalIdentitySizeExpected = 1;
     ::android::hardware::radio::V1_2::CellIdentity cellIdentities =
         radioRsp_v1_2->dataRegResp.cellIdentity;
@@ -765,6 +766,7 @@ TEST_F(RadioHidlTest_v1_2, getDataRegistrationState) {
     if (cellInfoType == CellInfoType::NONE) {
         // All the fields are 0
         totalIdentitySizeExpected = 0;
+        checkMccMnc = false;
     } else if (cellInfoType == CellInfoType::GSM) {
         EXPECT_EQ(1, cellIdentities.cellIdentityGsm.size());
         ::android::hardware::radio::V1_2::CellIdentityGsm cig = cellIdentities.cellIdentityGsm[0];
@@ -791,6 +793,7 @@ TEST_F(RadioHidlTest_v1_2, getDataRegistrationState) {
         // CellIndentityCdma has no mcc and mnc.
         EXPECT_EQ(CellInfoType::CDMA, cellInfoType);
         EXPECT_EQ(1, cellIdentities.cellIdentityCdma.size());
+        checkMccMnc = false;
     }
 
     // Check only one CellIdentity is size 1, and others must be 0.
@@ -799,10 +802,13 @@ TEST_F(RadioHidlTest_v1_2, getDataRegistrationState) {
                   cellIdentities.cellIdentityLte.size() + cellIdentities.cellIdentityWcdma.size() +
                   cellIdentities.cellIdentityTdscdma.size());
 
-    int mcc = stoi(hidl_mcc);
-    int mnc = stoi(hidl_mnc);
-    EXPECT_TRUE(mcc >= 0 && mcc <= 999);
-    EXPECT_TRUE(mnc >= 0 && mnc <= 999);
+    // 32 bit system might return invalid mcc and mnc hidl string "\xff\xff..."
+    if (checkMccMnc && hidl_mcc.size() < 4 && hidl_mnc.size() < 4) {
+        int mcc = stoi(hidl_mcc);
+        int mnc = stoi(hidl_mnc);
+        EXPECT_TRUE(mcc >= 0 && mcc <= 999);
+        EXPECT_TRUE(mnc >= 0 && mnc <= 999);
+    }
 }
 
 /*
