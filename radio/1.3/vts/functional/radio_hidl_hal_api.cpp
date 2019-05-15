@@ -33,9 +33,9 @@ TEST_F(RadioHidlTest_v1_3, enableModem) {
     EXPECT_EQ(serial, radioRsp_v1_3->rspInfo.serial);
     ALOGI("getModemStackStatus, rspInfo.error = %s\n",
           toString(radioRsp_v1_3->rspInfo.error).c_str());
-    ASSERT_TRUE(CheckAnyOfErrors(
-            radioRsp_v1_3->rspInfo.error,
-            {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::MODEM_ERR}));
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_3->rspInfo.error,
+                                 {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE,
+                                  RadioError::MODEM_ERR, RadioError::REQUEST_NOT_SUPPORTED}));
 
     // checking if getModemStackStatus returns true, as modem was enabled above
     if (RadioError::NONE == radioRsp_v1_3->rspInfo.error) {
@@ -50,9 +50,9 @@ TEST_F(RadioHidlTest_v1_3, enableModem) {
         EXPECT_EQ(serial, radioRsp_v1_3->rspInfo.serial);
         ALOGI("getModemStackStatus, rspInfo.error = %s\n",
               toString(radioRsp_v1_3->rspInfo.error).c_str());
-        ASSERT_TRUE(CheckAnyOfErrors(
-                radioRsp_v1_3->rspInfo.error,
-                {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::MODEM_ERR}));
+        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_3->rspInfo.error,
+                                     {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE,
+                                      RadioError::MODEM_ERR, RadioError::REQUEST_NOT_SUPPORTED}));
         // verify that enableModem did set isEnabled correctly
         EXPECT_EQ(true, radioRsp_v1_3->isModemEnabled);
     }
