@@ -530,6 +530,7 @@ const ConfigDeclaration kVehicleProperties[]{
     {.config = {.prop = toInt(VehicleProperty::HVAC_TEMPERATURE_DISPLAY_UNITS),
                 .access = VehiclePropertyAccess::READ_WRITE,
                 .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                .configArray = {(int)VehicleUnit::FAHRENHEIT, (int)VehicleUnit::CELSIUS},
                 .areaConfigs = {VehicleAreaConfig{.areaId = (0)}}},
      .initialValue = {.int32Values = {(int)VehicleUnit::FAHRENHEIT}}},
 
