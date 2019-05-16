@@ -42,6 +42,7 @@ class WifiRttController : public V1_0::IWifiRttController {
     void invalidate();
     bool isValid();
     std::vector<sp<IWifiRttControllerEventCallback>> getEventCallbacks();
+    std::string getIfaceName();
 
     // HIDL methods exposed.
     Return<void> getBoundIface(getBoundIface_cb hidl_status_cb) override;
