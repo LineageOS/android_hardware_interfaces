@@ -2269,7 +2269,8 @@ TEST_F(EncryptionOperationsTest, RsaOaepTooLarge) {
               Begin(KeyPurpose::ENCRYPT,
                     AuthorizationSetBuilder().Padding(PaddingMode::RSA_OAEP).Digest(Digest::SHA_2_256)));
     string result;
-    EXPECT_EQ(ErrorCode::INVALID_ARGUMENT, Finish(message, &result));
+    auto error = Finish(message, &result);
+    EXPECT_TRUE(error == ErrorCode::INVALID_INPUT_LENGTH || error == ErrorCode::INVALID_ARGUMENT);
     EXPECT_EQ(0U, result.size());
 }
 
@@ -2327,7 +2328,8 @@ TEST_F(EncryptionOperationsTest, RsaPkcs1TooLarge) {
     auto params = AuthorizationSetBuilder().Padding(PaddingMode::RSA_PKCS1_1_5_ENCRYPT);
     EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, params));
     string result;
-    EXPECT_EQ(ErrorCode::INVALID_ARGUMENT, Finish(message, &result));
+    auto error = Finish(message, &result);
+    EXPECT_TRUE(error == ErrorCode::INVALID_INPUT_LENGTH || error == ErrorCode::INVALID_ARGUMENT);
     EXPECT_EQ(0U, result.size());
 }
 
