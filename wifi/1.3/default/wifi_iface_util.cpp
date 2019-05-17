@@ -39,7 +39,8 @@ namespace V1_3 {
 namespace implementation {
 namespace iface_util {
 
-WifiIfaceUtil::WifiIfaceUtil() : random_mac_address_(nullptr) {}
+WifiIfaceUtil::WifiIfaceUtil()
+    : random_mac_address_(nullptr), event_handlers_map_() {}
 
 std::array<uint8_t, 6> WifiIfaceUtil::getFactoryMacAddress(
     const std::string& iface_name) {
@@ -60,6 +61,14 @@ bool WifiIfaceUtil::setMacAddress(const std::string& iface_name,
         LOG(ERROR) << "SetUpState(true) failed.";
         return false;
     }
+    IfaceEventHandlers event_handlers = {};
+    const auto it = event_handlers_map_.find(iface_name);
+    if (it != event_handlers_map_.end()) {
+        event_handlers = it->second;
+    }
+    if (event_handlers.on_state_toggle_off_on != nullptr) {
+        event_handlers.on_state_toggle_off_on(iface_name);
+    }
     LOG(DEBUG) << "Successfully SetMacAddress.";
     return true;
 }
@@ -71,6 +80,16 @@ std::array<uint8_t, 6> WifiIfaceUtil::getOrCreateRandomMacAddress() {
     random_mac_address_ =
         std::make_unique<std::array<uint8_t, 6>>(createRandomMacAddress());
     return *random_mac_address_.get();
+}
+
+void WifiIfaceUtil::registerIfaceEventHandlers(const std::string& iface_name,
+                                               IfaceEventHandlers handlers) {
+    event_handlers_map_[iface_name] = handlers;
+}
+
+void WifiIfaceUtil::unregisterIfaceEventHandlers(
+    const std::string& iface_name) {
+    event_handlers_map_.erase(iface_name);
 }
 
 std::array<uint8_t, 6> WifiIfaceUtil::createRandomMacAddress() {

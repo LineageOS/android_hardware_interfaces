@@ -861,7 +861,7 @@ std::pair<WifiStatus, sp<IWifiNanIface>> WifiChip::createNanIfaceInternal() {
     }
     // These are still assumed to be based on wlan0.
     std::string ifname = getFirstActiveWlanIfaceName();
-    sp<WifiNanIface> iface = new WifiNanIface(ifname, legacy_hal_);
+    sp<WifiNanIface> iface = new WifiNanIface(ifname, legacy_hal_, iface_util_);
     nan_ifaces_.push_back(iface);
     for (const auto& callback : event_cb_handler_.getCallbacks()) {
         if (!callback->onIfaceAdded(IfaceType::NAN, ifname).isOk()) {
