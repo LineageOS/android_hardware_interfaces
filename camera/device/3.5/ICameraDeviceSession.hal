@@ -36,6 +36,12 @@ interface ICameraDeviceSession extends @3.4::ICameraDeviceSession {
      *
      * - a streamConfigCounter counter is provided to check for race condition
      *   between configureStreams_3_5 and signalStreamFlush call.
+     * - In case the HAL overrides dataspace or format for
+     *   IMPLEMENTATION_DEFINED pixel format, camera framework must use original
+     *   dataspace and format in subsequent configureStreams_3_5 calls for the same
+     *   stream. HAL is allowed to change the overriding behavior of format or
+     *   dataspace for reconfiguration of the same stream depending on the stream
+     *   combination.
      *
      * @return status Status code for the operation, one of:
      *     OK:
