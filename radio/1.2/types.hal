@@ -193,7 +193,8 @@ struct NetworkScanRequest {
      * the client (in seconds).
      * Expected range for the input is
      * [IncrementalResultsPeriodicityRange:MIN - IncrementalResultsPeriodicityRange:MAX]
-     * This value must be less than or equal to maxSearchTime.
+     * This value must be less than or equal to maxSearchTime. If incremental results are
+     * not requested, implementations may ignore this value.
      */
     int32_t incrementalResultsPeriodicity;
 
