@@ -54,8 +54,10 @@
 #include <ui/GraphicBuffer.h>
 
 #include <android/hardware/graphics/allocator/2.0/IAllocator.h>
+#include <android/hardware/graphics/allocator/3.0/IAllocator.h>
 #include <android/hardware/graphics/mapper/2.0/IMapper.h>
 #include <android/hardware/graphics/mapper/2.0/types.h>
+#include <android/hardware/graphics/mapper/3.0/IMapper.h>
 #include <android/hidl/allocator/1.0/IAllocator.h>
 #include <android/hidl/memory/1.0/IMapper.h>
 #include <android/hidl/memory/1.0/IMemory.h>
@@ -6104,36 +6106,66 @@ void CameraHidlTest::allocateGraphicBuffer(uint32_t width, uint32_t height, uint
 
     sp<android::hardware::graphics::allocator::V2_0::IAllocator> allocator =
         android::hardware::graphics::allocator::V2_0::IAllocator::getService();
-    ASSERT_NE(nullptr, allocator.get());
+    sp<android::hardware::graphics::allocator::V3_0::IAllocator> allocatorV3 =
+        android::hardware::graphics::allocator::V3_0::IAllocator::getService();
 
+    sp<android::hardware::graphics::mapper::V3_0::IMapper> mapperV3 =
+        android::hardware::graphics::mapper::V3_0::IMapper::getService();
     sp<android::hardware::graphics::mapper::V2_0::IMapper> mapper =
         android::hardware::graphics::mapper::V2_0::IMapper::getService();
-    ASSERT_NE(mapper.get(), nullptr);
-
-    android::hardware::graphics::mapper::V2_0::IMapper::BufferDescriptorInfo descriptorInfo {};
-    descriptorInfo.width = width;
-    descriptorInfo.height = height;
-    descriptorInfo.layerCount = 1;
-    descriptorInfo.format = format;
-    descriptorInfo.usage = usage;
-
     ::android::hardware::hidl_vec<uint32_t> descriptor;
-    auto ret = mapper->createDescriptor(
-        descriptorInfo, [&descriptor](android::hardware::graphics::mapper::V2_0::Error err,
-                            ::android::hardware::hidl_vec<uint32_t> desc) {
-            ASSERT_EQ(err, android::hardware::graphics::mapper::V2_0::Error::NONE);
-            descriptor = desc;
-        });
-    ASSERT_TRUE(ret.isOk());
+    if (mapperV3 != nullptr && allocatorV3 != nullptr) {
+        android::hardware::graphics::mapper::V3_0::IMapper::BufferDescriptorInfo descriptorInfo {};
+        descriptorInfo.width = width;
+        descriptorInfo.height = height;
+        descriptorInfo.layerCount = 1;
+        descriptorInfo.format =
+                static_cast<android::hardware::graphics::common::V1_2::PixelFormat>(format);
+        descriptorInfo.usage = usage;
 
-    ret = allocator->allocate(descriptor, 1u,
-        [&](android::hardware::graphics::mapper::V2_0::Error err, uint32_t /*stride*/,
-            const ::android::hardware::hidl_vec<::android::hardware::hidl_handle>& buffers) {
-            ASSERT_EQ(android::hardware::graphics::mapper::V2_0::Error::NONE, err);
-            ASSERT_EQ(buffers.size(), 1u);
-            *buffer_handle = buffers[0];
-        });
-    ASSERT_TRUE(ret.isOk());
+        auto ret = mapperV3->createDescriptor(
+            descriptorInfo, [&descriptor](android::hardware::graphics::mapper::V3_0::Error err,
+                                ::android::hardware::hidl_vec<uint32_t> desc) {
+                ASSERT_EQ(err, android::hardware::graphics::mapper::V3_0::Error::NONE);
+                descriptor = desc;
+            });
+        ASSERT_TRUE(ret.isOk());
+
+        ret = allocatorV3->allocate(descriptor, 1u,
+            [&](android::hardware::graphics::mapper::V3_0::Error err, uint32_t /*stride*/,
+                const ::android::hardware::hidl_vec<::android::hardware::hidl_handle>& buffers) {
+                ASSERT_EQ(android::hardware::graphics::mapper::V3_0::Error::NONE, err);
+                ASSERT_EQ(buffers.size(), 1u);
+                *buffer_handle = buffers[0];
+            });
+        ASSERT_TRUE(ret.isOk());
+    } else {
+        ASSERT_NE(mapper.get(), nullptr);
+        ASSERT_NE(allocator.get(), nullptr);
+        android::hardware::graphics::mapper::V2_0::IMapper::BufferDescriptorInfo descriptorInfo {};
+        descriptorInfo.width = width;
+        descriptorInfo.height = height;
+        descriptorInfo.layerCount = 1;
+        descriptorInfo.format = format;
+        descriptorInfo.usage = usage;
+
+        auto ret = mapper->createDescriptor(
+            descriptorInfo, [&descriptor](android::hardware::graphics::mapper::V2_0::Error err,
+                                ::android::hardware::hidl_vec<uint32_t> desc) {
+                ASSERT_EQ(err, android::hardware::graphics::mapper::V2_0::Error::NONE);
+                descriptor = desc;
+            });
+        ASSERT_TRUE(ret.isOk());
+
+        ret = allocator->allocate(descriptor, 1u,
+            [&](android::hardware::graphics::mapper::V2_0::Error err, uint32_t /*stride*/,
+                const ::android::hardware::hidl_vec<::android::hardware::hidl_handle>& buffers) {
+                ASSERT_EQ(android::hardware::graphics::mapper::V2_0::Error::NONE, err);
+                ASSERT_EQ(buffers.size(), 1u);
+                *buffer_handle = buffers[0];
+            });
+        ASSERT_TRUE(ret.isOk());
+    }
 }
 
 void CameraHidlTest::verifyRecommendedConfigs(const CameraMetadata& chars) {
