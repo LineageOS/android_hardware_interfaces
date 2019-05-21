@@ -35,7 +35,7 @@ TEST_F(RadioHidlTest_v1_3, enableModem) {
           toString(radioRsp_v1_3->rspInfo.error).c_str());
     ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_3->rspInfo.error,
                                  {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE,
-                                  RadioError::MODEM_ERR, RadioError::REQUEST_NOT_SUPPORTED}));
+                                  RadioError::MODEM_ERR, RadioError::INVALID_STATE}));
 
     // checking if getModemStackStatus returns true, as modem was enabled above
     if (RadioError::NONE == radioRsp_v1_3->rspInfo.error) {
@@ -52,7 +52,7 @@ TEST_F(RadioHidlTest_v1_3, enableModem) {
               toString(radioRsp_v1_3->rspInfo.error).c_str());
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_3->rspInfo.error,
                                      {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE,
-                                      RadioError::MODEM_ERR, RadioError::REQUEST_NOT_SUPPORTED}));
+                                      RadioError::MODEM_ERR, RadioError::INVALID_STATE}));
         // verify that enableModem did set isEnabled correctly
         EXPECT_EQ(true, radioRsp_v1_3->isModemEnabled);
     }
