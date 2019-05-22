@@ -44,6 +44,9 @@ interface IRadioResponse extends @1.2::IRadioResponse {
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:MODEM_ERR
+     *   RadioError:INVALID_STATE: this is for the case that the API is called in a single-sim
+     *              mode, or when there is only one modem available, as this API should only
+     *              be called in multi sim status.
      */
     oneway enableModemResponse(RadioResponseInfo info);
 
