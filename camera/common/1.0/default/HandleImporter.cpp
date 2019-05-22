@@ -25,7 +25,9 @@ namespace common {
 namespace V1_0 {
 namespace helper {
 
-using MapperError = android::hardware::graphics::mapper::V2_0::Error;
+using MapperErrorV2 = android::hardware::graphics::mapper::V2_0::Error;
+using MapperErrorV3 = android::hardware::graphics::mapper::V3_0::Error;
+using IMapperV3 = android::hardware::graphics::mapper::V3_0::IMapper;
 
 HandleImporter::HandleImporter() : mInitialized(false) {}
 
@@ -34,8 +36,14 @@ void HandleImporter::initializeLocked() {
         return;
     }
 
-    mMapper = IMapper::getService();
-    if (mMapper == nullptr) {
+    mMapperV3 = IMapperV3::getService();
+    if (mMapperV3 != nullptr) {
+        mInitialized = true;
+        return;
+    }
+
+    mMapperV2 = IMapper::getService();
+    if (mMapperV2 == nullptr) {
         ALOGE("%s: cannnot acccess graphics mapper HAL!", __FUNCTION__);
         return;
     }
@@ -45,8 +53,88 @@ void HandleImporter::initializeLocked() {
 }
 
 void HandleImporter::cleanup() {
-    mMapper.clear();
+    mMapperV3.clear();
+    mMapperV2.clear();
     mInitialized = false;
+}
+
+template<class M, class E>
+bool HandleImporter::importBufferInternal(const sp<M> mapper, buffer_handle_t& handle) {
+    E error;
+    buffer_handle_t importedHandle;
+    auto ret = mapper->importBuffer(
+        hidl_handle(handle),
+        [&](const auto& tmpError, const auto& tmpBufferHandle) {
+            error = tmpError;
+            importedHandle = static_cast<buffer_handle_t>(tmpBufferHandle);
+        });
+
+    if (!ret.isOk()) {
+        ALOGE("%s: mapper importBuffer failed: %s",
+                __FUNCTION__, ret.description().c_str());
+        return false;
+    }
+
+    if (error != E::NONE) {
+        return false;
+    }
+
+    handle = importedHandle;
+    return true;
+}
+
+template<class M, class E>
+YCbCrLayout HandleImporter::lockYCbCrInternal(const sp<M> mapper, buffer_handle_t& buf,
+        uint64_t cpuUsage, const IMapper::Rect& accessRegion) {
+    hidl_handle acquireFenceHandle;
+    auto buffer = const_cast<native_handle_t*>(buf);
+    YCbCrLayout layout = {};
+
+    typename M::Rect accessRegionCopy = {accessRegion.left, accessRegion.top,
+            accessRegion.width, accessRegion.height};
+    mapper->lockYCbCr(buffer, cpuUsage, accessRegionCopy, acquireFenceHandle,
+            [&](const auto& tmpError, const auto& tmpLayout) {
+                if (tmpError == E::NONE) {
+                    // Member by member copy from different versions of YCbCrLayout.
+                    layout.y = tmpLayout.y;
+                    layout.cb = tmpLayout.cb;
+                    layout.cr = tmpLayout.cr;
+                    layout.yStride = tmpLayout.yStride;
+                    layout.cStride = tmpLayout.cStride;
+                    layout.chromaStep = tmpLayout.chromaStep;
+                } else {
+                    ALOGE("%s: failed to lockYCbCr error %d!", __FUNCTION__, tmpError);
+                }
+           });
+    return layout;
+}
+
+template<class M, class E>
+int HandleImporter::unlockInternal(const sp<M> mapper, buffer_handle_t& buf) {
+    int releaseFence = -1;
+    auto buffer = const_cast<native_handle_t*>(buf);
+
+    mapper->unlock(
+        buffer, [&](const auto& tmpError, const auto& tmpReleaseFence) {
+            if (tmpError == E::NONE) {
+                auto fenceHandle = tmpReleaseFence.getNativeHandle();
+                if (fenceHandle) {
+                    if (fenceHandle->numInts != 0 || fenceHandle->numFds != 1) {
+                        ALOGE("%s: bad release fence numInts %d numFds %d",
+                                __FUNCTION__, fenceHandle->numInts, fenceHandle->numFds);
+                        return;
+                    }
+                    releaseFence = dup(fenceHandle->data[0]);
+                    if (releaseFence < 0) {
+                        ALOGE("%s: bad release fence FD %d",
+                                __FUNCTION__, releaseFence);
+                    }
+                }
+            } else {
+                ALOGE("%s: failed to unlock error %d!", __FUNCTION__, tmpError);
+            }
+        });
+    return releaseFence;
 }
 
 // In IComposer, any buffer_handle_t is owned by the caller and we need to
@@ -63,33 +151,16 @@ bool HandleImporter::importBuffer(buffer_handle_t& handle) {
         initializeLocked();
     }
 
-    if (mMapper == nullptr) {
-        ALOGE("%s: mMapper is null!", __FUNCTION__);
-        return false;
+    if (mMapperV3 != nullptr) {
+        return importBufferInternal<IMapperV3, MapperErrorV3>(mMapperV3, handle);
     }
 
-    MapperError error;
-    buffer_handle_t importedHandle;
-    auto ret = mMapper->importBuffer(
-        hidl_handle(handle),
-        [&](const auto& tmpError, const auto& tmpBufferHandle) {
-            error = tmpError;
-            importedHandle = static_cast<buffer_handle_t>(tmpBufferHandle);
-        });
-
-    if (!ret.isOk()) {
-        ALOGE("%s: mapper importBuffer failed: %s",
-                __FUNCTION__, ret.description().c_str());
-        return false;
+    if (mMapperV2 != nullptr) {
+        return importBufferInternal<IMapper, MapperErrorV2>(mMapperV2, handle);
     }
 
-    if (error != MapperError::NONE) {
-        return false;
-    }
-
-    handle = importedHandle;
-
-    return true;
+    ALOGE("%s: mMapperV3 and mMapperV2 are both null!", __FUNCTION__);
+    return false;
 }
 
 void HandleImporter::freeBuffer(buffer_handle_t handle) {
@@ -98,15 +169,23 @@ void HandleImporter::freeBuffer(buffer_handle_t handle) {
     }
 
     Mutex::Autolock lock(mLock);
-    if (mMapper == nullptr) {
-        ALOGE("%s: mMapper is null!", __FUNCTION__);
+    if (mMapperV3 == nullptr && mMapperV2 == nullptr) {
+        ALOGE("%s: mMapperV3 and mMapperV2 are both null!", __FUNCTION__);
         return;
     }
 
-    auto ret = mMapper->freeBuffer(const_cast<native_handle_t*>(handle));
-    if (!ret.isOk()) {
-        ALOGE("%s: mapper freeBuffer failed: %s",
-                __FUNCTION__, ret.description().c_str());
+    if (mMapperV3 != nullptr) {
+        auto ret = mMapperV3->freeBuffer(const_cast<native_handle_t*>(handle));
+        if (!ret.isOk()) {
+            ALOGE("%s: mapper freeBuffer failed: %s",
+                    __FUNCTION__, ret.description().c_str());
+        }
+    } else {
+        auto ret = mMapperV2->freeBuffer(const_cast<native_handle_t*>(handle));
+        if (!ret.isOk()) {
+            ALOGE("%s: mapper freeBuffer failed: %s",
+                    __FUNCTION__, ret.description().c_str());
+        }
     }
 }
 
@@ -138,91 +217,82 @@ void* HandleImporter::lock(
         buffer_handle_t& buf, uint64_t cpuUsage, size_t size) {
     Mutex::Autolock lock(mLock);
     void *ret = 0;
-    IMapper::Rect accessRegion { 0, 0, static_cast<int>(size), 1 };
 
     if (!mInitialized) {
         initializeLocked();
     }
 
-    if (mMapper == nullptr) {
-        ALOGE("%s: mMapper is null!", __FUNCTION__);
+    if (mMapperV3 == nullptr && mMapperV2 == nullptr) {
+        ALOGE("%s: mMapperV3 and mMapperV2 are both null!", __FUNCTION__);
         return ret;
     }
 
     hidl_handle acquireFenceHandle;
     auto buffer = const_cast<native_handle_t*>(buf);
-    mMapper->lock(buffer, cpuUsage, accessRegion, acquireFenceHandle,
-            [&](const auto& tmpError, const auto& tmpPtr) {
-                if (tmpError == MapperError::NONE) {
-                    ret = tmpPtr;
-                } else {
-                    ALOGE("%s: failed to lock error %d!",
-                          __FUNCTION__, tmpError);
-                }
-           });
+    if (mMapperV3 != nullptr) {
+        IMapperV3::Rect accessRegion { 0, 0, static_cast<int>(size), 1 };
+        // No need to use bytesPerPixel and bytesPerStride because we are using
+        // an 1-D buffer and accressRegion.
+        mMapperV3->lock(buffer, cpuUsage, accessRegion, acquireFenceHandle,
+                [&](const auto& tmpError, const auto& tmpPtr, const auto& /*bytesPerPixel*/,
+                        const auto& /*bytesPerStride*/) {
+                    if (tmpError == MapperErrorV3::NONE) {
+                        ret = tmpPtr;
+                    } else {
+                        ALOGE("%s: failed to lock error %d!",
+                              __FUNCTION__, tmpError);
+                    }
+               });
+    } else {
+        IMapper::Rect accessRegion { 0, 0, static_cast<int>(size), 1 };
+        mMapperV2->lock(buffer, cpuUsage, accessRegion, acquireFenceHandle,
+                [&](const auto& tmpError, const auto& tmpPtr) {
+                    if (tmpError == MapperErrorV2::NONE) {
+                        ret = tmpPtr;
+                    } else {
+                        ALOGE("%s: failed to lock error %d!",
+                              __FUNCTION__, tmpError);
+                    }
+               });
+    }
 
     ALOGV("%s: ptr %p size: %zu", __FUNCTION__, ret, size);
     return ret;
 }
 
-
 YCbCrLayout HandleImporter::lockYCbCr(
         buffer_handle_t& buf, uint64_t cpuUsage,
         const IMapper::Rect& accessRegion) {
     Mutex::Autolock lock(mLock);
-    YCbCrLayout layout = {};
 
     if (!mInitialized) {
         initializeLocked();
     }
 
-    if (mMapper == nullptr) {
-        ALOGE("%s: mMapper is null!", __FUNCTION__);
-        return layout;
+    if (mMapperV3 != nullptr) {
+        return lockYCbCrInternal<IMapperV3, MapperErrorV3>(
+                mMapperV3, buf, cpuUsage, accessRegion);
     }
 
-    hidl_handle acquireFenceHandle;
-    auto buffer = const_cast<native_handle_t*>(buf);
-    mMapper->lockYCbCr(buffer, cpuUsage, accessRegion, acquireFenceHandle,
-            [&](const auto& tmpError, const auto& tmpLayout) {
-                if (tmpError == MapperError::NONE) {
-                    layout = tmpLayout;
-                } else {
-                    ALOGE("%s: failed to lockYCbCr error %d!", __FUNCTION__, tmpError);
-                }
-           });
+    if (mMapperV2 != nullptr) {
+        return lockYCbCrInternal<IMapper, MapperErrorV2>(
+                mMapperV2, buf, cpuUsage, accessRegion);
+    }
 
-    ALOGV("%s: layout y %p cb %p cr %p y_str %d c_str %d c_step %d",
-            __FUNCTION__, layout.y, layout.cb, layout.cr,
-            layout.yStride, layout.cStride, layout.chromaStep);
-    return layout;
+    ALOGE("%s: mMapperV3 and mMapperV2 are both null!", __FUNCTION__);
+    return {};
 }
 
 int HandleImporter::unlock(buffer_handle_t& buf) {
-    int releaseFence = -1;
-    auto buffer = const_cast<native_handle_t*>(buf);
-    mMapper->unlock(
-        buffer, [&](const auto& tmpError, const auto& tmpReleaseFence) {
-            if (tmpError == MapperError::NONE) {
-                auto fenceHandle = tmpReleaseFence.getNativeHandle();
-                if (fenceHandle) {
-                    if (fenceHandle->numInts != 0 || fenceHandle->numFds != 1) {
-                        ALOGE("%s: bad release fence numInts %d numFds %d",
-                                __FUNCTION__, fenceHandle->numInts, fenceHandle->numFds);
-                        return;
-                    }
-                    releaseFence = dup(fenceHandle->data[0]);
-                    if (releaseFence <= 0) {
-                        ALOGE("%s: bad release fence FD %d",
-                                __FUNCTION__, releaseFence);
-                    }
-                }
-            } else {
-                ALOGE("%s: failed to unlock error %d!", __FUNCTION__, tmpError);
-            }
-        });
+    if (mMapperV3 != nullptr) {
+        return unlockInternal<IMapperV3, MapperErrorV3>(mMapperV3, buf);
+    }
+    if (mMapperV2 != nullptr) {
+        return unlockInternal<IMapper, MapperErrorV2>(mMapperV2, buf);
+    }
 
-    return releaseFence;
+    ALOGE("%s: mMapperV3 and mMapperV2 are both null!", __FUNCTION__);
+    return -1;
 }
 
 } // namespace helper
