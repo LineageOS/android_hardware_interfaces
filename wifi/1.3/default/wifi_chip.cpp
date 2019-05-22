@@ -1435,6 +1435,13 @@ bool WifiChip::isStaApConcurrencyAllowedInCurrentMode() {
     return canCurrentModeSupportIfaceCombo(req_iface_combo);
 }
 
+bool WifiChip::isDualApAllowedInCurrentMode() {
+    // Check if we can support atleast 1 STA & 1 AP concurrently.
+    std::map<IfaceType, size_t> req_iface_combo;
+    req_iface_combo[IfaceType::AP] = 2;
+    return canCurrentModeSupportIfaceCombo(req_iface_combo);
+}
+
 std::string WifiChip::getFirstActiveWlanIfaceName() {
     if (sta_ifaces_.size() > 0) return sta_ifaces_[0]->getName();
     if (ap_ifaces_.size() > 0) return ap_ifaces_[0]->getName();
@@ -1460,10 +1467,12 @@ std::string WifiChip::allocateApOrStaIfaceName(uint32_t start_idx) {
 }
 
 // AP iface names start with idx 1 for modes supporting
-// concurrent STA, else start with idx 0.
+// concurrent STA and not dual AP, else start with idx 0.
 std::string WifiChip::allocateApIfaceName() {
-    return allocateApOrStaIfaceName(
-        isStaApConcurrencyAllowedInCurrentMode() ? 1 : 0);
+    return allocateApOrStaIfaceName((isStaApConcurrencyAllowedInCurrentMode() &&
+                                     !isDualApAllowedInCurrentMode())
+                                        ? 1
+                                        : 0);
 }
 
 // STA iface names start with idx 0.
