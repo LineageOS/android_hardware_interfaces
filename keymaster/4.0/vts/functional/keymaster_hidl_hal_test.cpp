@@ -4219,28 +4219,6 @@ TEST_F(AttestationTest, RsaAttestationRequiresAppId) {
 }
 
 /*
- * AttestationTest.RsaAttestationRequiresCorrectAppId
- *
- * Verifies that attesting to RSA requires the correct app ID.
- */
-TEST_F(AttestationTest, RsaAttestationRequiresCorrectAppId) {
-    ASSERT_EQ(ErrorCode::OK,
-              GenerateKey(AuthorizationSetBuilder()
-                                  .Authorization(TAG_NO_AUTH_REQUIRED)
-                                  .RsaSigningKey(2048, 65537)
-                                  .Digest(Digest::NONE)
-                                  .Padding(PaddingMode::NONE)
-                                  .Authorization(TAG_APPLICATION_ID, HidlBuf("lol"))));
-
-    hidl_vec<hidl_vec<uint8_t>> cert_chain;
-    EXPECT_EQ(ErrorCode::ATTESTATION_APPLICATION_ID_MISSING,
-              AttestKey(AuthorizationSetBuilder()
-                                .Authorization(TAG_ATTESTATION_CHALLENGE, HidlBuf("challenge"))
-                                .Authorization(TAG_APPLICATION_ID, HidlBuf("heh")),
-                        &cert_chain));
-}
-
-/*
  * AttestationTest.EcAttestation
  *
  * Verifies that attesting to EC keys works and generates the expected output.
