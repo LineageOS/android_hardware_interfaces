@@ -19,12 +19,15 @@ cc_library_static {
     defaults: ["hidl_defaults"],
     srcs: [
         "ComposerVts.cpp",
+        "ReadbackVts.cpp",
     ],
     static_libs: [
         "VtsHalHidlTargetTestBase",
         "android.hardware.graphics.composer@2.1",
         "android.hardware.graphics.composer@2.1-vts",
         "android.hardware.graphics.composer@2.2",
+        "android.hardware.graphics.mapper@2.1",
+        "android.hardware.graphics.mapper@2.1-vts",
     ],
     export_static_lib_headers: [
         "android.hardware.graphics.composer@2.1-vts",
