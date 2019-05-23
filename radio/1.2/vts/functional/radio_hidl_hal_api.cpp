@@ -228,7 +228,7 @@ TEST_F(RadioHidlTest_v1_2, startNetworkScan_InvalidPeriodicity1) {
             .interval = 60,
             .specifiers = {::GERAN_SPECIFIER_P900, ::GERAN_SPECIFIER_850},
             .maxSearchTime = 600,
-            .incrementalResults = false,
+            .incrementalResults = true,
             .incrementalResultsPeriodicity = 0};
 
     Return<void> res = radio_v1_2->startNetworkScan_1_2(serial, request);
@@ -260,7 +260,7 @@ TEST_F(RadioHidlTest_v1_2, startNetworkScan_InvalidPeriodicity2) {
             .interval = 60,
             .specifiers = {::GERAN_SPECIFIER_P900, ::GERAN_SPECIFIER_850},
             .maxSearchTime = 600,
-            .incrementalResults = false,
+            .incrementalResults = true,
             .incrementalResultsPeriodicity = 11};
 
     Return<void> res = radio_v1_2->startNetworkScan_1_2(serial, request);
