@@ -410,6 +410,7 @@ eb754b58c93e5591613208b4c972811288b0fa16a82430d602f107c91a908b22 android.hardwar
 ed9da80ec0c96991fd03f0a46107815d0e50f764656e49dba4980fa5c31d5bc3 android.hardware.radio@1.0::types
 1d19720d4fd38b1095f0f555a4bd92b3b12c9b1d0f560b0e9a474cd6dcc20db6 android.hardware.radio@1.2::IRadio
 cd1757867a5e3a3faa362e785239515870d1a3c9ce756c6f0cf0f0fd8aac2547 android.hardware.radio@1.2::types
+722b3595548ed7f1953b6e0143dc842d4d6e290ff009a134eb518d7c17a09347 android.hardware.radio@1.2::types # b/112486807
 e78cf871f9fd1c072874e481e06e18e2681763cf2aa38c1fd777d53bab4eb69b android.hardware.sensors@1.0::types
 3d01e29e8129186f7567c4f9c8bee7480a0768e587b1be9b28adb0a6cbec6bf2 android.hardware.tv.cec@1.0::types
 1722ad002317b1fae1400de709e90f442d94ef22864e05f7a12af48c32e8edc8 android.hardware.usb@1.1::types
