@@ -34,11 +34,13 @@ using hidl_return_util::validateAndCall;
 using hidl_return_util::validateAndCallWithLock;
 
 Wifi::Wifi(
+    const std::shared_ptr<wifi_system::InterfaceTool> iface_tool,
     const std::shared_ptr<legacy_hal::WifiLegacyHal> legacy_hal,
     const std::shared_ptr<mode_controller::WifiModeController> mode_controller,
     const std::shared_ptr<iface_util::WifiIfaceUtil> iface_util,
     const std::shared_ptr<feature_flags::WifiFeatureFlags> feature_flags)
-    : legacy_hal_(legacy_hal),
+    : iface_tool_(iface_tool),
+      legacy_hal_(legacy_hal),
       mode_controller_(mode_controller),
       iface_util_(iface_util),
       feature_flags_(feature_flags),

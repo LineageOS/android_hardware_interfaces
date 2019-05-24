@@ -40,7 +40,8 @@ namespace implementation {
  */
 class Wifi : public V1_3::IWifi {
    public:
-    Wifi(const std::shared_ptr<legacy_hal::WifiLegacyHal> legacy_hal,
+    Wifi(const std::shared_ptr<wifi_system::InterfaceTool> iface_tool,
+         const std::shared_ptr<legacy_hal::WifiLegacyHal> legacy_hal,
          const std::shared_ptr<mode_controller::WifiModeController>
              mode_controller,
          const std::shared_ptr<iface_util::WifiIfaceUtil> iface_util,
@@ -77,6 +78,7 @@ class Wifi : public V1_3::IWifi {
 
     // Instance is created in this root level |IWifi| HIDL interface object
     // and shared with all the child HIDL interface objects.
+    std::shared_ptr<wifi_system::InterfaceTool> iface_tool_;
     std::shared_ptr<legacy_hal::WifiLegacyHal> legacy_hal_;
     std::shared_ptr<mode_controller::WifiModeController> mode_controller_;
     std::shared_ptr<iface_util::WifiIfaceUtil> iface_util_;
