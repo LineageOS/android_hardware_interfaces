@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,27 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include <android-base/logging.h>
 #include <android-base/macros.h>
 #include <gmock/gmock.h>
 
 #undef NAN  // This is weird, NAN is defined in bionic/libc/include/math.h:38
-#include "mock_wifi_legacy_hal.h"
+#include "mock_interface_tool.h"
 
 namespace android {
-namespace hardware {
-namespace wifi {
-namespace V1_3 {
-namespace implementation {
-namespace legacy_hal {
+namespace wifi_system {
 
-MockWifiLegacyHal::MockWifiLegacyHal(
-    const std::weak_ptr<wifi_system::InterfaceTool> iface_tool)
-    : WifiLegacyHal(iface_tool) {}
-}  // namespace legacy_hal
-}  // namespace implementation
-}  // namespace V1_3
-}  // namespace wifi
-}  // namespace hardware
+MockInterfaceTool::MockInterfaceTool() {}
+
+}  // namespace wifi_system
 }  // namespace android
