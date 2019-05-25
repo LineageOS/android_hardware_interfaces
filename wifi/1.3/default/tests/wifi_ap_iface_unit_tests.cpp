@@ -22,6 +22,7 @@
 #undef NAN  // This is weird, NAN is defined in bionic/libc/include/math.h:38
 #include "wifi_ap_iface.h"
 
+#include "mock_interface_tool.h"
 #include "mock_wifi_feature_flags.h"
 #include "mock_wifi_iface_util.h"
 #include "mock_wifi_legacy_hal.h"
@@ -42,10 +43,12 @@ namespace implementation {
 
 class WifiApIfaceTest : public Test {
    protected:
+    std::shared_ptr<NiceMock<wifi_system::MockInterfaceTool>> iface_tool_{
+        new NiceMock<wifi_system::MockInterfaceTool>};
     std::shared_ptr<NiceMock<legacy_hal::MockWifiLegacyHal>> legacy_hal_{
-        new NiceMock<legacy_hal::MockWifiLegacyHal>};
+        new NiceMock<legacy_hal::MockWifiLegacyHal>(iface_tool_)};
     std::shared_ptr<NiceMock<iface_util::MockWifiIfaceUtil>> iface_util_{
-        new NiceMock<iface_util::MockWifiIfaceUtil>};
+        new NiceMock<iface_util::MockWifiIfaceUtil>(iface_tool_)};
     std::shared_ptr<NiceMock<feature_flags::MockWifiFeatureFlags>>
         feature_flags_{new NiceMock<feature_flags::MockWifiFeatureFlags>};
 };

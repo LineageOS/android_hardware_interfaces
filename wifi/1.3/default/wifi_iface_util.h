@@ -28,12 +28,19 @@ namespace V1_3 {
 namespace implementation {
 namespace iface_util {
 
+// Iface event handlers.
+struct IfaceEventHandlers {
+    // Callback to be invoked when the iface is set down & up for MAC address
+    // change.
+    std::function<void(const std::string& iface_name)> on_state_toggle_off_on;
+};
+
 /**
  * Util class for common iface operations.
  */
 class WifiIfaceUtil {
    public:
-    WifiIfaceUtil();
+    WifiIfaceUtil(const std::weak_ptr<wifi_system::InterfaceTool> iface_tool);
     virtual ~WifiIfaceUtil() = default;
 
     virtual std::array<uint8_t, 6> getFactoryMacAddress(
@@ -45,11 +52,17 @@ class WifiIfaceUtil {
     // daemon. (So, changes on every reboot)
     virtual std::array<uint8_t, 6> getOrCreateRandomMacAddress();
 
+    // Register for any iface event callbacks for the provided interface.
+    virtual void registerIfaceEventHandlers(const std::string& iface_name,
+                                            IfaceEventHandlers handlers);
+    virtual void unregisterIfaceEventHandlers(const std::string& iface_name);
+
    private:
     std::array<uint8_t, 6> createRandomMacAddress();
 
-    wifi_system::InterfaceTool iface_tool_;
+    std::weak_ptr<wifi_system::InterfaceTool> iface_tool_;
     std::unique_ptr<std::array<uint8_t, 6>> random_mac_address_;
+    std::map<std::string, IfaceEventHandlers> event_handlers_map_;
 };
 
 }  // namespace iface_util

@@ -170,7 +170,7 @@ using on_radio_mode_change_callback =
  */
 class WifiLegacyHal {
    public:
-    WifiLegacyHal();
+    WifiLegacyHal(const std::weak_ptr<wifi_system::InterfaceTool> iface_tool);
     virtual ~WifiLegacyHal() = default;
 
     // Initialize the legacy HAL function table.
@@ -391,7 +391,7 @@ class WifiLegacyHal {
     std::condition_variable_any stop_wait_cv_;
     // Flag to indicate if the legacy HAL has been started.
     bool is_started_;
-    wifi_system::InterfaceTool iface_tool_;
+    std::weak_ptr<wifi_system::InterfaceTool> iface_tool_;
 };
 
 }  // namespace legacy_hal

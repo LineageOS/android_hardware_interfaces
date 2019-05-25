@@ -155,6 +155,9 @@ class WifiChip : public V1_3::IWifiChip {
 
    private:
     void invalidateAndRemoveAllIfaces();
+    // When a STA iface is removed any dependent NAN-ifaces/RTT-controllers are
+    // invalidated & removed.
+    void invalidateAndRemoveDependencies(const std::string& removed_iface_name);
 
     // Corresponding worker functions for the HIDL methods.
     std::pair<WifiStatus, ChipId> getIdInternal();
@@ -237,6 +240,7 @@ class WifiChip : public V1_3::IWifiChip {
     bool canCurrentModeSupportIfaceOfType(IfaceType requested_type);
     bool isValidModeId(ChipModeId mode_id);
     bool isStaApConcurrencyAllowedInCurrentMode();
+    bool isDualApAllowedInCurrentMode();
     std::string getFirstActiveWlanIfaceName();
     std::string allocateApOrStaIfaceName(uint32_t start_idx);
     std::string allocateApIfaceName();

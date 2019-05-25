@@ -47,6 +47,13 @@ void RadioHidlTest_v1_4::SetUp() {
     EXPECT_EQ(serial, radioRsp_v1_4->rspInfo.serial);
     EXPECT_EQ(RadioError::NONE, radioRsp_v1_4->rspInfo.error);
 
+    sp<::android::hardware::radio::config::V1_1::IRadioConfig> radioConfig =
+            ::testing::VtsHalHidlTargetTestBase::getService<
+                    ::android::hardware::radio::config::V1_1::IRadioConfig>();
+
+    /* Enforce Vts tesing with RadioConfig is existed. */
+    ASSERT_NE(nullptr, radioConfig.get());
+
     /* Enforce Vts Testing with Sim Status Present only. */
     EXPECT_EQ(CardState::PRESENT, cardStatus.base.base.cardState);
 }
