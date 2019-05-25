@@ -30,12 +30,16 @@ namespace iface_util {
 
 class MockWifiIfaceUtil : public WifiIfaceUtil {
    public:
-    MockWifiIfaceUtil();
+    MockWifiIfaceUtil(
+        const std::weak_ptr<wifi_system::InterfaceTool> iface_tool);
     MOCK_METHOD1(getFactoryMacAddress,
                  std::array<uint8_t, 6>(const std::string&));
     MOCK_METHOD2(setMacAddress,
                  bool(const std::string&, const std::array<uint8_t, 6>&));
     MOCK_METHOD0(getOrCreateRandomMacAddress, std::array<uint8_t, 6>());
+    MOCK_METHOD2(registerIfaceEventHandlers,
+                 void(const std::string&, IfaceEventHandlers));
+    MOCK_METHOD1(unregisterIfaceEventHandlers, void(const std::string&));
 };
 }  // namespace iface_util
 }  // namespace implementation
