@@ -22,6 +22,7 @@
 #undef NAN  // This is weird, NAN is defined in bionic/libc/include/math.h:38
 #include "wifi_chip.h"
 
+#include "mock_interface_tool.h"
 #include "mock_wifi_feature_flags.h"
 #include "mock_wifi_iface_util.h"
 #include "mock_wifi_legacy_hal.h"
@@ -263,12 +264,14 @@ class WifiChipTest : public Test {
 
     sp<WifiChip> chip_;
     ChipId chip_id_ = kFakeChipId;
+    std::shared_ptr<NiceMock<wifi_system::MockInterfaceTool>> iface_tool_{
+        new NiceMock<wifi_system::MockInterfaceTool>};
     std::shared_ptr<NiceMock<legacy_hal::MockWifiLegacyHal>> legacy_hal_{
-        new NiceMock<legacy_hal::MockWifiLegacyHal>};
+        new NiceMock<legacy_hal::MockWifiLegacyHal>(iface_tool_)};
     std::shared_ptr<NiceMock<mode_controller::MockWifiModeController>>
         mode_controller_{new NiceMock<mode_controller::MockWifiModeController>};
     std::shared_ptr<NiceMock<iface_util::MockWifiIfaceUtil>> iface_util_{
-        new NiceMock<iface_util::MockWifiIfaceUtil>};
+        new NiceMock<iface_util::MockWifiIfaceUtil>(iface_tool_)};
     std::shared_ptr<NiceMock<feature_flags::MockWifiFeatureFlags>>
         feature_flags_{new NiceMock<feature_flags::MockWifiFeatureFlags>};
 
@@ -700,6 +703,72 @@ TEST_F(WifiChipV2_AwareIfaceCombinationTest, SelectTxScenarioWithOnlyAp) {
         });
 }
 
+TEST_F(WifiChipV2_AwareIfaceCombinationTest,
+       InvalidateAndRemoveNanOnStaRemove) {
+    findModeAndConfigureForIfaceType(IfaceType::STA);
+    ASSERT_EQ(createIface(IfaceType::STA), "wlan0");
+
+    // Create NAN iface
+    ASSERT_EQ(createIface(IfaceType::NAN), "wlan0");
+
+    // We should have 1 nan iface.
+    chip_->getNanIfaceNames(
+        [](const WifiStatus& status, const hidl_vec<hidl_string>& iface_names) {
+            ASSERT_EQ(WifiStatusCode::SUCCESS, status.code);
+            ASSERT_EQ(iface_names.size(), 1u);
+            ASSERT_EQ(iface_names[0], "wlan0");
+        });
+    // Retrieve the exact iface object.
+    sp<IWifiNanIface> nan_iface;
+    chip_->getNanIface("wlan0", [&nan_iface](const WifiStatus& status,
+                                             const sp<IWifiNanIface>& iface) {
+        ASSERT_EQ(WifiStatusCode::SUCCESS, status.code);
+        ASSERT_NE(iface.get(), nullptr);
+        nan_iface = iface;
+    });
+
+    // Remove the STA iface.
+    removeIface(IfaceType::STA, "wlan0");
+    // We should have 0 nan iface now.
+    chip_->getNanIfaceNames(
+        [](const WifiStatus& status, const hidl_vec<hidl_string>& iface_names) {
+            ASSERT_EQ(WifiStatusCode::SUCCESS, status.code);
+            ASSERT_EQ(iface_names.size(), 0u);
+        });
+    // Any operation on the nan iface object should return error now.
+    nan_iface->getName(
+        [](const WifiStatus& status, const std::string& /* iface_name */) {
+            ASSERT_EQ(WifiStatusCode::ERROR_WIFI_IFACE_INVALID, status.code);
+        });
+}
+
+TEST_F(WifiChipV2_AwareIfaceCombinationTest,
+       InvalidateAndRemoveRttControllerOnStaRemove) {
+    findModeAndConfigureForIfaceType(IfaceType::STA);
+    ASSERT_EQ(createIface(IfaceType::STA), "wlan0");
+
+    // Create RTT controller
+    sp<IWifiRttController> rtt_controller;
+    chip_->createRttController(
+        NULL, [&rtt_controller](const WifiStatus& status,
+                                const sp<IWifiRttController>& rtt) {
+            if (WifiStatusCode::SUCCESS == status.code) {
+                ASSERT_NE(rtt.get(), nullptr);
+                rtt_controller = rtt;
+            }
+        });
+
+    // Remove the STA iface.
+    removeIface(IfaceType::STA, "wlan0");
+
+    // Any operation on the rtt controller object should return error now.
+    rtt_controller->getBoundIface(
+        [](const WifiStatus& status, const sp<IWifiIface>& /* iface */) {
+            ASSERT_EQ(WifiStatusCode::ERROR_WIFI_RTT_CONTROLLER_INVALID,
+                      status.code);
+        });
+}
+
 ////////// V1 Iface Combinations when AP creation is disabled //////////
 class WifiChipV1_AwareDisabledApIfaceCombinationTest : public WifiChipTest {
    public:
@@ -732,6 +801,7 @@ TEST_F(WifiChipV2_AwareDisabledApIfaceCombinationTest,
     ASSERT_TRUE(createIface(IfaceType::AP).empty());
 }
 
+////////// Hypothetical Iface Combination with multiple ifaces //////////
 class WifiChip_MultiIfaceTest : public WifiChipTest {
    public:
     void SetUp() override {
