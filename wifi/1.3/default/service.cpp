@@ -48,12 +48,14 @@ int main(int /*argc*/, char** argv) {
 
     configureRpcThreadpool(1, true /* callerWillJoin */);
 
+    const auto iface_tool =
+        std::make_shared<android::wifi_system::InterfaceTool>();
     // Setup hwbinder service
     android::sp<android::hardware::wifi::V1_3::IWifi> service =
         new android::hardware::wifi::V1_3::implementation::Wifi(
-            std::make_shared<WifiLegacyHal>(),
+            iface_tool, std::make_shared<WifiLegacyHal>(iface_tool),
             std::make_shared<WifiModeController>(),
-            std::make_shared<WifiIfaceUtil>(),
+            std::make_shared<WifiIfaceUtil>(iface_tool),
             std::make_shared<WifiFeatureFlags>());
     if (kLazyService) {
         LazyServiceRegistrar registrar;

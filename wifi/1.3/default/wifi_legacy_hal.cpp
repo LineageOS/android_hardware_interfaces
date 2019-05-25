@@ -333,10 +333,12 @@ void onAsyncNanEventScheduleUpdate(NanDataPathScheduleUpdateInd* event) {
 }
 // End of the free-standing "C" style callbacks.
 
-WifiLegacyHal::WifiLegacyHal()
+WifiLegacyHal::WifiLegacyHal(
+    const std::weak_ptr<wifi_system::InterfaceTool> iface_tool)
     : global_handle_(nullptr),
       awaiting_event_loop_termination_(false),
-      is_started_(false) {}
+      is_started_(false),
+      iface_tool_(iface_tool) {}
 
 wifi_error WifiLegacyHal::initialize() {
     LOG(DEBUG) << "Initialize legacy HAL";
@@ -371,7 +373,7 @@ wifi_error WifiLegacyHal::start() {
     property_set(kDriverPropName, "ok");
 
     LOG(DEBUG) << "Starting legacy HAL";
-    if (!iface_tool_.SetWifiUpState(true)) {
+    if (!iface_tool_.lock()->SetWifiUpState(true)) {
         LOG(ERROR) << "Failed to set WiFi interface up";
         return WIFI_ERROR_UNKNOWN;
     }
@@ -407,7 +409,7 @@ wifi_error WifiLegacyHal::stop(
         // Invalidate all the internal pointers now that the HAL is
         // stopped.
         invalidate();
-        iface_tool_.SetWifiUpState(false);
+        iface_tool_.lock()->SetWifiUpState(false);
         on_stop_complete_user_callback();
         is_started_ = false;
     };

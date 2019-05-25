@@ -142,12 +142,14 @@ LOCAL_CPPFLAGS := -Wall -Werror -Wextra
 LOCAL_SRC_FILES := \
     tests/hidl_struct_util_unit_tests.cpp \
     tests/main.cpp \
+    tests/mock_interface_tool.cpp \
     tests/mock_wifi_feature_flags.cpp \
     tests/mock_wifi_iface_util.cpp \
     tests/mock_wifi_legacy_hal.cpp \
     tests/mock_wifi_mode_controller.cpp \
     tests/ringbuffer_unit_tests.cpp \
     tests/wifi_ap_iface_unit_tests.cpp \
+    tests/wifi_nan_iface_unit_tests.cpp \
     tests/wifi_chip_unit_tests.cpp \
     tests/wifi_iface_util_unit_tests.cpp
 LOCAL_STATIC_LIBRARIES := \
