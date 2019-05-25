@@ -30,8 +30,12 @@ using hidl_return_util::validateAndCall;
 
 WifiNanIface::WifiNanIface(
     const std::string& ifname,
-    const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal)
-    : ifname_(ifname), legacy_hal_(legacy_hal), is_valid_(true) {
+    const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal,
+    const std::weak_ptr<iface_util::WifiIfaceUtil> iface_util)
+    : ifname_(ifname),
+      legacy_hal_(legacy_hal),
+      iface_util_(iface_util),
+      is_valid_(true) {
     // Register all the callbacks here. these should be valid for the lifetime
     // of the object. Whenever the mode changes legacy HAL will remove
     // all of these callbacks.
@@ -498,6 +502,26 @@ WifiNanIface::WifiNanIface(
         LOG(ERROR) << "Failed to register nan callbacks. Invalidating object";
         invalidate();
     }
+
+    // Register for iface state toggle events.
+    iface_util::IfaceEventHandlers event_handlers = {};
+    event_handlers.on_state_toggle_off_on =
+        [weak_ptr_this](const std::string& /* iface_name */) {
+            const auto shared_ptr_this = weak_ptr_this.promote();
+            if (!shared_ptr_this.get() || !shared_ptr_this->isValid()) {
+                LOG(ERROR) << "Callback invoked on an invalid object";
+                return;
+            }
+            // Tell framework that NAN has been disabled.
+            WifiNanStatus status = {
+                NanStatusType::UNSUPPORTED_CONCURRENCY_NAN_DISABLED, ""};
+            for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
+                if (!callback->eventDisabled(status).isOk()) {
+                    LOG(ERROR) << "Failed to invoke the callback";
+                }
+            }
+        };
+    iface_util_.lock()->registerIfaceEventHandlers(ifname_, event_handlers);
 }
 
 void WifiNanIface::invalidate() {
@@ -505,7 +529,7 @@ void WifiNanIface::invalidate() {
     legacy_hal_.lock()->nanDisableRequest(ifname_, 0xFFFF);
     legacy_hal_.lock()->nanDataInterfaceDelete(ifname_, 0xFFFE, "aware_data0");
     legacy_hal_.lock()->nanDataInterfaceDelete(ifname_, 0xFFFD, "aware_data1");
-
+    iface_util_.lock()->unregisterIfaceEventHandlers(ifname_);
     legacy_hal_.reset();
     event_cb_handler_.invalidate();
     event_cb_handler_1_2_.invalidate();
