@@ -1329,6 +1329,8 @@ enum VehicleProperty : int32_t {
      * int32Values[2] : target display defined in VehicleDisplay. Events not
      *                  tied to specific display must be sent to
      *                  VehicleDisplay#MAIN.
+     * int32Values[3] : [optional] Number of ticks. The value must be equal or
+     *                  greater than 1. When omitted, Android will default to 1.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ
