@@ -29,16 +29,16 @@ struct TrieNode {
 // Some forward reference tests.
 
 struct A {
-    ref<B> b;
+    vec<B> b;
 };
 
 struct B {
-    ref<A> a;
+    vec<A> a;
 };
 
-typedef ref<S> refS;
+typedef vec<S> vecS;
 struct S {
-    refS f;
+    vecS f;
 };
 
 enum E2 : E1 {
