@@ -331,7 +331,13 @@ enum FixedChannelCount : int32_t {
 
 /**
  * A channel mask per se only defines the presence or absence of a channel, not
- * the order.  See AUDIO_INTERLEAVE_* for the platform convention of order.
+ * the order.
+ *
+ * The channel order convention is that channels are interleaved in order from
+ * least significant channel mask bit to most significant channel mask bit,
+ * with unused bits skipped. For example for stereo, LEFT would be first,
+ * followed by RIGHT.
+ * Any exceptions to this convention are noted at the appropriate API.
  *
  * AudioChannelMask is an opaque type and its internal layout should not be
  * assumed as it may change in the future.  Instead, always use functions
