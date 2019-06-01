@@ -137,6 +137,10 @@ Return<void> FrameHandler::deliverFrame(const BufferDesc& bufferArg) {
         // Signal that the last frame has been received and the stream is stopped
         timeToStop = true;
     } else {
+        // Store a dimension of a received frame.
+        mFrameWidth = bufferArg.width;
+        mFrameHeight = bufferArg.height;
+
         // If we were given an opened display at construction time, then send the received
         // image back down the camera.
         if (mDisplay.get()) {
@@ -298,4 +302,14 @@ bool FrameHandler::copyBufferContents(const BufferDesc& tgtBuffer,
     }
 
     return success;
+}
+
+void FrameHandler::getFrameDimension(unsigned* width, unsigned* height) {
+    if (width) {
+        *width = mFrameWidth;
+    }
+
+    if (height) {
+        *height = mFrameHeight;
+    }
 }
