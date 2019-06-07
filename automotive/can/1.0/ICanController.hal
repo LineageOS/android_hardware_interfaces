@@ -1,0 +1,190 @@
+/*
+ * Copyright (C) 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package android.hardware.automotive.can@1.0;
+
+/**
+ * Represents a CAN controller that's capable of configuring CAN bus interfaces.
+ *
+ * The goal of this service is to configure CAN interfaces and bring up HIDL
+ * server instances of ICanBus for each one that's up.
+ *
+ * Providing an ICanController interface to configure CAN buses is optional.
+ * A system can elect to publish only ICanBus if the hardware is hardcoded
+ * for a specific application.
+ */
+interface ICanController {
+    /**
+     * Type of an interface, a mean to express the domain of device address.
+     */
+    enum InterfaceType : uint8_t {
+        /**
+         * Virtual SocketCAN interface.
+         *
+         * The address is an interface name, such as vcan0. If the interface
+         * doesn't exist, HAL server must create it.
+         *
+         * Valid InterfaceIdentifier types:
+         *  - address.
+         */
+        VIRTUAL,
+
+        /**
+         * Native SocketCAN interface.
+         *
+         * The address is an interface name, such as can0.
+         *
+         * Valid InterfaceIdentifier types:
+         *  - address;
+         *  - serialno.
+         */
+        SOCKETCAN,
+
+        /**
+         * Serial-based interface.
+         *
+         * The address is a patch to a device, such as /dev/ttyUSB0.
+         *
+         * Valid InterfaceIdentifier types:
+         *  - address;
+         *  - serialno.
+         */
+        SLCAN,
+
+        /**
+         * Proprietary interface, specific to the hardware system Android
+         * is running on. Instead of using address field, the interface is
+         * addressed with 0-based index.
+         *
+         * Valid InterfaceIdentifier types:
+         *  - index
+         */
+        INDEXED
+    };
+
+    enum Result : uint8_t {
+        OK,
+
+        /**
+         * General error class, if others are not applicable.
+         */
+        UNKNOWN_ERROR,
+
+        /**
+         * Up request was called out of order (i.e. trying to up the
+         * interface twice).
+         */
+        INVALID_STATE,
+
+        /** Interface type is not supported. */
+        NOT_SUPPORTED,
+
+        /**
+         * Provided address (interface name, device path) doesn't exist or there
+         * is no device with a given serial no.
+         */
+        BAD_ADDRESS,
+
+        /** Provided baud rate is not supported by the hardware. */
+        BAD_BAUDRATE,
+    };
+
+    /**
+     * Configuration of the (physical or virtual) CAN bus.
+     *
+     * ISO TP and CAN FD are currently not supported.
+     */
+    struct BusConfiguration {
+        /**
+         * Name under which ICanBus HIDL service should be published.
+         *
+         * It must consist of only alphanumeric characters and underscore
+         * (a-z, A-Z, 0-9, '_'), at least 1 and at most 32 characters long.
+         */
+        string name;
+
+        /**
+         * Type of the hardware (or virtual) CAN interface.
+         */
+        InterfaceType iftype;
+
+        /**
+         * Identification of hardware interface to configure.
+         */
+        safe_union InterfaceIdentifier {
+            /**
+             * Interface name or other mean of identification of the specific
+             * interface port. Syntax depends on {@see iftype}, for details
+             * {@see InterfaceType}.
+             */
+            string address;
+
+            /**
+             * Numerical identifier of interface, used for InterfaceType#INDEXED.
+             */
+            uint8_t index;
+
+            /**
+             * Alternatively to providing {@see address}, one may provide a list
+             * of interface serial number suffixes. If there happens to be
+             * a device (like USB2CAN) with a matching serial number suffix,
+             * it gets selected.
+             *
+             * Client may utilize this in two ways: by matching against the
+             * entire serial number, or the last few characters (usually one).
+             * The former is better for small-scale test deployments (with just
+             * a handful of vehicles), the latter is good for larger scale
+             * (where a small suffix list may support large test fleet).
+             */
+            vec<string> serialno;
+        } interfaceId;
+
+        /**
+         * Baud rate for CAN communication.
+         *
+         * Typical baud rates are: 100000, 125000, 250000, 500000.
+         *
+         * For virtual interfaces this value is ignored.
+         */
+        uint32_t baudrate;
+    };
+
+    /**
+     * Fetches the list of interface types supported by this HAL server.
+     *
+     * @return iftypes The list of supported interface types
+     */
+    getSupportedInterfaceTypes() generates (vec<InterfaceType> iftypes);
+
+    /**
+     * Bring up the CAN interface and publish ICanBus server instance.
+     *
+     * @param config Configuration of the CAN interface
+     * @return result OK if the operation succeeded; error code otherwise.
+     */
+    upInterface(BusConfiguration config) generates (Result result);
+
+    /**
+     * Unpublish ICanBus server instance and bring down the CAN interface.
+     *
+     * In case of failure, at least the ICanBus server instance must be
+     * unpublished and resources freed on best-effort basis.
+     *
+     * @param name Name of the interface (@see BusConfiguration#name} to
+     * bring down
+     * @return success true in case of success, false otherwise
+     */
+    downInterface(string name) generates (bool success);
+};
