@@ -75,7 +75,7 @@ Return<void> CameraDeviceSession::configureStreams_3_4(
 void CameraDeviceSession::configureStreams_3_4_Impl(
         const StreamConfiguration& requestedConfiguration,
         ICameraDeviceSession::configureStreams_3_4_cb _hidl_cb,
-        uint32_t streamConfigCounter)  {
+        uint32_t streamConfigCounter, bool useOverriddenFields)  {
     Status status = initStatus();
     HalStreamConfiguration outStreams;
 
@@ -133,7 +133,8 @@ void CameraDeviceSession::configureStreams_3_4_Impl(
     mStreamConfigCounter = streamConfigCounter;
     hidl_vec<camera3_stream_t*> streams;
     stream_list.session_parameters = paramBuffer;
-    if (!preProcessConfigurationLocked_3_4(requestedConfiguration, &stream_list, &streams)) {
+    if (!preProcessConfigurationLocked_3_4(requestedConfiguration,
+            useOverriddenFields, &stream_list, &streams)) {
         _hidl_cb(Status::INTERNAL_ERROR, outStreams);
         return;
     }
@@ -164,7 +165,7 @@ void CameraDeviceSession::configureStreams_3_4_Impl(
 }
 
 bool CameraDeviceSession::preProcessConfigurationLocked_3_4(
-        const StreamConfiguration& requestedConfiguration,
+        const StreamConfiguration& requestedConfiguration, bool useOverriddenFields,
         camera3_stream_configuration_t *stream_list /*out*/,
         hidl_vec<camera3_stream_t*> *streams /*out*/) {
 
@@ -189,18 +190,30 @@ bool CameraDeviceSession::preProcessConfigurationLocked_3_4(
                     mStreamMap[id].data_space);
             mCirculatingBuffers.emplace(stream.mId, CirculatingBuffers{});
         } else {
-            // width/height/format must not change, but usage/rotation might need to change
+            // width/height/format must not change, but usage/rotation might need to change.
+            // format and data_space may change.
             if (mStreamMap[id].stream_type !=
                     (int) requestedConfiguration.streams[i].v3_2.streamType ||
                     mStreamMap[id].width != requestedConfiguration.streams[i].v3_2.width ||
                     mStreamMap[id].height != requestedConfiguration.streams[i].v3_2.height ||
-                    mStreamMap[id].format != (int) requestedConfiguration.streams[i].v3_2.format ||
-                    mStreamMap[id].data_space !=
-                            mapToLegacyDataspace( static_cast<android_dataspace_t> (
-                                    requestedConfiguration.streams[i].v3_2.dataSpace)) ||
                     mPhysicalCameraIdMap[id] != requestedConfiguration.streams[i].physicalCameraId) {
                 ALOGE("%s: stream %d configuration changed!", __FUNCTION__, id);
                 return false;
+            }
+            if (useOverriddenFields) {
+                android_dataspace_t requestedDataSpace =
+                        mapToLegacyDataspace(static_cast<android_dataspace_t>(
+                        requestedConfiguration.streams[i].v3_2.dataSpace));
+                if (mStreamMap[id].format != (int) requestedConfiguration.streams[i].v3_2.format ||
+                        mStreamMap[id].data_space != requestedDataSpace) {
+                    ALOGE("%s: stream %d configuration changed!", __FUNCTION__, id);
+                    return false;
+                }
+            } else {
+                mStreamMap[id].format =
+                        (int) requestedConfiguration.streams[i].v3_2.format;
+                mStreamMap[id].data_space = (android_dataspace_t)
+                        requestedConfiguration.streams[i].v3_2.dataSpace;
             }
             mStreamMap[id].rotation = (int) requestedConfiguration.streams[i].v3_2.rotation;
             mStreamMap[id].usage = (uint32_t) requestedConfiguration.streams[i].v3_2.usage;
