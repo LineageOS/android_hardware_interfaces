@@ -20,7 +20,6 @@ cc_library_shared {
     cflags: [
         "-Wall",
         "-Werror",
-        "-Wno-user-defined-warnings",
     ],
     cppflags: [
         "-Weverything",
