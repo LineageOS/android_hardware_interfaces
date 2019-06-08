@@ -66,7 +66,7 @@ Return<void> CameraDeviceSession::configureStreams_3_5(
         const StreamConfiguration& requestedConfiguration,
         ICameraDeviceSession::configureStreams_3_5_cb _hidl_cb)  {
     configureStreams_3_4_Impl(requestedConfiguration.v3_4, _hidl_cb,
-            requestedConfiguration.streamConfigCounter);
+            requestedConfiguration.streamConfigCounter, false /*useOverriddenFields*/);
     return Void();
 }
 
