@@ -38,7 +38,7 @@ using ::android::hardware::nfc::V1_2::INfc;
 using ::android::hardware::nfc::V1_2::NfcConfig;
 
 // Range of valid off host route ids
-constexpr unsigned int MIN_OFFHOST_ROUTE_ID = 0x80;
+constexpr unsigned int MIN_OFFHOST_ROUTE_ID = 0x01;
 constexpr unsigned int MAX_OFFHOST_ROUTE_ID = 0xFE;
 
 constexpr char kCallbackNameSendEvent[] = "sendEvent";
