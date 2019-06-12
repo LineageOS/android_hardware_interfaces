@@ -109,11 +109,15 @@ bool SensorsHidlEnvironmentV2_0::resetHal() {
 void SensorsHidlEnvironmentV2_0::HidlTearDown() {
     mStopThread = true;
 
-    // Wake up the event queue so the poll thread can exit
-    mEventQueueFlag->wake(asBaseType(EventQueueFlagBits::READ_AND_PROCESS));
-    mPollThread.join();
+    if (mEventQueueFlag != nullptr) {
+        // Wake up the event queue so the poll thread can exit
+        mEventQueueFlag->wake(asBaseType(EventQueueFlagBits::READ_AND_PROCESS));
+        if (mPollThread.joinable()) {
+            mPollThread.join();
+        }
 
-    EventFlag::deleteEventFlag(&mEventQueueFlag);
+        EventFlag::deleteEventFlag(&mEventQueueFlag);
+    }
 }
 
 void SensorsHidlEnvironmentV2_0::startPollingThread() {
