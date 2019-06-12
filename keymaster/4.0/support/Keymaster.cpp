@@ -80,8 +80,7 @@ std::ostream& operator<<(std::ostream& os, const Keymaster& keymaster) {
 }
 
 template <typename Wrapper>
-std::vector<std::unique_ptr<Keymaster>> enumerateDevices(
-    const sp<IServiceManager>& serviceManager) {
+Keymaster::KeymasterSet enumerateDevices(const sp<IServiceManager>& serviceManager) {
     Keymaster::KeymasterSet result;
 
     bool foundDefault = false;
@@ -92,7 +91,7 @@ std::vector<std::unique_ptr<Keymaster>> enumerateDevices(
             auto device = Wrapper::WrappedIKeymasterDevice::getService(name);
             CHECK(device) << "Failed to get service for " << descriptor << " with interface name "
                           << name;
-            result.push_back(std::unique_ptr<Keymaster>(new Wrapper(device, name)));
+            result.push_back(new Wrapper(device, name));
         }
     });
 
@@ -100,7 +99,7 @@ std::vector<std::unique_ptr<Keymaster>> enumerateDevices(
         // "default" wasn't provided by listManifestByInterface.  Maybe there's a passthrough
         // implementation.
         auto device = Wrapper::WrappedIKeymasterDevice::getService("default");
-        if (device) result.push_back(std::unique_ptr<Keymaster>(new Wrapper(device, "default")));
+        if (device) result.push_back(new Wrapper(device, "default"));
     }
 
     return result;
