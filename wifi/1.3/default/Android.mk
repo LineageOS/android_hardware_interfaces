@@ -155,11 +155,11 @@ LOCAL_SRC_FILES := \
 LOCAL_STATIC_LIBRARIES := \
     libgmock \
     libgtest \
-    libhidlbase \
     android.hardware.wifi@1.0-service-lib
 LOCAL_SHARED_LIBRARIES := \
     libbase \
     libcutils \
+    libhidlbase \
     libhidltransport \
     liblog \
     libnl \
