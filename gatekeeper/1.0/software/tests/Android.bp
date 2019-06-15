@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2018 The Android Open Source Project
+// Copyright (C) 2015 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,14 +15,20 @@
 //
 
 cc_test {
-    name: "VtsHalHealthStorageV1_0TargetTest",
-    defaults: ["VtsHalTargetTestDefaults"],
-    srcs: ["VtsHalHealthStorageV1_0TargetTest.cpp"],
-    static_libs: ["android.hardware.health.storage@1.0"],
-    shared_libs: [
-        "libhidlbase",
-        "libhidltransport",
-    ],
-    test_suites: ["general-tests"],
-}
+    name: "gatekeeper-software-device-unit-tests",
 
+    cflags: [
+        "-g",
+        "-Wall",
+        "-Werror",
+        "-Wno-missing-field-initializers",
+    ],
+    shared_libs: [
+        "libgatekeeper",
+        "libcrypto",
+        "libbase",
+    ],
+    static_libs: ["libscrypt_static"],
+
+    srcs: ["gatekeeper_test.cpp"],
+}
