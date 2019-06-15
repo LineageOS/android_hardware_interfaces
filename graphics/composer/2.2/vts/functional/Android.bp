@@ -25,6 +25,7 @@ cc_test {
     // TODO(b/64437680): Assume these libs are always available on the device.
     shared_libs: [
         "libfmq",
+        "libhidlbase",
         "libhidltransport",
         "libsync",
     ],

@@ -130,7 +130,8 @@ TEST_F(RadioConfigHidlTest, setPreferredDataModem) {
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(RadioResponseType::SOLICITED, radioConfigRsp->rspInfo.type);
     EXPECT_EQ(serial, radioConfigRsp->rspInfo.serial);
-    ALOGI("getModemsConfig, rspInfo.error = %s\n", toString(radioConfigRsp->rspInfo.error).c_str());
+    ALOGI("setPreferredDataModem, rspInfo.error = %s\n",
+          toString(radioConfigRsp->rspInfo.error).c_str());
 
     ASSERT_TRUE(CheckAnyOfErrors(
             radioConfigRsp->rspInfo.error,
@@ -149,7 +150,8 @@ TEST_F(RadioConfigHidlTest, setPreferredDataModem_invalidArgument) {
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(RadioResponseType::SOLICITED, radioConfigRsp->rspInfo.type);
     EXPECT_EQ(serial, radioConfigRsp->rspInfo.serial);
-    ALOGI("getModemsConfig, rspInfo.error = %s\n", toString(radioConfigRsp->rspInfo.error).c_str());
+    ALOGI("setPreferredDataModem, rspInfo.error = %s\n",
+          toString(radioConfigRsp->rspInfo.error).c_str());
 
     ASSERT_TRUE(CheckAnyOfErrors(radioConfigRsp->rspInfo.error,
                                  {RadioError::INVALID_ARGUMENTS, RadioError::RADIO_NOT_AVAILABLE,
