@@ -39,8 +39,8 @@ namespace support {
  * while still having to use only the latest interface.
  */
 class Keymaster : public IKeymasterDevice {
-   public:
-    using KeymasterSet = std::vector<std::unique_ptr<Keymaster>>;
+  public:
+    using KeymasterSet = std::vector<android::sp<Keymaster>>;
 
     Keymaster(const hidl_string& descriptor, const hidl_string& instanceName)
         : descriptor_(descriptor), instanceName_(instanceName) {}
@@ -86,7 +86,7 @@ class Keymaster : public IKeymasterDevice {
      */
     static void performHmacKeyAgreement(const KeymasterSet& keymasters);
 
-   private:
+  private:
     hidl_string descriptor_;
     hidl_string instanceName_;
 };
