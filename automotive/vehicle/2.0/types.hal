@@ -3287,16 +3287,6 @@ enum DiagnosticFloatSensorIndex : int32_t {
  */
 enum VmsMessageType : int32_t {
     /**
-     * A notification indicating that the sender has been reset.
-     *
-     * The receiving party must reset its internal state and respond to the
-     * sender with a START_SESSION message as acknowledgement.
-     *
-     * This message type uses enum VmsStartSessionMessageIntegerValuesIndex.
-     */
-    START_SESSION = 17,
-
-    /**
      * A request from the subscribers to the VMS service to subscribe to a layer.
      *
      * This message type uses enum VmsMessageWithLayerIntegerValuesIndex.
@@ -3411,6 +3401,16 @@ enum VmsMessageType : int32_t {
      * This message type uses enum VmsPublisherInformationIntegerValuesIndex.
      */
     PUBLISHER_INFORMATION_RESPONSE = 16,
+
+    /**
+     * A notification indicating that the sender has been reset.
+     *
+     * The receiving party must reset its internal state and respond to the
+     * sender with a START_SESSION message as acknowledgement.
+     *
+     * This message type uses enum VmsStartSessionMessageIntegerValuesIndex.
+     */
+    START_SESSION = 17,
 
     LAST_VMS_MESSAGE_TYPE = START_SESSION,
 };
