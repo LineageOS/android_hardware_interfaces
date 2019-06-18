@@ -59,16 +59,20 @@ int main(int /* argc */, char* /* argv */ []) {
     }
     configureRpcThreadpool(16, true /*callerWillJoin*/);
 
-    LOG_ALWAYS_FATAL_IF((registerPassthroughServiceImplementations<audio::V5_0::IDevicesFactory,
-                                                                   audio::V4_0::IDevicesFactory,
-                                                                   audio::V2_0::IDevicesFactory>()),
+    // Keep versions on a separate line for easier parsing
+    // clang-format off
+    LOG_ALWAYS_FATAL_IF((registerPassthroughServiceImplementations<
+                                audio::V5_0::IDevicesFactory,
+                                audio::V4_0::IDevicesFactory,
+                                audio::V2_0::IDevicesFactory>()),
                         "Could not register audio core API");
 
-    LOG_ALWAYS_FATAL_IF(
-            (registerPassthroughServiceImplementations<audio::effect::V5_0::IEffectsFactory,
-                                                       audio::effect::V4_0::IEffectsFactory,
-                                                       audio::effect::V2_0::IEffectsFactory>()),
-            "Could not register audio effect API");
+    LOG_ALWAYS_FATAL_IF((registerPassthroughServiceImplementations<
+                                audio::effect::V5_0::IEffectsFactory,
+                                audio::effect::V4_0::IEffectsFactory,
+                                audio::effect::V2_0::IEffectsFactory>()),
+                        "Could not register audio effect API");
+    // clang-format on
 
     ALOGW_IF((registerPassthroughServiceImplementations<soundtrigger::V2_2::ISoundTriggerHw,
                                                         soundtrigger::V2_1::ISoundTriggerHw,
