@@ -99,7 +99,11 @@ interface ISensors {
      * Lock FMQ. When the HAL reads the data from the Wake Lock FMQ, the HAL
      * decrements its current count of unprocessed WAKE_UP events and releases
      * its wake_lock if the current count of unprocessed WAKE_UP events is
-     * zero.
+     * zero. It is important to note that the HAL must acquire the wake lock and
+     * update its internal state regarding the number of outstanding WAKE_UP
+     * events _before_ posting the event to the Wake Lock FMQ, in order to avoid
+     * a race condition that can lead to loss of wake lock synchronization with
+     * the framework.
      *
      * The framework must use the WakeLockQueueFlagBits::DATA_WRITTEN value to
      * notify the HAL that data has been written to the Wake Lock FMQ and must
