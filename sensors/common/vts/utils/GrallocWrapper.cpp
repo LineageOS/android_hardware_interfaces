@@ -33,8 +33,7 @@ void GrallocWrapper::init() {
     mMapper = mapper2::IMapper::getService();
     if (mMapper == nullptr) {
         ALOGE("Failed to get mapper service");
-    }
-    if (mMapper->isRemote()) {
+    } else if (mMapper->isRemote()) {
         ALOGE("Mapper is not in passthrough mode");
     }
 }
