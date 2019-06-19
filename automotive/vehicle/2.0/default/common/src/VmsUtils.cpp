@@ -126,10 +126,13 @@ std::unique_ptr<VehiclePropValue> createSubscriptionsRequest() {
     return result;
 }
 
-std::unique_ptr<VehiclePropValue> createDataMessage(const std::string& bytes) {
-    auto result = createBaseVmsMessage(kMessageTypeSize);
-    result->value.int32Values = hidl_vec<int32_t>{toInt(VmsMessageType::DATA)};
-    result->value.bytes = std::vector<uint8_t>(bytes.begin(), bytes.end());
+std::unique_ptr<VehiclePropValue> CreateDataMessageWithLayerPublisherInfo(
+        const VmsLayerAndPublisher& layer_publisher, const std::string& vms_packet) {
+    auto result = createBaseVmsMessage(kMessageTypeSize + kLayerAndPublisherSize);
+    result->value.int32Values = hidl_vec<int32_t>{
+            toInt(VmsMessageType::DATA), layer_publisher.layer.type, layer_publisher.layer.subtype,
+            layer_publisher.layer.version, layer_publisher.publisher_id};
+    result->value.bytes = std::vector<uint8_t>(vms_packet.begin(), vms_packet.end());
     return result;
 }
 
