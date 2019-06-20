@@ -140,6 +140,20 @@ void ValidationTest::validateEverything(const Model& model, const std::vector<Re
     validateBurst(preparedModel, requests);
 }
 
+void ValidationTest::validateFailure(const Model& model, const std::vector<Request>& requests) {
+    // TODO: Should this always succeed?
+    //       What if the invalid input is part of the model (i.e., a parameter).
+    validateModel(model);
+
+    sp<IPreparedModel> preparedModel;
+    ASSERT_NO_FATAL_FAILURE(createPreparedModel(device, model, &preparedModel));
+    if (preparedModel == nullptr) {
+        return;
+    }
+
+    validateRequestFailure(preparedModel, requests);
+}
+
 sp<IPreparedModel> getPreparedModel_1_2(
     const sp<V1_2::implementation::PreparedModelCallback>& callback) {
     sp<V1_0::IPreparedModel> preparedModelV1_0 = callback->getPreparedModel();
