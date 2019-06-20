@@ -40,7 +40,6 @@ using common::V1_1::Dataspace;
 using common::V1_1::PixelFormat;
 using common::V1_1::RenderIntent;
 using mapper::V2_0::IMapper;
-using mapper::V2_0::vts::Gralloc;
 
 // Test environment for graphics.composer
 class GraphicsComposerHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
@@ -171,15 +170,10 @@ class GraphicsComposerHidlCommandTest : public GraphicsComposerHidlTest {
     }
 
     const native_handle_t* allocate() {
-        IMapper::BufferDescriptorInfo info{};
-        info.width = 64;
-        info.height = 64;
-        info.layerCount = 1;
-        info.format = static_cast<common::V1_0::PixelFormat>(PixelFormat::RGBA_8888);
-        info.usage =
-            static_cast<uint64_t>(BufferUsage::CPU_WRITE_OFTEN | BufferUsage::CPU_READ_OFTEN);
-
-        return mGralloc->allocate(info);
+        uint64_t usage =
+                static_cast<uint64_t>(BufferUsage::CPU_WRITE_OFTEN | BufferUsage::CPU_READ_OFTEN);
+        return mGralloc->allocate(/*width*/ 64, /*height*/ 64, /*layerCount*/ 1,
+                                  PixelFormat::RGBA_8888, usage);
     }
 
     void execute() { mComposerClient->execute(mReader.get(), mWriter.get()); }
@@ -456,18 +450,15 @@ TEST_F(GraphicsComposerHidlTest, SetReadbackBuffer) {
         return;
     }
 
-    IMapper::BufferDescriptorInfo info{};
-    info.width = mDisplayWidth;
-    info.height = mDisplayHeight;
-    info.layerCount = 1;
-    info.format = static_cast<common::V1_0::PixelFormat>(mReadbackPixelFormat);
     // BufferUsage::COMPOSER_OUTPUT is missing
-    info.usage = static_cast<uint64_t>(BufferUsage::COMPOSER_OVERLAY | BufferUsage::CPU_READ_OFTEN);
+    uint64_t usage =
+            static_cast<uint64_t>(BufferUsage::COMPOSER_OVERLAY | BufferUsage::CPU_READ_OFTEN);
 
     std::unique_ptr<Gralloc> gralloc;
     const native_handle_t* buffer;
     ASSERT_NO_FATAL_FAILURE(gralloc = std::make_unique<Gralloc>());
-    ASSERT_NO_FATAL_FAILURE(buffer = gralloc->allocate(info));
+    ASSERT_NO_FATAL_FAILURE(buffer = gralloc->allocate(mDisplayWidth, mDisplayHeight, 1,
+                                                       mReadbackPixelFormat, usage));
 
     mComposerClient->setReadbackBuffer(mPrimaryDisplay, buffer, -1);
 }
@@ -483,17 +474,14 @@ TEST_F(GraphicsComposerHidlTest, SetReadbackBufferBadDisplay) {
         return;
     }
 
-    IMapper::BufferDescriptorInfo info{};
-    info.width = mDisplayWidth;
-    info.height = mDisplayHeight;
-    info.layerCount = 1;
-    info.format = static_cast<common::V1_0::PixelFormat>(mReadbackPixelFormat);
-    info.usage = static_cast<uint64_t>(BufferUsage::COMPOSER_OVERLAY | BufferUsage::CPU_READ_OFTEN);
+    uint64_t usage =
+            static_cast<uint64_t>(BufferUsage::COMPOSER_OVERLAY | BufferUsage::CPU_READ_OFTEN);
 
     std::unique_ptr<Gralloc> gralloc;
     const native_handle_t* buffer;
     ASSERT_NO_FATAL_FAILURE(gralloc = std::make_unique<Gralloc>());
-    ASSERT_NO_FATAL_FAILURE(buffer = gralloc->allocate(info));
+    ASSERT_NO_FATAL_FAILURE(buffer = gralloc->allocate(mDisplayWidth, mDisplayHeight, 1,
+                                                       mReadbackPixelFormat, usage));
 
     Error error = mComposerClient->getRaw()->setReadbackBuffer(mInvalidDisplayId, buffer, nullptr);
     ASSERT_EQ(Error::BAD_DISPLAY, error);
