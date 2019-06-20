@@ -60,6 +60,8 @@ struct VmsLayer {
 };
 
 struct VmsLayerAndPublisher {
+    VmsLayerAndPublisher(VmsLayer layer, int publisher_id)
+        : layer(layer), publisher_id(publisher_id) {}
     VmsLayer layer;
     int publisher_id;
 };
@@ -162,12 +164,16 @@ std::unique_ptr<VehiclePropValue> createAvailabilityRequest();
 std::unique_ptr<VehiclePropValue> createSubscriptionsRequest();
 
 // Creates a VehiclePropValue containing a message of type VmsMessageType.DATA.
-// Returns a nullptr if the byte string in bytes is empty.
+// Returns a nullptr if the vms_packet string in bytes is empty or if the layer_publisher
+// information in VmsLayerAndPublisher format is missing the later or publisher
+// information.
 //
 // For example, to build a VehiclePropValue message containing a proto, the caller
-// should convert the proto to a byte string using the SerializeToString proto
-// API, then use this inteface to build the VehicleProperty.
-std::unique_ptr<VehiclePropValue> createDataMessage(const std::string& bytes);
+// should first convert the proto to a byte string (vms_packet) using the
+// SerializeToString proto API. Then, it use this interface to build the VehicleProperty
+// by passing publisher and layer information (layer_publisher) and the vms_packet.
+std::unique_ptr<VehiclePropValue> CreateDataMessageWithLayerPublisherInfo(
+        const VmsLayerAndPublisher& layer_publisher, const std::string& vms_packet);
 
 // Creates a VehiclePropValue containing a message of type
 // VmsMessageType.PUBLISHER_ID_REQUEST with the given publisher information.
