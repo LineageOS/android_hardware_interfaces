@@ -21,6 +21,7 @@ cc_library_shared {
         "android.hardware.graphics.composer@2.1",
         "android.hardware.graphics.mapper@2.0",
         "android.hardware.graphics.mapper@3.0",
+        "android.hardware.graphics.mapper@4.0",
         "libcutils",
         "libhardware", // TODO remove hwcomposer2.h dependency
         "libhidlbase",
@@ -31,6 +32,7 @@ cc_library_shared {
         "android.hardware.graphics.composer@2.1",
         "android.hardware.graphics.mapper@2.0",
         "android.hardware.graphics.mapper@3.0",
+        "android.hardware.graphics.mapper@4.0",
         "libhardware",
         "libhidlbase",
         "liblog",

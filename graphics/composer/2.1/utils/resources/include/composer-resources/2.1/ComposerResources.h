@@ -29,6 +29,7 @@
 
 #include <android/hardware/graphics/mapper/2.0/IMapper.h>
 #include <android/hardware/graphics/mapper/3.0/IMapper.h>
+#include <android/hardware/graphics/mapper/4.0/IMapper.h>
 #include <log/log.h>
 
 namespace android {
@@ -51,6 +52,7 @@ class ComposerHandleImporter {
   private:
     sp<mapper::V2_0::IMapper> mMapper2;
     sp<mapper::V3_0::IMapper> mMapper3;
+    sp<mapper::V4_0::IMapper> mMapper4;
 };
 
 class ComposerHandleCache {

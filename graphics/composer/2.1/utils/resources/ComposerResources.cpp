@@ -26,6 +26,12 @@ namespace V2_1 {
 namespace hal {
 
 bool ComposerHandleImporter::init() {
+    mMapper4 = mapper::V4_0::IMapper::getService();
+    if (mMapper4) {
+        return true;
+    }
+    ALOGI_IF(!mMapper4, "failed to get mapper 4.0 service, falling back to mapper 3.0");
+
     mMapper3 = mapper::V3_0::IMapper::getService();
     if (mMapper3) {
         return true;
@@ -66,6 +72,16 @@ Error ComposerHandleImporter::importBuffer(const native_handle_t* rawHandle,
             return Error::NO_RESOURCES;
         }
     }
+    if (mMapper4) {
+        mapper::V4_0::Error error;
+        mMapper4->importBuffer(rawHandle, [&](const auto& tmpError, const auto& tmpBufferHandle) {
+            error = tmpError;
+            bufferHandle = static_cast<const native_handle_t*>(tmpBufferHandle);
+        });
+        if (error != mapper::V4_0::Error::NONE) {
+            return Error::NO_RESOURCES;
+        }
+    }
 
     *outBufferHandle = bufferHandle;
     return Error::NONE;
@@ -77,6 +93,8 @@ void ComposerHandleImporter::freeBuffer(const native_handle_t* bufferHandle) {
             mMapper2->freeBuffer(static_cast<void*>(const_cast<native_handle_t*>(bufferHandle)));
         } else if (mMapper3) {
             mMapper3->freeBuffer(static_cast<void*>(const_cast<native_handle_t*>(bufferHandle)));
+        } else if (mMapper4) {
+            mMapper4->freeBuffer(static_cast<void*>(const_cast<native_handle_t*>(bufferHandle)));
         }
     }
 }
