@@ -274,6 +274,22 @@ void ValidationTest::validateRequests(const sp<IPreparedModel>& preparedModel,
     }
 }
 
+void ValidationTest::validateRequestFailure(const sp<IPreparedModel>& preparedModel,
+                                            const std::vector<Request>& requests) {
+    for (const Request& request : requests) {
+        SCOPED_TRACE("Expecting request to fail [executeSynchronously]");
+        Return<void> executeStatus = preparedModel->executeSynchronously(
+                request, MeasureTiming::NO,
+                [](ErrorStatus error, const hidl_vec<OutputShape>& outputShapes,
+                   const Timing& timing) {
+                    ASSERT_NE(ErrorStatus::NONE, error);
+                    EXPECT_EQ(outputShapes.size(), 0);
+                    EXPECT_TRUE(badTiming(timing));
+                });
+        ASSERT_TRUE(executeStatus.isOk());
+    }
+}
+
 }  // namespace functional
 }  // namespace vts
 }  // namespace V1_2
