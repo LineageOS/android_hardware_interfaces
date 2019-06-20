@@ -60,6 +60,11 @@ TEST_F(RadioHidlTest_v1_2, startNetworkScan) {
                                      {RadioError::NONE, RadioError::REQUEST_NOT_SUPPORTED,
                                       RadioError::OPERATION_NOT_ALLOWED}));
     }
+
+    if (radioRsp_v1_2->rspInfo.error == RadioError::NONE) {
+        ALOGI("Stop Network Scan");
+        stopNetworkScan();
+    }
 }
 
 /*
