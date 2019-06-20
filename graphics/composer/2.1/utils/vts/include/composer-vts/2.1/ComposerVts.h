@@ -27,6 +27,7 @@
 #include <composer-vts/2.1/TestCommandReader.h>
 #include <mapper-vts/2.0/MapperVts.h>
 #include <mapper-vts/3.0/MapperVts.h>
+#include <mapper-vts/4.0/MapperVts.h>
 #include <utils/StrongPointer.h>
 
 #include "gtest/gtest.h"
@@ -44,8 +45,10 @@ using android::hardware::graphics::common::V1_0::Hdr;
 using android::hardware::graphics::common::V1_0::PixelFormat;
 using IMapper2 = android::hardware::graphics::mapper::V2_0::IMapper;
 using IMapper3 = android::hardware::graphics::mapper::V3_0::IMapper;
+using IMapper4 = android::hardware::graphics::mapper::V4_0::IMapper;
 using Gralloc2 = android::hardware::graphics::mapper::V2_0::vts::Gralloc;
 using Gralloc3 = android::hardware::graphics::mapper::V3_0::vts::Gralloc;
+using Gralloc4 = android::hardware::graphics::mapper::V4_0::vts::Gralloc;
 
 class ComposerClient;
 
@@ -153,6 +156,7 @@ class Gralloc {
   protected:
     std::shared_ptr<Gralloc2> mGralloc2 = nullptr;
     std::shared_ptr<Gralloc3> mGralloc3 = nullptr;
+    std::shared_ptr<Gralloc4> mGralloc4 = nullptr;
 };
 
 }  // namespace vts

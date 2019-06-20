@@ -22,6 +22,7 @@
 #include <composer-vts/2.1/TestCommandReader.h>
 #include <mapper-vts/2.0/MapperVts.h>
 #include <mapper-vts/3.0/MapperVts.h>
+#include <mapper-vts/4.0/MapperVts.h>
 
 #include <VtsHalHidlTargetTestBase.h>
 #include <VtsHalHidlTargetTestEnvBase.h>

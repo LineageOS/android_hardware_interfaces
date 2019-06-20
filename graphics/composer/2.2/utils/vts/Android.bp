@@ -34,6 +34,10 @@ cc_library_static {
         "libmath",
         "libnativewindow",
         "librenderengine",
+        "android.hardware.graphics.mapper@3.0",
+        "android.hardware.graphics.mapper@3.0-vts",
+        "android.hardware.graphics.mapper@4.0",
+        "android.hardware.graphics.mapper@4.0-vts",
     ],
     export_static_lib_headers: [
         "VtsHalHidlTargetTestBase",
