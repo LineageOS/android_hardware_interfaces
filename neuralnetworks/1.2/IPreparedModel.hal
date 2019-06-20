@@ -47,6 +47,13 @@ interface IPreparedModel extends @1.0::IPreparedModel {
      * execute_1_2 function. This callback must be provided with the ErrorStatus of
      * the execution.
      *
+     * If the launch is successful, the caller must not change the content of
+     * any data object referenced by 'request' (described by the
+     * {@link @1.0::DataLocation} of a {@link @1.0::RequestArgument}) until the
+     * asynchronous task has invoked the callback object. The asynchronous task
+     * must not change the content of any of the data objects corresponding to
+     * 'request' inputs.
+     *
      * If the prepared model was prepared from a model wherein all
      * tensor operands have fully specified dimensions, and the inputs
      * to the function are valid, then the execution should launch
@@ -89,6 +96,12 @@ interface IPreparedModel extends @1.0::IPreparedModel {
      * function are valid and there is no error, executeSynchronously must
      * perform the execution, and must not return until the execution is
      * complete.
+     *
+     * The caller must not change the content of any data object referenced by
+     * 'request' (described by the {@link @1.0::DataLocation} of a
+     * {@link @1.0::RequestArgument}) until executeSynchronously
+     * returns. executeSynchronously must not change the content of any of the
+     * data objects corresponding to 'request' inputs.
      *
      * If the prepared model was prepared from a model wherein all tensor
      * operands have fully specified dimensions, and the inputs to the function
@@ -135,9 +148,15 @@ interface IPreparedModel extends @1.0::IPreparedModel {
      * @param callback A callback object used to retrieve memory resources
      *                 corresponding to a unique identifiers ("slots").
      * @param requestChannel Used by the client to send a serialized Request to
-     *                       the Burst for execution. requestChannel must not be
-     *                       used to pass a second Request object until a result
-     *                       has been received from resultChannel.
+     *                       the Burst for execution. The client must not change
+     *                       the content of any data object referenced by the
+     *                       Request (described by the {@link @1.0::DataLocation}
+     *                       of an {@link OperandInformation}) until a result
+     *                       has been received from resultChannel. Execution
+     *                       must not change the content of any of the data
+     *                       objects corresponding to Request inputs. requestChannel
+     *                       must not be used to pass a second Request object
+     *                       until a result has been received from resultChannel.
      * @param resultChannel Used by the service to return the results of an
      *                      execution to the client: the status of the execution
      *                      and OutputShape of all output tensors. resultChannel

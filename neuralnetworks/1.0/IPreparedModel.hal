@@ -42,6 +42,13 @@ interface IPreparedModel {
      * execute function. This callback must be provided with the ErrorStatus of
      * the execution.
      *
+     * If the launch is successful, the caller must not change the content of
+     * any data object referenced by 'request' (described by the
+     * {@link DataLocation} of a {@link RequestArgument}) until the
+     * asynchronous task has invoked the callback object. The asynchronous task
+     * must not change the content of any of the data objects corresponding to
+     * 'request' inputs.
+     *
      * If the prepared model was prepared from a model wherein all
      * tensor operands have fully specified dimensions, and the inputs
      * to the function are valid, then the execution should launch
