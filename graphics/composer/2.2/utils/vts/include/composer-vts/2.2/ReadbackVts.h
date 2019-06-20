@@ -33,10 +33,11 @@ using android::hardware::hidl_handle;
 using common::V1_1::BufferUsage;
 using common::V1_1::Dataspace;
 using common::V1_1::PixelFormat;
-using mapper::V2_1::IMapper;
-using mapper::V2_1::vts::Gralloc;
+using IMapper2_1 = mapper::V2_1::IMapper;
+using Gralloc2_1 = mapper::V2_1::vts::Gralloc;
 using V2_1::Display;
 using V2_1::Layer;
+using V2_1::vts::AccessRegion;
 using V2_1::vts::TestCommandReader;
 
 static const IComposerClient::Color BLACK = {0, 0, 0, 0xff};
@@ -115,8 +116,12 @@ class TestBufferLayer : public TestLayer {
 
     void setToClientComposition(const std::shared_ptr<CommandWriterBase>& writer);
 
-    IMapper::BufferDescriptorInfo mInfo;
-    IMapper::Rect mAccessRegion;
+    uint32_t mWidth;
+    uint32_t mHeight;
+    uint32_t mLayerCount;
+    PixelFormat mFormat;
+    uint64_t mUsage;
+    AccessRegion mAccessRegion;
     uint32_t mStride;
 
   protected:
@@ -156,8 +161,12 @@ class ReadbackBuffer {
     void checkReadbackBuffer(std::vector<IComposerClient::Color> expectedColors);
 
   protected:
-    IMapper::BufferDescriptorInfo mInfo;
-    IMapper::Rect mAccessRegion;
+    uint32_t mWidth;
+    uint32_t mHeight;
+    uint32_t mLayerCount;
+    PixelFormat mFormat;
+    uint64_t mUsage;
+    AccessRegion mAccessRegion;
     uint32_t mStride;
     const native_handle_t* mBufferHandle = nullptr;
     PixelFormat mPixelFormat;

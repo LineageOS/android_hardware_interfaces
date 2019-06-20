@@ -32,25 +32,26 @@ using V2_0::BufferDescriptor;
 // A wrapper to IAllocator and IMapper.
 class Gralloc : public V2_0::vts::Gralloc {
    public:
-    Gralloc();
-    Gralloc(const std::string& allocatorServiceName, const std::string& mapperServiceName);
+     Gralloc(bool errOnFailure = true);
+     Gralloc(const std::string& allocatorServiceName, const std::string& mapperServiceName,
+             bool errOnFailure = true);
 
-    sp<IMapper> getMapper() const;
+     sp<IMapper> getMapper() const;
 
-    bool validateBufferSize(const native_handle_t* bufferHandle,
-                            const IMapper::BufferDescriptorInfo& descriptorInfo, uint32_t stride);
-    void getTransportSize(const native_handle_t* bufferHandle, uint32_t* outNumFds,
-                          uint32_t* outNumInts);
+     bool validateBufferSize(const native_handle_t* bufferHandle,
+                             const IMapper::BufferDescriptorInfo& descriptorInfo, uint32_t stride);
+     void getTransportSize(const native_handle_t* bufferHandle, uint32_t* outNumFds,
+                           uint32_t* outNumInts);
 
-    BufferDescriptor createDescriptor(const IMapper::BufferDescriptorInfo& descriptorInfo);
+     BufferDescriptor createDescriptor(const IMapper::BufferDescriptorInfo& descriptorInfo);
 
-    const native_handle_t* allocate(const IMapper::BufferDescriptorInfo& descriptorInfo,
-                                    bool import = true, uint32_t* outStride = nullptr);
+     const native_handle_t* allocate(const IMapper::BufferDescriptorInfo& descriptorInfo,
+                                     bool import = true, uint32_t* outStride = nullptr);
 
    protected:
-    void init();
+     void init(bool errOnFailure = true);
 
-    sp<IMapper> mMapperV2_1;
+     sp<IMapper> mMapperV2_1;
 };
 
 }  // namespace vts
