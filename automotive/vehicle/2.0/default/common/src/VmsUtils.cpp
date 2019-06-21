@@ -126,7 +126,7 @@ std::unique_ptr<VehiclePropValue> createSubscriptionsRequest() {
     return result;
 }
 
-std::unique_ptr<VehiclePropValue> CreateDataMessageWithLayerPublisherInfo(
+std::unique_ptr<VehiclePropValue> createDataMessageWithLayerPublisherInfo(
         const VmsLayerAndPublisher& layer_publisher, const std::string& vms_packet) {
     auto result = createBaseVmsMessage(kMessageTypeSize + kLayerAndPublisherSize);
     result->value.int32Values = hidl_vec<int32_t>{
