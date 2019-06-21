@@ -35,6 +35,9 @@ using ::std::literals::chrono_literals::operator""ms;
 // Dev GC timeout. This is the timeout used by vold.
 const uint64_t kDevGcTimeoutSec = 120;
 const std::chrono::seconds kDevGcTimeout{kDevGcTimeoutSec};
+// Dev GC timeout tolerance. The HAL may not immediately return after the
+// timeout, so include an acceptable tolerance.
+const std::chrono::seconds kDevGcTolerance{3};
 // Time accounted for RPC calls.
 const std::chrono::milliseconds kRpcTime{1000};
 
@@ -156,8 +159,9 @@ TEST_F(HealthStorageHidlTest, GcNullCallback) {
     ASSERT_OK(ret);
 
     // Hold test process because HAL can be single-threaded and doing GC.
-    ASSERT_TRUE(ping(kDevGcTimeout + kRpcTime))
-        << "Service must be available after " << toString(kDevGcTimeout + kRpcTime);
+    ASSERT_TRUE(ping(kDevGcTimeout + kDevGcTolerance + kRpcTime))
+            << "Service must be available after "
+            << toString(kDevGcTimeout + kDevGcTolerance + kRpcTime);
 }
 
 /**
@@ -167,7 +171,7 @@ TEST_F(HealthStorageHidlTest, GcNonNullCallback) {
     sp<GcCallback> cb = new GcCallback();
     auto ret = fs->garbageCollect(kDevGcTimeoutSec, cb);
     ASSERT_OK(ret);
-    cb->waitForResult(kDevGcTimeout + kRpcTime, Result::SUCCESS);
+    cb->waitForResult(kDevGcTimeout + kDevGcTolerance + kRpcTime, Result::SUCCESS);
 }
 
 }  // namespace V1_0
