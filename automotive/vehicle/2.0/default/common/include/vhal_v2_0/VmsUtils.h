@@ -172,7 +172,7 @@ std::unique_ptr<VehiclePropValue> createSubscriptionsRequest();
 // should first convert the proto to a byte string (vms_packet) using the
 // SerializeToString proto API. Then, it use this interface to build the VehicleProperty
 // by passing publisher and layer information (layer_publisher) and the vms_packet.
-std::unique_ptr<VehiclePropValue> CreateDataMessageWithLayerPublisherInfo(
+std::unique_ptr<VehiclePropValue> createDataMessageWithLayerPublisherInfo(
         const VmsLayerAndPublisher& layer_publisher, const std::string& vms_packet);
 
 // Creates a VehiclePropValue containing a message of type
