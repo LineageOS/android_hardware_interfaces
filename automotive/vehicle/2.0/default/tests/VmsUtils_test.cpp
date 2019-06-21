@@ -141,7 +141,7 @@ TEST(VmsUtilsTest, subscriptionsMessage) {
 TEST(VmsUtilsTest, dataMessage) {
     const std::string bytes = "aaa";
     const VmsLayerAndPublisher layer_and_publisher(VmsLayer(2, 0, 1), 123);
-    auto message = CreateDataMessageWithLayerPublisherInfo(layer_and_publisher, bytes);
+    auto message = createDataMessageWithLayerPublisherInfo(layer_and_publisher, bytes);
     ASSERT_NE(message, nullptr);
     EXPECT_TRUE(isValidVmsMessage(*message));
     EXPECT_EQ(message->prop, toInt(VehicleProperty::VEHICLE_MAP_SERVICE));
@@ -177,7 +177,7 @@ TEST(VmsUtilsTest, invalidMessageType) {
 TEST(VmsUtilsTest, parseDataMessage) {
     const std::string bytes = "aaa";
     const VmsLayerAndPublisher layer_and_publisher(VmsLayer(1, 0, 1), 123);
-    auto message = CreateDataMessageWithLayerPublisherInfo(layer_and_publisher, bytes);
+    auto message = createDataMessageWithLayerPublisherInfo(layer_and_publisher, bytes);
     auto data_str = parseData(*message);
     ASSERT_FALSE(data_str.empty());
     EXPECT_EQ(data_str, bytes);
