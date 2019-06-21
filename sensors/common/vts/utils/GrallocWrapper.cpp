@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "GrallocWrapper"
-
 #include "GrallocWrapper.h"
 
 #include <utils/Log.h>
