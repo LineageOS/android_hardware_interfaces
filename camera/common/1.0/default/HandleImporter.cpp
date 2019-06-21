@@ -27,12 +27,20 @@ namespace helper {
 
 using MapperErrorV2 = android::hardware::graphics::mapper::V2_0::Error;
 using MapperErrorV3 = android::hardware::graphics::mapper::V3_0::Error;
+using MapperErrorV4 = android::hardware::graphics::mapper::V4_0::Error;
 using IMapperV3 = android::hardware::graphics::mapper::V3_0::IMapper;
+using IMapperV4 = android::hardware::graphics::mapper::V4_0::IMapper;
 
 HandleImporter::HandleImporter() : mInitialized(false) {}
 
 void HandleImporter::initializeLocked() {
     if (mInitialized) {
+        return;
+    }
+
+    mMapperV4 = IMapperV4::getService();
+    if (mMapperV4 != nullptr) {
+        mInitialized = true;
         return;
     }
 
@@ -53,6 +61,7 @@ void HandleImporter::initializeLocked() {
 }
 
 void HandleImporter::cleanup() {
+    mMapperV4.clear();
     mMapperV3.clear();
     mMapperV2.clear();
     mInitialized = false;
@@ -151,6 +160,10 @@ bool HandleImporter::importBuffer(buffer_handle_t& handle) {
         initializeLocked();
     }
 
+    if (mMapperV4 != nullptr) {
+        return importBufferInternal<IMapperV4, MapperErrorV4>(mMapperV4, handle);
+    }
+
     if (mMapperV3 != nullptr) {
         return importBufferInternal<IMapperV3, MapperErrorV3>(mMapperV3, handle);
     }
@@ -159,7 +172,7 @@ bool HandleImporter::importBuffer(buffer_handle_t& handle) {
         return importBufferInternal<IMapper, MapperErrorV2>(mMapperV2, handle);
     }
 
-    ALOGE("%s: mMapperV3 and mMapperV2 are both null!", __FUNCTION__);
+    ALOGE("%s: mMapperV4, mMapperV3 and mMapperV2 are all null!", __FUNCTION__);
     return false;
 }
 
@@ -169,12 +182,17 @@ void HandleImporter::freeBuffer(buffer_handle_t handle) {
     }
 
     Mutex::Autolock lock(mLock);
-    if (mMapperV3 == nullptr && mMapperV2 == nullptr) {
-        ALOGE("%s: mMapperV3 and mMapperV2 are both null!", __FUNCTION__);
+    if (mMapperV4 == nullptr && mMapperV3 == nullptr && mMapperV2 == nullptr) {
+        ALOGE("%s: mMapperV4, mMapperV3 and mMapperV2 are all null!", __FUNCTION__);
         return;
     }
 
-    if (mMapperV3 != nullptr) {
+    if (mMapperV4 != nullptr) {
+        auto ret = mMapperV4->freeBuffer(const_cast<native_handle_t*>(handle));
+        if (!ret.isOk()) {
+            ALOGE("%s: mapper freeBuffer failed: %s", __FUNCTION__, ret.description().c_str());
+        }
+    } else if (mMapperV3 != nullptr) {
         auto ret = mMapperV3->freeBuffer(const_cast<native_handle_t*>(handle));
         if (!ret.isOk()) {
             ALOGE("%s: mapper freeBuffer failed: %s",
@@ -222,14 +240,27 @@ void* HandleImporter::lock(
         initializeLocked();
     }
 
-    if (mMapperV3 == nullptr && mMapperV2 == nullptr) {
-        ALOGE("%s: mMapperV3 and mMapperV2 are both null!", __FUNCTION__);
+    if (mMapperV4 == nullptr && mMapperV3 == nullptr && mMapperV2 == nullptr) {
+        ALOGE("%s: mMapperV4, mMapperV3 and mMapperV2 are all null!", __FUNCTION__);
         return ret;
     }
 
     hidl_handle acquireFenceHandle;
     auto buffer = const_cast<native_handle_t*>(buf);
-    if (mMapperV3 != nullptr) {
+    if (mMapperV4 != nullptr) {
+        IMapperV4::Rect accessRegion{0, 0, static_cast<int>(size), 1};
+        // No need to use bytesPerPixel and bytesPerStride because we are using
+        // an 1-D buffer and accressRegion.
+        mMapperV4->lock(buffer, cpuUsage, accessRegion, acquireFenceHandle,
+                        [&](const auto& tmpError, const auto& tmpPtr, const auto& /*bytesPerPixel*/,
+                            const auto& /*bytesPerStride*/) {
+                            if (tmpError == MapperErrorV4::NONE) {
+                                ret = tmpPtr;
+                            } else {
+                                ALOGE("%s: failed to lock error %d!", __FUNCTION__, tmpError);
+                            }
+                        });
+    } else if (mMapperV3 != nullptr) {
         IMapperV3::Rect accessRegion { 0, 0, static_cast<int>(size), 1 };
         // No need to use bytesPerPixel and bytesPerStride because we are using
         // an 1-D buffer and accressRegion.
@@ -269,6 +300,10 @@ YCbCrLayout HandleImporter::lockYCbCr(
         initializeLocked();
     }
 
+    if (mMapperV4 != nullptr) {
+        return lockYCbCrInternal<IMapperV4, MapperErrorV4>(mMapperV4, buf, cpuUsage, accessRegion);
+    }
+
     if (mMapperV3 != nullptr) {
         return lockYCbCrInternal<IMapperV3, MapperErrorV3>(
                 mMapperV3, buf, cpuUsage, accessRegion);
@@ -279,11 +314,14 @@ YCbCrLayout HandleImporter::lockYCbCr(
                 mMapperV2, buf, cpuUsage, accessRegion);
     }
 
-    ALOGE("%s: mMapperV3 and mMapperV2 are both null!", __FUNCTION__);
+    ALOGE("%s: mMapperV4, mMapperV3 and mMapperV2 are all null!", __FUNCTION__);
     return {};
 }
 
 int HandleImporter::unlock(buffer_handle_t& buf) {
+    if (mMapperV4 != nullptr) {
+        return unlockInternal<IMapperV4, MapperErrorV4>(mMapperV4, buf);
+    }
     if (mMapperV3 != nullptr) {
         return unlockInternal<IMapperV3, MapperErrorV3>(mMapperV3, buf);
     }
@@ -291,7 +329,7 @@ int HandleImporter::unlock(buffer_handle_t& buf) {
         return unlockInternal<IMapper, MapperErrorV2>(mMapperV2, buf);
     }
 
-    ALOGE("%s: mMapperV3 and mMapperV2 are both null!", __FUNCTION__);
+    ALOGE("%s: mMapperV4, mMapperV3 and mMapperV2 are all null!", __FUNCTION__);
     return -1;
 }
 
