@@ -242,6 +242,17 @@ const ConfigDeclaration kVehicleProperties[]{
 
     {.config =
          {
+             .prop = toInt(VehicleProperty::VEHICLE_SPEED_DISPLAY_UNITS),
+             .access = VehiclePropertyAccess::READ_WRITE,
+             .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+             .configArray = {(int)VehicleUnit::METER_PER_SEC,
+                             (int)VehicleUnit::MILES_PER_HOUR,
+                             (int)VehicleUnit::KILOMETERS_PER_HOUR},
+         },
+     .initialValue = {.int32Values = {(int)VehicleUnit::KILOMETERS_PER_HOUR}}},
+
+    {.config =
+         {
              .prop = toInt(VehicleProperty::INFO_DRIVER_SEAT),
              .access = VehiclePropertyAccess::READ,
              .changeMode = VehiclePropertyChangeMode::STATIC,
