@@ -16,6 +16,7 @@
 
 cc_test {
     name: "VtsHalSensorsV1_0TargetTest",
+    cflags: ["-DLOG_TAG=\"sensors_hidl_hal_test\""],
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: [
         "SensorsHidlEnvironmentV1_0.cpp",
