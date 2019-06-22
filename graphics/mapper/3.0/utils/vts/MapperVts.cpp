@@ -25,8 +25,13 @@ namespace mapper {
 namespace V3_0 {
 namespace vts {
 
-Gralloc::Gralloc(const std::string& allocatorServiceName, const std::string& mapperServiceName) {
-    init(allocatorServiceName, mapperServiceName);
+Gralloc::Gralloc(const std::string& allocatorServiceName, const std::string& mapperServiceName,
+                 bool errOnFailure) {
+    if (errOnFailure) {
+        init(allocatorServiceName, mapperServiceName);
+    } else {
+        initNoErr(allocatorServiceName, mapperServiceName);
+    }
 }
 
 void Gralloc::init(const std::string& allocatorServiceName, const std::string& mapperServiceName) {
@@ -36,6 +41,16 @@ void Gralloc::init(const std::string& allocatorServiceName, const std::string& m
     mMapper = ::testing::VtsHalHidlTargetTestBase::getService<IMapper>(mapperServiceName);
     ASSERT_NE(nullptr, mMapper.get()) << "failed to get mapper service";
     ASSERT_FALSE(mMapper->isRemote()) << "mapper is not in passthrough mode";
+}
+
+void Gralloc::initNoErr(const std::string& allocatorServiceName,
+                        const std::string& mapperServiceName) {
+    mAllocator = ::testing::VtsHalHidlTargetTestBase::getService<IAllocator>(allocatorServiceName);
+
+    mMapper = ::testing::VtsHalHidlTargetTestBase::getService<IMapper>(mapperServiceName);
+    if (mMapper.get()) {
+        ASSERT_FALSE(mMapper->isRemote()) << "mapper is not in passthrough mode";
+    }
 }
 
 Gralloc::~Gralloc() {

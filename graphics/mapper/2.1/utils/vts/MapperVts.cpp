@@ -43,24 +43,25 @@ static_assert(sizeof(OldBufferDescriptorInfo) == sizeof(IMapper::BufferDescripto
                       offsetof(IMapper::BufferDescriptorInfo, usage),
               "");
 
-Gralloc::Gralloc() : V2_0::vts::Gralloc() {
+Gralloc::Gralloc(bool errOnFailure) : V2_0::vts::Gralloc() {
     if (::testing::Test::HasFatalFailure()) {
         return;
     }
-    init();
+    init(errOnFailure);
 }
 
-Gralloc::Gralloc(const std::string& allocatorServiceName, const std::string& mapperServiceName)
+Gralloc::Gralloc(const std::string& allocatorServiceName, const std::string& mapperServiceName,
+                 bool errOnFailure)
     : V2_0::vts::Gralloc(allocatorServiceName, mapperServiceName) {
     if (::testing::Test::HasFatalFailure()) {
         return;
     }
-    init();
+    init(errOnFailure);
 }
 
-void Gralloc::init() {
+void Gralloc::init(bool errOnFailure) {
     mMapperV2_1 = IMapper::castFrom(V2_0::vts::Gralloc::getMapper());
-    ASSERT_NE(nullptr, mMapperV2_1.get()) << "failed to get mapper 2.1 service";
+    if (errOnFailure) ASSERT_NE(nullptr, mMapperV2_1.get()) << "failed to get mapper 2.1 service";
 }
 
 sp<IMapper> Gralloc::getMapper() const {

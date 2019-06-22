@@ -36,62 +36,66 @@ using android::hardware::graphics::allocator::V3_0::IAllocator;
 // A wrapper to IAllocator and IMapper.
 class Gralloc {
    public:
-    Gralloc(const std::string& allocatorServiceName = "default",
-            const std::string& mapperServiceName = "default");
-    ~Gralloc();
+     Gralloc(const std::string& allocatorServiceName = "default",
+             const std::string& mapperServiceName = "default", bool errOnFailure = true);
+     ~Gralloc();
 
-    // IAllocator methods
+     // IAllocator methods
 
-    sp<IAllocator> getAllocator() const;
+     sp<IAllocator> getAllocator() const;
 
-    std::string dumpDebugInfo();
+     std::string dumpDebugInfo();
 
-    // When import is false, this simply calls IAllocator::allocate. When import
-    // is true, the returned buffers are also imported into the mapper.
-    //
-    // Either case, the returned buffers must be freed with freeBuffer.
-    std::vector<const native_handle_t*> allocate(const BufferDescriptor& descriptor, uint32_t count,
-                                                 bool import = true, uint32_t* outStride = nullptr);
-    const native_handle_t* allocate(const IMapper::BufferDescriptorInfo& descriptorInfo,
-                                    bool import = true, uint32_t* outStride = nullptr);
+     // When import is false, this simply calls IAllocator::allocate. When import
+     // is true, the returned buffers are also imported into the mapper.
+     //
+     // Either case, the returned buffers must be freed with freeBuffer.
+     std::vector<const native_handle_t*> allocate(const BufferDescriptor& descriptor,
+                                                  uint32_t count, bool import = true,
+                                                  uint32_t* outStride = nullptr);
+     const native_handle_t* allocate(const IMapper::BufferDescriptorInfo& descriptorInfo,
+                                     bool import = true, uint32_t* outStride = nullptr);
 
-    // IMapper methods
+     // IMapper methods
 
-    sp<IMapper> getMapper() const;
+     sp<IMapper> getMapper() const;
 
-    BufferDescriptor createDescriptor(const IMapper::BufferDescriptorInfo& descriptorInfo);
+     BufferDescriptor createDescriptor(const IMapper::BufferDescriptorInfo& descriptorInfo);
 
-    const native_handle_t* importBuffer(const hidl_handle& rawHandle);
-    void freeBuffer(const native_handle_t* bufferHandle);
+     const native_handle_t* importBuffer(const hidl_handle& rawHandle);
+     void freeBuffer(const native_handle_t* bufferHandle);
 
-    // We use fd instead of hidl_handle in these functions to pass fences
-    // in and out of the mapper.  The ownership of the fd is always transferred
-    // with each of these functions.
-    void* lock(const native_handle_t* bufferHandle, uint64_t cpuUsage,
-               const IMapper::Rect& accessRegion, int acquireFence, int32_t* outBytesPerPixel,
-               int32_t* outBytesPerStride);
-    YCbCrLayout lockYCbCr(const native_handle_t* bufferHandle, uint64_t cpuUsage,
-                          const IMapper::Rect& accessRegion, int acquireFence);
-    int unlock(const native_handle_t* bufferHandle);
+     // We use fd instead of hidl_handle in these functions to pass fences
+     // in and out of the mapper.  The ownership of the fd is always transferred
+     // with each of these functions.
+     void* lock(const native_handle_t* bufferHandle, uint64_t cpuUsage,
+                const IMapper::Rect& accessRegion, int acquireFence, int32_t* outBytesPerPixel,
+                int32_t* outBytesPerStride);
+     YCbCrLayout lockYCbCr(const native_handle_t* bufferHandle, uint64_t cpuUsage,
+                           const IMapper::Rect& accessRegion, int acquireFence);
+     int unlock(const native_handle_t* bufferHandle);
 
-    bool validateBufferSize(const native_handle_t* bufferHandle,
-                            const IMapper::BufferDescriptorInfo& descriptorInfo, uint32_t stride);
-    void getTransportSize(const native_handle_t* bufferHandle, uint32_t* outNumFds,
-                          uint32_t* outNumInts);
+     bool validateBufferSize(const native_handle_t* bufferHandle,
+                             const IMapper::BufferDescriptorInfo& descriptorInfo, uint32_t stride);
+     void getTransportSize(const native_handle_t* bufferHandle, uint32_t* outNumFds,
+                           uint32_t* outNumInts);
 
-    bool isSupported(const IMapper::BufferDescriptorInfo& descriptorInfo);
+     bool isSupported(const IMapper::BufferDescriptorInfo& descriptorInfo);
 
    private:
-    void init(const std::string& allocatorServiceName, const std::string& mapperServiceName);
-    const native_handle_t* cloneBuffer(const hidl_handle& rawHandle);
+     void init(const std::string& allocatorServiceName, const std::string& mapperServiceName);
 
-    sp<IAllocator> mAllocator;
-    sp<IMapper> mMapper;
+     // initialize without checking for failure to get service
+     void initNoErr(const std::string& allocatorServiceName, const std::string& mapperServiceName);
+     const native_handle_t* cloneBuffer(const hidl_handle& rawHandle);
 
-    // Keep track of all cloned and imported handles.  When a test fails with
-    // ASSERT_*, the destructor will free the handles for the test.
-    std::unordered_set<const native_handle_t*> mClonedBuffers;
-    std::unordered_set<const native_handle_t*> mImportedBuffers;
+     sp<IAllocator> mAllocator;
+     sp<IMapper> mMapper;
+
+     // Keep track of all cloned and imported handles.  When a test fails with
+     // ASSERT_*, the destructor will free the handles for the test.
+     std::unordered_set<const native_handle_t*> mClonedBuffers;
+     std::unordered_set<const native_handle_t*> mImportedBuffers;
 };
 
 }  // namespace vts
