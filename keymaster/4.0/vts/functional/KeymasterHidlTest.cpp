@@ -216,8 +216,8 @@ void KeymasterHidlTest::CheckCreationDateTime(
                     std::chrono::system_clock::now();
             std::chrono::time_point<std::chrono::system_clock> reported_time{
                     std::chrono::milliseconds(sw_enforced[i].f.dateTime)};
-            // The test is flaky for EC keys, so a buffer time of 1 second will be added.
-            EXPECT_LE(creation - 1s, reported_time);
+            // The test is flaky for EC keys, so a buffer time of 120 seconds will be added.
+            EXPECT_LE(creation - 120s, reported_time);
             EXPECT_LE(reported_time, now + 1s);
         }
     }
