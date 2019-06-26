@@ -755,7 +755,8 @@ public:
             uint32_t *partialResultCount /*out*/,
             bool *useHalBufManager /*out*/,
             sp<DeviceCb> *cb /*out*/,
-            uint32_t streamConfigCounter = 0);
+            uint32_t streamConfigCounter = 0,
+            bool allowUnsupport = false);
     void configurePreviewStream(const std::string &name, int32_t deviceVersion,
             sp<ICameraProvider> provider,
             const AvailableStream *previewThreshold,
@@ -4055,7 +4056,7 @@ TEST_F(CameraHidlTest, processMultiCaptureRequestPreview) {
 
     for (const auto& name : cameraDeviceNames) {
         int deviceVersion = getCameraDeviceVersion(name, mProviderType);
-        if (deviceVersion < CAMERA_DEVICE_API_VERSION_3_4) {
+        if (deviceVersion < CAMERA_DEVICE_API_VERSION_3_5) {
             continue;
         }
         std::string version, deviceId;
@@ -4127,8 +4128,11 @@ TEST_F(CameraHidlTest, processMultiCaptureRequestPreview) {
         configurePreviewStreams3_4(name, deviceVersion, mProvider, &previewThreshold, physicalIds,
                 &session3_4, &session3_5, &previewStream, &halStreamConfig /*out*/,
                 &supportsPartialResults /*out*/, &partialResultCount /*out*/,
-                &useHalBufManager /*out*/, &cb /*out*/);
-        ASSERT_NE(session3_4, nullptr);
+                &useHalBufManager /*out*/, &cb /*out*/, 0 /*streamConfigCounter*/,
+                true /*allowUnsupport*/);
+        if (session3_5 == nullptr) {
+            continue;
+        }
 
         std::shared_ptr<ResultMetadataQueue> resultQueue;
         auto resultQueueRet =
@@ -5174,7 +5178,8 @@ void CameraHidlTest::configurePreviewStreams3_4(const std::string &name, int32_t
         uint32_t *partialResultCount /*out*/,
         bool *useHalBufManager /*out*/,
         sp<DeviceCb> *outCb /*out*/,
-        uint32_t streamConfigCounter) {
+        uint32_t streamConfigCounter,
+        bool allowUnsupport) {
     ASSERT_NE(nullptr, session3_4);
     ASSERT_NE(nullptr, session3_5);
     ASSERT_NE(nullptr, halStreamConfig);
@@ -5272,6 +5277,28 @@ void CameraHidlTest::configurePreviewStreams3_4(const std::string &name, int32_t
             config3_4.sessionParams = req;
             });
     ASSERT_TRUE(ret.isOk());
+
+    ASSERT_TRUE(!allowUnsupport || deviceVersion == CAMERA_DEVICE_API_VERSION_3_5);
+    if (allowUnsupport) {
+        sp<device::V3_5::ICameraDevice> cameraDevice3_5;
+        castDevice(device3_x, deviceVersion, &cameraDevice3_5);
+
+        bool supported = false;
+        ret = cameraDevice3_5->isStreamCombinationSupported(config3_4,
+                [&supported](Status s, bool combStatus) {
+                    ASSERT_TRUE((Status::OK == s) ||
+                            (Status::METHOD_NOT_SUPPORTED == s));
+                    if (Status::OK == s) {
+                        supported = combStatus;
+                    }
+                });
+        ASSERT_TRUE(ret.isOk());
+        // If stream combination is not supported, return null session.
+        if (!supported) {
+            *session3_5 = nullptr;
+            return;
+        }
+    }
 
     if (*session3_5 != nullptr) {
         config3_5.v3_4 = config3_4;
