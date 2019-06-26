@@ -109,20 +109,13 @@ struct VmsAvailabilityState {
 
 // An enum to represent the result of parsing START_SESSION message from the VMS service.
 enum VmsSessionStatus {
-    // New server session is received if the new client ID is -1 and the new server ID is not an
-    // invalid ID.
+    // When a new session is received, the client should acknowledge it with the correct
+    // IDs in the START_SESSION message.
     kNewServerSession,
-    // Ack to new client session is received if the new client ID is same as the old one and the new
-    // server ID is not an invalid ID.
-    kAckToNewClientSession,
-    // Error codes:
+    // When an acknowledgement it received, the client can start using the connection.
+    kAckToCurrentSession,
     // Invalid message with either invalid format or unexpected data.
-    kInvalidMessage,
-    // Invalid server ID. New ID should always be greater than or equal to max_of(0, current server
-    // ID)
-    kInvalidServiceId,
-    // Invalid client ID. New ID should always be either -1 or the current client ID.
-    kInvalidClientId
+    kInvalidMessage
 };
 
 // Creates an empty base VMS message with some pre-populated default fields.
@@ -235,7 +228,7 @@ bool hasServiceNewlyStarted(const VehiclePropValue& availability_change);
 // Takes a start session message, current service ID, current client ID; and returns the type/status
 // of the message. It also populates the new service ID with the correct value.
 VmsSessionStatus parseStartSessionMessage(const VehiclePropValue& start_session,
-                                          const int service_id, const int client_id,
+                                          const int current_service_id, const int current_client_id,
                                           int* new_service_id);
 
 }  // namespace vms
