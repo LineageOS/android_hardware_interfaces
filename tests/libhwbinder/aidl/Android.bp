@@ -1,4 +1,4 @@
-cc_library_shared {
+cc_library {
     name: "android.hardware.tests.libbinder",
     defaults: ["hidl_defaults"],
 
