@@ -16,9 +16,15 @@
 
 #define LOG_TAG "GnssHalTest"
 
+#include <android/hidl/manager/1.2/IServiceManager.h>
+#include <hidl/ServiceManagement.h>
+
 #include <gnss_hal_test.h>
 #include <chrono>
 #include "Utils.h"
+
+using ::android::hardware::hidl_string;
+using ::android::hardware::hidl_vec;
 
 using ::android::hardware::gnss::common::Utils;
 
@@ -147,6 +153,28 @@ void GnssHalTest::StartAndCheckLocations(int count) {
             CheckLocation(last_location_, location_called_count_ > 1);
         }
     }
+}
+
+bool GnssHalTest::IsGnssHalVersion_1_1() const {
+    using ::android::hidl::manager::V1_2::IServiceManager;
+    sp<IServiceManager> manager = ::android::hardware::defaultServiceManager1_2();
+
+    bool hasGnssHalVersion_1_1 = false;
+    manager->listManifestByInterface(
+            "android.hardware.gnss@1.1::IGnss",
+            [&hasGnssHalVersion_1_1](const hidl_vec<hidl_string>& registered) {
+                ASSERT_EQ(1, registered.size());
+                hasGnssHalVersion_1_1 = true;
+            });
+
+    bool hasGnssHalVersion_2_0 = false;
+    manager->listManifestByInterface(
+            "android.hardware.gnss@2.0::IGnss",
+            [&hasGnssHalVersion_2_0](const hidl_vec<hidl_string>& registered) {
+                hasGnssHalVersion_2_0 = registered.size() != 0;
+            });
+
+    return hasGnssHalVersion_1_1 && !hasGnssHalVersion_2_0;
 }
 
 void GnssHalTest::notify() {
