@@ -133,6 +133,10 @@ class TestBufferLayer : public TestLayer {
 
 class ReadbackHelper : public ::testing::VtsHalHidlTargetTestBase {
   public:
+    static std::string getColorModeString(ColorMode mode);
+
+    static std::string getDataspaceString(Dataspace dataspace);
+
     static int32_t GetBytesPerPixel(PixelFormat pixelFormat);
 
     static void fillBuffer(int32_t width, int32_t height, uint32_t stride, void* bufferData,
@@ -147,6 +151,9 @@ class ReadbackHelper : public ::testing::VtsHalHidlTargetTestBase {
 
     static bool readbackSupported(const PixelFormat& pixelFormat, const Dataspace& dataspace,
                                   const Error error);
+
+    static const std::vector<ColorMode> colorModes;
+    static const std::vector<Dataspace> dataspaces;
 };
 
 class ReadbackBuffer {

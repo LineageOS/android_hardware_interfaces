@@ -78,6 +78,8 @@ class GraphicsComposerReadbackTest : public ::testing::VtsHalHidlTargetTestBase 
             mDisplayHeight = mComposerClient->getDisplayAttribute(
                 mPrimaryDisplay, activeConfig, IComposerClient::Attribute::HEIGHT));
 
+        setTestColorModes();
+
         // explicitly disable vsync
         ASSERT_NO_FATAL_FAILURE(mComposerClient->setVsyncEnabled(mPrimaryDisplay, false));
         mComposerCallback->setVsyncAllowed(false);
@@ -87,17 +89,6 @@ class GraphicsComposerReadbackTest : public ::testing::VtsHalHidlTargetTestBase 
         mReader = std::make_unique<TestCommandReader>();
         mGralloc = std::make_shared<Gralloc>();
 
-        ASSERT_NO_FATAL_FAILURE(mComposerClient->setColorMode(mPrimaryDisplay, ColorMode::SRGB,
-                                                              RenderIntent::COLORIMETRIC));
-
-        mComposerClient->getRaw()->getReadbackBufferAttributes(
-                mPrimaryDisplay,
-                [&](const auto& tmpError, const auto& tmpPixelFormat, const auto& tmpDataspace) {
-                    mHasReadbackBuffer = ReadbackHelper::readbackSupported(tmpPixelFormat,
-                                                                           tmpDataspace, tmpError);
-                    mPixelFormat = tmpPixelFormat;
-                    mDataspace = tmpDataspace;
-                });
         ASSERT_NO_FATAL_FAILURE(mComposerClient->setPowerMode(mPrimaryDisplay, PowerMode::ON));
     }
 
@@ -137,6 +128,7 @@ class GraphicsComposerReadbackTest : public ::testing::VtsHalHidlTargetTestBase 
     Display mPrimaryDisplay;
     int32_t mDisplayWidth;
     int32_t mDisplayHeight;
+    std::vector<ColorMode> mTestColorModes;
     std::shared_ptr<CommandWriterBase> mWriter;
     std::unique_ptr<TestCommandReader> mReader;
     std::shared_ptr<Gralloc> mGralloc;
@@ -158,185 +150,372 @@ class GraphicsComposerReadbackTest : public ::testing::VtsHalHidlTargetTestBase 
             return displays[0];
         }
     }
+
+    void setTestColorModes() {
+        mTestColorModes.clear();
+        mComposerClient->getRaw()->getColorModes_2_2(mPrimaryDisplay, [&](const auto& tmpError,
+                                                                          const auto& tmpModes) {
+            ASSERT_EQ(Error::NONE, tmpError);
+            for (ColorMode mode : tmpModes) {
+                if (std::find(ReadbackHelper::colorModes.begin(), ReadbackHelper::colorModes.end(),
+                              mode) != ReadbackHelper::colorModes.end()) {
+                    mTestColorModes.push_back(mode);
+                }
+            }
+        });
+    }
 };
 
 TEST_F(GraphicsComposerReadbackTest, SingleSolidColorLayer) {
-    if (!mHasReadbackBuffer) {
-        GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
-        return;
+    for (ColorMode mode : mTestColorModes) {
+        std::cout << "---Testing Color Mode " << ReadbackHelper::getColorModeString(mode) << "---"
+                  << std::endl;
+        mWriter->selectDisplay(mPrimaryDisplay);
+        ASSERT_NO_FATAL_FAILURE(
+                mComposerClient->setColorMode(mPrimaryDisplay, mode, RenderIntent::COLORIMETRIC));
+
+        mComposerClient->getRaw()->getReadbackBufferAttributes(
+                mPrimaryDisplay,
+                [&](const auto& tmpError, const auto& tmpPixelFormat, const auto& tmpDataspace) {
+                    mHasReadbackBuffer = ReadbackHelper::readbackSupported(tmpPixelFormat,
+                                                                           tmpDataspace, tmpError);
+                    mPixelFormat = tmpPixelFormat;
+                    mDataspace = tmpDataspace;
+                });
+
+        if (!mHasReadbackBuffer) {
+            std::cout << "Readback not supported or unsupported pixelFormat/dataspace" << std::endl;
+            GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
+            return;
+        }
+
+        auto layer = std::make_shared<TestColorLayer>(mComposerClient, mPrimaryDisplay);
+        IComposerClient::Rect coloredSquare({0, 0, mDisplayWidth, mDisplayHeight});
+        layer->setColor(BLUE);
+        layer->setDisplayFrame(coloredSquare);
+        layer->setZOrder(10);
+
+        std::vector<std::shared_ptr<TestLayer>> layers = {layer};
+
+        // expected color for each pixel
+        std::vector<IComposerClient::Color> expectedColors(mDisplayWidth * mDisplayHeight);
+        ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth, coloredSquare, BLUE);
+
+        ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mGralloc, mDisplayWidth,
+                                      mDisplayHeight, mPixelFormat, mDataspace);
+        ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
+
+        writeLayers(layers);
+        ASSERT_EQ(0, mReader->mErrors.size());
+        mWriter->validateDisplay();
+        execute();
+        // if hwc cannot handle and asks for composition change,
+        // just succeed the test
+        if (mReader->mCompositionChanges.size() != 0) {
+            clearCommandReaderState();
+            GTEST_SUCCEED();
+            return;
+        }
+        ASSERT_EQ(0, mReader->mErrors.size());
+        mWriter->presentDisplay();
+        execute();
+        ASSERT_EQ(0, mReader->mErrors.size());
+
+        ASSERT_NO_FATAL_FAILURE(readbackBuffer.checkReadbackBuffer(expectedColors));
     }
-    mWriter->selectDisplay(mPrimaryDisplay);
-
-    auto layer = std::make_shared<TestColorLayer>(mComposerClient, mPrimaryDisplay);
-    IComposerClient::Rect coloredSquare({0, 0, mDisplayWidth, mDisplayHeight});
-    layer->setColor(BLUE);
-    layer->setDisplayFrame(coloredSquare);
-    layer->setZOrder(10);
-
-    std::vector<std::shared_ptr<TestLayer>> layers = {layer};
-
-    // expected color for each pixel
-    std::vector<IComposerClient::Color> expectedColors(mDisplayWidth * mDisplayHeight);
-    ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth, coloredSquare, BLUE);
-
-    ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mGralloc, mDisplayWidth,
-                                  mDisplayHeight, mPixelFormat, mDataspace);
-    ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
-
-    writeLayers(layers);
-    ASSERT_EQ(0, mReader->mErrors.size());
-    mWriter->validateDisplay();
-    execute();
-    // if hwc cannot handle and asks for composition change,
-    // just succeed the test
-    if (mReader->mCompositionChanges.size() != 0) {
-        clearCommandReaderState();
-        GTEST_SUCCEED();
-        return;
-    }
-    ASSERT_EQ(0, mReader->mErrors.size());
-    mWriter->presentDisplay();
-    execute();
-    ASSERT_EQ(0, mReader->mErrors.size());
-
-    ASSERT_NO_FATAL_FAILURE(readbackBuffer.checkReadbackBuffer(expectedColors));
 }
 
 TEST_F(GraphicsComposerReadbackTest, SetLayerBuffer) {
-    if (!mHasReadbackBuffer) {
-        GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
-        return;
+    for (ColorMode mode : mTestColorModes) {
+        std::cout << "---Testing Color Mode " << ReadbackHelper::getColorModeString(mode) << "---"
+                  << std::endl;
+        mWriter->selectDisplay(mPrimaryDisplay);
+        ASSERT_NO_FATAL_FAILURE(
+                mComposerClient->setColorMode(mPrimaryDisplay, mode, RenderIntent::COLORIMETRIC));
+
+        mComposerClient->getRaw()->getReadbackBufferAttributes(
+                mPrimaryDisplay,
+                [&](const auto& tmpError, const auto& tmpPixelFormat, const auto& tmpDataspace) {
+                    mHasReadbackBuffer = ReadbackHelper::readbackSupported(tmpPixelFormat,
+                                                                           tmpDataspace, tmpError);
+                    mPixelFormat = tmpPixelFormat;
+                    mDataspace = tmpDataspace;
+                });
+
+        if (!mHasReadbackBuffer) {
+            std::cout << "Readback not supported or unsupported pixelFormat/dataspace" << std::endl;
+            GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
+            return;
+        }
+
+        mWriter->selectDisplay(mPrimaryDisplay);
+
+        ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mGralloc, mDisplayWidth,
+                                      mDisplayHeight, mPixelFormat, mDataspace);
+        ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
+        std::vector<IComposerClient::Color> expectedColors(mDisplayWidth * mDisplayHeight);
+        ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth,
+                                       {0, 0, mDisplayWidth, mDisplayHeight / 4}, RED);
+        ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth,
+                                       {0, mDisplayHeight / 4, mDisplayWidth, mDisplayHeight / 2},
+                                       GREEN);
+        ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth,
+                                       {0, mDisplayHeight / 2, mDisplayWidth, mDisplayHeight},
+                                       BLUE);
+
+        auto layer = std::make_shared<TestBufferLayer>(mComposerClient, mGralloc, mPrimaryDisplay,
+                                                       mDisplayWidth, mDisplayHeight,
+                                                       PixelFormat::RGBA_8888);
+        layer->setDisplayFrame({0, 0, mDisplayWidth, mDisplayHeight});
+        layer->setZOrder(10);
+        ASSERT_NO_FATAL_FAILURE(layer->setBuffer(expectedColors));
+
+        std::vector<std::shared_ptr<TestLayer>> layers = {layer};
+
+        writeLayers(layers);
+        ASSERT_EQ(0, mReader->mErrors.size());
+        mWriter->validateDisplay();
+        execute();
+
+        if (mReader->mCompositionChanges.size() != 0) {
+            clearCommandReaderState();
+            GTEST_SUCCEED();
+            return;
+        }
+        ASSERT_EQ(0, mReader->mErrors.size());
+
+        mWriter->presentDisplay();
+        execute();
+
+        ASSERT_EQ(0, mReader->mErrors.size());
+
+        ASSERT_NO_FATAL_FAILURE(readbackBuffer.checkReadbackBuffer(expectedColors));
     }
-
-    mWriter->selectDisplay(mPrimaryDisplay);
-
-    ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mGralloc, mDisplayWidth,
-                                  mDisplayHeight, mPixelFormat, mDataspace);
-    ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
-    std::vector<IComposerClient::Color> expectedColors(mDisplayWidth * mDisplayHeight);
-    ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth,
-                                   {0, 0, mDisplayWidth, mDisplayHeight / 4}, RED);
-    ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth,
-                                   {0, mDisplayHeight / 4, mDisplayWidth, mDisplayHeight / 2},
-                                   GREEN);
-    ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth,
-                                   {0, mDisplayHeight / 2, mDisplayWidth, mDisplayHeight}, BLUE);
-
-    auto layer =
-        std::make_shared<TestBufferLayer>(mComposerClient, mGralloc, mPrimaryDisplay, mDisplayWidth,
-                                          mDisplayHeight, PixelFormat::RGBA_8888);
-    layer->setDisplayFrame({0, 0, mDisplayWidth, mDisplayHeight});
-    layer->setZOrder(10);
-    ASSERT_NO_FATAL_FAILURE(layer->setBuffer(expectedColors));
-
-    std::vector<std::shared_ptr<TestLayer>> layers = {layer};
-
-    writeLayers(layers);
-    ASSERT_EQ(0, mReader->mErrors.size());
-    mWriter->validateDisplay();
-    execute();
-
-    if (mReader->mCompositionChanges.size() != 0) {
-        clearCommandReaderState();
-        GTEST_SUCCEED();
-        return;
-    }
-    ASSERT_EQ(0, mReader->mErrors.size());
-
-    mWriter->presentDisplay();
-    execute();
-
-    ASSERT_EQ(0, mReader->mErrors.size());
-
-    ASSERT_NO_FATAL_FAILURE(readbackBuffer.checkReadbackBuffer(expectedColors));
 }
 
 TEST_F(GraphicsComposerReadbackTest, SetLayerBufferNoEffect) {
-    if (!mHasReadbackBuffer) {
-        GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
-        return;
+    for (ColorMode mode : mTestColorModes) {
+        std::cout << "---Testing Color Mode " << ReadbackHelper::getColorModeString(mode) << "---"
+                  << std::endl;
+        mWriter->selectDisplay(mPrimaryDisplay);
+        ASSERT_NO_FATAL_FAILURE(
+                mComposerClient->setColorMode(mPrimaryDisplay, mode, RenderIntent::COLORIMETRIC));
+
+        mComposerClient->getRaw()->getReadbackBufferAttributes(
+                mPrimaryDisplay,
+                [&](const auto& tmpError, const auto& tmpPixelFormat, const auto& tmpDataspace) {
+                    mHasReadbackBuffer = ReadbackHelper::readbackSupported(tmpPixelFormat,
+                                                                           tmpDataspace, tmpError);
+                    mPixelFormat = tmpPixelFormat;
+                    mDataspace = tmpDataspace;
+                });
+
+        if (!mHasReadbackBuffer) {
+            std::cout << "Readback not supported or unsupported pixelFormat/dataspace" << std::endl;
+            GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
+            return;
+        }
+
+        auto layer = std::make_shared<TestColorLayer>(mComposerClient, mPrimaryDisplay);
+        IComposerClient::Rect coloredSquare({0, 0, mDisplayWidth, mDisplayHeight});
+        layer->setColor(BLUE);
+        layer->setDisplayFrame(coloredSquare);
+        layer->setZOrder(10);
+        layer->write(mWriter);
+
+        // This following buffer call should have no effect
+        uint64_t usage =
+                static_cast<uint64_t>(BufferUsage::CPU_READ_OFTEN | BufferUsage::CPU_WRITE_OFTEN);
+        const native_handle_t* bufferHandle =
+                mGralloc->allocate(mDisplayWidth, mDisplayHeight, 1, PixelFormat::RGBA_8888, usage);
+        mWriter->setLayerBuffer(0, bufferHandle, -1);
+
+        // expected color for each pixel
+        std::vector<IComposerClient::Color> expectedColors(mDisplayWidth * mDisplayHeight);
+        ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth, coloredSquare, BLUE);
+
+        ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mGralloc, mDisplayWidth,
+                                      mDisplayHeight, mPixelFormat, mDataspace);
+        ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
+
+        mWriter->validateDisplay();
+        execute();
+
+        if (mReader->mCompositionChanges.size() != 0) {
+            clearCommandReaderState();
+            GTEST_SUCCEED();
+            return;
+        }
+        ASSERT_EQ(0, mReader->mErrors.size());
+        mWriter->presentDisplay();
+        execute();
+        ASSERT_EQ(0, mReader->mErrors.size());
+
+        ASSERT_NO_FATAL_FAILURE(readbackBuffer.checkReadbackBuffer(expectedColors));
     }
-
-    mWriter->selectDisplay(mPrimaryDisplay);
-
-    auto layer = std::make_shared<TestColorLayer>(mComposerClient, mPrimaryDisplay);
-    IComposerClient::Rect coloredSquare({0, 0, mDisplayWidth, mDisplayHeight});
-    layer->setColor(BLUE);
-    layer->setDisplayFrame(coloredSquare);
-    layer->setZOrder(10);
-    layer->write(mWriter);
-
-    // This following buffer call should have no effect
-    PixelFormat format = PixelFormat::RGBA_8888;
-    uint64_t usage =
-            static_cast<uint64_t>(BufferUsage::CPU_READ_OFTEN | BufferUsage::CPU_WRITE_OFTEN);
-    const native_handle_t* bufferHandle =
-            mGralloc->allocate(mDisplayWidth, mDisplayHeight, 1, format, usage);
-    mWriter->setLayerBuffer(0, bufferHandle, -1);
-
-    // expected color for each pixel
-    std::vector<IComposerClient::Color> expectedColors(mDisplayWidth * mDisplayHeight);
-    ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth, coloredSquare, BLUE);
-
-    ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mGralloc, mDisplayWidth,
-                                  mDisplayHeight, mPixelFormat, mDataspace);
-    ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
-
-    mWriter->validateDisplay();
-    execute();
-
-    if (mReader->mCompositionChanges.size() != 0) {
-        clearCommandReaderState();
-        GTEST_SUCCEED();
-        return;
-    }
-    ASSERT_EQ(0, mReader->mErrors.size());
-    mWriter->presentDisplay();
-    execute();
-    ASSERT_EQ(0, mReader->mErrors.size());
-
-    ASSERT_NO_FATAL_FAILURE(readbackBuffer.checkReadbackBuffer(expectedColors));
 }
 
 TEST_F(GraphicsComposerReadbackTest, ClientComposition) {
-    if (!mHasReadbackBuffer) {
-        GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
-        return;
-    }
-
-    mWriter->selectDisplay(mPrimaryDisplay);
-
-    std::vector<IComposerClient::Color> expectedColors(mDisplayWidth * mDisplayHeight);
-    ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth,
-                                   {0, 0, mDisplayWidth, mDisplayHeight / 4}, RED);
-    ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth,
-                                   {0, mDisplayHeight / 4, mDisplayWidth, mDisplayHeight / 2},
-                                   GREEN);
-    ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth,
-                                   {0, mDisplayHeight / 2, mDisplayWidth, mDisplayHeight}, BLUE);
-
-    auto layer =
-        std::make_shared<TestBufferLayer>(mComposerClient, mGralloc, mPrimaryDisplay, mDisplayWidth,
-                                          mDisplayHeight, PixelFormat::RGBA_FP16);
-    layer->setDisplayFrame({0, 0, mDisplayWidth, mDisplayHeight});
-    layer->setZOrder(10);
-
-    std::vector<std::shared_ptr<TestLayer>> layers = {layer};
-
-    ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mGralloc, mDisplayWidth,
-                                  mDisplayHeight, mPixelFormat, mDataspace);
-    ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
-    writeLayers(layers);
-    ASSERT_EQ(0, mReader->mErrors.size());
-    mWriter->validateDisplay();
-    execute();
-
-    if (mReader->mCompositionChanges.size() != 0) {
-        ASSERT_EQ(1, mReader->mCompositionChanges.size());
-        ASSERT_EQ(1, mReader->mCompositionChanges[0].second);
-
-        ASSERT_NO_FATAL_FAILURE(
+    ASSERT_NO_FATAL_FAILURE(
             mComposerClient->setClientTargetSlotCount(mPrimaryDisplay, kClientTargetSlotCount));
+
+    for (ColorMode mode : mTestColorModes) {
+        std::cout << "---Testing Color Mode " << ReadbackHelper::getColorModeString(mode) << "---"
+                  << std::endl;
+        mWriter->selectDisplay(mPrimaryDisplay);
+        ASSERT_NO_FATAL_FAILURE(
+                mComposerClient->setColorMode(mPrimaryDisplay, mode, RenderIntent::COLORIMETRIC));
+
+        mComposerClient->getRaw()->getReadbackBufferAttributes(
+                mPrimaryDisplay,
+                [&](const auto& tmpError, const auto& tmpPixelFormat, const auto& tmpDataspace) {
+                    mHasReadbackBuffer = ReadbackHelper::readbackSupported(tmpPixelFormat,
+                                                                           tmpDataspace, tmpError);
+                    mPixelFormat = tmpPixelFormat;
+                    mDataspace = tmpDataspace;
+                });
+
+        if (!mHasReadbackBuffer) {
+            std::cout << "Readback not supported or unsupported pixelFormat/dataspace" << std::endl;
+            GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
+            return;
+        }
+
+        mWriter->selectDisplay(mPrimaryDisplay);
+
+        std::vector<IComposerClient::Color> expectedColors(mDisplayWidth * mDisplayHeight);
+        ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth,
+                                       {0, 0, mDisplayWidth, mDisplayHeight / 4}, RED);
+        ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth,
+                                       {0, mDisplayHeight / 4, mDisplayWidth, mDisplayHeight / 2},
+                                       GREEN);
+        ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth,
+                                       {0, mDisplayHeight / 2, mDisplayWidth, mDisplayHeight},
+                                       BLUE);
+
+        auto layer = std::make_shared<TestBufferLayer>(mComposerClient, mGralloc, mPrimaryDisplay,
+                                                       mDisplayWidth, mDisplayHeight,
+                                                       PixelFormat::RGBA_FP16);
+        layer->setDisplayFrame({0, 0, mDisplayWidth, mDisplayHeight});
+        layer->setZOrder(10);
+
+        std::vector<std::shared_ptr<TestLayer>> layers = {layer};
+
+        ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mGralloc, mDisplayWidth,
+                                      mDisplayHeight, mPixelFormat, mDataspace);
+        ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
+        writeLayers(layers);
+        ASSERT_EQ(0, mReader->mErrors.size());
+        mWriter->validateDisplay();
+        execute();
+
+        if (mReader->mCompositionChanges.size() != 0) {
+            ASSERT_EQ(1, mReader->mCompositionChanges.size());
+            ASSERT_EQ(1, mReader->mCompositionChanges[0].second);
+
+            // create client target buffer
+            uint32_t clientStride;
+            PixelFormat clientFormat = PixelFormat::RGBA_8888;
+            uint64_t clientUsage = static_cast<uint64_t>(BufferUsage::CPU_READ_OFTEN |
+                                                         BufferUsage::CPU_WRITE_OFTEN |
+                                                         BufferUsage::COMPOSER_CLIENT_TARGET);
+            const native_handle_t* clientBufferHandle =
+                    mGralloc->allocate(layer->mWidth, layer->mHeight, layer->mLayerCount,
+                                       clientFormat, clientUsage, /*import*/ true, &clientStride);
+            ASSERT_NE(nullptr, clientBufferHandle);
+
+            void* clientBufData =
+                    mGralloc->lock(clientBufferHandle, clientUsage, layer->mAccessRegion, -1);
+
+            ASSERT_NO_FATAL_FAILURE(ReadbackHelper::fillBuffer(layer->mWidth, layer->mHeight,
+                                                               clientStride, clientBufData,
+                                                               clientFormat, expectedColors));
+            int clientFence = mGralloc->unlock(clientBufferHandle);
+            if (clientFence != -1) {
+                sync_wait(clientFence, -1);
+                close(clientFence);
+            }
+
+            IComposerClient::Rect damage{0, 0, mDisplayWidth, mDisplayHeight};
+            mWriter->setClientTarget(0, clientBufferHandle, clientFence, Dataspace::UNKNOWN,
+                                     std::vector<IComposerClient::Rect>(1, damage));
+
+            layer->setToClientComposition(mWriter);
+            mWriter->validateDisplay();
+            execute();
+            ASSERT_EQ(0, mReader->mCompositionChanges.size());
+        }
+        ASSERT_EQ(0, mReader->mErrors.size());
+
+        mWriter->presentDisplay();
+        execute();
+
+        ASSERT_EQ(0, mReader->mErrors.size());
+
+        ASSERT_NO_FATAL_FAILURE(readbackBuffer.checkReadbackBuffer(expectedColors));
+    }
+}
+
+TEST_F(GraphicsComposerReadbackTest, DeviceAndClientComposition) {
+    ASSERT_NO_FATAL_FAILURE(
+            mComposerClient->setClientTargetSlotCount(mPrimaryDisplay, kClientTargetSlotCount));
+
+    for (ColorMode mode : mTestColorModes) {
+        std::cout << "---Testing Color Mode " << ReadbackHelper::getColorModeString(mode) << "---"
+                  << std::endl;
+        mWriter->selectDisplay(mPrimaryDisplay);
+        ASSERT_NO_FATAL_FAILURE(
+                mComposerClient->setColorMode(mPrimaryDisplay, mode, RenderIntent::COLORIMETRIC));
+
+        mComposerClient->getRaw()->getReadbackBufferAttributes(
+                mPrimaryDisplay,
+                [&](const auto& tmpError, const auto& tmpPixelFormat, const auto& tmpDataspace) {
+                    mHasReadbackBuffer = ReadbackHelper::readbackSupported(tmpPixelFormat,
+                                                                           tmpDataspace, tmpError);
+                    mPixelFormat = tmpPixelFormat;
+                    mDataspace = tmpDataspace;
+                });
+
+        if (!mHasReadbackBuffer) {
+            std::cout << "Readback not supported or unsupported pixelFormat/dataspace" << std::endl;
+            GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
+            return;
+        }
+
+        std::vector<IComposerClient::Color> expectedColors(mDisplayWidth * mDisplayHeight);
+        ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth,
+                                       {0, 0, mDisplayWidth, mDisplayHeight / 2}, GREEN);
+        ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth,
+                                       {0, mDisplayHeight / 2, mDisplayWidth, mDisplayHeight}, RED);
+
+        ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mGralloc, mDisplayWidth,
+                                      mDisplayHeight, mPixelFormat, mDataspace);
+        ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
+
+        auto deviceLayer = std::make_shared<TestBufferLayer>(
+                mComposerClient, mGralloc, mPrimaryDisplay, mDisplayWidth, mDisplayHeight / 2,
+                PixelFormat::RGBA_8888);
+        std::vector<IComposerClient::Color> deviceColors(deviceLayer->mWidth *
+                                                         deviceLayer->mHeight);
+        ReadbackHelper::fillColorsArea(deviceColors, deviceLayer->mWidth,
+                                       {0, 0, static_cast<int32_t>(deviceLayer->mWidth),
+                                        static_cast<int32_t>(deviceLayer->mHeight)},
+                                       GREEN);
+        deviceLayer->setDisplayFrame({0, 0, static_cast<int32_t>(deviceLayer->mWidth),
+                                      static_cast<int32_t>(deviceLayer->mHeight)});
+        deviceLayer->setZOrder(10);
+        ASSERT_NO_FATAL_FAILURE(deviceLayer->setBuffer(deviceColors));
+        deviceLayer->write(mWriter);
+
+        auto clientLayer = std::make_shared<TestBufferLayer>(
+                mComposerClient, mGralloc, mPrimaryDisplay, mDisplayWidth, mDisplayHeight / 2,
+                PixelFormat::RGBA_8888, IComposerClient::Composition::CLIENT);
+        IComposerClient::Rect clientFrame = {0, mDisplayHeight / 2, mDisplayWidth, mDisplayHeight};
+        clientLayer->setDisplayFrame(clientFrame);
+        clientLayer->setZOrder(0);
+        clientLayer->write(mWriter);
+        execute();
+        ASSERT_EQ(0, mReader->mErrors.size());
 
         // create client target buffer
         uint32_t clientStride;
@@ -345,350 +524,335 @@ TEST_F(GraphicsComposerReadbackTest, ClientComposition) {
                 static_cast<uint64_t>(BufferUsage::CPU_READ_OFTEN | BufferUsage::CPU_WRITE_OFTEN |
                                       BufferUsage::COMPOSER_CLIENT_TARGET);
         const native_handle_t* clientBufferHandle =
-                mGralloc->allocate(layer->mWidth, layer->mHeight, layer->mLayerCount, clientFormat,
-                                   clientUsage, /*import*/ true, &clientStride);
+                mGralloc->allocate(mDisplayWidth, mDisplayHeight, clientLayer->mLayerCount,
+                                   clientFormat, clientUsage, /*import*/ true, &clientStride);
         ASSERT_NE(nullptr, clientBufferHandle);
 
-        void* clientBufData =
-                mGralloc->lock(clientBufferHandle, clientUsage, layer->mAccessRegion, -1);
+        void* clientBufData = mGralloc->lock(clientBufferHandle, clientUsage,
+                                             {0, 0, mDisplayWidth, mDisplayHeight}, -1);
 
-        ASSERT_NO_FATAL_FAILURE(ReadbackHelper::fillBuffer(layer->mWidth, layer->mHeight,
+        std::vector<IComposerClient::Color> clientColors(mDisplayWidth * mDisplayHeight);
+        ReadbackHelper::fillColorsArea(clientColors, mDisplayWidth, clientFrame, RED);
+        ASSERT_NO_FATAL_FAILURE(ReadbackHelper::fillBuffer(mDisplayWidth, mDisplayHeight,
                                                            clientStride, clientBufData,
-                                                           clientFormat, expectedColors));
+                                                           clientFormat, clientColors));
         int clientFence = mGralloc->unlock(clientBufferHandle);
         if (clientFence != -1) {
             sync_wait(clientFence, -1);
             close(clientFence);
         }
 
-        IComposerClient::Rect damage{0, 0, mDisplayWidth, mDisplayHeight};
         mWriter->setClientTarget(0, clientBufferHandle, clientFence, Dataspace::UNKNOWN,
-                                 std::vector<IComposerClient::Rect>(1, damage));
-
-        layer->setToClientComposition(mWriter);
+                                 std::vector<IComposerClient::Rect>(1, clientFrame));
+        execute();
+        ASSERT_EQ(0, mReader->mErrors.size());
         mWriter->validateDisplay();
         execute();
-        ASSERT_EQ(0, mReader->mCompositionChanges.size());
+        if (mReader->mCompositionChanges.size() != 0) {
+            clearCommandReaderState();
+            std::cout << "Composition change requested, skipping test" << std::endl;
+            GTEST_SUCCEED() << "Composition change requested, skipping test";
+            return;
+        }
+        ASSERT_EQ(0, mReader->mErrors.size());
+        mWriter->presentDisplay();
+        execute();
+        ASSERT_EQ(0, mReader->mErrors.size());
+        ASSERT_NO_FATAL_FAILURE(readbackBuffer.checkReadbackBuffer(expectedColors));
     }
-    ASSERT_EQ(0, mReader->mErrors.size());
-
-    mWriter->presentDisplay();
-    execute();
-
-    ASSERT_EQ(0, mReader->mErrors.size());
-
-    ASSERT_NO_FATAL_FAILURE(readbackBuffer.checkReadbackBuffer(expectedColors));
-}
-
-TEST_F(GraphicsComposerReadbackTest, DeviceAndClientComposition) {
-    if (!mHasReadbackBuffer) {
-        GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
-        return;
-    }
-
-    mWriter->selectDisplay(mPrimaryDisplay);
-    ASSERT_NO_FATAL_FAILURE(
-        mComposerClient->setClientTargetSlotCount(mPrimaryDisplay, kClientTargetSlotCount));
-
-    std::vector<IComposerClient::Color> expectedColors(mDisplayWidth * mDisplayHeight);
-    ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth,
-                                   {0, 0, mDisplayWidth, mDisplayHeight / 2}, GREEN);
-    ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth,
-                                   {0, mDisplayHeight / 2, mDisplayWidth, mDisplayHeight}, RED);
-
-    ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mGralloc, mDisplayWidth,
-                                  mDisplayHeight, mPixelFormat, mDataspace);
-    ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
-
-    auto deviceLayer =
-        std::make_shared<TestBufferLayer>(mComposerClient, mGralloc, mPrimaryDisplay, mDisplayWidth,
-                                          mDisplayHeight / 2, PixelFormat::RGBA_8888);
-    std::vector<IComposerClient::Color> deviceColors(deviceLayer->mWidth * deviceLayer->mHeight);
-    ReadbackHelper::fillColorsArea(deviceColors, deviceLayer->mWidth,
-                                   {0, 0, static_cast<int32_t>(deviceLayer->mWidth),
-                                    static_cast<int32_t>(deviceLayer->mHeight)},
-                                   GREEN);
-    deviceLayer->setDisplayFrame({0, 0, static_cast<int32_t>(deviceLayer->mWidth),
-                                  static_cast<int32_t>(deviceLayer->mHeight)});
-    deviceLayer->setZOrder(10);
-    ASSERT_NO_FATAL_FAILURE(deviceLayer->setBuffer(deviceColors));
-    deviceLayer->write(mWriter);
-
-    auto clientLayer = std::make_shared<TestBufferLayer>(
-        mComposerClient, mGralloc, mPrimaryDisplay, mDisplayWidth, mDisplayHeight / 2,
-        PixelFormat::RGBA_8888, IComposerClient::Composition::CLIENT);
-    IComposerClient::Rect clientFrame = {0, mDisplayHeight / 2, mDisplayWidth, mDisplayHeight};
-    clientLayer->setDisplayFrame(clientFrame);
-    clientLayer->setZOrder(0);
-    clientLayer->write(mWriter);
-    execute();
-    ASSERT_EQ(0, mReader->mErrors.size());
-
-    uint64_t clientUsage =
-            static_cast<uint64_t>(BufferUsage::CPU_READ_OFTEN | BufferUsage::CPU_WRITE_OFTEN |
-                                  BufferUsage::COMPOSER_CLIENT_TARGET);
-    uint32_t clientStride;
-    const native_handle_t* clientBufferHandle =
-            mGralloc->allocate(mDisplayWidth, mDisplayHeight, 1, PixelFormat::RGBA_8888,
-                               clientUsage, /*import*/ true, &clientStride);
-    ASSERT_NE(nullptr, clientBufferHandle);
-
-    AccessRegion clientAccessRegion;
-    clientAccessRegion.left = 0;
-    clientAccessRegion.top = 0;
-    clientAccessRegion.width = mDisplayWidth;
-    clientAccessRegion.height = mDisplayHeight;
-    void* clientData = mGralloc->lock(clientBufferHandle, clientUsage, clientAccessRegion, -1);
-    std::vector<IComposerClient::Color> clientColors(mDisplayWidth * mDisplayHeight);
-    ReadbackHelper::fillColorsArea(clientColors, mDisplayWidth, clientFrame, RED);
-    ASSERT_NO_FATAL_FAILURE(ReadbackHelper::fillBuffer(mDisplayWidth, mDisplayHeight, clientStride,
-                                                       clientData, PixelFormat::RGBA_8888,
-                                                       clientColors));
-    int clientFence = mGralloc->unlock(clientBufferHandle);
-    if (clientFence != -1) {
-        sync_wait(clientFence, -1);
-        close(clientFence);
-    }
-
-    mWriter->setClientTarget(0, clientBufferHandle, clientFence, Dataspace::UNKNOWN,
-                             std::vector<IComposerClient::Rect>(1, clientFrame));
-    execute();
-    ASSERT_EQ(0, mReader->mErrors.size());
-    mWriter->validateDisplay();
-    execute();
-    if (mReader->mCompositionChanges.size() != 0) {
-        clearCommandReaderState();
-        GTEST_SUCCEED();
-        return;
-    }
-    ASSERT_EQ(0, mReader->mErrors.size());
-    mWriter->presentDisplay();
-    execute();
-    ASSERT_EQ(0, mReader->mErrors.size());
-    ASSERT_NO_FATAL_FAILURE(readbackBuffer.checkReadbackBuffer(expectedColors));
 }
 
 TEST_F(GraphicsComposerReadbackTest, SetLayerDamage) {
-    if (!mHasReadbackBuffer) {
-        GTEST_SUCCEED() << "Readback not supported or unsupported pixelformat/dataspace";
-        return;
+    for (ColorMode mode : mTestColorModes) {
+        std::cout << "---Testing Color Mode " << ReadbackHelper::getColorModeString(mode) << "---"
+                  << std::endl;
+        mWriter->selectDisplay(mPrimaryDisplay);
+        ASSERT_NO_FATAL_FAILURE(
+                mComposerClient->setColorMode(mPrimaryDisplay, mode, RenderIntent::COLORIMETRIC));
+
+        mComposerClient->getRaw()->getReadbackBufferAttributes(
+                mPrimaryDisplay,
+                [&](const auto& tmpError, const auto& tmpPixelFormat, const auto& tmpDataspace) {
+                    mHasReadbackBuffer = ReadbackHelper::readbackSupported(tmpPixelFormat,
+                                                                           tmpDataspace, tmpError);
+                    mPixelFormat = tmpPixelFormat;
+                    mDataspace = tmpDataspace;
+                });
+
+        if (!mHasReadbackBuffer) {
+            std::cout << "Readback not supported or unsupported pixelFormat/dataspace" << std::endl;
+            GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
+            return;
+        }
+
+        mWriter->selectDisplay(mPrimaryDisplay);
+
+        IComposerClient::Rect redRect = {0, 0, mDisplayWidth / 4, mDisplayHeight / 4};
+
+        std::vector<IComposerClient::Color> expectedColors(mDisplayWidth * mDisplayHeight);
+        ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth, redRect, RED);
+
+        auto layer = std::make_shared<TestBufferLayer>(mComposerClient, mGralloc, mPrimaryDisplay,
+                                                       mDisplayWidth, mDisplayHeight,
+                                                       PixelFormat::RGBA_8888);
+        layer->setDisplayFrame({0, 0, mDisplayWidth, mDisplayHeight});
+        layer->setZOrder(10);
+        ASSERT_NO_FATAL_FAILURE(layer->setBuffer(expectedColors));
+
+        std::vector<std::shared_ptr<TestLayer>> layers = {layer};
+
+        ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mGralloc, mDisplayWidth,
+                                      mDisplayHeight, mPixelFormat, mDataspace);
+        ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
+
+        writeLayers(layers);
+        ASSERT_EQ(0, mReader->mErrors.size());
+        mWriter->validateDisplay();
+        execute();
+        if (mReader->mCompositionChanges.size() != 0) {
+            clearCommandReaderState();
+            GTEST_SUCCEED();
+            return;
+        }
+        ASSERT_EQ(0, mReader->mErrors.size());
+        mWriter->presentDisplay();
+        execute();
+        ASSERT_EQ(0, mReader->mErrors.size());
+
+        ASSERT_NO_FATAL_FAILURE(readbackBuffer.checkReadbackBuffer(expectedColors));
+
+        // update surface damage and recheck
+        redRect = {mDisplayWidth / 4, mDisplayHeight / 4, mDisplayWidth / 2, mDisplayHeight / 2};
+        ReadbackHelper::clearColors(expectedColors, mDisplayWidth, mDisplayHeight, mDisplayWidth);
+        ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth, redRect, RED);
+
+        ASSERT_NO_FATAL_FAILURE(layer->fillBuffer(expectedColors));
+        layer->setSurfaceDamage(std::vector<IComposerClient::Rect>(
+                1, {0, 0, mDisplayWidth / 2, mDisplayWidth / 2}));
+
+        ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
+
+        writeLayers(layers);
+        ASSERT_EQ(0, mReader->mErrors.size());
+        mWriter->validateDisplay();
+        execute();
+        ASSERT_EQ(0, mReader->mErrors.size());
+        ASSERT_EQ(0, mReader->mCompositionChanges.size());
+        mWriter->presentDisplay();
+        execute();
+        ASSERT_EQ(0, mReader->mErrors.size());
+
+        ASSERT_NO_FATAL_FAILURE(readbackBuffer.checkReadbackBuffer(expectedColors));
     }
-
-    mWriter->selectDisplay(mPrimaryDisplay);
-
-    IComposerClient::Rect redRect = {0, 0, mDisplayWidth / 4, mDisplayHeight / 4};
-
-    std::vector<IComposerClient::Color> expectedColors(mDisplayWidth * mDisplayHeight);
-    ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth, redRect, RED);
-
-    auto layer =
-        std::make_shared<TestBufferLayer>(mComposerClient, mGralloc, mPrimaryDisplay, mDisplayWidth,
-                                          mDisplayHeight, PixelFormat::RGBA_8888);
-    layer->setDisplayFrame({0, 0, mDisplayWidth, mDisplayHeight});
-    layer->setZOrder(10);
-    ASSERT_NO_FATAL_FAILURE(layer->setBuffer(expectedColors));
-
-    std::vector<std::shared_ptr<TestLayer>> layers = {layer};
-
-    ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mGralloc, mDisplayWidth,
-                                  mDisplayHeight, mPixelFormat, mDataspace);
-    ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
-
-    writeLayers(layers);
-    ASSERT_EQ(0, mReader->mErrors.size());
-    mWriter->validateDisplay();
-    execute();
-    if (mReader->mCompositionChanges.size() != 0) {
-        clearCommandReaderState();
-        GTEST_SUCCEED();
-        return;
-    }
-    ASSERT_EQ(0, mReader->mErrors.size());
-    mWriter->presentDisplay();
-    execute();
-    ASSERT_EQ(0, mReader->mErrors.size());
-
-    ASSERT_NO_FATAL_FAILURE(readbackBuffer.checkReadbackBuffer(expectedColors));
-
-    // update surface damage and recheck
-    redRect = {mDisplayWidth / 4, mDisplayHeight / 4, mDisplayWidth / 2, mDisplayHeight / 2};
-    ReadbackHelper::clearColors(expectedColors, mDisplayWidth, mDisplayHeight, mDisplayWidth);
-    ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth, redRect, RED);
-
-    ASSERT_NO_FATAL_FAILURE(layer->fillBuffer(expectedColors));
-    layer->setSurfaceDamage(
-        std::vector<IComposerClient::Rect>(1, {0, 0, mDisplayWidth / 2, mDisplayWidth / 2}));
-
-    ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
-
-    writeLayers(layers);
-    ASSERT_EQ(0, mReader->mErrors.size());
-    mWriter->validateDisplay();
-    execute();
-    ASSERT_EQ(0, mReader->mErrors.size());
-    ASSERT_EQ(0, mReader->mCompositionChanges.size());
-    mWriter->presentDisplay();
-    execute();
-    ASSERT_EQ(0, mReader->mErrors.size());
-
-    ASSERT_NO_FATAL_FAILURE(readbackBuffer.checkReadbackBuffer(expectedColors));
 }
 
 TEST_F(GraphicsComposerReadbackTest, SetLayerPlaneAlpha) {
-    if (!mHasReadbackBuffer) {
-        GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
-        return;
+    for (ColorMode mode : mTestColorModes) {
+        std::cout << "---Testing Color Mode " << ReadbackHelper::getColorModeString(mode) << "---"
+                  << std::endl;
+        mWriter->selectDisplay(mPrimaryDisplay);
+        ASSERT_NO_FATAL_FAILURE(
+                mComposerClient->setColorMode(mPrimaryDisplay, mode, RenderIntent::COLORIMETRIC));
+
+        mComposerClient->getRaw()->getReadbackBufferAttributes(
+                mPrimaryDisplay,
+                [&](const auto& tmpError, const auto& tmpPixelFormat, const auto& tmpDataspace) {
+                    mHasReadbackBuffer = ReadbackHelper::readbackSupported(tmpPixelFormat,
+                                                                           tmpDataspace, tmpError);
+                    mPixelFormat = tmpPixelFormat;
+                    mDataspace = tmpDataspace;
+                });
+
+        if (!mHasReadbackBuffer) {
+            std::cout << "Readback not supported or unsupported pixelFormat/dataspace" << std::endl;
+            GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
+            return;
+        }
+
+        auto layer = std::make_shared<TestColorLayer>(mComposerClient, mPrimaryDisplay);
+        layer->setColor(RED);
+        layer->setDisplayFrame({0, 0, mDisplayWidth, mDisplayHeight});
+        layer->setZOrder(10);
+        layer->setAlpha(0);
+        layer->setBlendMode(IComposerClient::BlendMode::PREMULTIPLIED);
+
+        std::vector<std::shared_ptr<TestLayer>> layers = {layer};
+
+        ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mGralloc, mDisplayWidth,
+                                      mDisplayHeight, mPixelFormat, mDataspace);
+
+        ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
+
+        writeLayers(layers);
+        ASSERT_EQ(0, mReader->mErrors.size());
+        mWriter->validateDisplay();
+        execute();
+        if (mReader->mCompositionChanges.size() != 0) {
+            clearCommandReaderState();
+            GTEST_SUCCEED();
+            return;
+        }
+        ASSERT_EQ(0, mReader->mErrors.size());
+
+        mWriter->presentDisplay();
+        execute();
+        ASSERT_EQ(0, mReader->mErrors.size());
+
+        std::vector<IComposerClient::Color> expectedColors(mDisplayWidth * mDisplayHeight);
+
+        ASSERT_NO_FATAL_FAILURE(readbackBuffer.checkReadbackBuffer(expectedColors));
     }
-
-    mWriter->selectDisplay(mPrimaryDisplay);
-
-    auto layer = std::make_shared<TestColorLayer>(mComposerClient, mPrimaryDisplay);
-    layer->setColor(RED);
-    layer->setDisplayFrame({0, 0, mDisplayWidth, mDisplayHeight});
-    layer->setZOrder(10);
-    layer->setAlpha(0);
-    layer->setBlendMode(IComposerClient::BlendMode::PREMULTIPLIED);
-
-    std::vector<std::shared_ptr<TestLayer>> layers = {layer};
-
-    ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mGralloc, mDisplayWidth,
-                                  mDisplayHeight, mPixelFormat, mDataspace);
-
-    ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
-
-    writeLayers(layers);
-    ASSERT_EQ(0, mReader->mErrors.size());
-    mWriter->validateDisplay();
-    execute();
-    if (mReader->mCompositionChanges.size() != 0) {
-        clearCommandReaderState();
-        GTEST_SUCCEED();
-        return;
-    }
-    ASSERT_EQ(0, mReader->mErrors.size());
-
-    mWriter->presentDisplay();
-    execute();
-    ASSERT_EQ(0, mReader->mErrors.size());
-
-    std::vector<IComposerClient::Color> expectedColors(mDisplayWidth * mDisplayHeight);
-
-    ASSERT_NO_FATAL_FAILURE(readbackBuffer.checkReadbackBuffer(expectedColors));
 }
 
 TEST_F(GraphicsComposerReadbackTest, SetLayerSourceCrop) {
-    if (!mHasReadbackBuffer) {
-        GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
-        return;
+    for (ColorMode mode : mTestColorModes) {
+        std::cout << "---Testing Color Mode " << ReadbackHelper::getColorModeString(mode) << "---"
+                  << std::endl;
+        mWriter->selectDisplay(mPrimaryDisplay);
+        ASSERT_NO_FATAL_FAILURE(
+                mComposerClient->setColorMode(mPrimaryDisplay, mode, RenderIntent::COLORIMETRIC));
+
+        mComposerClient->getRaw()->getReadbackBufferAttributes(
+                mPrimaryDisplay,
+                [&](const auto& tmpError, const auto& tmpPixelFormat, const auto& tmpDataspace) {
+                    mHasReadbackBuffer = ReadbackHelper::readbackSupported(tmpPixelFormat,
+                                                                           tmpDataspace, tmpError);
+                    mPixelFormat = tmpPixelFormat;
+                    mDataspace = tmpDataspace;
+                });
+
+        if (!mHasReadbackBuffer) {
+            std::cout << "Readback not supported or unsupported pixelFormat/dataspace" << std::endl;
+            GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
+            return;
+        }
+
+        mWriter->selectDisplay(mPrimaryDisplay);
+
+        std::vector<IComposerClient::Color> expectedColors(mDisplayWidth * mDisplayHeight);
+        ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth,
+                                       {0, 0, mDisplayWidth, mDisplayHeight / 4}, RED);
+        ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth,
+                                       {0, mDisplayHeight / 2, mDisplayWidth, mDisplayHeight},
+                                       BLUE);
+
+        auto layer = std::make_shared<TestBufferLayer>(mComposerClient, mGralloc, mPrimaryDisplay,
+                                                       mDisplayWidth, mDisplayHeight,
+                                                       PixelFormat::RGBA_8888);
+        layer->setDisplayFrame({0, 0, mDisplayWidth, mDisplayHeight});
+        layer->setZOrder(10);
+        layer->setSourceCrop({0, static_cast<float>(mDisplayHeight / 2),
+                              static_cast<float>(mDisplayWidth),
+                              static_cast<float>(mDisplayHeight)});
+        ASSERT_NO_FATAL_FAILURE(layer->setBuffer(expectedColors));
+
+        std::vector<std::shared_ptr<TestLayer>> layers = {layer};
+
+        // update expected colors to match crop
+        ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth,
+                                       {0, 0, mDisplayWidth, mDisplayHeight}, BLUE);
+        ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mGralloc, mDisplayWidth,
+                                      mDisplayHeight, mPixelFormat, mDataspace);
+        ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
+        writeLayers(layers);
+        ASSERT_EQ(0, mReader->mErrors.size());
+        mWriter->validateDisplay();
+        execute();
+        if (mReader->mCompositionChanges.size() != 0) {
+            clearCommandReaderState();
+            GTEST_SUCCEED();
+            return;
+        }
+        ASSERT_EQ(0, mReader->mErrors.size());
+        mWriter->presentDisplay();
+        execute();
+        ASSERT_EQ(0, mReader->mErrors.size());
+        ASSERT_NO_FATAL_FAILURE(readbackBuffer.checkReadbackBuffer(expectedColors));
     }
-
-    mWriter->selectDisplay(mPrimaryDisplay);
-
-    std::vector<IComposerClient::Color> expectedColors(mDisplayWidth * mDisplayHeight);
-    ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth,
-                                   {0, 0, mDisplayWidth, mDisplayHeight / 4}, RED);
-    ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth,
-                                   {0, mDisplayHeight / 2, mDisplayWidth, mDisplayHeight}, BLUE);
-
-    auto layer =
-        std::make_shared<TestBufferLayer>(mComposerClient, mGralloc, mPrimaryDisplay, mDisplayWidth,
-                                          mDisplayHeight, PixelFormat::RGBA_8888);
-    layer->setDisplayFrame({0, 0, mDisplayWidth, mDisplayHeight});
-    layer->setZOrder(10);
-    layer->setSourceCrop({0, static_cast<float>(mDisplayHeight / 2),
-                          static_cast<float>(mDisplayWidth), static_cast<float>(mDisplayHeight)});
-    ASSERT_NO_FATAL_FAILURE(layer->setBuffer(expectedColors));
-
-    std::vector<std::shared_ptr<TestLayer>> layers = {layer};
-
-    // update expected colors to match crop
-    ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth,
-                                   {0, 0, mDisplayWidth, mDisplayHeight}, BLUE);
-    ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mGralloc, mDisplayWidth,
-                                  mDisplayHeight, mPixelFormat, mDataspace);
-    ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
-    writeLayers(layers);
-    ASSERT_EQ(0, mReader->mErrors.size());
-    mWriter->validateDisplay();
-    execute();
-    if (mReader->mCompositionChanges.size() != 0) {
-        clearCommandReaderState();
-        GTEST_SUCCEED();
-        return;
-    }
-    ASSERT_EQ(0, mReader->mErrors.size());
-    mWriter->presentDisplay();
-    execute();
-    ASSERT_EQ(0, mReader->mErrors.size());
-    ASSERT_NO_FATAL_FAILURE(readbackBuffer.checkReadbackBuffer(expectedColors));
 }
 
 TEST_F(GraphicsComposerReadbackTest, SetLayerZOrder) {
-    if (!mHasReadbackBuffer) {
-        GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
-        return;
+    for (ColorMode mode : mTestColorModes) {
+        std::cout << "---Testing Color Mode " << ReadbackHelper::getColorModeString(mode) << "---"
+                  << std::endl;
+        mWriter->selectDisplay(mPrimaryDisplay);
+        ASSERT_NO_FATAL_FAILURE(
+                mComposerClient->setColorMode(mPrimaryDisplay, mode, RenderIntent::COLORIMETRIC));
+
+        mComposerClient->getRaw()->getReadbackBufferAttributes(
+                mPrimaryDisplay,
+                [&](const auto& tmpError, const auto& tmpPixelFormat, const auto& tmpDataspace) {
+                    mHasReadbackBuffer = ReadbackHelper::readbackSupported(tmpPixelFormat,
+                                                                           tmpDataspace, tmpError);
+                    mPixelFormat = tmpPixelFormat;
+                    mDataspace = tmpDataspace;
+                });
+
+        if (!mHasReadbackBuffer) {
+            std::cout << "Readback not supported or unsupported pixelFormat/dataspace" << std::endl;
+            GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
+            return;
+        }
+
+        IComposerClient::Rect redRect = {0, 0, mDisplayWidth, mDisplayHeight / 2};
+        IComposerClient::Rect blueRect = {0, mDisplayHeight / 4, mDisplayWidth, mDisplayHeight};
+        auto redLayer = std::make_shared<TestColorLayer>(mComposerClient, mPrimaryDisplay);
+        redLayer->setColor(RED);
+        redLayer->setDisplayFrame(redRect);
+
+        auto blueLayer = std::make_shared<TestColorLayer>(mComposerClient, mPrimaryDisplay);
+        blueLayer->setColor(BLUE);
+        blueLayer->setDisplayFrame(blueRect);
+        blueLayer->setZOrder(5);
+
+        std::vector<std::shared_ptr<TestLayer>> layers = {redLayer, blueLayer};
+        std::vector<IComposerClient::Color> expectedColors(mDisplayWidth * mDisplayHeight);
+
+        // red in front of blue
+        redLayer->setZOrder(10);
+
+        // fill blue first so that red will overwrite on overlap
+        ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth, blueRect, BLUE);
+        ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth, redRect, RED);
+
+        ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mGralloc, mDisplayWidth,
+                                      mDisplayHeight, mPixelFormat, mDataspace);
+        ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
+
+        writeLayers(layers);
+        ASSERT_EQ(0, mReader->mErrors.size());
+        mWriter->validateDisplay();
+        execute();
+        if (mReader->mCompositionChanges.size() != 0) {
+            clearCommandReaderState();
+            GTEST_SUCCEED();
+            return;
+        }
+        mWriter->presentDisplay();
+        execute();
+        ASSERT_EQ(0, mReader->mErrors.size());
+
+        ASSERT_NO_FATAL_FAILURE(readbackBuffer.checkReadbackBuffer(expectedColors));
+
+        redLayer->setZOrder(1);
+        ReadbackHelper::clearColors(expectedColors, mDisplayWidth, mDisplayHeight, mDisplayWidth);
+        ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth, redRect, RED);
+        ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth, blueRect, BLUE);
+
+        ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
+
+        writeLayers(layers);
+        ASSERT_EQ(0, mReader->mErrors.size());
+        mWriter->validateDisplay();
+        execute();
+        ASSERT_EQ(0, mReader->mCompositionChanges.size());
+        ASSERT_EQ(0, mReader->mErrors.size());
+        mWriter->presentDisplay();
+        execute();
+        ASSERT_EQ(0, mReader->mErrors.size());
+
+        ASSERT_NO_FATAL_FAILURE(readbackBuffer.checkReadbackBuffer(expectedColors));
     }
-
-    mWriter->selectDisplay(mPrimaryDisplay);
-
-    IComposerClient::Rect redRect = {0, 0, mDisplayWidth, mDisplayHeight / 2};
-    IComposerClient::Rect blueRect = {0, mDisplayHeight / 4, mDisplayWidth, mDisplayHeight};
-    auto redLayer = std::make_shared<TestColorLayer>(mComposerClient, mPrimaryDisplay);
-    redLayer->setColor(RED);
-    redLayer->setDisplayFrame(redRect);
-
-    auto blueLayer = std::make_shared<TestColorLayer>(mComposerClient, mPrimaryDisplay);
-    blueLayer->setColor(BLUE);
-    blueLayer->setDisplayFrame(blueRect);
-    blueLayer->setZOrder(5);
-
-    std::vector<std::shared_ptr<TestLayer>> layers = {redLayer, blueLayer};
-    std::vector<IComposerClient::Color> expectedColors(mDisplayWidth * mDisplayHeight);
-
-    // red in front of blue
-    redLayer->setZOrder(10);
-
-    // fill blue first so that red will overwrite on overlap
-    ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth, blueRect, BLUE);
-    ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth, redRect, RED);
-
-    ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mGralloc, mDisplayWidth,
-                                  mDisplayHeight, mPixelFormat, mDataspace);
-    ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
-
-    writeLayers(layers);
-    ASSERT_EQ(0, mReader->mErrors.size());
-    mWriter->validateDisplay();
-    execute();
-    if (mReader->mCompositionChanges.size() != 0) {
-        clearCommandReaderState();
-        GTEST_SUCCEED();
-        return;
-    }
-    mWriter->presentDisplay();
-    execute();
-    ASSERT_EQ(0, mReader->mErrors.size());
-
-    ASSERT_NO_FATAL_FAILURE(readbackBuffer.checkReadbackBuffer(expectedColors));
-
-    redLayer->setZOrder(1);
-    ReadbackHelper::clearColors(expectedColors, mDisplayWidth, mDisplayHeight, mDisplayWidth);
-    ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth, redRect, RED);
-    ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth, blueRect, BLUE);
-
-    ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
-
-    writeLayers(layers);
-    ASSERT_EQ(0, mReader->mErrors.size());
-    mWriter->validateDisplay();
-    execute();
-    ASSERT_EQ(0, mReader->mCompositionChanges.size());
-    ASSERT_EQ(0, mReader->mErrors.size());
-    mWriter->presentDisplay();
-    execute();
-    ASSERT_EQ(0, mReader->mErrors.size());
-
-    ASSERT_NO_FATAL_FAILURE(readbackBuffer.checkReadbackBuffer(expectedColors));
 }
 
 class GraphicsComposerBlendModeReadbackTest : public GraphicsComposerReadbackTest,
