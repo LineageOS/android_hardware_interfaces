@@ -87,6 +87,9 @@ class GraphicsComposerReadbackTest : public ::testing::VtsHalHidlTargetTestBase 
         mReader = std::make_unique<TestCommandReader>();
         mGralloc = std::make_shared<Gralloc>();
 
+        ASSERT_NO_FATAL_FAILURE(mComposerClient->setColorMode(mPrimaryDisplay, ColorMode::SRGB,
+                                                              RenderIntent::COLORIMETRIC));
+
         mComposerClient->getRaw()->getReadbackBufferAttributes(
                 mPrimaryDisplay,
                 [&](const auto& tmpError, const auto& tmpPixelFormat, const auto& tmpDataspace) {
@@ -163,8 +166,6 @@ TEST_F(GraphicsComposerReadbackTest, SingleSolidColorLayer) {
         return;
     }
     mWriter->selectDisplay(mPrimaryDisplay);
-    ASSERT_NO_FATAL_FAILURE(mComposerClient->setColorMode(mPrimaryDisplay, ColorMode::SRGB,
-                                                          RenderIntent::COLORIMETRIC));
 
     auto layer = std::make_shared<TestColorLayer>(mComposerClient, mPrimaryDisplay);
     IComposerClient::Rect coloredSquare({0, 0, mDisplayWidth, mDisplayHeight});
@@ -257,8 +258,6 @@ TEST_F(GraphicsComposerReadbackTest, SetLayerBufferNoEffect) {
     }
 
     mWriter->selectDisplay(mPrimaryDisplay);
-    ASSERT_NO_FATAL_FAILURE(mComposerClient->setColorMode(mPrimaryDisplay, ColorMode::SRGB,
-                                                          RenderIntent::COLORIMETRIC));
 
     auto layer = std::make_shared<TestColorLayer>(mComposerClient, mPrimaryDisplay);
     IComposerClient::Rect coloredSquare({0, 0, mDisplayWidth, mDisplayHeight});
@@ -542,8 +541,6 @@ TEST_F(GraphicsComposerReadbackTest, SetLayerPlaneAlpha) {
     }
 
     mWriter->selectDisplay(mPrimaryDisplay);
-    ASSERT_NO_FATAL_FAILURE(mComposerClient->setColorMode(mPrimaryDisplay, ColorMode::SRGB,
-                                                          RenderIntent::COLORIMETRIC));
 
     auto layer = std::make_shared<TestColorLayer>(mComposerClient, mPrimaryDisplay);
     layer->setColor(RED);
@@ -633,8 +630,6 @@ TEST_F(GraphicsComposerReadbackTest, SetLayerZOrder) {
     }
 
     mWriter->selectDisplay(mPrimaryDisplay);
-    ASSERT_NO_FATAL_FAILURE(mComposerClient->setColorMode(mPrimaryDisplay, ColorMode::SRGB,
-                                                          RenderIntent::COLORIMETRIC));
 
     IComposerClient::Rect redRect = {0, 0, mDisplayWidth, mDisplayHeight / 2};
     IComposerClient::Rect blueRect = {0, mDisplayHeight / 4, mDisplayWidth, mDisplayHeight};
@@ -891,8 +886,6 @@ class GraphicsComposerTransformReadbackTest : public GraphicsComposerReadbackTes
         GraphicsComposerReadbackTest::SetUp();
 
         mWriter->selectDisplay(mPrimaryDisplay);
-        ASSERT_NO_FATAL_FAILURE(mComposerClient->setColorMode(mPrimaryDisplay, ColorMode::SRGB,
-                                                              RenderIntent::COLORIMETRIC));
 
         auto backgroundLayer = std::make_shared<TestColorLayer>(mComposerClient, mPrimaryDisplay);
         backgroundLayer->setColor({0, 0, 0, 0});
