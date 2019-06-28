@@ -34,6 +34,32 @@ void TestLayer::write(const std::shared_ptr<CommandWriterBase>& writer) {
     writer->setLayerBlendMode(mBlendMode);
 }
 
+const std::vector<ColorMode> ReadbackHelper::colorModes = {ColorMode::SRGB, ColorMode::DISPLAY_P3};
+const std::vector<Dataspace> ReadbackHelper::dataspaces = {Dataspace::V0_SRGB,
+                                                           Dataspace::DISPLAY_P3};
+
+std::string ReadbackHelper::getColorModeString(ColorMode mode) {
+    switch (mode) {
+        case ColorMode::SRGB:
+            return std::string("SRGB");
+        case ColorMode::DISPLAY_P3:
+            return std::string("DISPLAY_P3");
+        default:
+            return std::string("Unsupported color mode for readback");
+    }
+}
+
+std::string ReadbackHelper::getDataspaceString(Dataspace dataspace) {
+    switch (dataspace) {
+        case Dataspace::V0_SRGB:
+            return std::string("V0_SRGB");
+        case Dataspace::DISPLAY_P3:
+            return std::string("DISPLAY_P3");
+        default:
+            return std::string("Unsupported dataspace for readback");
+    }
+}
+
 int32_t ReadbackHelper::GetBytesPerPixel(PixelFormat pixelFormat) {
     switch (pixelFormat) {
         case PixelFormat::RGBA_8888:
@@ -99,7 +125,7 @@ bool ReadbackHelper::readbackSupported(const PixelFormat& pixelFormat, const Dat
     if (pixelFormat != PixelFormat::RGB_888 && pixelFormat != PixelFormat::RGBA_8888) {
         return false;
     }
-    if (dataspace != Dataspace::V0_SRGB) {
+    if (std::find(dataspaces.begin(), dataspaces.end(), dataspace) == dataspaces.end()) {
         return false;
     }
     return true;
