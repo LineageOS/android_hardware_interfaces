@@ -23,6 +23,7 @@
 
 #include <condition_variable>
 #include <deque>
+#include <list>
 #include <mutex>
 
 using android::hardware::hidl_vec;
@@ -85,6 +86,14 @@ class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
          */
         bool retrieve(T& event, int timeout_seconds);
 
+        /*
+         * Removes parameter count number of callack events at the front of the queue, stores
+         * them in event_list parameter and returns the number of events retrieved. Waits up to
+         * timeout_seconds to retrieve each event. If timeout occurs, it returns the number of
+         * items retrieved which will be less than count.
+         */
+        int retrieve(list<T>& event_list, int count, int timeout_seconds);
+
         /* Returns the number of events pending to be retrieved from the callback event queue. */
         int size() const;
 
@@ -117,7 +126,7 @@ class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
         CallbackQueue<android::hardware::hidl_string> name_cbq_;
         CallbackQueue<uint32_t> capabilities_cbq_;
         CallbackQueue<GnssLocation_2_0> location_cbq_;
-        CallbackQueue<hidl_vec<IGnssCallback_2_0::GnssSvInfo>> sv_info_cbq_;
+        CallbackQueue<hidl_vec<IGnssCallback_2_0::GnssSvInfo>> sv_info_list_cbq_;
 
         GnssCallback();
         virtual ~GnssCallback() = default;
@@ -262,6 +271,19 @@ bool GnssHalTest::CallbackQueue<T>::retrieve(T& event, int timeout_seconds) {
     event = events_.front();
     events_.pop_front();
     return true;
+}
+
+template <class T>
+int GnssHalTest::CallbackQueue<T>::retrieve(list<T>& event_list, int count, int timeout_seconds) {
+    for (int i = 0; i < count; ++i) {
+        T event;
+        if (!retrieve(event, timeout_seconds)) {
+            return i;
+        }
+        event_list.push_back(event);
+    }
+
+    return count;
 }
 
 template <class T>
