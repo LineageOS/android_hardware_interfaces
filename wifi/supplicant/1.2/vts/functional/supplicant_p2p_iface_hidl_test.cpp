@@ -127,25 +127,33 @@ TEST_F(SupplicantP2pIfaceHidlTest, AddGroup_1_2_FailureInvalidFrequency) {
         });
 }
 
+bool isMacRandomizationSupported(const SupplicantStatus& status) {
+    return status.code != SupplicantStatusCode::FAILURE_ARGS_INVALID;
+}
+
 /*
  * Verify that setMacRandomization successes.
  */
 TEST_F(SupplicantP2pIfaceHidlTest, EnableMacRandomization) {
     p2p_iface_->setMacRandomization(true, [](const SupplicantStatus& status) {
+        if (!isMacRandomizationSupported(status)) return;
         EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
     });
 
     // enable twice
     p2p_iface_->setMacRandomization(true, [](const SupplicantStatus& status) {
+        if (!isMacRandomizationSupported(status)) return;
         EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
     });
 
     p2p_iface_->setMacRandomization(false, [](const SupplicantStatus& status) {
+        if (!isMacRandomizationSupported(status)) return;
         EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
     });
 
     // disable twice
     p2p_iface_->setMacRandomization(false, [](const SupplicantStatus& status) {
+        if (!isMacRandomizationSupported(status)) return;
         EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
     });
 }
