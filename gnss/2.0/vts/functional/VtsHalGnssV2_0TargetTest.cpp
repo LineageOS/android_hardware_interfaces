@@ -23,7 +23,6 @@ int main(int argc, char** argv) {
     ::testing::AddGlobalTestEnvironment(GnssHidlEnvironment::Instance());
     ::testing::InitGoogleTest(&argc, argv);
     GnssHidlEnvironment::Instance()->init(&argc, argv);
-    // TODO (b/122463165): Expand coverage to include 1.1 and 1.0 VTS tests.
     int status = RUN_ALL_TESTS();
     ALOGI("Test result = %d", status);
     return status;
