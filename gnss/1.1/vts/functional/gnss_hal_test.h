@@ -145,6 +145,12 @@ class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
      */
     void SetPositionMode(const int min_interval_msec, const bool low_power_mode);
 
+    /*
+     * IsGnssHalVersion_1_1:
+     * returns  true if the GNSS HAL version is exactly 1.1.
+     */
+    bool IsGnssHalVersion_1_1() const;
+
     sp<IGnss> gnss_hal_;         // GNSS HAL to call into
     sp<IGnssCallback> gnss_cb_;  // Primary callback interface
 
