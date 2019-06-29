@@ -309,6 +309,11 @@ std::string make_string(const uint8_t (&a)[N]) {
     return make_string(a, N);
 }
 
+bool avb_verification_enabled() {
+    char value[PROPERTY_VALUE_MAX];
+    return property_get("ro.boot.vbmeta.device_state", value, "") != 0;
+}
+
 }  // namespace
 
 bool verify_attestation_record(const string& challenge, const string& app_id,
@@ -359,26 +364,32 @@ bool verify_attestation_record(const string& challenge, const string& app_id,
     EXPECT_EQ(0, memcmp(challenge.data(), att_challenge.data(), challenge.length()));
 
     char property_value[PROPERTY_VALUE_MAX] = {};
-    for (int i = 0; i < att_hw_enforced.size(); i++) {
-        if (att_hw_enforced[i].tag == TAG_BOOT_PATCHLEVEL ||
-            att_hw_enforced[i].tag == TAG_VENDOR_PATCHLEVEL) {
-            std::string date = std::to_string(att_hw_enforced[i].f.integer);
-            // strptime seems to require delimiters, but the tag value will be YYYYMMDD
-            date.insert(6, "-");
-            date.insert(4, "-");
-            EXPECT_EQ(date.size(), 10);
-            struct tm time;
-            strptime(date.c_str(), "%Y-%m-%d", &time);
+    // TODO(b/136282179): When running under VTS-on-GSI the TEE-backed
+    // keymaster implementation will report YYYYMM dates instead of YYYYMMDD
+    // for the BOOT_PATCH_LEVEL.
+    if (avb_verification_enabled()) {
+        for (int i = 0; i < att_hw_enforced.size(); i++) {
+            if (att_hw_enforced[i].tag == TAG_BOOT_PATCHLEVEL ||
+                att_hw_enforced[i].tag == TAG_VENDOR_PATCHLEVEL) {
+                std::string date = std::to_string(att_hw_enforced[i].f.integer);
+                // strptime seems to require delimiters, but the tag value will
+                // be YYYYMMDD
+                date.insert(6, "-");
+                date.insert(4, "-");
+                EXPECT_EQ(date.size(), 10);
+                struct tm time;
+                strptime(date.c_str(), "%Y-%m-%d", &time);
 
-            // Day of the month (0-31)
-            EXPECT_GE(time.tm_mday, 0);
-            EXPECT_LT(time.tm_mday, 32);
-            // Months since Jan (0-11)
-            EXPECT_GE(time.tm_mon, 0);
-            EXPECT_LT(time.tm_mon, 12);
-            // Years since 1900
-            EXPECT_GT(time.tm_year, 110);
-            EXPECT_LT(time.tm_year, 200);
+                // Day of the month (0-31)
+                EXPECT_GE(time.tm_mday, 0);
+                EXPECT_LT(time.tm_mday, 32);
+                // Months since Jan (0-11)
+                EXPECT_GE(time.tm_mon, 0);
+                EXPECT_LT(time.tm_mon, 12);
+                // Years since 1900
+                EXPECT_GT(time.tm_year, 110);
+                EXPECT_LT(time.tm_year, 200);
+            }
         }
     }
 
@@ -410,18 +421,20 @@ bool verify_attestation_record(const string& challenge, const string& app_id,
                                 &verified_boot_state, &device_locked, &verified_boot_hash);
     EXPECT_EQ(ErrorCode::OK, error);
 
-    property_get("ro.boot.vbmeta.digest", property_value, "nogood");
-    EXPECT_NE(strcmp(property_value, "nogood"), 0);
-    string prop_string(property_value);
-    EXPECT_EQ(prop_string.size(), 64);
-    EXPECT_EQ(prop_string, bin2hex(verified_boot_hash));
+    if (avb_verification_enabled()) {
+        property_get("ro.boot.vbmeta.digest", property_value, "nogood");
+        EXPECT_NE(strcmp(property_value, "nogood"), 0);
+        string prop_string(property_value);
+        EXPECT_EQ(prop_string.size(), 64);
+        EXPECT_EQ(prop_string, bin2hex(verified_boot_hash));
 
-    property_get("ro.boot.vbmeta.device_state", property_value, "nogood");
-    EXPECT_NE(property_value, "nogood");
-    if (!strcmp(property_value, "unlocked")) {
-        EXPECT_FALSE(device_locked);
-    } else {
-        EXPECT_TRUE(device_locked);
+        property_get("ro.boot.vbmeta.device_state", property_value, "nogood");
+        EXPECT_NE(strcmp(property_value, "nogood"), 0);
+        if (!strcmp(property_value, "unlocked")) {
+            EXPECT_FALSE(device_locked);
+        } else {
+            EXPECT_TRUE(device_locked);
+        }
     }
 
     // Verified boot key should be all 0's if the boot state is not verified or self signed
