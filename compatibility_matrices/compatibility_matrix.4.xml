@@ -365,7 +365,13 @@
     </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.radio.config</name>
-        <version>1.2</version>
+        <!--
+        Note: Devices launching with target-level 4, if implementing the
+        radio config HAL, must provide an implementation of 1.1 IRadioConfig
+        that can handle version 1.2 of IRadioConfigResponse and
+        IRadioConfigIndication.
+        -->
+        <version>1.1</version>
         <interface>
             <name>IRadioConfig</name>
             <instance>default</instance>
