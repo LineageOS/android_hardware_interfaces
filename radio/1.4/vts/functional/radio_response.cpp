@@ -77,7 +77,9 @@ Return<void> RadioResponse_v1_4::getIMSIForAppResponse(
     return Void();
 }
 
-Return<void> RadioResponse_v1_4::hangupConnectionResponse(const RadioResponseInfo& /*info*/) {
+Return<void> RadioResponse_v1_4::hangupConnectionResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_v1_4.notify(info.serial);
     return Void();
 }
 
@@ -729,9 +731,10 @@ Return<void> RadioResponse_v1_4::getIccCardStatusResponse_1_2(
 
 Return<void> RadioResponse_v1_4::getCurrentCallsResponse_1_2(
         const RadioResponseInfo& info,
-        const ::android::hardware::hidl_vec<::android::hardware::radio::V1_2::Call>& /*calls*/) {
+        const ::android::hardware::hidl_vec<::android::hardware::radio::V1_2::Call>& calls) {
     rspInfo = info;
     parent_v1_4.notify(info.serial);
+    currentCalls = calls;
     return Void();
 }
 
