@@ -1,0 +1,128 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.biometrics.face@1.0;
+
+/**
+ * This callback interface is used by clients to recieve updates from the face
+ * HAL.
+ */
+interface IBiometricsFaceClientCallback {
+
+    /**
+     * A callback invoked when one enrollment step has been completed.
+     *
+     * @param deviceId A unique id associated with the HAL implementation
+     *     service that processed this enrollment step.
+     * @param faceId The id of the face template being enrolled.
+     * @param userId The active user id for the template being enrolled.
+     * @param remaining The number of remaining steps before enrolllment is
+     *     complete or 0 if enrollment has completed successfully.
+     */
+    oneway onEnrollResult(uint64_t deviceId, uint32_t faceId, int32_t userId,
+        uint32_t remaining);
+
+    /**
+     * A callback invoked when a face has been successfully authenticated.
+     *
+     * @param deviceId A unique id associated with the HAL implementation
+     *     service that processed this authentication attempt.
+     * @param faceId The id of the face template that passed the authentication
+     *     challenge.
+     * @param userId The active user id for the authenticated face.
+     * @param token The hardware authentication token associated with this
+     *     authenticate operation.
+     */
+    oneway onAuthenticated(uint64_t deviceId, uint32_t faceId, int32_t userId,
+        vec<uint8_t> token);
+
+    /**
+     * A callback invoked when a face is acquired.
+     *
+     * If a non-critical, recoverable error occurs during an enrollment or
+     * authentication attempt, the HAL implementation must invoke this callback
+     * to allow clients to inform the user that some actionable change must be
+     * made.
+     *
+     * @param deviceId A unique id associated with the HAL implementation
+     *     service that acquired a face.
+     * @param userId The id of the active user associated with the attempted
+     *     face acquisition.
+     * @param acquiredInfo A message about the quality of the acquired image.
+     * @param vendorCode An optional vendor-specific message. This is only valid
+     *     when acquiredInfo == FaceAcquiredInfo.VENDOR. This message is opaque
+     *     to the framework, and vendors must provide code to handle it. For
+     *     example this can be used to guide enrollment in Settings or provide
+     *     a message during authentication that is vendor-specific. The vendor
+     *     is expected to provide help strings to cover all known values.
+     */
+     oneway onAcquired(uint64_t deviceId, int32_t userId,
+         FaceAcquiredInfo acquiredInfo, int32_t vendorCode);
+
+    /**
+     * A callback invoked when an error has occured.
+     *
+     * @param deviceId A unique id associated with the HAL implementation
+     *     service where this error occured.
+     * @param userId The id of the active user when the error occured, or
+     *     UserHandle::NONE if an active user had not been set yet.
+     * @param error A message about the error that occurred.
+     * @param vendorCode An optional, vendor-speicifc error message. Only valid
+     *     when error == FaceError.VENDOR. This message is opaque to the
+     *     framework, and vendors must provide code to handle it. For example,
+     *     this scan be used to show the user an error message specific to the
+     *     device. The vendor is expected to provide error strings to cover
+     *     all known values.
+     */
+    oneway onError(uint64_t deviceId, int32_t userId, FaceError error,
+        int32_t vendorCode);
+
+    /**
+     * A callback invoked when a face template has been removed.
+     *
+     * @param deviceId A unique id associated with the HAL implementation
+     *     service that processed this removal.
+     * @param removed A list of ids that were removed.
+     * @param userId The active user id for the removed face template.
+     */
+    oneway onRemoved(uint64_t deviceId, vec<uint32_t> removed, int32_t userId);
+
+    /**
+     * A callback invoked to enumerate all current face templates.
+     *
+     * @param deviceId A unique id associated with the HAL implementation
+     *     service that processed this enumeration.
+     * @param faceIds A list of ids of all currently enrolled face templates.
+     * @param userId The active user id for the enumerated face template.
+     */
+    oneway onEnumerate(uint64_t deviceId, vec<uint32_t> faceIds,
+        int32_t userId);
+
+    /**
+     * A callback invoked when the lockout state changes.
+     *
+     * This method must only be invoked when setActiveUser() is called,
+     * when lockout starts, and when lockout ends. When lockout starts,
+     * duration must be greater than 0, and when lockout ends, duration must
+     * be 0. This must be called before calling onError() with parameters
+     * LOCKOUT or LOCKOUT_PERMANENT. If the user is permanently locked out,
+     * the duration must be MAX_UINT64.
+     *
+     * @param duration the remaining lockout duration in milliseconds, or 0
+     *     if the user is not locked out.
+     */
+    oneway onLockoutChanged(uint64_t duration);
+};

@@ -52,7 +52,6 @@ namespace implementation {
     Return<void> CryptoPlugin::setSharedBufferBase(const hidl_memory& base,
             uint32_t bufferId) {
         sp<IMemory> hidlMemory = mapMemory(base);
-        ALOGE_IF(hidlMemory == nullptr, "mapMemory returns nullptr");
 
         // allow mapMemory to return nullptr
         mSharedBufferMap[bufferId] = hidlMemory;

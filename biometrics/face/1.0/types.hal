@@ -1,0 +1,383 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.biometrics.face@1.0;
+
+/*
+ * In the event setActiveUser is not called, all error messages will return
+ * this userId.
+ */
+enum UserHandle : int32_t {
+    NONE = -1
+};
+
+/**
+ * Status codes returned directly by the HIDL method calls upon critical errors
+ * where the callback cannot be invoked. Most errors should sent through the
+ * onError callback using one of the FaceErrors below.
+ */
+enum Status : uint32_t {
+    /**
+     * The method was invoked successfully.
+     */
+    OK = 0,
+
+    /**
+     * One of the arguments to the method call is invalid.
+     */
+    ILLEGAL_ARGUMENT = 1,
+
+    /**
+     * This face HAL does not support this operation.
+     */
+    OPERATION_NOT_SUPPORTED = 2,
+
+    /**
+     * The HAL has encountered an internal error and cannot complete the request.
+     */
+    INTERNAL_ERROR = 3,
+
+    /**
+     * The operation could not be completed because there are no enrolled
+     * templates.
+     */
+    NOT_ENROLLED = 4
+};
+
+enum Feature : uint32_t {
+    /**
+     * Require the user to look at the device during enrollment and
+     * authentication. Note this is to accommodate people who have limited
+     * vision. Must be enabled by default.
+     */
+    REQUIRE_ATTENTION = 1,
+
+    /**
+     * Require a diverse set of poses during enrollment. Note this is to
+     * accommodate people with limited mobility. Must be enabled by default.
+     */
+    REQUIRE_DIVERSITY = 2
+};
+
+/**
+ * Face errors represent events that can't be immediately recovered by user
+ * intervention. These are returned in the onError callback.
+ *
+ * Upon receiving a face error, clients must terminate the current operation and
+ * notify the user where possible.
+ */
+enum FaceError : int32_t {
+
+    /**
+     * A hardware error has occurred that cannot be resolved. Try again later.
+     */
+    HW_UNAVAILABLE = 1,
+
+    /**
+     * The current enroll or authenticate operation could not be completed,
+     * e.g. the sensor was unable to process the current image or the HAT was
+     * invalid.
+     */
+    UNABLE_TO_PROCESS = 2,
+
+    /**
+     * The current operation took too long to complete. This is intended to
+     * prevent programs from blocking the face HAL indefinitely. The timeout is
+     * framework and sensor-specific, but is generally on the order of 30
+     * seconds.
+
+     * The timeout is a device-specific time meant to optimize power. For
+     * example after 30 seconds of searching for a face it can be use to
+     * indicate that the implementation is no longer looking and the framework
+     * should restart the operation on the next user interaction.
+     */
+    TIMEOUT = 3,
+
+    /**
+     * The current operation could not be completed because there is not enough
+     * storage space remaining to do so.
+     */
+    NO_SPACE = 4,
+
+    /**
+     * The current operation has been cancelled. This may happen if a new
+     * request (authenticate, remove, enumerate, enroll) is initiated while
+     * an on-going operation is in progress, or if cancel() was called.
+     */
+    CANCELED = 5,
+
+    /**
+     * The current remove operation could not be completed; the face template
+     * provided could not be removed.
+     */
+    UNABLE_TO_REMOVE = 6,
+
+    /**
+     * Face authentication is locked out due to too many unsuccessful attempts.
+     * This is a "soft" lockout, and authentication can be restarted after
+     * a period of time, generally on the order of 30 seconds.
+     */
+    LOCKOUT = 7,
+
+    /**
+     * Used to enable a vendor-specific error message.
+     */
+    VENDOR = 8,
+
+    /**
+     * Face authentication is disabled until the user unlocks with strong
+     * authentication (PIN/Pattern/Password).
+     */
+    LOCKOUT_PERMANENT = 9
+};
+
+/**
+ * Face acquisition information provides feedback for the current enrollment
+ * or authentication operation.
+ *
+ * This information indicates that the user can take immediate action to resolve
+ * an issue, and clients must ensure that this information is surfaced to the
+ * user.
+ */
+enum FaceAcquiredInfo : int32_t {
+
+    /**
+     * The face acquired was good; no further user interaction is necessary.
+     */
+    GOOD = 0,
+
+    /**
+     * The face data acquired was too noisy or did not have sufficient detail.
+     * This is a catch-all for all acquisition errors not captured by the other
+     * constants.
+     */
+    INSUFFICIENT = 1,
+
+    /**
+     * Because there was too much ambient light, the captured face data was too
+     * bright. It's reasonable to return this after multiple
+     * FaceAcquiredInfo.INSUFFICIENT.
+     *
+     * The user is expected to take action to retry the operation in better
+     * lighting conditions when this is returned.
+     */
+    TOO_BRIGHT = 2,
+
+    /**
+     * Because there was not enough illumination, the captured face data was too
+     * dark. It's reasonable to return this after multiple
+     * FaceAcquiredInfo.INSUFFICIENT.
+     *
+     * The user is expected to take action to retry the operation in better
+     * lighting conditions when this is returned.
+     */
+    TOO_DARK = 3,
+
+    /**
+     * The detected face is too close to the sensor, and the image cannot be
+     * processed.
+     *
+     * The user is expected to be informed to move further from the sensor when
+     * this is returned.
+     */
+    TOO_CLOSE = 4,
+
+    /**
+     * The detected face is too small, as the user might be too far away from
+     * the sensor.
+     *
+     * The user is expected to be informed to move closer to the sensor when
+     * this is returned.
+     */
+    TOO_FAR = 5,
+
+    /**
+     * Only the upper part of the face was detected. The sensor's field of view
+     * is too high.
+     *
+     * The user should be informed to move up with respect to the sensor when
+     * this is returned.
+     */
+    FACE_TOO_HIGH = 6,
+
+    /**
+     * Only the lower part of the face was detected. The sensor's field of view
+     * is too low.
+     *
+     * The user should be informed to move down with respect to the sensor when
+     * this is returned.
+     */
+    FACE_TOO_LOW = 7,
+
+    /**
+     * Only the right part of the face was detected. The sensor's field of view
+     * is too far right.
+     *
+     * The user should be informed to move to the right with respect to the
+     * sensor when this is returned.
+     */
+    FACE_TOO_RIGHT = 8,
+
+    /**
+     * Only the left part of the face was detected. The sensor's field of view
+     * is too far left.
+     *
+     * The user should be informed to move to the left with respect to the
+     * sensor when this is returned.
+     */
+    FACE_TOO_LEFT = 9,
+
+    /**
+     * The user's eyes have strayed away from the sensor. If this message is
+     * sent, the user should be informed to look at the device. If the user
+     * can't be found in the frame, one of the other acquisition messages
+     * must be sent, e.g. NOT_DETECTED.
+     */
+    POOR_GAZE = 10,
+
+    /**
+     * No face was detected within the sensor's field of view.
+     *
+     * The user should be informed to point the sensor to a face when this is
+     * returned.
+     */
+    NOT_DETECTED = 11,
+
+    /**
+     * Too much motion was detected.
+     *
+     * The user should be informed to keep their face steady relative to the
+     * sensor.
+     */
+    TOO_MUCH_MOTION = 12,
+
+    /**
+     * The sensor needs to be re-calibrated. This is an unexpected condition,
+     * and must only be sent if a serious, uncorrectable, and unrecoverable
+     * calibration issue is detected which requires user intervention, e.g.
+     * re-enrolling. The expected response to this message is to direct the
+     * user to re-enroll.
+     */
+    RECALIBRATE = 13,
+
+    /**
+     * The face is too different from a previous acquisition. This condition
+     * only applies to enrollment. This can happen if the user passes the
+     * device to someone else in the middle of enrollment.
+     */
+    TOO_DIFFERENT = 14,
+
+    /**
+     * The face is too similar to a previous acquisition. This condition only
+     * applies to enrollment. The user should change their pose.
+     */
+    TOO_SIMILAR = 15,
+
+    /**
+     * The magnitude of the pan angle of the user’s face with respect to the sensor’s
+     * capture plane is too high.
+     *
+     * The pan angle is defined as the angle swept out by the user’s face turning
+     * their neck left and right. The pan angle would be zero if the user faced the
+     * camera directly.
+     *
+     * The user should be informed to look more directly at the camera.
+     */
+    PAN_TOO_EXTREME = 16,
+
+    /**
+     * The magnitude of the tilt angle of the user’s face with respect to the sensor’s
+     * capture plane is too high.
+     *
+     * The tilt angle is defined as the angle swept out by the user’s face looking up
+     * and down. The tilt angle would be zero if the user faced the camera directly.
+     *
+     * The user should be informed to look more directly at the camera.
+     */
+    TILT_TOO_EXTREME = 17,
+
+    /**
+     * The magnitude of the roll angle of the user’s face with respect to the sensor’s
+     * capture plane is too high.
+     *
+     * The roll angle is defined as the angle swept out by the user’s face tilting their head
+     * towards their shoulders to the left and right. The roll angle would be zero if the user's
+     * head is vertically aligned with the camera.
+     *
+     * The user should be informed to look more directly at the camera.
+     */
+    ROLL_TOO_EXTREME = 18,
+
+   /**
+     * The user’s face has been obscured by some object.
+     *
+     * The user should be informed to remove any objects from the line of sight from
+     * the sensor to the user’s face.
+     */
+    FACE_OBSCURED = 19,
+
+    /**
+     * This message represents the earliest message sent at the beginning of the authentication
+     * pipeline. It is expected to be used to measure latency. For example, in a camera-based
+     * authentication system it's expected to be sent prior to camera initialization. Note this
+     * should be sent whenever authentication is restarted (see IBiometricsFace#userActivity).
+     * The framework will measure latency based on the time between the last START message and the
+     * onAuthenticated callback.
+     */
+    START = 20,
+
+    /**
+     * The sensor is dirty. The user should be informed to clean the sensor.
+     */
+    SENSOR_DIRTY = 21,
+
+    /**
+     * Used to enable a vendor-specific acquisition message.
+     */
+    VENDOR = 22
+};
+
+/**
+ * Result structure with an additional uint64_t field. See documentation in
+ * setCallback(), preEnroll(), and getAuthenticatorId() for usage of the value.
+ */
+struct OptionalUint64 {
+    /**
+     * The return status.
+     */
+    Status status;
+
+    /**
+     * This value is only meaningful if status is OK.
+     */
+    uint64_t value;
+};
+
+/**
+ * Result structure with an addition bool field. See documentation in
+ * getFeature() for usage of the value.
+ */
+struct OptionalBool {
+    /**
+     * The return status.
+     */
+    Status status;
+
+    /**
+     * This value is only meaningful if status is OK.
+     */
+    bool value;
+};

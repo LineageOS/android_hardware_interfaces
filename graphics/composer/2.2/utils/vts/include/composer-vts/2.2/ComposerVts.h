@@ -27,6 +27,7 @@
 #include <android/hardware/graphics/composer/2.2/IComposerClient.h>
 #include <composer-command-buffer/2.2/ComposerCommandBuffer.h>
 #include <composer-vts/2.1/ComposerVts.h>
+#include <mapper-vts/2.1/MapperVts.h>
 #include <utils/StrongPointer.h>
 
 namespace android {
@@ -36,36 +37,36 @@ namespace composer {
 namespace V2_2 {
 namespace vts {
 
-using android::hardware::graphics::common::V1_0::Hdr;
-using android::hardware::graphics::common::V1_1::ColorMode;
-using android::hardware::graphics::common::V1_1::Dataspace;
-using android::hardware::graphics::common::V1_1::PixelFormat;
-using android::hardware::graphics::common::V1_1::RenderIntent;
-using android::hardware::graphics::composer::V2_2::IComposer;
-using android::hardware::graphics::composer::V2_2::IComposerClient;
+using common::V1_0::Hdr;
+using common::V1_1::ColorMode;
+using common::V1_1::Dataspace;
+using common::V1_1::PixelFormat;
+using common::V1_1::RenderIntent;
+using IMapper2_1 = android::hardware::graphics::mapper::V2_1::IMapper;
+using IMapper3 = android::hardware::graphics::mapper::V3_0::IMapper;
+using Gralloc2 = android::hardware::graphics::mapper::V2_0::vts::Gralloc;
+using Gralloc2_1 = android::hardware::graphics::mapper::V2_1::vts::Gralloc;
+using Gralloc3 = android::hardware::graphics::mapper::V3_0::vts::Gralloc;
 
-class ComposerClient_v2_2;
+class ComposerClient;
 
-// Only thing I need for Composer_v2_2 is to create a v2_2 ComposerClient
-// Everything else is the same
-class Composer_v2_2 : public V2_1::vts::Composer {
+// A wrapper to IComposer.
+class Composer : public V2_1::vts::Composer {
    public:
-    Composer_v2_2() : V2_1::vts::Composer(){};
-    explicit Composer_v2_2(const std::string& name) : V2_1::vts::Composer(name){};
+    using V2_1::vts::Composer::Composer;
 
-    std::unique_ptr<ComposerClient_v2_2> createClient_v2_2();
+    std::unique_ptr<ComposerClient> createClient();
 };
 
 // A wrapper to IComposerClient.
-class ComposerClient_v2_2
-    : public android::hardware::graphics::composer::V2_1::vts::ComposerClient {
+class ComposerClient : public V2_1::vts::ComposerClient {
    public:
-    ComposerClient_v2_2(const sp<IComposerClient>& client)
-        : V2_1::vts::ComposerClient(client), mClient_v2_2(client){};
+    explicit ComposerClient(const sp<IComposerClient>& client)
+        : V2_1::vts::ComposerClient(client), mClient(client) {}
 
-    sp<V2_2::IComposerClient> getRaw() const;
+    sp<IComposerClient> getRaw() const;
 
-    void execute_v2_2(V2_1::vts::TestCommandReader* reader, V2_2::CommandWriterBase* writer);
+    void execute(V2_1::vts::TestCommandReader* reader, CommandWriterBase* writer);
 
     std::vector<IComposerClient::PerFrameMetadataKey> getPerFrameMetadataKeys(Display display);
 
@@ -73,7 +74,7 @@ class ComposerClient_v2_2
                                      uint32_t outputBufferSlotCount, PixelFormat* outFormat);
     bool getClientTargetSupport_2_2(Display display, uint32_t width, uint32_t height,
                                     PixelFormat format, Dataspace dataspace);
-    void setPowerMode_2_2(Display display, V2_2::IComposerClient::PowerMode mode);
+    void setPowerMode_2_2(Display display, IComposerClient::PowerMode mode);
     void setReadbackBuffer(Display display, const native_handle_t* buffer, int32_t releaseFence);
     void getReadbackBufferAttributes(Display display, PixelFormat* outPixelFormat,
                                      Dataspace* outDataspace);
@@ -86,7 +87,27 @@ class ComposerClient_v2_2
     std::array<float, 16> getDataspaceSaturationMatrix(Dataspace dataspace);
 
    private:
-    sp<V2_2::IComposerClient> mClient_v2_2;
+    const sp<IComposerClient> mClient;
+};
+
+class Gralloc : public V2_1::vts::Gralloc {
+  public:
+    Gralloc();
+    const native_handle_t* allocate(uint32_t width, uint32_t height, uint32_t layerCount,
+                                    PixelFormat format, uint64_t usage, bool import = true,
+                                    uint32_t* outStride = nullptr) {
+        return V2_1::vts::Gralloc::allocate(
+                width, height, layerCount,
+                static_cast<android::hardware::graphics::common::V1_0::PixelFormat>(format), usage,
+                import, outStride);
+    }
+
+    bool validateBufferSize(const native_handle_t* bufferHandle, uint32_t width, uint32_t height,
+                            uint32_t layerCount, PixelFormat format, uint64_t usage,
+                            uint32_t stride);
+
+  protected:
+    std::shared_ptr<Gralloc2_1> mGralloc2_1 = nullptr;
 };
 
 }  // namespace vts

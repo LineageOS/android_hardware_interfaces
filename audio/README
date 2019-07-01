@@ -1,48 +1,33 @@
 Directory structure of the audio HIDL related code.
 
 audio
-|-- 2.0              <== HIDL (.hal) can not be moved to fit the directory structure
-|                        because that would create a separate HAL
+|-- 2.0              <== core 2.0 HIDL API. .hal can not be moved into the core directory
+|                        because that would change its namespace and include path
 |-- 4.0              <== Version 4.0 of the core API
 |
-|-- common           <== code common to audio core and effect API
-|   |-- 2.0
-|   |   |-- default  <== code that wraps the legacy API
-|   |   `-- vts      <== vts of 2.0 core and effect API common code
-|   |-- 4.0
-|   |   |-- default
-|   |   `-- vts
-|   |-- ...          <== The future versions should continue this structure
-|   |   |-- default
-|   |   `-- vts
-|   `-- all_versions <== code common to all version of both core and effect API
-|       |-- default
-|       `-- vts      <== vts of core and effect API common version independent code
+|-- ...
 |
-|-- core           <== code relative to the core API
-|   |-- 2.0          <== 2.0 core API code (except .hal, see audio/2.0)
-|   |   |-- default
-|   |   `-- vts
+|-- common           <== code common to audio core and effect API
+|   |-- 2.0          <== HIDL API of V2
 |   |-- 4.0
-|   |   |-- default  <== default implementation of the core 4.0 api
-|   |   `-- vts      <== vts code of the 4.0 API
 |   |-- ...
-|   |   |-- default
-|   |   `-- vts
-|   `-- all_versions
-|       |-- default
-|       `-- vts      <== vts of core API common version independent code
+|   `-- all_versions <== code common to all version of both core and effect API
+|       |-- default  <== implementation shared code between core and effect impl
+|       |-- test     <== utilities used by tests
+|       `-- util     <== utilities used by both implementation and tests
+|
+|-- core             <== VTS and default implementation of the core API (not HIDL, see /audio/2.0))
+|   `-- all_versions <== Code is version independent through #if and separate files
+|       |-- default  <== code that wraps the legacy API
+|       `-- vts      <== vts of core API
+|           |-- 2.0  <== 2.0 specific tests and helpers
+|           |-- 4.0
+|           |-- ...
 |
 `-- effect           <== idem for the effect API
     |-- 2.0
-    |   |-- default
-    |   `-- vts
     |-- 4.0
-    |   |-- default
-    |   `-- vts
     |-- ...
-    |   |-- default
-    |   `-- vts
     `-- all_versions
         |-- default
         `-- vts

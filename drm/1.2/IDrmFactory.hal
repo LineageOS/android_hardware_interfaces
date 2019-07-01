@@ -1,0 +1,51 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package android.hardware.drm@1.2;
+
+import @1.1::IDrmFactory;
+import @1.1::IDrmPlugin;
+import @1.1::SecurityLevel;
+
+/**
+ * IDrmFactory is the main entry point for interacting with a vendor's
+ * drm HAL to create drm plugin instances. A drm plugin instance
+ * creates drm sessions which are used to obtain keys for a crypto
+ * session so it can decrypt protected video content.
+ *
+ * The 1.2 factory must always create 1.2 IDrmPlugin interfaces, which are
+ * returned via the 1.0 createPlugin method.
+ *
+ * To use 1.2 features the caller must cast the returned interface to a
+ * 1.2 HAL, using V1_2::IDrmPlugin::castFrom().
+ *
+ * The IDrmFactory hal is required because all top-level interfaces
+ * have to be updated in a minor uprev.
+ */
+
+interface IDrmFactory extends @1.1::IDrmFactory {
+    /**
+     * Determine if a specific security level is supported by the device.
+     * This method only differs from @1.0 isCryptoSchemeSupported
+     * by the addition of a security level.
+     *
+     * @param uuid identifies the crypto scheme in question
+     * @param mimeType identifies the mime type in question
+     * @param securityLevel specifies the security level required
+     * @return isSupported must be true only if the scheme is supported
+     */
+    isCryptoSchemeSupported_1_2(uint8_t[16] uuid, string mimeType,
+            @1.1::SecurityLevel securityLevel) generates(bool isSupported);
+};

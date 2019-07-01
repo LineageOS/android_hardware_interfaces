@@ -97,7 +97,7 @@ enum CameraMetadataTag : @3.2::CameraMetadataTag {
      */
     ANDROID_REQUEST_AVAILABLE_SESSION_KEYS = android.hardware.camera.metadata@3.2::CameraMetadataTag:ANDROID_REQUEST_END,
 
-    /** android.request.availablePhysicalCameraRequestKeys [static, int32[], hidden]
+    /** android.request.availablePhysicalCameraRequestKeys [static, int32[], ndk_public]
      *
      * <p>A subset of the available request keys that can be overridden for
      * physical devices backing a logical multi-camera.</p>

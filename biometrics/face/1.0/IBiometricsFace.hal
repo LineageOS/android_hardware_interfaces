@@ -1,0 +1,274 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.biometrics.face@1.0;
+
+import IBiometricsFaceClientCallback;
+
+/**
+ * The HAL interface for biometric face authentication.
+ */
+interface IBiometricsFace {
+
+    /**
+     * Sets the current client callback.
+     *
+     * Registers a user function that must receive notifications from the HAL.
+     * There is usually only one client (FaceService). This call must block
+     * if the HAL state machine is in busy state until the HAL leaves the
+     * busy state.
+     *
+     * All callback methods pass a deviceId to differentiate callback
+     * invocations in the case where multiple sensors exist.
+     *
+     * @param clientCallback The client defined callback to register.
+     * @return result, with its "value" parameter representing a "deviceId",
+     *     which must be unique for a given sensor.
+     */
+    @callflow(next={"setActiveUser"})
+    @entry
+    setCallback(IBiometricsFaceClientCallback clientCallback)
+        generates (OptionalUint64 result);
+
+    /**
+     * Sets the active user, which all subsequent HAL operations are applied to.
+     *
+     * HAL service implementors must ensure that operations are restricted to
+     * the given user. Clients must not call any part of this interface, except
+     * for setCallback(), without first having set an active user. The
+     * implementation is responsible for cancelling the current operation and
+     * returning to the idle state. Calling this method with the same userId
+     * should have no effect on the state machine.
+     *
+     * Note that onLockoutChanged() MUST be invoked by the implementation in
+     * response to a user change in order to update the framework with the
+     * timeout of the new user (or 0 if the user is not locked out).
+     *
+     * @param userId A non-negative user identifier that must be unique and
+     *     persistent for a given user.
+     * @param storePath absolute filesystem path to the template storage
+     *     directory. This must be the /data/vendor_de/<user>/facedata
+     *     directory specified by the SeLinux policy.
+     */
+    @callflow(next={"authenticate", "generateChallenge", "enumerate", "remove"})
+    setActiveUser(int32_t userId, string storePath) generates (Status status);
+
+    /**
+     * Begins a secure transaction request, e.g. enroll() or resetLockout().
+     *
+     * Generates a unique and cryptographically secure random token used to
+     * indicate the start of a secure transaction. generateChallenge() and
+     * revokeChallenge() specify a window where the resulting HAT that is
+     * generated in response to checking the user's PIN/pattern/password
+     * can be used to verify/perform a secure transaction.
+     *
+     * generateChallenge() generates a challenge which must then be wrapped by
+     * gatekeeper after verifying a successful strong authentication attempt,
+     * which generates a Hardware Authentication Token. The challenge prevents
+     * spoofing and replay attacks and ensures that only a transaction backed
+     * by a user authentication (PIN/pattern/password) can proceed.
+     *
+     * The implementation should be tolerant of revokeChallenge() being invoked
+     * after timeout has expired.
+     *
+     * @param challengeTimeoutSec A timeout in seconds, after which the driver
+     *     must invalidate the challenge. This is to prevent bugs or crashes in
+     *     the system from leaving a challenge enabled indefinitely.
+     * @return result, with its "value" parameter representing a "challenge": a
+     *     unique and cryptographically secure random token.
+     */
+    @callflow(next={"enroll", "revokeChallenge", "setFeature"})
+    generateChallenge(uint32_t challengeTimeoutSec)
+        generates (OptionalUint64 result);
+
+    /**
+     * Enrolls a user's face.
+     *
+     * Note that the Hardware Authentication Token must be valid for the
+     * duration of enrollment and thus should be explicitly invalidated by a
+     * call to revokeChallenge() when enrollment is complete, to reduce the
+     * window of opportunity to re-use the challenge and HAT. For example,
+     * Settings calls generateChallenge() once to allow the user to enroll one
+     * or more faces or toggle secure settings without having to re-enter the
+     * PIN/pattern/password. Once the user completes the operation, Settings
+     * invokes revokeChallenge() to close the transaction. If the HAT is expired,
+     * the implementation must invoke onError with UNABLE_TO_PROCESS.
+     *
+     * This method triggers the IBiometricsFaceClientCallback#onEnrollResult()
+     * method.
+     *
+     * @param hat A valid Hardware Authentication Token, generated as a result
+     *     of a generateChallenge() challenge being wrapped by the gatekeeper
+     *     after a successful strong authentication request.
+     * @param timeoutSec A timeout in seconds, after which this enroll
+     *     attempt is cancelled. Note that the framework can continue
+     *     enrollment by calling this again with a valid HAT. This timeout is
+     *     expected to be used to limit power usage if the device becomes idle
+     *     during enrollment. The implementation is expected to send
+     *     ERROR_TIMEOUT if this happens.
+     * @param disabledFeatures A list of features to be disabled during
+     *     enrollment. Note that all features are enabled by default.
+     * @return status The status of this method call.
+     */
+    @callflow(next={"cancel", "enroll", "revokeChallenge", "remove"})
+    enroll(vec<uint8_t> hat, uint32_t timeoutSec, vec<Feature> disabledFeatures)
+        generates (Status status);
+
+    /**
+     * Finishes the secure transaction by invalidating the challenge generated
+     * by generateChallenge().
+     *
+     * Clients must call this method once the secure transaction (e.g. enroll
+     * or setFeature) is completed. See generateChallenge().
+     *
+     * @return status The status of this method call.
+     */
+    @callflow(next={"authenticate", "setActiveUser", "enumerate", "remove"})
+    revokeChallenge() generates (Status status);
+
+    /**
+     * Changes the state of previous enrollment setting. Because this may
+     * decrease security, the user must enter their password before this method
+     * is invoked (see @param HAT). The driver must verify the HAT before
+     * changing any feature state. This method must return ILLEGAL_ARGUMENT if
+     * the HAT or faceId is invalid. This must only be invoked after
+     * setActiveUser() is called.
+     *
+     * Note: In some cases it may not be possible to change the state of this
+     * flag without re-enrolling. For example, if the user didn't provide
+     * attention during the original enrollment. This flag reflects the same
+     * persistent state as the one passed to enroll().
+     *
+     * Note: This call may block for a short amount of time (few hundred
+     * milliseconds). Clients are expected to invoke this asynchronously if it
+     * takes much longer than the above limit. Also note that the result is
+     * returned solely through Status (and not onError).
+     *
+     * @param feature The feature to be enabled or disabled.
+     * @param enabled True to enable the feature, false to disable.
+     * @param hat A valid Hardware Authentication Token, generated as a result
+     *     of getChallenge().
+     * @param faceId the ID of the enrollment returned by onEnrollResult() for
+     *     the feature to update.
+     * @return status The status of this method call.
+     */
+    setFeature(Feature feature, bool enabled, vec<uint8_t> hat, uint32_t faceId)
+        generates(Status status);
+
+    /**
+     * Retrieves the current state of the feature. If the faceId is invalid,
+     * the implementation must return ILLEGAL_ARGUMENT.
+     *
+     * @param faceId the ID of the enrollment returned by enroll().
+     * @return result with the value set to true if the feature is enabled,
+     *     false if disabled.
+     */
+    getFeature(Feature feature, uint32_t faceId) generates (OptionalBool result);
+
+    /**
+     * Returns an identifier associated with the current face set.
+     *
+     * The authenticator ID must change whenever a new face is enrolled. The
+     * authenticator ID must not be changed when a face is deleted. The
+     * authenticator ID must be an entropy-encoded random number which all
+     * current templates are tied to. The authenticator ID must be immutable
+     * outside of an active enrollment window to prevent replay attacks.
+     *
+     * @return result, with its value parameter representing an
+     *     "authenticatorId": an identifier associated to the user's current
+     *     face enrollment.
+     */
+    @callflow(next={"authenticate"})
+    getAuthenticatorId() generates (OptionalUint64 result);
+
+    /**
+     * Cancels the current enroll, authenticate, remove, or enumerate operation.
+     *
+     * @return status The status of this method call.
+     */
+    @callflow(next={"authenticate", "enroll", "enumerate", "remove",
+        "setActiveUser"})
+    cancel() generates (Status status);
+
+    /**
+     * Enumerates all face templates associated with the active user.
+     *
+     * The onEnumerate() callback method is invoked once for each face template
+     * found.
+     *
+     * @return status The status of this method call.
+     */
+    @callflow(next={"remove", "enroll", "authenticate", "setActiveUser"})
+    enumerate() generates (Status status);
+
+    /**
+     * Removes a face template or all face templates associated with the active
+     * user.
+     *
+     * This method triggers the IBiometricsFaceClientCallback#onRemoved() method.
+     *
+     * @param faceId The id correpsonding to the face to be removed; or 0 if all
+     *    faces are to be removed.
+     * @return status The status of this method call.
+     */
+    @callflow(next={"enumerate", "authenticate", "cancel", "getAuthenticatorId",
+        "setActiveUser"})
+    remove(uint32_t faceId) generates (Status status);
+
+    /**
+     * Authenticates the active user.
+     *
+     * An optional operationId can be specified as a token from the transaction
+     * being authorized. The hardware may enter a standby state during
+     * authentication, where the device is idle to conserve power while
+     * authenticating, e.g. after 3 seconds without finding a face. See
+     * IBiometricsFace#userActivity() for more info.
+     *
+     * @param operationId A non-zero operation id associated with a crypto
+     * object instance; or 0 if not being used.
+     * @return status The status of this method call.
+     */
+    @callflow(next={"cancel", "generateChallenge", "remove"})
+    authenticate(uint64_t operationId) generates (Status status);
+
+    /**
+     * A hint to the HAL to continue looking for faces.
+     *
+     * This method should only be used when the HAL is in the authenticating
+     * or standby state. Using this method when the HAL is not in one of the
+     * mentioned states must return OPERATION_NOT_SUPPORTED. Calling this
+     * method while the HAL is already authenticating may extend the duration
+     * where it's looking for a face.
+     *
+     * @return status The status of this method call.
+     */
+    userActivity() generates (Status status);
+
+    /**
+     * Reset lockout for the current user.
+     *
+     * Note: This call may block for a short amount of time (few hundred
+     * milliseconds). Clients are expected to invoke this asynchronously if it
+     * takes much longer than the above limit.
+     *
+     * @param hat A valid Hardware Authentication Token, generated when the
+     *     user authenticates with PIN/pattern/pass. When the Hardware
+     *     Authentication Token is verified, lockout must be reset and
+     *     onLockoutChanged must be called with duration 0.
+     * @return status The status of this method call.
+     */
+    resetLockout(vec<uint8_t> hat) generates (Status status);
+};

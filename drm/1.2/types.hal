@@ -1,0 +1,118 @@
+/**
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.drm@1.2;
+
+import @1.0::KeyStatusType;
+import @1.0::Status;
+import @1.1::HdcpLevel;
+
+enum OfflineLicenseState : uint32_t {
+    /**
+     * Offline license state is unknown
+     */
+    UNKNOWN,
+
+    /**
+     * Offline license state is usable, the keys are usable for decryption.
+     */
+    USABLE,
+
+    /**
+     * Offline license state is inactive, the keys have been marked for
+     * release using {@link #getKeyRequest} with KEY_TYPE_RELEASE but the
+     * key response has not been received.
+     */
+    INACTIVE
+};
+
+enum Status : @1.0::Status {
+    /**
+     * The drm HAL module must return ERROR_DRM_INSUFFICIENT_SECURITY
+     * from the crypto plugin decrypt method when the security level
+     * of the device is not sufficient to meet the requirements in the
+     * license policy.
+     */
+    ERROR_DRM_INSUFFICIENT_SECURITY,
+
+    /**
+     * The drm HAL module must return ERROR_FRAME_TOO_LARGE from the
+     * decrypt method when the frame being decrypted into the secure
+     * output buffer exceeds the size of the buffer.
+     */
+    ERROR_DRM_FRAME_TOO_LARGE,
+
+    /**
+     * This error must be returned from any session method when an
+     * attempt is made to use the session after the crypto hardware
+     * state has been invalidated. Some devices are not able to
+     * retain crypto session state across device suspend/resume which
+     * results in invalid session state.
+     */
+    ERROR_DRM_SESSION_LOST_STATE,
+
+     /**
+      * The drm HAL module must return this error if client
+      * applications using the hal are temporarily exceeding the
+      * capacity of available crypto resources such that a retry of
+      * the operation is likely to succeed.
+      */
+    ERROR_DRM_RESOURCE_CONTENTION,
+};
+
+/**
+ * HDCP specifications are defined by Digital Content Protection LLC (DCP).
+ *   "HDCP Specification Rev. 2.3 Interface Independent Adaptation"
+ *   "HDCP 2.3 on HDMI Specification"
+ */
+enum HdcpLevel : @1.1::HdcpLevel {
+    /**
+     * HDCP version 2.3 Type 1.
+     */
+    HDCP_V2_3
+};
+
+
+/**
+ * KeySetId is an identifier that references a set of keys in an
+ * offline license. The keySetId is created by the HAL implementation
+ * and returned from provideKeyResponse and getOfflineLicenseIds. The
+ * framework passes KeySetId back to the HAL when referring to the key
+ * set in methods that take a KeySetId as an input parameter.
+ */
+typedef vec<uint8_t> KeySetId;
+
+enum KeyStatusType : @1.0::KeyStatusType {
+    /**
+     * The key is not yet usable to decrypt media because the start
+     * time is in the future. The key must become usable when
+     * its start time is reached.
+     */
+    USABLEINFUTURE
+};
+
+/**
+ * Used by sendKeysChange_1_2 to report the usability status of each key to the
+ * app.
+ *
+ * This struct only differs from @1.0 version by the addition of new
+ * KeyStatusType(s).
+ *
+ */
+struct KeyStatus {
+    KeySetId keyId;
+    KeyStatusType type;
+};

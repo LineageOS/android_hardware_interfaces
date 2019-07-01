@@ -44,7 +44,10 @@ int main(int argc, char** argv) {
     ::testing::AddGlobalTestEnvironment(gEnv);
     ::testing::InitGoogleTest(&argc, argv);
     gEnv->init(&argc, argv);
-    int status = RUN_ALL_TESTS();
-    LOG(INFO) << "Test result = " << status;
+    int status = gEnv->initFromOptions(argc, argv);
+    if (status == 0) {
+        int status = RUN_ALL_TESTS();
+        LOG(INFO) << "Test result = " << status;
+    }
     return status;
 }

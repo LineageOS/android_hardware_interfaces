@@ -1,0 +1,846 @@
+/*
+ * Copyright (C) 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.input.common@1.0;
+
+
+/**
+ * Constants that identify each individual axis of a motion event.
+ */
+enum Axis : uint64_t {
+    /**
+     * Axis constant: X axis of a motion event.
+     *
+     * - For a touch screen, reports the absolute X screen position of the center of
+     * the touch contact area.  The units are display pixels.
+     * - For a touch pad, reports the absolute X surface position of the center of the touch
+     * contact area. The units are device-dependent.
+     * - For a mouse, reports the absolute X screen position of the mouse pointer.
+     * The units are display pixels.
+     * - For a trackball, reports the relative horizontal displacement of the trackball.
+     * The value is normalized to a range from -1.0 (left) to 1.0 (right).
+     * - For a joystick, reports the absolute X position of the joystick.
+     * The value is normalized to a range from -1.0 (left) to 1.0 (right).
+     */
+    X = 0,
+    /**
+     * Axis constant: Y axis of a motion event.
+     *
+     * - For a touch screen, reports the absolute Y screen position of the center of
+     * the touch contact area.  The units are display pixels.
+     * - For a touch pad, reports the absolute Y surface position of the center of the touch
+     * contact area. The units are device-dependent.
+     * - For a mouse, reports the absolute Y screen position of the mouse pointer.
+     * The units are display pixels.
+     * - For a trackball, reports the relative vertical displacement of the trackball.
+     * The value is normalized to a range from -1.0 (up) to 1.0 (down).
+     * - For a joystick, reports the absolute Y position of the joystick.
+     * The value is normalized to a range from -1.0 (up or far) to 1.0 (down or near).
+     */
+    Y = 1,
+    /**
+     * Axis constant: Pressure axis of a motion event.
+     *
+     * - For a touch screen or touch pad, reports the approximate pressure applied to the surface
+     * by a finger or other tool.  The value is normalized to a range from
+     * 0 (no pressure at all) to 1 (normal pressure), although values higher than 1
+     * may be generated depending on the calibration of the input device.
+     * - For a trackball, the value is set to 1 if the trackball button is pressed
+     * or 0 otherwise.
+     * - For a mouse, the value is set to 1 if the primary mouse button is pressed
+     * or 0 otherwise.
+     */
+    PRESSURE = 2,
+    /**
+     * Axis constant: Size axis of a motion event.
+     *
+     * - For a touch screen or touch pad, reports the approximate size of the contact area in
+     * relation to the maximum detectable size for the device.  The value is normalized
+     * to a range from 0 (smallest detectable size) to 1 (largest detectable size),
+     * although it is not a linear scale. This value is of limited use.
+     * To obtain calibrated size information, see
+     * {@link TOUCH_MAJOR} or {@link TOOL_MAJOR}.
+     */
+    SIZE = 3,
+    /**
+     * Axis constant: TouchMajor axis of a motion event.
+     *
+     * - For a touch screen, reports the length of the major axis of an ellipse that
+     * represents the touch area at the point of contact.
+     * The units are display pixels.
+     * - For a touch pad, reports the length of the major axis of an ellipse that
+     * represents the touch area at the point of contact.
+     * The units are device-dependent.
+     */
+    TOUCH_MAJOR = 4,
+    /**
+     * Axis constant: TouchMinor axis of a motion event.
+     *
+     * - For a touch screen, reports the length of the minor axis of an ellipse that
+     * represents the touch area at the point of contact.
+     * The units are display pixels.
+     * - For a touch pad, reports the length of the minor axis of an ellipse that
+     * represents the touch area at the point of contact.
+     * The units are device-dependent.
+     *
+     * When the touch is circular, the major and minor axis lengths will be equal to one another.
+     */
+    TOUCH_MINOR = 5,
+    /**
+     * Axis constant: ToolMajor axis of a motion event.
+     *
+     * - For a touch screen, reports the length of the major axis of an ellipse that
+     * represents the size of the approaching finger or tool used to make contact.
+     * - For a touch pad, reports the length of the major axis of an ellipse that
+     * represents the size of the approaching finger or tool used to make contact.
+     * The units are device-dependent.
+     *
+     * When the touch is circular, the major and minor axis lengths will be equal to one another.
+     *
+     * The tool size may be larger than the touch size since the tool may not be fully
+     * in contact with the touch sensor.
+     */
+    TOOL_MAJOR = 6,
+    /**
+     * Axis constant: ToolMinor axis of a motion event.
+     *
+     * - For a touch screen, reports the length of the minor axis of an ellipse that
+     * represents the size of the approaching finger or tool used to make contact.
+     * - For a touch pad, reports the length of the minor axis of an ellipse that
+     * represents the size of the approaching finger or tool used to make contact.
+     * The units are device-dependent.
+     *
+     * When the touch is circular, the major and minor axis lengths will be equal to one another.
+     *
+     * The tool size may be larger than the touch size since the tool may not be fully
+     * in contact with the touch sensor.
+     */
+    TOOL_MINOR = 7,
+    /**
+     * Axis constant: Orientation axis of a motion event.
+     *
+     * - For a touch screen or touch pad, reports the orientation of the finger
+     * or tool in radians relative to the vertical plane of the device.
+     * An angle of 0 radians indicates that the major axis of contact is oriented
+     * upwards, is perfectly circular or is of unknown orientation.  A positive angle
+     * indicates that the major axis of contact is oriented to the right.  A negative angle
+     * indicates that the major axis of contact is oriented to the left.
+     * The full range is from -PI/2 radians (finger pointing fully left) to PI/2 radians
+     * (finger pointing fully right).
+     * - For a stylus, the orientation indicates the direction in which the stylus
+     * is pointing in relation to the vertical axis of the current orientation of the screen.
+     * The range is from -PI radians to PI radians, where 0 is pointing up,
+     * -PI/2 radians is pointing left, -PI or PI radians is pointing down, and PI/2 radians
+     * is pointing right.  See also {@link TILT}.
+     */
+    ORIENTATION = 8,
+    /**
+     * Axis constant: Vertical Scroll axis of a motion event.
+     *
+     * - For a mouse, reports the relative movement of the vertical scroll wheel.
+     * The value is normalized to a range from -1.0 (down) to 1.0 (up).
+     *
+     * The framework may use this axis to scroll views vertically.
+     */
+    VSCROLL = 9,
+    /**
+     * Axis constant: Horizontal Scroll axis of a motion event.
+     *
+     * - For a mouse, reports the relative movement of the horizontal scroll wheel.
+     * The value is normalized to a range from -1.0 (left) to 1.0 (right).
+     *
+     * The framework may use this axis to scroll views horizontally.
+     */
+    HSCROLL = 10,
+    /**
+     * Axis constant: Z axis of a motion event.
+     *
+     * - For a joystick, reports the absolute Z position of the joystick.
+     * The value is normalized to a range from -1.0 (high) to 1.0 (low).
+     * <em>On game pads with two analog joysticks, this axis is often reinterpreted
+     * to report the absolute X position of the second joystick instead.</em>
+     */
+    Z = 11,
+    /**
+     * Axis constant: X Rotation axis of a motion event.
+     *
+     * - For a joystick, reports the absolute rotation angle about the X axis.
+     * The value is normalized to a range from -1.0 (counter-clockwise) to 1.0 (clockwise).
+     */
+    RX = 12,
+    /**
+     * Axis constant: Y Rotation axis of a motion event.
+     *
+     * - For a joystick, reports the absolute rotation angle about the Y axis.
+     * The value is normalized to a range from -1.0 (counter-clockwise) to 1.0 (clockwise).
+     */
+    RY = 13,
+    /**
+     * Axis constant: Z Rotation axis of a motion event.
+     *
+     * - For a joystick, reports the absolute rotation angle about the Z axis.
+     * The value is normalized to a range from -1.0 (counter-clockwise) to 1.0 (clockwise).
+     * On game pads with two analog joysticks, this axis is often reinterpreted
+     * to report the absolute Y position of the second joystick instead.
+     */
+    RZ = 14,
+    /**
+     * Axis constant: Hat X axis of a motion event.
+     *
+     * - For a joystick, reports the absolute X position of the directional hat control.
+     * The value is normalized to a range from -1.0 (left) to 1.0 (right).
+     */
+    HAT_X = 15,
+    /**
+     * Axis constant: Hat Y axis of a motion event.
+     *
+     * - For a joystick, reports the absolute Y position of the directional hat control.
+     * The value is normalized to a range from -1.0 (up) to 1.0 (down).
+     */
+    HAT_Y = 16,
+    /**
+     * Axis constant: Left Trigger axis of a motion event.
+     *
+     * - For a joystick, reports the absolute position of the left trigger control.
+     * The value is normalized to a range from 0.0 (released) to 1.0 (fully pressed).
+     */
+    LTRIGGER = 17,
+    /**
+     * Axis constant: Right Trigger axis of a motion event.
+     *
+     * - For a joystick, reports the absolute position of the right trigger control.
+     * The value is normalized to a range from 0.0 (released) to 1.0 (fully pressed).
+     */
+    RTRIGGER = 18,
+    /**
+     * Axis constant: Throttle axis of a motion event.
+     *
+     * - For a joystick, reports the absolute position of the throttle control.
+     * The value is normalized to a range from 0.0 (fully open) to 1.0 (fully closed).
+     */
+    THROTTLE = 19,
+    /**
+     * Axis constant: Rudder axis of a motion event.
+     *
+     * - For a joystick, reports the absolute position of the rudder control.
+     * The value is normalized to a range from -1.0 (turn left) to 1.0 (turn right).
+     */
+    RUDDER = 20,
+    /**
+     * Axis constant: Wheel axis of a motion event.
+     *
+     * - For a joystick, reports the absolute position of the steering wheel control.
+     * The value is normalized to a range from -1.0 (turn left) to 1.0 (turn right).
+     */
+    WHEEL = 21,
+    /**
+     * Axis constant: Gas axis of a motion event.
+     *
+     * - For a joystick, reports the absolute position of the gas (accelerator) control.
+     * The value is normalized to a range from 0.0 (no acceleration)
+     * to 1.0 (maximum acceleration).
+     */
+    GAS = 22,
+    /**
+     * Axis constant: Brake axis of a motion event.
+     *
+     * - For a joystick, reports the absolute position of the brake control.
+     * The value is normalized to a range from 0.0 (no braking) to 1.0 (maximum braking).
+     */
+    BRAKE = 23,
+    /**
+     * Axis constant: Distance axis of a motion event.
+     *
+     * - For a stylus, reports the distance of the stylus from the screen.
+     * A value of 0.0 indicates direct contact and larger values indicate increasing
+     * distance from the surface.
+     */
+    DISTANCE = 24,
+    /**
+     * Axis constant: Tilt axis of a motion event.
+     *
+     * - For a stylus, reports the tilt angle of the stylus in radians where
+     * 0 radians indicates that the stylus is being held perpendicular to the
+     * surface, and PI/2 radians indicates that the stylus is being held flat
+     * against the surface.
+     */
+    TILT = 25,
+    /**
+     * Axis constant:  Generic scroll axis of a motion event.
+     *
+     * - This is used for scroll axis motion events that can't be classified as strictly
+     *   vertical or horizontal. The movement of a rotating scroller is an example of this.
+     */
+    SCROLL = 26,
+    /**
+     * Axis constant: The movement of x position of a motion event.
+     *
+     * - For a mouse, reports a difference of x position between the previous position.
+     * This is useful when pointer is captured, in that case the mouse pointer doesn't
+     * change the location but this axis reports the difference which allows the app
+     * to see how the mouse is moved.
+     */
+    RELATIVE_X = 27,
+    /**
+     * Axis constant: The movement of y position of a motion event.
+     *
+     * Same as {@link RELATIVE_X}, but for y position.
+     */
+    RELATIVE_Y = 28,
+    /**
+     * Axis constant: Generic 1 axis of a motion event.
+     * The interpretation of a generic axis is device-specific.
+     */
+    GENERIC_1 = 32,
+    /**
+     * Axis constant: Generic 2 axis of a motion event.
+     * The interpretation of a generic axis is device-specific.
+     */
+    GENERIC_2 = 33,
+    /**
+     * Axis constant: Generic 3 axis of a motion event.
+     * The interpretation of a generic axis is device-specific.
+     */
+    GENERIC_3 = 34,
+    /**
+     * Axis constant: Generic 4 axis of a motion event.
+     * The interpretation of a generic axis is device-specific.
+     */
+    GENERIC_4 = 35,
+    /**
+     * Axis constant: Generic 5 axis of a motion event.
+     * The interpretation of a generic axis is device-specific.
+     */
+    GENERIC_5 = 36,
+    /**
+     * Axis constant: Generic 6 axis of a motion event.
+     * The interpretation of a generic axis is device-specific.
+     */
+    GENERIC_6 = 37,
+    /**
+     * Axis constant: Generic 7 axis of a motion event.
+     * The interpretation of a generic axis is device-specific.
+     */
+    GENERIC_7 = 38,
+    /**
+     * Axis constant: Generic 8 axis of a motion event.
+     * The interpretation of a generic axis is device-specific.
+     */
+    GENERIC_8 = 39,
+    /**
+     * Axis constant: Generic 9 axis of a motion event.
+     * The interpretation of a generic axis is device-specific.
+     */
+    GENERIC_9 = 40,
+    /**
+     * Axis constant: Generic 10 axis of a motion event.
+     * The interpretation of a generic axis is device-specific.
+     */
+    GENERIC_10 = 41,
+    /**
+     * Axis constant: Generic 11 axis of a motion event.
+     * The interpretation of a generic axis is device-specific.
+     */
+    GENERIC_11 = 42,
+    /**
+     * Axis constant: Generic 12 axis of a motion event.
+     * The interpretation of a generic axis is device-specific.
+     */
+    GENERIC_12 = 43,
+    /**
+     * Axis constant: Generic 13 axis of a motion event.
+     * The interpretation of a generic axis is device-specific.
+     */
+    GENERIC_13 = 44,
+    /**
+     * Axis constant: Generic 14 axis of a motion event.
+     * The interpretation of a generic axis is device-specific.
+     */
+    GENERIC_14 = 45,
+    /**
+     * Axis constant: Generic 15 axis of a motion event.
+     * The interpretation of a generic axis is device-specific.
+     */
+    GENERIC_15 = 46,
+    /**
+     * Axis constant: Generic 16 axis of a motion event.
+     * The interpretation of a generic axis is device-specific.
+     */
+    GENERIC_16 = 47,
+};
+
+/**
+ * Tool type of a pointer
+ */
+enum ToolType: uint8_t {
+    UNKNOWN = 0,
+    FINGER = 1,
+    STYLUS = 2,
+    MOUSE = 3,
+    ERASER = 4,
+};
+
+/**
+ * Properties of a particular pointer. Analogous to Android's PointerProperties.
+ */
+struct PointerProperties {
+    /**
+     * A number identifying a specific pointer. When a pointer is lifted,
+     * this value may be reused by another new pointer, even during the
+     * same gesture. For example, if there are two pointers touching the screen
+     * at the same time, they might have pointer ID's of 0 and 1. If the
+     * pointer with id = 0 is lifted, while the pointer with id = 1 remains, and
+     * a new pointer is placed on the screen, then the new pointer may receive
+     * an id of 0. While a pointer is active, it is guaranteed to keep the same
+     * id.
+     */
+    int32_t id;
+    /**
+     * Type of tool used to make contact, such as a finger or stylus, if known.
+     */
+    ToolType toolType;
+};
+
+/**
+ * Pointer coordinate data. Analogous to Android's PointerCoords.
+ */
+struct PointerCoords {
+    /**
+     * Bitfield of axes that are present in this structure.
+     */
+    bitfield<Axis> bits;
+    /**
+     * The values corresponding to each non-zero axis. This vector only
+     * contains non-zero entries. If an axis that is not currently specified
+     * in "bits" is requested, a zero value is returned.
+     * There are only as many values stored here
+     * as there are non-zero bits in the "bits" field.
+     * The values are position-packed. So the first non-zero axis will be
+     * at position 0, the next non-zero axis will be at position 1, and so on.
+     */
+    vec<float> values;
+};
+
+enum SourceClass: uint8_t {
+    NONE = 0 << 0,
+    BUTTON = 1 << 0,
+    POINTER = 1 << 1,
+    NAVIGATION = 1 << 2,
+    POSITION = 1 << 3,
+    JOYSTICK = 1 << 4,
+};
+
+/**
+ * Input sources
+ */
+enum Source: uint32_t {
+    UNKNOWN = 0,
+    KEYBOARD = (1 << 8) | SourceClass:BUTTON,
+    DPAD = (1 << 9) | SourceClass:BUTTON,
+    GAMEPAD = (1 << 10) | SourceClass:BUTTON,
+    TOUCHSCREEN = (1 << 12) | SourceClass:POINTER,
+    MOUSE = (1 << 13) | SourceClass:POINTER,
+    STYLUS = (1 << 14) | SourceClass:POINTER,
+    BLUETOOTH_STYLUS = (1 << 15) | STYLUS,
+    TRACKBALL = (1 << 16) | SourceClass:NAVIGATION,
+    MOUSE_RELATIVE = (1 << 17) | SourceClass:NAVIGATION,
+    TOUCHPAD = (1 << 20) | SourceClass:POSITION,
+    TOUCH_NAVIGATION = (1 << 21) | SourceClass:NONE,
+    ROTARY_ENCODER = (1 << 22) | SourceClass:NONE,
+    JOYSTICK = (1 << 24) | SourceClass:JOYSTICK,
+    ANY = 0xFFFFFF00,
+};
+
+/** Motion event actions */
+enum Action: int32_t {
+    /** A pressed gesture has started, the motion contains the initial starting location. */
+    DOWN = 0,
+    /**
+     * A pressed gesture has finished, the motion contains the final release location
+     * as well as any intermediate points since the last down or move event.
+     */
+    UP = 1,
+    /**
+     * A change has happened during a press gesture (between AMOTION_EVENT_ACTION_DOWN and
+     * AMOTION_EVENT_ACTION_UP). The motion contains the most recent point.
+     */
+    MOVE = 2,
+    /**
+     * The current gesture has been aborted.
+     * You will not receive any more points in it. You must treat this as
+     * an up event, but not perform any action that you normally would.
+     */
+    CANCEL = 3,
+    /**
+     * A movement has happened outside of the normal bounds of the UI element.
+     * This does not provide a full gesture, but only the initial location of the movement/touch.
+     */
+    OUTSIDE = 4,
+    /**
+     * A non-primary pointer has gone down.
+     */
+    POINTER_DOWN = 5,
+    /**
+     * A non-primary pointer has gone up.
+     */
+    POINTER_UP = 6,
+    /**
+     * A change happened but the pointer is not down (unlike AMOTION_EVENT_ACTION_MOVE).
+     * The motion contains the most recent point, as well as any intermediate points since
+     * the last hover move event.
+     */
+    HOVER_MOVE = 7,
+    /**
+     * The motion event contains relative vertical and/or horizontal scroll offsets.
+     * Use getAxisValue to retrieve the information from AMOTION_EVENT_AXIS_VSCROLL
+     * and AMOTION_EVENT_AXIS_HSCROLL.
+     * The pointer may or may not be down when this event is dispatched.
+     * The framework will always deliver this action to the window under the pointer, which
+     * may not be the window currently touched.
+     */
+    SCROLL = 8,
+    /**
+     * The pointer is not down but has entered the boundaries of a window or view.
+     */
+    HOVER_ENTER = 9,
+    /**
+     * The pointer is not down but has exited the boundaries of a window or view.
+     */
+    HOVER_EXIT = 10,
+    /**
+     * One or more buttons have been pressed.
+     */
+    BUTTON_PRESS = 11,
+    /**
+     * One or more buttons have been released.
+     */
+    BUTTON_RELEASE = 12,
+};
+
+/** Edge flags */
+enum EdgeFlag : int32_t {
+    /** No edges are intersected */
+    NONE = 0,
+    /** Motion intersected top edge of the screen */
+    TOP = 1 << 0,
+    /** Motion intersected bottom edge of the screen */
+    BOTTOM = 1 << 1,
+    /** Motion intersected left edge of the screen */
+    LEFT = 1 << 2,
+    /** Motion intersected right edge of the screen */
+    RIGHT = 1 << 3,
+};
+
+/** Policy flags */
+enum PolicyFlag : uint32_t {
+    // The following flags originate in RawEvents
+
+    /** Event should wake the device */
+    WAKE = 1 << 0,
+    /** Key is virtual, and should generate haptic feedback */
+    VIRTUAL = 1 << 1,
+    /** Key is the special function modifier */
+    FUNCTION = 1 << 2,
+    /**
+     * Key represents a special gesture that has been detected
+     * by the touch firmware or driver.
+     */
+    GESTURE = 1 << 3,
+
+    // The following flags may be generated here in the InputClassifier HAL
+    // or in later InputListener stages
+
+    /** Event was injected */
+    INJECTED = 1 << 24,
+    /**
+     * Event comes from a trusted source, such as a directly attached input
+     * device or an application with system-wide event injection permission.
+     */
+    TRUSTED = 1 << 25,
+    /** Event has passed through an input filter. */
+    FILTERED = 1 << 26,
+    /** Disable automatic key repeating behaviour. */
+    DISABLE_KEY_REPEAT = 1 << 27,
+
+    // The following flags are set by the input reader policy as it intercepts each event
+
+    /** Device was in an interactive state when the event was intercepted */
+    INTERACTIVE = 1 << 29,
+    /** Event should be dispatched to applications */
+    PASS_TO_USER = 1 << 30,
+};
+
+/**
+ * Buttons that are associated with motion events.
+ */
+enum Button : int32_t {
+    NONE = 0,
+    PRIMARY = 1 << 0,
+    SECONDARY = 1 << 1,
+    TERTIARY = 1 << 2,
+    BACK = 1 << 3,
+    FORWARD = 1 << 4,
+    STYLUS_PRIMARY = 1 << 5,
+    STYLUS_SECONDARY = 1 << 6,
+};
+
+/**
+ * Meta key / modifier state
+ */
+enum Meta : int32_t {
+    NONE = 0,
+
+    /** One of the ALT meta keys is pressed. */
+    ALT_ON = 1 << 1, // 0x02
+
+    /** The left ALT meta key is pressed. */
+    ALT_LEFT_ON = 1 << 4, // 0x10
+
+    /** The right ALT meta key is pressed. */
+    ALT_RIGHT_ON = 1 << 5, // 0x20
+
+    /** One of the SHIFT meta keys is pressed. */
+    SHIFT_ON = 1 << 0, // 0x01
+
+    /** The left SHIFT meta key is pressed. */
+    SHIFT_LEFT_ON = 1 << 6, // 0x40
+
+    /** The right SHIFT meta key is pressed. */
+    SHIFT_RIGHT_ON = 1 << 7, // 0x80
+
+    /** The SYM meta key is pressed. */
+    SYM_ON = 1 << 2, // 0x04
+
+    /** The FUNCTION meta key is pressed. */
+    FUNCTION_ON = 1 << 3, // 0x08
+
+    /** One of the CTRL meta keys is pressed. */
+    CTRL_ON = 1 << 12, // 0x1000
+
+    /** The left CTRL meta key is pressed. */
+    CTRL_LEFT_ON = 1 << 13, // 0x2000
+
+    /** The right CTRL meta key is pressed. */
+    CTRL_RIGHT_ON = 1 << 14, // 0x4000
+
+    /** One of the META meta keys is pressed. */
+    META_ON = 1 << 16, // 0x10000
+
+    /** The left META meta key is pressed. */
+    META_LEFT_ON = 1 << 17, // 0x20000
+
+    /** The right META meta key is pressed. */
+    META_RIGHT_ON = 1 << 18, //0x40000
+
+    /** The CAPS LOCK meta key is on. */
+    CAPS_LOCK_ON = 1 << 20, // 0x100000
+
+    /** The NUM LOCK meta key is on. */
+    NUM_LOCK_ON = 1 << 21, // 0x200000
+
+    /** The SCROLL LOCK meta key is on. */
+    SCROLL_LOCK_ON = 1 << 22, // 0x400000
+};
+
+/**
+ * Motion event flags
+ */
+enum Flag : int32_t {
+    /**
+     * Indicates that the window that received this motion event is partly
+     * or wholly obscured by another visible window above it. This flag is set to true
+     * even if the event did not directly pass through the obscured area.
+     * A security sensitive application can check this flag to identify situations in which
+     * a malicious application may have covered up part of its content for the purpose
+     * of misleading the user or hijacking touches. An appropriate response might be
+     * to drop the suspect touches or to take additional precautions to confirm the user's
+     * actual intent.
+     */
+    WINDOW_IS_OBSCURED = 1 << 0,
+    /**
+     * This flag indicates that the event has been generated by a gesture generator. It
+     * could be used, for example, to determine whether touch slop should be applied.
+     */
+    IS_GENERATED_GESTURE = 1 << 3, // 0x8
+    /**
+     * Motion event is inconsistent with previously sent motion events.
+     */
+    TAINTED = 1 << 31, // 0x80000000
+};
+
+/**
+ * Touch heatmap.
+ *
+ * The array is a 2-D row-major matrix with dimensions (height, width).
+ * The heatmap data is rotated when device orientation changes.
+ *
+ * Example:
+ *
+ * If the data in the array is:
+ * data[i] = i for i in 0 .. 59,
+ * then it can be represented as a 10 x 6 matrix:
+ *
+ *  <--   width   -->
+ *   0  1  2  3  4  5   ^
+ *   6  7  8  9 10 11   |
+ *  12 13 14 15 16 17   |
+ *  18    ...      23   |
+ *  24    ...      29   | height
+ *  30    ...      35   |
+ *  36    ...      41   |
+ *  42    ...      47   |
+ *  48    ...      53   |
+ *  54    ...      59   v
+ *
+ * Looking at the device in standard portrait orientation,
+ * the element "0" is the top left of the screen,
+ * "5" is at the top right, and "59" is the bottom right.
+ * Here height=10 and width=6.
+ *
+ * If the screen orientation changes to landscape (a 90 degree orientation
+ * change), the frame's dimensions will become 6 x 10
+ * and the data will look as follows:
+ * 54 48 42 36 30 24 18 12  6  0     ^
+ * ...                  13  7  1     |
+ * ...                  14  8  2     | height
+ * ...                  15  9  3     |
+ * ...                  16 10  4     |
+ * 59 53 47 41 35 29 23 17 11  5     v
+ * <--        width          -->
+ *
+ * Here the element "0" is at the physical top left of the unrotated screen.
+ *
+ * Since the coordinates of a MotionEvent are also adjusted based on the
+ * orientation, the rotation of the video frame data ensures that
+ * the axes for MotionEvent and VideoFrame data are consistent.
+ */
+struct VideoFrame {
+    /**
+     * Video frame data.
+     * Size of the data is height * width.
+     */
+    vec<int16_t> data;
+    uint32_t height;
+    uint32_t width;
+    /**
+     * Time at which the frame was collected, in nanoseconds.
+     * Measured with the same clock that is used to populate MotionEvent times.
+     */
+    uint64_t timestamp;
+};
+
+/**
+ * Analogous to Android's native MotionEvent / NotifyMotionArgs.
+ * Stores the basic information about pointer movements.
+ */
+struct MotionEvent {
+    // InputEvent fields
+    /**
+     * The id of the device which produced this event.
+     */
+    int32_t deviceId;
+    /**
+     * The source type of this event.
+     */
+    Source source;
+    /**
+     * The display id associated with this event.
+     */
+    int32_t displayId;
+
+    // NotifyMotionArgs fields
+    /**
+     * Time when the initial touch down occurred, in nanoseconds.
+     */
+    int64_t downTime;
+    /**
+     * Time when this event occurred, in nanoseconds.
+     */
+    int64_t eventTime;
+    /**
+     * The kind of action being performed.
+     */
+    Action action;
+    /**
+     * For ACTION_POINTER_DOWN or ACTION_POINTER_UP, this contains the associated pointer index.
+     * The index may be used to get information about the pointer that has gone down or up.
+     */
+    uint8_t actionIndex;
+    /**
+     * The button that has been modified during a press or release action.
+     */
+    Button actionButton;
+    /**
+     * The motion event flags.
+     */
+    bitfield<Flag> flags;
+    /**
+     * The motion event policy flags.
+     */
+    bitfield<PolicyFlag> policyFlags;
+    /**
+     * The edges, if any, that were touched by this motion event.
+     */
+    bitfield<EdgeFlag> edgeFlags;
+    /**
+     * The state of any meta / modifier keys that were in effect when the event was generated.
+     */
+    bitfield<Meta> metaState;
+    /**
+     * The state of buttons that are pressed.
+     */
+    bitfield<Button> buttonState;
+    /**
+     * The precision of the X coordinate being reported.
+     */
+    float xPrecision;
+    /**
+     * The precision of the Y coordinate being reported.
+     */
+    float yPrecision;
+    /**
+     * The properties of each pointer present in this motion event.
+     */
+    vec<PointerProperties> pointerProperties;
+    /**
+     * The coordinates of each pointer.
+     */
+    vec<PointerCoords> pointerCoords;
+
+    // Additional fields from NotifyMotionArgs
+    /**
+     * Device time at which the event occurred, in microseconds.
+     * Will wrap after a little over an hour.
+     */
+    uint32_t deviceTimestamp;
+    /**
+     * The video frames, if any, associated with the current or previous motion events.
+     */
+    vec<VideoFrame> frames;
+};
+
+
+enum Classification : uint8_t {
+    NONE = 0,
+    /**
+     * Too early to classify the gesture, need more events.
+     */
+    AMBIGUOUS_GESTURE = 1,
+    /**
+     * User is force-pressing the screen.
+     */
+    DEEP_PRESS = 2,
+};

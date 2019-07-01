@@ -97,7 +97,7 @@ struct ExternalCameraDeviceSession : public virtual RefBase {
     // Call by CameraDevice to dump active device states
     void dumpState(const native_handle_t*);
     // Caller must use this method to check if CameraDeviceSession ctor failed
-    bool isInitFailed() { return mInitFail; }
+    bool isInitFailed();
     bool isClosed();
 
     // Retrieve the HIDL interface, split into its own class to avoid inheritance issues when
@@ -134,7 +134,7 @@ protected:
             ICameraDeviceSession::processCaptureRequest_cb);
 
     Return<Status> flush();
-    Return<void> close();
+    Return<void> close(bool callerIsDtor = false);
 
     Return<void> configureStreams_3_3(
             const V3_2::StreamConfiguration&,
@@ -170,32 +170,65 @@ protected:
         std::vector<HalStreamBuffer> buffers;
     };
 
+    static const uint64_t BUFFER_ID_NO_BUFFER = 0;
+
     Status constructDefaultRequestSettingsRaw(RequestTemplate type,
             V3_2::CameraMetadata *outMetadata);
 
     bool initialize();
+    // To init/close different version of output thread
+    virtual void initOutputThread();
+    virtual void closeOutputThread();
+    void closeOutputThreadImpl();
+
     Status initStatus() const;
     status_t initDefaultRequests();
     status_t fillCaptureResult(common::V1_0::helper::CameraMetadata& md, nsecs_t timestamp);
-    Status configureStreams(const V3_2::StreamConfiguration&, V3_3::HalStreamConfiguration* out);
+    Status configureStreams(const V3_2::StreamConfiguration&,
+            V3_3::HalStreamConfiguration* out,
+            // Only filled by configureStreams_3_4, and only one blob stream supported
+            uint32_t blobBufferSize = 0);
     // fps = 0.0 means default, which is
     // slowest fps that is at least 30, or fastest fps if 30 is not supported
     int configureV4l2StreamLocked(const SupportedV4L2Format& fmt, double fps = 0.0);
     int v4l2StreamOffLocked();
     int setV4l2FpsLocked(double fps);
+    static Status isStreamCombinationSupported(const V3_2::StreamConfiguration& config,
+            const std::vector<SupportedV4L2Format>& supportedFormats,
+            const ExternalCameraConfig& devCfg);
 
     // TODO: change to unique_ptr for better tracking
     sp<V4L2Frame> dequeueV4l2FrameLocked(/*out*/nsecs_t* shutterTs); // Called with mLock hold
     void enqueueV4l2Frame(const sp<V4L2Frame>&);
 
     // Check if input Stream is one of supported stream setting on this device
-    bool isSupported(const Stream&);
+    static bool isSupported(const Stream& stream,
+            const std::vector<SupportedV4L2Format>& supportedFormats,
+            const ExternalCameraConfig& cfg);
 
     // Validate and import request's output buffers and acquire fence
-    Status importRequest(
+    virtual Status importRequestLocked(
             const CaptureRequest& request,
             hidl_vec<buffer_handle_t*>& allBufPtrs,
             hidl_vec<int>& allFences);
+
+    Status importRequestLockedImpl(
+            const CaptureRequest& request,
+            hidl_vec<buffer_handle_t*>& allBufPtrs,
+            hidl_vec<int>& allFences,
+            // Optional argument for ICameraDeviceSession@3.5 impl
+            bool allowEmptyBuf = false);
+
+    Status importBuffer(int32_t streamId,
+            uint64_t bufId, buffer_handle_t buf,
+            /*out*/buffer_handle_t** outBufPtr,
+            bool allowEmptyBuf);
+
+    Status importBufferLocked(int32_t streamId,
+            uint64_t bufId, buffer_handle_t buf,
+            /*out*/buffer_handle_t** outBufPtr,
+            bool allowEmptyBuf);
+
     static void cleanupInflightFences(
             hidl_vec<int>& allFences, size_t numFences);
     void cleanupBuffersLocked(int id);
@@ -221,18 +254,26 @@ protected:
     class OutputThread : public android::Thread {
     public:
         OutputThread(wp<ExternalCameraDeviceSession> parent, CroppingType);
-        ~OutputThread();
+        virtual ~OutputThread();
 
         Status allocateIntermediateBuffers(
                 const Size& v4lSize, const Size& thumbSize,
-                const hidl_vec<Stream>& streams);
+                const hidl_vec<Stream>& streams,
+                uint32_t blobBufferSize);
         Status submitRequest(const std::shared_ptr<HalRequest>&);
         void flush();
         void dump(int fd);
         virtual bool threadLoop() override;
 
         void setExifMakeModel(const std::string& make, const std::string& model);
-    private:
+
+    protected:
+        // Methods to request output buffer in parallel
+        // No-op for device@3.4. Implemented in device@3.5
+        virtual int requestBufferStart(const std::vector<HalStreamBuffer>&) { return 0; }
+        virtual int waitForBufferRequestDone(
+                /*out*/std::vector<HalStreamBuffer>*) { return 0; }
+
         static const uint32_t FLEX_YUV_GENERIC = static_cast<uint32_t>('F') |
                 static_cast<uint32_t>('L') << 8 | static_cast<uint32_t>('E') << 16 |
                 static_cast<uint32_t>('X') << 24;
@@ -289,6 +330,7 @@ protected:
         std::unordered_map<Size, sp<AllocatedFrame>, SizeHasher> mScaledYu12Frames;
         YCbCrLayout mYu12FrameLayout;
         YCbCrLayout mYu12ThumbFrameLayout;
+        uint32_t mBlobBufferSize = 0; // 0 -> HAL derive buffer size, else: use given size
 
         std::string mExifMake;
         std::string mExifModel;
@@ -314,6 +356,7 @@ protected:
     //    - init failed
     //    - camera disconnected
     bool mClosed = false;
+    bool mInitialized = false;
     bool mInitFail = false;
     bool mFirstRequest = false;
     common::V1_0::helper::CameraMetadata mLatestReqSetting;
@@ -346,6 +389,8 @@ protected:
     typedef std::unordered_map<uint64_t, buffer_handle_t> CirculatingBuffers;
     // Stream ID -> circulating buffers map
     std::map<int, CirculatingBuffers> mCirculatingBuffers;
+    // Protect mCirculatingBuffers, must not lock mLock after acquiring this lock
+    mutable Mutex mCbsLock;
 
     std::mutex mAfTriggerLock; // protect mAfTrigger
     bool mAfTrigger = false;

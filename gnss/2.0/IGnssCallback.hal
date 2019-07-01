@@ -1,0 +1,101 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.gnss@2.0;
+
+import @1.0::IGnssCallback;
+import @1.1::IGnssCallback;
+import GnssLocation;
+import GnssConstellationType;
+
+/**
+ * This interface is required for the HAL to communicate certain information
+ * like status and location info back to the platform, the platform implements
+ * the interfaces and passes a handle to the HAL.
+ */
+interface IGnssCallback extends @1.1::IGnssCallback {
+
+    /** Flags for the gnssSetCapabilities callback. */
+    @export(name="", value_prefix="GPS_CAPABILITY_")
+    enum Capabilities : @1.0::IGnssCallback.Capabilities {
+        /** GNSS supports low power mode */
+        LOW_POWER_MODE                          = 1 << 8,
+        /** GNSS supports blacklisting satellites */
+        SATELLITE_BLACKLIST                     = 1 << 9,
+        /** GNSS supports measurement corrections */
+        MEASUREMENT_CORRECTIONS                 = 1 << 10
+    };
+
+    /**
+     * Callback to inform framework of the GNSS HAL implementation's capabilities.
+     *
+     * @param capabilities Capability parameter is a bit field of the Capabilities enum.
+     */
+    gnssSetCapabilitiesCb_2_0(bitfield<Capabilities> capabilities);
+
+   /**
+     * Called when a GNSS location is available.
+     *
+     * @param location Location information from HAL.
+     */
+    gnssLocationCb_2_0(GnssLocation location);
+
+    /**
+     * Callback for requesting Location.
+     *
+     * HAL implementation must call this when it wants the framework to provide locations to assist
+     * with GNSS HAL operation, for example, to assist with time to first fix, error recovery, or to
+     * supplement GNSS location for other clients of the GNSS HAL.
+     *
+     * If a request is made with independentFromGnss set to true, the framework must avoid
+     * providing locations derived from GNSS locations (such as "fused" location), to help improve
+     * information independence for situations such as error recovery.
+     *
+     * In response to this method call, GNSS HAL can expect zero, one, or more calls to
+     * IGnss::injectLocation or IGnss::injectBestLocation, dependent on availability of location
+     * from other sources, which may happen at some arbitrary delay. Generally speaking, HAL
+     * implementations must be able to handle calls to IGnss::injectLocation or
+     * IGnss::injectBestLocation at any time.
+     *
+     * @param independentFromGnss True if requesting a location that is independent from GNSS.
+     * @param isUserEmergency True if the location request is for delivery of this location to an
+     *        emergency services endpoint, during a user-initiated emergency session (e.g.
+     *        during-call to E911, or up to 5 minutes after end-of-call or text to E911).
+     */
+    gnssRequestLocationCb_2_0(bool independentFromGnss, bool isUserEmergency);
+
+    /** Extends a GnssSvInfo, replacing the GnssConstellationType. */
+    struct GnssSvInfo {
+        /**
+         * GNSS satellite information for a single satellite and frequency.
+         *
+         * In this version of the HAL, the field 'constellation' in the v1_0 struct is deprecated,
+         * and is no longer used by the framework. The constellation type is instead reported in
+         * @2.0::IGnssCallback.GnssSvInfo.constellation.
+         */
+        @1.0::IGnssCallback.GnssSvInfo v1_0;
+
+        /** Defines the constellation of the given SV. */
+        GnssConstellationType constellation;
+    };
+
+    /**
+     * Callback for the HAL to pass a vector of GnssSvInfo back to the client.
+     *
+     * @param svInfo SV status information from HAL.
+     */
+    gnssSvStatusCb_2_0(vec<GnssSvInfo> svInfoList);
+};

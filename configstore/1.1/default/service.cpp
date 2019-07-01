@@ -22,14 +22,14 @@
 
 #include "SurfaceFlingerConfigs.h"
 
-using android::hardware::configureRpcThreadpool;
-using android::hardware::joinRpcThreadpool;
-using android::hardware::configstore::V1_1::ISurfaceFlingerConfigs;
-using android::hardware::configstore::V1_1::implementation::SurfaceFlingerConfigs;
-using android::hardware::SetupMinijail;
+using android::OK;
 using android::sp;
 using android::status_t;
-using android::OK;
+using android::hardware::configureRpcThreadpool;
+using android::hardware::joinRpcThreadpool;
+using android::hardware::SetupMinijail;
+using android::hardware::configstore::V1_1::ISurfaceFlingerConfigs;
+using android::hardware::configstore::V1_1::implementation::SurfaceFlingerConfigs;
 
 int main() {
     configureRpcThreadpool(10, true);

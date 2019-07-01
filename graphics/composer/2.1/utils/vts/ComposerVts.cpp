@@ -25,21 +25,19 @@ namespace composer {
 namespace V2_1 {
 namespace vts {
 
-Composer::Composer() {
-    mComposer = ::testing::VtsHalHidlTargetTestBase::getService<IComposer>();
-    init();
-}
+Composer::Composer() : Composer(::testing::VtsHalHidlTargetTestBase::getService<IComposer>()) {}
 
-Composer::Composer(const std::string& name) {
-    mComposer = ::testing::VtsHalHidlTargetTestBase::getService<IComposer>(name);
-    init();
-}
+Composer::Composer(const std::string& name)
+    : Composer(::testing::VtsHalHidlTargetTestBase::getService<IComposer>(name)) {}
 
-void Composer::init() {
-    ASSERT_NE(nullptr, mComposer.get()) << "failed to get composer service";
+Composer::Composer(const sp<IComposer>& composer) : mComposer(composer) {
+    // ASSERT_* can only be used in functions returning void.
+    [this] {
+        ASSERT_NE(nullptr, mComposer.get()) << "failed to get composer service";
 
-    std::vector<IComposer::Capability> capabilities = getCapabilities();
-    mCapabilities.insert(capabilities.begin(), capabilities.end());
+        std::vector<IComposer::Capability> capabilities = getCapabilities();
+        mCapabilities.insert(capabilities.begin(), capabilities.end());
+    }();
 }
 
 sp<IComposer> Composer::getRaw() const {
@@ -295,7 +293,6 @@ void ComposerClient::execute(TestCommandReader* reader, CommandWriterBase* write
     if (queueChanged) {
         auto ret = mClient->setInputCommandQueue(*writer->getMQDescriptor());
         ASSERT_EQ(Error::NONE, static_cast<Error>(ret));
-        return;
     }
 
     mClient->executeCommands(commandLength, commandHandles,
@@ -314,6 +311,79 @@ void ComposerClient::execute(TestCommandReader* reader, CommandWriterBase* write
                                  ASSERT_TRUE(reader->readQueue(tmpOutLength, tmpOutHandles));
                                  reader->parse();
                              });
+    reader->reset();
+    writer->reset();
+}
+
+Gralloc::Gralloc() {
+    [this] {
+        ASSERT_NO_FATAL_FAILURE(mGralloc3 = std::make_shared<Gralloc3>("default", "default",
+                                                                       /*errOnFailure=*/false));
+        if (mGralloc3->getAllocator() == nullptr || mGralloc3->getMapper() == nullptr) {
+            mGralloc3 = nullptr;
+            ASSERT_NO_FATAL_FAILURE(mGralloc2 = std::make_shared<Gralloc2>());
+        }
+    }();
+}
+
+const native_handle_t* Gralloc::allocate(uint32_t width, uint32_t height, uint32_t layerCount,
+                                         PixelFormat format, uint64_t usage, bool import,
+                                         uint32_t* outStride) {
+    if (mGralloc3) {
+        IMapper3::BufferDescriptorInfo info{};
+        info.width = width;
+        info.height = height;
+        info.layerCount = layerCount;
+        info.format = static_cast<android::hardware::graphics::common::V1_2::PixelFormat>(format);
+        info.usage = usage;
+        return mGralloc3->allocate(info, import, outStride);
+    } else {
+        IMapper2::BufferDescriptorInfo info{};
+        info.width = width;
+        info.height = height;
+        info.layerCount = layerCount;
+        info.format = format;
+        info.usage = usage;
+        return mGralloc2->allocate(info, import, outStride);
+    }
+}
+
+void* Gralloc::lock(const native_handle_t* bufferHandle, uint64_t cpuUsage,
+                    const AccessRegion& accessRegionRect, int acquireFence) {
+    if (mGralloc3) {
+        IMapper3::Rect accessRegion;
+        accessRegion.left = accessRegionRect.left;
+        accessRegion.top = accessRegionRect.top;
+        accessRegion.width = accessRegionRect.width;
+        accessRegion.height = accessRegionRect.height;
+        int32_t bytesPerPixel;
+        int32_t bytesPerStride;
+        return mGralloc3->lock(bufferHandle, cpuUsage, accessRegion, acquireFence, &bytesPerPixel,
+                               &bytesPerStride);
+    } else {
+        IMapper2::Rect accessRegion;
+        accessRegion.left = accessRegionRect.left;
+        accessRegion.top = accessRegionRect.top;
+        accessRegion.width = accessRegionRect.width;
+        accessRegion.height = accessRegionRect.height;
+        return mGralloc2->lock(bufferHandle, cpuUsage, accessRegion, acquireFence);
+    }
+}
+
+int Gralloc::unlock(const native_handle_t* bufferHandle) {
+    if (mGralloc3) {
+        return mGralloc3->unlock(bufferHandle);
+    } else {
+        return mGralloc2->unlock(bufferHandle);
+    }
+}
+
+void Gralloc::freeBuffer(const native_handle_t* bufferHandle) {
+    if (mGralloc3) {
+        mGralloc3->freeBuffer(bufferHandle);
+    } else {
+        mGralloc2->freeBuffer(bufferHandle);
+    }
 }
 
 }  // namespace vts

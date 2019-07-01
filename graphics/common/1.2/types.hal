@@ -1,0 +1,159 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.graphics.common@1.2;
+
+import @1.0::Hdr;
+import @1.1::BufferUsage;
+import @1.1::ColorMode;
+import @1.1::Dataspace;
+import @1.1::PixelFormat;
+
+/**
+ * Hdr
+ */
+@export(name="android_hdr_v1_2_t", value_prefix="HAL_HDR_",
+        export_parent="false")
+enum Hdr : @1.0::Hdr {
+    HDR10_PLUS = 4,
+};
+
+@export(name="android_dataspace_v1_2_t", value_prefix="HAL_DATASPACE_",
+        export_parent="false")
+enum Dataspace : @1.1::Dataspace {
+    /**
+     * ITU-R Recommendation 2020 (BT.2020)
+     *
+     * Ultra High-definition television
+     *
+     * Use full range, sRGB transfer and BT2020 standard
+     */
+    DISPLAY_BT2020 = STANDARD_BT2020 | TRANSFER_SRGB | RANGE_FULL,
+
+    /**
+     * ISO 16684-1:2011(E)
+     *
+     * Embedded depth metadata following the dynamic depth specification.
+     */
+    DYNAMIC_DEPTH = 0x1002,
+
+    /**
+     * JPEG APP segments format as specified by JEIDA spec
+     *
+     * The buffer must only contain APP1 (Application Marker) segment followed
+     * by zero or more APPn segments, as is specified by JEITA CP-3451C section 4.5.4.
+     * The APP1 segment optionally contains a thumbnail. The buffer will not
+     * contain main compressed image.
+     *
+     * This value is valid with formats:
+     *    HAL_PIXEL_FORMAT_BLOB: JPEG APP segments optionally containing thumbnail image
+     * in APP1. BLOB buffer with this dataspace is output by HAL, and used by
+     * camera framework to encode into a HEIC image.
+     */
+    JPEG_APP_SEGMENTS = 0x1003,
+
+    /**
+     * ISO/IEC 23008-12
+     *
+     * High Efficiency Image File Format (HEIF)
+     *
+     * This value is valid with formats:
+     *    HAL_PIXEL_FORMAT_BLOB: A HEIC image encoded by HEIC or HEVC encoder
+     * according to ISO/IEC 23008-12.
+     */
+    HEIF = 0x1004,
+};
+
+enum ColorMode : @1.1::ColorMode {
+    /**
+     * DISPLAY_BT2020 corresponds with display settings that implement the ITU-R
+     * Recommendation BT.2020 / Rec. 2020 for UHDTV, but specifies an SRGB
+     * transfer function.
+     *
+     * Primaries:
+     *                  x       y
+     *  green           0.170   0.797
+     *  blue            0.131   0.046
+     *  red             0.708   0.292
+     *  white (D65)     0.3127  0.3290
+     *
+     * Transfer Function is sRGB
+     */
+    DISPLAY_BT2020 = 13,
+};
+
+/**
+ * Buffer usage definitions.
+ */
+enum BufferUsage : @1.1::BufferUsage {
+    /**
+     * Buffer is used as input for HEIC encoder.
+     */
+    HW_IMAGE_ENCODER = 1ULL << 27,
+
+    /* bits 28 and 32-47 must be zero and are reserved for future versions */
+};
+
+/**
+ * HIDL counterpart of `AHardwareBuffer_Desc`.
+ *
+ * An `AHardwareBuffer_Desc` object can be converted to and from a
+ * `HardwareBufferDescription` object by `memcpy()`.
+ *
+ * @sa +ndk libnativewindow#AHardwareBuffer_Desc.
+ */
+typedef uint32_t[10] HardwareBufferDescription;
+
+/**
+ * HIDL counterpart of `AHardwareBuffer`.
+ *
+ * AHardwareBuffer_createFromHandle() can be used to convert a `HardwareBuffer`
+ * object to an `AHardwareBuffer` object.
+ *
+ * Conversely, AHardwareBuffer_getNativeHandle() can be used to extract a native
+ * handle from an `AHardwareBuffer` object. Paired with `AHardwareBuffer_Desc`,
+ * AHardwareBuffer_getNativeHandle() can be used to convert between
+ * `HardwareBuffer` and `AHardwareBuffer`.
+ *
+ * @sa +ndk libnativewindow#AHardwareBuffer".
+ */
+struct HardwareBuffer {
+    HardwareBufferDescription description;
+    handle nativeHandle;
+};
+
+/**
+ * HIDL counterpart of `ARect`.
+ *
+ * @sa +ndk libarect_headers#ARect.
+ */
+typedef int32_t[4] Rect;
+
+/**
+ * Pixel formats for graphics buffers.
+ */
+@export(name="android_pixel_format_v1_2_t", value_prefix="HAL_PIXEL_FORMAT_",
+        export_parent="false")
+enum PixelFormat : @1.1::PixelFormat {
+    /**
+     * 24-bit format that has 8-bit H, S, and V components, in that order,
+     * from the lowest memory address to the highest memory address.
+     *
+     * The component values are unsigned normalized to the range [0, 1], whose
+     * interpretation is defined by the dataspace.
+    */
+    HSV_888 = 0x37,
+};

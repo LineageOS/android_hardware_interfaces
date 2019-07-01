@@ -18,13 +18,13 @@
 
 void RadioConfigHidlTest::SetUp() {
     radioConfig = ::testing::VtsHalHidlTargetTestBase::getService<IRadioConfig>(
-            RadioConfigHidlEnvironment::Instance()->getServiceName<IRadioConfig>(
-                    hidl_string(RADIO_SERVICE_NAME)));
+        RadioConfigHidlEnvironment::Instance()->getServiceName<IRadioConfig>(
+            hidl_string(RADIO_SERVICE_NAME)));
     if (radioConfig == NULL) {
         sleep(60);
         radioConfig = ::testing::VtsHalHidlTargetTestBase::getService<IRadioConfig>(
-                RadioConfigHidlEnvironment::Instance()->getServiceName<IRadioConfig>(
-                        hidl_string(RADIO_SERVICE_NAME)));
+            RadioConfigHidlEnvironment::Instance()->getServiceName<IRadioConfig>(
+                hidl_string(RADIO_SERVICE_NAME)));
     }
     ASSERT_NE(nullptr, radioConfig.get());
 
@@ -34,9 +34,6 @@ void RadioConfigHidlTest::SetUp() {
     count_ = 0;
 
     radioConfig->setResponseFunctions(radioConfigRsp, nullptr);
-    EXPECT_EQ(RadioResponseType::SOLICITED, radioConfigRsp->rspInfo.type);
-    EXPECT_EQ(serial, radioConfigRsp->rspInfo.serial);
-    EXPECT_EQ(RadioError::NONE, radioConfigRsp->rspInfo.error);
 }
 
 /*
