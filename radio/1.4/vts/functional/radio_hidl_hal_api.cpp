@@ -41,6 +41,12 @@ TEST_F(RadioHidlTest_v1_4, emergencyDial) {
 
     ALOGI("emergencyDial, rspInfo.error = %s\n", toString(radioRsp_v1_4->rspInfo.error).c_str());
     EXPECT_EQ(RadioError::NONE, radioRsp_v1_4->rspInfo.error);
+
+    // Give some time for modem to establish the emergency call channel.
+    sleep(MODEM_EMERGENCY_CALL_ESTABLISH_TIME);
+
+    // Disconnect all the potential established calls to prevent them affecting other tests.
+    clearPotentialEstablishedCalls();
 }
 
 /*
@@ -67,6 +73,12 @@ TEST_F(RadioHidlTest_v1_4, emergencyDial_withServices) {
     ALOGI("emergencyDial_withServices, rspInfo.error = %s\n",
           toString(radioRsp_v1_4->rspInfo.error).c_str());
     EXPECT_EQ(RadioError::NONE, radioRsp_v1_4->rspInfo.error);
+
+    // Give some time for modem to establish the emergency call channel.
+    sleep(MODEM_EMERGENCY_CALL_ESTABLISH_TIME);
+
+    // Disconnect all the potential established calls to prevent them affecting other tests.
+    clearPotentialEstablishedCalls();
 }
 
 /*
@@ -93,6 +105,12 @@ TEST_F(RadioHidlTest_v1_4, emergencyDial_withEmergencyRouting) {
     ALOGI("emergencyDial_withEmergencyRouting, rspInfo.error = %s\n",
           toString(radioRsp_v1_4->rspInfo.error).c_str());
     EXPECT_EQ(RadioError::NONE, radioRsp_v1_4->rspInfo.error);
+
+    // Give some time for modem to establish the emergency call channel.
+    sleep(MODEM_EMERGENCY_CALL_ESTABLISH_TIME);
+
+    // Disconnect all the potential established calls to prevent them affecting other tests.
+    clearPotentialEstablishedCalls();
 }
 
 /*
