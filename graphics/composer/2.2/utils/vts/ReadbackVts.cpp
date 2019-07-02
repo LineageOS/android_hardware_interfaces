@@ -60,6 +60,27 @@ std::string ReadbackHelper::getDataspaceString(Dataspace dataspace) {
     }
 }
 
+LayerSettings TestLayer::toRenderEngineLayerSettings() {
+    LayerSettings layerSettings;
+
+    layerSettings.alpha = half(mAlpha);
+    layerSettings.disableBlending = mBlendMode == IComposerClient::BlendMode::NONE;
+    layerSettings.geometry.boundaries = FloatRect(
+            static_cast<float>(mDisplayFrame.left), static_cast<float>(mDisplayFrame.top),
+            static_cast<float>(mDisplayFrame.right), static_cast<float>(mDisplayFrame.bottom));
+
+    const mat4 translation = mat4::translate(vec4(
+            (mTransform & Transform::FLIP_H ? -1.0f : 0.0f) * mDisplayFrame.right,
+            (mTransform & Transform::FLIP_V ? -1.0f : 0.0f) * mDisplayFrame.bottom, 0.0f, 1.0f));
+
+    const mat4 scale = mat4::scale(vec4(mTransform & Transform::FLIP_H ? -1.0f : 1.0f,
+                                        mTransform & Transform::FLIP_V ? -1.0f : 1.0f, 1.0f, 1.0f));
+
+    layerSettings.geometry.positionTransform = translation * scale;
+
+    return layerSettings;
+}
+
 int32_t ReadbackHelper::GetBytesPerPixel(PixelFormat pixelFormat) {
     switch (pixelFormat) {
         case PixelFormat::RGBA_8888:
@@ -131,6 +152,25 @@ bool ReadbackHelper::readbackSupported(const PixelFormat& pixelFormat, const Dat
     return true;
 }
 
+void ReadbackHelper::compareColorBuffers(std::vector<IComposerClient::Color>& expectedColors,
+                                         void* bufferData, const uint32_t stride,
+                                         const uint32_t width, const uint32_t height,
+                                         const PixelFormat pixelFormat) {
+    const int32_t bytesPerPixel = ReadbackHelper::GetBytesPerPixel(pixelFormat);
+    ASSERT_NE(-1, bytesPerPixel);
+    for (int row = 0; row < height; row++) {
+        for (int col = 0; col < width; col++) {
+            int pixel = row * width + col;
+            int offset = (row * stride + col) * bytesPerPixel;
+            uint8_t* pixelColor = (uint8_t*)bufferData + offset;
+
+            ASSERT_EQ(expectedColors[pixel].r, pixelColor[0]);
+            ASSERT_EQ(expectedColors[pixel].g, pixelColor[1]);
+            ASSERT_EQ(expectedColors[pixel].b, pixelColor[2]);
+        }
+    }
+}
+
 ReadbackBuffer::ReadbackBuffer(Display display, const std::shared_ptr<ComposerClient>& client,
                                const std::shared_ptr<Gralloc>& gralloc, uint32_t width,
                                uint32_t height, PixelFormat pixelFormat, Dataspace dataspace) {
@@ -179,19 +219,8 @@ void ReadbackBuffer::checkReadbackBuffer(std::vector<IComposerClient::Color> exp
 
     void* bufData = mGralloc->lock(mBufferHandle, mUsage, mAccessRegion, fenceHandle);
     ASSERT_TRUE(mPixelFormat == PixelFormat::RGB_888 || mPixelFormat == PixelFormat::RGBA_8888);
-    int32_t bytesPerPixel = ReadbackHelper::GetBytesPerPixel(mPixelFormat);
-    ASSERT_NE(-1, bytesPerPixel);
-    for (int row = 0; row < mHeight; row++) {
-        for (int col = 0; col < mWidth; col++) {
-            int pixel = row * mWidth + col;
-            int offset = (row * mStride + col) * bytesPerPixel;
-            uint8_t* pixelColor = (uint8_t*)bufData + offset;
-
-            ASSERT_EQ(expectedColors[pixel].r, pixelColor[0]);
-            ASSERT_EQ(expectedColors[pixel].g, pixelColor[1]);
-            ASSERT_EQ(expectedColors[pixel].b, pixelColor[2]);
-        }
-    }
+    ReadbackHelper::compareColorBuffers(expectedColors, bufData, mStride, mWidth, mHeight,
+                                        mPixelFormat);
     int32_t unlockFence = mGralloc->unlock(mBufferHandle);
     if (unlockFence != -1) {
         sync_wait(unlockFence, -1);
@@ -203,6 +232,16 @@ void TestColorLayer::write(const std::shared_ptr<CommandWriterBase>& writer) {
     TestLayer::write(writer);
     writer->setLayerCompositionType(IComposerClient::Composition::SOLID_COLOR);
     writer->setLayerColor(mColor);
+}
+
+LayerSettings TestColorLayer::toRenderEngineLayerSettings() {
+    LayerSettings layerSettings = TestLayer::toRenderEngineLayerSettings();
+
+    layerSettings.source.solidColor =
+            half3(static_cast<half>(mColor.r) / 255.0, static_cast<half>(mColor.g) / 255.0,
+                  static_cast<half>(mColor.b) / 255.0);
+    layerSettings.alpha = mAlpha * (static_cast<half>(mColor.a) / 255.0);
+    return layerSettings;
 }
 
 TestBufferLayer::TestBufferLayer(const std::shared_ptr<ComposerClient>& client,
@@ -241,6 +280,27 @@ void TestBufferLayer::write(const std::shared_ptr<CommandWriterBase>& writer) {
     if (mBufferHandle != nullptr) writer->setLayerBuffer(0, mBufferHandle, mFillFence);
 }
 
+LayerSettings TestBufferLayer::toRenderEngineLayerSettings() {
+    LayerSettings layerSettings = TestLayer::toRenderEngineLayerSettings();
+    layerSettings.source.buffer.buffer =
+            new GraphicBuffer(mBufferHandle, GraphicBuffer::CLONE_HANDLE, mWidth, mHeight,
+                              static_cast<int32_t>(mFormat), 1, mUsage, mStride);
+    // TODO(b/136483187): Why does this break the premultiply test
+    // layerSettings.source.buffer.usePremultipliedAlpha =
+    //      mBlendMode == IComposerClient::BlendMode::PREMULTIPLIED;
+
+    const float scaleX = (mSourceCrop.right - mSourceCrop.left) / (mWidth);
+    const float scaleY = (mSourceCrop.bottom - mSourceCrop.top) / (mHeight);
+    const float translateX = mSourceCrop.left / (mWidth);
+    const float translateY = mSourceCrop.top / (mHeight);
+
+    layerSettings.source.buffer.textureTransform =
+            mat4::translate(vec4(translateX, translateY, 0, 1)) *
+            mat4::scale(vec4(scaleX, scaleY, 1.0, 1.0));
+
+    return layerSettings;
+}
+
 void TestBufferLayer::fillBuffer(std::vector<IComposerClient::Color> expectedColors) {
     void* bufData = mGralloc->lock(mBufferHandle, mUsage, mAccessRegion, -1);
     ASSERT_NO_FATAL_FAILURE(
@@ -251,6 +311,7 @@ void TestBufferLayer::fillBuffer(std::vector<IComposerClient::Color> expectedCol
         close(mFillFence);
     }
 }
+
 void TestBufferLayer::setBuffer(std::vector<IComposerClient::Color> colors) {
     if (mBufferHandle != nullptr) {
         mGralloc->freeBuffer(mBufferHandle);
