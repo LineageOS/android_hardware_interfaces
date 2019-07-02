@@ -44,6 +44,9 @@ using ::android::hardware::Return;
 using ::android::hardware::Void;
 
 #define TIMEOUT_PERIOD 75
+#define MODEM_EMERGENCY_CALL_ESTABLISH_TIME 3
+#define MODEM_EMERGENCY_CALL_DISCONNECT_TIME 3
+
 #define RADIO_SERVICE_NAME "slot1"
 
 class RadioHidlTest_v1_4;
@@ -58,6 +61,9 @@ class RadioResponse_v1_4 : public ::android::hardware::radio::V1_4::IRadioRespon
     hidl_vec<RadioBandMode> radioBandModes;
 
     RadioResponseInfo rspInfo;
+
+    // Call
+    hidl_vec<::android::hardware::radio::V1_2::Call> currentCalls;
 
     // Modem
     bool isModemEnabled;
@@ -724,6 +730,9 @@ class RadioHidlTest_v1_4 : public ::testing::VtsHalHidlTargetTestBase {
 
     /* Serial number for radio request */
     int serial;
+
+    /* Clear Potential Established Calls */
+    void clearPotentialEstablishedCalls();
 
     /* Update Sim Card Status */
     void updateSimCardStatus();
