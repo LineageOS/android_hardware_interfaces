@@ -683,11 +683,16 @@ void SensorsHidlTest::runFlushTest(const std::vector<SensorInfo>& sensors, bool 
             Result flushResult = flush(sensor.sensorHandle);
             ASSERT_EQ(flushResult, expectedResponse);
         }
-        activate(sensor.sensorHandle, false);
     }
 
     // Wait up to one second for the flush events
     callback.waitForFlushEvents(sensors, flushCalls, 1000 /* timeoutMs */);
+
+    // Deactivate all sensors after waiting for flush events so pending flush events are not
+    // abandoned by the HAL.
+    for (const SensorInfo& sensor : sensors) {
+        activate(sensor.sensorHandle, false);
+    }
     getEnvironment()->unregisterCallback();
 
     // Check that the correct number of flushes are present for each sensor
