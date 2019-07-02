@@ -1,0 +1,541 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.graphics.composer@2.3;
+
+import android.hardware.graphics.common@1.1::RenderIntent;
+import android.hardware.graphics.common@1.2::PixelFormat;
+import android.hardware.graphics.common@1.2::ColorMode;
+import android.hardware.graphics.common@1.2::Dataspace;
+import android.hardware.graphics.common@1.2::Hdr;
+import android.hardware.graphics.composer@2.1::IComposerClient.Command;
+import @2.2::IComposerClient;
+import @2.1::Display;
+import @2.1::Error;
+
+interface IComposerClient extends @2.2::IComposerClient {
+
+    /**
+     * Required capabilities which are supported by the display. The
+     * particular set of supported capabilities for a given display may be
+     * retrieved using getDisplayCapabilities.
+     */
+    enum DisplayCapability : uint32_t {
+        INVALID = 0,
+
+        /**
+         * Indicates that the display must apply a color transform even when
+         * either the client or the device has chosen that all layers should
+         * be composed by the client. This prevents the client from applying
+         * the color transform during its composition step.
+         * If getDisplayCapabilities is supported, the global capability
+         * SKIP_CLIENT_COLOR_TRANSFORM is ignored.
+         * If getDisplayCapabilities is not supported, and the global capability
+         * SKIP_CLIENT_COLOR_TRANSFORM is returned by getCapabilities,
+         * then all displays must be treated as having
+         * SKIP_CLIENT_COLOR_TRANSFORM.
+         */
+        SKIP_CLIENT_COLOR_TRANSFORM = 1,
+
+        /**
+         * Indicates that the display supports PowerMode::DOZE and
+         * PowerMode::DOZE_SUSPEND. DOZE_SUSPEND may not provide any benefit
+         * over DOZE (see the definition of PowerMode for more information),
+         * but if both DOZE and DOZE_SUSPEND are no different from
+         * PowerMode::ON, the device must not claim support.
+         * Must be returned by getDisplayCapabilities when getDozeSupport
+         * indicates the display supports PowerMode::DOZE and
+         * PowerMode::DOZE_SUSPEND.
+         */
+        DOZE = 2,
+
+        /**
+         * Indicates that the display supports brightness operations.
+         */
+        BRIGHTNESS = 3,
+    };
+
+    /**
+     * PerFrameMetadataKey
+     *
+     * A set of PerFrameMetadataKey pertains specifically to blob-formatted
+     * metadata (as opposed to float-valued metadata).
+     * The list of keys that represent blobs are:
+     * 1. HDR10_PLUS_SEI
+     */
+    enum PerFrameMetadataKey : @2.2::IComposerClient.PerFrameMetadataKey {
+        /**HDR10+ metadata
+         * Specifies a metadata blob adhering to
+         * the ST2094-40 SEI message spec, Version 1.0
+         */
+        HDR10_PLUS_SEI,
+    };
+
+    /**
+     * PerFrameMetadata
+     * This struct encapsulates float-valued
+     * metadata - key must not be in the list
+     * of keys representing blob-formatted metadata
+     * (see PerFrameMetadataKey)
+     */
+    struct PerFrameMetadata {
+        PerFrameMetadataKey key;
+        float value;
+    };
+
+    /**
+     * PerFrameMetadataBlob
+     * This struct encapsulates blob
+     * metadata - key must be one of the list of keys
+     * associated with blob-type metadata key
+     * and the blob must adhere to the format specified by
+     * that key (See PerFrameMetadataKey).
+     */
+    struct PerFrameMetadataBlob {
+        PerFrameMetadataKey key;
+        vec<uint8_t> blob;
+    };
+
+    enum Command : @2.2::IComposerClient.Command {
+        /**
+         * SET_LAYER_COLOR_TRANSFORM has this pseudo prototype
+         *
+         *   setLayerColorTransform(float[16] matrix);
+         *
+         * This command has the following binary layout in bytes:
+         *
+         *     0 - 16 * 4: matrix
+         *
+         * Sets a matrix for color transform which will be applied on this layer
+         * before composition.
+         *
+         * If the device is not capable of apply the matrix on this layer, it must force
+         * this layer to client composition during VALIDATE_DISPLAY.
+         *
+         * The matrix provided is an affine color transformation of the following
+         * form:
+         *
+         * |r.r r.g r.b 0|
+         * |g.r g.g g.b 0|
+         * |b.r b.g b.b 0|
+         * |Tr  Tg  Tb  1|
+         *
+         * This matrix must be provided in row-major form:
+         *
+         * {r.r, r.g, r.b, 0, g.r, ...}.
+         *
+         * Given a matrix of this form and an input color [R_in, G_in, B_in],
+         * the input color must first be converted to linear space
+         * [R_linear, G_linear, B_linear], then the output linear color
+         * [R_out_linear, G_out_linear, B_out_linear] will be:
+         *
+         * R_out_linear = R_linear * r.r + G_linear * g.r + B_linear * b.r + Tr
+         * G_out_linear = R_linear * r.g + G_linear * g.g + B_linear * b.g + Tg
+         * B_out_linear = R_linear * r.b + G_linear * g.b + B_linear * b.b + Tb
+         *
+         * [R_out_linear, G_out_linear, B_out_linear] must then be converted to
+         * gamma space: [R_out, G_out, B_out] before blending.
+         *
+         * @param matrix is a 4x4 transform matrix (16 floats) as described above.
+         */
+        SET_LAYER_COLOR_TRANSFORM = 0x40d << @2.1::IComposerClient.Command:OPCODE_SHIFT,
+
+        /* SET_LAYER_PER_FRAME_METADATA_BLOBS has this pseudo prototype
+         *
+         *   setLayerPerFrameMetadataBlobs(Display display, Layer layer,
+         *                                   vec<PerFrameMetadataBlob> metadata);
+         *
+         *   This command sends metadata that may be used for tone-mapping the
+         *   associated layer.  The metadata structure follows a {key, blob}
+         *   format (see the PerFrameMetadataBlob struct).  All keys must be
+         *   returned by a prior call to getPerFrameMetadataKeys and must
+         *   be part of the list of keys associated with blob-type metadata
+         *   (see PerFrameMetadataKey).
+         *
+         *   This method may be called every frame.
+         */
+        SET_LAYER_PER_FRAME_METADATA_BLOBS = 0x304 << @2.1::IComposerClient.Command:OPCODE_SHIFT,
+    };
+
+    /**
+     * Returns the port and data that describe a physical display. The port is
+     * a unique number that identifies a physical connector (e.g. eDP, HDMI)
+     * for display output. The data blob is parsed to determine its format,
+     * typically EDID 1.3 as specified in VESA E-EDID Standard Release A
+     * Revision 1.
+     *
+     * @param display is the display to query.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     *         UNSUPPORTED when identification data is unavailable.
+     * @return port is the connector to which the display is connected.
+     * @return data is the EDID 1.3 blob identifying the display.
+     */
+    @callflow(next="*")
+    getDisplayIdentificationData(Display display)
+               generates (Error error,
+                          uint8_t port,
+                          vec<uint8_t> data);
+    /**
+     * getReadbackBufferAttributes_2_3
+     * Returns the format which should be used when allocating a buffer for use by
+     * device readback as well as the dataspace in which its contents must be
+     * interpreted.
+     *
+     * The width and height of this buffer must be those of the currently-active
+     * display configuration, and the usage flags must consist of the following:
+     *   BufferUsage::CPU_READ | BufferUsage::GPU_TEXTURE |
+     *   BufferUsage::COMPOSER_OUTPUT
+     *
+     * The format and dataspace provided must be sufficient such that if a
+     * correctly-configured buffer is passed into setReadbackBuffer, filled by
+     * the device, and then displayed by the client as a full-screen buffer, the
+     * output of the display remains the same (subject to the note about protected
+     * content in the description of setReadbackBuffer).
+     *
+     * If the active configuration or color mode of this display has changed
+     * since a previous call to this function, it must be called again prior to
+     * setting a readback buffer such that the returned format and dataspace will
+     * be updated accordingly.
+     *
+     * Parameters:
+     * @param display - the display on which to create the layer.
+     *
+     * @return format - the format the client should use when allocating a device
+     *     readback buffer
+     * @return dataspace - the dataspace to use when interpreting the
+     *     contents of a device readback buffer
+     * @return error is NONE upon success. Otherwise,
+     *     BAD_DISPLAY when an invalid display handle was passed in.
+     *     UNSUPPORTED if not supported on underlying HAL
+     *
+     * See also:
+     *   setReadbackBuffer
+     *   getReadbackBufferFence
+     */
+    getReadbackBufferAttributes_2_3(Display display)
+        generates (Error error,
+                   PixelFormat format,
+                   Dataspace dataspace);
+
+    /**
+     * getClientTargetSupport_2_3
+     * Returns whether a client target with the given properties can be
+     * handled by the device.
+     *
+     * This function must return true for a client target with width and
+     * height equal to the active display configuration dimensions,
+     * PixelFormat::RGBA_8888, and Dataspace::UNKNOWN. It is not required to
+     * return true for any other configuration.
+     *
+     * @param display is the display to query.
+     * @param width is the client target width in pixels.
+     * @param height is the client target height in pixels.
+     * @param format is the client target format.
+     * @param dataspace is the client target dataspace, as described in
+     *     setLayerDataspace.
+     * @return error is NONE upon success. Otherwise,
+     *     BAD_DISPLAY when an invalid display handle was passed in.
+     *     UNSUPPORTED when the given configuration is not supported.
+     */
+    @callflow(next="*")
+    getClientTargetSupport_2_3(Display display,
+                               uint32_t width,
+                               uint32_t height,
+                               PixelFormat format,
+                               Dataspace dataspace)
+                    generates (Error error);
+
+    enum FormatColorComponent : uint8_t {
+        /* The first component  (eg, for RGBA_8888, this is R) */
+        FORMAT_COMPONENT_0 = 1 << 0,
+        /* The second component (eg, for RGBA_8888, this is G) */
+        FORMAT_COMPONENT_1 = 1 << 1,
+        /* The third component  (eg, for RGBA_8888, this is B) */
+        FORMAT_COMPONENT_2 = 1 << 2,
+        /* The fourth component (eg, for RGBA_8888, this is A) */
+        FORMAT_COMPONENT_3 = 1 << 3,
+    };
+
+    /**
+     * Query for what types of color sampling the hardware supports.
+     *
+     * @param  display        is the display where the samples are collected.
+     * @return error          is NONE upon success. Otherwise,
+     *                        BAD_DISPLAY when an invalid display was passed in, or
+     *                        UNSUPPORTED when there is no efficient way to sample.
+     * @return format         The format of the sampled pixels.
+     * @return dataspace      The dataspace of the sampled pixels.
+     * @return componentMask  The mask of which components can be sampled.
+     */
+    getDisplayedContentSamplingAttributes(Display display)
+               generates (Error error,
+                          PixelFormat format,
+                          Dataspace dataspace,
+                          bitfield<FormatColorComponent> componentMask);
+
+    /** DisplayedContentSampling values passed to setDisplayedContentSamplingEnabled. */
+    enum DisplayedContentSampling : int32_t {
+        INVALID = 0,
+
+        /** Enable content sampling. */
+        ENABLE = 1,
+
+        /** Disable content sampling. */
+        DISABLE = 2,
+    };
+
+    /**
+     * Enables or disables the collection of color content statistics
+     * on this display.
+     *
+     * Sampling occurs on the contents of the final composition on this display
+     * (i.e., the contents presented on screen). Samples should be collected after all
+     * color transforms have been applied.
+     *
+     * Sampling support is optional, and is set to DISABLE by default.
+     * On each call to ENABLE, all collected statistics must be reset.
+     *
+     * Sample data can be queried via getDisplayedContentSample().
+     *
+     * @param display        is the display to which the sampling mode is set.
+     * @param enabled        indicates whether to enable or disable sampling.
+     * @param componentMask  The mask of which components should be sampled. If zero, all supported
+     *                       components are to be enabled.
+     * @param maxFrames      is the maximum number of frames that should be stored before discard.
+     *                       The sample represents the most-recently posted frames.
+     * @return error      is NONE upon success. Otherwise,
+     *                    BAD_DISPLAY when an invalid display handle was passed in,
+     *                    BAD_PARAMETER when enabled was an invalid value, or
+     *                    NO_RESOURCES when the requested ringbuffer size via maxFrames was
+     *                                 not available.
+     *                    UNSUPPORTED when there is no efficient way to sample.
+     */
+    setDisplayedContentSamplingEnabled(
+        Display display, DisplayedContentSampling enable,
+        bitfield<FormatColorComponent> componentMask, uint64_t maxFrames)
+        generates (Error error);
+
+    /**
+     * Collects the results of display content color sampling for display.
+     *
+     * Collection of data can occur whether the sampling is in ENABLE or
+     * DISABLE state.
+     *
+     * @param  display     is the display to which the sampling is collected.
+     * @param  maxFrames   is the maximum number of frames that should be represented in the sample.
+     *                     The sample represents the most-recently posted frames.
+     *                     If maxFrames is 0, all frames are to be represented by the sample.
+     * @param  timestamp   is the timestamp after which any frames were posted that should be
+     *                     included in the sample. Timestamp is CLOCK_MONOTONIC.
+     *                     If timestamp is 0, do not filter from the sample by time.
+     * @return error       is NONE upon success. Otherwise,
+     *                     BAD_DISPLAY   when an invalid display was passed in, or
+     *                     UNSUPPORTED   when there is no efficient way to sample, or
+     *                     BAD_PARAMETER when the component is not supported by the hardware.
+     * @return frameCount  The number of frames represented by this sample.
+     * @return sampleComponent0 is a histogram counting how many times a pixel of a given value
+     *                     was displayed onscreen for FORMAT_COMPONENT_0.
+     *                     The buckets of the histogram are evenly weighted, the number of buckets
+     *                     is device specific.
+     *                     eg, for RGBA_8888, if sampleComponent0 is {10, 6, 4, 1} this means that
+     *                     10 red pixels were displayed onscreen in range 0x00->0x3F, 6 red pixels
+     *                     were displayed onscreen in range 0x40->0x7F, etc.
+     * @return sampleComponent1 is the same sample definition as sampleComponent0,
+     *                     but for FORMAT_COMPONENT_1.
+     * @return sampleComponent2 is the same sample definition as sampleComponent0,
+     *                     but for FORMAT_COMPONENT_2.
+     * @return sampleComponent3 is the same sample definition as sampleComponent0,
+     *                     but for FORMAT_COMPONENT_3.
+     */
+    getDisplayedContentSample(Display display, uint64_t maxFrames, uint64_t timestamp)
+               generates (Error error,
+                          uint64_t frameCount,
+                          vec<uint64_t> sampleComponent0,
+                          vec<uint64_t> sampleComponent1,
+                          vec<uint64_t> sampleComponent2,
+                          vec<uint64_t> sampleComponent3);
+
+    /**
+     * Executes commands from the input command message queue. Return values
+     * generated by the input commands are written to the output command
+     * message queue in the form of value commands.
+     *
+     * @param inLength is the length of input commands.
+     * @param inHandles is an array of handles referenced by the input
+     *        commands.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_PARAMETER when inLength is not equal to the length of
+     *                       commands in the input command message queue.
+     *         NO_RESOURCES when the output command message queue was not
+     *                      properly drained.
+     * @param outQueueChanged indicates whether the output command message
+     *        queue has changed.
+     * @param outLength is the length of output commands.
+     * @param outHandles is an array of handles referenced by the output
+     *        commands.
+     */
+    executeCommands_2_3(uint32_t inLength,
+                        vec<handle> inHandles)
+             generates (Error error,
+                        bool outQueueChanged,
+                        uint32_t outLength,
+                        vec<handle> outHandles);
+
+    /**
+     * Returns the render intents supported by the specified display and color
+     * mode.
+     *
+     * For SDR color modes, RenderIntent::COLORIMETRIC must be supported. For
+     * HDR color modes, RenderIntent::TONE_MAP_COLORIMETRIC must be supported.
+     *
+     * @param display is the display to query.
+     * @param mode is the color mode to query.
+     * @return error is NONE upon success. Otherwise,
+     *     BAD_DISPLAY when an invalid display handle was passed in.
+     *     BAD_PARAMETER when an invalid color mode was passed in.
+     * @return intents is an array of render intents.
+     */
+    getRenderIntents_2_3(Display display, ColorMode mode)
+          generates (Error error,
+                     vec<RenderIntent> intents);
+
+    /**
+     * Returns the color modes supported on this display.
+     *
+     * All devices must support at least ColorMode::NATIVE.
+     *
+     * @param display is the display to query.
+     * @return error is NONE upon success. Otherwise,
+     *     BAD_DISPLAY when an invalid display handle was passed in.
+     * @return modes is an array of color modes.
+     */
+    getColorModes_2_3(Display display)
+           generates (Error error,
+                      vec<ColorMode> modes);
+
+    /**
+     * Sets the color mode and render intent of the given display.
+     *
+     * The color mode and render intent change must take effect on next
+     * presentDisplay.
+     *
+     * All devices must support at least ColorMode::NATIVE and
+     * RenderIntent::COLORIMETRIC, and displays are assumed to be in this mode
+     * upon hotplug.
+     *
+     * @param display is the display to which the color mode is set.
+     * @param mode is the color mode to set to.
+     * @param intent is the render intent to set to.
+     * @return error is NONE upon success. Otherwise,
+     *     BAD_DISPLAY when an invalid display handle was passed in.
+     *     BAD_PARAMETER when mode or intent is invalid
+     *     UNSUPPORTED when mode or intent is not supported on this
+     *         display.
+     */
+    setColorMode_2_3(Display display, ColorMode mode, RenderIntent intent)
+          generates (Error error);
+
+    /**
+     * Provides a list of supported capabilities (as described in the
+     * definition of DisplayCapability above). This list must not change after
+     * initialization.
+     *
+     * @return error is NONE upon success. Otherwise,
+     *     BAD_DISPLAY when an invalid display handle was passed in.
+     * @return capabilities is a list of supported capabilities.
+     */
+    getDisplayCapabilities(Display display)
+              generates (Error error,
+                         vec<DisplayCapability> capabilities);
+
+    /**
+     * Returns the PerFrameMetadataKeys that are supported by this device.
+     *
+     * @param display is the display on which to create the layer.
+     * @return keys is the vector of PerFrameMetadataKey keys that are
+     *        supported by this device.
+     * @return error is NONE upon success. Otherwise,
+     *         UNSUPPORTED if not supported on underlying HAL
+     */
+    getPerFrameMetadataKeys_2_3(Display display)
+          generates (Error error,
+                     vec<PerFrameMetadataKey> keys);
+
+    /**
+     * Returns the high dynamic range (HDR) capabilities of the given display,
+     * which are invariant with regard to the active configuration.
+     *
+     * Displays which are not HDR-capable must return no types.
+     *
+     * @param display is the display to query.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     * @return types is an array of HDR types, may have 0 elements if the
+     *         display is not HDR-capable.
+     * @return maxLuminance is the desired content maximum luminance for this
+     *         display in cd/m^2.
+     * @return maxAverageLuminance - the desired content maximum frame-average
+     *         luminance for this display in cd/m^2.
+     * @return minLuminance is the desired content minimum luminance for this
+     *         display in cd/m^2.
+     */
+    @callflow(next="*")
+    getHdrCapabilities_2_3(Display display)
+            generates (Error error,
+                       vec<Hdr> types,
+                       float maxLuminance,
+                       float maxAverageLuminance,
+                       float minLuminance);
+
+    /**
+     * Use getDisplayCapabilities instead. If brightness is supported, must return
+     * DisplayCapability::BRIGHTNESS as one of the display capabilities via getDisplayCapabilities.
+     * Only use getDisplayCapabilities as the source of truth to query brightness support.
+     *
+     * Gets whether brightness operations are supported on a display.
+     *
+     * @param display
+     *      The display.
+     *
+     * @return error is NONE upon success. Otherwise,
+     *      BAD_DISPLAY   when the display is invalid, or
+     *      BAD_PARAMETER when the output parameter is invalid.
+     * @return support
+     *      Whether brightness operations are supported on the display.
+     */
+    getDisplayBrightnessSupport(Display display) generates (Error error, bool support);
+
+    /**
+     * Sets the brightness of a display.
+     *
+     * Ideally, the brightness change should take effect in the next frame post (so that it can be
+     * aligned with color transforms).
+     *
+     * @param display
+     *      The display whose brightness is set.
+     * @param brightness
+     *      A number between 0.0f (minimum brightness) and 1.0f (maximum brightness), or -1.0 to
+     *      turn the backlight off.
+     *
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY   when the display is invalid, or
+     *         UNSUPPORTED   when brightness operations are not supported, or
+     *         BAD_PARAMETER when the brightness is invalid, or
+     *         NO_RESOURCES  when the brightness cannot be applied.
+     */
+    setDisplayBrightness(Display display, float brightness) generates (Error error);
+};

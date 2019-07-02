@@ -1008,10 +1008,40 @@ enum AdditionalInfoType : uint32_t {
     AINFO_VEC3_CALIBRATION,
 
     /**
-     * Location and orientation of sensor element in the device frame: origin is
-     * the geometric center of the mobile device screen surface; the axis
-     * definition corresponds to Android sensor definitions.
-     * float[12]: 3x4 matrix in row major order
+     * Provides the orientation and location of the sensor element in terms of
+     * the Android coordinate system. This data is given as a 3x4 matrix
+     * consisting of a 3x3 rotation matrix (R) concatenated with a 3x1 location
+     * vector (t). The rotation matrix provides the orientation of the Android
+     * device coordinate frame relative to the local coordinate frame of the
+     * sensor. Note that assuming the axes conventions of the sensor are the
+     * same as Android, this is the inverse of the matrix applied to raw
+     * samples read from the sensor to convert them into the Android
+     * representation. The location vector represents the translation from the
+     * origin of the Android sensor coordinate system to the geometric center
+     * of the sensor, specified in millimeters (mm).
+     *
+     * float[12]: 3x4 matrix in row major order [R; t]
+     *
+     * Example:
+     *     This raw buffer: {0, 1, 0, 0, -1, 0, 0, 10, 0, 0, 1, -2.5}
+     *     Corresponds to this 3x4 matrix:
+     *         0 1 0    0
+     *        -1 0 0   10
+     *         0 0 1 -2.5
+     *     The sensor is oriented such that:
+     *         - the device X axis corresponds to the sensor's local -Y axis
+     *         - the device Y axis corresponds to the sensor's local X axis
+     *         - the device Z axis and sensor's local Z axis are equivalent
+     *     In other words, if viewing the origin of the Android coordinate
+     *     system from the positive Z direction, the device coordinate frame is
+     *     to be rotated 90 degrees counter-clockwise about the Z axis to align
+     *     with the sensor's local coordinate frame. Equivalently, a vector in
+     *     the Android coordinate frame may be multiplied with R to rotate it
+     *     90 degrees clockwise (270 degrees counter-clockwise), yielding its
+     *     representation in the sensor's coordinate frame.
+     *     Relative to the origin of the Android coordinate system, the physical
+     *     center of the sensor is located 10mm in the positive Y direction, and
+     *     2.5mm in the negative Z direction.
      */
     AINFO_SENSOR_PLACEMENT,
 

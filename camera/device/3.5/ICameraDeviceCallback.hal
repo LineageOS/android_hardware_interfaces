@@ -1,0 +1,70 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.camera.device@3.5;
+
+import @3.2::StreamBuffer;
+import @3.4::ICameraDeviceCallback;
+
+/**
+ * Callback methods for the HAL to call into the framework.
+ */
+interface ICameraDeviceCallback extends @3.4::ICameraDeviceCallback {
+
+    /**
+     * requestStreamBuffers:
+     *
+     * Synchronous callback for HAL to ask for output buffers from camera service.
+     *
+     * This call may be serialized in camera service so it is strongly
+     * recommended to only call this method from one thread.
+     *
+     * When camera device advertises
+     * (CameraMetadataEnumAndroidInfoSupportedBufferManagementVersion ==
+     * ANDROID_INFO_SUPPORTED_BUFFER_MANAGEMENT_VERSION_HIDL_DEVICE_3_5), HAL
+     * can use this method to request buffers from camera service.
+     *
+     * @return status Status code for the operation, one of:
+     *     OK: all requested buffers are returned
+     *     FAILED_PARTIAL: some streams failed while some succeeds. Check
+     *             individual StreamBufferRet for details.
+     *     FAILED_CONFIGURING: the request failed because camera servicve is
+     *             performing configureStreams and no buffers are returned.
+     *     FAILED_UNKNOWN: the request failed for unknown reason and no buffers
+     *             are returned.
+     *
+     * Performance requirements:
+     * This is a blocking call that takes more time with more buffers requested.
+     * HAL must not request large amount of buffers on a latency critical code
+     * path. It is highly recommended to use a dedicated thread to perform
+     * all requestStreamBuffers calls, and adjust the thread priority and/or
+     * timing of making the call in order for buffers to arrive before HAL is
+     * ready to fill the buffer.
+     */
+    requestStreamBuffers(vec<BufferRequest> bufReqs)
+            generates (BufferRequestStatus st, vec<StreamBufferRet> buffers);
+
+    /**
+     * returnStreamBuffers:
+     *
+     * Synchronous callback for HAL to return output buffers to camera service.
+     *
+     * If this method is called during a configureStreams call, it must be blocked
+     * until camera service finishes the ongoing configureStreams call.
+     */
+    returnStreamBuffers(vec<StreamBuffer> buffers);
+
+};

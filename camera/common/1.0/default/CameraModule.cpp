@@ -235,7 +235,7 @@ void CameraModule::appendAvailableKeys(CameraMetadata &chars,
     chars.update(keyTag, availableKeys);
 }
 
-CameraModule::CameraModule(camera_module_t *module) {
+CameraModule::CameraModule(camera_module_t *module) : mNumberOfCameras(0) {
     if (module == NULL) {
         ALOGE("%s: camera hardware module must not be null", __FUNCTION__);
         assert(0);
@@ -253,6 +253,14 @@ CameraModule::~CameraModule()
         }
         mCameraInfoMap.removeItemsAt(0);
     }
+
+    while (mPhysicalCameraInfoMap.size() > 0) {
+        camera_metadata_t* metadata = mPhysicalCameraInfoMap.editValueAt(0);
+        if (metadata != NULL) {
+            free_camera_metadata(metadata);
+        }
+        mPhysicalCameraInfoMap.removeItemsAt(0);
+    }
 }
 
 int CameraModule::init() {
@@ -264,7 +272,8 @@ int CameraModule::init() {
         res = mModule->init();
         ATRACE_END();
     }
-    mCameraInfoMap.setCapacity(getNumberOfCameras());
+    mNumberOfCameras = getNumberOfCameras();
+    mCameraInfoMap.setCapacity(mNumberOfCameras);
     return res;
 }
 
@@ -316,6 +325,52 @@ int CameraModule::getCameraInfo(int cameraId, struct camera_info *info) {
     assert(index != NAME_NOT_FOUND);
     // return the cached camera info
     *info = mCameraInfoMap[index];
+    return OK;
+}
+
+int CameraModule::getPhysicalCameraInfo(int physicalCameraId, camera_metadata_t **physicalInfo) {
+    ATRACE_CALL();
+    Mutex::Autolock lock(mCameraInfoLock);
+    if (physicalCameraId < mNumberOfCameras) {
+        ALOGE("%s: Invalid physical camera ID %d", __FUNCTION__, physicalCameraId);
+        return -EINVAL;
+    }
+
+    // Only query physical camera info for 2.5 version for newer
+    int apiVersion = mModule->common.module_api_version;
+    if (apiVersion < CAMERA_MODULE_API_VERSION_2_5) {
+        ALOGE("%s: Module version must be at least 2.5 to handle getPhysicalCameraInfo",
+                __FUNCTION__);
+        return -ENODEV;
+    }
+    if (mModule->get_physical_camera_info == nullptr) {
+        ALOGE("%s: get_physical_camera is NULL for module version 2.5", __FUNCTION__);
+        return -EINVAL;
+    }
+
+    ssize_t index = mPhysicalCameraInfoMap.indexOfKey(physicalCameraId);
+    if (index == NAME_NOT_FOUND) {
+        // Get physical camera characteristics, and cache it
+        camera_metadata_t *info = nullptr;
+        ATRACE_BEGIN("camera_module->get_physical_camera_info");
+        int ret = mModule->get_physical_camera_info(physicalCameraId, &info);
+        ATRACE_END();
+        if (ret != 0) {
+            return ret;
+        }
+
+        // The camera_metadata_t returned by get_physical_camera_info could be using
+        // more memory than necessary due to unused reserved space. Reduce the
+        // size by appending it to a new CameraMetadata object, which internally
+        // calls resizeIfNeeded.
+        CameraMetadata m;
+        m.append(info);
+        camera_metadata_t* derivedMetadata = m.release();
+        index = mPhysicalCameraInfoMap.add(physicalCameraId, derivedMetadata);
+    }
+
+    assert(index != NAME_NOT_FOUND);
+    *physicalInfo = mPhysicalCameraInfoMap[index];
     return OK;
 }
 
@@ -412,6 +467,64 @@ int CameraModule::setTorchMode(const char* camera_id, bool enable) {
     return res;
 }
 
+int CameraModule::isStreamCombinationSupported(int cameraId, camera_stream_combination_t *streams) {
+    int res = INVALID_OPERATION;
+    if (mModule->is_stream_combination_supported != NULL) {
+        ATRACE_BEGIN("camera_module->is_stream_combination_supported");
+        res = mModule->is_stream_combination_supported(cameraId, streams);
+        ATRACE_END();
+    }
+    return res;
+}
+
+void CameraModule::notifyDeviceStateChange(uint64_t deviceState) {
+   if (getModuleApiVersion() >= CAMERA_MODULE_API_VERSION_2_5 &&
+           mModule->notify_device_state_change != NULL) {
+       ATRACE_BEGIN("camera_module->notify_device_state_change");
+       ALOGI("%s: calling notify_device_state_change with state %" PRId64, __FUNCTION__,
+               deviceState);
+       mModule->notify_device_state_change(deviceState);
+       ATRACE_END();
+   }
+}
+
+bool CameraModule::isLogicalMultiCamera(
+        const common::V1_0::helper::CameraMetadata& metadata,
+        std::unordered_set<std::string>* physicalCameraIds) {
+    if (physicalCameraIds == nullptr) {
+        ALOGE("%s: physicalCameraIds must not be null", __FUNCTION__);
+        return false;
+    }
+
+    bool isLogicalMultiCamera = false;
+    camera_metadata_ro_entry_t capabilities =
+            metadata.find(ANDROID_REQUEST_AVAILABLE_CAPABILITIES);
+    for (size_t i = 0; i < capabilities.count; i++) {
+        if (capabilities.data.u8[i] ==
+                ANDROID_REQUEST_AVAILABLE_CAPABILITIES_LOGICAL_MULTI_CAMERA) {
+            isLogicalMultiCamera = true;
+            break;
+        }
+    }
+
+    if (isLogicalMultiCamera) {
+        camera_metadata_ro_entry_t entry =
+                metadata.find(ANDROID_LOGICAL_MULTI_CAMERA_PHYSICAL_IDS);
+        const uint8_t* ids = entry.data.u8;
+        size_t start = 0;
+        for (size_t i = 0; i < entry.count; ++i) {
+            if (ids[i] == '\0') {
+                if (start != i) {
+                    const char* physicalId = reinterpret_cast<const char*>(ids+start);
+                    physicalCameraIds->emplace(physicalId);
+                }
+                start = i + 1;
+            }
+        }
+    }
+    return isLogicalMultiCamera;
+}
+
 status_t CameraModule::filterOpenErrorCode(status_t err) {
     switch(err) {
         case NO_ERROR:
@@ -426,8 +539,24 @@ status_t CameraModule::filterOpenErrorCode(status_t err) {
 }
 
 void CameraModule::removeCamera(int cameraId) {
-    free_camera_metadata(
-        const_cast<camera_metadata_t*>(mCameraInfoMap[cameraId].static_camera_characteristics));
+    std::unordered_set<std::string> physicalIds;
+    camera_metadata_t *metadata = const_cast<camera_metadata_t*>(
+            mCameraInfoMap.valueFor(cameraId).static_camera_characteristics);
+    common::V1_0::helper::CameraMetadata hidlMetadata(metadata);
+
+    if (isLogicalMultiCamera(hidlMetadata, &physicalIds)) {
+        for (const auto& id : physicalIds) {
+            int idInt = std::stoi(id);
+            if (mPhysicalCameraInfoMap.indexOfKey(idInt) >= 0) {
+                free_camera_metadata(mPhysicalCameraInfoMap[idInt]);
+                mPhysicalCameraInfoMap.removeItem(idInt);
+            } else {
+                ALOGE("%s: Cannot find corresponding static metadata for physical id %s",
+                        __FUNCTION__, id.c_str());
+            }
+        }
+    }
+    free_camera_metadata(metadata);
     mCameraInfoMap.removeItem(cameraId);
     mDeviceVersionMap.removeItem(cameraId);
 }

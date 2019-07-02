@@ -15,6 +15,7 @@ cc_library_shared {
         "android.hardware.camera.device@3.3",
         "android.hardware.camera.provider@2.4",
         "android.hardware.graphics.mapper@2.0",
+        "android.hardware.graphics.mapper@3.0",
         "liblog",
         "libhardware",
         "libcamera_metadata",

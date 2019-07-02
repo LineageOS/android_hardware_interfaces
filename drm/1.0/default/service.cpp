@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#define LOG_TAG "android.hardware.drm@1.0-service"
 
 #include <1.0/default/CryptoFactory.h>
 #include <1.0/default/DrmFactory.h>
@@ -31,15 +30,8 @@ using android::hardware::drm::V1_0::ICryptoFactory;
 using android::hardware::drm::V1_0::IDrmFactory;
 
 int main() {
-    ALOGD("android.hardware.drm@1.0-service starting...");
-
-    // The DRM HAL may communicate to other vendor components via
-    // /dev/vndbinder
-    android::ProcessState::initWithDriver("/dev/vndbinder");
-
     configureRpcThreadpool(8, true /* callerWillJoin */);
-    android::status_t status =
-        registerPassthroughServiceImplementation<IDrmFactory>();
+    android::status_t status = registerPassthroughServiceImplementation<IDrmFactory>();
     LOG_ALWAYS_FATAL_IF(
         status != android::OK,
         "Error while registering drm service: %d", status);

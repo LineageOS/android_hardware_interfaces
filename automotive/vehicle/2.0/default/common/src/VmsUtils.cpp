@@ -27,16 +27,24 @@ namespace vms {
 
 static constexpr int kMessageIndex = toInt(VmsBaseMessageIntegerValuesIndex::MESSAGE_TYPE);
 static constexpr int kMessageTypeSize = 1;
+static constexpr int kPublisherIdSize = 1;
 static constexpr int kLayerNumberSize = 1;
 static constexpr int kLayerSize = 3;
 static constexpr int kLayerAndPublisherSize = 4;
+static constexpr int kSessionIdsSize = 2;
+static constexpr int kPublisherIdIndex =
+        toInt(VmsPublisherInformationIntegerValuesIndex::PUBLISHER_ID);
+static constexpr int kSubscriptionStateSequenceNumberIndex =
+        toInt(VmsSubscriptionsStateIntegerValuesIndex::SEQUENCE_NUMBER);
+static constexpr int kAvailabilitySequenceNumberIndex =
+        toInt(VmsAvailabilityStateIntegerValuesIndex::SEQUENCE_NUMBER);
 
 // TODO(aditin): We should extend the VmsMessageType enum to include a first and
 // last, which would prevent breakages in this API. However, for all of the
 // functions in this module, we only need to guarantee that the message type is
-// between SUBSCRIBE and DATA.
+// between SUBSCRIBE and START_SESSION.
 static constexpr int kFirstMessageType = toInt(VmsMessageType::SUBSCRIBE);
-static constexpr int kLastMessageType = toInt(VmsMessageType::DATA);
+static constexpr int kLastMessageType = toInt(VmsMessageType::START_SESSION);
 
 std::unique_ptr<VehiclePropValue> createBaseVmsMessage(size_t message_size) {
     auto result = createVehiclePropValue(VehiclePropertyType::INT32, message_size);
@@ -77,17 +85,16 @@ std::unique_ptr<VehiclePropValue> createUnsubscribeToPublisherMessage(
     return result;
 }
 
-std::unique_ptr<VehiclePropValue> createOfferingMessage(
-    const std::vector<VmsLayerOffering>& offering) {
-    int message_size = kMessageTypeSize + kLayerNumberSize;
-    for (const auto& offer : offering) {
-        message_size += kLayerNumberSize + (1 + offer.dependencies.size()) * kLayerSize;
+std::unique_ptr<VehiclePropValue> createOfferingMessage(const VmsOffers& offers) {
+    int message_size = kMessageTypeSize + kPublisherIdSize + kLayerNumberSize;
+    for (const auto& offer : offers.offerings) {
+        message_size += kLayerSize + kLayerNumberSize + (offer.dependencies.size() * kLayerSize);
     }
     auto result = createBaseVmsMessage(message_size);
 
-    std::vector<int32_t> offers = {toInt(VmsMessageType::OFFERING),
-                                   static_cast<int>(offering.size())};
-    for (const auto& offer : offering) {
+    std::vector<int32_t> offerings = {toInt(VmsMessageType::OFFERING), offers.publisher_id,
+                                      static_cast<int>(offers.offerings.size())};
+    for (const auto& offer : offers.offerings) {
         std::vector<int32_t> layer_vector = {offer.layer.type, offer.layer.subtype,
                                              offer.layer.version,
                                              static_cast<int32_t>(offer.dependencies.size())};
@@ -97,9 +104,9 @@ std::unique_ptr<VehiclePropValue> createOfferingMessage(
             layer_vector.insert(layer_vector.end(), dependency_layer.begin(),
                                 dependency_layer.end());
         }
-        offers.insert(offers.end(), layer_vector.begin(), layer_vector.end());
+        offerings.insert(offerings.end(), layer_vector.begin(), layer_vector.end());
     }
-    result->value.int32Values = offers;
+    result->value.int32Values = offerings;
     return result;
 }
 
@@ -119,10 +126,35 @@ std::unique_ptr<VehiclePropValue> createSubscriptionsRequest() {
     return result;
 }
 
-std::unique_ptr<VehiclePropValue> createDataMessage(const std::string& bytes) {
+std::unique_ptr<VehiclePropValue> createDataMessageWithLayerPublisherInfo(
+        const VmsLayerAndPublisher& layer_publisher, const std::string& vms_packet) {
+    auto result = createBaseVmsMessage(kMessageTypeSize + kLayerAndPublisherSize);
+    result->value.int32Values = hidl_vec<int32_t>{
+            toInt(VmsMessageType::DATA), layer_publisher.layer.type, layer_publisher.layer.subtype,
+            layer_publisher.layer.version, layer_publisher.publisher_id};
+    result->value.bytes = std::vector<uint8_t>(vms_packet.begin(), vms_packet.end());
+    return result;
+}
+
+std::unique_ptr<VehiclePropValue> createPublisherIdRequest(
+        const std::string& vms_provider_description) {
     auto result = createBaseVmsMessage(kMessageTypeSize);
-    result->value.int32Values = hidl_vec<int32_t>{toInt(VmsMessageType::DATA)};
-    result->value.bytes = std::vector<uint8_t>(bytes.begin(), bytes.end());
+    result->value.int32Values = hidl_vec<int32_t>{
+            toInt(VmsMessageType::PUBLISHER_ID_REQUEST),
+    };
+    result->value.bytes =
+            std::vector<uint8_t>(vms_provider_description.begin(), vms_provider_description.end());
+    return result;
+}
+
+std::unique_ptr<VehiclePropValue> createStartSessionMessage(const int service_id,
+                                                            const int client_id) {
+    auto result = createBaseVmsMessage(kMessageTypeSize + kSessionIdsSize);
+    result->value.int32Values = hidl_vec<int32_t>{
+            toInt(VmsMessageType::START_SESSION),
+            service_id,
+            client_id,
+    };
     return result;
 }
 
@@ -151,6 +183,118 @@ std::string parseData(const VehiclePropValue& value) {
     } else {
         return std::string();
     }
+}
+
+int32_t parsePublisherIdResponse(const VehiclePropValue& publisher_id_response) {
+    if (isValidVmsMessage(publisher_id_response) &&
+        parseMessageType(publisher_id_response) == VmsMessageType::PUBLISHER_ID_RESPONSE &&
+        publisher_id_response.value.int32Values.size() > kPublisherIdIndex) {
+        return publisher_id_response.value.int32Values[kPublisherIdIndex];
+    }
+    return -1;
+}
+
+bool isSequenceNumberNewer(const VehiclePropValue& subscription_change,
+                           const int last_seen_sequence_number) {
+    return (isValidVmsMessage(subscription_change) &&
+            parseMessageType(subscription_change) == VmsMessageType::SUBSCRIPTIONS_CHANGE &&
+            subscription_change.value.int32Values.size() > kSubscriptionStateSequenceNumberIndex &&
+            subscription_change.value.int32Values[kSubscriptionStateSequenceNumberIndex] >
+                    last_seen_sequence_number);
+}
+
+int32_t getSequenceNumberForSubscriptionsState(const VehiclePropValue& subscription_change) {
+    if (isValidVmsMessage(subscription_change) &&
+        parseMessageType(subscription_change) == VmsMessageType::SUBSCRIPTIONS_CHANGE &&
+        subscription_change.value.int32Values.size() > kSubscriptionStateSequenceNumberIndex) {
+        return subscription_change.value.int32Values[kSubscriptionStateSequenceNumberIndex];
+    }
+    return -1;
+}
+
+std::vector<VmsLayer> getSubscribedLayers(const VehiclePropValue& subscription_change,
+                                          const VmsOffers& offers) {
+    if (isValidVmsMessage(subscription_change) &&
+        parseMessageType(subscription_change) == VmsMessageType::SUBSCRIPTIONS_CHANGE &&
+        subscription_change.value.int32Values.size() > kSubscriptionStateSequenceNumberIndex) {
+        const int32_t num_of_layers = subscription_change.value.int32Values[toInt(
+                VmsSubscriptionsStateIntegerValuesIndex::NUMBER_OF_LAYERS)];
+        const int32_t num_of_associated_layers = subscription_change.value.int32Values[toInt(
+                VmsSubscriptionsStateIntegerValuesIndex ::NUMBER_OF_ASSOCIATED_LAYERS)];
+
+        std::unordered_set<VmsLayer, VmsLayer::VmsLayerHashFunction> offered_layers;
+        for (const auto& offer : offers.offerings) {
+            offered_layers.insert(offer.layer);
+        }
+        std::vector<VmsLayer> subscribed_layers;
+
+        int current_index = toInt(VmsSubscriptionsStateIntegerValuesIndex::SUBSCRIPTIONS_START);
+        // Add all subscribed layers which are offered by the current publisher.
+        for (int i = 0; i < num_of_layers; i++) {
+            VmsLayer layer = VmsLayer(subscription_change.value.int32Values[current_index],
+                                      subscription_change.value.int32Values[current_index + 1],
+                                      subscription_change.value.int32Values[current_index + 2]);
+            if (offered_layers.find(layer) != offered_layers.end()) {
+                subscribed_layers.push_back(layer);
+            }
+            current_index += kLayerSize;
+        }
+        // Add all subscribed associated layers which are offered by the current publisher.
+        // For this, we need to check if the associated layer has a publisher ID which is
+        // same as that of the current publisher.
+        for (int i = 0; i < num_of_associated_layers; i++) {
+            VmsLayer layer = VmsLayer(subscription_change.value.int32Values[current_index],
+                                      subscription_change.value.int32Values[current_index + 1],
+                                      subscription_change.value.int32Values[current_index + 2]);
+            current_index += kLayerSize;
+            if (offered_layers.find(layer) != offered_layers.end()) {
+                int32_t num_of_publisher_ids = subscription_change.value.int32Values[current_index];
+                current_index++;
+                for (int j = 0; j < num_of_publisher_ids; j++) {
+                    if (subscription_change.value.int32Values[current_index] ==
+                        offers.publisher_id) {
+                        subscribed_layers.push_back(layer);
+                    }
+                    current_index++;
+                }
+            }
+        }
+        return subscribed_layers;
+    }
+    return {};
+}
+
+bool hasServiceNewlyStarted(const VehiclePropValue& availability_change) {
+    return (isValidVmsMessage(availability_change) &&
+            parseMessageType(availability_change) == VmsMessageType::AVAILABILITY_CHANGE &&
+            availability_change.value.int32Values.size() > kAvailabilitySequenceNumberIndex &&
+            availability_change.value.int32Values[kAvailabilitySequenceNumberIndex] == 0);
+}
+
+VmsSessionStatus parseStartSessionMessage(const VehiclePropValue& start_session,
+                                          const int current_service_id, const int current_client_id,
+                                          int* new_service_id) {
+    if (isValidVmsMessage(start_session) &&
+        parseMessageType(start_session) == VmsMessageType::START_SESSION &&
+        start_session.value.int32Values.size() == kSessionIdsSize + 1) {
+        *new_service_id = start_session.value.int32Values[1];
+        const int new_client_id = start_session.value.int32Values[2];
+        if (new_client_id != current_client_id) {
+            // If the new_client_id = -1, it means the service has newly started.
+            // But if it is not -1 and is different than the current client ID, then
+            // it means that the service did not have the correct client ID. In
+            // both these cases, the client should acknowledge with a START_SESSION
+            // message containing the correct client ID. So here, the status is returned as
+            // kNewServerSession.
+            return VmsSessionStatus::kNewServerSession;
+        } else {
+            // kAckToCurrentSession is returned if the new client ID is same as the current one.
+            return VmsSessionStatus::kAckToCurrentSession;
+        }
+    }
+    // If the message is invalid then persist the old service ID.
+    *new_service_id = current_service_id;
+    return VmsSessionStatus::kInvalidMessage;
 }
 
 }  // namespace vms

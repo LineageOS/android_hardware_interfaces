@@ -78,6 +78,8 @@ TEST_F(RadioHidlTest_v1_3, getModemStackStatus) {
 
 /*
  * Test IRadio.setSystemSelectionChannels() for the response returned.
+ *
+ * This test is excluded from manifest, due to non-implementation in Q. Tracked by b/130254624.
  */
 TEST_F(RadioHidlTest_v1_3, setSystemSelectionChannels) {
     serial = GetRandomSerialNumber();

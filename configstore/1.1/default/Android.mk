@@ -7,7 +7,7 @@ LOCAL_MODULE := android.hardware.configstore@1.1-service
 ifneq ($(NATIVE_COVERAGE),true)
 LOCAL_REQUIRED_MODULES_arm64 := configstore@1.1.policy
 endif
-LOCAL_PROPRIETARY_MODULE := true
+LOCAL_VENDOR_MODULE := true
 LOCAL_MODULE_CLASS := EXECUTABLES
 LOCAL_MODULE_RELATIVE_PATH := hw
 LOCAL_INIT_RC := android.hardware.configstore@1.1-service.rc

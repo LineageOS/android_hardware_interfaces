@@ -21,11 +21,15 @@ SimSlotStatus slotStatus;
 RadioConfigResponse::RadioConfigResponse(RadioConfigHidlTest& parent) : parent(parent) {}
 
 Return<void> RadioConfigResponse::getSimSlotsStatusResponse(
-    const RadioResponseInfo& /* info */,
-    const ::android::hardware::hidl_vec<SimSlotStatus>& /* slotStatus */) {
+        const RadioResponseInfo& info,
+        const ::android::hardware::hidl_vec<SimSlotStatus>& /* slotStatus */) {
+    rspInfo = info;
+    parent.notify();
     return Void();
 }
 
-Return<void> RadioConfigResponse::setSimSlotsMappingResponse(const RadioResponseInfo& /* info */) {
+Return<void> RadioConfigResponse::setSimSlotsMappingResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent.notify();
     return Void();
 }

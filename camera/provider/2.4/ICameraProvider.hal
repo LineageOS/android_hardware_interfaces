@@ -140,7 +140,8 @@ interface ICameraProvider {
      *         Torch API support cannot be queried. This may be due to
      *         a failure to initialize the camera subsystem, for example.
      * @return support Whether the camera devices known to this provider
-     *     supports setTorchMode API or not.
+     *     supports setTorchMode API or not. Devices launched with SDK
+     *     level 29 or higher must return true.
      *
      */
     isSetTorchModeSupported() generates (Status status, bool support);

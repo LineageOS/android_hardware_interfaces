@@ -1,0 +1,42 @@
+/*
+ * Copyright 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.soundtrigger@2.2;
+
+import @2.0::SoundModelHandle;
+import @2.1::ISoundTriggerHw;
+
+/**
+ * SoundTrigger HAL interface. Used for hardware recognition of hotwords
+ * and other sounds.
+ */
+interface ISoundTriggerHw extends @2.1::ISoundTriggerHw {
+
+    /**
+     * Get the state of a given model.
+     * The model state is returned asynchronously as a RecognitionEvent via
+     * the callback that was registered in StartRecognition().
+     * @param modelHandle The handle of the sound model whose state is being
+     *                    queried.
+     * @return retval Operation completion status: 0 in case of success,
+     *                -ENOSYS in case of invalid model handle,
+     *                -ENOMEM in case of memory allocation failure,
+     *                -ENODEV in case of initialization error,
+     *                -EINVAL in case where a recognition event is already
+     *                        being processed.
+     */
+    getModelState(SoundModelHandle modelHandle) generates (int32_t retval);
+};

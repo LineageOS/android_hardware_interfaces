@@ -119,6 +119,10 @@ TEST_F(RadioHidlTest_v1_4, setPreferredNetworkTypeBitmap) {
 
     network_type_bitmap |= ::android::hardware::radio::V1_4::RadioAccessFamily::LTE;
 
+    // TODO(b/131634656): LTE_CA will be sent to modem as a RAF in Q, but LTE_CA is not a RAF,
+    // we will not send it to modem as a RAF in R.
+    network_type_bitmap |= ::android::hardware::radio::V1_4::RadioAccessFamily::LTE_CA;
+
     Return<void> res = radio_v1_4->setPreferredNetworkTypeBitmap(serial, network_type_bitmap);
 
     ASSERT_OK(res);

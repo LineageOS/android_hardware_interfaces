@@ -1,0 +1,154 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.camera.device@3.5;
+
+import android.hardware.camera.common@1.0::Status;
+import @3.2::CameraMetadata;
+import @3.4::ICameraDeviceSession;
+import @3.4::HalStreamConfiguration;
+
+/**
+ * Camera device active session interface.
+ *
+ * Obtained via ICameraDevice::open(), this interface contains the methods to
+ * configure and request captures from an active camera device.
+ */
+interface ICameraDeviceSession extends @3.4::ICameraDeviceSession {
+
+    /**
+     * configureStreams_3_5:
+     *
+     * Identical to @3.4::ICameraDeviceSession.configureStreams, except that:
+     *
+     * - a streamConfigCounter counter is provided to check for race condition
+     *   between configureStreams_3_5 and signalStreamFlush call.
+     * - In case the HAL overrides dataspace or format for
+     *   IMPLEMENTATION_DEFINED pixel format, camera framework must use original
+     *   dataspace and format in subsequent configureStreams_3_5 calls for the same
+     *   stream. HAL is allowed to change the overriding behavior of format or
+     *   dataspace for reconfiguration of the same stream depending on the stream
+     *   combination.
+     *
+     * @return status Status code for the operation, one of:
+     *     OK:
+     *         On successful stream configuration.
+     *     INTERNAL_ERROR:
+     *         If there has been a fatal error and the device is no longer
+     *         operational. Only close() can be called successfully by the
+     *         framework after this error is returned.
+     *     ILLEGAL_ARGUMENT:
+     *         If the requested stream configuration is invalid. Some examples
+     *         of invalid stream configurations include:
+     *           - Including more than 1 INPUT stream
+     *           - Not including any OUTPUT streams
+     *           - Including streams with unsupported formats, or an unsupported
+     *             size for that format.
+     *           - Including too many output streams of a certain format.
+     *           - Unsupported rotation configuration
+     *           - Stream sizes/formats don't satisfy the
+     *             StreamConfigurationMode requirements
+     *             for non-NORMAL mode, or the requested operation_mode is not
+     *             supported by the HAL.
+     *           - Unsupported usage flag
+     *         The camera service cannot filter out all possible illegal stream
+     *         configurations, since some devices may support more simultaneous
+     *         streams or larger stream resolutions than the minimum required
+     *         for a given camera device hardware level. The HAL must return an
+     *         ILLEGAL_ARGUMENT for any unsupported stream set, and then be
+     *         ready to accept a future valid stream configuration in a later
+     *         configureStreams call.
+     * @return halConfiguration The stream parameters desired by the HAL for
+     *     each stream, including maximum buffers, the usage flags, and the
+     *     override format.
+     */
+    configureStreams_3_5(@3.5::StreamConfiguration requestedConfiguration)
+            generates (Status status,
+                       @3.4::HalStreamConfiguration halConfiguration);
+
+
+    /**
+     * signalStreamFlush:
+     *
+     * Signaling HAL camera service is about to perform configureStreams_3_5 and
+     * HAL must return all buffers of designated streams. HAL must finish
+     * inflight requests normally and return all buffers that belongs to the
+     * designated streams through processCaptureResult or returnStreamBuffer
+     * API in a timely manner, or camera service will run into a fatal error.
+     *
+     * Note that this call serves as an optional hint and camera service may
+     * skip sending this call if all buffers are already returned.
+     *
+     * @param streamIds The ID of streams camera service need all of its
+     *     buffers returned.
+     *
+     * @param streamConfigCounter Note that due to concurrency nature, it is
+     *     possible the signalStreamFlush call arrives later than the
+     *     corresponding configureStreams_3_5 call, HAL must check
+     *     streamConfigCounter for such race condition. If the counter is less
+     *     than the counter in the last configureStreams_3_5 call HAL last
+     *     received, the call is stale and HAL should just return this call.
+     */
+    oneway signalStreamFlush(
+        vec<int32_t> streamIds,
+        uint32_t streamConfigCounter
+    );
+
+    /**
+     * isReconfigurationRequired:
+     *
+     * Check whether complete stream reconfiguration is required for possible new session
+     * parameter values.
+     *
+     * This method must be called by the camera framework in case the client changes
+     * the value of any advertised session parameters. Depending on the specific values
+     * the HAL can decide whether a complete stream reconfiguration is required. In case
+     * the HAL returns false, the camera framework must skip the internal reconfiguration.
+     * In case Hal returns true, the framework must reconfigure the streams and pass the
+     * new session parameter values accordingly.
+     * This call may be done by the framework some time before the request with new parameters
+     * is submitted to the HAL, and the request may be cancelled before it ever gets submitted.
+     * Therefore, the HAL must not use this query as an indication to change its behavior in any
+     * way.
+     * ------------------------------------------------------------------------
+     *
+     * Preconditions:
+     *
+     * The framework can call this method at any time after active
+     * session configuration. There must be no impact on the performance of
+     * pending camera requests in any way. In particular there must not be
+     * any glitches or delays during normal camera streaming.
+     *
+     * Performance requirements:
+     * HW and SW camera settings must not be changed and there must not be
+     * a user-visible impact on camera performance.
+     *
+     * @param oldSessionParams Before session parameters, usually the current session parameters.
+     * @param newSessionParams The new session parameters which may be set by client.
+     *
+     * @return Status Status code for the operation, one of:
+     *     OK:
+     *          On successful reconfiguration required query.
+     *     METHOD_NOT_SUPPORTED:
+     *          The camera device does not support the reconfiguration query.
+     *     INTERNAL_ERROR:
+     *          The reconfiguration query cannot complete due to internal
+     *          error.
+     * @return true in case the stream reconfiguration is required, false otherwise.
+     */
+    isReconfigurationRequired(CameraMetadata oldSessionParams, CameraMetadata newSessionParams)
+            generates(Status status, bool reconfigurationNeeded);
+};

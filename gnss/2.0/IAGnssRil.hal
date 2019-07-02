@@ -1,0 +1,71 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.gnss@2.0;
+
+import @1.0::IAGnssRil;
+
+/**
+ * Extended interface for AGNSS RIL support. An Assisted GNSS Radio Interface
+ * Layer interface allows the GNSS chipset to request radio interface layer
+ * information from Android platform. Examples of such information are reference
+ * location, unique subscriber ID, phone number string and network availability changes.
+ */
+interface IAGnssRil extends @1.0::IAGnssRil {
+    /** Flags to indicate capabilities of the network */
+    enum NetworkCapability : uint16_t {
+        /** Network is not metered. */
+        NOT_METERED       = 1 << 0,
+        /** Network is not roaming. */
+        NOT_ROAMING       = 1 << 1
+    };
+
+    /** Represents network connection status and capabilities. */
+    struct NetworkAttributes {
+        /** Network handle of the network for use with the NDK API. */
+        net_handle_t networkHandle;
+
+        /**
+         * True indicates that network connectivity exists and it is possible to
+         * establish connections and pass data. If false, only the networkHandle field
+         * is populated to indicate that this network has just disconnected.
+         */
+        bool isConnected;
+
+        /** A set of flags indicating the capabilities of this network. */
+        bitfield<NetworkCapability> capabilities;
+
+        /**
+         * Telephony preferred Access Point Name to use for carrier data connection when
+         * connected to a cellular network. Empty string, otherwise.
+         */
+        string apn;
+    };
+
+    /**
+     * Notifies GNSS of network status changes.
+     *
+     * The framework calls this method to update the GNSS HAL implementation of network
+     * state changes. The methods updateNetworkState() and updateNetworkAvailability
+     * in @1.0::IAGnssRil are deprecated and are not called by the framework.
+     *
+     * @param attributes Updated network attributes.
+     *
+     * @return success True if all parameters were valid and the operation was
+     * successful.
+     */
+    updateNetworkState_2_0(NetworkAttributes attributes) generates (bool success);
+};

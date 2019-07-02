@@ -1,0 +1,5 @@
+service vendor.sensors-hal-2-0-mock /vendor/bin/hw/android.hardware.sensors@2.0-service.mock
+    class hal
+    user system
+    group system
+    rlimit rtprio 10 10

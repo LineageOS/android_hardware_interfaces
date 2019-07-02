@@ -17,6 +17,7 @@
 #include <android-base/logging.h>
 
 #include <android/hardware/wifi/1.0/IWifiStaIface.h>
+#include <android/hardware/wifi/1.3/IWifiStaIface.h>
 
 #include <VtsHalHidlTargetTestBase.h>
 
@@ -143,6 +144,14 @@ TEST_F(WifiStaIfaceHidlTest, LinkLayerStatsCollection) {
         return;
     }
 
+    sp<::android::hardware::wifi::V1_3::IWifiStaIface> iface_converted =
+        ::android::hardware::wifi::V1_3::IWifiStaIface::castFrom(
+            wifi_sta_iface_);
+    if (iface_converted != nullptr) {
+        // Skip this test since this API is deprecated in this newer HAL version
+        return;
+    }
+
     // Enable link layer stats collection.
     EXPECT_EQ(WifiStatusCode::SUCCESS,
               HIDL_INVOKE(wifi_sta_iface_, enableLinkLayerStatsCollection, true)
@@ -249,6 +258,11 @@ TEST_F(WifiStaIfaceHidlTest, EnableNDOffload) {
  * code.
  */
 TEST_F(WifiStaIfaceHidlTest, SetScanningMacOui) {
+    if (!isCapabilitySupported(
+            IWifiStaIface::StaIfaceCapabilityMask::SCAN_RAND)) {
+        // No-op if SetScanningMacOui is not supported.
+        return;
+    }
     const android::hardware::hidl_array<uint8_t, 3> kOui{
         std::array<uint8_t, 3>{{0x10, 0x22, 0x33}}};
     EXPECT_EQ(WifiStatusCode::SUCCESS,

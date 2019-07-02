@@ -30,7 +30,10 @@ class WifiSupplicantHidlEnvironment_1_1 : public WifiSupplicantHidlEnvironment {
         return instance;
     }
     virtual void registerTestServices() override {
+        registerTestService<::android::hardware::wifi::V1_0::IWifi>();
         registerTestService<::android::hardware::wifi::V1_1::IWifi>();
+        registerTestService<
+            ::android::hardware::wifi::supplicant::V1_0::ISupplicant>();
         registerTestService<
             ::android::hardware::wifi::supplicant::V1_1::ISupplicant>();
     }
@@ -46,7 +49,10 @@ int main(int argc, char** argv) {
     ::testing::AddGlobalTestEnvironment(gEnv);
     ::testing::InitGoogleTest(&argc, argv);
     gEnv->init(&argc, argv);
-    int status = RUN_ALL_TESTS();
-    LOG(INFO) << "Test result = " << status;
+    int status = gEnv->initFromOptions(argc, argv);
+    if (status == 0) {
+        int status = RUN_ALL_TESTS();
+        LOG(INFO) << "Test result = " << status;
+    }
     return status;
 }

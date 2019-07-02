@@ -131,6 +131,27 @@ TEST_F(ConfigstoreHidlTest, TestSameReturnValue) {
     }
 }
 
+/**
+ * Make sure the constrains of hasWideColorDisplay, hasHDRDisplay
+ * are enforced.
+ */
+TEST_F(ConfigstoreHidlTest, TestColorConstrainsBasic) {
+    bool hasWideColorDisplay;
+    bool hasHDRDisplay;
+
+    Return<void> status = sfConfigs->hasWideColorDisplay(
+        [&](OptionalBool arg) { hasWideColorDisplay = arg.specified; });
+    EXPECT_OK(status);
+
+    status = sfConfigs->hasHDRDisplay([&](OptionalBool arg) { hasHDRDisplay = arg.specified; });
+    EXPECT_OK(status);
+
+    // When hasHDRDisplay returns true, hasWideColorDisplay must also return true.
+    if (hasHDRDisplay) {
+        ASSERT_TRUE(hasWideColorDisplay);
+    }
+}
+
 int main(int argc, char** argv) {
     ::testing::AddGlobalTestEnvironment(ConfigstoreHidlEnvironment::Instance());
     ::testing::InitGoogleTest(&argc, argv);
