@@ -797,7 +797,7 @@ TEST_F(GraphicsComposerHidlCommandTest, PRESENT_DISPLAY_NO_LAYER_STATE_CHANGES) 
     }
     mWriter->selectDisplay(mPrimaryDisplay);
     mComposerClient->setPowerMode(mPrimaryDisplay, IComposerClient::PowerMode::ON);
-    mComposerClient->setColorMode(mPrimaryDisplay, ColorMode::SRGB);
+    mComposerClient->setColorMode(mPrimaryDisplay, ColorMode::NATIVE);
 
     auto handle = allocate();
     ASSERT_NE(nullptr, handle);
