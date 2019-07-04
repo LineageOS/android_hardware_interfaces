@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#pragma once
+
 #include <android-base/unique_fd.h>
 #include <android/hardware/graphics/composer/2.2/IComposerClient.h>
 #include <composer-command-buffer/2.2/ComposerCommandBuffer.h>
@@ -21,6 +23,7 @@
 #include <composer-vts/2.1/TestCommandReader.h>
 #include <composer-vts/2.2/ComposerVts.h>
 #include <mapper-vts/2.1/MapperVts.h>
+#include <renderengine/RenderEngine.h>
 
 namespace android {
 namespace hardware {
@@ -35,6 +38,7 @@ using common::V1_1::Dataspace;
 using common::V1_1::PixelFormat;
 using IMapper2_1 = mapper::V2_1::IMapper;
 using Gralloc2_1 = mapper::V2_1::vts::Gralloc;
+using renderengine::LayerSettings;
 using V2_1::Display;
 using V2_1::Layer;
 using V2_1::vts::AccessRegion;
@@ -56,6 +60,7 @@ class TestLayer {
     virtual ~TestLayer(){};
 
     virtual void write(const std::shared_ptr<CommandWriterBase>& writer);
+    virtual LayerSettings toRenderEngineLayerSettings();
 
     void setDisplayFrame(IComposerClient::Rect frame) { mDisplayFrame = frame; }
     void setSourceCrop(IComposerClient::FRect crop) { mSourceCrop = crop; }
@@ -93,6 +98,8 @@ class TestColorLayer : public TestLayer {
 
     void write(const std::shared_ptr<CommandWriterBase>& writer) override;
 
+    LayerSettings toRenderEngineLayerSettings() override;
+
     void setColor(IComposerClient::Color color) { mColor = color; }
 
   private:
@@ -109,6 +116,8 @@ class TestBufferLayer : public TestLayer {
     ~TestBufferLayer();
 
     void write(const std::shared_ptr<CommandWriterBase>& writer) override;
+
+    LayerSettings toRenderEngineLayerSettings() override;
 
     void fillBuffer(std::vector<IComposerClient::Color> expectedColors);
 
@@ -154,6 +163,10 @@ class ReadbackHelper : public ::testing::VtsHalHidlTargetTestBase {
 
     static const std::vector<ColorMode> colorModes;
     static const std::vector<Dataspace> dataspaces;
+
+    static void compareColorBuffers(std::vector<IComposerClient::Color>& expectedColors,
+                                    void* bufferData, const uint32_t stride, const uint32_t width,
+                                    const uint32_t height, const PixelFormat pixelFormat);
 };
 
 class ReadbackBuffer {

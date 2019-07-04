@@ -28,7 +28,16 @@ cc_library_static {
         "android.hardware.graphics.mapper@2.0-vts",
         "android.hardware.graphics.mapper@3.0-vts",
     ],
+    export_static_lib_headers: [
+        "VtsHalHidlTargetTestBase",
+        "android.hardware.graphics.composer@2.1",
+        "android.hardware.graphics.mapper@2.0-vts",
+        "android.hardware.graphics.mapper@3.0-vts",
+    ],
     header_libs: [
+        "android.hardware.graphics.composer@2.1-command-buffer",
+    ],
+    export_header_lib_headers: [
         "android.hardware.graphics.composer@2.1-command-buffer",
     ],
     cflags: [

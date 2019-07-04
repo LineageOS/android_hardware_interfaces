@@ -20,26 +20,31 @@ cc_library_static {
     srcs: [
         "ComposerVts.cpp",
         "ReadbackVts.cpp",
+        "RenderEngineVts.cpp",
+    ],
+    shared_libs: [
+        "libui",
     ],
     static_libs: [
         "VtsHalHidlTargetTestBase",
-        "android.hardware.graphics.composer@2.1",
         "android.hardware.graphics.composer@2.1-vts",
         "android.hardware.graphics.composer@2.2",
-        "android.hardware.graphics.mapper@2.1",
         "android.hardware.graphics.mapper@2.1-vts",
-        "android.hardware.graphics.mapper@3.0",
-        "android.hardware.graphics.mapper@3.0-vts",
+        "libarect",
+        "libmath",
+        "libnativewindow",
+        "librenderengine",
     ],
     export_static_lib_headers: [
+        "VtsHalHidlTargetTestBase",
         "android.hardware.graphics.composer@2.1-vts",
+        "android.hardware.graphics.composer@2.2",
+        "android.hardware.graphics.mapper@2.1-vts",
     ],
     header_libs: [
-        "android.hardware.graphics.composer@2.1-command-buffer",
         "android.hardware.graphics.composer@2.2-command-buffer",
     ],
     export_header_lib_headers: [
-        "android.hardware.graphics.composer@2.1-command-buffer",
         "android.hardware.graphics.composer@2.2-command-buffer",
     ],
     cflags: [
