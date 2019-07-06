@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef VTS_HAL_NEURALNETWORKS_V1_1_H
-#define VTS_HAL_NEURALNETWORKS_V1_1_H
+#ifndef ANDROID_HARDWARE_NEURALNETWORKS_V1_1_VTS_HAL_NEURALNETWORKS_H
+#define ANDROID_HARDWARE_NEURALNETWORKS_V1_1_VTS_HAL_NEURALNETWORKS_H
 
 #include <android/hardware/neuralnetworks/1.0/types.h>
 #include <android/hardware/neuralnetworks/1.1/IDevice.h>
@@ -98,4 +98,4 @@ namespace android::hardware::neuralnetworks::V1_0 {
 
 }  // namespace android::hardware::neuralnetworks::V1_0
 
-#endif  // VTS_HAL_NEURALNETWORKS_V1_1_H
+#endif  // ANDROID_HARDWARE_NEURALNETWORKS_V1_1_VTS_HAL_NEURALNETWORKS_H
