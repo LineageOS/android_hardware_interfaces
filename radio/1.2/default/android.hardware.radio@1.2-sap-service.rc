@@ -1,4 +1,7 @@
 service vendor.sap-1-2 /vendor/bin/hw/android.hardware.radio@1.2-sap-service
+    interface android.hardware.radio@1.0::ISap slot1
+    interface android.hardware.radio@1.1::ISap slot1
+    interface android.hardware.radio@1.2::ISap slot1
     class hal
     user system
     group system

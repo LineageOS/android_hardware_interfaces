@@ -1,4 +1,13 @@
 service vendor.radio-1-2 /vendor/bin/hw/android.hardware.radio@1.2-radio-service
+    interface android.hardware.radio@1.0::IRadio slot1
+    interface android.hardware.radio@1.0::IRadio slot2
+    interface android.hardware.radio@1.0::IRadio slot3
+    interface android.hardware.radio@1.1::IRadio slot1
+    interface android.hardware.radio@1.1::IRadio slot2
+    interface android.hardware.radio@1.1::IRadio slot3
+    interface android.hardware.radio@1.2::IRadio slot1
+    interface android.hardware.radio@1.2::IRadio slot2
+    interface android.hardware.radio@1.2::IRadio slot3
     class hal
     user system
     group system
