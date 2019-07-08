@@ -243,8 +243,8 @@ Return<Result> Stream::setParameters(const hidl_vec<ParameterValue>& parameters)
 
 Return<Result> Stream::setConnectedState(const DeviceAddress& address, bool connected) {
     return setParam(
-        connected ? AudioParameter::keyStreamConnect : AudioParameter::keyStreamDisconnect,
-        address);
+            connected ? AudioParameter::keyDeviceConnect : AudioParameter::keyDeviceDisconnect,
+            address);
 }
 #elif MAJOR_VERSION >= 4
 Return<void> Stream::getDevices(getDevices_cb _hidl_cb) {
