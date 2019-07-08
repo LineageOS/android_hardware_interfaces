@@ -1,4 +1,6 @@
 service gnss-1-1 /vendor/bin/hw/android.hardware.gnss@1.1-service
+    interface android.hardware.gnss@1.0::IGnss default
+    interface android.hardware.gnss@1.1::IGnss default
     class hal
     user system
     group system
