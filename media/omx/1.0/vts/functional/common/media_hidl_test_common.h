@@ -22,6 +22,16 @@
 #endif
 
 #include <getopt.h>
+
+#include <android/hardware/graphics/allocator/2.0/IAllocator.h>
+#include <android/hardware/graphics/allocator/3.0/IAllocator.h>
+#include <android/hardware/graphics/common/1.0/types.h>
+#include <android/hardware/graphics/common/1.1/types.h>
+#include <android/hardware/graphics/common/1.2/types.h>
+#include <android/hardware/graphics/mapper/2.0/IMapper.h>
+#include <android/hardware/graphics/mapper/2.0/types.h>
+#include <android/hardware/graphics/mapper/3.0/IMapper.h>
+#include <android/hardware/graphics/mapper/3.0/types.h>
 #include <media/stagefright/foundation/ALooper.h>
 #include <utils/Condition.h>
 #include <utils/List.h>
@@ -288,6 +298,36 @@ Return<android::hardware::media::omx::V1_0::Status> setPortConfig(
 /*
  * common functions declarations
  */
+struct GrallocV2 {
+    using Format = android::hardware::graphics::common::V1_0::PixelFormat;
+    using Usage = android::hardware::hidl_bitfield<
+            android::hardware::graphics::common::V1_0::BufferUsage>;
+
+    using IAllocator = android::hardware::graphics::allocator::V2_0::IAllocator;
+
+    using IMapper = android::hardware::graphics::mapper::V2_0::IMapper;
+    using Error = android::hardware::graphics::mapper::V2_0::Error;
+    using Descriptor = android::hardware::graphics::mapper::V2_0::BufferDescriptor;
+    using YCbCrLayout = android::hardware::graphics::mapper::V2_0::YCbCrLayout;
+    using DescriptorInfo = IMapper::BufferDescriptorInfo;
+    using Rect = IMapper::Rect;
+};
+
+struct GrallocV3 {
+    using Format = android::hardware::graphics::common::V1_2::PixelFormat;
+    using Usage = android::hardware::hidl_bitfield<
+            android::hardware::graphics::common::V1_2::BufferUsage>;
+
+    using IAllocator = android::hardware::graphics::allocator::V3_0::IAllocator;
+
+    using IMapper = android::hardware::graphics::mapper::V3_0::IMapper;
+    using Error = android::hardware::graphics::mapper::V3_0::Error;
+    using Descriptor = android::hardware::graphics::mapper::V3_0::BufferDescriptor;
+    using YCbCrLayout = android::hardware::graphics::mapper::V3_0::YCbCrLayout;
+    using DescriptorInfo = IMapper::BufferDescriptorInfo;
+    using Rect = IMapper::Rect;
+};
+
 Return<android::hardware::media::omx::V1_0::Status> setRole(
     sp<IOmxNode> omxNode, const char* role);
 
