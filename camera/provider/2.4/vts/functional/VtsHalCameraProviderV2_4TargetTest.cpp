@@ -4135,6 +4135,8 @@ TEST_F(CameraHidlTest, processMultiCaptureRequestPreview) {
                 &useHalBufManager /*out*/, &cb /*out*/, 0 /*streamConfigCounter*/,
                 true /*allowUnsupport*/);
         if (session3_5 == nullptr) {
+            ret = session3_4->close();
+            ASSERT_TRUE(ret.isOk());
             continue;
         }
 
