@@ -26,6 +26,10 @@ TEST_F(SapHidlTest, connectReq) {
     sap->connectReq(token, maxMsgSize);
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(sapCb->sapResponseToken, token);
+
+    // Modem side need time for connect to finish. Adding a waiting time to prevent
+    // disconnect being requested right after connect request.
+    sleep(1);
 }
 
 /*
