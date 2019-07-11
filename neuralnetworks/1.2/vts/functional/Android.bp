@@ -56,9 +56,6 @@ cc_test {
         "GeneratedTestsV1_0.cpp",
         "ValidateBurst.cpp",
     ],
-    cflags: [
-        "-DNN_TEST_DYNAMIC_OUTPUT_SHAPE"
-    ],
 }
 
 // Tests for V1_1 models using the V1_2 HAL.
@@ -68,9 +65,6 @@ cc_test {
     srcs: [
         "GeneratedTestsV1_1.cpp",
         "ValidateBurst.cpp",
-    ],
-    cflags: [
-        "-DNN_TEST_DYNAMIC_OUTPUT_SHAPE"
     ],
 }
 
@@ -84,9 +78,6 @@ cc_test {
         "GeneratedTestsV1_2.cpp",
         "ValidateBurst.cpp",
     ],
-    cflags: [
-        "-DNN_TEST_DYNAMIC_OUTPUT_SHAPE"
-    ],
 }
 
 cc_test {
@@ -98,7 +89,6 @@ cc_test {
         "ValidateBurst.cpp",
     ],
     cflags: [
-        "-DNN_TEST_DYNAMIC_OUTPUT_SHAPE",
         "-DPRESUBMIT_NOT_VTS",
     ],
 }
