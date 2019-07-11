@@ -42,7 +42,7 @@ using ::test_helper::MixedTypedExample;
 std::vector<Request> createRequests(const std::vector<MixedTypedExample>& examples);
 
 // in frameworks/ml/nn/runtime/tests/generated/
-#include "all_generated_V1_2_vts_tests.cpp"
+#include "vts/V1_2/all_generated_V1_2_vts_tests.cpp"
 
 // Generated from spec/strided_slice_invalid_output_dims.mod.py.
 // TODO(b/132155416): Make this part of all_generated_V1_2_vts_tests.cpp.
