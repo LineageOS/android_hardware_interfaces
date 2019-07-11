@@ -42,8 +42,11 @@ namespace V1_2 {
 namespace vts {
 namespace functional {
 
+using ::android::hardware::neuralnetworks::V1_0::OperandLifeTime;
+using ::android::hardware::neuralnetworks::V1_1::ExecutionPreference;
 using ::android::hardware::neuralnetworks::V1_2::implementation::ExecutionCallback;
 using ::android::hardware::neuralnetworks::V1_2::implementation::PreparedModelCallback;
+using ::android::hidl::memory::V1_0::IMemory;
 using ::android::nn::allocateSharedMemory;
 using ::test_helper::MixedTypedExample;
 
