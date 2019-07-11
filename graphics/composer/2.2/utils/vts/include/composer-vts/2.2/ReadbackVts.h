@@ -146,6 +146,8 @@ class ReadbackHelper : public ::testing::VtsHalHidlTargetTestBase {
 
     static std::string getDataspaceString(Dataspace dataspace);
 
+    static Dataspace getDataspaceForColorMode(ColorMode mode);
+
     static int32_t GetBytesPerPixel(PixelFormat pixelFormat);
 
     static void fillBuffer(int32_t width, int32_t height, uint32_t stride, void* bufferData,
