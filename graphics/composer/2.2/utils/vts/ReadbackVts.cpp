@@ -55,8 +55,20 @@ std::string ReadbackHelper::getDataspaceString(Dataspace dataspace) {
             return std::string("V0_SRGB");
         case Dataspace::DISPLAY_P3:
             return std::string("DISPLAY_P3");
+        case Dataspace::UNKNOWN:
+            return std::string("UNKNOWN");
         default:
             return std::string("Unsupported dataspace for readback");
+    }
+}
+
+Dataspace ReadbackHelper::getDataspaceForColorMode(ColorMode mode) {
+    switch (mode) {
+        case ColorMode::DISPLAY_P3:
+            return Dataspace::DISPLAY_P3;
+        case ColorMode::SRGB:
+        default:
+            return Dataspace::UNKNOWN;
     }
 }
 

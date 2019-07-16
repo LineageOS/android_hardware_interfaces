@@ -413,12 +413,28 @@ TEST_F(GraphicsComposerReadbackTest, ClientComposition) {
             ASSERT_EQ(1, mReader->mCompositionChanges.size());
             ASSERT_EQ(1, mReader->mCompositionChanges[0].second);
 
-            // create client target buffer
-            uint32_t clientStride;
             PixelFormat clientFormat = PixelFormat::RGBA_8888;
             uint64_t clientUsage = static_cast<uint64_t>(BufferUsage::CPU_READ_OFTEN |
                                                          BufferUsage::CPU_WRITE_OFTEN |
                                                          BufferUsage::COMPOSER_CLIENT_TARGET);
+            Dataspace clientDataspace = ReadbackHelper::getDataspaceForColorMode(mode);
+            IComposerClient::Rect damage{0, 0, mDisplayWidth, mDisplayHeight};
+
+            bool clientTargetSupported = mComposerClient->getClientTargetSupport_2_2(
+                    mPrimaryDisplay, layer->mWidth, layer->mHeight, clientFormat, clientDataspace);
+            // if the client target format is not supported, skip this
+            // configuration
+            if (!clientTargetSupported) {
+                std::cout << "Client target configuration width: " << layer->mWidth
+                          << " height: " << layer->mHeight
+                          << " pixel format: PixelFormat::RGBA_8888 dataspace: "
+                          << ReadbackHelper::getDataspaceString(clientDataspace)
+                          << " unsupported for display" << std::endl;
+                continue;
+            }
+
+            // create client target buffer
+            uint32_t clientStride;
             const native_handle_t* clientBufferHandle =
                     mGralloc->allocate(layer->mWidth, layer->mHeight, layer->mLayerCount,
                                        clientFormat, clientUsage, /*import*/ true, &clientStride);
@@ -436,8 +452,7 @@ TEST_F(GraphicsComposerReadbackTest, ClientComposition) {
                 close(clientFence);
             }
 
-            IComposerClient::Rect damage{0, 0, mDisplayWidth, mDisplayHeight};
-            mWriter->setClientTarget(0, clientBufferHandle, clientFence, Dataspace::UNKNOWN,
+            mWriter->setClientTarget(0, clientBufferHandle, clientFence, clientDataspace,
                                      std::vector<IComposerClient::Rect>(1, damage));
 
             layer->setToClientComposition(mWriter);
@@ -507,22 +522,46 @@ TEST_F(GraphicsComposerReadbackTest, DeviceAndClientComposition) {
         ASSERT_NO_FATAL_FAILURE(deviceLayer->setBuffer(deviceColors));
         deviceLayer->write(mWriter);
 
-        auto clientLayer = std::make_shared<TestBufferLayer>(
-                mComposerClient, mGralloc, mPrimaryDisplay, mDisplayWidth, mDisplayHeight / 2,
-                PixelFormat::RGBA_8888, IComposerClient::Composition::CLIENT);
-        IComposerClient::Rect clientFrame = {0, mDisplayHeight / 2, mDisplayWidth, mDisplayHeight};
-        clientLayer->setDisplayFrame(clientFrame);
-        clientLayer->setZOrder(0);
-        clientLayer->write(mWriter);
-        execute();
-        ASSERT_EQ(0, mReader->mErrors.size());
-
-        // create client target buffer
-        uint32_t clientStride;
         PixelFormat clientFormat = PixelFormat::RGBA_8888;
         uint64_t clientUsage =
                 static_cast<uint64_t>(BufferUsage::CPU_READ_OFTEN | BufferUsage::CPU_WRITE_OFTEN |
                                       BufferUsage::COMPOSER_CLIENT_TARGET);
+        Dataspace clientDataspace = ReadbackHelper::getDataspaceForColorMode(mode);
+        int32_t clientWidth = mDisplayWidth;
+        int32_t clientHeight = mDisplayHeight / 2;
+
+        bool clientTargetSupported = mComposerClient->getClientTargetSupport_2_2(
+                mPrimaryDisplay, clientWidth, clientHeight, clientFormat, clientDataspace);
+        // if the client target format is not supported, skip this
+        // configuration
+        if (!clientTargetSupported) {
+            std::cout << "Client target configuration width: " << clientWidth
+                      << " height: " << clientHeight
+                      << " pixel format: PixelFormat::RGBA_8888 dataspace: "
+                      << ReadbackHelper::getDataspaceString(clientDataspace)
+                      << " unsupported for display" << std::endl;
+            continue;
+        }
+
+        auto clientLayer = std::make_shared<TestBufferLayer>(
+                mComposerClient, mGralloc, mPrimaryDisplay, clientWidth, clientHeight,
+                PixelFormat::RGBA_FP16, IComposerClient::Composition::DEVICE);
+        IComposerClient::Rect clientFrame = {0, mDisplayHeight / 2, mDisplayWidth, mDisplayHeight};
+        clientLayer->setDisplayFrame(clientFrame);
+        clientLayer->setZOrder(0);
+        clientLayer->write(mWriter);
+        mWriter->validateDisplay();
+        execute();
+
+        if (mReader->mCompositionChanges.size() != 1) {
+            std::cout << "HWC asked for none or more than 1 composition change, skipping"
+                      << std::endl;
+            mReader->mCompositionChanges.clear();
+            continue;
+        }
+        // create client target buffer
+        ASSERT_EQ(1, mReader->mCompositionChanges[0].second);
+        uint32_t clientStride;
         const native_handle_t* clientBufferHandle =
                 mGralloc->allocate(mDisplayWidth, mDisplayHeight, clientLayer->mLayerCount,
                                    clientFormat, clientUsage, /*import*/ true, &clientStride);
@@ -542,19 +581,14 @@ TEST_F(GraphicsComposerReadbackTest, DeviceAndClientComposition) {
             close(clientFence);
         }
 
-        mWriter->setClientTarget(0, clientBufferHandle, clientFence, Dataspace::UNKNOWN,
+        mWriter->setClientTarget(0, clientBufferHandle, clientFence, clientDataspace,
                                  std::vector<IComposerClient::Rect>(1, clientFrame));
-        execute();
-        ASSERT_EQ(0, mReader->mErrors.size());
+        clientLayer->setToClientComposition(mWriter);
         mWriter->validateDisplay();
         execute();
-        if (mReader->mCompositionChanges.size() != 0) {
-            clearCommandReaderState();
-            std::cout << "Composition change requested, skipping test" << std::endl;
-            GTEST_SUCCEED() << "Composition change requested, skipping test";
-            return;
-        }
+        ASSERT_EQ(0, mReader->mCompositionChanges.size());
         ASSERT_EQ(0, mReader->mErrors.size());
+
         mWriter->presentDisplay();
         execute();
         ASSERT_EQ(0, mReader->mErrors.size());
