@@ -26,6 +26,7 @@
 namespace android {
 namespace hardware {
 namespace neuralnetworks {
+namespace V1_1 {
 namespace generated_tests {
 
 void Execute(const sp<V1_1::IDevice>& device, std::function<V1_1::Model(void)> create_model,
@@ -33,6 +34,7 @@ void Execute(const sp<V1_1::IDevice>& device, std::function<V1_1::Model(void)> c
              const std::vector<::test_helper::MixedTypedExample>& examples);
 
 }  // namespace generated_tests
+}  // namespace V1_1
 }  // namespace neuralnetworks
 }  // namespace hardware
 }  // namespace android
