@@ -59,6 +59,11 @@ TEST_F(GnssHalTest, TestGnssMeasurementCallback) {
  * each received location.
  */
 TEST_F(GnssHalTest, GetLocationLowPower) {
+    if (!IsGnssHalVersion_1_1()) {
+        ALOGI("Test GetLocationLowPower skipped. GNSS HAL version is greater than 1.1.");
+        return;
+    }
+
     const int kMinIntervalMsec = 5000;
     const int kLocationTimeoutSubsequentSec = (kMinIntervalMsec / 1000) * 2;
     const int kNoLocationPeriodSec = (kMinIntervalMsec / 1000) / 2;
