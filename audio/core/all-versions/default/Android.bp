@@ -29,6 +29,7 @@ cc_defaults {
         "libhardware",
         "libhidlbase",
         "liblog",
+        "libmedia_helper",
         "libutils",
         "android.hardware.audio.common-util",
     ],
@@ -39,10 +40,6 @@ cc_defaults {
         "libaudio_system_headers",
         "libhardware_headers",
         "libmedia_headers",
-    ],
-
-    whole_static_libs: [
-        "libmedia_helper",
     ],
 }
 
