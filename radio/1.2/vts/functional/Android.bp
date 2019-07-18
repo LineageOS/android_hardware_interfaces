@@ -20,6 +20,7 @@ cc_test {
     srcs: [
         "radio_hidl_hal_api.cpp",
         "radio_hidl_hal_test.cpp",
+        "radio_config_response.cpp",
         "radio_response.cpp",
         "radio_indication.cpp",
         "VtsHalRadioV1_2TargetTest.cpp",
@@ -29,6 +30,8 @@ cc_test {
         "android.hardware.radio@1.2",
         "android.hardware.radio@1.1",
         "android.hardware.radio@1.0",
+        "android.hardware.radio.config@1.0",
+        "android.hardware.radio.config@1.1",
     ],
     header_libs: ["radio.util.header@1.0"],
     test_suites: ["general-tests"],
