@@ -24,7 +24,7 @@
 #include <android/hardware/drm/1.0/types.h>
 #include <android/hardware/drm/1.1/types.h>
 #include <android/hidl/allocator/1.0/IAllocator.h>
-#include <android/hidl/manager/1.0/IServiceManager.h>
+#include <android/hidl/manager/1.2/IServiceManager.h>
 #include <gtest/gtest.h>
 #include <hidl/HidlSupport.h>
 #include <hidl/ServiceManagement.h>
@@ -129,9 +129,9 @@ public:
         ALOGD("DrmHalClearkeyTest: Running test %s.%s", test_info->test_case_name(),
                 test_info->name());
 
-        auto manager = android::hardware::defaultServiceManager();
+        auto manager = android::hardware::defaultServiceManager1_2();
         ASSERT_NE(nullptr, manager.get());
-        manager->listByInterface(IDrmFactory::descriptor,
+        manager->listManifestByInterface(IDrmFactory::descriptor,
                 [&](const hidl_vec<hidl_string> &registered) {
                     for (const auto &instance : registered) {
                         sp<IDrmFactory> drmFactory =
@@ -144,7 +144,7 @@ public:
                 }
             );
 
-        manager->listByInterface(ICryptoFactory::descriptor,
+        manager->listManifestByInterface(ICryptoFactory::descriptor,
                 [&](const hidl_vec<hidl_string> &registered) {
                     for (const auto &instance : registered) {
                         sp<ICryptoFactory> cryptoFactory =
