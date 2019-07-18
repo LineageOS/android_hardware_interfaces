@@ -182,6 +182,14 @@ class GraphicsComposerReadbackTest : public ::testing::VtsHalHidlTargetTestBase 
         mReader = std::make_unique<TestCommandReader>();
         mGralloc = std::make_shared<Gralloc>();
 
+        std::vector<ColorMode> colorModes = mComposerClient->getColorModes(mPrimaryDisplay);
+        if (std::find(colorModes.begin(), colorModes.end(), ColorMode::SRGB) == colorModes.end()) {
+            mHasReadbackBuffer = false;
+            return;
+        }
+        mWriter->selectDisplay(mPrimaryDisplay);
+        ASSERT_NO_FATAL_FAILURE(mComposerClient->setColorMode(mPrimaryDisplay, ColorMode::SRGB,
+                                                              RenderIntent::COLORIMETRIC));
         mComposerClient->getRaw()->getReadbackBufferAttributes(
             mPrimaryDisplay,
             [&](const auto& tmpError, const auto& tmpPixelFormat, const auto& tmpDataspace) {
@@ -471,12 +479,12 @@ class TestBufferLayer : public TestLayer {
 
 TEST_F(GraphicsComposerReadbackTest, SingleSolidColorLayer) {
     if (!mHasReadbackBuffer) {
+        std::cout << "Readback not supported or unsuppported pixelFormat/dataspace or SRGB not a "
+                     "valid color mode"
+                  << std::endl;
         GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
         return;
     }
-    mWriter->selectDisplay(mPrimaryDisplay);
-    ASSERT_NO_FATAL_FAILURE(mComposerClient->setColorMode(mPrimaryDisplay, ColorMode::SRGB,
-                                                          RenderIntent::COLORIMETRIC));
 
     auto layer = std::make_shared<TestColorLayer>(mComposerClient, mPrimaryDisplay);
     IComposerClient::Rect coloredSquare({0, 0, mDisplayWidth, mDisplayHeight});
@@ -515,11 +523,12 @@ TEST_F(GraphicsComposerReadbackTest, SingleSolidColorLayer) {
 
 TEST_F(GraphicsComposerReadbackTest, SetLayerBuffer) {
     if (!mHasReadbackBuffer) {
+        std::cout << "Readback not supported or unsuppported pixelFormat/dataspace or SRGB not a "
+                     "valid color mode"
+                  << std::endl;
         GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
         return;
     }
-
-    mWriter->selectDisplay(mPrimaryDisplay);
 
     ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mGralloc, mDisplayWidth,
                                   mDisplayHeight, mPixelFormat, mDataspace);
@@ -562,13 +571,13 @@ TEST_F(GraphicsComposerReadbackTest, SetLayerBuffer) {
 
 TEST_F(GraphicsComposerReadbackTest, SetLayerBufferNoEffect) {
     if (!mHasReadbackBuffer) {
+        std::cout << "Readback not supported or unsuppported pixelFormat/dataspace or SRGB not a "
+                     "valid color mode"
+                  << std::endl;
         GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
         return;
     }
 
-    mWriter->selectDisplay(mPrimaryDisplay);
-    ASSERT_NO_FATAL_FAILURE(mComposerClient->setColorMode(mPrimaryDisplay, ColorMode::SRGB,
-                                                          RenderIntent::COLORIMETRIC));
 
     auto layer = std::make_shared<TestColorLayer>(mComposerClient, mPrimaryDisplay);
     IComposerClient::Rect coloredSquare({0, 0, mDisplayWidth, mDisplayHeight});
@@ -611,11 +620,12 @@ TEST_F(GraphicsComposerReadbackTest, SetLayerBufferNoEffect) {
 
 TEST_F(GraphicsComposerReadbackTest, ClientComposition) {
     if (!mHasReadbackBuffer) {
+        std::cout << "Readback not supported or unsuppported pixelFormat/dataspace or SRGB not a "
+                     "valid color mode"
+                  << std::endl;
         GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
         return;
     }
-
-    mWriter->selectDisplay(mPrimaryDisplay);
 
     std::vector<IComposerClient::Color> expectedColors(mDisplayWidth * mDisplayHeight);
     fillColorsArea(expectedColors, mDisplayWidth, {0, 0, mDisplayWidth, mDisplayHeight / 4}, RED);
@@ -690,11 +700,13 @@ TEST_F(GraphicsComposerReadbackTest, ClientComposition) {
 
 TEST_F(GraphicsComposerReadbackTest, DeviceAndClientComposition) {
     if (!mHasReadbackBuffer) {
+        std::cout << "Readback not supported or unsuppported pixelFormat/dataspace or SRGB not a "
+                     "valid color mode"
+                  << std::endl;
         GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
         return;
     }
 
-    mWriter->selectDisplay(mPrimaryDisplay);
     ASSERT_NO_FATAL_FAILURE(
         mComposerClient->setClientTargetSlotCount(mPrimaryDisplay, kClientTargetSlotCount));
 
@@ -776,11 +788,12 @@ TEST_F(GraphicsComposerReadbackTest, DeviceAndClientComposition) {
 
 TEST_F(GraphicsComposerReadbackTest, SetLayerDamage) {
     if (!mHasReadbackBuffer) {
+        std::cout << "Readback not supported or unsuppported pixelFormat/dataspace or SRGB not a "
+                     "valid color mode"
+                  << std::endl;
         GTEST_SUCCEED() << "Readback not supported or unsupported pixelformat/dataspace";
         return;
     }
-
-    mWriter->selectDisplay(mPrimaryDisplay);
 
     IComposerClient::Rect redRect = {0, 0, mDisplayWidth / 4, mDisplayHeight / 4};
 
@@ -842,13 +855,12 @@ TEST_F(GraphicsComposerReadbackTest, SetLayerDamage) {
 
 TEST_F(GraphicsComposerReadbackTest, SetLayerPlaneAlpha) {
     if (!mHasReadbackBuffer) {
+        std::cout << "Readback not supported or unsuppported pixelFormat/dataspace or SRGB not a "
+                     "valid color mode"
+                  << std::endl;
         GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
         return;
     }
-
-    mWriter->selectDisplay(mPrimaryDisplay);
-    ASSERT_NO_FATAL_FAILURE(mComposerClient->setColorMode(mPrimaryDisplay, ColorMode::SRGB,
-                                                          RenderIntent::COLORIMETRIC));
 
     auto layer = std::make_shared<TestColorLayer>(mComposerClient, mPrimaryDisplay);
     layer->setColor(RED);
@@ -886,11 +898,12 @@ TEST_F(GraphicsComposerReadbackTest, SetLayerPlaneAlpha) {
 
 TEST_F(GraphicsComposerReadbackTest, SetLayerSourceCrop) {
     if (!mHasReadbackBuffer) {
+        std::cout << "Readback not supported or unsuppported pixelFormat/dataspace or SRGB not a "
+                     "valid color mode"
+                  << std::endl;
         GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
         return;
     }
-
-    mWriter->selectDisplay(mPrimaryDisplay);
 
     std::vector<IComposerClient::Color> expectedColors(mDisplayWidth * mDisplayHeight);
     fillColorsArea(expectedColors, mDisplayWidth, {0, 0, mDisplayWidth, mDisplayHeight / 4}, RED);
@@ -931,13 +944,12 @@ TEST_F(GraphicsComposerReadbackTest, SetLayerSourceCrop) {
 
 TEST_F(GraphicsComposerReadbackTest, SetLayerZOrder) {
     if (!mHasReadbackBuffer) {
+        std::cout << "Readback not supported or unsuppported pixelFormat/dataspace or SRGB not a "
+                     "valid color mode"
+                  << std::endl;
         GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
         return;
     }
-
-    mWriter->selectDisplay(mPrimaryDisplay);
-    ASSERT_NO_FATAL_FAILURE(mComposerClient->setColorMode(mPrimaryDisplay, ColorMode::SRGB,
-                                                          RenderIntent::COLORIMETRIC));
 
     IComposerClient::Rect redRect = {0, 0, mDisplayWidth, mDisplayHeight / 2};
     IComposerClient::Rect blueRect = {0, mDisplayHeight / 4, mDisplayWidth, mDisplayHeight};
@@ -1081,11 +1093,12 @@ class GraphicsComposerBlendModeReadbackTest : public GraphicsComposerReadbackTes
 
 TEST_P(GraphicsComposerBlendModeReadbackTest, None) {
     if (!mHasReadbackBuffer) {
+        std::cout << "Readback not supported or unsuppported pixelFormat/dataspace or SRGB not a "
+                     "valid color mode"
+                  << std::endl;
         GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
         return;
     }
-
-    mWriter->selectDisplay(mPrimaryDisplay);
 
     std::vector<IComposerClient::Color> expectedColors(mDisplayWidth * mDisplayHeight);
 
@@ -1118,11 +1131,12 @@ TEST_P(GraphicsComposerBlendModeReadbackTest, None) {
 // alpha of .2, expected 10.2
 TEST_P(GraphicsComposerBlendModeReadbackTest, DISABLED_Coverage) {
     if (!mHasReadbackBuffer) {
+        std::cout << "Readback not supported or unsuppported pixelFormat/dataspace or SRGB not a "
+                     "valid color mode"
+                  << std::endl;
         GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
         return;
     }
-
-    mWriter->selectDisplay(mPrimaryDisplay);
 
     std::vector<IComposerClient::Color> expectedColors(mDisplayWidth * mDisplayHeight);
 
@@ -1153,11 +1167,12 @@ TEST_P(GraphicsComposerBlendModeReadbackTest, DISABLED_Coverage) {
 
 TEST_P(GraphicsComposerBlendModeReadbackTest, Premultiplied) {
     if (!mHasReadbackBuffer) {
+        std::cout << "Readback not supported or unsuppported pixelFormat/dataspace or SRGB not a "
+                     "valid color mode"
+                  << std::endl;
         GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
         return;
     }
-
-    mWriter->selectDisplay(mPrimaryDisplay);
 
     std::vector<IComposerClient::Color> expectedColors(mDisplayWidth * mDisplayHeight);
 
@@ -1193,10 +1208,6 @@ class GraphicsComposerTransformReadbackTest : public GraphicsComposerReadbackTes
     void SetUp() override {
         GraphicsComposerReadbackTest::SetUp();
 
-        mWriter->selectDisplay(mPrimaryDisplay);
-        ASSERT_NO_FATAL_FAILURE(mComposerClient->setColorMode(mPrimaryDisplay, ColorMode::SRGB,
-                                                              RenderIntent::COLORIMETRIC));
-
         auto backgroundLayer = std::make_shared<TestColorLayer>(mComposerClient, mPrimaryDisplay);
         backgroundLayer->setColor({0, 0, 0, 0});
         backgroundLayer->setDisplayFrame({0, 0, mDisplayWidth, mDisplayHeight});
@@ -1230,6 +1241,9 @@ class GraphicsComposerTransformReadbackTest : public GraphicsComposerReadbackTes
 
 TEST_F(GraphicsComposerTransformReadbackTest, FLIP_H) {
     if (!mHasReadbackBuffer) {
+        std::cout << "Readback not supported or unsuppported pixelFormat/dataspace or SRGB not a "
+                     "valid color mode"
+                  << std::endl;
         GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
         return;
     }
@@ -1262,6 +1276,9 @@ TEST_F(GraphicsComposerTransformReadbackTest, FLIP_H) {
 
 TEST_F(GraphicsComposerTransformReadbackTest, FLIP_V) {
     if (!mHasReadbackBuffer) {
+        std::cout << "Readback not supported or unsuppported pixelFormat/dataspace or SRGB not a "
+                     "valid color mode"
+                  << std::endl;
         GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
         return;
     }
@@ -1295,6 +1312,9 @@ TEST_F(GraphicsComposerTransformReadbackTest, FLIP_V) {
 
 TEST_F(GraphicsComposerTransformReadbackTest, ROT_180) {
     if (!mHasReadbackBuffer) {
+        std::cout << "Readback not supported or unsuppported pixelFormat/dataspace or SRGB not a "
+                     "valid color mode"
+                  << std::endl;
         GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
         return;
     }
