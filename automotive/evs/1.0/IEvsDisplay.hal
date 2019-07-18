@@ -16,8 +16,6 @@
 
 package android.hardware.automotive.evs@1.0;
 
-import types;
-
 
 /**
  * Represents a single camera and is the primary interface for capturing images.
@@ -28,6 +26,9 @@ interface IEvsDisplay {
      * Returns basic information about the EVS display provided by the system.
      *
      * See the description of the DisplayDesc structure for details.
+     *
+     * @return info The description of this display.  Please see the description
+     *              of the DisplayDesc structure for details.
      */
      getDisplayInfo() generates (DisplayDesc info);
 
@@ -42,6 +43,9 @@ interface IEvsDisplay {
      * video. When the display is no longer required, the client is expected to request
      * the NOT_VISIBLE state after passing the last video frame.
      * Returns INVALID_ARG if the requested state is not a recognized value.
+     *
+     * @param  state  Desired new DisplayState.
+     * @return result EvsResult::OK is returned if this call is successful.
      */
      setDisplayState(DisplayState state) generates (EvsResult result);
 
@@ -54,6 +58,8 @@ interface IEvsDisplay {
      * the logic responsible for changing display states should generally live above
      * the device layer, making it undesirable for the HAL implementation to spontaneously
      * change display states.
+     *
+     * @return state Current DisplayState of this Display.
      */
      getDisplayState() generates (DisplayState state);
 
@@ -61,9 +67,11 @@ interface IEvsDisplay {
     /**
      * This call returns a handle to a frame buffer associated with the display.
      *
-     * The returned buffer may be locked and written to by software and/or GL. This buffer
-     * must be returned via a call to returnTargetBufferForDisplay() even if the
-     * display is no longer visible.
+     * @return buffer A handle to a frame buffer.  The returned buffer may be
+     *                locked and written to by software and/or GL.  This buffer
+     *                must be returned via a call to
+     *                returnTargetBufferForDisplay() even if the display is no
+     *                longer visible.
      */
      getTargetBuffer() generates (BufferDesc buffer);
 
@@ -75,6 +83,9 @@ interface IEvsDisplay {
      * There is no maximum time the caller may hold onto the buffer before making this
      * call. The buffer may be returned at any time and in any DisplayState, but all
      * buffers are expected to be returned before the IEvsDisplay interface is destroyed.
+     *
+     * @param  buffer A buffer handle to the frame that is ready for display.
+     * @return result EvsResult::OK is returned if this call is successful.
      */
     returnTargetBufferForDisplay(BufferDesc buffer) generates (EvsResult result);
 };

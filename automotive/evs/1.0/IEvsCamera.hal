@@ -16,7 +16,6 @@
 
 package android.hardware.automotive.evs@1.0;
 
-import types;
 import IEvsCameraStream;
 
 
@@ -28,8 +27,8 @@ interface IEvsCamera {
     /**
      * Returns the ID of this camera.
      *
-     * Returns the description of this camera. This must be the same value as reported
-     * by EvsEnumerator::getCamerList().
+     * @return info The description of this camera.  This must be the same value as
+     *              reported by EvsEnumerator::getCameraList().
      */
     getCameraInfo() generates (CameraDesc info);
 
@@ -43,16 +42,20 @@ interface IEvsCamera {
      * in which case buffers should be added or removed from the chain as appropriate.
      * If no call is made to this entry point, the IEvsCamera must support at least one
      * frame by default. More is acceptable.
-     * BUFFER_NOT_AVAILABLE is returned if the implementation cannot support the
-     * requested number of concurrent frames.
+     *
+     * @param  bufferCount Number of buffers the client of IEvsCamera may hold concurrently.
+     * @return result EvsResult::OK is returned if this call is successful.
      */
     setMaxFramesInFlight(uint32_t bufferCount) generates (EvsResult result);
 
     /**
-     * Request delivery of EVS camera frames from this camera.
+     * Request to start EVS camera stream from this camera.
      *
-     * The IEvsCameraStream must begin receiving periodic calls with new image
-     * frames until stopVideoStream() is called.
+     * The IEvsCameraStream must begin receiving calls with various events
+     * including new image frame ready until stopVideoStream() is called.
+     *
+     * @param  receiver IEvsCameraStream implementation.
+     * @return result EvsResult::OK is returned if this call is successful.
      */
     startVideoStream(IEvsCameraStream receiver) generates (EvsResult result);
 
@@ -64,6 +67,8 @@ interface IEvsCamera {
      * A small, finite number of buffers are available (possibly as small
      * as one), and if the supply is exhausted, no further frames may be
      * delivered until a buffer is returned.
+     *
+     * @param  buffer A buffer to be returned.
      */
     oneway doneWithFrame(BufferDesc buffer);
 
@@ -83,6 +88,11 @@ interface IEvsCamera {
      * The values allowed for opaqueIdentifier are driver specific,
      * but no value passed in may crash the driver. The driver should
      * return 0 for any unrecognized opaqueIdentifier.
+     *
+     * @param  opaqueIdentifier An unique identifier of the information to
+     *                          request.
+     * @return value            Requested information.  Zero is returned if the
+     *                          driver does not recognize a given identifier.
      */
     getExtendedInfo(uint32_t opaqueIdentifier) generates (int32_t value);
 
@@ -94,6 +104,11 @@ interface IEvsCamera {
      * in order to function in a default state.
      * INVALID_ARG is returned if the opaqueValue is not meaningful to
      * the driver implementation.
+     *
+     * @param  opaqueIdentifier An unique identifier of the information to
+     *                          program.
+     *         opaqueValue      A value to program.
+     * @return result           EvsResult::OK is returned if this call is successful.
      */
     setExtendedInfo(uint32_t opaqueIdentifier, int32_t opaqueValue) generates (EvsResult result);
 };
