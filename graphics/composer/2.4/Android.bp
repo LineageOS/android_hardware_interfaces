@@ -4,8 +4,7 @@ hidl_interface {
     name: "android.hardware.graphics.composer@2.4",
     root: "android.hardware",
     vndk: {
-        // TODO(b/135929065) enable once we are ready to use.
-        enabled: false,
+        enabled: true,
     },
     srcs: [
         "IComposer.hal",
