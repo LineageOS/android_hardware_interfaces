@@ -24,6 +24,9 @@
 
 using android::hardware::hidl_vec;
 
+using IGnssMeasurement_1_0 = android::hardware::gnss::V1_0::IGnssMeasurement;
+using IGnssMeasurement_1_1 = android::hardware::gnss::V1_1::IGnssMeasurement;
+
 using android::hardware::gnss::V1_0::GnssConstellationType;
 using android::hardware::gnss::V1_0::GnssLocation;
 using android::hardware::gnss::V1_0::IGnssDebug;
@@ -43,11 +46,15 @@ TEST_F(GnssHalTest, SetupTeardownCreateCleanup) {}
  * Gets the GnssMeasurementExtension and verify that it returns an actual extension.
  */
 TEST_F(GnssHalTest, TestGnssMeasurementCallback) {
-    auto gnssMeasurement = gnss_hal_->getExtensionGnssMeasurement_1_1();
-    ASSERT_TRUE(gnssMeasurement.isOk());
+    auto gnssMeasurement_1_1 = gnss_hal_->getExtensionGnssMeasurement_1_1();
+    ASSERT_TRUE(gnssMeasurement_1_1.isOk());
+    auto gnssMeasurement_1_0 = gnss_hal_->getExtensionGnssMeasurement();
+    ASSERT_TRUE(gnssMeasurement_1_0.isOk());
     if (last_capabilities_ & IGnssCallback::Capabilities::MEASUREMENTS) {
-        sp<IGnssMeasurement> iGnssMeas = gnssMeasurement;
-        EXPECT_NE(iGnssMeas, nullptr);
+        sp<IGnssMeasurement_1_1> iGnssMeas_1_1 = gnssMeasurement_1_1;
+        sp<IGnssMeasurement_1_0> iGnssMeas_1_0 = gnssMeasurement_1_0;
+        // At least one interface must be non-null.
+        ASSERT_TRUE(iGnssMeas_1_1 != nullptr || iGnssMeas_1_0 != nullptr);
     }
 }
 
