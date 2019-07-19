@@ -1,0 +1,57 @@
+/*
+ * Copyright (C) 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.automotive.evs@1.1;
+
+import @1.0::IEvsCamera;
+import @1.0::EvsResult;
+import IEvsCameraStream;
+
+/**
+ * Represents a single camera and is the primary interface for capturing images.
+ */
+interface IEvsCamera extends @1.0::IEvsCamera {
+    /**
+     * Requests to pause EVS camera stream events.
+     *
+     * Like stopVideoStream(), events may continue to arrive for some time
+     * after this call returns. Delivered frame buffers must be returned.
+     *
+     * @return result EvsResult::OK is returned if this call is successful.
+     */
+    pauseVideoStream() generates (EvsResult result);
+
+    /**
+     * Requests to resume EVS camera stream.
+     *
+     * @return result EvsResult::OK is returned if this call is successful.
+     */
+    resumeVideoStream() generates (EvsResult result);
+
+    /**
+     * Returns a frame that was delivered by to the IEvsCameraStream.
+     *
+     * When done consuming a frame delivered to the IEvsCameraStream
+     * interface, it must be returned to the IEvsCamera for reuse.
+     * A small, finite number of buffers are available (possibly as small
+     * as one), and if the supply is exhausted, no further frames may be
+     * delivered until a buffer is returned.
+     *
+     * @param  buffer A buffer to be returned.
+     * @return result Return EvsResult::OK if this call is successful.
+     */
+    doneWithFrame_1_1(BufferDesc buffer) generates (EvsResult result);
+};
