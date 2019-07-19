@@ -14,26 +14,27 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_NEURALNETWORKS_V1_0_GENERATED_TEST_HARNESS_H
-#define ANDROID_HARDWARE_NEURALNETWORKS_V1_0_GENERATED_TEST_HARNESS_H
+#ifndef ANDROID_HARDWARE_NEURALNETWORKS_V1_1_GENERATED_TEST_HARNESS_H
+#define ANDROID_HARDWARE_NEURALNETWORKS_V1_1_GENERATED_TEST_HARNESS_H
 
-#include <android/hardware/neuralnetworks/1.0/IDevice.h>
+#include <android/hardware/neuralnetworks/1.1/IDevice.h>
+#include <android/hardware/neuralnetworks/1.1/types.h>
+#include <functional>
+#include <vector>
 #include "TestHarness.h"
 
 namespace android {
 namespace hardware {
 namespace neuralnetworks {
-
 namespace generated_tests {
-using ::test_helper::MixedTypedExample;
 
-void Execute(const sp<V1_0::IDevice>& device, std::function<V1_0::Model(void)> create_model,
-             std::function<bool(int)> is_ignored, const std::vector<MixedTypedExample>& examples);
+void Execute(const sp<V1_1::IDevice>& device, std::function<V1_1::Model(void)> create_model,
+             std::function<bool(int)> is_ignored,
+             const std::vector<::test_helper::MixedTypedExample>& examples);
 
 }  // namespace generated_tests
-
 }  // namespace neuralnetworks
 }  // namespace hardware
 }  // namespace android
 
-#endif  // ANDROID_HARDWARE_NEURALNETWORKS_V1_0_GENERATED_TEST_HARNESS_H
+#endif  // ANDROID_HARDWARE_NEURALNETWORKS_V1_1_GENERATED_TEST_HARNESS_H

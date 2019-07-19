@@ -14,14 +14,11 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_NEURALNETWORKS_V1_0_CALLBACKS_H
-#define ANDROID_HARDWARE_NEURALNETWORKS_V1_0_CALLBACKS_H
+#ifndef ANDROID_HARDWARE_NEURALNETWORKS_V1_2_CALLBACKS_H
+#define ANDROID_HARDWARE_NEURALNETWORKS_V1_2_CALLBACKS_H
 
-#include <android/hardware/neuralnetworks/1.0/IExecutionCallback.h>
-#include <android/hardware/neuralnetworks/1.0/IPreparedModelCallback.h>
 #include <android/hardware/neuralnetworks/1.2/IExecutionCallback.h>
 #include <android/hardware/neuralnetworks/1.2/IPreparedModelCallback.h>
-#include <hidl/MQDescriptor.h>
 #include <hidl/Status.h>
 #include <chrono>
 #include <condition_variable>
@@ -60,7 +57,7 @@ using V1_0::ErrorStatus;
  * std::condition_variable, or std::experimental::latch instead.
  */
 class CallbackBase {
- public:
+  public:
     CallbackBase();
     ~CallbackBase();
 
@@ -79,8 +76,8 @@ class CallbackBase {
      *                before the time duration expired, std::cv_status::timeout
      *                otherwise.
      */
-    template<class Rep, class Period>
-    std::cv_status wait_for(const std::chrono::duration<Rep,Period>& timeout_duration);
+    template <class Rep, class Period>
+    std::cv_status wait_for(const std::chrono::duration<Rep, Period>& timeout_duration);
 
     /**
      * CallbackBase::on_finish binds a function to the callback object. This
@@ -144,7 +141,7 @@ class CallbackBase {
      */
     void join_thread();
 
- protected:
+  protected:
     /**
      * CallbackBase::notify enables all prior and future wait* calls on the
      * callback object to proceed. The call to CallbackBase::notify happens
@@ -158,16 +155,16 @@ class CallbackBase {
      */
     void notify();
 
- private:
+  private:
     // Same as CallbackBase::join_thread but assumes we already hold a lock on
     // mMutex.
     void join_thread_locked();
 
-    bool                      mNotified;
-    std::mutex                mMutex;
-    std::condition_variable   mCondition;
+    bool mNotified;
+    std::mutex mMutex;
+    std::condition_variable mCondition;
     std::function<bool(void)> mPostWork;
-    std::thread               mThread;
+    std::thread mThread;
 };
 
 /**
@@ -185,7 +182,7 @@ class CallbackBase {
  * IDevice::prepareModel.
  */
 class PreparedModelCallback : public CallbackBase, public IPreparedModelCallback {
- public:
+  public:
     PreparedModelCallback();
     ~PreparedModelCallback() override;
 
@@ -241,8 +238,8 @@ class PreparedModelCallback : public CallbackBase, public IPreparedModelCallback
      */
     sp<V1_0::IPreparedModel> getPreparedModel();
 
-   private:
-    ErrorStatus        mErrorStatus;
+  private:
+    ErrorStatus mErrorStatus;
     sp<V1_0::IPreparedModel> mPreparedModel;
 };
 
@@ -260,8 +257,8 @@ class PreparedModelCallback : public CallbackBase, public IPreparedModelCallback
  * IExecutionCallback. This callback object is passed as an argument to
  * IPreparedModel::execute.
  */
-class ExecutionCallback : public CallbackBase,  public IExecutionCallback {
- public:
+class ExecutionCallback : public CallbackBase, public IExecutionCallback {
+  public:
     ExecutionCallback();
     ~ExecutionCallback() override;
 
@@ -376,19 +373,19 @@ class ExecutionCallback : public CallbackBase,  public IExecutionCallback {
      */
     Timing getTiming();
 
-   private:
+  private:
     ErrorStatus mErrorStatus = ErrorStatus::GENERAL_FAILURE;
     std::vector<OutputShape> mOutputShapes = {};
     Timing mTiming = {};
 };
 
-
 // template function implementation(s) below this point
 
-template<class Rep, class Period>
-std::cv_status CallbackBase::wait_for(const std::chrono::duration<Rep,Period>& timeout_duration) {
+template <class Rep, class Period>
+std::cv_status CallbackBase::wait_for(const std::chrono::duration<Rep, Period>& timeout_duration) {
     std::unique_lock<std::mutex> lock(mMutex);
-    std::cv_status status = mCondition.wait_for(lock, timeout_duration, [this]{return mNotified;});
+    std::cv_status status =
+            mCondition.wait_for(lock, timeout_duration, [this] { return mNotified; });
     if (status != std::cv_status::timeout) {
         join_thread_locked();
     }
@@ -401,4 +398,4 @@ std::cv_status CallbackBase::wait_for(const std::chrono::duration<Rep,Period>& t
 }  // namespace hardware
 }  // namespace android
 
-#endif  // ANDROID_HARDWARE_NEURALNETWORKS_V1_0_CALLBACKS_H
+#endif  // ANDROID_HARDWARE_NEURALNETWORKS_V1_2_CALLBACKS_H

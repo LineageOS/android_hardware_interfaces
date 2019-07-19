@@ -14,23 +14,22 @@
  * limitations under the License.
  */
 
-#ifndef VTS_HAL_NEURALNETWORKS_V1_2_H
-#define VTS_HAL_NEURALNETWORKS_V1_2_H
+#ifndef ANDROID_HARDWARE_NEURALNETWORKS_V1_2_VTS_HAL_NEURALNETWORKS_H
+#define ANDROID_HARDWARE_NEURALNETWORKS_V1_2_VTS_HAL_NEURALNETWORKS_H
 
-#include "Callbacks.h"
-
+#include <VtsHalHidlTargetTestBase.h>
+#include <VtsHalHidlTargetTestEnvBase.h>
+#include <android-base/macros.h>
 #include <android/hardware/neuralnetworks/1.0/types.h>
 #include <android/hardware/neuralnetworks/1.1/types.h>
 #include <android/hardware/neuralnetworks/1.2/IDevice.h>
 #include <android/hardware/neuralnetworks/1.2/types.h>
-
-#include <VtsHalHidlTargetTestBase.h>
-#include <VtsHalHidlTargetTestEnvBase.h>
-
-#include <android-base/macros.h>
 #include <gtest/gtest.h>
+
 #include <iostream>
 #include <vector>
+
+#include "1.2/Callbacks.h"
 
 namespace android {
 namespace hardware {
@@ -50,7 +49,7 @@ class NeuralnetworksHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvB
     NeuralnetworksHidlEnvironment();
     ~NeuralnetworksHidlEnvironment() override;
 
-   public:
+  public:
     static NeuralnetworksHidlEnvironment* getInstance();
     void registerTestServices() override;
 };
@@ -59,30 +58,30 @@ class NeuralnetworksHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvB
 class NeuralnetworksHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     DISALLOW_COPY_AND_ASSIGN(NeuralnetworksHidlTest);
 
-   public:
+  public:
     NeuralnetworksHidlTest();
     ~NeuralnetworksHidlTest() override;
     void SetUp() override;
     void TearDown() override;
 
-   protected:
+  protected:
     sp<IDevice> device;
 };
 
 // Tag for the validation tests
 class ValidationTest : public NeuralnetworksHidlTest {
-   protected:
-     void validateEverything(const Model& model, const std::vector<Request>& requests);
-     void validateFailure(const Model& model, const std::vector<Request>& requests);
+  protected:
+    void validateEverything(const Model& model, const std::vector<Request>& requests);
+    void validateFailure(const Model& model, const std::vector<Request>& requests);
 
-   private:
-     void validateModel(const Model& model);
-     void validateRequests(const sp<IPreparedModel>& preparedModel,
-                           const std::vector<Request>& requests);
-     void validateRequestFailure(const sp<IPreparedModel>& preparedModel,
-                                 const std::vector<Request>& requests);
-     void validateBurst(const sp<IPreparedModel>& preparedModel,
-                        const std::vector<Request>& requests);
+  private:
+    void validateModel(const Model& model);
+    void validateRequests(const sp<IPreparedModel>& preparedModel,
+                          const std::vector<Request>& requests);
+    void validateRequestFailure(const sp<IPreparedModel>& preparedModel,
+                                const std::vector<Request>& requests);
+    void validateBurst(const sp<IPreparedModel>& preparedModel,
+                       const std::vector<Request>& requests);
 };
 
 // Tag for the generated tests
@@ -93,7 +92,7 @@ class DynamicOutputShapeTest : public NeuralnetworksHidlTest {};
 
 // Utility function to get PreparedModel from callback and downcast to V1_2.
 sp<IPreparedModel> getPreparedModel_1_2(
-    const sp<V1_2::implementation::PreparedModelCallback>& callback);
+        const sp<V1_2::implementation::PreparedModelCallback>& callback);
 
 }  // namespace functional
 }  // namespace vts
@@ -110,4 +109,4 @@ namespace android::hardware::neuralnetworks::V1_0 {
 
 }  // namespace android::hardware::neuralnetworks::V1_0
 
-#endif  // VTS_HAL_NEURALNETWORKS_V1_2_H
+#endif  // ANDROID_HARDWARE_NEURALNETWORKS_V1_2_VTS_HAL_NEURALNETWORKS_H
