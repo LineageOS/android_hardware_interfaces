@@ -43,7 +43,7 @@ using ::test_helper::MixedTypedExample;
 std::vector<Request> createRequests(const std::vector<MixedTypedExample>& examples);
 
 // in frameworks/ml/nn/runtime/tests/generated/
-#include "all_generated_V1_1_vts_tests.cpp"
+#include "vts/V1_1/all_generated_V1_1_vts_tests.cpp"
 
 }  // namespace functional
 }  // namespace vts
