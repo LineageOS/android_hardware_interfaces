@@ -14,130 +14,78 @@
  * limitations under the License.
  */
 
+#define LOG_TAG "Callbacks"
+
 #include "1.0/Callbacks.h"
+
 #include <android-base/logging.h>
 
-namespace android {
-namespace hardware {
-namespace neuralnetworks {
-namespace V1_0 {
-namespace implementation {
+namespace android::hardware::neuralnetworks::V1_0::implementation {
 
-CallbackBase::CallbackBase() : mNotified(false) {}
-
-CallbackBase::~CallbackBase() {
-    // Note that we cannot call CallbackBase::join_thread from here:
-    // CallbackBase is intended to be reference counted, and it is possible that
-    // the reference count drops to zero in the bound thread, causing the
-    // bound thread to call this destructor. If a thread tries to join
-    // itself, it throws an exception, producing a message like the
-    // following:
-    //
-    //     terminating with uncaught exception of type std::__1::system_error:
-    //     thread::join failed: Resource deadlock would occur
-}
-
-void CallbackBase::wait() {
-    std::unique_lock<std::mutex> lock(mMutex);
-    mCondition.wait(lock, [this]{return mNotified;});
-    join_thread_locked();
-}
-
-bool CallbackBase::on_finish(std::function<bool(void)> post_work) {
-    std::lock_guard<std::mutex> lock(mMutex);
-    if (mPostWork != nullptr) {
-        LOG(ERROR) << "CallbackBase::on_finish -- a post-work function has already been bound to "
-                   "this callback object";
-        return false;
-    }
-    if (post_work == nullptr) {
-        LOG(ERROR) << "CallbackBase::on_finish -- the new post-work function is invalid";
-        return false;
-    }
-    mPostWork = std::move(post_work);
-    return true;
-}
-
-bool CallbackBase::bind_thread(std::thread&& asyncThread) {
-    std::lock_guard<std::mutex> lock(mMutex);
-    if (mThread.joinable()) {
-        LOG(ERROR) << "CallbackBase::bind_thread -- a thread has already been bound to this "
-                   "callback object";
-        return false;
-    }
-    if (!asyncThread.joinable()) {
-        LOG(ERROR) << "CallbackBase::bind_thread -- the new thread is not joinable";
-        return false;
-    }
-    mThread = std::move(asyncThread);
-    return true;
-}
-
-void CallbackBase::join_thread() {
-    std::lock_guard<std::mutex> lock(mMutex);
-    join_thread_locked();
-}
-
-void CallbackBase::notify() {
-    {
-        std::lock_guard<std::mutex> lock(mMutex);
-        mNotified = true;
-        if (mPostWork != nullptr) {
-            bool success = mPostWork();
-            if (!success) {
-                LOG(ERROR) << "CallbackBase::notify -- post work failed";
-            }
-        }
-    }
-    mCondition.notify_all();
-}
-
-void CallbackBase::join_thread_locked() {
-    if (mThread.joinable()) {
-        mThread.join();
-    }
-}
-
-PreparedModelCallback::PreparedModelCallback() :
-        mErrorStatus(ErrorStatus::GENERAL_FAILURE), mPreparedModel(nullptr) {}
-
-PreparedModelCallback::~PreparedModelCallback() {}
+// PreparedModelCallback methods begin here
 
 Return<void> PreparedModelCallback::notify(ErrorStatus errorStatus,
-                                           const sp<V1_0::IPreparedModel>& preparedModel) {
-    mErrorStatus = errorStatus;
-    mPreparedModel = preparedModel;
-    CallbackBase::notify();
+                                           const sp<IPreparedModel>& preparedModel) {
+    {
+        std::lock_guard<std::mutex> hold(mMutex);
+
+        // quick-return if object has already been notified
+        if (mNotified) {
+            return Void();
+        }
+
+        // store results and mark as notified
+        mErrorStatus = errorStatus;
+        mPreparedModel = preparedModel;
+        mNotified = true;
+    }
+
+    mCondition.notify_all();
     return Void();
 }
 
-ErrorStatus PreparedModelCallback::getStatus() {
+void PreparedModelCallback::wait() const {
+    std::unique_lock<std::mutex> lock(mMutex);
+    mCondition.wait(lock, [this] { return mNotified; });
+}
+
+ErrorStatus PreparedModelCallback::getStatus() const {
     wait();
     return mErrorStatus;
 }
 
-sp<V1_0::IPreparedModel> PreparedModelCallback::getPreparedModel() {
+sp<IPreparedModel> PreparedModelCallback::getPreparedModel() const {
     wait();
     return mPreparedModel;
 }
 
-ExecutionCallback::ExecutionCallback() : mErrorStatus(ErrorStatus::GENERAL_FAILURE) {}
-
-ExecutionCallback::~ExecutionCallback() {}
+// ExecutionCallback methods begin here
 
 Return<void> ExecutionCallback::notify(ErrorStatus errorStatus) {
-    mErrorStatus = errorStatus;
-    CallbackBase::notify();
+    {
+        std::lock_guard<std::mutex> hold(mMutex);
+
+        // quick-return if object has already been notified
+        if (mNotified) {
+            return Void();
+        }
+
+        mErrorStatus = errorStatus;
+        mNotified = true;
+    }
+    mCondition.notify_all();
+
     return Void();
 }
 
-ErrorStatus ExecutionCallback::getStatus() {
+void ExecutionCallback::wait() const {
+    std::unique_lock<std::mutex> lock(mMutex);
+    mCondition.wait(lock, [this] { return mNotified; });
+}
+
+ErrorStatus ExecutionCallback::getStatus() const {
     wait();
     return mErrorStatus;
 }
 
-}  // namespace implementation
-}  // namespace V1_0
-}  // namespace neuralnetworks
-}  // namespace hardware
-}  // namespace android
+}  // namespace android::hardware::neuralnetworks::V1_0::implementation

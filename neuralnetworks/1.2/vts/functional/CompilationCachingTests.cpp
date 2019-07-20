@@ -26,6 +26,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <random>
+#include <thread>
 
 #include "1.2/Callbacks.h"
 #include "GeneratedTestHarness.h"
