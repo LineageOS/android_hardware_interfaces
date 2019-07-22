@@ -287,7 +287,6 @@ TestBufferLayer::~TestBufferLayer() {
 void TestBufferLayer::write(const std::shared_ptr<CommandWriterBase>& writer) {
     TestLayer::write(writer);
     writer->setLayerCompositionType(mComposition);
-    writer->setLayerDataspace(Dataspace::UNKNOWN);
     writer->setLayerVisibleRegion(std::vector<IComposerClient::Rect>(1, mDisplayFrame));
     if (mBufferHandle != nullptr) writer->setLayerBuffer(0, mBufferHandle, mFillFence);
 }
@@ -335,6 +334,12 @@ void TestBufferLayer::setBuffer(std::vector<IComposerClient::Color> colors) {
     ASSERT_NO_FATAL_FAILURE(fillBuffer(colors));
     ASSERT_NE(false, mGralloc->validateBufferSize(mBufferHandle, mWidth, mHeight, mLayerCount,
                                                   mFormat, mUsage, mStride));
+}
+
+void TestBufferLayer::setDataspace(Dataspace dataspace,
+                                   const std::shared_ptr<CommandWriterBase>& writer) {
+    writer->selectLayer(mLayer);
+    writer->setLayerDataspace(dataspace);
 }
 
 void TestBufferLayer::setToClientComposition(const std::shared_ptr<CommandWriterBase>& writer) {
