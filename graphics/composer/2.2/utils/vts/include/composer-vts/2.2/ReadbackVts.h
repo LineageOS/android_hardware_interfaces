@@ -123,6 +123,8 @@ class TestBufferLayer : public TestLayer {
 
     void setBuffer(std::vector<IComposerClient::Color> colors);
 
+    void setDataspace(Dataspace dataspace, const std::shared_ptr<CommandWriterBase>& writer);
+
     void setToClientComposition(const std::shared_ptr<CommandWriterBase>& writer);
 
     uint32_t mWidth;
