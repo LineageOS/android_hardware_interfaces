@@ -91,12 +91,12 @@ class WifiNanIfaceHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     };
 
     /* Test code calls this function to wait for data/event callback */
+    /* Must set callbackType = INVALID before call this function */
     inline std::cv_status wait(CallbackType waitForCallbackType) {
       std::unique_lock<std::mutex> lock(mtx_);
 
       EXPECT_NE(INVALID, waitForCallbackType); // can't ASSERT in a non-void-returning method
 
-      callbackType = INVALID;
       std::cv_status status = std::cv_status::no_timeout;
       auto now = std::chrono::system_clock::now();
       while (count_ == 0) {
@@ -469,6 +469,7 @@ TEST(WifiNanIfaceHidlTestNoFixture, FailOnIfaceInvalid) {
  */
 TEST_F(WifiNanIfaceHidlTest, getCapabilitiesRequest) {
   uint16_t inputCmdId = 10;
+  callbackType = INVALID;
   ASSERT_EQ(WifiStatusCode::SUCCESS,
         HIDL_INVOKE(iwifiNanIface, getCapabilitiesRequest, inputCmdId).code);
   // wait for a callback
