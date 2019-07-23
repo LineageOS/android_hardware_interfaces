@@ -22,6 +22,10 @@
 #include <condition_variable>
 #include <mutex>
 
+#include <android/hardware/radio/config/1.1/IRadioConfig.h>
+#include <android/hardware/radio/config/1.1/IRadioConfigResponse.h>
+#include <android/hardware/radio/config/1.1/types.h>
+
 #include <android/hardware/radio/1.2/IRadio.h>
 #include <android/hardware/radio/1.2/IRadioIndication.h>
 #include <android/hardware/radio/1.2/IRadioResponse.h>
@@ -32,19 +36,53 @@
 using namespace ::android::hardware::radio::V1_2;
 using namespace ::android::hardware::radio::V1_1;
 using namespace ::android::hardware::radio::V1_0;
+using namespace ::android::hardware::radio::config::V1_1;
 
+using ::android::sp;
 using ::android::hardware::hidl_bitfield;
 using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
-using ::android::sp;
+using ::android::hardware::radio::config::V1_0::SimSlotStatus;
+using ::android::hardware::radio::V1_0::RadioResponseInfo;
+using ::android::hardware::radio::V1_0::RadioResponseType;
 
 #define TIMEOUT_PERIOD 75
 #define RADIO_SERVICE_NAME "slot1"
 
 class RadioHidlTest_v1_2;
 extern ::android::hardware::radio::V1_2::CardStatus cardStatus;
+
+/* Callback class for radio config response */
+class RadioConfigResponse : public IRadioConfigResponse {
+  protected:
+    RadioHidlTest_v1_2& parent_v1_2;
+
+  public:
+    RadioResponseInfo rspInfo;
+    PhoneCapability phoneCap;
+    hidl_vec<SimSlotStatus> simSlotStatus;
+
+    RadioConfigResponse(RadioHidlTest_v1_2& parent_v1_2);
+    virtual ~RadioConfigResponse() = default;
+
+    Return<void> getSimSlotsStatusResponse(
+            const RadioResponseInfo& info,
+            const ::android::hardware::hidl_vec<SimSlotStatus>& slotStatus);
+
+    Return<void> setSimSlotsMappingResponse(const RadioResponseInfo& info);
+
+    Return<void> getPhoneCapabilityResponse(const RadioResponseInfo& info,
+                                            const PhoneCapability& phoneCapability);
+
+    Return<void> setPreferredDataModemResponse(const RadioResponseInfo& info);
+
+    Return<void> getModemsConfigResponse(const RadioResponseInfo& info,
+                                         const ModemsConfig& mConfig);
+
+    Return<void> setModemsConfigResponse(const RadioResponseInfo& info);
+};
 
 /* Callback class for radio response v1_2*/
 class RadioResponse_v1_2 : public ::android::hardware::radio::V1_2::IRadioResponse {
@@ -616,14 +654,26 @@ class RadioHidlTest_v1_2 : public ::testing::VtsHalHidlTargetTestBase {
     std::condition_variable cv_;
     int count_;
 
+    /* Preferred data sim id */
+    const int DDS_LOGICAL_SLOT_INDEX = 0;
+
     /* Serial number for radio request */
     int serial;
+
+    /* Current logical slot id */
+    int logicalSlotId;
 
     /* Update Sim Card Status */
     void updateSimCardStatus();
 
     /* Stop Network Scan Command */
     void stopNetworkScan();
+
+    /* Set preferred data modem */
+    void setPreferredDataModem();
+
+    /* get current logical sim id */
+    void getLogicalSimId();
 
   public:
     virtual void SetUp() override;
@@ -642,4 +692,10 @@ class RadioHidlTest_v1_2 : public ::testing::VtsHalHidlTargetTestBase {
 
     /* radio indication handle */
     sp<RadioIndication_v1_2> radioInd_v1_2;
+
+    /* radio config response handle */
+    sp<RadioConfigResponse> radioConfigRsp;
+
+    /* radio config service handle */
+    sp<IRadioConfig> radioConfig;
 };
