@@ -28,9 +28,42 @@ import android.hardware.camera.metadata@3.4;
 
 // No new metadata sections added in this revision
 
+/**
+ * Main enumeration for defining camera metadata tags added in this revision
+ *
+ * <p>Partial documentation is included for each tag; for complete documentation, reference
+ * '/system/media/camera/docs/docs.html' in the corresponding Android source tree.</p>
+ */
+enum CameraMetadataTag : @3.4::CameraMetadataTag {
+    /** android.control.availableBokehCapabilities [static, int32[], public]
+     *
+     * <p>The list of bokeh modes that are supported by this camera device, and each bokeh mode's
+     * maximum streaming (non-stall) size with bokeh effect.</p>
+     */
+    ANDROID_CONTROL_AVAILABLE_BOKEH_CAPABILITIES = android.hardware.camera.metadata@3.3::CameraMetadataTag:ANDROID_CONTROL_END_3_3,
+
+    /** android.control.bokehMode [dynamic, enum, public]
+     *
+     * <p>Whether bokeh mode is enabled for a particular capture request.</p>
+     */
+    ANDROID_CONTROL_BOKEH_MODE,
+
+    ANDROID_CONTROL_END_3_5,
+
+};
+
 /*
  * Enumeration definitions for the various entries that need them
  */
+
+/** android.control.bokehMode enumeration values
+ * @see ANDROID_CONTROL_BOKEH_MODE
+ */
+enum CameraMetadataEnumAndroidControlBokehMode : uint32_t {
+    ANDROID_CONTROL_BOKEH_MODE_OFF,
+    ANDROID_CONTROL_BOKEH_MODE_STILL_CAPTURE,
+    ANDROID_CONTROL_BOKEH_MODE_CONTINUOUS,
+};
 
 /** android.request.availableCapabilities enumeration values added since v3.4
  * @see ANDROID_REQUEST_AVAILABLE_CAPABILITIES
