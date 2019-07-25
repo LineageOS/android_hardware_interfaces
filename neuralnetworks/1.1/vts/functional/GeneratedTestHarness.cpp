@@ -34,6 +34,7 @@
 namespace android {
 namespace hardware {
 namespace neuralnetworks {
+namespace V1_1 {
 namespace generated_tests {
 
 using ::android::hardware::neuralnetworks::V1_0::ErrorStatus;
@@ -227,6 +228,7 @@ void Execute(const sp<IDevice>& device, std::function<Model(void)> create_model,
 }
 
 }  // namespace generated_tests
+}  // namespace V1_1
 }  // namespace neuralnetworks
 }  // namespace hardware
 }  // namespace android

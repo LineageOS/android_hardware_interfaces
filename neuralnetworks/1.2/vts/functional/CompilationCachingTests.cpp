@@ -35,6 +35,23 @@
 #include "Utils.h"
 #include "VtsHalNeuralnetworks.h"
 
+namespace android::hardware::neuralnetworks::V1_2::generated_tests::
+        mobilenet_224_gender_basic_fixed {
+Model createTestModel();
+}  // namespace android::hardware::neuralnetworks::V1_2::generated_tests::mobilenet_224_gender_basic_fixed
+
+namespace generated_tests::mobilenet_224_gender_basic_fixed {
+std::vector<test_helper::MixedTypedExample>& get_examples();
+}  // namespace generated_tests::mobilenet_224_gender_basic_fixed
+
+namespace android::hardware::neuralnetworks::V1_2::generated_tests::mobilenet_quantized {
+Model createTestModel();
+}  // namespace android::hardware::neuralnetworks::V1_2::generated_tests::mobilenet_quantized
+
+namespace generated_tests::mobilenet_quantized {
+std::vector<test_helper::MixedTypedExample>& get_examples();
+}  // namespace generated_tests::mobilenet_quantized
+
 namespace android {
 namespace hardware {
 namespace neuralnetworks {
@@ -52,13 +69,9 @@ using ::test_helper::MixedTypedExample;
 
 namespace float32_model {
 
-// In frameworks/ml/nn/runtime/test/generated/, creates a hidl model of float32 mobilenet.
-#include "examples/mobilenet_224_gender_basic_fixed.example.cpp"
-#include "vts/V1_2/models/mobilenet_224_gender_basic_fixed.model.cpp"
-
-// Prevent the compiler from complaining about an otherwise unused function.
-[[maybe_unused]] auto dummy_createTestModel = createTestModel_dynamic_output_shape;
-[[maybe_unused]] auto dummy_get_examples = get_examples_dynamic_output_shape;
+constexpr auto createTestModel = ::android::hardware::neuralnetworks::V1_2::generated_tests::
+        mobilenet_224_gender_basic_fixed::createTestModel;
+constexpr auto get_examples = ::generated_tests::mobilenet_224_gender_basic_fixed::get_examples;
 
 // MixedTypedExample is defined in frameworks/ml/nn/tools/test_generator/include/TestHarness.h.
 // This function assumes the operation is always ADD.
@@ -75,13 +88,9 @@ std::vector<MixedTypedExample> getLargeModelExamples(uint32_t len) {
 
 namespace quant8_model {
 
-// In frameworks/ml/nn/runtime/test/generated/, creates a hidl model of quant8 mobilenet.
-#include "examples/mobilenet_quantized.example.cpp"
-#include "vts/V1_2/models/mobilenet_quantized.model.cpp"
-
-// Prevent the compiler from complaining about an otherwise unused function.
-[[maybe_unused]] auto dummy_createTestModel = createTestModel_dynamic_output_shape;
-[[maybe_unused]] auto dummy_get_examples = get_examples_dynamic_output_shape;
+constexpr auto createTestModel = ::android::hardware::neuralnetworks::V1_2::generated_tests::
+        mobilenet_quantized::createTestModel;
+constexpr auto get_examples = ::generated_tests::mobilenet_quantized::get_examples;
 
 // MixedTypedExample is defined in frameworks/ml/nn/tools/test_generator/include/TestHarness.h.
 // This function assumes the operation is always ADD.

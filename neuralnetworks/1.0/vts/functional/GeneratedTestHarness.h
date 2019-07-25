@@ -23,15 +23,16 @@
 namespace android {
 namespace hardware {
 namespace neuralnetworks {
-
+namespace V1_0 {
 namespace generated_tests {
+
 using ::test_helper::MixedTypedExample;
 
 void Execute(const sp<V1_0::IDevice>& device, std::function<V1_0::Model(void)> create_model,
              std::function<bool(int)> is_ignored, const std::vector<MixedTypedExample>& examples);
 
 }  // namespace generated_tests
-
+}  // namespace V1_0
 }  // namespace neuralnetworks
 }  // namespace hardware
 }  // namespace android
