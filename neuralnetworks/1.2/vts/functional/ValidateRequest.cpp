@@ -35,6 +35,7 @@ namespace V1_2 {
 namespace vts {
 namespace functional {
 
+using ::android::hardware::neuralnetworks::V1_0::RequestArgument;
 using ::android::hardware::neuralnetworks::V1_2::implementation::ExecutionCallback;
 using ::android::hidl::memory::V1_0::IMemory;
 using test_helper::for_all;
