@@ -26,6 +26,7 @@
 #include "Utils.h"
 
 #include <android-base/logging.h>
+#include <chrono>
 #include <cstring>
 
 namespace android::hardware::neuralnetworks::V1_2::vts::functional {
@@ -64,9 +65,9 @@ static void createBurst(const sp<IPreparedModel>& preparedModel, const sp<IBurst
 
     // create FMQ objects
     auto [fmqRequestChannel, fmqRequestDescriptor] =
-            RequestChannelSender::create(kExecutionBurstChannelLength, /*blocking=*/true);
+            RequestChannelSender::create(kExecutionBurstChannelLength);
     auto [fmqResultChannel, fmqResultDescriptor] =
-            ResultChannelReceiver::create(resultChannelLength, /*blocking=*/true);
+            ResultChannelReceiver::create(resultChannelLength, std::chrono::microseconds{0});
     ASSERT_NE(nullptr, fmqRequestChannel.get());
     ASSERT_NE(nullptr, fmqResultChannel.get());
     ASSERT_NE(nullptr, fmqRequestDescriptor);
@@ -293,8 +294,10 @@ static void validateBurstFmqLength(const sp<IPreparedModel>& preparedModel,
     }
 
     // collect serialized result by running regular burst
-    const auto [statusRegular, outputShapesRegular, timingRegular] =
+    const auto [nRegular, outputShapesRegular, timingRegular, fallbackRegular] =
             controllerRegular->compute(request, MeasureTiming::NO, keys);
+    const ErrorStatus statusRegular = nn::convertResultCodeToErrorStatus(nRegular);
+    EXPECT_FALSE(fallbackRegular);
 
     // skip test if regular burst output isn't useful for testing a failure
     // caused by having too small of a length for the result FMQ
@@ -307,11 +310,13 @@ static void validateBurstFmqLength(const sp<IPreparedModel>& preparedModel,
 
     // by this point, execution should fail because the result channel isn't
     // large enough to return the serialized result
-    const auto [statusSmall, outputShapesSmall, timingSmall] =
+    const auto [nSmall, outputShapesSmall, timingSmall, fallbackSmall] =
             controllerSmall->compute(request, MeasureTiming::NO, keys);
+    const ErrorStatus statusSmall = nn::convertResultCodeToErrorStatus(nSmall);
     EXPECT_NE(ErrorStatus::NONE, statusSmall);
     EXPECT_EQ(0u, outputShapesSmall.size());
     EXPECT_TRUE(badTiming(timingSmall));
+    EXPECT_FALSE(fallbackSmall);
 }
 
 static bool isSanitized(const FmqResultDatum& datum) {
