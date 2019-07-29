@@ -240,46 +240,47 @@ bool FrameHandler::copyBufferContents(const BufferDesc& tgtBuffer,
     tgt->lock(GRALLOC_USAGE_SW_WRITE_OFTEN, (void**)&tgtPixels);
 
     if (srcPixels && tgtPixels) {
+        using namespace ::android::hardware::automotive::evs::common;
         if (tgtBuffer.format == HAL_PIXEL_FORMAT_RGBA_8888) {
             if (srcBuffer.format == HAL_PIXEL_FORMAT_YCRCB_420_SP) {   // 420SP == NV21
-                copyNV21toRGB32(width, height,
-                                srcPixels,
-                                tgtPixels, tgtBuffer.stride);
+                Utils::copyNV21toRGB32(width, height,
+                                       srcPixels,
+                                       tgtPixels, tgtBuffer.stride);
             } else if (srcBuffer.format == HAL_PIXEL_FORMAT_YV12) { // YUV_420P == YV12
-                copyYV12toRGB32(width, height,
-                                srcPixels,
-                                tgtPixels, tgtBuffer.stride);
+                Utils::copyYV12toRGB32(width, height,
+                                       srcPixels,
+                                       tgtPixels, tgtBuffer.stride);
             } else if (srcBuffer.format == HAL_PIXEL_FORMAT_YCBCR_422_I) { // YUYV
-                copyYUYVtoRGB32(width, height,
-                                srcPixels, srcBuffer.stride,
-                                tgtPixels, tgtBuffer.stride);
+                Utils::copyYUYVtoRGB32(width, height,
+                                       srcPixels, srcBuffer.stride,
+                                       tgtPixels, tgtBuffer.stride);
             } else if (srcBuffer.format == tgtBuffer.format) {  // 32bit RGBA
-                copyMatchedInterleavedFormats(width, height,
-                                              srcPixels, srcBuffer.stride,
-                                              tgtPixels, tgtBuffer.stride,
-                                              tgtBuffer.pixelSize);
+                Utils::copyMatchedInterleavedFormats(width, height,
+                                                     srcPixels, srcBuffer.stride,
+                                                     tgtPixels, tgtBuffer.stride,
+                                                     tgtBuffer.pixelSize);
             } else {
                 ALOGE("Camera buffer format is not supported");
                 success = false;
             }
         } else if (tgtBuffer.format == HAL_PIXEL_FORMAT_BGRA_8888) {
             if (srcBuffer.format == HAL_PIXEL_FORMAT_YCRCB_420_SP) {   // 420SP == NV21
-                copyNV21toBGR32(width, height,
-                                srcPixels,
-                                tgtPixels, tgtBuffer.stride);
+                Utils::copyNV21toBGR32(width, height,
+                                       srcPixels,
+                                       tgtPixels, tgtBuffer.stride);
             } else if (srcBuffer.format == HAL_PIXEL_FORMAT_YV12) { // YUV_420P == YV12
-                copyYV12toBGR32(width, height,
-                                srcPixels,
-                                tgtPixels, tgtBuffer.stride);
+                Utils::copyYV12toBGR32(width, height,
+                                       srcPixels,
+                                       tgtPixels, tgtBuffer.stride);
             } else if (srcBuffer.format == HAL_PIXEL_FORMAT_YCBCR_422_I) { // YUYV
-                copyYUYVtoBGR32(width, height,
-                                srcPixels, srcBuffer.stride,
-                                tgtPixels, tgtBuffer.stride);
+                Utils::copyYUYVtoBGR32(width, height,
+                                       srcPixels, srcBuffer.stride,
+                                       tgtPixels, tgtBuffer.stride);
             } else if (srcBuffer.format == tgtBuffer.format) {  // 32bit RGBA
-                copyMatchedInterleavedFormats(width, height,
-                                              srcPixels, srcBuffer.stride,
-                                              tgtPixels, tgtBuffer.stride,
-                                              tgtBuffer.pixelSize);
+                Utils::copyMatchedInterleavedFormats(width, height,
+                                                     srcPixels, srcBuffer.stride,
+                                                     tgtPixels, tgtBuffer.stride,
+                                                     tgtBuffer.pixelSize);
             } else {
                 ALOGE("Camera buffer format is not supported");
                 success = false;
