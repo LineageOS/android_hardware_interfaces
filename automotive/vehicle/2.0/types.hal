@@ -35,6 +35,21 @@ enum VehiclePropertyType : int32_t {
     /**
      * Any combination of scalar or vector types. The exact format must be
      * provided in the description of the property.
+     *
+     * For vendor MIXED type properties, configArray needs to be formatted in this
+     * structure.
+     * configArray[0], 1 indicates the property has a String value
+     * configArray[1], 1 indicates the property has a Boolean value .
+     * configArray[2], 1 indicates the property has an Integer value.
+     * configArray[3], the number indicates the size of Integer[] in the property.
+     * configArray[4], 1 indicates the property has a Long value.
+     * configArray[5], the number indicates the size of Long[] in the property.
+     * configArray[6], 1 indicates the property has a Float value.
+     * configArray[7], the number indicates the size of Float[] in the property.
+     * configArray[8], the number indicates the size of byte[] in the property.
+     * For example:
+     * {@code configArray = {1, 1, 1, 3, 0, 0, 0, 0, 0}} indicates the property has
+     * a String value, a Boolean value, an Integer value and an array with 3 integers.
      */
     MIXED           = 0x00e00000,
 

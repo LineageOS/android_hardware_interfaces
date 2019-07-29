@@ -85,6 +85,12 @@ const int32_t kGenerateFakeDataControllingProperty =
     0x0666 | VehiclePropertyGroup::VENDOR | VehicleArea::GLOBAL | VehiclePropertyType::MIXED;
 
 /**
+ * This property is used for test purpose. End to end tests use this property to test set and get
+ * method for MIXED type properties.
+ */
+const int32_t kMixedTypePropertyForTest =
+        0x1111 | VehiclePropertyGroup::VENDOR | VehicleArea::GLOBAL | VehiclePropertyType::MIXED;
+/**
  * FakeDataCommand enum defines the supported command type for kGenerateFakeDataControllingProperty.
  * All those commands can be send independently with each other. And each will override the one sent
  * previously.
@@ -606,6 +612,14 @@ const ConfigDeclaration kVehicleProperties[]{
                                 .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
                         },
         },
+
+        {.config = {.prop = kMixedTypePropertyForTest,
+                    .access = VehiclePropertyAccess::READ_WRITE,
+                    .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                    .configArray = {1, 1, 0, 2, 0, 0, 1, 0, 0}},
+         .initialValue = {.stringValue = "MIXED property",
+                          .int32Values = {1 /* indicate TRUE boolean value */, 2, 3},
+                          .floatValues = {4.5f}}},
 
         {.config = {.prop = toInt(VehicleProperty::DOOR_LOCK),
                     .access = VehiclePropertyAccess::READ_WRITE,
