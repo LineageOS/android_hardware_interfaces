@@ -56,7 +56,8 @@ class HostapdHidlTest : public ::testing::VtsHalHidlTargetTestBase {
    protected:
     std::string getPrimaryWlanIfaceName() {
         std::array<char, PROPERTY_VALUE_MAX> buffer;
-        auto res = property_get("wifi.sap.interface", buffer.data(), nullptr);
+        auto res = property_get("ro.vendor.wifi.sap.interface",
+                                buffer.data(), nullptr);
         if (res > 0) return buffer.data();
         property_get("wifi.interface", buffer.data(), "wlan0");
         return buffer.data();
