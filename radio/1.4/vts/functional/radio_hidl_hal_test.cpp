@@ -102,6 +102,12 @@ void RadioHidlTest_v1_4::clearPotentialEstablishedCalls() {
         // Give some time for modem to disconnect the established call channel.
         sleep(MODEM_EMERGENCY_CALL_DISCONNECT_TIME);
     }
+
+    // Verify there are no more current calls.
+    serial = GetRandomSerialNumber();
+    radio_v1_4->getCurrentCalls(serial);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(0, radioRsp_v1_4->currentCalls.size());
 }
 
 void RadioHidlTest_v1_4::updateSimCardStatus() {
