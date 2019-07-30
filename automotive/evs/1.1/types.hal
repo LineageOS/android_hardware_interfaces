@@ -48,9 +48,9 @@ struct BufferDesc {
 };
 
 /**
- * EVS event types
+ * Types of informative streaming events
  */
-enum EvsEventType : uint32_t {
+enum InfoEventType : uint32_t {
     /**
      * Video stream is started
      */
@@ -67,6 +67,25 @@ enum EvsEventType : uint32_t {
      * Timeout happens
      */
     TIMEOUT,
+    /**
+     * Camera parameter is changed; payload contains a changed parameter ID and
+     * its value
+     */
+    PARAMETER_CHANGED,
+};
+
+/**
+ * Structure that describes informative events occurred during EVS is streaming
+ */
+struct InfoEventDesc {
+    /**
+     * Type of an informative event
+     */
+    InfoEventType aType;
+    /**
+     * Possible additional information
+     */
+    uint32_t[4] payload;
 };
 
 /**
@@ -80,5 +99,74 @@ safe_union EvsEvent {
     /**
      * General streaming events
      */
-    EvsEventType info;
+    InfoEventDesc info;
+};
+
+/**
+ * EVS Camera Parameter
+ */
+enum CameraParam : uint32_t {
+    /**
+     * The brightness of image frames
+     */
+    BRIGHTNESS,
+    /**
+     * The contrast of image frames
+     */
+    CONTRAST,
+    /**
+     * Automatic gain/exposure control
+     */
+    AUTOGAIN,
+    /**
+     * Gain control
+     */
+    GAIN,
+    /**
+     * Mirror the image horizontally
+     */
+    HFLIP,
+    /**
+     * Mirror the image vertically
+     */
+    VFLIP,
+    /**
+     * Automatic Whitebalance
+     */
+    AUTO_WHITE_BALANCE,
+    /**
+     * Manual white balance setting as a color temperature in Kelvin.
+     */
+    WHITE_BALANCE_TEMPERATURE,
+    /**
+     * Image sharpness adjustment
+     */
+    SHARPNESS,
+    /**
+     * Auto Exposure Control modes; auto, manual, shutter priority, or
+     * aperture priority.
+     */
+    AUTO_EXPOSURE,
+    /**
+     * Manual exposure time of the camera
+     */
+    ABSOLUTE_EXPOSURE,
+    /**
+     * When AEC is running in either auto or aperture priority, this parameter
+     * sets whether a frame rate varies.
+     */
+    AUTO_EXPOSURE_PRIORITY,
+    /**
+     * Set the focal point of the camera to the specified position.  This
+     * parameter may not be effective when auto focus is enabled.
+     */
+    ABSOLUTE_FOCUS,
+    /**
+     * Enables continuous automatic focus adjustments.
+     */
+    AUTO_FOCUS,
+    /**
+     * Specify the objective lens focal length as an absolute value.
+     */
+    ABSOLUTE_ZOOM,
 };

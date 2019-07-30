@@ -60,6 +60,11 @@ public:
     Return<EvsResult> pauseVideoStream() override;
     Return<EvsResult> resumeVideoStream() override;
     Return<EvsResult> doneWithFrame_1_1(const BufferDesc_1_1& buffer) override;
+    Return<EvsResult> setMaster() override;
+    Return<EvsResult> unsetMaster() override;
+    Return<void>      setParameter(CameraParam id, int32_t value,
+                                   setParameter_cb _hidl_cb) override;
+    Return<void>      getParameter(CameraParam id, getParameter_cb _hidl_cb) override;
 
     // Implementation details
     EvsCamera(const char *id);

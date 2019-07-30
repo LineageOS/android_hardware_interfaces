@@ -54,4 +54,59 @@ interface IEvsCamera extends @1.0::IEvsCamera {
      * @return result Return EvsResult::OK if this call is successful.
      */
     doneWithFrame_1_1(BufferDesc buffer) generates (EvsResult result);
+
+    /**
+     * Requests to be a master client.
+     *
+     * When multiple clients subscribe to a single camera hardware and one of
+     * them adjusts a camera parameter such as the contrast, it may disturb
+     * other clients' operations.  Therefore, the client must call this method
+     * to be a master client.  Once it becomes a master, it will be able to
+     * change camera parameters until either it dies or explicitly gives up the
+     * role.
+     *
+     * @return result EvsResult::OK if a master role is granted.
+     *                EvsResult::OWNERSHIP_LOST if there is already a
+     *                master client.
+     */
+    setMaster() generates (EvsResult result);
+
+
+    /**
+     * Retires from a master client role.
+     *
+     * @return result EvsResult::OK if this call is successful.
+     *                EvsResult::INVALID_ARG if the caller client is not a
+     *                master client.
+     */
+    unsetMaster() generates (EvsResult result);
+
+    /**
+     * Requests to set a camera parameter.
+     *
+     * @param  id             The identifier of camera parameter, CameraParam enum.
+     *         value          A desired parameter value.
+     * @return result         EvsResult::OK if it succeeds to set a parameter.
+     *                        EvsResult::INVALID_ARG if either the request is
+     *                        not made by a master client, or a requested
+     *                        parameter is not supported.
+     *                        EvsResult::UNDERLYING_SERVICE_ERROR if it fails to
+     *                        program a value by any other reason.
+     *         effectiveValue A programmed parameter value.  This may differ
+     *                        from what the client gives if, for example, the
+     *                        driver does not support a target parameter.
+     */
+    setParameter(CameraParam id, int32_t value)
+        generates (EvsResult result, int32_t effectiveValue);
+
+    /**
+     * Retrieves a value of given camera parameter.
+     *
+     * @param  id     The identifier of camera parameter, CameraParam enum.
+     * @return result EvsResult::OK if it succeeds to read a parameter.
+     *                EvsResult::INVALID_ARG if either a requested parameter is
+     *                not supported.
+     *         value  A value of requested camera parameter.
+     */
+    getParameter(CameraParam id) generates(EvsResult result, int32_t value);
 };

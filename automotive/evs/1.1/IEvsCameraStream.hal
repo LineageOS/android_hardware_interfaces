@@ -19,7 +19,7 @@ package android.hardware.automotive.evs@1.1;
 import @1.0::IEvsCameraStream;
 
 /**
- * Implemented on client side to receive asynchronous video frame deliveries.
+ * Implemented on client side to receive asynchronous streaming event deliveries.
  */
 interface IEvsCameraStream extends @1.0::IEvsCameraStream {
     /**
