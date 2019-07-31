@@ -33,7 +33,7 @@ using android::hardware::configureRpcThreadpool;
 using android::hardware::joinRpcThreadpool;
 
 // Generated HIDL files
-using android::hardware::automotive::evs::V1_0::IEvsEnumerator;
+using android::hardware::automotive::evs::V1_1::IEvsEnumerator;
 using android::hardware::automotive::evs::V1_0::IEvsDisplay;
 
 // The namespace in which all our implementation code lives
