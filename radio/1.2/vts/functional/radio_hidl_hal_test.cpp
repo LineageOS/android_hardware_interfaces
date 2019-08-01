@@ -37,6 +37,7 @@ void RadioHidlTest_v1_2::SetUp() {
     ASSERT_NE(nullptr, radioRsp_v1_2.get());
 
     count_ = 0;
+    logicalSlotId = -1;
 
     radioInd_v1_2 = new (std::nothrow) RadioIndication_v1_2(*this);
     ASSERT_NE(nullptr, radioInd_v1_2.get());
@@ -50,6 +51,71 @@ void RadioHidlTest_v1_2::SetUp() {
 
     /* Enforce Vts Testing with Sim Status Present only. */
     EXPECT_EQ(CardState::PRESENT, cardStatus.base.cardState);
+
+    radioConfig = ::testing::VtsHalHidlTargetTestBase::getService<
+            ::android::hardware::radio::config::V1_1::IRadioConfig>();
+
+    /* Enforce Vts tesing with RadioConfig for network scan excemption. */
+    // Some devices can only perform network scan on logical modem that currently used for packet
+    // data. This exemption is removed in HAL version 1.4. See b/135243177 for additional info.
+    if (radioConfig != NULL) {
+        // RadioConfig 1.1 available, some devices fall in excepmtion category.
+        ASSERT_NE(nullptr, radioConfig.get());
+
+        radioConfigRsp = new (std::nothrow) RadioConfigResponse(*this);
+        ASSERT_NE(nullptr, radioConfigRsp.get());
+
+        /* Set radio config response functions */
+        radioConfig->setResponseFunctions(radioConfigRsp, nullptr);
+
+        /* set preferred data modem */
+        setPreferredDataModem();
+
+        /* get current logical sim id */
+        getLogicalSimId();
+    }
+}
+
+void RadioHidlTest_v1_2::getLogicalSimId() {
+    serial = GetRandomSerialNumber();
+    radioConfig->getSimSlotsStatus(serial);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioConfigRsp->rspInfo.type);
+    EXPECT_EQ(serial, radioConfigRsp->rspInfo.serial);
+
+    ASSERT_TRUE(CheckAnyOfErrors(radioConfigRsp->rspInfo.error,
+                                 {RadioError::NONE, RadioError::REQUEST_NOT_SUPPORTED}));
+
+    if (radioConfigRsp->rspInfo.error != RadioError ::NONE) {
+        ALOGI("Failed to get sim slot status, rspInfo.error = %s\n",
+              toString(radioConfigRsp->rspInfo.error).c_str());
+        return;
+    }
+
+    if (cardStatus.physicalSlotId < 0 ||
+        cardStatus.physicalSlotId >= radioConfigRsp->simSlotStatus.size()) {
+        ALOGI("Physical slot id: %d is out of range", cardStatus.physicalSlotId);
+        return;
+    }
+
+    logicalSlotId = radioConfigRsp->simSlotStatus[cardStatus.physicalSlotId].logicalSlotId;
+}
+
+/*
+ * Set preferred data modem
+ */
+void RadioHidlTest_v1_2::setPreferredDataModem() {
+    serial = GetRandomSerialNumber();
+    // Even for single sim device, the setPreferredDataModem should still success. Enforce dds on
+    // first logical modem.
+    radioConfig->setPreferredDataModem(serial, DDS_LOGICAL_SLOT_INDEX);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioConfigRsp->rspInfo.type);
+    EXPECT_EQ(serial, radioConfigRsp->rspInfo.serial);
+
+    ASSERT_TRUE(CheckAnyOfErrors(
+            radioConfigRsp->rspInfo.error,
+            {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::INTERNAL_ERR}));
 }
 
 /*

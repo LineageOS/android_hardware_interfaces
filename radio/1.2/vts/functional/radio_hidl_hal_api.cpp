@@ -34,6 +34,15 @@ const RadioAccessSpecifier GERAN_SPECIFIER_850 = {.radioAccessNetwork = RadioAcc
 TEST_F(RadioHidlTest_v1_2, startNetworkScan) {
     serial = GetRandomSerialNumber();
 
+    if (radioConfig != NULL && DDS_LOGICAL_SLOT_INDEX != logicalSlotId) {
+        // Some DSDS devices have a limitation that network scans can only be performed on the
+        // logical modem that currently used for packet data. For now, skip the test on the
+        // non-data SIM. This exemption is removed in HAL version 1.4. See b/135243177 for
+        // additional information.
+        ALOGI("Skip network scan on non-dds SIM, slot id = %d", logicalSlotId);
+        return;
+    }
+
     ::android::hardware::radio::V1_2::NetworkScanRequest request = {
             .type = ScanType::ONE_SHOT,
             .interval = 60,
