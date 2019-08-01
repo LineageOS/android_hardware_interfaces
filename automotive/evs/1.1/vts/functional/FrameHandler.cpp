@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@
 #include <android/log.h>
 #include <cutils/native_handle.h>
 #include <ui/GraphicBuffer.h>
-
 
 FrameHandler::FrameHandler(android::sp <IEvsCamera> pCamera, CameraDesc cameraInfo,
                            android::sp <IEvsDisplay> pDisplay,
@@ -94,9 +93,9 @@ bool FrameHandler::returnHeldBuffer() {
         return false;
     }
 
-    BufferDesc buffer = mHeldBuffers.front();
+    BufferDesc_1_1 buffer = mHeldBuffers.front();
     mHeldBuffers.pop();
-    mCamera->doneWithFrame(buffer);
+    mCamera->doneWithFrame_1_1(buffer);
 
     return true;
 }
@@ -127,26 +126,42 @@ void FrameHandler::getFramesCounters(unsigned* received, unsigned* displayed) {
 }
 
 
-Return<void> FrameHandler::deliverFrame(const BufferDesc& bufferArg) {
-    ALOGD("Received a frame from the camera (%p)", bufferArg.memHandle.getNativeHandle());
+Return<void> FrameHandler::deliverFrame(const BufferDesc_1_0& bufferArg) {
+    ALOGW("A frame delivered via v1.0 method is rejected.");
+    mCamera->doneWithFrame(bufferArg);
+    return Void();
+}
 
+
+Return<void> FrameHandler::notifyEvent(const EvsEvent& event) {
     // Local flag we use to keep track of when the stream is stopping
     bool timeToStop = false;
 
-    if (bufferArg.memHandle.getNativeHandle() == nullptr) {
-        // Signal that the last frame has been received and the stream is stopped
-        timeToStop = true;
+    auto type = event.getDiscriminator();
+    if (type == EvsEvent::hidl_discriminator::info) {
+        if (event.info() == EvsEventType::STREAM_STOPPED) {
+            // Signal that the last frame has been received and the stream is stopped
+            timeToStop = true;
+        } else {
+            ALOGD("Received an event 0x%X", event.info());
+        }
     } else {
+        auto bufDesc = event.buffer();
+        const AHardwareBuffer_Desc* pDesc =
+            reinterpret_cast<const AHardwareBuffer_Desc *>(&bufDesc.buffer.description);
+        ALOGD("Received a frame from the camera (%p)",
+              bufDesc.buffer.nativeHandle.getNativeHandle());
+
         // Store a dimension of a received frame.
-        mFrameWidth = bufferArg.width;
-        mFrameHeight = bufferArg.height;
+        mFrameWidth = pDesc->width;
+        mFrameHeight = pDesc->height;
 
         // If we were given an opened display at construction time, then send the received
         // image back down the camera.
         if (mDisplay.get()) {
             // Get the output buffer we'll use to display the imagery
-            BufferDesc tgtBuffer = {};
-            mDisplay->getTargetBuffer([&tgtBuffer](const BufferDesc& buff) {
+            BufferDesc_1_0 tgtBuffer = {};
+            mDisplay->getTargetBuffer([&tgtBuffer](const BufferDesc_1_0& buff) {
                                           tgtBuffer = buff;
                                       }
             );
@@ -156,10 +171,10 @@ Return<void> FrameHandler::deliverFrame(const BufferDesc& bufferArg) {
                 ALOGE("Didn't get requested output buffer -- skipping this frame.");
             } else {
                 // Copy the contents of the of buffer.memHandle into tgtBuffer
-                copyBufferContents(tgtBuffer, bufferArg);
+                copyBufferContents(tgtBuffer, bufDesc);
 
                 // Send the target buffer back for display
-                Return <EvsResult> result = mDisplay->returnTargetBufferForDisplay(tgtBuffer);
+                Return<EvsResult> result = mDisplay->returnTargetBufferForDisplay(tgtBuffer);
                 if (!result.isOk()) {
                     printf("HIDL error on display buffer (%s)- frame lost\n",
                            result.description().c_str());
@@ -185,11 +200,11 @@ Return<void> FrameHandler::deliverFrame(const BufferDesc& bufferArg) {
             // Send the camera buffer back now that the client has seen it
             ALOGD("Calling doneWithFrame");
             // TODO:  Why is it that we get a HIDL crash if we pass back the cloned buffer?
-            mCamera->doneWithFrame(bufferArg);
+            mCamera->doneWithFrame_1_1(bufDesc);
             break;
         case eNoAutoReturn:
             // Hang onto the buffer handle for now -- the client will return it explicitly later
-            mHeldBuffers.push(bufferArg);
+            mHeldBuffers.push(bufDesc);
         }
 
 
@@ -207,29 +222,38 @@ Return<void> FrameHandler::deliverFrame(const BufferDesc& bufferArg) {
     mLock.unlock();
     mSignal.notify_all();
 
-
     return Void();
 }
 
 
-bool FrameHandler::copyBufferContents(const BufferDesc& tgtBuffer,
-                                      const BufferDesc& srcBuffer) {
+bool FrameHandler::copyBufferContents(const BufferDesc_1_0& tgtBuffer,
+                                      const BufferDesc_1_1& srcBuffer) {
     bool success = true;
+    const AHardwareBuffer_Desc* pSrcDesc =
+        reinterpret_cast<const AHardwareBuffer_Desc *>(&srcBuffer.buffer.description);
 
     // Make sure we don't run off the end of either buffer
-    const unsigned width     = std::min(tgtBuffer.width,
-                                        srcBuffer.width);
-    const unsigned height    = std::min(tgtBuffer.height,
-                                        srcBuffer.height);
+    const unsigned width  = std::min(tgtBuffer.width,
+                                     pSrcDesc->width);
+    const unsigned height = std::min(tgtBuffer.height,
+                                     pSrcDesc->height);
 
-    sp<android::GraphicBuffer> tgt = new android::GraphicBuffer(
-        tgtBuffer.memHandle, android::GraphicBuffer::CLONE_HANDLE,
-        tgtBuffer.width, tgtBuffer.height, tgtBuffer.format, 1, tgtBuffer.usage,
-        tgtBuffer.stride);
-    sp<android::GraphicBuffer> src = new android::GraphicBuffer(
-        srcBuffer.memHandle, android::GraphicBuffer::CLONE_HANDLE,
-        srcBuffer.width, srcBuffer.height, srcBuffer.format, 1, srcBuffer.usage,
-        srcBuffer.stride);
+    sp<android::GraphicBuffer> tgt = new android::GraphicBuffer(tgtBuffer.memHandle,
+                                                                android::GraphicBuffer::CLONE_HANDLE,
+                                                                tgtBuffer.width,
+                                                                tgtBuffer.height,
+                                                                tgtBuffer.format,
+                                                                1,
+                                                                tgtBuffer.usage,
+                                                                tgtBuffer.stride);
+    sp<android::GraphicBuffer> src = new android::GraphicBuffer(srcBuffer.buffer.nativeHandle,
+                                                                android::GraphicBuffer::CLONE_HANDLE,
+                                                                pSrcDesc->width,
+                                                                pSrcDesc->height,
+                                                                pSrcDesc->format,
+                                                                pSrcDesc->layers,
+                                                                pSrcDesc->usage,
+                                                                pSrcDesc->stride);
 
     // Lock our source buffer for reading (current expectation are for this to be NV21 format)
     uint8_t* srcPixels = nullptr;
@@ -242,21 +266,21 @@ bool FrameHandler::copyBufferContents(const BufferDesc& tgtBuffer,
     if (srcPixels && tgtPixels) {
         using namespace ::android::hardware::automotive::evs::common;
         if (tgtBuffer.format == HAL_PIXEL_FORMAT_RGBA_8888) {
-            if (srcBuffer.format == HAL_PIXEL_FORMAT_YCRCB_420_SP) {   // 420SP == NV21
+            if (pSrcDesc->format == HAL_PIXEL_FORMAT_YCRCB_420_SP) {   // 420SP == NV21
                 Utils::copyNV21toRGB32(width, height,
                                        srcPixels,
                                        tgtPixels, tgtBuffer.stride);
-            } else if (srcBuffer.format == HAL_PIXEL_FORMAT_YV12) { // YUV_420P == YV12
+            } else if (pSrcDesc->format == HAL_PIXEL_FORMAT_YV12) { // YUV_420P == YV12
                 Utils::copyYV12toRGB32(width, height,
                                        srcPixels,
                                        tgtPixels, tgtBuffer.stride);
-            } else if (srcBuffer.format == HAL_PIXEL_FORMAT_YCBCR_422_I) { // YUYV
+            } else if (pSrcDesc->format == HAL_PIXEL_FORMAT_YCBCR_422_I) { // YUYV
                 Utils::copyYUYVtoRGB32(width, height,
-                                       srcPixels, srcBuffer.stride,
+                                       srcPixels, pSrcDesc->stride,
                                        tgtPixels, tgtBuffer.stride);
-            } else if (srcBuffer.format == tgtBuffer.format) {  // 32bit RGBA
+            } else if (pSrcDesc->format == tgtBuffer.format) {  // 32bit RGBA
                 Utils::copyMatchedInterleavedFormats(width, height,
-                                                     srcPixels, srcBuffer.stride,
+                                                     srcPixels, pSrcDesc->stride,
                                                      tgtPixels, tgtBuffer.stride,
                                                      tgtBuffer.pixelSize);
             } else {
@@ -264,21 +288,21 @@ bool FrameHandler::copyBufferContents(const BufferDesc& tgtBuffer,
                 success = false;
             }
         } else if (tgtBuffer.format == HAL_PIXEL_FORMAT_BGRA_8888) {
-            if (srcBuffer.format == HAL_PIXEL_FORMAT_YCRCB_420_SP) {   // 420SP == NV21
+            if (pSrcDesc->format == HAL_PIXEL_FORMAT_YCRCB_420_SP) {   // 420SP == NV21
                 Utils::copyNV21toBGR32(width, height,
                                        srcPixels,
                                        tgtPixels, tgtBuffer.stride);
-            } else if (srcBuffer.format == HAL_PIXEL_FORMAT_YV12) { // YUV_420P == YV12
+            } else if (pSrcDesc->format == HAL_PIXEL_FORMAT_YV12) { // YUV_420P == YV12
                 Utils::copyYV12toBGR32(width, height,
                                        srcPixels,
                                        tgtPixels, tgtBuffer.stride);
-            } else if (srcBuffer.format == HAL_PIXEL_FORMAT_YCBCR_422_I) { // YUYV
+            } else if (pSrcDesc->format == HAL_PIXEL_FORMAT_YCBCR_422_I) { // YUYV
                 Utils::copyYUYVtoBGR32(width, height,
-                                       srcPixels, srcBuffer.stride,
+                                       srcPixels, pSrcDesc->stride,
                                        tgtPixels, tgtBuffer.stride);
-            } else if (srcBuffer.format == tgtBuffer.format) {  // 32bit RGBA
+            } else if (pSrcDesc->format == tgtBuffer.format) {  // 32bit RGBA
                 Utils::copyMatchedInterleavedFormats(width, height,
-                                                     srcPixels, srcBuffer.stride,
+                                                     srcPixels, pSrcDesc->stride,
                                                      tgtPixels, tgtBuffer.stride,
                                                      tgtBuffer.pixelSize);
             } else {
