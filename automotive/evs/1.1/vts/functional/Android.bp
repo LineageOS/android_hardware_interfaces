@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2016 The Android Open Source Project
+// Copyright (C) 2019 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,10 +15,10 @@
 //
 
 cc_test {
-    name: "VtsHalEvsV1_0TargetTest",
+    name: "VtsHalEvsV1_1TargetTest",
     srcs: [
-        "VtsHalEvsV1_0TargetTest.cpp",
         "FrameHandler.cpp",
+        "VtsHalEvsV1_1TargetTest.cpp",
     ],
     defaults: ["VtsHalTargetTestDefaults"],
     shared_libs: [
@@ -26,7 +26,11 @@ cc_test {
     ],
     static_libs: [
         "android.hardware.automotive.evs@1.0",
+        "android.hardware.automotive.evs@1.1",
         "android.hardware.automotive.evs@common-default-lib",
+        "android.hardware.graphics.common@1.0",
+        "android.hardware.graphics.common@1.1",
+        "android.hardware.graphics.common@1.2",
     ],
     test_suites: ["general-tests"],
     cflags: [

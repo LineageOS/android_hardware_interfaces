@@ -2,3 +2,4 @@ service vendor.evs-hal-mock /vendor/bin/hw/android.hardware.automotive.evs@1.0-s
     class hal
     user automotive_evs
     group automotive_evs
+    disabled # do not start automatically

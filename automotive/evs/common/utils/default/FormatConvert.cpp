@@ -18,10 +18,15 @@
 
 #include "FormatConvert.h"
 
+namespace android {
+namespace hardware {
+namespace automotive {
+namespace evs {
+namespace common {
 
 // Round up to the nearest multiple of the given alignment value
 template<unsigned alignment>
-int align(int value) {
+int Utils::align(int value) {
     static_assert((alignment && !(alignment & (alignment - 1))),
                   "alignment must be a power of 2");
 
@@ -31,15 +36,17 @@ int align(int value) {
 
 
 // Limit the given value to the provided range.  :)
-static inline float clamp(float v, float min, float max) {
+inline float Utils::clamp(float v, float min, float max) {
     if (v < min) return min;
     if (v > max) return max;
     return v;
 }
 
 
-static uint32_t yuvToRgbx(const unsigned char Y, const unsigned char Uin, const unsigned char Vin,
-                          bool bgrxFormat = false) {
+uint32_t Utils::yuvToRgbx(const unsigned char Y,
+                          const unsigned char Uin,
+                          const unsigned char Vin,
+                          bool bgrxFormat) {
     // Don't use this if you want to see the best performance.  :)
     // Better to do this in a pixel shader if we really have to, but on actual
     // embedded hardware we expect to be able to texture directly from the YUV data
@@ -67,10 +74,10 @@ static uint32_t yuvToRgbx(const unsigned char Y, const unsigned char Uin, const 
 }
 
 
-void copyNV21toRGB32(unsigned width, unsigned height,
-                     uint8_t* src,
-                     uint32_t* dst, unsigned dstStridePixels,
-                     bool bgrxFormat)
+void Utils::copyNV21toRGB32(unsigned width, unsigned height,
+                            uint8_t* src,
+                            uint32_t* dst, unsigned dstStridePixels,
+                            bool bgrxFormat)
 {
     // The NV21 format provides a Y array of 8bit values, followed by a 1/2 x 1/2 interleaved
     // U/V array.  It assumes an even width and height for the overall image, and a horizontal
@@ -99,10 +106,10 @@ void copyNV21toRGB32(unsigned width, unsigned height,
 }
 
 
-void copyYV12toRGB32(unsigned width, unsigned height,
-                     uint8_t* src,
-                     uint32_t* dst, unsigned dstStridePixels,
-                     bool bgrxFormat)
+void Utils::copyYV12toRGB32(unsigned width, unsigned height,
+                            uint8_t* src,
+                            uint32_t* dst, unsigned dstStridePixels,
+                            bool bgrxFormat)
 {
     // The YV12 format provides a Y array of 8bit values, followed by a 1/2 x 1/2 U array, followed
     // by another 1/2 x 1/2 V array.  It assumes an even width and height for the overall image,
@@ -134,10 +141,10 @@ void copyYV12toRGB32(unsigned width, unsigned height,
 }
 
 
-void copyYUYVtoRGB32(unsigned width, unsigned height,
-                     uint8_t* src, unsigned srcStridePixels,
-                     uint32_t* dst, unsigned dstStridePixels,
-                     bool bgrxFormat)
+void Utils::copyYUYVtoRGB32(unsigned width, unsigned height,
+                            uint8_t* src, unsigned srcStridePixels,
+                            uint32_t* dst, unsigned dstStridePixels,
+                            bool bgrxFormat)
 {
     uint32_t* srcWords = (uint32_t*)src;
 
@@ -167,34 +174,34 @@ void copyYUYVtoRGB32(unsigned width, unsigned height,
 }
 
 
-void copyNV21toBGR32(unsigned width, unsigned height,
-                     uint8_t* src,
-                     uint32_t* dst, unsigned dstStridePixels)
+void Utils::copyNV21toBGR32(unsigned width, unsigned height,
+                            uint8_t* src,
+                            uint32_t* dst, unsigned dstStridePixels)
 {
     return copyNV21toRGB32(width, height, src, dst, dstStridePixels, true);
 }
 
 
-void copyYV12toBGR32(unsigned width, unsigned height,
-                     uint8_t* src,
-                     uint32_t* dst, unsigned dstStridePixels)
+void Utils::copyYV12toBGR32(unsigned width, unsigned height,
+                            uint8_t* src,
+                            uint32_t* dst, unsigned dstStridePixels)
 {
     return copyYV12toRGB32(width, height, src, dst, dstStridePixels, true);
 }
 
 
-void copyYUYVtoBGR32(unsigned width, unsigned height,
-                     uint8_t* src, unsigned srcStridePixels,
-                     uint32_t* dst, unsigned dstStridePixels)
+void Utils::copyYUYVtoBGR32(unsigned width, unsigned height,
+                            uint8_t* src, unsigned srcStridePixels,
+                            uint32_t* dst, unsigned dstStridePixels)
 {
     return copyYUYVtoRGB32(width, height, src, srcStridePixels, dst, dstStridePixels, true);
 }
 
 
-void copyMatchedInterleavedFormats(unsigned width, unsigned height,
-                                   void* src, unsigned srcStridePixels,
-                                   void* dst, unsigned dstStridePixels,
-                                   unsigned pixelSize) {
+void Utils::copyMatchedInterleavedFormats(unsigned width, unsigned height,
+                                          void* src, unsigned srcStridePixels,
+                                          void* dst, unsigned dstStridePixels,
+                                          unsigned pixelSize) {
     for (unsigned row = 0; row < height; row++) {
         // Copy the entire row of pixel data
         memcpy(dst, src, width * pixelSize);
@@ -204,3 +211,10 @@ void copyMatchedInterleavedFormats(unsigned width, unsigned height,
         dst = (uint8_t*)dst + dstStridePixels * pixelSize;
     }
 }
+
+} // namespace common
+} // namespace evs
+} // namespace automotive
+} // namespace hardware
+} // namespace android
+
