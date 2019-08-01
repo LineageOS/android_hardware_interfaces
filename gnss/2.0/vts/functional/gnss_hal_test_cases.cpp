@@ -453,18 +453,18 @@ TEST_F(GnssHalTest, GetLocationLowPower) {
         // ensure that no location is received yet
 
         gnss_cb_->location_cbq_.retrieve(gnss_cb_->last_location_, kNoLocationPeriodSec);
-        const int locationCalledCount = gnss_cb_->location_cbq_.calledCount();
+        const int location_called_count = gnss_cb_->location_cbq_.calledCount();
 
         // Tolerate (ignore) one extra location right after the first one
         // to handle startup edge case scheduling limitations in some implementations
-        if ((i == 1) && (locationCalledCount == 2)) {
+        if ((i == 1) && (location_called_count == 2)) {
             CheckLocation(gnss_cb_->last_location_, true);
             continue;  // restart the quiet wait period after this too-fast location
         }
-        EXPECT_LE(locationCalledCount, i);
-        if (locationCalledCount != i) {
+        EXPECT_LE(location_called_count, i);
+        if (location_called_count != i) {
             ALOGW("GetLocationLowPower test - not enough locations received. %d vs. %d expected ",
-                  locationCalledCount, i);
+                  location_called_count, i);
         }
 
         if (!gnss_cb_->location_cbq_.retrieve(
