@@ -14,66 +14,47 @@
  * limitations under the License.
  */
 
-#ifndef GRALLO_WRAPPER_H_
-#define GRALLO_WRAPPER_H_
+#pragma once
 
+#include <utils/NativeHandle.h>
+
+#include <memory>
+#include <string>
 #include <unordered_set>
-
-#include <android/hardware/graphics/allocator/2.0/IAllocator.h>
-#include <android/hardware/graphics/mapper/2.0/IMapper.h>
-
-namespace allocator2 = ::android::hardware::graphics::allocator::V2_0;
-namespace mapper2 = ::android::hardware::graphics::mapper::V2_0;
+#include <utility>
 
 namespace android {
 
-// Modified from hardware/interfaces/graphics/mapper/2.0/vts/functional/
+class IGrallocHalWrapper;
+
+// Reference: hardware/interfaces/graphics/mapper/2.0/vts/functional/
 class GrallocWrapper {
    public:
     GrallocWrapper();
     ~GrallocWrapper();
 
-    sp<allocator2::IAllocator> getAllocator() const;
-    sp<mapper2::IMapper> getMapper() const;
+    // After constructing this object, this function must be called to check the result. If it
+    // returns false, other methods are not safe to call.
+    bool isInitialized() const { return (mGrallocHal != nullptr); };
 
     std::string dumpDebugInfo();
 
-    // When import is false, this simply calls IAllocator::allocate. When import
-    // is true, the returned buffers are also imported into the mapper.
-    //
-    // Either case, the returned buffers must be freed with freeBuffer.
-    std::vector<const native_handle_t*> allocate(const mapper2::BufferDescriptor& descriptor,
-                                                 uint32_t count, bool import = true,
-                                                 uint32_t* outStride = nullptr);
-    const native_handle_t* allocate(const mapper2::IMapper::BufferDescriptorInfo& descriptorInfo,
-                                    bool import = true, uint32_t* outStride = nullptr);
+    // Allocates a gralloc buffer suitable for direct channel sensors usage with the given size.
+    // The buffer should be freed using freeBuffer when it's not needed anymore; otherwise it'll
+    // be freed when this object is destroyed.
+    // Returns a handle to the buffer, and a CPU-accessible pointer for reading. On failure, both
+    // will be set to nullptr.
+    std::pair<native_handle_t*, void*> allocate(uint32_t size);
 
-    mapper2::BufferDescriptor createDescriptor(
-        const mapper2::IMapper::BufferDescriptorInfo& descriptorInfo);
+    // Releases a gralloc buffer previously returned by allocate()
+    void freeBuffer(native_handle_t* bufferHandle);
 
-    const native_handle_t* importBuffer(const hardware::hidl_handle& rawHandle);
-    void freeBuffer(const native_handle_t* bufferHandle);
-
-    // We use fd instead of hardware::hidl_handle in these functions to pass fences
-    // in and out of the mapper.  The ownership of the fd is always transferred
-    // with each of these functions.
-    void* lock(const native_handle_t* bufferHandle, uint64_t cpuUsage,
-               const mapper2::IMapper::Rect& accessRegion, int acquireFence);
-
-    int unlock(const native_handle_t* bufferHandle);
-
-   private:
-    void init();
-    const native_handle_t* cloneBuffer(const hardware::hidl_handle& rawHandle);
-
-    sp<allocator2::IAllocator> mAllocator;
-    sp<mapper2::IMapper> mMapper;
+  private:
+    std::unique_ptr<IGrallocHalWrapper> mGrallocHal;
 
     // Keep track of all cloned and imported handles.  When a test fails with
     // ASSERT_*, the destructor will free the handles for the test.
-    std::unordered_set<const native_handle_t*> mClonedBuffers;
-    std::unordered_set<const native_handle_t*> mImportedBuffers;
+    std::unordered_set<native_handle_t*> mAllocatedBuffers;
 };
 
 }  // namespace android
-#endif  // GRALLO_WRAPPER_H_
