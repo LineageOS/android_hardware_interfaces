@@ -556,6 +556,13 @@ const ConfigDeclaration kVehicleProperties[]{
                     .configArray = {(int)VehicleUnit::FAHRENHEIT, (int)VehicleUnit::CELSIUS}},
          .initialValue = {.int32Values = {(int)VehicleUnit::FAHRENHEIT}}},
 
+        {.config = {.prop = toInt(VehicleProperty::DISTANCE_DISPLAY_UNITS),
+                    .access = VehiclePropertyAccess::READ_WRITE,
+                    .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                    .configArray = {(int)VehicleUnit::KILOMETER, (int)VehicleUnit::MILE},
+                    .areaConfigs = {VehicleAreaConfig{.areaId = (0)}}},
+         .initialValue = {.int32Values = {(int)VehicleUnit::MILE}}},
+
         {.config =
                  {
                          .prop = toInt(VehicleProperty::NIGHT_MODE),
