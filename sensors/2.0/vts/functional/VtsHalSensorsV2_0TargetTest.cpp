@@ -790,7 +790,12 @@ TEST_F(SensorsHidlTest, Batch) {
     activateAllSensors(false /* enable */);
     for (const SensorInfo& sensor : getSensorsList()) {
         // Call batch on inactive sensor
-        ASSERT_EQ(batch(sensor.sensorHandle, sensor.minDelay, 0 /* maxReportLatencyNs */),
+        // One shot sensors have minDelay set to -1 which is an invalid
+        // parameter. Use 0 instead to avoid errors.
+        int64_t samplingPeriodNs = extractReportMode(sensor.flags) == SensorFlagBits::ONE_SHOT_MODE
+                                           ? 0
+                                           : sensor.minDelay;
+        ASSERT_EQ(batch(sensor.sensorHandle, samplingPeriodNs, 0 /* maxReportLatencyNs */),
                   Result::OK);
 
         // Activate the sensor
