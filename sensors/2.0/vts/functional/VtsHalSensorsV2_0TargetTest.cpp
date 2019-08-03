@@ -911,7 +911,9 @@ void SensorsHidlTest::checkRateLevel(const SensorInfo& sensor, int32_t directCha
                        [&](Result result, int32_t reportToken) {
                            if (isDirectReportRateSupported(sensor, rateLevel)) {
                                ASSERT_EQ(result, Result::OK);
-                               ASSERT_GT(reportToken, 0);
+                               if (rateLevel != RateLevel::STOP) {
+                                   ASSERT_GT(reportToken, 0);
+                               }
                            } else {
                                ASSERT_EQ(result, Result::BAD_VALUE);
                            }
