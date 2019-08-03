@@ -422,6 +422,17 @@ const ConfigDeclaration kVehicleProperties[]{
                                             .areaId = toInt(VehicleAreaWindow::REAR_WINDSHIELD)}}},
                 .initialValue = {.int32Values = {0}}  // Will be used for all areas.
         },
+        {
+                .config = {.prop = toInt(VehicleProperty::HVAC_ELECTRIC_DEFROSTER_ON),
+                           .access = VehiclePropertyAccess::READ_WRITE,
+                           .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                           .areaConfigs =
+                                   {VehicleAreaConfig{
+                                            .areaId = toInt(VehicleAreaWindow::FRONT_WINDSHIELD)},
+                                    VehicleAreaConfig{
+                                            .areaId = toInt(VehicleAreaWindow::REAR_WINDSHIELD)}}},
+                .initialValue = {.int32Values = {0}}  // Will be used for all areas.
+        },
 
         {.config = {.prop = toInt(VehicleProperty::HVAC_MAX_DEFROST_ON),
                     .access = VehiclePropertyAccess::READ_WRITE,
