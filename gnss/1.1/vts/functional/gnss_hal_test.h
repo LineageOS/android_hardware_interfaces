@@ -21,19 +21,17 @@
 
 #include <VtsHalHidlTargetTestBase.h>
 #include <VtsHalHidlTargetTestEnvBase.h>
-
-#include <condition_variable>
-#include <list>
-#include <mutex>
+#include "GnssCallbackEventQueue.h"
 
 using android::hardware::Return;
 using android::hardware::Void;
 
 using android::hardware::gnss::V1_0::GnssLocation;
 
+using android::hardware::gnss::common::GnssCallbackEventQueue;
+using android::hardware::gnss::V1_0::GnssLocationFlags;
 using android::hardware::gnss::V1_1::IGnss;
 using android::hardware::gnss::V1_1::IGnssCallback;
-using android::hardware::gnss::V1_0::GnssLocationFlags;
 
 using android::sp;
 
@@ -57,8 +55,6 @@ class GnssHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
 // The main test class for GNSS HAL.
 class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
    public:
-    GnssHalTest();
-
     virtual void SetUp() override;
 
     virtual void TearDown() override;
@@ -72,32 +68,40 @@ class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
     /* Callback class for data & Event. */
     class GnssCallback : public IGnssCallback {
        public:
-        GnssHalTest& parent_;
+         IGnssCallback::GnssSystemInfo last_info_;
+         android::hardware::hidl_string last_name_;
+         uint32_t last_capabilities_;
+         GnssLocation last_location_;
 
-        GnssCallback(GnssHalTest& parent) : parent_(parent){};
+         GnssCallbackEventQueue<IGnssCallback::GnssSystemInfo> info_cbq_;
+         GnssCallbackEventQueue<android::hardware::hidl_string> name_cbq_;
+         GnssCallbackEventQueue<uint32_t> capabilities_cbq_;
+         GnssCallbackEventQueue<GnssLocation> location_cbq_;
+         GnssCallbackEventQueue<IGnssCallback::GnssSvStatus> sv_status_cbq_;
 
-        virtual ~GnssCallback() = default;
+         GnssCallback();
+         virtual ~GnssCallback() = default;
 
-        // Dummy callback handlers
-        Return<void> gnssStatusCb(const IGnssCallback::GnssStatusValue /* status */) override {
-            return Void();
-        }
-        Return<void> gnssNmeaCb(int64_t /* timestamp */,
-                                const android::hardware::hidl_string& /* nmea */) override {
-            return Void();
-        }
-        Return<void> gnssAcquireWakelockCb() override { return Void(); }
-        Return<void> gnssReleaseWakelockCb() override { return Void(); }
-        Return<void> gnssRequestLocationCb(bool /* independentFromGnss */) override {
-            return Void();
-        }
-        Return<void> gnssRequestTimeCb() override { return Void(); }
-        // Actual (test) callback handlers
-        Return<void> gnssNameCb(const android::hardware::hidl_string& name) override;
-        Return<void> gnssLocationCb(const GnssLocation& location) override;
-        Return<void> gnssSetCapabilitesCb(uint32_t capabilities) override;
-        Return<void> gnssSetSystemInfoCb(const IGnssCallback::GnssSystemInfo& info) override;
-        Return<void> gnssSvStatusCb(const IGnssCallback::GnssSvStatus& svStatus) override;
+         // Dummy callback handlers
+         Return<void> gnssStatusCb(const IGnssCallback::GnssStatusValue /* status */) override {
+             return Void();
+         }
+         Return<void> gnssNmeaCb(int64_t /* timestamp */,
+                                 const android::hardware::hidl_string& /* nmea */) override {
+             return Void();
+         }
+         Return<void> gnssAcquireWakelockCb() override { return Void(); }
+         Return<void> gnssReleaseWakelockCb() override { return Void(); }
+         Return<void> gnssRequestLocationCb(bool /* independentFromGnss */) override {
+             return Void();
+         }
+         Return<void> gnssRequestTimeCb() override { return Void(); }
+         // Actual (test) callback handlers
+         Return<void> gnssNameCb(const android::hardware::hidl_string& name) override;
+         Return<void> gnssLocationCb(const GnssLocation& location) override;
+         Return<void> gnssSetCapabilitesCb(uint32_t capabilities) override;
+         Return<void> gnssSetSystemInfoCb(const IGnssCallback::GnssSystemInfo& info) override;
+         Return<void> gnssSvStatusCb(const IGnssCallback::GnssSvStatus& svStatus) override;
     };
 
     /*
@@ -152,26 +156,7 @@ class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
     bool IsGnssHalVersion_1_1() const;
 
     sp<IGnss> gnss_hal_;         // GNSS HAL to call into
-    sp<IGnssCallback> gnss_cb_;  // Primary callback interface
-
-    /* Count of calls to set the following items, and the latest item (used by
-     * test.)
-     */
-    int info_called_count_;
-    IGnssCallback::GnssSystemInfo last_info_;
-    uint32_t last_capabilities_;
-    int capabilities_called_count_;
-    int location_called_count_;
-    GnssLocation last_location_;
-    list<IGnssCallback::GnssSvStatus> list_gnss_sv_status_;
-
-    int name_called_count_;
-    android::hardware::hidl_string last_name_;
-
-   private:
-    std::mutex mtx_;
-    std::condition_variable cv_;
-    int notify_count_;
+    sp<GnssCallback> gnss_cb_;   // Primary callback interface
 };
 
 #endif  // GNSS_HAL_TEST_H_

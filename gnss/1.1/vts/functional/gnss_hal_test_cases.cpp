@@ -50,7 +50,7 @@ TEST_F(GnssHalTest, TestGnssMeasurementCallback) {
     ASSERT_TRUE(gnssMeasurement_1_1.isOk());
     auto gnssMeasurement_1_0 = gnss_hal_->getExtensionGnssMeasurement();
     ASSERT_TRUE(gnssMeasurement_1_0.isOk());
-    if (last_capabilities_ & IGnssCallback::Capabilities::MEASUREMENTS) {
+    if (gnss_cb_->last_capabilities_ & IGnssCallback::Capabilities::MEASUREMENTS) {
         sp<IGnssMeasurement_1_1> iGnssMeas_1_1 = gnssMeasurement_1_1;
         sp<IGnssMeasurement_1_0> iGnssMeas_1_0 = gnssMeasurement_1_0;
         // At least one interface must be non-null.
@@ -78,8 +78,10 @@ TEST_F(GnssHalTest, GetLocationLowPower) {
     const bool kLowPowerMode = true;
 
     // Warmup period - VTS doesn't have AGPS access via GnssLocationProvider
-    StartAndCheckLocations(5);
+    gnss_cb_->location_cbq_.reset();
+    StartAndCheckLocations(kLocationsToCheck);
     StopAndClearLocations();
+    gnss_cb_->location_cbq_.reset();
 
     // Start of Low Power Mode test
     SetPositionMode(kMinIntervalMsec, kLowPowerMode);
@@ -93,24 +95,27 @@ TEST_F(GnssHalTest, GetLocationLowPower) {
         // Verify that kMinIntervalMsec is respected by waiting kNoLocationPeriodSec and
         // ensure that no location is received yet
 
-        wait(kNoLocationPeriodSec);
+        gnss_cb_->location_cbq_.retrieve(gnss_cb_->last_location_, kNoLocationPeriodSec);
+        const int location_called_count = gnss_cb_->location_cbq_.calledCount();
+
         // Tolerate (ignore) one extra location right after the first one
         // to handle startup edge case scheduling limitations in some implementations
-        if ((i == 1) && (location_called_count_ == 2)) {
-            CheckLocation(last_location_, true);
+        if ((i == 1) && (location_called_count == 2)) {
+            CheckLocation(gnss_cb_->last_location_, true);
             continue;  // restart the quiet wait period after this too-fast location
         }
-        EXPECT_LE(location_called_count_, i);
-        if (location_called_count_ != i) {
+        EXPECT_LE(location_called_count, i);
+        if (location_called_count != i) {
             ALOGW("GetLocationLowPower test - not enough locations received. %d vs. %d expected ",
-                  location_called_count_, i);
+                  location_called_count, i);
         }
 
-        if (std::cv_status::no_timeout !=
-            wait(kLocationTimeoutSubsequentSec - kNoLocationPeriodSec)) {
+        if (!gnss_cb_->location_cbq_.retrieve(
+                    gnss_cb_->last_location_,
+                    kLocationTimeoutSubsequentSec - kNoLocationPeriodSec)) {
             ALOGW("GetLocationLowPower test - timeout awaiting location %d", i);
         } else {
-            CheckLocation(last_location_, true);
+            CheckLocation(gnss_cb_->last_location_, true);
         }
     }
 
@@ -222,12 +227,15 @@ TEST_F(GnssHalTest, BlacklistIndividualSatellites) {
     const int kLocationsToAwait = 3;
     const int kRetriesToUnBlacklist = 10;
 
+    gnss_cb_->location_cbq_.reset();
     StartAndCheckLocations(kLocationsToAwait);
+    int location_called_count = gnss_cb_->location_cbq_.calledCount();
 
     // Tolerate 1 less sv status to handle edge cases in reporting.
-    EXPECT_GE((int)list_gnss_sv_status_.size() + 1, kLocationsToAwait);
-    ALOGD("Observed %d GnssSvStatus, while awaiting %d Locations (%d received)",
-          (int)list_gnss_sv_status_.size(), kLocationsToAwait, location_called_count_);
+    int sv_status_cbq_size = gnss_cb_->sv_status_cbq_.size();
+    EXPECT_GE(sv_status_cbq_size + 1, kLocationsToAwait);
+    ALOGD("Observed %d GnssSvStatus, while awaiting %d Locations (%d received)", sv_status_cbq_size,
+          kLocationsToAwait, location_called_count);
 
     /*
      * Identify strongest SV seen at least kLocationsToAwait -1 times
@@ -235,8 +243,14 @@ TEST_F(GnssHalTest, BlacklistIndividualSatellites) {
      * observability (one epoch RF null)
      */
 
+    const int kGnssSvStatusTimeout = 2;
+    list<IGnssCallback::GnssSvStatus> sv_status_list;
+    int count = gnss_cb_->sv_status_cbq_.retrieve(sv_status_list, sv_status_cbq_size,
+                                                  kGnssSvStatusTimeout);
+    ASSERT_EQ(count, sv_status_cbq_size);
+
     IGnssConfiguration::BlacklistedSource source_to_blacklist =
-        FindStrongFrequentNonGpsSource(list_gnss_sv_status_, kLocationsToAwait - 1);
+            FindStrongFrequentNonGpsSource(sv_status_list, kLocationsToAwait - 1);
 
     if (source_to_blacklist.constellation == GnssConstellationType::UNKNOWN) {
         // Cannot find a non-GPS satellite. Let the test pass.
@@ -260,21 +274,26 @@ TEST_F(GnssHalTest, BlacklistIndividualSatellites) {
     EXPECT_TRUE(result);
 
     // retry and ensure satellite not used
-    list_gnss_sv_status_.clear();
+    gnss_cb_->sv_status_cbq_.reset();
 
+    gnss_cb_->location_cbq_.reset();
     StartAndCheckLocations(kLocationsToAwait);
 
     // early exit if test is being run with insufficient signal
-    if (location_called_count_ == 0) {
+    location_called_count = gnss_cb_->location_cbq_.calledCount();
+    if (location_called_count == 0) {
         ALOGE("0 Gnss locations received - ensure sufficient signal and retry");
     }
-    ASSERT_TRUE(location_called_count_ > 0);
+    ASSERT_TRUE(location_called_count > 0);
 
     // Tolerate 1 less sv status to handle edge cases in reporting.
-    EXPECT_GE((int)list_gnss_sv_status_.size() + 1, kLocationsToAwait);
-    ALOGD("Observed %d GnssSvStatus, while awaiting %d Locations (%d received)",
-          (int)list_gnss_sv_status_.size(), kLocationsToAwait, location_called_count_);
-    for (const auto& gnss_sv_status : list_gnss_sv_status_) {
+    sv_status_cbq_size = gnss_cb_->sv_status_cbq_.size();
+    EXPECT_GE(sv_status_cbq_size + 1, kLocationsToAwait);
+    ALOGD("Observed %d GnssSvStatus, while awaiting %d Locations (%d received)", sv_status_cbq_size,
+          kLocationsToAwait, location_called_count);
+    for (int i = 0; i < sv_status_cbq_size; ++i) {
+        IGnssCallback::GnssSvStatus gnss_sv_status;
+        gnss_cb_->sv_status_cbq_.retrieve(gnss_sv_status, kGnssSvStatusTimeout);
         for (uint32_t iSv = 0; iSv < gnss_sv_status.numSvs; iSv++) {
             const auto& gnss_sv = gnss_sv_status.gnssSvList[iSv];
             EXPECT_FALSE((gnss_sv.svid == source_to_blacklist.svid) &&
@@ -295,24 +314,28 @@ TEST_F(GnssHalTest, BlacklistIndividualSatellites) {
     int unblacklist_loops_remaining = kRetriesToUnBlacklist;
     while (!strongest_sv_is_reobserved && (unblacklist_loops_remaining-- > 0)) {
         StopAndClearLocations();
-        list_gnss_sv_status_.clear();
+        gnss_cb_->sv_status_cbq_.reset();
 
+        gnss_cb_->location_cbq_.reset();
         StartAndCheckLocations(kLocationsToAwait);
 
         // early exit loop if test is being run with insufficient signal
-        if (location_called_count_ == 0) {
+        location_called_count = gnss_cb_->location_cbq_.calledCount();
+        if (location_called_count == 0) {
             ALOGE("0 Gnss locations received - ensure sufficient signal and retry");
         }
-        ASSERT_TRUE(location_called_count_ > 0);
+        ASSERT_TRUE(location_called_count > 0);
 
         // Tolerate 1 less sv status to handle edge cases in reporting.
-        EXPECT_GE((int)list_gnss_sv_status_.size() + 1, kLocationsToAwait);
-        ALOGD(
-            "Clear blacklist, observed %d GnssSvStatus, while awaiting %d Locations"
-            ", tries remaining %d",
-            (int)list_gnss_sv_status_.size(), kLocationsToAwait, unblacklist_loops_remaining);
+        sv_status_cbq_size = gnss_cb_->sv_status_cbq_.size();
+        EXPECT_GE(sv_status_cbq_size + 1, kLocationsToAwait);
+        ALOGD("Clear blacklist, observed %d GnssSvStatus, while awaiting %d Locations"
+              ", tries remaining %d",
+              sv_status_cbq_size, kLocationsToAwait, unblacklist_loops_remaining);
 
-        for (const auto& gnss_sv_status : list_gnss_sv_status_) {
+        for (int i = 0; i < sv_status_cbq_size; ++i) {
+            IGnssCallback::GnssSvStatus gnss_sv_status;
+            gnss_cb_->sv_status_cbq_.retrieve(gnss_sv_status, kGnssSvStatusTimeout);
             for (uint32_t iSv = 0; iSv < gnss_sv_status.numSvs; iSv++) {
                 const auto& gnss_sv = gnss_sv_status.gnssSvList[iSv];
                 if ((gnss_sv.svid == source_to_blacklist.svid) &&
@@ -347,16 +370,22 @@ TEST_F(GnssHalTest, BlacklistConstellation) {
 
     const int kLocationsToAwait = 3;
 
+    gnss_cb_->location_cbq_.reset();
     StartAndCheckLocations(kLocationsToAwait);
+    const int location_called_count = gnss_cb_->location_cbq_.calledCount();
 
     // Tolerate 1 less sv status to handle edge cases in reporting.
-    EXPECT_GE((int)list_gnss_sv_status_.size() + 1, kLocationsToAwait);
-    ALOGD("Observed %d GnssSvStatus, while awaiting %d Locations (%d received)",
-          (int)list_gnss_sv_status_.size(), kLocationsToAwait, location_called_count_);
+    int sv_status_cbq_size = gnss_cb_->sv_status_cbq_.size();
+    EXPECT_GE(sv_status_cbq_size + 1, kLocationsToAwait);
+    ALOGD("Observed %d GnssSvStatus, while awaiting %d Locations (%d received)", sv_status_cbq_size,
+          kLocationsToAwait, location_called_count);
 
     // Find first non-GPS constellation to blacklist
+    const int kGnssSvStatusTimeout = 2;
     GnssConstellationType constellation_to_blacklist = GnssConstellationType::UNKNOWN;
-    for (const auto& gnss_sv_status : list_gnss_sv_status_) {
+    for (int i = 0; i < sv_status_cbq_size; ++i) {
+        IGnssCallback::GnssSvStatus gnss_sv_status;
+        gnss_cb_->sv_status_cbq_.retrieve(gnss_sv_status, kGnssSvStatusTimeout);
         for (uint32_t iSv = 0; iSv < gnss_sv_status.numSvs; iSv++) {
             const auto& gnss_sv = gnss_sv_status.gnssSvList[iSv];
             if ((gnss_sv.svFlag & IGnssCallback::GnssSvFlags::USED_IN_FIX) &&
@@ -395,16 +424,19 @@ TEST_F(GnssHalTest, BlacklistConstellation) {
     EXPECT_TRUE(result);
 
     // retry and ensure constellation not used
-    list_gnss_sv_status_.clear();
+    gnss_cb_->sv_status_cbq_.reset();
 
-    location_called_count_ = 0;
+    gnss_cb_->location_cbq_.reset();
     StartAndCheckLocations(kLocationsToAwait);
 
     // Tolerate 1 less sv status to handle edge cases in reporting.
-    EXPECT_GE((int)list_gnss_sv_status_.size() + 1, kLocationsToAwait);
-    ALOGD("Observed %d GnssSvStatus, while awaiting %d Locations", (int)list_gnss_sv_status_.size(),
+    sv_status_cbq_size = gnss_cb_->sv_status_cbq_.size();
+    EXPECT_GE(sv_status_cbq_size + 1, kLocationsToAwait);
+    ALOGD("Observed %d GnssSvStatus, while awaiting %d Locations", sv_status_cbq_size,
           kLocationsToAwait);
-    for (const auto& gnss_sv_status : list_gnss_sv_status_) {
+    for (int i = 0; i < sv_status_cbq_size; ++i) {
+        IGnssCallback::GnssSvStatus gnss_sv_status;
+        gnss_cb_->sv_status_cbq_.retrieve(gnss_sv_status, kGnssSvStatusTimeout);
         for (uint32_t iSv = 0; iSv < gnss_sv_status.numSvs; iSv++) {
             const auto& gnss_sv = gnss_sv_status.gnssSvList[iSv];
             EXPECT_FALSE((gnss_sv.constellation == source_to_blacklist.constellation) &&
@@ -427,7 +459,7 @@ TEST_F(GnssHalTest, BlacklistConstellation) {
  */
 TEST_F(GnssHalTest, InjectBestLocation) {
     StartAndCheckLocations(1);
-    GnssLocation gnssLocation = last_location_;
+    GnssLocation gnssLocation = gnss_cb_->last_location_;
     CheckLocation(gnssLocation, true);
 
     auto result = gnss_hal_->injectBestLocation(gnssLocation);
@@ -447,7 +479,7 @@ TEST_F(GnssHalTest, InjectBestLocation) {
 TEST_F(GnssHalTest, GnssDebugValuesSanityTest) {
     auto gnssDebug = gnss_hal_->getExtensionGnssDebug();
     ASSERT_TRUE(gnssDebug.isOk());
-    if (info_called_count_ > 0 && last_info_.yearOfHw >= 2017) {
+    if (gnss_cb_->info_cbq_.calledCount() > 0 && gnss_cb_->last_info_.yearOfHw >= 2017) {
         sp<IGnssDebug> iGnssDebug = gnssDebug;
         EXPECT_NE(iGnssDebug, nullptr);
 

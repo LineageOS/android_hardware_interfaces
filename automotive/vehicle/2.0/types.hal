@@ -799,7 +799,7 @@ enum VehicleProperty : int32_t {
         | VehicleArea:SEAT),
 
     /**
-     * On/off defrost for designated window
+     * Fan-based defrost for designated window.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
@@ -1076,6 +1076,7 @@ enum VehicleProperty : int32_t {
      *
      * @change_mode VehiclePropertyChangeMode:STATIC
      * @access VehiclePropertyAccess:READ
+     * @data_enum VehicleHvacFanDirection
      */
     HVAC_FAN_DIRECTION_AVAILABLE = (
         0x0511
@@ -1117,6 +1118,18 @@ enum VehicleProperty : int32_t {
         | VehiclePropertyGroup:SYSTEM
         | VehiclePropertyType:INT32
         | VehicleArea:SEAT),
+
+    /**
+     * Electric defrosters' status
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
+     */
+    HVAC_ELECTRIC_DEFROSTER_ON = (
+        0x0514
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:BOOLEAN
+        | VehicleArea:WINDOW),
 
    /**
      * Distance units for display
@@ -2458,9 +2471,19 @@ enum FuelType : int32_t {
  * Bit flags for fan direction
  */
 enum VehicleHvacFanDirection : int32_t {
+    UNKNOWN = 0x0,
+
     FACE = 0x1,
     FLOOR = 0x2,
+    /**
+     * FACE_AND_FLOOR = FACE | FLOOR
+     */
+    FACE_AND_FLOOR = 0X3,
     DEFROST = 0x4,
+    /**
+     * DEFROST_AND_FLOOR = DEFROST | FLOOR
+     */
+    DEFROST_AND_FLOOR = 0x06,
 };
 
 enum VehicleOilLevel : int32_t {
@@ -2723,6 +2746,8 @@ enum VehiclePropertyStatus : int32_t {
  * Various gears which can be selected by user and chosen in system.
  */
 enum VehicleGear : int32_t {
+    GEAR_UNKNOWN = 0x0000,
+
     GEAR_NEUTRAL = 0x0001,
     GEAR_REVERSE = 0x0002,
     GEAR_PARK = 0x0004,
