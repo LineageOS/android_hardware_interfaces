@@ -36,7 +36,6 @@ interface IExpressionExt {
         SixteenColors my16Colors;
     };
 
-    @callflow(key=@1.0::IExpression.Constants:MAX_ARRAY_SIZE)
     foo3(int32_t[IExpression.Constants:MAX_ARRAY_SIZE] array);
     foo2(SixteenColors array);
     foo1(int32_t[Constants:CONST_FOO + 5] array);
