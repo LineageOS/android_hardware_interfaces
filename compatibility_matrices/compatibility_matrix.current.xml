@@ -195,8 +195,8 @@
     </hal>
     <hal format="hidl" optional="false">
         <name>android.hardware.graphics.allocator</name>
-        <version>2.0</version>
         <version>3.0</version>
+        <version>4.0</version>
         <interface>
             <name>IAllocator</name>
             <instance>default</instance>
@@ -212,8 +212,8 @@
     </hal>
     <hal format="hidl" optional="false">
         <name>android.hardware.graphics.mapper</name>
-        <version>2.1</version>
         <version>3.0</version>
+        <version>4.0</version>
         <interface>
             <name>IMapper</name>
             <instance>default</instance>
