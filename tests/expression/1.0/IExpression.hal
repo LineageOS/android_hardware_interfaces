@@ -215,7 +215,6 @@ interface IExpression {
     MY_INT32_MIN_PLUS_1, // 0x80000001
   };
 
-  @callflow(key=Constants:CONST_FOO + 1)
   foo1(int32_t[Constants:CONST_FOO + 1] array);
   foo2(int32_t[5 + 8] array);
   foo3(int32_t[Constants:MAX_ARRAY_SIZE] array);
