@@ -29,6 +29,7 @@ cc_test {
         "libhidlbase",
         "libhidltransport",
         "libhwbinder",
+        "libprocessgroup",
         "libsync",
         "libui",
         "libgui",
