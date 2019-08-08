@@ -2478,7 +2478,7 @@ enum VehicleHvacFanDirection : int32_t {
     /**
      * FACE_AND_FLOOR = FACE | FLOOR
      */
-    FACE_AND_FLOOR = 0X3,
+    FACE_AND_FLOOR = 0x3,
     DEFROST = 0x4,
     /**
      * DEFROST_AND_FLOOR = DEFROST | FLOOR
