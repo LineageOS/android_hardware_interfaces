@@ -1,0 +1,171 @@
+/*
+ * Copyright (C) 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.neuralnetworks@1.3;
+
+import @1.0::ErrorStatus;
+import @1.1::ExecutionPreference;
+import @1.2::Constant;
+import @1.2::DeviceType;
+import @1.2::Extension;
+import @1.2::IDevice;
+import @1.2::IPreparedModelCallback;
+
+/**
+ * This interface represents a device driver.
+ */
+interface IDevice extends @1.2::IDevice {
+    /**
+     * Gets the capabilities of a driver.
+     *
+     * @return status Error status of the call, must be:
+     *                - NONE if successful
+     *                - DEVICE_UNAVAILABLE if driver is offline or busy
+     *                - GENERAL_FAILURE if there is an unspecified error
+     * @return capabilities Capabilities of the driver.
+     */
+    getCapabilities_1_3() generates (ErrorStatus status, Capabilities capabilities);
+
+    /**
+     * Gets the supported operations in a model.
+     *
+     * getSupportedOperations indicates which operations of a model are fully
+     * supported by the vendor driver. If an operation may not be supported for
+     * any reason, getSupportedOperations must return false for that operation.
+     *
+     * @param model A model whose operations--and their corresponding operands--
+     *     are to be verified by the driver.
+     * @return status Error status of the call, must be:
+     *     - NONE if successful
+     *     - DEVICE_UNAVAILABLE if driver is offline or busy
+     *     - GENERAL_FAILURE if there is an unspecified error
+     *     - INVALID_ARGUMENT if provided model is invalid
+     * @return supportedOperations A list of supported operations, where true
+     *     indicates the operation is supported and false indicates the
+     *     operation is not supported. The index of "supported" corresponds with
+     *     the index of the operation it is describing.
+     */
+    getSupportedOperations_1_3(Model model)
+        generates (ErrorStatus status, vec<bool> supportedOperations);
+
+    /**
+     * Asynchronously creates a prepared model for execution and optionally
+     * saves it into cache files.
+     *
+     * prepareModel is used to make any necessary transformations to or
+     * alternative representations to a model for execution, possibly including
+     * transformations on the constant data, optimization on the model's graph,
+     * or compilation into the device's native binary format. The model itself
+     * is not changed.
+     *
+     * Optionally, caching information may be provided for the driver to save
+     * the prepared model to cache files for faster model compilation time when
+     * the same model preparation is requested in the future. There are two
+     * types of cache file handles provided to the driver: model cache and data
+     * cache. For more information on the two types of cache handles, refer to
+     * getNumberOfCacheFilesNeeded.
+     *
+     * The file descriptors must be opened with read and write permission. A
+     * file may have any size, and the corresponding file descriptor may have
+     * any offset. The driver must truncate a file to zero size before writing
+     * to that file. The file descriptors may be closed by the client once the
+     * asynchronous preparation has finished. The driver must dup a file
+     * descriptor if it wants to get access to the cache file later.
+     *
+     * The model is prepared asynchronously with respect to the caller. The
+     * prepareModel function must verify the inputs to the preparedModel
+     * function related to preparing the model (as opposed to saving the
+     * prepared model to cache) are correct. If there is an error, prepareModel
+     * must immediately invoke the callback with the appropriate ErrorStatus
+     * value and nullptr for the IPreparedModel, then return with the same
+     * ErrorStatus. If the inputs to the prepareModel function that are related
+     * to preparing the model are valid and there is no error, prepareModel must
+     * launch an asynchronous task to prepare the model in the background, and
+     * immediately return from prepareModel with ErrorStatus::NONE. If the
+     * asynchronous task fails to launch, prepareModel must immediately invoke
+     * the callback with ErrorStatus::GENERAL_FAILURE and nullptr for the
+     * IPreparedModel, then return with ErrorStatus::GENERAL_FAILURE.
+     *
+     * When the asynchronous task has finished preparing the model, it must
+     * immediately invoke the callback function provided as an input to
+     * prepareModel. If the model was prepared successfully, the callback object
+     * must be invoked with an error status of ErrorStatus::NONE and the
+     * produced IPreparedModel object. If an error occurred preparing the model,
+     * the callback object must be invoked with the appropriate ErrorStatus
+     * value and nullptr for the IPreparedModel.
+     *
+     * Optionally, the driver may save the prepared model to cache during the
+     * asynchronous preparation. Any error that occurs when saving to cache must
+     * not affect the status of preparing the model. Even if the input arguments
+     * related to the cache may be invalid, or the driver may fail to save to
+     * cache, the prepareModel function must finish preparing the model. The
+     * driver may choose not to save to cache even if the caching information is
+     * provided and valid.
+     *
+     * The only information that may be unknown to the model at this stage is
+     * the shape of the tensors, which may only be known at execution time. As
+     * such, some driver services may return partially prepared models, where
+     * the prepared model may only be finished when it is paired with a set of
+     * inputs to the model. Note that the same prepared model object may be used
+     * with different shapes of inputs on different (possibly concurrent)
+     * executions.
+     *
+     * Multiple threads may call prepareModel on the same model concurrently.
+     *
+     * @param model The model to be prepared for execution.
+     * @param preference Indicates the intended execution behavior of a prepared
+     *     model.
+     * @param modelCache A vector of handles with each entry holding exactly one
+     *     cache file descriptor for the security-sensitive cache. The length of
+     *     the vector must either be 0 indicating that caching information is
+     *     not provided, or match the numModelCache returned from
+     *     getNumberOfCacheFilesNeeded. The cache handles will be provided in
+     *     the same order when retrieving the preparedModel from cache files
+     *     with prepareModelFromCache.
+     * @param dataCache A vector of handles with each entry holding exactly one
+     *     cache file descriptor for the constants' cache. The length of the
+     *     vector must either be 0 indicating that caching information is not
+     *     provided, or match the numDataCache returned from
+     *     getNumberOfCacheFilesNeeded. The cache handles will be provided in
+     *     the same order when retrieving the preparedModel from cache files
+     *     with prepareModelFromCache.
+     * @param token A caching token of length Constant::BYTE_SIZE_OF_CACHE_TOKEN
+     *     identifying the prepared model. The same token will be provided when
+     *     retrieving the prepared model from the cache files with
+     *     prepareModelFromCache.  Tokens should be chosen to have a low rate of
+     *     collision for a particular application. The driver cannot detect a
+     *     collision; a collision will result in a failed execution or in a
+     *     successful execution that produces incorrect output values. If both
+     *     modelCache and dataCache are empty indicating that caching
+     *     information is not provided, this token must be ignored.
+     * @param callback A callback object used to return the error status of
+     *     preparing the model for execution and the prepared model if
+     *     successful, nullptr otherwise. The callback object's notify function
+     *     must be called exactly once, even if the model could not be prepared.
+     * @return status Error status of launching a task which prepares the model
+     *     in the background; must be:
+     *     - NONE if preparation task is successfully launched
+     *     - DEVICE_UNAVAILABLE if driver is offline or busy
+     *     - GENERAL_FAILURE if there is an unspecified error
+     *     - INVALID_ARGUMENT if one of the input arguments related to preparing
+     *       the model is invalid
+     */
+    prepareModel_1_3(Model model, ExecutionPreference preference,
+                     vec<handle> modelCache, vec<handle> dataCache,
+                     uint8_t[Constant:BYTE_SIZE_OF_CACHE_TOKEN] token,
+                     IPreparedModelCallback callback)
+        generates (ErrorStatus status);
+};
