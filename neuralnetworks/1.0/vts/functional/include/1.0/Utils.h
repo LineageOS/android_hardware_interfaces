@@ -26,8 +26,11 @@ namespace android {
 namespace hardware {
 namespace neuralnetworks {
 
-void copy_back(::test_helper::MixedTyped* dst, const std::vector<V1_0::RequestArgument>& ra,
-               char* src);
+// Create HIDL Request from the TestModel struct.
+V1_0::Request createRequest(const ::test_helper::TestModel& testModel);
+
+// After execution, copy out output results from the output memory pool.
+std::vector<::test_helper::TestBuffer> getOutputBuffers(const V1_0::Request& request);
 
 // Delete element from hidl_vec. hidl_vec doesn't support a "remove" operation,
 // so this is efficiently accomplished by moving the element to the end and

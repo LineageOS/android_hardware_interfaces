@@ -121,7 +121,7 @@ void NeuralnetworksHidlTest::TearDown() {
     ::testing::VtsHalHidlTargetTestBase::TearDown();
 }
 
-void ValidationTest::validateEverything(const Model& model, const std::vector<Request>& requests) {
+void ValidationTest::validateEverything(const Model& model, const Request& request) {
     validateModel(model);
 
     // create IPreparedModel
@@ -131,7 +131,7 @@ void ValidationTest::validateEverything(const Model& model, const std::vector<Re
         return;
     }
 
-    validateRequests(preparedModel, requests);
+    validateRequest(preparedModel, request);
 }
 
 }  // namespace functional

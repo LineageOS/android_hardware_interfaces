@@ -26,10 +26,9 @@ namespace neuralnetworks {
 namespace V1_0 {
 namespace generated_tests {
 
-using ::test_helper::MixedTypedExample;
+Model createModel(const ::test_helper::TestModel& testModel);
 
-void Execute(const sp<V1_0::IDevice>& device, std::function<V1_0::Model(void)> create_model,
-             std::function<bool(int)> is_ignored, const std::vector<MixedTypedExample>& examples);
+void Execute(const sp<V1_0::IDevice>& device, const ::test_helper::TestModel& testModel);
 
 }  // namespace generated_tests
 }  // namespace V1_0
