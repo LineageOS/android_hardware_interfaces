@@ -592,6 +592,14 @@ const ConfigDeclaration kVehicleProperties[]{
 
         {.config =
                  {
+                         .prop = toInt(VehicleProperty::TURN_SIGNAL_STATE),
+                         .access = VehiclePropertyAccess::READ,
+                         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                 },
+         .initialValue = {.int32Values = {toInt(VehicleTurnSignal::NONE)}}},
+
+        {.config =
+                 {
                          .prop = toInt(VehicleProperty::IGNITION_STATE),
                          .access = VehiclePropertyAccess::READ,
                          .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
