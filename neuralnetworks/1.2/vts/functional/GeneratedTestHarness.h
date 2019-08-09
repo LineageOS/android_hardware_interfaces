@@ -30,18 +30,15 @@ namespace neuralnetworks {
 namespace V1_2 {
 namespace generated_tests {
 
-using ::test_helper::MixedTypedExample;
+Model createModel(const ::test_helper::TestModel& testModel);
 
 void PrepareModel(const sp<V1_2::IDevice>& device, const V1_2::Model& model,
                   sp<V1_2::IPreparedModel>* preparedModel);
 
-void EvaluatePreparedModel(sp<V1_2::IPreparedModel>& preparedModel,
-                           std::function<bool(int)> is_ignored,
-                           const std::vector<MixedTypedExample>& examples,
-                           bool hasRelaxedFloat32Model, bool testDynamicOutputShape);
+void EvaluatePreparedModel(const sp<V1_2::IPreparedModel>& preparedModel,
+                           const ::test_helper::TestModel& testModel, bool testDynamicOutputShape);
 
-void Execute(const sp<V1_2::IDevice>& device, std::function<V1_2::Model(void)> create_model,
-             std::function<bool(int)> is_ignored, const std::vector<MixedTypedExample>& examples,
+void Execute(const sp<V1_2::IDevice>& device, const ::test_helper::TestModel& testModel,
              bool testDynamicOutputShape = false);
 
 }  // namespace generated_tests
