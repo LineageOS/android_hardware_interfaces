@@ -163,7 +163,7 @@ class ISensorsSubHal : public ISensors {
     /**
      * @return A human-readable name for use in wake locks and logging.
      */
-    virtual const std::string& getName() = 0;
+    virtual const std::string getName() = 0;
 
     /**
      * First method invoked on the sub-HAL after it's allocated through sensorsHalGetSubHal() by the

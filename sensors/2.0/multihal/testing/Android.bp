@@ -13,16 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-cc_binary {
-    name: "android.hardware.sensors@2.0-service.multihal",
-    defaults: ["hidl_defaults"],
+cc_defaults {
+    name: "android.hardware.sensors@2.0-fakesubhal-defaults",
     vendor: true,
-    relative_install_path: "hw",
     srcs: [
-        "service.cpp",
-        "HalProxy.cpp",
+        "Sensor.cpp",
+        "SensorsSubHal.cpp",
     ],
-    init_rc: ["android.hardware.sensors@2.0-service-multihal.rc"],
     header_libs: [
         "android.hardware.sensors@2.0-subhal.header",
     ],
@@ -37,11 +34,22 @@ cc_binary {
         "libpower",
         "libutils",
     ],
-    vintf_fragments: ["android.hardware.sensors@2.0-multihal.xml"],
 }
 
-cc_library_headers {
-    name: "android.hardware.sensors@2.0-subhal.header",
-    vendor: true,
-    export_include_dirs: ["include"],
+cc_library {
+    name: "android.hardware.sensors@2.0-fakesubhal-config1",
+    defaults: ["android.hardware.sensors@2.0-fakesubhal-defaults"],
+    cflags: [
+        "-DSUPPORT_CONTINUOUS_SENSORS",
+        "-DSUB_HAL_NAME=\"FakeSubHal-Continuous\"",
+    ],
+}
+
+cc_library {
+    name: "android.hardware.sensors@2.0-fakesubhal-config2",
+    defaults: ["android.hardware.sensors@2.0-fakesubhal-defaults"],
+    cflags: [
+        "-DSUPPORT_ON_CHANGE_SENSORS",
+        "-DSUB_HAL_NAME=\"FakeSubHal-OnChange\"",
+    ],
 }
