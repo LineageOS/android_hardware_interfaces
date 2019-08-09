@@ -25,6 +25,7 @@
 #include <android/hidl/memory/1.0/IMemory.h>
 #include <hidlmemory/mapping.h>
 
+#include <algorithm>
 #include <vector>
 
 namespace android {
@@ -63,11 +64,19 @@ Request createRequest(const TestModel& testModel) {
     size_t outputSize = 0;
     for (uint32_t i = 0; i < testModel.outputIndexes.size(); i++) {
         const auto& op = testModel.operands[testModel.outputIndexes[i]];
-        size_t dataSize = op.data.size();
+
+        // In the case of zero-sized output, we should at least provide a one-byte buffer.
+        // This is because zero-sized tensors are only supported internally to the driver, or
+        // reported in output shapes. It is illegal for the client to pre-specify a zero-sized
+        // tensor as model output. Otherwise, we will have two semantic conflicts:
+        // - "Zero dimension" conflicts with "unspecified dimension".
+        // - "Omitted operand buffer" conflicts with "zero-sized operand buffer".
+        size_t bufferSize = std::max<size_t>(op.data.size(), 1);
+
         DataLocation loc = {.poolIndex = kOutputPoolIndex,
                             .offset = static_cast<uint32_t>(outputSize),
-                            .length = static_cast<uint32_t>(dataSize)};
-        outputSize += op.data.alignedSize();
+                            .length = static_cast<uint32_t>(bufferSize)};
+        outputSize += op.data.size() == 0 ? TestBuffer::kAlignment : op.data.alignedSize();
         outputs[i] = {.hasNoValue = false, .location = loc, .dimensions = {}};
     }
 
