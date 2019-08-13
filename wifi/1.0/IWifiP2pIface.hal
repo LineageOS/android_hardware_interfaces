@@ -19,6 +19,6 @@ package android.hardware.wifi@1.0;
 import IWifiIface;
 
 /**
- * Interface used to represent a single NAN iface.
+ * Interface used to represent a single P2P iface.
  */
 interface IWifiP2pIface extends IWifiIface {};
