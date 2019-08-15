@@ -53,7 +53,7 @@ cc_test {
     name: "VtsHalNeuralnetworksV1_2CompatV1_0TargetTest",
     defaults: ["VtsHalNeuralNetworksV1_2TargetTestDefaults"],
     srcs: [
-        "GeneratedTestsV1_0.cpp",
+        ":VtsHalNeuralNetworksV1_2_all_generated_V1_0_tests",
         "ValidateBurst.cpp",
     ],
 }
@@ -63,7 +63,7 @@ cc_test {
     name: "VtsHalNeuralnetworksV1_2CompatV1_1TargetTest",
     defaults: ["VtsHalNeuralNetworksV1_2TargetTestDefaults"],
     srcs: [
-        "GeneratedTestsV1_1.cpp",
+        ":VtsHalNeuralNetworksV1_2_all_generated_V1_1_tests",
         "ValidateBurst.cpp",
     ],
 }
@@ -74,8 +74,9 @@ cc_test {
     defaults: ["VtsHalNeuralNetworksV1_2TargetTestDefaults"],
     srcs: [
         "BasicTests.cpp",
+        ":VtsHalNeuralNetworksV1_2_all_generated_V1_2_tests",
         "CompilationCachingTests.cpp",
-        "GeneratedTestsV1_2.cpp",
+        ":VtsHalNeuralNetworksV1_2_mobilenets", // CompilationCachingTests depend on MobileNets.
         "ValidateBurst.cpp",
     ],
 }
@@ -85,7 +86,7 @@ cc_test {
     defaults: ["VtsHalNeuralNetworksV1_2TargetTestDefaults"],
     srcs: [
         "BasicTests.cpp",
-        "GeneratedTestsV1_2.cpp",
+        ":VtsHalNeuralNetworksV1_2_all_generated_V1_2_tests",
         "ValidateBurst.cpp",
     ],
     cflags: [
