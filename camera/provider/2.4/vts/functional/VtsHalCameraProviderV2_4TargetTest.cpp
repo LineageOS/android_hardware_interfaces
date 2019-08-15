@@ -607,7 +607,9 @@ public:
 
     struct DeviceCb : public V3_5::ICameraDeviceCallback {
         DeviceCb(CameraHidlTest *parent, int deviceVersion, const camera_metadata_t *staticMeta) :
-                mParent(parent), mDeviceVersion(deviceVersion), mStaticMetadata(staticMeta) {}
+                mParent(parent), mDeviceVersion(deviceVersion) {
+            mStaticMetadata = staticMeta;
+        }
 
         Return<void> processCaptureResult_3_4(
                 const hidl_vec<V3_4::CaptureResult>& results) override;
@@ -631,7 +633,7 @@ public:
 
         CameraHidlTest *mParent; // Parent object
         int mDeviceVersion;
-        const camera_metadata_t *mStaticMetadata;
+        android::hardware::camera::common::V1_0::helper::CameraMetadata mStaticMetadata;
         bool hasOutstandingBuffersLocked();
 
         /* members for requestStreamBuffers() and returnStreamBuffers()*/
@@ -1194,18 +1196,20 @@ bool CameraHidlTest::DeviceCb::processCaptureResultLocked(const CaptureResult& r
         // Verify final result metadata
         bool isAtLeast_3_5 = mDeviceVersion >= CAMERA_DEVICE_API_VERSION_3_5;
         if (isAtLeast_3_5) {
+            auto staticMetadataBuffer = mStaticMetadata.getAndLock();
             bool isMonochrome = Status::OK ==
-                    CameraHidlTest::isMonochromeCamera(mStaticMetadata);
+                    CameraHidlTest::isMonochromeCamera(staticMetadataBuffer);
             if (isMonochrome) {
                 mParent->verifyMonochromeCameraResult(request->collectedResult);
             }
 
             // Verify logical camera result metadata
             bool isLogicalCamera =
-                    Status::OK == CameraHidlTest::isLogicalMultiCamera(mStaticMetadata);
+                    Status::OK == CameraHidlTest::isLogicalMultiCamera(staticMetadataBuffer);
             if (isLogicalCamera) {
-                mParent->verifyLogicalCameraResult(mStaticMetadata, request->collectedResult);
+                mParent->verifyLogicalCameraResult(staticMetadataBuffer, request->collectedResult);
             }
+            mStaticMetadata.unlock(staticMetadataBuffer);
         }
     }
 
@@ -4131,6 +4135,8 @@ TEST_F(CameraHidlTest, processMultiCaptureRequestPreview) {
                 &useHalBufManager /*out*/, &cb /*out*/, 0 /*streamConfigCounter*/,
                 true /*allowUnsupport*/);
         if (session3_5 == nullptr) {
+            ret = session3_4->close();
+            ASSERT_TRUE(ret.isOk());
             continue;
         }
 
@@ -5402,7 +5408,7 @@ void CameraHidlTest::configurePreviewStream(const std::string &name, int32_t dev
         ASSERT_EQ(Status::OK, s);
         staticMeta = clone_camera_metadata(
                 reinterpret_cast<const camera_metadata_t*>(metadata.data()));
-         ASSERT_NE(nullptr, staticMeta);
+        ASSERT_NE(nullptr, staticMeta);
     });
     ASSERT_TRUE(ret.isOk());
 
