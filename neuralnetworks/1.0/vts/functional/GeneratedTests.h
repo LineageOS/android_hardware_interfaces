@@ -32,7 +32,4 @@ namespace android::hardware::neuralnetworks::V1_0::generated_tests {
 
 using namespace android::hardware::neuralnetworks::V1_0::vts::functional;
 
-using ::android::hardware::neuralnetworks::V1_0::Model;
-using ::android::hardware::neuralnetworks::V1_0::Request;
-
 }  // namespace android::hardware::neuralnetworks::V1_0::generated_tests
