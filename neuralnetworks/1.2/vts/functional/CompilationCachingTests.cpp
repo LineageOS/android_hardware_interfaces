@@ -35,10 +35,11 @@
 #include "Utils.h"
 #include "VtsHalNeuralnetworks.h"
 
-namespace android::hardware::neuralnetworks::V1_2::generated_tests::
-        mobilenet_224_gender_basic_fixed {
+namespace android::hardware::neuralnetworks::V1_2 {
+namespace generated_tests::mobilenet_224_gender_basic_fixed {
 Model createTestModel();
-}  // namespace android::hardware::neuralnetworks::V1_2::generated_tests::mobilenet_224_gender_basic_fixed
+}  // namespace generated_tests::mobilenet_224_gender_basic_fixed
+}  // namespace android::hardware::neuralnetworks::V1_2
 
 namespace generated_tests::mobilenet_224_gender_basic_fixed {
 std::vector<test_helper::MixedTypedExample>& get_examples();
