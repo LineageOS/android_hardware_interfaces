@@ -72,6 +72,10 @@ enum InfoEventType : uint32_t {
      * its value
      */
     PARAMETER_CHANGED,
+    /**
+     * Master role has become available
+     */
+    MASTER_RELEASED,
 };
 
 /**

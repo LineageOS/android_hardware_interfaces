@@ -563,16 +563,18 @@ TEST_F(EvsHidlTest, CameraParameter) {
         ASSERT_TRUE(result == EvsResult::OK ||
                     result == EvsResult::INVALID_ARG);
 
-        pCam->getParameter(CameraParam::BRIGHTNESS,
-                           [&result, &val1](auto status, auto value) {
-                               result = status;
-                               if (status == EvsResult::OK) {
-                                  val1 = value;
-                               }
-                           });
-        ASSERT_TRUE(result == EvsResult::OK ||
-                    result == EvsResult::INVALID_ARG);
-        ASSERT_EQ(val0, val1) << "Values are not matched.";
+        if (result == EvsResult::OK) {
+            pCam->getParameter(CameraParam::BRIGHTNESS,
+                               [&result, &val1](auto status, auto value) {
+                                   result = status;
+                                   if (status == EvsResult::OK) {
+                                      val1 = value;
+                                   }
+                               });
+            ASSERT_TRUE(result == EvsResult::OK ||
+                        result == EvsResult::INVALID_ARG);
+            ASSERT_EQ(val0, val1) << "Values are not matched.";
+        }
 
         val0 = 80;
         val1 = 0;
@@ -584,16 +586,18 @@ TEST_F(EvsHidlTest, CameraParameter) {
         ASSERT_TRUE(result == EvsResult::OK ||
                     result == EvsResult::INVALID_ARG);
 
-        pCam->getParameter(CameraParam::CONTRAST,
-                           [&result, &val1](auto status, auto value) {
-                               result = status;
-                               if (status == EvsResult::OK) {
-                                  val1 = value;
-                               }
-                           });
-        ASSERT_TRUE(result == EvsResult::OK ||
-                    result == EvsResult::INVALID_ARG);
-        ASSERT_EQ(val0, val1) << "Values are not matched.";
+        if (result == EvsResult::OK) {
+            pCam->getParameter(CameraParam::CONTRAST,
+                               [&result, &val1](auto status, auto value) {
+                                   result = status;
+                                   if (status == EvsResult::OK) {
+                                      val1 = value;
+                                   }
+                               });
+            ASSERT_TRUE(result == EvsResult::OK ||
+                        result == EvsResult::INVALID_ARG);
+            ASSERT_EQ(val0, val1) << "Values are not matched.";
+        }
 
         val0 = 300;
         val1 = 0;
@@ -605,21 +609,23 @@ TEST_F(EvsHidlTest, CameraParameter) {
         ASSERT_TRUE(result == EvsResult::OK ||
                     result == EvsResult::INVALID_ARG);
 
-        pCam->getParameter(CameraParam::ABSOLUTE_ZOOM,
-                           [&result, &val1](auto status, auto value) {
-                               result = status;
-                               if (status == EvsResult::OK) {
-                                  val1 = value;
-                               }
-                           });
-        ASSERT_TRUE(result == EvsResult::OK ||
-                    result == EvsResult::INVALID_ARG);
-        ASSERT_EQ(val0, val1) << "Values are not matched.";
+        if (result == EvsResult::OK) {
+            pCam->getParameter(CameraParam::ABSOLUTE_ZOOM,
+                               [&result, &val1](auto status, auto value) {
+                                   result = status;
+                                   if (status == EvsResult::OK) {
+                                      val1 = value;
+                                   }
+                               });
+            ASSERT_TRUE(result == EvsResult::OK ||
+                        result == EvsResult::INVALID_ARG);
+            ASSERT_EQ(val0, val1) << "Values are not matched.";
+        }
 
         result = pCam->unsetMaster();
         ASSERT_TRUE(result == EvsResult::OK);
 
-        // Shutdown another
+        // Shutdown
         frameHandler->shutdown();
 
         // Explicitly release the camera
@@ -629,12 +635,114 @@ TEST_F(EvsHidlTest, CameraParameter) {
 
 
 /*
+ * CameraMasterRelease
+ * Verify that non-master client gets notified when the master client either
+ * terminates or releases a role.
+ */
+TEST_F(EvsHidlTest, CameraMasterRelease) {
+    ALOGI("Starting CameraMasterRelease test");
+
+    if (mIsHwModule) {
+        // This test is not for HW module implementation.
+        return;
+    }
+
+    // Get the camera list
+    loadCameraList();
+
+    // Test each reported camera
+    for (auto&& cam: cameraInfo) {
+        // Create two camera clients.
+        sp<IEvsCamera_1_1> pCamMaster =
+            IEvsCamera_1_1::castFrom(pEnumerator->openCamera(cam.cameraId))
+            .withDefault(nullptr);
+        ASSERT_NE(pCamMaster, nullptr);
+        sp<IEvsCamera_1_1> pCamNonMaster =
+            IEvsCamera_1_1::castFrom(pEnumerator->openCamera(cam.cameraId))
+            .withDefault(nullptr);
+        ASSERT_NE(pCamNonMaster, nullptr);
+
+        // Set up per-client frame receiver objects which will fire up its own thread
+        sp<FrameHandler> frameHandlerMaster =
+            new FrameHandler(pCamMaster, cam,
+                             nullptr,
+                             FrameHandler::eAutoReturn);
+        ASSERT_NE(frameHandlerMaster, nullptr);
+        sp<FrameHandler> frameHandlerNonMaster =
+            new FrameHandler(pCamNonMaster, cam,
+                             nullptr,
+                             FrameHandler::eAutoReturn);
+        ASSERT_NE(frameHandlerNonMaster, nullptr);
+
+        // Set one client as the master
+        EvsResult result = pCamMaster->setMaster();
+        ASSERT_TRUE(result == EvsResult::OK);
+
+        // Try to set another client as the master.
+        result = pCamNonMaster->setMaster();
+        ASSERT_TRUE(result == EvsResult::OWNERSHIP_LOST);
+
+        // Start the camera's video stream via a master client.
+        bool startResult = frameHandlerMaster->startStream();
+        ASSERT_TRUE(startResult);
+
+        // Ensure the stream starts
+        frameHandlerMaster->waitForFrameCount(1);
+
+        // Start the camera's video stream via another client
+        startResult = frameHandlerNonMaster->startStream();
+        ASSERT_TRUE(startResult);
+
+        // Ensure the stream starts
+        frameHandlerNonMaster->waitForFrameCount(1);
+
+        // Non-master client expects to receive a master role relesed
+        // notification.
+        InfoEventDesc aNotification = {};
+
+        // Release a master role.
+        pCamMaster->unsetMaster();
+
+        // Verify a change notification.
+        frameHandlerNonMaster->waitForEvent(InfoEventType::MASTER_RELEASED, aNotification);
+        ASSERT_EQ(InfoEventType::MASTER_RELEASED,
+                  static_cast<InfoEventType>(aNotification.aType));
+
+        // Non-master becomes a master.
+        result = pCamNonMaster->setMaster();
+        ASSERT_TRUE(result == EvsResult::OK);
+
+        // Previous master client fails to become a master.
+        result = pCamMaster->setMaster();
+        ASSERT_TRUE(result == EvsResult::OWNERSHIP_LOST);
+
+        // Closing current master client.
+        frameHandlerNonMaster->shutdown();
+
+        // Verify a change notification.
+        frameHandlerMaster->waitForEvent(InfoEventType::MASTER_RELEASED, aNotification);
+        ASSERT_EQ(InfoEventType::MASTER_RELEASED,
+                  static_cast<InfoEventType>(aNotification.aType));
+
+        // Closing another stream.
+        frameHandlerMaster->shutdown();
+
+        // Explicitly release the camera
+        pEnumerator->closeCamera(pCamMaster);
+        pEnumerator->closeCamera(pCamNonMaster);
+    }
+
+
+}
+
+
+/*
  * MultiCameraParameter:
  * Verify that master and non-master clients behave as expected when they try to adjust
  * camera parameters.
  */
 TEST_F(EvsHidlTest, MultiCameraParameter) {
-    ALOGI("Starting CameraParameter test");
+    ALOGI("Starting MultiCameraParameter test");
 
     if (mIsHwModule) {
         // This test is not for HW module implementation.
