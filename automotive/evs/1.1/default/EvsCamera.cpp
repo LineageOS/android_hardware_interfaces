@@ -258,6 +258,38 @@ Return<EvsResult> EvsCamera::resumeVideoStream() {
 }
 
 
+Return<EvsResult> EvsCamera::setMaster() {
+    // Default implementation does not expect multiple subscribers and therefore
+    // return a success code always.
+    return EvsResult::OK;
+}
+
+
+Return<EvsResult> EvsCamera::unsetMaster() {
+    // Default implementation does not expect multiple subscribers and therefore
+    // return a success code always.
+    return EvsResult::OK;
+}
+
+
+Return<void> EvsCamera::setParameter(CameraParam id, int32_t value,
+                                     setParameter_cb _hidl_cb) {
+    // Default implementation does not support this.
+    (void)id;
+    (void)value;
+    _hidl_cb(EvsResult::INVALID_ARG, 0);
+    return Void();
+}
+
+
+Return<void> EvsCamera::getParameter(CameraParam id, getParameter_cb _hidl_cb) {
+    // Default implementation does not support this.
+    (void)id;
+    _hidl_cb(EvsResult::INVALID_ARG, 0);
+    return Void();
+}
+
+
 bool EvsCamera::setAvailableFrames_Locked(unsigned bufferCount) {
     if (bufferCount < 1) {
         ALOGE("Ignoring request to set buffer count to zero");
@@ -468,7 +500,9 @@ void EvsCamera::generateFrames() {
 
     // If we've been asked to stop, send an event to signal the actual end of stream
     EvsEvent event;
-    event.info(EvsEventType::STREAM_STOPPED);
+    InfoEventDesc desc = {};
+    desc.aType = InfoEventType::STREAM_STOPPED;
+    event.info(desc);
     auto result = mStream->notifyEvent(event);
     if (!result.isOk()) {
         ALOGE("Error delivering end of stream marker");

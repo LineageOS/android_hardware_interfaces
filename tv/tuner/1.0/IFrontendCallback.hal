@@ -14,18 +14,24 @@
  * limitations under the License.
  */
 
-package android.hardware.automotive.evs@1.1;
+package android.hardware.tv.tuner@1.0;
 
-import @1.0::IEvsCameraStream;
-
-/**
- * Implemented on client side to receive asynchronous streaming event deliveries.
- */
-interface IEvsCameraStream extends @1.0::IEvsCameraStream {
+interface IFrontendCallback {
     /**
-     * Receives calls from the HAL each time an event happens.
+     * Notify the client that a new event happened on the frontend.
      *
-     * @param  event EVS event with possible event information.
+     * @param frontendEventType the event type.
      */
-    oneway notifyEvent(EvsEvent event);
+    oneway onEvent(FrontendEventType frontendEventType);
+
+    /**
+     * The callback function that must be called by HAL implementation to notify
+     * the client of new DiSEqC message.
+     *
+     * @param diseqcMessage a byte array of data for DiSEqC (Digital Satellite
+     * Equipment Control) message which is specified by EUTELSAT Bus Functional
+     * Specification Version 4.2.
+     */
+    oneway onDiseqcMessage(vec<uint8_t> diseqcMessage);
 };
+

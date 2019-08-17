@@ -81,14 +81,14 @@ LayerSettings TestLayer::toRenderEngineLayerSettings() {
             static_cast<float>(mDisplayFrame.left), static_cast<float>(mDisplayFrame.top),
             static_cast<float>(mDisplayFrame.right), static_cast<float>(mDisplayFrame.bottom));
 
-    const mat4 translation = mat4::translate(vec4(
-            (mTransform & Transform::FLIP_H ? -1.0f : 0.0f) * mDisplayFrame.right,
-            (mTransform & Transform::FLIP_V ? -1.0f : 0.0f) * mDisplayFrame.bottom, 0.0f, 1.0f));
+    const mat4 translation = mat4::translate(
+            vec4((mTransform & Transform::FLIP_H ? -mDisplayFrame.right : 0.0f),
+                 (mTransform & Transform::FLIP_V ? -mDisplayFrame.bottom : 0.0f), 0.0f, 1.0f));
 
     const mat4 scale = mat4::scale(vec4(mTransform & Transform::FLIP_H ? -1.0f : 1.0f,
                                         mTransform & Transform::FLIP_V ? -1.0f : 1.0f, 1.0f, 1.0f));
 
-    layerSettings.geometry.positionTransform = translation * scale;
+    layerSettings.geometry.positionTransform = scale * translation;
 
     return layerSettings;
 }
@@ -296,9 +296,9 @@ LayerSettings TestBufferLayer::toRenderEngineLayerSettings() {
     layerSettings.source.buffer.buffer =
             new GraphicBuffer(mBufferHandle, GraphicBuffer::CLONE_HANDLE, mWidth, mHeight,
                               static_cast<int32_t>(mFormat), 1, mUsage, mStride);
-    // TODO(b/136483187): Why does this break the premultiply test
-    // layerSettings.source.buffer.usePremultipliedAlpha =
-    //      mBlendMode == IComposerClient::BlendMode::PREMULTIPLIED;
+
+    layerSettings.source.buffer.usePremultipliedAlpha =
+            mBlendMode == IComposerClient::BlendMode::PREMULTIPLIED;
 
     const float scaleX = (mSourceCrop.right - mSourceCrop.left) / (mWidth);
     const float scaleY = (mSourceCrop.bottom - mSourceCrop.top) / (mHeight);

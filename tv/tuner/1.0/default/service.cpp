@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 The Android Open Source Project
+ * Copyright 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,22 @@
 
 //#define LOG_NDEBUG 0
 #ifdef LAZY_SERVICE
-#define LOG_TAG "android.hardware.cas@1.0-service-lazy"
+#define LOG_TAG "android.hardware.tv.tuner@1.0-service-lazy"
 #else
-#define LOG_TAG "android.hardware.cas@1.0-service"
+#define LOG_TAG "android.hardware.tv.tuner@1.0-service"
 #endif
 
 #include <binder/ProcessState.h>
 #include <hidl/HidlTransportSupport.h>
 #include <hidl/LegacySupport.h>
 
-#include "MediaCasService.h"
+#include "Tuner.h"
 
 using android::hardware::configureRpcThreadpool;
 using android::hardware::joinRpcThreadpool;
 using android::hardware::LazyServiceRegistrar;
-using android::hardware::cas::V1_0::IMediaCasService;
-using android::hardware::cas::V1_0::implementation::MediaCasService;
+using android::hardware::tv::tuner::V1_0::ITuner;
+using android::hardware::tv::tuner::V1_0::implementation::Tuner;
 
 #ifdef LAZY_SERVICE
 const bool kLazyService = true;
@@ -43,15 +43,15 @@ int main() {
     configureRpcThreadpool(8, true /* callerWillJoin */);
 
     // Setup hwbinder service
-    android::sp<IMediaCasService> service = new MediaCasService();
+    android::sp<ITuner> service = new Tuner();
     android::status_t status;
     if (kLazyService) {
-        auto serviceRegistrar = LazyServiceRegistrar::getInstance();
-        status = serviceRegistrar.registerService(service);
+        auto serviceRegistrar = std::make_shared<LazyServiceRegistrar>();
+        status = serviceRegistrar->registerService(service);
     } else {
         status = service->registerAsService();
     }
-    LOG_ALWAYS_FATAL_IF(status != android::OK, "Error while registering cas service: %d", status);
+    LOG_ALWAYS_FATAL_IF(status != android::OK, "Error while registering tuner service: %d", status);
 
     joinRpcThreadpool();
     return 0;
