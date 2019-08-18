@@ -20,6 +20,7 @@
 #include <android/hardware/automotive/evs/1.1/types.h>
 #include <android/hardware/automotive/evs/1.1/IEvsCamera.h>
 #include <android/hardware/automotive/evs/1.1/IEvsCameraStream.h>
+#include <android/hardware/automotive/evs/1.0/IEvsDisplay.h>
 #include <ui/GraphicBuffer.h>
 
 #include <thread>
@@ -30,6 +31,7 @@ using IEvsCameraStream_1_0 = ::android::hardware::automotive::evs::V1_0::IEvsCam
 using IEvsCameraStream_1_1 = ::android::hardware::automotive::evs::V1_1::IEvsCameraStream;
 using ::android::hardware::automotive::evs::V1_0::EvsResult;
 using ::android::hardware::automotive::evs::V1_0::CameraDesc;
+using ::android::hardware::automotive::evs::V1_0::IEvsDisplay;
 
 
 namespace android {
@@ -61,6 +63,7 @@ public:
     Return<EvsResult> resumeVideoStream() override;
     Return<EvsResult> doneWithFrame_1_1(const BufferDesc_1_1& buffer) override;
     Return<EvsResult> setMaster() override;
+    Return<EvsResult> forceMaster(const sp<IEvsDisplay>& display) override;
     Return<EvsResult> unsetMaster() override;
     Return<void>      setParameter(CameraParam id, int32_t value,
                                    setParameter_cb _hidl_cb) override;

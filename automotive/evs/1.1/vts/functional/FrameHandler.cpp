@@ -21,10 +21,13 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <chrono>
 
 #include <android/log.h>
 #include <cutils/native_handle.h>
 #include <ui/GraphicBuffer.h>
+
+using namespace std::chrono_literals;
 
 FrameHandler::FrameHandler(android::sp <IEvsCamera> pCamera, CameraDesc cameraInfo,
                            android::sp <IEvsDisplay> pDisplay,
@@ -148,7 +151,7 @@ Return<void> FrameHandler::notifyEvent(const EvsEvent& event) {
             ALOGD("Camera parameter 0x%X is changed to 0x%X",
                   mLatestEventDesc.payload[0], mLatestEventDesc.payload[1]);
         } else {
-            ALOGD("Received an event 0x%X", mLatestEventDesc.aType);
+            ALOGD("Received an event %s", eventToString(mLatestEventDesc.aType));
         }
         mLock.unlock();
         mEventSignal.notify_all();
@@ -339,19 +342,42 @@ void FrameHandler::getFrameDimension(unsigned* width, unsigned* height) {
     }
 }
 
-void FrameHandler::waitForEvent(const InfoEventType aTargetEvent,
+bool FrameHandler::waitForEvent(const InfoEventType aTargetEvent,
                                 InfoEventDesc &eventDesc) {
     // Wait until we get an expected parameter change event.
     std::unique_lock<std::mutex> lock(mLock);
-    mEventSignal.wait(lock, [this, aTargetEvent, &eventDesc](){
-        bool flag = mLatestEventDesc.aType == aTargetEvent;
-        if (flag) {
-            eventDesc.aType = mLatestEventDesc.aType;
-            eventDesc.payload[0] = mLatestEventDesc.payload[0];
-            eventDesc.payload[1] = mLatestEventDesc.payload[1];
-        }
+    auto now = std::chrono::system_clock::now();
+    bool result = mEventSignal.wait_until(lock, now + 5s,
+        [this, aTargetEvent, &eventDesc](){
+            bool flag = mLatestEventDesc.aType == aTargetEvent;
+            if (flag) {
+                eventDesc.aType = mLatestEventDesc.aType;
+                eventDesc.payload[0] = mLatestEventDesc.payload[0];
+                eventDesc.payload[1] = mLatestEventDesc.payload[1];
+            }
 
-        return flag;
-    });
+            return flag;
+        }
+    );
+
+    return !result;
 }
 
+const char *FrameHandler::eventToString(const InfoEventType aType) {
+    switch (aType) {
+        case InfoEventType::STREAM_STARTED:
+            return "STREAM_STARTED";
+        case InfoEventType::STREAM_STOPPED:
+            return "STREAM_STOPPED";
+        case InfoEventType::FRAME_DROPPED:
+            return "FRAME_DROPPED";
+        case InfoEventType::TIMEOUT:
+            return "TIMEOUT";
+        case InfoEventType::PARAMETER_CHANGED:
+            return "PARAMETER_CHANGED";
+        case InfoEventType::MASTER_RELEASED:
+            return "MASTER_RELEASED";
+        default:
+            return "Unknown";
+    }
+}
