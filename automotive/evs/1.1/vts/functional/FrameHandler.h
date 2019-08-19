@@ -67,7 +67,7 @@ public:
     bool isRunning();
 
     void waitForFrameCount(unsigned frameCount);
-    void waitForEvent(const InfoEventType aTargetEvent,
+    bool waitForEvent(const InfoEventType aTargetEvent,
                             InfoEventDesc &eventDesc);
     void getFramesCounters(unsigned* received, unsigned* displayed);
     void getFrameDimension(unsigned* width, unsigned* height);
@@ -79,6 +79,7 @@ private:
 
     // Local implementation details
     bool copyBufferContents(const BufferDesc_1_0& tgtBuffer, const BufferDesc_1_1& srcBuffer);
+    const char *eventToString(const InfoEventType aType);
 
     // Values initialized as startup
     android::sp <IEvsCamera>    mCamera;

@@ -17,6 +17,7 @@
 package android.hardware.automotive.evs@1.1;
 
 import @1.0::IEvsCamera;
+import @1.0::IEvsDisplay;
 import @1.0::EvsResult;
 import IEvsCameraStream;
 
@@ -71,6 +72,23 @@ interface IEvsCamera extends @1.0::IEvsCamera {
      */
     setMaster() generates (EvsResult result);
 
+    /**
+     * Sets to be a master client forcibly.
+     *
+     * The client, which owns the display, has a high priority and can take over
+     * a master role from other clients without the display.
+     *
+     * @param  display IEvsDisplay handle.  If a given display is in either
+     *                 NOT_VISIBLE, VISIBLE_ON_NEXT_FRAME, or VISIBLE state, the
+     *                 calling client is considered as the high priority client
+     *                 and therefore allowed to take over a master role from
+     *                 existing master client.
+     *
+     * @return result  EvsResult::OK if a master role is granted.
+     *                 EvsResult::INVALID_ARG if a given display handle is null
+     *                 or in valid states.
+     */
+    forceMaster(IEvsDisplay display) generates (EvsResult result);
 
     /**
      * Retires from a master client role.
