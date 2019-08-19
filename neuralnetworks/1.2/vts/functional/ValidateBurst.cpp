@@ -361,7 +361,7 @@ static bool isSanitized(const FmqResultDatum& datum) {
 }
 
 static void validateBurstSanitized(const sp<IPreparedModel>& preparedModel,
-                                   const std::vector<Request>& requests) {
+                                   const Request& request) {
     // create burst
     std::unique_ptr<RequestChannelSender> sender;
     std::unique_ptr<ResultChannelReceiver> receiver;
@@ -372,26 +372,23 @@ static void validateBurstSanitized(const sp<IPreparedModel>& preparedModel,
     ASSERT_NE(nullptr, receiver.get());
     ASSERT_NE(nullptr, context.get());
 
-    // validate each request
-    for (const Request& request : requests) {
-        // load memory into callback slots
-        std::vector<intptr_t> keys;
-        keys.reserve(request.pools.size());
-        std::transform(request.pools.begin(), request.pools.end(), std::back_inserter(keys),
-                       [](const auto& pool) { return reinterpret_cast<intptr_t>(&pool); });
-        const std::vector<int32_t> slots = callback->getSlots(request.pools, keys);
+    // load memory into callback slots
+    std::vector<intptr_t> keys;
+    keys.reserve(request.pools.size());
+    std::transform(request.pools.begin(), request.pools.end(), std::back_inserter(keys),
+                   [](const auto& pool) { return reinterpret_cast<intptr_t>(&pool); });
+    const std::vector<int32_t> slots = callback->getSlots(request.pools, keys);
 
-        // send valid request
-        ASSERT_TRUE(sender->send(request, MeasureTiming::YES, slots));
+    // send valid request
+    ASSERT_TRUE(sender->send(request, MeasureTiming::YES, slots));
 
-        // receive valid result
-        auto serialized = receiver->getPacketBlocking();
-        ASSERT_TRUE(serialized.has_value());
+    // receive valid result
+    auto serialized = receiver->getPacketBlocking();
+    ASSERT_TRUE(serialized.has_value());
 
-        // sanitize result
-        ASSERT_TRUE(std::all_of(serialized->begin(), serialized->end(), isSanitized))
-                << "The result serialized data is not properly sanitized";
-    }
+    // sanitize result
+    ASSERT_TRUE(std::all_of(serialized->begin(), serialized->end(), isSanitized))
+            << "The result serialized data is not properly sanitized";
 }
 
 ///////////////////////////// ENTRY POINT //////////////////////////////////
@@ -400,7 +397,7 @@ void ValidationTest::validateBurst(const sp<IPreparedModel>& preparedModel,
                                    const Request& request) {
     ASSERT_NO_FATAL_FAILURE(validateBurstSerialization(preparedModel, request));
     ASSERT_NO_FATAL_FAILURE(validateBurstFmqLength(preparedModel, request));
-    ASSERT_NO_FATAL_FAILURE(validateBurstSanitized(preparedModel, requests));
+    ASSERT_NO_FATAL_FAILURE(validateBurstSanitized(preparedModel, request));
 }
 
 }  // namespace functional
