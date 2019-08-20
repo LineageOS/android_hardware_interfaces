@@ -58,7 +58,7 @@ int main(int /*argc*/, char** argv) {
             std::make_shared<WifiIfaceUtil>(iface_tool),
             std::make_shared<WifiFeatureFlags>());
     if (kLazyService) {
-        LazyServiceRegistrar registrar;
+        auto registrar = LazyServiceRegistrar::getInstance();
         CHECK_EQ(registrar.registerService(service), android::NO_ERROR)
             << "Failed to register wifi HAL";
     } else {
