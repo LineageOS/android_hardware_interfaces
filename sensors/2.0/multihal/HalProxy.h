@@ -111,6 +111,11 @@ struct HalProxy : public ISensors {
      * Callback to the sensors framework to inform it that new sensors have been added or removed.
      */
     sp<ISensorsCallback> mDynamicSensorsCallback;
+
+    /**
+     * SubHal object pointers that have been saved from vendor dynamic libraries.
+     */
+    std::vector<ISensorsSubHal*> mSubHalList;
 };
 
 }  // namespace implementation
