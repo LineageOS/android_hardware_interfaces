@@ -182,17 +182,23 @@ std::array<float, 16> ComposerClient::getDataspaceSaturationMatrix(Dataspace dat
 
 Gralloc::Gralloc() {
     [this] {
-        ALOGD("Attempting to initialize gralloc3");
-        ASSERT_NO_FATAL_FAILURE(mGralloc3 = std::make_shared<Gralloc3>("default", "default",
+        ALOGD("Attempting to initialize gralloc4");
+        ASSERT_NO_FATAL_FAILURE(mGralloc4 = std::make_shared<Gralloc4>("default", "default",
                                                                        /*errOnFailure=*/false));
-        if (mGralloc3->getMapper() == nullptr || mGralloc3->getAllocator() == nullptr) {
-            mGralloc3 = nullptr;
-            ALOGD("Failed to initialize gralloc3, initializing gralloc2_1");
-            mGralloc2_1 = std::make_shared<Gralloc2_1>(/*errOnFailure*/ false);
-            if (!mGralloc2_1->getMapper()) {
-                mGralloc2_1 = nullptr;
-                ALOGD("Failed to initialize gralloc2_1, initializing gralloc2");
-                ASSERT_NO_FATAL_FAILURE(mGralloc2 = std::make_shared<Gralloc2>());
+        if (mGralloc4->getMapper() == nullptr || mGralloc4->getAllocator() == nullptr) {
+            mGralloc4 = nullptr;
+            ALOGD("Failed to initialize gralloc4, initializing gralloc3");
+            ASSERT_NO_FATAL_FAILURE(mGralloc3 = std::make_shared<Gralloc3>("default", "default",
+                                                                           /*errOnFailure=*/false));
+            if (mGralloc3->getMapper() == nullptr || mGralloc3->getAllocator() == nullptr) {
+                mGralloc3 = nullptr;
+                ALOGD("Failed to initialize gralloc3, initializing gralloc2_1");
+                mGralloc2_1 = std::make_shared<Gralloc2_1>(/*errOnFailure*/ false);
+                if (!mGralloc2_1->getMapper()) {
+                    mGralloc2_1 = nullptr;
+                    ALOGD("Failed to initialize gralloc2_1, initializing gralloc2");
+                    ASSERT_NO_FATAL_FAILURE(mGralloc2 = std::make_shared<Gralloc2>());
+                }
             }
         }
     }();
@@ -201,7 +207,15 @@ Gralloc::Gralloc() {
 bool Gralloc::validateBufferSize(const native_handle_t* bufferHandle, uint32_t width,
                                  uint32_t height, uint32_t layerCount, PixelFormat format,
                                  uint64_t usage, uint32_t stride) {
-    if (mGralloc3) {
+    if (mGralloc4) {
+        IMapper4::BufferDescriptorInfo info{};
+        info.width = width;
+        info.height = height;
+        info.layerCount = layerCount;
+        info.format = static_cast<android::hardware::graphics::common::V1_2::PixelFormat>(format);
+        info.usage = usage;
+        return mGralloc4->validateBufferSize(bufferHandle, info, stride);
+    } else if (mGralloc3) {
         IMapper3::BufferDescriptorInfo info{};
         info.width = width;
         info.height = height;
