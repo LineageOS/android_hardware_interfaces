@@ -23,7 +23,7 @@
 #include <composer-command-buffer/2.2/ComposerCommandBuffer.h>
 #include <composer-hal/2.1/ComposerCommandEngine.h>
 #include <composer-hal/2.2/ComposerHal.h>
-#include <composer-hal/2.2/ComposerResources.h>
+#include <composer-resources/2.2/ComposerResources.h>
 
 namespace android {
 namespace hardware {

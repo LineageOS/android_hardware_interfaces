@@ -21,9 +21,9 @@
 #endif
 
 #include <android/hardware/graphics/composer/2.3/IComposerClient.h>
-#include <composer-hal/2.2/ComposerResources.h>
 #include <composer-hal/2.3/ComposerCommandEngine.h>
 #include <composer-hal/2.3/ComposerHal.h>
+#include <composer-resources/2.2/ComposerResources.h>
 
 namespace android {
 namespace hardware {

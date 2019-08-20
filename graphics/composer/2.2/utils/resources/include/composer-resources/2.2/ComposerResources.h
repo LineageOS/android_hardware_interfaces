@@ -20,7 +20,7 @@
 #warning "ComposerResources.h included without LOG_TAG"
 #endif
 
-#include <composer-hal/2.1/ComposerResources.h>
+#include <composer-resources/2.1/ComposerResources.h>
 
 namespace android {
 namespace hardware {
@@ -33,7 +33,7 @@ using V2_1::hal::ComposerHandleCache;
 using V2_1::hal::ComposerHandleImporter;
 
 class ComposerDisplayResource : public V2_1::hal::ComposerDisplayResource {
-   public:
+  public:
     ComposerDisplayResource(DisplayType type, ComposerHandleImporter& importer,
                             uint32_t outputBufferCacheSize)
         : V2_1::hal::ComposerDisplayResource(type, importer, outputBufferCacheSize),
@@ -47,12 +47,12 @@ class ComposerDisplayResource : public V2_1::hal::ComposerDisplayResource {
                                               outReplacedHandle);
     }
 
-   protected:
+  protected:
     ComposerHandleCache mReadbackBufferCache;
 };
 
 class ComposerResources : public V2_1::hal::ComposerResources {
-   public:
+  public:
     static std::unique_ptr<ComposerResources> create() {
         auto resources = std::make_unique<ComposerResources>();
         return resources->init() ? std::move(resources) : nullptr;
@@ -60,7 +60,7 @@ class ComposerResources : public V2_1::hal::ComposerResources {
 
     Error getDisplayReadbackBuffer(Display display, const native_handle_t* rawHandle,
                                    const native_handle_t** outHandle,
-                                   ReplacedBufferHandle* outReplacedHandle) {
+                                   ReplacedHandle* outReplacedHandle) {
         // import buffer
         const native_handle_t* importedHandle;
         Error error = mImporter.importBuffer(rawHandle, &importedHandle);
@@ -76,7 +76,7 @@ class ComposerResources : public V2_1::hal::ComposerResources {
             return Error::BAD_DISPLAY;
         }
         ComposerDisplayResource& displayResource =
-            *static_cast<ComposerDisplayResource*>(iter->second.get());
+                *static_cast<ComposerDisplayResource*>(iter->second.get());
 
         // update cache
         const native_handle_t* replacedHandle;
@@ -90,9 +90,9 @@ class ComposerResources : public V2_1::hal::ComposerResources {
         return Error::NONE;
     }
 
-   protected:
+  protected:
     std::unique_ptr<V2_1::hal::ComposerDisplayResource> createDisplayResource(
-        ComposerDisplayResource::DisplayType type, uint32_t outputBufferCacheSize) override {
+            ComposerDisplayResource::DisplayType type, uint32_t outputBufferCacheSize) override {
         return std::make_unique<ComposerDisplayResource>(type, mImporter, outputBufferCacheSize);
     }
 };

@@ -935,6 +935,132 @@ TEST_F(EvsHidlTest, MultiCameraParameter) {
 }
 
 
+/*
+ * HighPriorityCameraClient:
+ * EVS client, which owns the display, is priortized and therefore can take over
+ * a master role from other EVS clients without the display.
+ */
+TEST_F(EvsHidlTest, HighPriorityCameraClient) {
+    ALOGI("Starting HighPriorityCameraClient test");
+
+    // Get the camera list
+    loadCameraList();
+
+    // Request exclusive access to the EVS display
+    sp<IEvsDisplay> pDisplay = pEnumerator->openDisplay();
+    ASSERT_NE(pDisplay, nullptr);
+
+    // Test each reported camera
+    for (auto&& cam: cameraInfo) {
+        // Create two clients
+        sp<IEvsCamera_1_1> pCam0 =
+            IEvsCamera_1_1::castFrom(pEnumerator->openCamera(cam.cameraId))
+            .withDefault(nullptr);
+        ASSERT_NE(pCam0, nullptr);
+
+        sp<IEvsCamera_1_1> pCam1 =
+            IEvsCamera_1_1::castFrom(pEnumerator->openCamera(cam.cameraId))
+            .withDefault(nullptr);
+        ASSERT_NE(pCam1, nullptr);
+
+        // Set up a frame receiver object which will fire up its own thread.
+        sp<FrameHandler> frameHandler0 = new FrameHandler(pCam0, cam,
+                                                          pDisplay,
+                                                          FrameHandler::eAutoReturn);
+        sp<FrameHandler> frameHandler1 = new FrameHandler(pCam1, cam,
+                                                          nullptr,
+                                                          FrameHandler::eAutoReturn);
+
+        // Activate the display
+        pDisplay->setDisplayState(DisplayState::VISIBLE_ON_NEXT_FRAME);
+
+        // Start the camera's video stream
+        ASSERT_TRUE(frameHandler0->startStream());
+        ASSERT_TRUE(frameHandler1->startStream());
+
+        // Ensure the stream starts
+        frameHandler0->waitForFrameCount(1);
+        frameHandler1->waitForFrameCount(1);
+
+        // Client 1 becomes a master and programs a brightness.
+        EvsResult result = EvsResult::OK;
+        int32_t val0 = 100;
+        int32_t val1 = 0;
+
+        result = pCam1->setMaster();
+        ASSERT_TRUE(result == EvsResult::OK);
+
+        pCam1->setParameter(CameraParam::BRIGHTNESS, val0,
+                            [&result, &val1](auto status, auto effectiveValue) {
+                                result = status;
+                                val1 = effectiveValue;
+                            });
+        ASSERT_TRUE(result == EvsResult::OK ||
+                    result == EvsResult::INVALID_ARG);
+
+
+        // Verify a change notification
+        InfoEventDesc aNotification = {};
+        if (result == EvsResult::OK) {
+            bool timeout =
+                frameHandler0->waitForEvent(InfoEventType::PARAMETER_CHANGED, aNotification);
+            ASSERT_FALSE(timeout) << "Expected event does not arrive";
+            ASSERT_EQ(static_cast<InfoEventType>(aNotification.aType),
+                      InfoEventType::PARAMETER_CHANGED);
+            ASSERT_EQ(static_cast<CameraParam>(aNotification.payload[0]),
+                      CameraParam::BRIGHTNESS);
+            ASSERT_EQ(val1,
+                      static_cast<int32_t>(aNotification.payload[1]));
+        }
+
+        // Client 0 steals a master role
+        ASSERT_EQ(EvsResult::OK, pCam0->forceMaster(pDisplay));
+
+        frameHandler1->waitForEvent(InfoEventType::MASTER_RELEASED, aNotification);
+        ASSERT_EQ(static_cast<InfoEventType>(aNotification.aType),
+                  InfoEventType::MASTER_RELEASED);
+
+        // Client 0 programs a brightness
+        val0 = 50;
+        val1 = 0;
+        pCam0->setParameter(CameraParam::BRIGHTNESS, val0,
+                            [&result, &val1](auto status, auto effectiveValue) {
+                                result = status;
+                                val1 = effectiveValue;
+                            });
+        ASSERT_TRUE(result == EvsResult::OK ||
+                    result == EvsResult::INVALID_ARG);
+
+        // Verify a change notification
+        if (result == EvsResult::OK) {
+            bool timeout =
+                frameHandler1->waitForEvent(InfoEventType::PARAMETER_CHANGED, aNotification);
+            ASSERT_FALSE(timeout) << "Expected event does not arrive";
+            ASSERT_EQ(static_cast<InfoEventType>(aNotification.aType),
+                      InfoEventType::PARAMETER_CHANGED);
+            ASSERT_EQ(static_cast<CameraParam>(aNotification.payload[0]),
+                      CameraParam::BRIGHTNESS);
+            ASSERT_EQ(val1,
+                      static_cast<int32_t>(aNotification.payload[1]));
+        }
+
+        // Turn off the display (yes, before the stream stops -- it should be handled)
+        pDisplay->setDisplayState(DisplayState::NOT_VISIBLE);
+
+        // Shut down the streamer
+        frameHandler0->shutdown();
+        frameHandler1->shutdown();
+
+        // Explicitly release the camera
+        pEnumerator->closeCamera(pCam0);
+        pEnumerator->closeCamera(pCam1);
+    }
+
+    // Explicitly release the display
+    pEnumerator->closeDisplay(pDisplay);
+}
+
+
 int main(int argc, char** argv) {
     ::testing::AddGlobalTestEnvironment(EvsHidlEnvironment::Instance());
     ::testing::InitGoogleTest(&argc, argv);
