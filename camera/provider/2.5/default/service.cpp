@@ -49,8 +49,8 @@ int main()
 
     status_t status;
     if (kLazyService) {
-        auto serviceRegistrar = std::make_shared<::android::hardware::LazyServiceRegistrar>();
-        status = serviceRegistrar->registerService(provider, "legacy/0");
+        auto serviceRegistrar = ::android::hardware::LazyServiceRegistrar::getInstance();
+        status = serviceRegistrar.registerService(provider, "legacy/0");
     } else {
         status = provider->registerAsService("legacy/0");
     }
