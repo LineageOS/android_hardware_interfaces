@@ -44,9 +44,11 @@ using common::V1_1::PixelFormat;
 using common::V1_1::RenderIntent;
 using IMapper2_1 = android::hardware::graphics::mapper::V2_1::IMapper;
 using IMapper3 = android::hardware::graphics::mapper::V3_0::IMapper;
+using IMapper4 = android::hardware::graphics::mapper::V4_0::IMapper;
 using Gralloc2 = android::hardware::graphics::mapper::V2_0::vts::Gralloc;
 using Gralloc2_1 = android::hardware::graphics::mapper::V2_1::vts::Gralloc;
 using Gralloc3 = android::hardware::graphics::mapper::V3_0::vts::Gralloc;
+using Gralloc4 = android::hardware::graphics::mapper::V4_0::vts::Gralloc;
 
 class ComposerClient;
 
