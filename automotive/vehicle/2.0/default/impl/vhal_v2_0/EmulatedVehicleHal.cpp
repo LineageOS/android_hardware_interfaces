@@ -455,7 +455,7 @@ void EmulatedVehicleHal::onFakeValueGenerated(const VehiclePropValue& value) {
 
     VehiclePropValuePtr updatedPropValue = getValuePool()->obtain(value);
     if (updatedPropValue) {
-        updatedPropValue->timestamp = elapsedRealtimeNano();
+        updatedPropValue->timestamp = value.timestamp;
         updatedPropValue->status = VehiclePropertyStatus::AVAILABLE;
         mPropStore->writeValue(*updatedPropValue, shouldUpdateStatus);
         auto changeMode = mPropStore->getConfigOrDie(value.prop)->changeMode;
