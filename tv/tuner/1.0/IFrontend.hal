@@ -18,15 +18,16 @@ package android.hardware.tv.tuner@1.0;
 import IFrontendCallback;
 
 /**
- * A Tuner Frontend is used to tune to a frequency and lock signal. It provide
- * live data feed to Tuner Demux interface.
+ * A Tuner Frontend is used to tune to a frequency and lock signal.
+ *
+ * IFrontend provides a bit stream to the Tuner Demux interface.
  */
 interface IFrontend {
     /**
-     * Set the callback
+     * Set the frontend callback.
      *
-     * It is used by the client to receive events from the Frontend.
-     * Only one callback for one Frontend instance is supported. The callback
+     * IFrontendCallback is used by the client to receive events from the Frontend.
+     * Only one callback per IFrontend instance is supported. The callback
      * will be replaced if it's set again.
      *
      * @param callback Callback object to pass Frontend events to the system.
@@ -40,14 +41,14 @@ interface IFrontend {
     setCallback(IFrontendCallback callback) generates (Result result);
 
     /**
-     * Tuning Frontend
+     * Tunes the frontend to using the settings given.
      *
-     * It is used by the client to lock a frequency by providing signal
-     * delivery information. If previous tuning isn't completed, this call must
-     * stop previous tuning, and start a new tuning. Tune is a async call.
-     * LOCKED or NO_SIGNAL eventi is sent back to caller through callback.
+     * This locks the frontend to a frequency by providing signal
+     * delivery information. If previous tuning isn't completed, this call MUST
+     * stop previous tuning, and start a new tuning.
+     * Tune is an async call, with LOCKED or NO_SIGNAL events sent via callback.
      *
-     * @param settings Signal delivery information which frontend can use to
+     * @param settings Signal delivery information the frontend uses to
      * search and lock the signal.
      *
      * @return result Result status of the operation.
@@ -58,9 +59,10 @@ interface IFrontend {
     tune(FrontendSettings settings) generates (Result result);
 
     /**
-     * Stop the tuning
+     * Stops a previous tuning.
      *
-     * It is used by the client to stop a previous tuning.
+     * If the method completes successfully the frontend is no longer tuned and no data
+     * will be sent to attached demuxes.
      *
      * @return result Result status of the operation.
      *         SUCCESS if successfully stop tuning.
@@ -69,10 +71,10 @@ interface IFrontend {
     stopTune() generates (Result result);
 
     /**
-     * Release the Frontend instance
+     * Releases the Frontend instance
      *
-     * It is used by the client to release the frontend instance. HAL clear
-     * underneath resource. client mustn't access the instance any more.
+     * Associated resources are released.  close may be called more than once.
+     * Calls to any other method after this will return an error
      *
      * @return result Result status of the operation.
      *         SUCCESS if successful,
