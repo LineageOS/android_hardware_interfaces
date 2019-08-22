@@ -17,10 +17,11 @@
 #ifndef CAMERA_COMMON_1_0_HANDLEIMPORTED_H
 #define CAMERA_COMMON_1_0_HANDLEIMPORTED_H
 
-#include <utils/Mutex.h>
 #include <android/hardware/graphics/mapper/2.0/IMapper.h>
 #include <android/hardware/graphics/mapper/3.0/IMapper.h>
+#include <android/hardware/graphics/mapper/4.0/IMapper.h>
 #include <cutils/native_handle.h>
+#include <utils/Mutex.h>
 
 using android::hardware::graphics::mapper::V2_0::IMapper;
 using android::hardware::graphics::mapper::V2_0::YCbCrLayout;
@@ -70,6 +71,7 @@ private:
     bool mInitialized;
     sp<IMapper> mMapperV2;
     sp<graphics::mapper::V3_0::IMapper> mMapperV3;
+    sp<graphics::mapper::V4_0::IMapper> mMapperV4;
 };
 
 } // namespace helper
