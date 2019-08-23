@@ -70,42 +70,12 @@ class SensorsCallbackProxy : public ISensorsCallback {
 
 HalProxy::HalProxy() {
     const char* kMultiHalConfigFilePath = "/vendor/etc/sensors/hals.conf";
-    std::ifstream subHalConfigStream(kMultiHalConfigFilePath);
-    if (!subHalConfigStream) {
-        LOG_FATAL("Failed to load subHal config file: %s", kMultiHalConfigFilePath);
-    } else {
-        std::string subHalLibraryFile;
-        while (subHalConfigStream >> subHalLibraryFile) {
-            void* handle = dlopen(subHalLibraryFile.c_str(), RTLD_NOW);
-            if (handle == nullptr) {
-                LOG_FATAL("dlopen failed for library: %s", subHalLibraryFile.c_str());
-            } else {
-                SensorsHalGetSubHalFunc* sensorsHalGetSubHalPtr =
-                        (SensorsHalGetSubHalFunc*)dlsym(handle, "sensorsHalGetSubHal");
-                if (sensorsHalGetSubHalPtr == nullptr) {
-                    LOG_FATAL("Failed to locate sensorsHalGetSubHal function for library: %s",
-                              subHalLibraryFile.c_str());
-                } else {
-                    std::function<SensorsHalGetSubHalFunc> sensorsHalGetSubHal =
-                            *sensorsHalGetSubHalPtr;
-                    uint32_t version;
-                    ISensorsSubHal* subHal = sensorsHalGetSubHal(&version);
-                    if (version != SUB_HAL_2_0_VERSION) {
-                        LOG_FATAL("SubHal version was not 2.0 for library: %s",
-                                  subHalLibraryFile.c_str());
-                    } else {
-                        ALOGI("Loaded SubHal from library: %s", subHalLibraryFile.c_str());
-                        mSubHalList.push_back(subHal);
-                    }
-                }
-            }
-        }
-    }
-    // TODO: Discover sensors
+    initializeSubHalListFromConfigFile(kMultiHalConfigFilePath);
+    initializeSensorList();
 }
 
 HalProxy::HalProxy(std::vector<ISensorsSubHal*>& subHalList) : mSubHalList(subHalList) {
-    // TODO: Perform the same steps as the empty constructor.
+    initializeSensorList();
 }
 
 HalProxy::~HalProxy() {
@@ -113,8 +83,8 @@ HalProxy::~HalProxy() {
     // state.
 }
 
-Return<void> HalProxy::getSensorsList(getSensorsList_cb /* _hidl_cb */) {
-    // TODO: Output sensors list created as part of HalProxy().
+Return<void> HalProxy::getSensorsList(getSensorsList_cb _hidl_cb) {
+    _hidl_cb(mSensorList);
     return Void();
 }
 
@@ -215,6 +185,60 @@ Return<void> HalProxy::onDynamicSensorsDisconnected(
         const hidl_vec<int32_t>& /* dynamicSensorHandlesRemoved */, int32_t /* subHalIndex */) {
     // TODO: Unmap the SensorInfo from the global list and then invoke the framework's callback.
     return Return<void>();
+}
+
+void HalProxy::initializeSubHalListFromConfigFile(const char* configFileName) {
+    std::ifstream subHalConfigStream(configFileName);
+    if (!subHalConfigStream) {
+        LOG_FATAL("Failed to load subHal config file: %s", configFileName);
+    } else {
+        std::string subHalLibraryFile;
+        while (subHalConfigStream >> subHalLibraryFile) {
+            void* handle = dlopen(subHalLibraryFile.c_str(), RTLD_NOW);
+            if (handle == nullptr) {
+                LOG_FATAL("dlopen failed for library: %s", subHalLibraryFile.c_str());
+            } else {
+                SensorsHalGetSubHalFunc* sensorsHalGetSubHalPtr =
+                        (SensorsHalGetSubHalFunc*)dlsym(handle, "sensorsHalGetSubHal");
+                if (sensorsHalGetSubHalPtr == nullptr) {
+                    LOG_FATAL("Failed to locate sensorsHalGetSubHal function for library: %s",
+                              subHalLibraryFile.c_str());
+                } else {
+                    std::function<SensorsHalGetSubHalFunc> sensorsHalGetSubHal =
+                            *sensorsHalGetSubHalPtr;
+                    uint32_t version;
+                    ISensorsSubHal* subHal = sensorsHalGetSubHal(&version);
+                    if (version != SUB_HAL_2_0_VERSION) {
+                        LOG_FATAL("SubHal version was not 2.0 for library: %s",
+                                  subHalLibraryFile.c_str());
+                    } else {
+                        ALOGV("Loaded SubHal from library: %s", subHalLibraryFile.c_str());
+                        mSubHalList.push_back(subHal);
+                    }
+                }
+            }
+        }
+    }
+}
+
+void HalProxy::initializeSensorList() {
+    for (size_t subHalIndex = 0; subHalIndex < mSubHalList.size(); subHalIndex++) {
+        ISensorsSubHal* subHal = mSubHalList[subHalIndex];
+        auto result = subHal->getSensorsList([&](const auto& list) {
+            for (SensorInfo sensor : list) {
+                if ((sensor.sensorHandle & 0xFF000000) != 0) {
+                    ALOGE("SubHal sensorHandle's first byte was not 0");
+                } else {
+                    ALOGV("Loaded sensor: %s", sensor.name.c_str());
+                    sensor.sensorHandle |= (subHalIndex << 24);
+                    mSensorList.push_back(sensor);
+                }
+            }
+        });
+        if (!result.isOk()) {
+            ALOGE("getSensorsList call failed for SubHal: %s", subHal->getName().c_str());
+        }
+    }
 }
 
 ISensorsSubHal* HalProxy::getSubHalForSensorHandle(uint32_t sensorHandle) {

@@ -20,6 +20,8 @@
 
 #include "Sensor.h"
 
+#include <vector>
+
 namespace android {
 namespace hardware {
 namespace sensors {
@@ -81,7 +83,7 @@ class SensorsSubHal : public ISensorsSubHal, public ISensorsEventCallback {
     // Method from ISensorsEventCallback.
     void postEvents(const std::vector<Event>& events, bool wakeup) override;
 
-  private:
+  protected:
     template <class SensorType>
     void AddSensor() {
         std::shared_ptr<SensorType> sensor =
@@ -89,6 +91,7 @@ class SensorsSubHal : public ISensorsSubHal, public ISensorsEventCallback {
         mSensors[sensor->getSensorInfo().sensorHandle] = sensor;
     }
 
+  private:
     /**
      * Callback used to communicate to the HalProxy when dynamic sensors are connected /
      * disconnected, sensor events need to be sent to the framework, and when a wakelock should be
@@ -105,6 +108,24 @@ class SensorsSubHal : public ISensorsSubHal, public ISensorsEventCallback {
      * The next available sensor handle
      */
     int32_t mNextHandle;
+};
+
+// SubHal that has continuous sensors for testing purposes.
+class ContinuousSensorsSubHal : public SensorsSubHal {
+  public:
+    ContinuousSensorsSubHal();
+};
+
+// SubHal that has on-change sensors for testing purposes.
+class OnChangeSensorsSubHal : public SensorsSubHal {
+  public:
+    OnChangeSensorsSubHal();
+};
+
+// SubHal that has both continuous and on-change sensors for testing purposes.
+class AllSensorsSubHal : public SensorsSubHal {
+  public:
+    AllSensorsSubHal();
 };
 
 }  // namespace implementation
