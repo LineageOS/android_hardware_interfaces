@@ -29,6 +29,8 @@
 #include <iostream>
 #include <vector>
 
+#include "TestHarness.h"
+
 namespace android {
 namespace hardware {
 namespace neuralnetworks {
@@ -68,19 +70,6 @@ class NeuralnetworksHidlTest : public ::testing::VtsHalHidlTargetTestBase {
    protected:
     sp<IDevice> device;
 };
-
-// Tag for the validation tests
-class ValidationTest : public NeuralnetworksHidlTest {
-   protected:
-     void validateEverything(const Model& model, const Request& request);
-
-   private:
-     void validateModel(const Model& model);
-     void validateRequest(const sp<IPreparedModel>& preparedModel, const Request& request);
-};
-
-// Tag for the generated tests
-class GeneratedTest : public NeuralnetworksHidlTest {};
 
 }  // namespace functional
 }  // namespace vts
