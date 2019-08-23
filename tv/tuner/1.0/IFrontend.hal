@@ -1,0 +1,82 @@
+/*
+ * Copyright (C) 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package android.hardware.tv.tuner@1.0;
+
+import IFrontendCallback;
+
+/**
+ * A Tuner Frontend is used to tune to a frequency and lock signal. It provide
+ * live data feed to Tuner Demux interface.
+ */
+interface IFrontend {
+    /**
+     * Set the callback
+     *
+     * It is used by the client to receive events from the Frontend.
+     * Only one callback for one Frontend instance is supported. The callback
+     * will be replaced if it's set again.
+     *
+     * @param callback Callback object to pass Frontend events to the system.
+     *        The previously registered callback must be replaced with this one.
+     *        It can be null.
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_STATE if callback can't be set at current stage,
+     *         UNKNOWN_ERROR if callback setting failed for other reasons.
+     */
+    setCallback(IFrontendCallback callback) generates (Result result);
+
+    /**
+     * Tuning Frontend
+     *
+     * It is used by the client to lock a frequency by providing signal
+     * delivery information. If previous tuning isn't completed, this call must
+     * stop previous tuning, and start a new tuning. Tune is a async call.
+     * LOCKED or NO_SIGNAL eventi is sent back to caller through callback.
+     *
+     * @param settings Signal delivery information which frontend can use to
+     * search and lock the signal.
+     *
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_STATE if tuning can't be applied at current stage,
+     *         UNKNOWN_ERROR if tuning failed for other reasons.
+     */
+    tune(FrontendSettings settings) generates (Result result);
+
+    /**
+     * Stop the tuning
+     *
+     * It is used by the client to stop a previous tuning.
+     *
+     * @return result Result status of the operation.
+     *         SUCCESS if successfully stop tuning.
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    stopTune() generates (Result result);
+
+    /**
+     * Release the Frontend instance
+     *
+     * It is used by the client to release the frontend instance. HAL clear
+     * underneath resource. client mustn't access the instance any more.
+     *
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    close() generates (Result result);
+};
