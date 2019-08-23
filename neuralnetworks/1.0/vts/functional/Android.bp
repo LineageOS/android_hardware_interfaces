@@ -74,7 +74,7 @@ cc_test {
     defaults: ["VtsHalNeuralNetworksV1_0TargetTestDefaults"],
     srcs: [
         "BasicTests.cpp",
-        ":VtsHalNeuralNetworksV1_0_all_generated_V1_0_tests",
+        ":VtsHalNeuralNetworksV1_0_all_generated_tests",
     ],
 }
 
@@ -83,7 +83,7 @@ cc_test {
     defaults: ["VtsHalNeuralNetworksV1_0TargetTestDefaults"],
     srcs: [
         "BasicTests.cpp",
-        ":VtsHalNeuralNetworksV1_0_all_generated_V1_0_tests",
+        ":VtsHalNeuralNetworksV1_0_all_generated_tests",
     ],
     cflags: [
         "-DPRESUBMIT_NOT_VTS",
