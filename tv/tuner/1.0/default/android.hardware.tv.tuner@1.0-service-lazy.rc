@@ -1,0 +1,9 @@
+service vendor.tuner-hal-1-0 /vendor/bin/hw/android.hardware.tv.tuner@1.0-service-lazy
+    interface android.hardware.tv.tuner@1.0::ITuner default
+    oneshot
+    disabled
+    class hal
+    user media
+    group mediadrm drmrpc
+    ioprio rt 4
+    writepid /dev/cpuset/foreground/tasks
