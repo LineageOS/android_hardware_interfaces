@@ -16,11 +16,13 @@
 
 #define LOG_TAG "light_hidl_hal_test"
 
-#include <VtsHalHidlTargetTestBase.h>
-#include <VtsHalHidlTargetTestEnvBase.h>
 #include <android-base/logging.h>
 #include <android/hardware/light/2.0/ILight.h>
 #include <android/hardware/light/2.0/types.h>
+#include <gtest/gtest.h>
+#include <hidl/GtestPrinter.h>
+#include <hidl/ServiceManagement.h>
+
 #include <unistd.h>
 #include <set>
 
@@ -73,25 +75,10 @@ const static std::set<Type> kAllTypes = {
     Type::WIFI
 };
 
-// Test environment for Light HIDL HAL.
-class LightHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
-   public:
-    // get the test environment singleton
-    static LightHidlEnvironment* Instance() {
-        static LightHidlEnvironment* instance = new LightHidlEnvironment;
-        return instance;
-    }
-
-    virtual void registerTestServices() override { registerTestService<ILight>(); }
-   private:
-    LightHidlEnvironment() {}
-};
-
-class LightHidlTest : public ::testing::VtsHalHidlTargetTestBase {
-public:
+class LightHidlTest : public testing::TestWithParam<std::string> {
+  public:
     virtual void SetUp() override {
-        light = ::testing::VtsHalHidlTargetTestBase::getService<ILight>(
-            LightHidlEnvironment::Instance()->getServiceName<ILight>());
+        light = ILight::getService(GetParam());
 
         ASSERT_NE(light, nullptr);
         LOG(INFO) << "Test is remote " << light->isRemote();
@@ -120,13 +107,12 @@ public:
             EXPECT_EQ(Status::SUCCESS, static_cast<Status>(ret));
         }
     }
-
 };
 
 /**
  * Ensure all lights which are reported as supported work.
  */
-TEST_F(LightHidlTest, TestSupported) {
+TEST_P(LightHidlTest, TestSupported) {
     for (const Type& type: supportedTypes) {
         Return<Status> ret = light->setLight(type, kWhite);
         EXPECT_OK(ret);
@@ -137,7 +123,7 @@ TEST_F(LightHidlTest, TestSupported) {
 /**
  * Ensure BRIGHTNESS_NOT_SUPPORTED is returned if LOW_PERSISTANCE is not supported.
  */
-TEST_F(LightHidlTest, TestLowPersistance) {
+TEST_P(LightHidlTest, TestLowPersistance) {
     for (const Type& type: supportedTypes) {
         Return<Status> ret = light->setLight(type, kLowPersistance);
         EXPECT_OK(ret);
@@ -151,7 +137,7 @@ TEST_F(LightHidlTest, TestLowPersistance) {
 /**
  * Ensure lights which are not supported return LIGHT_NOT_SUPPORTED
  */
-TEST_F(LightHidlTest, TestUnsupported) {
+TEST_P(LightHidlTest, TestUnsupported) {
     std::set<Type> unsupportedTypes = kAllTypes;
     for (const Type& type: supportedTypes) {
         unsupportedTypes.erase(type);
@@ -164,11 +150,7 @@ TEST_F(LightHidlTest, TestUnsupported) {
     }
 }
 
-int main(int argc, char **argv) {
-    ::testing::AddGlobalTestEnvironment(LightHidlEnvironment::Instance());
-    ::testing::InitGoogleTest(&argc, argv);
-    LightHidlEnvironment::Instance()->init(&argc, argv);
-    int status = RUN_ALL_TESTS();
-    LOG(INFO) << "Test result = " << status;
-    return status;
-}
+INSTANTIATE_TEST_SUITE_P(
+        PerInstance, LightHidlTest,
+        testing::ValuesIn(android::hardware::getAllHalInstanceNames(ILight::descriptor)),
+        android::hardware::PrintInstanceNameToString);
