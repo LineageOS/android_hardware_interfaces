@@ -24,6 +24,11 @@ cc_defaults {
         "VtsHalHidlTargetTestBase",
         "libhidl-gen-utils",
     ],
+
+    header_libs: [
+        "libhidl_gtest_helpers",
+    ],
+
     group_static_libs: true,
 
     // Lists all system dependencies that can be expected on the device.
