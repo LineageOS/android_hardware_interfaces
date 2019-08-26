@@ -425,7 +425,7 @@ class CompilationCachingTest : public CompilationCachingTestBase,
 TEST_P(CompilationCachingTest, CacheSavingAndRetrieval) {
     // Create test HIDL model and compile.
     const TestModel& testModel = createTestModel();
-    const Model model = generated_tests::createModel(testModel);
+    const Model model = createModel(testModel);
     if (checkEarlyTermination(model)) return;
     sp<IPreparedModel> preparedModel = nullptr;
 
@@ -459,14 +459,14 @@ TEST_P(CompilationCachingTest, CacheSavingAndRetrieval) {
     }
 
     // Execute and verify results.
-    generated_tests::EvaluatePreparedModel(preparedModel, testModel,
-                                           /*testDynamicOutputShape=*/false);
+    EvaluatePreparedModel(preparedModel, testModel,
+                          /*testDynamicOutputShape=*/false);
 }
 
 TEST_P(CompilationCachingTest, CacheSavingAndRetrievalNonZeroOffset) {
     // Create test HIDL model and compile.
     const TestModel& testModel = createTestModel();
-    const Model model = generated_tests::createModel(testModel);
+    const Model model = createModel(testModel);
     if (checkEarlyTermination(model)) return;
     sp<IPreparedModel> preparedModel = nullptr;
 
@@ -522,14 +522,14 @@ TEST_P(CompilationCachingTest, CacheSavingAndRetrievalNonZeroOffset) {
     }
 
     // Execute and verify results.
-    generated_tests::EvaluatePreparedModel(preparedModel, testModel,
-                                           /*testDynamicOutputShape=*/false);
+    EvaluatePreparedModel(preparedModel, testModel,
+                          /*testDynamicOutputShape=*/false);
 }
 
 TEST_P(CompilationCachingTest, SaveToCacheInvalidNumCache) {
     // Create test HIDL model and compile.
     const TestModel& testModel = createTestModel();
-    const Model model = generated_tests::createModel(testModel);
+    const Model model = createModel(testModel);
     if (checkEarlyTermination(model)) return;
 
     // Test with number of model cache files greater than mNumModelCache.
@@ -544,8 +544,8 @@ TEST_P(CompilationCachingTest, SaveToCacheInvalidNumCache) {
         saveModelToCache(model, modelCache, dataCache, &preparedModel);
         ASSERT_NE(preparedModel, nullptr);
         // Execute and verify results.
-        generated_tests::EvaluatePreparedModel(preparedModel, testModel,
-                                               /*testDynamicOutputShape=*/false);
+        EvaluatePreparedModel(preparedModel, testModel,
+                              /*testDynamicOutputShape=*/false);
         // Check if prepareModelFromCache fails.
         preparedModel = nullptr;
         ErrorStatus status;
@@ -569,8 +569,8 @@ TEST_P(CompilationCachingTest, SaveToCacheInvalidNumCache) {
         saveModelToCache(model, modelCache, dataCache, &preparedModel);
         ASSERT_NE(preparedModel, nullptr);
         // Execute and verify results.
-        generated_tests::EvaluatePreparedModel(preparedModel, testModel,
-                                               /*testDynamicOutputShape=*/false);
+        EvaluatePreparedModel(preparedModel, testModel,
+                              /*testDynamicOutputShape=*/false);
         // Check if prepareModelFromCache fails.
         preparedModel = nullptr;
         ErrorStatus status;
@@ -593,8 +593,8 @@ TEST_P(CompilationCachingTest, SaveToCacheInvalidNumCache) {
         saveModelToCache(model, modelCache, dataCache, &preparedModel);
         ASSERT_NE(preparedModel, nullptr);
         // Execute and verify results.
-        generated_tests::EvaluatePreparedModel(preparedModel, testModel,
-                                               /*testDynamicOutputShape=*/false);
+        EvaluatePreparedModel(preparedModel, testModel,
+                              /*testDynamicOutputShape=*/false);
         // Check if prepareModelFromCache fails.
         preparedModel = nullptr;
         ErrorStatus status;
@@ -618,8 +618,8 @@ TEST_P(CompilationCachingTest, SaveToCacheInvalidNumCache) {
         saveModelToCache(model, modelCache, dataCache, &preparedModel);
         ASSERT_NE(preparedModel, nullptr);
         // Execute and verify results.
-        generated_tests::EvaluatePreparedModel(preparedModel, testModel,
-                                               /*testDynamicOutputShape=*/false);
+        EvaluatePreparedModel(preparedModel, testModel,
+                              /*testDynamicOutputShape=*/false);
         // Check if prepareModelFromCache fails.
         preparedModel = nullptr;
         ErrorStatus status;
@@ -634,7 +634,7 @@ TEST_P(CompilationCachingTest, SaveToCacheInvalidNumCache) {
 TEST_P(CompilationCachingTest, PrepareModelFromCacheInvalidNumCache) {
     // Create test HIDL model and compile.
     const TestModel& testModel = createTestModel();
-    const Model model = generated_tests::createModel(testModel);
+    const Model model = createModel(testModel);
     if (checkEarlyTermination(model)) return;
 
     // Save the compilation to cache.
@@ -715,7 +715,7 @@ TEST_P(CompilationCachingTest, PrepareModelFromCacheInvalidNumCache) {
 TEST_P(CompilationCachingTest, SaveToCacheInvalidNumFd) {
     // Create test HIDL model and compile.
     const TestModel& testModel = createTestModel();
-    const Model model = generated_tests::createModel(testModel);
+    const Model model = createModel(testModel);
     if (checkEarlyTermination(model)) return;
 
     // Go through each handle in model cache, test with NumFd greater than 1.
@@ -730,8 +730,8 @@ TEST_P(CompilationCachingTest, SaveToCacheInvalidNumFd) {
         saveModelToCache(model, modelCache, dataCache, &preparedModel);
         ASSERT_NE(preparedModel, nullptr);
         // Execute and verify results.
-        generated_tests::EvaluatePreparedModel(preparedModel, testModel,
-                                               /*testDynamicOutputShape=*/false);
+        EvaluatePreparedModel(preparedModel, testModel,
+                              /*testDynamicOutputShape=*/false);
         // Check if prepareModelFromCache fails.
         preparedModel = nullptr;
         ErrorStatus status;
@@ -755,8 +755,8 @@ TEST_P(CompilationCachingTest, SaveToCacheInvalidNumFd) {
         saveModelToCache(model, modelCache, dataCache, &preparedModel);
         ASSERT_NE(preparedModel, nullptr);
         // Execute and verify results.
-        generated_tests::EvaluatePreparedModel(preparedModel, testModel,
-                                               /*testDynamicOutputShape=*/false);
+        EvaluatePreparedModel(preparedModel, testModel,
+                              /*testDynamicOutputShape=*/false);
         // Check if prepareModelFromCache fails.
         preparedModel = nullptr;
         ErrorStatus status;
@@ -779,8 +779,8 @@ TEST_P(CompilationCachingTest, SaveToCacheInvalidNumFd) {
         saveModelToCache(model, modelCache, dataCache, &preparedModel);
         ASSERT_NE(preparedModel, nullptr);
         // Execute and verify results.
-        generated_tests::EvaluatePreparedModel(preparedModel, testModel,
-                                               /*testDynamicOutputShape=*/false);
+        EvaluatePreparedModel(preparedModel, testModel,
+                              /*testDynamicOutputShape=*/false);
         // Check if prepareModelFromCache fails.
         preparedModel = nullptr;
         ErrorStatus status;
@@ -804,8 +804,8 @@ TEST_P(CompilationCachingTest, SaveToCacheInvalidNumFd) {
         saveModelToCache(model, modelCache, dataCache, &preparedModel);
         ASSERT_NE(preparedModel, nullptr);
         // Execute and verify results.
-        generated_tests::EvaluatePreparedModel(preparedModel, testModel,
-                                               /*testDynamicOutputShape=*/false);
+        EvaluatePreparedModel(preparedModel, testModel,
+                              /*testDynamicOutputShape=*/false);
         // Check if prepareModelFromCache fails.
         preparedModel = nullptr;
         ErrorStatus status;
@@ -820,7 +820,7 @@ TEST_P(CompilationCachingTest, SaveToCacheInvalidNumFd) {
 TEST_P(CompilationCachingTest, PrepareModelFromCacheInvalidNumFd) {
     // Create test HIDL model and compile.
     const TestModel& testModel = createTestModel();
-    const Model model = generated_tests::createModel(testModel);
+    const Model model = createModel(testModel);
     if (checkEarlyTermination(model)) return;
 
     // Save the compilation to cache.
@@ -901,7 +901,7 @@ TEST_P(CompilationCachingTest, PrepareModelFromCacheInvalidNumFd) {
 TEST_P(CompilationCachingTest, SaveToCacheInvalidAccessMode) {
     // Create test HIDL model and compile.
     const TestModel& testModel = createTestModel();
-    const Model model = generated_tests::createModel(testModel);
+    const Model model = createModel(testModel);
     if (checkEarlyTermination(model)) return;
     std::vector<AccessMode> modelCacheMode(mNumModelCache, AccessMode::READ_WRITE);
     std::vector<AccessMode> dataCacheMode(mNumDataCache, AccessMode::READ_WRITE);
@@ -917,8 +917,8 @@ TEST_P(CompilationCachingTest, SaveToCacheInvalidAccessMode) {
         saveModelToCache(model, modelCache, dataCache, &preparedModel);
         ASSERT_NE(preparedModel, nullptr);
         // Execute and verify results.
-        generated_tests::EvaluatePreparedModel(preparedModel, testModel,
-                                               /*testDynamicOutputShape=*/false);
+        EvaluatePreparedModel(preparedModel, testModel,
+                              /*testDynamicOutputShape=*/false);
         // Check if prepareModelFromCache fails.
         preparedModel = nullptr;
         ErrorStatus status;
@@ -940,8 +940,8 @@ TEST_P(CompilationCachingTest, SaveToCacheInvalidAccessMode) {
         saveModelToCache(model, modelCache, dataCache, &preparedModel);
         ASSERT_NE(preparedModel, nullptr);
         // Execute and verify results.
-        generated_tests::EvaluatePreparedModel(preparedModel, testModel,
-                                               /*testDynamicOutputShape=*/false);
+        EvaluatePreparedModel(preparedModel, testModel,
+                              /*testDynamicOutputShape=*/false);
         // Check if prepareModelFromCache fails.
         preparedModel = nullptr;
         ErrorStatus status;
@@ -956,7 +956,7 @@ TEST_P(CompilationCachingTest, SaveToCacheInvalidAccessMode) {
 TEST_P(CompilationCachingTest, PrepareModelFromCacheInvalidAccessMode) {
     // Create test HIDL model and compile.
     const TestModel& testModel = createTestModel();
-    const Model model = generated_tests::createModel(testModel);
+    const Model model = createModel(testModel);
     if (checkEarlyTermination(model)) return;
     std::vector<AccessMode> modelCacheMode(mNumModelCache, AccessMode::READ_WRITE);
     std::vector<AccessMode> dataCacheMode(mNumDataCache, AccessMode::READ_WRITE);
@@ -1035,10 +1035,10 @@ TEST_P(CompilationCachingTest, SaveToCache_TOCTOU) {
 
     // Create test models and check if fully supported by the service.
     const TestModel testModelMul = createLargeTestModel(OperationType::MUL, kLargeModelSize);
-    const Model modelMul = generated_tests::createModel(testModelMul);
+    const Model modelMul = createModel(testModelMul);
     if (checkEarlyTermination(modelMul)) return;
     const TestModel testModelAdd = createLargeTestModel(OperationType::ADD, kLargeModelSize);
-    const Model modelAdd = generated_tests::createModel(testModelAdd);
+    const Model modelAdd = createModel(testModelAdd);
     if (checkEarlyTermination(modelAdd)) return;
 
     // Save the modelMul compilation to cache.
@@ -1085,8 +1085,8 @@ TEST_P(CompilationCachingTest, SaveToCache_TOCTOU) {
                 ASSERT_EQ(preparedModel, nullptr);
             } else {
                 ASSERT_NE(preparedModel, nullptr);
-                generated_tests::EvaluatePreparedModel(preparedModel, testModelAdd,
-                                                       /*testDynamicOutputShape=*/false);
+                EvaluatePreparedModel(preparedModel, testModelAdd,
+                                      /*testDynamicOutputShape=*/false);
             }
         }
     }
@@ -1097,10 +1097,10 @@ TEST_P(CompilationCachingTest, PrepareFromCache_TOCTOU) {
 
     // Create test models and check if fully supported by the service.
     const TestModel testModelMul = createLargeTestModel(OperationType::MUL, kLargeModelSize);
-    const Model modelMul = generated_tests::createModel(testModelMul);
+    const Model modelMul = createModel(testModelMul);
     if (checkEarlyTermination(modelMul)) return;
     const TestModel testModelAdd = createLargeTestModel(OperationType::ADD, kLargeModelSize);
-    const Model modelAdd = generated_tests::createModel(testModelAdd);
+    const Model modelAdd = createModel(testModelAdd);
     if (checkEarlyTermination(modelAdd)) return;
 
     // Save the modelMul compilation to cache.
@@ -1147,8 +1147,8 @@ TEST_P(CompilationCachingTest, PrepareFromCache_TOCTOU) {
                 ASSERT_EQ(preparedModel, nullptr);
             } else {
                 ASSERT_NE(preparedModel, nullptr);
-                generated_tests::EvaluatePreparedModel(preparedModel, testModelAdd,
-                                                       /*testDynamicOutputShape=*/false);
+                EvaluatePreparedModel(preparedModel, testModelAdd,
+                                      /*testDynamicOutputShape=*/false);
             }
         }
     }
@@ -1159,10 +1159,10 @@ TEST_P(CompilationCachingTest, ReplaceSecuritySensitiveCache) {
 
     // Create test models and check if fully supported by the service.
     const TestModel testModelMul = createLargeTestModel(OperationType::MUL, kLargeModelSize);
-    const Model modelMul = generated_tests::createModel(testModelMul);
+    const Model modelMul = createModel(testModelMul);
     if (checkEarlyTermination(modelMul)) return;
     const TestModel testModelAdd = createLargeTestModel(OperationType::ADD, kLargeModelSize);
-    const Model modelAdd = generated_tests::createModel(testModelAdd);
+    const Model modelAdd = createModel(testModelAdd);
     if (checkEarlyTermination(modelAdd)) return;
 
     // Save the modelMul compilation to cache.
@@ -1265,7 +1265,7 @@ class CompilationCachingSecurityTest
     // whether the test should be skipped or not.
     void testCorruptedCache(ExpectedResult expected, std::function<void(bool*)> modifier) {
         const TestModel& testModel = createTestModel();
-        const Model model = generated_tests::createModel(testModel);
+        const Model model = createModel(testModel);
         if (checkEarlyTermination(model)) return;
 
         // Save the compilation to cache.
