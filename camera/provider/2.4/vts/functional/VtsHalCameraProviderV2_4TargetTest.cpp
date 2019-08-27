@@ -624,7 +624,7 @@ public:
 
         Return<void> returnStreamBuffers(const hidl_vec<StreamBuffer>& buffers) override;
 
-        void setCurrentStreamConfig(const hidl_vec<V3_2::Stream>& streams,
+        void setCurrentStreamConfig(const hidl_vec<V3_4::Stream>& streams,
                 const hidl_vec<V3_2::HalStream>& halStreams);
 
         void waitForBuffersReturned();
@@ -641,7 +641,7 @@ public:
         /* members for requestStreamBuffers() and returnStreamBuffers()*/
         std::mutex mLock; // protecting members below
         bool                      mUseHalBufManager = false;
-        hidl_vec<V3_2::Stream>    mStreams;
+        hidl_vec<V3_4::Stream>    mStreams;
         hidl_vec<V3_2::HalStream> mHalStreams;
         uint64_t mNextBufferId = 1;
         using OutstandingBuffers = std::unordered_map<uint64_t, hidl_handle>;
@@ -867,6 +867,8 @@ protected:
         int32_t partialResultCount;
 
         // For buffer drop errors, the stream ID for the stream that lost a buffer.
+        // For physical sub-camera result errors, the Id of the physical stream
+        // for the physical sub-camera.
         // Otherwise -1.
         int32_t errorStreamId;
 
@@ -879,6 +881,8 @@ protected:
         // Buffers are added by process_capture_result when output buffers
         // return from HAL but framework.
         ::android::Vector<StreamBuffer> resultOutputBuffers;
+
+        std::unordered_set<string> expectedPhysicalResults;
 
         InFlightRequest() :
                 shutterTimestamp(0),
@@ -909,6 +913,24 @@ protected:
                 partialResultCount(0),
                 errorStreamId(-1),
                 hasInputBuffer(hasInput) {}
+
+        InFlightRequest(ssize_t numBuffers, bool hasInput,
+                bool partialResults, uint32_t partialCount,
+                const std::unordered_set<string>& extraPhysicalResult,
+                std::shared_ptr<ResultMetadataQueue> queue = nullptr) :
+                shutterTimestamp(0),
+                errorCodeValid(false),
+                errorCode(ErrorCode::ERROR_BUFFER),
+                usePartialResult(partialResults),
+                numPartialResults(partialCount),
+                resultQueue(queue),
+                haveResultMetadata(false),
+                numBuffersLeft(numBuffers),
+                frameNumber(0),
+                partialResultCount(0),
+                errorStreamId(-1),
+                hasInputBuffer(hasInput),
+                expectedPhysicalResults(extraPhysicalResult) {}
     };
 
     // Map from frame number to the in-flight request state
@@ -1126,6 +1148,13 @@ bool CameraHidlTest::DeviceCb::processCaptureResultLocked(const CaptureResult& r
             return notify;
         }
 
+        if (physicalCameraMetadata.size() != request->expectedPhysicalResults.size()) {
+            ALOGE("%s: Frame %d: Returned physical metadata count %zu "
+                    "must be equal to expected count %zu", __func__, frameNumber,
+                    physicalCameraMetadata.size(), request->expectedPhysicalResults.size());
+            ADD_FAILURE();
+            return notify;
+        }
         std::vector<::android::hardware::camera::device::V3_2::CameraMetadata> physResultMetadata;
         physResultMetadata.resize(physicalCameraMetadata.size());
         for (size_t i = 0; i < physicalCameraMetadata.size(); i++) {
@@ -1253,11 +1282,11 @@ bool CameraHidlTest::DeviceCb::processCaptureResultLocked(const CaptureResult& r
 }
 
 void CameraHidlTest::DeviceCb::setCurrentStreamConfig(
-        const hidl_vec<V3_2::Stream>& streams, const hidl_vec<V3_2::HalStream>& halStreams) {
+        const hidl_vec<V3_4::Stream>& streams, const hidl_vec<V3_2::HalStream>& halStreams) {
     ASSERT_EQ(streams.size(), halStreams.size());
     ASSERT_NE(streams.size(), 0);
     for (size_t i = 0; i < streams.size(); i++) {
-        ASSERT_EQ(streams[i].id, halStreams[i].id);
+        ASSERT_EQ(streams[i].v3_2.id, halStreams[i].id);
     }
     std::lock_guard<std::mutex> l(mLock);
     mUseHalBufManager = true;
@@ -1295,16 +1324,6 @@ Return<void> CameraHidlTest::DeviceCb::notify(
     std::lock_guard<std::mutex> l(mParent->mLock);
 
     for (size_t i = 0; i < messages.size(); i++) {
-        ssize_t idx = mParent->mInflightMap.indexOfKey(
-                messages[i].msg.shutter.frameNumber);
-        if (::android::NAME_NOT_FOUND == idx) {
-            ALOGE("%s: Unexpected frame number! received: %u",
-                  __func__, messages[i].msg.shutter.frameNumber);
-            ADD_FAILURE();
-            break;
-        }
-        InFlightRequest *r = mParent->mInflightMap.editValueAt(idx);
-
         switch(messages[i].type) {
             case MsgType::ERROR:
                 if (ErrorCode::ERROR_DEVICE == messages[i].msg.error.errorCode) {
@@ -1312,13 +1331,59 @@ Return<void> CameraHidlTest::DeviceCb::notify(
                           __func__);
                     ADD_FAILURE();
                 } else {
-                    r->errorCodeValid = true;
-                    r->errorCode = messages[i].msg.error.errorCode;
-                    r->errorStreamId = messages[i].msg.error.errorStreamId;
+                    ssize_t idx = mParent->mInflightMap.indexOfKey(
+                            messages[i].msg.error.frameNumber);
+                    if (::android::NAME_NOT_FOUND == idx) {
+                        ALOGE("%s: Unexpected error frame number! received: %u",
+                              __func__, messages[i].msg.error.frameNumber);
+                        ADD_FAILURE();
+                        break;
+                    }
+                    InFlightRequest *r = mParent->mInflightMap.editValueAt(idx);
+
+                    if (ErrorCode::ERROR_RESULT == messages[i].msg.error.errorCode &&
+                            messages[i].msg.error.errorStreamId != -1) {
+                        if (r->haveResultMetadata) {
+                            ALOGE("%s: Camera must report physical camera result error before "
+                                    "the final capture result!", __func__);
+                            ADD_FAILURE();
+                        } else {
+                            for (size_t j = 0; j < mStreams.size(); j++) {
+                                if (mStreams[j].v3_2.id == messages[i].msg.error.errorStreamId) {
+                                    hidl_string physicalCameraId = mStreams[j].physicalCameraId;
+                                    bool idExpected = r->expectedPhysicalResults.find(
+                                            physicalCameraId) != r->expectedPhysicalResults.end();
+                                    if (!idExpected) {
+                                        ALOGE("%s: ERROR_RESULT's error stream's physicalCameraId "
+                                                "%s must be expected", __func__,
+                                                physicalCameraId.c_str());
+                                        ADD_FAILURE();
+                                    } else {
+                                        r->expectedPhysicalResults.erase(physicalCameraId);
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                    } else {
+                        r->errorCodeValid = true;
+                        r->errorCode = messages[i].msg.error.errorCode;
+                        r->errorStreamId = messages[i].msg.error.errorStreamId;
+                  }
                 }
                 break;
             case MsgType::SHUTTER:
+            {
+                ssize_t idx = mParent->mInflightMap.indexOfKey(messages[i].msg.shutter.frameNumber);
+                if (::android::NAME_NOT_FOUND == idx) {
+                    ALOGE("%s: Unexpected shutter frame number! received: %u",
+                          __func__, messages[i].msg.shutter.frameNumber);
+                    ADD_FAILURE();
+                    break;
+                }
+                InFlightRequest *r = mParent->mInflightMap.editValueAt(idx);
                 r->shutterTimestamp = messages[i].msg.shutter.timestamp;
+            }
                 break;
             default:
                 ALOGE("%s: Unsupported notify message %d", __func__,
@@ -1359,7 +1424,7 @@ Return<void> CameraHidlTest::DeviceCb::requestStreamBuffers(
     for (size_t i = 0; i < bufReqs.size(); i++) {
         bool found = false;
         for (size_t idx = 0; idx < mStreams.size(); idx++) {
-            if (bufReqs[i].streamId == mStreams[idx].id) {
+            if (bufReqs[i].streamId == mStreams[idx].v3_2.id) {
                 found = true;
                 indexes[i] = idx;
                 break;
@@ -1383,7 +1448,7 @@ Return<void> CameraHidlTest::DeviceCb::requestStreamBuffers(
         const auto& halStream = mHalStreams[idx];
         const V3_5::BufferRequest& bufReq = bufReqs[i];
         if (mOutstandingBufferIds[idx].size() + bufReq.numBuffersRequested > halStream.maxBuffers) {
-            bufRets[i].streamId = stream.id;
+            bufRets[i].streamId = stream.v3_2.id;
             bufRets[i].val.error(StreamBufferRequestError::MAX_BUFFER_EXCEEDED);
             allStreamOk = false;
             continue;
@@ -1392,17 +1457,17 @@ Return<void> CameraHidlTest::DeviceCb::requestStreamBuffers(
         hidl_vec<StreamBuffer> tmpRetBuffers(bufReq.numBuffersRequested);
         for (size_t j = 0; j < bufReq.numBuffersRequested; j++) {
             hidl_handle buffer_handle;
-            mParent->allocateGraphicBuffer(stream.width, stream.height,
+            mParent->allocateGraphicBuffer(stream.v3_2.width, stream.v3_2.height,
                     android_convertGralloc1To0Usage(
                             halStream.producerUsage, halStream.consumerUsage),
                     halStream.overrideFormat, &buffer_handle);
 
-            tmpRetBuffers[j] = {stream.id, mNextBufferId, buffer_handle, BufferStatus::OK,
+            tmpRetBuffers[j] = {stream.v3_2.id, mNextBufferId, buffer_handle, BufferStatus::OK,
                                 nullptr, nullptr};
             mOutstandingBufferIds[idx].insert(std::make_pair(mNextBufferId++, buffer_handle));
         }
         atLeastOneStreamOk = true;
-        bufRets[i].streamId = stream.id;
+        bufRets[i].streamId = stream.v3_2.id;
         bufRets[i].val.buffers(std::move(tmpRetBuffers));
     }
 
@@ -1432,7 +1497,7 @@ Return<void> CameraHidlTest::DeviceCb::returnStreamBuffers(
     for (const auto& buf : buffers) {
         bool found = false;
         for (size_t idx = 0; idx < mOutstandingBufferIds.size(); idx++) {
-            if (mStreams[idx].id == buf.streamId &&
+            if (mStreams[idx].v3_2.id == buf.streamId &&
                     mOutstandingBufferIds[idx].count(buf.bufferId) == 1) {
                 mOutstandingBufferIds[idx].erase(buf.bufferId);
                 // TODO: check do we need to close/delete native handle or assume we have enough
@@ -4159,7 +4224,7 @@ TEST_F(CameraHidlTest, processMultiCaptureRequestPreview) {
         ASSERT_TRUE(resultQueueRet.isOk());
 
         InFlightRequest inflightReq = {static_cast<ssize_t> (halStreamConfig.streams.size()), false,
-            supportsPartialResults, partialResultCount, resultQueue};
+            supportsPartialResults, partialResultCount, physicalIds, resultQueue};
 
         std::vector<hidl_handle> graphicBuffers;
         graphicBuffers.reserve(halStreamConfig.streams.size());
@@ -4238,7 +4303,7 @@ TEST_F(CameraHidlTest, processMultiCaptureRequestPreview) {
             request.v3_2.outputBuffers[0].buffer = nullptr;
             mInflightMap.clear();
             inflightReq = {static_cast<ssize_t> (physicalIds.size()), false,
-                supportsPartialResults, partialResultCount, resultQueue};
+                supportsPartialResults, partialResultCount, physicalIds, resultQueue};
             mInflightMap.add(request.v3_2.frameNumber, &inflightReq);
         }
 
@@ -5317,10 +5382,10 @@ void CameraHidlTest::configurePreviewStreams3_4(const std::string &name, int32_t
                     ASSERT_EQ(physicalIds.size(), halConfig.streams.size());
                     *halStreamConfig = halConfig;
                     if (*useHalBufManager) {
-                        hidl_vec<V3_2::Stream> streams(physicalIds.size());
+                        hidl_vec<V3_4::Stream> streams(physicalIds.size());
                         hidl_vec<V3_2::HalStream> halStreams(physicalIds.size());
                         for (size_t i = 0; i < physicalIds.size(); i++) {
-                            streams[i] = streams3_4[i].v3_2;
+                            streams[i] = streams3_4[i];
                             halStreams[i] = halConfig.streams[i].v3_3.v3_2;
                         }
                         cb->setCurrentStreamConfig(streams, halStreams);
@@ -5495,9 +5560,9 @@ void CameraHidlTest::configurePreviewStream(const std::string &name, int32_t dev
                     halStreamConfig->streams.resize(1);
                     halStreamConfig->streams[0] = halConfig.streams[0].v3_3.v3_2;
                     if (*useHalBufManager) {
-                        hidl_vec<V3_2::Stream> streams(1);
+                        hidl_vec<V3_4::Stream> streams(1);
                         hidl_vec<V3_2::HalStream> halStreams(1);
-                        streams[0] = stream3_2;
+                        streams[0] = config3_4.streams[0];
                         halStreams[0] = halConfig.streams[0].v3_3.v3_2;
                         cb->setCurrentStreamConfig(streams, halStreams);
                     }

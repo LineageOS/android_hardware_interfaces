@@ -18,11 +18,18 @@
 
 #include <android/hardware/sensors/2.0/types.h>
 
+#include <dlfcn.h>
+
+#include <fstream>
+#include <functional>
+
 namespace android {
 namespace hardware {
 namespace sensors {
 namespace V2_0 {
 namespace implementation {
+
+typedef ISensorsSubHal*(SensorsHalGetSubHalFunc)(uint32_t*);
 
 // TODO: Use this wake lock name as the prefix to all sensors HAL wake locks acquired.
 // constexpr const char* kWakeLockName = "SensorsHAL_WAKEUP";
@@ -62,7 +69,39 @@ class SensorsCallbackProxy : public ISensorsCallback {
 };
 
 HalProxy::HalProxy() {
-    // TODO: Initialize all sub-HALs and discover sensors.
+    const char* kMultiHalConfigFilePath = "/vendor/etc/sensors/hals.conf";
+    std::ifstream subHalConfigStream(kMultiHalConfigFilePath);
+    if (!subHalConfigStream) {
+        LOG_FATAL("Failed to load subHal config file: %s", kMultiHalConfigFilePath);
+    } else {
+        std::string subHalLibraryFile;
+        while (subHalConfigStream >> subHalLibraryFile) {
+            void* handle = dlopen(subHalLibraryFile.c_str(), RTLD_NOW);
+            if (handle == nullptr) {
+                LOG_FATAL("dlopen failed for library: %s", subHalLibraryFile.c_str());
+            } else {
+                SensorsHalGetSubHalFunc* sensorsHalGetSubHalPtr =
+                        (SensorsHalGetSubHalFunc*)dlsym(handle, "sensorsHalGetSubHal");
+                if (sensorsHalGetSubHalPtr == nullptr) {
+                    LOG_FATAL("Failed to locate sensorsHalGetSubHal function for library: %s",
+                              subHalLibraryFile.c_str());
+                } else {
+                    std::function<SensorsHalGetSubHalFunc> sensorsHalGetSubHal =
+                            *sensorsHalGetSubHalPtr;
+                    uint32_t version;
+                    ISensorsSubHal* subHal = sensorsHalGetSubHal(&version);
+                    if (version != SUB_HAL_2_0_VERSION) {
+                        LOG_FATAL("SubHal version was not 2.0 for library: %s",
+                                  subHalLibraryFile.c_str());
+                    } else {
+                        ALOGI("Loaded SubHal from library: %s", subHalLibraryFile.c_str());
+                        mSubHalList.push_back(subHal);
+                    }
+                }
+            }
+        }
+    }
+    // TODO: Discover sensors
 }
 
 HalProxy::~HalProxy() {

@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_TV_TUNER_V1_0_TUNER_H_
-#define ANDROID_HARDWARE_TV_TUNER_V1_0_TUNER_H_
+#ifndef ANDROID_HARDWARE_TV_TUNER_V1_0_DESCRAMBLER_H_
+#define ANDROID_HARDWARE_TV_TUNER_V1_0_DESCRAMBLER_H_
 
+#include <android/hardware/tv/tuner/1.0/IDescrambler.h>
 #include <android/hardware/tv/tuner/1.0/ITuner.h>
-#include "Frontend.h"
 
 using namespace std;
 
@@ -29,27 +29,21 @@ namespace tuner {
 namespace V1_0 {
 namespace implementation {
 
-class Tuner : public ITuner {
+using ::android::hardware::tv::tuner::V1_0::IDescrambler;
+using ::android::hardware::tv::tuner::V1_0::Result;
+
+class Descrambler : public IDescrambler {
   public:
-    Tuner();
-    virtual Return<void> getFrontendIds(getFrontendIds_cb _hidl_cb) override;
+    Descrambler();
 
-    virtual Return<void> openFrontendById(uint32_t frontendId,
-                                          openFrontendById_cb _hidl_cb) override;
+    virtual Return<Result> setDemuxSource(uint32_t demuxId) override;
 
-    virtual Return<void> openDemux(openDemux_cb _hidl_cb) override;
-
-    virtual Return<void> openDescrambler(openDescrambler_cb _hidl_cb) override;
+    virtual Return<Result> close() override;
 
   private:
-    virtual ~Tuner();
-    // Static mFrontends array to maintain local frontends information
-    vector<sp<Frontend>> mFrontends;
-    // To maintain how many Frontends we have
-    int mFrontendSize;
-    // The last used demux id. Initial value is -1.
-    // First used id will be 0.
-    int mLastUsedId = -1;
+    virtual ~Descrambler();
+    uint32_t mSourceDemuxId;
+    bool mDemuxSet = false;
 };
 
 }  // namespace implementation
@@ -59,4 +53,4 @@ class Tuner : public ITuner {
 }  // namespace hardware
 }  // namespace android
 
-#endif  // ANDROID_HARDWARE_TV_TUNER_V1_0_TUNER_H_
+#endif  // ANDROID_HARDWARE_TV_TUNER_V1_DESCRAMBLER_H_

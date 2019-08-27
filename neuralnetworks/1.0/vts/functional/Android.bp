@@ -32,12 +32,11 @@ cc_library_static {
         "android.hidl.memory@1.0",
         "libgmock",
         "libhidlmemory",
+        "libneuralnetworks_generated_test_harness",
         "libneuralnetworks_utils",
     ],
     header_libs: [
         "libneuralnetworks_headers",
-        "libneuralnetworks_generated_test_harness_headers",
-        "libneuralnetworks_generated_tests",
     ],
 }
 
@@ -60,13 +59,12 @@ cc_defaults {
         "android.hidl.memory@1.0",
         "libgmock",
         "libhidlmemory",
+        "libneuralnetworks_generated_test_harness",
         "libneuralnetworks_utils",
         "VtsHalNeuralNetworksV1_0_utils",
     ],
     header_libs: [
         "libneuralnetworks_headers",
-        "libneuralnetworks_generated_test_harness_headers",
-        "libneuralnetworks_generated_tests",
     ],
     test_suites: ["general-tests"],
 }
@@ -76,7 +74,7 @@ cc_test {
     defaults: ["VtsHalNeuralNetworksV1_0TargetTestDefaults"],
     srcs: [
         "BasicTests.cpp",
-        ":VtsHalNeuralNetworksV1_0_all_generated_V1_0_tests",
+        ":VtsHalNeuralNetworksV1_0_all_generated_tests",
     ],
 }
 
@@ -85,7 +83,7 @@ cc_test {
     defaults: ["VtsHalNeuralNetworksV1_0TargetTestDefaults"],
     srcs: [
         "BasicTests.cpp",
-        ":VtsHalNeuralNetworksV1_0_all_generated_V1_0_tests",
+        ":VtsHalNeuralNetworksV1_0_all_generated_tests",
     ],
     cflags: [
         "-DPRESUBMIT_NOT_VTS",

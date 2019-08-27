@@ -17,10 +17,12 @@
 #define LOG_TAG "neuralnetworks_hidl_hal_test"
 
 #include "VtsHalNeuralnetworks.h"
+#include "1.0/Callbacks.h"
+#include "1.0/Utils.h"
+#include "GeneratedTestHarness.h"
+#include "TestHarness.h"
 
 #include <android-base/logging.h>
-
-#include "1.2/Callbacks.h"
 
 namespace android {
 namespace hardware {
@@ -126,7 +128,7 @@ void NeuralnetworksHidlTest::TearDown() {
     ::testing::VtsHalHidlTargetTestBase::TearDown();
 }
 
-void ValidationTest::validateEverything(const Model& model, const std::vector<Request>& requests) {
+void ValidationTest::validateEverything(const Model& model, const Request& request) {
     validateModel(model);
 
     // create IPreparedModel
@@ -136,11 +138,11 @@ void ValidationTest::validateEverything(const Model& model, const std::vector<Re
         return;
     }
 
-    validateRequests(preparedModel, requests);
-    validateBurst(preparedModel, requests);
+    validateRequest(preparedModel, request);
+    validateBurst(preparedModel, request);
 }
 
-void ValidationTest::validateFailure(const Model& model, const std::vector<Request>& requests) {
+void ValidationTest::validateFailure(const Model& model, const Request& request) {
     // TODO: Should this always succeed?
     //       What if the invalid input is part of the model (i.e., a parameter).
     validateModel(model);
@@ -151,8 +153,20 @@ void ValidationTest::validateFailure(const Model& model, const std::vector<Reque
         return;
     }
 
-    validateRequestFailure(preparedModel, requests);
+    validateRequestFailure(preparedModel, request);
 }
+
+TEST_P(ValidationTest, Test) {
+    const Model model = createModel(*mTestModel);
+    const Request request = createRequest(*mTestModel);
+    if (mTestModel->expectFailure) {
+        validateFailure(model, request);
+    } else {
+        validateEverything(model, request);
+    }
+}
+
+INSTANTIATE_GENERATED_TEST(ValidationTest, [](const test_helper::TestModel&) { return true; });
 
 sp<IPreparedModel> getPreparedModel_1_2(
     const sp<V1_2::implementation::PreparedModelCallback>& callback) {

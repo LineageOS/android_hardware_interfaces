@@ -23,7 +23,8 @@ import @3.2::CameraBlobId;
 /**
  * If the result metadata cannot be produced for a physical camera device part of a logical
  * multi-camera, then HAL must invoke the notification callback and pass a message with ERROR_RESULT
- * code and errorStreamId that contains the stream id associated with that physical device.
+ * code and errorStreamId that contains the stream id associated with that physical device. Such
+ * callback must be made before the final processCaptureResult() call for the corresponding request.
  * The behavior during absent result metadata remains unchanged for a logical or a non-logical
  * camera device and the errorStreamId must be set to -1.
  */
