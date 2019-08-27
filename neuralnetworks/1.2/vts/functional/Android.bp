@@ -37,13 +37,12 @@ cc_defaults {
         "android.hidl.memory@1.0",
         "libgmock",
         "libhidlmemory",
+        "libneuralnetworks_generated_test_harness",
         "libneuralnetworks_utils",
         "VtsHalNeuralNetworksV1_0_utils",
     ],
     header_libs: [
         "libneuralnetworks_headers",
-        "libneuralnetworks_generated_test_harness_headers",
-        "libneuralnetworks_generated_tests",
     ],
     test_suites: ["general-tests"],
 }
@@ -75,8 +74,8 @@ cc_test {
     srcs: [
         "BasicTests.cpp",
         ":VtsHalNeuralNetworksV1_2_all_generated_V1_2_tests",
+        ":VtsHalNeuralNetworksV1_2_mobilenets",
         "CompilationCachingTests.cpp",
-        ":VtsHalNeuralNetworksV1_2_mobilenets", // CompilationCachingTests depend on MobileNets.
         "ValidateBurst.cpp",
     ],
 }
