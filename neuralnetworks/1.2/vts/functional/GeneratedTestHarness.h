@@ -25,12 +25,7 @@
 #include "TestHarness.h"
 #include "VtsHalNeuralnetworks.h"
 
-namespace android {
-namespace hardware {
-namespace neuralnetworks {
-namespace V1_2 {
-namespace vts {
-namespace functional {
+namespace android::hardware::neuralnetworks::V1_2::vts::functional {
 
 class GeneratedTestBase
     : public NeuralnetworksHidlTest,
@@ -54,29 +49,24 @@ class GeneratedTestBase
 // TODO: Clean up the hierarchy for ValidationTest.
 class ValidationTest : public GeneratedTestBase {
   protected:
-    void validateEverything(const Model& model, const Request& request);
-    void validateFailure(const Model& model, const Request& request);
+    void validateEverything(const Model& model, const V1_0::Request& request);
+    void validateFailure(const Model& model, const V1_0::Request& request);
 
   private:
     void validateModel(const Model& model);
-    void validateRequest(const sp<IPreparedModel>& preparedModel, const Request& request);
-    void validateRequestFailure(const sp<IPreparedModel>& preparedModel, const Request& request);
-    void validateBurst(const sp<IPreparedModel>& preparedModel, const Request& request);
+    void validateRequest(const sp<IPreparedModel>& preparedModel, const V1_0::Request& request);
+    void validateRequestFailure(const sp<IPreparedModel>& preparedModel,
+                                const V1_0::Request& request);
+    void validateBurst(const sp<IPreparedModel>& preparedModel, const V1_0::Request& request);
 };
 
 Model createModel(const ::test_helper::TestModel& testModel);
 
-void PrepareModel(const sp<V1_2::IDevice>& device, const V1_2::Model& model,
-                  sp<V1_2::IPreparedModel>* preparedModel);
+void PrepareModel(const sp<IDevice>& device, const Model& model, sp<IPreparedModel>* preparedModel);
 
-void EvaluatePreparedModel(const sp<V1_2::IPreparedModel>& preparedModel,
+void EvaluatePreparedModel(const sp<IPreparedModel>& preparedModel,
                            const ::test_helper::TestModel& testModel, bool testDynamicOutputShape);
 
-}  // namespace functional
-}  // namespace vts
-}  // namespace V1_2
-}  // namespace neuralnetworks
-}  // namespace hardware
-}  // namespace android
+}  // namespace android::hardware::neuralnetworks::V1_2::vts::functional
 
 #endif  // ANDROID_HARDWARE_NEURALNETWORKS_V1_2_GENERATED_TEST_HARNESS_H
