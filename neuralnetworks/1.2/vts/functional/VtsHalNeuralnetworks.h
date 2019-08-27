@@ -68,20 +68,16 @@ class NeuralnetworksHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     sp<IDevice> device;
 };
 
-// Tag for the validation tests
 class ValidationTest : public NeuralnetworksHidlTest {
   protected:
-    void validateEverything(const Model& model, const std::vector<Request>& requests);
-    void validateFailure(const Model& model, const std::vector<Request>& requests);
+    void validateEverything(const Model& model, const Request& request);
+    void validateFailure(const Model& model, const Request& request);
 
   private:
     void validateModel(const Model& model);
-    void validateRequests(const sp<IPreparedModel>& preparedModel,
-                          const std::vector<Request>& requests);
-    void validateRequestFailure(const sp<IPreparedModel>& preparedModel,
-                                const std::vector<Request>& requests);
-    void validateBurst(const sp<IPreparedModel>& preparedModel,
-                       const std::vector<Request>& requests);
+    void validateRequest(const sp<IPreparedModel>& preparedModel, const Request& request);
+    void validateRequestFailure(const sp<IPreparedModel>& preparedModel, const Request& request);
+    void validateBurst(const sp<IPreparedModel>& preparedModel, const Request& request);
 };
 
 // Tag for the generated tests

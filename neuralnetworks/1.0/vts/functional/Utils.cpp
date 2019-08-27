@@ -14,45 +14,108 @@
  * limitations under the License.
  */
 
-#include "GeneratedTestHarness.h"
+#include "1.0/Utils.h"
+
+#include "MemoryUtils.h"
 #include "TestHarness.h"
 
+#include <android-base/logging.h>
 #include <android/hardware/neuralnetworks/1.0/types.h>
+#include <android/hidl/allocator/1.0/IAllocator.h>
+#include <android/hidl/memory/1.0/IMemory.h>
+#include <hidlmemory/mapping.h>
 
-#include <cstring>
-#include <map>
+#include <algorithm>
 #include <vector>
 
 namespace android {
 namespace hardware {
 namespace neuralnetworks {
 
+using namespace test_helper;
+using ::android::hardware::neuralnetworks::V1_0::DataLocation;
+using ::android::hardware::neuralnetworks::V1_0::Request;
 using ::android::hardware::neuralnetworks::V1_0::RequestArgument;
-using ::test_helper::for_each;
-using ::test_helper::MixedTyped;
+using ::android::hidl::memory::V1_0::IMemory;
 
-template <typename T>
-void copy_back_(std::map<int, std::vector<T>>* dst, const std::vector<RequestArgument>& ra,
-                char* src) {
-    for_each<T>(*dst, [&ra, src](int index, std::vector<T>& m) {
-        ASSERT_EQ(m.size(), ra[index].location.length / sizeof(T));
-        char* begin = src + ra[index].location.offset;
-        memcpy(m.data(), begin, ra[index].location.length);
-    });
+constexpr uint32_t kInputPoolIndex = 0;
+constexpr uint32_t kOutputPoolIndex = 1;
+
+Request createRequest(const TestModel& testModel) {
+    // Model inputs.
+    hidl_vec<RequestArgument> inputs(testModel.inputIndexes.size());
+    size_t inputSize = 0;
+    for (uint32_t i = 0; i < testModel.inputIndexes.size(); i++) {
+        const auto& op = testModel.operands[testModel.inputIndexes[i]];
+        if (op.data.size() == 0) {
+            // Omitted input.
+            inputs[i] = {.hasNoValue = true};
+        } else {
+            DataLocation loc = {.poolIndex = kInputPoolIndex,
+                                .offset = static_cast<uint32_t>(inputSize),
+                                .length = static_cast<uint32_t>(op.data.size())};
+            inputSize += op.data.alignedSize();
+            inputs[i] = {.hasNoValue = false, .location = loc, .dimensions = {}};
+        }
+    }
+
+    // Model outputs.
+    hidl_vec<RequestArgument> outputs(testModel.outputIndexes.size());
+    size_t outputSize = 0;
+    for (uint32_t i = 0; i < testModel.outputIndexes.size(); i++) {
+        const auto& op = testModel.operands[testModel.outputIndexes[i]];
+
+        // In the case of zero-sized output, we should at least provide a one-byte buffer.
+        // This is because zero-sized tensors are only supported internally to the driver, or
+        // reported in output shapes. It is illegal for the client to pre-specify a zero-sized
+        // tensor as model output. Otherwise, we will have two semantic conflicts:
+        // - "Zero dimension" conflicts with "unspecified dimension".
+        // - "Omitted operand buffer" conflicts with "zero-sized operand buffer".
+        size_t bufferSize = std::max<size_t>(op.data.size(), 1);
+
+        DataLocation loc = {.poolIndex = kOutputPoolIndex,
+                            .offset = static_cast<uint32_t>(outputSize),
+                            .length = static_cast<uint32_t>(bufferSize)};
+        outputSize += op.data.size() == 0 ? TestBuffer::kAlignment : op.data.alignedSize();
+        outputs[i] = {.hasNoValue = false, .location = loc, .dimensions = {}};
+    }
+
+    // Allocate memory pools.
+    hidl_vec<hidl_memory> pools = {nn::allocateSharedMemory(inputSize),
+                                   nn::allocateSharedMemory(outputSize)};
+    CHECK_NE(pools[kInputPoolIndex].size(), 0u);
+    CHECK_NE(pools[kOutputPoolIndex].size(), 0u);
+    sp<IMemory> inputMemory = mapMemory(pools[kInputPoolIndex]);
+    CHECK(inputMemory.get() != nullptr);
+    uint8_t* inputPtr = static_cast<uint8_t*>(static_cast<void*>(inputMemory->getPointer()));
+    CHECK(inputPtr != nullptr);
+
+    // Copy input data to the memory pool.
+    for (uint32_t i = 0; i < testModel.inputIndexes.size(); i++) {
+        const auto& op = testModel.operands[testModel.inputIndexes[i]];
+        if (op.data.size() > 0) {
+            const uint8_t* begin = op.data.get<uint8_t>();
+            const uint8_t* end = begin + op.data.size();
+            std::copy(begin, end, inputPtr + inputs[i].location.offset);
+        }
+    }
+
+    return {.inputs = std::move(inputs), .outputs = std::move(outputs), .pools = std::move(pools)};
 }
 
-void copy_back(MixedTyped* dst, const std::vector<RequestArgument>& ra, char* src) {
-    copy_back_(&dst->float32Operands, ra, src);
-    copy_back_(&dst->int32Operands, ra, src);
-    copy_back_(&dst->quant8AsymmOperands, ra, src);
-    copy_back_(&dst->quant16SymmOperands, ra, src);
-    copy_back_(&dst->float16Operands, ra, src);
-    copy_back_(&dst->bool8Operands, ra, src);
-    copy_back_(&dst->quant8ChannelOperands, ra, src);
-    copy_back_(&dst->quant16AsymmOperands, ra, src);
-    copy_back_(&dst->quant8SymmOperands, ra, src);
-    static_assert(9 == MixedTyped::kNumTypes,
-                  "Number of types in MixedTyped changed, but copy_back function wasn't updated");
+std::vector<TestBuffer> getOutputBuffers(const Request& request) {
+    sp<IMemory> outputMemory = mapMemory(request.pools[kOutputPoolIndex]);
+    CHECK(outputMemory.get() != nullptr);
+    uint8_t* outputPtr = static_cast<uint8_t*>(static_cast<void*>(outputMemory->getPointer()));
+    CHECK(outputPtr != nullptr);
+
+    // Copy out output results.
+    std::vector<TestBuffer> outputBuffers;
+    for (const auto& output : request.outputs) {
+        outputBuffers.emplace_back(output.location.length, outputPtr + output.location.offset);
+    }
+
+    return outputBuffers;
 }
 
 }  // namespace neuralnetworks
