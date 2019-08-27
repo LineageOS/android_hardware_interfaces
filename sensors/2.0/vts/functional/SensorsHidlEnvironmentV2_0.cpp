@@ -38,6 +38,13 @@ constexpr typename std::underlying_type<EnumType>::type asBaseType(EnumType valu
 
 constexpr size_t SensorsHidlEnvironmentV2_0::MAX_RECEIVE_BUFFER_EVENT_COUNT;
 
+void SensorsHalDeathRecipient::serviceDied(
+        uint64_t /* cookie */,
+        const ::android::wp<::android::hidl::base::V1_0::IBase>& /* service */) {
+    ALOGE("Sensors HAL died (likely crashed) during test");
+    FAIL() << "Sensors HAL died during test";
+}
+
 struct SensorsCallback : ISensorsCallback {
     Return<void> onDynamicSensorsConnected(const hidl_vec<SensorInfo>& /* sensorInfos */) {
         return Return<void>();
@@ -56,6 +63,7 @@ bool SensorsHidlEnvironmentV2_0::resetHal() {
         if (mSensors == nullptr) {
             break;
         }
+        mSensors->linkToDeath(mDeathRecipient, 0 /* cookie */);
 
         // Initialize FMQs
         mEventQueue = std::make_unique<EventMessageQueue>(MAX_RECEIVE_BUFFER_EVENT_COUNT,
