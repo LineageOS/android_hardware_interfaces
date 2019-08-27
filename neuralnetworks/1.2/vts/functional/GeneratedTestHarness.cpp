@@ -44,30 +44,17 @@
 #include "Utils.h"
 #include "VtsHalNeuralnetworks.h"
 
-namespace android {
-namespace hardware {
-namespace neuralnetworks {
-namespace V1_2 {
-namespace vts {
-namespace functional {
+namespace android::hardware::neuralnetworks::V1_2::vts::functional {
 
 using namespace test_helper;
-using ::android::hardware::neuralnetworks::V1_0::DataLocation;
-using ::android::hardware::neuralnetworks::V1_0::ErrorStatus;
-using ::android::hardware::neuralnetworks::V1_0::OperandLifeTime;
-using ::android::hardware::neuralnetworks::V1_0::Request;
-using ::android::hardware::neuralnetworks::V1_0::RequestArgument;
-using ::android::hardware::neuralnetworks::V1_1::ExecutionPreference;
-using ::android::hardware::neuralnetworks::V1_2::Constant;
-using ::android::hardware::neuralnetworks::V1_2::IDevice;
-using ::android::hardware::neuralnetworks::V1_2::IPreparedModel;
-using ::android::hardware::neuralnetworks::V1_2::MeasureTiming;
-using ::android::hardware::neuralnetworks::V1_2::Model;
-using ::android::hardware::neuralnetworks::V1_2::OutputShape;
-using ::android::hardware::neuralnetworks::V1_2::Timing;
-using ::android::hardware::neuralnetworks::V1_2::implementation::ExecutionCallback;
-using ::android::hardware::neuralnetworks::V1_2::implementation::PreparedModelCallback;
-using ::android::hidl::memory::V1_0::IMemory;
+using hidl::memory::V1_0::IMemory;
+using implementation::ExecutionCallback;
+using implementation::PreparedModelCallback;
+using V1_0::DataLocation;
+using V1_0::ErrorStatus;
+using V1_0::OperandLifeTime;
+using V1_0::Request;
+using V1_1::ExecutionPreference;
 using HidlToken = hidl_array<uint8_t, static_cast<uint32_t>(Constant::BYTE_SIZE_OF_CACHE_TOKEN)>;
 
 enum class OutputType { FULLY_SPECIFIED, UNSPECIFIED, INSUFFICIENT };
@@ -447,9 +434,4 @@ INSTANTIATE_GENERATED_TEST(GeneratedTest,
 INSTANTIATE_GENERATED_TEST(DynamicOutputShapeTest,
                            [](const TestModel& testModel) { return !testModel.expectFailure; });
 
-}  // namespace functional
-}  // namespace vts
-}  // namespace V1_2
-}  // namespace neuralnetworks
-}  // namespace hardware
-}  // namespace android
+}  // namespace android::hardware::neuralnetworks::V1_2::vts::functional
