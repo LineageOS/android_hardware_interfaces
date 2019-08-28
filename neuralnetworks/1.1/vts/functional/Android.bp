@@ -49,7 +49,7 @@ cc_test {
     name: "VtsHalNeuralnetworksV1_1CompatV1_0TargetTest",
     defaults: ["VtsHalNeuralNetworksV1_1TargetTestDefaults"],
     srcs: [
-        ":VtsHalNeuralNetworksV1_1_all_generated_V1_0_tests",
+        ":VtsHalNeuralNetworksV1_0_all_generated_tests",
     ],
 }
 
@@ -59,7 +59,7 @@ cc_test {
     defaults: ["VtsHalNeuralNetworksV1_1TargetTestDefaults"],
     srcs: [
         "BasicTests.cpp",
-        ":VtsHalNeuralNetworksV1_1_all_generated_V1_1_tests",
+        ":VtsHalNeuralNetworksV1_1_all_generated_tests",
     ],
 }
 
@@ -68,7 +68,7 @@ cc_test {
     defaults: ["VtsHalNeuralNetworksV1_1TargetTestDefaults"],
     srcs: [
         "BasicTests.cpp",
-        ":VtsHalNeuralNetworksV1_1_all_generated_V1_1_tests",
+        ":VtsHalNeuralNetworksV1_1_all_generated_tests",
     ],
     cflags: [
         "-DPRESUBMIT_NOT_VTS",
