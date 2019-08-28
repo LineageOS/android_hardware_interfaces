@@ -18,6 +18,7 @@ cc_defaults {
     name: "VtsHalNeuralNetworksV1_1TargetTestDefaults",
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: [
+        "TestAssertions.cpp",
         "ValidateModel.cpp",
         "ValidateRequest.cpp",
         "VtsHalNeuralnetworks.cpp",
