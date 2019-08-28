@@ -21,7 +21,12 @@
 #include "supplicant_hidl_test_utils_1_3.h"
 
 using ::android::sp;
+using ::android::hardware::wifi::supplicant::V1_3::ISupplicantStaIface;
 using ::android::hardware::wifi::supplicant::V1_3::ISupplicantStaNetwork;
+
+sp<ISupplicantStaIface> getSupplicantStaIface_1_3() {
+    return ISupplicantStaIface::castFrom(getSupplicantStaIface());
+}
 
 sp<ISupplicantStaNetwork> createSupplicantStaNetwork_1_3() {
     return ISupplicantStaNetwork::castFrom(createSupplicantStaNetwork());

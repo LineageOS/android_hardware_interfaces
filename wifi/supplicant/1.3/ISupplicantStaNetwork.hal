@@ -47,4 +47,19 @@ interface ISupplicantStaNetwork extends @1.2::ISupplicantStaNetwork {
      * @return ocspType ocsp type.
      */
     getOcsp() generates (SupplicantStatus status, OcspType ocspType);
+
+    /**
+     * Add a PMK into supplicant PMK cache.
+     *
+     * @param serializedEntry is serialized PMK cache entry, the content is
+     *              opaque for the framework and depends on the native implementation.
+     * @return status Status of the operation
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     */
+    setPmkCache(vec<uint8_t> serializedEntry)
+        generates (SupplicantStatus status);
 };
