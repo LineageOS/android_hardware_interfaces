@@ -17,6 +17,7 @@
 #define LOG_TAG "neuralnetworks_hidl_hal_test"
 
 #include "1.0/Callbacks.h"
+#include "GeneratedTestHarness.h"
 #include "VtsHalNeuralnetworks.h"
 
 namespace android {
