@@ -18,6 +18,7 @@
 
 #include "1.0/Callbacks.h"
 #include "1.0/Utils.h"
+#include "GeneratedTestHarness.h"
 #include "VtsHalNeuralnetworks.h"
 
 namespace android {

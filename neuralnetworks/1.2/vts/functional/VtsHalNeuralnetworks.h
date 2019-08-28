@@ -30,6 +30,7 @@
 #include <vector>
 
 #include "1.2/Callbacks.h"
+#include "TestHarness.h"
 
 namespace android {
 namespace hardware {
@@ -67,24 +68,6 @@ class NeuralnetworksHidlTest : public ::testing::VtsHalHidlTargetTestBase {
   protected:
     sp<IDevice> device;
 };
-
-class ValidationTest : public NeuralnetworksHidlTest {
-  protected:
-    void validateEverything(const Model& model, const Request& request);
-    void validateFailure(const Model& model, const Request& request);
-
-  private:
-    void validateModel(const Model& model);
-    void validateRequest(const sp<IPreparedModel>& preparedModel, const Request& request);
-    void validateRequestFailure(const sp<IPreparedModel>& preparedModel, const Request& request);
-    void validateBurst(const sp<IPreparedModel>& preparedModel, const Request& request);
-};
-
-// Tag for the generated tests
-class GeneratedTest : public NeuralnetworksHidlTest {};
-
-// Tag for the dynamic output shape tests
-class DynamicOutputShapeTest : public NeuralnetworksHidlTest {};
 
 // Utility function to get PreparedModel from callback and downcast to V1_2.
 sp<IPreparedModel> getPreparedModel_1_2(
