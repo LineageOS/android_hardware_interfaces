@@ -30,20 +30,14 @@
 
 #include "TestHarness.h"
 
-namespace android {
-namespace hardware {
-namespace neuralnetworks {
-namespace V1_0 {
-namespace vts {
-namespace functional {
+namespace android::hardware::neuralnetworks::V1_0::vts::functional {
 
 // A class for test environment setup
 class NeuralnetworksHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
     DISALLOW_COPY_AND_ASSIGN(NeuralnetworksHidlEnvironment);
-    NeuralnetworksHidlEnvironment();
-    ~NeuralnetworksHidlEnvironment() override;
+    NeuralnetworksHidlEnvironment() = default;
 
-   public:
+  public:
     static NeuralnetworksHidlEnvironment* getInstance();
     void registerTestServices() override;
 };
@@ -52,22 +46,17 @@ class NeuralnetworksHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvB
 class NeuralnetworksHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     DISALLOW_COPY_AND_ASSIGN(NeuralnetworksHidlTest);
 
-   public:
-    NeuralnetworksHidlTest();
-    ~NeuralnetworksHidlTest() override;
+  public:
+    NeuralnetworksHidlTest() = default;
     void SetUp() override;
     void TearDown() override;
 
-   protected:
-    sp<IDevice> device;
+  protected:
+    const sp<IDevice> device = ::testing::VtsHalHidlTargetTestBase::getService<IDevice>(
+            NeuralnetworksHidlEnvironment::getInstance());
 };
 
-}  // namespace functional
-}  // namespace vts
-}  // namespace V1_0
-}  // namespace neuralnetworks
-}  // namespace hardware
-}  // namespace android
+}  // namespace android::hardware::neuralnetworks::V1_0::vts::functional
 
 namespace android::hardware::neuralnetworks::V1_0 {
 

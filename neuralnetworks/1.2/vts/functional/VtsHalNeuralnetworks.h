@@ -32,23 +32,12 @@
 #include "1.2/Callbacks.h"
 #include "TestHarness.h"
 
-namespace android {
-namespace hardware {
-namespace neuralnetworks {
-namespace V1_2 {
-
-using V1_0::DeviceStatus;
-using V1_0::ErrorStatus;
-using V1_0::Request;
-
-namespace vts {
-namespace functional {
+namespace android::hardware::neuralnetworks::V1_2::vts::functional {
 
 // A class for test environment setup
 class NeuralnetworksHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
     DISALLOW_COPY_AND_ASSIGN(NeuralnetworksHidlEnvironment);
-    NeuralnetworksHidlEnvironment();
-    ~NeuralnetworksHidlEnvironment() override;
+    NeuralnetworksHidlEnvironment() = default;
 
   public:
     static NeuralnetworksHidlEnvironment* getInstance();
@@ -60,25 +49,19 @@ class NeuralnetworksHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     DISALLOW_COPY_AND_ASSIGN(NeuralnetworksHidlTest);
 
   public:
-    NeuralnetworksHidlTest();
-    ~NeuralnetworksHidlTest() override;
+    NeuralnetworksHidlTest() = default;
     void SetUp() override;
     void TearDown() override;
 
   protected:
-    sp<IDevice> device;
+    const sp<IDevice> device = ::testing::VtsHalHidlTargetTestBase::getService<IDevice>(
+            NeuralnetworksHidlEnvironment::getInstance());
 };
 
 // Utility function to get PreparedModel from callback and downcast to V1_2.
-sp<IPreparedModel> getPreparedModel_1_2(
-        const sp<V1_2::implementation::PreparedModelCallback>& callback);
+sp<IPreparedModel> getPreparedModel_1_2(const sp<implementation::PreparedModelCallback>& callback);
 
-}  // namespace functional
-}  // namespace vts
-}  // namespace V1_2
-}  // namespace neuralnetworks
-}  // namespace hardware
-}  // namespace android
+}  // namespace android::hardware::neuralnetworks::V1_2::vts::functional
 
 namespace android::hardware::neuralnetworks::V1_0 {
 
