@@ -68,6 +68,7 @@ Return<Result> SensorsSubHal::setOperationMode(OperationMode mode) {
     for (auto sensor : mSensors) {
         sensor.second->setOperationMode(mode);
     }
+    mCurrentOperationMode = mode;
     return Result::OK;
 }
 
@@ -190,6 +191,34 @@ AllSensorsSubHal::AllSensorsSubHal() {
     AddSensor<LightSensor>();
     AddSensor<ProximitySensor>();
     AddSensor<RelativeHumiditySensor>();
+}
+
+Return<Result> SetOperationModeFailingSensorsSubHal::setOperationMode(OperationMode /*mode*/) {
+    return Result::BAD_VALUE;
+}
+
+Return<void> AllSupportDirectChannelSensorsSubHal::getSensorsList(getSensorsList_cb _hidl_cb) {
+    std::vector<SensorInfo> sensors;
+    for (const auto& sensor : mSensors) {
+        SensorInfo sensorInfo = sensor.second->getSensorInfo();
+        sensorInfo.flags |= V1_0::SensorFlagBits::MASK_DIRECT_CHANNEL;
+        sensorInfo.flags |= V1_0::SensorFlagBits::MASK_DIRECT_REPORT;
+        sensors.push_back(sensorInfo);
+    }
+    _hidl_cb(sensors);
+    return Void();
+}
+
+Return<void> DoesNotSupportDirectChannelSensorsSubHal::getSensorsList(getSensorsList_cb _hidl_cb) {
+    std::vector<SensorInfo> sensors;
+    for (const auto& sensor : mSensors) {
+        SensorInfo sensorInfo = sensor.second->getSensorInfo();
+        sensorInfo.flags &= ~static_cast<uint32_t>(V1_0::SensorFlagBits::MASK_DIRECT_CHANNEL);
+        sensorInfo.flags &= ~static_cast<uint32_t>(V1_0::SensorFlagBits::MASK_DIRECT_REPORT);
+        sensors.push_back(sensorInfo);
+    }
+    _hidl_cb(sensors);
+    return Void();
 }
 
 }  // namespace implementation

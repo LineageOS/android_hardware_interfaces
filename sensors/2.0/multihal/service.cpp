@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "android.hardware.sensors@2.0-service"
-
 #include <android/hardware/sensors/2.0/ISensors.h>
 #include <hidl/HidlTransportSupport.h>
 #include <log/log.h>

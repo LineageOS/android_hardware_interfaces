@@ -69,8 +69,8 @@ class SensorsCallbackProxy : public ISensorsCallback {
 };
 
 HalProxy::HalProxy() {
-    const char* kMultiHalConfigFilePath = "/vendor/etc/sensors/hals.conf";
-    initializeSubHalListFromConfigFile(kMultiHalConfigFilePath);
+    const char* kMultiHalConfigFile = "/vendor/etc/sensors/hals.conf";
+    initializeSubHalListFromConfigFile(kMultiHalConfigFile);
     initializeSensorList();
 }
 
@@ -88,9 +88,27 @@ Return<void> HalProxy::getSensorsList(getSensorsList_cb _hidl_cb) {
     return Void();
 }
 
-Return<Result> HalProxy::setOperationMode(OperationMode /* mode */) {
-    // TODO: Proxy API call to all sub-HALs and return appropriate result.
-    return Result::INVALID_OPERATION;
+Return<Result> HalProxy::setOperationMode(OperationMode mode) {
+    Result result = Result::OK;
+    size_t subHalIndex;
+    for (subHalIndex = 0; subHalIndex < mSubHalList.size(); subHalIndex++) {
+        ISensorsSubHal* subHal = mSubHalList[subHalIndex];
+        result = subHal->setOperationMode(mode);
+        if (result != Result::OK) {
+            ALOGE("setOperationMode failed for SubHal: %s", subHal->getName().c_str());
+            break;
+        }
+    }
+    if (result != Result::OK) {
+        // Reset the subhal operation modes that have been flipped
+        for (size_t i = 0; i < subHalIndex; i++) {
+            ISensorsSubHal* subHal = mSubHalList[i];
+            subHal->setOperationMode(mCurrentOperationMode);
+        }
+    } else {
+        mCurrentOperationMode = mode;
+    }
+    return result;
 }
 
 Return<Result> HalProxy::activate(int32_t sensorHandle, bool enabled) {
@@ -190,27 +208,27 @@ Return<void> HalProxy::onDynamicSensorsDisconnected(
 void HalProxy::initializeSubHalListFromConfigFile(const char* configFileName) {
     std::ifstream subHalConfigStream(configFileName);
     if (!subHalConfigStream) {
-        LOG_FATAL("Failed to load subHal config file: %s", configFileName);
+        ALOGE("Failed to load subHal config file: %s", configFileName);
     } else {
         std::string subHalLibraryFile;
         while (subHalConfigStream >> subHalLibraryFile) {
             void* handle = dlopen(subHalLibraryFile.c_str(), RTLD_NOW);
             if (handle == nullptr) {
-                LOG_FATAL("dlopen failed for library: %s", subHalLibraryFile.c_str());
+                ALOGE("dlopen failed for library: %s", subHalLibraryFile.c_str());
             } else {
                 SensorsHalGetSubHalFunc* sensorsHalGetSubHalPtr =
                         (SensorsHalGetSubHalFunc*)dlsym(handle, "sensorsHalGetSubHal");
                 if (sensorsHalGetSubHalPtr == nullptr) {
-                    LOG_FATAL("Failed to locate sensorsHalGetSubHal function for library: %s",
-                              subHalLibraryFile.c_str());
+                    ALOGE("Failed to locate sensorsHalGetSubHal function for library: %s",
+                          subHalLibraryFile.c_str());
                 } else {
                     std::function<SensorsHalGetSubHalFunc> sensorsHalGetSubHal =
                             *sensorsHalGetSubHalPtr;
                     uint32_t version;
                     ISensorsSubHal* subHal = sensorsHalGetSubHal(&version);
                     if (version != SUB_HAL_2_0_VERSION) {
-                        LOG_FATAL("SubHal version was not 2.0 for library: %s",
-                                  subHalLibraryFile.c_str());
+                        ALOGE("SubHal version was not 2.0 for library: %s",
+                              subHalLibraryFile.c_str());
                     } else {
                         ALOGV("Loaded SubHal from library: %s", subHalLibraryFile.c_str());
                         mSubHalList.push_back(subHal);
@@ -231,6 +249,7 @@ void HalProxy::initializeSensorList() {
                 } else {
                     ALOGV("Loaded sensor: %s", sensor.name.c_str());
                     sensor.sensorHandle |= (subHalIndex << 24);
+                    setDirectChannelFlags(&sensor, subHal);
                     mSensorList.push_back(sensor);
                 }
             }
@@ -238,6 +257,20 @@ void HalProxy::initializeSensorList() {
         if (!result.isOk()) {
             ALOGE("getSensorsList call failed for SubHal: %s", subHal->getName().c_str());
         }
+    }
+}
+
+void HalProxy::setDirectChannelFlags(SensorInfo* sensorInfo, ISensorsSubHal* subHal) {
+    bool sensorSupportsDirectChannel =
+            (sensorInfo->flags & (V1_0::SensorFlagBits::MASK_DIRECT_REPORT |
+                                  V1_0::SensorFlagBits::MASK_DIRECT_CHANNEL)) != 0;
+    if (mDirectChannelSubHal == nullptr && sensorSupportsDirectChannel) {
+        mDirectChannelSubHal = subHal;
+    } else if (mDirectChannelSubHal != nullptr && subHal != mDirectChannelSubHal) {
+        // disable direct channel capability for sensors in subHals that are not
+        // the only one we will enable
+        sensorInfo->flags &= ~(V1_0::SensorFlagBits::MASK_DIRECT_REPORT |
+                               V1_0::SensorFlagBits::MASK_DIRECT_CHANNEL);
     }
 }
 
