@@ -25,17 +25,17 @@ using V1_0::ErrorStatus;
 using V1_0::PerformanceInfo;
 
 // create device test
-TEST_F(NeuralnetworksHidlTest, CreateDevice) {}
+TEST_P(NeuralnetworksHidlTest, CreateDevice) {}
 
 // status test
-TEST_F(NeuralnetworksHidlTest, StatusTest) {
+TEST_P(NeuralnetworksHidlTest, StatusTest) {
     Return<DeviceStatus> status = kDevice->getStatus();
     ASSERT_TRUE(status.isOk());
     EXPECT_EQ(DeviceStatus::AVAILABLE, static_cast<DeviceStatus>(status));
 }
 
 // initialization
-TEST_F(NeuralnetworksHidlTest, GetCapabilitiesTest) {
+TEST_P(NeuralnetworksHidlTest, GetCapabilitiesTest) {
     using OperandPerformance = Capabilities::OperandPerformance;
     Return<void> ret = kDevice->getCapabilities_1_2([](ErrorStatus status,
                                                        const Capabilities& capabilities) {
@@ -60,7 +60,7 @@ TEST_F(NeuralnetworksHidlTest, GetCapabilitiesTest) {
 }
 
 // device version test
-TEST_F(NeuralnetworksHidlTest, GetDeviceVersionStringTest) {
+TEST_P(NeuralnetworksHidlTest, GetDeviceVersionStringTest) {
     Return<void> ret =
             kDevice->getVersionString([](ErrorStatus status, const hidl_string& version) {
                 EXPECT_EQ(ErrorStatus::NONE, status);
@@ -70,7 +70,7 @@ TEST_F(NeuralnetworksHidlTest, GetDeviceVersionStringTest) {
 }
 
 // device type test
-TEST_F(NeuralnetworksHidlTest, GetDeviceTypeTest) {
+TEST_P(NeuralnetworksHidlTest, GetDeviceTypeTest) {
     Return<void> ret = kDevice->getType([](ErrorStatus status, DeviceType type) {
         EXPECT_EQ(ErrorStatus::NONE, status);
         EXPECT_TRUE(type == DeviceType::OTHER || type == DeviceType::CPU ||
@@ -80,7 +80,7 @@ TEST_F(NeuralnetworksHidlTest, GetDeviceTypeTest) {
 }
 
 // device supported extensions test
-TEST_F(NeuralnetworksHidlTest, GetDeviceSupportedExtensionsTest) {
+TEST_P(NeuralnetworksHidlTest, GetDeviceSupportedExtensionsTest) {
     Return<void> ret = kDevice->getSupportedExtensions(
             [](ErrorStatus status, const hidl_vec<Extension>& extensions) {
                 EXPECT_EQ(ErrorStatus::NONE, status);
@@ -101,7 +101,7 @@ TEST_F(NeuralnetworksHidlTest, GetDeviceSupportedExtensionsTest) {
 }
 
 // getNumberOfCacheFilesNeeded test
-TEST_F(NeuralnetworksHidlTest, getNumberOfCacheFilesNeeded) {
+TEST_P(NeuralnetworksHidlTest, getNumberOfCacheFilesNeeded) {
     Return<void> ret = kDevice->getNumberOfCacheFilesNeeded(
             [](ErrorStatus status, uint32_t numModelCache, uint32_t numDataCache) {
                 EXPECT_EQ(ErrorStatus::NONE, status);

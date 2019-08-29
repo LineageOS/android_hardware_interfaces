@@ -190,7 +190,7 @@ static Return<ErrorStatus> ExecutePreparedModel(const sp<IPreparedModel>& prepar
 }
 static std::shared_ptr<::android::nn::ExecutionBurstController> CreateBurst(
         const sp<IPreparedModel>& preparedModel) {
-    return ::android::nn::ExecutionBurstController::create(preparedModel, /*blocking=*/true);
+    return android::nn::ExecutionBurstController::create(preparedModel, /*blocking=*/true);
 }
 enum class Executor { ASYNC, SYNC, BURST };
 
@@ -369,6 +369,20 @@ void Execute(const sp<IDevice>& device, const TestModel& testModel, bool testDyn
     if (preparedModel == nullptr) return;
 
     EvaluatePreparedModel(preparedModel, testModel, testDynamicOutputShape);
+}
+
+void GeneratedTestBase::SetUp() {
+    testing::TestWithParam<GeneratedTestParam>::SetUp();
+    ASSERT_NE(kDevice, nullptr);
+}
+
+std::vector<NamedModel> getNamedModels(const FilterFn& filter) {
+    return TestModelManager::get().getTestModels(filter);
+}
+
+std::string printGeneratedTest(const testing::TestParamInfo<GeneratedTestParam>& info) {
+    const auto& [namedDevice, namedModel] = info.param;
+    return gtestCompliantName(getName(namedDevice) + "_" + getName(namedModel));
 }
 
 // Tag for the generated tests
