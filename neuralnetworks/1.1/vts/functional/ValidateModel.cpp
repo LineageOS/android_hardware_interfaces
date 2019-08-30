@@ -21,18 +21,14 @@
 #include "GeneratedTestHarness.h"
 #include "VtsHalNeuralnetworks.h"
 
-namespace android {
-namespace hardware {
-namespace neuralnetworks {
-namespace V1_1 {
-namespace vts {
-namespace functional {
+namespace android::hardware::neuralnetworks::V1_1::vts::functional {
 
-using ::android::hardware::neuralnetworks::V1_0::IPreparedModel;
-using ::android::hardware::neuralnetworks::V1_0::Operand;
-using ::android::hardware::neuralnetworks::V1_0::OperandLifeTime;
-using ::android::hardware::neuralnetworks::V1_0::OperandType;
-using ::android::hardware::neuralnetworks::V1_0::implementation::PreparedModelCallback;
+using V1_0::ErrorStatus;
+using V1_0::IPreparedModel;
+using V1_0::Operand;
+using V1_0::OperandLifeTime;
+using V1_0::OperandType;
+using V1_0::implementation::PreparedModelCallback;
 
 ///////////////////////// UTILITY FUNCTIONS /////////////////////////
 
@@ -52,7 +48,6 @@ static void validatePrepareModel(const sp<IDevice>& device, const std::string& m
     SCOPED_TRACE(message + " [prepareModel_1_1]");
 
     sp<PreparedModelCallback> preparedModelCallback = new PreparedModelCallback();
-    ASSERT_NE(nullptr, preparedModelCallback.get());
     Return<ErrorStatus> prepareLaunchStatus =
             device->prepareModel_1_1(model, preference, preparedModelCallback);
     ASSERT_TRUE(prepareLaunchStatus.isOk());
@@ -484,8 +479,9 @@ static void mutateExecutionPreferenceTest(const sp<IDevice>& device, const V1_1:
     for (int32_t preference : invalidExecutionPreferences) {
         const std::string message =
                 "mutateExecutionPreferenceTest: preference " + std::to_string(preference);
-        validate(device, message, model, [](Model*) {},
-                 static_cast<ExecutionPreference>(preference));
+        validate(
+                device, message, model, [](Model*) {},
+                static_cast<ExecutionPreference>(preference));
     }
 }
 
@@ -509,9 +505,4 @@ void ValidationTest::validateModel(const V1_1::Model& model) {
     mutateExecutionPreferenceTest(device, model);
 }
 
-}  // namespace functional
-}  // namespace vts
-}  // namespace V1_1
-}  // namespace neuralnetworks
-}  // namespace hardware
-}  // namespace android
+}  // namespace android::hardware::neuralnetworks::V1_1::vts::functional

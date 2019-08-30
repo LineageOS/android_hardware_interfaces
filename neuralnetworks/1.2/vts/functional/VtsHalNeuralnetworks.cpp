@@ -24,15 +24,12 @@
 
 #include <android-base/logging.h>
 
-namespace android {
-namespace hardware {
-namespace neuralnetworks {
-namespace V1_2 {
-namespace vts {
-namespace functional {
+namespace android::hardware::neuralnetworks::V1_2::vts::functional {
 
-using ::android::hardware::neuralnetworks::V1_2::implementation::PreparedModelCallback;
+using implementation::PreparedModelCallback;
 using HidlToken = hidl_array<uint8_t, static_cast<uint32_t>(Constant::BYTE_SIZE_OF_CACHE_TOKEN)>;
+using V1_0::ErrorStatus;
+using V1_0::Request;
 using V1_1::ExecutionPreference;
 
 // internal helper function
@@ -53,7 +50,6 @@ static void createPreparedModel(const sp<IDevice>& device, const Model& model,
 
     // launch prepare model
     sp<PreparedModelCallback> preparedModelCallback = new PreparedModelCallback();
-    ASSERT_NE(nullptr, preparedModelCallback.get());
     Return<ErrorStatus> prepareLaunchStatus = device->prepareModel_1_2(
             model, ExecutionPreference::FAST_SINGLE_ANSWER, hidl_vec<hidl_handle>(),
             hidl_vec<hidl_handle>(), HidlToken(), preparedModelCallback);
@@ -86,10 +82,6 @@ static void createPreparedModel(const sp<IDevice>& device, const Model& model,
 }
 
 // A class for test environment setup
-NeuralnetworksHidlEnvironment::NeuralnetworksHidlEnvironment() {}
-
-NeuralnetworksHidlEnvironment::~NeuralnetworksHidlEnvironment() {}
-
 NeuralnetworksHidlEnvironment* NeuralnetworksHidlEnvironment::getInstance() {
     // This has to return a "new" object because it is freed inside
     // ::testing::AddGlobalTestEnvironment when the gtest is being torn down
@@ -102,14 +94,8 @@ void NeuralnetworksHidlEnvironment::registerTestServices() {
 }
 
 // The main test class for NEURALNETWORK HIDL HAL.
-NeuralnetworksHidlTest::NeuralnetworksHidlTest() {}
-
-NeuralnetworksHidlTest::~NeuralnetworksHidlTest() {}
-
 void NeuralnetworksHidlTest::SetUp() {
     ::testing::VtsHalHidlTargetTestBase::SetUp();
-    device = ::testing::VtsHalHidlTargetTestBase::getService<IDevice>(
-            NeuralnetworksHidlEnvironment::getInstance());
 
 #ifdef PRESUBMIT_NOT_VTS
     const std::string name =
@@ -124,7 +110,6 @@ void NeuralnetworksHidlTest::SetUp() {
 }
 
 void NeuralnetworksHidlTest::TearDown() {
-    device = nullptr;
     ::testing::VtsHalHidlTargetTestBase::TearDown();
 }
 
@@ -168,18 +153,12 @@ TEST_P(ValidationTest, Test) {
 
 INSTANTIATE_GENERATED_TEST(ValidationTest, [](const test_helper::TestModel&) { return true; });
 
-sp<IPreparedModel> getPreparedModel_1_2(
-    const sp<V1_2::implementation::PreparedModelCallback>& callback) {
+sp<IPreparedModel> getPreparedModel_1_2(const sp<implementation::PreparedModelCallback>& callback) {
     sp<V1_0::IPreparedModel> preparedModelV1_0 = callback->getPreparedModel();
-    return V1_2::IPreparedModel::castFrom(preparedModelV1_0).withDefault(nullptr);
+    return IPreparedModel::castFrom(preparedModelV1_0).withDefault(nullptr);
 }
 
-}  // namespace functional
-}  // namespace vts
-}  // namespace V1_2
-}  // namespace neuralnetworks
-}  // namespace hardware
-}  // namespace android
+}  // namespace android::hardware::neuralnetworks::V1_2::vts::functional
 
 namespace android::hardware::neuralnetworks::V1_0 {
 
