@@ -29,36 +29,20 @@ namespace android::hardware::neuralnetworks::V1_2::vts::functional {
 
 class GeneratedTestBase
     : public NeuralnetworksHidlTest,
-      public ::testing::WithParamInterface<test_helper::TestModelManager::TestParam> {
+      public testing::WithParamInterface<test_helper::TestModelManager::TestParam> {
   protected:
-    void SetUp() override {
-        NeuralnetworksHidlTest::SetUp();
-        ASSERT_NE(mTestModel, nullptr);
-    }
-
-    const test_helper::TestModel* mTestModel = GetParam().second;
+    const test_helper::TestModel& kTestModel = *GetParam().second;
 };
 
-#define INSTANTIATE_GENERATED_TEST(TestSuite, filter)                                          \
-    INSTANTIATE_TEST_SUITE_P(                                                                  \
-            TestGenerated, TestSuite,                                                          \
-            ::testing::ValuesIn(::test_helper::TestModelManager::get().getTestModels(filter)), \
+#define INSTANTIATE_GENERATED_TEST(TestSuite, filter)                                        \
+    INSTANTIATE_TEST_SUITE_P(                                                                \
+            TestGenerated, TestSuite,                                                        \
+            testing::ValuesIn(::test_helper::TestModelManager::get().getTestModels(filter)), \
             [](const auto& info) { return info.param.first; })
 
 // Tag for the validation tests, instantiated in VtsHalNeuralnetworks.cpp.
 // TODO: Clean up the hierarchy for ValidationTest.
-class ValidationTest : public GeneratedTestBase {
-  protected:
-    void validateEverything(const Model& model, const V1_0::Request& request);
-    void validateFailure(const Model& model, const V1_0::Request& request);
-
-  private:
-    void validateModel(const Model& model);
-    void validateRequest(const sp<IPreparedModel>& preparedModel, const V1_0::Request& request);
-    void validateRequestFailure(const sp<IPreparedModel>& preparedModel,
-                                const V1_0::Request& request);
-    void validateBurst(const sp<IPreparedModel>& preparedModel, const V1_0::Request& request);
-};
+class ValidationTest : public GeneratedTestBase {};
 
 Model createModel(const ::test_helper::TestModel& testModel);
 

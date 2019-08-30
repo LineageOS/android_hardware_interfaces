@@ -25,15 +25,11 @@
 
 #include <android-base/macros.h>
 #include <gtest/gtest.h>
-#include <iostream>
-#include <vector>
-
-#include "TestHarness.h"
 
 namespace android::hardware::neuralnetworks::V1_0::vts::functional {
 
 // A class for test environment setup
-class NeuralnetworksHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
+class NeuralnetworksHidlEnvironment : public testing::VtsHalHidlTargetTestEnvBase {
     DISALLOW_COPY_AND_ASSIGN(NeuralnetworksHidlEnvironment);
     NeuralnetworksHidlEnvironment() = default;
 
@@ -43,27 +39,23 @@ class NeuralnetworksHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvB
 };
 
 // The main test class for NEURALNETWORKS HIDL HAL.
-class NeuralnetworksHidlTest : public ::testing::VtsHalHidlTargetTestBase {
+class NeuralnetworksHidlTest : public testing::VtsHalHidlTargetTestBase {
     DISALLOW_COPY_AND_ASSIGN(NeuralnetworksHidlTest);
 
   public:
     NeuralnetworksHidlTest() = default;
     void SetUp() override;
-    void TearDown() override;
 
   protected:
-    const sp<IDevice> device = ::testing::VtsHalHidlTargetTestBase::getService<IDevice>(
+    const sp<IDevice> kDevice = testing::VtsHalHidlTargetTestBase::getService<IDevice>(
             NeuralnetworksHidlEnvironment::getInstance());
 };
 
+// Create an IPreparedModel object. If the model cannot be prepared,
+// "preparedModel" will be nullptr instead.
+void createPreparedModel(const sp<IDevice>& device, const Model& model,
+                         sp<IPreparedModel>* preparedModel);
+
 }  // namespace android::hardware::neuralnetworks::V1_0::vts::functional
-
-namespace android::hardware::neuralnetworks::V1_0 {
-
-// pretty-print values for error messages
-::std::ostream& operator<<(::std::ostream& os, ErrorStatus errorStatus);
-::std::ostream& operator<<(::std::ostream& os, DeviceStatus deviceStatus);
-
-}  // namespace android::hardware::neuralnetworks::V1_0
 
 #endif  // ANDROID_HARDWARE_NEURALNETWORKS_V1_0_VTS_HAL_NEURALNETWORKS_H
