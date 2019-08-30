@@ -46,7 +46,9 @@ struct HalProxy : public ISensors {
     using Result = ::android::hardware::sensors::V1_0::Result;
     using SharedMemInfo = ::android::hardware::sensors::V1_0::SharedMemInfo;
 
-    HalProxy();
+    explicit HalProxy();
+    // Test only constructor.
+    explicit HalProxy(std::vector<ISensorsSubHal*>& subHalList);
     ~HalProxy();
 
     // Methods from ::android::hardware::sensors::V2_0::ISensors follow.
@@ -78,7 +80,7 @@ struct HalProxy : public ISensors {
 
     Return<void> debug(const hidl_handle& fd, const hidl_vec<hidl_string>& args) override;
 
-    // Below methods from ::android::hardware::sensors::V2_0::ISensorsCaback with a minor change
+    // Below methods from ::android::hardware::sensors::V2_0::ISensorsCallback with a minor change
     // to pass in the sub-HAL index. While the above methods are invoked from the sensors framework
     // via the binder, these methods are invoked from a callback provided to sub-HALs inside the
     // same process as the HalProxy, but potentially running on different threads.

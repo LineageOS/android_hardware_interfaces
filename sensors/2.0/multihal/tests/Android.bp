@@ -15,14 +15,13 @@
 
 cc_defaults {
     name: "android.hardware.sensors@2.0-fakesubhal-defaults",
-    vendor: true,
     srcs: [
-        "Sensor.cpp",
-        "SensorsSubHal.cpp",
+        "fake_subhal/*.cpp",
     ],
     header_libs: [
-        "android.hardware.sensors@2.0-subhal.header",
+        "android.hardware.sensors@2.0-multihal.header",
     ],
+    export_include_dirs: ["fake_subhal"],
     shared_libs: [
         "android.hardware.sensors@1.0",
         "android.hardware.sensors@2.0",
@@ -38,6 +37,7 @@ cc_defaults {
 
 cc_library {
     name: "android.hardware.sensors@2.0-fakesubhal-config1",
+    vendor: true,
     defaults: ["android.hardware.sensors@2.0-fakesubhal-defaults"],
     cflags: [
         "-DSUPPORT_CONTINUOUS_SENSORS",
@@ -47,9 +47,43 @@ cc_library {
 
 cc_library {
     name: "android.hardware.sensors@2.0-fakesubhal-config2",
+    vendor: true,
     defaults: ["android.hardware.sensors@2.0-fakesubhal-defaults"],
     cflags: [
         "-DSUPPORT_ON_CHANGE_SENSORS",
         "-DSUB_HAL_NAME=\"FakeSubHal-OnChange\"",
     ],
+}
+
+cc_test_library {
+    name: "android.hardware.sensors@2.0-fakesubhal-unittest",
+    vendor_available: true,
+    defaults: ["android.hardware.sensors@2.0-fakesubhal-defaults"],
+    cflags: [
+        "-DSUPPORT_ON_CHANGE_SENSORS",
+        "-DSUPPORT_CONTINUOUS_SENSORS",
+        "-DSUB_HAL_NAME=\"FakeSubHal-Test\"",
+    ],
+}
+
+cc_test {
+    name: "android.hardware.sensors@2.0-halproxy-unit-tests",
+    srcs: ["HalProxy_test.cpp"],
+    vendor: true,
+    static_libs: [
+        "android.hardware.sensors@2.0-HalProxy",
+        "android.hardware.sensors@2.0-fakesubhal-unittest",
+    ],
+    shared_libs: [
+        "android.hardware.sensors@1.0",
+        "android.hardware.sensors@2.0",
+        "libcutils",
+        "libfmq",
+        "libhidlbase",
+        "libhidltransport",
+        "liblog",
+        "libpower",
+        "libutils",
+    ],
+    test_suites: ["device-tests"],
 }
