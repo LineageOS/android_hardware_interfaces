@@ -46,8 +46,6 @@
 
 namespace android::hardware::neuralnetworks::V1_2::implementation {
 
-using V1_0::ErrorStatus;
-
 /**
  * The PreparedModelCallback class is used to receive the error status of
  * preparing a model as well as the prepared model from a task executing
@@ -87,7 +85,8 @@ class PreparedModelCallback : public IPreparedModelCallback {
      * @param preparedModel Returned model that has been prepared for execution,
      *     nullptr if the model was unable to be prepared.
      */
-    Return<void> notify(ErrorStatus status, const sp<V1_0::IPreparedModel>& preparedModel) override;
+    Return<void> notify(V1_0::ErrorStatus status,
+                        const sp<V1_0::IPreparedModel>& preparedModel) override;
 
     /**
      * IPreparedModelCallback::notify_1_2 marks the callback object with the
@@ -112,7 +111,7 @@ class PreparedModelCallback : public IPreparedModelCallback {
      * @param preparedModel Returned model that has been prepared for execution,
      *     nullptr if the model was unable to be prepared.
      */
-    Return<void> notify_1_2(ErrorStatus status,
+    Return<void> notify_1_2(V1_0::ErrorStatus status,
                             const sp<V1_2::IPreparedModel>& preparedModel) override;
 
     /**
@@ -134,7 +133,7 @@ class PreparedModelCallback : public IPreparedModelCallback {
      *     - GENERAL_FAILURE if there is an unspecified error
      *     - INVALID_ARGUMENT if the input model is invalid
      */
-    ErrorStatus getStatus() const;
+    V1_0::ErrorStatus getStatus() const;
 
     /**
      * Retrieves the model that has been prepared for execution from the
@@ -152,7 +151,7 @@ class PreparedModelCallback : public IPreparedModelCallback {
     mutable std::mutex mMutex;
     mutable std::condition_variable mCondition;
     bool mNotified GUARDED_BY(mMutex) = false;
-    ErrorStatus mErrorStatus = ErrorStatus::GENERAL_FAILURE;
+    V1_0::ErrorStatus mErrorStatus = V1_0::ErrorStatus::GENERAL_FAILURE;
     sp<V1_0::IPreparedModel> mPreparedModel;
 };
 
@@ -195,7 +194,7 @@ class ExecutionCallback : public IExecutionCallback {
      *         enough to store the resultant values
      *     - INVALID_ARGUMENT if the input request is invalid
      */
-    Return<void> notify(ErrorStatus status) override;
+    Return<void> notify(V1_0::ErrorStatus status) override;
 
     /**
      * IExecutionCallback::notify_1_2 marks the callback object with the results
@@ -230,11 +229,11 @@ class ExecutionCallback : public IExecutionCallback {
      *     reported as UINT64_MAX. A driver may choose to report any time as
      *     UINT64_MAX, indicating that particular measurement is not available.
      */
-    Return<void> notify_1_2(ErrorStatus status, const hidl_vec<OutputShape>& outputShapes,
+    Return<void> notify_1_2(V1_0::ErrorStatus status, const hidl_vec<OutputShape>& outputShapes,
                             const Timing& timing) override;
 
     // An overload of the latest notify interface to hide the version from ExecutionBuilder.
-    Return<void> notify(ErrorStatus status, const hidl_vec<OutputShape>& outputShapes,
+    Return<void> notify(V1_0::ErrorStatus status, const hidl_vec<OutputShape>& outputShapes,
                         const Timing& timing) {
         return notify_1_2(status, outputShapes, timing);
     }
@@ -264,7 +263,7 @@ class ExecutionCallback : public IExecutionCallback {
      *     - INVALID_ARGUMENT if one of the input arguments to prepareModel is
      *         invalid
      */
-    ErrorStatus getStatus() const;
+    V1_0::ErrorStatus getStatus() const;
 
     /**
      * Retrieves the output shapes returned from the asynchronous task launched
@@ -309,14 +308,14 @@ class ExecutionCallback : public IExecutionCallback {
      * object before any call to wait or get* return. It then enables all prior
      * and future wait calls on the ExecutionCallback object to proceed.
      */
-    void notifyInternal(ErrorStatus errorStatus, const hidl_vec<OutputShape>& outputShapes,
+    void notifyInternal(V1_0::ErrorStatus errorStatus, const hidl_vec<OutputShape>& outputShapes,
                         const Timing& timing);
 
     // members
     mutable std::mutex mMutex;
     mutable std::condition_variable mCondition;
     bool mNotified GUARDED_BY(mMutex) = false;
-    ErrorStatus mErrorStatus = ErrorStatus::GENERAL_FAILURE;
+    V1_0::ErrorStatus mErrorStatus = V1_0::ErrorStatus::GENERAL_FAILURE;
     std::vector<OutputShape> mOutputShapes = {};
     Timing mTiming = {};
 };
