@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
-#include <android/hardware/neuralnetworks/1.2/types.h>
+#include <android/hardware/neuralnetworks/1.3/types.h>
 #include "TestHarness.h"
 
-namespace android::hardware::neuralnetworks::V1_2 {
+namespace android::hardware::neuralnetworks::V1_3 {
 
 // Make sure that the HIDL enums are compatible with the values defined in
 // frameworks/ml/nn/tools/test_generator/test_harness/include/TestHarness.h.
 using namespace test_helper;
 #define CHECK_TEST_ENUM(EnumType, enumValue) \
     static_assert(static_cast<EnumType>(Test##EnumType::enumValue) == EnumType::enumValue)
+
+using V1_2::OperationType;
 
 CHECK_TEST_ENUM(OperandType, FLOAT32);
 CHECK_TEST_ENUM(OperandType, INT32);
@@ -39,6 +41,7 @@ CHECK_TEST_ENUM(OperandType, FLOAT16);
 CHECK_TEST_ENUM(OperandType, TENSOR_QUANT8_SYMM_PER_CHANNEL);
 CHECK_TEST_ENUM(OperandType, TENSOR_QUANT16_ASYMM);
 CHECK_TEST_ENUM(OperandType, TENSOR_QUANT8_SYMM);
+CHECK_TEST_ENUM(OperandType, TENSOR_QUANT8_ASYMM_SIGNED);
 
 CHECK_TEST_ENUM(OperationType, ADD);
 CHECK_TEST_ENUM(OperationType, AVERAGE_POOL_2D);
@@ -138,4 +141,4 @@ CHECK_TEST_ENUM(OperationType, RESIZE_NEAREST_NEIGHBOR);
 
 #undef CHECK_TEST_ENUM
 
-}  // namespace android::hardware::neuralnetworks::V1_2
+}  // namespace android::hardware::neuralnetworks::V1_3
