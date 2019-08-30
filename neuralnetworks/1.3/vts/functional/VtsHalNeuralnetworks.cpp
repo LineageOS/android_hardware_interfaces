@@ -26,13 +26,15 @@
 #include "GeneratedTestHarness.h"
 #include "TestHarness.h"
 
-namespace android::hardware::neuralnetworks::V1_2::vts::functional {
+namespace android::hardware::neuralnetworks::V1_3::vts::functional {
 
-using implementation::PreparedModelCallback;
-using HidlToken = hidl_array<uint8_t, static_cast<uint32_t>(Constant::BYTE_SIZE_OF_CACHE_TOKEN)>;
+using HidlToken =
+        hidl_array<uint8_t, static_cast<uint32_t>(V1_2::Constant::BYTE_SIZE_OF_CACHE_TOKEN)>;
 using V1_0::ErrorStatus;
 using V1_0::Request;
 using V1_1::ExecutionPreference;
+using V1_2::IPreparedModel;
+using V1_2::implementation::PreparedModelCallback;
 
 // internal helper function
 void createPreparedModel(const sp<IDevice>& device, const Model& model,
@@ -42,7 +44,7 @@ void createPreparedModel(const sp<IDevice>& device, const Model& model,
 
     // see if service can handle model
     bool fullySupportsModel = false;
-    const Return<void> supportedCall = device->getSupportedOperations_1_2(
+    const Return<void> supportedCall = device->getSupportedOperations_1_3(
             model, [&fullySupportsModel](ErrorStatus status, const hidl_vec<bool>& supported) {
                 ASSERT_EQ(ErrorStatus::NONE, status);
                 ASSERT_NE(0ul, supported.size());
@@ -53,7 +55,7 @@ void createPreparedModel(const sp<IDevice>& device, const Model& model,
 
     // launch prepare model
     const sp<PreparedModelCallback> preparedModelCallback = new PreparedModelCallback();
-    const Return<ErrorStatus> prepareLaunchStatus = device->prepareModel_1_2(
+    const Return<ErrorStatus> prepareLaunchStatus = device->prepareModel_1_3(
             model, ExecutionPreference::FAST_SINGLE_ANSWER, hidl_vec<hidl_handle>(),
             hidl_vec<hidl_handle>(), HidlToken(), preparedModelCallback);
     ASSERT_TRUE(prepareLaunchStatus.isOk());
@@ -64,8 +66,8 @@ void createPreparedModel(const sp<IDevice>& device, const Model& model,
     const ErrorStatus prepareReturnStatus = preparedModelCallback->getStatus();
     *preparedModel = getPreparedModel_1_2(preparedModelCallback);
 
-    // The getSupportedOperations_1_2 call returns a list of operations that are
-    // guaranteed not to fail if prepareModel_1_2 is called, and
+    // The getSupportedOperations_1_3 call returns a list of operations that are
+    // guaranteed not to fail if prepareModel_1_3 is called, and
     // 'fullySupportsModel' is true i.f.f. the entire model is guaranteed.
     // If a driver has any doubt that it can prepare an operation, it must
     // return false. So here, if a driver isn't sure if it can support an
@@ -163,9 +165,9 @@ TEST_P(ValidationTest, Test) {
 
 INSTANTIATE_GENERATED_TEST(ValidationTest, [](const test_helper::TestModel&) { return true; });
 
-sp<IPreparedModel> getPreparedModel_1_2(const sp<implementation::PreparedModelCallback>& callback) {
+sp<IPreparedModel> getPreparedModel_1_2(const sp<PreparedModelCallback>& callback) {
     sp<V1_0::IPreparedModel> preparedModelV1_0 = callback->getPreparedModel();
     return IPreparedModel::castFrom(preparedModelV1_0).withDefault(nullptr);
 }
 
-}  // namespace android::hardware::neuralnetworks::V1_2::vts::functional
+}  // namespace android::hardware::neuralnetworks::V1_3::vts::functional
