@@ -18,12 +18,10 @@
 
 #include "VtsHalNeuralnetworks.h"
 
-namespace android {
-namespace hardware {
-namespace neuralnetworks {
-namespace V1_1 {
-namespace vts {
-namespace functional {
+namespace android::hardware::neuralnetworks::V1_1::vts::functional {
+
+using V1_0::DeviceStatus;
+using V1_0::ErrorStatus;
 
 // create device test
 TEST_F(NeuralnetworksHidlTest, CreateDevice) {}
@@ -38,21 +36,16 @@ TEST_F(NeuralnetworksHidlTest, StatusTest) {
 // initialization
 TEST_F(NeuralnetworksHidlTest, GetCapabilitiesTest) {
     Return<void> ret =
-        device->getCapabilities_1_1([](ErrorStatus status, const Capabilities& capabilities) {
-            EXPECT_EQ(ErrorStatus::NONE, status);
-            EXPECT_LT(0.0f, capabilities.float32Performance.execTime);
-            EXPECT_LT(0.0f, capabilities.float32Performance.powerUsage);
-            EXPECT_LT(0.0f, capabilities.quantized8Performance.execTime);
-            EXPECT_LT(0.0f, capabilities.quantized8Performance.powerUsage);
-            EXPECT_LT(0.0f, capabilities.relaxedFloat32toFloat16Performance.execTime);
-            EXPECT_LT(0.0f, capabilities.relaxedFloat32toFloat16Performance.powerUsage);
-        });
+            device->getCapabilities_1_1([](ErrorStatus status, const Capabilities& capabilities) {
+                EXPECT_EQ(ErrorStatus::NONE, status);
+                EXPECT_LT(0.0f, capabilities.float32Performance.execTime);
+                EXPECT_LT(0.0f, capabilities.float32Performance.powerUsage);
+                EXPECT_LT(0.0f, capabilities.quantized8Performance.execTime);
+                EXPECT_LT(0.0f, capabilities.quantized8Performance.powerUsage);
+                EXPECT_LT(0.0f, capabilities.relaxedFloat32toFloat16Performance.execTime);
+                EXPECT_LT(0.0f, capabilities.relaxedFloat32toFloat16Performance.powerUsage);
+            });
     EXPECT_TRUE(ret.isOk());
 }
 
-}  // namespace functional
-}  // namespace vts
-}  // namespace V1_1
-}  // namespace neuralnetworks
-}  // namespace hardware
-}  // namespace android
+}  // namespace android::hardware::neuralnetworks::V1_1::vts::functional
