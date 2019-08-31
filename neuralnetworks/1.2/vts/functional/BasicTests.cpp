@@ -18,13 +18,10 @@
 
 #include "VtsHalNeuralnetworks.h"
 
-namespace android {
-namespace hardware {
-namespace neuralnetworks {
-namespace V1_2 {
-namespace vts {
-namespace functional {
+namespace android::hardware::neuralnetworks::V1_2::vts::functional {
 
+using V1_0::DeviceStatus;
+using V1_0::ErrorStatus;
 using V1_0::PerformanceInfo;
 
 // create device test
@@ -32,7 +29,7 @@ TEST_F(NeuralnetworksHidlTest, CreateDevice) {}
 
 // status test
 TEST_F(NeuralnetworksHidlTest, StatusTest) {
-    Return<DeviceStatus> status = device->getStatus();
+    Return<DeviceStatus> status = kDevice->getStatus();
     ASSERT_TRUE(status.isOk());
     EXPECT_EQ(DeviceStatus::AVAILABLE, static_cast<DeviceStatus>(status));
 }
@@ -40,8 +37,8 @@ TEST_F(NeuralnetworksHidlTest, StatusTest) {
 // initialization
 TEST_F(NeuralnetworksHidlTest, GetCapabilitiesTest) {
     using OperandPerformance = Capabilities::OperandPerformance;
-    Return<void> ret = device->getCapabilities_1_2([](ErrorStatus status,
-                                                      const Capabilities& capabilities) {
+    Return<void> ret = kDevice->getCapabilities_1_2([](ErrorStatus status,
+                                                       const Capabilities& capabilities) {
         EXPECT_EQ(ErrorStatus::NONE, status);
 
         auto isPositive = [](const PerformanceInfo& perf) {
@@ -64,16 +61,17 @@ TEST_F(NeuralnetworksHidlTest, GetCapabilitiesTest) {
 
 // device version test
 TEST_F(NeuralnetworksHidlTest, GetDeviceVersionStringTest) {
-    Return<void> ret = device->getVersionString([](ErrorStatus status, const hidl_string& version) {
-        EXPECT_EQ(ErrorStatus::NONE, status);
-        EXPECT_LT(0, version.size());
-    });
+    Return<void> ret =
+            kDevice->getVersionString([](ErrorStatus status, const hidl_string& version) {
+                EXPECT_EQ(ErrorStatus::NONE, status);
+                EXPECT_LT(0, version.size());
+            });
     EXPECT_TRUE(ret.isOk());
 }
 
 // device type test
 TEST_F(NeuralnetworksHidlTest, GetDeviceTypeTest) {
-    Return<void> ret = device->getType([](ErrorStatus status, DeviceType type) {
+    Return<void> ret = kDevice->getType([](ErrorStatus status, DeviceType type) {
         EXPECT_EQ(ErrorStatus::NONE, status);
         EXPECT_TRUE(type == DeviceType::OTHER || type == DeviceType::CPU ||
                     type == DeviceType::GPU || type == DeviceType::ACCELERATOR);
@@ -83,7 +81,7 @@ TEST_F(NeuralnetworksHidlTest, GetDeviceTypeTest) {
 
 // device supported extensions test
 TEST_F(NeuralnetworksHidlTest, GetDeviceSupportedExtensionsTest) {
-    Return<void> ret = device->getSupportedExtensions(
+    Return<void> ret = kDevice->getSupportedExtensions(
             [](ErrorStatus status, const hidl_vec<Extension>& extensions) {
                 EXPECT_EQ(ErrorStatus::NONE, status);
                 for (auto& extension : extensions) {
@@ -104,7 +102,7 @@ TEST_F(NeuralnetworksHidlTest, GetDeviceSupportedExtensionsTest) {
 
 // getNumberOfCacheFilesNeeded test
 TEST_F(NeuralnetworksHidlTest, getNumberOfCacheFilesNeeded) {
-    Return<void> ret = device->getNumberOfCacheFilesNeeded(
+    Return<void> ret = kDevice->getNumberOfCacheFilesNeeded(
             [](ErrorStatus status, uint32_t numModelCache, uint32_t numDataCache) {
                 EXPECT_EQ(ErrorStatus::NONE, status);
                 EXPECT_LE(numModelCache,
@@ -113,9 +111,4 @@ TEST_F(NeuralnetworksHidlTest, getNumberOfCacheFilesNeeded) {
             });
     EXPECT_TRUE(ret.isOk());
 }
-}  // namespace functional
-}  // namespace vts
-}  // namespace V1_2
-}  // namespace neuralnetworks
-}  // namespace hardware
-}  // namespace android
+}  // namespace android::hardware::neuralnetworks::V1_2::vts::functional

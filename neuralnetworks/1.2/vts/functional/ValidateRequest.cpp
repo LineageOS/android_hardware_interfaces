@@ -24,14 +24,11 @@
 #include "Utils.h"
 #include "VtsHalNeuralnetworks.h"
 
-namespace android {
-namespace hardware {
-namespace neuralnetworks {
-namespace V1_2 {
-namespace vts {
-namespace functional {
+namespace android::hardware::neuralnetworks::V1_2::vts::functional {
 
-using ::android::hardware::neuralnetworks::V1_2::implementation::ExecutionCallback;
+using implementation::ExecutionCallback;
+using V1_0::ErrorStatus;
+using V1_0::Request;
 
 ///////////////////////// UTILITY FUNCTIONS /////////////////////////
 
@@ -62,7 +59,6 @@ static void validate(const sp<IPreparedModel>& preparedModel, const std::string&
         SCOPED_TRACE(message + " [execute_1_2]");
 
         sp<ExecutionCallback> executionCallback = new ExecutionCallback();
-        ASSERT_NE(nullptr, executionCallback.get());
         Return<ErrorStatus> executeLaunchStatus =
                 preparedModel->execute_1_2(request, measure, executionCallback);
         ASSERT_TRUE(executeLaunchStatus.isOk());
@@ -152,14 +148,12 @@ static void removeOutputTest(const sp<IPreparedModel>& preparedModel, const Requ
 
 ///////////////////////////// ENTRY POINT //////////////////////////////////
 
-void ValidationTest::validateRequest(const sp<IPreparedModel>& preparedModel,
-                                     const Request& request) {
+void validateRequest(const sp<IPreparedModel>& preparedModel, const Request& request) {
     removeInputTest(preparedModel, request);
     removeOutputTest(preparedModel, request);
 }
 
-void ValidationTest::validateRequestFailure(const sp<IPreparedModel>& preparedModel,
-                                            const Request& request) {
+void validateRequestFailure(const sp<IPreparedModel>& preparedModel, const Request& request) {
     SCOPED_TRACE("Expecting request to fail [executeSynchronously]");
     Return<void> executeStatus = preparedModel->executeSynchronously(
             request, MeasureTiming::NO,
@@ -171,9 +165,4 @@ void ValidationTest::validateRequestFailure(const sp<IPreparedModel>& preparedMo
     ASSERT_TRUE(executeStatus.isOk());
 }
 
-}  // namespace functional
-}  // namespace vts
-}  // namespace V1_2
-}  // namespace neuralnetworks
-}  // namespace hardware
-}  // namespace android
+}  // namespace android::hardware::neuralnetworks::V1_2::vts::functional

@@ -44,30 +44,17 @@
 #include "Utils.h"
 #include "VtsHalNeuralnetworks.h"
 
-namespace android {
-namespace hardware {
-namespace neuralnetworks {
-namespace V1_2 {
-namespace vts {
-namespace functional {
+namespace android::hardware::neuralnetworks::V1_2::vts::functional {
 
 using namespace test_helper;
-using ::android::hardware::neuralnetworks::V1_0::DataLocation;
-using ::android::hardware::neuralnetworks::V1_0::ErrorStatus;
-using ::android::hardware::neuralnetworks::V1_0::OperandLifeTime;
-using ::android::hardware::neuralnetworks::V1_0::Request;
-using ::android::hardware::neuralnetworks::V1_0::RequestArgument;
-using ::android::hardware::neuralnetworks::V1_1::ExecutionPreference;
-using ::android::hardware::neuralnetworks::V1_2::Constant;
-using ::android::hardware::neuralnetworks::V1_2::IDevice;
-using ::android::hardware::neuralnetworks::V1_2::IPreparedModel;
-using ::android::hardware::neuralnetworks::V1_2::MeasureTiming;
-using ::android::hardware::neuralnetworks::V1_2::Model;
-using ::android::hardware::neuralnetworks::V1_2::OutputShape;
-using ::android::hardware::neuralnetworks::V1_2::Timing;
-using ::android::hardware::neuralnetworks::V1_2::implementation::ExecutionCallback;
-using ::android::hardware::neuralnetworks::V1_2::implementation::PreparedModelCallback;
-using ::android::hidl::memory::V1_0::IMemory;
+using hidl::memory::V1_0::IMemory;
+using implementation::ExecutionCallback;
+using implementation::PreparedModelCallback;
+using V1_0::DataLocation;
+using V1_0::ErrorStatus;
+using V1_0::OperandLifeTime;
+using V1_0::Request;
+using V1_1::ExecutionPreference;
 using HidlToken = hidl_array<uint8_t, static_cast<uint32_t>(Constant::BYTE_SIZE_OF_CACHE_TOKEN)>;
 
 enum class OutputType { FULLY_SPECIFIED, UNSPECIFIED, INSUFFICIENT };
@@ -371,74 +358,31 @@ void EvaluatePreparedModel(const sp<IPreparedModel>& preparedModel, const TestMo
     }
 }
 
-void PrepareModel(const sp<IDevice>& device, const Model& model,
-                  sp<IPreparedModel>* preparedModel) {
-    // see if service can handle model
-    bool fullySupportsModel = false;
-    Return<void> supportedCall = device->getSupportedOperations_1_2(
-            model, [&fullySupportsModel](ErrorStatus status, const hidl_vec<bool>& supported) {
-                ASSERT_EQ(ErrorStatus::NONE, status);
-                ASSERT_NE(0ul, supported.size());
-                fullySupportsModel = std::all_of(supported.begin(), supported.end(),
-                                                 [](bool valid) { return valid; });
-            });
-    ASSERT_TRUE(supportedCall.isOk());
-
-    // launch prepare model
-    sp<PreparedModelCallback> preparedModelCallback = new PreparedModelCallback();
-    Return<ErrorStatus> prepareLaunchStatus = device->prepareModel_1_2(
-            model, ExecutionPreference::FAST_SINGLE_ANSWER, hidl_vec<hidl_handle>(),
-            hidl_vec<hidl_handle>(), HidlToken(), preparedModelCallback);
-    ASSERT_TRUE(prepareLaunchStatus.isOk());
-    ASSERT_EQ(ErrorStatus::NONE, static_cast<ErrorStatus>(prepareLaunchStatus));
-
-    // retrieve prepared model
-    preparedModelCallback->wait();
-    ErrorStatus prepareReturnStatus = preparedModelCallback->getStatus();
-    sp<V1_0::IPreparedModel> preparedModelV1_0 = preparedModelCallback->getPreparedModel();
-    *preparedModel = IPreparedModel::castFrom(preparedModelV1_0).withDefault(nullptr);
-
-    // early termination if vendor service cannot fully prepare model
-    if (!fullySupportsModel && prepareReturnStatus != ErrorStatus::NONE) {
-        ASSERT_EQ(nullptr, preparedModel->get());
-        LOG(INFO) << "NN VTS: Early termination of test because vendor service cannot "
-                     "prepare model that it does not support.";
-        std::cout << "[          ]   Early termination of test because vendor service cannot "
-                     "prepare model that it does not support."
-                  << std::endl;
-        return;
+void Execute(const sp<IDevice>& device, const TestModel& testModel, bool testDynamicOutputShape) {
+    Model model = createModel(testModel);
+    if (testDynamicOutputShape) {
+        makeOutputDimensionsUnspecified(&model);
     }
-    EXPECT_EQ(ErrorStatus::NONE, prepareReturnStatus);
-    ASSERT_NE(nullptr, preparedModel->get());
+
+    sp<IPreparedModel> preparedModel;
+    createPreparedModel(device, model, &preparedModel);
+    if (preparedModel == nullptr) return;
+
+    EvaluatePreparedModel(preparedModel, testModel, testDynamicOutputShape);
 }
 
 // Tag for the generated tests
-class GeneratedTest : public GeneratedTestBase {
-  protected:
-    void Execute(const TestModel& testModel, bool testDynamicOutputShape) {
-        Model model = createModel(testModel);
-        if (testDynamicOutputShape) {
-            makeOutputDimensionsUnspecified(&model);
-        }
-
-        sp<IPreparedModel> preparedModel = nullptr;
-        PrepareModel(device, model, &preparedModel);
-        if (preparedModel == nullptr) {
-            GTEST_SKIP();
-        }
-        EvaluatePreparedModel(preparedModel, testModel, testDynamicOutputShape);
-    }
-};
+class GeneratedTest : public GeneratedTestBase {};
 
 // Tag for the dynamic output shape tests
 class DynamicOutputShapeTest : public GeneratedTest {};
 
 TEST_P(GeneratedTest, Test) {
-    Execute(*mTestModel, /*testDynamicOutputShape=*/false);
+    Execute(kDevice, kTestModel, /*testDynamicOutputShape=*/false);
 }
 
 TEST_P(DynamicOutputShapeTest, Test) {
-    Execute(*mTestModel, /*testDynamicOutputShape=*/true);
+    Execute(kDevice, kTestModel, /*testDynamicOutputShape=*/true);
 }
 
 INSTANTIATE_GENERATED_TEST(GeneratedTest,
@@ -447,9 +391,4 @@ INSTANTIATE_GENERATED_TEST(GeneratedTest,
 INSTANTIATE_GENERATED_TEST(DynamicOutputShapeTest,
                            [](const TestModel& testModel) { return !testModel.expectFailure; });
 
-}  // namespace functional
-}  // namespace vts
-}  // namespace V1_2
-}  // namespace neuralnetworks
-}  // namespace hardware
-}  // namespace android
+}  // namespace android::hardware::neuralnetworks::V1_2::vts::functional

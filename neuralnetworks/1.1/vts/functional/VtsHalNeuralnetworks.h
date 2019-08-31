@@ -26,64 +26,37 @@
 
 #include <android-base/macros.h>
 #include <gtest/gtest.h>
-#include <iostream>
-#include <vector>
 
-#include "TestHarness.h"
-
-namespace android {
-namespace hardware {
-namespace neuralnetworks {
-namespace V1_1 {
-
-using V1_0::DeviceStatus;
-using V1_0::ErrorStatus;
-using V1_0::IPreparedModel;
-using V1_0::Operand;
-using V1_0::OperandType;
-using V1_0::Request;
-
-namespace vts {
-namespace functional {
+namespace android::hardware::neuralnetworks::V1_1::vts::functional {
 
 // A class for test environment setup
-class NeuralnetworksHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
+class NeuralnetworksHidlEnvironment : public testing::VtsHalHidlTargetTestEnvBase {
     DISALLOW_COPY_AND_ASSIGN(NeuralnetworksHidlEnvironment);
-    NeuralnetworksHidlEnvironment();
-    ~NeuralnetworksHidlEnvironment() override;
+    NeuralnetworksHidlEnvironment() = default;
 
-   public:
+  public:
     static NeuralnetworksHidlEnvironment* getInstance();
     void registerTestServices() override;
 };
 
 // The main test class for NEURALNETWORKS HIDL HAL.
-class NeuralnetworksHidlTest : public ::testing::VtsHalHidlTargetTestBase {
+class NeuralnetworksHidlTest : public testing::VtsHalHidlTargetTestBase {
     DISALLOW_COPY_AND_ASSIGN(NeuralnetworksHidlTest);
 
-   public:
-    NeuralnetworksHidlTest();
-    ~NeuralnetworksHidlTest() override;
+  public:
+    NeuralnetworksHidlTest() = default;
     void SetUp() override;
-    void TearDown() override;
 
-   protected:
-    sp<IDevice> device;
+  protected:
+    const sp<IDevice> kDevice = testing::VtsHalHidlTargetTestBase::getService<IDevice>(
+            NeuralnetworksHidlEnvironment::getInstance());
 };
 
-}  // namespace functional
-}  // namespace vts
-}  // namespace V1_1
-}  // namespace neuralnetworks
-}  // namespace hardware
-}  // namespace android
+// Create an IPreparedModel object. If the model cannot be prepared,
+// "preparedModel" will be nullptr instead.
+void createPreparedModel(const sp<IDevice>& device, const Model& model,
+                         sp<V1_0::IPreparedModel>* preparedModel);
 
-namespace android::hardware::neuralnetworks::V1_0 {
-
-// pretty-print values for error messages
-::std::ostream& operator<<(::std::ostream& os, ErrorStatus errorStatus);
-::std::ostream& operator<<(::std::ostream& os, DeviceStatus deviceStatus);
-
-}  // namespace android::hardware::neuralnetworks::V1_0
+}  // namespace android::hardware::neuralnetworks::V1_1::vts::functional
 
 #endif  // ANDROID_HARDWARE_NEURALNETWORKS_V1_1_VTS_HAL_NEURALNETWORKS_H
