@@ -104,6 +104,10 @@ HalProxy::HalProxy() {
     // TODO: Discover sensors
 }
 
+HalProxy::HalProxy(std::vector<ISensorsSubHal*>& subHalList) : mSubHalList(subHalList) {
+    // TODO: Perform the same steps as the empty constructor.
+}
+
 HalProxy::~HalProxy() {
     // TODO: Join any running threads and clean up FMQs and any other allocated
     // state.

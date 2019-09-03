@@ -43,11 +43,14 @@ Sensor::Sensor(ISensorsEventCallback* callback)
 }
 
 Sensor::~Sensor() {
-    std::unique_lock<std::mutex> lock(mRunMutex);
-    mStopThread = true;
-    mIsEnabled = false;
-    mWaitCV.notify_all();
-    lock.release();
+    // Ensure that lock is unlocked before calling mRunThread.join() or a
+    // deadlock will occur.
+    {
+        std::unique_lock<std::mutex> lock(mRunMutex);
+        mStopThread = true;
+        mIsEnabled = false;
+        mWaitCV.notify_all();
+    }
     mRunThread.join();
 }
 
