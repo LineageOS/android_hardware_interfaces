@@ -1,0 +1,247 @@
+/**
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package android.hardware.drm@1.2;
+
+import @1.0::KeyedVector;
+import @1.0::KeyType;
+import @1.0::SessionId;
+import @1.0::Status;
+import @1.1::IDrmPlugin;
+import @1.1::KeyRequestType;
+import @1.2::IDrmPluginListener;
+
+/**
+ * IDrmPlugin is used to interact with a specific drm plugin that was
+ * created by IDrm::createPlugin. A drm plugin provides methods for
+ * obtaining drm keys to be used by a codec to decrypt protected video
+ * content.
+ */
+interface IDrmPlugin extends @1.1::IDrmPlugin {
+
+    /**
+     * The keys in an offline license allow protected content to be
+     * played even if the device is not connected to a network.
+     * Offline licenses are stored on the device after a key
+     * request/response exchange when the key request KeyType is
+     * OFFLINE. Normally each app is responsible for keeping track of
+     * the KeySetIds it has created. In some situations however, it
+     * will be necessary to request the list of stored offline license
+     * KeySetIds. If an app loses the KeySetId for any stored licenses
+     * that it created, for example, it must be able to recover the
+     * stored KeySetIds so those licenses will be removed when they
+     * expire or when the app is uninstalled.
+     * <p>
+     * This method returns a list of the KeySetIds for all offline
+     * licenses. The offline license KeySetId allows an app to query
+     * the status of an offline license or remove it.
+     *
+     * @return status the status of the call. Must be OK or
+     *     ERROR_DRM_INVALID_STATE if the HAL is in a state where the
+     *     KeySetIds can't be returned.
+     * @return a list of offline license keySetIds. If there are no offline
+     *     licenses, the list must be empty and OK must be returned as the
+     *     status.
+     */
+    getOfflineLicenseKeySetIds() generates (@1.0::Status status,
+            vec<KeySetId> keySetIds);
+
+    /**
+     * Normally offline licenses are released using a key
+     * request/response exchange using getKeyRequest where the KeyType
+     * is RELEASE, followed by provideKeyResponse. This allows the
+     * server to cryptographically confirm that the license has been
+     * removed and then adjust the count of offline licenses allocated
+     * to the device.
+     * <p>
+     * In some exceptional situations it will be necessary to directly
+     * remove offline licenses without notifying the server, which is
+     * performed by this method.
+     *
+     * @param keySetId the id of the offline license to remove
+     * @return status the status of the call. Must be one of OK on
+     *     success, BAD_VALUE if the license is not found or
+     *     ERROR_DRM_INVALID_STATE if the HAL is in a state where the
+     *     KeySetIds can't be removed.
+     */
+    removeOfflineLicense(KeySetId keySetId) generates (@1.0::Status status);
+
+    /**
+     * Request the state of an offline license. An offline license must
+     * be usable or inactive. The keys in a usable offline license are
+     * available for decryption. When the offline license state is
+     * inactive, the keys have been marked for release using
+     * getKeyRequest with KeyType RELEASE but the key response has not
+     * been received. The keys in an inactive offline license are not
+     * usable for decryption.
+     *
+     * @param keySetId the id of the offline license
+     * @return status the status of the call. Must be one of OK on
+     *     success, BAD_VALUE if the license is not found or
+     *     ERROR_DRM_INVALID_STATE if the HAL is in a state where the
+     *     offline license state can't be queried.
+     * @return the offline license state, one of USABLE or INACTIVE.
+     *     If the return status is not OK then state must be set to
+     *     UNKNOWN.
+     */
+    getOfflineLicenseState(KeySetId keySetId) generates (
+            @1.0::Status status, OfflineLicenseState state);
+
+    /**
+     * A key request/response exchange occurs between the app and a License
+     * Server to obtain the keys required to decrypt the content.
+     * getKeyRequest_1_2() is used to obtain an opaque key request blob that is
+     * delivered to the license server.
+     *
+     * getKeyRequest_1_2() only differs from getKeyRequest_1_1() in that
+     *     additional status codes must be returned.
+     *
+     * @param scope either a sessionId or a keySetId, depending on the
+     *     specified keyType. When the keyType is OFFLINE or STREAMING, scope
+     *     must be set to the sessionId the keys will be provided to. When the
+     *     keyType is RELEASE, scope must be set to the keySetId of the keys
+     *     being released.
+     * @param initData container-specific data, its meaning is interpreted
+     *     based on the mime type provided in the mimeType parameter. It could
+     *     contain, for example, the content ID, key ID or other data obtained
+     *     from the content metadata that is required to generate the key
+     *     request. initData must be empty when keyType is RELEASE.
+     * @param mimeType identifies the mime type of the content
+     * @param keyType specifies if the keys are to be used for streaming,
+     *     offline or a release
+     * @param optionalParameters included in the key request message to
+     *     allow a client application to provide additional message parameters
+     *     to the server.
+     * @return status the status of the call. The status must be OK or one of
+     *     the following errors: ERROR_DRM_SESSION_NOT_OPENED if the session is
+     *     not opened, ERROR_DRM_NOT_PROVISIONED if the device requires
+     *     provisioning before it is able to generate a key request,
+     *     ERROR_DRM_RESOURCE_CONTENTION if client applications using the hal
+     *     are temporarily exceeding the available crypto resources such that a
+     *     retry of the operation is likely to succeed, ERROR_DRM_CANNOT_HANDLE
+     *     if getKeyRequest is not supported at the time of the call, BAD_VALUE
+     *     if any parameters are invalid or ERROR_DRM_INVALID_STATE if the HAL
+     *     is in a state where a key request cannot be generated.
+     * @return request if successful, the opaque key request blob is returned
+     * @return requestType indicates type information about the returned
+     *      request. The type must be one of INITIAL, RENEWAL, RELEASE, NONE or
+     *      UPDATE. An INITIAL request is the first key request for a
+     *      license. RENEWAL is a subsequent key request used to refresh the
+     *      keys in a license. RELEASE corresponds to a keyType of RELEASE,
+     *      which indicates keys are being released. NONE indicates that no
+     *      request is needed because the keys are already loaded. UPDATE
+     *      indicates that the keys need to be refetched after the initial
+     *      license request.
+     * @return defaultUrl the URL that the request may be sent to, if
+     *      provided by the drm HAL. The app can choose to override this URL.
+     */
+    getKeyRequest_1_2(vec<uint8_t> scope, vec<uint8_t> initData,
+            string mimeType, KeyType keyType, KeyedVector optionalParameters)
+        generates (Status status, vec<uint8_t> request,
+                KeyRequestType requestType, string defaultUrl);
+
+    /**
+     * A provision request/response exchange occurs between the app and a
+     * provisioning server to retrieve a device certificate. getProvisionRequest
+     * is used to obtain an opaque provisioning request blob that is delivered
+     * to the provisioning server.
+     *
+     * getProvisionRequest_1_2() only differs from getProvisionRequest_1_0() in
+     *     that additional status codes must be returned.
+     *
+     * @param certificateType the type of certificate requested, e.g. "X.509"
+     * @param certificateAuthority identifies the certificate authority. A
+     *     certificate authority (CA) is an entity which issues digital
+     *     certificates for use by other parties. It is an example of a trusted
+     *     third party.
+     * @return status the status of the call. The status must be OK or one of
+     *     the following errors: ERROR_DRM_RESOURCE_CONTENTION if client
+     *     applications using the hal are temporarily exceeding the available
+     *     crypto resources such that a retry of the operation is likely to
+     *     succeed, ERROR_DRM_CANNOT_HANDLE if the drm scheme does not require
+     *     provisioning or ERROR_DRM_INVALID_STATE if the HAL is in a state
+     *     where the provision request cannot be generated.
+     * @return request if successful the opaque certificate request blob
+     *     is returned
+     * @return defaultUrl URL that the provisioning request may be
+     *     sent to, if known by the HAL implementation. An app can choose to
+     *     override this URL. If the HAL implementation does not provide a
+     *     defaultUrl, the returned string must be empty.
+     */
+    getProvisionRequest_1_2(string certificateType, string certificateAuthority)
+        generates (Status status, vec<uint8_t> request, string defaultUrl);
+
+    /**
+     * Return the currently negotiated and max supported HDCP levels.
+     *
+     * This method only differs from @1.1 version by the addition of
+     * support for HDCP 2.3.
+     *
+     * The current level is based on the display(s) the device is connected to.
+     * If multiple HDCP-capable displays are simultaneously connected to
+     * separate interfaces, this method returns the lowest negotiated HDCP level
+     * of all interfaces.
+     *
+     * The maximum HDCP level is the highest level that can potentially be
+     * negotiated. It is a constant for any device, i.e. it does not depend on
+     * downstream receiving devices that could be connected. For example, if
+     * the device has HDCP 1.x keys and is capable of negotiating HDCP 1.x, but
+     * does not have HDCP 2.x keys, then the maximum HDCP capability would be
+     * reported as 1.x. If multiple HDCP-capable interfaces are present, it
+     * indicates the highest of the maximum HDCP levels of all interfaces.
+     *
+     * This method should only be used for informational purposes, not for
+     * enforcing compliance with HDCP requirements. Trusted enforcement of HDCP
+     * policies must be handled by the DRM system.
+     *
+     * @return status the status of the call. The status must be OK or
+     *         ERROR_DRM_INVALID_STATE if the HAL is in a state where the HDCP
+     *         level cannot be queried.
+     * @return connectedLevel the lowest HDCP level for any connected
+     *         displays
+     * @return maxLevel the highest HDCP level that can be supported
+     *         by the device
+     */
+    getHdcpLevels_1_2() generates (Status status, HdcpLevel connectedLevel,
+            HdcpLevel maxLevel);
+
+    /**
+     * Send a session lost state event to the listener. This event
+     * indicates that a session's state has become invalid because the
+     * device crypto hardware is incapable of retaining crypto session
+     * state across suspend and resume cycles.
+     *
+     * @param sessionId identifies the session the event originated from
+     */
+    sendSessionLostState(SessionId sessionId);
+
+    /**
+     * Send a keys change event to the listener. The keys change event
+     * indicates the status of each key in the session. Keys can be
+     * indicated as being usable, expired, outputnotallowed or statuspending.
+     *
+     * This method only differs from @1.0 version by the addition of new
+     * KeyStatusType(s) in keyStatusList.
+     *
+     * @param sessionId identifies the session the event originated from
+     * @param keyStatusList indicates the status for each key ID in the
+     * session.
+     * @param hasNewUsableKey indicates if the event includes at least one
+     * key that has become usable.
+     */
+    sendKeysChange_1_2(SessionId sessionId, vec<KeyStatus> keyStatusList,
+            bool hasNewUsableKey);
+
+};

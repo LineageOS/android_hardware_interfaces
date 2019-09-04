@@ -25,8 +25,7 @@ namespace configstore {
 namespace V1_1 {
 namespace implementation {
 
-// Methods from ::android::hardware::configstore::V1_0::ISurfaceFlingerConfigs
-// follow.
+// ::android::hardware::configstore::V1_0::ISurfaceFlingerConfigs implementation.
 Return<void> SurfaceFlingerConfigs::vsyncEventPhaseOffsetNs(vsyncEventPhaseOffsetNs_cb _hidl_cb) {
 #ifdef VSYNC_EVENT_PHASE_OFFSET_NS
     _hidl_cb({true, VSYNC_EVENT_PHASE_OFFSET_NS});
@@ -55,7 +54,7 @@ Return<void> SurfaceFlingerConfigs::useContextPriority(useContextPriority_cb _hi
 }
 
 Return<void> SurfaceFlingerConfigs::maxFrameBufferAcquiredBuffers(
-    maxFrameBufferAcquiredBuffers_cb _hidl_cb) {
+        maxFrameBufferAcquiredBuffers_cb _hidl_cb) {
 #ifdef NUM_FRAMEBUFFER_SURFACE_BUFFERS
     _hidl_cb({true, NUM_FRAMEBUFFER_SURFACE_BUFFERS});
 #else
@@ -92,7 +91,7 @@ Return<void> SurfaceFlingerConfigs::hasHDRDisplay(hasHDRDisplay_cb _hidl_cb) {
 }
 
 Return<void> SurfaceFlingerConfigs::presentTimeOffsetFromVSyncNs(
-    presentTimeOffsetFromVSyncNs_cb _hidl_cb) {
+        presentTimeOffsetFromVSyncNs_cb _hidl_cb) {
 #ifdef PRESENT_TIME_OFFSET_FROM_VSYNC_NS
     _hidl_cb({true, PRESENT_TIME_OFFSET_FROM_VSYNC_NS});
 #else
@@ -133,7 +132,7 @@ Return<void> SurfaceFlingerConfigs::useVrFlinger(useVrFlinger_cb _hidl_cb) {
 }
 
 Return<void> SurfaceFlingerConfigs::startGraphicsAllocatorService(
-    startGraphicsAllocatorService_cb _hidl_cb) {
+        startGraphicsAllocatorService_cb _hidl_cb) {
     bool value = false;
 #ifdef START_GRAPHICS_ALLOCATOR_SERVICE
     value = true;
@@ -142,17 +141,16 @@ Return<void> SurfaceFlingerConfigs::startGraphicsAllocatorService(
     return Void();
 }
 
-// Methods from ::android::hardware::configstore::V1_1::ISurfaceFlingerConfigs
-// follow.
+// ::android::hardware::configstore::V1_1::ISurfaceFlingerConfigs implementation.
 
 #ifdef PRIMARY_DISPLAY_ORIENTATION
 static_assert(PRIMARY_DISPLAY_ORIENTATION == 0 || PRIMARY_DISPLAY_ORIENTATION == 90 ||
-                  PRIMARY_DISPLAY_ORIENTATION == 180 || PRIMARY_DISPLAY_ORIENTATION == 270,
+                      PRIMARY_DISPLAY_ORIENTATION == 180 || PRIMARY_DISPLAY_ORIENTATION == 270,
               "Primary display orientation must be 0/90/180/270");
 #endif
 
 Return<void> SurfaceFlingerConfigs::primaryDisplayOrientation(
-    primaryDisplayOrientation_cb _hidl_cb) {
+        primaryDisplayOrientation_cb _hidl_cb) {
     using ::android::hardware::configstore::V1_1::DisplayOrientation;
 
     bool specified = false;
@@ -190,8 +188,6 @@ Return<void> SurfaceFlingerConfigs::primaryDisplayOrientation(
     _hidl_cb({specified, value});
     return Void();
 }
-
-// Methods from ::android::hidl::base::V1_0::IBase follow.
 
 }  // namespace implementation
 }  // namespace V1_1

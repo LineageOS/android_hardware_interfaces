@@ -1,0 +1,99 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.gnss@2.0;
+
+import @1.0::GnssLocation;
+
+/** Network handle type. */
+typedef uint64_t net_handle_t;
+
+/**
+ * Flags indicating the validity of the fields in ElapsedRealtime.
+ */
+@export(name="", value_prefix="ELAPSED_REALTIME_")
+enum ElapsedRealtimeFlags : uint16_t {
+    /** A valid timestampNs is stored in the data structure. */
+    HAS_TIMESTAMP_NS        = 1 << 0,
+    /** A valid timeUncertaintyNs is stored in the data structure. */
+    HAS_TIME_UNCERTAINTY_NS = 1 << 1,
+};
+
+/**
+ * Represents an estimate of elapsed time since boot of Android for a given event.
+ *
+ * This timestamp MUST represent the time the event happened and MUST be synchronized
+ * with the SystemClock.elapsedRealtimeNanos() clock.
+ */
+struct ElapsedRealtime {
+    /**
+     * A set of flags indicating the validity of each field in this data structure.
+     *
+     * Fields may have invalid information in them, if not marked as valid by the
+     * corresponding bit in flags.
+     */
+    bitfield<ElapsedRealtimeFlags> flags;
+
+    /**
+     * Estimate of the elapsed time since boot value for the corresponding event in nanoseconds.
+     */
+    uint64_t timestampNs;
+
+    /**
+     * Estimate of the relative precision of the alignment of this SystemClock
+     * timestamp, with the reported measurements in nanoseconds (68% confidence).
+     */
+    uint64_t timeUncertaintyNs;
+};
+
+/** Represents a location. */
+struct GnssLocation {
+    @1.0::GnssLocation v1_0;
+
+    /**
+     * Timing information of the GNSS location synchronized with SystemClock.elapsedRealtimeNanos()
+     * clock.
+     *
+     * This clock information can be obtained from SystemClock.elapsedRealtimeNanos(), when the GNSS
+     * is attached straight to the AP/SOC. When it is attached to a separate module the timestamp
+     * needs to be estimated by syncing the notion of time via PTP or some other mechanism.
+     */
+    ElapsedRealtime elapsedRealtime;
+};
+
+/**
+ * GNSS constellation type
+ *
+ * This is to specify the navigation satellite system, for example, as listed in Section 3.5 in
+ * RINEX Version 3.04.
+ */
+enum GnssConstellationType : uint8_t {
+    UNKNOWN = 0,
+    /** Global Positioning System. */
+    GPS     = 1,
+    /** Satellite-Based Augmentation System. */
+    SBAS    = 2,
+    /** Global Navigation Satellite System. */
+    GLONASS = 3,
+    /** Quasi-Zenith Satellite System. */
+    QZSS    = 4,
+    /** BeiDou Navigation Satellite System. */
+    BEIDOU  = 5,
+    /** Galileo Navigation Satellite System. */
+    GALILEO = 6,
+    /** Indian Regional Navigation Satellite System. */
+    IRNSS   = 7,
+};

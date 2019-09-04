@@ -1,0 +1,4 @@
+service vendor.cec-hal-2-0 /vendor/bin/hw/android.hardware.tv.cec@2.0-service
+    class hal
+    user system
+    group system

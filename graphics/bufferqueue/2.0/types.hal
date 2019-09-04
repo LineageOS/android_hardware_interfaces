@@ -1,0 +1,119 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.graphics.bufferqueue@2.0;
+
+/**
+ * Possible return values from a function call.
+ */
+enum Status : int32_t {
+    /**
+     * The call succeeds.
+     */
+    OK = 0,
+    /**
+     * The function fails allocate memory.
+     */
+    NO_MEMORY = -12,
+    /**
+     * The buffer queue has been abandoned, no consumer is connected, or no
+     * producer is connected at the time of the call.
+     */
+    NO_INIT = -19,
+    /**
+     * Some of the provided input arguments are invalid.
+     */
+    BAD_VALUE = -22,
+    /**
+     * An unexpected death of some object prevents the operation from
+     * continuing.
+     *
+     * @note This status value is different from a transaction failure, which
+     * should be detected by isOk().
+     */
+    DEAD_OBJECT = -32,
+    /**
+     * The internal state of the buffer queue does not permit the operation.
+     */
+    INVALID_OPERATION = -38,
+    /**
+     * The call fails to finish within the specified time limit.
+     */
+    TIMED_OUT = -110,
+    /**
+     * The buffer queue is operating in a non-blocking mode, but the call cannot
+     * be completed without blocking.
+     */
+    WOULD_BLOCK = 0xfffffffb,
+    /**
+     * The call fails because of a reason not listed above.
+     */
+    UNKNOWN_ERROR = 0xffffffff,
+};
+
+/**
+ * Special values for a slot index.
+ */
+enum SlotIndex : int32_t {
+    /**
+     * Invalid/unspecified slot index. This may be returned from a function that
+     * returns a slot index if the call is unsuccessful.
+     */
+    INVALID = -1,
+    UNSPECIFIED = -1,
+};
+
+/**
+ * An "empty" fence can be an empty handle (containing no fds and no ints) or a
+ * fence with one fd that is equal to -1 and no ints.
+ *
+ * A valid fence is an empty fence or a native handle with exactly one fd and no
+ * ints.
+ */
+typedef handle Fence;
+
+/**
+ * How buffers shall be produced. One of these values must be provided in a call
+ * to IGraphicBufferProducer::connect() and
+ * IGraphicBufferProducer::disconnect().
+ */
+enum ConnectionType : int32_t {
+    /**
+     * This value can be used only as an input to
+     * IGraphicBufferProducer::disconnect().
+     */
+    CURRENTLY_CONNECTED = -1,
+    /**
+     * Buffers shall be queued by EGL via `eglSwapBuffers()` after being filled
+     * using OpenGL ES.
+     */
+    EGL = 1,
+    /**
+     * Buffers shall be queued after being filled using the CPU.
+     */
+    CPU = 2,
+    /**
+     * Buffers shall be queued by Stagefright after being filled by a video
+     * decoder. The video decoder can either be a software or hardware decoder.
+     */
+    MEDIA = 3,
+    /**
+     * Buffers shall be queued by the camera HAL.
+     */
+    CAMERA = 4,
+};
+
+

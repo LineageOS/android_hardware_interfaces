@@ -38,7 +38,8 @@ static inline float clamp(float v, float min, float max) {
 }
 
 
-static uint32_t yuvToRgbx(const unsigned char Y, const unsigned char Uin, const unsigned char Vin) {
+static uint32_t yuvToRgbx(const unsigned char Y, const unsigned char Uin, const unsigned char Vin,
+                          bool bgrxFormat = false) {
     // Don't use this if you want to see the best performance.  :)
     // Better to do this in a pixel shader if we really have to, but on actual
     // embedded hardware we expect to be able to texture directly from the YUV data
@@ -52,16 +53,24 @@ static uint32_t yuvToRgbx(const unsigned char Y, const unsigned char Uin, const 
     unsigned char G = (unsigned char)clamp(Gf, 0.0f, 255.0f);
     unsigned char B = (unsigned char)clamp(Bf, 0.0f, 255.0f);
 
-    return (R      ) |
-           (G <<  8) |
-           (B << 16) |
-           0xFF000000;  // Fill the alpha channel with ones
+    if (!bgrxFormat) {
+        return (R      ) |
+               (G <<  8) |
+               (B << 16) |
+               0xFF000000;  // Fill the alpha channel with ones
+    } else {
+        return (R << 16) |
+               (G <<  8) |
+               (B      ) |
+               0xFF000000;  // Fill the alpha channel with ones
+    }
 }
 
 
 void copyNV21toRGB32(unsigned width, unsigned height,
                      uint8_t* src,
-                     uint32_t* dst, unsigned dstStridePixels)
+                     uint32_t* dst, unsigned dstStridePixels,
+                     bool bgrxFormat)
 {
     // The NV21 format provides a Y array of 8bit values, followed by a 1/2 x 1/2 interleaved
     // U/V array.  It assumes an even width and height for the overall image, and a horizontal
@@ -84,7 +93,7 @@ void copyNV21toRGB32(unsigned width, unsigned height,
         for (unsigned c = 0; c < width; c++) {
             unsigned uCol = (c & ~1);   // uCol is always even and repeats 1:2 with Y values
             unsigned vCol = uCol | 1;   // vCol is always odd
-            rowDest[c] = yuvToRgbx(rowY[c], rowUV[uCol], rowUV[vCol]);
+            rowDest[c] = yuvToRgbx(rowY[c], rowUV[uCol], rowUV[vCol], bgrxFormat);
         }
     }
 }
@@ -92,7 +101,8 @@ void copyNV21toRGB32(unsigned width, unsigned height,
 
 void copyYV12toRGB32(unsigned width, unsigned height,
                      uint8_t* src,
-                     uint32_t* dst, unsigned dstStridePixels)
+                     uint32_t* dst, unsigned dstStridePixels,
+                     bool bgrxFormat)
 {
     // The YV12 format provides a Y array of 8bit values, followed by a 1/2 x 1/2 U array, followed
     // by another 1/2 x 1/2 V array.  It assumes an even width and height for the overall image,
@@ -118,7 +128,7 @@ void copyYV12toRGB32(unsigned width, unsigned height,
         uint32_t* rowDest = dst + r*dstStridePixels;
 
         for (unsigned c = 0; c < width; c++) {
-            rowDest[c] = yuvToRgbx(rowY[c], rowU[c], rowV[c]);
+            rowDest[c] = yuvToRgbx(rowY[c], rowU[c], rowV[c], bgrxFormat);
         }
     }
 }
@@ -126,7 +136,8 @@ void copyYV12toRGB32(unsigned width, unsigned height,
 
 void copyYUYVtoRGB32(unsigned width, unsigned height,
                      uint8_t* src, unsigned srcStridePixels,
-                     uint32_t* dst, unsigned dstStridePixels)
+                     uint32_t* dst, unsigned dstStridePixels,
+                     bool bgrxFormat)
 {
     uint32_t* srcWords = (uint32_t*)src;
 
@@ -144,8 +155,8 @@ void copyYUYVtoRGB32(unsigned width, unsigned height,
             uint8_t V  = (srcPixel >> 24) & 0xFF;
 
             // On the RGB output, we're writing one pixel at a time
-            *(dst+0) = yuvToRgbx(Y1, U, V);
-            *(dst+1) = yuvToRgbx(Y2, U, V);
+            *(dst+0) = yuvToRgbx(Y1, U, V, bgrxFormat);
+            *(dst+1) = yuvToRgbx(Y2, U, V, bgrxFormat);
             dst += 2;
         }
 
@@ -153,6 +164,30 @@ void copyYUYVtoRGB32(unsigned width, unsigned height,
         srcWords += srcRowPadding32;
         dst += dstRowPadding32;
     }
+}
+
+
+void copyNV21toBGR32(unsigned width, unsigned height,
+                     uint8_t* src,
+                     uint32_t* dst, unsigned dstStridePixels)
+{
+    return copyNV21toRGB32(width, height, src, dst, dstStridePixels, true);
+}
+
+
+void copyYV12toBGR32(unsigned width, unsigned height,
+                     uint8_t* src,
+                     uint32_t* dst, unsigned dstStridePixels)
+{
+    return copyYV12toRGB32(width, height, src, dst, dstStridePixels, true);
+}
+
+
+void copyYUYVtoBGR32(unsigned width, unsigned height,
+                     uint8_t* src, unsigned srcStridePixels,
+                     uint32_t* dst, unsigned dstStridePixels)
+{
+    return copyYUYVtoRGB32(width, height, src, srcStridePixels, dst, dstStridePixels, true);
 }
 
 

@@ -26,36 +26,31 @@ namespace audio {
 namespace common {
 namespace utils {
 
-/** Similar to static_cast but also casts to hidl_bitfield depending on
- * return type inference (emulated through user-define conversion).
- */
-template <class Source, class Destination = Source>
-class EnumConverter {
+/** Converting between a bitfield or itself. */
+template <class Enum>
+class EnumBitfield {
    public:
-    static_assert(std::is_enum<Source>::value || std::is_enum<Destination>::value,
-                  "Source or destination should be an enum");
+    using Bitfield = ::android::hardware::hidl_bitfield<Enum>;
 
-    explicit EnumConverter(Source source) : mSource(source) {}
+    EnumBitfield(const EnumBitfield&) = default;
+    explicit EnumBitfield(Enum value) : mValue(value) {}
+    explicit EnumBitfield(Bitfield value) : EnumBitfield(static_cast<Enum>(value)) {}
 
-    operator Destination() const { return static_cast<Destination>(mSource); }
+    EnumBitfield& operator=(const EnumBitfield&) = default;
+    EnumBitfield& operator=(Enum value) { return *this = EnumBitfield{value}; }
+    EnumBitfield& operator=(Bitfield value) { return *this = EnumBitfield{value}; }
 
-    template <class = std::enable_if_t<std::is_enum<Destination>::value>>
-    operator ::android::hardware::hidl_bitfield<Destination>() {
-        return static_cast<std::underlying_type_t<Destination>>(mSource);
-    }
+    operator Enum() const { return mValue; }
+    operator Bitfield() const { return static_cast<Bitfield>(mValue); }
 
    private:
-    const Source mSource;
+    Enum mValue;
 };
-template <class Destination, class Source>
-auto mkEnumConverter(Source source) {
-    return EnumConverter<Source, Destination>{source};
-}
 
-/** Allows converting an enum to its bitfield or itself. */
+/** ATD way to create a EnumBitfield. */
 template <class Enum>
-EnumConverter<Enum> mkBitfield(Enum value) {
-    return EnumConverter<Enum>{value};
+EnumBitfield<Enum> mkEnumBitfield(Enum value) {
+    return EnumBitfield<Enum>{value};
 }
 
 }  // namespace utils

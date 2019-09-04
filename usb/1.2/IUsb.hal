@@ -1,0 +1,65 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.usb@1.2;
+
+import android.hardware.usb@1.1::IUsb;
+
+/**
+ * The setCallback function in V1_0 is used to register the V1_2
+ * IUsbCallback object as well. The implementation can use the
+ * castFrom method to cast the IUsbCallback object.
+ */
+interface IUsb extends @1.1::IUsb {
+    /**
+     * When supportsEnableContaminantPresenceDetection is true,
+     * enableContaminantPresenceDetection enables/disables contaminant
+     * presence detection algorithm. Calling enableContaminantPresenceDetection
+     * when supportsEnableContaminantPresenceDetection is false does
+     * not have any effect.
+     * Change in contantaminant presence status should notify should
+     * be notified to the client via notifyPortStatusChange_1_2 through
+     * PortStatus.
+     *
+     * @param portName name of the port.
+     * @param enable true Enable contaminant presence detection algorithm.
+     *               false Disable contaminant presence detection algorithm.
+     */
+    oneway enableContaminantPresenceDetection(string portName, bool enable);
+
+    /**
+     * When supportsEnableContaminantPresenceProtection is true,
+     * enableContaminantPresenceProtection enables/disables contaminant
+     * presence protection algorithm. Calling
+     * enableContaminantPresenceProtection
+     * when supportsEnableContaminantPresenceProtection is false does
+     * not have any effect.
+     * Used to enable/disable contaminant presence protection algorithm.
+     * Enabling port protection algoritm must make the lower layers to autonomously
+     * act on taking the corresponding preventive measure mentioned at
+     * ContaminantProtectionModes when contaminant is detected on the USB Port.
+     * Calling this method with enable set to true must set to contaminantProtectionEnabled
+     * to true upon success and vice versa.
+     * currentContaminantProtectionMode should be updated whenever there is a
+     * change in the status of contaminant presence protection algorithm.
+     *
+     * @param portName name of the port.
+     * @param enable true Reduce capabilities of the port to protect port
+     *                    from damage due to contaminant presence.
+     *               false No action is taken upon contaminant presence.
+     */
+    oneway enableContaminantPresenceProtection(string portName, bool enable);
+};

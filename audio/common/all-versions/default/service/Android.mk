@@ -31,22 +31,28 @@ LOCAL_SRC_FILES := \
 LOCAL_CFLAGS := -Wall -Werror
 
 LOCAL_SHARED_LIBRARIES := \
+    libcutils \
     libbinder \
     libhidlbase \
     libhidltransport \
     liblog \
     libutils \
     libhardware \
+    libhwbinder \
     android.hardware.audio@2.0 \
     android.hardware.audio@4.0 \
+    android.hardware.audio@5.0 \
     android.hardware.audio.common@2.0 \
     android.hardware.audio.common@4.0 \
+    android.hardware.audio.common@5.0 \
     android.hardware.audio.effect@2.0 \
     android.hardware.audio.effect@4.0 \
+    android.hardware.audio.effect@5.0 \
     android.hardware.bluetooth.a2dp@1.0 \
     android.hardware.bluetooth.audio@2.0 \
     android.hardware.soundtrigger@2.0 \
-    android.hardware.soundtrigger@2.1
+    android.hardware.soundtrigger@2.1 \
+    android.hardware.soundtrigger@2.2
 
 # Can not switch to Android.bp until AUDIOSERVER_MULTILIB
 # is deprecated as build config variable are not supported

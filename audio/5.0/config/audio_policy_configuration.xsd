@@ -42,7 +42,7 @@
                 <xs:element name="globalConfiguration" type="globalConfiguration"/>
                 <xs:element name="modules" type="modules" maxOccurs="unbounded"/>
                 <xs:element name="volumes" type="volumes" maxOccurs="unbounded"/>
-                <xs:element name="surroundSound" type="surroundSound" />
+                <xs:element name="surroundSound" type="surroundSound" minOccurs="0" />
             </xs:sequence>
             <xs:attribute name="version" type="version"/>
         </xs:complexType>
@@ -277,6 +277,8 @@
             <xs:enumeration value="AUDIO_DEVICE_IN_PROXY"/>
             <xs:enumeration value="AUDIO_DEVICE_IN_USB_HEADSET"/>
             <xs:enumeration value="AUDIO_DEVICE_IN_BLUETOOTH_BLE"/>
+            <xs:enumeration value="AUDIO_DEVICE_IN_HDMI_ARC"/>
+            <xs:enumeration value="AUDIO_DEVICE_IN_ECHO_REFERENCE"/>
             <xs:enumeration value="AUDIO_DEVICE_IN_DEFAULT"/>
             <xs:enumeration value="AUDIO_DEVICE_IN_STUB"/>
         </xs:restriction>
@@ -364,6 +366,15 @@
             <xs:enumeration value="AUDIO_FORMAT_MAT_2_1"/>
             <xs:enumeration value="AUDIO_FORMAT_AAC_XHE"/>
             <xs:enumeration value="AUDIO_FORMAT_AAC_ADTS_XHE"/>
+            <xs:enumeration value="AUDIO_FORMAT_AAC_LATM"/>
+            <xs:enumeration value="AUDIO_FORMAT_AAC_LATM_LC"/>
+            <xs:enumeration value="AUDIO_FORMAT_AAC_LATM_HE_V1"/>
+            <xs:enumeration value="AUDIO_FORMAT_AAC_LATM_HE_V2"/>
+            <xs:enumeration value="AUDIO_FORMAT_CELT"/>
+            <xs:enumeration value="AUDIO_FORMAT_APTX_ADAPTIVE"/>
+            <xs:enumeration value="AUDIO_FORMAT_LHDC"/>
+            <xs:enumeration value="AUDIO_FORMAT_LHDC_LL"/>
+            <xs:enumeration value="AUDIO_FORMAT_APTX_TWSP"/>
         </xs:restriction>
     </xs:simpleType>
     <xs:simpleType name="extendableAudioFormat">
@@ -461,6 +472,8 @@
                             </xs:documentation>
                         </xs:annotation>
                     </xs:attribute>
+                    <xs:attribute name="encodedFormats" type="audioFormatsList" use="optional"
+                                  default="" />
                 </xs:complexType>
                 <xs:unique name="devicePortProfileUniqueness">
                     <xs:selector xpath="profile"/>
@@ -595,7 +608,7 @@
             <xs:element name="formats" type="surroundFormats"/>
         </xs:sequence>
     </xs:complexType>
-    <xs:simpleType name="surroundFormatsList">
+    <xs:simpleType name="audioFormatsList">
         <xs:list itemType="audioFormat" />
     </xs:simpleType>
     <xs:complexType name="surroundFormats">
@@ -603,7 +616,7 @@
             <xs:element name="format" minOccurs="0" maxOccurs="unbounded">
                 <xs:complexType>
                     <xs:attribute name="name" type="audioFormat" use="required"/>
-                    <xs:attribute name="subformats" type="surroundFormatsList" />
+                    <xs:attribute name="subformats" type="audioFormatsList" />
                 </xs:complexType>
             </xs:element>
         </xs:sequence>
