@@ -117,6 +117,10 @@ TEST_F(AudioPrimaryHidlTest, GetMicrophonesTest) {
                 ASSERT_NE(0U, activeMicrophones.size());
             }
             stream->close();
+            // Workaround for b/139329877. Ensures the stream gets closed on the audio hal side.
+            stream.clear();
+            IPCThreadState::self()->flushCommands();
+            usleep(1000);
             if (efGroup) {
                 EventFlag::deleteEventFlag(&efGroup);
             }
