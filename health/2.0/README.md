@@ -44,7 +44,6 @@
             "libbase",
             "libcutils",
             "libhidlbase",
-            "libhidltransport",
             "libutils",
             "android.hardware.health@2.0",
         ],

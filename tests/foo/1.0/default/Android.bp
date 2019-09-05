@@ -13,8 +13,6 @@ cc_library {
         "libcutils",
         "libfootest",
         "libhidlbase",
-        "libhidltransport",
-        "libhwbinder",
         "liblog",
         "libutils",
     ],

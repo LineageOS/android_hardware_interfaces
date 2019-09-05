@@ -26,7 +26,6 @@ cc_binary {
     shared_libs: [
         "libcutils",
         "libhidlbase",
-        "libhidltransport",
         "liblog",
         "libutils",
         "libhardware",
