@@ -85,6 +85,28 @@ const int32_t kGenerateFakeDataControllingProperty =
     0x0666 | VehiclePropertyGroup::VENDOR | VehicleArea::GLOBAL | VehiclePropertyType::MIXED;
 
 /**
+ * This property is used for test purpose to set properties' value from vehicle.
+ * For example: Mocking hard button press triggering a HVAC fan speed change.
+ * Android set kSetPropertyFromVehcileForTest with an array of integer {HVAC_FAN_SPEED, value of
+ * fan speed} and a long value indicates the timestamp of the events .
+ * It only works with integer type properties.
+ */
+const int32_t kSetIntPropertyFromVehcileForTest =
+        0x1112 | VehiclePropertyGroup::VENDOR | VehicleArea::GLOBAL | VehiclePropertyType::MIXED;
+/**
+ * This property is used for test purpose to set properties' value from vehicle.
+ * It only works with float type properties.
+ */
+const int32_t kSetFloatPropertyFromVehcileForTest =
+        0x1113 | VehiclePropertyGroup::VENDOR | VehicleArea::GLOBAL | VehiclePropertyType::MIXED;
+/**
+ * This property is used for test purpose to set properties' value from vehicle.
+ * It only works with boolean type properties.
+ */
+const int32_t kSetBooleanPropertyFromVehcileForTest =
+        0x1114 | VehiclePropertyGroup::VENDOR | VehicleArea::GLOBAL | VehiclePropertyType::MIXED;
+
+/**
  * This property is used for test purpose. End to end tests use this property to test set and get
  * method for MIXED type properties.
  */
@@ -636,6 +658,37 @@ const ConfigDeclaration kVehicleProperties[]{
                                 .prop = kGenerateFakeDataControllingProperty,
                                 .access = VehiclePropertyAccess::WRITE,
                                 .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                                .configArray = {1, 0, 0, 2, 0, 0, 0, 0, 0},
+                        },
+        },
+
+        {
+                .config =
+                        {
+                                .prop = kSetIntPropertyFromVehcileForTest,
+                                .access = VehiclePropertyAccess::WRITE,
+                                .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                                .configArray = {0, 0, 0, 2, 1, 0, 0, 0, 0},
+                        },
+        },
+
+        {
+                .config =
+                        {
+                                .prop = kSetFloatPropertyFromVehcileForTest,
+                                .access = VehiclePropertyAccess::WRITE,
+                                .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                                .configArray = {0, 0, 1, 0, 1, 0, 1, 0, 0},
+                        },
+        },
+
+        {
+                .config =
+                        {
+                                .prop = kSetBooleanPropertyFromVehcileForTest,
+                                .access = VehiclePropertyAccess::WRITE,
+                                .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                                .configArray = {0, 1, 1, 0, 1, 0, 0, 0, 0},
                         },
         },
 
