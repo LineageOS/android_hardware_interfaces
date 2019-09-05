@@ -42,6 +42,7 @@ interface ITuner {
      *
      * It is used by the client to create a frontend instance.
      *
+     * @param frontendId the id of the frontend to be opened.
      * @return result Result status of the operation.
      *         SUCCESS if successful,
      *         UNKNOWN_ERROR if creation failed for other reasons.

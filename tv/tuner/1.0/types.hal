@@ -170,7 +170,7 @@ enum DemuxFilterType : uint32_t {
      */
     VIDEO,
     /**
-     * A filter to set PCR channel from input stream.
+     * A filter to set PCR (Program Clock Reference) channel from input stream.
      */
     PCR,
     /**
@@ -179,11 +179,303 @@ enum DemuxFilterType : uint32_t {
     RECORD,
 };
 
+/* Packet ID is used to specify packets in transport stream. */
+typedef uint16_t DemuxTpid;
+
+@export
+enum Constant : uint16_t {
+    /**
+     * An invalid packet ID in transport stream according to ISO/IEC 13818-1.
+     */
+    INVALID_TPID = 0xFFFF,
+    /**
+     * An invalid Stream ID.
+     */
+    INVALID_STREAM_ID = 0xFFFF,
+};
+
+/**
+ * A status of data in the filter's buffer.
+ */
+@export
+enum DemuxFilterStatus : uint8_t {
+    /**
+     * The data in the filter buffer is ready to be read.
+     */
+    DATA_READY = 1 << 0,
+    /**
+     * The available data amount in the filter buffer is at low level which is
+     * set to 25 percent by default.
+     */
+    LOW_WATER  = 1 << 1,
+    /**
+     * The available data amount in the filter buffer is at high level which is
+     * set to 75 percent by default.
+     */
+    HIGH_WATER = 1 << 2,
+    /**
+     * The data in the filter buffer is full and newly filtered data is being
+     * discarded.
+     */
+    OVERFLOW   = 1 << 3,
+};
+
+/**
+ *  Bits Setting for Section Filter.
+ */
+struct DemuxFilterSectionBits {
+    /* The bytes are configured for Section Filter */
+    vec<uint8_t> filter;
+    /* Active bits in the configured bytes to be used for filtering */
+    vec<uint8_t> mask;
+    /*
+     * Do positive match at the bit position of the configured bytes when the
+     * bit at same position of the mode is 0.
+     * Do negative match at the bit position of the configured bytes when the
+     * bit at same position of the mode is 1.
+     */
+    vec<uint8_t> mode;
+};
+
+/**
+ *  Filter Settings for Section data according to ISO/IEC 13818-1.
+ */
+struct DemuxFilterSectionSettings {
+    DemuxTpid tpid;
+    DemuxFilterSectionBits bits;
+    /* Table ID for Section Filter */
+    uint16_t tableId;
+    /* Version number for Section Filter */
+    uint16_t version;
+    /* true if the filter checks CRC and discards data with wrong CRC */
+    bool checkCrc;
+    /* true if the filter repeats the data with the same version */
+    bool isRepeat;
+    /* true if the filter output raw data */
+    bool isRaw;
+};
+
+/* Stream ID is used to specify one elementary stream */
+typedef uint16_t DemuxStreamId;
+
+/**
+ *  Filter Settings for a PES Data.
+ */
+struct DemuxFilterPesDataSettings {
+    DemuxTpid tpid;
+    DemuxStreamId streamId;
+    /* true if the filter output raw data */
+    bool bIsRaw;
+};
+
+/**
+ *  Filter Settings for a TS Data.
+ */
+struct DemuxFilterTsSettings {
+    DemuxTpid tpid;
+};
+
+/**
+ *  Filter Settings for a Audio.
+ */
+struct DemuxFilterAudioSettings {
+    DemuxTpid tpid;
+    /**
+     * true if the filter output goes to decoder directly in pass through mode.
+     */
+    bool bPassthrough;
+};
+
+/**
+ *  Filter Settings for a Video.
+ */
+struct DemuxFilterVideoSettings {
+    DemuxTpid tpid;
+    /**
+     * true if the filter output goes to decoder directly in pass through mode.
+     */
+    bool bPassthrough;
+};
+
+/**
+ *  Filter Settings for a PCR (Program Clock Reference).
+ */
+struct DemuxFilterPcrSettings {
+    DemuxTpid tpid;
+};
+
+/**
+ * Indexes can be tagged through TS (Transport Stream) header.
+ */
+@export
+enum DemuxTsIndex : uint32_t {
+    FIRST_PACKET                 = 1 << 0,
+    PAYLOAD_UNIT_START_INDICATOR = 1 << 1,
+    CHANGE_TO_NOT_SCRAMBLED      = 1 << 2,
+    CHANGE_TO_EVEN_SCRAMBLED     = 1 << 3,
+    CHANGE_TO_ODD_SCRAMBLED      = 1 << 4,
+    DISCONTINUITY_INDICATOR      = 1 << 5,
+    RANDOM_ACCESS_INDICATOR      = 1 << 6,
+    PRIORITY_INDICATOR           = 1 << 7,
+    PCR_FLAG                     = 1 << 8,
+    OPCR_FLAG                    = 1 << 9,
+    SPLICING_POINT_FLAG          = 1 << 10,
+    PRIVATE_DATA                 = 1 << 11,
+    ADAPTATION_EXTENSION_FLAG    = 1 << 12,
+};
+
+/**
+ * A mask of TS indexes
+ *
+ * It's a combination of TS indexes.
+ */
+typedef bitfield<DemuxTsIndex> DemuxTsIndexMask;
+
+/**
+ * Indexes can be tagged by Start Code in PES (Packetized Elementary Stream)
+ * according to ISO/IEC 13818-1.
+ */
+@export
+enum DemuxScIndex : uint32_t {
+    /* Start Code is for a new I Frame */
+    I_FRAME   = 1 << 0,
+    /* Start Code is for a new P Frame */
+    P_FRAME   = 1 << 1,
+    /* Start Code is for a new B Frame */
+    B_FRAME   = 1 << 2,
+    /* Start Code is for a new Sequence */
+    SEQUENCE  = 1 << 3,
+};
+
+/**
+ * A mask of Start Code Indexes
+ *
+ * It's a combination of Start Code Indexes.
+ */
+typedef bitfield<DemuxScIndex> DemuxScIndexMask;
+
+/* Index type to be used in the filter for record */
+@export
+enum DemuxRecordIndexType : uint32_t {
+    /* Don't use index */
+    NONE,
+    /* Use TS index */
+    TS,
+    /* Use Start Code index */
+    SC,
+};
+
+/**
+ *  Filter Settings for Record data.
+ */
+struct DemuxFilterRecordSettings {
+    DemuxTpid tpid;
+    DemuxRecordIndexType indexType;
+    safe_union IndexMask {
+        DemuxTsIndexMask tsIndexMask;
+        DemuxScIndexMask scIndexMask;
+    } indexMask;
+};
+
+/**
+ *  Filter Settings.
+ */
+safe_union DemuxFilterSettings {
+    DemuxFilterSectionSettings section;
+    DemuxFilterPesDataSettings pesData;
+    DemuxFilterTsSettings ts;
+    DemuxFilterAudioSettings audio;
+    DemuxFilterVideoSettings video;
+    DemuxFilterPcrSettings pcr;
+    DemuxFilterRecordSettings record;
+};
+
+/**
+ * The bits of EventFlag in FMQ (Fast message queue) are used by client to
+ * notify HAL the status change.
+ */
+@export
+enum DemuxQueueNotifyBits : uint32_t {
+    /* client writes data and notify HAL the data is ready. */
+    DATA_READY = 1 << 0,
+    /* client reads data and notify HAL the data is consumed. */
+    DATA_CONSUMED = 1 << 1
+};
+
+/**
+ *  Filter Event for Section Filter.
+ */
+struct DemuxFilterSectionEvent {
+    /* Table ID of filtered data */
+    uint16_t tableId;
+    /* Version number of filtered data */
+    uint16_t version;
+    /* Section number of filtered data */
+    uint16_t sectionNum;
+    /* Data size in bytes of filtered data */
+    uint16_t dataLength;
+};
+
+/**
+ *  Filter Event for Audio or Video Filter.
+ */
+struct DemuxFilterMediaEvent {
+    /* Presentation Time Stamp for audio or video frame. It based on 90KHz has
+     * the same format as PTS (Presentation Time Stamp).
+     */
+    uint64_t pts;
+    /* Data size in bytes of audio or video frame */
+    uint16_t dataLength;
+    /* A handle associated to the memory where audio or video data stays. */
+    handle secureMemory;
+};
+
+/**
+ *  Filter Event for PES data.
+ */
+struct DemuxFilterPesEvent {
+    DemuxStreamId streamId;
+    /* Data size in bytes of PES data */
+    uint16_t dataLength;
+};
+
+/**
+ *  Filter Event for Record data.
+ */
+struct DemuxFilterRecordEvent {
+    DemuxTpid tpid;
+    /* Indexes of record output */
+    safe_union IndexMask {
+        DemuxTsIndexMask tsIndexMask;
+        DemuxScIndexMask scIndexMask;
+    } indexMask;
+    /* Packet number from beginning of the filter's output */
+    uint64_t packetNum;
+};
+
 /**
  * Filter Event.
  */
 struct DemuxFilterEvent {
-     DemuxFilterId filterId;
-     DemuxFilterType filterType;
+    DemuxFilterId filterId;
+    DemuxFilterType filterType;
+    safe_union Event {
+        DemuxFilterSectionEvent section;
+        DemuxFilterMediaEvent media;
+        DemuxFilterPesEvent pes;
+        DemuxFilterRecordEvent ts;
+    };
+    /* An array of events */
+    vec<Event> events;
 };
 
+/**
+ *  A hardware resource ID to be used for audio and video hardware sync.
+ */
+typedef uint32_t AvSyncHwId;
+
+/**
+ *  A token to be used to link descrambler and key slot. It's opaque to
+ *  framework and apps.
+ */
+typedef vec<uint8_t> TunerKeyToken;
