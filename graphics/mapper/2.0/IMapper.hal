@@ -147,6 +147,9 @@ interface IMapper {
      * outside of accessRegion is undefined, except that it must not cause
      * process termination.
      *
+     * An accessRegion of all-zeros means the entire buffer. That is, it is
+     * equivalent to '(0,0)-(buffer width, buffer height)'.
+     *
      * data will be filled with a pointer to the locked buffer memory. This
      * address will represent the top-left corner of the entire buffer, even
      * if accessRegion does not begin at the top-left corner.

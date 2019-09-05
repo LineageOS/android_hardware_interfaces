@@ -29,7 +29,7 @@
  * INTERNAL IMPLEMENTATION - don't use in user code.
  */
 #if EGMOCK_VERBOSE
-#define EGMOCK_LOG_(...) ALOGV("egmock: " __VA_ARGS__)
+#define EGMOCK_LOG_(...) LOG(VERBOSE) << "egmock: " << __VA_ARGS__
 #else
 #define EGMOCK_LOG_(...)
 #endif

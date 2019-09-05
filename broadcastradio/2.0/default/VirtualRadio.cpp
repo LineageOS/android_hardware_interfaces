@@ -13,13 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#define LOG_TAG "BcRadioDef.VirtualRadio"
-//#define LOG_NDEBUG 0
-
 #include "VirtualRadio.h"
 
 #include <broadcastradio-utils-2x/Utils.h>
-#include <log/log.h>
 
 namespace android {
 namespace hardware {
@@ -32,6 +28,7 @@ using std::move;
 using std::mutex;
 using std::vector;
 using utils::make_selector_amfm;
+using utils::make_selector_dab;
 
 VirtualRadio gAmFmRadio(
     "AM/FM radio mock",
@@ -44,6 +41,16 @@ VirtualRadio gAmFmRadio(
         {make_selector_amfm(103700), "iHeart80s @ 103.7", "Michael Jackson", "Billie Jean"},
         {make_selector_amfm(106100), "106 KMEL", "Drake", "Marvins Room"},
     });
+
+// clang-format off
+VirtualRadio gDabRadio(
+    "DAB radio mock",
+    {
+        {make_selector_dab(12345, 225648), "BBC Radio 1", "Khalid", "Talk"},  // 12B
+        {make_selector_dab(22345, 222064), "Classic FM", "Jean Sibelius", "Andante Festivo"},  // 11D
+        {make_selector_dab(32345, 222064), "Absolute Radio", "Coldplay", "Clocks"},  // 11D
+    });
+// clang-format on
 
 VirtualRadio::VirtualRadio(const std::string& name, const vector<VirtualProgram>& initialList)
     : mName(name), mPrograms(initialList) {}

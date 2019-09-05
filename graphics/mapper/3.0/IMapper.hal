@@ -1,0 +1,304 @@
+/*
+ * Copyright 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.graphics.mapper@3.0;
+
+import android.hardware.graphics.common@1.2::BufferUsage;
+import android.hardware.graphics.common@1.2::PixelFormat;
+import android.hardware.graphics.common@1.2::Rect;
+
+interface IMapper {
+    struct BufferDescriptorInfo {
+        /**
+         * The width specifies how many columns of pixels must be in the
+         * allocated buffer, but does not necessarily represent the offset in
+         * columns between the same column in adjacent rows. The rows may be
+         * padded.
+         */
+        uint32_t width;
+
+       /**
+        * The height specifies how many rows of pixels must be in the
+        * allocated buffer.
+        */
+        uint32_t height;
+
+       /**
+        * The number of image layers that must be in the allocated buffer.
+        */
+        uint32_t layerCount;
+
+        /** Buffer pixel format. */
+        PixelFormat format;
+
+        /**
+         * Buffer usage mask; valid flags can be found in the definition of
+         * BufferUsage.
+         */
+        bitfield<BufferUsage> usage;
+    };
+
+    struct Rect {
+        int32_t left;
+        int32_t top;
+        int32_t width;
+        int32_t height;
+    };
+
+    /**
+     * Creates a buffer descriptor. The descriptor can be used with IAllocator
+     * to allocate buffers.
+     *
+     * Since the buffer descriptor fully describes a buffer, any device
+     * dependent or device independent checks must be performed here whenever
+     * possible. Specifically, when layered buffers are not supported, this
+     * function must return `UNSUPPORTED` if `description.layers` is great than
+     * 1.
+     *
+     * @param description Attributes of the descriptor.
+     * @return error Error status of the call, which may be
+     *     - `NONE` upon success.
+     *     - `BAD_VALUE` if any of the specified attributes are invalid or
+     *       inconsistent.
+     *     - `NO_RESOURCES` if the creation cannot be fullfilled due to
+     *       unavailability of resources.
+     *     - `UNSUPPORTED` when any of the specified attributes are not
+     *       supported.
+     * @return descriptor Newly created buffer descriptor.
+     */
+    createDescriptor(BufferDescriptorInfo description)
+            generates (Error error,
+                       BufferDescriptor descriptor);
+
+    /**
+     * Imports a raw buffer handle to create an imported buffer handle for use
+     * with the rest of the mapper or with other in-process libraries.
+     *
+     * A buffer handle is considered raw when it is cloned (e.g., with
+     * `native_handle_clone()`) from another buffer handle locally, or when it
+     * is received from another HAL server/client or another process. A raw
+     * buffer handle must not be used to access the underlying graphic
+     * buffer. It must be imported to create an imported handle first.
+     *
+     * This function must at least validate the raw handle before creating the
+     * imported handle. It must also support importing the same raw handle
+     * multiple times to create multiple imported handles. The imported handle
+     * must be considered valid everywhere in the process, including in
+     * another instance of the mapper.
+     *
+     * Because of passthrough HALs, a raw buffer handle received from a HAL
+     * may actually have been imported in the process. importBuffer() must treat
+     * such a handle as if it is raw and must not return `BAD_BUFFER`. The
+     * returned handle is independent from the input handle as usual, and
+     * freeBuffer() must be called on it when it is no longer needed.
+     *
+     * @param rawHandle Raw buffer handle to import.
+     * @return error Error status of the call, which may be
+     *     - `NONE` upon success.
+     *     - `BAD_BUFFER` if the raw handle is invalid.
+     *     - `NO_RESOURCES` if the raw handle cannot be imported due to
+     *       unavailability of resources.
+     * @return buffer Imported buffer handle that has the type
+     *     `buffer_handle_t` which is a handle type.
+     */
+    importBuffer(handle rawHandle) generates (Error error, pointer buffer);
+
+    /**
+     * Frees a buffer handle. Buffer handles returned by importBuffer() must be
+     * freed with this function when no longer needed.
+     *
+     * This function must free up all resources allocated by importBuffer() for
+     * the imported handle. For example, if the imported handle was created
+     * with `native_handle_create()`, this function must call
+     * `native_handle_close()` and `native_handle_delete()`.
+     *
+     * @param buffer Imported buffer handle.
+     * @return error Error status of the call, which may be
+     *     - `NONE` upon success.
+     *     - `BAD_BUFFER` if the buffer is invalid.
+     */
+    freeBuffer(pointer buffer) generates (Error error);
+
+    /**
+     * Validates that the buffer can be safely accessed by a caller who assumes
+     * the specified @p description and @p stride. This must at least validate
+     * that the buffer size is large enough. Validating the buffer against
+     * individual buffer attributes is optional.
+     *
+     * @param buffer Buffer to validate against.
+     * @param description Attributes of the buffer.
+     * @param stride Stride returned by IAllocator::allocate().
+     * @return error Error status of the call, which may be
+     *     - `NONE` upon success.
+     *     - `BAD_BUFFER` if the buffer is invalid.
+     *     - `BAD_VALUE` if the buffer cannot be safely accessed.
+     */
+    validateBufferSize(pointer buffer,
+                       BufferDescriptorInfo description,
+                       uint32_t stride)
+            generates (Error error);
+
+    /**
+     * Calculates the transport size of a buffer. An imported buffer handle is a
+     * raw buffer handle with the process-local runtime data appended. This
+     * function, for example, allows a caller to omit the process-local runtime
+     * data at the tail when serializing the imported buffer handle.
+     *
+     * Note that a client might or might not omit the process-local runtime data
+     * when sending an imported buffer handle. The mapper must support both
+     * cases on the receiving end.
+     *
+     * @param buffer Buffer to get the transport size from.
+     * @return error Error status of the call, which may be
+     *     - `NONE` upon success.
+     *     - `BAD_BUFFER` if the buffer is invalid.
+     * @return numFds The number of file descriptors needed for transport.
+     * @return numInts The number of integers needed for transport.
+     */
+    getTransportSize(pointer buffer)
+            generates (Error error,
+                       uint32_t numFds,
+                       uint32_t numInts);
+
+    /**
+     * Locks the given buffer for the specified CPU usage.
+     *
+     * Locking the same buffer simultaneously from multiple threads is
+     * permitted, but if any of the threads attempt to lock the buffer for
+     * writing, the behavior is undefined, except that it must not cause
+     * process termination or block the client indefinitely. Leaving the
+     * buffer content in an indeterminate state or returning an error are both
+     * acceptable.
+     *
+     * 1D buffers (width = size in bytes, height = 1, pixel_format = BLOB) must
+     * "lock in place". The buffers must be directly accessible via mapping.
+     *
+     * The client must not modify the content of the buffer outside of
+     * @p accessRegion, and the device need not guarantee that content outside
+     * of @p accessRegion is valid for reading. The result of reading or writing
+     * outside of @p accessRegion is undefined, except that it must not cause
+     * process termination.
+     *
+     * On success, @p data must be filled with a pointer to the locked buffer
+     * memory. This address will represent the top-left corner of the entire
+     * buffer, even if @p accessRegion does not begin at the top-left corner.
+     *
+     * On success, bytesPerPixel must contain the number of bytes per pixel in
+     * the buffer. If the bytesPerPixel is unknown or variable, a value of -1
+     * should be returned. bytesPerStride must contain the bytes per stride of
+     * the buffer. If the bytesPerStride is unknown or variable, a value of -1
+     * should be returned.
+     *
+     * @param buffer Buffer to lock.
+     * @param cpuUsage CPU usage flags to request. See +ndk
+     *     libnativewindow#AHardwareBuffer_UsageFlags for possible values.
+     * @param accessRegion Portion of the buffer that the client intends to
+     *     access.
+     * @param acquireFence Handle containing a file descriptor referring to a
+     *     sync fence object, which will be signaled when it is safe for the
+     *     mapper to lock the buffer. @p acquireFence may be an empty fence if
+     *     it is already safe to lock.
+     * @return error Error status of the call, which may be
+     *     - `NONE` upon success.
+     *     - `BAD_BUFFER` if the buffer is invalid or is incompatible with this
+     *       function.
+     *     - `BAD_VALUE` if @p cpuUsage is 0, contains non-CPU usage flags, or
+     *       is incompatible with the buffer.
+     *     - `NO_RESOURCES` if the buffer cannot be locked at this time. Note
+     *       that locking may succeed at a later time.
+     * @return data CPU-accessible pointer to the buffer data.
+     * @return bytesPerPixel the number of bytes per pixel in the buffer
+     * @return bytesPerStride the number of bytes per stride of the buffer
+     */
+    lock(pointer buffer,
+         uint64_t cpuUsage,
+         Rect accessRegion,
+         handle acquireFence)
+            generates (Error error,
+                       pointer data,
+                       int32_t bytesPerPixel,
+                       int32_t bytesPerStride);
+
+    /**
+     * Locks a YCbCr buffer for the specified CPU usage.
+     *
+     * This is largely the same as lock(), except that instead of returning a
+     * pointer directly to the buffer data, it returns a `YCbCrLayout` struct
+     * describing how to access the data planes.
+     *
+     * This function must work on buffers with
+     * `AHARDWAREBUFFER_FORMAT_Y8Cb8Cr8_*` if supported by the device, as well
+     * as with any other formats requested by multimedia codecs when they are
+     * configured with a flexible-YUV-compatible color format.
+     *
+     * @param buffer Buffer to lock.
+     * @param cpuUsage CPU usage flags to request. See +ndk
+     *     libnativewindow#AHardwareBuffer_UsageFlags for possible values.
+     * @param accessRegion Portion of the buffer that the client intends to
+     *     access.
+     * @param acquireFence Handle containing a file descriptor referring to a
+     *     sync fence object, which will be signaled when it is safe for the
+     *     mapper to lock the buffer. @p acquireFence may be empty if it is
+     *     already safe to lock.
+     * @return error Error status of the call, which may be
+     *     - `NONE` upon success.
+     *     - `BAD_BUFFER` if the buffer is invalid or is incompatible with this
+     *       function.
+     *     - `BAD_VALUE` if @p cpuUsage is 0, contains non-CPU usage flags, or
+     *       is incompatible with the buffer.
+     *     - `NO_RESOURCES` if the buffer cannot be locked at this time. Note
+     *       that locking may succeed at a later time.
+     * @return layout Data layout of the locked buffer.
+     */
+    lockYCbCr(pointer buffer,
+              uint64_t cpuUsage,
+              Rect accessRegion,
+              handle acquireFence)
+            generates (Error error,
+                       YCbCrLayout layout);
+
+    /**
+     * Unlocks a buffer to indicate all CPU accesses to the buffer have
+     * completed.
+     *
+     * @param buffer Buffer to unlock.
+     * @return error Error status of the call, which may be
+     *     - `NONE` upon success.
+     *     - `BAD_BUFFER` if the buffer is invalid or not locked.
+     * @return releaseFence Handle containing a file descriptor referring to a
+     *     sync fence object. The sync fence object will be signaled when the
+     *     mapper has completed any pending work. @p releaseFence may be an
+     *     empty fence.
+     */
+    unlock(pointer buffer) generates (Error error, handle releaseFence);
+
+    /**
+     * Test whether the given BufferDescriptorInfo is allocatable.
+     *
+     * If this function returns true, it means that a buffer with the given
+     * description can be allocated on this implementation, unless resource
+     * exhaustion occurs. If this function returns false, it means that the
+     * allocation of the given description will never succeed.
+     *
+     * @param description the description of the buffer
+     * @return supported whether the description is supported
+     */
+    isSupported(BufferDescriptorInfo description)
+            generates (Error error,
+                       bool supported);
+
+};
+

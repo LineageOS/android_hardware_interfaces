@@ -1,0 +1,268 @@
+/*
+ * Copyright 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.wifi.supplicant@1.2;
+
+import @1.0::ISupplicantStaNetworkCallback;
+import @1.0::ISupplicantStaNetwork;
+import @1.0::SupplicantStatus;
+import @1.1::ISupplicantStaNetwork;
+
+/**
+ * Interface exposed by the supplicant for each station mode network
+ * configuration it controls.
+ */
+interface ISupplicantStaNetwork extends @1.1::ISupplicantStaNetwork {
+    /** Possble mask of values for KeyMgmt param. */
+    enum KeyMgmtMask : @1.0::ISupplicantStaNetwork.KeyMgmtMask {
+        /** WPA using EAP authentication with stronger SHA256-based algorithms */
+        WPA_EAP_SHA256 = 1 << 7,
+
+        /** WPA pre-shared key with stronger SHA256-based algorithms */
+        WPA_PSK_SHA256 = 1 << 8,
+
+        /** WPA3-Personal SAE Key management */
+        SAE = 1 << 10,
+
+        /** WPA3-Enterprise Suite-B Key management */
+        SUITE_B_192 = 1 << 17,
+
+        /** Enhacned Open (OWE) Key management */
+        OWE = 1 << 22,
+
+        /** Easy Connect (DPP) Key management */
+        DPP = 1 << 23,
+    };
+
+    /** Possble mask of values for PairwiseCipher param. */
+    enum PairwiseCipherMask : @1.0::ISupplicantStaNetwork.PairwiseCipherMask {
+        /** GCMP-256 Pairwise Cipher */
+        GCMP_256 = 1 << 8,
+    };
+
+    /** Possble mask of values for GroupCipher param. */
+    enum GroupCipherMask : @1.0::ISupplicantStaNetwork.GroupCipherMask {
+        /** GCMP-256 Group Cipher */
+        GCMP_256 = 1 << 8,
+    };
+
+    /** Possble mask of values for GroupMgmtCipher param. */
+    enum GroupMgmtCipherMask : uint32_t {
+        /** BIP_GMAC-128 Group Management Cipher */
+        BIP_GMAC_128 = 1 << 11,
+
+        /** BIP_GMAC-256 Group Management Cipher */
+        BIP_GMAC_256 = 1 << 12,
+
+        /** BIP_CMAC-256 Group Management Cipher */
+        BIP_CMAC_256 = 1 << 13,
+    };
+
+    /**
+     * Set key management mask for the network.
+     *
+     * @param keyMgmtMask value to set.
+     *        Combination of |KeyMgmtMask| values.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     */
+    setKeyMgmt_1_2(bitfield<KeyMgmtMask> keyMgmtMask) generates (SupplicantStatus status);
+
+    /**
+     * Get the key mgmt mask set for the network.
+     *
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     * @return keyMgmtMask Combination of |KeyMgmtMask| values.
+     */
+    getKeyMgmt_1_2()
+        generates (SupplicantStatus status, bitfield<KeyMgmtMask> keyMgmtMask);
+
+    /**
+     * Set pairwise cipher mask for the network.
+     *
+     * @param pairwiseCipherMask value to set.
+     *        Combination of |PairwiseCipherMask| values.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     */
+    setPairwiseCipher_1_2(bitfield<PairwiseCipherMask> pairwiseCipherMask)
+        generates (SupplicantStatus status);
+
+    /**
+     * Get the pairwise cipher mask set for the network.
+     *
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     * @return pairwiseCipherMask Combination of |PairwiseCipherMask| values.
+     */
+    getPairwiseCipher_1_2()
+        generates (SupplicantStatus status,
+            bitfield<PairwiseCipherMask> pairwiseCipherMask);
+
+    /**
+     * Set group cipher mask for the network.
+     *
+     * @param groupCipherMask value to set.
+     *        Combination of |GroupCipherMask| values.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     */
+    setGroupCipher_1_2(bitfield<GroupCipherMask> groupCipherMask)
+        generates (SupplicantStatus status);
+
+    /**
+     * Get the group cipher mask set for the network.
+     *
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     * @return groupCipherMask Combination of |GroupCipherMask| values.
+     */
+    getGroupCipher_1_2()
+        generates (SupplicantStatus status,
+            bitfield<GroupCipherMask> groupCipherMask);
+
+    /**
+     * Set group management cipher mask for the network.
+     *
+     * @param groupMgmtCipherMask value to set.
+     *        Combination of |GroupMgmtCipherMask| values.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     */
+    setGroupMgmtCipher(bitfield<GroupMgmtCipherMask> groupMgmtCipherMask)
+        generates (SupplicantStatus status);
+
+    /**
+     * Get the group management cipher mask set for the network.
+     *
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     * @return groupMgmtCipherMask Combination of |GroupMgmtCipherMask| values.
+     */
+    getGroupMgmtCipher()
+        generates (SupplicantStatus status,
+            bitfield<GroupMgmtCipherMask> groupMgmtCipherMask);
+
+    /**
+     * Enable TLS Suite-B in EAP Phase1
+     *
+     * @param enable Set to true to enable TLS Suite-B in EAP phase1
+     *
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     */
+    enableTlsSuiteBEapPhase1Param(bool enable)
+        generates (SupplicantStatus status);
+
+    /**
+     * Set EAP OpenSSL Suite-B-192 ciphers for WPA3-Enterprise
+     *        Supported option:
+     *
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     */
+    enableSuiteBEapOpenSslCiphers()
+        generates (SupplicantStatus status);
+
+    /**
+     * Get SAE password for WPA3-Personal
+     *
+     * @return status Status of the operation, and a string.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     */
+    getSaePassword()
+        generates (SupplicantStatus status, string saePassword);
+
+    /**
+     * Get SAE password ID for WPA3-Personal
+     *
+     * @return status Status of the operation, and a string.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     */
+    getSaePasswordId()
+        generates (SupplicantStatus status, string saePasswordId);
+
+    /**
+    * Set SAE password for WPA3-Personal
+    *
+    * @param saePassword string with the above option
+    *
+    * @return status Status of the operation.
+    *         Possible status codes:
+    *         |SupplicantStatusCode.SUCCESS|,
+    *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
+    *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+    *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+    */
+    setSaePassword(string saePassword)
+        generates (SupplicantStatus status);
+
+    /**
+     * Set SAE password ID for WPA3-Personal
+     *
+     * @param sae_password_id string with the above option
+     *
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     */
+    setSaePasswordId(string saePasswordId)
+        generates (SupplicantStatus status);
+};

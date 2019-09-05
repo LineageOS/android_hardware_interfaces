@@ -17,11 +17,8 @@
 #ifndef android_hardware_automotive_vehicle_V2_0_impl_JsonFakeValueGenerator_H_
 #define android_hardware_automotive_vehicle_V2_0_impl_JsonFakeValueGenerator_H_
 
-#include <atomic>
 #include <chrono>
-#include <condition_variable>
 #include <iostream>
-#include <thread>
 
 #include <json/json.h>
 
@@ -37,32 +34,33 @@ namespace impl {
 
 class JsonFakeValueGenerator : public FakeValueGenerator {
 private:
-    using Nanos = std::chrono::nanoseconds;
-    using Clock = std::chrono::steady_clock;
-    using TimePoint = std::chrono::time_point<Clock, Nanos>;
-
     struct GeneratorCfg {
         size_t index;
         std::vector<VehiclePropValue> events;
     };
 
 public:
-    JsonFakeValueGenerator(const OnHalEvent& onHalEvent);
-    ~JsonFakeValueGenerator();
-    StatusCode start(const VehiclePropValue& request) override;
-    StatusCode stop(const VehiclePropValue& request) override;
+    JsonFakeValueGenerator(const VehiclePropValue& request);
+    ~JsonFakeValueGenerator() = default;
+
+    VehiclePropValue nextEvent();
+
+    bool hasNext();
 
 private:
     std::vector<VehiclePropValue> parseFakeValueJson(std::istream& is);
-    void loop();
+    void copyMixedValueJson(VehiclePropValue::RawValue& dest, const Json::Value& jsonValue);
+
+    template <typename T>
+    void copyJsonArray(hidl_vec<T>& dest, const Json::Value& jsonArray);
+
+    bool isDiagnosticProperty(int32_t prop);
+    hidl_vec<uint8_t> generateDiagnosticBytes(const VehiclePropValue::RawValue& diagnosticValue);
+    void setBit(hidl_vec<uint8_t>& bytes, size_t idx);
 
 private:
-    OnHalEvent mOnHalEvent;
-    std::thread mThread;
-    mutable std::mutex mLock;
-    std::condition_variable mCond;
     GeneratorCfg mGenCfg;
-    std::atomic_bool mStopRequested{false};
+    int32_t mNumOfIterations;
 };
 
 }  // namespace impl

@@ -105,6 +105,9 @@ using ::android::hardware::bluetooth::V1_0::Status;
   (ACL_PACKET_BOUNDARY_FLAG_FIRST_AUTO_FLUSHABLE \
    << ACL_PACKET_BOUNDARY_FLAG_OFFSET)
 
+// To be removed in VTS release builds
+#define ACL_HANDLE_QCA_DEBUG_MESSAGE 0xedc
+
 constexpr char kCallbackNameAclEventReceived[] = "aclDataReceived";
 constexpr char kCallbackNameHciEventReceived[] = "hciEventReceived";
 constexpr char kCallbackNameInitializationComplete[] = "initializationComplete";
@@ -314,6 +317,19 @@ void BluetoothHidlTest::handle_no_ops() {
                       (event[EVENT_COMMAND_STATUS_OPCODE_LSBYTE + 1] == 0x00);
     if (event_is_no_op) {
       event_queue.pop();
+    } else {
+      break;
+    }
+  }
+  // To be removed in VTS release builds
+  while (acl_queue.size() > 0) {
+    hidl_vec<uint8_t> acl_packet = acl_queue.front();
+    uint16_t connection_handle = acl_packet[1] & 0xF;
+    connection_handle <<= 8;
+    connection_handle |= acl_packet[0];
+    bool packet_is_no_op = connection_handle == ACL_HANDLE_QCA_DEBUG_MESSAGE;
+    if (packet_is_no_op) {
+      acl_queue.pop();
     } else {
       break;
     }

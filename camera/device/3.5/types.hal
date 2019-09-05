@@ -1,0 +1,176 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.camera.device@3.5;
+
+import @3.2::StreamBuffer;
+import @3.4::StreamConfiguration;
+import @3.2::CameraBlobId;
+
+/**
+ * If the result metadata cannot be produced for a physical camera device part of a logical
+ * multi-camera, then HAL must invoke the notification callback and pass a message with ERROR_RESULT
+ * code and errorStreamId that contains the stream id associated with that physical device.
+ * The behavior during absent result metadata remains unchanged for a logical or a non-logical
+ * camera device and the errorStreamId must be set to -1.
+ */
+
+/**
+ * StreamConfiguration:
+ *
+ * Identical to @3.4::StreamConfiguration, except that it contains streamConfigCounter
+ */
+struct StreamConfiguration {
+    @3.4::StreamConfiguration v3_4;
+
+    /**
+     * An incrementing counter used for HAL to keep track of the stream
+     * configuration and the paired oneway signalStreamFlush call. When the
+     * counter in signalStreamFlush call is less than the counter here, that
+     * signalStreamFlush call is stale.
+     */
+    uint32_t streamConfigCounter;
+};
+
+enum StreamBufferRequestError : uint32_t {
+    /**
+     * Get buffer failed due to timeout waiting for an available buffer. This is
+     * likely due to the client application holding too many buffers, or the
+     * system is under memory pressure.
+     * This is not a fatal error. HAL may try to request buffer for this stream
+     * later. If HAL cannot get a buffer for certain capture request in time
+     * due to this error, HAL can send an ERROR_REQUEST to camera service and
+     * drop processing that request.
+     */
+    NO_BUFFER_AVAILABLE = 1,
+
+    /**
+     * Get buffer failed due to HAL has reached its maxBuffer count. This is not
+     * a fatal error. HAL may try to request buffer for this stream again after
+     * it returns at least one buffer of that stream to camera service.
+     */
+    MAX_BUFFER_EXCEEDED = 2,
+
+    /**
+     * Get buffer failed due to the stream is disconnected by client
+     * application, has been removed, or not recognized by camera service.
+     * This means application is no longer interested in this stream.
+     * Requesting buffer for this stream must never succeed after this error is
+     * returned. HAL must safely return all buffers of this stream after
+     * getting this error. If HAL gets another capture request later targeting
+     * a disconnected stream, HAL must send an ERROR_REQUEST to camera service
+     * and drop processing that request.
+     */
+    STREAM_DISCONNECTED = 3,
+
+    /**
+     * Get buffer failed for unknown reasons. This is a fatal error and HAL must
+     * send ERROR_DEVICE to camera service and be ready to be closed.
+     */
+    UNKNOWN_ERROR = 4
+};
+
+/**
+ * Per-stream return value for requestStreamBuffers.
+ * For each stream, either an StreamBufferRequestError error code, or all
+ * requested buffers for this stream is returned, so buffers.size() must be
+ * equal to BufferRequest::numBuffersRequested of corresponding stream.
+ */
+safe_union StreamBuffersVal {
+    StreamBufferRequestError error;
+    vec<@3.2::StreamBuffer> buffers;
+};
+
+struct StreamBufferRet {
+    int32_t streamId;
+    StreamBuffersVal val;
+};
+
+enum BufferRequestStatus : uint32_t {
+    /**
+     * Method call succeeded and all requested buffers are returned.
+     */
+    OK = 0,
+
+    /**
+     * Method call failed for some streams. Check per stream status for each
+     * returned StreamBufferRet.
+     */
+    FAILED_PARTIAL = 1,
+
+    /**
+     * Method call failed for all streams and no buffers are returned at all.
+     * Camera service is about to or is performing configureStreams. HAL must
+     * wait until next configureStreams call is finished before requesting
+     * buffers again.
+     */
+    FAILED_CONFIGURING = 2,
+
+    /**
+     * Method call failed for all streams and no buffers are returned at all.
+     * Failure due to bad BufferRequest input, eg: unknown streamId or repeated
+     * streamId.
+     */
+    FAILED_ILLEGAL_ARGUMENTS = 3,
+
+    /**
+     * Method call failed for all streams and no buffers are returned at all.
+     * Failure due to unknown reason, or all streams has individual failing
+     * reason. For the latter case, check per stream status for each returned
+     * StreamBufferRet.
+     */
+    FAILED_UNKNOWN = 4,
+};
+
+struct BufferRequest {
+    int32_t streamId;
+    uint32_t numBuffersRequested;
+};
+
+/**
+ * CameraBlob:
+ *
+ * Identical to @3.2::CameraBlob, except that it also supports transport of JPEG
+ * APP segments blob, which contains JPEG APP1 to APPn (Application Marker)
+ * segments as specified in JEITA CP-3451.
+ *
+ * To capture a JPEG APP segments blob, a stream is created using the pixel format
+ * HAL_PIXEL_FORMAT_BLOB and dataspace HAL_DATASPACE_JPEG_APP_SEGMENTS. The buffer
+ * size for the stream is calculated by the framework, based on the static
+ * metadata field android.heic.maxAppSegmentsCount, and is assigned to both
+ * @3.2::Stream::width and @3.4::Stream::bufferSize. Camera framework sets
+ * @3.2::Stream::height to 1.
+ *
+ * Similar to JPEG image, the JPEG APP segment images can be of variable size,
+ * so the HAL needs to include the final size of all APP segments using this
+ * structure inside the output stream buffer. The camera blob ID field must be
+ * set to CameraBlobId::JPEG_APP_SEGMENTS.
+ *
+ * The transport header must be at the end of the JPEG APP segments output stream
+ * buffer. That means the blobId must start at byte[buffer_size -
+ * sizeof(CameraBlob)], where the buffer_size is the size of gralloc
+ * buffer. The JPEG APP segments data itself starts at the beginning of the
+ * buffer and must be blobSize bytes long.
+ */
+enum CameraBlobId : @3.2::CameraBlobId {
+    JPEG_APP_SEGMENTS = 0x100,
+};
+
+struct CameraBlob {
+    CameraBlobId blobId;
+    uint32_t blobSize;
+};
+

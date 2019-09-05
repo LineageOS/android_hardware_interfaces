@@ -16,6 +16,10 @@
 
 #define LOG_TAG "VtsHalGraphicsMapperV2_0TargetTest"
 
+#include <chrono>
+#include <thread>
+#include <vector>
+
 #include <VtsHalHidlTargetTestBase.h>
 #include <android-base/logging.h>
 #include <mapper-vts/2.0/MapperVts.h>
@@ -121,6 +125,36 @@ TEST_F(GraphicsMapperHidlTest, AllocatorAllocateNoLeak) {
     for (int i = 0; i < 2048; i++) {
         auto bufferHandle = mGralloc->allocate(info, false);
         mGralloc->freeBuffer(bufferHandle);
+    }
+}
+
+/**
+ * Test that IAllocator::allocate is thread-safe.
+ */
+TEST_F(GraphicsMapperHidlTest, AllocatorAllocateThreaded) {
+    BufferDescriptor descriptor;
+    ASSERT_NO_FATAL_FAILURE(descriptor = mGralloc->createDescriptor(mDummyDescriptorInfo));
+
+    std::atomic<bool> timeUp(false);
+    std::atomic<uint64_t> allocationCount(0);
+    auto threadLoop = [&]() {
+        while (!timeUp) {
+            mGralloc->getAllocator()->allocate(
+                descriptor, 1, [&](const auto&, const auto&, const auto&) { allocationCount++; });
+        }
+    };
+
+    std::vector<std::thread> threads;
+    for (int i = 0; i < 8; i++) {
+        threads.push_back(std::thread(threadLoop));
+    }
+
+    std::this_thread::sleep_for(std::chrono::seconds(3));
+    timeUp = true;
+    LOG(VERBOSE) << "Made " << allocationCount << " threaded allocations";
+
+    for (auto& thread : threads) {
+        thread.join();
     }
 }
 

@@ -1,0 +1,55 @@
+/*
+ * Copyright 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.graphics.allocator@3.0;
+
+import android.hardware.graphics.mapper@3.0;
+
+interface IAllocator {
+    /**
+     * Retrieves implementation-defined debug information, which will be
+     * displayed during, for example, `dumpsys SurfaceFlinger`.
+     *
+     * @return debugInfo is a string of debug information.
+     */
+    dumpDebugInfo() generates (string debugInfo);
+
+    /**
+     * Allocates buffers with the properties specified by the descriptor.
+     *
+     * Allocations should be optimized for usage bits provided in the
+     * descriptor.
+     *
+     * @param descriptor Properties of the buffers to allocate. This must be
+     *     obtained from IMapper::createDescriptor().
+     * @param count The number of buffers to allocate.
+     * @return error Error status of the call, which may be
+     *     - `NONE` upon success.
+     *     - `BAD_DESCRIPTOR` if the descriptor is invalid.
+     *     - `NO_RESOURCES` if the allocation cannot be fulfilled at this time.
+     *     - `UNSUPPORTED` if any of the properties encoded in the descriptor
+     *       are not supported.
+     * @return stride The number of pixels between two consecutive rows of
+     *     an allocated buffer, when the concept of consecutive rows is defined.
+     *     Otherwise, it has no meaning.
+     * @return buffers Array of raw handles to the allocated buffers.
+     */
+    allocate(BufferDescriptor descriptor, uint32_t count)
+        generates (Error error,
+                   uint32_t stride,
+                   vec<handle> buffers);
+};
+

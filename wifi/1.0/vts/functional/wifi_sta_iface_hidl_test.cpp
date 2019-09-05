@@ -17,6 +17,7 @@
 #include <android-base/logging.h>
 
 #include <android/hardware/wifi/1.0/IWifiStaIface.h>
+#include <android/hardware/wifi/1.3/IWifiStaIface.h>
 
 #include <VtsHalHidlTargetTestBase.h>
 
@@ -140,6 +141,14 @@ TEST_F(WifiStaIfaceHidlTest, LinkLayerStatsCollection) {
     if (!isCapabilitySupported(
             IWifiStaIface::StaIfaceCapabilityMask::LINK_LAYER_STATS)) {
         // No-op if link layer stats is not supported.
+        return;
+    }
+
+    sp<::android::hardware::wifi::V1_3::IWifiStaIface> iface_converted =
+        ::android::hardware::wifi::V1_3::IWifiStaIface::castFrom(
+            wifi_sta_iface_);
+    if (iface_converted != nullptr) {
+        // Skip this test since this API is deprecated in this newer HAL version
         return;
     }
 

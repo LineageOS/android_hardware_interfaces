@@ -1,0 +1,481 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.gnss@2.0;
+
+import @1.0::IGnssMeasurementCallback;
+import @1.1::IGnssMeasurementCallback;
+import ElapsedRealtime;
+import GnssConstellationType;
+
+/** The callback interface to report measurements from the HAL. */
+interface IGnssMeasurementCallback extends @1.1::IGnssMeasurementCallback {
+
+    /**
+     * Flags indicating the GNSS measurement state.
+     *
+     * <p>The expected behavior here is for GNSS HAL to set all the flags that apply. For example,
+     * if the state for a satellite is only C/A code locked and bit synchronized, and there is still
+     * millisecond ambiguity, the state must be set as:
+     *
+     * STATE_CODE_LOCK | STATE_BIT_SYNC |  STATE_MSEC_AMBIGUOUS
+     *
+     * <p>If GNSS is still searching for a satellite, the corresponding state must be set to
+     * STATE_UNKNOWN(0).
+     *
+     * <p>In @2.0::IGnssMeasurementCallback.GnssMeasurement, v1_1.v1_0.receivedSvTimeInNs, the
+     * received satellite time, is relative to the beginning of the system week for all
+     * constellations except for Glonass where it is relative to the beginning of the Glonass system
+     * day.
+     *
+     * <p>The table below indicates the valid range of the received GNSS satellite time.  These
+     * ranges depend on the constellation and code being tracked and the state of the tracking
+     * algorithms given by the getState method. If the state flag is set, then the valid measurement
+     * range is zero to the value in the table. The state flag with the widest range indicates the
+     * range of the received GNSS satellite time value.
+     *
+     * <table>
+     *   <thead>
+     *     <tr>
+     *       <td />
+     *       <td colspan="3"><strong>GPS/QZSS</strong></td>
+     *       <td><strong>GLNS</strong></td>
+     *       <td colspan="2"><strong>BDS</strong></td>
+     *       <td colspan="3"><strong>GAL</strong></td>
+     *       <td><strong>SBAS</strong></td>
+     *     </tr>
+     *     <tr>
+     *       <td><strong>State Flag</strong></td>
+     *       <td><strong>L1 C/A</strong></td>
+     *       <td><strong>L5I</strong></td>
+     *       <td><strong>L5Q</strong></td>
+     *       <td><strong>L1OF</strong></td>
+     *       <td><strong>B1I (D1)</strong></td>
+     *       <td><strong>B1I &nbsp;(D2)</strong></td>
+     *       <td><strong>E1B</strong></td>
+     *       <td><strong>E1C</strong></td>
+     *       <td><strong>E5AQ</strong></td>
+     *       <td><strong>L1 C/A</strong></td>
+     *     </tr>
+     *   </thead>
+     *   <tbody>
+     *     <tr>
+     *       <td>
+     *         <strong>STATE_UNKNOWN</strong>
+     *       </td>
+     *       <td>0</td>
+     *       <td>0</td>
+     *       <td>0</td>
+     *       <td>0</td>
+     *       <td>0</td>
+     *       <td>0</td>
+     *       <td>0</td>
+     *       <td>0</td>
+     *       <td>0</td>
+     *       <td>0</td>
+     *     </tr>
+     *     <tr>
+     *       <td>
+     *         <strong>STATE_CODE_LOCK</strong>
+     *       </td>
+     *       <td>1 ms</td>
+     *       <td>1 ms</td>
+     *       <td>1 ms</td>
+     *       <td>1 ms</td>
+     *       <td>1 ms</td>
+     *       <td>1 ms</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>1 ms</td>
+     *       <td>1 ms</td>
+     *     </tr>
+     *     <tr>
+     *       <td>
+     *         <strong>STATE_SYMBOL_SYNC</strong>
+     *       </td>
+     *       <td>20 ms (optional)</td>
+     *       <td>10 ms</td>
+     *       <td>1 ms (optional)</td>
+     *       <td>10 ms</td>
+     *       <td>20 ms (optional)</td>
+     *       <td>2 ms</td>
+     *       <td>4 ms (optional)</td>
+     *       <td>4 ms (optional)</td>
+     *       <td>1 ms (optional)</td>
+     *       <td>2 ms</td>
+     *     </tr>
+     *     <tr>
+     *       <td>
+     *         <strong>STATE_BIT_SYNC</strong>
+     *       </td>
+     *       <td>20 ms</td>
+     *       <td>20 ms</td>
+     *       <td>1 ms (optional)</td>
+     *       <td>20 ms</td>
+     *       <td>20 ms</td>
+     *       <td>-</td>
+     *       <td>8 ms</td>
+     *       <td>-</td>
+     *       <td>1 ms (optional)</td>
+     *       <td>4 ms</td>
+     *     </tr>
+     *     <tr>
+     *       <td>
+     *         <strong>STATE_SUBFRAME_SYNC</strong>
+     *       </td>
+     *       <td>6s</td>
+     *       <td>6s</td>
+     *       <td>-</td>
+     *       <td>2 s</td>
+     *       <td>6 s</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>100 ms</td>
+     *       <td>-</td>
+     *     </tr>
+     *     <tr>
+     *       <td>
+     *         <strong>STATE_TOW_DECODED</strong>
+     *       </td>
+     *       <td colspan="2">1 week</td>
+     *       <td>-</td>
+     *       <td>1 day</td>
+     *       <td colspan="2">1 week</td>
+     *       <td colspan="2">1 week</td>
+     *       <td>-</td>
+     *       <td>1 week</td>
+     *     </tr>
+     *     <tr>
+     *       <td>
+     *         <strong>STATE_TOW_KNOWN</strong>
+     *       </td>
+     *       <td colspan="3">1 week</td>
+     *       <td>1 day</td>
+     *       <td colspan="2">1 week</td>
+     *       <td colspan="3">1 week</td>
+     *       <td>1 week</td>
+     *     </tr>
+     *     <tr>
+     *       <td>
+     *         <strong>STATE_GLO_STRING_SYNC</strong>
+     *       </td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>2 s</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *     </tr>
+     *     <tr>
+     *       <td>
+     *         <strong>STATE_GLO_TOD_DECODED</strong>
+     *       </td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>1 day</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *     </tr>
+     *     <tr>
+     *       <td>
+     *         <strong>STATE_GLO_TOD_KNOWN</strong>
+     *       </td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>1 day</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *     </tr>
+     *     <tr>
+     *       <td>
+     *         <strong>STATE_BDS_D2_BIT_SYNC</strong>
+     *       </td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>2 ms</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *     </tr>
+     *     <tr>
+     *       <td>
+     *         <strong>STATE_BDS_D2_SUBFRAME_SYNC</strong>
+     *       </td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>600 ms</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *     </tr>
+     *     <tr>
+     *       <td>
+     *         <strong>STATE_GAL_E1BC_CODE_LOCK</strong>
+     *       </td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>4 ms</td>
+     *       <td>4 ms</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *     </tr>
+     *     <tr>
+     *       <td>
+     *         <strong>STATE_GAL_E1C_2ND_CODE_LOCK</strong>
+     *       </td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>100 ms</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *     </tr>
+     *     <tr>
+     *       <td>
+     *         <strong>STATE_2ND_CODE_LOCK</strong>
+     *       </td>
+     *       <td>-</td>
+     *       <td>10 ms (optional)</td>
+     *       <td>20 ms</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>100 ms (optional)</td>
+     *       <td>100 ms</td>
+     *       <td>-</td>
+     *     </tr>
+     *     <tr>
+     *       <td>
+     *         <strong>STATE_GAL_E1B_PAGE_SYNC</strong>
+     *       </td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>2 s</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *     </tr>
+     *     <tr>
+     *       <td>
+     *         <strong>STATE_SBAS_SYNC</strong>
+     *       </td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>-</td>
+     *       <td>1 s</td>
+     *     </tr>
+     *   </tbody>
+     * </table>
+     *
+     * <p>Note: TOW Known refers to the case where TOW is possibly not decoded over the air but has
+     * been determined from other sources. If TOW decoded is set then TOW Known must also be set.
+     *
+     * <p>Note well: if there is any ambiguity in integer millisecond, STATE_MSEC_AMBIGUOUS must be
+     * set accordingly, in the 'state' field.  This value must be populated if 'state' !=
+     * STATE_UNKNOWN.
+     *
+     * <p>Note on optional flags:
+     * <ul>
+     *     <li> For L1 C/A and B1I, STATE_SYMBOL_SYNC is optional since the symbol length is the
+     *     same as the bit length.
+     *     <li> For L5Q and E5aQ, STATE_BIT_SYNC and STATE_SYMBOL_SYNC are optional since they are
+     *     implied by STATE_CODE_LOCK.
+     *     <li> STATE_2ND_CODE_LOCK for L5I is optional since it is implied by STATE_SYMBOL_SYNC.
+     *     <li> STATE_2ND_CODE_LOCK for E1C is optional since it is implied by
+     *     STATE_GAL_E1C_2ND_CODE_LOCK.
+     *     <li> For E1B and E1C, STATE_SYMBOL_SYNC is optional, because it is implied by
+     *     STATE_GAL_E1BC_CODE_LOCK.
+     * </ul>
+     *
+     */
+    @export(name="", value_prefix="GNSS_MEASUREMENT_")
+    enum GnssMeasurementState : uint32_t {
+        STATE_UNKNOWN                = 0,
+        STATE_CODE_LOCK              = 1 << 0,
+        STATE_BIT_SYNC               = 1 << 1,
+        STATE_SUBFRAME_SYNC          = 1 << 2,
+        STATE_TOW_DECODED            = 1 << 3,
+        STATE_MSEC_AMBIGUOUS         = 1 << 4,
+        STATE_SYMBOL_SYNC            = 1 << 5,
+        STATE_GLO_STRING_SYNC        = 1 << 6,
+        STATE_GLO_TOD_DECODED        = 1 << 7,
+        STATE_BDS_D2_BIT_SYNC        = 1 << 8,
+        STATE_BDS_D2_SUBFRAME_SYNC   = 1 << 9,
+        STATE_GAL_E1BC_CODE_LOCK     = 1 << 10,
+        STATE_GAL_E1C_2ND_CODE_LOCK  = 1 << 11,
+        STATE_GAL_E1B_PAGE_SYNC      = 1 << 12,
+        STATE_SBAS_SYNC              = 1 << 13,
+        STATE_TOW_KNOWN              = 1 << 14,
+        STATE_GLO_TOD_KNOWN          = 1 << 15,
+        STATE_2ND_CODE_LOCK          = 1 << 16,
+    };
+
+    /**
+     * Extends a GNSS Measurement, adding a GnssMeasurementCodeType, a GnssMeasurementState, and
+     * replacing the GnssConstellationType.
+     */
+    struct GnssMeasurement {
+        /**
+         * GNSS measurement information for a single satellite and frequency, as in the 1.1
+         * version of the HAL with further clarification of the value reported in the
+         * accumulatedDeltaRangeM field, i.e., the alignment of the phase measurement will not be
+         * adjusted by the receiver so the in-phase and quadrature phase components will have a
+         * quarter cycle offset as they do when transmitted from the satellites. If the measurement
+         * is from a combination of the in-phase and quadrature phase components, then the alignment
+         * of the phase measurement will be aligned to the in-phase component.
+         *
+         * In this version of the HAL, the field 'state' in the v1_1.v1_0 struct is deprecated, and
+         * is no longer used by the framework. The satellite sync state is instead reported in
+         * @2.0::IGnssMeasurementCallback.GnssMeasurement.state.
+         *
+         * In this version of the HAL, the field 'constellation' in the v1_1.v1_0 struct is
+         * deprecated, and is no longer used by the framework. The constellation type is instead
+         * reported in @2.0::IGnssMeasurementCallback.GnssMeasurement.constellation.
+         */
+        @1.1::IGnssMeasurementCallback.GnssMeasurement v1_1;
+
+        /**
+         * The type of code that is currently being tracked in the GNSS measurement.
+         *
+         * For high precision applications the type of code being tracked needs to be considered
+         * in-order to properly apply code specific corrections to the pseudorange measurements.
+         *
+         * Value "A" represents GALILEO E1A, GALILEO E6A, IRNSS L5A, IRNSS SA.
+         *
+         * Value "B" represents GALILEO E1B, GALILEO E6B, IRNSS L5B, IRNSS SB.
+         *
+         * Value "C" represents GPS L1 C/A,  GPS L2 C/A, GLONASS G1 C/A, GLONASS G2 C/A, GALILEO E1C,
+         * GALILEO E6C, SBAS L1 C/A, QZSS L1 C/A, IRNSS L5C.
+         *
+         * Value "I" represents GPS L5 I, GLONASS G3 I, GALILEO E5a I, GALILEO E5b I, GALILEO E5a+b I,
+         * SBAS L5 I, QZSS L5 I, BDS B1 I, BDS B2 I, BDS B3 I.
+         *
+         * Value "L" represents GPS L1C (P), GPS L2C (L), QZSS L1C (P), QZSS L2C (L), LEX(6) L.
+         *
+         * Value "M" represents GPS L1M, GPS L2M.
+         *
+         * Value "N" represents GPS L1 codeless, GPS L2 codeless.
+         *
+         * Value "P" represents GPS L1P, GPS L2P, GLONASS G1P, GLONASS G2P.
+         *
+         * Value "Q" represents GPS L5 Q, GLONASS G3 Q, GALILEO E5a Q, GALILEO E5b Q, GALILEO E5a+b Q,
+         * SBAS L5 Q, QZSS L5 Q, BDS B1 Q, BDS B2 Q, BDS B3 Q.
+         *
+         * Value "S" represents GPS L1C (D), GPS L2C (M), QZSS L1C (D), QZSS L2C (M), LEX(6) S.
+         *
+         * Value "W" represents GPS L1 Z-tracking, GPS L2 Z-tracking.
+         *
+         * Value "X" represents GPS L1C (D+P), GPS L2C (M+L), GPS L5 (I+Q), GLONASS G3 (I+Q),
+         * GALILEO E1 (B+C), GALILEO E5a (I+Q), GALILEO E5b (I+Q), GALILEO E5a+b(I+Q),
+         * GALILEO E6 (B+C), SBAS L5 (I+Q), QZSS L1C (D+P), QZSS L2C (M+L), QZSS L5 (I+Q),
+         * LEX(6) (S+L), BDS B1 (I+Q), BDS B2 (I+Q), BDS B3 (I+Q), IRNSS L5 (B+C).
+         *
+         * Value "Y" represents GPS L1Y, GPS L2Y.
+         *
+         * Value "Z" represents GALILEO E1 (A+B+C), GALILEO E6 (A+B+C), QZSS L1-SAIF.
+         *
+         * Value "UNKNOWN" represents the GNSS Measurement's code type is unknown.
+         *
+         * This is used to specify the observation descriptor defined in GNSS Observation Data File
+         * Header Section Description in the RINEX standard (Version 3.XX). In RINEX Version 3.03,
+         * in Appendix Table A2 Attributes are listed as uppercase letters (for instance, "A" for
+         * "A channel"). In the future, if for instance a code "G" was added in the official RINEX
+         * standard, "G" could be specified here.
+         */
+        string codeType;
+
+        /**
+         * Per satellite sync state. It represents the current sync state for the associated
+         * satellite.
+         *
+         * Based on the sync state, the receivedSvTimeInNs field must be interpreted accordingly.
+         *
+         * This value is mandatory.
+         */
+        bitfield<GnssMeasurementState> state;
+
+        /**
+         * The constellation type of the GNSS measurement.
+         */
+        GnssConstellationType constellation;
+    };
+
+    /**
+     * Complete set of GNSS Measurement data, same as 1.1 with additional enum in measurements.
+     */
+    struct GnssData {
+        /** The full set of satellite measurement observations. */
+        vec<GnssMeasurement> measurements;
+
+        /** The GNSS clock time reading. */
+        GnssClock clock;
+
+        /**
+         * Timing information of the GNSS data synchronized with SystemClock.elapsedRealtimeNanos()
+         * clock.
+         */
+        ElapsedRealtime elapsedRealtime;
+    };
+
+    /**
+     * Callback for the hal to pass a GnssData structure back to the client.
+     *
+     * @param data Contains a reading of GNSS measurements.
+     */
+    gnssMeasurementCb_2_0(GnssData data);
+};

@@ -81,6 +81,8 @@ bool tryLock(std::mutex& mutex)
     return locked;
 }
 
+buffer_handle_t sEmptyBuffer = nullptr;
+
 } // Anonymous namespace
 
 // Static instances
@@ -103,11 +105,8 @@ ExternalCameraDeviceSession::ExternalCameraDeviceSession(
         mCroppingType(croppingType),
         mCameraId(cameraId),
         mV4l2Fd(std::move(v4l2Fd)),
-        mOutputThread(new OutputThread(this, mCroppingType)),
         mMaxThumbResolution(getMaxThumbResolution()),
-        mMaxJpegResolution(getMaxJpegResolution()) {
-    mInitFail = initialize();
-}
+        mMaxJpegResolution(getMaxJpegResolution()) {}
 
 bool ExternalCameraDeviceSession::initialize() {
     if (mV4l2Fd.get() < 0) {
@@ -142,6 +141,12 @@ bool ExternalCameraDeviceSession::initialize() {
             model = card;
         }
     }
+
+    initOutputThread();
+    if (mOutputThread == nullptr) {
+        ALOGE("%s: init OutputThread failed!", __FUNCTION__);
+        return true;
+    }
     mOutputThread->setExifMakeModel(make, model);
 
     status_t status = initDefaultRequests();
@@ -168,6 +173,32 @@ bool ExternalCameraDeviceSession::initialize() {
     return false;
 }
 
+bool ExternalCameraDeviceSession::isInitFailed() {
+    Mutex::Autolock _l(mLock);
+    if (!mInitialized) {
+        mInitFail = initialize();
+        mInitialized = true;
+    }
+    return mInitFail;
+}
+
+void ExternalCameraDeviceSession::initOutputThread() {
+    mOutputThread = new OutputThread(this, mCroppingType);
+}
+
+void ExternalCameraDeviceSession::closeOutputThread() {
+    closeOutputThreadImpl();
+}
+
+void ExternalCameraDeviceSession::closeOutputThreadImpl() {
+    if (mOutputThread) {
+        mOutputThread->flush();
+        mOutputThread->requestExit();
+        mOutputThread->join();
+        mOutputThread.clear();
+    }
+}
+
 Status ExternalCameraDeviceSession::initStatus() const {
     Mutex::Autolock _l(mLock);
     Status status = Status::OK;
@@ -181,7 +212,7 @@ Status ExternalCameraDeviceSession::initStatus() const {
 ExternalCameraDeviceSession::~ExternalCameraDeviceSession() {
     if (!isClosed()) {
         ALOGE("ExternalCameraDeviceSession deleted before close!");
-        close();
+        close(/*callerIsDtor*/true);
     }
 }
 
@@ -344,17 +375,31 @@ Return<void> ExternalCameraDeviceSession::configureStreams_3_4(
         ICameraDeviceSession::configureStreams_3_4_cb _hidl_cb)  {
     V3_2::StreamConfiguration config_v32;
     V3_3::HalStreamConfiguration outStreams_v33;
+    V3_4::HalStreamConfiguration outStreams;
     Mutex::Autolock _il(mInterfaceLock);
 
     config_v32.operationMode = requestedConfiguration.operationMode;
     config_v32.streams.resize(requestedConfiguration.streams.size());
+    uint32_t blobBufferSize = 0;
+    int numStallStream = 0;
     for (size_t i = 0; i < config_v32.streams.size(); i++) {
         config_v32.streams[i] = requestedConfiguration.streams[i].v3_2;
+        if (config_v32.streams[i].format == PixelFormat::BLOB) {
+            blobBufferSize = requestedConfiguration.streams[i].bufferSize;
+            numStallStream++;
+        }
     }
 
-    Status status = configureStreams(config_v32, &outStreams_v33);
+    // Fail early if there are multiple BLOB streams
+    if (numStallStream > kMaxStallStream) {
+        ALOGE("%s: too many stall streams (expect <= %d, got %d)", __FUNCTION__,
+                kMaxStallStream, numStallStream);
+        _hidl_cb(Status::ILLEGAL_ARGUMENT, outStreams);
+        return Void();
+    }
 
-    V3_4::HalStreamConfiguration outStreams;
+    Status status = configureStreams(config_v32, &outStreams_v33, blobBufferSize);
+
     outStreams.streams.resize(outStreams_v33.streams.size());
     for (size_t i = 0; i < outStreams.streams.size(); i++) {
         outStreams.streams[i].v3_3 = outStreams_v33.streams[i];
@@ -428,18 +473,23 @@ Return<Status> ExternalCameraDeviceSession::flush() {
     return Status::OK;
 }
 
-Return<void> ExternalCameraDeviceSession::close() {
+Return<void> ExternalCameraDeviceSession::close(bool callerIsDtor) {
     Mutex::Autolock _il(mInterfaceLock);
     bool closed = isClosed();
     if (!closed) {
-        mOutputThread->flush();
-        mOutputThread->requestExit();
-        mOutputThread->join();
+        if (callerIsDtor) {
+            closeOutputThreadImpl();
+        } else {
+            closeOutputThread();
+        }
 
         Mutex::Autolock _l(mLock);
         // free all buffers
-        for(auto pair : mStreamMap) {
-            cleanupBuffersLocked(/*Stream ID*/pair.first);
+        {
+            Mutex::Autolock _l(mCbsLock);
+            for(auto pair : mStreamMap) {
+                cleanupBuffersLocked(/*Stream ID*/pair.first);
+            }
         }
         v4l2StreamOffLocked();
         ALOGV("%s: closing V4L2 camera FD %d", __FUNCTION__, mV4l2Fd.get());
@@ -449,10 +499,61 @@ Return<void> ExternalCameraDeviceSession::close() {
     return Void();
 }
 
-Status ExternalCameraDeviceSession::importRequest(
+Status ExternalCameraDeviceSession::importRequestLocked(
+    const CaptureRequest& request,
+    hidl_vec<buffer_handle_t*>& allBufPtrs,
+    hidl_vec<int>& allFences) {
+    return importRequestLockedImpl(request, allBufPtrs, allFences);
+}
+
+Status ExternalCameraDeviceSession::importBuffer(int32_t streamId,
+        uint64_t bufId, buffer_handle_t buf,
+        /*out*/buffer_handle_t** outBufPtr,
+        bool allowEmptyBuf) {
+    Mutex::Autolock _l(mCbsLock);
+    return importBufferLocked(streamId, bufId, buf, outBufPtr, allowEmptyBuf);
+}
+
+Status ExternalCameraDeviceSession::importBufferLocked(int32_t streamId,
+        uint64_t bufId, buffer_handle_t buf,
+        /*out*/buffer_handle_t** outBufPtr,
+        bool allowEmptyBuf) {
+
+    if (buf == nullptr && bufId == BUFFER_ID_NO_BUFFER) {
+        if (allowEmptyBuf) {
+            *outBufPtr = &sEmptyBuffer;
+            return Status::OK;
+        } else {
+            ALOGE("%s: bufferId %" PRIu64 " has null buffer handle!", __FUNCTION__, bufId);
+            return Status::ILLEGAL_ARGUMENT;
+        }
+    }
+
+    CirculatingBuffers& cbs = mCirculatingBuffers[streamId];
+    if (cbs.count(bufId) == 0) {
+        if (buf == nullptr) {
+            ALOGE("%s: bufferId %" PRIu64 " has null buffer handle!", __FUNCTION__, bufId);
+            return Status::ILLEGAL_ARGUMENT;
+        }
+        // Register a newly seen buffer
+        buffer_handle_t importedBuf = buf;
+        sHandleImporter.importBuffer(importedBuf);
+        if (importedBuf == nullptr) {
+            ALOGE("%s: output buffer for stream %d is invalid!", __FUNCTION__, streamId);
+            return Status::INTERNAL_ERROR;
+        } else {
+            cbs[bufId] = importedBuf;
+        }
+    }
+    *outBufPtr = &cbs[bufId];
+    return Status::OK;
+}
+
+Status ExternalCameraDeviceSession::importRequestLockedImpl(
         const CaptureRequest& request,
         hidl_vec<buffer_handle_t*>& allBufPtrs,
-        hidl_vec<int>& allFences) {
+        hidl_vec<int>& allFences,
+        bool allowEmptyBuf) {
     size_t numOutputBufs = request.outputBuffers.size();
     size_t numBufs = numOutputBufs;
     // Validate all I/O buffers
@@ -471,26 +572,17 @@ Status ExternalCameraDeviceSession::importRequest(
         streamIds[i] = request.outputBuffers[i].streamId;
     }
 
-    for (size_t i = 0; i < numBufs; i++) {
-        buffer_handle_t buf = allBufs[i];
-        uint64_t bufId = allBufIds[i];
-        CirculatingBuffers& cbs = mCirculatingBuffers[streamIds[i]];
-        if (cbs.count(bufId) == 0) {
-            if (buf == nullptr) {
-                ALOGE("%s: bufferId %" PRIu64 " has null buffer handle!", __FUNCTION__, bufId);
-                return Status::ILLEGAL_ARGUMENT;
-            }
-            // Register a newly seen buffer
-            buffer_handle_t importedBuf = buf;
-            sHandleImporter.importBuffer(importedBuf);
-            if (importedBuf == nullptr) {
-                ALOGE("%s: output buffer %zu is invalid!", __FUNCTION__, i);
-                return Status::INTERNAL_ERROR;
-            } else {
-                cbs[bufId] = importedBuf;
+    {
+        Mutex::Autolock _l(mCbsLock);
+        for (size_t i = 0; i < numBufs; i++) {
+            Status st = importBufferLocked(
+                    streamIds[i], allBufIds[i], allBufs[i], &allBufPtrs[i],
+                    allowEmptyBuf);
+            if (st != Status::OK) {
+                // Detailed error logs printed in importBuffer
+                return st;
             }
         }
-        allBufPtrs[i] = &cbs[bufId];
     }
 
     // All buffers are imported. Now validate output buffer acquire fences
@@ -638,7 +730,7 @@ Status ExternalCameraDeviceSession::processOneCaptureRequest(const CaptureReques
         }
     }
 
-    status = importRequest(request, allBufPtrs, allFences);
+    status = importRequestLocked(request, allBufPtrs, allFences);
     if (status != Status::OK) {
         return status;
     }
@@ -761,14 +853,16 @@ Status ExternalCameraDeviceSession::processCaptureResult(std::shared_ptr<HalRequ
         result.outputBuffers[i].bufferId = req->buffers[i].bufferId;
         if (req->buffers[i].fenceTimeout) {
             result.outputBuffers[i].status = BufferStatus::ERROR;
-            native_handle_t* handle = native_handle_create(/*numFds*/1, /*numInts*/0);
-            handle->data[0] = req->buffers[i].acquireFence;
-            result.outputBuffers[i].releaseFence.setTo(handle, /*shouldOwn*/false);
+            if (req->buffers[i].acquireFence >= 0) {
+                native_handle_t* handle = native_handle_create(/*numFds*/1, /*numInts*/0);
+                handle->data[0] = req->buffers[i].acquireFence;
+                result.outputBuffers[i].releaseFence.setTo(handle, /*shouldOwn*/false);
+            }
             notifyError(req->frameNumber, req->buffers[i].streamId, ErrorCode::ERROR_BUFFER);
         } else {
             result.outputBuffers[i].status = BufferStatus::OK;
             // TODO: refactor
-            if (req->buffers[i].acquireFence > 0) {
+            if (req->buffers[i].acquireFence >= 0) {
                 native_handle_t* handle = native_handle_create(/*numFds*/1, /*numInts*/0);
                 handle->data[0] = req->buffers[i].acquireFence;
                 result.outputBuffers[i].releaseFence.setTo(handle, /*shouldOwn*/false);
@@ -1592,8 +1686,9 @@ int ExternalCameraDeviceSession::OutputThread::createJpegLocked(
      * main image needs to hold APP1, headers, and at most a poorly
      * compressed image */
     const ssize_t maxThumbCodeSize = 64 * 1024;
-    const ssize_t maxJpegCodeSize = parent->getJpegBufferSize(jpegSize.width,
-                                                             jpegSize.height);
+    const ssize_t maxJpegCodeSize = mBlobBufferSize == 0 ?
+            parent->getJpegBufferSize(jpegSize.width, jpegSize.height) :
+            mBlobBufferSize;
 
     /* Check that getJpegBufferSize did not return an error */
     if (maxJpegCodeSize < 0) {
@@ -1683,7 +1778,7 @@ int ExternalCameraDeviceSession::OutputThread::createJpegLocked(
 
     /* Unlock the HAL jpeg code buffer */
     int relFence = sHandleImporter.unlock(*(halBuf.bufPtr));
-    if (relFence > 0) {
+    if (relFence >= 0) {
         halBuf.acquireFence = relFence;
     }
 
@@ -1732,6 +1827,12 @@ bool ExternalCameraDeviceSession::OutputThread::threadLoop() {
                 (req->frameIn->mFourcc >> 24) & 0xFF);
     }
 
+    int res = requestBufferStart(req->buffers);
+    if (res != 0) {
+        ALOGE("%s: send BufferRequest failed! res %d", __FUNCTION__, res);
+        return onDeviceError("%s: failed to send buffer request!", __FUNCTION__);
+    }
+
     std::unique_lock<std::mutex> lk(mBufferLock);
     // Convert input V4L2 frame to YU12 of the same size
     // TODO: see if we can save some computation by converting to YV12 here
@@ -1765,10 +1866,23 @@ bool ExternalCameraDeviceSession::OutputThread::threadLoop() {
         }
     }
 
+    ATRACE_BEGIN("Wait for BufferRequest done");
+    res = waitForBufferRequestDone(&req->buffers);
+    ATRACE_END();
+
+    if (res != 0) {
+        ALOGE("%s: wait for BufferRequest done failed! res %d", __FUNCTION__, res);
+        lk.unlock();
+        return onDeviceError("%s: failed to process buffer request error!", __FUNCTION__);
+    }
+
     ALOGV("%s processing new request", __FUNCTION__);
     const int kSyncWaitTimeoutMs = 500;
     for (auto& halBuf : req->buffers) {
-        if (halBuf.acquireFence != -1) {
+        if (*(halBuf.bufPtr) == nullptr) {
+            ALOGW("%s: buffer for stream %d missing", __FUNCTION__, halBuf.streamId);
+            halBuf.fenceTimeout = true;
+        } else if (halBuf.acquireFence >= 0) {
             int ret = sync_wait(halBuf.acquireFence, kSyncWaitTimeoutMs);
             if (ret) {
                 halBuf.fenceTimeout = true;
@@ -1843,7 +1957,7 @@ bool ExternalCameraDeviceSession::OutputThread::threadLoop() {
                     return onDeviceError("%s: format coversion failed!", __FUNCTION__);
                 }
                 int relFence = sHandleImporter.unlock(*(halBuf.bufPtr));
-                if (relFence > 0) {
+                if (relFence >= 0) {
                     halBuf.acquireFence = relFence;
                 }
             } break;
@@ -1866,7 +1980,8 @@ bool ExternalCameraDeviceSession::OutputThread::threadLoop() {
 
 Status ExternalCameraDeviceSession::OutputThread::allocateIntermediateBuffers(
         const Size& v4lSize, const Size& thumbSize,
-        const hidl_vec<Stream>& streams) {
+        const hidl_vec<Stream>& streams,
+        uint32_t blobBufferSize) {
     std::lock_guard<std::mutex> lk(mBufferLock);
     if (mScaledYu12Frames.size() != 0) {
         ALOGE("%s: intermediate buffer pool has %zu inflight buffers! (expect 0)",
@@ -1935,6 +2050,8 @@ Status ExternalCameraDeviceSession::OutputThread::allocateIntermediateBuffers(
             it = mIntermediateBuffers.erase(it);
         }
     }
+
+    mBlobBufferSize = blobBufferSize;
     return Status::OK;
 }
 
@@ -2034,7 +2151,7 @@ void ExternalCameraDeviceSession::cleanupBuffersLocked(int id) {
 }
 
 void ExternalCameraDeviceSession::updateBufferCaches(const hidl_vec<BufferCache>& cachesToRemove) {
-    Mutex::Autolock _l(mLock);
+    Mutex::Autolock _l(mCbsLock);
     for (auto& cache : cachesToRemove) {
         auto cbsIt = mCirculatingBuffers.find(cache.streamId);
         if (cbsIt == mCirculatingBuffers.end()) {
@@ -2053,7 +2170,9 @@ void ExternalCameraDeviceSession::updateBufferCaches(const hidl_vec<BufferCache>
     }
 }
 
-bool ExternalCameraDeviceSession::isSupported(const Stream& stream) {
+bool ExternalCameraDeviceSession::isSupported(const Stream& stream,
+        const std::vector<SupportedV4L2Format>& supportedFormats,
+        const ExternalCameraConfig& devCfg) {
     int32_t ds = static_cast<int32_t>(stream.dataSpace);
     PixelFormat fmt = stream.format;
     uint32_t width = stream.width;
@@ -2084,7 +2203,7 @@ bool ExternalCameraDeviceSession::isSupported(const Stream& stream) {
             // intentional no-ops.
             break;
         case PixelFormat::Y16:
-            if (!mCfg.depthEnabled) {
+            if (!devCfg.depthEnabled) {
                 ALOGI("%s: Depth is not Enabled", __FUNCTION__);
                 return false;
             }
@@ -2101,7 +2220,7 @@ bool ExternalCameraDeviceSession::isSupported(const Stream& stream) {
     // Assume we can convert any V4L2 format to any of supported output format for now, i.e,
     // ignoring v4l2Fmt.fourcc for now. Might need more subtle check if we support more v4l format
     // in the futrue.
-    for (const auto& v4l2Fmt : mSupportedFormats) {
+    for (const auto& v4l2Fmt : supportedFormats) {
         if (width == v4l2Fmt.width && height == v4l2Fmt.height) {
             return true;
         }
@@ -2436,9 +2555,10 @@ void ExternalCameraDeviceSession::enqueueV4l2Frame(const sp<V4L2Frame>& frame) {
     mV4L2BufferReturned.notify_one();
 }
 
-Status ExternalCameraDeviceSession::configureStreams(
-        const V3_2::StreamConfiguration& config, V3_3::HalStreamConfiguration* out) {
-    ATRACE_CALL();
+Status ExternalCameraDeviceSession::isStreamCombinationSupported(
+        const V3_2::StreamConfiguration& config,
+        const std::vector<SupportedV4L2Format>& supportedFormats,
+        const ExternalCameraConfig& devCfg) {
     if (config.operationMode != StreamConfigurationMode::NORMAL_MODE) {
         ALOGE("%s: unsupported operation mode: %d", __FUNCTION__, config.operationMode);
         return Status::ILLEGAL_ARGUMENT;
@@ -2453,7 +2573,7 @@ Status ExternalCameraDeviceSession::configureStreams(
     int numStallStream = 0;
     for (const auto& stream : config.streams) {
         // Check if the format/width/height combo is supported
-        if (!isSupported(stream)) {
+        if (!isSupported(stream, supportedFormats, devCfg)) {
             return Status::ILLEGAL_ARGUMENT;
         }
         if (stream.format == PixelFormat::BLOB) {
@@ -2475,7 +2595,21 @@ Status ExternalCameraDeviceSession::configureStreams(
         return Status::ILLEGAL_ARGUMENT;
     }
 
-    Status status = initStatus();
+    return Status::OK;
+}
+
+Status ExternalCameraDeviceSession::configureStreams(
+        const V3_2::StreamConfiguration& config,
+        V3_3::HalStreamConfiguration* out,
+        uint32_t blobBufferSize) {
+    ATRACE_CALL();
+
+    Status status = isStreamCombinationSupported(config, mSupportedFormats, mCfg);
+    if (status != Status::OK) {
+        return status;
+    }
+
+    status = initStatus();
     if (status != Status::OK) {
         return status;
     }
@@ -2491,30 +2625,33 @@ Status ExternalCameraDeviceSession::configureStreams(
     }
 
     Mutex::Autolock _l(mLock);
-    // Add new streams
-    for (const auto& stream : config.streams) {
-        if (mStreamMap.count(stream.id) == 0) {
-            mStreamMap[stream.id] = stream;
-            mCirculatingBuffers.emplace(stream.id, CirculatingBuffers{});
-        }
-    }
-
-    // Cleanup removed streams
-    for(auto it = mStreamMap.begin(); it != mStreamMap.end();) {
-        int id = it->first;
-        bool found = false;
+    {
+        Mutex::Autolock _l(mCbsLock);
+        // Add new streams
         for (const auto& stream : config.streams) {
-            if (id == stream.id) {
-                found = true;
-                break;
+            if (mStreamMap.count(stream.id) == 0) {
+                mStreamMap[stream.id] = stream;
+                mCirculatingBuffers.emplace(stream.id, CirculatingBuffers{});
             }
         }
-        if (!found) {
-            // Unmap all buffers of deleted stream
-            cleanupBuffersLocked(id);
-            it = mStreamMap.erase(it);
-        } else {
-            ++it;
+
+        // Cleanup removed streams
+        for(auto it = mStreamMap.begin(); it != mStreamMap.end();) {
+            int id = it->first;
+            bool found = false;
+            for (const auto& stream : config.streams) {
+                if (id == stream.id) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                // Unmap all buffers of deleted stream
+                cleanupBuffersLocked(id);
+                it = mStreamMap.erase(it);
+            } else {
+                ++it;
+            }
         }
     }
 
@@ -2599,7 +2736,7 @@ Status ExternalCameraDeviceSession::configureStreams(
     }
 
     status = mOutputThread->allocateIntermediateBuffers(v4lSize,
-                mMaxThumbResolution, config.streams);
+                mMaxThumbResolution, config.streams, blobBufferSize);
     if (status != Status::OK) {
         ALOGE("%s: allocating intermediate buffers failed!", __FUNCTION__);
         return status;

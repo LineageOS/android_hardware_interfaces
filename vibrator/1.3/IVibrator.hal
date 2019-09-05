@@ -1,0 +1,59 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.vibrator@1.3;
+
+import @1.0::EffectStrength;
+import @1.0::Status;
+import @1.2::IVibrator;
+
+interface IVibrator extends @1.2::IVibrator {
+  /**
+   * Returns whether the vibrator supports control through an alternate interface.
+   */
+  supportsExternalControl() generates (bool supports);
+
+  /**
+   * Enables/disables control override of vibrator to audio.
+   *
+   * When this API is set, the vibrator control should be ceded to audio system
+   * for haptic audio. While this is enabled, issuing of other commands to control
+   * the vibrator is unsupported and the resulting behavior is undefined. Amplitude
+   * control may or may not be supported and is reflected in the return value of
+   * supportsAmplitudeControl() while this is enabled. When this is disabled, the
+   * vibrator should resume to an off state.
+   *
+   * @param enabled Whether external control should be enabled or disabled.
+   * @return status Whether the command was successful or not. Must return
+   *                Status::UNSUPPORTED_OPERATION if external control is
+   *                not supported by the device.
+   */
+  setExternalControl(bool enabled) generates (Status status);
+
+  /**
+   * Fire off a predefined haptic event.
+   *
+   * @param event The type of haptic event to trigger.
+   * @return status Whether the effect was successfully performed or not. Must
+   *     return Status::UNSUPPORTED_OPERATION if the effect is not supported.
+   * @return lengthMs The length of time the event is expected to take in
+   *     milliseconds. This doesn't need to be perfectly accurate, but should be a reasonable
+   *     approximation. Should be a positive, non-zero value if the returned status is Status::OK,
+   *     and set to 0 otherwise.
+   */
+  perform_1_3(Effect effect, EffectStrength strength)
+          generates (Status status, uint32_t lengthMs);
+};

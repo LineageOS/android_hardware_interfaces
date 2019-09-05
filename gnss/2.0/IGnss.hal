@@ -1,0 +1,132 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.gnss@2.0;
+
+import android.hardware.gnss.measurement_corrections@1.0::IMeasurementCorrections;
+import android.hardware.gnss.visibility_control@1.0::IGnssVisibilityControl;
+import @1.1::IGnss;
+
+import GnssLocation;
+import IGnssCallback;
+import IGnssConfiguration;
+import IGnssDebug;
+import IGnssMeasurement;
+import IAGnss;
+import IAGnssRil;
+import IGnssBatching;
+
+/**
+ * Represents the standard GNSS (Global Navigation Satellite System) interface.
+ *
+ * Due to the introduction of new GNSS HAL package android.hardware.gnss.visibility_control@1.0
+ * the interface @1.0::IGnssNi.hal and @1.0::IGnssNiCallback.hal are deprecated in this version
+ * and are not supported by the framework. The GNSS HAL implementation of this interface
+ * must return nullptr for the following @1.0::IGnss method.
+ *     getExtensionGnssNi() generates (IGnssNi gnssNiIface);
+ */
+interface IGnss extends @1.1::IGnss {
+    /**
+     * Opens the interface and provides the callback routines to the implementation of this
+     * interface.
+     *
+     * The framework calls this method to instruct the GPS engine to prepare for serving requests
+     * from the framework. The GNSS HAL implementation must respond to all GNSS requests from the
+     * framework upon successful return from this method until cleanup() method is called to
+     * close this interface.
+     *
+     * @param callback Callback interface for IGnss.
+     *
+     * @return success Returns true on success.
+     */
+    setCallback_2_0(IGnssCallback callback) generates (bool success);
+
+    /**
+     * This method returns the IGnssConfiguration interface.
+     *
+     * @return gnssConfigurationIface Handle to the IGnssConfiguration interface.
+     */
+    getExtensionGnssConfiguration_2_0() generates (IGnssConfiguration gnssConfigurationIface);
+
+    /**
+     * This method returns the IGnssDebug interface.
+     *
+     * @return gnssDebugIface Handle to the IGnssDebug interface.
+     */
+    getExtensionGnssDebug_2_0() generates (IGnssDebug gnssDebugIface);
+
+    /**
+     * This method returns the IAGnss Interface.
+     *
+     * The getExtensionAGnss() must return nullptr as the @1.0::IAGnss interface is
+     * deprecated.
+     *
+     * @return aGnssIface Handle to the IAGnss interface.
+     */
+    getExtensionAGnss_2_0() generates (IAGnss aGnssIface);
+
+    /**
+     * This method returns the IAGnssRil Interface.
+     *
+     * @return aGnssRilIface Handle to the IAGnssRil interface.
+     */
+    getExtensionAGnssRil_2_0() generates (IAGnssRil aGnssRilIface);
+
+    /**
+     * This method returns the IGnssMeasurement interface.
+     *
+     * Exactly one of getExtensionGnssMeasurement(), getExtensionGnssMeasurement_1_1(), and
+     * getExtensionGnssMeasurement_2_0() methods must return a non-null handle, and the other
+     * methods must return nullptr.
+     *
+     * @return gnssMeasurementIface Handle to the IGnssMeasurement interface.
+     */
+    getExtensionGnssMeasurement_2_0() generates (IGnssMeasurement gnssMeasurementIface);
+
+    /**
+     * This method returns the IMeasurementCorrections interface.
+     *
+     * @return measurementCorrectionsIface Handle to the IMeasurementCorrections interface.
+     */
+    getExtensionMeasurementCorrections()
+            generates (IMeasurementCorrections measurementCorrectionsIface);
+
+    /**
+     * This method returns the IGnssVisibilityControl interface.
+     *
+     * @return visibilityControlIface Handle to the IGnssVisibilityControl interface.
+     */
+    getExtensionVisibilityControl() generates (IGnssVisibilityControl visibilityControlIface);
+
+    /**
+     * This method returns the IGnssBatching interface.
+     *
+     * @return batchingIface Handle to the IGnssBatching interface.
+     */
+    getExtensionGnssBatching_2_0() generates (IGnssBatching batchingIface);
+
+    /**
+     * Injects current location from the best available location provider.
+     *
+     * Unlike injectLocation, this method may inject a recent GNSS location from the HAL
+     * implementation, if that is the best available location known to the framework.
+     *
+     * @param location Location information from the best available location provider.
+     *
+     * @return success Returns true if successful.
+     */
+    injectBestLocation_2_0(GnssLocation location) generates (bool success);
+};

@@ -1,0 +1,103 @@
+/*
+ * Copyright 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.wifi.hostapd@1.1;
+
+import @1.0::IHostapd;
+import @1.0::HostapdStatus;
+
+import IHostapdCallback;
+
+/**
+ * Top-level object for managing SoftAPs.
+ */
+interface IHostapd extends @1.0::IHostapd {
+    /**
+     * Parameters to specify the channel range for ACS.
+     */
+    struct AcsChannelRange {
+        /**
+         * Channel number (IEEE 802.11) at the start of the range.
+         */
+        uint32_t start;
+        /**
+         * Channel number (IEEE 802.11) at the end of the range.
+         */
+        uint32_t end;
+    };
+
+    /**
+     * Parameters to control the channel selection for the interface.
+     */
+    struct ChannelParams {
+        /**
+         * This option can be used to specify the channels selected by ACS.
+         * If this is an empty list, all channels allowed in selected HW mode
+         * are specified implicitly.
+         * Note: channels may be overridden by firmware.
+         * Note: this option is ignored if ACS is disabled.
+         */
+        vec<AcsChannelRange> acsChannelRanges;
+    };
+
+    /**
+     * Parameters to use for setting up the access point interface.
+     */
+    struct IfaceParams {
+        /**
+         * Baseline information as defined in HAL 1.0.
+         */
+        @1.0::IHostapd.IfaceParams V1_0;
+        /** Additional Channel params for the interface */
+        ChannelParams channelParams;
+    };
+
+    /**
+     * Adds a new access point for hostapd to control.
+     *
+     * This should trigger the setup of an access point with the specified
+     * interface and network params.
+     *
+     * @param ifaceParams AccessPoint Params for the access point.
+     * @param nwParams Network Params for the access point.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |HostapdStatusCode.SUCCESS|,
+     *         |HostapdStatusCode.FAILURE_ARGS_INVALID|,
+     *         |HostapdStatusCode.FAILURE_UNKNOWN|,
+     *         |HostapdStatusCode.FAILURE_IFACE_EXISTS|
+     */
+    addAccessPoint_1_1(IfaceParams ifaceParams, NetworkParams nwParams)
+        generates(HostapdStatus status);
+
+    /**
+     * Register for callbacks from the hostapd service.
+     *
+     * These callbacks are invoked for global events that are not specific
+     * to any interface or network. Registration of multiple callback
+     * objects is supported. These objects must be deleted when the corresponding
+     * client process is dead.
+     *
+     * @param callback An instance of the |IHostapdCallback| HIDL interface
+     *     object.
+     * @return status Status of the operation.
+     *     Possible status codes:
+     *     |HostapdStatusCode.SUCCESS|,
+     *     |HostapdStatusCode.FAILURE_UNKNOWN|
+     */
+    registerCallback(IHostapdCallback callback)
+        generates (HostapdStatus status);
+};

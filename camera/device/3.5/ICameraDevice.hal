@@ -1,0 +1,119 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.camera.device@3.5;
+
+import android.hardware.camera.common@1.0::Status;
+import @3.2::CameraMetadata;
+import @3.2::ICameraDevice;
+import @3.4::StreamConfiguration;
+
+/**
+ * Camera device interface
+ *
+ * Supports the android.hardware.Camera API, and the android.hardware.camera2
+ * API at LIMITED or better hardware level.
+ *
+ */
+interface ICameraDevice extends @3.2::ICameraDevice {
+
+    /**
+     * getPhysicalCameraCharacteristics:
+     *
+     * Return the static camera information for a physical camera ID backing
+     * this logical camera device. This information may not change between consecutive calls.
+     *
+     * Note that HAL must support this function for physical camera IDs that are
+     * not exposed via ICameraProvider::getCameraIdList(). Calling
+     * getCameraDeviceInterface_V3_x() on these camera IDs must return ILLEGAL_ARGUMENT.
+     *
+     * The characteristics of all cameras returned by
+     * ICameraProvider::getCameraIdList() must be queried via
+     * getCameraCharacteristics(). Calling getPhysicalCameraCharacteristics() on
+     * those cameras must return ILLEGAL_ARGUMENT.
+     *
+     * @param physicalCameraId The physical camera id parsed from the logical
+     *     camera's ANDROID_LOGICAL_MULTI_CAMERA_PHYSICAL_IDS static metadata
+     *     key. The framework assumes that this ID is just the <id> part of fully
+     *     qualified camera device name "device@<major>.<minor>/<type>/<id>". And
+     *     the physical camera must be of the same version and type as the parent
+     *     logical camera device.
+     *
+     * @return status Status code for the operation, one of:
+     *     OK:
+     *         On a successful query of the physical camera device characteristics
+     *     INTERNAL_ERROR:
+     *         The camera device cannot be opened due to an internal
+     *         error.
+     *     CAMERA_DISCONNECTED:
+     *         An external camera device has been disconnected, and is no longer
+     *         available. This camera device interface is now stale, and a new
+     *         instance must be acquired if the device is reconnected. All
+     *         subsequent calls on this interface must return
+     *         CAMERA_DISCONNECTED.
+     *     ILLEGAL_ARGUMENT:
+     *         If the physicalCameraId is not a valid physical camera Id outside
+     *         of ICameraProvider::getCameraIdList().
+     *
+     * @return cameraCharacteristics
+     *     The static metadata for this logical camera device's physical device, or an empty
+     *     metadata structure if status is not OK.
+     *
+     */
+    getPhysicalCameraCharacteristics(string physicalCameraId)
+            generates (Status status, CameraMetadata cameraCharacteristics);
+
+
+    /**
+     * isStreamCombinationSupported:
+     *
+     * Check for device support of specific camera stream combination.
+     *
+     * The streamList must contain at least one output-capable stream, and may
+     * not contain more than one input-capable stream.
+     * In contrast to regular stream configuration the framework does not create
+     * or initialize any actual streams. This means that Hal must not use or
+     * consider the stream "id" value.
+     *
+     * ------------------------------------------------------------------------
+     *
+     * Preconditions:
+     *
+     * The framework can call this method at any time before, during and
+     * after active session configuration. This means that calls must not
+     * impact the performance of pending camera requests in any way. In
+     * particular there must not be any glitches or delays during normal
+     * camera streaming.
+     *
+     * Performance requirements:
+     * This call is expected to be significantly faster than stream
+     * configuration. In general HW and SW camera settings must not be
+     * changed and there must not be a user-visible impact on camera performance.
+     *
+     * @return Status Status code for the operation, one of:
+     *     OK:
+     *          On successful stream combination query.
+     *     METHOD_NOT_SUPPORTED:
+     *          The camera device does not support stream combination query.
+     *     INTERNAL_ERROR:
+     *          The stream combination query cannot complete due to internal
+     *          error.
+     * @return true in case the stream combination is supported, false otherwise.
+     *
+     */
+    isStreamCombinationSupported(@3.4::StreamConfiguration streams)
+            generates (Status status, bool queryStatus);
+};

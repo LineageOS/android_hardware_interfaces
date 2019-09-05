@@ -1,0 +1,241 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.media.c2@1.0;
+
+/**
+ * Generic configuration interface presented by all configurable Codec2 objects.
+ *
+ * This interface must be supported in all states of the owning object, and must
+ * not change the state of the owning object.
+ */
+interface IConfigurable {
+    /**
+     * Returns the id of the object. This must be unique among all objects of
+     * the same type hosted by the same store.
+     *
+     * @return id Id of the object.
+     */
+    getId() generates (uint32_t id);
+
+    /**
+     * Returns the name of the object.
+     *
+     * This must match the name that was supplied during the creation of the
+     * object.
+     *
+     * @return name Name of the object.
+     */
+    getName() generates (string name);
+
+    /**
+     * Queries a set of parameters from the object.
+     *
+     * Querying is performed at best effort: the object must query all supported
+     * parameters and skip unsupported ones (which may include parameters that
+     * could not be allocated). Any errors are communicated in the return value.
+     *
+     * If @p mayBlock is false, this method must not block. All parameter
+     * queries that require blocking must be skipped.
+     *
+     * If @p mayBlock is true, a query may block, but the whole method call
+     * has to complete in a timely manner, or `status = TIMED_OUT` is returned.
+     *
+     * If @p mayBlock is false, this method must not block. Otherwise, this
+     * method is allowed to block for a certain period of time before completing
+     * the operation. If the operation is not completed in a timely manner,
+     * `status = TIMED_OUT` is returned.
+     *
+     * @note The order of C2Param objects in @p param does not depend on the
+     *     order of C2Param structure indices in @p indices.
+     *
+     * \par For IComponent
+     *
+     * When the object type is @ref IComponent, this method must be supported in
+     * any state except released. This call must not change the state nor the
+     * internal configuration of the component.
+     *
+     * The blocking behavior of this method differs among states:
+     *   - In the stopped state, this must be non-blocking. @p mayBlock is
+     *     ignored. (The method operates as if @p mayBlock was false.)
+     *   - In any of the running states, this method may block momentarily if
+     *     @p mayBlock is true. However, if the call cannot be completed in a
+     *     timely manner, `status = TIMED_OUT` is returned.
+     *
+     * @param indices List of C2Param structure indices to query.
+     * @param mayBlock Whether this call may block or not.
+     * @return status Status of the call, which may be
+     *   - `OK`        - All parameters could be queried.
+     *   - `BAD_INDEX` - All supported parameters could be queried, but some
+     *                   parameters were not supported.
+     *   - `NO_MEMORY` - Could not allocate memory for a supported parameter.
+     *   - `BLOCKING`  - Querying some parameters requires blocking, but
+     *                   @p mayBlock is false.
+     *   - `TIMED_OUT` - The operation cannot be finished in a timely manner.
+     *   - `CORRUPTED` - Some unknown error occurred.
+     * @return params Flattened representation of C2Param objects.
+     *
+     * @sa Params.
+     */
+    query(
+            vec<ParamIndex> indices,
+            bool mayBlock
+        ) generates (
+            Status status,
+            Params params
+        );
+
+    /**
+     * Sets a set of parameters for the object.
+     *
+     * Tuning is performed at best effort: the object must update all supported
+     * configurations at best effort and skip unsupported parameters. Any errors
+     * are communicated in the return value and in @p failures.
+     *
+     * A non-strict parameter update with an unsupported value shall cause an
+     * update to the closest supported value. A strict parameter update with an
+     * unsupported value shall be skipped and a failure shall be returned.
+     *
+     * If @p mayBlock is false, this method must not block. An update that
+     * requires blocking shall be skipped and a failure shall be returned.
+     *
+     * If @p mayBlock is true, an update may block, but the whole method call
+     * has to complete in a timely manner, or `status = TIMED_OUT` is returned.
+     *
+     * The final values for all parameters set are propagated back to the caller
+     * in @p params.
+     *
+     * \par For IComponent
+     *
+     * When the object type is @ref IComponent, this method must be supported in
+     * any state except released.
+     *
+     * The blocking behavior of this method differs among states:
+     *   - In the stopped state, this must be non-blocking. @p mayBlock is
+     *     ignored. (The method operates as if @p mayBlock was false.)
+     *   - In any of the running states, this method may block momentarily if
+     *     @p mayBlock is true. However, if the call cannot be completed in a
+     *     timely manner, `status = TIMED_OUT` is returned.
+     *
+     * @note Parameter tuning @e does depend on the order of the tuning
+     * parameters, e.g., some parameter update may enable some subsequent
+     * parameter update.
+     *
+     * @param inParams Requested parameter updates.
+     * @param mayBlock Whether this call may block or not.
+     * @return status Status of the call, which may be
+     *   - `OK`        - All parameters could be updated successfully.
+     *   - `BAD_INDEX` - All supported parameters could be updated successfully,
+     *                   but some parameters were not supported.
+     *   - `NO_MEMORY` - Some supported parameters could not be updated
+     *                   successfully because they contained unsupported values.
+     *                   These are returned in @p failures.
+     *   - `BLOCKING`  - Setting some parameters requires blocking, but
+     *                   @p mayBlock is false.
+     *   - `TIMED_OUT` - The operation cannot be finished in a timely manner.
+     *   - `CORRUPTED` - Some unknown error occurred.
+     * @return failures List of update failures.
+     * @return outParams Flattened representation of configured parameters. The
+     *     order of parameters in @p outParams is based on the order of
+     *     requested updates in @p inParams.
+     *
+     * @sa SettingResult.
+     */
+    config(
+            Params inParams,
+            bool mayBlock
+        ) generates (
+            Status status,
+            vec<SettingResult> failures,
+            Params outParams
+        );
+
+    // REFLECTION MECHANISM
+    // =========================================================================
+
+    /**
+     * Returns a list of supported parameters within a selected range of C2Param
+     * structure indices.
+     *
+     * @param start The first index of the selected range.
+     * @param count The length of the selected range.
+     * @return status Status of the call, which may be
+     *   - `OK`        - The operation completed successfully.
+     *   - `NO_MEMORY` - Not enough memory to complete this method.
+     * @return params List of supported parameters in the selected range. This
+     *     list may have fewer than @p count elements if some indices in the
+     *     range are not supported.
+     *
+     * @sa ParamDescriptor.
+     */
+    querySupportedParams(
+            uint32_t start,
+            uint32_t count
+        ) generates (
+            Status status,
+            vec<ParamDescriptor> params
+        );
+
+    /**
+     * Retrieves the supported values for the queried fields.
+     *
+     * The object must process all fields queried even if some queries fail.
+     *
+     * If @p mayBlock is false, this method must not block. Otherwise, this
+     * method is allowed to block for a certain period of time before completing
+     * the operation. If the operation cannot be completed in a timely manner,
+     * `status = TIMED_OUT` is returned.
+     *
+     * \par For IComponent
+     *
+     * When the object type is @ref IComponent, this method must be supported in
+     * any state except released.
+     *
+     * The blocking behavior of this method differs among states:
+     *   - In the stopped state, this must be non-blocking. @p mayBlock is
+     *     ignored. (The method operates as if @p mayBlock was false.)
+     *   - In any of the running states, this method may block momentarily if
+     *     @p mayBlock is true. However, if the call cannot be completed in a
+     *     timely manner, `status = TIMED_OUT` is returned.
+     *
+     * @param inFields List of field queries.
+     * @param mayBlock Whether this call may block or not.
+     * @return status Status of the call, which may be
+     *   - `OK`        - The operation completed successfully.
+     *   - `BLOCKING`  - Querying some parameters requires blocking, but
+     *                   @p mayBlock is false.
+     *   - `NO_MEMORY` - Not enough memory to complete this method.
+     *   - `BAD_INDEX` - At least one field was not recognized as a component
+     *                   field.
+     *   - `BLOCKING`  - Querying some fields requires blocking, but @p mayblock
+     *                   is false.
+     *   - `TIMED_OUT` - The operation cannot be finished in a timely manner.
+     *   - `CORRUPTED` - Some unknown error occurred.
+     * @return outFields List of supported values and results for the
+     *     supplied queries.
+     *
+     * @sa FieldSupportedValuesQuery, FieldSupportedValuesQueryResult.
+     */
+    querySupportedValues(
+            vec<FieldSupportedValuesQuery> inFields,
+            bool mayBlock
+        ) generates (
+            Status status,
+            vec<FieldSupportedValuesQueryResult> outFields
+        );
+
+};
+

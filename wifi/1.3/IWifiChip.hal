@@ -1,0 +1,91 @@
+/*
+ * Copyright 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.wifi@1.3;
+
+import @1.0::WifiStatus;
+import @1.2::IWifiChip;
+
+/**
+ * Interface that represents a chip that must be configured as a single unit.
+ */
+interface IWifiChip extends @1.2::IWifiChip {
+
+    /**
+     * Capabilities exposed by this chip.
+     */
+    enum ChipCapabilityMask : @1.2::IWifiChip.ChipCapabilityMask {
+        /**
+         * Set Latency Mode.
+         */
+        SET_LATENCY_MODE = 1 << 12,
+
+        /**
+         * Support P2P MAC randomization
+         */
+        P2P_RAND_MAC = 1 << 13
+    };
+
+    /**
+     * Get the capabilities supported by this chip.
+     *
+     * @return status WifiStatus of the operation.
+     *         Possible status codes:
+     *         |WifiStatusCode.SUCCESS|,
+     *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
+     *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
+     *         |WifiStatusCode.ERROR_UNKNOWN|
+     * @return capabilities Bitset of |ChipCapabilityMask| values.
+     */
+    getCapabilities_1_3()
+      generates (WifiStatus status, bitfield<ChipCapabilityMask> capabilities);
+
+    /**
+     * This enum represents the different latency modes that can be set through
+     * setLatencyMode()
+     */
+    enum LatencyMode : uint32_t {
+        NORMAL    = 0,
+        LOW       = 1
+    };
+
+    /**
+     * API to set the wifi latency mode
+     *
+     * The latency mode is a hint to the HAL to enable or disable Wi-Fi latency
+     * optimization. The optimization should be enabled if the mode is set to |LOW|
+     * and should be disabled if the mode is set to |NORMAL|.
+     * Wi-Fi latency optimization may trade-off latency against other Wi-Fi
+     * functionality such as scanning, roaming, etc. but it should not result in
+     * completely halting this functionality.
+     *
+     * The low latency mode targets applications such as gaming and virtual reality.
+     */
+    setLatencyMode(LatencyMode mode) generates (WifiStatus status);
+
+    /**
+     * API to flush debug ring buffer data to files.
+     *
+     * Force flush debug ring buffer using IBase::debug.
+     * This API help to collect firmware/driver/pkt logs.
+     *
+     * @return status WifiStatus of the operation.
+     *         Possible status codes:
+     *         |WifiStatusCode.SUCCESS|,
+     *         |WifiStatusCode.UNKNOWN|
+     */
+    flushRingBufferToFile() generates (WifiStatus status);
+};

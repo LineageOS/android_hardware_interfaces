@@ -1,0 +1,9 @@
+service vendor.camera-provider-2-5-ext /vendor/bin/hw/android.hardware.camera.provider@2.5-external-service
+    interface android.hardware.camera.provider@2.5::ICameraProvider external/0
+    interface android.hardware.camera.provider@2.4::ICameraProvider external/0
+    class hal
+    user cameraserver
+    group audio camera input drmrpc usb
+    ioprio rt 4
+    capabilities SYS_NICE
+    writepid /dev/cpuset/camera-daemon/tasks /dev/stune/top-app/tasks
