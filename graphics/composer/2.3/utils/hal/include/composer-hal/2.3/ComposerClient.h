@@ -184,18 +184,18 @@ class ComposerClientImpl : public V2_2::hal::detail::ComposerClientImpl<Interfac
     }
 
   protected:
+    using BaseType2_1 = V2_1::hal::detail::ComposerClientImpl<Interface, Hal>;
+    using BaseType2_1::mHal;
+    using BaseType2_1::mResources;
     std::unique_ptr<V2_1::hal::ComposerCommandEngine> createCommandEngine() override {
         return std::make_unique<ComposerCommandEngine>(
             mHal, static_cast<V2_2::hal::ComposerResources*>(mResources.get()));
     }
 
-   private:
+  private:
     using BaseType2_2 = V2_2::hal::detail::ComposerClientImpl<Interface, Hal>;
-    using BaseType2_1 = V2_1::hal::detail::ComposerClientImpl<Interface, Hal>;
     using BaseType2_1::mCommandEngine;
     using BaseType2_1::mCommandEngineMutex;
-    using BaseType2_1::mHal;
-    using BaseType2_1::mResources;
 };
 
 }  // namespace detail
