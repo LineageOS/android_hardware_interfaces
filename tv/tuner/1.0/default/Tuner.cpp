@@ -28,6 +28,8 @@ namespace tuner {
 namespace V1_0 {
 namespace implementation {
 
+using ::android::hardware::tv::tuner::V1_0::DemuxId;
+
 Tuner::Tuner() {
     // Static Frontends array to maintain local frontends information
     // Array index matches their FrontendId in the default impl
@@ -68,6 +70,25 @@ Return<void> Tuner::openFrontendById(uint32_t frontendId, openFrontendById_cb _h
     }
 
     _hidl_cb(Result::SUCCESS, mFrontends[frontendId]);
+    return Void();
+}
+
+Return<void> Tuner::openDemux(openDemux_cb _hidl_cb) {
+    ALOGV("%s", __FUNCTION__);
+
+    sp<IDemux> demux;
+    DemuxId demuxId = 0;
+
+    _hidl_cb(Result::SUCCESS, demuxId, demux);
+    return Void();
+}
+
+Return<void> Tuner::openDescrambler(openDescrambler_cb _hidl_cb) {
+    ALOGV("%s", __FUNCTION__);
+
+    sp<IDescrambler> descrambler;
+
+    _hidl_cb(Result::SUCCESS, descrambler);
     return Void();
 }
 
