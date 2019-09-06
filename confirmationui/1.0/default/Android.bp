@@ -36,7 +36,6 @@ cc_binary {
         "libcrypto",
         "libbase",
         "libhidlbase",
-        "libhidltransport",
         "liblog",
         "libutils",
     ],

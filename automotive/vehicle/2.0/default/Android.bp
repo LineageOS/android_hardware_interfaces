@@ -16,7 +16,6 @@ cc_defaults {
     name: "vhal_v2_0_defaults",
     shared_libs: [
         "libhidlbase",
-        "libhidltransport",
         "liblog",
         "libutils",
         "android.hardware.automotive.vehicle@2.0",

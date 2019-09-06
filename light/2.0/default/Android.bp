@@ -23,7 +23,6 @@ cc_library_shared {
         "libbase",
         "liblog",
         "libhidlbase",
-        "libhidltransport",
         "libhardware",
         "libutils",
         "android.hardware.light@2.0",
@@ -44,7 +43,6 @@ cc_defaults {
         "libutils",
         "libhardware",
         "libhidlbase",
-        "libhidltransport",
         "android.hardware.light@2.0",
     ],
 }

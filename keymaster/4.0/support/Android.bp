@@ -39,7 +39,6 @@ cc_library {
         "libcrypto",
         "libhardware",
         "libhidlbase",
-        "libhidltransport",
         "libutils",
     ]
 }

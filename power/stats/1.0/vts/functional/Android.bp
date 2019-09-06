@@ -31,8 +31,6 @@ cc_test {
         "liblog",
         "libhidlbase",
         "libfmq",
-        "libhidltransport",
-        "libhwbinder",
         "libutils",
     ],
 }

@@ -21,7 +21,6 @@ cc_library_shared {
     srcs: ["Vibrator.cpp"],
     shared_libs: [
         "libhidlbase",
-        "libhidltransport",
         "liblog",
         "libutils",
         "libhardware",
@@ -39,7 +38,6 @@ cc_binary {
 
     shared_libs: [
         "libhidlbase",
-        "libhidltransport",
         "liblog",
         "libutils",
         "libhardware",
