@@ -1,0 +1,11 @@
+package android.hardware.tv.tuner@1.0;
+
+interface IDemuxCallback {
+    /**
+     * Notify the client that a new filter event happened.
+     *
+     * @param filterEvent a demux filter event.
+     */
+     oneway onFilterEvent(DemuxFilterEvent filterEvent);
+};
+

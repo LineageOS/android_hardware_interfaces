@@ -1,0 +1,37 @@
+package android.hardware.tv.tuner@1.0;
+
+import IDemuxCallback;
+
+/**
+ * Demultiplexer(Demux) takes a single multiplexed input and splits it into
+ * one or more output.
+ *
+ */
+interface IDemux {
+
+    /**
+     * Set a frontend resource as data input of the demux
+     *
+     * It is used by the client to specify a hardware frontend as data source of
+     * this demux instance. A demux instance can have only one data source.
+     *
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_STATE if failed for wrong state.
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    setFrontendDataSource(FrontendId frontendId) generates (Result result);
+
+    /**
+     * Close the Demux instance
+     *
+     * It is used by the client to release the demux instance. HAL clear
+     * underneath resource. client mustn't access the instance any more.
+     *
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    close() generates (Result result);
+};
+
