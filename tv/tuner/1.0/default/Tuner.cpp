@@ -19,6 +19,8 @@
 #include "Tuner.h"
 #include <android/hardware/tv/tuner/1.0/IFrontendCallback.h>
 #include <utils/Log.h>
+#include "Demux.h"
+#include "Descrambler.h"
 #include "Frontend.h"
 
 namespace android {
@@ -76,8 +78,9 @@ Return<void> Tuner::openFrontendById(uint32_t frontendId, openFrontendById_cb _h
 Return<void> Tuner::openDemux(openDemux_cb _hidl_cb) {
     ALOGV("%s", __FUNCTION__);
 
-    sp<IDemux> demux;
-    DemuxId demuxId = 0;
+    DemuxId demuxId = mLastUsedId + 1;
+    mLastUsedId += 1;
+    sp<IDemux> demux = new Demux(demuxId);
 
     _hidl_cb(Result::SUCCESS, demuxId, demux);
     return Void();
@@ -86,7 +89,7 @@ Return<void> Tuner::openDemux(openDemux_cb _hidl_cb) {
 Return<void> Tuner::openDescrambler(openDescrambler_cb _hidl_cb) {
     ALOGV("%s", __FUNCTION__);
 
-    sp<IDescrambler> descrambler;
+    sp<IDescrambler> descrambler = new Descrambler();
 
     _hidl_cb(Result::SUCCESS, descrambler);
     return Void();

@@ -5,6 +5,8 @@ cc_defaults {
     relative_install_path: "hw",
     srcs: [
         "Frontend.cpp",
+        "Descrambler.cpp",
+        "Demux.cpp",
         "Tuner.cpp",
         "service.cpp",
     ],
