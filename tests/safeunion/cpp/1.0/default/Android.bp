@@ -8,8 +8,6 @@ cc_library {
         "libbase",
         "libcutils",
         "libhidlbase",
-        "libhidltransport",
-        "libhwbinder",
         "liblog",
         "libutils",
     ],

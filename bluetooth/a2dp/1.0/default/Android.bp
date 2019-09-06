@@ -7,7 +7,6 @@ cc_library_shared {
     ],
     shared_libs: [
         "libhidlbase",
-        "libhidltransport",
         "libutils",
         "android.hardware.bluetooth.a2dp@1.0",
     ],

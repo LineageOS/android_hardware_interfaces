@@ -59,7 +59,6 @@ LOCAL_SHARED_LIBRARIES := \
     libcutils \
     libhidlbase \
     libhidlmemory \
-    libhidltransport \
     liblog \
     libstagefright_foundation \
     libutils \

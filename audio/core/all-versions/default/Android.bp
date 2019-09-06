@@ -25,7 +25,6 @@ cc_defaults {
         "libfmq",
         "libhardware",
         "libhidlbase",
-        "libhidltransport",
         "liblog",
         "libmedia_helper",
         "libutils",
