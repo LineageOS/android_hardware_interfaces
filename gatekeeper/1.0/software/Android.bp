@@ -15,7 +15,6 @@ cc_binary {
         "libbase",
         "libhardware",
         "libhidlbase",
-        "libhidltransport",
         "libutils",
         "liblog",
         "libcrypto",

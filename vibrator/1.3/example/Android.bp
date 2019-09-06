@@ -23,7 +23,6 @@ cc_binary {
     cflags: ["-Wall", "-Werror"],
     shared_libs: [
         "libhidlbase",
-        "libhidltransport",
         "liblog",
         "libutils",
         "android.hardware.vibrator@1.0",

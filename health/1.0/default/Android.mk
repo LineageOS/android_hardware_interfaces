@@ -13,7 +13,6 @@ LOCAL_HEADER_LIBRARIES := libhealthd_headers
 LOCAL_SHARED_LIBRARIES := \
     libcutils \
     libhidlbase \
-    libhidltransport \
     liblog \
     libutils \
     android.hardware.health@1.0 \
@@ -39,7 +38,6 @@ LOCAL_SHARED_LIBRARIES := \
     libbase \
     libutils \
     libhidlbase \
-    libhidltransport \
     android.hardware.health@1.0 \
 
 include $(BUILD_EXECUTABLE)

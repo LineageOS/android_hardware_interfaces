@@ -12,7 +12,6 @@ cc_library_shared {
         "libcutils",
         "libutils",
         "libhidlbase",
-        "libhidltransport",
         "android.hardware.vr@1.0",
     ],
 }
@@ -30,7 +29,6 @@ cc_binary {
         "libutils",
         "libhardware",
         "libhidlbase",
-        "libhidltransport",
         "android.hardware.vr@1.0",
     ],
 }
