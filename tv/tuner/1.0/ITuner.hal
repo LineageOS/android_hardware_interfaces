@@ -16,6 +16,8 @@
 
 package android.hardware.tv.tuner@1.0;
 
+import IDemux;
+import IDescrambler;
 import IFrontend;
 
 /**
@@ -48,5 +50,30 @@ interface ITuner {
     openFrontendById(FrontendId frontendId)
         generates (Result result, IFrontend frontend);
 
-};
+    /**
+     * Create a new instance of Demux.
+     *
+     * It is used by the client to create a Demux instance.
+     *
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         UNKNOWN_ERROR if creation failed for other reasons.
+     * @return demuxId newly created demux id.
+     * @return demux the newly created demux interface.
+     */
+     openDemux()
+         generates (Result result, DemuxId demuxId, IDemux demux);
 
+    /**
+     * Create a new instance of Descrambler.
+     *
+     * It is used by the client to create a Descrambler instance.
+     *
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         UNKNOWN_ERROR if creation failed for other reasons.
+     * @return descrambler the newly created descrambler interface.
+     */
+     openDescrambler()
+         generates (Result result, IDescrambler descrambler);
+};

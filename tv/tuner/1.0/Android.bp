@@ -8,6 +8,9 @@ hidl_interface {
     },
     srcs: [
         "types.hal",
+        "IDemux.hal",
+        "IDemuxCallback.hal",
+        "IDescrambler.hal",
         "IFrontend.hal",
         "IFrontendCallback.hal",
         "ITuner.hal",
