@@ -1,0 +1,35 @@
+package android.hardware.tv.tuner@1.0;
+
+/**
+ * Descrambler is used to descramble input data.
+ *
+ */
+interface IDescrambler {
+
+    /**
+     * Set a demux as source of the descrambler
+     *
+     * It is used by the client to specify a demux as source of this
+     * descrambler. A descrambler instance can have only one source, and
+     * this method can be only called once.
+     *
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_STATE if failed for wrong state.
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    setDemuxSource(DemuxId demuxId) generates (Result result);
+
+    /**
+     * Release the descrambler instance
+     *
+     * It is used by the client to release the descrambler instance. HAL clear
+     * underneath resource. client mustn't access the instance any more.
+     *
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+     close() generates (Result result);
+};
+
