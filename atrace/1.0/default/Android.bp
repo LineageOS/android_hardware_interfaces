@@ -29,7 +29,6 @@ cc_binary {
         "libbase",
         "libutils",
         "libhidlbase",
-        "libhidltransport",
         "android.hardware.atrace@1.0",
     ],
 }

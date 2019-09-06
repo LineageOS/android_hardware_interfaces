@@ -7,7 +7,6 @@ cc_library_shared {
 
     shared_libs: [
         "libhidlbase",
-        "libhidltransport",
         "liblog",
         "libbase",
         "libutils",
@@ -35,7 +34,6 @@ cc_binary {
         "libhardware_legacy",
         "libhardware",
         "libhidlbase",
-        "libhidltransport",
         "android.hardware.tv.cec@2.0",
     ],
 

@@ -12,7 +12,6 @@ cc_binary {
     ],
     shared_libs: [
         "libhidlbase",
-        "libhidltransport",
         "libutils",
         "liblog",
         "android.hardware.gnss@1.1",

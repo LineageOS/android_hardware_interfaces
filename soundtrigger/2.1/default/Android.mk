@@ -29,7 +29,6 @@ LOCAL_SHARED_LIBRARIES := \
         libhardware \
         libhidlbase \
         libhidlmemory \
-        libhidltransport \
         liblog \
         libutils \
         android.hardware.soundtrigger@2.1 \

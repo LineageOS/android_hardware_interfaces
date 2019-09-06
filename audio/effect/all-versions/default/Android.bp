@@ -28,7 +28,6 @@ cc_defaults {
         "libfmq",
         "libhidlbase",
         "libhidlmemory",
-        "libhidltransport",
         "liblog",
         "libutils",
         "android.hardware.audio.common-util",
