@@ -49,6 +49,9 @@ using ::android::hardware::tv::cec::V1_0::OptionKey;
 using ::android::hardware::tv::cec::V1_0::Result;
 using ::android::hardware::tv::cec::V1_0::SendMessageResult;
 
+#define CEC_MSG_IN_FIFO "/dev/cec_in_pipe"
+#define CEC_MSG_OUT_FIFO "/dev/cec_out_pipe"
+
 struct HdmiCecMock : public IHdmiCec, public hidl_death_recipient {
     HdmiCecMock();
     // Methods from ::android::hardware::tv::cec::V1_0::IHdmiCec follow.
@@ -71,21 +74,43 @@ struct HdmiCecMock : public IHdmiCec, public hidl_death_recipient {
     }
 
     void cec_set_option(int flag, int value);
+    void printCecMsgBuf(const char* msg_buf, int len);
+
+  private:
+    static void* __threadLoop(void* data);
+    void threadLoop();
+    int readMessageFromFifo(unsigned char* buf, int msgCount);
+    int sendMessageToFifo(const CecMessage& message);
+    void handleHotplugMessage(unsigned char* msgBuf);
+    void handleCecMessage(unsigned char* msgBuf, int length);
 
   private:
     sp<IHdmiCecCallback> mCallback;
+
     // Variables for the virtual cec hal impl
     uint16_t mPhysicalAddress = 0xFFFF;
     vector<CecLogicalAddress> mLogicalAddresses;
     int32_t mCecVersion = 0;
     uint32_t mCecVendorId = 0;
+
     // Port configuration
-    int mTotalPorts = 4;
+    int mTotalPorts = 1;
+    hidl_vec<HdmiPortInfo> mPortInfo;
+    hidl_vec<bool> mPortConnectionStatus;
+
     // CEC Option value
     int mOptionWakeUp = 0;
     int mOptionEnableCec = 0;
     int mOptionSystemCecControl = 0;
     int mOptionLanguage = 0;
+
+    // Testing variables
+    // Input file descriptor
+    int mInputFile;
+    // Output file descriptor
+    int mOutputFile;
+    bool mCecThreadRun = true;
+    pthread_t mThreadId = 0;
 };
 }  // namespace implementation
 }  // namespace V1_0
