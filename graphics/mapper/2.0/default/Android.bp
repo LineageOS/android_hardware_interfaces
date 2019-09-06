@@ -28,7 +28,6 @@ cc_library_shared {
         "libcutils",
         "libhardware",
         "libhidlbase",
-        "libhidltransport",
         "liblog",
         "libsync",
         "libutils",

@@ -16,7 +16,6 @@ cc_defaults {
         "android.hidl.memory@1.0",
         "libhidlbase",
         "libhidlmemory",
-        "libhidltransport",
         "liblog",
         "libstagefright_foundation",
         "libutils",

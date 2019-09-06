@@ -9,7 +9,6 @@ cc_library_shared {
     shared_libs: [
         "liblog",
         "libhidlbase",
-        "libhidltransport",
         "libhardware",
         "libutils",
         "android.hardware.boot@1.0",
@@ -29,7 +28,6 @@ cc_binary {
         "liblog",
         "libhardware",
         "libhidlbase",
-        "libhidltransport",
         "libutils",
         "android.hardware.boot@1.0",
     ],

@@ -34,11 +34,9 @@ LOCAL_SHARED_LIBRARIES := \
     libcutils \
     libbinder \
     libhidlbase \
-    libhidltransport \
     liblog \
     libutils \
     libhardware \
-    libhwbinder \
     android.hardware.audio@2.0 \
     android.hardware.audio@4.0 \
     android.hardware.audio@5.0 \
