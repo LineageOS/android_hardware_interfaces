@@ -28,7 +28,6 @@ cc_library_shared {
         "libcutils",
         "libutils",
         "libhidlbase",
-        "libhidltransport",
         "android.hardware.contexthub@1.0",
     ],
 }
@@ -47,7 +46,6 @@ cc_binary {
         "libdl",
         "libhardware",
         "libhidlbase",
-        "libhidltransport",
         "liblog",
         "libutils",
         "android.hardware.contexthub@1.0",

@@ -38,6 +38,12 @@ class Descrambler : public IDescrambler {
 
     virtual Return<Result> setDemuxSource(uint32_t demuxId) override;
 
+    virtual Return<Result> setKeyToken(const hidl_vec<uint8_t>& keyToken) override;
+
+    virtual Return<Result> addPid(uint16_t pid) override;
+
+    virtual Return<Result> removePid(uint16_t pid) override;
+
     virtual Return<Result> close() override;
 
   private:

@@ -7,7 +7,6 @@ cc_library_shared {
            "convert.cpp"],
     shared_libs: [
         "libhidlbase",
-        "libhidltransport",
         "libutils",
         "libcutils",
         "camera.device@3.2-impl",

@@ -1,5 +1,5 @@
 cc_library_shared {
-    name: "android.hardware.bluetooth.a2dp@1.0-impl",
+    name: "android.hardware.bluetooth.a2dp@1.0-impl.mock",
     relative_install_path: "hw",
     vendor: true,
     srcs: [
@@ -7,7 +7,6 @@ cc_library_shared {
     ],
     shared_libs: [
         "libhidlbase",
-        "libhidltransport",
         "libutils",
         "android.hardware.bluetooth.a2dp@1.0",
     ],

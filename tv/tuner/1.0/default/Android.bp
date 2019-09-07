@@ -16,9 +16,10 @@ cc_defaults {
     shared_libs: [
         "android.hardware.tv.tuner@1.0",
         "android.hidl.memory@1.0",
+        "libcutils",
+        "libfmq",
         "libhidlbase",
         "libhidlmemory",
-        "libhidltransport",
         "liblog",
         "libstagefright_foundation",
         "libutils",

@@ -31,7 +31,6 @@ cc_library_shared {
     ],
     shared_libs: [
         "libhidlbase",
-        "libhidltransport",
         "libutils",
         "liblog",
         "libhardware",

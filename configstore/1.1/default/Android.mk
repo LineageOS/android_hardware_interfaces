@@ -17,7 +17,6 @@ include $(LOCAL_PATH)/surfaceflinger.mk
 
 LOCAL_SHARED_LIBRARIES := \
     libhidlbase \
-    libhidltransport \
     libbase \
     libhwminijail \
     liblog \

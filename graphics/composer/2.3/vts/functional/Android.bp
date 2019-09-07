@@ -23,7 +23,6 @@ cc_test {
     shared_libs: [
         "libfmq",
         "libhidlbase",
-        "libhidltransport",
         "libsync",
     ],
     static_libs: [

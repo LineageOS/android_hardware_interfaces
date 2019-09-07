@@ -23,7 +23,6 @@ cc_library_shared {
         "libbase",
         "liblog",
         "libhidlbase",
-        "libhidltransport",
         "libhardware",
         "libutils",
         "android.hardware.memtrack@1.0",
@@ -46,7 +45,6 @@ cc_binary {
         "libutils",
         "libhardware",
         "libhidlbase",
-        "libhidltransport",
         "android.hardware.memtrack@1.0",
     ],
 
