@@ -24,6 +24,8 @@ cc_test {
         "android.hidl.memory@1.0",
         "libhidlallocatorutils",
         "libhidlmemory",
+        "libcutils",
+        "libfmq",
     ],
     shared_libs: [
         "libbinder",
