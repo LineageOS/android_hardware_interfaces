@@ -1,0 +1,42 @@
+/*
+ * Copyright (C) 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.keymaster@4.1;
+
+import @4.0::ErrorCode;
+import @4.0::Tag;
+import @4.0::TagType;
+
+enum Tag : @4.0::Tag {
+    /**
+     * Keys tagged with EARLY_BOOT_ONLY may only be used, or created, during early boot, until
+     * IKeymasterDevice::earlyBootEnded() is called.
+     */
+    EARLY_BOOT_ONLY = TagType:BOOL | 305,
+    /**
+     * DEVICE_UNIQUE_ATTESTATION is an argument to IKeymasterDevice::attestKey().  It indicates that
+     * attestation using a device-unique key is requested, rather than a batch key.  Only
+     * SecurityLevel::STRONGBOX IKeymasterDevices may support device-unique attestations.
+     * SecurityLevel::TRUSTED_ENVIRONMENT IKeymasterDevices must return ErrorCode::INVALID_ARGUMENT
+     * if they receive DEVICE_UNIQUE_ATTESTATION.  SecurityLevel::STRONGBOX IKeymasterDevices need
+     * not support DEVICE_UNIQUE_ATTESTATION, and return ErrorCode::CANNOT_ATTEST_IDS if they do not
+     * support it.
+     *
+     * IKeymasterDevice implementations that support device-unique attestation MUST add the
+     * DEVICE_UNIQUE_ATTESTATION tag to device-unique attestations.
+     */
+    DEVICE_UNIQUE_ATTESTATION = TagType:BOOL | 720,
+};
