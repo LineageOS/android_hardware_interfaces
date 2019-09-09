@@ -57,7 +57,7 @@ class ComponentTestEnvironment : public ::testing::Environment {
     virtual void SetUp() {}
     virtual void TearDown() {}
 
-    ComponentTestEnvironment() : instance("default"), res("/sdcard/media/") {}
+    ComponentTestEnvironment() : instance("default"), res("/data/local/tmp/media/") {}
 
     void setInstance(const char* _instance) { instance = _instance; }
 
