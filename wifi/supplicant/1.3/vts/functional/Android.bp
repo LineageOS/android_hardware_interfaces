@@ -31,7 +31,6 @@ cc_library_static {
         "android.hardware.wifi.supplicant@1.2",
         "android.hardware.wifi.supplicant@1.3",
         "android.hardware.wifi@1.0",
-        "libcrypto",
         "libgmock",
         "libwifi-system",
         "libwifi-system-iface",
@@ -57,11 +56,9 @@ cc_test {
         "android.hardware.wifi.supplicant@1.3",
         "android.hardware.wifi@1.0",
         "android.hardware.wifi@1.1",
-        "libcrypto",
         "libgmock",
         "libwifi-system",
         "libwifi-system-iface",
     ],
     test_suites: ["general-tests"],
 }
-
