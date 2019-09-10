@@ -123,9 +123,9 @@ Return<Result> HalProxy::setOperationMode(OperationMode /* mode */) {
     return Result::INVALID_OPERATION;
 }
 
-Return<Result> HalProxy::activate(int32_t /* sensorHandle */, bool /* enabled */) {
-    // TODO: Proxy API call to appropriate sub-HAL.
-    return Result::INVALID_OPERATION;
+Return<Result> HalProxy::activate(int32_t sensorHandle, bool enabled) {
+    return getSubHalForSensorHandle(sensorHandle)
+            ->activate(zeroOutFirstByte(sensorHandle), enabled);
 }
 
 Return<Result> HalProxy::initialize(
@@ -163,15 +163,14 @@ Return<Result> HalProxy::initialize(
     return result;
 }
 
-Return<Result> HalProxy::batch(int32_t /* sensorHandle */, int64_t /* samplingPeriodNs */,
-                               int64_t /* maxReportLatencyNs */) {
-    // TODO: Proxy API call to appropriate sub-HAL.
-    return Result::INVALID_OPERATION;
+Return<Result> HalProxy::batch(int32_t sensorHandle, int64_t samplingPeriodNs,
+                               int64_t maxReportLatencyNs) {
+    return getSubHalForSensorHandle(sensorHandle)
+            ->batch(zeroOutFirstByte(sensorHandle), samplingPeriodNs, maxReportLatencyNs);
 }
 
-Return<Result> HalProxy::flush(int32_t /* sensorHandle */) {
-    // TODO: Proxy API call to appropriate sub-HAL.
-    return Result::INVALID_OPERATION;
+Return<Result> HalProxy::flush(int32_t sensorHandle) {
+    return getSubHalForSensorHandle(sensorHandle)->flush(zeroOutFirstByte(sensorHandle));
 }
 
 Return<Result> HalProxy::injectSensorData(const Event& /* event */) {
