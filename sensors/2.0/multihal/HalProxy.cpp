@@ -218,6 +218,14 @@ Return<void> HalProxy::onDynamicSensorsDisconnected(
     return Return<void>();
 }
 
+ISensorsSubHal* HalProxy::getSubHalForSensorHandle(uint32_t sensorHandle) {
+    return mSubHalList[static_cast<size_t>(sensorHandle >> 24)];
+}
+
+uint32_t HalProxy::zeroOutFirstByte(uint32_t num) {
+    return num & 0x00FFFFFF;
+}
+
 }  // namespace implementation
 }  // namespace V2_0
 }  // namespace sensors
