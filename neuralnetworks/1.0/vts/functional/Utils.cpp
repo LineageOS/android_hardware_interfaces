@@ -26,6 +26,7 @@
 #include <hidlmemory/mapping.h>
 
 #include <algorithm>
+#include <iostream>
 #include <vector>
 
 namespace android::hardware::neuralnetworks {
@@ -117,3 +118,15 @@ std::vector<TestBuffer> getOutputBuffers(const Request& request) {
 }
 
 }  // namespace android::hardware::neuralnetworks
+
+namespace android::hardware::neuralnetworks::V1_0 {
+
+::std::ostream& operator<<(::std::ostream& os, ErrorStatus errorStatus) {
+    return os << toString(errorStatus);
+}
+
+::std::ostream& operator<<(::std::ostream& os, DeviceStatus deviceStatus) {
+    return os << toString(deviceStatus);
+}
+
+}  // namespace android::hardware::neuralnetworks::V1_0
