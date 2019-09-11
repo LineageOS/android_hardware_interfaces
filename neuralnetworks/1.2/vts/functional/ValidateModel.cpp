@@ -692,7 +692,7 @@ static void mutateExecutionPreferenceTest(const sp<IDevice>& device, const Model
 
 ////////////////////////// ENTRY POINT //////////////////////////////
 
-void ValidationTest::validateModel(const Model& model) {
+void validateModel(const sp<IDevice>& device, const Model& model) {
     mutateOperandTypeTest(device, model);
     mutateOperandRankTest(device, model);
     mutateOperandScaleTest(device, model);
