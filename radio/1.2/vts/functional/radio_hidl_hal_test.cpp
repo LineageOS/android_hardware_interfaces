@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <android/hardware/radio/1.1/IRadio.h>
 #include <radio_hidl_hal_utils_v1_2.h>
 
 void RadioHidlTest_v1_2::SetUp() {
@@ -154,25 +153,7 @@ void RadioHidlTest_v1_2::updateSimCardStatus() {
 }
 
 void RadioHidlTest_v1_2::stopNetworkScan() {
-    sp<::android::hardware::radio::V1_1::IRadio> radio_v1_1;
-
-    radio_v1_1 = ::testing::VtsHalHidlTargetTestBase::getService<
-            ::android::hardware::radio::V1_1::IRadio>(
-            RadioHidlEnvironment::Instance()
-                    ->getServiceName<::android::hardware::radio::V1_1::IRadio>(
-                            hidl_string(RADIO_SERVICE_NAME)));
-    if (radio_v1_1 == NULL) {
-        sleep(60);
-        radio_v1_1 = ::testing::VtsHalHidlTargetTestBase::getService<
-                ::android::hardware::radio::V1_1::IRadio>(
-                RadioHidlEnvironment::Instance()
-                        ->getServiceName<::android::hardware::radio::V1_1::IRadio>(
-                                hidl_string(RADIO_SERVICE_NAME)));
-    }
-    ASSERT_NE(nullptr, radio_v1_1.get());
-
     serial = GetRandomSerialNumber();
-
-    radio_v1_1->stopNetworkScan(serial);
+    radio_v1_2->stopNetworkScan(serial);
     EXPECT_EQ(std::cv_status::no_timeout, wait());
 }
