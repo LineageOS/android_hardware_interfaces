@@ -102,11 +102,22 @@ namespace implementation {
         android::CryptoPlugin::SubSample *legacySubSamples =
             new android::CryptoPlugin::SubSample[subSamples.size()];
 
+        size_t destSize = 0;
         for (size_t i = 0; i < subSamples.size(); i++) {
-            legacySubSamples[i].mNumBytesOfClearData
-                = subSamples[i].numBytesOfClearData;
-            legacySubSamples[i].mNumBytesOfEncryptedData
-                = subSamples[i].numBytesOfEncryptedData;
+            uint32_t numBytesOfClearData = subSamples[i].numBytesOfClearData;
+            legacySubSamples[i].mNumBytesOfClearData = numBytesOfClearData;
+            uint32_t numBytesOfEncryptedData = subSamples[i].numBytesOfEncryptedData;
+            legacySubSamples[i].mNumBytesOfEncryptedData = numBytesOfEncryptedData;
+            if (__builtin_add_overflow(destSize, numBytesOfClearData, &destSize)) {
+                delete[] legacySubSamples;
+                _hidl_cb(Status::BAD_VALUE, 0, "subsample clear size overflow");
+                return Void();
+            }
+            if (__builtin_add_overflow(destSize, numBytesOfEncryptedData, &destSize)) {
+                delete[] legacySubSamples;
+                _hidl_cb(Status::BAD_VALUE, 0, "subsample encrypted size overflow");
+                return Void();
+            }
         }
 
         AString detailMessage;
@@ -138,11 +149,27 @@ namespace implementation {
                 _hidl_cb(Status::ERROR_DRM_CANNOT_HANDLE, 0, "invalid buffer size");
                 return Void();
             }
+
+            if (destSize > destBuffer.size) {
+                delete[] legacySubSamples;
+                _hidl_cb(Status::BAD_VALUE, 0, "subsample sum too large");
+                return Void();
+            }
+
             destPtr = static_cast<void *>(base + destination.nonsecureMemory.offset);
         } else if (destination.type == BufferType::NATIVE_HANDLE) {
+            if (!secure) {
+                delete[] legacySubSamples;
+                _hidl_cb(Status::BAD_VALUE, 0, "native handle destination must be secure");
+                return Void();
+            }
             native_handle_t *handle = const_cast<native_handle_t *>(
                     destination.secureMemory.getNativeHandle());
             destPtr = static_cast<void *>(handle);
+        } else {
+            delete[] legacySubSamples;
+            _hidl_cb(Status::BAD_VALUE, 0, "invalid destination type");
+            return Void();
         }
         ssize_t result = mLegacyPlugin->decrypt(secure, keyId.data(), iv.data(),
                 legacyMode, legacyPattern, srcPtr, legacySubSamples,
