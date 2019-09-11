@@ -20,6 +20,7 @@
 #include <android-base/logging.h>
 #include <android/hardware/neuralnetworks/1.0/types.h>
 #include <algorithm>
+#include <iosfwd>
 #include <vector>
 #include "TestHarness.h"
 
@@ -51,5 +52,13 @@ inline uint32_t hidl_vec_push_back(hidl_vec<Type>* vec, const Type& value) {
 }
 
 }  // namespace android::hardware::neuralnetworks
+
+namespace android::hardware::neuralnetworks::V1_0 {
+
+// pretty-print values for error messages
+::std::ostream& operator<<(::std::ostream& os, ErrorStatus errorStatus);
+::std::ostream& operator<<(::std::ostream& os, DeviceStatus deviceStatus);
+
+}  // namespace android::hardware::neuralnetworks::V1_0
 
 #endif  // ANDROID_HARDWARE_NEURALNETWORKS_V1_0_UTILS_H
