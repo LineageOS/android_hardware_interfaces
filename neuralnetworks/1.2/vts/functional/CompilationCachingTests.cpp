@@ -223,7 +223,7 @@ class CompilationCachingTestBase : public NeuralnetworksHidlTest {
 
     void SetUp() override {
         NeuralnetworksHidlTest::SetUp();
-        ASSERT_NE(device.get(), nullptr);
+        ASSERT_NE(kDevice.get(), nullptr);
 
         // Create cache directory. The cache directory and a temporary cache file is always created
         // to test the behavior of prepareModelFromCache, even when caching is not supported.
@@ -233,7 +233,7 @@ class CompilationCachingTestBase : public NeuralnetworksHidlTest {
         mCacheDir = cacheDir;
         mCacheDir.push_back('/');
 
-        Return<void> ret = device->getNumberOfCacheFilesNeeded(
+        Return<void> ret = kDevice->getNumberOfCacheFilesNeeded(
                 [this](ErrorStatus status, uint32_t numModelCache, uint32_t numDataCache) {
                     EXPECT_EQ(ErrorStatus::NONE, status);
                     mNumModelCache = numModelCache;
@@ -267,7 +267,7 @@ class CompilationCachingTestBase : public NeuralnetworksHidlTest {
 
     void TearDown() override {
         // If the test passes, remove the tmp directory.  Otherwise, keep it for debugging purposes.
-        if (!::testing::Test::HasFailure()) {
+        if (!testing::Test::HasFailure()) {
             // Recursively remove the cache directory specified by mCacheDir.
             auto callback = [](const char* entry, const struct stat*, int, struct FTW*) {
                 return remove(entry);
@@ -300,7 +300,7 @@ class CompilationCachingTestBase : public NeuralnetworksHidlTest {
     // See if the service can handle the model.
     bool isModelFullySupported(const Model& model) {
         bool fullySupportsModel = false;
-        Return<void> supportedCall = device->getSupportedOperations_1_2(
+        Return<void> supportedCall = kDevice->getSupportedOperations_1_2(
                 model,
                 [&fullySupportsModel, &model](ErrorStatus status, const hidl_vec<bool>& supported) {
                     ASSERT_EQ(ErrorStatus::NONE, status);
@@ -321,8 +321,8 @@ class CompilationCachingTestBase : public NeuralnetworksHidlTest {
         sp<PreparedModelCallback> preparedModelCallback = new PreparedModelCallback();
         hidl_array<uint8_t, sizeof(mToken)> cacheToken(mToken);
         Return<ErrorStatus> prepareLaunchStatus =
-                device->prepareModel_1_2(model, ExecutionPreference::FAST_SINGLE_ANSWER, modelCache,
-                                         dataCache, cacheToken, preparedModelCallback);
+                kDevice->prepareModel_1_2(model, ExecutionPreference::FAST_SINGLE_ANSWER,
+                                          modelCache, dataCache, cacheToken, preparedModelCallback);
         ASSERT_TRUE(prepareLaunchStatus.isOk());
         ASSERT_EQ(static_cast<ErrorStatus>(prepareLaunchStatus), ErrorStatus::NONE);
 
@@ -365,7 +365,7 @@ class CompilationCachingTestBase : public NeuralnetworksHidlTest {
         // Launch prepare model from cache.
         sp<PreparedModelCallback> preparedModelCallback = new PreparedModelCallback();
         hidl_array<uint8_t, sizeof(mToken)> cacheToken(mToken);
-        Return<ErrorStatus> prepareLaunchStatus = device->prepareModelFromCache(
+        Return<ErrorStatus> prepareLaunchStatus = kDevice->prepareModelFromCache(
                 modelCache, dataCache, cacheToken, preparedModelCallback);
         ASSERT_TRUE(prepareLaunchStatus.isOk());
         if (static_cast<ErrorStatus>(prepareLaunchStatus) != ErrorStatus::NONE) {
@@ -405,7 +405,7 @@ class CompilationCachingTestBase : public NeuralnetworksHidlTest {
 // A parameterized fixture of CompilationCachingTestBase. Every test will run twice, with the first
 // pass running with float32 models and the second pass running with quant8 models.
 class CompilationCachingTest : public CompilationCachingTestBase,
-                               public ::testing::WithParamInterface<OperandType> {
+                               public testing::WithParamInterface<OperandType> {
   protected:
     CompilationCachingTest() : CompilationCachingTestBase(GetParam()) {}
 };
@@ -1193,13 +1193,13 @@ TEST_P(CompilationCachingTest, ReplaceSecuritySensitiveCache) {
 }
 
 static const auto kOperandTypeChoices =
-        ::testing::Values(OperandType::TENSOR_FLOAT32, OperandType::TENSOR_QUANT8_ASYMM);
+        testing::Values(OperandType::TENSOR_FLOAT32, OperandType::TENSOR_QUANT8_ASYMM);
 
 INSTANTIATE_TEST_CASE_P(TestCompilationCaching, CompilationCachingTest, kOperandTypeChoices);
 
 class CompilationCachingSecurityTest
     : public CompilationCachingTestBase,
-      public ::testing::WithParamInterface<std::tuple<OperandType, uint32_t>> {
+      public testing::WithParamInterface<std::tuple<OperandType, uint32_t>> {
   protected:
     CompilationCachingSecurityTest() : CompilationCachingTestBase(std::get<0>(GetParam())) {}
 
@@ -1339,6 +1339,6 @@ TEST_P(CompilationCachingSecurityTest, WrongToken) {
 }
 
 INSTANTIATE_TEST_CASE_P(TestCompilationCaching, CompilationCachingSecurityTest,
-                        ::testing::Combine(kOperandTypeChoices, ::testing::Range(0U, 10U)));
+                        testing::Combine(kOperandTypeChoices, testing::Range(0U, 10U)));
 
 }  // namespace android::hardware::neuralnetworks::V1_2::vts::functional
