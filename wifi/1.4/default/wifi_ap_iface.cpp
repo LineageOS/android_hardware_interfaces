@@ -85,6 +85,20 @@ Return<void> WifiApIface::getValidFrequenciesForBand(
                            hidl_status_cb, band);
 }
 
+Return<void> WifiApIface::setMacAddress(const hidl_array<uint8_t, 6>& mac,
+                                        setMacAddress_cb hidl_status_cb) {
+    return validateAndCall(this, WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
+                           &WifiApIface::setMacAddressInternal, hidl_status_cb,
+                           mac);
+}
+
+Return<void> WifiApIface::getFactoryMacAddress(
+    getFactoryMacAddress_cb hidl_status_cb) {
+    return validateAndCall(this, WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
+                           &WifiApIface::getFactoryMacAddressInternal,
+                           hidl_status_cb);
+}
+
 std::pair<WifiStatus, std::string> WifiApIface::getNameInternal() {
     return {createWifiStatus(WifiStatusCode::SUCCESS), ifname_};
 }
@@ -110,6 +124,26 @@ WifiApIface::getValidFrequenciesForBandInternal(WifiBand band) {
         legacy_hal_.lock()->getValidFrequenciesForBand(
             ifname_, hidl_struct_util::convertHidlWifiBandToLegacy(band));
     return {createWifiStatusFromLegacyError(legacy_status), valid_frequencies};
+}
+
+WifiStatus WifiApIface::setMacAddressInternal(
+    const std::array<uint8_t, 6>& mac) {
+    bool status = iface_util_.lock()->setMacAddress(ifname_, mac);
+    if (!status) {
+        return createWifiStatus(WifiStatusCode::ERROR_UNKNOWN);
+    }
+    return createWifiStatus(WifiStatusCode::SUCCESS);
+}
+
+std::pair<WifiStatus, std::array<uint8_t, 6>>
+WifiApIface::getFactoryMacAddressInternal() {
+    std::array<uint8_t, 6> mac =
+        iface_util_.lock()->getFactoryMacAddress(ifname_);
+    if (mac[0] == 0 && mac[1] == 0 && mac[2] == 0 && mac[3] == 0 &&
+        mac[4] == 0 && mac[5] == 0) {
+        return {createWifiStatus(WifiStatusCode::ERROR_UNKNOWN), mac};
+    }
+    return {createWifiStatus(WifiStatusCode::SUCCESS), mac};
 }
 }  // namespace implementation
 }  // namespace V1_4
