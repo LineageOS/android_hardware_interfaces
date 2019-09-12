@@ -118,6 +118,24 @@ struct HalProxy : public ISensors {
      * SubHal object pointers that have been saved from vendor dynamic libraries.
      */
     std::vector<ISensorsSubHal*> mSubHalList;
+
+    /*
+     * Get the subhal pointer which can be found by indexing into the mSubHalList vector
+     * using the index from the first byte of sensorHandle.
+     *
+     * @param sensorHandle The handle used to identify a sensor in one of the subhals.
+     */
+    ISensorsSubHal* getSubHalForSensorHandle(uint32_t sensorHandle);
+
+    /*
+     * Zero out the first (most significant) byte in a number. Used in modifying the sensor handles
+     * before passing them to subhals.
+     *
+     * @param num The uint32_t number to work with.
+     *
+     * @return The modified version of num param.
+     */
+    static uint32_t zeroOutFirstByte(uint32_t num);
 };
 
 }  // namespace implementation
