@@ -113,7 +113,7 @@ Return<Result> HalProxy::setOperationMode(OperationMode mode) {
 
 Return<Result> HalProxy::activate(int32_t sensorHandle, bool enabled) {
     return getSubHalForSensorHandle(sensorHandle)
-            ->activate(zeroOutFirstByte(sensorHandle), enabled);
+            ->activate(clearSubHalIndex(sensorHandle), enabled);
 }
 
 Return<Result> HalProxy::initialize(
@@ -154,11 +154,11 @@ Return<Result> HalProxy::initialize(
 Return<Result> HalProxy::batch(int32_t sensorHandle, int64_t samplingPeriodNs,
                                int64_t maxReportLatencyNs) {
     return getSubHalForSensorHandle(sensorHandle)
-            ->batch(zeroOutFirstByte(sensorHandle), samplingPeriodNs, maxReportLatencyNs);
+            ->batch(clearSubHalIndex(sensorHandle), samplingPeriodNs, maxReportLatencyNs);
 }
 
 Return<Result> HalProxy::flush(int32_t sensorHandle) {
-    return getSubHalForSensorHandle(sensorHandle)->flush(zeroOutFirstByte(sensorHandle));
+    return getSubHalForSensorHandle(sensorHandle)->flush(clearSubHalIndex(sensorHandle));
 }
 
 Return<Result> HalProxy::injectSensorData(const Event& /* event */) {
@@ -244,7 +244,7 @@ void HalProxy::initializeSensorList() {
         ISensorsSubHal* subHal = mSubHalList[subHalIndex];
         auto result = subHal->getSensorsList([&](const auto& list) {
             for (SensorInfo sensor : list) {
-                if ((sensor.sensorHandle & 0xFF000000) != 0) {
+                if ((sensor.sensorHandle & kSensorHandleSubHalIndexMask) != 0) {
                     ALOGE("SubHal sensorHandle's first byte was not 0");
                 } else {
                     ALOGV("Loaded sensor: %s", sensor.name.c_str());
@@ -278,8 +278,8 @@ ISensorsSubHal* HalProxy::getSubHalForSensorHandle(uint32_t sensorHandle) {
     return mSubHalList[static_cast<size_t>(sensorHandle >> 24)];
 }
 
-uint32_t HalProxy::zeroOutFirstByte(uint32_t num) {
-    return num & 0x00FFFFFF;
+uint32_t HalProxy::clearSubHalIndex(uint32_t sensorHandle) {
+    return sensorHandle & (~kSensorHandleSubHalIndexMask);
 }
 
 }  // namespace implementation
