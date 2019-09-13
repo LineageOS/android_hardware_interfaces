@@ -20,7 +20,16 @@
 #include <log/log.h>
 
 ISensorsSubHal* sensorsHalGetSubHal(uint32_t* version) {
+#if defined SUPPORT_CONTINUOUS_SENSORS && defined SUPPORT_ON_CHANGE_SENSORS
+    static ::android::hardware::sensors::V2_0::subhal::implementation::AllSensorsSubHal subHal;
+#elif defined SUPPORT_CONTINUOUS_SENSORS
+    static ::android::hardware::sensors::V2_0::subhal::implementation::ContinuousSensorsSubHal
+            subHal;
+#elif defined SUPPORT_ON_CHANGE_SENSORS
+    static ::android::hardware::sensors::V2_0::subhal::implementation::OnChangeSensorsSubHal subHal;
+#else
     static ::android::hardware::sensors::V2_0::subhal::implementation::SensorsSubHal subHal;
+#endif  // defined SUPPORT_CONTINUOUS_SENSORS && defined SUPPORT_ON_CHANGE_SENSORS
     *version = SUB_HAL_2_0_VERSION;
     return &subHal;
 }
@@ -42,22 +51,7 @@ using ::android::hardware::sensors::V2_0::SensorTimeout;
 using ::android::hardware::sensors::V2_0::WakeLockQueueFlagBits;
 using ::android::hardware::sensors::V2_0::implementation::ScopedWakelock;
 
-SensorsSubHal::SensorsSubHal() : mCallback(nullptr), mNextHandle(1) {
-#ifdef SUPPORT_CONTINUOUS_SENSORS
-    AddSensor<AccelSensor>();
-    AddSensor<GyroSensor>();
-    AddSensor<MagnetometerSensor>();
-    AddSensor<PressureSensor>();
-#endif  // SUPPORT_CONTINUOUS_SENSORS
-
-#ifdef SUPPORT_ON_CHANGE_SENSORS
-    AddSensor<AmbientTempSensor>();
-    AddSensor<DeviceTempSensor>();
-    AddSensor<LightSensor>();
-    AddSensor<ProximitySensor>();
-    AddSensor<RelativeHumiditySensor>();
-#endif  // SUPPORT_ON_CHANGE_SENSORS
-}
+SensorsSubHal::SensorsSubHal() : mCallback(nullptr), mNextHandle(1) {}
 
 // Methods from ::android::hardware::sensors::V2_0::ISensors follow.
 Return<void> SensorsSubHal::getSensorsList(getSensorsList_cb _hidl_cb) {
@@ -74,6 +68,7 @@ Return<Result> SensorsSubHal::setOperationMode(OperationMode mode) {
     for (auto sensor : mSensors) {
         sensor.second->setOperationMode(mode);
     }
+    mCurrentOperationMode = mode;
     return Result::OK;
 }
 
@@ -169,6 +164,61 @@ Return<Result> SensorsSubHal::initialize(const sp<IHalProxyCallback>& halProxyCa
 void SensorsSubHal::postEvents(const std::vector<Event>& events, bool wakeup) {
     ScopedWakelock wakelock = mCallback->createScopedWakelock(wakeup);
     mCallback->postEvents(events, std::move(wakelock));
+}
+
+ContinuousSensorsSubHal::ContinuousSensorsSubHal() {
+    AddSensor<AccelSensor>();
+    AddSensor<GyroSensor>();
+    AddSensor<MagnetometerSensor>();
+    AddSensor<PressureSensor>();
+}
+
+OnChangeSensorsSubHal::OnChangeSensorsSubHal() {
+    AddSensor<AmbientTempSensor>();
+    AddSensor<DeviceTempSensor>();
+    AddSensor<LightSensor>();
+    AddSensor<ProximitySensor>();
+    AddSensor<RelativeHumiditySensor>();
+}
+
+AllSensorsSubHal::AllSensorsSubHal() {
+    AddSensor<AccelSensor>();
+    AddSensor<GyroSensor>();
+    AddSensor<MagnetometerSensor>();
+    AddSensor<PressureSensor>();
+    AddSensor<AmbientTempSensor>();
+    AddSensor<DeviceTempSensor>();
+    AddSensor<LightSensor>();
+    AddSensor<ProximitySensor>();
+    AddSensor<RelativeHumiditySensor>();
+}
+
+Return<Result> SetOperationModeFailingSensorsSubHal::setOperationMode(OperationMode /*mode*/) {
+    return Result::BAD_VALUE;
+}
+
+Return<void> AllSupportDirectChannelSensorsSubHal::getSensorsList(getSensorsList_cb _hidl_cb) {
+    std::vector<SensorInfo> sensors;
+    for (const auto& sensor : mSensors) {
+        SensorInfo sensorInfo = sensor.second->getSensorInfo();
+        sensorInfo.flags |= V1_0::SensorFlagBits::MASK_DIRECT_CHANNEL;
+        sensorInfo.flags |= V1_0::SensorFlagBits::MASK_DIRECT_REPORT;
+        sensors.push_back(sensorInfo);
+    }
+    _hidl_cb(sensors);
+    return Void();
+}
+
+Return<void> DoesNotSupportDirectChannelSensorsSubHal::getSensorsList(getSensorsList_cb _hidl_cb) {
+    std::vector<SensorInfo> sensors;
+    for (const auto& sensor : mSensors) {
+        SensorInfo sensorInfo = sensor.second->getSensorInfo();
+        sensorInfo.flags &= ~static_cast<uint32_t>(V1_0::SensorFlagBits::MASK_DIRECT_CHANNEL);
+        sensorInfo.flags &= ~static_cast<uint32_t>(V1_0::SensorFlagBits::MASK_DIRECT_REPORT);
+        sensors.push_back(sensorInfo);
+    }
+    _hidl_cb(sensors);
+    return Void();
 }
 
 }  // namespace implementation

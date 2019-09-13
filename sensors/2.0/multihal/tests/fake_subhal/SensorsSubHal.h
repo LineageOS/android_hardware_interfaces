@@ -20,6 +20,8 @@
 
 #include "Sensor.h"
 
+#include <vector>
+
 namespace android {
 namespace hardware {
 namespace sensors {
@@ -27,6 +29,8 @@ namespace V2_0 {
 namespace subhal {
 namespace implementation {
 
+using ::android::hardware::sensors::V1_0::OperationMode;
+using ::android::hardware::sensors::V1_0::Result;
 using ::android::hardware::sensors::V2_0::implementation::IHalProxyCallback;
 
 /**
@@ -35,18 +39,18 @@ using ::android::hardware::sensors::V2_0::implementation::IHalProxyCallback;
  */
 class SensorsSubHal : public ISensorsSubHal, public ISensorsEventCallback {
     using Event = ::android::hardware::sensors::V1_0::Event;
-    using OperationMode = ::android::hardware::sensors::V1_0::OperationMode;
     using RateLevel = ::android::hardware::sensors::V1_0::RateLevel;
-    using Result = ::android::hardware::sensors::V1_0::Result;
     using SharedMemInfo = ::android::hardware::sensors::V1_0::SharedMemInfo;
 
   public:
     SensorsSubHal();
 
     // Methods from ::android::hardware::sensors::V2_0::ISensors follow.
-    Return<void> getSensorsList(getSensorsList_cb _hidl_cb) override;
+    virtual Return<void> getSensorsList(getSensorsList_cb _hidl_cb) override;
 
-    Return<Result> setOperationMode(OperationMode mode) override;
+    virtual Return<Result> setOperationMode(OperationMode mode) override;
+
+    OperationMode getOperationMode() const { return mCurrentOperationMode; }
 
     Return<Result> activate(int32_t sensorHandle, bool enabled) override;
 
@@ -81,13 +85,25 @@ class SensorsSubHal : public ISensorsSubHal, public ISensorsEventCallback {
     // Method from ISensorsEventCallback.
     void postEvents(const std::vector<Event>& events, bool wakeup) override;
 
-  private:
+  protected:
     template <class SensorType>
     void AddSensor() {
         std::shared_ptr<SensorType> sensor =
                 std::make_shared<SensorType>(mNextHandle++ /* sensorHandle */, this /* callback */);
         mSensors[sensor->getSensorInfo().sensorHandle] = sensor;
     }
+
+    /**
+     * A map of the available sensors
+     */
+    std::map<int32_t, std::shared_ptr<Sensor>> mSensors;
+
+  private:
+    /**
+     * The current operation mode of the multihal framework. Ensures that all subhals are set to
+     * the same operation mode.
+     */
+    OperationMode mCurrentOperationMode = OperationMode::NORMAL;
 
     /**
      * Callback used to communicate to the HalProxy when dynamic sensors are connected /
@@ -97,14 +113,42 @@ class SensorsSubHal : public ISensorsSubHal, public ISensorsEventCallback {
     sp<IHalProxyCallback> mCallback;
 
     /**
-     * A map of the available sensors
-     */
-    std::map<int32_t, std::shared_ptr<Sensor>> mSensors;
-
-    /**
      * The next available sensor handle
      */
     int32_t mNextHandle;
+};
+
+// SubHal that has continuous sensors for testing purposes.
+class ContinuousSensorsSubHal : public SensorsSubHal {
+  public:
+    ContinuousSensorsSubHal();
+};
+
+// SubHal that has on-change sensors for testing purposes.
+class OnChangeSensorsSubHal : public SensorsSubHal {
+  public:
+    OnChangeSensorsSubHal();
+};
+
+// SubHal that has both continuous and on-change sensors for testing purposes.
+class AllSensorsSubHal : public SensorsSubHal {
+  public:
+    AllSensorsSubHal();
+};
+
+class SetOperationModeFailingSensorsSubHal : public AllSensorsSubHal {
+  public:
+    Return<Result> setOperationMode(OperationMode mode) override;
+};
+
+class AllSupportDirectChannelSensorsSubHal : public AllSensorsSubHal {
+  public:
+    Return<void> getSensorsList(getSensorsList_cb _hidl_cb) override;
+};
+
+class DoesNotSupportDirectChannelSensorsSubHal : public AllSensorsSubHal {
+  public:
+    Return<void> getSensorsList(getSensorsList_cb _hidl_cb) override;
 };
 
 }  // namespace implementation
