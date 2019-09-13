@@ -21,10 +21,6 @@
 
 #include <vector>
 
-using ::android::hardware::sensors::V1_0::Event;
-using ::android::hardware::sensors::V1_0::Result;
-using ::android::hardware::sensors::V1_0::SensorInfo;
-
 // Indicates the current version of the multiHAL interface formatted as (HAL major version) << 24 |
 // (HAL minor version) << 16 | (multiHAL version)
 #define SUB_HAL_2_0_VERSION 0x02000000
@@ -34,6 +30,10 @@ namespace hardware {
 namespace sensors {
 namespace V2_0 {
 namespace implementation {
+
+using ::android::hardware::sensors::V1_0::Event;
+using ::android::hardware::sensors::V1_0::Result;
+using ::android::hardware::sensors::V1_0::SensorInfo;
 
 /**
  * Wrapper around wake lock acquisition functions (acquire/release_wake_lock) that provides a
@@ -68,7 +68,7 @@ class ScopedWakelock {
     bool mLocked;
 
   private:
-    // TODO: Mark HalProxy's subclass of ScopedWakelock as a friend so that it can be initialized.
+    friend class HalProxyCallback;
     ScopedWakelock();
     ScopedWakelock(const ScopedWakelock&) = delete;
     ScopedWakelock& operator=(const ScopedWakelock&) = delete;
@@ -169,7 +169,9 @@ class ISensorsSubHal : public ISensors {
     /**
      * First method invoked on the sub-HAL after it's allocated through sensorsHalGetSubHal() by the
      * HalProxy. Sub-HALs should use this to initialize any state and retain the callback given in
-     * order to communicate with the HalProxy.
+     * order to communicate with the HalProxy. Method will be called anytime the sensors framework
+     * restarts. Therefore, this method will be responsible for reseting the state of the subhal and
+     * cleaning up and reallocating any previously allocated data.
      *
      * @param halProxyCallback callback used to inform the HalProxy when a dynamic sensor's state
      *     changes, new sensor events should be sent to the framework, and when a new ScopedWakelock

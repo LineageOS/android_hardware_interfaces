@@ -16,18 +16,29 @@
 #include <gtest/gtest.h>
 
 #include <android/hardware/sensors/2.0/types.h>
+#include <fmq/MessageQueue.h>
 
 #include "HalProxy.h"
 #include "SensorsSubHal.h"
+#include "SubHal.h"
 
 #include <vector>
 
+#undef LOG_TAG
+#define LOG_TAG "HalProxy_test"
+
 namespace {
 
+using ::android::hardware::hidl_vec;
+using ::android::hardware::MessageQueue;
+using ::android::hardware::Return;
+using ::android::hardware::sensors::V1_0::EventPayload;
 using ::android::hardware::sensors::V1_0::SensorFlagBits;
 using ::android::hardware::sensors::V1_0::SensorInfo;
 using ::android::hardware::sensors::V1_0::SensorType;
+using ::android::hardware::sensors::V2_0::ISensorsCallback;
 using ::android::hardware::sensors::V2_0::implementation::HalProxy;
+using ::android::hardware::sensors::V2_0::implementation::HalProxyCallback;
 using ::android::hardware::sensors::V2_0::subhal::implementation::AllSensorsSubHal;
 using ::android::hardware::sensors::V2_0::subhal::implementation::
         AllSupportDirectChannelSensorsSubHal;
@@ -36,9 +47,27 @@ using ::android::hardware::sensors::V2_0::subhal::implementation::
         DoesNotSupportDirectChannelSensorsSubHal;
 using ::android::hardware::sensors::V2_0::subhal::implementation::OnChangeSensorsSubHal;
 using ::android::hardware::sensors::V2_0::subhal::implementation::SensorsSubHal;
-
 using ::android::hardware::sensors::V2_0::subhal::implementation::
         SetOperationModeFailingSensorsSubHal;
+
+using EventMessageQueue = MessageQueue<Event, ::android::hardware::kSynchronizedReadWrite>;
+using WakeupMessageQueue = MessageQueue<uint32_t, ::android::hardware::kSynchronizedReadWrite>;
+
+// The barebones sensors callback class passed into halproxy initialize calls
+class SensorsCallback : public ISensorsCallback {
+  public:
+    Return<void> onDynamicSensorsConnected(
+            const hidl_vec<SensorInfo>& /*dynamicSensorsAdded*/) override {
+        // Nothing yet
+        return Return<void>();
+    }
+
+    Return<void> onDynamicSensorsDisconnected(
+            const hidl_vec<int32_t>& /*dynamicSensorHandlesRemoved*/) override {
+        // Nothing yet
+        return Return<void>();
+    }
+};
 
 // Helper declarations follow
 
@@ -64,6 +93,22 @@ void testSensorsListFromProxyAndSubHal(const std::vector<SensorInfo>& proxySenso
  */
 void testSensorsListForOneDirectChannelEnabledSubHal(const std::vector<SensorInfo>& sensorsList,
                                                      size_t enabledSubHalIndex);
+
+/**
+ * Construct and return a HIDL Event type thats sensorHandle refers to a proximity sensor
+ *    which is a wakeup type sensor.
+ *
+ * @ return A proximity event.
+ */
+Event makeProximityEvent();
+
+/**
+ * Construct and return a HIDL Event type thats sensorHandle refers to a proximity sensor
+ *    which is a wakeup type sensor.
+ *
+ * @ return A proximity event.
+ */
+Event makeAccelerometerEvent();
 
 // Tests follow
 TEST(HalProxyTest, GetSensorsListOneSubHalTest) {
@@ -156,6 +201,86 @@ TEST(HalProxyTest, InitDirectChannelThreeSubHalsUnitTest) {
     });
 }
 
+TEST(HalProxyTest, PostSingleNonWakeupEvent) {
+    constexpr size_t kQueueSize = 5;
+    AllSensorsSubHal subHal;
+    std::vector<ISensorsSubHal*> subHals{&subHal};
+    HalProxy proxy(subHals);
+    std::unique_ptr<EventMessageQueue> eventQueue =
+            std::make_unique<EventMessageQueue>(kQueueSize, true);
+    std::unique_ptr<WakeupMessageQueue> wakeLockQueue =
+            std::make_unique<WakeupMessageQueue>(kQueueSize, true);
+    ::android::sp<ISensorsCallback> callback = new SensorsCallback();
+    proxy.initialize(*eventQueue->getDesc(), *wakeLockQueue->getDesc(), callback);
+
+    std::vector<Event> events{makeAccelerometerEvent()};
+    subHal.postEvents(events, false /* wakeup */);
+
+    EXPECT_EQ(eventQueue->availableToRead(), 1);
+}
+
+TEST(HalProxyTest, PostMultipleNonWakeupEvent) {
+    constexpr size_t kQueueSize = 5;
+    constexpr size_t kNumEvents = 3;
+    AllSensorsSubHal subHal;
+    std::vector<ISensorsSubHal*> subHals{&subHal};
+    HalProxy proxy(subHals);
+    std::unique_ptr<EventMessageQueue> eventQueue =
+            std::make_unique<EventMessageQueue>(kQueueSize, true);
+    std::unique_ptr<WakeupMessageQueue> wakeLockQueue =
+            std::make_unique<WakeupMessageQueue>(kQueueSize, true);
+    ::android::sp<ISensorsCallback> callback = new SensorsCallback();
+    proxy.initialize(*eventQueue->getDesc(), *wakeLockQueue->getDesc(), callback);
+
+    std::vector<Event> events;
+    for (size_t i = 0; i < kNumEvents; i++) {
+        events.push_back(makeAccelerometerEvent());
+    }
+    subHal.postEvents(events, false /* wakeup */);
+
+    EXPECT_EQ(eventQueue->availableToRead(), kNumEvents);
+}
+
+TEST(HalProxyTest, PostSingleWakeupEvent) {
+    constexpr size_t kQueueSize = 5;
+    AllSensorsSubHal subHal;
+    std::vector<ISensorsSubHal*> subHals{&subHal};
+    HalProxy proxy(subHals);
+    std::unique_ptr<EventMessageQueue> eventQueue =
+            std::make_unique<EventMessageQueue>(kQueueSize, true);
+    std::unique_ptr<WakeupMessageQueue> wakeLockQueue =
+            std::make_unique<WakeupMessageQueue>(kQueueSize, true);
+    ::android::sp<ISensorsCallback> callback = new SensorsCallback();
+    proxy.initialize(*eventQueue->getDesc(), *wakeLockQueue->getDesc(), callback);
+
+    std::vector<Event> events{makeProximityEvent()};
+    subHal.postEvents(events, true /* wakeup */);
+
+    EXPECT_EQ(eventQueue->availableToRead(), 1);
+}
+
+TEST(HalProxyTest, PostMultipleWakeupEvents) {
+    constexpr size_t kQueueSize = 5;
+    constexpr size_t kNumEvents = 3;
+    AllSensorsSubHal subHal;
+    std::vector<ISensorsSubHal*> subHals{&subHal};
+    HalProxy proxy(subHals);
+    std::unique_ptr<EventMessageQueue> eventQueue =
+            std::make_unique<EventMessageQueue>(kQueueSize, true);
+    std::unique_ptr<WakeupMessageQueue> wakeLockQueue =
+            std::make_unique<WakeupMessageQueue>(kQueueSize, true);
+    ::android::sp<ISensorsCallback> callback = new SensorsCallback();
+    proxy.initialize(*eventQueue->getDesc(), *wakeLockQueue->getDesc(), callback);
+
+    std::vector<Event> events;
+    for (size_t i = 0; i < kNumEvents; i++) {
+        events.push_back(makeProximityEvent());
+    }
+    subHal.postEvents(events, true /* wakeup */);
+
+    EXPECT_EQ(eventQueue->availableToRead(), kNumEvents);
+}
+
 // Helper implementations follow
 void testSensorsListFromProxyAndSubHal(const std::vector<SensorInfo>& proxySensorsList,
                                        const std::vector<SensorInfo>& subHalSensorsList) {
@@ -185,6 +310,26 @@ void testSensorsListForOneDirectChannelEnabledSubHal(const std::vector<SensorInf
             EXPECT_EQ(sensor.flags & SensorFlagBits::MASK_DIRECT_CHANNEL, 0);
         }
     }
+}
+
+Event makeProximityEvent() {
+    Event event;
+    event.timestamp = 0xFF00FF00;
+    // This is the sensorhandle of proximity, which is wakeup type
+    event.sensorHandle = 0x00000008;
+    event.sensorType = SensorType::PROXIMITY;
+    event.u = EventPayload();
+    return event;
+}
+
+Event makeAccelerometerEvent() {
+    Event event;
+    event.timestamp = 0xFF00FF00;
+    // This is the sensorhandle of proximity, which is wakeup type
+    event.sensorHandle = 0x00000001;
+    event.sensorType = SensorType::ACCELEROMETER;
+    event.u = EventPayload();
+    return event;
 }
 
 }  // namespace

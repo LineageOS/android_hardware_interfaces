@@ -16,12 +16,15 @@
 
 #include "HalProxy.h"
 
+#include "SubHal.h"
+
 #include <android/hardware/sensors/2.0/types.h>
 
 #include <dlfcn.h>
 
 #include <fstream>
 #include <functional>
+#include <thread>
 
 namespace android {
 namespace hardware {
@@ -29,53 +32,22 @@ namespace sensors {
 namespace V2_0 {
 namespace implementation {
 
+using ::android::hardware::sensors::V2_0::EventQueueFlagBits;
+
 typedef ISensorsSubHal*(SensorsHalGetSubHalFunc)(uint32_t*);
 
-// TODO: Use this wake lock name as the prefix to all sensors HAL wake locks acquired.
-// constexpr const char* kWakeLockName = "SensorsHAL_WAKEUP";
-
-// TODO: Use the following class as a starting point for implementing the full HalProxyCallback
-// along with being inspiration for how to implement the ScopedWakelock class.
-/**
- * Callback class used to provide the HalProxy with the index of which subHal is invoking
- */
-class SensorsCallbackProxy : public ISensorsCallback {
-  public:
-    SensorsCallbackProxy(wp<HalProxy>& halProxy, int32_t subHalIndex)
-        : mHalProxy(halProxy), mSubHalIndex(subHalIndex) {}
-
-    Return<void> onDynamicSensorsConnected(
-            const hidl_vec<SensorInfo>& dynamicSensorsAdded) override {
-        sp<HalProxy> halProxy(mHalProxy.promote());
-        if (halProxy != nullptr) {
-            return halProxy->onDynamicSensorsConnected(dynamicSensorsAdded, mSubHalIndex);
-        }
-        return Return<void>();
-    }
-
-    Return<void> onDynamicSensorsDisconnected(
-            const hidl_vec<int32_t>& dynamicSensorHandlesRemoved) override {
-        sp<HalProxy> halProxy(mHalProxy.promote());
-        if (halProxy != nullptr) {
-            return halProxy->onDynamicSensorsDisconnected(dynamicSensorHandlesRemoved,
-                                                          mSubHalIndex);
-        }
-        return Return<void>();
-    }
-
-  private:
-    wp<HalProxy>& mHalProxy;
-    int32_t mSubHalIndex;
-};
+ScopedWakelock::ScopedWakelock() {
+    // TODO: Implement
+}
 
 HalProxy::HalProxy() {
     const char* kMultiHalConfigFile = "/vendor/etc/sensors/hals.conf";
     initializeSubHalListFromConfigFile(kMultiHalConfigFile);
-    initializeSensorList();
+    initializeSubHalCallbacksAndSensorList();
 }
 
 HalProxy::HalProxy(std::vector<ISensorsSubHal*>& subHalList) : mSubHalList(subHalList) {
-    initializeSensorList();
+    initializeSubHalCallbacksAndSensorList();
 }
 
 HalProxy::~HalProxy() {
@@ -84,7 +56,11 @@ HalProxy::~HalProxy() {
 }
 
 Return<void> HalProxy::getSensorsList(getSensorsList_cb _hidl_cb) {
-    _hidl_cb(mSensorList);
+    std::vector<SensorInfo> sensors;
+    for (const auto& iter : mSensors) {
+        sensors.push_back(iter.second);
+    }
+    _hidl_cb(sensors);
     return Void();
 }
 
@@ -147,6 +123,17 @@ Return<Result> HalProxy::initialize(
     }
 
     // TODO: start threads to read wake locks and process events from sub HALs.
+
+    for (size_t i = 0; i < mSubHalList.size(); i++) {
+        auto subHal = mSubHalList[i];
+        const auto& subHalCallback = mSubHalCallbacks[i];
+        Result currRes = subHal->initialize(subHalCallback);
+        if (currRes != Result::OK) {
+            result = currRes;
+            ALOGE("Subhal '%s' failed to initialize.", subHal->getName().c_str());
+            break;
+        }
+    }
 
     return result;
 }
@@ -239,6 +226,13 @@ void HalProxy::initializeSubHalListFromConfigFile(const char* configFileName) {
     }
 }
 
+void HalProxy::initializeSubHalCallbacks() {
+    for (size_t subHalIndex = 0; subHalIndex < mSubHalList.size(); subHalIndex++) {
+        sp<IHalProxyCallback> callback = new HalProxyCallback(this, subHalIndex);
+        mSubHalCallbacks.push_back(callback);
+    }
+}
+
 void HalProxy::initializeSensorList() {
     for (size_t subHalIndex = 0; subHalIndex < mSubHalList.size(); subHalIndex++) {
         ISensorsSubHal* subHal = mSubHalList[subHalIndex];
@@ -250,13 +244,36 @@ void HalProxy::initializeSensorList() {
                     ALOGV("Loaded sensor: %s", sensor.name.c_str());
                     sensor.sensorHandle |= (subHalIndex << 24);
                     setDirectChannelFlags(&sensor, subHal);
-                    mSensorList.push_back(sensor);
+                    mSensors[sensor.sensorHandle] = sensor;
                 }
             }
         });
         if (!result.isOk()) {
             ALOGE("getSensorsList call failed for SubHal: %s", subHal->getName().c_str());
         }
+    }
+}
+
+void HalProxy::initializeSubHalCallbacksAndSensorList() {
+    initializeSubHalCallbacks();
+    initializeSensorList();
+}
+
+void HalProxy::postEventsToMessageQueue(const std::vector<Event>& events) {
+    std::lock_guard<std::mutex> lock(mEventQueueMutex);
+    size_t numToWrite = std::min(events.size(), mEventQueue->availableToWrite());
+    if (numToWrite > 0) {
+        if (mEventQueue->write(events.data(), numToWrite)) {
+            // TODO: While loop if mEventQueue->avaiableToWrite > 0 to possibly fit in more writes
+            // immediately
+            mEventQueueFlag->wake(static_cast<uint32_t>(EventQueueFlagBits::READ_AND_PROCESS));
+        } else {
+            numToWrite = 0;
+        }
+    }
+    if (numToWrite < events.size()) {
+        // TODO: Post from events[numToWrite -> end] to background events queue
+        // Signal background thread
     }
 }
 
@@ -280,6 +297,50 @@ ISensorsSubHal* HalProxy::getSubHalForSensorHandle(uint32_t sensorHandle) {
 
 uint32_t HalProxy::clearSubHalIndex(uint32_t sensorHandle) {
     return sensorHandle & (~kSensorHandleSubHalIndexMask);
+}
+
+void HalProxyCallback::postEvents(const std::vector<Event>& events, ScopedWakelock wakelock) {
+    (void)wakelock;
+    size_t numWakeupEvents;
+    std::vector<Event> processedEvents = processEvents(events, &numWakeupEvents);
+    if (numWakeupEvents > 0) {
+        ALOG_ASSERT(wakelock.isLocked(),
+                    "Wakeup events posted while wakelock unlocked for subhal"
+                    " w/ index %zu.",
+                    mSubHalIndex);
+    } else {
+        ALOG_ASSERT(!wakelock.isLocked(),
+                    "No Wakeup events posted but wakelock locked for subhal"
+                    " w/ index %zu.",
+                    mSubHalIndex);
+    }
+
+    mHalProxy->postEventsToMessageQueue(processedEvents);
+}
+
+ScopedWakelock HalProxyCallback::createScopedWakelock(bool lock) {
+    ScopedWakelock wakelock;
+    wakelock.mLocked = lock;
+    return wakelock;
+}
+
+std::vector<Event> HalProxyCallback::processEvents(const std::vector<Event>& events,
+                                                   size_t* numWakeupEvents) const {
+    std::vector<Event> eventsOut;
+    *numWakeupEvents = 0;
+    for (Event event : events) {
+        event.sensorHandle = setSubHalIndex(event.sensorHandle);
+        eventsOut.push_back(event);
+        if ((mHalProxy->getSensorInfo(event.sensorHandle).flags & V1_0::SensorFlagBits::WAKE_UP) !=
+            0) {
+            (*numWakeupEvents)++;
+        }
+    }
+    return eventsOut;
+}
+
+uint32_t HalProxyCallback::setSubHalIndex(uint32_t sensorHandle) const {
+    return sensorHandle | mSubHalIndex << 24;
 }
 
 }  // namespace implementation
