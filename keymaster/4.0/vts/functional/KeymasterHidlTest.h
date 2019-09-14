@@ -201,6 +201,8 @@ class KeymasterHidlTest : public ::testing::VtsHalHidlTargetTestBase {
                           HidlBuf* iv_out);
     string EncryptMessage(const string& message, BlockMode block_mode, PaddingMode padding,
                           const HidlBuf& iv_in);
+    string EncryptMessage(const string& message, BlockMode block_mode, PaddingMode padding,
+                          uint8_t mac_length_bits, const HidlBuf& iv_in);
 
     string DecryptMessage(const HidlBuf& key_blob, const string& ciphertext,
                           const AuthorizationSet& params);
