@@ -135,6 +135,9 @@ class HalProxy : public ISensors {
     //! The single subHal that supports directChannel reporting.
     ISensorsSubHal* mDirectChannelSubHal = nullptr;
 
+    //! The bit mask used to get the subhal index from a sensor handle.
+    static constexpr uint32_t kSensorHandleSubHalIndexMask = 0xFF000000;
+
     /**
      * Initialize the list of SubHal objects in mSubHalList by reading from dynamic libraries
      * listed in a config file.
@@ -167,14 +170,13 @@ class HalProxy : public ISensors {
     ISensorsSubHal* getSubHalForSensorHandle(uint32_t sensorHandle);
 
     /*
-     * Zero out the first (most significant) byte in a number. Used in modifying the sensor handles
-     * before passing them to subhals.
+     * Clear out the subhal index bytes from a sensorHandle.
      *
-     * @param num The uint32_t number to work with.
+     * @param sensorHandle The sensor handle to modify.
      *
-     * @return The modified version of num param.
+     * @return The modified version of the sensor handle.
      */
-    static uint32_t zeroOutFirstByte(uint32_t num);
+    static uint32_t clearSubHalIndex(uint32_t sensorHandle);
 };
 
 }  // namespace implementation
