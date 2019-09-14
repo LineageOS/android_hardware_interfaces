@@ -137,6 +137,7 @@ class IHalProxyCallback : public ISensorsCallback {
  * sub-HALs can continue to use the lower 3 bytes of the handle.
  */
 class ISensorsSubHal : public ISensors {
+  public:
     // The ISensors version of initialize isn't used for multihal. Instead, sub-HALs must implement
     // the version below to allow communciation logic to centralized in the HalProxy
     Return<Result> initialize(
