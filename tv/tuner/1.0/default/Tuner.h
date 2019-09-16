@@ -41,6 +41,13 @@ class Tuner : public ITuner {
 
     virtual Return<void> openDescrambler(openDescrambler_cb _hidl_cb) override;
 
+    virtual Return<void> getFrontendInfo(FrontendId frontendId,
+                                         getFrontendInfo_cb _hidl_cb) override;
+
+    virtual Return<void> getLnbIds(getLnbIds_cb _hidl_cb) override;
+
+    virtual Return<void> openLnbById(LnbId lnbId, openLnbById_cb _hidl_cb) override;
+
   private:
     virtual ~Tuner();
     // Static mFrontends array to maintain local frontends information
