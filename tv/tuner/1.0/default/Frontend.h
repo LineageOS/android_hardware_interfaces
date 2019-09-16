@@ -38,6 +38,7 @@ using ::android::hardware::tv::tuner::V1_0::Result;
 class Frontend : public IFrontend {
   public:
     Frontend();
+
     Frontend(FrontendType type, FrontendId id);
 
     virtual Return<Result> close() override;
@@ -47,6 +48,19 @@ class Frontend : public IFrontend {
     virtual Return<Result> tune(const FrontendSettings& settings) override;
 
     virtual Return<Result> stopTune() override;
+
+    virtual Return<Result> scan(const FrontendSettings& settings, FrontendScanType type) override;
+
+    virtual Return<Result> stopScan() override;
+
+    virtual Return<void> getStatus(const hidl_vec<FrontendStatusType>& statusTypes,
+                                   getStatus_cb _hidl_cb) override;
+
+    virtual Return<Result> sendDiseqcMessage(const hidl_vec<uint8_t>& diseqcMessage) override;
+
+    virtual Return<Result> setLna(bool bEnable) override;
+
+    virtual Return<Result> setLnb(const sp<ILnb>& lnb) override;
 
     FrontendType getFrontendType();
 
