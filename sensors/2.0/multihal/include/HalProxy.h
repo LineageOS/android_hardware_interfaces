@@ -41,7 +41,7 @@ using ::android::hardware::MQDescriptor;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
 
-class HalProxy : public ISensors {
+class HalProxy : public ISensors, public IScopedWakelockRefCounter {
   public:
     using Event = ::android::hardware::sensors::V1_0::Event;
     using OperationMode = ::android::hardware::sensors::V1_0::OperationMode;
@@ -95,6 +95,18 @@ class HalProxy : public ISensors {
     Return<void> onDynamicSensorsDisconnected(const hidl_vec<int32_t>& dynamicSensorHandlesRemoved,
                                               int32_t subHalIndex);
 
+    // Below methods follow IScopedWakelockRefCounter
+
+    /**
+     * Increment ref count and maybe acquire wakelock.
+     */
+    void incrementRefCountAndMaybeAcquireWakelock() override;
+
+    /**
+     * Decrement ref count and maybe release wakelock.
+     */
+    void decrementRefCountAndMaybeReleaseWakelock() override;
+
     // Below methods are for HalProxyCallback
 
     /**
@@ -119,6 +131,8 @@ class HalProxy : public ISensors {
   private:
     using EventMessageQueue = MessageQueue<Event, kSynchronizedReadWrite>;
     using WakeLockMessageQueue = MessageQueue<uint32_t, kSynchronizedReadWrite>;
+
+    const char* kWakeLockName = "SensorsHAL_WAKEUP";
 
     /**
      * The Event FMQ where sensor events are written
@@ -164,6 +178,12 @@ class HalProxy : public ISensors {
 
     //! The mutex for the event queue.
     std::mutex mEventQueueMutex;
+
+    //! The scoped wakelock ref count.
+    size_t mWakelockRefCount = 0;
+
+    //! The mutex guarding the mWakelockRefCount variable
+    std::mutex mWakelockRefCountMutex;
 
     //! The bit mask used to get the subhal index from a sensor handle.
     static constexpr uint32_t kSensorHandleSubHalIndexMask = 0xFF000000;
@@ -219,11 +239,6 @@ class HalProxy : public ISensors {
     static uint32_t clearSubHalIndex(uint32_t sensorHandle);
 };
 
-// TODO: Use this wake lock name as the prefix to all sensors HAL wake locks acquired.
-// constexpr const char* kWakeLockName = "SensorsHAL_WAKEUP";
-
-// TODO: Use the following class as a starting point for implementing the full HalProxyCallback
-// along with being inspiration for how to implement the ScopedWakelock class.
 /**
  * Callback class used to provide the HalProxy with the index of which subHal is invoking
  */

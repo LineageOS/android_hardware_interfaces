@@ -19,8 +19,8 @@
 #include <fmq/MessageQueue.h>
 
 #include "HalProxy.h"
+#include "ScopedWakelock.h"
 #include "SensorsSubHal.h"
-#include "SubHal.h"
 
 #include <vector>
 

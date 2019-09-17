@@ -20,6 +20,8 @@
 
 #include <android/hardware/sensors/2.0/types.h>
 
+#include "hardware_legacy/power.h"
+
 #include <dlfcn.h>
 
 #include <fstream>
@@ -35,10 +37,6 @@ namespace implementation {
 using ::android::hardware::sensors::V2_0::EventQueueFlagBits;
 
 typedef ISensorsSubHal*(SensorsHalGetSubHalFunc)(uint32_t*);
-
-ScopedWakelock::ScopedWakelock() {
-    // TODO: Implement
-}
 
 HalProxy::HalProxy() {
     const char* kMultiHalConfigFile = "/vendor/etc/sensors/hals.conf";
@@ -277,6 +275,25 @@ void HalProxy::postEventsToMessageQueue(const std::vector<Event>& events) {
     }
 }
 
+// TODO: Implement the wakelock timeout in these next two methods. Also pass in the subhal
+// index for better tracking.
+
+void HalProxy::incrementRefCountAndMaybeAcquireWakelock() {
+    std::lock_guard<std::mutex> lockGuard(mWakelockRefCountMutex);
+    if (mWakelockRefCount == 0) {
+        acquire_wake_lock(PARTIAL_WAKE_LOCK, kWakeLockName);
+    }
+    mWakelockRefCount++;
+}
+
+void HalProxy::decrementRefCountAndMaybeReleaseWakelock() {
+    std::lock_guard<std::mutex> lockGuard(mWakelockRefCountMutex);
+    mWakelockRefCount--;
+    if (mWakelockRefCount == 0) {
+        release_wake_lock(kWakeLockName);
+    }
+}
+
 void HalProxy::setDirectChannelFlags(SensorInfo* sensorInfo, ISensorsSubHal* subHal) {
     bool sensorSupportsDirectChannel =
             (sensorInfo->flags & (V1_0::SensorFlagBits::MASK_DIRECT_REPORT |
@@ -319,8 +336,7 @@ void HalProxyCallback::postEvents(const std::vector<Event>& events, ScopedWakelo
 }
 
 ScopedWakelock HalProxyCallback::createScopedWakelock(bool lock) {
-    ScopedWakelock wakelock;
-    wakelock.mLocked = lock;
+    ScopedWakelock wakelock(mHalProxy, lock);
     return wakelock;
 }
 

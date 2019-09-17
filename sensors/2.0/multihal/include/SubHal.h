@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include "ScopedWakelock.h"
+
 #include <android/hardware/sensors/1.0/types.h>
 #include <android/hardware/sensors/2.0/ISensors.h>
 
@@ -34,45 +36,6 @@ namespace implementation {
 using ::android::hardware::sensors::V1_0::Event;
 using ::android::hardware::sensors::V1_0::Result;
 using ::android::hardware::sensors::V1_0::SensorInfo;
-
-/**
- * Wrapper around wake lock acquisition functions (acquire/release_wake_lock) that provides a
- * RAII-style mechanism for keeping a wake lock held for the duration of a scoped block.
- * When a ScopedWakelock is created, it increments the reference count stored in the HalProxy
- * for the sub-HALs specific wake lock, acquiring the wake lock if necessary. When the object goes
- * out of scope, the ref count is decremented, potentially releasing the wake lock if no other
- * references to the wake lock exist.
- *
- * This class is allocated through the createScopedWakelock callback inside the IHalProxyCallback
- * provided to sub-HALs during initialization and should be used for all wake lock acquisition
- * inside of the sub-HAL to ensure wake locks are not held indefinitely.
- *
- * The most prevalent use case for this class will be for posting events to the framework through
- * the postEvents HalProxy callback. The expectation is that sub-HALs will create this
- * ScopedWakelock through the createScopedWakelock upon receiving a sensor events. The lock boolean
- * provided to createScopedWakelock will be set the according to whether the sensor events are
- * from wakeup sensors. Then, the sub-HAL will perform any processing necessary before invoking the
- * postEvents callback passing in the previously created ScopedWakelock. At this point, ownership
- * of the object will be passed to the HalProxy that will then be responsible for ensuring any
- * wake locks continue to be held, if necessary.
- */
-class ScopedWakelock {
-  public:
-    ScopedWakelock(ScopedWakelock&&) = default;
-    ScopedWakelock& operator=(ScopedWakelock&&) = default;
-    virtual ~ScopedWakelock() { mLocked = false; };
-
-    bool isLocked() const { return mLocked; }
-
-  protected:
-    bool mLocked;
-
-  private:
-    friend class HalProxyCallback;
-    ScopedWakelock();
-    ScopedWakelock(const ScopedWakelock&) = delete;
-    ScopedWakelock& operator=(const ScopedWakelock&) = delete;
-};
 
 /**
  * Interface that contains several callbacks into the HalProxy class to communicate dynamic sensor
