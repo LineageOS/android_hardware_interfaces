@@ -325,7 +325,7 @@ class MediaCasHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         return ::testing::AssertionFailure();
     }
 
-    uint8_t* ipBuffer = static_cast<uint8_t*>(static_cast<void*>(mem->pointer()));
+    uint8_t* ipBuffer = static_cast<uint8_t*>(static_cast<void*>(mem->unsecurePointer()));
     memcpy(ipBuffer, kInBinaryBuffer, sizeof(kInBinaryBuffer));
 
     // hidlMemory is not to be passed out of scope!
@@ -568,7 +568,7 @@ TEST_F(MediaCasHidlTest, TestClearKeyApis) {
     EXPECT_EQ(Status::OK, descrambleStatus);
 
     ASSERT_NE(nullptr, dataMemory.get());
-    uint8_t* opBuffer = static_cast<uint8_t*>(static_cast<void*>(dataMemory->pointer()));
+    uint8_t* opBuffer = static_cast<uint8_t*>(static_cast<void*>(dataMemory->unsecurePointer()));
 
     int compareResult =
         memcmp(static_cast<const void*>(opBuffer), static_cast<const void*>(kOutRefBinaryBuffer),
