@@ -29,6 +29,11 @@ interface IBaz extends IBase {
         VALL = V0 | V1 | V2 | V3,
     };
 
+    struct BitFieldTester {
+      bitfield<BitField> scalar;
+      vec<bitfield<BitField>> vector;
+     };
+
     enum SomeOtherEnum : uint8_t {
         bar = 66
     };
@@ -108,6 +113,7 @@ interface IBaz extends IBase {
 
     haveSomeStrings(string[3] array) generates (string[2] result);
     haveAStringVec(vec<string> vector) generates (vec<string> result);
+    repeatBitfieldVec(vec<bitfield<BitField>> vector) generates (vec<bitfield<BitField>> result);
 
     returnABunchOfStrings() generates (string a, string b, string c);
 
