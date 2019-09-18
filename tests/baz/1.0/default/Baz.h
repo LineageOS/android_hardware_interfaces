@@ -86,6 +86,8 @@ struct Baz : public IBaz {
                                  haveSomeStrings_cb _hidl_cb) override;
     Return<void> haveAStringVec(const hidl_vec<hidl_string>& vector,
                                 haveAStringVec_cb _hidl_cb) override;
+    Return<void> repeatBitfieldVec(const hidl_vec<uint8_t>& vector,
+                                   repeatBitfieldVec_cb _hidl_cb) override;
     Return<void> returnABunchOfStrings(returnABunchOfStrings_cb _hidl_cb) override;
     Return<uint8_t> returnABitField() override;
     Return<uint32_t> size(uint32_t size) override;

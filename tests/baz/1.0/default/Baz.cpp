@@ -364,6 +364,12 @@ Return<void> Baz::haveAStringVec(const hidl_vec<hidl_string>& vector,
     return Void();
 }
 
+Return<void> Baz::repeatBitfieldVec(const hidl_vec<uint8_t>& vector,
+                                    repeatBitfieldVec_cb _hidl_cb) {
+    _hidl_cb(vector);
+    return Void();
+}
+
 Return<void> Baz::returnABunchOfStrings(returnABunchOfStrings_cb _hidl_cb) {
     hidl_string eins; eins = "Eins";
     hidl_string zwei; zwei = "Zwei";
