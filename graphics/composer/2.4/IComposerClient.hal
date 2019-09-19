@@ -21,19 +21,32 @@ import @2.1::Error;
 import @2.3::IComposerClient;
 
 interface IComposerClient extends @2.3::IComposerClient {
-
     /**
      * Required capabilities which are supported by the display. The
      * particular set of supported capabilities for a given display may be
      * retrieved using getDisplayCapabilities.
      */
-    enum DisplayCapability : uint32_t {
+    enum DisplayCapability : @2.3::IComposerClient.DisplayCapability {
         /**
          * Indicates that the display supports protected contents.
          * When returned, hardware composer must be able to accept client target
          * with protected buffers.
          */
         PROTECTED_CONTENTS = 4,
+    };
+
+    /**
+     * Supersedes {@link @2.1::IComposerClient.DisplayType}.
+     */
+    enum DisplayConnectionType : uint32_t {
+        /**
+         * Display is connected through internal port, e.g. DSI, eDP.
+         */
+        INTERNAL = 0,
+        /**
+         * Display is connected through external port, e.g. HDMI, DisplayPort.
+         */
+        EXTERNAL = 1,
     };
 
     /**
@@ -46,6 +59,14 @@ interface IComposerClient extends @2.3::IComposerClient {
      * @return capabilities is a list of supported capabilities.
      */
     getDisplayCapabilities_2_4(Display display)
-              generates (Error error,
-                         vec<DisplayCapability> capabilities);
+        generates (Error error, vec<DisplayCapability> capabilities);
+
+    /**
+     * Returns whether the given physical display is internal or external.
+     *
+     * @return error is NONE upon success. Otherwise,
+     *     BAD_DISPLAY when the given display is invalid or virtual.
+     * @return type is the connection type of the display.
+     */
+    getDisplayConnectionType(Display display) generates (Error error, DisplayConnectionType type);
 };

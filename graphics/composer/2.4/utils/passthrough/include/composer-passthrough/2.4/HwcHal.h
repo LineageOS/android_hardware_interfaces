@@ -62,15 +62,34 @@ class HwcHalImpl : public V2_3::passthrough::detail::HwcHalImpl<Hal> {
         return Error::NONE;
     }
 
+    Error getDisplayConnectionType(Display display,
+                                   IComposerClient::DisplayConnectionType* outType) override {
+        if (!mDispatch.getDisplayConnectionType) {
+            return Error::UNSUPPORTED;
+        }
+
+        uint32_t type = HWC2_DISPLAY_CONNECTION_TYPE_INTERNAL;
+        int32_t error = mDispatch.getDisplayConnectionType(mDevice, display, &type);
+        *outType = static_cast<IComposerClient::DisplayConnectionType>(type);
+        return static_cast<Error>(error);
+    }
+
   protected:
     bool initDispatch() override {
         if (!BaseType2_3::initDispatch()) {
             return false;
         }
+
+        this->initOptionalDispatch(HWC2_FUNCTION_GET_DISPLAY_CONNECTION_TYPE,
+                                   &mDispatch.getDisplayConnectionType);
         return true;
     }
 
   private:
+    struct {
+        HWC2_PFN_GET_DISPLAY_CONNECTION_TYPE getDisplayConnectionType;
+    } mDispatch = {};
+
     using BaseType2_1 = V2_1::passthrough::detail::HwcHalImpl<Hal>;
     using BaseType2_3 = V2_3::passthrough::detail::HwcHalImpl<Hal>;
     using BaseType2_1::mDevice;
