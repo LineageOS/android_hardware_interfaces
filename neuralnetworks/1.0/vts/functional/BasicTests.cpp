@@ -21,17 +21,17 @@
 namespace android::hardware::neuralnetworks::V1_0::vts::functional {
 
 // create device test
-TEST_F(NeuralnetworksHidlTest, CreateDevice) {}
+TEST_P(NeuralnetworksHidlTest, CreateDevice) {}
 
 // status test
-TEST_F(NeuralnetworksHidlTest, StatusTest) {
+TEST_P(NeuralnetworksHidlTest, StatusTest) {
     Return<DeviceStatus> status = kDevice->getStatus();
     ASSERT_TRUE(status.isOk());
     EXPECT_EQ(DeviceStatus::AVAILABLE, static_cast<DeviceStatus>(status));
 }
 
 // initialization
-TEST_F(NeuralnetworksHidlTest, GetCapabilitiesTest) {
+TEST_P(NeuralnetworksHidlTest, GetCapabilitiesTest) {
     Return<void> ret =
             kDevice->getCapabilities([](ErrorStatus status, const Capabilities& capabilities) {
                 EXPECT_EQ(ErrorStatus::NONE, status);

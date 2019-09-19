@@ -94,7 +94,7 @@ static void validate(const sp<IPreparedModel>& preparedModel, const std::string&
 
         // create burst
         std::shared_ptr<::android::nn::ExecutionBurstController> burst =
-                ::android::nn::ExecutionBurstController::create(preparedModel, /*blocking=*/true);
+                android::nn::ExecutionBurstController::create(preparedModel, /*blocking=*/true);
         ASSERT_NE(nullptr, burst.get());
 
         // create memory keys
