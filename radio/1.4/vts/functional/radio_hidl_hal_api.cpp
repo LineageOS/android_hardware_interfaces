@@ -398,7 +398,7 @@ TEST_F(RadioHidlTest_v1_4, startNetworkScan_InvalidPeriodicity1) {
             .interval = 60,
             .specifiers = {specifier},
             .maxSearchTime = 600,
-            .incrementalResults = false,
+            .incrementalResults = true,
             .incrementalResultsPeriodicity = 0};
 
     Return<void> res = radio_v1_4->startNetworkScan_1_4(serial, request);
@@ -434,7 +434,7 @@ TEST_F(RadioHidlTest_v1_4, startNetworkScan_InvalidPeriodicity2) {
             .interval = 60,
             .specifiers = {specifier},
             .maxSearchTime = 600,
-            .incrementalResults = false,
+            .incrementalResults = true,
             .incrementalResultsPeriodicity = 11};
 
     Return<void> res = radio_v1_4->startNetworkScan_1_4(serial, request);
