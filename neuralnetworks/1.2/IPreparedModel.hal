@@ -157,22 +157,44 @@ interface IPreparedModel extends @1.0::IPreparedModel {
      * unless the device itself is in a bad state.
      *
      * @param callback A callback object used to retrieve memory resources
-     *                 corresponding to a unique identifiers ("slots").
-     * @param requestChannel Used by the client to send a serialized Request to
-     *                       the Burst for execution. The client must not change
-     *                       the content of any data object referenced by the
-     *                       Request (described by the {@link @1.0::DataLocation}
-     *                       of an {@link OperandInformation}) until a result
-     *                       has been received from resultChannel. Execution
-     *                       must not change the content of any of the data
-     *                       objects corresponding to Request inputs. requestChannel
+     *                 corresponding to unique identifiers ("slots").
+     * @param requestChannel FMQ used by the client to send a serialized Request
+     *                       to the Burst for execution. The client must not
+     *                       change the content of any data object referenced by
+     *                       the Request (described by the
+     *                       {@link @1.0::DataLocation} of an
+     *                       {@link OperandInformation}) until a result has been
+     *                       received from resultChannel. Execution must not
+     *                       change the content of any of the data objects
+     *                       corresponding to Request inputs. requestChannel
      *                       must not be used to pass a second Request object
-     *                       until a result has been received from resultChannel.
-     * @param resultChannel Used by the service to return the results of an
-     *                      execution to the client: the status of the execution
-     *                      and OutputShape of all output tensors. resultChannel
-     *                      must be used to return the results if a Request was
-     *                      sent through the requestChannel.
+     *                       until a result has been received from
+     *                       resultChannel. The client must send the request
+     *                       messages to the consumer atomically by using
+     *                       MessageQueue::writeBlocking if the queue is
+     *                       blocking, or by using MessageQueue::write if the
+     *                       queue is non-blocking. When the service receives a
+     *                       packet, it must dequeue the entire packet from the
+     *                       requestChannel. The client must not send a request
+     *                       packet that exceeds the length of the FMQ.
+     * @param resultChannel FMQ used by the service to return the results of an
+     *                      execution to the client: the status of the
+     *                      execution, OutputShape of all output tensors, and
+     *                      timing information. resultChannel must be used to
+     *                      return the results if a Request was sent through the
+     *                      requestChannel. The service must send the result
+     *                      messages to the consumer atomically by using
+     *                      MessageQueue::writeBlocking if the queue is
+     *                      blocking, or by using MessageQueue::write if the
+     *                      queue is non-blocking. When the client receives a
+     *                      packet, it must dequeue the entire packet from the
+     *                      resultChannel. If the packet's length exceeds the
+     *                      size of the FMQ, the service must not send this
+     *                      result packet; instead, the service must send a
+     *                      packet consisting of the error code
+     *                      ErrorStatus::GENERAL_FAILURE, no information for the
+     *                      outputShapes, and an indication that timing
+     *                      information is unavailable.
      * @return status Error status of configuring the execution burst, must be:
      *                - NONE if the burst is successfully configured
      *                - DEVICE_UNAVAILABLE if driver is offline or busy
