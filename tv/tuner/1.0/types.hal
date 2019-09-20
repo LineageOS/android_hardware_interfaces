@@ -479,3 +479,99 @@ typedef uint32_t AvSyncHwId;
  *  framework and apps.
  */
 typedef vec<uint8_t> TunerKeyToken;
+
+/**
+ * A data format in demux's output or input according to ISO/IEC 13818-1.
+ */
+@export
+enum DemuxDataFormat : uint32_t {
+    /* Data is Transport Stream. */
+    TS,
+    /* Data is Packetized Elementary Stream. */
+    PES,
+    /* Data is Elementary Stream. */
+    ES,
+};
+
+/**
+ * A status of the demux's output.
+ */
+typedef DemuxFilterStatus DemuxOutputStatus;
+
+/**
+ *  The Settings for the demux's output.
+ */
+struct DemuxOutputSettings {
+    /**
+     * Register for interested status events so that the HAL can send these
+     * status events back to client.
+     */
+    bitfield<DemuxOutputStatus> statusMask;
+    /**
+     * Unconsumed data size in bytes in the output. The HAL uses it to trigger
+     * DemuxOutputStatus::LOW_WATER.
+     */
+    uint32_t lowThreshold;
+    /**
+     * Unconsumed data size in bytes in the output. The HAL uses it to trigger
+     * DemuxOutputStatus::High_WATER.
+     */
+    uint32_t highThreshold;
+    /**
+     * The data format in the output.
+     */
+    DemuxDataFormat dataFormat;
+    /**
+     * The packet size in bytes in the output.
+     */
+    uint8_t packetSize;
+};
+
+/**
+ * A status of the demux's input.
+ */
+@export
+enum DemuxInputStatus : uint32_t {
+    /**
+     * The space of the demux's input is empty.
+     */
+    SPACE_EMPTY        = 1 << 0,
+    /**
+     * The spece of the demux's input is almost empty.
+     */
+    SPACE_ALMOST_EMPTY = 1 << 1,
+    /**
+     * The space of the demux's input is almost full.
+     */
+    SPACE_ALMOST_FULL  = 1 << 2,
+    /**
+     * The space of the demux's input is full.
+     */
+    SPACE_FULL         = 1 << 3,
+};
+
+struct DemuxInputSettings {
+    /**
+     * Register for interested status events so that the HAL can send these
+     * status events back to client.
+     */
+    bitfield<DemuxInputStatus> statusMask;
+    /**
+     * Unused space size in bytes in the input. The HAL uses it to trigger
+     * DemuxInputStatus::SPACE_ALMOST_EMPTY.
+     */
+    uint32_t lowThreshold;
+    /**
+     * Unused space size in bytes in the input. The HAL uses it to trigger
+     * DemuxInputStatus::SPACE_ALMOST_FULL.
+     */
+    uint32_t highThreshold;
+    /**
+     * The data format in the input.
+     */
+    DemuxDataFormat dataFormat;
+    /**
+     * The packet size in bytes in the input.
+     */
+    uint8_t packetSize;
+};
