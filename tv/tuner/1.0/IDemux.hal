@@ -180,5 +180,220 @@ interface IDemux {
      *         UNKNOWN_ERROR if failed for other reasons.
      */
     close() generates (Result result);
-};
 
+    /**
+     * Add output to the demux
+     *
+     * It is used by the client to record output data from selected filters.
+     *
+     * @param bufferSize the buffer size of the output to be added. It's used to
+     * create a FMQ(Fast Message Queue) to hold data from selected filters.
+     * @param cb the callback for the demux to be used to send notifications
+     * back to the client.
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         OUT_OF_MEMORY if failed for not enough memory.
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    addOutput(uint32_t bufferSize, IDemuxCallback cb) generates (Result result);
+
+    /**
+     * Get the descriptor of the output's FMQ
+     *
+     * It is used by the client to get the descriptor of the output's Fast
+     * Message Queue. The data in FMQ is muxed packets output from selected
+     * filters. The packet's format is specifed by DemuxDataFormat in
+     * DemuxOutputSettings.
+     *
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         UNKNOWN_ERROR if failed for other reasons.
+     * @return queue the descriptor of the output's FMQ
+     */
+    getOutputQueueDesc() generates (Result result, fmq_sync<uint8_t> queue);
+
+    /**
+     * Configure the demux's output.
+     *
+     * It is used by the client to configure the demux's output for recording.
+     *
+     * @param settings the settings of the demux's output.
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_STATE if failed for wrong state.
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    configureOutput(DemuxOutputSettings settings) generates (Result result);
+
+    /**
+     * Attach one filter to the demux's output.
+     *
+     * It is used by the client to mux one filter's output to demux's output.
+     *
+     * @param filterId the ID of the attached filter.
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_STATE if failed for wrong state.
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    attachOutputTsFilter(DemuxFilterId filterId) generates (Result result);
+
+    /**
+     * Detach one filter from the demux's output.
+     *
+     * It is used by the client to remove one filter's output from demux's
+     * output.
+     *
+     * @param filterId the ID of the detached filter.
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_STATE if failed for wrong state.
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    detachOutputTsFilter(DemuxFilterId filterId) generates (Result result);
+
+    /**
+     * Start to take data to the demux's output.
+     *
+     * It is used by the client to ask the output to start to take data from
+     * attached filters.
+     *
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_STATE if failed for wrong state.
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    startOutput() generates (Result result);
+
+    /**
+     * Stop to take data to the demux's output.
+     *
+     * It is used by the client to ask the output to stop to take data from
+     * attached filters.
+     *
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_STATE if failed for wrong state.
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    stopOutput() generates (Result result);
+
+    /**
+     * Flush unconsumed data in the demux's output.
+     *
+     * It is used by the client to ask the demux to flush the data which is
+     * already produced but not consumed yet in the demux's output.
+     *
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_STATE if failed for wrong state.
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    flushOutput() generates (Result result);
+
+    /**
+     * Remove the demux's output.
+     *
+     * It is used by the client to remove the demux's output.
+     *
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_STATE if failed for wrong state.
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    removeOutput() generates (Result result);
+
+    /**
+     * Add input to the demux
+     *
+     * It is used by the client to add the demux's input for playback content.
+     *
+     * @param bufferSize the buffer size of the demux's input to be added.
+     * It's used to create a FMQ(Fast Message Queue) to hold input data.
+     * @param cb the callback for the demux to be used to send notifications
+     * back to the client.
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         OUT_OF_MEMORY if failed for not enough memory.
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    addInput(uint32_t bufferSize, IDemuxCallback cb) generates (Result result);
+
+    /**
+     * Get the descriptor of the input's FMQ
+     *
+     * It is used by the client to get the descriptor of the input's Fast
+     * Message Queue. The data in FMQ is fed by client. Data format is specifed
+     * by DemuxDataFormat in DemuxInputSettings.
+     *
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         UNKNOWN_ERROR if failed for other reasons.
+     * @return queue the descriptor of the output's FMQ
+     */
+    getInputQueueDesc() generates (Result result, fmq_sync<uint8_t> queue);
+
+    /**
+     * Configure the demux's input.
+     *
+     * It is used by the client to configure the demux's input for playback.
+     *
+     * @param settings the settings of the demux's input.
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_STATE if failed for wrong state.
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    configureInput(DemuxInputSettings settings) generates (Result result);
+
+    /**
+     * Start to consume the data from the demux's input.
+     *
+     * It is used by the client to ask the demux to start to consume data from
+     * the demux's input.
+     *
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_STATE if failed for wrong state.
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    startInput() generates (Result result);
+
+    /**
+     * Stop to consume the data from the demux's input.
+     *
+     * It is used by the client to ask the demux to stop to consume data from
+     * the demux's input.
+     *
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_STATE if failed for wrong state.
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    stopInput() generates (Result result);
+
+    /**
+     * Flush unconsumed data in the demux's input.
+     *
+     * It is used by the client to ask the demux to flush the data which is
+     * already produced but not consumed yet in the demux's input.
+     *
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_STATE if failed for wrong state.
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    flushInput() generates (Result result);
+
+    /**
+     * Remove the demux's input.
+     *
+     * It is used by the client to remove the demux's input.
+     *
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_STATE if failed for wrong state.
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    removeInput() generates (Result result);
+};

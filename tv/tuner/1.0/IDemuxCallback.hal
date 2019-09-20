@@ -15,5 +15,19 @@ interface IDemuxCallback {
      * @param status a new status of the demux filter.
      */
     oneway onFilterStatus(DemuxFilterId filterId, DemuxFilterStatus status);
+
+    /**
+     * Notify the client a new status of the demux's output.
+     *
+     * @param status a new status of the demux's output.
+     */
+    oneway onOutputStatus(DemuxOutputStatus status);
+
+    /**
+     * Notify the client a new status of the demux's input.
+     *
+     * @param status a new status of the demux's input.
+     */
+    oneway onInputStatus(DemuxInputStatus status);
 };
 
