@@ -24,7 +24,12 @@
 #include <hidl/MQDescriptor.h>
 #include <hidl/Status.h>
 
+#include <atomic>
+#include <condition_variable>
 #include <map>
+#include <mutex>
+#include <queue>
+#include <thread>
 
 namespace android {
 namespace hardware {
@@ -159,6 +164,7 @@ class HalProxy : public ISensors, public IScopedWakelockRefCounter {
      */
     std::vector<ISensorsSubHal*> mSubHalList;
 
+    //! The list of subhal callbacks for each subhal where the indices correlate with mSubHalList
     std::vector<const sp<IHalProxyCallback>> mSubHalCallbacks;
 
     /**
@@ -179,6 +185,9 @@ class HalProxy : public ISensors, public IScopedWakelockRefCounter {
     //! The mutex for the event queue.
     std::mutex mEventQueueMutex;
 
+    //! The timeout for each pending write on background thread for events.
+    static const int64_t kWakelockTimeoutNs = 5 * INT64_C(1000000000) /* 5 seconds */;
+
     //! The scoped wakelock ref count.
     size_t mWakelockRefCount = 0;
 
@@ -187,6 +196,21 @@ class HalProxy : public ISensors, public IScopedWakelockRefCounter {
 
     //! The bit mask used to get the subhal index from a sensor handle.
     static constexpr uint32_t kSensorHandleSubHalIndexMask = 0xFF000000;
+
+    //! The events that were not able to be written to fmq right away
+    std::queue<std::vector<Event>> mPendingWriteEventsQueue;
+
+    //! The mutex protecting writing to the fmq and the pending events queue
+    std::mutex mEventQueueWriteMutex;
+
+    //! The condition variable waiting on pending write events to stack up
+    std::condition_variable mEventQueueWriteCV;
+
+    //! The thread object ptr that handles pending writes
+    std::thread mPendingWritesThread;
+
+    //! The bool indicating whether to end the pending writes background thread or not
+    bool mPendingWritesRun = true;
 
     /**
      * Initialize the list of SubHal objects in mSubHalList by reading from dynamic libraries
@@ -209,6 +233,16 @@ class HalProxy : public ISensors, public IScopedWakelockRefCounter {
      * Calls the above two helper methods which are shared in both ctors.
      */
     void initializeSubHalCallbacksAndSensorList();
+
+    /**
+     * Starts the thread that handles pending writes to event fmq.
+     *
+     * @param halProxy The HalProxy object pointer.
+     */
+    static void startPendingWritesThread(HalProxy* halProxy);
+
+    //! Handles the pending writes on events to eventqueue.
+    void handlePendingWrites();
 
     /**
      * Clear direct channel flags if the HalProxy has already chosen a subhal as its direct channel
