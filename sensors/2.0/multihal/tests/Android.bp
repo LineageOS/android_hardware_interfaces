@@ -33,6 +33,9 @@ cc_defaults {
         "libpower",
         "libutils",
     ],
+    static_libs: [
+        "android.hardware.sensors@2.0-HalProxy",
+    ],
 }
 
 cc_library {

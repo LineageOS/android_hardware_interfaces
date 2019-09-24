@@ -16,14 +16,12 @@
 
 #pragma once
 
+#include "ScopedWakelock.h"
+
 #include <android/hardware/sensors/1.0/types.h>
 #include <android/hardware/sensors/2.0/ISensors.h>
 
 #include <vector>
-
-using ::android::hardware::sensors::V1_0::Event;
-using ::android::hardware::sensors::V1_0::Result;
-using ::android::hardware::sensors::V1_0::SensorInfo;
 
 // Indicates the current version of the multiHAL interface formatted as (HAL major version) << 24 |
 // (HAL minor version) << 16 | (multiHAL version)
@@ -35,44 +33,9 @@ namespace sensors {
 namespace V2_0 {
 namespace implementation {
 
-/**
- * Wrapper around wake lock acquisition functions (acquire/release_wake_lock) that provides a
- * RAII-style mechanism for keeping a wake lock held for the duration of a scoped block.
- * When a ScopedWakelock is created, it increments the reference count stored in the HalProxy
- * for the sub-HALs specific wake lock, acquiring the wake lock if necessary. When the object goes
- * out of scope, the ref count is decremented, potentially releasing the wake lock if no other
- * references to the wake lock exist.
- *
- * This class is allocated through the createScopedWakelock callback inside the IHalProxyCallback
- * provided to sub-HALs during initialization and should be used for all wake lock acquisition
- * inside of the sub-HAL to ensure wake locks are not held indefinitely.
- *
- * The most prevalent use case for this class will be for posting events to the framework through
- * the postEvents HalProxy callback. The expectation is that sub-HALs will create this
- * ScopedWakelock through the createScopedWakelock upon receiving a sensor events. The lock boolean
- * provided to createScopedWakelock will be set the according to whether the sensor events are
- * from wakeup sensors. Then, the sub-HAL will perform any processing necessary before invoking the
- * postEvents callback passing in the previously created ScopedWakelock. At this point, ownership
- * of the object will be passed to the HalProxy that will then be responsible for ensuring any
- * wake locks continue to be held, if necessary.
- */
-class ScopedWakelock {
-  public:
-    ScopedWakelock(ScopedWakelock&&) = default;
-    ScopedWakelock& operator=(ScopedWakelock&&) = default;
-    virtual ~ScopedWakelock() { mLocked = false; };
-
-    bool isLocked() const { return mLocked; }
-
-  protected:
-    bool mLocked;
-
-  private:
-    // TODO: Mark HalProxy's subclass of ScopedWakelock as a friend so that it can be initialized.
-    ScopedWakelock();
-    ScopedWakelock(const ScopedWakelock&) = delete;
-    ScopedWakelock& operator=(const ScopedWakelock&) = delete;
-};
+using ::android::hardware::sensors::V1_0::Event;
+using ::android::hardware::sensors::V1_0::Result;
+using ::android::hardware::sensors::V1_0::SensorInfo;
 
 /**
  * Interface that contains several callbacks into the HalProxy class to communicate dynamic sensor
@@ -169,7 +132,9 @@ class ISensorsSubHal : public ISensors {
     /**
      * First method invoked on the sub-HAL after it's allocated through sensorsHalGetSubHal() by the
      * HalProxy. Sub-HALs should use this to initialize any state and retain the callback given in
-     * order to communicate with the HalProxy.
+     * order to communicate with the HalProxy. Method will be called anytime the sensors framework
+     * restarts. Therefore, this method will be responsible for reseting the state of the subhal and
+     * cleaning up and reallocating any previously allocated data.
      *
      * @param halProxyCallback callback used to inform the HalProxy when a dynamic sensor's state
      *     changes, new sensor events should be sent to the framework, and when a new ScopedWakelock
