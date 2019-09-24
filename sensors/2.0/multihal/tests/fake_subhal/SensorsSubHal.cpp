@@ -221,6 +221,16 @@ Return<void> DoesNotSupportDirectChannelSensorsSubHal::getSensorsList(getSensors
     return Void();
 }
 
+void AddAndRemoveDynamicSensorsSubHal::addDynamicSensors(
+        const std::vector<SensorInfo>& sensorsAdded) {
+    mCallback->onDynamicSensorsConnected(sensorsAdded);
+}
+
+void AddAndRemoveDynamicSensorsSubHal::removeDynamicSensors(
+        const std::vector<int32_t>& sensorHandlesRemoved) {
+    mCallback->onDynamicSensorsDisconnected(sensorHandlesRemoved);
+}
+
 }  // namespace implementation
 }  // namespace subhal
 }  // namespace V2_0
