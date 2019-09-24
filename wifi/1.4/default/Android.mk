@@ -18,6 +18,7 @@ LOCAL_PATH := $(call my-dir)
 ###
 include $(CLEAR_VARS)
 LOCAL_MODULE := android.hardware.wifi@1.0-service-lib
+LOCAL_VINTF_FRAGMENTS := android.hardware.wifi@1.0-service.xml
 LOCAL_MODULE_RELATIVE_PATH := hw
 LOCAL_PROPRIETARY_MODULE := true
 LOCAL_CPPFLAGS := -Wall -Werror -Wextra
@@ -77,7 +78,6 @@ include $(BUILD_STATIC_LIBRARY)
 ###
 include $(CLEAR_VARS)
 LOCAL_MODULE := android.hardware.wifi@1.0-service
-LOCAL_VINTF_FRAGMENTS := android.hardware.wifi@1.0-service.xml
 LOCAL_MODULE_RELATIVE_PATH := hw
 LOCAL_PROPRIETARY_MODULE := true
 LOCAL_CPPFLAGS := -Wall -Werror -Wextra
@@ -107,7 +107,6 @@ include $(BUILD_EXECUTABLE)
 ###
 include $(CLEAR_VARS)
 LOCAL_MODULE := android.hardware.wifi@1.0-service-lazy
-LOCAL_VINTF_FRAGMENTS := android.hardware.wifi@1.0-service.xml
 LOCAL_OVERRIDES_MODULES := android.hardware.wifi@1.0-service
 LOCAL_CFLAGS := -DLAZY_SERVICE
 LOCAL_MODULE_RELATIVE_PATH := hw
