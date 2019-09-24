@@ -162,25 +162,34 @@ Return<Result> HalProxy::injectSensorData(const Event& event) {
     return result;
 }
 
-Return<void> HalProxy::registerDirectChannel(const SharedMemInfo& /* mem */,
+Return<void> HalProxy::registerDirectChannel(const SharedMemInfo& mem,
                                              registerDirectChannel_cb _hidl_cb) {
-    // TODO: During init, discover the first sub-HAL in the config that has sensors with direct
-    // channel support, if any, and proxy the API call there.
-    _hidl_cb(Result::INVALID_OPERATION, -1 /* channelHandle */);
+    if (mDirectChannelSubHal == nullptr) {
+        _hidl_cb(Result::INVALID_OPERATION, -1 /* channelHandle */);
+    } else {
+        mDirectChannelSubHal->registerDirectChannel(mem, _hidl_cb);
+    }
     return Return<void>();
 }
 
-Return<Result> HalProxy::unregisterDirectChannel(int32_t /* channelHandle */) {
-    // TODO: During init, discover the first sub-HAL in the config that has sensors with direct
-    // channel support, if any, and proxy the API call there.
-    return Result::INVALID_OPERATION;
+Return<Result> HalProxy::unregisterDirectChannel(int32_t channelHandle) {
+    Result result;
+    if (mDirectChannelSubHal == nullptr) {
+        result = Result::INVALID_OPERATION;
+    } else {
+        result = mDirectChannelSubHal->unregisterDirectChannel(channelHandle);
+    }
+    return result;
 }
 
-Return<void> HalProxy::configDirectReport(int32_t /* sensorHandle */, int32_t /* channelHandle */,
-                                          RateLevel /* rate */, configDirectReport_cb _hidl_cb) {
-    // TODO: During init, discover the first sub-HAL in the config that has sensors with direct
-    // channel support, if any, and proxy the API call there.
-    _hidl_cb(Result::INVALID_OPERATION, 0 /* reportToken */);
+Return<void> HalProxy::configDirectReport(int32_t sensorHandle, int32_t channelHandle,
+                                          RateLevel rate, configDirectReport_cb _hidl_cb) {
+    if (mDirectChannelSubHal == nullptr) {
+        _hidl_cb(Result::INVALID_OPERATION, -1 /* reportToken */);
+    } else {
+        mDirectChannelSubHal->configDirectReport(clearSubHalIndex(sensorHandle), channelHandle,
+                                                 rate, _hidl_cb);
+    }
     return Return<void>();
 }
 
