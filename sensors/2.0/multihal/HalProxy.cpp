@@ -146,9 +146,20 @@ Return<Result> HalProxy::flush(int32_t sensorHandle) {
     return getSubHalForSensorHandle(sensorHandle)->flush(clearSubHalIndex(sensorHandle));
 }
 
-Return<Result> HalProxy::injectSensorData(const Event& /* event */) {
-    // TODO: Proxy API call to appropriate sub-HAL.
-    return Result::INVALID_OPERATION;
+Return<Result> HalProxy::injectSensorData(const Event& event) {
+    Result result = Result::OK;
+    if (mCurrentOperationMode == OperationMode::NORMAL &&
+        event.sensorType != V1_0::SensorType::ADDITIONAL_INFO) {
+        ALOGE("An event with type != ADDITIONAL_INFO passed to injectSensorData while operation"
+              " mode was NORMAL.");
+        result = Result::BAD_VALUE;
+    }
+    if (result == Result::OK) {
+        Event subHalEvent = event;
+        subHalEvent.sensorHandle = clearSubHalIndex(event.sensorHandle);
+        result = getSubHalForSensorHandle(event.sensorHandle)->injectSensorData(subHalEvent);
+    }
+    return result;
 }
 
 Return<void> HalProxy::registerDirectChannel(const SharedMemInfo& /* mem */,
