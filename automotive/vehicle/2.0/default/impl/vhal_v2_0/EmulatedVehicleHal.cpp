@@ -131,6 +131,36 @@ VehicleHal::VehiclePropValuePtr EmulatedVehicleHal::get(
 StatusCode EmulatedVehicleHal::set(const VehiclePropValue& propValue) {
     static constexpr bool shouldUpdateStatus = false;
 
+    // set the value from vehcile side, used in end to end test.
+    if (propValue.prop == kSetIntPropertyFromVehcileForTest) {
+        auto mockValue = createVehiclePropValue(VehiclePropertyType::INT32, 1);
+        mockValue->prop = propValue.value.int32Values[0];
+        mockValue->value.int32Values[0] = propValue.value.int32Values[1];
+        mockValue->timestamp = propValue.value.int64Values[0];
+        mockValue->areaId = propValue.areaId;
+        setPropertyFromVehicle(*mockValue);
+        return StatusCode::OK;
+    }
+
+    if (propValue.prop == kSetFloatPropertyFromVehcileForTest) {
+        auto mockValue = createVehiclePropValue(VehiclePropertyType::FLOAT, 1);
+        mockValue->prop = propValue.value.int32Values[0];
+        mockValue->value.floatValues[0] = propValue.value.floatValues[0];
+        mockValue->timestamp = propValue.value.int64Values[0];
+        mockValue->areaId = propValue.areaId;
+        setPropertyFromVehicle(*mockValue);
+        return StatusCode::OK;
+    }
+    if (propValue.prop == kSetBooleanPropertyFromVehcileForTest) {
+        auto mockValue = createVehiclePropValue(VehiclePropertyType::BOOLEAN, 1);
+        mockValue->prop = propValue.value.int32Values[1];
+        mockValue->value.int32Values[0] = propValue.value.int32Values[0];
+        mockValue->timestamp = propValue.value.int64Values[0];
+        mockValue->areaId = propValue.areaId;
+        setPropertyFromVehicle(*mockValue);
+        return StatusCode::OK;
+    }
+
     if (propValue.prop == kGenerateFakeDataControllingProperty) {
         StatusCode status = handleGenerateFakeDataRequest(propValue);
         if (status != StatusCode::OK) {
@@ -198,12 +228,19 @@ StatusCode EmulatedVehicleHal::set(const VehiclePropValue& propValue) {
         return StatusCode::NOT_AVAILABLE;
     }
 
-    if (!mPropStore->writeValue(propValue, shouldUpdateStatus)) {
-        return StatusCode::INVALID_ARG;
+    /**
+     * After checking all conditions, such as the property is available, a real vhal will
+     * sent the events to Car ECU to take actions.
+     * Google HAL will just add a timestamp for the value and triggle the callback to android.
+     */
+    VehiclePropValuePtr updatedPropValue = getValuePool()->obtain(propValue);
+    updatedPropValue->timestamp = elapsedRealtimeNano();
+    if (!mPropStore->writeValue(*updatedPropValue, shouldUpdateStatus)) {
+        return StatusCode::INTERNAL_ERROR;
     }
 
-    getEmulatorOrDie()->doSetValueFromClient(propValue);
-    doHalEvent(getValuePool()->obtain(propValue));
+    getEmulatorOrDie()->doSetValueFromClient(*updatedPropValue);
+    doHalEvent(std::move(updatedPropValue));
 
     return StatusCode::OK;
 }
