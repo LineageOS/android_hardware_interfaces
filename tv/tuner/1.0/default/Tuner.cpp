@@ -22,6 +22,7 @@
 #include "Demux.h"
 #include "Descrambler.h"
 #include "Frontend.h"
+#include "Lnb.h"
 
 namespace android {
 namespace hardware {
@@ -92,6 +93,33 @@ Return<void> Tuner::openDescrambler(openDescrambler_cb _hidl_cb) {
     sp<IDescrambler> descrambler = new Descrambler();
 
     _hidl_cb(Result::SUCCESS, descrambler);
+    return Void();
+}
+
+Return<void> Tuner::getFrontendInfo(FrontendId /* frontendId */, getFrontendInfo_cb _hidl_cb) {
+    ALOGV("%s", __FUNCTION__);
+
+    FrontendInfo info;
+
+    _hidl_cb(Result::SUCCESS, info);
+    return Void();
+}
+
+Return<void> Tuner::getLnbIds(getLnbIds_cb _hidl_cb) {
+    ALOGV("%s", __FUNCTION__);
+
+    vector<LnbId> lnbIds;
+
+    _hidl_cb(Result::SUCCESS, lnbIds);
+    return Void();
+}
+
+Return<void> Tuner::openLnbById(LnbId /* lnbId */, openLnbById_cb _hidl_cb) {
+    ALOGV("%s", __FUNCTION__);
+
+    sp<ILnb> lnb = new Lnb();
+
+    _hidl_cb(Result::SUCCESS, lnb);
     return Void();
 }
 
