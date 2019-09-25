@@ -117,6 +117,13 @@ std::vector<TestBuffer> getOutputBuffers(const Request& request) {
     return outputBuffers;
 }
 
+std::string gtestCompliantName(std::string name) {
+    // gtest test names must only contain alphanumeric characters
+    std::replace_if(
+            name.begin(), name.end(), [](char c) { return !std::isalnum(c); }, '_');
+    return name;
+}
+
 }  // namespace android::hardware::neuralnetworks
 
 namespace android::hardware::neuralnetworks::V1_0 {

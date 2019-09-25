@@ -14,16 +14,19 @@
 // limitations under the License.
 //
 
-cc_defaults {
-    name: "VtsHalNeuralNetworksV1_2TargetTestDefaults",
+cc_test {
+    name: "VtsHalNeuralnetworksV1_2TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: [
+        "BasicTests.cpp",
+        "Callbacks.cpp",
+        "CompilationCachingTests.cpp",
+        "GeneratedTestHarness.cpp",
         "TestAssertions.cpp",
         "ValidateModel.cpp",
         "ValidateRequest.cpp",
+        "ValidateBurst.cpp",
         "VtsHalNeuralnetworks.cpp",
-        "Callbacks.cpp",
-        "GeneratedTestHarness.cpp",
     ],
     local_include_dirs: ["include"],
     shared_libs: [
@@ -42,41 +45,13 @@ cc_defaults {
         "libneuralnetworks_utils",
         "VtsHalNeuralNetworksV1_0_utils",
     ],
+    whole_static_libs: [
+        "neuralnetworks_generated_V1_0_example",
+        "neuralnetworks_generated_V1_1_example",
+        "neuralnetworks_generated_V1_2_example",
+    ],
     header_libs: [
         "libneuralnetworks_headers",
     ],
     test_suites: ["general-tests"],
-}
-
-cc_test {
-    name: "VtsHalNeuralnetworksV1_2TargetTest",
-    defaults: ["VtsHalNeuralNetworksV1_2TargetTestDefaults"],
-    srcs: [
-        "BasicTests.cpp",
-        "CompilationCachingTests.cpp",
-        "ValidateBurst.cpp",
-    ],
-    whole_static_libs: [
-        "neuralnetworks_generated_V1_0_example",
-        "neuralnetworks_generated_V1_1_example",
-        "neuralnetworks_generated_V1_2_example",
-    ],
-}
-
-cc_test {
-    name: "PresubmitHalNeuralnetworksV1_2TargetTest",
-    defaults: ["VtsHalNeuralNetworksV1_2TargetTestDefaults"],
-    srcs: [
-        "BasicTests.cpp",
-        "CompilationCachingTests.cpp",
-        "ValidateBurst.cpp",
-    ],
-    whole_static_libs: [
-        "neuralnetworks_generated_V1_0_example",
-        "neuralnetworks_generated_V1_1_example",
-        "neuralnetworks_generated_V1_2_example",
-    ],
-    cflags: [
-        "-DPRESUBMIT_NOT_VTS",
-    ],
 }

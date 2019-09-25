@@ -262,7 +262,7 @@ static void validateBurstSerialization(const sp<IPreparedModel>& preparedModel,
     }));
 
     // serialize the request
-    const auto serialized = ::android::nn::serialize(request, MeasureTiming::YES, slots);
+    const auto serialized = android::nn::serialize(request, MeasureTiming::YES, slots);
 
     // validations
     removeDatumTest(sender.get(), receiver.get(), serialized);
@@ -299,7 +299,7 @@ static void validateBurstFmqLength(const sp<IPreparedModel>& preparedModel,
     // skip test if regular burst output isn't useful for testing a failure
     // caused by having too small of a length for the result FMQ
     const std::vector<FmqResultDatum> serialized =
-            ::android::nn::serialize(statusRegular, outputShapesRegular, timingRegular);
+            android::nn::serialize(statusRegular, outputShapesRegular, timingRegular);
     if (statusRegular != ErrorStatus::NONE ||
         serialized.size() <= kExecutionBurstChannelSmallLength) {
         return;

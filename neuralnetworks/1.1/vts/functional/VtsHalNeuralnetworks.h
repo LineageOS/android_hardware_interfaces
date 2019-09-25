@@ -17,40 +17,32 @@
 #ifndef ANDROID_HARDWARE_NEURALNETWORKS_V1_1_VTS_HAL_NEURALNETWORKS_H
 #define ANDROID_HARDWARE_NEURALNETWORKS_V1_1_VTS_HAL_NEURALNETWORKS_H
 
-#include <android/hardware/neuralnetworks/1.0/types.h>
+#include <android/hardware/neuralnetworks/1.0/IPreparedModel.h>
 #include <android/hardware/neuralnetworks/1.1/IDevice.h>
 #include <android/hardware/neuralnetworks/1.1/types.h>
-
-#include <VtsHalHidlTargetTestBase.h>
-#include <VtsHalHidlTargetTestEnvBase.h>
-
-#include <android-base/macros.h>
 #include <gtest/gtest.h>
+#include <vector>
+#include "1.0/Utils.h"
 
 namespace android::hardware::neuralnetworks::V1_1::vts::functional {
 
-// A class for test environment setup
-class NeuralnetworksHidlEnvironment : public testing::VtsHalHidlTargetTestEnvBase {
-    DISALLOW_COPY_AND_ASSIGN(NeuralnetworksHidlEnvironment);
-    NeuralnetworksHidlEnvironment() = default;
+using NamedDevice = Named<sp<IDevice>>;
+using NeuralnetworksHidlTestParam = NamedDevice;
 
-  public:
-    static NeuralnetworksHidlEnvironment* getInstance();
-    void registerTestServices() override;
-};
-
-// The main test class for NEURALNETWORKS HIDL HAL.
-class NeuralnetworksHidlTest : public testing::VtsHalHidlTargetTestBase {
-    DISALLOW_COPY_AND_ASSIGN(NeuralnetworksHidlTest);
-
-  public:
-    NeuralnetworksHidlTest() = default;
-    void SetUp() override;
-
+class NeuralnetworksHidlTest : public testing::TestWithParam<NeuralnetworksHidlTestParam> {
   protected:
-    const sp<IDevice> kDevice = testing::VtsHalHidlTargetTestBase::getService<IDevice>(
-            NeuralnetworksHidlEnvironment::getInstance());
+    void SetUp() override;
+    const sp<IDevice> kDevice = getData(GetParam());
 };
+
+const std::vector<NamedDevice>& getNamedDevices();
+
+std::string printNeuralnetworksHidlTest(
+        const testing::TestParamInfo<NeuralnetworksHidlTestParam>& info);
+
+#define INSTANTIATE_DEVICE_TEST(TestSuite)                                                 \
+    INSTANTIATE_TEST_SUITE_P(PerInstance, TestSuite, testing::ValuesIn(getNamedDevices()), \
+                             printNeuralnetworksHidlTest)
 
 // Create an IPreparedModel object. If the model cannot be prepared,
 // "preparedModel" will be nullptr instead.
