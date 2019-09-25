@@ -77,6 +77,46 @@ Return<Result> Frontend::stopTune() {
     return Result::SUCCESS;
 }
 
+Return<Result> Frontend::scan(const FrontendSettings& /* settings */, FrontendScanType /* type */) {
+    ALOGV("%s", __FUNCTION__);
+
+    return Result::SUCCESS;
+}
+
+Return<Result> Frontend::stopScan() {
+    ALOGV("%s", __FUNCTION__);
+
+    return Result::SUCCESS;
+}
+
+Return<void> Frontend::getStatus(const hidl_vec<FrontendStatusType>& /* statusTypes */,
+                                 getStatus_cb _hidl_cb) {
+    ALOGV("%s", __FUNCTION__);
+
+    vector<FrontendStatus> statuses;
+    _hidl_cb(Result::SUCCESS, statuses);
+
+    return Void();
+}
+
+Return<Result> Frontend::setLna(bool /* bEnable */) {
+    ALOGV("%s", __FUNCTION__);
+
+    return Result::SUCCESS;
+}
+
+Return<Result> Frontend::setLnb(const sp<ILnb>& /* lnb */) {
+    ALOGV("%s", __FUNCTION__);
+
+    return Result::SUCCESS;
+}
+
+Return<Result> Frontend::sendDiseqcMessage(const hidl_vec<uint8_t>& /* diseqcMessage */) {
+    ALOGV("%s", __FUNCTION__);
+
+    return Result::SUCCESS;
+}
+
 FrontendType Frontend::getFrontendType() {
     return mType;
 }
