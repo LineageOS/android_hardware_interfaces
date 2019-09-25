@@ -21,13 +21,15 @@
 #include <android/hardware/neuralnetworks/1.0/types.h>
 #include <algorithm>
 #include <iosfwd>
+#include <string>
+#include <utility>
 #include <vector>
 #include "TestHarness.h"
 
 namespace android::hardware::neuralnetworks {
 
 // Create HIDL Request from the TestModel struct.
-V1_0::Request createRequest(const ::test_helper::TestModel& testModel);
+V1_0::Request createRequest(const test_helper::TestModel& testModel);
 
 // After execution, copy out output results from the output memory pool.
 std::vector<::test_helper::TestBuffer> getOutputBuffers(const V1_0::Request& request);
@@ -50,6 +52,21 @@ inline uint32_t hidl_vec_push_back(hidl_vec<Type>* vec, const Type& value) {
     (*vec)[index] = value;
     return index;
 }
+
+template <typename Type>
+using Named = std::pair<std::string, Type>;
+
+template <typename Type>
+const std::string& getName(const Named<Type>& namedData) {
+    return namedData.first;
+}
+
+template <typename Type>
+const Type& getData(const Named<Type>& namedData) {
+    return namedData.second;
+}
+
+std::string gtestCompliantName(std::string name);
 
 }  // namespace android::hardware::neuralnetworks
 
