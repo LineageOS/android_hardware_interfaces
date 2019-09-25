@@ -16,6 +16,7 @@
 package android.hardware.tv.tuner@1.0;
 
 import IFrontendCallback;
+import ILnb;
 
 /**
  * A Tuner Frontend is used to tune to a frequency and lock signal.
@@ -81,4 +82,98 @@ interface IFrontend {
      *         UNKNOWN_ERROR if failed for other reasons.
      */
     close() generates (Result result);
+
+    /**
+     * Scan the frontend to use the settings given.
+     *
+     * This uses the frontend to start a scan from signal delivery information.
+     * If previous scan isn't completed, this call MUST stop previous scan,
+     * and start a new scan.
+     * Scan is an async call, with FrontendScanMessage sent via callback.
+     *
+     * @param settings Signal delivery information which the frontend uses to
+     * scan the signal.
+     * @param type the type which the frontend uses to scan the signal.
+     *
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_STATE if tuning can't be applied at current stage,
+     *         UNKNOWN_ERROR if tuning failed for other reasons.
+     */
+    scan(FrontendSettings settings, FrontendScanType type) generates (Result result);
+
+    /**
+     * Stops a previous scanning.
+     *
+     * If the method completes successfully, the frontend stop previous
+     * scanning.
+     *
+     * @return result Result status of the operation.
+     *         SUCCESS if successfully stop tuning.
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    stopScan() generates (Result result);
+
+    /**
+     * Gets the statuses of the frontend.
+     *
+     * This retrieve the statuses of the frontend for given status types.
+     *
+     * @param statusTypes an array of status type which the caller request.
+     *
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_STATE if tuning can't be applied at current stage,
+     *         UNKNOWN_ERROR if tuning failed for other reasons.
+     * @return statuses an array of statuses which response the caller's
+     *         request.
+     */
+    getStatus(vec<FrontendStatusType> statusTypes) generates (Result result, vec<FrontendStatus> statuses);
+
+    /**
+     * Sets Low-Noise Block downconverter (LNB) for satellite frontend.
+     *
+     * This assigns a hardware LNB resource to the satellite frontend. It can be
+     * called multiple times to update LNB assignment. The LNB resource must be
+     * released when the frontend is closed.
+     *
+     * @param lnbId the Id of assigned LNB resource.
+     *
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_STATE if the frontend can't be set with a LNB, such as
+     *         cable frontend.
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    setLnb(ILnb lnb) generates (Result result);
+
+    /**
+     * Enble or Disable Low Noise Amplifier (LNA).
+     *
+     * @param bEnable true if activate LNA module; false if deactivate LNA
+     *
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_STATE if the frontend doesn't support LNA.
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    setLna(bool bEnable) generates (Result result);
+
+    /**
+     *  Sends DiSEqC (Digital Satellite Equipment Control) message.
+     *
+     * Client sends DiSeqc message to DiSEqc compatible device through the
+     * frontend. The response message from the device comes back to the client
+     * through frontend's callback onDiseqcMessage.
+     *
+     * @param diseqcMessage a byte array of data for DiSEqC message which is
+     *        specified by EUTELSAT Bus Functional Specification Version 4.2.
+     *
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_STATE if the frontend can't send DiSEqc Message, such as
+     *         cable frontend.
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    sendDiseqcMessage(vec<uint8_t> diseqcMessage) generates (Result result);
 };

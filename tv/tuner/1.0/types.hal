@@ -41,42 +41,121 @@ typedef uint32_t FrontendId;
 enum FrontendType : uint32_t {
     UNDEFINED = 0,
     ANALOG,
+    /* Advanced Television Systems Committee (ATSC) Standard A/72. */
     ATSC,
+    /* Advanced Television Systems Committee (ATSC 3.0) Standard A/330. */
+    ATSC3,
+    /**
+     * Digital Video Broadcasting - Cable
+     * DVB Cable Frontend Standard ETSI EN 300 468 V1.15.1.
+     */
     DVBC,
+    /**
+     * Digital Video Broadcasting - Satellite
+     * DVB Satellite Frontend Standard ETSI EN 300 468 V1.15.1 and
+     * ETSI EN 302 307-2 V1.1.1.
+     */
     DVBS,
+    /**
+     * Digital Video Broadcasting - Terrestrial
+     * DVB Terresttrial Frontend Standard ETSI EN 300 468 V1.15.1 and
+     * ETSI EN 302 755 V1.4.1.
+     */
     DVBT,
+    /* Integrated Services Digital Broadcasting-Satellite (ISDB-S)
+     * ARIB SDT-B20 is technical document of ISDB-S.
+     */
+    ISDBS,
+    /* Integrated Services Digital Broadcasting-Satellite (ISDB-S)
+     * ARIB TR-B15 is technical document of ISDB-S3.
+     */
+    ISDBS3,
+    /* Integrated Services Digital Broadcasting-Terrestrial (ISDB-T or SBTVD)
+     * ABNT NBR 15603 is technical document of ISDB-T.
+     */
     ISDBT,
 };
 
 /**
  *  Inner Forward Error Correction type as specified in ETSI EN 300 468 V1.15.1
- *  It's a 4-bit field specifying the inner FEC scheme used according to the
- *  table 35 in the spec.
+ *  and ETSI EN 302 307-2 V1.1.1.
  */
 @export
-enum FrontendInnerFec : uint32_t {
+enum FrontendInnerFec : uint64_t {
     /* Not defined */
     FEC_UNDEFINED = 0,
-    /* 1/2 conv. code rate */
-    FEC_1_2 = 1 << 0,
-    /* 2/3 conv. code rate */
-    FEC_2_3 = 1 << 1,
-    /* 3/4 conv. code rate */
-    FEC_3_4 = 1 << 2,
-    /* 5/6 conv. code rate */
-    FEC_5_6 = 1 << 3,
-    /* 7/8 conv. code rate */
-    FEC_7_8 = 1 << 4,
-    /* 8/9 conv. code rate */
-    FEC_8_9 = 1 << 5,
-    /* 3/5 conv. code rate */
-    FEC_3_5 = 1 << 6,
-    /* 4/5 conv. code rate */
-    FEC_4_5 = 1 << 7,
-    /* 9/10 conv. code rate */
-    FEC_9_10 = 1 << 8,
     /* hardware is able to detect and set FEC automatically */
-    FEC_AUTO = 1 << 9,
+    AUTO = 1 << 0,
+    /* 1/2 conv. code rate */
+    FEC_1_2 = 1 << 1,
+    /* 1/3 conv. code rate */
+    FEC_1_3 = 1 << 2,
+    /* 1/4 conv. code rate */
+    FEC_1_4 = 1 << 3,
+    /* 1/5 conv. code rate */
+    FEC_1_5 = 1 << 4,
+    /* 2/3 conv. code rate */
+    FEC_2_3 = 1 << 5,
+    /* 2/5 conv. code rate */
+    FEC_2_5 = 1 << 6,
+    /* 2/9 conv. code rate */
+    FEC_2_9 = 1 << 7,
+    /* 3/4 conv. code rate */
+    FEC_3_4 = 1 << 8,
+    /* 3/5 conv. code rate */
+    FEC_3_5 = 1 << 9,
+    /* 4/5 conv. code rate */
+    FEC_4_5 = 1 << 10,
+    /* 4/15 conv. code rate */
+    FEC_4_15 = 1 << 11,
+    /* 5/6 conv. code rate */
+    FEC_5_6 = 1 << 12,
+    /* 5/9 conv. code rate */
+    FEC_5_9 = 1 << 13,
+    /* 6/7 conv. code rate */
+    FEC_6_7 = 1 << 14,
+    /* 7/8 conv. code rate */
+    FEC_7_8 = 1 << 15,
+    /* 7/9 conv. code rate */
+    FEC_7_9 = 1 << 16,
+    /* 7/15 conv. code rate */
+    FEC_7_15 = 1 << 17,
+    /* 8/9 conv. code rate */
+    FEC_8_9 = 1 << 18,
+    /* 8/15 conv. code rate */
+    FEC_8_15 = 1 << 19,
+    /* 9/10 conv. code rate */
+    FEC_9_10 = 1 << 20,
+    /* 9/20 conv. code rate */
+    FEC_9_20 = 1 << 21,
+    /* 11/15 conv. code rate */
+    FEC_11_15 = 1 << 22,
+    /* 11/20 conv. code rate */
+    FEC_11_20 = 1 << 23,
+    /* 11/45 conv. code rate */
+    FEC_11_45 = 1 << 24,
+    /* 13/18 conv. code rate */
+    FEC_13_18 = 1 << 25,
+    /* 13/45 conv. code rate */
+    FEC_13_45 = 1 << 26,
+    /* 14/45 conv. code rate */
+    FEC_14_45 = 1 << 27,
+    /* 23/36 conv. code rate */
+    FEC_23_36 = 1 << 28,
+    /* 25/36 conv. code rate */
+    FEC_25_36 = 1 << 29,
+    /* 26/45 conv. code rate */
+    FEC_26_45 = 1 << 30,
+    /* 28/45 conv. code rate */
+    FEC_28_45 = 1 << 31,
+    /* 29/45 conv. code rate */
+    FEC_29_45 = 1 << 32,
+    /* 31/45 conv. code rate */
+    FEC_31_45 = 1 << 33,
+    /* 32/45 conv. code rate */
+    FEC_32_45 = 1 << 34,
+    /* 77/90 conv. code rate */
+    FEC_77_90 = 1 << 35,
 };
 
 /**
@@ -99,21 +178,760 @@ struct FrontendAtscSettings {
 };
 
 /**
+ *  Capabilities for ATSC Frontend.
+ */
+struct FrontendAtscCapabilities {
+    /** Modulation capability */
+    bitfield<FrontendAtscModulation> modulationCap;
+};
+
+/**
+ *  Modulation Type for ATSC3.
+ */
+@export
+enum FrontendAtsc3Modulation : uint32_t {
+    UNDEFINED = 0,
+    MOD_QPSK = 1 << 0,
+    MOD_16QAM = 1 << 1,
+    MOD_64QAM = 1 << 2,
+    MOD_256QAM = 1 << 3,
+    MOD_1024QAM = 1 << 4,
+    MOD_4096QAM = 1 << 5,
+};
+
+/**
+ *  Bandwidth for ATSC3.
+ */
+@export
+enum FrontendAtsc3Bandwidth : uint32_t {
+    UNDEFINED = 0,
+    BANDWIDTH_8MHZ = 1 << 0,
+    BANDWIDTH_7MHZ = 1 << 1,
+    BANDWIDTH_6MHZ = 1 << 2,
+};
+
+/**
+ *  Time Interleave Mode for ATSC3.
+ */
+@export
+enum FrontendAtsc3TimeInterleaveMode : uint32_t {
+    UNDEFINED,
+    CTI,
+    HTI,
+};
+
+/**
+ *  Code Rate for ATSC3.
+ */
+@export
+enum FrontendAtsc3CodeRate : uint32_t {
+    UNDEFINED = 0,
+    /** hardware is able to detect and set Coderate automatically */
+    AUTO     = 1 << 0,
+    CODERATE_2_15      = 1 << 1,
+    CODERATE_3_15      = 1 << 2,
+    CODERATE_4_15      = 1 << 3,
+    CODERATE_5_15      = 1 << 4,
+    CODERATE_6_15      = 1 << 5,
+    CODERATE_7_15      = 1 << 6,
+    CODERATE_8_15      = 1 << 7,
+    CODERATE_9_15      = 1 << 8,
+    CODERATE_10_15     = 1 << 9,
+    CODERATE_11_15     = 1 << 10,
+    CODERATE_12_15     = 1 << 11,
+    CODERATE_13_15     = 1 << 12,
+};
+
+/**
+ *  Forward Error Correction (FEC) for ATSC3.
+ */
+@export
+enum FrontendAtsc3Fec : uint32_t {
+    UNDEFINED,
+    BCH_LDPC_16K,
+    BCH_LDPC_64K,
+    CRC_LDPC_16K,
+    CRC_LDPC_64K,
+    LDPC_16K,
+    LDPC_64K,
+};
+
+/**
+ *  Signal Settings for an ATSC3 Frontend.
+ */
+struct FrontendAtsc3Settings {
+    /** Signal frequency in Hertz */
+    uint32_t frequency;
+    FrontendAtsc3Bandwidth bandwidth;
+    FrontendAtsc3TimeInterleaveMode interleaveMode;
+    FrontendAtsc3CodeRate codeRate;
+    FrontendAtsc3Fec fec;
+    vec<uint8_t> plpIdList;
+};
+
+/**
+ *  Capabilities for ATSC3 Frontend.
+ */
+struct FrontendAtsc3Capabilities {
+    /** Modulation capability */
+    bitfield<FrontendAtsc3Modulation> modulationCap;
+    /** Bandwidth capability */
+    bitfield<FrontendAtsc3Bandwidth> bandwidthCap;
+};
+
+/**
+ *  Modulation Type for DVBS.
+ */
+@export
+enum FrontendDvbsModulation : int32_t {
+    UNDEFINED = 0,
+    /** hardware is able to detect and set Modulation automatically */
+    AUTO = 1 << 0,
+    MOD_QPSK = 1 << 1,
+    MOD_8PSK = 1 << 2,
+    MOD_16QAM = 1 << 3,
+    MOD_16PSK = 1 << 4,
+    MOD_32PSK = 1 << 5,
+    MOD_ACM = 1 << 6,
+    MOD_8APSK = 1 << 7,
+    MOD_16APSK = 1 << 8,
+    MOD_32APSK = 1 << 9,
+    MOD_64APSK = 1 << 10,
+    MOD_128APSK = 1 << 11,
+    MOD_256APSK = 1 << 12,
+    /** Reserved for Proprietary modulation */
+    MOD_RESERVED = 1 << 13,
+};
+
+/**
+ *  Roll Off value for DVBS.
+ */
+@export
+enum FrontendDvbsRolloff : uint32_t {
+    UNDEFINED,
+    ROLLOFF_0_35,
+    ROLLOFF_0_25,
+    ROLLOFF_0_20,
+    ROLLOFF_0_15,
+    ROLLOFF_0_10,
+    ROLLOFF_0_5,
+};
+
+/**
+ *  Pilot mode for DVBS.
+ */
+@export
+enum FrontendDvbsPilot : uint32_t {
+    UNDEFINED,
+    ON,
+    OFF,
+    AUTO,
+};
+
+/**
+ *  Code Rate for DVBS.
+ */
+struct FrontendDvbsCodeRate {
+    FrontendInnerFec fec;
+    bool isLinear;
+    /* true if enable short frame */
+    bool isShortFrames;
+    /* bits number in 1000 symbol. 0 if use the default. */
+    uint32_t bitsPer1000Symbol;
+};
+
+/**
+ *  Sub standards in DVBS.
+ */
+@export
+enum FrontendDvbsStandard : uint8_t {
+    AUTO = 1 << 0,
+    S = 1 << 1,
+    S2 = 1 << 2,
+    S2X = 1 << 3,
+};
+
+/**
+ *  Signal Settings for an DVBS Frontend.
+ */
+struct FrontendDvbsSettings {
+    /** Signal frequency in Hertz */
+    uint32_t frequency;
+    FrontendDvbsModulation modulation;
+    FrontendDvbsCodeRate coderate;
+    /** Symbols per second */
+    uint32_t symbolRate;
+    FrontendDvbsRolloff rolloff;
+    FrontendDvbsPilot pilot;
+    uint32_t inputStreamId;
+    FrontendDvbsStandard standard;
+};
+
+/**
+ *  Capabilities for DVBS Frontend.
+ */
+struct FrontendDvbsCapabilities {
+    bitfield<FrontendDvbsModulation> modulationCap;
+    bitfield<FrontendInnerFec> innerfecCap;
+    bitfield<FrontendDvbsStandard>  standard;
+};
+
+/**
+ *  Modulation Type for DVBC.
+ */
+@export
+enum FrontendDvbcModulation : uint32_t {
+    UNDEFINED = 0,
+    /** hardware is able to detect and set Modulation automatically */
+    AUTO = 1 << 0,
+    MOD_16QAM = 1 << 1,
+    MOD_32QAM = 1 << 2,
+    MOD_64QAM = 1 << 3,
+    MOD_128QAM = 1 << 4,
+    MOD_256QAM = 1 << 5,
+};
+
+/**
+ *  Outer Forward Error Correction (FEC) Type for DVBC.
+ */
+@export
+enum FrontendDvbcOuterFec : uint32_t {
+    UNDEFINED = 0,
+    OUTER_FEC_NONE,
+    OUTER_FEC_RS,
+};
+
+/**
+ *   Annex Type for DVBC.
+ */
+@export
+enum FrontendDvbcAnnex : uint8_t {
+    UNDEFINED = 0,
+    A = 1 << 0,
+    B = 1 << 1,
+    C = 1 << 2,
+};
+
+/**
+ *   Spectral Inversion Type for DVBC.
+ */
+@export
+enum FrontendDvbcSpectralInversion : uint32_t {
+    UNDEFINED,
+    NORMAL,
+    INVERTED,
+};
+
+/**
+ *  Signal Settings for an DVBC Frontend.
+ */
+struct FrontendDvbcSettings {
+    /** Signal frequency in Hertz */
+    uint32_t frequency;
+    FrontendDvbcModulation modulation;
+    FrontendInnerFec fec;
+    /** Symbols per second */
+    uint32_t symbolRate;
+    FrontendDvbcOuterFec outerFec;
+    FrontendDvbcAnnex annex;
+    FrontendDvbcSpectralInversion spectralInversion;
+};
+
+/**
+ *  Capabilities for DVBC Frontend.
+ */
+struct FrontendDvbcCapabilities {
+    bitfield<FrontendDvbcModulation> modulationCap;
+    bitfield<FrontendInnerFec> fecCap;
+    bitfield<FrontendDvbcAnnex> annexCap;
+};
+
+/**
+ *  Bandwidth Type for DVBT.
+ */
+@export
+enum FrontendDvbtBandwidth : uint32_t {
+    UNDEFINED = 0,
+    /** hardware is able to detect and set Bandwidth automatically */
+    AUTO = 1 << 0,
+    BANDWIDTH_8MHZ = 1 << 1,
+    BANDWIDTH_7MHZ = 1 << 2,
+    BANDWIDTH_6MHZ = 1 << 3,
+    BANDWIDTH_5MHZ = 1 << 4,
+    BANDWIDTH_1_7MHZ = 1 << 5,
+    BANDWIDTH_10MHZ = 1 << 6,
+};
+
+/**
+ *  Constellation Type for DVBT.
+ */
+@export
+enum FrontendDvbtConstellation : uint32_t {
+    UNDEFINED = 0,
+    /** hardware is able to detect and set Constellation automatically */
+    AUTO = 1 << 0,
+    CONSTELLATION_QPSK = 1 << 1,
+    CONSTELLATION_16QAM = 1 << 2,
+    CONSTELLATION_64QAM = 1 << 3,
+    CONSTELLATION_256QAM = 1 << 4,
+};
+
+/**
+ *  Hierarchy Type for DVBT.
+ */
+@export
+enum FrontendDvbtHierarchy : uint32_t {
+    UNDEFINED = 0,
+    /** hardware is able to detect and set Hierarchy automatically */
+    AUTO = 1 << 0,
+    HIERARCHY_NON_NATIVE = 1 << 1,
+    HIERARCHY_1_NATIVE = 1 << 2,
+    HIERARCHY_2_NATIVE = 1 << 3,
+    HIERARCHY_4_NATIVE = 1 << 4,
+    HIERARCHY_NON_INDEPTH = 1 << 5,
+    HIERARCHY_1_INDEPTH = 1 << 6,
+    HIERARCHY_2_INDEPTH = 1 << 7,
+    HIERARCHY_4_INDEPTH = 1 << 8,
+};
+
+/**
+ *  Hierarchy Type for DVBT.
+ */
+@export
+enum FrontendDvbtCoderate : uint32_t {
+    UNDEFINED = 0,
+    /** hardware is able to detect and set Hierarchy automatically */
+    AUTO = 1 << 0,
+    CODERATE_1_2 = 1 << 1,
+    CODERATE_2_3 = 1 << 2,
+    CODERATE_3_4 = 1 << 3,
+    CODERATE_5_6 = 1 << 4,
+    CODERATE_7_8 = 1 << 5,
+    CODERATE_3_5 = 1 << 6,
+    CODERATE_4_5 = 1 << 7,
+    CODERATE_6_7 = 1 << 8,
+    CODERATE_8_9 = 1 << 9,
+};
+
+/**
+ *  Guard Interval Type for DVBT.
+ */
+@export
+enum FrontendDvbtGuardInterval : uint32_t {
+    UNDEFINED = 0,
+    /** hardware is able to detect and set Guard Interval automatically */
+    AUTO = 1 << 0,
+    INTERVAL_1_32 = 1 << 1,
+    INTERVAL_1_16 = 1 << 2,
+    INTERVAL_1_8 = 1 << 3,
+    INTERVAL_1_4 = 1 << 4,
+    INTERVAL_1_128 = 1 << 5,
+    INTERVAL_19_128 = 1 << 6,
+    INTERVAL_19_256 = 1 << 7,
+};
+
+/**
+ *  Transmission Mode for DVBT.
+ */
+@export
+enum FrontendDvbtTransmissionMode : uint32_t {
+    UNDEFINED = 0,
+    /** hardware is able to detect and set Transmission Mode automatically */
+    AUTO = 1 << 0,
+    MODE_2K = 1 << 1,
+    MODE_8K = 1 << 2,
+    MODE_4K = 1 << 3,
+    MODE_1K = 1 << 4,
+    MODE_16K = 1 << 5,
+    MODE_32K = 1 << 6,
+};
+
+/**
+ *   Physical Layer Pipe (PLP) Mode for DVBT.
+ */
+enum FrontendDvbtPlpMode : uint32_t {
+    UNDEFINED,
+    AUTO,
+    MANUAL,
+};
+
+/**
+ *  Sub standards in DVBT.
+ */
+@export
+enum FrontendDvbtStandard : uint8_t {
+    AUTO = 1 << 0,
+    T = 1 << 1,
+    T2 = 1 << 2,
+};
+
+/**
  *  Signal Setting for DVBT Frontend.
  */
 struct FrontendDvbtSettings {
     /** Signal frequency in Hertz */
     uint32_t frequency;
-    FrontendAtscModulation modulation;
-    FrontendInnerFec fec;
+    FrontendDvbtTransmissionMode transmissionMode;
+    FrontendDvbtBandwidth bandwidth;
+    FrontendDvbtConstellation constellation;
+    FrontendDvbtHierarchy hierarchy;
+    /** Code Rate for High Priority level */
+    FrontendDvbtCoderate hpCoderate;
+    /** Code Rate for Low Priority level */
+    FrontendDvbtCoderate lpCoderate;
+    FrontendDvbtGuardInterval guardInterval;
+    bool isHighPriority;
+    FrontendDvbtStandard standard;
+    bool isMiso;
+    FrontendDvbtPlpMode plpMode;
+    /** Physical Layer Pipe (PLP) Id */
+    uint8_t plpId;
+    /** Group Id for Physical Layer Pipe (PLP) */
+    uint8_t plpGroupId;
 };
 
 /**
- *  Modulation Type for ATSC.
+ *  Capabilities for DVBT Frontend.
+ */
+struct FrontendDvbtCapabilities {
+    bitfield<FrontendDvbtTransmissionMode> transmissionModeCap;
+    bitfield<FrontendDvbtBandwidth> bandwidthCap;
+    bitfield<FrontendDvbtConstellation> constellationCap;
+    bitfield<FrontendDvbtCoderate> coderateCap;
+    bitfield<FrontendDvbtHierarchy> hierarchyCap;
+    bitfield<FrontendDvbtGuardInterval> guardIntervalCap;
+    bool isT2Supported;
+    bool isMisoSupported;
+};
+
+/**
+ *  Roll Off Type for ISDBS.
+ */
+@export
+enum FrontendIsdbsRolloff : uint32_t {
+    UNDEFINED,
+    ROLLOFF_0_35,
+};
+
+/**
+ *  Modulaltion Type for ISDBS.
+ */
+@export
+enum FrontendIsdbsModulation : uint32_t {
+    UNDEFINED = 0,
+    /** hardware is able to detect and set Modulation automatically */
+    AUTO      = 1 << 0,
+    MOD_BPSK      = 1 << 1,
+    MOD_QPSK      = 1 << 2,
+    MOD_TC8PSK    = 1 << 3,
+};
+
+/**
+ *  Code Rate Type for ISDBS.
+ */
+@export
+enum FrontendIsdbsCoderate : uint32_t {
+    UNDEFINED = 0,
+    /** hardware is able to detect and set Code Rate automatically */
+    AUTO      = 1 << 0,
+    CODERATE_1_2       = 1 << 1,
+    CODERATE_2_3       = 1 << 2,
+    CODERATE_3_4       = 1 << 3,
+    CODERATE_5_6       = 1 << 4,
+    CODERATE_7_8       = 1 << 5,
+};
+
+/**
+ *  Stream Id Type for ISDBS.
+ */
+@export
+enum FrontendIsdbsStreamIdType : uint32_t {
+    STREAM_ID,
+    RELATIVE_STREAM_ID,
+};
+
+/**
+ *  Signal Setting for ISDBS Frontend.
+ */
+struct FrontendIsdbsSettings {
+    /** Signal frequency in Hertz */
+    uint32_t frequency;
+    uint16_t streamId;
+    FrontendIsdbsStreamIdType streamIdType;
+    FrontendIsdbsModulation modulation;
+    FrontendIsdbsCoderate coderate;
+    /** Symbols per second */
+    uint32_t symbolRate;
+    FrontendIsdbsRolloff rolloff;
+};
+
+/**
+ *  Capabilities for ISDBS Frontend.
+ */
+struct FrontendIsdbsCapabilities {
+    bitfield<FrontendIsdbsModulation> modulationCap;
+    bitfield<FrontendIsdbsCoderate> coderateCap;
+};
+
+/**
+ *  Roll of Type for ISDBS3.
+ */
+@export
+enum FrontendIsdbs3Rolloff : uint32_t {
+    UNDEFINED,
+    ROLLOFF_0_03,
+};
+
+/**
+ *  Modulaltion Type for ISDBS3.
+ */
+@export
+enum FrontendIsdbs3Modulation : uint32_t {
+    UNDEFINED = 0,
+    /** hardware is able to detect and set Modulation automatically */
+    AUTO      = 1 << 5,
+    MOD_BPSK      = 1 << 1,
+    MOD_QPSK      = 1 << 2,
+    MOD_8PSK      = 1 << 3,
+    MOD_16APSK    = 1 << 4,
+    MOD_32APSK    = 1 << 5,
+};
+
+/**
+ *  Code Rate Type for ISDBS3.
+ */
+@export
+enum FrontendIsdbs3Coderate : uint32_t {
+    UNDEFINED = 0,
+    /** hardware is able to detect and set Code Rate automatically */
+    AUTO      = 1 << 0,
+    CODERATE_1_3       = 1 << 1,
+    CODERATE_2_5       = 1 << 2,
+    CODERATE_1_2       = 1 << 3,
+    CODERATE_3_5       = 1 << 4,
+    CODERATE_2_3       = 1 << 5,
+    CODERATE_3_4       = 1 << 6,
+    CODERATE_7_9       = 1 << 7,
+    CODERATE_4_5       = 1 << 8,
+    CODERATE_5_6       = 1 << 9,
+    CODERATE_7_8       = 1 << 10,
+    CODERATE_9_10      = 1 << 11,
+};
+
+/**
+ *  Signal Setting for ISDBS3 Frontend.
+ */
+struct FrontendIsdbs3Settings {
+    /** Signal frequency in Hertz */
+    uint32_t frequency;
+    uint16_t streamId;
+    FrontendIsdbsStreamIdType streamIdType;
+    FrontendIsdbs3Modulation modulation;
+    FrontendIsdbs3Coderate coderate;
+    /** Symbols per second */
+    uint32_t symbolRate;
+    FrontendIsdbs3Rolloff rolloff;
+};
+
+/**
+ *  Capabilities for ISDBS3 Frontend.
+ */
+struct FrontendIsdbs3Capabilities {
+    bitfield<FrontendIsdbs3Modulation> modulationCap;
+    bitfield<FrontendIsdbs3Coderate> coderateCap;
+};
+
+/**
+ *   Mode for ISDBT.
+ */
+@export
+enum FrontendIsdbtMode : uint32_t {
+    UNDEFINED = 0,
+    /** hardware is able to detect and set Mode automatically */
+    AUTO = 1 << 0,
+    MODE_1 = 1 << 1,
+    MODE_2 = 1 << 2,
+    MODE_3 = 1 << 3,
+};
+
+/**
+ *   Bandwidth for ISDBT.
+ */
+@export
+enum FrontendIsdbtBandwidth : uint32_t {
+    UNDEFINED = 0,
+    /** hardware is able to detect and set Bandwidth automatically */
+    AUTO = 1 << 0,
+    BANDWIDTH_8MHZ = 1 << 1,
+    BANDWIDTH_7MHZ = 1 << 2,
+    BANDWIDTH_6MHZ = 1 << 3,
+};
+
+/**
+ *   Modulation for ISDBT.
+ */
+@export
+enum FrontendIsdbtModulation : uint32_t {
+    UNDEFINED = 0,
+    /** hardware is able to detect and set Modulation automatically */
+    AUTO = 1 << 0,
+    MOD_DQPSK = 1 << 1,
+    MOD_QPSK = 1 << 2,
+    MOD_16QAM = 1 << 3,
+    MOD_64QAM = 1 << 4,
+};
+
+/** Code Rate for ISDBT. */
+typedef FrontendDvbtCoderate FrontendIsdbtCoderate;
+
+/** Guard Interval for ISDBT. */
+typedef FrontendDvbtGuardInterval FrontendIsdbtGuardInterval;
+
+/**
+ *  Signal Setting for ISDBT Frontend.
+ */
+struct FrontendIsdbtSettings {
+    /** Signal frequency in Hertz */
+    uint32_t frequency;
+    FrontendIsdbtModulation modulation;
+    FrontendIsdbtBandwidth bandwidth;
+    FrontendIsdbtMode mode;
+    FrontendIsdbtCoderate coderate;
+    FrontendIsdbtGuardInterval guardInterval;
+    uint32_t serviceAreaId;
+};
+
+/**
+ *  Capabilities for ISDBT Frontend.
+ */
+struct FrontendIsdbtCapabilities {
+    bitfield<FrontendIsdbtMode> modeCap;
+    bitfield<FrontendIsdbtBandwidth> bandwidthCap;
+    bitfield<FrontendIsdbtModulation> constellationCap;
+    bitfield<FrontendIsdbtCoderate> coderateCap;
+    bitfield<FrontendIsdbtGuardInterval> guardIntervalCap;
+};
+
+/**
+ *   Signal Type for Analog Frontend.
+ */
+@export
+enum FrontendAnalogType : uint32_t {
+    UNDEFINED = 0,
+    PAL = 1 << 0,
+    SECAM = 1 << 1,
+    NTSC = 1 << 2,
+};
+
+/**
+ *   Standard Interchange Format (SIF) for Analog Frontend.
+ */
+@export
+enum FrontendAnalogSifStandard : uint32_t {
+    UNDEFINED = 0,
+    BG = 1 << 0,
+    BG_A2 = 1 << 1,
+    BG_NICAM  = 1 << 2,
+    I = 1 << 3,
+    DK = 1 << 4,
+    DK1 = 1 << 5,
+    DK2 = 1 << 6,
+    DK3 = 1 << 7,
+    DK_NICAM = 1 << 8,
+    L = 1 << 9,
+    M = 1 << 10,
+    M_BTSC = 1 << 11,
+    M_A2 = 1 << 12,
+    M_EIA_J = 1 << 13,
+    I_NICAM = 1 << 14,
+    L_NICAM = 1 << 15,
+};
+
+/**
+ *  Signal Setting for Analog Frontend.
+ */
+struct FrontendAnalogSettings {
+    /** Signal frequency in Hertz */
+    uint32_t frequency;
+    FrontendAnalogType type;
+    FrontendAnalogSifStandard sifStandard;
+};
+
+/**
+ *  Capabilities for Analog Frontend.
+ */
+struct FrontendAnalogCapabilities {
+    bitfield<FrontendAnalogType> typeCap;
+    bitfield<FrontendAnalogSifStandard> sifStandardCap;
+};
+
+/**
+ *  Signal Setting for Frontend.
  */
 safe_union FrontendSettings {
+    FrontendAnalogSettings analog;
     FrontendAtscSettings atsc;
+    FrontendAtsc3Settings atsc3;
+    FrontendDvbsSettings dvbs;
+    FrontendDvbcSettings dvbc;
     FrontendDvbtSettings dvbt;
+    FrontendIsdbsSettings isdbs;
+    FrontendIsdbs3Settings isdbs3;
+    FrontendIsdbtSettings isdbt;
+};
+
+/**
+ *  Scan type for Frontend.
+ */
+enum FrontendScanType : uint32_t {
+    SCAN_UNDEFINED = 0,
+    SCAN_AUTO = 1 << 0,
+    SCAN_BLIND = 1 << 1,
+};
+
+/**
+ *  Scan Message Type for Frontend.
+ */
+enum FrontendScanMessageType : uint32_t {
+    /** Scan locked the signal. */
+    LOCKED,
+    /** Scan stopped. */
+    END,
+    /** Scan progress report. */
+    PROGRESS_PERCENT,
+    /** Locked frequency report. */
+    FREQUENCY,
+    /** Locked symbol rate. */
+    SYMBOL_RATE,
+    /** Locked Plp Ids for DVBT2 frontend. */
+    PLP_IDS,
+    /** Locked group Ids for DVBT2 frontend. */
+    GROUP_IDS,
+    /** Locked the number of the Plps. */
+   INPUT_STREAM_IDS,
+    /** Locked signal stardard.  */
+    STANDARD,
+};
+
+/**
+ *  Scan Message for Frontend.
+ */
+safe_union FrontendScanMessage {
+    bool islocked;
+    bool isEnd;
+    /** scan progress percent (0..100) */
+    uint8_t progressPercent;
+    /** Signal frequency in Hertz */
+    uint32_t frequency;
+    /** Symbols per second */
+    uint32_t symbolRate;
+    vec<uint8_t> plpIds;
+    vec<uint8_t> groupIds;
+    vec<uint8_t> inputStreamIds;
+    safe_union standard {
+        FrontendDvbsStandard sStd;
+        FrontendDvbtStandard tStd;
+    } std;
 };
 
 /**
@@ -136,7 +954,173 @@ enum FrontendEventType : uint32_t {
      * event.
      */
     LOST_LOCK,
+    /**
+     * If frontend detect that incoming Diseqc message is overflow.
+     */
+    DISEQC_RX_OVERFLOW,
+    /**
+     * If frontend detect that outgoing Diseqc message isn't delivered on time.
+     */
+    DISEQC_RX_TIMEOUT,
+    /**
+     * If frontend detect that the incoming Diseqc message has parity error.
+     */
+    DISEQC_RX_PARITY_ERROR,
+    /**
+     * If frontend detect that the LNB is overload.
+     */
+    LNB_OVERLOAD,
 };
+
+/**
+ * Frontend Status Type.
+ */
+@export
+enum FrontendStatusType : uint32_t {
+    /** Lock status for RF or Demod. */
+    LOCK,
+    /** Signal to Noise Ratio. */
+    SNR,
+    /** Bit Error Ratio. */
+    BER,
+    /** Packages Error Ratio. */
+    PER,
+    /** Bit Error Ratio befor FEC. */
+    PRE_BER,
+    /*
+     * Signal Quality (0..100). Good data over total data in percent can be
+     * used as a way to present Signal Quality.
+     */
+    SIGNAL_QUALITY,
+    /** Signal Strength. */
+    SIGGAL_STRENGTH,
+    /** Symbol Rate. */
+    SYMBOL_RATE,
+    /** Forward Error Correction Type. */
+    FEC,
+    /** Modulation Type. */
+    MODULATION,
+    /** Spectral Inversion Type. */
+    SPECTRAL,
+    /** LNB Voltage. */
+    LNB_VOLTAGE,
+    /** Physical Layer Pipe ID. */
+    PLP_ID,
+    /** Status for Emergency Warning Broadcasting System. */
+    EWBS,
+};
+
+/**
+ * Modulation Type for Frontend's status.
+ */
+safe_union FrontendModulationStatus {
+    FrontendDvbsModulation dvbs;
+    FrontendAtsc3Modulation atsc3;
+};
+
+/**
+ *  The status for Frontend.
+ */
+safe_union FrontendStatus {
+    bool isLocked;
+    /** SNR value measured by 0.001 dB. */
+    int32_t snr;
+    /** The number of error bit per 1 billion bits. */
+    uint32_t ber;
+    /** The number of error package per 1 billion packages. */
+    uint32_t per;
+    /** The number of error bit per 1 billion bits before FEC. */
+    uint32_t preBer;
+    /** Signal Quality in percent. */
+    uint32_t signalQuality;
+    /** Signal Strength measured by 0.001 dBm. */
+    int32_t signalStrength;
+    /** Symbols per second */
+    uint32_t symbolRate;
+    FrontendInnerFec innerFec;
+    FrontendModulationStatus modulation;
+    FrontendDvbcSpectralInversion inversion;
+    FrontendLnbVoltage lnbVoltage;
+    uint8_t plpId;
+    bool isEWBS;
+};
+
+/**
+ *  Information for the Frontend.
+ */
+struct FrontendInfo {
+    FrontendType type;
+    /** Frequency in Hertz */
+    uint32_t minFrequency;
+    /** Frequency in Hertz */
+    uint32_t maxFrequency;
+    /** Minimum symbols per second */
+    uint32_t minSymbolRate;
+    /** Maximum symbols per second */
+    uint32_t maxSymbolRate;
+    /** Range in Hertz */
+    uint32_t acquireRange;
+    /*
+     * Frontends are assigned with the same exclusiveGroupId if they can't
+     * function at same time. For instance, they share same hardware module.
+     */
+    uint32_t exclusiveGroupId;
+    /** A list of supported status types which client can inquiry */
+    vec<FrontendStatusType> statusCaps;
+    safe_union FrontendCapabilities {
+        FrontendAnalogCapabilities analogCaps;
+        FrontendAtscCapabilities atscCaps;
+        FrontendAtsc3Capabilities atsc3Caps;
+        FrontendDvbsCapabilities dvbsCaps;
+        FrontendDvbcCapabilities dvbcCaps;
+        FrontendDvbtCapabilities dvbtCaps;
+        FrontendIsdbsCapabilities isdbsCaps;
+        FrontendIsdbs3Capabilities isdbs3Caps;
+        FrontendIsdbtCapabilities isdbtCaps;
+    } frontendCaps;
+};
+
+/*
+ * Low-Noise Block downconverter (LNB) ID is used to associate with a hardware
+ * LNB module.
+ */
+typedef uint32_t LnbId;
+
+/**
+ *  Power Voltage Type for LNB.
+ */
+@export
+enum FrontendLnbVoltage : uint32_t {
+    NONE,
+    VOLTAGE_5V,
+    VOLTAGE_11V,
+    VOLTAGE_12V,
+    VOLTAGE_13V,
+    VOLTAGE_14V,
+    VOLTAGE_15V,
+    VOLTAGE_18V,
+    VOLTAGE_19V,
+};
+
+/**
+ *  Tone Type for LNB.
+ */
+@export
+enum FrontendLnbTone : int32_t {
+    NONE,
+    CONTINUOUS,
+};
+
+/**
+ *  The Position of LNB.
+ */
+@export
+enum FrontendLnbPosition : int32_t {
+    UNDEFINED,
+    POSITION_A,
+    POSITION_B,
+};
+
 
 /* Demux ID is used to associate with a hardware demux resource. */
 typedef uint32_t DemuxId;
@@ -248,7 +1232,7 @@ struct DemuxFilterSectionSettings {
     /* Version number for Section Filter */
     uint16_t version;
     /* true if the filter checks CRC and discards data with wrong CRC */
-    bool checkCrc;
+    bool isCheckCrc;
     /* true if the filter repeats the data with the same version */
     bool isRepeat;
     /* true if the filter output raw data */
@@ -265,7 +1249,7 @@ struct DemuxFilterPesDataSettings {
     DemuxTpid tpid;
     DemuxStreamId streamId;
     /* true if the filter output raw data */
-    bool bIsRaw;
+    bool isRaw;
 };
 
 /**
@@ -283,7 +1267,7 @@ struct DemuxFilterAudioSettings {
     /**
      * true if the filter output goes to decoder directly in pass through mode.
      */
-    bool bPassthrough;
+    bool isPassthrough;
 };
 
 /**
@@ -294,7 +1278,7 @@ struct DemuxFilterVideoSettings {
     /**
      * true if the filter output goes to decoder directly in pass through mode.
      */
-    bool bPassthrough;
+    bool isPassthrough;
 };
 
 /**
