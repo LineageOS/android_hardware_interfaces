@@ -13,6 +13,7 @@ hidl_interface {
         "IDescrambler.hal",
         "IFrontend.hal",
         "IFrontendCallback.hal",
+        "ILnb.hal",
         "ITuner.hal",
     ],
     interfaces: [

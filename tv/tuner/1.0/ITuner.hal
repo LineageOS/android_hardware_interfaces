@@ -19,6 +19,7 @@ package android.hardware.tv.tuner@1.0;
 import IDemux;
 import IDescrambler;
 import IFrontend;
+import ILnb;
 
 /**
  * Top level interface to manage Frontend, Demux and Decrambler hardware
@@ -45,6 +46,7 @@ interface ITuner {
      * @param frontendId the id of the frontend to be opened.
      * @return result Result status of the operation.
      *         SUCCESS if successful,
+     *         UNAVAILABLE if no resource.
      *         UNKNOWN_ERROR if creation failed for other reasons.
      * @return frontend the newly created frontend interface.
      */
@@ -62,7 +64,7 @@ interface ITuner {
      * @return demuxId newly created demux id.
      * @return demux the newly created demux interface.
      */
-     openDemux()
+    openDemux()
          generates (Result result, DemuxId demuxId, IDemux demux);
 
     /**
@@ -75,6 +77,48 @@ interface ITuner {
      *         UNKNOWN_ERROR if creation failed for other reasons.
      * @return descrambler the newly created descrambler interface.
      */
-     openDescrambler()
+    openDescrambler()
          generates (Result result, IDescrambler descrambler);
+
+    /**
+     * Create a new instance of Descrambler.
+     *
+     * It is used by the client to create a Descrambler instance.
+     *
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         UNKNOWN_ERROR if creation failed for other reasons.
+     * @return descrambler the newly created descrambler interface.
+     */
+    getFrontendInfo(FrontendId frontendId)
+        generates (Result result, FrontendInfo info);
+
+    /**
+     * Get low-noise block downconverter (LNB) IDs.
+     *
+     * It is used by the client to get all available LNBs' IDs.
+     *
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         UNKNOWN_ERROR if tuning failed for other reasons.
+     * @return frontendIds an array of LnbId for the available LNBs.
+     */
+    getLnbIds() generates (Result result, vec<LnbId> lnbIds);
+
+    /**
+     * Create a new instance of Lnb given a lnbId.
+     *
+     * It is used by the client to create a Lnb instance for satellite Frontend.
+     *
+     * @param lnbId the id of the LNB to be opened.
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         UNAVAILABLE if no resource.
+     *         UNKNOWN_ERROR if creation failed for other reasons.
+     * @return lnb the newly created Lnb interface.
+     */
+    openLnbById(LnbId lnbId)
+        generates (Result result, ILnb lnb);
+
 };
+

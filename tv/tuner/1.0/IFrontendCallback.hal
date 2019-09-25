@@ -33,5 +33,13 @@ interface IFrontendCallback {
      * Specification Version 4.2.
      */
     oneway onDiseqcMessage(vec<uint8_t> diseqcMessage);
-};
 
+    /**
+     * The callback function that must be called by HAL implementation to notify
+     * the client of scan messages.
+     *
+     * @param type the type of scan message.
+     * @param message the scan message sent by HAL to the client.
+     */
+    oneway onScanMessage(FrontendScanMessageType type, FrontendScanMessage message);
+};
