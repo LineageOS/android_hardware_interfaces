@@ -156,6 +156,20 @@ void Execute(const sp<IDevice>& device, const TestModel& testModel) {
     checkResults(testModel, outputs);
 }
 
+void GeneratedTestBase::SetUp() {
+    testing::TestWithParam<GeneratedTestParam>::SetUp();
+    ASSERT_NE(kDevice, nullptr);
+}
+
+std::vector<NamedModel> getNamedModels(const FilterFn& filter) {
+    return TestModelManager::get().getTestModels(filter);
+}
+
+std::string printGeneratedTest(const testing::TestParamInfo<GeneratedTestParam>& info) {
+    const auto& [namedDevice, namedModel] = info.param;
+    return gtestCompliantName(getName(namedDevice) + "_" + getName(namedModel));
+}
+
 // Tag for the generated tests
 class GeneratedTest : public GeneratedTestBase {};
 
