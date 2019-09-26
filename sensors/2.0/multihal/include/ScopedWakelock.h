@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <mutex>
+#include <android/hardware/sensors/2.0/types.h>
 
 namespace android {
 namespace hardware {
@@ -24,10 +24,36 @@ namespace sensors {
 namespace V2_0 {
 namespace implementation {
 
-class IScopedWakelockRefCounter {
+using ::android::hardware::sensors::V2_0::SensorTimeout;
+
+const int64_t kWakelockTimeoutNs =
+        static_cast<int64_t>(SensorTimeout::WAKE_LOCK_SECONDS) * INT64_C(1000000000);
+
+int64_t getTimeNow();
+
+class IScopedWakelockRefCounter : public RefBase {
   public:
-    virtual void incrementRefCountAndMaybeAcquireWakelock() = 0;
-    virtual void decrementRefCountAndMaybeReleaseWakelock() = 0;
+    /**
+     * Increment the wakelock ref count and maybe acquire the shared wakelock if incrementing
+     * from 0 then return the time of incrementing back to caller.
+     *
+     * @param delta The amount to change ref count by.
+     * @param timeoutStart The ptr to the timestamp in ns that the increment occurred which will be
+     *        set in the function or nullptr if not specified.
+     *
+     * @return true if successfully incremented the wakelock ref count.
+     */
+    virtual bool incrementRefCountAndMaybeAcquireWakelock(size_t delta,
+                                                          int64_t* timeoutStart = nullptr) = 0;
+    /**
+     * Decrement the wakelock ref count and maybe release wakelock if ref count ends up 0.
+     *
+     * @param delta The amount to change ref count by.
+     * @param timeoutStart The timestamp in ns that the calling context kept track of when
+     *        incrementing the ref count or -1 by default
+     */
+    virtual void decrementRefCountAndMaybeReleaseWakelock(size_t delta,
+                                                          int64_t timeoutStart = -1) = 0;
     // Virtual dtor needed for compilation success
     virtual ~IScopedWakelockRefCounter(){};
 };
@@ -64,6 +90,7 @@ class ScopedWakelock {
   private:
     friend class HalProxyCallback;
     IScopedWakelockRefCounter* mRefCounter;
+    int64_t mCreatedAtTimeNs;
     bool mLocked;
     ScopedWakelock(IScopedWakelockRefCounter* refCounter, bool locked);
     ScopedWakelock(const ScopedWakelock&) = delete;

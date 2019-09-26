@@ -28,6 +28,7 @@ cc_defaults {
         "libpower",
         "libutils",
     ],
+    cflags: ["-DLOG_TAG=\"SensorsMultiHal\""],
 }
 
 cc_binary {
@@ -45,7 +46,6 @@ cc_binary {
     ],
     init_rc: ["android.hardware.sensors@2.0-service-multihal.rc"],
     vintf_fragments: ["android.hardware.sensors@2.0-multihal.xml"],
-    cflags: ["-DLOG_TAG=\"SensorsMultiHal\""],
 }
 
 cc_library_headers {
@@ -65,5 +65,8 @@ cc_test_library {
     ],
     export_header_lib_headers: [
         "android.hardware.sensors@2.0-multihal.header",
+    ],
+    shared_libs: [
+        "libutils",
     ],
 }
