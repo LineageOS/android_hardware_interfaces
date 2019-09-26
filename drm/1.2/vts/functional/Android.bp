@@ -34,7 +34,7 @@ cc_test {
         "libhidlmemory",
         "libnativehelper",
         "libssl",
-        "libcrypto",
+        "libcrypto_static",
     ],
     test_suites: ["general-tests"],
 }
