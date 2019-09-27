@@ -42,6 +42,7 @@ cc_test {
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: [
         "VtsHalWifiSupplicantV1_3TargetTest.cpp",
+        "supplicant_sta_iface_hidl_test.cpp",
         "supplicant_sta_network_hidl_test.cpp",
     ],
     static_libs: [
