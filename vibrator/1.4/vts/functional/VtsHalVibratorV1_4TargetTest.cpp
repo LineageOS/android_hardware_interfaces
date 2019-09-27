@@ -22,6 +22,8 @@
 #include <gtest/gtest.h>
 #include <hidl/GtestPrinter.h>
 #include <hidl/ServiceManagement.h>
+
+#include <getopt.h>
 #include <unistd.h>
 
 #include <future>
@@ -37,6 +39,8 @@ using ::android::hardware::vibrator::V1_3::Effect;
 using ::android::hardware::vibrator::V1_4::Capabilities;
 using ::android::hardware::vibrator::V1_4::IVibrator;
 using ::android::hardware::vibrator::V1_4::IVibratorCallback;
+
+static uint32_t sCompletionLimitMs = UINT32_MAX;
 
 #define EXPECT_OK(ret) ASSERT_TRUE((ret).isOk())
 
@@ -115,7 +119,7 @@ TEST_P(VibratorHidlTest_1_4, PerformEffect_1_4) {
             sp<CompletionCallback> callback =
                     new CompletionCallback([&completionPromise] { completionPromise.set_value(); });
             EXPECT_OK(vibrator->perform_1_4(effect, strength, callback, validateWrapper));
-            if (performStatus == Status::OK &&
+            if (performStatus == Status::OK && performLength < sCompletionLimitMs &&
                 (capabilities & Capabilities::PERFORM_COMPLETION_CALLBACK)) {
                 std::chrono::milliseconds timeout{performLength * 2};
                 EXPECT_EQ(completionFuture.wait_for(timeout), std::future_status::ready);
@@ -168,3 +172,32 @@ INSTANTIATE_TEST_SUITE_P(
         PerInstance, VibratorHidlTest_1_4,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(IVibrator::descriptor)),
         android::hardware::PrintInstanceNameToString);
+
+enum {
+    OPTION_COMPLETION_LIMIT_MS,
+};
+
+int main(int argc, char** argv) {
+    struct option options[] = {
+            {"completion-limit-ms", required_argument, 0, OPTION_COMPLETION_LIMIT_MS}, {}};
+
+    printf("Running main() from %s\n", __FILE__);
+    testing::InitGoogleTest(&argc, argv);
+
+    while (true) {
+        int opt = getopt_long(argc, argv, "", options, nullptr);
+        if (opt == -1) {
+            break;
+        }
+        switch (opt) {
+            case OPTION_COMPLETION_LIMIT_MS:
+                std::istringstream(optarg) >> sCompletionLimitMs;
+                break;
+            default:
+                printf("Unrecognized option\n");
+                return -EINVAL;
+        }
+    }
+
+    return RUN_ALL_TESTS();
+}
