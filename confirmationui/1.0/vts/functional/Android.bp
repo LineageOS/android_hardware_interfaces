@@ -23,7 +23,7 @@ cc_test {
     static_libs: [
         "android.hardware.confirmationui@1.0",
         "android.hardware.keymaster@4.0",
-        "libcrypto",
+        "libcrypto_static",
         "libcn-cbor",
         "android.hardware.confirmationui-support-lib",
     ],
