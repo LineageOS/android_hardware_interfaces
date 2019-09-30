@@ -76,3 +76,16 @@ cc_test {
     ]
 }
 
+cc_test {
+    name: "VtsHalAudioEffectV6_0TargetTest",
+    defaults: ["VtsHalAudioEffectTargetTest_default"],
+    static_libs: [
+        "android.hardware.audio.common@6.0",
+        "android.hardware.audio.effect@6.0",
+    ],
+    cflags: [
+        "-DMAJOR_VERSION=6",
+        "-DMINOR_VERSION=0",
+        "-include common/all-versions/VersionMacro.h",
+    ]
+}
