@@ -37,6 +37,7 @@ using ::android::hardware::wifi::supplicant::V1_0::SupplicantStatusCode;
 using ::android::hardware::wifi::supplicant::V1_2::DppAkm;
 using ::android::hardware::wifi::supplicant::V1_2::DppFailureCode;
 using ::android::hardware::wifi::supplicant::V1_2::DppProgressCode;
+using ::android::hardware::wifi::supplicant::V1_3::ConnectionCapabilities;
 using ::android::hardware::wifi::supplicant::V1_3::ISupplicantStaIface;
 using ::android::hardware::wifi::supplicant::V1_3::ISupplicantStaIfaceCallback;
 using ::android::hardware::wifi::supplicant::V1_3::ISupplicantStaNetwork;
@@ -176,6 +177,17 @@ class IfacePmkCacheCallback : public IfaceCallback {
 TEST_F(SupplicantStaIfaceHidlTest, RegisterCallback_1_3) {
     sta_iface_->registerCallback_1_3(
         new IfaceCallback(), [](const SupplicantStatus& status) {
+            EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+        });
+}
+
+/*
+ * getConnectionCapabilities
+ */
+TEST_F(SupplicantStaIfaceHidlTest, GetConnectionCapabilities) {
+    sta_iface_->getConnectionCapabilities(
+        [&](const SupplicantStatus& status,
+            ConnectionCapabilities /* capabilities */) {
             EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
         });
 }
