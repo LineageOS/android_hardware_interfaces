@@ -37,6 +37,7 @@ namespace test {
 
 using ::android::sp;
 using ::std::string;
+using hidl::base::V1_0::DebugInfo;
 
 class HidlBuf : public hidl_vec<uint8_t> {
     typedef hidl_vec<uint8_t> super;
@@ -95,6 +96,7 @@ class KeymasterHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 
     // SetUpTestCase runs only once per test case, not once per test.
     static void SetUpTestCase();
+    static void InitializeKeymaster();
     static void TearDownTestCase() {
         keymaster_.clear();
         all_keymasters_.clear();
@@ -139,6 +141,8 @@ class KeymasterHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     ErrorCode GetCharacteristics(const HidlBuf& key_blob, const HidlBuf& client_id,
                                  const HidlBuf& app_data, KeyCharacteristics* key_characteristics);
     ErrorCode GetCharacteristics(const HidlBuf& key_blob, KeyCharacteristics* key_characteristics);
+
+    ErrorCode GetDebugInfo(DebugInfo* debug_info);
 
     ErrorCode Begin(KeyPurpose purpose, const HidlBuf& key_blob, const AuthorizationSet& in_params,
                     AuthorizationSet* out_params, OperationHandle* op_handle);
@@ -235,6 +239,7 @@ class KeymasterHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     static SecurityLevel securityLevel_;
     static hidl_string name_;
     static hidl_string author_;
+    static string service_name_;
 };
 
 }  // namespace test
