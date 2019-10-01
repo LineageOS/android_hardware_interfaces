@@ -261,7 +261,12 @@ void Gnss::nmeaCb(GpsUtcTime timestamp, const char* nmea, int length) {
     }
 
     android::hardware::hidl_string nmeaString;
-    nmeaString.setToExternal(nmea, length);
+    if (nmea[length] != '\0') {
+        // Copy the string into a new buffer and append '\0', if not properly terminated already
+        nmeaString = nmea;
+    } else {
+        nmeaString.setToExternal(nmea, length);
+    }
     auto ret = sGnssCbIface->gnssNmeaCb(timestamp, nmeaString);
     if (!ret.isOk()) {
         ALOGE("%s: Unable to invoke callback", __func__);
