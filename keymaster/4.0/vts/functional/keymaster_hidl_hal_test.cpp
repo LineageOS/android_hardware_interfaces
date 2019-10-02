@@ -18,6 +18,7 @@
 #include <cutils/log.h>
 
 #include <iostream>
+#include <signal.h>
 
 #include <openssl/evp.h>
 #include <openssl/mem.h>
@@ -4455,6 +4456,84 @@ TEST_F(UpgradeKeyTest, UpgradeKey) {
     // Key doesn't need upgrading.  Should get okay, but no new key blob.
     EXPECT_EQ(result, std::make_pair(ErrorCode::OK, HidlBuf()));
 }
+
+
+using ClearOperationsTest = KeymasterHidlTest;
+
+/*
+ * ClearSlotsTest.TooManyOperations
+ *
+ * Verifies that TOO_MANY_OPERATIONS is returned after the max number of
+ * operations are started without being finished or aborted. Also verifies
+ * that aborting the operations clears the operations.
+ *
+ */
+TEST_F(ClearOperationsTest, TooManyOperations) {
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                             .Authorization(TAG_NO_AUTH_REQUIRED)
+                                             .RsaEncryptionKey(2048, 65537)
+                                             .Padding(PaddingMode::NONE)));
+
+    auto params = AuthorizationSetBuilder().Padding(PaddingMode::NONE);
+    int max_operations = SecLevel() == SecurityLevel::STRONGBOX ? 4 : 16;
+    OperationHandle op_handles[max_operations];
+    AuthorizationSet out_params;
+    for(int i=0; i<max_operations; i++) {
+        EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, key_blob_, params, &out_params, &(op_handles[i])));
+    }
+    EXPECT_EQ(ErrorCode::TOO_MANY_OPERATIONS,
+         Begin(KeyPurpose::ENCRYPT, key_blob_, params, &out_params, &op_handle_));
+    // Try again just in case there's a weird overflow bug
+    EXPECT_EQ(ErrorCode::TOO_MANY_OPERATIONS,
+         Begin(KeyPurpose::ENCRYPT, key_blob_, params, &out_params, &op_handle_));
+    for(int i=0; i<max_operations; i++) {
+        EXPECT_EQ(ErrorCode::OK, Abort(op_handles[i]));
+    }
+    EXPECT_EQ(ErrorCode::OK,
+         Begin(KeyPurpose::ENCRYPT, key_blob_, params, &out_params, &op_handle_));
+    AbortIfNeeded();
+}
+
+/*
+ * ClearSlotsTest.ServiceDeath
+ *
+ * Verifies that the service is restarted after death and the ongoing
+ * operations are cleared.
+ */
+TEST_F(ClearOperationsTest, ServiceDeath) {
+
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                             .Authorization(TAG_NO_AUTH_REQUIRED)
+                                             .RsaEncryptionKey(2048, 65537)
+                                             .Padding(PaddingMode::NONE)));
+
+    auto params = AuthorizationSetBuilder().Padding(PaddingMode::NONE);
+    int max_operations = SecLevel() == SecurityLevel::STRONGBOX ? 4 : 16;
+    OperationHandle op_handles[max_operations];
+    AuthorizationSet out_params;
+    for(int i=0; i<max_operations; i++) {
+        EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, key_blob_, params, &out_params, &(op_handles[i])));
+    }
+    EXPECT_EQ(ErrorCode::TOO_MANY_OPERATIONS,
+         Begin(KeyPurpose::ENCRYPT, key_blob_, params, &out_params, &op_handle_));
+
+    DebugInfo debug_info;
+    GetDebugInfo(&debug_info);
+    kill(debug_info.pid, SIGKILL);
+    // wait 1 second for keymaster to restart
+    sleep(1);
+    InitializeKeymaster();
+
+    for(int i=0; i<max_operations; i++) {
+        EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, key_blob_, params, &out_params, &(op_handles[i])));
+    }
+    EXPECT_EQ(ErrorCode::TOO_MANY_OPERATIONS,
+         Begin(KeyPurpose::ENCRYPT, key_blob_, params, &out_params, &op_handle_));
+    for(int i=0; i<max_operations; i++) {
+        EXPECT_EQ(ErrorCode::OK, Abort(op_handles[i]));
+    }
+}
+
 
 }  // namespace test
 }  // namespace V4_0
