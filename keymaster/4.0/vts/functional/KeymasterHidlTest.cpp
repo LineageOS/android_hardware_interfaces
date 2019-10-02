@@ -623,6 +623,20 @@ string KeymasterHidlTest::EncryptMessage(const string& message, BlockMode block_
     return ciphertext;
 }
 
+string KeymasterHidlTest::EncryptMessage(const string& message, BlockMode block_mode,
+                                         PaddingMode padding, uint8_t mac_length_bits,
+                                         const HidlBuf& iv_in) {
+    SCOPED_TRACE("EncryptMessage");
+    auto params = AuthorizationSetBuilder()
+                          .BlockMode(block_mode)
+                          .Padding(padding)
+                          .Authorization(TAG_MAC_LENGTH, mac_length_bits)
+                          .Authorization(TAG_NONCE, iv_in);
+    AuthorizationSet out_params;
+    string ciphertext = EncryptMessage(message, params, &out_params);
+    return ciphertext;
+}
+
 string KeymasterHidlTest::DecryptMessage(const HidlBuf& key_blob, const string& ciphertext,
                                          const AuthorizationSet& params) {
     SCOPED_TRACE("DecryptMessage");
