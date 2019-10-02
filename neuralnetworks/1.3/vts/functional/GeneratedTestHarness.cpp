@@ -69,7 +69,19 @@ using V1_2::Timing;
 using V1_2::implementation::ExecutionCallback;
 using HidlToken = hidl_array<uint8_t, static_cast<uint32_t>(Constant::BYTE_SIZE_OF_CACHE_TOKEN)>;
 
+namespace {
+
+enum class Executor { ASYNC, SYNC, BURST };
+
 enum class OutputType { FULLY_SPECIFIED, UNSPECIFIED, INSUFFICIENT };
+
+struct TestConfig {
+    Executor executor;
+    MeasureTiming measureTiming;
+    OutputType outputType;
+};
+
+}  // namespace
 
 Model createModel(const TestModel& testModel) {
     // Model operands.
@@ -205,31 +217,31 @@ static std::shared_ptr<::android::nn::ExecutionBurstController> CreateBurst(
     return android::nn::ExecutionBurstController::create(preparedModel,
                                                          std::chrono::microseconds{0});
 }
-enum class Executor { ASYNC, SYNC, BURST };
 
 void EvaluatePreparedModel(const sp<IPreparedModel>& preparedModel, const TestModel& testModel,
-                           Executor executor, MeasureTiming measure, OutputType outputType) {
+                           const TestConfig& testConfig) {
     // If output0 does not have size larger than one byte, we can not test with insufficient buffer.
-    if (outputType == OutputType::INSUFFICIENT && !isOutputSizeGreaterThanOne(testModel, 0)) {
+    if (testConfig.outputType == OutputType::INSUFFICIENT &&
+        !isOutputSizeGreaterThanOne(testModel, 0)) {
         return;
     }
 
     Request request = createRequest(testModel);
-    if (outputType == OutputType::INSUFFICIENT) {
+    if (testConfig.outputType == OutputType::INSUFFICIENT) {
         makeOutputInsufficientSize(/*outputIndex=*/0, &request);
     }
 
     ErrorStatus executionStatus;
     hidl_vec<OutputShape> outputShapes;
     Timing timing;
-    switch (executor) {
+    switch (testConfig.executor) {
         case Executor::ASYNC: {
             SCOPED_TRACE("asynchronous");
 
             // launch execution
             sp<ExecutionCallback> executionCallback = new ExecutionCallback();
-            Return<ErrorStatus> executionLaunchStatus =
-                    ExecutePreparedModel(preparedModel, request, measure, executionCallback);
+            Return<ErrorStatus> executionLaunchStatus = ExecutePreparedModel(
+                    preparedModel, request, testConfig.measureTiming, executionCallback);
             ASSERT_TRUE(executionLaunchStatus.isOk());
             EXPECT_EQ(ErrorStatus::NONE, static_cast<ErrorStatus>(executionLaunchStatus));
 
@@ -245,8 +257,8 @@ void EvaluatePreparedModel(const sp<IPreparedModel>& preparedModel, const TestMo
             SCOPED_TRACE("synchronous");
 
             // execute
-            Return<ErrorStatus> executionReturnStatus =
-                    ExecutePreparedModel(preparedModel, request, measure, &outputShapes, &timing);
+            Return<ErrorStatus> executionReturnStatus = ExecutePreparedModel(
+                    preparedModel, request, testConfig.measureTiming, &outputShapes, &timing);
             ASSERT_TRUE(executionReturnStatus.isOk());
             executionStatus = static_cast<ErrorStatus>(executionReturnStatus);
 
@@ -269,14 +281,14 @@ void EvaluatePreparedModel(const sp<IPreparedModel>& preparedModel, const TestMo
             // execute burst
             int n;
             std::tie(n, outputShapes, timing, std::ignore) =
-                    controller->compute(request, measure, keys);
+                    controller->compute(request, testConfig.measureTiming, keys);
             executionStatus = nn::convertResultCodeToErrorStatus(n);
 
             break;
         }
     }
 
-    if (outputType != OutputType::FULLY_SPECIFIED &&
+    if (testConfig.outputType != OutputType::FULLY_SPECIFIED &&
         executionStatus == ErrorStatus::GENERAL_FAILURE) {
         LOG(INFO) << "NN VTS: Early termination of test because vendor service cannot "
                      "execute model that it does not support.";
@@ -285,7 +297,7 @@ void EvaluatePreparedModel(const sp<IPreparedModel>& preparedModel, const TestMo
                   << std::endl;
         GTEST_SKIP();
     }
-    if (measure == MeasureTiming::NO) {
+    if (testConfig.measureTiming == MeasureTiming::NO) {
         EXPECT_EQ(UINT64_MAX, timing.timeOnDevice);
         EXPECT_EQ(UINT64_MAX, timing.timeInDriver);
     } else {
@@ -294,7 +306,7 @@ void EvaluatePreparedModel(const sp<IPreparedModel>& preparedModel, const TestMo
         }
     }
 
-    switch (outputType) {
+    switch (testConfig.outputType) {
         case OutputType::FULLY_SPECIFIED:
             // If the model output operands are fully specified, outputShapes must be either
             // either empty, or have the same number of elements as the number of outputs.
@@ -332,44 +344,29 @@ void EvaluatePreparedModel(const sp<IPreparedModel>& preparedModel, const TestMo
 
 void EvaluatePreparedModel(const sp<IPreparedModel>& preparedModel, const TestModel& testModel,
                            bool testDynamicOutputShape) {
+    std::initializer_list<OutputType> outputTypesList;
+    std::initializer_list<MeasureTiming> measureTimingList;
+    std::initializer_list<Executor> executorList;
+
     if (testDynamicOutputShape) {
-        EvaluatePreparedModel(preparedModel, testModel, Executor::ASYNC, MeasureTiming::NO,
-                              OutputType::UNSPECIFIED);
-        EvaluatePreparedModel(preparedModel, testModel, Executor::SYNC, MeasureTiming::NO,
-                              OutputType::UNSPECIFIED);
-        EvaluatePreparedModel(preparedModel, testModel, Executor::BURST, MeasureTiming::NO,
-                              OutputType::UNSPECIFIED);
-        EvaluatePreparedModel(preparedModel, testModel, Executor::ASYNC, MeasureTiming::YES,
-                              OutputType::UNSPECIFIED);
-        EvaluatePreparedModel(preparedModel, testModel, Executor::SYNC, MeasureTiming::YES,
-                              OutputType::UNSPECIFIED);
-        EvaluatePreparedModel(preparedModel, testModel, Executor::BURST, MeasureTiming::YES,
-                              OutputType::UNSPECIFIED);
-        EvaluatePreparedModel(preparedModel, testModel, Executor::ASYNC, MeasureTiming::NO,
-                              OutputType::INSUFFICIENT);
-        EvaluatePreparedModel(preparedModel, testModel, Executor::SYNC, MeasureTiming::NO,
-                              OutputType::INSUFFICIENT);
-        EvaluatePreparedModel(preparedModel, testModel, Executor::BURST, MeasureTiming::NO,
-                              OutputType::INSUFFICIENT);
-        EvaluatePreparedModel(preparedModel, testModel, Executor::ASYNC, MeasureTiming::YES,
-                              OutputType::INSUFFICIENT);
-        EvaluatePreparedModel(preparedModel, testModel, Executor::SYNC, MeasureTiming::YES,
-                              OutputType::INSUFFICIENT);
-        EvaluatePreparedModel(preparedModel, testModel, Executor::BURST, MeasureTiming::YES,
-                              OutputType::INSUFFICIENT);
+        outputTypesList = {OutputType::UNSPECIFIED, OutputType::INSUFFICIENT};
+        measureTimingList = {MeasureTiming::NO, MeasureTiming::YES};
+        executorList = {Executor::ASYNC, Executor::SYNC, Executor::BURST};
     } else {
-        EvaluatePreparedModel(preparedModel, testModel, Executor::ASYNC, MeasureTiming::NO,
-                              OutputType::FULLY_SPECIFIED);
-        EvaluatePreparedModel(preparedModel, testModel, Executor::SYNC, MeasureTiming::NO,
-                              OutputType::FULLY_SPECIFIED);
-        EvaluatePreparedModel(preparedModel, testModel, Executor::BURST, MeasureTiming::NO,
-                              OutputType::FULLY_SPECIFIED);
-        EvaluatePreparedModel(preparedModel, testModel, Executor::ASYNC, MeasureTiming::YES,
-                              OutputType::FULLY_SPECIFIED);
-        EvaluatePreparedModel(preparedModel, testModel, Executor::SYNC, MeasureTiming::YES,
-                              OutputType::FULLY_SPECIFIED);
-        EvaluatePreparedModel(preparedModel, testModel, Executor::BURST, MeasureTiming::YES,
-                              OutputType::FULLY_SPECIFIED);
+        outputTypesList = {OutputType::FULLY_SPECIFIED};
+        measureTimingList = {MeasureTiming::NO, MeasureTiming::YES};
+        executorList = {Executor::ASYNC, Executor::SYNC, Executor::BURST};
+    }
+
+    for (const OutputType outputType : outputTypesList) {
+        for (const MeasureTiming measureTiming : measureTimingList) {
+            for (const Executor executor : executorList) {
+                const TestConfig testConfig = {.executor = executor,
+                                               .measureTiming = measureTiming,
+                                               .outputType = outputType};
+                EvaluatePreparedModel(preparedModel, testModel, testConfig);
+            }
+        }
     }
 }
 
