@@ -132,6 +132,10 @@ void ackWakeupEventsToHalProxy(size_t numEvents, std::unique_ptr<WakeupMessageQu
 bool readEventsOutOfQueue(size_t numEvents, std::unique_ptr<EventMessageQueue>& eventQueue,
                           EventFlag* eventQueueFlag);
 
+std::unique_ptr<EventMessageQueue> makeEventFMQ(size_t size);
+
+std::unique_ptr<WakeupMessageQueue> makeWakelockFMQ(size_t size);
+
 /**
  * Construct and return a HIDL Event type thats sensorHandle refers to a proximity sensor
  *    which is a wakeup type sensor.
@@ -278,10 +282,8 @@ TEST(HalProxyTest, PostSingleNonWakeupEvent) {
     AllSensorsSubHal subHal;
     std::vector<ISensorsSubHal*> subHals{&subHal};
     HalProxy proxy(subHals);
-    std::unique_ptr<EventMessageQueue> eventQueue =
-            std::make_unique<EventMessageQueue>(kQueueSize, true);
-    std::unique_ptr<WakeupMessageQueue> wakeLockQueue =
-            std::make_unique<WakeupMessageQueue>(kQueueSize, true);
+    std::unique_ptr<EventMessageQueue> eventQueue = makeEventFMQ(kQueueSize);
+    std::unique_ptr<WakeupMessageQueue> wakeLockQueue = makeWakelockFMQ(kQueueSize);
     ::android::sp<ISensorsCallback> callback = new SensorsCallback();
     proxy.initialize(*eventQueue->getDesc(), *wakeLockQueue->getDesc(), callback);
 
@@ -297,10 +299,8 @@ TEST(HalProxyTest, PostMultipleNonWakeupEvent) {
     AllSensorsSubHal subHal;
     std::vector<ISensorsSubHal*> subHals{&subHal};
     HalProxy proxy(subHals);
-    std::unique_ptr<EventMessageQueue> eventQueue =
-            std::make_unique<EventMessageQueue>(kQueueSize, true);
-    std::unique_ptr<WakeupMessageQueue> wakeLockQueue =
-            std::make_unique<WakeupMessageQueue>(kQueueSize, true);
+    std::unique_ptr<EventMessageQueue> eventQueue = makeEventFMQ(kQueueSize);
+    std::unique_ptr<WakeupMessageQueue> wakeLockQueue = makeWakelockFMQ(kQueueSize);
     ::android::sp<ISensorsCallback> callback = new SensorsCallback();
     proxy.initialize(*eventQueue->getDesc(), *wakeLockQueue->getDesc(), callback);
 
@@ -315,10 +315,8 @@ TEST(HalProxyTest, PostSingleWakeupEvent) {
     AllSensorsSubHal subHal;
     std::vector<ISensorsSubHal*> subHals{&subHal};
     HalProxy proxy(subHals);
-    std::unique_ptr<EventMessageQueue> eventQueue =
-            std::make_unique<EventMessageQueue>(kQueueSize, true);
-    std::unique_ptr<WakeupMessageQueue> wakeLockQueue =
-            std::make_unique<WakeupMessageQueue>(kQueueSize, true);
+    std::unique_ptr<EventMessageQueue> eventQueue = makeEventFMQ(kQueueSize);
+    std::unique_ptr<WakeupMessageQueue> wakeLockQueue = makeWakelockFMQ(kQueueSize);
     ::android::sp<ISensorsCallback> callback = new SensorsCallback();
     proxy.initialize(*eventQueue->getDesc(), *wakeLockQueue->getDesc(), callback);
 
@@ -343,10 +341,8 @@ TEST(HalProxyTest, PostMultipleWakeupEvents) {
     AllSensorsSubHal subHal;
     std::vector<ISensorsSubHal*> subHals{&subHal};
     HalProxy proxy(subHals);
-    std::unique_ptr<EventMessageQueue> eventQueue =
-            std::make_unique<EventMessageQueue>(kQueueSize, true);
-    std::unique_ptr<WakeupMessageQueue> wakeLockQueue =
-            std::make_unique<WakeupMessageQueue>(kQueueSize, true);
+    std::unique_ptr<EventMessageQueue> eventQueue = makeEventFMQ(kQueueSize);
+    std::unique_ptr<WakeupMessageQueue> wakeLockQueue = makeWakelockFMQ(kQueueSize);
     ::android::sp<ISensorsCallback> callback = new SensorsCallback();
     proxy.initialize(*eventQueue->getDesc(), *wakeLockQueue->getDesc(), callback);
 
@@ -371,10 +367,8 @@ TEST(HalProxyTest, PostEventsMultipleSubhals) {
     AllSensorsSubHal subHal1, subHal2;
     std::vector<ISensorsSubHal*> subHals{&subHal1, &subHal2};
     HalProxy proxy(subHals);
-    std::unique_ptr<EventMessageQueue> eventQueue =
-            std::make_unique<EventMessageQueue>(kQueueSize, true);
-    std::unique_ptr<WakeupMessageQueue> wakeLockQueue =
-            std::make_unique<WakeupMessageQueue>(kQueueSize, true);
+    std::unique_ptr<EventMessageQueue> eventQueue = makeEventFMQ(kQueueSize);
+    std::unique_ptr<WakeupMessageQueue> wakeLockQueue = makeWakelockFMQ(kQueueSize);
     ::android::sp<ISensorsCallback> callback = new SensorsCallback();
     proxy.initialize(*eventQueue->getDesc(), *wakeLockQueue->getDesc(), callback);
 
@@ -394,10 +388,8 @@ TEST(HalProxyTest, PostEventsDelayedWrite) {
     AllSensorsSubHal subHal1, subHal2;
     std::vector<ISensorsSubHal*> subHals{&subHal1, &subHal2};
     HalProxy proxy(subHals);
-    std::unique_ptr<EventMessageQueue> eventQueue =
-            std::make_unique<EventMessageQueue>(kQueueSize, true);
-    std::unique_ptr<WakeupMessageQueue> wakeLockQueue =
-            std::make_unique<WakeupMessageQueue>(kQueueSize, true);
+    std::unique_ptr<EventMessageQueue> eventQueue = makeEventFMQ(kQueueSize);
+    std::unique_ptr<WakeupMessageQueue> wakeLockQueue = makeWakelockFMQ(kQueueSize);
     ::android::sp<ISensorsCallback> callback = new SensorsCallback();
     proxy.initialize(*eventQueue->getDesc(), *wakeLockQueue->getDesc(), callback);
 
@@ -424,10 +416,8 @@ TEST(HalProxyTest, PostEventsMultipleSubhalsThreaded) {
     AllSensorsSubHal subHal1, subHal2;
     std::vector<ISensorsSubHal*> subHals{&subHal1, &subHal2};
     HalProxy proxy(subHals);
-    std::unique_ptr<EventMessageQueue> eventQueue =
-            std::make_unique<EventMessageQueue>(kQueueSize, true);
-    std::unique_ptr<WakeupMessageQueue> wakeLockQueue =
-            std::make_unique<WakeupMessageQueue>(kQueueSize, true);
+    std::unique_ptr<EventMessageQueue> eventQueue = makeEventFMQ(kQueueSize);
+    std::unique_ptr<WakeupMessageQueue> wakeLockQueue = makeWakelockFMQ(kQueueSize);
     ::android::sp<ISensorsCallback> callback = new SensorsCallback();
     proxy.initialize(*eventQueue->getDesc(), *wakeLockQueue->getDesc(), callback);
 
@@ -448,10 +438,8 @@ TEST(HalProxyTest, DestructingWithEventsPendingOnBackgroundThreadTest) {
     AllSensorsSubHal subHal;
     std::vector<ISensorsSubHal*> subHals{&subHal};
 
-    std::unique_ptr<EventMessageQueue> eventQueue =
-            std::make_unique<EventMessageQueue>(kQueueSize, true);
-    std::unique_ptr<WakeupMessageQueue> wakeLockQueue =
-            std::make_unique<WakeupMessageQueue>(kQueueSize, true);
+    std::unique_ptr<EventMessageQueue> eventQueue = makeEventFMQ(kQueueSize);
+    std::unique_ptr<WakeupMessageQueue> wakeLockQueue = makeWakelockFMQ(kQueueSize);
     ::android::sp<ISensorsCallback> callback = new SensorsCallback();
     HalProxy proxy(subHals);
     proxy.initialize(*eventQueue->getDesc(), *wakeLockQueue->getDesc(), callback);
@@ -473,9 +461,8 @@ TEST(HalProxyTest, DynamicSensorsConnectedTest) {
     AddAndRemoveDynamicSensorsSubHal subHal;
     std::vector<ISensorsSubHal*> subHals{&subHal};
     HalProxy proxy(subHals);
-    std::unique_ptr<EventMessageQueue> eventQueue = std::make_unique<EventMessageQueue>(0, true);
-    std::unique_ptr<WakeupMessageQueue> wakeLockQueue =
-            std::make_unique<WakeupMessageQueue>(0, true);
+    std::unique_ptr<EventMessageQueue> eventQueue = makeEventFMQ(0);
+    std::unique_ptr<WakeupMessageQueue> wakeLockQueue = makeWakelockFMQ(0);
 
     std::vector<SensorInfo> sensorsToConnect;
     std::vector<int32_t> sensorHandlesToExpect;
@@ -502,9 +489,8 @@ TEST(HalProxyTest, DynamicSensorsDisconnectedTest) {
     AddAndRemoveDynamicSensorsSubHal subHal;
     std::vector<ISensorsSubHal*> subHals{&subHal};
     HalProxy proxy(subHals);
-    std::unique_ptr<EventMessageQueue> eventQueue = std::make_unique<EventMessageQueue>(0, true);
-    std::unique_ptr<WakeupMessageQueue> wakeLockQueue =
-            std::make_unique<WakeupMessageQueue>(0, true);
+    std::unique_ptr<EventMessageQueue> eventQueue = makeEventFMQ(0);
+    std::unique_ptr<WakeupMessageQueue> wakeLockQueue = makeWakelockFMQ(0);
 
     std::vector<SensorInfo> sensorsToConnect;
     std::vector<int32_t> sensorHandlesToExpect;
@@ -591,6 +577,14 @@ bool readEventsOutOfQueue(size_t numEvents, std::unique_ptr<EventMessageQueue>& 
                                     static_cast<uint32_t>(EventQueueFlagBits::EVENTS_READ),
                                     static_cast<uint32_t>(EventQueueFlagBits::READ_AND_PROCESS),
                                     kReadBlockingTimeout, eventQueueFlag);
+}
+
+std::unique_ptr<EventMessageQueue> makeEventFMQ(size_t size) {
+    return std::make_unique<EventMessageQueue>(size, true);
+}
+
+std::unique_ptr<WakeupMessageQueue> makeWakelockFMQ(size_t size) {
+    return std::make_unique<WakeupMessageQueue>(size, true);
 }
 
 Event makeProximityEvent() {
