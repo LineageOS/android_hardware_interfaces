@@ -2707,6 +2707,40 @@ TEST_F(EncryptionOperationsTest, AesWrongMode) {
 }
 
 /*
+ * EncryptionOperationsTest.AesWrongPurpose
+ *
+ * Verifies that AES encryption fails in the correct way when an unauthorized purpose is specified.
+ */
+TEST_F(EncryptionOperationsTest, AesWrongPurpose) {
+    auto err = GenerateKey(AuthorizationSetBuilder()
+                                   .Authorization(TAG_NO_AUTH_REQUIRED)
+                                   .AesKey(128)
+                                   .Authorization(TAG_PURPOSE, KeyPurpose::ENCRYPT)
+                                   .Authorization(TAG_BLOCK_MODE, BlockMode::GCM)
+                                   .Authorization(TAG_MIN_MAC_LENGTH, 128)
+                                   .Padding(PaddingMode::NONE));
+    ASSERT_EQ(ErrorCode::OK, err) << "Got " << err;
+
+    err = Begin(KeyPurpose::DECRYPT,
+                AuthorizationSetBuilder().BlockMode(BlockMode::GCM).Padding(PaddingMode::NONE));
+    EXPECT_EQ(ErrorCode::INCOMPATIBLE_PURPOSE, err) << "Got " << err;
+
+    CheckedDeleteKey();
+
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                                 .Authorization(TAG_NO_AUTH_REQUIRED)
+                                                 .AesKey(128)
+                                                 .Authorization(TAG_PURPOSE, KeyPurpose::DECRYPT)
+                                                 .Authorization(TAG_BLOCK_MODE, BlockMode::GCM)
+                                                 .Authorization(TAG_MIN_MAC_LENGTH, 128)
+                                                 .Padding(PaddingMode::NONE)));
+
+    err = Begin(KeyPurpose::ENCRYPT,
+                AuthorizationSetBuilder().BlockMode(BlockMode::GCM).Padding(PaddingMode::NONE));
+    EXPECT_EQ(ErrorCode::INCOMPATIBLE_PURPOSE, err) << "Got " << err;
+}
+
+/*
  * EncryptionOperationsTest.AesEcbNoPaddingWrongInputSize
  *
  * Verifies that AES encryption fails in the correct way when provided an input that is not a
@@ -3223,6 +3257,92 @@ TEST_F(EncryptionOperationsTest, AesGcmRoundTripSuccess) {
     EXPECT_EQ(ErrorCode::OK, Finish("", &plaintext));
     EXPECT_EQ(message.length(), plaintext.length());
     EXPECT_EQ(message, plaintext);
+}
+
+/*
+ * EncryptionOperationsTest.AesGcmRoundTripWithDelaySuccess
+ *
+ * Verifies that AES GCM mode works, even when there's a long delay
+ * between operations.
+ */
+TEST_F(EncryptionOperationsTest, AesGcmRoundTripWithDelaySuccess) {
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                             .Authorization(TAG_NO_AUTH_REQUIRED)
+                                             .AesEncryptionKey(128)
+                                             .Authorization(TAG_BLOCK_MODE, BlockMode::GCM)
+                                             .Padding(PaddingMode::NONE)
+                                             .Authorization(TAG_MIN_MAC_LENGTH, 128)));
+
+    string aad = "foobar";
+    string message = "123456789012345678901234567890123456";
+
+    auto begin_params = AuthorizationSetBuilder()
+                            .BlockMode(BlockMode::GCM)
+                            .Padding(PaddingMode::NONE)
+                            .Authorization(TAG_MAC_LENGTH, 128);
+
+    auto update_params =
+        AuthorizationSetBuilder().Authorization(TAG_ASSOCIATED_DATA, aad.data(), aad.size());
+
+    // Encrypt
+    AuthorizationSet begin_out_params;
+    ASSERT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, begin_params, &begin_out_params))
+        << "Begin encrypt";
+    string ciphertext;
+    AuthorizationSet update_out_params;
+    sleep(5);
+    ASSERT_EQ(ErrorCode::OK,
+              Finish(op_handle_, update_params, message, "", &update_out_params, &ciphertext));
+
+    ASSERT_EQ(ciphertext.length(), message.length() + 16);
+
+    // Grab nonce
+    begin_params.push_back(begin_out_params);
+
+    // Decrypt.
+    ASSERT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, begin_params)) << "Begin decrypt";
+    string plaintext;
+    size_t input_consumed;
+    sleep(5);
+    ASSERT_EQ(ErrorCode::OK, Update(op_handle_, update_params, ciphertext, &update_out_params,
+                                    &plaintext, &input_consumed));
+    EXPECT_EQ(ciphertext.size(), input_consumed);
+    sleep(5);
+    EXPECT_EQ(ErrorCode::OK, Finish("", &plaintext));
+    EXPECT_EQ(message.length(), plaintext.length());
+    EXPECT_EQ(message, plaintext);
+}
+
+/*
+ * EncryptionOperationsTest.AesGcmDifferentNonces
+ *
+ * Verifies that encrypting the same data with different nonces produces different outputs.
+ */
+TEST_F(EncryptionOperationsTest, AesGcmDifferentNonces) {
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                                 .Authorization(TAG_NO_AUTH_REQUIRED)
+                                                 .AesEncryptionKey(128)
+                                                 .Authorization(TAG_BLOCK_MODE, BlockMode::GCM)
+                                                 .Padding(PaddingMode::NONE)
+                                                 .Authorization(TAG_MIN_MAC_LENGTH, 128)
+                                                 .Authorization(TAG_CALLER_NONCE)));
+
+    string aad = "foobar";
+    string message = "123456789012345678901234567890123456";
+    string nonce1 = "000000000000";
+    string nonce2 = "111111111111";
+    string nonce3 = "222222222222";
+
+    string ciphertext1 =
+            EncryptMessage(message, BlockMode::GCM, PaddingMode::NONE, 128, HidlBuf(nonce1));
+    string ciphertext2 =
+            EncryptMessage(message, BlockMode::GCM, PaddingMode::NONE, 128, HidlBuf(nonce2));
+    string ciphertext3 =
+            EncryptMessage(message, BlockMode::GCM, PaddingMode::NONE, 128, HidlBuf(nonce3));
+
+    ASSERT_NE(ciphertext1, ciphertext2);
+    ASSERT_NE(ciphertext1, ciphertext3);
+    ASSERT_NE(ciphertext2, ciphertext3);
 }
 
 /*
