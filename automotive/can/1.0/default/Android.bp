@@ -47,7 +47,6 @@ cc_binary {
     shared_libs: [
         "android.hardware.automotive.can@1.0",
         "libhidlbase",
-        "libhidltransport",
     ],
     static_libs: [
         "android.hardware.automotive.can@libnetdevice",

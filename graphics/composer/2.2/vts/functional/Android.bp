@@ -30,8 +30,6 @@ cc_test {
         "libfmq",
         "libgui",
         "libhidlbase",
-        "libhidltransport",
-        "libhwbinder",
         "libprocessgroup",
         "libsync",
         "libui",

@@ -24,7 +24,6 @@ cc_defaults {
         "libcutils",
         "libfmq",
         "libhidlbase",
-        "libhidltransport",
         "liblog",
         "libpower",
         "libutils",
