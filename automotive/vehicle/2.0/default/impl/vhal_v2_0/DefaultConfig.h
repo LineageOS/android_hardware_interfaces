@@ -671,7 +671,7 @@ const ConfigDeclaration kVehicleProperties[]{
      .initialValue = {.int32Values = {toInt(VehicleApPowerStateReq::ON), 0}}},
 
     {.config = {.prop = toInt(VehicleProperty::AP_POWER_STATE_REPORT),
-                .access = VehiclePropertyAccess::WRITE,
+                .access = VehiclePropertyAccess::READ_WRITE,
                 .changeMode = VehiclePropertyChangeMode::ON_CHANGE},
      .initialValue = {.int32Values = {toInt(VehicleApPowerStateReport::WAIT_FOR_VHAL), 0}}},
 
