@@ -37,11 +37,6 @@ Return<void> DumpstateDevice::dumpstateBoard(const hidl_handle& handle) {
     // NOTE: this is just an example on how to use the DumpstateUtil.h functions to implement
     // this interface.
 
-    // Exit when dump is completed since this is a lazy HAL.
-    addPostCommandTask([]() {
-        exit(0);
-    });
-
     if (handle == nullptr || handle->numFds < 1) {
         ALOGE("no FDs\n");
         return Void();
