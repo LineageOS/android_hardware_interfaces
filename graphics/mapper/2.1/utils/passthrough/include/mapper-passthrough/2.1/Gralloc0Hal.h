@@ -37,6 +37,10 @@ class Gralloc0HalImpl : public V2_0::passthrough::detail::Gralloc0HalImpl<Hal> {
      Error validateBufferSize(const native_handle_t* bufferHandle,
                               const IMapper::BufferDescriptorInfo& descriptorInfo,
                               uint32_t stride) override {
+         if (descriptorInfo.layerCount != 1) {
+             return Error::BAD_VALUE;
+         }
+
          if (!mModule->validateBufferSize) {
              return Error::NONE;
          }
