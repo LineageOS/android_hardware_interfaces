@@ -39,6 +39,8 @@ class Tuner : public ITuner {
 
     virtual Return<void> openDemux(openDemux_cb _hidl_cb) override;
 
+    virtual Return<void> getDemuxCaps(getDemuxCaps_cb _hidl_cb) override;
+
     virtual Return<void> openDescrambler(openDescrambler_cb _hidl_cb) override;
 
     virtual Return<void> getFrontendInfo(FrontendId frontendId,
