@@ -23,7 +23,6 @@ cc_binary {
     shared_libs: [
         "android.hardware.automotive.can@1.0",
         "libhidlbase",
-        "libhidltransport",
     ],
     header_libs: [
         "android.hardware.automotive.can@hidl-utils-lib",
@@ -39,7 +38,6 @@ cc_binary {
     shared_libs: [
         "android.hardware.automotive.can@1.0",
         "libhidlbase",
-        "libhidltransport",
     ],
     header_libs: [
         "android.hardware.automotive.can@hidl-utils-lib",
@@ -55,6 +53,5 @@ cc_binary {
     shared_libs: [
         "android.hardware.automotive.can@1.0",
         "libhidlbase",
-        "libhidltransport",
     ],
 }
