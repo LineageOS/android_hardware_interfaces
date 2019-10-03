@@ -38,6 +38,8 @@ class ComposerHal : public V2_3::hal::ComposerHal {
   public:
     virtual Error getDisplayCapabilities_2_4(
             Display display, std::vector<IComposerClient::DisplayCapability>* outCapabilities) = 0;
+    virtual Error getDisplayConnectionType(Display display,
+                                           IComposerClient::DisplayConnectionType* outType) = 0;
 };
 
 }  // namespace hal

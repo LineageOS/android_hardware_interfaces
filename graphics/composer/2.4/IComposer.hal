@@ -17,12 +17,10 @@
 package android.hardware.graphics.composer@2.4;
 
 import IComposerClient;
-
 import @2.1::Error;
 import @2.3::IComposer;
 
 interface IComposer extends @2.3::IComposer {
-
     /**
      * Creates a v2.4 client of the composer. Supersedes @2.3::createClient.
      *
