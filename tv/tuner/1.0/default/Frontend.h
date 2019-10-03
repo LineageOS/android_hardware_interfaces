@@ -56,11 +56,9 @@ class Frontend : public IFrontend {
     virtual Return<void> getStatus(const hidl_vec<FrontendStatusType>& statusTypes,
                                    getStatus_cb _hidl_cb) override;
 
-    virtual Return<Result> sendDiseqcMessage(const hidl_vec<uint8_t>& diseqcMessage) override;
-
     virtual Return<Result> setLna(bool bEnable) override;
 
-    virtual Return<Result> setLnb(const sp<ILnb>& lnb) override;
+    virtual Return<Result> setLnb(uint32_t lnb) override;
 
     FrontendType getFrontendType();
 
