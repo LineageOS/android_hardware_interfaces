@@ -14,15 +14,11 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "android.hardware.health@2.0-impl"
+#define LOG_TAG "HealthLoop"
 #define KLOG_LEVEL 6
 
-#include <healthd/BatteryMonitor.h>
-#include <healthd/healthd.h>
+#include <health/HealthLoop.h>
 
-#include <batteryservice/BatteryService.h>
-#include <cutils/klog.h>
-#include <cutils/uevent.h>
 #include <errno.h>
 #include <libgen.h>
 #include <stdio.h>
@@ -31,77 +27,65 @@
 #include <sys/epoll.h>
 #include <sys/timerfd.h>
 #include <unistd.h>
+
+#include <android-base/logging.h>
+#include <batteryservice/BatteryService.h>
+#include <cutils/klog.h>
+#include <cutils/uevent.h>
+#include <healthd/healthd.h>
 #include <utils/Errors.h>
 
-#include <health2/Health.h>
+#include <health/utils.h>
 
 using namespace android;
-
-// Periodic chores fast interval in seconds
-#define DEFAULT_PERIODIC_CHORES_INTERVAL_FAST (60 * 1)
-// Periodic chores fast interval in seconds
-#define DEFAULT_PERIODIC_CHORES_INTERVAL_SLOW (60 * 10)
-
-static struct healthd_config healthd_config = {
-    .periodic_chores_interval_fast = DEFAULT_PERIODIC_CHORES_INTERVAL_FAST,
-    .periodic_chores_interval_slow = DEFAULT_PERIODIC_CHORES_INTERVAL_SLOW,
-    .batteryStatusPath = String8(String8::kEmptyString),
-    .batteryHealthPath = String8(String8::kEmptyString),
-    .batteryPresentPath = String8(String8::kEmptyString),
-    .batteryCapacityPath = String8(String8::kEmptyString),
-    .batteryVoltagePath = String8(String8::kEmptyString),
-    .batteryTemperaturePath = String8(String8::kEmptyString),
-    .batteryTechnologyPath = String8(String8::kEmptyString),
-    .batteryCurrentNowPath = String8(String8::kEmptyString),
-    .batteryCurrentAvgPath = String8(String8::kEmptyString),
-    .batteryChargeCounterPath = String8(String8::kEmptyString),
-    .batteryFullChargePath = String8(String8::kEmptyString),
-    .batteryCycleCountPath = String8(String8::kEmptyString),
-    .energyCounter = NULL,
-    .boot_min_cap = 0,
-    .screen_on = NULL,
-};
-
-static int eventct;
-static int epollfd;
+using namespace std::chrono_literals;
 
 #define POWER_SUPPLY_SUBSYSTEM "power_supply"
 
-static int uevent_fd;
-static int wakealarm_fd;
+namespace android {
+namespace hardware {
+namespace health {
 
-// -1 for no epoll timeout
-static int awake_poll_interval = -1;
+HealthLoop::HealthLoop() {
+    InitHealthdConfig(&healthd_config_);
+    awake_poll_interval_ = -1;
+    wakealarm_wake_interval_ = healthd_config_.periodic_chores_interval_fast;
+}
 
-static int wakealarm_wake_interval = DEFAULT_PERIODIC_CHORES_INTERVAL_FAST;
+HealthLoop::~HealthLoop() {
+    LOG(FATAL) << "HealthLoop cannot be destroyed";
+}
 
-using ::android::hardware::health::V2_0::implementation::Health;
+int HealthLoop::RegisterEvent(int fd, BoundFunction func, EventWakeup wakeup) {
+    CHECK(!reject_event_register_);
 
-struct healthd_mode_ops* healthd_mode_ops = nullptr;
+    auto* event_handler =
+            event_handlers_
+                    .emplace_back(std::make_unique<EventHandler>(EventHandler{this, fd, func}))
+                    .get();
 
-int healthd_register_event(int fd, void (*handler)(uint32_t), EventWakeup wakeup) {
     struct epoll_event ev;
 
     ev.events = EPOLLIN;
 
     if (wakeup == EVENT_WAKEUP_FD) ev.events |= EPOLLWAKEUP;
 
-    ev.data.ptr = (void*)handler;
-    if (epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &ev) == -1) {
+    ev.data.ptr = reinterpret_cast<void*>(event_handler);
+
+    if (epoll_ctl(epollfd_, EPOLL_CTL_ADD, fd, &ev) == -1) {
         KLOG_ERROR(LOG_TAG, "epoll_ctl failed; errno=%d\n", errno);
         return -1;
     }
 
-    eventct++;
     return 0;
 }
 
-static void wakealarm_set_interval(int interval) {
+void HealthLoop::WakeAlarmSetInterval(int interval) {
     struct itimerspec itval;
 
-    if (wakealarm_fd == -1) return;
+    if (wakealarm_fd_ == -1) return;
 
-    wakealarm_wake_interval = interval;
+    wakealarm_wake_interval_ = interval;
 
     if (interval == -1) interval = 0;
 
@@ -110,47 +94,46 @@ static void wakealarm_set_interval(int interval) {
     itval.it_value.tv_sec = interval;
     itval.it_value.tv_nsec = 0;
 
-    if (timerfd_settime(wakealarm_fd, 0, &itval, NULL) == -1)
+    if (timerfd_settime(wakealarm_fd_, 0, &itval, NULL) == -1)
         KLOG_ERROR(LOG_TAG, "wakealarm_set_interval: timerfd_settime failed\n");
 }
 
-void healthd_battery_update_internal(bool charger_online) {
+void HealthLoop::AdjustWakealarmPeriods(bool charger_online) {
     // Fast wake interval when on charger (watch for overheat);
     // slow wake interval when on battery (watch for drained battery).
 
-    int new_wake_interval = charger_online ? healthd_config.periodic_chores_interval_fast
-                                           : healthd_config.periodic_chores_interval_slow;
+    int new_wake_interval = charger_online ? healthd_config_.periodic_chores_interval_fast
+                                           : healthd_config_.periodic_chores_interval_slow;
 
-    if (new_wake_interval != wakealarm_wake_interval) wakealarm_set_interval(new_wake_interval);
+    if (new_wake_interval != wakealarm_wake_interval_) WakeAlarmSetInterval(new_wake_interval);
 
     // During awake periods poll at fast rate.  If wake alarm is set at fast
     // rate then just use the alarm; if wake alarm is set at slow rate then
     // poll at fast rate while awake and let alarm wake up at slow rate when
     // asleep.
 
-    if (healthd_config.periodic_chores_interval_fast == -1)
-        awake_poll_interval = -1;
+    if (healthd_config_.periodic_chores_interval_fast == -1)
+        awake_poll_interval_ = -1;
     else
-        awake_poll_interval = new_wake_interval == healthd_config.periodic_chores_interval_fast
-                                  ? -1
-                                  : healthd_config.periodic_chores_interval_fast * 1000;
+        awake_poll_interval_ = new_wake_interval == healthd_config_.periodic_chores_interval_fast
+                                       ? -1
+                                       : healthd_config_.periodic_chores_interval_fast * 1000;
 }
 
-static void healthd_battery_update(void) {
-    Health::getImplementation()->update();
+void HealthLoop::PeriodicChores() {
+    ScheduleBatteryUpdate();
 }
 
-static void periodic_chores() {
-    healthd_battery_update();
-}
-
+// TODO(b/140330870): Use BPF instead.
 #define UEVENT_MSG_LEN 2048
-static void uevent_event(uint32_t /*epevents*/) {
+void HealthLoop::UeventEvent(uint32_t /*epevents*/) {
+    // No need to lock because uevent_fd_ is guaranteed to be initialized.
+
     char msg[UEVENT_MSG_LEN + 2];
     char* cp;
     int n;
 
-    n = uevent_kernel_multicast_recv(uevent_fd, msg, UEVENT_MSG_LEN);
+    n = uevent_kernel_multicast_recv(uevent_fd_, msg, UEVENT_MSG_LEN);
     if (n <= 0) return;
     if (n >= UEVENT_MSG_LEN) /* overflow -- discard */
         return;
@@ -161,7 +144,7 @@ static void uevent_event(uint32_t /*epevents*/) {
 
     while (*cp) {
         if (!strcmp(cp, "SUBSYSTEM=" POWER_SUPPLY_SUBSYSTEM)) {
-            healthd_battery_update();
+            ScheduleBatteryUpdate();
             break;
         }
 
@@ -171,58 +154,63 @@ static void uevent_event(uint32_t /*epevents*/) {
     }
 }
 
-static void uevent_init(void) {
-    uevent_fd = uevent_open_socket(64 * 1024, true);
+void HealthLoop::UeventInit(void) {
+    uevent_fd_.reset(uevent_open_socket(64 * 1024, true));
 
-    if (uevent_fd < 0) {
+    if (uevent_fd_ < 0) {
         KLOG_ERROR(LOG_TAG, "uevent_init: uevent_open_socket failed\n");
         return;
     }
 
-    fcntl(uevent_fd, F_SETFL, O_NONBLOCK);
-    if (healthd_register_event(uevent_fd, uevent_event, EVENT_WAKEUP_FD))
+    fcntl(uevent_fd_, F_SETFL, O_NONBLOCK);
+    if (RegisterEvent(uevent_fd_, &HealthLoop::UeventEvent, EVENT_WAKEUP_FD))
         KLOG_ERROR(LOG_TAG, "register for uevent events failed\n");
 }
 
-static void wakealarm_event(uint32_t /*epevents*/) {
+void HealthLoop::WakeAlarmEvent(uint32_t /*epevents*/) {
+    // No need to lock because wakealarm_fd_ is guaranteed to be initialized.
+
     unsigned long long wakeups;
 
-    if (read(wakealarm_fd, &wakeups, sizeof(wakeups)) == -1) {
+    if (read(wakealarm_fd_, &wakeups, sizeof(wakeups)) == -1) {
         KLOG_ERROR(LOG_TAG, "wakealarm_event: read wakealarm fd failed\n");
         return;
     }
 
-    periodic_chores();
+    PeriodicChores();
 }
 
-static void wakealarm_init(void) {
-    wakealarm_fd = timerfd_create(CLOCK_BOOTTIME_ALARM, TFD_NONBLOCK);
-    if (wakealarm_fd == -1) {
+void HealthLoop::WakeAlarmInit(void) {
+    wakealarm_fd_.reset(timerfd_create(CLOCK_BOOTTIME_ALARM, TFD_NONBLOCK));
+    if (wakealarm_fd_ == -1) {
         KLOG_ERROR(LOG_TAG, "wakealarm_init: timerfd_create failed\n");
         return;
     }
 
-    if (healthd_register_event(wakealarm_fd, wakealarm_event, EVENT_WAKEUP_FD))
+    if (RegisterEvent(wakealarm_fd_, &HealthLoop::WakeAlarmEvent, EVENT_WAKEUP_FD))
         KLOG_ERROR(LOG_TAG, "Registration of wakealarm event failed\n");
 
-    wakealarm_set_interval(healthd_config.periodic_chores_interval_fast);
+    WakeAlarmSetInterval(healthd_config_.periodic_chores_interval_fast);
 }
 
-static void healthd_mainloop(void) {
+void HealthLoop::MainLoop(void) {
     int nevents = 0;
     while (1) {
+        reject_event_register_ = true;
+        size_t eventct = event_handlers_.size();
         struct epoll_event events[eventct];
-        int timeout = awake_poll_interval;
+        int timeout = awake_poll_interval_;
+
         int mode_timeout;
 
         /* Don't wait for first timer timeout to run periodic chores */
-        if (!nevents) periodic_chores();
+        if (!nevents) PeriodicChores();
 
-        healthd_mode_ops->heartbeat();
+        Heartbeat();
 
-        mode_timeout = healthd_mode_ops->preparetowait();
+        mode_timeout = PrepareToWait();
         if (timeout < 0 || (mode_timeout > 0 && mode_timeout < timeout)) timeout = mode_timeout;
-        nevents = epoll_wait(epollfd, events, eventct, timeout);
+        nevents = epoll_wait(epollfd_, events, eventct, timeout);
         if (nevents == -1) {
             if (errno == EINTR) continue;
             KLOG_ERROR(LOG_TAG, "healthd_mainloop: epoll_wait failed\n");
@@ -230,44 +218,50 @@ static void healthd_mainloop(void) {
         }
 
         for (int n = 0; n < nevents; ++n) {
-            if (events[n].data.ptr) (*(void (*)(int))events[n].data.ptr)(events[n].events);
+            if (events[n].data.ptr) {
+                auto* event_handler = reinterpret_cast<EventHandler*>(events[n].data.ptr);
+                event_handler->func(event_handler->object, events[n].events);
+            }
         }
     }
 
     return;
 }
 
-static int healthd_init() {
-    epollfd = epoll_create1(EPOLL_CLOEXEC);
-    if (epollfd == -1) {
+int HealthLoop::InitInternal() {
+    epollfd_.reset(epoll_create1(EPOLL_CLOEXEC));
+    if (epollfd_ == -1) {
         KLOG_ERROR(LOG_TAG, "epoll_create1 failed; errno=%d\n", errno);
         return -1;
     }
 
-    healthd_mode_ops->init(&healthd_config);
-    wakealarm_init();
-    uevent_init();
+    // Call subclass's init for any additional init steps.
+    // Note that healthd_config_ is initialized before wakealarm_fd_; see
+    // AdjustUeventWakealarmPeriods().
+    Init(&healthd_config_);
+
+    WakeAlarmInit();
+    UeventInit();
 
     return 0;
 }
 
-int healthd_main() {
+int HealthLoop::StartLoop() {
     int ret;
 
     klog_set_level(KLOG_LEVEL);
 
-    if (!healthd_mode_ops) {
-        KLOG_ERROR("healthd ops not set, exiting\n");
-        exit(1);
-    }
-
-    ret = healthd_init();
+    ret = InitInternal();
     if (ret) {
-        KLOG_ERROR("Initialization failed, exiting\n");
-        exit(2);
+        KLOG_ERROR(LOG_TAG, "Initialization failed, exiting\n");
+        return 2;
     }
 
-    healthd_mainloop();
-    KLOG_ERROR("Main loop terminated, exiting\n");
+    MainLoop();
+    KLOG_ERROR(LOG_TAG, "Main loop terminated, exiting\n");
     return 3;
 }
+
+}  // namespace health
+}  // namespace hardware
+}  // namespace android
