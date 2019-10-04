@@ -87,7 +87,7 @@ size_t PowerStats::parsePowerRails() {
     std::string railFileName;
     std::string spsFileName;
     uint32_t index = 0;
-    uint32_t samplingRate;
+    unsigned long samplingRate;
     for (const auto& path : mPm.devicePaths) {
         railFileName = path + "/enabled_rails";
         spsFileName = path + "/sampling_rate";
@@ -109,10 +109,11 @@ size_t PowerStats::parsePowerRails() {
         while (std::getline(railNames, line)) {
             std::vector<std::string> words = android::base::Split(line, ":");
             if (words.size() == 2) {
-                mPm.railsInfo.emplace(words[0], RailData{.devicePath = path,
-                                                         .index = index,
-                                                         .subsysName = words[1],
-                                                         .samplingRate = samplingRate});
+                mPm.railsInfo.emplace(
+                        words[0], RailData{.devicePath = path,
+                                           .index = index,
+                                           .subsysName = words[1],
+                                           .samplingRate = static_cast<uint32_t>(samplingRate)});
                 index++;
             } else {
                 ALOGW("Unexpected format in file: %s", railFileName.c_str());
