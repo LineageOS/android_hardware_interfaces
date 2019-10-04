@@ -2537,7 +2537,7 @@ enum VehicleApPowerStateReq : int32_t {
      * power controller must change power state to this state to shutdown
      * system.
      *
-     * int32Values[1] : one of enum_vehicle_ap_power_state_shutdown_param_type
+     * int32Values[1] : one of VehicleApPowerStateShutdownParam
      *
      * SHUTDOWN_PRPARE may be requested from either WAIT_FOR_VHAL or ON states.
      */
