@@ -71,6 +71,9 @@ class ComposerClient : public V2_3::vts::ComposerClient {
             Display display,
             std::vector<IComposerClient::DisplayCapability>* outDisplayCapabilities);
 
+    Error getDisplayConnectionType(Display display,
+                                   IComposerClient::DisplayConnectionType* outType);
+
   private:
     const sp<IComposerClient> mClient;
 };

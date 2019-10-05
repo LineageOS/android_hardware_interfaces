@@ -179,6 +179,16 @@ TEST_F(GraphicsComposerHidlTest, getDisplayCapabilitiesBadDisplay) {
     EXPECT_EQ(Error::BAD_DISPLAY, error);
 }
 
+TEST_F(GraphicsComposerHidlTest, getDisplayConnectionType) {
+    IComposerClient::DisplayConnectionType type;
+    EXPECT_EQ(Error::BAD_DISPLAY,
+              mComposerClient->getDisplayConnectionType(mInvalidDisplayId, &type));
+
+    for (Display display : mComposerCallback->getDisplays()) {
+        EXPECT_EQ(Error::NONE, mComposerClient->getDisplayConnectionType(display, &type));
+    }
+}
+
 }  // namespace
 }  // namespace vts
 }  // namespace V2_4

@@ -204,7 +204,7 @@
     </hal>
     <hal format="hidl" optional="false">
         <name>android.hardware.graphics.composer</name>
-        <version>2.1-3</version>
+        <version>2.1-4</version>
         <interface>
             <name>IComposer</name>
             <instance>default</instance>
@@ -307,7 +307,7 @@
     </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.neuralnetworks</name>
-        <version>1.0-2</version>
+        <version>1.0-3</version>
         <interface>
             <name>IDevice</name>
             <regex-instance>.*</regex-instance>
@@ -467,7 +467,7 @@
     </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.vibrator</name>
-        <version>1.0-3</version>
+        <version>1.0-4</version>
         <interface>
             <name>IVibrator</name>
             <instance>default</instance>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,8 @@
  * limitations under the License.
  */
 
-package android.hardware.graphics.composer@2.4;
+package android.hardware.vibrator@1.4;
 
-import IComposerClient;
-import @2.1::Error;
-import @2.3::IComposer;
-
-interface IComposer extends @2.3::IComposer {
-    /**
-     * Creates a v2.4 client of the composer. Supersedes @2.3::createClient.
-     *
-     * @return error is NONE upon success. Otherwise,
-     *         NO_RESOURCES when the client could not be created.
-     * @return client is the newly created client.
-     */
-    createClient_2_4() generates (Error error, IComposerClient client);
+interface IVibratorCallback {
+    oneway onComplete();
 };

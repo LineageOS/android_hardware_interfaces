@@ -46,6 +46,14 @@ class ComposerClientImpl : public V2_3::hal::detail::ComposerClientImpl<Interfac
         return Void();
     }
 
+    Return<void> getDisplayConnectionType(
+            Display display, IComposerClient::getDisplayConnectionType_cb hidl_cb) override {
+        IComposerClient::DisplayConnectionType type;
+        Error error = mHal->getDisplayConnectionType(display, &type);
+        hidl_cb(error, type);
+        return Void();
+    }
+
     static std::unique_ptr<ComposerClientImpl> create(Hal* hal) {
         auto client = std::make_unique<ComposerClientImpl>(hal);
         return client->init() ? std::move(client) : nullptr;

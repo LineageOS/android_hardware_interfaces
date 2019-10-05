@@ -51,13 +51,22 @@ sp<IComposerClient> ComposerClient::getRaw() const {
 
 Error ComposerClient::getDisplayCapabilities(
         Display display, std::vector<IComposerClient::DisplayCapability>* outCapabilities) {
-    std::vector<IComposerClient::DisplayCapability> capabilities;
     Error error = Error::NONE;
     mClient->getDisplayCapabilities_2_4(display,
                                         [&](const auto& tmpError, const auto& tmpCapabilities) {
                                             error = tmpError;
                                             *outCapabilities = tmpCapabilities;
                                         });
+    return error;
+}
+
+Error ComposerClient::getDisplayConnectionType(Display display,
+                                               IComposerClient::DisplayConnectionType* outType) {
+    Error error = Error::NONE;
+    mClient->getDisplayConnectionType(display, [&](const auto& tmpError, const auto& tmpType) {
+        error = tmpError;
+        *outType = tmpType;
+    });
     return error;
 }
 
