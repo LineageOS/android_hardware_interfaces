@@ -148,7 +148,7 @@ interface IFrontend {
     setLnb(LnbId lnbId) generates (Result result);
 
     /**
-     * Enble or Disable Low Noise Amplifier (LNA).
+     * Enable or Disable Low Noise Amplifier (LNA).
      *
      * @param bEnable true if activate LNA module; false if deactivate LNA
      *

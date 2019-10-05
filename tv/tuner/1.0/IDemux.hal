@@ -62,9 +62,9 @@ interface IDemux {
      *
      * It is used by the client to get the descriptor of the filter's Fast
      * Message Queue. The data in FMQ is filtered out from MPEG transport
-     * stream. The data is origanized to data blocks which may have
+     * stream. The data is organized to data blocks which may have
      * different length. The length's information of one or multiple data blocks
-     * is sent to client throught DemuxFilterEvent.
+     * is sent to client through DemuxFilterEvent.
      *
      * @param filterId the ID of the filter.
      * @return result Result status of the operation.
@@ -97,7 +97,7 @@ interface IDemux {
     /**
      * Start the filter.
      *
-     * It is used by the client to ask the filter to start filterring data.
+     * It is used by the client to ask the filter to start filtering data.
      *
      * @param filterId the ID of the filter.
      * @return result Result status of the operation.
@@ -218,7 +218,7 @@ interface IDemux {
      *
      * It is used by the client to get the descriptor of the output's Fast
      * Message Queue. The data in FMQ is muxed packets output from selected
-     * filters. The packet's format is specifed by DemuxDataFormat in
+     * filters. The packet's format is specified by DemuxDataFormat in
      * DemuxOutputSettings.
      *
      * @return result Result status of the operation.

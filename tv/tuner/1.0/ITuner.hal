@@ -23,7 +23,7 @@ import ILnb;
 
 /**
  * Top level interface to manage Frontend, Demux and Decrambler hardware
- * resouces which are needed for Android TV.
+ * resources which are needed for Android TV.
  */
 interface ITuner {
     /**

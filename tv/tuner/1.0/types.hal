@@ -58,7 +58,7 @@ enum FrontendType : uint32_t {
     DVBS,
     /**
      * Digital Video Broadcasting - Terrestrial
-     * DVB Terresttrial Frontend Standard ETSI EN 300 468 V1.15.1 and
+     * DVB Terrestrial Frontend Standard ETSI EN 300 468 V1.15.1 and
      * ETSI EN 302 755 V1.4.1.
      */
     DVBT,
@@ -655,7 +655,7 @@ enum FrontendIsdbsRolloff : uint32_t {
 };
 
 /**
- *  Modulaltion Type for ISDBS.
+ *  Modulation Type for ISDBS.
  */
 @export
 enum FrontendIsdbsModulation : uint32_t {
@@ -951,7 +951,7 @@ enum FrontendScanMessageType : uint32_t {
     GROUP_IDS,
     /** Stream Ids. */
     INPUT_STREAM_IDS,
-    /** Locked signal stardard.  */
+    /** Locked signal standard.  */
     STANDARD,
     /** PLP status in a tuned frequency band for ATSC3 frontend. */
     ATSC3_PLP_INFO,
@@ -969,7 +969,7 @@ struct FrontendScanAtsc3PlpInfo {
  *  Scan Message for Frontend.
  */
 safe_union FrontendScanMessage {
-    bool islocked;
+    bool isLocked;
     bool isEnd;
     /** scan progress percent (0..100) */
     uint8_t progressPercent;
