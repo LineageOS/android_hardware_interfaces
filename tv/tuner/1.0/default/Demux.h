@@ -20,6 +20,8 @@
 #include <android/hardware/tv/tuner/1.0/IDemux.h>
 #include <fmq/MessageQueue.h>
 #include <set>
+#include "Frontend.h"
+#include "Tuner.h"
 
 using namespace std;
 
@@ -40,9 +42,12 @@ using ::android::hardware::tv::tuner::V1_0::Result;
 
 using FilterMQ = MessageQueue<uint8_t, kSynchronizedReadWrite>;
 
+class Tuner;
+class Frontend;
+
 class Demux : public IDemux {
   public:
-    Demux(uint32_t demuxId);
+    Demux(uint32_t demuxId, sp<Tuner> tuner);
 
     ~Demux();
 
@@ -103,7 +108,17 @@ class Demux : public IDemux {
 
     virtual Return<Result> removeOutput() override;
 
+    // Functions interacts with Tuner Service
+    void stopBroadcastInput();
+
   private:
+    // Tuner service
+    sp<Tuner> mTunerService;
+
+    // Frontend source
+    sp<Frontend> mFrontend;
+    string mFrontendSourceFile;
+
     // A struct that passes the arguments to a newly created filter thread
     struct ThreadArgs {
         Demux* user;
@@ -122,6 +137,7 @@ class Demux : public IDemux {
     Result startRecordFilterHandler(uint32_t filterId);
     Result startPcrFilterHandler();
     Result startFilterLoop(uint32_t filterId);
+    Result startBroadcastInputLoop();
 
     /**
      * To create a FilterMQ with the the next available Filter ID.
@@ -143,14 +159,17 @@ class Demux : public IDemux {
      * A dispatcher to read and dispatch input data to all the started filters.
      * Each filter handler handles the data filtering/output writing/filterEvent updating.
      */
-    bool filterAndOutputData();
+    bool readInputFMQ();
+    void startTsFilter(vector<uint8_t> data);
+    bool startFilterDispatcher();
     static void* __threadLoopFilter(void* data);
     static void* __threadLoopInput(void* user);
+    static void* __threadLoopBroadcast(void* user);
     void filterThreadLoop(uint32_t filterId);
     void inputThreadLoop();
+    void broadcastInputThreadLoop();
 
     uint32_t mDemuxId;
-    uint32_t mSourceFrontendId;
     /**
      * Record the last used filter id. Initial value is -1.
      * Filter Id starts with 0.
@@ -195,6 +214,7 @@ class Demux : public IDemux {
     // Thread handlers
     pthread_t mInputThread;
     pthread_t mOutputThread;
+    pthread_t mBroadcastInputThread;
     vector<pthread_t> mFilterThreads;
 
     // FMQ status local records
@@ -204,6 +224,8 @@ class Demux : public IDemux {
      */
     vector<bool> mFilterThreadRunning;
     bool mInputThreadRunning;
+    bool mBroadcastInputThreadRunning;
+    bool mKeepFetchingDataFromFrontend;
     /**
      * Lock to protect writes to the FMQs
      */
@@ -217,6 +239,9 @@ class Demux : public IDemux {
      * Lock to protect writes to the input status
      */
     std::mutex mInputStatusLock;
+    std::mutex mBroadcastInputThreadLock;
+    std::mutex mFilterThreadLock;
+    std::mutex mInputThreadLock;
     /**
      * How many times a filter should write
      * TODO make this dynamic/random/can take as a parameter
