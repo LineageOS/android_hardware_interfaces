@@ -27,14 +27,10 @@ namespace tuner {
 namespace V1_0 {
 namespace implementation {
 
-Frontend::Frontend() {
-    // Init callback to nullptr
-    mCallback = nullptr;
-}
-
-Frontend::Frontend(FrontendType type, FrontendId id) {
+Frontend::Frontend(FrontendType type, FrontendId id, sp<Tuner> tuner) {
     mType = type;
     mId = id;
+    mTunerService = tuner;
     // Init callback to nullptr
     mCallback = nullptr;
 }
@@ -67,12 +63,17 @@ Return<Result> Frontend::tune(const FrontendSettings& /* settings */) {
         return Result::INVALID_STATE;
     }
 
-    mCallback->onEvent(FrontendEventType::NO_SIGNAL);
+    // TODO dynamically allocate file to the source file
+    mSourceStreamFile = FRONTEND_STREAM_FILE;
+
+    mCallback->onEvent(FrontendEventType::LOCKED);
     return Result::SUCCESS;
 }
 
 Return<Result> Frontend::stopTune() {
     ALOGV("%s", __FUNCTION__);
+
+    mTunerService->frontendStopTune(mId);
 
     return Result::SUCCESS;
 }
@@ -117,6 +118,10 @@ FrontendType Frontend::getFrontendType() {
 
 FrontendId Frontend::getFrontendId() {
     return mId;
+}
+
+string Frontend::getSourceFile() {
+    return mSourceStreamFile;
 }
 
 }  // namespace implementation
