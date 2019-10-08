@@ -254,6 +254,7 @@ class DemuxCallback : public IDemuxCallback {
 
     void testOnFilterEvent(uint32_t filterId);
     void testFilterDataOutput();
+    void stopInputThread();
 
     void startPlaybackInputThread(InputConf inputConf, MQDesc& inputMQDescriptor);
     void startFilterEventThread(DemuxFilterEvent event);
@@ -290,6 +291,7 @@ class DemuxCallback : public IDemuxCallback {
 
     android::Mutex mMsgLock;
     android::Mutex mFilterOutputLock;
+    android::Mutex mInputThreadLock;
     android::Condition mMsgCondition;
     android::Condition mFilterOutputCondition;
 
@@ -326,15 +328,21 @@ void DemuxCallback::startFilterEventThread(DemuxFilterEvent event) {
 
 void DemuxCallback::testFilterDataOutput() {
     android::Mutex::Autolock autoLock(mMsgLock);
-    while (mPidFilterOutputCount < 3) {
+    while (mPidFilterOutputCount < 1) {
         if (-ETIMEDOUT == mMsgCondition.waitRelative(mMsgLock, WAIT_TIMEOUT)) {
             EXPECT_TRUE(false) << "filter output matching pid does not output within timeout";
             return;
         }
     }
+    mPidFilterOutputCount = 0;
     ALOGW("[vts] pass and stop");
+}
+
+void DemuxCallback::stopInputThread() {
     mInputThreadRunning = false;
     mKeepWritingInputFMQ = false;
+
+    android::Mutex::Autolock autoLock(mInputThreadLock);
 }
 
 void DemuxCallback::updateFilterMQ(uint32_t filterId, MQDesc& filterMQDescriptor) {
@@ -358,6 +366,7 @@ void* DemuxCallback::__threadLoopInput(void* threadArgs) {
 }
 
 void DemuxCallback::inputThreadLoop(InputConf* inputConf, bool* keepWritingInputFMQ) {
+    android::Mutex::Autolock autoLock(mInputThreadLock);
     mInputThreadRunning = true;
 
     // Create the EventFlag that is used to signal the HAL impl that data have been
@@ -372,13 +381,12 @@ void DemuxCallback::inputThreadLoop(InputConf* inputConf, bool* keepWritingInput
     char* buffer = new char[writeSize];
     ALOGW("[vts] input thread loop start %s", inputConf->inputDataFile.c_str());
     if (!inputData.is_open()) {
-        // log
         mInputThreadRunning = false;
         ALOGW("[vts] Error %s", strerror(errno));
     }
 
     while (mInputThreadRunning) {
-        // move the stream pointer for packet size * 100 every read until the end
+        // move the stream pointer for packet size * 6 every read until the end
         while (*keepWritingInputFMQ) {
             inputData.read(buffer, writeSize);
             if (!inputData) {
@@ -502,7 +510,8 @@ class TunerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     ::testing::AssertionResult stopTuneFrontend(int32_t frontendId);
     ::testing::AssertionResult closeFrontend(int32_t frontendId);
     ::testing::AssertionResult createDemux();
-    ::testing::AssertionResult createDemuxWithFrontend(int32_t frontendId);
+    ::testing::AssertionResult createDemuxWithFrontend(int32_t frontendId,
+                                                       FrontendSettings settings);
     ::testing::AssertionResult getInputMQDescriptor();
     ::testing::AssertionResult addInputToDemux(DemuxInputSettings setting);
     ::testing::AssertionResult addFilterToDemux(DemuxFilterType type, DemuxFilterSettings setting);
@@ -514,6 +523,8 @@ class TunerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     ::testing::AssertionResult playbackDataFlowTest(vector<FilterConf> filterConf,
                                                     InputConf inputConf,
                                                     vector<string> goldenOutputFiles);
+    ::testing::AssertionResult broadcastDataFlowTest(vector<FilterConf> filterConf,
+                                                     vector<string> goldenOutputFiles);
 };
 
 ::testing::AssertionResult TunerHidlTest::createFrontend(int32_t frontendId) {
@@ -588,7 +599,8 @@ class TunerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     return ::testing::AssertionResult(status == Result::SUCCESS);
 }
 
-::testing::AssertionResult TunerHidlTest::createDemuxWithFrontend(int32_t frontendId) {
+::testing::AssertionResult TunerHidlTest::createDemuxWithFrontend(int32_t frontendId,
+                                                                  FrontendSettings settings) {
     Result status;
 
     if (!mDemux && createDemux() == ::testing::AssertionFailure()) {
@@ -598,6 +610,8 @@ class TunerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     if (!mFrontend && createFrontend(frontendId) == ::testing::AssertionFailure()) {
         return ::testing::AssertionFailure();
     }
+
+    mFrontendCallback->testOnEvent(mFrontend, settings);
 
     status = mDemux->setFrontendDataSource(frontendId);
 
@@ -772,6 +786,7 @@ class TunerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 
     // Data Verify Module
     mDemuxCallback->testFilterDataOutput();
+    mDemuxCallback->stopInputThread();
 
     // Clean Up Module
     for (int i = 0; i <= filterIdsSize; i++) {
@@ -780,6 +795,65 @@ class TunerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         }
     }
     if (mDemux->stopInput() != Result::SUCCESS) {
+        return ::testing::AssertionFailure();
+    }
+    return closeDemux();
+}
+
+::testing::AssertionResult TunerHidlTest::broadcastDataFlowTest(
+        vector<FilterConf> filterConf, vector<string> /*goldenOutputFiles*/) {
+    Result status;
+    hidl_vec<FrontendId> feIds;
+
+    mService->getFrontendIds([&](Result result, const hidl_vec<FrontendId>& frontendIds) {
+        status = result;
+        feIds = frontendIds;
+    });
+
+    if (feIds.size() == 0) {
+        ALOGW("[   WARN   ] Frontend isn't available");
+        return ::testing::AssertionFailure();
+    }
+
+    FrontendDvbtSettings dvbt{
+            .frequency = 1000,
+    };
+    FrontendSettings settings;
+    settings.dvbt(dvbt);
+
+    if (createDemuxWithFrontend(feIds[0], settings) != ::testing::AssertionSuccess()) {
+        return ::testing::AssertionFailure();
+    }
+
+    int filterIdsSize;
+    // Filter Configuration Module
+    for (int i = 0; i < filterConf.size(); i++) {
+        if (addFilterToDemux(filterConf[i].type, filterConf[i].setting) ==
+                    ::testing::AssertionFailure() ||
+            // TODO use a map to save the FMQs/EvenFlags and pass to callback
+            getFilterMQDescriptor(mFilterId) == ::testing::AssertionFailure()) {
+            return ::testing::AssertionFailure();
+        }
+        filterIdsSize = mUsedFilterIds.size();
+        mUsedFilterIds.resize(filterIdsSize + 1);
+        mUsedFilterIds[filterIdsSize] = mFilterId;
+        mDemuxCallback->updateFilterMQ(mFilterId, mFilterMQDescriptor);
+        status = mDemux->startFilter(mFilterId);
+        if (status != Result::SUCCESS) {
+            return ::testing::AssertionFailure();
+        }
+    }
+
+    // Data Verify Module
+    mDemuxCallback->testFilterDataOutput();
+
+    // Clean Up Module
+    for (int i = 0; i <= filterIdsSize; i++) {
+        if (mDemux->stopFilter(mUsedFilterIds[i]) != Result::SUCCESS) {
+            return ::testing::AssertionFailure();
+        }
+    }
+    if (mFrontend->stopTune() != Result::SUCCESS) {
         return ::testing::AssertionFailure();
     }
     return closeDemux();
@@ -868,7 +942,7 @@ TEST_F(TunerHidlTest, CloseFrontend) {
     }
 }
 
-TEST_F(TunerHidlTest, CreateDemuxWithFrontend) {
+/*TEST_F(TunerHidlTest, CreateDemuxWithFrontend) {
     Result status;
     hidl_vec<FrontendId> feIds;
 
@@ -883,10 +957,17 @@ TEST_F(TunerHidlTest, CreateDemuxWithFrontend) {
         return;
     }
 
+    FrontendDvbtSettings dvbt{
+        .frequency = 1000,
+    };
+    FrontendSettings settings;
+    settings.dvbt(dvbt);
+
     for (size_t i = 0; i < feIds.size(); i++) {
-        ASSERT_TRUE(createDemuxWithFrontend(feIds[i]));
+        ASSERT_TRUE(createDemuxWithFrontend(feIds[i], settings));
+        mFrontend->stopTune();
     }
-}
+}*/
 
 TEST_F(TunerHidlTest, CreateDemux) {
     description("Create Demux");
@@ -920,7 +1001,7 @@ TEST_F(TunerHidlTest, PlaybackDataFlowWithPesFilterTest) {
 
     DemuxFilterSettings filterSetting;
     DemuxFilterPesDataSettings pesFilterSetting{
-            .tpid = 4720,
+            .tpid = 18,
     };
     filterSetting.pesData(pesFilterSetting);
     FilterConf pesFilterConf{
@@ -945,6 +1026,29 @@ TEST_F(TunerHidlTest, PlaybackDataFlowWithPesFilterTest) {
     vector<string> goldenOutputFiles;
 
     ASSERT_TRUE(playbackDataFlowTest(filterConf, inputConf, goldenOutputFiles));
+}
+
+TEST_F(TunerHidlTest, BroadcastDataFlowWithPesFilterTest) {
+    description("Feed ts data from frontend and test with PES filter");
+
+    // todo modulize the filter conf parser
+    vector<FilterConf> filterConf;
+    filterConf.resize(1);
+
+    DemuxFilterSettings filterSetting;
+    DemuxFilterPesDataSettings pesFilterSetting{
+            .tpid = 18,
+    };
+    filterSetting.pesData(pesFilterSetting);
+    FilterConf pesFilterConf{
+            .type = DemuxFilterType::PES,
+            .setting = filterSetting,
+    };
+    filterConf[0] = pesFilterConf;
+
+    vector<string> goldenOutputFiles;
+
+    ASSERT_TRUE(broadcastDataFlowTest(filterConf, goldenOutputFiles));
 }
 
 }  // namespace
