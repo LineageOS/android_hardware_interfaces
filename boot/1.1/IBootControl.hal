@@ -1,0 +1,66 @@
+/*
+ * Copyright 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.boot@1.1;
+
+import @1.0::IBootControl;
+
+interface IBootControl extends @1.0::IBootControl {
+    /**
+     * Sets whether a snapshot-merge of any dynamic partition is in progress.
+     *
+     * After the merge status is set to a given value, subsequent calls to
+     * getSnapshotMergeStatus must return the set value.
+     *
+     * The merge status must be persistent across reboots. That is, getSnapshotMergeStatus
+     * must return the same value after a reboot if the merge status is not altered in any way
+     * (e.g. set by setSnapshotMergeStatus or set to CANCELLED by bootloader).
+     *
+     * Read/write access to the merge status must be atomic. When the HAL is processing a
+     * setSnapshotMergeStatus call, all subsequent calls to getSnapshotMergeStatus must block until
+     * setSnapshotMergeStatus has returned.
+     *
+     * A MERGING state indicates that dynamic partitions are partially comprised by blocks in the
+     * userdata partition.
+     *
+     * When the merge status is set to MERGING, the following operations must be prohibited from the
+     * bootloader:
+     *  - Flashing or erasing "userdata" or "metadata".
+     *
+     * The following operations may be prohibited when the status is set to MERGING. If not
+     * prohibited, it is recommended that the user receive a warning.
+     *  - Changing the active slot (e.g. via "fastboot set_active")
+     *
+     * @param status Merge status.
+     *
+     * @return success True on success, false otherwise.
+     */
+    setSnapshotMergeStatus(MergeStatus status) generates (bool success);
+
+    /**
+     * Returns whether a snapshot-merge of any dynamic partition is in progress.
+     *
+     * This function must return the merge status set by the last setSnapshotMergeStatus call and
+     * recorded by the bootloader with one exception. If the partitions are being flashed from the
+     * bootloader such that the pending merge must be canceled (for example, if the super partition
+     * is being flashed), this function must return CANCELLED.
+     *
+     * @return success True if the merge status is read successfully, false otherwise.
+     * @return status Merge status.
+     */
+    getSnapshotMergeStatus() generates (MergeStatus status);
+};
+
