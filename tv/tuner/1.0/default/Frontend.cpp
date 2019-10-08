@@ -105,13 +105,7 @@ Return<Result> Frontend::setLna(bool /* bEnable */) {
     return Result::SUCCESS;
 }
 
-Return<Result> Frontend::setLnb(const sp<ILnb>& /* lnb */) {
-    ALOGV("%s", __FUNCTION__);
-
-    return Result::SUCCESS;
-}
-
-Return<Result> Frontend::sendDiseqcMessage(const hidl_vec<uint8_t>& /* diseqcMessage */) {
+Return<Result> Frontend::setLnb(uint32_t /* lnb */) {
     ALOGV("%s", __FUNCTION__);
 
     return Result::SUCCESS;
