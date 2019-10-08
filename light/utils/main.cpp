@@ -25,7 +25,7 @@ void error(const std::string& msg) {
     std::cerr << msg << std::endl;
 }
 
-int main() {
+int main(int argc, char* argv[]) {
     using ::android::hardware::hidl_vec;
     using ::android::hardware::light::V2_0::Brightness;
     using ::android::hardware::light::V2_0::Flash;
@@ -41,9 +41,28 @@ int main() {
         return -1;
     }
 
-    const static LightState off = {
-        .color = 0u, .flashMode = Flash::NONE, .brightnessMode = Brightness::USER,
+    static LightState off = {
+            .color = 0u,
+            .flashMode = Flash::NONE,
+            .brightnessMode = Brightness::USER,
     };
+
+    if (argc > 2) {
+        error("Usage: blank_screen [color]");
+        return -1;
+    }
+
+    if (argc > 1) {
+        char* col_ptr;
+        unsigned int col_new;
+
+        col_new = strtoul(argv[1], &col_ptr, 0);
+        if (*col_ptr != '\0') {
+            error("Failed to convert " + std::string(argv[1]) + " to number");
+            return -1;
+        }
+        off.color = col_new;
+    }
 
     service->getSupportedTypes([&](const hidl_vec<Type>& types) {
         for (Type type : types) {
