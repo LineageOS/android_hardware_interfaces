@@ -35,13 +35,11 @@ extern WifiHidlEnvironment* gEnv;
 class WifiApIfaceHidlTest : public ::testing::VtsHalHidlTargetTestBase {
    public:
     virtual void SetUp() override {
-        if (!gEnv->isSoftApOn) return;
         wifi_ap_iface_ = IWifiApIface::castFrom(getWifiApIface());
         ASSERT_NE(nullptr, wifi_ap_iface_.get());
     }
 
     virtual void TearDown() override {
-        if (!gEnv->isSoftApOn) return;
         stopWifi();
     }
 
@@ -55,7 +53,6 @@ class WifiApIfaceHidlTest : public ::testing::VtsHalHidlTargetTestBase {
  * code.
  */
 TEST_F(WifiApIfaceHidlTest, SetMacAddress) {
-    if (!gEnv->isSoftApOn) return;
     const hidl_array<uint8_t, 6> kMac{{0x12, 0x22, 0x33, 0x52, 0x10, 0x41}};
     EXPECT_EQ(WifiStatusCode::SUCCESS,
               HIDL_INVOKE(wifi_ap_iface_, setMacAddress, kMac).code);
@@ -67,7 +64,6 @@ TEST_F(WifiApIfaceHidlTest, SetMacAddress) {
  * and return a success status code.
  */
 TEST_F(WifiApIfaceHidlTest, GetFactoryMacAddress) {
-    if (!gEnv->isSoftApOn) return;
     std::pair<WifiStatus, hidl_array<uint8_t, 6> > status_and_mac =
         HIDL_INVOKE(wifi_ap_iface_, getFactoryMacAddress);
     EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_mac.first.code);

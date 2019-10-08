@@ -14,8 +14,9 @@
 // limitations under the License.
 //
 
+// SoftAP-specific tests, similar to VtsHalWifiApV1_0TargetTest.
 cc_test {
-    name: "VtsHalWifiV1_4TargetTest",
+    name: "VtsHalWifiApV1_4TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: [
         "VtsHalWifiV1_4TargetTest.cpp",

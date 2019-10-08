@@ -28,7 +28,9 @@ cc_library_static {
     shared_libs: [
         "libnativehelper",
     ],
-    static_libs: ["android.hardware.wifi@1.0"],
+    static_libs: [
+        "android.hardware.wifi@1.0",
+    ],
 }
 
 cc_test {
@@ -36,7 +38,6 @@ cc_test {
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: [
         "VtsHalWifiV1_0TargetTest.cpp",
-        "wifi_ap_iface_hidl_test.cpp",
         "wifi_chip_hidl_test.cpp",
         "wifi_p2p_iface_hidl_test.cpp",
         "wifi_rtt_controller_hidl_test.cpp",
@@ -52,12 +53,32 @@ cc_test {
     test_suites: ["general-tests"],
 }
 
+// These tests are split out so that they can be conditioned on presence of the
+// "android.hardware.wifi.aware" feature.
 cc_test {
     name: "VtsHalWifiNanV1_0TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: [
         "VtsHalWifiV1_0TargetTest.cpp",
+        "wifi_chip_hidl_nan_test.cpp",
         "wifi_nan_iface_hidl_test.cpp",
+    ],
+    static_libs: [
+        "VtsHalWifiV1_0TargetTestUtil",
+        "android.hardware.wifi@1.0",
+    ],
+    test_suites: ["general-tests"],
+}
+
+// These tests are split out so that they can be conditioned on presence of
+// the hostapd HAL, which indicates SoftAP support.
+cc_test {
+    name: "VtsHalWifiApV1_0TargetTest",
+    defaults: ["VtsHalTargetTestDefaults"],
+    srcs: [
+        "VtsHalWifiV1_0TargetTest.cpp",
+        "wifi_ap_iface_hidl_test.cpp",
+        "wifi_chip_hidl_ap_test.cpp",
     ],
     static_libs: [
         "VtsHalWifiV1_0TargetTestUtil",
