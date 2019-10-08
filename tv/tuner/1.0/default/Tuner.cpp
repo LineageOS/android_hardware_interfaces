@@ -38,14 +38,14 @@ Tuner::Tuner() {
     // Array index matches their FrontendId in the default impl
     mFrontendSize = 8;
     mFrontends.resize(mFrontendSize);
-    mFrontends[0] = new Frontend();
-    mFrontends[1] = new Frontend(FrontendType::ATSC, 1);
-    mFrontends[2] = new Frontend(FrontendType::DVBC, 2);
-    mFrontends[3] = new Frontend(FrontendType::DVBS, 3);
-    mFrontends[4] = new Frontend(FrontendType::DVBT, 4);
-    mFrontends[5] = new Frontend(FrontendType::ISDBT, 5);
-    mFrontends[6] = new Frontend(FrontendType::ANALOG, 6);
-    mFrontends[7] = new Frontend(FrontendType::ATSC, 7);
+    mFrontends[0] = new Frontend(FrontendType::DVBT, 0, this);
+    mFrontends[1] = new Frontend(FrontendType::ATSC, 1, this);
+    mFrontends[2] = new Frontend(FrontendType::DVBC, 2, this);
+    mFrontends[3] = new Frontend(FrontendType::DVBS, 3, this);
+    mFrontends[4] = new Frontend(FrontendType::DVBT, 4, this);
+    mFrontends[5] = new Frontend(FrontendType::ISDBT, 5, this);
+    mFrontends[6] = new Frontend(FrontendType::ANALOG, 6, this);
+    mFrontends[7] = new Frontend(FrontendType::ATSC, 7, this);
 }
 
 Tuner::~Tuner() {}
@@ -81,7 +81,8 @@ Return<void> Tuner::openDemux(openDemux_cb _hidl_cb) {
 
     DemuxId demuxId = mLastUsedId + 1;
     mLastUsedId += 1;
-    sp<IDemux> demux = new Demux(demuxId);
+    sp<Demux> demux = new Demux(demuxId, this);
+    mDemuxes[demuxId] = demux;
 
     _hidl_cb(Result::SUCCESS, demuxId, demux);
     return Void();
@@ -130,6 +131,25 @@ Return<void> Tuner::openLnbById(LnbId /* lnbId */, openLnbById_cb _hidl_cb) {
 
     _hidl_cb(Result::SUCCESS, lnb);
     return Void();
+}
+
+sp<Frontend> Tuner::getFrontendById(uint32_t frontendId) {
+    ALOGV("%s", __FUNCTION__);
+
+    return mFrontends[frontendId];
+}
+
+void Tuner::setFrontendAsDemuxSource(uint32_t frontendId, uint32_t demuxId) {
+    mFrontendToDemux[frontendId] = demuxId;
+}
+
+void Tuner::frontendStopTune(uint32_t frontendId) {
+    map<uint32_t, uint32_t>::iterator it = mFrontendToDemux.find(frontendId);
+    uint32_t demuxId;
+    if (it != mFrontendToDemux.end()) {
+        demuxId = it->second;
+        mDemuxes[demuxId]->stopBroadcastInput();
+    }
 }
 
 }  // namespace implementation
