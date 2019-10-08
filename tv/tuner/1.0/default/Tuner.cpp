@@ -87,6 +87,15 @@ Return<void> Tuner::openDemux(openDemux_cb _hidl_cb) {
     return Void();
 }
 
+Return<void> Tuner::getDemuxCaps(getDemuxCaps_cb _hidl_cb) {
+    ALOGV("%s", __FUNCTION__);
+
+    DemuxCapabilities caps;
+
+    _hidl_cb(Result::SUCCESS, caps);
+    return Void();
+}
+
 Return<void> Tuner::openDescrambler(openDescrambler_cb _hidl_cb) {
     ALOGV("%s", __FUNCTION__);
 

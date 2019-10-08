@@ -91,9 +91,9 @@ class Demux : public IDemux {
 
     virtual Return<Result> configureOutput(const DemuxOutputSettings& settings) override;
 
-    virtual Return<Result> attachOutputTsFilter(uint32_t filterId) override;
+    virtual Return<Result> attachOutputFilter(uint32_t filterId) override;
 
-    virtual Return<Result> detachOutputTsFilter(uint32_t filterId) override;
+    virtual Return<Result> detachOutputFilter(uint32_t filterId) override;
 
     virtual Return<Result> startOutput() override;
 
@@ -115,7 +115,7 @@ class Demux : public IDemux {
      * They are also responsible to write the filtered output into the filter FMQ
      * and update the filterEvent bound with the same filterId.
      */
-    Result startSectionFilterHandler(uint32_t filterId, vector<uint8_t> data);
+    Result startSectionFilterHandler(uint32_t filterId);
     Result startPesFilterHandler(uint32_t filterId);
     Result startTsFilterHandler();
     Result startMediaFilterHandler(uint32_t filterId);
@@ -136,6 +136,9 @@ class Demux : public IDemux {
     bool writeDataToFilterMQ(const std::vector<uint8_t>& data, uint32_t filterId);
     bool readDataFromMQ();
     bool writeSectionsAndCreateEvent(uint32_t filterId, vector<uint8_t> data);
+    void maySendInputStatusCallback();
+    DemuxInputStatus checkStatusChange(uint32_t availableToWrite, uint32_t availableToRead,
+                                       uint32_t highThreshold, uint32_t lowThreshold);
     /**
      * A dispatcher to read and dispatch input data to all the started filters.
      * Each filter handler handles the data filtering/output writing/filterEvent updating.
@@ -169,6 +172,8 @@ class Demux : public IDemux {
      * A list of created FilterMQ ptrs.
      * The array number is the filter ID.
      */
+    vector<uint16_t> mFilterPids;
+    vector<vector<uint8_t>> mFilterOutputs;
     vector<unique_ptr<FilterMQ>> mFilterMQs;
     vector<EventFlag*> mFilterEventFlags;
     vector<DemuxFilterEvent> mFilterEvents;
@@ -182,10 +187,18 @@ class Demux : public IDemux {
     vector<sp<IDemuxCallback>> mDemuxCallbacks;
     sp<IDemuxCallback> mInputCallback;
     sp<IDemuxCallback> mOutputCallback;
+    bool mInputConfigured = false;
+    bool mOutputConfigured = false;
+    DemuxInputSettings mInputSettings;
+    DemuxOutputSettings mOutputSettings;
+
     // Thread handlers
     pthread_t mInputThread;
     pthread_t mOutputThread;
     vector<pthread_t> mFilterThreads;
+
+    // FMQ status local records
+    DemuxInputStatus mIntputStatus;
     /**
      * If a specific filter's writing loop is still running
      */
@@ -198,7 +211,12 @@ class Demux : public IDemux {
     /**
      * Lock to protect writes to the filter event
      */
+    // TODO make each filter separate event lock
     std::mutex mFilterEventLock;
+    /**
+     * Lock to protect writes to the input status
+     */
+    std::mutex mInputStatusLock;
     /**
      * How many times a filter should write
      * TODO make this dynamic/random/can take as a parameter

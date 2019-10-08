@@ -48,6 +48,12 @@ Return<Result> Lnb::setSatellitePosition(FrontendLnbPosition /* position */) {
     return Result::SUCCESS;
 }
 
+Return<Result> Lnb::sendDiseqcMessage(const hidl_vec<uint8_t>& /* diseqcMessage */) {
+    ALOGV("%s", __FUNCTION__);
+
+    return Result::SUCCESS;
+}
+
 Return<Result> Lnb::close() {
     ALOGV("%s", __FUNCTION__);
 
