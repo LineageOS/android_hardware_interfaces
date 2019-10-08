@@ -38,11 +38,13 @@ class Lnb : public ILnb {
   public:
     Lnb();
 
-    virtual Return<Result> setVoltage(FrontendLnbVoltage voltage);
+    virtual Return<Result> setVoltage(FrontendLnbVoltage voltage) override;
 
     virtual Return<Result> setTone(FrontendLnbTone tone) override;
 
     virtual Return<Result> setSatellitePosition(FrontendLnbPosition position) override;
+
+    virtual Return<Result> sendDiseqcMessage(const hidl_vec<uint8_t>& diseqcMessage) override;
 
     virtual Return<Result> close() override;
 
