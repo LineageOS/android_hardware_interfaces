@@ -55,6 +55,24 @@ interface ILnb {
     setSatellitePosition(FrontendLnbPosition position) generates (Result result);
 
     /**
+     *  Sends DiSEqC (Digital Satellite Equipment Control) message.
+     *
+     * Client sends DiSeqc message to DiSEqc to LNB. The response message from
+     * the device comes back to the client through frontend's callback
+     * onDiseqcMessage.
+     *
+     * @param diseqcMessage a byte array of data for DiSEqC message which is
+     *        specified by EUTELSAT Bus Functional Specification Version 4.2.
+     *
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_STATE if the frontend can't send DiSEqc Message, such as
+     *         cable frontend.
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    sendDiseqcMessage(vec<uint8_t> diseqcMessage) generates (Result result);
+
+    /**
      * Releases the LNB instance
      *
      * Associated resources are released.  close may be called more than once.
