@@ -90,6 +90,30 @@ bool ConfigManagerUtil::convertToMetadataTag(const char *name,
         aTag =  ANDROID_LENS_POSE_ROTATION;
     } else if (!strcmp(name, "LENS_POSE_TRANSLATION")) {
         aTag =  ANDROID_LENS_POSE_TRANSLATION;
+    } else if (!strcmp(name, "REQUEST_AVAILABLE_CAPABILITIES")) {
+        aTag =  ANDROID_REQUEST_AVAILABLE_CAPABILITIES;
+    } else if (!strcmp(name, "LOGICAL_MULTI_CAMERA_PHYSICAL_IDS")) {
+        aTag =  ANDROID_LOGICAL_MULTI_CAMERA_PHYSICAL_IDS;
+    } else {
+        return false;
+    }
+
+    return true;
+}
+
+
+bool ConfigManagerUtil::convertToCameraCapability(
+    const char *name,
+    camera_metadata_enum_android_request_available_capabilities_t &cap) {
+
+    if (!strcmp(name, "DEPTH_OUTPUT")) {
+        cap = ANDROID_REQUEST_AVAILABLE_CAPABILITIES_DEPTH_OUTPUT;
+    } else if (!strcmp(name, "LOGICAL_MULTI_CAMERA")) {
+        cap = ANDROID_REQUEST_AVAILABLE_CAPABILITIES_LOGICAL_MULTI_CAMERA;
+    } else if (!strcmp(name, "MONOCHROME")) {
+        cap = ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MONOCHROME;
+    } else if (!strcmp(name, "SECURE_IMAGE_DATA")) {
+        cap = ANDROID_REQUEST_AVAILABLE_CAPABILITIES_SECURE_IMAGE_DATA;
     } else {
         return false;
     }

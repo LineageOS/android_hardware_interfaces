@@ -80,7 +80,7 @@ void FrameHandler::blockingStopStream() {
     asyncStopStream();
 
     // Wait until the stream has actually stopped
-    std::unique_lock<std::mutex> lock(mLock);
+    std::unique_lock<std::mutex> lock(mEventLock);
     if (mRunning) {
         mEventSignal.wait(lock, [this]() { return !mRunning; });
     }
@@ -96,9 +96,9 @@ bool FrameHandler::returnHeldBuffer() {
         return false;
     }
 
-    BufferDesc_1_1 buffer = mHeldBuffers.front();
+    hidl_vec<BufferDesc_1_1> buffers = mHeldBuffers.front();
     mHeldBuffers.pop();
-    mCamera->doneWithFrame_1_1(buffer);
+    mCamera->doneWithFrame_1_1(buffers);
 
     return true;
 }
@@ -138,50 +138,52 @@ Return<void> FrameHandler::deliverFrame(const BufferDesc_1_0& bufferArg) {
 }
 
 
-Return<void> FrameHandler::deliverFrame_1_1(const BufferDesc_1_1& bufDesc) {
-    const AHardwareBuffer_Desc* pDesc =
-        reinterpret_cast<const AHardwareBuffer_Desc *>(&bufDesc.buffer.description);
-    ALOGD("Received a frame from the camera (%p)",
-          bufDesc.buffer.nativeHandle.getNativeHandle());
+Return<void> FrameHandler::deliverFrame_1_1(const hidl_vec<BufferDesc_1_1>& buffers) {
+    for (auto&& buffer : buffers) {
+        const AHardwareBuffer_Desc* pDesc =
+            reinterpret_cast<const AHardwareBuffer_Desc *>(&buffer.buffer.description);
+        ALOGD("Received a frame from the camera (%p)",
+              buffer.buffer.nativeHandle.getNativeHandle());
 
-    // Store a dimension of a received frame.
-    mFrameWidth = pDesc->width;
-    mFrameHeight = pDesc->height;
+        // Store a dimension of a received frame.
+        mFrameWidth = pDesc->width;
+        mFrameHeight = pDesc->height;
 
-    // If we were given an opened display at construction time, then send the received
-    // image back down the camera.
-    if (mDisplay.get()) {
-        // Get the output buffer we'll use to display the imagery
-        BufferDesc_1_0 tgtBuffer = {};
-        mDisplay->getTargetBuffer([&tgtBuffer](const BufferDesc_1_0& buff) {
-                                      tgtBuffer = buff;
-                                  }
-        );
+        // If we were given an opened display at construction time, then send the received
+        // image back down the camera.
+        if (mDisplay.get()) {
+            // Get the output buffer we'll use to display the imagery
+            BufferDesc_1_0 tgtBuffer = {};
+            mDisplay->getTargetBuffer([&tgtBuffer](const BufferDesc_1_0& buff) {
+                                          tgtBuffer = buff;
+                                      }
+            );
 
-        if (tgtBuffer.memHandle == nullptr) {
-            printf("Didn't get target buffer - frame lost\n");
-            ALOGE("Didn't get requested output buffer -- skipping this frame.");
-        } else {
-            // Copy the contents of the of buffer.memHandle into tgtBuffer
-            copyBufferContents(tgtBuffer, bufDesc);
-
-            // Send the target buffer back for display
-            Return<EvsResult> result = mDisplay->returnTargetBufferForDisplay(tgtBuffer);
-            if (!result.isOk()) {
-                printf("HIDL error on display buffer (%s)- frame lost\n",
-                       result.description().c_str());
-                ALOGE("Error making the remote function call.  HIDL said %s",
-                      result.description().c_str());
-            } else if (result != EvsResult::OK) {
-                printf("Display reported error - frame lost\n");
-                ALOGE("We encountered error %d when returning a buffer to the display!",
-                      (EvsResult) result);
+            if (tgtBuffer.memHandle == nullptr) {
+                printf("Didn't get target buffer - frame lost\n");
+                ALOGE("Didn't get requested output buffer -- skipping this frame.");
             } else {
-                // Everything looks good!
-                // Keep track so tests or watch dogs can monitor progress
-                mLock.lock();
-                mFramesDisplayed++;
-                mLock.unlock();
+                // Copy the contents of the of buffer.memHandle into tgtBuffer
+                copyBufferContents(tgtBuffer, buffer);
+
+                // Send the target buffer back for display
+                Return<EvsResult> result = mDisplay->returnTargetBufferForDisplay(tgtBuffer);
+                if (!result.isOk()) {
+                    printf("HIDL error on display buffer (%s)- frame lost\n",
+                           result.description().c_str());
+                    ALOGE("Error making the remote function call.  HIDL said %s",
+                          result.description().c_str());
+                } else if (result != EvsResult::OK) {
+                    printf("Display reported error - frame lost\n");
+                    ALOGE("We encountered error %d when returning a buffer to the display!",
+                          (EvsResult) result);
+                } else {
+                    // Everything looks good!
+                    // Keep track so tests or watch dogs can monitor progress
+                    mLock.lock();
+                    mFramesDisplayed++;
+                    mLock.unlock();
+                }
             }
         }
     }
@@ -191,11 +193,11 @@ Return<void> FrameHandler::deliverFrame_1_1(const BufferDesc_1_1& bufDesc) {
     case eAutoReturn:
         // Send the camera buffer back now that the client has seen it
         ALOGD("Calling doneWithFrame");
-        mCamera->doneWithFrame_1_1(bufDesc);
+        mCamera->doneWithFrame_1_1(buffers);
         break;
     case eNoAutoReturn:
-        // Hang onto the buffer handle for now -- the client will return it explicitly later
-        mHeldBuffers.push(bufDesc);
+        // Hang onto the buffer handles for now -- the client will return it explicitly later
+        mHeldBuffers.push(buffers);
     }
 
     mLock.lock();
@@ -209,7 +211,7 @@ Return<void> FrameHandler::deliverFrame_1_1(const BufferDesc_1_1& bufDesc) {
 }
 
 
-Return<void> FrameHandler::notify(const EvsEvent& event) {
+Return<void> FrameHandler::notify(const EvsEventDesc& event) {
     // Local flag we use to keep track of when the stream is stopping
     mLock.lock();
     mLatestEventDesc = event;
@@ -223,7 +225,7 @@ Return<void> FrameHandler::notify(const EvsEvent& event) {
         ALOGD("Received an event %s", eventToString(mLatestEventDesc.aType));
     }
     mLock.unlock();
-    mEventSignal.notify_all();
+    mEventSignal.notify_one();
 
     return Void();
 }
@@ -342,19 +344,20 @@ void FrameHandler::getFrameDimension(unsigned* width, unsigned* height) {
     }
 }
 
-bool FrameHandler::waitForEvent(const EvsEventType aTargetEvent,
-                                EvsEvent &event) {
+bool FrameHandler::waitForEvent(const EvsEventDesc& aTargetEvent,
+                                      EvsEventDesc& aReceivedEvent) {
     // Wait until we get an expected parameter change event.
-    std::unique_lock<std::mutex> lock(mLock);
+    std::unique_lock<std::mutex> lock(mEventLock);
     auto now = std::chrono::system_clock::now();
     bool result = mEventSignal.wait_until(lock, now + 5s,
-        [this, aTargetEvent, &event](){
-            bool flag = mLatestEventDesc.aType == aTargetEvent;
-            if (flag) {
-                event.aType = mLatestEventDesc.aType;
-                event.payload[0] = mLatestEventDesc.payload[0];
-                event.payload[1] = mLatestEventDesc.payload[1];
-            }
+        [this, aTargetEvent, &aReceivedEvent](){
+            bool flag = (mLatestEventDesc.aType == aTargetEvent.aType) &&
+                        (mLatestEventDesc.payload[0] == aTargetEvent.payload[0]) &&
+                        (mLatestEventDesc.payload[1] == aTargetEvent.payload[1]);
+
+            aReceivedEvent.aType = mLatestEventDesc.aType;
+            aReceivedEvent.payload[0] = mLatestEventDesc.payload[0];
+            aReceivedEvent.payload[1] = mLatestEventDesc.payload[1];
 
             return flag;
         }
