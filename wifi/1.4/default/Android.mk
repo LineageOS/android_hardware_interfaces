@@ -150,7 +150,6 @@ LOCAL_SRC_FILES := \
     tests/mock_wifi_legacy_hal.cpp \
     tests/mock_wifi_mode_controller.cpp \
     tests/ringbuffer_unit_tests.cpp \
-    tests/wifi_ap_iface_unit_tests.cpp \
     tests/wifi_nan_iface_unit_tests.cpp \
     tests/wifi_chip_unit_tests.cpp \
     tests/wifi_iface_util_unit_tests.cpp

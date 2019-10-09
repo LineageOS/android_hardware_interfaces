@@ -145,19 +145,17 @@ static const std::vector<IWifiChip::ChipMode> kChipModes{
 #undef NAN
 
 #ifdef WIFI_HIDL_FEATURE_DISABLE_AP_MAC_RANDOMIZATION
-static const bool wifiHidlFeatureDisableApMacRandomization = true;
-#else
-static const bool wifiHidlFeatureDisableApMacRandomization = false;
-#endif  // WIFI_HIDL_FEATURE_DISABLE_AP
+#pragma message                                                               \
+    "WIFI_HIDL_FEATURE_DISABLE_AP_MAC_RANDOMIZATION is deprecated; override " \
+    "'config_wifi_ap_randomization_supported' in "                            \
+    "frameworks/base/core/res/res/values/config.xml in the device overlay "   \
+    "instead"
+#endif  // WIFI_HIDL_FEATURE_DISABLE_AP_MAC_RANDOMIZATION
 
 WifiFeatureFlags::WifiFeatureFlags() {}
 
 std::vector<IWifiChip::ChipMode> WifiFeatureFlags::getChipModes() {
     return kChipModes;
-}
-
-bool WifiFeatureFlags::isApMacRandomizationDisabled() {
-    return wifiHidlFeatureDisableApMacRandomization;
 }
 
 }  // namespace feature_flags

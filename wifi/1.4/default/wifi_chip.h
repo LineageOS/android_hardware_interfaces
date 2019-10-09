@@ -251,7 +251,6 @@ class WifiChip : public V1_3::IWifiChip {
     std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal_;
     std::weak_ptr<mode_controller::WifiModeController> mode_controller_;
     std::weak_ptr<iface_util::WifiIfaceUtil> iface_util_;
-    std::weak_ptr<feature_flags::WifiFeatureFlags> feature_flags_;
     std::vector<sp<WifiApIface>> ap_ifaces_;
     std::vector<sp<WifiNanIface>> nan_ifaces_;
     std::vector<sp<WifiP2pIface>> p2p_ifaces_;
