@@ -257,13 +257,19 @@ bool verifyHealthInfo(const HealthInfo& health_info) {
     using V1_0::BatteryStatus;
     using V1_0::BatteryHealth;
 
-    if (!((health_info.legacy.batteryChargeCounter > 0) &&
-          (health_info.legacy.batteryCurrent != INT32_MIN) &&
+    if (!((health_info.legacy.batteryCurrent != INT32_MIN) &&
           (0 <= health_info.legacy.batteryLevel && health_info.legacy.batteryLevel <= 100) &&
           verifyEnum<BatteryHealth>(health_info.legacy.batteryHealth) &&
-          (health_info.legacy.batteryStatus != BatteryStatus::UNKNOWN) &&
           verifyEnum<BatteryStatus>(health_info.legacy.batteryStatus))) {
         return false;
+    }
+
+    if (health_info.legacy.batteryPresent) {
+        // If a battery is present, the battery status must be known.
+        if (!((health_info.legacy.batteryChargeCounter > 0) &&
+              (health_info.legacy.batteryStatus != BatteryStatus::UNKNOWN))) {
+            return false;
+        }
     }
 
     return true;
