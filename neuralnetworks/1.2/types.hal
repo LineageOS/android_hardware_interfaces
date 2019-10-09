@@ -43,8 +43,6 @@ enum OperandType : @1.0::OperandType {
      *
      * Values of this operand type are either true or false. A zero value
      * represents false; any other value represents true.
-     *
-     * Available since API level 29.
      */
     BOOL = 6,
     /**
@@ -55,14 +53,10 @@ enum OperandType : @1.0::OperandType {
      * realValue = integerValue * scale.
      *
      * scale is a 32 bit floating point with value greater than zero.
-     *
-     * Available since API level 29.
      */
     TENSOR_QUANT16_SYMM = 7,
     /**
      * A tensor of IEEE 754 16 bit floating point values.
-     *
-     * Available since API level 29.
      */
     TENSOR_FLOAT16 = 8,
     /**
@@ -70,14 +64,10 @@ enum OperandType : @1.0::OperandType {
      *
      * Values of this operand type are either true or false. A zero value
      * represents false; any other value represents true.
-     *
-     * Available since API level 29.
      */
     TENSOR_BOOL8 = 9,
     /**
      * An IEEE 754 16 bit floating point scalar value.
-     *
-     * Available since API level 29.
      */
     FLOAT16 = 10,
     /**
@@ -90,14 +80,13 @@ enum OperandType : @1.0::OperandType {
      * - scales: an array of positive 32 bit floating point values.
      * The size of the scales array must be equal to dimensions[channelDim].
      *
+     *{@link SymmPerChannelQuantParams} must hold the parameters for an Operand of this type.
      * The channel dimension of this tensor must not be unknown (dimensions[channelDim] != 0).
      *
      * The formula is:
      * realValue[..., C, ...] =
      *     integerValue[..., C, ...] * scales[C]
      * where C is an index in the Channel dimension.
-     *
-     * Available since API level 29.
      */
     TENSOR_QUANT8_SYMM_PER_CHANNEL = 11,
     /**
@@ -110,8 +99,6 @@ enum OperandType : @1.0::OperandType {
      *
      * The formula is:
      * real_value = (integer_value - zeroPoint) * scale.
-     *
-     * Available since API level 29.
      */
     TENSOR_QUANT16_ASYMM = 12,
     /**
@@ -122,20 +109,19 @@ enum OperandType : @1.0::OperandType {
      * realValue = integerValue * scale.
      *
      * scale is a 32 bit floating point with value greater than zero.
-     *
-     * Available since API level 29.
      */
     TENSOR_QUANT8_SYMM = 13,
+
     /*
-     * DEPRECATED. Since NNAPI 1.2, extensions are the preferred alternative to
-     * OEM operation and data types.
+     * DEPRECATED. Since HAL version 1.2, extensions are the preferred
+     * alternative to OEM operation and data types.
      *
      * OEM specific scalar value.
      * OEM                 = 10000,
      */
     /*
-     * DEPRECATED. Since NNAPI 1.2, extensions are the preferred alternative to
-     * OEM operation and data types.
+     * DEPRECATED. Since HAL version 1.2, extensions are the preferred
+     * alternative to OEM operation and data types.
      *
      * A tensor of OEM specific values.
      * TENSOR_OEM_BYTE     = 10001,
@@ -166,6 +152,7 @@ enum OperandTypeRange : uint32_t {
  * The type of an operation in a model.
  */
 enum OperationType : int32_t {
+
     /**
      * Adds two tensors, element-wise.
      *
@@ -187,12 +174,12 @@ enum OperationType : int32_t {
      *     input2.dimension = {5, 4, 3, 1}
      *     output.dimension = {5, 4, 3, 2}
      *
-     * Since API level 29, generic zero-sized input tensor is supported. Zero
+     * Since HAL version 1.2, generic zero-sized input tensor is supported. Zero
      * dimension is only compatible with 0 or 1. The size of the output
      * dimension is zero if either of corresponding input dimension is zero.
      *
      * Supported tensor {@link OperandType}:
-     * * {@link OperandType::TENSOR_FLOAT16} (since API level 29)
+     * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
      *
@@ -202,14 +189,16 @@ enum OperationType : int32_t {
      * * 0: A tensor.
      * * 1: A tensor of the same {@link OperandType}, and compatible dimensions
      *      as input0.
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      the scales and zeroPoint can be different from input0 scale and zeroPoint.
      * * 2: An {@link OperandType::INT32} scalar, and has to be one of the
      *      {@link FusedActivationFunc} values. Specifies the activation to
      *      invoke on the result.
      *
      * Outputs:
      * * 0: The sum, a tensor of the same {@link OperandType} as input0.
-     *
-     * Available since API level 27.
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      the scale and zeroPoint can be different from inputs' scale and zeroPoint.
      */
     ADD = @1.1::OperationType:ADD,
 
@@ -227,7 +216,7 @@ enum OperationType : int32_t {
      *         ) / sum(1)
      *
      * Supported tensor {@link OperandType}:
-     * * {@link OperandType::TENSOR_FLOAT16} (since API level 29)
+     * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
      *
@@ -235,13 +224,14 @@ enum OperationType : int32_t {
      * With the default data layout NHWC, the data is stored in the order of:
      * [batch, height, width, channels]. Alternatively, the data layout could
      * be NCHW, the data storage order of: [batch, channels, height, width].
+     * NCHW is supported since HAL version 1.2.
      *
      * Both explicit padding and implicit padding are supported.
      *
      * Inputs (explicit padding):
      * * 0: A 4-D tensor, of shape [batches, height, width, depth], specifying
-     *      the input. Since API level 29, zero batches is supported for this
-     *      tensor.
+     *      the input.
+     *      Since HAL version 1.2, zero batches is supported for this tensor.
      * * 1: An {@link OperandType::INT32} scalar, specifying the padding on
      *      the left, in the ‘width’ dimension.
      * * 2: An {@link OperandType::INT32} scalar, specifying the padding on
@@ -263,12 +253,12 @@ enum OperationType : int32_t {
      *      invoke on the result.
      * * 10: An optional {@link OperandType::BOOL} scalar, default to false.
      *       Set to true to specify NCHW data layout for input0 and output0.
-     *       Available since API level 29.
+     *       Available since HAL version 1.2.
      *
      * Inputs (implicit padding):
      * * 0: A 4-D tensor, of shape [batches, height, width, depth], specifying
-     *      the input. Since API level 29, zero batches is supported for this
-     *      tensor.
+     *      the input.
+     *      Since HAL version 1.2, zero batches is supported for this tensor.
      * * 1: An {@link OperandType::INT32} scalar, specifying the implicit
      *      padding scheme, has to be one of the
      *      following values: {0 (NONE), 1 (SAME), 2 (VALID)}.
@@ -285,13 +275,13 @@ enum OperationType : int32_t {
      *      invoke on the result.
      * * 7: An optional {@link OperandType::BOOL} scalar, default to false.
      *      Set to true to specify NCHW data layout for input0 and output0.
-     *      Available since API level 29.
+     *      Available since HAL version 1.2.
      *
      * Outputs:
      * * 0: The output 4-D tensor, of shape
      *      [batches, out_height, out_width, depth].
-     *
-     * Available since API level 27.
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      the scale and zeroPoint must be the same as input0.
      */
     AVERAGE_POOL_2D = @1.1::OperationType:AVERAGE_POOL_2D,
 
@@ -302,33 +292,34 @@ enum OperationType : int32_t {
      * dimensions except the dimension along the concatenation axis.
      *
      * Supported tensor {@link OperandType}:
-     * * {@link OperandType::TENSOR_FLOAT16} (since API level 29)
+     * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_FLOAT32}
-     * * {@link OperandType::TENSOR_QUANT8_ASYMM} (full support since API
-     *   level 29, see the input section)
+     * * {@link OperandType::TENSOR_QUANT8_ASYMM}
+     *   (full support since HAL version 1.2, see the input section)
      *
      * Supported tensor rank: up to 4
      *
      * Inputs:
      * * 0 ~ n-1: The list of n input tensors, of shape
      *            [D0, D1, ..., Daxis(i), ..., Dm].
-     *            Before API level 29, all input tensors of
+     *            Before HAL version 1.2, all input tensors of
      *            {@link OperandType::TENSOR_QUANT8_ASYMM}
      *            must have the same scale and zeroPoint as the output tensor.
-     *            Since API level 29, zero-sized tensors are supported.
+     *            Since HAL version 1.2, zero-sized tensors are supported.
      * * n: An {@link OperandType::INT32} scalar, specifying the
      *      concatenation axis.
      *
      * Outputs:
      * * 0: The output, a tensor of the same {@link OperandType} as the input
      *      tensors. The output shape is [D0, D1, ..., sum(Daxis(i)), ..., Dm].
-     *
-     * Available since API level 27.
+     *      Since HAL version 1.2, for a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      the scale and zeroPoint values can be different from
+     *      input tensors. Before HAL version 1.2 they have to be the same as for the input tensors.
      */
     CONCATENATION = @1.1::OperationType:CONCATENATION,
 
     /**
-     * Performs an 2-D convolution operation.
+     * Performs a 2-D convolution operation.
      *
      * The CONV_2D op sweeps a 2-D filter that can mix channels together over a
      * batch of images, applying the filter to each window of each image of the
@@ -354,7 +345,7 @@ enum OperationType : int32_t {
      * * * {@link OperandType::TENSOR_INT32} for bias (with scale set to
      * * * input.scale * filter.scale).
      *
-     * Available since API level 29:
+     * Available since HAL version 1.2:
      * * 16 bit floating point:
      * * * {@link OperandType::TENSOR_FLOAT16} for input, filter, output, and bias.
      *
@@ -368,27 +359,29 @@ enum OperationType : int32_t {
      * With the default data layout NHWC, the data is stored in the order of:
      * [batch, height, width, channels]. Alternatively, the data layout could
      * be NCHW, the data storage order of: [batch, channels, height, width].
+     * NCHW is supported since HAL version 1.2.
      *
      * Both explicit padding and implicit padding are supported.
      *
      * Inputs (explicit padding):
      * * 0: A 4-D tensor, of shape [batches, height, width, depth_in],
-     *      specifying the input. Since API level 29, zero batches is supported
-     *      for this tensor.
+     *      specifying the input.
+     *      Since HAL version 1.2, zero batches is supported for this tensor.
      * * 1: A 4-D tensor, of shape
      *      [depth_out, filter_height, filter_width, depth_in], specifying the
-     *      filter. For tensor of type
-     *      {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL} the channel
-     *      dimension (extraParams.channelQuant.channelDim) must be set to 0.
+     *      filter.
+     *      For tensor of type {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL}
+     *      the channel dimension (SymmPerChannelQuantParams::channelDim)
+     *      must be set to 0.
      * * 2: A 1-D tensor, of shape [depth_out], specifying the bias. For input
-     *      tensor of type {@link OperandType::TENSOR_FLOAT32} or
-     *      {@link OperandType::TENSOR_FLOAT16}, the bias must be of the same
+     *      tensor of type {@link OperandType::TENSOR_FLOAT32}
+     *      or {@link OperandType::TENSOR_FLOAT16} the bias must be of the same
      *      type. For filter tensor of {@link OperandType::TENSOR_QUANT8_ASYMM},
      *      the bias should be of {@link OperandType::TENSOR_INT32}, with zeroPoint
-     *      of 0 and bias_scale == input_scale * filter_scale. For filter tensor
-     *      of {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL}, the bias
-     *      should be of {@link OperandType::TENSOR_INT32}, with zeroPoint of
-     *      0 and bias_scale of 0. The actual scale of each value 'i' is equal to
+     *      of 0 and bias_scale == input_scale * filter_scale.
+     *      For filter tensor of {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL},
+     *      the bias should be of {@link OperandType::TENSOR_INT32}, with zeroPoint of 0
+     *      and bias_scale of 0. The actual scale of each value 'i' is equal to
      *      bias_scale[i] = input_scale * filter_scale[i].
      * * 3: An {@link OperandType::INT32} scalar, specifying the padding on
      *      the left, in the ‘width’ dimension.
@@ -407,36 +400,37 @@ enum OperationType : int32_t {
      *      invoke on the result.
      * * 10: An optional {@link OperandType::BOOL} scalar, default to false.
      *      Set to true to specify NCHW data layout for input0 and output0.
-     *      Available since API level 29.
+     *      Available since HAL version 1.2.
      * * 11: An optional {@link OperandType::INT32} scalar, specifying the dilation
      *      factor for width. Defaults to 1. If set to k > 1, there will be k-1 skipped
      *      cells between each filter element on width dimension. If this input is set,
      *      input 12 (dilation factor for height) must be specified as well.
-     *      Available since API level 29.
+     *      Available since HAL version 1.2.
      * * 12: An optional {@link OperandType::INT32} scalar, specifying the dilation
      *      factor for height. Defaults to 1. If set to k > 1, there will be k-1 skipped
      *      cells between each filter element on height dimension. If this input is set,
      *      input 11 (dilation factor for width) must be specified as well.
-     *      Available since API level 29.
+     *      Available since HAL version 1.2.
      *
      * Inputs (implicit padding):
      * * 0: A 4-D tensor, of shape [batches, height, width, depth_in],
-     *      specifying the input. Since API level 29, zero batches is supported
-     *      for this tensor.
+     *      specifying the input.
+     *      Since HAL version 1.2, zero batches is supported for this tensor.
      * * 1: A 4-D tensor, of shape
      *      [depth_out, filter_height, filter_width, depth_in], specifying the
-     *      filter. For tensor of type
-     *      {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL} the channel
-     *      dimension (extraParams.channelQuant.channelDim) must be set to 0.
+     *      filter.
+     *      For tensor of type {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL}
+     *      the channel dimension (SymmPerChannelQuantParams::channelDim)
+     *      must be set to 0.
      * * 2: A 1-D tensor, of shape [depth_out], specifying the bias. For input
-     *      tensor of type {@link OperandType::TENSOR_FLOAT32} or
-     *      {@link OperandType::TENSOR_FLOAT16}, the bias must be of the same
+     *      tensor of type {@link OperandType::TENSOR_FLOAT32}
+     *      or {@link OperandType::TENSOR_FLOAT16} the bias must be of the same
      *      type. For filter tensor of {@link OperandType::TENSOR_QUANT8_ASYMM},
      *      the bias should be of {@link OperandType::TENSOR_INT32}, with zeroPoint
-     *      of 0 and bias_scale == input_scale * filter_scale. For filter tensor
-     *      of {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL}, the bias
-     *      should be of {@link OperandType::TENSOR_INT32}, with zeroPoint of
-     *      0 and bias_scale of 0. The actual scale of each value 'i' is equal to
+     *      of 0 and bias_scale == input_scale * filter_scale.
+     *      For filter tensor of {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL},
+     *      the bias should be of {@link OperandType::TENSOR_INT32}, with zeroPoint of 0
+     *      and bias_scale of 0. The actual scale of each value 'i' is equal to
      *      bias_scale[i] = input_scale * filter_scale[i].
      * * 3: An {@link OperandType::INT32} scalar, specifying the implicit
      *      padding scheme, has to be one of the
@@ -450,26 +444,23 @@ enum OperationType : int32_t {
      *      invoke on the result.
      * * 7: An optional {@link OperandType::BOOL} scalar, default to false.
      *      Set to true to specify NCHW data layout for input0 and output0.
-     *      Available since API level 29.
+     *      Available since HAL version 1.2.
      * * 8: An optional {@link OperandType::INT32} scalar, specifying the dilation
      *      factor for width. Defaults to 1. If set to k > 1, there will be k-1 skipped
      *      cells between each filter element on width dimension. If this input is set,
      *      input 9 (dilation factor for height) must be specified as well.
-     *      Available since API level 29.
+     *      Available since HAL version 1.2.
      * * 9: An optional {@link OperandType::INT32} scalar, specifying the dilation
      *      factor for height. Defaults to 1. If set to k > 1, there will be k-1 skipped
      *      cells between each filter element on height dimension. If this input is set,
      *      input 8 (dilation factor for width) must be specified as well.
-     *      Available since API level 29.
+     *      Available since HAL version 1.2.
      *
      * Outputs:
      * * 0: The output 4-D tensor, of shape
-     *      [batches, out_height, out_width, depth_out]. Before API level 29,
-     *      for output tensor of {@link OperandType::TENSOR_QUANT8_ASYMM}, the
-     *      following condition must be satisfied:
-     *      output_scale > input_scale * filter_scale
-     *
-     * Available since API level 27.
+     *      [batches, out_height, out_width, depth_out].
+     *      Before HAL version 1.2, for output tensor of {@link OperandType::TENSOR_QUANT8_ASYMM},
+     *      the following condition must be satisfied: output_scale > input_scale * filter_scale
      */
     CONV_2D = @1.1::OperationType:CONV_2D,
 
@@ -504,7 +495,7 @@ enum OperationType : int32_t {
      * * * {@link OperandType::TENSOR_INT32} for bias (with scale set to
      * * * input.scale * filter.scale).
      *
-     * Available since API level 29:
+     * Available since HAL version 1.2:
      * * 16 bit floating point:
      * * * {@link OperandType::TENSOR_FLOAT16} for input, filter, output, and bias.
      *
@@ -518,6 +509,7 @@ enum OperationType : int32_t {
      * With the default data layout NHWC, the data is stored in the order of:
      * [batch, height, width, channels]. Alternatively, the data layout could
      * be NCHW, the data storage order of: [batch, channels, height, width].
+     * NCHW is supported since HAL version 1.2.
      *
      * Both explicit padding and implicit padding are supported.
      *
@@ -525,18 +517,19 @@ enum OperationType : int32_t {
      * * 0: A 4-D tensor, of shape [batches, height, width, depth_in],
      *      specifying the input.
      * * 1: A 4-D tensor, of shape [1, filter_height, filter_width, depth_out],
-     *      specifying the filter. For tensor of type
-     *      {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL} the channel
-     *      dimension (extraParams.channelQuant.channelDim) must be set to 3.
+     *      specifying the filter.
+     *      For tensor of type {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL}
+     *      the channel dimension (SymmPerChannelQuantParams::channelDim)
+     *      must be set to 3.
      * * 2: A 1-D tensor, of shape [depth_out], specifying the bias. For input
-     *      tensor of type {@link OperandType::TENSOR_FLOAT32} or
-     *      {@link OperandType::TENSOR_FLOAT16}, the bias must be of the same
+     *      tensor of type {@link OperandType::TENSOR_FLOAT32}
+     *      or {@link OperandType::TENSOR_FLOAT16} the bias must be of the same
      *      type. For filter tensor of {@link OperandType::TENSOR_QUANT8_ASYMM},
      *      the bias should be of {@link OperandType::TENSOR_INT32}, with zeroPoint
-     *      of 0 and bias_scale == input_scale * filter_scale. For filter tensor
-     *      of {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL}, the bias
-     *      should be of {@link OperandType::TENSOR_INT32}, with zeroPoint of
-     *      0 and bias_scale of 0. The actual scale of each value 'i' is equal to
+     *      of 0 and bias_scale == input_scale * filter_scale.
+     *      For filter tensor of {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL},
+     *      the bias should be of {@link OperandType::TENSOR_INT32}, with zeroPoint of 0
+     *      and bias_scale of 0. The actual scale of each value 'i' is equal to
      *      bias_scale[i] = input_scale * filter_scale[i].
      * * 3: An {@link OperandType::INT32} scalar, specifying the padding on
      *      the left, in the ‘width’ dimension.
@@ -557,17 +550,17 @@ enum OperationType : int32_t {
      *       invoke on the result.
      * * 11: An optional {@link OperandType::BOOL} scalar, default to false.
      *       Set to true to specify NCHW data layout for input0 and output0.
-     *       Available since API level 29.
+     *       Available since HAL version 1.2.
      * * 12: An optional {@link OperandType::INT32} scalar, specifying the dilation
      *      factor for width. Defaults to 1. If set to k > 1, there will be k-1 skipped
      *      cells between each filter element on width dimension. If this input is set,
      *      input 13 (dilation factor for height) must be specified as well.
-     *      Available since API level 29.
+     *      Available since HAL version 1.2.
      * * 13: An optional {@link OperandType::INT32} scalar, specifying the dilation
      *      factor for height. Defaults to 1. If set to k > 1, there will be k-1 skipped
      *      cells between each filter element on height dimension. If this input is set,
      *      input 12 (dilation factor for width) must be specified as well.
-     *      Available since API level 29.
+     *      Available since HAL version 1.2.
      *
      * Inputs (implicit padding):
      * * 0: A 4-D tensor, of shape [batches, height, width, depth_in],
@@ -575,14 +568,14 @@ enum OperationType : int32_t {
      * * 1: A 4-D tensor, of shape [1, filter_height, filter_width, depth_out],
      *      specifying the filter.
      * * 2: A 1-D tensor, of shape [depth_out], specifying the bias. For input
-     *      tensor of type {@link OperandType::TENSOR_FLOAT32} or
-     *      {@link OperandType::TENSOR_FLOAT16}, the bias must be of the same
+     *      tensor of type {@link OperandType::TENSOR_FLOAT32}
+     *      or {@link OperandType::TENSOR_FLOAT16} the bias must be of the same
      *      type. For filter tensor of {@link OperandType::TENSOR_QUANT8_ASYMM},
      *      the bias should be of {@link OperandType::TENSOR_INT32}, with zeroPoint
-     *      of 0 and bias_scale == input_scale * filter_scale. For filter tensor
-     *      of {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL}, the bias
-     *      should be of {@link OperandType::TENSOR_INT32}, with zeroPoint of
-     *      0 and bias_scale of 0. The actual scale of each value 'i' is equal to
+     *      of 0 and bias_scale == input_scale * filter_scale.
+     *      For filter tensor of {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL},
+     *      the bias should be of {@link OperandType::TENSOR_INT32}, with zeroPoint of 0
+     *      and bias_scale of 0. The actual scale of each value 'i' is equal to
      *      bias_scale[i] = input_scale * filter_scale[i].
      * * 3: An {@link OperandType::INT32} scalar, specifying the implicit
      *      padding scheme, has to be one of the
@@ -598,27 +591,24 @@ enum OperationType : int32_t {
      *      invoke on the result.
      * * 8: An optional {@link OperandType::BOOL} scalar, default to false.
      *      Set to true to specify NCHW data layout for input0 and output0.
-     *      Available since API level 29.
+     *      Available since HAL version 1.2.
      * * 9: An optional {@link OperandType::INT32} scalar, specifying the dilation
      *      factor for width. Defaults to 1. If set to k > 1, there will be k-1 skipped
      *      cells between each filter element on width dimension. If this input is set,
      *      input 10 (dilation factor for height) must be specified as well.
-     *      Available since API level 29.
+     *      Available since HAL version 1.2.
      * * 10: An optional {@link OperandType::INT32} scalar, specifying the dilation
      *      factor for height. Defaults to 1. If set to k > 1, there will be k-1 skipped
      *      cells between each filter element on height dimension. If this input is set,
      *      input 9 (dilation factor for width) must be specified as well.
-     *      Available since API level 29.
-
+     *      Available since HAL version 1.2.
      *
      * Outputs:
      * * 0: The output 4-D tensor, of shape
-     *      [batches, out_height, out_width, depth_out]. Before API level 29,
-     *      for output tensor of {@link OperandType::TENSOR_QUANT8_ASYMM}, the
-     *      following condition must be satisfied:
+     *      [batches, out_height, out_width, depth_out]. Before HAL version 1.2, for
+     *      output tensor of {@link OperandType::TENSOR_QUANT8_ASYMM},
+     *      the following condition must be satisfied:
      *      output_scale > input_scale * filter_scale
-     *
-     * Available since API level 27.
      */
     DEPTHWISE_CONV_2D = @1.1::OperationType:DEPTHWISE_CONV_2D,
 
@@ -638,7 +628,7 @@ enum OperationType : int32_t {
      * be divisible by block_size * block_size
      *
      * Supported tensor {@link OperandType}:
-     * * {@link OperandType::TENSOR_FLOAT16} (since API level 29)
+     * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
      *
@@ -646,6 +636,7 @@ enum OperationType : int32_t {
      * With the default data layout NHWC, the data is stored in the order of:
      * [batch, height, width, channels]. Alternatively, the data layout could
      * be NCHW, the data storage order of: [batch, channels, height, width].
+     * NCHW is supported since HAL version 1.2.
      *
      * Inputs:
      * * 0: A 4-D tensor, of shape [batches, height, width, depth_in],
@@ -655,13 +646,13 @@ enum OperationType : int32_t {
      *      of the input depth.
      * * 2: An optional {@link OperandType::BOOL} scalar, default to false.
      *      Set to true to specify NCHW data layout for input0 and output0.
-     *      Available since API level 29.
+     *      Available since HAL version 1.2.
      *
      * Outputs:
      * * 0: The output 4-D tensor, of shape [batch, height*block_size,
      *      width*block_size, depth/(block_size*block_size)].
-     *
-     * Available since API level 27.
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      the scale and zeroPoint must be the same as input0.
      */
     DEPTH_TO_SPACE = @1.1::OperationType:DEPTH_TO_SPACE,
 
@@ -674,22 +665,21 @@ enum OperationType : int32_t {
      *
      * Supported input tensor {@link OperandType}:
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
-     * * {@link OperandType::TENSOR_QUANT8_SYMM} (since API level 29)
-     * * {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL} (since API level 29)
+     * * {@link OperandType::TENSOR_QUANT8_SYMM} (since HAL version 1.2)
+     * * {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL} (since HAL version 1.2)
      *
      * Supported output tensor {@link OperandType}:
-     * * {@link OperandType::TENSOR_FLOAT16} (since API level 29)
+     * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_FLOAT32}.
      *
      * Supported tensor rank: up to 4
      *
      * Inputs:
-     * * 0: A tensor. Since API level 29, this tensor may be zero-sized.
+     * * 0: A tensor.
+     *      Since HAL version 1.2, this tensor may be zero-sized.
      *
      * Outputs:
      * * 0: A tensor with the same shape as input0.
-     *
-     * Available since API level 27.
      */
     DEQUANTIZE = @1.1::OperationType:DEQUANTIZE,
 
@@ -730,8 +720,8 @@ enum OperationType : int32_t {
      * * 0: A n-D tensor with the same rank and shape as the Values
      *      tensor, except for the first dimension which has the same size
      *      as Lookups' only dimension.
-     *
-     * Available since API level 27.
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      the scale and zeroPoint must be the same as input1.
      */
     EMBEDDING_LOOKUP = @1.1::OperationType:EMBEDDING_LOOKUP,
 
@@ -739,7 +729,7 @@ enum OperationType : int32_t {
      * Computes element-wise floor() on the input tensor.
      *
      * Supported tensor {@link OperandType}:
-     * * {@link OperandType::TENSOR_FLOAT16} (since API level 29)
+     * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_FLOAT32}
      *
      * Supported tensor rank: up to 4
@@ -750,8 +740,6 @@ enum OperationType : int32_t {
      * Outputs:
      * * 0: The output tensor, of the same {@link OperandType} and dimensions as
      *      the input tensor.
-     *
-     * Available since API level 27.
      */
     FLOOR = @1.1::OperationType:FLOOR,
 
@@ -764,7 +752,7 @@ enum OperationType : int32_t {
      *     outputs = activation(inputs * weights’ + bias)
      *
      * Supported tensor {@link OperandType}:
-     * * {@link OperandType::TENSOR_FLOAT16} (since API level 29)
+     * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
      *
@@ -777,8 +765,8 @@ enum OperationType : int32_t {
      *      [batch_size, input_size], where "input_size" corresponds to the
      *      number of inputs to the layer, matching the second dimension of
      *      weights, and "batch_size" is calculated by dividing the number of
-     *      elements by "input_size". Since API level 29, zero batch_size is
-     *      supported for this tensor.
+     *      elements by "input_size".
+     *      Since HAL version 1.2, zero batch_size is supported for this tensor.
      * * 1: A 2-D tensor, specifying the weights, of shape
      *      [num_units, input_size], where "num_units" corresponds to the number
      *      of output nodes.
@@ -793,12 +781,9 @@ enum OperationType : int32_t {
      *      invoke on the result.
      *
      * Outputs:
-     * * 0: The output tensor, of shape [batch_size, num_units]. Before API
-     *      level 29, For output tensor of {@link
-     *      OperandType::TENSOR_QUANT8_ASYMM}, the following condition must be
-     *      satisfied: output_scale > input_scale * filter_scale.
-     *
-     * Available since API level 27.
+     * * 0: The output tensor, of shape [batch_size, num_units]. Before HAL version 1.2, for
+     *      output tensor of {@link OperandType::TENSOR_QUANT8_ASYMM}, the following
+     *      condition must be satisfied: output_scale > input_scale * filter_scale.
      */
     FULLY_CONNECTED = @1.1::OperationType:FULLY_CONNECTED,
 
@@ -849,13 +834,13 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: Output. A tensor with shape [ k …].
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      the scale and zeroPoint must be the same as input2.
      * * 1: Hits. A boolean tensor with shape [ k ] indicates whether the lookup
      *      hits (True) or not (False).
      *      Stored as {@link OperandType::TENSOR_QUANT8_ASYMM} with offset 0
      *      and scale 1.0f.
      *      A non-zero byte represents True, a hit. A zero indicates otherwise.
-     *
-     * Available since API level 27.
      */
     HASHTABLE_LOOKUP = @1.1::OperationType:HASHTABLE_LOOKUP,
 
@@ -872,12 +857,12 @@ enum OperationType : int32_t {
      * 1-D slice along dimension dim.
      *
      * Supported tensor {@link OperandType}:
-     * * {@link OperandType::TENSOR_FLOAT16} (since API level 29)
+     * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_FLOAT32}
-     * * {@link OperandType::TENSOR_QUANT8_ASYMM} (since API level 29)
+     * * {@link OperandType::TENSOR_QUANT8_ASYMM} (since HAL version 1.2)
      *
      * Supported tensor rank: up to 4
-     * Tensors with rank less than 4 are only supported since API level 29.
+     * Tensors with rank less than 4 are only supported since HAL version 1.2.
      *
      * Inputs:
      * * 0: An n-D tensor, specifying the tensor to be normalized.
@@ -885,14 +870,12 @@ enum OperationType : int32_t {
      *      specifying the dimension normalization would be performed on.
      *      Negative index is used to specify axis from the end (e.g. -1 for
      *      the last axis). Must be in the range [-n, n).
-     *      Available since API level 29.
+     *      Available since HAL version 1.2.
      *
      * Outputs:
      * * 0: A tensor of the same {@link OperandType} and same shape as input0.
      *      For {@link OperandType::TENSOR_QUANT8_ASYMM},
      *      the scale must be 1.f / 128 and the zeroPoint must be 128.
-     *
-     * Available since API level 27.
      */
     L2_NORMALIZATION = @1.1::OperationType:L2_NORMALIZATION,
 
@@ -909,20 +892,21 @@ enum OperationType : int32_t {
      *              sum(1))
      *
      * Supported tensor {@link OperandType}:
-     * * {@link OperandType::TENSOR_FLOAT16} (since API level 29)
+     * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_FLOAT32}
      *
      * Supported tensor rank: 4, with "NHWC" or "NCHW" data layout.
      * With the default data layout NHWC, the data is stored in the order of:
      * [batch, height, width, channels]. Alternatively, the data layout could
      * be NCHW, the data storage order of: [batch, channels, height, width].
+     * NCHW is supported since HAL version 1.2.
      *
      * Both explicit padding and implicit padding are supported.
      *
      * Inputs (explicit padding):
      * * 0: A 4-D tensor, of shape [batches, height, width, depth], specifying
-     *      the input. Since API level 29, zero batches is supported for this
-     *      tensor.
+     *      the input.
+     *      Since HAL version 1.2, zero batches is supported for this tensor.
      * * 1: An {@link OperandType::INT32} scalar, specifying the padding on
      *      the left, in the ‘width’ dimension.
      * * 2: An {@link OperandType::INT32} scalar, specifying the padding on
@@ -944,12 +928,12 @@ enum OperationType : int32_t {
      *      invoke on the result.
      * * 10: An optional {@link OperandType::BOOL} scalar, default to false.
      *       Set to true to specify NCHW data layout for input0 and output0.
-     *       Available since API level 29.
+     *       Available since HAL version 1.2.
      *
      * Inputs (implicit padding):
      * * 0: A 4-D tensor, of shape [batches, height, width, depth], specifying
-     *      the input. Since API level 29, zero batches is supported for this
-     *      tensor.
+     *      the input.
+     *      Since HAL version 1.2, zero batches is supported for this tensor.
      * * 1: An {@link OperandType::INT32} scalar, specifying the implicit
      *      padding scheme, has to be one of the
      *      following values: {0 (NONE), 1 (SAME), 2 (VALID)}.
@@ -966,13 +950,11 @@ enum OperationType : int32_t {
      *      invoke on the result.
      * * 7: An optional {@link OperandType::BOOL} scalar, default to false.
      *      Set to true to specify NCHW data layout for input0 and output0.
-     *      Available since API level 29.
+     *      Available since HAL version 1.2.
      *
      * Outputs:
      * * 0: The output 4-D tensor, of shape
      *      [batches, out_height, out_width, depth].
-     *
-     * Available since API level 27.
      */
     L2_POOL_2D = @1.1::OperationType:L2_POOL_2D,
 
@@ -994,11 +976,11 @@ enum OperationType : int32_t {
      * 1-D slice along specified dimension.
      *
      * Supported tensor {@link OperandType}:
-     * * {@link OperandType::TENSOR_FLOAT16} (since API level 29)
+     * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_FLOAT32}
      *
      * Supported tensor rank: up to 4
-     * Tensors with rank less than 4 are only supported since API level 29.
+     * Tensors with rank less than 4 are only supported since HAL version 1.2.
      *
      * Inputs:
      * * 0: A 4-D tensor, of shape [batches, height, width, depth], specifying
@@ -1011,10 +993,10 @@ enum OperationType : int32_t {
      *      For input tensor of {@link OperandType::TENSOR_FLOAT32}, the bias
      *      value must be of {@link OperandType::FLOAT32}.
      * * 3: A scalar, specifying the scale factor, alpha.
-     *      For input tensor of {@link OperandType::TENSOR_FLOAT16}, the alpha
-     *      value must be of {@link OperandType::FLOAT16}.
-     *      For input tensor of {@link OperandType::TENSOR_FLOAT32}, the alpha
-     *      value must be of {@link OperandType::FLOAT32}.
+     *      For input tensor of {@link OperandType::TENSOR_FLOAT16}, the
+     *      alpha value must be of {@link OperandType::FLOAT16}.
+     *      For input tensor of {@link OperandType::TENSOR_FLOAT32}, the
+     *      alpha value must be of {@link OperandType::FLOAT32}.
      * * 4: A scalar, specifying the exponent, beta.
      *      For input tensor of {@link OperandType::TENSOR_FLOAT16}, the beta
      *      value must be of {@link OperandType::FLOAT16}.
@@ -1024,12 +1006,10 @@ enum OperationType : int32_t {
      *      specifying the dimension normalization would be performed on.
      *      Negative index is used to specify axis from the end (e.g. -1 for
      *      the last axis). Must be in the range [-n, n).
-     *      Available since API level 29.
+     *      Available since HAL version 1.2.
      *
      * Outputs:
      * * 0: The output tensor of same shape as input0.
-     *
-     * Available since API level 27.
      */
     LOCAL_RESPONSE_NORMALIZATION = @1.1::OperationType:LOCAL_RESPONSE_NORMALIZATION,
 
@@ -1041,22 +1021,20 @@ enum OperationType : int32_t {
      *     output = 1 / (1 + exp(-input))
      *
      * Supported tensor {@link OperandType}:
-     * * {@link OperandType::TENSOR_FLOAT16} (since API level 29)
+     * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
      *
      * Supported tensor rank: up to 4.
      *
      * Inputs:
-     * * 0: A tensor, specifying the input. Since API level 29, this tensor may
-     *      be zero-sized.
+     * * 0: A tensor, specifying the input.
+     *      Since HAL version 1.2, this tensor may be zero-sized.
      *
      * Outputs:
      * * 0: The output tensor of same shape as input0.
      *      For {@link OperandType::TENSOR_QUANT8_ASYMM},
      *      the scale must be 1.f / 256 and the zeroPoint must be 0.
-     *
-     * Available since API level 27.
      */
     LOGISTIC = @1.1::OperationType:LOGISTIC,
 
@@ -1064,7 +1042,7 @@ enum OperationType : int32_t {
      * Projects an input to a bit vector via locality senstive hashing.
      *
      * Supported input tensor {@link OperandType}:
-     * * {@link OperandType::TENSOR_FLOAT16} (since API level 29)
+     * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_INT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
@@ -1086,7 +1064,7 @@ enum OperationType : int32_t {
      *      Tensor[1].Dim[0] == Tensor[2].Dim[0]
      * * 3: Type:
      *        Sparse:
-     *          Value LSHProjectionType_SPARSE(=3) (since API level 29).
+     *          Value LSHProjectionType_SPARSE(=3) (since HAL version 1.2).
      *          Computed bit vector is considered to be sparse.
      *          Each output element is an int32 made up of multiple bits
      *          computed from hash functions.
@@ -1107,14 +1085,12 @@ enum OperationType : int32_t {
      * Outputs:
      * * 0: If the projection type is Sparse:
      *      Output.Dim == { Tensor[0].Dim[0] }
-     *      A tensor of int32 that represents hash signatures,
+     *      A tensor of int32 that represents hash signatures.
      *
      *      If the projection type is Dense:
      *      Output.Dim == { Tensor[0].Dim[0] * Tensor[0].Dim[1] }
      *      A flattened tensor that represents projected bit vectors.
-     *
-     * Available since API level 27.
-     * The offset value for sparse projections was added in API level 29.
+     * The offset value for sparse projections was added in HAL version 1.2.
      */
     LSH_PROJECTION = @1.1::OperationType:LSH_PROJECTION,
 
@@ -1170,7 +1146,7 @@ enum OperationType : int32_t {
      *   matrix, each element of which is the product of the corresponding
      *   elements of the input matrices.
      *
-     * Since API level 29 LSTM supports layer normalization.
+     * Since HAL version 1.2 LSTM supports layer normalization.
      * In case layer normalization is used, the inputs to internal activation
      * functions (sigmoid and \f$g\f$) are normalized, rescaled and recentered
      * following an approach from section 3.1 from
@@ -1197,7 +1173,7 @@ enum OperationType : int32_t {
      * * The projection bias (\f$b_{proj}\f$) may (but not required to) have a
      *   value if the recurrent projection layer exists, and should otherwise
      *   have no value.
-     * * (API level >= 29) The four layer normalization weights either all have
+     * * (HAL version 1.2 or later) The four layer normalization weights either all have
      *   values or none of them have values. Additionally, if CIFG is used,
      *   input layer normalization weights tensor is omitted and the other layer
      *   normalization weights either all have values or none of them have
@@ -1228,7 +1204,7 @@ enum OperationType : int32_t {
      * Jimmy Ba et al. "Layer Normalization"
      *
      * Supported tensor {@link OperandType}:
-     * * {@link OperandType::TENSOR_FLOAT16} (since API level 29)
+     * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_FLOAT32}
      *
      * All input and output tensors must be of the same type.
@@ -1291,24 +1267,24 @@ enum OperationType : int32_t {
      * * 21:The clipping threshold (\f$t_{cell}\f$) for the cell state, such
      *      that values are bound within [-cell_clip, cell_clip]. If set to 0.0
      *      then clipping is disabled.
-     *      Until API level 29 this scalar must be of type {@link
-     *      FLOAT32}. Since API level 29, if all the input
+     *      Until HAL version 1.2 this scalar must be of type {@link
+     *      OperandType::FLOAT32}. Since HAL version 1.2, if all the input
      *      tensors have type {@link OperandType::TENSOR_FLOAT32}, this
      *      scalar must be of the type {@link OperandType::FLOAT32},
      *      otherwise if all the input tensors have the type {@link
-     *      TENSOR_FLOAT16}, this scalar must be of type {@link
-     *      FLOAT16}.
+     *      OperandType::TENSOR_FLOAT16}, this scalar must be of type {@link
+     *      OperandType::FLOAT16}.
      * * 22:The clipping threshold (\f$t_{proj}\f$) for the output from the
      *      projection layer, such that values are bound within
      *      [-proj_clip, proj_clip]. If set to 0.0 then clipping is disabled.
-     *      Until API level 29 this scalar must be of type {@link
-     *      FLOAT32}. Since API level 29, if all the input
+     *      Until HAL version 1.2 this scalar must be of type {@link
+     *      OperandType::FLOAT32}. Since HAL version 1.2, if all the input
      *      tensors have type {@link OperandType::TENSOR_FLOAT32}, this
      *      scalar must be of the type {@link OperandType::FLOAT32},
      *      otherwise if all the input tensors have the type {@link
-     *      TENSOR_FLOAT16}, this scalar must be of type {@link
-     *      FLOAT16}.
-     * Since API level 29 there are additional inputs to this op:
+     *      OperandType::TENSOR_FLOAT16}, this scalar must be of type {@link
+     *      OperandType::FLOAT16}.
+     * Since HAL version 1.2 there are additional inputs to this op:
      * * 23:The input layer normalization weights.
      *      A 1-D tensor of shape [num_units]. Used to rescale normalized inputs
      *      to activation at input gate.
@@ -1333,8 +1309,6 @@ enum OperationType : int32_t {
      * * 3: The output (\f$o_t\f$).
      *      A 2-D tensor of shape [batch_size, output_size]. This is effectively
      *      the same as the current “output state (out)” value.
-     *
-     * Available since API level 27.
      */
     LSTM = @1.1::OperationType:LSTM,
 
@@ -1352,7 +1326,7 @@ enum OperationType : int32_t {
      *         )
      *
      * Supported tensor {@link OperandType}:
-     * * {@link OperandType::TENSOR_FLOAT16} (since API level 29)
+     * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
      *
@@ -1360,13 +1334,14 @@ enum OperationType : int32_t {
      * With the default data layout NHWC, the data is stored in the order of:
      * [batch, height, width, channels]. Alternatively, the data layout could
      * be NCHW, the data storage order of: [batch, channels, height, width].
+     * NCHW is supported since HAL version 1.2.
      *
      * Both explicit padding and implicit padding are supported.
      *
      * Inputs (explicit padding):
      * * 0: A 4-D tensor, of shape [batches, height, width, depth], specifying
-     *      the input. Since API level 29, zero batches is supported for this
-     *      tensor.
+     *      the input.
+     *      Since HAL version 1.2, zero batches is supported for this tensor.
      * * 1: An {@link OperandType::INT32} scalar, specifying the padding on
      *      the left, in the ‘width’ dimension.
      * * 2: An {@link OperandType::INT32} scalar, specifying the padding on
@@ -1388,12 +1363,12 @@ enum OperationType : int32_t {
      *      invoke on the result.
      * * 10: An optional {@link OperandType::BOOL} scalar, default to false.
      *       Set to true to specify NCHW data layout for input0 and output0.
-     *       Available since API level 29.
+     *       Available since HAL version 1.2.
      *
      * Inputs (implicit padding):
      * * 0: A 4-D tensor, of shape [batches, height, width, depth], specifying
-     *      the input. Since API level 29, zero batches is supported for this
-     *      tensor.
+     *      the input.
+     *      Since HAL version 1.2, zero batches is supported for this tensor.
      * * 1: An {@link OperandType::INT32} scalar, specifying the implicit
      *      padding scheme, has to be one of the
      *      following values: {0 (NONE), 1 (SAME), 2 (VALID)}.
@@ -1410,13 +1385,13 @@ enum OperationType : int32_t {
      *      invoke on the result.
      * * 7: An optional {@link OperandType::BOOL} scalar, default to false.
      *      Set to true to specify NCHW data layout for input0 and output0.
-     *      Available since API level 29.
+     *      Available since HAL version 1.2.
      *
      * Outputs:
      * * 0: The output 4-D tensor, of shape
      *      [batches, out_height, out_width, depth].
-     *
-     * Available since API level 27.
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      the scale and zeroPoint must be the same as input0.
      */
     MAX_POOL_2D = @1.1::OperationType:MAX_POOL_2D,
 
@@ -1435,14 +1410,14 @@ enum OperationType : int32_t {
      * of the input operands. It starts with the trailing dimensions, and works
      * its way forward.
      *
-     * Supported tensor {@link OperandType}:
-     * * {@link OperandType::TENSOR_FLOAT16} (since API level 29)
-     * * {@link OperandType::TENSOR_FLOAT32}
-     * * {@link OperandType::TENSOR_QUANT8_ASYMM}
-     *
-     * Since API level 29, generic zero-sized input tensor is supported. Zero
+     * Since HAL version 1.2, generic zero-sized input tensor is supported. Zero
      * dimension is only compatible with 0 or 1. The size of the output
      * dimension is zero if either of corresponding input dimension is zero.
+     *
+     * Supported tensor {@link OperandType}:
+     * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
+     * * {@link OperandType::TENSOR_FLOAT32}
+     * * {@link OperandType::TENSOR_QUANT8_ASYMM}
      *
      * Supported tensor rank: up to 4
      *
@@ -1459,8 +1434,6 @@ enum OperationType : int32_t {
      *      For output tensor of {@link OperandType::TENSOR_QUANT8_ASYMM},
      *      the following condition must be satisfied:
      *      output_scale > input1_scale * input2_scale.
-     *
-     * Available since API level 27.
      */
     MUL = @1.1::OperationType:MUL,
 
@@ -1472,20 +1445,20 @@ enum OperationType : int32_t {
      *     output = max(0, input)
      *
      * Supported tensor {@link OperandType}:
-     * * {@link OperandType::TENSOR_FLOAT16} (since API level 29)
+     * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
      *
      * Supported tensor rank: up to 4.
      *
      * Inputs:
-     * * 0: A tensor, specifying the input. Since API level 29, this tensor may
-     *      be zero-sized.
+     * * 0: A tensor, specifying the input.
+     *      Since HAL version 1.2, this tensor may be zero-sized.
      *
      * Outputs:
      * * 0: The output tensor of same shape as input0.
-     *
-     * Available since API level 27.
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      the scale and zeroPoint must be the same as input0.
      */
     RELU = @1.1::OperationType:RELU,
 
@@ -1497,20 +1470,20 @@ enum OperationType : int32_t {
      *     output = min(1.f, max(-1.f, input))
      *
      * Supported tensor {@link OperandType}:
-     * * {@link OperandType::TENSOR_FLOAT16} (since API level 29)
+     * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
      *
      * Supported tensor rank: up to 4.
      *
      * Inputs:
-     * * 0: A tensor, specifying the input. Since API level 29, this tensor may
-     *      be zero-sized.
+     * * 0: A tensor, specifying the input.
+     *      Since HAL version 1.2, this tensor may be zero-sized.
      *
      * Outputs:
-     * * 0: The output tensor of same shape as input0.
-     *
-     * Available since API level 27.
+     * * 0: The output tensor of the same shape as input0.
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      the scale and zeroPoint must be the same as input0.
      */
     RELU1 = @1.1::OperationType:RELU1,
 
@@ -1522,20 +1495,20 @@ enum OperationType : int32_t {
      *     output = min(6, max(0, input))
      *
      * Supported tensor {@link OperandType}:
-     * * {@link OperandType::TENSOR_FLOAT16} (since API level 29)
+     * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
      *
      * Supported tensor rank: up to 4.
      *
      * Inputs:
-     * * 0: A tensor, specifying the input. Since API level 29, this tensor may
-     *      be zero-sized.
+     * * 0: A tensor, specifying the input.
+     *      Since HAL version 1.2, this tensor may be zero-sized.
      *
      * Outputs:
      * * 0: The output tensor of same shape as input0.
-     *
-     * Available since API level 27.
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      the scale and zeroPoint must be the same as input0.
      */
     RELU6 = @1.1::OperationType:RELU6,
 
@@ -1546,7 +1519,7 @@ enum OperationType : int32_t {
      * tensor, but with a newly specified shape.
      *
      * Supported tensor {@link OperandType}:
-     * * {@link OperandType::TENSOR_FLOAT16} (since API level 29)
+     * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
      *
@@ -1565,8 +1538,8 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: The output tensor, of shape specified by the input shape.
-     *
-     * Available since API level 27.
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      the scale and zeroPoint must be the same as input0.
      */
     RESHAPE = @1.1::OperationType:RESHAPE,
 
@@ -1578,30 +1551,31 @@ enum OperationType : int32_t {
      * same as corner pixels of input.
      *
      * Supported tensor {@link OperandType}:
-     * * {@link OperandType::TENSOR_FLOAT16} (since API level 29)
+     * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_FLOAT32}
-     * * {@link OperandType::TENSOR_QUANT8_ASYMM} (since API level 29)
+     * * {@link OperandType::TENSOR_QUANT8_ASYMM} (since HAL version 1.2)
      *
      * Supported tensor rank: 4, with "NHWC" or "NCHW" data layout.
      * With the default data layout NHWC, the data is stored in the order of:
      * [batch, height, width, channels]. Alternatively, the data layout could
      * be NCHW, the data storage order of: [batch, channels, height, width].
+     * NCHW is supported since HAL version 1.2.
      *
      * Both resizing by shape and resizing by scale are supported.
      *
      * Inputs (resizing by shape):
      * * 0: A 4-D tensor, of shape [batches, height, width, depth], specifying
-     *      the input. Since API level 29, zero batches is supported for this
-     *      tensor.
+     *      the input.
+     *      Since HAL version 1.2, zero batches is supported for this tensor.
      * * 1: An {@link OperandType::INT32} scalar, specifying the output
      *      width of the output tensor.
      * * 2: An {@link OperandType::INT32} scalar, specifying the output
      *      height of the output tensor.
      * * 3: An optional {@link OperandType::BOOL} scalar, default to false.
      *      Set to true to specify NCHW data layout for input0 and output0.
-     *      Available since API level 29.
+     *      Available since HAL version 1.2.
      *
-     * Inputs (resizing by scale, since API level 29):
+     * Inputs (resizing by scale, since HAL version 1.2):
      * * 0: A 4-D tensor, of shape [batches, height, width, depth], specifying
      *      the input. Zero batches is supported for this tensor.
      * * 1: A scalar, specifying width_scale, the scaling factor of the width
@@ -1622,8 +1596,8 @@ enum OperationType : int32_t {
      * Outputs:
      * * 0: The output 4-D tensor, of shape
      *      [batches, new_height, new_width, depth].
-     *
-     * Available since API level 27.
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      the scale and zeroPoint must be the same as input0.
      */
     RESIZE_BILINEAR = @1.1::OperationType:RESIZE_BILINEAR,
 
@@ -1644,7 +1618,7 @@ enum OperationType : int32_t {
      *   argument (if not “NONE”).
      *
      * Supported tensor {@link OperandType}:
-     * * {@link OperandType::TENSOR_FLOAT16} (since API level 29)
+     * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_FLOAT32}
      *
      * The input tensors must all be the same type.
@@ -1676,8 +1650,6 @@ enum OperationType : int32_t {
      * * 1: output.
      *      A 2-D tensor of shape [batch_size, num_units]. This is effectively
      *      the same as the current state value.
-     *
-     * Available since API level 27.
      */
     RNN = @1.1::OperationType:RNN,
 
@@ -1696,34 +1668,32 @@ enum OperationType : int32_t {
      * independently on each 1-D slice along specified dimension.
      *
      * Supported tensor {@link OperandType}:
-     * * {@link OperandType::TENSOR_FLOAT16} (since API level 29)
+     * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
      *
      * Supported tensor rank: up to 4.
-     * Tensors with rank other than 2 or 4 are only supported since API level 29.
+     * Tensors with rank other than 2 or 4 are only supported since HAL version 1.2.
      *
      * Inputs:
-     * * 0: A 2-D or 4-D tensor, specifying the tensor to be reshaped. Since
-     *      API level 29, this tensor may be zero-sized.
+     * * 0: A 2-D or 4-D tensor, specifying the tensor to be reshaped.
+     *      Since HAL version 1.2, this tensor may be zero-sized.
      * * 1: A scalar, specifying the positive scaling factor for the exponent,
      *      beta. If input0 is of {@link OperandType::TENSOR_FLOAT32} or
      *      {@link OperandType::TENSOR_QUANT8_ASYMM}, the scalar must be of
-     *      {@link OperandType::FLOAT32}. If input0 is of {@link
-     *      OperandType::TENSOR_FLOAT16}, then the scalar must be of {@link
-     *      OperandType::FLOAT16}.
+     *      {@link OperandType::FLOAT32}.
+     *      If input0 is of {@link OperandType::TENSOR_FLOAT16}, then the
+     *      scalar must be of {@link OperandType::FLOAT16}.
      * * 2: An optional {@link OperandType::INT32} scalar, default to -1,
      *      specifying the dimension the activation would be performed on.
      *      Negative index is used to specify axis from the end (e.g. -1 for
      *      the last axis). Must be in the range [-n, n).
-     *      Available since API level 29.
+     *      Available since HAL version 1.2.
      *
      * Outputs:
      * * 0: The output tensor of same shape as input0.
      *      For {@link OperandType::TENSOR_QUANT8_ASYMM},
      *      the scale must be 1.f / 256 and the zeroPoint must be 0.
-     *
-     * Available since API level 27.
      */
     SOFTMAX = @1.1::OperationType:SOFTMAX,
 
@@ -1742,7 +1712,7 @@ enum OperationType : int32_t {
      * The input tensor's height and width must be divisible by block_size.
      *
      * Supported tensor {@link OperandType}:
-     * * {@link OperandType::TENSOR_FLOAT16} (since API level 29)
+     * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
      *
@@ -1750,6 +1720,7 @@ enum OperationType : int32_t {
      * With the default data layout NHWC, the data is stored in the order of:
      * [batch, height, width, channels]. Alternatively, the data layout could
      * be NCHW, the data storage order of: [batch, channels, height, width].
+     * NCHW is supported since HAL version 1.2.
      *
      * Inputs:
      * * 0: A 4-D tensor, of shape [batches, height, width, depth_in],
@@ -1759,13 +1730,13 @@ enum OperationType : int32_t {
      *      input height and width.
      * * 2: An optional {@link OperandType::BOOL} scalar, default to false.
      *      Set to true to specify NCHW data layout for input0 and output0.
-     *      Available since API level 29.
+     *      Available since HAL version 1.2.
      *
      * Outputs:
      * * 0: The output 4-D tensor, of shape [batches, height/block_size,
      *      width/block_size, depth_in*block_size*block_size].
-     *
-     * Available since API level 27.
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      the scale and zeroPoint must be the same as input0.
      */
     SPACE_TO_DEPTH = @1.1::OperationType:SPACE_TO_DEPTH,
 
@@ -1809,7 +1780,7 @@ enum OperationType : int32_t {
      * the filters.
      *
      * Supported tensor {@link OperandType}:
-     * * {@link OperandType::TENSOR_FLOAT16} (since API level 29)
+     * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_FLOAT32}
      *
      * All input tensors must be the same type.
@@ -1843,8 +1814,6 @@ enum OperationType : int32_t {
      * * 1: output.
      *      A 2-D tensor of the same {@link OperandType} as the inputs, with shape
      *      [batch_size, num_units].
-     *
-     * Available since API level 27.
      */
     SVDF = @1.1::OperationType:SVDF,
 
@@ -1856,22 +1825,20 @@ enum OperationType : int32_t {
      *     output = tanh(input)
      *
      * Supported tensor {@link OperandType}:
-     * * {@link OperandType::TENSOR_FLOAT16} (since API level 29)
+     * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_FLOAT32}
-     * * {@link OperandType::TENSOR_QUANT8_ASYMM} (since API level 29)
+     * * {@link OperandType::TENSOR_QUANT8_ASYMM} (since HAL version 1.2)
      *
      * Supported tensor rank: up to 4.
      *
      * Inputs:
-     * * 0: A tensor, specifying the input. Since API level 29, this tensor may
-     *      be zero-sized.
+     * * 0: A tensor, specifying the input.
+     *      Since HAL version 1.2, this tensor may be zero-sized.
      *
      * Outputs:
      * * 0: The output tensor of same shape as input0.
      *      For {@link OperandType::TENSOR_QUANT8_ASYMM},
      *      the scale must be 1.f / 128 and the zeroPoint must be 128.
-     *
-     * Available since API level 27.
      */
     TANH = @1.1::OperationType:TANH,
 
@@ -1886,7 +1853,7 @@ enum OperationType : int32_t {
      * This is the reverse of SpaceToBatch.
      *
      * Supported tensor {@link OperandType}:
-     * * {@link OperandType::TENSOR_FLOAT16} (since API level 29)
+     * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
      *
@@ -1894,6 +1861,7 @@ enum OperationType : int32_t {
      * With the default data layout NHWC, the data is stored in the order of:
      * [batch, height, width, channels]. Alternatively, the data layout could
      * be NCHW, the data storage order of: [batch, channels, height, width].
+     * NCHW is supported since HAL version 1.2.
      *
      * Inputs:
      * * 0: An n-D tensor, specifying the tensor to be reshaped
@@ -1906,8 +1874,8 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: A tensor of the same {@link OperandType} as input0.
-     *
-     * Available since API level 28.
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      the scale and zeroPoint must be the same as input0.
      */
     BATCH_TO_SPACE_ND = @1.1::OperationType:BATCH_TO_SPACE_ND,
 
@@ -1931,12 +1899,12 @@ enum OperationType : int32_t {
      *     input2.dimension = {5, 4, 3, 1}
      *     output.dimension = {5, 4, 3, 2}
      *
-     * Since API level 29, generic zero-sized input tensor is supported. Zero
+     * Since HAL version 1.2, generic zero-sized input tensor is supported. Zero
      * dimension is only compatible with 0 or 1. The size of the output
      * dimension is zero if either of corresponding input dimension is zero.
      *
      * Supported tensor {@link OperandType}:
-     * * {@link OperandType::TENSOR_FLOAT16} (since API level 29)
+     * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_FLOAT32}
      *
      * Supported tensor rank: up to 4
@@ -1951,8 +1919,6 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: A tensor of the same {@link OperandType} as input0.
-     *
-     * Available since API level 28.
      */
     DIV = @1.1::OperationType:DIV,
 
@@ -1965,7 +1931,7 @@ enum OperationType : int32_t {
      * length 1.
      *
      * Supported tensor {@link OperandType}:
-     * * {@link OperandType::TENSOR_FLOAT16} (since API level 29)
+     * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
      *
@@ -1987,21 +1953,21 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: A tensor of the same {@link OperandType} as input0.
-     *
-     * Available since API level 28.
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      the scale and zeroPoint must be same as input0.
      */
     MEAN = @1.1::OperationType:MEAN,
 
     /**
-     * Pads a tensor with zeros.
+     * Pads a tensor.
      *
      * This operation pads a tensor according to the specified paddings.
      *
      * Supported tensor {@link OperandType}:
-     * * {@link OperandType::TENSOR_FLOAT16} (since API level 29)
+     * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_FLOAT32}
-     * * {@link OperandType::TENSOR_QUANT8_ASYMM} (full support since API
-     *   level 29, see the output section)
+     * * {@link OperandType::TENSOR_QUANT8_ASYMM}
+     *   (full support since HAL version 1.2, see the output section)
      *
      * Supported tensor rank: up to 4
      *
@@ -2023,12 +1989,12 @@ enum OperationType : int32_t {
      *      of the padding:
      *          output0.dimension[i] =
      *              padding[i, 0] + input0.dimension[i] + padding[i, 1]
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      the scale and zeroPoint must be the same as input0.
      *
-     *      NOTE: Before API level 29, the pad value for
-     *      {@link ANEURALNETWORKS_TENSOR_QUANT8_ASYMM} is undefined.
-     *      Since API level 29, the pad value is always the logical zero.
-     *
-     * Available since API level 28.
+     *      NOTE: Before HAL version 1.2, the pad value for
+     *      {@link OperandType::TENSOR_QUANT8_ASYMM} is undefined.
+     *      Since HAL version 1.2, the pad value is always the logical zero.
      */
     PAD = @1.1::OperationType:PAD,
 
@@ -2044,14 +2010,16 @@ enum OperationType : int32_t {
      * dimensions of the input are optionally zero padded according to paddings.
      *
      * Supported tensor {@link OperandType}:
-     * * {@link OperandType::TENSOR_FLOAT16} (since API level 29)
+     * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
+     *   (full support since HAL version 1.2, see the output section)
      *
      * Supported tensor rank: 4, with "NHWC" or "NCHW" data layout.
      * With the default data layout NHWC, the data is stored in the order of:
      * [batch, height, width, channels]. Alternatively, the data layout could
      * be NCHW, the data storage order of: [batch, channels, height, width].
+     * NCHW is supported since HAL version 1.2.
      *
      * Inputs:
      * * 0: An n-D tensor, specifying the input.
@@ -2068,12 +2036,16 @@ enum OperationType : int32_t {
      *      end of dimension i.
      * * 3: An optional {@link OperandType::BOOL} scalar, default to false.
      *      Set to true to specify NCHW data layout for input0 and output0.
-     *      Available since API level 29.
+     *      Available since HAL version 1.2.
      *
      * Outputs:
      * * 0: A tensor of the same {@link OperandType} as input0.
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      the scale and zeroPoint must be the same as input0.
      *
-     * Available since API level 28.
+     *      NOTE: Before HAL version 1.2, the pad value for
+     *      {@link OperandType::TENSOR_QUANT8_ASYMM} is undefined.
+     *      Since HAL version 1.2, the pad value is always the logical zero.
      */
     SPACE_TO_BATCH_ND = @1.1::OperationType:SPACE_TO_BATCH_ND,
 
@@ -2086,7 +2058,7 @@ enum OperationType : int32_t {
      * dimensions by specifying the axes (input1).
      *
      * Supported tensor {@link OperandType}:
-     * * {@link OperandType::TENSOR_FLOAT16} (since API level 29)
+     * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
      *
@@ -2104,8 +2076,8 @@ enum OperationType : int32_t {
      * * 0: A tensor of the same {@link OperandType} as input0. Contains the
      *      same data as input, but has one or more dimensions of size 1
      *      removed.
-     *
-     * Available since API level 28.
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      the scale and zeroPoint must be the same as input0.
      */
     SQUEEZE = @1.1::OperationType:SQUEEZE,
 
@@ -2119,7 +2091,7 @@ enum OperationType : int32_t {
      * reverse slice.
      *
      * Supported tensor {@link OperandType}:
-     * * {@link OperandType::TENSOR_FLOAT16} (since API level 29)
+     * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
      *
@@ -2151,8 +2123,8 @@ enum OperationType : int32_t {
      * Outputs:
      * * 0: A tensor of the same {@link OperandType} as input0 and rank (n - k),
      *      where k is the number of bits set in shrink_axis_mask.
-     *
-     * Available since API level 28.
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      the scale and zeroPoint must be the same as input0.
      */
     STRIDED_SLICE = @1.1::OperationType:STRIDED_SLICE,
 
@@ -2176,14 +2148,14 @@ enum OperationType : int32_t {
      *     input2.dimension = {5, 4, 3, 1}
      *     output.dimension = {5, 4, 3, 2}
      *
-     * Since API level 29, generic zero-sized input tensor is supported. Zero
+     * Since HAL version 1.2, generic zero-sized input tensor is supported. Zero
      * dimension is only compatible with 0 or 1. The size of the output
      * dimension is zero if either of corresponding input dimension is zero.
      *
      * Supported tensor {@link OperandType}:
-     * * {@link OperandType::TENSOR_FLOAT16} (since API level 29)
+     * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_FLOAT32}
-     * * {@link OperandType::TENSOR_QUANT8_ASYMM} (since API level 29)
+     * * {@link OperandType::TENSOR_QUANT8_ASYMM} (since HAL version 1.2)
      *
      * Supported tensor rank: up to 4
      *
@@ -2197,8 +2169,8 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: A tensor of the same {@link OperandType} as input0.
-     *
-     * Available since API level 28.
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      the scale and zeroPoint can be different from inputs' scale and zeroPoint.
      */
     SUB = @1.1::OperationType:SUB,
 
@@ -2212,7 +2184,7 @@ enum OperationType : int32_t {
      * regular matrix transpose on 2-D input Tensors.
      *
      * Supported tensor {@link OperandType}:
-     * * {@link OperandType::TENSOR_FLOAT16} (since API level 29)
+     * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
      *
@@ -2220,14 +2192,14 @@ enum OperationType : int32_t {
      *
      * Inputs:
      * * 0: An n-D tensor, specifying the tensor to be transposed.
-     *      Since API level 29, this tensor may be zero-sized.
+     *      Since HAL version 1.2, this tensor may be zero-sized.
      * * 1: An optional 1-D Tensor of {@link OperandType::TENSOR_INT32},
      *      the permutation of the dimensions of the input tensor.
      *
      * Outputs:
      * * 0: A tensor of the same {@link OperandType} as input0.
-     *
-     * Available since API level 28.
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      the scale and zeroPoint must be the same as input0.
      */
     TRANSPOSE = @1.1::OperationType:TRANSPOSE,
 
@@ -2245,8 +2217,6 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: The output tensor of same shape as input0.
-     *
-     * Available since API level 29.
      */
     ABS = 38,
 
@@ -2269,8 +2239,6 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: An (n - 1)-D {@link OperandType::TENSOR_INT32} tensor.
-     *
-     * Available since API level 29.
      */
     // There is no underscore in ARG_MAX to avoid name conflict with
     // the macro defined in libc/kernel/uapi/linux/limits.h.
@@ -2295,8 +2263,6 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: An (n - 1)-D {@link OperandType::TENSOR_INT32} tensor.
-     *
-     * Available since API level 29.
      */
     ARGMIN = 40,  // See ARGMAX for naming discussion.
 
@@ -2341,8 +2307,8 @@ enum OperationType : int32_t {
      * * 0: A tensor of the same {@link OperandType} as input0, with shape
      *      [num_rois, num_classes * 4], specifying the coordinates of each
      *      output bounding box for each class, with format [x1, y1, x2, y2].
-     *
-     * Available since API level 29.
+     *      For type of {@link OperandType::TENSOR_QUANT16_ASYMM}, the
+     *      scale must be 0.125 and the zero point must be 0.
      */
     AXIS_ALIGNED_BBOX_TRANSFORM = 41,
 
@@ -2482,17 +2448,15 @@ enum OperationType : int32_t {
      *       then clipping is disabled.
      *       If all the input tensors have type {@link OperandType::TENSOR_FLOAT32},
      *       this scalar must be of the type {@link OperandType::FLOAT32},
-     *       otherwise if all the input tensors have the type {@link
-     *       TENSOR_FLOAT16}, this scalar must be of type {@link
-     *       FLOAT16}.
+     *       otherwise if all the input tensors have the type {@link OperandType::TENSOR_FLOAT16},
+     *       this scalar must be of type {@link OperandType::FLOAT16}.
      * * 50: The clipping threshold for the output from the
      *       projection layer, such that values are bound within
      *       [-proj_clip, proj_clip]. If set to 0.0 then clipping is disabled.
      *       If all the input tensors have type {@link OperandType::TENSOR_FLOAT32},
      *       this scalar must be of the type {@link OperandType::FLOAT32},
-     *       otherwise if all the input tensors have the type {@link
-     *       TENSOR_FLOAT16}, this scalar must be of type {@link
-     *       FLOAT16}.
+     *       otherwise if all the input tensors have the type {@link OperandType::TENSOR_FLOAT16},
+     *       this scalar must be of type {@link OperandType::FLOAT16}.
      * * 51: merge_outputs
      *       An {@link OperandType::BOOL} scalar specifying if the outputs
      *       from forward and backward cells should be merged.
@@ -2539,8 +2503,6 @@ enum OperationType : int32_t {
      *      A 3-D tensor of shape:
      *        If time-major: [max_time, batch_size, bw_output_size]
      *        If batch-major: [batch_size, max_time, bw_output_size]
-     *
-     * Available since API level 29.
      */
     BIDIRECTIONAL_SEQUENCE_LSTM = 42,
 
@@ -2658,8 +2620,6 @@ enum OperationType : int32_t {
      *      (timeMajor). If it is set to true, then the shape is set to
      *      [maxTime, batchSize, bwNumUnits], otherwise the shape is set to
      *      [batchSize, maxTime, bwNumUnits].
-     *
-     * Available since API level 29.
      */
     BIDIRECTIONAL_SEQUENCE_RNN = 43,
 
@@ -2737,8 +2697,6 @@ enum OperationType : int32_t {
      * * 3: A 1-D {@link OperandType::TENSOR_INT32} tensor, of shape
      *      [num_output_rois], specifying the batch index of each box. Boxes
      *      with the same batch index are grouped together.
-     *
-     * Available since API level 29.
      */
     BOX_WITH_NMS_LIMIT = 44,
 
@@ -2762,8 +2720,6 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: A tensor with the same shape as input0.
-     *
-     * Available since API level 29.
      */
     CAST = 45,
 
@@ -2800,8 +2756,8 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: A tensor of the same {@link OperandType} and same shape as input0.
-     *
-     * Available since API level 29.
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      the scale and zeroPoint must be the same as input0.
      */
     CHANNEL_SHUFFLE = 46,
 
@@ -2856,14 +2812,14 @@ enum OperationType : int32_t {
      * * 11: A scalar, score_threshold. Boxes with scores lower than the
      *       threshold are filtered before sending to the NMS algorithm. The
      *       scalar must be of {@link OperandType::FLOAT16} if input0 is of
-     *       {@link OperandType::TENSOR_FLOAT16} and of {@link
-     *       OperandType::FLOAT32} if input0 is of {@link
-     *       OperandType::TENSOR_FLOAT32}.
+     *       {@link OperandType::TENSOR_FLOAT16} and of
+     *       {@link OperandType::FLOAT32} if input0 is of
+     *       {@link OperandType::TENSOR_FLOAT32}.
      * * 12: A scalar, specifying the IoU threshold for hard NMS. The scalar
-     *       must be of {@link OperandType::FLOAT16} if input0 is of {@link
-     *       OperandType::TENSOR_FLOAT16} and of {@link
-     *       OperandType::FLOAT32} if input0 is of {@link
-     *       OperandType::TENSOR_FLOAT32}.
+     *       must be of {@link OperandType::FLOAT16} if input0 is of
+     *       {@link OperandType::TENSOR_FLOAT16} and of
+     *       {@link OperandType::FLOAT32} if input0 is of
+     *       {@link OperandType::TENSOR_FLOAT32}.
      * * 13: An {@link OperandType::BOOL} scalar, set to true to include
      *       background class in the list of label map for the output, set
      *       to false to not include the background. When the background
@@ -2882,8 +2838,6 @@ enum OperationType : int32_t {
      *      output detection.
      * * 3: An 1-D {@link OperandType::TENSOR_INT32} tensor, of shape [batches],
      *      specifying the number of valid output detections for each batch.
-     *
-     * Available since API level 29.
      */
     DETECTION_POSTPROCESSING = 47,
 
@@ -2908,8 +2862,6 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: A tensor of {@link OperandType::TENSOR_BOOL8}.
-     *
-     * Available since API level 29.
      */
     EQUAL = 48,
 
@@ -2927,8 +2879,6 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: The output tensor of same shape as input0.
-     *
-     * Available since API level 29.
      */
     EXP = 49,
 
@@ -2956,8 +2906,8 @@ enum OperationType : int32_t {
      * Outputs:
      * * 0: An (n + 1)-D tensor with the same {@link OperandType} and data as
      *      input0.
-     *
-     * Available since API level 29.
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      the scale and zeroPoint must be the same as input0.
      */
     EXPAND_DIMS = 50,
 
@@ -2994,8 +2944,8 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: An (n + k - 1)-D tensor with the same {@link OperandType} as input0.
-     *
-     * Available since API level 29.
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      the scale and zeroPoint must be the same as input0.
      */
     GATHER = 51,
 
@@ -3074,8 +3024,6 @@ enum OperationType : int32_t {
      * * 2: A 1-D {@link OperandType::TENSOR_INT32} tensor, of shape
      *      [num_output_rois], specifying the batch index of each box. Boxes
      *      with the same batch index are grouped together.
-     *
-     * Available since API level 29.
      */
     GENERATE_PROPOSALS = 52,
 
@@ -3100,8 +3048,6 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: A tensor of {@link OperandType::TENSOR_BOOL8}.
-     *
-     * Available since API level 29.
      */
     GREATER = 53,
     /**
@@ -3125,8 +3071,6 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: A tensor of {@link OperandType::TENSOR_BOOL8}.
-     *
-     * Available since API level 29.
      */
     GREATER_EQUAL = 54,
 
@@ -3191,7 +3135,8 @@ enum OperationType : int32_t {
      *      [depth_out, filter_height, filter_width, depth_group], specifying
      *      the filter, where depth_out must be divisible by num_groups.  For
      *      tensor of type {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL}
-     *      the channel dimension must be set to 0.
+     *      the channel dimension (channelDim at
+     *      {@link SymmPerChannelQuantParams}) must be set to 0.
      * * 2: A 1-D tensor, of shape [depth_out], specifying the bias. For input
      *      tensor of type {@link OperandType::TENSOR_FLOAT32} or
      *      {@link OperandType::TENSOR_FLOAT16}, the bias must be of the same
@@ -3229,7 +3174,8 @@ enum OperationType : int32_t {
      *      [depth_out, filter_height, filter_width, depth_group], specifying
      *      the filter, where depth_out must be divisible by num_groups.  For
      *      tensor of type {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL}
-     *      the channel dimension must be set to 0.
+     *      the channel dimension (SymmPerChannelQuantParams::channelDim)
+     *      must be set to 0.
      * * 2: A 1-D tensor, of shape [depth_out], specifying the bias. For input
      *      tensor of type {@link OperandType::TENSOR_FLOAT32} or
      *      {@link OperandType::TENSOR_FLOAT16}, the bias must be of the same
@@ -3258,8 +3204,8 @@ enum OperationType : int32_t {
      * Outputs:
      * * 0: The output 4-D tensor, of shape
      *      [batches, out_height, out_width, depth_out].
-     *
-     * Available since API level 29.
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      the scale and zeroPoint can be different from inputs' scale and zeroPoint.
      */
     GROUPED_CONV_2D = 55,
 
@@ -3300,12 +3246,14 @@ enum OperationType : int32_t {
      * Outputs:
      * * 0: A tensor of the same {@link OperandType} as input0, with shape
      *      [num_boxes, num_keypoints], specifying score of the keypoints.
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      the scale and zeroPoint can be different from input0 scale and zeroPoint.
      * * 1: A tensor of the same {@link OperandType} as input1, with shape
      *      [num_boxes, num_keypoints, 2], specifying the location of
      *      the keypoints, the second dimension is organized as
      *      [keypoint_x, keypoint_y].
-     *
-     * Available since API level 29.
+     *      For type of {@link OperandType::TENSOR_QUANT16_ASYMM}, the
+     *      scale must be 0.125 and the zero point must be 0.
      */
     HEATMAP_MAX_KEYPOINT = 56,
 
@@ -3339,26 +3287,24 @@ enum OperationType : int32_t {
      * * 0: An n-D tensor, specifying the tensor to be normalized.
      * * 1: A scalar, specifying gamma, the scale applied to the normalized
      *      tensor. The scalar must be of {@link OperandType::FLOAT16} if
-     *      input0 is of {@link OperandType::TENSOR_FLOAT16} and of {@link
-     *      OperandType::FLOAT32} if input0 is of {@link
-     *      OperandType::TENSOR_FLOAT32}.
+     *      input0 is of {@link OperandType::TENSOR_FLOAT16} and of
+     *      {@link OperandType::FLOAT32} if input0 is of
+     *      {@link OperandType::TENSOR_FLOAT32}.
      * * 2: A scalar, specifying beta, the offset applied to the normalized
      *      tensor. The scalar must be of {@link OperandType::FLOAT16} if
-     *      input0 is of {@link OperandType::TENSOR_FLOAT16} and of {@link
-     *      OperandType::FLOAT32} if input0 is of {@link
-     *      OperandType::TENSOR_FLOAT32}.
+     *      input0 is of {@link OperandType::TENSOR_FLOAT16} and of
+     *      {@link OperandType::FLOAT32} if input0 is of
+     *      {@link OperandType::TENSOR_FLOAT32}.
      * * 3: A scalar, specifying epsilon, the small value added to variance to
      *      avoid dividing by zero. The scalar must be of {@link OperandType::FLOAT16} if
-     *      input0 is of {@link OperandType::TENSOR_FLOAT16} and of {@link
-     *      OperandType::FLOAT32} if input0 is of {@link
-     *      OperandType::TENSOR_FLOAT32}.
+     *      input0 is of {@link OperandType::TENSOR_FLOAT16} and of
+     *      {@link OperandType::FLOAT32} if input0 is of
+     *      {@link OperandType::TENSOR_FLOAT32}.
      * * 4: An {@link OperandType::BOOL} scalar, set to true to specify
      *      NCHW data layout for input0 and output0. Set to false for NHWC.
      *
      * Outputs:
      * * 0: A tensor of the same {@link OperandType} and same shape as input0.
-     *
-     * Available since API level 29.
      */
     INSTANCE_NORMALIZATION = 57,
 
@@ -3383,8 +3329,6 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: A tensor of {@link OperandType::TENSOR_BOOL8}.
-     *
-     * Available since API level 29.
      */
     LESS = 58,
 
@@ -3409,8 +3353,6 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: A tensor of {@link OperandType::TENSOR_BOOL8}.
-     *
-     * Available since API level 29.
      */
     LESS_EQUAL = 59,
 
@@ -3428,8 +3370,6 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: The output tensor of same shape as input0.
-     *
-     * Available since API level 29.
      */
     LOG = 60,
 
@@ -3450,8 +3390,6 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: A tensor of {@link OperandType::TENSOR_BOOL8}.
-     *
-     * Available since API level 29.
      */
     LOGICAL_AND = 61,
 
@@ -3468,8 +3406,6 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: The output tensor of same shape as input0.
-     *
-     * Available since API level 29.
      */
     LOGICAL_NOT = 62,
 
@@ -3490,8 +3426,6 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: A tensor of {@link OperandType::TENSOR_BOOL8}.
-     *
-     * Available since API level 29.
      */
     LOGICAL_OR = 63,
 
@@ -3523,8 +3457,6 @@ enum OperationType : int32_t {
      * Outputs:
      * * 0: The output tensor of the same {@link OperandType} and shape as
      *      input0.
-     *
-     * Available since API level 29.
      */
     LOG_SOFTMAX = 64,
 
@@ -3543,11 +3475,13 @@ enum OperationType : int32_t {
      * * 0: A tensor.
      * * 1: A tensor of the same {@link OperandType} and compatible dimensions
      *      with input0.
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      the scales and zeroPoint can be different from input0 scale and zeroPoint.
      *
      * Outputs:
      * * 0: A tensor of the same {@link OperandType} as input0.
-     *
-     * Available since API level 29.
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      the scale and zeroPoint can be different from inputs' scale and zeroPoint.
      */
     MAXIMUM = 65,
 
@@ -3566,11 +3500,13 @@ enum OperationType : int32_t {
      * * 0: A tensor.
      * * 1: A tensor of the same {@link OperandType} and compatible dimensions
      *      with input0.
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      the scales and zeroPoint can be different from input0 scale and zeroPoint.
      *
      * Outputs:
      * * 0: A tensor of the same {@link OperandType} as input0.
-     *
-     * Available since API level 29.
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      the scale and zeroPoint can be different from inputs' scale and zeroPoint.
      */
     MINIMUM = 66,
 
@@ -3589,8 +3525,6 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: The output tensor of same shape as input0.
-     *
-     * Available since API level 29.
      */
     NEG = 67,
 
@@ -3615,8 +3549,6 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: A tensor of {@link OperandType::TENSOR_BOOL8}.
-     *
-     * Available since API level 29.
      */
     NOT_EQUAL = 68,
 
@@ -3657,8 +3589,8 @@ enum OperationType : int32_t {
      *      of the padding:
      *          output0.dimension[i] =
      *              padding[i, 0] + input0.dimension[i] + padding[i, 1]
-     *
-     * Available since API level 29.
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      the scale and zeroPoint must be the same as input0.
      */
     PAD_V2 = 69,
 
@@ -3689,8 +3621,6 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: An output tensor.
-     *
-     * Available since API level 29.
      */
     POW = 70,
 
@@ -3728,8 +3658,8 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: A tensor of the same {@link OperandType} as input0.
-     *
-     * Available since API level 29.
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      the scale and zeroPoint can be diffent from the input0 scale and zeroPoint.
      */
     PRELU = 71,
 
@@ -3752,8 +3682,6 @@ enum OperationType : int32_t {
      * Outputs:
      * * 0: The output tensor of same shape as input0, but with
      *      {@link OperandType::TENSOR_QUANT8_ASYMM}.
-     *
-     * Available since API level 29.
      */
     QUANTIZE = 72,
 
@@ -3879,8 +3807,6 @@ enum OperationType : int32_t {
      * Outputs:
      * * 0: A 2-D {@link OperandType::TENSOR_INT32} tensor with shape
      *      [batches, samples], containing the drawn samples.
-     *
-     * Available since API level 29.
      */
     RANDOM_MULTINOMIAL = 74,
 
@@ -3906,8 +3832,6 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: A tensor of the same {@link OperandType} as input0.
-     *
-     * Available since API level 29.
      */
     REDUCE_ALL = 75,
 
@@ -3933,8 +3857,6 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: A tensor of the same {@link OperandType} as input0.
-     *
-     * Available since API level 29.
      */
     REDUCE_ANY = 76,
 
@@ -3962,8 +3884,8 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: A tensor of the same {@link OperandType} as input0.
-     *
-     * Available since API level 29.
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      the scale and zeroPoint must be the same as input0.
      */
     REDUCE_MAX = 77,
 
@@ -3991,8 +3913,8 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: A tensor of the same {@link OperandType} as input0.
-     *
-     * Available since API level 29.
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      the scale and zeroPoint must be the same as input0.
      */
     REDUCE_MIN = 78,
 
@@ -4018,8 +3940,6 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: A tensor of the same {@link OperandType} as input0.
-     *
-     * Available since API level 29.
      */
     REDUCE_PROD = 79,
 
@@ -4045,8 +3965,6 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: A tensor of the same {@link OperandType} as input0.
-     *
-     * Available since API level 29.
      */
     REDUCE_SUM = 80,
 
@@ -4064,7 +3982,7 @@ enum OperationType : int32_t {
      * interpolation.
      *
      * Supported tensor {@link OperandType}:
-     * * {@link OperandType::TENSOR_FLOAT16} (since API level 29)
+     * * {@link OperandType::TENSOR_FLOAT16}
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
      *
@@ -4105,8 +4023,8 @@ enum OperationType : int32_t {
      * Outputs:
      * * 0: A tensor of the same {@link OperandType} as input0. The output
      *      shape is [num_rois, out_height, out_width, depth].
-     *
-     * Available since API level 29.
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      the scale and zeroPoint can be different from the input0 scale and zeroPoint.
      */
     ROI_ALIGN = 81,
 
@@ -4156,8 +4074,8 @@ enum OperationType : int32_t {
      * Outputs:
      * * 0: A tensor of the same {@link OperandType} as input0. The output
      *      shape is [num_rois, out_height, out_width, depth].
-     *
-     * Available since API level 29.
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      the scale and zeroPoint must be the same as input0.
      */
     ROI_POOLING = 82,
 
@@ -4175,8 +4093,6 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: The output tensor of same shape as input0.
-     *
-     * Available since API level 29.
      */
     RSQRT = 83,
 
@@ -4201,9 +4117,13 @@ enum OperationType : int32_t {
      *      true) or input2 (if false).
      * * 1: An input tensor of the same shape as input0.
      * * 2: An input tensor of the same shape and type as input1.
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      the scales and zeroPoint can be different from input1 scale and zeroPoint.
      *
      * Outputs:
      * * 0: A tensor of the same type and shape as input1 and input2.
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      the scale and zeroPoint can be different from inputs' scale and zeroPoint.
      *
      */
     SELECT = 84,
@@ -4222,8 +4142,6 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: The output tensor of same shape as input0.
-     *
-     * Available since API level 29.
      */
     SIN = 85,
 
@@ -4235,7 +4153,6 @@ enum OperationType : int32_t {
      * for each dimension. The size is specified as a 1-D tensor containing
      * either size of a slice along corresponding dimension or -1. In the latter
      * case, all the remaining elements in dimension are included in the slice.
-     * Slice size in each dimension cannot be zero.
      *
      * A sum of begin offset and a size of a slice must not exceed size of a
      * corresponding dimension.
@@ -4257,8 +4174,8 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: An n-D tensor of the same type as the input containing the slice.
-     *
-     * Available since API level 29.
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      its scale and zeroPoint has to be same as the input0 scale and zeroPoint.
      */
     SLICE = 86,
 
@@ -4282,8 +4199,8 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0 ~ (num_splits - 1): Resulting subtensors.
-     *
-     * Available since API level 29.
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      the scale and zeroPoint must be the same as input0.
      */
     SPLIT = 87,
 
@@ -4301,8 +4218,6 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: The output tensor of same shape as input0.
-     *
-     * Available since API level 29.
      */
     SQRT = 88,
 
@@ -4330,8 +4245,8 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: A tiled tensor of the same {@link OperandType} and rank as `input`.
-     *
-     * Available since API level 29.
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      the scale and zeroPoint must be the same as input0.
      */
     TILE = 89,
 
@@ -4357,10 +4272,10 @@ enum OperationType : int32_t {
      * Outputs:
      * * 0: An n-D tensor of the same type as the input, containing the k
      *      largest elements along each last dimensional slice.
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      the scale and zeroPoint must be the same as input0.
      * * 1: An n-D tensor of type {@link OperandType::TENSOR_INT32}
      *      containing the indices of values within the last dimension of input.
-     *
-     * Available since API level 29.
      */
     TOPK_V2 = 90,
 
@@ -4374,7 +4289,7 @@ enum OperationType : int32_t {
      * The output dimensions are functions of the filter dimensions, stride, and
      * padding.
      *
-     * Supported tensor {@link OperandCode} configurations:
+     * Supported tensor {@link OperandType} configurations:
      * * 16 bit floating point:
      * * * {@link OperandType::TENSOR_FLOAT16} for input, filter, output, and bias.
      *
@@ -4406,7 +4321,7 @@ enum OperationType : int32_t {
      *      [depth_out, filter_height, filter_width, depth_in], specifying the
      *      filter. For tensor of type
      *      {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL} the channel
-     *      dimension (extraParams.channelQuant.channelDim) must be set to 0.
+     *      dimension (SymmPerChannelQuantParams::channelDim) must be set to 0.
      * * 2: A 1-D tensor, of shape [depth_out], specifying the bias. For input
      *      tensor of type {@link OperandType::TENSOR_FLOAT32} or
      *      {@link OperandType::TENSOR_FLOAT16}, the bias should be of the
@@ -4443,7 +4358,7 @@ enum OperationType : int32_t {
      *      [depth_out, filter_height, filter_width, depth_in], specifying the
      *      filter. For tensor of type
      *      {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL} the channel
-     *      dimension (extraParams.channelQuant.channelDim) must be set to 0.
+     *      dimension (SymmPerChannelQuantParams::channelDim) must be set to 0.
      * * 2: A 1-D tensor, of shape [depth_out], specifying the bias. For input
      *      tensor of type {@link OperandType::TENSOR_FLOAT32} or
      *      {@link OperandType::TENSOR_FLOAT16}, the bias should be of the
@@ -4473,8 +4388,8 @@ enum OperationType : int32_t {
      * Outputs:
      * * 0: The output 4-D tensor, of shape
      *      [batches, out_height, out_width, depth_out].
-     *
-     * Available since API level 29.
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      the scale and zeroPoint can be different from inputs' scale and zeroPoint.
      */
     TRANSPOSE_CONV_2D = 91,
 
@@ -4584,8 +4499,6 @@ enum OperationType : int32_t {
      *      A 3-D tensor of shape:
      *        If time-major: [max_time, batch_size, output_size]
      *        If batch-major: [batch_size, max_time, output_size]
-     *
-     * Available since API level 29.
      */
     UNIDIRECTIONAL_SEQUENCE_LSTM = 92,
 
@@ -4641,8 +4554,6 @@ enum OperationType : int32_t {
      *      it is set to 1, then the output has a shape [maxTime, batchSize,
      *      numUnits], otherwise the output has a shape [batchSize, maxTime,
      *      numUnits].
-     *
-     * Available since API level 29.
      */
     UNIDIRECTIONAL_SEQUENCE_RNN = 93,
 
@@ -4696,8 +4607,8 @@ enum OperationType : int32_t {
      * Outputs:
      * * 0: The output 4-D tensor, of shape
      *      [batches, new_height, new_width, depth].
-     *
-     * Available since API level 29.
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      the scale and zeroPoint must be the same as input0.
      */
     RESIZE_NEAREST_NEIGHBOR = 94,
 
