@@ -43,7 +43,7 @@ enum FrontendType : uint32_t {
     ANALOG,
     /* Advanced Television Systems Committee (ATSC) Standard A/72. */
     ATSC,
-    /* Advanced Television Systems Committee (ATSC 3.0) Standard A/330. */
+    /* Advanced Television Systems Committee (ATSC 3.0) Standard A/300. */
     ATSC3,
     /**
      * Digital Video Broadcasting - Cable
@@ -58,16 +58,16 @@ enum FrontendType : uint32_t {
     DVBS,
     /**
      * Digital Video Broadcasting - Terrestrial
-     * DVB Terresttrial Frontend Standard ETSI EN 300 468 V1.15.1 and
+     * DVB Terrestrial Frontend Standard ETSI EN 300 468 V1.15.1 and
      * ETSI EN 302 755 V1.4.1.
      */
     DVBT,
     /* Integrated Services Digital Broadcasting-Satellite (ISDB-S)
-     * ARIB SDT-B20 is technical document of ISDB-S.
+     * ARIB STD-B20 is technical document of ISDB-S.
      */
     ISDBS,
     /* Integrated Services Digital Broadcasting-Satellite (ISDB-S)
-     * ARIB TR-B15 is technical document of ISDB-S3.
+     * ARIB STD-B44 is technical document of ISDB-S3.
      */
     ISDBS3,
     /* Integrated Services Digital Broadcasting-Terrestrial (ISDB-T or SBTVD)
@@ -164,8 +164,10 @@ enum FrontendInnerFec : uint64_t {
 @export
 enum FrontendAtscModulation : uint32_t {
     UNDEFINED = 0,
-    MOD_8VSB = 1 << 0,
-    MOD_16VSB = 1 << 1,
+    /** hardware is able to detect and set modulation automatically */
+    AUTO      = 1 << 0,
+    MOD_8VSB  = 1 << 2,
+    MOD_16VSB = 1 << 3,
 };
 
 /**
@@ -191,12 +193,14 @@ struct FrontendAtscCapabilities {
 @export
 enum FrontendAtsc3Modulation : uint32_t {
     UNDEFINED = 0,
-    MOD_QPSK = 1 << 0,
-    MOD_16QAM = 1 << 1,
-    MOD_64QAM = 1 << 2,
-    MOD_256QAM = 1 << 3,
-    MOD_1024QAM = 1 << 4,
-    MOD_4096QAM = 1 << 5,
+    /** hardware is able to detect and set modulation automatically */
+    AUTO        = 1 << 0,
+    MOD_QPSK    = 1 << 1,
+    MOD_16QAM   = 1 << 2,
+    MOD_64QAM   = 1 << 3,
+    MOD_256QAM  = 1 << 4,
+    MOD_1024QAM = 1 << 5,
+    MOD_4096QAM = 1 << 6,
 };
 
 /**
@@ -205,9 +209,11 @@ enum FrontendAtsc3Modulation : uint32_t {
 @export
 enum FrontendAtsc3Bandwidth : uint32_t {
     UNDEFINED = 0,
-    BANDWIDTH_8MHZ = 1 << 0,
-    BANDWIDTH_7MHZ = 1 << 1,
-    BANDWIDTH_6MHZ = 1 << 2,
+    /** hardware is able to detect and set bandwidth automatically */
+    AUTO = 1 << 0,
+    BANDWIDTH_6MHZ = 1 << 1,
+    BANDWIDTH_7MHZ = 1 << 2,
+    BANDWIDTH_8MHZ = 1 << 3,
 };
 
 /**
@@ -215,9 +221,11 @@ enum FrontendAtsc3Bandwidth : uint32_t {
  */
 @export
 enum FrontendAtsc3TimeInterleaveMode : uint32_t {
-    UNDEFINED,
-    CTI,
-    HTI,
+    UNDEFINED = 0,
+    /** hardware is able to detect and set TimeInterleaveMode automatically */
+    AUTO = 1 << 0,
+    CTI  = 1 << 1,
+    HTI  = 1 << 2,
 };
 
 /**
@@ -247,13 +255,39 @@ enum FrontendAtsc3CodeRate : uint32_t {
  */
 @export
 enum FrontendAtsc3Fec : uint32_t {
-    UNDEFINED,
-    BCH_LDPC_16K,
-    BCH_LDPC_64K,
-    CRC_LDPC_16K,
-    CRC_LDPC_64K,
-    LDPC_16K,
-    LDPC_64K,
+    UNDEFINED = 0,
+    /** hardware is able to detect and set FEC automatically */
+    AUTO     = 1 << 0,
+    BCH_LDPC_16K = 1 << 1,
+    BCH_LDPC_64K = 1 << 2,
+    CRC_LDPC_16K = 1 << 3,
+    CRC_LDPC_64K = 1 << 4,
+    LDPC_16K     = 1 << 5,
+    LDPC_64K     = 1 << 6,
+};
+
+/**
+ *  Demodulator Output Format for an ATSC3 Frontend.
+ */
+@export
+enum FrontendAtsc3DemodOutputFormat : uint8_t {
+    /** Dummy. Scan uses this. */
+    UNDEFINED = 0,
+    /** ALP format. Typically used in US region. */
+    ATSC3_LINKLAYER_PACKET = 1 << 0,
+    /** BaseBand packet format. Typically used in Korea region. */
+    BASEBAND_PACKET        = 1 << 1,
+};
+
+/**
+ *  PLP basis Signal Settings for an ATSC3 Frontend.
+ */
+struct FrontendAtsc3PlpSettings {
+    uint8_t plpId;
+    FrontendAtsc3Modulation modulation;
+    FrontendAtsc3TimeInterleaveMode interleaveMode;
+    FrontendAtsc3CodeRate codeRate;
+    FrontendAtsc3Fec fec;
 };
 
 /**
@@ -262,21 +296,28 @@ enum FrontendAtsc3Fec : uint32_t {
 struct FrontendAtsc3Settings {
     /** Signal frequency in Hertz */
     uint32_t frequency;
+    /** Bandwidth of tuning band. */
     FrontendAtsc3Bandwidth bandwidth;
-    FrontendAtsc3TimeInterleaveMode interleaveMode;
-    FrontendAtsc3CodeRate codeRate;
-    FrontendAtsc3Fec fec;
-    vec<uint8_t> plpIdList;
+    FrontendAtsc3DemodOutputFormat demodOutputFormat;
+    vec<FrontendAtsc3PlpSettings> plpSettings;
 };
 
 /**
  *  Capabilities for ATSC3 Frontend.
  */
 struct FrontendAtsc3Capabilities {
-    /** Modulation capability */
-    bitfield<FrontendAtsc3Modulation> modulationCap;
     /** Bandwidth capability */
     bitfield<FrontendAtsc3Bandwidth> bandwidthCap;
+    /** Modulation capability */
+    bitfield<FrontendAtsc3Modulation> modulationCap;
+    /** TimeInterleaveMode capability */
+    bitfield<FrontendAtsc3TimeInterleaveMode> timeInterleaveModeCap;
+    /** CodeRate capability */
+    bitfield<FrontendAtsc3CodeRate> codeRateCap;
+    /** FEC capability */
+    bitfield<FrontendAtsc3Fec> fecCap;
+    /** Demodulator Output Format capability */
+    bitfield<FrontendAtsc3DemodOutputFormat> demodOutputFormatCap;
 };
 
 /**
@@ -614,7 +655,7 @@ enum FrontendIsdbsRolloff : uint32_t {
 };
 
 /**
- *  Modulaltion Type for ISDBS.
+ *  Modulation Type for ISDBS.
  */
 @export
 enum FrontendIsdbsModulation : uint32_t {
@@ -647,7 +688,7 @@ enum FrontendIsdbsCoderate : uint32_t {
 @export
 enum FrontendIsdbsStreamIdType : uint32_t {
     STREAM_ID,
-    RELATIVE_STREAM_ID,
+    RELATIVE_STREAM_NUMBER,
 };
 
 /**
@@ -845,6 +886,7 @@ enum FrontendAnalogSifStandard : uint32_t {
     M_EIA_J = 1 << 13,
     I_NICAM = 1 << 14,
     L_NICAM = 1 << 15,
+    L_PRIME = 1 << 16,
 };
 
 /**
@@ -907,17 +949,27 @@ enum FrontendScanMessageType : uint32_t {
     PLP_IDS,
     /** Locked group Ids for DVBT2 frontend. */
     GROUP_IDS,
-    /** Locked the number of the Plps. */
-   INPUT_STREAM_IDS,
-    /** Locked signal stardard.  */
+    /** Stream Ids. */
+    INPUT_STREAM_IDS,
+    /** Locked signal standard.  */
     STANDARD,
+    /** PLP status in a tuned frequency band for ATSC3 frontend. */
+    ATSC3_PLP_INFO,
+};
+
+/**
+ *  ATSC3.0 PLP information for scan
+ */
+struct FrontendScanAtsc3PlpInfo {
+    uint8_t plpId;
+    bool bLlsFlag;
 };
 
 /**
  *  Scan Message for Frontend.
  */
 safe_union FrontendScanMessage {
-    bool islocked;
+    bool isLocked;
     bool isEnd;
     /** scan progress percent (0..100) */
     uint8_t progressPercent;
@@ -927,11 +979,13 @@ safe_union FrontendScanMessage {
     uint32_t symbolRate;
     vec<uint8_t> plpIds;
     vec<uint8_t> groupIds;
-    vec<uint8_t> inputStreamIds;
+    vec<uint16_t> inputStreamIds;
     safe_union standard {
         FrontendDvbsStandard sStd;
         FrontendDvbtStandard tStd;
     } std;
+    /** A list of PLP status in a tuned frequency band for ATSC3 frontend. */
+    vec<FrontendScanAtsc3PlpInfo> atsc3PlpInfos;
 };
 
 /**
@@ -940,17 +994,17 @@ safe_union FrontendScanMessage {
 @export
 enum FrontendEventType : uint32_t {
     /**
-     * If frontend locked the signal which is specified by tune method, HAL sent
+     * If frontend locked the signal which is specified by tune method, HAL sends
      * Locked event.
      */
     LOCKED,
     /**
      * If frontend can't locked the signal which is specified by tune method,
-     * HAL sent NO_SIGNAL event.
+     * HAL sends NO_SIGNAL event.
      */
     NO_SIGNAL,
     /**
-     * If frontend detect that the locked signal get lost, HAL sent LOST_LOCK
+     * If frontend detect that the locked signal get lost, HAL sends LOST_LOCK
      * event.
      */
     LOST_LOCK,
@@ -977,15 +1031,15 @@ enum FrontendEventType : uint32_t {
  */
 @export
 enum FrontendStatusType : uint32_t {
-    /** Lock status for RF or Demod. */
-    LOCK,
+    /** Lock status for Demod. */
+    DEMOD_LOCK,
     /** Signal to Noise Ratio. */
     SNR,
     /** Bit Error Ratio. */
     BER,
     /** Packages Error Ratio. */
     PER,
-    /** Bit Error Ratio befor FEC. */
+    /** Bit Error Ratio before FEC. */
     PRE_BER,
     /*
      * Signal Quality (0..100). Good data over total data in percent can be
@@ -993,7 +1047,7 @@ enum FrontendStatusType : uint32_t {
      */
     SIGNAL_QUALITY,
     /** Signal Strength. */
-    SIGGAL_STRENGTH,
+    SIGNAL_STRENGTH,
     /** Symbol Rate. */
     SYMBOL_RATE,
     /** Forward Error Correction Type. */
@@ -1008,21 +1062,62 @@ enum FrontendStatusType : uint32_t {
     PLP_ID,
     /** Status for Emergency Warning Broadcasting System. */
     EWBS,
+    /** Automatic Gain Control. */
+    AGC,
+    /** Low Noise Amplifier. */
+    LNA,
+    /** Lock status for stream. */
+    STREAM_LOCK,
+    /** Error status by layer. */
+    LAYER_ERROR,
+    /** CN value by VBER. */
+    VBER_CN,
+    /** CN value by LBER. */
+    LBER_CN,
+    /** CN value by XER. */
+    XER_CN,
+    /** Moduration Error Ratio. */
+    MER,
+    /** Difference between tuning frequency and actual locked frequency. */
+    FREQ_OFFSET,
+    /* Hierarchy for DVBT. */
+    HIERARCHY,
+    /** Lock status for RF. */
+    RF_LOCK,
+    /** PLP information in a frequency band for ATSC3.0 frontend. */
+    ATSC3_PLP_INFO,
 };
+
+/**
+ * Status for each tuning PLPs
+ */
+struct FrontendStatusAtsc3PlpInfo {
+    /** PLP Id value. */
+    uint8_t plpId;
+    /** Demod Lock/Unlock status of this particular PLP. */
+    bool isLocked;
+    /** Uncorrectable Error Counts (UEC) of this particular PLP since last tune operation. */
+    uint32_t uec;
+};
+
 
 /**
  * Modulation Type for Frontend's status.
  */
 safe_union FrontendModulationStatus {
+    FrontendDvbcModulation dvbc;
     FrontendDvbsModulation dvbs;
-    FrontendAtsc3Modulation atsc3;
+    FrontendIsdbsModulation isdbs;
+    FrontendIsdbs3Modulation isdbs3;
+    FrontendIsdbtModulation isdbt;
 };
 
 /**
  *  The status for Frontend.
  */
 safe_union FrontendStatus {
-    bool isLocked;
+    /** Lock status for Demod in True/False. */
+    bool isDemodLocked;
     /** SNR value measured by 0.001 dB. */
     int32_t snr;
     /** The number of error bit per 1 billion bits. */
@@ -1043,6 +1138,25 @@ safe_union FrontendStatus {
     FrontendLnbVoltage lnbVoltage;
     uint8_t plpId;
     bool isEWBS;
+    /** AGC value is normalized from 0 to 255. */
+    uint8_t agc;
+    bool isLnaOn;
+    bool isStreamLock;
+    vec<bool> isLayerError;
+    /** CN value by VBER measured by 0.001 dB */
+    int32_t vberCn;
+    /** CN value by LBER measured by 0.001 dB */
+    int32_t lberCn;
+    /** CN value by XER measured by 0.001 dB */
+    int32_t xerCn;
+    /** MER value measured by 0.001 dB */
+    int32_t mer;
+    /** Frequency difference in Hertz. */
+    int32_t freqOffset;
+    FrontendDvbtHierarchy hierarchy;
+    bool isRfLocked;
+    /** A list of PLP status for tuned PLPs for ATSC3 frontend. */
+    vec<FrontendStatusAtsc3PlpInfo> plpInfo;
 };
 
 /**
@@ -1121,7 +1235,6 @@ enum FrontendLnbPosition : int32_t {
     POSITION_B,
 };
 
-
 /* Demux ID is used to associate with a hardware demux resource. */
 typedef uint32_t DemuxId;
 
@@ -1150,7 +1263,7 @@ enum DemuxFilterType : uint32_t {
      */
     AUDIO,
     /**
-     * A filter to filter Vidoe Metadata out from input stream.
+     * A filter to filter Video Metadata out from input stream.
      */
     VIDEO,
     /**
@@ -1475,6 +1588,8 @@ enum DemuxDataFormat : uint32_t {
     PES,
     /* Data is Elementary Stream. */
     ES,
+    /* Data is TLV (type-length-value) Stream for JP SHV */
+    SHV_TLV,
 };
 
 /**
@@ -1534,6 +1649,10 @@ enum DemuxInputStatus : uint32_t {
     SPACE_FULL         = 1 << 3,
 };
 
+/**
+ *  The Settings for the demux's input.
+ */
+@export
 struct DemuxInputSettings {
     /**
      * Register for interested status events so that the HAL can send these
@@ -1558,4 +1677,31 @@ struct DemuxInputSettings {
      * The packet size in bytes in the input.
      */
     uint8_t packetSize;
+};
+
+/**
+ *  Capabilities for Demux.
+ */
+@export
+struct DemuxCapabilities {
+    /* The number of Demux to be supported. */
+    uint32_t numDemux;
+    /* The number of Input to be supported. */
+    uint32_t numInput;
+    /* The number of Output to be supported. */
+    uint32_t numOutput;
+    /* The number of TS Filter to be supported. */
+    uint32_t numTsFilter;
+    /* The number of Section Filter to be supported. */
+    uint32_t numSectionFilter;
+    /* The number of Audio Filter to be supported. */
+    uint32_t numAudioFilter;
+    /* The number of Video Filter to be supported. */
+    uint32_t numVideoFilter;
+    /* The number of PES Filter to be supported. */
+    uint32_t numPesFilter;
+    /* The number of PCR Filter to be supported. */
+    uint32_t numPcrFilter;
+    /* The maximum number of bytes is supported in the mask of Section Filter. */
+    uint32_t numBytesInSectionFilter;
 };

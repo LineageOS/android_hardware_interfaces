@@ -145,10 +145,10 @@ interface IFrontend {
      *         cable frontend.
      *         UNKNOWN_ERROR if failed for other reasons.
      */
-    setLnb(ILnb lnb) generates (Result result);
+    setLnb(LnbId lnbId) generates (Result result);
 
     /**
-     * Enble or Disable Low Noise Amplifier (LNA).
+     * Enable or Disable Low Noise Amplifier (LNA).
      *
      * @param bEnable true if activate LNA module; false if deactivate LNA
      *
@@ -158,22 +158,4 @@ interface IFrontend {
      *         UNKNOWN_ERROR if failed for other reasons.
      */
     setLna(bool bEnable) generates (Result result);
-
-    /**
-     *  Sends DiSEqC (Digital Satellite Equipment Control) message.
-     *
-     * Client sends DiSeqc message to DiSEqc compatible device through the
-     * frontend. The response message from the device comes back to the client
-     * through frontend's callback onDiseqcMessage.
-     *
-     * @param diseqcMessage a byte array of data for DiSEqC message which is
-     *        specified by EUTELSAT Bus Functional Specification Version 4.2.
-     *
-     * @return result Result status of the operation.
-     *         SUCCESS if successful,
-     *         INVALID_STATE if the frontend can't send DiSEqc Message, such as
-     *         cable frontend.
-     *         UNKNOWN_ERROR if failed for other reasons.
-     */
-    sendDiseqcMessage(vec<uint8_t> diseqcMessage) generates (Result result);
 };

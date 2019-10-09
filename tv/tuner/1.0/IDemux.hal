@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package android.hardware.tv.tuner@1.0;
 
 import IDemuxCallback;
@@ -46,9 +62,9 @@ interface IDemux {
      *
      * It is used by the client to get the descriptor of the filter's Fast
      * Message Queue. The data in FMQ is filtered out from MPEG transport
-     * stream. The data is origanized to data blocks which may have
+     * stream. The data is organized to data blocks which may have
      * different length. The length's information of one or multiple data blocks
-     * is sent to client throught DemuxFilterEvent.
+     * is sent to client through DemuxFilterEvent.
      *
      * @param filterId the ID of the filter.
      * @return result Result status of the operation.
@@ -81,7 +97,7 @@ interface IDemux {
     /**
      * Start the filter.
      *
-     * It is used by the client to ask the filter to start filterring data.
+     * It is used by the client to ask the filter to start filtering data.
      *
      * @param filterId the ID of the filter.
      * @return result Result status of the operation.
@@ -202,7 +218,7 @@ interface IDemux {
      *
      * It is used by the client to get the descriptor of the output's Fast
      * Message Queue. The data in FMQ is muxed packets output from selected
-     * filters. The packet's format is specifed by DemuxDataFormat in
+     * filters. The packet's format is specified by DemuxDataFormat in
      * DemuxOutputSettings.
      *
      * @return result Result status of the operation.
@@ -236,7 +252,7 @@ interface IDemux {
      *         INVALID_STATE if failed for wrong state.
      *         UNKNOWN_ERROR if failed for other reasons.
      */
-    attachOutputTsFilter(DemuxFilterId filterId) generates (Result result);
+    attachOutputFilter(DemuxFilterId filterId) generates (Result result);
 
     /**
      * Detach one filter from the demux's output.
@@ -250,7 +266,7 @@ interface IDemux {
      *         INVALID_STATE if failed for wrong state.
      *         UNKNOWN_ERROR if failed for other reasons.
      */
-    detachOutputTsFilter(DemuxFilterId filterId) generates (Result result);
+    detachOutputFilter(DemuxFilterId filterId) generates (Result result);
 
     /**
      * Start to take data to the demux's output.

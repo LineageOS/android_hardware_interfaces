@@ -23,7 +23,7 @@ import ILnb;
 
 /**
  * Top level interface to manage Frontend, Demux and Decrambler hardware
- * resouces which are needed for Android TV.
+ * resources which are needed for Android TV.
  */
 interface ITuner {
     /**
@@ -68,6 +68,16 @@ interface ITuner {
          generates (Result result, DemuxId demuxId, IDemux demux);
 
     /**
+     * Retrieve the Demux's Capabilities.
+     *
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         UNKNOWN_ERROR if the inquiry failed for other reasons.
+     * @return caps the Demux's Capabilities.
+     */
+    getDemuxCaps() generates (Result result, DemuxCapabilities caps);
+
+    /**
      * Create a new instance of Descrambler.
      *
      * It is used by the client to create a Descrambler instance.
@@ -81,14 +91,13 @@ interface ITuner {
          generates (Result result, IDescrambler descrambler);
 
     /**
-     * Create a new instance of Descrambler.
+     * Retrieve the frontend's information.
      *
-     * It is used by the client to create a Descrambler instance.
-     *
+     * @param frontendId the id of the frontend to be inquiried.
      * @return result Result status of the operation.
      *         SUCCESS if successful,
-     *         UNKNOWN_ERROR if creation failed for other reasons.
-     * @return descrambler the newly created descrambler interface.
+     *         UNKNOWN_ERROR if the inquiry failed for other reasons.
+     * @return info the frontend's information.
      */
     getFrontendInfo(FrontendId frontendId)
         generates (Result result, FrontendInfo info);
@@ -119,6 +128,5 @@ interface ITuner {
      */
     openLnbById(LnbId lnbId)
         generates (Result result, ILnb lnb);
-
 };
 

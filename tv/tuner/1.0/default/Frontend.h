@@ -18,7 +18,9 @@
 #define ANDROID_HARDWARE_TV_TUNER_V1_0_FRONTEND_H_
 
 #include <android/hardware/tv/tuner/1.0/IFrontend.h>
-#include <android/hardware/tv/tuner/1.0/ITuner.h>
+#include <fstream>
+#include <iostream>
+#include "Tuner.h"
 
 using namespace std;
 
@@ -35,11 +37,11 @@ using ::android::hardware::tv::tuner::V1_0::IFrontend;
 using ::android::hardware::tv::tuner::V1_0::IFrontendCallback;
 using ::android::hardware::tv::tuner::V1_0::Result;
 
+class Tuner;
+
 class Frontend : public IFrontend {
   public:
-    Frontend();
-
-    Frontend(FrontendType type, FrontendId id);
+    Frontend(FrontendType type, FrontendId id, sp<Tuner> tuner);
 
     virtual Return<Result> close() override;
 
@@ -56,21 +58,26 @@ class Frontend : public IFrontend {
     virtual Return<void> getStatus(const hidl_vec<FrontendStatusType>& statusTypes,
                                    getStatus_cb _hidl_cb) override;
 
-    virtual Return<Result> sendDiseqcMessage(const hidl_vec<uint8_t>& diseqcMessage) override;
-
     virtual Return<Result> setLna(bool bEnable) override;
 
-    virtual Return<Result> setLnb(const sp<ILnb>& lnb) override;
+    virtual Return<Result> setLnb(uint32_t lnb) override;
 
     FrontendType getFrontendType();
 
     FrontendId getFrontendId();
 
+    string getSourceFile();
+
   private:
     virtual ~Frontend();
     sp<IFrontendCallback> mCallback;
+    sp<Tuner> mTunerService;
     FrontendType mType = FrontendType::UNDEFINED;
     FrontendId mId = 0;
+
+    const string FRONTEND_STREAM_FILE = "/vendor/etc/test1.ts";
+    string mSourceStreamFile;
+    std::ifstream mFrontendData;
 };
 
 }  // namespace implementation

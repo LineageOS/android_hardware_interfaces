@@ -18,6 +18,8 @@
 #define ANDROID_HARDWARE_TV_TUNER_V1_0_TUNER_H_
 
 #include <android/hardware/tv/tuner/1.0/ITuner.h>
+#include <map>
+#include "Demux.h"
 #include "Frontend.h"
 
 using namespace std;
@@ -29,6 +31,9 @@ namespace tuner {
 namespace V1_0 {
 namespace implementation {
 
+class Frontend;
+class Demux;
+
 class Tuner : public ITuner {
   public:
     Tuner();
@@ -39,6 +44,8 @@ class Tuner : public ITuner {
 
     virtual Return<void> openDemux(openDemux_cb _hidl_cb) override;
 
+    virtual Return<void> getDemuxCaps(getDemuxCaps_cb _hidl_cb) override;
+
     virtual Return<void> openDescrambler(openDescrambler_cb _hidl_cb) override;
 
     virtual Return<void> getFrontendInfo(FrontendId frontendId,
@@ -48,10 +55,18 @@ class Tuner : public ITuner {
 
     virtual Return<void> openLnbById(LnbId lnbId, openLnbById_cb _hidl_cb) override;
 
+    sp<Frontend> getFrontendById(uint32_t frontendId);
+
+    void setFrontendAsDemuxSource(uint32_t frontendId, uint32_t demuxId);
+
+    void frontendStopTune(uint32_t frontendId);
+
   private:
     virtual ~Tuner();
     // Static mFrontends array to maintain local frontends information
     vector<sp<Frontend>> mFrontends;
+    std::map<uint32_t, uint32_t> mFrontendToDemux;
+    std::map<uint32_t, sp<Demux>> mDemuxes;
     // To maintain how many Frontends we have
     int mFrontendSize;
     // The last used demux id. Initial value is -1.
