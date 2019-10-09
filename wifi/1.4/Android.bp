@@ -8,6 +8,7 @@ hidl_interface {
     },
     srcs: [
         "IWifi.hal",
+        "IWifiApIface.hal",
     ],
     interfaces: [
         "android.hardware.wifi@1.0",
