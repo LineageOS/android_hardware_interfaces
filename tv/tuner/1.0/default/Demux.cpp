@@ -106,7 +106,7 @@ Return<void> Demux::addFilter(DemuxFilterType type, uint32_t bufferSize,
     } else {
         filterId = ++mLastUsedFilterId;
 
-        mDemuxCallbacks.resize(filterId + 1);
+        mFilterCallbacks.resize(filterId + 1);
         mFilterMQs.resize(filterId + 1);
         mFilterEvents.resize(filterId + 1);
         mFilterEventFlags.resize(filterId + 1);
@@ -114,6 +114,7 @@ Return<void> Demux::addFilter(DemuxFilterType type, uint32_t bufferSize,
         mFilterThreads.resize(filterId + 1);
         mFilterPids.resize(filterId + 1);
         mFilterOutputs.resize(filterId + 1);
+        mFilterStatus.resize(filterId + 1);
     }
 
     mUsedFilterIds.insert(filterId);
@@ -125,7 +126,7 @@ Return<void> Demux::addFilter(DemuxFilterType type, uint32_t bufferSize,
     }
 
     // Add callback
-    mDemuxCallbacks[filterId] = cb;
+    mFilterCallbacks[filterId] = cb;
 
     // Mapping from the filter ID to the filter event
     DemuxFilterEvent event{
@@ -211,8 +212,15 @@ Return<Result> Demux::stopFilter(uint32_t filterId) {
     return Result::SUCCESS;
 }
 
-Return<Result> Demux::flushFilter(uint32_t /* filterId */) {
+Return<Result> Demux::flushFilter(uint32_t filterId) {
     ALOGV("%s", __FUNCTION__);
+
+    // temp implementation to flush the FMQ
+    int size = mFilterMQs[filterId]->availableToRead();
+    char* buffer = new char[size];
+    mOutputMQ->read((unsigned char*)&buffer[0], size);
+    delete[] buffer;
+    mFilterStatus[filterId] = DemuxFilterStatus::DATA_READY;
 
     return Result::SUCCESS;
 }
@@ -254,7 +262,7 @@ Return<Result> Demux::close() {
     mFilterThreads.clear();
     mUnusedFilterIds.clear();
     mUsedFilterIds.clear();
-    mDemuxCallbacks.clear();
+    mFilterCallbacks.clear();
     mFilterMQs.clear();
     mFilterEvents.clear();
     mFilterEventFlags.clear();
@@ -475,6 +483,7 @@ Result Demux::startPesFilterHandler(uint32_t filterId) {
                 mFilterOutputs[filterId].clear();
                 return Result::INVALID_STATE;
             }
+            maySendFilterStatusCallback(filterId);
             pesEvent = {
                     // temp dump meta data
                     .streamId = filterOutData[3],
@@ -672,8 +681,10 @@ void Demux::filterThreadLoop(uint32_t filterId) {
             continue;
         }
         // After successfully write, send a callback and wait for the read to be done
-        mDemuxCallbacks[filterId]->onFilterEvent(mFilterEvents[filterId]);
+        mFilterCallbacks[filterId]->onFilterEvent(mFilterEvents[filterId]);
         mFilterEvents[filterId].events.resize(0);
+        mFilterStatus[filterId] = DemuxFilterStatus::DATA_READY;
+        mFilterCallbacks[filterId]->onFilterStatus(filterId, mFilterStatus[filterId]);
         break;
     }
 
@@ -693,10 +704,12 @@ void Demux::filterThreadLoop(uint32_t filterId) {
                 break;
             }
 
-            if (mDemuxCallbacks[filterId] == nullptr) {
+            if (mFilterCallbacks[filterId] == nullptr) {
                 ALOGD("[Demux] filter %d does not hava callback. Ending thread", filterId);
                 break;
             }
+
+            maySendFilterStatusCallback(filterId);
 
             while (mFilterThreadRunning[filterId]) {
                 std::lock_guard<std::mutex> lock(mFilterEventLock);
@@ -704,7 +717,7 @@ void Demux::filterThreadLoop(uint32_t filterId) {
                     continue;
                 }
                 // After successfully write, send a callback and wait for the read to be done
-                mDemuxCallbacks[filterId]->onFilterEvent(mFilterEvents[filterId]);
+                mFilterCallbacks[filterId]->onFilterEvent(mFilterEvents[filterId]);
                 mFilterEvents[filterId].events.resize(0);
                 break;
             }
@@ -755,16 +768,31 @@ void Demux::maySendInputStatusCallback() {
     int availableToWrite = mInputMQ->availableToWrite();
 
     DemuxInputStatus newStatus =
-            checkStatusChange(availableToWrite, availableToRead, mInputSettings.highThreshold,
-                              mInputSettings.lowThreshold);
+            checkInputStatusChange(availableToWrite, availableToRead, mInputSettings.highThreshold,
+                                   mInputSettings.lowThreshold);
     if (mIntputStatus != newStatus) {
         mInputCallback->onInputStatus(newStatus);
         mIntputStatus = newStatus;
     }
 }
 
-DemuxInputStatus Demux::checkStatusChange(uint32_t availableToWrite, uint32_t availableToRead,
-                                          uint32_t highThreshold, uint32_t lowThreshold) {
+void Demux::maySendFilterStatusCallback(uint32_t filterId) {
+    std::lock_guard<std::mutex> lock(mFilterStatusLock);
+    int availableToRead = mFilterMQs[filterId]->availableToRead();
+    int availableToWrite = mInputMQ->availableToWrite();
+    int fmqSize = mFilterMQs[filterId]->getQuantumCount();
+
+    DemuxFilterStatus newStatus =
+            checkFilterStatusChange(filterId, availableToWrite, availableToRead,
+                                    ceil(fmqSize * 0.75), ceil(fmqSize * 0.25));
+    if (mFilterStatus[filterId] != newStatus) {
+        mFilterCallbacks[filterId]->onFilterStatus(filterId, newStatus);
+        mFilterStatus[filterId] = newStatus;
+    }
+}
+
+DemuxInputStatus Demux::checkInputStatusChange(uint32_t availableToWrite, uint32_t availableToRead,
+                                               uint32_t highThreshold, uint32_t lowThreshold) {
     if (availableToWrite == 0) {
         return DemuxInputStatus::SPACE_FULL;
     } else if (availableToRead > highThreshold) {
@@ -775,6 +803,19 @@ DemuxInputStatus Demux::checkStatusChange(uint32_t availableToWrite, uint32_t av
         return DemuxInputStatus::SPACE_EMPTY;
     }
     return mIntputStatus;
+}
+
+DemuxFilterStatus Demux::checkFilterStatusChange(uint32_t filterId, uint32_t availableToWrite,
+                                                 uint32_t availableToRead, uint32_t highThreshold,
+                                                 uint32_t lowThreshold) {
+    if (availableToWrite == 0) {
+        return DemuxFilterStatus::OVERFLOW;
+    } else if (availableToRead > highThreshold) {
+        return DemuxFilterStatus::HIGH_WATER;
+    } else if (availableToRead < lowThreshold) {
+        return DemuxFilterStatus::LOW_WATER;
+    }
+    return mFilterStatus[filterId];
 }
 
 Result Demux::startBroadcastInputLoop() {
@@ -818,7 +859,7 @@ void Demux::broadcastInputThreadLoop() {
                 }
                 // filter and dispatch filter output
                 vector<uint8_t> byteBuffer;
-                byteBuffer.resize(sizeof(buffer));
+                byteBuffer.resize(packetSize);
                 for (int index = 0; index < byteBuffer.size(); index++) {
                     byteBuffer[index] = static_cast<uint8_t>(buffer[index]);
                 }
