@@ -46,7 +46,10 @@ TEST_F(RadioHidlTest_v1_2, startNetworkScan) {
     ::android::hardware::radio::V1_2::NetworkScanRequest request = {
             .type = ScanType::ONE_SHOT,
             .interval = 60,
-            .specifiers = {::GERAN_SPECIFIER_P900, ::GERAN_SPECIFIER_850}};
+            .specifiers = {::GERAN_SPECIFIER_P900, ::GERAN_SPECIFIER_850},
+            .maxSearchTime = 60,
+            .incrementalResults = false,
+            .incrementalResultsPeriodicity = 1};
 
     Return<void> res = radio_v1_2->startNetworkScan_1_2(serial, request);
     ASSERT_OK(res);
