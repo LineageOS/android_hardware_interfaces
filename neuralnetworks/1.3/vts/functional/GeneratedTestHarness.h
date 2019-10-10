@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_NEURALNETWORKS_V1_3_GENERATED_TEST_HARNESS_H
-#define ANDROID_HARDWARE_NEURALNETWORKS_V1_3_GENERATED_TEST_HARNESS_H
+#ifndef ANDROID_HARDWARE_NEURALNETWORKS_V1_2_GENERATED_TEST_HARNESS_H
+#define ANDROID_HARDWARE_NEURALNETWORKS_V1_2_GENERATED_TEST_HARNESS_H
 
+#include <android/hardware/neuralnetworks/1.2/IDevice.h>
 #include <android/hardware/neuralnetworks/1.2/IPreparedModel.h>
-#include <android/hardware/neuralnetworks/1.3/IDevice.h>
-#include <android/hardware/neuralnetworks/1.3/types.h>
+#include <android/hardware/neuralnetworks/1.2/types.h>
 #include <functional>
 #include <vector>
 #include "1.0/Utils.h"
 #include "TestHarness.h"
 #include "VtsHalNeuralnetworks.h"
 
-namespace android::hardware::neuralnetworks::V1_3::vts::functional {
+namespace android::hardware::neuralnetworks::V1_2::vts::functional {
 
 using NamedModel = Named<const test_helper::TestModel*>;
 using GeneratedTestParam = std::tuple<NamedDevice, NamedModel>;
@@ -55,12 +55,11 @@ class ValidationTest : public GeneratedTestBase {};
 
 Model createModel(const test_helper::TestModel& testModel);
 
-void PrepareModel(const sp<IDevice>& device, const Model& model,
-                  sp<V1_2::IPreparedModel>* preparedModel);
+void PrepareModel(const sp<IDevice>& device, const Model& model, sp<IPreparedModel>* preparedModel);
 
-void EvaluatePreparedModel(const sp<V1_2::IPreparedModel>& preparedModel,
+void EvaluatePreparedModel(const sp<IPreparedModel>& preparedModel,
                            const test_helper::TestModel& testModel, bool testDynamicOutputShape);
 
-}  // namespace android::hardware::neuralnetworks::V1_3::vts::functional
+}  // namespace android::hardware::neuralnetworks::V1_2::vts::functional
 
-#endif  // ANDROID_HARDWARE_NEURALNETWORKS_V1_3_GENERATED_TEST_HARNESS_H
+#endif  // ANDROID_HARDWARE_NEURALNETWORKS_V1_2_GENERATED_TEST_HARNESS_H
