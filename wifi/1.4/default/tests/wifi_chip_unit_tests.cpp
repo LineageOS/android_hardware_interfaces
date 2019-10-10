@@ -173,8 +173,9 @@ class WifiChipTest : public Test {
     std::string createIface(const IfaceType& type) {
         std::string iface_name;
         if (type == IfaceType::AP) {
-            chip_->createApIface([&iface_name](const WifiStatus& status,
-                                               const sp<IWifiApIface>& iface) {
+            chip_->createApIface([&iface_name](
+                                     const WifiStatus& status,
+                                     const sp<V1_0::IWifiApIface>& iface) {
                 if (WifiStatusCode::SUCCESS == status.code) {
                     ASSERT_NE(iface.get(), nullptr);
                     iface->getName([&iface_name](const WifiStatus& status,

@@ -1,3 +1,5 @@
+%% template file for generating types.hal.
+%% see frameworks/ml/nn/tools/api/README.md.
 /*
  * Copyright (C) 2019 The Android Open Source Project
  *
@@ -26,39 +28,8 @@ import @1.2::SymmPerChannelQuantParams;
 import android.hidl.safe_union@1.0::Monostate;
 
 enum OperandType : @1.2::OperandType {
-    /**
-     * A tensor of 8 bit signed integers that represent real numbers.
-     *
-     * Attached to this tensor are two numbers that can be used to convert the
-     * 8 bit integer to the real value and vice versa. These two numbers are:
-     * - scale: a 32 bit floating point value greater than zero.
-     * - zeroPoint: a 32 bit integer, in range [-128, 127].
-     *
-     * The formula is:
-     * real_value = (integer_value - zeroPoint) * scale.
-     */
-    TENSOR_QUANT8_ASYMM_SIGNED = 14,
-
-    /*
-     * DEPRECATED. Since HAL version 1.2, extensions are the preferred
-     * alternative to OEM operation and data types.
-     *
-     * OEM specific scalar value.
-     * OEM                 = 10000,
-     */
-    /*
-     * DEPRECATED. Since HAL version 1.2, extensions are the preferred
-     * alternative to OEM operation and data types.
-     *
-     * A tensor of OEM specific values.
-     * TENSOR_OEM_BYTE     = 10001,
-     */
-    /* ADDING A NEW FUNDAMENTAL TYPE REQUIRES UPDATING THE VALUE OF
-     * OperandTypeRange::FUNDAMENTAL_MAX.
-     */
-    /* ADDING A NEW OEM TYPE REQUIRES UPDATING THE VALUE OF
-     * OperandTypeRange::OEM_MAX.
-     */
+%insert Operand_1.3
+%insert OEMDeprecationAndOperandTypeRangeMaxComment
 };
 
 /**
@@ -67,7 +38,7 @@ enum OperandType : @1.2::OperandType {
 enum OperandTypeRange : uint32_t {
     BASE_MIN        = 0,
     FUNDAMENTAL_MIN = 0,
-    FUNDAMENTAL_MAX = 14,
+%insert Operand_1.3_MAX
     OEM_MIN         = 10000,
     OEM_MAX         = 10001,
     BASE_MAX        = 0xFFFF,
