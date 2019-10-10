@@ -24,11 +24,15 @@
 #include "Utils.h"
 #include "VtsHalNeuralnetworks.h"
 
-namespace android::hardware::neuralnetworks::V1_2::vts::functional {
+namespace android::hardware::neuralnetworks::V1_3::vts::functional {
 
-using implementation::ExecutionCallback;
 using V1_0::ErrorStatus;
 using V1_0::Request;
+using V1_2::IPreparedModel;
+using V1_2::MeasureTiming;
+using V1_2::OutputShape;
+using V1_2::Timing;
+using V1_2::implementation::ExecutionCallback;
 
 ///////////////////////// UTILITY FUNCTIONS /////////////////////////
 
@@ -165,4 +169,4 @@ void validateRequestFailure(const sp<IPreparedModel>& preparedModel, const Reque
     ASSERT_TRUE(executeStatus.isOk());
 }
 
-}  // namespace android::hardware::neuralnetworks::V1_2::vts::functional
+}  // namespace android::hardware::neuralnetworks::V1_3::vts::functional

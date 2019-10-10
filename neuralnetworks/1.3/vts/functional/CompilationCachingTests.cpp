@@ -45,12 +45,15 @@ namespace generated_tests::mobilenet_quantized {
 const test_helper::TestModel& get_test_model();
 }  // namespace generated_tests::mobilenet_quantized
 
-namespace android::hardware::neuralnetworks::V1_2::vts::functional {
+namespace android::hardware::neuralnetworks::V1_3::vts::functional {
 
 using namespace test_helper;
-using implementation::PreparedModelCallback;
 using V1_0::ErrorStatus;
 using V1_1::ExecutionPreference;
+using V1_2::Constant;
+using V1_2::IPreparedModel;
+using V1_2::OperationType;
+using V1_2::implementation::PreparedModelCallback;
 
 namespace float32_model {
 
@@ -302,7 +305,7 @@ class CompilationCachingTestBase : public testing::Test {
     // See if the service can handle the model.
     bool isModelFullySupported(const Model& model) {
         bool fullySupportsModel = false;
-        Return<void> supportedCall = kDevice->getSupportedOperations_1_2(
+        Return<void> supportedCall = kDevice->getSupportedOperations_1_3(
                 model,
                 [&fullySupportsModel, &model](ErrorStatus status, const hidl_vec<bool>& supported) {
                     ASSERT_EQ(ErrorStatus::NONE, status);
@@ -323,7 +326,7 @@ class CompilationCachingTestBase : public testing::Test {
         sp<PreparedModelCallback> preparedModelCallback = new PreparedModelCallback();
         hidl_array<uint8_t, sizeof(mToken)> cacheToken(mToken);
         Return<ErrorStatus> prepareLaunchStatus =
-                kDevice->prepareModel_1_2(model, ExecutionPreference::FAST_SINGLE_ANSWER,
+                kDevice->prepareModel_1_3(model, ExecutionPreference::FAST_SINGLE_ANSWER,
                                           modelCache, dataCache, cacheToken, preparedModelCallback);
         ASSERT_TRUE(prepareLaunchStatus.isOk());
         ASSERT_EQ(static_cast<ErrorStatus>(prepareLaunchStatus), ErrorStatus::NONE);
@@ -1371,4 +1374,4 @@ INSTANTIATE_TEST_CASE_P(TestCompilationCaching, CompilationCachingSecurityTest,
                                          testing::Range(0U, 10U)),
                         printCompilationCachingSecurityTest);
 
-}  // namespace android::hardware::neuralnetworks::V1_2::vts::functional
+}  // namespace android::hardware::neuralnetworks::V1_3::vts::functional
