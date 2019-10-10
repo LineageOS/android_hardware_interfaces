@@ -27,9 +27,6 @@
 #include <android/hardware/neuralnetworks/1.2/IExecutionCallback.h>
 #include <android/hardware/neuralnetworks/1.2/IPreparedModel.h>
 #include <android/hardware/neuralnetworks/1.2/IPreparedModelCallback.h>
-#include <android/hardware/neuralnetworks/1.2/types.h>
-#include <android/hardware/neuralnetworks/1.3/IDevice.h>
-#include <android/hardware/neuralnetworks/1.3/types.h>
 #include <android/hidl/allocator/1.0/IAllocator.h>
 #include <android/hidl/memory/1.0/IMemory.h>
 #include <hidlmemory/mapping.h>
@@ -47,24 +44,17 @@
 #include "Utils.h"
 #include "VtsHalNeuralnetworks.h"
 
-namespace android::hardware::neuralnetworks::V1_3::vts::functional {
+namespace android::hardware::neuralnetworks::V1_2::vts::functional {
 
 using namespace test_helper;
 using hidl::memory::V1_0::IMemory;
+using implementation::ExecutionCallback;
+using implementation::PreparedModelCallback;
 using V1_0::DataLocation;
 using V1_0::ErrorStatus;
 using V1_0::OperandLifeTime;
 using V1_0::Request;
 using V1_1::ExecutionPreference;
-using V1_2::Constant;
-using V1_2::IPreparedModel;
-using V1_2::MeasureTiming;
-using V1_2::OperationType;
-using V1_2::OutputShape;
-using V1_2::SymmPerChannelQuantParams;
-using V1_2::Timing;
-using V1_2::implementation::ExecutionCallback;
-using V1_2::implementation::PreparedModelCallback;
 using HidlToken = hidl_array<uint8_t, static_cast<uint32_t>(Constant::BYTE_SIZE_OF_CACHE_TOKEN)>;
 
 enum class OutputType { FULLY_SPECIFIED, UNSPECIFIED, INSUFFICIENT };
@@ -415,4 +405,4 @@ INSTANTIATE_GENERATED_TEST(GeneratedTest,
 INSTANTIATE_GENERATED_TEST(DynamicOutputShapeTest,
                            [](const TestModel& testModel) { return !testModel.expectFailure; });
 
-}  // namespace android::hardware::neuralnetworks::V1_3::vts::functional
+}  // namespace android::hardware::neuralnetworks::V1_2::vts::functional

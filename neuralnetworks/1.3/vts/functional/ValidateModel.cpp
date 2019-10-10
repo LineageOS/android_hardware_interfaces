@@ -21,26 +21,21 @@
 #include "GeneratedTestHarness.h"
 #include "VtsHalNeuralnetworks.h"
 
-namespace android::hardware::neuralnetworks::V1_3::vts::functional {
+namespace android::hardware::neuralnetworks::V1_2::vts::functional {
 
+using implementation::PreparedModelCallback;
 using V1_0::ErrorStatus;
 using V1_0::OperandLifeTime;
 using V1_1::ExecutionPreference;
-using V1_2::IPreparedModel;
-using V1_2::OperationType;
-using V1_2::OperationTypeRange;
-using V1_2::SymmPerChannelQuantParams;
-using V1_2::implementation::PreparedModelCallback;
-using HidlToken =
-        hidl_array<uint8_t, static_cast<uint32_t>(V1_2::Constant::BYTE_SIZE_OF_CACHE_TOKEN)>;
+using HidlToken = hidl_array<uint8_t, static_cast<uint32_t>(Constant::BYTE_SIZE_OF_CACHE_TOKEN)>;
 
 ///////////////////////// UTILITY FUNCTIONS /////////////////////////
 
 static void validateGetSupportedOperations(const sp<IDevice>& device, const std::string& message,
                                            const Model& model) {
-    SCOPED_TRACE(message + " [getSupportedOperations_1_3]");
+    SCOPED_TRACE(message + " [getSupportedOperations_1_2]");
 
-    Return<void> ret = device->getSupportedOperations_1_3(
+    Return<void> ret = device->getSupportedOperations_1_2(
             model, [&](ErrorStatus status, const hidl_vec<bool>&) {
                 EXPECT_EQ(ErrorStatus::INVALID_ARGUMENT, status);
             });
@@ -49,11 +44,11 @@ static void validateGetSupportedOperations(const sp<IDevice>& device, const std:
 
 static void validatePrepareModel(const sp<IDevice>& device, const std::string& message,
                                  const Model& model, ExecutionPreference preference) {
-    SCOPED_TRACE(message + " [prepareModel_1_3]");
+    SCOPED_TRACE(message + " [prepareModel_1_2]");
 
     sp<PreparedModelCallback> preparedModelCallback = new PreparedModelCallback();
     Return<ErrorStatus> prepareLaunchStatus =
-            device->prepareModel_1_3(model, preference, hidl_vec<hidl_handle>(),
+            device->prepareModel_1_2(model, preference, hidl_vec<hidl_handle>(),
                                      hidl_vec<hidl_handle>(), HidlToken(), preparedModelCallback);
     ASSERT_TRUE(prepareLaunchStatus.isOk());
     ASSERT_EQ(ErrorStatus::INVALID_ARGUMENT, static_cast<ErrorStatus>(prepareLaunchStatus));
@@ -715,4 +710,4 @@ void validateModel(const sp<IDevice>& device, const Model& model) {
     mutateExecutionPreferenceTest(device, model);
 }
 
-}  // namespace android::hardware::neuralnetworks::V1_3::vts::functional
+}  // namespace android::hardware::neuralnetworks::V1_2::vts::functional

@@ -28,20 +28,13 @@
 #include <android-base/logging.h>
 #include <cstring>
 
-namespace android::hardware::neuralnetworks::V1_3::vts::functional {
+namespace android::hardware::neuralnetworks::V1_2::vts::functional {
 
 using nn::ExecutionBurstController;
 using nn::RequestChannelSender;
 using nn::ResultChannelReceiver;
 using V1_0::ErrorStatus;
 using V1_0::Request;
-using V1_2::FmqRequestDatum;
-using V1_2::FmqResultDatum;
-using V1_2::IBurstCallback;
-using V1_2::IBurstContext;
-using V1_2::IPreparedModel;
-using V1_2::MeasureTiming;
-using V1_2::Timing;
 using ExecutionBurstCallback = ExecutionBurstController::ExecutionBurstCallback;
 
 // This constant value represents the length of an FMQ that is large enough to
@@ -404,4 +397,4 @@ void validateBurst(const sp<IPreparedModel>& preparedModel, const Request& reque
     ASSERT_NO_FATAL_FAILURE(validateBurstSanitized(preparedModel, request));
 }
 
-}  // namespace android::hardware::neuralnetworks::V1_3::vts::functional
+}  // namespace android::hardware::neuralnetworks::V1_2::vts::functional
