@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2018 The Android Open Source Project
+// Copyright (C) 2019 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,37 +14,19 @@
 // limitations under the License.
 //
 
-cc_library_static {
-    name: "VtsHalNeuralNetworksV1_2Callbacks",
-    defaults: ["VtsHalTargetTestDefaults"],
-    export_include_dirs: ["include"],
-    srcs: [
-        "Callbacks.cpp",
-    ],
-    static_libs: [
-        "android.hardware.neuralnetworks@1.0",
-        "android.hardware.neuralnetworks@1.1",
-        "android.hardware.neuralnetworks@1.2",
-    ],
-    header_libs: [
-        "libbase_headers",
-    ]
-}
-
 cc_test {
-    name: "VtsHalNeuralnetworksV1_2TargetTest",
+    name: "VtsHalNeuralNetworksV1_3TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: [
         "BasicTests.cpp",
         "CompilationCachingTests.cpp",
         "GeneratedTestHarness.cpp",
         "TestAssertions.cpp",
+        "ValidateBurst.cpp",
         "ValidateModel.cpp",
         "ValidateRequest.cpp",
-        "ValidateBurst.cpp",
         "VtsHalNeuralnetworks.cpp",
     ],
-    local_include_dirs: ["include"],
     shared_libs: [
         "libfmq",
         "libnativewindow",
@@ -67,6 +49,7 @@ cc_test {
         "neuralnetworks_generated_V1_0_example",
         "neuralnetworks_generated_V1_1_example",
         "neuralnetworks_generated_V1_2_example",
+        "neuralnetworks_generated_V1_3_example",
     ],
     header_libs: [
         "libneuralnetworks_headers",
