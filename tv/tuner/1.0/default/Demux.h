@@ -19,6 +19,7 @@
 
 #include <android/hardware/tv/tuner/1.0/IDemux.h>
 #include <fmq/MessageQueue.h>
+#include <math.h>
 #include <set>
 #include "Frontend.h"
 #include "Tuner.h"
@@ -153,8 +154,12 @@ class Demux : public IDemux {
     bool readDataFromMQ();
     bool writeSectionsAndCreateEvent(uint32_t filterId, vector<uint8_t> data);
     void maySendInputStatusCallback();
-    DemuxInputStatus checkStatusChange(uint32_t availableToWrite, uint32_t availableToRead,
-                                       uint32_t highThreshold, uint32_t lowThreshold);
+    void maySendFilterStatusCallback(uint32_t filterId);
+    DemuxInputStatus checkInputStatusChange(uint32_t availableToWrite, uint32_t availableToRead,
+                                            uint32_t highThreshold, uint32_t lowThreshold);
+    DemuxFilterStatus checkFilterStatusChange(uint32_t filterId, uint32_t availableToWrite,
+                                              uint32_t availableToRead, uint32_t highThreshold,
+                                              uint32_t lowThreshold);
     /**
      * A dispatcher to read and dispatch input data to all the started filters.
      * Each filter handler handles the data filtering/output writing/filterEvent updating.
@@ -203,7 +208,7 @@ class Demux : public IDemux {
     /**
      * Demux callbacks used on filter events or IO buffer status
      */
-    vector<sp<IDemuxCallback>> mDemuxCallbacks;
+    vector<sp<IDemuxCallback>> mFilterCallbacks;
     sp<IDemuxCallback> mInputCallback;
     sp<IDemuxCallback> mOutputCallback;
     bool mInputConfigured = false;
@@ -219,6 +224,7 @@ class Demux : public IDemux {
 
     // FMQ status local records
     DemuxInputStatus mIntputStatus;
+    vector<DemuxFilterStatus> mFilterStatus;
     /**
      * If a specific filter's writing loop is still running
      */
@@ -239,6 +245,7 @@ class Demux : public IDemux {
      * Lock to protect writes to the input status
      */
     std::mutex mInputStatusLock;
+    std::mutex mFilterStatusLock;
     std::mutex mBroadcastInputThreadLock;
     std::mutex mFilterThreadLock;
     std::mutex mInputThreadLock;
