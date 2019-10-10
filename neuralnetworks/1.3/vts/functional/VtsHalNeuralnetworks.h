@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_NEURALNETWORKS_V1_3_VTS_HAL_NEURALNETWORKS_H
-#define ANDROID_HARDWARE_NEURALNETWORKS_V1_3_VTS_HAL_NEURALNETWORKS_H
+#ifndef ANDROID_HARDWARE_NEURALNETWORKS_V1_2_VTS_HAL_NEURALNETWORKS_H
+#define ANDROID_HARDWARE_NEURALNETWORKS_V1_2_VTS_HAL_NEURALNETWORKS_H
 
+#include <android/hardware/neuralnetworks/1.2/IDevice.h>
 #include <android/hardware/neuralnetworks/1.2/IPreparedModel.h>
-#include <android/hardware/neuralnetworks/1.3/IDevice.h>
-#include <android/hardware/neuralnetworks/1.3/types.h>
+#include <android/hardware/neuralnetworks/1.2/types.h>
 #include <gtest/gtest.h>
 #include "1.0/Utils.h"
 #include "1.2/Callbacks.h"
 
-namespace android::hardware::neuralnetworks::V1_3::vts::functional {
+namespace android::hardware::neuralnetworks::V1_2::vts::functional {
 
 using NamedDevice = Named<sp<IDevice>>;
 using NeuralnetworksHidlTestParam = NamedDevice;
@@ -47,12 +47,11 @@ std::string printNeuralnetworksHidlTest(
 // Create an IPreparedModel object. If the model cannot be prepared,
 // "preparedModel" will be nullptr instead.
 void createPreparedModel(const sp<IDevice>& device, const Model& model,
-                         sp<V1_2::IPreparedModel>* preparedModel);
+                         sp<IPreparedModel>* preparedModel);
 
 // Utility function to get PreparedModel from callback and downcast to V1_2.
-sp<V1_2::IPreparedModel> getPreparedModel_1_2(
-        const sp<V1_2::implementation::PreparedModelCallback>& callback);
+sp<IPreparedModel> getPreparedModel_1_2(const sp<implementation::PreparedModelCallback>& callback);
 
-}  // namespace android::hardware::neuralnetworks::V1_3::vts::functional
+}  // namespace android::hardware::neuralnetworks::V1_2::vts::functional
 
-#endif  // ANDROID_HARDWARE_NEURALNETWORKS_V1_3_VTS_HAL_NEURALNETWORKS_H
+#endif  // ANDROID_HARDWARE_NEURALNETWORKS_V1_2_VTS_HAL_NEURALNETWORKS_H
