@@ -357,6 +357,10 @@
             <xs:enumeration value="AUDIO_FORMAT_APTX_HD"/>
             <xs:enumeration value="AUDIO_FORMAT_AC4"/>
             <xs:enumeration value="AUDIO_FORMAT_LDAC"/>
+            <xs:enumeration value="AUDIO_FORMAT_E_AC3_JOC"/>
+            <xs:enumeration value="AUDIO_FORMAT_MAT_1_0"/>
+            <xs:enumeration value="AUDIO_FORMAT_MAT_2_0"/>
+            <xs:enumeration value="AUDIO_FORMAT_MAT_2_1"/>
         </xs:restriction>
     </xs:simpleType>
     <xs:simpleType name="extendableAudioFormat">
