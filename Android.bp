@@ -45,4 +45,5 @@ cc_defaults {
         "-g",
     ],
 
+    require_root: true,
 }
