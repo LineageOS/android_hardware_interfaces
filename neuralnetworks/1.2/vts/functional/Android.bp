@@ -14,28 +14,12 @@
 // limitations under the License.
 //
 
-cc_library_static {
-    name: "VtsHalNeuralNetworksV1_2Callbacks",
-    defaults: ["VtsHalTargetTestDefaults"],
-    export_include_dirs: ["include"],
-    srcs: [
-        "Callbacks.cpp",
-    ],
-    static_libs: [
-        "android.hardware.neuralnetworks@1.0",
-        "android.hardware.neuralnetworks@1.1",
-        "android.hardware.neuralnetworks@1.2",
-    ],
-    header_libs: [
-        "libbase_headers",
-    ]
-}
-
 cc_test {
     name: "VtsHalNeuralnetworksV1_2TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: [
         "BasicTests.cpp",
+        "Callbacks.cpp",
         "CompilationCachingTests.cpp",
         "GeneratedTestHarness.cpp",
         "TestAssertions.cpp",
@@ -53,7 +37,6 @@ cc_test {
         "android.hardware.neuralnetworks@1.0",
         "android.hardware.neuralnetworks@1.1",
         "android.hardware.neuralnetworks@1.2",
-        "android.hardware.neuralnetworks@1.3",
         "android.hidl.allocator@1.0",
         "android.hidl.memory@1.0",
         "libgmock",
@@ -61,7 +44,6 @@ cc_test {
         "libneuralnetworks_generated_test_harness",
         "libneuralnetworks_utils",
         "VtsHalNeuralNetworksV1_0_utils",
-        "VtsHalNeuralNetworksV1_2Callbacks",
     ],
     whole_static_libs: [
         "neuralnetworks_generated_V1_0_example",
