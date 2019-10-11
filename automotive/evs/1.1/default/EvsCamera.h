@@ -25,8 +25,6 @@
 
 #include <thread>
 
-#include "ConfigManager.h"
-
 using BufferDesc_1_0 = ::android::hardware::automotive::evs::V1_0::BufferDesc;
 using BufferDesc_1_1 = ::android::hardware::automotive::evs::V1_1::BufferDesc;
 using IEvsCameraStream_1_0 = ::android::hardware::automotive::evs::V1_0::IEvsCameraStream;
@@ -61,28 +59,18 @@ public:
     Return<EvsResult> setExtendedInfo(uint32_t opaqueIdentifier, int32_t opaqueValue) override;
 
     // Methods from ::android::hardware::automotive::evs::V1_1::IEvsCamera follow.
-    Return<void>      getCameraInfo_1_1(getCameraInfo_1_1_cb _hidl_cb)  override;
     Return<EvsResult> pauseVideoStream() override;
     Return<EvsResult> resumeVideoStream() override;
     Return<EvsResult> doneWithFrame_1_1(const BufferDesc_1_1& buffer) override;
     Return<EvsResult> setMaster() override;
     Return<EvsResult> forceMaster(const sp<IEvsDisplay>& display) override;
     Return<EvsResult> unsetMaster() override;
-    Return<void>      getParameterList(getParameterList_cb _hidl_cb) override;
-    Return<void>      getIntParameterRange(CameraParam id,
-                                           getIntParameterRange_cb _hidl_cb) override;
-    Return<void>      setIntParameter(CameraParam id, int32_t value,
-                                      setIntParameter_cb _hidl_cb) override;
-    Return<void>      getIntParameter(CameraParam id,
-                                      getIntParameter_cb _hidl_cb) override;
+    Return<void>      setParameter(CameraParam id, int32_t value,
+                                   setParameter_cb _hidl_cb) override;
+    Return<void>      getParameter(CameraParam id, getParameter_cb _hidl_cb) override;
 
-    static sp<EvsCamera> Create(const char *deviceName);
-    static sp<EvsCamera> Create(const char *deviceName,
-                                unique_ptr<ConfigManager::CameraInfo> &camInfo,
-                                const Stream *streamCfg = nullptr);
-    EvsCamera(const EvsCamera&) = delete;
-    EvsCamera& operator=(const EvsCamera&) = delete;
-
+    // Implementation details
+    EvsCamera(const char *id);
     virtual ~EvsCamera() override;
     void forceShutdown();   // This gets called if another caller "steals" ownership of the camera
 
@@ -91,10 +79,7 @@ public:
     static const char kCameraName_Backup[];
 
 private:
-    EvsCamera(const char *id,
-              unique_ptr<ConfigManager::CameraInfo> &camInfo);
     // These three functions are expected to be called while mAccessLock is held
-    //
     bool setAvailableFrames_Locked(unsigned bufferCount);
     unsigned increaseAvailableFrames_Locked(unsigned numToAdd);
     unsigned decreaseAvailableFrames_Locked(unsigned numToRemove);
@@ -139,9 +124,6 @@ private:
 
     // Synchronization necessary to deconflict mCaptureThread from the main service thread
     std::mutex mAccessLock;
-
-    // Static camera module information
-    unique_ptr<ConfigManager::CameraInfo> &mCameraInfo;
 };
 
 } // namespace implementation
