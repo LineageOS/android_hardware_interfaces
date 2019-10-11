@@ -25,7 +25,7 @@ namespace composer {
 namespace V2_4 {
 namespace vts {
 
-using V2_1::Error;
+using V2_4::Error;
 
 Composer::Composer() : Composer(::testing::VtsHalHidlTargetTestBase::getService<IComposer>()) {}
 
@@ -67,6 +67,40 @@ Error ComposerClient::getDisplayConnectionType(Display display,
         error = tmpError;
         *outType = tmpType;
     });
+    return error;
+}
+
+Error ComposerClient::getSupportedDisplayVsyncPeriods(
+        Display display, Config config, std::vector<VsyncPeriodNanos>* outSupportedVsyncPeriods) {
+    Error error = Error::NONE;
+    mClient->getSupportedDisplayVsyncPeriods(
+            display, config, [&](const auto& tmpError, const auto& tmpSupportedVsyncPeriods) {
+                error = tmpError;
+                *outSupportedVsyncPeriods = tmpSupportedVsyncPeriods;
+            });
+    return error;
+}
+
+Error ComposerClient::getDisplayVsyncPeriod(Display display, VsyncPeriodNanos* outVsyncPeriod) {
+    Error error = Error::NONE;
+    mClient->getDisplayVsyncPeriod(display, [&](const auto& tmpError, const auto& tmpVsyncPeriod) {
+        error = tmpError;
+        *outVsyncPeriod = tmpVsyncPeriod;
+    });
+    return error;
+}
+
+Error ComposerClient::setActiveConfigAndVsyncPeriod(
+        Display display, Config config, VsyncPeriodNanos vsyncPeriodNanos,
+        const IComposerClient::VsyncPeriodChangeConstraints& vsyncPeriodChangeConstraints,
+        int64_t* outNewVsyncAppliedTime) {
+    Error error = Error::NONE;
+    mClient->setActiveConfigAndVsyncPeriod(
+            display, config, vsyncPeriodNanos, vsyncPeriodChangeConstraints,
+            [&](const auto& tmpError, const auto& tmpNewVsyncAppliedTime) {
+                error = tmpError;
+                *outNewVsyncAppliedTime = tmpNewVsyncAppliedTime;
+            });
     return error;
 }
 

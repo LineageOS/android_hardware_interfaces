@@ -37,10 +37,12 @@ using common::V1_2::ColorMode;
 using common::V1_2::Dataspace;
 using common::V1_2::Hdr;
 using common::V1_2::PixelFormat;
+using V2_1::Config;
 using V2_1::Display;
-using V2_1::Error;
+using V2_4::Error;
 using V2_4::IComposer;
 using V2_4::IComposerClient;
+using V2_4::VsyncPeriodNanos;
 
 class ComposerClient;
 
@@ -73,6 +75,16 @@ class ComposerClient : public V2_3::vts::ComposerClient {
 
     Error getDisplayConnectionType(Display display,
                                    IComposerClient::DisplayConnectionType* outType);
+
+    Error getSupportedDisplayVsyncPeriods(Display display, Config config,
+                                          std::vector<VsyncPeriodNanos>* outSupportedVsyncPeriods);
+
+    Error getDisplayVsyncPeriod(Display display, VsyncPeriodNanos* outVsyncPeriods);
+
+    Error setActiveConfigAndVsyncPeriod(
+            Display display, Config config, VsyncPeriodNanos vsyncPeriodNanos,
+            const IComposerClient::VsyncPeriodChangeConstraints& vsyncPeriodChangeConstraints,
+            int64_t* outNewVsyncAppliedTime);
 
   private:
     const sp<IComposerClient> mClient;
