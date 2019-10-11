@@ -38,9 +38,8 @@ static const float kNanoToSeconds = 0.000000001f;
 
 #include "FrameHandler.h"
 
-#include <cstdio>
-#include <cstring>
-#include <cstdlib>
+#include <stdio.h>
+#include <string.h>
 
 #include <hidl/HidlTransportSupport.h>
 #include <hwbinder/ProcessState.h>
@@ -51,10 +50,8 @@ static const float kNanoToSeconds = 0.000000001f;
 #include <android/log.h>
 #include <android/hardware/automotive/evs/1.1/IEvsCamera.h>
 #include <android/hardware/automotive/evs/1.1/IEvsCameraStream.h>
-#include <android/hardware/automotive/evs/1.1/IEvsEnumerator.h>
+#include <android/hardware/automotive/evs/1.0/IEvsEnumerator.h>
 #include <android/hardware/automotive/evs/1.0/IEvsDisplay.h>
-#include <android/hardware/camera/device/3.2/ICameraDevice.h>
-#include <system/camera_metadata.h>
 
 #include <VtsHalHidlTargetTestBase.h>
 #include <VtsHalHidlTargetTestEnvBase.h>
@@ -67,27 +64,12 @@ using ::android::hardware::hidl_vec;
 using ::android::hardware::hidl_handle;
 using ::android::hardware::hidl_string;
 using ::android::sp;
-using ::android::hardware::camera::device::V3_2::Stream;
+using ::android::hardware::automotive::evs::V1_0::CameraDesc;
 using ::android::hardware::automotive::evs::V1_0::DisplayDesc;
 using ::android::hardware::automotive::evs::V1_0::DisplayState;
-using ::android::hardware::graphics::common::V1_0::PixelFormat;
+using ::android::hardware::automotive::evs::V1_0::IEvsEnumerator;
 using IEvsCamera_1_0 = ::android::hardware::automotive::evs::V1_0::IEvsCamera;
 using IEvsCamera_1_1 = ::android::hardware::automotive::evs::V1_1::IEvsCamera;
-
-/*
- * Plese note that this is different from what is defined in
- * libhardware/modules/camera/3_4/metadata/types.h; this has one additional
- * field to store a framerate.
- */
-const size_t kStreamCfgSz = 5;
-typedef struct {
-    int32_t width;
-    int32_t height;
-    int32_t format;
-    int32_t direction;
-    int32_t framerate;
-} RawStreamConfig;
-
 
 // Test environment for Evs HIDL HAL.
 class EvsHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
@@ -125,16 +107,15 @@ protected:
         assert(pEnumerator != nullptr);
 
         // Get the camera list
-        pEnumerator->getCameraList_1_1(
-            [this](hidl_vec <CameraDesc> cameraList) {
-                ALOGI("Camera list callback received %zu cameras",
-                      cameraList.size());
-                cameraInfo.reserve(cameraList.size());
-                for (auto&& cam: cameraList) {
-                    ALOGI("Found camera %s", cam.v1.cameraId.c_str());
-                    cameraInfo.push_back(cam);
-                }
-            }
+        pEnumerator->getCameraList([this](hidl_vec <CameraDesc> cameraList) {
+                                       ALOGI("Camera list callback received %zu cameras",
+                                             cameraList.size());
+                                       cameraInfo.reserve(cameraList.size());
+                                       for (auto&& cam: cameraList) {
+                                           ALOGI("Found camera %s", cam.cameraId.c_str());
+                                           cameraInfo.push_back(cam);
+                                       }
+                                   }
         );
 
         // We insist on at least one camera for EVS to pass any camera tests
@@ -162,23 +143,19 @@ TEST_F(EvsHidlTest, CameraOpenClean) {
     // Get the camera list
     loadCameraList();
 
-    // Using null stream configuration makes EVS uses the default resolution and
-    // output format.
-    Stream nullCfg = {};
-
     // Open and close each camera twice
     for (auto&& cam: cameraInfo) {
         for (int pass = 0; pass < 2; pass++) {
             sp<IEvsCamera_1_1> pCam =
-                IEvsCamera_1_1::castFrom(pEnumerator->openCamera_1_1(cam.v1.cameraId, nullCfg))
+                IEvsCamera_1_1::castFrom(pEnumerator->openCamera(cam.cameraId))
                 .withDefault(nullptr);
             ASSERT_NE(pCam, nullptr);
 
             // Verify that this camera self-identifies correctly
-            pCam->getCameraInfo_1_1([&cam](CameraDesc desc) {
-                                        ALOGD("Found camera %s", desc.v1.cameraId.c_str());
-                                        EXPECT_EQ(cam.v1.cameraId, desc.v1.cameraId);
-                                    }
+            pCam->getCameraInfo([&cam](CameraDesc desc) {
+                                    ALOGD("Found camera %s", desc.cameraId.c_str());
+                                    EXPECT_EQ(cam.cameraId, desc.cameraId);
+                                }
             );
 
             // Explicitly close the camera so resources are released right away
@@ -200,26 +177,22 @@ TEST_F(EvsHidlTest, CameraOpenAggressive) {
     // Get the camera list
     loadCameraList();
 
-    // Using null stream configuration makes EVS uses the default resolution and
-    // output format.
-    Stream nullCfg = {};
-
     // Open and close each camera twice
     for (auto&& cam: cameraInfo) {
         sp<IEvsCamera_1_1> pCam =
-            IEvsCamera_1_1::castFrom(pEnumerator->openCamera_1_1(cam.v1.cameraId, nullCfg))
+            IEvsCamera_1_1::castFrom(pEnumerator->openCamera(cam.cameraId))
             .withDefault(nullptr);
         ASSERT_NE(pCam, nullptr);
 
         // Verify that this camera self-identifies correctly
-        pCam->getCameraInfo_1_1([&cam](CameraDesc desc) {
-                                    ALOGD("Found camera %s", desc.v1.cameraId.c_str());
-                                    EXPECT_EQ(cam.v1.cameraId, desc.v1.cameraId);
-                                }
+        pCam->getCameraInfo([&cam](CameraDesc desc) {
+                                ALOGD("Found camera %s", desc.cameraId.c_str());
+                                EXPECT_EQ(cam.cameraId, desc.cameraId);
+                            }
         );
 
         sp<IEvsCamera_1_1> pCam2 =
-            IEvsCamera_1_1::castFrom(pEnumerator->openCamera_1_1(cam.v1.cameraId, nullCfg))
+            IEvsCamera_1_1::castFrom(pEnumerator->openCamera(cam.cameraId))
             .withDefault(nullptr);
         ASSERT_NE(pCam, pCam2);
         ASSERT_NE(pCam2, nullptr);
@@ -237,10 +210,10 @@ TEST_F(EvsHidlTest, CameraOpenAggressive) {
         pEnumerator->closeCamera(pCam);
 
         // Verify that the second camera instance self-identifies correctly
-        pCam2->getCameraInfo_1_1([&cam](CameraDesc desc) {
-                                     ALOGD("Found camera %s", desc.v1.cameraId.c_str());
-                                     EXPECT_EQ(cam.v1.cameraId, desc.v1.cameraId);
-                                 }
+        pCam2->getCameraInfo([&cam](CameraDesc desc) {
+                                 ALOGD("Found camera %s", desc.cameraId.c_str());
+                                 EXPECT_EQ(cam.cameraId, desc.cameraId);
+                             }
         );
 
         // Close the second camera instance
@@ -262,14 +235,10 @@ TEST_F(EvsHidlTest, CameraStreamPerformance) {
     // Get the camera list
     loadCameraList();
 
-    // Using null stream configuration makes EVS uses the default resolution and
-    // output format.
-    Stream nullCfg = {};
-
     // Test each reported camera
     for (auto&& cam: cameraInfo) {
         sp<IEvsCamera_1_1> pCam =
-            IEvsCamera_1_1::castFrom(pEnumerator->openCamera_1_1(cam.v1.cameraId, nullCfg))
+            IEvsCamera_1_1::castFrom(pEnumerator->openCamera(cam.cameraId))
             .withDefault(nullptr);
         ASSERT_NE(pCam, nullptr);
 
@@ -334,15 +303,11 @@ TEST_F(EvsHidlTest, CameraStreamBuffering) {
     // Get the camera list
     loadCameraList();
 
-    // Using null stream configuration makes EVS uses the default resolution and
-    // output format.
-    Stream nullCfg = {};
-
     // Test each reported camera
     for (auto&& cam: cameraInfo) {
 
         sp<IEvsCamera_1_1> pCam =
-            IEvsCamera_1_1::castFrom(pEnumerator->openCamera_1_1(cam.v1.cameraId, nullCfg))
+            IEvsCamera_1_1::castFrom(pEnumerator->openCamera(cam.cameraId))
             .withDefault(nullptr);
         ASSERT_NE(pCam, nullptr);
 
@@ -406,10 +371,6 @@ TEST_F(EvsHidlTest, CameraToDisplayRoundTrip) {
     // Get the camera list
     loadCameraList();
 
-    // Using null stream configuration makes EVS uses the default resolution and
-    // output format.
-    Stream nullCfg = {};
-
     // Request exclusive access to the EVS display
     sp<IEvsDisplay> pDisplay = pEnumerator->openDisplay();
     ASSERT_NE(pDisplay, nullptr);
@@ -417,7 +378,7 @@ TEST_F(EvsHidlTest, CameraToDisplayRoundTrip) {
     // Test each reported camera
     for (auto&& cam: cameraInfo) {
         sp<IEvsCamera_1_1> pCam =
-            IEvsCamera_1_1::castFrom(pEnumerator->openCamera_1_1(cam.v1.cameraId, nullCfg))
+            IEvsCamera_1_1::castFrom(pEnumerator->openCamera(cam.cameraId))
             .withDefault(nullptr);
         ASSERT_NE(pCam, nullptr);
 
@@ -478,20 +439,16 @@ TEST_F(EvsHidlTest, MultiCameraStream) {
     // Get the camera list
     loadCameraList();
 
-    // Using null stream configuration makes EVS uses the default resolution and
-    // output format.
-    Stream nullCfg = {};
-
     // Test each reported camera
     for (auto&& cam: cameraInfo) {
         // Create two camera clients.
         sp<IEvsCamera_1_1> pCam0 =
-            IEvsCamera_1_1::castFrom(pEnumerator->openCamera_1_1(cam.v1.cameraId, nullCfg))
+            IEvsCamera_1_1::castFrom(pEnumerator->openCamera(cam.cameraId))
             .withDefault(nullptr);
         ASSERT_NE(pCam0, nullptr);
 
         sp<IEvsCamera_1_1> pCam1 =
-            IEvsCamera_1_1::castFrom(pEnumerator->openCamera_1_1(cam.v1.cameraId, nullCfg))
+            IEvsCamera_1_1::castFrom(pEnumerator->openCamera(cam.cameraId))
             .withDefault(nullptr);
         ASSERT_NE(pCam1, nullptr);
 
@@ -529,6 +486,7 @@ TEST_F(EvsHidlTest, MultiCameraStream) {
         nsecs_t runTime = end - firstFrame;
         float framesPerSecond0 = framesReceived0 / (runTime * kNanoToSeconds);
         float framesPerSecond1 = framesReceived1 / (runTime * kNanoToSeconds);
+        printf("Measured camera rate %3.2f fps and %3.2f fps\n", framesPerSecond0, framesPerSecond1);
         ALOGI("Measured camera rate %3.2f fps and %3.2f fps", framesPerSecond0, framesPerSecond1);
         EXPECT_GE(framesPerSecond0, kMinimumFramesPerSecond);
         EXPECT_GE(framesPerSecond1, kMinimumFramesPerSecond);
@@ -568,32 +526,13 @@ TEST_F(EvsHidlTest, CameraParameter) {
     // Get the camera list
     loadCameraList();
 
-    // Using null stream configuration makes EVS uses the default resolution and
-    // output format.
-    Stream nullCfg = {};
-
     // Test each reported camera
-    Return<EvsResult> result = EvsResult::OK;
     for (auto&& cam: cameraInfo) {
         // Create a camera client
         sp<IEvsCamera_1_1> pCam =
-            IEvsCamera_1_1::castFrom(pEnumerator->openCamera_1_1(cam.v1.cameraId, nullCfg))
+            IEvsCamera_1_1::castFrom(pEnumerator->openCamera(cam.cameraId))
             .withDefault(nullptr);
         ASSERT_NE(pCam, nullptr);
-
-        // Get the parameter list
-        std::vector<CameraParam> cmds;
-        pCam->getParameterList([&cmds](hidl_vec<CameraParam> cmdList) {
-                cmds.reserve(cmdList.size());
-                for (auto &&cmd : cmdList) {
-                    cmds.push_back(cmd);
-                }
-            }
-        );
-
-        if (cmds.size() < 1) {
-            continue;
-        }
 
         // Set up per-client frame receiver objects which will fire up its own thread
         sp<FrameHandler> frameHandler = new FrameHandler(pCam, cam,
@@ -608,70 +547,83 @@ TEST_F(EvsHidlTest, CameraParameter) {
         // Ensure the stream starts
         frameHandler->waitForFrameCount(1);
 
+        // Try to program few parameters
+        EvsResult result = EvsResult::OK;
+        int32_t val0 = 100;
+        int32_t val1 = 0;
+
         result = pCam->setMaster();
-        ASSERT_EQ(EvsResult::OK, result);
+        ASSERT_TRUE(result == EvsResult::OK);
 
-        for (auto &cmd : cmds) {
-            // Get a valid parameter value range
-            int32_t minVal, maxVal, step;
-            pCam->getIntParameterRange(
-                cmd,
-                [&minVal, &maxVal, &step](int32_t val0, int32_t val1, int32_t val2) {
-                    minVal = val0;
-                    maxVal = val1;
-                    step   = val2;
-                }
-            );
+        pCam->setParameter(CameraParam::BRIGHTNESS, val0,
+                           [&result, &val1](auto status, auto effectiveValue) {
+                               result = status;
+                               val1 = effectiveValue;
+                           });
+        ASSERT_TRUE(result == EvsResult::OK ||
+                    result == EvsResult::INVALID_ARG);
 
-            EvsResult result = EvsResult::OK;
-            if (cmd == CameraParam::ABSOLUTE_FOCUS) {
-                // Try to turn off auto-focus
-                int32_t val1 = 0;
-                pCam->getIntParameter(CameraParam::AUTO_FOCUS,
-                                   [&result, &val1](auto status, auto value) {
-                                       result = status;
-                                       if (status == EvsResult::OK) {
-                                          val1 = value;
-                                       }
-                                   });
-                if (val1 != 0) {
-                    pCam->setIntParameter(CameraParam::AUTO_FOCUS, 0,
-                                       [&result, &val1](auto status, auto effectiveValue) {
-                                           result = status;
-                                           val1 = effectiveValue;
-                                       });
-                    ASSERT_EQ(EvsResult::OK, result);
-                    ASSERT_EQ(val1, 0);
-                }
-            }
-
-            // Try to program a parameter with a random value [minVal, maxVal]
-            int32_t val0 = minVal + (std::rand() % (maxVal - minVal));
-            int32_t val1 = 0;
-
-            // Rounding down
-            val0 = val0 - (val0 % step);
-            pCam->setIntParameter(cmd, val0,
-                               [&result, &val1](auto status, auto effectiveValue) {
-                                   result = status;
-                                   val1 = effectiveValue;
-                               });
-
-            ASSERT_EQ(EvsResult::OK, result);
-
-            pCam->getIntParameter(cmd,
+        if (result == EvsResult::OK) {
+            pCam->getParameter(CameraParam::BRIGHTNESS,
                                [&result, &val1](auto status, auto value) {
                                    result = status;
                                    if (status == EvsResult::OK) {
                                       val1 = value;
                                    }
                                });
-            ASSERT_EQ(EvsResult::OK, result);
+            ASSERT_TRUE(result == EvsResult::OK ||
+                        result == EvsResult::INVALID_ARG);
+            ASSERT_EQ(val0, val1) << "Values are not matched.";
+        }
+
+        val0 = 80;
+        val1 = 0;
+        pCam->setParameter(CameraParam::CONTRAST, val0,
+                           [&result, &val1](auto status, auto effectiveValue) {
+                               result = status;
+                               val1 = effectiveValue;
+                           });
+        ASSERT_TRUE(result == EvsResult::OK ||
+                    result == EvsResult::INVALID_ARG);
+
+        if (result == EvsResult::OK) {
+            pCam->getParameter(CameraParam::CONTRAST,
+                               [&result, &val1](auto status, auto value) {
+                                   result = status;
+                                   if (status == EvsResult::OK) {
+                                      val1 = value;
+                                   }
+                               });
+            ASSERT_TRUE(result == EvsResult::OK ||
+                        result == EvsResult::INVALID_ARG);
+            ASSERT_EQ(val0, val1) << "Values are not matched.";
+        }
+
+        val0 = 300;
+        val1 = 0;
+        pCam->setParameter(CameraParam::ABSOLUTE_ZOOM, val0,
+                           [&result, &val1](auto status, auto effectiveValue) {
+                               result = status;
+                               val1 = effectiveValue;
+                           });
+        ASSERT_TRUE(result == EvsResult::OK ||
+                    result == EvsResult::INVALID_ARG);
+
+        if (result == EvsResult::OK) {
+            pCam->getParameter(CameraParam::ABSOLUTE_ZOOM,
+                               [&result, &val1](auto status, auto value) {
+                                   result = status;
+                                   if (status == EvsResult::OK) {
+                                      val1 = value;
+                                   }
+                               });
+            ASSERT_TRUE(result == EvsResult::OK ||
+                        result == EvsResult::INVALID_ARG);
             ASSERT_EQ(val0, val1) << "Values are not matched.";
         }
 
         result = pCam->unsetMaster();
-        ASSERT_EQ(EvsResult::OK, result);
+        ASSERT_TRUE(result == EvsResult::OK);
 
         // Shutdown
         frameHandler->shutdown();
@@ -698,19 +650,15 @@ TEST_F(EvsHidlTest, CameraMasterRelease) {
     // Get the camera list
     loadCameraList();
 
-    // Using null stream configuration makes EVS uses the default resolution and
-    // output format.
-    Stream nullCfg = {};
-
     // Test each reported camera
     for (auto&& cam: cameraInfo) {
         // Create two camera clients.
         sp<IEvsCamera_1_1> pCamMaster =
-            IEvsCamera_1_1::castFrom(pEnumerator->openCamera_1_1(cam.v1.cameraId, nullCfg))
+            IEvsCamera_1_1::castFrom(pEnumerator->openCamera(cam.cameraId))
             .withDefault(nullptr);
         ASSERT_NE(pCamMaster, nullptr);
         sp<IEvsCamera_1_1> pCamNonMaster =
-            IEvsCamera_1_1::castFrom(pEnumerator->openCamera_1_1(cam.v1.cameraId, nullCfg))
+            IEvsCamera_1_1::castFrom(pEnumerator->openCamera(cam.cameraId))
             .withDefault(nullptr);
         ASSERT_NE(pCamNonMaster, nullptr);
 
@@ -750,15 +698,15 @@ TEST_F(EvsHidlTest, CameraMasterRelease) {
 
         // Non-master client expects to receive a master role relesed
         // notification.
-        EvsEvent aNotification = {};
+        InfoEventDesc aNotification = {};
 
         // Release a master role.
         pCamMaster->unsetMaster();
 
         // Verify a change notification.
-        frameHandlerNonMaster->waitForEvent(EvsEventType::MASTER_RELEASED, aNotification);
-        ASSERT_EQ(EvsEventType::MASTER_RELEASED,
-                  static_cast<EvsEventType>(aNotification.aType));
+        frameHandlerNonMaster->waitForEvent(InfoEventType::MASTER_RELEASED, aNotification);
+        ASSERT_EQ(InfoEventType::MASTER_RELEASED,
+                  static_cast<InfoEventType>(aNotification.aType));
 
         // Non-master becomes a master.
         result = pCamNonMaster->setMaster();
@@ -772,9 +720,9 @@ TEST_F(EvsHidlTest, CameraMasterRelease) {
         frameHandlerNonMaster->shutdown();
 
         // Verify a change notification.
-        frameHandlerMaster->waitForEvent(EvsEventType::MASTER_RELEASED, aNotification);
-        ASSERT_EQ(EvsEventType::MASTER_RELEASED,
-                  static_cast<EvsEventType>(aNotification.aType));
+        frameHandlerMaster->waitForEvent(InfoEventType::MASTER_RELEASED, aNotification);
+        ASSERT_EQ(InfoEventType::MASTER_RELEASED,
+                  static_cast<InfoEventType>(aNotification.aType));
 
         // Closing another stream.
         frameHandlerMaster->shutdown();
@@ -804,45 +752,17 @@ TEST_F(EvsHidlTest, MultiCameraParameter) {
     // Get the camera list
     loadCameraList();
 
-    // Using null stream configuration makes EVS uses the default resolution and
-    // output format.
-    Stream nullCfg = {};
-
     // Test each reported camera
     for (auto&& cam: cameraInfo) {
         // Create two camera clients.
         sp<IEvsCamera_1_1> pCamMaster =
-            IEvsCamera_1_1::castFrom(pEnumerator->openCamera_1_1(cam.v1.cameraId, nullCfg))
+            IEvsCamera_1_1::castFrom(pEnumerator->openCamera(cam.cameraId))
             .withDefault(nullptr);
         ASSERT_NE(pCamMaster, nullptr);
         sp<IEvsCamera_1_1> pCamNonMaster =
-            IEvsCamera_1_1::castFrom(pEnumerator->openCamera_1_1(cam.v1.cameraId, nullCfg))
+            IEvsCamera_1_1::castFrom(pEnumerator->openCamera(cam.cameraId))
             .withDefault(nullptr);
         ASSERT_NE(pCamNonMaster, nullptr);
-
-        // Get the parameter list
-        std::vector<CameraParam> camMasterCmds, camNonMasterCmds;
-        pCamMaster->getParameterList([&camMasterCmds](hidl_vec<CameraParam> cmdList) {
-                camMasterCmds.reserve(cmdList.size());
-                for (auto &&cmd : cmdList) {
-                    camMasterCmds.push_back(cmd);
-                }
-            }
-        );
-
-        pCamNonMaster->getParameterList([&camNonMasterCmds](hidl_vec<CameraParam> cmdList) {
-                camNonMasterCmds.reserve(cmdList.size());
-                for (auto &&cmd : cmdList) {
-                    camNonMasterCmds.push_back(cmd);
-                }
-            }
-        );
-
-        if (camMasterCmds.size() < 1 ||
-            camNonMasterCmds.size() < 1) {
-            // Skip a camera device if it does not support any parameter.
-            continue;
-        }
 
         // Set up per-client frame receiver objects which will fire up its own thread
         sp<FrameHandler> frameHandlerMaster =
@@ -858,11 +778,11 @@ TEST_F(EvsHidlTest, MultiCameraParameter) {
 
         // Set one client as the master
         EvsResult result = pCamMaster->setMaster();
-        ASSERT_EQ(EvsResult::OK, result);
+        ASSERT_TRUE(result == EvsResult::OK);
 
         // Try to set another client as the master.
         result = pCamNonMaster->setMaster();
-        ASSERT_EQ(EvsResult::OWNERSHIP_LOST, result);
+        ASSERT_TRUE(result == EvsResult::OWNERSHIP_LOST);
 
         // Start the camera's video stream via a master client.
         bool startResult = frameHandlerMaster->startStream();
@@ -878,168 +798,131 @@ TEST_F(EvsHidlTest, MultiCameraParameter) {
         // Ensure the stream starts
         frameHandlerNonMaster->waitForFrameCount(1);
 
-        int32_t val0 = 0;
+        // Try to program CameraParam::BRIGHTNESS
+        int32_t val0 = 100;
         int32_t val1 = 0;
-        for (auto &cmd : camMasterCmds) {
-            // Get a valid parameter value range
-            int32_t minVal, maxVal, step;
-            pCamMaster->getIntParameterRange(
-                cmd,
-                [&minVal, &maxVal, &step](int32_t val0, int32_t val1, int32_t val2) {
-                    minVal = val0;
-                    maxVal = val1;
-                    step   = val2;
-                }
-            );
 
-            EvsResult result = EvsResult::OK;
-            if (cmd == CameraParam::ABSOLUTE_FOCUS) {
-                // Try to turn off auto-focus
-                int32_t val1 = 1;
-                pCamMaster->setIntParameter(CameraParam::AUTO_FOCUS, 0,
-                                   [&result, &val1](auto status, auto effectiveValue) {
-                                       result = status;
-                                       val1 = effectiveValue;
-                                   });
-                ASSERT_EQ(EvsResult::OK, result);
-                ASSERT_EQ(val1, 0);
-            }
+        pCamMaster->setParameter(CameraParam::BRIGHTNESS, val0,
+                                 [&result, &val1](auto status, auto effectiveValue) {
+                                     result = status;
+                                     val1 = effectiveValue;
+                                 });
+        ASSERT_TRUE(result == EvsResult::OK ||            // Succeeded to program
+                    result == EvsResult::INVALID_ARG);    // Camera parameter is not supported
 
-            // Try to program a parameter
-            val0 = minVal + (std::rand() % (maxVal - minVal));
+        // Non-master client expects to receive a parameter change notification
+        // whenever a master client adjusts it.
+        InfoEventDesc aNotification = {};
 
-            // Rounding down
-            val0 = val0 - (val0 % step);
-            pCamMaster->setIntParameter(cmd, val0,
-                                     [&result, &val1](auto status, auto effectiveValue) {
-                                         result = status;
-                                         val1 = effectiveValue;
-                                     });
-            ASSERT_EQ(EvsResult::OK, result);
+        pCamMaster->getParameter(CameraParam::BRIGHTNESS,
+                                 [&result, &val1](auto status, auto value) {
+                                     result = status;
+                                     if (status == EvsResult::OK) {
+                                        val1 = value;
+                                     }
+                                 });
+        ASSERT_TRUE(result == EvsResult::OK ||            // Succeeded to program
+                    result == EvsResult::INVALID_ARG);    // Camera parameter is not supported
+        if (result == EvsResult::OK) {
+            ASSERT_EQ(val0, val1) << "Values are not matched.";
 
-            // Wait a moment
-            sleep(1);
+            // Verify a change notification
+            frameHandlerNonMaster->waitForEvent(InfoEventType::PARAMETER_CHANGED, aNotification);
+            ASSERT_EQ(InfoEventType::PARAMETER_CHANGED,
+                      static_cast<InfoEventType>(aNotification.aType));
+            ASSERT_EQ(CameraParam::BRIGHTNESS,
+                      static_cast<CameraParam>(aNotification.payload[0]));
+            ASSERT_EQ(val1,
+                      static_cast<int32_t>(aNotification.payload[1]));
+        }
 
-            // Non-master client expects to receive a parameter change notification
-            // whenever a master client adjusts it.
-            EvsEvent aNotification = {};
+        // Try to program CameraParam::CONTRAST
+        val0 = 80;
+        val1 = 0;
+        pCamMaster->setParameter(CameraParam::CONTRAST, val0,
+                                 [&result, &val1](auto status, auto effectiveValue) {
+                                     result = status;
+                                     val1 = effectiveValue;
+                                 });
+        ASSERT_TRUE(result == EvsResult::OK ||            // Succeeded to program
+                    result == EvsResult::INVALID_ARG);    // Camera parameter is not supported
 
-            pCamMaster->getIntParameter(cmd,
+        if (result == EvsResult::OK) {
+            pCamMaster->getParameter(CameraParam::CONTRAST,
                                      [&result, &val1](auto status, auto value) {
                                          result = status;
                                          if (status == EvsResult::OK) {
                                             val1 = value;
                                          }
                                      });
-            ASSERT_EQ(EvsResult::OK, result);
+            ASSERT_TRUE(result == EvsResult::OK);
             ASSERT_EQ(val0, val1) << "Values are not matched.";
 
+
             // Verify a change notification
-            frameHandlerNonMaster->waitForEvent(EvsEventType::PARAMETER_CHANGED, aNotification);
-            ASSERT_EQ(EvsEventType::PARAMETER_CHANGED,
-                      static_cast<EvsEventType>(aNotification.aType));
-            ASSERT_EQ(cmd,
+            frameHandlerNonMaster->waitForEvent(InfoEventType::PARAMETER_CHANGED, aNotification);
+            ASSERT_EQ(InfoEventType::PARAMETER_CHANGED,
+                      static_cast<InfoEventType>(aNotification.aType));
+            ASSERT_EQ(CameraParam::CONTRAST,
                       static_cast<CameraParam>(aNotification.payload[0]));
             ASSERT_EQ(val1,
                       static_cast<int32_t>(aNotification.payload[1]));
         }
 
         // Try to adjust a parameter via non-master client
-        pCamNonMaster->setIntParameter(camNonMasterCmds[0], val0,
+        pCamNonMaster->setParameter(CameraParam::CONTRAST, val0,
                                     [&result, &val1](auto status, auto effectiveValue) {
                                         result = status;
                                         val1 = effectiveValue;
                                     });
-        ASSERT_EQ(EvsResult::INVALID_ARG, result);
+        ASSERT_TRUE(result == EvsResult::INVALID_ARG);
 
         // Non-master client attemps to be a master
         result = pCamNonMaster->setMaster();
-        ASSERT_EQ(EvsResult::OWNERSHIP_LOST, result);
+        ASSERT_TRUE(result == EvsResult::OWNERSHIP_LOST);
 
         // Master client retires from a master role
         result = pCamMaster->unsetMaster();
-        ASSERT_EQ(EvsResult::OK, result);
+        ASSERT_TRUE(result == EvsResult::OK);
 
         // Try to adjust a parameter after being retired
-        pCamMaster->setIntParameter(camMasterCmds[0], val0,
+        pCamMaster->setParameter(CameraParam::BRIGHTNESS, val0,
                                  [&result, &val1](auto status, auto effectiveValue) {
                                      result = status;
                                      val1 = effectiveValue;
                                  });
-        ASSERT_EQ(EvsResult::INVALID_ARG, result);
+        ASSERT_TRUE(result == EvsResult::INVALID_ARG);
 
         // Non-master client becomes a master
         result = pCamNonMaster->setMaster();
-        ASSERT_EQ(EvsResult::OK, result);
+        ASSERT_TRUE(result == EvsResult::OK);
 
         // Try to adjust a parameter via new master client
-        for (auto &cmd : camNonMasterCmds) {
-            // Get a valid parameter value range
-            int32_t minVal, maxVal, step;
-            pCamNonMaster->getIntParameterRange(
-                cmd,
-                [&minVal, &maxVal, &step](int32_t val0, int32_t val1, int32_t val2) {
-                    minVal = val0;
-                    maxVal = val1;
-                    step   = val2;
-                }
-            );
+        pCamNonMaster->setParameter(CameraParam::BRIGHTNESS, val0,
+                                    [&result, &val1](auto status, auto effectiveValue) {
+                                        result = status;
+                                        val1 = effectiveValue;
+                                    });
+        ASSERT_TRUE(result == EvsResult::OK ||            // Succeeded to program
+                    result == EvsResult::INVALID_ARG);    // Camera parameter is not supported
 
-            EvsResult result = EvsResult::OK;
-            if (cmd == CameraParam::ABSOLUTE_FOCUS) {
-                // Try to turn off auto-focus
-                int32_t val1 = 1;
-                pCamNonMaster->setIntParameter(CameraParam::AUTO_FOCUS, 0,
-                                   [&result, &val1](auto status, auto effectiveValue) {
-                                       result = status;
-                                       val1 = effectiveValue;
-                                   });
-                ASSERT_EQ(EvsResult::OK, result);
-                ASSERT_EQ(val1, 0);
-            }
+        // Wait a moment
+        sleep(1);
 
-            // Try to program a parameter
-            val0 = minVal + (std::rand() % (maxVal - minVal));
-
-            // Rounding down
-            val0 = val0 - (val0 % step);
-            pCamNonMaster->setIntParameter(cmd, val0,
-                                        [&result, &val1](auto status, auto effectiveValue) {
-                                            result = status;
-                                            val1 = effectiveValue;
-                                        });
-            ASSERT_EQ(EvsResult::OK, result);
-
-            // Wait a moment
-            sleep(1);
-
-            // Non-master client expects to receive a parameter change notification
-            // whenever a master client adjusts it.
-            EvsEvent aNotification = {};
-
-            pCamNonMaster->getIntParameter(cmd,
-                                        [&result, &val1](auto status, auto value) {
-                                            result = status;
-                                            if (status == EvsResult::OK) {
-                                               val1 = value;
-                                            }
-                                        });
-            ASSERT_EQ(EvsResult::OK, result);
-            ASSERT_EQ(val0, val1) << "Values are not matched.";
-
-            // Verify a change notification
-            frameHandlerMaster->waitForEvent(EvsEventType::PARAMETER_CHANGED, aNotification);
-            ASSERT_EQ(EvsEventType::PARAMETER_CHANGED,
-                      static_cast<EvsEventType>(aNotification.aType));
-            ASSERT_EQ(cmd,
-                      static_cast<CameraParam>(aNotification.payload[0]));
+        // Verify a change notification
+        if (result == EvsResult::OK) {
+            frameHandlerMaster->waitForEvent(InfoEventType::PARAMETER_CHANGED, aNotification);
+            ASSERT_EQ(static_cast<InfoEventType>(aNotification.aType),
+                      InfoEventType::PARAMETER_CHANGED);
+            ASSERT_EQ(static_cast<CameraParam>(aNotification.payload[0]),
+                      CameraParam::BRIGHTNESS);
             ASSERT_EQ(val1,
                       static_cast<int32_t>(aNotification.payload[1]));
         }
 
         // New master retires from a master role
         result = pCamNonMaster->unsetMaster();
-        ASSERT_EQ(EvsResult::OK, result);
+        ASSERT_TRUE(result == EvsResult::OK);
 
         // Shutdown
         frameHandlerMaster->shutdown();
@@ -1060,17 +943,8 @@ TEST_F(EvsHidlTest, MultiCameraParameter) {
 TEST_F(EvsHidlTest, HighPriorityCameraClient) {
     ALOGI("Starting HighPriorityCameraClient test");
 
-    if (mIsHwModule) {
-        // This test is not for HW module implementation.
-        return;
-    }
-
     // Get the camera list
     loadCameraList();
-
-    // Using null stream configuration makes EVS uses the default resolution and
-    // output format.
-    Stream nullCfg = {};
 
     // Request exclusive access to the EVS display
     sp<IEvsDisplay> pDisplay = pEnumerator->openDisplay();
@@ -1080,37 +954,14 @@ TEST_F(EvsHidlTest, HighPriorityCameraClient) {
     for (auto&& cam: cameraInfo) {
         // Create two clients
         sp<IEvsCamera_1_1> pCam0 =
-            IEvsCamera_1_1::castFrom(pEnumerator->openCamera_1_1(cam.v1.cameraId, nullCfg))
+            IEvsCamera_1_1::castFrom(pEnumerator->openCamera(cam.cameraId))
             .withDefault(nullptr);
         ASSERT_NE(pCam0, nullptr);
 
         sp<IEvsCamera_1_1> pCam1 =
-            IEvsCamera_1_1::castFrom(pEnumerator->openCamera_1_1(cam.v1.cameraId, nullCfg))
+            IEvsCamera_1_1::castFrom(pEnumerator->openCamera(cam.cameraId))
             .withDefault(nullptr);
         ASSERT_NE(pCam1, nullptr);
-
-        // Get the parameter list; this test will use the first command in both
-        // lists.
-        std::vector<CameraParam> cam0Cmds, cam1Cmds;
-        pCam0->getParameterList([&cam0Cmds](hidl_vec<CameraParam> cmdList) {
-                cam0Cmds.reserve(cmdList.size());
-                for (auto &&cmd : cmdList) {
-                    cam0Cmds.push_back(cmd);
-                }
-            }
-        );
-
-        pCam1->getParameterList([&cam1Cmds](hidl_vec<CameraParam> cmdList) {
-                cam1Cmds.reserve(cmdList.size());
-                for (auto &&cmd : cmdList) {
-                    cam1Cmds.push_back(cmd);
-                }
-            }
-        );
-        if (cam0Cmds.size() < 1 || cam1Cmds.size() < 1) {
-            // Cannot execute this test.
-            return;
-        }
 
         // Set up a frame receiver object which will fire up its own thread.
         sp<FrameHandler> frameHandler0 = new FrameHandler(pCam0, cam,
@@ -1131,121 +982,67 @@ TEST_F(EvsHidlTest, HighPriorityCameraClient) {
         frameHandler0->waitForFrameCount(1);
         frameHandler1->waitForFrameCount(1);
 
-        // Client 1 becomes a master and programs a parameter.
+        // Client 1 becomes a master and programs a brightness.
         EvsResult result = EvsResult::OK;
-        // Get a valid parameter value range
-        int32_t minVal, maxVal, step;
-        pCam1->getIntParameterRange(
-            cam1Cmds[0],
-            [&minVal, &maxVal, &step](int32_t val0, int32_t val1, int32_t val2) {
-                minVal = val0;
-                maxVal = val1;
-                step   = val2;
-            }
-        );
-
-        if (cam1Cmds[0] == CameraParam::ABSOLUTE_FOCUS) {
-            // Try to turn off auto-focus
-            int32_t val1 = 0;
-            pCam1->getIntParameter(CameraParam::AUTO_FOCUS,
-                               [&result, &val1](auto status, auto value) {
-                                   result = status;
-                                   if (status == EvsResult::OK) {
-                                      val1 = value;
-                                   }
-                               });
-            if (val1 != 0) {
-                pCam1->setIntParameter(CameraParam::AUTO_FOCUS, 0,
-                                   [&result, &val1](auto status, auto effectiveValue) {
-                                       result = status;
-                                       val1 = effectiveValue;
-                                   });
-                ASSERT_EQ(EvsResult::OK, result);
-                ASSERT_EQ(val1, 0);
-            }
-        }
-
-        // Try to program a parameter with a random value [minVal, maxVal]
-        int32_t val0 = minVal + (std::rand() % (maxVal - minVal));
+        int32_t val0 = 100;
         int32_t val1 = 0;
 
-        // Rounding down
-        val0 = val0 - (val0 % step);
-
         result = pCam1->setMaster();
-        ASSERT_EQ(EvsResult::OK, result);
+        ASSERT_TRUE(result == EvsResult::OK);
 
-        pCam1->setIntParameter(cam1Cmds[0], val0,
+        pCam1->setParameter(CameraParam::BRIGHTNESS, val0,
                             [&result, &val1](auto status, auto effectiveValue) {
                                 result = status;
                                 val1 = effectiveValue;
                             });
-        ASSERT_EQ(EvsResult::OK, result);
+        ASSERT_TRUE(result == EvsResult::OK ||
+                    result == EvsResult::INVALID_ARG);
+
 
         // Verify a change notification
-        EvsEvent aNotification = {};
-        bool timeout =
-            frameHandler0->waitForEvent(EvsEventType::PARAMETER_CHANGED, aNotification);
-        ASSERT_FALSE(timeout) << "Expected event does not arrive";
-        ASSERT_EQ(static_cast<EvsEventType>(aNotification.aType),
-                  EvsEventType::PARAMETER_CHANGED);
-        ASSERT_EQ(static_cast<CameraParam>(aNotification.payload[0]),
-                  cam1Cmds[0]);
-        ASSERT_EQ(val1,
-                  static_cast<int32_t>(aNotification.payload[1]));
+        InfoEventDesc aNotification = {};
+        if (result == EvsResult::OK) {
+            bool timeout =
+                frameHandler0->waitForEvent(InfoEventType::PARAMETER_CHANGED, aNotification);
+            ASSERT_FALSE(timeout) << "Expected event does not arrive";
+            ASSERT_EQ(static_cast<InfoEventType>(aNotification.aType),
+                      InfoEventType::PARAMETER_CHANGED);
+            ASSERT_EQ(static_cast<CameraParam>(aNotification.payload[0]),
+                      CameraParam::BRIGHTNESS);
+            ASSERT_EQ(val1,
+                      static_cast<int32_t>(aNotification.payload[1]));
+        }
 
         // Client 0 steals a master role
         ASSERT_EQ(EvsResult::OK, pCam0->forceMaster(pDisplay));
 
-        frameHandler1->waitForEvent(EvsEventType::MASTER_RELEASED, aNotification);
-        ASSERT_EQ(static_cast<EvsEventType>(aNotification.aType),
-                  EvsEventType::MASTER_RELEASED);
+        frameHandler1->waitForEvent(InfoEventType::MASTER_RELEASED, aNotification);
+        ASSERT_EQ(static_cast<InfoEventType>(aNotification.aType),
+                  InfoEventType::MASTER_RELEASED);
 
-        // Client 0 programs a parameter
-        val0 = minVal + (std::rand() % (maxVal - minVal));
+        // Client 0 programs a brightness
+        val0 = 50;
         val1 = 0;
-
-        // Rounding down
-        val0 = val0 - (val0 % step);
-
-        if (cam0Cmds[0] == CameraParam::ABSOLUTE_FOCUS) {
-            // Try to turn off auto-focus
-            int32_t val1 = 0;
-            pCam0->getIntParameter(CameraParam::AUTO_FOCUS,
-                               [&result, &val1](auto status, auto value) {
-                                   result = status;
-                                   if (status == EvsResult::OK) {
-                                      val1 = value;
-                                   }
-                               });
-            if (val1 != 0) {
-                pCam0->setIntParameter(CameraParam::AUTO_FOCUS, 0,
-                                   [&result, &val1](auto status, auto effectiveValue) {
-                                       result = status;
-                                       val1 = effectiveValue;
-                                   });
-                ASSERT_EQ(EvsResult::OK, result);
-                ASSERT_EQ(val1, 0);
-            }
-        }
-
-        pCam0->setIntParameter(cam0Cmds[0], val0,
+        pCam0->setParameter(CameraParam::BRIGHTNESS, val0,
                             [&result, &val1](auto status, auto effectiveValue) {
                                 result = status;
                                 val1 = effectiveValue;
                             });
-        ASSERT_EQ(EvsResult::OK, result);
+        ASSERT_TRUE(result == EvsResult::OK ||
+                    result == EvsResult::INVALID_ARG);
 
         // Verify a change notification
-        timeout =
-            frameHandler1->waitForEvent(EvsEventType::PARAMETER_CHANGED, aNotification);
-        ASSERT_FALSE(timeout) << "Expected event does not arrive";
-        ASSERT_EQ(static_cast<EvsEventType>(aNotification.aType),
-                  EvsEventType::PARAMETER_CHANGED);
-        ASSERT_EQ(static_cast<CameraParam>(aNotification.payload[0]),
-                  cam0Cmds[0]);
-        ASSERT_EQ(val1,
-                  static_cast<int32_t>(aNotification.payload[1]));
+        if (result == EvsResult::OK) {
+            bool timeout =
+                frameHandler1->waitForEvent(InfoEventType::PARAMETER_CHANGED, aNotification);
+            ASSERT_FALSE(timeout) << "Expected event does not arrive";
+            ASSERT_EQ(static_cast<InfoEventType>(aNotification.aType),
+                      InfoEventType::PARAMETER_CHANGED);
+            ASSERT_EQ(static_cast<CameraParam>(aNotification.payload[0]),
+                      CameraParam::BRIGHTNESS);
+            ASSERT_EQ(val1,
+                      static_cast<int32_t>(aNotification.payload[1]));
+        }
 
         // Turn off the display (yes, before the stream stops -- it should be handled)
         pDisplay->setDisplayState(DisplayState::NOT_VISIBLE);
@@ -1261,248 +1058,6 @@ TEST_F(EvsHidlTest, HighPriorityCameraClient) {
 
     // Explicitly release the display
     pEnumerator->closeDisplay(pDisplay);
-}
-
-
-/*
- * CameraUseStreamConfigToDisplay:
- * End to end test of data flowing from the camera to the display.  Similar to
- * CameraToDisplayRoundTrip test case but this case retrieves available stream
- * configurations from EVS and uses one of them to start a video stream.
- */
-TEST_F(EvsHidlTest, CameraUseStreamConfigToDisplay) {
-    ALOGI("Starting CameraUseStreamConfigToDisplay test");
-
-    // Get the camera list
-    loadCameraList();
-
-    // Request exclusive access to the EVS display
-    sp<IEvsDisplay> pDisplay = pEnumerator->openDisplay();
-    ASSERT_NE(pDisplay, nullptr);
-
-    // Test each reported camera
-    for (auto&& cam: cameraInfo) {
-        // choose a configuration that has a frame rate faster than minReqFps.
-        Stream targetCfg = {};
-        const int32_t minReqFps = 15;
-        int32_t maxArea = 0;
-        camera_metadata_entry_t streamCfgs;
-        bool foundCfg = false;
-        if (!find_camera_metadata_entry(
-                 reinterpret_cast<camera_metadata_t *>(cam.metadata.data()),
-                 ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS,
-                 &streamCfgs)) {
-            // Stream configurations are found in metadata
-            RawStreamConfig *ptr = reinterpret_cast<RawStreamConfig *>(streamCfgs.data.i32);
-            for (unsigned idx = 0; idx < streamCfgs.count; idx += kStreamCfgSz) {
-                if (ptr->direction == ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT &&
-                    ptr->format == HAL_PIXEL_FORMAT_RGBA_8888) {
-
-                    if (ptr->width * ptr->height > maxArea &&
-                        ptr->framerate >= minReqFps) {
-                        targetCfg.width = ptr->width;
-                        targetCfg.height = ptr->height;
-
-                        maxArea = ptr->width * ptr->height;
-                        foundCfg = true;
-                    }
-                }
-                ++ptr;
-            }
-        }
-        targetCfg.format =
-            static_cast<PixelFormat>(HAL_PIXEL_FORMAT_RGBA_8888);
-
-        if (!foundCfg) {
-            // Current EVS camera does not provide stream configurations in the
-            // metadata.
-            continue;
-        }
-
-        sp<IEvsCamera_1_1> pCam =
-            IEvsCamera_1_1::castFrom(pEnumerator->openCamera_1_1(cam.v1.cameraId, targetCfg))
-            .withDefault(nullptr);
-        ASSERT_NE(pCam, nullptr);
-
-        // Set up a frame receiver object which will fire up its own thread.
-        sp<FrameHandler> frameHandler = new FrameHandler(pCam, cam,
-                                                         pDisplay,
-                                                         FrameHandler::eAutoReturn);
-
-
-        // Activate the display
-        pDisplay->setDisplayState(DisplayState::VISIBLE_ON_NEXT_FRAME);
-
-        // Start the camera's video stream
-        bool startResult = frameHandler->startStream();
-        ASSERT_TRUE(startResult);
-
-        // Wait a while to let the data flow
-        static const int kSecondsToWait = 5;
-        const int streamTimeMs = kSecondsToWait * kSecondsToMilliseconds -
-                                 kMaxStreamStartMilliseconds;
-        const unsigned minimumFramesExpected = streamTimeMs * kMinimumFramesPerSecond /
-                                               kSecondsToMilliseconds;
-        sleep(kSecondsToWait);
-        unsigned framesReceived = 0;
-        unsigned framesDisplayed = 0;
-        frameHandler->getFramesCounters(&framesReceived, &framesDisplayed);
-        EXPECT_EQ(framesReceived, framesDisplayed);
-        EXPECT_GE(framesDisplayed, minimumFramesExpected);
-
-        // Turn off the display (yes, before the stream stops -- it should be handled)
-        pDisplay->setDisplayState(DisplayState::NOT_VISIBLE);
-
-        // Shut down the streamer
-        frameHandler->shutdown();
-
-        // Explicitly release the camera
-        pEnumerator->closeCamera(pCam);
-    }
-
-    // Explicitly release the display
-    pEnumerator->closeDisplay(pDisplay);
-}
-
-
-/*
- * MultiCameraStreamUseConfig:
- * Verify that each client can start and stop video streams on the same
- * underlying camera with same configuration.
- */
-TEST_F(EvsHidlTest, MultiCameraStreamUseConfig) {
-    ALOGI("Starting MultiCameraStream test");
-
-    if (mIsHwModule) {
-        // This test is not for HW module implementation.
-        return;
-    }
-
-    // Get the camera list
-    loadCameraList();
-
-    // Test each reported camera
-    for (auto&& cam: cameraInfo) {
-        // choose a configuration that has a frame rate faster than minReqFps.
-        Stream targetCfg = {};
-        const int32_t minReqFps = 15;
-        int32_t maxArea = 0;
-        camera_metadata_entry_t streamCfgs;
-        bool foundCfg = false;
-        if (!find_camera_metadata_entry(
-                 reinterpret_cast<camera_metadata_t *>(cam.metadata.data()),
-                 ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS,
-                 &streamCfgs)) {
-            // Stream configurations are found in metadata
-            RawStreamConfig *ptr = reinterpret_cast<RawStreamConfig *>(streamCfgs.data.i32);
-            for (unsigned idx = 0; idx < streamCfgs.count; idx += kStreamCfgSz) {
-                if (ptr->direction == ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT &&
-                    ptr->format == HAL_PIXEL_FORMAT_RGBA_8888) {
-
-                    if (ptr->width * ptr->height > maxArea &&
-                        ptr->framerate >= minReqFps) {
-                        targetCfg.width = ptr->width;
-                        targetCfg.height = ptr->height;
-
-                        maxArea = ptr->width * ptr->height;
-                        foundCfg = true;
-                    }
-                }
-                ++ptr;
-            }
-        }
-        targetCfg.format =
-            static_cast<PixelFormat>(HAL_PIXEL_FORMAT_RGBA_8888);
-
-        if (!foundCfg) {
-            ALOGI("Device %s does not provide a list of supported stream configurations, skipped",
-                  cam.v1.cameraId.c_str());
-
-            continue;
-        }
-
-        // Create the first camera client with a selected stream configuration.
-        sp<IEvsCamera_1_1> pCam0 =
-            IEvsCamera_1_1::castFrom(pEnumerator->openCamera_1_1(cam.v1.cameraId, targetCfg))
-            .withDefault(nullptr);
-        ASSERT_NE(pCam0, nullptr);
-
-        // Try to create the second camera client with different stream
-        // configuration.
-        int32_t id = targetCfg.id;
-        targetCfg.id += 1;  // EVS manager sees only the stream id.
-        sp<IEvsCamera_1_1> pCam1 =
-            IEvsCamera_1_1::castFrom(pEnumerator->openCamera_1_1(cam.v1.cameraId, targetCfg))
-            .withDefault(nullptr);
-        ASSERT_EQ(pCam1, nullptr);
-
-        // Try again with same stream configuration.
-        targetCfg.id = id;
-        pCam1 =
-            IEvsCamera_1_1::castFrom(pEnumerator->openCamera_1_1(cam.v1.cameraId, targetCfg))
-            .withDefault(nullptr);
-        ASSERT_NE(pCam1, nullptr);
-
-        // Set up per-client frame receiver objects which will fire up its own thread
-        sp<FrameHandler> frameHandler0 = new FrameHandler(pCam0, cam,
-                                                          nullptr,
-                                                          FrameHandler::eAutoReturn);
-        ASSERT_NE(frameHandler0, nullptr);
-
-        sp<FrameHandler> frameHandler1 = new FrameHandler(pCam1, cam,
-                                                          nullptr,
-                                                          FrameHandler::eAutoReturn);
-        ASSERT_NE(frameHandler1, nullptr);
-
-        // Start the camera's video stream via client 0
-        bool startResult = false;
-        startResult = frameHandler0->startStream() &&
-                      frameHandler1->startStream();
-        ASSERT_TRUE(startResult);
-
-        // Ensure the stream starts
-        frameHandler0->waitForFrameCount(1);
-        frameHandler1->waitForFrameCount(1);
-
-        nsecs_t firstFrame = systemTime(SYSTEM_TIME_MONOTONIC);
-
-        // Wait a bit, then ensure both clients get at least the required minimum number of frames
-        sleep(5);
-        nsecs_t end = systemTime(SYSTEM_TIME_MONOTONIC);
-        unsigned framesReceived0 = 0, framesReceived1 = 0;
-        frameHandler0->getFramesCounters(&framesReceived0, nullptr);
-        frameHandler1->getFramesCounters(&framesReceived1, nullptr);
-        framesReceived0 = framesReceived0 - 1;    // Back out the first frame we already waited for
-        framesReceived1 = framesReceived1 - 1;    // Back out the first frame we already waited for
-        nsecs_t runTime = end - firstFrame;
-        float framesPerSecond0 = framesReceived0 / (runTime * kNanoToSeconds);
-        float framesPerSecond1 = framesReceived1 / (runTime * kNanoToSeconds);
-        ALOGI("Measured camera rate %3.2f fps and %3.2f fps", framesPerSecond0, framesPerSecond1);
-        EXPECT_GE(framesPerSecond0, kMinimumFramesPerSecond);
-        EXPECT_GE(framesPerSecond1, kMinimumFramesPerSecond);
-
-        // Shutdown one client
-        frameHandler0->shutdown();
-
-        // Read frame counters again
-        frameHandler0->getFramesCounters(&framesReceived0, nullptr);
-        frameHandler1->getFramesCounters(&framesReceived1, nullptr);
-
-        // Wait a bit again
-        sleep(5);
-        unsigned framesReceivedAfterStop0 = 0, framesReceivedAfterStop1 = 0;
-        frameHandler0->getFramesCounters(&framesReceivedAfterStop0, nullptr);
-        frameHandler1->getFramesCounters(&framesReceivedAfterStop1, nullptr);
-        EXPECT_EQ(framesReceived0, framesReceivedAfterStop0);
-        EXPECT_LT(framesReceived1, framesReceivedAfterStop1);
-
-        // Shutdown another
-        frameHandler1->shutdown();
-
-        // Explicitly release the camera
-        pEnumerator->closeCamera(pCam0);
-        pEnumerator->closeCamera(pCam1);
-    }
 }
 
 
