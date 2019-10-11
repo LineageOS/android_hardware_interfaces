@@ -754,11 +754,11 @@ void ExternalCameraDevice::getFrameRateList(
         int fd, double fpsUpperBound, SupportedV4L2Format* format) {
     format->frameRates.clear();
 
-    v4l2_frmivalenum frameInterval {
-        .pixel_format = format->fourcc,
-        .width = format->width,
-        .height = format->height,
-        .index = 0
+    v4l2_frmivalenum frameInterval{
+            .index = 0,
+            .pixel_format = format->fourcc,
+            .width = format->width,
+            .height = format->height,
     };
 
     for (frameInterval.index = 0;
