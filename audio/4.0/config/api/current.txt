@@ -114,11 +114,15 @@ package audio.policy.configuration.V4_0 {
     enum_constant public static final audio.policy.configuration.V4_0.AudioFormat AUDIO_FORMAT_EVRCNW;
     enum_constant public static final audio.policy.configuration.V4_0.AudioFormat AUDIO_FORMAT_EVRCWB;
     enum_constant public static final audio.policy.configuration.V4_0.AudioFormat AUDIO_FORMAT_E_AC3;
+    enum_constant public static final audio.policy.configuration.V4_0.AudioFormat AUDIO_FORMAT_E_AC3_JOC;
     enum_constant public static final audio.policy.configuration.V4_0.AudioFormat AUDIO_FORMAT_FLAC;
     enum_constant public static final audio.policy.configuration.V4_0.AudioFormat AUDIO_FORMAT_HE_AAC_V1;
     enum_constant public static final audio.policy.configuration.V4_0.AudioFormat AUDIO_FORMAT_HE_AAC_V2;
     enum_constant public static final audio.policy.configuration.V4_0.AudioFormat AUDIO_FORMAT_IEC61937;
     enum_constant public static final audio.policy.configuration.V4_0.AudioFormat AUDIO_FORMAT_LDAC;
+    enum_constant public static final audio.policy.configuration.V4_0.AudioFormat AUDIO_FORMAT_MAT_1_0;
+    enum_constant public static final audio.policy.configuration.V4_0.AudioFormat AUDIO_FORMAT_MAT_2_0;
+    enum_constant public static final audio.policy.configuration.V4_0.AudioFormat AUDIO_FORMAT_MAT_2_1;
     enum_constant public static final audio.policy.configuration.V4_0.AudioFormat AUDIO_FORMAT_MP2;
     enum_constant public static final audio.policy.configuration.V4_0.AudioFormat AUDIO_FORMAT_MP3;
     enum_constant public static final audio.policy.configuration.V4_0.AudioFormat AUDIO_FORMAT_OPUS;
