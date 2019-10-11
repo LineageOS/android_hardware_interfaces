@@ -23,6 +23,7 @@
 #include "SensorsSubHal.h"
 
 #include <chrono>
+#include <set>
 #include <thread>
 #include <vector>
 
@@ -38,6 +39,7 @@ using ::android::hardware::sensors::V1_0::SensorType;
 using ::android::hardware::sensors::V2_0::ISensorsCallback;
 using ::android::hardware::sensors::V2_0::implementation::HalProxy;
 using ::android::hardware::sensors::V2_0::implementation::HalProxyCallback;
+using ::android::hardware::sensors::V2_0::subhal::implementation::AddAndRemoveDynamicSensorsSubHal;
 using ::android::hardware::sensors::V2_0::subhal::implementation::AllSensorsSubHal;
 using ::android::hardware::sensors::V2_0::subhal::implementation::
         AllSupportDirectChannelSensorsSubHal;
@@ -66,6 +68,34 @@ class SensorsCallback : public ISensorsCallback {
         // Nothing yet
         return Return<void>();
     }
+};
+
+// The sensors callback that expects a variable list of sensors to be added
+class TestSensorsCallback : public ISensorsCallback {
+  public:
+    Return<void> onDynamicSensorsConnected(
+            const hidl_vec<SensorInfo>& dynamicSensorsAdded) override {
+        mSensorsConnected.insert(mSensorsConnected.end(), dynamicSensorsAdded.begin(),
+                                 dynamicSensorsAdded.end());
+        return Return<void>();
+    }
+
+    Return<void> onDynamicSensorsDisconnected(
+            const hidl_vec<int32_t>& dynamicSensorHandlesRemoved) override {
+        mSensorHandlesDisconnected.insert(mSensorHandlesDisconnected.end(),
+                                          dynamicSensorHandlesRemoved.begin(),
+                                          dynamicSensorHandlesRemoved.end());
+        return Return<void>();
+    }
+
+    const std::vector<SensorInfo>& getSensorsConnected() const { return mSensorsConnected; }
+    const std::vector<int32_t>& getSensorHandlesDisconnected() const {
+        return mSensorHandlesDisconnected;
+    }
+
+  private:
+    std::vector<SensorInfo> mSensorsConnected;
+    std::vector<int32_t> mSensorHandlesDisconnected;
 };
 
 // Helper declarations follow
@@ -128,6 +158,20 @@ std::vector<Event> makeMultipleProximityEvents(size_t numEvents);
  * @return The created list of events.
  */
 std::vector<Event> makeMultipleAccelerometerEvents(size_t numEvents);
+
+/**
+ * Given a SensorInfo vector and a sensor handles vector populate 'sensors' with SensorInfo
+ * objects that have the sensorHandle property set to int32_ts from start to start + size
+ * (exclusive) and push those sensorHandles also onto 'sensorHandles'.
+ *
+ * @param start The starting sensorHandle value.
+ * @param size The ending (not included) sensorHandle value.
+ * @param sensors The SensorInfo object vector reference to push_back to.
+ * @param sensorHandles The sensor handles int32_t vector reference to push_back to.
+ */
+void makeSensorsAndSensorHandlesStartingAndOfSize(int32_t start, size_t size,
+                                                  std::vector<SensorInfo>& sensors,
+                                                  std::vector<int32_t>& sensorHandles);
 
 // Tests follow
 TEST(HalProxyTest, GetSensorsListOneSubHalTest) {
@@ -396,6 +440,83 @@ TEST(HalProxyTest, DestructingWithEventsPendingOnBackgroundThreadTest) {
     // If this TEST completes then it was a success, if it hangs we will see a crash
 }
 
+TEST(HalProxyTest, DynamicSensorsConnectedTest) {
+    constexpr size_t kNumSensors = 3;
+    AddAndRemoveDynamicSensorsSubHal subHal;
+    std::vector<ISensorsSubHal*> subHals{&subHal};
+    HalProxy proxy(subHals);
+    std::unique_ptr<EventMessageQueue> eventQueue = std::make_unique<EventMessageQueue>(0, true);
+    std::unique_ptr<WakeupMessageQueue> wakeLockQueue =
+            std::make_unique<WakeupMessageQueue>(0, true);
+
+    std::vector<SensorInfo> sensorsToConnect;
+    std::vector<int32_t> sensorHandlesToExpect;
+    makeSensorsAndSensorHandlesStartingAndOfSize(1, kNumSensors, sensorsToConnect,
+                                                 sensorHandlesToExpect);
+
+    TestSensorsCallback* callback = new TestSensorsCallback();
+    ::android::sp<ISensorsCallback> callbackPtr = callback;
+    proxy.initialize(*eventQueue->getDesc(), *wakeLockQueue->getDesc(), callbackPtr);
+    subHal.addDynamicSensors(sensorsToConnect);
+
+    std::vector<SensorInfo> sensorsSeen = callback->getSensorsConnected();
+    EXPECT_EQ(kNumSensors, sensorsSeen.size());
+    for (size_t i = 0; i < kNumSensors; i++) {
+        auto sensorHandleSeen = sensorsSeen[i].sensorHandle;
+        // Note since only one subhal we do not need to change first byte for expected
+        auto sensorHandleExpected = sensorHandlesToExpect[i];
+        EXPECT_EQ(sensorHandleSeen, sensorHandleExpected);
+    }
+}
+
+TEST(HalProxyTest, DynamicSensorsDisconnectedTest) {
+    constexpr size_t kNumSensors = 3;
+    AddAndRemoveDynamicSensorsSubHal subHal;
+    std::vector<ISensorsSubHal*> subHals{&subHal};
+    HalProxy proxy(subHals);
+    std::unique_ptr<EventMessageQueue> eventQueue = std::make_unique<EventMessageQueue>(0, true);
+    std::unique_ptr<WakeupMessageQueue> wakeLockQueue =
+            std::make_unique<WakeupMessageQueue>(0, true);
+
+    std::vector<SensorInfo> sensorsToConnect;
+    std::vector<int32_t> sensorHandlesToExpect;
+    makeSensorsAndSensorHandlesStartingAndOfSize(20, kNumSensors, sensorsToConnect,
+                                                 sensorHandlesToExpect);
+
+    std::vector<int32_t> nonDynamicSensorHandles;
+    for (int32_t sensorHandle = 1; sensorHandle < 10; sensorHandle++) {
+        nonDynamicSensorHandles.push_back(sensorHandle);
+    }
+
+    std::set<int32_t> nonDynamicSensorHandlesSet(nonDynamicSensorHandles.begin(),
+                                                 nonDynamicSensorHandles.end());
+
+    std::vector<int32_t> sensorHandlesToAttemptToRemove;
+    sensorHandlesToAttemptToRemove.insert(sensorHandlesToAttemptToRemove.end(),
+                                          sensorHandlesToExpect.begin(),
+                                          sensorHandlesToExpect.end());
+    sensorHandlesToAttemptToRemove.insert(sensorHandlesToAttemptToRemove.end(),
+                                          nonDynamicSensorHandles.begin(),
+                                          nonDynamicSensorHandles.end());
+
+    TestSensorsCallback* callback = new TestSensorsCallback();
+    ::android::sp<ISensorsCallback> callbackPtr = callback;
+    proxy.initialize(*eventQueue->getDesc(), *wakeLockQueue->getDesc(), callbackPtr);
+    subHal.addDynamicSensors(sensorsToConnect);
+    subHal.removeDynamicSensors(sensorHandlesToAttemptToRemove);
+
+    std::vector<int32_t> sensorHandlesSeen = callback->getSensorHandlesDisconnected();
+    EXPECT_EQ(kNumSensors, sensorHandlesSeen.size());
+    for (size_t i = 0; i < kNumSensors; i++) {
+        auto sensorHandleSeen = sensorHandlesSeen[i];
+        // Note since only one subhal we do not need to change first byte for expected
+        auto sensorHandleExpected = sensorHandlesToExpect[i];
+        EXPECT_EQ(sensorHandleSeen, sensorHandleExpected);
+        EXPECT_TRUE(nonDynamicSensorHandlesSet.find(sensorHandleSeen) ==
+                    nonDynamicSensorHandlesSet.end());
+    }
+}
+
 // Helper implementations follow
 void testSensorsListFromProxyAndSubHal(const std::vector<SensorInfo>& proxySensorsList,
                                        const std::vector<SensorInfo>& subHalSensorsList) {
@@ -461,6 +582,20 @@ std::vector<Event> makeMultipleAccelerometerEvents(size_t numEvents) {
         events.push_back(makeAccelerometerEvent());
     }
     return events;
+}
+
+void makeSensorsAndSensorHandlesStartingAndOfSize(int32_t start, size_t size,
+                                                  std::vector<SensorInfo>& sensors,
+                                                  std::vector<int32_t>& sensorHandles) {
+    for (int32_t sensorHandle = start; sensorHandle < start + static_cast<int32_t>(size);
+         sensorHandle++) {
+        SensorInfo sensor;
+        // Just set the sensorHandle field to the correct value so as to not have
+        // to compare every field
+        sensor.sensorHandle = sensorHandle;
+        sensors.push_back(sensor);
+        sensorHandles.push_back(sensorHandle);
+    }
 }
 
 }  // namespace

@@ -98,19 +98,19 @@ class SensorsSubHal : public ISensorsSubHal, public ISensorsEventCallback {
      */
     std::map<int32_t, std::shared_ptr<Sensor>> mSensors;
 
-  private:
-    /**
-     * The current operation mode of the multihal framework. Ensures that all subhals are set to
-     * the same operation mode.
-     */
-    OperationMode mCurrentOperationMode = OperationMode::NORMAL;
-
     /**
      * Callback used to communicate to the HalProxy when dynamic sensors are connected /
      * disconnected, sensor events need to be sent to the framework, and when a wakelock should be
      * acquired.
      */
     sp<IHalProxyCallback> mCallback;
+
+  private:
+    /**
+     * The current operation mode of the multihal framework. Ensures that all subhals are set to
+     * the same operation mode.
+     */
+    OperationMode mCurrentOperationMode = OperationMode::NORMAL;
 
     /**
      * The next available sensor handle
@@ -149,6 +149,12 @@ class AllSupportDirectChannelSensorsSubHal : public AllSensorsSubHal {
 class DoesNotSupportDirectChannelSensorsSubHal : public AllSensorsSubHal {
   public:
     Return<void> getSensorsList(getSensorsList_cb _hidl_cb) override;
+};
+
+class AddAndRemoveDynamicSensorsSubHal : public AllSensorsSubHal {
+  public:
+    void addDynamicSensors(const std::vector<SensorInfo>& sensorsAdded);
+    void removeDynamicSensors(const std::vector<int32_t>& sensorHandlesAdded);
 };
 
 }  // namespace implementation

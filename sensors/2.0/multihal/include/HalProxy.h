@@ -176,6 +176,9 @@ class HalProxy : public ISensors, public IScopedWakelockRefCounter {
      */
     std::map<uint32_t, SensorInfo> mSensors;
 
+    //! Map of the dynamic sensors that have been added to halproxy.
+    std::map<uint32_t, SensorInfo> mDynamicSensors;
+
     //! The current operation mode for all subhals.
     OperationMode mCurrentOperationMode = OperationMode::NORMAL;
 
@@ -211,6 +214,9 @@ class HalProxy : public ISensors, public IScopedWakelockRefCounter {
 
     //! The bool indicating whether to end the pending writes background thread or not
     bool mPendingWritesRun = true;
+
+    //! The mutex protecting access to the dynamic sensors added and removed methods.
+    std::mutex mDynamicSensorsMutex;
 
     /**
      * Initialize the list of SubHal objects in mSubHalList by reading from dynamic libraries
@@ -271,6 +277,13 @@ class HalProxy : public ISensors, public IScopedWakelockRefCounter {
      * @return The modified version of the sensor handle.
      */
     static uint32_t clearSubHalIndex(uint32_t sensorHandle);
+
+    /**
+     * @param sensorHandle The sensor handle to modify.
+     *
+     * @return true if subHalIndex byte of sensorHandle is zeroed.
+     */
+    static bool subHalIndexIsClear(uint32_t sensorHandle);
 };
 
 /**
@@ -303,8 +316,6 @@ class HalProxyCallback : public IHalProxyCallback {
 
     std::vector<Event> processEvents(const std::vector<Event>& events,
                                      size_t* numWakeupEvents) const;
-
-    uint32_t setSubHalIndex(uint32_t sensorHandle) const;
 };
 
 }  // namespace implementation
