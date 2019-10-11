@@ -586,3 +586,6 @@ fd65298e1e09e0e3c781ab18305920d757dbe55a3b459ce17814ec5cf6dfee99 android.hardwar
 # HALs released in Android R
 07d0a252b2d8fa35887908a996ba395cf392968395fc30afab791f46e0c22a52 android.hardware.boot@1.1::IBootControl
 74049a402be913963edfdd80828a53736570e9d8124a1bf18166b6ed46a6b0ab android.hardware.boot@1.1::types
+544049dcda3f943ad67d83d5277f06681a3782982a9af5a78b5d4e8d295d061a android.hardware.vibrator@1.4::IVibrator
+5e1c12efbbba89c9143d10b1b90eceff8bc79aa079f5106215b528e104fef101 android.hardware.vibrator@1.4::IVibratorCallback
+033eae03c09ebc75e82db37bc39995dfaa9086745577b44d9e14e9ccb48bd8cc android.hardware.vibrator@1.4::types
