@@ -17,15 +17,32 @@
 package android.hardware.automotive.evs@1.1;
 
 import @1.0::IEvsCameraStream;
+import @1.1::BufferDesc;
+import @1.1::EvsEvent;
 
 /**
  * Implemented on client side to receive asynchronous streaming event deliveries.
  */
 interface IEvsCameraStream extends @1.0::IEvsCameraStream {
+
+    /**
+     * Receives calls from the HAL each time a video frame is ready for inspection.
+     * Buffer handles received by this method must be returned via calls to
+     * IEvsCamera::doneWithFrame_1_1(). When the video stream is stopped via a call
+     * to IEvsCamera::stopVideoStream(), this callback may continue to happen for
+     * some time as the pipeline drains. Each frame must still be returned.
+     * When the last frame in the stream has been delivered, STREAM_STOPPED
+     * event must be delivered.  No further frame deliveries may happen
+     * thereafter.
+     *
+     * @param buffer a buffer descriptor of a delivered image frame.
+     */
+    oneway deliverFrame_1_1(BufferDesc buffer);
+
     /**
      * Receives calls from the HAL each time an event happens.
      *
      * @param  event EVS event with possible event information.
      */
-    oneway notifyEvent(EvsEvent event);
+    oneway notify(EvsEvent event);
 };

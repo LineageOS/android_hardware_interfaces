@@ -26,6 +26,14 @@ import IEvsCameraStream;
  */
 interface IEvsCamera extends @1.0::IEvsCamera {
     /**
+     * Returns the description of this camera.
+     *
+     * @return info The description of this camera.  This must be the same value as
+     *              reported by EvsEnumerator::getCameraList_1_1().
+     */
+    getCameraInfo_1_1() generates (CameraDesc info);
+
+    /**
      * Requests to pause EVS camera stream events.
      *
      * Like stopVideoStream(), events may continue to arrive for some time
@@ -100,7 +108,27 @@ interface IEvsCamera extends @1.0::IEvsCamera {
     unsetMaster() generates (EvsResult result);
 
     /**
-     * Requests to set a camera parameter.
+     * Retrieves a list of parameters this camera supports.
+     *
+     * @return params A list of CameraParam that this camera supports.
+     */
+    getParameterList() generates (vec<CameraParam> params);
+
+    /**
+     * Requests a valid value range of a camera parameter
+     *
+     * @param  id    The identifier of camera parameter, CameraParam enum.
+     *
+     * @return min   The lower bound of valid parameter value range.
+     * @return max   The upper bound of valid parameter value range.
+     * @return step  The resolution of values in valid range.
+     */
+    getIntParameterRange(CameraParam id)
+        generates (int32_t min, int32_t max, int32_t step);
+
+    /**
+     * Requests to set a camera parameter.  Only a request from the master
+     * client will be processed successfully.
      *
      * @param  id             The identifier of camera parameter, CameraParam enum.
      *         value          A desired parameter value.
@@ -114,7 +142,7 @@ interface IEvsCamera extends @1.0::IEvsCamera {
      *                        from what the client gives if, for example, the
      *                        driver does not support a target parameter.
      */
-    setParameter(CameraParam id, int32_t value)
+    setIntParameter(CameraParam id, int32_t value)
         generates (EvsResult result, int32_t effectiveValue);
 
     /**
@@ -126,5 +154,5 @@ interface IEvsCamera extends @1.0::IEvsCamera {
      *                not supported.
      *         value  A value of requested camera parameter.
      */
-    getParameter(CameraParam id) generates(EvsResult result, int32_t value);
+    getIntParameter(CameraParam id) generates(EvsResult result, int32_t value);
 };
