@@ -466,33 +466,54 @@ Result Demux::startSectionFilterHandler(uint32_t filterId) {
 
 Result Demux::startPesFilterHandler(uint32_t filterId) {
     std::lock_guard<std::mutex> lock(mFilterEventLock);
-    DemuxFilterPesEvent pesEvent;
     if (mFilterOutputs[filterId].empty()) {
         return Result::SUCCESS;
     }
 
     for (int i = 0; i < mFilterOutputs[filterId].size(); i += 188) {
-        uint8_t pusi = mFilterOutputs[filterId][i + 1] & 0x40;
-        uint8_t adaptFieldControl = (mFilterOutputs[filterId][i + 3] & 0x30) >> 4;
-        ALOGD("[Demux] pusi %d, adaptFieldControl %d", pusi, adaptFieldControl);
-        if (pusi && (adaptFieldControl == 0x01)) {
-            vector<uint8_t>::const_iterator first = mFilterOutputs[filterId].begin() + i + 4;
-            vector<uint8_t>::const_iterator last = mFilterOutputs[filterId].begin() + i + 187;
-            vector<uint8_t> filterOutData(first, last);
-            if (!writeDataToFilterMQ(filterOutData, filterId)) {
-                mFilterOutputs[filterId].clear();
-                return Result::INVALID_STATE;
+        if (mPesSizeLeft == 0) {
+            uint32_t prefix = (mFilterOutputs[filterId][i + 4] << 16) |
+                              (mFilterOutputs[filterId][i + 5] << 8) |
+                              mFilterOutputs[filterId][i + 6];
+            ALOGD("[Demux] prefix %d", prefix);
+            if (prefix == 0x000001) {
+                // TODO handle mulptiple Pes filters
+                mPesSizeLeft =
+                        (mFilterOutputs[filterId][i + 7] << 8) | mFilterOutputs[filterId][i + 8];
+                ALOGD("[Demux] pes data length %d", mPesSizeLeft);
+            } else {
+                continue;
             }
-            maySendFilterStatusCallback(filterId);
-            pesEvent = {
-                    // temp dump meta data
-                    .streamId = filterOutData[3],
-                    .dataLength = static_cast<uint16_t>(filterOutData.size()),
-            };
-            int size = mFilterEvents[filterId].events.size();
-            mFilterEvents[filterId].events.resize(size + 1);
-            mFilterEvents[filterId].events[size].pes(pesEvent);
         }
+
+        int endPoint = min(184, mPesSizeLeft);
+        // append data and check size
+        vector<uint8_t>::const_iterator first = mFilterOutputs[filterId].begin() + i + 4;
+        vector<uint8_t>::const_iterator last = mFilterOutputs[filterId].begin() + i + 3 + endPoint;
+        mPesOutput.insert(mPesOutput.end(), first, last);
+        // size does not match then continue
+        mPesSizeLeft -= endPoint;
+        if (mPesSizeLeft > 0) {
+            continue;
+        }
+        // size match then create event
+        if (!writeDataToFilterMQ(mPesOutput, filterId)) {
+            mFilterOutputs[filterId].clear();
+            return Result::INVALID_STATE;
+        }
+        maySendFilterStatusCallback(filterId);
+        DemuxFilterPesEvent pesEvent;
+        pesEvent = {
+                // temp dump meta data
+                .streamId = mPesOutput[3],
+                .dataLength = static_cast<uint16_t>(mPesOutput.size()),
+        };
+        ALOGD("[Demux] assembled pes data length %d", pesEvent.dataLength);
+
+        int size = mFilterEvents[filterId].events.size();
+        mFilterEvents[filterId].events.resize(size + 1);
+        mFilterEvents[filterId].events[size].pes(pesEvent);
+        mPesOutput.clear();
     }
 
     mFilterOutputs[filterId].clear();
