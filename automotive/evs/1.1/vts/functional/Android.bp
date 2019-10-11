@@ -23,6 +23,7 @@ cc_test {
     defaults: ["VtsHalTargetTestDefaults"],
     shared_libs: [
         "libui",
+        "libcamera_metadata",
     ],
     static_libs: [
         "android.hardware.automotive.evs@1.0",
@@ -31,6 +32,7 @@ cc_test {
         "android.hardware.graphics.common@1.0",
         "android.hardware.graphics.common@1.1",
         "android.hardware.graphics.common@1.2",
+        "android.hardware.camera.device@3.2",
     ],
     test_suites: ["general-tests"],
     cflags: [

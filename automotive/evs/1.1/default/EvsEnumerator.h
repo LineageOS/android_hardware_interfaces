@@ -17,18 +17,20 @@
 #ifndef ANDROID_HARDWARE_AUTOMOTIVE_EVS_V1_1_EVSCAMERAENUMERATOR_H
 #define ANDROID_HARDWARE_AUTOMOTIVE_EVS_V1_1_EVSCAMERAENUMERATOR_H
 
-#include <android/hardware/automotive/evs/1.0/IEvsEnumerator.h>
+#include <android/hardware/automotive/evs/1.1/IEvsEnumerator.h>
 #include <android/hardware/automotive/evs/1.1/IEvsCamera.h>
 
 #include <list>
 
+#include "ConfigManager.h"
+
 using ::android::hardware::automotive::evs::V1_0::EvsResult;
 using ::android::hardware::automotive::evs::V1_0::IEvsDisplay;
 using ::android::hardware::automotive::evs::V1_0::DisplayState;
-using ::android::hardware::automotive::evs::V1_0::IEvsEnumerator;
 using IEvsCamera_1_0 = ::android::hardware::automotive::evs::V1_0::IEvsCamera;
 using IEvsCamera_1_1 = ::android::hardware::automotive::evs::V1_1::IEvsCamera;
 using CameraDesc_1_0 = ::android::hardware::automotive::evs::V1_0::CameraDesc;
+using CameraDesc_1_1 = ::android::hardware::automotive::evs::V1_1::CameraDesc;
 
 
 namespace android {
@@ -53,6 +55,11 @@ public:
     Return<void>                closeDisplay(const ::android::sp<IEvsDisplay>& display)  override;
     Return<DisplayState>        getDisplayState()  override;
 
+    // Methods from ::android::hardware::automotive::evs::V1_1::IEvsEnumerator follow.
+    Return<void> getCameraList_1_1(getCameraList_1_1_cb _hidl_cb)  override;
+    Return<sp<IEvsCamera_1_1>>  openCamera_1_1(const hidl_string& cameraId,
+                                               const Stream& streamCfg) override;
+
     // Implementation details
     EvsEnumerator();
 
@@ -61,14 +68,20 @@ private:
     //        That is to say, this is effectively a singleton despite the fact that HIDL
     //        constructs a new instance for each client.
     struct CameraRecord {
-        CameraDesc_1_0      desc;
+        CameraDesc_1_1      desc;
         wp<EvsCamera>       activeInstance;
 
-        CameraRecord(const char *cameraId) : desc() { desc.cameraId = cameraId; }
+        CameraRecord(const char *cameraId) : desc() { desc.v1.cameraId = cameraId; }
     };
-    static std::list<CameraRecord> sCameraList;
 
-    static wp<EvsDisplay>          sActiveDisplay; // Weak pointer. Object destructs if client dies.
+    static CameraRecord* findCameraById(const std::string& cameraId);
+
+    static std::list<CameraRecord>   sCameraList;
+
+    // Weak pointer. Object destructs if client dies.
+    static wp<EvsDisplay>            sActiveDisplay;
+
+    static unique_ptr<ConfigManager> sConfigManager;
 };
 
 } // namespace implementation
