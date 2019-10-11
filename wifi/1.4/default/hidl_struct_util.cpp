@@ -2279,6 +2279,8 @@ legacy_hal::wifi_rtt_preamble convertHidlRttPreambleToLegacy(RttPreamble type) {
             return legacy_hal::WIFI_RTT_PREAMBLE_HT;
         case RttPreamble::VHT:
             return legacy_hal::WIFI_RTT_PREAMBLE_VHT;
+        case RttPreamble::HE:
+            return legacy_hal::WIFI_RTT_PREAMBLE_HE;
     };
     CHECK(false);
 }
@@ -2291,6 +2293,8 @@ RttPreamble convertLegacyRttPreambleToHidl(legacy_hal::wifi_rtt_preamble type) {
             return RttPreamble::HT;
         case legacy_hal::WIFI_RTT_PREAMBLE_VHT:
             return RttPreamble::VHT;
+        case legacy_hal::WIFI_RTT_PREAMBLE_HE:
+            return RttPreamble::HE;
     };
     CHECK(false) << "Unknown legacy type: " << type;
 }
@@ -2354,6 +2358,8 @@ WifiRatePreamble convertLegacyWifiRatePreambleToHidl(uint8_t preamble) {
             return WifiRatePreamble::HT;
         case 3:
             return WifiRatePreamble::VHT;
+        case 4:
+            return WifiRatePreamble::HE;
         default:
             return WifiRatePreamble::RESERVED;
     };
@@ -2579,9 +2585,10 @@ bool convertLegacyRttCapabilitiesToHidl(
     hidl_capabilities->responderSupported =
         legacy_capabilities.responder_supported;
     hidl_capabilities->preambleSupport = 0;
-    for (const auto flag : {legacy_hal::WIFI_RTT_PREAMBLE_LEGACY,
-                            legacy_hal::WIFI_RTT_PREAMBLE_HT,
-                            legacy_hal::WIFI_RTT_PREAMBLE_VHT}) {
+    for (const auto flag :
+         {legacy_hal::WIFI_RTT_PREAMBLE_LEGACY,
+          legacy_hal::WIFI_RTT_PREAMBLE_HT, legacy_hal::WIFI_RTT_PREAMBLE_VHT,
+          legacy_hal::WIFI_RTT_PREAMBLE_HE}) {
         if (legacy_capabilities.preamble_support & flag) {
             hidl_capabilities->preambleSupport |=
                 static_cast<std::underlying_type<RttPreamble>::type>(
