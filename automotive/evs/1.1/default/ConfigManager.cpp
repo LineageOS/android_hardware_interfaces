@@ -321,22 +321,22 @@ bool ConfigManager::constructCameraMetadata(unique_ptr<CameraInfo> &aCamera,
 
             /* may exceed preallocated capacity */
             ALOGE("Camera metadata has %ld / %ld entries and %ld / %ld bytes are filled",
-                  get_camera_metadata_entry_count(aCamera->characteristics),
-                  get_camera_metadata_entry_capacity(aCamera->characteristics),
-                  get_camera_metadata_data_count(aCamera->characteristics),
-                  get_camera_metadata_data_capacity(aCamera->characteristics));
+                  (long)get_camera_metadata_entry_count(aCamera->characteristics),
+                  (long)get_camera_metadata_entry_capacity(aCamera->characteristics),
+                  (long)get_camera_metadata_data_count(aCamera->characteristics),
+                  (long)get_camera_metadata_data_capacity(aCamera->characteristics));
             ALOGE("\tCurrent metadata entry requires %ld bytes",
-                  calculate_camera_metadata_entry_data_size(tag, entry.second));
+                  (long)calculate_camera_metadata_entry_data_size(tag, entry.second));
 
             success = false;
         }
     }
 
     ALOGV("Camera metadata has %ld / %ld entries and %ld / %ld bytes are filled",
-          get_camera_metadata_entry_count(aCamera->characteristics),
-          get_camera_metadata_entry_capacity(aCamera->characteristics),
-          get_camera_metadata_data_count(aCamera->characteristics),
-          get_camera_metadata_data_capacity(aCamera->characteristics));
+          (long)get_camera_metadata_entry_count(aCamera->characteristics),
+          (long)get_camera_metadata_entry_capacity(aCamera->characteristics),
+          (long)get_camera_metadata_data_count(aCamera->characteristics),
+          (long)get_camera_metadata_data_capacity(aCamera->characteristics));
 
     return success;
 }
