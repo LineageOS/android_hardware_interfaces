@@ -14,20 +14,15 @@
 // limitations under the License.
 //
 
-// SoftAP-specific tests, similar to VtsHalWifiApV1_0TargetTest.
 cc_test {
-    name: "VtsHalWifiApV1_4TargetTest",
+    name: "VtsHalBootV1_1TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
-    srcs: [
-        "VtsHalWifiV1_4TargetTest.cpp",
-        "wifi_ap_iface_hidl_test.cpp",
-    ],
+    srcs: ["VtsHalBootV1_1TargetTest.cpp"],
     static_libs: [
-        "VtsHalWifiV1_0TargetTestUtil",
-        "android.hardware.wifi@1.0",
-        "android.hardware.wifi@1.1",
-        "android.hardware.wifi@1.2",
-        "android.hardware.wifi@1.3",
-        "android.hardware.wifi@1.4",
+        "android.hardware.boot@1.0",
+        "android.hardware.boot@1.1",
+        "libgmock",
     ],
+    test_suites: ["device-tests"],
 }
+

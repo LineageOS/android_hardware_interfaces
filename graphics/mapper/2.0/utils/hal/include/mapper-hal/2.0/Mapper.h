@@ -80,17 +80,21 @@ class MapperImpl : public Interface {
     }
 
     Return<Error> freeBuffer(void* buffer) override {
-        native_handle_t* bufferHandle = removeImportedBuffer(buffer);
+        native_handle_t* bufferHandle = getImportedBuffer(buffer);
         if (!bufferHandle) {
             return Error::BAD_BUFFER;
         }
 
-        return mHal->freeBuffer(bufferHandle);
+        Error error = mHal->freeBuffer(bufferHandle);
+        if (error == Error::NONE) {
+            removeImportedBuffer(buffer);
+        }
+        return error;
     }
 
     Return<void> lock(void* buffer, uint64_t cpuUsage, const V2_0::IMapper::Rect& accessRegion,
                       const hidl_handle& acquireFence, IMapper::lock_cb hidl_cb) override {
-        const native_handle_t* bufferHandle = getImportedBuffer(buffer);
+        const native_handle_t* bufferHandle = getConstImportedBuffer(buffer);
         if (!bufferHandle) {
             hidl_cb(Error::BAD_BUFFER, nullptr);
             return Void();
@@ -112,7 +116,7 @@ class MapperImpl : public Interface {
     Return<void> lockYCbCr(void* buffer, uint64_t cpuUsage, const V2_0::IMapper::Rect& accessRegion,
                            const hidl_handle& acquireFence,
                            IMapper::lockYCbCr_cb hidl_cb) override {
-        const native_handle_t* bufferHandle = getImportedBuffer(buffer);
+        const native_handle_t* bufferHandle = getConstImportedBuffer(buffer);
         if (!bufferHandle) {
             hidl_cb(Error::BAD_BUFFER, YCbCrLayout{});
             return Void();
@@ -132,7 +136,7 @@ class MapperImpl : public Interface {
     }
 
     Return<void> unlock(void* buffer, IMapper::unlock_cb hidl_cb) override {
-        const native_handle_t* bufferHandle = getImportedBuffer(buffer);
+        const native_handle_t* bufferHandle = getConstImportedBuffer(buffer);
         if (!bufferHandle) {
             hidl_cb(Error::BAD_BUFFER, nullptr);
             return Void();
@@ -160,7 +164,11 @@ class MapperImpl : public Interface {
         return static_cast<native_handle_t*>(buffer);
     }
 
-    virtual const native_handle_t* getImportedBuffer(void* buffer) const {
+    virtual native_handle_t* getImportedBuffer(void* buffer) const {
+        return static_cast<native_handle_t*>(buffer);
+    }
+
+    virtual const native_handle_t* getConstImportedBuffer(void* buffer) const {
         return static_cast<const native_handle_t*>(buffer);
     }
 
