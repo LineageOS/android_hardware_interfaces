@@ -40,28 +40,21 @@ const char EvsCamera::kCameraName_Backup[] = "backup";
 const unsigned MAX_BUFFERS_IN_FLIGHT = 100;
 
 
-EvsCamera::EvsCamera(const char *id) :
+EvsCamera::EvsCamera(const char *id,
+                     unique_ptr<ConfigManager::CameraInfo> &camInfo) :
         mFramesAllowed(0),
         mFramesInUse(0),
-        mStreamState(STOPPED) {
+        mStreamState(STOPPED),
+        mCameraInfo(camInfo) {
 
     ALOGD("EvsCamera instantiated");
 
-    mDescription.cameraId = id;
+    /* set a camera id */
+    mDescription.v1.cameraId = id;
 
-    // Set up dummy data for testing
-    if (mDescription.cameraId == kCameraName_Backup) {
-        mWidth  = 640;          // full NTSC/VGA
-        mHeight = 480;          // full NTSC/VGA
-        mDescription.vendorFlags = 0xFFFFFFFF;   // Arbitrary value
-    } else {
-        mWidth  = 320;          // 1/2 NTSC/VGA
-        mHeight = 240;          // 1/2 NTSC/VGA
-    }
-
-    mFormat = HAL_PIXEL_FORMAT_RGBA_8888;
-    mUsage  = GRALLOC_USAGE_HW_TEXTURE | GRALLOC_USAGE_HW_CAMERA_WRITE |
-              GRALLOC_USAGE_SW_READ_RARELY | GRALLOC_USAGE_SW_WRITE_RARELY;
+    /* set camera metadata */
+    mDescription.metadata.setToExternal((uint8_t *)camInfo->characteristics,
+                                        get_camera_metadata_size(camInfo->characteristics));
 }
 
 
@@ -109,7 +102,7 @@ Return<void> EvsCamera::getCameraInfo(getCameraInfo_cb _hidl_cb) {
     ALOGD("getCameraInfo");
 
     // Send back our self description
-    _hidl_cb(mDescription);
+    _hidl_cb(mDescription.v1);
     return Void();
 }
 
@@ -194,7 +187,7 @@ Return<void> EvsCamera::stopVideoStream()  {
 
         // Block outside the mutex until the "stop" flag has been acknowledged
         // We won't send any more frames, but the client might still get some already in flight
-        ALOGD("Waiting for stream thread to end..");
+        ALOGD("Waiting for stream thread to end...");
         lock.unlock();
         mCaptureThread.join();
         lock.lock();
@@ -238,6 +231,15 @@ Return<EvsResult> EvsCamera::setExtendedInfo(uint32_t /*opaqueIdentifier*/, int3
 
 
 // Methods from ::android::hardware::automotive::evs::V1_1::IEvsCamera follow.
+Return<void> EvsCamera::getCameraInfo_1_1(getCameraInfo_1_1_cb _hidl_cb) {
+    ALOGD("getCameraInfo_1_1");
+
+    // Send back our self description
+    _hidl_cb(mDescription);
+    return Void();
+}
+
+
 Return<EvsResult> EvsCamera::doneWithFrame_1_1(const BufferDesc_1_1& bufDesc)  {
     std::lock_guard <std::mutex> lock(mAccessLock);
     returnBuffer(bufDesc.bufferId, bufDesc.buffer.nativeHandle);
@@ -278,8 +280,29 @@ Return<EvsResult> EvsCamera::unsetMaster() {
 }
 
 
-Return<void> EvsCamera::setParameter(CameraParam id, int32_t value,
-                                     setParameter_cb _hidl_cb) {
+Return<void> EvsCamera::getParameterList(getParameterList_cb _hidl_cb) {
+    hidl_vec<CameraParam> hidlCtrls;
+    hidlCtrls.resize(mCameraInfo->controls.size());
+    unsigned idx = 0;
+    for (auto& [cid, cfg] : mCameraInfo->controls) {
+        hidlCtrls[idx++] = cid;
+    }
+
+    _hidl_cb(hidlCtrls);
+    return Void();
+}
+
+
+Return<void> EvsCamera::getIntParameterRange(CameraParam id,
+                                             getIntParameterRange_cb _hidl_cb) {
+    auto range = mCameraInfo->controls[id];
+    _hidl_cb(get<0>(range), get<1>(range), get<2>(range));
+    return Void();
+}
+
+
+Return<void> EvsCamera::setIntParameter(CameraParam id, int32_t value,
+                                        setIntParameter_cb _hidl_cb) {
     // Default implementation does not support this.
     (void)id;
     (void)value;
@@ -288,7 +311,8 @@ Return<void> EvsCamera::setParameter(CameraParam id, int32_t value,
 }
 
 
-Return<void> EvsCamera::getParameter(CameraParam id, getParameter_cb _hidl_cb) {
+Return<void> EvsCamera::getIntParameter(CameraParam id,
+                                        getIntParameter_cb _hidl_cb) {
     // Default implementation does not support this.
     (void)id;
     _hidl_cb(EvsResult::INVALID_ARG, 0);
@@ -471,9 +495,7 @@ void EvsCamera::generateFrames() {
             fillTestFrame(newBuffer);
 
             // Issue the (asynchronous) callback to the client -- can't be holding the lock
-            EvsEvent event;
-            event.buffer(newBuffer);
-            auto result = mStream->notifyEvent(event);
+            auto result = mStream->deliverFrame_1_1(newBuffer);
             if (result.isOk()) {
                 ALOGD("Delivered %p as id %d",
                       newBuffer.buffer.nativeHandle.getNativeHandle(), newBuffer.bufferId);
@@ -506,10 +528,8 @@ void EvsCamera::generateFrames() {
 
     // If we've been asked to stop, send an event to signal the actual end of stream
     EvsEvent event;
-    InfoEventDesc desc = {};
-    desc.aType = InfoEventType::STREAM_STOPPED;
-    event.info(desc);
-    auto result = mStream->notifyEvent(event);
+    event.aType = EvsEventType::STREAM_STOPPED;
+    auto result = mStream->notify(event);
     if (!result.isOk()) {
         ALOGE("Error delivering end of stream marker");
     }
@@ -613,6 +633,38 @@ void EvsCamera::returnBuffer(const uint32_t bufferId, const buffer_handle_t memH
             }
         }
     }
+}
+
+
+sp<EvsCamera> EvsCamera::Create(const char *deviceName) {
+    unique_ptr<ConfigManager::CameraInfo> nullCamInfo = nullptr;
+
+    return Create(deviceName, nullCamInfo);
+}
+
+
+sp<EvsCamera> EvsCamera::Create(const char *deviceName,
+                                unique_ptr<ConfigManager::CameraInfo> &camInfo,
+                                const Stream *streamCfg) {
+    sp<EvsCamera> evsCamera = new EvsCamera(deviceName, camInfo);
+    if (evsCamera == nullptr) {
+        return nullptr;
+    }
+
+    /* default implementation does not use a given configuration */
+    (void)streamCfg;
+
+    /* Use the first resolution from the list for the testing */
+    auto it = camInfo->streamConfigurations.begin();
+    evsCamera->mWidth = it->second[1];
+    evsCamera->mHeight = it->second[2];
+    evsCamera->mDescription.v1.vendorFlags = 0xFFFFFFFF; // Arbitrary test value
+
+    evsCamera->mFormat = HAL_PIXEL_FORMAT_RGBA_8888;
+    evsCamera->mUsage  = GRALLOC_USAGE_HW_TEXTURE | GRALLOC_USAGE_HW_CAMERA_WRITE |
+                         GRALLOC_USAGE_SW_READ_RARELY | GRALLOC_USAGE_SW_WRITE_RARELY;
+
+    return evsCamera;
 }
 
 
