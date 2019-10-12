@@ -21,6 +21,22 @@ import @1.0::DisplayDesc;
 import @1.0::DisplayState;
 import @1.0::EvsResult;
 import android.hardware.graphics.common@1.2::HardwareBuffer;
+import android.hardware.camera.device@3.2::CameraMetadata;
+
+/**
+ * Structure describing the basic properties of an EVS camera, extended from its
+ * v1.0 declaration.
+ *
+ * The HAL is responsible for filling out this structure for each
+ * EVS camera in the system.
+ */
+struct CameraDesc {
+    @1.0::CameraDesc v1;
+    /**
+     * Store camera metadata such as lens characteristics.
+     */
+    CameraMetadata metadata;
+};
 
 /**
  * Structure representing an image buffer through our APIs
@@ -50,7 +66,7 @@ struct BufferDesc {
 /**
  * Types of informative streaming events
  */
-enum InfoEventType : uint32_t {
+enum EvsEventType : uint32_t {
     /**
      * Video stream is started
      */
@@ -81,29 +97,15 @@ enum InfoEventType : uint32_t {
 /**
  * Structure that describes informative events occurred during EVS is streaming
  */
-struct InfoEventDesc {
+struct EvsEvent {
     /**
      * Type of an informative event
      */
-    InfoEventType aType;
+    EvsEventType aType;
     /**
      * Possible additional information
      */
     uint32_t[4] payload;
-};
-
-/**
- * EVS event definition
- */
-safe_union EvsEvent {
-    /**
-     * A buffer descriptor of an image frame
-     */
-    BufferDesc buffer;
-    /**
-     * General streaming events
-     */
-    InfoEventDesc info;
 };
 
 /**
@@ -127,14 +129,6 @@ enum CameraParam : uint32_t {
      */
     GAIN,
     /**
-     * Mirror the image horizontally
-     */
-    HFLIP,
-    /**
-     * Mirror the image vertically
-     */
-    VFLIP,
-    /**
      * Automatic Whitebalance
      */
     AUTO_WHITE_BALANCE,
@@ -155,11 +149,6 @@ enum CameraParam : uint32_t {
      * Manual exposure time of the camera
      */
     ABSOLUTE_EXPOSURE,
-    /**
-     * When AEC is running in either auto or aperture priority, this parameter
-     * sets whether a frame rate varies.
-     */
-    AUTO_EXPOSURE_PRIORITY,
     /**
      * Set the focal point of the camera to the specified position.  This
      * parameter may not be effective when auto focus is enabled.
