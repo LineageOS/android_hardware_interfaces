@@ -114,6 +114,27 @@ inline ::testing::AssertionResult assertOk(const char* expr, const Return<Result
 #define ASSERT_RESULT(expected, ret) ASSERT_PRED_FORMAT2(detail::assertResult, expected, ret)
 #define EXPECT_RESULT(expected, ret) EXPECT_PRED_FORMAT2(detail::assertResult, expected, ret)
 
+/** Unpack the provided result.
+ * If the result is not OK, register a failure and return the default initializer value. */
+template <class R>
+static R extract(const Return<R>& ret) {
+    if (!ret.isOk()) {
+        EXPECT_IS_OK(ret);
+        return R{};
+    }
+    return ret;
+}
+
+template <class Result, class Value>
+static void expectValueOrFailure(Result res, Value expectedValue, Value actualValue,
+                                 Result expectedFailure) {
+    if (res == Result::OK) {
+        ASSERT_EQ(expectedValue, actualValue);
+    } else {
+        ASSERT_EQ(expectedFailure, res) << "Unexpected result " << toString(res);
+    }
+}
+
 }  // namespace utility
 }  // namespace test
 }  // namespace common
