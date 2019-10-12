@@ -81,3 +81,6 @@ $(call add-clean-step, rm -rf $(PRODUCT_OUT)/system/lib64/android.hardware.confi
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/system/lib/vndk-Q/android.hardware.configstore@1.2.so)
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/system/lib/android.hardware.configstore@1.2.so)
 $(call add-clean-step, rm -f $(PRODUCT_OUT)/etc/init/android.hardware.audio@2.0-service.rc $(PRODUCT_OUT)/vendor/bin/hw/android.hardware.audio@2.0-service)
+$(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/bin/hw/android.hardware.cas@1.1*)
+$(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/etc/init/android.hardware.cas@1.1*)
+$(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/etc/vintf/manifest/android.hardware.cas@1.1*)

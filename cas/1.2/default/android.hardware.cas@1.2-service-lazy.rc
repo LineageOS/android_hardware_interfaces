@@ -1,0 +1,11 @@
+service vendor.cas-hal-1-2 /vendor/bin/hw/android.hardware.cas@1.2-service-lazy
+    interface android.hardware.cas@1.0::IMediaCasService default
+    interface android.hardware.cas@1.1::IMediaCasService default
+    interface android.hardware.cas@1.2::IMediaCasService default
+    oneshot
+    disabled
+    class hal
+    user media
+    group mediadrm drmrpc
+    ioprio rt 4
+    writepid /dev/cpuset/foreground/tasks
