@@ -15,11 +15,11 @@
  */
 #define LOG_TAG "android.hardware.boot@1.1-service"
 
-#include <android/hardware/boot/1.1/IBootControl.h>
+#include <android/hardware/boot/1.0/IBootControl.h>
 #include <hidl/LegacySupport.h>
 
 using android::hardware::defaultPassthroughServiceImplementation;
-using ::android::hardware::boot::V1_1::IBootControl;
+using ::android::hardware::boot::V1_0::IBootControl;
 
 int main(int /* argc */, char* /* argv */[]) {
     return defaultPassthroughServiceImplementation<IBootControl>();
