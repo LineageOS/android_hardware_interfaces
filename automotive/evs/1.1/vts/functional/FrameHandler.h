@@ -33,7 +33,6 @@ using ::android::hardware::hidl_handle;
 using ::android::sp;
 using ::android::hardware::automotive::evs::V1_0::IEvsDisplay;
 using ::android::hardware::automotive::evs::V1_0::EvsResult;
-using ::android::hardware::automotive::evs::V1_0::CameraDesc;
 using BufferDesc_1_0 = ::android::hardware::automotive::evs::V1_0::BufferDesc;
 using BufferDesc_1_1 = ::android::hardware::automotive::evs::V1_1::BufferDesc;
 
@@ -56,6 +55,13 @@ public:
     FrameHandler(android::sp <IEvsCamera> pCamera, CameraDesc cameraInfo,
                  android::sp <IEvsDisplay> pDisplay = nullptr,
                  BufferControlFlag mode = eAutoReturn);
+    virtual ~FrameHandler() {
+        if (mCamera != nullptr) {
+            /* shutdown a camera explicitly */
+            shutdown();
+        }
+    }
+
     void shutdown();
 
     bool startStream();
@@ -67,19 +73,22 @@ public:
     bool isRunning();
 
     void waitForFrameCount(unsigned frameCount);
-    bool waitForEvent(const InfoEventType aTargetEvent,
-                            InfoEventDesc &eventDesc);
+    bool waitForEvent(const EvsEventType aTargetEvent,
+                            EvsEvent &eventDesc);
     void getFramesCounters(unsigned* received, unsigned* displayed);
     void getFrameDimension(unsigned* width, unsigned* height);
 
 private:
-    // Implementation for ::android::hardware::automotive::evs::V1_1::IEvsCameraStream
+    // Implementation for ::android::hardware::automotive::evs::V1_0::IEvsCameraStream
     Return<void> deliverFrame(const BufferDesc_1_0& buffer) override;
-    Return<void> notifyEvent(const EvsEvent& event) override;
+
+    // Implementation for ::android::hardware::automotive::evs::V1_1::IEvsCameraStream
+    Return<void> deliverFrame_1_1(const BufferDesc_1_1& buffer) override;
+    Return<void> notify(const EvsEvent& event) override;
 
     // Local implementation details
     bool copyBufferContents(const BufferDesc_1_0& tgtBuffer, const BufferDesc_1_1& srcBuffer);
-    const char *eventToString(const InfoEventType aType);
+    const char *eventToString(const EvsEventType aType);
 
     // Values initialized as startup
     android::sp <IEvsCamera>    mCamera;
@@ -100,7 +109,7 @@ private:
     unsigned                    mFramesDisplayed = 0;   // Simple counter -- rolls over eventually!
     unsigned                    mFrameWidth = 0;
     unsigned                    mFrameHeight = 0;
-    InfoEventDesc               mLatestEventDesc;
+    EvsEvent                    mLatestEventDesc;
 };
 
 

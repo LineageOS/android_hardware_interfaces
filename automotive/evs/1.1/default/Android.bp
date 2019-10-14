@@ -7,25 +7,41 @@ cc_binary {
         "service.cpp",
         "EvsCamera.cpp",
         "EvsEnumerator.cpp",
-        "EvsDisplay.cpp"
+        "EvsDisplay.cpp",
+        "ConfigManager.cpp",
+        "ConfigManagerUtil.cpp",
     ],
     init_rc: ["android.hardware.automotive.evs@1.1-service.rc"],
 
     shared_libs: [
         "android.hardware.automotive.evs@1.0",
         "android.hardware.automotive.evs@1.1",
+        "android.hardware.camera.device@3.2",
         "libbase",
         "libbinder",
-        "libcutils",
+        "liblog",
         "libhardware",
         "libhidlbase",
         "liblog",
         "libui",
         "libutils",
+        "libcamera_metadata",
+        "libtinyxml2",
     ],
 
     cflags: [
         "-O0",
         "-g",
     ],
+
+    required: [
+        "evs_default_configuration.xml",
+    ],
+}
+
+prebuilt_etc {
+    name: "evs_default_configuration.xml",
+
+    src: "resources/evs_default_configuration.xml",
+    sub_dir: "automotive/evs",
 }
