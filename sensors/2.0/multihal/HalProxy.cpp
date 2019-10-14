@@ -65,15 +65,7 @@ HalProxy::HalProxy(std::vector<ISensorsSubHal*>& subHalList) : mSubHalList(subHa
 }
 
 HalProxy::~HalProxy() {
-    mThreadsRun.store(false);
-    mWakelockCV.notify_one();
-    mEventQueueWriteCV.notify_one();
-    if (mPendingWritesThread.joinable()) {
-        mPendingWritesThread.join();
-    }
-    if (mWakelockThread.joinable()) {
-        mWakelockThread.join();
-    }
+    stopThreads();
 }
 
 Return<void> HalProxy::getSensorsList(getSensorsList_cb _hidl_cb) {
@@ -119,8 +111,18 @@ Return<Result> HalProxy::initialize(
         const sp<ISensorsCallback>& sensorsCallback) {
     Result result = Result::OK;
 
-    // TODO: clean up sensor requests, if not already done elsewhere through a death recipient, and
-    // clean up any other resources that exist (FMQs, flags, threads, etc.)
+    stopThreads();
+    resetSharedWakelock();
+
+    // So that the pending write events queue can be cleared safely and when we start threads
+    // again we do not get new events until after initialize resets the subhals.
+    disableAllSensors();
+
+    // Clears the queue if any events were pending write before.
+    mPendingWriteEventsQueue = std::queue<std::pair<std::vector<Event>, size_t>>();
+
+    // Clears previously connected dynamic sensors
+    mDynamicSensors.clear();
 
     mDynamicSensorsCallback = sensorsCallback;
 
@@ -128,20 +130,28 @@ Return<Result> HalProxy::initialize(
     mEventQueue =
             std::make_unique<EventMessageQueue>(eventQueueDescriptor, true /* resetPointers */);
 
-    // Create the EventFlag that is used to signal to the framework that sensor events have been
-    // written to the Event FMQ
-    if (EventFlag::createEventFlag(mEventQueue->getEventFlagWord(), &mEventQueueFlag) != OK) {
-        result = Result::BAD_VALUE;
-    }
-
     // Create the Wake Lock FMQ that is used by the framework to communicate whenever WAKE_UP
     // events have been successfully read and handled by the framework.
     mWakeLockQueue =
             std::make_unique<WakeLockMessageQueue>(wakeLockDescriptor, true /* resetPointers */);
 
+    if (mEventQueueFlag != nullptr) {
+        EventFlag::deleteEventFlag(&mEventQueueFlag);
+    }
+    if (mWakelockQueueFlag != nullptr) {
+        EventFlag::deleteEventFlag(&mWakelockQueueFlag);
+    }
+    if (EventFlag::createEventFlag(mEventQueue->getEventFlagWord(), &mEventQueueFlag) != OK) {
+        result = Result::BAD_VALUE;
+    }
+    if (EventFlag::createEventFlag(mWakeLockQueue->getEventFlagWord(), &mWakelockQueueFlag) != OK) {
+        result = Result::BAD_VALUE;
+    }
     if (!mDynamicSensorsCallback || !mEventQueue || !mWakeLockQueue || mEventQueueFlag == nullptr) {
         result = Result::BAD_VALUE;
     }
+
+    mThreadsRun.store(true);
 
     mPendingWritesThread = std::thread(startPendingWritesThread, this);
     mWakelockThread = std::thread(startWakelockThread, this);
@@ -156,6 +166,8 @@ Return<Result> HalProxy::initialize(
             break;
         }
     }
+
+    mCurrentOperationMode = OperationMode::NORMAL;
 
     return result;
 }
@@ -331,6 +343,41 @@ void HalProxy::init() {
     initializeSensorList();
 }
 
+void HalProxy::stopThreads() {
+    mThreadsRun.store(false);
+    if (mEventQueueFlag != nullptr && mEventQueue != nullptr) {
+        size_t numToRead = mEventQueue->availableToRead();
+        std::vector<Event> events(numToRead);
+        mEventQueue->read(events.data(), numToRead);
+        mEventQueueFlag->wake(static_cast<uint32_t>(EventQueueFlagBits::EVENTS_READ));
+    }
+    if (mWakelockQueueFlag != nullptr && mWakeLockQueue != nullptr) {
+        uint32_t kZero = 0;
+        mWakeLockQueue->write(&kZero);
+        mWakelockQueueFlag->wake(static_cast<uint32_t>(WakeLockQueueFlagBits::DATA_WRITTEN));
+    }
+    mWakelockCV.notify_one();
+    mEventQueueWriteCV.notify_one();
+    if (mPendingWritesThread.joinable()) {
+        mPendingWritesThread.join();
+    }
+    if (mWakelockThread.joinable()) {
+        mWakelockThread.join();
+    }
+}
+
+void HalProxy::disableAllSensors() {
+    for (const auto& sensorEntry : mSensors) {
+        int32_t sensorHandle = sensorEntry.first;
+        activate(sensorHandle, false /* enabled */);
+    }
+    std::lock_guard<std::mutex> dynamicSensorsLock(mDynamicSensorsMutex);
+    for (const auto& sensorEntry : mDynamicSensors) {
+        int32_t sensorHandle = sensorEntry.first;
+        activate(sensorHandle, false /* enabled */);
+    }
+}
+
 void HalProxy::startPendingWritesThread(HalProxy* halProxy) {
     halProxy->handlePendingWrites();
 }
@@ -347,8 +394,6 @@ void HalProxy::handlePendingWrites() {
             size_t eventQueueSize = mEventQueue->getQuantumCount();
             size_t numToWrite = std::min(pendingWriteEvents.size(), eventQueueSize);
             lock.unlock();
-            // TODO: Find a way to interrup writeBlocking if the thread should exit
-            // so we don't have to wait for timeout on framework restarts.
             if (!mEventQueue->writeBlocking(
                         pendingWriteEvents.data(), numToWrite,
                         static_cast<uint32_t>(EventQueueFlagBits::EVENTS_READ),
