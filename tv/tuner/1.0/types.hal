@@ -17,6 +17,7 @@
 package android.hardware.tv.tuner@1.0;
 
 import android.hidl.safe_union@1.0;
+import android.hidl.safe_union@1.0::Monostate;
 
 @export
 enum Result : int32_t {
@@ -41,9 +42,13 @@ typedef uint32_t FrontendId;
 enum FrontendType : uint32_t {
     UNDEFINED = 0,
     ANALOG,
-    /* Advanced Television Systems Committee (ATSC) Standard A/72. */
+    /**
+     * Advanced Television Systems Committee (ATSC) Standard A/72.
+     */
     ATSC,
-    /* Advanced Television Systems Committee (ATSC 3.0) Standard A/300. */
+    /**
+     * Advanced Television Systems Committee (ATSC 3.0) Standard A/300.
+     */
     ATSC3,
     /**
      * Digital Video Broadcasting - Cable
@@ -62,15 +67,18 @@ enum FrontendType : uint32_t {
      * ETSI EN 302 755 V1.4.1.
      */
     DVBT,
-    /* Integrated Services Digital Broadcasting-Satellite (ISDB-S)
+    /**
+     * Integrated Services Digital Broadcasting-Satellite (ISDB-S)
      * ARIB STD-B20 is technical document of ISDB-S.
      */
     ISDBS,
-    /* Integrated Services Digital Broadcasting-Satellite (ISDB-S)
+    /**
+     * Integrated Services Digital Broadcasting-Satellite (ISDB-S)
      * ARIB STD-B44 is technical document of ISDB-S3.
      */
     ISDBS3,
-    /* Integrated Services Digital Broadcasting-Terrestrial (ISDB-T or SBTVD)
+    /**
+     * Integrated Services Digital Broadcasting-Terrestrial (ISDB-T or SBTVD)
      * ABNT NBR 15603 is technical document of ISDB-T.
      */
     ISDBT,
@@ -82,79 +90,153 @@ enum FrontendType : uint32_t {
  */
 @export
 enum FrontendInnerFec : uint64_t {
-    /* Not defined */
+    /**
+     * Not defined
+     */
     FEC_UNDEFINED = 0,
-    /* hardware is able to detect and set FEC automatically */
+    /**
+     * hardware is able to detect and set FEC automatically
+     */
     AUTO = 1 << 0,
-    /* 1/2 conv. code rate */
+    /**
+     * 1/2 conv. code rate
+     */
     FEC_1_2 = 1 << 1,
-    /* 1/3 conv. code rate */
+    /**
+     * 1/3 conv. code rate
+     */
     FEC_1_3 = 1 << 2,
-    /* 1/4 conv. code rate */
+    /**
+     * 1/4 conv. code rate
+     */
     FEC_1_4 = 1 << 3,
-    /* 1/5 conv. code rate */
+    /**
+     * 1/5 conv. code rate
+     */
     FEC_1_5 = 1 << 4,
-    /* 2/3 conv. code rate */
+    /**
+     * 2/3 conv. code rate
+     */
     FEC_2_3 = 1 << 5,
-    /* 2/5 conv. code rate */
+    /**
+     * 2/5 conv. code rate
+     */
     FEC_2_5 = 1 << 6,
-    /* 2/9 conv. code rate */
+    /**
+     * 2/9 conv. code rate
+     */
     FEC_2_9 = 1 << 7,
-    /* 3/4 conv. code rate */
+    /**
+     * 3/4 conv. code rate
+     */
     FEC_3_4 = 1 << 8,
-    /* 3/5 conv. code rate */
+    /**
+     * 3/5 conv. code rate
+     */
     FEC_3_5 = 1 << 9,
-    /* 4/5 conv. code rate */
+    /**
+     * 4/5 conv. code rate
+     */
     FEC_4_5 = 1 << 10,
-    /* 4/15 conv. code rate */
+    /**
+     * 4/15 conv. code rate
+     */
     FEC_4_15 = 1 << 11,
-    /* 5/6 conv. code rate */
+    /**
+     * 5/6 conv. code rate
+     */
     FEC_5_6 = 1 << 12,
-    /* 5/9 conv. code rate */
+    /**
+     * 5/9 conv. code rate
+     */
     FEC_5_9 = 1 << 13,
-    /* 6/7 conv. code rate */
+    /**
+     * 6/7 conv. code rate
+     */
     FEC_6_7 = 1 << 14,
-    /* 7/8 conv. code rate */
+    /**
+     * 7/8 conv. code rate
+     */
     FEC_7_8 = 1 << 15,
-    /* 7/9 conv. code rate */
+    /**
+     * 7/9 conv. code rate
+     */
     FEC_7_9 = 1 << 16,
-    /* 7/15 conv. code rate */
+    /**
+     * 7/15 conv. code rate
+     */
     FEC_7_15 = 1 << 17,
-    /* 8/9 conv. code rate */
+    /**
+     * 8/9 conv. code rate
+     */
     FEC_8_9 = 1 << 18,
-    /* 8/15 conv. code rate */
+    /**
+     * 8/15 conv. code rate
+     */
     FEC_8_15 = 1 << 19,
-    /* 9/10 conv. code rate */
+    /**
+     * 9/10 conv. code rate
+     */
     FEC_9_10 = 1 << 20,
-    /* 9/20 conv. code rate */
+    /**
+     * 9/20 conv. code rate
+     */
     FEC_9_20 = 1 << 21,
-    /* 11/15 conv. code rate */
+    /**
+     * 11/15 conv. code rate
+     */
     FEC_11_15 = 1 << 22,
-    /* 11/20 conv. code rate */
+    /**
+     * 11/20 conv. code rate
+     */
     FEC_11_20 = 1 << 23,
-    /* 11/45 conv. code rate */
+    /**
+     * 11/45 conv. code rate
+     */
     FEC_11_45 = 1 << 24,
-    /* 13/18 conv. code rate */
+    /**
+     * 13/18 conv. code rate
+     */
     FEC_13_18 = 1 << 25,
-    /* 13/45 conv. code rate */
+    /**
+     * 13/45 conv. code rate
+     */
     FEC_13_45 = 1 << 26,
-    /* 14/45 conv. code rate */
+    /**
+     * 14/45 conv. code rate
+     */
     FEC_14_45 = 1 << 27,
-    /* 23/36 conv. code rate */
+    /**
+     * 23/36 conv. code rate
+     */
     FEC_23_36 = 1 << 28,
-    /* 25/36 conv. code rate */
+    /**
+     * 25/36 conv. code rate
+     */
     FEC_25_36 = 1 << 29,
-    /* 26/45 conv. code rate */
+    /**
+     * 26/45 conv. code rate
+     */
     FEC_26_45 = 1 << 30,
-    /* 28/45 conv. code rate */
+    /**
+     * 28/45 conv. code rate
+     */
     FEC_28_45 = 1 << 31,
-    /* 29/45 conv. code rate */
+    /**
+     * 29/45 conv. code rate
+     */
     FEC_29_45 = 1 << 32,
-    /* 31/45 conv. code rate */
+    /**
+     * 31/45 conv. code rate
+     */
     FEC_31_45 = 1 << 33,
-    /* 32/45 conv. code rate */
+    /**
+     * 32/45 conv. code rate
+     */
     FEC_32_45 = 1 << 34,
-    /* 77/90 conv. code rate */
+    /**
+     * 77/90 conv. code rate
+     */
     FEC_77_90 = 1 << 35,
 };
 
@@ -164,9 +246,11 @@ enum FrontendInnerFec : uint64_t {
 @export
 enum FrontendAtscModulation : uint32_t {
     UNDEFINED = 0,
-    /** hardware is able to detect and set modulation automatically */
-    AUTO      = 1 << 0,
-    MOD_8VSB  = 1 << 2,
+    /**
+     * hardware is able to detect and set modulation automatically
+     */
+    AUTO = 1 << 0,
+    MOD_8VSB = 1 << 2,
     MOD_16VSB = 1 << 3,
 };
 
@@ -174,8 +258,11 @@ enum FrontendAtscModulation : uint32_t {
  *  Signal Settings for an ATSC Frontend.
  */
 struct FrontendAtscSettings {
-    /** Signal frequency in Hertz */
+    /**
+     * Signal frequency in Hertz
+     */
     uint32_t frequency;
+
     FrontendAtscModulation modulation;
 };
 
@@ -183,7 +270,9 @@ struct FrontendAtscSettings {
  *  Capabilities for ATSC Frontend.
  */
 struct FrontendAtscCapabilities {
-    /** Modulation capability */
+    /**
+     * Modulation capability
+     */
     bitfield<FrontendAtscModulation> modulationCap;
 };
 
@@ -193,12 +282,14 @@ struct FrontendAtscCapabilities {
 @export
 enum FrontendAtsc3Modulation : uint32_t {
     UNDEFINED = 0,
-    /** hardware is able to detect and set modulation automatically */
-    AUTO        = 1 << 0,
-    MOD_QPSK    = 1 << 1,
-    MOD_16QAM   = 1 << 2,
-    MOD_64QAM   = 1 << 3,
-    MOD_256QAM  = 1 << 4,
+    /**
+     * hardware is able to detect and set modulation automatically
+     */
+    AUTO = 1 << 0,
+    MOD_QPSK = 1 << 1,
+    MOD_16QAM = 1 << 2,
+    MOD_64QAM = 1 << 3,
+    MOD_256QAM = 1 << 4,
     MOD_1024QAM = 1 << 5,
     MOD_4096QAM = 1 << 6,
 };
@@ -209,7 +300,9 @@ enum FrontendAtsc3Modulation : uint32_t {
 @export
 enum FrontendAtsc3Bandwidth : uint32_t {
     UNDEFINED = 0,
-    /** hardware is able to detect and set bandwidth automatically */
+    /**
+     * hardware is able to detect and set bandwidth automatically
+     */
     AUTO = 1 << 0,
     BANDWIDTH_6MHZ = 1 << 1,
     BANDWIDTH_7MHZ = 1 << 2,
@@ -222,10 +315,12 @@ enum FrontendAtsc3Bandwidth : uint32_t {
 @export
 enum FrontendAtsc3TimeInterleaveMode : uint32_t {
     UNDEFINED = 0,
-    /** hardware is able to detect and set TimeInterleaveMode automatically */
+    /**
+     * hardware is able to detect and set TimeInterleaveMode automatically
+     */
     AUTO = 1 << 0,
-    CTI  = 1 << 1,
-    HTI  = 1 << 2,
+    CTI = 1 << 1,
+    HTI = 1 << 2,
 };
 
 /**
@@ -234,20 +329,22 @@ enum FrontendAtsc3TimeInterleaveMode : uint32_t {
 @export
 enum FrontendAtsc3CodeRate : uint32_t {
     UNDEFINED = 0,
-    /** hardware is able to detect and set Coderate automatically */
-    AUTO     = 1 << 0,
-    CODERATE_2_15      = 1 << 1,
-    CODERATE_3_15      = 1 << 2,
-    CODERATE_4_15      = 1 << 3,
-    CODERATE_5_15      = 1 << 4,
-    CODERATE_6_15      = 1 << 5,
-    CODERATE_7_15      = 1 << 6,
-    CODERATE_8_15      = 1 << 7,
-    CODERATE_9_15      = 1 << 8,
-    CODERATE_10_15     = 1 << 9,
-    CODERATE_11_15     = 1 << 10,
-    CODERATE_12_15     = 1 << 11,
-    CODERATE_13_15     = 1 << 12,
+    /**
+     * hardware is able to detect and set Coderate automatically
+     */
+    AUTO = 1 << 0,
+    CODERATE_2_15 = 1 << 1,
+    CODERATE_3_15 = 1 << 2,
+    CODERATE_4_15 = 1 << 3,
+    CODERATE_5_15 = 1 << 4,
+    CODERATE_6_15 = 1 << 5,
+    CODERATE_7_15 = 1 << 6,
+    CODERATE_8_15 = 1 << 7,
+    CODERATE_9_15 = 1 << 8,
+    CODERATE_10_15 = 1 << 9,
+    CODERATE_11_15 = 1 << 10,
+    CODERATE_12_15 = 1 << 11,
+    CODERATE_13_15 = 1 << 12,
 };
 
 /**
@@ -256,14 +353,16 @@ enum FrontendAtsc3CodeRate : uint32_t {
 @export
 enum FrontendAtsc3Fec : uint32_t {
     UNDEFINED = 0,
-    /** hardware is able to detect and set FEC automatically */
-    AUTO     = 1 << 0,
+    /**
+     * hardware is able to detect and set FEC automatically
+     */
+    AUTO = 1 << 0,
     BCH_LDPC_16K = 1 << 1,
     BCH_LDPC_64K = 1 << 2,
     CRC_LDPC_16K = 1 << 3,
     CRC_LDPC_64K = 1 << 4,
-    LDPC_16K     = 1 << 5,
-    LDPC_64K     = 1 << 6,
+    LDPC_16K = 1 << 5,
+    LDPC_64K = 1 << 6,
 };
 
 /**
@@ -271,12 +370,18 @@ enum FrontendAtsc3Fec : uint32_t {
  */
 @export
 enum FrontendAtsc3DemodOutputFormat : uint8_t {
-    /** Dummy. Scan uses this. */
+    /**
+     * Dummy. Scan uses this.
+     */
     UNDEFINED = 0,
-    /** ALP format. Typically used in US region. */
+    /**
+     * ALP format. Typically used in US region.
+     */
     ATSC3_LINKLAYER_PACKET = 1 << 0,
-    /** BaseBand packet format. Typically used in Korea region. */
-    BASEBAND_PACKET        = 1 << 1,
+    /**
+     * BaseBand packet format. Typically used in Korea region.
+     */
+    BASEBAND_PACKET = 1 << 1,
 };
 
 /**
@@ -284,9 +389,13 @@ enum FrontendAtsc3DemodOutputFormat : uint8_t {
  */
 struct FrontendAtsc3PlpSettings {
     uint8_t plpId;
+
     FrontendAtsc3Modulation modulation;
+
     FrontendAtsc3TimeInterleaveMode interleaveMode;
+
     FrontendAtsc3CodeRate codeRate;
+
     FrontendAtsc3Fec fec;
 };
 
@@ -294,11 +403,18 @@ struct FrontendAtsc3PlpSettings {
  *  Signal Settings for an ATSC3 Frontend.
  */
 struct FrontendAtsc3Settings {
-    /** Signal frequency in Hertz */
+    /**
+     * Signal frequency in Hertz
+     */
     uint32_t frequency;
-    /** Bandwidth of tuning band. */
+
+    /**
+     * Bandwidth of tuning band.
+     */
     FrontendAtsc3Bandwidth bandwidth;
+
     FrontendAtsc3DemodOutputFormat demodOutputFormat;
+
     vec<FrontendAtsc3PlpSettings> plpSettings;
 };
 
@@ -306,17 +422,34 @@ struct FrontendAtsc3Settings {
  *  Capabilities for ATSC3 Frontend.
  */
 struct FrontendAtsc3Capabilities {
-    /** Bandwidth capability */
+    /**
+     * Bandwidth capability
+     */
     bitfield<FrontendAtsc3Bandwidth> bandwidthCap;
-    /** Modulation capability */
+
+    /**
+     * Modulation capability
+     */
     bitfield<FrontendAtsc3Modulation> modulationCap;
-    /** TimeInterleaveMode capability */
+
+    /**
+     * TimeInterleaveMode capability
+     */
     bitfield<FrontendAtsc3TimeInterleaveMode> timeInterleaveModeCap;
-    /** CodeRate capability */
+
+    /**
+     * CodeRate capability
+     */
     bitfield<FrontendAtsc3CodeRate> codeRateCap;
-    /** FEC capability */
+
+    /**
+     * FEC capability
+     */
     bitfield<FrontendAtsc3Fec> fecCap;
-    /** Demodulator Output Format capability */
+
+    /**
+     * Demodulator Output Format capability
+     */
     bitfield<FrontendAtsc3DemodOutputFormat> demodOutputFormatCap;
 };
 
@@ -326,7 +459,9 @@ struct FrontendAtsc3Capabilities {
 @export
 enum FrontendDvbsModulation : int32_t {
     UNDEFINED = 0,
-    /** hardware is able to detect and set Modulation automatically */
+    /**
+     * hardware is able to detect and set Modulation automatically
+     */
     AUTO = 1 << 0,
     MOD_QPSK = 1 << 1,
     MOD_8PSK = 1 << 2,
@@ -340,7 +475,9 @@ enum FrontendDvbsModulation : int32_t {
     MOD_64APSK = 1 << 10,
     MOD_128APSK = 1 << 11,
     MOD_256APSK = 1 << 12,
-    /** Reserved for Proprietary modulation */
+    /**
+     * Reserved for Proprietary modulation
+     */
     MOD_RESERVED = 1 << 13,
 };
 
@@ -374,10 +511,17 @@ enum FrontendDvbsPilot : uint32_t {
  */
 struct FrontendDvbsCodeRate {
     FrontendInnerFec fec;
+
     bool isLinear;
-    /* true if enable short frame */
+
+    /**
+     * true if enable short frame
+     */
     bool isShortFrames;
-    /* bits number in 1000 symbol. 0 if use the default. */
+
+    /**
+     * bits number in 1000 symbol. 0 if use the default.
+     */
     uint32_t bitsPer1000Symbol;
 };
 
@@ -396,15 +540,26 @@ enum FrontendDvbsStandard : uint8_t {
  *  Signal Settings for an DVBS Frontend.
  */
 struct FrontendDvbsSettings {
-    /** Signal frequency in Hertz */
+    /**
+     * Signal frequency in Hertz
+     */
     uint32_t frequency;
+
     FrontendDvbsModulation modulation;
+
     FrontendDvbsCodeRate coderate;
-    /** Symbols per second */
+
+    /**
+     * Symbols per second
+     */
     uint32_t symbolRate;
+
     FrontendDvbsRolloff rolloff;
+
     FrontendDvbsPilot pilot;
+
     uint32_t inputStreamId;
+
     FrontendDvbsStandard standard;
 };
 
@@ -413,8 +568,10 @@ struct FrontendDvbsSettings {
  */
 struct FrontendDvbsCapabilities {
     bitfield<FrontendDvbsModulation> modulationCap;
+
     bitfield<FrontendInnerFec> innerfecCap;
-    bitfield<FrontendDvbsStandard>  standard;
+
+    bitfield<FrontendDvbsStandard> standard;
 };
 
 /**
@@ -423,7 +580,9 @@ struct FrontendDvbsCapabilities {
 @export
 enum FrontendDvbcModulation : uint32_t {
     UNDEFINED = 0,
-    /** hardware is able to detect and set Modulation automatically */
+    /**
+     * hardware is able to detect and set Modulation automatically
+     */
     AUTO = 1 << 0,
     MOD_16QAM = 1 << 1,
     MOD_32QAM = 1 << 2,
@@ -467,14 +626,24 @@ enum FrontendDvbcSpectralInversion : uint32_t {
  *  Signal Settings for an DVBC Frontend.
  */
 struct FrontendDvbcSettings {
-    /** Signal frequency in Hertz */
+    /**
+     * Signal frequency in Hertz
+     */
     uint32_t frequency;
+
     FrontendDvbcModulation modulation;
+
     FrontendInnerFec fec;
-    /** Symbols per second */
+
+    /**
+     * Symbols per second
+     */
     uint32_t symbolRate;
+
     FrontendDvbcOuterFec outerFec;
+
     FrontendDvbcAnnex annex;
+
     FrontendDvbcSpectralInversion spectralInversion;
 };
 
@@ -483,7 +652,9 @@ struct FrontendDvbcSettings {
  */
 struct FrontendDvbcCapabilities {
     bitfield<FrontendDvbcModulation> modulationCap;
+
     bitfield<FrontendInnerFec> fecCap;
+
     bitfield<FrontendDvbcAnnex> annexCap;
 };
 
@@ -493,7 +664,9 @@ struct FrontendDvbcCapabilities {
 @export
 enum FrontendDvbtBandwidth : uint32_t {
     UNDEFINED = 0,
-    /** hardware is able to detect and set Bandwidth automatically */
+    /**
+     * hardware is able to detect and set Bandwidth automatically
+     */
     AUTO = 1 << 0,
     BANDWIDTH_8MHZ = 1 << 1,
     BANDWIDTH_7MHZ = 1 << 2,
@@ -509,7 +682,9 @@ enum FrontendDvbtBandwidth : uint32_t {
 @export
 enum FrontendDvbtConstellation : uint32_t {
     UNDEFINED = 0,
-    /** hardware is able to detect and set Constellation automatically */
+    /**
+     * hardware is able to detect and set Constellation automatically
+     */
     AUTO = 1 << 0,
     CONSTELLATION_QPSK = 1 << 1,
     CONSTELLATION_16QAM = 1 << 2,
@@ -523,7 +698,9 @@ enum FrontendDvbtConstellation : uint32_t {
 @export
 enum FrontendDvbtHierarchy : uint32_t {
     UNDEFINED = 0,
-    /** hardware is able to detect and set Hierarchy automatically */
+    /**
+     * hardware is able to detect and set Hierarchy automatically
+     */
     AUTO = 1 << 0,
     HIERARCHY_NON_NATIVE = 1 << 1,
     HIERARCHY_1_NATIVE = 1 << 2,
@@ -541,7 +718,9 @@ enum FrontendDvbtHierarchy : uint32_t {
 @export
 enum FrontendDvbtCoderate : uint32_t {
     UNDEFINED = 0,
-    /** hardware is able to detect and set Hierarchy automatically */
+    /**
+     * hardware is able to detect and set Hierarchy automatically
+     */
     AUTO = 1 << 0,
     CODERATE_1_2 = 1 << 1,
     CODERATE_2_3 = 1 << 2,
@@ -560,7 +739,9 @@ enum FrontendDvbtCoderate : uint32_t {
 @export
 enum FrontendDvbtGuardInterval : uint32_t {
     UNDEFINED = 0,
-    /** hardware is able to detect and set Guard Interval automatically */
+    /**
+     * hardware is able to detect and set Guard Interval automatically
+     */
     AUTO = 1 << 0,
     INTERVAL_1_32 = 1 << 1,
     INTERVAL_1_16 = 1 << 2,
@@ -577,7 +758,9 @@ enum FrontendDvbtGuardInterval : uint32_t {
 @export
 enum FrontendDvbtTransmissionMode : uint32_t {
     UNDEFINED = 0,
-    /** hardware is able to detect and set Transmission Mode automatically */
+    /**
+     * hardware is able to detect and set Transmission Mode automatically
+     */
     AUTO = 1 << 0,
     MODE_2K = 1 << 1,
     MODE_8K = 1 << 2,
@@ -607,27 +790,50 @@ enum FrontendDvbtStandard : uint8_t {
 };
 
 /**
- *  Signal Setting for DVBT Frontend.
+ *  Signal Settings for DVBT Frontend.
  */
 struct FrontendDvbtSettings {
-    /** Signal frequency in Hertz */
+    /**
+     * Signal frequency in Hertz
+     */
     uint32_t frequency;
+
     FrontendDvbtTransmissionMode transmissionMode;
+
     FrontendDvbtBandwidth bandwidth;
+
     FrontendDvbtConstellation constellation;
+
     FrontendDvbtHierarchy hierarchy;
-    /** Code Rate for High Priority level */
+
+    /**
+     * Code Rate for High Priority level
+     */
     FrontendDvbtCoderate hpCoderate;
-    /** Code Rate for Low Priority level */
+
+    /**
+     * Code Rate for Low Priority level
+     */
     FrontendDvbtCoderate lpCoderate;
+
     FrontendDvbtGuardInterval guardInterval;
+
     bool isHighPriority;
+
     FrontendDvbtStandard standard;
+
     bool isMiso;
+
     FrontendDvbtPlpMode plpMode;
-    /** Physical Layer Pipe (PLP) Id */
+
+    /**
+     * Physical Layer Pipe (PLP) Id
+     */
     uint8_t plpId;
-    /** Group Id for Physical Layer Pipe (PLP) */
+
+    /**
+     * Group Id for Physical Layer Pipe (PLP)
+     */
     uint8_t plpGroupId;
 };
 
@@ -636,12 +842,19 @@ struct FrontendDvbtSettings {
  */
 struct FrontendDvbtCapabilities {
     bitfield<FrontendDvbtTransmissionMode> transmissionModeCap;
+
     bitfield<FrontendDvbtBandwidth> bandwidthCap;
+
     bitfield<FrontendDvbtConstellation> constellationCap;
+
     bitfield<FrontendDvbtCoderate> coderateCap;
+
     bitfield<FrontendDvbtHierarchy> hierarchyCap;
+
     bitfield<FrontendDvbtGuardInterval> guardIntervalCap;
+
     bool isT2Supported;
+
     bool isMisoSupported;
 };
 
@@ -660,11 +873,13 @@ enum FrontendIsdbsRolloff : uint32_t {
 @export
 enum FrontendIsdbsModulation : uint32_t {
     UNDEFINED = 0,
-    /** hardware is able to detect and set Modulation automatically */
-    AUTO      = 1 << 0,
-    MOD_BPSK      = 1 << 1,
-    MOD_QPSK      = 1 << 2,
-    MOD_TC8PSK    = 1 << 3,
+    /**
+     * hardware is able to detect and set Modulation automatically
+     */
+    AUTO = 1 << 0,
+    MOD_BPSK = 1 << 1,
+    MOD_QPSK = 1 << 2,
+    MOD_TC8PSK = 1 << 3,
 };
 
 /**
@@ -673,13 +888,15 @@ enum FrontendIsdbsModulation : uint32_t {
 @export
 enum FrontendIsdbsCoderate : uint32_t {
     UNDEFINED = 0,
-    /** hardware is able to detect and set Code Rate automatically */
-    AUTO      = 1 << 0,
-    CODERATE_1_2       = 1 << 1,
-    CODERATE_2_3       = 1 << 2,
-    CODERATE_3_4       = 1 << 3,
-    CODERATE_5_6       = 1 << 4,
-    CODERATE_7_8       = 1 << 5,
+    /**
+     * hardware is able to detect and set Code Rate automatically
+     */
+    AUTO = 1 << 0,
+    CODERATE_1_2 = 1 << 1,
+    CODERATE_2_3 = 1 << 2,
+    CODERATE_3_4 = 1 << 3,
+    CODERATE_5_6 = 1 << 4,
+    CODERATE_7_8 = 1 << 5,
 };
 
 /**
@@ -692,17 +909,27 @@ enum FrontendIsdbsStreamIdType : uint32_t {
 };
 
 /**
- *  Signal Setting for ISDBS Frontend.
+ *  Signal Settings for ISDBS Frontend.
  */
 struct FrontendIsdbsSettings {
-    /** Signal frequency in Hertz */
+    /**
+     * Signal frequency in Hertz
+     */
     uint32_t frequency;
+
     uint16_t streamId;
+
     FrontendIsdbsStreamIdType streamIdType;
+
     FrontendIsdbsModulation modulation;
+
     FrontendIsdbsCoderate coderate;
-    /** Symbols per second */
+
+    /**
+     * Symbols per second
+     */
     uint32_t symbolRate;
+
     FrontendIsdbsRolloff rolloff;
 };
 
@@ -711,6 +938,7 @@ struct FrontendIsdbsSettings {
  */
 struct FrontendIsdbsCapabilities {
     bitfield<FrontendIsdbsModulation> modulationCap;
+
     bitfield<FrontendIsdbsCoderate> coderateCap;
 };
 
@@ -729,13 +957,15 @@ enum FrontendIsdbs3Rolloff : uint32_t {
 @export
 enum FrontendIsdbs3Modulation : uint32_t {
     UNDEFINED = 0,
-    /** hardware is able to detect and set Modulation automatically */
-    AUTO      = 1 << 5,
-    MOD_BPSK      = 1 << 1,
-    MOD_QPSK      = 1 << 2,
-    MOD_8PSK      = 1 << 3,
-    MOD_16APSK    = 1 << 4,
-    MOD_32APSK    = 1 << 5,
+    /**
+     * hardware is able to detect and set Modulation automatically
+     */
+    AUTO = 1 << 5,
+    MOD_BPSK = 1 << 1,
+    MOD_QPSK = 1 << 2,
+    MOD_8PSK = 1 << 3,
+    MOD_16APSK = 1 << 4,
+    MOD_32APSK = 1 << 5,
 };
 
 /**
@@ -744,33 +974,45 @@ enum FrontendIsdbs3Modulation : uint32_t {
 @export
 enum FrontendIsdbs3Coderate : uint32_t {
     UNDEFINED = 0,
-    /** hardware is able to detect and set Code Rate automatically */
-    AUTO      = 1 << 0,
-    CODERATE_1_3       = 1 << 1,
-    CODERATE_2_5       = 1 << 2,
-    CODERATE_1_2       = 1 << 3,
-    CODERATE_3_5       = 1 << 4,
-    CODERATE_2_3       = 1 << 5,
-    CODERATE_3_4       = 1 << 6,
-    CODERATE_7_9       = 1 << 7,
-    CODERATE_4_5       = 1 << 8,
-    CODERATE_5_6       = 1 << 9,
-    CODERATE_7_8       = 1 << 10,
-    CODERATE_9_10      = 1 << 11,
+    /**
+     * hardware is able to detect and set Code Rate automatically
+     */
+    AUTO = 1 << 0,
+    CODERATE_1_3 = 1 << 1,
+    CODERATE_2_5 = 1 << 2,
+    CODERATE_1_2 = 1 << 3,
+    CODERATE_3_5 = 1 << 4,
+    CODERATE_2_3 = 1 << 5,
+    CODERATE_3_4 = 1 << 6,
+    CODERATE_7_9 = 1 << 7,
+    CODERATE_4_5 = 1 << 8,
+    CODERATE_5_6 = 1 << 9,
+    CODERATE_7_8 = 1 << 10,
+    CODERATE_9_10 = 1 << 11,
 };
 
 /**
- *  Signal Setting for ISDBS3 Frontend.
+ *  Signal Settings for ISDBS3 Frontend.
  */
 struct FrontendIsdbs3Settings {
-    /** Signal frequency in Hertz */
+    /**
+     * Signal frequency in Hertz
+     */
     uint32_t frequency;
+
     uint16_t streamId;
+
     FrontendIsdbsStreamIdType streamIdType;
+
     FrontendIsdbs3Modulation modulation;
+
     FrontendIsdbs3Coderate coderate;
-    /** Symbols per second */
+
+    /**
+     * Symbols per second
+     */
     uint32_t symbolRate;
+
     FrontendIsdbs3Rolloff rolloff;
 };
 
@@ -779,6 +1021,7 @@ struct FrontendIsdbs3Settings {
  */
 struct FrontendIsdbs3Capabilities {
     bitfield<FrontendIsdbs3Modulation> modulationCap;
+
     bitfield<FrontendIsdbs3Coderate> coderateCap;
 };
 
@@ -788,7 +1031,9 @@ struct FrontendIsdbs3Capabilities {
 @export
 enum FrontendIsdbtMode : uint32_t {
     UNDEFINED = 0,
-    /** hardware is able to detect and set Mode automatically */
+    /**
+     * hardware is able to detect and set Mode automatically
+     */
     AUTO = 1 << 0,
     MODE_1 = 1 << 1,
     MODE_2 = 1 << 2,
@@ -801,7 +1046,9 @@ enum FrontendIsdbtMode : uint32_t {
 @export
 enum FrontendIsdbtBandwidth : uint32_t {
     UNDEFINED = 0,
-    /** hardware is able to detect and set Bandwidth automatically */
+    /**
+     * hardware is able to detect and set Bandwidth automatically
+     */
     AUTO = 1 << 0,
     BANDWIDTH_8MHZ = 1 << 1,
     BANDWIDTH_7MHZ = 1 << 2,
@@ -814,7 +1061,9 @@ enum FrontendIsdbtBandwidth : uint32_t {
 @export
 enum FrontendIsdbtModulation : uint32_t {
     UNDEFINED = 0,
-    /** hardware is able to detect and set Modulation automatically */
+    /**
+     * hardware is able to detect and set Modulation automatically
+     */
     AUTO = 1 << 0,
     MOD_DQPSK = 1 << 1,
     MOD_QPSK = 1 << 2,
@@ -822,23 +1071,29 @@ enum FrontendIsdbtModulation : uint32_t {
     MOD_64QAM = 1 << 4,
 };
 
-/** Code Rate for ISDBT. */
 typedef FrontendDvbtCoderate FrontendIsdbtCoderate;
 
-/** Guard Interval for ISDBT. */
 typedef FrontendDvbtGuardInterval FrontendIsdbtGuardInterval;
 
 /**
- *  Signal Setting for ISDBT Frontend.
+ *  Signal Settings for ISDBT Frontend.
  */
 struct FrontendIsdbtSettings {
-    /** Signal frequency in Hertz */
+    /**
+     * Signal frequency in Hertz
+     */
     uint32_t frequency;
+
     FrontendIsdbtModulation modulation;
+
     FrontendIsdbtBandwidth bandwidth;
+
     FrontendIsdbtMode mode;
+
     FrontendIsdbtCoderate coderate;
+
     FrontendIsdbtGuardInterval guardInterval;
+
     uint32_t serviceAreaId;
 };
 
@@ -847,9 +1102,13 @@ struct FrontendIsdbtSettings {
  */
 struct FrontendIsdbtCapabilities {
     bitfield<FrontendIsdbtMode> modeCap;
+
     bitfield<FrontendIsdbtBandwidth> bandwidthCap;
+
     bitfield<FrontendIsdbtModulation> constellationCap;
+
     bitfield<FrontendIsdbtCoderate> coderateCap;
+
     bitfield<FrontendIsdbtGuardInterval> guardIntervalCap;
 };
 
@@ -872,7 +1131,7 @@ enum FrontendAnalogSifStandard : uint32_t {
     UNDEFINED = 0,
     BG = 1 << 0,
     BG_A2 = 1 << 1,
-    BG_NICAM  = 1 << 2,
+    BG_NICAM = 1 << 2,
     I = 1 << 3,
     DK = 1 << 4,
     DK1 = 1 << 5,
@@ -890,12 +1149,16 @@ enum FrontendAnalogSifStandard : uint32_t {
 };
 
 /**
- *  Signal Setting for Analog Frontend.
+ *  Signal Settings for Analog Frontend.
  */
 struct FrontendAnalogSettings {
-    /** Signal frequency in Hertz */
+    /**
+     * Signal frequency in Hertz
+     */
     uint32_t frequency;
+
     FrontendAnalogType type;
+
     FrontendAnalogSifStandard sifStandard;
 };
 
@@ -904,21 +1167,30 @@ struct FrontendAnalogSettings {
  */
 struct FrontendAnalogCapabilities {
     bitfield<FrontendAnalogType> typeCap;
+
     bitfield<FrontendAnalogSifStandard> sifStandardCap;
 };
 
 /**
- *  Signal Setting for Frontend.
+ *  Signal Settings for Frontend.
  */
 safe_union FrontendSettings {
     FrontendAnalogSettings analog;
+
     FrontendAtscSettings atsc;
+
     FrontendAtsc3Settings atsc3;
+
     FrontendDvbsSettings dvbs;
+
     FrontendDvbcSettings dvbc;
+
     FrontendDvbtSettings dvbt;
+
     FrontendIsdbsSettings isdbs;
+
     FrontendIsdbs3Settings isdbs3;
+
     FrontendIsdbtSettings isdbt;
 };
 
@@ -935,25 +1207,45 @@ enum FrontendScanType : uint32_t {
  *  Scan Message Type for Frontend.
  */
 enum FrontendScanMessageType : uint32_t {
-    /** Scan locked the signal. */
+    /**
+     * Scan locked the signal.
+     */
     LOCKED,
-    /** Scan stopped. */
+    /**
+     * Scan stopped.
+     */
     END,
-    /** Scan progress report. */
+    /**
+     * Scan progress report.
+     */
     PROGRESS_PERCENT,
-    /** Locked frequency report. */
+    /**
+     * Locked frequency report.
+     */
     FREQUENCY,
-    /** Locked symbol rate. */
+    /**
+     * Locked symbol rate.
+     */
     SYMBOL_RATE,
-    /** Locked Plp Ids for DVBT2 frontend. */
+    /**
+     * Locked Plp Ids for DVBT2 frontend.
+     */
     PLP_IDS,
-    /** Locked group Ids for DVBT2 frontend. */
+    /**
+     * Locked group Ids for DVBT2 frontend.
+     */
     GROUP_IDS,
-    /** Stream Ids. */
+    /**
+     * Stream Ids.
+     */
     INPUT_STREAM_IDS,
-    /** Locked signal standard.  */
+    /**
+     * Locked signal standard.
+     */
     STANDARD,
-    /** PLP status in a tuned frequency band for ATSC3 frontend. */
+    /**
+     * PLP status in a tuned frequency band for ATSC3 frontend.
+     */
     ATSC3_PLP_INFO,
 };
 
@@ -962,6 +1254,7 @@ enum FrontendScanMessageType : uint32_t {
  */
 struct FrontendScanAtsc3PlpInfo {
     uint8_t plpId;
+
     bool bLlsFlag;
 };
 
@@ -970,21 +1263,39 @@ struct FrontendScanAtsc3PlpInfo {
  */
 safe_union FrontendScanMessage {
     bool isLocked;
+
     bool isEnd;
-    /** scan progress percent (0..100) */
+
+    /**
+     * scan progress percent (0..100)
+     */
     uint8_t progressPercent;
-    /** Signal frequency in Hertz */
+
+    /**
+     * Signal frequency in Hertz
+     */
     uint32_t frequency;
-    /** Symbols per second */
+
+    /**
+     * Symbols per second
+     */
     uint32_t symbolRate;
+
     vec<uint8_t> plpIds;
+
     vec<uint8_t> groupIds;
+
     vec<uint16_t> inputStreamIds;
+
     safe_union standard {
         FrontendDvbsStandard sStd;
+
         FrontendDvbtStandard tStd;
     } std;
-    /** A list of PLP status in a tuned frequency band for ATSC3 frontend. */
+
+    /**
+     * A list of PLP status in a tuned frequency band for ATSC3 frontend.
+     */
     vec<FrontendScanAtsc3PlpInfo> atsc3PlpInfos;
 };
 
@@ -1008,22 +1319,6 @@ enum FrontendEventType : uint32_t {
      * event.
      */
     LOST_LOCK,
-    /**
-     * If frontend detect that incoming Diseqc message is overflow.
-     */
-    DISEQC_RX_OVERFLOW,
-    /**
-     * If frontend detect that outgoing Diseqc message isn't delivered on time.
-     */
-    DISEQC_RX_TIMEOUT,
-    /**
-     * If frontend detect that the incoming Diseqc message has parity error.
-     */
-    DISEQC_RX_PARITY_ERROR,
-    /**
-     * If frontend detect that the LNB is overload.
-     */
-    LNB_OVERLOAD,
 };
 
 /**
@@ -1031,60 +1326,106 @@ enum FrontendEventType : uint32_t {
  */
 @export
 enum FrontendStatusType : uint32_t {
-    /** Lock status for Demod. */
+    /**
+     * Lock status for Demod.
+     */
     DEMOD_LOCK,
-    /** Signal to Noise Ratio. */
+    /**
+     * Signal to Noise Ratio.
+     */
     SNR,
-    /** Bit Error Ratio. */
+    /**
+     * Bit Error Ratio.
+     */
     BER,
-    /** Packages Error Ratio. */
+    /**
+     * Packages Error Ratio.
+     */
     PER,
-    /** Bit Error Ratio before FEC. */
+    /**
+     * Bit Error Ratio before FEC.
+     */
     PRE_BER,
-    /*
+    /**
      * Signal Quality (0..100). Good data over total data in percent can be
      * used as a way to present Signal Quality.
      */
     SIGNAL_QUALITY,
-    /** Signal Strength. */
+    /**
+     * Signal Strength.
+     */
     SIGNAL_STRENGTH,
-    /** Symbol Rate. */
+    /**
+     * Symbol Rate.
+     */
     SYMBOL_RATE,
-    /** Forward Error Correction Type. */
+    /**
+     * Forward Error Correction Type.
+     */
     FEC,
-    /** Modulation Type. */
+    /**
+     * Modulation Type.
+     */
     MODULATION,
-    /** Spectral Inversion Type. */
+    /**
+     * Spectral Inversion Type.
+     */
     SPECTRAL,
-    /** LNB Voltage. */
+    /**
+     * LNB Voltage.
+     */
     LNB_VOLTAGE,
-    /** Physical Layer Pipe ID. */
+    /**
+     * Physical Layer Pipe ID.
+     */
     PLP_ID,
-    /** Status for Emergency Warning Broadcasting System. */
+    /**
+     * Status for Emergency Warning Broadcasting System.
+     */
     EWBS,
-    /** Automatic Gain Control. */
+    /**
+     * Automatic Gain Control.
+     */
     AGC,
-    /** Low Noise Amplifier. */
+    /**
+     * Low Noise Amplifier.
+     */
     LNA,
-    /** Lock status for stream. */
-    STREAM_LOCK,
-    /** Error status by layer. */
+    /**
+     * Error status by layer.
+     */
     LAYER_ERROR,
-    /** CN value by VBER. */
+    /**
+     * CN value by VBER.
+     */
     VBER_CN,
-    /** CN value by LBER. */
+    /**
+     * CN value by LBER.
+     */
     LBER_CN,
-    /** CN value by XER. */
+    /**
+     * CN value by XER.
+     */
     XER_CN,
-    /** Moduration Error Ratio. */
+    /**
+     * Moduration Error Ratio.
+     */
     MER,
-    /** Difference between tuning frequency and actual locked frequency. */
+    /**
+     * Difference between tuning frequency and actual locked frequency.
+     */
     FREQ_OFFSET,
-    /* Hierarchy for DVBT. */
+    /**
+     * Hierarchy for DVBT.
+     */
     HIERARCHY,
-    /** Lock status for RF. */
+    /**
+     * Lock status for RF.
+     */
     RF_LOCK,
-    /** PLP information in a frequency band for ATSC3.0 frontend. */
+    /**
+     * PLP information in a frequency band for ATSC3.0 frontend.
+     */
     ATSC3_PLP_INFO,
 };
 
@@ -1092,23 +1433,34 @@ enum FrontendStatusType : uint32_t {
  * Status for each tuning PLPs
  */
 struct FrontendStatusAtsc3PlpInfo {
-    /** PLP Id value. */
+    /**
+     * PLP Id value.
+     */
     uint8_t plpId;
-    /** Demod Lock/Unlock status of this particular PLP. */
+
+    /**
+     * Demod Lock/Unlock status of this particular PLP.
+     */
     bool isLocked;
-    /** Uncorrectable Error Counts (UEC) of this particular PLP since last tune operation. */
+
+    /**
+     * Uncorrectable Error Counts (UEC) of this particular PLP since last tune operation.
+     */
     uint32_t uec;
 };
-
 
 /**
  * Modulation Type for Frontend's status.
  */
 safe_union FrontendModulationStatus {
     FrontendDvbcModulation dvbc;
+
     FrontendDvbsModulation dvbs;
+
     FrontendIsdbsModulation isdbs;
+
     FrontendIsdbs3Modulation isdbs3;
+
     FrontendIsdbtModulation isdbt;
 };
 
@@ -1116,46 +1468,99 @@ safe_union FrontendModulationStatus {
  *  The status for Frontend.
  */
 safe_union FrontendStatus {
-    /** Lock status for Demod in True/False. */
+    /**
+     * Lock status for Demod in True/False.
+     */
     bool isDemodLocked;
-    /** SNR value measured by 0.001 dB. */
+
+    /**
+     * SNR value measured by 0.001 dB.
+     */
     int32_t snr;
-    /** The number of error bit per 1 billion bits. */
+
+    /**
+     * The number of error bit per 1 billion bits.
+     */
     uint32_t ber;
-    /** The number of error package per 1 billion packages. */
+
+    /**
+     * The number of error package per 1 billion packages.
+     */
     uint32_t per;
-    /** The number of error bit per 1 billion bits before FEC. */
+
+    /**
+     * The number of error bit per 1 billion bits before FEC.
+     */
     uint32_t preBer;
-    /** Signal Quality in percent. */
+
+    /**
+     * Signal Quality in percent.
+     */
     uint32_t signalQuality;
-    /** Signal Strength measured by 0.001 dBm. */
+
+    /**
+     * Signal Strength measured by 0.001 dBm.
+     */
     int32_t signalStrength;
-    /** Symbols per second */
+
+    /**
+     * Symbols per second
+     */
     uint32_t symbolRate;
+
     FrontendInnerFec innerFec;
+
     FrontendModulationStatus modulation;
+
     FrontendDvbcSpectralInversion inversion;
-    FrontendLnbVoltage lnbVoltage;
+
+    LnbVoltage lnbVoltage;
+
     uint8_t plpId;
+
     bool isEWBS;
-    /** AGC value is normalized from 0 to 255. */
+
+    /**
+     * AGC value is normalized from 0 to 255.
+     */
     uint8_t agc;
+
     bool isLnaOn;
-    bool isStreamLock;
+
     vec<bool> isLayerError;
-    /** CN value by VBER measured by 0.001 dB */
+
+    /**
+     * CN value by VBER measured by 0.001 dB
+     */
     int32_t vberCn;
-    /** CN value by LBER measured by 0.001 dB */
+
+    /**
+     * CN value by LBER measured by 0.001 dB
+     */
     int32_t lberCn;
-    /** CN value by XER measured by 0.001 dB */
+
+    /**
+     * CN value by XER measured by 0.001 dB
+     */
     int32_t xerCn;
-    /** MER value measured by 0.001 dB */
+
+    /**
+     * MER value measured by 0.001 dB
+     */
     int32_t mer;
-    /** Frequency difference in Hertz. */
+
+    /**
+     * Frequency difference in Hertz.
+     */
     int32_t freqOffset;
+
     FrontendDvbtHierarchy hierarchy;
+
     bool isRfLocked;
-    /** A list of PLP status for tuned PLPs for ATSC3 frontend. */
+
+    /**
+     * A list of PLP status for tuned PLPs for ATSC3 frontend.
+     */
     vec<FrontendStatusAtsc3PlpInfo> plpInfo;
 };
 
@@ -1164,32 +1569,60 @@ safe_union FrontendStatus {
  */
 struct FrontendInfo {
     FrontendType type;
-    /** Frequency in Hertz */
+
+    /**
+     * Frequency in Hertz
+     */
     uint32_t minFrequency;
-    /** Frequency in Hertz */
+
+    /**
+     * Frequency in Hertz
+     */
     uint32_t maxFrequency;
-    /** Minimum symbols per second */
+
+    /**
+     * Minimum symbols per second
+     */
     uint32_t minSymbolRate;
-    /** Maximum symbols per second */
+
+    /**
+     * Maximum symbols per second
+     */
     uint32_t maxSymbolRate;
-    /** Range in Hertz */
+
+    /**
+     * Range in Hertz
+     */
     uint32_t acquireRange;
-    /*
+
+    /**
      * Frontends are assigned with the same exclusiveGroupId if they can't
      * function at same time. For instance, they share same hardware module.
      */
     uint32_t exclusiveGroupId;
-    /** A list of supported status types which client can inquiry */
+
+    /**
+     * A list of supported status types which client can inquiry
+     */
     vec<FrontendStatusType> statusCaps;
+
     safe_union FrontendCapabilities {
         FrontendAnalogCapabilities analogCaps;
+
         FrontendAtscCapabilities atscCaps;
+
         FrontendAtsc3Capabilities atsc3Caps;
+
         FrontendDvbsCapabilities dvbsCaps;
+
         FrontendDvbcCapabilities dvbcCaps;
+
         FrontendDvbtCapabilities dvbtCaps;
+
         FrontendIsdbsCapabilities isdbsCaps;
+
         FrontendIsdbs3Capabilities isdbs3Caps;
+
         FrontendIsdbtCapabilities isdbtCaps;
     } frontendCaps;
 };
@@ -1204,7 +1637,7 @@ typedef uint32_t LnbId;
  *  Power Voltage Type for LNB.
  */
 @export
-enum FrontendLnbVoltage : uint32_t {
+enum LnbVoltage : uint32_t {
     NONE,
     VOLTAGE_5V,
     VOLTAGE_11V,
@@ -1220,7 +1653,7 @@ enum FrontendLnbVoltage : uint32_t {
  *  Tone Type for LNB.
  */
 @export
-enum FrontendLnbTone : int32_t {
+enum LnbTone : int32_t {
     NONE,
     CONTINUOUS,
 };
@@ -1229,41 +1662,92 @@ enum FrontendLnbTone : int32_t {
  *  The Position of LNB.
  */
 @export
-enum FrontendLnbPosition : int32_t {
+enum LnbPosition : int32_t {
     UNDEFINED,
     POSITION_A,
     POSITION_B,
 };
 
+/**
+ * Lnb Event Type.
+ */
+@export
+enum LnbEventType : uint32_t {
+    DISEQC_RX_OVERFLOW,
+    /**
+     * If LNB detect that outgoing Diseqc message isn't delivered on time.
+     */
+    DISEQC_RX_TIMEOUT,
+    /**
+     * If LNB detect that the incoming Diseqc message has parity error.
+     */
+    DISEQC_RX_PARITY_ERROR,
+    /**
+     * If LNB detect that the LNB is overload.
+     */
+    LNB_OVERLOAD,
+};
+
 /* Demux ID is used to associate with a hardware demux resource. */
 typedef uint32_t DemuxId;
 
-/* Filter ID is used to associate with a hardware filter resource. */
-typedef uint32_t DemuxFilterId;
-
 /**
- * Filter Type according to ISO/IEC 13818-1
+ * Filter Main Type specifies the protocol that the filter use to extract data
+ * from input stream.
  */
 @export
-enum DemuxFilterType : uint32_t {
+enum DemuxFilterMainType : uint32_t {
     /**
-     * A filter to filter section data out from input stream.
+     * Transport Stream according to ISO/IEC 13818-1.
+     */
+    TS = 1 << 0,
+    /**
+     * MPEG Media Transport Protocol according to ISO/IEC 23008-1.
+     */
+    MMTP = 1 << 1,
+    /**
+     * Internet Protocol.
+     */
+    IP = 1 << 2,
+    /**
+     * Type Length Value according to ITU-R BT.1869.
+     */
+    TLV = 1 << 3,
+    /**
+     * ATSC Link-Layer Protocol according to A/330 ATSC3.0.
+     */
+    ALP = 1 << 4,
+};
+
+/**
+ * TS Filter Type according to ISO/IEC 13818-1
+ */
+@export
+enum DemuxTsFilterType : uint32_t {
+    UNDEFINED,
+    /**
+     * A filter to filter Section data out from input stream, and queue the
+     * data to the filter's FMQ (Fast Message Queue).
      */
     SECTION,
     /**
-     * A filter to filter PES data out from input stream.
+     * A filter to filter Packetized Elementary Stream data out from input
+     * stream, and queue the data to the filter's FMQ.
      */
     PES,
     /**
-     * A filter to filter TS payload out from input stream.
+     * A filter to filter a Transport Stream out from input stream, and queue
+     * the data to the filter's FMQ.
      */
     TS,
     /**
-     * A filter to filter Audio Metadata out from input stream.
+     * A filter to filter Audio data out from input stream, and send Audio's
+     * Metadata to client through onFilterEvent.
      */
     AUDIO,
     /**
-     * A filter to filter Video Metadata out from input stream.
+     * A filter to filter Video data out from input stream, and send Video's
+     * Metadata to client through onFilterEvent.
      */
     VIDEO,
     /**
@@ -1271,20 +1755,172 @@ enum DemuxFilterType : uint32_t {
      */
     PCR,
     /**
-     * A filter to filter data directly to output buffer for record.
+     * A filter to filter data out from input stream, and queue the data to the
+     * buffer of the record.
      */
     RECORD,
 };
 
+/**
+ * MMTP Filter Type according to ISO/IEC 23008-1
+ */
+@export
+enum DemuxMmtpFilterType : uint32_t {
+    UNDEFINED,
+    /**
+     * A filter to filter signaling data out from input stream, and queue the
+     * data to the filter's FMQ (Fast Message Queue).
+     */
+    SECTION,
+    /**
+     * A filter to filter MFU (Media fragment unit) out from input stream, and
+     * queue the data to the filter's FMQ.
+     */
+    PES,
+    /**
+     * A filter to filter a MMTP stream out from input stream, and queue the
+     * data to the filter's FMQ.
+     */
+    MMTP,
+    /**
+     * A filter to filter Audio data out from input stream, and send Audio's
+     * Metadata to client through onFilterEvent.
+     */
+    AUDIO,
+    /**
+     * A filter to filter Video data out from input stream, and send Video's
+     * Metadata to client through onFilterEvent.
+     */
+    VIDEO,
+    /**
+     * A filter to filter data out from input stream, and queue the data to the
+     * buffer of the record.
+     */
+    RECORD,
+    /**
+     * A filter to filter application data out from input stream, and queue the
+     * data to the filter's FMQ.
+     */
+    DOWNLOAD,
+};
+
+/**
+ * IP Filter Type.
+ */
+@export
+enum DemuxIpFilterType : uint32_t {
+    UNDEFINED,
+    /**
+     * A filter to filter section data out from input stream, and queue the
+     * data to the filter's FMQ (Fast Message Queue).
+     */
+    SECTION,
+    /**
+     * A filter to set NTP (Network Time Procotol) channel from input stream.
+     */
+    NTP,
+    /**
+     * A filter to strip out IP message header and queue the data to the
+     * filter's FMQ.
+     */
+    IP_PAYLOAD,
+    /**
+     * A filter to filter a IP stream out from input stream. The output can be
+     * either upper stream of another filter or queued to the filter's FMQ.
+     */
+    IP,
+    /**
+     * A filter to strip out IP message header and be a data source of another
+     * filter.
+     */
+    PAYLOAD_THROUGH,
+};
+
+/**
+ * TLV Filter Type according to ITU-R BT.1869.
+ */
+@export
+enum DemuxTlvFilterType : uint32_t {
+    UNDEFINED,
+    /**
+     * A filter to filter signaling data out from input stream, and queue the
+     * data to the filter's FMQ (Fast Message Queue).
+     */
+    SECTION,
+    /**
+     * A filter to filter a TLV stream out from input stream. The output can be
+     * either upper stream of another filter or queued to the filter's FMQ.
+     */
+    TLV,
+    /**
+     * A filter to strip out TLV message header and be a data source of another
+     * filter.
+     */
+    PAYLOAD_THROUGH,
+};
+
+/**
+ * ALP Filter Type according to A/330 ATSC3.0.
+ */
+@export
+enum DemuxAlpFilterType : uint32_t {
+    UNDEFINED,
+    /**
+     * A filter to filter signaling data out from input stream, and queue the
+     * data to the filter's FMQ (Fast Message Queue).
+     */
+    SECTION,
+    /**
+     * A filter to set PTP (Precision Time Protocol) channel from input stream.
+     */
+    PTP,
+    /**
+     * A filter to strip out ALP message header and be a data source of another
+     * filter.
+     */
+    PAYLOAD_THROUGH,
+};
+
+/**
+ * Demux Filter Type.
+ */
+struct DemuxFilterType {
+    DemuxFilterMainType mainType;
+
+    safe_union DemuxFilterSubType {
+        DemuxTsFilterType tsFilterType;
+
+        DemuxMmtpFilterType mmtpFilterType;
+
+        DemuxIpFilterType ipFilterType;
+
+        DemuxTlvFilterType tlvFilterType;
+
+        DemuxAlpFilterType alpFilterType;
+    } subType;
+};
+
 /* Packet ID is used to specify packets in transport stream. */
 typedef uint16_t DemuxTpid;
+
+/* Packet ID is used to specify packets in MMTP */
+typedef uint16_t DemuxMmtpPid;
+
+/**
+ * Demux Packet ID.
+ */
+safe_union DemuxPid {
+    DemuxTpid tPid;
+
+    DemuxMmtpPid mmtpPid;
+};
 
 @export
 enum Constant : uint16_t {
     /**
      * An invalid packet ID in transport stream according to ISO/IEC 13818-1.
      */
-    INVALID_TPID = 0xFFFF,
+    INVALID_TS_PID = 0xFFFF,
     /**
      * An invalid Stream ID.
      */
@@ -1304,7 +1940,7 @@ enum DemuxFilterStatus : uint8_t {
      * The available data amount in the filter buffer is at low level which is
      * set to 25 percent by default.
      */
-    LOW_WATER  = 1 << 1,
+    LOW_WATER = 1 << 1,
     /**
      * The available data amount in the filter buffer is at high level which is
      * set to 75 percent by default.
@@ -1314,18 +1950,122 @@ enum DemuxFilterStatus : uint8_t {
      * The data in the filter buffer is full and newly filtered data is being
      * discarded.
      */
-    OVERFLOW   = 1 << 3,
+    OVERFLOW = 1 << 3,
 };
 
 /**
- *  Bits Setting for Section Filter.
+ * Indexes can be tagged through TS (Transport Stream) header.
+ */
+@export
+enum DemuxTsIndex : uint32_t {
+    FIRST_PACKET = 1 << 0,
+    PAYLOAD_UNIT_START_INDICATOR = 1 << 1,
+    CHANGE_TO_NOT_SCRAMBLED = 1 << 2,
+    CHANGE_TO_EVEN_SCRAMBLED = 1 << 3,
+    CHANGE_TO_ODD_SCRAMBLED = 1 << 4,
+    DISCONTINUITY_INDICATOR = 1 << 5,
+    RANDOM_ACCESS_INDICATOR = 1 << 6,
+    PRIORITY_INDICATOR = 1 << 7,
+    PCR_FLAG = 1 << 8,
+    OPCR_FLAG = 1 << 9,
+    SPLICING_POINT_FLAG = 1 << 10,
+    PRIVATE_DATA = 1 << 11,
+    ADAPTATION_EXTENSION_FLAG = 1 << 12,
+};
+
+/**
+ * Indexes can be tagged by Start Code in PES (Packetized Elementary Stream)
+ * according to ISO/IEC 13818-1.
+ */
+@export
+enum DemuxScIndex : uint32_t {
+    /**
+     * Start Code is for a new I Frame
+     */
+    I_FRAME = 1 << 0,
+    /**
+     * Start Code is for a new P Frame
+     */
+    P_FRAME = 1 << 1,
+    /**
+     * Start Code is for a new B Frame
+     */
+    B_FRAME = 1 << 2,
+    /**
+     * Start Code is for a new Sequence
+     */
+    SEQUENCE = 1 << 3,
+};
+
+/**
+ * Indexes can be tagged by NAL unit group in HEVC
+ * according to ISO/IEC 23008-2.
+ */
+@export
+enum DemuxScHevcIndex : uint32_t {
+    SPS = 1 << 0,
+    AUD = 1 << 1,
+    SLICE_CE_BLA_W_LP = 1 << 2,
+    SLICE_BLA_W_RADL = 1 << 3,
+    SLICE_BLA_N_LP = 1 << 4,
+    SLICE_IDR_W_RADL = 1 << 5,
+    SLICE_IDR_N_LP = 1 << 6,
+    SLICE_TRAIL_CRA = 1 << 7,
+};
+
+/**
+ * Index type to be used in the filter for record
+ */
+@export
+enum DemuxRecordIndexType : uint32_t {
+    /**
+     * Don't use index
+     */
+    NONE,
+    /**
+     * Use TS index
+     */
+    TS,
+    /**
+     * Use Start Code index
+     */
+    SC,
+    /**
+     * Use Start Code index for HEVC
+     */
+    SC_HEVC,
+};
+
+/**
+ *  Filter Settings for Record data.
+ */
+struct DemuxFilterRecordSettings {
+    DemuxRecordIndexType indexType;
+
+    safe_union IndexMask {
+        bitfield<DemuxTsIndex> tsIndexMask;
+
+        bitfield<DemuxScIndex> scIndexMask;
+
+        bitfield<DemuxScHevcIndex> scHevcIndexMask;
+    } indexMask;
+};
+
+/**
+ *  Bits Settings for Section Filter.
  */
 struct DemuxFilterSectionBits {
-    /* The bytes are configured for Section Filter */
+    /**
+     * The bytes are configured for Section Filter
+     */
     vec<uint8_t> filter;
-    /* Active bits in the configured bytes to be used for filtering */
+
+    /**
+     * Active bits in the configured bytes to be used for filtering
+     */
     vec<uint8_t> mask;
-    /*
+
+    /**
      * Do positive match at the bit position of the configured bytes when the
      * bit at same position of the mode is 0.
      * Do negative match at the bit position of the configured bytes when the
@@ -1338,45 +2078,56 @@ struct DemuxFilterSectionBits {
  *  Filter Settings for Section data according to ISO/IEC 13818-1.
  */
 struct DemuxFilterSectionSettings {
-    DemuxTpid tpid;
-    DemuxFilterSectionBits bits;
-    /* Table ID for Section Filter */
-    uint16_t tableId;
-    /* Version number for Section Filter */
-    uint16_t version;
-    /* true if the filter checks CRC and discards data with wrong CRC */
+    safe_union Condition {
+        DemuxFilterSectionBits sectionBits;
+
+        struct TableInfo {
+            /**
+             * Table ID for Section Filter
+             */
+            uint16_t tableId;
+
+            /**
+             * Version number for Section Filter
+             */
+            uint16_t version;
+        } tableInfo;
+    } condition;
+
+    /**
+     * true if the filter checks CRC and discards data with wrong CRC
+     */
     bool isCheckCrc;
-    /* true if the filter repeats the data with the same version */
+
+    /**
+     * true if the filter repeats the data with the same version
+     */
     bool isRepeat;
-    /* true if the filter output raw data */
+
+    /**
+     * true if the filter send onFilterStatus instead of onFilterEvent.
+     */
     bool isRaw;
 };
 
-/* Stream ID is used to specify one elementary stream */
 typedef uint16_t DemuxStreamId;
 
 /**
  *  Filter Settings for a PES Data.
  */
 struct DemuxFilterPesDataSettings {
-    DemuxTpid tpid;
     DemuxStreamId streamId;
-    /* true if the filter output raw data */
+
+    /**
+     * true if the filter send onFilterStatus instead of onFilterEvent.
+     */
     bool isRaw;
 };
 
 /**
- *  Filter Settings for a TS Data.
+ *  Filter Settings for a Video and Audio.
  */
-struct DemuxFilterTsSettings {
-    DemuxTpid tpid;
-};
-
-/**
- *  Filter Settings for a Audio.
- */
-struct DemuxFilterAudioSettings {
-    DemuxTpid tpid;
+struct DemuxFilterAvSettings {
     /**
      * true if the filter output goes to decoder directly in pass through mode.
      */
@@ -1384,107 +2135,181 @@ struct DemuxFilterAudioSettings {
 };
 
 /**
- *  Filter Settings for a Video.
+ *  Filter Settings for a Download.
  */
-struct DemuxFilterVideoSettings {
+struct DemuxFilterDownloadSettings {
+    uint32_t downloadId;
+};
+
+/**
+ *  IP Settings for a IP filter.
+ */
+struct DemuxIpAddress {
+    safe_union SrcIpAddress {
+        uint8_t[4] v4;
+
+        uint8_t[16] v6;
+    } srcIpAddress;
+
+    safe_union DstIpAddress {
+        uint8_t[4] v4;
+
+        uint8_t[16] v6;
+    } dstIpAddress;
+
+    uint16_t srcPort;
+
+    uint16_t dstPort;
+};
+
+/**
+ *  Filter Settings for a TS filter.
+ */
+struct DemuxTsFilterSettings {
     DemuxTpid tpid;
+
+    safe_union FilterSettings {
+        /**
+         * Not additional parameters. it's used by PCR, TS subtype filters.
+         */
+        Monostate noinit;
+
+        DemuxFilterSectionSettings section;
+
+        DemuxFilterAvSettings av;
+
+        DemuxFilterPesDataSettings pesData;
+
+        DemuxFilterRecordSettings record;
+    } filterSettings;
+};
+
+/**
+ *  Filter Settings for a MMTP filter.
+ */
+struct DemuxMmtpFilterSettings {
+    DemuxMmtpPid mmtpPid;
+
+    safe_union FilterSettings {
+        /**
+         * Not additional parameters. it's used by MMTP subtype filters.
+         */
+        Monostate noinit;
+
+        DemuxFilterSectionSettings section;
+
+        DemuxFilterAvSettings av;
+
+        DemuxFilterPesDataSettings pesData;
+
+        DemuxFilterRecordSettings record;
+
+        DemuxFilterDownloadSettings download;
+    } filterSettings;
+};
+
+/**
+ *  Filter Settings for a IP filter.
+ */
+struct DemuxIpFilterSettings {
+    DemuxIpAddress ipAddr;
+
+    safe_union FilterSettings {
+        /**
+         * Not additional parameters. it's used by NTP, IP_PAYLOAD,
+         * PAYLOAD_THROUGH subtype filters.
+         */
+        Monostate noinit;
+
+        DemuxFilterSectionSettings section;
+
+        DemuxFilterPesDataSettings pesData;
+
+        /**
+         * true if the data from IP subtype go to next filter directly
+         */
+        bool bPassthrough;
+    } filterSettings;
+};
+
+/**
+ *  Filter Settings for a TLV filter.
+ */
+struct DemuxTlvFilterSettings {
+    uint8_t packetType;
+
     /**
-     * true if the filter output goes to decoder directly in pass through mode.
+     * true if the filtered data is commpressed ip packet
      */
-    bool isPassthrough;
+    bool bIsCompressedIpPacket;
+
+    safe_union FilterSettings {
+        /**
+         * Not additional parameters. it's used by PAYLOAD_THROUGH subtype
+         * filters.
+         */
+        Monostate noinit;
+
+        DemuxFilterSectionSettings section;
+
+        /**
+         * true if the data from TLV subtype go to next filter directly
+         */
+        bool bPassthrough;
+    } filterSettings;
 };
 
 /**
- *  Filter Settings for a PCR (Program Clock Reference).
- */
-struct DemuxFilterPcrSettings {
-    DemuxTpid tpid;
-};
-
-/**
- * Indexes can be tagged through TS (Transport Stream) header.
+ * ALP Length Type
  */
 @export
-enum DemuxTsIndex : uint32_t {
-    FIRST_PACKET                 = 1 << 0,
-    PAYLOAD_UNIT_START_INDICATOR = 1 << 1,
-    CHANGE_TO_NOT_SCRAMBLED      = 1 << 2,
-    CHANGE_TO_EVEN_SCRAMBLED     = 1 << 3,
-    CHANGE_TO_ODD_SCRAMBLED      = 1 << 4,
-    DISCONTINUITY_INDICATOR      = 1 << 5,
-    RANDOM_ACCESS_INDICATOR      = 1 << 6,
-    PRIORITY_INDICATOR           = 1 << 7,
-    PCR_FLAG                     = 1 << 8,
-    OPCR_FLAG                    = 1 << 9,
-    SPLICING_POINT_FLAG          = 1 << 10,
-    PRIVATE_DATA                 = 1 << 11,
-    ADAPTATION_EXTENSION_FLAG    = 1 << 12,
+enum DemuxAlpLengthType : uint8_t {
+    UNDEFINED = 0,
+    /**
+     * Length does NOT include additional header. Used in US region.
+     */
+    WITHOUT_ADDITIONAL_HEADER,
+    /**
+     * Length includes additional header. Used in Korea region.
+     */
+    WITH_ADDITIONAL_HEADER,
 };
 
 /**
- * A mask of TS indexes
- *
- * It's a combination of TS indexes.
+ *  Filter Settings for a ALP filter.
  */
-typedef bitfield<DemuxTsIndex> DemuxTsIndexMask;
+struct DemuxAlpFilterSettings {
+    /**
+     * 0: IpV4, 2:Compressed Ip, 4:Signaling.
+     */
+    uint8_t packetType;
 
-/**
- * Indexes can be tagged by Start Code in PES (Packetized Elementary Stream)
- * according to ISO/IEC 13818-1.
- */
-@export
-enum DemuxScIndex : uint32_t {
-    /* Start Code is for a new I Frame */
-    I_FRAME   = 1 << 0,
-    /* Start Code is for a new P Frame */
-    P_FRAME   = 1 << 1,
-    /* Start Code is for a new B Frame */
-    B_FRAME   = 1 << 2,
-    /* Start Code is for a new Sequence */
-    SEQUENCE  = 1 << 3,
-};
+    DemuxAlpLengthType lengthType;
 
-/**
- * A mask of Start Code Indexes
- *
- * It's a combination of Start Code Indexes.
- */
-typedef bitfield<DemuxScIndex> DemuxScIndexMask;
+    safe_union FilterSettings {
+        /**
+         * Not additional parameters. it's used by PTP, PAYLOAD_THROUGH subtype
+         * filters.
+         */
+        Monostate noinit;
 
-/* Index type to be used in the filter for record */
-@export
-enum DemuxRecordIndexType : uint32_t {
-    /* Don't use index */
-    NONE,
-    /* Use TS index */
-    TS,
-    /* Use Start Code index */
-    SC,
-};
-
-/**
- *  Filter Settings for Record data.
- */
-struct DemuxFilterRecordSettings {
-    DemuxTpid tpid;
-    DemuxRecordIndexType indexType;
-    safe_union IndexMask {
-        DemuxTsIndexMask tsIndexMask;
-        DemuxScIndexMask scIndexMask;
-    } indexMask;
+        DemuxFilterSectionSettings section;
+    } filterSettings;
 };
 
 /**
  *  Filter Settings.
  */
 safe_union DemuxFilterSettings {
-    DemuxFilterSectionSettings section;
-    DemuxFilterPesDataSettings pesData;
-    DemuxFilterTsSettings ts;
-    DemuxFilterAudioSettings audio;
-    DemuxFilterVideoSettings video;
-    DemuxFilterPcrSettings pcr;
-    DemuxFilterRecordSettings record;
+    DemuxTsFilterSettings ts;
+
+    DemuxMmtpFilterSettings mmtp;
+
+    DemuxIpFilterSettings ip;
+
+    DemuxTlvFilterSettings tlv;
+
+    DemuxAlpFilterSettings alp;
 };
 
 /**
@@ -1493,38 +2318,106 @@ safe_union DemuxFilterSettings {
  */
 @export
 enum DemuxQueueNotifyBits : uint32_t {
-    /* client writes data and notify HAL the data is ready. */
+    /**
+     * client writes data and notify HAL the data is ready.
+     */
     DATA_READY = 1 << 0,
-    /* client reads data and notify HAL the data is consumed. */
-    DATA_CONSUMED = 1 << 1
+    /**
+     * client reads data and notify HAL the data is consumed.
+     */
+    DATA_CONSUMED = 1 << 1,
 };
 
 /**
  *  Filter Event for Section Filter.
  */
 struct DemuxFilterSectionEvent {
-    /* Table ID of filtered data */
+    /**
+     * Table ID of filtered data
+     */
     uint16_t tableId;
-    /* Version number of filtered data */
+
+    /**
+     * Version number of filtered data
+     */
     uint16_t version;
-    /* Section number of filtered data */
+
+    /**
+     * Section number of filtered data
+     */
     uint16_t sectionNum;
-    /* Data size in bytes of filtered data */
+
+    /**
+     * Data size in bytes of filtered data
+     */
     uint16_t dataLength;
+};
+
+/**
+ *  Extra Meta Data from AD (Audio Descriptor) according to
+ *  ETSI TS 101 154 V2.1.1.
+ */
+struct AudioExtraMetaData {
+    uint8_t adFade;
+
+    uint8_t adPan;
+
+    uint8_t versionTextTag;
+
+    uint8_t adGainCenter;
+
+    uint8_t adGainFront;
+
+    uint8_t adGainSurround;
 };
 
 /**
  *  Filter Event for Audio or Video Filter.
  */
 struct DemuxFilterMediaEvent {
-    /* Presentation Time Stamp for audio or video frame. It based on 90KHz has
+    DemuxStreamId streamId;
+
+    /**
+     * true if PTS is present in PES header.
+     */
+    bool isPtsPresent;
+
+    /**
+     * Presentation Time Stamp for audio or video frame. It based on 90KHz has
      * the same format as PTS (Presentation Time Stamp).
      */
     uint64_t pts;
-    /* Data size in bytes of audio or video frame */
-    uint16_t dataLength;
-    /* A handle associated to the memory where audio or video data stays. */
-    handle secureMemory;
+
+    /**
+     * Data size in bytes of audio or video frame
+     */
+    uint32_t dataLength;
+
+    /**
+     * A handle associated to the memory where audio or video data stays.
+     */
+    handle avMemory;
+
+    /**
+     * True if the avMemory is in secure area, and isn't mappable.
+     */
+    bool isSecureMemory;
+
+    /**
+     * MPU sequence number of filtered data (only for MMTP)
+     */
+    uint32_t mpuSequenceNumber;
+
+    bool isPesPrivateData;
+
+    safe_union ExtraMetaData {
+        /**
+         * Not additional parameters. it's used for video.
+         */
+        Monostate noinit;
+
+        AudioExtraMetaData audio;
+    } extraMetaData;
 };
 
 /**
@@ -1532,176 +2425,309 @@ struct DemuxFilterMediaEvent {
  */
 struct DemuxFilterPesEvent {
     DemuxStreamId streamId;
-    /* Data size in bytes of PES data */
+
+    /**
+     * Data size in bytes of PES data
+     */
+    uint16_t dataLength;
+
+    /**
+     * MPU sequence number of filtered data (only for MMTP)
+     */
+    uint32_t mpuSequenceNumber;
+};
+
+/**
+ *  Filter Event for TS Record data.
+ */
+struct DemuxFilterTsRecordEvent {
+    DemuxPid pid;
+
+    /**
+     * Indexes of record output
+     */
+    safe_union IndexMask {
+        bitfield<DemuxTsIndex> tsIndexMask;
+
+        bitfield<DemuxScIndex> scIndexMask;
+
+        bitfield<DemuxScHevcIndex> scHevcIndexMask;
+    } indexMask;
+
+    /**
+     * Byte number from beginning of the filter's output
+     */
+    uint64_t byteNumber;
+};
+
+/**
+ *  Filter Event for MMTP Record data.
+ */
+struct DemuxFilterMmtpRecordEvent {
+    bitfield<DemuxScHevcIndex> scHevcIndexMask;
+
+    /**
+     * Byte number from beginning of the filter's output
+     */
+    uint64_t byteNumber;
+};
+
+/**
+ *  Filter Event for Download data.
+ */
+struct DemuxFilterDownloadEvent {
+    uint32_t itemId;
+
+    /**
+     * MPU sequence number of filtered data (only for MMTP)
+     */
+    uint32_t mpuSequenceNumber;
+
+    uint32_t itemFragmentIndex;
+
+    uint32_t lastItemFragmentIndex;
+
+    /**
+     * Data size in bytes of filtered data
+     */
     uint16_t dataLength;
 };
 
 /**
- *  Filter Event for Record data.
+ *  Filter Event for IP payload data.
  */
-struct DemuxFilterRecordEvent {
-    DemuxTpid tpid;
-    /* Indexes of record output */
-    safe_union IndexMask {
-        DemuxTsIndexMask tsIndexMask;
-        DemuxScIndexMask scIndexMask;
-    } indexMask;
-    /* Packet number from beginning of the filter's output */
-    uint64_t packetNum;
+struct DemuxFilterIpPayloadEvent {
+    /**
+     * Data size in bytes of IP data
+     */
+    uint16_t dataLength;
 };
 
 /**
  * Filter Event.
  */
 struct DemuxFilterEvent {
-    DemuxFilterId filterId;
-    DemuxFilterType filterType;
     safe_union Event {
         DemuxFilterSectionEvent section;
+
         DemuxFilterMediaEvent media;
+
         DemuxFilterPesEvent pes;
-        DemuxFilterRecordEvent ts;
+
+        DemuxFilterTsRecordEvent tsRecord;
+
+        DemuxFilterMmtpRecordEvent mmtpRecord;
+
+        DemuxFilterDownloadEvent download;
+
+        DemuxFilterIpPayloadEvent ipPayload;
     };
-    /* An array of events */
+
+    /**
+     * An array of events
+     */
     vec<Event> events;
 };
 
-/**
- *  A hardware resource ID to be used for audio and video hardware sync.
- */
 typedef uint32_t AvSyncHwId;
 
-/**
- *  A token to be used to link descrambler and key slot. It's opaque to
- *  framework and apps.
- */
 typedef vec<uint8_t> TunerKeyToken;
 
 /**
  * A data format in demux's output or input according to ISO/IEC 13818-1.
  */
 @export
-enum DemuxDataFormat : uint32_t {
-    /* Data is Transport Stream. */
+enum DataFormat : uint32_t {
+    /**
+     * Data is Transport Stream.
+     */
     TS,
-    /* Data is Packetized Elementary Stream. */
+    /**
+     * Data is Packetized Elementary Stream.
+     */
     PES,
-    /* Data is Elementary Stream. */
+    /**
+     * Data is Elementary Stream.
+     */
     ES,
-    /* Data is TLV (type-length-value) Stream for JP SHV */
+    /**
+     * Data is TLV (type-length-value) Stream for JP SHV
+     */
     SHV_TLV,
 };
 
-/**
- * A status of the demux's output.
- */
-typedef DemuxFilterStatus DemuxOutputStatus;
+typedef DemuxFilterStatus RecordStatus;
 
 /**
- *  The Settings for the demux's output.
+ *  The Settings for the record in DVR.
  */
-struct DemuxOutputSettings {
+struct RecordSettings {
     /**
      * Register for interested status events so that the HAL can send these
      * status events back to client.
      */
-    bitfield<DemuxOutputStatus> statusMask;
+    bitfield<RecordStatus> statusMask;
+
     /**
-     * Unconsumed data size in bytes in the output. The HAL uses it to trigger
-     * DemuxOutputStatus::LOW_WATER.
+     * Unconsumed data size in bytes in the record. The HAL uses it to trigger
+     * OutputStatus::LOW_WATER.
      */
     uint32_t lowThreshold;
+
     /**
-     * Unconsumed data size in bytes in the output. The HAL uses it to trigger
-     * DemuxOutputStatus::High_WATER.
+     * Unconsumed data size in bytes in the record. The HAL uses it to trigger
+     * OutputStatus::High_WATER.
      */
     uint32_t highThreshold;
+
     /**
-     * The data format in the output.
+     * The data format in the record.
      */
-    DemuxDataFormat dataFormat;
+    DataFormat dataFormat;
+
     /**
-     * The packet size in bytes in the output.
+     * The packet size in bytes in the record.
      */
     uint8_t packetSize;
 };
 
 /**
- * A status of the demux's input.
+ * A status of the playback in DVR.
  */
 @export
-enum DemuxInputStatus : uint32_t {
+enum PlaybackStatus : uint32_t {
     /**
-     * The space of the demux's input is empty.
+     * The space of the demux's playback is empty.
      */
-    SPACE_EMPTY        = 1 << 0,
+    SPACE_EMPTY = 1 << 0,
     /**
-     * The spece of the demux's input is almost empty.
+     * The spece of the demux's playback is almost empty.
      */
     SPACE_ALMOST_EMPTY = 1 << 1,
     /**
-     * The space of the demux's input is almost full.
+     * The space of the demux's playback is almost full.
      */
-    SPACE_ALMOST_FULL  = 1 << 2,
+    SPACE_ALMOST_FULL = 1 << 2,
     /**
-     * The space of the demux's input is full.
+     * The space of the demux's playback is full.
      */
-    SPACE_FULL         = 1 << 3,
+    SPACE_FULL = 1 << 3,
 };
 
 /**
- *  The Settings for the demux's input.
+ * The Setting for the playback in DVR.
  */
-@export
-struct DemuxInputSettings {
+struct PlaybackSettings {
     /**
      * Register for interested status events so that the HAL can send these
      * status events back to client.
      */
-    bitfield<DemuxInputStatus> statusMask;
+    bitfield<PlaybackStatus> statusMask;
+
     /**
-     * Unused space size in bytes in the input. The HAL uses it to trigger
-     * DemuxInputStatus::SPACE_ALMOST_EMPTY.
+     * Unused space size in bytes in the playback. The HAL uses it to trigger
+     * InputStatus::SPACE_ALMOST_EMPTY.
      */
     uint32_t lowThreshold;
+
     /**
-     * Unused space size in bytes in the input. The HAL uses it to trigger
-     * DemuxInputStatus::SPACE_ALMOST_FULL.
+     * Unused space size in bytes in the playback. The HAL uses it to trigger
+     * InputStatus::SPACE_ALMOST_FULL.
      */
     uint32_t highThreshold;
+
     /**
-     * The data format in the input.
+     * The data format in the playback.
      */
-    DemuxDataFormat dataFormat;
+    DataFormat dataFormat;
+
     /**
-     * The packet size in bytes in the input.
+     * The packet size in bytes in the playback.
      */
     uint8_t packetSize;
+};
+
+/**
+ * The type of DVR.
+ */
+@export
+enum DvrType : uint8_t {
+    RECORD,
+    PLAYBACK,
+};
+
+/**
+ * The Setting for DVR.
+ */
+safe_union DvrSettings {
+    RecordSettings record;
+
+    PlaybackSettings playback;
 };
 
 /**
  *  Capabilities for Demux.
  */
-@export
 struct DemuxCapabilities {
-    /* The number of Demux to be supported. */
+    /**
+     * The number of Demux to be supported.
+     */
     uint32_t numDemux;
-    /* The number of Input to be supported. */
-    uint32_t numInput;
-    /* The number of Output to be supported. */
-    uint32_t numOutput;
-    /* The number of TS Filter to be supported. */
+
+    /**
+     * The number of record to be supported.
+     */
+    uint32_t numRecord;
+
+    /**
+     * The number of playback to be supported.
+     */
+    uint32_t numPlayback;
+
+    /**
+     * The number of TS Filter to be supported.
+     */
     uint32_t numTsFilter;
-    /* The number of Section Filter to be supported. */
+
+    /**
+     * The number of Section Filter to be supported.
+     */
     uint32_t numSectionFilter;
-    /* The number of Audio Filter to be supported. */
+
+    /**
+     * The number of Audio Filter to be supported.
+     */
     uint32_t numAudioFilter;
-    /* The number of Video Filter to be supported. */
+
+    /**
+     * The number of Video Filter to be supported.
+     */
     uint32_t numVideoFilter;
-    /* The number of PES Filter to be supported. */
+
+    /**
+     * The number of PES Filter to be supported.
+     */
     uint32_t numPesFilter;
-    /* The number of PCR Filter to be supported. */
+
+    /**
+     * The number of PCR Filter to be supported.
+     */
     uint32_t numPcrFilter;
-    /* The maximum number of bytes is supported in the mask of Section Filter. */
+
+    /**
+     * The maximum number of bytes is supported in the mask of Section Filter.
+     */
     uint32_t numBytesInSectionFilter;
+
+    bitfield<DemuxFilterMainType> filterCaps;
+
+    /**
+     * The array has same elements as DemuxFilterMainType. linkCaps[i] presents
+     * filter's capability as soource for the ith type in DemuxFilterMainType.
+     * The jth bit of linkCaps[i] is 1 if the output of ith type filter can be
+     * data source for the filter type j.
+     */
+    vec<bitfield<DemuxFilterMainType>> linkCaps;
+
+    bool bTimeFilter;
 };

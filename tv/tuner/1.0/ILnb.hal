@@ -13,7 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package android.hardware.tv.tuner@1.0;
+
+import ILnbCallback;
 
 /**
  * A Tuner LNB (low-noise block downconverter) is used by satellite frontend
@@ -21,6 +24,23 @@ package android.hardware.tv.tuner@1.0;
  * downconvert the frequency to a lower frequency.
  */
 interface ILnb {
+    /**
+     * Set the lnb callback.
+     *
+     * ILnbCallback is used by the client to receive events from the Lnb.
+     * Only one callback per ILnb instance is supported. The callback
+     * will be replaced if it's set again.
+     *
+     * @param callback Callback object to pass Lnb events to the system.
+     *        The previously registered callback must be replaced with this one.
+     *        It can be null.
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_STATE if callback can't be set at current stage,
+     *         UNKNOWN_ERROR if callback setting failed for other reasons.
+     */
+    setCallback(ILnbCallback callback) generates (Result result);
+
     /**
      * Set the lnb's power voltage.
      *
@@ -30,7 +50,7 @@ interface ILnb {
      *         INVALID_ARGUMENT if the selected voltage isn't allowed,
      *         UNKNOWN_ERROR if failed for other reasons.
      */
-    setVoltage(FrontendLnbVoltage voltage) generates (Result result);
+    setVoltage(LnbVoltage voltage) generates (Result result);
 
     /**
      * Set the lnb's tone mode.
@@ -41,7 +61,7 @@ interface ILnb {
      *         INVALID_ARGUMENT if the selected tone mode isn't allowed,
      *         UNKNOWN_ERROR if failed for other reasons.
      */
-    setTone(FrontendLnbTone tone) generates (Result result);
+    setTone(LnbTone tone) generates (Result result);
 
     /**
      * Select the lnb's position.
@@ -52,7 +72,7 @@ interface ILnb {
      *         INVALID_ARGUMENT if the selected position isn't allowed,
      *         UNKNOWN_ERROR if failed for other reasons.
      */
-    setSatellitePosition(FrontendLnbPosition position) generates (Result result);
+    setSatellitePosition(LnbPosition position) generates (Result result);
 
     /**
      *  Sends DiSEqC (Digital Satellite Equipment Control) message.
