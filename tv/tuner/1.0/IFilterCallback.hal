@@ -16,34 +16,18 @@
 
 package android.hardware.tv.tuner@1.0;
 
-interface IDemuxCallback {
+interface IFilterCallback {
     /**
      * Notify the client that a new filter event happened.
      *
-     * @param filterEvent a demux filter event.
+     * @param filterEvent a filter event.
      */
     oneway onFilterEvent(DemuxFilterEvent filterEvent);
 
     /**
-     * Notify the client a new status of a demux filter.
+     * Notify the client a new status of a filter.
      *
-     * @param filterId the demux filter ID.
-     * @param status a new status of the demux filter.
+     * @param status a new status of the filter.
      */
-    oneway onFilterStatus(DemuxFilterId filterId, DemuxFilterStatus status);
-
-    /**
-     * Notify the client a new status of the demux's output.
-     *
-     * @param status a new status of the demux's output.
-     */
-    oneway onOutputStatus(DemuxOutputStatus status);
-
-    /**
-     * Notify the client a new status of the demux's input.
-     *
-     * @param status a new status of the demux's input.
-     */
-    oneway onInputStatus(DemuxInputStatus status);
+    oneway onFilterStatus(DemuxFilterStatus status);
 };
-
