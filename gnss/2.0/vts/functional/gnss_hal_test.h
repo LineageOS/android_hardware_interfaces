@@ -17,10 +17,10 @@
 #ifndef GNSS_HAL_TEST_H_
 #define GNSS_HAL_TEST_H_
 
-#include <VtsHalHidlTargetTestBase.h>
-#include <VtsHalHidlTargetTestEnvBase.h>
 #include <android/hardware/gnss/2.0/IGnss.h>
 #include "GnssCallbackEventQueue.h"
+
+#include <gtest/gtest.h>
 
 using android::hardware::hidl_vec;
 using android::hardware::Return;
@@ -45,24 +45,9 @@ using android::sp;
 
 #define TIMEOUT_SEC 2  // for basic commands/responses
 
-// Test environment for GNSS HIDL HAL.
-class GnssHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
-   public:
-    // get the test environment singleton
-    static GnssHidlEnvironment* Instance() {
-        static GnssHidlEnvironment* instance = new GnssHidlEnvironment;
-        return instance;
-    }
-
-    virtual void registerTestServices() override { registerTestService<IGnss>(); }
-
-   private:
-    GnssHidlEnvironment() {}
-};
-
 // The main test class for GNSS HAL.
-class GnssHalTest : public ::testing::VtsHalHidlTargetTestBase {
-   public:
+class GnssHalTest : public testing::TestWithParam<std::string> {
+  public:
     virtual void SetUp() override;
 
     virtual void TearDown() override;
