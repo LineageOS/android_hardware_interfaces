@@ -33,6 +33,7 @@ namespace implementation {
 //        constructs a new instance for each client.
 std::list<EvsEnumerator::CameraRecord>   EvsEnumerator::sCameraList;
 wp<EvsDisplay>                           EvsEnumerator::sActiveDisplay;
+unique_ptr<ConfigManager>                EvsEnumerator::sConfigManager;
 
 
 EvsEnumerator::EvsEnumerator() {
@@ -40,9 +41,11 @@ EvsEnumerator::EvsEnumerator() {
 
     // Add sample camera data to our list of cameras
     // In a real driver, this would be expected to can the available hardware
-    sCameraList.emplace_back(EvsCamera::kCameraName_Backup);
-    sCameraList.emplace_back("LaneView");
-    sCameraList.emplace_back("right turn");
+    sConfigManager =
+        ConfigManager::Create("/etc/automotive/evs/evs_sample_configuration.xml");
+    for (auto v : sConfigManager->getCameraList()) {
+        sCameraList.emplace_back(v.c_str());
+    }
 }
 
 
@@ -57,7 +60,7 @@ Return<void> EvsEnumerator::getCameraList(getCameraList_cb _hidl_cb)  {
     std::vector<CameraDesc_1_0> descriptions;
     descriptions.reserve(numCameras);
     for (const auto& cam : sCameraList) {
-        descriptions.push_back( cam.desc );
+        descriptions.push_back( cam.desc.v1 );
     }
 
     // Encapsulate our camera descriptions in the HIDL vec type
@@ -78,7 +81,7 @@ Return<sp<IEvsCamera_1_0>> EvsEnumerator::openCamera(const hidl_string& cameraId
     // Find the named camera
     CameraRecord *pRecord = nullptr;
     for (auto &&cam : sCameraList) {
-        if (cam.desc.cameraId == cameraId) {
+        if (cam.desc.v1.cameraId == cameraId) {
             // Found a match!
             pRecord = &cam;
             break;
@@ -99,7 +102,12 @@ Return<sp<IEvsCamera_1_0>> EvsEnumerator::openCamera(const hidl_string& cameraId
     }
 
     // Construct a camera instance for the caller
-    pActiveCamera = new EvsCamera(cameraId.c_str());
+    if (sConfigManager == nullptr) {
+        pActiveCamera = EvsCamera::Create(cameraId.c_str());
+    } else {
+        pActiveCamera = EvsCamera::Create(cameraId.c_str(),
+                                          sConfigManager->getCameraInfo(cameraId));
+    }
     pRecord->activeInstance = pActiveCamera;
     if (pActiveCamera == nullptr) {
         ALOGE("Failed to allocate new EvsCamera object for %s\n", cameraId.c_str());
@@ -120,15 +128,15 @@ Return<void> EvsEnumerator::closeCamera(const ::android::sp<IEvsCamera_1_0>& pCa
 
     // Get the camera id so we can find it in our list
     std::string cameraId;
-    pCamera_1_1->getCameraInfo([&cameraId](CameraDesc desc) {
-                               cameraId = desc.cameraId;
+    pCamera_1_1->getCameraInfo_1_1([&cameraId](CameraDesc desc) {
+                               cameraId = desc.v1.cameraId;
                            }
     );
 
     // Find the named camera
     CameraRecord *pRecord = nullptr;
     for (auto &&cam : sCameraList) {
-        if (cam.desc.cameraId == cameraId) {
+        if (cam.desc.v1.cameraId == cameraId) {
             // Found a match!
             pRecord = &cam;
             break;
@@ -208,6 +216,89 @@ Return<DisplayState> EvsEnumerator::getDisplayState()  {
     }
 }
 
+
+// Methods from ::android::hardware::automotive::evs::V1_1::IEvsEnumerator follow.
+Return<void> EvsEnumerator::getCameraList_1_1(getCameraList_1_1_cb _hidl_cb)  {
+    ALOGD("getCameraList");
+
+    const unsigned numCameras = sCameraList.size();
+
+    // Build up a packed array of CameraDesc for return
+    // NOTE:  Only has to live until the callback returns
+    std::vector<CameraDesc_1_1> descriptions;
+    descriptions.reserve(numCameras);
+    for (const auto& cam : sCameraList) {
+        descriptions.push_back( cam.desc );
+    }
+
+    // Encapsulate our camera descriptions in the HIDL vec type
+    hidl_vec<CameraDesc_1_1> hidlCameras(descriptions);
+
+    // Send back the results
+    ALOGD("reporting %zu cameras available", hidlCameras.size());
+    _hidl_cb(hidlCameras);
+
+    // HIDL convention says we return Void if we sent our result back via callback
+    return Void();
+}
+
+Return<sp<IEvsCamera_1_1>>
+EvsEnumerator::openCamera_1_1(const hidl_string& cameraId,
+                              const Stream& streamCfg) {
+    // Find the named camera
+    CameraRecord *pRecord = nullptr;
+    for (auto &&cam : sCameraList) {
+        if (cam.desc.v1.cameraId == cameraId) {
+            // Found a match!
+            pRecord = &cam;
+            break;
+        }
+    }
+
+    // Is this a recognized camera id?
+    if (!pRecord) {
+        ALOGE("Requested camera %s not found", cameraId.c_str());
+        return nullptr;
+    }
+
+    // Has this camera already been instantiated by another caller?
+    sp<EvsCamera> pActiveCamera = pRecord->activeInstance.promote();
+    if (pActiveCamera != nullptr) {
+        ALOGW("Killing previous camera because of new caller");
+        closeCamera(pActiveCamera);
+    }
+
+    // Construct a camera instance for the caller
+    if (sConfigManager == nullptr) {
+        pActiveCamera = EvsCamera::Create(cameraId.c_str());
+    } else {
+        pActiveCamera = EvsCamera::Create(cameraId.c_str(),
+                                          sConfigManager->getCameraInfo(cameraId),
+                                          &streamCfg);
+    }
+
+    pRecord->activeInstance = pActiveCamera;
+    if (pActiveCamera == nullptr) {
+        ALOGE("Failed to allocate new EvsCamera object for %s\n", cameraId.c_str());
+    }
+
+    return pActiveCamera;
+}
+
+
+EvsEnumerator::CameraRecord* EvsEnumerator::findCameraById(const std::string& cameraId) {
+    // Find the named camera
+    CameraRecord *pRecord = nullptr;
+    for (auto &&cam : sCameraList) {
+        if (cam.desc.v1.cameraId == cameraId) {
+            // Found a match!
+            pRecord = &cam;
+            break;
+        }
+    }
+
+    return pRecord;
+}
 
 } // namespace implementation
 } // namespace V1_1

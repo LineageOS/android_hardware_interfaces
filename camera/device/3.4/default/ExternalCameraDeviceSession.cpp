@@ -2412,9 +2412,7 @@ int ExternalCameraDeviceSession::configureV4l2StreamLocked(
     mV4L2BufferCount = req_buffers.count;
     for (uint32_t i = 0; i < req_buffers.count; i++) {
         v4l2_buffer buffer = {
-            .type = V4L2_BUF_TYPE_VIDEO_CAPTURE,
-            .index = i,
-            .memory = V4L2_MEMORY_MMAP};
+                .index = i, .type = V4L2_BUF_TYPE_VIDEO_CAPTURE, .memory = V4L2_MEMORY_MMAP};
 
         if (TEMP_FAILURE_RETRY(ioctl(mV4l2Fd.get(), VIDIOC_QUERYBUF, &buffer)) < 0) {
             ALOGE("%s: QUERYBUF %d failed: %s", __FUNCTION__, i,  strerror(errno));
