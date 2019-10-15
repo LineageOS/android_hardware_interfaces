@@ -53,7 +53,7 @@ class GnssCallbackEventQueue {
      * timeout_seconds to retrieve each event. If timeout occurs, it returns the number of
      * items retrieved which will be less than count.
      */
-    int retrieve(list<T>& event_list, int count, int timeout_seconds);
+    int retrieve(std::list<T>& event_list, int count, int timeout_seconds);
 
     /* Returns the number of events pending to be retrieved from the callback event queue. */
     int size() const;
@@ -97,7 +97,7 @@ bool GnssCallbackEventQueue<T>::retrieve(T& event, int timeout_seconds) {
 }
 
 template <class T>
-int GnssCallbackEventQueue<T>::retrieve(list<T>& event_list, int count, int timeout_seconds) {
+int GnssCallbackEventQueue<T>::retrieve(std::list<T>& event_list, int count, int timeout_seconds) {
     for (int i = 0; i < count; ++i) {
         T event;
         if (!retrieve(event, timeout_seconds)) {
