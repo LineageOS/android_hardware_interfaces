@@ -75,7 +75,7 @@ class Frontend : public IFrontend {
     FrontendType mType = FrontendType::UNDEFINED;
     FrontendId mId = 0;
 
-    const string FRONTEND_STREAM_FILE = "/vendor/etc/test1.ts";
+    const string FRONTEND_STREAM_FILE = "/vendor/etc/dumpTs3.ts";
     string mSourceStreamFile;
     std::ifstream mFrontendData;
 };
