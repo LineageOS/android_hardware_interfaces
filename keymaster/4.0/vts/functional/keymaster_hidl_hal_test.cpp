@@ -4413,6 +4413,35 @@ TEST_F(AttestationTest, EcAttestationRequiresAttestationAppId) {
 }
 
 /*
+ * AttestationTest.AttestationApplicationIDLengthProperlyEncoded
+ *
+ * Verifies that the Attestation Application ID software enforced tag has a proper length encoding.
+ * Some implementations break strict encoding rules by encoding a length between 127 and 256 in one
+ * byte. Proper DER encoding specifies that for lengths greather than 127, one byte should be used
+ * to specify how many following bytes will be used to encode the length.
+ */
+TEST_F(AttestationTest, AttestationApplicationIDLengthProperlyEncoded) {
+    auto creation_time = std::chrono::system_clock::now();
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                                 .Authorization(TAG_NO_AUTH_REQUIRED)
+                                                 .EcdsaSigningKey(EcCurve::P_256)
+                                                 .Digest(Digest::SHA_2_256)));
+
+    hidl_vec<hidl_vec<uint8_t>> cert_chain;
+    const string app_id(143, 'a');
+    ASSERT_EQ(ErrorCode::OK,
+              AttestKey(AuthorizationSetBuilder()
+                                .Authorization(TAG_ATTESTATION_CHALLENGE, HidlBuf("challenge"))
+                                .Authorization(TAG_ATTESTATION_APPLICATION_ID, HidlBuf(app_id)),
+                        &cert_chain));
+    EXPECT_GE(cert_chain.size(), 2U);
+
+    EXPECT_TRUE(verify_attestation_record("challenge", app_id,                    //
+                                          key_characteristics_.softwareEnforced,  //
+                                          key_characteristics_.hardwareEnforced,  //
+                                          SecLevel(), cert_chain[0], creation_time));
+}
+/*
  * AttestationTest.AesAttestation
  *
  * Verifies that attesting to AES keys fails in the expected way.
