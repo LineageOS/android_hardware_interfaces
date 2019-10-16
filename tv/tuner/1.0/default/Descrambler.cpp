@@ -50,13 +50,15 @@ Return<Result> Descrambler::setKeyToken(const hidl_vec<uint8_t>& /* keyToken */)
     return Result::SUCCESS;
 }
 
-Return<Result> Descrambler::addPid(uint16_t /* pid */) {
+Return<Result> Descrambler::addPid(const DemuxPid& /* pid */,
+                                   const sp<IFilter>& /* optionalSourceFilter */) {
     ALOGV("%s", __FUNCTION__);
 
     return Result::SUCCESS;
 }
 
-Return<Result> Descrambler::removePid(uint16_t /* pid */) {
+Return<Result> Descrambler::removePid(const DemuxPid& /* pid */,
+                                      const sp<IFilter>& /* optionalSourceFilter */) {
     ALOGV("%s", __FUNCTION__);
 
     return Result::SUCCESS;
