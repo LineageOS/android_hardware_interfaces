@@ -35,6 +35,9 @@ cc_defaults {
     static_libs: [
         "android.hardware.sensors@2.0-HalProxy",
     ],
+    cflags: [
+        "-DLOG_TAG=\"FakeSubHal\""
+    ],
 }
 
 cc_library {
@@ -87,4 +90,7 @@ cc_test {
         "libutils",
     ],
     test_suites: ["device-tests"],
+    cflags: [
+        "-DLOG_TAG=\"HalProxyUnitTests\"",
+    ],
 }

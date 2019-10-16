@@ -22,18 +22,22 @@ namespace sensors {
 namespace V2_0 {
 namespace implementation {
 
+int64_t getTimeNow() {
+    return std::chrono::duration_cast<std::chrono::nanoseconds>(
+                   std::chrono::system_clock::now().time_since_epoch())
+            .count();
+}
+
 ScopedWakelock::ScopedWakelock(IScopedWakelockRefCounter* refCounter, bool locked)
     : mRefCounter(refCounter), mLocked(locked) {
-    // TODO: Move this implementation into HalProxy object instead
     if (mLocked) {
-        mRefCounter->incrementRefCountAndMaybeAcquireWakelock();
+        mLocked = mRefCounter->incrementRefCountAndMaybeAcquireWakelock(1, &mCreatedAtTimeNs);
     }
 }
 
 ScopedWakelock::~ScopedWakelock() {
-    // TODO: Move this implementation into HalProxy object instead
     if (mLocked) {
-        mRefCounter->decrementRefCountAndMaybeReleaseWakelock();
+        mRefCounter->decrementRefCountAndMaybeReleaseWakelock(1, mCreatedAtTimeNs);
     }
 }
 

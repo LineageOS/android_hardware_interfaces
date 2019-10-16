@@ -29,6 +29,7 @@
 
 namespace {
 
+using ::android::hardware::EventFlag;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::MessageQueue;
 using ::android::hardware::Return;
@@ -36,7 +37,9 @@ using ::android::hardware::sensors::V1_0::EventPayload;
 using ::android::hardware::sensors::V1_0::SensorFlagBits;
 using ::android::hardware::sensors::V1_0::SensorInfo;
 using ::android::hardware::sensors::V1_0::SensorType;
+using ::android::hardware::sensors::V2_0::EventQueueFlagBits;
 using ::android::hardware::sensors::V2_0::ISensorsCallback;
+using ::android::hardware::sensors::V2_0::WakeLockQueueFlagBits;
 using ::android::hardware::sensors::V2_0::implementation::HalProxy;
 using ::android::hardware::sensors::V2_0::implementation::HalProxyCallback;
 using ::android::hardware::sensors::V2_0::subhal::implementation::AddAndRemoveDynamicSensorsSubHal;
@@ -122,6 +125,12 @@ void testSensorsListFromProxyAndSubHal(const std::vector<SensorInfo>& proxySenso
  */
 void testSensorsListForOneDirectChannelEnabledSubHal(const std::vector<SensorInfo>& sensorsList,
                                                      size_t enabledSubHalIndex);
+
+void ackWakeupEventsToHalProxy(size_t numEvents, std::unique_ptr<WakeupMessageQueue>& wakelockQueue,
+                               EventFlag* wakelockQueueFlag);
+
+bool readEventsOutOfQueue(size_t numEvents, std::unique_ptr<EventMessageQueue>& eventQueue,
+                          EventFlag* eventQueueFlag);
 
 /**
  * Construct and return a HIDL Event type thats sensorHandle refers to a proximity sensor
@@ -313,10 +322,19 @@ TEST(HalProxyTest, PostSingleWakeupEvent) {
     ::android::sp<ISensorsCallback> callback = new SensorsCallback();
     proxy.initialize(*eventQueue->getDesc(), *wakeLockQueue->getDesc(), callback);
 
+    EventFlag* eventQueueFlag;
+    EventFlag::createEventFlag(eventQueue->getEventFlagWord(), &eventQueueFlag);
+
+    EventFlag* wakelockQueueFlag;
+    EventFlag::createEventFlag(wakeLockQueue->getEventFlagWord(), &wakelockQueueFlag);
+
     std::vector<Event> events{makeProximityEvent()};
     subHal.postEvents(events, true /* wakeup */);
 
     EXPECT_EQ(eventQueue->availableToRead(), 1);
+
+    readEventsOutOfQueue(1, eventQueue, eventQueueFlag);
+    ackWakeupEventsToHalProxy(1, wakeLockQueue, wakelockQueueFlag);
 }
 
 TEST(HalProxyTest, PostMultipleWakeupEvents) {
@@ -332,10 +350,19 @@ TEST(HalProxyTest, PostMultipleWakeupEvents) {
     ::android::sp<ISensorsCallback> callback = new SensorsCallback();
     proxy.initialize(*eventQueue->getDesc(), *wakeLockQueue->getDesc(), callback);
 
+    EventFlag* eventQueueFlag;
+    EventFlag::createEventFlag(eventQueue->getEventFlagWord(), &eventQueueFlag);
+
+    EventFlag* wakelockQueueFlag;
+    EventFlag::createEventFlag(wakeLockQueue->getEventFlagWord(), &wakelockQueueFlag);
+
     std::vector<Event> events = makeMultipleProximityEvents(kNumEvents);
     subHal.postEvents(events, true /* wakeup */);
 
     EXPECT_EQ(eventQueue->availableToRead(), kNumEvents);
+
+    readEventsOutOfQueue(kNumEvents, eventQueue, eventQueueFlag);
+    ackWakeupEventsToHalProxy(kNumEvents, wakeLockQueue, wakelockQueueFlag);
 }
 
 TEST(HalProxyTest, PostEventsMultipleSubhals) {
@@ -374,20 +401,21 @@ TEST(HalProxyTest, PostEventsDelayedWrite) {
     ::android::sp<ISensorsCallback> callback = new SensorsCallback();
     proxy.initialize(*eventQueue->getDesc(), *wakeLockQueue->getDesc(), callback);
 
+    EventFlag* eventQueueFlag;
+    EventFlag::createEventFlag(eventQueue->getEventFlagWord(), &eventQueueFlag);
+
     std::vector<Event> events = makeMultipleAccelerometerEvents(kNumEvents);
     subHal1.postEvents(events, false /* wakeup */);
 
     EXPECT_EQ(eventQueue->availableToRead(), kQueueSize);
 
-    Event eventOut;
-    // writeblock 1 event out of queue, timeout for half a second
-    EXPECT_TRUE(eventQueue->readBlocking(&eventOut, 1, 500000000));
+    // readblock a full queue size worth of events out of queue, timeout for half a second
+    EXPECT_TRUE(readEventsOutOfQueue(kQueueSize, eventQueue, eventQueueFlag));
 
-    // Sleep for a half second so that blocking write has time complete in background thread
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    // proxy background thread should have wrote remaining events when it saw space
+    EXPECT_TRUE(readEventsOutOfQueue(kNumEvents - kQueueSize, eventQueue, eventQueueFlag));
 
-    // proxy background thread should have wrote last event when it saw space
-    EXPECT_EQ(eventQueue->availableToRead(), kQueueSize);
+    EXPECT_EQ(eventQueue->availableToRead(), 0);
 }
 
 TEST(HalProxyTest, PostEventsMultipleSubhalsThreaded) {
@@ -546,6 +574,23 @@ void testSensorsListForOneDirectChannelEnabledSubHal(const std::vector<SensorInf
             EXPECT_EQ(sensor.flags & SensorFlagBits::MASK_DIRECT_CHANNEL, 0);
         }
     }
+}
+
+void ackWakeupEventsToHalProxy(size_t numEvents, std::unique_ptr<WakeupMessageQueue>& wakelockQueue,
+                               EventFlag* wakelockQueueFlag) {
+    uint32_t numEventsUInt32 = static_cast<uint32_t>(numEvents);
+    wakelockQueue->write(&numEventsUInt32);
+    wakelockQueueFlag->wake(static_cast<uint32_t>(WakeLockQueueFlagBits::DATA_WRITTEN));
+}
+
+bool readEventsOutOfQueue(size_t numEvents, std::unique_ptr<EventMessageQueue>& eventQueue,
+                          EventFlag* eventQueueFlag) {
+    constexpr int64_t kReadBlockingTimeout = INT64_C(500000000);
+    std::vector<Event> events(numEvents);
+    return eventQueue->readBlocking(events.data(), numEvents,
+                                    static_cast<uint32_t>(EventQueueFlagBits::EVENTS_READ),
+                                    static_cast<uint32_t>(EventQueueFlagBits::READ_AND_PROCESS),
+                                    kReadBlockingTimeout, eventQueueFlag);
 }
 
 Event makeProximityEvent() {
