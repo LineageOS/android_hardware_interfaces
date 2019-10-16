@@ -156,8 +156,9 @@ class BluetoothAudioSession {
 
   static constexpr PcmParameters kInvalidPcmParameters = {
       .sampleRate = SampleRate::RATE_UNKNOWN,
+      .channelMode = ChannelMode::UNKNOWN,
       .bitsPerSample = BitsPerSample::BITS_UNKNOWN,
-      .channelMode = ChannelMode::UNKNOWN};
+  };
   // can't be constexpr because of non-literal type
   static const CodecConfiguration kInvalidCodecConfiguration;
 
