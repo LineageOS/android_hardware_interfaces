@@ -1,5 +1,6 @@
 cc_library_shared {
     name: "android.hardware.boot@1.1-impl",
+    stem: "android.hardware.boot@1.0-impl-1.1",
     defaults: [
         "hidl_defaults",
         "libboot_control_defaults",
@@ -30,6 +31,10 @@ cc_binary {
     vendor: true,
     init_rc: ["android.hardware.boot@1.1-service.rc"],
     srcs: ["service.cpp"],
+
+    vintf_fragments: [
+        "android.hardware.boot@1.1.xml",
+    ],
 
     shared_libs: [
         "liblog",
