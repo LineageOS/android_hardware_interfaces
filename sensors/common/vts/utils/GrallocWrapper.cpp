@@ -147,8 +147,8 @@ BufferDescriptor GrallocHalWrapper<AllocatorT, MapperT>::getDescriptor(uint32_t 
             .width = size,
             .height = 1,
             .layerCount = 1,
-            .usage = kBufferUsage,
             .format = static_cast<decltype(descriptorInfo.format)>(PixelFormat::BLOB),
+            .usage = kBufferUsage,
     };
 
     BufferDescriptor descriptor;
