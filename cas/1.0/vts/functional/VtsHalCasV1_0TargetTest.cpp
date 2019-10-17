@@ -16,8 +16,6 @@
 
 #define LOG_TAG "mediacas_hidl_hal_test"
 
-#include <VtsHalHidlTargetTestBase.h>
-#include <VtsHalHidlTargetTestEnvBase.h>
 #include <android-base/logging.h>
 #include <android/hardware/cas/1.0/ICas.h>
 #include <android/hardware/cas/1.0/ICasListener.h>
@@ -27,8 +25,11 @@
 #include <android/hardware/cas/native/1.0/IDescrambler.h>
 #include <android/hardware/cas/native/1.0/types.h>
 #include <binder/MemoryDealer.h>
+#include <gtest/gtest.h>
+#include <hidl/GtestPrinter.h>
 #include <hidl/HidlSupport.h>
 #include <hidl/HidlTransportSupport.h>
+#include <hidl/ServiceManagement.h>
 #include <hidl/Status.h>
 #include <hidlmemory/FrameworkUtils.h>
 #include <utils/Condition.h>
@@ -208,29 +209,16 @@ void MediaCasListener::testEventEcho(sp<ICas>& mediaCas, int32_t& event, int32_t
     EXPECT_TRUE(mEventData == eventData);
 }
 
-// Test environment for Cas HIDL HAL.
-class CasHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
-   public:
-    // get the test environment singleton
-    static CasHidlEnvironment* Instance() {
-        static CasHidlEnvironment* instance = new CasHidlEnvironment;
-        return instance;
-    }
-
-    virtual void registerTestServices() override { registerTestService<IMediaCasService>(); }
-};
-
-class MediaCasHidlTest : public ::testing::VtsHalHidlTargetTestBase {
-   public:
+class MediaCasHidlTest : public testing::TestWithParam<std::string> {
+  public:
     virtual void SetUp() override {
-        mService = ::testing::VtsHalHidlTargetTestBase::getService<IMediaCasService>(
-            CasHidlEnvironment::Instance()->getServiceName<IMediaCasService>());
+        mService = IMediaCasService::getService(GetParam());
         ASSERT_NE(mService, nullptr);
     }
 
-    sp<IMediaCasService> mService;
+    sp<IMediaCasService> mService = nullptr;
 
-   protected:
+  protected:
     static void description(const std::string& description) {
         RecordProperty("description", description);
     }
@@ -419,7 +407,7 @@ class MediaCasHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     return ::testing::AssertionResult(returnVoid.isOk());
 }
 
-TEST_F(MediaCasHidlTest, EnumeratePlugins) {
+TEST_P(MediaCasHidlTest, EnumeratePlugins) {
     description("Test enumerate plugins");
     hidl_vec<HidlCasPluginDescriptor> descriptors;
     EXPECT_TRUE(mService
@@ -440,7 +428,7 @@ TEST_F(MediaCasHidlTest, EnumeratePlugins) {
     }
 }
 
-TEST_F(MediaCasHidlTest, TestInvalidSystemIdFails) {
+TEST_P(MediaCasHidlTest, TestInvalidSystemIdFails) {
     description("Test failure for invalid system ID");
     sp<MediaCasListener> casListener = new MediaCasListener();
 
@@ -458,7 +446,7 @@ TEST_F(MediaCasHidlTest, TestInvalidSystemIdFails) {
     EXPECT_EQ(descramblerBase, nullptr);
 }
 
-TEST_F(MediaCasHidlTest, TestClearKeyPluginInstalled) {
+TEST_P(MediaCasHidlTest, TestClearKeyPluginInstalled) {
     description("Test if ClearKey plugin is installed");
     hidl_vec<HidlCasPluginDescriptor> descriptors;
     EXPECT_TRUE(mService
@@ -480,7 +468,7 @@ TEST_F(MediaCasHidlTest, TestClearKeyPluginInstalled) {
     ASSERT_TRUE(false) << "ClearKey plugin not installed";
 }
 
-TEST_F(MediaCasHidlTest, TestClearKeyApis) {
+TEST_P(MediaCasHidlTest, TestClearKeyApis) {
     description("Test that valid call sequences succeed");
 
     ASSERT_TRUE(createCasPlugin(CLEAR_KEY_SYSTEM_ID));
@@ -584,7 +572,7 @@ TEST_F(MediaCasHidlTest, TestClearKeyApis) {
     EXPECT_EQ(Status::OK, returnStatus);
 }
 
-TEST_F(MediaCasHidlTest, TestClearKeySessionClosedAfterRelease) {
+TEST_P(MediaCasHidlTest, TestClearKeySessionClosedAfterRelease) {
     description("Test that all sessions are closed after a MediaCas object is released");
 
     ASSERT_TRUE(createCasPlugin(CLEAR_KEY_SYSTEM_ID));
@@ -611,7 +599,7 @@ TEST_F(MediaCasHidlTest, TestClearKeySessionClosedAfterRelease) {
     EXPECT_EQ(Status::ERROR_CAS_SESSION_NOT_OPENED, returnStatus);
 }
 
-TEST_F(MediaCasHidlTest, TestClearKeyErrors) {
+TEST_P(MediaCasHidlTest, TestClearKeyErrors) {
     description("Test that invalid call sequences fail with expected error codes");
 
     ASSERT_TRUE(createCasPlugin(CLEAR_KEY_SYSTEM_ID));
@@ -700,7 +688,7 @@ TEST_F(MediaCasHidlTest, TestClearKeyErrors) {
     EXPECT_FALSE(mDescramblerBase->requiresSecureDecoderComponent("bad"));
 }
 
-TEST_F(MediaCasHidlTest, TestClearKeyOobFails) {
+TEST_P(MediaCasHidlTest, TestClearKeyOobFails) {
     description("Test that oob descramble request fails with expected error");
 
     ASSERT_TRUE(createCasPlugin(CLEAR_KEY_SYSTEM_ID));
@@ -849,11 +837,7 @@ TEST_F(MediaCasHidlTest, TestClearKeyOobFails) {
 
 }  // anonymous namespace
 
-int main(int argc, char** argv) {
-    ::testing::AddGlobalTestEnvironment(CasHidlEnvironment::Instance());
-    ::testing::InitGoogleTest(&argc, argv);
-    CasHidlEnvironment::Instance()->init(&argc, argv);
-    int status = RUN_ALL_TESTS();
-    LOG(INFO) << "Test result = " << status;
-    return status;
-}
+INSTANTIATE_TEST_SUITE_P(
+        PerInstance, MediaCasHidlTest,
+        testing::ValuesIn(android::hardware::getAllHalInstanceNames(IMediaCasService::descriptor)),
+        android::hardware::PrintInstanceNameToString);
