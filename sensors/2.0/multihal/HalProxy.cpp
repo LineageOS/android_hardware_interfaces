@@ -42,6 +42,8 @@ using ::android::hardware::sensors::V2_0::implementation::kWakelockTimeoutNs;
 
 typedef ISensorsSubHal*(SensorsHalGetSubHalFunc)(uint32_t*);
 
+static constexpr int32_t kBitsAfterSubHalIndex = 24;
+
 /**
  * Set the subhal index as first byte of sensor handle and return this modified version.
  *
@@ -50,8 +52,19 @@ typedef ISensorsSubHal*(SensorsHalGetSubHalFunc)(uint32_t*);
  *
  * @return The modified sensor handle.
  */
-uint32_t setSubHalIndex(uint32_t sensorHandle, size_t subHalIndex) {
-    return sensorHandle | (subHalIndex << 24);
+int32_t setSubHalIndex(int32_t sensorHandle, size_t subHalIndex) {
+    return sensorHandle | (static_cast<int32_t>(subHalIndex) << kBitsAfterSubHalIndex);
+}
+
+/**
+ * Extract the subHalIndex from sensorHandle.
+ *
+ * @param sensorHandle The sensorHandle to extract from.
+ *
+ * @return The subhal index.
+ */
+size_t extractSubHalIndex(int32_t sensorHandle) {
+    return static_cast<size_t>(sensorHandle >> kBitsAfterSubHalIndex);
 }
 
 HalProxy::HalProxy() {
@@ -101,6 +114,9 @@ Return<Result> HalProxy::setOperationMode(OperationMode mode) {
 }
 
 Return<Result> HalProxy::activate(int32_t sensorHandle, bool enabled) {
+    if (!isSubHalIndexValid(sensorHandle)) {
+        return Result::BAD_VALUE;
+    }
     return getSubHalForSensorHandle(sensorHandle)
             ->activate(clearSubHalIndex(sensorHandle), enabled);
 }
@@ -174,11 +190,17 @@ Return<Result> HalProxy::initialize(
 
 Return<Result> HalProxy::batch(int32_t sensorHandle, int64_t samplingPeriodNs,
                                int64_t maxReportLatencyNs) {
+    if (!isSubHalIndexValid(sensorHandle)) {
+        return Result::BAD_VALUE;
+    }
     return getSubHalForSensorHandle(sensorHandle)
             ->batch(clearSubHalIndex(sensorHandle), samplingPeriodNs, maxReportLatencyNs);
 }
 
 Return<Result> HalProxy::flush(int32_t sensorHandle) {
+    if (!isSubHalIndexValid(sensorHandle)) {
+        return Result::BAD_VALUE;
+    }
     return getSubHalForSensorHandle(sensorHandle)->flush(clearSubHalIndex(sensorHandle));
 }
 
@@ -192,6 +214,9 @@ Return<Result> HalProxy::injectSensorData(const Event& event) {
     }
     if (result == Result::OK) {
         Event subHalEvent = event;
+        if (!isSubHalIndexValid(event.sensorHandle)) {
+            return Result::BAD_VALUE;
+        }
         subHalEvent.sensorHandle = clearSubHalIndex(event.sensorHandle);
         result = getSubHalForSensorHandle(event.sensorHandle)->injectSensorData(subHalEvent);
     }
@@ -326,7 +351,7 @@ void HalProxy::initializeSensorList() {
                     ALOGE("SubHal sensorHandle's first byte was not 0");
                 } else {
                     ALOGV("Loaded sensor: %s", sensor.name.c_str());
-                    sensor.sensorHandle |= (subHalIndex << 24);
+                    sensor.sensorHandle = setSubHalIndex(sensor.sensorHandle, subHalIndex);
                     setDirectChannelFlags(&sensor, subHal);
                     mSensors[sensor.sensorHandle] = sensor;
                 }
@@ -539,8 +564,12 @@ void HalProxy::setDirectChannelFlags(SensorInfo* sensorInfo, ISensorsSubHal* sub
     }
 }
 
-ISensorsSubHal* HalProxy::getSubHalForSensorHandle(uint32_t sensorHandle) {
-    return mSubHalList[static_cast<size_t>(sensorHandle >> 24)];
+ISensorsSubHal* HalProxy::getSubHalForSensorHandle(int32_t sensorHandle) {
+    return mSubHalList[extractSubHalIndex(sensorHandle)];
+}
+
+bool HalProxy::isSubHalIndexValid(int32_t sensorHandle) {
+    return extractSubHalIndex(sensorHandle) < mSubHalList.size();
 }
 
 size_t HalProxy::countNumWakeupEvents(const std::vector<Event>& events, size_t n) {
@@ -554,11 +583,11 @@ size_t HalProxy::countNumWakeupEvents(const std::vector<Event>& events, size_t n
     return numWakeupEvents;
 }
 
-uint32_t HalProxy::clearSubHalIndex(uint32_t sensorHandle) {
+int32_t HalProxy::clearSubHalIndex(int32_t sensorHandle) {
     return sensorHandle & (~kSensorHandleSubHalIndexMask);
 }
 
-bool HalProxy::subHalIndexIsClear(uint32_t sensorHandle) {
+bool HalProxy::subHalIndexIsClear(int32_t sensorHandle) {
     return (sensorHandle & kSensorHandleSubHalIndexMask) == 0;
 }
 
