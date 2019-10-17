@@ -17,6 +17,8 @@
 #define LOG_TAG "GnssHalTest"
 
 #include <android/hidl/manager/1.2/IServiceManager.h>
+#include <gtest/gtest.h>
+#include <hidl/GtestPrinter.h>
 #include <hidl/ServiceManagement.h>
 
 #include <gnss_hal_test.h>
@@ -29,8 +31,7 @@ using ::android::hardware::hidl_vec;
 using ::android::hardware::gnss::common::Utils;
 
 void GnssHalTest::SetUp() {
-    gnss_hal_ = ::testing::VtsHalHidlTargetTestBase::getService<IGnss>(
-        GnssHidlEnvironment::Instance()->getServiceName<IGnss>());
+    gnss_hal_ = IGnss::getService(GetParam());
     ASSERT_NE(gnss_hal_, nullptr);
 
     SetUpGnssCallback();

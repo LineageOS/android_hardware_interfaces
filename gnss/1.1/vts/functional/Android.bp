@@ -30,5 +30,5 @@ cc_test {
     shared_libs: [
         "android.hardware.gnss.measurement_corrections@1.0",
     ],
-    test_suites: ["general-tests"],
+    test_suites: ["general-tests", "vts-core"],
 }

@@ -16,9 +16,10 @@
 
 #define LOG_TAG "GnssHalTestCases"
 
-#include <VtsHalHidlTargetTestBase.h>
 #include <gnss_hal_test.h>
 #include "Utils.h"
+
+#include <gtest/gtest.h>
 
 using android::hardware::hidl_string;
 using android::hardware::hidl_vec;
@@ -51,13 +52,13 @@ using android::hardware::gnss::visibility_control::V1_0::IGnssVisibilityControl;
  *
  * Empty test fixture to verify basic Setup & Teardown
  */
-TEST_F(GnssHalTest, SetupTeardownCreateCleanup) {}
+TEST_P(GnssHalTest, SetupTeardownCreateCleanup) {}
 
 /*
  * TestGnssMeasurementExtension:
  * Gets the GnssMeasurementExtension and verifies that it returns an actual extension.
  */
-TEST_F(GnssHalTest, TestGnssMeasurementExtension) {
+TEST_P(GnssHalTest, TestGnssMeasurementExtension) {
     auto gnssMeasurement_2_0 = gnss_hal_->getExtensionGnssMeasurement_2_0();
     auto gnssMeasurement_1_1 = gnss_hal_->getExtensionGnssMeasurement_1_1();
     auto gnssMeasurement_1_0 = gnss_hal_->getExtensionGnssMeasurement();
@@ -80,7 +81,7 @@ TEST_F(GnssHalTest, TestGnssMeasurementExtension) {
  * The GNSS HAL 2.0 implementation must support @2.0::IGnssConfiguration interface due to
  * the deprecation of some methods in @1.0::IGnssConfiguration interface.
  */
-TEST_F(GnssHalTest, TestGnssConfigurationExtension) {
+TEST_P(GnssHalTest, TestGnssConfigurationExtension) {
     auto gnssConfiguration = gnss_hal_->getExtensionGnssConfiguration_2_0();
     ASSERT_TRUE(gnssConfiguration.isOk());
     sp<IGnssConfiguration_2_0> iGnssConfiguration = gnssConfiguration;
@@ -96,7 +97,7 @@ TEST_F(GnssHalTest, TestGnssConfigurationExtension) {
  * TestGnssConfiguration_setSuplEs_Deprecation:
  * Calls setSuplEs and verifies that it returns false.
  */
-TEST_F(GnssHalTest, TestGnssConfiguration_setSuplEs_Deprecation) {
+TEST_P(GnssHalTest, TestGnssConfiguration_setSuplEs_Deprecation) {
     auto gnssConfiguration = gnss_hal_->getExtensionGnssConfiguration_2_0();
     ASSERT_TRUE(gnssConfiguration.isOk());
     sp<IGnssConfiguration_2_0> iGnssConfiguration = gnssConfiguration;
@@ -111,7 +112,7 @@ TEST_F(GnssHalTest, TestGnssConfiguration_setSuplEs_Deprecation) {
  * TestGnssConfiguration_setGpsLock_Deprecation:
  * Calls setGpsLock and verifies that it returns false.
  */
-TEST_F(GnssHalTest, TestGnssConfiguration_setGpsLock_Deprecation) {
+TEST_P(GnssHalTest, TestGnssConfiguration_setGpsLock_Deprecation) {
     auto gnssConfiguration = gnss_hal_->getExtensionGnssConfiguration_2_0();
     ASSERT_TRUE(gnssConfiguration.isOk());
     sp<IGnssConfiguration_2_0> iGnssConfiguration = gnssConfiguration;
@@ -130,7 +131,7 @@ TEST_F(GnssHalTest, TestGnssConfiguration_setGpsLock_Deprecation) {
  * @2.0::IAGnssRil interface due to the deprecation of framework network API methods needed
  * to support the @1.0::IAGnssRil interface.
  */
-TEST_F(GnssHalTest, TestAGnssRilExtension) {
+TEST_P(GnssHalTest, TestAGnssRilExtension) {
     auto agnssRil_2_0 = gnss_hal_->getExtensionAGnssRil_2_0();
     ASSERT_TRUE(agnssRil_2_0.isOk());
     sp<IAGnssRil_2_0> iAGnssRil_2_0 = agnssRil_2_0;
@@ -148,7 +149,7 @@ TEST_F(GnssHalTest, TestAGnssRilExtension) {
  * 1. Updates GNSS HAL that a network has connected.
  * 2. Updates GNSS HAL that network has disconnected.
  */
-TEST_F(GnssHalTest, TestAGnssRil_UpdateNetworkState_2_0) {
+TEST_P(GnssHalTest, TestAGnssRil_UpdateNetworkState_2_0) {
     auto agnssRil = gnss_hal_->getExtensionAGnssRil_2_0();
     ASSERT_TRUE(agnssRil.isOk());
     sp<IAGnssRil_2_0> iAGnssRil = agnssRil;
@@ -180,7 +181,7 @@ TEST_F(GnssHalTest, TestAGnssRil_UpdateNetworkState_2_0) {
  * 2. constellation is valid.
  * 3. state is valid.
  */
-TEST_F(GnssHalTest, TestGnssMeasurementFields) {
+TEST_P(GnssHalTest, TestGnssMeasurementFields) {
     const int kFirstGnssMeasurementTimeoutSeconds = 10;
 
     auto gnssMeasurement = gnss_hal_->getExtensionGnssMeasurement_2_0();
@@ -234,7 +235,7 @@ TEST_F(GnssHalTest, TestGnssMeasurementFields) {
  * @2.0::IAGnss interface due to the deprecation of framework network API methods needed
  * to support the @1.0::IAGnss interface.
  */
-TEST_F(GnssHalTest, TestAGnssExtension) {
+TEST_P(GnssHalTest, TestAGnssExtension) {
     auto agnss_2_0 = gnss_hal_->getExtensionAGnss_2_0();
     ASSERT_TRUE(agnss_2_0.isOk());
     sp<IAGnss_2_0> iAGnss_2_0 = agnss_2_0;
@@ -258,7 +259,7 @@ TEST_F(GnssHalTest, TestAGnssExtension) {
  * TestGnssNiExtension_Deprecation:
  * Gets the @1.0::IGnssNi extension and verifies that it is a nullptr.
  */
-TEST_F(GnssHalTest, TestGnssNiExtension_Deprecation) {
+TEST_P(GnssHalTest, TestGnssNiExtension_Deprecation) {
     // Verify IGnssNi 1.0 is not supported.
     auto gnssNi = gnss_hal_->getExtensionGnssNi();
     ASSERT_TRUE(!gnssNi.isOk() || ((sp<IGnssNi>)gnssNi) == nullptr);
@@ -269,7 +270,7 @@ TEST_F(GnssHalTest, TestGnssNiExtension_Deprecation) {
  * Gets the GnssVisibilityControlExtension and if it is not null, verifies that it supports
  * the gnss.visibility_control@1.0::IGnssVisibilityControl interface by invoking a method.
  */
-TEST_F(GnssHalTest, TestGnssVisibilityControlExtension) {
+TEST_P(GnssHalTest, TestGnssVisibilityControlExtension) {
     auto gnssVisibilityControl = gnss_hal_->getExtensionVisibilityControl();
     ASSERT_TRUE(gnssVisibilityControl.isOk());
     sp<IGnssVisibilityControl> iGnssVisibilityControl = gnssVisibilityControl;
@@ -290,7 +291,7 @@ TEST_F(GnssHalTest, TestGnssVisibilityControlExtension) {
  * capabilities are reported and the mandatory LOS_SATS or the EXCESS_PATH_LENGTH
  * capability flag is set.
  */
-TEST_F(GnssHalTest, TestGnssMeasurementCorrectionsCapabilities) {
+TEST_P(GnssHalTest, TestGnssMeasurementCorrectionsCapabilities) {
     if (!(gnss_cb_->last_capabilities_ & IGnssCallback::Capabilities::MEASUREMENT_CORRECTIONS)) {
         return;
     }
@@ -318,7 +319,7 @@ TEST_F(GnssHalTest, TestGnssMeasurementCorrectionsCapabilities) {
  * If measurement corrections capability is supported, verifies that it supports the
  * gnss.measurement_corrections@1.0::IMeasurementCorrections interface by invoking a method.
  */
-TEST_F(GnssHalTest, TestGnssMeasurementCorrections) {
+TEST_P(GnssHalTest, TestGnssMeasurementCorrections) {
     if (!(gnss_cb_->last_capabilities_ & IGnssCallback::Capabilities::MEASUREMENT_CORRECTIONS)) {
         return;
     }
@@ -348,7 +349,7 @@ TEST_F(GnssHalTest, TestGnssMeasurementCorrections) {
  * Sets a GnssMeasurementCallback, waits for a GnssData object, and verifies the flags in member
  * elapsedRealitme are valid.
  */
-TEST_F(GnssHalTest, TestGnssDataElapsedRealtimeFlags) {
+TEST_P(GnssHalTest, TestGnssDataElapsedRealtimeFlags) {
     const int kFirstGnssMeasurementTimeoutSeconds = 10;
 
     auto gnssMeasurement = gnss_hal_->getExtensionGnssMeasurement_2_0();
@@ -383,7 +384,7 @@ TEST_F(GnssHalTest, TestGnssDataElapsedRealtimeFlags) {
     iGnssMeasurement->close();
 }
 
-TEST_F(GnssHalTest, TestGnssLocationElapsedRealtime) {
+TEST_P(GnssHalTest, TestGnssLocationElapsedRealtime) {
     StartAndCheckFirstLocation();
 
     ASSERT_TRUE((int)gnss_cb_->last_location_.elapsedRealtime.flags <=
@@ -399,7 +400,7 @@ TEST_F(GnssHalTest, TestGnssLocationElapsedRealtime) {
 }
 
 // This test only verify that injectBestLocation_2_0 does not crash.
-TEST_F(GnssHalTest, TestInjectBestLocation_2_0) {
+TEST_P(GnssHalTest, TestInjectBestLocation_2_0) {
     StartAndCheckFirstLocation();
     gnss_hal_->injectBestLocation_2_0(gnss_cb_->last_location_);
     StopAndClearLocations();
@@ -410,7 +411,7 @@ TEST_F(GnssHalTest, TestInjectBestLocation_2_0) {
  * Gets the @2.0::IGnssBatching extension and verifies that it doesn't return an error. Support
  * for this interface is optional.
  */
-TEST_F(GnssHalTest, TestGnssBatchingExtension) {
+TEST_P(GnssHalTest, TestGnssBatchingExtension) {
     auto gnssBatching_2_0 = gnss_hal_->getExtensionGnssBatching_2_0();
     ASSERT_TRUE(gnssBatching_2_0.isOk());
 }
@@ -422,7 +423,7 @@ TEST_F(GnssHalTest, TestGnssBatchingExtension) {
  * NO_LOCATION_PERIOD_SEC and verfiy that no location is received. Also perform validity checks on
  * each received location.
  */
-TEST_F(GnssHalTest, GetLocationLowPower) {
+TEST_P(GnssHalTest, GetLocationLowPower) {
     if (!(gnss_cb_->last_capabilities_ & IGnssCallback::Capabilities::LOW_POWER_MODE)) {
         ALOGI("Test GetLocationLowPower skipped. LOW_POWER_MODE capability not supported.");
         return;
@@ -513,7 +514,7 @@ GnssConstellationType_1_0 MapConstellationType(GnssConstellationType_2_0 constel
  *         or a source with constellation == UNKNOWN if none are found sufficient times
  */
 IGnssConfiguration_1_1::BlacklistedSource FindStrongFrequentNonGpsSource(
-        const list<hidl_vec<IGnssCallback_2_0::GnssSvInfo>>& sv_info_lists,
+        const std::list<hidl_vec<IGnssCallback_2_0::GnssSvInfo>>& sv_info_lists,
         const int min_observations) {
     struct ComparableBlacklistedSource {
         IGnssConfiguration_1_1::BlacklistedSource id;
@@ -599,7 +600,7 @@ IGnssConfiguration_1_1::BlacklistedSource FindStrongFrequentNonGpsSource(
  * 5b) Retry a few times, in case GNSS search strategy takes a while to reacquire even the
  * formerly strongest satellite
  */
-TEST_F(GnssHalTest, BlacklistIndividualSatellites) {
+TEST_P(GnssHalTest, BlacklistIndividualSatellites) {
     if (!(gnss_cb_->last_capabilities_ & IGnssCallback::Capabilities::SATELLITE_BLACKLIST)) {
         ALOGI("Test BlacklistIndividualSatellites skipped. SATELLITE_BLACKLIST capability"
               " not supported.");
@@ -626,7 +627,7 @@ TEST_F(GnssHalTest, BlacklistIndividualSatellites) {
      */
 
     const int kGnssSvStatusTimeout = 2;
-    list<hidl_vec<IGnssCallback_2_0::GnssSvInfo>> sv_info_lists;
+    std::list<hidl_vec<IGnssCallback_2_0::GnssSvInfo>> sv_info_lists;
     int count = gnss_cb_->sv_info_list_cbq_.retrieve(sv_info_lists, sv_info_list_cbq_size,
                                                      kGnssSvStatusTimeout);
     ASSERT_EQ(count, sv_info_list_cbq_size);
@@ -744,7 +745,7 @@ TEST_F(GnssHalTest, BlacklistIndividualSatellites) {
  * GnssStatus does not use any constellation but GPS.
  * 4a & b) Clean up by turning off location, and send in empty blacklist.
  */
-TEST_F(GnssHalTest, BlacklistConstellation) {
+TEST_P(GnssHalTest, BlacklistConstellation) {
     if (!(gnss_cb_->last_capabilities_ & IGnssCallback::Capabilities::SATELLITE_BLACKLIST)) {
         ALOGI("Test BlacklistConstellation skipped. SATELLITE_BLACKLIST capability not supported.");
         return;
