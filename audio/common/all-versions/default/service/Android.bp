@@ -1,0 +1,51 @@
+cc_binary {
+    name: "android.hardware.audio.service",
+
+    init_rc: ["android.hardware.audio.service.rc"],
+    relative_install_path: "hw",
+    vendor: true,
+    // Only support 32 bit  as the binary must always be installed at the same
+    // location for init to start it and the build system does not support
+    // having two binaries installable to the same location even if they are
+    // not installed in the same build.
+    compile_multilib: "32",
+    srcs: ["service.cpp"],
+
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+    ],
+
+    shared_libs: [
+        "libcutils",
+        "libbinder",
+        "libhidlbase",
+        "liblog",
+        "libutils",
+        "libhardware",
+        "android.hardware.audio@2.0",
+        "android.hardware.audio@4.0",
+        "android.hardware.audio@5.0",
+        "android.hardware.audio@6.0",
+        "android.hardware.audio.common@2.0",
+        "android.hardware.audio.common@4.0",
+        "android.hardware.audio.common@5.0",
+        "android.hardware.audio.common@6.0",
+        "android.hardware.audio.effect@2.0",
+        "android.hardware.audio.effect@4.0",
+        "android.hardware.audio.effect@5.0",
+        "android.hardware.audio.effect@6.0",
+        "android.hardware.bluetooth.a2dp@1.0",
+        "android.hardware.bluetooth.audio@2.0",
+        "android.hardware.soundtrigger@2.0",
+        "android.hardware.soundtrigger@2.1",
+        "android.hardware.soundtrigger@2.2",
+    ],
+}
+
+// Legacy service name, use android.hardware.audio.service instead
+phony {
+    name: "android.hardware.audio@2.0-service",
+    required: ["android.hardware.audio.service"],
+}
