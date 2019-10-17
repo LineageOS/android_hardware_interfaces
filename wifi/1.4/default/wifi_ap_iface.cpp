@@ -31,26 +31,11 @@ using hidl_return_util::validateAndCall;
 WifiApIface::WifiApIface(
     const std::string& ifname,
     const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal,
-    const std::weak_ptr<iface_util::WifiIfaceUtil> iface_util,
-    const std::weak_ptr<feature_flags::WifiFeatureFlags> feature_flags)
+    const std::weak_ptr<iface_util::WifiIfaceUtil> iface_util)
     : ifname_(ifname),
       legacy_hal_(legacy_hal),
       iface_util_(iface_util),
-      feature_flags_(feature_flags),
-      is_valid_(true) {
-    if (feature_flags_.lock()->isApMacRandomizationDisabled()) {
-        LOG(INFO) << "AP MAC randomization disabled";
-        return;
-    }
-    LOG(INFO) << "AP MAC randomization enabled";
-    // Set random MAC address
-    std::array<uint8_t, 6> randomized_mac =
-        iface_util_.lock()->getOrCreateRandomMacAddress();
-    bool status = iface_util_.lock()->setMacAddress(ifname_, randomized_mac);
-    if (!status) {
-        LOG(ERROR) << "Failed to set random mac address";
-    }
-}
+      is_valid_(true) {}
 
 void WifiApIface::invalidate() {
     legacy_hal_.reset();
