@@ -370,31 +370,34 @@ const ConfigDeclaration kVehicleProperties[]{
                  },
          .initialValue = {.floatValues = {100.0f}}},  // units in meters
 
-        {.config = {.prop = toInt(VehicleProperty::TIRE_PRESSURE),
-                    .access = VehiclePropertyAccess::READ,
-                    .changeMode = VehiclePropertyChangeMode::CONTINUOUS,
-                    .minSampleRate = 1.0f,
-                    .maxSampleRate = 2.0f,
-                    .areaConfigs = {VehicleAreaConfig{
-                                            .areaId = WHEEL_FRONT_LEFT,
-                                            .minFloatValue = 100.0f,
-                                            .maxFloatValue = 300.0f,
-                                    },
-                                    VehicleAreaConfig{
-                                            .areaId = WHEEL_FRONT_RIGHT,
-                                            .minFloatValue = 100.0f,
-                                            .maxFloatValue = 300.0f,
-                                    },
-                                    VehicleAreaConfig{
-                                            .areaId = WHEEL_REAR_LEFT,
-                                            .minFloatValue = 100.0f,
-                                            .maxFloatValue = 300.0f,
-                                    },
-                                    VehicleAreaConfig{
-                                            .areaId = WHEEL_REAR_RIGHT,
-                                            .minFloatValue = 100.0f,
-                                            .maxFloatValue = 300.0f,
-                                    }}},
+        {.config =
+                 {
+                         .prop = toInt(VehicleProperty::TIRE_PRESSURE),
+                         .access = VehiclePropertyAccess::READ,
+                         .changeMode = VehiclePropertyChangeMode::CONTINUOUS,
+                         .areaConfigs = {VehicleAreaConfig{
+                                                 .areaId = WHEEL_FRONT_LEFT,
+                                                 .minFloatValue = 100.0f,
+                                                 .maxFloatValue = 300.0f,
+                                         },
+                                         VehicleAreaConfig{
+                                                 .areaId = WHEEL_FRONT_RIGHT,
+                                                 .minFloatValue = 100.0f,
+                                                 .maxFloatValue = 300.0f,
+                                         },
+                                         VehicleAreaConfig{
+                                                 .areaId = WHEEL_REAR_LEFT,
+                                                 .minFloatValue = 100.0f,
+                                                 .maxFloatValue = 300.0f,
+                                         },
+                                         VehicleAreaConfig{
+                                                 .areaId = WHEEL_REAR_RIGHT,
+                                                 .minFloatValue = 100.0f,
+                                                 .maxFloatValue = 300.0f,
+                                         }},
+                         .minSampleRate = 1.0f,
+                         .maxSampleRate = 2.0f,
+                 },
          .initialValue = {.floatValues = {200.0f}}},  // units in kPa
 
         {.config =
@@ -595,11 +598,14 @@ const ConfigDeclaration kVehicleProperties[]{
                     .configArray = {(int)VehicleUnit::FAHRENHEIT, (int)VehicleUnit::CELSIUS}},
          .initialValue = {.int32Values = {(int)VehicleUnit::FAHRENHEIT}}},
 
-        {.config = {.prop = toInt(VehicleProperty::DISTANCE_DISPLAY_UNITS),
-                    .access = VehiclePropertyAccess::READ_WRITE,
-                    .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-                    .configArray = {(int)VehicleUnit::KILOMETER, (int)VehicleUnit::MILE},
-                    .areaConfigs = {VehicleAreaConfig{.areaId = (0)}}},
+        {.config =
+                 {
+                         .prop = toInt(VehicleProperty::DISTANCE_DISPLAY_UNITS),
+                         .access = VehiclePropertyAccess::READ_WRITE,
+                         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                         .areaConfigs = {VehicleAreaConfig{.areaId = (0)}},
+                         .configArray = {(int)VehicleUnit::KILOMETER, (int)VehicleUnit::MILE},
+                 },
          .initialValue = {.int32Values = {(int)VehicleUnit::MILE}}},
 
         {.config =
@@ -692,13 +698,18 @@ const ConfigDeclaration kVehicleProperties[]{
                         },
         },
 
-        {.config = {.prop = kMixedTypePropertyForTest,
-                    .access = VehiclePropertyAccess::READ_WRITE,
-                    .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-                    .configArray = {1, 1, 0, 2, 0, 0, 1, 0, 0}},
-         .initialValue = {.stringValue = "MIXED property",
-                          .int32Values = {1 /* indicate TRUE boolean value */, 2, 3},
-                          .floatValues = {4.5f}}},
+        {
+                .config = {.prop = kMixedTypePropertyForTest,
+                           .access = VehiclePropertyAccess::READ_WRITE,
+                           .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                           .configArray = {1, 1, 0, 2, 0, 0, 1, 0, 0}},
+                .initialValue =
+                        {
+                                .int32Values = {1 /* indicate TRUE boolean value */, 2, 3},
+                                .floatValues = {4.5f},
+                                .stringValue = "MIXED property",
+                        },
+        },
 
         {.config = {.prop = toInt(VehicleProperty::DOOR_LOCK),
                     .access = VehiclePropertyAccess::READ_WRITE,
