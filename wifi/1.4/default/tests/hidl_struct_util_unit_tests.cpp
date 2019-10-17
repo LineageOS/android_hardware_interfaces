@@ -170,12 +170,14 @@ TEST_F(HidlStructUtilTest, canConvertLegacyLinkLayerStatsToHidl) {
 
         legacy_hal::wifi_channel_stat channel_stat1 = {
             .channel = {legacy_hal::WIFI_CHAN_WIDTH_20, 2437, 2437, 0},
+            .on_time = 0x1111,
             .cca_busy_time = 0x55,
-            .on_time = 0x1111};
+        };
         legacy_hal::wifi_channel_stat channel_stat2 = {
             .channel = {legacy_hal::WIFI_CHAN_WIDTH_20, 5180, 5180, 0},
+            .on_time = 0x2222,
             .cca_busy_time = 0x66,
-            .on_time = 0x2222};
+        };
         radio.channel_stats.push_back(channel_stat1);
         radio.channel_stats.push_back(channel_stat2);
     }

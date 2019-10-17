@@ -479,7 +479,8 @@ Result Demux::startPesFilterHandler(uint32_t filterId) {
             if (prefix == 0x000001) {
                 // TODO handle mulptiple Pes filters
                 mPesSizeLeft =
-                        (mFilterOutputs[filterId][i + 7] << 8) | mFilterOutputs[filterId][i + 8];
+                        (mFilterOutputs[filterId][i + 8] << 8) | mFilterOutputs[filterId][i + 9];
+                mPesSizeLeft += 6;
                 ALOGD("[Demux] pes data length %d", mPesSizeLeft);
             } else {
                 continue;
@@ -489,7 +490,7 @@ Result Demux::startPesFilterHandler(uint32_t filterId) {
         int endPoint = min(184, mPesSizeLeft);
         // append data and check size
         vector<uint8_t>::const_iterator first = mFilterOutputs[filterId].begin() + i + 4;
-        vector<uint8_t>::const_iterator last = mFilterOutputs[filterId].begin() + i + 3 + endPoint;
+        vector<uint8_t>::const_iterator last = mFilterOutputs[filterId].begin() + i + 4 + endPoint;
         mPesOutput.insert(mPesOutput.end(), first, last);
         // size does not match then continue
         mPesSizeLeft -= endPoint;
@@ -800,7 +801,7 @@ void Demux::maySendInputStatusCallback() {
 void Demux::maySendFilterStatusCallback(uint32_t filterId) {
     std::lock_guard<std::mutex> lock(mFilterStatusLock);
     int availableToRead = mFilterMQs[filterId]->availableToRead();
-    int availableToWrite = mInputMQ->availableToWrite();
+    int availableToWrite = mFilterMQs[filterId]->availableToWrite();
     int fmqSize = mFilterMQs[filterId]->getQuantumCount();
 
     DemuxFilterStatus newStatus =
@@ -885,7 +886,6 @@ void Demux::broadcastInputThreadLoop() {
                     byteBuffer[index] = static_cast<uint8_t>(buffer[index]);
                 }
                 startTsFilter(byteBuffer);
-                inputData.seekg(packetSize, inputData.cur);
             }
             startFilterDispatcher();
             sleep(1);

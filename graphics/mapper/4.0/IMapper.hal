@@ -202,6 +202,9 @@ interface IMapper {
      * the buffer. If the bytesPerStride is unknown or variable, a value of -1
      * should be returned.
      *
+     * The locked buffer must adhere to the format requested at allocation time
+     * in the BufferDescriptorInfo.
+     *
      * @param buffer Buffer to lock.
      * @param cpuUsage CPU usage flags to request. See +ndk
      *     libnativewindow#AHardwareBuffer_UsageFlags for possible values.
