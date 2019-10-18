@@ -16,25 +16,14 @@
 
 #include "AudioPrimaryHidlHalTest.h"
 
-static void waitForDeviceDestruction() {
-    // FIXME: there is no way to know when the remote IDevice is being destroyed
-    //        Binder does not support testing if an object is alive, thus
-    //        wait for 100ms to let the binder destruction propagates and
-    //        the remote device has the time to be destroyed.
-    //        flushCommand makes sure all local command are sent, thus should reduce
-    //        the latency between local and remote destruction.
-    IPCThreadState::self()->flushCommands();
-    usleep(100 * 1000);
-}
-
-TEST_F(AudioHidlTest, OpenPrimaryDeviceUsingGetDevice) {
+TEST_P(AudioHidlTest, OpenPrimaryDeviceUsingGetDevice) {
     doc::test("Calling openDevice(\"primary\") should return the primary device.");
     struct WaitExecutor {
-        ~WaitExecutor() { waitForDeviceDestruction(); }
+        ~WaitExecutor() { DeviceManager::waitForInstanceDestruction(); }
     } waitExecutor;  // Make sure we wait for the device destruction on exiting from the test.
     Result result;
     sp<IDevice> baseDevice;
-    ASSERT_OK(devicesFactory->openDevice("primary", returnIn(result, baseDevice)));
+    ASSERT_OK(getDevicesFactory()->openDevice("primary", returnIn(result, baseDevice)));
     if (result != Result::OK && isPrimaryDeviceOptional()) {
         GTEST_SKIP() << "No primary device on this factory";  // returns
     }
@@ -50,10 +39,10 @@ TEST_F(AudioHidlTest, OpenPrimaryDeviceUsingGetDevice) {
 /////////////////////////// get(Active)Microphones ///////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
-TEST_F(AudioPrimaryHidlTest, GetMicrophonesTest) {
+TEST_P(AudioPrimaryHidlTest, GetMicrophonesTest) {
     doc::test("Make sure getMicrophones always succeeds");
     hidl_vec<MicrophoneInfo> microphones;
-    ASSERT_OK(device->getMicrophones(returnIn(res, microphones)));
+    ASSERT_OK(getDevice()->getMicrophones(returnIn(res, microphones)));
     ASSERT_OK(res);
     if (microphones.size() > 0) {
         // When there is microphone on the phone, try to open an input stream
@@ -75,15 +64,15 @@ TEST_F(AudioPrimaryHidlTest, GetMicrophonesTest) {
             }
             sp<IStreamIn> stream;
             AudioConfig suggestedConfig{};
-            ASSERT_OK(device->openInputStream(ioHandle, microphone.deviceAddress, config, flags,
-                                              initMetadata,
-                                              returnIn(res, stream, suggestedConfig)));
+            ASSERT_OK(getDevice()->openInputStream(ioHandle, microphone.deviceAddress, config,
+                                                   flags, initMetadata,
+                                                   returnIn(res, stream, suggestedConfig)));
             if (res != Result::OK) {
                 ASSERT_TRUE(stream == nullptr);
                 AudioConfig suggestedConfigRetry{};
-                ASSERT_OK(device->openInputStream(ioHandle, microphone.deviceAddress,
-                                                  suggestedConfig, flags, initMetadata,
-                                                  returnIn(res, stream, suggestedConfigRetry)));
+                ASSERT_OK(getDevice()->openInputStream(
+                        ioHandle, microphone.deviceAddress, suggestedConfig, flags, initMetadata,
+                        returnIn(res, stream, suggestedConfigRetry)));
             }
             ASSERT_OK(res);
             hidl_vec<MicrophoneInfo> activeMicrophones;
@@ -131,7 +120,7 @@ TEST_F(AudioPrimaryHidlTest, GetMicrophonesTest) {
     }
 }
 
-TEST_F(AudioPrimaryHidlTest, SetConnectedState) {
+TEST_P(AudioPrimaryHidlTest, SetConnectedState) {
     doc::test("Check that the HAL can be notified of device connection and deconnection");
     using AD = AudioDevice;
     for (auto deviceType : {AD::OUT_HDMI, AD::OUT_WIRED_HEADPHONE, AD::IN_USB_HEADSET}) {
@@ -140,7 +129,7 @@ TEST_F(AudioPrimaryHidlTest, SetConnectedState) {
             SCOPED_TRACE("state=" + ::testing::PrintToString(state));
             DeviceAddress address = {};
             address.device = deviceType;
-            auto ret = device->setConnectedState(address, state);
+            auto ret = getDevice()->setConnectedState(address, state);
             ASSERT_TRUE(ret.isOk());
             if (ret == Result::NOT_SUPPORTED) {
                 doc::partialTest("setConnectedState is not supported");
@@ -153,9 +142,7 @@ TEST_F(AudioPrimaryHidlTest, SetConnectedState) {
     // Because there is no way of knowing if the devices were connected before
     // calling setConnectedState, there is no way to restore the HAL to its
     // initial state. To workaround this, destroy the HAL at the end of this test.
-    device.clear();
-    waitForDeviceDestruction();
-    ASSERT_NO_FATAL_FAILURE(initPrimaryDevice());
+    ASSERT_TRUE(DeviceManager::getInstance().resetPrimary(getFactoryName()));
 }
 
 static void testGetDevices(IStream* stream, AudioDevice expectedDevice) {
@@ -199,7 +186,7 @@ static void checkGetHwAVSync(IDevice* device) {
     }
     ASSERT_OK(res);
 }
-TEST_IO_STREAM(GetHwAvSync, "Get hardware sync can not fail", checkGetHwAVSync(device.get()));
+TEST_IO_STREAM(GetHwAvSync, "Get hardware sync can not fail", checkGetHwAVSync(getDevice().get()));
 
 TEST_P(InputStreamTest, updateSinkMetadata) {
     doc::test("The HAL should not crash on metadata change");
@@ -259,58 +246,58 @@ TEST_P(OutputStreamTest, updateSourceMetadata) {
     ASSERT_OK(stream->updateSourceMetadata(initMetadata));
 }
 
-TEST_F(AudioPrimaryHidlTest, setMode) {
+TEST_P(AudioPrimaryHidlTest, setMode) {
     doc::test("Make sure setMode always succeeds if mode is valid and fails otherwise");
     // Test Invalid values
     for (int mode : {-2, -1, int(AudioMode::IN_COMMUNICATION) + 1}) {
-        ASSERT_RESULT(Result::INVALID_ARGUMENTS, device->setMode(AudioMode(mode)))
-            << "mode=" << mode;
+        ASSERT_RESULT(Result::INVALID_ARGUMENTS, getDevice()->setMode(AudioMode(mode)))
+                << "mode=" << mode;
     }
     // Test valid values
     for (AudioMode mode : {AudioMode::IN_CALL, AudioMode::IN_COMMUNICATION, AudioMode::RINGTONE,
                            AudioMode::NORMAL /* Make sure to leave the test in normal mode */}) {
-        ASSERT_OK(device->setMode(mode)) << "mode=" << toString(mode);
+        ASSERT_OK(getDevice()->setMode(mode)) << "mode=" << toString(mode);
     }
 }
 
-TEST_F(AudioPrimaryHidlTest, setBtHfpSampleRate) {
+TEST_P(AudioPrimaryHidlTest, setBtHfpSampleRate) {
     doc::test(
         "Make sure setBtHfpSampleRate either succeeds or "
         "indicates that it is not supported at all, or that the provided value is invalid");
     for (auto samplingRate : {8000, 16000, 22050, 24000}) {
-        ASSERT_RESULT(okOrNotSupportedOrInvalidArgs, device->setBtHfpSampleRate(samplingRate));
+        ASSERT_RESULT(okOrNotSupportedOrInvalidArgs, getDevice()->setBtHfpSampleRate(samplingRate));
     }
 }
 
-TEST_F(AudioPrimaryHidlTest, setBtHfpVolume) {
+TEST_P(AudioPrimaryHidlTest, setBtHfpVolume) {
     doc::test(
         "Make sure setBtHfpVolume is either not supported or "
         "only succeed if volume is in [0,1]");
-    auto ret = device->setBtHfpVolume(0.0);
+    auto ret = getDevice()->setBtHfpVolume(0.0);
     ASSERT_TRUE(ret.isOk());
     if (ret == Result::NOT_SUPPORTED) {
         doc::partialTest("setBtHfpVolume is not supported");
         return;
     }
-    testUnitaryGain([](float volume) { return device->setBtHfpVolume(volume); });
+    testUnitaryGain([this](float volume) { return getDevice()->setBtHfpVolume(volume); });
 }
 
-TEST_F(AudioPrimaryHidlTest, setBtScoHeadsetDebugName) {
+TEST_P(AudioPrimaryHidlTest, setBtScoHeadsetDebugName) {
     doc::test(
         "Make sure setBtScoHeadsetDebugName either succeeds or "
         "indicates that it is not supported");
-    ASSERT_RESULT(okOrNotSupported, device->setBtScoHeadsetDebugName("test"));
+    ASSERT_RESULT(okOrNotSupported, getDevice()->setBtScoHeadsetDebugName("test"));
 }
 
-TEST_F(AudioPrimaryHidlTest, updateRotation) {
+TEST_P(AudioPrimaryHidlTest, updateRotation) {
     doc::test("Check that the hal can receive the current rotation");
     for (Rotation rotation : {Rotation::DEG_0, Rotation::DEG_90, Rotation::DEG_180,
                               Rotation::DEG_270, Rotation::DEG_0}) {
-        ASSERT_RESULT(okOrNotSupported, device->updateRotation(rotation));
+        ASSERT_RESULT(okOrNotSupported, getDevice()->updateRotation(rotation));
     }
 }
 
-TEST_F(BoolAccessorPrimaryHidlTest, setGetBtHfpEnabled) {
+TEST_P(BoolAccessorPrimaryHidlTest, setGetBtHfpEnabled) {
     doc::test("Query and set the BT HFP state");
     testAccessors<OPTIONAL>("BtHfpEnabled", Initial{false, OPTIONAL}, {true},
                             &IPrimaryDevice::setBtHfpEnabled, &IPrimaryDevice::getBtHfpEnabled);
