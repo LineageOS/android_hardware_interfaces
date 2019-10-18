@@ -16,14 +16,15 @@
 
 #define LOG_TAG "fingerprint_hidl_hal_test"
 
-#include <VtsHalHidlTargetTestBase.h>
-#include <VtsHalHidlTargetTestEnvBase.h>
 #include <android-base/logging.h>
 #include <android-base/properties.h>
 #include <android/hardware/biometrics/fingerprint/2.1/IBiometricsFingerprint.h>
 #include <android/hardware/biometrics/fingerprint/2.1/IBiometricsFingerprintClientCallback.h>
+#include <gtest/gtest.h>
+#include <hidl/GtestPrinter.h>
 #include <hidl/HidlSupport.h>
 #include <hidl/HidlTransportSupport.h>
+#include <hidl/ServiceManagement.h>
 #include <utils/Condition.h>
 
 #include <cinttypes>
@@ -183,315 +184,295 @@ class RemoveCallback : public FingerprintCallbackBase {
   std::promise<void> promise;
 };
 
-// Test environment for Fingerprint HIDL HAL.
-class FingerprintHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
- public:
-  // get the test environment singleton
-  static FingerprintHidlEnvironment* Instance() {
-    static FingerprintHidlEnvironment* instance = new FingerprintHidlEnvironment;
-    return instance;
-  }
+class FingerprintHidlTest : public ::testing::TestWithParam<std::string> {
+  public:
+    virtual void SetUp() override {
+        mService = IBiometricsFingerprint::getService(GetParam());
+        ASSERT_FALSE(mService == nullptr);
 
-  virtual void registerTestServices() override { registerTestService<IBiometricsFingerprint>(); }
-};
+        /*
+         * Devices shipped from now on will instead store
+         * fingerprint data under /data/vendor_de/<user-id>/fpdata.
+         * Support for /data/vendor_de and /data/vendor_ce has been added to vold.
+         */
 
-class FingerprintHidlTest : public ::testing::VtsHalHidlTargetTestBase {
- public:
-  virtual void SetUp() override {
-    mService = ::testing::VtsHalHidlTargetTestBase::getService<IBiometricsFingerprint>(
-        FingerprintHidlEnvironment::Instance()->getServiceName<IBiometricsFingerprint>());
-    ASSERT_FALSE(mService == nullptr);
+        uint64_t api_level = GetUintProperty<uint64_t>("ro.product.first_api_level", 0);
+        if (api_level == 0) {
+            api_level = GetUintProperty<uint64_t>("ro.build.version.sdk", 0);
+        }
+        ASSERT_TRUE(api_level != 0);
 
-    /*
-     * Devices shipped from now on will instead store
-     * fingerprint data under /data/vendor_de/<user-id>/fpdata.
-     * Support for /data/vendor_de and /data/vendor_ce has been added to vold.
-     */
+        // 27 is the API number for O-MR1
+        if (api_level <= 27) {
+            kTmpDir = "/data/system/users/0/fpdata/";
+        } else {
+            kTmpDir = "/data/vendor_de/0/fpdata/";
+        }
 
-    uint64_t api_level = GetUintProperty<uint64_t>("ro.product.first_api_level", 0);
-    if (api_level == 0) {
-      api_level = GetUintProperty<uint64_t>("ro.build.version.sdk", 0);
-    }
-    ASSERT_TRUE(api_level != 0);
-
-    // 27 is the API number for O-MR1
-    if (api_level <= 27) {
-      kTmpDir = "/data/system/users/0/fpdata/";
-    } else {
-      kTmpDir = "/data/vendor_de/0/fpdata/";
+        Return<RequestStatus> res = mService->setActiveGroup(kGroupId, kTmpDir);
+        ASSERT_EQ(RequestStatus::SYS_OK, static_cast<RequestStatus>(res));
     }
 
-    Return<RequestStatus> res = mService->setActiveGroup(kGroupId, kTmpDir);
-    ASSERT_EQ(RequestStatus::SYS_OK, static_cast<RequestStatus>(res));
-  }
+    virtual void TearDown() override {}
 
-  virtual void TearDown() override {}
-
-  sp<IBiometricsFingerprint> mService;
+    sp<IBiometricsFingerprint> mService;
 };
-
 
 // The service should be reachable.
-TEST_F(FingerprintHidlTest, ConnectTest) {
-  sp<FingerprintCallbackBase> cb = new FingerprintCallbackBase();
-  Return<uint64_t> rc = mService->setNotify(cb);
-  ASSERT_NE(0UL, static_cast<uint64_t>(rc));
+TEST_P(FingerprintHidlTest, ConnectTest) {
+    sp<FingerprintCallbackBase> cb = new FingerprintCallbackBase();
+    Return<uint64_t> rc = mService->setNotify(cb);
+    ASSERT_NE(0UL, static_cast<uint64_t>(rc));
 }
 
 // Starting the service with null callback should succeed.
-TEST_F(FingerprintHidlTest, ConnectNullTest) {
-  Return<uint64_t> rc = mService->setNotify(NULL);
-  ASSERT_NE(0UL, static_cast<uint64_t>(rc));
+TEST_P(FingerprintHidlTest, ConnectNullTest) {
+    Return<uint64_t> rc = mService->setNotify(NULL);
+    ASSERT_NE(0UL, static_cast<uint64_t>(rc));
 }
 
 // Pre-enroll should always return unique, cryptographically secure, non-zero number
-TEST_F(FingerprintHidlTest, PreEnrollTest) {
-  std::map<uint64_t, uint64_t> m;
+TEST_P(FingerprintHidlTest, PreEnrollTest) {
+    std::map<uint64_t, uint64_t> m;
 
-  for(unsigned int i = 0; i < kIterations; ++i) {
-    uint64_t res = static_cast<uint64_t>(mService->preEnroll());
-    EXPECT_NE(0UL, res);
-    m[res]++;
-    EXPECT_EQ(1UL, m[res]);
-  }
+    for (unsigned int i = 0; i < kIterations; ++i) {
+        uint64_t res = static_cast<uint64_t>(mService->preEnroll());
+        EXPECT_NE(0UL, res);
+        m[res]++;
+        EXPECT_EQ(1UL, m[res]);
+    }
 }
 
 // Enroll with an invalid (all zeroes) HAT should fail.
-TEST_F(FingerprintHidlTest, EnrollInvalidHatTest) {
-  sp<ErrorCallback> cb = new ErrorCallback();
-  Return<uint64_t> rc = mService->setNotify(cb);
-  ASSERT_NE(0UL, static_cast<uint64_t>(rc));
+TEST_P(FingerprintHidlTest, EnrollInvalidHatTest) {
+    sp<ErrorCallback> cb = new ErrorCallback();
+    Return<uint64_t> rc = mService->setNotify(cb);
+    ASSERT_NE(0UL, static_cast<uint64_t>(rc));
 
-  uint8_t token[69];
-  for(int i=0; i<69; i++) {
-    token[i] = 0;
-  }
+    uint8_t token[69];
+    for (int i = 0; i < 69; i++) {
+        token[i] = 0;
+    }
 
-  Return<RequestStatus> res = mService->enroll(token, kGroupId, kTimeout);
-  ASSERT_EQ(RequestStatus::SYS_OK, static_cast<RequestStatus>(res));
+    Return<RequestStatus> res = mService->enroll(token, kGroupId, kTimeout);
+    ASSERT_EQ(RequestStatus::SYS_OK, static_cast<RequestStatus>(res));
 
-  // At least one call to onError should occur
-  ASSERT_TRUE(waitForCallback(cb->promise.get_future()));
-  ASSERT_NE(FingerprintError::ERROR_NO_ERROR, cb->error);
+    // At least one call to onError should occur
+    ASSERT_TRUE(waitForCallback(cb->promise.get_future()));
+    ASSERT_NE(FingerprintError::ERROR_NO_ERROR, cb->error);
 }
 
 // Enroll with an invalid (null) HAT should fail.
-TEST_F(FingerprintHidlTest, EnrollNullTest) {
-  sp<ErrorCallback> cb = new ErrorCallback();
-  Return<uint64_t> rc = mService->setNotify(cb);
-  ASSERT_NE(0UL, static_cast<uint64_t>(rc));
+TEST_P(FingerprintHidlTest, EnrollNullTest) {
+    sp<ErrorCallback> cb = new ErrorCallback();
+    Return<uint64_t> rc = mService->setNotify(cb);
+    ASSERT_NE(0UL, static_cast<uint64_t>(rc));
 
-  uint8_t token[69];
-  Return<RequestStatus> res = mService->enroll(token, kGroupId, kTimeout);
-  ASSERT_EQ(RequestStatus::SYS_OK, static_cast<RequestStatus>(res));
+    uint8_t token[69];
+    Return<RequestStatus> res = mService->enroll(token, kGroupId, kTimeout);
+    ASSERT_EQ(RequestStatus::SYS_OK, static_cast<RequestStatus>(res));
 
-  // At least one call to onError should occur
-  ASSERT_TRUE(waitForCallback(cb->promise.get_future()));
-  ASSERT_NE(FingerprintError::ERROR_NO_ERROR, cb->error);
+    // At least one call to onError should occur
+    ASSERT_TRUE(waitForCallback(cb->promise.get_future()));
+    ASSERT_NE(FingerprintError::ERROR_NO_ERROR, cb->error);
 }
 
 // PostEnroll should always return within 3s
-TEST_F(FingerprintHidlTest, PostEnrollTest) {
-  sp<FingerprintCallbackBase> cb = new FingerprintCallbackBase();
-  Return<uint64_t> rc = mService->setNotify(cb);
+TEST_P(FingerprintHidlTest, PostEnrollTest) {
+    sp<FingerprintCallbackBase> cb = new FingerprintCallbackBase();
+    Return<uint64_t> rc = mService->setNotify(cb);
 
-  auto start = std::chrono::system_clock::now();
-  Return<RequestStatus> res = mService->postEnroll();
-  auto elapsed = std::chrono::system_clock::now() - start;
-  ASSERT_GE(kTimeoutInSeconds, elapsed);
+    auto start = std::chrono::system_clock::now();
+    Return<RequestStatus> res = mService->postEnroll();
+    auto elapsed = std::chrono::system_clock::now() - start;
+    ASSERT_GE(kTimeoutInSeconds, elapsed);
 }
 
 // getAuthenticatorId should always return non-zero numbers
-TEST_F(FingerprintHidlTest, GetAuthenticatorIdTest) {
-  Return<uint64_t> res = mService->getAuthenticatorId();
-  EXPECT_NE(0UL, static_cast<uint64_t>(res));
+TEST_P(FingerprintHidlTest, GetAuthenticatorIdTest) {
+    Return<uint64_t> res = mService->getAuthenticatorId();
+    EXPECT_NE(0UL, static_cast<uint64_t>(res));
 }
 
 // Enumerate should always trigger onEnumerated(fid=0, rem=0) when there are no fingerprints
-TEST_F(FingerprintHidlTest, EnumerateTest) {
-  sp<EnumerateCallback> cb = new EnumerateCallback();
-  Return<uint64_t> rc = mService->setNotify(cb);
-  ASSERT_NE(0UL, static_cast<uint64_t>(rc));
+TEST_P(FingerprintHidlTest, EnumerateTest) {
+    sp<EnumerateCallback> cb = new EnumerateCallback();
+    Return<uint64_t> rc = mService->setNotify(cb);
+    ASSERT_NE(0UL, static_cast<uint64_t>(rc));
 
-  // Callback will return when rem=0 is found
-  Return<RequestStatus> res = mService->enumerate();
-  ASSERT_TRUE(waitForCallback(cb->promise.get_future()));
-  EXPECT_EQ(0UL, cb->fingerId);
-  EXPECT_EQ(0UL, cb->remaining);
-
+    // Callback will return when rem=0 is found
+    Return<RequestStatus> res = mService->enumerate();
+    ASSERT_TRUE(waitForCallback(cb->promise.get_future()));
+    EXPECT_EQ(0UL, cb->fingerId);
+    EXPECT_EQ(0UL, cb->remaining);
 }
 
 // Remove should succeed on any inputs
 // At least one callback with "remaining=0" should occur
-TEST_F(FingerprintHidlTest, RemoveFingerprintTest) {
-  // Register callback
-  sp<RemoveCallback> cb = new RemoveCallback(kGroupId);
-  Return<uint64_t> rc = mService->setNotify(cb);
-  ASSERT_NE(0UL, static_cast<uint64_t>(rc));
+TEST_P(FingerprintHidlTest, RemoveFingerprintTest) {
+    // Register callback
+    sp<RemoveCallback> cb = new RemoveCallback(kGroupId);
+    Return<uint64_t> rc = mService->setNotify(cb);
+    ASSERT_NE(0UL, static_cast<uint64_t>(rc));
 
-  // Remove a fingerprint
-  Return<RequestStatus> res = mService->remove(kGroupId, 1);
-  ASSERT_EQ(RequestStatus::SYS_OK, static_cast<RequestStatus>(res));
+    // Remove a fingerprint
+    Return<RequestStatus> res = mService->remove(kGroupId, 1);
+    ASSERT_EQ(RequestStatus::SYS_OK, static_cast<RequestStatus>(res));
 
-  // At least one call to onRemove with remaining=0 should occur
-  ASSERT_TRUE(waitForCallback(cb->promise.get_future()));
+    // At least one call to onRemove with remaining=0 should occur
+    ASSERT_TRUE(waitForCallback(cb->promise.get_future()));
 }
 
 // Remove should accept 0 to delete all fingerprints
 // At least one callback with "remaining=0" should occur.
-TEST_F(FingerprintHidlTest, RemoveAllFingerprintsTest) {
-  // Register callback
-  sp<RemoveCallback> cb = new RemoveCallback(kGroupId);
-  Return<uint64_t> rc = mService->setNotify(cb);
-  ASSERT_NE(0UL, static_cast<uint64_t>(rc));
+TEST_P(FingerprintHidlTest, RemoveAllFingerprintsTest) {
+    // Register callback
+    sp<RemoveCallback> cb = new RemoveCallback(kGroupId);
+    Return<uint64_t> rc = mService->setNotify(cb);
+    ASSERT_NE(0UL, static_cast<uint64_t>(rc));
 
-  // Remove all fingerprints
-  Return<RequestStatus> res = mService->remove(kGroupId, 0);
-  ASSERT_EQ(RequestStatus::SYS_OK, static_cast<RequestStatus>(res));
-  ASSERT_TRUE(waitForCallback(cb->promise.get_future()));
+    // Remove all fingerprints
+    Return<RequestStatus> res = mService->remove(kGroupId, 0);
+    ASSERT_EQ(RequestStatus::SYS_OK, static_cast<RequestStatus>(res));
+    ASSERT_TRUE(waitForCallback(cb->promise.get_future()));
 }
 
 // Active group should successfully set to a writable location.
-TEST_F(FingerprintHidlTest, SetActiveGroupTest) {
-  // Create an active group
-  Return<RequestStatus> res = mService->setActiveGroup(2, kTmpDir);
-  ASSERT_EQ(RequestStatus::SYS_OK, static_cast<RequestStatus>(res));
+TEST_P(FingerprintHidlTest, SetActiveGroupTest) {
+    // Create an active group
+    Return<RequestStatus> res = mService->setActiveGroup(2, kTmpDir);
+    ASSERT_EQ(RequestStatus::SYS_OK, static_cast<RequestStatus>(res));
 
-  // Reset active group
-  res = mService->setActiveGroup(kGroupId, kTmpDir);
-  ASSERT_EQ(RequestStatus::SYS_OK, static_cast<RequestStatus>(res));
+    // Reset active group
+    res = mService->setActiveGroup(kGroupId, kTmpDir);
+    ASSERT_EQ(RequestStatus::SYS_OK, static_cast<RequestStatus>(res));
 }
 
 // Active group should fail to set to an unwritable location.
-TEST_F(FingerprintHidlTest, SetActiveGroupUnwritableTest) {
-  // Create an active group to an unwritable location (device root dir)
-  Return<RequestStatus> res = mService->setActiveGroup(3, "/");
-  ASSERT_NE(RequestStatus::SYS_OK, static_cast<RequestStatus>(res));
+TEST_P(FingerprintHidlTest, SetActiveGroupUnwritableTest) {
+    // Create an active group to an unwritable location (device root dir)
+    Return<RequestStatus> res = mService->setActiveGroup(3, "/");
+    ASSERT_NE(RequestStatus::SYS_OK, static_cast<RequestStatus>(res));
 
-  // Reset active group
-  res = mService->setActiveGroup(kGroupId, kTmpDir);
-  ASSERT_EQ(RequestStatus::SYS_OK, static_cast<RequestStatus>(res));
+    // Reset active group
+    res = mService->setActiveGroup(kGroupId, kTmpDir);
+    ASSERT_EQ(RequestStatus::SYS_OK, static_cast<RequestStatus>(res));
 }
 
 // Active group should fail to set to a null location.
-TEST_F(FingerprintHidlTest, SetActiveGroupNullTest) {
-  // Create an active group to a null location.
-  Return<RequestStatus> res = mService->setActiveGroup(4, nullptr);
-  ASSERT_NE(RequestStatus::SYS_OK, static_cast<RequestStatus>(res));
+TEST_P(FingerprintHidlTest, SetActiveGroupNullTest) {
+    // Create an active group to a null location.
+    Return<RequestStatus> res = mService->setActiveGroup(4, nullptr);
+    ASSERT_NE(RequestStatus::SYS_OK, static_cast<RequestStatus>(res));
 
-  // Reset active group
-  res = mService->setActiveGroup(kGroupId, kTmpDir);
-  ASSERT_EQ(RequestStatus::SYS_OK, static_cast<RequestStatus>(res));
+    // Reset active group
+    res = mService->setActiveGroup(kGroupId, kTmpDir);
+    ASSERT_EQ(RequestStatus::SYS_OK, static_cast<RequestStatus>(res));
 }
 
 // Cancel should always return ERROR_CANCELED from any starting state including
 // the IDLE state.
-TEST_F(FingerprintHidlTest, CancelTest) {
-  sp<ErrorCallback> cb = new ErrorCallback(true, FingerprintError::ERROR_CANCELED);
-  Return<uint64_t> rc = mService->setNotify(cb);
-  ASSERT_NE(0UL, static_cast<uint64_t>(rc));
+TEST_P(FingerprintHidlTest, CancelTest) {
+    sp<ErrorCallback> cb = new ErrorCallback(true, FingerprintError::ERROR_CANCELED);
+    Return<uint64_t> rc = mService->setNotify(cb);
+    ASSERT_NE(0UL, static_cast<uint64_t>(rc));
 
-  Return<RequestStatus> res = mService->cancel();
-  // check that we were able to make an IPC request successfully
-  ASSERT_EQ(RequestStatus::SYS_OK, static_cast<RequestStatus>(res));
+    Return<RequestStatus> res = mService->cancel();
+    // check that we were able to make an IPC request successfully
+    ASSERT_EQ(RequestStatus::SYS_OK, static_cast<RequestStatus>(res));
 
-  // make sure callback was invoked within kTimeoutInSeconds
-  ASSERT_TRUE(waitForCallback(cb->promise.get_future()));
-  // check error should be ERROR_CANCELED
-  ASSERT_EQ(FingerprintError::ERROR_CANCELED, cb->error);
+    // make sure callback was invoked within kTimeoutInSeconds
+    ASSERT_TRUE(waitForCallback(cb->promise.get_future()));
+    // check error should be ERROR_CANCELED
+    ASSERT_EQ(FingerprintError::ERROR_CANCELED, cb->error);
 }
 
 // A call to cancel should succeed during enroll.
-TEST_F(FingerprintHidlTest, CancelEnrollTest) {
-  Return<RequestStatus> res = mService->setActiveGroup(kGroupId, kTmpDir);
-  ASSERT_EQ(RequestStatus::SYS_OK, static_cast<RequestStatus>(res));
+TEST_P(FingerprintHidlTest, CancelEnrollTest) {
+    Return<RequestStatus> res = mService->setActiveGroup(kGroupId, kTmpDir);
+    ASSERT_EQ(RequestStatus::SYS_OK, static_cast<RequestStatus>(res));
 
-  sp<ErrorCallback> cb = new ErrorCallback(true, FingerprintError::ERROR_CANCELED);
-  Return<uint64_t> rc = mService->setNotify(cb);
-  ASSERT_NE(0U, static_cast<uint64_t>(rc));
+    sp<ErrorCallback> cb = new ErrorCallback(true, FingerprintError::ERROR_CANCELED);
+    Return<uint64_t> rc = mService->setNotify(cb);
+    ASSERT_NE(0U, static_cast<uint64_t>(rc));
 
-  uint8_t token[69];
-  res = mService->enroll(token, kGroupId, kTimeout);
-  // check that we were able to make an IPC request successfully
-  ASSERT_EQ(RequestStatus::SYS_OK, static_cast<RequestStatus>(res));
+    uint8_t token[69];
+    res = mService->enroll(token, kGroupId, kTimeout);
+    // check that we were able to make an IPC request successfully
+    ASSERT_EQ(RequestStatus::SYS_OK, static_cast<RequestStatus>(res));
 
-  res = mService->cancel();
-  ASSERT_EQ(RequestStatus::SYS_OK, static_cast<RequestStatus>(res));
+    res = mService->cancel();
+    ASSERT_EQ(RequestStatus::SYS_OK, static_cast<RequestStatus>(res));
 
-  // make sure callback was invoked within kTimeoutInSeconds
-  ASSERT_TRUE(waitForCallback(cb->promise.get_future()));
+    // make sure callback was invoked within kTimeoutInSeconds
+    ASSERT_TRUE(waitForCallback(cb->promise.get_future()));
 
-  // check error should be ERROR_CANCELED
-  ASSERT_EQ(FingerprintError::ERROR_CANCELED, cb->error);
+    // check error should be ERROR_CANCELED
+    ASSERT_EQ(FingerprintError::ERROR_CANCELED, cb->error);
 }
 
 // A call to cancel should succeed during authentication.
-TEST_F(FingerprintHidlTest, CancelAuthTest) {
-  sp<ErrorCallback> cb = new ErrorCallback(true, FingerprintError::ERROR_CANCELED);
-  Return<uint64_t> rc = mService->setNotify(cb);
-  ASSERT_NE(0U, static_cast<uint64_t>(rc));
+TEST_P(FingerprintHidlTest, CancelAuthTest) {
+    sp<ErrorCallback> cb = new ErrorCallback(true, FingerprintError::ERROR_CANCELED);
+    Return<uint64_t> rc = mService->setNotify(cb);
+    ASSERT_NE(0U, static_cast<uint64_t>(rc));
 
-  Return<RequestStatus> res = mService->authenticate(0, kGroupId);
-  // check that we were able to make an IPC request successfully
-  ASSERT_EQ(RequestStatus::SYS_OK, static_cast<RequestStatus>(res));
+    Return<RequestStatus> res = mService->authenticate(0, kGroupId);
+    // check that we were able to make an IPC request successfully
+    ASSERT_EQ(RequestStatus::SYS_OK, static_cast<RequestStatus>(res));
 
-  res = mService->cancel();
-  ASSERT_EQ(RequestStatus::SYS_OK, static_cast<RequestStatus>(res));
+    res = mService->cancel();
+    ASSERT_EQ(RequestStatus::SYS_OK, static_cast<RequestStatus>(res));
 
-  // make sure callback was invoked within kTimeoutInSeconds
-  ASSERT_TRUE(waitForCallback(cb->promise.get_future()));
+    // make sure callback was invoked within kTimeoutInSeconds
+    ASSERT_TRUE(waitForCallback(cb->promise.get_future()));
 
-  // check error should be ERROR_CANCELED
-  ASSERT_EQ(FingerprintError::ERROR_CANCELED, cb->error);
+    // check error should be ERROR_CANCELED
+    ASSERT_EQ(FingerprintError::ERROR_CANCELED, cb->error);
 }
 
 // A call to cancel should succeed during authentication.
-TEST_F(FingerprintHidlTest, CancelRemoveTest) {
-  sp<ErrorCallback> cb = new ErrorCallback(true, FingerprintError::ERROR_CANCELED);
-  Return<uint64_t> rc = mService->setNotify(cb);
-  ASSERT_NE(0U, static_cast<uint64_t>(rc));
+TEST_P(FingerprintHidlTest, CancelRemoveTest) {
+    sp<ErrorCallback> cb = new ErrorCallback(true, FingerprintError::ERROR_CANCELED);
+    Return<uint64_t> rc = mService->setNotify(cb);
+    ASSERT_NE(0U, static_cast<uint64_t>(rc));
 
-  // Remove a fingerprint
-  Return<RequestStatus> res = mService->remove(kGroupId, 1);
-  ASSERT_EQ(RequestStatus::SYS_OK, static_cast<RequestStatus>(res));
+    // Remove a fingerprint
+    Return<RequestStatus> res = mService->remove(kGroupId, 1);
+    ASSERT_EQ(RequestStatus::SYS_OK, static_cast<RequestStatus>(res));
 
-  res = mService->cancel();
-  ASSERT_EQ(RequestStatus::SYS_OK, static_cast<RequestStatus>(res));
+    res = mService->cancel();
+    ASSERT_EQ(RequestStatus::SYS_OK, static_cast<RequestStatus>(res));
 
-  // make sure callback was invoked within kTimeoutInSeconds
-  ASSERT_TRUE(waitForCallback(cb->promise.get_future()));
+    // make sure callback was invoked within kTimeoutInSeconds
+    ASSERT_TRUE(waitForCallback(cb->promise.get_future()));
 
-  // check error should be ERROR_CANCELED
-  ASSERT_EQ(FingerprintError::ERROR_CANCELED, cb->error);
+    // check error should be ERROR_CANCELED
+    ASSERT_EQ(FingerprintError::ERROR_CANCELED, cb->error);
 }
 
 // A call to cancel should succeed during authentication.
-TEST_F(FingerprintHidlTest, CancelRemoveAllTest) {
-  sp<ErrorCallback> cb = new ErrorCallback(true, FingerprintError::ERROR_CANCELED);
-  Return<uint64_t> rc = mService->setNotify(cb);
-  ASSERT_NE(0U, static_cast<uint64_t>(rc));
+TEST_P(FingerprintHidlTest, CancelRemoveAllTest) {
+    sp<ErrorCallback> cb = new ErrorCallback(true, FingerprintError::ERROR_CANCELED);
+    Return<uint64_t> rc = mService->setNotify(cb);
+    ASSERT_NE(0U, static_cast<uint64_t>(rc));
 
-  // Remove a fingerprint
-  Return<RequestStatus> res = mService->remove(kGroupId, 0);
-  ASSERT_EQ(RequestStatus::SYS_OK, static_cast<RequestStatus>(res));
+    // Remove a fingerprint
+    Return<RequestStatus> res = mService->remove(kGroupId, 0);
+    ASSERT_EQ(RequestStatus::SYS_OK, static_cast<RequestStatus>(res));
 
-  res = mService->cancel();
-  ASSERT_EQ(RequestStatus::SYS_OK, static_cast<RequestStatus>(res));
+    res = mService->cancel();
+    ASSERT_EQ(RequestStatus::SYS_OK, static_cast<RequestStatus>(res));
 
-  // make sure callback was invoked within kTimeoutInSeconds
-  ASSERT_TRUE(waitForCallback(cb->promise.get_future()));
+    // make sure callback was invoked within kTimeoutInSeconds
+    ASSERT_TRUE(waitForCallback(cb->promise.get_future()));
 
-  // check error should be ERROR_CANCELED
-  ASSERT_EQ(FingerprintError::ERROR_CANCELED, cb->error);
+    // check error should be ERROR_CANCELED
+    ASSERT_EQ(FingerprintError::ERROR_CANCELED, cb->error);
 }
 }  // anonymous namespace
 
-int main(int argc, char **argv) {
-  ::testing::AddGlobalTestEnvironment(FingerprintHidlEnvironment::Instance());
-  ::testing::InitGoogleTest(&argc, argv);
-  FingerprintHidlEnvironment::Instance()->init(&argc, argv);
-  int status = RUN_ALL_TESTS();
-  LOG(INFO) << "Test result = " << status;
-  return status;
-}
-
+INSTANTIATE_TEST_SUITE_P(PerInstance, FingerprintHidlTest,
+                         testing::ValuesIn(android::hardware::getAllHalInstanceNames(
+                                 IBiometricsFingerprint::descriptor)),
+                         android::hardware::PrintInstanceNameToString);
