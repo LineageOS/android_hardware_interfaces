@@ -21,11 +21,12 @@
 #include <android/hardware/nfc/1.1/INfc.h>
 #include <android/hardware/nfc/1.1/INfcClientCallback.h>
 #include <android/hardware/nfc/1.1/types.h>
+#include <gtest/gtest.h>
 #include <hardware/nfc.h>
+#include <hidl/GtestPrinter.h>
+#include <hidl/ServiceManagement.h>
 
 #include <VtsHalHidlTargetCallbackBase.h>
-#include <VtsHalHidlTargetTestBase.h>
-#include <VtsHalHidlTargetTestEnvBase.h>
 
 using ::android::hardware::nfc::V1_1::INfc;
 using ::android::hardware::nfc::V1_1::INfcClientCallback;
@@ -83,25 +84,11 @@ class NfcClientCallback : public ::testing::VtsHalHidlTargetCallbackBase<NfcClie
     };
 };
 
-// Test environment for Nfc HIDL HAL.
-class NfcHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
-   public:
-    // get the test environment singleton
-    static NfcHidlEnvironment* Instance() {
-        static NfcHidlEnvironment* instance = new NfcHidlEnvironment;
-        return instance;
-    }
-
-    virtual void registerTestServices() override { registerTestService<INfc>(); }
-   private:
-    NfcHidlEnvironment() {}
-};
-
 // The main test class for NFC HIDL HAL.
-class NfcHidlTest : public ::testing::VtsHalHidlTargetTestBase {
+class NfcHidlTest : public ::testing::TestWithParam<std::string> {
    public:
     virtual void SetUp() override {
-        nfc_ = ::testing::VtsHalHidlTargetTestBase::getService<INfc>();
+        nfc_ = INfc::getService(GetParam());
         ASSERT_NE(nfc_, nullptr);
 
         nfc_cb_ = new NfcClientCallback();
@@ -151,7 +138,7 @@ class NfcHidlTest : public ::testing::VtsHalHidlTargetTestBase {
  * calls factoryReset()
  * checks status
  */
-TEST_F(NfcHidlTest, FactoryReset) {
+TEST_P(NfcHidlTest, FactoryReset) {
     nfc_->factoryReset();
 
     EXPECT_EQ(NfcStatus::OK, nfc_->close());
@@ -174,7 +161,7 @@ TEST_F(NfcHidlTest, FactoryReset) {
  * Makes an open call, waits for NfcEvent.OPEN_CPLT
  * Immediately calls closeforPowerOffCase() and waits for NfcEvent.CLOSE_CPLT
  */
-TEST_F(NfcHidlTest, OpenAndCloseForPowerOff) {
+TEST_P(NfcHidlTest, OpenAndCloseForPowerOff) {
     EXPECT_EQ(NfcStatus::OK, nfc_->closeForPowerOffCase());
     // Wait for CLOSE_CPLT event
     auto res = nfc_cb_->WaitForCallback(kCallbackNameSendEvent);
@@ -195,7 +182,7 @@ TEST_F(NfcHidlTest, OpenAndCloseForPowerOff) {
  * Calls closeForPowerOffCase()
  * Calls close() - checks failed status
  */
-TEST_F(NfcHidlTest, CloseForPowerCaseOffAfterClose) {
+TEST_P(NfcHidlTest, CloseForPowerCaseOffAfterClose) {
     EXPECT_EQ(NfcStatus::OK, nfc_->closeForPowerOffCase());
     // Wait for CLOSE_CPLT event
     auto res = nfc_cb_->WaitForCallback(kCallbackNameSendEvent);
@@ -218,16 +205,19 @@ TEST_F(NfcHidlTest, CloseForPowerCaseOffAfterClose) {
  * Calls getConfig()
  * checks if fields in NfcConfig are populated correctly
  */
-TEST_F(NfcHidlTest, GetConfig) {
+TEST_P(NfcHidlTest, GetConfig) {
     nfc_->getConfig([](NfcConfig config) {
         EXPECT_GE(config.maxIsoDepTransceiveLength, MIN_ISO_DEP_TRANSCEIVE_LENGTH);
     });
 }
 
+INSTANTIATE_TEST_SUITE_P(
+        PerInstance, NfcHidlTest,
+        testing::ValuesIn(android::hardware::getAllHalInstanceNames(INfc::descriptor)),
+        android::hardware::PrintInstanceNameToString);
+
 int main(int argc, char** argv) {
-    ::testing::AddGlobalTestEnvironment(NfcHidlEnvironment::Instance());
     ::testing::InitGoogleTest(&argc, argv);
-    NfcHidlEnvironment::Instance()->init(&argc, argv);
 
     std::system("svc nfc disable"); /* Turn off NFC */
     sleep(5);

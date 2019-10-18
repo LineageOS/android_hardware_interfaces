@@ -20,11 +20,12 @@
 #include <android/hardware/nfc/1.1/INfcClientCallback.h>
 #include <android/hardware/nfc/1.2/INfc.h>
 #include <android/hardware/nfc/1.2/types.h>
+#include <gtest/gtest.h>
 #include <hardware/nfc.h>
+#include <hidl/GtestPrinter.h>
+#include <hidl/ServiceManagement.h>
 
 #include <VtsHalHidlTargetCallbackBase.h>
-#include <VtsHalHidlTargetTestBase.h>
-#include <VtsHalHidlTargetTestEnvBase.h>
 
 using ::android::sp;
 using ::android::hardware::hidl_vec;
@@ -83,26 +84,11 @@ class NfcClientCallback : public ::testing::VtsHalHidlTargetCallbackBase<NfcClie
     };
 };
 
-// Test environment for Nfc HIDL HAL.
-class NfcHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
-   public:
-    // get the test environment singleton
-    static NfcHidlEnvironment* Instance() {
-        static NfcHidlEnvironment* instance = new NfcHidlEnvironment;
-        return instance;
-    }
-
-    virtual void registerTestServices() override { registerTestService<INfc>(); }
-
-   private:
-    NfcHidlEnvironment() {}
-};
-
 // The main test class for NFC HIDL HAL.
-class NfcHidlTest : public ::testing::VtsHalHidlTargetTestBase {
+class NfcHidlTest : public ::testing::TestWithParam<std::string> {
    public:
     virtual void SetUp() override {
-        nfc_ = ::testing::VtsHalHidlTargetTestBase::getService<INfc>();
+        nfc_ = INfc::getService(GetParam());
         ASSERT_NE(nfc_, nullptr);
 
         nfc_cb_ = new NfcClientCallback();
@@ -152,7 +138,7 @@ class NfcHidlTest : public ::testing::VtsHalHidlTargetTestBase {
  * Calls getConfig()
  * checks if fields in NfcConfig are populated correctly
  */
-TEST_F(NfcHidlTest, GetExtendedConfig) {
+TEST_P(NfcHidlTest, GetExtendedConfig) {
     nfc_->getConfig_1_2([](NfcConfig config) {
         for (uint8_t uicc : config.offHostRouteUicc) {
             EXPECT_GE(uicc, MIN_OFFHOST_ROUTE_ID);
@@ -169,10 +155,13 @@ TEST_F(NfcHidlTest, GetExtendedConfig) {
     });
 }
 
+INSTANTIATE_TEST_SUITE_P(
+        PerInstance, NfcHidlTest,
+        testing::ValuesIn(android::hardware::getAllHalInstanceNames(INfc::descriptor)),
+        android::hardware::PrintInstanceNameToString);
+
 int main(int argc, char** argv) {
-    ::testing::AddGlobalTestEnvironment(NfcHidlEnvironment::Instance());
     ::testing::InitGoogleTest(&argc, argv);
-    NfcHidlEnvironment::Instance()->init(&argc, argv);
 
     std::system("svc nfc disable"); /* Turn off NFC */
     sleep(5);
