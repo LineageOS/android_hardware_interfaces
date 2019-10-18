@@ -233,7 +233,7 @@ class HalProxy : public ISensors, public IScopedWakelockRefCounter {
 
     int64_t mWakelockTimeoutResetTime = getTimeNow();
 
-    const char* kWakelockName = "SensorsMultiHal";
+    const char* kWakelockName = "SensorsHAL_WAKEUP";
 
     /**
      * Initialize the list of SubHal objects in mSubHalList by reading from dynamic libraries
