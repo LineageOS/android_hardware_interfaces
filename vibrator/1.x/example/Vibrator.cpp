@@ -23,7 +23,7 @@
 namespace android {
 namespace hardware {
 namespace vibrator {
-namespace V1_3 {
+namespace V1_4 {
 namespace implementation {
 
 static constexpr uint32_t MS_PER_S = 1000;
@@ -100,7 +100,25 @@ Return<Status> Vibrator::setExternalControl(bool enabled) {
     }
 }
 
-Return<void> Vibrator::perform_1_3(Effect effect, EffectStrength strength, perform_cb _hidl_cb) {
+Return<void> Vibrator::perform_1_3(V1_3::Effect effect, EffectStrength strength,
+                                   perform_cb _hidl_cb) {
+    return perform<decltype(effect)>(effect, strength, _hidl_cb);
+}
+
+// Methods from ::android::hardware::vibrator::V1_4::IVibrator follow.
+
+Return<hidl_bitfield<Capabilities>> Vibrator::getCapabilities() {
+    return Capabilities::ON_COMPLETION_CALLBACK | Capabilities::PERFORM_COMPLETION_CALLBACK;
+}
+
+Return<Status> Vibrator::on_1_4(uint32_t timeoutMs, const sp<IVibratorCallback>& callback) {
+    mCallback = callback;
+    return on(timeoutMs);
+}
+
+Return<void> Vibrator::perform_1_4(V1_3::Effect effect, EffectStrength strength,
+                                   const sp<IVibratorCallback>& callback, perform_cb _hidl_cb) {
+    mCallback = callback;
     return perform<decltype(effect)>(effect, strength, _hidl_cb);
 }
 
@@ -148,6 +166,14 @@ Status Vibrator::enable(bool enabled) {
         return Status::UNSUPPORTED_OPERATION;
     } else {
         ALOGI("Enabled: %s -> %s\n", mEnabled ? "true" : "false", enabled ? "true" : "false");
+        if (mEnabled && !enabled) {
+            if (auto callback = mCallback) {
+                mCallback = nullptr;
+                if (auto ret = callback->onComplete(); !ret.isOk()) {
+                    ALOGE("Failed completion callback: %s", ret.description().c_str());
+                }
+            }
+        }
         mEnabled = enabled;
         return Status::OK;
     }
@@ -271,7 +297,7 @@ uint8_t Vibrator::strengthToAmplitude(EffectStrength strength, Status* status) {
 }
 
 }  // namespace implementation
-}  // namespace V1_3
+}  // namespace V1_4
 }  // namespace vibrator
 }  // namespace hardware
 }  // namespace android
