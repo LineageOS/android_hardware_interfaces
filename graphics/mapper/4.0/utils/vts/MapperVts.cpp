@@ -246,6 +246,34 @@ int Gralloc::unlock(const native_handle_t* bufferHandle) {
     return releaseFence;
 }
 
+int Gralloc::flushLockedBuffer(const native_handle_t* bufferHandle) {
+    auto buffer = const_cast<native_handle_t*>(bufferHandle);
+
+    int releaseFence = -1;
+    mMapper->flushLockedBuffer(buffer, [&](const auto& tmpError, const auto& tmpReleaseFence) {
+        ASSERT_EQ(Error::NONE, tmpError) << "failed to flush locked buffer " << buffer;
+
+        auto fenceHandle = tmpReleaseFence.getNativeHandle();
+        if (fenceHandle) {
+            ASSERT_EQ(0, fenceHandle->numInts) << "invalid fence handle " << fenceHandle;
+            if (fenceHandle->numFds == 1) {
+                releaseFence = dup(fenceHandle->data[0]);
+                ASSERT_LT(0, releaseFence) << "failed to dup fence fd";
+            } else {
+                ASSERT_EQ(0, fenceHandle->numFds) << " invalid fence handle " << fenceHandle;
+            }
+        }
+    });
+
+    return releaseFence;
+}
+
+void Gralloc::rereadLockedBuffer(const native_handle_t* bufferHandle) {
+    auto buffer = const_cast<native_handle_t*>(bufferHandle);
+
+    ASSERT_EQ(Error::NONE, mMapper->rereadLockedBuffer(buffer));
+}
+
 bool Gralloc::validateBufferSize(const native_handle_t* bufferHandle,
                                  const IMapper::BufferDescriptorInfo& descriptorInfo,
                                  uint32_t stride) {

@@ -24,6 +24,7 @@
 
 #include <VtsHalHidlTargetTestBase.h>
 #include <android-base/logging.h>
+#include <android/sync.h>
 #include <gralloctypes/Gralloc4.h>
 #include <mapper-vts/4.0/MapperVts.h>
 #include <system/graphics.h>
@@ -271,6 +272,24 @@ class GraphicsMapperHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         ASSERT_NE(nullptr, outYCbCr->y);
         ASSERT_NE(nullptr, outYCbCr->cb);
         ASSERT_NE(nullptr, outYCbCr->cr);
+    }
+
+    void fillRGBA8888(uint8_t* data, uint32_t height, size_t strideInBytes, size_t widthInBytes,
+                      uint32_t seed = 0) {
+        for (uint32_t y = 0; y < height; y++) {
+            memset(data, y + seed, widthInBytes);
+            data += strideInBytes;
+        }
+    }
+
+    void verifyRGBA8888(uint8_t* data, uint32_t height, size_t strideInBytes, size_t widthInBytes,
+                        uint32_t seed = 0) {
+        for (uint32_t y = 0; y < height; y++) {
+            for (size_t i = 0; i < widthInBytes; i++) {
+                EXPECT_EQ(static_cast<uint8_t>(y + seed), data[i]);
+            }
+            data += strideInBytes;
+        }
     }
 
     std::unique_ptr<Gralloc> mGralloc;
@@ -529,25 +548,14 @@ TEST_F(GraphicsMapperHidlTest, LockUnlockBasic) {
             data = static_cast<uint8_t*>(mGralloc->lock(bufferHandle, info.usage, region, fence)));
 
     // RGBA_8888
-    size_t strideInBytes = stride * 4;
-    size_t writeInBytes = info.width * 4;
-
-    for (uint32_t y = 0; y < info.height; y++) {
-        memset(data, y, writeInBytes);
-        data += strideInBytes;
-    }
+    fillRGBA8888(data, info.height, stride * 4, info.width * 4);
 
     ASSERT_NO_FATAL_FAILURE(fence = mGralloc->unlock(bufferHandle));
 
     // lock again for reading
     ASSERT_NO_FATAL_FAILURE(
             data = static_cast<uint8_t*>(mGralloc->lock(bufferHandle, info.usage, region, fence)));
-    for (uint32_t y = 0; y < info.height; y++) {
-        for (size_t i = 0; i < writeInBytes; i++) {
-            EXPECT_EQ(static_cast<uint8_t>(y), data[i]);
-        }
-        data += strideInBytes;
-    }
+    ASSERT_NO_FATAL_FAILURE(verifyRGBA8888(data, info.height, stride * 4, info.width * 4));
 
     ASSERT_NO_FATAL_FAILURE(fence = mGralloc->unlock(bufferHandle));
     if (fence >= 0) {
@@ -703,6 +711,75 @@ TEST_F(GraphicsMapperHidlTest, UnlockNegative) {
       });
   mGralloc->freeBuffer(invalidHandle);
 #endif
+}
+
+/**
+ * Test IMapper::flush and IMapper::reread.
+ */
+TEST_F(GraphicsMapperHidlTest, FlushRereadBasic) {
+    const auto& info = mDummyDescriptorInfo;
+
+    const native_handle_t* rawHandle;
+    uint32_t stride;
+    ASSERT_NO_FATAL_FAILURE(
+            rawHandle = mGralloc->allocate(mDummyDescriptorInfo, false, false, &stride));
+
+    const native_handle_t* writeBufferHandle;
+    const native_handle_t* readBufferHandle;
+    ASSERT_NO_FATAL_FAILURE(writeBufferHandle = mGralloc->importBuffer(rawHandle));
+    ASSERT_NO_FATAL_FAILURE(readBufferHandle = mGralloc->importBuffer(rawHandle));
+
+    // lock buffer for writing
+    const IMapper::Rect region{0, 0, static_cast<int32_t>(info.width),
+                               static_cast<int32_t>(info.height)};
+    uint8_t* writeData;
+    ASSERT_NO_FATAL_FAILURE(
+            writeData = static_cast<uint8_t*>(mGralloc->lock(
+                    writeBufferHandle, static_cast<uint64_t>(BufferUsage::CPU_WRITE_OFTEN), region,
+                    -1)));
+
+    uint8_t* readData;
+    ASSERT_NO_FATAL_FAILURE(
+            readData = static_cast<uint8_t*>(mGralloc->lock(
+                    readBufferHandle, static_cast<uint64_t>(BufferUsage::CPU_READ_OFTEN), region,
+                    -1)));
+
+    fillRGBA8888(writeData, info.height, stride * 4, info.width * 4);
+
+    int fence;
+    ASSERT_NO_FATAL_FAILURE(fence = mGralloc->flushLockedBuffer(writeBufferHandle));
+    ASSERT_EQ(0, sync_wait(fence, 3500));
+    close(fence);
+
+    ASSERT_NO_FATAL_FAILURE(mGralloc->rereadLockedBuffer(readBufferHandle));
+
+    ASSERT_NO_FATAL_FAILURE(verifyRGBA8888(readData, info.height, stride * 4, info.width * 4));
+
+    ASSERT_NO_FATAL_FAILURE(fence = mGralloc->unlock(readBufferHandle));
+    if (fence >= 0) {
+        close(fence);
+    }
+    ASSERT_NO_FATAL_FAILURE(fence = mGralloc->unlock(writeBufferHandle));
+    if (fence >= 0) {
+        close(fence);
+    }
+}
+
+/**
+ * Test IMapper::flushLockedBuffer with bad buffer
+ */
+TEST_F(GraphicsMapperHidlTest, FlushLockedBufferBadBuffer) {
+    ASSERT_NO_FATAL_FAILURE(mGralloc->getMapper()->flushLockedBuffer(
+            nullptr, [&](const auto& tmpError, const auto& /*tmpReleaseFence*/) {
+                ASSERT_EQ(Error::BAD_BUFFER, tmpError);
+            }));
+}
+
+/**
+ * Test IMapper::rereadLockedBuffer with bad buffer
+ */
+TEST_F(GraphicsMapperHidlTest, RereadLockedBufferBadBuffer) {
+    ASSERT_EQ(Error::BAD_BUFFER, mGralloc->getMapper()->rereadLockedBuffer(nullptr));
 }
 
 /**
