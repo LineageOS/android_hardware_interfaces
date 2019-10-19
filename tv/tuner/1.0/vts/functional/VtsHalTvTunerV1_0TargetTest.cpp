@@ -20,8 +20,11 @@
 #include <VtsHalHidlTargetTestEnvBase.h>
 #include <android-base/logging.h>
 #include <android/hardware/tv/tuner/1.0/IDemux.h>
-#include <android/hardware/tv/tuner/1.0/IDemuxCallback.h>
 #include <android/hardware/tv/tuner/1.0/IDescrambler.h>
+#include <android/hardware/tv/tuner/1.0/IDvr.h>
+#include <android/hardware/tv/tuner/1.0/IDvrCallback.h>
+#include <android/hardware/tv/tuner/1.0/IFilter.h>
+#include <android/hardware/tv/tuner/1.0/IFilterCallback.h>
 #include <android/hardware/tv/tuner/1.0/IFrontend.h>
 #include <android/hardware/tv/tuner/1.0/IFrontendCallback.h>
 #include <android/hardware/tv/tuner/1.0/ITuner.h>
@@ -57,8 +60,9 @@ using android::hardware::MessageQueue;
 using android::hardware::MQDescriptorSync;
 using android::hardware::Return;
 using android::hardware::Void;
-using android::hardware::tv::tuner::V1_0::DemuxDataFormat;
+using android::hardware::tv::tuner::V1_0::DataFormat;
 using android::hardware::tv::tuner::V1_0::DemuxFilterEvent;
+using android::hardware::tv::tuner::V1_0::DemuxFilterMainType;
 using android::hardware::tv::tuner::V1_0::DemuxFilterPesDataSettings;
 using android::hardware::tv::tuner::V1_0::DemuxFilterPesEvent;
 using android::hardware::tv::tuner::V1_0::DemuxFilterSectionEvent;
@@ -66,10 +70,11 @@ using android::hardware::tv::tuner::V1_0::DemuxFilterSectionSettings;
 using android::hardware::tv::tuner::V1_0::DemuxFilterSettings;
 using android::hardware::tv::tuner::V1_0::DemuxFilterStatus;
 using android::hardware::tv::tuner::V1_0::DemuxFilterType;
-using android::hardware::tv::tuner::V1_0::DemuxInputSettings;
-using android::hardware::tv::tuner::V1_0::DemuxInputStatus;
-using android::hardware::tv::tuner::V1_0::DemuxOutputStatus;
 using android::hardware::tv::tuner::V1_0::DemuxQueueNotifyBits;
+using android::hardware::tv::tuner::V1_0::DemuxTsFilterSettings;
+using android::hardware::tv::tuner::V1_0::DemuxTsFilterType;
+using android::hardware::tv::tuner::V1_0::DvrSettings;
+using android::hardware::tv::tuner::V1_0::DvrType;
 using android::hardware::tv::tuner::V1_0::FrontendAtscModulation;
 using android::hardware::tv::tuner::V1_0::FrontendAtscSettings;
 using android::hardware::tv::tuner::V1_0::FrontendDvbtSettings;
@@ -80,11 +85,17 @@ using android::hardware::tv::tuner::V1_0::FrontendScanMessage;
 using android::hardware::tv::tuner::V1_0::FrontendScanMessageType;
 using android::hardware::tv::tuner::V1_0::FrontendSettings;
 using android::hardware::tv::tuner::V1_0::IDemux;
-using android::hardware::tv::tuner::V1_0::IDemuxCallback;
 using android::hardware::tv::tuner::V1_0::IDescrambler;
+using android::hardware::tv::tuner::V1_0::IDvr;
+using android::hardware::tv::tuner::V1_0::IDvrCallback;
+using android::hardware::tv::tuner::V1_0::IFilter;
+using android::hardware::tv::tuner::V1_0::IFilterCallback;
 using android::hardware::tv::tuner::V1_0::IFrontend;
 using android::hardware::tv::tuner::V1_0::IFrontendCallback;
 using android::hardware::tv::tuner::V1_0::ITuner;
+using android::hardware::tv::tuner::V1_0::PlaybackSettings;
+using android::hardware::tv::tuner::V1_0::PlaybackStatus;
+using android::hardware::tv::tuner::V1_0::RecordStatus;
 using android::hardware::tv::tuner::V1_0::Result;
 
 namespace {
@@ -131,17 +142,28 @@ const std::vector<uint8_t> goldenDataOutputBuffer{
         0x73, 0x63, 0x65, 0x6e, 0x65,
 };
 
-const uint16_t FMQ_SIZE_4K = 0x1000;
+// const uint16_t FMQ_SIZE_4K = 0x1000;
 const uint32_t FMQ_SIZE_1M = 0x100000;
+const uint32_t FMQ_SIZE_16M = 0x1000000;
 
 struct FilterConf {
     DemuxFilterType type;
     DemuxFilterSettings setting;
 };
 
-struct InputConf {
+enum FilterEventType : uint8_t {
+    UNDEFINED,
+    SECTION,
+    MEDIA,
+    PES,
+    RECORD,
+    MMTPRECORD,
+    DOWNLOAD,
+};
+
+struct PlaybackConf {
     string inputDataFile;
-    DemuxInputSettings setting;
+    PlaybackSettings setting;
 };
 
 class FrontendCallback : public IFrontendCallback {
@@ -150,14 +172,6 @@ class FrontendCallback : public IFrontendCallback {
         android::Mutex::Autolock autoLock(mMsgLock);
         mEventReceived = true;
         mEventType = frontendEventType;
-        mMsgCondition.signal();
-        return Void();
-    }
-
-    virtual Return<void> onDiseqcMessage(const hidl_vec<uint8_t>& diseqcMessage) override {
-        android::Mutex::Autolock autoLock(mMsgLock);
-        mDiseqcMessageReceived = true;
-        mEventMessage = diseqcMessage;
         mMsgCondition.signal();
         return Void();
     }
@@ -211,14 +225,14 @@ void FrontendCallback::testOnDiseqcMessage(sp<IFrontend>& frontend, FrontendSett
     }
 }
 
-class DemuxCallback : public IDemuxCallback {
+class FilterCallback : public IFilterCallback {
   public:
     virtual Return<void> onFilterEvent(const DemuxFilterEvent& filterEvent) override {
         android::Mutex::Autolock autoLock(mMsgLock);
         // Temprarily we treat the first coming back filter data on the matching pid a success
         // once all of the MQ are cleared, means we got all the expected output
-        mFilterIdToEvent[filterEvent.filterId] = filterEvent;
-        readFilterEventData(filterEvent.filterId);
+        mFilterIdToEvent = filterEvent;
+        readFilterEventData();
         mPidFilterOutputCount++;
         // mFilterIdToMQ.erase(filterEvent.filterId);
 
@@ -227,96 +241,50 @@ class DemuxCallback : public IDemuxCallback {
         return Void();
     }
 
-    virtual Return<void> onFilterStatus(uint32_t /*filterId*/,
-                                        const DemuxFilterStatus /*status*/) override {
+    virtual Return<void> onFilterStatus(const DemuxFilterStatus /*status*/) override {
         return Void();
     }
 
-    virtual Return<void> onOutputStatus(DemuxOutputStatus /*status*/) override { return Void(); }
+    void setFilterId(uint32_t filterId) { mFilterId = filterId; }
+    void setFilterEventType(FilterEventType type) { mFilterEventType = type; }
 
-    virtual Return<void> onInputStatus(DemuxInputStatus status) override {
-        // android::Mutex::Autolock autoLock(mMsgLock);
-        ALOGW("[vts] input status %d", status);
-        switch (status) {
-            case DemuxInputStatus::SPACE_EMPTY:
-            case DemuxInputStatus::SPACE_ALMOST_EMPTY:
-                ALOGW("[vts] keep inputing %d", status);
-                mKeepWritingInputFMQ = true;
-                break;
-            case DemuxInputStatus::SPACE_ALMOST_FULL:
-            case DemuxInputStatus::SPACE_FULL:
-                ALOGW("[vts] stop inputing %d", status);
-                mKeepWritingInputFMQ = false;
-                break;
-        }
-        return Void();
-    }
-
-    void testOnFilterEvent(uint32_t filterId);
     void testFilterDataOutput();
-    void stopInputThread();
 
-    void startPlaybackInputThread(InputConf inputConf, MQDesc& inputMQDescriptor);
     void startFilterEventThread(DemuxFilterEvent event);
-    static void* __threadLoopInput(void* threadArgs);
     static void* __threadLoopFilter(void* threadArgs);
-    void inputThreadLoop(InputConf* inputConf, bool* keepWritingInputFMQ);
     void filterThreadLoop(DemuxFilterEvent& event);
 
-    void updateFilterMQ(uint32_t filterId, MQDesc& filterMQDescriptor);
-    void updateGoldenOutputMap(uint32_t filterId, string goldenOutputFile);
-    bool readFilterEventData(uint32_t filterId);
+    void updateFilterMQ(MQDesc& filterMQDescriptor);
+    void updateGoldenOutputMap(string goldenOutputFile);
+    bool readFilterEventData();
 
   private:
-    struct InputThreadArgs {
-        DemuxCallback* user;
-        InputConf* inputConf;
-        bool* keepWritingInputFMQ;
-    };
     struct FilterThreadArgs {
-        DemuxCallback* user;
+        FilterCallback* user;
         DemuxFilterEvent event;
     };
     uint16_t mDataLength = 0;
     std::vector<uint8_t> mDataOutputBuffer;
 
-    bool mFilterEventReceived;
-    std::map<uint32_t, string> mFilterIdToGoldenOutput;
+    string mFilterIdToGoldenOutput;
 
-    std::map<uint32_t, std::unique_ptr<FilterMQ>> mFilterIdToMQ;
-    std::unique_ptr<FilterMQ> mInputMQ;
-    std::map<uint32_t, EventFlag*> mFilterIdToMQEventFlag;
-    std::map<uint32_t, DemuxFilterEvent> mFilterIdToEvent;
-    EventFlag* mInputMQEventFlag;
+    uint32_t mFilterId;
+    FilterEventType mFilterEventType;
+    std::unique_ptr<FilterMQ> mFilterIdToMQ;
+    EventFlag* mFilterIdToMQEventFlag;
+    DemuxFilterEvent mFilterIdToEvent;
 
     android::Mutex mMsgLock;
     android::Mutex mFilterOutputLock;
-    android::Mutex mInputThreadLock;
     android::Condition mMsgCondition;
     android::Condition mFilterOutputCondition;
 
-    bool mKeepWritingInputFMQ = true;
-    bool mInputThreadRunning;
-    pthread_t mInputThread;
     pthread_t mFilterThread;
 
     int mPidFilterOutputCount = 0;
 };
 
-void DemuxCallback::startPlaybackInputThread(InputConf inputConf, MQDesc& inputMQDescriptor) {
-    mInputMQ = std::make_unique<FilterMQ>(inputMQDescriptor, true /* resetPointers */);
-    EXPECT_TRUE(mInputMQ);
-    struct InputThreadArgs* threadArgs =
-            (struct InputThreadArgs*)malloc(sizeof(struct InputThreadArgs));
-    threadArgs->user = this;
-    threadArgs->inputConf = &inputConf;
-    threadArgs->keepWritingInputFMQ = &mKeepWritingInputFMQ;
-
-    pthread_create(&mInputThread, NULL, __threadLoopInput, (void*)threadArgs);
-    pthread_setname_np(mInputThread, "test_playback_input_loop");
-}
-
-void DemuxCallback::startFilterEventThread(DemuxFilterEvent event) {
+void FilterCallback::startFilterEventThread(DemuxFilterEvent event) {
     struct FilterThreadArgs* threadArgs =
             (struct FilterThreadArgs*)malloc(sizeof(struct FilterThreadArgs));
     threadArgs->user = this;
@@ -326,7 +294,7 @@ void DemuxCallback::startFilterEventThread(DemuxFilterEvent event) {
     pthread_setname_np(mFilterThread, "test_playback_input_loop");
 }
 
-void DemuxCallback::testFilterDataOutput() {
+void FilterCallback::testFilterDataOutput() {
     android::Mutex::Autolock autoLock(mMsgLock);
     while (mPidFilterOutputCount < 1) {
         if (-ETIMEDOUT == mMsgCondition.waitRelative(mMsgLock, WAIT_TIMEOUT)) {
@@ -338,95 +306,25 @@ void DemuxCallback::testFilterDataOutput() {
     ALOGW("[vts] pass and stop");
 }
 
-void DemuxCallback::stopInputThread() {
-    mInputThreadRunning = false;
-    mKeepWritingInputFMQ = false;
-
-    android::Mutex::Autolock autoLock(mInputThreadLock);
+void FilterCallback::updateFilterMQ(MQDesc& filterMQDescriptor) {
+    mFilterIdToMQ = std::make_unique<FilterMQ>(filterMQDescriptor, true /* resetPointers */);
+    EXPECT_TRUE(mFilterIdToMQ);
+    EXPECT_TRUE(EventFlag::createEventFlag(mFilterIdToMQ->getEventFlagWord(),
+                                           &mFilterIdToMQEventFlag) == android::OK);
 }
 
-void DemuxCallback::updateFilterMQ(uint32_t filterId, MQDesc& filterMQDescriptor) {
-    mFilterIdToMQ[filterId] =
-            std::make_unique<FilterMQ>(filterMQDescriptor, true /* resetPointers */);
-    EXPECT_TRUE(mFilterIdToMQ[filterId]);
-    EXPECT_TRUE(EventFlag::createEventFlag(mFilterIdToMQ[filterId]->getEventFlagWord(),
-                                           &mFilterIdToMQEventFlag[filterId]) == android::OK);
+void FilterCallback::updateGoldenOutputMap(string goldenOutputFile) {
+    mFilterIdToGoldenOutput = goldenOutputFile;
 }
 
-void DemuxCallback::updateGoldenOutputMap(uint32_t filterId, string goldenOutputFile) {
-    mFilterIdToGoldenOutput[filterId] = goldenOutputFile;
-}
-
-void* DemuxCallback::__threadLoopInput(void* threadArgs) {
-    DemuxCallback* const self =
-            static_cast<DemuxCallback*>(((struct InputThreadArgs*)threadArgs)->user);
-    self->inputThreadLoop(((struct InputThreadArgs*)threadArgs)->inputConf,
-                          ((struct InputThreadArgs*)threadArgs)->keepWritingInputFMQ);
-    return 0;
-}
-
-void DemuxCallback::inputThreadLoop(InputConf* inputConf, bool* keepWritingInputFMQ) {
-    android::Mutex::Autolock autoLock(mInputThreadLock);
-    mInputThreadRunning = true;
-
-    // Create the EventFlag that is used to signal the HAL impl that data have been
-    // written into the Input FMQ
-    EventFlag* inputMQEventFlag;
-    EXPECT_TRUE(EventFlag::createEventFlag(mInputMQ->getEventFlagWord(), &inputMQEventFlag) ==
-                android::OK);
-
-    // open the stream and get its length
-    std::ifstream inputData(inputConf->inputDataFile, std::ifstream::binary);
-    int writeSize = inputConf->setting.packetSize * 6;
-    char* buffer = new char[writeSize];
-    ALOGW("[vts] input thread loop start %s", inputConf->inputDataFile.c_str());
-    if (!inputData.is_open()) {
-        mInputThreadRunning = false;
-        ALOGW("[vts] Error %s", strerror(errno));
-    }
-
-    while (mInputThreadRunning) {
-        // move the stream pointer for packet size * 6 every read until the end
-        while (*keepWritingInputFMQ) {
-            inputData.read(buffer, writeSize);
-            if (!inputData) {
-                int leftSize = inputData.gcount();
-                if (leftSize == 0) {
-                    mInputThreadRunning = false;
-                    break;
-                }
-                inputData.clear();
-                inputData.read(buffer, leftSize);
-                // Write the left over of the input data and quit the thread
-                if (leftSize > 0) {
-                    EXPECT_TRUE(mInputMQ->write((unsigned char*)&buffer[0], leftSize));
-                    inputMQEventFlag->wake(static_cast<uint32_t>(DemuxQueueNotifyBits::DATA_READY));
-                }
-                mInputThreadRunning = false;
-                break;
-            }
-            // Write input FMQ and notify the Tuner Implementation
-            EXPECT_TRUE(mInputMQ->write((unsigned char*)&buffer[0], writeSize));
-            inputMQEventFlag->wake(static_cast<uint32_t>(DemuxQueueNotifyBits::DATA_READY));
-            inputData.seekg(writeSize, inputData.cur);
-            sleep(1);
-        }
-    }
-
-    ALOGW("[vts] Input thread end.");
-
-    delete[] buffer;
-    inputData.close();
-}
-
-void* DemuxCallback::__threadLoopFilter(void* threadArgs) {
-    DemuxCallback* const self =
-            static_cast<DemuxCallback*>(((struct FilterThreadArgs*)threadArgs)->user);
+void* FilterCallback::__threadLoopFilter(void* threadArgs) {
+    FilterCallback* const self =
+            static_cast<FilterCallback*>(((struct FilterThreadArgs*)threadArgs)->user);
     self->filterThreadLoop(((struct FilterThreadArgs*)threadArgs)->event);
     return 0;
 }
 
-void DemuxCallback::filterThreadLoop(DemuxFilterEvent& /* event */) {
+void FilterCallback::filterThreadLoop(DemuxFilterEvent& /* event */) {
     android::Mutex::Autolock autoLock(mFilterOutputLock);
     // Read from mFilterIdToMQ[event.filterId] per event and filter type
 
@@ -439,28 +337,182 @@ void DemuxCallback::filterThreadLoop(DemuxFilterEvent& /* event */) {
     // end thread
 }
 
-bool DemuxCallback::readFilterEventData(uint32_t filterId) {
+bool FilterCallback::readFilterEventData() {
     bool result = false;
-    DemuxFilterEvent filterEvent = mFilterIdToEvent[filterId];
-    ALOGW("[vts] reading from filter FMQ %d", filterId);
+    DemuxFilterEvent filterEvent = mFilterIdToEvent;
+    ALOGW("[vts] reading from filter FMQ %d", mFilterId);
     // todo separate filter handlers
     for (int i = 0; i < filterEvent.events.size(); i++) {
-        DemuxFilterPesEvent event = filterEvent.events[i].pes();
-        mDataLength = event.dataLength;
+        switch (mFilterEventType) {
+            case FilterEventType::SECTION:
+                mDataLength = filterEvent.events[i].section().dataLength;
+                break;
+            case FilterEventType::PES:
+                mDataLength = filterEvent.events[i].pes().dataLength;
+                break;
+            case FilterEventType::MEDIA:
+                break;
+            case FilterEventType::RECORD:
+                break;
+            case FilterEventType::MMTPRECORD:
+                break;
+            case FilterEventType::DOWNLOAD:
+                break;
+            default:
+                break;
+        }
         // EXPECT_TRUE(mDataLength == goldenDataOutputBuffer.size()) << "buffer size does not
         // match";
 
         mDataOutputBuffer.resize(mDataLength);
-        result = mFilterIdToMQ[filterId]->read(mDataOutputBuffer.data(), mDataLength);
+        result = mFilterIdToMQ->read(mDataOutputBuffer.data(), mDataLength);
         EXPECT_TRUE(result) << "can't read from Filter MQ";
 
         /*for (int i = 0; i < mDataLength; i++) {
             EXPECT_TRUE(goldenDataOutputBuffer[i] == mDataOutputBuffer[i]) << "data does not match";
         }*/
     }
-    mFilterIdToMQEventFlag[filterId]->wake(
-            static_cast<uint32_t>(DemuxQueueNotifyBits::DATA_CONSUMED));
+    mFilterIdToMQEventFlag->wake(static_cast<uint32_t>(DemuxQueueNotifyBits::DATA_CONSUMED));
     return result;
+}
+
+class DvrCallback : public IDvrCallback {
+  public:
+    virtual Return<void> onRecordStatus(RecordStatus /*status*/) override { return Void(); }
+
+    virtual Return<void> onPlaybackStatus(PlaybackStatus status) override {
+        // android::Mutex::Autolock autoLock(mMsgLock);
+        ALOGW("[vts] playback status %d", status);
+        switch (status) {
+            case PlaybackStatus::SPACE_EMPTY:
+            case PlaybackStatus::SPACE_ALMOST_EMPTY:
+                ALOGW("[vts] keep playback inputing %d", status);
+                mKeepWritingPlaybackFMQ = true;
+                break;
+            case PlaybackStatus::SPACE_ALMOST_FULL:
+            case PlaybackStatus::SPACE_FULL:
+                ALOGW("[vts] stop playback inputing %d", status);
+                mKeepWritingPlaybackFMQ = false;
+                break;
+        }
+        return Void();
+    }
+
+    void testFilterDataOutput();
+    void stopPlaybackThread();
+
+    void startPlaybackInputThread(PlaybackConf playbackConf, MQDesc& playbackMQDescriptor);
+    static void* __threadLoopPlayback(void* threadArgs);
+    void playbackThreadLoop(PlaybackConf* playbackConf, bool* keepWritingPlaybackFMQ);
+
+  private:
+    struct PlaybackThreadArgs {
+        DvrCallback* user;
+        PlaybackConf* playbackConf;
+        bool* keepWritingPlaybackFMQ;
+    };
+    uint16_t mDataLength = 0;
+    std::vector<uint8_t> mDataOutputBuffer;
+
+    std::map<uint32_t, std::unique_ptr<FilterMQ>> mFilterIdToMQ;
+    std::unique_ptr<FilterMQ> mPlaybackMQ;
+    std::map<uint32_t, EventFlag*> mFilterIdToMQEventFlag;
+    std::map<uint32_t, DemuxFilterEvent> mFilterIdToEvent;
+    EventFlag* mPlaybackMQEventFlag;
+
+    android::Mutex mMsgLock;
+    android::Mutex mPlaybackThreadLock;
+    android::Condition mMsgCondition;
+
+    bool mKeepWritingPlaybackFMQ = true;
+    bool mPlaybackThreadRunning;
+    pthread_t mPlaybackThread;
+
+    int mPidFilterOutputCount = 0;
+};
+
+void DvrCallback::startPlaybackInputThread(PlaybackConf playbackConf,
+                                           MQDesc& playbackMQDescriptor) {
+    mPlaybackMQ = std::make_unique<FilterMQ>(playbackMQDescriptor, true /* resetPointers */);
+    EXPECT_TRUE(mPlaybackMQ);
+    struct PlaybackThreadArgs* threadArgs =
+            (struct PlaybackThreadArgs*)malloc(sizeof(struct PlaybackThreadArgs));
+    threadArgs->user = this;
+    threadArgs->playbackConf = &playbackConf;
+    threadArgs->keepWritingPlaybackFMQ = &mKeepWritingPlaybackFMQ;
+
+    pthread_create(&mPlaybackThread, NULL, __threadLoopPlayback, (void*)threadArgs);
+    pthread_setname_np(mPlaybackThread, "test_playback_input_loop");
+}
+
+void DvrCallback::stopPlaybackThread() {
+    mPlaybackThreadRunning = false;
+    mKeepWritingPlaybackFMQ = false;
+
+    android::Mutex::Autolock autoLock(mPlaybackThreadLock);
+}
+
+void* DvrCallback::__threadLoopPlayback(void* threadArgs) {
+    DvrCallback* const self =
+            static_cast<DvrCallback*>(((struct PlaybackThreadArgs*)threadArgs)->user);
+    self->playbackThreadLoop(((struct PlaybackThreadArgs*)threadArgs)->playbackConf,
+                             ((struct PlaybackThreadArgs*)threadArgs)->keepWritingPlaybackFMQ);
+    return 0;
+}
+
+void DvrCallback::playbackThreadLoop(PlaybackConf* playbackConf, bool* keepWritingPlaybackFMQ) {
+    android::Mutex::Autolock autoLock(mPlaybackThreadLock);
+    mPlaybackThreadRunning = true;
+
+    // Create the EventFlag that is used to signal the HAL impl that data have been
+    // written into the Playback FMQ
+    EventFlag* playbackMQEventFlag;
+    EXPECT_TRUE(EventFlag::createEventFlag(mPlaybackMQ->getEventFlagWord(), &playbackMQEventFlag) ==
+                android::OK);
+
+    // open the stream and get its length
+    std::ifstream inputData(playbackConf->inputDataFile, std::ifstream::binary);
+    int writeSize = playbackConf->setting.packetSize * 6;
+    char* buffer = new char[writeSize];
+    ALOGW("[vts] playback thread loop start %s", playbackConf->inputDataFile.c_str());
+    if (!inputData.is_open()) {
+        mPlaybackThreadRunning = false;
+        ALOGW("[vts] Error %s", strerror(errno));
+    }
+
+    while (mPlaybackThreadRunning) {
+        // move the stream pointer for packet size * 6 every read until the end
+        while (*keepWritingPlaybackFMQ) {
+            inputData.read(buffer, writeSize);
+            if (!inputData) {
+                int leftSize = inputData.gcount();
+                if (leftSize == 0) {
+                    mPlaybackThreadRunning = false;
+                    break;
+                }
+                inputData.clear();
+                inputData.read(buffer, leftSize);
+                // Write the left over of the input data and quit the thread
+                if (leftSize > 0) {
+                    EXPECT_TRUE(mPlaybackMQ->write((unsigned char*)&buffer[0], leftSize));
+                    playbackMQEventFlag->wake(
+                            static_cast<uint32_t>(DemuxQueueNotifyBits::DATA_READY));
+                }
+                mPlaybackThreadRunning = false;
+                break;
+            }
+            // Write input FMQ and notify the Tuner Implementation
+            EXPECT_TRUE(mPlaybackMQ->write((unsigned char*)&buffer[0], writeSize));
+            playbackMQEventFlag->wake(static_cast<uint32_t>(DemuxQueueNotifyBits::DATA_READY));
+            inputData.seekg(writeSize, inputData.cur);
+            sleep(1);
+        }
+    }
+
+    ALOGW("[vts] Playback thread end.");
+
+    delete[] buffer;
+    inputData.close();
 }
 
 // Test environment for Tuner HIDL HAL.
@@ -494,16 +546,21 @@ class TunerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     sp<FrontendCallback> mFrontendCallback;
     sp<IDescrambler> mDescrambler;
     sp<IDemux> mDemux;
-    sp<DemuxCallback> mDemuxCallback;
+    sp<IDvr> mDvr;
+    sp<IFilter> mFilter;
+    std::map<uint32_t, sp<IFilter>> mFilters;
+    std::map<uint32_t, sp<FilterCallback>> mFilterCallbacks;
+    sp<FilterCallback> mFilterCallback;
+    sp<DvrCallback> mDvrCallback;
     MQDesc mFilterMQDescriptor;
-    MQDesc mInputMQDescriptor;
+    MQDesc mPlaybackMQDescriptor;
     vector<uint32_t> mUsedFilterIds;
 
     uint32_t mDemuxId;
     uint32_t mFilterId;
 
-    pthread_t mInputThread;
-    bool mInputThreadRunning;
+    pthread_t mPlaybackshread;
+    bool mPlaybackThreadRunning;
 
     ::testing::AssertionResult createFrontend(int32_t frontendId);
     ::testing::AssertionResult tuneFrontend(int32_t frontendId);
@@ -512,16 +569,16 @@ class TunerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     ::testing::AssertionResult createDemux();
     ::testing::AssertionResult createDemuxWithFrontend(int32_t frontendId,
                                                        FrontendSettings settings);
-    ::testing::AssertionResult getInputMQDescriptor();
-    ::testing::AssertionResult addInputToDemux(DemuxInputSettings setting);
+    ::testing::AssertionResult getPlaybackMQDescriptor();
+    ::testing::AssertionResult addPlaybackToDemux(PlaybackSettings setting);
     ::testing::AssertionResult addFilterToDemux(DemuxFilterType type, DemuxFilterSettings setting);
-    ::testing::AssertionResult getFilterMQDescriptor(const uint32_t filterId);
+    ::testing::AssertionResult getFilterMQDescriptor();
     ::testing::AssertionResult closeDemux();
     ::testing::AssertionResult createDescrambler();
     ::testing::AssertionResult closeDescrambler();
 
     ::testing::AssertionResult playbackDataFlowTest(vector<FilterConf> filterConf,
-                                                    InputConf inputConf,
+                                                    PlaybackConf playbackConf,
                                                     vector<string> goldenOutputFiles);
     ::testing::AssertionResult broadcastDataFlowTest(vector<FilterConf> filterConf,
                                                      vector<string> goldenOutputFiles);
@@ -665,39 +722,43 @@ class TunerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     return ::testing::AssertionResult(status == Result::SUCCESS);
 }
 
-::testing::AssertionResult TunerHidlTest::addInputToDemux(DemuxInputSettings setting) {
+::testing::AssertionResult TunerHidlTest::addPlaybackToDemux(PlaybackSettings setting) {
     Result status;
 
     if (!mDemux && createDemux() == ::testing::AssertionFailure()) {
         return ::testing::AssertionFailure();
     }
 
-    // Create demux callback
-    if (!mDemuxCallback) {
-        mDemuxCallback = new DemuxCallback();
-    }
+    // Create dvr callback
+    mDvrCallback = new DvrCallback();
 
     // Add playback input to the local demux
-    status = mDemux->addInput(FMQ_SIZE_1M, mDemuxCallback);
+    mDemux->openDvr(DvrType::PLAYBACK, FMQ_SIZE_1M, mDvrCallback,
+                    [&](Result result, const sp<IDvr>& dvr) {
+                        mDvr = dvr;
+                        status = result;
+                    });
 
     if (status != Result::SUCCESS) {
         return ::testing::AssertionFailure();
     }
 
-    status = mDemux->configureInput(setting);
+    DvrSettings dvrSetting;
+    dvrSetting.playback(setting);
+    status = mDvr->configure(dvrSetting);
 
     return ::testing::AssertionResult(status == Result::SUCCESS);
 }
 
-::testing::AssertionResult TunerHidlTest::getInputMQDescriptor() {
+::testing::AssertionResult TunerHidlTest::getPlaybackMQDescriptor() {
     Result status;
 
-    if (!mDemux && createDemux() == ::testing::AssertionFailure()) {
+    if ((!mDemux && createDemux() == ::testing::AssertionFailure()) || !mDvr) {
         return ::testing::AssertionFailure();
     }
 
-    mDemux->getInputQueueDesc([&](Result result, const MQDesc& inputMQDesc) {
-        mInputMQDescriptor = inputMQDesc;
+    mDvr->getQueueDesc([&](Result result, const MQDesc& dvrMQDesc) {
+        mPlaybackMQDescriptor = dvrMQDesc;
         status = result;
     });
 
@@ -713,13 +774,20 @@ class TunerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     }
 
     // Create demux callback
-    if (!mDemuxCallback) {
-        mDemuxCallback = new DemuxCallback();
-    }
+    mFilterCallback = new FilterCallback();
 
     // Add filter to the local demux
-    mDemux->addFilter(type, FMQ_SIZE_4K, mDemuxCallback, [&](Result result, uint32_t filterId) {
-        // TODO use a map to save all the filter id and FMQ
+    mDemux->openFilter(type, FMQ_SIZE_16M, mFilterCallback,
+                       [&](Result result, const sp<IFilter>& filter) {
+                           mFilter = filter;
+                           status = result;
+                       });
+
+    if (status != Result::SUCCESS) {
+        return ::testing::AssertionFailure();
+    }
+
+    mFilter->getId([&](Result result, uint32_t filterId) {
         mFilterId = filterId;
         status = result;
     });
@@ -728,20 +796,64 @@ class TunerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         return ::testing::AssertionFailure();
     }
 
+    mFilterCallback->setFilterId(mFilterId);
+
+    FilterEventType eventType = FilterEventType::UNDEFINED;
+    switch (type.mainType) {
+        case DemuxFilterMainType::TS:
+            switch (type.subType.tsFilterType()) {
+                case DemuxTsFilterType::UNDEFINED:
+                    break;
+                case DemuxTsFilterType::SECTION:
+                    eventType = FilterEventType::SECTION;
+                    break;
+                case DemuxTsFilterType::PES:
+                    eventType = FilterEventType::PES;
+                    break;
+                case DemuxTsFilterType::TS:
+                    break;
+                case DemuxTsFilterType::AUDIO:
+                case DemuxTsFilterType::VIDEO:
+                    eventType = FilterEventType::MEDIA;
+                    break;
+                case DemuxTsFilterType::PCR:
+                    break;
+                case DemuxTsFilterType::RECORD:
+                    eventType = FilterEventType::RECORD;
+                    break;
+            }
+            break;
+        case DemuxFilterMainType::MMTP:
+            /*mmtpSettings*/
+            break;
+        case DemuxFilterMainType::IP:
+            /*ipSettings*/
+            break;
+        case DemuxFilterMainType::TLV:
+            /*tlvSettings*/
+            break;
+        case DemuxFilterMainType::ALP:
+            /*alpSettings*/
+            break;
+        default:
+            break;
+    }
+    mFilterCallback->setFilterEventType(eventType);
+
     // Configure the filter
-    status = mDemux->configureFilter(mFilterId, setting);
+    status = mFilter->configure(setting);
 
     return ::testing::AssertionResult(status == Result::SUCCESS);
 }
 
-::testing::AssertionResult TunerHidlTest::getFilterMQDescriptor(const uint32_t filterId) {
+::testing::AssertionResult TunerHidlTest::getFilterMQDescriptor() {
     Result status;
 
-    if (!mDemux) {
+    if (!mDemux || !mFilter) {
         return ::testing::AssertionFailure();
     }
 
-    mDemux->getFilterQueueDesc(filterId, [&](Result result, const MQDesc& filterMQDesc) {
+    mFilter->getQueueDesc([&](Result result, const MQDesc& filterMQDesc) {
         mFilterMQDescriptor = filterMQDesc;
         status = result;
     });
@@ -750,7 +862,8 @@ class TunerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 }
 
 ::testing::AssertionResult TunerHidlTest::playbackDataFlowTest(
-        vector<FilterConf> filterConf, InputConf inputConf, vector<string> /*goldenOutputFiles*/) {
+        vector<FilterConf> filterConf, PlaybackConf playbackConf,
+        vector<string> /*goldenOutputFiles*/) {
     Result status;
     int filterIdsSize;
     // Filter Configuration Module
@@ -758,45 +871,58 @@ class TunerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         if (addFilterToDemux(filterConf[i].type, filterConf[i].setting) ==
                     ::testing::AssertionFailure() ||
             // TODO use a map to save the FMQs/EvenFlags and pass to callback
-            getFilterMQDescriptor(mFilterId) == ::testing::AssertionFailure()) {
+            getFilterMQDescriptor() == ::testing::AssertionFailure()) {
             return ::testing::AssertionFailure();
         }
         filterIdsSize = mUsedFilterIds.size();
         mUsedFilterIds.resize(filterIdsSize + 1);
         mUsedFilterIds[filterIdsSize] = mFilterId;
-        mDemuxCallback->updateFilterMQ(mFilterId, mFilterMQDescriptor);
-        // mDemuxCallback->updateGoldenOutputMap(mFilterId, goldenOutputFiles[i]);
-        status = mDemux->startFilter(mFilterId);
+        mFilters[mFilterId] = mFilter;
+        mFilterCallbacks[mFilterId] = mFilterCallback;
+        mFilterCallback->updateFilterMQ(mFilterMQDescriptor);
+        // mDemuxCallback->updateGoldenOutputMap(goldenOutputFiles[i]);
+        status = mFilter->start();
         if (status != Result::SUCCESS) {
             return ::testing::AssertionFailure();
         }
     }
 
     // Playback Input Module
-    DemuxInputSettings inputSetting = inputConf.setting;
-    if (addInputToDemux(inputSetting) == ::testing::AssertionFailure() ||
-        getInputMQDescriptor() == ::testing::AssertionFailure()) {
+    PlaybackSettings playbackSetting = playbackConf.setting;
+    if (addPlaybackToDemux(playbackSetting) == ::testing::AssertionFailure() ||
+        getPlaybackMQDescriptor() == ::testing::AssertionFailure()) {
         return ::testing::AssertionFailure();
     }
-    mDemuxCallback->startPlaybackInputThread(inputConf, mInputMQDescriptor);
-    status = mDemux->startInput();
+    for (int i = 0; i <= filterIdsSize; i++) {
+        if (mDvr->attachFilter(mFilters[mUsedFilterIds[i]]) != Result::SUCCESS) {
+            return ::testing::AssertionFailure();
+        }
+    }
+    mDvrCallback->startPlaybackInputThread(playbackConf, mPlaybackMQDescriptor);
+    status = mDvr->start();
     if (status != Result::SUCCESS) {
         return ::testing::AssertionFailure();
     }
 
     // Data Verify Module
-    mDemuxCallback->testFilterDataOutput();
-    mDemuxCallback->stopInputThread();
+    std::map<uint32_t, sp<FilterCallback>>::iterator it;
+    for (it = mFilterCallbacks.begin(); it != mFilterCallbacks.end(); it++) {
+        it->second->testFilterDataOutput();
+    }
+    mDvrCallback->stopPlaybackThread();
 
     // Clean Up Module
     for (int i = 0; i <= filterIdsSize; i++) {
-        if (mDemux->stopFilter(mUsedFilterIds[i]) != Result::SUCCESS) {
+        if (mFilters[mUsedFilterIds[i]]->stop() != Result::SUCCESS) {
             return ::testing::AssertionFailure();
         }
     }
-    if (mDemux->stopInput() != Result::SUCCESS) {
+    if (mDvr->stop() != Result::SUCCESS) {
         return ::testing::AssertionFailure();
     }
+    mUsedFilterIds.clear();
+    mFilterCallbacks.clear();
+    mFilters.clear();
     return closeDemux();
 }
 
@@ -831,31 +957,39 @@ class TunerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         if (addFilterToDemux(filterConf[i].type, filterConf[i].setting) ==
                     ::testing::AssertionFailure() ||
             // TODO use a map to save the FMQs/EvenFlags and pass to callback
-            getFilterMQDescriptor(mFilterId) == ::testing::AssertionFailure()) {
+            getFilterMQDescriptor() == ::testing::AssertionFailure()) {
             return ::testing::AssertionFailure();
         }
         filterIdsSize = mUsedFilterIds.size();
         mUsedFilterIds.resize(filterIdsSize + 1);
         mUsedFilterIds[filterIdsSize] = mFilterId;
-        mDemuxCallback->updateFilterMQ(mFilterId, mFilterMQDescriptor);
-        status = mDemux->startFilter(mFilterId);
+        mFilters[mFilterId] = mFilter;
+        mFilterCallbacks[mFilterId] = mFilterCallback;
+        mFilterCallback->updateFilterMQ(mFilterMQDescriptor);
+        status = mFilter->start();
         if (status != Result::SUCCESS) {
             return ::testing::AssertionFailure();
         }
     }
 
     // Data Verify Module
-    mDemuxCallback->testFilterDataOutput();
+    std::map<uint32_t, sp<FilterCallback>>::iterator it;
+    for (it = mFilterCallbacks.begin(); it != mFilterCallbacks.end(); it++) {
+        it->second->testFilterDataOutput();
+    }
 
     // Clean Up Module
     for (int i = 0; i <= filterIdsSize; i++) {
-        if (mDemux->stopFilter(mUsedFilterIds[i]) != Result::SUCCESS) {
+        if (mFilters[mUsedFilterIds[i]]->stop() != Result::SUCCESS) {
             return ::testing::AssertionFailure();
         }
     }
     if (mFrontend->stopTune() != Result::SUCCESS) {
         return ::testing::AssertionFailure();
     }
+    mUsedFilterIds.clear();
+    mFilterCallbacks.clear();
+    mFilters.clear();
     return closeDemux();
 }
 
@@ -992,7 +1126,7 @@ TEST_F(TunerHidlTest, CloseDescrambler) {
 /*
  * DATA FLOW TESTS
  */
-TEST_F(TunerHidlTest, PlaybackDataFlowWithPesFilterTest) {
+TEST_F(TunerHidlTest, PlaybackDataFlowWithSectionFilterTest) {
     description("Feed ts data from playback and configure pes filter to get output");
 
     // todo modulize the filter conf parser
@@ -1000,32 +1134,39 @@ TEST_F(TunerHidlTest, PlaybackDataFlowWithPesFilterTest) {
     filterConf.resize(1);
 
     DemuxFilterSettings filterSetting;
-    DemuxFilterPesDataSettings pesFilterSetting{
+    DemuxTsFilterSettings tsFilterSetting{
             .tpid = 18,
     };
-    filterSetting.pesData(pesFilterSetting);
-    FilterConf pesFilterConf{
-            .type = DemuxFilterType::PES,
+    DemuxFilterSectionSettings sectionFilterSetting;
+    tsFilterSetting.filterSettings.section(sectionFilterSetting);
+    filterSetting.ts(tsFilterSetting);
+
+    DemuxFilterType type{
+            .mainType = DemuxFilterMainType::TS,
+    };
+    type.subType.tsFilterType(DemuxTsFilterType::SECTION);
+    FilterConf sectionFilterConf{
+            .type = type,
             .setting = filterSetting,
     };
-    filterConf[0] = pesFilterConf;
+    filterConf[0] = sectionFilterConf;
 
-    DemuxInputSettings inputSetting{
+    PlaybackSettings playbackSetting{
             .statusMask = 0xf,
             .lowThreshold = 0x1000,
             .highThreshold = 0x07fff,
-            .dataFormat = DemuxDataFormat::TS,
+            .dataFormat = DataFormat::TS,
             .packetSize = 188,
     };
 
-    InputConf inputConf{
+    PlaybackConf playbackConf{
             .inputDataFile = "/vendor/etc/test1.ts",
-            .setting = inputSetting,
+            .setting = playbackSetting,
     };
 
     vector<string> goldenOutputFiles;
 
-    ASSERT_TRUE(playbackDataFlowTest(filterConf, inputConf, goldenOutputFiles));
+    ASSERT_TRUE(playbackDataFlowTest(filterConf, playbackConf, goldenOutputFiles));
 }
 
 TEST_F(TunerHidlTest, BroadcastDataFlowWithPesFilterTest) {
@@ -1036,12 +1177,19 @@ TEST_F(TunerHidlTest, BroadcastDataFlowWithPesFilterTest) {
     filterConf.resize(1);
 
     DemuxFilterSettings filterSetting;
-    DemuxFilterPesDataSettings pesFilterSetting{
-            .tpid = 18,
+    DemuxTsFilterSettings tsFilterSetting{
+            .tpid = 119,
     };
-    filterSetting.pesData(pesFilterSetting);
+    DemuxFilterPesDataSettings pesFilterSetting;
+    tsFilterSetting.filterSettings.pesData(pesFilterSetting);
+    filterSetting.ts(tsFilterSetting);
+
+    DemuxFilterType type{
+            .mainType = DemuxFilterMainType::TS,
+    };
+    type.subType.tsFilterType(DemuxTsFilterType::PES);
     FilterConf pesFilterConf{
-            .type = DemuxFilterType::PES,
+            .type = type,
             .setting = filterSetting,
     };
     filterConf[0] = pesFilterConf;
