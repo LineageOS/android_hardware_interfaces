@@ -20,11 +20,13 @@
 
 #include <android/hardware/sensors/2.0/types.h>
 
+#include <android-base/file.h>
 #include "hardware_legacy/power.h"
 
 #include <dlfcn.h>
 
 #include <cinttypes>
+#include <cmath>
 #include <fstream>
 #include <functional>
 #include <thread>
@@ -52,6 +54,18 @@ typedef ISensorsSubHal*(SensorsHalGetSubHalFunc)(uint32_t*);
  */
 uint32_t setSubHalIndex(uint32_t sensorHandle, size_t subHalIndex) {
     return sensorHandle | (subHalIndex << 24);
+}
+
+/**
+ * Convert nanoseconds to milliseconds.
+ *
+ * @param nanos The nanoseconds input.
+ *
+ * @return The milliseconds count.
+ */
+int64_t msFromNs(int64_t nanos) {
+    constexpr int64_t nanosecondsInAMillsecond = 1000000;
+    return nanos / nanosecondsInAMillsecond;
 }
 
 HalProxy::HalProxy() {
@@ -229,8 +243,43 @@ Return<void> HalProxy::configDirectReport(int32_t sensorHandle, int32_t channelH
     return Return<void>();
 }
 
-Return<void> HalProxy::debug(const hidl_handle& /* fd */, const hidl_vec<hidl_string>& /* args */) {
-    // TODO: output debug information
+Return<void> HalProxy::debug(const hidl_handle& fd, const hidl_vec<hidl_string>& /*args*/) {
+    if (fd.getNativeHandle() == nullptr || fd->numFds < 1) {
+        ALOGE("%s: missing fd for writing", __FUNCTION__);
+        return Void();
+    }
+
+    android::base::borrowed_fd writeFd = dup(fd->data[0]);
+
+    std::ostringstream stream;
+    stream << "===HalProxy===" << std::endl;
+    stream << "Internal values:" << std::endl;
+    stream << "  Threads are running: " << (mThreadsRun.load() ? "true" : "false") << std::endl;
+    int64_t now = getTimeNow();
+    stream << "  Wakelock timeout start time: " << msFromNs(now - mWakelockTimeoutStartTime)
+           << " ms ago" << std::endl;
+    stream << "  Wakelock timeout reset time: " << msFromNs(now - mWakelockTimeoutResetTime)
+           << " ms ago" << std::endl;
+    // TODO(b/142969448): Add logging for history of wakelock acquisition per subhal.
+    stream << "  Wakelock ref count: " << mWakelockRefCount << std::endl;
+    stream << "  Size of pending write events queue: " << mPendingWriteEventsQueue.size()
+           << std::endl;
+    if (!mPendingWriteEventsQueue.empty()) {
+        stream << "  Size of events list on front of pending writes queue: "
+               << mPendingWriteEventsQueue.front().first.size() << std::endl;
+    }
+    stream << "  # of non-dynamic sensors across all subhals: " << mSensors.size() << std::endl;
+    stream << "  # of dynamic sensors across all subhals: " << mDynamicSensors.size() << std::endl;
+    stream << "SubHals (" << mSubHalList.size() << "):" << std::endl;
+    for (ISensorsSubHal* subHal : mSubHalList) {
+        stream << "  Name: " << subHal->getName() << std::endl;
+        stream << "  Debug dump: " << std::endl;
+        android::base::WriteStringToFd(stream.str(), writeFd);
+        subHal->debug(fd, {});
+        stream.str("");
+        stream << std::endl;
+    }
+    android::base::WriteStringToFd(stream.str(), writeFd);
     return Return<void>();
 }
 
