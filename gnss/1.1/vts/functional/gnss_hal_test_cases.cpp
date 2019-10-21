@@ -18,9 +18,8 @@
 
 #include <gnss_hal_test.h>
 
-#include <VtsHalHidlTargetTestBase.h>
-
 #include <android/hardware/gnss/1.1/IGnssConfiguration.h>
+#include <gtest/gtest.h>
 
 using android::hardware::hidl_vec;
 
@@ -39,13 +38,13 @@ using android::hardware::gnss::V1_1::IGnssMeasurement;
  *
  * Empty test fixture to verify basic Setup & Teardown
  */
-TEST_F(GnssHalTest, SetupTeardownCreateCleanup) {}
+TEST_P(GnssHalTest, SetupTeardownCreateCleanup) {}
 
 /*
  * TestGnssMeasurementCallback:
  * Gets the GnssMeasurementExtension and verify that it returns an actual extension.
  */
-TEST_F(GnssHalTest, TestGnssMeasurementCallback) {
+TEST_P(GnssHalTest, TestGnssMeasurementCallback) {
     auto gnssMeasurement_1_1 = gnss_hal_->getExtensionGnssMeasurement_1_1();
     ASSERT_TRUE(gnssMeasurement_1_1.isOk());
     auto gnssMeasurement_1_0 = gnss_hal_->getExtensionGnssMeasurement();
@@ -65,7 +64,7 @@ TEST_F(GnssHalTest, TestGnssMeasurementCallback) {
  * NO_LOCATION_PERIOD_SEC and verfiy that no location is received. Also perform validity checks on
  * each received location.
  */
-TEST_F(GnssHalTest, GetLocationLowPower) {
+TEST_P(GnssHalTest, GetLocationLowPower) {
     if (!IsGnssHalVersion_1_1()) {
         ALOGI("Test GetLocationLowPower skipped. GNSS HAL version is greater than 1.1.");
         return;
@@ -97,7 +96,6 @@ TEST_F(GnssHalTest, GetLocationLowPower) {
 
         gnss_cb_->location_cbq_.retrieve(gnss_cb_->last_location_, kNoLocationPeriodSec);
         const int location_called_count = gnss_cb_->location_cbq_.calledCount();
-
         // Tolerate (ignore) one extra location right after the first one
         // to handle startup edge case scheduling limitations in some implementations
         if ((i == 1) && (location_called_count == 2)) {
@@ -132,7 +130,8 @@ TEST_F(GnssHalTest, GetLocationLowPower) {
  */
 
 IGnssConfiguration::BlacklistedSource FindStrongFrequentNonGpsSource(
-    const list<IGnssCallback::GnssSvStatus> list_gnss_sv_status, const int min_observations) {
+        const std::list<IGnssCallback::GnssSvStatus> list_gnss_sv_status,
+        const int min_observations) {
     struct ComparableBlacklistedSource {
         IGnssConfiguration::BlacklistedSource id;
 
@@ -218,7 +217,7 @@ IGnssConfiguration::BlacklistedSource FindStrongFrequentNonGpsSource(
  * 5b) Retry a few times, in case GNSS search strategy takes a while to reacquire even the
  * formerly strongest satellite
  */
-TEST_F(GnssHalTest, BlacklistIndividualSatellites) {
+TEST_P(GnssHalTest, BlacklistIndividualSatellites) {
     if (!IsGnssHalVersion_1_1()) {
         ALOGI("Test BlacklistIndividualSatellites skipped. GNSS HAL version is greater than 1.1.");
         return;
@@ -244,7 +243,7 @@ TEST_F(GnssHalTest, BlacklistIndividualSatellites) {
      */
 
     const int kGnssSvStatusTimeout = 2;
-    list<IGnssCallback::GnssSvStatus> sv_status_list;
+    std::list<IGnssCallback::GnssSvStatus> sv_status_list;
     int count = gnss_cb_->sv_status_cbq_.retrieve(sv_status_list, sv_status_cbq_size,
                                                   kGnssSvStatusTimeout);
     ASSERT_EQ(count, sv_status_cbq_size);
@@ -362,7 +361,7 @@ TEST_F(GnssHalTest, BlacklistIndividualSatellites) {
  * GnssStatus does not use any constellation but GPS.
  * 4a & b) Clean up by turning off location, and send in empty blacklist.
  */
-TEST_F(GnssHalTest, BlacklistConstellation) {
+TEST_P(GnssHalTest, BlacklistConstellation) {
     if (!IsGnssHalVersion_1_1()) {
         ALOGI("Test BlacklistConstellation skipped. GNSS HAL version is greater than 1.1.");
         return;
@@ -457,7 +456,7 @@ TEST_F(GnssHalTest, BlacklistConstellation) {
  *
  * Ensure successfully injecting a location.
  */
-TEST_F(GnssHalTest, InjectBestLocation) {
+TEST_P(GnssHalTest, InjectBestLocation) {
     StartAndCheckLocations(1);
     GnssLocation gnssLocation = gnss_cb_->last_location_;
     CheckLocation(gnssLocation, true);
@@ -476,7 +475,7 @@ TEST_F(GnssHalTest, InjectBestLocation) {
  * GnssDebugValuesSanityTest:
  * Ensures that GnssDebug values make sense.
  */
-TEST_F(GnssHalTest, GnssDebugValuesSanityTest) {
+TEST_P(GnssHalTest, GnssDebugValuesSanityTest) {
     auto gnssDebug = gnss_hal_->getExtensionGnssDebug();
     ASSERT_TRUE(gnssDebug.isOk());
     if (gnss_cb_->info_cbq_.calledCount() > 0 && gnss_cb_->last_info_.yearOfHw >= 2017) {

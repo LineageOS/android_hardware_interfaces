@@ -20,12 +20,13 @@
 #include <chrono>
 #include "Utils.h"
 
+#include <gtest/gtest.h>
+
 using ::android::hardware::gnss::common::Utils;
 
 // Implementations for the main test class for GNSS HAL
 void GnssHalTest::SetUp() {
-    gnss_hal_ = ::testing::VtsHalHidlTargetTestBase::getService<IGnss>(
-        GnssHidlEnvironment::Instance()->getServiceName<IGnss>());
+    gnss_hal_ = IGnss::getService(GetParam());
     ASSERT_NE(gnss_hal_, nullptr);
 
     SetUpGnssCallback();

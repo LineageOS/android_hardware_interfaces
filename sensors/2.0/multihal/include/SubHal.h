@@ -130,11 +130,13 @@ class ISensorsSubHal : public ISensors {
     virtual const std::string getName() = 0;
 
     /**
-     * First method invoked on the sub-HAL after it's allocated through sensorsHalGetSubHal() by the
-     * HalProxy. Sub-HALs should use this to initialize any state and retain the callback given in
-     * order to communicate with the HalProxy. Method will be called anytime the sensors framework
-     * restarts. Therefore, this method will be responsible for reseting the state of the subhal and
-     * cleaning up and reallocating any previously allocated data.
+     * This is the first method invoked on the sub-HAL after it's allocated through
+     * sensorsHalGetSubHal() by the HalProxy. Sub-HALs should use this to initialize any state and
+     * retain the callback given in order to communicate with the HalProxy. Method will be called
+     * anytime the sensors framework restarts. Therefore, this method will be responsible for
+     * reseting the state of the subhal and cleaning up and reallocating any previously allocated
+     * data. Initialize should ensure that the subhal has reset its operation mode to NORMAL state
+     * as well.
      *
      * @param halProxyCallback callback used to inform the HalProxy when a dynamic sensor's state
      *     changes, new sensor events should be sent to the framework, and when a new ScopedWakelock

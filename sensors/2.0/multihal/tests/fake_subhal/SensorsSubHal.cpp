@@ -158,6 +158,7 @@ Return<void> SensorsSubHal::debug(const hidl_handle& fd, const hidl_vec<hidl_str
 
 Return<Result> SensorsSubHal::initialize(const sp<IHalProxyCallback>& halProxyCallback) {
     mCallback = halProxyCallback;
+    setOperationMode(OperationMode::NORMAL);
     return Result::OK;
 }
 

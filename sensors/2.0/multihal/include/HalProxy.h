@@ -149,9 +149,13 @@ class HalProxy : public ISensors, public IScopedWakelockRefCounter {
     std::unique_ptr<WakeLockMessageQueue> mWakeLockQueue;
 
     /**
-     * Event Flag to signal to the framework when sensor events are available to be read
+     * Event Flag to signal to the framework when sensor events are available to be read and to
+     * interrupt event queue blocking write.
      */
-    EventFlag* mEventQueueFlag;
+    EventFlag* mEventQueueFlag = nullptr;
+
+    //! Event Flag to signal internally that the wakelock queue should stop its blocking read.
+    EventFlag* mWakelockQueueFlag = nullptr;
 
     /**
      * Callback to the sensors framework to inform it that new sensors have been added or removed.
@@ -229,7 +233,7 @@ class HalProxy : public ISensors, public IScopedWakelockRefCounter {
 
     int64_t mWakelockTimeoutResetTime = getTimeNow();
 
-    const char* kWakelockName = "SensorsMultiHal";
+    const char* kWakelockName = "SensorsHAL_WAKEUP";
 
     /**
      * Initialize the list of SubHal objects in mSubHalList by reading from dynamic libraries
@@ -252,6 +256,16 @@ class HalProxy : public ISensors, public IScopedWakelockRefCounter {
      * Calls the helper methods that all ctors use.
      */
     void init();
+
+    /**
+     * Stops all threads by setting the threads running flag to false and joining to them.
+     */
+    void stopThreads();
+
+    /**
+     * Disable all the sensors observed by the HalProxy.
+     */
+    void disableAllSensors();
 
     /**
      * Starts the thread that handles pending writes to event fmq.

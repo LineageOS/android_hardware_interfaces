@@ -20,11 +20,13 @@
 
 #include <android/hardware/sensors/2.0/types.h>
 
+#include <android-base/file.h>
 #include "hardware_legacy/power.h"
 
 #include <dlfcn.h>
 
 #include <cinttypes>
+#include <cmath>
 #include <fstream>
 #include <functional>
 #include <thread>
@@ -54,6 +56,18 @@ uint32_t setSubHalIndex(uint32_t sensorHandle, size_t subHalIndex) {
     return sensorHandle | (subHalIndex << 24);
 }
 
+/**
+ * Convert nanoseconds to milliseconds.
+ *
+ * @param nanos The nanoseconds input.
+ *
+ * @return The milliseconds count.
+ */
+int64_t msFromNs(int64_t nanos) {
+    constexpr int64_t nanosecondsInAMillsecond = 1000000;
+    return nanos / nanosecondsInAMillsecond;
+}
+
 HalProxy::HalProxy() {
     const char* kMultiHalConfigFile = "/vendor/etc/sensors/hals.conf";
     initializeSubHalListFromConfigFile(kMultiHalConfigFile);
@@ -65,15 +79,7 @@ HalProxy::HalProxy(std::vector<ISensorsSubHal*>& subHalList) : mSubHalList(subHa
 }
 
 HalProxy::~HalProxy() {
-    mThreadsRun.store(false);
-    mWakelockCV.notify_one();
-    mEventQueueWriteCV.notify_one();
-    if (mPendingWritesThread.joinable()) {
-        mPendingWritesThread.join();
-    }
-    if (mWakelockThread.joinable()) {
-        mWakelockThread.join();
-    }
+    stopThreads();
 }
 
 Return<void> HalProxy::getSensorsList(getSensorsList_cb _hidl_cb) {
@@ -119,8 +125,18 @@ Return<Result> HalProxy::initialize(
         const sp<ISensorsCallback>& sensorsCallback) {
     Result result = Result::OK;
 
-    // TODO: clean up sensor requests, if not already done elsewhere through a death recipient, and
-    // clean up any other resources that exist (FMQs, flags, threads, etc.)
+    stopThreads();
+    resetSharedWakelock();
+
+    // So that the pending write events queue can be cleared safely and when we start threads
+    // again we do not get new events until after initialize resets the subhals.
+    disableAllSensors();
+
+    // Clears the queue if any events were pending write before.
+    mPendingWriteEventsQueue = std::queue<std::pair<std::vector<Event>, size_t>>();
+
+    // Clears previously connected dynamic sensors
+    mDynamicSensors.clear();
 
     mDynamicSensorsCallback = sensorsCallback;
 
@@ -128,20 +144,28 @@ Return<Result> HalProxy::initialize(
     mEventQueue =
             std::make_unique<EventMessageQueue>(eventQueueDescriptor, true /* resetPointers */);
 
-    // Create the EventFlag that is used to signal to the framework that sensor events have been
-    // written to the Event FMQ
-    if (EventFlag::createEventFlag(mEventQueue->getEventFlagWord(), &mEventQueueFlag) != OK) {
-        result = Result::BAD_VALUE;
-    }
-
     // Create the Wake Lock FMQ that is used by the framework to communicate whenever WAKE_UP
     // events have been successfully read and handled by the framework.
     mWakeLockQueue =
             std::make_unique<WakeLockMessageQueue>(wakeLockDescriptor, true /* resetPointers */);
 
+    if (mEventQueueFlag != nullptr) {
+        EventFlag::deleteEventFlag(&mEventQueueFlag);
+    }
+    if (mWakelockQueueFlag != nullptr) {
+        EventFlag::deleteEventFlag(&mWakelockQueueFlag);
+    }
+    if (EventFlag::createEventFlag(mEventQueue->getEventFlagWord(), &mEventQueueFlag) != OK) {
+        result = Result::BAD_VALUE;
+    }
+    if (EventFlag::createEventFlag(mWakeLockQueue->getEventFlagWord(), &mWakelockQueueFlag) != OK) {
+        result = Result::BAD_VALUE;
+    }
     if (!mDynamicSensorsCallback || !mEventQueue || !mWakeLockQueue || mEventQueueFlag == nullptr) {
         result = Result::BAD_VALUE;
     }
+
+    mThreadsRun.store(true);
 
     mPendingWritesThread = std::thread(startPendingWritesThread, this);
     mWakelockThread = std::thread(startWakelockThread, this);
@@ -156,6 +180,8 @@ Return<Result> HalProxy::initialize(
             break;
         }
     }
+
+    mCurrentOperationMode = OperationMode::NORMAL;
 
     return result;
 }
@@ -217,8 +243,43 @@ Return<void> HalProxy::configDirectReport(int32_t sensorHandle, int32_t channelH
     return Return<void>();
 }
 
-Return<void> HalProxy::debug(const hidl_handle& /* fd */, const hidl_vec<hidl_string>& /* args */) {
-    // TODO: output debug information
+Return<void> HalProxy::debug(const hidl_handle& fd, const hidl_vec<hidl_string>& /*args*/) {
+    if (fd.getNativeHandle() == nullptr || fd->numFds < 1) {
+        ALOGE("%s: missing fd for writing", __FUNCTION__);
+        return Void();
+    }
+
+    android::base::borrowed_fd writeFd = dup(fd->data[0]);
+
+    std::ostringstream stream;
+    stream << "===HalProxy===" << std::endl;
+    stream << "Internal values:" << std::endl;
+    stream << "  Threads are running: " << (mThreadsRun.load() ? "true" : "false") << std::endl;
+    int64_t now = getTimeNow();
+    stream << "  Wakelock timeout start time: " << msFromNs(now - mWakelockTimeoutStartTime)
+           << " ms ago" << std::endl;
+    stream << "  Wakelock timeout reset time: " << msFromNs(now - mWakelockTimeoutResetTime)
+           << " ms ago" << std::endl;
+    // TODO(b/142969448): Add logging for history of wakelock acquisition per subhal.
+    stream << "  Wakelock ref count: " << mWakelockRefCount << std::endl;
+    stream << "  Size of pending write events queue: " << mPendingWriteEventsQueue.size()
+           << std::endl;
+    if (!mPendingWriteEventsQueue.empty()) {
+        stream << "  Size of events list on front of pending writes queue: "
+               << mPendingWriteEventsQueue.front().first.size() << std::endl;
+    }
+    stream << "  # of non-dynamic sensors across all subhals: " << mSensors.size() << std::endl;
+    stream << "  # of dynamic sensors across all subhals: " << mDynamicSensors.size() << std::endl;
+    stream << "SubHals (" << mSubHalList.size() << "):" << std::endl;
+    for (ISensorsSubHal* subHal : mSubHalList) {
+        stream << "  Name: " << subHal->getName() << std::endl;
+        stream << "  Debug dump: " << std::endl;
+        android::base::WriteStringToFd(stream.str(), writeFd);
+        subHal->debug(fd, {});
+        stream.str("");
+        stream << std::endl;
+    }
+    android::base::WriteStringToFd(stream.str(), writeFd);
     return Return<void>();
 }
 
@@ -331,6 +392,41 @@ void HalProxy::init() {
     initializeSensorList();
 }
 
+void HalProxy::stopThreads() {
+    mThreadsRun.store(false);
+    if (mEventQueueFlag != nullptr && mEventQueue != nullptr) {
+        size_t numToRead = mEventQueue->availableToRead();
+        std::vector<Event> events(numToRead);
+        mEventQueue->read(events.data(), numToRead);
+        mEventQueueFlag->wake(static_cast<uint32_t>(EventQueueFlagBits::EVENTS_READ));
+    }
+    if (mWakelockQueueFlag != nullptr && mWakeLockQueue != nullptr) {
+        uint32_t kZero = 0;
+        mWakeLockQueue->write(&kZero);
+        mWakelockQueueFlag->wake(static_cast<uint32_t>(WakeLockQueueFlagBits::DATA_WRITTEN));
+    }
+    mWakelockCV.notify_one();
+    mEventQueueWriteCV.notify_one();
+    if (mPendingWritesThread.joinable()) {
+        mPendingWritesThread.join();
+    }
+    if (mWakelockThread.joinable()) {
+        mWakelockThread.join();
+    }
+}
+
+void HalProxy::disableAllSensors() {
+    for (const auto& sensorEntry : mSensors) {
+        int32_t sensorHandle = sensorEntry.first;
+        activate(sensorHandle, false /* enabled */);
+    }
+    std::lock_guard<std::mutex> dynamicSensorsLock(mDynamicSensorsMutex);
+    for (const auto& sensorEntry : mDynamicSensors) {
+        int32_t sensorHandle = sensorEntry.first;
+        activate(sensorHandle, false /* enabled */);
+    }
+}
+
 void HalProxy::startPendingWritesThread(HalProxy* halProxy) {
     halProxy->handlePendingWrites();
 }
@@ -347,8 +443,6 @@ void HalProxy::handlePendingWrites() {
             size_t eventQueueSize = mEventQueue->getQuantumCount();
             size_t numToWrite = std::min(pendingWriteEvents.size(), eventQueueSize);
             lock.unlock();
-            // TODO: Find a way to interrup writeBlocking if the thread should exit
-            // so we don't have to wait for timeout on framework restarts.
             if (!mEventQueue->writeBlocking(
                         pendingWriteEvents.data(), numToWrite,
                         static_cast<uint32_t>(EventQueueFlagBits::EVENTS_READ),

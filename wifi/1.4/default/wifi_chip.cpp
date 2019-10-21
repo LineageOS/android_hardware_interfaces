@@ -321,7 +321,6 @@ WifiChip::WifiChip(
       legacy_hal_(legacy_hal),
       mode_controller_(mode_controller),
       iface_util_(iface_util),
-      feature_flags_(feature_flags),
       is_valid_(true),
       current_mode_id_(feature_flags::chip_mode_ids::kInvalid),
       modes_(feature_flags.lock()->getChipModes()),
@@ -806,8 +805,7 @@ std::pair<WifiStatus, sp<IWifiApIface>> WifiChip::createApIfaceInternal() {
         return {createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE), {}};
     }
     std::string ifname = allocateApIfaceName();
-    sp<WifiApIface> iface =
-        new WifiApIface(ifname, legacy_hal_, iface_util_, feature_flags_);
+    sp<WifiApIface> iface = new WifiApIface(ifname, legacy_hal_, iface_util_);
     ap_ifaces_.push_back(iface);
     for (const auto& callback : event_cb_handler_.getCallbacks()) {
         if (!callback->onIfaceAdded(IfaceType::AP, ifname).isOk()) {
