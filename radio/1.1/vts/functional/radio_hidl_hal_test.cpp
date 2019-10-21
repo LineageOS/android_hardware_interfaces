@@ -17,18 +17,10 @@
 #include <radio_hidl_hal_utils_v1_1.h>
 
 void RadioHidlTest_v1_1::SetUp() {
-    radio_v1_1 =
-        ::testing::VtsHalHidlTargetTestBase::getService<::android::hardware::radio::V1_1::IRadio>(
-            RadioHidlEnvironment::Instance()
-                ->getServiceName<::android::hardware::radio::V1_1::IRadio>(
-                    hidl_string(RADIO_SERVICE_NAME)));
+    radio_v1_1 = ::android::hardware::radio::V1_1::IRadio::getService(GetParam());
     if (radio_v1_1 == NULL) {
         sleep(60);
-        radio_v1_1 = ::testing::VtsHalHidlTargetTestBase::getService<
-            ::android::hardware::radio::V1_1::IRadio>(
-            RadioHidlEnvironment::Instance()
-                ->getServiceName<::android::hardware::radio::V1_1::IRadio>(
-                    hidl_string(RADIO_SERVICE_NAME)));
+        radio_v1_1 = ::android::hardware::radio::V1_1::IRadio::getService(GetParam());
     }
     ASSERT_NE(nullptr, radio_v1_1.get());
 

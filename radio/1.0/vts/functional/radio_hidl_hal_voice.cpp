@@ -19,7 +19,7 @@
 /*
  * Test IRadio.getCurrentCalls() for the response returned.
  */
-TEST_F(RadioHidlTest, getCurrentCalls) {
+TEST_P(RadioHidlTest, getCurrentCalls) {
     serial = GetRandomSerialNumber();
 
     radio->getCurrentCalls(serial);
@@ -35,7 +35,7 @@ TEST_F(RadioHidlTest, getCurrentCalls) {
 /*
  * Test IRadio.dial() for the response returned.
  */
-TEST_F(RadioHidlTest, dial) {
+TEST_P(RadioHidlTest, dial) {
     serial = GetRandomSerialNumber();
 
     Dial dialInfo;
@@ -62,7 +62,7 @@ TEST_F(RadioHidlTest, dial) {
 /*
  * Test IRadio.hangup() for the response returned.
  */
-TEST_F(RadioHidlTest, hangup) {
+TEST_P(RadioHidlTest, hangup) {
     serial = GetRandomSerialNumber();
 
     radio->hangup(serial, 1);
@@ -81,7 +81,7 @@ TEST_F(RadioHidlTest, hangup) {
 /*
  * Test IRadio.hangupWaitingOrBackground() for the response returned.
  */
-TEST_F(RadioHidlTest, hangupWaitingOrBackground) {
+TEST_P(RadioHidlTest, hangupWaitingOrBackground) {
     serial = GetRandomSerialNumber();
 
     radio->hangupWaitingOrBackground(serial);
@@ -99,7 +99,7 @@ TEST_F(RadioHidlTest, hangupWaitingOrBackground) {
 /*
  * Test IRadio.hangupForegroundResumeBackground() for the response returned.
  */
-TEST_F(RadioHidlTest, hangupForegroundResumeBackground) {
+TEST_P(RadioHidlTest, hangupForegroundResumeBackground) {
     serial = GetRandomSerialNumber();
 
     radio->hangupForegroundResumeBackground(serial);
@@ -117,7 +117,7 @@ TEST_F(RadioHidlTest, hangupForegroundResumeBackground) {
 /*
  * Test IRadio.switchWaitingOrHoldingAndActive() for the response returned.
  */
-TEST_F(RadioHidlTest, switchWaitingOrHoldingAndActive) {
+TEST_P(RadioHidlTest, switchWaitingOrHoldingAndActive) {
     serial = GetRandomSerialNumber();
 
     radio->switchWaitingOrHoldingAndActive(serial);
@@ -135,7 +135,7 @@ TEST_F(RadioHidlTest, switchWaitingOrHoldingAndActive) {
 /*
  * Test IRadio.conference() for the response returned.
  */
-TEST_F(RadioHidlTest, conference) {
+TEST_P(RadioHidlTest, conference) {
     serial = GetRandomSerialNumber();
 
     radio->conference(serial);
@@ -153,7 +153,7 @@ TEST_F(RadioHidlTest, conference) {
 /*
  * Test IRadio.rejectCall() for the response returned.
  */
-TEST_F(RadioHidlTest, rejectCall) {
+TEST_P(RadioHidlTest, rejectCall) {
     serial = GetRandomSerialNumber();
 
     radio->rejectCall(serial);
@@ -171,7 +171,7 @@ TEST_F(RadioHidlTest, rejectCall) {
 /*
  * Test IRadio.getLastCallFailCause() for the response returned.
  */
-TEST_F(RadioHidlTest, getLastCallFailCause) {
+TEST_P(RadioHidlTest, getLastCallFailCause) {
     serial = GetRandomSerialNumber();
 
     radio->getLastCallFailCause(serial);
@@ -188,7 +188,7 @@ TEST_F(RadioHidlTest, getLastCallFailCause) {
 /*
  * Test IRadio.sendUssd() for the response returned.
  */
-TEST_F(RadioHidlTest, sendUssd) {
+TEST_P(RadioHidlTest, sendUssd) {
     serial = GetRandomSerialNumber();
     radio->sendUssd(serial, hidl_string("test"));
     EXPECT_EQ(std::cv_status::no_timeout, wait());
@@ -206,7 +206,7 @@ TEST_F(RadioHidlTest, sendUssd) {
 /*
  * Test IRadio.cancelPendingUssd() for the response returned.
  */
-TEST_F(RadioHidlTest, cancelPendingUssd) {
+TEST_P(RadioHidlTest, cancelPendingUssd) {
     serial = GetRandomSerialNumber();
 
     radio->cancelPendingUssd(serial);
@@ -225,7 +225,7 @@ TEST_F(RadioHidlTest, cancelPendingUssd) {
 /*
  * Test IRadio.getCallForwardStatus() for the response returned.
  */
-TEST_F(RadioHidlTest, getCallForwardStatus) {
+TEST_P(RadioHidlTest, getCallForwardStatus) {
     serial = GetRandomSerialNumber();
     CallForwardInfo callInfo;
     memset(&callInfo, 0, sizeof(callInfo));
@@ -247,7 +247,7 @@ TEST_F(RadioHidlTest, getCallForwardStatus) {
 /*
  * Test IRadio.setCallForward() for the response returned.
  */
-TEST_F(RadioHidlTest, setCallForward) {
+TEST_P(RadioHidlTest, setCallForward) {
     serial = GetRandomSerialNumber();
     CallForwardInfo callInfo;
     memset(&callInfo, 0, sizeof(callInfo));
@@ -269,7 +269,7 @@ TEST_F(RadioHidlTest, setCallForward) {
 /*
  * Test IRadio.getCallWaiting() for the response returned.
  */
-TEST_F(RadioHidlTest, getCallWaiting) {
+TEST_P(RadioHidlTest, getCallWaiting) {
     serial = GetRandomSerialNumber();
 
     radio->getCallWaiting(serial, 1);
@@ -288,7 +288,7 @@ TEST_F(RadioHidlTest, getCallWaiting) {
 /*
  * Test IRadio.setCallWaiting() for the response returned.
  */
-TEST_F(RadioHidlTest, setCallWaiting) {
+TEST_P(RadioHidlTest, setCallWaiting) {
     serial = GetRandomSerialNumber();
 
     radio->setCallWaiting(serial, true, 1);
@@ -307,7 +307,7 @@ TEST_F(RadioHidlTest, setCallWaiting) {
 /*
  * Test IRadio.acceptCall() for the response returned.
  */
-TEST_F(RadioHidlTest, acceptCall) {
+TEST_P(RadioHidlTest, acceptCall) {
     serial = GetRandomSerialNumber();
 
     radio->acceptCall(serial);
@@ -325,7 +325,7 @@ TEST_F(RadioHidlTest, acceptCall) {
 /*
  * Test IRadio.separateConnection() for the response returned.
  */
-TEST_F(RadioHidlTest, separateConnection) {
+TEST_P(RadioHidlTest, separateConnection) {
     serial = GetRandomSerialNumber();
 
     radio->separateConnection(serial, 1);
@@ -344,7 +344,7 @@ TEST_F(RadioHidlTest, separateConnection) {
 /*
  * Test IRadio.explicitCallTransfer() for the response returned.
  */
-TEST_F(RadioHidlTest, explicitCallTransfer) {
+TEST_P(RadioHidlTest, explicitCallTransfer) {
     serial = GetRandomSerialNumber();
 
     radio->explicitCallTransfer(serial);
@@ -362,7 +362,7 @@ TEST_F(RadioHidlTest, explicitCallTransfer) {
 /*
  * Test IRadio.sendCDMAFeatureCode() for the response returned.
  */
-TEST_F(RadioHidlTest, sendCDMAFeatureCode) {
+TEST_P(RadioHidlTest, sendCDMAFeatureCode) {
     serial = GetRandomSerialNumber();
 
     radio->sendCDMAFeatureCode(serial, hidl_string());
@@ -382,7 +382,7 @@ TEST_F(RadioHidlTest, sendCDMAFeatureCode) {
 /*
  * Test IRadio.sendDtmf() for the response returned.
  */
-TEST_F(RadioHidlTest, sendDtmf) {
+TEST_P(RadioHidlTest, sendDtmf) {
     serial = GetRandomSerialNumber();
 
     radio->sendDtmf(serial, "1");
@@ -402,7 +402,7 @@ TEST_F(RadioHidlTest, sendDtmf) {
 /*
  * Test IRadio.startDtmf() for the response returned.
  */
-TEST_F(RadioHidlTest, startDtmf) {
+TEST_P(RadioHidlTest, startDtmf) {
     serial = GetRandomSerialNumber();
 
     radio->startDtmf(serial, "1");
@@ -422,7 +422,7 @@ TEST_F(RadioHidlTest, startDtmf) {
 /*
  * Test IRadio.stopDtmf() for the response returned.
  */
-TEST_F(RadioHidlTest, stopDtmf) {
+TEST_P(RadioHidlTest, stopDtmf) {
     serial = GetRandomSerialNumber();
 
     radio->stopDtmf(serial);
@@ -441,7 +441,7 @@ TEST_F(RadioHidlTest, stopDtmf) {
 /*
  * Test IRadio.setMute() for the response returned.
  */
-TEST_F(RadioHidlTest, setMute) {
+TEST_P(RadioHidlTest, setMute) {
     serial = GetRandomSerialNumber();
 
     radio->setMute(serial, true);
@@ -459,7 +459,7 @@ TEST_F(RadioHidlTest, setMute) {
 /*
  * Test IRadio.getMute() for the response returned.
  */
-TEST_F(RadioHidlTest, getMute) {
+TEST_P(RadioHidlTest, getMute) {
     serial = GetRandomSerialNumber();
 
     radio->getMute(serial);
@@ -475,7 +475,7 @@ TEST_F(RadioHidlTest, getMute) {
 /*
  * Test IRadio.sendBurstDtmf() for the response returned.
  */
-TEST_F(RadioHidlTest, sendBurstDtmf) {
+TEST_P(RadioHidlTest, sendBurstDtmf) {
     serial = GetRandomSerialNumber();
 
     radio->sendBurstDtmf(serial, "1", 0, 0);

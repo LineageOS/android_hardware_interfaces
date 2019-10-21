@@ -21,7 +21,7 @@ using namespace ::android::hardware::radio::V1_0;
 /*
  * Test IRadio.getDataRegistrationState() for the response returned.
  */
-TEST_F(RadioHidlTest, getDataRegistrationState) {
+TEST_P(RadioHidlTest, getDataRegistrationState) {
     serial = GetRandomSerialNumber();
 
     radio->getDataRegistrationState(serial);
@@ -99,7 +99,7 @@ TEST_F(RadioHidlTest, getDataRegistrationState) {
 /*
  * Test IRadio.setupDataCall() for the response returned.
  */
-TEST_F(RadioHidlTest, setupDataCall) {
+TEST_P(RadioHidlTest, setupDataCall) {
     serial = GetRandomSerialNumber();
 
     RadioTechnology radioTechnology = RadioTechnology::LTE;
@@ -147,7 +147,7 @@ TEST_F(RadioHidlTest, setupDataCall) {
 /*
  * Test IRadio.deactivateDataCall() for the response returned.
  */
-TEST_F(RadioHidlTest, deactivateDataCall) {
+TEST_P(RadioHidlTest, deactivateDataCall) {
     serial = GetRandomSerialNumber();
     int cid = 1;
     bool reasonRadioShutDown = false;
@@ -169,7 +169,7 @@ TEST_F(RadioHidlTest, deactivateDataCall) {
 /*
  * Test IRadio.getDataCallList() for the response returned.
  */
-TEST_F(RadioHidlTest, getDataCallList) {
+TEST_P(RadioHidlTest, getDataCallList) {
     serial = GetRandomSerialNumber();
 
     radio->getDataCallList(serial);
@@ -188,7 +188,7 @@ TEST_F(RadioHidlTest, getDataCallList) {
 /*
  * Test IRadio.setInitialAttachApn() for the response returned.
  */
-TEST_F(RadioHidlTest, setInitialAttachApn) {
+TEST_P(RadioHidlTest, setInitialAttachApn) {
     serial = GetRandomSerialNumber();
 
     DataProfileInfo dataProfileInfo;
@@ -231,7 +231,7 @@ TEST_F(RadioHidlTest, setInitialAttachApn) {
 /*
  * Test IRadio.setDataAllowed() for the response returned.
  */
-TEST_F(RadioHidlTest, setDataAllowed) {
+TEST_P(RadioHidlTest, setDataAllowed) {
     serial = GetRandomSerialNumber();
     bool allow = true;
 
@@ -249,7 +249,7 @@ TEST_F(RadioHidlTest, setDataAllowed) {
 /*
  * Test IRadio.setDataProfile() for the response returned.
  */
-TEST_F(RadioHidlTest, setDataProfile) {
+TEST_P(RadioHidlTest, setDataProfile) {
     serial = GetRandomSerialNumber();
 
     // Create a dataProfileInfo

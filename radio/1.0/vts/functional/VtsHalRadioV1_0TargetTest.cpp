@@ -14,12 +14,18 @@
  * limitations under the License.
  */
 
+#include <gtest/gtest.h>
+#include <hidl/GtestPrinter.h>
+#include <hidl/ServiceManagement.h>
 #include <radio_hidl_hal_utils_v1_0.h>
 
+INSTANTIATE_TEST_SUITE_P(PerInstance, RadioHidlTest,
+                         testing::ValuesIn(android::hardware::getAllHalInstanceNames(
+                                 ::android::hardware::radio::V1_0::IRadio::descriptor)),
+                         android::hardware::PrintInstanceNameToString);
+
 int main(int argc, char** argv) {
-    ::testing::AddGlobalTestEnvironment(RadioHidlEnvironment::Instance());
     ::testing::InitGoogleTest(&argc, argv);
-    RadioHidlEnvironment::Instance()->init(&argc, argv);
 
     // setup seed for rand function
     int seedSrand = time(NULL);

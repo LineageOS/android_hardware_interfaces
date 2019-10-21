@@ -16,8 +16,6 @@
 
 #include <android-base/logging.h>
 
-#include <VtsHalHidlTargetTestBase.h>
-#include <VtsHalHidlTargetTestEnvBase.h>
 #include <chrono>
 #include <condition_variable>
 #include <mutex>
@@ -26,6 +24,7 @@
 #include <android/hardware/radio/1.0/IRadioIndication.h>
 #include <android/hardware/radio/1.0/IRadioResponse.h>
 #include <android/hardware/radio/1.0/types.h>
+#include <gtest/gtest.h>
 
 #include "vts_test_util.h"
 
@@ -515,23 +514,9 @@ class RadioIndication : public IRadioIndication {
                             const ::android::hardware::hidl_string& reason);
 };
 
-// Test environment for Radio HIDL HAL.
-class RadioHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
-   public:
-    // get the test environment singleton
-    static RadioHidlEnvironment* Instance() {
-        static RadioHidlEnvironment* instance = new RadioHidlEnvironment;
-        return instance;
-    }
-    virtual void registerTestServices() override { registerTestService<IRadio>(); }
-
-   private:
-    RadioHidlEnvironment() {}
-};
-
 // The main test class for Radio HIDL.
-class RadioHidlTest : public ::testing::VtsHalHidlTargetTestBase {
-   protected:
+class RadioHidlTest : public ::testing::TestWithParam<std::string> {
+  protected:
     std::mutex mtx;
     std::condition_variable cv;
     int count;
