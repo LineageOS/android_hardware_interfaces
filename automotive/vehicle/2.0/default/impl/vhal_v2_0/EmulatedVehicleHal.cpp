@@ -249,8 +249,8 @@ void EmulatedVehicleHal::onCreate() {
 
             // Create a separate instance for each individual zone
             VehiclePropValue prop = {
-                .prop = cfg.prop,
-                .areaId = curArea,
+                    .areaId = curArea,
+                    .prop = cfg.prop,
             };
 
             if (it.initialAreaValues.size() > 0) {
