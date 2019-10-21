@@ -164,6 +164,14 @@ class ComposerClientImpl : public V2_3::hal::detail::ComposerClientImpl<Interfac
         return mHal->setContentType(display, contentType);
     }
 
+    Return<void> getLayerGenericMetadataKeys(
+            IComposerClient::getLayerGenericMetadataKeys_cb hidl_cb) override {
+        std::vector<IComposerClient::LayerGenericMetadataKey> keys;
+        Error error = mHal->getLayerGenericMetadataKeys(&keys);
+        hidl_cb(error, keys);
+        return Void();
+    }
+
     static std::unique_ptr<ComposerClientImpl> create(Hal* hal) {
         auto client = std::make_unique<ComposerClientImpl>(hal);
         return client->init() ? std::move(client) : nullptr;
