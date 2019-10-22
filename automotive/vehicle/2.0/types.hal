@@ -2569,6 +2569,11 @@ enum VehicleApPowerStateShutdownParam : int32_t {
 
     /** AP can only shutdown with postponing allowed. */
     SHUTDOWN_ONLY = 3,
+
+    /**
+     * AP may enter deep sleep, but must either sleep or shut down immediately.
+     * Postponing is not allowed. */
+    SLEEP_IMMEDIATELY = 4,
 };
 
 enum VehicleApPowerStateReport : int32_t {
@@ -3581,4 +3586,3 @@ enum VmsAvailabilityStateIntegerValuesIndex : VmsBaseMessageIntegerValuesIndex {
 enum VmsPublisherInformationIntegerValuesIndex : VmsBaseMessageIntegerValuesIndex {
     PUBLISHER_ID = 1,
 };
-

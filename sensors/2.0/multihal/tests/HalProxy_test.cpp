@@ -663,6 +663,35 @@ TEST(HalProxyTest, DynamicSensorsDisconnectedTest) {
     }
 }
 
+TEST(HalProxyTest, InvalidSensorHandleSubHalIndexProxyCalls) {
+    constexpr size_t kNumSubHals = 3;
+    constexpr size_t kQueueSize = 5;
+    int32_t kNumSubHalsInt32 = static_cast<int32_t>(kNumSubHals);
+    std::vector<AllSensorsSubHal> subHalObjs(kNumSubHals);
+    std::vector<ISensorsSubHal*> subHals;
+    for (const auto& subHal : subHalObjs) {
+        subHals.push_back((ISensorsSubHal*)(&subHal));
+    }
+
+    std::unique_ptr<EventMessageQueue> eventQueue = makeEventFMQ(kQueueSize);
+    std::unique_ptr<WakeupMessageQueue> wakeLockQueue = makeWakelockFMQ(kQueueSize);
+    ::android::sp<ISensorsCallback> callback = new SensorsCallback();
+    HalProxy proxy(subHals);
+    // Initialize for the injectSensorData call so callback postEvents is valid
+    proxy.initialize(*eventQueue->getDesc(), *wakeLockQueue->getDesc(), callback);
+
+    // For testing proxy.injectSensorData properly
+    proxy.setOperationMode(OperationMode::DATA_INJECTION);
+
+    // kNumSubHalsInt32 index is one off the end of mSubHalList in proxy object
+    EXPECT_EQ(proxy.activate(0x00000001 | (kNumSubHalsInt32 << 24), true), Result::BAD_VALUE);
+    EXPECT_EQ(proxy.batch(0x00000001 | (kNumSubHalsInt32 << 24), 0, 0), Result::BAD_VALUE);
+    EXPECT_EQ(proxy.flush(0x00000001 | (kNumSubHalsInt32 << 24)), Result::BAD_VALUE);
+    Event event;
+    event.sensorHandle = 0x00000001 | (kNumSubHalsInt32 << 24);
+    EXPECT_EQ(proxy.injectSensorData(event), Result::BAD_VALUE);
+}
+
 // Helper implementations follow
 void testSensorsListFromProxyAndSubHal(const std::vector<SensorInfo>& proxySensorsList,
                                        const std::vector<SensorInfo>& subHalSensorsList) {
