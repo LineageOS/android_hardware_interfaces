@@ -15,11 +15,11 @@
  */
 
 #include <android/hardware/weaver/1.0/IWeaver.h>
+#include <gtest/gtest.h>
+#include <hidl/GtestPrinter.h>
+#include <hidl/ServiceManagement.h>
 
 #include <limits>
-
-#include <VtsHalHidlTargetTestBase.h>
-#include <VtsHalHidlTargetTestEnvBase.h>
 
 using ::android::hardware::weaver::V1_0::IWeaver;
 using ::android::hardware::weaver::V1_0::WeaverConfig;
@@ -34,22 +34,9 @@ const std::vector<uint8_t> WRONG_KEY{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 const std::vector<uint8_t> VALUE{16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1};
 const std::vector<uint8_t> OTHER_VALUE{0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 255, 255};
 
-// Test environment for Weaver HIDL HAL.
-class WeaverHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
-   public:
-    // get the test environment singleton
-    static WeaverHidlEnvironment* Instance() {
-        static WeaverHidlEnvironment* instance = new WeaverHidlEnvironment;
-        return instance;
-    }
-
-    virtual void registerTestServices() override { registerTestService<IWeaver>(); }
-};
-
-struct WeaverHidlTest : public ::testing::VtsHalHidlTargetTestBase {
+struct WeaverHidlTest : public ::testing::TestWithParam<std::string> {
     virtual void SetUp() override {
-        weaver = ::testing::VtsHalHidlTargetTestBase::getService<IWeaver>(
-            WeaverHidlEnvironment::Instance()->getServiceName<IWeaver>());
+        weaver = IWeaver::getService(GetParam());
         ASSERT_NE(weaver, nullptr);
     }
 
@@ -61,7 +48,7 @@ struct WeaverHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 /*
  * Checks config values are suitably large
  */
-TEST_F(WeaverHidlTest, GetConfig) {
+TEST_P(WeaverHidlTest, GetConfig) {
     WeaverStatus status;
     WeaverConfig config;
 
@@ -83,7 +70,7 @@ TEST_F(WeaverHidlTest, GetConfig) {
 /*
  * Gets the config twice and checks they are the same
  */
-TEST_F(WeaverHidlTest, GettingConfigMultipleTimesGivesSameResult) {
+TEST_P(WeaverHidlTest, GettingConfigMultipleTimesGivesSameResult) {
     WeaverConfig config1;
     WeaverConfig config2;
 
@@ -114,7 +101,7 @@ TEST_F(WeaverHidlTest, GettingConfigMultipleTimesGivesSameResult) {
 /*
  * Gets the number of slots from the config and writes a key and value to the last one
  */
-TEST_F(WeaverHidlTest, WriteToLastSlot) {
+TEST_P(WeaverHidlTest, WriteToLastSlot) {
     WeaverStatus status;
     WeaverConfig config;
     const auto configRet = weaver->getConfig([&](WeaverStatus s, WeaverConfig c) {
@@ -134,7 +121,7 @@ TEST_F(WeaverHidlTest, WriteToLastSlot) {
  * Writes a key and value to a slot
  * Reads the slot with the same key and receives the value that was previously written
  */
-TEST_F(WeaverHidlTest, WriteFollowedByReadGivesTheSameValue) {
+TEST_P(WeaverHidlTest, WriteFollowedByReadGivesTheSameValue) {
     constexpr uint32_t slotId = 0;
     const auto ret = weaver->write(slotId, KEY, VALUE);
     ASSERT_TRUE(ret.isOk());
@@ -162,7 +149,7 @@ TEST_F(WeaverHidlTest, WriteFollowedByReadGivesTheSameValue) {
  * Overwrites the slot with a new key and value
  * Reads the slot with the new key and receives the new value
  */
-TEST_F(WeaverHidlTest, OverwritingSlotUpdatesTheValue) {
+TEST_P(WeaverHidlTest, OverwritingSlotUpdatesTheValue) {
     constexpr uint32_t slotId = 0;
     const auto initialWriteRet = weaver->write(slotId, WRONG_KEY, VALUE);
     ASSERT_TRUE(initialWriteRet.isOk());
@@ -193,7 +180,7 @@ TEST_F(WeaverHidlTest, OverwritingSlotUpdatesTheValue) {
  * Writes a key and value to a slot
  * Reads the slot with a different key so does not receive the value
  */
-TEST_F(WeaverHidlTest, WriteFollowedByReadWithWrongKeyDoesNotGiveTheValue) {
+TEST_P(WeaverHidlTest, WriteFollowedByReadWithWrongKeyDoesNotGiveTheValue) {
     constexpr uint32_t slotId = 0;
     const auto ret = weaver->write(slotId, KEY, VALUE);
     ASSERT_TRUE(ret.isOk());
@@ -217,7 +204,7 @@ TEST_F(WeaverHidlTest, WriteFollowedByReadWithWrongKeyDoesNotGiveTheValue) {
 /*
  * Writing to an invalid slot fails
  */
-TEST_F(WeaverHidlTest, WritingToInvalidSlotFails) {
+TEST_P(WeaverHidlTest, WritingToInvalidSlotFails) {
     WeaverStatus status;
     WeaverConfig config;
     const auto configRet = weaver->getConfig([&](WeaverStatus s, WeaverConfig c) {
@@ -240,7 +227,7 @@ TEST_F(WeaverHidlTest, WritingToInvalidSlotFails) {
 /*
  * Reading from an invalid slot fails rather than incorrect key
  */
-TEST_F(WeaverHidlTest, ReadingFromInvalidSlotFails) {
+TEST_P(WeaverHidlTest, ReadingFromInvalidSlotFails) {
     WeaverStatus status;
     WeaverConfig config;
     const auto configRet = weaver->getConfig([&](WeaverStatus s, WeaverConfig c) {
@@ -276,7 +263,7 @@ TEST_F(WeaverHidlTest, ReadingFromInvalidSlotFails) {
 /*
  * Writing a key that is too large fails
  */
-TEST_F(WeaverHidlTest, WriteWithTooLargeKeyFails) {
+TEST_P(WeaverHidlTest, WriteWithTooLargeKeyFails) {
     WeaverStatus status;
     WeaverConfig config;
     const auto configRet = weaver->getConfig([&](WeaverStatus s, WeaverConfig c) {
@@ -297,7 +284,7 @@ TEST_F(WeaverHidlTest, WriteWithTooLargeKeyFails) {
 /*
  * Writing a value that is too large fails
  */
-TEST_F(WeaverHidlTest, WriteWithTooLargeValueFails) {
+TEST_P(WeaverHidlTest, WriteWithTooLargeValueFails) {
     WeaverStatus status;
     WeaverConfig config;
     const auto configRet = weaver->getConfig([&](WeaverStatus s, WeaverConfig c) {
@@ -318,7 +305,7 @@ TEST_F(WeaverHidlTest, WriteWithTooLargeValueFails) {
 /*
  * Reading with a key that is loo large fails
  */
-TEST_F(WeaverHidlTest, ReadWithTooLargeKeyFails) {
+TEST_P(WeaverHidlTest, ReadWithTooLargeKeyFails) {
     WeaverStatus status;
     WeaverConfig config;
     const auto configRet = weaver->getConfig([&](WeaverStatus s, WeaverConfig c) {
@@ -349,11 +336,7 @@ TEST_F(WeaverHidlTest, ReadWithTooLargeKeyFails) {
     EXPECT_EQ(timeout, 0u);
 }
 
-int main(int argc, char** argv) {
-    ::testing::AddGlobalTestEnvironment(WeaverHidlEnvironment::Instance());
-    ::testing::InitGoogleTest(&argc, argv);
-    WeaverHidlEnvironment::Instance()->init(&argc, argv);
-    int status = RUN_ALL_TESTS();
-    ALOGI("Test result = %d", status);
-    return status;
-}
+INSTANTIATE_TEST_SUITE_P(
+        PerInstance, WeaverHidlTest,
+        testing::ValuesIn(android::hardware::getAllHalInstanceNames(IWeaver::descriptor)),
+        android::hardware::PrintInstanceNameToString);
