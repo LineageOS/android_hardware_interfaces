@@ -26,12 +26,11 @@ namespace vts {
 using mapper::V2_1::IMapper;
 using renderengine::DisplaySettings;
 using renderengine::LayerSettings;
+using renderengine::RenderEngineCreationArgs;
 
-TestRenderEngine::TestRenderEngine(common::V1_1::PixelFormat hwcFormat,
-                                   uint32_t renderEngineFeatures) {
-    mFormat = hwcFormat;
-    mRenderEngine = renderengine::RenderEngine::create(
-            static_cast<int32_t>(mFormat), renderEngineFeatures, mMaxFrameBufferAcquireBuffers);
+TestRenderEngine::TestRenderEngine(const RenderEngineCreationArgs& args) {
+    mFormat = static_cast<common::V1_1::PixelFormat>(args.pixelFormat);
+    mRenderEngine = renderengine::RenderEngine::create(args);
 }
 
 void TestRenderEngine::setRenderLayers(std::vector<std::shared_ptr<TestLayer>> layers) {
