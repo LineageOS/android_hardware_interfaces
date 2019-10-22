@@ -57,6 +57,7 @@ class Composer {
    public:
     Composer();
     explicit Composer(const std::string& name);
+    explicit Composer(const sp<IComposer>& composer);
 
     sp<IComposer> getRaw() const;
 
@@ -66,9 +67,6 @@ class Composer {
     std::vector<IComposer::Capability> getCapabilities();
     std::string dumpDebugInfo();
     std::unique_ptr<ComposerClient> createClient();
-
-   protected:
-    explicit Composer(const sp<IComposer>& composer);
 
    private:
     const sp<IComposer> mComposer;

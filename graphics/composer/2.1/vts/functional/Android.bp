@@ -42,5 +42,6 @@ cc_test {
     header_libs: [
         "android.hardware.graphics.composer@2.1-command-buffer",
     ],
-    test_suites: ["general-tests"],
+    disable_framework: true,
+    test_suites: ["general-tests", "vts-core"],
 }
