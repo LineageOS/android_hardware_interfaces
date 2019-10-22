@@ -45,7 +45,7 @@ class ISensorsEventCallback {
 
 class Sensor {
   public:
-    Sensor(ISensorsEventCallback* callback);
+    Sensor(int32_t sensorHandle, ISensorsEventCallback* callback);
     virtual ~Sensor();
 
     const SensorInfo& getSensorInfo() const;
@@ -81,7 +81,7 @@ class Sensor {
 
 class OnChangeSensor : public Sensor {
   public:
-    OnChangeSensor(ISensorsEventCallback* callback);
+    OnChangeSensor(int32_t sensorHandle, ISensorsEventCallback* callback);
 
     virtual void activate(bool enable) override;
 
@@ -93,34 +93,45 @@ class OnChangeSensor : public Sensor {
     bool mPreviousEventSet;
 };
 
-class AccelSensor : public Sensor {
+class ContinuousSensor : public Sensor {
   public:
-    AccelSensor(int32_t sensorHandle, ISensorsEventCallback* callback);
+    ContinuousSensor(int32_t sensorHandle, ISensorsEventCallback* callback);
 };
 
-class GyroSensor : public Sensor {
+class AccelSensor : public ContinuousSensor {
+  public:
+    AccelSensor(int32_t sensorHandle, ISensorsEventCallback* callback);
+
+  protected:
+    std::vector<Event> readEvents() override;
+};
+
+class GyroSensor : public ContinuousSensor {
   public:
     GyroSensor(int32_t sensorHandle, ISensorsEventCallback* callback);
+
+  protected:
+    std::vector<Event> readEvents() override;
+};
+
+class DeviceTempSensor : public ContinuousSensor {
+  public:
+    DeviceTempSensor(int32_t sensorHandle, ISensorsEventCallback* callback);
+};
+
+class PressureSensor : public ContinuousSensor {
+  public:
+    PressureSensor(int32_t sensorHandle, ISensorsEventCallback* callback);
+};
+
+class MagnetometerSensor : public ContinuousSensor {
+  public:
+    MagnetometerSensor(int32_t sensorHandle, ISensorsEventCallback* callback);
 };
 
 class AmbientTempSensor : public OnChangeSensor {
   public:
     AmbientTempSensor(int32_t sensorHandle, ISensorsEventCallback* callback);
-};
-
-class DeviceTempSensor : public OnChangeSensor {
-  public:
-    DeviceTempSensor(int32_t sensorHandle, ISensorsEventCallback* callback);
-};
-
-class PressureSensor : public Sensor {
-  public:
-    PressureSensor(int32_t sensorHandle, ISensorsEventCallback* callback);
-};
-
-class MagnetometerSensor : public Sensor {
-  public:
-    MagnetometerSensor(int32_t sensorHandle, ISensorsEventCallback* callback);
 };
 
 class LightSensor : public OnChangeSensor {
