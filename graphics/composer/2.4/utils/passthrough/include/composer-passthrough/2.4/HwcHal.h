@@ -25,6 +25,7 @@
 #include <android/hardware/graphics/composer/2.4/IComposerClient.h>
 #include <composer-hal/2.4/ComposerHal.h>
 #include <composer-passthrough/2.3/HwcHal.h>
+#include <hardware/hwcomposer_defs.h>
 
 namespace android {
 namespace hardware {
@@ -51,14 +52,22 @@ class HwcHalImpl : public V2_3::passthrough::detail::HwcHalImpl<Hal> {
     void registerEventCallback_2_4(hal::ComposerHal::EventCallback_2_4* callback) override {
         mEventCallback_2_4 = callback;
 
-        mDispatch.registerCallback(mDevice, HWC2_CALLBACK_HOTPLUG, this,
-                                   reinterpret_cast<hwc2_function_pointer_t>(hotplugHook));
-        mDispatch.registerCallback(mDevice, HWC2_CALLBACK_REFRESH, this,
-                                   reinterpret_cast<hwc2_function_pointer_t>(refreshHook));
-        mDispatch.registerCallback(mDevice, HWC2_CALLBACK_VSYNC, this,
-                                   reinterpret_cast<hwc2_function_pointer_t>(vsyncHook));
-        mDispatch.registerCallback(mDevice, HWC2_CALLBACK_VSYNC_2_4, this,
-                                   reinterpret_cast<hwc2_function_pointer_t>(vsync_2_4_Hook));
+        BaseType2_1::mDispatch.registerCallback(
+                mDevice, HWC2_CALLBACK_HOTPLUG, this,
+                reinterpret_cast<hwc2_function_pointer_t>(hotplugHook));
+        BaseType2_1::mDispatch.registerCallback(
+                mDevice, HWC2_CALLBACK_REFRESH, this,
+                reinterpret_cast<hwc2_function_pointer_t>(refreshHook));
+        BaseType2_1::mDispatch.registerCallback(
+                mDevice, HWC2_CALLBACK_VSYNC, this,
+                reinterpret_cast<hwc2_function_pointer_t>(vsyncHook));
+        BaseType2_1::mDispatch.registerCallback(
+                mDevice, HWC2_CALLBACK_VSYNC_2_4, this,
+                reinterpret_cast<hwc2_function_pointer_t>(vsync_2_4_Hook));
+
+        BaseType2_1::mDispatch.registerCallback(
+                mDevice, HWC2_CALLBACK_VSYNC_PERIOD_TIMING_CHANGED, this,
+                reinterpret_cast<hwc2_function_pointer_t>(vsyncPeriodTimingChangedHook));
     }
 
     void unregisterEventCallback_2_4() override {
@@ -69,10 +78,12 @@ class HwcHalImpl : public V2_3::passthrough::detail::HwcHalImpl<Hal> {
         //  - will never be called afterward
         //
         // which is likely incorrect
-        mDispatch.registerCallback(mDevice, HWC2_CALLBACK_HOTPLUG, this, nullptr);
-        mDispatch.registerCallback(mDevice, HWC2_CALLBACK_REFRESH, this, nullptr);
-        mDispatch.registerCallback(mDevice, HWC2_CALLBACK_VSYNC, this, nullptr);
-        mDispatch.registerCallback(mDevice, HWC2_CALLBACK_VSYNC_2_4, this, nullptr);
+        BaseType2_1::mDispatch.registerCallback(mDevice, HWC2_CALLBACK_HOTPLUG, this, nullptr);
+        BaseType2_1::mDispatch.registerCallback(mDevice, HWC2_CALLBACK_REFRESH, this, nullptr);
+        BaseType2_1::mDispatch.registerCallback(mDevice, HWC2_CALLBACK_VSYNC, this, nullptr);
+        BaseType2_1::mDispatch.registerCallback(mDevice, HWC2_CALLBACK_VSYNC_2_4, this, nullptr);
+        BaseType2_1::mDispatch.registerCallback(mDevice, HWC2_CALLBACK_VSYNC_PERIOD_TIMING_CHANGED,
+                                                this, nullptr);
 
         mEventCallback_2_4 = nullptr;
     }
@@ -106,26 +117,16 @@ class HwcHalImpl : public V2_3::passthrough::detail::HwcHalImpl<Hal> {
         return static_cast<Error>(error);
     }
 
-    Error getSupportedDisplayVsyncPeriods(Display display, Config config,
-                                          std::vector<VsyncPeriodNanos>* outVsyncPeriods) override {
-        if (!mDispatch.getSupportedDisplayVsyncPeriods) {
-            return Error::UNSUPPORTED;
+    Error getDisplayAttribute_2_4(Display display, Config config,
+                                  IComposerClient::Attribute attribute,
+                                  int32_t* outValue) override {
+        int32_t err = BaseType2_1::mDispatch.getDisplayAttribute(
+                mDevice, display, config, static_cast<int32_t>(attribute), outValue);
+        if (err != HWC2_ERROR_NONE && *outValue == -1) {
+            // Convert the error from hwcomposer2 to IComposerClient definition
+            return Error::BAD_PARAMETER;
         }
-
-        uint32_t count = 0;
-        int32_t error = mDispatch.getSupportedDisplayVsyncPeriods(mDevice, display, config, &count,
-                                                                  nullptr);
-        if (error != HWC2_ERROR_NONE) {
-            return static_cast<Error>(error);
-        }
-        outVsyncPeriods->resize(count);
-        error = mDispatch.getSupportedDisplayVsyncPeriods(mDevice, display, config, &count,
-                                                          outVsyncPeriods->data());
-        if (error != HWC2_ERROR_NONE) {
-            *outVsyncPeriods = std::vector<VsyncPeriodNanos>();
-            return static_cast<Error>(error);
-        }
-        return Error::NONE;
+        return static_cast<Error>(err);
     }
 
     Error getDisplayVsyncPeriod(Display display, VsyncPeriodNanos* outVsyncPeriod) override {
@@ -140,11 +141,11 @@ class HwcHalImpl : public V2_3::passthrough::detail::HwcHalImpl<Hal> {
         return Error::NONE;
     }
 
-    Error setActiveConfigAndVsyncPeriod(
-            Display display, Config config, VsyncPeriodNanos vsyncPeriodNanos,
+    Error setActiveConfigWithConstraints(
+            Display display, Config config,
             const IComposerClient::VsyncPeriodChangeConstraints& vsyncPeriodChangeConstraints,
-            int64_t* outNewVsyncAppliedTime) override {
-        if (!mDispatch.setActiveConfigAndVsyncPeriod) {
+            VsyncPeriodChangeTimeline* timeline) override {
+        if (!mDispatch.setActiveConfigWithConstraints) {
             return Error::UNSUPPORTED;
         }
 
@@ -154,12 +155,15 @@ class HwcHalImpl : public V2_3::passthrough::detail::HwcHalImpl<Hal> {
         vsync_period_change_constraints.seamlessRequired =
                 vsyncPeriodChangeConstraints.seamlessRequired;
 
-        int32_t error = mDispatch.setActiveConfigAndVsyncPeriod(
-                mDevice, display, config, vsyncPeriodNanos, &vsync_period_change_constraints,
-                outNewVsyncAppliedTime);
+        hwc_vsync_period_change_timeline_t out_timeline;
+        int32_t error = mDispatch.setActiveConfigWithConstraints(
+                mDevice, display, config, &vsync_period_change_constraints, &out_timeline);
         if (error != HWC2_ERROR_NONE) {
             return static_cast<Error>(error);
         }
+        timeline->newVsyncAppliedTimeNanos = out_timeline.newVsyncAppliedTimeNanos;
+        timeline->refreshRequired = out_timeline.refreshRequired;
+        timeline->refreshTimeNanos = out_timeline.refreshTimeNanos;
         return Error::NONE;
     }
 
@@ -171,13 +175,10 @@ class HwcHalImpl : public V2_3::passthrough::detail::HwcHalImpl<Hal> {
 
         this->initOptionalDispatch(HWC2_FUNCTION_GET_DISPLAY_CONNECTION_TYPE,
                                    &mDispatch.getDisplayConnectionType);
-        this->initOptionalDispatch(HWC2_FUNCTION_REGISTER_CALLBACK, &mDispatch.registerCallback);
-        this->initOptionalDispatch(HWC2_FUNCTION_GET_SUPPORTED_DISPLAY_VSYNC_PERIODS,
-                                   &mDispatch.getSupportedDisplayVsyncPeriods);
         this->initOptionalDispatch(HWC2_FUNCTION_GET_DISPLAY_VSYNC_PERIOD,
                                    &mDispatch.getDisplayVsyncPeriod);
-        this->initOptionalDispatch(HWC2_FUNCTION_SET_ACTIVE_CONFIG_AND_VSYNC_PERIOD,
-                                   &mDispatch.setActiveConfigAndVsyncPeriod);
+        this->initOptionalDispatch(HWC2_FUNCTION_SET_ACTIVE_CONFIG_WITH_CONSTRAINTS,
+                                   &mDispatch.setActiveConfigWithConstraints);
         return true;
     }
 
@@ -205,13 +206,22 @@ class HwcHalImpl : public V2_3::passthrough::detail::HwcHalImpl<Hal> {
         hal->mEventCallback_2_4->onVsync_2_4(display, timestamp, vsyncPeriodNanos);
     }
 
+    static void vsyncPeriodTimingChangedHook(hwc2_callback_data_t callbackData,
+                                             hwc2_display_t display,
+                                             hwc_vsync_period_change_timeline_t* updated_timeline) {
+        auto hal = static_cast<HwcHalImpl*>(callbackData);
+        VsyncPeriodChangeTimeline timeline;
+        timeline.newVsyncAppliedTimeNanos = updated_timeline->newVsyncAppliedTimeNanos;
+        timeline.refreshRequired = updated_timeline->refreshRequired;
+        timeline.refreshTimeNanos = updated_timeline->refreshTimeNanos;
+        hal->mEventCallback_2_4->onVsyncPeriodTimingChanged(display, timeline);
+    }
+
   private:
     struct {
         HWC2_PFN_GET_DISPLAY_CONNECTION_TYPE getDisplayConnectionType;
-        HWC2_PFN_REGISTER_CALLBACK registerCallback;
-        HWC2_PFN_GET_SUPPORTED_DISPLAY_VSYNC_PERIODS getSupportedDisplayVsyncPeriods;
         HWC2_PFN_GET_DISPLAY_VSYNC_PERIOD getDisplayVsyncPeriod;
-        HWC2_PFN_SET_ACTIVE_CONFIG_AND_VSYNC_PERIOD setActiveConfigAndVsyncPeriod;
+        HWC2_PFN_SET_ACTIVE_CONFIG_WITH_CONSTRAINTS setActiveConfigWithConstraints;
     } mDispatch = {};
 
     hal::ComposerHal::EventCallback_2_4* mEventCallback_2_4 = nullptr;

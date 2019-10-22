@@ -47,6 +47,8 @@ class ComposerHal : public V2_3::hal::ComposerHal {
         virtual void onVsync(Display display, int64_t timestamp) = 0;
         virtual void onVsync_2_4(Display display, int64_t timestamp,
                                  VsyncPeriodNanos vsyncPeriodNanos) = 0;
+        virtual void onVsyncPeriodTimingChanged(Display display,
+                                                const VsyncPeriodChangeTimeline& timeline) = 0;
     };
 
     virtual void registerEventCallback_2_4(EventCallback_2_4* callback) = 0;
@@ -57,13 +59,14 @@ class ComposerHal : public V2_3::hal::ComposerHal {
             Display display, std::vector<IComposerClient::DisplayCapability>* outCapabilities) = 0;
     virtual Error getDisplayConnectionType(Display display,
                                            IComposerClient::DisplayConnectionType* outType) = 0;
-    virtual Error getSupportedDisplayVsyncPeriods(
-            Display display, Config config, std::vector<VsyncPeriodNanos>* outVsyncPeriod) = 0;
+    virtual Error getDisplayAttribute_2_4(Display display, Config config,
+                                          IComposerClient::Attribute attribute,
+                                          int32_t* outValue) = 0;
     virtual Error getDisplayVsyncPeriod(Display display, VsyncPeriodNanos* outVsyncPeriod) = 0;
-    virtual Error setActiveConfigAndVsyncPeriod(
-            Display display, Config config, VsyncPeriodNanos vsyncPeriodNanos,
+    virtual Error setActiveConfigWithConstraints(
+            Display display, Config config,
             const IComposerClient::VsyncPeriodChangeConstraints& vsyncPeriodChangeConstraints,
-            int64_t* outNewVsyncAppliedTime) = 0;
+            VsyncPeriodChangeTimeline* timeline) = 0;
 };
 
 }  // namespace hal
