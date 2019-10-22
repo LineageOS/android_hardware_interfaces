@@ -24,7 +24,7 @@ static void waitForDeviceDestruction() {
     //        flushCommand makes sure all local command are sent, thus should reduce
     //        the latency between local and remote destruction.
     IPCThreadState::self()->flushCommands();
-    usleep(100);
+    usleep(100 * 1000);
 }
 
 TEST_F(AudioHidlTest, OpenPrimaryDeviceUsingGetDevice) {
