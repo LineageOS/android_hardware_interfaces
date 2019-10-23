@@ -191,7 +191,7 @@ TEST_F(AudioHidlTest, OpenPrimaryDeviceUsingGetDevice) {
     //        flushCommand makes sure all local command are sent, thus should reduce
     //        the latency between local and remote destruction.
     IPCThreadState::self()->flushCommands();
-    usleep(100);
+    usleep(100*1000);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -698,13 +698,27 @@ class OpenStreamTest : public AudioConfigPrimaryTest,
 
     Return<Result> closeStream() {
         open = false;
-        return stream->close();
+        auto res = stream->close();
+        stream.clear();
+        waitForStreamDestruction();
+        return res;
+    }
+
+    void waitForStreamDestruction() {
+        // FIXME: there is no way to know when the remote IStream is being destroyed
+        //        Binder does not support testing if an object is alive, thus
+        //        wait for 100ms to let the binder destruction propagates and
+        //        the remote device has the time to be destroyed.
+        //        flushCommand makes sure all local command are sent, thus should reduce
+        //        the latency between local and remote destruction.
+        IPCThreadState::self()->flushCommands();
+        usleep(100*1000);
     }
 
    private:
     void TearDown() override {
         if (open) {
-            ASSERT_OK(stream->close());
+            ASSERT_OK(closeStream());
         }
     }
 
@@ -1051,8 +1065,12 @@ TEST_IO_STREAM(getMmapPositionNoMmap, "Get a stream Mmap position before mapping
                ASSERT_RESULT(invalidStateOrNotSupported, stream->stop()))
 
 TEST_IO_STREAM(close, "Make sure a stream can be closed", ASSERT_OK(closeStream()))
-TEST_IO_STREAM(closeTwice, "Make sure a stream can not be closed twice", ASSERT_OK(closeStream());
-               ASSERT_RESULT(Result::INVALID_STATE, closeStream()))
+TEST_IO_STREAM(closeTwice, "Make sure a stream can not be closed twice",
+        auto streamCopy = stream;
+        ASSERT_OK(closeStream());
+        ASSERT_RESULT(Result::INVALID_STATE, streamCopy->close());
+        streamCopy.clear();
+        waitForStreamDestruction())
 
 static void testCreateTooBigMmapBuffer(IStream* stream) {
     MmapBufferInfo info;
