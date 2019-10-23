@@ -17,9 +17,9 @@
 #define LOG_TAG "power_hidl_hal_test"
 #include <android-base/logging.h>
 #include <android/hardware/power/1.2/IPower.h>
-
-#include <VtsHalHidlTargetTestBase.h>
-#include <VtsHalHidlTargetTestEnvBase.h>
+#include <gtest/gtest.h>
+#include <hidl/GtestPrinter.h>
+#include <hidl/ServiceManagement.h>
 
 using ::android::sp;
 using ::android::hardware::hidl_vec;
@@ -27,23 +27,10 @@ using ::android::hardware::Return;
 using ::android::hardware::power::V1_2::IPower;
 using ::android::hardware::power::V1_2::PowerHint;
 
-// Test environment for Power HIDL HAL.
-class PowerHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
-   public:
-    // get the test environment singleton
-    static PowerHidlEnvironment* Instance() {
-        static PowerHidlEnvironment* instance = new PowerHidlEnvironment;
-        return instance;
-    }
-
-    virtual void registerTestServices() override { registerTestService<IPower>(); }
-};
-
-class PowerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
+class PowerHidlTest : public testing::TestWithParam<std::string> {
    public:
     virtual void SetUp() override {
-        power = ::testing::VtsHalHidlTargetTestBase::getService<IPower>(
-            PowerHidlEnvironment::Instance()->getServiceName<IPower>());
+        power = IPower::getService(GetParam());
         ASSERT_NE(power, nullptr);
     }
 
@@ -51,7 +38,7 @@ class PowerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 };
 
 // Sanity check Power::PowerHintAsync_1_2 on good and bad inputs.
-TEST_F(PowerHidlTest, PowerHintAsync_1_2) {
+TEST_P(PowerHidlTest, PowerHintAsync_1_2) {
     std::vector<PowerHint> hints;
     for (uint32_t i = static_cast<uint32_t>(PowerHint::VSYNC);
          i <= static_cast<uint32_t>(PowerHint::CAMERA_SHOT); ++i) {
@@ -89,11 +76,8 @@ TEST_F(PowerHidlTest, PowerHintAsync_1_2) {
     } while (std::next_permutation(hints2.begin(), hints2.end(), compareHints));
 }
 
-int main(int argc, char** argv) {
-    ::testing::AddGlobalTestEnvironment(PowerHidlEnvironment::Instance());
-    ::testing::InitGoogleTest(&argc, argv);
-    PowerHidlEnvironment::Instance()->init(&argc, argv);
-    int status = RUN_ALL_TESTS();
-    LOG(INFO) << "Test result = " << status;
-    return status;
-}
+INSTANTIATE_TEST_SUITE_P(
+        PerInstance, PowerHidlTest,
+        testing::ValuesIn(android::hardware::getAllHalInstanceNames(IPower::descriptor)),
+        android::hardware::PrintInstanceNameToString);
+
