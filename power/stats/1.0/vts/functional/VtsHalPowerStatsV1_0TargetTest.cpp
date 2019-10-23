@@ -16,13 +16,15 @@
 
 #define LOG_TAG "android.power.stats.vts"
 
-#include <VtsHalHidlTargetTestBase.h>
-#include <VtsHalHidlTargetTestEnvBase.h>
 #include <android-base/logging.h>
 #include <android/hardware/power/stats/1.0/IPowerStats.h>
 #include <fmq/MessageQueue.h>
+#include <gtest/gtest.h>
+#include <hidl/GtestPrinter.h>
 #include <hidl/MQDescriptor.h>
+#include <hidl/ServiceManagement.h>
 #include <inttypes.h>
+
 #include <algorithm>
 #include <random>
 #include <thread>
@@ -49,23 +51,11 @@ using android::hardware::power::stats::V1_0::Status;
 }  // namespace
 
 typedef hardware::MessageQueue<EnergyData, kSynchronizedReadWrite> MessageQueueSync;
-// Test environment for Power HIDL HAL.
-class PowerStatsHidlEnv : public ::testing::VtsHalHidlTargetTestEnvBase {
-   public:
-    // get the test environment singleton
-    static PowerStatsHidlEnv* Instance() {
-        static PowerStatsHidlEnv* instance = new PowerStatsHidlEnv;
-        return instance;
-    }
 
-    virtual void registerTestServices() override { registerTestService<IPowerStats>(); }
-};
-
-class PowerStatsHidlTest : public ::testing::VtsHalHidlTargetTestBase {
+class PowerStatsHidlTest : public ::testing::TestWithParam<std::string> {
    public:
     virtual void SetUp() override {
-        service_ = ::testing::VtsHalHidlTargetTestBase::getService<IPowerStats>(
-            PowerStatsHidlEnv::Instance()->getServiceName<IPowerStats>());
+        service_ = IPowerStats::getService(GetParam());
         ASSERT_NE(service_, nullptr);
     }
 
@@ -157,7 +147,7 @@ void PowerStatsHidlTest::getRandomIds(std::vector<uint32_t>& ids) {
 }
 
 // Each PowerEntity must have a valid name
-TEST_F(PowerStatsHidlTest, ValidatePowerEntityNames) {
+TEST_P(PowerStatsHidlTest, ValidatePowerEntityNames) {
     hidl_vec<PowerEntityInfo> infos;
     getInfos(infos);
     for (auto info : infos) {
@@ -166,18 +156,18 @@ TEST_F(PowerStatsHidlTest, ValidatePowerEntityNames) {
 }
 
 // Each PowerEntity must have a unique ID
-TEST_F(PowerStatsHidlTest, ValidatePowerEntityIds) {
+TEST_P(PowerStatsHidlTest, ValidatePowerEntityIds) {
     hidl_vec<PowerEntityInfo> infos;
     getInfos(infos);
 
-    set<uint32_t> ids;
+    std::set<uint32_t> ids;
     for (auto info : infos) {
         ASSERT_TRUE(ids.insert(info.powerEntityId).second);
     }
 }
 
 // Each PowerEntityStateSpace must have an associated PowerEntityInfo
-TEST_F(PowerStatsHidlTest, ValidateStateInfoAssociation) {
+TEST_P(PowerStatsHidlTest, ValidateStateInfoAssociation) {
     hidl_vec<PowerEntityInfo> infos;
     getInfos(infos);
 
@@ -195,7 +185,7 @@ TEST_F(PowerStatsHidlTest, ValidateStateInfoAssociation) {
 }
 
 // Each state must have a valid name
-TEST_F(PowerStatsHidlTest, ValidateStateNames) {
+TEST_P(PowerStatsHidlTest, ValidateStateNames) {
     hidl_vec<PowerEntityStateSpace> stateSpaces;
     getStateSpaces(stateSpaces);
 
@@ -207,12 +197,12 @@ TEST_F(PowerStatsHidlTest, ValidateStateNames) {
 }
 
 // Each state must have an ID that is unique to the PowerEntityStateSpace
-TEST_F(PowerStatsHidlTest, ValidateStateUniqueIds) {
+TEST_P(PowerStatsHidlTest, ValidateStateUniqueIds) {
     hidl_vec<PowerEntityStateSpace> stateSpaces;
     getStateSpaces(stateSpaces);
 
     for (auto stateSpace : stateSpaces) {
-        set<uint32_t> stateIds;
+        std::set<uint32_t> stateIds;
         for (auto state : stateSpace.states) {
             ASSERT_TRUE(stateIds.insert(state.powerEntityStateId).second);
         }
@@ -221,7 +211,7 @@ TEST_F(PowerStatsHidlTest, ValidateStateUniqueIds) {
 
 // getPowerEntityStateInfo must support passing in requested IDs
 // Results must contain state space information for all requested IDs
-TEST_F(PowerStatsHidlTest, ValidateStateInfoAssociationSelect) {
+TEST_P(PowerStatsHidlTest, ValidateStateInfoAssociationSelect) {
     std::vector<uint32_t> randomIds;
     getRandomIds(randomIds);
 
@@ -244,7 +234,7 @@ TEST_F(PowerStatsHidlTest, ValidateStateInfoAssociationSelect) {
 }
 
 // Requested state space info must match initially obtained stateinfos
-TEST_F(PowerStatsHidlTest, ValidateStateInfoSelect) {
+TEST_P(PowerStatsHidlTest, ValidateStateInfoSelect) {
     hidl_vec<PowerEntityStateSpace> stateSpaces;
     getStateSpaces(stateSpaces);
     if (stateSpaces.size() == 0) {
@@ -279,7 +269,7 @@ TEST_F(PowerStatsHidlTest, ValidateStateInfoSelect) {
 
 // stateResidencyResults must contain results for every PowerEntityStateSpace
 // returned by getPowerEntityStateInfo
-TEST_F(PowerStatsHidlTest, ValidateResidencyResultsAssociation) {
+TEST_P(PowerStatsHidlTest, ValidateResidencyResultsAssociation) {
     hidl_vec<PowerEntityStateSpace> stateSpaces;
     getStateSpaces(stateSpaces);
 
@@ -311,7 +301,7 @@ TEST_F(PowerStatsHidlTest, ValidateResidencyResultsAssociation) {
 // getPowerEntityStateResidencyData must support passing in requested IDs
 // stateResidencyResults must contain results for each PowerEntityStateSpace
 // returned by getPowerEntityStateInfo
-TEST_F(PowerStatsHidlTest, ValidateResidencyResultsAssociationSelect) {
+TEST_P(PowerStatsHidlTest, ValidateResidencyResultsAssociationSelect) {
     std::vector<uint32_t> randomIds;
     getRandomIds(randomIds);
     if (randomIds.empty()) {
@@ -346,7 +336,7 @@ TEST_F(PowerStatsHidlTest, ValidateResidencyResultsAssociationSelect) {
     }
 }
 
-TEST_F(PowerStatsHidlTest, ValidateRailInfo) {
+TEST_P(PowerStatsHidlTest, ValidateRailInfo) {
     hidl_vec<RailInfo> rails[2];
     Status s;
     auto cb = [&rails, &s](hidl_vec<RailInfo> rail_subsys, Status status) {
@@ -359,7 +349,7 @@ TEST_F(PowerStatsHidlTest, ValidateRailInfo) {
         /* Rails size should be non-zero on SUCCESS*/
         ASSERT_NE(rails[0].size(), 0);
         /* check if indices returned are unique*/
-        set<uint32_t> ids;
+        std::set<uint32_t> ids;
         for (auto rail : rails[0]) {
             ASSERT_TRUE(ids.insert(rail.index).second);
         }
@@ -402,7 +392,7 @@ TEST_F(PowerStatsHidlTest, ValidateRailInfo) {
     }
 }
 
-TEST_F(PowerStatsHidlTest, ValidateAllPowerData) {
+TEST_P(PowerStatsHidlTest, ValidateAllPowerData) {
     hidl_vec<EnergyData> measurements[2];
     Status s;
     auto cb = [&measurements, &s](hidl_vec<EnergyData> measure, Status status) {
@@ -451,7 +441,7 @@ TEST_F(PowerStatsHidlTest, ValidateAllPowerData) {
     }
 }
 
-TEST_F(PowerStatsHidlTest, ValidateFilteredPowerData) {
+TEST_P(PowerStatsHidlTest, ValidateFilteredPowerData) {
     hidl_vec<RailInfo> rails;
     hidl_vec<EnergyData> measurements;
     hidl_vec<uint32_t> indices;
@@ -559,23 +549,19 @@ void readEnergy(sp<IPowerStats> service_, uint32_t timeMs) {
     }
 }
 
-TEST_F(PowerStatsHidlTest, StreamEnergyData) {
+TEST_P(PowerStatsHidlTest, StreamEnergyData) {
     std::time_t seed = std::time(nullptr);
     std::srand(seed);
     std::thread thread1 = std::thread(readEnergy, service_, std::rand() % 5000);
     thread1.join();
 }
 
+INSTANTIATE_TEST_SUITE_P(
+        PerInstance, PowerStatsHidlTest,
+        testing::ValuesIn(android::hardware::getAllHalInstanceNames(IPowerStats::descriptor)),
+        android::hardware::PrintInstanceNameToString);
+
 }  // namespace vts
 }  // namespace stats
 }  // namespace power
 }  // namespace android
-
-int main(int argc, char** argv) {
-    ::testing::AddGlobalTestEnvironment(android::power::stats::vts::PowerStatsHidlEnv::Instance());
-    ::testing::InitGoogleTest(&argc, argv);
-    android::power::stats::vts::PowerStatsHidlEnv::Instance()->init(&argc, argv);
-    int status = RUN_ALL_TESTS();
-    LOG(INFO) << "Test result = " << status;
-    return status;
-}
