@@ -22,7 +22,7 @@
 #include <android/hardware/neuralnetworks/1.3/types.h>
 #include <gtest/gtest.h>
 #include "1.0/Utils.h"
-#include "1.2/Callbacks.h"
+#include "1.3/Callbacks.h"
 
 namespace android::hardware::neuralnetworks::V1_3::vts::functional {
 
@@ -51,7 +51,7 @@ void createPreparedModel(const sp<IDevice>& device, const Model& model,
 
 // Utility function to get PreparedModel from callback and downcast to V1_2.
 sp<V1_2::IPreparedModel> getPreparedModel_1_2(
-        const sp<V1_2::implementation::PreparedModelCallback>& callback);
+        const sp<implementation::PreparedModelCallback>& callback);
 
 }  // namespace android::hardware::neuralnetworks::V1_3::vts::functional
 
