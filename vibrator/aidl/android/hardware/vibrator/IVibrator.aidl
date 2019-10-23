@@ -19,6 +19,8 @@ package android.hardware.vibrator;
 import android.hardware.vibrator.IVibratorCallback;
 import android.hardware.vibrator.Effect;
 import android.hardware.vibrator.EffectStrength;
+import android.hardware.vibrator.CompositeEffect;
+import android.hardware.vibrator.CompositePrimitive;
 
 @VintfStability
 interface IVibrator {
@@ -42,6 +44,10 @@ interface IVibrator {
      * Whether setAmplitude is supported (when external control is enabled)
      */
     const int CAP_EXTERNAL_AMPLITUDE_CONTROL = 1 << 4;
+    /**
+     * Whether compose is supported.
+     */
+    const int CAP_COMPOSE_EFFECTS = 1 << 5;
 
     /**
      * Determine capabilities of the vibrator HAL (CAP_* mask)
@@ -107,11 +113,10 @@ interface IVibrator {
      * CAP_EXTERNAL_AMPLITUDE_CONTROL.
      *
      * @param amplitude The unitless force setting. Note that this number must
-     *                  be between 1 and 255, inclusive. If the motor does not
-     *                  have exactly 255 steps, it must do it's best to map it
-     *                  onto the number of steps it does have.
+     *                  be between 0.0 (exclusive) and 1.0 (inclusive). It must
+     *                  do it's best to map it onto the number of steps it does have.
      */
-    void setAmplitude(in int amplitude);
+    void setAmplitude(in float amplitude);
 
     /**
      * Enables/disables control override of vibrator to audio.
@@ -128,4 +133,36 @@ interface IVibrator {
      * @param enabled Whether external control should be enabled or disabled.
      */
     void setExternalControl(in boolean enabled);
+
+    /**
+     * Retrieve composition delay limit.
+     *
+     * Support is reflected in getCapabilities (CAP_COMPOSE_EFFECTS).
+     *
+     * @return Maximum delay for a single CompositeEffect[] entry.
+     */
+    int getCompositionDelayMax();
+
+    /**
+     * Retrieve composition size limit.
+     *
+     * Support is reflected in getCapabilities (CAP_COMPOSE_EFFECTS).
+     *
+     * @return Maximum number of entries in CompositeEffect[].
+     * @param maxDelayMs Maximum delay for a single CompositeEffect[] entry.
+     */
+    int getCompositionSizeMax();
+
+    /**
+     * Fire off a string of effect primitives, combined to perform richer effects.
+     *
+     * Support is reflected in getCapabilities (CAP_COMPOSE_EFFECTS).
+     *
+     * Doing this operation while the vibrator is already on is undefined behavior. Clients should
+     * explicitly call off.
+     *
+     * @param composite Array of composition parameters.
+     */
+    void compose(in CompositeEffect[] composite, in IVibratorCallback callback);
+
 }
