@@ -60,6 +60,5 @@ interface ISupplicantStaNetwork extends @1.2::ISupplicantStaNetwork {
      *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
      *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
      */
-    setPmkCache(vec<uint8_t> serializedEntry)
-        generates (SupplicantStatus status);
+    setPmkCache(vec<uint8_t> serializedEntry) generates (SupplicantStatus status);
 };

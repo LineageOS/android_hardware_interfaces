@@ -25,3 +25,36 @@ enum OcspType : uint32_t {
     REQUIRE_CERT_STATUS,
     REQUIRE_ALL_CERTS_STATUS,
 };
+
+/**
+ * Wifi Technologies
+ */
+enum WifiTechnology : uint32_t {
+    UNKNOWN = 0,
+    /**
+     * For 802.11a/b/g
+     */
+    LEGACY = 1,
+    /**
+     * For 802.11n
+     */
+    HT = 2,
+    /**
+     * For 802.11ac
+     */
+    VHT = 3,
+    /**
+     * For 802.11ax
+     */
+    HE = 4,
+};
+
+/**
+ * Connection Capabilities.
+ */
+struct ConnectionCapabilities {
+    /**
+     * Wifi Technology
+     */
+    WifiTechnology technology;
+};

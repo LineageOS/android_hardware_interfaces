@@ -24,5 +24,4 @@ import @1.3::IWifi;
  * module loaded in the system.
  * IWifi.getChip() must return @1.2::IWifiChip
  */
-interface IWifi extends @1.3::IWifi {
-};
+interface IWifi extends @1.3::IWifi {};

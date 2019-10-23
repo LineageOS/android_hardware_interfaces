@@ -26,5 +26,4 @@ import @1.2::ISupplicant;
  * 1.2 HAL. For example V1_2::ISupplicant::addIface() adds V1_2::ISupplicantIface,
  * which can be cast to V1_3::ISupplicantStaIface.
  */
-interface ISupplicant extends @1.2::ISupplicant {
-};
+interface ISupplicant extends @1.2::ISupplicant {};
