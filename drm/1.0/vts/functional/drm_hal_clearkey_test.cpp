@@ -23,14 +23,14 @@
 #include <android/hardware/drm/1.0/types.h>
 #include <android/hidl/allocator/1.0/IAllocator.h>
 #include <gtest/gtest.h>
+#include <hidl/GtestPrinter.h>
 #include <hidl/HidlSupport.h>
+#include <hidl/ServiceManagement.h>
 #include <hidlmemory/mapping.h>
 #include <log/log.h>
-#include <memory>
 #include <openssl/aes.h>
+#include <memory>
 #include <random>
-
-#include "VtsHalHidlTargetTestBase.h"
 
 using ::android::hardware::drm::V1_0::BufferType;
 using ::android::hardware::drm::V1_0::DestinationBuffer;
@@ -89,44 +89,59 @@ static const uint8_t kInvalidUUID[16] = {
     0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80,
     0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80};
 
-class DrmHalClearkeyFactoryTest : public ::testing::VtsHalHidlTargetTestBase {
-   public:
-    virtual void SetUp() override {
+class DrmHalClearkeyFactoryTest : public ::testing::TestWithParam<std::string> {
+  public:
+    void SetUp() override {
         const ::testing::TestInfo* const test_info =
                 ::testing::UnitTest::GetInstance()->current_test_info();
         ALOGD("Running test %s.%s", test_info->test_case_name(),
               test_info->name());
 
-        drmFactory =
-                ::testing::VtsHalHidlTargetTestBase::getService<IDrmFactory>();
+        const std::string instanceName = GetParam();
+        drmFactory = IDrmFactory::getService(instanceName);
         ASSERT_NE(nullptr, drmFactory.get());
-        cryptoFactory =
-                ::testing::VtsHalHidlTargetTestBase::getService<ICryptoFactory>();
+        cryptoFactory = ICryptoFactory::getService(instanceName);
         ASSERT_NE(nullptr, cryptoFactory.get());
-    }
 
-    virtual void TearDown() override {}
+        const bool drmClearKey = drmFactory->isCryptoSchemeSupported(kClearKeyUUID);
+        const bool cryptoClearKey = cryptoFactory->isCryptoSchemeSupported(kClearKeyUUID);
+        EXPECT_EQ(drmClearKey, cryptoClearKey);
+        const bool supportsClearKey = drmClearKey && cryptoClearKey;
+
+        const bool drmCommonPsshBox = drmFactory->isCryptoSchemeSupported(kCommonPsshBoxUUID);
+        const bool cryptoCommonPsshBox = cryptoFactory->isCryptoSchemeSupported(kCommonPsshBoxUUID);
+        EXPECT_EQ(drmCommonPsshBox, cryptoCommonPsshBox);
+        const bool supportsCommonPsshBox = drmCommonPsshBox && cryptoCommonPsshBox;
+
+        EXPECT_EQ(supportsClearKey, supportsCommonPsshBox);
+        correspondsToThisTest = supportsClearKey && supportsCommonPsshBox;
+
+        if (instanceName == "clearkey") {
+            EXPECT_TRUE(correspondsToThisTest);
+
+            // TODO(b/147449315)
+            // Only the clearkey plugged into the "default" instance supports
+            // this test. Currently the "clearkey" instance fails some tests
+            // here.
+            GTEST_SKIP() << "Clearkey tests don't work with 'clearkey' instance yet.";
+        }
+
+        if (!correspondsToThisTest) {
+            GTEST_SKIP() << "Cannot test clearkey features on non-clearkey DRM modules";
+        }
+    }
 
    protected:
     sp<IDrmFactory> drmFactory;
     sp<ICryptoFactory> cryptoFactory;
+
+    bool correspondsToThisTest;
 };
-
-/**
- * Ensure the factory supports both Common Pssh Box UUID and Clearkey Scheme UUID
- */
-TEST_F(DrmHalClearkeyFactoryTest, ClearKeyPluginSupported) {
-    EXPECT_TRUE(drmFactory->isCryptoSchemeSupported(kCommonPsshBoxUUID));
-    EXPECT_TRUE(cryptoFactory->isCryptoSchemeSupported(kCommonPsshBoxUUID));
-
-    EXPECT_TRUE(drmFactory->isCryptoSchemeSupported(kClearKeyUUID));
-    EXPECT_TRUE(cryptoFactory->isCryptoSchemeSupported(kClearKeyUUID));
-}
 
 /**
  * Ensure the factory doesn't support an invalid scheme UUID
  */
-TEST_F(DrmHalClearkeyFactoryTest, InvalidPluginNotSupported) {
+TEST_P(DrmHalClearkeyFactoryTest, InvalidPluginNotSupported) {
     EXPECT_FALSE(drmFactory->isCryptoSchemeSupported(kInvalidUUID));
     EXPECT_FALSE(cryptoFactory->isCryptoSchemeSupported(kInvalidUUID));
 }
@@ -134,7 +149,7 @@ TEST_F(DrmHalClearkeyFactoryTest, InvalidPluginNotSupported) {
 /**
  * Ensure the factory doesn't support an empty UUID
  */
-TEST_F(DrmHalClearkeyFactoryTest, EmptyPluginUUIDNotSupported) {
+TEST_P(DrmHalClearkeyFactoryTest, EmptyPluginUUIDNotSupported) {
     hidl_array<uint8_t, 16> emptyUUID;
     memset(emptyUUID.data(), 0, 16);
     EXPECT_FALSE(drmFactory->isCryptoSchemeSupported(emptyUUID));
@@ -144,7 +159,7 @@ TEST_F(DrmHalClearkeyFactoryTest, EmptyPluginUUIDNotSupported) {
 /**
  * Ensure empty content type is not supported
  */
-TEST_F(DrmHalClearkeyFactoryTest, EmptyContentTypeNotSupported) {
+TEST_P(DrmHalClearkeyFactoryTest, EmptyContentTypeNotSupported) {
     hidl_string empty;
     EXPECT_FALSE(drmFactory->isContentTypeSupported(empty));
 }
@@ -152,7 +167,7 @@ TEST_F(DrmHalClearkeyFactoryTest, EmptyContentTypeNotSupported) {
 /**
  * Ensure invalid content type is not supported
  */
-TEST_F(DrmHalClearkeyFactoryTest, InvalidContentTypeNotSupported) {
+TEST_P(DrmHalClearkeyFactoryTest, InvalidContentTypeNotSupported) {
     hidl_string invalid("abcdabcd");
     EXPECT_FALSE(drmFactory->isContentTypeSupported(invalid));
 }
@@ -160,7 +175,7 @@ TEST_F(DrmHalClearkeyFactoryTest, InvalidContentTypeNotSupported) {
 /**
  * Ensure valid content type is supported
  */
-TEST_F(DrmHalClearkeyFactoryTest, ValidContentTypeSupported) {
+TEST_P(DrmHalClearkeyFactoryTest, ValidContentTypeSupported) {
     hidl_string cencType("cenc");
     EXPECT_TRUE(drmFactory->isContentTypeSupported(cencType));
 }
@@ -168,7 +183,7 @@ TEST_F(DrmHalClearkeyFactoryTest, ValidContentTypeSupported) {
 /**
  * Ensure clearkey drm plugin can be created using Common Pssh Box UUID
  */
-TEST_F(DrmHalClearkeyFactoryTest, CreateClearKeyDrmPluginUsingCommonPsshBoxUuid) {
+TEST_P(DrmHalClearkeyFactoryTest, CreateClearKeyDrmPluginUsingCommonPsshBoxUuid) {
     hidl_string packageName("android.hardware.drm.test");
     auto res = drmFactory->createPlugin(
             kCommonPsshBoxUUID, packageName,
@@ -182,7 +197,7 @@ TEST_F(DrmHalClearkeyFactoryTest, CreateClearKeyDrmPluginUsingCommonPsshBoxUuid)
 /**
  * Ensure clearkey drm plugin can be created using ClearKey UUID
  */
- TEST_F(DrmHalClearkeyFactoryTest, CreateClearKeyDrmPluginUsingClearKeyUuid) {
+TEST_P(DrmHalClearkeyFactoryTest, CreateClearKeyDrmPluginUsingClearKeyUuid) {
     hidl_string packageName("android.hardware.drm.test");
     auto res = drmFactory->createPlugin(
             kClearKeyUUID, packageName,
@@ -196,7 +211,7 @@ TEST_F(DrmHalClearkeyFactoryTest, CreateClearKeyDrmPluginUsingCommonPsshBoxUuid)
 /**
  * Ensure clearkey crypto plugin can be created using Common Pssh Box UUID
  */
-TEST_F(DrmHalClearkeyFactoryTest, CreateClearKeyCryptoPluginUsingCommonPsshBoxUuid) {
+TEST_P(DrmHalClearkeyFactoryTest, CreateClearKeyCryptoPluginUsingCommonPsshBoxUuid) {
     hidl_vec<uint8_t> initVec;
     auto res = cryptoFactory->createPlugin(
             kCommonPsshBoxUUID, initVec,
@@ -210,7 +225,7 @@ TEST_F(DrmHalClearkeyFactoryTest, CreateClearKeyCryptoPluginUsingCommonPsshBoxUu
 /**
  * Ensure clearkey crypto plugin can be created using ClearKey UUID
  */
-TEST_F(DrmHalClearkeyFactoryTest, CreateClearKeyCryptoPluginUsingClearKeyUuid) {
+TEST_P(DrmHalClearkeyFactoryTest, CreateClearKeyCryptoPluginUsingClearKeyUuid) {
     hidl_vec<uint8_t> initVec;
     auto res = cryptoFactory->createPlugin(
             kClearKeyUUID, initVec,
@@ -224,7 +239,7 @@ TEST_F(DrmHalClearkeyFactoryTest, CreateClearKeyCryptoPluginUsingClearKeyUuid) {
 /**
  * Ensure invalid drm plugin can't be created
  */
-TEST_F(DrmHalClearkeyFactoryTest, CreateInvalidDrmPlugin) {
+TEST_P(DrmHalClearkeyFactoryTest, CreateInvalidDrmPlugin) {
     hidl_string packageName("android.hardware.drm.test");
     auto res = drmFactory->createPlugin(
             kInvalidUUID, packageName,
@@ -238,7 +253,7 @@ TEST_F(DrmHalClearkeyFactoryTest, CreateInvalidDrmPlugin) {
 /**
  * Ensure invalid crypto plugin can't be created
  */
-TEST_F(DrmHalClearkeyFactoryTest, CreateInvalidCryptoPlugin) {
+TEST_P(DrmHalClearkeyFactoryTest, CreateInvalidCryptoPlugin) {
     hidl_vec<uint8_t> initVec;
     auto res = cryptoFactory->createPlugin(
             kInvalidUUID, initVec,
@@ -254,6 +269,10 @@ class DrmHalClearkeyPluginTest : public DrmHalClearkeyFactoryTest {
     virtual void SetUp() override {
         // Create factories
         DrmHalClearkeyFactoryTest::SetUp();
+
+        if (!correspondsToThisTest) {
+            GTEST_SKIP() << "Cannot test clearkey features on non-clearkey DRM modules";
+        }
 
         ASSERT_NE(nullptr, drmFactory.get());
         hidl_string packageName("android.hardware.drm.test");
@@ -277,8 +296,6 @@ class DrmHalClearkeyPluginTest : public DrmHalClearkeyFactoryTest {
         ASSERT_OK(res);
     }
 
-    virtual void TearDown() override {}
-
     SessionId openSession();
     void closeSession(const SessionId& sessionId);
     hidl_vec<uint8_t> loadKeys(const SessionId& sessionId, const KeyType& type);
@@ -298,7 +315,7 @@ class DrmHalClearkeyPluginTest : public DrmHalClearkeyFactoryTest {
  * the clearkey plugin doesn't support provisioning, it is
  * expected to return Status::ERROR_DRM_CANNOT_HANDLE.
  */
-TEST_F(DrmHalClearkeyPluginTest, GetProvisionRequest) {
+TEST_P(DrmHalClearkeyPluginTest, GetProvisionRequest) {
     hidl_string certificateType;
     hidl_string certificateAuthority;
     auto res = drmPlugin->getProvisionRequest(
@@ -314,7 +331,7 @@ TEST_F(DrmHalClearkeyPluginTest, GetProvisionRequest) {
  * The DRM HAL should return BAD_VALUE if an empty provisioning
  * response is provided.
  */
-TEST_F(DrmHalClearkeyPluginTest, ProvideEmptyProvisionResponse) {
+TEST_P(DrmHalClearkeyPluginTest, ProvideEmptyProvisionResponse) {
     hidl_vec<uint8_t> response;
     auto res = drmPlugin->provideProvisionResponse(
             response, [&](Status status, const hidl_vec<uint8_t>&,
@@ -412,7 +429,7 @@ hidl_vec<uint8_t> DrmHalClearkeyPluginTest::loadKeys(
 /**
  * Test that a session can be opened and closed
  */
-TEST_F(DrmHalClearkeyPluginTest, OpenCloseSession) {
+TEST_P(DrmHalClearkeyPluginTest, OpenCloseSession) {
     auto sessionId = openSession();
     closeSession(sessionId);
 }
@@ -421,7 +438,7 @@ TEST_F(DrmHalClearkeyPluginTest, OpenCloseSession) {
  * Test that attempting to close an invalid (empty) sessionId
  * is prohibited with the documented error code.
  */
-TEST_F(DrmHalClearkeyPluginTest, CloseInvalidSession) {
+TEST_P(DrmHalClearkeyPluginTest, CloseInvalidSession) {
     SessionId invalidSessionId;
     Status result = drmPlugin->closeSession(invalidSessionId);
     EXPECT_EQ(Status::BAD_VALUE, result);
@@ -431,7 +448,7 @@ TEST_F(DrmHalClearkeyPluginTest, CloseInvalidSession) {
  * Test that attempting to close a session that is already closed
  * is prohibited with the documented error code.
  */
-TEST_F(DrmHalClearkeyPluginTest, CloseClosedSession) {
+TEST_P(DrmHalClearkeyPluginTest, CloseClosedSession) {
     SessionId sessionId = openSession();
     closeSession(sessionId);
     Status result = drmPlugin->closeSession(sessionId);
@@ -441,7 +458,7 @@ TEST_F(DrmHalClearkeyPluginTest, CloseClosedSession) {
 /**
  * A get key request should fail if no sessionId is provided
  */
-TEST_F(DrmHalClearkeyPluginTest, GetKeyRequestNoSession) {
+TEST_P(DrmHalClearkeyPluginTest, GetKeyRequestNoSession) {
     SessionId invalidSessionId;
     hidl_vec<uint8_t> initData;
     hidl_string mimeType = "video/mp4";
@@ -459,7 +476,7 @@ TEST_F(DrmHalClearkeyPluginTest, GetKeyRequestNoSession) {
  * Test that the plugin returns the expected error code in
  * this case.
  */
-TEST_F(DrmHalClearkeyPluginTest, GetKeyRequestOfflineKeyTypeNotSupported) {
+TEST_P(DrmHalClearkeyPluginTest, GetKeyRequestOfflineKeyTypeNotSupported) {
     auto sessionId = openSession();
     hidl_vec<uint8_t> initData;
     hidl_string mimeType = "video/mp4";
@@ -481,7 +498,7 @@ TEST_F(DrmHalClearkeyPluginTest, GetKeyRequestOfflineKeyTypeNotSupported) {
  * case of attempting to generate a key request using an
  * invalid mime type
  */
-TEST_F(DrmHalClearkeyPluginTest, GetKeyRequestBadMime) {
+TEST_P(DrmHalClearkeyPluginTest, GetKeyRequestBadMime) {
     auto sessionId = openSession();
     hidl_vec<uint8_t> initData;
     hidl_string mimeType = "video/unknown";
@@ -499,7 +516,7 @@ TEST_F(DrmHalClearkeyPluginTest, GetKeyRequestBadMime) {
 /**
  * Test that a closed sessionID returns SESSION_NOT_OPENED
  */
-TEST_F(DrmHalClearkeyPluginTest, ProvideKeyResponseClosedSession) {
+TEST_P(DrmHalClearkeyPluginTest, ProvideKeyResponseClosedSession) {
     SessionId session = openSession();
     closeSession(session);
 
@@ -517,7 +534,7 @@ TEST_F(DrmHalClearkeyPluginTest, ProvideKeyResponseClosedSession) {
 /**
  * Test that an empty sessionID returns BAD_VALUE
  */
-TEST_F(DrmHalClearkeyPluginTest, ProvideKeyResponseInvalidSessionId) {
+TEST_P(DrmHalClearkeyPluginTest, ProvideKeyResponseInvalidSessionId) {
     SessionId session;
 
     hidl_vec<uint8_t> keyResponse = {0x7b, 0x22, 0x6b, 0x65,
@@ -534,7 +551,7 @@ TEST_F(DrmHalClearkeyPluginTest, ProvideKeyResponseInvalidSessionId) {
 /**
  * Test that an empty key response returns BAD_VALUE
  */
-TEST_F(DrmHalClearkeyPluginTest, ProvideKeyResponseEmptyResponse) {
+TEST_P(DrmHalClearkeyPluginTest, ProvideKeyResponseEmptyResponse) {
     SessionId session = openSession();
     hidl_vec<uint8_t> emptyResponse;
     auto res = drmPlugin->provideKeyResponse(
@@ -550,7 +567,7 @@ TEST_F(DrmHalClearkeyPluginTest, ProvideKeyResponseEmptyResponse) {
 /**
  * Test that a removeKeys on an empty sessionID returns BAD_VALUE
  */
-TEST_F(DrmHalClearkeyPluginTest, RemoveKeysEmptySessionId) {
+TEST_P(DrmHalClearkeyPluginTest, RemoveKeysEmptySessionId) {
     SessionId sessionId;
     Status status = drmPlugin->removeKeys(sessionId);
     EXPECT_TRUE(status == Status::BAD_VALUE);
@@ -559,7 +576,7 @@ TEST_F(DrmHalClearkeyPluginTest, RemoveKeysEmptySessionId) {
 /**
  * Remove keys is not supported for clearkey.
  */
-TEST_F(DrmHalClearkeyPluginTest, RemoveKeysNewSession) {
+TEST_P(DrmHalClearkeyPluginTest, RemoveKeysNewSession) {
     SessionId sessionId = openSession();
     Status status = drmPlugin->removeKeys(sessionId);
     // Clearkey plugin doesn't support remove keys
@@ -571,7 +588,7 @@ TEST_F(DrmHalClearkeyPluginTest, RemoveKeysNewSession) {
  * Test that ClearKey cannot handle key restoring.
  * Expected message is Status::ERROR_DRM_CANNOT_HANDLE.
  */
-TEST_F(DrmHalClearkeyPluginTest, RestoreKeysCannotHandle) {
+TEST_P(DrmHalClearkeyPluginTest, RestoreKeysCannotHandle) {
     hidl_vec<uint8_t> keySetId = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1};
     SessionId sessionId = openSession();
     Status status = drmPlugin->restoreKeys(sessionId, keySetId);
@@ -583,7 +600,7 @@ TEST_F(DrmHalClearkeyPluginTest, RestoreKeysCannotHandle) {
  * Test that restoreKeys fails with a null key set ID.
  * Error message is expected to be Status::BAD_VALUE.
  */
-TEST_F(DrmHalClearkeyPluginTest, RestoreKeysNull) {
+TEST_P(DrmHalClearkeyPluginTest, RestoreKeysNull) {
     SessionId sessionId = openSession();
     hidl_vec<uint8_t> nullKeySetId;
     Status status = drmPlugin->restoreKeys(sessionId, nullKeySetId);
@@ -595,7 +612,7 @@ TEST_F(DrmHalClearkeyPluginTest, RestoreKeysNull) {
  * Test that the clearkey plugin doesn't support getting
  * secure stops.
  */
-TEST_F(DrmHalClearkeyPluginTest, GetSecureStops) {
+TEST_P(DrmHalClearkeyPluginTest, GetSecureStops) {
     auto res = drmPlugin->getSecureStops(
             [&](Status status, const hidl_vec<SecureStop>&) {
                 // Clearkey plugin doesn't support secure stops
@@ -608,7 +625,7 @@ TEST_F(DrmHalClearkeyPluginTest, GetSecureStops) {
  * Test that the clearkey plugin returns BAD_VALUE if
  * an empty ssid is provided.
  */
-TEST_F(DrmHalClearkeyPluginTest, GetSecureStopEmptySSID) {
+TEST_P(DrmHalClearkeyPluginTest, GetSecureStopEmptySSID) {
     SecureStopId ssid;
     auto res = drmPlugin->getSecureStop(
             ssid, [&](Status status, const SecureStop&) {
@@ -621,7 +638,7 @@ TEST_F(DrmHalClearkeyPluginTest, GetSecureStopEmptySSID) {
  * Test that releasing all secure stops isn't handled by
  * clearkey.
  */
-TEST_F(DrmHalClearkeyPluginTest, ReleaseAllSecureStops) {
+TEST_P(DrmHalClearkeyPluginTest, ReleaseAllSecureStops) {
     EXPECT_EQ(Status::ERROR_DRM_CANNOT_HANDLE,
               drmPlugin->releaseAllSecureStops());
 }
@@ -630,7 +647,7 @@ TEST_F(DrmHalClearkeyPluginTest, ReleaseAllSecureStops) {
  * Test that releasing a specific secure stop with an empty
  * SSID returns BAD_VALUE.
  */
-TEST_F(DrmHalClearkeyPluginTest, ReleaseSecureStopEmptySSID) {
+TEST_P(DrmHalClearkeyPluginTest, ReleaseSecureStopEmptySSID) {
     SecureStopId ssid;
     Status status = drmPlugin->releaseSecureStop(ssid);
     EXPECT_EQ(Status::BAD_VALUE, status);
@@ -641,7 +658,7 @@ TEST_F(DrmHalClearkeyPluginTest, ReleaseSecureStopEmptySSID) {
  * defined in the MediaDrm API are supported by
  * the plugin.
  */
-TEST_F(DrmHalClearkeyPluginTest, GetVendorProperty) {
+TEST_P(DrmHalClearkeyPluginTest, GetVendorProperty) {
     auto res = drmPlugin->getPropertyString(
             "vendor", [&](Status status, const hidl_string& value) {
                 EXPECT_EQ(Status::OK, status);
@@ -650,7 +667,7 @@ TEST_F(DrmHalClearkeyPluginTest, GetVendorProperty) {
     EXPECT_OK(res);
 }
 
-TEST_F(DrmHalClearkeyPluginTest, GetVersionProperty) {
+TEST_P(DrmHalClearkeyPluginTest, GetVersionProperty) {
     auto res = drmPlugin->getPropertyString(
             "version", [&](Status status, const hidl_string& value) {
                 EXPECT_EQ(Status::OK, status);
@@ -659,7 +676,7 @@ TEST_F(DrmHalClearkeyPluginTest, GetVersionProperty) {
     EXPECT_OK(res);
 }
 
-TEST_F(DrmHalClearkeyPluginTest, GetDescriptionProperty) {
+TEST_P(DrmHalClearkeyPluginTest, GetDescriptionProperty) {
     auto res = drmPlugin->getPropertyString(
             "description", [&](Status status, const hidl_string& value) {
                 EXPECT_EQ(Status::OK, status);
@@ -668,7 +685,7 @@ TEST_F(DrmHalClearkeyPluginTest, GetDescriptionProperty) {
     EXPECT_OK(res);
 }
 
-TEST_F(DrmHalClearkeyPluginTest, GetAlgorithmsProperty) {
+TEST_P(DrmHalClearkeyPluginTest, GetAlgorithmsProperty) {
     auto res = drmPlugin->getPropertyString(
             "algorithms", [&](Status status, const hidl_string& value) {
                 EXPECT_EQ(Status::OK, status);
@@ -681,7 +698,7 @@ TEST_F(DrmHalClearkeyPluginTest, GetAlgorithmsProperty) {
  * Test that attempting to read invalid string and byte array
  * properties returns the documented error code.
  */
-TEST_F(DrmHalClearkeyPluginTest, GetInvalidStringProperty) {
+TEST_P(DrmHalClearkeyPluginTest, GetInvalidStringProperty) {
     auto res = drmPlugin->getPropertyString(
             "invalid", [&](Status status, const hidl_string&) {
                 EXPECT_EQ(Status::ERROR_DRM_CANNOT_HANDLE, status);
@@ -689,7 +706,7 @@ TEST_F(DrmHalClearkeyPluginTest, GetInvalidStringProperty) {
     EXPECT_OK(res);
 }
 
-TEST_F(DrmHalClearkeyPluginTest, GetByteArrayPropertyNotSupported) {
+TEST_P(DrmHalClearkeyPluginTest, GetByteArrayPropertyNotSupported) {
     auto res = drmPlugin->getPropertyByteArray(
             "deviceUniqueId", [&](Status status, const hidl_vec<uint8_t>&) {
                 EXPECT_EQ(Status::ERROR_DRM_CANNOT_HANDLE, status);
@@ -701,12 +718,12 @@ TEST_F(DrmHalClearkeyPluginTest, GetByteArrayPropertyNotSupported) {
  * Clearkey doesn't support setting string or byte array properties,
  * particularly an undefined one.
  */
-TEST_F(DrmHalClearkeyPluginTest, SetStringPropertyNotSupported) {
+TEST_P(DrmHalClearkeyPluginTest, SetStringPropertyNotSupported) {
     Status status = drmPlugin->setPropertyString("property", "value");
     EXPECT_EQ(Status::ERROR_DRM_CANNOT_HANDLE, status);
 }
 
-TEST_F(DrmHalClearkeyPluginTest, SetByteArrayPropertyNotSupported) {
+TEST_P(DrmHalClearkeyPluginTest, SetByteArrayPropertyNotSupported) {
     hidl_vec<uint8_t> value;
     Status status = drmPlugin->setPropertyByteArray("property", value);
     EXPECT_EQ(Status::ERROR_DRM_CANNOT_HANDLE, status);
@@ -715,7 +732,7 @@ TEST_F(DrmHalClearkeyPluginTest, SetByteArrayPropertyNotSupported) {
 /**
  * Clearkey doesn't support setting cipher algorithms, verify it
  */
-TEST_F(DrmHalClearkeyPluginTest, SetCipherAlgorithmNotSupported) {
+TEST_P(DrmHalClearkeyPluginTest, SetCipherAlgorithmNotSupported) {
     SessionId session = openSession();
     hidl_string algorithm = "AES/CBC/NoPadding";
     Status status = drmPlugin->setCipherAlgorithm(session, algorithm);
@@ -726,7 +743,7 @@ TEST_F(DrmHalClearkeyPluginTest, SetCipherAlgorithmNotSupported) {
 /**
  * Setting an empty algorithm should return BAD_VALUE
  */
-TEST_F(DrmHalClearkeyPluginTest, SetCipherEmptyAlgorithm) {
+TEST_P(DrmHalClearkeyPluginTest, SetCipherEmptyAlgorithm) {
     SessionId session = openSession();
     hidl_string algorithm;
     Status status = drmPlugin->setCipherAlgorithm(session, algorithm);
@@ -737,7 +754,7 @@ TEST_F(DrmHalClearkeyPluginTest, SetCipherEmptyAlgorithm) {
 /**
  * Setting a cipher algorithm with no session returns BAD_VALUE
  */
-TEST_F(DrmHalClearkeyPluginTest, SetCipherAlgorithmNoSession) {
+TEST_P(DrmHalClearkeyPluginTest, SetCipherAlgorithmNoSession) {
     SessionId session;
     hidl_string algorithm = "AES/CBC/NoPadding";
     Status status = drmPlugin->setCipherAlgorithm(session, algorithm);
@@ -747,7 +764,7 @@ TEST_F(DrmHalClearkeyPluginTest, SetCipherAlgorithmNoSession) {
 /**
  * Clearkey doesn't support setting mac algorithms, verify it
  */
-TEST_F(DrmHalClearkeyPluginTest, SetMacAlgorithmNotSupported) {
+TEST_P(DrmHalClearkeyPluginTest, SetMacAlgorithmNotSupported) {
     SessionId session = openSession();
     hidl_string algorithm = "HmacSHA256";
     Status status = drmPlugin->setMacAlgorithm(session, algorithm);
@@ -758,7 +775,7 @@ TEST_F(DrmHalClearkeyPluginTest, SetMacAlgorithmNotSupported) {
 /**
  * Setting an empty algorithm should return BAD_VALUE
  */
-TEST_F(DrmHalClearkeyPluginTest, SetMacEmptyAlgorithm) {
+TEST_P(DrmHalClearkeyPluginTest, SetMacEmptyAlgorithm) {
     SessionId session = openSession();
     hidl_string algorithm;
     Status status = drmPlugin->setMacAlgorithm(session, algorithm);
@@ -769,7 +786,7 @@ TEST_F(DrmHalClearkeyPluginTest, SetMacEmptyAlgorithm) {
 /**
  * Setting a mac algorithm with no session should return BAD_VALUE
  */
-TEST_F(DrmHalClearkeyPluginTest, SetMacAlgorithmNoSession) {
+TEST_P(DrmHalClearkeyPluginTest, SetMacAlgorithmNoSession) {
     SessionId session;
     hidl_string algorithm = "HmacSHA256";
     Status status = drmPlugin->setMacAlgorithm(session, algorithm);
@@ -786,7 +803,7 @@ TEST_F(DrmHalClearkeyPluginTest, SetMacAlgorithmNoSession) {
  *
  * Clearkey doesn't support generic encrypt/decrypt/sign/verify.
  */
-TEST_F(DrmHalClearkeyPluginTest, GenericEncryptNotSupported) {
+TEST_P(DrmHalClearkeyPluginTest, GenericEncryptNotSupported) {
     SessionId session = openSession();
 
     hidl_vec<uint8_t> keyId = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1};
@@ -801,7 +818,7 @@ TEST_F(DrmHalClearkeyPluginTest, GenericEncryptNotSupported) {
     closeSession(session);
 }
 
-TEST_F(DrmHalClearkeyPluginTest, GenericDecryptNotSupported) {
+TEST_P(DrmHalClearkeyPluginTest, GenericDecryptNotSupported) {
     SessionId session = openSession();
     hidl_vec<uint8_t> keyId = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1};
     hidl_vec<uint8_t> input = {1, 2, 3, 4, 5};
@@ -815,7 +832,7 @@ TEST_F(DrmHalClearkeyPluginTest, GenericDecryptNotSupported) {
     closeSession(session);
 }
 
-TEST_F(DrmHalClearkeyPluginTest, GenericSignNotSupported) {
+TEST_P(DrmHalClearkeyPluginTest, GenericSignNotSupported) {
     SessionId session = openSession();
 
     hidl_vec<uint8_t> keyId = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1};
@@ -829,7 +846,7 @@ TEST_F(DrmHalClearkeyPluginTest, GenericSignNotSupported) {
     closeSession(session);
 }
 
-TEST_F(DrmHalClearkeyPluginTest, GenericVerifyNotSupported) {
+TEST_P(DrmHalClearkeyPluginTest, GenericVerifyNotSupported) {
     SessionId session = openSession();
 
     hidl_vec<uint8_t> keyId = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1};
@@ -844,7 +861,7 @@ TEST_F(DrmHalClearkeyPluginTest, GenericVerifyNotSupported) {
     closeSession(session);
 }
 
-TEST_F(DrmHalClearkeyPluginTest, GenericSignRSANotSupported) {
+TEST_P(DrmHalClearkeyPluginTest, GenericSignRSANotSupported) {
     SessionId session = openSession();
     hidl_string algorithm = "RSASSA-PSS-SHA1";
     hidl_vec<uint8_t> message = {1, 2, 3, 4, 5};
@@ -867,14 +884,14 @@ TEST_F(DrmHalClearkeyPluginTest, GenericSignRSANotSupported) {
  * Clearkey doesn't support secure decoder and is expected to
  * return false.
  */
-TEST_F(DrmHalClearkeyPluginTest, RequiresSecureDecoder) {
+TEST_P(DrmHalClearkeyPluginTest, RequiresSecureDecoder) {
     EXPECT_FALSE(cryptoPlugin->requiresSecureDecoderComponent("cenc"));
 }
 
 /**
  * Verify that requiresSecureDecoderComponent handles empty mimetype
  */
-TEST_F(DrmHalClearkeyPluginTest, RequiresSecureDecoderEmptyMimeType) {
+TEST_P(DrmHalClearkeyPluginTest, RequiresSecureDecoderEmptyMimeType) {
     EXPECT_FALSE(cryptoPlugin->requiresSecureDecoderComponent(""));
 }
 
@@ -882,7 +899,7 @@ TEST_F(DrmHalClearkeyPluginTest, RequiresSecureDecoderEmptyMimeType) {
  * Exercise the NotifyResolution API. There is no observable result,
  * just call the method for coverage.
  */
-TEST_F(DrmHalClearkeyPluginTest, NotifyResolution) {
+TEST_P(DrmHalClearkeyPluginTest, NotifyResolution) {
     cryptoPlugin->notifyResolution(1920, 1080);
 }
 
@@ -919,7 +936,7 @@ sp<IMemory> DrmHalClearkeyPluginTest::getDecryptMemory(size_t size,
  * Exercise the setMediaDrmSession method. setMediaDrmSession
  * is used to associate a drm session with a crypto session.
  */
-TEST_F(DrmHalClearkeyPluginTest, SetMediaDrmSession) {
+TEST_P(DrmHalClearkeyPluginTest, SetMediaDrmSession) {
     auto sessionId = openSession();
     EXPECT_TRUE(cryptoPlugin->setMediaDrmSession(sessionId).isOk());
     closeSession(sessionId);
@@ -928,7 +945,7 @@ TEST_F(DrmHalClearkeyPluginTest, SetMediaDrmSession) {
 /**
  * setMediaDrmSession with a closed session id
  */
-TEST_F(DrmHalClearkeyPluginTest, SetMediaDrmSessionClosedSession) {
+TEST_P(DrmHalClearkeyPluginTest, SetMediaDrmSessionClosedSession) {
     auto sessionId = openSession();
     closeSession(sessionId);
     Status status = cryptoPlugin->setMediaDrmSession(sessionId);
@@ -940,7 +957,7 @@ TEST_F(DrmHalClearkeyPluginTest, SetMediaDrmSessionClosedSession) {
  * empty session clears the previously set session and should
  * return OK.
  */
-TEST_F(DrmHalClearkeyPluginTest, SetMediaDrmSessionEmptySession) {
+TEST_P(DrmHalClearkeyPluginTest, SetMediaDrmSessionEmptySession) {
     SessionId sessionId;
     EXPECT_TRUE(cryptoPlugin->setMediaDrmSession(sessionId).isOk());
 }
@@ -951,6 +968,13 @@ TEST_F(DrmHalClearkeyPluginTest, SetMediaDrmSessionEmptySession) {
 
 class DrmHalClearkeyDecryptTest : public DrmHalClearkeyPluginTest {
    public:
+     void SetUp() override {
+         DrmHalClearkeyPluginTest::SetUp();
+
+         if (!correspondsToThisTest) {
+             GTEST_SKIP() << "Cannot test clearkey features on non-clearkey DRM modules";
+         }
+     }
     void fillRandom(const sp<IMemory>& memory);
     hidl_array<uint8_t, 16> toHidlArray(const vector<uint8_t>& vec) {
         EXPECT_EQ(16u, vec.size());
@@ -1109,7 +1133,7 @@ void DrmHalClearkeyDecryptTest::aes_cbc_decrypt(uint8_t* dest, uint8_t* src,
 /**
  * Test query key status
  */
-TEST_F(DrmHalClearkeyDecryptTest, TestQueryKeyStatus) {
+TEST_P(DrmHalClearkeyDecryptTest, TestQueryKeyStatus) {
     auto sessionId = openSession();
     auto res = drmPlugin->queryKeyStatus(
         sessionId, [&](Status status, KeyedVector /* info */) { EXPECT_EQ(Status::OK, status); });
@@ -1121,7 +1145,7 @@ TEST_F(DrmHalClearkeyDecryptTest, TestQueryKeyStatus) {
 /**
  * Positive decrypt test.  "Decrypt" a single clear segment
  */
-TEST_F(DrmHalClearkeyDecryptTest, ClearSegmentTest) {
+TEST_P(DrmHalClearkeyDecryptTest, ClearSegmentTest) {
     vector<uint8_t> iv(AES_BLOCK_SIZE, 0);
     const Pattern noPattern = {0, 0};
     const uint32_t kByteCount = 256;
@@ -1143,7 +1167,7 @@ TEST_F(DrmHalClearkeyDecryptTest, ClearSegmentTest) {
  * Positive decrypt test.  Decrypt a single segment using AES_CTR.
  * Verify data matches.
  */
-TEST_F(DrmHalClearkeyDecryptTest, EncryptedAesCtrSegmentTest) {
+TEST_P(DrmHalClearkeyDecryptTest, EncryptedAesCtrSegmentTest) {
     vector<uint8_t> iv(AES_BLOCK_SIZE, 0);
     const Pattern noPattern = {0, 0};
     const uint32_t kClearBytes = 512;
@@ -1165,7 +1189,7 @@ TEST_F(DrmHalClearkeyDecryptTest, EncryptedAesCtrSegmentTest) {
 /**
  * Negative decrypt test. Decrypt without loading keys.
  */
-TEST_F(DrmHalClearkeyDecryptTest, EncryptedAesCtrSegmentTestNoKeys) {
+TEST_P(DrmHalClearkeyDecryptTest, EncryptedAesCtrSegmentTestNoKeys) {
     vector<uint8_t> iv(AES_BLOCK_SIZE, 0);
     const Pattern noPattern = {0, 0};
     const vector<SubSample> subSamples = {
@@ -1211,7 +1235,7 @@ void DrmHalClearkeyDecryptTest::decryptWithInvalidKeys(
 /**
  * Negative decrypt test. Decrypt with invalid key.
  */
-TEST_F(DrmHalClearkeyDecryptTest, DecryptWithEmptyKey) {
+TEST_P(DrmHalClearkeyDecryptTest, DecryptWithEmptyKey) {
     vector<uint8_t> iv(AES_BLOCK_SIZE, 0);
     const Pattern noPattern = {0, 0};
     const uint32_t kClearBytes = 512;
@@ -1248,7 +1272,7 @@ TEST_F(DrmHalClearkeyDecryptTest, DecryptWithEmptyKey) {
 /**
  * Negative decrypt test. Decrypt with a key exceeds AES_BLOCK_SIZE.
  */
-TEST_F(DrmHalClearkeyDecryptTest, DecryptWithKeyTooLong) {
+TEST_P(DrmHalClearkeyDecryptTest, DecryptWithKeyTooLong) {
     vector<uint8_t> iv(AES_BLOCK_SIZE, 0);
     const Pattern noPattern = {0, 0};
     const uint32_t kClearBytes = 512;
@@ -1275,3 +1299,21 @@ TEST_F(DrmHalClearkeyDecryptTest, DecryptWithKeyTooLong) {
     memcpy(invalidResponse.data(), keyTooLongResponse.c_str(), kKeyTooLongResponseSize);
     decryptWithInvalidKeys(invalidResponse, iv, noPattern, subSamples);
 }
+
+static const std::set<std::string> kAllInstances = [] {
+    std::vector<std::string> drmInstances =
+            android::hardware::getAllHalInstanceNames(IDrmFactory::descriptor);
+    std::vector<std::string> cryptoInstances =
+            android::hardware::getAllHalInstanceNames(ICryptoFactory::descriptor);
+    std::set<std::string> allInstances;
+    allInstances.insert(drmInstances.begin(), drmInstances.end());
+    allInstances.insert(cryptoInstances.begin(), cryptoInstances.end());
+    return allInstances;
+}();
+
+INSTANTIATE_TEST_SUITE_P(PerInstance, DrmHalClearkeyFactoryTest, testing::ValuesIn(kAllInstances),
+                         android::hardware::PrintInstanceNameToString);
+INSTANTIATE_TEST_SUITE_P(PerInstance, DrmHalClearkeyPluginTest, testing::ValuesIn(kAllInstances),
+                         android::hardware::PrintInstanceNameToString);
+INSTANTIATE_TEST_SUITE_P(PerInstance, DrmHalClearkeyDecryptTest, testing::ValuesIn(kAllInstances),
+                         android::hardware::PrintInstanceNameToString);
