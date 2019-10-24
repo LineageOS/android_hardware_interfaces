@@ -1,0 +1,80 @@
+/*
+ * Copyright (C) 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.health@2.1;
+
+import @2.0::IHealth;
+import @2.0::Result;
+import HealthConfig;
+import HealthInfo;
+import IHealthInfoCallback;
+
+/**
+ * IHealth manages health info and posts events on registered callbacks.
+ *
+ * An implementation of @2.1::IHealth must be able to handle both
+ * @2.0::IHealthInfoCallback and @2.1::IHealthInfoCallback.
+ * - When registerCallback() is called, an implementation must cast the callback
+ * to @2.1::IHealthInfoCallback.
+ *   - If the cast is successful, when a health info broadcast is sent, the
+ *     implementation must call
+ *     @2.1::IHealthInfoCallback.healthInfoChanged_2_1(). All fields introduced
+ *     in 2.1 must be set appropriately. The implementation must not call
+ *     @2.0::IHealthInfoCallback.healthInfoChanged().
+ *   - If the cast is unsuccessful, the implementation must call
+ *     @2.0::IHealthInfoCallback.healthInfoChanged().
+ * - When unregisterCallback() is called, from then on, updates must not be sent
+ *   through either healthInfoChanged_2_1() or healthInfoChanged().
+ *
+ * Passthrough implementations are not required to send health info to all
+ * callbacks periodically, but they must do so when update() is called.
+ * Binderized implementations must send health info to all callbacks
+ * periodically. The intervals between two notifications must be retrieved from
+ * the passthrough implementation through the getHealthConfig() function.
+ */
+interface IHealth extends @2.0::IHealth {
+    /**
+     * Get configuration of this HAL.
+     *
+     * @return result SUCCESS if successful,
+     *                NOT_SUPPORTED if this API is not supported,
+     *                UNKNOWN for other errors.
+     * @return config HAL configuration, to be ignored if result is not
+     *                SUCCESS.
+     */
+    getHealthConfig() generates (Result result, HealthConfig config);
+
+    /**
+     * Get Health Information.
+     *
+     * @return result SUCCESS if successful,
+     *                NOT_SUPPORTED if this API is not supported,
+     *                UNKNOWN for other errors.
+     * @return value  Health information, to be ignored if result is not
+     *                SUCCESS.
+     */
+    getHealthInfo_2_1() generates (Result result, @2.1::HealthInfo value);
+
+    /**
+     * Return whether the screen should be kept on in charger mode.
+     *
+     * @return result SUCCESS if successful,
+     *                NOT_SUPPORTED if this API is not supported,
+     *                UNKNOWN for other errors.
+     * @return value whether screen should be kept on.
+     */
+    shouldKeepScreenOn() generates (Result result, bool value);
+};
