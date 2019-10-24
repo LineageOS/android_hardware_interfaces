@@ -1,0 +1,36 @@
+/*
+ * Copyright (C) 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.health@2.1;
+
+import @2.0::IHealthInfoCallback;
+
+/**
+ * IHealthInfoCallback is the updated callback interface to
+ * {@link IHealth.registerCallback}.
+ *
+ * A @2.1::IHealthInfoCallback must implement healthInfoChanged_2_1(). The
+ * inherited healthInfoChanged() function is never called when the HAL
+ * implementation post events. See documentation on @2.1::IHealth for details.
+ */
+interface IHealthInfoCallback extends @2.0::IHealthInfoCallback {
+    /**
+     * An implementation of IHealth must call healthInfoChanged on all
+     * registered callbacks after health info changes.
+     * @param info the updated HealthInfo
+     */
+    oneway healthInfoChanged_2_1(HealthInfo info);
+};
