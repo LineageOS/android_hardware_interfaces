@@ -35,11 +35,14 @@ namespace vts {
 
 using mapper::V2_1::IMapper;
 using renderengine::DisplaySettings;
+using renderengine::RenderEngineCreationArgs;
 using vts::Gralloc;
 
 class TestRenderEngine {
   public:
-    TestRenderEngine(common::V1_1::PixelFormat hwcFormat, uint32_t renderEngineFeatures);
+    static constexpr uint32_t sMaxFrameBufferAcquireBuffers = 2;
+
+    TestRenderEngine(const RenderEngineCreationArgs& args);
     ~TestRenderEngine() = default;
 
     void setRenderLayers(std::vector<std::shared_ptr<TestLayer>> layers);
@@ -51,7 +54,6 @@ class TestRenderEngine {
     void checkColorBuffer(std::vector<V2_2::IComposerClient::Color>& expectedColors);
 
   private:
-    static constexpr uint32_t mMaxFrameBufferAcquireBuffers = 2;
     common::V1_1::PixelFormat mFormat;
     std::vector<renderengine::LayerSettings> mCompositionLayers;
     std::unique_ptr<renderengine::RenderEngine> mRenderEngine;

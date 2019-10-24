@@ -103,9 +103,14 @@ class GraphicsCompositionTest : public ::testing::VtsHalHidlTargetTestBase {
 
         ASSERT_NO_FATAL_FAILURE(
                 mTestRenderEngine = std::unique_ptr<TestRenderEngine>(new TestRenderEngine(
-                        PixelFormat::RGBA_8888,
-                        renderengine::RenderEngine::USE_COLOR_MANAGEMENT |
-                                renderengine::RenderEngine::USE_HIGH_PRIORITY_CONTEXT)));
+                        renderengine::RenderEngineCreationArgs::Builder()
+                            .setPixelFormat(static_cast<int>(ui::PixelFormat::RGBA_8888))
+                            .setImageCacheSize(TestRenderEngine::sMaxFrameBufferAcquireBuffers)
+                            .setUseColorManagerment(true)
+                            .setEnableProtectedContext(false)
+                            .setPrecacheToneMapperShaderOnly(false)
+                            .setContextPriority(renderengine::RenderEngine::ContextPriority::HIGH)
+                            .build())));
 
         renderengine::DisplaySettings clientCompositionDisplay;
         clientCompositionDisplay.physicalDisplay = Rect(mDisplayWidth, mDisplayHeight);
