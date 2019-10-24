@@ -1,0 +1,109 @@
+/*
+ * Copyright (C) 2017 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.health@2.1;
+
+import @1.0::HealthConfig;
+import @2.0::HealthInfo;
+
+/**
+ * Battery capacity level. This enum provides additional information along side
+ * with the battery capacity.
+ * Clients of this HAL must use this value before inferring it from the
+ * battery capacity.
+ */
+enum BatteryCapacityLevel : int32_t {
+    /**
+     * Battery capacity level is unknown.
+     * Battery capacity level must be set to this value if and only if battery
+     * is not present.
+     */
+    UNKNOWN = 0,
+    /**
+     * Battery is at critical level. The Android framework must schedule a
+     * shutdown when it sees this value from the HAL.
+     */
+    CRITICAL,
+    /**
+     * Battery is low. The Android framework may limit the performance of
+     * the device when it sees this value from the HAL.
+     */
+    LOW,
+    /**
+     * Battery level is normal.
+     */
+    NORMAL,
+    /**
+     * Battery level is high.
+     */
+    HIGH,
+    /**
+     * Battery is full. It must be set to FULL if and only if battery level is
+     * 100.
+     */
+    FULL,
+};
+
+/**
+ * Combined Health Information.
+ */
+struct HealthInfo {
+    /**
+     * V2.0 HealthInfo.
+     * If a member is unsupported, it is filled with:
+     * - 0 (for integers);
+     * - false (for booleans);
+     * - empty string (for strings);
+     * - UNKNOWN (for BatteryStatus and BatteryHealth).
+     */
+    @2.0::HealthInfo legacy;
+
+    /**
+     * Battery capacity level. See BatteryCapacityLevel for more details.
+     */
+    BatteryCapacityLevel batteryCapacityLevel;
+
+    /**
+     * Estimated time to fully charge the device (in seconds).
+     * Value must be 0 if and only if batteryCapacityLevel is FULL or UNKNOWN.
+     * Otherwise, value must be positive.
+     */
+    int64_t batteryChargeTimeToFullNowSeconds;
+
+    /**
+     * Estimated battery full capacity (in microamp hours, uAh).
+     * Value must be 0 if unknown.
+     * Value must be positive if known, and must be between [50%, 120%] of
+     * batteryFullCharge (the designed capacity).
+     */
+    int32_t batteryFullCapacityUah;
+};
+
+/**
+ * Combined configuration of a health HAL implementation.
+ */
+struct HealthConfig {
+    /**
+     * 1.0 version of health config.
+     */
+    @1.0::HealthConfig battery;
+
+    /**
+     * Minimum battery level for charger to reboot into Android (in percent).
+     * Value should be in range [0, 100].
+     */
+    int32_t bootMinCap;
+};
