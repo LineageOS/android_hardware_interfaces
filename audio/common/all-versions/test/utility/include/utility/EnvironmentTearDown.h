@@ -20,9 +20,6 @@
 #include <functional>
 #include <list>
 
-#include <VtsHalHidlTargetTestEnvBase.h>
-#include <gtest/gtest.h>
-
 namespace android {
 namespace hardware {
 namespace audio {
@@ -34,18 +31,20 @@ namespace utility {
  * Avoid destroying static objects after main return.
  * Post main return destruction leads to incorrect gtest timing measurements as
  * well as harder debuging if anything goes wrong during destruction. */
-class Environment : public ::testing::VtsHalHidlTargetTestEnvBase {
-   public:
+class EnvironmentTearDown {
+  public:
     using TearDownFunc = std::function<void()>;
     void registerTearDown(TearDownFunc&& tearDown) { tearDowns.push_front(std::move(tearDown)); }
 
-   private:
-    void HidlTearDown() override {
+  protected:
+    void executeAllTearDowns() {
         // Call the tear downs in reverse order of insertion
         for (auto& tearDown : tearDowns) {
             tearDown();
         }
     }
+
+  private:
     std::list<TearDownFunc> tearDowns;
 };
 
