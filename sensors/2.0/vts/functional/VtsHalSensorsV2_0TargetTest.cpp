@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "sensors_hidl_hal_test"
-
 #include "SensorsHidlEnvironmentV2_0.h"
 #include "sensors-vts-utils/SensorsHidlTestBase.h"
 #include "sensors-vts-utils/SensorsTestSharedMemory.h"
@@ -40,6 +38,10 @@ using ::android::hardware::sensors::V1_0::SensorsEventFormatOffset;
 using ::android::hardware::sensors::V1_0::SensorStatus;
 using ::android::hardware::sensors::V1_0::SharedMemType;
 using ::android::hardware::sensors::V1_0::Vec3;
+using std::chrono::duration_cast;
+using std::chrono::microseconds;
+using std::chrono::milliseconds;
+using std::chrono::nanoseconds;
 
 constexpr size_t kEventSize = static_cast<size_t>(SensorsEventFormatOffset::TOTAL_LENGTH);
 
@@ -69,9 +71,9 @@ class EventCallback : public IEventCallback {
     }
 
     void waitForFlushEvents(const std::vector<SensorInfo>& sensorsToWaitFor,
-                            int32_t numCallsToFlush, int64_t timeoutMs) {
+                            int32_t numCallsToFlush, milliseconds timeout) {
         std::unique_lock<std::recursive_mutex> lock(mFlushMutex);
-        mFlushCV.wait_for(lock, std::chrono::milliseconds(timeoutMs),
+        mFlushCV.wait_for(lock, timeout,
                           [&] { return flushesReceived(sensorsToWaitFor, numCallsToFlush); });
     }
 
@@ -80,10 +82,9 @@ class EventCallback : public IEventCallback {
         return mEventMap[sensorHandle];
     }
 
-    void waitForEvents(const std::vector<SensorInfo>& sensorsToWaitFor, int32_t timeoutMs) {
+    void waitForEvents(const std::vector<SensorInfo>& sensorsToWaitFor, milliseconds timeout) {
         std::unique_lock<std::recursive_mutex> lock(mEventMutex);
-        mEventCV.wait_for(lock, std::chrono::milliseconds(timeoutMs),
-                          [&] { return eventsReceived(sensorsToWaitFor); });
+        mEventCV.wait_for(lock, timeout, [&] { return eventsReceived(sensorsToWaitFor); });
     }
 
    protected:
@@ -117,7 +118,13 @@ class EventCallback : public IEventCallback {
 // The main test class for SENSORS HIDL HAL.
 
 class SensorsHidlTest : public SensorsHidlTestBase {
-   protected:
+  public:
+    virtual void SetUp() override {
+        // Ensure that we have a valid environment before performing tests
+        ASSERT_NE(getSensors(), nullptr);
+    }
+
+  protected:
     SensorInfo defaultSensorByType(SensorType type) override;
     std::vector<SensorInfo> getSensorsList();
     // implementation wrapper
@@ -169,19 +176,21 @@ class SensorsHidlTest : public SensorsHidlTestBase {
     // Helper functions
     void activateAllSensors(bool enable);
     std::vector<SensorInfo> getNonOneShotSensors();
+    std::vector<SensorInfo> getNonOneShotAndNonSpecialSensors();
     std::vector<SensorInfo> getOneShotSensors();
     std::vector<SensorInfo> getInjectEventSensors();
     int32_t getInvalidSensorHandle();
     bool getDirectChannelSensor(SensorInfo* sensor, SharedMemType* memType, RateLevel* rate);
     void verifyDirectChannel(SharedMemType memType);
-    void verifyRegisterDirectChannel(const SensorInfo& sensor, SharedMemType memType,
-                                     std::shared_ptr<SensorsTestSharedMemory> mem,
-                                     int32_t* directChannelHandle);
+    void verifyRegisterDirectChannel(std::shared_ptr<SensorsTestSharedMemory> mem,
+                                     int32_t* directChannelHandle, bool supportsSharedMemType,
+                                     bool supportsAnyDirectChannel);
     void verifyConfigure(const SensorInfo& sensor, SharedMemType memType,
-                         int32_t directChannelHandle);
-    void verifyUnregisterDirectChannel(const SensorInfo& sensor, SharedMemType memType,
-                                       int32_t directChannelHandle);
+                         int32_t directChannelHandle, bool directChannelSupported);
+    void verifyUnregisterDirectChannel(int32_t directChannelHandle, bool directChannelSupported);
     void checkRateLevel(const SensorInfo& sensor, int32_t directChannelHandle, RateLevel rateLevel);
+    void queryDirectChannelSupport(SharedMemType memType, bool* supportsSharedMemType,
+                                   bool* supportsAnyDirectChannel);
 };
 
 Return<Result> SensorsHidlTest::activate(int32_t sensorHandle, bool enabled) {
@@ -244,6 +253,18 @@ std::vector<SensorInfo> SensorsHidlTest::getNonOneShotSensors() {
     std::vector<SensorInfo> sensors;
     for (const SensorInfo& info : getSensorsList()) {
         if (extractReportMode(info.flags) != SensorFlagBits::ONE_SHOT_MODE) {
+            sensors.push_back(info);
+        }
+    }
+    return sensors;
+}
+
+std::vector<SensorInfo> SensorsHidlTest::getNonOneShotAndNonSpecialSensors() {
+    std::vector<SensorInfo> sensors;
+    for (const SensorInfo& info : getSensorsList()) {
+        SensorFlagBits reportMode = extractReportMode(info.flags);
+        if (reportMode != SensorFlagBits::ONE_SHOT_MODE &&
+            reportMode != SensorFlagBits::SPECIAL_REPORTING_MODE) {
             sensors.push_back(info);
         }
     }
@@ -368,7 +389,7 @@ TEST_F(SensorsHidlTest, InjectSensorEventData) {
     }
 
     // Wait for events to be written back to the Event FMQ
-    callback.waitForEvents(sensors, 1000 /* timeoutMs */);
+    callback.waitForEvents(sensors, milliseconds(1000) /* timeout */);
 
     for (const auto& s : sensors) {
         auto events = callback.getEvents(s.sensorHandle);
@@ -614,6 +635,9 @@ TEST_F(SensorsHidlTest, CallInitializeTwice) {
     std::unique_ptr<SensorsHidlEnvironmentTest> newEnv =
         std::make_unique<SensorsHidlEnvironmentTest>();
     newEnv->HidlSetUp();
+    if (HasFatalFailure()) {
+        return;  // Exit early if setting up the new environment failed
+    }
 
     activateAllSensors(true);
     // Verify that the old environment does not receive any events
@@ -626,8 +650,11 @@ TEST_F(SensorsHidlTest, CallInitializeTwice) {
     newEnv->HidlTearDown();
 
     // Restore the test environment for future tests
-    SensorsHidlEnvironmentV2_0::Instance()->HidlTearDown();
-    SensorsHidlEnvironmentV2_0::Instance()->HidlSetUp();
+    getEnvironment()->HidlTearDown();
+    getEnvironment()->HidlSetUp();
+    if (HasFatalFailure()) {
+        return;  // Exit early if resetting the environment failed
+    }
 
     // Ensure that the original environment is receiving events
     activateAllSensors(true);
@@ -646,8 +673,11 @@ TEST_F(SensorsHidlTest, CleanupConnectionsOnInitialize) {
     // Clear the active sensor handles so they are not disabled during TearDown
     auto handles = mSensorHandles;
     mSensorHandles.clear();
-    getEnvironment()->TearDown();
-    getEnvironment()->SetUp();
+    getEnvironment()->HidlTearDown();
+    getEnvironment()->HidlSetUp();
+    if (HasFatalFailure()) {
+        return;  // Exit early if resetting the environment failed
+    }
 
     // Verify no events are received until sensors are re-activated
     ASSERT_EQ(collectEvents(kCollectionTimeoutUs, kNumEvents, getEnvironment()).size(), 0);
@@ -686,7 +716,7 @@ void SensorsHidlTest::runFlushTest(const std::vector<SensorInfo>& sensors, bool 
     }
 
     // Wait up to one second for the flush events
-    callback.waitForFlushEvents(sensors, flushCalls, 1000 /* timeoutMs */);
+    callback.waitForFlushEvents(sensors, flushCalls, milliseconds(1000) /* timeout */);
 
     // Deactivate all sensors after waiting for flush events so pending flush events are not
     // abandoned by the HAL.
@@ -761,7 +791,12 @@ TEST_F(SensorsHidlTest, Batch) {
     activateAllSensors(false /* enable */);
     for (const SensorInfo& sensor : getSensorsList()) {
         // Call batch on inactive sensor
-        ASSERT_EQ(batch(sensor.sensorHandle, sensor.minDelay, 0 /* maxReportLatencyNs */),
+        // One shot sensors have minDelay set to -1 which is an invalid
+        // parameter. Use 0 instead to avoid errors.
+        int64_t samplingPeriodNs = extractReportMode(sensor.flags) == SensorFlagBits::ONE_SHOT_MODE
+                                           ? 0
+                                           : sensor.minDelay;
+        ASSERT_EQ(batch(sensor.sensorHandle, samplingPeriodNs, 0 /* maxReportLatencyNs */),
                   Result::OK);
 
         // Activate the sensor
@@ -807,17 +842,19 @@ TEST_F(SensorsHidlTest, Activate) {
 }
 
 TEST_F(SensorsHidlTest, NoStaleEvents) {
-    constexpr int64_t kFiveHundredMilliseconds = 500 * 1000;
-    constexpr int64_t kOneSecond = 1000 * 1000;
+    constexpr milliseconds kFiveHundredMs(500);
+    constexpr milliseconds kOneSecond(1000);
 
     // Register the callback to receive sensor events
     EventCallback callback;
     getEnvironment()->registerCallback(&callback);
 
-    const std::vector<SensorInfo> sensors = getSensorsList();
-    int32_t maxMinDelay = 0;
-    for (const SensorInfo& sensor : getSensorsList()) {
-        maxMinDelay = std::max(maxMinDelay, sensor.minDelay);
+    // This test is not valid for one-shot or special-report-mode sensors
+    const std::vector<SensorInfo> sensors = getNonOneShotAndNonSpecialSensors();
+    milliseconds maxMinDelay(0);
+    for (const SensorInfo& sensor : sensors) {
+        milliseconds minDelay = duration_cast<milliseconds>(microseconds(sensor.minDelay));
+        maxMinDelay = milliseconds(std::max(maxMinDelay.count(), minDelay.count()));
     }
 
     // Activate the sensors so that they start generating events
@@ -826,33 +863,46 @@ TEST_F(SensorsHidlTest, NoStaleEvents) {
     // According to the CDD, the first sample must be generated within 400ms + 2 * sample_time
     // and the maximum reporting latency is 100ms + 2 * sample_time. Wait a sufficient amount
     // of time to guarantee that a sample has arrived.
-    callback.waitForEvents(sensors, kFiveHundredMilliseconds + (5 * maxMinDelay));
+    callback.waitForEvents(sensors, kFiveHundredMs + (5 * maxMinDelay));
     activateAllSensors(false);
 
     // Save the last received event for each sensor
     std::map<int32_t, int64_t> lastEventTimestampMap;
     for (const SensorInfo& sensor : sensors) {
-        ASSERT_GE(callback.getEvents(sensor.sensorHandle).size(), 1);
-        lastEventTimestampMap[sensor.sensorHandle] =
-            callback.getEvents(sensor.sensorHandle).back().timestamp;
+        // Some on-change sensors may not report an event without stimulus
+        if (extractReportMode(sensor.flags) != SensorFlagBits::ON_CHANGE_MODE) {
+            ASSERT_GE(callback.getEvents(sensor.sensorHandle).size(), 1);
+        }
+        if (callback.getEvents(sensor.sensorHandle).size() >= 1) {
+            lastEventTimestampMap[sensor.sensorHandle] =
+                    callback.getEvents(sensor.sensorHandle).back().timestamp;
+        }
     }
 
     // Allow some time to pass, reset the callback, then reactivate the sensors
-    usleep(kOneSecond + (5 * maxMinDelay));
+    usleep(duration_cast<microseconds>(kOneSecond + (5 * maxMinDelay)).count());
     callback.reset();
     activateAllSensors(true);
-    callback.waitForEvents(sensors, kFiveHundredMilliseconds + (5 * maxMinDelay));
+    callback.waitForEvents(sensors, kFiveHundredMs + (5 * maxMinDelay));
     activateAllSensors(false);
 
     for (const SensorInfo& sensor : sensors) {
+        // Skip sensors that did not previously report an event
+        if (lastEventTimestampMap.find(sensor.sensorHandle) == lastEventTimestampMap.end()) {
+            continue;
+        }
+        // Skip on-change sensors that do not consistently report an initial event
+        if (callback.getEvents(sensor.sensorHandle).size() < 1) {
+            continue;
+        }
         // Ensure that the first event received is not stale by ensuring that its timestamp is
         // sufficiently different from the previous event
         const Event newEvent = callback.getEvents(sensor.sensorHandle).front();
-        int64_t delta = newEvent.timestamp - lastEventTimestampMap[sensor.sensorHandle];
-        ASSERT_GE(delta, kFiveHundredMilliseconds + (3 * sensor.minDelay));
+        milliseconds delta = duration_cast<milliseconds>(
+                nanoseconds(newEvent.timestamp - lastEventTimestampMap[sensor.sensorHandle]));
+        milliseconds sensorMinDelay = duration_cast<milliseconds>(microseconds(sensor.minDelay));
+        ASSERT_GE(delta, kFiveHundredMs + (3 * sensorMinDelay));
     }
-
-    getEnvironment()->unregisterCallback();
 }
 
 void SensorsHidlTest::checkRateLevel(const SensorInfo& sensor, int32_t directChannelHandle,
@@ -861,21 +911,43 @@ void SensorsHidlTest::checkRateLevel(const SensorInfo& sensor, int32_t directCha
                        [&](Result result, int32_t reportToken) {
                            if (isDirectReportRateSupported(sensor, rateLevel)) {
                                ASSERT_EQ(result, Result::OK);
-                               ASSERT_GT(reportToken, 0);
+                               if (rateLevel != RateLevel::STOP) {
+                                   ASSERT_GT(reportToken, 0);
+                               }
                            } else {
                                ASSERT_EQ(result, Result::BAD_VALUE);
                            }
                        });
 }
 
-void SensorsHidlTest::verifyRegisterDirectChannel(const SensorInfo& sensor, SharedMemType memType,
-                                                  std::shared_ptr<SensorsTestSharedMemory> mem,
-                                                  int32_t* directChannelHandle) {
+void SensorsHidlTest::queryDirectChannelSupport(SharedMemType memType, bool* supportsSharedMemType,
+                                                bool* supportsAnyDirectChannel) {
+    *supportsSharedMemType = false;
+    *supportsAnyDirectChannel = false;
+    for (const SensorInfo& curSensor : getSensorsList()) {
+        if (isDirectChannelTypeSupported(curSensor, memType)) {
+            *supportsSharedMemType = true;
+        }
+        if (isDirectChannelTypeSupported(curSensor, SharedMemType::ASHMEM) ||
+            isDirectChannelTypeSupported(curSensor, SharedMemType::GRALLOC)) {
+            *supportsAnyDirectChannel = true;
+        }
+
+        if (*supportsSharedMemType && *supportsAnyDirectChannel) {
+            break;
+        }
+    }
+}
+
+void SensorsHidlTest::verifyRegisterDirectChannel(std::shared_ptr<SensorsTestSharedMemory> mem,
+                                                  int32_t* directChannelHandle,
+                                                  bool supportsSharedMemType,
+                                                  bool supportsAnyDirectChannel) {
     char* buffer = mem->getBuffer();
     memset(buffer, 0xff, mem->getSize());
 
     registerDirectChannel(mem->getSharedMemInfo(), [&](Result result, int32_t channelHandle) {
-        if (isDirectChannelTypeSupported(sensor, memType)) {
+        if (supportsSharedMemType) {
             ASSERT_EQ(result, Result::OK);
             ASSERT_GT(channelHandle, 0);
 
@@ -884,7 +956,9 @@ void SensorsHidlTest::verifyRegisterDirectChannel(const SensorInfo& sensor, Shar
                 ASSERT_EQ(buffer[i], 0x00);
             }
         } else {
-            ASSERT_EQ(result, Result::INVALID_OPERATION);
+            Result expectedResult =
+                    supportsAnyDirectChannel ? Result::BAD_VALUE : Result::INVALID_OPERATION;
+            ASSERT_EQ(result, expectedResult);
             ASSERT_EQ(channelHandle, -1);
         }
         *directChannelHandle = channelHandle;
@@ -892,7 +966,7 @@ void SensorsHidlTest::verifyRegisterDirectChannel(const SensorInfo& sensor, Shar
 }
 
 void SensorsHidlTest::verifyConfigure(const SensorInfo& sensor, SharedMemType memType,
-                                      int32_t directChannelHandle) {
+                                      int32_t directChannelHandle, bool supportsAnyDirectChannel) {
     if (isDirectChannelTypeSupported(sensor, memType)) {
         // Verify that each rate level is properly supported
         checkRateLevel(sensor, directChannelHandle, RateLevel::NORMAL);
@@ -908,22 +982,22 @@ void SensorsHidlTest::verifyConfigure(const SensorInfo& sensor, SharedMemType me
             -1 /* sensorHandle */, directChannelHandle, RateLevel::STOP,
             [](Result result, int32_t /* reportToken */) { ASSERT_EQ(result, Result::OK); });
     } else {
-        // Direct channel is not supported for this SharedMemType
+        // directChannelHandle will be -1 here, HAL should either reject it as a bad value if there
+        // is some level of direct channel report, otherwise return INVALID_OPERATION if direct
+        // channel is not supported at all
+        Result expectedResult =
+                supportsAnyDirectChannel ? Result::BAD_VALUE : Result::INVALID_OPERATION;
         configDirectReport(sensor.sensorHandle, directChannelHandle, RateLevel::NORMAL,
-                           [](Result result, int32_t /* reportToken */) {
-                               ASSERT_EQ(result, Result::INVALID_OPERATION);
+                           [expectedResult](Result result, int32_t /* reportToken */) {
+                               ASSERT_EQ(result, expectedResult);
                            });
     }
 }
 
-void SensorsHidlTest::verifyUnregisterDirectChannel(const SensorInfo& sensor, SharedMemType memType,
-                                                    int32_t directChannelHandle) {
-    Result result = unregisterDirectChannel(directChannelHandle);
-    if (isDirectChannelTypeSupported(sensor, memType)) {
-        ASSERT_EQ(result, Result::OK);
-    } else {
-        ASSERT_EQ(result, Result::INVALID_OPERATION);
-    }
+void SensorsHidlTest::verifyUnregisterDirectChannel(int32_t directChannelHandle,
+                                                    bool supportsAnyDirectChannel) {
+    Result expectedResult = supportsAnyDirectChannel ? Result::OK : Result::INVALID_OPERATION;
+    ASSERT_EQ(unregisterDirectChannel(directChannelHandle), expectedResult);
 }
 
 void SensorsHidlTest::verifyDirectChannel(SharedMemType memType) {
@@ -934,11 +1008,16 @@ void SensorsHidlTest::verifyDirectChannel(SharedMemType memType) {
         SensorsTestSharedMemory::create(memType, kMemSize));
     ASSERT_NE(mem, nullptr);
 
+    bool supportsSharedMemType;
+    bool supportsAnyDirectChannel;
+    queryDirectChannelSupport(memType, &supportsSharedMemType, &supportsAnyDirectChannel);
+
     for (const SensorInfo& sensor : getSensorsList()) {
         int32_t directChannelHandle = 0;
-        verifyRegisterDirectChannel(sensor, memType, mem, &directChannelHandle);
-        verifyConfigure(sensor, memType, directChannelHandle);
-        verifyUnregisterDirectChannel(sensor, memType, directChannelHandle);
+        verifyRegisterDirectChannel(mem, &directChannelHandle, supportsSharedMemType,
+                                    supportsAnyDirectChannel);
+        verifyConfigure(sensor, memType, directChannelHandle, supportsAnyDirectChannel);
+        verifyUnregisterDirectChannel(directChannelHandle, supportsAnyDirectChannel);
     }
 }
 
@@ -1030,8 +1109,11 @@ TEST_F(SensorsHidlTest, CleanupDirectConnectionOnInitialize) {
     // Clear the active direct connections so they are not stopped during TearDown
     auto handles = mDirectChannelHandles;
     mDirectChannelHandles.clear();
-    getEnvironment()->TearDown();
-    getEnvironment()->SetUp();
+    getEnvironment()->HidlTearDown();
+    getEnvironment()->HidlSetUp();
+    if (HasFatalFailure()) {
+        return;  // Exit early if resetting the environment failed
+    }
 
     // Attempt to configure the direct channel and expect it to fail
     configDirectReport(

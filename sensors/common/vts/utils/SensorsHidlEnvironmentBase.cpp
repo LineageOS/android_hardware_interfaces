@@ -29,7 +29,9 @@ void SensorsHidlEnvironmentBase::HidlSetUp() {
 
 void SensorsHidlEnvironmentBase::HidlTearDown() {
     mStopThread = true;
-    mPollThread.detach();
+    if (mPollThread.joinable()) {
+        mPollThread.detach();
+    }
 }
 
 void SensorsHidlEnvironmentBase::catEvents(std::vector<Event>* output) {

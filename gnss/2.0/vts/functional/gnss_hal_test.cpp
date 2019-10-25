@@ -152,7 +152,7 @@ GnssHalTest::GnssCallback::GnssCallback()
       name_cbq_("name"),
       capabilities_cbq_("capabilities"),
       location_cbq_("location"),
-      sv_info_cbq_("sv_info") {}
+      sv_info_list_cbq_("sv_info") {}
 
 Return<void> GnssHalTest::GnssCallback::gnssSetSystemInfoCb(
         const IGnssCallback_1_0::GnssSystemInfo& info) {
@@ -204,7 +204,7 @@ Return<void> GnssHalTest::GnssCallback::gnssSvStatusCb(const IGnssCallback_1_0::
 Return<void> GnssHalTest::GnssCallback::gnssSvStatusCb_2_0(
         const hidl_vec<IGnssCallback_2_0::GnssSvInfo>& svInfoList) {
     ALOGI("gnssSvStatusCb_2_0. Size = %d", (int)svInfoList.size());
-    sv_info_cbq_.store(svInfoList);
+    sv_info_list_cbq_.store(svInfoList);
     return Void();
 }
 
