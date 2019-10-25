@@ -1,0 +1,4 @@
+service vendor.gnss-2-1 /vendor/bin/hw/android.hardware.gnss@2.1-service
+    class hal
+    user system
+    group system

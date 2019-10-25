@@ -1,0 +1,77 @@
+/*
+ * Copyright (C) 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.gnss@2.1;
+
+import @1.0::IGnssMeasurementCallback;
+import @1.1::IGnssMeasurementCallback;
+import @2.0::IGnssMeasurementCallback;
+import @2.0::ElapsedRealtime;
+
+/** The callback interface to report measurements from the HAL. */
+interface IGnssMeasurementCallback extends @2.0::IGnssMeasurementCallback {
+
+    /**
+     * Extends a GNSS Measurement, adding a basebandCN0DbHz.
+     */
+    struct GnssMeasurement {
+        /**
+         * GNSS measurement information for a single satellite and frequency, as in the 2.0 version
+         * of the HAL.
+         */
+        @2.0::IGnssMeasurementCallback.GnssMeasurement v2_0;
+
+        /**
+         * Baseband Carrier-to-noise density in dB-Hz, typically in the range [0, 63]. It contains
+         * the measured C/N0 value for the signal measured at the baseband.
+         *
+         * This is typically a few dB weaker than the value estimated for C/N0 at the antenna port,
+         * which is reported in cN0DbHz.
+         *
+         * If a signal has separate components (e.g. Pilot and Data channels) and the receiver only
+         * processes one of the components, then the reported basebandCN0DbHz reflects only the
+         * component that is processed.
+         *
+         * This value is mandatory.
+         */
+        double basebandCN0DbHz;
+    };
+
+    /**
+     * Complete set of GNSS Measurement data, same as 2.0 with additional double (i.e.,
+     * basebandCN0DbHz) in measurements.
+     */
+    struct GnssData {
+        /** The full set of satellite measurement observations. */
+        vec<GnssMeasurement> measurements;
+
+        /** The GNSS clock time reading. */
+        GnssClock clock;
+
+        /**
+         * Timing information of the GNSS data synchronized with SystemClock.elapsedRealtimeNanos()
+         * clock.
+         */
+        ElapsedRealtime elapsedRealtime;
+    };
+
+    /**
+     * Callback for the hal to pass a GnssData structure back to the client.
+     *
+     * @param data Contains a reading of GNSS measurements.
+     */
+    gnssMeasurementCb_2_1(GnssData data);
+};
