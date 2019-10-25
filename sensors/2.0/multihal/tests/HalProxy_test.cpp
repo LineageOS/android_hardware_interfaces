@@ -692,6 +692,38 @@ TEST(HalProxyTest, InvalidSensorHandleSubHalIndexProxyCalls) {
     EXPECT_EQ(proxy.injectSensorData(event), Result::BAD_VALUE);
 }
 
+TEST(HalProxyTest, PostedEventSensorHandleSubHalIndexValid) {
+    constexpr size_t kQueueSize = 5;
+    constexpr int32_t subhal1Index = 0;
+    constexpr int32_t subhal2Index = 1;
+    AllSensorsSubHal subhal1;
+    AllSensorsSubHal subhal2;
+    std::vector<ISensorsSubHal*> subHals{&subhal1, &subhal2};
+
+    std::unique_ptr<EventMessageQueue> eventQueue = makeEventFMQ(kQueueSize);
+    std::unique_ptr<WakeupMessageQueue> wakeLockQueue = makeWakelockFMQ(kQueueSize);
+    ::android::sp<ISensorsCallback> callback = new SensorsCallback();
+    HalProxy proxy(subHals);
+    proxy.initialize(*eventQueue->getDesc(), *wakeLockQueue->getDesc(), callback);
+
+    int32_t sensorHandleToPost = 0x00000001;
+    Event eventIn = makeAccelerometerEvent();
+    eventIn.sensorHandle = sensorHandleToPost;
+    std::vector<Event> eventsToPost{eventIn};
+    subhal1.postEvents(eventsToPost, false);
+
+    Event eventOut;
+    EXPECT_TRUE(eventQueue->read(&eventOut));
+
+    EXPECT_EQ(eventOut.sensorHandle, (subhal1Index << 24) | sensorHandleToPost);
+
+    subhal2.postEvents(eventsToPost, false);
+
+    EXPECT_TRUE(eventQueue->read(&eventOut));
+
+    EXPECT_EQ(eventOut.sensorHandle, (subhal2Index << 24) | sensorHandleToPost);
+}
+
 // Helper implementations follow
 void testSensorsListFromProxyAndSubHal(const std::vector<SensorInfo>& proxySensorsList,
                                        const std::vector<SensorInfo>& subHalSensorsList) {
