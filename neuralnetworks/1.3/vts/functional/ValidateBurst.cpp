@@ -40,7 +40,6 @@ using V1_2::FmqRequestDatum;
 using V1_2::FmqResultDatum;
 using V1_2::IBurstCallback;
 using V1_2::IBurstContext;
-using V1_2::IPreparedModel;
 using V1_2::MeasureTiming;
 using V1_2::Timing;
 using ExecutionBurstCallback = ExecutionBurstController::ExecutionBurstCallback;
