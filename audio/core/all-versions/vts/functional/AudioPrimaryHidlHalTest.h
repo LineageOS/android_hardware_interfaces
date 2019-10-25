@@ -24,6 +24,7 @@
 #include <limits>
 #include <list>
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -129,11 +130,31 @@ static AudioHidlTestEnvironment* environment;
 #include "DeviceManager.h"
 
 #if MAJOR_VERSION <= 5
-class HidlTest : public ::testing::VtsHalHidlTargetTestBase {
+using HidlTestBase = ::testing::VtsHalHidlTargetTestBase;
 #elif MAJOR_VERSION >= 6
-class HidlTest : public ::testing::Test {
+using HidlTestBase = ::testing::Test;
 #endif
+
+class HidlTest : public HidlTestBase {
+  public:
+    virtual ~HidlTest() = default;
+
   protected:
+    // Factory and device name getters to be overridden in subclasses.
+    virtual const std::string& getFactoryName() const = 0;
+    virtual const std::string& getDeviceName() const = 0;
+
+    sp<IDevicesFactory> getDevicesFactory() const {
+        return DevicesFactoryManager::getInstance().get(getFactoryName());
+    }
+    sp<IDevice> getDevice() const {
+        return DeviceManager::getInstance().get(getFactoryName(), getDeviceName());
+    }
+    bool resetDevice() const {
+        return DeviceManager::getInstance().reset(getFactoryName(), getDeviceName());
+    }
+    bool areAudioPatchesSupported() { return extract(getDevice()->supportsAudioPatches()); }
+
     // Convenient member to store results
     Result res;
 };
@@ -179,7 +200,25 @@ class PolicyConfig : private PolicyConfigData, public AudioPolicyConfig {
         }
         mStatus = android::deserializeAudioPolicyFile(mFilePath.c_str(), this);
         if (mStatus == OK) {
-            mPrimaryModule = getHwModules().getModuleFromName("primary");
+            mPrimaryModule = getHwModules().getModuleFromName(DeviceManager::kPrimaryDevice);
+            // Available devices are not 'attached' to modules at this moment.
+            // Need to go over available devices and find their module.
+            for (const auto& device : availableOutputDevices) {
+                for (const auto& module : hwModules) {
+                    if (module->getDeclaredDevices().indexOf(device) >= 0) {
+                        mModulesWithDevicesNames.insert(module->getName());
+                        break;
+                    }
+                }
+            }
+            for (const auto& device : availableInputDevices) {
+                for (const auto& module : hwModules) {
+                    if (module->getDeclaredDevices().indexOf(device) >= 0) {
+                        mModulesWithDevicesNames.insert(module->getName());
+                        break;
+                    }
+                }
+            }
         }
     }
     status_t getStatus() const { return mStatus; }
@@ -193,11 +232,15 @@ class PolicyConfig : private PolicyConfigData, public AudioPolicyConfig {
     }
     const std::string& getFilePath() const { return mFilePath; }
     sp<const HwModule> getPrimaryModule() const { return mPrimaryModule; }
+    const std::set<std::string>& getModulesWithDevicesNames() const {
+        return mModulesWithDevicesNames;
+    }
 
    private:
     status_t mStatus = NO_INIT;
     std::string mFilePath;
     sp<HwModule> mPrimaryModule = nullptr;
+    std::set<std::string> mModulesWithDevicesNames;
 };
 
 // Cached policy config after parsing for faster test startup
@@ -210,38 +253,24 @@ const PolicyConfig& getCachedPolicyConfig() {
     return *policyConfig;
 }
 
-class AudioPolicyConfigTest : public HidlTest {
-   public:
+class AudioPolicyConfigTest : public HidlTestBase {
+  public:
     void SetUp() override {
-        ASSERT_NO_FATAL_FAILURE(HidlTest::SetUp());  // setup base
-
+        ASSERT_NO_FATAL_FAILURE(HidlTestBase::SetUp());  // setup base
         auto& policyConfig = getCachedPolicyConfig();
         ASSERT_EQ(0, policyConfig.getStatus()) << policyConfig.getError();
-
-        mPrimaryConfig = policyConfig.getPrimaryModule();
-        ASSERT_TRUE(mPrimaryConfig) << "Could not find primary module in configuration file: "
-                                    << policyConfig.getFilePath();
     }
-
-  protected:
-    sp<IDevicesFactory> getDevicesFactory(const std::string& factoryName) const {
-        return DevicesFactoryManager::getInstance().get(factoryName);
-    }
-
-    sp<IPrimaryDevice> getPrimaryDevice(const std::string& factoryName) const {
-        return DeviceManager::getInstance().getPrimary(factoryName);
-    }
-
-    bool isPrimaryDeviceOptional(const std::string& factoryName) const {
-        // It's OK not to have "primary" device on non-default audio HAL service.
-        return factoryName != kDefaultServiceName;
-    }
-
-    sp<const HwModule> mPrimaryConfig = nullptr;
 };
 
 TEST_F(AudioPolicyConfigTest, LoadAudioPolicyXMLConfiguration) {
     doc::test("Test parsing audio_policy_configuration.xml (called in SetUp)");
+}
+
+TEST_F(AudioPolicyConfigTest, HasPrimaryModule) {
+    auto& policyConfig = getCachedPolicyConfig();
+    ASSERT_TRUE(policyConfig.getPrimaryModule() != nullptr)
+            << "Could not find primary module in configuration file: "
+            << policyConfig.getFilePath();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -253,13 +282,13 @@ using DeviceParameter = std::tuple<std::string, std::string>;
 
 static inline std::string DeviceParameterToString(
         const ::testing::TestParamInfo<DeviceParameter>& info) {
+    const auto& deviceName = std::get<PARAM_DEVICE_NAME>(info.param);
 #if MAJOR_VERSION <= 5
-    return std::get<PARAM_DEVICE_NAME>(info.param);
+    return !deviceName.empty() ? deviceName : std::to_string(info.index);
 #elif MAJOR_VERSION >= 6
     const auto factoryName =
             ::android::hardware::PrintInstanceNameToString(::testing::TestParamInfo<std::string>{
                     std::get<PARAM_FACTORY_NAME>(info.param), info.index});
-    const auto& deviceName = std::get<PARAM_DEVICE_NAME>(info.param);
     return !deviceName.empty() ? factoryName + "_" + deviceName : factoryName;
 #endif
 }
@@ -268,41 +297,48 @@ static inline std::string DeviceParameterToString(
 // For V2..5 the factory is looked up using the instance name passed
 // in the environment, only one factory is returned. This is because the VTS
 // framework will call the test for each instance. Only the primary device of
-// the factory specified in the environment is tested.
-const std::vector<DeviceParameter>& getDeviceParameters() {
+// the default service factory can be tested.
+
+// Return a pair of <"default", "primary"> or <[non-default name], "">
+// This is used to parametrize device factory tests.
+// The device name is used to indicate whether IPrimaryDevice is required.
+const std::vector<DeviceParameter>& getDeviceParametersForFactoryTests() {
     static std::vector<DeviceParameter> parameters = {
-            {environment->getServiceName<IDevicesFactory>(), DeviceManager::kPrimaryDevice}};
+            {environment->getServiceName<IDevicesFactory>(),
+             environment->getServiceName<IDevicesFactory>() == kDefaultServiceName
+                     ? DeviceManager::kPrimaryDevice
+                     : ""}};
     return parameters;
+}
+// Return a pair of <"default", "primary"> or nothing.
+// This is used to parametrize primary device tests.
+const std::vector<DeviceParameter>& getDeviceParametersForPrimaryDeviceTests() {
+    static std::vector<DeviceParameter> parameters =
+            !std::get<PARAM_DEVICE_NAME>(*getDeviceParametersForFactoryTests().begin()).empty()
+                    ? getDeviceParametersForFactoryTests()
+                    : std::vector<DeviceParameter>{};
+    return parameters;
+}
+// In V2..5 device tests must only test the primary device.
+// No device tests are executed for non-primary devices.
+const std::vector<DeviceParameter>& getDeviceParameters() {
+    return getDeviceParametersForPrimaryDeviceTests();
 }
 #elif MAJOR_VERSION >= 6
-// FIXME: Will be replaced with code that analyzes the audio policy config file.
-const std::vector<DeviceParameter>& getDeviceParameters() {
-    static std::vector<DeviceParameter> parameters = [] {
-        const auto instances =
-                ::android::hardware::getAllHalInstanceNames(IDevicesFactory::descriptor);
-        std::vector<DeviceParameter> result;
-        result.reserve(instances.size());
-        for (const auto& instance : instances) {
-            result.emplace_back(instance, DeviceManager::kPrimaryDevice);
-        }
-        return result;
-    }();
-    return parameters;
-}
+// For V6 and above these functions are implemented in 6.0/AudioPrimaryHidlHalTest.cpp
+const std::vector<DeviceParameter>& getDeviceParametersForFactoryTests();
+const std::vector<DeviceParameter>& getDeviceParametersForPrimaryDeviceTests();
+const std::vector<DeviceParameter>& getDeviceParameters();
 #endif
 
-class AudioHidlTestWithDeviceParameter : public AudioPolicyConfigTest,
+class AudioHidlTestWithDeviceParameter : public HidlTest,
                                          public ::testing::WithParamInterface<DeviceParameter> {
   protected:
-    const std::string& getFactoryName() const { return std::get<PARAM_FACTORY_NAME>(GetParam()); }
-    bool isPrimaryDeviceOptional() const {
-        return AudioPolicyConfigTest::isPrimaryDeviceOptional(getFactoryName());
+    const std::string& getFactoryName() const override {
+        return std::get<PARAM_FACTORY_NAME>(GetParam());
     }
-    sp<IDevicesFactory> getDevicesFactory() const {
-        return AudioPolicyConfigTest::getDevicesFactory(getFactoryName());
-    }
-    sp<IPrimaryDevice> getPrimaryDevice() const {
-        return AudioPolicyConfigTest::getPrimaryDevice(getFactoryName());
+    const std::string& getDeviceName() const override {
+        return std::get<PARAM_DEVICE_NAME>(GetParam());
     }
 };
 
@@ -310,7 +346,7 @@ class AudioHidlTestWithDeviceParameter : public AudioPolicyConfigTest,
 ////////////////////// getService audio_devices_factory //////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
-// Test all audio devices
+// Test audio devices factory
 class AudioHidlTest : public AudioHidlTestWithDeviceParameter {
   public:
     void SetUp() override {
@@ -337,53 +373,75 @@ TEST_P(AudioHidlTest, OpenDeviceInvalidParameter) {
     ASSERT_TRUE(device == nullptr);
 }
 
-INSTANTIATE_TEST_CASE_P(AudioHidl, AudioHidlTest, ::testing::ValuesIn(getDeviceParameters()),
+INSTANTIATE_TEST_CASE_P(AudioHidl, AudioHidlTest,
+                        ::testing::ValuesIn(getDeviceParametersForFactoryTests()),
                         &DeviceParameterToString);
+
+//////////////////////////////////////////////////////////////////////////////
+/////////////////////////////// openDevice ///////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+
+// Test all audio devices
+class AudioHidlDeviceTest : public AudioHidlTest {
+  public:
+    void SetUp() override {
+        ASSERT_NO_FATAL_FAILURE(AudioHidlTest::SetUp());  // setup base
+        ASSERT_TRUE(getDevice() != nullptr);
+    }
+};
+
+TEST_P(AudioHidlDeviceTest, OpenDevice) {
+    doc::test("Test openDevice (called during setup)");
+}
+
+TEST_P(AudioHidlDeviceTest, Init) {
+    doc::test("Test that the audio hal initialized correctly");
+    ASSERT_OK(getDevice()->initCheck());
+}
+
+INSTANTIATE_TEST_CASE_P(AudioHidlDevice, AudioHidlDeviceTest,
+                        ::testing::ValuesIn(getDeviceParameters()), &DeviceParameterToString);
 
 //////////////////////////////////////////////////////////////////////////////
 /////////////////////////////// openDevice primary ///////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
 // Test the primary device
-class AudioPrimaryHidlTest : public AudioHidlTest {
-   public:
+class AudioPrimaryHidlTest : public AudioHidlDeviceTest {
+  public:
     void SetUp() override {
-        ASSERT_NO_FATAL_FAILURE(AudioHidlTest::SetUp());  // setup base
-        if (getDevice() == nullptr && isPrimaryDeviceOptional()) {
-            GTEST_SKIP() << "No primary device on this factory";
-        }
+        ASSERT_NO_FATAL_FAILURE(AudioHidlDeviceTest::SetUp());  // setup base
         ASSERT_TRUE(getDevice() != nullptr);
     }
 
-   protected:
-     sp<IPrimaryDevice> getDevice() const { return getPrimaryDevice(); }
+  protected:
+    sp<IPrimaryDevice> getDevice() const {
+        return DeviceManager::getInstance().getPrimary(getFactoryName());
+    }
 };
 
 TEST_P(AudioPrimaryHidlTest, OpenPrimaryDevice) {
-    doc::test("Test the openDevice (called during setup)");
-}
-
-TEST_P(AudioPrimaryHidlTest, Init) {
-    doc::test("Test that the audio primary hal initialized correctly");
-    ASSERT_OK(getDevice()->initCheck());
+    doc::test("Test openPrimaryDevice (called during setup)");
 }
 
 INSTANTIATE_TEST_CASE_P(AudioPrimaryHidl, AudioPrimaryHidlTest,
-                        ::testing::ValuesIn(getDeviceParameters()), &DeviceParameterToString);
+                        ::testing::ValuesIn(getDeviceParametersForPrimaryDeviceTests()),
+                        &DeviceParameterToString);
 
 //////////////////////////////////////////////////////////////////////////////
 ///////////////////// {set,get}{Master,Mic}{Mute,Volume} /////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
-template <class Property>
-class AccessorPrimaryHidlTest : public AudioPrimaryHidlTest {
-   protected:
+template <class Property, class BaseTestClass = AudioHidlDeviceTest>
+class AccessorHidlTest : public BaseTestClass {
+  protected:
     enum Optionality { REQUIRED, OPTIONAL };
     struct Initial {  // Initial property value
         Initial(Property value, Optionality check = REQUIRED) : value(value), check(check) {}
         Property value;
         Optionality check;  // If this initial value should be checked
     };
+    using BaseTestClass::res;
     /** Test a property getter and setter.
      *  The getter and/or the setter may return NOT_SUPPORTED if optionality == OPTIONAL.
      */
@@ -395,7 +453,7 @@ class AccessorPrimaryHidlTest : public AudioPrimaryHidlTest {
                                       optionality == OPTIONAL ? Result::NOT_SUPPORTED : Result::OK};
 
         Property initialValue = expectedInitial.value;
-        ASSERT_OK((getDevice().get()->*getter)(returnIn(res, initialValue)));
+        ASSERT_OK((BaseTestClass::getDevice().get()->*getter)(returnIn(res, initialValue)));
         ASSERT_RESULT(expectedResults, res);
         if (res == Result::OK && expectedInitial.check == REQUIRED) {
             EXPECT_EQ(expectedInitial.value, initialValue);
@@ -406,7 +464,7 @@ class AccessorPrimaryHidlTest : public AudioPrimaryHidlTest {
         for (Property setValue : valuesToTest) {
             SCOPED_TRACE("Test " + propertyName + " getter and setter for " +
                          testing::PrintToString(setValue));
-            auto ret = (getDevice().get()->*setter)(setValue);
+            auto ret = (BaseTestClass::getDevice().get()->*setter)(setValue);
             ASSERT_RESULT(expectedResults, ret);
             if (ret == Result::NOT_SUPPORTED) {
                 doc::partialTest(propertyName + " setter is not supported");
@@ -414,7 +472,7 @@ class AccessorPrimaryHidlTest : public AudioPrimaryHidlTest {
             }
             Property getValue;
             // Make sure the getter returns the same value just set
-            ASSERT_OK((getDevice().get()->*getter)(returnIn(res, getValue)));
+            ASSERT_OK((BaseTestClass::getDevice().get()->*getter)(returnIn(res, getValue)));
             ASSERT_RESULT(expectedResults, res);
             if (res == Result::NOT_SUPPORTED) {
                 doc::partialTest(propertyName + " getter is not supported");
@@ -426,34 +484,40 @@ class AccessorPrimaryHidlTest : public AudioPrimaryHidlTest {
         for (Property invalidValue : invalidValues) {
             SCOPED_TRACE("Try to set " + propertyName + " with the invalid value " +
                          testing::PrintToString(invalidValue));
-            EXPECT_RESULT(invalidArgsOrNotSupported, (getDevice().get()->*setter)(invalidValue));
+            EXPECT_RESULT(invalidArgsOrNotSupported,
+                          (BaseTestClass::getDevice().get()->*setter)(invalidValue));
         }
 
         // Restore initial value
-        EXPECT_RESULT(expectedResults, (getDevice().get()->*setter)(initialValue));
+        EXPECT_RESULT(expectedResults, (BaseTestClass::getDevice().get()->*setter)(initialValue));
     }
 };
 
-using BoolAccessorPrimaryHidlTest = AccessorPrimaryHidlTest<bool>;
+using BoolAccessorHidlTest = AccessorHidlTest<bool>;
+using BoolAccessorPrimaryHidlTest = AccessorHidlTest<bool, AudioPrimaryHidlTest>;
 
-TEST_P(BoolAccessorPrimaryHidlTest, MicMuteTest) {
+TEST_P(BoolAccessorHidlTest, MicMuteTest) {
     doc::test("Check that the mic can be muted and unmuted");
-    testAccessors("mic mute", Initial{false}, {true}, &IDevice::setMicMute, &IDevice::getMicMute);
+    testAccessors<OPTIONAL>("mic mute", Initial{false}, {true}, &IDevice::setMicMute,
+                            &IDevice::getMicMute);
     // TODO: check that the mic is really muted (all sample are 0)
 }
 
-TEST_P(BoolAccessorPrimaryHidlTest, MasterMuteTest) {
+TEST_P(BoolAccessorHidlTest, MasterMuteTest) {
     doc::test("If master mute is supported, try to mute and unmute the master output");
     testAccessors<OPTIONAL>("master mute", Initial{false}, {true}, &IDevice::setMasterMute,
                             &IDevice::getMasterMute);
     // TODO: check that the master volume is really muted
 }
 
-INSTANTIATE_TEST_CASE_P(BoolAccessorPrimaryHidl, BoolAccessorPrimaryHidlTest,
+INSTANTIATE_TEST_CASE_P(BoolAccessorHidl, BoolAccessorHidlTest,
                         ::testing::ValuesIn(getDeviceParameters()), &DeviceParameterToString);
+INSTANTIATE_TEST_CASE_P(BoolAccessorPrimaryHidl, BoolAccessorPrimaryHidlTest,
+                        ::testing::ValuesIn(getDeviceParametersForPrimaryDeviceTests()),
+                        &DeviceParameterToString);
 
-using FloatAccessorPrimaryHidlTest = AccessorPrimaryHidlTest<float>;
-TEST_P(FloatAccessorPrimaryHidlTest, MasterVolumeTest) {
+using FloatAccessorHidlTest = AccessorHidlTest<float>;
+TEST_P(FloatAccessorHidlTest, MasterVolumeTest) {
     doc::test("Test the master volume if supported");
     testAccessors<OPTIONAL>(
         "master volume", Initial{1}, {0, 0.5}, &IDevice::setMasterVolume, &IDevice::getMasterVolume,
@@ -461,28 +525,29 @@ TEST_P(FloatAccessorPrimaryHidlTest, MasterVolumeTest) {
     // TODO: check that the master volume is really changed
 }
 
-INSTANTIATE_TEST_CASE_P(FloatAccessorPrimaryHidl, FloatAccessorPrimaryHidlTest,
+INSTANTIATE_TEST_CASE_P(FloatAccessorHidl, FloatAccessorHidlTest,
                         ::testing::ValuesIn(getDeviceParameters()), &DeviceParameterToString);
 
 //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////// AudioPatches ////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
-class AudioPatchPrimaryHidlTest : public AudioPrimaryHidlTest {
-   protected:
-     bool areAudioPatchesSupported() { return extract(getDevice()->supportsAudioPatches()); }
+class AudioPatchHidlTest : public AudioHidlDeviceTest {
+  public:
+    void SetUp() override {
+        ASSERT_NO_FATAL_FAILURE(AudioHidlDeviceTest::SetUp());  // setup base
+        if (!areAudioPatchesSupported()) {
+            GTEST_SKIP() << "Audio patches are not supported";
+        }
+    }
 };
 
-TEST_P(AudioPatchPrimaryHidlTest, AudioPatches) {
+TEST_P(AudioPatchHidlTest, AudioPatches) {
     doc::test("Test if audio patches are supported");
-    if (!areAudioPatchesSupported()) {
-        doc::partialTest("Audio patches are not supported");
-        return;
-    }
     // TODO: test audio patches
 }
 
-INSTANTIATE_TEST_CASE_P(AudioPatchPrimaryHidl, AudioPatchPrimaryHidlTest,
+INSTANTIATE_TEST_CASE_P(AudioPatchHidl, AudioPatchHidlTest,
                         ::testing::ValuesIn(getDeviceParameters()), &DeviceParameterToString);
 
 //////////////////////////////////////////////////////////////////////////////
@@ -591,24 +656,21 @@ static string DeviceConfigParameterToString(
 }
 
 class AudioHidlTestWithDeviceConfigParameter
-    : public AudioPolicyConfigTest,
+    : public HidlTest,
       public ::testing::WithParamInterface<DeviceConfigParameter> {
   protected:
-    const std::string& getFactoryName() const {
+    void SetUp() override {
+        ASSERT_NO_FATAL_FAILURE(HidlTest::SetUp());  // setup base
+        ASSERT_TRUE(getDevicesFactory() != nullptr);
+        ASSERT_TRUE(getDevice() != nullptr);
+    }
+    const std::string& getFactoryName() const override {
         return std::get<PARAM_FACTORY_NAME>(std::get<PARAM_DEVICE>(GetParam()));
     }
-    bool isPrimaryDeviceOptional() const {
-        return AudioPolicyConfigTest::isPrimaryDeviceOptional(getFactoryName());
-    }
-    sp<IDevicesFactory> getDevicesFactory() const {
-        return AudioPolicyConfigTest::getDevicesFactory(getFactoryName());
-    }
-    sp<IPrimaryDevice> getPrimaryDevice() const {
-        return AudioPolicyConfigTest::getPrimaryDevice(getFactoryName());
+    const std::string& getDeviceName() const override {
+        return std::get<PARAM_DEVICE_NAME>(std::get<PARAM_DEVICE>(GetParam()));
     }
     const AudioConfig& getConfig() const { return std::get<PARAM_CONFIG>(GetParam()); }
-    // FIXME: Split out tests that don't require primary device
-    sp<IPrimaryDevice> getDevice() const { return getPrimaryDevice(); }
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -620,16 +682,6 @@ class AudioHidlTestWithDeviceConfigParameter
 //        how to get this value ? is it a property ???
 
 class AudioCaptureConfigPrimaryTest : public AudioHidlTestWithDeviceConfigParameter {
-  public:
-    void SetUp() override {
-        ASSERT_NO_FATAL_FAILURE(AudioHidlTestWithDeviceConfigParameter::SetUp());  // setup base
-        ASSERT_TRUE(getDevicesFactory() != nullptr);
-        if (getDevice() == nullptr && isPrimaryDeviceOptional()) {
-            GTEST_SKIP() << "No primary device on this factory";
-        }
-        ASSERT_TRUE(getDevice() != nullptr);
-    }
-
   protected:
     void inputBufferSizeTest(const AudioConfig& audioConfig, bool supportRequired) {
         uint64_t bufferSize;
@@ -661,8 +713,9 @@ TEST_P(RequiredInputBufferSizeTest, RequiredInputBufferSizeTest) {
 }
 INSTANTIATE_TEST_CASE_P(
         RequiredInputBufferSize, RequiredInputBufferSizeTest,
+        // FIXME: uses primaryHasMic
         ::testing::Combine(
-                ::testing::ValuesIn(getDeviceParameters()),
+                ::testing::ValuesIn(getDeviceParametersForPrimaryDeviceTests()),
                 ::testing::ValuesIn(ConfigHelper::getRequiredSupportCaptureAudioConfig())),
         &DeviceConfigParameterToString);
 INSTANTIATE_TEST_CASE_P(
@@ -682,8 +735,9 @@ TEST_P(OptionalInputBufferSizeTest, OptionalInputBufferSizeTest) {
 }
 INSTANTIATE_TEST_CASE_P(
         RecommendedCaptureAudioConfigSupport, OptionalInputBufferSizeTest,
+        // FIXME: uses primaryHasMic
         ::testing::Combine(
-                ::testing::ValuesIn(getDeviceParameters()),
+                ::testing::ValuesIn(getDeviceParametersForPrimaryDeviceTests()),
                 ::testing::ValuesIn(ConfigHelper::getRecommendedSupportCaptureAudioConfig())),
         &DeviceConfigParameterToString);
 
@@ -691,7 +745,7 @@ INSTANTIATE_TEST_CASE_P(
 /////////////////////////////// setScreenState ///////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
-TEST_P(AudioPrimaryHidlTest, setScreenState) {
+TEST_P(AudioHidlDeviceTest, setScreenState) {
     doc::test("Check that the hal can receive the screen state");
     for (bool turnedOn : {false, true, true, false, false}) {
         ASSERT_RESULT(okOrNotSupported, getDevice()->setScreenState(turnedOn));
@@ -702,15 +756,16 @@ TEST_P(AudioPrimaryHidlTest, setScreenState) {
 //////////////////////////// {get,set}Parameters /////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
-TEST_P(AudioPrimaryHidlTest, getParameters) {
+TEST_P(AudioHidlDeviceTest, getParameters) {
     doc::test("Check that the hal can set and get parameters");
     hidl_vec<ParameterValue> context;
     hidl_vec<hidl_string> keys;
     hidl_vec<ParameterValue> values;
     ASSERT_OK(Parameters::get(getDevice(), keys, returnIn(res, values)));
-    ASSERT_OK(Parameters::set(getDevice(), values));
+    ASSERT_RESULT(okOrNotSupported, res);
+    ASSERT_RESULT(okOrNotSupported, Parameters::set(getDevice(), values));
     values.resize(0);
-    ASSERT_OK(Parameters::set(getDevice(), values));
+    ASSERT_RESULT(okOrNotSupported, Parameters::set(getDevice(), values));
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -751,12 +806,12 @@ static void testDebugDump(DebugDump debugDump) {
     EXPECT_EQ(0, close(fds[1])) << errno;
 }
 
-TEST_P(AudioPrimaryHidlTest, DebugDump) {
+TEST_P(AudioHidlDeviceTest, DebugDump) {
     doc::test("Check that the hal can dump its state without error");
     testDebugDump([this](const auto& handle) { return dump(getDevice(), handle); });
 }
 
-TEST_P(AudioPrimaryHidlTest, DebugDumpInvalidArguments) {
+TEST_P(AudioHidlDeviceTest, DebugDumpInvalidArguments) {
     doc::test("Check that the hal dump doesn't crash on invalid arguments");
     ASSERT_OK(dump(getDevice(), hidl_handle()));
 }
@@ -768,15 +823,6 @@ TEST_P(AudioPrimaryHidlTest, DebugDumpInvalidArguments) {
 template <class Stream>
 class OpenStreamTest : public AudioHidlTestWithDeviceConfigParameter {
   protected:
-    void SetUp() override {
-        ASSERT_NO_FATAL_FAILURE(AudioHidlTestWithDeviceConfigParameter::SetUp());  // setup base
-        ASSERT_TRUE(getDevicesFactory() != nullptr);
-        if (getDevice() == nullptr && isPrimaryDeviceOptional()) {
-            GTEST_SKIP() << "No primary device on this factory";
-        }
-        ASSERT_TRUE(getDevice() != nullptr);
-    }
-
     template <class Open>
     void testOpen(Open openStream, const AudioConfig& config) {
         // FIXME: Open a stream without an IOHandle
@@ -828,14 +874,12 @@ class OpenStreamTest : public AudioHidlTestWithDeviceConfigParameter {
         usleep(100 * 1000);
     }
 
-    bool areAudioPatchesSupported() { return extract(getDevice()->supportsAudioPatches()); }
-
   private:
     void TearDown() override {
         if (open) {
             ASSERT_OK(closeStream());
         }
-        AudioPolicyConfigTest::TearDown();
+        AudioHidlTestWithDeviceConfigParameter::TearDown();
     }
 
    protected:
@@ -850,7 +894,6 @@ class OpenStreamTest : public AudioHidlTestWithDeviceConfigParameter {
 class OutputStreamTest : public OpenStreamTest<IStreamOut> {
     void SetUp() override {
         ASSERT_NO_FATAL_FAILURE(OpenStreamTest::SetUp());  // setup base
-        if (IsSkipped()) return;                           // do not attempt to use 'device'
         address.device = AudioDevice::OUT_DEFAULT;
         const AudioConfig& config = getConfig();
         // TODO: test all flag combination
@@ -881,10 +924,11 @@ TEST_P(OutputStreamTest, OpenOutputStreamTest) {
         "recommended config");
     // Open done in SetUp
 }
+// FIXME: Add instantiations for non-primary devices with configs harvested from the APM config file
 INSTANTIATE_TEST_CASE_P(
         RequiredOutputStreamConfigSupport, OutputStreamTest,
         ::testing::Combine(
-                ::testing::ValuesIn(getDeviceParameters()),
+                ::testing::ValuesIn(getDeviceParametersForPrimaryDeviceTests()),
                 ::testing::ValuesIn(ConfigHelper::getRequiredSupportPlaybackAudioConfig())),
         &DeviceConfigParameterToString);
 INSTANTIATE_TEST_CASE_P(
@@ -896,7 +940,7 @@ INSTANTIATE_TEST_CASE_P(
 INSTANTIATE_TEST_CASE_P(
         RecommendedOutputStreamConfigSupport, OutputStreamTest,
         ::testing::Combine(
-                ::testing::ValuesIn(getDeviceParameters()),
+                ::testing::ValuesIn(getDeviceParametersForPrimaryDeviceTests()),
                 ::testing::ValuesIn(ConfigHelper::getRecommendedSupportPlaybackAudioConfig())),
         &DeviceConfigParameterToString);
 
@@ -905,7 +949,6 @@ INSTANTIATE_TEST_CASE_P(
 class InputStreamTest : public OpenStreamTest<IStreamIn> {
     void SetUp() override {
         ASSERT_NO_FATAL_FAILURE(OpenStreamTest::SetUp());  // setup base
-        if (IsSkipped()) return;                           // do not attempt to use 'device'
         address.device = AudioDevice::IN_DEFAULT;
         const AudioConfig& config = getConfig();
         // TODO: test all supported flags and source
@@ -934,8 +977,9 @@ TEST_P(InputStreamTest, OpenInputStreamTest) {
 }
 INSTANTIATE_TEST_CASE_P(
         RequiredInputStreamConfigSupport, InputStreamTest,
+        // FIXME: uses primaryHasMic
         ::testing::Combine(
-                ::testing::ValuesIn(getDeviceParameters()),
+                ::testing::ValuesIn(getDeviceParametersForPrimaryDeviceTests()),
                 ::testing::ValuesIn(ConfigHelper::getRequiredSupportCaptureAudioConfig())),
         &DeviceConfigParameterToString);
 INSTANTIATE_TEST_CASE_P(
@@ -946,8 +990,9 @@ INSTANTIATE_TEST_CASE_P(
 
 INSTANTIATE_TEST_CASE_P(
         RecommendedInputStreamConfigSupport, InputStreamTest,
+        // FIXME: uses primaryHasMic
         ::testing::Combine(
-                ::testing::ValuesIn(getDeviceParameters()),
+                ::testing::ValuesIn(getDeviceParametersForPrimaryDeviceTests()),
                 ::testing::ValuesIn(ConfigHelper::getRecommendedSupportCaptureAudioConfig())),
         &DeviceConfigParameterToString);
 
@@ -1481,7 +1526,8 @@ TEST_P(BoolAccessorPrimaryHidlTest, setGetBtScoWidebandEnabled) {
                             &IPrimaryDevice::getBtScoWidebandEnabled);
 }
 
-using TtyModeAccessorPrimaryHidlTest = AccessorPrimaryHidlTest<IPrimaryDevice::TtyMode>;
+using TtyModeAccessorPrimaryHidlTest =
+        AccessorHidlTest<IPrimaryDevice::TtyMode, AudioPrimaryHidlTest>;
 TEST_P(TtyModeAccessorPrimaryHidlTest, setGetTtyMode) {
     doc::test("Query and set the TTY mode state");
     testAccessors<OPTIONAL>(
@@ -1490,7 +1536,8 @@ TEST_P(TtyModeAccessorPrimaryHidlTest, setGetTtyMode) {
         &IPrimaryDevice::setTtyMode, &IPrimaryDevice::getTtyMode);
 }
 INSTANTIATE_TEST_CASE_P(TtyModeAccessorPrimaryHidl, TtyModeAccessorPrimaryHidlTest,
-                        ::testing::ValuesIn(getDeviceParameters()), &DeviceParameterToString);
+                        ::testing::ValuesIn(getDeviceParametersForPrimaryDeviceTests()),
+                        &DeviceParameterToString);
 
 TEST_P(BoolAccessorPrimaryHidlTest, setGetHac) {
     doc::test("Query and set the HAC state");
