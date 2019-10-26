@@ -20,10 +20,11 @@
 #include <android/hardware/wifi/offload/1.0/IOffload.h>
 #include <android/hardware/wifi/offload/1.0/IOffloadCallback.h>
 #include <android/hardware/wifi/offload/1.0/types.h>
+#include <gtest/gtest.h>
+#include <hidl/GtestPrinter.h>
+#include <hidl/ServiceManagement.h>
 
 #include <VtsHalHidlTargetCallbackBase.h>
-#include <VtsHalHidlTargetTestBase.h>
-#include <VtsHalHidlTargetTestEnvBase.h>
 
 #include <vector>
 
@@ -69,33 +70,11 @@ class OffloadCallbackArgs {
     OffloadStatus error_code_;
 };
 
-// Test environment for Weaver HIDL HAL.
-class WifiOffloadHidlEnvironment
-    : public ::testing::VtsHalHidlTargetTestEnvBase {
-   public:
-    // get the test environment singleton
-    static WifiOffloadHidlEnvironment* Instance() {
-        static WifiOffloadHidlEnvironment* instance =
-            new WifiOffloadHidlEnvironment;
-        return instance;
-    }
-
-    virtual void registerTestServices() override {
-        registerTestService<IOffload>();
-    }
-
-   private:
-    WifiOffloadHidlEnvironment() {}
-};
-
 // The main test class for WifiOffload HIDL HAL.
-class WifiOffloadHidlTest : public ::testing::VtsHalHidlTargetTestBase {
+class WifiOffloadHidlTest : public ::testing::TestWithParam<std::string> {
    public:
     virtual void SetUp() override {
-        wifi_offload_ =
-            ::testing::VtsHalHidlTargetTestBase::getService<IOffload>(
-                WifiOffloadHidlEnvironment::Instance()
-                    ->getServiceName<IOffload>());
+        wifi_offload_ = IOffload::getService(GetParam());
         ASSERT_NE(wifi_offload_, nullptr);
 
         wifi_offload_cb_ = new OffloadCallback();
@@ -136,7 +115,7 @@ class WifiOffloadHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 /*
  * Verify that setEventCallback method returns without errors
  */
-TEST_F(WifiOffloadHidlTest, setEventCallback) {
+TEST_P(WifiOffloadHidlTest, setEventCallback) {
     auto returnObject = wifi_offload_->setEventCallback(wifi_offload_cb_);
     ASSERT_EQ(true, returnObject.isOk());
 }
@@ -144,7 +123,7 @@ TEST_F(WifiOffloadHidlTest, setEventCallback) {
 /*
  * Verify that subscribeScanResults method returns without errors
  */
-TEST_F(WifiOffloadHidlTest, subscribeScanResults) {
+TEST_P(WifiOffloadHidlTest, subscribeScanResults) {
     const auto& result = HIDL_INVOKE(wifi_offload_, subscribeScanResults, 0);
     ASSERT_EQ(OffloadStatusCode::OK, result.code);
 }
@@ -152,7 +131,7 @@ TEST_F(WifiOffloadHidlTest, subscribeScanResults) {
 /*
  * Verify that unsubscribeScanResults method returns without errors
  */
-TEST_F(WifiOffloadHidlTest, unsubscribeScanResults) {
+TEST_P(WifiOffloadHidlTest, unsubscribeScanResults) {
     auto returnObject = wifi_offload_->unsubscribeScanResults();
     ASSERT_EQ(true, returnObject.isOk());
 }
@@ -160,7 +139,7 @@ TEST_F(WifiOffloadHidlTest, unsubscribeScanResults) {
 /*
  * Verify that configureScans method returns without errors
  */
-TEST_F(WifiOffloadHidlTest, configureScans) {
+TEST_P(WifiOffloadHidlTest, configureScans) {
     ScanParam* pScanParam = new ScanParam();
     std::vector<uint32_t> frequencyList = {kFrequency1, kFrequency2};
     pScanParam->disconnectedModeScanIntervalMs =
@@ -192,7 +171,7 @@ TEST_F(WifiOffloadHidlTest, configureScans) {
 /*
  * Verify that getScanStats returns without any errors
  */
-TEST_F(WifiOffloadHidlTest, getScanStats) {
+TEST_P(WifiOffloadHidlTest, getScanStats) {
     const auto& result = HIDL_INVOKE(wifi_offload_, getScanStats);
     OffloadStatus status = result.first;
     ASSERT_EQ(OffloadStatusCode::OK, status.code);
@@ -201,7 +180,7 @@ TEST_F(WifiOffloadHidlTest, getScanStats) {
 /*
  * Verify that onScanResult callback is invoked
  */
-TEST_F(WifiOffloadHidlTest, getScanResults) {
+TEST_P(WifiOffloadHidlTest, getScanResults) {
     wifi_offload_->setEventCallback(wifi_offload_cb_);
     std::vector<ScanResult> scan_results;
     std::vector<uint8_t> ssid(kSsid1, kSsid1 + sizeof(kSsid1));
@@ -223,7 +202,7 @@ TEST_F(WifiOffloadHidlTest, getScanResults) {
 /*
  * Verify that onError callback is invoked
  */
-TEST_F(WifiOffloadHidlTest, getError) {
+TEST_P(WifiOffloadHidlTest, getError) {
     wifi_offload_->setEventCallback(wifi_offload_cb_);
     OffloadStatus status = {OffloadStatusCode::ERROR, ""};
     wifi_offload_cb_->onError(status);
@@ -231,12 +210,8 @@ TEST_F(WifiOffloadHidlTest, getError) {
     ASSERT_EQ(true, res.no_timeout);
 }
 
-int main(int argc, char** argv) {
-    ::testing::AddGlobalTestEnvironment(WifiOffloadHidlEnvironment::Instance());
-    ::testing::InitGoogleTest(&argc, argv);
-    WifiOffloadHidlEnvironment::Instance()->init(&argc, argv);
-    int status = RUN_ALL_TESTS();
-    LOG(INFO) << "Test result = " << status;
-
-    return status;
-}
+INSTANTIATE_TEST_SUITE_P(
+    PerInstance, WifiOffloadHidlTest,
+    testing::ValuesIn(
+        android::hardware::getAllHalInstanceNames(IOffload::descriptor)),
+    android::hardware::PrintInstanceNameToString);
