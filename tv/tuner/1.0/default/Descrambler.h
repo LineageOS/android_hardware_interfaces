@@ -40,9 +40,11 @@ class Descrambler : public IDescrambler {
 
     virtual Return<Result> setKeyToken(const hidl_vec<uint8_t>& keyToken) override;
 
-    virtual Return<Result> addPid(uint16_t pid) override;
+    virtual Return<Result> addPid(const DemuxPid& pid,
+                                  const sp<IFilter>& optionalSourceFilter) override;
 
-    virtual Return<Result> removePid(uint16_t pid) override;
+    virtual Return<Result> removePid(const DemuxPid& pid,
+                                     const sp<IFilter>& optionalSourceFilter) override;
 
     virtual Return<Result> close() override;
 

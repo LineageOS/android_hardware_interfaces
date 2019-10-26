@@ -26,16 +26,6 @@ interface IFrontendCallback {
 
     /**
      * The callback function that must be called by HAL implementation to notify
-     * the client of new DiSEqC message.
-     *
-     * @param diseqcMessage a byte array of data for DiSEqC (Digital Satellite
-     * Equipment Control) message which is specified by EUTELSAT Bus Functional
-     * Specification Version 4.2.
-     */
-    oneway onDiseqcMessage(vec<uint8_t> diseqcMessage);
-
-    /**
-     * The callback function that must be called by HAL implementation to notify
      * the client of scan messages.
      *
      * @param type the type of scan message.

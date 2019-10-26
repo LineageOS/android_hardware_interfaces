@@ -23,7 +23,7 @@ import ILnb;
 
 /**
  * Top level interface to manage Frontend, Demux and Decrambler hardware
- * resources which are needed for Android TV.
+ * resouces which are needed for Android TV.
  */
 interface ITuner {
     /**
@@ -50,8 +50,7 @@ interface ITuner {
      *         UNKNOWN_ERROR if creation failed for other reasons.
      * @return frontend the newly created frontend interface.
      */
-    openFrontendById(FrontendId frontendId)
-        generates (Result result, IFrontend frontend);
+    openFrontendById(FrontendId frontendId) generates (Result result, IFrontend frontend);
 
     /**
      * Create a new instance of Demux.
@@ -64,8 +63,7 @@ interface ITuner {
      * @return demuxId newly created demux id.
      * @return demux the newly created demux interface.
      */
-    openDemux()
-         generates (Result result, DemuxId demuxId, IDemux demux);
+    openDemux() generates (Result result, DemuxId demuxId, IDemux demux);
 
     /**
      * Retrieve the Demux's Capabilities.
@@ -87,8 +85,7 @@ interface ITuner {
      *         UNKNOWN_ERROR if creation failed for other reasons.
      * @return descrambler the newly created descrambler interface.
      */
-    openDescrambler()
-         generates (Result result, IDescrambler descrambler);
+    openDescrambler() generates (Result result, IDescrambler descrambler);
 
     /**
      * Retrieve the frontend's information.
@@ -99,8 +96,7 @@ interface ITuner {
      *         UNKNOWN_ERROR if the inquiry failed for other reasons.
      * @return info the frontend's information.
      */
-    getFrontendInfo(FrontendId frontendId)
-        generates (Result result, FrontendInfo info);
+    getFrontendInfo(FrontendId frontendId) generates (Result result, FrontendInfo info);
 
     /**
      * Get low-noise block downconverter (LNB) IDs.
@@ -126,7 +122,5 @@ interface ITuner {
      *         UNKNOWN_ERROR if creation failed for other reasons.
      * @return lnb the newly created Lnb interface.
      */
-    openLnbById(LnbId lnbId)
-        generates (Result result, ILnb lnb);
+    openLnbById(LnbId lnbId) generates (Result result, ILnb lnb);
 };
-

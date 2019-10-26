@@ -16,7 +16,11 @@
 
 package android.hardware.tv.tuner@1.0;
 
-import IDemuxCallback;
+import IDvr;
+import IDvrCallback;
+import IFilter;
+import IFilterCallback;
+import ITimeFilter;
 
 /**
  * Demultiplexer(Demux) takes a single multiplexed input and splits it into
@@ -24,7 +28,6 @@ import IDemuxCallback;
  *
  */
 interface IDemux {
-
     /**
      * Set a frontend resource as data input of the demux
      *
@@ -39,134 +42,51 @@ interface IDemux {
     setFrontendDataSource(FrontendId frontendId) generates (Result result);
 
     /**
-     * Add a filter to the demux
+     * Open a new filter in the demux
      *
-     * It is used by the client to add a filter to the demux.
+     * It is used by the client to open a filter in the demux.
      *
      * @param type the type of the filter to be added.
-     * @param bufferSize the buffer size of the filter to be added. It's used to
-     * create a FMQ(Fast Message Queue) to hold data output from the filter.
+     * @param bufferSize the buffer size of the filter to be opened. It's used
+     * to create a FMQ(Fast Message Queue) to hold data output from the filter.
      * @param cb the callback for the filter to be used to send notifications
      * back to the client.
      * @return result Result status of the operation.
      *         SUCCESS if successful,
      *         INVALID_STATE if failed for wrong state.
      *         UNKNOWN_ERROR if failed for other reasons.
-     * @return filterId the ID of the newly added filter.
+     * @return filter the filter instance of the newly added.
      */
-    addFilter(DemuxFilterType type, uint32_t bufferSize, IDemuxCallback cb)
-        generates (Result result, DemuxFilterId filterId);
+    openFilter(DemuxFilterType type, uint32_t bufferSize, IFilterCallback cb)
+        generates (Result result, IFilter filter);
 
     /**
-     * Get the descriptor of the filter's FMQ
+     * Open time filter of the demux
      *
-     * It is used by the client to get the descriptor of the filter's Fast
-     * Message Queue. The data in FMQ is filtered out from MPEG transport
-     * stream. The data is organized to data blocks which may have
-     * different length. The length's information of one or multiple data blocks
-     * is sent to client through DemuxFilterEvent.
+     * It is used by the client to open time filter of the demux.
      *
-     * @param filterId the ID of the filter.
      * @return result Result status of the operation.
      *         SUCCESS if successful,
-     *         INVALID_ARGUMENT if failed for wrong filter ID.
+     *         UNAVAILABLE if time filter is not supported.
      *         INVALID_STATE if failed for wrong state.
      *         UNKNOWN_ERROR if failed for other reasons.
-     * @return queue the descriptor of the filter's FMQ
+     * @return timeFilter the time filter instance of the newly added.
      */
-    getFilterQueueDesc(DemuxFilterId filterId)
-        generates (Result result, fmq_sync<uint8_t> queue);
-
-    /**
-     * Configure the filter.
-     *
-     * It is used by the client to configure the filter so that it can filter out
-     * intended data.
-     *
-     * @param filterId the ID of the filter.
-     * @param settings the settings of the filter.
-     * @return result Result status of the operation.
-     *         SUCCESS if successful,
-     *         INVALID_ARGUMENT if failed for wrong filter ID.
-     *         INVALID_STATE if failed for wrong state.
-     *         UNKNOWN_ERROR if failed for other reasons.
-     */
-    configureFilter(DemuxFilterId filterId, DemuxFilterSettings settings)
-        generates(Result result);
-
-    /**
-     * Start the filter.
-     *
-     * It is used by the client to ask the filter to start filtering data.
-     *
-     * @param filterId the ID of the filter.
-     * @return result Result status of the operation.
-     *         SUCCESS if successful,
-     *         INVALID_ARGUMENT if failed for wrong filter ID.
-     *         INVALID_STATE if failed for wrong state.
-     *         UNKNOWN_ERROR if failed for other reasons.
-     */
-    startFilter(DemuxFilterId filterId) generates (Result result);
-
-    /**
-     * Stop the filter.
-     *
-     * It is used by the client to ask the filter to stop filterring data.
-     * It won't discard the data already filtered out by the filter. The filter
-     * will be stopped and removed automatically if the demux is closed.
-     *
-     * @param filterId the ID of the filter.
-     * @return result Result status of the operation.
-     *         SUCCESS if successful,
-     *         INVALID_ARGUMENT if failed for wrong filter ID.
-     *         INVALID_STATE if failed for wrong state.
-     *         UNKNOWN_ERROR if failed for other reasons.
-     */
-    stopFilter(DemuxFilterId filterId) generates (Result result);
-
-    /**
-     * Flush the filter.
-     *
-     * It is used by the client to ask the filter to flush the data which is
-     * already produced but not consumed yet.
-     *
-     * @param filterId the ID of the filter.
-     * @return result Result status of the operation.
-     *         SUCCESS if successful,
-     *         INVALID_ARGUMENT if failed for wrong filter ID.
-     *         INVALID_STATE if failed for wrong state.
-     *         UNKNOWN_ERROR if failed for other reasons.
-     */
-    flushFilter(DemuxFilterId filterId) generates (Result result);
-
-    /**
-     * Remove a filter from the demux
-     *
-     * It is used by the client to remove a filter from the demux.
-     *
-     * @param filterId the ID of the removed filter.
-     * @return result Result status of the operation.
-     *         SUCCESS if successful,
-     *         INVALID_ARGUMENT if failed for wrong filter ID.
-     *         INVALID_STATE if failed for wrong state.
-     *         UNKNOWN_ERROR if failed for other reasons.
-     */
-    removeFilter(DemuxFilterId filterId) generates (Result result);
+    openTimeFilter() generates (Result result, ITimeFilter timeFilter);
 
     /**
      * Get hardware sync ID for audio and video.
      *
      * It is used by the client to get the hardware sync ID for audio and video.
      *
-     * @param filterId the ID of the filter.
+     * @param filter the filter instance.
      * @return result Result status of the operation.
      *         SUCCESS if successful,
      *         INVALID_ARGUMENT if failed for a wrong filter ID.
      *         UNKNOWN_ERROR if failed for other reasons.
      * @return avSyncHwId the id of hardware A/V sync.
      */
-    getAvSyncHwId(DemuxFilterId filterId)
-        generates (Result result, AvSyncHwId avSyncHwId);
+    getAvSyncHwId(IFilter filter) generates (Result result, AvSyncHwId avSyncHwId);
 
     /**
      * Get current time stamp to use for A/V sync
@@ -182,8 +102,7 @@ interface IDemux {
      * @return time the current time stamp of hardware A/V sync. The time stamp
      * based on 90KHz has the same format as PTS (Presentation Time Stamp).
      */
-    getAvSyncTime(AvSyncHwId avSyncHwId)
-        generates (Result result, uint64_t time);
+    getAvSyncTime(AvSyncHwId avSyncHwId) generates (Result result, uint64_t time);
 
     /**
      * Close the Demux instance
@@ -198,218 +117,21 @@ interface IDemux {
     close() generates (Result result);
 
     /**
-     * Add output to the demux
+     * Open a DVR (Digital Video Record) instance in the demux
      *
-     * It is used by the client to record output data from selected filters.
+     * It is used by the client to record and playback.
      *
+     * @param type specify which kind of DVR to open.
      * @param bufferSize the buffer size of the output to be added. It's used to
      * create a FMQ(Fast Message Queue) to hold data from selected filters.
-     * @param cb the callback for the demux to be used to send notifications
+     * @param cb the callback for the DVR to be used to send notifications
      * back to the client.
      * @return result Result status of the operation.
      *         SUCCESS if successful,
      *         OUT_OF_MEMORY if failed for not enough memory.
      *         UNKNOWN_ERROR if failed for other reasons.
+     * @return dvr a DVR instance.
      */
-    addOutput(uint32_t bufferSize, IDemuxCallback cb) generates (Result result);
-
-    /**
-     * Get the descriptor of the output's FMQ
-     *
-     * It is used by the client to get the descriptor of the output's Fast
-     * Message Queue. The data in FMQ is muxed packets output from selected
-     * filters. The packet's format is specified by DemuxDataFormat in
-     * DemuxOutputSettings.
-     *
-     * @return result Result status of the operation.
-     *         SUCCESS if successful,
-     *         UNKNOWN_ERROR if failed for other reasons.
-     * @return queue the descriptor of the output's FMQ
-     */
-    getOutputQueueDesc() generates (Result result, fmq_sync<uint8_t> queue);
-
-    /**
-     * Configure the demux's output.
-     *
-     * It is used by the client to configure the demux's output for recording.
-     *
-     * @param settings the settings of the demux's output.
-     * @return result Result status of the operation.
-     *         SUCCESS if successful,
-     *         INVALID_STATE if failed for wrong state.
-     *         UNKNOWN_ERROR if failed for other reasons.
-     */
-    configureOutput(DemuxOutputSettings settings) generates (Result result);
-
-    /**
-     * Attach one filter to the demux's output.
-     *
-     * It is used by the client to mux one filter's output to demux's output.
-     *
-     * @param filterId the ID of the attached filter.
-     * @return result Result status of the operation.
-     *         SUCCESS if successful,
-     *         INVALID_STATE if failed for wrong state.
-     *         UNKNOWN_ERROR if failed for other reasons.
-     */
-    attachOutputFilter(DemuxFilterId filterId) generates (Result result);
-
-    /**
-     * Detach one filter from the demux's output.
-     *
-     * It is used by the client to remove one filter's output from demux's
-     * output.
-     *
-     * @param filterId the ID of the detached filter.
-     * @return result Result status of the operation.
-     *         SUCCESS if successful,
-     *         INVALID_STATE if failed for wrong state.
-     *         UNKNOWN_ERROR if failed for other reasons.
-     */
-    detachOutputFilter(DemuxFilterId filterId) generates (Result result);
-
-    /**
-     * Start to take data to the demux's output.
-     *
-     * It is used by the client to ask the output to start to take data from
-     * attached filters.
-     *
-     * @return result Result status of the operation.
-     *         SUCCESS if successful,
-     *         INVALID_STATE if failed for wrong state.
-     *         UNKNOWN_ERROR if failed for other reasons.
-     */
-    startOutput() generates (Result result);
-
-    /**
-     * Stop to take data to the demux's output.
-     *
-     * It is used by the client to ask the output to stop to take data from
-     * attached filters.
-     *
-     * @return result Result status of the operation.
-     *         SUCCESS if successful,
-     *         INVALID_STATE if failed for wrong state.
-     *         UNKNOWN_ERROR if failed for other reasons.
-     */
-    stopOutput() generates (Result result);
-
-    /**
-     * Flush unconsumed data in the demux's output.
-     *
-     * It is used by the client to ask the demux to flush the data which is
-     * already produced but not consumed yet in the demux's output.
-     *
-     * @return result Result status of the operation.
-     *         SUCCESS if successful,
-     *         INVALID_STATE if failed for wrong state.
-     *         UNKNOWN_ERROR if failed for other reasons.
-     */
-    flushOutput() generates (Result result);
-
-    /**
-     * Remove the demux's output.
-     *
-     * It is used by the client to remove the demux's output.
-     *
-     * @return result Result status of the operation.
-     *         SUCCESS if successful,
-     *         INVALID_STATE if failed for wrong state.
-     *         UNKNOWN_ERROR if failed for other reasons.
-     */
-    removeOutput() generates (Result result);
-
-    /**
-     * Add input to the demux
-     *
-     * It is used by the client to add the demux's input for playback content.
-     *
-     * @param bufferSize the buffer size of the demux's input to be added.
-     * It's used to create a FMQ(Fast Message Queue) to hold input data.
-     * @param cb the callback for the demux to be used to send notifications
-     * back to the client.
-     * @return result Result status of the operation.
-     *         SUCCESS if successful,
-     *         OUT_OF_MEMORY if failed for not enough memory.
-     *         UNKNOWN_ERROR if failed for other reasons.
-     */
-    addInput(uint32_t bufferSize, IDemuxCallback cb) generates (Result result);
-
-    /**
-     * Get the descriptor of the input's FMQ
-     *
-     * It is used by the client to get the descriptor of the input's Fast
-     * Message Queue. The data in FMQ is fed by client. Data format is specifed
-     * by DemuxDataFormat in DemuxInputSettings.
-     *
-     * @return result Result status of the operation.
-     *         SUCCESS if successful,
-     *         UNKNOWN_ERROR if failed for other reasons.
-     * @return queue the descriptor of the output's FMQ
-     */
-    getInputQueueDesc() generates (Result result, fmq_sync<uint8_t> queue);
-
-    /**
-     * Configure the demux's input.
-     *
-     * It is used by the client to configure the demux's input for playback.
-     *
-     * @param settings the settings of the demux's input.
-     * @return result Result status of the operation.
-     *         SUCCESS if successful,
-     *         INVALID_STATE if failed for wrong state.
-     *         UNKNOWN_ERROR if failed for other reasons.
-     */
-    configureInput(DemuxInputSettings settings) generates (Result result);
-
-    /**
-     * Start to consume the data from the demux's input.
-     *
-     * It is used by the client to ask the demux to start to consume data from
-     * the demux's input.
-     *
-     * @return result Result status of the operation.
-     *         SUCCESS if successful,
-     *         INVALID_STATE if failed for wrong state.
-     *         UNKNOWN_ERROR if failed for other reasons.
-     */
-    startInput() generates (Result result);
-
-    /**
-     * Stop to consume the data from the demux's input.
-     *
-     * It is used by the client to ask the demux to stop to consume data from
-     * the demux's input.
-     *
-     * @return result Result status of the operation.
-     *         SUCCESS if successful,
-     *         INVALID_STATE if failed for wrong state.
-     *         UNKNOWN_ERROR if failed for other reasons.
-     */
-    stopInput() generates (Result result);
-
-    /**
-     * Flush unconsumed data in the demux's input.
-     *
-     * It is used by the client to ask the demux to flush the data which is
-     * already produced but not consumed yet in the demux's input.
-     *
-     * @return result Result status of the operation.
-     *         SUCCESS if successful,
-     *         INVALID_STATE if failed for wrong state.
-     *         UNKNOWN_ERROR if failed for other reasons.
-     */
-    flushInput() generates (Result result);
-
-    /**
-     * Remove the demux's input.
-     *
-     * It is used by the client to remove the demux's input.
-     *
-     * @return result Result status of the operation.
-     *         SUCCESS if successful,
-     *         INVALID_STATE if failed for wrong state.
-     *         UNKNOWN_ERROR if failed for other reasons.
-     */
-    removeInput() generates (Result result);
+    openDvr(DvrType type, uint32_t bufferSize, IDvrCallback cb)
+        generates (Result result, IDvr dvr);
 };

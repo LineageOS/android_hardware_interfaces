@@ -172,11 +172,11 @@ ContinuousSensorsSubHal::ContinuousSensorsSubHal() {
     AddSensor<GyroSensor>();
     AddSensor<MagnetometerSensor>();
     AddSensor<PressureSensor>();
+    AddSensor<DeviceTempSensor>();
 }
 
 OnChangeSensorsSubHal::OnChangeSensorsSubHal() {
     AddSensor<AmbientTempSensor>();
-    AddSensor<DeviceTempSensor>();
     AddSensor<LightSensor>();
     AddSensor<ProximitySensor>();
     AddSensor<RelativeHumiditySensor>();
@@ -187,8 +187,8 @@ AllSensorsSubHal::AllSensorsSubHal() {
     AddSensor<GyroSensor>();
     AddSensor<MagnetometerSensor>();
     AddSensor<PressureSensor>();
-    AddSensor<AmbientTempSensor>();
     AddSensor<DeviceTempSensor>();
+    AddSensor<AmbientTempSensor>();
     AddSensor<LightSensor>();
     AddSensor<ProximitySensor>();
     AddSensor<RelativeHumiditySensor>();

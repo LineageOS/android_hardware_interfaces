@@ -330,7 +330,7 @@ Return<void> HalProxy::onDynamicSensorsConnected(const hidl_vec<SensorInfo>& dyn
 
 Return<void> HalProxy::onDynamicSensorsDisconnected(
         const hidl_vec<int32_t>& dynamicSensorHandlesRemoved, int32_t subHalIndex) {
-    // TODO: Block this call until all pending events are flushed from queue
+    // TODO(b/143302327): Block this call until all pending events are flushed from queue
     std::vector<int32_t> sensorHandles;
     {
         std::lock_guard<std::mutex> lock(mDynamicSensorsMutex);
@@ -457,7 +457,8 @@ void HalProxy::startPendingWritesThread(HalProxy* halProxy) {
 }
 
 void HalProxy::handlePendingWrites() {
-    // TODO: Find a way to optimize locking strategy maybe using two mutexes instead of one.
+    // TODO(b/143302327): Find a way to optimize locking strategy maybe using two mutexes instead of
+    // one.
     std::unique_lock<std::mutex> lock(mEventQueueWriteMutex);
     while (mThreadsRun.load()) {
         mEventQueueWriteCV.wait(
@@ -485,8 +486,8 @@ void HalProxy::handlePendingWrites() {
             }
             lock.lock();
             if (pendingWriteEvents.size() > eventQueueSize) {
-                // TODO: Check if this erase operation is too inefficient. It will copy all the
-                // events ahead of it down to fill gap off array at front after the erase.
+                // TODO(b/143302327): Check if this erase operation is too inefficient. It will copy
+                // all the events ahead of it down to fill gap off array at front after the erase.
                 pendingWriteEvents.erase(pendingWriteEvents.begin(),
                                          pendingWriteEvents.begin() + eventQueueSize);
             } else {
@@ -554,8 +555,8 @@ void HalProxy::postEventsToMessageQueue(const std::vector<Event>& events, size_t
         numToWrite = std::min(events.size(), mEventQueue->availableToWrite());
         if (numToWrite > 0) {
             if (mEventQueue->write(events.data(), numToWrite)) {
-                // TODO: While loop if mEventQueue->avaiableToWrite > 0 to possibly fit in more
-                // writes immediately
+                // TODO(b/143302327): While loop if mEventQueue->avaiableToWrite > 0 to possibly fit
+                // in more writes immediately
                 mEventQueueFlag->wake(static_cast<uint32_t>(EventQueueFlagBits::READ_AND_PROCESS));
             } else {
                 numToWrite = 0;
@@ -563,8 +564,8 @@ void HalProxy::postEventsToMessageQueue(const std::vector<Event>& events, size_t
         }
     }
     if (numToWrite < events.size()) {
-        // TODO: Bound the mPendingWriteEventsQueue so that we do not trigger OOMs if framework
-        // stalls
+        // TODO(b/143302327): Bound the mPendingWriteEventsQueue so that we do not trigger OOMs if
+        // framework stalls
         std::vector<Event> eventsLeft(events.begin() + numToWrite, events.end());
         mPendingWriteEventsQueue.push({eventsLeft, numWakeupEvents});
         mEventQueueWriteCV.notify_one();
@@ -655,7 +656,7 @@ void HalProxyCallback::postEvents(const std::vector<Event>& events, ScopedWakelo
                     " w/ index %zu.",
                     mSubHalIndex);
     }
-    mHalProxy->postEventsToMessageQueue(events, numWakeupEvents, std::move(wakelock));
+    mHalProxy->postEventsToMessageQueue(processedEvents, numWakeupEvents, std::move(wakelock));
 }
 
 ScopedWakelock HalProxyCallback::createScopedWakelock(bool lock) {

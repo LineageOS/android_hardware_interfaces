@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package android.hardware.tv.tuner@1.0;
 
 import IFrontendCallback;
@@ -128,7 +129,8 @@ interface IFrontend {
      * @return statuses an array of statuses which response the caller's
      *         request.
      */
-    getStatus(vec<FrontendStatusType> statusTypes) generates (Result result, vec<FrontendStatus> statuses);
+    getStatus(vec<FrontendStatusType> statusTypes)
+        generates (Result result, vec<FrontendStatus> statuses);
 
     /**
      * Sets Low-Noise Block downconverter (LNB) for satellite frontend.

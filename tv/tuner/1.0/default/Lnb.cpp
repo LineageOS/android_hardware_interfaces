@@ -30,19 +30,25 @@ Lnb::Lnb() {}
 
 Lnb::~Lnb() {}
 
-Return<Result> Lnb::setVoltage(FrontendLnbVoltage /* voltage */) {
+Return<Result> Lnb::setCallback(const sp<ILnbCallback>& /* callback */) {
     ALOGV("%s", __FUNCTION__);
 
     return Result::SUCCESS;
 }
 
-Return<Result> Lnb::setTone(FrontendLnbTone /* tone */) {
+Return<Result> Lnb::setVoltage(LnbVoltage /* voltage */) {
     ALOGV("%s", __FUNCTION__);
 
     return Result::SUCCESS;
 }
 
-Return<Result> Lnb::setSatellitePosition(FrontendLnbPosition /* position */) {
+Return<Result> Lnb::setTone(LnbTone /* tone */) {
+    ALOGV("%s", __FUNCTION__);
+
+    return Result::SUCCESS;
+}
+
+Return<Result> Lnb::setSatellitePosition(LnbPosition /* position */) {
     ALOGV("%s", __FUNCTION__);
 
     return Result::SUCCESS;

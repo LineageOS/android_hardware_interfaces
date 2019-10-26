@@ -21,7 +21,10 @@
 #include <fmq/MessageQueue.h>
 #include <math.h>
 #include <set>
+#include "Dvr.h"
+#include "Filter.h"
 #include "Frontend.h"
+#include "TimeFilter.h"
 #include "Tuner.h"
 
 using namespace std;
@@ -38,13 +41,17 @@ using ::android::hardware::kSynchronizedReadWrite;
 using ::android::hardware::MessageQueue;
 using ::android::hardware::MQDescriptorSync;
 using ::android::hardware::tv::tuner::V1_0::IDemux;
-using ::android::hardware::tv::tuner::V1_0::IDemuxCallback;
+using ::android::hardware::tv::tuner::V1_0::IDvrCallback;
+using ::android::hardware::tv::tuner::V1_0::IFilterCallback;
 using ::android::hardware::tv::tuner::V1_0::Result;
 
 using FilterMQ = MessageQueue<uint8_t, kSynchronizedReadWrite>;
 
-class Tuner;
+class Dvr;
+class Filter;
 class Frontend;
+class TimeFilter;
+class Tuner;
 
 class Demux : public IDemux {
   public:
@@ -54,63 +61,27 @@ class Demux : public IDemux {
 
     virtual Return<Result> setFrontendDataSource(uint32_t frontendId) override;
 
-    virtual Return<Result> close() override;
+    virtual Return<void> openFilter(const DemuxFilterType& type, uint32_t bufferSize,
+                                    const sp<IFilterCallback>& cb, openFilter_cb _hidl_cb) override;
 
-    virtual Return<void> addFilter(DemuxFilterType type, uint32_t bufferSize,
-                                   const sp<IDemuxCallback>& cb, addFilter_cb _hidl_cb) override;
+    virtual Return<void> openTimeFilter(openTimeFilter_cb _hidl_cb) override;
 
-    virtual Return<void> getFilterQueueDesc(uint32_t filterId,
-                                            getFilterQueueDesc_cb _hidl_cb) override;
-
-    virtual Return<Result> configureFilter(uint32_t filterId,
-                                           const DemuxFilterSettings& settings) override;
-
-    virtual Return<Result> startFilter(uint32_t filterId) override;
-
-    virtual Return<Result> stopFilter(uint32_t filterId) override;
-
-    virtual Return<Result> flushFilter(uint32_t filterId) override;
-
-    virtual Return<Result> removeFilter(uint32_t filterId) override;
-
-    virtual Return<void> getAvSyncHwId(uint32_t filterId, getAvSyncHwId_cb _hidl_cb) override;
+    virtual Return<void> getAvSyncHwId(const sp<IFilter>& filter,
+                                       getAvSyncHwId_cb _hidl_cb) override;
 
     virtual Return<void> getAvSyncTime(AvSyncHwId avSyncHwId, getAvSyncTime_cb _hidl_cb) override;
 
-    virtual Return<Result> addInput(uint32_t bufferSize, const sp<IDemuxCallback>& cb) override;
+    virtual Return<Result> close() override;
 
-    virtual Return<void> getInputQueueDesc(getInputQueueDesc_cb _hidl_cb) override;
-
-    virtual Return<Result> configureInput(const DemuxInputSettings& settings) override;
-
-    virtual Return<Result> startInput() override;
-
-    virtual Return<Result> stopInput() override;
-
-    virtual Return<Result> flushInput() override;
-
-    virtual Return<Result> removeInput() override;
-
-    virtual Return<Result> addOutput(uint32_t bufferSize, const sp<IDemuxCallback>& cb) override;
-
-    virtual Return<void> getOutputQueueDesc(getOutputQueueDesc_cb _hidl_cb) override;
-
-    virtual Return<Result> configureOutput(const DemuxOutputSettings& settings) override;
-
-    virtual Return<Result> attachOutputFilter(uint32_t filterId) override;
-
-    virtual Return<Result> detachOutputFilter(uint32_t filterId) override;
-
-    virtual Return<Result> startOutput() override;
-
-    virtual Return<Result> stopOutput() override;
-
-    virtual Return<Result> flushOutput() override;
-
-    virtual Return<Result> removeOutput() override;
+    virtual Return<void> openDvr(DvrType type, uint32_t bufferSize, const sp<IDvrCallback>& cb,
+                                 openDvr_cb _hidl_cb) override;
 
     // Functions interacts with Tuner Service
     void stopBroadcastInput();
+    Result removeFilter(uint32_t filterId);
+    Result startFilterHandler(uint32_t filterId);
+    void updateFilterOutput(uint16_t filterId, vector<uint8_t> data);
+    uint16_t getFilterTpid(uint32_t filterId);
 
   private:
     // Tuner service
@@ -126,19 +97,9 @@ class Demux : public IDemux {
         uint32_t filterId;
     };
 
-    /**
-     * Filter handlers to handle the data filtering.
-     * They are also responsible to write the filtered output into the filter FMQ
-     * and update the filterEvent bound with the same filterId.
-     */
-    Result startSectionFilterHandler(uint32_t filterId);
-    Result startPesFilterHandler(uint32_t filterId);
-    Result startTsFilterHandler();
-    Result startMediaFilterHandler(uint32_t filterId);
-    Result startRecordFilterHandler(uint32_t filterId);
-    Result startPcrFilterHandler();
-    Result startFilterLoop(uint32_t filterId);
     Result startBroadcastInputLoop();
+    static void* __threadLoopBroadcast(void* user);
+    void broadcastInputThreadLoop();
 
     /**
      * To create a FilterMQ with the the next available Filter ID.
@@ -147,32 +108,14 @@ class Demux : public IDemux {
      *
      * Return false is any of the above processes fails.
      */
-    bool createFilterMQ(uint32_t bufferSize, uint32_t filterId);
-    bool createMQ(FilterMQ* queue, EventFlag* eventFlag, uint32_t bufferSize);
     void deleteEventFlag();
-    bool writeDataToFilterMQ(const std::vector<uint8_t>& data, uint32_t filterId);
     bool readDataFromMQ();
-    bool writeSectionsAndCreateEvent(uint32_t filterId, vector<uint8_t> data);
-    void maySendInputStatusCallback();
-    void maySendFilterStatusCallback(uint32_t filterId);
-    DemuxInputStatus checkInputStatusChange(uint32_t availableToWrite, uint32_t availableToRead,
-                                            uint32_t highThreshold, uint32_t lowThreshold);
-    DemuxFilterStatus checkFilterStatusChange(uint32_t filterId, uint32_t availableToWrite,
-                                              uint32_t availableToRead, uint32_t highThreshold,
-                                              uint32_t lowThreshold);
     /**
      * A dispatcher to read and dispatch input data to all the started filters.
      * Each filter handler handles the data filtering/output writing/filterEvent updating.
      */
-    bool readInputFMQ();
-    void startTsFilter(vector<uint8_t> data);
     bool startFilterDispatcher();
-    static void* __threadLoopFilter(void* data);
-    static void* __threadLoopInput(void* user);
-    static void* __threadLoopBroadcast(void* user);
-    void filterThreadLoop(uint32_t filterId);
-    void inputThreadLoop();
-    void broadcastInputThreadLoop();
+    void startTsFilter(vector<uint8_t> data);
 
     uint32_t mDemuxId;
     /**
@@ -196,40 +139,13 @@ class Demux : public IDemux {
      * A list of created FilterMQ ptrs.
      * The array number is the filter ID.
      */
-    vector<uint16_t> mFilterPids;
-    vector<vector<uint8_t>> mFilterOutputs;
-    vector<unique_ptr<FilterMQ>> mFilterMQs;
-    vector<EventFlag*> mFilterEventFlags;
-    vector<DemuxFilterEvent> mFilterEvents;
-    unique_ptr<FilterMQ> mInputMQ;
-    unique_ptr<FilterMQ> mOutputMQ;
-    EventFlag* mInputEventFlag;
-    EventFlag* mOutputEventFlag;
-    /**
-     * Demux callbacks used on filter events or IO buffer status
-     */
-    vector<sp<IDemuxCallback>> mFilterCallbacks;
-    sp<IDemuxCallback> mInputCallback;
-    sp<IDemuxCallback> mOutputCallback;
-    bool mInputConfigured = false;
-    bool mOutputConfigured = false;
-    DemuxInputSettings mInputSettings;
-    DemuxOutputSettings mOutputSettings;
+    std::map<uint32_t, sp<Filter>> mFilters;
 
     // Thread handlers
-    pthread_t mInputThread;
-    pthread_t mOutputThread;
     pthread_t mBroadcastInputThread;
-    vector<pthread_t> mFilterThreads;
-
-    // FMQ status local records
-    DemuxInputStatus mIntputStatus;
-    vector<DemuxFilterStatus> mFilterStatus;
     /**
      * If a specific filter's writing loop is still running
      */
-    vector<bool> mFilterThreadRunning;
-    bool mInputThreadRunning;
     bool mBroadcastInputThreadRunning;
     bool mKeepFetchingDataFromFrontend;
     /**
@@ -237,28 +153,16 @@ class Demux : public IDemux {
      */
     std::mutex mWriteLock;
     /**
-     * Lock to protect writes to the filter event
-     */
-    // TODO make each filter separate event lock
-    std::mutex mFilterEventLock;
-    /**
      * Lock to protect writes to the input status
      */
-    std::mutex mInputStatusLock;
-    std::mutex mFilterStatusLock;
     std::mutex mBroadcastInputThreadLock;
-    std::mutex mFilterThreadLock;
-    std::mutex mInputThreadLock;
-    /**
-     * How many times a filter should write
-     * TODO make this dynamic/random/can take as a parameter
-     */
-    const uint16_t SECTION_WRITE_COUNT = 10;
 
     // temp handle single PES filter
     // TODO handle mulptiple Pes filters
     int mPesSizeLeft = 0;
     vector<uint8_t> mPesOutput;
+
+    const bool DEBUG_FILTER = false;
 };
 
 }  // namespace implementation
