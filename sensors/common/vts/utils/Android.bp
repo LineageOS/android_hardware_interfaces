@@ -16,6 +16,7 @@
 
 cc_library_static {
     name: "VtsHalSensorsTargetTestUtils",
+    cflags: ["-DLOG_TAG=\"sensors_hidl_hal_test\""],
     srcs: [
         "GrallocWrapper.cpp",
         "SensorsHidlEnvironmentBase.cpp",
@@ -30,7 +31,10 @@ cc_library_static {
     ],
     static_libs: [
         "android.hardware.graphics.allocator@2.0",
+        "android.hardware.graphics.allocator@3.0",
         "android.hardware.graphics.mapper@2.0",
+        "android.hardware.graphics.mapper@2.1",
+        "android.hardware.graphics.mapper@3.0",
         "android.hardware.sensors@1.0",
         "VtsHalHidlTargetTestBase",
     ],
