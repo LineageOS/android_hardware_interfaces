@@ -41,27 +41,7 @@ enum Constant : uint32_t {
 
 enum OperandType : @1.0::OperandType {
 %insert Operand_1.2
-
-    /*
-     * DEPRECATED. Since HAL version 1.2, extensions are the preferred
-     * alternative to OEM operation and data types.
-     *
-     * OEM specific scalar value.
-     * OEM                 = 10000,
-     */
-    /*
-     * DEPRECATED. Since HAL version 1.2, extensions are the preferred
-     * alternative to OEM operation and data types.
-     *
-     * A tensor of OEM specific values.
-     * TENSOR_OEM_BYTE     = 10001,
-     */
-    /* ADDING A NEW FUNDAMENTAL TYPE REQUIRES UPDATING THE VALUE OF
-     * OperandTypeRange::FUNDAMENTAL_MAX.
-     */
-    /* ADDING A NEW OEM TYPE REQUIRES UPDATING THE VALUE OF
-     * OperandTypeRange::OEM_MAX.
-     */
+%insert OEMDeprecationAndOperandTypeRangeMaxComment
 };
 
 /**
