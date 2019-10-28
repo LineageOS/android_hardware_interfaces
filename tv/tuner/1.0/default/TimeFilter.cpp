@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "android.hardware.tv.tuner@1.0-Lnb"
+#define LOG_TAG "android.hardware.tv.tuner@1.0-TimeFilter"
 
-#include "Lnb.h"
+#include "TimeFilter.h"
 #include <utils/Log.h>
 
 namespace android {
@@ -26,41 +26,45 @@ namespace tuner {
 namespace V1_0 {
 namespace implementation {
 
-Lnb::Lnb() {}
+TimeFilter::TimeFilter() {}
 
-Lnb::~Lnb() {}
+TimeFilter::TimeFilter(sp<Demux> demux) {
+    mDemux = demux;
+}
 
-Return<Result> Lnb::setCallback(const sp<ILnbCallback>& /* callback */) {
+TimeFilter::~TimeFilter() {}
+
+Return<Result> TimeFilter::setTimeStamp(uint64_t /* timeStamp */) {
     ALOGV("%s", __FUNCTION__);
 
     return Result::SUCCESS;
 }
 
-Return<Result> Lnb::setVoltage(LnbVoltage /* voltage */) {
+Return<Result> TimeFilter::clearTimeStamp() {
     ALOGV("%s", __FUNCTION__);
 
     return Result::SUCCESS;
 }
 
-Return<Result> Lnb::setTone(LnbTone /* tone */) {
+Return<void> TimeFilter::getTimeStamp(getTimeStamp_cb _hidl_cb) {
     ALOGV("%s", __FUNCTION__);
 
-    return Result::SUCCESS;
+    uint64_t timeStamp = 0;
+
+    _hidl_cb(Result::SUCCESS, timeStamp);
+    return Void();
 }
 
-Return<Result> Lnb::setSatellitePosition(LnbPosition /* position */) {
+Return<void> TimeFilter::getSourceTime(getSourceTime_cb _hidl_cb) {
     ALOGV("%s", __FUNCTION__);
 
-    return Result::SUCCESS;
+    uint64_t time = 0;
+
+    _hidl_cb(Result::SUCCESS, time);
+    return Void();
 }
 
-Return<Result> Lnb::sendDiseqcMessage(const hidl_vec<uint8_t>& /* diseqcMessage */) {
-    ALOGV("%s", __FUNCTION__);
-
-    return Result::SUCCESS;
-}
-
-Return<Result> Lnb::close() {
+Return<Result> TimeFilter::close() {
     ALOGV("%s", __FUNCTION__);
 
     return Result::SUCCESS;

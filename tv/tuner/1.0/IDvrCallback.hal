@@ -16,20 +16,18 @@
 
 package android.hardware.tv.tuner@1.0;
 
-interface IFrontendCallback {
+interface IDvrCallback {
     /**
-     * Notify the client that a new event happened on the frontend.
+     * Notify the client a new status of the demux's record.
      *
-     * @param frontendEventType the event type.
+     * @param status a new status of the demux's record.
      */
-    oneway onEvent(FrontendEventType frontendEventType);
+    oneway onRecordStatus(RecordStatus status);
 
     /**
-     * The callback function that must be called by HAL implementation to notify
-     * the client of scan messages.
+     * Notify the client a new status of the demux's playback.
      *
-     * @param type the type of scan message.
-     * @param message the scan message sent by HAL to the client.
+     * @param status a new status of the demux's playback.
      */
-    oneway onScanMessage(FrontendScanMessageType type, FrontendScanMessage message);
+    oneway onPlaybackStatus(PlaybackStatus status);
 };

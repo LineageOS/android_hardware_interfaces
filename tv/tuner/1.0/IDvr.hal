@@ -1,0 +1,133 @@
+/*
+ * Copyright (C) 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.tv.tuner@1.0;
+
+import IFilter;
+
+/**
+ * Digtal Video Record (DVR) interface provides record control on Demux's
+ * output buffer and playback control on Demux's input buffer.
+ */
+interface IDvr {
+    /**
+     * Get the descriptor of the DVR's FMQ
+     *
+     * It is used by the client to get the descriptor of the DVR's Fast
+     * Message Queue. The FMQ is used to transfer record or playback data
+     * between the client and the HAL.
+     *
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         UNKNOWN_ERROR if failed for other reasons.
+     * @return queue the descriptor of the DVR's FMQ
+     */
+    getQueueDesc() generates (Result result, fmq_sync<uint8_t> queue);
+
+    /**
+     * Configure the DVR.
+     *
+     * It is used by the client to configure the DVR interface.
+     *
+     * @param settings the settings of the DVR interface.
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_STATE if failed for wrong state.
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    configure(DvrSettings settings) generates (Result result);
+
+    /**
+     * Attach one filter to DVR interface for recording.
+     *
+     * It is used by the client to add the data filtered out from the filter
+     * to record.
+     *
+     * @param filter the instance of the attached filter.
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_STATE if failed for wrong state.
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    attachFilter(IFilter filter) generates (Result result);
+
+    /**
+     * Detach one filter from the DVR's recording.
+     *
+     * It is used by the client to remove the data of the filter from DVR's
+     * recording.
+     *
+     * @param filter the instance of the detached filter.
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_STATE if failed for wrong state.
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    detachFilter(IFilter filter) generates (Result result);
+
+    /**
+     * Start DVR.
+     *
+     * It is used by the client to ask the DVR to start consuming playback data
+     * or producing data for record.
+     *
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_STATE if failed for wrong state.
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    start() generates (Result result);
+
+    /**
+     * Stop DVR.
+     *
+     * It is used by the client to ask the DVR to stop consuming playback data
+     * or producing data for record.
+     *
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_STATE if failed for wrong state.
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    stop() generates (Result result);
+
+    /**
+     * Flush DVR data.
+     *
+     * It is used by the client to ask the DVR to flush the data which is
+     * not consumed by HAL for playback or the client for record yet.
+     *
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_STATE if failed for wrong state.
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    flush() generates (Result result);
+
+    /**
+     * close the DVR instance to release resource for DVR.
+     *
+     * It is used by the client to close the DVR instance, and HAL clears
+     * underneath resource for this DVR instance. Client mustn't access the
+     * instance any more and all methods should return a failure.
+     *
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_STATE if failed for wrong state.
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    close() generates (Result result);
+};

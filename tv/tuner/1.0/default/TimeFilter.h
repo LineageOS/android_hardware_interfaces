@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_TV_TUNER_V1_0_DESCRAMBLER_H_
-#define ANDROID_HARDWARE_TV_TUNER_V1_0_DESCRAMBLER_H_
+#ifndef ANDROID_HARDWARE_TV_TUNER_V1_0_TIMEFILTER_H_
+#define ANDROID_HARDWARE_TV_TUNER_V1_0_TIMEFILTER_H_
 
-#include <android/hardware/tv/tuner/1.0/IDescrambler.h>
-#include <android/hardware/tv/tuner/1.0/ITuner.h>
+#include <android/hardware/tv/tuner/1.0/ITimeFilter.h>
+#include "Demux.h"
 
 using namespace std;
 
@@ -29,29 +29,34 @@ namespace tuner {
 namespace V1_0 {
 namespace implementation {
 
-using ::android::hardware::tv::tuner::V1_0::IDescrambler;
+using ::android::hardware::tv::tuner::V1_0::IDemux;
+using ::android::hardware::tv::tuner::V1_0::IFilterCallback;
 using ::android::hardware::tv::tuner::V1_0::Result;
 
-class Descrambler : public IDescrambler {
+using FilterMQ = MessageQueue<uint8_t, kSynchronizedReadWrite>;
+
+class Demux;
+
+class TimeFilter : public ITimeFilter {
   public:
-    Descrambler();
+    TimeFilter();
 
-    virtual Return<Result> setDemuxSource(uint32_t demuxId) override;
+    TimeFilter(sp<Demux> demux);
 
-    virtual Return<Result> setKeyToken(const hidl_vec<uint8_t>& keyToken) override;
+    ~TimeFilter();
 
-    virtual Return<Result> addPid(const DemuxPid& pid,
-                                  const sp<IFilter>& optionalSourceFilter) override;
+    virtual Return<Result> setTimeStamp(uint64_t timeStamp) override;
 
-    virtual Return<Result> removePid(const DemuxPid& pid,
-                                     const sp<IFilter>& optionalSourceFilter) override;
+    virtual Return<Result> clearTimeStamp() override;
+
+    virtual Return<void> getTimeStamp(getTimeStamp_cb _hidl_cb) override;
+
+    virtual Return<void> getSourceTime(getSourceTime_cb _hidl_cb) override;
 
     virtual Return<Result> close() override;
 
   private:
-    virtual ~Descrambler();
-    uint32_t mSourceDemuxId;
-    bool mDemuxSet = false;
+    sp<Demux> mDemux;
 };
 
 }  // namespace implementation
@@ -61,4 +66,4 @@ class Descrambler : public IDescrambler {
 }  // namespace hardware
 }  // namespace android
 
-#endif  // ANDROID_HARDWARE_TV_TUNER_V1_DESCRAMBLER_H_
+#endif  // ANDROID_HARDWARE_TV_TUNER_V1_0_TIMEFILTER_H_
