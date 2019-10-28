@@ -16,20 +16,21 @@
 
 package android.hardware.tv.tuner@1.0;
 
-interface IFrontendCallback {
+interface ILnbCallback {
     /**
-     * Notify the client that a new event happened on the frontend.
+     * Notify the client that a new event happened on the Lnb.
      *
-     * @param frontendEventType the event type.
+     * @param LnbEventType the event type.
      */
-    oneway onEvent(FrontendEventType frontendEventType);
+    oneway onEvent(LnbEventType lnbEventType);
 
     /**
      * The callback function that must be called by HAL implementation to notify
-     * the client of scan messages.
+     * the client of new DiSEqC message.
      *
-     * @param type the type of scan message.
-     * @param message the scan message sent by HAL to the client.
+     * @param diseqcMessage a byte array of data for DiSEqC (Digital Satellite
+     * Equipment Control) message which is specified by EUTELSAT Bus Functional
+     * Specification Version 4.2.
      */
-    oneway onScanMessage(FrontendScanMessageType type, FrontendScanMessage message);
+    oneway onDiseqcMessage(vec<uint8_t> diseqcMessage);
 };

@@ -29,20 +29,23 @@ namespace tuner {
 namespace V1_0 {
 namespace implementation {
 
-using ::android::hardware::tv::tuner::V1_0::FrontendLnbPosition;
-using ::android::hardware::tv::tuner::V1_0::FrontendLnbTone;
-using ::android::hardware::tv::tuner::V1_0::FrontendLnbVoltage;
+using ::android::hardware::tv::tuner::V1_0::ILnbCallback;
+using ::android::hardware::tv::tuner::V1_0::LnbPosition;
+using ::android::hardware::tv::tuner::V1_0::LnbTone;
+using ::android::hardware::tv::tuner::V1_0::LnbVoltage;
 using ::android::hardware::tv::tuner::V1_0::Result;
 
 class Lnb : public ILnb {
   public:
     Lnb();
 
-    virtual Return<Result> setVoltage(FrontendLnbVoltage voltage) override;
+    virtual Return<Result> setCallback(const sp<ILnbCallback>& callback) override;
 
-    virtual Return<Result> setTone(FrontendLnbTone tone) override;
+    virtual Return<Result> setVoltage(LnbVoltage voltage) override;
 
-    virtual Return<Result> setSatellitePosition(FrontendLnbPosition position) override;
+    virtual Return<Result> setTone(LnbTone tone) override;
+
+    virtual Return<Result> setSatellitePosition(LnbPosition position) override;
 
     virtual Return<Result> sendDiseqcMessage(const hidl_vec<uint8_t>& diseqcMessage) override;
 
