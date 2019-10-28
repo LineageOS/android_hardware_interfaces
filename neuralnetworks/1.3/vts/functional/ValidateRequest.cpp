@@ -79,9 +79,9 @@ static void validate(const sp<IPreparedModel>& preparedModel, const std::string&
 
     // synchronous
     {
-        SCOPED_TRACE(message + " [executeSynchronously]");
+        SCOPED_TRACE(message + " [executeSynchronously_1_3]");
 
-        Return<void> executeStatus = preparedModel->executeSynchronously(
+        Return<void> executeStatus = preparedModel->executeSynchronously_1_3(
                 request, measure,
                 [](ErrorStatus error, const hidl_vec<OutputShape>& outputShapes,
                    const Timing& timing) {
@@ -158,8 +158,8 @@ void validateRequest(const sp<IPreparedModel>& preparedModel, const Request& req
 }
 
 void validateRequestFailure(const sp<IPreparedModel>& preparedModel, const Request& request) {
-    SCOPED_TRACE("Expecting request to fail [executeSynchronously]");
-    Return<void> executeStatus = preparedModel->executeSynchronously(
+    SCOPED_TRACE("Expecting request to fail [executeSynchronously_1_3]");
+    Return<void> executeStatus = preparedModel->executeSynchronously_1_3(
             request, MeasureTiming::NO,
             [](ErrorStatus error, const hidl_vec<OutputShape>& outputShapes, const Timing& timing) {
                 ASSERT_NE(ErrorStatus::NONE, error);
