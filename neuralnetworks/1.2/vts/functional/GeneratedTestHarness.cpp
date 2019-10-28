@@ -33,6 +33,7 @@
 
 #include <gtest/gtest.h>
 #include <algorithm>
+#include <chrono>
 #include <iostream>
 #include <numeric>
 
@@ -190,7 +191,8 @@ static Return<ErrorStatus> ExecutePreparedModel(const sp<IPreparedModel>& prepar
 }
 static std::shared_ptr<::android::nn::ExecutionBurstController> CreateBurst(
         const sp<IPreparedModel>& preparedModel) {
-    return android::nn::ExecutionBurstController::create(preparedModel, /*blocking=*/true);
+    return android::nn::ExecutionBurstController::create(preparedModel,
+                                                         std::chrono::microseconds{0});
 }
 enum class Executor { ASYNC, SYNC, BURST };
 
@@ -254,8 +256,10 @@ void EvaluatePreparedModel(const sp<IPreparedModel>& preparedModel, const TestMo
             }
 
             // execute burst
-            std::tie(executionStatus, outputShapes, timing) =
+            int n;
+            std::tie(n, outputShapes, timing, std::ignore) =
                     controller->compute(request, measure, keys);
+            executionStatus = nn::convertResultCodeToErrorStatus(n);
 
             break;
         }
