@@ -1,0 +1,143 @@
+/*
+ * Copyright (C) 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.tv.tuner@1.0;
+
+import IFilterCallback;
+
+/**
+ * The Filter is used to filter wanted data according to the filter's
+ * configuration.
+ */
+interface IFilter {
+    /**
+     * Get the descriptor of the filter's FMQ
+     *
+     * It is used by the client to get the descriptor of the filter's Fast
+     * Message Queue. The data in FMQ is filtered out from demux input or upper
+     * stream's filter. The data is origanized to data blocks which may have
+     * different length. The length's information of one or multiple data blocks
+     * is sent to client through DemuxFilterEvent. The data in each block
+     * follows the stardard specified by filter's type.
+     * E.X. one data block from the filter with Main_Type==TS and Sub_Type==PES
+     * is Packetized Elementary Stream from Transport Stream according to
+     * ISO/IEC 13818-1.
+     *
+     *
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         UNAVAILABLE if the filter doesn't have FMQ.
+     *         INVALID_STATE if failed for wrong state.
+     *         UNKNOWN_ERROR if failed for other reasons.
+     * @return queue the descriptor of the filter's FMQ
+     */
+    getQueueDesc() generates (Result result, fmq_sync<uint8_t> queue);
+
+    /**
+     * Configure the filter.
+     *
+     * It is used by the client to configure the filter so that it can filter out
+     * intended data.
+     *
+     * @param settings the settings of the filter.
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_STATE if failed for wrong state.
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    configure(DemuxFilterSettings settings) generates (Result result);
+
+    /**
+     * Start the filter.
+     *
+     * It is used by the client to ask the filter to start filterring data.
+     *
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_STATE if failed for wrong state.
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    start() generates (Result result);
+
+    /**
+     * Stop the filter.
+     *
+     * It is used by the client to ask the filter to stop filterring data.
+     * It won't discard the data already filtered out by the filter. The filter
+     * will be stopped and removed automatically if the demux is closed.
+     *
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_STATE if failed for wrong state.
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    stop() generates (Result result);
+
+    /**
+     * Flush the filter.
+     *
+     * It is used by the client to ask the filter to flush the data which is
+     * already produced but not consumed yet.
+     *
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_STATE if failed for wrong state.
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    flush() generates (Result result);
+
+    /**
+     * Get the filter Id.
+     *
+     * It is used by the client to ask the hardware resource id for the filter.
+     *
+     * @param filterId the hardware resource Id for the filter.
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_STATE if failed for wrong state.
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    getId() generates (Result result, uint32_t filterId);
+
+    /**
+     * Set the filter's data source.
+     *
+     * A filter uses demux as data source by default. If the data was packetized
+     * by multiple protocols, multiple filters may need to work together to
+     * extract all protocols' header. Then a filter's data source can be output
+     * from another filter.
+     *
+     * @param filter the filter instance which provides data input. Switch to
+     * use demux as data source if the filter instance is NULL.
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_STATE if failed for wrong state.
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    setDataSource(IFilter filter) generates (Result result);
+
+    /**
+     * Release the Filter instance
+     *
+     * It is used by the client to release the Filter instance. HAL clear
+     * underneath resource. client mustn't access the instance any more.
+     *
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    close() generates (Result result);
+};
