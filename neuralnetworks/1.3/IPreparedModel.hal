@@ -18,9 +18,11 @@ package android.hardware.neuralnetworks@1.3;
 
 import @1.0::ErrorStatus;
 import @1.0::Request;
-import @1.2::MeasureTiming;
 import @1.2::IExecutionCallback;
 import @1.2::IPreparedModel;
+import @1.2::MeasureTiming;
+import @1.2::OutputShape;
+import @1.2::Timing;
 
 /**
  * IPreparedModel describes a model that has been prepared for execution and
@@ -62,8 +64,8 @@ interface IPreparedModel extends @1.2::IPreparedModel {
      *   values, the execution should complete successfully (ErrorStatus::NONE):
      *   There must be no failure unless the device itself is in a bad state.
      *
-     * Any number of calls to the execute, execute_1_2, execute_1_3, and executeSynchronously
-     * functions, in any combination, may be made concurrently, even on the same
+     * Any number of calls to the execute* and executeSynchronously* functions,
+     * in any combination, may be made concurrently, even on the same
      * IPreparedModel object.
      *
      * @param request The input and output information on which the prepared
@@ -87,4 +89,60 @@ interface IPreparedModel extends @1.2::IPreparedModel {
      */
     execute_1_3(Request request, MeasureTiming measure, IExecutionCallback callback)
         generates (ErrorStatus status);
+
+    /**
+     * Performs a synchronous execution on a prepared model.
+     *
+     * The execution is performed synchronously with respect to the caller.
+     * executeSynchronously_1_3 must verify the inputs to the function are
+     * correct. If there is an error, executeSynchronously_1_3 must immediately
+     * return with the appropriate ErrorStatus value. If the inputs to the
+     * function are valid and there is no error, executeSynchronously_1_3 must
+     * perform the execution, and must not return until the execution is
+     * complete.
+     *
+     * The caller must not change the content of any data object referenced by
+     * 'request' (described by the {@link @1.0::DataLocation} of a
+     * {@link @1.0::RequestArgument}) until executeSynchronously_1_3
+     * returns. executeSynchronously_1_3 must not change the content of any of the
+     * data objects corresponding to 'request' inputs.
+     *
+     * If the prepared model was prepared from a model wherein all tensor
+     * operands have fully specified dimensions, and the inputs to the function
+     * are valid, and at execution time every operation's input operands have
+     * legal values, then the execution should complete successfully
+     * (ErrorStatus::NONE): There must be no failure unless the device itself is
+     * in a bad state.
+     *
+     * Any number of calls to the execute* and executeSynchronously* functions,
+     * in any combination, may be made concurrently, even on the same
+     * IPreparedModel object.
+     *
+     * @param request The input and output information on which the prepared
+     *                model is to be executed.
+     * @param measure Specifies whether or not to measure duration of the execution.
+     *                The duration runs from the time the driver sees the call
+     *                to the executeSynchronously_1_3 function to the time the driver
+     *                returns from the function.
+     * @return status Error status of the execution, must be:
+     *                - NONE if execution is performed successfully
+     *                - DEVICE_UNAVAILABLE if driver is offline or busy
+     *                - GENERAL_FAILURE if there is an unspecified error
+     *                - OUTPUT_INSUFFICIENT_SIZE if at least one output
+     *                  operand buffer is not large enough to store the
+     *                  corresponding output
+     *                - INVALID_ARGUMENT if one of the input arguments is
+     *                  invalid
+     * @return outputShapes A list of shape information of model output operands.
+     *                      The index into "outputShapes" corresponds to the index
+     *                      of the output operand in the Request outputs vector.
+     *                      outputShapes must be empty unless the status is either
+     *                      NONE or OUTPUT_INSUFFICIENT_SIZE.
+     * @return Timing Duration of execution. Unless measure is YES and status is
+     *                NONE, all times must be reported as UINT64_MAX. A driver may
+     *                choose to report any time as UINT64_MAX, indicating that
+     *                measurement is not available.
+     */
+    executeSynchronously_1_3(Request request, MeasureTiming measure)
+            generates (ErrorStatus status, vec<OutputShape> outputShapes, Timing timing);
 };
