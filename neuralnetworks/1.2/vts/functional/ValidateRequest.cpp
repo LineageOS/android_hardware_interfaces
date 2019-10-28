@@ -16,6 +16,7 @@
 
 #define LOG_TAG "neuralnetworks_hidl_hal_test"
 
+#include <chrono>
 #include "1.0/Utils.h"
 #include "1.2/Callbacks.h"
 #include "ExecutionBurstController.h"
@@ -94,7 +95,8 @@ static void validate(const sp<IPreparedModel>& preparedModel, const std::string&
 
         // create burst
         std::shared_ptr<::android::nn::ExecutionBurstController> burst =
-                android::nn::ExecutionBurstController::create(preparedModel, /*blocking=*/true);
+                android::nn::ExecutionBurstController::create(preparedModel,
+                                                              std::chrono::microseconds{0});
         ASSERT_NE(nullptr, burst.get());
 
         // create memory keys
@@ -104,13 +106,12 @@ static void validate(const sp<IPreparedModel>& preparedModel, const std::string&
         }
 
         // execute and verify
-        ErrorStatus error;
-        std::vector<OutputShape> outputShapes;
-        Timing timing;
-        std::tie(error, outputShapes, timing) = burst->compute(request, measure, keys);
-        EXPECT_EQ(ErrorStatus::INVALID_ARGUMENT, error);
+        const auto [n, outputShapes, timing, fallback] = burst->compute(request, measure, keys);
+        const ErrorStatus status = nn::convertResultCodeToErrorStatus(n);
+        EXPECT_EQ(ErrorStatus::INVALID_ARGUMENT, status);
         EXPECT_EQ(outputShapes.size(), 0);
         EXPECT_TRUE(badTiming(timing));
+        EXPECT_FALSE(fallback);
 
         // additional burst testing
         if (request.pools.size() > 0) {
