@@ -7,7 +7,9 @@ hidl_interface {
         enabled: true,
     },
     srcs: [
+        "types.hal",
         "IComposer.hal",
+        "IComposerCallback.hal",
         "IComposerClient.hal",
     ],
     interfaces: [

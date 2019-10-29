@@ -20,8 +20,10 @@
 #warning "ComposerClient.h included without LOG_TAG"
 #endif
 
+#include <android/hardware/graphics/composer/2.4/IComposerCallback.h>
 #include <android/hardware/graphics/composer/2.4/IComposerClient.h>
 #include <composer-hal/2.4/ComposerHal.h>
+#include <composer-resources/2.1/ComposerResources.h>
 
 namespace android {
 namespace hardware {
@@ -37,6 +39,54 @@ template <typename Interface, typename Hal>
 class ComposerClientImpl : public V2_3::hal::detail::ComposerClientImpl<Interface, Hal> {
   public:
     ComposerClientImpl(Hal* hal) : BaseType2_3(hal) {}
+
+    ~ComposerClientImpl() override { mHal->unregisterEventCallback_2_4(); }
+
+    class HalEventCallback : public Hal::EventCallback_2_4 {
+      public:
+        HalEventCallback(const sp<IComposerCallback> callback,
+                         V2_1::hal::ComposerResources* resources)
+            : mCallback(callback), mResources(resources) {}
+
+        void onHotplug(Display display, IComposerCallback::Connection connected) override {
+            if (connected == IComposerCallback::Connection::CONNECTED) {
+                mResources->addPhysicalDisplay(display);
+            } else if (connected == IComposerCallback::Connection::DISCONNECTED) {
+                mResources->removeDisplay(display);
+            }
+
+            auto ret = mCallback->onHotplug(display, connected);
+            ALOGE_IF(!ret.isOk(), "failed to send onHotplug: %s", ret.description().c_str());
+        }
+
+        void onRefresh(Display display) override {
+            mResources->setDisplayMustValidateState(display, true);
+            auto ret = mCallback->onRefresh(display);
+            ALOGE_IF(!ret.isOk(), "failed to send onRefresh: %s", ret.description().c_str());
+        }
+
+        void onVsync(Display display, int64_t timestamp) override {
+            auto ret = mCallback->onVsync(display, timestamp);
+            ALOGE_IF(!ret.isOk(), "failed to send onVsync: %s", ret.description().c_str());
+        }
+
+        void onVsync_2_4(Display display, int64_t timestamp,
+                         VsyncPeriodNanos vsyncPeriodNanos) override {
+            auto ret = mCallback->onVsync_2_4(display, timestamp, vsyncPeriodNanos);
+            ALOGE_IF(!ret.isOk(), "failed to send onVsync_2_4: %s", ret.description().c_str());
+        }
+
+      protected:
+        const sp<IComposerCallback> mCallback;
+        V2_1::hal::ComposerResources* const mResources;
+    };
+
+    Return<void> registerCallback_2_4(const sp<IComposerCallback>& callback) override {
+        // no locking as we require this function to be called only once
+        mHalEventCallback_2_4 = std::make_unique<HalEventCallback>(callback, mResources.get());
+        mHal->registerEventCallback_2_4(mHalEventCallback_2_4.get());
+        return Void();
+    }
 
     Return<void> getDisplayCapabilities_2_4(
             Display display, IComposerClient::getDisplayCapabilities_2_4_cb hidl_cb) override {
@@ -54,6 +104,36 @@ class ComposerClientImpl : public V2_3::hal::detail::ComposerClientImpl<Interfac
         return Void();
     }
 
+    Return<void> getSupportedDisplayVsyncPeriods(
+            Display display, Config config,
+            IComposerClient::getSupportedDisplayVsyncPeriods_cb hidl_cb) override {
+        std::vector<VsyncPeriodNanos> supportedVsyncPeriods;
+        Error error =
+                mHal->getSupportedDisplayVsyncPeriods(display, config, &supportedVsyncPeriods);
+        hidl_cb(error, supportedVsyncPeriods);
+        return Void();
+    }
+
+    Return<void> getDisplayVsyncPeriod(Display display,
+                                       IComposerClient::getDisplayVsyncPeriod_cb hidl_cb) override {
+        VsyncPeriodNanos vsyncPeriods;
+        Error error = mHal->getDisplayVsyncPeriod(display, &vsyncPeriods);
+        hidl_cb(error, vsyncPeriods);
+        return Void();
+    }
+
+    Return<void> setActiveConfigAndVsyncPeriod(
+            Display display, Config config, VsyncPeriodNanos vsyncPeriodNanos,
+            const IComposerClient::VsyncPeriodChangeConstraints& vsyncPeriodChangeConstraints,
+            IComposerClient::setActiveConfigAndVsyncPeriod_cb hidl_cb) override {
+        int64_t newVsyncAppliedTime = 0;
+        Error error = mHal->setActiveConfigAndVsyncPeriod(display, config, vsyncPeriodNanos,
+                                                          vsyncPeriodChangeConstraints,
+                                                          &newVsyncAppliedTime);
+        hidl_cb(error, newVsyncAppliedTime);
+        return Void();
+    }
+
     static std::unique_ptr<ComposerClientImpl> create(Hal* hal) {
         auto client = std::make_unique<ComposerClientImpl>(hal);
         return client->init() ? std::move(client) : nullptr;
@@ -63,6 +143,8 @@ class ComposerClientImpl : public V2_3::hal::detail::ComposerClientImpl<Interfac
     using BaseType2_3 = V2_3::hal::detail::ComposerClientImpl<Interface, Hal>;
     using BaseType2_1 = V2_1::hal::detail::ComposerClientImpl<Interface, Hal>;
     using BaseType2_1::mHal;
+    std::unique_ptr<HalEventCallback> mHalEventCallback_2_4;
+    using BaseType2_1::mResources;
 };
 
 }  // namespace detail
