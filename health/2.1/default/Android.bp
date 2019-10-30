@@ -1,0 +1,81 @@
+// Copyright (C) 2019 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+cc_defaults {
+    name: "android.hardware.health@2.1-impl-defaults",
+    relative_install_path: "hw",
+
+    shared_libs: [
+        "libbase",
+        "libcutils",
+        "libhidlbase",
+        "liblog",
+        "libutils",
+        "android.hardware.health@2.1",
+        "android.hardware.health@2.0",
+    ],
+
+    static_libs: [
+        "android.hardware.health@1.0-convert",
+        "libbatterymonitor",
+        "libhealthloop",
+        "libhealth2impl",
+    ],
+}
+
+// Default passthrough implementation of the health@2.1 HAL.
+// Passhtrough implementations of the health@2.1 HAL must be installed in
+// vendor in order to support charger.
+// Passhtrough implementations of the health@2.1 HAL must be installed in
+// recovery in order to allow recovery to check battery status.
+// See README.md for details.
+cc_library_shared {
+    name: "android.hardware.health@2.1-impl",
+    stem: "android.hardware.health@2.0-impl-2.1",
+
+    // Only vendor and recovery variants are allowed, not core.
+    vendor: true,
+    recovery_available: true,
+
+    defaults: ["android.hardware.health@2.1-impl-defaults"],
+
+    srcs: [
+        "impl.cpp",
+    ],
+
+    // No vintf_fragments because both -impl and -service should have been
+    // installed.
+}
+
+// Default binderized service of the health@2.1 HAL.
+// This binderized implementation dlopen()s the passthrough implementation,
+// so there is no need to implement your own.
+cc_binary {
+    name: "android.hardware.health@2.1-service",
+    vendor: true,
+    defaults: ["android.hardware.health@2.1-impl-defaults"],
+    init_rc: ["android.hardware.health@2.1-service.rc"],
+
+    srcs: [
+        "service.cpp",
+    ],
+
+    vintf_fragments: [
+        "android.hardware.health@2.1.xml"
+    ],
+
+    overrides: [
+        "healthd",
+    ],
+}
