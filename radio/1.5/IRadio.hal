@@ -17,6 +17,8 @@
 package android.hardware.radio@1.5;
 
 import @1.4::IRadio;
+import @1.5::AccessNetwork;
+import @1.5::SignalThresholdInfo;
 
 /**
  * This interface is used by telephony and telecom to talk to cellular radio.
@@ -27,4 +29,30 @@ import @1.4::IRadio;
  * setResponseFunctions must work with @1.5::IRadioResponse and @1.5::IRadioIndication.
  */
 interface IRadio extends @1.4::IRadio {
+
+    /**
+     * Sets the signal strength reporting criteria.
+     *
+     * The resulting reporting rules are the AND of all the supplied criteria. For each RAN
+     * The hysteresisDb and thresholds apply to only the following measured quantities:
+     * -GERAN    - RSSI
+     * -CDMA2000 - RSSI
+     * -UTRAN    - RSCP
+     * -EUTRAN   - RSRP/RSRQ/RSSNR
+     * -NGRAN    - SSRSRP/SSRSRQ/SSSINR
+     *
+     * Note: Reporting criteria must be individually set for each RAN. For any unset reporting
+     * criteria, the value is implementation-defined.
+     *
+     * Response callback is
+     * IRadioResponse.setSignalStrengthReportingCriteriaResponse_1_5()
+     *
+     * @param serial Serial number of request.
+     * @param signalThresholdInfo Signal threshold info including the threshold values,
+     *                            hysteresisDb, and hysteresisMs. See @1.5::SignalThresholdInfo
+     *                            for details.
+     * @param accessNetwork The type of network for which to apply these thresholds.
+     */
+    oneway setSignalStrengthReportingCriteria_1_5(int32_t serial,
+            SignalThresholdInfo signalThresholdInfo, AccessNetwork accessNetwork);
 };
