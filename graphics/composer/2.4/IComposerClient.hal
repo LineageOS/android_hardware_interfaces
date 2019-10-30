@@ -16,6 +16,8 @@
 
 package android.hardware.graphics.composer@2.4;
 
+import IComposerCallback;
+import @2.1::Config;
 import @2.1::Display;
 import @2.1::Error;
 import @2.3::IComposerClient;
@@ -50,6 +52,32 @@ interface IComposerClient extends @2.3::IComposerClient {
     };
 
     /**
+     * Constraints for changing vsync period.
+     */
+    struct VsyncPeriodChangeConstraints {
+        /**
+         * Time in CLOCK_MONOTONIC after which the vsync period may change
+         * (i.e., the vsync period must not change before this time).
+         */
+        int64_t desiredTimeNanos;
+        /**
+         * If true, requires that the vsync period change must happen seamlessly without
+         * a noticeable visual artifact.
+         */
+        bool seamlessRequired;
+    };
+
+    /**
+     * Provides a IComposerCallback object for the device to call.
+     *
+     * This function must be called only once.
+     *
+     * @param callback is the IComposerCallback object.
+     */
+    @entry
+    registerCallback_2_4(IComposerCallback callback);
+
+    /**
      * Provides a list of supported capabilities (as described in the
      * definition of DisplayCapability above). This list must not change after
      * initialization.
@@ -69,4 +97,63 @@ interface IComposerClient extends @2.3::IComposerClient {
      * @return type is the connection type of the display.
      */
     getDisplayConnectionType(Display display) generates (Error error, DisplayConnectionType type);
+
+    /**
+     * Provides a list of the vsync periods supported by the display in the given configuration
+     *
+     * @param display is the display for which the vsync periods are queried.
+     * @param config is the display configuration for which the vsync periods are queried.
+     *
+     * @return error is NONE upon success. Otherwise,
+     *     BAD_DISPLAY when an invalid display handle was passed in.
+     *     BAD_CONFIG when an invalid config handle was passed in.
+     * @return supportedVsyncPeriods is a list of supported vsync periods.
+     */
+    getSupportedDisplayVsyncPeriods(Display display, Config config)
+        generates (Error error, vec<VsyncPeriodNanos> supportedVsyncPeriods);
+
+    /**
+     * Retrieves which vsync period the display is currently using.
+     *
+     * If no display configuration is currently active, this function must
+     * return BAD_CONFIG. If the vsync period is about to change due to a
+     * setActiveConfigAndVsyncPeriod call, this function must return the current vsync period
+     * until the change takes place.
+     *
+     * @param display is the display for which the vsync period is queried.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     *         BAD_CONFIG when no configuration is currently active.
+     * @return vsyncPeriodNanos is the current vsync period of the display.
+     */
+    getDisplayVsyncPeriod(Display display)
+        generates (Error error, VsyncPeriodNanos vsyncPeriodNanos);
+
+    /**
+     * Sets the active configuration and the refresh rate for this display.
+     * If the config is the same as the current config, only the vsync period shall change.
+     * Upon returning, the given display configuration, except vsync period, must be active and
+     * remain so until either this function is called again or the display is disconnected.
+     * When the display starts to refresh at the new vsync period, onVsync_2_4 callback must be
+     * called with the new vsync period.
+     *
+     * @param display is the display for which the active config is set.
+     * @param config is the new display configuration.
+     * @param vsyncPeriodNanos is the new display vsync period.
+     * @param vsyncPeriodChangeConstraints are the constraints required for changing vsync period.
+     *
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     *         BAD_CONFIG when the configuration handle passed in is not valid
+     *                    for this display.
+     *         BAD_VSYNC_PERIOD when an invalid vsync period is passed in.
+     *         SEAMLESS_NOT_POSSIBLE when seamlessRequired was true but the display cannot achieve
+     *                               the vsync period change without a noticeable visual artifact.
+     * @return newVsyncAppliedTime is the time in CLOCK_MONOTONIC when the new display will start to
+     *                             refresh at the new vsync period.
+     */
+    setActiveConfigAndVsyncPeriod(Display display, Config config,
+        VsyncPeriodNanos vsyncPeriodNanos,
+        VsyncPeriodChangeConstraints vsyncPeriodChangeConstraints)
+        generates (Error error, int64_t newVsyncAppliedTime);
 };

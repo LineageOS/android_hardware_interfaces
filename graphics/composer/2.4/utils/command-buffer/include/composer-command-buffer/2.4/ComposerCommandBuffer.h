@@ -34,7 +34,7 @@ namespace composer {
 namespace V2_4 {
 
 using android::hardware::MessageQueue;
-using android::hardware::graphics::composer::V2_1::Error;
+using android::hardware::graphics::composer::V2_4::Error;
 using android::hardware::graphics::composer::V2_4::IComposerClient;
 
 // This class helps build a command queue.  Note that all sizes/lengths are in
