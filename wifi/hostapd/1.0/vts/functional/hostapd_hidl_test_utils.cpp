@@ -139,7 +139,7 @@ void startHostapdAndWaitForHidlService() {
     HostapdManager hostapd_manager;
     ASSERT_TRUE(hostapd_manager.StartHostapd());
 
-    ASSERT_TRUE(notification_listener->waitForHidlService(200, service_name));
+    ASSERT_TRUE(notification_listener->waitForHidlService(500, service_name));
 }
 
 bool is_1_1(const sp<IHostapd>& hostapd) {
