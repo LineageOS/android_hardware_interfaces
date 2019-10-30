@@ -7,7 +7,7 @@
           // Just use sample-all driver for presubmit tests for faster results.
           // The other sample drivers (fast-float, quant, etc.) are subsets of
           // sample-all.
-          "native-test-flag": "--gtest_filter=*sample_all*"
+          "include-filter": "*sample_all*"
         }
       ]
     },
@@ -18,7 +18,7 @@
           // Just use sample-all driver for presubmit tests for faster results.
           // The other sample drivers (fast-float, quant, etc.) are subsets of
           // sample-all.
-          "native-test-flag": "--gtest_filter=*sample_all*"
+          "include-filter": "*sample_all*"
         }
       ]
     },
@@ -29,7 +29,7 @@
           // Just use sample-all driver for presubmit tests for faster results.
           // The other sample drivers (fast-float, quant, etc.) are subsets of
           // sample-all.
-          "native-test-flag": "--gtest_filter=*sample_all*"
+          "include-filter": "*sample_all*"
         }
       ]
     }
