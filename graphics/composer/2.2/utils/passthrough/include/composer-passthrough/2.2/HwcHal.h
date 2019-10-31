@@ -173,6 +173,14 @@ class HwcHalImpl : public V2_1::passthrough::detail::HwcHalImpl<Hal> {
     Error getRenderIntents(Display display, ColorMode mode,
                            std::vector<RenderIntent>* outIntents) override {
         if (!mDispatch.getRenderIntents) {
+            IComposerClient::DisplayType type;
+            if (getDisplayType(display, &type) == Error::BAD_DISPLAY) {
+                return Error::BAD_DISPLAY;
+            }
+            if (mode < ColorMode::NATIVE || mode > ColorMode::DISPLAY_P3) {
+                return Error::BAD_PARAMETER;
+            }
+
             *outIntents = std::vector<RenderIntent>({RenderIntent::COLORIMETRIC});
             return Error::NONE;
         }
@@ -199,6 +207,9 @@ class HwcHalImpl : public V2_1::passthrough::detail::HwcHalImpl<Hal> {
 
     Error setColorMode_2_2(Display display, ColorMode mode, RenderIntent intent) override {
         if (!mDispatch.setColorModeWithRenderIntent) {
+            if (intent < RenderIntent::COLORIMETRIC || intent > RenderIntent::TONE_MAP_ENHANCE) {
+                return Error::BAD_PARAMETER;
+            }
             if (intent != RenderIntent::COLORIMETRIC) {
                 return Error::UNSUPPORTED;
             }
@@ -282,6 +293,7 @@ class HwcHalImpl : public V2_1::passthrough::detail::HwcHalImpl<Hal> {
    private:
     using BaseType2_1 = V2_1::passthrough::detail::HwcHalImpl<Hal>;
     using BaseType2_1::getColorModes;
+    using BaseType2_1::getDisplayType;
     using BaseType2_1::mDevice;
     using BaseType2_1::setColorMode;
     using BaseType2_1::createVirtualDisplay;
