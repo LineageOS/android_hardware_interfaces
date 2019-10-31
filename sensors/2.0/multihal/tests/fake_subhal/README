@@ -1,0 +1,19 @@
+This directory contains a modified version of the default implementation
+provided for sensors HAL 2.0 to support multi-HAL 2.0. It should be used as a
+means to verify the multi-HAL 2.0 implementation can successfully load and
+interact with sub-HALs.
+
+This sub-HAL implementation has two macros that can be used to configure support
+for different sets of sensors. One "SUPPORT_CONTINUOUS_SENSORS", enables
+support for continuous sensors like accel, and gyro whereas the other
+"SUPPORT_ON_CHANGE_SENSORS" enables support for on change sensors like the
+light and proximity sensor. A build target is defined for each of these macros,
+but more targets could be added to support both in one sub-HAL or none at all,
+if necessary.
+
+When built, the library will be written to
+out/target/product/<device>/vendor/lib64/android.hardware.sensors@2.0-fakesubhal.so
+
+Take this .so and place it where the multi-HAL config will cause the HalProxy to
+look and then restart the system server with adb shell stop / adb shell start
+to cause the multi-HAL to restart and attempt to load in the sub-HAL.
