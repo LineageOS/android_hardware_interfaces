@@ -32,6 +32,17 @@
           "include-filter": "*sample_all*"
         }
       ]
+    },
+    {
+      "name": "VtsHalNeuralnetworksV1_3TargetTest",
+      "options": [
+        {
+          // Just use sample-all driver for presubmit tests for faster results.
+          // The other sample drivers (fast-float, quant, etc.) are subsets of
+          // sample-all.
+          "include-filter": "*sample_all*"
+        }
+      ]
     }
   ]
 }
