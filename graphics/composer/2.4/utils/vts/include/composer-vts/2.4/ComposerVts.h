@@ -84,6 +84,13 @@ class ComposerClient : public V2_3::vts::ComposerClient {
             const IComposerClient::VsyncPeriodChangeConstraints& vsyncPeriodChangeConstraints,
             VsyncPeriodChangeTimeline* timeline);
 
+    Error setAutoLowLatencyMode(Display display, bool on);
+
+    Error getSupportedContentTypes(
+            Display display, std::vector<IComposerClient::ContentType>* outSupportedContentTypes);
+
+    Error setContentType(Display display, IComposerClient::ContentType contentType);
+
   private:
     const sp<IComposerClient> mClient;
 };
