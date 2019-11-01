@@ -778,6 +778,7 @@ public:
             const CameraMetadata& chars, int deviceVersion,
             const hidl_vec<hidl_string>& deviceNames);
     void verifyCameraCharacteristics(Status status, const CameraMetadata& chars);
+    void verifyBokehCharacteristics(const camera_metadata_t* metadata);
     void verifyRecommendedConfigs(const CameraMetadata& metadata);
     void verifyMonochromeCharacteristics(const CameraMetadata& chars, int deviceVersion);
     void verifyMonochromeCameraResult(
@@ -801,7 +802,7 @@ public:
 
     bool isDepthOnly(camera_metadata_t* staticMeta);
 
-    static Status getAvailableOutputStreams(camera_metadata_t *staticMeta,
+    static Status getAvailableOutputStreams(const camera_metadata_t *staticMeta,
             std::vector<AvailableStream> &outputStreams,
             const AvailableStream *threshold = nullptr);
     static Status getJpegBufferSize(camera_metadata_t *staticMeta,
@@ -4856,7 +4857,7 @@ TEST_F(CameraHidlTest, providerDeviceStateNotification) {
 
 // Retrieve all valid output stream resolutions from the camera
 // static characteristics.
-Status CameraHidlTest::getAvailableOutputStreams(camera_metadata_t *staticMeta,
+Status CameraHidlTest::getAvailableOutputStreams(const camera_metadata_t *staticMeta,
         std::vector<AvailableStream> &outputStreams,
         const AvailableStream *threshold) {
     AvailableStream depthPreviewThreshold = {kMaxPreviewWidth, kMaxPreviewHeight,
@@ -5839,6 +5840,101 @@ void CameraHidlTest::verifyCameraCharacteristics(Status status, const CameraMeta
             ADD_FAILURE() << "Get Heic maxJpegAppSegmentsCount failed!";
         }
     }
+
+    verifyBokehCharacteristics(metadata);
+}
+
+void CameraHidlTest::verifyBokehCharacteristics(const camera_metadata_t* metadata) {
+    camera_metadata_ro_entry entry;
+    int retcode = 0;
+
+    // Check key availability in capabilities, request and result.
+
+    retcode = find_camera_metadata_ro_entry(metadata,
+            ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS, &entry);
+    bool hasBokehRequestKey = false;
+    if ((0 == retcode) && (entry.count > 0)) {
+        hasBokehRequestKey = std::find(entry.data.i32, entry.data.i32+entry.count,
+                ANDROID_CONTROL_BOKEH_MODE) != entry.data.i32+entry.count;
+    } else {
+        ADD_FAILURE() << "Get camera availableRequestKeys failed!";
+    }
+
+    retcode = find_camera_metadata_ro_entry(metadata,
+            ANDROID_REQUEST_AVAILABLE_RESULT_KEYS, &entry);
+    bool hasBokehResultKey = false;
+    if ((0 == retcode) && (entry.count > 0)) {
+        hasBokehResultKey = std::find(entry.data.i32, entry.data.i32+entry.count,
+                ANDROID_CONTROL_BOKEH_MODE) != entry.data.i32+entry.count;
+    } else {
+        ADD_FAILURE() << "Get camera availableResultKeys failed!";
+    }
+
+    retcode = find_camera_metadata_ro_entry(metadata,
+            ANDROID_REQUEST_AVAILABLE_CHARACTERISTICS_KEYS, &entry);
+    bool hasBokehCharacteristicsKey = false;
+    if ((0 == retcode) && (entry.count > 0)) {
+        hasBokehCharacteristicsKey = std::find(entry.data.i32, entry.data.i32+entry.count,
+                ANDROID_CONTROL_AVAILABLE_BOKEH_CAPABILITIES) != entry.data.i32+entry.count;
+    } else {
+        ADD_FAILURE() << "Get camera availableCharacteristicsKeys failed!";
+    }
+    retcode = find_camera_metadata_ro_entry(metadata,
+            ANDROID_CONTROL_AVAILABLE_BOKEH_CAPABILITIES, &entry);
+    bool hasAvailableBokehCaps = (0 == retcode && entry.count > 0);
+
+    // Bokeh keys must all be available, or all be unavailable.
+    bool noBokeh = !hasBokehRequestKey && !hasBokehResultKey && !hasBokehCharacteristicsKey &&
+            !hasAvailableBokehCaps;
+    if (noBokeh) {
+        return;
+    }
+    bool hasBokeh = hasBokehRequestKey && hasBokehResultKey && hasBokehCharacteristicsKey &&
+            hasAvailableBokehCaps;
+    ASSERT_TRUE(hasBokeh);
+
+    // Must have OFF, and must have one of STILL_CAPTURE and CONTINUOUS.
+    ASSERT_TRUE(entry.count == 6 || entry.count == 9);
+    bool hasOffMode = false;
+    bool hasStillCaptureMode = false;
+    bool hasContinuousMode = false;
+    std::vector<AvailableStream> outputStreams;
+    ASSERT_EQ(Status::OK, getAvailableOutputStreams(metadata, outputStreams));
+    for (int i = 0; i < entry.count; i += 3) {
+        int32_t mode = entry.data.i32[i];
+        int32_t maxWidth = entry.data.i32[i+1];
+        int32_t maxHeight = entry.data.i32[i+2];
+        switch (mode) {
+            case ANDROID_CONTROL_BOKEH_MODE_OFF:
+                hasOffMode = true;
+                ASSERT_TRUE(maxWidth == 0 && maxHeight == 0);
+                break;
+            case ANDROID_CONTROL_BOKEH_MODE_STILL_CAPTURE:
+                hasStillCaptureMode = true;
+                break;
+            case ANDROID_CONTROL_BOKEH_MODE_CONTINUOUS:
+                hasContinuousMode = true;
+                break;
+            default:
+                ADD_FAILURE() << "Invalid bokehMode advertised: " << mode;
+                break;
+        }
+
+        if (mode != ANDROID_CONTROL_BOKEH_MODE_OFF) {
+            bool sizeSupported = false;
+            for (const auto& stream : outputStreams) {
+                if ((stream.format == static_cast<int32_t>(PixelFormat::YCBCR_420_888) ||
+                        stream.format == static_cast<int32_t>(PixelFormat::IMPLEMENTATION_DEFINED))
+                        && stream.width == maxWidth && stream.height == maxHeight) {
+                    sizeSupported = true;
+                    break;
+                }
+            }
+            ASSERT_TRUE(sizeSupported);
+        }
+    }
+    ASSERT_TRUE(hasOffMode);
+    ASSERT_TRUE(hasStillCaptureMode || hasContinuousMode);
 }
 
 void CameraHidlTest::verifyMonochromeCharacteristics(const CameraMetadata& chars,
