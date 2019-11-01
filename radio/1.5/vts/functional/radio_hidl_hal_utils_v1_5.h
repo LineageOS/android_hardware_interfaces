@@ -53,7 +53,7 @@ using ::android::hardware::Void;
 class RadioHidlTest_v1_5;
 extern ::android::hardware::radio::V1_4::CardStatus cardStatus;
 
-/* Callback class for radio respons v1_5 */
+/* Callback class for radio response v1_5 */
 class RadioResponse_v1_5 : public ::android::hardware::radio::V1_5::IRadioResponse {
   protected:
     RadioHidlTest_v1_5& parent_v1_5;
@@ -530,10 +530,17 @@ class RadioResponse_v1_5 : public ::android::hardware::radio::V1_5::IRadioRespon
 
     /* 1.5 Api */
     Return<void> setSignalStrengthReportingCriteriaResponse_1_5(const RadioResponseInfo& info);
+
     Return<void> enableUiccApplicationsResponse(const RadioResponseInfo& info);
+
     Return<void> areUiccApplicationsEnabledResponse(const RadioResponseInfo& info, bool enabled);
+
     Return<void> canToggleUiccApplicationsEnablementResponse(const RadioResponseInfo& info,
                                                              bool canToggle);
+
+    Return<void> setSystemSelectionChannelsResponse_1_5(const RadioResponseInfo& info);
+
+    Return<void> startNetworkScanResponse_1_5(const RadioResponseInfo& info);
 };
 
 /* Callback class for radio indication */
