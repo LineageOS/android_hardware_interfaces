@@ -47,6 +47,9 @@ using common::V1_2::PixelFormat;
 using mapper::V2_0::IMapper;
 using mapper::V2_0::vts::Gralloc;
 
+using ContentType = IComposerClient::ContentType;
+using DisplayCapability = IComposerClient::DisplayCapability;
+
 class GraphicsComposerHidlTest : public ::testing::TestWithParam<std::string> {
   protected:
     void SetUp() override {
@@ -116,6 +119,11 @@ class GraphicsComposerHidlTest : public ::testing::TestWithParam<std::string> {
 
     void Test_setActiveConfigWithConstraints(
             const IComposerClient::VsyncPeriodChangeConstraints& constraints);
+
+    void Test_setContentType(const ContentType& contentType, const char* contentTypeStr);
+    void Test_setContentTypeForDisplay(const Display& display,
+                                       const std::vector<ContentType>& capabilities,
+                                       const ContentType& contentType, const char* contentTypeStr);
 
     std::unique_ptr<Composer> mComposer;
     std::unique_ptr<ComposerClient> mComposerClient;
@@ -375,6 +383,117 @@ TEST_P(GraphicsComposerHidlTest, setActiveConfigWithConstraints_delayed) {
     constraints.seamlessRequired = false;
     constraints.desiredTimeNanos = systemTime() + kDelayForChange.count();
     Test_setActiveConfigWithConstraints(constraints);
+}
+
+TEST_P(GraphicsComposerHidlTest, setAutoLowLatencyModeBadDisplay) {
+    EXPECT_EQ(Error::BAD_DISPLAY, mComposerClient->setAutoLowLatencyMode(mInvalidDisplayId, true));
+    EXPECT_EQ(Error::BAD_DISPLAY, mComposerClient->setAutoLowLatencyMode(mInvalidDisplayId, false));
+}
+
+TEST_P(GraphicsComposerHidlTest, setAutoLowLatencyMode) {
+    for (Display display : mComposerCallback->getDisplays()) {
+        std::vector<DisplayCapability> capabilities;
+        const auto error = mComposerClient->getDisplayCapabilities(display, &capabilities);
+        EXPECT_EQ(Error::NONE, error);
+
+        const bool allmSupport =
+                std::find(capabilities.begin(), capabilities.end(),
+                          DisplayCapability::AUTO_LOW_LATENCY_MODE) != capabilities.end();
+
+        if (!allmSupport) {
+            EXPECT_EQ(Error::UNSUPPORTED,
+                      mComposerClient->setAutoLowLatencyMode(mPrimaryDisplay, true));
+            EXPECT_EQ(Error::UNSUPPORTED,
+                      mComposerClient->setAutoLowLatencyMode(mPrimaryDisplay, false));
+            GTEST_SUCCEED() << "Auto Low Latency Mode is not supported on display "
+                            << to_string(display) << ", skipping test";
+            return;
+        }
+
+        EXPECT_EQ(Error::NONE, mComposerClient->setAutoLowLatencyMode(mPrimaryDisplay, true));
+        EXPECT_EQ(Error::NONE, mComposerClient->setAutoLowLatencyMode(mPrimaryDisplay, false));
+    }
+}
+
+TEST_P(GraphicsComposerHidlTest, getSupportedContentTypesBadDisplay) {
+    std::vector<ContentType> supportedContentTypes;
+    const auto error =
+            mComposerClient->getSupportedContentTypes(mInvalidDisplayId, &supportedContentTypes);
+    EXPECT_EQ(Error::BAD_DISPLAY, error);
+}
+
+TEST_P(GraphicsComposerHidlTest, getSupportedContentTypes) {
+    std::vector<ContentType> supportedContentTypes;
+    for (Display display : mComposerCallback->getDisplays()) {
+        supportedContentTypes.clear();
+        const auto error =
+                mComposerClient->getSupportedContentTypes(display, &supportedContentTypes);
+        const bool noneSupported =
+                std::find(supportedContentTypes.begin(), supportedContentTypes.end(),
+                          ContentType::NONE) != supportedContentTypes.end();
+        EXPECT_EQ(Error::NONE, error);
+        EXPECT_FALSE(noneSupported);
+    }
+}
+
+TEST_P(GraphicsComposerHidlTest, setContentTypeNoneAlwaysAccepted) {
+    for (Display display : mComposerCallback->getDisplays()) {
+        const auto error = mComposerClient->setContentType(display, ContentType::NONE);
+        EXPECT_NE(Error::UNSUPPORTED, error);
+    }
+}
+
+TEST_P(GraphicsComposerHidlTest, setContentTypeBadDisplay) {
+    const auto types = {ContentType::NONE, ContentType::GRAPHICS, ContentType::PHOTO,
+                        ContentType::CINEMA, ContentType::GAME};
+    for (auto type : types) {
+        EXPECT_EQ(Error::BAD_DISPLAY, mComposerClient->setContentType(mInvalidDisplayId, type));
+    }
+}
+
+void GraphicsComposerHidlTest::Test_setContentTypeForDisplay(
+        const Display& display, const std::vector<ContentType>& capabilities,
+        const ContentType& contentType, const char* contentTypeStr) {
+    const bool contentTypeSupport =
+            std::find(capabilities.begin(), capabilities.end(), contentType) != capabilities.end();
+
+    if (!contentTypeSupport) {
+        EXPECT_EQ(Error::UNSUPPORTED, mComposerClient->setContentType(display, contentType));
+        GTEST_SUCCEED() << contentTypeStr << " content type is not supported on display "
+                        << to_string(display) << ", skipping test";
+        return;
+    }
+
+    EXPECT_EQ(Error::NONE, mComposerClient->setContentType(display, contentType));
+    EXPECT_EQ(Error::NONE, mComposerClient->setContentType(display, ContentType::NONE));
+}
+
+void GraphicsComposerHidlTest::Test_setContentType(const ContentType& contentType,
+                                                   const char* contentTypeStr) {
+    for (Display display : mComposerCallback->getDisplays()) {
+        std::vector<ContentType> supportedContentTypes;
+        const auto error =
+                mComposerClient->getSupportedContentTypes(display, &supportedContentTypes);
+        EXPECT_EQ(Error::NONE, error);
+
+        Test_setContentTypeForDisplay(display, supportedContentTypes, contentType, contentTypeStr);
+    }
+}
+
+TEST_P(GraphicsComposerHidlTest, setGraphicsContentType) {
+    Test_setContentType(ContentType::GRAPHICS, "GRAPHICS");
+}
+
+TEST_P(GraphicsComposerHidlTest, setPhotoContentType) {
+    Test_setContentType(ContentType::PHOTO, "PHOTO");
+}
+
+TEST_P(GraphicsComposerHidlTest, setCinemaContentType) {
+    Test_setContentType(ContentType::CINEMA, "CINEMA");
+}
+
+TEST_P(GraphicsComposerHidlTest, setGameContentType) {
+    Test_setContentType(ContentType::GAME, "GAME");
 }
 
 INSTANTIATE_TEST_SUITE_P(

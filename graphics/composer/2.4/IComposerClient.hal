@@ -48,6 +48,12 @@ interface IComposerClient extends @2.3::IComposerClient {
          * with protected buffers.
          */
         PROTECTED_CONTENTS = 4,
+
+        /**
+         * Indicates that both the composer HAL implementation and the given display
+         * support a low latency mode, such as HDMI 2.1 Auto Low Latency Mode.
+         */
+        AUTO_LOW_LATENCY_MODE = 5,
     };
 
     /**
@@ -62,6 +68,18 @@ interface IComposerClient extends @2.3::IComposerClient {
          * Display is connected through external port, e.g. HDMI, DisplayPort.
          */
         EXTERNAL = 1,
+    };
+
+    enum ContentType : uint32_t {
+        NONE = 0,
+
+        /**
+         * These modes correspond to those found in the HDMI 1.4 specification.
+         */
+        GRAPHICS = 1,
+        PHOTO = 2,
+        CINEMA = 3,
+        GAME = 4,
     };
 
     /**
@@ -172,4 +190,60 @@ interface IComposerClient extends @2.3::IComposerClient {
     setActiveConfigWithConstraints(Display display, Config config,
         VsyncPeriodChangeConstraints vsyncPeriodChangeConstraints)
         generates (Error error, VsyncPeriodChangeTimeline timeline);
+
+    /**
+     * Requests the display to enable/disable its low latency mode.
+     *
+     * If the display is connected via HDMI 2.1, then Auto Low Latency Mode should be triggered. If
+     * the display is internally connected and a custom low latency mode is available, that should
+     * be triggered.
+     *
+     * This function should only be called if the display reports support for
+     * DisplayCapability::AUTO_LOW_LATENCY_MODE from getDisplayCapabilities_2_4.
+     *
+     * @return error is NONE upon success. Otherwise,
+     *     BAD_DISPLAY when an invalid display handle was passed in.
+     *     UNSUPPORTED when AUTO_LOW_LATENCY_MODE is not supported by the composer
+     *         implementation or the given display
+     */
+    setAutoLowLatencyMode(Display display, bool on)
+        generates (Error error);
+
+    /**
+     * Provides a list of all the content types supported by this display (any of
+     * ContentType::{GRAPHICS, PHOTO, CINEMA, GAME}). This list must not change after
+     * initialization.
+     *
+     * Content types are introduced in HDMI 1.4 and supporting them is optional. The
+     * ContentType::NONE is always supported and will not be returned by this method..
+     *
+     * @return error is NONE upon success. Otherwise,
+     *     BAD_DISPLAY when an invalid display handle was passed in.
+     * @return supportedContentTypes is a list of supported content types.
+     */
+    getSupportedContentTypes(Display display)
+        generates(Error error, vec<ContentType> supportedContentTypes);
+
+    /**
+     * Instructs the connected display that the content being shown is of the given type - one of
+     * GRAPHICS, PHOTO, CINEMA, GAME.
+     *
+     * Content types are introduced in HDMI 1.4 and supporting them is optional. If they are
+     * supported, this signal should switch the display to a mode that is optimal for the given
+     * type of content. See HDMI 1.4 specification for more information.
+     *
+     * If the display is internally connected (not through HDMI), and such modes are available,
+     * this method should trigger them.
+     *
+     * This function should only be called if the display reports support for the corresponding
+     * content type (ContentType::{GRAPHICS, PHOTO, CINEMA, GAME}) from getSupportedContentTypes.
+     * ContentType::NONE is supported by default and can always be set.
+     *
+     * @return error is NONE upon success. Otherwise,
+     *     BAD_DISPLAY when an invalid display handle was passed in.
+     *     UNSUPPORTED when the given content type is not supported by the composer
+     *         implementation or the given display
+     */
+    setContentType(Display display, ContentType type)
+        generates (Error error);
 };
