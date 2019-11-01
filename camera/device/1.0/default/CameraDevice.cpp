@@ -397,9 +397,11 @@ void CameraDevice::sPutMemory(camera_memory_t *data) {
     CameraDevice* device = mem->handle.mDevice;
     if (device == nullptr) {
         ALOGE("%s: camera HAL return memory for a null device!", __FUNCTION__);
+        return;
     }
     if (device->mDeviceCallback == nullptr) {
         ALOGE("%s: camera HAL return memory while camera is not opened!", __FUNCTION__);
+        return;
     }
     device->mDeviceCallback->unregisterMemory(mem->handle.mId);
     {
