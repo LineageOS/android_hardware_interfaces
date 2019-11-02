@@ -18,8 +18,9 @@
 
 #include <android/hardware/atrace/1.0/IAtraceDevice.h>
 
-#include <VtsHalHidlTargetTestBase.h>
-#include <VtsHalHidlTargetTestEnvBase.h>
+#include <gtest/gtest.h>
+#include <hidl/GtestPrinter.h>
+#include <hidl/ServiceManagement.h>
 
 using ::android::sp;
 using ::android::hardware::hidl_string;
@@ -28,29 +29,13 @@ using ::android::hardware::Return;
 using ::android::hardware::atrace::V1_0::IAtraceDevice;
 using ::android::hardware::atrace::V1_0::Status;
 
-// Test environment for Boot HIDL HAL.
-class AtraceHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
-   public:
-    // get the test environment singleton
-    static AtraceHidlEnvironment* Instance() {
-        static AtraceHidlEnvironment* instance = new AtraceHidlEnvironment;
-        return instance;
-    }
-
-    virtual void registerTestServices() override { registerTestService<IAtraceDevice>(); }
-
-   private:
-    AtraceHidlEnvironment() {}
-};
-
 /**
  * There is no expected behaviour that can be tested so these tests check the
  * HAL doesn't crash with different execution orders.
  */
-struct AtraceHidlTest : public ::testing::VtsHalHidlTargetTestBase {
+struct AtraceHidlTest : public ::testing::TestWithParam<std::string> {
     virtual void SetUp() override {
-        atrace = ::testing::VtsHalHidlTargetTestBase::getService<IAtraceDevice>(
-            AtraceHidlEnvironment::Instance()->getServiceName<IAtraceDevice>());
+        atrace = IAtraceDevice::getService(GetParam());
         ASSERT_NE(atrace, nullptr);
     }
 
@@ -82,13 +67,13 @@ hidl_vec<hidl_string> getVendorCategoryName(sp<IAtraceDevice> atrace) {
 }
 
 /* list categories from vendors. */
-TEST_F(AtraceHidlTest, listCategories) {
+TEST_P(AtraceHidlTest, listCategories) {
     hidl_vec<hidl_string> vnd_categories = getVendorCategoryName(atrace);
     EXPECT_NE(0, vnd_categories.size());
 }
 
 /* enable categories. */
-TEST_F(AtraceHidlTest, enableCategories) {
+TEST_P(AtraceHidlTest, enableCategories) {
     hidl_vec<hidl_string> vnd_categories = getVendorCategoryName(atrace);
     // empty Category with ERROR_INVALID_ARGUMENT
     hidl_vec<hidl_string> empty_categories;
@@ -102,17 +87,13 @@ TEST_F(AtraceHidlTest, enableCategories) {
 }
 
 /* enable categories. */
-TEST_F(AtraceHidlTest, disableAllCategories) {
+TEST_P(AtraceHidlTest, disableAllCategories) {
     auto ret = atrace->disableAllCategories();
     ASSERT_TRUE(ret.isOk());
     EXPECT_EQ(Status::SUCCESS, ret);
 }
 
-int main(int argc, char** argv) {
-    ::testing::AddGlobalTestEnvironment(AtraceHidlEnvironment::Instance());
-    ::testing::InitGoogleTest(&argc, argv);
-    AtraceHidlEnvironment::Instance()->init(&argc, argv);
-    int status = RUN_ALL_TESTS();
-    ALOGI("Test result = %d", status);
-    return status;
-}
+INSTANTIATE_TEST_SUITE_P(
+        PerInstance, AtraceHidlTest,
+        testing::ValuesIn(android::hardware::getAllHalInstanceNames(IAtraceDevice::descriptor)),
+        android::hardware::PrintInstanceNameToString);
