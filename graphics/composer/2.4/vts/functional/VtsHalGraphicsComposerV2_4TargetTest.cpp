@@ -19,13 +19,15 @@
 #include <algorithm>
 #include <thread>
 
-#include <VtsHalHidlTargetTestBase.h>
 #include <android-base/logging.h>
 #include <android/hardware/graphics/mapper/2.0/IMapper.h>
 #include <composer-command-buffer/2.4/ComposerCommandBuffer.h>
 #include <composer-vts/2.1/GraphicsComposerCallback.h>
 #include <composer-vts/2.1/TestCommandReader.h>
 #include <composer-vts/2.4/ComposerVts.h>
+#include <gtest/gtest.h>
+#include <hidl/GtestPrinter.h>
+#include <hidl/ServiceManagement.h>
 #include <mapper-vts/2.0/MapperVts.h>
 #include <utils/Timers.h>
 
@@ -45,29 +47,11 @@ using common::V1_2::PixelFormat;
 using mapper::V2_0::IMapper;
 using mapper::V2_0::vts::Gralloc;
 
-// Test environment for graphics.composer
-class GraphicsComposerHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
-  public:
-    // get the test environment singleton
-    static GraphicsComposerHidlEnvironment* Instance() {
-        static GraphicsComposerHidlEnvironment* instance = new GraphicsComposerHidlEnvironment;
-        return instance;
-    }
-
-    virtual void registerTestServices() override { registerTestService<IComposer>(); }
-
-  private:
-    GraphicsComposerHidlEnvironment() {}
-
-    GTEST_DISALLOW_COPY_AND_ASSIGN_(GraphicsComposerHidlEnvironment);
-};
-
-class GraphicsComposerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
+class GraphicsComposerHidlTest : public ::testing::TestWithParam<std::string> {
   protected:
     void SetUp() override {
         ASSERT_NO_FATAL_FAILURE(
-                mComposer = std::make_unique<Composer>(
-                        GraphicsComposerHidlEnvironment::Instance()->getServiceName<IComposer>()));
+                mComposer = std::make_unique<Composer>(IComposer::getService(GetParam())));
         ASSERT_NO_FATAL_FAILURE(mComposerClient = mComposer->createClient());
 
         mComposerCallback = new V2_1::vts::GraphicsComposerCallback;
@@ -194,13 +178,13 @@ class GraphicsComposerHidlCommandTest : public GraphicsComposerHidlTest {
     std::unique_ptr<Gralloc> mGralloc;
 };
 
-TEST_F(GraphicsComposerHidlTest, getDisplayCapabilitiesBadDisplay) {
+TEST_P(GraphicsComposerHidlTest, getDisplayCapabilitiesBadDisplay) {
     std::vector<IComposerClient::DisplayCapability> capabilities;
     const auto error = mComposerClient->getDisplayCapabilities(mInvalidDisplayId, &capabilities);
     EXPECT_EQ(Error::BAD_DISPLAY, error);
 }
 
-TEST_F(GraphicsComposerHidlTest, getDisplayConnectionType) {
+TEST_P(GraphicsComposerHidlTest, getDisplayConnectionType) {
     IComposerClient::DisplayConnectionType type;
     EXPECT_EQ(Error::BAD_DISPLAY,
               mComposerClient->getDisplayConnectionType(mInvalidDisplayId, &type));
@@ -210,13 +194,13 @@ TEST_F(GraphicsComposerHidlTest, getDisplayConnectionType) {
     }
 }
 
-TEST_F(GraphicsComposerHidlTest, getSupportedDisplayVsyncPeriods_BadDisplay) {
+TEST_P(GraphicsComposerHidlTest, getSupportedDisplayVsyncPeriods_BadDisplay) {
     std::vector<VsyncPeriodNanos> supportedVsyncPeriods;
     EXPECT_EQ(Error::BAD_DISPLAY, mComposerClient->getSupportedDisplayVsyncPeriods(
                                           mInvalidDisplayId, Config(0), &supportedVsyncPeriods));
 }
 
-TEST_F(GraphicsComposerHidlTest, getSupportedDisplayVsyncPeriods_BadConfig) {
+TEST_P(GraphicsComposerHidlTest, getSupportedDisplayVsyncPeriods_BadConfig) {
     for (Display display : mComposerCallback->getDisplays()) {
         Config invalidConfigId = GetInvalidConfigId(display);
         std::vector<VsyncPeriodNanos> supportedVsyncPeriods;
@@ -225,7 +209,7 @@ TEST_F(GraphicsComposerHidlTest, getSupportedDisplayVsyncPeriods_BadConfig) {
     }
 }
 
-TEST_F(GraphicsComposerHidlTest, getSupportedDisplayVsyncPeriods) {
+TEST_P(GraphicsComposerHidlTest, getSupportedDisplayVsyncPeriods) {
     for (Display display : mComposerCallback->getDisplays()) {
         for (Config config : mComposerClient->getDisplayConfigs(display)) {
             std::vector<VsyncPeriodNanos> supportedVsyncPeriods;
@@ -250,13 +234,13 @@ TEST_F(GraphicsComposerHidlTest, getSupportedDisplayVsyncPeriods) {
     }
 }
 
-TEST_F(GraphicsComposerHidlTest, getDisplayVsyncPeriod_BadDisplay) {
+TEST_P(GraphicsComposerHidlTest, getDisplayVsyncPeriod_BadDisplay) {
     VsyncPeriodNanos vsyncPeriodNanos;
     EXPECT_EQ(Error::BAD_DISPLAY,
               mComposerClient->getDisplayVsyncPeriod(mInvalidDisplayId, &vsyncPeriodNanos));
 }
 
-TEST_F(GraphicsComposerHidlTest, setActiveConfigAndVsyncPeriod_BadDisplay) {
+TEST_P(GraphicsComposerHidlTest, setActiveConfigAndVsyncPeriod_BadDisplay) {
     int64_t newVsyncAppliedTime;
     IComposerClient::VsyncPeriodChangeConstraints constraints;
 
@@ -268,7 +252,7 @@ TEST_F(GraphicsComposerHidlTest, setActiveConfigAndVsyncPeriod_BadDisplay) {
                                           constraints, &newVsyncAppliedTime));
 }
 
-TEST_F(GraphicsComposerHidlTest, setActiveConfigAndVsyncPeriod_BadConfig) {
+TEST_P(GraphicsComposerHidlTest, setActiveConfigAndVsyncPeriod_BadConfig) {
     int64_t newVsyncAppliedTime;
     IComposerClient::VsyncPeriodChangeConstraints constraints;
 
@@ -283,7 +267,7 @@ TEST_F(GraphicsComposerHidlTest, setActiveConfigAndVsyncPeriod_BadConfig) {
     }
 }
 
-TEST_F(GraphicsComposerHidlTest, setActiveConfigAndVsyncPeriod_BadVsyncPeriod) {
+TEST_P(GraphicsComposerHidlTest, setActiveConfigAndVsyncPeriod_BadVsyncPeriod) {
     int64_t newVsyncAppliedTime;
     IComposerClient::VsyncPeriodChangeConstraints constraints;
 
@@ -349,7 +333,7 @@ void GraphicsComposerHidlTest::Test_setActiveConfigAndVsyncPeriod(
     }
 }
 
-TEST_F(GraphicsComposerHidlTest, setActiveConfigAndVsyncPeriod) {
+TEST_P(GraphicsComposerHidlTest, setActiveConfigAndVsyncPeriod) {
     IComposerClient::VsyncPeriodChangeConstraints constraints;
 
     constraints.seamlessRequired = false;
@@ -357,7 +341,7 @@ TEST_F(GraphicsComposerHidlTest, setActiveConfigAndVsyncPeriod) {
     Test_setActiveConfigAndVsyncPeriod(constraints);
 }
 
-TEST_F(GraphicsComposerHidlTest, setActiveConfigAndVsyncPeriod_delayed) {
+TEST_P(GraphicsComposerHidlTest, setActiveConfigAndVsyncPeriod_delayed) {
     IComposerClient::VsyncPeriodChangeConstraints constraints;
 
     constexpr auto kDelayForChange = 300ms;
@@ -366,6 +350,11 @@ TEST_F(GraphicsComposerHidlTest, setActiveConfigAndVsyncPeriod_delayed) {
     Test_setActiveConfigAndVsyncPeriod(constraints);
 }
 
+INSTANTIATE_TEST_SUITE_P(
+        PerInstance, GraphicsComposerHidlTest,
+        testing::ValuesIn(android::hardware::getAllHalInstanceNames(IComposer::descriptor)),
+        android::hardware::PrintInstanceNameToString);
+
 }  // namespace
 }  // namespace vts
 }  // namespace V2_4
@@ -373,12 +362,3 @@ TEST_F(GraphicsComposerHidlTest, setActiveConfigAndVsyncPeriod_delayed) {
 }  // namespace graphics
 }  // namespace hardware
 }  // namespace android
-
-int main(int argc, char** argv) {
-    using android::hardware::graphics::composer::V2_4::vts::GraphicsComposerHidlEnvironment;
-    ::testing::AddGlobalTestEnvironment(GraphicsComposerHidlEnvironment::Instance());
-    ::testing::InitGoogleTest(&argc, argv);
-    GraphicsComposerHidlEnvironment::Instance()->init(&argc, argv);
-    int status = RUN_ALL_TESTS();
-    return status;
-}
