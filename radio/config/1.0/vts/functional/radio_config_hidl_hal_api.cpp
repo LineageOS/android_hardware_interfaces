@@ -21,7 +21,7 @@
 /*
  * Test IRadioConfig.getSimSlotsStatus()
  */
-TEST_F(RadioConfigHidlTest, getSimSlotsStatus) {
+TEST_P(RadioConfigHidlTest, getSimSlotsStatus) {
     const int serial = GetRandomSerialNumber();
     Return<void> res = radioConfig->getSimSlotsStatus(serial);
     ASSERT_OK(res);
@@ -38,7 +38,7 @@ TEST_F(RadioConfigHidlTest, getSimSlotsStatus) {
 /*
  * Test IRadioConfig.setSimSlotsMapping()
  */
-TEST_F(RadioConfigHidlTest, setSimSlotsMapping) {
+TEST_P(RadioConfigHidlTest, setSimSlotsMapping) {
     const int serial = GetRandomSerialNumber();
     android::hardware::hidl_vec<uint32_t> mapping = {0};
     Return<void> res = radioConfig->setSimSlotsMapping(serial, mapping);
