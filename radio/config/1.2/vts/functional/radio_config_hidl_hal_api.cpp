@@ -21,7 +21,7 @@
 /*
  * Test IRadioConfig.getSimSlotsStatus()
  */
-TEST_F(RadioConfigHidlTest, getSimSlotsStatus) {
+TEST_P(RadioConfigHidlTest, getSimSlotsStatus) {
     const int serial = GetRandomSerialNumber();
     Return<void> res = radioConfig->getSimSlotsStatus(serial);
     ASSERT_OK(res);
