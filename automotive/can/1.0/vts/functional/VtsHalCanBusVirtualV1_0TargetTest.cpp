@@ -50,15 +50,10 @@ struct CanMessageListener : public can::V1_0::ICanMessageListener {
 
     CanMessageListener() {}
 
-    virtual Return<void> onReceive(const can::V1_0::CanMessage& msg) {
+    virtual Return<void> onReceive(const can::V1_0::CanMessage& msg) override {
         std::unique_lock<std::mutex> lk(mMessagesGuard);
         mMessages.push_back(msg);
         mMessagesUpdated.notify_one();
-        return {};
-    }
-
-    virtual Return<void> onError(can::V1_0::ErrorEvent event) {
-        EXPECT_TRUE(false) << "Got error: " << event;
         return {};
     }
 

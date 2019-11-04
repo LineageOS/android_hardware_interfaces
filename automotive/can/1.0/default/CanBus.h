@@ -34,12 +34,16 @@ namespace V1_0 {
 namespace implementation {
 
 struct CanBus : public ICanBus {
+    using ErrorCallback = std::function<void()>;
+
     virtual ~CanBus();
 
     Return<Result> send(const CanMessage& message) override;
     Return<void> listen(const hidl_vec<CanMessageFilter>& filter,
                         const sp<ICanMessageListener>& listener, listen_cb _hidl_cb) override;
+    Return<sp<ICloseHandle>> listenForErrors(const sp<ICanErrorListener>& listener) override;
 
+    void setErrorCallback(ErrorCallback errcb);
     ICanController::Result up();
     bool down();
 
@@ -68,17 +72,22 @@ struct CanBus : public ICanBus {
         sp<ICanMessageListener> callback;
         hidl_vec<CanMessageFilter> filter;
         wp<ICloseHandle> closeHandle;
+        bool failedOnce = false;
     };
-    void clearListeners();
+    void clearMsgListeners();
+    void clearErrListeners();
 
     void onRead(const struct canfd_frame& frame, std::chrono::nanoseconds timestamp);
-    void onError();
+    void onError(int errnoVal);
 
-    std::mutex mListenersGuard;
-    std::vector<CanMessageListener> mListeners GUARDED_BY(mListenersGuard);
+    std::mutex mMsgListenersGuard;
+    std::vector<CanMessageListener> mMsgListeners GUARDED_BY(mMsgListenersGuard);
+
+    std::mutex mErrListenersGuard;
+    std::vector<sp<ICanErrorListener>> mErrListeners GUARDED_BY(mErrListenersGuard);
 
     std::unique_ptr<CanSocket> mSocket;
-    bool mWasUpInitially;
+    bool mDownAfterUse;
 
     /**
      * Guard for up flag is required to be held for entire time when the interface is being used
@@ -87,6 +96,8 @@ struct CanBus : public ICanBus {
      */
     std::mutex mIsUpGuard;
     bool mIsUp GUARDED_BY(mIsUpGuard) = false;
+
+    ErrorCallback mErrCb;
 };
 
 }  // namespace implementation

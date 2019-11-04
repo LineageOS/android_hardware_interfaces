@@ -39,13 +39,13 @@ struct CloseHandle : public ICloseHandle {
      *
      * \param callback Called on the first close() call, or on destruction of the handle
      */
-    CloseHandle(Callback callback);
+    CloseHandle(Callback callback = nullptr);
     virtual ~CloseHandle();
 
     Return<void> close() override;
 
   private:
-    Callback mCallback;
+    const Callback mCallback;
     std::atomic<bool> mIsClosed = false;
 
     DISALLOW_COPY_AND_ASSIGN(CloseHandle);

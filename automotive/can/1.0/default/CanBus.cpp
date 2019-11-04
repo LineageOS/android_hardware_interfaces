@@ -68,14 +68,14 @@ Return<void> CanBus::listen(const hidl_vec<CanMessageFilter>& filter,
         return {};
     }
 
-    std::lock_guard<std::mutex> lckListeners(mListenersGuard);
+    std::lock_guard<std::mutex> lckListeners(mMsgListenersGuard);
 
     sp<CloseHandle> closeHandle = new CloseHandle([this, listenerCb]() {
-        std::lock_guard<std::mutex> lck(mListenersGuard);
-        std::erase_if(mListeners, [&](const auto& e) { return e.callback == listenerCb; });
+        std::lock_guard<std::mutex> lck(mMsgListenersGuard);
+        std::erase_if(mMsgListeners, [&](const auto& e) { return e.callback == listenerCb; });
     });
-    mListeners.emplace_back(CanMessageListener{listenerCb, filter, closeHandle});
-    auto& listener = mListeners.back();
+    mMsgListeners.emplace_back(CanMessageListener{listenerCb, filter, closeHandle});
+    auto& listener = mMsgListeners.back();
 
     // fix message IDs to have all zeros on bits not covered by mask
     std::for_each(listener.filter.begin(), listener.filter.end(),
@@ -91,8 +91,15 @@ CanBus::~CanBus() {
     std::lock_guard<std::mutex> lck(mIsUpGuard);
     CHECK(!mIsUp) << "Interface is still up while being destroyed";
 
-    std::lock_guard<std::mutex> lckListeners(mListenersGuard);
-    CHECK(mListeners.empty()) << "Listeners list is not empty while interface is being destroyed";
+    std::lock_guard<std::mutex> lckListeners(mMsgListenersGuard);
+    CHECK(mMsgListeners.empty()) << "Listener list is not empty while interface is being destroyed";
+}
+
+void CanBus::setErrorCallback(ErrorCallback errcb) {
+    CHECK(!mIsUp) << "Can't set error callback while interface is up";
+    CHECK(mErrCb == nullptr) << "Error callback is already set";
+    mErrCb = errcb;
+    CHECK(!mIsUp) << "Can't set error callback while interface is up";
 }
 
 ICanController::Result CanBus::preUp() {
@@ -120,19 +127,19 @@ ICanController::Result CanBus::up() {
         LOG(ERROR) << "Interface " << mIfname << " didn't get prepared";
         return ICanController::Result::BAD_ADDRESS;
     }
-    mWasUpInitially = *isUp;
 
-    if (!mWasUpInitially && !netdevice::up(mIfname)) {
+    if (!*isUp && !netdevice::up(mIfname)) {
         LOG(ERROR) << "Can't bring " << mIfname << " up";
         return ICanController::Result::UNKNOWN_ERROR;
     }
+    mDownAfterUse = !*isUp;
 
     using namespace std::placeholders;
     CanSocket::ReadCallback rdcb = std::bind(&CanBus::onRead, this, _1, _2);
-    CanSocket::ErrorCallback errcb = std::bind(&CanBus::onError, this);
+    CanSocket::ErrorCallback errcb = std::bind(&CanBus::onError, this, _1);
     mSocket = CanSocket::open(mIfname, rdcb, errcb);
     if (!mSocket) {
-        if (!mWasUpInitially) netdevice::down(mIfname);
+        if (mDownAfterUse) netdevice::down(mIfname);
         return ICanController::Result::UNKNOWN_ERROR;
     }
 
@@ -140,24 +147,50 @@ ICanController::Result CanBus::up() {
     return ICanController::Result::OK;
 }
 
-void CanBus::clearListeners() {
+void CanBus::clearMsgListeners() {
     std::vector<wp<ICloseHandle>> listenersToClose;
     {
-        std::lock_guard<std::mutex> lck(mListenersGuard);
-        std::transform(mListeners.begin(), mListeners.end(), std::back_inserter(listenersToClose),
+        std::lock_guard<std::mutex> lck(mMsgListenersGuard);
+        std::transform(mMsgListeners.begin(), mMsgListeners.end(),
+                       std::back_inserter(listenersToClose),
                        [](const auto& e) { return e.closeHandle; });
     }
 
     for (auto& weakListener : listenersToClose) {
         /* Between populating listenersToClose and calling close method here, some listeners might
-         * have been already removed from the original mListeners list (resulting in a dangling weak
-         * pointer here). It's fine - we just want to clean them up. */
+         * have been already removed from the original mMsgListeners list (resulting in a dangling
+         * weak pointer here). It's fine - we just want to clean them up. */
         auto listener = weakListener.promote();
         if (listener != nullptr) listener->close();
     }
 
-    std::lock_guard<std::mutex> lck(mListenersGuard);
-    CHECK(mListeners.empty()) << "Listeners list wasn't emptied";
+    std::lock_guard<std::mutex> lck(mMsgListenersGuard);
+    CHECK(mMsgListeners.empty()) << "Listeners list wasn't emptied";
+}
+
+void CanBus::clearErrListeners() {
+    std::lock_guard<std::mutex> lck(mErrListenersGuard);
+    mErrListeners.clear();
+}
+
+Return<sp<ICloseHandle>> CanBus::listenForErrors(const sp<ICanErrorListener>& listener) {
+    if (listener == nullptr) {
+        return new CloseHandle();
+    }
+
+    std::lock_guard<std::mutex> upLck(mIsUpGuard);
+    if (!mIsUp) {
+        listener->onError(ErrorEvent::INTERFACE_DOWN, true);
+        return new CloseHandle();
+    }
+
+    std::lock_guard<std::mutex> errLck(mErrListenersGuard);
+    mErrListeners.emplace_back(listener);
+
+    return new CloseHandle([this, listener]() {
+        std::lock_guard<std::mutex> lck(mErrListenersGuard);
+        std::erase(mErrListeners, listener);
+    });
 }
 
 bool CanBus::down() {
@@ -169,12 +202,13 @@ bool CanBus::down() {
     }
     mIsUp = false;
 
-    clearListeners();
+    clearMsgListeners();
+    clearErrListeners();
     mSocket.reset();
 
     bool success = true;
 
-    if (!mWasUpInitially && !netdevice::down(mIfname)) {
+    if (mDownAfterUse && !netdevice::down(mIfname)) {
         LOG(ERROR) << "Can't bring " << mIfname << " down";
         // don't return yet, let's try to do best-effort cleanup
         success = false;
@@ -223,22 +257,35 @@ void CanBus::onRead(const struct canfd_frame& frame, std::chrono::nanoseconds ti
         LOG(VERBOSE) << "Got message " << toString(message);
     }
 
-    std::lock_guard<std::mutex> lck(mListenersGuard);
-    for (auto& listener : mListeners) {
+    std::lock_guard<std::mutex> lck(mMsgListenersGuard);
+    for (auto& listener : mMsgListeners) {
         if (!match(listener.filter, message.id)) continue;
-        if (!listener.callback->onReceive(message).isOk()) {
+        if (!listener.callback->onReceive(message).isOk() && !listener.failedOnce) {
+            listener.failedOnce = true;
             LOG(WARNING) << "Failed to notify listener about message";
         }
     }
 }
 
-void CanBus::onError() {
-    std::lock_guard<std::mutex> lck(mListenersGuard);
-    for (auto& listener : mListeners) {
-        if (!listener.callback->onError(ErrorEvent::HARDWARE_ERROR).isOk()) {
-            LOG(WARNING) << "Failed to notify listener about error";
+void CanBus::onError(int errnoVal) {
+    auto eventType = ErrorEvent::HARDWARE_ERROR;
+
+    if (errnoVal == ENODEV || errnoVal == ENETDOWN) {
+        mDownAfterUse = false;
+        eventType = ErrorEvent::INTERFACE_DOWN;
+    }
+
+    {
+        std::lock_guard<std::mutex> lck(mErrListenersGuard);
+        for (auto& listener : mErrListeners) {
+            if (!listener->onError(eventType, true).isOk()) {
+                LOG(WARNING) << "Failed to notify listener about error";
+            }
         }
     }
+
+    const auto errcb = mErrCb;
+    if (errcb != nullptr) errcb();
 }
 
 }  // namespace implementation

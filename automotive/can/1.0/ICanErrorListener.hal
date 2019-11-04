@@ -16,18 +16,17 @@
 package android.hardware.automotive.can@1.0;
 
 /**
- * CAN message listener.
+ * CAN error listener.
  */
-interface ICanMessageListener {
+interface ICanErrorListener {
     /**
-     * Called on received CAN message.
+     * Called on error event.
      *
-     * The timestamp field of message struct is set to time when the message
-     * was received by the hardware. If it's not possible to fetch exact
-     * hardware time, this field should be set as early as possible to decrease
-     * potential time delta.
+     * If the error is fatal, the client is supposed to drop any references to
+     * this specific ICanBus instance.
      *
-     * @param message Received CAN message
+     * @param error Error type
+     * @param isFatal Whether an error would result with ICanBus instance being unusable.
      */
-    onReceive(CanMessage message);
+    onError(ErrorEvent error, bool isFatal);
 };
