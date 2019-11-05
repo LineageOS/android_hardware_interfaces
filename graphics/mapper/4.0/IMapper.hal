@@ -23,6 +23,11 @@ import android.hardware.graphics.common@1.2::Rect;
 interface IMapper {
     struct BufferDescriptorInfo {
         /**
+         * The name of the buffer. Useful for debugging/tracing.
+         */
+        string name;
+
+        /**
          * The width specifies how many columns of pixels must be in the
          * allocated buffer, but does not necessarily represent the offset in
          * columns between the same column in adjacent rows. The rows may be

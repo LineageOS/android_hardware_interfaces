@@ -6224,9 +6224,10 @@ void CameraHidlTest::allocateGraphicBuffer(uint32_t width, uint32_t height, uint
         android::hardware::graphics::mapper::V3_0::IMapper::getService();
     sp<android::hardware::graphics::mapper::V2_0::IMapper> mapper =
         android::hardware::graphics::mapper::V2_0::IMapper::getService();
-    ::android::hardware::hidl_vec<uint32_t> descriptor;
     if (mapperV4 != nullptr && allocatorV4 != nullptr) {
+        ::android::hardware::hidl_vec<uint8_t> descriptor;
         android::hardware::graphics::mapper::V4_0::IMapper::BufferDescriptorInfo descriptorInfo{};
+        descriptorInfo.name = "VtsHalCameraProviderV2_4";
         descriptorInfo.width = width;
         descriptorInfo.height = height;
         descriptorInfo.layerCount = 1;
@@ -6236,7 +6237,7 @@ void CameraHidlTest::allocateGraphicBuffer(uint32_t width, uint32_t height, uint
 
         auto ret = mapperV4->createDescriptor(
                 descriptorInfo, [&descriptor](android::hardware::graphics::mapper::V4_0::Error err,
-                                              ::android::hardware::hidl_vec<uint32_t> desc) {
+                                              ::android::hardware::hidl_vec<uint8_t> desc) {
                     ASSERT_EQ(err, android::hardware::graphics::mapper::V4_0::Error::NONE);
                     descriptor = desc;
                 });
@@ -6253,6 +6254,7 @@ void CameraHidlTest::allocateGraphicBuffer(uint32_t width, uint32_t height, uint
                 });
         ASSERT_TRUE(ret.isOk());
     } else if (mapperV3 != nullptr && allocatorV3 != nullptr) {
+        ::android::hardware::hidl_vec<uint32_t> descriptor;
         android::hardware::graphics::mapper::V3_0::IMapper::BufferDescriptorInfo descriptorInfo {};
         descriptorInfo.width = width;
         descriptorInfo.height = height;
@@ -6278,6 +6280,7 @@ void CameraHidlTest::allocateGraphicBuffer(uint32_t width, uint32_t height, uint
             });
         ASSERT_TRUE(ret.isOk());
     } else {
+        ::android::hardware::hidl_vec<uint32_t> descriptor;
         ASSERT_NE(mapper.get(), nullptr);
         ASSERT_NE(allocator.get(), nullptr);
         android::hardware::graphics::mapper::V2_0::IMapper::BufferDescriptorInfo descriptorInfo {};
