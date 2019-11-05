@@ -14,47 +14,8 @@
  * limitations under the License.
  */
 
-#include <android-base/logging.h>
-#include <android/hardware/wifi/1.1/IWifi.h>
-#include <android/hardware/wifi/supplicant/1.2/ISupplicant.h>
-
 #include "supplicant_hidl_test_utils.h"
-#include "wifi_hidl_test_utils.h"
 
-class WifiSupplicantHidlEnvironment_1_2 : public WifiSupplicantHidlEnvironment {
-   public:
-    // get the test environment singleton
-    static WifiSupplicantHidlEnvironment_1_2* Instance() {
-        static WifiSupplicantHidlEnvironment_1_2* instance =
-            new WifiSupplicantHidlEnvironment_1_2;
-        return instance;
-    }
-    virtual void registerTestServices() override {
-        registerTestService<::android::hardware::wifi::V1_0::IWifi>();
-        registerTestService<::android::hardware::wifi::V1_1::IWifi>();
-        registerTestService<
-            ::android::hardware::wifi::supplicant::V1_0::ISupplicant>();
-        registerTestService<
-            ::android::hardware::wifi::supplicant::V1_1::ISupplicant>();
-        registerTestService<
-            ::android::hardware::wifi::supplicant::V1_2::ISupplicant>();
-    }
-
-   private:
-    WifiSupplicantHidlEnvironment_1_2() {}
-};
-
-WifiSupplicantHidlEnvironment* gEnv =
-    WifiSupplicantHidlEnvironment_1_2::Instance();
-
-int main(int argc, char** argv) {
-    ::testing::AddGlobalTestEnvironment(gEnv);
-    ::testing::InitGoogleTest(&argc, argv);
-    gEnv->init(&argc, argv);
-    int status = gEnv->initFromOptions(argc, argv);
-    if (status == 0) {
-        int status = RUN_ALL_TESTS();
-        LOG(INFO) << "Test result = " << status;
-    }
-    return status;
-}
+// TODO(b/143892896): Remove this file after wifi_hidl_test_utils.cpp is
+// updated.
+WifiSupplicantHidlEnvironment* gEnv = nullptr;

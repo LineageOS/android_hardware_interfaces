@@ -19,7 +19,7 @@ cc_library_static {
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: ["supplicant_hidl_test_utils_1_2.cpp"],
     export_include_dirs: [
-        "."
+        ".",
     ],
     static_libs: [
         "VtsHalWifiV1_0TargetTestUtil",
@@ -58,7 +58,10 @@ cc_test {
         "libwifi-system",
         "libwifi-system-iface",
     ],
-    test_suites: ["general-tests"],
+    test_suites: [
+        "general-tests",
+        "vts-core",
+    ],
 }
 
 cc_test {
@@ -82,5 +85,8 @@ cc_test {
         "libwifi-system",
         "libwifi-system-iface",
     ],
+    test_suites: [
+        "general-tests",
+        "vts-core",
+    ],
 }
-
