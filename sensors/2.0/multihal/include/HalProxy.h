@@ -200,6 +200,12 @@ class HalProxy : public ISensors, public IScopedWakelockRefCounter {
      */
     std::queue<std::pair<std::vector<Event>, size_t>> mPendingWriteEventsQueue;
 
+    //! The max number of events allowed in the pending write events queue
+    static constexpr size_t kMaxSizePendingWriteEventsQueue = 100000;
+
+    //! The number of events in the pending write events queue
+    size_t mSizePendingWriteEventsQueue = 0;
+
     //! The mutex protecting writing to the fmq and the pending events queue
     std::mutex mEventQueueWriteMutex;
 
