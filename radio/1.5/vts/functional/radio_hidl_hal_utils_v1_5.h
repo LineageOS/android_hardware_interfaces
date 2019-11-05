@@ -541,6 +541,14 @@ class RadioResponse_v1_5 : public ::android::hardware::radio::V1_5::IRadioRespon
     Return<void> setSystemSelectionChannelsResponse_1_5(const RadioResponseInfo& info);
 
     Return<void> startNetworkScanResponse_1_5(const RadioResponseInfo& info);
+
+    Return<void> setupDataCallResponse_1_5(
+            const RadioResponseInfo& info,
+            const android::hardware::radio::V1_4::SetupDataCallResult& dcResponse);
+
+    Return<void> setInitialAttachApnResponse_1_5(const RadioResponseInfo& info);
+
+    Return<void> setDataProfileResponse_1_5(const RadioResponseInfo& info);
 };
 
 /* Callback class for radio indication */
