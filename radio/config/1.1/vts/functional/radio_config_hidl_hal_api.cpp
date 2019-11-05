@@ -21,7 +21,7 @@
 /*
  * Test IRadioConfig.getModemsConfig()
  */
-TEST_F(RadioConfigHidlTest, getModemsConfig) {
+TEST_P(RadioConfigHidlTest, getModemsConfig) {
     serial = GetRandomSerialNumber();
     Return<void> res = radioConfig->getModemsConfig(serial);
     ASSERT_OK(res);
@@ -37,7 +37,7 @@ TEST_F(RadioConfigHidlTest, getModemsConfig) {
 /*
  * Test IRadioConfig.setModemsConfig()
  */
-TEST_F(RadioConfigHidlTest, setModemsConfig_invalidArgument) {
+TEST_P(RadioConfigHidlTest, setModemsConfig_invalidArgument) {
     serial = GetRandomSerialNumber();
     ModemsConfig* mConfig = new ModemsConfig();
     Return<void> res = radioConfig->setModemsConfig(serial, *mConfig);
@@ -55,7 +55,7 @@ TEST_F(RadioConfigHidlTest, setModemsConfig_invalidArgument) {
 /*
  * Test IRadioConfig.setModemsConfig()
  */
-TEST_F(RadioConfigHidlTest, setModemsConfig_goodRequest) {
+TEST_P(RadioConfigHidlTest, setModemsConfig_goodRequest) {
     serial = GetRandomSerialNumber();
     ModemsConfig* mConfig = new ModemsConfig();
     mConfig->numOfLiveModems = 1;
@@ -73,7 +73,7 @@ TEST_F(RadioConfigHidlTest, setModemsConfig_goodRequest) {
 /*
  * Test IRadioConfig.getPhoneCapability()
  */
-TEST_F(RadioConfigHidlTest, getPhoneCapability) {
+TEST_P(RadioConfigHidlTest, getPhoneCapability) {
     serial = GetRandomSerialNumber();
     Return<void> res = radioConfig->getPhoneCapability(serial);
     ASSERT_OK(res);
@@ -99,7 +99,7 @@ TEST_F(RadioConfigHidlTest, getPhoneCapability) {
 /*
  * Test IRadioConfig.getPhoneCapability()
  */
-TEST_F(RadioConfigHidlTest, setPreferredDataModem) {
+TEST_P(RadioConfigHidlTest, setPreferredDataModem) {
     serial = GetRandomSerialNumber();
     Return<void> res = radioConfig->getPhoneCapability(serial);
     ASSERT_OK(res);
@@ -141,7 +141,7 @@ TEST_F(RadioConfigHidlTest, setPreferredDataModem) {
 /*
  * Test IRadioConfig.getPhoneCapability()
  */
-TEST_F(RadioConfigHidlTest, setPreferredDataModem_invalidArgument) {
+TEST_P(RadioConfigHidlTest, setPreferredDataModem_invalidArgument) {
     serial = GetRandomSerialNumber();
     uint8_t modemId = -1;
     Return<void> res = radioConfig->setPreferredDataModem(serial, modemId);
