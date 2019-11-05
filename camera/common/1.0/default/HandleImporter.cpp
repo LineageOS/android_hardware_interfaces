@@ -252,8 +252,7 @@ void* HandleImporter::lock(
         // No need to use bytesPerPixel and bytesPerStride because we are using
         // an 1-D buffer and accressRegion.
         mMapperV4->lock(buffer, cpuUsage, accessRegion, acquireFenceHandle,
-                        [&](const auto& tmpError, const auto& tmpPtr, const auto& /*bytesPerPixel*/,
-                            const auto& /*bytesPerStride*/) {
+                        [&](const auto& tmpError, const auto& tmpPtr) {
                             if (tmpError == MapperErrorV4::NONE) {
                                 ret = tmpPtr;
                             } else {
@@ -301,7 +300,13 @@ YCbCrLayout HandleImporter::lockYCbCr(
     }
 
     if (mMapperV4 != nullptr) {
-        return lockYCbCrInternal<IMapperV4, MapperErrorV4>(mMapperV4, buf, cpuUsage, accessRegion);
+        // No device currently supports IMapper 4.0 so it is safe to just return an error code here.
+        //
+        // This will be supported by a combination of lock and BufferMetadata getters. We are going
+        // to refactor all the IAllocator/IMapper versioning code into a shared library. We will
+        // then add the IMapper 4.0 lockYCbCr support then.
+        ALOGE("%s: MapperV4 doesn't support lockYCbCr directly!", __FUNCTION__);
+        return {};
     }
 
     if (mMapperV3 != nullptr) {

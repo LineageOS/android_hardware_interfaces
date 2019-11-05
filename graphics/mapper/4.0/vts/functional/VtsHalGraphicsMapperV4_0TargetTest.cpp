@@ -20,6 +20,9 @@
 #include <thread>
 #include <vector>
 
+//#include <aidl/android/hardware/graphics/common/BlendMode.h>
+//#include <aidl/android/hardware/graphics/common/Compression.h>
+
 #include <VtsHalHidlTargetTestBase.h>
 #include <android-base/logging.h>
 #include <gralloctypes/Gralloc4.h>
@@ -391,15 +394,8 @@ TEST_F(GraphicsMapperHidlTest, LockUnlockBasic) {
                                static_cast<int32_t>(info.height)};
     int fence = -1;
     uint8_t* data;
-    int32_t bytesPerPixel = -1;
-    int32_t bytesPerStride = -1;
     ASSERT_NO_FATAL_FAILURE(
-            data = static_cast<uint8_t*>(mGralloc->lock(bufferHandle, info.usage, region, fence,
-                                                        &bytesPerPixel, &bytesPerStride)));
-
-    // Valid return values are -1 for unsupported or the number bytes for supported which is >=0
-    EXPECT_GT(bytesPerPixel, -1);
-    EXPECT_GT(bytesPerStride, -1);
+            data = static_cast<uint8_t*>(mGralloc->lock(bufferHandle, info.usage, region, fence)));
 
     // RGBA_8888
     size_t strideInBytes = stride * 4;
@@ -412,81 +408,14 @@ TEST_F(GraphicsMapperHidlTest, LockUnlockBasic) {
 
     ASSERT_NO_FATAL_FAILURE(fence = mGralloc->unlock(bufferHandle));
 
-    bytesPerPixel = -1;
-    bytesPerStride = -1;
-
     // lock again for reading
     ASSERT_NO_FATAL_FAILURE(
-            data = static_cast<uint8_t*>(mGralloc->lock(bufferHandle, info.usage, region, fence,
-                                                        &bytesPerPixel, &bytesPerStride)));
+            data = static_cast<uint8_t*>(mGralloc->lock(bufferHandle, info.usage, region, fence)));
     for (uint32_t y = 0; y < info.height; y++) {
         for (size_t i = 0; i < writeInBytes; i++) {
             EXPECT_EQ(static_cast<uint8_t>(y), data[i]);
         }
         data += strideInBytes;
-    }
-
-    EXPECT_GT(bytesPerPixel, -1);
-    EXPECT_GT(bytesPerStride, -1);
-
-    ASSERT_NO_FATAL_FAILURE(fence = mGralloc->unlock(bufferHandle));
-    if (fence >= 0) {
-        close(fence);
-    }
-}
-
-/**
- * Test IMapper::lockYCbCr.  This locks a YV12 buffer, and makes sure we can
- * write to and read from it.
- */
-TEST_F(GraphicsMapperHidlTest, LockYCbCrBasic) {
-    auto info = mDummyDescriptorInfo;
-    info.format = PixelFormat::YV12;
-
-    const native_handle_t* bufferHandle;
-    uint32_t stride;
-    ASSERT_NO_FATAL_FAILURE(bufferHandle = mGralloc->allocate(info, true, false, &stride));
-
-    // lock buffer for writing
-    const IMapper::Rect region{0, 0, static_cast<int32_t>(info.width),
-                               static_cast<int32_t>(info.height)};
-    int fence = -1;
-    YCbCrLayout layout;
-    ASSERT_NO_FATAL_FAILURE(layout = mGralloc->lockYCbCr(bufferHandle, info.usage, region, fence));
-
-    auto yData = static_cast<uint8_t*>(layout.y);
-    auto cbData = static_cast<uint8_t*>(layout.cb);
-    auto crData = static_cast<uint8_t*>(layout.cr);
-    for (uint32_t y = 0; y < info.height; y++) {
-        for (uint32_t x = 0; x < info.width; x++) {
-            auto val = static_cast<uint8_t>(info.height * y + x);
-
-            yData[layout.yStride * y + x] = val;
-            if (y % 2 == 0 && x % 2 == 0) {
-                cbData[layout.cStride * y / 2 + x / 2] = val;
-                crData[layout.cStride * y / 2 + x / 2] = val;
-            }
-        }
-    }
-
-    ASSERT_NO_FATAL_FAILURE(fence = mGralloc->unlock(bufferHandle));
-
-    // lock again for reading
-    ASSERT_NO_FATAL_FAILURE(layout = mGralloc->lockYCbCr(bufferHandle, info.usage, region, fence));
-
-    yData = static_cast<uint8_t*>(layout.y);
-    cbData = static_cast<uint8_t*>(layout.cb);
-    crData = static_cast<uint8_t*>(layout.cr);
-    for (uint32_t y = 0; y < info.height; y++) {
-        for (uint32_t x = 0; x < info.width; x++) {
-            auto val = static_cast<uint8_t>(info.height * y + x);
-
-            EXPECT_EQ(val, yData[layout.yStride * y + x]);
-            if (y % 2 == 0 && x % 2 == 0) {
-                EXPECT_EQ(val, cbData[layout.cStride * y / 2 + x / 2]);
-                EXPECT_EQ(val, crData[layout.cStride * y / 2 + x / 2]);
-            }
-        }
     }
 
     ASSERT_NO_FATAL_FAILURE(fence = mGralloc->unlock(bufferHandle));
@@ -518,8 +447,7 @@ TEST_F(GraphicsMapperHidlTest, LockBadAccessRegion) {
 
     auto buffer = const_cast<native_handle_t*>(bufferHandle);
     mGralloc->getMapper()->lock(buffer, info.usage, accessRegion, acquireFenceHandle,
-                                [&](const auto& tmpError, const auto& /*tmpData*/,
-                                    int32_t /*tmpBytesPerPixel*/, int32_t /*tmpBytesPerStride*/) {
+                                [&](const auto& tmpError, const auto& /*tmpData*/) {
                                     EXPECT_EQ(Error::BAD_VALUE, tmpError)
                                             << "locking with a bad access region should fail";
                                 });
