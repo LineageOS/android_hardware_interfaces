@@ -260,7 +260,8 @@ interface IDevice {
     /**
      * Returns an array with available microphones in device.
      *
-     * @return retval INVALID_STATE if the call is not successful,
+     * @return retval NOT_SUPPORTED if there are no microphones on this device
+     *                INVALID_STATE if the call is not successful,
      *                OK otherwise.
      *
      * @return microphones array with microphones info
