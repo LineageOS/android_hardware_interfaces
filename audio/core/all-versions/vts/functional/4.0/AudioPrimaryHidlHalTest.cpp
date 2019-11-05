@@ -18,15 +18,16 @@
 
 TEST_P(AudioHidlTest, OpenPrimaryDeviceUsingGetDevice) {
     doc::test("Calling openDevice(\"primary\") should return the primary device.");
+    if (getDeviceName() != DeviceManager::kPrimaryDevice) {
+        GTEST_SKIP() << "No primary device on this factory";  // returns
+    }
+
     struct WaitExecutor {
         ~WaitExecutor() { DeviceManager::waitForInstanceDestruction(); }
     } waitExecutor;  // Make sure we wait for the device destruction on exiting from the test.
     Result result;
     sp<IDevice> baseDevice;
     ASSERT_OK(getDevicesFactory()->openDevice("primary", returnIn(result, baseDevice)));
-    if (result != Result::OK && isPrimaryDeviceOptional()) {
-        GTEST_SKIP() << "No primary device on this factory";  // returns
-    }
     ASSERT_OK(result);
     ASSERT_TRUE(baseDevice != nullptr);
 
@@ -39,10 +40,13 @@ TEST_P(AudioHidlTest, OpenPrimaryDeviceUsingGetDevice) {
 /////////////////////////// get(Active)Microphones ///////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
-TEST_P(AudioPrimaryHidlTest, GetMicrophonesTest) {
+TEST_P(AudioHidlDeviceTest, GetMicrophonesTest) {
     doc::test("Make sure getMicrophones always succeeds");
     hidl_vec<MicrophoneInfo> microphones;
     ASSERT_OK(getDevice()->getMicrophones(returnIn(res, microphones)));
+    if (res == Result::NOT_SUPPORTED) {
+        GTEST_SKIP() << "getMicrophones is not supported";  // returns
+    }
     ASSERT_OK(res);
     if (microphones.size() > 0) {
         // When there is microphone on the phone, try to open an input stream
@@ -120,7 +124,7 @@ TEST_P(AudioPrimaryHidlTest, GetMicrophonesTest) {
     }
 }
 
-TEST_P(AudioPrimaryHidlTest, SetConnectedState) {
+TEST_P(AudioHidlDeviceTest, SetConnectedState) {
     doc::test("Check that the HAL can be notified of device connection and deconnection");
     using AD = AudioDevice;
     for (auto deviceType : {AD::OUT_HDMI, AD::OUT_WIRED_HEADPHONE, AD::IN_USB_HEADSET}) {
@@ -142,7 +146,7 @@ TEST_P(AudioPrimaryHidlTest, SetConnectedState) {
     // Because there is no way of knowing if the devices were connected before
     // calling setConnectedState, there is no way to restore the HAL to its
     // initial state. To workaround this, destroy the HAL at the end of this test.
-    ASSERT_TRUE(DeviceManager::getInstance().resetPrimary(getFactoryName()));
+    ASSERT_TRUE(resetDevice());
 }
 
 static void testGetDevices(IStream* stream, AudioDevice expectedDevice) {
