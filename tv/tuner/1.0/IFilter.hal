@@ -113,6 +113,21 @@ interface IFilter {
     getId() generates (Result result, uint32_t filterId);
 
     /**
+     * Release the handle reported by the HAL for AV memory.
+     *
+     * It is used by the client to notify the HAL that the AV handle won't be
+     * used any more in client side, so that the HAL can mark the memory
+     * presented by file descripor in the handle as released.
+     *
+     * @param avMemory A handle associated to the memory for audio or video.
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_ARGUMENT if failed for wrong parameter.
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    releaseAvHandle(handle avMemory) generates (Result result);
+
+    /**
      * Set the filter's data source.
      *
      * A filter uses demux as data source by default. If the data was packetized

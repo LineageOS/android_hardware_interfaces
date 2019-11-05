@@ -76,6 +76,10 @@ class Demux : public IDemux {
     virtual Return<void> openDvr(DvrType type, uint32_t bufferSize, const sp<IDvrCallback>& cb,
                                  openDvr_cb _hidl_cb) override;
 
+    virtual Return<Result> connectCiCam(uint32_t ciCamId) override;
+
+    virtual Return<Result> disconnectCiCam() override;
+
     // Functions interacts with Tuner Service
     void stopBroadcastInput();
     Result removeFilter(uint32_t filterId);
@@ -118,6 +122,7 @@ class Demux : public IDemux {
     void startTsFilter(vector<uint8_t> data);
 
     uint32_t mDemuxId;
+    uint32_t mCiCamId;
     /**
      * Record the last used filter id. Initial value is -1.
      * Filter Id starts with 0.

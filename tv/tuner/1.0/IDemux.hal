@@ -25,7 +25,6 @@ import ITimeFilter;
 /**
  * Demultiplexer(Demux) takes a single multiplexed input and splits it into
  * one or more output.
- *
  */
 interface IDemux {
     /**
@@ -134,4 +133,30 @@ interface IDemux {
      */
     openDvr(DvrType type, uint32_t bufferSize, IDvrCallback cb)
         generates (Result result, IDvr dvr);
+
+    /**
+     * Connect Conditional Access Modules (CAM) through Common Interface (CI)
+     *
+     * It is used by the client to connect CI-CAM. The demux uses the output
+     * from the frontend as the input by default, and must change to use the
+     * output from CI-CAM as the input after this call take place.
+     *
+     * @param ciCamId specify CI-CAM Id to connect.
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    connectCiCam(uint32_t ciCamId) generates (Result result);
+
+    /**
+     * Disconnect Conditional Access Modules (CAM)
+     *
+     * It is used by the client to disconnect CI-CAM. The demux will use the
+     * output from the frontend as the input after this call take place.
+     *
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    disconnectCiCam() generates (Result result);
 };

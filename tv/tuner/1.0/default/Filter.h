@@ -68,6 +68,8 @@ class Filter : public IFilter {
 
     virtual Return<Result> flush() override;
 
+    virtual Return<Result> releaseAvHandle(const hidl_handle& avMemory) override;
+
     virtual Return<Result> close() override;
 
     /**
@@ -129,6 +131,7 @@ class Filter : public IFilter {
     Result startMediaFilterHandler();
     Result startRecordFilterHandler();
     Result startPcrFilterHandler();
+    Result startTemiFilterHandler();
     Result startFilterLoop();
 
     void deleteEventFlag();
