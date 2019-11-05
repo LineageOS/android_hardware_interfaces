@@ -24,6 +24,8 @@ import @1.1::ScanType;
 import @1.1::UtranBands;
 import @1.2::NetworkScanRequest;
 import @1.4::AccessNetwork;
+import @1.4::ApnTypes;
+import @1.4::DataProfileInfo;
 
 /**
  * Defining signal strength type.
@@ -267,4 +269,23 @@ struct NetworkScanRequest {
      * reported.
      */
     vec<string> mccMncs;
+};
+
+enum ApnTypes : @1.4::ApnTypes {
+    /**
+     * APN type for XCAP
+     * NOTE: Due to the addition of this new value, the value ALL defined in
+     * 1.0::ApnTypes is deprecated and should not be used.
+     */
+    XCAP = 1 << 11,
+};
+
+/**
+ * Extended from @1.4::DataProfileInfo to update ApnTypes to 1.5 version
+ */
+struct DataProfileInfo {
+    @1.4::DataProfileInfo base;
+
+    /** Supported APN types bitmap. See ApnTypes for the value of each bit. */
+    bitfield<ApnTypes> supportedApnTypesBitmap;
 };
