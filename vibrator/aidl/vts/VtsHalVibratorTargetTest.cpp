@@ -32,6 +32,7 @@ using android::hardware::vibrator::Effect;
 using android::hardware::vibrator::EffectStrength;
 using android::hardware::vibrator::IVibrator;
 
+// TODO(b/143992652): autogenerate
 const std::vector<Effect> kEffects = {
         Effect::CLICK,       Effect::DOUBLE_CLICK, Effect::TICK,        Effect::THUD,
         Effect::POP,         Effect::HEAVY_CLICK,  Effect::RINGTONE_1,  Effect::RINGTONE_2,
@@ -40,6 +41,7 @@ const std::vector<Effect> kEffects = {
         Effect::RINGTONE_11, Effect::RINGTONE_12,  Effect::RINGTONE_13, Effect::RINGTONE_14,
         Effect::RINGTONE_15, Effect::TEXTURE_TICK};
 
+// TODO(b/143992652): autogenerate
 const std::vector<EffectStrength> kEffectStrengths = {EffectStrength::LIGHT, EffectStrength::MEDIUM,
                                                       EffectStrength::STRONG};
 
@@ -105,15 +107,22 @@ TEST_P(VibratorAidl, OnCallbackNotSupported) {
 }
 
 TEST_P(VibratorAidl, ValidateEffect) {
+    std::vector<Effect> supported;
+    ASSERT_TRUE(vibrator->getSupportedEffects(&supported).isOk());
+
     for (Effect effect : kEffects) {
+        bool isEffectSupported =
+                std::find(supported.begin(), supported.end(), effect) != supported.end();
+
         for (EffectStrength strength : kEffectStrengths) {
             int32_t lengthMs = 0;
             Status status = vibrator->perform(effect, strength, nullptr /*callback*/, &lengthMs);
-            EXPECT_TRUE(status.isOk() ||
-                        status.exceptionCode() == Status::EX_UNSUPPORTED_OPERATION);
-            if (status.isOk()) {
+
+            if (isEffectSupported) {
+                EXPECT_TRUE(status.isOk());
                 EXPECT_GT(lengthMs, 0);
             } else {
+                EXPECT_EQ(status.exceptionCode(), Status::EX_UNSUPPORTED_OPERATION);
                 EXPECT_EQ(lengthMs, 0);
             }
         }
@@ -123,16 +132,29 @@ TEST_P(VibratorAidl, ValidateEffect) {
 TEST_P(VibratorAidl, ValidateEffectWithCallback) {
     if (!(capabilities & IVibrator::CAP_PERFORM_CALLBACK)) return;
 
+    std::vector<Effect> supported;
+    ASSERT_TRUE(vibrator->getSupportedEffects(&supported).isOk());
+
     for (Effect effect : kEffects) {
+        bool isEffectSupported =
+                std::find(supported.begin(), supported.end(), effect) != supported.end();
+
         for (EffectStrength strength : kEffectStrengths) {
             std::promise<void> completionPromise;
             std::future<void> completionFuture{completionPromise.get_future()};
             sp<CompletionCallback> callback =
                     new CompletionCallback([&completionPromise] { completionPromise.set_value(); });
-            int lengthMs;
+            int lengthMs = 0;
             Status status = vibrator->perform(effect, strength, callback, &lengthMs);
-            EXPECT_TRUE(status.isOk() ||
-                        status.exceptionCode() == Status::EX_UNSUPPORTED_OPERATION);
+
+            if (isEffectSupported) {
+                EXPECT_TRUE(status.isOk());
+                EXPECT_GT(lengthMs, 0);
+            } else {
+                EXPECT_EQ(status.exceptionCode(), Status::EX_UNSUPPORTED_OPERATION);
+                EXPECT_EQ(lengthMs, 0);
+            }
+
             if (!status.isOk()) continue;
 
             std::chrono::milliseconds timeout{lengthMs * 2};
