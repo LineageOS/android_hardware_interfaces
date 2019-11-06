@@ -9,6 +9,6 @@ hidl_interface {
     srcs: [
         "types.hal",
     ],
-    gen_java: false,
+    gen_java: true,
     gen_java_constants: true,
 }
