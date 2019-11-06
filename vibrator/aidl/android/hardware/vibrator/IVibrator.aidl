@@ -74,6 +74,14 @@ interface IVibrator {
     int perform(in Effect effect, in EffectStrength strength, in IVibratorCallback callback);
 
     /**
+     * List supported effects.
+     *
+     * Return the effects which are supported (an effect is expected to be supported at every
+     * strength level.
+     */
+    Effect[] getSupportedEffects();
+
+    /**
      * Sets the motor's vibrational amplitude.
      *
      * Changes the force being produced by the underlying motor.

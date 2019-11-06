@@ -78,6 +78,11 @@ ndk::ScopedAStatus Vibrator::perform(Effect effect, EffectStrength strength,
     return ndk::ScopedAStatus::ok();
 }
 
+ndk::ScopedAStatus Vibrator::getSupportedEffects(std::vector<Effect>* _aidl_return) {
+    *_aidl_return = {Effect::CLICK, Effect::TICK};
+    return ndk::ScopedAStatus::ok();
+}
+
 ndk::ScopedAStatus Vibrator::setAmplitude(int32_t amplitude) {
     LOG(INFO) << "Vibrator set amplitude: " << amplitude;
     if (amplitude <= 0 || amplitude > 255) {
