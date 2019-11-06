@@ -1389,7 +1389,7 @@ static std::string rectString(hwc_rect_t rect) {
 }
 
 static std::string approximateFloatString(float f) {
-    if (static_cast<int32_t>(f) == f) {
+    if (static_cast<float>(static_cast<int32_t>(f)) == f) {
         return std::to_string(static_cast<int32_t>(f));
     }
     int32_t truncated = static_cast<int32_t>(f * 10);
@@ -1680,10 +1680,10 @@ std::string HWC2On1Adapter::Display::Config::toString(bool splitLine) const {
     if (mAttributes.count(HWC2::Attribute::DpiX) != 0 &&
             mAttributes.at(HWC2::Attribute::DpiX) != -1) {
         std::memset(buffer, 0, BUFFER_SIZE);
-        writtenBytes = snprintf(buffer, BUFFER_SIZE,
-                ", DPI: %.1f x %.1f",
-                mAttributes.at(HWC2::Attribute::DpiX) / 1000.0f,
-                mAttributes.at(HWC2::Attribute::DpiY) / 1000.0f);
+        writtenBytes =
+                snprintf(buffer, BUFFER_SIZE, ", DPI: %.1f x %.1f",
+                         static_cast<float>(mAttributes.at(HWC2::Attribute::DpiX)) / 1000.0f,
+                         static_cast<float>(mAttributes.at(HWC2::Attribute::DpiY)) / 1000.0f);
         output.append(buffer, writtenBytes);
     }
 
