@@ -446,6 +446,7 @@
                     <xs:attribute name="stepValueMB" type="xs:int" use="optional"/>
                     <xs:attribute name="minRampMs" type="xs:int" use="optional"/>
                     <xs:attribute name="maxRampMs" type="xs:int" use="optional"/>
+                    <xs:attribute name="useForVolume" type="xs:boolean" use="optional"/>
                 </xs:complexType>
             </xs:element>
         </xs:sequence>
