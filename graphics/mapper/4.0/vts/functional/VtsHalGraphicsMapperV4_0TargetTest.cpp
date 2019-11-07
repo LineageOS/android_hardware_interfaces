@@ -404,6 +404,49 @@ TEST_F(GraphicsMapperHidlTest, LockYCbCrBasic) {
 }
 
 /**
+ * Test IMapper::unlock with bad access region
+ */
+TEST_F(GraphicsMapperHidlTest, LockBadAccessRegion) {
+    const auto& info = mDummyDescriptorInfo;
+
+    const native_handle_t* bufferHandle;
+    ASSERT_NO_FATAL_FAILURE(bufferHandle = mGralloc->allocate(info, true));
+
+    const IMapper::Rect accessRegion{0, 0, static_cast<int32_t>(info.width * 2),
+                                     static_cast<int32_t>(info.height * 2)};
+    int acquireFence = -1;
+
+    NATIVE_HANDLE_DECLARE_STORAGE(acquireFenceStorage, 1, 0);
+    hidl_handle acquireFenceHandle;
+    if (acquireFence >= 0) {
+        auto h = native_handle_init(acquireFenceStorage, 1, 0);
+        h->data[0] = acquireFence;
+        acquireFenceHandle = h;
+    }
+
+    auto buffer = const_cast<native_handle_t*>(bufferHandle);
+    mGralloc->getMapper()->lock(buffer, info.usage, accessRegion, acquireFenceHandle,
+                                [&](const auto& tmpError, const auto& /*tmpData*/,
+                                    int32_t /*tmpBytesPerPixel*/, int32_t /*tmpBytesPerStride*/) {
+                                    EXPECT_EQ(Error::BAD_VALUE, tmpError)
+                                            << "locking with a bad access region should fail";
+                                });
+
+    if (::testing::Test::HasFailure()) {
+        if (acquireFence >= 0) {
+            close(acquireFence);
+        }
+
+        int releaseFence = -1;
+        ASSERT_NO_FATAL_FAILURE(releaseFence = mGralloc->unlock(bufferHandle));
+
+        if (releaseFence >= 0) {
+            close(releaseFence);
+        }
+    }
+}
+
+/**
  * Test IMapper::unlock with invalid buffers.
  */
 TEST_F(GraphicsMapperHidlTest, UnlockNegative) {
