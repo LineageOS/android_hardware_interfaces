@@ -164,6 +164,42 @@ class GraphicsMapperHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         EXPECT_EQ(planeLayout.heightInSamples, planeLayout.crop.bottom);
     }
 
+    void verifyBufferDump(const IMapper::BufferDump& bufferDump,
+                          const native_handle_t* bufferHandle = nullptr) {
+        std::set<StandardMetadataType> foundMetadataTypes;
+
+        const std::vector<IMapper::MetadataDump> metadataDump = bufferDump.metadataDump;
+
+        for (const auto& dump : metadataDump) {
+            const auto& metadataType = dump.metadataType;
+            const auto& metadata = dump.metadata;
+
+            if (!gralloc4::isStandardMetadataType(metadataType)) {
+                continue;
+            }
+
+            StandardMetadataType type = gralloc4::getStandardMetadataTypeValue(metadataType);
+
+            if (sRequiredMetadataTypes.find(type) == sRequiredMetadataTypes.end()) {
+                continue;
+            }
+
+            ASSERT_EQ(foundMetadataTypes.find(type), foundMetadataTypes.end());
+            foundMetadataTypes.insert(type);
+
+            if (!bufferHandle) {
+                continue;
+            }
+
+            hidl_vec<uint8_t> metadataFromGet;
+            ASSERT_EQ(Error::NONE, mGralloc->get(bufferHandle, metadataType, &metadataFromGet));
+
+            ASSERT_EQ(metadataFromGet, metadata);
+        }
+
+        EXPECT_EQ(sRequiredMetadataTypes, foundMetadataTypes);
+    }
+
     std::unique_ptr<Gralloc> mGralloc;
     IMapper::BufferDescriptorInfo mDummyDescriptorInfo{};
     static const std::set<StandardMetadataType> sRequiredMetadataTypes;
@@ -1587,6 +1623,59 @@ TEST_F(GraphicsMapperHidlTest, ListSupportedMetadataTypes) {
     }
 
     ASSERT_EQ(sRequiredMetadataTypes, foundMetadataTypes);
+}
+
+/**
+ * Test IMapper::dumpBuffer()
+ */
+TEST_F(GraphicsMapperHidlTest, DumpBuffer) {
+    const native_handle_t* bufferHandle = nullptr;
+    ASSERT_NO_FATAL_FAILURE(bufferHandle = mGralloc->allocate(mDummyDescriptorInfo, true));
+    auto buffer = const_cast<native_handle_t*>(bufferHandle);
+
+    IMapper::BufferDump bufferDump;
+    mGralloc->getMapper()->dumpBuffer(buffer, [&](const auto& tmpError, const auto& tmpBufferDump) {
+        ASSERT_EQ(Error::NONE, tmpError);
+        bufferDump = tmpBufferDump;
+    });
+
+    ASSERT_NO_FATAL_FAILURE(verifyBufferDump(bufferDump, buffer));
+}
+
+/**
+ * Test IMapper::dumpBuffer() with an invalid buffer
+ */
+TEST_F(GraphicsMapperHidlTest, DumpBufferNullBuffer) {
+    native_handle_t* bufferHandle = nullptr;
+    auto buffer = const_cast<native_handle_t*>(bufferHandle);
+
+    mGralloc->getMapper()->dumpBuffer(buffer,
+                                      [&](const auto& tmpError, const auto& /*tmpBufferDump*/) {
+                                          ASSERT_EQ(Error::BAD_BUFFER, tmpError);
+                                      });
+}
+
+/**
+ * Test IMapper::dumpBuffer() multiple
+ */
+TEST_F(GraphicsMapperHidlTest, DumpBuffers) {
+    size_t bufferCount = 10;
+
+    for (int i = 0; i < bufferCount; i++) {
+        ASSERT_NO_FATAL_FAILURE(mGralloc->allocate(mDummyDescriptorInfo, true));
+    }
+
+    hidl_vec<IMapper::BufferDump> bufferDump;
+    mGralloc->getMapper()->dumpBuffers([&](const auto& tmpError, const auto& tmpBufferDump) {
+        ASSERT_EQ(Error::NONE, tmpError);
+        bufferDump = tmpBufferDump;
+    });
+
+    ASSERT_EQ(bufferCount, bufferDump.size());
+
+    for (const auto& dump : bufferDump) {
+        ASSERT_NO_FATAL_FAILURE(verifyBufferDump(dump));
+    }
 }
 
 }  // namespace
