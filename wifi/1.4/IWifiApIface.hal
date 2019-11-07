@@ -49,5 +49,5 @@ interface IWifiApIface extends @1.0::IWifiApIface {
      *         |WifiStatusCode.ERROR_UNKNOWN|
      * @return mac factory MAC address of the interface
      */
-     getFactoryMacAddress() generates (WifiStatus status, MacAddress mac);
+    getFactoryMacAddress() generates (WifiStatus status, MacAddress mac);
 };

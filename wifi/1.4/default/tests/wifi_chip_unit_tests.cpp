@@ -252,7 +252,7 @@ class WifiChipTest : public Test {
 
     bool createRttController() {
         bool success = false;
-        chip_->createRttController(
+        chip_->createRttController_1_4(
             NULL, [&success](const WifiStatus& status,
                              const sp<IWifiRttController>& rtt) {
                 if (WifiStatusCode::SUCCESS == status.code) {
@@ -750,7 +750,7 @@ TEST_F(WifiChipV2_AwareIfaceCombinationTest,
 
     // Create RTT controller
     sp<IWifiRttController> rtt_controller;
-    chip_->createRttController(
+    chip_->createRttController_1_4(
         NULL, [&rtt_controller](const WifiStatus& status,
                                 const sp<IWifiRttController>& rtt) {
             if (WifiStatusCode::SUCCESS == status.code) {

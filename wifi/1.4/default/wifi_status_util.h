@@ -17,7 +17,7 @@
 #ifndef WIFI_STATUS_UTIL_H_
 #define WIFI_STATUS_UTIL_H_
 
-#include <android/hardware/wifi/1.0/IWifi.h>
+#include <android/hardware/wifi/1.4/IWifi.h>
 
 #include "wifi_legacy_hal.h"
 

@@ -25,6 +25,7 @@
 #include <android/hardware/wifi/1.2/types.h>
 #include <android/hardware/wifi/1.3/IWifiChip.h>
 #include <android/hardware/wifi/1.3/types.h>
+#include <android/hardware/wifi/1.4/types.h>
 
 #include "wifi_legacy_hal.h"
 
