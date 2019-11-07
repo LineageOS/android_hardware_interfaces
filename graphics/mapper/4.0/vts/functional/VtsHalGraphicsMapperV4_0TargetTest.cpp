@@ -58,6 +58,7 @@ class GraphicsMapperHidlTest : public ::testing::VtsHalHidlTargetTestBase {
                         GraphicsMapperHidlEnvironment::Instance()->getServiceName<IAllocator>(),
                         GraphicsMapperHidlEnvironment::Instance()->getServiceName<IMapper>()));
 
+        mDummyDescriptorInfo.name = "dummy";
         mDummyDescriptorInfo.width = 64;
         mDummyDescriptorInfo.height = 64;
         mDummyDescriptorInfo.layerCount = 1;
