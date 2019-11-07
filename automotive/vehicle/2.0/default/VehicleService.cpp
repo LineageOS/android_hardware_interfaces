@@ -20,8 +20,9 @@
 
 #include <iostream>
 
-#include <vhal_v2_0/VehicleHalManager.h>
+#include <vhal_v2_0/EmulatedVehicleConnector.h>
 #include <vhal_v2_0/EmulatedVehicleHal.h>
+#include <vhal_v2_0/VehicleHalManager.h>
 
 using namespace android;
 using namespace android::hardware;
@@ -29,9 +30,11 @@ using namespace android::hardware::automotive::vehicle::V2_0;
 
 int main(int /* argc */, char* /* argv */ []) {
     auto store = std::make_unique<VehiclePropertyStore>();
-    auto hal = std::make_unique<impl::EmulatedVehicleHal>(store.get());
+    auto connector = impl::makeEmulatedPassthroughConnector();
+    auto hal = std::make_unique<impl::EmulatedVehicleHal>(store.get(), connector.get());
     auto emulator = std::make_unique<impl::VehicleEmulator>(hal.get());
     auto service = std::make_unique<VehicleHalManager>(hal.get());
+    connector->setValuePool(hal->getValuePool());
 
     configureRpcThreadpool(4, true /* callerWillJoin */);
 
