@@ -36,8 +36,11 @@ using hardware::hidl_vec;
 static utils::SimpleHidlEnvironment<ICanBus>* gEnv = nullptr;
 
 struct CanMessageListener : public can::V1_0::ICanMessageListener {
-    virtual Return<void> onReceive(const can::V1_0::CanMessage&) { return {}; }
-    virtual Return<void> onError(can::V1_0::ErrorEvent) { return {}; }
+    virtual Return<void> onReceive(const can::V1_0::CanMessage&) override { return {}; }
+};
+
+struct CanErrorListener : public can::V1_0::ICanErrorListener {
+    virtual Return<void> onError(ErrorEvent, bool) override { return {}; }
 };
 
 class CanBusHalTest : public ::testing::VtsHalHidlTargetTestBase {
@@ -47,6 +50,7 @@ class CanBusHalTest : public ::testing::VtsHalHidlTargetTestBase {
 
     std::tuple<Result, sp<ICloseHandle>> listen(const hidl_vec<CanMessageFilter>& filter,
                                                 const sp<ICanMessageListener>& listener);
+    sp<ICloseHandle> listenForErrors(const sp<ICanErrorListener>& listener);
 
     sp<ICanBus> mCanBus;
 };
@@ -68,6 +72,12 @@ std::tuple<Result, sp<ICloseHandle>> CanBusHalTest::listen(
     mCanBus->listen(filter, listener, hidl_utils::fill(&halResult, &closeHandle)).assertOk();
 
     return {halResult, closeHandle};
+}
+
+sp<ICloseHandle> CanBusHalTest::listenForErrors(const sp<ICanErrorListener>& listener) {
+    const auto res = mCanBus->listenForErrors(listener);
+    res.assertOk();
+    return res;
 }
 
 TEST_F(CanBusHalTest, SendNoPayload) {
@@ -129,7 +139,7 @@ TEST_F(CanBusHalTest, ListenNull) {
     ASSERT_EQ(Result::INVALID_ARGUMENTS, result);
 }
 
-TEST_F(CanBusHalTest, DoubleCloseListen) {
+TEST_F(CanBusHalTest, DoubleCloseListener) {
     const auto [result, closeHandle] = listen({}, new CanMessageListener());
     ASSERT_EQ(Result::OK, result);
 
@@ -137,9 +147,30 @@ TEST_F(CanBusHalTest, DoubleCloseListen) {
     closeHandle->close().assertOk();
 }
 
-TEST_F(CanBusHalTest, DontCloseListen) {
+TEST_F(CanBusHalTest, DontCloseListener) {
     const auto [result, closeHandle] = listen({}, new CanMessageListener());
     ASSERT_EQ(Result::OK, result);
+}
+
+TEST_F(CanBusHalTest, DoubleCloseErrorListener) {
+    auto closeHandle = listenForErrors(new CanErrorListener());
+    ASSERT_NE(nullptr, closeHandle.get());
+
+    closeHandle->close().assertOk();
+    closeHandle->close().assertOk();
+}
+
+TEST_F(CanBusHalTest, DoubleCloseNullErrorListener) {
+    auto closeHandle = listenForErrors(nullptr);
+    ASSERT_NE(nullptr, closeHandle.get());
+
+    closeHandle->close().assertOk();
+    closeHandle->close().assertOk();
+}
+
+TEST_F(CanBusHalTest, DontCloseErrorListener) {
+    auto closeHandle = listenForErrors(new CanErrorListener());
+    ASSERT_NE(nullptr, closeHandle.get());
 }
 
 }  // namespace vts

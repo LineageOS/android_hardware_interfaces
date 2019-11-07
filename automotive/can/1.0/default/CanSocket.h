@@ -36,7 +36,7 @@ namespace implementation {
  */
 struct CanSocket {
     using ReadCallback = std::function<void(const struct canfd_frame&, std::chrono::nanoseconds)>;
-    using ErrorCallback = std::function<void()>;
+    using ErrorCallback = std::function<void(int errnoVal)>;
 
     /**
      * Open and bind SocketCAN socket.
@@ -68,6 +68,7 @@ struct CanSocket {
     const base::unique_fd mSocket;
     std::thread mReaderThread;
     std::atomic<bool> mStopReaderThread = false;
+    std::atomic<bool> mReaderThreadFinished = false;
 
     DISALLOW_COPY_AND_ASSIGN(CanSocket);
 };

@@ -61,7 +61,14 @@ CanSocket::CanSocket(base::unique_fd socket, ReadCallback rdcb, ErrorCallback er
 
 CanSocket::~CanSocket() {
     mStopReaderThread = true;
-    mReaderThread.join();
+
+    /* CanSocket can be brought down as a result of read failure, from the same thread,
+     * so let's just detach and let it finish on its own. */
+    if (mReaderThreadFinished) {
+        mReaderThread.detach();
+    } else {
+        mReaderThread.join();
+    }
 }
 
 bool CanSocket::send(const struct canfd_frame& frame) {
@@ -94,6 +101,7 @@ static int selectRead(const base::unique_fd& fd, std::chrono::microseconds timeo
 
 void CanSocket::readerThread() {
     LOG(VERBOSE) << "Reader thread started";
+    int errnoCopy = 0;
 
     while (!mStopReaderThread) {
         /* The ideal would be to have a blocking read(3) call and interrupt it with shutdown(3).
@@ -130,14 +138,20 @@ void CanSocket::readerThread() {
             }
             if (errno == EAGAIN) continue;
 
-            LOG(ERROR) << "Failed to read CAN packet: " << errno;
+            errnoCopy = errno;
+            LOG(ERROR) << "Failed to read CAN packet: " << strerror(errno) << " (" << errno << ")";
             break;
         }
 
         mReadCallback(frame, ts);
     }
 
-    if (!mStopReaderThread) mErrorCallback();
+    bool failed = !mStopReaderThread;
+    auto errCb = mErrorCallback;
+    mReaderThreadFinished = true;
+
+    // Don't access any fields from here, see CanSocket::~CanSocket comment about detached thread
+    if (failed) errCb(errnoCopy);
 
     LOG(VERBOSE) << "Reader thread stopped";
 }

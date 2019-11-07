@@ -10,6 +10,7 @@ hidl_interface {
         "types.hal",
         "ICanBus.hal",
         "ICanController.hal",
+        "ICanErrorListener.hal",
         "ICanMessageListener.hal",
         "ICloseHandle.hal",
     ],

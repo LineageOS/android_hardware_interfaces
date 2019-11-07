@@ -33,7 +33,7 @@ Return<void> CloseHandle::close() {
     const auto wasClosed = mIsClosed.exchange(true);
     if (wasClosed) return {};
 
-    mCallback();
+    if (mCallback != nullptr) mCallback();
     return {};
 }
 
