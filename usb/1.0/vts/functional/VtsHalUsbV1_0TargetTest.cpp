@@ -20,9 +20,10 @@
 #include <android/hardware/usb/1.0/IUsb.h>
 #include <android/hardware/usb/1.0/IUsbCallback.h>
 #include <android/hardware/usb/1.0/types.h>
+#include <gtest/gtest.h>
+#include <hidl/GtestPrinter.h>
+#include <hidl/ServiceManagement.h>
 
-#include <VtsHalHidlTargetTestBase.h>
-#include <VtsHalHidlTargetTestEnvBase.h>
 #include <log/log.h>
 #include <stdlib.h>
 #include <chrono>
@@ -49,20 +50,8 @@ using ::android::hardware::Return;
 using ::android::hardware::Void;
 using ::android::sp;
 
-// Test environment for Usb HIDL HAL.
-class UsbHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
- public:
-  // get the test environment singleton
-  static UsbHidlEnvironment* Instance() {
-    static UsbHidlEnvironment* instance = new UsbHidlEnvironment;
-    return instance;
-  }
-
-  virtual void registerTestServices() override { registerTestService<IUsb>(); }
-};
-
 // The main test class for the USB hidl HAL
-class UsbHidlTest : public ::testing::VtsHalHidlTargetTestBase {
+class UsbHidlTest : public testing::TestWithParam<std::string> {
  public:
   // Callback class for the USB HIDL hal.
   // Usb Hal will call this object upon role switch or port query.
@@ -109,8 +98,7 @@ class UsbHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 
   virtual void SetUp() override {
     ALOGI("Setup");
-    usb = ::testing::VtsHalHidlTargetTestBase::getService<IUsb>(
-        UsbHidlEnvironment::Instance()->getServiceName<IUsb>());
+    usb = IUsb::getService(GetParam());
     ASSERT_NE(usb, nullptr);
 
     usb_cb_2 = new UsbCallback(*this, 2);
@@ -182,7 +170,7 @@ class UsbHidlTest : public ::testing::VtsHalHidlTargetTestBase {
  * Callback oject is created and registered.
  * Check to see if the hidl transaction succeeded.
  */
-TEST_F(UsbHidlTest, setCallback) {
+TEST_P(UsbHidlTest, setCallback) {
   usb_cb_1 = new UsbCallback(*this, 1);
   ASSERT_NE(usb_cb_1, nullptr);
   Return<void> ret = usb->setCallback(usb_cb_1);
@@ -193,7 +181,7 @@ TEST_F(UsbHidlTest, setCallback) {
  * Check to see if querying type-c
  * port status succeeds.
  */
-TEST_F(UsbHidlTest, queryPortStatus) {
+TEST_P(UsbHidlTest, queryPortStatus) {
   Return<void> ret = usb->queryPortStatus();
   ASSERT_TRUE(ret.isOk());
   EXPECT_EQ(std::cv_status::no_timeout, wait());
@@ -206,7 +194,7 @@ TEST_F(UsbHidlTest, queryPortStatus) {
  * This test case tried to switch the port with empty
  * name which is expected to fail.
  */
-TEST_F(UsbHidlTest, switchEmptyPort) {
+TEST_P(UsbHidlTest, switchEmptyPort) {
   struct PortRole role;
   role.type = PortRoleType::DATA_ROLE;
 
@@ -215,52 +203,6 @@ TEST_F(UsbHidlTest, switchEmptyPort) {
   EXPECT_EQ(std::cv_status::no_timeout, wait());
   EXPECT_EQ(Status::ERROR, usb_last_status);
   EXPECT_EQ(2, usb_last_cookie);
-}
-
-/*
- * Test switching the mode of usb port.
- * Test case queries the usb ports present in device.
- * If there is atleast one usb port, a mode switch
- * to DFP is attempted for the port.
- * The callback parametes are checked to see if the mode
- * switch was successfull. Upon success, Status::SUCCESS
- * is expected to be returned.
- */
-TEST_F(UsbHidlTest, switchModetoDFP) {
-  struct PortRole role;
-  role.type = PortRoleType::MODE;
-  role.role = static_cast<uint32_t>(PortMode::DFP);
-
-  Return<void> ret = usb->queryPortStatus();
-  ASSERT_TRUE(ret.isOk());
-  EXPECT_EQ(std::cv_status::no_timeout, wait());
-  EXPECT_EQ(2, usb_last_cookie);
-
-  if (!usb_last_port_status.portName.empty()) {
-    hidl_string portBeingSwitched = usb_last_port_status.portName;
-    ALOGI("mode portname:%s", portBeingSwitched.c_str());
-    usb_role_switch_done = false;
-    Return<void> ret = usb->switchRole(portBeingSwitched.c_str(), role);
-    ASSERT_TRUE(ret.isOk());
-
-    std::cv_status waitStatus = wait();
-    while (waitStatus == std::cv_status::no_timeout &&
-           usb_role_switch_done == false)
-      waitStatus = wait();
-
-    EXPECT_EQ(std::cv_status::no_timeout, waitStatus);
-    EXPECT_EQ(2, usb_last_cookie);
-
-    EXPECT_EQ(static_cast<uint32_t>(PortRoleType::MODE),
-              static_cast<uint32_t>(usb_last_port_role.type));
-    if (usb_last_status == Status::SUCCESS) {
-      EXPECT_EQ(static_cast<uint32_t>(PortMode::DFP),
-                static_cast<uint32_t>(usb_last_port_role.role));
-    } else {
-      EXPECT_NE(static_cast<uint32_t>(PortMode::UFP),
-                static_cast<uint32_t>(usb_last_port_role.role));
-    }
-  }
 }
 
 /*
@@ -273,7 +215,7 @@ TEST_F(UsbHidlTest, switchModetoDFP) {
  * is expected to be returned.
  */
 
-TEST_F(UsbHidlTest, switchPowerRole) {
+TEST_P(UsbHidlTest, switchPowerRole) {
   struct PortRole role;
   role.type = PortRoleType::POWER_ROLE;
   role.role = static_cast<uint32_t>(PortPowerRole::SOURCE);
@@ -319,7 +261,7 @@ TEST_F(UsbHidlTest, switchPowerRole) {
  * switch was successfull. Upon success, Status::SUCCESS
  * is expected to be returned.
  */
-TEST_F(UsbHidlTest, switchDataRole) {
+TEST_P(UsbHidlTest, switchDataRole) {
   struct PortRole role;
   role.type = PortRoleType::DATA_ROLE;
   role.role = static_cast<uint32_t>(PortDataRole::HOST);
@@ -356,11 +298,7 @@ TEST_F(UsbHidlTest, switchDataRole) {
   }
 }
 
-int main(int argc, char** argv) {
-  ::testing::AddGlobalTestEnvironment(UsbHidlEnvironment::Instance());
-  ::testing::InitGoogleTest(&argc, argv);
-  UsbHidlEnvironment::Instance()->init(&argc, argv);
-  int status = RUN_ALL_TESTS();
-  ALOGI("Test result = %d", status);
-  return status;
-}
+INSTANTIATE_TEST_SUITE_P(
+        PerInstance, UsbHidlTest,
+        testing::ValuesIn(android::hardware::getAllHalInstanceNames(IUsb::descriptor)),
+        android::hardware::PrintInstanceNameToString);
