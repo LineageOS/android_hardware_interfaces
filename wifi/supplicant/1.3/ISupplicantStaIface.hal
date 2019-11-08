@@ -54,4 +54,26 @@ interface ISupplicantStaIface extends @1.2::ISupplicantStaIface {
      */
     getConnectionCapabilities()
         generates (SupplicantStatus status, ConnectionCapabilities capabilities);
+
+    /**
+     * Get wpa driver capabilities.
+     *
+     * @return status Status of the operation, and a bitmap of wpa driver features.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     */
+    getWpaDriverCapabilities() generates (SupplicantStatus status,
+        bitfield<WpaDriverCapabilitiesMask> driverCapabilitiesMask);
+
+    /**
+     * Set MBO cellular data status.
+     *
+     * @param available true means cellular data available, false otherwise.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+     */
+    setMboCellularDataStatus(bool available) generates (SupplicantStatus status);
 };

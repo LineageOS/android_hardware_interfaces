@@ -58,3 +58,17 @@ struct ConnectionCapabilities {
      */
     WifiTechnology technology;
 };
+
+/**
+ * WPA Driver capability.
+ */
+enum WpaDriverCapabilitiesMask : uint32_t {
+    /**
+     * Multi Band Operation.
+     */
+    MBO = 1 << 0,
+    /**
+     * Optimized Connectivity Experience.
+     */
+    OCE = 1 << 1,
+};
