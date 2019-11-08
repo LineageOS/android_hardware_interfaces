@@ -16,12 +16,14 @@
 
 #include <android-base/logging.h>
 
+#include <android/hardware/wifi/1.2/IWifi.h>
 #include <android/hardware/wifi/1.2/IWifiChip.h>
 #include <android/hardware/wifi/1.2/IWifiChipEventCallback.h>
 #include <android/hardware/wifi/1.3/IWifiChip.h>
-
+#include <gtest/gtest.h>
+#include <hidl/GtestPrinter.h>
+#include <hidl/ServiceManagement.h>
 #include <VtsHalHidlTargetCallbackBase.h>
-#include <VtsHalHidlTargetTestBase.h>
 
 #include "wifi_hidl_call_util.h"
 #include "wifi_hidl_test_utils.h"
@@ -50,14 +52,14 @@ constexpr IWifiChip::TxPowerScenario kPowerScenarioVoiceCall =
 /**
  * Fixture to use for all Wifi chip HIDL interface tests.
  */
-class WifiChipHidlTest : public ::testing::VtsHalHidlTargetTestBase {
+class WifiChipHidlTest : public ::testing::TestWithParam<std::string> {
  public:
   virtual void SetUp() override {
-    wifi_chip_ = IWifiChip::castFrom(getWifiChip());
+    wifi_chip_ = IWifiChip::castFrom(getWifiChip(GetInstanceName()));
     ASSERT_NE(nullptr, wifi_chip_.get());
   }
 
-  virtual void TearDown() override { stopWifi(); }
+  virtual void TearDown() override { stopWifi(GetInstanceName()); }
 
   // A simple test implementation of WifiChipEventCallback.
   class WifiChipEventCallback
@@ -123,6 +125,9 @@ class WifiChipHidlTest : public ::testing::VtsHalHidlTargetTestBase {
   }
 
   sp<IWifiChip> wifi_chip_;
+
+ private:
+  std::string GetInstanceName() { return GetParam(); }
 };
 
 /*
@@ -130,7 +135,7 @@ class WifiChipHidlTest : public ::testing::VtsHalHidlTargetTestBase {
  * This test case tests the selectTxPowerScenario_1_2() API with SAR scenarios
  * newly defined in 1.2
  */
-TEST_F(WifiChipHidlTest, SelectTxPowerScenario_1_2_body) {
+TEST_P(WifiChipHidlTest, SelectTxPowerScenario_1_2_body) {
   uint32_t caps = configureChipForStaIfaceAndGetCapabilities();
   const auto& status =
       HIDL_INVOKE(wifi_chip_, selectTxPowerScenario_1_2, kPowerScenarioBody);
@@ -147,7 +152,7 @@ TEST_F(WifiChipHidlTest, SelectTxPowerScenario_1_2_body) {
  * This test case tests the selectTxPowerScenario_1_2() API with previously
  * defined SAR scenarios
  */
-TEST_F(WifiChipHidlTest, SelectTxPowerScenario_1_2_voiceCall) {
+TEST_P(WifiChipHidlTest, SelectTxPowerScenario_1_2_voiceCall) {
   uint32_t caps = configureChipForStaIfaceAndGetCapabilities();
   const auto& status =
       HIDL_INVOKE(wifi_chip_, selectTxPowerScenario_1_2, kPowerScenarioVoiceCall);
@@ -167,9 +172,15 @@ TEST_F(WifiChipHidlTest, SelectTxPowerScenario_1_2_voiceCall) {
  * since event is triggered internally in the HAL implementation, and can not be
  * triggered from the test case
  */
-TEST_F(WifiChipHidlTest, registerEventCallback_1_2) {
+TEST_P(WifiChipHidlTest, registerEventCallback_1_2) {
     sp<WifiChipEventCallback> wifiChipEventCallback = new WifiChipEventCallback();
     const auto& status =
         HIDL_INVOKE(wifi_chip_, registerEventCallback_1_2, wifiChipEventCallback);
     EXPECT_EQ(WifiStatusCode::SUCCESS, status.code);
 }
+
+INSTANTIATE_TEST_SUITE_P(
+    PerInstance, WifiChipHidlTest,
+    testing::ValuesIn(android::hardware::getAllHalInstanceNames(
+        ::android::hardware::wifi::V1_2::IWifi::descriptor)),
+    android::hardware::PrintInstanceNameToString);
