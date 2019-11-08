@@ -66,6 +66,7 @@
     </xs:element>
     <xs:complexType name="globalConfiguration">
         <xs:attribute name="speaker_drc_enabled" type="xs:boolean" use="required"/>
+        <xs:attribute name="call_screen_mode_supported" type="xs:boolean" use="optional"/>
     </xs:complexType>
     <xs:complexType name="modules">
         <xs:annotation>
