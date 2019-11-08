@@ -46,13 +46,13 @@ const std::vector<EffectStrength> kEffectStrengths = {EffectStrength::LIGHT, Eff
                                                       EffectStrength::STRONG};
 
 const std::vector<Effect> kInvalidEffects = {
-        static_cast<Effect>(static_cast<int32_t>(*kEffects.begin()) - 1),
-        static_cast<Effect>(static_cast<int32_t>(*kEffects.end()) + 1),
+        static_cast<Effect>(static_cast<int32_t>(kEffects.front()) - 1),
+        static_cast<Effect>(static_cast<int32_t>(kEffects.back()) + 1),
 };
 
 const std::vector<EffectStrength> kInvalidEffectStrengths = {
-        static_cast<EffectStrength>(static_cast<int8_t>(*kEffectStrengths.begin()) - 1),
-        static_cast<EffectStrength>(static_cast<int8_t>(*kEffectStrengths.end()) + 1),
+        static_cast<EffectStrength>(static_cast<int8_t>(kEffectStrengths.front()) - 1),
+        static_cast<EffectStrength>(static_cast<int8_t>(kEffectStrengths.back()) + 1),
 };
 
 class CompletionCallback : public BnVibratorCallback {
@@ -119,10 +119,13 @@ TEST_P(VibratorAidl, ValidateEffect) {
             Status status = vibrator->perform(effect, strength, nullptr /*callback*/, &lengthMs);
 
             if (isEffectSupported) {
-                EXPECT_TRUE(status.isOk());
+                EXPECT_TRUE(status.isOk())
+                        << static_cast<int>(effect) << " " << static_cast<int>(strength);
                 EXPECT_GT(lengthMs, 0);
+                usleep(lengthMs * 1000);
             } else {
-                EXPECT_EQ(status.exceptionCode(), Status::EX_UNSUPPORTED_OPERATION);
+                EXPECT_EQ(status.exceptionCode(), Status::EX_UNSUPPORTED_OPERATION)
+                        << static_cast<int>(effect) << " " << static_cast<int>(strength);
                 EXPECT_EQ(lengthMs, 0);
             }
         }
@@ -179,10 +182,19 @@ TEST_P(VibratorAidl, ValidateEffectWithCallbackNotSupported) {
 
 TEST_P(VibratorAidl, InvalidEffectsUnsupported) {
     for (Effect effect : kInvalidEffects) {
+        for (EffectStrength strength : kEffectStrengths) {
+            int32_t lengthMs;
+            Status status = vibrator->perform(effect, strength, nullptr /*callback*/, &lengthMs);
+            EXPECT_EQ(status.exceptionCode(), Status::EX_UNSUPPORTED_OPERATION)
+                    << static_cast<int>(effect) << " " << static_cast<int>(strength);
+        }
+    }
+    for (Effect effect : kEffects) {
         for (EffectStrength strength : kInvalidEffectStrengths) {
             int32_t lengthMs;
             Status status = vibrator->perform(effect, strength, nullptr /*callback*/, &lengthMs);
-            EXPECT_EQ(status.exceptionCode(), Status::EX_UNSUPPORTED_OPERATION);
+            EXPECT_EQ(status.exceptionCode(), Status::EX_UNSUPPORTED_OPERATION)
+                    << static_cast<int>(effect) << " " << static_cast<int>(strength);
         }
     }
 }
