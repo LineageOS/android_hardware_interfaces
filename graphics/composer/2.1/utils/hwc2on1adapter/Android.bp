@@ -22,40 +22,12 @@ cc_library_shared {
         "-Werror",
     ],
     cppflags: [
-        "-Weverything",
+        "-Wextra",
         "-Wunused",
         "-Wunreachable-code",
 
-        // The static constructors and destructors in this library have not been noted to
-        // introduce significant overheads
-        "-Wno-exit-time-destructors",
-        "-Wno-global-constructors",
-
-        // We only care about compiling as C++14
-        "-Wno-c++98-compat-pedantic",
-
-        // android/sensors.h uses nested anonymous unions and anonymous structs
-        "-Wno-nested-anon-types",
-        "-Wno-gnu-anonymous-struct",
-
-        // Don't warn about struct padding
-        "-Wno-padded",
-
-        // hwcomposer2.h features switch covering all cases.
-        "-Wno-covered-switch-default",
-
-        // hwcomposer.h features zero size array.
-        "-Wno-zero-length-array",
-
         // Disabling warning specific to hwc2on1adapter code
-        "-Wno-double-promotion",
-        "-Wno-sign-conversion",
-        "-Wno-switch-enum",
-        "-Wno-float-equal",
-        "-Wno-shorten-64-to-32",
         "-Wno-sign-compare",
-        "-Wno-missing-prototypes",
-        "-Wno-format-pedantic",
     ],
 
     srcs: [
