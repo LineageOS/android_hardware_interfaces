@@ -73,9 +73,12 @@ const std::vector<DeviceConfigParameter>& getOutputDeviceConfigParameters() {
                     getCachedPolicyConfig().getModuleFromName(std::get<PARAM_DEVICE_NAME>(device));
             for (const auto& ioProfile : module->getOutputProfiles()) {
                 for (const auto& profile : ioProfile->getAudioProfiles()) {
-                    auto configs = ConfigHelper::combineAudioConfig(profile->getChannels(),
-                                                                    profile->getSampleRates(),
-                                                                    profile->getFormat());
+                    const auto& channels = profile->getChannels();
+                    const auto& sampleRates = profile->getSampleRates();
+                    auto configs = ConfigHelper::combineAudioConfig(
+                            vector<audio_channel_mask_t>(channels.begin(), channels.end()),
+                            vector<uint32_t>(sampleRates.begin(), sampleRates.end()),
+                            profile->getFormat());
                     auto flags = ioProfile->getFlags();
                     for (auto& config : configs) {
                         // Some combinations of flags declared in the config file require special
@@ -125,9 +128,12 @@ const std::vector<DeviceConfigParameter>& getInputDeviceConfigParameters() {
                     getCachedPolicyConfig().getModuleFromName(std::get<PARAM_DEVICE_NAME>(device));
             for (const auto& ioProfile : module->getInputProfiles()) {
                 for (const auto& profile : ioProfile->getAudioProfiles()) {
-                    auto configs = ConfigHelper::combineAudioConfig(profile->getChannels(),
-                                                                    profile->getSampleRates(),
-                                                                    profile->getFormat());
+                    const auto& channels = profile->getChannels();
+                    const auto& sampleRates = profile->getSampleRates();
+                    auto configs = ConfigHelper::combineAudioConfig(
+                            vector<audio_channel_mask_t>(channels.begin(), channels.end()),
+                            vector<uint32_t>(sampleRates.begin(), sampleRates.end()),
+                            profile->getFormat());
                     for (const auto& config : configs) {
                         result.emplace_back(device, config, AudioInputFlag(ioProfile->getFlags()));
                     }
