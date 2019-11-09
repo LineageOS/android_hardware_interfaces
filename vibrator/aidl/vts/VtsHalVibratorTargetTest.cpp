@@ -247,7 +247,7 @@ TEST_P(VibratorAidl, ExternalControlUnsupportedMatchingCapabilities) {
     }
 }
 
-INSTANTIATE_TEST_SUITE_P(, VibratorAidl,
+INSTANTIATE_TEST_SUITE_P(Vibrator, VibratorAidl,
                          testing::ValuesIn(android::getAidlHalInstanceNames(IVibrator::descriptor)),
                          android::PrintInstanceNameToString);
 
