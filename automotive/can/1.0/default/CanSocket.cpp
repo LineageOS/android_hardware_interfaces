@@ -33,12 +33,10 @@ namespace implementation {
 
 using namespace std::chrono_literals;
 
-/**
- * How frequently the read thread checks whether the interface was asked to be down.
+/* How frequently the read thread checks whether the interface was asked to be down.
  *
  * Note: This does *not* affect read timing or bandwidth, just CPU load vs time to
- *       down the interface.
- */
+ *       down the interface. */
 static constexpr auto kReadPooling = 100ms;
 
 std::unique_ptr<CanSocket> CanSocket::open(const std::string& ifname, ReadCallback rdcb,
@@ -105,8 +103,7 @@ void CanSocket::readerThread() {
 
     while (!mStopReaderThread) {
         /* The ideal would be to have a blocking read(3) call and interrupt it with shutdown(3).
-         * This is unfortunately not supported for SocketCAN, so we need to rely on select(3).
-         */
+         * This is unfortunately not supported for SocketCAN, so we need to rely on select(3). */
         const auto sel = selectRead(mSocket, kReadPooling);
         if (sel == 0) continue;  // timeout
         if (sel == -1) {
@@ -127,8 +124,7 @@ void CanSocket::readerThread() {
          * Apart from the added complexity, it's possible the added calculations and system calls
          * would add so much time to the processing pipeline so the precision of the reported time
          * was buried under the subsystem latency. Let's just use a local time since boot here and
-         * leave precise hardware timestamps for custom proprietary implementations (if needed).
-         */
+         * leave precise hardware timestamps for custom proprietary implementations (if needed). */
         const std::chrono::nanoseconds ts(elapsedRealtimeNano());
 
         if (nbytes != CAN_MTU) {

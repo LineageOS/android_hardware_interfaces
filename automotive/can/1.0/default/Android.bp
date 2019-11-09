@@ -39,6 +39,7 @@ cc_binary {
         "CanBus.cpp",
         "CanBusNative.cpp",
         "CanBusVirtual.cpp",
+        "CanBusSlcan.cpp",
         "CanController.cpp",
         "CanSocket.cpp",
         "CloseHandle.cpp",

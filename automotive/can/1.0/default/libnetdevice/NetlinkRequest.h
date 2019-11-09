@@ -27,9 +27,7 @@ namespace netdevice {
 typedef unsigned short rtattrtype_t;  // as in rtnetlink.h
 typedef __u16 nlmsgtype_t;            // as in netlink.h
 
-/**
- * Implementation details, do not use outside NetlinkRequest template.
- */
+/** Implementation details, do not use outside NetlinkRequest template. */
 namespace impl {
 
 struct rtattr* addattr_l(struct nlmsghdr* n, size_t maxLen, rtattrtype_t type, const void* data,
@@ -59,7 +57,7 @@ struct NetlinkRequest {
         mRequest.nlmsg.nlmsg_flags = flags;
     }
 
-    /** Returns pointer to raw netlink message header. */
+    /** \return pointer to raw netlink message header. */
     struct nlmsghdr* header() {
         return &mRequest.nlmsg;
     }
@@ -89,9 +87,7 @@ struct NetlinkRequest {
         if (ap == nullptr) mIsGood = false;
     }
 
-    /**
-     * Guard class to frame nested attributes. See nest(int).
-     */
+    /** Guard class to frame nested attributes. See nest(int). */
     struct Nest {
         Nest(NetlinkRequest& req, rtattrtype_t type) : mReq(req), mAttr(req.nestStart(type)) {}
         ~Nest() { mReq.nestEnd(mAttr); }

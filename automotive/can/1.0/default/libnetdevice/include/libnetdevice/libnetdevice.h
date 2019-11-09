@@ -25,49 +25,49 @@ namespace netdevice {
 /**
  * Checks, if the network interface exists.
  *
- * @param ifname Interface to check
- * @return true if it exists, false otherwise
+ * \param ifname Interface to check
+ * \return true if it exists, false otherwise
  */
 bool exists(std::string ifname);
 
 /**
  * Checks if network interface is up.
  *
- * @param ifname Interface to check
- * @return true/false if the check succeeded, nullopt otherwise
+ * \param ifname Interface to check
+ * \return true/false if the check succeeded, nullopt otherwise
  */
 std::optional<bool> isUp(std::string ifname);
 
 /**
  * Brings network interface up.
  *
- * @param ifname Interface to bring up
- * @return true in case of success, false otherwise
+ * \param ifname Interface to bring up
+ * \return true in case of success, false otherwise
  */
 bool up(std::string ifname);
 
 /**
  * Brings network interface down.
  *
- * @param ifname Interface to bring down
- * @return true in case of success, false otherwise
+ * \param ifname Interface to bring down
+ * \return true in case of success, false otherwise
  */
 bool down(std::string ifname);
 
 /**
  * Adds virtual link.
  *
- * @param dev the name of the new virtual device
- * @param type the type of the new device
- * @return true in case of success, false otherwise
+ * \param dev the name of the new virtual device
+ * \param type the type of the new device
+ * \return true in case of success, false otherwise
  */
 bool add(std::string dev, std::string type);
 
 /**
  * Deletes virtual link.
  *
- * @param dev the name of the device to remove
- * @return true in case of success, false otherwise
+ * \param dev the name of the device to remove
+ * \return true in case of success, false otherwise
  */
 bool del(std::string dev);
 

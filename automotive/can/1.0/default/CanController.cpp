@@ -17,6 +17,7 @@
 #include "CanController.h"
 
 #include "CanBusNative.h"
+#include "CanBusSlcan.h"
 #include "CanBusVirtual.h"
 
 #include <android-base/logging.h>
@@ -34,10 +35,8 @@ namespace implementation {
 using IfaceIdDisc = ICanController::BusConfiguration::InterfaceIdentifier::hidl_discriminator;
 
 Return<void> CanController::getSupportedInterfaceTypes(getSupportedInterfaceTypes_cb _hidl_cb) {
-    _hidl_cb({
-            ICanController::InterfaceType::VIRTUAL,
-            ICanController::InterfaceType::SOCKETCAN,
-    });
+    _hidl_cb({ICanController::InterfaceType::VIRTUAL, ICanController::InterfaceType::SOCKETCAN,
+              ICanController::InterfaceType::SLCAN});
     return {};
 }
 
@@ -74,6 +73,12 @@ Return<ICanController::Result> CanController::upInterface(
     } else if (config.iftype == ICanController::InterfaceType::VIRTUAL) {
         if (config.interfaceId.getDiscriminator() == IfaceIdDisc::address) {
             busService = new CanBusVirtual(config.interfaceId.address());
+        } else {
+            return ICanController::Result::BAD_ADDRESS;
+        }
+    } else if (config.iftype == ICanController::InterfaceType::SLCAN) {
+        if (config.interfaceId.getDiscriminator() == IfaceIdDisc::address) {
+            busService = new CanBusSlcan(config.interfaceId.address(), config.baudrate);
         } else {
             return ICanController::Result::BAD_ADDRESS;
         }

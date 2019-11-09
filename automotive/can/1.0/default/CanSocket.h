@@ -31,9 +31,7 @@ namespace can {
 namespace V1_0 {
 namespace implementation {
 
-/**
- * Wrapper around SocketCAN socket.
- */
+/** Wrapper around SocketCAN socket. */
 struct CanSocket {
     using ReadCallback = std::function<void(const struct canfd_frame&, std::chrono::nanoseconds)>;
     using ErrorCallback = std::function<void(int errnoVal)>;

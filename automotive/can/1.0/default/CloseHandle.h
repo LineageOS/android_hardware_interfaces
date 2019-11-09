@@ -26,9 +26,7 @@ namespace can {
 namespace V1_0 {
 namespace implementation {
 
-/**
- * Generic ICloseHandle implementation ignoring double-close events.
- */
+/** Generic ICloseHandle implementation ignoring double-close events. */
 struct CloseHandle : public ICloseHandle {
     using Callback = std::function<void()>;
 
