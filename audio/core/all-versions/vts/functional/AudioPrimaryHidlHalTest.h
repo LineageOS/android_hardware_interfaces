@@ -26,6 +26,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <variant>
 #include <vector>
 
 #include <fcntl.h>
@@ -97,7 +98,9 @@ using ::android::hardware::kSynchronizedReadWrite;
 using ::android::hardware::MessageQueue;
 using ::android::hardware::MQDescriptorSync;
 using ::android::hardware::Return;
+using ::android::hardware::audio::common::utils::EnumBitfield;
 using ::android::hardware::audio::common::utils::mkEnumBitfield;
+using ::android::hardware::details::toHexString;
 
 using namespace ::android::hardware::audio::common::CPP_VERSION;
 using namespace ::android::hardware::audio::common::test::utility;
@@ -231,6 +234,9 @@ class PolicyConfig : private PolicyConfigData, public AudioPolicyConfig {
         }
     }
     const std::string& getFilePath() const { return mFilePath; }
+    sp<const HwModule> getModuleFromName(const std::string& name) const {
+        return getHwModules().getModuleFromName(name.c_str());
+    }
     sp<const HwModule> getPrimaryModule() const { return mPrimaryModule; }
     const std::set<std::string>& getModulesWithDevicesNames() const {
         return mModulesWithDevicesNames;
@@ -550,91 +556,28 @@ TEST_P(AudioPatchHidlTest, AudioPatches) {
 INSTANTIATE_TEST_CASE_P(AudioPatchHidl, AudioPatchHidlTest,
                         ::testing::ValuesIn(getDeviceParameters()), &DeviceParameterToString);
 
-//////////////////////////////////////////////////////////////////////////////
-//////////////// Required and recommended audio format support ///////////////
-// From:
-// https://source.android.com/compatibility/android-cdd.html#5_4_audio_recording
-// From:
-// https://source.android.com/compatibility/android-cdd.html#5_5_audio_playback
-/////////// TODO: move to the beginning of the file for easier update ////////
-//////////////////////////////////////////////////////////////////////////////
-
-struct ConfigHelper {
-    // for retro compatibility only test the primary device IN_BUILTIN_MIC
-    // FIXME: in the next audio HAL version, test all available devices
-    static bool primaryHasMic() {
-        auto& policyConfig = getCachedPolicyConfig();
-        if (policyConfig.getStatus() != OK || policyConfig.getPrimaryModule() == nullptr) {
-            return true;  // Could not get the information, run all tests
-        }
-        auto getMic = [](auto& devs) { return devs.getDevice(
-                AUDIO_DEVICE_IN_BUILTIN_MIC, {}, AUDIO_FORMAT_DEFAULT); };
-        auto primaryMic = getMic(policyConfig.getPrimaryModule()->getDeclaredDevices());
-        auto availableMic = getMic(policyConfig.getAvailableInputDevices());
-
-        return primaryMic != nullptr && primaryMic->equals(availableMic);
-    }
-
-    // Cache result ?
-    static const vector<AudioConfig> getRequiredSupportPlaybackAudioConfig() {
-        return combineAudioConfig({AudioChannelMask::OUT_STEREO, AudioChannelMask::OUT_MONO},
-                                  {8000, 11025, 16000, 22050, 32000, 44100},
-                                  {AudioFormat::PCM_16_BIT});
-    }
-
-    static const vector<AudioConfig> getRecommendedSupportPlaybackAudioConfig() {
-        return combineAudioConfig({AudioChannelMask::OUT_STEREO, AudioChannelMask::OUT_MONO},
-                                  {24000, 48000}, {AudioFormat::PCM_16_BIT});
-    }
-
-    static const vector<AudioConfig> getSupportedPlaybackAudioConfig() {
-        // TODO: retrieve audio config supported by the platform
-        // as declared in the policy configuration
-        return {};
-    }
-
-    static const vector<AudioConfig> getRequiredSupportCaptureAudioConfig() {
-        if (!primaryHasMic()) return {};
-        return combineAudioConfig({AudioChannelMask::IN_MONO}, {8000, 11025, 16000, 44100},
-                                  {AudioFormat::PCM_16_BIT});
-    }
-    static const vector<AudioConfig> getRecommendedSupportCaptureAudioConfig() {
-        if (!primaryHasMic()) return {};
-        return combineAudioConfig({AudioChannelMask::IN_STEREO}, {22050, 48000},
-                                  {AudioFormat::PCM_16_BIT});
-    }
-    static const vector<AudioConfig> getSupportedCaptureAudioConfig() {
-        // TODO: retrieve audio config supported by the platform
-        // as declared in the policy configuration
-        return {};
-    }
-
-   private:
-    static const vector<AudioConfig> combineAudioConfig(vector<AudioChannelMask> channelMasks,
-                                                        vector<uint32_t> sampleRates,
-                                                        vector<AudioFormat> formats) {
-        vector<AudioConfig> configs;
-        for (auto channelMask : channelMasks) {
-            for (auto sampleRate : sampleRates) {
-                for (auto format : formats) {
-                    AudioConfig config{};
-                    // leave offloadInfo to 0
-                    config.channelMask = mkEnumBitfield(channelMask);
-                    config.sampleRateHz = sampleRate;
-                    config.format = format;
-                    // FIXME: leave frameCount to 0 ?
-                    configs.push_back(config);
-                }
-            }
-        }
-        return configs;
-    }
-};
-
 // Nesting a tuple in another tuple allows to use GTest Combine function to generate
 // all combinations of devices and configs.
-enum { PARAM_DEVICE, PARAM_CONFIG };
-using DeviceConfigParameter = std::tuple<DeviceParameter, AudioConfig>;
+enum { PARAM_DEVICE, PARAM_CONFIG, PARAM_FLAGS };
+enum { INDEX_INPUT, INDEX_OUTPUT };
+using DeviceConfigParameter =
+        std::tuple<DeviceParameter, AudioConfig, std::variant<AudioInputFlag, AudioOutputFlag>>;
+
+#if MAJOR_VERSION >= 6
+const std::vector<DeviceConfigParameter>& getInputDeviceConfigParameters();
+const std::vector<DeviceConfigParameter>& getOutputDeviceConfigParameters();
+#endif
+
+#if MAJOR_VERSION >= 4
+static string SanitizeStringForGTestName(const string& s) {
+    string result = s;
+    for (size_t i = 0; i < result.size(); i++) {
+        // gtest test names must only contain alphanumeric characters
+        if (!std::isalnum(result[i])) result[i] = '_';
+    }
+    return result;
+}
+#endif
 
 /** Generate a test name based on an audio config.
  *
@@ -652,7 +595,32 @@ static string DeviceConfigParameterToString(
            ((config.channelMask == mkEnumBitfield(AudioChannelMask::OUT_MONO) ||
              config.channelMask == mkEnumBitfield(AudioChannelMask::IN_MONO))
                     ? "MONO"
-                    : ::testing::PrintToString(config.channelMask));
+#if MAJOR_VERSION == 2
+                    : ::testing::PrintToString(config.channelMask)
+#elif MAJOR_VERSION >= 4
+                    // In V4 and above the channel mask is a bitfield.
+                    // Printing its value using HIDL's toString for a bitfield emits a lot of extra
+                    // text due to overlapping constant values. Instead, we print the bitfield value
+                    // as if it was a single value + its hex representation
+                    : SanitizeStringForGTestName(
+                              ::testing::PrintToString(AudioChannelMask(config.channelMask)) + "_" +
+                              toHexString(config.channelMask))
+#endif
+                    ) +
+           "_" +
+#if MAJOR_VERSION == 2
+           std::visit([](auto&& arg) -> std::string { return ::testing::PrintToString(arg); },
+                      std::get<PARAM_FLAGS>(info.param));
+#elif MAJOR_VERSION >= 4
+           SanitizeStringForGTestName(std::visit(
+                   [](auto&& arg) -> std::string {
+                       using T = std::decay_t<decltype(arg)>;
+                       // Need to use FQN of toString to avoid confusing the compiler
+                       return ::android::hardware::audio::common::CPP_VERSION::toString<T>(
+                               hidl_bitfield<T>(arg));
+                   },
+                   std::get<PARAM_FLAGS>(info.param)));
+#endif
 }
 
 class AudioHidlTestWithDeviceConfigParameter
@@ -671,7 +639,26 @@ class AudioHidlTestWithDeviceConfigParameter
         return std::get<PARAM_DEVICE_NAME>(std::get<PARAM_DEVICE>(GetParam()));
     }
     const AudioConfig& getConfig() const { return std::get<PARAM_CONFIG>(GetParam()); }
+#if MAJOR_VERSION == 2
+    AudioInputFlag getInputFlags() const {
+        return std::get<INDEX_INPUT>(std::get<PARAM_FLAGS>(GetParam()));
+    }
+    AudioOutputFlag getOutputFlags() const {
+        return std::get<INDEX_OUTPUT>(std::get<PARAM_FLAGS>(GetParam()));
+    }
+#elif MAJOR_VERSION >= 4
+    hidl_bitfield<AudioInputFlag> getInputFlags() const {
+        return hidl_bitfield<AudioInputFlag>(
+                std::get<INDEX_INPUT>(std::get<PARAM_FLAGS>(GetParam())));
+    }
+    hidl_bitfield<AudioOutputFlag> getOutputFlags() const {
+        return hidl_bitfield<AudioOutputFlag>(
+                std::get<INDEX_OUTPUT>(std::get<PARAM_FLAGS>(GetParam())));
+    }
+#endif
 };
+
+#include "ConfigHelper.h"
 
 //////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// getInputBufferSize /////////////////////////////
@@ -681,7 +668,7 @@ class AudioHidlTestWithDeviceConfigParameter
 // android.hardware.microphone
 //        how to get this value ? is it a property ???
 
-class AudioCaptureConfigPrimaryTest : public AudioHidlTestWithDeviceConfigParameter {
+class AudioCaptureConfigTest : public AudioHidlTestWithDeviceConfigParameter {
   protected:
     void inputBufferSizeTest(const AudioConfig& audioConfig, bool supportRequired) {
         uint64_t bufferSize;
@@ -704,42 +691,51 @@ class AudioCaptureConfigPrimaryTest : public AudioHidlTestWithDeviceConfigParame
 
 // Test that the required capture config and those declared in the policy are
 // indeed supported
-class RequiredInputBufferSizeTest : public AudioCaptureConfigPrimaryTest {};
+class RequiredInputBufferSizeTest : public AudioCaptureConfigTest {};
 TEST_P(RequiredInputBufferSizeTest, RequiredInputBufferSizeTest) {
     doc::test(
         "Input buffer size must be retrievable for a format with required "
         "support.");
     inputBufferSizeTest(getConfig(), true);
 }
+
+// Test that the recommended capture config are supported or lead to a
+// INVALID_ARGUMENTS return
+class OptionalInputBufferSizeTest : public AudioCaptureConfigTest {};
+TEST_P(OptionalInputBufferSizeTest, OptionalInputBufferSizeTest) {
+    doc::test(
+            "Input buffer size should be retrievable for a format with recommended "
+            "support.");
+    inputBufferSizeTest(getConfig(), false);
+}
+
+#if MAJOR_VERSION <= 5
+// For V2..5 test the primary device according to CDD requirements.
 INSTANTIATE_TEST_CASE_P(
         RequiredInputBufferSize, RequiredInputBufferSizeTest,
-        // FIXME: uses primaryHasMic
         ::testing::Combine(
                 ::testing::ValuesIn(getDeviceParametersForPrimaryDeviceTests()),
-                ::testing::ValuesIn(ConfigHelper::getRequiredSupportCaptureAudioConfig())),
+                ::testing::ValuesIn(ConfigHelper::getRequiredSupportCaptureAudioConfig()),
+                ::testing::Values(AudioInputFlag::NONE)),
         &DeviceConfigParameterToString);
 INSTANTIATE_TEST_CASE_P(
         SupportedInputBufferSize, RequiredInputBufferSizeTest,
         ::testing::Combine(::testing::ValuesIn(getDeviceParameters()),
-                           ::testing::ValuesIn(ConfigHelper::getSupportedCaptureAudioConfig())),
+                           ::testing::ValuesIn(ConfigHelper::getSupportedCaptureAudioConfig()),
+                           ::testing::Values(AudioInputFlag::NONE)),
         &DeviceConfigParameterToString);
-
-// Test that the recommended capture config are supported or lead to a
-// INVALID_ARGUMENTS return
-class OptionalInputBufferSizeTest : public AudioCaptureConfigPrimaryTest {};
-TEST_P(OptionalInputBufferSizeTest, OptionalInputBufferSizeTest) {
-    doc::test(
-        "Input buffer size should be retrievable for a format with recommended "
-        "support.");
-    inputBufferSizeTest(getConfig(), false);
-}
 INSTANTIATE_TEST_CASE_P(
         RecommendedCaptureAudioConfigSupport, OptionalInputBufferSizeTest,
-        // FIXME: uses primaryHasMic
         ::testing::Combine(
                 ::testing::ValuesIn(getDeviceParametersForPrimaryDeviceTests()),
-                ::testing::ValuesIn(ConfigHelper::getRecommendedSupportCaptureAudioConfig())),
+                ::testing::ValuesIn(ConfigHelper::getRecommendedSupportCaptureAudioConfig()),
+                ::testing::Values(AudioInputFlag::NONE)),
         &DeviceConfigParameterToString);
+#elif MAJOR_VERSION >= 6
+INSTANTIATE_TEST_CASE_P(SupportedInputBufferSize, RequiredInputBufferSizeTest,
+                        ::testing::ValuesIn(getInputDeviceConfigParameters()),
+                        &DeviceConfigParameterToString);
+#endif
 
 //////////////////////////////////////////////////////////////////////////////
 /////////////////////////////// setScreenState ///////////////////////////////
@@ -896,8 +892,7 @@ class OutputStreamTest : public OpenStreamTest<IStreamOut> {
         ASSERT_NO_FATAL_FAILURE(OpenStreamTest::SetUp());  // setup base
         address.device = AudioDevice::OUT_DEFAULT;
         const AudioConfig& config = getConfig();
-        // TODO: test all flag combination
-        auto flags = mkEnumBitfield(AudioOutputFlag::NONE);
+        auto flags = getOutputFlags();
         testOpen(
                 [&](AudioIoHandle handle, AudioConfig config, auto cb) {
 #if MAJOR_VERSION == 2
@@ -924,25 +919,37 @@ TEST_P(OutputStreamTest, OpenOutputStreamTest) {
         "recommended config");
     // Open done in SetUp
 }
-// FIXME: Add instantiations for non-primary devices with configs harvested from the APM config file
+
+#if MAJOR_VERSION <= 5
+// For V2..5 test the primary device according to CDD requirements.
 INSTANTIATE_TEST_CASE_P(
         RequiredOutputStreamConfigSupport, OutputStreamTest,
         ::testing::Combine(
                 ::testing::ValuesIn(getDeviceParametersForPrimaryDeviceTests()),
-                ::testing::ValuesIn(ConfigHelper::getRequiredSupportPlaybackAudioConfig())),
+                ::testing::ValuesIn(ConfigHelper::getRequiredSupportPlaybackAudioConfig()),
+                ::testing::Values(AudioOutputFlag::NONE)),
         &DeviceConfigParameterToString);
 INSTANTIATE_TEST_CASE_P(
         SupportedOutputStreamConfig, OutputStreamTest,
         ::testing::Combine(::testing::ValuesIn(getDeviceParameters()),
-                           ::testing::ValuesIn(ConfigHelper::getSupportedPlaybackAudioConfig())),
+                           ::testing::ValuesIn(ConfigHelper::getSupportedPlaybackAudioConfig()),
+                           ::testing::Values(AudioOutputFlag::NONE)),
         &DeviceConfigParameterToString);
-
 INSTANTIATE_TEST_CASE_P(
         RecommendedOutputStreamConfigSupport, OutputStreamTest,
         ::testing::Combine(
                 ::testing::ValuesIn(getDeviceParametersForPrimaryDeviceTests()),
-                ::testing::ValuesIn(ConfigHelper::getRecommendedSupportPlaybackAudioConfig())),
+                ::testing::ValuesIn(ConfigHelper::getRecommendedSupportPlaybackAudioConfig()),
+                ::testing::Values(AudioOutputFlag::NONE)),
         &DeviceConfigParameterToString);
+#elif MAJOR_VERSION >= 6
+// For V6 and above test according to the audio policy manager configuration.
+// This is more correct as CDD is written from the apps perspective.
+// Audio system provides necessary format conversions for the missing configurations.
+INSTANTIATE_TEST_CASE_P(DeclaredOutputStreamConfigSupport, OutputStreamTest,
+                        ::testing::ValuesIn(getOutputDeviceConfigParameters()),
+                        &DeviceConfigParameterToString);
+#endif
 
 ////////////////////////////// openInputStream //////////////////////////////
 
@@ -951,8 +958,7 @@ class InputStreamTest : public OpenStreamTest<IStreamIn> {
         ASSERT_NO_FATAL_FAILURE(OpenStreamTest::SetUp());  // setup base
         address.device = AudioDevice::IN_DEFAULT;
         const AudioConfig& config = getConfig();
-        // TODO: test all supported flags and source
-        auto flags = mkEnumBitfield(AudioInputFlag::NONE);
+        auto flags = getInputFlags();
         testOpen(
                 [&](AudioIoHandle handle, AudioConfig config, auto cb) {
                     return getDevice()->openInputStream(handle, address, config, flags,
@@ -975,26 +981,36 @@ TEST_P(InputStreamTest, OpenInputStreamTest) {
         "recommended config");
     // Open done in setup
 }
+#if MAJOR_VERSION <= 5
+// For V2..5 test the primary device according to CDD requirements.
 INSTANTIATE_TEST_CASE_P(
         RequiredInputStreamConfigSupport, InputStreamTest,
-        // FIXME: uses primaryHasMic
         ::testing::Combine(
                 ::testing::ValuesIn(getDeviceParametersForPrimaryDeviceTests()),
-                ::testing::ValuesIn(ConfigHelper::getRequiredSupportCaptureAudioConfig())),
+                ::testing::ValuesIn(ConfigHelper::getRequiredSupportCaptureAudioConfig()),
+                ::testing::Values(AudioInputFlag::NONE)),
         &DeviceConfigParameterToString);
 INSTANTIATE_TEST_CASE_P(
         SupportedInputStreamConfig, InputStreamTest,
         ::testing::Combine(::testing::ValuesIn(getDeviceParameters()),
-                           ::testing::ValuesIn(ConfigHelper::getSupportedCaptureAudioConfig())),
+                           ::testing::ValuesIn(ConfigHelper::getSupportedCaptureAudioConfig()),
+                           ::testing::Values(AudioInputFlag::NONE)),
         &DeviceConfigParameterToString);
-
 INSTANTIATE_TEST_CASE_P(
         RecommendedInputStreamConfigSupport, InputStreamTest,
-        // FIXME: uses primaryHasMic
         ::testing::Combine(
                 ::testing::ValuesIn(getDeviceParametersForPrimaryDeviceTests()),
-                ::testing::ValuesIn(ConfigHelper::getRecommendedSupportCaptureAudioConfig())),
+                ::testing::ValuesIn(ConfigHelper::getRecommendedSupportCaptureAudioConfig()),
+                ::testing::Values(AudioInputFlag::NONE)),
         &DeviceConfigParameterToString);
+#elif MAJOR_VERSION >= 6
+// For V6 and above test according to the audio policy manager configuration.
+// This is more correct as CDD is written from the apps perspective.
+// Audio system provides necessary format conversions for the missing configurations.
+INSTANTIATE_TEST_CASE_P(DeclaredInputStreamConfigSupport, InputStreamTest,
+                        ::testing::ValuesIn(getInputDeviceConfigParameters()),
+                        &DeviceConfigParameterToString);
+#endif
 
 //////////////////////////////////////////////////////////////////////////////
 ////////////////////////////// IStream getters ///////////////////////////////

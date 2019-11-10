@@ -13,18 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package android.hardware.automotive.can@1.0;
 
-#ifndef HOSTAPD_HIDL_TEST_UTILS_1_1_H
-#define HOSTAPD_HIDL_TEST_UTILS_1_1_H
-
-#include <android/hardware/wifi/hostapd/1.1/IHostapd.h>
-
-#include <VtsHalHidlTargetTestEnvBase.h>
-
-// Helper functions to obtain references to the various HIDL interface objects.
-// Note: We only have a single instance of each of these objects currently.
-// These helper functions should be modified to return vectors if we support
-// multiple instances.
-android::sp<android::hardware::wifi::hostapd::V1_1::IHostapd> getHostapd_1_1();
-
-#endif /* HOSTAPD_HIDL_TEST_UTILS_1_1_H */
+/**
+ * CAN error listener.
+ */
+interface ICanErrorListener {
+    /**
+     * Called on error event.
+     *
+     * If the error is fatal, the client is supposed to drop any references to
+     * this specific ICanBus instance.
+     *
+     * @param error Error type
+     * @param isFatal Whether an error would result with ICanBus instance being unusable.
+     */
+    onError(ErrorEvent error, bool isFatal);
+};

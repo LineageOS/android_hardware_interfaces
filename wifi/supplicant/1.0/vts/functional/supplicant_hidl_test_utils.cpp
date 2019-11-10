@@ -175,7 +175,7 @@ void startSupplicantAndWaitForHidlService() {
     ASSERT_TRUE(supplicant_manager.StartSupplicant());
     ASSERT_TRUE(supplicant_manager.IsSupplicantRunning());
 
-    ASSERT_TRUE(notification_listener->waitForHidlService(200, service_name));
+    ASSERT_TRUE(notification_listener->waitForHidlService(500, service_name));
 }
 
 bool is_1_1(const sp<ISupplicant>& supplicant) {

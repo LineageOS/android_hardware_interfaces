@@ -16,11 +16,12 @@
 
 #define LOG_TAG "VtsOffloadConfigV1_0TargetTest"
 
-#include <VtsHalHidlTargetTestBase.h>
-#include <VtsHalHidlTargetTestEnvBase.h>
 #include <android-base/stringprintf.h>
 #include <android-base/unique_fd.h>
 #include <android/hardware/tetheroffload/config/1.0/IOffloadConfig.h>
+#include <gtest/gtest.h>
+#include <hidl/GtestPrinter.h>
+#include <hidl/ServiceManagement.h>
 #include <linux/netfilter/nfnetlink.h>
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
@@ -78,25 +79,10 @@ int netlinkSocket(unsigned groups) {
     return netlinkSocket(NETLINK_NETFILTER, groups);
 }
 
-// Test environment for OffloadConfig HIDL HAL.
-class OffloadConfigHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
-   public:
-    // get the test environment singleton
-    static OffloadConfigHidlEnvironment* Instance() {
-        static OffloadConfigHidlEnvironment* instance = new OffloadConfigHidlEnvironment;
-        return instance;
-    }
-
-    virtual void registerTestServices() override { registerTestService<IOffloadConfig>(); }
-   private:
-    OffloadConfigHidlEnvironment() {}
-};
-
-class OffloadConfigHidlTest : public testing::VtsHalHidlTargetTestBase {
+class OffloadConfigHidlTest : public testing::TestWithParam<std::string> {
    public:
     virtual void SetUp() override {
-        config = testing::VtsHalHidlTargetTestBase::getService<IOffloadConfig>(
-            OffloadConfigHidlEnvironment::Instance()->getServiceName<IOffloadConfig>());
+        config = IOffloadConfig::getService(GetParam());
         ASSERT_NE(nullptr, config.get()) << "Could not get HIDL instance";
     }
 
@@ -106,7 +92,7 @@ class OffloadConfigHidlTest : public testing::VtsHalHidlTargetTestBase {
 };
 
 // Ensure handles can be set with correct socket options.
-TEST_F(OffloadConfigHidlTest, TestSetHandles) {
+TEST_P(OffloadConfigHidlTest, TestSetHandles) {
     // Try multiple times in a row to see if it provokes file descriptor leaks.
     for (int i = 0; i < 1024; i++) {
         unique_fd fd1(netlinkSocket(kFd1Groups));
@@ -136,7 +122,7 @@ TEST_F(OffloadConfigHidlTest, TestSetHandles) {
 
 // Passing a handle without an associated file descriptor should return an error
 // (e.g. "Failed Input Checks"). Check that this occurs when both FDs are empty.
-TEST_F(OffloadConfigHidlTest, TestSetHandleNone) {
+TEST_P(OffloadConfigHidlTest, TestSetHandleNone) {
     native_handle_t* const nativeHandle1 = native_handle_create(0, 0);
     hidl_handle h1;
     h1.setTo(nativeHandle1, true);
@@ -150,7 +136,7 @@ TEST_F(OffloadConfigHidlTest, TestSetHandleNone) {
 
 // Passing a handle without an associated file descriptor should return an error
 // (e.g. "Failed Input Checks"). Check that this occurs when FD2 is empty.
-TEST_F(OffloadConfigHidlTest, TestSetHandle1Only) {
+TEST_P(OffloadConfigHidlTest, TestSetHandle1Only) {
     unique_fd fd1(netlinkSocket(kFd1Groups));
     if (fd1.get() < 0) {
         ALOGE("Unable to create conntrack handles: %d/%s", errno, strerror(errno));
@@ -171,7 +157,7 @@ TEST_F(OffloadConfigHidlTest, TestSetHandle1Only) {
 
 // Passing a handle without an associated file descriptor should return an error
 // (e.g. "Failed Input Checks"). Check that this occurs when FD1 is empty.
-TEST_F(OffloadConfigHidlTest, TestSetHandle2OnlyNotOk) {
+TEST_P(OffloadConfigHidlTest, TestSetHandle2OnlyNotOk) {
     native_handle_t* const nativeHandle1 = native_handle_create(0, 0);
     hidl_handle h1;
     h1.setTo(nativeHandle1, true);
@@ -190,11 +176,7 @@ TEST_F(OffloadConfigHidlTest, TestSetHandle2OnlyNotOk) {
     ASSERT_TRUE(ret.isOk());
 }
 
-int main(int argc, char** argv) {
-    ::testing::AddGlobalTestEnvironment(OffloadConfigHidlEnvironment::Instance());
-    ::testing::InitGoogleTest(&argc, argv);
-    OffloadConfigHidlEnvironment::Instance()->init(&argc, argv);
-    int status = RUN_ALL_TESTS();
-    ALOGE("Test result with status=%d", status);
-    return status;
-}
+INSTANTIATE_TEST_SUITE_P(
+        PerInstance, OffloadConfigHidlTest,
+        testing::ValuesIn(android::hardware::getAllHalInstanceNames(IOffloadConfig::descriptor)),
+        android::hardware::PrintInstanceNameToString);

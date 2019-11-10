@@ -51,7 +51,7 @@ enum Error : int32_t {
  * createDescriptor(). It describes the properties of a buffer and is consumed
  * by the allocator.
  */
-typedef vec<uint32_t> BufferDescriptor;
+typedef vec<uint8_t> BufferDescriptor;
 
 /**
  * Structure for describing YCbCr formats for consumption by applications.

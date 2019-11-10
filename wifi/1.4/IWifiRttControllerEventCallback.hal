@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,20 @@
  * limitations under the License.
  */
 
-#include <VtsHalHidlTargetTestBase.h>
-#include <android-base/logging.h>
+package android.hardware.wifi@1.4;
 
-#include "hostapd_hidl_test_utils.h"
-#include "hostapd_hidl_test_utils_1_1.h"
+import @1.0::IWifiRttControllerEventCallback;
+import @1.0::CommandId;
 
-using ::android::sp;
-using ::android::hardware::wifi::hostapd::V1_1::IHostapd;
-
-sp<IHostapd> getHostapd_1_1() { return IHostapd::castFrom(getHostapd()); }
+/**
+ * RTT Response and Event Callbacks.
+ */
+interface IWifiRttControllerEventCallback extends @1.0::IWifiRttControllerEventCallback {
+    /*
+     * Invoked when an RTT result is available.
+     *
+     * @param cmdId command Id corresponding to the original request.
+     * @param results Vector of |RttResult| instances.
+     */
+    oneway onResults_1_4(CommandId cmdId, vec<RttResult> results);
+};

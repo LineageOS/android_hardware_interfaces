@@ -221,6 +221,25 @@ TEST_P(VibratorAidl, ChangeVibrationExternalControl) {
     }
 }
 
+TEST_P(VibratorAidl, ExternalAmplitudeControl) {
+    const bool supportsExternalAmplitudeControl =
+            (capabilities & IVibrator::CAP_EXTERNAL_AMPLITUDE_CONTROL) > 0;
+
+    if (capabilities & IVibrator::CAP_EXTERNAL_CONTROL) {
+        EXPECT_TRUE(vibrator->setExternalControl(true).isOk());
+
+        Status amplitudeStatus = vibrator->setAmplitude(128);
+        if (supportsExternalAmplitudeControl) {
+            EXPECT_TRUE(amplitudeStatus.isOk());
+        } else {
+            EXPECT_EQ(amplitudeStatus.exceptionCode(), Status::EX_UNSUPPORTED_OPERATION);
+        }
+        EXPECT_TRUE(vibrator->setExternalControl(false).isOk());
+    } else {
+        EXPECT_FALSE(supportsExternalAmplitudeControl);
+    }
+}
+
 TEST_P(VibratorAidl, ExternalControlUnsupportedMatchingCapabilities) {
     if ((capabilities & IVibrator::CAP_EXTERNAL_CONTROL) == 0) {
         EXPECT_EQ(Status::EX_UNSUPPORTED_OPERATION,
@@ -228,7 +247,7 @@ TEST_P(VibratorAidl, ExternalControlUnsupportedMatchingCapabilities) {
     }
 }
 
-INSTANTIATE_TEST_SUITE_P(, VibratorAidl,
+INSTANTIATE_TEST_SUITE_P(Vibrator, VibratorAidl,
                          testing::ValuesIn(android::getAidlHalInstanceNames(IVibrator::descriptor)),
                          android::PrintInstanceNameToString);
 

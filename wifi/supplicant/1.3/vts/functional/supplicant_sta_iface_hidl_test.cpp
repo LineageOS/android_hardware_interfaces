@@ -41,6 +41,7 @@ using ::android::hardware::wifi::supplicant::V1_3::ConnectionCapabilities;
 using ::android::hardware::wifi::supplicant::V1_3::ISupplicantStaIface;
 using ::android::hardware::wifi::supplicant::V1_3::ISupplicantStaIfaceCallback;
 using ::android::hardware::wifi::supplicant::V1_3::ISupplicantStaNetwork;
+using ::android::hardware::wifi::supplicant::V1_3::WpaDriverCapabilitiesMask;
 
 class SupplicantStaIfaceHidlTest : public ::testing::VtsHalHidlTargetTestBase {
    public:
@@ -189,5 +190,40 @@ TEST_F(SupplicantStaIfaceHidlTest, GetConnectionCapabilities) {
         [&](const SupplicantStatus& status,
             ConnectionCapabilities /* capabilities */) {
             EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+        });
+}
+
+/*
+ * GetWpaDriverCapabilities
+ */
+TEST_F(SupplicantStaIfaceHidlTest, GetWpaDriverCapabilities) {
+    sta_iface_->getWpaDriverCapabilities(
+        [&](const SupplicantStatus& status, uint32_t) {
+            EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+        });
+}
+
+/*
+ * SetMboCellularDataStatus
+ */
+TEST_F(SupplicantStaIfaceHidlTest, SetMboCellularDataStatus) {
+    uint32_t driverCapMask = 0;
+
+    // Get MBO support from the device.
+    sta_iface_->getWpaDriverCapabilities(
+        [&](const SupplicantStatus& status, uint32_t driverCapMaskInternal) {
+            EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+
+            driverCapMask = driverCapMaskInternal;
+        });
+
+    SupplicantStatusCode expectedStatusCode =
+        (driverCapMask & WpaDriverCapabilitiesMask::MBO)
+            ? SupplicantStatusCode::SUCCESS
+            : SupplicantStatusCode::FAILURE_UNKNOWN;
+
+    sta_iface_->setMboCellularDataStatus(
+        true, [expectedStatusCode](const SupplicantStatus& status) {
+            EXPECT_EQ(expectedStatusCode, status.code);
         });
 }

@@ -23,6 +23,11 @@ import android.hardware.graphics.common@1.2::Rect;
 interface IMapper {
     struct BufferDescriptorInfo {
         /**
+         * The name of the buffer. Useful for debugging/tracing.
+         */
+        string name;
+
+        /**
          * The width specifies how many columns of pixels must be in the
          * allocated buffer, but does not necessarily represent the offset in
          * columns between the same column in adjacent rows. The rows may be
@@ -219,7 +224,8 @@ interface IMapper {
      *     - `BAD_BUFFER` if the buffer is invalid or is incompatible with this
      *       function.
      *     - `BAD_VALUE` if @p cpuUsage is 0, contains non-CPU usage flags, or
-     *       is incompatible with the buffer.
+     *       is incompatible with the buffer. Also if the @p accessRegion is
+     *       outside the bounds of the buffer or the accessRegion is invalid.
      *     - `NO_RESOURCES` if the buffer cannot be locked at this time. Note
      *       that locking may succeed at a later time.
      * @return data CPU-accessible pointer to the buffer data.

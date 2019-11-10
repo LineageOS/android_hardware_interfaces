@@ -95,6 +95,9 @@ enum ErrorEvent : uint8_t {
     /** A problem with CAN interface HW. */
     HARDWARE_ERROR,
 
+    /** CAN interface is down. */
+    INTERFACE_DOWN,
+
     /** TX buffer overflow: client is sending too many packets. */
     TX_OVERFLOW,
 

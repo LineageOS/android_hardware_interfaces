@@ -58,7 +58,7 @@ Return<void> WifiRttController::getBoundIface(getBoundIface_cb hidl_status_cb) {
 }
 
 Return<void> WifiRttController::registerEventCallback(
-    const sp<IWifiRttControllerEventCallback>& callback,
+    const sp<V1_0::IWifiRttControllerEventCallback>& callback,
     registerEventCallback_cb hidl_status_cb) {
     return validateAndCall(this,
                            WifiStatusCode::ERROR_WIFI_RTT_CONTROLLER_INVALID,
@@ -67,7 +67,7 @@ Return<void> WifiRttController::registerEventCallback(
 }
 
 Return<void> WifiRttController::rangeRequest(
-    uint32_t cmd_id, const hidl_vec<RttConfig>& rtt_configs,
+    uint32_t cmd_id, const hidl_vec<V1_0::RttConfig>& rtt_configs,
     rangeRequest_cb hidl_status_cb) {
     return validateAndCall(this,
                            WifiStatusCode::ERROR_WIFI_RTT_CONTROLLER_INVALID,
@@ -115,7 +115,7 @@ Return<void> WifiRttController::getResponderInfo(
 
 Return<void> WifiRttController::enableResponder(
     uint32_t cmd_id, const WifiChannelInfo& channel_hint,
-    uint32_t max_duration_seconds, const RttResponder& info,
+    uint32_t max_duration_seconds, const V1_0::RttResponder& info,
     enableResponder_cb hidl_status_cb) {
     return validateAndCall(
         this, WifiStatusCode::ERROR_WIFI_RTT_CONTROLLER_INVALID,
@@ -130,49 +130,64 @@ Return<void> WifiRttController::disableResponder(
         &WifiRttController::disableResponderInternal, hidl_status_cb, cmd_id);
 }
 
+Return<void> WifiRttController::registerEventCallback_1_4(
+    const sp<IWifiRttControllerEventCallback>& callback,
+    registerEventCallback_1_4_cb hidl_status_cb) {
+    return validateAndCall(
+        this, WifiStatusCode::ERROR_WIFI_RTT_CONTROLLER_INVALID,
+        &WifiRttController::registerEventCallbackInternal_1_4, hidl_status_cb,
+        callback);
+}
+
+Return<void> WifiRttController::rangeRequest_1_4(
+    uint32_t cmd_id, const hidl_vec<RttConfig>& rtt_configs,
+    rangeRequest_1_4_cb hidl_status_cb) {
+    return validateAndCall(this,
+                           WifiStatusCode::ERROR_WIFI_RTT_CONTROLLER_INVALID,
+                           &WifiRttController::rangeRequestInternal_1_4,
+                           hidl_status_cb, cmd_id, rtt_configs);
+}
+
+Return<void> WifiRttController::getCapabilities_1_4(
+    getCapabilities_1_4_cb hidl_status_cb) {
+    return validateAndCall(
+        this, WifiStatusCode::ERROR_WIFI_RTT_CONTROLLER_INVALID,
+        &WifiRttController::getCapabilitiesInternal_1_4, hidl_status_cb);
+}
+
+Return<void> WifiRttController::getResponderInfo_1_4(
+    getResponderInfo_1_4_cb hidl_status_cb) {
+    return validateAndCall(
+        this, WifiStatusCode::ERROR_WIFI_RTT_CONTROLLER_INVALID,
+        &WifiRttController::getResponderInfoInternal_1_4, hidl_status_cb);
+}
+
+Return<void> WifiRttController::enableResponder_1_4(
+    uint32_t cmd_id, const WifiChannelInfo& channel_hint,
+    uint32_t max_duration_seconds, const RttResponder& info,
+    enableResponder_1_4_cb hidl_status_cb) {
+    return validateAndCall(
+        this, WifiStatusCode::ERROR_WIFI_RTT_CONTROLLER_INVALID,
+        &WifiRttController::enableResponderInternal_1_4, hidl_status_cb, cmd_id,
+        channel_hint, max_duration_seconds, info);
+}
+
 std::pair<WifiStatus, sp<IWifiIface>>
 WifiRttController::getBoundIfaceInternal() {
     return {createWifiStatus(WifiStatusCode::SUCCESS), bound_iface_};
 }
 
 WifiStatus WifiRttController::registerEventCallbackInternal(
-    const sp<IWifiRttControllerEventCallback>& callback) {
-    // TODO(b/31632518): remove the callback when the client is destroyed
-    event_callbacks_.emplace_back(callback);
-    return createWifiStatus(WifiStatusCode::SUCCESS);
+    const sp<V1_0::IWifiRttControllerEventCallback>& /* callback */) {
+    // Deprecated support for this api
+    return createWifiStatus(WifiStatusCode::ERROR_NOT_SUPPORTED);
 }
 
 WifiStatus WifiRttController::rangeRequestInternal(
-    uint32_t cmd_id, const std::vector<RttConfig>& rtt_configs) {
-    std::vector<legacy_hal::wifi_rtt_config> legacy_configs;
-    if (!hidl_struct_util::convertHidlVectorOfRttConfigToLegacy(
-            rtt_configs, &legacy_configs)) {
-        return createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS);
-    }
-    android::wp<WifiRttController> weak_ptr_this(this);
-    const auto& on_results_callback =
-        [weak_ptr_this](
-            legacy_hal::wifi_request_id id,
-            const std::vector<const legacy_hal::wifi_rtt_result*>& results) {
-            const auto shared_ptr_this = weak_ptr_this.promote();
-            if (!shared_ptr_this.get() || !shared_ptr_this->isValid()) {
-                LOG(ERROR) << "Callback invoked on an invalid object";
-                return;
-            }
-            std::vector<RttResult> hidl_results;
-            if (!hidl_struct_util::convertLegacyVectorOfRttResultToHidl(
-                    results, &hidl_results)) {
-                LOG(ERROR) << "Failed to convert rtt results to HIDL structs";
-                return;
-            }
-            for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
-                callback->onResults(id, hidl_results);
-            }
-        };
-    legacy_hal::wifi_error legacy_status =
-        legacy_hal_.lock()->startRttRangeRequest(
-            ifname_, cmd_id, legacy_configs, on_results_callback);
-    return createWifiStatusFromLegacyError(legacy_status);
+    uint32_t /* cmd_id */,
+    const std::vector<V1_0::RttConfig>& /* rtt_configs */) {
+    // Deprecated support for this api
+    return createWifiStatus(WifiStatusCode::ERROR_NOT_SUPPORTED);
 }
 
 WifiStatus WifiRttController::rangeCancelInternal(
@@ -187,21 +202,10 @@ WifiStatus WifiRttController::rangeCancelInternal(
     return createWifiStatusFromLegacyError(legacy_status);
 }
 
-std::pair<WifiStatus, RttCapabilities>
+std::pair<WifiStatus, V1_0::RttCapabilities>
 WifiRttController::getCapabilitiesInternal() {
-    legacy_hal::wifi_error legacy_status;
-    legacy_hal::wifi_rtt_capabilities legacy_caps;
-    std::tie(legacy_status, legacy_caps) =
-        legacy_hal_.lock()->getRttCapabilities(ifname_);
-    if (legacy_status != legacy_hal::WIFI_SUCCESS) {
-        return {createWifiStatusFromLegacyError(legacy_status), {}};
-    }
-    RttCapabilities hidl_caps;
-    if (!hidl_struct_util::convertLegacyRttCapabilitiesToHidl(legacy_caps,
-                                                              &hidl_caps)) {
-        return {createWifiStatus(WifiStatusCode::ERROR_UNKNOWN), {}};
-    }
-    return {createWifiStatus(WifiStatusCode::SUCCESS), hidl_caps};
+    // Deprecated support for this api
+    return {createWifiStatus(WifiStatusCode::ERROR_NOT_SUPPORTED), {}};
 }
 
 WifiStatus WifiRttController::setLciInternal(uint32_t cmd_id,
@@ -228,8 +232,84 @@ WifiStatus WifiRttController::setLcrInternal(uint32_t cmd_id,
     return createWifiStatusFromLegacyError(legacy_status);
 }
 
-std::pair<WifiStatus, RttResponder>
+std::pair<WifiStatus, V1_0::RttResponder>
 WifiRttController::getResponderInfoInternal() {
+    // Deprecated support for this api
+    return {createWifiStatus(WifiStatusCode::ERROR_NOT_SUPPORTED), {}};
+}
+
+WifiStatus WifiRttController::enableResponderInternal(
+    uint32_t /* cmd_id */, const WifiChannelInfo& /* channel_hint */,
+    uint32_t /* max_duration_seconds */, const V1_0::RttResponder& /* info */) {
+    // Deprecated support for this api
+    return {createWifiStatus(WifiStatusCode::ERROR_NOT_SUPPORTED)};
+}
+
+WifiStatus WifiRttController::disableResponderInternal(uint32_t cmd_id) {
+    legacy_hal::wifi_error legacy_status =
+        legacy_hal_.lock()->disableRttResponder(ifname_, cmd_id);
+    return createWifiStatusFromLegacyError(legacy_status);
+}
+
+WifiStatus WifiRttController::registerEventCallbackInternal_1_4(
+    const sp<IWifiRttControllerEventCallback>& callback) {
+    // TODO(b/31632518): remove the callback when the client is destroyed
+    event_callbacks_.emplace_back(callback);
+    return createWifiStatus(WifiStatusCode::SUCCESS);
+}
+
+WifiStatus WifiRttController::rangeRequestInternal_1_4(
+    uint32_t cmd_id, const std::vector<RttConfig>& rtt_configs) {
+    std::vector<legacy_hal::wifi_rtt_config> legacy_configs;
+    if (!hidl_struct_util::convertHidlVectorOfRttConfigToLegacy(
+            rtt_configs, &legacy_configs)) {
+        return createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS);
+    }
+    android::wp<WifiRttController> weak_ptr_this(this);
+    const auto& on_results_callback =
+        [weak_ptr_this](
+            legacy_hal::wifi_request_id id,
+            const std::vector<const legacy_hal::wifi_rtt_result*>& results) {
+            const auto shared_ptr_this = weak_ptr_this.promote();
+            if (!shared_ptr_this.get() || !shared_ptr_this->isValid()) {
+                LOG(ERROR) << "Callback invoked on an invalid object";
+                return;
+            }
+            std::vector<RttResult> hidl_results;
+            if (!hidl_struct_util::convertLegacyVectorOfRttResultToHidl(
+                    results, &hidl_results)) {
+                LOG(ERROR) << "Failed to convert rtt results to HIDL structs";
+                return;
+            }
+            for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
+                callback->onResults_1_4(id, hidl_results);
+            }
+        };
+    legacy_hal::wifi_error legacy_status =
+        legacy_hal_.lock()->startRttRangeRequest(
+            ifname_, cmd_id, legacy_configs, on_results_callback);
+    return createWifiStatusFromLegacyError(legacy_status);
+}
+
+std::pair<WifiStatus, RttCapabilities>
+WifiRttController::getCapabilitiesInternal_1_4() {
+    legacy_hal::wifi_error legacy_status;
+    legacy_hal::wifi_rtt_capabilities legacy_caps;
+    std::tie(legacy_status, legacy_caps) =
+        legacy_hal_.lock()->getRttCapabilities(ifname_);
+    if (legacy_status != legacy_hal::WIFI_SUCCESS) {
+        return {createWifiStatusFromLegacyError(legacy_status), {}};
+    }
+    RttCapabilities hidl_caps;
+    if (!hidl_struct_util::convertLegacyRttCapabilitiesToHidl(legacy_caps,
+                                                              &hidl_caps)) {
+        return {createWifiStatus(WifiStatusCode::ERROR_UNKNOWN), {}};
+    }
+    return {createWifiStatus(WifiStatusCode::SUCCESS), hidl_caps};
+}
+
+std::pair<WifiStatus, RttResponder>
+WifiRttController::getResponderInfoInternal_1_4() {
     legacy_hal::wifi_error legacy_status;
     legacy_hal::wifi_rtt_responder legacy_responder;
     std::tie(legacy_status, legacy_responder) =
@@ -245,7 +325,7 @@ WifiRttController::getResponderInfoInternal() {
     return {createWifiStatus(WifiStatusCode::SUCCESS), hidl_responder};
 }
 
-WifiStatus WifiRttController::enableResponderInternal(
+WifiStatus WifiRttController::enableResponderInternal_1_4(
     uint32_t cmd_id, const WifiChannelInfo& channel_hint,
     uint32_t max_duration_seconds, const RttResponder& info) {
     legacy_hal::wifi_channel_info legacy_channel_info;
@@ -262,12 +342,6 @@ WifiStatus WifiRttController::enableResponderInternal(
         legacy_hal_.lock()->enableRttResponder(
             ifname_, cmd_id, legacy_channel_info, max_duration_seconds,
             legacy_responder);
-    return createWifiStatusFromLegacyError(legacy_status);
-}
-
-WifiStatus WifiRttController::disableResponderInternal(uint32_t cmd_id) {
-    legacy_hal::wifi_error legacy_status =
-        legacy_hal_.lock()->disableRttResponder(ifname_, cmd_id);
     return createWifiStatusFromLegacyError(legacy_status);
 }
 }  // namespace implementation

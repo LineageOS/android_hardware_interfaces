@@ -250,7 +250,9 @@ package audio.policy.configuration.V6_0 {
 
   public class GlobalConfiguration {
     ctor public GlobalConfiguration();
+    method public boolean getCall_screen_mode_supported();
     method public boolean getSpeaker_drc_enabled();
+    method public void setCall_screen_mode_supported(boolean);
     method public void setSpeaker_drc_enabled(boolean);
   }
 

@@ -172,9 +172,10 @@ static void testSetDevices(IStream* stream, const DeviceAddress& address) {
     DeviceAddress otherAddress = address;
     otherAddress.device = (address.device & AudioDevice::BIT_IN) == 0 ? AudioDevice::OUT_SPEAKER
                                                                       : AudioDevice::IN_BUILTIN_MIC;
-    EXPECT_OK(stream->setDevices({otherAddress}));
+    EXPECT_RESULT(okOrNotSupported, stream->setDevices({otherAddress}));
 
-    ASSERT_OK(stream->setDevices({address}));  // Go back to the original value
+    ASSERT_RESULT(okOrNotSupported,
+                  stream->setDevices({address}));  // Go back to the original value
 }
 
 TEST_IO_STREAM(SetDevices, "Check that the stream can be rerouted to SPEAKER or BUILTIN_MIC",
