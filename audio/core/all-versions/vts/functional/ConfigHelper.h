@@ -79,8 +79,8 @@ struct ConfigHelper {
         return {};
     }
 
-    static vector<AudioConfig> combineAudioConfig(android::ChannelMaskSet channelMasks,
-                                                  android::SampleRateSet sampleRates,
+    static vector<AudioConfig> combineAudioConfig(vector<audio_channel_mask_t> channelMasks,
+                                                  vector<uint32_t> sampleRates,
                                                   audio_format_t format) {
         vector<AudioConfig> configs;
         configs.reserve(channelMasks.size() * sampleRates.size());
