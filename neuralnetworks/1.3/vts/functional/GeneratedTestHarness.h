@@ -17,8 +17,8 @@
 #ifndef ANDROID_HARDWARE_NEURALNETWORKS_V1_3_GENERATED_TEST_HARNESS_H
 #define ANDROID_HARDWARE_NEURALNETWORKS_V1_3_GENERATED_TEST_HARNESS_H
 
-#include <android/hardware/neuralnetworks/1.2/IPreparedModel.h>
 #include <android/hardware/neuralnetworks/1.3/IDevice.h>
+#include <android/hardware/neuralnetworks/1.3/IPreparedModel.h>
 #include <android/hardware/neuralnetworks/1.3/types.h>
 #include <functional>
 #include <vector>
@@ -55,10 +55,9 @@ class ValidationTest : public GeneratedTestBase {};
 
 Model createModel(const test_helper::TestModel& testModel);
 
-void PrepareModel(const sp<IDevice>& device, const Model& model,
-                  sp<V1_2::IPreparedModel>* preparedModel);
+void PrepareModel(const sp<IDevice>& device, const Model& model, sp<IPreparedModel>* preparedModel);
 
-void EvaluatePreparedModel(const sp<V1_2::IPreparedModel>& preparedModel,
+void EvaluatePreparedModel(const sp<IPreparedModel>& preparedModel,
                            const test_helper::TestModel& testModel, bool testDynamicOutputShape);
 
 }  // namespace android::hardware::neuralnetworks::V1_3::vts::functional

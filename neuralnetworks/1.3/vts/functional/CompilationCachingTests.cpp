@@ -52,7 +52,6 @@ using implementation::PreparedModelCallback;
 using V1_0::ErrorStatus;
 using V1_1::ExecutionPreference;
 using V1_2::Constant;
-using V1_2::IPreparedModel;
 using V1_2::OperationType;
 
 namespace float32_model {

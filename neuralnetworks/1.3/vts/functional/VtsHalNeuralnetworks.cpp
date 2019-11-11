@@ -34,7 +34,6 @@ using implementation::PreparedModelCallback;
 using V1_0::ErrorStatus;
 using V1_0::Request;
 using V1_1::ExecutionPreference;
-using V1_2::IPreparedModel;
 
 // internal helper function
 void createPreparedModel(const sp<IDevice>& device, const Model& model,
@@ -64,7 +63,7 @@ void createPreparedModel(const sp<IDevice>& device, const Model& model,
     // retrieve prepared model
     preparedModelCallback->wait();
     const ErrorStatus prepareReturnStatus = preparedModelCallback->getStatus();
-    *preparedModel = getPreparedModel_1_2(preparedModelCallback);
+    *preparedModel = getPreparedModel_1_3(preparedModelCallback);
 
     // The getSupportedOperations_1_3 call returns a list of operations that are
     // guaranteed not to fail if prepareModel_1_3 is called, and
@@ -165,7 +164,7 @@ TEST_P(ValidationTest, Test) {
 
 INSTANTIATE_GENERATED_TEST(ValidationTest, [](const test_helper::TestModel&) { return true; });
 
-sp<IPreparedModel> getPreparedModel_1_2(const sp<PreparedModelCallback>& callback) {
+sp<IPreparedModel> getPreparedModel_1_3(const sp<PreparedModelCallback>& callback) {
     sp<V1_0::IPreparedModel> preparedModelV1_0 = callback->getPreparedModel();
     return IPreparedModel::castFrom(preparedModelV1_0).withDefault(nullptr);
 }
