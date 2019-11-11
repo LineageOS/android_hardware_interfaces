@@ -71,10 +71,10 @@ cc_library_static {
     whole_static_libs: ["android.hardware.automotive.vehicle@2.0-manager-lib"],
     shared_libs: [
         "libbase",
+        "libjsoncpp",
         "libprotobuf-cpp-lite",
     ],
     static_libs: [
-        "libjsoncpp",
         "libqemu_pipe",
         "android.hardware.automotive.vehicle@2.0-libproto-native",
     ],
@@ -106,13 +106,13 @@ cc_binary {
     srcs: ["VehicleService.cpp"],
     shared_libs: [
         "libbase",
+        "libjsoncpp",
         "libprotobuf-cpp-lite",
     ],
     static_libs: [
         "android.hardware.automotive.vehicle@2.0-manager-lib",
         "android.hardware.automotive.vehicle@2.0-default-impl-lib",
         "android.hardware.automotive.vehicle@2.0-libproto-native",
-        "libjsoncpp",
         "libqemu_pipe",
     ],
 }
