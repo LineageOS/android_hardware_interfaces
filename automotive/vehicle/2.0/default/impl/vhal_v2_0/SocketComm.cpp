@@ -92,7 +92,10 @@ bool SocketComm::listen() {
     }
 
     ALOGI("%s: Listening for connections on port %d", __FUNCTION__, DEBUG_SOCKET);
-    ::listen(mListenFd, 1);
+    if (::listen(mListenFd, 1) == -1) {
+        ALOGE("%s: Error on listening: errno: %d: %s", __FUNCTION__, errno, strerror(errno));
+        return false;
+    }
     return true;
 }
 
