@@ -1,0 +1,12 @@
+package android.hardware.tests.memory@2.0;
+
+interface IMemoryInterface {
+    // Flips all the bits in the given memory buffer.
+    bitwiseNot(memory mem);
+    // Returns a read-only buffer of size 8, containing the bytes 0..7.
+    getTestMem() generates(memory mem);
+    // Given two memory regions of the same size, returns two memory fields of
+    // equal size, the first contains the byte-wise sum and the other the byte-
+    // wise difference.
+    getSumDiff(TwoMemory in) generates(TwoMemory out);
+};
