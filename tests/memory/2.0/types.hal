@@ -1,0 +1,6 @@
+package android.hardware.tests.memory@2.0;
+
+struct TwoMemory {
+    memory mem1;
+    memory mem2;
+};
