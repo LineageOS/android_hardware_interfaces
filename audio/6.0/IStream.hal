@@ -123,9 +123,11 @@ interface IStream {
      * equivalent to getting AUDIO_PARAMETER_STREAM_SUP_FORMATS on the legacy
      * HAL.
      *
+     * @return retval operation completion status.
      * @return formats supported audio formats.
+     *                 Must be non empty if retval is OK.
      */
-    getSupportedFormats() generates (vec<AudioFormat> formats);
+    getSupportedFormats() generates (Result retval, vec<AudioFormat> formats);
 
     /**
      * Sets the audio format of the stream. Calling this method is equivalent to
