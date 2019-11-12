@@ -13,21 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef ANDROID_HARDWARE_VIBRATOR_V1_x_VIBRATOR_H
-#define ANDROID_HARDWARE_VIBRATOR_V1_x_VIBRATOR_H
+#ifndef ANDROID_HARDWARE_VIBRATOR_V1_3_VIBRATOR_H
+#define ANDROID_HARDWARE_VIBRATOR_V1_3_VIBRATOR_H
 
-#include <android/hardware/vibrator/1.4/IVibrator.h>
+#include <android/hardware/vibrator/1.3/IVibrator.h>
 #include <hidl/Status.h>
 
 namespace android {
 namespace hardware {
 namespace vibrator {
-namespace V1_4 {
+namespace V1_3 {
 namespace implementation {
 
 using android::hardware::vibrator::V1_0::EffectStrength;
 using android::hardware::vibrator::V1_0::Status;
-using android::hardware::vibrator::V1_3::Effect;
 
 class Vibrator : public IVibrator {
   public:
@@ -52,14 +51,7 @@ class Vibrator : public IVibrator {
     // Methods from ::android::hardware::vibrator::V1_3::IVibrator follow.
     Return<bool> supportsExternalControl() override;
     Return<Status> setExternalControl(bool enabled) override;
-    Return<void> perform_1_3(V1_3::Effect effect, EffectStrength strength,
-                             perform_cb _hidl_cb) override;
-
-    // Methods from ::android::hardware::vibrator::V1_4::IVibrator follow.
-    Return<hidl_bitfield<Capabilities>> getCapabilities() override;
-    Return<Status> on_1_4(uint32_t timeoutMs, const sp<IVibratorCallback>& callback) override;
-    Return<void> perform_1_4(V1_3::Effect effect, EffectStrength strength,
-                             const sp<IVibratorCallback>& callback, perform_cb _hidl_cb) override;
+    Return<void> perform_1_3(Effect effect, EffectStrength strength, perform_cb _hidl_cb) override;
 
   private:
     Return<void> perform(Effect effect, EffectStrength strength, perform_cb _hidl_cb);
@@ -80,12 +72,11 @@ class Vibrator : public IVibrator {
     bool mExternalControl{false};
     std::mutex mMutex;
     timer_t mTimer{nullptr};
-    sp<IVibratorCallback> mCallback{nullptr};
 };
 }  // namespace implementation
-}  // namespace V1_4
+}  // namespace V1_3
 }  // namespace vibrator
 }  // namespace hardware
 }  // namespace android
 
-#endif  // ANDROID_HARDWARE_VIBRATOR_V1_x_VIBRATOR_H
+#endif  // ANDROID_HARDWARE_VIBRATOR_V1_3_VIBRATOR_H
