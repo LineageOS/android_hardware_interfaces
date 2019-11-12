@@ -75,11 +75,18 @@ struct GetSupported {
         return res;
     }
 
+#if MAJOR_VERSION <= 5
     static Result formats(IStream* stream, hidl_vec<AudioFormat>& capabilities) {
         EXPECT_OK(stream->getSupportedFormats(returnIn(capabilities)));
-        // TODO: this should be an optional function
         return Result::OK;
     }
+#elif MAJOR_VERSION >= 6
+    static Result formats(IStream* stream, hidl_vec<AudioFormat>& capabilities) {
+        Result res;
+        EXPECT_OK(stream->getSupportedFormats(returnIn(res, capabilities)));
+        return res;
+    }
+#endif
 };
 
 template <class T>
