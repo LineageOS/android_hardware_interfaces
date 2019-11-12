@@ -1,4 +1,0 @@
-service vendor.vibrator-1-x /vendor/bin/hw/android.hardware.vibrator@1.x-service.example
-    class hal
-    user system
-    group system
