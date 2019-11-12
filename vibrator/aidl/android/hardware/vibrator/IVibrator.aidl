@@ -51,7 +51,8 @@ interface IVibrator {
     /**
      * Turn off vibrator
      *
-     * Cancel a previously-started vibration, if any.
+     * Cancel a previously-started vibration, if any. If a previously-started vibration is
+     * associated with a callback, then onComplete should still be called on that callback.
      */
     void off();
 
@@ -61,6 +62,9 @@ interface IVibrator {
      * This function must only be called after the previous timeout has expired or
      * was canceled (through off()). A callback is only expected to be supported when
      * getCapabilities CAP_ON_CALLBACK is specified.
+     *
+     * Doing this operation while the vibrator is already on is undefined behavior. Clients should
+     * explicitly call off.
      *
      * @param timeoutMs number of milliseconds to vibrate.
      * @param callback A callback used to inform Frameworks of state change, if supported.
@@ -72,6 +76,9 @@ interface IVibrator {
      *
      * A callback is only expected to be supported when getCapabilities CAP_PERFORM_CALLBACK
      * is specified.
+     *
+     * Doing this operation while the vibrator is already on is undefined behavior. Clients should
+     * explicitly call off.
      *
      * @param effect The type of haptic event to trigger.
      * @param strength The intensity of haptic event to trigger.

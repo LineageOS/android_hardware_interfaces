@@ -17,20 +17,19 @@
 #define LOG_TAG "neuralnetworks_hidl_hal_test"
 
 #include "1.0/Utils.h"
-#include "1.2/Callbacks.h"
+#include "1.3/Callbacks.h"
 #include "GeneratedTestHarness.h"
 #include "VtsHalNeuralnetworks.h"
 
 namespace android::hardware::neuralnetworks::V1_3::vts::functional {
 
+using implementation::PreparedModelCallback;
 using V1_0::ErrorStatus;
 using V1_0::OperandLifeTime;
 using V1_1::ExecutionPreference;
-using V1_2::IPreparedModel;
 using V1_2::OperationType;
 using V1_2::OperationTypeRange;
 using V1_2::SymmPerChannelQuantParams;
-using V1_2::implementation::PreparedModelCallback;
 using HidlToken =
         hidl_array<uint8_t, static_cast<uint32_t>(V1_2::Constant::BYTE_SIZE_OF_CACHE_TOKEN)>;
 
@@ -61,7 +60,7 @@ static void validatePrepareModel(const sp<IDevice>& device, const std::string& m
     preparedModelCallback->wait();
     ErrorStatus prepareReturnStatus = preparedModelCallback->getStatus();
     ASSERT_EQ(ErrorStatus::INVALID_ARGUMENT, prepareReturnStatus);
-    sp<IPreparedModel> preparedModel = getPreparedModel_1_2(preparedModelCallback);
+    sp<IPreparedModel> preparedModel = getPreparedModel_1_3(preparedModelCallback);
     ASSERT_EQ(nullptr, preparedModel.get());
 }
 

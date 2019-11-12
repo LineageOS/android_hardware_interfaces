@@ -29,6 +29,8 @@
 #include <android/hardware/neuralnetworks/1.2/IPreparedModelCallback.h>
 #include <android/hardware/neuralnetworks/1.2/types.h>
 #include <android/hardware/neuralnetworks/1.3/IDevice.h>
+#include <android/hardware/neuralnetworks/1.3/IPreparedModel.h>
+#include <android/hardware/neuralnetworks/1.3/IPreparedModelCallback.h>
 #include <android/hardware/neuralnetworks/1.3/types.h>
 #include <android/hidl/allocator/1.0/IAllocator.h>
 #include <android/hidl/memory/1.0/IMemory.h>
@@ -42,6 +44,7 @@
 
 #include "1.0/Utils.h"
 #include "1.2/Callbacks.h"
+#include "1.3/Callbacks.h"
 #include "ExecutionBurstController.h"
 #include "MemoryUtils.h"
 #include "TestHarness.h"
@@ -52,20 +55,19 @@ namespace android::hardware::neuralnetworks::V1_3::vts::functional {
 
 using namespace test_helper;
 using hidl::memory::V1_0::IMemory;
+using implementation::PreparedModelCallback;
 using V1_0::DataLocation;
 using V1_0::ErrorStatus;
 using V1_0::OperandLifeTime;
 using V1_0::Request;
 using V1_1::ExecutionPreference;
 using V1_2::Constant;
-using V1_2::IPreparedModel;
 using V1_2::MeasureTiming;
 using V1_2::OperationType;
 using V1_2::OutputShape;
 using V1_2::SymmPerChannelQuantParams;
 using V1_2::Timing;
 using V1_2::implementation::ExecutionCallback;
-using V1_2::implementation::PreparedModelCallback;
 using HidlToken = hidl_array<uint8_t, static_cast<uint32_t>(Constant::BYTE_SIZE_OF_CACHE_TOKEN)>;
 
 enum class OutputType { FULLY_SPECIFIED, UNSPECIFIED, INSUFFICIENT };
@@ -179,7 +181,7 @@ static void makeOutputDimensionsUnspecified(Model* model) {
 static Return<ErrorStatus> ExecutePreparedModel(const sp<IPreparedModel>& preparedModel,
                                                 const Request& request, MeasureTiming measure,
                                                 sp<ExecutionCallback>& callback) {
-    return preparedModel->execute_1_2(request, measure, callback);
+    return preparedModel->execute_1_3(request, measure, callback);
 }
 static Return<ErrorStatus> ExecutePreparedModel(const sp<IPreparedModel>& preparedModel,
                                                 const Request& request, MeasureTiming measure,

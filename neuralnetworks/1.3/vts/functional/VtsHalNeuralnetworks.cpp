@@ -21,8 +21,8 @@
 #include <hidl/ServiceManagement.h>
 #include <string>
 #include <utility>
-#include "1.0/Callbacks.h"
 #include "1.0/Utils.h"
+#include "1.3/Callbacks.h"
 #include "GeneratedTestHarness.h"
 #include "TestHarness.h"
 
@@ -30,11 +30,10 @@ namespace android::hardware::neuralnetworks::V1_3::vts::functional {
 
 using HidlToken =
         hidl_array<uint8_t, static_cast<uint32_t>(V1_2::Constant::BYTE_SIZE_OF_CACHE_TOKEN)>;
+using implementation::PreparedModelCallback;
 using V1_0::ErrorStatus;
 using V1_0::Request;
 using V1_1::ExecutionPreference;
-using V1_2::IPreparedModel;
-using V1_2::implementation::PreparedModelCallback;
 
 // internal helper function
 void createPreparedModel(const sp<IDevice>& device, const Model& model,
@@ -64,7 +63,7 @@ void createPreparedModel(const sp<IDevice>& device, const Model& model,
     // retrieve prepared model
     preparedModelCallback->wait();
     const ErrorStatus prepareReturnStatus = preparedModelCallback->getStatus();
-    *preparedModel = getPreparedModel_1_2(preparedModelCallback);
+    *preparedModel = getPreparedModel_1_3(preparedModelCallback);
 
     // The getSupportedOperations_1_3 call returns a list of operations that are
     // guaranteed not to fail if prepareModel_1_3 is called, and
@@ -165,7 +164,7 @@ TEST_P(ValidationTest, Test) {
 
 INSTANTIATE_GENERATED_TEST(ValidationTest, [](const test_helper::TestModel&) { return true; });
 
-sp<IPreparedModel> getPreparedModel_1_2(const sp<PreparedModelCallback>& callback) {
+sp<IPreparedModel> getPreparedModel_1_3(const sp<PreparedModelCallback>& callback) {
     sp<V1_0::IPreparedModel> preparedModelV1_0 = callback->getPreparedModel();
     return IPreparedModel::castFrom(preparedModelV1_0).withDefault(nullptr);
 }
