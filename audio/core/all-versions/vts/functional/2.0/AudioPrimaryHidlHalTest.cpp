@@ -60,19 +60,20 @@ TEST_IO_STREAM(SetConnectedState,
                "deconnection",
                testConnectedState(stream.get()))
 
-TEST_IO_STREAM(GetHwAvSync, "Get hardware sync can not fail", ASSERT_IS_OK(device->getHwAvSync()));
+TEST_IO_STREAM(GetHwAvSync, "Get hardware sync can not fail",
+               ASSERT_IS_OK(getDevice()->getHwAvSync()));
 
-TEST_F(AudioPrimaryHidlTest, setMode) {
+TEST_P(AudioPrimaryHidlTest, setMode) {
     doc::test("Make sure setMode always succeeds if mode is valid and fails otherwise");
     // Test Invalid values
     for (AudioMode mode : {AudioMode::INVALID, AudioMode::CURRENT, AudioMode::CNT}) {
         SCOPED_TRACE("mode=" + toString(mode));
-        ASSERT_RESULT(Result::INVALID_ARGUMENTS, device->setMode(mode));
+        ASSERT_RESULT(Result::INVALID_ARGUMENTS, getDevice()->setMode(mode));
     }
     // Test valid values
     for (AudioMode mode : {AudioMode::IN_CALL, AudioMode::IN_COMMUNICATION, AudioMode::RINGTONE,
                            AudioMode::NORMAL /* Make sure to leave the test in normal mode */}) {
         SCOPED_TRACE("mode=" + toString(mode));
-        ASSERT_OK(device->setMode(mode));
+        ASSERT_OK(getDevice()->setMode(mode));
     }
 }
