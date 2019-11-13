@@ -885,3 +885,11 @@ Return<void> RadioResponse_v1_5::getAllowedCarriersResponse_1_4(
     parent_v1_5.notify(info.serial);
     return Void();
 }
+
+/* 1.5 Apis */
+Return<void> RadioResponse_v1_5::setSignalStrengthReportingCriteriaResponse_1_5(
+        const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_v1_5.notify(info.serial);
+    return Void();
+}

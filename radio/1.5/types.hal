@@ -15,3 +15,100 @@
  */
 
 package android.hardware.radio@1.5;
+
+import @1.4::AccessNetwork;
+
+/**
+ * Defining signal strength type.
+ */
+enum SignalMeasurementType : int32_t {
+    /**
+     * Received Signal Strength Indication.
+     * Range: -113 dBm and -51 dBm
+     * Used RAN: GERAN, CDMA2000
+     * Reference: 3GPP TS 27.007 section 8.5.
+     */
+    RSSI = 1,
+    /**
+     * Received Signal Code Power.
+     * Range: -120 dBm to -25 dBm;
+     * Used RAN: UTRAN
+     * Reference: 3GPP TS 25.123, section 9.1.1.1
+     */
+    RSCP = 2,
+    /**
+     * Reference Signal Received Power.
+     * Range: -140 dBm to -44 dBm;
+     * Used RAN: EUTRAN
+     * Reference: 3GPP TS 36.133 9.1.4
+     */
+    RSRP = 3,
+    /**
+     * Reference Signal Received Quality
+     * Range: -20 dB to -3 dB;
+     * Used RAN: EUTRAN
+     * Reference: 3GPP TS 36.133 9.1.7
+     */
+    RSRQ = 4,
+    /**
+     * Reference Signal Signal to Noise Ratio
+     * Range: -20 dB to -30 dB;
+     * Used RAN: EUTRAN
+     * Reference: 3GPP TS 36.101 8.1.1
+     */
+    RSSNR = 5,
+    /**
+     * 5G SS reference signal received power.
+     * Range: -140 dBm to -44 dBm.
+     * Used RAN: NGRAN
+     * Reference: 3GPP TS 38.215.
+     */
+    SSRSRP = 6,
+    /**
+     * 5G SS reference signal received quality.
+     * Range: -20 dB to -3 dB.
+     * Used RAN: NGRAN
+     * Reference: 3GPP TS 38.215.
+     */
+    SSRSRQ = 7,
+    /**
+     * 5G SS signal-to-noise and interference ratio.
+     * Range: -23 dB to 40 dB
+     * Used RAN: NGRAN
+     * Reference: 3GPP TS 38.215 section 5.1.*, 3GPP TS 38.133 section 10.1.16.1.
+     */
+    SSSINR = 8,
+};
+
+/**
+ * Contains the threshold values of each signal measurement type.
+ */
+struct SignalThresholdInfo {
+    /** Signal Measurement Type */
+    SignalMeasurementType signalMeasurement;
+
+    /** A hysteresis time in milliseconds to prevent flapping. A value of 0 disables hysteresis */
+    int32_t hysteresisMs;
+
+    /**
+     * An interval in dB defining the required magnitude change between reports.
+     * hysteresisDb must be smaller than the smallest threshold delta.
+     * An interval value of 0 disables hysteresis.
+     */
+    int32_t hysteresisDb;
+
+    /**
+     * List of threshold values.
+     * Range and unit must reference specific @1.5::SignalMeasurementType.
+     * The threshold values for which to apply criteria.
+     * A vector size of 0 disables the use of thresholds for reporting.
+     */
+    vec<int32_t> thresholds;
+};
+
+enum AccessNetwork : @1.4::AccessNetwork {
+    /**
+     *  Next-Generation Radio Access Network (NGRAN)
+     */
+    NGRAN = 6,
+};
