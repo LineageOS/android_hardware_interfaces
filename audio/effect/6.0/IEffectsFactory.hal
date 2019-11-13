@@ -48,11 +48,15 @@ interface IEffectsFactory {
      *                stream.
      * @param ioHandle identifies the output or input stream this effect is
      *                 directed to in audio HAL.
+     * @param device identifies the sink or source device this effect is directed to in the
+     *               audio HAL. Must be specified if session is AudioSessionConsts.DEVICE.
+     *               "device" is the AudioPortHandle used for the device when the audio
+     *               patch is created at the audio HAL.
      * @return retval operation completion status.
      * @return result the interface for the created effect.
      * @return effectId the unique ID of the effect to be used with
      *                  IStream::addEffect and IStream::removeEffect methods.
      */
-    createEffect(Uuid uid, AudioSession session, AudioIoHandle ioHandle)
+    createEffect(Uuid uid, AudioSession session, AudioIoHandle ioHandle, AudioPortHandle device)
         generates (Result retval, IEffect result, uint64_t effectId);
 };
