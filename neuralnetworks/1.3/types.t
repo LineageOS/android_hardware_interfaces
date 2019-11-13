@@ -44,6 +44,47 @@ enum OperandTypeRange : uint32_t {
     BASE_MAX        = 0xFFFF,
 };
 
+/**
+ * Operation types.
+ *
+ * The type of an operation in a model.
+ */
+enum OperationType : int32_t {
+
+%insert Operation_1.0
+
+%insert Operation_1.1
+
+%insert Operation_1.2
+
+    /**
+     * DEPRECATED. Since NNAPI 1.2, extensions are the preferred alternative to
+     * OEM operation and data types.
+     *
+     * This operation is OEM specific. It should only be used for OEM
+     * applications.
+     */
+    OEM_OPERATION = @1.2::OperationType:OEM_OPERATION,
+    /* ADDING A NEW FUNDAMENTAL OPERATION REQUIRES UPDATING THE VALUE OF
+     * OperationTypeRange::FUNDAMENTAL_MAX.
+     */
+    /* ADDING A NEW OEM OPERATION REQUIRES UPDATING THE VALUE OF
+     * OperationTypeRange::OEM_MAX.
+     */
+};
+
+/**
+ * The range of values in the OperationType enum.
+ */
+enum OperationTypeRange : uint32_t {
+    BASE_MIN        = 0,
+    FUNDAMENTAL_MIN = 0,
+%insert Operation_1.3_MAX
+    OEM_MIN         = 10000,
+    OEM_MAX         = 10000,
+    BASE_MAX        = 0xFFFF,
+};
+
 
 /**
  * The capabilities of a driver.
@@ -77,6 +118,32 @@ struct Capabilities {
      * { .execTime = FLT_MAX, .powerUsage = FLT_MAX }.
      */
     vec<OperandPerformance> operandPerformance;
+};
+
+/**
+ * Describes one operation of the model's graph.
+ */
+struct Operation {
+    /**
+     * The operation type.
+     *
+     * Besides the values listed in {@link OperationType}, any value above
+     * {@link OperationTypeRange::BASE_MAX} is possible and should be interpreted
+     * as an extension type according to {@link Model::extensionNameToPrefix}.
+     */
+    OperationType type;
+
+    /**
+     * Describes the table that contains the indexes of the inputs of the
+     * operation. The offset is the index in the operandIndexes table.
+     */
+    vec<uint32_t> inputs;
+
+    /**
+     * Describes the table that contains the indexes of the outputs of the
+     * operation. The offset is the index in the operandIndexes table.
+     */
+    vec<uint32_t> outputs;
 };
 
 /**
@@ -201,28 +268,6 @@ struct Operand {
         */
        vec<uint8_t> extension;
     } extraParams;
-};
-
-/**
- * Describes one operation of the model's graph.
- */
-struct Operation {
-    /**
-     * The operation type.
-     */
-    OperationType type;
-
-    /**
-     * Describes the table that contains the indexes of the inputs of the
-     * operation. The offset is the index in the operandIndexes table.
-     */
-    vec<uint32_t> inputs;
-
-    /**
-     * Describes the table that contains the indexes of the outputs of the
-     * operation. The offset is the index in the operandIndexes table.
-     */
-    vec<uint32_t> outputs;
 };
 
 /**
