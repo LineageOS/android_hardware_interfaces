@@ -23,4 +23,13 @@ import @1.4::IRadioResponse;
  * Interface declaring response functions to solicited radio requests.
  */
 interface IRadioResponse extends @1.4::IRadioResponse {
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:INVALID_ARGUMENTS
+     *   RadioError:RADIO_NOT_AVAILABLE
+     */
+    oneway setSignalStrengthReportingCriteriaResponse_1_5(RadioResponseInfo info);
 };
