@@ -20,6 +20,7 @@
 #include <chrono>
 #include <mutex>
 #include <regex>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <condition_variable>
@@ -755,6 +756,7 @@ public:
             const hidl_vec<hidl_string>& deviceNames);
     void verifyCameraCharacteristics(Status status, const CameraMetadata& chars);
     void verifyBokehCharacteristics(const camera_metadata_t* metadata);
+    void verifyZoomCharacteristics(const camera_metadata_t* metadata);
     void verifyRecommendedConfigs(const CameraMetadata& metadata);
     void verifyMonochromeCharacteristics(const CameraMetadata& chars, int deviceVersion);
     void verifyMonochromeCameraResult(
@@ -775,6 +777,8 @@ public:
 
     void verifySessionReconfigurationQuery(sp<device::V3_5::ICameraDeviceSession> session3_5,
             camera_metadata* oldSessionParams, camera_metadata* newSessionParams);
+
+    void verifyRequestTemplate(const camera_metadata_t* metadata, RequestTemplate requestTemplate);
 
     bool isDepthOnly(camera_metadata_t* staticMeta);
 
@@ -2857,13 +2861,7 @@ TEST_P(CameraHidlTest, constructDefaultRequestSettings) {
                                             metadata, &expectedSize);
                                     ASSERT_TRUE((result == 0) ||
                                             (result == CAMERA_METADATA_VALIDATION_SHIFTED));
-                                    size_t entryCount =
-                                            get_camera_metadata_entry_count(metadata);
-                                    // TODO: we can do better than 0 here. Need to check how many required
-                                    // request keys we've defined for each template
-                                    ASSERT_GT(entryCount, 0u);
-                                    ALOGI("template %u metadata entry count is %zu",
-                                          t, entryCount);
+                                    verifyRequestTemplate(metadata, reqTemplate);
                                 } else {
                                     ASSERT_EQ(0u, req.size());
                                 }
@@ -5671,6 +5669,11 @@ void CameraHidlTest::verifyLogicalCameraMetadata(const std::string& cameraName,
         return;
     }
 
+    camera_metadata_ro_entry entry;
+    int retcode = find_camera_metadata_ro_entry(metadata,
+            ANDROID_CONTROL_ZOOM_RATIO_RANGE, &entry);
+    bool hasZoomRatioRange = (0 == retcode && entry.count == 2);
+
     std::string version, cameraId;
     ASSERT_TRUE(::matchDeviceName(cameraName, mProviderType, &version, &cameraId));
     std::unordered_set<std::string> physicalIds;
@@ -5678,15 +5681,37 @@ void CameraHidlTest::verifyLogicalCameraMetadata(const std::string& cameraName,
     for (auto physicalId : physicalIds) {
         ASSERT_NE(physicalId, cameraId);
         bool isPublicId = false;
+        std::string fullPublicId;
         for (auto& deviceName : deviceNames) {
             std::string publicVersion, publicId;
             ASSERT_TRUE(::matchDeviceName(deviceName, mProviderType, &publicVersion, &publicId));
             if (physicalId == publicId) {
                 isPublicId = true;
+                fullPublicId = deviceName;
                 break;
             }
         }
         if (isPublicId) {
+            ::android::sp<::android::hardware::camera::device::V3_2::ICameraDevice> subDevice;
+            Return<void> ret;
+            ret = mProvider->getCameraDeviceInterface_V3_x(
+                fullPublicId, [&](auto status, const auto& device) {
+                    ASSERT_EQ(Status::OK, status);
+                    ASSERT_NE(device, nullptr);
+                    subDevice = device;
+                });
+            ASSERT_TRUE(ret.isOk());
+
+            ret = subDevice->getCameraCharacteristics(
+                    [&](auto status, const auto& chars) {
+                ASSERT_EQ(Status::OK, status);
+                retcode = find_camera_metadata_ro_entry(
+                        (const camera_metadata_t *)chars.data(),
+                        ANDROID_CONTROL_ZOOM_RATIO_RANGE, &entry);
+                bool subCameraHasZoomRatioRange = (0 == retcode && entry.count == 2);
+                ASSERT_EQ(hasZoomRatioRange, subCameraHasZoomRatioRange);
+            });
+            ASSERT_TRUE(ret.isOk());
             continue;
         }
 
@@ -5702,6 +5727,12 @@ void CameraHidlTest::verifyLogicalCameraMetadata(const std::string& cameraName,
                 [&](auto status, const auto& chars) {
             verifyCameraCharacteristics(status, chars);
             verifyMonochromeCharacteristics(chars, deviceVersion);
+
+            retcode = find_camera_metadata_ro_entry(
+                    (const camera_metadata_t *)chars.data(),
+                    ANDROID_CONTROL_ZOOM_RATIO_RANGE, &entry);
+            bool subCameraHasZoomRatioRange = (0 == retcode && entry.count == 2);
+            ASSERT_EQ(hasZoomRatioRange, subCameraHasZoomRatioRange);
         });
         ASSERT_TRUE(ret.isOk());
 
@@ -5721,8 +5752,7 @@ void CameraHidlTest::verifyLogicalCameraMetadata(const std::string& cameraName,
     // Make sure ANDROID_LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_ID is available in
     // result keys.
     if (deviceVersion >= CAMERA_DEVICE_API_VERSION_3_5) {
-        camera_metadata_ro_entry entry;
-        int retcode = find_camera_metadata_ro_entry(metadata,
+        retcode = find_camera_metadata_ro_entry(metadata,
                 ANDROID_REQUEST_AVAILABLE_RESULT_KEYS, &entry);
         if ((0 == retcode) && (entry.count > 0)) {
                 ASSERT_NE(std::find(entry.data.i32, entry.data.i32 + entry.count,
@@ -5822,6 +5852,7 @@ void CameraHidlTest::verifyCameraCharacteristics(Status status, const CameraMeta
     }
 
     verifyBokehCharacteristics(metadata);
+    verifyZoomCharacteristics(metadata);
 }
 
 void CameraHidlTest::verifyBokehCharacteristics(const camera_metadata_t* metadata) {
@@ -5852,38 +5883,51 @@ void CameraHidlTest::verifyBokehCharacteristics(const camera_metadata_t* metadat
 
     retcode = find_camera_metadata_ro_entry(metadata,
             ANDROID_REQUEST_AVAILABLE_CHARACTERISTICS_KEYS, &entry);
-    bool hasBokehCharacteristicsKey = false;
+    bool hasBokehMaxSizesKey = false;
+    bool hasBokehZoomRatioRangesKey = false;
     if ((0 == retcode) && (entry.count > 0)) {
-        hasBokehCharacteristicsKey = std::find(entry.data.i32, entry.data.i32+entry.count,
-                ANDROID_CONTROL_AVAILABLE_BOKEH_CAPABILITIES) != entry.data.i32+entry.count;
+        hasBokehMaxSizesKey = std::find(entry.data.i32, entry.data.i32+entry.count,
+                ANDROID_CONTROL_AVAILABLE_BOKEH_MAX_SIZES) != entry.data.i32+entry.count;
+        hasBokehZoomRatioRangesKey = std::find(entry.data.i32, entry.data.i32+entry.count,
+                ANDROID_CONTROL_AVAILABLE_BOKEH_ZOOM_RATIO_RANGES) != entry.data.i32+entry.count;
     } else {
         ADD_FAILURE() << "Get camera availableCharacteristicsKeys failed!";
     }
+
+    camera_metadata_ro_entry maxSizesEntry;
     retcode = find_camera_metadata_ro_entry(metadata,
-            ANDROID_CONTROL_AVAILABLE_BOKEH_CAPABILITIES, &entry);
-    bool hasAvailableBokehCaps = (0 == retcode && entry.count > 0);
+            ANDROID_CONTROL_AVAILABLE_BOKEH_MAX_SIZES, &maxSizesEntry);
+    bool hasBokehMaxSizes = (0 == retcode && maxSizesEntry.count > 0);
+
+    camera_metadata_ro_entry zoomRatioRangesEntry;
+    retcode = find_camera_metadata_ro_entry(metadata,
+            ANDROID_CONTROL_AVAILABLE_BOKEH_ZOOM_RATIO_RANGES, &zoomRatioRangesEntry);
+    bool hasBokehZoomRatioRanges = (0 == retcode && zoomRatioRangesEntry.count > 0);
 
     // Bokeh keys must all be available, or all be unavailable.
-    bool noBokeh = !hasBokehRequestKey && !hasBokehResultKey && !hasBokehCharacteristicsKey &&
-            !hasAvailableBokehCaps;
+    bool noBokeh = !hasBokehRequestKey && !hasBokehResultKey && !hasBokehMaxSizesKey &&
+            !hasBokehZoomRatioRangesKey && !hasBokehMaxSizes && !hasBokehZoomRatioRanges;
     if (noBokeh) {
         return;
     }
-    bool hasBokeh = hasBokehRequestKey && hasBokehResultKey && hasBokehCharacteristicsKey &&
-            hasAvailableBokehCaps;
+    bool hasBokeh = hasBokehRequestKey && hasBokehResultKey && hasBokehMaxSizesKey &&
+            hasBokehZoomRatioRangesKey && hasBokehMaxSizes && hasBokehZoomRatioRanges;
     ASSERT_TRUE(hasBokeh);
 
     // Must have OFF, and must have one of STILL_CAPTURE and CONTINUOUS.
-    ASSERT_TRUE(entry.count == 6 || entry.count == 9);
+    // Only valid combinations: {OFF, CONTINUOUS}, {OFF, STILL_CAPTURE}, and
+    // {OFF, CONTINUOUS, STILL_CAPTURE}.
+    ASSERT_TRUE((maxSizesEntry.count == 6 && zoomRatioRangesEntry.count == 2) ||
+            (maxSizesEntry.count == 9 && zoomRatioRangesEntry.count == 4));
     bool hasOffMode = false;
     bool hasStillCaptureMode = false;
     bool hasContinuousMode = false;
     std::vector<AvailableStream> outputStreams;
     ASSERT_EQ(Status::OK, getAvailableOutputStreams(metadata, outputStreams));
-    for (int i = 0; i < entry.count; i += 3) {
-        int32_t mode = entry.data.i32[i];
-        int32_t maxWidth = entry.data.i32[i+1];
-        int32_t maxHeight = entry.data.i32[i+2];
+    for (int i = 0, j = 0; i < maxSizesEntry.count && j < zoomRatioRangesEntry.count; i += 3) {
+        int32_t mode = maxSizesEntry.data.i32[i];
+        int32_t maxWidth = maxSizesEntry.data.i32[i+1];
+        int32_t maxHeight = maxSizesEntry.data.i32[i+2];
         switch (mode) {
             case ANDROID_CONTROL_BOKEH_MODE_OFF:
                 hasOffMode = true;
@@ -5891,9 +5935,11 @@ void CameraHidlTest::verifyBokehCharacteristics(const camera_metadata_t* metadat
                 break;
             case ANDROID_CONTROL_BOKEH_MODE_STILL_CAPTURE:
                 hasStillCaptureMode = true;
+                j += 2;
                 break;
             case ANDROID_CONTROL_BOKEH_MODE_CONTINUOUS:
                 hasContinuousMode = true;
+                j += 2;
                 break;
             default:
                 ADD_FAILURE() << "Invalid bokehMode advertised: " << mode;
@@ -5901,6 +5947,7 @@ void CameraHidlTest::verifyBokehCharacteristics(const camera_metadata_t* metadat
         }
 
         if (mode != ANDROID_CONTROL_BOKEH_MODE_OFF) {
+            // Make sure size is supported.
             bool sizeSupported = false;
             for (const auto& stream : outputStreams) {
                 if ((stream.format == static_cast<int32_t>(PixelFormat::YCBCR_420_888) ||
@@ -5911,10 +5958,100 @@ void CameraHidlTest::verifyBokehCharacteristics(const camera_metadata_t* metadat
                 }
             }
             ASSERT_TRUE(sizeSupported);
+
+            // Make sure zoom range is valid
+            float minZoomRatio = zoomRatioRangesEntry.data.f[0];
+            float maxZoomRatio = zoomRatioRangesEntry.data.f[1];
+            ASSERT_GT(minZoomRatio, 0.0f);
+            ASSERT_LE(minZoomRatio, maxZoomRatio);
         }
     }
     ASSERT_TRUE(hasOffMode);
     ASSERT_TRUE(hasStillCaptureMode || hasContinuousMode);
+}
+
+void CameraHidlTest::verifyZoomCharacteristics(const camera_metadata_t* metadata) {
+    camera_metadata_ro_entry entry;
+    int retcode = 0;
+
+    // Check key availability in capabilities, request and result.
+    retcode = find_camera_metadata_ro_entry(metadata,
+            ANDROID_SCALER_AVAILABLE_MAX_DIGITAL_ZOOM, &entry);
+    float maxDigitalZoom = 1.0;
+    if ((0 == retcode) && (entry.count == 1)) {
+        maxDigitalZoom = entry.data.f[0];
+    } else {
+        ADD_FAILURE() << "Get camera scalerAvailableMaxDigitalZoom failed!";
+    }
+
+    retcode = find_camera_metadata_ro_entry(metadata,
+            ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS, &entry);
+    bool hasZoomRequestKey = false;
+    if ((0 == retcode) && (entry.count > 0)) {
+        hasZoomRequestKey = std::find(entry.data.i32, entry.data.i32+entry.count,
+                ANDROID_CONTROL_ZOOM_RATIO) != entry.data.i32+entry.count;
+    } else {
+        ADD_FAILURE() << "Get camera availableRequestKeys failed!";
+    }
+
+    retcode = find_camera_metadata_ro_entry(metadata,
+            ANDROID_REQUEST_AVAILABLE_RESULT_KEYS, &entry);
+    bool hasZoomResultKey = false;
+    if ((0 == retcode) && (entry.count > 0)) {
+        hasZoomResultKey = std::find(entry.data.i32, entry.data.i32+entry.count,
+                ANDROID_CONTROL_ZOOM_RATIO) != entry.data.i32+entry.count;
+    } else {
+        ADD_FAILURE() << "Get camera availableResultKeys failed!";
+    }
+
+    retcode = find_camera_metadata_ro_entry(metadata,
+            ANDROID_REQUEST_AVAILABLE_CHARACTERISTICS_KEYS, &entry);
+    bool hasZoomCharacteristicsKey = false;
+    if ((0 == retcode) && (entry.count > 0)) {
+        hasZoomCharacteristicsKey = std::find(entry.data.i32, entry.data.i32+entry.count,
+                ANDROID_CONTROL_ZOOM_RATIO_RANGE) != entry.data.i32+entry.count;
+    } else {
+        ADD_FAILURE() << "Get camera availableCharacteristicsKeys failed!";
+    }
+
+    retcode = find_camera_metadata_ro_entry(metadata,
+            ANDROID_CONTROL_ZOOM_RATIO_RANGE, &entry);
+    bool hasZoomRatioRange = (0 == retcode && entry.count == 2);
+
+    // Zoom keys must all be available, or all be unavailable.
+    bool noZoomRatio = !hasZoomRequestKey && !hasZoomResultKey && !hasZoomCharacteristicsKey &&
+            !hasZoomRatioRange;
+    if (noZoomRatio) {
+        return;
+    }
+    bool hasZoomRatio = hasZoomRequestKey && hasZoomResultKey && hasZoomCharacteristicsKey &&
+            hasZoomRatioRange;
+    ASSERT_TRUE(hasZoomRatio);
+
+    float minZoomRatio = entry.data.f[0];
+    float maxZoomRatio = entry.data.f[1];
+    if (maxDigitalZoom != maxZoomRatio) {
+        ADD_FAILURE() << "Maximum zoom ratio is different than maximum digital zoom!";
+    }
+    if (minZoomRatio > maxZoomRatio) {
+        ADD_FAILURE() << "Maximum zoom ratio is less than minimum zoom ratio!";
+    }
+    if (minZoomRatio > 1.0f) {
+        ADD_FAILURE() << "Minimum zoom ratio is more than 1.0!";
+    }
+    if (maxZoomRatio < 1.0f) {
+        ADD_FAILURE() << "Maximum zoom ratio is less than 1.0!";
+    }
+
+    // Make sure CROPPING_TYPE is CENTER_ONLY
+    retcode = find_camera_metadata_ro_entry(metadata,
+            ANDROID_SCALER_CROPPING_TYPE, &entry);
+    if ((0 == retcode) && (entry.count == 1)) {
+        int8_t croppingType = entry.data.u8[0];
+        ASSERT_EQ(croppingType, ANDROID_SCALER_CROPPING_TYPE_CENTER_ONLY);
+    } else {
+        ADD_FAILURE() << "Get camera scalerCroppingType failed!";
+    }
 }
 
 void CameraHidlTest::verifyMonochromeCharacteristics(const CameraMetadata& chars,
@@ -6412,6 +6549,26 @@ void CameraHidlTest::verifySessionReconfigurationQuery(
         case android::hardware::camera::common::V1_0::Status::INTERNAL_ERROR:
         default:
             ADD_FAILURE() << "Query calllback failed";
+    }
+}
+
+void CameraHidlTest::verifyRequestTemplate(const camera_metadata_t* metadata,
+        RequestTemplate requestTemplate) {
+    ASSERT_NE(nullptr, metadata);
+    size_t entryCount =
+            get_camera_metadata_entry_count(metadata);
+    ALOGI("template %u metadata entry count is %zu", (int32_t)requestTemplate, entryCount);
+    // TODO: we can do better than 0 here. Need to check how many required
+    // request keys we've defined for each template
+    ASSERT_GT(entryCount, 0u);
+
+    // Check zoomRatio
+    camera_metadata_ro_entry zoomRatioEntry;
+    int foundZoomRatio = find_camera_metadata_ro_entry(metadata,
+            ANDROID_CONTROL_ZOOM_RATIO, &zoomRatioEntry);
+    if (foundZoomRatio == 0) {
+        ASSERT_EQ(zoomRatioEntry.count, 1);
+        ASSERT_EQ(zoomRatioEntry.data.f[0], 1.0f);
     }
 }
 
