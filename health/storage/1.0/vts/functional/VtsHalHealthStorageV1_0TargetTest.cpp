@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-#include <VtsHalHidlTargetTestBase.h>
-#include <VtsHalHidlTargetTestEnvBase.h>
 #include <android-base/logging.h>
 #include <android/hardware/health/storage/1.0/IStorage.h>
+#include <gtest/gtest.h>
+#include <hidl/GtestPrinter.h>
 #include <hidl/HidlTransportSupport.h>
+#include <hidl/ServiceManagement.h>
 #include <unistd.h>
 #include <thread>
 
@@ -101,25 +102,10 @@ class GcCallback : public IGarbageCollectCallback, public Flag {
     Result mResult{Result::UNKNOWN_ERROR};
 };
 
-/** Test environment for Health Storage HIDL HAL. */
-class HealthStorageHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
-   public:
-    /** get the test environment singleton */
-    static HealthStorageHidlEnvironment* Instance() {
-        static HealthStorageHidlEnvironment* instance = new HealthStorageHidlEnvironment();
-        return instance;
-    }
-    virtual void registerTestServices() override { registerTestService<IStorage>(); }
-
-   private:
-    HealthStorageHidlEnvironment() {}
-};
-
-class HealthStorageHidlTest : public ::testing::VtsHalHidlTargetTestBase {
+class HealthStorageHidlTest : public ::testing::TestWithParam<std::string> {
    public:
     virtual void SetUp() override {
-        fs = ::testing::VtsHalHidlTargetTestBase::getService<IStorage>(
-            HealthStorageHidlEnvironment::Instance()->getServiceName<IStorage>());
+        fs = IStorage::getService(GetParam());
 
         ASSERT_NE(fs, nullptr);
         LOG(INFO) << "Service is remote " << fs->isRemote();
@@ -153,7 +139,7 @@ class HealthStorageHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 /**
  * Ensure garbage collection works on null callback.
  */
-TEST_F(HealthStorageHidlTest, GcNullCallback) {
+TEST_P(HealthStorageHidlTest, GcNullCallback) {
     auto ret = fs->garbageCollect(kDevGcTimeoutSec, nullptr);
 
     ASSERT_OK(ret);
@@ -167,28 +153,20 @@ TEST_F(HealthStorageHidlTest, GcNullCallback) {
 /**
  * Ensure garbage collection works on non-null callback.
  */
-TEST_F(HealthStorageHidlTest, GcNonNullCallback) {
+TEST_P(HealthStorageHidlTest, GcNonNullCallback) {
     sp<GcCallback> cb = new GcCallback();
     auto ret = fs->garbageCollect(kDevGcTimeoutSec, cb);
     ASSERT_OK(ret);
     cb->waitForResult(kDevGcTimeout + kDevGcTolerance + kRpcTime, Result::SUCCESS);
 }
 
+INSTANTIATE_TEST_SUITE_P(
+        PerInstance, HealthStorageHidlTest,
+        testing::ValuesIn(android::hardware::getAllHalInstanceNames(IStorage::descriptor)),
+        android::hardware::PrintInstanceNameToString);
+
 }  // namespace V1_0
 }  // namespace storage
 }  // namespace health
 }  // namespace hardware
 }  // namespace android
-
-int main(int argc, char** argv) {
-    using ::android::hardware::configureRpcThreadpool;
-    using ::android::hardware::health::storage::V1_0::HealthStorageHidlEnvironment;
-
-    configureRpcThreadpool(1, false /* callerWillJoin*/);
-    ::testing::AddGlobalTestEnvironment(HealthStorageHidlEnvironment::Instance());
-    ::testing::InitGoogleTest(&argc, argv);
-    HealthStorageHidlEnvironment::Instance()->init(&argc, argv);
-    int status = RUN_ALL_TESTS();
-    LOG(INFO) << "Test result = " << status;
-    return status;
-}
