@@ -521,6 +521,9 @@ class RadioResponse_v1_5 : public ::android::hardware::radio::V1_5::IRadioRespon
     Return<void> getAllowedCarriersResponse_1_4(const RadioResponseInfo& info,
                                                 const CarrierRestrictionsWithPriority& carriers,
                                                 SimLockMultiSimPolicy multiSimPolicy);
+
+    /* 1.5 Api */
+    Return<void> setSignalStrengthReportingCriteriaResponse_1_5(const RadioResponseInfo& info);
 };
 
 /* Callback class for radio indication */
