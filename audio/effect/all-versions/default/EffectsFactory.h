@@ -47,9 +47,15 @@ using namespace ::android::hardware::audio::effect::CPP_VERSION;
 struct EffectsFactory : public IEffectsFactory {
     // Methods from ::android::hardware::audio::effect::CPP_VERSION::IEffectsFactory follow.
     Return<void> getAllDescriptors(getAllDescriptors_cb _hidl_cb) override;
-    Return<void> getDescriptor(const Uuid& uid, getDescriptor_cb _hidl_cb) override;
-    Return<void> createEffect(const Uuid& uid, int32_t session, int32_t ioHandle,
+    Return<void> getDescriptor(const Uuid& uuid, getDescriptor_cb _hidl_cb) override;
+#if MAJOR_VERSION <= 5
+    Return<void> createEffect(const Uuid& uuid, int32_t session, int32_t ioHandle,
                               createEffect_cb _hidl_cb) override;
+#else
+    Return<void> createEffect(const Uuid& uuid, int32_t session, int32_t ioHandle, int32_t device,
+                              createEffect_cb _hidl_cb) override;
+#endif
+
     Return<void> debugDump(
         const hidl_handle& fd);  //< in CPP_VERSION::IEffectsFactory only, alias of debug
     Return<void> debug(const hidl_handle& fd, const hidl_vec<hidl_string>& options) override;
@@ -57,6 +63,8 @@ struct EffectsFactory : public IEffectsFactory {
    private:
     static sp<IEffect> dispatchEffectInstanceCreation(const effect_descriptor_t& halDescriptor,
                                                       effect_handle_t handle);
+    Return<void> createEffectImpl(const Uuid& uuid, int32_t session, int32_t ioHandle,
+                                  int32_t device, createEffect_cb _hidl_cb);
 };
 
 extern "C" IEffectsFactory* HIDL_FETCH_IEffectsFactory(const char* name);
