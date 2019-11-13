@@ -328,3 +328,8 @@ Return<void> RadioIndication_v1_5::modemReset(RadioIndicationType /*type*/,
                                               const ::android::hardware::hidl_string& /*reason*/) {
     return Void();
 }
+
+Return<void> RadioIndication_v1_5::uiccApplicationsEnablementChanged(RadioIndicationType /*type*/,
+                                                                     bool /*enabled*/) {
+    return Void();
+}

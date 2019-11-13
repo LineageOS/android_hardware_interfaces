@@ -55,4 +55,45 @@ interface IRadio extends @1.4::IRadio {
      */
     oneway setSignalStrengthReportingCriteria_1_5(int32_t serial,
             SignalThresholdInfo signalThresholdInfo, AccessNetwork accessNetwork);
+
+    /**
+     * Enable or disable UiccApplications on the SIM. If disabled:
+     *  - Modem will not register on any network.
+     *  - SIM must be PRESENT, and the IccId of the SIM must still be accessible.
+     *  - The corresponding modem stack is still functional, e.g. able to make emergency calls or
+     *    do network scan.
+     * By default if this API is not called, the uiccApplications must be enabled automatically.
+     * It must work for both single SIM and DSDS cases for UX consistency.
+     * The preference is per SIM, and must be remembered over power cycle, modem reboot, or SIM
+     * insertion / unplug.
+     *
+     * @param serial: Serial number of request.
+     * @param enable: true if to enable uiccApplications, false to disable.
+
+     * Response callback is IRadioResponse.enableUiccApplicationsResponse()
+     */
+    oneway enableUiccApplications(int32_t serial, bool enable);
+
+    /**
+     * Whether uiccApplications are enabled, or disabled.
+     *
+     * By default uiccApplications must be enabled, unless enableUiccApplications() with enable
+     * being false is called.
+     *
+     * @param serial Serial number of request.
+     *
+     * Response callback is IRadioResponse.areUiccApplicationsEnabledResponse()
+     */
+    oneway areUiccApplicationsEnabled(int32_t serial);
+
+    /**
+     * Query whether disabling and enabling UiccApplications functionality is supported. If not,
+     * calling enableUiccApplications with a different value will return
+     * RadioError:REQUEST_NOT_SUPPORTED.
+     *
+     * @param serial Serial number of request.
+     *
+     * Response callback is IRadioResponse.canToggleUiccApplicationsEnablementResponse()
+     */
+    oneway canToggleUiccApplicationsEnablement(int32_t serial);
 };
