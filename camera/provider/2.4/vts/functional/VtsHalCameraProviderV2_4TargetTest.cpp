@@ -1494,7 +1494,7 @@ Return<void> CameraHidlTest::DeviceCb::returnStreamBuffers(
         ADD_FAILURE();
     }
 
-    std::lock_guard<std::mutex> l(mLock);
+    std::unique_lock<std::mutex> l(mLock);
     for (const auto& buf : buffers) {
         bool found = false;
         for (size_t idx = 0; idx < mOutstandingBufferIds.size(); idx++) {
@@ -1513,6 +1513,10 @@ Return<void> CameraHidlTest::DeviceCb::returnStreamBuffers(
         }
         ALOGE("%s: unknown buffer ID %" PRIu64, __FUNCTION__, buf.bufferId);
         ADD_FAILURE();
+    }
+    if (!hasOutstandingBuffersLocked()) {
+        l.unlock();
+        mFlushedCondition.notify_one();
     }
     return Void();
 }
