@@ -16,9 +16,16 @@
 
 #include <android-base/logging.h>
 
+#include <VtsCoreUtil.h>
 #include <VtsHalHidlTargetTestBase.h>
+#include <android/hardware/wifi/1.0/IWifi.h>
+#include <android/hardware/wifi/1.1/IWifi.h>
+#include <android/hardware/wifi/supplicant/1.3/ISupplicant.h>
 #include <android/hardware/wifi/supplicant/1.3/ISupplicantStaIface.h>
 #include <android/hardware/wifi/supplicant/1.3/ISupplicantStaNetwork.h>
+#include <gtest/gtest.h>
+#include <hidl/GtestPrinter.h>
+#include <hidl/ServiceManagement.h>
 
 #include "supplicant_hidl_test_utils.h"
 #include "supplicant_hidl_test_utils_1_3.h"
@@ -28,6 +35,7 @@ using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::wifi::supplicant::V1_0::SupplicantStatus;
 using ::android::hardware::wifi::supplicant::V1_0::SupplicantStatusCode;
+using ::android::hardware::wifi::supplicant::V1_3::ISupplicant;
 using ::android::hardware::wifi::supplicant::V1_3::ISupplicantStaIface;
 using ::android::hardware::wifi::supplicant::V1_3::ISupplicantStaNetwork;
 using ::android::hardware::wifi::supplicant::V1_3::OcspType;
@@ -37,23 +45,34 @@ constexpr OcspType kTestInvalidOcspType = (OcspType)-1;
 }  // namespace
 
 class SupplicantStaNetworkHidlTest
-    : public ::testing::VtsHalHidlTargetTestBase {
+    : public ::testing::TestWithParam<std::tuple<std::string, std::string>> {
    public:
     virtual void SetUp() override {
-        startSupplicantAndWaitForHidlService();
-        EXPECT_TRUE(turnOnExcessiveLogging());
-        sta_iface_ = getSupplicantStaIface_1_3();
-        ASSERT_NE(nullptr, sta_iface_.get());
-        sta_network_ = createSupplicantStaNetwork_1_3();
-        ASSERT_NE(nullptr, sta_network_.get());
+        wifi_v1_0_instance_name_ = std::get<0>(GetParam());
+        supplicant_v1_3_instance_name_ = std::get<1>(GetParam());
+        isP2pOn_ =
+            testing::deviceSupportsFeature("android.hardware.wifi.direct");
+        startSupplicantAndWaitForHidlService(wifi_v1_0_instance_name_,
+                                             supplicant_v1_3_instance_name_);
+        supplicant_ =
+            getSupplicant_1_3(supplicant_v1_3_instance_name_, isP2pOn_);
+        EXPECT_TRUE(turnOnExcessiveLogging(supplicant_));
+        sta_network_ = createSupplicantStaNetwork_1_3(supplicant_);
+        ASSERT_NE(sta_network_.get(), nullptr);
     }
 
-    virtual void TearDown() override { stopSupplicant(); }
+    virtual void TearDown() override {
+        stopSupplicant(wifi_v1_0_instance_name_);
+    }
 
    protected:
     sp<ISupplicantStaIface> sta_iface_;
     // ISupplicantStaNetwork object used for all tests in this fixture.
     sp<ISupplicantStaNetwork> sta_network_;
+    sp<ISupplicant> supplicant_;
+    bool isP2pOn_ = false;
+    std::string wifi_v1_0_instance_name_;
+    std::string supplicant_v1_3_instance_name_;
 
     bool isWapiSupported() {
         uint32_t keyMgmtMask = 0;
@@ -78,7 +97,7 @@ class SupplicantStaNetworkHidlTest
 /*
  * SetGetOcsp
  */
-TEST_F(SupplicantStaNetworkHidlTest, SetGetOcsp) {
+TEST_P(SupplicantStaNetworkHidlTest, SetGetOcsp) {
     OcspType testOcspType = kTestOcspType;
 
     sta_network_->setOcsp(testOcspType, [](const SupplicantStatus &status) {
@@ -100,7 +119,7 @@ TEST_F(SupplicantStaNetworkHidlTest, SetGetOcsp) {
 /*
  * SetPmkCacheEntry
  */
-TEST_F(SupplicantStaNetworkHidlTest, SetPmkCache) {
+TEST_P(SupplicantStaNetworkHidlTest, SetPmkCache) {
     uint8_t bytes[128] = {0};
     std::vector<uint8_t> serializedEntry(bytes, bytes + sizeof(bytes));
 
@@ -113,7 +132,7 @@ TEST_F(SupplicantStaNetworkHidlTest, SetPmkCache) {
 /*
  * SetGetKeyMgmt_1_3, check new WAPI proto support
  */
-TEST_F(SupplicantStaNetworkHidlTest, SetGetKeyMgmt_1_3) {
+TEST_P(SupplicantStaNetworkHidlTest, SetGetKeyMgmt_1_3) {
     uint32_t keyMgmt = (uint32_t)ISupplicantStaNetwork::KeyMgmtMask::WAPI_PSK;
 
     sta_network_->setKeyMgmt_1_3(keyMgmt, [](const SupplicantStatus &status) {
@@ -155,7 +174,7 @@ TEST_F(SupplicantStaNetworkHidlTest, SetGetKeyMgmt_1_3) {
 /*
  * SetGetProto_1_3, check new WAPI proto support
  */
-TEST_F(SupplicantStaNetworkHidlTest, SetGetProto_1_3) {
+TEST_P(SupplicantStaNetworkHidlTest, SetGetProto_1_3) {
     uint32_t wapiProto = (uint32_t)ISupplicantStaNetwork::ProtoMask::WAPI;
     sta_network_->setProto(wapiProto, [](const SupplicantStatus &status) {
         if (SupplicantStatusCode::SUCCESS != status.code) {
@@ -176,7 +195,7 @@ TEST_F(SupplicantStaNetworkHidlTest, SetGetProto_1_3) {
 /*
  * SetGetGroupCipher_1_3, check new WAPI support
  */
-TEST_F(SupplicantStaNetworkHidlTest, SetGetGroupCipher_1_3) {
+TEST_P(SupplicantStaNetworkHidlTest, SetGetGroupCipher_1_3) {
     uint32_t groupCipher =
         (uint32_t)ISupplicantStaNetwork::GroupCipherMask::SMS4;
 
@@ -203,7 +222,7 @@ TEST_F(SupplicantStaNetworkHidlTest, SetGetGroupCipher_1_3) {
 /*
  * SetGetPairwiseCipher_1_3, check new WAPI support
  */
-TEST_F(SupplicantStaNetworkHidlTest, SetGetPairwiseCipher_1_3) {
+TEST_P(SupplicantStaNetworkHidlTest, SetGetPairwiseCipher_1_3) {
     uint32_t pairwiseCipher =
         (uint32_t)ISupplicantStaNetwork::PairwiseCipherMask::SMS4;
 
@@ -230,7 +249,7 @@ TEST_F(SupplicantStaNetworkHidlTest, SetGetPairwiseCipher_1_3) {
 /*
  * SetGetWapiCertSuite
  */
-TEST_F(SupplicantStaNetworkHidlTest, SetGetWapiCertSuite) {
+TEST_P(SupplicantStaNetworkHidlTest, SetGetWapiCertSuite) {
     hidl_string testWapiCertSuite = "suite";
 
     if (isWapiSupported()) {
@@ -266,3 +285,12 @@ TEST_F(SupplicantStaNetworkHidlTest, SetGetWapiCertSuite) {
             });
     }
 }
+INSTANTIATE_TEST_CASE_P(
+    PerInstance, SupplicantStaNetworkHidlTest,
+    testing::Combine(
+        testing::ValuesIn(android::hardware::getAllHalInstanceNames(
+            android::hardware::wifi::V1_0::IWifi::descriptor)),
+        testing::ValuesIn(android::hardware::getAllHalInstanceNames(
+            android::hardware::wifi::supplicant::V1_3::ISupplicant::
+                descriptor))),
+    android::hardware::PrintInstanceTupleNameToString<>);
