@@ -407,8 +407,11 @@ interface IEffect {
 
     /**
      * Called by the framework to deinitialize the effect and free up
-     * all the currently allocated resources. It is recommended to close
+     * all currently allocated resources. It is recommended to close
      * the effect on the client side as soon as it is becomes unused.
+     *
+     * The client must ensure that this function is not called while
+     * audio data is being transferred through the effect's message queues.
      *
      * @return retval OK in case the success.
      *                INVALID_STATE if the effect was already closed.

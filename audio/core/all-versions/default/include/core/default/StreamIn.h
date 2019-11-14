@@ -120,7 +120,6 @@ struct StreamIn : public IStreamIn {
                                          uint64_t* time);
 
    private:
-    bool mIsClosed;
     const sp<Device> mDevice;
     audio_stream_in_t* mStream;
     const sp<Stream> mStreamCommon;
