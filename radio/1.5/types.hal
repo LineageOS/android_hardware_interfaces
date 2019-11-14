@@ -54,7 +54,9 @@ enum SignalMeasurementType : int32_t {
      * Reference Signal Signal to Noise Ratio
      * Range: -20 dB to -30 dB;
      * Used RAN: EUTRAN
-     * Reference: 3GPP TS 36.101 8.1.1
+     * Note: this field is optional; how to support it can be decided by the
+     * corresponding vendor. Though the response code is not enforced,
+     * vendor's implementation must ensure this interface not crashing.
      */
     RSSNR = 5,
     /**
