@@ -4338,25 +4338,29 @@ TEST_F(AttestationTest, EcAttestationRequiresAttestationAppId) {
  * to specify how many following bytes will be used to encode the length.
  */
 TEST_F(AttestationTest, AttestationApplicationIDLengthProperlyEncoded) {
-    auto creation_time = std::chrono::system_clock::now();
-    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
-                                                 .Authorization(TAG_NO_AUTH_REQUIRED)
-                                                 .EcdsaSigningKey(EcCurve::P_256)
-                                                 .Digest(Digest::SHA_2_256)));
+    std::vector<uint32_t> app_id_lengths{143, 258};
+    for (uint32_t length : app_id_lengths) {
+        auto creation_time = std::chrono::system_clock::now();
+        ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                                     .Authorization(TAG_NO_AUTH_REQUIRED)
+                                                     .EcdsaSigningKey(EcCurve::P_256)
+                                                     .Digest(Digest::SHA_2_256)));
 
-    hidl_vec<hidl_vec<uint8_t>> cert_chain;
-    const string app_id(143, 'a');
-    ASSERT_EQ(ErrorCode::OK,
-              AttestKey(AuthorizationSetBuilder()
-                                .Authorization(TAG_ATTESTATION_CHALLENGE, HidlBuf("challenge"))
-                                .Authorization(TAG_ATTESTATION_APPLICATION_ID, HidlBuf(app_id)),
-                        &cert_chain));
-    EXPECT_GE(cert_chain.size(), 2U);
+        hidl_vec<hidl_vec<uint8_t>> cert_chain;
+        const string app_id(length, 'a');
+        ASSERT_EQ(ErrorCode::OK,
+                  AttestKey(AuthorizationSetBuilder()
+                                    .Authorization(TAG_ATTESTATION_CHALLENGE, HidlBuf("challenge"))
+                                    .Authorization(TAG_ATTESTATION_APPLICATION_ID, HidlBuf(app_id)),
+                            &cert_chain));
+        EXPECT_GE(cert_chain.size(), 2U);
 
-    EXPECT_TRUE(verify_attestation_record("challenge", app_id,                    //
-                                          key_characteristics_.softwareEnforced,  //
-                                          key_characteristics_.hardwareEnforced,  //
-                                          SecLevel(), cert_chain[0], creation_time));
+        EXPECT_TRUE(verify_attestation_record("challenge", app_id,                    //
+                                              key_characteristics_.softwareEnforced,  //
+                                              key_characteristics_.hardwareEnforced,  //
+                                              SecLevel(), cert_chain[0], creation_time));
+        CheckedDeleteKey();
+    }
 }
 /*
  * AttestationTest.AesAttestation
