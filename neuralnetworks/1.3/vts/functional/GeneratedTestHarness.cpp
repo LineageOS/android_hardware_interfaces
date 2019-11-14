@@ -63,7 +63,6 @@ using V1_0::Request;
 using V1_1::ExecutionPreference;
 using V1_2::Constant;
 using V1_2::MeasureTiming;
-using V1_2::OperationType;
 using V1_2::OutputShape;
 using V1_2::SymmPerChannelQuantParams;
 using V1_2::Timing;

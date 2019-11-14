@@ -16,30 +16,35 @@
 
 #pragma once
 
-#include <android-base/unique_fd.h>
-
-#include <string>
+#include <linux/serial.h>
+#include <linux/tty.h>
+#include <net/if.h>
+#include <termios.h>
+#include "CanBus.h"
 
 namespace android {
-namespace netdevice {
+namespace hardware {
+namespace automotive {
 namespace can {
+namespace V1_0 {
+namespace implementation {
 
-/**
- * Opens and binds SocketCAN socket.
- *
- * \param ifname Interface to open a socket against
- * \return Socket's FD or -1 in case of failure
- */
-base::unique_fd socket(const std::string& ifname);
+struct CanBusSlcan : public CanBus {
+    CanBusSlcan(const std::string& uartName, uint32_t bitrate);
 
-/**
- * Sets CAN interface bitrate.
- *
- * \param ifname Interface for which the bitrate is to be set
- * \return true on success, false on failure
- */
-bool setBitrate(std::string ifname, uint32_t bitrate);
+  protected:
+    virtual ICanController::Result preUp() override;
+    virtual bool postDown() override;
 
+  private:
+    const std::string mUartName;
+    const uint32_t kBitrate;
+    base::unique_fd mFd;
+};
+
+}  // namespace implementation
+}  // namespace V1_0
 }  // namespace can
-}  // namespace netdevice
+}  // namespace automotive
+}  // namespace hardware
 }  // namespace android

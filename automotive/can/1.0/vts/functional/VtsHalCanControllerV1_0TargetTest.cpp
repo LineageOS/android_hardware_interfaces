@@ -95,8 +95,7 @@ bool CanControllerHalTest::up(InterfaceType iftype, std::string srvname, std::st
 
 void CanControllerHalTest::assertRegistered(std::string srvname, bool expectRegistered) {
     /* Not using ICanBus::tryGetService here, since it ignores interfaces not in the manifest
-     * file -- this is a test, so we don't want to add dummy services to a device manifest.
-     */
+     * file -- this is a test, so we don't want to add dummy services to a device manifest. */
     auto manager = hidl::manager::V1_2::IServiceManager::getService();
     auto busService = manager->get(ICanBus::descriptor, srvname);
     ASSERT_EQ(expectRegistered, busService.withDefault(nullptr) != nullptr)

@@ -30,9 +30,7 @@ namespace can {
 namespace V1_0 {
 namespace implementation {
 
-/**
- * Whether to log sent/received packets.
- */
+/** Whether to log sent/received packets. */
 static constexpr bool kSuperVerbose = false;
 
 Return<Result> CanBus::send(const CanMessage& message) {
@@ -84,6 +82,8 @@ Return<void> CanBus::listen(const hidl_vec<CanMessageFilter>& filter,
     _hidl_cb(Result::OK, closeHandle);
     return {};
 }
+
+CanBus::CanBus() {}
 
 CanBus::CanBus(const std::string& ifname) : mIfname(ifname) {}
 

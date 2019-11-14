@@ -23,14 +23,14 @@
 
 #include <android/log.h>
 #include <cutils/native_handle.h>
+#include <gtest/gtest.h>
+#include <hidl/GtestPrinter.h>
+#include <hidl/ServiceManagement.h>
 #include <log/log.h>
 
 #include <android/hardware/audio/common/2.0/types.h>
 #include <android/hardware/soundtrigger/2.0/ISoundTriggerHw.h>
 #include <android/hardware/soundtrigger/2.2/ISoundTriggerHw.h>
-
-#include <VtsHalHidlTargetTestBase.h>
-#include <VtsHalHidlTargetTestEnvBase.h>
 
 using ::android::sp;
 using ::android::hardware::Return;
@@ -38,27 +38,11 @@ using ::android::hardware::soundtrigger::V2_0::ISoundTriggerHwCallback;
 using ::android::hardware::soundtrigger::V2_0::SoundModelHandle;
 using ::android::hardware::soundtrigger::V2_2::ISoundTriggerHw;
 
-// Test environment for SoundTrigger HIDL HAL.
-class SoundTriggerHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
-   public:
-    // get the test environment singleton
-    static SoundTriggerHidlEnvironment* Instance() {
-        static SoundTriggerHidlEnvironment* instance = new SoundTriggerHidlEnvironment;
-        return instance;
-    }
-
-    void registerTestServices() override { registerTestService<ISoundTriggerHw>(); }
-
-   private:
-    SoundTriggerHidlEnvironment() {}
-};
-
 // The main test class for Sound Trigger HIDL HAL.
-class SoundTriggerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
+class SoundTriggerHidlTest : public ::testing::TestWithParam<std::string> {
    public:
     void SetUp() override {
-        mSoundTriggerHal = ::testing::VtsHalHidlTargetTestBase::getService<ISoundTriggerHw>(
-            SoundTriggerHidlEnvironment::Instance()->getServiceName<ISoundTriggerHw>());
+        mSoundTriggerHal = ISoundTriggerHw::getService(GetParam());
         ASSERT_NE(nullptr, mSoundTriggerHal.get());
     }
 
@@ -77,18 +61,13 @@ class SoundTriggerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
  *  - the implementation returns -ENOSYS with invalid model handle
  *
  */
-TEST_F(SoundTriggerHidlTest, GetModelStateInvalidModel) {
+TEST_P(SoundTriggerHidlTest, GetModelStateInvalidModel) {
     SoundModelHandle handle = 0;
     Return<int32_t> hidlReturn = mSoundTriggerHal->getModelState(handle);
     EXPECT_TRUE(hidlReturn.isOk());
     EXPECT_EQ(-ENOSYS, hidlReturn);
 }
-
-int main(int argc, char** argv) {
-    ::testing::AddGlobalTestEnvironment(SoundTriggerHidlEnvironment::Instance());
-    ::testing::InitGoogleTest(&argc, argv);
-    SoundTriggerHidlEnvironment::Instance()->init(&argc, argv);
-    int status = RUN_ALL_TESTS();
-    ALOGI("Test result = %d", status);
-    return status;
-}
+INSTANTIATE_TEST_SUITE_P(
+        PerInstance, SoundTriggerHidlTest,
+        testing::ValuesIn(android::hardware::getAllHalInstanceNames(ISoundTriggerHw::descriptor)),
+        android::hardware::PrintInstanceNameToString);

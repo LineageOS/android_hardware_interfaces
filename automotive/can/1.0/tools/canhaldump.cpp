@@ -49,7 +49,7 @@ struct CanMessageListener : public V1_0::ICanMessageListener {
         } else {
             std::cout << "   [" << message.payload.size() << "] ";
             for (const auto byte : message.payload) {
-                std::cout << " " << unsigned(byte);
+                std::cout << " " << std::setfill('0') << std::setw(2) << unsigned(byte);
             }
         }
         std::cout << std::nouppercase << std::dec << std::endl;

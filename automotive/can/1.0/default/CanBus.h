@@ -48,12 +48,22 @@ struct CanBus : public ICanBus {
     bool down();
 
   protected:
+    /**
+     * Blank constructor, since some interface types (such as SLCAN) don't get a name until after
+     * being initialized.
+     *
+     * If using this constructor, you MUST initialize mIfname prior to the completion of preUp().
+     */
+    CanBus();
+
     CanBus(const std::string& ifname);
 
     /**
      * Prepare the SocketCAN interface.
      *
      * After calling this method, mIfname network interface is available and ready to be brought up.
+     *
+     * \return OK on success, or an error state on failure. See ICanController::Result
      */
     virtual ICanController::Result preUp();
 
@@ -61,11 +71,13 @@ struct CanBus : public ICanBus {
      * Cleanup after bringing the interface down.
      *
      * This is a counterpart to preUp().
+     *
+     * \return true upon success and false upon failure
      */
     virtual bool postDown();
 
     /** Network interface name. */
-    const std::string mIfname;
+    std::string mIfname;
 
   private:
     struct CanMessageListener {

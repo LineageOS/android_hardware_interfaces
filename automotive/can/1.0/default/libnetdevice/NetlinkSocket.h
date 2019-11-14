@@ -38,8 +38,8 @@ struct NetlinkSocket {
     /**
      * Send Netlink message to Kernel.
      *
-     * @param msg Message to send, nlmsg_seq will be set to next sequence number
-     * @return true, if succeeded
+     * \param msg Message to send, nlmsg_seq will be set to next sequence number
+     * \return true, if succeeded
      */
     template <class T, unsigned int BUFSIZE>
     bool send(NetlinkRequest<T, BUFSIZE>& req) {
@@ -50,7 +50,7 @@ struct NetlinkSocket {
     /**
      * Receive Netlink ACK message from Kernel.
      *
-     * @return true if received ACK message, false in case of error
+     * \return true if received ACK message, false in case of error
      */
     bool receiveAck();
 
