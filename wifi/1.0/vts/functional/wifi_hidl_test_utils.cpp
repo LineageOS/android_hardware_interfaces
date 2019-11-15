@@ -214,7 +214,7 @@ sp<IWifiRttController> getWifiRttController(const std::string& instance_name) {
     if (!wifi_chip.get()) {
         return nullptr;
     }
-    sp<IWifiStaIface> wifi_sta_iface = getWifiStaIface();
+    sp<IWifiStaIface> wifi_sta_iface = getWifiStaIface(instance_name);
     if (!wifi_sta_iface.get()) {
         return nullptr;
     }
