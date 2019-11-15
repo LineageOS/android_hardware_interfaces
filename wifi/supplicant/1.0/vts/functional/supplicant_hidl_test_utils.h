@@ -25,20 +25,46 @@
 
 #include <getopt.h>
 
-#include <VtsHalHidlTargetTestEnvBase.h>
+#include "wifi_hidl_test_utils.h"
 
 // Used to stop the android wifi framework before every test.
 void stopWifiFramework();
+void stopWifiFramework(const std::string& wifi_instance_name);
 void startWifiFramework();
+void startWifiFramework(const std::string& wifi_instance_name);
+
 void stopSupplicant();
+void stopSupplicant(const std::string& wifi_instance_name);
 // Used to configure the chip, driver and start wpa_supplicant before every
 // test.
-void startSupplicantAndWaitForHidlService();
+void startSupplicantAndWaitForHidlService(
+    const std::string& wifi_instance_name,
+    const std::string& supplicant_instance_name);
 
 // Helper functions to obtain references to the various HIDL interface objects.
 // Note: We only have a single instance of each of these objects currently.
 // These helper functions should be modified to return vectors if we support
 // multiple instances.
+android::sp<android::hardware::wifi::supplicant::V1_0::ISupplicant>
+getSupplicant(const std::string& supplicant_instance_name, bool isP2pOn);
+android::sp<android::hardware::wifi::supplicant::V1_0::ISupplicantStaIface>
+getSupplicantStaIface(
+    const android::sp<android::hardware::wifi::supplicant::V1_0::ISupplicant>&
+        supplicant);
+android::sp<android::hardware::wifi::supplicant::V1_0::ISupplicantStaNetwork>
+createSupplicantStaNetwork(
+    const android::sp<android::hardware::wifi::supplicant::V1_0::ISupplicant>&
+        supplicant);
+android::sp<android::hardware::wifi::supplicant::V1_0::ISupplicantP2pIface>
+getSupplicantP2pIface(
+    const android::sp<android::hardware::wifi::supplicant::V1_0::ISupplicant>&
+        supplicant);
+bool turnOnExcessiveLogging(
+    const android::sp<android::hardware::wifi::supplicant::V1_0::ISupplicant>&
+        supplicant);
+
+// TODO(b/143892896): Remove old APIs after all supplicant tests are updated.
+void startSupplicantAndWaitForHidlService();
 android::sp<android::hardware::wifi::supplicant::V1_0::ISupplicant>
 getSupplicant();
 android::sp<android::hardware::wifi::supplicant::V1_0::ISupplicantStaIface>
