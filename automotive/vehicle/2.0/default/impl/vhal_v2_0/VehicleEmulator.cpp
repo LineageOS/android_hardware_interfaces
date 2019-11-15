@@ -24,6 +24,7 @@
 #include <vhal_v2_0/VehicleUtils.h>
 
 #include "PipeComm.h"
+#include "ProtoMessageConverter.h"
 #include "SocketComm.h"
 
 #include "VehicleEmulator.h"
@@ -217,90 +218,12 @@ void VehicleEmulator::processMessage(emulator::EmulatorMessage const& rxMsg,
 
 void VehicleEmulator::populateProtoVehicleConfig(emulator::VehiclePropConfig* protoCfg,
                                                  const VehiclePropConfig& cfg) {
-    protoCfg->set_prop(cfg.prop);
-    protoCfg->set_access(toInt(cfg.access));
-    protoCfg->set_change_mode(toInt(cfg.changeMode));
-    protoCfg->set_value_type(toInt(getPropType(cfg.prop)));
-
-    for (auto& configElement : cfg.configArray) {
-        protoCfg->add_config_array(configElement);
-    }
-
-    if (cfg.configString.size() > 0) {
-        protoCfg->set_config_string(cfg.configString.c_str(), cfg.configString.size());
-    }
-
-    // Populate the min/max values based on property type
-    switch (getPropType(cfg.prop)) {
-        case VehiclePropertyType::STRING:
-        case VehiclePropertyType::BOOLEAN:
-        case VehiclePropertyType::INT32_VEC:
-        case VehiclePropertyType::INT64_VEC:
-        case VehiclePropertyType::FLOAT_VEC:
-        case VehiclePropertyType::BYTES:
-        case VehiclePropertyType::MIXED:
-            // Do nothing.  These types don't have min/max values
-            break;
-        case VehiclePropertyType::INT64:
-            if (cfg.areaConfigs.size() > 0) {
-                emulator::VehicleAreaConfig* aCfg = protoCfg->add_area_configs();
-                aCfg->set_min_int64_value(cfg.areaConfigs[0].minInt64Value);
-                aCfg->set_max_int64_value(cfg.areaConfigs[0].maxInt64Value);
-            }
-            break;
-        case VehiclePropertyType::FLOAT:
-            if (cfg.areaConfigs.size() > 0) {
-                emulator::VehicleAreaConfig* aCfg = protoCfg->add_area_configs();
-                aCfg->set_min_float_value(cfg.areaConfigs[0].minFloatValue);
-                aCfg->set_max_float_value(cfg.areaConfigs[0].maxFloatValue);
-            }
-            break;
-        case VehiclePropertyType::INT32:
-            if (cfg.areaConfigs.size() > 0) {
-                emulator::VehicleAreaConfig* aCfg = protoCfg->add_area_configs();
-                aCfg->set_min_int32_value(cfg.areaConfigs[0].minInt32Value);
-                aCfg->set_max_int32_value(cfg.areaConfigs[0].maxInt32Value);
-            }
-            break;
-        default:
-            ALOGW("%s: Unknown property type:  0x%x", __func__, toInt(getPropType(cfg.prop)));
-            break;
-    }
-
-    protoCfg->set_min_sample_rate(cfg.minSampleRate);
-    protoCfg->set_max_sample_rate(cfg.maxSampleRate);
+    return proto_msg_converter::toProto(protoCfg, cfg);
 }
 
 void VehicleEmulator::populateProtoVehiclePropValue(emulator::VehiclePropValue* protoVal,
                                                     const VehiclePropValue* val) {
-    protoVal->set_prop(val->prop);
-    protoVal->set_value_type(toInt(getPropType(val->prop)));
-    protoVal->set_timestamp(val->timestamp);
-    protoVal->set_status((emulator::VehiclePropStatus)(val->status));
-    protoVal->set_area_id(val->areaId);
-
-    // Copy value data if it is set.
-    //  - for bytes and strings, this is indicated by size > 0
-    //  - for int32, int64, and float, copy the values if vectors have data
-    if (val->value.stringValue.size() > 0) {
-        protoVal->set_string_value(val->value.stringValue.c_str(), val->value.stringValue.size());
-    }
-
-    if (val->value.bytes.size() > 0) {
-        protoVal->set_bytes_value(val->value.bytes.data(), val->value.bytes.size());
-    }
-
-    for (auto& int32Value : val->value.int32Values) {
-        protoVal->add_int32_values(int32Value);
-    }
-
-    for (auto& int64Value : val->value.int64Values) {
-        protoVal->add_int64_values(int64Value);
-    }
-
-    for (auto& floatValue : val->value.floatValues) {
-        protoVal->add_float_values(floatValue);
-    }
+    return proto_msg_converter::toProto(protoVal, *val);
 }
 
 }  // impl
