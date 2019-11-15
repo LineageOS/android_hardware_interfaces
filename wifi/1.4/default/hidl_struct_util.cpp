@@ -91,7 +91,7 @@ V1_3::IWifiChip::ChipCapabilityMask convertLegacyFeatureToHidlChipCapability(
 }
 
 IWifiStaIface::StaIfaceCapabilityMask
-convertLegacyFeatureToHidlStaIfaceCapability(uint32_t feature) {
+convertLegacyFeatureToHidlStaIfaceCapability(uint64_t feature) {
     using HidlStaIfaceCaps = IWifiStaIface::StaIfaceCapabilityMask;
     switch (feature) {
         case WIFI_FEATURE_GSCAN:
@@ -120,6 +120,8 @@ convertLegacyFeatureToHidlStaIfaceCapability(uint32_t feature) {
             return HidlStaIfaceCaps::ND_OFFLOAD;
         case WIFI_FEATURE_MKEEP_ALIVE:
             return HidlStaIfaceCaps::KEEP_ALIVE;
+        case WIFI_FEATURE_INFRA_6G:
+            return HidlStaIfaceCaps::STA_6G;
     };
     CHECK(false) << "Unknown legacy feature: " << feature;
     return {};
@@ -365,7 +367,7 @@ bool convertLegacyWifiMacInfosToHidl(
 }
 
 bool convertLegacyFeaturesToHidlStaCapabilities(
-    uint32_t legacy_feature_set, uint32_t legacy_logger_feature_set,
+    uint64_t legacy_feature_set, uint32_t legacy_logger_feature_set,
     uint32_t* hidl_caps) {
     if (!hidl_caps) {
         return false;
@@ -384,7 +386,8 @@ bool convertLegacyFeaturesToHidlStaCapabilities(
           WIFI_FEATURE_IE_WHITELIST, WIFI_FEATURE_SCAN_RAND,
           WIFI_FEATURE_INFRA_5G, WIFI_FEATURE_HOTSPOT, WIFI_FEATURE_PNO,
           WIFI_FEATURE_TDLS, WIFI_FEATURE_TDLS_OFFCHANNEL,
-          WIFI_FEATURE_CONFIG_NDO, WIFI_FEATURE_MKEEP_ALIVE}) {
+          WIFI_FEATURE_CONFIG_NDO, WIFI_FEATURE_MKEEP_ALIVE,
+          WIFI_FEATURE_INFRA_6G}) {
         if (feature & legacy_feature_set) {
             *hidl_caps |= convertLegacyFeatureToHidlStaIfaceCapability(feature);
         }

@@ -25,6 +25,7 @@
 #include <android/hardware/wifi/1.2/types.h>
 #include <android/hardware/wifi/1.3/IWifiChip.h>
 #include <android/hardware/wifi/1.3/types.h>
+#include <android/hardware/wifi/1.4/IWifiStaIface.h>
 #include <android/hardware/wifi/1.4/types.h>
 
 #include "wifi_legacy_hal.h"
@@ -69,7 +70,7 @@ bool convertLegacyWifiMacInfosToHidl(
 
 // STA iface conversion methods.
 bool convertLegacyFeaturesToHidlStaCapabilities(
-    uint32_t legacy_feature_set, uint32_t legacy_logger_feature_set,
+    uint64_t legacy_feature_set, uint32_t legacy_logger_feature_set,
     uint32_t* hidl_caps);
 bool convertLegacyApfCapabilitiesToHidl(
     const legacy_hal::PacketFilterCapabilities& legacy_caps,
