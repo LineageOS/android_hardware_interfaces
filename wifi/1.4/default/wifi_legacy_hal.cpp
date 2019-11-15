@@ -479,7 +479,7 @@ WifiLegacyHal::requestFirmwareMemoryDump(const std::string& iface_name) {
 std::pair<wifi_error, uint32_t> WifiLegacyHal::getSupportedFeatureSet(
     const std::string& iface_name) {
     feature_set set;
-    static_assert(sizeof(set) == sizeof(uint32_t),
+    static_assert(sizeof(set) == sizeof(uint64_t),
                   "Some feature_flags can not be represented in output");
     wifi_error status = global_func_table_.wifi_get_supported_feature_set(
         getIfaceHandle(iface_name), &set);
