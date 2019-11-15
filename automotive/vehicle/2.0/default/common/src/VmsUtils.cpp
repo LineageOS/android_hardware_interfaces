@@ -219,12 +219,9 @@ std::vector<VmsLayer> getSubscribedLayers(const VehiclePropValue& subscriptions_
     if (isValidVmsMessage(subscriptions_state) &&
         (parseMessageType(subscriptions_state) == VmsMessageType::SUBSCRIPTIONS_CHANGE ||
          parseMessageType(subscriptions_state) == VmsMessageType::SUBSCRIPTIONS_RESPONSE) &&
-        subscriptions_state.value.int32Values.size() > kSubscriptionStateSequenceNumberIndex) {
-        const int32_t num_of_layers = subscriptions_state.value.int32Values[toInt(
-                VmsSubscriptionsStateIntegerValuesIndex::NUMBER_OF_LAYERS)];
-        const int32_t num_of_associated_layers = subscriptions_state.value.int32Values[toInt(
-                VmsSubscriptionsStateIntegerValuesIndex ::NUMBER_OF_ASSOCIATED_LAYERS)];
-
+        subscriptions_state.value.int32Values.size() >
+                toInt(VmsSubscriptionsStateIntegerValuesIndex::NUMBER_OF_LAYERS)) {
+        int subscriptions_state_int_size = subscriptions_state.value.int32Values.size();
         std::unordered_set<VmsLayer, VmsLayer::VmsLayerHashFunction> offered_layers;
         for (const auto& offer : offers.offerings) {
             offered_layers.insert(offer.layer);
@@ -232,33 +229,52 @@ std::vector<VmsLayer> getSubscribedLayers(const VehiclePropValue& subscriptions_
         std::vector<VmsLayer> subscribed_layers;
 
         int current_index = toInt(VmsSubscriptionsStateIntegerValuesIndex::SUBSCRIPTIONS_START);
+
         // Add all subscribed layers which are offered by the current publisher.
+        const int32_t num_of_layers = subscriptions_state.value.int32Values[toInt(
+                VmsSubscriptionsStateIntegerValuesIndex::NUMBER_OF_LAYERS)];
         for (int i = 0; i < num_of_layers; i++) {
+            if (subscriptions_state_int_size < current_index + kLayerSize) {
+                return {};
+            }
             VmsLayer layer = VmsLayer(subscriptions_state.value.int32Values[current_index],
                                       subscriptions_state.value.int32Values[current_index + 1],
                                       subscriptions_state.value.int32Values[current_index + 2]);
             if (offered_layers.find(layer) != offered_layers.end()) {
-                subscribed_layers.push_back(layer);
+                subscribed_layers.push_back(std::move(layer));
             }
             current_index += kLayerSize;
         }
+
         // Add all subscribed associated layers which are offered by the current publisher.
         // For this, we need to check if the associated layer has a publisher ID which is
         // same as that of the current publisher.
-        for (int i = 0; i < num_of_associated_layers; i++) {
-            VmsLayer layer = VmsLayer(subscriptions_state.value.int32Values[current_index],
-                                      subscriptions_state.value.int32Values[current_index + 1],
-                                      subscriptions_state.value.int32Values[current_index + 2]);
-            current_index += kLayerSize;
-            if (offered_layers.find(layer) != offered_layers.end()) {
-                int32_t num_of_publisher_ids = subscriptions_state.value.int32Values[current_index];
-                current_index++;
-                for (int j = 0; j < num_of_publisher_ids; j++) {
-                    if (subscriptions_state.value.int32Values[current_index] ==
-                        offers.publisher_id) {
-                        subscribed_layers.push_back(layer);
-                    }
+        if (subscriptions_state_int_size >
+            toInt(VmsSubscriptionsStateIntegerValuesIndex::NUMBER_OF_ASSOCIATED_LAYERS)) {
+            const int32_t num_of_associated_layers = subscriptions_state.value.int32Values[toInt(
+                    VmsSubscriptionsStateIntegerValuesIndex::NUMBER_OF_ASSOCIATED_LAYERS)];
+
+            for (int i = 0; i < num_of_associated_layers; i++) {
+                if (subscriptions_state_int_size < current_index + kLayerSize) {
+                    return {};
+                }
+                VmsLayer layer = VmsLayer(subscriptions_state.value.int32Values[current_index],
+                                          subscriptions_state.value.int32Values[current_index + 1],
+                                          subscriptions_state.value.int32Values[current_index + 2]);
+                current_index += kLayerSize;
+                if (offered_layers.find(layer) != offered_layers.end() &&
+                    subscriptions_state_int_size > current_index) {
+                    int32_t num_of_publisher_ids =
+                            subscriptions_state.value.int32Values[current_index];
                     current_index++;
+                    for (int j = 0; j < num_of_publisher_ids; j++) {
+                        if (subscriptions_state_int_size > current_index &&
+                            subscriptions_state.value.int32Values[current_index] ==
+                                    offers.publisher_id) {
+                            subscribed_layers.push_back(std::move(layer));
+                        }
+                        current_index++;
+                    }
                 }
             }
         }
@@ -298,6 +314,64 @@ VmsSessionStatus parseStartSessionMessage(const VehiclePropValue& start_session,
     // If the message is invalid then persist the old service ID.
     *new_service_id = current_service_id;
     return VmsSessionStatus::kInvalidMessage;
+}
+
+bool isAvailabilitySequenceNumberNewer(const VehiclePropValue& availability_state,
+                                       const int last_seen_availability_sequence_number) {
+    return (isValidVmsMessage(availability_state) &&
+            (parseMessageType(availability_state) == VmsMessageType::AVAILABILITY_CHANGE ||
+             parseMessageType(availability_state) == VmsMessageType::AVAILABILITY_RESPONSE) &&
+            availability_state.value.int32Values.size() > kAvailabilitySequenceNumberIndex &&
+            availability_state.value.int32Values[kAvailabilitySequenceNumberIndex] >
+                    last_seen_availability_sequence_number);
+}
+
+int32_t getSequenceNumberForAvailabilityState(const VehiclePropValue& availability_state) {
+    if (isValidVmsMessage(availability_state) &&
+        (parseMessageType(availability_state) == VmsMessageType::AVAILABILITY_CHANGE ||
+         parseMessageType(availability_state) == VmsMessageType::AVAILABILITY_RESPONSE) &&
+        availability_state.value.int32Values.size() > kAvailabilitySequenceNumberIndex) {
+        return availability_state.value.int32Values[kAvailabilitySequenceNumberIndex];
+    }
+    return -1;
+}
+
+std::vector<VmsAssociatedLayer> getAvailableLayers(const VehiclePropValue& availability_state) {
+    if (isValidVmsMessage(availability_state) &&
+        (parseMessageType(availability_state) == VmsMessageType::AVAILABILITY_CHANGE ||
+         parseMessageType(availability_state) == VmsMessageType::AVAILABILITY_RESPONSE) &&
+        availability_state.value.int32Values.size() >
+                toInt(VmsAvailabilityStateIntegerValuesIndex::NUMBER_OF_ASSOCIATED_LAYERS)) {
+        int availability_state_int_size = availability_state.value.int32Values.size();
+        const int32_t num_of_associated_layers = availability_state.value.int32Values[toInt(
+                VmsAvailabilityStateIntegerValuesIndex::NUMBER_OF_ASSOCIATED_LAYERS)];
+        int current_index = toInt(VmsAvailabilityStateIntegerValuesIndex::LAYERS_START);
+        std::vector<VmsAssociatedLayer> available_layers;
+        for (int i = 0; i < num_of_associated_layers; i++) {
+            if (availability_state_int_size < current_index + kLayerSize) {
+                return {};
+            }
+            VmsLayer layer = VmsLayer(availability_state.value.int32Values[current_index],
+                                      availability_state.value.int32Values[current_index + 1],
+                                      availability_state.value.int32Values[current_index + 2]);
+            current_index += kLayerSize;
+            std::vector<int> publisher_ids;
+            if (availability_state_int_size > current_index) {
+                int32_t num_of_publisher_ids = availability_state.value.int32Values[current_index];
+                current_index++;
+                for (int j = 0; j < num_of_publisher_ids; j++) {
+                    if (availability_state_int_size > current_index) {
+                        publisher_ids.push_back(
+                                availability_state.value.int32Values[current_index]);
+                        current_index++;
+                    }
+                }
+            }
+            available_layers.emplace_back(layer, std::move(publisher_ids));
+        }
+        return available_layers;
+    }
+    return {};
 }
 
 }  // namespace vms
