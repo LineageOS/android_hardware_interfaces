@@ -64,7 +64,7 @@ Return<void> WifiApIface::setCountryCode(const hidl_array<int8_t, 2>& code,
 }
 
 Return<void> WifiApIface::getValidFrequenciesForBand(
-    WifiBand band, getValidFrequenciesForBand_cb hidl_status_cb) {
+    V1_0::WifiBand band, getValidFrequenciesForBand_cb hidl_status_cb) {
     return validateAndCall(this, WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
                            &WifiApIface::getValidFrequenciesForBandInternal,
                            hidl_status_cb, band);
@@ -100,7 +100,7 @@ WifiStatus WifiApIface::setCountryCodeInternal(
 }
 
 std::pair<WifiStatus, std::vector<WifiChannelInMhz>>
-WifiApIface::getValidFrequenciesForBandInternal(WifiBand band) {
+WifiApIface::getValidFrequenciesForBandInternal(V1_0::WifiBand band) {
     static_assert(sizeof(WifiChannelInMhz) == sizeof(uint32_t),
                   "Size mismatch");
     legacy_hal::wifi_error legacy_status;

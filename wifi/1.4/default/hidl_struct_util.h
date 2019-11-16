@@ -21,10 +21,10 @@
 
 #include <android/hardware/wifi/1.0/IWifiChip.h>
 #include <android/hardware/wifi/1.0/types.h>
-#include <android/hardware/wifi/1.2/IWifiChipEventCallback.h>
 #include <android/hardware/wifi/1.2/types.h>
 #include <android/hardware/wifi/1.3/IWifiChip.h>
 #include <android/hardware/wifi/1.3/types.h>
+#include <android/hardware/wifi/1.4/IWifiChipEventCallback.h>
 #include <android/hardware/wifi/1.4/IWifiStaIface.h>
 #include <android/hardware/wifi/1.4/types.h>
 
@@ -65,8 +65,7 @@ legacy_hal::wifi_power_scenario convertHidlTxPowerScenarioToLegacy_1_2(
     V1_2::IWifiChip::TxPowerScenario hidl_scenario);
 bool convertLegacyWifiMacInfosToHidl(
     const std::vector<legacy_hal::WifiMacInfo>& legacy_mac_infos,
-    std::vector<V1_2::IWifiChipEventCallback::RadioModeInfo>*
-        hidl_radio_mode_infos);
+    std::vector<IWifiChipEventCallback::RadioModeInfo>* hidl_radio_mode_infos);
 
 // STA iface conversion methods.
 bool convertLegacyFeaturesToHidlStaCapabilities(
@@ -78,7 +77,7 @@ bool convertLegacyApfCapabilitiesToHidl(
 bool convertLegacyGscanCapabilitiesToHidl(
     const legacy_hal::wifi_gscan_capabilities& legacy_caps,
     StaBackgroundScanCapabilities* hidl_caps);
-legacy_hal::wifi_band convertHidlWifiBandToLegacy(WifiBand band);
+legacy_hal::wifi_band convertHidlWifiBandToLegacy(V1_0::WifiBand band);
 bool convertHidlGscanParamsToLegacy(
     const StaBackgroundScanParameters& hidl_scan_params,
     legacy_hal::wifi_scan_cmd_params* legacy_scan_params);

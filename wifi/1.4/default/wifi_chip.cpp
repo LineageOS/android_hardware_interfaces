@@ -341,7 +341,7 @@ void WifiChip::invalidate() {
 
 bool WifiChip::isValid() { return is_valid_; }
 
-std::set<sp<V1_2::IWifiChipEventCallback>> WifiChip::getEventCallbacks() {
+std::set<sp<IWifiChipEventCallback>> WifiChip::getEventCallbacks() {
     return event_cb_handler_.getCallbacks();
 }
 
@@ -626,6 +626,14 @@ Return<void> WifiChip::createRttController_1_4(
     return validateAndCall(this, WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
                            &WifiChip::createRttControllerInternal_1_4,
                            hidl_status_cb, bound_iface);
+}
+
+Return<void> WifiChip::registerEventCallback_1_4(
+    const sp<IWifiChipEventCallback>& event_callback,
+    registerEventCallback_cb hidl_status_cb) {
+    return validateAndCall(this, WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
+                           &WifiChip::registerEventCallbackInternal_1_4,
+                           hidl_status_cb, event_callback);
 }
 
 void WifiChip::invalidateAndRemoveAllIfaces() {
@@ -1125,11 +1133,9 @@ WifiStatus WifiChip::setLatencyModeInternal(LatencyMode mode) {
 }
 
 WifiStatus WifiChip::registerEventCallbackInternal_1_2(
-    const sp<V1_2::IWifiChipEventCallback>& event_callback) {
-    if (!event_cb_handler_.addCallback(event_callback)) {
-        return createWifiStatus(WifiStatusCode::ERROR_UNKNOWN);
-    }
-    return createWifiStatus(WifiStatusCode::SUCCESS);
+    const sp<V1_2::IWifiChipEventCallback>& /* event_callback */) {
+    // Deprecated support for this callback.
+    return createWifiStatus(WifiStatusCode::ERROR_NOT_SUPPORTED);
 }
 
 WifiStatus WifiChip::selectTxPowerScenarioInternal_1_2(
@@ -1177,6 +1183,14 @@ WifiChip::createRttControllerInternal_1_4(const sp<IWifiIface>& bound_iface) {
         getFirstActiveWlanIfaceName(), bound_iface, legacy_hal_);
     rtt_controllers_.emplace_back(rtt);
     return {createWifiStatus(WifiStatusCode::SUCCESS), rtt};
+}
+
+WifiStatus WifiChip::registerEventCallbackInternal_1_4(
+    const sp<IWifiChipEventCallback>& event_callback) {
+    if (!event_cb_handler_.addCallback(event_callback)) {
+        return createWifiStatus(WifiStatusCode::ERROR_UNKNOWN);
+    }
+    return createWifiStatus(WifiStatusCode::SUCCESS);
 }
 
 WifiStatus WifiChip::handleChipConfiguration(
@@ -1281,7 +1295,7 @@ WifiStatus WifiChip::registerRadioModeChangeCallback() {
                 LOG(ERROR) << "Callback invoked on an invalid object";
                 return;
             }
-            std::vector<V1_2::IWifiChipEventCallback::RadioModeInfo>
+            std::vector<IWifiChipEventCallback::RadioModeInfo>
                 hidl_radio_mode_infos;
             if (!hidl_struct_util::convertLegacyWifiMacInfosToHidl(
                     mac_infos, &hidl_radio_mode_infos)) {
@@ -1289,9 +1303,9 @@ WifiStatus WifiChip::registerRadioModeChangeCallback() {
                 return;
             }
             for (const auto& callback : shared_ptr_this->getEventCallbacks()) {
-                if (!callback->onRadioModeChange(hidl_radio_mode_infos)
+                if (!callback->onRadioModeChange_1_4(hidl_radio_mode_infos)
                          .isOk()) {
-                    LOG(ERROR) << "Failed to invoke onRadioModeChange"
+                    LOG(ERROR) << "Failed to invoke onRadioModeChange_1_4"
                                << " callback on: " << toString(callback);
                 }
             }
