@@ -1,0 +1,19 @@
+# Keymaster Benchmark
+
+The Keymaster Benchmark is a standalone tool for measuring the performance of keymaster implementations.
+
+## Building
+
+Build:
+`m  keymaster_benchmark`
+
+Transfer to device/emulator:
+`adb sync data`
+
+The benchmark executable should will be located at `data/benchmarktest/keymaster_benchmark/keymaster_benchmark` on the device.
+
+## Usage
+
+Keymaster Benchmark is built on [Google microbenchmark library](https://github.com/google/benchmark).
+All of the commandline arguments provided by the microbenchmark library are valid, such as `--benchmark_filter=<regex>` or `benchmark_out_format={json|console|csv}`.
+In addition to the command line arguments provided by microbenchmark, `--service_name=<service_name>` is provided allow specification of the keymaster service name, e.g. specify `--service_name=strongbox` to benchmark strongbox.
