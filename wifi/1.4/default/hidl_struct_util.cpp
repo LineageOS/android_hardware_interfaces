@@ -1270,16 +1270,20 @@ bool convertHidlNanEnableRequestToLegacy(
         hidl_request.debugConfigs
             .useSdfInBandVal[(size_t)NanBandIndex::NAN_BAND_5GHZ];
 
+    /* TODO: b/145609058
+     * Missing updates needed to legacy_hal::NanEnableRequest and conversion to
+     * it for 6GHz band */
+
     return true;
 }
 
-bool convertHidlNanEnableRequest_1_2ToLegacy(
+bool convertHidlNanEnableRequest_1_4ToLegacy(
     const NanEnableRequest& hidl_request1,
     const V1_2::NanConfigRequestSupplemental& hidl_request2,
     legacy_hal::NanEnableRequest* legacy_request) {
     if (!legacy_request) {
         LOG(ERROR)
-            << "convertHidlNanEnableRequest_1_2ToLegacy: null legacy_request";
+            << "convertHidlNanEnableRequest_1_4ToLegacy: null legacy_request";
         return false;
     }
 
@@ -1780,16 +1784,19 @@ bool convertHidlNanConfigRequestToLegacy(
     legacy_request->config_dw.dw_5g_interval_val =
         hidl_request.bandSpecificConfig[(size_t)NanBandIndex::NAN_BAND_5GHZ]
             .discoveryWindowIntervalVal;
+    /* TODO: b/145609058
+     * Missing updates needed to legacy_hal::NanConfigRequest and conversion to
+     * it for 6GHz band */
 
     return true;
 }
 
-bool convertHidlNanConfigRequest_1_2ToLegacy(
+bool convertHidlNanConfigRequest_1_4ToLegacy(
     const NanConfigRequest& hidl_request1,
     const V1_2::NanConfigRequestSupplemental& hidl_request2,
     legacy_hal::NanConfigRequest* legacy_request) {
     if (!legacy_request) {
-        LOG(ERROR) << "convertHidlNanConfigRequest_1_2ToLegacy: legacy_request "
+        LOG(ERROR) << "convertHidlNanConfigRequest_1_4ToLegacy: legacy_request "
                       "is null";
         return false;
     }
