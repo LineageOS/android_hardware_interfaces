@@ -1202,19 +1202,17 @@ TEST_IO_STREAM(closeTwice, "Make sure a stream can not be closed twice",
         waitForStreamDestruction())
 // clang-format on
 
-static void testCreateTooBigMmapBuffer(IStream* stream) {
-    MmapBufferInfo info;
-    Result res;
-    // Assume that int max is a value too big to be allocated
-    // This is true currently with a 32bit media server, but might not when it
-    // will run in 64 bit
-    auto minSizeFrames = std::numeric_limits<int32_t>::max();
-    ASSERT_OK(stream->createMmapBuffer(minSizeFrames, returnIn(res, info)));
-    ASSERT_RESULT(invalidArgsOrNotSupported, res);
+static void testMmapBufferOfInvalidSize(IStream* stream) {
+    for (int32_t value : {-1, 0, std::numeric_limits<int32_t>::max()}) {
+        MmapBufferInfo info;
+        Result res;
+        EXPECT_OK(stream->createMmapBuffer(value, returnIn(res, info)));
+        EXPECT_RESULT(invalidArgsOrNotSupported, res) << "value=" << value;
+    }
 }
 
-TEST_IO_STREAM(CreateTooBigMmapBuffer, "Create mmap buffer too big should fail",
-               testCreateTooBigMmapBuffer(stream.get()))
+TEST_IO_STREAM(CreateTooBigMmapBuffer, "Create mmap buffer of invalid size must fail",
+               testMmapBufferOfInvalidSize(stream.get()))
 
 static void testGetMmapPositionOfNonMmapedStream(IStream* stream) {
     Result res;
