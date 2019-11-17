@@ -4338,25 +4338,29 @@ TEST_F(AttestationTest, EcAttestationRequiresAttestationAppId) {
  * to specify how many following bytes will be used to encode the length.
  */
 TEST_F(AttestationTest, AttestationApplicationIDLengthProperlyEncoded) {
-    auto creation_time = std::chrono::system_clock::now();
-    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
-                                                 .Authorization(TAG_NO_AUTH_REQUIRED)
-                                                 .EcdsaSigningKey(EcCurve::P_256)
-                                                 .Digest(Digest::SHA_2_256)));
+    std::vector<uint32_t> app_id_lengths{143, 258};
+    for (uint32_t length : app_id_lengths) {
+        auto creation_time = std::chrono::system_clock::now();
+        ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                                     .Authorization(TAG_NO_AUTH_REQUIRED)
+                                                     .EcdsaSigningKey(EcCurve::P_256)
+                                                     .Digest(Digest::SHA_2_256)));
 
-    hidl_vec<hidl_vec<uint8_t>> cert_chain;
-    const string app_id(143, 'a');
-    ASSERT_EQ(ErrorCode::OK,
-              AttestKey(AuthorizationSetBuilder()
-                                .Authorization(TAG_ATTESTATION_CHALLENGE, HidlBuf("challenge"))
-                                .Authorization(TAG_ATTESTATION_APPLICATION_ID, HidlBuf(app_id)),
-                        &cert_chain));
-    EXPECT_GE(cert_chain.size(), 2U);
+        hidl_vec<hidl_vec<uint8_t>> cert_chain;
+        const string app_id(length, 'a');
+        ASSERT_EQ(ErrorCode::OK,
+                  AttestKey(AuthorizationSetBuilder()
+                                    .Authorization(TAG_ATTESTATION_CHALLENGE, HidlBuf("challenge"))
+                                    .Authorization(TAG_ATTESTATION_APPLICATION_ID, HidlBuf(app_id)),
+                            &cert_chain));
+        EXPECT_GE(cert_chain.size(), 2U);
 
-    EXPECT_TRUE(verify_attestation_record("challenge", app_id,                    //
-                                          key_characteristics_.softwareEnforced,  //
-                                          key_characteristics_.hardwareEnforced,  //
-                                          SecLevel(), cert_chain[0], creation_time));
+        EXPECT_TRUE(verify_attestation_record("challenge", app_id,                    //
+                                              key_characteristics_.softwareEnforced,  //
+                                              key_characteristics_.hardwareEnforced,  //
+                                              SecLevel(), cert_chain[0], creation_time));
+        CheckedDeleteKey();
+    }
 }
 /*
  * AttestationTest.AesAttestation
@@ -4600,6 +4604,57 @@ TEST_F(ClearOperationsTest, ServiceDeath) {
     }
 }
 
+typedef KeymasterHidlTest TransportLimitTest;
+
+/*
+ * TransportLimitTest.LargeFinishInput
+ *
+ * Verifies that passing large input data to finish either succeeds or fails as expected.
+ */
+TEST_F(TransportLimitTest, LargeFinishInput) {
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                                 .Authorization(TAG_NO_AUTH_REQUIRED)
+                                                 .AesEncryptionKey(128)
+                                                 .BlockMode(BlockMode::ECB)
+                                                 .Padding(PaddingMode::NONE)));
+
+    for (int msg_size = 10 /*1KB*/; msg_size <= 17 /*128KB*/; msg_size++) {
+        auto cipher_params =
+                AuthorizationSetBuilder().BlockMode(BlockMode::ECB).Padding(PaddingMode::NONE);
+
+        AuthorizationSet out_params;
+        EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, cipher_params, &out_params));
+
+        string plain_message = std::string(1 << msg_size, 'x');
+        string encrypted_message;
+        auto rc = Finish(plain_message, &encrypted_message);
+
+        if (rc == ErrorCode::OK) {
+            EXPECT_EQ(plain_message.size(), encrypted_message.size())
+                    << "Encrypt finish returned OK, but did not consume all of the given input";
+        } else {
+            EXPECT_EQ(ErrorCode::INVALID_INPUT_LENGTH, rc)
+                    << "Encrypt finish failed in an unexpected way when given a large input";
+            continue;
+        }
+        cipher_params.push_back(out_params);
+
+        EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, cipher_params));
+
+        string decrypted_message;
+        rc = Finish(encrypted_message, &decrypted_message);
+
+        if (rc == ErrorCode::OK) {
+            EXPECT_EQ(plain_message.size(), decrypted_message.size())
+                    << "Decrypt finish returned OK, did not consume all of the given input";
+        } else {
+            EXPECT_EQ(ErrorCode::INVALID_INPUT_LENGTH, rc)
+                    << "Encrypt finish failed in an unexpected way when given a large input";
+        }
+    }
+
+    CheckedDeleteKey();
+}
 
 }  // namespace test
 }  // namespace V4_0

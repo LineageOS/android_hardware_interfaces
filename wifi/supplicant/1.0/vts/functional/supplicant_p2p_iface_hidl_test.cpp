@@ -15,9 +15,12 @@
  */
 
 #include <android-base/logging.h>
+#include <gtest/gtest.h>
+#include <hidl/GtestPrinter.h>
+#include <hidl/ServiceManagement.h>
 
-#include <VtsHalHidlTargetTestBase.h>
-
+#include <VtsCoreUtil.h>
+#include <android/hardware/wifi/1.0/IWifi.h>
 #include <android/hardware/wifi/supplicant/1.0/ISupplicantP2pIface.h>
 
 #include "supplicant_hidl_call_util.h"
@@ -30,11 +33,13 @@ using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
 using ::android::hardware::wifi::supplicant::V1_0::IfaceType;
+using ::android::hardware::wifi::supplicant::V1_0::ISupplicant;
 using ::android::hardware::wifi::supplicant::V1_0::ISupplicantP2pIface;
 using ::android::hardware::wifi::supplicant::V1_0::ISupplicantP2pIfaceCallback;
 using ::android::hardware::wifi::supplicant::V1_0::SupplicantNetworkId;
 using ::android::hardware::wifi::supplicant::V1_0::SupplicantStatus;
 using ::android::hardware::wifi::supplicant::V1_0::SupplicantStatusCode;
+using ::android::hardware::wifi::V1_0::IWifi;
 
 namespace {
 constexpr uint8_t kTestSsidPostfix[] = {'t', 'e', 's', 't'};
@@ -66,26 +71,38 @@ constexpr uint32_t kTestExtListenInterval = 400;
 constexpr SupplicantNetworkId kTestNetworkId = 5;
 }  // namespace
 
-class SupplicantP2pIfaceHidlTest : public ::testing::VtsHalHidlTargetTestBase {
+class SupplicantP2pIfaceHidlTest
+    : public ::testing::TestWithParam<std::tuple<std::string, std::string>> {
    public:
     virtual void SetUp() override {
-        startSupplicantAndWaitForHidlService();
-        EXPECT_TRUE(turnOnExcessiveLogging());
-        p2p_iface_ = getSupplicantP2pIface();
+        wifi_instance_name_ = std::get<0>(GetParam());
+        supplicant_instance_name_ = std::get<1>(GetParam());
+        stopSupplicant(wifi_instance_name_);
+        startSupplicantAndWaitForHidlService(wifi_instance_name_,
+                                             supplicant_instance_name_);
+        isP2pOn_ =
+            testing::deviceSupportsFeature("android.hardware.wifi.direct");
+        supplicant_ = getSupplicant(supplicant_instance_name_, isP2pOn_);
+        EXPECT_TRUE(turnOnExcessiveLogging(supplicant_));
+        p2p_iface_ = getSupplicantP2pIface(supplicant_);
         ASSERT_NE(p2p_iface_.get(), nullptr);
 
         memcpy(mac_addr_.data(), kTestMacAddr, mac_addr_.size());
         memcpy(peer_mac_addr_.data(), kTestPeerMacAddr, peer_mac_addr_.size());
     }
 
-    virtual void TearDown() override { stopSupplicant(); }
+    virtual void TearDown() override { stopSupplicant(wifi_instance_name_); }
 
    protected:
+    bool isP2pOn_ = false;
+    sp<ISupplicant> supplicant_;
     // ISupplicantP2pIface object used for all tests in this fixture.
     sp<ISupplicantP2pIface> p2p_iface_;
     // MAC address to use for various tests.
     std::array<uint8_t, 6> mac_addr_;
     std::array<uint8_t, 6> peer_mac_addr_;
+    std::string wifi_instance_name_;
+    std::string supplicant_instance_name_;
 };
 
 class IfaceCallback : public ISupplicantP2pIfaceCallback {
@@ -177,16 +194,20 @@ class IfaceCallback : public ISupplicantP2pIfaceCallback {
  * Ensures that an instance of the ISupplicantP2pIface proxy object is
  * successfully created.
  */
-TEST(SupplicantP2pIfaceHidlTestNoFixture, Create) {
-    startSupplicantAndWaitForHidlService();
-    EXPECT_NE(nullptr, getSupplicantP2pIface().get());
-    stopSupplicant();
+TEST_P(SupplicantP2pIfaceHidlTest, Create) {
+    stopSupplicant(wifi_instance_name_);
+    startSupplicantAndWaitForHidlService(wifi_instance_name_,
+                                         supplicant_instance_name_);
+    sp<ISupplicantP2pIface> p2p_iface = getSupplicantP2pIface(
+        getSupplicant(supplicant_instance_name_, isP2pOn_));
+
+    EXPECT_NE(nullptr, p2p_iface.get());
 }
 
 /*
  * RegisterCallback
  */
-TEST_F(SupplicantP2pIfaceHidlTest, RegisterCallback) {
+TEST_P(SupplicantP2pIfaceHidlTest, RegisterCallback) {
     p2p_iface_->registerCallback(
         new IfaceCallback(), [](const SupplicantStatus& status) {
             EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
@@ -196,7 +217,7 @@ TEST_F(SupplicantP2pIfaceHidlTest, RegisterCallback) {
 /*
  * GetName
  */
-TEST_F(SupplicantP2pIfaceHidlTest, GetName) {
+TEST_P(SupplicantP2pIfaceHidlTest, GetName) {
     const auto& status_and_interface_name = HIDL_INVOKE(p2p_iface_, getName);
     EXPECT_EQ(SupplicantStatusCode::SUCCESS,
               status_and_interface_name.first.code);
@@ -206,7 +227,7 @@ TEST_F(SupplicantP2pIfaceHidlTest, GetName) {
 /*
  * GetType
  */
-TEST_F(SupplicantP2pIfaceHidlTest, GetType) {
+TEST_P(SupplicantP2pIfaceHidlTest, GetType) {
     const auto& status_and_interface_type = HIDL_INVOKE(p2p_iface_, getType);
     EXPECT_EQ(SupplicantStatusCode::SUCCESS,
               status_and_interface_type.first.code);
@@ -216,7 +237,7 @@ TEST_F(SupplicantP2pIfaceHidlTest, GetType) {
 /*
  * GetDeviceAddress
  */
-TEST_F(SupplicantP2pIfaceHidlTest, GetDeviceAddress) {
+TEST_P(SupplicantP2pIfaceHidlTest, GetDeviceAddress) {
     p2p_iface_->getDeviceAddress(
         [](const SupplicantStatus& status,
            const hidl_array<uint8_t, 6>& /* mac_addr */) {
@@ -227,7 +248,7 @@ TEST_F(SupplicantP2pIfaceHidlTest, GetDeviceAddress) {
 /*
  * SetSsidPostfix
  */
-TEST_F(SupplicantP2pIfaceHidlTest, SetSsidPostfix) {
+TEST_P(SupplicantP2pIfaceHidlTest, SetSsidPostfix) {
     std::vector<uint8_t> ssid(kTestSsidPostfix,
                               kTestSsidPostfix + sizeof(kTestSsidPostfix));
     p2p_iface_->setSsidPostfix(ssid, [](const SupplicantStatus& status) {
@@ -238,7 +259,7 @@ TEST_F(SupplicantP2pIfaceHidlTest, SetSsidPostfix) {
 /*
  * Find
  */
-TEST_F(SupplicantP2pIfaceHidlTest, Find) {
+TEST_P(SupplicantP2pIfaceHidlTest, Find) {
     p2p_iface_->find(kTestFindTimeout, [](const SupplicantStatus& status) {
         EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
     });
@@ -247,7 +268,7 @@ TEST_F(SupplicantP2pIfaceHidlTest, Find) {
 /*
  * StopFind
  */
-TEST_F(SupplicantP2pIfaceHidlTest, StopFind) {
+TEST_P(SupplicantP2pIfaceHidlTest, StopFind) {
     p2p_iface_->find(kTestFindTimeout, [](const SupplicantStatus& status) {
         EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
     });
@@ -260,7 +281,7 @@ TEST_F(SupplicantP2pIfaceHidlTest, StopFind) {
 /*
  * Flush
  */
-TEST_F(SupplicantP2pIfaceHidlTest, Flush) {
+TEST_P(SupplicantP2pIfaceHidlTest, Flush) {
     p2p_iface_->flush([](const SupplicantStatus& status) {
         EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
     });
@@ -269,7 +290,7 @@ TEST_F(SupplicantP2pIfaceHidlTest, Flush) {
 /*
  * Connect
  */
-TEST_F(SupplicantP2pIfaceHidlTest, Connect) {
+TEST_P(SupplicantP2pIfaceHidlTest, Connect) {
     p2p_iface_->connect(
         mac_addr_, ISupplicantP2pIface::WpsProvisionMethod::PBC,
         kTestConnectPin, false, false, kTestConnectGoIntent,
@@ -282,7 +303,7 @@ TEST_F(SupplicantP2pIfaceHidlTest, Connect) {
 /*
  * CancelConnect
  */
-TEST_F(SupplicantP2pIfaceHidlTest, CancelConnect) {
+TEST_P(SupplicantP2pIfaceHidlTest, CancelConnect) {
     p2p_iface_->connect(
         mac_addr_, ISupplicantP2pIface::WpsProvisionMethod::PBC,
         kTestConnectPin, false, false, kTestConnectGoIntent,
@@ -299,7 +320,7 @@ TEST_F(SupplicantP2pIfaceHidlTest, CancelConnect) {
 /*
  * ProvisionDiscovery
  */
-TEST_F(SupplicantP2pIfaceHidlTest, ProvisionDiscovery) {
+TEST_P(SupplicantP2pIfaceHidlTest, ProvisionDiscovery) {
     p2p_iface_->provisionDiscovery(
         mac_addr_, ISupplicantP2pIface::WpsProvisionMethod::PBC,
         [](const SupplicantStatus& status) {
@@ -311,7 +332,7 @@ TEST_F(SupplicantP2pIfaceHidlTest, ProvisionDiscovery) {
 /*
  * AddGroup
  */
-TEST_F(SupplicantP2pIfaceHidlTest, AddGroup) {
+TEST_P(SupplicantP2pIfaceHidlTest, AddGroup) {
     p2p_iface_->addGroup(false, kTestNetworkId,
                          [](const SupplicantStatus& /* status */) {
                              // TODO: Figure out the initialization sequence for
@@ -324,7 +345,7 @@ TEST_F(SupplicantP2pIfaceHidlTest, AddGroup) {
 /*
  * RemoveGroup
  */
-TEST_F(SupplicantP2pIfaceHidlTest, RemoveGroup) {
+TEST_P(SupplicantP2pIfaceHidlTest, RemoveGroup) {
     // This is not going to work with fake values.
     EXPECT_NE(SupplicantStatusCode::SUCCESS,
               HIDL_INVOKE(p2p_iface_, removeGroup, kTestGroupIfName).code);
@@ -333,7 +354,7 @@ TEST_F(SupplicantP2pIfaceHidlTest, RemoveGroup) {
 /*
  * Reject
  */
-TEST_F(SupplicantP2pIfaceHidlTest, Reject) {
+TEST_P(SupplicantP2pIfaceHidlTest, Reject) {
     p2p_iface_->reject(mac_addr_, [](const SupplicantStatus& status) {
         // This is not going to work with fake values.
         EXPECT_EQ(SupplicantStatusCode::FAILURE_UNKNOWN, status.code);
@@ -343,7 +364,7 @@ TEST_F(SupplicantP2pIfaceHidlTest, Reject) {
 /*
  * Invite
  */
-TEST_F(SupplicantP2pIfaceHidlTest, Invite) {
+TEST_P(SupplicantP2pIfaceHidlTest, Invite) {
     p2p_iface_->invite(kTestGroupIfName, mac_addr_, peer_mac_addr_,
                        [](const SupplicantStatus& status) {
                            // This is not going to work with fake values.
@@ -355,7 +376,7 @@ TEST_F(SupplicantP2pIfaceHidlTest, Invite) {
 /*
  * Reinvoke
  */
-TEST_F(SupplicantP2pIfaceHidlTest, Reinvoke) {
+TEST_P(SupplicantP2pIfaceHidlTest, Reinvoke) {
     p2p_iface_->reinvoke(
         kTestNetworkId, mac_addr_, [](const SupplicantStatus& status) {
             // This is not going to work with fake values.
@@ -367,7 +388,7 @@ TEST_F(SupplicantP2pIfaceHidlTest, Reinvoke) {
 /*
  * ConfigureExtListen
  */
-TEST_F(SupplicantP2pIfaceHidlTest, ConfigureExtListen) {
+TEST_P(SupplicantP2pIfaceHidlTest, ConfigureExtListen) {
     p2p_iface_->configureExtListen(kTestExtListenPeriod, kTestExtListenInterval,
                                    [](const SupplicantStatus& status) {
                                        EXPECT_EQ(SupplicantStatusCode::SUCCESS,
@@ -378,7 +399,7 @@ TEST_F(SupplicantP2pIfaceHidlTest, ConfigureExtListen) {
 /*
  * SetListenChannel
  */
-TEST_F(SupplicantP2pIfaceHidlTest, SetListenChannel) {
+TEST_P(SupplicantP2pIfaceHidlTest, SetListenChannel) {
     p2p_iface_->setListenChannel(
         kTestChannel, kTestOperatingClass, [](const SupplicantStatus& status) {
             EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
@@ -388,7 +409,7 @@ TEST_F(SupplicantP2pIfaceHidlTest, SetListenChannel) {
 /*
  * SetDisallowedFrequencies
  */
-TEST_F(SupplicantP2pIfaceHidlTest, SetDisallowedFrequencies) {
+TEST_P(SupplicantP2pIfaceHidlTest, SetDisallowedFrequencies) {
     std::vector<ISupplicantP2pIface::FreqRange> ranges = {
         {kTestFreqRange[0], kTestFreqRange[1]}};
     p2p_iface_->setDisallowedFrequencies(
@@ -400,7 +421,7 @@ TEST_F(SupplicantP2pIfaceHidlTest, SetDisallowedFrequencies) {
 /*
  * GetSsid
  */
-TEST_F(SupplicantP2pIfaceHidlTest, GetSsid) {
+TEST_P(SupplicantP2pIfaceHidlTest, GetSsid) {
     std::array<uint8_t, 6> mac_addr;
     memcpy(mac_addr.data(), kTestMacAddr, mac_addr.size());
     p2p_iface_->getSsid(mac_addr, [](const SupplicantStatus& status,
@@ -413,7 +434,7 @@ TEST_F(SupplicantP2pIfaceHidlTest, GetSsid) {
 /*
  * GetGroupCapability
  */
-TEST_F(SupplicantP2pIfaceHidlTest, GetGroupCapability) {
+TEST_P(SupplicantP2pIfaceHidlTest, GetGroupCapability) {
     std::array<uint8_t, 6> mac_addr;
     memcpy(mac_addr.data(), kTestMacAddr, mac_addr.size());
     p2p_iface_->getGroupCapability(
@@ -426,7 +447,7 @@ TEST_F(SupplicantP2pIfaceHidlTest, GetGroupCapability) {
 /*
  * FlushServices
  */
-TEST_F(SupplicantP2pIfaceHidlTest, FlushServices) {
+TEST_P(SupplicantP2pIfaceHidlTest, FlushServices) {
     p2p_iface_->flushServices([](const SupplicantStatus& status) {
         EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
     });
@@ -435,7 +456,7 @@ TEST_F(SupplicantP2pIfaceHidlTest, FlushServices) {
 /*
  * SetMiracastMode
  */
-TEST_F(SupplicantP2pIfaceHidlTest, SetMiracastMode) {
+TEST_P(SupplicantP2pIfaceHidlTest, SetMiracastMode) {
     p2p_iface_->setMiracastMode(ISupplicantP2pIface::MiracastMode::DISABLED,
                                 [](const SupplicantStatus& status) {
                                     EXPECT_EQ(SupplicantStatusCode::SUCCESS,
@@ -456,7 +477,7 @@ TEST_F(SupplicantP2pIfaceHidlTest, SetMiracastMode) {
 /*
  * SetGroupIdle
  */
-TEST_F(SupplicantP2pIfaceHidlTest, SetGroupIdle) {
+TEST_P(SupplicantP2pIfaceHidlTest, SetGroupIdle) {
     // This is not going to work with fake values.
     EXPECT_NE(SupplicantStatusCode::SUCCESS,
               HIDL_INVOKE(p2p_iface_, setGroupIdle, kTestGroupIfName,
@@ -467,7 +488,7 @@ TEST_F(SupplicantP2pIfaceHidlTest, SetGroupIdle) {
 /*
  * SetPowerSave
  */
-TEST_F(SupplicantP2pIfaceHidlTest, SetPowerSave) {
+TEST_P(SupplicantP2pIfaceHidlTest, SetPowerSave) {
     // This is not going to work with fake values.
     EXPECT_NE(
         SupplicantStatusCode::SUCCESS,
@@ -481,7 +502,7 @@ TEST_F(SupplicantP2pIfaceHidlTest, SetPowerSave) {
 /*
  * SetWpsDeviceName
  */
-TEST_F(SupplicantP2pIfaceHidlTest, SetWpsDeviceName) {
+TEST_P(SupplicantP2pIfaceHidlTest, SetWpsDeviceName) {
     EXPECT_EQ(
         SupplicantStatusCode::SUCCESS,
         HIDL_INVOKE(p2p_iface_, setWpsDeviceName, kTestWpsDeviceName).code);
@@ -490,7 +511,7 @@ TEST_F(SupplicantP2pIfaceHidlTest, SetWpsDeviceName) {
 /*
  * SetWpsDeviceType
  */
-TEST_F(SupplicantP2pIfaceHidlTest, SetWpsDeviceType) {
+TEST_P(SupplicantP2pIfaceHidlTest, SetWpsDeviceType) {
     EXPECT_EQ(
         SupplicantStatusCode::SUCCESS,
         HIDL_INVOKE(p2p_iface_, setWpsDeviceType, kTestWpsDeviceType).code);
@@ -499,7 +520,7 @@ TEST_F(SupplicantP2pIfaceHidlTest, SetWpsDeviceType) {
 /*
  * SetWpsManufacturer
  */
-TEST_F(SupplicantP2pIfaceHidlTest, SetWpsManufacturer) {
+TEST_P(SupplicantP2pIfaceHidlTest, SetWpsManufacturer) {
     EXPECT_EQ(
         SupplicantStatusCode::SUCCESS,
         HIDL_INVOKE(p2p_iface_, setWpsManufacturer, kTestWpsManufacturer).code);
@@ -508,7 +529,7 @@ TEST_F(SupplicantP2pIfaceHidlTest, SetWpsManufacturer) {
 /*
  * SetWpsModelName
  */
-TEST_F(SupplicantP2pIfaceHidlTest, SetWpsModelName) {
+TEST_P(SupplicantP2pIfaceHidlTest, SetWpsModelName) {
     EXPECT_EQ(SupplicantStatusCode::SUCCESS,
               HIDL_INVOKE(p2p_iface_, setWpsModelName, kTestWpsModelName).code);
 }
@@ -516,7 +537,7 @@ TEST_F(SupplicantP2pIfaceHidlTest, SetWpsModelName) {
 /*
  * SetWpsModelNumber
  */
-TEST_F(SupplicantP2pIfaceHidlTest, SetWpsModelNumber) {
+TEST_P(SupplicantP2pIfaceHidlTest, SetWpsModelNumber) {
     EXPECT_EQ(
         SupplicantStatusCode::SUCCESS,
         HIDL_INVOKE(p2p_iface_, setWpsModelNumber, kTestWpsModelNumber).code);
@@ -525,7 +546,7 @@ TEST_F(SupplicantP2pIfaceHidlTest, SetWpsModelNumber) {
 /*
  * SetWpsSerialNumber
  */
-TEST_F(SupplicantP2pIfaceHidlTest, SetWpsSerialNumber) {
+TEST_P(SupplicantP2pIfaceHidlTest, SetWpsSerialNumber) {
     EXPECT_EQ(
         SupplicantStatusCode::SUCCESS,
         HIDL_INVOKE(p2p_iface_, setWpsSerialNumber, kTestWpsSerialNumber).code);
@@ -534,7 +555,7 @@ TEST_F(SupplicantP2pIfaceHidlTest, SetWpsSerialNumber) {
 /*
  * SetWpsConfigMethods
  */
-TEST_F(SupplicantP2pIfaceHidlTest, SetWpsConfigMethods) {
+TEST_P(SupplicantP2pIfaceHidlTest, SetWpsConfigMethods) {
     EXPECT_EQ(
         SupplicantStatusCode::SUCCESS,
         HIDL_INVOKE(p2p_iface_, setWpsConfigMethods, kTestWpsConfigMethods)
@@ -548,7 +569,7 @@ TEST_F(SupplicantP2pIfaceHidlTest, SetWpsConfigMethods) {
  * This also tests that removeBonjourSerive() returns error when there is no
  * existing bonjour service with the same query data.
  */
-TEST_F(SupplicantP2pIfaceHidlTest, AddAndRemoveBonjourService) {
+TEST_P(SupplicantP2pIfaceHidlTest, AddAndRemoveBonjourService) {
     EXPECT_EQ(SupplicantStatusCode::SUCCESS,
               HIDL_INVOKE(
                   p2p_iface_, addBonjourService,
@@ -584,7 +605,7 @@ TEST_F(SupplicantP2pIfaceHidlTest, AddAndRemoveBonjourService) {
  * This also tests that removeUpnpService() returns error when there is no
  * exsiting upnp service with the same service name.
  */
-TEST_F(SupplicantP2pIfaceHidlTest, AddAndRemoveUpnpService) {
+TEST_P(SupplicantP2pIfaceHidlTest, AddAndRemoveUpnpService) {
     EXPECT_EQ(SupplicantStatusCode::SUCCESS,
               HIDL_INVOKE(p2p_iface_, addUpnpService, 0 /* version */,
                           kTestUpnpServiceName)
@@ -604,7 +625,7 @@ TEST_F(SupplicantP2pIfaceHidlTest, AddAndRemoveUpnpService) {
 /*
  * EnableWfd
  */
-TEST_F(SupplicantP2pIfaceHidlTest, EnableWfd) {
+TEST_P(SupplicantP2pIfaceHidlTest, EnableWfd) {
     EXPECT_EQ(SupplicantStatusCode::SUCCESS,
               HIDL_INVOKE(p2p_iface_, enableWfd, true).code);
     EXPECT_EQ(SupplicantStatusCode::SUCCESS,
@@ -614,8 +635,17 @@ TEST_F(SupplicantP2pIfaceHidlTest, EnableWfd) {
 /*
  * SetWfdDeviceInfo
  */
-TEST_F(SupplicantP2pIfaceHidlTest, SetWfdDeviceInfo) {
+TEST_P(SupplicantP2pIfaceHidlTest, SetWfdDeviceInfo) {
     EXPECT_EQ(
         SupplicantStatusCode::SUCCESS,
         HIDL_INVOKE(p2p_iface_, setWfdDeviceInfo, kTestWfdDeviceInfo).code);
 }
+
+INSTANTIATE_TEST_CASE_P(
+    PerInstance, SupplicantP2pIfaceHidlTest,
+    testing::Combine(
+        testing::ValuesIn(
+            android::hardware::getAllHalInstanceNames(IWifi::descriptor)),
+        testing::ValuesIn(android::hardware::getAllHalInstanceNames(
+            ISupplicant::descriptor))),
+    android::hardware::PrintInstanceTupleNameToString<>);

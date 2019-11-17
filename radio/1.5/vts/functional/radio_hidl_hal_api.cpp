@@ -179,10 +179,6 @@ TEST_F(RadioHidlTest_v1_5, setSignalStrengthReportingCriteria_1_5_Eutran_RSSNR) 
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_5->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
-
-    ALOGI("setSignalStrengthReportingCriteria_1_5_Eutran, rspInfo.error = %s\n",
-          toString(radioRsp_v1_5->rspInfo.error).c_str());
-    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error, {RadioError::NONE}));
 }
 
 /*
