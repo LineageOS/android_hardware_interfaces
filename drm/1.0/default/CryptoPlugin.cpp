@@ -152,6 +152,7 @@ namespace implementation {
                 return Void();
             }
 
+            base = static_cast<uint8_t *>(static_cast<void *>(destBase->getPointer()));
             destPtr = static_cast<void *>(base + destination.nonsecureMemory.offset);
         } else if (destination.type == BufferType::NATIVE_HANDLE) {
             if (!secure) {
