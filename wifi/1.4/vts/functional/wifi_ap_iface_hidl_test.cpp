@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
+#include <android/hardware/wifi/1.4/IWifi.h>
 #include <android/hardware/wifi/1.4/IWifiApIface.h>
-
-#include <VtsHalHidlTargetTestBase.h>
+#include <gtest/gtest.h>
+#include <hidl/GtestPrinter.h>
+#include <hidl/ServiceManagement.h>
 
 #include "wifi_hidl_call_util.h"
 #include "wifi_hidl_test_utils.h"
@@ -25,6 +27,7 @@ using ::android::sp;
 using ::android::hardware::hidl_array;
 using ::android::hardware::wifi::V1_0::WifiStatus;
 using ::android::hardware::wifi::V1_0::WifiStatusCode;
+using ::android::hardware::wifi::V1_4::IWifi;
 using ::android::hardware::wifi::V1_4::IWifiApIface;
 
 extern WifiHidlEnvironment* gEnv;
@@ -32,19 +35,21 @@ extern WifiHidlEnvironment* gEnv;
 /**
  * Fixture to use for all STA Iface HIDL interface tests.
  */
-class WifiApIfaceHidlTest : public ::testing::VtsHalHidlTargetTestBase {
+class WifiApIfaceHidlTest : public ::testing::TestWithParam<std::string> {
    public:
     virtual void SetUp() override {
-        wifi_ap_iface_ = IWifiApIface::castFrom(getWifiApIface());
+        wifi_ap_iface_ =
+            IWifiApIface::castFrom(getWifiApIface(GetInstanceName()));
         ASSERT_NE(nullptr, wifi_ap_iface_.get());
     }
 
-    virtual void TearDown() override {
-        stopWifi();
-    }
+    virtual void TearDown() override { stopWifi(GetInstanceName()); }
 
    protected:
     sp<IWifiApIface> wifi_ap_iface_;
+
+   private:
+    std::string GetInstanceName() { return GetParam(); }
 };
 
 /*
@@ -52,7 +57,7 @@ class WifiApIfaceHidlTest : public ::testing::VtsHalHidlTargetTestBase {
  * Ensures that calls to set MAC address will return a success status
  * code.
  */
-TEST_F(WifiApIfaceHidlTest, SetMacAddress) {
+TEST_P(WifiApIfaceHidlTest, SetMacAddress) {
     const hidl_array<uint8_t, 6> kMac{{0x12, 0x22, 0x33, 0x52, 0x10, 0x41}};
     EXPECT_EQ(WifiStatusCode::SUCCESS,
               HIDL_INVOKE(wifi_ap_iface_, setMacAddress, kMac).code);
@@ -63,10 +68,16 @@ TEST_F(WifiApIfaceHidlTest, SetMacAddress) {
  * Ensures that calls to get factory MAC address will retrieve a non-zero MAC
  * and return a success status code.
  */
-TEST_F(WifiApIfaceHidlTest, GetFactoryMacAddress) {
+TEST_P(WifiApIfaceHidlTest, GetFactoryMacAddress) {
     std::pair<WifiStatus, hidl_array<uint8_t, 6> > status_and_mac =
         HIDL_INVOKE(wifi_ap_iface_, getFactoryMacAddress);
     EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_mac.first.code);
     hidl_array<uint8_t, 6> all_zero{};
     EXPECT_NE(all_zero, status_and_mac.second);
 }
+
+INSTANTIATE_TEST_SUITE_P(
+    PerInstance, WifiApIfaceHidlTest,
+    testing::ValuesIn(
+        android::hardware::getAllHalInstanceNames(IWifi::descriptor)),
+    android::hardware::PrintInstanceNameToString);

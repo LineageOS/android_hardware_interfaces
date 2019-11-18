@@ -16,9 +16,11 @@
 
 #include <android-base/logging.h>
 
+#include <android/hardware/wifi/1.3/IWifi.h>
 #include <android/hardware/wifi/1.3/IWifiChip.h>
-
-#include <VtsHalHidlTargetTestBase.h>
+#include <gtest/gtest.h>
+#include <hidl/GtestPrinter.h>
+#include <hidl/ServiceManagement.h>
 
 #include "wifi_hidl_call_util.h"
 #include "wifi_hidl_test_utils.h"
@@ -39,14 +41,14 @@ constexpr IWifiChip::LatencyMode kLatencyModeLow = IWifiChip::LatencyMode::LOW;
 /**
  * Fixture to use for all Wifi chip HIDL interface tests.
  */
-class WifiChipHidlTest : public ::testing::VtsHalHidlTargetTestBase {
+class WifiChipHidlTest : public ::testing::TestWithParam<std::string> {
    public:
     virtual void SetUp() override {
-        wifi_chip_ = IWifiChip::castFrom(getWifiChip());
+        wifi_chip_ = IWifiChip::castFrom(getWifiChip(GetInstanceName()));
         ASSERT_NE(nullptr, wifi_chip_.get());
     }
 
-    virtual void TearDown() override { stopWifi(); }
+    virtual void TearDown() override { stopWifi(GetInstanceName()); }
 
    protected:
     // Helper function to configure the Chip in one of the supported modes.
@@ -70,6 +72,9 @@ class WifiChipHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     }
 
     sp<IWifiChip> wifi_chip_;
+
+   private:
+    std::string GetInstanceName() { return GetParam(); }
 };
 
 /*
@@ -77,7 +82,7 @@ class WifiChipHidlTest : public ::testing::VtsHalHidlTargetTestBase {
  * This test case tests the setLatencyMode() API with
  * Latency mode NORMAL
  */
-TEST_F(WifiChipHidlTest, SetLatencyMode_normal) {
+TEST_P(WifiChipHidlTest, SetLatencyMode_normal) {
     uint32_t caps = configureChipForStaIfaceAndGetCapabilities();
     const auto& status =
         HIDL_INVOKE(wifi_chip_, setLatencyMode, kLatencyModeNormal);
@@ -92,7 +97,7 @@ TEST_F(WifiChipHidlTest, SetLatencyMode_normal) {
  * SetLatencyMode_low
  * This test case tests the setLatencyMode() API with Latency mode LOW
  */
-TEST_F(WifiChipHidlTest, SetLatencyMode_low) {
+TEST_P(WifiChipHidlTest, SetLatencyMode_low) {
     uint32_t caps = configureChipForStaIfaceAndGetCapabilities();
     const auto& status =
         HIDL_INVOKE(wifi_chip_, setLatencyMode, kLatencyModeLow);
@@ -106,7 +111,7 @@ TEST_F(WifiChipHidlTest, SetLatencyMode_low) {
 /*
  * GetCapabilities_1_3
  */
-TEST_F(WifiChipHidlTest, GetCapabilities_1_3) {
+TEST_P(WifiChipHidlTest, GetCapabilities_1_3) {
     configureChipForIfaceType(IfaceType::STA, true);
     const auto& status_and_caps = HIDL_INVOKE(wifi_chip_, getCapabilities_1_3);
     if (status_and_caps.first.code != WifiStatusCode::SUCCESS) {
@@ -116,3 +121,9 @@ TEST_F(WifiChipHidlTest, GetCapabilities_1_3) {
     }
     EXPECT_NE(0u, status_and_caps.second);
 }
+
+INSTANTIATE_TEST_SUITE_P(
+    PerInstance, WifiChipHidlTest,
+    testing::ValuesIn(android::hardware::getAllHalInstanceNames(
+        ::android::hardware::wifi::V1_3::IWifi::descriptor)),
+    android::hardware::PrintInstanceNameToString);

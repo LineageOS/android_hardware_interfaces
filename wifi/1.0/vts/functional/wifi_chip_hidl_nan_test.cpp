@@ -16,9 +16,11 @@
 
 #include <android-base/logging.h>
 
+#include <android/hardware/wifi/1.0/IWifi.h>
 #include <android/hardware/wifi/1.0/IWifiChip.h>
-
-#include <VtsHalHidlTargetTestBase.h>
+#include <gtest/gtest.h>
+#include <hidl/GtestPrinter.h>
+#include <hidl/ServiceManagement.h>
 
 #include "wifi_hidl_call_util.h"
 #include "wifi_hidl_test_utils.h"
@@ -26,6 +28,7 @@
 using ::android::sp;
 using ::android::hardware::wifi::V1_0::ChipModeId;
 using ::android::hardware::wifi::V1_0::IfaceType;
+using ::android::hardware::wifi::V1_0::IWifi;
 using ::android::hardware::wifi::V1_0::IWifiChip;
 using ::android::hardware::wifi::V1_0::IWifiIface;
 using ::android::hardware::wifi::V1_0::IWifiNanIface;
@@ -35,14 +38,14 @@ using ::android::hardware::wifi::V1_0::WifiStatusCode;
 /**
  * Fixture for IWifiChip tests that are conditioned on NAN support.
  */
-class WifiChipHidlNanTest : public ::testing::VtsHalHidlTargetTestBase {
+class WifiChipHidlNanTest : public ::testing::TestWithParam<std::string> {
    public:
     virtual void SetUp() override {
-        wifi_chip_ = getWifiChip();
+        wifi_chip_ = getWifiChip(GetInstanceName());
         ASSERT_NE(nullptr, wifi_chip_.get());
     }
 
-    virtual void TearDown() override { stopWifi(); }
+    virtual void TearDown() override { stopWifi(GetInstanceName()); }
 
    protected:
     // Helper function to configure the Chip in one of the supported modes.
@@ -72,6 +75,9 @@ class WifiChipHidlNanTest : public ::testing::VtsHalHidlTargetTestBase {
     }
 
     sp<IWifiChip> wifi_chip_;
+
+   private:
+    std::string GetInstanceName() { return GetParam(); }
 };
 
 /*
@@ -79,7 +85,7 @@ class WifiChipHidlNanTest : public ::testing::VtsHalHidlTargetTestBase {
  * Configures the chip in NAN mode and ensures that at least 1 iface creation
  * succeeds.
  */
-TEST_F(WifiChipHidlNanTest, CreateNanIface) {
+TEST_P(WifiChipHidlNanTest, CreateNanIface) {
     configureChipForIfaceType(IfaceType::NAN, true);
 
     sp<IWifiNanIface> iface;
@@ -93,7 +99,7 @@ TEST_F(WifiChipHidlNanTest, CreateNanIface) {
  * before creating the iface. Then, create the iface and ensure that
  * iface name is returned via the list.
  */
-TEST_F(WifiChipHidlNanTest, GetNanIfaceNames) {
+TEST_P(WifiChipHidlNanTest, GetNanIfaceNames) {
     configureChipForIfaceType(IfaceType::NAN, true);
 
     const auto& status_and_iface_names1 =
@@ -125,7 +131,7 @@ TEST_F(WifiChipHidlNanTest, GetNanIfaceNames) {
  * the iface object using the correct name and ensure any other name
  * doesn't retrieve an iface object.
  */
-TEST_F(WifiChipHidlNanTest, GetNanIface) {
+TEST_P(WifiChipHidlNanTest, GetNanIface) {
     configureChipForIfaceType(IfaceType::NAN, true);
 
     sp<IWifiNanIface> nan_iface;
@@ -151,7 +157,7 @@ TEST_F(WifiChipHidlNanTest, GetNanIface) {
  * the iface object using the correct name and ensure any other name
  * doesn't remove the iface.
  */
-TEST_F(WifiChipHidlNanTest, RemoveNanIface) {
+TEST_P(WifiChipHidlNanTest, RemoveNanIface) {
     configureChipForIfaceType(IfaceType::NAN, true);
 
     sp<IWifiNanIface> nan_iface;
@@ -167,3 +173,9 @@ TEST_F(WifiChipHidlNanTest, RemoveNanIface) {
     // No such iface exists now. So, this should return failure.
     EXPECT_EQ(WifiStatusCode::ERROR_INVALID_ARGS, removeNanIface(iface_name));
 }
+
+INSTANTIATE_TEST_SUITE_P(
+    PerInstance, WifiChipHidlNanTest,
+    testing::ValuesIn(
+        android::hardware::getAllHalInstanceNames(IWifi::descriptor)),
+    android::hardware::PrintInstanceNameToString);
