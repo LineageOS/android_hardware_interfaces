@@ -237,6 +237,7 @@ package audio.policy.configuration.V6_0 {
     method public audio.policy.configuration.V6_0.GainMode getMode();
     method public String getName();
     method public int getStepValueMB();
+    method public boolean getUseForVolume();
     method public void setChannel_mask(String);
     method public void setDefaultValueMB(int);
     method public void setMaxRampMs(int);
@@ -246,6 +247,7 @@ package audio.policy.configuration.V6_0 {
     method public void setMode(audio.policy.configuration.V6_0.GainMode);
     method public void setName(String);
     method public void setStepValueMB(int);
+    method public void setUseForVolume(boolean);
   }
 
   public class GlobalConfiguration {
