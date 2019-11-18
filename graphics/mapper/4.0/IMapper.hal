@@ -356,7 +356,7 @@ interface IMapper {
      * to read from a buffer, they have permission to read the buffer's metadata.
      *
      * There is one exception to this rule. Fences CANNOT be used to protect a buffer's
-     * metadata. A process should finish writing to a buffer's metadata before sending
+     * metadata. A process should finish writing to a buffer's metadata before
      * sending the buffer to another process that will read or write to the buffer.
      * This exception is needed because sometimes userspace needs to read the
      * buffer's metadata before the buffer's contents are ready.
