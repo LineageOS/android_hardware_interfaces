@@ -29,6 +29,7 @@
 #include <android/hardware/neuralnetworks/1.2/IPreparedModelCallback.h>
 #include <android/hardware/neuralnetworks/1.2/types.h>
 #include <android/hardware/neuralnetworks/1.3/IDevice.h>
+#include <android/hardware/neuralnetworks/1.3/IPreparedModel.h>
 #include <android/hardware/neuralnetworks/1.3/IPreparedModelCallback.h>
 #include <android/hardware/neuralnetworks/1.3/types.h>
 #include <android/hidl/allocator/1.0/IAllocator.h>
@@ -61,7 +62,6 @@ using V1_0::OperandLifeTime;
 using V1_0::Request;
 using V1_1::ExecutionPreference;
 using V1_2::Constant;
-using V1_2::IPreparedModel;
 using V1_2::MeasureTiming;
 using V1_2::OperationType;
 using V1_2::OutputShape;
@@ -181,7 +181,7 @@ static void makeOutputDimensionsUnspecified(Model* model) {
 static Return<ErrorStatus> ExecutePreparedModel(const sp<IPreparedModel>& preparedModel,
                                                 const Request& request, MeasureTiming measure,
                                                 sp<ExecutionCallback>& callback) {
-    return preparedModel->execute_1_2(request, measure, callback);
+    return preparedModel->execute_1_3(request, measure, callback);
 }
 static Return<ErrorStatus> ExecutePreparedModel(const sp<IPreparedModel>& preparedModel,
                                                 const Request& request, MeasureTiming measure,
