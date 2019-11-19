@@ -31,4 +31,5 @@ cc_test {
         "android.hardware.wifi@1.4",
         "libwifi-system-iface"
     ],
+    test_suites: ["general-tests", "vts-core"],
 }

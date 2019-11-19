@@ -18,7 +18,9 @@
 
 #include <android/hardware/wifi/1.0/IWifi.h>
 
-#include <VtsHalHidlTargetTestBase.h>
+#include <gtest/gtest.h>
+#include <hidl/GtestPrinter.h>
+#include <hidl/ServiceManagement.h>
 
 #include "wifi_hidl_test_utils.h"
 
@@ -28,13 +30,14 @@ using ::android::sp;
 /**
  * Fixture to use for all root Wifi HIDL interface tests.
  */
-class WifiHidlTest : public ::testing::VtsHalHidlTargetTestBase {
+class WifiHidlTest : public ::testing::TestWithParam<std::string> {
    public:
     virtual void SetUp() override {}
 
-    virtual void TearDown() override { stopWifi(); }
+    virtual void TearDown() override { stopWifi(GetInstanceName()); }
 
    protected:
+    std::string GetInstanceName() { return GetParam(); }
 };
 
 /*
@@ -42,7 +45,12 @@ class WifiHidlTest : public ::testing::VtsHalHidlTargetTestBase {
  * Ensures that an instance of the IWifi proxy object is
  * successfully created.
  */
-TEST(WifiHidlTestNoFixture, Create) {
-    EXPECT_NE(nullptr, getWifi().get());
-    stopWifi();
+TEST_P(WifiHidlTest, Create) {
+    // The creation of a proxy object is tested as part of SetUp method.
 }
+
+INSTANTIATE_TEST_SUITE_P(
+    PerInstance, WifiHidlTest,
+    testing::ValuesIn(
+        android::hardware::getAllHalInstanceNames(IWifi::descriptor)),
+    android::hardware::PrintInstanceNameToString);

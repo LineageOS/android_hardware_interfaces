@@ -16,10 +16,12 @@
 
 #include <android-base/logging.h>
 
+#include <android/hardware/wifi/1.0/IWifi.h>
 #include <android/hardware/wifi/1.0/IWifiStaIface.h>
 #include <android/hardware/wifi/1.3/IWifiStaIface.h>
-
-#include <VtsHalHidlTargetTestBase.h>
+#include <gtest/gtest.h>
+#include <hidl/GtestPrinter.h>
+#include <hidl/ServiceManagement.h>
 
 #include "wifi_hidl_call_util.h"
 #include "wifi_hidl_test_utils.h"
@@ -28,6 +30,7 @@ using ::android::sp;
 using ::android::hardware::wifi::V1_0::Bssid;
 using ::android::hardware::wifi::V1_0::CommandId;
 using ::android::hardware::wifi::V1_0::IfaceType;
+using ::android::hardware::wifi::V1_0::IWifi;
 using ::android::hardware::wifi::V1_0::IWifiStaIface;
 using ::android::hardware::wifi::V1_0::Rssi;
 using ::android::hardware::wifi::V1_0::Ssid;
@@ -41,14 +44,14 @@ using ::android::hardware::wifi::V1_0::WifiStatusCode;
 /**
  * Fixture to use for all STA Iface HIDL interface tests.
  */
-class WifiStaIfaceHidlTest : public ::testing::VtsHalHidlTargetTestBase {
+class WifiStaIfaceHidlTest : public ::testing::TestWithParam<std::string> {
    public:
     virtual void SetUp() override {
-        wifi_sta_iface_ = getWifiStaIface();
+        wifi_sta_iface_ = getWifiStaIface(GetInstanceName());
         ASSERT_NE(nullptr, wifi_sta_iface_.get());
     }
 
-    virtual void TearDown() override { stopWifi(); }
+    virtual void TearDown() override { stopWifi(GetInstanceName()); }
 
    protected:
     bool isCapabilitySupported(IWifiStaIface::StaIfaceCapabilityMask cap_mask) {
@@ -59,6 +62,7 @@ class WifiStaIfaceHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     }
 
     sp<IWifiStaIface> wifi_sta_iface_;
+    std::string GetInstanceName() { return GetParam(); }
 };
 
 /*
@@ -66,15 +70,14 @@ class WifiStaIfaceHidlTest : public ::testing::VtsHalHidlTargetTestBase {
  * Ensures that an instance of the IWifiStaIface proxy object is
  * successfully created.
  */
-TEST(WifiStaIfaceHidlTestNoFixture, Create) {
-    EXPECT_NE(nullptr, getWifiStaIface().get());
-    stopWifi();
+TEST_P(WifiStaIfaceHidlTest, Create) {
+    // The creation of a proxy object is tested as part of SetUp method.
 }
 
 /*
  * GetCapabilities:
  */
-TEST_F(WifiStaIfaceHidlTest, GetCapabilities) {
+TEST_P(WifiStaIfaceHidlTest, GetCapabilities) {
     const auto& status_and_caps = HIDL_INVOKE(wifi_sta_iface_, getCapabilities);
     EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_caps.first.code);
     EXPECT_GT(status_and_caps.second, 0u);
@@ -84,7 +87,7 @@ TEST_F(WifiStaIfaceHidlTest, GetCapabilities) {
  * GetType:
  * Ensures that the correct interface type is returned for station interface.
  */
-TEST_F(WifiStaIfaceHidlTest, GetType) {
+TEST_P(WifiStaIfaceHidlTest, GetType) {
     const auto& status_and_type = HIDL_INVOKE(wifi_sta_iface_, getType);
     EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_type.first.code);
     EXPECT_EQ(IfaceType::STA, status_and_type.second);
@@ -94,7 +97,7 @@ TEST_F(WifiStaIfaceHidlTest, GetType) {
  * GetApfPacketFilterCapabilities:
  * Ensures that we can retrieve APF packet filter capabilites.
  */
-TEST_F(WifiStaIfaceHidlTest, GetApfPacketFilterCapabilities) {
+TEST_P(WifiStaIfaceHidlTest, GetApfPacketFilterCapabilities) {
     if (!isCapabilitySupported(IWifiStaIface::StaIfaceCapabilityMask::APF)) {
         // No-op if APF packet filer is not supported.
         return;
@@ -109,7 +112,7 @@ TEST_F(WifiStaIfaceHidlTest, GetApfPacketFilterCapabilities) {
  * GetBackgroundScanCapabilities:
  * Ensures that we can retrieve background scan capabilities.
  */
-TEST_F(WifiStaIfaceHidlTest, GetBackgroundScanCapabilities) {
+TEST_P(WifiStaIfaceHidlTest, GetBackgroundScanCapabilities) {
     if (!isCapabilitySupported(
             IWifiStaIface::StaIfaceCapabilityMask::BACKGROUND_SCAN)) {
         // No-op if background scan is not supported.
@@ -125,7 +128,7 @@ TEST_F(WifiStaIfaceHidlTest, GetBackgroundScanCapabilities) {
  * GetValidFrequenciesForBand:
  * Ensures that we can retrieve valid frequencies for 2.4 GHz band.
  */
-TEST_F(WifiStaIfaceHidlTest, GetValidFrequenciesForBand) {
+TEST_P(WifiStaIfaceHidlTest, GetValidFrequenciesForBand) {
     const auto& status_and_freqs = HIDL_INVOKE(
         wifi_sta_iface_, getValidFrequenciesForBand, WifiBand::BAND_24GHZ);
     EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_freqs.first.code);
@@ -137,7 +140,7 @@ TEST_F(WifiStaIfaceHidlTest, GetValidFrequenciesForBand) {
  * Ensures that calls to enable, disable, and retrieve link layer stats
  * will return a success status code.
  */
-TEST_F(WifiStaIfaceHidlTest, LinkLayerStatsCollection) {
+TEST_P(WifiStaIfaceHidlTest, LinkLayerStatsCollection) {
     if (!isCapabilitySupported(
             IWifiStaIface::StaIfaceCapabilityMask::LINK_LAYER_STATS)) {
         // No-op if link layer stats is not supported.
@@ -172,7 +175,7 @@ TEST_F(WifiStaIfaceHidlTest, LinkLayerStatsCollection) {
  * Ensures that calls to disable RSSI monitoring will return an error status
  * code if RSSI monitoring is not enabled.
  */
-TEST_F(WifiStaIfaceHidlTest, RSSIMonitoring) {
+TEST_P(WifiStaIfaceHidlTest, RSSIMonitoring) {
     if (!isCapabilitySupported(
             IWifiStaIface::StaIfaceCapabilityMask::RSSI_MONITOR)) {
         // No-op if RSSI monitor is not supported.
@@ -197,7 +200,7 @@ TEST_F(WifiStaIfaceHidlTest, RSSIMonitoring) {
  * Ensures that calls to configure and enable roaming will return a success
  * status code.
  */
-TEST_F(WifiStaIfaceHidlTest, RoamingControl) {
+TEST_P(WifiStaIfaceHidlTest, RoamingControl) {
     if (!isCapabilitySupported(
             IWifiStaIface::StaIfaceCapabilityMask::CONTROL_ROAMING)) {
         // No-op if roaming control is not supported.
@@ -242,9 +245,9 @@ TEST_F(WifiStaIfaceHidlTest, RoamingControl) {
  * Ensures that calls to enable neighbor discovery offload will return a success
  * status code.
  */
-TEST_F(WifiStaIfaceHidlTest, EnableNDOffload) {
-   if (!isCapabilitySupported(
-           IWifiStaIface::StaIfaceCapabilityMask::ND_OFFLOAD)) {
+TEST_P(WifiStaIfaceHidlTest, EnableNDOffload) {
+    if (!isCapabilitySupported(
+            IWifiStaIface::StaIfaceCapabilityMask::ND_OFFLOAD)) {
         // No-op if nd offload is not supported.
         return;
     }
@@ -257,7 +260,7 @@ TEST_F(WifiStaIfaceHidlTest, EnableNDOffload) {
  * Ensures that calls to set scanning MAC OUI will return a success status
  * code.
  */
-TEST_F(WifiStaIfaceHidlTest, SetScanningMacOui) {
+TEST_P(WifiStaIfaceHidlTest, SetScanningMacOui) {
     if (!isCapabilitySupported(
             IWifiStaIface::StaIfaceCapabilityMask::SCAN_RAND)) {
         // No-op if SetScanningMacOui is not supported.
@@ -274,9 +277,9 @@ TEST_F(WifiStaIfaceHidlTest, SetScanningMacOui) {
  * Ensures that calls to start packet fate monitoring and retrieve TX/RX
  * packets will return a success status code.
  */
-TEST_F(WifiStaIfaceHidlTest, PacketFateMonitoring) {
-   if (!isCapabilitySupported(
-           IWifiStaIface::StaIfaceCapabilityMask::DEBUG_PACKET_FATE)) {
+TEST_P(WifiStaIfaceHidlTest, PacketFateMonitoring) {
+    if (!isCapabilitySupported(
+            IWifiStaIface::StaIfaceCapabilityMask::DEBUG_PACKET_FATE)) {
         // No-op if packet fate monitor is not supported.
         return;
     }
@@ -291,3 +294,9 @@ TEST_F(WifiStaIfaceHidlTest, PacketFateMonitoring) {
     EXPECT_EQ(WifiStatusCode::SUCCESS,
               HIDL_INVOKE(wifi_sta_iface_, getDebugRxPacketFates).first.code);
 }
+
+INSTANTIATE_TEST_SUITE_P(
+    PerInstance, WifiStaIfaceHidlTest,
+    testing::ValuesIn(
+        android::hardware::getAllHalInstanceNames(IWifi::descriptor)),
+    android::hardware::PrintInstanceNameToString);

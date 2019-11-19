@@ -16,9 +16,11 @@
 
 #include <android-base/logging.h>
 
+#include <android/hardware/wifi/1.0/IWifi.h>
 #include <android/hardware/wifi/1.0/IWifiChip.h>
-
-#include <VtsHalHidlTargetTestBase.h>
+#include <gtest/gtest.h>
+#include <hidl/GtestPrinter.h>
+#include <hidl/ServiceManagement.h>
 
 #include "wifi_hidl_call_util.h"
 #include "wifi_hidl_test_utils.h"
@@ -26,6 +28,7 @@
 using ::android::sp;
 using ::android::hardware::wifi::V1_0::ChipModeId;
 using ::android::hardware::wifi::V1_0::IfaceType;
+using ::android::hardware::wifi::V1_0::IWifi;
 using ::android::hardware::wifi::V1_0::IWifiApIface;
 using ::android::hardware::wifi::V1_0::IWifiChip;
 using ::android::hardware::wifi::V1_0::IWifiIface;
@@ -35,14 +38,14 @@ using ::android::hardware::wifi::V1_0::WifiStatusCode;
 /**
  * Fixture for IWifiChip tests that are conditioned on SoftAP support.
  */
-class WifiChipHidlApTest : public ::testing::VtsHalHidlTargetTestBase {
+class WifiChipHidlApTest : public ::testing::TestWithParam<std::string> {
    public:
     virtual void SetUp() override {
-        wifi_chip_ = getWifiChip();
+        wifi_chip_ = getWifiChip(GetInstanceName());
         ASSERT_NE(nullptr, wifi_chip_.get());
     }
 
-    virtual void TearDown() override { stopWifi(); }
+    virtual void TearDown() override { stopWifi(GetInstanceName()); }
 
    protected:
     // Helper function to configure the Chip in one of the supported modes.
@@ -72,6 +75,9 @@ class WifiChipHidlApTest : public ::testing::VtsHalHidlTargetTestBase {
     }
 
     sp<IWifiChip> wifi_chip_;
+
+   private:
+    std::string GetInstanceName() { return GetParam(); }
 };
 
 /*
@@ -79,7 +85,7 @@ class WifiChipHidlApTest : public ::testing::VtsHalHidlTargetTestBase {
  * Configures the chip in AP mode and ensures that at least 1 iface creation
  * succeeds.
  */
-TEST_F(WifiChipHidlApTest, CreateApIface) {
+TEST_P(WifiChipHidlApTest, CreateApIface) {
     configureChipForIfaceType(IfaceType::AP, true);
 
     sp<IWifiApIface> iface;
@@ -93,7 +99,7 @@ TEST_F(WifiChipHidlApTest, CreateApIface) {
  * before creating the iface. Then, create the iface and ensure that
  * iface name is returned via the list.
  */
-TEST_F(WifiChipHidlApTest, GetApIfaceNames) {
+TEST_P(WifiChipHidlApTest, GetApIfaceNames) {
     configureChipForIfaceType(IfaceType::AP, true);
 
     const auto& status_and_iface_names1 =
@@ -125,7 +131,7 @@ TEST_F(WifiChipHidlApTest, GetApIfaceNames) {
  * the iface object using the correct name and ensure any other name
  * doesn't retrieve an iface object.
  */
-TEST_F(WifiChipHidlApTest, GetApIface) {
+TEST_P(WifiChipHidlApTest, GetApIface) {
     configureChipForIfaceType(IfaceType::AP, true);
 
     sp<IWifiApIface> ap_iface;
@@ -151,7 +157,7 @@ TEST_F(WifiChipHidlApTest, GetApIface) {
  * the iface object using the correct name and ensure any other name
  * doesn't remove the iface.
  */
-TEST_F(WifiChipHidlApTest, RemoveApIface) {
+TEST_P(WifiChipHidlApTest, RemoveApIface) {
     configureChipForIfaceType(IfaceType::AP, true);
 
     sp<IWifiApIface> ap_iface;
@@ -166,3 +172,9 @@ TEST_F(WifiChipHidlApTest, RemoveApIface) {
     // No such iface exists now. So, this should return failure.
     EXPECT_EQ(WifiStatusCode::ERROR_INVALID_ARGS, removeApIface(iface_name));
 }
+
+INSTANTIATE_TEST_SUITE_P(
+    PerInstance, WifiChipHidlApTest,
+    testing::ValuesIn(
+        android::hardware::getAllHalInstanceNames(IWifi::descriptor)),
+    android::hardware::PrintInstanceNameToString);
