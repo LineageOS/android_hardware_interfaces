@@ -5,10 +5,5 @@ aidl_interface {
         "android/hardware/vibrator/*.aidl",
     ],
     stability: "vintf",
-    backend: {
-        java: {
-            enabled: false,
-        },
-    },
 }
 
