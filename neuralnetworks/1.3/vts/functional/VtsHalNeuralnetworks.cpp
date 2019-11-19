@@ -21,8 +21,8 @@
 #include <hidl/ServiceManagement.h>
 #include <string>
 #include <utility>
-#include "1.0/Callbacks.h"
 #include "1.0/Utils.h"
+#include "1.3/Callbacks.h"
 #include "GeneratedTestHarness.h"
 #include "TestHarness.h"
 
@@ -30,11 +30,11 @@ namespace android::hardware::neuralnetworks::V1_3::vts::functional {
 
 using HidlToken =
         hidl_array<uint8_t, static_cast<uint32_t>(V1_2::Constant::BYTE_SIZE_OF_CACHE_TOKEN)>;
+using implementation::PreparedModelCallback;
 using V1_0::ErrorStatus;
 using V1_0::Request;
 using V1_1::ExecutionPreference;
 using V1_2::IPreparedModel;
-using V1_2::implementation::PreparedModelCallback;
 
 // internal helper function
 void createPreparedModel(const sp<IDevice>& device, const Model& model,
