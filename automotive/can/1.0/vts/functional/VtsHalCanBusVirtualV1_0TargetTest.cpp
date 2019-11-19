@@ -244,14 +244,14 @@ TEST_F(CanBusVirtualHalTest, Filter) {
     auto bus2 = makeBus();
 
     hidl_vec<CanMessageFilter> filterPositive = {
-            {0x101, 0x100, false},
-            {0x010, 0x0F0, false},
+            {0x101, 0x100, false, FilterFlag::DONT_CARE, FilterFlag::DONT_CARE},
+            {0x010, 0x0F0, false, FilterFlag::DONT_CARE, FilterFlag::DONT_CARE},
     };
     auto listenerPositive = bus2.listen(filterPositive);
 
     hidl_vec<CanMessageFilter> filterNegative = {
-            {0x123, 0x0FF, true},
-            {0x004, 0x00F, true},
+            {0x123, 0x0FF, true, FilterFlag::DONT_CARE, FilterFlag::DONT_CARE},
+            {0x004, 0x00F, true, FilterFlag::DONT_CARE, FilterFlag::DONT_CARE},
     };
     auto listenerNegative = bus2.listen(filterNegative);
 
