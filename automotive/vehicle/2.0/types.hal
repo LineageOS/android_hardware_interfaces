@@ -2349,6 +2349,96 @@ enum VehicleProperty : int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:SEAT),
 
+    /**
+     * Support customize permissions for vendor properties
+     *
+     * Implement this property if vehicle hal support customize vendor permissions feature.
+     * VehiclePropConfig.configArray is used to indicate vendor properties and permissions
+     * which selected for this vendor property. The permission must be one of enum in
+     * VehicleVendorPermission.
+     * The configArray is set as follows:
+     *      configArray[n] = propId : property ID for the vendor property
+     *      configArray[n+1] = one of enums in VehicleVendorPermission. It indicates the permission
+     *      for reading value of the property.
+     *      configArray[n+2] = one of enums in VehicleVendorPermission. It indicates the permission
+     *      for writing value of the property.
+     *
+     * For example:
+     * configArray = {
+     *      vendor_prop_1, PERMISSION_VENDOR_SEAT_READ, PERMISSION_VENDOR_SEAT_WRITE,
+     *      vendor_prop_2, PERMISSION_VENDOR_INFO, PERMISSION_NOT_ACCESSIBLE,
+     * }
+     * If vendor properties are not in this array, they will have the default vendor permission.
+     * If vendor chose PERMISSION_NOT_ACCESSIBLE, android will not have access to the property. In
+     * the example, Android can not write value for vendor_prop_2.
+     *
+     * @change_mode VehiclePropertyChangeMode:STATIC
+     * @access VehiclePropertyAccess:READ
+     */
+    SUPPORT_CUSTOMIZE_VENDOR_PERMISSION = (
+        0x0F05
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:BOOLEAN
+        | VehicleArea:GLOBAL),
+
+};
+
+/**
+ * Used by SUPPORT_CUSTOMIZE_VENDOR_PERMISSION to indicate the permission of vendor properties.
+ */
+enum VehicleVendorPermission : int32_t {
+    PERMISSION_DEFAULT = 0x00000000,
+
+    // permissions for the property related with window
+    PERMISSION_SET_VENDOR_CATEGORY_WINDOW= 0X00000001,
+    PERMISSION_GET_VENDOR_CATEGORY_WINDOW = 0x00000002,
+    // permissions for the property related with door
+    PERMISSION_SET_VENDOR_CATEGORY_DOOR  = 0x00000003,
+    PERMISSION_GET_VENDOR_CATEGORY_DOOR   = 0x00000004,
+    // permissions for the property related with seat
+    PERMISSION_SET_VENDOR_CATEGORY_SEAT  = 0x00000005,
+    PERMISSION_GET_VENDOR_CATEGORY_SEAT   = 0x00000006,
+    // permissions for the property related with mirror
+    PERMISSION_SET_VENDOR_CATEGORY_MIRROR= 0x00000007,
+    PERMISSION_GET_VENDOR_CATEGORY_MIRROR = 0x00000008,
+
+    // permissions for the property related with car's information
+    PERMISSION_SET_VENDOR_CATEGORY_INFO  = 0x00000009,
+    PERMISSION_GET_VENDOR_CATEGORY_INFO   = 0x0000000A,
+    // permissions for the property related with car's engine
+    PERMISSION_SET_VENDOR_CATEGORY_ENGINE= 0x0000000B,
+    PERMISSION_GET_VENDOR_CATEGORY_ENGINE = 0x0000000C,
+    // permissions for the property related with car's HVAC
+    PERMISSION_SET_VENDOR_CATEGORY_HVAC  = 0x0000000D,
+    PERMISSION_GET_VENDOR_CATEGORY_HVAC   = 0x0000000E,
+    // permissions for the property related with car's light
+    PERMISSION_SET_VENDOR_CATEGORY_LIGHT = 0x0000000F,
+    PERMISSION_GET_VENDOR_CATEGORY_LIGHT  = 0x00000010,
+
+    // permissions reserved for other vendor permission
+    PERMISSION_SET_VENDOR_CATEGORY_1  = 0x00010000,
+    PERMISSION_GET_VENDOR_CATEGORY_1   = 0x00011000,
+    PERMISSION_SET_VENDOR_CATEGORY_2  = 0x00020000,
+    PERMISSION_GET_VENDOR_CATEGORY_2   = 0x00021000,
+    PERMISSION_SET_VENDOR_CATEGORY_3  = 0x00030000,
+    PERMISSION_GET_VENDOR_CATEGORY_3   = 0x00031000,
+    PERMISSION_SET_VENDOR_CATEGORY_4  = 0x00040000,
+    PERMISSION_GET_VENDOR_CATEGORY_4   = 0x00041000,
+    PERMISSION_SET_VENDOR_CATEGORY_5  = 0x00050000,
+    PERMISSION_GET_VENDOR_CATEGORY_5   = 0x00051000,
+    PERMISSION_SET_VENDOR_CATEGORY_6  = 0x00060000,
+    PERMISSION_GET_VENDOR_CATEGORY_6   = 0x00061000,
+    PERMISSION_SET_VENDOR_CATEGORY_7  = 0x00070000,
+    PERMISSION_GET_VENDOR_CATEGORY_7   = 0x00071000,
+    PERMISSION_SET_VENDOR_CATEGORY_8  = 0x00080000,
+    PERMISSION_GET_VENDOR_CATEGORY_8   = 0x00081000,
+    PERMISSION_SET_VENDOR_CATEGORY_9  = 0x00090000,
+    PERMISSION_GET_VENDOR_CATEGORY_9   = 0x00091000,
+    PERMISSION_SET_VENDOR_CATEGORY_10 = 0x000A0000,
+    PERMISSION_GET_VENDOR_CATEGORY_10  = 0x000A1000,
+
+    // Indicate not available for android to access.
+    PERMISSION_NOT_ACCESSIBLE = 0xF0000000
 };
 
 /**
