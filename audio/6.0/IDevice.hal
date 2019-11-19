@@ -280,4 +280,15 @@ interface IDevice {
      */
     setConnectedState(DeviceAddress address, bool connected)
             generates (Result retval);
+
+    /**
+     * Called by the framework to deinitialize the device and free up
+     * all currently allocated resources. It is recommended to close
+     * the device on the client side as soon as it is becomes unused.
+     *
+     * @return retval OK in case the success.
+     *                INVALID_STATE if the device was already closed.
+     */
+    @exit
+    close() generates (Result retval);
 };

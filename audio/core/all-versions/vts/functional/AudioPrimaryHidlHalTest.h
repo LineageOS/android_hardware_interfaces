@@ -860,6 +860,7 @@ class OpenStreamTest : public AudioHidlTestWithDeviceConfigParameter {
     }
 
     static void waitForStreamDestruction() {
+#if MAJOR_VERSION <= 5
         // FIXME: there is no way to know when the remote IStream is being destroyed
         //        Binder does not support testing if an object is alive, thus
         //        wait for 100ms to let the binder destruction propagates and
@@ -868,6 +869,7 @@ class OpenStreamTest : public AudioHidlTestWithDeviceConfigParameter {
         //        the latency between local and remote destruction.
         IPCThreadState::self()->flushCommands();
         usleep(100 * 1000);
+#endif
     }
 
   private:

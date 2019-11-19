@@ -31,7 +31,11 @@ namespace implementation {
 
 PrimaryDevice::PrimaryDevice(audio_hw_device_t* device) : mDevice(new Device(device)) {}
 
-PrimaryDevice::~PrimaryDevice() {}
+PrimaryDevice::~PrimaryDevice() {
+    // Do not call mDevice->close here. If there are any unclosed streams,
+    // they only hold IDevice instance, not IPrimaryDevice, thus IPrimaryDevice
+    // "part" of a device can be destroyed before the streams.
+}
 
 // Methods from ::android::hardware::audio::CPP_VERSION::IDevice follow.
 Return<Result> PrimaryDevice::initCheck() {
@@ -158,6 +162,11 @@ Return<void> PrimaryDevice::getMicrophones(getMicrophones_cb _hidl_cb) {
 }
 Return<Result> PrimaryDevice::setConnectedState(const DeviceAddress& address, bool connected) {
     return mDevice->setConnectedState(address, connected);
+}
+#endif
+#if MAJOR_VERSION >= 6
+Return<Result> PrimaryDevice::close() {
+    return mDevice->close();
 }
 #endif
 
