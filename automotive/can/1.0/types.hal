@@ -73,23 +73,22 @@ struct CanMessage {
  * Single filter rule for CAN messages.
  *
  * A filter is satisfied if:
- * ((receivedId & mask) == (id & mask)) == !inverted
+ * ((receivedId & mask) == (id & mask)) == !exclude
  *
- * In order for set of filters to match, at least one non-inverted filters must match (if there is
- * one) and all inverted filters must match. In other words:
- *  - a single matching non-inverted filter makes the whole set matching;
- *  - a single non-matching inverted filter makes the whole set non-matching.
- *
- * Additional less common options for filtering include:
- * rtr - Remote Transmission Request; another ECU requests DLC bytes of data on this message ID
- * extendedFormat - 29 bit message ID is used instead of 11 bits
+ * In order for set of filters to match, at least one non-exclude filters must match (if there is
+ * one) and all exclude filters must match. In other words:
+ *  - a single matching non-exclude filter makes the whole set matching;
+ *  - a single non-matching excluded filter makes the whole set non-matching.
  */
 struct CanMessageFilter {
     CanMessageId id;
     uint32_t mask;
-    bool inverted;
+    /** Remote Transmission Request; another ECU requests <DLC> bytes of data on this message ID */
     FilterFlag rtr;
+    /** 29 bit message ID is used instead of 11 bits */
     FilterFlag extendedFormat;
+    /** 'exclude' *DOES* apply to rtr and extendedFormat! */
+    bool exclude;
 };
 
 
@@ -100,9 +99,9 @@ enum FilterFlag : uint8_t {
     /** Default, FilterFlag doesn't effect what messages filtered */
     DONT_CARE = 0,
     /** This FilterFlag MUST be present in received messages to pass though the filter */
-    REQUIRE,
+    SET,
     /** This FilterFlag must NOT be present in received messages to pass though the filter */
-    EXCLUDE,
+    NOT_SET,
 };
 
 enum Result : uint8_t {
