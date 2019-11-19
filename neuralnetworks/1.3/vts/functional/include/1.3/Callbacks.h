@@ -137,7 +137,7 @@ class PreparedModelCallback : public IPreparedModelCallback {
      *     nullptr if the model was unable to be prepared.
      */
     Return<void> notify_1_3(V1_0::ErrorStatus status,
-                            const sp<V1_2::IPreparedModel>& preparedModel) override;
+                            const sp<V1_3::IPreparedModel>& preparedModel) override;
 
     /**
      * PreparedModelCallback::wait blocks until notify* has been called on the
