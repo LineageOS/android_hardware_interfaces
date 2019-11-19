@@ -61,7 +61,7 @@ struct VmsLayer {
 
 struct VmsLayerAndPublisher {
     VmsLayerAndPublisher(VmsLayer layer, int publisher_id)
-        : layer(layer), publisher_id(publisher_id) {}
+        : layer(std::move(layer)), publisher_id(publisher_id) {}
     VmsLayer layer;
     int publisher_id;
 };
@@ -69,6 +69,8 @@ struct VmsLayerAndPublisher {
 // A VmsAssociatedLayer is used by subscribers to specify which publisher IDs
 // are acceptable for a given layer.
 struct VmsAssociatedLayer {
+    VmsAssociatedLayer(VmsLayer layer, std::vector<int> publisher_ids)
+        : layer(std::move(layer)), publisher_ids(std::move(publisher_ids)) {}
     VmsLayer layer;
     std::vector<int> publisher_ids;
 };
@@ -77,7 +79,7 @@ struct VmsAssociatedLayer {
 // its dependencies. Dependencies can be empty.
 struct VmsLayerOffering {
     VmsLayerOffering(VmsLayer layer, std::vector<VmsLayer> dependencies)
-        : layer(layer), dependencies(dependencies) {}
+        : layer(std::move(layer)), dependencies(std::move(dependencies)) {}
     VmsLayerOffering(VmsLayer layer) : layer(layer), dependencies() {}
     VmsLayer layer;
     std::vector<VmsLayer> dependencies;
@@ -87,7 +89,7 @@ struct VmsLayerOffering {
 // with the specified publisher ID.
 struct VmsOffers {
     VmsOffers(int publisher_id, std::vector<VmsLayerOffering> offerings)
-        : publisher_id(publisher_id), offerings(offerings) {}
+        : publisher_id(publisher_id), offerings(std::move(offerings)) {}
     int publisher_id;
     std::vector<VmsLayerOffering> offerings;
 };
@@ -230,6 +232,24 @@ bool hasServiceNewlyStarted(const VehiclePropValue& availability_change);
 VmsSessionStatus parseStartSessionMessage(const VehiclePropValue& start_session,
                                           const int current_service_id, const int current_client_id,
                                           int* new_service_id);
+
+// Returns true if the new sequence number of the availability state message is greater than
+// the last seen availability sequence number.
+bool isAvailabilitySequenceNumberNewer(const VehiclePropValue& availability_state,
+                                       const int last_seen_availability_sequence_number);
+
+// Returns sequence number of the availability state message.
+int32_t getSequenceNumberForAvailabilityState(const VehiclePropValue& availability_state);
+
+// Takes a availability state message and returns the associated layers that are
+// available to publish data.
+//
+// A subscriber can use this function when receiving an availability response or availability
+// change message to determine which associated layers are ready to publish data.
+// The caller of this function can optionally decide to not consume these layers
+// if the availability change has the sequence number less than the last seen
+// sequence number.
+std::vector<VmsAssociatedLayer> getAvailableLayers(const VehiclePropValue& availability_state);
 
 }  // namespace vms
 }  // namespace V2_0
