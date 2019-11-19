@@ -361,6 +361,7 @@ package audio.policy.configuration.V6_0 {
     method public String getRawName();
     enum_constant public static final audio.policy.configuration.V6_0.Stream AUDIO_STREAM_ACCESSIBILITY;
     enum_constant public static final audio.policy.configuration.V6_0.Stream AUDIO_STREAM_ALARM;
+    enum_constant public static final audio.policy.configuration.V6_0.Stream AUDIO_STREAM_ASSISTANT;
     enum_constant public static final audio.policy.configuration.V6_0.Stream AUDIO_STREAM_BLUETOOTH_SCO;
     enum_constant public static final audio.policy.configuration.V6_0.Stream AUDIO_STREAM_DTMF;
     enum_constant public static final audio.policy.configuration.V6_0.Stream AUDIO_STREAM_ENFORCED_AUDIBLE;
