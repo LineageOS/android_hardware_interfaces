@@ -214,6 +214,12 @@ package audio.policy.configuration.V6_0 {
     method public void set_default(boolean);
   }
 
+  public enum EngineSuffix {
+    method public String getRawName();
+    enum_constant public static final audio.policy.configuration.V6_0.EngineSuffix _default;
+    enum_constant public static final audio.policy.configuration.V6_0.EngineSuffix configurable;
+  }
+
   public enum GainMode {
     method public String getRawName();
     enum_constant public static final audio.policy.configuration.V6_0.GainMode AUDIO_GAIN_MODE_CHANNELS;
@@ -253,8 +259,10 @@ package audio.policy.configuration.V6_0 {
   public class GlobalConfiguration {
     ctor public GlobalConfiguration();
     method public boolean getCall_screen_mode_supported();
+    method public audio.policy.configuration.V6_0.EngineSuffix getEngine_library();
     method public boolean getSpeaker_drc_enabled();
     method public void setCall_screen_mode_supported(boolean);
+    method public void setEngine_library(audio.policy.configuration.V6_0.EngineSuffix);
     method public void setSpeaker_drc_enabled(boolean);
   }
 
