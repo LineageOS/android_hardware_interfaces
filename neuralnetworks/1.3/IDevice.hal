@@ -22,7 +22,7 @@ import @1.2::Constant;
 import @1.2::DeviceType;
 import @1.2::Extension;
 import @1.2::IDevice;
-import @1.2::IPreparedModelCallback;
+import IPreparedModelCallback;
 
 /**
  * This interface represents a device driver.
@@ -134,18 +134,18 @@ interface IDevice extends @1.2::IDevice {
      *     not provided, or match the numModelCache returned from
      *     getNumberOfCacheFilesNeeded. The cache handles will be provided in
      *     the same order when retrieving the preparedModel from cache files
-     *     with prepareModelFromCache.
+     *     with prepareModelFromCache_1_3.
      * @param dataCache A vector of handles with each entry holding exactly one
      *     cache file descriptor for the constants' cache. The length of the
      *     vector must either be 0 indicating that caching information is not
      *     provided, or match the numDataCache returned from
      *     getNumberOfCacheFilesNeeded. The cache handles will be provided in
      *     the same order when retrieving the preparedModel from cache files
-     *     with prepareModelFromCache.
+     *     with prepareModelFromCache_1_3.
      * @param token A caching token of length Constant::BYTE_SIZE_OF_CACHE_TOKEN
      *     identifying the prepared model. The same token will be provided when
      *     retrieving the prepared model from the cache files with
-     *     prepareModelFromCache.  Tokens should be chosen to have a low rate of
+     *     prepareModelFromCache_1_3.  Tokens should be chosen to have a low rate of
      *     collision for a particular application. The driver cannot detect a
      *     collision; a collision will result in a failed execution or in a
      *     successful execution that produces incorrect output values. If both
@@ -168,4 +168,83 @@ interface IDevice extends @1.2::IDevice {
                      uint8_t[Constant:BYTE_SIZE_OF_CACHE_TOKEN] token,
                      IPreparedModelCallback callback)
         generates (ErrorStatus status);
+
+    /**
+     * Creates a prepared model from cache files for execution.
+     *
+     * prepareModelFromCache_1_3 is used to retrieve a prepared model directly from
+     * cache files to avoid slow model compilation time. There are
+     * two types of cache file handles provided to the driver: model cache
+     * and data cache. For more information on the two types of cache handles,
+     * refer to getNumberOfCacheFilesNeeded.
+     *
+     * The file descriptors must be opened with read and write permission. A file may
+     * have any size, and the corresponding file descriptor may have any offset. The
+     * driver must truncate a file to zero size before writing to that file. The file
+     * descriptors may be closed by the client once the asynchronous preparation has
+     * finished. The driver must dup a file descriptor if it wants to get access to
+     * the cache file later.
+     *
+     * The model is prepared asynchronously with respect to the caller. The
+     * prepareModelFromCache_1_3 function must verify the inputs to the
+     * prepareModelFromCache_1_3 function are correct, and that the security-sensitive
+     * cache has not been modified since it was last written by the driver.
+     * If there is an error, or if compilation caching is not supported, or if the
+     * security-sensitive cache has been modified, prepareModelFromCache_1_3 must
+     * immediately invoke the callback with the appropriate ErrorStatus value and
+     * nullptr for the IPreparedModel, then return with the same ErrorStatus. If
+     * the inputs to the prepareModelFromCache_1_3 function are valid, the security-sensitive
+     * cache is not modified, and there is no error, prepareModelFromCache_1_3 must launch an
+     * asynchronous task to prepare the model in the background, and immediately return
+     * from prepareModelFromCache_1_3 with ErrorStatus::NONE. If the asynchronous task
+     * fails to launch, prepareModelFromCache_1_3 must immediately invoke the callback
+     * with ErrorStatus::GENERAL_FAILURE and nullptr for the IPreparedModel, then
+     * return with ErrorStatus::GENERAL_FAILURE.
+     *
+     * When the asynchronous task has finished preparing the model, it must
+     * immediately invoke the callback function provided as an input to
+     * prepareModelFromCache_1_3. If the model was prepared successfully, the
+     * callback object must be invoked with an error status of ErrorStatus::NONE
+     * and the produced IPreparedModel object. If an error occurred preparing
+     * the model, the callback object must be invoked with the appropriate
+     * ErrorStatus value and nullptr for the IPreparedModel.
+     *
+     * The only information that may be unknown to the model at this stage is
+     * the shape of the tensors, which may only be known at execution time. As
+     * such, some driver services may return partially prepared models, where
+     * the prepared model may only be finished when it is paired with a set of
+     * inputs to the model. Note that the same prepared model object may be
+     * used with different shapes of inputs on different (possibly concurrent)
+     * executions.
+     *
+     * @param modelCache A vector of handles with each entry holding exactly one
+     *     cache file descriptor for the security-sensitive cache. The length of
+     *     the vector must match the numModelCache returned from getNumberOfCacheFilesNeeded.
+     *     The cache handles will be provided in the same order as with prepareModel_1_3.
+     * @param dataCache A vector of handles with each entry holding exactly one
+     *     cache file descriptor for the constants' cache. The length of the vector
+     *     must match the numDataCache returned from getNumberOfCacheFilesNeeded.
+     *     The cache handles will be provided in the same order as with prepareModel_1_3.
+     * @param token A caching token of length Constant::BYTE_SIZE_OF_CACHE_TOKEN
+     *     identifying the prepared model. It is the same token provided when saving
+     *     the cache files with prepareModel_1_3. Tokens should be chosen
+     *     to have a low rate of collision for a particular application. The driver
+     *     cannot detect a collision; a collision will result in a failed execution
+     *     or in a successful execution that produces incorrect output values.
+     * @param callback A callback object used to return the error status of
+     *     preparing the model for execution and the prepared model if
+     *     successful, nullptr otherwise. The callback object's notify function
+     *     must be called exactly once, even if the model could not be prepared.
+     * @return status Error status of launching a task which prepares the model
+     *     in the background; must be:
+     *     - NONE if preparation task is successfully launched
+     *     - DEVICE_UNAVAILABLE if driver is offline or busy
+     *     - GENERAL_FAILURE if caching is not supported or if there is an
+     *       unspecified error
+     *     - INVALID_ARGUMENT if one of the input arguments is invalid
+     */
+    prepareModelFromCache_1_3(vec<handle> modelCache, vec<handle> dataCache,
+                              uint8_t[Constant:BYTE_SIZE_OF_CACHE_TOKEN] token,
+                              IPreparedModelCallback callback)
+            generates (ErrorStatus status);
 };
