@@ -149,6 +149,7 @@ enum OperationType : int32_t {
      * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
+     * * {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} (since HAL version 1.3)
      *
      * Supported tensor rank: 4, with "NHWC" or "NCHW" data layout.
      * With the default data layout NHWC, the data is stored in the order of:
@@ -210,7 +211,8 @@ enum OperationType : int32_t {
      * Outputs:
      * * 0: The output 4-D tensor, of shape
      *      [batches, out_height, out_width, depth].
-     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} and
+     *      {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} tensor,
      *      the scale and zeroPoint must be the same as input0.
      */
     AVERAGE_POOL_2D = @1.2::OperationType:AVERAGE_POOL_2D,
@@ -1259,6 +1261,7 @@ enum OperationType : int32_t {
      * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
+     * * {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} (since HAL version 1.3)
      *
      * Supported tensor rank: 4, with "NHWC" or "NCHW" data layout.
      * With the default data layout NHWC, the data is stored in the order of:
@@ -1320,7 +1323,8 @@ enum OperationType : int32_t {
      * Outputs:
      * * 0: The output 4-D tensor, of shape
      *      [batches, out_height, out_width, depth].
-     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} and
+     *      {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} tensor,
      *      the scale and zeroPoint must be the same as input0.
      */
     MAX_POOL_2D = @1.2::OperationType:MAX_POOL_2D,
