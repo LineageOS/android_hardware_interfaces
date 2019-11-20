@@ -58,7 +58,6 @@
 
 #include "utility/AssertOk.h"
 #include "utility/Documentation.h"
-#include "utility/PrettyPrintAudioTypes.h"
 #include "utility/ReturnIn.h"
 #include "utility/ValidateXml.h"
 
