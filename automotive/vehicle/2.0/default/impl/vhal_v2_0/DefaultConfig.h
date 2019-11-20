@@ -948,6 +948,24 @@ const ConfigDeclaration kVehicleProperties[]{
                     .access = VehiclePropertyAccess::READ_WRITE,
                     .changeMode = VehiclePropertyChangeMode::ON_CHANGE},
          .initialValue = {.stringValue = "Vendor String Property"}},
+
+        {.config =
+                 {
+                         .prop = toInt(VehicleProperty::SUPPORT_CUSTOMIZE_VENDOR_PERMISSION),
+                         .access = VehiclePropertyAccess::READ_WRITE,
+                         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                         .configArray =
+                                 {kMixedTypePropertyForTest,
+                                  (int)VehicleVendorPermission::PERMISSION_GET_VENDOR_CATEGORY_INFO,
+                                  (int)VehicleVendorPermission::PERMISSION_SET_VENDOR_CATEGORY_INFO,
+                                  VENDOR_EXTENSION_INT_PROPERTY,
+                                  (int)VehicleVendorPermission::PERMISSION_GET_VENDOR_CATEGORY_SEAT,
+                                  (int)VehicleVendorPermission::PERMISSION_NOT_ACCESSIBLE,
+                                  VENDOR_EXTENSION_FLOAT_PROPERTY,
+                                  (int)VehicleVendorPermission::PERMISSION_DEFAULT,
+                                  (int)VehicleVendorPermission::PERMISSION_DEFAULT},
+                 },
+         .initialValue = {.int32Values = {1}}},
 };
 
 }  // impl

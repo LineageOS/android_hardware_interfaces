@@ -100,7 +100,8 @@ const std::vector<DeviceConfigParameter>& getOutputDeviceConfigParameters() {
                             special = true;
                         }
                         if ((flags & AUDIO_OUTPUT_FLAG_DIRECT) &&
-                            !(flags & AUDIO_OUTPUT_FLAG_HW_AV_SYNC)) {
+                            !(flags &
+                              (AUDIO_OUTPUT_FLAG_HW_AV_SYNC | AUDIO_OUTPUT_FLAG_MMAP_NOIRQ))) {
                             result.emplace_back(device, config,
                                                 AudioOutputFlag(AUDIO_OUTPUT_FLAG_DIRECT));
                             special = true;

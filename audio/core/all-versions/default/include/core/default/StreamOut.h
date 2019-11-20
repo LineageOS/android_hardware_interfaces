@@ -126,7 +126,6 @@ struct StreamOut : public IStreamOut {
                                               TimeSpec* timeStamp);
 
    private:
-    bool mIsClosed;
     const sp<Device> mDevice;
     audio_stream_out_t* mStream;
     const sp<Stream> mStreamCommon;

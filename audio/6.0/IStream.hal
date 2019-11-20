@@ -277,7 +277,7 @@ interface IStream {
      * @return retval OK in case the success.
      *                NOT_SUPPORTED on non mmap mode streams
      *                NOT_INITIALIZED in case of memory allocation error
-     *                INVALID_ARGUMENTS if the requested buffer size is too large
+     *                INVALID_ARGUMENTS if the requested buffer size is invalid
      *                INVALID_STATE if called out of sequence
      * @return info    a MmapBufferInfo struct containing information on the MMMAP buffer created.
      */
@@ -300,13 +300,17 @@ interface IStream {
 
     /**
      * Called by the framework to deinitialize the stream and free up
-     * all the currently allocated resources. It is recommended to close
+     * all currently allocated resources. It is recommended to close
      * the stream on the client side as soon as it is becomes unused.
+     *
+     * The client must ensure that this function is not called while
+     * audio data is being transferred through the stream's message queues.
      *
      * @return retval OK in case the success.
      *                NOT_SUPPORTED if called on IStream instead of input or
      *                              output stream interface.
      *                INVALID_STATE if the stream was already closed.
      */
+    @exit
     close() generates (Result retval);
 };

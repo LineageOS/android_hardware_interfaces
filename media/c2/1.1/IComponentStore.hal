@@ -1,0 +1,64 @@
+/*
+ * Copyright 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.media.c2@1.1;
+
+import android.hardware.media.bufferpool@2.0::IClientManager;
+import android.hardware.media.c2@1.0::IComponentListener;
+import android.hardware.media.c2@1.0::IComponentStore;
+import android.hardware.media.c2@1.0::Status;
+
+import IComponent;
+
+/**
+ * Entry point for Codec2 HAL.
+ *
+ * All methods in `IComponentStore` must not block. If a method call cannot be
+ * completed in a timely manner, it must return `TIMED_OUT` in the return
+ * status. The only exceptions are getPoolClientManager() and getConfigurable(),
+ * which must always return immediately.
+ *
+ * @note This is an extension of version 1.0 of `IComponentStore`. The purpose
+ * of the extension is to add support for tunneling.
+ */
+interface IComponentStore extends @1.0::IComponentStore {
+    /**
+     * Creates a component by name.
+     *
+     * @param name Name of the component to create. This must match one of the
+     *     names returned by listComponents().
+     * @param listener Callback receiver.
+     * @param pool `IClientManager` object of the BufferPool in the client
+     *     process. This may be null if the client does not own a BufferPool.
+     * @return status Status of the call, which may be
+     *   - `OK`        - The component was created successfully.
+     *   - `NOT_FOUND` - There is no component with the given name.
+     *   - `NO_MEMORY` - Not enough memory to create the component.
+     *   - `TIMED_OUT` - The operation cannot be finished in a timely manner.
+     *   - `CORRUPTED` - Some unknown error occurred.
+     * @return comp The created component if @p status is `OK`.
+     *
+     * @sa IComponentListener.
+     */
+    createComponent_1_1(
+            string name,
+            IComponentListener listener,
+            IClientManager pool
+        ) generates (
+            Status status,
+            IComponent comp
+        );
+};
