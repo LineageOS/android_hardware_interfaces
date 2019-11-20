@@ -58,6 +58,9 @@ void H4Protocol::OnPacketReady() {
     case HCI_PACKET_TYPE_SCO_DATA:
       sco_cb_(hci_packetizer_.GetPacket());
       break;
+    case HCI_PACKET_TYPE_ISO_DATA:
+      iso_cb_(hci_packetizer_.GetPacket());
+      break;
     default:
       LOG_ALWAYS_FATAL("%s: Unimplemented packet type %d", __func__,
                        static_cast<int>(hci_packet_type_));

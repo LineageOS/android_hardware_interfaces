@@ -31,11 +31,12 @@ namespace hci {
 class H4Protocol : public HciProtocol {
  public:
   H4Protocol(int fd, PacketReadCallback event_cb, PacketReadCallback acl_cb,
-             PacketReadCallback sco_cb)
+             PacketReadCallback sco_cb, PacketReadCallback iso_cb)
       : uart_fd_(fd),
         event_cb_(event_cb),
         acl_cb_(acl_cb),
         sco_cb_(sco_cb),
+        iso_cb_(iso_cb),
         hci_packetizer_([this]() { OnPacketReady(); }) {}
 
   size_t Send(uint8_t type, const uint8_t* data, size_t length);
@@ -50,6 +51,7 @@ class H4Protocol : public HciProtocol {
   PacketReadCallback event_cb_;
   PacketReadCallback acl_cb_;
   PacketReadCallback sco_cb_;
+  PacketReadCallback iso_cb_;
 
   HciPacketType hci_packet_type_{HCI_PACKET_TYPE_UNKNOWN};
   hci::HciPacketizer hci_packetizer_;

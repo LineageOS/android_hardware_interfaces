@@ -584,6 +584,8 @@ a785a57447a81e9c130eef6904c3a5c256076c6a04588c40620ebd6fa2660d77 android.hardwar
 fd65298e1e09e0e3c781ab18305920d757dbe55a3b459ce17814ec5cf6dfee99 android.hardware.wifi@1.0::IWifiP2pIface
 
 # HALs released in Android R
+79e115c8f8970b8b914bafc66df5425e065fda4dcda97222966ef12451d2a1cc android.hardware.bluetooth@1.1::IBluetoothHci
+40ab2c6866c18d32baf6e49e3053949e79601f56963a791e93e68b9ee18f718d android.hardware.bluetooth@1.1::IBluetoothHciCallbacks
 07d0a252b2d8fa35887908a996ba395cf392968395fc30afab791f46e0c22a52 android.hardware.boot@1.1::IBootControl
 74049a402be913963edfdd80828a53736570e9d8124a1bf18166b6ed46a6b0ab android.hardware.boot@1.1::types
 ce8dbe76eb9ee94b46ef98f725be992e760a5751073d4f4912484026541371f3 android.hardware.health@2.1::IHealth
