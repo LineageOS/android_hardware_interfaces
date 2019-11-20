@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "Vibrator.h"
+#include "vibrator-impl/Vibrator.h"
 
 #include <android-base/logging.h>
 #include <thread>
