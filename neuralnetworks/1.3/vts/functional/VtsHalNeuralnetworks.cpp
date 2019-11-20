@@ -37,7 +37,7 @@ using V1_1::ExecutionPreference;
 
 // internal helper function
 void createPreparedModel(const sp<IDevice>& device, const Model& model,
-                         sp<IPreparedModel>* preparedModel) {
+                         sp<IPreparedModel>* preparedModel, bool reportSkipping) {
     ASSERT_NE(nullptr, preparedModel);
     *preparedModel = nullptr;
 
@@ -74,6 +74,9 @@ void createPreparedModel(const sp<IDevice>& device, const Model& model,
     // can continue.
     if (!fullySupportsModel && prepareReturnStatus != ErrorStatus::NONE) {
         ASSERT_EQ(nullptr, preparedModel->get());
+        if (!reportSkipping) {
+            return;
+        }
         LOG(INFO) << "NN VTS: Early termination of test because vendor service cannot prepare "
                      "model that it does not support.";
         std::cout << "[          ]   Early termination of test because vendor service cannot "
