@@ -28,43 +28,36 @@ namespace config {
 namespace V1_3 {
 namespace implementation {
 
-using ::android::sp;
-using ::android::hardware::hidl_array;
-using ::android::hardware::hidl_memory;
-using ::android::hardware::hidl_string;
+using namespace ::android::hardware::radio::config;
+
 using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
-using ::android::hardware::Void;
+
+using ::android::hardware::radio::V1_0::RadioResponseInfo;
 
 struct RadioConfigResponse : public IRadioConfigResponse {
     // Methods from ::android::hardware::radio::config::V1_0::IRadioConfigResponse follow.
     Return<void> getSimSlotsStatusResponse(
-            const ::android::hardware::radio::V1_0::RadioResponseInfo& info,
-            const hidl_vec<::android::hardware::radio::config::V1_0::SimSlotStatus>& slotStatus)
-            override;
-    Return<void> setSimSlotsMappingResponse(
-            const ::android::hardware::radio::V1_0::RadioResponseInfo& info) override;
+            const RadioResponseInfo& info,
+            const hidl_vec<V1_0::SimSlotStatus>& slotStatus) override;
+    Return<void> setSimSlotsMappingResponse(const RadioResponseInfo& info) override;
 
     // Methods from ::android::hardware::radio::config::V1_1::IRadioConfigResponse follow.
-    Return<void> getPhoneCapabilityResponse(
-            const ::android::hardware::radio::V1_0::RadioResponseInfo& info,
-            const ::android::hardware::radio::config::V1_1::PhoneCapability& phoneCapability)
-            override;
-    Return<void> setPreferredDataModemResponse(
-            const ::android::hardware::radio::V1_0::RadioResponseInfo& info) override;
-    Return<void> setModemsConfigResponse(
-            const ::android::hardware::radio::V1_0::RadioResponseInfo& info) override;
-    Return<void> getModemsConfigResponse(
-            const ::android::hardware::radio::V1_0::RadioResponseInfo& info,
-            const ::android::hardware::radio::config::V1_1::ModemsConfig& modemsConfig) override;
+    Return<void> getPhoneCapabilityResponse(const RadioResponseInfo& info,
+                                            const V1_1::PhoneCapability& phoneCapability) override;
+    Return<void> setPreferredDataModemResponse(const RadioResponseInfo& info) override;
+    Return<void> setModemsConfigResponse(const RadioResponseInfo& info) override;
+    Return<void> getModemsConfigResponse(const RadioResponseInfo& info,
+                                         const V1_1::ModemsConfig& modemsConfig) override;
 
     // Methods from ::android::hardware::radio::config::V1_2::IRadioConfigResponse follow.
     Return<void> getSimSlotsStatusResponse_1_2(
-            const ::android::hardware::radio::V1_0::RadioResponseInfo& info,
-            const hidl_vec<::android::hardware::radio::config::V1_2::SimSlotStatus>& slotStatus)
-            override;
+            const RadioResponseInfo& info,
+            const hidl_vec<V1_2::SimSlotStatus>& slotStatus) override;
 
-    // Methods from ::android::hidl::base::V1_0::IBase follow.
+    // Methods from ::android::hardware::radio::config::V1_3::IRadioConfigResponse follow.
+    Return<void> getPhoneCapabilityResponse_1_3(
+            const RadioResponseInfo& info, const V1_3::PhoneCapability& phoneCapability) override;
 };
 
 }  // namespace implementation
