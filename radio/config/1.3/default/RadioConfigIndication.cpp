@@ -23,10 +23,6 @@ namespace config {
 namespace V1_3 {
 namespace implementation {
 
-using namespace ::android::hardware::radio::V1_0;
-using namespace ::android::hardware::radio::config::V1_0;
-using namespace ::android::hardware::radio::config::V1_2;
-
 // Methods from ::android::hardware::radio::config::V1_0::IRadioConfigIndication follow.
 Return<void> RadioConfigIndication::simSlotsStatusChanged(
         RadioIndicationType /* type */, const hidl_vec<V1_0::SimSlotStatus>& /* slotStatus */) {
