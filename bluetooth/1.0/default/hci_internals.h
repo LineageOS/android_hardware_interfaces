@@ -24,7 +24,8 @@ enum HciPacketType {
   HCI_PACKET_TYPE_COMMAND = 1,
   HCI_PACKET_TYPE_ACL_DATA = 2,
   HCI_PACKET_TYPE_SCO_DATA = 3,
-  HCI_PACKET_TYPE_EVENT = 4
+  HCI_PACKET_TYPE_EVENT = 4,
+  HCI_PACKET_TYPE_ISO_DATA = 5,
 };
 
 // 2 bytes for opcode, 1 byte for parameter length (Volume 2, Part E, 5.4.1)
