@@ -2381,6 +2381,26 @@ enum VehicleProperty : int32_t {
         | VehiclePropertyType:BOOLEAN
         | VehicleArea:GLOBAL),
 
+    /**
+     * Allow disabling optional featurs from vhal.
+     *
+     * This property reports optional features that should be disabled.
+     * All allowed optional features for the system is declared in Car service overlay,
+     * config_allowed_optional_car_features.
+     * This property allows disabling features defined in the overlay. Without this property,
+     * all the features declared in the overlay will be enabled.
+     *
+     * Value read should include all features disabled with ',' separation.
+     * ex) "com.android.car.user.CarUserNoticeService,storage_monitoring"
+     * @change_mode VehiclePropertyChangeMode:STATIC
+     * @access VehiclePropertyAccess:READ
+     */
+    DISABLED_OPTIONAL_FEATURES = (
+        0x0F06
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:STRING
+        | VehicleArea:GLOBAL),
+
 };
 
 /**
