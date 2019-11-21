@@ -307,12 +307,11 @@ void Effect::getConfigImpl(int commandCode, const char* commandName, GetConfigCa
 Result Effect::getCurrentConfigImpl(uint32_t featureId, uint32_t configSize,
                                     GetCurrentConfigSuccessCallback onSuccess) {
     uint32_t halCmd = featureId;
-    uint32_t halResult[alignedSizeIn<uint32_t>(sizeof(uint32_t) + configSize)];
-    memset(halResult, 0, sizeof(halResult));
+    std::vector<uint32_t> halResult(alignedSizeIn<uint32_t>(sizeof(uint32_t) + configSize), 0);
     uint32_t halResultSize = 0;
-    return sendCommandReturningStatusAndData(EFFECT_CMD_GET_FEATURE_CONFIG, "GET_FEATURE_CONFIG",
-                                             sizeof(uint32_t), &halCmd, &halResultSize, halResult,
-                                             sizeof(uint32_t), [&] { onSuccess(&halResult[1]); });
+    return sendCommandReturningStatusAndData(
+            EFFECT_CMD_GET_FEATURE_CONFIG, "GET_FEATURE_CONFIG", sizeof(uint32_t), &halCmd,
+            &halResultSize, &halResult[0], sizeof(uint32_t), [&] { onSuccess(&halResult[1]); });
 }
 
 Result Effect::getParameterImpl(uint32_t paramSize, const void* paramData,
@@ -339,8 +338,7 @@ Result Effect::getSupportedConfigsImpl(uint32_t featureId, uint32_t maxConfigs, 
                                        GetSupportedConfigsSuccessCallback onSuccess) {
     uint32_t halCmd[2] = {featureId, maxConfigs};
     uint32_t halResultSize = 2 * sizeof(uint32_t) + maxConfigs * sizeof(configSize);
-    uint8_t halResult[halResultSize];
-    memset(&halResult[0], 0, halResultSize);
+    std::vector<uint8_t> halResult(static_cast<size_t>(halResultSize), 0);
     return sendCommandReturningStatusAndData(
         EFFECT_CMD_GET_FEATURE_SUPPORTED_CONFIGS, "GET_FEATURE_SUPPORTED_CONFIGS", sizeof(halCmd),
         halCmd, &halResultSize, &halResult[0], 2 * sizeof(uint32_t), [&] {
@@ -519,9 +517,9 @@ Return<void> Effect::setAndGetVolume(const hidl_vec<uint32_t>& volumes,
     uint32_t halDataSize;
     std::unique_ptr<uint8_t[]> halData = hidlVecToHal(volumes, &halDataSize);
     uint32_t halResultSize = halDataSize;
-    uint32_t halResult[volumes.size()];
+    std::vector<uint32_t> halResult(volumes.size(), 0);
     Result retval = sendCommandReturningData(EFFECT_CMD_SET_VOLUME, "SET_VOLUME", halDataSize,
-                                             &halData[0], &halResultSize, halResult);
+                                             &halData[0], &halResultSize, &halResult[0]);
     hidl_vec<uint32_t> result;
     if (retval == Result::OK) {
         result.setToExternal(&halResult[0], halResultSize);
@@ -581,8 +579,6 @@ Return<void> Effect::getSupportedAuxChannelsConfigs(uint32_t maxConfigs,
 }
 
 Return<void> Effect::getAuxChannelsConfig(getAuxChannelsConfig_cb _hidl_cb) {
-    uint32_t halResult[alignedSizeIn<uint32_t>(sizeof(uint32_t) + sizeof(channel_config_t))];
-    memset(halResult, 0, sizeof(halResult));
     EffectAuxChannelsConfig result;
     Result retval = getCurrentConfigImpl(
         EFFECT_FEATURE_AUX_CHANNELS, sizeof(channel_config_t), [&](void* configData) {
@@ -594,11 +590,12 @@ Return<void> Effect::getAuxChannelsConfig(getAuxChannelsConfig_cb _hidl_cb) {
 }
 
 Return<Result> Effect::setAuxChannelsConfig(const EffectAuxChannelsConfig& config) {
-    uint32_t halCmd[alignedSizeIn<uint32_t>(sizeof(uint32_t) + sizeof(channel_config_t))];
+    std::vector<uint32_t> halCmd(
+            alignedSizeIn<uint32_t>(sizeof(uint32_t) + sizeof(channel_config_t)), 0);
     halCmd[0] = EFFECT_FEATURE_AUX_CHANNELS;
     effectAuxChannelsConfigToHal(config, reinterpret_cast<channel_config_t*>(&halCmd[1]));
     return sendCommandReturningStatus(EFFECT_CMD_SET_FEATURE_CONFIG,
-                                      "SET_FEATURE_CONFIG AUX_CHANNELS", sizeof(halCmd), halCmd);
+                                      "SET_FEATURE_CONFIG AUX_CHANNELS", halCmd.size(), &halCmd[0]);
 }
 
 Return<Result> Effect::setAudioSource(AudioSource source) {
@@ -692,12 +689,11 @@ Return<void> Effect::getCurrentConfigForFeature(uint32_t featureId, uint32_t con
 
 Return<Result> Effect::setCurrentConfigForFeature(uint32_t featureId,
                                                   const hidl_vec<uint8_t>& configData) {
-    uint32_t halCmd[alignedSizeIn<uint32_t>(sizeof(uint32_t) + configData.size())];
-    memset(halCmd, 0, sizeof(halCmd));
+    std::vector<uint32_t> halCmd(alignedSizeIn<uint32_t>(sizeof(uint32_t) + configData.size()), 0);
     halCmd[0] = featureId;
     memcpy(&halCmd[1], &configData[0], configData.size());
     return sendCommandReturningStatus(EFFECT_CMD_SET_FEATURE_CONFIG, "SET_FEATURE_CONFIG",
-                                      sizeof(halCmd), halCmd);
+                                      halCmd.size(), &halCmd[0]);
 }
 
 Return<Result> Effect::close() {
