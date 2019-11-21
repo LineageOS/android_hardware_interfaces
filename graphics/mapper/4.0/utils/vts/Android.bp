@@ -26,6 +26,9 @@ cc_library_static {
         "android.hardware.graphics.allocator@4.0",
         "android.hardware.graphics.mapper@4.0",
     ],
+    shared_libs: [
+        "libgralloctypes",
+    ],
     export_static_lib_headers: [
         "android.hardware.graphics.allocator@4.0",
         "android.hardware.graphics.mapper@4.0",
