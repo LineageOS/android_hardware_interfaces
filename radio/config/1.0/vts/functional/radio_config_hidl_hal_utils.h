@@ -27,6 +27,7 @@
 #include <gtest/gtest.h>
 #include <hidl/GtestPrinter.h>
 #include <hidl/ServiceManagement.h>
+#include <log/log.h>
 
 #include "vts_test_util.h"
 
