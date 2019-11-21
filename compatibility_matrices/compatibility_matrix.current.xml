@@ -75,7 +75,7 @@
     </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.bluetooth</name>
-        <version>1.0</version>
+        <version>1.0-1</version>
         <interface>
             <name>IBluetoothHci</name>
             <instance>default</instance>

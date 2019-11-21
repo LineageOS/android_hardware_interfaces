@@ -13,10 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package android.hardware.tests.extension.vibrator;
 
-package android.hardware.vibrator@1.4;
-
-enum Capabilities : uint32_t {
-    ON_COMPLETION_CALLBACK = 1 << 0,
-    PERFORM_COMPLETION_CALLBACK = 1 << 1,
-};
+/**
+ * Can add custom enums. If these need to be extended further, new values can
+ * simply be added.
+ */
+@Backing(type="int")
+@VintfStability
+enum Directionality {
+    NONE,
+    /** vibrations should be transverse wrt primary screen */
+    TRANSVERSE,
+    /** vibrations should be longitudinal wrt primary screen */
+    LONGITUDINAL,
+}

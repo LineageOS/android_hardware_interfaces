@@ -1,0 +1,25 @@
+cc_binary {
+    name: "android.hardware.tests.extension.vibrator-service.example",
+    relative_install_path: "hw",
+    // normally you implement a service directly, but we are using an implementation
+    // from a library to attach our extension to.
+    static_libs: [
+        "libvibratorexampleimpl",
+    ],
+
+    // need to add this in the manifest and to init as well to use, see
+    // android.hardware.vibrator-service.example. This binary is being tested
+    // by running it manually as root.
+
+    vendor: true,
+    srcs: [
+        "service.cpp",
+        "CustomVibrator.cpp",
+    ],
+    shared_libs: [
+        "libbase",
+        "libbinder_ndk",
+        "vintf-vibrator-ndk_platform",
+        "test-vintf-vibrator-ext-ndk_platform",
+    ],
+}

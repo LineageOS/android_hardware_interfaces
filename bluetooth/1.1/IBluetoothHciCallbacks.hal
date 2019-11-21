@@ -14,8 +14,18 @@
  * limitations under the License.
  */
 
-package android.hardware.vibrator@1.4;
+package android.hardware.bluetooth@1.1;
 
-interface IVibratorCallback {
-    oneway onComplete();
+import @1.0::HciPacket;
+import @1.0::IBluetoothHciCallbacks;
+
+/**
+ * The interface from the Bluetooth Controller to the stack.
+ */
+interface IBluetoothHciCallbacks extends @1.0::IBluetoothHciCallbacks {
+    /**
+     * Send a ISO data packet form the controller to the host.
+     * @param data the ISO HCI packet to be passed to the host stack
+     */
+    isoDataReceived(HciPacket data);
 };

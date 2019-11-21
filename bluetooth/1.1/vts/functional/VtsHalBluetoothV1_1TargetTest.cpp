@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@
 #define LOG_TAG "bluetooth_hidl_hal_test"
 #include <android-base/logging.h>
 
-#include <android/hardware/bluetooth/1.0/IBluetoothHci.h>
-#include <android/hardware/bluetooth/1.0/IBluetoothHciCallbacks.h>
 #include <android/hardware/bluetooth/1.0/types.h>
+#include <android/hardware/bluetooth/1.1/IBluetoothHci.h>
+#include <android/hardware/bluetooth/1.1/IBluetoothHciCallbacks.h>
 #include <hardware/bluetooth.h>
 #include <utils/Log.h>
 
@@ -37,9 +37,9 @@ using ::android::hardware::hidl_death_recipient;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
-using ::android::hardware::bluetooth::V1_0::IBluetoothHci;
-using ::android::hardware::bluetooth::V1_0::IBluetoothHciCallbacks;
 using ::android::hardware::bluetooth::V1_0::Status;
+using ::android::hardware::bluetooth::V1_1::IBluetoothHci;
+using ::android::hardware::bluetooth::V1_1::IBluetoothHciCallbacks;
 
 #define HCI_MINIMUM_HCI_VERSION 5  // Bluetooth Core Specification 3.0 + HS
 #define HCI_MINIMUM_LMP_VERSION 5  // Bluetooth Core Specification 3.0 + HS
@@ -113,6 +113,7 @@ constexpr char kCallbackNameAclEventReceived[] = "aclDataReceived";
 constexpr char kCallbackNameHciEventReceived[] = "hciEventReceived";
 constexpr char kCallbackNameInitializationComplete[] = "initializationComplete";
 constexpr char kCallbackNameScoEventReceived[] = "scoDataReceived";
+constexpr char kCallbackNameIsoEventReceived[] = "isoDataReceived";
 
 class ThroughputLogger {
  public:
@@ -195,6 +196,7 @@ class BluetoothHidlTest : public ::testing::TestWithParam<std::string> {
     EXPECT_EQ(static_cast<size_t>(0), event_queue.size());
     EXPECT_EQ(static_cast<size_t>(0), sco_queue.size());
     EXPECT_EQ(static_cast<size_t>(0), acl_queue.size());
+    EXPECT_EQ(static_cast<size_t>(0), iso_queue.size());
   }
 
   void setBufferSizes();
@@ -205,8 +207,8 @@ class BluetoothHidlTest : public ::testing::TestWithParam<std::string> {
   void sendAndCheckACL(int num_packets, size_t size, uint16_t handle);
 
   // Helper functions to try to get a handle on verbosity
-  void enterLoopbackMode(std::vector<uint16_t>& sco_handles,
-                         std::vector<uint16_t>& acl_handles);
+  void enterLoopbackMode(std::vector<uint16_t>* sco_handles,
+                         std::vector<uint16_t>* acl_handles);
   void handle_no_ops();
   void wait_for_event(bool timeout_is_error);
   void wait_for_command_complete_event(hidl_vec<uint8_t> cmd);
@@ -264,6 +266,14 @@ class BluetoothHidlTest : public ::testing::TestWithParam<std::string> {
       NotifyFromCallback(kCallbackNameScoEventReceived);
       return Void();
     };
+
+    Return<void> isoDataReceived(
+        const ::android::hardware::hidl_vec<uint8_t>& data) override {
+      parent_.iso_cb_count++;
+      parent_.iso_queue.push(data);
+      NotifyFromCallback(kCallbackNameIsoEventReceived);
+      return Void();
+    };
   };
 
   sp<IBluetoothHci> bluetooth;
@@ -272,12 +282,14 @@ class BluetoothHidlTest : public ::testing::TestWithParam<std::string> {
   std::queue<hidl_vec<uint8_t>> event_queue;
   std::queue<hidl_vec<uint8_t>> acl_queue;
   std::queue<hidl_vec<uint8_t>> sco_queue;
+  std::queue<hidl_vec<uint8_t>> iso_queue;
 
   bool initialized;
 
   int event_cb_count;
   int sco_cb_count;
   int acl_cb_count;
+  int iso_cb_count;
 
   int max_acl_data_packet_length;
   int max_sco_data_packet_length;
@@ -548,8 +560,8 @@ int BluetoothHidlTest::wait_for_completed_packets_event(uint16_t handle) {
 }
 
 // Send local loopback command and initialize SCO and ACL handles.
-void BluetoothHidlTest::enterLoopbackMode(std::vector<uint16_t>& sco_handles,
-                                          std::vector<uint16_t>& acl_handles) {
+void BluetoothHidlTest::enterLoopbackMode(std::vector<uint16_t>* sco_handles,
+                                          std::vector<uint16_t>* acl_handles) {
   hidl_vec<uint8_t> cmd = COMMAND_HCI_WRITE_LOOPBACK_MODE_LOCAL;
   bluetooth->sendHciCommand(cmd);
 
@@ -582,9 +594,9 @@ void BluetoothHidlTest::enterLoopbackMode(std::vector<uint16_t>& sco_handles,
       uint16_t handle = event[EVENT_CONNECTION_COMPLETE_HANDLE_LSBYTE] |
                         event[EVENT_CONNECTION_COMPLETE_HANDLE_LSBYTE + 1] << 8;
       if (connection_type == EVENT_CONNECTION_COMPLETE_TYPE_SCO)
-        sco_handles.push_back(handle);
+        sco_handles->push_back(handle);
       else
-        acl_handles.push_back(handle);
+        acl_handles->push_back(handle);
 
       ALOGD("Connect complete type = %d handle = %d",
             event[EVENT_CONNECTION_COMPLETE_TYPE], handle);
@@ -662,7 +674,7 @@ TEST_P(BluetoothHidlTest, HciUnknownCommand) {
 TEST_P(BluetoothHidlTest, WriteLoopbackMode) {
   std::vector<uint16_t> sco_connection_handles;
   std::vector<uint16_t> acl_connection_handles;
-  enterLoopbackMode(sco_connection_handles, acl_connection_handles);
+  enterLoopbackMode(&sco_connection_handles, &acl_connection_handles);
 }
 
 // Enter loopback mode and send single packets.
@@ -671,7 +683,7 @@ TEST_P(BluetoothHidlTest, LoopbackModeSinglePackets) {
 
   std::vector<uint16_t> sco_connection_handles;
   std::vector<uint16_t> acl_connection_handles;
-  enterLoopbackMode(sco_connection_handles, acl_connection_handles);
+  enterLoopbackMode(&sco_connection_handles, &acl_connection_handles);
 
   sendAndCheckHCI(1);
 
@@ -708,7 +720,7 @@ TEST_P(BluetoothHidlTest, LoopbackModeBandwidth) {
 
   std::vector<uint16_t> sco_connection_handles;
   std::vector<uint16_t> acl_connection_handles;
-  enterLoopbackMode(sco_connection_handles, acl_connection_handles);
+  enterLoopbackMode(&sco_connection_handles, &acl_connection_handles);
 
   sendAndCheckHCI(NUM_HCI_COMMANDS_BANDWIDTH);
 

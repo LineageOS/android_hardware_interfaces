@@ -2448,15 +2448,17 @@ enum OperationType : int32_t {
      *       then clipping is disabled.
      *       If all the input tensors have type {@link OperandType::TENSOR_FLOAT32},
      *       this scalar must be of the type {@link OperandType::FLOAT32},
-     *       otherwise if all the input tensors have the type {@link OperandType::TENSOR_FLOAT16},
-     *       this scalar must be of type {@link OperandType::FLOAT16}.
+     *       otherwise if all the input tensors have the type
+     *       {@link OperandType::TENSOR_FLOAT16}, this scalar must be
+     *       of type {@link OperandType::FLOAT16}.
      * * 50: The clipping threshold for the output from the
      *       projection layer, such that values are bound within
      *       [-proj_clip, proj_clip]. If set to 0.0 then clipping is disabled.
      *       If all the input tensors have type {@link OperandType::TENSOR_FLOAT32},
      *       this scalar must be of the type {@link OperandType::FLOAT32},
-     *       otherwise if all the input tensors have the type {@link OperandType::TENSOR_FLOAT16},
-     *       this scalar must be of type {@link OperandType::FLOAT16}.
+     *       otherwise if all the input tensors have the type
+     *       {@link OperandType::TENSOR_FLOAT16}, this scalar must be
+     *       of type {@link OperandType::FLOAT16}.
      * * 51: merge_outputs
      *       An {@link OperandType::BOOL} scalar specifying if the outputs
      *       from forward and backward cells should be merged.
@@ -4124,7 +4126,6 @@ enum OperationType : int32_t {
      * * 0: A tensor of the same type and shape as input1 and input2.
      *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
      *      the scale and zeroPoint can be different from inputs' scale and zeroPoint.
-     *
      */
     SELECT = 84,
 
