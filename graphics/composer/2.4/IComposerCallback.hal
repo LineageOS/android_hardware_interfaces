@@ -32,4 +32,14 @@ interface IComposerCallback extends @2.1::IComposerCallback {
      *        is expected to be called vsyncPeriodNanos nanoseconds after this call.
      */
     oneway onVsync_2_4(Display display, int64_t timestamp, VsyncPeriodNanos vsyncPeriodNanos);
+
+    /**
+     * Notifies the client that the previously reported timing for vsync period change has been
+     * updated. This may occur if the composer missed the deadline for changing the vsync period
+     * or the client submitted a refresh frame too late.
+     *
+     * @param display is the display which vsync period change is in progress
+     * @param updatedTimeline is the new timeline for the vsync period change.
+     */
+    oneway onVsyncPeriodTimingChanged(Display display, VsyncPeriodChangeTimeline updatedTimeline);
 };

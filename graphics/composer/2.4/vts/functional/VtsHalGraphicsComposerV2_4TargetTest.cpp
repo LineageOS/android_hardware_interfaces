@@ -114,7 +114,7 @@ class GraphicsComposerHidlTest : public ::testing::TestWithParam<std::string> {
 
     void execute() { mComposerClient->execute(mReader.get(), mWriter.get()); }
 
-    void Test_setActiveConfigAndVsyncPeriod(
+    void Test_setActiveConfigWithConstraints(
             const IComposerClient::VsyncPeriodChangeConstraints& constraints);
 
     std::unique_ptr<Composer> mComposer;
@@ -194,42 +194,28 @@ TEST_P(GraphicsComposerHidlTest, getDisplayConnectionType) {
     }
 }
 
-TEST_P(GraphicsComposerHidlTest, getSupportedDisplayVsyncPeriods_BadDisplay) {
-    std::vector<VsyncPeriodNanos> supportedVsyncPeriods;
-    EXPECT_EQ(Error::BAD_DISPLAY, mComposerClient->getSupportedDisplayVsyncPeriods(
-                                          mInvalidDisplayId, Config(0), &supportedVsyncPeriods));
-}
+TEST_P(GraphicsComposerHidlTest, GetDisplayAttribute_2_4) {
+    std::vector<Config> configs = mComposerClient->getDisplayConfigs(mPrimaryDisplay);
+    for (auto config : configs) {
+        const std::array<IComposerClient::Attribute, 4> requiredAttributes = {{
+                IComposerClient::Attribute::WIDTH,
+                IComposerClient::Attribute::HEIGHT,
+                IComposerClient::Attribute::VSYNC_PERIOD,
+                IComposerClient::Attribute::CONFIG_GROUP,
+        }};
+        for (auto attribute : requiredAttributes) {
+            mComposerClient->getDisplayAttribute_2_4(mPrimaryDisplay, config, attribute);
+        }
 
-TEST_P(GraphicsComposerHidlTest, getSupportedDisplayVsyncPeriods_BadConfig) {
-    for (Display display : mComposerCallback->getDisplays()) {
-        Config invalidConfigId = GetInvalidConfigId(display);
-        std::vector<VsyncPeriodNanos> supportedVsyncPeriods;
-        EXPECT_EQ(Error::BAD_CONFIG, mComposerClient->getSupportedDisplayVsyncPeriods(
-                                             display, invalidConfigId, &supportedVsyncPeriods));
-    }
-}
-
-TEST_P(GraphicsComposerHidlTest, getSupportedDisplayVsyncPeriods) {
-    for (Display display : mComposerCallback->getDisplays()) {
-        for (Config config : mComposerClient->getDisplayConfigs(display)) {
-            std::vector<VsyncPeriodNanos> supportedVsyncPeriods;
-
-            // Get the default vsync period from the config
-            VsyncPeriodNanos defaultVsyncPeiord = mComposerClient->getDisplayAttribute(
-                    display, config, IComposerClient::Attribute::VSYNC_PERIOD);
-            // Get all supported vsync periods for this config
-            EXPECT_EQ(Error::NONE, mComposerClient->getSupportedDisplayVsyncPeriods(
-                                           display, config, &supportedVsyncPeriods));
-            // Default vsync period must be present in the list
-            EXPECT_NE(std::find(supportedVsyncPeriods.begin(), supportedVsyncPeriods.end(),
-                                defaultVsyncPeiord),
-                      supportedVsyncPeriods.end());
-
-            // Each vsync period must be unique
-            std::unordered_set<VsyncPeriodNanos> vsyncPeriodSet;
-            for (VsyncPeriodNanos vsyncPeriodNanos : supportedVsyncPeriods) {
-                EXPECT_TRUE(vsyncPeriodSet.insert(vsyncPeriodNanos).second);
-            }
+        const std::array<IComposerClient::Attribute, 2> optionalAttributes = {{
+                IComposerClient::Attribute::DPI_X,
+                IComposerClient::Attribute::DPI_Y,
+        }};
+        for (auto attribute : optionalAttributes) {
+            mComposerClient->getRaw()->getDisplayAttribute_2_4(
+                    mPrimaryDisplay, config, attribute, [&](const auto& tmpError, const auto&) {
+                        EXPECT_TRUE(tmpError == Error::NONE || tmpError == Error::UNSUPPORTED);
+                    });
         }
     }
 }
@@ -240,20 +226,40 @@ TEST_P(GraphicsComposerHidlTest, getDisplayVsyncPeriod_BadDisplay) {
               mComposerClient->getDisplayVsyncPeriod(mInvalidDisplayId, &vsyncPeriodNanos));
 }
 
-TEST_P(GraphicsComposerHidlTest, setActiveConfigAndVsyncPeriod_BadDisplay) {
-    int64_t newVsyncAppliedTime;
+TEST_P(GraphicsComposerHidlTest, getDisplayVsyncPeriod) {
+    for (Display display : mComposerCallback->getDisplays()) {
+        for (Config config : mComposerClient->getDisplayConfigs(display)) {
+            mComposerClient->setActiveConfig(display, config);
+
+            VsyncPeriodNanos vsyncPeriodNanos;
+            VsyncPeriodNanos expectedvsyncPeriodNanos = mComposerClient->getDisplayAttribute_2_4(
+                    display, config, IComposerClient::IComposerClient::Attribute::VSYNC_PERIOD);
+            int retryCount = 100;
+            do {
+                std::this_thread::sleep_for(10ms);
+                EXPECT_EQ(Error::NONE,
+                          mComposerClient->getDisplayVsyncPeriod(display, &vsyncPeriodNanos));
+                --retryCount;
+            } while (retryCount > 0);
+
+            EXPECT_EQ(vsyncPeriodNanos, expectedvsyncPeriodNanos);
+        }
+    }
+}
+
+TEST_P(GraphicsComposerHidlTest, setActiveConfigWithConstraints_BadDisplay) {
+    VsyncPeriodChangeTimeline timeline;
     IComposerClient::VsyncPeriodChangeConstraints constraints;
 
     constraints.seamlessRequired = false;
     constraints.desiredTimeNanos = systemTime();
 
-    EXPECT_EQ(Error::BAD_DISPLAY, mComposerClient->setActiveConfigAndVsyncPeriod(
-                                          mInvalidDisplayId, Config(0), VsyncPeriodNanos(0),
-                                          constraints, &newVsyncAppliedTime));
+    EXPECT_EQ(Error::BAD_DISPLAY, mComposerClient->setActiveConfigWithConstraints(
+                                          mInvalidDisplayId, Config(0), constraints, &timeline));
 }
 
-TEST_P(GraphicsComposerHidlTest, setActiveConfigAndVsyncPeriod_BadConfig) {
-    int64_t newVsyncAppliedTime;
+TEST_P(GraphicsComposerHidlTest, setActiveConfigWithConstraints_BadConfig) {
+    VsyncPeriodChangeTimeline timeline;
     IComposerClient::VsyncPeriodChangeConstraints constraints;
 
     constraints.seamlessRequired = false;
@@ -261,93 +267,114 @@ TEST_P(GraphicsComposerHidlTest, setActiveConfigAndVsyncPeriod_BadConfig) {
 
     for (Display display : mComposerCallback->getDisplays()) {
         Config invalidConfigId = GetInvalidConfigId(display);
-        EXPECT_EQ(Error::BAD_CONFIG, mComposerClient->setActiveConfigAndVsyncPeriod(
-                                             display, invalidConfigId, VsyncPeriodNanos(0),
-                                             constraints, &newVsyncAppliedTime));
+        EXPECT_EQ(Error::BAD_CONFIG, mComposerClient->setActiveConfigWithConstraints(
+                                             display, invalidConfigId, constraints, &timeline));
     }
 }
 
-TEST_P(GraphicsComposerHidlTest, setActiveConfigAndVsyncPeriod_BadVsyncPeriod) {
-    int64_t newVsyncAppliedTime;
+TEST_P(GraphicsComposerHidlTest, setActiveConfigWithConstraints_SeamlessNotAllowed) {
+    VsyncPeriodChangeTimeline timeline;
     IComposerClient::VsyncPeriodChangeConstraints constraints;
 
-    constraints.seamlessRequired = false;
+    constraints.seamlessRequired = true;
     constraints.desiredTimeNanos = systemTime();
 
     for (Display display : mComposerCallback->getDisplays()) {
         for (Config config : mComposerClient->getDisplayConfigs(display)) {
-            EXPECT_EQ(Error::BAD_VSYNC_PERIOD, mComposerClient->setActiveConfigAndVsyncPeriod(
-                                                       display, config, VsyncPeriodNanos(0),
-                                                       constraints, &newVsyncAppliedTime));
-        }
-    }
-}
+            int32_t configGroup = mComposerClient->getDisplayAttribute_2_4(
+                    display, config, IComposerClient::IComposerClient::Attribute::CONFIG_GROUP);
 
-void GraphicsComposerHidlTest::Test_setActiveConfigAndVsyncPeriod(
-        const IComposerClient::VsyncPeriodChangeConstraints& constraints) {
-    int64_t newVsyncAppliedTime;
-
-    for (Display display : mComposerCallback->getDisplays()) {
-        for (Config config : mComposerClient->getDisplayConfigs(display)) {
-            std::vector<VsyncPeriodNanos> supportedVsyncPeriods;
-
-            EXPECT_EQ(Error::NONE, mComposerClient->getSupportedDisplayVsyncPeriods(
-                                           display, config, &supportedVsyncPeriods));
-            for (VsyncPeriodNanos newVsyncPeriod : supportedVsyncPeriods) {
-                VsyncPeriodNanos vsyncPeriodNanos;
-                EXPECT_EQ(Error::NONE,
-                          mComposerClient->getDisplayVsyncPeriod(display, &vsyncPeriodNanos));
-
-                if (vsyncPeriodNanos == newVsyncPeriod) {
-                    continue;
+            for (Config otherConfig : mComposerClient->getDisplayConfigs(display)) {
+                int32_t otherConfigGroup = mComposerClient->getDisplayAttribute_2_4(
+                        display, otherConfig,
+                        IComposerClient::IComposerClient::Attribute::CONFIG_GROUP);
+                if (configGroup != otherConfigGroup) {
+                    mComposerClient->setActiveConfig(display, config);
+                    EXPECT_EQ(Error::SEAMLESS_NOT_ALLOWED,
+                              mComposerClient->setActiveConfigWithConstraints(
+                                      display, otherConfig, constraints, &timeline));
                 }
-
-                EXPECT_EQ(Error::NONE, mComposerClient->setActiveConfigAndVsyncPeriod(
-                                               display, config, newVsyncPeriod, constraints,
-                                               &newVsyncAppliedTime));
-
-                EXPECT_TRUE(newVsyncAppliedTime >= constraints.desiredTimeNanos);
-
-                // Refresh rate should change within a reasonable time
-                constexpr nsecs_t kReasonableTimeForChange = 1'000'000'000;  // 1 second
-                EXPECT_TRUE(newVsyncAppliedTime - constraints.desiredTimeNanos <=
-                            kReasonableTimeForChange);
-
-                while (systemTime() <= newVsyncAppliedTime) {
-                    EXPECT_EQ(Error::NONE,
-                              mComposerClient->getDisplayVsyncPeriod(display, &vsyncPeriodNanos));
-                    if (systemTime() <= constraints.desiredTimeNanos) {
-                        EXPECT_NE(vsyncPeriodNanos, newVsyncPeriod);
-                    }
-
-                    if (vsyncPeriodNanos == newVsyncPeriod) {
-                        break;
-                    }
-                    std::this_thread::sleep_for(10ms);
-                }
-                EXPECT_EQ(Error::NONE,
-                          mComposerClient->getDisplayVsyncPeriod(display, &vsyncPeriodNanos));
-                EXPECT_EQ(vsyncPeriodNanos, newVsyncPeriod);
             }
         }
     }
 }
 
-TEST_P(GraphicsComposerHidlTest, setActiveConfigAndVsyncPeriod) {
+void GraphicsComposerHidlTest::Test_setActiveConfigWithConstraints(
+        const IComposerClient::VsyncPeriodChangeConstraints& constraints) {
+    VsyncPeriodChangeTimeline timeline = {};
+
+    for (Display display : mComposerCallback->getDisplays()) {
+        for (Config config : mComposerClient->getDisplayConfigs(display)) {
+            mComposerClient->setActiveConfig(display, config);
+
+            int32_t configVsyncPeriod = mComposerClient->getDisplayAttribute_2_4(
+                    display, config, IComposerClient::IComposerClient::Attribute::VSYNC_PERIOD);
+            for (Config otherConfig : mComposerClient->getDisplayConfigs(display)) {
+                if (config == otherConfig) {
+                    continue;
+                }
+
+                int32_t otherVsyncPeriod = mComposerClient->getDisplayAttribute_2_4(
+                        display, otherConfig,
+                        IComposerClient::IComposerClient::Attribute::VSYNC_PERIOD);
+
+                if (configVsyncPeriod == otherVsyncPeriod) {
+                    continue;
+                }
+
+                EXPECT_EQ(Error::NONE, mComposerClient->setActiveConfigWithConstraints(
+                                               display, otherConfig, constraints, &timeline));
+
+                if (timeline.refreshRequired) {
+                    // TODO(b/143775556): handle this case;
+                    continue;
+                }
+
+                EXPECT_TRUE(timeline.newVsyncAppliedTimeNanos >= constraints.desiredTimeNanos);
+
+                // Refresh rate should change within a reasonable time
+                constexpr nsecs_t kReasonableTimeForChange = 1'000'000'000;  // 1 second
+                EXPECT_TRUE(timeline.newVsyncAppliedTimeNanos - constraints.desiredTimeNanos <=
+                            kReasonableTimeForChange);
+
+                while (systemTime() <= timeline.newVsyncAppliedTimeNanos) {
+                    VsyncPeriodNanos vsyncPeriodNanos;
+                    EXPECT_EQ(Error::NONE,
+                              mComposerClient->getDisplayVsyncPeriod(display, &vsyncPeriodNanos));
+
+                    if (systemTime() <= constraints.desiredTimeNanos) {
+                        EXPECT_NE(vsyncPeriodNanos, otherVsyncPeriod);
+                    }
+
+                    if (vsyncPeriodNanos == otherVsyncPeriod) {
+                        break;
+                    }
+                    std::this_thread::sleep_for(10ms);
+                }
+                VsyncPeriodNanos vsyncPeriodNanos;
+                EXPECT_EQ(Error::NONE,
+                          mComposerClient->getDisplayVsyncPeriod(display, &vsyncPeriodNanos));
+                EXPECT_EQ(vsyncPeriodNanos, otherVsyncPeriod);
+            }
+        }
+    }
+}
+
+TEST_P(GraphicsComposerHidlTest, setActiveConfigWithConstraints) {
     IComposerClient::VsyncPeriodChangeConstraints constraints;
 
     constraints.seamlessRequired = false;
     constraints.desiredTimeNanos = systemTime();
-    Test_setActiveConfigAndVsyncPeriod(constraints);
+    Test_setActiveConfigWithConstraints(constraints);
 }
 
-TEST_P(GraphicsComposerHidlTest, setActiveConfigAndVsyncPeriod_delayed) {
+TEST_P(GraphicsComposerHidlTest, setActiveConfigWithConstraints_delayed) {
     IComposerClient::VsyncPeriodChangeConstraints constraints;
 
     constexpr auto kDelayForChange = 300ms;
     constraints.seamlessRequired = false;
     constraints.desiredTimeNanos = systemTime() + kDelayForChange.count();
-    Test_setActiveConfigAndVsyncPeriod(constraints);
+    Test_setActiveConfigWithConstraints(constraints);
 }
 
 INSTANTIATE_TEST_SUITE_P(
