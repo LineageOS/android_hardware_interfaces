@@ -1,0 +1,12 @@
+hidl_interface {
+    name: "android.hardware.tests.memory@2.0",
+    root: "android.hardware",
+    srcs: [
+        "IMemoryInterface.hal",
+        "types.hal",
+    ],
+    interfaces: [
+        "android.hidl.base@1.0",
+    ],
+    gen_java: true,
+}
