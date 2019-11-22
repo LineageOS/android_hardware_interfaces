@@ -515,5 +515,43 @@ interface IMapper {
                                 MetadataType metadataType)
             generates (Error error,
                        vec<uint8_t> metadata);
+
+    struct MetadataTypeDescription {
+        MetadataType metadataType;
+        /**
+         * description should contain a string representation of the MetadataType.
+         *
+         * For example: "MyExampleMetadataType is a 64-bit timestamp in nanoseconds
+         * that indicates when a buffer is decoded. It is set by the media HAL after
+         * a buffer is decoded. It is used by the display HAL for hardware
+         * synchronization".
+         *
+         * This field is required for any non-StandardMetadataTypes.
+         */
+        string description;
+        /**
+         * isGettable represents if the MetadataType can be get.
+         */
+        bool isGettable;
+        /**
+         * isSettable represents if the MetadataType can be set.
+         */
+        bool isSettable;
+    };
+
+    /**
+     * Lists all the MetadataTypes supported by IMapper as well as a description
+     * of each supported MetadataType. For StandardMetadataTypes, the description
+     * string can be left empty.
+     *
+     * @return error Error status of the call, which may be
+     *     - `NONE` upon success.
+     *     - `NO_RESOURCES` if the get cannot be fullfilled due to unavailability of
+     *       resources.
+     * @return descriptions Vector of MetadataTypeDescriptions that represent the
+     *  MetadataTypes supported by the device.
+     */
+    listSupportedMetadataTypes()
+            generates (Error error, vec<MetadataTypeDescription> descriptions);
 };
 

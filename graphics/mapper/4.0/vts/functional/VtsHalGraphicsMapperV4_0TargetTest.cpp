@@ -41,6 +41,7 @@ using aidl::android::hardware::graphics::common::Dataspace;
 using aidl::android::hardware::graphics::common::ExtendableType;
 using aidl::android::hardware::graphics::common::PlaneLayout;
 using aidl::android::hardware::graphics::common::PlaneLayoutComponent;
+using aidl::android::hardware::graphics::common::StandardMetadataType;
 
 using DecodeFunction = std::function<void(const IMapper::BufferDescriptorInfo& descriptorInfo,
                                           const hidl_vec<uint8_t>& vec)>;
@@ -162,6 +163,27 @@ class GraphicsMapperHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 
     std::unique_ptr<Gralloc> mGralloc;
     IMapper::BufferDescriptorInfo mDummyDescriptorInfo{};
+    static const std::set<StandardMetadataType> sRequiredMetadataTypes;
+};
+
+const std::set<StandardMetadataType> GraphicsMapperHidlTest::sRequiredMetadataTypes{
+        StandardMetadataType::BUFFER_ID,
+        StandardMetadataType::NAME,
+        StandardMetadataType::WIDTH,
+        StandardMetadataType::HEIGHT,
+        StandardMetadataType::LAYER_COUNT,
+        StandardMetadataType::PIXEL_FORMAT_REQUESTED,
+        StandardMetadataType::PIXEL_FORMAT_FOURCC,
+        StandardMetadataType::PIXEL_FORMAT_MODIFIER,
+        StandardMetadataType::USAGE,
+        StandardMetadataType::ALLOCATION_SIZE,
+        StandardMetadataType::PROTECTED_CONTENT,
+        StandardMetadataType::COMPRESSION,
+        StandardMetadataType::INTERLACED,
+        StandardMetadataType::CHROMA_SITING,
+        StandardMetadataType::PLANE_LAYOUTS,
+        StandardMetadataType::DATASPACE,
+        StandardMetadataType::BLEND_MODE,
 };
 
 /**
@@ -1589,6 +1611,54 @@ TEST_F(GraphicsMapperHidlTest, GetFromBufferDescriptorInfoUnsupportedStandardMet
     ASSERT_EQ(Error::UNSUPPORTED,
               mGralloc->getFromBufferDescriptorInfo(mDummyDescriptorInfo, metadataTypeFake, &vec));
     ASSERT_EQ(0, vec.size());
+}
+
+/**
+ * Test IMapper::listSupportedMetadataTypes()
+ */
+TEST_F(GraphicsMapperHidlTest, ListSupportedMetadataTypes) {
+    hidl_vec<IMapper::MetadataTypeDescription> descriptions;
+    mGralloc->getMapper()->listSupportedMetadataTypes(
+            [&](const auto& tmpError, const auto& tmpDescriptions) {
+                ASSERT_EQ(Error::NONE, tmpError);
+                descriptions = tmpDescriptions;
+            });
+
+    std::set<StandardMetadataType> foundMetadataTypes;
+
+    std::set<StandardMetadataType> notSettableMetadataTypes{
+            StandardMetadataType::BUFFER_ID,   StandardMetadataType::NAME,
+            StandardMetadataType::WIDTH,       StandardMetadataType::HEIGHT,
+            StandardMetadataType::LAYER_COUNT, StandardMetadataType::PIXEL_FORMAT_REQUESTED,
+            StandardMetadataType::USAGE};
+
+    ASSERT_LE(sRequiredMetadataTypes.size(), descriptions.size());
+
+    for (const auto& description : descriptions) {
+        const auto& metadataType = description.metadataType;
+
+        if (!gralloc4::isStandardMetadataType(metadataType)) {
+            EXPECT_GT(0, description.description.size());
+            continue;
+        }
+
+        StandardMetadataType type = gralloc4::getStandardMetadataTypeValue(metadataType);
+
+        if (sRequiredMetadataTypes.find(type) == sRequiredMetadataTypes.end()) {
+            continue;
+        }
+
+        ASSERT_EQ(foundMetadataTypes.find(type), foundMetadataTypes.end());
+        foundMetadataTypes.insert(type);
+
+        ASSERT_TRUE(description.isGettable);
+
+        if (notSettableMetadataTypes.find(type) != notSettableMetadataTypes.end()) {
+            ASSERT_FALSE(description.isSettable);
+        }
+    }
+
+    ASSERT_EQ(sRequiredMetadataTypes, foundMetadataTypes);
 }
 
 }  // namespace
