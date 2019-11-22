@@ -145,3 +145,49 @@ const std::vector<DeviceConfigParameter>& getInputDeviceConfigParameters() {
     }();
     return parameters;
 }
+
+TEST_P(AudioHidlDeviceTest, CloseDeviceWithOpenedOutputStreams) {
+    doc::test("Verify that a device can't be closed if there are streams opened");
+    DeviceAddress address{.device = AudioDevice::OUT_DEFAULT};
+    AudioConfig config{};
+    auto flags = hidl_bitfield<AudioOutputFlag>(AudioOutputFlag::NONE);
+    SourceMetadata initMetadata = {{{AudioUsage::MEDIA, AudioContentType::MUSIC, 1 /* gain */}}};
+    sp<IStreamOut> stream;
+    StreamHelper<IStreamOut> helper(stream);
+    AudioConfig suggestedConfig{};
+    ASSERT_NO_FATAL_FAILURE(helper.open(
+            [&](AudioIoHandle handle, AudioConfig config, auto cb) {
+                return getDevice()->openOutputStream(handle, address, config, flags, initMetadata,
+                                                     cb);
+            },
+            config, &res, &suggestedConfig));
+    ASSERT_RESULT(Result::INVALID_STATE, getDevice()->close());
+    ASSERT_NO_FATAL_FAILURE(helper.close(true /*clear*/, &res));
+    ASSERT_OK(getDevice()->close());
+    ASSERT_TRUE(resetDevice());
+}
+
+TEST_P(AudioHidlDeviceTest, CloseDeviceWithOpenedInputStreams) {
+    doc::test("Verify that a device can't be closed if there are streams opened");
+    auto module = getCachedPolicyConfig().getModuleFromName(getDeviceName());
+    if (module->getInputProfiles().empty()) {
+        GTEST_SKIP() << "Device doesn't have input profiles";
+    }
+    DeviceAddress address{.device = AudioDevice::IN_DEFAULT};
+    AudioConfig config{};
+    auto flags = hidl_bitfield<AudioInputFlag>(AudioInputFlag::NONE);
+    SinkMetadata initMetadata = {{{.source = AudioSource::MIC, .gain = 1}}};
+    sp<IStreamIn> stream;
+    StreamHelper<IStreamIn> helper(stream);
+    AudioConfig suggestedConfig{};
+    ASSERT_NO_FATAL_FAILURE(helper.open(
+            [&](AudioIoHandle handle, AudioConfig config, auto cb) {
+                return getDevice()->openInputStream(handle, address, config, flags, initMetadata,
+                                                    cb);
+            },
+            config, &res, &suggestedConfig));
+    ASSERT_RESULT(Result::INVALID_STATE, getDevice()->close());
+    ASSERT_NO_FATAL_FAILURE(helper.close(true /*clear*/, &res));
+    ASSERT_OK(getDevice()->close());
+    ASSERT_TRUE(resetDevice());
+}
