@@ -22,25 +22,33 @@
 template <class Derived, class Key, class Interface>
 class InterfaceManager {
   public:
+    sp<Interface> getExisting(const Key& name) {
+        auto existing = instances.find(name);
+        return existing != instances.end() ? existing->second : sp<Interface>();
+    }
+
     sp<Interface> get(const Key& name) {
         auto existing = instances.find(name);
         if (existing != instances.end()) return existing->second;
         auto [inserted, _] = instances.emplace(name, Derived::createInterfaceInstance(name));
         if (inserted->second) {
-            environment->registerTearDown([name]() { (void)Derived::getInstance().reset(name); });
+            environment->registerTearDown(
+                    [name]() { (void)Derived::getInstance().reset(name, false); });
         }
         return inserted->second;
     }
 
     // The test must check that reset was successful. Reset failure means that the test code
     // is holding a strong reference to the device.
-    bool reset(const Key& name) __attribute__((warn_unused_result)) {
+    bool reset(const Key& name, bool waitForDestruction) __attribute__((warn_unused_result)) {
         auto iter = instances.find(name);
         if (iter == instances.end()) return true;
         ::android::wp<Interface> weak = iter->second;
         instances.erase(iter);
         if (weak.promote() != nullptr) return false;
-        waitForInstanceDestruction();
+        if (waitForDestruction) {
+            waitForInstanceDestruction();
+        }
         return true;
     }
 
@@ -100,7 +108,15 @@ class DeviceManager : public InterfaceManager<DeviceManager, FactoryAndDevice, I
     }
     bool reset(const std::string& factoryName, const std::string& name)
             __attribute__((warn_unused_result)) {
-        return InterfaceManager::reset(std::make_tuple(factoryName, name));
+#if MAJOR_VERSION <= 5
+        return InterfaceManager::reset(std::make_tuple(factoryName, name), true);
+#elif MAJOR_VERSION >= 6
+        {
+            sp<IDevice> device = getExisting(std::make_tuple(factoryName, name));
+            if (device != nullptr) device->close();
+        }
+        return InterfaceManager::reset(std::make_tuple(factoryName, name), false);
+#endif
     }
     bool resetPrimary(const std::string& factoryName) __attribute__((warn_unused_result)) {
         return reset(factoryName, kPrimaryDevice);

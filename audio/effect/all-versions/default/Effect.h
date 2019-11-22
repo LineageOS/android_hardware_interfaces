@@ -170,7 +170,6 @@ struct Effect : public IEffect {
     static const char* sContextCallToCommand;
     static const char* sContextCallFunction;
 
-    bool mIsClosed;
     effect_handle_t mHandle;
     sp<AudioBufferWrapper> mInBuffer;
     sp<AudioBufferWrapper> mOutBuffer;
