@@ -34,7 +34,7 @@ parcelable ExtendableType {
      * For custom vendor types, the "name" field will be set to the name of the custom
      * @VendorStability vendor AIDL interface such as
      * "vendor.mycompanyname.graphics.common.Compression". The name of the vendor extension should
-     * contain the name of the company that owns the extension. Including the company
+     * contain the name of the owner of the extension. Including the company
      * name in the "name" field prevents type collisions between different vendors.
      */
     @utf8InCpp String name;
