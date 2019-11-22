@@ -25,8 +25,6 @@ using namespace test_helper;
 #define CHECK_TEST_ENUM(EnumType, enumValue) \
     static_assert(static_cast<EnumType>(Test##EnumType::enumValue) == EnumType::enumValue)
 
-using V1_2::OperationType;
-
 CHECK_TEST_ENUM(OperandType, FLOAT32);
 CHECK_TEST_ENUM(OperandType, INT32);
 CHECK_TEST_ENUM(OperandType, UINT32);
