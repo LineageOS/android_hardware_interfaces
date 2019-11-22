@@ -52,7 +52,6 @@ TEST_P(AudioHidlDeviceTest, GetMicrophonesTest) {
         doc::test(
             "Make sure getMicrophones always succeeds"
             "and getActiveMicrophones always succeeds when recording from these microphones.");
-        AudioIoHandle ioHandle = (AudioIoHandle)AudioHandleConsts::AUDIO_IO_HANDLE_NONE;
         AudioConfig config{};
         config.channelMask = mkEnumBitfield(AudioChannelMask::IN_MONO);
         config.sampleRateHz = 8000;
@@ -65,18 +64,14 @@ TEST_P(AudioHidlDeviceTest, GetMicrophonesTest) {
                 continue;
             }
             sp<IStreamIn> stream;
+            StreamHelper<IStreamIn> helper(stream);
             AudioConfig suggestedConfig{};
-            ASSERT_OK(getDevice()->openInputStream(ioHandle, microphone.deviceAddress, config,
-                                                   flags, initMetadata,
-                                                   returnIn(res, stream, suggestedConfig)));
-            if (res != Result::OK) {
-                ASSERT_TRUE(stream == nullptr);
-                AudioConfig suggestedConfigRetry{};
-                ASSERT_OK(getDevice()->openInputStream(
-                        ioHandle, microphone.deviceAddress, suggestedConfig, flags, initMetadata,
-                        returnIn(res, stream, suggestedConfigRetry)));
-            }
-            ASSERT_OK(res);
+            ASSERT_NO_FATAL_FAILURE(helper.open(
+                    [&](AudioIoHandle handle, AudioConfig config, auto cb) {
+                        return getDevice()->openInputStream(handle, microphone.deviceAddress,
+                                                            config, flags, initMetadata, cb);
+                    },
+                    config, &res, &suggestedConfig));
             hidl_vec<MicrophoneInfo> activeMicrophones;
             Result readRes;
             typedef MessageQueue<IStreamIn::ReadParameters, kSynchronizedReadWrite> CommandMQ;
@@ -110,13 +105,8 @@ TEST_P(AudioHidlDeviceTest, GetMicrophonesTest) {
                 ASSERT_OK(res);
                 ASSERT_NE(0U, activeMicrophones.size());
             }
-            stream->close();
-#if MAJOR_VERSION <= 5
-            // Workaround for b/139329877. Ensures the stream gets closed on the audio hal side.
-            stream.clear();
-            IPCThreadState::self()->flushCommands();
-            usleep(1000);
-#endif
+            helper.close(true /*clear*/, &res);
+            ASSERT_OK(res);
             if (efGroup) {
                 EventFlag::deleteEventFlag(&efGroup);
             }

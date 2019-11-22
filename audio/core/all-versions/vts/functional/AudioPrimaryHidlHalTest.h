@@ -809,60 +809,82 @@ TEST_P(AudioHidlDeviceTest, DebugDumpInvalidArguments) {
 ////////////////////////// open{Output,Input}Stream //////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
+// This class is also used by some device tests.
 template <class Stream>
-class OpenStreamTest : public AudioHidlTestWithDeviceConfigParameter {
-  protected:
+class StreamHelper {
+  public:
+    // StreamHelper doesn't own the stream, this is for simpler stream lifetime management.
+    explicit StreamHelper(sp<Stream>& stream) : mStream(stream) {}
     template <class Open>
-    void testOpen(Open openStream, const AudioConfig& config) {
+    void open(Open openStream, const AudioConfig& config, Result* res,
+              AudioConfig* suggestedConfigPtr) {
         // FIXME: Open a stream without an IOHandle
         //        This is not required to be accepted by hal implementations
         AudioIoHandle ioHandle = (AudioIoHandle)AudioHandleConsts::AUDIO_IO_HANDLE_NONE;
         AudioConfig suggestedConfig{};
-        ASSERT_OK(openStream(ioHandle, config, returnIn(res, stream, suggestedConfig)));
-
-        // TODO: only allow failure for RecommendedPlaybackAudioConfig
-        switch (res) {
+        bool retryWithSuggestedConfig = true;
+        if (suggestedConfigPtr == nullptr) {
+            suggestedConfigPtr = &suggestedConfig;
+            retryWithSuggestedConfig = false;
+        }
+        ASSERT_OK(openStream(ioHandle, config, returnIn(*res, mStream, *suggestedConfigPtr)));
+        switch (*res) {
             case Result::OK:
-                ASSERT_TRUE(stream != nullptr);
-                audioConfig = config;
+                ASSERT_TRUE(mStream != nullptr);
+                *suggestedConfigPtr = config;
                 break;
             case Result::INVALID_ARGUMENTS:
-                ASSERT_TRUE(stream == nullptr);
-                AudioConfig suggestedConfigRetry;
-                // Could not open stream with config, try again with the
-                // suggested one
-                ASSERT_OK(openStream(ioHandle, suggestedConfig,
-                                     returnIn(res, stream, suggestedConfigRetry)));
-                // This time it must succeed
-                ASSERT_OK(res);
-                ASSERT_TRUE(stream != nullptr);
-                audioConfig = suggestedConfig;
+                ASSERT_TRUE(mStream == nullptr);
+                if (retryWithSuggestedConfig) {
+                    AudioConfig suggestedConfigRetry;
+                    ASSERT_OK(openStream(ioHandle, *suggestedConfigPtr,
+                                         returnIn(*res, mStream, suggestedConfigRetry)));
+                    ASSERT_OK(*res);
+                    ASSERT_TRUE(mStream != nullptr);
+                }
                 break;
             default:
-                FAIL() << "Invalid return status: " << ::testing::PrintToString(res);
+                FAIL() << "Invalid return status: " << ::testing::PrintToString(*res);
         }
+    }
+    void close(bool clear, Result* res) {
+        auto ret = mStream->close();
+        EXPECT_TRUE(ret.isOk());
+        *res = ret;
+        if (clear) {
+            mStream.clear();
+#if MAJOR_VERSION <= 5
+            // FIXME: there is no way to know when the remote IStream is being destroyed
+            //        Binder does not support testing if an object is alive, thus
+            //        wait for 100ms to let the binder destruction propagates and
+            //        the remote device has the time to be destroyed.
+            //        flushCommand makes sure all local command are sent, thus should reduce
+            //        the latency between local and remote destruction.
+            IPCThreadState::self()->flushCommands();
+            usleep(100 * 1000);
+#endif
+        }
+    }
+
+  private:
+    sp<Stream>& mStream;
+};
+
+template <class Stream>
+class OpenStreamTest : public AudioHidlTestWithDeviceConfigParameter {
+  protected:
+    OpenStreamTest() : AudioHidlTestWithDeviceConfigParameter(), helper(stream) {}
+    template <class Open>
+    void testOpen(Open openStream, const AudioConfig& config) {
+        // TODO: only allow failure for RecommendedPlaybackAudioConfig
+        ASSERT_NO_FATAL_FAILURE(helper.open(openStream, config, &res, &audioConfig));
         open = true;
     }
 
-    Return<Result> closeStream() {
+    Result closeStream(bool clear = true) {
         open = false;
-        auto res = stream->close();
-        stream.clear();
-        waitForStreamDestruction();
+        helper.close(clear, &res);
         return res;
-    }
-
-    static void waitForStreamDestruction() {
-#if MAJOR_VERSION <= 5
-        // FIXME: there is no way to know when the remote IStream is being destroyed
-        //        Binder does not support testing if an object is alive, thus
-        //        wait for 100ms to let the binder destruction propagates and
-        //        the remote device has the time to be destroyed.
-        //        flushCommand makes sure all local command are sent, thus should reduce
-        //        the latency between local and remote destruction.
-        IPCThreadState::self()->flushCommands();
-        usleep(100 * 1000);
-#endif
     }
 
   private:
@@ -877,6 +899,7 @@ class OpenStreamTest : public AudioHidlTestWithDeviceConfigParameter {
     AudioConfig audioConfig;
     DeviceAddress address = {};
     sp<Stream> stream;
+    StreamHelper<Stream> helper;
     bool open = false;
 };
 
@@ -1178,11 +1201,8 @@ TEST_IO_STREAM(getMmapPositionNoMmap, "Get a stream Mmap position before mapping
 TEST_IO_STREAM(close, "Make sure a stream can be closed", ASSERT_OK(closeStream()))
 // clang-format off
 TEST_IO_STREAM(closeTwice, "Make sure a stream can not be closed twice",
-        auto streamCopy = stream;
-        ASSERT_OK(closeStream());
-        ASSERT_RESULT(Result::INVALID_STATE, streamCopy->close());
-        streamCopy.clear();
-        waitForStreamDestruction())
+        ASSERT_OK(closeStream(false /*clear*/));
+        ASSERT_EQ(Result::INVALID_STATE, closeStream()))
 // clang-format on
 
 static void testMmapBufferOfInvalidSize(IStream* stream) {
