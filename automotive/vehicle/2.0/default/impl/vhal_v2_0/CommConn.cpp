@@ -41,7 +41,7 @@ void CommConn::stop() {
     }
 }
 
-void CommConn::sendMessage(emulator::EmulatorMessage const& msg) {
+void CommConn::sendMessage(vhal_proto::EmulatorMessage const& msg) {
     int numBytes = msg.ByteSize();
     std::vector<uint8_t> buffer(static_cast<size_t>(numBytes));
     if (!msg.SerializeToArray(buffer.data(), numBytes)) {
@@ -61,9 +61,9 @@ void CommConn::readThread() {
             break;
         }
 
-        emulator::EmulatorMessage rxMsg;
+        vhal_proto::EmulatorMessage rxMsg;
         if (rxMsg.ParseFromArray(buffer.data(), static_cast<int32_t>(buffer.size()))) {
-            emulator::EmulatorMessage respMsg;
+            vhal_proto::EmulatorMessage respMsg;
             mMessageProcessor->processMessage(rxMsg, respMsg);
 
             sendMessage(respMsg);

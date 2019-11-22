@@ -33,15 +33,15 @@ namespace proto_msg_converter {
 
 // VehiclePropConfig
 
-void toProto(emulator::VehiclePropConfig* protoCfg, const VehiclePropConfig& cfg);
+void toProto(vhal_proto::VehiclePropConfig* protoCfg, const VehiclePropConfig& cfg);
 
-void fromProto(VehiclePropConfig* cfg, const emulator::VehiclePropConfig& protoCfg);
+void fromProto(VehiclePropConfig* cfg, const vhal_proto::VehiclePropConfig& protoCfg);
 
 // VehiclePropValue
 
-void toProto(emulator::VehiclePropValue* protoVal, const VehiclePropValue& val);
+void toProto(vhal_proto::VehiclePropValue* protoVal, const VehiclePropValue& val);
 
-void fromProto(VehiclePropValue* val, const emulator::VehiclePropValue& protoVal);
+void fromProto(VehiclePropValue* val, const vhal_proto::VehiclePropValue& protoVal);
 
 }  // namespace proto_msg_converter
 

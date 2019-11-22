@@ -63,11 +63,11 @@ VehicleEmulator::~VehicleEmulator() {
  * changed.
  */
 void VehicleEmulator::doSetValueFromClient(const VehiclePropValue& propValue) {
-    emulator::EmulatorMessage msg;
-    emulator::VehiclePropValue *val = msg.add_value();
+    vhal_proto::EmulatorMessage msg;
+    vhal_proto::VehiclePropValue* val = msg.add_value();
     populateProtoVehiclePropValue(val, &propValue);
-    msg.set_status(emulator::RESULT_OK);
-    msg.set_msg_type(emulator::SET_PROPERTY_ASYNC);
+    msg.set_status(vhal_proto::RESULT_OK);
+    msg.set_msg_type(vhal_proto::SET_PROPERTY_ASYNC);
 
     mSocketComm->sendMessage(msg);
     if (mPipeComm) {
@@ -78,17 +78,17 @@ void VehicleEmulator::doSetValueFromClient(const VehiclePropValue& propValue) {
 void VehicleEmulator::doGetConfig(VehicleEmulator::EmulatorMessage const& rxMsg,
                                   VehicleEmulator::EmulatorMessage& respMsg) {
     std::vector<VehiclePropConfig> configs = mHal->listProperties();
-    emulator::VehiclePropGet getProp = rxMsg.prop(0);
+    vhal_proto::VehiclePropGet getProp = rxMsg.prop(0);
 
-    respMsg.set_msg_type(emulator::GET_CONFIG_RESP);
-    respMsg.set_status(emulator::ERROR_INVALID_PROPERTY);
+    respMsg.set_msg_type(vhal_proto::GET_CONFIG_RESP);
+    respMsg.set_status(vhal_proto::ERROR_INVALID_PROPERTY);
 
     for (auto& config : configs) {
         // Find the config we are looking for
         if (config.prop == getProp.prop()) {
-            emulator::VehiclePropConfig* protoCfg = respMsg.add_config();
+            vhal_proto::VehiclePropConfig* protoCfg = respMsg.add_config();
             populateProtoVehicleConfig(protoCfg, config);
-            respMsg.set_status(emulator::RESULT_OK);
+            respMsg.set_status(vhal_proto::RESULT_OK);
             break;
         }
     }
@@ -98,11 +98,11 @@ void VehicleEmulator::doGetConfigAll(VehicleEmulator::EmulatorMessage const& /* 
                                      VehicleEmulator::EmulatorMessage& respMsg) {
     std::vector<VehiclePropConfig> configs = mHal->listProperties();
 
-    respMsg.set_msg_type(emulator::GET_CONFIG_ALL_RESP);
-    respMsg.set_status(emulator::RESULT_OK);
+    respMsg.set_msg_type(vhal_proto::GET_CONFIG_ALL_RESP);
+    respMsg.set_status(vhal_proto::RESULT_OK);
 
     for (auto& config : configs) {
-        emulator::VehiclePropConfig* protoCfg = respMsg.add_config();
+        vhal_proto::VehiclePropConfig* protoCfg = respMsg.add_config();
         populateProtoVehicleConfig(protoCfg, config);
     }
 }
@@ -110,11 +110,11 @@ void VehicleEmulator::doGetConfigAll(VehicleEmulator::EmulatorMessage const& /* 
 void VehicleEmulator::doGetProperty(VehicleEmulator::EmulatorMessage const& rxMsg,
                                     VehicleEmulator::EmulatorMessage& respMsg) {
     int32_t areaId = 0;
-    emulator::VehiclePropGet getProp = rxMsg.prop(0);
+    vhal_proto::VehiclePropGet getProp = rxMsg.prop(0);
     int32_t propId = getProp.prop();
-    emulator::Status status = emulator::ERROR_INVALID_PROPERTY;
+    vhal_proto::Status status = vhal_proto::ERROR_INVALID_PROPERTY;
 
-    respMsg.set_msg_type(emulator::GET_PROPERTY_RESP);
+    respMsg.set_msg_type(vhal_proto::GET_PROPERTY_RESP);
 
     if (getProp.has_area_id()) {
         areaId = getProp.area_id();
@@ -128,9 +128,9 @@ void VehicleEmulator::doGetProperty(VehicleEmulator::EmulatorMessage const& rxMs
         StatusCode halStatus;
         auto val = mHal->get(request, &halStatus);
         if (val != nullptr) {
-            emulator::VehiclePropValue* protoVal = respMsg.add_value();
+            vhal_proto::VehiclePropValue* protoVal = respMsg.add_value();
             populateProtoVehiclePropValue(protoVal, val.get());
-            status = emulator::RESULT_OK;
+            status = vhal_proto::RESULT_OK;
         }
     }
 
@@ -139,12 +139,12 @@ void VehicleEmulator::doGetProperty(VehicleEmulator::EmulatorMessage const& rxMs
 
 void VehicleEmulator::doGetPropertyAll(VehicleEmulator::EmulatorMessage const& /* rxMsg */,
                                        VehicleEmulator::EmulatorMessage& respMsg) {
-    respMsg.set_msg_type(emulator::GET_PROPERTY_ALL_RESP);
-    respMsg.set_status(emulator::RESULT_OK);
+    respMsg.set_msg_type(vhal_proto::GET_PROPERTY_ALL_RESP);
+    respMsg.set_status(vhal_proto::RESULT_OK);
 
     {
         for (const auto& prop : mHal->getAllProperties()) {
-            emulator::VehiclePropValue* protoVal = respMsg.add_value();
+            vhal_proto::VehiclePropValue* protoVal = respMsg.add_value();
             populateProtoVehiclePropValue(protoVal, &prop);
         }
     }
@@ -152,7 +152,7 @@ void VehicleEmulator::doGetPropertyAll(VehicleEmulator::EmulatorMessage const& /
 
 void VehicleEmulator::doSetProperty(VehicleEmulator::EmulatorMessage const& rxMsg,
                                     VehicleEmulator::EmulatorMessage& respMsg) {
-    emulator::VehiclePropValue protoVal = rxMsg.value(0);
+    vhal_proto::VehiclePropValue protoVal = rxMsg.value(0);
     VehiclePropValue val = {
             .timestamp = elapsedRealtimeNano(),
             .areaId = protoVal.area_id(),
@@ -160,7 +160,7 @@ void VehicleEmulator::doSetProperty(VehicleEmulator::EmulatorMessage const& rxMs
             .status = (VehiclePropertyStatus)protoVal.status(),
     };
 
-    respMsg.set_msg_type(emulator::SET_PROPERTY_RESP);
+    respMsg.set_msg_type(vhal_proto::SET_PROPERTY_RESP);
 
     // Copy value data if it is set.  This automatically handles complex data types if needed.
     if (protoVal.has_string_value()) {
@@ -188,40 +188,40 @@ void VehicleEmulator::doSetProperty(VehicleEmulator::EmulatorMessage const& rxMs
     }
 
     bool halRes = mHal->setPropertyFromVehicle(val);
-    respMsg.set_status(halRes ? emulator::RESULT_OK : emulator::ERROR_INVALID_PROPERTY);
+    respMsg.set_status(halRes ? vhal_proto::RESULT_OK : vhal_proto::ERROR_INVALID_PROPERTY);
 }
 
-void VehicleEmulator::processMessage(emulator::EmulatorMessage const& rxMsg,
-                                     emulator::EmulatorMessage& respMsg) {
+void VehicleEmulator::processMessage(vhal_proto::EmulatorMessage const& rxMsg,
+                                     vhal_proto::EmulatorMessage& respMsg) {
     switch (rxMsg.msg_type()) {
-        case emulator::GET_CONFIG_CMD:
+        case vhal_proto::GET_CONFIG_CMD:
             doGetConfig(rxMsg, respMsg);
             break;
-        case emulator::GET_CONFIG_ALL_CMD:
+        case vhal_proto::GET_CONFIG_ALL_CMD:
             doGetConfigAll(rxMsg, respMsg);
             break;
-        case emulator::GET_PROPERTY_CMD:
+        case vhal_proto::GET_PROPERTY_CMD:
             doGetProperty(rxMsg, respMsg);
             break;
-        case emulator::GET_PROPERTY_ALL_CMD:
+        case vhal_proto::GET_PROPERTY_ALL_CMD:
             doGetPropertyAll(rxMsg, respMsg);
             break;
-        case emulator::SET_PROPERTY_CMD:
+        case vhal_proto::SET_PROPERTY_CMD:
             doSetProperty(rxMsg, respMsg);
             break;
         default:
             ALOGW("%s: Unknown message received, type = %d", __func__, rxMsg.msg_type());
-            respMsg.set_status(emulator::ERROR_UNIMPLEMENTED_CMD);
+            respMsg.set_status(vhal_proto::ERROR_UNIMPLEMENTED_CMD);
             break;
     }
 }
 
-void VehicleEmulator::populateProtoVehicleConfig(emulator::VehiclePropConfig* protoCfg,
+void VehicleEmulator::populateProtoVehicleConfig(vhal_proto::VehiclePropConfig* protoCfg,
                                                  const VehiclePropConfig& cfg) {
     return proto_msg_converter::toProto(protoCfg, cfg);
 }
 
-void VehicleEmulator::populateProtoVehiclePropValue(emulator::VehiclePropValue* protoVal,
+void VehicleEmulator::populateProtoVehiclePropValue(vhal_proto::VehiclePropValue* protoVal,
                                                     const VehiclePropValue* val) {
     return proto_msg_converter::toProto(protoVal, *val);
 }

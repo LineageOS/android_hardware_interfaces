@@ -70,7 +70,7 @@ namespace proto_msg_converter {
     CAST_COPY_PROTOBUF_VEC_TO_VHAL_TYPE(                                            \
             PROTO_VALUE, PROTO_VECNAME, VHAL_TYPE_VALUE, VHAL_TYPE_VECNAME, /*NO CAST*/)
 
-void toProto(emulator::VehiclePropConfig* protoCfg, const VehiclePropConfig& cfg) {
+void toProto(vhal_proto::VehiclePropConfig* protoCfg, const VehiclePropConfig& cfg) {
     protoCfg->set_prop(cfg.prop);
     protoCfg->set_access(toInt(cfg.access));
     protoCfg->set_change_mode(toInt(cfg.changeMode));
@@ -121,7 +121,7 @@ void toProto(emulator::VehiclePropConfig* protoCfg, const VehiclePropConfig& cfg
     protoCfg->set_max_sample_rate(cfg.maxSampleRate);
 }
 
-void fromProto(VehiclePropConfig* cfg, const emulator::VehiclePropConfig& protoCfg) {
+void fromProto(VehiclePropConfig* cfg, const vhal_proto::VehiclePropConfig& protoCfg) {
     CHECK_COPY_PROTOBUF_VAR_TO_VHAL_TYPE(protoCfg, prop, cfg, prop);
     CHECK_CAST_COPY_PROTOBUF_VAR_TO_VHAL_TYPE(protoCfg, access, cfg, access,
                                               static_cast<VehiclePropertyAccess>);
@@ -130,7 +130,7 @@ void fromProto(VehiclePropConfig* cfg, const emulator::VehiclePropConfig& protoC
     COPY_PROTOBUF_VEC_TO_VHAL_TYPE(protoCfg, config_array, cfg, configArray);
     CHECK_COPY_PROTOBUF_VAR_TO_VHAL_TYPE(protoCfg, config_string, cfg, configString);
 
-    auto cast_to_acfg = [](const emulator::VehicleAreaConfig& protoAcfg) {
+    auto cast_to_acfg = [](const vhal_proto::VehicleAreaConfig& protoAcfg) {
         VehicleAreaConfig acfg;
         CHECK_COPY_PROTOBUF_VAR_TO_VHAL_TYPE(protoAcfg, area_id, &acfg, areaId);
         CHECK_COPY_PROTOBUF_VAR_TO_VHAL_TYPE(protoAcfg, min_int32_value, &acfg, minInt32Value);
@@ -148,11 +148,11 @@ void fromProto(VehiclePropConfig* cfg, const emulator::VehiclePropConfig& protoC
     CHECK_COPY_PROTOBUF_VAR_TO_VHAL_TYPE(protoCfg, max_sample_rate, cfg, maxSampleRate);
 }
 
-void toProto(emulator::VehiclePropValue* protoVal, const VehiclePropValue& val) {
+void toProto(vhal_proto::VehiclePropValue* protoVal, const VehiclePropValue& val) {
     protoVal->set_prop(val.prop);
     protoVal->set_value_type(toInt(getPropType(val.prop)));
     protoVal->set_timestamp(val.timestamp);
-    protoVal->set_status((emulator::VehiclePropStatus)(val.status));
+    protoVal->set_status((vhal_proto::VehiclePropStatus)(val.status));
     protoVal->set_area_id(val.areaId);
 
     // Copy value data if it is set.
@@ -179,7 +179,7 @@ void toProto(emulator::VehiclePropValue* protoVal, const VehiclePropValue& val) 
     }
 }
 
-void fromProto(VehiclePropValue* val, const emulator::VehiclePropValue& protoVal) {
+void fromProto(VehiclePropValue* val, const vhal_proto::VehiclePropValue& protoVal) {
     CHECK_COPY_PROTOBUF_VAR_TO_VHAL_TYPE(protoVal, prop, val, prop);
     CHECK_COPY_PROTOBUF_VAR_TO_VHAL_TYPE(protoVal, timestamp, val, timestamp);
     CHECK_CAST_COPY_PROTOBUF_VAR_TO_VHAL_TYPE(protoVal, status, val, status,

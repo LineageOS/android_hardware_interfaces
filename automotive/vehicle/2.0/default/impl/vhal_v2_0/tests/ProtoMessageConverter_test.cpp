@@ -33,7 +33,7 @@ namespace proto_msg_converter {
 namespace {
 
 void CheckPropConfigConversion(const VehiclePropConfig& config) {
-    emulator::VehiclePropConfig protoCfg;
+    vhal_proto::VehiclePropConfig protoCfg;
     VehiclePropConfig tmpConfig;
 
     toProto(&protoCfg, config);
@@ -76,7 +76,7 @@ void CheckPropConfigConversion(const VehiclePropConfig& config) {
 }
 
 void CheckPropValueConversion(const VehiclePropValue& val) {
-    emulator::VehiclePropValue protoVal;
+    vhal_proto::VehiclePropValue protoVal;
     VehiclePropValue tmpVal;
 
     toProto(&protoVal, val);

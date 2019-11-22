@@ -60,7 +60,7 @@ void SocketComm::stop() {
     }
 }
 
-void SocketComm::sendMessage(emulator::EmulatorMessage const& msg) {
+void SocketComm::sendMessage(vhal_proto::EmulatorMessage const& msg) {
     std::lock_guard<std::mutex> lock(mMutex);
     for (std::unique_ptr<SocketConn> const& conn : mOpenConnections) {
         conn->sendMessage(msg);
