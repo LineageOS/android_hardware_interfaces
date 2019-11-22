@@ -57,12 +57,6 @@ struct ConfigHelper {
                                   {24000, 48000}, {AudioFormat::PCM_16_BIT});
     }
 
-    static const vector<AudioConfig> getSupportedPlaybackAudioConfig() {
-        // TODO: retrieve audio config supported by the platform
-        // as declared in the policy configuration
-        return {};
-    }
-
     static const vector<AudioConfig> getRequiredSupportCaptureAudioConfig() {
         if (!primaryHasMic()) return {};
         return combineAudioConfig({AudioChannelMask::IN_MONO}, {8000, 11025, 16000, 44100},
@@ -72,11 +66,6 @@ struct ConfigHelper {
         if (!primaryHasMic()) return {};
         return combineAudioConfig({AudioChannelMask::IN_STEREO}, {22050, 48000},
                                   {AudioFormat::PCM_16_BIT});
-    }
-    static const vector<AudioConfig> getSupportedCaptureAudioConfig() {
-        // TODO: retrieve audio config supported by the platform
-        // as declared in the policy configuration
-        return {};
     }
 
     static vector<AudioConfig> combineAudioConfig(vector<audio_channel_mask_t> channelMasks,

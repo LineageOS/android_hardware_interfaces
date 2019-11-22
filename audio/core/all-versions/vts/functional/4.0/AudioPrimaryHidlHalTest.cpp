@@ -22,18 +22,16 @@ TEST_P(AudioHidlTest, OpenPrimaryDeviceUsingGetDevice) {
         GTEST_SKIP() << "No primary device on this factory";  // returns
     }
 
-    struct WaitExecutor {
-        ~WaitExecutor() { DeviceManager::waitForInstanceDestruction(); }
-    } waitExecutor;  // Make sure we wait for the device destruction on exiting from the test.
-    Result result;
-    sp<IDevice> baseDevice;
-    ASSERT_OK(getDevicesFactory()->openDevice("primary", returnIn(result, baseDevice)));
-    ASSERT_OK(result);
-    ASSERT_TRUE(baseDevice != nullptr);
-
-    Return<sp<IPrimaryDevice>> primaryDevice = IPrimaryDevice::castFrom(baseDevice);
-    ASSERT_TRUE(primaryDevice.isOk());
-    ASSERT_TRUE(sp<IPrimaryDevice>(primaryDevice) != nullptr);
+    {  // Scope for device SPs
+        sp<IDevice> baseDevice =
+                DeviceManager::getInstance().get(getFactoryName(), DeviceManager::kPrimaryDevice);
+        ASSERT_TRUE(baseDevice != nullptr);
+        Return<sp<IPrimaryDevice>> primaryDevice = IPrimaryDevice::castFrom(baseDevice);
+        EXPECT_TRUE(primaryDevice.isOk());
+        EXPECT_TRUE(sp<IPrimaryDevice>(primaryDevice) != nullptr);
+    }
+    EXPECT_TRUE(
+            DeviceManager::getInstance().reset(getFactoryName(), DeviceManager::kPrimaryDevice));
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -54,7 +52,6 @@ TEST_P(AudioHidlDeviceTest, GetMicrophonesTest) {
         doc::test(
             "Make sure getMicrophones always succeeds"
             "and getActiveMicrophones always succeeds when recording from these microphones.");
-        AudioIoHandle ioHandle = (AudioIoHandle)AudioHandleConsts::AUDIO_IO_HANDLE_NONE;
         AudioConfig config{};
         config.channelMask = mkEnumBitfield(AudioChannelMask::IN_MONO);
         config.sampleRateHz = 8000;
@@ -67,18 +64,14 @@ TEST_P(AudioHidlDeviceTest, GetMicrophonesTest) {
                 continue;
             }
             sp<IStreamIn> stream;
+            StreamHelper<IStreamIn> helper(stream);
             AudioConfig suggestedConfig{};
-            ASSERT_OK(getDevice()->openInputStream(ioHandle, microphone.deviceAddress, config,
-                                                   flags, initMetadata,
-                                                   returnIn(res, stream, suggestedConfig)));
-            if (res != Result::OK) {
-                ASSERT_TRUE(stream == nullptr);
-                AudioConfig suggestedConfigRetry{};
-                ASSERT_OK(getDevice()->openInputStream(
-                        ioHandle, microphone.deviceAddress, suggestedConfig, flags, initMetadata,
-                        returnIn(res, stream, suggestedConfigRetry)));
-            }
-            ASSERT_OK(res);
+            ASSERT_NO_FATAL_FAILURE(helper.open(
+                    [&](AudioIoHandle handle, AudioConfig config, auto cb) {
+                        return getDevice()->openInputStream(handle, microphone.deviceAddress,
+                                                            config, flags, initMetadata, cb);
+                    },
+                    config, &res, &suggestedConfig));
             hidl_vec<MicrophoneInfo> activeMicrophones;
             Result readRes;
             typedef MessageQueue<IStreamIn::ReadParameters, kSynchronizedReadWrite> CommandMQ;
@@ -112,11 +105,8 @@ TEST_P(AudioHidlDeviceTest, GetMicrophonesTest) {
                 ASSERT_OK(res);
                 ASSERT_NE(0U, activeMicrophones.size());
             }
-            stream->close();
-            // Workaround for b/139329877. Ensures the stream gets closed on the audio hal side.
-            stream.clear();
-            IPCThreadState::self()->flushCommands();
-            usleep(1000);
+            helper.close(true /*clear*/, &res);
+            ASSERT_OK(res);
             if (efGroup) {
                 EventFlag::deleteEventFlag(&efGroup);
             }
