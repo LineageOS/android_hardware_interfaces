@@ -22,18 +22,16 @@ TEST_P(AudioHidlTest, OpenPrimaryDeviceUsingGetDevice) {
         GTEST_SKIP() << "No primary device on this factory";  // returns
     }
 
-    struct WaitExecutor {
-        ~WaitExecutor() { DeviceManager::waitForInstanceDestruction(); }
-    } waitExecutor;  // Make sure we wait for the device destruction on exiting from the test.
-    Result result;
-    sp<IDevice> baseDevice;
-    ASSERT_OK(getDevicesFactory()->openDevice("primary", returnIn(result, baseDevice)));
-    ASSERT_OK(result);
-    ASSERT_TRUE(baseDevice != nullptr);
-
-    Return<sp<IPrimaryDevice>> primaryDevice = IPrimaryDevice::castFrom(baseDevice);
-    ASSERT_TRUE(primaryDevice.isOk());
-    ASSERT_TRUE(sp<IPrimaryDevice>(primaryDevice) != nullptr);
+    {  // Scope for device SPs
+        sp<IDevice> baseDevice =
+                DeviceManager::getInstance().get(getFactoryName(), DeviceManager::kPrimaryDevice);
+        ASSERT_TRUE(baseDevice != nullptr);
+        Return<sp<IPrimaryDevice>> primaryDevice = IPrimaryDevice::castFrom(baseDevice);
+        EXPECT_TRUE(primaryDevice.isOk());
+        EXPECT_TRUE(sp<IPrimaryDevice>(primaryDevice) != nullptr);
+    }
+    EXPECT_TRUE(
+            DeviceManager::getInstance().reset(getFactoryName(), DeviceManager::kPrimaryDevice));
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -113,10 +111,12 @@ TEST_P(AudioHidlDeviceTest, GetMicrophonesTest) {
                 ASSERT_NE(0U, activeMicrophones.size());
             }
             stream->close();
+#if MAJOR_VERSION <= 5
             // Workaround for b/139329877. Ensures the stream gets closed on the audio hal side.
             stream.clear();
             IPCThreadState::self()->flushCommands();
             usleep(1000);
+#endif
             if (efGroup) {
                 EventFlag::deleteEventFlag(&efGroup);
             }

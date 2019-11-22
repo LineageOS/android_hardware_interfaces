@@ -138,11 +138,11 @@ const char* Effect::sContextCallToCommand = "error";
 const char* Effect::sContextCallFunction = sContextCallToCommand;
 
 Effect::Effect(effect_handle_t handle)
-    : mIsClosed(false), mHandle(handle), mEfGroup(nullptr), mStopProcessThread(false) {}
+    : mHandle(handle), mEfGroup(nullptr), mStopProcessThread(false) {}
 
 Effect::~Effect() {
     ATRACE_CALL();
-    close();
+    (void)close();
     if (mProcessThread.get()) {
         ATRACE_NAME("mProcessThread->join");
         status_t status = mProcessThread->join();
@@ -154,8 +154,10 @@ Effect::~Effect() {
     }
     mInBuffer.clear();
     mOutBuffer.clear();
+#if MAJOR_VERSION <= 5
     int status = EffectRelease(mHandle);
     ALOGW_IF(status, "Error releasing effect %p: %s", mHandle, strerror(-status));
+#endif
     EffectMap::getInstance().remove(mHandle);
     mHandle = 0;
 }
@@ -699,15 +701,20 @@ Return<Result> Effect::setCurrentConfigForFeature(uint32_t featureId,
 }
 
 Return<Result> Effect::close() {
-    if (mIsClosed) return Result::INVALID_STATE;
-    mIsClosed = true;
-    if (mProcessThread.get()) {
-        mStopProcessThread.store(true, std::memory_order_release);
+    if (mStopProcessThread.load(std::memory_order_relaxed)) {  // only this thread modifies
+        return Result::INVALID_STATE;
     }
+    mStopProcessThread.store(true, std::memory_order_release);
     if (mEfGroup) {
         mEfGroup->wake(static_cast<uint32_t>(MessageQueueFlagBits::REQUEST_QUIT));
     }
+#if MAJOR_VERSION <= 5
     return Result::OK;
+#elif MAJOR_VERSION >= 6
+    // No need to join the processing thread, it is part of the API contract that the client
+    // must finish processing before closing the effect.
+    return analyzeStatus("EffectRelease", "", sContextCallFunction, EffectRelease(mHandle));
+#endif
 }
 
 Return<void> Effect::debug(const hidl_handle& fd, const hidl_vec<hidl_string>& /* options */) {
