@@ -29,3 +29,64 @@ cc_library_static {
     ],
     srcs: ["VehicleHalProto.proto"]
 }
+
+cc_library_static {
+    name: "android.hardware.automotive.vehicle@2.0-grpc",
+    vendor: true,
+    include_dirs: [
+        "external/protobuf/src",
+    ],
+    generated_headers: [
+        "DefaultVehicleHalProtoStub_h",
+    ],
+    export_generated_headers: [
+        "DefaultVehicleHalProtoStub_h",
+    ],
+    generated_sources: [
+        "DefaultVehicleHalProtoStub_cc",
+    ],
+    shared_libs: [
+        "libgrpc++_unsecure",
+    ],
+    cflags: [
+        "-Wno-unused-parameter"
+    ],
+}
+
+genrule {
+    name: "DefaultVehicleHalProtoStub_h",
+    tools: [
+        "aprotoc",
+        "protoc-gen-grpc-cpp-plugin",
+    ],
+    cmd: "$(location aprotoc) -I$$(dirname $(in)) -Iexternal/protobuf/src --plugin=protoc-gen-grpc=$(location protoc-gen-grpc-cpp-plugin) $(in) --grpc_out=$(genDir) --cpp_out=$(genDir)",
+    srcs: [
+        "VehicleHalProto.proto",
+        "VehicleServer.proto",
+    ],
+    out: [
+        "VehicleHalProto.pb.h",
+        "VehicleHalProto.grpc.pb.h",
+        "VehicleServer.pb.h",
+        "VehicleServer.grpc.pb.h",
+    ],
+}
+
+genrule {
+    name: "DefaultVehicleHalProtoStub_cc",
+    tools: [
+        "aprotoc",
+        "protoc-gen-grpc-cpp-plugin",
+    ],
+    cmd: "$(location aprotoc) -I$$(dirname $(in)) -Iexternal/protobuf/src --plugin=protoc-gen-grpc=$(location protoc-gen-grpc-cpp-plugin) $(in) --grpc_out=$(genDir) --cpp_out=$(genDir)",
+    srcs: [
+        "VehicleHalProto.proto",
+        "VehicleServer.proto",
+    ],
+    out: [
+        "VehicleHalProto.pb.cc",
+        "VehicleHalProto.grpc.pb.cc",
+        "VehicleServer.pb.cc",
+        "VehicleServer.grpc.pb.cc",
+    ],
+}

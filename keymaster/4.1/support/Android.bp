@@ -14,24 +14,19 @@
 // limitations under the License.
 //
 
-cc_library_static {
-    name: "android.hardware.graphics.mapper@4.0-vts",
-    defaults: ["VtsHalTargetTestDefaults"],
-    srcs: ["MapperVts.cpp"],
+cc_library {
+    name: "libkeymaster4_1support",
+    vendor_available: true,
     cflags: [
-        "-O0",
-        "-g",
-    ],
-    static_libs: [
-        "android.hardware.graphics.allocator@4.0",
-        "android.hardware.graphics.mapper@4.0",
-    ],
-    shared_libs: [
-        "libgralloctypes",
-    ],
-    export_static_lib_headers: [
-        "android.hardware.graphics.allocator@4.0",
-        "android.hardware.graphics.mapper@4.0",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
     ],
     export_include_dirs: ["include"],
+    shared_libs: [
+        "android.hardware.keymaster@3.0",
+        "android.hardware.keymaster@4.0",
+        "android.hardware.keymaster@4.1",
+        "libkeymaster4support",
+    ]
 }

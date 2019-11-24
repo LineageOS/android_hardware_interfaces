@@ -76,6 +76,13 @@ class ComposerClientImpl : public V2_3::hal::detail::ComposerClientImpl<Interfac
             ALOGE_IF(!ret.isOk(), "failed to send onVsync_2_4: %s", ret.description().c_str());
         }
 
+        void onVsyncPeriodTimingChanged(Display display,
+                                        const VsyncPeriodChangeTimeline& updatedTimeline) override {
+            auto ret = mCallback->onVsyncPeriodTimingChanged(display, updatedTimeline);
+            ALOGE_IF(!ret.isOk(), "failed to send onVsyncPeriodTimingChanged: %s",
+                     ret.description().c_str());
+        }
+
       protected:
         const sp<IComposerCallback> mCallback;
         V2_1::hal::ComposerResources* const mResources;
@@ -104,13 +111,12 @@ class ComposerClientImpl : public V2_3::hal::detail::ComposerClientImpl<Interfac
         return Void();
     }
 
-    Return<void> getSupportedDisplayVsyncPeriods(
-            Display display, Config config,
-            IComposerClient::getSupportedDisplayVsyncPeriods_cb hidl_cb) override {
-        std::vector<VsyncPeriodNanos> supportedVsyncPeriods;
-        Error error =
-                mHal->getSupportedDisplayVsyncPeriods(display, config, &supportedVsyncPeriods);
-        hidl_cb(error, supportedVsyncPeriods);
+    Return<void> getDisplayAttribute_2_4(
+            Display display, Config config, IComposerClient::Attribute attribute,
+            IComposerClient::getDisplayAttribute_2_4_cb hidl_cb) override {
+        int32_t value = 0;
+        Error error = mHal->getDisplayAttribute_2_4(display, config, attribute, &value);
+        hidl_cb(error, value);
         return Void();
     }
 
@@ -122,15 +128,14 @@ class ComposerClientImpl : public V2_3::hal::detail::ComposerClientImpl<Interfac
         return Void();
     }
 
-    Return<void> setActiveConfigAndVsyncPeriod(
-            Display display, Config config, VsyncPeriodNanos vsyncPeriodNanos,
+    Return<void> setActiveConfigWithConstraints(
+            Display display, Config config,
             const IComposerClient::VsyncPeriodChangeConstraints& vsyncPeriodChangeConstraints,
-            IComposerClient::setActiveConfigAndVsyncPeriod_cb hidl_cb) override {
-        int64_t newVsyncAppliedTime = 0;
-        Error error = mHal->setActiveConfigAndVsyncPeriod(display, config, vsyncPeriodNanos,
-                                                          vsyncPeriodChangeConstraints,
-                                                          &newVsyncAppliedTime);
-        hidl_cb(error, newVsyncAppliedTime);
+            IComposerClient::setActiveConfigWithConstraints_cb hidl_cb) override {
+        VsyncPeriodChangeTimeline timeline = {};
+        Error error = mHal->setActiveConfigWithConstraints(display, config,
+                                                           vsyncPeriodChangeConstraints, &timeline);
+        hidl_cb(error, timeline);
         return Void();
     }
 

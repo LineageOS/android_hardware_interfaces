@@ -74,15 +74,15 @@ class ComposerClient : public V2_3::vts::ComposerClient {
     Error getDisplayConnectionType(Display display,
                                    IComposerClient::DisplayConnectionType* outType);
 
-    Error getSupportedDisplayVsyncPeriods(Display display, Config config,
-                                          std::vector<VsyncPeriodNanos>* outSupportedVsyncPeriods);
+    int32_t getDisplayAttribute_2_4(Display display, Config config,
+                                    IComposerClient::Attribute attribute);
 
     Error getDisplayVsyncPeriod(Display display, VsyncPeriodNanos* outVsyncPeriods);
 
-    Error setActiveConfigAndVsyncPeriod(
-            Display display, Config config, VsyncPeriodNanos vsyncPeriodNanos,
+    Error setActiveConfigWithConstraints(
+            Display display, Config config,
             const IComposerClient::VsyncPeriodChangeConstraints& vsyncPeriodChangeConstraints,
-            int64_t* outNewVsyncAppliedTime);
+            VsyncPeriodChangeTimeline* timeline);
 
   private:
     const sp<IComposerClient> mClient;

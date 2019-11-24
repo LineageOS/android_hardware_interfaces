@@ -35,18 +35,20 @@ interface IMapper {
          */
         uint32_t width;
 
-       /**
-        * The height specifies how many rows of pixels must be in the
-        * allocated buffer.
-        */
+        /**
+         * The height specifies how many rows of pixels must be in the
+         * allocated buffer.
+         */
         uint32_t height;
 
-       /**
-        * The number of image layers that must be in the allocated buffer.
-        */
+        /**
+         * The number of image layers that must be in the allocated buffer.
+         */
         uint32_t layerCount;
 
-        /** Buffer pixel format. */
+        /**
+         * Buffer pixel format.
+         */
         PixelFormat format;
 
         /**
@@ -309,5 +311,247 @@ interface IMapper {
             generates (Error error,
                        bool supported);
 
+
+    /**
+     * Description for get(...), set(...) and getFromBufferDescriptorInfo(...)
+     *
+     * ------------ Overview -----------------------------------
+     * Gralloc 4 adds support for getting and setting buffer metadata on a buffer.
+     *
+     * To get buffer metadata, the client passes in a buffer handle and a token that
+     * represents the type of buffer metadata they would like to get. IMapper returns
+     * a byte stream that contains the buffer metadata. To set the buffer metadata, the
+     * client passes in a buffer handle and a token that represents the type of buffer
+     * metadata they would like to set and a byte stream that contains the buffer metadata
+     * they are setting.
+     *
+     * Buffer metadata is global for a buffer. When the metadata is set on the buffer
+     * in a process, the updated metadata should be available to all other processes.
+     * Please see "Storing and Propagating Metadata" below for more details.
+     *
+     * The getter and setter functions have been optimized for easy vendor extension.
+     * They do not require a formal HIDL extension to add support for getting and setting
+     * vendor defined buffer metadata. In order to allow easy extension, the types used
+     * here are not typical HIDL types. See "Buffer Metadata Token" and
+     * "Buffer Metadata Stream" below for more details.
+     *
+     * ------------ Storing and Propagating Metadata -----------
+     * Buffer metadata must be global. Any changes to the metadata must be propagated
+     * to all other processes immediately. Vendors may chose how they would like support
+     * this functionality.
+     *
+     * We recommend supporting this functionality by allocating an extra page of shared
+     * memory and storing it in the buffer's native_handle_t. The buffer metadata can
+     * be stored in the extra page of shared memory. Set operations are automatically
+     * propagated to all other processes.
+     *
+     * ------------ Buffer Metadata Synchronization ------------
+     * There are no explicit buffer metadata synchronization primitives. Many devices
+     * before gralloc 4 already support getting and setting of global buffer metadata
+     * with no explicit synchronization primitives. Adding synchronization primitives
+     * would just add unnecessary complexity.
+     *
+     * The general rule is if a process has permission to write to a buffer, they
+     * have permission to write to the buffer's metadata. If a process has permission
+     * to read from a buffer, they have permission to read the buffer's metadata.
+     *
+     * There is one exception to this rule. Fences CANNOT be used to protect a buffer's
+     * metadata. A process should finish writing to a buffer's metadata before
+     * sending the buffer to another process that will read or write to the buffer.
+     * This exception is needed because sometimes userspace needs to read the
+     * buffer's metadata before the buffer's contents are ready.
+     *
+     * As a simple example: an app renders to a buffer and then displays the buffer.
+     * In this example when the app renders to the buffer, both the buffer and its
+     * metadata need to be updated. The app's process queues up its work on the GPU
+     * and gets back an acquire fence. The app's process must update the buffer's
+     * metadata before enqueuing the buffer to SurfaceFlinger. The app process CANNOT
+     * update the buffer's metadata after enqueuing the buffer. When HardwareComposer
+     * receives the buffer, it is immediately safe to read the buffer's metadata
+     * and use it to program the display driver. To read the buffer's contents,
+     * display driver must still wait on the acquire fence.
+     *
+     * ------------ Buffer Metadata Token ----------------------
+     * In order to allow arbitrary vendor defined metadata, we could not use a
+     * HIDL enum as the buffer metadata token. Extending a HIDL enum requires a full
+     * HIDL extension. We also could not use a simple non-HIDL enum because vendor
+     * defined enums from different vendors could collide. Instead we have defined
+     * a struct that has a string representing the enum type and an int that
+     * represents the enum value. The string protects different enum values from
+     * colliding.
+     *
+     * The token struct (MetadataType) is defined as a HIDL struct since it
+     * is passed into a HIDL function. The standard buffer metadata types are NOT
+     * defined as a HIDL enum because it would have required a new IMapper version
+     * just to add future standard buffer metadata types. By putting the enum in the
+     * stable AIDL (hardware/interfaces/graphics/common/aidl/android/hardware/
+     * graphics/common/StandardMetadataType.aidl), vendors will be able to optionally
+     * choose to support future standard buffer metadata types without upgrading
+     * HIDL versions. For more information see the description of "struct MetadataType".
+     *
+     * ------------ Buffer Metadata Stream ---------------------
+     * The buffer metadata is get and set as a byte stream (vec<uint8_t>). By getting
+     * and setting buffer metadata as a byte stream, vendors can use the standard
+     * getters and setter functions defined here. Vendors do NOT need to add their own
+     * getters and setter functions for each new type of buffer metadata.
+     *
+     * Converting buffer metadata into a byte stream can be non-trivial. For the standard
+     * buffer metadata types defined in StandardMetadataType.aidl, there are also
+     * support functions that will encode the buffer metadata into a byte stream
+     * and decode the buffer metadata from a byte stream. We STRONGLY recommend using
+     * these support functions. The framework will use them when getting and setting
+     * metadata. The support functions are defined in
+     * frameworks/native/libs/gralloc/types/include/gralloctypes/Gralloc4.h.
+     */
+
+    /**
+     * MetadataType represents the different types of buffer metadata that could be
+     * associated with a buffer. It is used by IMapper to help get and set buffer metadata
+     * on the buffer's native handle.
+     *
+     * Standard buffer metadata will have the name field set to
+     * "android.hardware.graphics.common.StandardMetadataType" and will contain values
+     * from StandardMetadataType.aidl.
+     *
+     * This struct should be "extended" by devices that use a proprietary or non-standard
+     * buffer metadata. To extend the struct, first create a custom @VendorStability vendor
+     * AIDL interface that defines the new type(s) you would like to support. Set the
+     * struct's name field to the custom aidl interface's name
+     * (eg. "vendor.mycompanyname.graphics.common.MetadataType"). Set the struct's value
+     * field to the custom @VendorStabilty vendor AIDL interface.
+     *
+     * Each company should create their own StandardMetadataType.aidl extension. The name
+     * field prevents values from different companies from colliding.
+     */
+    struct MetadataType {
+        string name;
+        int64_t value;
+    };
+
+    /**
+     * Gets the buffer metadata for a given MetadataType.
+     *
+     * Buffer metadata can be changed after allocation so clients should avoid "caching"
+     * the buffer metadata. For example, if the video resolution changes and the buffers
+     * are not reallocated, several buffer metadata values may change without warning.
+     * Clients should not expect the values to be constant. They should requery them every
+     * frame. The only exception is buffer metadata that is determined at allocation
+     * time. For StandardMetadataType values, only BUFFER_ID, NAME, WIDTH,
+     * HEIGHT, LAYER_COUNT, PIXEL_FORMAT_REQUESTED and USAGE are safe to cache because
+     * they are determined at allocation time.
+     *
+     * @param buffer Buffer containing desired metadata
+     * @param metadataType MetadataType for the metadata value being queried
+     * @return error Error status of the call, which may be
+     *     - `NONE` upon success.
+     *     - `BAD_BUFFER` if the raw handle is invalid.
+     *     - `NO_RESOURCES` if the get cannot be fullfilled due to unavailability of
+     *        resources.
+     *     - `UNSUPPORTED` when metadataType is unknown/unsupported.
+     *        IMapper must support getting all StandardMetadataType.aidl values defined
+     *        at the time the device first launches.
+     * @return metadata Vector of bytes representing the buffer metadata associated with
+     *  the MetadataType.
+     */
+    get(pointer buffer, MetadataType metadataType)
+            generates (Error error,
+                       vec<uint8_t> metadata);
+
+    /**
+     * Sets the global value for a given MetadataType.
+     *
+     * Metadata fields are not required to be settable. This function can
+     * return Error::UNSUPPORTED whenever it doesn't support setting a
+     * particular Metadata field.
+     *
+     * The framework may attempt to set the following StandardMetadataType
+     * values: DATASPACE, PER_FRAME_METADATA, PER_FRAME_METADATA_BLOB and BLEND_MODE.
+     * We strongly encourage everyone to support setting as many of those fields as
+     * possible. If a device's Composer implementation supports a field, it should be
+     * supported here. Over time these metadata fields will be moved out of
+     * Composer/BufferQueue/etc. and into the buffer's Metadata fields.
+     * If a device's IMapper doesn't support setting those Metadata fields,
+     * eventually the device may not longer be able to support these fields.
+     *
+     * @param buffer Buffer receiving desired metadata
+     * @param metadataType MetadataType for the metadata value being set
+     * @param metadata Vector of bytes representing the value associated with
+     * @return error Error status of the call, which may be
+     *     - `NONE` upon success.
+     *     - `BAD_BUFFER` if the raw handle is invalid.
+     *     - `BAD_VALUE` when the field is constant and can never be set (such as
+     *       BUFFER_ID, NAME, WIDTH, HEIGHT, LAYER_COUNT, PIXEL_FORMAT_REQUESTED and
+     *       USAGE)
+     *     - `NO_RESOURCES` if the set cannot be fullfilled due to unavailability of
+     *        resources.
+     *     - `UNSUPPORTED` when metadataType is unknown/unsupported or setting
+     *       it is unsupported. Unsupported should also be returned if the metadata
+     *       is malformed.
+     */
+    set(pointer buffer, MetadataType metadataType, vec<uint8_t> metadata)
+            generates (Error error);
+
+    /**
+     * Given a BufferDescriptorInfo, gets the starting value of a given
+     * MetadataType. This can be used to query basic information about a buffer
+     * before the buffer is allocated.
+     *
+     * @param description Attributes of the descriptor.
+     * @param metadataType MetadataType for the metadata value being queried
+     * @return error Error status of the call, which may be
+     *     - `NONE` upon success.
+     *     - `BAD_VALUE` if any of the specified BufferDescriptorInfo attributes
+     *       are invalid.
+     *     - `NO_RESOURCES` if the get cannot be fullfilled due to unavailability of
+     *       resources.
+     *     - `UNSUPPORTED` when any of the description attributes are unsupported or
+     *       if the metadataType is unknown/unsupported. This should also be
+     *       returned if the requested metadata is not defined until a buffer has been
+     *       allocated.
+     * @return metadata Vector of bytes representing the value associated with
+     *  the MetadataType value.
+     */
+    getFromBufferDescriptorInfo(BufferDescriptorInfo description,
+                                MetadataType metadataType)
+            generates (Error error,
+                       vec<uint8_t> metadata);
+
+    struct MetadataTypeDescription {
+        MetadataType metadataType;
+        /**
+         * description should contain a string representation of the MetadataType.
+         *
+         * For example: "MyExampleMetadataType is a 64-bit timestamp in nanoseconds
+         * that indicates when a buffer is decoded. It is set by the media HAL after
+         * a buffer is decoded. It is used by the display HAL for hardware
+         * synchronization".
+         *
+         * This field is required for any non-StandardMetadataTypes.
+         */
+        string description;
+        /**
+         * isGettable represents if the MetadataType can be get.
+         */
+        bool isGettable;
+        /**
+         * isSettable represents if the MetadataType can be set.
+         */
+        bool isSettable;
+    };
+
+    /**
+     * Lists all the MetadataTypes supported by IMapper as well as a description
+     * of each supported MetadataType. For StandardMetadataTypes, the description
+     * string can be left empty.
+     *
+     * @return error Error status of the call, which may be
+     *     - `NONE` upon success.
+     *     - `NO_RESOURCES` if the get cannot be fullfilled due to unavailability of
+     *       resources.
+     * @return descriptions Vector of MetadataTypeDescriptions that represent the
+     *  MetadataTypes supported by the device.
+     */
+    listSupportedMetadataTypes()
+            generates (Error error, vec<MetadataTypeDescription> descriptions);
 };
 

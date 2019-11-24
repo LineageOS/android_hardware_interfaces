@@ -20,13 +20,36 @@ import @2.1::Error;
 
 enum Error : @2.1::Error {
     /**
-     * Invalid vsync period
+     * Seamless cannot be required for configurations that don't share a config group
      */
-    BAD_VSYNC_PERIOD = 9,
+    SEAMLESS_NOT_ALLOWED = 9,
     /**
      * Seamless requirements cannot be met
      */
     SEAMLESS_NOT_POSSIBLE = 10,
+};
+
+/**
+ * Timing for a vsync period change.
+ */
+struct VsyncPeriodChangeTimeline {
+    /**
+     * The time in CLOCK_MONOTONIC when the new display will start to refresh at
+     * the new vsync period.
+     */
+    int64_t newVsyncAppliedTimeNanos;
+
+    /**
+     * Set to true if the client is required to send a frame to be displayed before
+     * the change can take place.
+     */
+    bool refreshRequired;
+
+    /**
+     * The time in CLOCK_MONOTONIC when the client is expected to send the new frame.
+     * Should be ignored if refreshRequired is false.
+     */
+    int64_t refreshTimeNanos;
 };
 
 typedef uint32_t VsyncPeriodNanos;

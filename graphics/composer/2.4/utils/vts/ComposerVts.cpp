@@ -70,15 +70,18 @@ Error ComposerClient::getDisplayConnectionType(Display display,
     return error;
 }
 
-Error ComposerClient::getSupportedDisplayVsyncPeriods(
-        Display display, Config config, std::vector<VsyncPeriodNanos>* outSupportedVsyncPeriods) {
-    Error error = Error::NONE;
-    mClient->getSupportedDisplayVsyncPeriods(
-            display, config, [&](const auto& tmpError, const auto& tmpSupportedVsyncPeriods) {
-                error = tmpError;
-                *outSupportedVsyncPeriods = tmpSupportedVsyncPeriods;
+int32_t ComposerClient::getDisplayAttribute_2_4(
+        android::hardware::graphics::composer::V2_1::Display display,
+        android::hardware::graphics::composer::V2_1::Config config,
+        IComposerClient::Attribute attribute) {
+    int32_t value = 0;
+    mClient->getDisplayAttribute_2_4(
+            display, config, attribute, [&](const auto& tmpError, const auto& tmpValue) {
+                ASSERT_EQ(Error::NONE, tmpError) << "failed to get display attribute";
+                value = tmpValue;
             });
-    return error;
+
+    return value;
 }
 
 Error ComposerClient::getDisplayVsyncPeriod(Display display, VsyncPeriodNanos* outVsyncPeriod) {
@@ -90,17 +93,16 @@ Error ComposerClient::getDisplayVsyncPeriod(Display display, VsyncPeriodNanos* o
     return error;
 }
 
-Error ComposerClient::setActiveConfigAndVsyncPeriod(
-        Display display, Config config, VsyncPeriodNanos vsyncPeriodNanos,
+Error ComposerClient::setActiveConfigWithConstraints(
+        Display display, Config config,
         const IComposerClient::VsyncPeriodChangeConstraints& vsyncPeriodChangeConstraints,
-        int64_t* outNewVsyncAppliedTime) {
+        VsyncPeriodChangeTimeline* timeline) {
     Error error = Error::NONE;
-    mClient->setActiveConfigAndVsyncPeriod(
-            display, config, vsyncPeriodNanos, vsyncPeriodChangeConstraints,
-            [&](const auto& tmpError, const auto& tmpNewVsyncAppliedTime) {
-                error = tmpError;
-                *outNewVsyncAppliedTime = tmpNewVsyncAppliedTime;
-            });
+    mClient->setActiveConfigWithConstraints(display, config, vsyncPeriodChangeConstraints,
+                                            [&](const auto& tmpError, const auto& tmpTimeline) {
+                                                error = tmpError;
+                                                *timeline = tmpTimeline;
+                                            });
     return error;
 }
 
