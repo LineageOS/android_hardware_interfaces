@@ -130,6 +130,7 @@ struct Device : public IDevice, public ParametersUtil {
   private:
     bool mIsClosed;
     audio_hw_device_t* mDevice;
+    int mOpenedStreamsCount = 0;
 
     virtual ~Device();
 
