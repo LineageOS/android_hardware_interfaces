@@ -70,10 +70,7 @@ class Gralloc {
     // in and out of the mapper.  The ownership of the fd is always transferred
     // with each of these functions.
     void* lock(const native_handle_t* bufferHandle, uint64_t cpuUsage,
-               const IMapper::Rect& accessRegion, int acquireFence, int32_t* outBytesPerPixel,
-               int32_t* outBytesPerStride);
-    YCbCrLayout lockYCbCr(const native_handle_t* bufferHandle, uint64_t cpuUsage,
-                          const IMapper::Rect& accessRegion, int acquireFence);
+               const IMapper::Rect& accessRegion, int acquireFence);
     int unlock(const native_handle_t* bufferHandle);
 
     bool validateBufferSize(const native_handle_t* bufferHandle,
