@@ -16,6 +16,7 @@
 
 #define LOG_TAG "VtsHalGraphicsMapperV4_0TargetTest"
 
+#include <unistd.h>
 #include <chrono>
 #include <thread>
 #include <vector>
@@ -82,6 +83,7 @@ class GraphicsMapperHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         mDummyDescriptorInfo.format = PixelFormat::RGBA_8888;
         mDummyDescriptorInfo.usage =
                 static_cast<uint64_t>(BufferUsage::CPU_WRITE_OFTEN | BufferUsage::CPU_READ_OFTEN);
+        mDummyDescriptorInfo.reservedSize = 0;
     }
 
     void TearDown() override {}
@@ -1819,6 +1821,124 @@ TEST_F(GraphicsMapperHidlTest, DumpBuffers) {
     for (const auto& dump : bufferDump) {
         ASSERT_NO_FATAL_FAILURE(verifyBufferDump(dump));
     }
+}
+
+/**
+ * Test IMapper::getReservedRegion()
+ */
+TEST_F(GraphicsMapperHidlTest, GetReservedRegion) {
+    const native_handle_t* bufferHandle = nullptr;
+    auto info = mDummyDescriptorInfo;
+
+    const int pageSize = getpagesize();
+    ASSERT_GE(0, pageSize);
+    std::vector<uint64_t> requestedReservedSizes{1, 10, 333, static_cast<uint64_t>(pageSize) / 2,
+                                                 static_cast<uint64_t>(pageSize)};
+
+    for (auto requestedReservedSize : requestedReservedSizes) {
+        info.reservedSize = requestedReservedSize;
+
+        ASSERT_NO_FATAL_FAILURE(bufferHandle = mGralloc->allocate(info, true));
+
+        void* reservedRegion = nullptr;
+        uint64_t reservedSize = 0;
+        ASSERT_EQ(Error::NONE,
+                  mGralloc->getReservedRegion(bufferHandle, &reservedRegion, &reservedSize));
+        ASSERT_NE(nullptr, reservedRegion);
+        ASSERT_EQ(requestedReservedSize, reservedSize);
+
+        uint8_t testValue = 1;
+        memset(reservedRegion, testValue, reservedSize);
+        for (uint64_t i = 0; i < reservedSize; i++) {
+            ASSERT_EQ(testValue, static_cast<uint8_t*>(reservedRegion)[i]);
+        }
+    }
+}
+
+/**
+ * Test IMapper::getReservedRegion() request over a page
+ */
+TEST_F(GraphicsMapperHidlTest, GetLargeReservedRegion) {
+    const native_handle_t* bufferHandle = nullptr;
+    auto info = mDummyDescriptorInfo;
+
+    const int pageSize = getpagesize();
+    ASSERT_GE(0, pageSize);
+    std::vector<uint64_t> requestedReservedSizes{static_cast<uint64_t>(pageSize) * 2,
+                                                 static_cast<uint64_t>(pageSize) * 10,
+                                                 static_cast<uint64_t>(pageSize) * 1000};
+
+    for (auto requestedReservedSize : requestedReservedSizes) {
+        info.reservedSize = requestedReservedSize;
+
+        BufferDescriptor descriptor;
+        ASSERT_NO_FATAL_FAILURE(descriptor = mGralloc->createDescriptor(info));
+
+        Error err;
+        mGralloc->getAllocator()->allocate(
+                descriptor, 1,
+                [&](const auto& tmpError, const auto&, const auto&) { err = tmpError; });
+        if (err == Error::UNSUPPORTED) {
+            continue;
+        }
+        ASSERT_EQ(Error::NONE, err);
+
+        void* reservedRegion = nullptr;
+        uint64_t reservedSize = 0;
+        err = mGralloc->getReservedRegion(bufferHandle, &reservedRegion, &reservedSize);
+
+        ASSERT_EQ(Error::NONE, err);
+        ASSERT_NE(nullptr, reservedRegion);
+        ASSERT_EQ(requestedReservedSize, reservedSize);
+    }
+}
+
+/**
+ * Test IMapper::getReservedRegion() across multiple mappers
+ */
+TEST_F(GraphicsMapperHidlTest, GetReservedRegionMultiple) {
+    const native_handle_t* bufferHandle = nullptr;
+    auto info = mDummyDescriptorInfo;
+
+    const int pageSize = getpagesize();
+    ASSERT_GE(0, pageSize);
+    info.reservedSize = pageSize;
+
+    ASSERT_NO_FATAL_FAILURE(bufferHandle = mGralloc->allocate(info, true));
+
+    void* reservedRegion1 = nullptr;
+    uint64_t reservedSize1 = 0;
+    ASSERT_EQ(Error::NONE,
+              mGralloc->getReservedRegion(bufferHandle, &reservedRegion1, &reservedSize1));
+    ASSERT_NE(nullptr, reservedRegion1);
+    ASSERT_EQ(info.reservedSize, reservedSize1);
+
+    std::unique_ptr<Gralloc> anotherGralloc;
+    ASSERT_NO_FATAL_FAILURE(
+            anotherGralloc = std::make_unique<Gralloc>(
+                    GraphicsMapperHidlEnvironment::Instance()->getServiceName<IAllocator>(),
+                    GraphicsMapperHidlEnvironment::Instance()->getServiceName<IMapper>()));
+
+    void* reservedRegion2 = nullptr;
+    uint64_t reservedSize2 = 0;
+    ASSERT_EQ(Error::NONE,
+              mGralloc->getReservedRegion(bufferHandle, &reservedRegion2, &reservedSize2));
+    ASSERT_EQ(reservedRegion1, reservedRegion2);
+    ASSERT_EQ(reservedSize1, reservedSize2);
+}
+
+/**
+ * Test IMapper::getReservedRegion() with a bad buffer
+ */
+TEST_F(GraphicsMapperHidlTest, GetReservedRegionBadBuffer) {
+    const native_handle_t* bufferHandle = nullptr;
+
+    void* reservedRegion = nullptr;
+    uint64_t reservedSize = 0;
+    ASSERT_EQ(Error::BAD_BUFFER,
+              mGralloc->getReservedRegion(bufferHandle, &reservedRegion, &reservedSize));
+    ASSERT_EQ(nullptr, reservedRegion);
+    ASSERT_EQ(0, reservedSize);
 }
 
 }  // namespace

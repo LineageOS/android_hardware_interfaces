@@ -90,6 +90,9 @@ class Gralloc {
                                       const IMapper::MetadataType& metadataType,
                                       hidl_vec<uint8_t>* outVec);
 
+    Error getReservedRegion(const native_handle_t* bufferHandle, void** outReservedRegion,
+                            uint64_t* outReservedSize);
+
   private:
     void init(const std::string& allocatorServiceName, const std::string& mapperServiceName);
 
