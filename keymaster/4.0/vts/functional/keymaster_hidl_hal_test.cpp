@@ -840,6 +840,8 @@ TEST_P(NewKeyGenerationTest, HmacDigestNone) {
                               .Authorization(TAG_MIN_MAC_LENGTH, 128)));
 }
 
+INSTANTIATE_KEYMASTER_HIDL_TEST(NewKeyGenerationTest);
+
 typedef KeymasterHidlTest SigningOperationsTest;
 
 /*
@@ -1509,6 +1511,8 @@ TEST_P(SigningOperationsTest, HmacRfc4231TestCase5) {
     }
 }
 
+INSTANTIATE_KEYMASTER_HIDL_TEST(SigningOperationsTest);
+
 typedef KeymasterHidlTest VerificationOperationsTest;
 
 /*
@@ -1749,6 +1753,8 @@ TEST_P(VerificationOperationsTest, HmacSigningKeyCannotVerify) {
     CheckedDeleteKey(&verification_key);
 }
 
+INSTANTIATE_KEYMASTER_HIDL_TEST(VerificationOperationsTest);
+
 typedef KeymasterHidlTest ExportKeyTest;
 
 /*
@@ -1827,6 +1833,8 @@ TEST_P(ExportKeyTest, AesKeyUnexportable) {
     EXPECT_EQ(ErrorCode::UNSUPPORTED_KEY_FORMAT, ExportKey(KeyFormat::PKCS8, &export_data));
     EXPECT_EQ(ErrorCode::UNSUPPORTED_KEY_FORMAT, ExportKey(KeyFormat::RAW, &export_data));
 }
+
+INSTANTIATE_KEYMASTER_HIDL_TEST(ExportKeyTest);
 
 class ImportKeyTest : public KeymasterHidlTest {
    public:
@@ -2093,6 +2101,8 @@ TEST_P(ImportKeyTest, HmacKeySuccess) {
     VerifyMessage(message, signature, AuthorizationSetBuilder().Digest(Digest::SHA_2_256));
 }
 
+INSTANTIATE_KEYMASTER_HIDL_TEST(ImportKeyTest);
+
 auto wrapped_key = hex2str(
     "3082017902010004820100934bf94e2aa28a3f83c9f79297250262fbe3276b5a1c91159bbfa3ef8957aac84b59b30b"
     "455a79c2973480823d8b3863c3deef4a8e243590268d80e18751a0e130f67ce6a1ace9f79b95e097474febc981195b"
@@ -2213,6 +2223,8 @@ TEST_P(ImportWrappedKeyTest, WrongPurpose) {
                       .Digest(Digest::SHA_2_256)
                       .Padding(PaddingMode::RSA_OAEP)));
 }
+
+INSTANTIATE_KEYMASTER_HIDL_TEST(ImportWrappedKeyTest);
 
 typedef KeymasterHidlTest EncryptionOperationsTest;
 
@@ -4111,6 +4123,8 @@ TEST_P(EncryptionOperationsTest, TripleDesCbcIncrementalNoPadding) {
     EXPECT_EQ(message, plaintext);
 }
 
+INSTANTIATE_KEYMASTER_HIDL_TEST(EncryptionOperationsTest);
+
 typedef KeymasterHidlTest MaxOperationsTest;
 
 /*
@@ -4166,6 +4180,8 @@ TEST_P(MaxOperationsTest, TestLimitRsa) {
     EXPECT_EQ(ErrorCode::KEY_MAX_OPS_EXCEEDED, Begin(KeyPurpose::SIGN, params));
 }
 
+INSTANTIATE_KEYMASTER_HIDL_TEST(MaxOperationsTest);
+
 typedef KeymasterHidlTest AddEntropyTest;
 
 /*
@@ -4195,6 +4211,8 @@ TEST_P(AddEntropyTest, AddEmptyEntropy) {
 TEST_P(AddEntropyTest, AddLargeEntropy) {
     EXPECT_EQ(ErrorCode::OK, keymaster().addRngEntropy(HidlBuf(string(2 * 1024, 'a'))));
 }
+
+INSTANTIATE_KEYMASTER_HIDL_TEST(AddEntropyTest);
 
 typedef KeymasterHidlTest AttestationTest;
 
@@ -4373,6 +4391,8 @@ TEST_P(AttestationTest, HmacAttestation) {
                         &cert_chain));
 }
 
+INSTANTIATE_KEYMASTER_HIDL_TEST(AttestationTest);
+
 typedef KeymasterHidlTest KeyDeletionTest;
 
 /**
@@ -4478,6 +4498,8 @@ TEST_P(KeyDeletionTest, DeleteAllKeys) {
     }
 }
 
+INSTANTIATE_KEYMASTER_HIDL_TEST(KeyDeletionTest);
+
 using UpgradeKeyTest = KeymasterHidlTest;
 
 /*
@@ -4496,6 +4518,8 @@ TEST_P(UpgradeKeyTest, UpgradeKey) {
     // Key doesn't need upgrading.  Should get okay, but no new key blob.
     EXPECT_EQ(result, std::make_pair(ErrorCode::OK, HidlBuf()));
 }
+
+INSTANTIATE_KEYMASTER_HIDL_TEST(UpgradeKeyTest);
 
 using ClearOperationsTest = KeymasterHidlTest;
 
@@ -4572,6 +4596,8 @@ TEST_P(ClearOperationsTest, ServiceDeath) {
     }
 }
 
+INSTANTIATE_KEYMASTER_HIDL_TEST(ClearOperationsTest);
+
 typedef KeymasterHidlTest TransportLimitTest;
 
 /*
@@ -4624,44 +4650,7 @@ TEST_P(TransportLimitTest, LargeFinishInput) {
     CheckedDeleteKey();
 }
 
-static const auto kKeymasterDeviceChoices =
-        testing::ValuesIn(android::hardware::getAllHalInstanceNames(IKeymasterDevice::descriptor));
-
-INSTANTIATE_TEST_SUITE_P(PerInstance, NewKeyGenerationTest, kKeymasterDeviceChoices,
-                         android::hardware::PrintInstanceNameToString);
-
-INSTANTIATE_TEST_SUITE_P(PerInstance, ImportKeyTest, kKeymasterDeviceChoices,
-                         android::hardware::PrintInstanceNameToString);
-
-INSTANTIATE_TEST_SUITE_P(PerInstance, ImportWrappedKeyTest, kKeymasterDeviceChoices,
-                         android::hardware::PrintInstanceNameToString);
-
-INSTANTIATE_TEST_SUITE_P(PerInstance, SigningOperationsTest, kKeymasterDeviceChoices,
-                         android::hardware::PrintInstanceNameToString);
-
-INSTANTIATE_TEST_SUITE_P(PerInstance, VerificationOperationsTest, kKeymasterDeviceChoices,
-                         android::hardware::PrintInstanceNameToString);
-
-INSTANTIATE_TEST_SUITE_P(PerInstance, ExportKeyTest, kKeymasterDeviceChoices,
-                         android::hardware::PrintInstanceNameToString);
-
-INSTANTIATE_TEST_SUITE_P(PerInstance, EncryptionOperationsTest, kKeymasterDeviceChoices,
-                         android::hardware::PrintInstanceNameToString);
-
-INSTANTIATE_TEST_SUITE_P(PerInstance, MaxOperationsTest, kKeymasterDeviceChoices,
-                         android::hardware::PrintInstanceNameToString);
-
-INSTANTIATE_TEST_SUITE_P(PerInstance, AddEntropyTest, kKeymasterDeviceChoices,
-                         android::hardware::PrintInstanceNameToString);
-
-INSTANTIATE_TEST_SUITE_P(PerInstance, AttestationTest, kKeymasterDeviceChoices,
-                         android::hardware::PrintInstanceNameToString);
-
-INSTANTIATE_TEST_SUITE_P(PerInstance, KeyDeletionTest, kKeymasterDeviceChoices,
-                         android::hardware::PrintInstanceNameToString);
-
-INSTANTIATE_TEST_SUITE_P(PerInstance, TransportLimitTest, kKeymasterDeviceChoices,
-                         android::hardware::PrintInstanceNameToString);
+INSTANTIATE_KEYMASTER_HIDL_TEST(TransportLimitTest);
 
 }  // namespace test
 }  // namespace V4_0
