@@ -15,5 +15,5 @@ hidl_interface {
         "android.hardware.soundtrigger@2.0",
         "android.hidl.base@1.0",
     ],
-    gen_java: false,
+    gen_java: true,
 }

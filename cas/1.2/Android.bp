@@ -7,10 +7,10 @@ hidl_interface {
         enabled: true,
     },
     srcs: [
+        "types.hal",
         "ICas.hal",
         "ICasListener.hal",
         "IMediaCasService.hal",
-        "types.hal",
     ],
     interfaces: [
         "android.hardware.cas@1.0",
