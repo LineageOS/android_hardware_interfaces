@@ -1954,7 +1954,7 @@ enum OperationType : int32_t {
      * Outputs:
      * * 0: A tensor of the same {@link OperandType} as input0.
      *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
-     *      the scale and zeroPoint must be same as input0.
+     *      the scale and zeroPoint must be the same as input0.
      */
     MEAN = @1.1::OperationType:MEAN,
 
@@ -3141,8 +3141,8 @@ enum OperationType : int32_t {
      *      {@link SymmPerChannelQuantParams}) must be set to 0.
      * * 2: A 1-D tensor, of shape [depth_out], specifying the bias. For input
      *      tensor of type {@link OperandType::TENSOR_FLOAT32} or
-     *      {@link OperandType::TENSOR_FLOAT16}, the bias must be of the same type.
-     *      For filter tensor of {@link OperandType::TENSOR_QUANT8_ASYMM},
+     *      {@link OperandType::TENSOR_FLOAT16}, the bias must be of the same
+     *      type. For filter tensor of {@link OperandType::TENSOR_QUANT8_ASYMM},
      *      the bias should be of {@link OperandType::TENSOR_INT32}, with zeroPoint
      *      of 0 and bias_scale == input_scale * filter_scale. For filter tensor
      *      of {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL}, the bias
@@ -3181,8 +3181,7 @@ enum OperationType : int32_t {
      * * 2: A 1-D tensor, of shape [depth_out], specifying the bias. For input
      *      tensor of type {@link OperandType::TENSOR_FLOAT32} or
      *      {@link OperandType::TENSOR_FLOAT16}, the bias must be of the same
-     *      {@link OperandType::TENSOR_FLOAT16}, the bias must be of the same type.
-     *      For filter tensor of {@link OperandType::TENSOR_QUANT8_ASYMM},
+     *      type. For filter tensor of {@link OperandType::TENSOR_QUANT8_ASYMM},
      *      the bias should be of {@link OperandType::TENSOR_INT32}, with zeroPoint
      *      of 0 and bias_scale == input_scale * filter_scale. For filter tensor
      *      of {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL}, the bias
@@ -3669,16 +3668,13 @@ enum OperationType : int32_t {
     /**
      * Quantizes the input tensor.
      *
-     * The formula for {@link OperandType::TENSOR_QUANT8_ASYMM} output tensor is:
+     * The formula is:
      *
      *     output = max(0, min(255, round(input / scale) + zeroPoint)
      *
-     * Supported input tensor {@link OperandType}:
+     * Supported tensor {@link OperandType}:
      * * {@link OperandType::TENSOR_FLOAT16}
      * * {@link OperandType::TENSOR_FLOAT32}
-     *
-     * Supported output tensor {@link OperandType}:
-     * * {@link OperandType::TENSOR_QUANT8_ASYMM}
      *
      * Supported tensor rank: from 1
      *
