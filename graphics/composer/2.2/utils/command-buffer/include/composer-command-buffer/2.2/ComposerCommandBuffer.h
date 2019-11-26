@@ -93,16 +93,17 @@ class CommandWriterBase : public V2_1::CommandWriterBase {
     }
 
    protected:
-    void beginCommand_2_2(IComposerClient::Command command, uint16_t length) {
-        V2_1::CommandWriterBase::beginCommand(
-            static_cast<V2_1::IComposerClient::Command>(static_cast<int32_t>(command)), length);
-    }
-
     void writeFloatColor(const IComposerClient::FloatColor& color) {
         writeFloat(color.r);
         writeFloat(color.g);
         writeFloat(color.b);
         writeFloat(color.a);
+    }
+
+  private:
+    void beginCommand_2_2(IComposerClient::Command command, uint16_t length) {
+        V2_1::CommandWriterBase::beginCommand(
+                static_cast<V2_1::IComposerClient::Command>(static_cast<int32_t>(command)), length);
     }
 };
 
