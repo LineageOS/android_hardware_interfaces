@@ -2375,15 +2375,17 @@ enum OperationType : int32_t {
      *       then clipping is disabled.
      *       If all the input tensors have type {@link OperandType::TENSOR_FLOAT32},
      *       this scalar must be of the type {@link OperandType::FLOAT32},
-     *       otherwise if all the input tensors have the type {@link OperandType::TENSOR_FLOAT16},
-     *       this scalar must be of type {@link OperandType::FLOAT16}.
+     *       otherwise if all the input tensors have the type
+     *       {@link OperandType::TENSOR_FLOAT16}, this scalar must be
+     *       of type {@link OperandType::FLOAT16}.
      * * 50: The clipping threshold for the output from the
      *       projection layer, such that values are bound within
      *       [-proj_clip, proj_clip]. If set to 0.0 then clipping is disabled.
      *       If all the input tensors have type {@link OperandType::TENSOR_FLOAT32},
      *       this scalar must be of the type {@link OperandType::FLOAT32},
-     *       otherwise if all the input tensors have the type {@link OperandType::TENSOR_FLOAT16},
-     *       this scalar must be of type {@link OperandType::FLOAT16}.
+     *       otherwise if all the input tensors have the type
+     *       {@link OperandType::TENSOR_FLOAT16}, this scalar must be
+     *       of type {@link OperandType::FLOAT16}.
      * * 51: merge_outputs
      *       An {@link OperandType::BOOL} scalar specifying if the outputs
      *       from forward and backward cells should be merged.
@@ -4034,6 +4036,7 @@ enum OperationType : int32_t {
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_INT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
+     * * {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} (since HAL version 1.3)
      *
      * Supported tensor rank: from 1
      *
@@ -4044,14 +4047,14 @@ enum OperationType : int32_t {
      *      true) or input2 (if false).
      * * 1: An input tensor of the same shape as input0.
      * * 2: An input tensor of the same shape and type as input1.
-     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM}
+     *      and {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} tensor,
      *      the scales and zeroPoint can be different from input1 scale and zeroPoint.
      *
      * Outputs:
      * * 0: A tensor of the same type and shape as input1 and input2.
      *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
      *      the scale and zeroPoint can be different from inputs' scale and zeroPoint.
-     *
      */
     SELECT = @1.2::OperationType:SELECT,
 

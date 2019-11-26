@@ -69,7 +69,34 @@ using V1_2::Timing;
 using V1_2::implementation::ExecutionCallback;
 using HidlToken = hidl_array<uint8_t, static_cast<uint32_t>(Constant::BYTE_SIZE_OF_CACHE_TOKEN)>;
 
+namespace {
+
+enum class Executor { ASYNC, SYNC, BURST };
+
 enum class OutputType { FULLY_SPECIFIED, UNSPECIFIED, INSUFFICIENT };
+
+struct TestConfig {
+    Executor executor;
+    MeasureTiming measureTiming;
+    OutputType outputType;
+    // `reportSkipping` indicates if a test should print an info message in case
+    // it is skipped. The field is set to true by default and is set to false in
+    // quantization coupling tests to suppress skipping a test
+    bool reportSkipping;
+    TestConfig(Executor executor, MeasureTiming measureTiming, OutputType outputType)
+        : executor(executor),
+          measureTiming(measureTiming),
+          outputType(outputType),
+          reportSkipping(true) {}
+    TestConfig(Executor executor, MeasureTiming measureTiming, OutputType outputType,
+               bool reportSkipping)
+        : executor(executor),
+          measureTiming(measureTiming),
+          outputType(outputType),
+          reportSkipping(reportSkipping) {}
+};
+
+}  // namespace
 
 Model createModel(const TestModel& testModel) {
     // Model operands.
@@ -205,31 +232,34 @@ static std::shared_ptr<::android::nn::ExecutionBurstController> CreateBurst(
     return android::nn::ExecutionBurstController::create(preparedModel,
                                                          std::chrono::microseconds{0});
 }
-enum class Executor { ASYNC, SYNC, BURST };
 
 void EvaluatePreparedModel(const sp<IPreparedModel>& preparedModel, const TestModel& testModel,
-                           Executor executor, MeasureTiming measure, OutputType outputType) {
+                           const TestConfig& testConfig, bool* skipped = nullptr) {
+    if (skipped != nullptr) {
+        *skipped = false;
+    }
     // If output0 does not have size larger than one byte, we can not test with insufficient buffer.
-    if (outputType == OutputType::INSUFFICIENT && !isOutputSizeGreaterThanOne(testModel, 0)) {
+    if (testConfig.outputType == OutputType::INSUFFICIENT &&
+        !isOutputSizeGreaterThanOne(testModel, 0)) {
         return;
     }
 
     Request request = createRequest(testModel);
-    if (outputType == OutputType::INSUFFICIENT) {
+    if (testConfig.outputType == OutputType::INSUFFICIENT) {
         makeOutputInsufficientSize(/*outputIndex=*/0, &request);
     }
 
     ErrorStatus executionStatus;
     hidl_vec<OutputShape> outputShapes;
     Timing timing;
-    switch (executor) {
+    switch (testConfig.executor) {
         case Executor::ASYNC: {
             SCOPED_TRACE("asynchronous");
 
             // launch execution
             sp<ExecutionCallback> executionCallback = new ExecutionCallback();
-            Return<ErrorStatus> executionLaunchStatus =
-                    ExecutePreparedModel(preparedModel, request, measure, executionCallback);
+            Return<ErrorStatus> executionLaunchStatus = ExecutePreparedModel(
+                    preparedModel, request, testConfig.measureTiming, executionCallback);
             ASSERT_TRUE(executionLaunchStatus.isOk());
             EXPECT_EQ(ErrorStatus::NONE, static_cast<ErrorStatus>(executionLaunchStatus));
 
@@ -245,8 +275,8 @@ void EvaluatePreparedModel(const sp<IPreparedModel>& preparedModel, const TestMo
             SCOPED_TRACE("synchronous");
 
             // execute
-            Return<ErrorStatus> executionReturnStatus =
-                    ExecutePreparedModel(preparedModel, request, measure, &outputShapes, &timing);
+            Return<ErrorStatus> executionReturnStatus = ExecutePreparedModel(
+                    preparedModel, request, testConfig.measureTiming, &outputShapes, &timing);
             ASSERT_TRUE(executionReturnStatus.isOk());
             executionStatus = static_cast<ErrorStatus>(executionReturnStatus);
 
@@ -269,15 +299,21 @@ void EvaluatePreparedModel(const sp<IPreparedModel>& preparedModel, const TestMo
             // execute burst
             int n;
             std::tie(n, outputShapes, timing, std::ignore) =
-                    controller->compute(request, measure, keys);
+                    controller->compute(request, testConfig.measureTiming, keys);
             executionStatus = nn::convertResultCodeToErrorStatus(n);
 
             break;
         }
     }
 
-    if (outputType != OutputType::FULLY_SPECIFIED &&
+    if (testConfig.outputType != OutputType::FULLY_SPECIFIED &&
         executionStatus == ErrorStatus::GENERAL_FAILURE) {
+        if (skipped != nullptr) {
+            *skipped = true;
+        }
+        if (!testConfig.reportSkipping) {
+            return;
+        }
         LOG(INFO) << "NN VTS: Early termination of test because vendor service cannot "
                      "execute model that it does not support.";
         std::cout << "[          ]   Early termination of test because vendor service cannot "
@@ -285,7 +321,7 @@ void EvaluatePreparedModel(const sp<IPreparedModel>& preparedModel, const TestMo
                   << std::endl;
         GTEST_SKIP();
     }
-    if (measure == MeasureTiming::NO) {
+    if (testConfig.measureTiming == MeasureTiming::NO) {
         EXPECT_EQ(UINT64_MAX, timing.timeOnDevice);
         EXPECT_EQ(UINT64_MAX, timing.timeInDriver);
     } else {
@@ -294,7 +330,7 @@ void EvaluatePreparedModel(const sp<IPreparedModel>& preparedModel, const TestMo
         }
     }
 
-    switch (outputType) {
+    switch (testConfig.outputType) {
         case OutputType::FULLY_SPECIFIED:
             // If the model output operands are fully specified, outputShapes must be either
             // either empty, or have the same number of elements as the number of outputs.
@@ -331,59 +367,117 @@ void EvaluatePreparedModel(const sp<IPreparedModel>& preparedModel, const TestMo
 }
 
 void EvaluatePreparedModel(const sp<IPreparedModel>& preparedModel, const TestModel& testModel,
-                           bool testDynamicOutputShape) {
-    if (testDynamicOutputShape) {
-        EvaluatePreparedModel(preparedModel, testModel, Executor::ASYNC, MeasureTiming::NO,
-                              OutputType::UNSPECIFIED);
-        EvaluatePreparedModel(preparedModel, testModel, Executor::SYNC, MeasureTiming::NO,
-                              OutputType::UNSPECIFIED);
-        EvaluatePreparedModel(preparedModel, testModel, Executor::BURST, MeasureTiming::NO,
-                              OutputType::UNSPECIFIED);
-        EvaluatePreparedModel(preparedModel, testModel, Executor::ASYNC, MeasureTiming::YES,
-                              OutputType::UNSPECIFIED);
-        EvaluatePreparedModel(preparedModel, testModel, Executor::SYNC, MeasureTiming::YES,
-                              OutputType::UNSPECIFIED);
-        EvaluatePreparedModel(preparedModel, testModel, Executor::BURST, MeasureTiming::YES,
-                              OutputType::UNSPECIFIED);
-        EvaluatePreparedModel(preparedModel, testModel, Executor::ASYNC, MeasureTiming::NO,
-                              OutputType::INSUFFICIENT);
-        EvaluatePreparedModel(preparedModel, testModel, Executor::SYNC, MeasureTiming::NO,
-                              OutputType::INSUFFICIENT);
-        EvaluatePreparedModel(preparedModel, testModel, Executor::BURST, MeasureTiming::NO,
-                              OutputType::INSUFFICIENT);
-        EvaluatePreparedModel(preparedModel, testModel, Executor::ASYNC, MeasureTiming::YES,
-                              OutputType::INSUFFICIENT);
-        EvaluatePreparedModel(preparedModel, testModel, Executor::SYNC, MeasureTiming::YES,
-                              OutputType::INSUFFICIENT);
-        EvaluatePreparedModel(preparedModel, testModel, Executor::BURST, MeasureTiming::YES,
-                              OutputType::INSUFFICIENT);
-    } else {
-        EvaluatePreparedModel(preparedModel, testModel, Executor::ASYNC, MeasureTiming::NO,
-                              OutputType::FULLY_SPECIFIED);
-        EvaluatePreparedModel(preparedModel, testModel, Executor::SYNC, MeasureTiming::NO,
-                              OutputType::FULLY_SPECIFIED);
-        EvaluatePreparedModel(preparedModel, testModel, Executor::BURST, MeasureTiming::NO,
-                              OutputType::FULLY_SPECIFIED);
-        EvaluatePreparedModel(preparedModel, testModel, Executor::ASYNC, MeasureTiming::YES,
-                              OutputType::FULLY_SPECIFIED);
-        EvaluatePreparedModel(preparedModel, testModel, Executor::SYNC, MeasureTiming::YES,
-                              OutputType::FULLY_SPECIFIED);
-        EvaluatePreparedModel(preparedModel, testModel, Executor::BURST, MeasureTiming::YES,
-                              OutputType::FULLY_SPECIFIED);
+                           TestKind testKind) {
+    std::initializer_list<OutputType> outputTypesList;
+    std::initializer_list<MeasureTiming> measureTimingList;
+    std::initializer_list<Executor> executorList;
+
+    switch (testKind) {
+        case TestKind::GENERAL: {
+            outputTypesList = {OutputType::FULLY_SPECIFIED};
+            measureTimingList = {MeasureTiming::NO, MeasureTiming::YES};
+            executorList = {Executor::ASYNC, Executor::SYNC, Executor::BURST};
+        } break;
+        case TestKind::DYNAMIC_SHAPE: {
+            outputTypesList = {OutputType::UNSPECIFIED, OutputType::INSUFFICIENT};
+            measureTimingList = {MeasureTiming::NO, MeasureTiming::YES};
+            executorList = {Executor::ASYNC, Executor::SYNC, Executor::BURST};
+        } break;
+        case TestKind::QUANTIZATION_COUPLING: {
+            LOG(FATAL) << "Wrong TestKind for EvaluatePreparedModel";
+            return;
+        } break;
+    }
+
+    for (const OutputType outputType : outputTypesList) {
+        for (const MeasureTiming measureTiming : measureTimingList) {
+            for (const Executor executor : executorList) {
+                const TestConfig testConfig(executor, measureTiming, outputType);
+                EvaluatePreparedModel(preparedModel, testModel, testConfig);
+            }
+        }
     }
 }
 
-void Execute(const sp<IDevice>& device, const TestModel& testModel, bool testDynamicOutputShape) {
+void EvaluatePreparedCoupledModels(const sp<IPreparedModel>& preparedModel,
+                                   const TestModel& testModel,
+                                   const sp<IPreparedModel>& preparedCoupledModel,
+                                   const TestModel& coupledModel) {
+    std::initializer_list<OutputType> outputTypesList = {OutputType::FULLY_SPECIFIED};
+    std::initializer_list<MeasureTiming> measureTimingList = {MeasureTiming::NO,
+                                                              MeasureTiming::YES};
+    std::initializer_list<Executor> executorList = {Executor::ASYNC, Executor::SYNC,
+                                                    Executor::BURST};
+
+    for (const OutputType outputType : outputTypesList) {
+        for (const MeasureTiming measureTiming : measureTimingList) {
+            for (const Executor executor : executorList) {
+                const TestConfig testConfig(executor, measureTiming, outputType,
+                                            /*reportSkipping=*/false);
+                bool baseSkipped = false;
+                EvaluatePreparedModel(preparedModel, testModel, testConfig, &baseSkipped);
+                bool coupledSkipped = false;
+                EvaluatePreparedModel(preparedCoupledModel, coupledModel, testConfig,
+                                      &coupledSkipped);
+                ASSERT_EQ(baseSkipped, coupledSkipped);
+                if (baseSkipped) {
+                    LOG(INFO) << "NN VTS: Early termination of test because vendor service cannot "
+                                 "execute model that it does not support.";
+                    std::cout << "[          ]   Early termination of test because vendor service "
+                                 "cannot "
+                                 "execute model that it does not support."
+                              << std::endl;
+                    GTEST_SKIP();
+                }
+            }
+        }
+    }
+}
+
+void Execute(const sp<IDevice>& device, const TestModel& testModel, TestKind testKind) {
     Model model = createModel(testModel);
-    if (testDynamicOutputShape) {
+    if (testKind == TestKind::DYNAMIC_SHAPE) {
         makeOutputDimensionsUnspecified(&model);
     }
 
     sp<IPreparedModel> preparedModel;
-    createPreparedModel(device, model, &preparedModel);
-    if (preparedModel == nullptr) return;
-
-    EvaluatePreparedModel(preparedModel, testModel, testDynamicOutputShape);
+    switch (testKind) {
+        case TestKind::GENERAL: {
+            createPreparedModel(device, model, &preparedModel);
+            if (preparedModel == nullptr) return;
+            EvaluatePreparedModel(preparedModel, testModel, TestKind::GENERAL);
+        } break;
+        case TestKind::DYNAMIC_SHAPE: {
+            createPreparedModel(device, model, &preparedModel);
+            if (preparedModel == nullptr) return;
+            EvaluatePreparedModel(preparedModel, testModel, TestKind::DYNAMIC_SHAPE);
+        } break;
+        case TestKind::QUANTIZATION_COUPLING: {
+            ASSERT_TRUE(testModel.hasQuant8AsymmOperands());
+            createPreparedModel(device, model, &preparedModel, /*reportSkipping*/ false);
+            TestModel signedQuantizedModel = convertQuant8AsymmOperandsToSigned(testModel);
+            sp<IPreparedModel> preparedCoupledModel;
+            createPreparedModel(device, createModel(signedQuantizedModel), &preparedCoupledModel,
+                                /*reportSkipping*/ false);
+            // If we couldn't prepare a model with unsigned quantization, we must
+            // fail to prepare a model with signed quantization as well.
+            if (preparedModel == nullptr) {
+                ASSERT_EQ(preparedCoupledModel, nullptr);
+                // If we failed to prepare both of the models, we can safely skip
+                // the test.
+                LOG(INFO) << "NN VTS: Early termination of test because vendor service cannot "
+                             "prepare model that it does not support.";
+                std::cout
+                        << "[          ]   Early termination of test because vendor service cannot "
+                           "prepare model that it does not support."
+                        << std::endl;
+                GTEST_SKIP();
+            }
+            ASSERT_NE(preparedCoupledModel, nullptr);
+            EvaluatePreparedCoupledModels(preparedModel, testModel, preparedCoupledModel,
+                                          signedQuantizedModel);
+        } break;
+    }
 }
 
 void GeneratedTestBase::SetUp() {
@@ -406,12 +500,19 @@ class GeneratedTest : public GeneratedTestBase {};
 // Tag for the dynamic output shape tests
 class DynamicOutputShapeTest : public GeneratedTest {};
 
+// Tag for the dynamic output shape tests
+class DISABLED_QuantizationCouplingTest : public GeneratedTest {};
+
 TEST_P(GeneratedTest, Test) {
-    Execute(kDevice, kTestModel, /*testDynamicOutputShape=*/false);
+    Execute(kDevice, kTestModel, /*testKind=*/TestKind::GENERAL);
 }
 
 TEST_P(DynamicOutputShapeTest, Test) {
-    Execute(kDevice, kTestModel, /*testDynamicOutputShape=*/true);
+    Execute(kDevice, kTestModel, /*testKind=*/TestKind::DYNAMIC_SHAPE);
+}
+
+TEST_P(DISABLED_QuantizationCouplingTest, Test) {
+    Execute(kDevice, kTestModel, /*testKind=*/TestKind::QUANTIZATION_COUPLING);
 }
 
 INSTANTIATE_GENERATED_TEST(GeneratedTest,
@@ -419,5 +520,9 @@ INSTANTIATE_GENERATED_TEST(GeneratedTest,
 
 INSTANTIATE_GENERATED_TEST(DynamicOutputShapeTest,
                            [](const TestModel& testModel) { return !testModel.expectFailure; });
+
+INSTANTIATE_GENERATED_TEST(DISABLED_QuantizationCouplingTest, [](const TestModel& testModel) {
+    return testModel.hasQuant8AsymmOperands() && testModel.operations.size() == 1;
+});
 
 }  // namespace android::hardware::neuralnetworks::V1_3::vts::functional
