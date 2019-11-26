@@ -23,4 +23,11 @@ import @1.4::IRadioIndication;
  * Interface declaring unsolicited radio indications.
  */
 interface IRadioIndication extends @1.4::IRadioIndication {
+    /**
+     * Report change of whether uiccApplications are enabled, or disabled.
+     *
+     * @param type Type of radio indication
+     * @param enabled whether uiccApplications are enabled, or disabled
+     */
+    oneway uiccApplicationsEnablementChanged(RadioIndicationType type, bool enabled);
 };
