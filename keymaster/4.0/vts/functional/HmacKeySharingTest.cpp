@@ -28,6 +28,16 @@ namespace test {
  */
 class HmacKeySharingTest : public KeymasterHidlTest {
    protected:
+     const std::vector<sp<IKeymasterDevice>>& allKeymasters() {
+         if (all_keymasters_.empty()) {
+             auto names = android::hardware::getAllHalInstanceNames(IKeymasterDevice::descriptor);
+             for (const auto& name : names) {
+                 all_keymasters_.push_back(IKeymasterDevice::getService(name));
+             }
+         }
+         return all_keymasters_;
+     }
+
     struct GetParamsResult {
         ErrorCode error;
         HmacSharingParameters params;
@@ -99,7 +109,12 @@ class HmacKeySharingTest : public KeymasterHidlTest {
             EXPECT_EQ(expected, response.sharing_check) << "Sharing check values should match.";
         }
     }
+
+  private:
+    static std::vector<sp<IKeymasterDevice>> all_keymasters_;
 };
+
+std::vector<sp<IKeymasterDevice>> HmacKeySharingTest::all_keymasters_;
 
 TEST_P(HmacKeySharingTest, GetParameters) {
     auto result1 = getHmacSharingParameters(keymaster());
@@ -115,26 +130,26 @@ TEST_P(HmacKeySharingTest, GetParameters) {
 }
 
 TEST_P(HmacKeySharingTest, ComputeSharedHmac) {
-    auto params = getHmacSharingParameters(all_keymasters());
-    ASSERT_EQ(all_keymasters().size(), params.size())
-        << "One or more keymasters failed to provide parameters.";
+    auto params = getHmacSharingParameters(allKeymasters());
+    ASSERT_EQ(allKeymasters().size(), params.size())
+            << "One or more keymasters failed to provide parameters.";
 
     auto nonces = copyNonces(params);
-    EXPECT_EQ(all_keymasters().size(), nonces.size());
+    EXPECT_EQ(allKeymasters().size(), nonces.size());
     std::sort(nonces.begin(), nonces.end());
     std::unique(nonces.begin(), nonces.end());
-    EXPECT_EQ(all_keymasters().size(), nonces.size());
+    EXPECT_EQ(allKeymasters().size(), nonces.size());
 
-    auto responses = computeSharedHmac(all_keymasters(), params);
+    auto responses = computeSharedHmac(allKeymasters(), params);
     ASSERT_GT(responses.size(), 0U);
     verifyResponses(responses[0].sharing_check, responses);
 
     // Do it a second time.  Should get the same answers.
-    params = getHmacSharingParameters(all_keymasters());
-    ASSERT_EQ(all_keymasters().size(), params.size())
-        << "One or more keymasters failed to provide parameters.";
+    params = getHmacSharingParameters(allKeymasters());
+    ASSERT_EQ(allKeymasters().size(), params.size())
+            << "One or more keymasters failed to provide parameters.";
 
-    responses = computeSharedHmac(all_keymasters(), params);
+    responses = computeSharedHmac(allKeymasters(), params);
     ASSERT_GT(responses.size(), 0U);
     ASSERT_EQ(32U, responses[0].sharing_check.size());
     verifyResponses(responses[0].sharing_check, responses);
@@ -160,15 +175,16 @@ TEST_P(HmacKeySharingTest, ComputeSharedHmacCorruptNonce) {
     // sync with respect to the HMAC key.  Granted that VTS tests aren't run on in-use production
     // devices, this still has the potential to cause confusion.  To mitigate that, we always
     // (barring crashes :-/) re-run the unmodified agreement process on our way out.
-    auto fixup_hmac = finally(
-        [&]() { computeSharedHmac(all_keymasters(), getHmacSharingParameters(all_keymasters())); });
+    auto fixup_hmac = finally([&]() {
+        computeSharedHmac(allKeymasters(), getHmacSharingParameters(allKeymasters()));
+    });
 
-    auto params = getHmacSharingParameters(all_keymasters());
-    ASSERT_EQ(all_keymasters().size(), params.size())
-        << "One or more keymasters failed to provide parameters.";
+    auto params = getHmacSharingParameters(allKeymasters());
+    ASSERT_EQ(allKeymasters().size(), params.size())
+            << "One or more keymasters failed to provide parameters.";
 
     // All should be well in the normal case
-    auto responses = computeSharedHmac(all_keymasters(), params);
+    auto responses = computeSharedHmac(allKeymasters(), params);
 
     ASSERT_GT(responses.size(), 0U);
     HidlBuf correct_response = responses[0].sharing_check;
@@ -181,7 +197,7 @@ TEST_P(HmacKeySharingTest, ComputeSharedHmacCorruptNonce) {
     uint8_t bit_to_tweak = rand() % 8;
     params[param_to_tweak].nonce[byte_to_tweak] ^= (1 << bit_to_tweak);
 
-    responses = computeSharedHmac(all_keymasters(), params);
+    responses = computeSharedHmac(allKeymasters(), params);
     for (size_t i = 0; i < responses.size(); ++i) {
         if (i == param_to_tweak) {
             EXPECT_EQ(ErrorCode::INVALID_ARGUMENT, responses[i].error)
@@ -199,15 +215,16 @@ TEST_P(HmacKeySharingTest, ComputeSharedHmacCorruptSeed) {
     // sync with respect to the HMAC key.  Granted that VTS tests aren't run on in-use production
     // devices, this still has the potential to cause confusion.  To mitigate that, we always
     // (barring crashes :-/) re-run the unmodified agreement process on our way out.
-    auto fixup_hmac = finally(
-        [&]() { computeSharedHmac(all_keymasters(), getHmacSharingParameters(all_keymasters())); });
+    auto fixup_hmac = finally([&]() {
+        computeSharedHmac(allKeymasters(), getHmacSharingParameters(allKeymasters()));
+    });
 
-    auto params = getHmacSharingParameters(all_keymasters());
-    ASSERT_EQ(all_keymasters().size(), params.size())
-        << "One or more keymasters failed to provide parameters.";
+    auto params = getHmacSharingParameters(allKeymasters());
+    ASSERT_EQ(allKeymasters().size(), params.size())
+            << "One or more keymasters failed to provide parameters.";
 
     // All should be well in the normal case
-    auto responses = computeSharedHmac(all_keymasters(), params);
+    auto responses = computeSharedHmac(allKeymasters(), params);
 
     ASSERT_GT(responses.size(), 0U);
     HidlBuf correct_response = responses[0].sharing_check;
@@ -223,7 +240,7 @@ TEST_P(HmacKeySharingTest, ComputeSharedHmacCorruptSeed) {
     }
     to_tweak[0]++;
 
-    responses = computeSharedHmac(all_keymasters(), params);
+    responses = computeSharedHmac(allKeymasters(), params);
     for (size_t i = 0; i < responses.size(); ++i) {
         if (i == param_to_tweak) {
             EXPECT_EQ(ErrorCode::INVALID_ARGUMENT, responses[i].error)
@@ -236,10 +253,7 @@ TEST_P(HmacKeySharingTest, ComputeSharedHmacCorruptSeed) {
     }
 }
 
-INSTANTIATE_TEST_SUITE_P(
-        PerInstance, HmacKeySharingTest,
-        testing::ValuesIn(android::hardware::getAllHalInstanceNames(IKeymasterDevice::descriptor)),
-        android::hardware::PrintInstanceNameToString);
+INSTANTIATE_KEYMASTER_HIDL_TEST(HmacKeySharingTest);
 
 }  // namespace test
 }  // namespace V4_0
