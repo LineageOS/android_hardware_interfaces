@@ -74,7 +74,8 @@ public:
 
     void waitForFrameCount(unsigned frameCount);
     bool waitForEvent(const EvsEventDesc& aTargetEvent,
-                            EvsEventDesc& aReceivedEvent);
+                            EvsEventDesc& aReceivedEvent,
+                            bool ignorePayload = false);
     void getFramesCounters(unsigned* received, unsigned* displayed);
     void getFrameDimension(unsigned* width, unsigned* height);
 

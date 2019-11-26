@@ -88,7 +88,7 @@ void FrameHandler::blockingStopStream() {
 
 
 bool FrameHandler::returnHeldBuffer() {
-    std::unique_lock<std::mutex> lock(mLock);
+    std::lock_guard<std::mutex> lock(mLock);
 
     // Return the oldest buffer we're holding
     if (mHeldBuffers.empty()) {
@@ -105,7 +105,7 @@ bool FrameHandler::returnHeldBuffer() {
 
 
 bool FrameHandler::isRunning() {
-    std::unique_lock<std::mutex> lock(mLock);
+    std::lock_guard<std::mutex> lock(mLock);
     return mRunning;
 }
 
@@ -120,7 +120,7 @@ void FrameHandler::waitForFrameCount(unsigned frameCount) {
 
 
 void FrameHandler::getFramesCounters(unsigned* received, unsigned* displayed) {
-    std::unique_lock<std::mutex> lock(mLock);
+    std::lock_guard<std::mutex> lock(mLock);
 
     if (received) {
         *received = mFramesReceived;
@@ -213,8 +213,10 @@ Return<void> FrameHandler::deliverFrame_1_1(const hidl_vec<BufferDesc_1_1>& buff
 
 Return<void> FrameHandler::notify(const EvsEventDesc& event) {
     // Local flag we use to keep track of when the stream is stopping
-    mLock.lock();
-    mLatestEventDesc = event;
+    std::unique_lock<std::mutex> lock(mEventLock);
+    mLatestEventDesc.aType = event.aType;
+    mLatestEventDesc.payload[0] = event.payload[0];
+    mLatestEventDesc.payload[1] = event.payload[1];
     if (mLatestEventDesc.aType == EvsEventType::STREAM_STOPPED) {
         // Signal that the last frame has been received and the stream is stopped
         mRunning = false;
@@ -224,7 +226,7 @@ Return<void> FrameHandler::notify(const EvsEventDesc& event) {
     } else {
         ALOGD("Received an event %s", eventToString(mLatestEventDesc.aType));
     }
-    mLock.unlock();
+    lock.unlock();
     mEventSignal.notify_one();
 
     return Void();
@@ -345,25 +347,33 @@ void FrameHandler::getFrameDimension(unsigned* width, unsigned* height) {
 }
 
 bool FrameHandler::waitForEvent(const EvsEventDesc& aTargetEvent,
-                                      EvsEventDesc& aReceivedEvent) {
+                                      EvsEventDesc& aReceivedEvent,
+                                      bool ignorePayload) {
     // Wait until we get an expected parameter change event.
     std::unique_lock<std::mutex> lock(mEventLock);
     auto now = std::chrono::system_clock::now();
-    bool result = mEventSignal.wait_until(lock, now + 5s,
-        [this, aTargetEvent, &aReceivedEvent](){
-            bool flag = (mLatestEventDesc.aType == aTargetEvent.aType) &&
-                        (mLatestEventDesc.payload[0] == aTargetEvent.payload[0]) &&
-                        (mLatestEventDesc.payload[1] == aTargetEvent.payload[1]);
+    bool found = false;
+    while (!found) {
+        bool result = mEventSignal.wait_until(lock, now + 5s,
+            [this, aTargetEvent, ignorePayload, &aReceivedEvent, &found](){
+                found = (mLatestEventDesc.aType == aTargetEvent.aType) &&
+                        (ignorePayload || (mLatestEventDesc.payload[0] == aTargetEvent.payload[0] &&
+                                           mLatestEventDesc.payload[1] == aTargetEvent.payload[1]));
 
-            aReceivedEvent.aType = mLatestEventDesc.aType;
-            aReceivedEvent.payload[0] = mLatestEventDesc.payload[0];
-            aReceivedEvent.payload[1] = mLatestEventDesc.payload[1];
+                aReceivedEvent.aType = mLatestEventDesc.aType;
+                aReceivedEvent.payload[0] = mLatestEventDesc.payload[0];
+                aReceivedEvent.payload[1] = mLatestEventDesc.payload[1];
+                return found;
+            }
+        );
 
-            return flag;
+        if (!result) {
+            ALOGW("A timer is expired before a target event has happened.");
+            break;
         }
-    );
+    }
 
-    return !result;
+    return found;
 }
 
 const char *FrameHandler::eventToString(const EvsEventType aType) {

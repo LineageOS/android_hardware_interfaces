@@ -41,6 +41,7 @@ static const float kNanoToSeconds = 0.000000001f;
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
+#include <thread>
 
 #include <hidl/HidlTransportSupport.h>
 #include <hwbinder/ProcessState.h>
@@ -812,12 +813,42 @@ TEST_F(EvsHidlTest, CameraMasterRelease) {
         EvsEventDesc aTargetEvent  = {};
         EvsEventDesc aNotification = {};
 
+        bool listening = false;
+        std::mutex eventLock;
+        std::condition_variable eventCond;
+        std::thread listener = std::thread(
+            [&aNotification, &frameHandlerNonMaster, &listening, &eventCond]() {
+                // Notify that a listening thread is running.
+                listening = true;
+                eventCond.notify_all();
+
+                EvsEventDesc aTargetEvent;
+                aTargetEvent.aType = EvsEventType::MASTER_RELEASED;
+                if (!frameHandlerNonMaster->waitForEvent(aTargetEvent, aNotification, true)) {
+                    ALOGW("A timer is expired before a target event is fired.");
+                }
+
+            }
+        );
+
+        // Wait until a listening thread starts.
+        std::unique_lock<std::mutex> lock(eventLock);
+        auto timer = std::chrono::system_clock::now();
+        while (!listening) {
+            timer += 1s;
+            eventCond.wait_until(lock, timer);
+        }
+        lock.unlock();
+
         // Release a master role.
         pCamMaster->unsetMaster();
 
-        // Verify a change notification.
-        aTargetEvent.aType = EvsEventType::MASTER_RELEASED;
-        frameHandlerNonMaster->waitForEvent(aTargetEvent, aNotification);
+        // Join a listening thread.
+        if (listener.joinable()) {
+            listener.join();
+        }
+
+        // Verify change notifications.
         ASSERT_EQ(EvsEventType::MASTER_RELEASED,
                   static_cast<EvsEventType>(aNotification.aType));
 
@@ -829,24 +860,49 @@ TEST_F(EvsHidlTest, CameraMasterRelease) {
         result = pCamMaster->setMaster();
         ASSERT_TRUE(result == EvsResult::OWNERSHIP_LOST);
 
+        listening = false;
+        listener = std::thread(
+            [&aNotification, &frameHandlerMaster, &listening, &eventCond]() {
+                // Notify that a listening thread is running.
+                listening = true;
+                eventCond.notify_all();
+
+                EvsEventDesc aTargetEvent;
+                aTargetEvent.aType = EvsEventType::MASTER_RELEASED;
+                if (!frameHandlerMaster->waitForEvent(aTargetEvent, aNotification, true)) {
+                    ALOGW("A timer is expired before a target event is fired.");
+                }
+
+            }
+        );
+
+        // Wait until a listening thread starts.
+        timer = std::chrono::system_clock::now();
+        lock.lock();
+        while (!listening) {
+            eventCond.wait_until(lock, timer + 1s);
+        }
+        lock.unlock();
+
         // Closing current master client.
         frameHandlerNonMaster->shutdown();
 
-        // Verify a change notification.
-        aTargetEvent.aType = EvsEventType::MASTER_RELEASED;
-        frameHandlerMaster->waitForEvent(aTargetEvent, aNotification);
+        // Join a listening thread.
+        if (listener.joinable()) {
+            listener.join();
+        }
+
+        // Verify change notifications.
         ASSERT_EQ(EvsEventType::MASTER_RELEASED,
                   static_cast<EvsEventType>(aNotification.aType));
 
-        // Closing another stream.
+        // Closing streams.
         frameHandlerMaster->shutdown();
 
         // Explicitly release the camera
         pEnumerator->closeCamera(pCamMaster);
         pEnumerator->closeCamera(pCamNonMaster);
     }
-
-
 }
 
 
@@ -950,6 +1006,8 @@ TEST_F(EvsHidlTest, MultiCameraParameter) {
 
         int32_t val0 = 0;
         std::vector<int32_t> values;
+        EvsEventDesc aNotification0 = {};
+        EvsEventDesc aNotification1 = {};
         for (auto &cmd : camMasterCmds) {
             // Get a valid parameter value range
             int32_t minVal, maxVal, step;
@@ -965,6 +1023,7 @@ TEST_F(EvsHidlTest, MultiCameraParameter) {
             EvsResult result = EvsResult::OK;
             if (cmd == CameraParam::ABSOLUTE_FOCUS) {
                 // Try to turn off auto-focus
+                values.clear();
                 pCamMaster->setIntParameter(CameraParam::AUTO_FOCUS, 0,
                                    [&result, &values](auto status, auto effectiveValues) {
                                        result = status;
@@ -980,11 +1039,59 @@ TEST_F(EvsHidlTest, MultiCameraParameter) {
                 }
             }
 
-            // Try to program a parameter
+            // Calculate a parameter value to program.
             val0 = minVal + (std::rand() % (maxVal - minVal));
-
-            // Rounding down
             val0 = val0 - (val0 % step);
+
+            // Prepare and start event listeners.
+            bool listening0 = false;
+            bool listening1 = false;
+            std::condition_variable eventCond;
+            std::thread listener0 = std::thread(
+                [cmd, val0,
+                 &aNotification0, &frameHandlerMaster, &listening0, &listening1, &eventCond]() {
+                    listening0 = true;
+                    if (listening1) {
+                        eventCond.notify_all();
+                    }
+
+                    EvsEventDesc aTargetEvent;
+                    aTargetEvent.aType = EvsEventType::PARAMETER_CHANGED;
+                    aTargetEvent.payload[0] = static_cast<uint32_t>(cmd);
+                    aTargetEvent.payload[1] = val0;
+                    if (!frameHandlerMaster->waitForEvent(aTargetEvent, aNotification0)) {
+                        ALOGW("A timer is expired before a target event is fired.");
+                    }
+                }
+            );
+            std::thread listener1 = std::thread(
+                [cmd, val0,
+                 &aNotification1, &frameHandlerNonMaster, &listening0, &listening1, &eventCond]() {
+                    listening1 = true;
+                    if (listening0) {
+                        eventCond.notify_all();
+                    }
+
+                    EvsEventDesc aTargetEvent;
+                    aTargetEvent.aType = EvsEventType::PARAMETER_CHANGED;
+                    aTargetEvent.payload[0] = static_cast<uint32_t>(cmd);
+                    aTargetEvent.payload[1] = val0;
+                    if (!frameHandlerNonMaster->waitForEvent(aTargetEvent, aNotification1)) {
+                        ALOGW("A timer is expired before a target event is fired.");
+                    }
+                }
+            );
+
+            // Wait until a listening thread starts.
+            std::mutex eventLock;
+            std::unique_lock<std::mutex> lock(eventLock);
+            auto timer = std::chrono::system_clock::now();
+            while (!listening0 || !listening1) {
+                eventCond.wait_until(lock, timer + 1s);
+            }
+            lock.unlock();
+
+            // Try to program a parameter
             values.clear();
             pCamMaster->setIntParameter(cmd, val0,
                                      [&result, &values](auto status, auto effectiveValues) {
@@ -995,13 +1102,38 @@ TEST_F(EvsHidlTest, MultiCameraParameter) {
                                             }
                                          }
                                      });
+
             ASSERT_EQ(EvsResult::OK, result);
+            for (auto &&v : values) {
+                ASSERT_EQ(val0, v) << "Values are not matched.";
+            }
 
-            // Non-master client expects to receive a parameter change notification
+            // Join a listening thread.
+            if (listener0.joinable()) {
+                listener0.join();
+            }
+            if (listener1.joinable()) {
+                listener1.join();
+            }
+
+            // Verify a change notification
+            ASSERT_EQ(EvsEventType::PARAMETER_CHANGED,
+                      static_cast<EvsEventType>(aNotification0.aType));
+            ASSERT_EQ(EvsEventType::PARAMETER_CHANGED,
+                      static_cast<EvsEventType>(aNotification1.aType));
+            ASSERT_EQ(cmd,
+                      static_cast<CameraParam>(aNotification0.payload[0]));
+            ASSERT_EQ(cmd,
+                      static_cast<CameraParam>(aNotification1.payload[0]));
+            for (auto &&v : values) {
+                ASSERT_EQ(v,
+                          static_cast<int32_t>(aNotification0.payload[1]));
+                ASSERT_EQ(v,
+                          static_cast<int32_t>(aNotification1.payload[1]));
+            }
+
+            // Clients expects to receive a parameter change notification
             // whenever a master client adjusts it.
-            EvsEventDesc aTargetEvent  = {};
-            EvsEventDesc aNotification = {};
-
             values.clear();
             pCamMaster->getIntParameter(cmd,
                                      [&result, &values](auto status, auto readValues) {
@@ -1015,20 +1147,6 @@ TEST_F(EvsHidlTest, MultiCameraParameter) {
             ASSERT_EQ(EvsResult::OK, result);
             for (auto &&v : values) {
                 ASSERT_EQ(val0, v) << "Values are not matched.";
-            }
-
-            // Verify a change notification
-            aTargetEvent.aType = EvsEventType::PARAMETER_CHANGED;
-            aTargetEvent.payload[0] = static_cast<uint32_t>(cmd);
-            aTargetEvent.payload[1] = static_cast<uint32_t>(val0);
-            frameHandlerNonMaster->waitForEvent(aTargetEvent, aNotification);
-            ASSERT_EQ(EvsEventType::PARAMETER_CHANGED,
-                      static_cast<EvsEventType>(aNotification.aType));
-            ASSERT_EQ(cmd,
-                      static_cast<CameraParam>(aNotification.payload[0]));
-            for (auto &&v : values) {
-                ASSERT_EQ(v,
-                          static_cast<int32_t>(aNotification.payload[1]));
             }
         }
 
@@ -1050,8 +1168,37 @@ TEST_F(EvsHidlTest, MultiCameraParameter) {
         ASSERT_EQ(EvsResult::OWNERSHIP_LOST, result);
 
         // Master client retires from a master role
+        bool listening = false;
+        std::condition_variable eventCond;
+        std::thread listener = std::thread(
+            [&aNotification0, &frameHandlerNonMaster, &listening, &eventCond]() {
+                listening = true;
+                eventCond.notify_all();
+
+                EvsEventDesc aTargetEvent;
+                aTargetEvent.aType = EvsEventType::MASTER_RELEASED;
+                if (!frameHandlerNonMaster->waitForEvent(aTargetEvent, aNotification0, true)) {
+                    ALOGW("A timer is expired before a target event is fired.");
+                }
+            }
+        );
+
+        std::mutex eventLock;
+        auto timer = std::chrono::system_clock::now();
+        unique_lock<std::mutex> lock(eventLock);
+        while (!listening) {
+            eventCond.wait_until(lock, timer + 1s);
+        }
+        lock.unlock();
+
         result = pCamMaster->unsetMaster();
         ASSERT_EQ(EvsResult::OK, result);
+
+        if (listener.joinable()) {
+            listener.join();
+        }
+        ASSERT_EQ(EvsEventType::MASTER_RELEASED,
+                  static_cast<EvsEventType>(aNotification0.aType));
 
         // Try to adjust a parameter after being retired
         values.clear();
@@ -1087,6 +1234,7 @@ TEST_F(EvsHidlTest, MultiCameraParameter) {
             values.clear();
             if (cmd == CameraParam::ABSOLUTE_FOCUS) {
                 // Try to turn off auto-focus
+                values.clear();
                 pCamNonMaster->setIntParameter(CameraParam::AUTO_FOCUS, 0,
                                    [&result, &values](auto status, auto effectiveValues) {
                                        result = status;
@@ -1102,11 +1250,57 @@ TEST_F(EvsHidlTest, MultiCameraParameter) {
                 }
             }
 
-            // Try to program a parameter
+            // Calculate a parameter value to program.  This is being rounding down.
             val0 = minVal + (std::rand() % (maxVal - minVal));
-
-            // Rounding down
             val0 = val0 - (val0 % step);
+
+            // Prepare and start event listeners.
+            bool listening0 = false;
+            bool listening1 = false;
+            std::condition_variable eventCond;
+            std::thread listener0 = std::thread(
+                [&cmd, &val0, &aNotification0, &frameHandlerMaster, &listening0, &listening1, &eventCond]() {
+                    listening0 = true;
+                    if (listening1) {
+                        eventCond.notify_all();
+                    }
+
+                    EvsEventDesc aTargetEvent;
+                    aTargetEvent.aType = EvsEventType::PARAMETER_CHANGED;
+                    aTargetEvent.payload[0] = static_cast<uint32_t>(cmd);
+                    aTargetEvent.payload[1] = val0;
+                    if (!frameHandlerMaster->waitForEvent(aTargetEvent, aNotification0)) {
+                        ALOGW("A timer is expired before a target event is fired.");
+                    }
+                }
+            );
+            std::thread listener1 = std::thread(
+                [&cmd, &val0, &aNotification1, &frameHandlerNonMaster, &listening0, &listening1, &eventCond]() {
+                    listening1 = true;
+                    if (listening0) {
+                        eventCond.notify_all();
+                    }
+
+                    EvsEventDesc aTargetEvent;
+                    aTargetEvent.aType = EvsEventType::PARAMETER_CHANGED;
+                    aTargetEvent.payload[0] = static_cast<uint32_t>(cmd);
+                    aTargetEvent.payload[1] = val0;
+                    if (!frameHandlerNonMaster->waitForEvent(aTargetEvent, aNotification1)) {
+                        ALOGW("A timer is expired before a target event is fired.");
+                    }
+                }
+            );
+
+            // Wait until a listening thread starts.
+            std::mutex eventLock;
+            std::unique_lock<std::mutex> lock(eventLock);
+            auto timer = std::chrono::system_clock::now();
+            while (!listening0 || !listening1) {
+                eventCond.wait_until(lock, timer + 1s);
+            }
+            lock.unlock();
+
+            // Try to program a parameter
             values.clear();
             pCamNonMaster->setIntParameter(cmd, val0,
                                         [&result, &values](auto status, auto effectiveValues) {
@@ -1119,11 +1313,8 @@ TEST_F(EvsHidlTest, MultiCameraParameter) {
                                         });
             ASSERT_EQ(EvsResult::OK, result);
 
-            // Non-master client expects to receive a parameter change notification
+            // Clients expects to receive a parameter change notification
             // whenever a master client adjusts it.
-            EvsEventDesc aTargetEvent  = {};
-            EvsEventDesc aNotification = {};
-
             values.clear();
             pCamNonMaster->getIntParameter(cmd,
                                         [&result, &values](auto status, auto readValues) {
@@ -1139,18 +1330,28 @@ TEST_F(EvsHidlTest, MultiCameraParameter) {
                 ASSERT_EQ(val0, v) << "Values are not matched.";
             }
 
+            // Join a listening thread.
+            if (listener0.joinable()) {
+                listener0.join();
+            }
+            if (listener1.joinable()) {
+                listener1.join();
+            }
+
             // Verify a change notification
-            aTargetEvent.aType = EvsEventType::PARAMETER_CHANGED;
-            aTargetEvent.payload[0] = static_cast<uint32_t>(cmd);
-            aTargetEvent.payload[1] = static_cast<uint32_t>(val0);
-            frameHandlerMaster->waitForEvent(aTargetEvent, aNotification);
             ASSERT_EQ(EvsEventType::PARAMETER_CHANGED,
-                      static_cast<EvsEventType>(aNotification.aType));
+                      static_cast<EvsEventType>(aNotification0.aType));
+            ASSERT_EQ(EvsEventType::PARAMETER_CHANGED,
+                      static_cast<EvsEventType>(aNotification1.aType));
             ASSERT_EQ(cmd,
-                      static_cast<CameraParam>(aNotification.payload[0]));
+                      static_cast<CameraParam>(aNotification0.payload[0]));
+            ASSERT_EQ(cmd,
+                      static_cast<CameraParam>(aNotification1.payload[0]));
             for (auto &&v : values) {
                 ASSERT_EQ(v,
-                          static_cast<int32_t>(aNotification.payload[1]));
+                          static_cast<int32_t>(aNotification0.payload[1]));
+                ASSERT_EQ(v,
+                          static_cast<int32_t>(aNotification1.payload[1]));
             }
         }
 
@@ -1276,7 +1477,33 @@ TEST_F(EvsHidlTest, HighPriorityCameraClient) {
         std::vector<int32_t> values;
         EvsEventDesc aTargetEvent  = {};
         EvsEventDesc aNotification = {};
+        bool listening = false;
+        std::mutex eventLock;
+        std::condition_variable eventCond;
         if (cam1Cmds[0] == CameraParam::ABSOLUTE_FOCUS) {
+            std::thread listener = std::thread(
+                [&frameHandler0, &aNotification, &listening, &eventCond] {
+                    listening = true;
+                    eventCond.notify_all();
+
+                    EvsEventDesc aTargetEvent;
+                    aTargetEvent.aType = EvsEventType::PARAMETER_CHANGED;
+                    aTargetEvent.payload[0] = static_cast<uint32_t>(CameraParam::AUTO_FOCUS);
+                    aTargetEvent.payload[1] = 0;
+                    if (!frameHandler0->waitForEvent(aTargetEvent, aNotification)) {
+                        ALOGW("A timer is expired before a target event is fired.");
+                    }
+                }
+            );
+
+            // Wait until a lister starts.
+            std::unique_lock<std::mutex> lock(eventLock);
+            auto timer = std::chrono::system_clock::now();
+            while (!listening) {
+                eventCond.wait_until(lock, timer + 1s);
+            }
+            lock.unlock();
+
             // Try to turn off auto-focus
             pCam1->setIntParameter(CameraParam::AUTO_FOCUS, 0,
                                [&result, &values](auto status, auto effectiveValues) {
@@ -1292,20 +1519,45 @@ TEST_F(EvsHidlTest, HighPriorityCameraClient) {
                 ASSERT_EQ(v, 0);
             }
 
+            // Join a listener
+            if (listener.joinable()) {
+                listener.join();
+            }
+
             // Make sure AUTO_FOCUS is off.
-            aTargetEvent.aType = EvsEventType::PARAMETER_CHANGED;
-            aTargetEvent.payload[0] = static_cast<uint32_t>(CameraParam::AUTO_FOCUS);
-            aTargetEvent.payload[1] = 0;
-            bool timeout =
-                frameHandler0->waitForEvent(aTargetEvent, aNotification);
-            ASSERT_FALSE(timeout) << "Expected event does not arrive";
+            ASSERT_EQ(static_cast<EvsEventType>(aNotification.aType),
+                      EvsEventType::PARAMETER_CHANGED);
         }
 
-        // Try to program a parameter with a random value [minVal, maxVal]
+        // Try to program a parameter with a random value [minVal, maxVal] after
+        // rounding it down.
         int32_t val0 = minVal + (std::rand() % (maxVal - minVal));
-
-        // Rounding down
         val0 = val0 - (val0 % step);
+
+        std::thread listener = std::thread(
+            [&frameHandler1, &aNotification, &listening, &eventCond, &cam1Cmds, val0] {
+                listening = true;
+                eventCond.notify_all();
+
+                EvsEventDesc aTargetEvent;
+                aTargetEvent.aType = EvsEventType::PARAMETER_CHANGED;
+                aTargetEvent.payload[0] = static_cast<uint32_t>(cam1Cmds[0]);
+                aTargetEvent.payload[1] = val0;
+                if (!frameHandler1->waitForEvent(aTargetEvent, aNotification)) {
+                    ALOGW("A timer is expired before a target event is fired.");
+                }
+            }
+        );
+
+        // Wait until a lister starts.
+        listening = false;
+        std::unique_lock<std::mutex> lock(eventLock);
+        auto timer = std::chrono::system_clock::now();
+        while (!listening) {
+            eventCond.wait_until(lock, timer + 1s);
+        }
+        lock.unlock();
+
         values.clear();
         pCam1->setIntParameter(cam1Cmds[0], val0,
                             [&result, &values](auto status, auto effectiveValues) {
@@ -1321,13 +1573,12 @@ TEST_F(EvsHidlTest, HighPriorityCameraClient) {
             ASSERT_EQ(val0, v);
         }
 
+        // Join a listener
+        if (listener.joinable()) {
+            listener.join();
+        }
+
         // Verify a change notification
-        aTargetEvent.aType = EvsEventType::PARAMETER_CHANGED;
-        aTargetEvent.payload[0] = static_cast<uint32_t>(cam1Cmds[0]);
-        aTargetEvent.payload[1] = static_cast<uint32_t>(val0);
-        bool timeout =
-            frameHandler0->waitForEvent(aTargetEvent, aNotification);
-        ASSERT_FALSE(timeout) << "Expected event does not arrive";
         ASSERT_EQ(static_cast<EvsEventType>(aNotification.aType),
                   EvsEventType::PARAMETER_CHANGED);
         ASSERT_EQ(static_cast<CameraParam>(aNotification.payload[0]),
@@ -1336,13 +1587,36 @@ TEST_F(EvsHidlTest, HighPriorityCameraClient) {
             ASSERT_EQ(v, static_cast<int32_t>(aNotification.payload[1]));
         }
 
+        listener = std::thread(
+            [&frameHandler1, &aNotification, &listening, &eventCond] {
+                listening = true;
+                eventCond.notify_all();
+
+                EvsEventDesc aTargetEvent;
+                aTargetEvent.aType = EvsEventType::MASTER_RELEASED;
+                if (!frameHandler1->waitForEvent(aTargetEvent, aNotification, true)) {
+                    ALOGW("A timer is expired before a target event is fired.");
+                }
+            }
+        );
+
+        // Wait until a lister starts.
+        listening = false;
+        lock.lock();
+        timer = std::chrono::system_clock::now();
+        while (!listening) {
+            eventCond.wait_until(lock, timer + 1s);
+        }
+        lock.unlock();
+
         // Client 0 steals a master role
         ASSERT_EQ(EvsResult::OK, pCam0->forceMaster(pDisplay));
 
-        aTargetEvent.aType = EvsEventType::MASTER_RELEASED;
-        aTargetEvent.payload[0] = 0;
-        aTargetEvent.payload[1] = 0;
-        frameHandler1->waitForEvent(aTargetEvent, aNotification);
+        // Join a listener
+        if (listener.joinable()) {
+            listener.join();
+        }
+
         ASSERT_EQ(static_cast<EvsEventType>(aNotification.aType),
                   EvsEventType::MASTER_RELEASED);
 
@@ -1353,6 +1627,29 @@ TEST_F(EvsHidlTest, HighPriorityCameraClient) {
         val0 = val0 - (val0 % step);
 
         if (cam0Cmds[0] == CameraParam::ABSOLUTE_FOCUS) {
+            std::thread listener = std::thread(
+                [&frameHandler1, &aNotification, &listening, &eventCond] {
+                    listening = true;
+                    eventCond.notify_all();
+
+                    EvsEventDesc aTargetEvent;
+                    aTargetEvent.aType = EvsEventType::PARAMETER_CHANGED;
+                    aTargetEvent.payload[0] = static_cast<uint32_t>(CameraParam::AUTO_FOCUS);
+                    aTargetEvent.payload[1] = 0;
+                    if (!frameHandler1->waitForEvent(aTargetEvent, aNotification)) {
+                        ALOGW("A timer is expired before a target event is fired.");
+                    }
+                }
+            );
+
+            // Wait until a lister starts.
+            std::unique_lock<std::mutex> lock(eventLock);
+            auto timer = std::chrono::system_clock::now();
+            while (!listening) {
+                eventCond.wait_until(lock, timer + 1s);
+            }
+            lock.unlock();
+
             // Try to turn off auto-focus
             values.clear();
             pCam0->setIntParameter(CameraParam::AUTO_FOCUS, 0,
@@ -1369,14 +1666,39 @@ TEST_F(EvsHidlTest, HighPriorityCameraClient) {
                 ASSERT_EQ(v, 0);
             }
 
+            // Join a listener
+            if (listener.joinable()) {
+                listener.join();
+            }
+
             // Make sure AUTO_FOCUS is off.
-            aTargetEvent.aType = EvsEventType::PARAMETER_CHANGED;
-            aTargetEvent.payload[0] = static_cast<uint32_t>(CameraParam::AUTO_FOCUS);
-            aTargetEvent.payload[1] = 0;
-            bool timeout =
-                frameHandler1->waitForEvent(aTargetEvent, aNotification);
-            ASSERT_FALSE(timeout) << "Expected event does not arrive";
+            ASSERT_EQ(static_cast<EvsEventType>(aNotification.aType),
+                      EvsEventType::PARAMETER_CHANGED);
         }
+
+        listener = std::thread(
+            [&frameHandler0, &aNotification, &listening, &eventCond, &cam0Cmds, val0] {
+                listening = true;
+                eventCond.notify_all();
+
+                EvsEventDesc aTargetEvent;
+                aTargetEvent.aType = EvsEventType::PARAMETER_CHANGED;
+                aTargetEvent.payload[0] = static_cast<uint32_t>(cam0Cmds[0]);
+                aTargetEvent.payload[1] = val0;
+                if (!frameHandler0->waitForEvent(aTargetEvent, aNotification)) {
+                    ALOGW("A timer is expired before a target event is fired.");
+                }
+            }
+        );
+
+        // Wait until a lister starts.
+        listening = false;
+        timer = std::chrono::system_clock::now();
+        lock.lock();
+        while (!listening) {
+            eventCond.wait_until(lock, timer + 1s);
+        }
+        lock.unlock();
 
         values.clear();
         pCam0->setIntParameter(cam0Cmds[0], val0,
@@ -1390,13 +1712,11 @@ TEST_F(EvsHidlTest, HighPriorityCameraClient) {
                             });
         ASSERT_EQ(EvsResult::OK, result);
 
+        // Join a listener
+        if (listener.joinable()) {
+            listener.join();
+        }
         // Verify a change notification
-        aTargetEvent.aType = EvsEventType::PARAMETER_CHANGED;
-        aTargetEvent.payload[0] = static_cast<uint32_t>(cam0Cmds[0]);
-        aTargetEvent.payload[1] = static_cast<uint32_t>(val0);
-        timeout =
-            frameHandler1->waitForEvent(aTargetEvent, aNotification);
-        ASSERT_FALSE(timeout) << "Expected event does not arrive";
         ASSERT_EQ(static_cast<EvsEventType>(aNotification.aType),
                   EvsEventType::PARAMETER_CHANGED);
         ASSERT_EQ(static_cast<CameraParam>(aNotification.payload[0]),
