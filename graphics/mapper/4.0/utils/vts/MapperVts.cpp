@@ -199,8 +199,7 @@ void Gralloc::freeBuffer(const native_handle_t* bufferHandle) {
 }
 
 void* Gralloc::lock(const native_handle_t* bufferHandle, uint64_t cpuUsage,
-                    const IMapper::Rect& accessRegion, int acquireFence, int32_t* outBytesPerPixel,
-                    int32_t* outBytesPerStride) {
+                    const IMapper::Rect& accessRegion, int acquireFence) {
     auto buffer = const_cast<native_handle_t*>(bufferHandle);
 
     NATIVE_HANDLE_DECLARE_STORAGE(acquireFenceStorage, 1, 0);
@@ -211,17 +210,11 @@ void* Gralloc::lock(const native_handle_t* bufferHandle, uint64_t cpuUsage,
         acquireFenceHandle = h;
     }
 
-    *outBytesPerPixel = -1;
-    *outBytesPerStride = -1;
-
     void* data = nullptr;
     mMapper->lock(buffer, cpuUsage, accessRegion, acquireFenceHandle,
-                  [&](const auto& tmpError, const auto& tmpData, int32_t tmpBytesPerPixel,
-                      int32_t tmpBytesPerStride) {
+                  [&](const auto& tmpError, const auto& tmpData) {
                       ASSERT_EQ(Error::NONE, tmpError) << "failed to lock buffer " << buffer;
                       data = tmpData;
-                      *outBytesPerPixel = tmpBytesPerPixel;
-                      *outBytesPerStride = tmpBytesPerStride;
                   });
 
     if (acquireFence >= 0) {
@@ -229,33 +222,6 @@ void* Gralloc::lock(const native_handle_t* bufferHandle, uint64_t cpuUsage,
     }
 
     return data;
-}
-
-YCbCrLayout Gralloc::lockYCbCr(const native_handle_t* bufferHandle, uint64_t cpuUsage,
-                               const IMapper::Rect& accessRegion, int acquireFence) {
-    auto buffer = const_cast<native_handle_t*>(bufferHandle);
-
-    NATIVE_HANDLE_DECLARE_STORAGE(acquireFenceStorage, 1, 0);
-    hidl_handle acquireFenceHandle;
-    if (acquireFence >= 0) {
-        auto h = native_handle_init(acquireFenceStorage, 1, 0);
-        h->data[0] = acquireFence;
-        acquireFenceHandle = h;
-    }
-
-    YCbCrLayout layout = {};
-    mMapper->lockYCbCr(buffer, cpuUsage, accessRegion, acquireFenceHandle,
-                       [&](const auto& tmpError, const auto& tmpLayout) {
-                           ASSERT_EQ(Error::NONE, tmpError)
-                                   << "failed to lockYCbCr buffer " << buffer;
-                           layout = tmpLayout;
-                       });
-
-    if (acquireFence >= 0) {
-        close(acquireFence);
-    }
-
-    return layout;
 }
 
 int Gralloc::unlock(const native_handle_t* bufferHandle) {

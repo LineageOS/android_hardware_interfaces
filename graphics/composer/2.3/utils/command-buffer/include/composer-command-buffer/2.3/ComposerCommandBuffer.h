@@ -119,16 +119,17 @@ class CommandWriterBase : public V2_2::CommandWriterBase {
     }
 
    protected:
-    void beginCommand_2_3(IComposerClient::Command command, uint16_t length) {
-        V2_2::CommandWriterBase::beginCommand_2_2(
-            static_cast<V2_2::IComposerClient::Command>(static_cast<int32_t>(command)), length);
-    }
-
     void writeBlob(uint32_t length, const unsigned char* blob) {
         memcpy(&mData[mDataWritten], blob, length);
         uint32_t numElements = length / 4;
         mDataWritten += numElements;
         mDataWritten += (length - (numElements * 4) > 0) ? 1 : 0;
+    }
+
+  private:
+    void beginCommand_2_3(IComposerClient::Command command, uint16_t length) {
+        V2_1::CommandWriterBase::beginCommand(
+                static_cast<V2_1::IComposerClient::Command>(static_cast<int32_t>(command)), length);
     }
 };
 

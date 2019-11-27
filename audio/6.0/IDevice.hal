@@ -286,8 +286,12 @@ interface IDevice {
      * all currently allocated resources. It is recommended to close
      * the device on the client side as soon as it is becomes unused.
      *
+     * Note that all streams must be closed by the client before
+     * attempting to close the device they belong to.
+     *
      * @return retval OK in case the success.
-     *                INVALID_STATE if the device was already closed.
+     *                INVALID_STATE if the device was already closed
+     *                or there are streams currently opened.
      */
     @exit
     close() generates (Result retval);

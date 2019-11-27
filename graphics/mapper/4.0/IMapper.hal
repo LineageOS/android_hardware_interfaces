@@ -199,15 +199,19 @@ interface IMapper {
      * outside of @p accessRegion is undefined, except that it must not cause
      * process termination.
      *
+     * This function can lock both single-planar and multi-planar formats. The caller
+     * should use get() to get information about the buffer they are locking.
+     * get() can be used to get information about the planes, offsets, stride,
+     * etc.
+     *
+     * This function must also work on buffers with
+     * `AHARDWAREBUFFER_FORMAT_Y8Cb8Cr8_*` if supported by the device, as well
+     * as with any other formats requested by multimedia codecs when they are
+     * configured with a flexible-YUV-compatible color format.
+     *
      * On success, @p data must be filled with a pointer to the locked buffer
      * memory. This address will represent the top-left corner of the entire
      * buffer, even if @p accessRegion does not begin at the top-left corner.
-     *
-     * On success, bytesPerPixel must contain the number of bytes per pixel in
-     * the buffer. If the bytesPerPixel is unknown or variable, a value of -1
-     * should be returned. bytesPerStride must contain the bytes per stride of
-     * the buffer. If the bytesPerStride is unknown or variable, a value of -1
-     * should be returned.
      *
      * The locked buffer must adhere to the format requested at allocation time
      * in the BufferDescriptorInfo.
@@ -231,55 +235,13 @@ interface IMapper {
      *     - `NO_RESOURCES` if the buffer cannot be locked at this time. Note
      *       that locking may succeed at a later time.
      * @return data CPU-accessible pointer to the buffer data.
-     * @return bytesPerPixel the number of bytes per pixel in the buffer
-     * @return bytesPerStride the number of bytes per stride of the buffer
      */
     lock(pointer buffer,
          uint64_t cpuUsage,
          Rect accessRegion,
          handle acquireFence)
             generates (Error error,
-                       pointer data,
-                       int32_t bytesPerPixel,
-                       int32_t bytesPerStride);
-
-    /**
-     * Locks a YCbCr buffer for the specified CPU usage.
-     *
-     * This is largely the same as lock(), except that instead of returning a
-     * pointer directly to the buffer data, it returns a `YCbCrLayout` struct
-     * describing how to access the data planes.
-     *
-     * This function must work on buffers with
-     * `AHARDWAREBUFFER_FORMAT_Y8Cb8Cr8_*` if supported by the device, as well
-     * as with any other formats requested by multimedia codecs when they are
-     * configured with a flexible-YUV-compatible color format.
-     *
-     * @param buffer Buffer to lock.
-     * @param cpuUsage CPU usage flags to request. See +ndk
-     *     libnativewindow#AHardwareBuffer_UsageFlags for possible values.
-     * @param accessRegion Portion of the buffer that the client intends to
-     *     access.
-     * @param acquireFence Handle containing a file descriptor referring to a
-     *     sync fence object, which will be signaled when it is safe for the
-     *     mapper to lock the buffer. @p acquireFence may be empty if it is
-     *     already safe to lock.
-     * @return error Error status of the call, which may be
-     *     - `NONE` upon success.
-     *     - `BAD_BUFFER` if the buffer is invalid or is incompatible with this
-     *       function.
-     *     - `BAD_VALUE` if @p cpuUsage is 0, contains non-CPU usage flags, or
-     *       is incompatible with the buffer.
-     *     - `NO_RESOURCES` if the buffer cannot be locked at this time. Note
-     *       that locking may succeed at a later time.
-     * @return layout Data layout of the locked buffer.
-     */
-    lockYCbCr(pointer buffer,
-              uint64_t cpuUsage,
-              Rect accessRegion,
-              handle acquireFence)
-            generates (Error error,
-                       YCbCrLayout layout);
+                       pointer data);
 
     /**
      * Unlocks a buffer to indicate all CPU accesses to the buffer have

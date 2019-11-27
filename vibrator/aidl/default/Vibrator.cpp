@@ -24,11 +24,14 @@ namespace android {
 namespace hardware {
 namespace vibrator {
 
+static constexpr int32_t kComposeDelayMaxMs = 1000;
+static constexpr int32_t kComposeSizeMax = 256;
+
 ndk::ScopedAStatus Vibrator::getCapabilities(int32_t* _aidl_return) {
     LOG(INFO) << "Vibrator reporting capabilities";
     *_aidl_return = IVibrator::CAP_ON_CALLBACK | IVibrator::CAP_PERFORM_CALLBACK |
                     IVibrator::CAP_AMPLITUDE_CONTROL | IVibrator::CAP_EXTERNAL_CONTROL |
-                    IVibrator::CAP_EXTERNAL_AMPLITUDE_CONTROL;
+                    IVibrator::CAP_EXTERNAL_AMPLITUDE_CONTROL | IVibrator::CAP_COMPOSE_EFFECTS;
     return ndk::ScopedAStatus::ok();
 }
 
@@ -84,9 +87,9 @@ ndk::ScopedAStatus Vibrator::getSupportedEffects(std::vector<Effect>* _aidl_retu
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus Vibrator::setAmplitude(int32_t amplitude) {
+ndk::ScopedAStatus Vibrator::setAmplitude(float amplitude) {
     LOG(INFO) << "Vibrator set amplitude: " << amplitude;
-    if (amplitude <= 0 || amplitude > 255) {
+    if (amplitude <= 0.0f || amplitude > 1.0f) {
         return ndk::ScopedAStatus(AStatus_fromExceptionCode(EX_ILLEGAL_ARGUMENT));
     }
     return ndk::ScopedAStatus::ok();
@@ -94,6 +97,55 @@ ndk::ScopedAStatus Vibrator::setAmplitude(int32_t amplitude) {
 
 ndk::ScopedAStatus Vibrator::setExternalControl(bool enabled) {
     LOG(INFO) << "Vibrator set external control: " << enabled;
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus Vibrator::getCompositionDelayMax(int32_t* maxDelayMs) {
+    *maxDelayMs = kComposeDelayMaxMs;
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus Vibrator::getCompositionSizeMax(int32_t* maxSize) {
+    *maxSize = kComposeSizeMax;
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus Vibrator::compose(const std::vector<CompositeEffect>& composite,
+                                     const std::shared_ptr<IVibratorCallback>& callback) {
+    if (composite.size() > kComposeSizeMax) {
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+    }
+
+    for (auto& e : composite) {
+        if (e.delayMs > kComposeDelayMaxMs) {
+            return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+        }
+        if (e.scale <= 0.0f || e.scale > 1.0f) {
+            return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+        }
+        if (e.primitive < CompositePrimitive::NOOP ||
+            e.primitive > CompositePrimitive::QUICK_FALL) {
+            return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+        }
+    }
+
+    std::thread([=] {
+        LOG(INFO) << "Starting compose on another thread";
+
+        for (auto& e : composite) {
+            if (e.delayMs) {
+                usleep(e.delayMs * 1000);
+            }
+            LOG(INFO) << "triggering primitive " << static_cast<int>(e.primitive) << " @ scale "
+                      << e.scale;
+        }
+
+        if (callback != nullptr) {
+            LOG(INFO) << "Notifying perform complete";
+            callback->onComplete();
+        }
+    }).detach();
+
     return ndk::ScopedAStatus::ok();
 }
 

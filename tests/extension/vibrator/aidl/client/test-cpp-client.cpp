@@ -20,9 +20,9 @@
 #include <binder/IServiceManager.h>
 #include <gtest/gtest.h>
 
+using android::checked_interface_cast;
 using android::IBinder;
 using android::IInterface;
-using android::interface_cast;
 using android::OK;
 using android::sp;
 using android::waitForVintfService;
@@ -44,7 +44,7 @@ TEST(Cpp, CallExtMethod) {
     // getting the extension
     sp<IBinder> ext;
     ASSERT_EQ(OK, IInterface::asBinder(vib)->getExtension(&ext));
-    sp<ICustomVibrator> cvib = interface_cast<ICustomVibrator>(ext);
+    sp<ICustomVibrator> cvib = checked_interface_cast<ICustomVibrator>(ext);
     ASSERT_NE(nullptr, cvib.get());
 
     // calling extension method
