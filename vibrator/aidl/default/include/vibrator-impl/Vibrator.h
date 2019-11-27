@@ -32,8 +32,12 @@ class Vibrator : public BnVibrator {
                                const std::shared_ptr<IVibratorCallback>& callback,
                                int32_t* _aidl_return) override;
     ndk::ScopedAStatus getSupportedEffects(std::vector<Effect>* _aidl_return) override;
-    ndk::ScopedAStatus setAmplitude(int32_t amplitude) override;
+    ndk::ScopedAStatus setAmplitude(float amplitude) override;
     ndk::ScopedAStatus setExternalControl(bool enabled) override;
+    ndk::ScopedAStatus getCompositionDelayMax(int32_t* maxDelayMs);
+    ndk::ScopedAStatus getCompositionSizeMax(int32_t* maxSize);
+    ndk::ScopedAStatus compose(const std::vector<CompositeEffect>& composite,
+                               const std::shared_ptr<IVibratorCallback>& callback) override;
 };
 
 }  // namespace vibrator
