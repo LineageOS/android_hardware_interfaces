@@ -28,6 +28,8 @@ using android::sp;
 using android::String16;
 using android::binder::Status;
 using android::hardware::vibrator::BnVibratorCallback;
+using android::hardware::vibrator::CompositeEffect;
+using android::hardware::vibrator::CompositePrimitive;
 using android::hardware::vibrator::Effect;
 using android::hardware::vibrator::EffectStrength;
 using android::hardware::vibrator::IVibrator;
@@ -53,6 +55,20 @@ const std::vector<Effect> kInvalidEffects = {
 const std::vector<EffectStrength> kInvalidEffectStrengths = {
         static_cast<EffectStrength>(static_cast<int8_t>(kEffectStrengths.front()) - 1),
         static_cast<EffectStrength>(static_cast<int8_t>(kEffectStrengths.back()) + 1),
+};
+
+// TODO(b/143992652): autogenerate
+const std::vector<CompositePrimitive> kCompositePrimitives = {
+        CompositePrimitive::NOOP,       CompositePrimitive::CLICK,
+        CompositePrimitive::THUD,       CompositePrimitive::SPIN,
+        CompositePrimitive::QUICK_RISE, CompositePrimitive::SLOW_RISE,
+        CompositePrimitive::QUICK_FALL,
+};
+// TODO(b/143992652): autogenerate
+
+const std::vector<CompositePrimitive> kInvalidPrimitives = {
+        static_cast<CompositePrimitive>(static_cast<int32_t>(kCompositePrimitives.front()) - 1),
+        static_cast<CompositePrimitive>(static_cast<int32_t>(kCompositePrimitives.back()) + 1),
 };
 
 class CompletionCallback : public BnVibratorCallback {
@@ -201,11 +217,11 @@ TEST_P(VibratorAidl, InvalidEffectsUnsupported) {
 
 TEST_P(VibratorAidl, ChangeVibrationAmplitude) {
     if (capabilities & IVibrator::CAP_AMPLITUDE_CONTROL) {
-        EXPECT_TRUE(vibrator->setAmplitude(1).isOk());
+        EXPECT_EQ(Status::EX_NONE, vibrator->setAmplitude(0.1f).exceptionCode());
         EXPECT_TRUE(vibrator->on(2000, nullptr /*callback*/).isOk());
-        EXPECT_TRUE(vibrator->setAmplitude(128).isOk());
+        EXPECT_EQ(Status::EX_NONE, vibrator->setAmplitude(0.5f).exceptionCode());
         sleep(1);
-        EXPECT_TRUE(vibrator->setAmplitude(255).isOk());
+        EXPECT_EQ(Status::EX_NONE, vibrator->setAmplitude(1.0f).exceptionCode());
         sleep(1);
     }
 }
@@ -214,7 +230,7 @@ TEST_P(VibratorAidl, AmplitudeOutsideRangeFails) {
     if (capabilities & IVibrator::CAP_AMPLITUDE_CONTROL) {
         EXPECT_EQ(Status::EX_ILLEGAL_ARGUMENT, vibrator->setAmplitude(-1).exceptionCode());
         EXPECT_EQ(Status::EX_ILLEGAL_ARGUMENT, vibrator->setAmplitude(0).exceptionCode());
-        EXPECT_EQ(Status::EX_ILLEGAL_ARGUMENT, vibrator->setAmplitude(256).exceptionCode());
+        EXPECT_EQ(Status::EX_ILLEGAL_ARGUMENT, vibrator->setAmplitude(1.1).exceptionCode());
     }
 }
 
@@ -240,7 +256,7 @@ TEST_P(VibratorAidl, ExternalAmplitudeControl) {
     if (capabilities & IVibrator::CAP_EXTERNAL_CONTROL) {
         EXPECT_TRUE(vibrator->setExternalControl(true).isOk());
 
-        Status amplitudeStatus = vibrator->setAmplitude(128);
+        Status amplitudeStatus = vibrator->setAmplitude(0.5);
         if (supportsExternalAmplitudeControl) {
             EXPECT_TRUE(amplitudeStatus.isOk());
         } else {
@@ -256,6 +272,102 @@ TEST_P(VibratorAidl, ExternalControlUnsupportedMatchingCapabilities) {
     if ((capabilities & IVibrator::CAP_EXTERNAL_CONTROL) == 0) {
         EXPECT_EQ(Status::EX_UNSUPPORTED_OPERATION,
                   vibrator->setExternalControl(true).exceptionCode());
+    }
+}
+
+TEST_P(VibratorAidl, ComposeValidPrimitives) {
+    if (capabilities & IVibrator::CAP_COMPOSE_EFFECTS) {
+        int32_t maxDelay, maxSize;
+
+        EXPECT_EQ(Status::EX_NONE, vibrator->getCompositionDelayMax(&maxDelay).exceptionCode());
+        EXPECT_EQ(Status::EX_NONE, vibrator->getCompositionSizeMax(&maxSize).exceptionCode());
+
+        std::vector<CompositeEffect> composite;
+
+        for (auto primitive : kCompositePrimitives) {
+            CompositeEffect effect;
+
+            effect.delayMs = std::rand() % (maxDelay + 1);
+            effect.primitive = primitive;
+            effect.scale = static_cast<float>(std::rand()) / RAND_MAX ?: 1.0f;
+            composite.emplace_back(effect);
+
+            if (composite.size() == maxSize) {
+                EXPECT_EQ(Status::EX_NONE, vibrator->compose(composite, nullptr).exceptionCode());
+                composite.clear();
+                vibrator->off();
+            }
+        }
+
+        if (composite.size() != 0) {
+            EXPECT_EQ(Status::EX_NONE, vibrator->compose(composite, nullptr).exceptionCode());
+            vibrator->off();
+        }
+    }
+}
+
+TEST_P(VibratorAidl, ComposeUnsupportedPrimitives) {
+    if (capabilities & IVibrator::CAP_COMPOSE_EFFECTS) {
+        for (auto primitive : kInvalidPrimitives) {
+            std::vector<CompositeEffect> composite(1);
+
+            for (auto& effect : composite) {
+                effect.delayMs = 0;
+                effect.primitive = primitive;
+                effect.scale = 1.0f;
+            }
+            EXPECT_EQ(Status::EX_UNSUPPORTED_OPERATION,
+                      vibrator->compose(composite, nullptr).exceptionCode());
+            vibrator->off();
+        }
+    }
+}
+
+TEST_P(VibratorAidl, CompseDelayBoundary) {
+    if (capabilities & IVibrator::CAP_COMPOSE_EFFECTS) {
+        int32_t maxDelay;
+
+        EXPECT_EQ(Status::EX_NONE, vibrator->getCompositionDelayMax(&maxDelay).exceptionCode());
+
+        std::vector<CompositeEffect> composite(1);
+        CompositeEffect effect;
+
+        effect.delayMs = 1;
+        effect.primitive = CompositePrimitive::CLICK;
+        effect.scale = 1.0f;
+
+        std::fill(composite.begin(), composite.end(), effect);
+        EXPECT_EQ(Status::EX_NONE, vibrator->compose(composite, nullptr).exceptionCode());
+
+        effect.delayMs = maxDelay + 1;
+
+        std::fill(composite.begin(), composite.end(), effect);
+        EXPECT_EQ(Status::EX_ILLEGAL_ARGUMENT,
+                  vibrator->compose(composite, nullptr).exceptionCode());
+        vibrator->off();
+    }
+}
+
+TEST_P(VibratorAidl, CompseSizeBoundary) {
+    if (capabilities & IVibrator::CAP_COMPOSE_EFFECTS) {
+        int32_t maxSize;
+
+        EXPECT_EQ(Status::EX_NONE, vibrator->getCompositionSizeMax(&maxSize).exceptionCode());
+
+        std::vector<CompositeEffect> composite(maxSize);
+        CompositeEffect effect;
+
+        effect.delayMs = 1;
+        effect.primitive = CompositePrimitive::CLICK;
+        effect.scale = 1.0f;
+
+        std::fill(composite.begin(), composite.end(), effect);
+        EXPECT_EQ(Status::EX_NONE, vibrator->compose(composite, nullptr).exceptionCode());
+
+        composite.emplace_back(effect);
+        EXPECT_EQ(Status::EX_ILLEGAL_ARGUMENT,
+                  vibrator->compose(composite, nullptr).exceptionCode());
+        vibrator->off();
     }
 }
 
