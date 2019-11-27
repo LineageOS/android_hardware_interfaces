@@ -4557,45 +4557,6 @@ TEST_P(ClearOperationsTest, TooManyOperations) {
     AbortIfNeeded();
 }
 
-/*
- * ClearSlotsTest.ServiceDeath
- *
- * Verifies that the service is restarted after death and the ongoing
- * operations are cleared.
- */
-TEST_P(ClearOperationsTest, ServiceDeath) {
-    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
-                                             .Authorization(TAG_NO_AUTH_REQUIRED)
-                                             .RsaEncryptionKey(2048, 65537)
-                                             .Padding(PaddingMode::NONE)));
-
-    auto params = AuthorizationSetBuilder().Padding(PaddingMode::NONE);
-    int max_operations = SecLevel() == SecurityLevel::STRONGBOX ? 4 : 16;
-    OperationHandle op_handles[max_operations];
-    AuthorizationSet out_params;
-    for(int i=0; i<max_operations; i++) {
-        EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, key_blob_, params, &out_params, &(op_handles[i])));
-    }
-    EXPECT_EQ(ErrorCode::TOO_MANY_OPERATIONS,
-         Begin(KeyPurpose::ENCRYPT, key_blob_, params, &out_params, &op_handle_));
-
-    DebugInfo debug_info;
-    GetDebugInfo(&debug_info);
-    kill(debug_info.pid, SIGKILL);
-    // wait 1 second for keymaster to restart
-    sleep(1);
-    InitializeKeymaster();
-
-    for(int i=0; i<max_operations; i++) {
-        EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, key_blob_, params, &out_params, &(op_handles[i])));
-    }
-    EXPECT_EQ(ErrorCode::TOO_MANY_OPERATIONS,
-         Begin(KeyPurpose::ENCRYPT, key_blob_, params, &out_params, &op_handle_));
-    for(int i=0; i<max_operations; i++) {
-        EXPECT_EQ(ErrorCode::OK, Abort(op_handles[i]));
-    }
-}
-
 INSTANTIATE_KEYMASTER_HIDL_TEST(ClearOperationsTest);
 
 typedef KeymasterHidlTest TransportLimitTest;
