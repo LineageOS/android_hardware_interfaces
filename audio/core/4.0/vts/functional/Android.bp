@@ -18,6 +18,7 @@ cc_test {
     name: "VtsHalAudioV4_0TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: [
+        "AudioPolicyConfiguration.cpp",
         "AudioPrimaryHidlHalTest.cpp",
         "ValidateAudioConfiguration.cpp"
     ],
