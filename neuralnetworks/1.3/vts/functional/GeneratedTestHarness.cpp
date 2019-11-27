@@ -60,7 +60,6 @@ using implementation::PreparedModelCallback;
 using V1_0::DataLocation;
 using V1_0::ErrorStatus;
 using V1_0::OperandLifeTime;
-using V1_0::Request;
 using V1_1::ExecutionPreference;
 using V1_2::Constant;
 using V1_2::MeasureTiming;
@@ -192,7 +191,7 @@ static bool isOutputSizeGreaterThanOne(const TestModel& testModel, uint32_t inde
     return byteSize > 1u;
 }
 
-static void makeOutputInsufficientSize(uint32_t outputIndex, Request* request) {
+static void makeOutputInsufficientSize(uint32_t outputIndex, V1_0::Request* request) {
     auto& length = request->outputs[outputIndex].location.length;
     ASSERT_GT(length, 1u);
     length -= 1u;
@@ -245,10 +244,11 @@ void EvaluatePreparedModel(const sp<IPreparedModel>& preparedModel, const TestMo
         return;
     }
 
-    Request request = createRequest(testModel);
+    V1_0::Request request10 = createRequest(testModel);
     if (testConfig.outputType == OutputType::INSUFFICIENT) {
-        makeOutputInsufficientSize(/*outputIndex=*/0, &request);
+        makeOutputInsufficientSize(/*outputIndex=*/0, &request10);
     }
+    Request request = nn::convertToV1_3(request10);
 
     ErrorStatus executionStatus;
     hidl_vec<OutputShape> outputShapes;
@@ -284,6 +284,8 @@ void EvaluatePreparedModel(const sp<IPreparedModel>& preparedModel, const TestMo
             break;
         }
         case Executor::BURST: {
+            // TODO(butlermichael): Check if we need to test burst in V1_3 if the interface remains
+            //                      V1_2.
             SCOPED_TRACE("burst");
 
             // create burst
@@ -292,15 +294,15 @@ void EvaluatePreparedModel(const sp<IPreparedModel>& preparedModel, const TestMo
             ASSERT_NE(nullptr, controller.get());
 
             // create memory keys
-            std::vector<intptr_t> keys(request.pools.size());
+            std::vector<intptr_t> keys(request10.pools.size());
             for (size_t i = 0; i < keys.size(); ++i) {
-                keys[i] = reinterpret_cast<intptr_t>(&request.pools[i]);
+                keys[i] = reinterpret_cast<intptr_t>(&request10.pools[i]);
             }
 
             // execute burst
             int n;
             std::tie(n, outputShapes, timing, std::ignore) =
-                    controller->compute(request, testConfig.measureTiming, keys);
+                    controller->compute(request10, testConfig.measureTiming, keys);
             executionStatus = nn::convertResultCodeToErrorStatus(n);
 
             break;
@@ -361,7 +363,7 @@ void EvaluatePreparedModel(const sp<IPreparedModel>& preparedModel, const TestMo
     }
 
     // Retrieve execution results.
-    const std::vector<TestBuffer> outputs = getOutputBuffers(request);
+    const std::vector<TestBuffer> outputs = getOutputBuffers(request10);
 
     // We want "close-enough" results.
     checkResults(testModel, outputs);
