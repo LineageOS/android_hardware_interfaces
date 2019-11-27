@@ -17,12 +17,12 @@
 package android.hardware.neuralnetworks@1.3;
 
 import @1.0::ErrorStatus;
-import @1.0::Request;
 import @1.2::IExecutionCallback;
 import @1.2::IPreparedModel;
 import @1.2::MeasureTiming;
 import @1.2::OutputShape;
 import @1.2::Timing;
+import Request;
 
 /**
  * IPreparedModel describes a model that has been prepared for execution and
@@ -33,7 +33,8 @@ interface IPreparedModel extends @1.2::IPreparedModel {
      * Launches an asynchronous execution on a prepared model.
      *
      * The execution is performed asynchronously with respect to the caller.
-     * execute_1_3 must verify the inputs to the function are correct. If there is
+     * execute_1_3 must verify the inputs to the function are correct, and the usages
+     * of memory pools allocated by IDevice::allocate are valid. If there is
      * an error, execute_1_3 must immediately invoke the callback with the
      * appropriate ErrorStatus value, then return with the same ErrorStatus. If
      * the inputs to the function are valid and there is no error, execute_1_3 must
@@ -95,7 +96,8 @@ interface IPreparedModel extends @1.2::IPreparedModel {
      *
      * The execution is performed synchronously with respect to the caller.
      * executeSynchronously_1_3 must verify the inputs to the function are
-     * correct. If there is an error, executeSynchronously_1_3 must immediately
+     * correct, and the usages of memory pools allocated by IDevice::allocate
+     * are valid. If there is an error, executeSynchronously_1_3 must immediately
      * return with the appropriate ErrorStatus value. If the inputs to the
      * function are valid and there is no error, executeSynchronously_1_3 must
      * perform the execution, and must not return until the execution is
