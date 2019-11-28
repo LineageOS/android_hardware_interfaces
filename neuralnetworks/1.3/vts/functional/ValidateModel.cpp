@@ -344,7 +344,17 @@ static bool mutateOperationOperandTypeSkip(size_t operand, OperandType type, con
                     return true;
                 }
             } break;
-            case OperationType::QUANTIZE:
+            case OperationType::QUANTIZE: {
+                if (operand == operation.inputs[0] &&
+                    (type == OperandType::TENSOR_FLOAT16 || type == OperandType::TENSOR_FLOAT32)) {
+                    return true;
+                }
+                if (operand == operation.outputs[0] &&
+                    (type == OperandType::TENSOR_QUANT8_ASYMM ||
+                     type == OperandType::TENSOR_QUANT8_ASYMM_SIGNED)) {
+                    return true;
+                }
+            } break;
             case OperationType::RANDOM_MULTINOMIAL: {
                 if (operand == operation.inputs[0] &&
                     (type == OperandType::TENSOR_FLOAT16 || type == OperandType::TENSOR_FLOAT32)) {
