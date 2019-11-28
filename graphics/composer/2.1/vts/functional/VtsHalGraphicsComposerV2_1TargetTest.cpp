@@ -20,6 +20,7 @@
 #include <composer-vts/2.1/ComposerVts.h>
 #include <composer-vts/2.1/GraphicsComposerCallback.h>
 #include <composer-vts/2.1/TestCommandReader.h>
+#include <hardware/hwcomposer2.h>
 #include <mapper-vts/2.0/MapperVts.h>
 #include <mapper-vts/3.0/MapperVts.h>
 
@@ -788,6 +789,12 @@ TEST_F(GraphicsComposerHidlCommandTest, PRESENT_DISPLAY) {
  * surface damage have been set
  */
 TEST_F(GraphicsComposerHidlCommandTest, PRESENT_DISPLAY_NO_LAYER_STATE_CHANGES) {
+    if (!mComposer->hasCapability(
+                static_cast<IComposer::Capability>(HWC2_CAPABILITY_SKIP_VALIDATE))) {
+        std::cout << "Device does not have skip validate capability, skipping" << std::endl;
+        GTEST_SUCCEED();
+        return;
+    }
     mWriter->selectDisplay(mPrimaryDisplay);
     mComposerClient->setPowerMode(mPrimaryDisplay, IComposerClient::PowerMode::ON);
     mComposerClient->setColorMode(mPrimaryDisplay, ColorMode::SRGB);
