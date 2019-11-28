@@ -48,7 +48,9 @@ ndk::ScopedAStatus Vibrator::on(int32_t timeoutMs,
             LOG(INFO) << "Starting on on another thread";
             usleep(timeoutMs * 1000);
             LOG(INFO) << "Notifying on complete";
-            callback->onComplete();
+            if (!callback->onComplete().isOk()) {
+                LOG(ERROR) << "Failed to call onComplete";
+            }
         }).detach();
     }
     return ndk::ScopedAStatus::ok();
