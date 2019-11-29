@@ -681,9 +681,10 @@ void WifiChip::invalidateAndRemoveAllIfaces() {
 
 void WifiChip::invalidateAndRemoveDependencies(
     const std::string& removed_iface_name) {
-    for (const auto& nan_iface : nan_ifaces_) {
+    for (auto it = nan_ifaces_.begin(); it != nan_ifaces_.end();) {
+        auto nan_iface = *it;
         if (nan_iface->getName() == removed_iface_name) {
-            invalidateAndClear(nan_ifaces_, nan_iface);
+            nan_iface->invalidate();
             for (const auto& callback : event_cb_handler_.getCallbacks()) {
                 if (!callback
                          ->onIfaceRemoved(IfaceType::NAN, removed_iface_name)
@@ -691,11 +692,19 @@ void WifiChip::invalidateAndRemoveDependencies(
                     LOG(ERROR) << "Failed to invoke onIfaceRemoved callback";
                 }
             }
+            it = nan_ifaces_.erase(it);
+        } else {
+            ++it;
         }
     }
-    for (const auto& rtt : rtt_controllers_) {
+
+    for (auto it = rtt_controllers_.begin(); it != rtt_controllers_.end();) {
+        auto rtt = *it;
         if (rtt->getIfaceName() == removed_iface_name) {
-            invalidateAndClear(rtt_controllers_, rtt);
+            rtt->invalidate();
+            it = rtt_controllers_.erase(it);
+        } else {
+            ++it;
         }
     }
 }
