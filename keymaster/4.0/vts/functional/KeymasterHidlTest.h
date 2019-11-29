@@ -204,6 +204,11 @@ class KeymasterHidlTest : public ::testing::TestWithParam<std::string> {
     KeyCharacteristics key_characteristics_;
     OperationHandle op_handle_ = kOpHandleSentinel;
 
+    static std::vector<std::string> build_params() {
+        auto params = android::hardware::getAllHalInstanceNames(IKeymasterDevice::descriptor);
+        return params;
+    }
+
   private:
     sp<IKeymasterDevice> keymaster_;
     uint32_t os_version_;
@@ -214,10 +219,9 @@ class KeymasterHidlTest : public ::testing::TestWithParam<std::string> {
     hidl_string author_;
 };
 
-#define INSTANTIATE_KEYMASTER_HIDL_TEST(name)                                             \
-    INSTANTIATE_TEST_SUITE_P(PerInstance, name,                                           \
-                             testing::ValuesIn(android::hardware::getAllHalInstanceNames( \
-                                     IKeymasterDevice::descriptor)),                      \
+#define INSTANTIATE_KEYMASTER_HIDL_TEST(name)                                      \
+    INSTANTIATE_TEST_SUITE_P(PerInstance, name,                                    \
+                             testing::ValuesIn(KeymasterHidlTest::build_params()), \
                              android::hardware::PrintInstanceNameToString)
 
 }  // namespace test
