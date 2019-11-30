@@ -22,7 +22,7 @@
 /*
  * Test IRadio.enableMddem() for the response returned.
  */
-TEST_F(RadioHidlTest_v1_3, enableModem) {
+TEST_P(RadioHidlTest_v1_3, enableModem) {
     serial = GetRandomSerialNumber();
 
     bool responseToggle = radioRsp_v1_3->enableModemResponseToggle;
@@ -61,7 +61,7 @@ TEST_F(RadioHidlTest_v1_3, enableModem) {
 /*
  * Test IRadio.getModemStackStatus() for the response returned.
  */
-TEST_F(RadioHidlTest_v1_3, getModemStackStatus) {
+TEST_P(RadioHidlTest_v1_3, getModemStackStatus) {
     serial = GetRandomSerialNumber();
 
     Return<void> res = radio_v1_3->getModemStackStatus(serial);
@@ -81,7 +81,7 @@ TEST_F(RadioHidlTest_v1_3, getModemStackStatus) {
  *
  * This test is excluded from manifest, due to non-implementation in Q. Tracked by b/130254624.
  */
-TEST_F(RadioHidlTest_v1_3, setSystemSelectionChannels) {
+TEST_P(RadioHidlTest_v1_3, setSystemSelectionChannels) {
     serial = GetRandomSerialNumber();
 
     RadioAccessSpecifier specifier = {.radioAccessNetwork = RadioAccessNetworks::GERAN,

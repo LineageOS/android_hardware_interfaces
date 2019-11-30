@@ -17,18 +17,10 @@
 #include <radio_hidl_hal_utils_v1_2.h>
 
 void RadioHidlTest_v1_2::SetUp() {
-    radio_v1_2 =
-        ::testing::VtsHalHidlTargetTestBase::getService<::android::hardware::radio::V1_2::IRadio>(
-            RadioHidlEnvironment::Instance()
-                ->getServiceName<::android::hardware::radio::V1_2::IRadio>(
-                    hidl_string(RADIO_SERVICE_NAME)));
+    radio_v1_2 = ::android::hardware::radio::V1_2::IRadio::getService(GetParam());
     if (radio_v1_2 == NULL) {
         sleep(60);
-        radio_v1_2 = ::testing::VtsHalHidlTargetTestBase::getService<
-            ::android::hardware::radio::V1_2::IRadio>(
-            RadioHidlEnvironment::Instance()
-                ->getServiceName<::android::hardware::radio::V1_2::IRadio>(
-                    hidl_string(RADIO_SERVICE_NAME)));
+        radio_v1_2 = ::android::hardware::radio::V1_2::IRadio::getService(GetParam());
     }
     ASSERT_NE(nullptr, radio_v1_2.get());
 
@@ -51,8 +43,7 @@ void RadioHidlTest_v1_2::SetUp() {
     /* Enforce Vts Testing with Sim Status Present only. */
     EXPECT_EQ(CardState::PRESENT, cardStatus.base.cardState);
 
-    radioConfig = ::testing::VtsHalHidlTargetTestBase::getService<
-            ::android::hardware::radio::config::V1_1::IRadioConfig>();
+    radioConfig = ::android::hardware::radio::config::V1_1::IRadioConfig::getService();
 
     /* Enforce Vts tesing with RadioConfig for network scan excemption. */
     // Some devices can only perform network scan on logical modem that currently used for packet
