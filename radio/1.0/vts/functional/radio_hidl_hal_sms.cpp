@@ -21,7 +21,7 @@ using namespace ::android::hardware::radio::V1_0;
 /*
  * Test IRadio.sendSms() for the response returned.
  */
-TEST_F(RadioHidlTest, sendSms) {
+TEST_P(RadioHidlTest, sendSms) {
     serial = GetRandomSerialNumber();
     GsmSmsMessage msg;
     msg.smscPdu = "";
@@ -45,7 +45,7 @@ TEST_F(RadioHidlTest, sendSms) {
 /*
  * Test IRadio.sendSMSExpectMore() for the response returned.
  */
-TEST_F(RadioHidlTest, sendSMSExpectMore) {
+TEST_P(RadioHidlTest, sendSMSExpectMore) {
     serial = GetRandomSerialNumber();
     GsmSmsMessage msg;
     msg.smscPdu = "";
@@ -71,7 +71,7 @@ TEST_F(RadioHidlTest, sendSMSExpectMore) {
 /*
  * Test IRadio.acknowledgeLastIncomingGsmSms() for the response returned.
  */
-TEST_F(RadioHidlTest, acknowledgeLastIncomingGsmSms) {
+TEST_P(RadioHidlTest, acknowledgeLastIncomingGsmSms) {
     serial = GetRandomSerialNumber();
     bool success = true;
 
@@ -92,7 +92,7 @@ TEST_F(RadioHidlTest, acknowledgeLastIncomingGsmSms) {
 /*
  * Test IRadio.acknowledgeIncomingGsmSmsWithPdu() for the response returned.
  */
-TEST_F(RadioHidlTest, acknowledgeIncomingGsmSmsWithPdu) {
+TEST_P(RadioHidlTest, acknowledgeIncomingGsmSmsWithPdu) {
     serial = GetRandomSerialNumber();
     bool success = true;
     std::string ackPdu = "";
@@ -111,7 +111,7 @@ TEST_F(RadioHidlTest, acknowledgeIncomingGsmSmsWithPdu) {
 /*
  * Test IRadio.sendCdmaSms() for the response returned.
  */
-TEST_F(RadioHidlTest, sendCdmaSms) {
+TEST_P(RadioHidlTest, sendCdmaSms) {
     serial = GetRandomSerialNumber();
 
     // Create a CdmaSmsAddress
@@ -155,7 +155,7 @@ TEST_F(RadioHidlTest, sendCdmaSms) {
 /*
  * Test IRadio.acknowledgeLastIncomingCdmaSms() for the response returned.
  */
-TEST_F(RadioHidlTest, acknowledgeLastIncomingCdmaSms) {
+TEST_P(RadioHidlTest, acknowledgeLastIncomingCdmaSms) {
     serial = GetRandomSerialNumber();
 
     // Create a CdmaSmsAck
@@ -179,7 +179,7 @@ TEST_F(RadioHidlTest, acknowledgeLastIncomingCdmaSms) {
 /*
  * Test IRadio.sendImsSms() for the response returned.
  */
-TEST_F(RadioHidlTest, sendImsSms) {
+TEST_P(RadioHidlTest, sendImsSms) {
     serial = GetRandomSerialNumber();
 
     // Create a CdmaSmsAddress
@@ -229,7 +229,7 @@ TEST_F(RadioHidlTest, sendImsSms) {
 /*
  * Test IRadio.getSmscAddress() for the response returned.
  */
-TEST_F(RadioHidlTest, getSmscAddress) {
+TEST_P(RadioHidlTest, getSmscAddress) {
     serial = GetRandomSerialNumber();
 
     radio->getSmscAddress(serial);
@@ -249,7 +249,7 @@ TEST_F(RadioHidlTest, getSmscAddress) {
 /*
  * Test IRadio.setSmscAddress() for the response returned.
  */
-TEST_F(RadioHidlTest, setSmscAddress) {
+TEST_P(RadioHidlTest, setSmscAddress) {
     serial = GetRandomSerialNumber();
     hidl_string address = hidl_string("smscAddress");
 
@@ -270,7 +270,7 @@ TEST_F(RadioHidlTest, setSmscAddress) {
 /*
  * Test IRadio.writeSmsToSim() for the response returned.
  */
-TEST_F(RadioHidlTest, writeSmsToSim) {
+TEST_P(RadioHidlTest, writeSmsToSim) {
     serial = GetRandomSerialNumber();
     SmsWriteArgs smsWriteArgs;
     smsWriteArgs.status = SmsWriteArgsStatus::REC_UNREAD;
@@ -296,7 +296,7 @@ TEST_F(RadioHidlTest, writeSmsToSim) {
 /*
  * Test IRadio.deleteSmsOnSim() for the response returned.
  */
-TEST_F(RadioHidlTest, deleteSmsOnSim) {
+TEST_P(RadioHidlTest, deleteSmsOnSim) {
     serial = GetRandomSerialNumber();
     int index = 1;
 
@@ -319,7 +319,7 @@ TEST_F(RadioHidlTest, deleteSmsOnSim) {
 /*
  * Test IRadio.writeSmsToRuim() for the response returned.
  */
-TEST_F(RadioHidlTest, writeSmsToRuim) {
+TEST_P(RadioHidlTest, writeSmsToRuim) {
     serial = GetRandomSerialNumber();
 
     // Create a CdmaSmsAddress
@@ -370,7 +370,7 @@ TEST_F(RadioHidlTest, writeSmsToRuim) {
 /*
  * Test IRadio.deleteSmsOnRuim() for the response returned.
  */
-TEST_F(RadioHidlTest, deleteSmsOnRuim) {
+TEST_P(RadioHidlTest, deleteSmsOnRuim) {
     serial = GetRandomSerialNumber();
     int index = 1;
 
@@ -421,7 +421,7 @@ TEST_F(RadioHidlTest, deleteSmsOnRuim) {
 /*
  * Test IRadio.reportSmsMemoryStatus() for the response returned.
  */
-TEST_F(RadioHidlTest, reportSmsMemoryStatus) {
+TEST_P(RadioHidlTest, reportSmsMemoryStatus) {
     serial = GetRandomSerialNumber();
     bool available = true;
 
