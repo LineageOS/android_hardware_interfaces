@@ -16,9 +16,8 @@
 
 #include <android-base/logging.h>
 
-#include <VtsHalHidlTargetTestBase.h>
-
 #include <android/hardware/radio/1.0/types.h>
+#include <gtest/gtest.h>
 
 using ::android::hardware::radio::V1_0::RadioError;
 using ::android::hardware::radio::V1_0::SapResultCode;
