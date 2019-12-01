@@ -139,55 +139,57 @@ Return<void> FrameHandler::deliverFrame(const BufferDesc_1_0& bufferArg) {
 
 
 Return<void> FrameHandler::deliverFrame_1_1(const hidl_vec<BufferDesc_1_1>& buffers) {
-    for (auto&& buffer : buffers) {
-        const AHardwareBuffer_Desc* pDesc =
-            reinterpret_cast<const AHardwareBuffer_Desc *>(&buffer.buffer.description);
-        ALOGD("Received a frame from the camera (%p)",
-              buffer.buffer.nativeHandle.getNativeHandle());
+    mLock.lock();
+    // For VTS tests, FrameHandler uses a single frame among delivered frames.
+    auto bufferIdx = mFramesDisplayed % buffers.size();
+    auto buffer = buffers[bufferIdx];
+    mLock.unlock();
 
-        // Store a dimension of a received frame.
-        mFrameWidth = pDesc->width;
-        mFrameHeight = pDesc->height;
+    const AHardwareBuffer_Desc* pDesc =
+        reinterpret_cast<const AHardwareBuffer_Desc *>(&buffer.buffer.description);
+    ALOGD("Received a frame from the camera (%p)",
+          buffer.buffer.nativeHandle.getNativeHandle());
 
-        // If we were given an opened display at construction time, then send the received
-        // image back down the camera.
-        if (mDisplay.get()) {
-            // Get the output buffer we'll use to display the imagery
-            BufferDesc_1_0 tgtBuffer = {};
-            mDisplay->getTargetBuffer([&tgtBuffer](const BufferDesc_1_0& buff) {
-                                          tgtBuffer = buff;
-                                      }
-            );
+    // Store a dimension of a received frame.
+    mFrameWidth = pDesc->width;
+    mFrameHeight = pDesc->height;
 
-            if (tgtBuffer.memHandle == nullptr) {
-                printf("Didn't get target buffer - frame lost\n");
-                ALOGE("Didn't get requested output buffer -- skipping this frame.");
+    // If we were given an opened display at construction time, then send the received
+    // image back down the camera.
+    bool displayed = false;
+    if (mDisplay.get()) {
+        // Get the output buffer we'll use to display the imagery
+        BufferDesc_1_0 tgtBuffer = {};
+        mDisplay->getTargetBuffer([&tgtBuffer](const BufferDesc_1_0& buff) {
+                                      tgtBuffer = buff;
+                                  }
+        );
+
+        if (tgtBuffer.memHandle == nullptr) {
+            printf("Didn't get target buffer - frame lost\n");
+            ALOGE("Didn't get requested output buffer -- skipping this frame.");
+        } else {
+            // Copy the contents of the of buffer.memHandle into tgtBuffer
+            copyBufferContents(tgtBuffer, buffer);
+
+            // Send the target buffer back for display
+            Return<EvsResult> result = mDisplay->returnTargetBufferForDisplay(tgtBuffer);
+            if (!result.isOk()) {
+                printf("HIDL error on display buffer (%s)- frame lost\n",
+                       result.description().c_str());
+                ALOGE("Error making the remote function call.  HIDL said %s",
+                      result.description().c_str());
+            } else if (result != EvsResult::OK) {
+                printf("Display reported error - frame lost\n");
+                ALOGE("We encountered error %d when returning a buffer to the display!",
+                      (EvsResult) result);
             } else {
-                // Copy the contents of the of buffer.memHandle into tgtBuffer
-                copyBufferContents(tgtBuffer, buffer);
-
-                // Send the target buffer back for display
-                Return<EvsResult> result = mDisplay->returnTargetBufferForDisplay(tgtBuffer);
-                if (!result.isOk()) {
-                    printf("HIDL error on display buffer (%s)- frame lost\n",
-                           result.description().c_str());
-                    ALOGE("Error making the remote function call.  HIDL said %s",
-                          result.description().c_str());
-                } else if (result != EvsResult::OK) {
-                    printf("Display reported error - frame lost\n");
-                    ALOGE("We encountered error %d when returning a buffer to the display!",
-                          (EvsResult) result);
-                } else {
-                    // Everything looks good!
-                    // Keep track so tests or watch dogs can monitor progress
-                    mLock.lock();
-                    mFramesDisplayed++;
-                    mLock.unlock();
-                }
+                // Everything looks good!
+                // Keep track so tests or watch dogs can monitor progress
+                displayed = true;
             }
         }
     }
-
 
     switch (mReturnMode) {
     case eAutoReturn:
@@ -198,10 +200,13 @@ Return<void> FrameHandler::deliverFrame_1_1(const hidl_vec<BufferDesc_1_1>& buff
     case eNoAutoReturn:
         // Hang onto the buffer handles for now -- the client will return it explicitly later
         mHeldBuffers.push(buffers);
+        break;
     }
 
     mLock.lock();
+    // increases counters
     ++mFramesReceived;
+    mFramesDisplayed += (int)displayed;
     mLock.unlock();
     mFrameSignal.notify_all();
 
