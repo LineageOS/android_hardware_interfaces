@@ -191,6 +191,13 @@ Return<void> FrameHandler::deliverFrame_1_1(const hidl_vec<BufferDesc_1_1>& buff
         }
     }
 
+    mLock.lock();
+    // increases counters
+    ++mFramesReceived;
+    mFramesDisplayed += (int)displayed;
+    mLock.unlock();
+    mFrameSignal.notify_all();
+
     switch (mReturnMode) {
     case eAutoReturn:
         // Send the camera buffer back now that the client has seen it
@@ -202,13 +209,6 @@ Return<void> FrameHandler::deliverFrame_1_1(const hidl_vec<BufferDesc_1_1>& buff
         mHeldBuffers.push(buffers);
         break;
     }
-
-    mLock.lock();
-    // increases counters
-    ++mFramesReceived;
-    mFramesDisplayed += (int)displayed;
-    mLock.unlock();
-    mFrameSignal.notify_all();
 
     ALOGD("Frame handling complete");
 

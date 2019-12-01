@@ -42,6 +42,7 @@ static const float kNanoToSeconds = 0.000000001f;
 #include <cstring>
 #include <cstdlib>
 #include <thread>
+#include <unordered_set>
 
 #include <hidl/HidlTransportSupport.h>
 #include <hwbinder/ProcessState.h>
@@ -151,6 +152,84 @@ protected:
         ASSERT_GE(cameraInfo.size(), 1u);
     }
 
+    bool isLogicalCamera(const camera_metadata_t *metadata) {
+        if (metadata == nullptr) {
+            // A logical camera device must have a valid camera metadata.
+            return false;
+        }
+
+        // Looking for LOGICAL_MULTI_CAMERA capability from metadata.
+        camera_metadata_ro_entry_t entry;
+        int rc = find_camera_metadata_ro_entry(metadata,
+                                               ANDROID_REQUEST_AVAILABLE_CAPABILITIES,
+                                               &entry);
+        if (0 != rc) {
+            // No capabilities are found.
+            return false;
+        }
+
+        for (size_t i = 0; i < entry.count; ++i) {
+            uint8_t cap = entry.data.u8[i];
+            if (cap == ANDROID_REQUEST_AVAILABLE_CAPABILITIES_LOGICAL_MULTI_CAMERA) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    std::unordered_set<std::string> getPhysicalCameraIds(const std::string& id,
+                                                         bool& flag) {
+        std::unordered_set<std::string> physicalCameras;
+
+        auto it = cameraInfo.begin();
+        while (it != cameraInfo.end()) {
+            if (it->v1.cameraId == id) {
+                break;
+            }
+            ++it;
+        }
+
+        if (it == cameraInfo.end()) {
+            // Unknown camera is requested.  Return an empty list.
+            return physicalCameras;
+        }
+
+        const camera_metadata_t *metadata =
+            reinterpret_cast<camera_metadata_t *>(&it->metadata[0]);
+        flag = isLogicalCamera(metadata);
+        if (!flag) {
+            // EVS assumes that the device w/o a valid metadata is a physical
+            // device.
+            ALOGI("%s is not a logical camera device.", id.c_str());
+            physicalCameras.emplace(id);
+            return physicalCameras;
+        }
+
+        // Look for physical camera identifiers
+        camera_metadata_ro_entry entry;
+        int rc = find_camera_metadata_ro_entry(metadata,
+                                               ANDROID_LOGICAL_MULTI_CAMERA_PHYSICAL_IDS,
+                                               &entry);
+        ALOGE_IF(rc, "No physical camera ID is found for a logical camera device");
+
+        const uint8_t *ids = entry.data.u8;
+        size_t start = 0;
+        for (size_t i = 0; i < entry.count; ++i) {
+            if (ids[i] == '\0') {
+                if (start != i) {
+                    std::string id(reinterpret_cast<const char *>(ids + start));
+                    physicalCameras.emplace(id);
+                }
+                start = i + 1;
+            }
+        }
+
+        ALOGI("%s consists of %d physical camera devices.", id.c_str(), (int)physicalCameras.size());
+        return physicalCameras;
+    }
+
+
     sp<IEvsEnumerator>              pEnumerator;   // Every test needs access to the service
     std::vector<CameraDesc>         cameraInfo;    // Empty unless/until loadCameraList() is called
     bool                            mIsHwModule;   // boolean to tell current module under testing
@@ -180,6 +259,13 @@ TEST_F(EvsHidlTest, CameraOpenClean) {
 
     // Open and close each camera twice
     for (auto&& cam: cameraInfo) {
+        bool isLogicalCam = false;
+        auto devices = getPhysicalCameraIds(cam.v1.cameraId, isLogicalCam);
+        if (mIsHwModule && isLogicalCam) {
+            ALOGI("Skip a logical device %s for HW module", cam.v1.cameraId.c_str());
+            continue;
+        }
+
         for (int pass = 0; pass < 2; pass++) {
             activeCameras.clear();
             sp<IEvsCamera_1_1> pCam =
@@ -222,6 +308,13 @@ TEST_F(EvsHidlTest, CameraOpenAggressive) {
 
     // Open and close each camera twice
     for (auto&& cam: cameraInfo) {
+        bool isLogicalCam = false;
+        getPhysicalCameraIds(cam.v1.cameraId, isLogicalCam);
+        if (mIsHwModule && isLogicalCam) {
+            ALOGI("Skip a logical device %s for HW module", cam.v1.cameraId.c_str());
+            continue;
+        }
+
         activeCameras.clear();
         sp<IEvsCamera_1_1> pCam =
             IEvsCamera_1_1::castFrom(pEnumerator->openCamera_1_1(cam.v1.cameraId, nullCfg))
@@ -292,6 +385,13 @@ TEST_F(EvsHidlTest, CameraStreamPerformance) {
 
     // Test each reported camera
     for (auto&& cam: cameraInfo) {
+        bool isLogicalCam = false;
+        auto devices = getPhysicalCameraIds(cam.v1.cameraId, isLogicalCam);
+        if (mIsHwModule && isLogicalCam) {
+            ALOGI("Skip a logical device %s", cam.v1.cameraId.c_str());
+            continue;
+        }
+
         activeCameras.clear();
         sp<IEvsCamera_1_1> pCam =
             IEvsCamera_1_1::castFrom(pEnumerator->openCamera_1_1(cam.v1.cameraId, nullCfg))
@@ -308,6 +408,7 @@ TEST_F(EvsHidlTest, CameraStreamPerformance) {
 
         // Start the camera's video stream
         nsecs_t start = systemTime(SYSTEM_TIME_MONOTONIC);
+
         bool startResult = frameHandler->startStream();
         ASSERT_TRUE(startResult);
 
@@ -315,9 +416,17 @@ TEST_F(EvsHidlTest, CameraStreamPerformance) {
         frameHandler->waitForFrameCount(1);
         nsecs_t firstFrame = systemTime(SYSTEM_TIME_MONOTONIC);
         nsecs_t timeToFirstFrame = systemTime(SYSTEM_TIME_MONOTONIC) - start;
-        EXPECT_LE(nanoseconds_to_milliseconds(timeToFirstFrame), kMaxStreamStartMilliseconds);
-        printf("Measured time to first frame %0.2f ms\n", timeToFirstFrame * kNanoToMilliseconds);
-        ALOGI("Measured time to first frame %0.2f ms", timeToFirstFrame * kNanoToMilliseconds);
+
+        // Extra delays are expected when we attempt to start a video stream on
+        // the logical camera device.  The amount of delay is expected the
+        // number of physical camera devices multiplied by
+        // kMaxStreamStartMilliseconds at most.
+        EXPECT_LE(nanoseconds_to_milliseconds(timeToFirstFrame),
+                  kMaxStreamStartMilliseconds * devices.size());
+        printf("%s: Measured time to first frame %0.2f ms\n",
+               cam.v1.cameraId.c_str(), timeToFirstFrame * kNanoToMilliseconds);
+        ALOGI("%s: Measured time to first frame %0.2f ms",
+              cam.v1.cameraId.c_str(), timeToFirstFrame * kNanoToMilliseconds);
 
         // Check aspect ratio
         unsigned width = 0, height = 0;
@@ -327,6 +436,13 @@ TEST_F(EvsHidlTest, CameraStreamPerformance) {
         // Wait a bit, then ensure we get at least the required minimum number of frames
         sleep(5);
         nsecs_t end = systemTime(SYSTEM_TIME_MONOTONIC);
+
+        // Even when the camera pointer goes out of scope, the FrameHandler object will
+        // keep the stream alive unless we tell it to shutdown.
+        // Also note that the FrameHandle and the Camera have a mutual circular reference, so
+        // we have to break that cycle in order for either of them to get cleaned up.
+        frameHandler->shutdown();
+
         unsigned framesReceived = 0;
         frameHandler->getFramesCounters(&framesReceived, nullptr);
         framesReceived = framesReceived - 1;    // Back out the first frame we already waited for
@@ -335,12 +451,6 @@ TEST_F(EvsHidlTest, CameraStreamPerformance) {
         printf("Measured camera rate %3.2f fps\n", framesPerSecond);
         ALOGI("Measured camera rate %3.2f fps", framesPerSecond);
         EXPECT_GE(framesPerSecond, kMinimumFramesPerSecond);
-
-        // Even when the camera pointer goes out of scope, the FrameHandler object will
-        // keep the stream alive unless we tell it to shutdown.
-        // Also note that the FrameHandle and the Camera have a mutual circular reference, so
-        // we have to break that cycle in order for either of them to get cleaned up.
-        frameHandler->shutdown();
 
         // Explicitly release the camera
         pEnumerator->closeCamera(pCam);
@@ -368,6 +478,13 @@ TEST_F(EvsHidlTest, CameraStreamBuffering) {
 
     // Test each reported camera
     for (auto&& cam: cameraInfo) {
+        bool isLogicalCam = false;
+        getPhysicalCameraIds(cam.v1.cameraId, isLogicalCam);
+        if (mIsHwModule && isLogicalCam) {
+            ALOGI("Skip a logical device %s for HW module", cam.v1.cameraId.c_str());
+            continue;
+        }
+
         activeCameras.clear();
         sp<IEvsCamera_1_1> pCam =
             IEvsCamera_1_1::castFrom(pEnumerator->openCamera_1_1(cam.v1.cameraId, nullCfg))
@@ -397,7 +514,7 @@ TEST_F(EvsHidlTest, CameraStreamBuffering) {
 
         // Check that the video stream stalls once we've gotten exactly the number of buffers
         // we requested since we told the frameHandler not to return them.
-        sleep(2);   // 1 second should be enough for at least 5 frames to be delivered worst case
+        sleep(1);   // 1 second should be enough for at least 5 frames to be delivered worst case
         unsigned framesReceived = 0;
         frameHandler->getFramesCounters(&framesReceived, nullptr);
         ASSERT_EQ(kBuffersToHold, framesReceived) << "Stream didn't stall at expected buffer limit";
@@ -447,6 +564,13 @@ TEST_F(EvsHidlTest, CameraToDisplayRoundTrip) {
 
     // Test each reported camera
     for (auto&& cam: cameraInfo) {
+        bool isLogicalCam = false;
+        getPhysicalCameraIds(cam.v1.cameraId, isLogicalCam);
+        if (mIsHwModule && isLogicalCam) {
+            ALOGI("Skip a logical device %s for HW module", cam.v1.cameraId.c_str());
+            continue;
+        }
+
         activeCameras.clear();
         sp<IEvsCamera_1_1> pCam =
             IEvsCamera_1_1::castFrom(pEnumerator->openCamera_1_1(cam.v1.cameraId, nullCfg))
@@ -596,6 +720,11 @@ TEST_F(EvsHidlTest, MultiCameraStream) {
         // Explicitly release the camera
         pEnumerator->closeCamera(pCam0);
         pEnumerator->closeCamera(pCam1);
+
+        // TODO(b/145459970, b/145457727): below sleep() is added to ensure the
+        // destruction of active camera objects; this may be related with two
+        // issues.
+        sleep(1);
     }
 }
 
@@ -617,6 +746,15 @@ TEST_F(EvsHidlTest, CameraParameter) {
     // Test each reported camera
     Return<EvsResult> result = EvsResult::OK;
     for (auto&& cam: cameraInfo) {
+        bool isLogicalCam = false;
+        getPhysicalCameraIds(cam.v1.cameraId, isLogicalCam);
+        if (isLogicalCam) {
+            // TODO(b/145465724): Support camera parameter programming on
+            // logical devices.
+            ALOGI("Skip a logical device %s", cam.v1.cameraId.c_str());
+            continue;
+        }
+
         activeCameras.clear();
         // Create a camera client
         sp<IEvsCamera_1_1> pCam =
@@ -756,6 +894,15 @@ TEST_F(EvsHidlTest, CameraMasterRelease) {
 
     // Test each reported camera
     for (auto&& cam: cameraInfo) {
+        bool isLogicalCam = false;
+        getPhysicalCameraIds(cam.v1.cameraId, isLogicalCam);
+        if (isLogicalCam) {
+            // TODO(b/145465724): Support camera parameter programming on
+            // logical devices.
+            ALOGI("Skip a logical device %s", cam.v1.cameraId.c_str());
+            continue;
+        }
+
         activeCameras.clear();
         // Create two camera clients.
         sp<IEvsCamera_1_1> pCamMaster =
@@ -928,6 +1075,15 @@ TEST_F(EvsHidlTest, MultiCameraParameter) {
 
     // Test each reported camera
     for (auto&& cam: cameraInfo) {
+        bool isLogicalCam = false;
+        getPhysicalCameraIds(cam.v1.cameraId, isLogicalCam);
+        if (isLogicalCam) {
+            // TODO(b/145465724): Support camera parameter programming on
+            // logical devices.
+            ALOGI("Skip a logical device %s", cam.v1.cameraId.c_str());
+            continue;
+        }
+
         activeCameras.clear();
         // Create two camera clients.
         sp<IEvsCamera_1_1> pCamMaster =
@@ -1991,6 +2147,30 @@ TEST_F(EvsHidlTest, MultiCameraStreamUseConfig) {
         // Explicitly release the camera
         pEnumerator->closeCamera(pCam0);
         pEnumerator->closeCamera(pCam1);
+    }
+}
+
+
+/*
+ * LogicalCameraMetadata:
+ * Opens logical camera reported by the enumerator and validate its metadata by
+ * checking its capability and locating supporting physical camera device
+ * identifiers.
+ */
+TEST_F(EvsHidlTest, LogicalCameraMetadata) {
+    ALOGI("Starting LogicalCameraMetadata test");
+
+    // Get the camera list
+    loadCameraList();
+
+    // Open and close each camera twice
+    for (auto&& cam: cameraInfo) {
+        bool isLogicalCam = false;
+        auto devices = getPhysicalCameraIds(cam.v1.cameraId, isLogicalCam);
+        if (isLogicalCam) {
+            ASSERT_GE(devices.size(), 1) <<
+                "Logical camera device must have at least one physical camera device ID in its metadata.";
+        }
     }
 }
 
