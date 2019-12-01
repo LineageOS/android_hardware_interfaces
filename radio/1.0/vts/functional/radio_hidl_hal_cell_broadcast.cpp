@@ -21,7 +21,7 @@ using namespace ::android::hardware::radio::V1_0;
 /*
  * Test IRadio.setGsmBroadcastConfig() for the response returned.
  */
-TEST_F(RadioHidlTest, setGsmBroadcastConfig) {
+TEST_P(RadioHidlTest, setGsmBroadcastConfig) {
     serial = GetRandomSerialNumber();
 
     // Create GsmBroadcastSmsConfigInfo #1
@@ -84,7 +84,7 @@ TEST_F(RadioHidlTest, setGsmBroadcastConfig) {
 /*
  * Test IRadio.getGsmBroadcastConfig() for the response returned.
  */
-TEST_F(RadioHidlTest, getGsmBroadcastConfig) {
+TEST_P(RadioHidlTest, getGsmBroadcastConfig) {
     serial = GetRandomSerialNumber();
 
     radio->getGsmBroadcastConfig(serial);
@@ -104,7 +104,7 @@ TEST_F(RadioHidlTest, getGsmBroadcastConfig) {
 /*
  * Test IRadio.setCdmaBroadcastConfig() for the response returned.
  */
-TEST_F(RadioHidlTest, setCdmaBroadcastConfig) {
+TEST_P(RadioHidlTest, setCdmaBroadcastConfig) {
     serial = GetRandomSerialNumber();
 
     CdmaBroadcastSmsConfigInfo cbSmsConfig;
@@ -131,7 +131,7 @@ TEST_F(RadioHidlTest, setCdmaBroadcastConfig) {
 /*
  * Test IRadio.getCdmaBroadcastConfig() for the response returned.
  */
-TEST_F(RadioHidlTest, getCdmaBroadcastConfig) {
+TEST_P(RadioHidlTest, getCdmaBroadcastConfig) {
     serial = GetRandomSerialNumber();
 
     radio->getCdmaBroadcastConfig(serial);
@@ -149,7 +149,7 @@ TEST_F(RadioHidlTest, getCdmaBroadcastConfig) {
 /*
  * Test IRadio.setCdmaBroadcastActivation() for the response returned.
  */
-TEST_F(RadioHidlTest, setCdmaBroadcastActivation) {
+TEST_P(RadioHidlTest, setCdmaBroadcastActivation) {
     serial = GetRandomSerialNumber();
     bool activate = false;
 
@@ -169,7 +169,7 @@ TEST_F(RadioHidlTest, setCdmaBroadcastActivation) {
 /*
  * Test IRadio.setGsmBroadcastActivation() for the response returned.
  */
-TEST_F(RadioHidlTest, setGsmBroadcastActivation) {
+TEST_P(RadioHidlTest, setGsmBroadcastActivation) {
     serial = GetRandomSerialNumber();
     bool activate = false;
 

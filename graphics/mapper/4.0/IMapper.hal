@@ -515,5 +515,50 @@ interface IMapper {
      */
     listSupportedMetadataTypes()
             generates (Error error, vec<MetadataTypeDescription> descriptions);
+
+    struct MetadataDump {
+        /**
+         * The type of metadata being dumped.
+         */
+        MetadataType metadataType;
+        /**
+         * The byte stream representation of the metadata. If the metadata is not
+         * gettable, the vector must be empty.
+         */
+        vec<uint8_t> metadata;
+    };
+
+    struct BufferDump {
+        /**
+         * A vector of all the metadata that is being dumped for a particular buffer.
+         */
+        vec<MetadataDump> metadataDump;
+    };
+
+    /**
+     * Dumps a buffer's metadata.
+     *
+     * @param buffer Buffer that is being dumped
+     * @return error Error status of the call, which may be
+     *     - `NONE` upon success.
+     *     - `BAD_BUFFER` if the raw handle is invalid.
+     *     - `NO_RESOURCES` if the get cannot be fullfilled due to unavailability of
+     *       resources.
+     * @return bufferDump Struct representing the metadata being dumped
+     */
+    dumpBuffer(pointer buffer)
+            generates (Error error, BufferDump bufferDump);
+
+    /**
+     * Dumps the metadata for all the buffers in the current process.
+     *
+     * @return error Error status of the call, which may be
+     *     - `NONE` upon success.
+     *     - `NO_RESOURCES` if the get cannot be fullfilled due to unavailability of
+     *       resources.
+     * @return bufferDumps Vector of structs representing the buffers being dumped
+     */
+    dumpBuffers()
+            generates (Error error, vec<BufferDump> bufferDumps);
 };
 
