@@ -512,7 +512,7 @@
     </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.wifi.hostapd</name>
-        <version>1.0-1</version>
+        <version>1.0-2</version>
         <interface>
             <name>IHostapd</name>
             <instance>default</instance>
