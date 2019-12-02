@@ -21,12 +21,13 @@
 #include <android/hardware/bluetooth/audio/2.0/IBluetoothAudioProvider.h>
 #include <android/hardware/bluetooth/audio/2.0/IBluetoothAudioProvidersFactory.h>
 #include <fmq/MessageQueue.h>
+#include <gtest/gtest.h>
+#include <hidl/GtestPrinter.h>
 #include <hidl/MQDescriptor.h>
+#include <hidl/ServiceManagement.h>
 #include <utils/Log.h>
 
 #include <VtsHalHidlTargetCallbackBase.h>
-#include <VtsHalHidlTargetTestBase.h>
-#include <VtsHalHidlTargetTestEnvBase.h>
 
 using ::android::sp;
 using ::android::hardware::hidl_vec;
@@ -105,34 +106,13 @@ std::vector<T> ExtractValuesFromBitmask(T bitmasks, uint32_t bitfield,
 }
 }  // namespace
 
-// Test environment for Bluetooth Audio HAL.
-class BluetoothAudioHidlEnvironment
-    : public ::testing::VtsHalHidlTargetTestEnvBase {
- public:
-  // get the test environment singleton
-  static BluetoothAudioHidlEnvironment* Instance() {
-    static BluetoothAudioHidlEnvironment* instance =
-        new BluetoothAudioHidlEnvironment;
-    return instance;
-  }
-
-  virtual void registerTestServices() override {
-    registerTestService<IBluetoothAudioProvidersFactory>();
-  }
-
- private:
-  BluetoothAudioHidlEnvironment() {}
-};
-
 // The base test class for Bluetooth Audio HAL.
 class BluetoothAudioProvidersFactoryHidlTest
-    : public ::testing::VtsHalHidlTargetTestBase {
+    : public ::testing::TestWithParam<std::string> {
  public:
   virtual void SetUp() override {
-    providers_factory_ = ::testing::VtsHalHidlTargetTestBase::getService<
-        IBluetoothAudioProvidersFactory>(
-        BluetoothAudioHidlEnvironment::Instance()
-            ->getServiceName<IBluetoothAudioProvidersFactory>());
+    providers_factory_ =
+        IBluetoothAudioProvidersFactory::getService(GetParam());
     ASSERT_NE(providers_factory_, nullptr);
   }
 
@@ -300,13 +280,13 @@ class BluetoothAudioProvidersFactoryHidlTest
 /**
  * Test whether we can get the FactoryService from HIDL
  */
-TEST_F(BluetoothAudioProvidersFactoryHidlTest, GetProvidersFactoryService) {}
+TEST_P(BluetoothAudioProvidersFactoryHidlTest, GetProvidersFactoryService) {}
 
 /**
  * Test whether we can open a provider for each provider returned by
  * getProviderCapabilities() with non-empty capabalities
  */
-TEST_F(BluetoothAudioProvidersFactoryHidlTest,
+TEST_P(BluetoothAudioProvidersFactoryHidlTest,
        OpenProviderAndCheckCapabilitiesBySession) {
   for (auto session_type : session_types_) {
     GetProviderCapabilitiesHelper(session_type);
@@ -341,14 +321,14 @@ class BluetoothAudioProviderA2dpSoftwareHidlTest
 /**
  * Test whether we can open a provider of type
  */
-TEST_F(BluetoothAudioProviderA2dpSoftwareHidlTest, OpenA2dpSoftwareProvider) {}
+TEST_P(BluetoothAudioProviderA2dpSoftwareHidlTest, OpenA2dpSoftwareProvider) {}
 
 /**
  * Test whether each provider of type
  * SessionType::A2DP_SOFTWARE_ENCODING_DATAPATH can be started and stopped with
  * different PCM config
  */
-TEST_F(BluetoothAudioProviderA2dpSoftwareHidlTest,
+TEST_P(BluetoothAudioProviderA2dpSoftwareHidlTest,
        StartAndEndA2dpSoftwareSessionWithPossiblePcmConfig) {
   bool is_codec_config_valid;
   std::unique_ptr<DataMQ> tempDataMQ;
@@ -616,14 +596,14 @@ class BluetoothAudioProviderA2dpHardwareHidlTest
 /**
  * Test whether we can open a provider of type
  */
-TEST_F(BluetoothAudioProviderA2dpHardwareHidlTest, OpenA2dpHardwareProvider) {}
+TEST_P(BluetoothAudioProviderA2dpHardwareHidlTest, OpenA2dpHardwareProvider) {}
 
 /**
  * Test whether each provider of type
  * SessionType::A2DP_HARDWARE_ENCODING_DATAPATH can be started and stopped with
  * SBC hardware encoding config
  */
-TEST_F(BluetoothAudioProviderA2dpHardwareHidlTest,
+TEST_P(BluetoothAudioProviderA2dpHardwareHidlTest,
        StartAndEndA2dpSbcHardwareSession) {
   if (!IsOffloadSupported()) {
     return;
@@ -658,7 +638,7 @@ TEST_F(BluetoothAudioProviderA2dpHardwareHidlTest,
  * SessionType::A2DP_HARDWARE_ENCODING_DATAPATH can be started and stopped with
  * AAC hardware encoding config
  */
-TEST_F(BluetoothAudioProviderA2dpHardwareHidlTest,
+TEST_P(BluetoothAudioProviderA2dpHardwareHidlTest,
        StartAndEndA2dpAacHardwareSession) {
   if (!IsOffloadSupported()) {
     return;
@@ -693,7 +673,7 @@ TEST_F(BluetoothAudioProviderA2dpHardwareHidlTest,
  * SessionType::A2DP_HARDWARE_ENCODING_DATAPATH can be started and stopped with
  * LDAC hardware encoding config
  */
-TEST_F(BluetoothAudioProviderA2dpHardwareHidlTest,
+TEST_P(BluetoothAudioProviderA2dpHardwareHidlTest,
        StartAndEndA2dpLdacHardwareSession) {
   if (!IsOffloadSupported()) {
     return;
@@ -728,7 +708,7 @@ TEST_F(BluetoothAudioProviderA2dpHardwareHidlTest,
  * SessionType::A2DP_HARDWARE_ENCODING_DATAPATH can be started and stopped with
  * AptX hardware encoding config
  */
-TEST_F(BluetoothAudioProviderA2dpHardwareHidlTest,
+TEST_P(BluetoothAudioProviderA2dpHardwareHidlTest,
        StartAndEndA2dpAptxHardwareSession) {
   if (!IsOffloadSupported()) {
     return;
@@ -767,7 +747,7 @@ TEST_F(BluetoothAudioProviderA2dpHardwareHidlTest,
  * SessionType::A2DP_HARDWARE_ENCODING_DATAPATH can be started and stopped with
  * an invalid codec config
  */
-TEST_F(BluetoothAudioProviderA2dpHardwareHidlTest,
+TEST_P(BluetoothAudioProviderA2dpHardwareHidlTest,
        StartAndEndA2dpHardwareSessionInvalidCodecConfig) {
   if (!IsOffloadSupported()) {
     return;
@@ -857,7 +837,7 @@ class BluetoothAudioProviderHearingAidSoftwareHidlTest
  * SessionType::HEARING_AID_HARDWARE_ENCODING_DATAPATH can be started and
  * stopped with SBC hardware encoding config
  */
-TEST_F(BluetoothAudioProviderHearingAidSoftwareHidlTest,
+TEST_P(BluetoothAudioProviderHearingAidSoftwareHidlTest,
        OpenHearingAidSoftwareProvider) {}
 
 /**
@@ -865,7 +845,7 @@ TEST_F(BluetoothAudioProviderHearingAidSoftwareHidlTest,
  * SessionType::HEARING_AID_SOFTWARE_ENCODING_DATAPATH can be started and
  * stopped with different PCM config
  */
-TEST_F(BluetoothAudioProviderHearingAidSoftwareHidlTest,
+TEST_P(BluetoothAudioProviderHearingAidSoftwareHidlTest,
        StartAndEndHearingAidSessionWithPossiblePcmConfig) {
   bool is_codec_config_valid;
   std::unique_ptr<DataMQ> tempDataMQ;
@@ -904,12 +884,25 @@ TEST_F(BluetoothAudioProviderHearingAidSoftwareHidlTest,
   }      // SampleRate
 }
 
-int main(int argc, char** argv) {
-  ::testing::AddGlobalTestEnvironment(
-      BluetoothAudioHidlEnvironment::Instance());
-  ::testing::InitGoogleTest(&argc, argv);
-  BluetoothAudioHidlEnvironment::Instance()->init(&argc, argv);
-  int status = RUN_ALL_TESTS();
-  LOG(INFO) << "Test result = " << status;
-  return status;
-}
+static const std::vector<std::string> kAudioInstances =
+    android::hardware::getAllHalInstanceNames(
+        IBluetoothAudioProvidersFactory::descriptor);
+
+INSTANTIATE_TEST_SUITE_P(PerInstance, BluetoothAudioProvidersFactoryHidlTest,
+                         testing::ValuesIn(kAudioInstances),
+                         android::hardware::PrintInstanceNameToString);
+
+INSTANTIATE_TEST_SUITE_P(PerInstance,
+                         BluetoothAudioProviderA2dpSoftwareHidlTest,
+                         testing::ValuesIn(kAudioInstances),
+                         android::hardware::PrintInstanceNameToString);
+
+INSTANTIATE_TEST_SUITE_P(PerInstance,
+                         BluetoothAudioProviderA2dpHardwareHidlTest,
+                         testing::ValuesIn(kAudioInstances),
+                         android::hardware::PrintInstanceNameToString);
+
+INSTANTIATE_TEST_SUITE_P(PerInstance,
+                         BluetoothAudioProviderHearingAidSoftwareHidlTest,
+                         testing::ValuesIn(kAudioInstances),
+                         android::hardware::PrintInstanceNameToString);
