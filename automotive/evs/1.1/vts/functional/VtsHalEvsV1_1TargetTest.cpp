@@ -273,6 +273,15 @@ TEST_F(EvsHidlTest, CameraOpenClean) {
                 .withDefault(nullptr);
             ASSERT_NE(pCam, nullptr);
 
+            for (auto&& devName : devices) {
+                bool matched = false;
+                pCam->getPhysicalCameraInfo(devName,
+                                            [&devName, &matched](const CameraDesc& info) {
+                                                matched = devName == info.v1.cameraId;
+                                            });
+                ASSERT_TRUE(matched);
+            }
+
             // Store a camera handle for a clean-up
             activeCameras.push_back(pCam);
 

@@ -34,6 +34,23 @@ interface IEvsCamera extends @1.0::IEvsCamera {
     getCameraInfo_1_1() generates (CameraDesc info);
 
     /**
+     * Returns the description of the physical camera device that backs this
+     * logical camera.
+     *
+     * If a requested device does not either exist or back this logical device,
+     * this method returns a null camera descriptor.  And, if this is called on
+     * a physical camera device, this method is the same as getCameraInfo_1_1()
+     * method if a given device ID is matched.  Otherwise, this will return a
+     * null camera descriptor.
+     *
+     * @param  deviceId Physical camera device identifier string.
+     * @return info     The description of a member physical camera device.
+     *                  This must be the same value as reported by
+     *                  EvsEnumerator::getCameraList_1_1().
+     */
+    getPhysicalCameraInfo(string deviceId) generates (CameraDesc info);
+
+    /**
      * Requests to pause EVS camera stream events.
      *
      * Like stopVideoStream(), events may continue to arrive for some time

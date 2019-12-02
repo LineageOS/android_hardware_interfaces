@@ -240,6 +240,17 @@ Return<void> EvsCamera::getCameraInfo_1_1(getCameraInfo_1_1_cb _hidl_cb) {
 }
 
 
+Return<void> EvsCamera::getPhysicalCameraInfo(const hidl_string& id,
+                                              getCameraInfo_1_1_cb _hidl_cb) {
+    ALOGD("%s", __FUNCTION__);
+
+    // This works exactly same as getCameraInfo_1_1() in default implementation.
+    (void)id;
+    _hidl_cb(mDescription);
+    return Void();
+}
+
+
 Return<EvsResult> EvsCamera::doneWithFrame_1_1(const hidl_vec<BufferDesc_1_1>& buffers)  {
     std::lock_guard <std::mutex> lock(mAccessLock);
 
