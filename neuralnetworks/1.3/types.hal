@@ -563,6 +563,7 @@ enum OperationType : int32_t {
      * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
+     * * {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} (since HAL version 1.3)
      *
      * Supported tensor rank: 4, with "NHWC" or "NCHW" data layout.
      * With the default data layout NHWC, the data is stored in the order of:
@@ -583,7 +584,8 @@ enum OperationType : int32_t {
      * Outputs:
      * * 0: The output 4-D tensor, of shape [batch, height*block_size,
      *      width*block_size, depth/(block_size*block_size)].
-     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} and
+     *      {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} tensor,
      *      the scale and zeroPoint must be the same as input0.
      */
     DEPTH_TO_SPACE = @1.2::OperationType:DEPTH_TO_SPACE,
@@ -1499,6 +1501,7 @@ enum OperationType : int32_t {
      * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM} (since HAL version 1.2)
+     * * {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} (since HAL version 1.3)
      *
      * Supported tensor rank: 4, with "NHWC" or "NCHW" data layout.
      * With the default data layout NHWC, the data is stored in the order of:
@@ -1541,7 +1544,8 @@ enum OperationType : int32_t {
      * Outputs:
      * * 0: The output 4-D tensor, of shape
      *      [batches, new_height, new_width, depth].
-     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} and
+     *      {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} tensor,
      *      the scale and zeroPoint must be the same as input0.
      */
     RESIZE_BILINEAR = @1.2::OperationType:RESIZE_BILINEAR,
@@ -1660,6 +1664,7 @@ enum OperationType : int32_t {
      * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
+     * * {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} (since HAL version 1.3)
      *
      * Supported tensor rank: 4, with "NHWC" or "NCHW" data layout.
      * With the default data layout NHWC, the data is stored in the order of:
@@ -1680,7 +1685,8 @@ enum OperationType : int32_t {
      * Outputs:
      * * 0: The output 4-D tensor, of shape [batches, height/block_size,
      *      width/block_size, depth_in*block_size*block_size].
-     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} and
+     *      {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} tensor,
      *      the scale and zeroPoint must be the same as input0.
      */
     SPACE_TO_DEPTH = @1.2::OperationType:SPACE_TO_DEPTH,
@@ -1804,6 +1810,7 @@ enum OperationType : int32_t {
      * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
+     * * {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} (since HAL version 1.3)
      *
      * Supported tensor rank: 4, with "NHWC" or "NCHW" data layout.
      * With the default data layout NHWC, the data is stored in the order of:
@@ -1822,7 +1829,8 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: A tensor of the same {@link OperandType} as input0.
-     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} and
+     *      {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} tensor,
      *      the scale and zeroPoint must be the same as input0.
      */
     BATCH_TO_SPACE_ND = @1.2::OperationType:BATCH_TO_SPACE_ND,
@@ -1915,6 +1923,7 @@ enum OperationType : int32_t {
      * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
+     * * {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} (since HAL version 1.3)
      *   (full support since HAL version 1.2, see the output section)
      *
      * Supported tensor rank: up to 4
@@ -1937,7 +1946,8 @@ enum OperationType : int32_t {
      *      of the padding:
      *          output0.dimension[i] =
      *              padding[i, 0] + input0.dimension[i] + padding[i, 1]
-     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} and
+     *      {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} tensor,
      *      the scale and zeroPoint must be the same as input0.
      *
      *      NOTE: Before HAL version 1.2, the pad value for
@@ -1961,6 +1971,7 @@ enum OperationType : int32_t {
      * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
+     * * {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} (since HAL version 1.3)
      *   (full support since HAL version 1.2, see the output section)
      *
      * Supported tensor rank: 4, with "NHWC" or "NCHW" data layout.
@@ -1988,7 +1999,8 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: A tensor of the same {@link OperandType} as input0.
-     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} and
+     *      {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} tensor,
      *      the scale and zeroPoint must be the same as input0.
      *
      *      NOTE: Before HAL version 1.2, the pad value for
@@ -2137,6 +2149,7 @@ enum OperationType : int32_t {
      * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
+     * * {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} (since HAL version 1.3)
      *
      * Supported tensor rank: up to 4
      *
@@ -2148,7 +2161,8 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: A tensor of the same {@link OperandType} as input0.
-     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} and
+     *      {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
      *      the scale and zeroPoint must be the same as input0.
      */
     TRANSPOSE = @1.2::OperationType:TRANSPOSE,
@@ -2694,6 +2708,7 @@ enum OperationType : int32_t {
      * * {@link OperandType::TENSOR_FLOAT16}
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
+     * * {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} (since HAL version 1.3)
      *
      * Supported tensor rank: up to 4
      *
@@ -2708,7 +2723,8 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: A tensor of the same {@link OperandType} and same shape as input0.
-     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} and
+     *      {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
      *      the scale and zeroPoint must be the same as input0.
      */
     CHANNEL_SHUFFLE = @1.2::OperationType:CHANNEL_SHUFFLE,
@@ -3067,8 +3083,19 @@ enum OperationType : int32_t {
      * * * {@link OperandType::TENSOR_INT32} for bias (with scale set to
      * * * input.scale * filter.scale).
      *
+     * * Quantized signed (since HAL version 1.3):
+     * * * {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} for input, filter, and output.
+     * * * {@link OperandType::TENSOR_INT32} for bias (with scale set to
+     * * * input.scale * filter.scale).
+     *
      * * Quantized with symmetric per channel quantization for the filter:
      * * * {@link OperandType::TENSOR_QUANT8_ASYMM} for input, and output.
+     * * * {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL} for filter.
+     * * * {@link OperandType::TENSOR_INT32} for bias (scale set to 0.0,
+     * * * each value scaling is separate and equal to input.scale * filter.scales[channel]).
+     *
+     * * Quantized signed with filter symmetric per channel quantization (since HAL version 1.3):
+     * * * {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} for input, and output.
      * * * {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL} for filter.
      * * * {@link OperandType::TENSOR_INT32} for bias (scale set to 0.0,
      * * * each value scaling is separate and equal to input.scale * filter.scales[channel]).
@@ -3091,8 +3118,9 @@ enum OperationType : int32_t {
      *      {@link SymmPerChannelQuantParams}) must be set to 0.
      * * 2: A 1-D tensor, of shape [depth_out], specifying the bias. For input
      *      tensor of type {@link OperandType::TENSOR_FLOAT32} or
-     *      {@link OperandType::TENSOR_FLOAT16}, the bias must be of the same
-     *      type. For filter tensor of {@link OperandType::TENSOR_QUANT8_ASYMM},
+     *      {@link OperandType::TENSOR_FLOAT16}, the bias must be of the same type.
+     *      For filter tensor of {@link OperandType::TENSOR_QUANT8_ASYMM} and
+     *      {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED}
      *      the bias should be of {@link OperandType::TENSOR_INT32}, with zeroPoint
      *      of 0 and bias_scale == input_scale * filter_scale. For filter tensor
      *      of {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL}, the bias
@@ -3131,7 +3159,9 @@ enum OperationType : int32_t {
      * * 2: A 1-D tensor, of shape [depth_out], specifying the bias. For input
      *      tensor of type {@link OperandType::TENSOR_FLOAT32} or
      *      {@link OperandType::TENSOR_FLOAT16}, the bias must be of the same
-     *      type. For filter tensor of {@link OperandType::TENSOR_QUANT8_ASYMM},
+     *      {@link OperandType::TENSOR_FLOAT16}, the bias must be of the same type.
+     *      For filter tensor of {@link OperandType::TENSOR_QUANT8_ASYMM} and
+     *      {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED}
      *      the bias should be of {@link OperandType::TENSOR_INT32}, with zeroPoint
      *      of 0 and bias_scale == input_scale * filter_scale. For filter tensor
      *      of {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL}, the bias
@@ -3156,7 +3186,8 @@ enum OperationType : int32_t {
      * Outputs:
      * * 0: The output 4-D tensor, of shape
      *      [batches, out_height, out_width, depth_out].
-     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} and
+     *      {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
      *      the scale and zeroPoint can be different from inputs' scale and zeroPoint.
      */
     GROUPED_CONV_2D = @1.2::OperationType:GROUPED_CONV_2D,
@@ -3512,6 +3543,7 @@ enum OperationType : int32_t {
      * * {@link OperandType::TENSOR_FLOAT16}
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
+     * * {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} (since HAL version 1.3)
      *
      * Supported tensor rank: up to 4
      *
@@ -3529,7 +3561,8 @@ enum OperationType : int32_t {
      *      pad value must be of {@link OperandType::FLOAT16}.
      *      For input tensor of {@link OperandType::TENSOR_FLOAT32}, the
      *      pad value must be of {@link OperandType::FLOAT32}.
-     *      For input tensor of {@link OperandType::TENSOR_QUANT8_ASYMM},
+     *      For input tensor of {@link OperandType::TENSOR_QUANT8_ASYMM} and
+     *      {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED},
      *      the pad value must be of {@link OperandType::INT32}. The
      *      scale and zeroPoint are assumed to be the same as in input0.
      *
@@ -3541,7 +3574,8 @@ enum OperationType : int32_t {
      *      of the padding:
      *          output0.dimension[i] =
      *              padding[i, 0] + input0.dimension[i] + padding[i, 1]
-     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} and
+     *      {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} tensor,
      *      the scale and zeroPoint must be the same as input0.
      */
     PAD_V2 = @1.2::OperationType:PAD_V2,
@@ -3618,13 +3652,22 @@ enum OperationType : int32_t {
     /**
      * Quantizes the input tensor.
      *
-     * The formula is:
+     * The formula for {@link OperandType::TENSOR_QUANT8_ASYMM} output tensor is:
      *
      *     output = max(0, min(255, round(input / scale) + zeroPoint)
      *
-     * Supported tensor {@link OperandType}:
+     * The formula for {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} output
+     * tensor is:
+     *
+     *     output = max(-128, min(127, round(input / scale) + zeroPoint)
+     *
+     * Supported input tensor {@link OperandType}:
      * * {@link OperandType::TENSOR_FLOAT16}
      * * {@link OperandType::TENSOR_FLOAT32}
+     *
+     * Supported output tensor {@link OperandType}:
+     * * {@link OperandType::TENSOR_QUANT8_ASYMM}
+     * * {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} (since HAL version 1.3)
      *
      * Supported tensor rank: from 1
      *
@@ -3633,7 +3676,8 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: The output tensor of same shape as input0, but with
-     *      {@link OperandType::TENSOR_QUANT8_ASYMM}.
+     *      {@link OperandType::TENSOR_QUANT8_ASYMM} or.
+     *      {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED}.
      */
     QUANTIZE = @1.2::OperationType:QUANTIZE,
 
@@ -4140,6 +4184,7 @@ enum OperationType : int32_t {
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_INT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
+     * * {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} (since HAL version 1.3)
      *
      * Supported tensor rank: from 1
      *
@@ -4152,7 +4197,8 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0 ~ (num_splits - 1): Resulting subtensors.
-     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} and
+     *      {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} tensor,
      *      the scale and zeroPoint must be the same as input0.
      */
     SPLIT = @1.2::OperationType:SPLIT,
@@ -4188,6 +4234,7 @@ enum OperationType : int32_t {
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_INT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
+     * * {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} (since HAL version 1.3)
      *
      * Supported tensor rank: from 1
      *
@@ -4198,7 +4245,8 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: A tiled tensor of the same {@link OperandType} and rank as `input`.
-     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} and
+     *      {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} tensor,
      *      the scale and zeroPoint must be the same as input0.
      */
     TILE = @1.2::OperationType:TILE,
@@ -4214,6 +4262,7 @@ enum OperationType : int32_t {
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_INT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
+     * * {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} (since HAL version 1.3)
      *
      * Supported tensor rank: from 1
      *
@@ -4225,7 +4274,8 @@ enum OperationType : int32_t {
      * Outputs:
      * * 0: An n-D tensor of the same type as the input, containing the k
      *      largest elements along each last dimensional slice.
-     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} and
+     *      {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} tensor,
      *      the scale and zeroPoint must be the same as input0.
      * * 1: An n-D tensor of type {@link OperandType::TENSOR_INT32}
      *      containing the indices of values within the last dimension of input.
@@ -4521,6 +4571,7 @@ enum OperationType : int32_t {
      * * {@link OperandType::TENSOR_FLOAT16}
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
+     * * {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} (since HAL version 1.3)
      *
      * Supported tensor rank: 4, with "NHWC" or "NCHW" data layout.
      * With the default data layout NHWC, the data is stored in the order of:
@@ -4560,7 +4611,8 @@ enum OperationType : int32_t {
      * Outputs:
      * * 0: The output 4-D tensor, of shape
      *      [batches, new_height, new_width, depth].
-     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
+     *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} and
+     *      {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} tensor,
      *      the scale and zeroPoint must be the same as input0.
      */
     RESIZE_NEAREST_NEIGHBOR = @1.2::OperationType:RESIZE_NEAREST_NEIGHBOR,
