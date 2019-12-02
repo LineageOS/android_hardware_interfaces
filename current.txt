@@ -679,3 +679,4 @@ b27ab0cd40b0b078cdcd024bfe1061c4c4c065f3519eeb9347fa359a3268a5ae android.hardwar
 ##
 51d1c8d285e0456da2a3fdfbf4700c6277165d5e83219894d651c8ea0e39aa8b android.hardware.soundtrigger@2.3::types
 12d7533ff0754f45bf59ab300799074570a99a676545652c2c23abc73cb4515d android.hardware.soundtrigger@2.3::ISoundTriggerHw
+7746fda1fbf9c7c132bae701cc5a161309e4f5e7f3e8065811045975ee86196d android.hardware.usb.gadget@1.1::IUsbGadget
