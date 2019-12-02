@@ -1954,7 +1954,7 @@ enum OperationType : int32_t {
      * Outputs:
      * * 0: A tensor of the same {@link OperandType} as input0.
      *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
-     *      the scale and zeroPoint must be same as input0.
+     *      the scale and zeroPoint must be the same as input0.
      */
     MEAN = @1.1::OperationType:MEAN,
 
