@@ -30,5 +30,8 @@ cc_test {
         "libgralloctypes",
         "vintf-graphics-common-ndk_platform",
     ],
+    header_libs: [
+        "libsystem_headers",
+    ],
     test_suites: ["general-tests"],
 }
