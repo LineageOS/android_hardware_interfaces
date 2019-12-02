@@ -1021,6 +1021,12 @@ WifiStatus WifiChip::startLoggingToDebugRingBufferInternal(
             max_interval_in_sec, min_data_size_in_bytes);
     ringbuffer_map_.insert(std::pair<std::string, Ringbuffer>(
         ring_name, Ringbuffer(kMaxBufferSizeBytes)));
+    // if verbose logging enabled, turn up HAL daemon logging as well.
+    if (verbose_level < WifiDebugRingBufferVerboseLevel::VERBOSE) {
+        android::base::SetMinimumLogSeverity(android::base::DEBUG);
+    } else {
+        android::base::SetMinimumLogSeverity(android::base::VERBOSE);
+    }
     return createWifiStatusFromLegacyError(legacy_status);
 }
 
