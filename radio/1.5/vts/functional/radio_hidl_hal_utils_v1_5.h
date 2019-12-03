@@ -80,6 +80,12 @@ class RadioResponse_v1_5 : public ::android::hardware::radio::V1_5::IRadioRespon
     ::android::hardware::radio::V1_4::CarrierRestrictionsWithPriority carrierRestrictionsResp;
     ::android::hardware::radio::V1_4::SimLockMultiSimPolicy multiSimPolicyResp;
 
+    // Whether toggling uicc applications operation is supported.
+    bool canToggleUiccApplicationsEnablement;
+
+    // Whether Uicc applications are enabled or not.
+    bool areUiccApplicationsEnabled;
+
     RadioResponse_v1_5(RadioHidlTest_v1_5& parent_v1_5);
     virtual ~RadioResponse_v1_5() = default;
 
@@ -524,6 +530,10 @@ class RadioResponse_v1_5 : public ::android::hardware::radio::V1_5::IRadioRespon
 
     /* 1.5 Api */
     Return<void> setSignalStrengthReportingCriteriaResponse_1_5(const RadioResponseInfo& info);
+    Return<void> enableUiccApplicationsResponse(const RadioResponseInfo& info);
+    Return<void> areUiccApplicationsEnabledResponse(const RadioResponseInfo& info, bool enabled);
+    Return<void> canToggleUiccApplicationsEnablementResponse(const RadioResponseInfo& info,
+                                                             bool canToggle);
 };
 
 /* Callback class for radio indication */
@@ -534,6 +544,9 @@ class RadioIndication_v1_5 : public ::android::hardware::radio::V1_5::IRadioIndi
   public:
     RadioIndication_v1_5(RadioHidlTest_v1_5& parent_v1_5);
     virtual ~RadioIndication_v1_5() = default;
+
+    /* 1.5 Api */
+    Return<void> uiccApplicationsEnablementChanged(RadioIndicationType type, bool enabled);
 
     /* 1.4 Api */
     Return<void> currentEmergencyNumberList(
