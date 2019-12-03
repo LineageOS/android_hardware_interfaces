@@ -527,9 +527,9 @@ TEST_F(NewKeyGenerationTest, Rsa) {
         HidlBuf key_blob;
         KeyCharacteristics key_characteristics;
         ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
-                                                 .RsaSigningKey(key_size, 3)
-                                                 .Digest(Digest::NONE)
-                                                 .Padding(PaddingMode::NONE),
+                                                     .RsaSigningKey(key_size, 65537)
+                                                     .Digest(Digest::NONE)
+                                                     .Padding(PaddingMode::NONE),
                                              &key_blob, &key_characteristics));
 
         ASSERT_GT(key_blob.size(), 0U);
@@ -579,11 +579,12 @@ TEST_F(NewKeyGenerationTest, NoInvalidRsaSizes) {
     for (auto key_size : InvalidKeySizes(Algorithm::RSA)) {
         HidlBuf key_blob;
         KeyCharacteristics key_characteristics;
-        ASSERT_EQ(ErrorCode::UNSUPPORTED_KEY_SIZE, GenerateKey(AuthorizationSetBuilder()
-                                                                   .RsaSigningKey(key_size, 3)
-                                                                   .Digest(Digest::NONE)
-                                                                   .Padding(PaddingMode::NONE),
-                                                               &key_blob, &key_characteristics));
+        ASSERT_EQ(ErrorCode::UNSUPPORTED_KEY_SIZE,
+                  GenerateKey(AuthorizationSetBuilder()
+                                      .RsaSigningKey(key_size, 65537)
+                                      .Digest(Digest::NONE)
+                                      .Padding(PaddingMode::NONE),
+                              &key_blob, &key_characteristics));
     }
 }
 
