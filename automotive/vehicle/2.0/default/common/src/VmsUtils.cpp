@@ -194,32 +194,35 @@ int32_t parsePublisherIdResponse(const VehiclePropValue& publisher_id_response) 
     return -1;
 }
 
-bool isSequenceNumberNewer(const VehiclePropValue& subscription_change,
+bool isSequenceNumberNewer(const VehiclePropValue& subscriptions_state,
                            const int last_seen_sequence_number) {
-    return (isValidVmsMessage(subscription_change) &&
-            parseMessageType(subscription_change) == VmsMessageType::SUBSCRIPTIONS_CHANGE &&
-            subscription_change.value.int32Values.size() > kSubscriptionStateSequenceNumberIndex &&
-            subscription_change.value.int32Values[kSubscriptionStateSequenceNumberIndex] >
+    return (isValidVmsMessage(subscriptions_state) &&
+            (parseMessageType(subscriptions_state) == VmsMessageType::SUBSCRIPTIONS_CHANGE ||
+             parseMessageType(subscriptions_state) == VmsMessageType::SUBSCRIPTIONS_RESPONSE) &&
+            subscriptions_state.value.int32Values.size() > kSubscriptionStateSequenceNumberIndex &&
+            subscriptions_state.value.int32Values[kSubscriptionStateSequenceNumberIndex] >
                     last_seen_sequence_number);
 }
 
-int32_t getSequenceNumberForSubscriptionsState(const VehiclePropValue& subscription_change) {
-    if (isValidVmsMessage(subscription_change) &&
-        parseMessageType(subscription_change) == VmsMessageType::SUBSCRIPTIONS_CHANGE &&
-        subscription_change.value.int32Values.size() > kSubscriptionStateSequenceNumberIndex) {
-        return subscription_change.value.int32Values[kSubscriptionStateSequenceNumberIndex];
+int32_t getSequenceNumberForSubscriptionsState(const VehiclePropValue& subscriptions_state) {
+    if (isValidVmsMessage(subscriptions_state) &&
+        (parseMessageType(subscriptions_state) == VmsMessageType::SUBSCRIPTIONS_CHANGE ||
+         parseMessageType(subscriptions_state) == VmsMessageType::SUBSCRIPTIONS_RESPONSE) &&
+        subscriptions_state.value.int32Values.size() > kSubscriptionStateSequenceNumberIndex) {
+        return subscriptions_state.value.int32Values[kSubscriptionStateSequenceNumberIndex];
     }
     return -1;
 }
 
-std::vector<VmsLayer> getSubscribedLayers(const VehiclePropValue& subscription_change,
+std::vector<VmsLayer> getSubscribedLayers(const VehiclePropValue& subscriptions_state,
                                           const VmsOffers& offers) {
-    if (isValidVmsMessage(subscription_change) &&
-        parseMessageType(subscription_change) == VmsMessageType::SUBSCRIPTIONS_CHANGE &&
-        subscription_change.value.int32Values.size() > kSubscriptionStateSequenceNumberIndex) {
-        const int32_t num_of_layers = subscription_change.value.int32Values[toInt(
+    if (isValidVmsMessage(subscriptions_state) &&
+        (parseMessageType(subscriptions_state) == VmsMessageType::SUBSCRIPTIONS_CHANGE ||
+         parseMessageType(subscriptions_state) == VmsMessageType::SUBSCRIPTIONS_RESPONSE) &&
+        subscriptions_state.value.int32Values.size() > kSubscriptionStateSequenceNumberIndex) {
+        const int32_t num_of_layers = subscriptions_state.value.int32Values[toInt(
                 VmsSubscriptionsStateIntegerValuesIndex::NUMBER_OF_LAYERS)];
-        const int32_t num_of_associated_layers = subscription_change.value.int32Values[toInt(
+        const int32_t num_of_associated_layers = subscriptions_state.value.int32Values[toInt(
                 VmsSubscriptionsStateIntegerValuesIndex ::NUMBER_OF_ASSOCIATED_LAYERS)];
 
         std::unordered_set<VmsLayer, VmsLayer::VmsLayerHashFunction> offered_layers;
@@ -231,9 +234,9 @@ std::vector<VmsLayer> getSubscribedLayers(const VehiclePropValue& subscription_c
         int current_index = toInt(VmsSubscriptionsStateIntegerValuesIndex::SUBSCRIPTIONS_START);
         // Add all subscribed layers which are offered by the current publisher.
         for (int i = 0; i < num_of_layers; i++) {
-            VmsLayer layer = VmsLayer(subscription_change.value.int32Values[current_index],
-                                      subscription_change.value.int32Values[current_index + 1],
-                                      subscription_change.value.int32Values[current_index + 2]);
+            VmsLayer layer = VmsLayer(subscriptions_state.value.int32Values[current_index],
+                                      subscriptions_state.value.int32Values[current_index + 1],
+                                      subscriptions_state.value.int32Values[current_index + 2]);
             if (offered_layers.find(layer) != offered_layers.end()) {
                 subscribed_layers.push_back(layer);
             }
@@ -243,15 +246,15 @@ std::vector<VmsLayer> getSubscribedLayers(const VehiclePropValue& subscription_c
         // For this, we need to check if the associated layer has a publisher ID which is
         // same as that of the current publisher.
         for (int i = 0; i < num_of_associated_layers; i++) {
-            VmsLayer layer = VmsLayer(subscription_change.value.int32Values[current_index],
-                                      subscription_change.value.int32Values[current_index + 1],
-                                      subscription_change.value.int32Values[current_index + 2]);
+            VmsLayer layer = VmsLayer(subscriptions_state.value.int32Values[current_index],
+                                      subscriptions_state.value.int32Values[current_index + 1],
+                                      subscriptions_state.value.int32Values[current_index + 2]);
             current_index += kLayerSize;
             if (offered_layers.find(layer) != offered_layers.end()) {
-                int32_t num_of_publisher_ids = subscription_change.value.int32Values[current_index];
+                int32_t num_of_publisher_ids = subscriptions_state.value.int32Values[current_index];
                 current_index++;
                 for (int j = 0; j < num_of_publisher_ids; j++) {
-                    if (subscription_change.value.int32Values[current_index] ==
+                    if (subscriptions_state.value.int32Values[current_index] ==
                         offers.publisher_id) {
                         subscribed_layers.push_back(layer);
                     }
