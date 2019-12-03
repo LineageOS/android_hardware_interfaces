@@ -19,7 +19,7 @@ LOCAL_SHARED_LIBRARIES := \
 
 LOCAL_STATIC_LIBRARIES := android.hardware.health@1.0-convert
 
-LOCAL_HAL_STATIC_LIBRARIES := libhealthd
+LOCAL_STATIC_LIBRARIES += libhealthd.default
 
 include $(BUILD_SHARED_LIBRARY)
 
