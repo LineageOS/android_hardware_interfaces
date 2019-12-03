@@ -1,0 +1,38 @@
+/*
+ * Copyright (C) 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package android.hardware.drm@1.3;
+
+import @1.2::IDrmFactory;
+
+/**
+ * IDrmFactory is the main entry point for interacting with a vendor's
+ * drm HAL to create drm plugin instances. A drm plugin instance
+ * creates drm sessions which are used to obtain keys for a crypto
+ * session so it can decrypt protected video content.
+ *
+ * The 1.3 factory must always create 1.2 IDrmPlugin interfaces, which are
+ * returned via the 1.0 createPlugin method.
+ */
+
+interface IDrmFactory extends @1.2::IDrmFactory {
+    /**
+     * Return vector of uuids identifying crypto schemes supported by this HAL.
+     *
+     * @return schemes Vector of uuids for which isCryptoSchemeSupported is true;
+     *                 each uuid can be used as input to createPlugin.
+     */
+    getSupportedCryptoSchemes() generates(vec<uint8_t[16]> schemes);
+};
