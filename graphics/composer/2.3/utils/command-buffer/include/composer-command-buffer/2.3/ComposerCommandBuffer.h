@@ -79,6 +79,7 @@ class CommandWriterBase : public V2_2::CommandWriterBase {
 
     void setLayerPerFrameMetadataBlobs(
         const hidl_vec<IComposerClient::PerFrameMetadataBlob>& metadata) {
+        // in units of uint32_t's
         size_t commandLength = 0;
 
         if (metadata.size() > std::numeric_limits<uint32_t>::max()) {
@@ -86,12 +87,12 @@ class CommandWriterBase : public V2_2::CommandWriterBase {
             return;
         }
 
-        // number of blobs
-        commandLength += metadata.size();
+        // space for numElements
+        commandLength += 1;
 
         for (auto metadataBlob : metadata) {
-            commandLength += sizeof(int32_t);  // key of metadata blob
-            commandLength += 1;                // size information of metadata blob
+            commandLength += 1;  // key of metadata blob
+            commandLength += 1;  // size information of metadata blob
 
             // metadata content size
             size_t metadataSize = metadataBlob.blob.size() / sizeof(uint32_t);

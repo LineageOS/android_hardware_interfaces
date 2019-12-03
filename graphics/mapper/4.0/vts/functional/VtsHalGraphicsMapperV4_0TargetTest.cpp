@@ -20,13 +20,13 @@
 #include <thread>
 #include <vector>
 
-//#include <aidl/android/hardware/graphics/common/BlendMode.h>
-//#include <aidl/android/hardware/graphics/common/Compression.h>
+#include <aidl/android/hardware/graphics/common/PlaneLayoutComponentType.h>
 
 #include <VtsHalHidlTargetTestBase.h>
 #include <android-base/logging.h>
 #include <gralloctypes/Gralloc4.h>
 #include <mapper-vts/4.0/MapperVts.h>
+#include <system/graphics.h>
 
 namespace android {
 namespace hardware {
@@ -44,6 +44,7 @@ using aidl::android::hardware::graphics::common::Dataspace;
 using aidl::android::hardware::graphics::common::ExtendableType;
 using aidl::android::hardware::graphics::common::PlaneLayout;
 using aidl::android::hardware::graphics::common::PlaneLayoutComponent;
+using aidl::android::hardware::graphics::common::PlaneLayoutComponentType;
 using aidl::android::hardware::graphics::common::StandardMetadataType;
 
 using DecodeFunction = std::function<void(const IMapper::BufferDescriptorInfo& descriptorInfo,
@@ -198,6 +199,78 @@ class GraphicsMapperHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         }
 
         EXPECT_EQ(sRequiredMetadataTypes, foundMetadataTypes);
+    }
+
+    void getAndroidYCbCr(const native_handle_t* bufferHandle, uint8_t* data,
+                         android_ycbcr* outYCbCr) {
+        hidl_vec<uint8_t> vec;
+        ASSERT_EQ(Error::NONE,
+                  mGralloc->get(bufferHandle, gralloc4::MetadataType_PlaneLayouts, &vec));
+        std::vector<PlaneLayout> planeLayouts;
+        ASSERT_EQ(NO_ERROR, gralloc4::decodePlaneLayouts(vec, &planeLayouts));
+
+        outYCbCr->y = nullptr;
+        outYCbCr->cb = nullptr;
+        outYCbCr->cr = nullptr;
+        outYCbCr->ystride = 0;
+        outYCbCr->cstride = 0;
+        outYCbCr->chroma_step = 0;
+
+        for (const auto& planeLayout : planeLayouts) {
+            for (const auto& planeLayoutComponent : planeLayout.components) {
+                std::string componentTypeName = planeLayoutComponent.type.name;
+                if (!std::strncmp(componentTypeName.c_str(), GRALLOC4_PLANE_LAYOUT_COMPONENT_TYPE,
+                                  componentTypeName.size())) {
+                    continue;
+                }
+                ASSERT_EQ(0, planeLayoutComponent.offsetInBits % 8);
+
+                uint8_t* tmpData =
+                        data + planeLayout.offsetInBytes + (planeLayoutComponent.offsetInBits / 8);
+                uint64_t sampleIncrementInBytes;
+
+                auto type = static_cast<PlaneLayoutComponentType>(planeLayoutComponent.type.value);
+                switch (type) {
+                    case PlaneLayoutComponentType::Y:
+                        ASSERT_EQ(nullptr, outYCbCr->y);
+                        ASSERT_EQ(8, planeLayoutComponent.sizeInBits);
+                        ASSERT_EQ(8, planeLayout.sampleIncrementInBits);
+                        outYCbCr->y = tmpData;
+                        outYCbCr->ystride = planeLayout.strideInBytes;
+                        break;
+
+                    case PlaneLayoutComponentType::CB:
+                    case PlaneLayoutComponentType::CR:
+                        ASSERT_EQ(0, planeLayout.sampleIncrementInBits % 8);
+
+                        sampleIncrementInBytes = planeLayout.sampleIncrementInBits / 8;
+                        ASSERT_TRUE(sampleIncrementInBytes == 1 || sampleIncrementInBytes == 2);
+
+                        if (outYCbCr->cstride == 0 && outYCbCr->chroma_step == 0) {
+                            outYCbCr->cstride = planeLayout.strideInBytes;
+                            outYCbCr->chroma_step = sampleIncrementInBytes;
+                        } else {
+                            ASSERT_EQ(outYCbCr->cstride, planeLayout.strideInBytes);
+                            ASSERT_EQ(outYCbCr->chroma_step, sampleIncrementInBytes);
+                        }
+
+                        if (type == PlaneLayoutComponentType::CB) {
+                            ASSERT_EQ(nullptr, outYCbCr->cb);
+                            outYCbCr->cb = tmpData;
+                        } else {
+                            ASSERT_EQ(nullptr, outYCbCr->cr);
+                            outYCbCr->cr = tmpData;
+                        }
+                        break;
+                    default:
+                        break;
+                };
+            }
+        }
+
+        ASSERT_NE(nullptr, outYCbCr->y);
+        ASSERT_NE(nullptr, outYCbCr->cb);
+        ASSERT_NE(nullptr, outYCbCr->cr);
     }
 
     std::unique_ptr<Gralloc> mGralloc;
@@ -474,6 +547,76 @@ TEST_F(GraphicsMapperHidlTest, LockUnlockBasic) {
             EXPECT_EQ(static_cast<uint8_t>(y), data[i]);
         }
         data += strideInBytes;
+    }
+
+    ASSERT_NO_FATAL_FAILURE(fence = mGralloc->unlock(bufferHandle));
+    if (fence >= 0) {
+        close(fence);
+    }
+}
+
+TEST_F(GraphicsMapperHidlTest, Lock_YCBCR_420_888) {
+    auto info = mDummyDescriptorInfo;
+    info.format = PixelFormat::YCBCR_420_888;
+
+    const native_handle_t* bufferHandle;
+    uint32_t stride;
+    ASSERT_NO_FATAL_FAILURE(bufferHandle = mGralloc->allocate(info, true, false, &stride));
+
+    // lock buffer for writing
+    const IMapper::Rect region{0, 0, static_cast<int32_t>(info.width),
+                               static_cast<int32_t>(info.height)};
+    int fence = -1;
+    uint8_t* data;
+
+    ASSERT_NO_FATAL_FAILURE(
+            data = static_cast<uint8_t*>(mGralloc->lock(bufferHandle, info.usage, region, fence)));
+
+    android_ycbcr yCbCr;
+    ASSERT_NO_FATAL_FAILURE(getAndroidYCbCr(bufferHandle, data, &yCbCr));
+
+    auto yData = static_cast<uint8_t*>(yCbCr.y);
+    auto cbData = static_cast<uint8_t*>(yCbCr.cb);
+    auto crData = static_cast<uint8_t*>(yCbCr.cr);
+    auto yStride = yCbCr.ystride;
+    auto cStride = yCbCr.cstride;
+    auto chromaStep = yCbCr.chroma_step;
+
+    for (uint32_t y = 0; y < info.height; y++) {
+        for (uint32_t x = 0; x < info.width; x++) {
+            auto val = static_cast<uint8_t>(info.height * y + x);
+
+            yData[yStride * y + x] = val;
+
+            if (y % chromaStep && x % chromaStep == 0) {
+                cbData[cStride * y / chromaStep + x / chromaStep] = val;
+                crData[cStride * y / chromaStep + x / chromaStep] = val;
+            }
+        }
+    }
+
+    ASSERT_NO_FATAL_FAILURE(fence = mGralloc->unlock(bufferHandle));
+
+    // lock again for reading
+    ASSERT_NO_FATAL_FAILURE(
+            data = static_cast<uint8_t*>(mGralloc->lock(bufferHandle, info.usage, region, fence)));
+
+    ASSERT_NO_FATAL_FAILURE(getAndroidYCbCr(bufferHandle, data, &yCbCr));
+
+    yData = static_cast<uint8_t*>(yCbCr.y);
+    cbData = static_cast<uint8_t*>(yCbCr.cb);
+    crData = static_cast<uint8_t*>(yCbCr.cr);
+    for (uint32_t y = 0; y < info.height; y++) {
+        for (uint32_t x = 0; x < info.width; x++) {
+            auto val = static_cast<uint8_t>(info.height * y + x);
+
+            EXPECT_EQ(val, yData[yStride * y + x]);
+
+            if (y % chromaStep == 0 && x % chromaStep == 0) {
+                EXPECT_EQ(val, cbData[cStride * y / chromaStep + x / chromaStep]);
+                EXPECT_EQ(val, crData[cStride * y / chromaStep + x / chromaStep]);
+            }
+        }
     }
 
     ASSERT_NO_FATAL_FAILURE(fence = mGralloc->unlock(bufferHandle));
