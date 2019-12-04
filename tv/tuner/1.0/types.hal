@@ -1759,6 +1759,12 @@ enum DemuxTsFilterType : uint32_t {
      * buffer of the record.
      */
     RECORD,
+    /**
+     * A filter to filter out Timed External Media Information (TEMI) according
+     * to ISO/IEC 13818-1:2013/ DAM 6 from input stream, and send TEMI event to
+     * client through onFilterEvent.
+     */
+    TEMI,
 };
 
 /**
@@ -2170,7 +2176,8 @@ struct DemuxTsFilterSettings {
 
     safe_union FilterSettings {
         /**
-         * Not additional parameters. it's used by PCR, TS subtype filters.
+         * Not additional parameters. it's used by PCR, TS, TEMI subtype
+         * filters.
          */
         Monostate noinit;
 
@@ -2461,6 +2468,27 @@ struct DemuxFilterTsRecordEvent {
 };
 
 /**
+ *  Filter Event for Timed External Media Information (TEMI) data.
+ */
+struct DemuxFilterTemiEvent {
+    /**
+     * Presentation Time Stamp for audio or video frame. It based on 90KHz has
+     * the same format as PTS (Presentation Time Stamp) in ISO/IEC 13818-1.
+     */
+    uint64_t pts;
+
+    /**
+     * TEMI Descriptor Tag
+     */
+    uint8_t descrTag;
+
+    /**
+     * TEMI Descriptor
+     */
+    vec<uint8_t> descrData;
+};
+
+/**
  *  Filter Event for MMTP Record data.
  */
 struct DemuxFilterMmtpRecordEvent {
@@ -2521,6 +2549,8 @@ struct DemuxFilterEvent {
         DemuxFilterDownloadEvent download;
 
         DemuxFilterIpPayloadEvent ipPayload;
+
+        DemuxFilterTemiEvent temi;
     };
 
     /**
