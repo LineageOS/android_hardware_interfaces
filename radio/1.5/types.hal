@@ -158,7 +158,7 @@ struct RadioAccessSpecifier {
 };
 
 enum NgranBands : int32_t {
-    /** 3GPP TS 28.101-1, Table 5.2-1: FR1 bands */
+    /** 3GPP TS 38.101-1, Table 5.2-1: FR1 bands */
     BAND_1 = 1,
     BAND_2 = 2,
     BAND_3 = 3,
@@ -166,16 +166,22 @@ enum NgranBands : int32_t {
     BAND_7 = 7,
     BAND_8 = 8,
     BAND_12 = 12,
+    BAND_14 = 14,
+    BAND_18 = 18,
     BAND_20 = 20,
     BAND_25 = 25,
     BAND_28 = 28,
+    BAND_29 = 29,
+    BAND_30 = 30,
     BAND_34 = 34,
     BAND_38 = 38,
     BAND_39 = 39,
     BAND_40 = 40,
     BAND_41 = 41,
+    BAND_48 = 48,
     BAND_50 = 50,
     BAND_51 = 51,
+    BAND_65 = 65,
     BAND_66 = 66,
     BAND_70 = 70,
     BAND_71 = 71,
@@ -191,7 +197,8 @@ enum NgranBands : int32_t {
     BAND_83 = 83,
     BAND_84 = 84,
     BAND_86 = 86,
-    /** 3GPP TS 28.101-2, Table 5.2-1: FR2 bands */
+    BAND_90 = 90,
+    /** 3GPP TS 38.101-2, Table 5.2-1: FR2 bands */
     BAND_257 = 257,
     BAND_258 = 258,
     BAND_260 = 260,
