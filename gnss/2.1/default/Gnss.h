@@ -22,6 +22,7 @@
 #include <atomic>
 #include <mutex>
 #include <thread>
+#include "GnssConfiguration.h"
 
 namespace android {
 namespace hardware {
@@ -87,6 +88,7 @@ struct Gnss : public IGnss {
     // Methods from V2_1::IGnss follow.
     Return<bool> setCallback_2_1(const sp<V2_1::IGnssCallback>& callback) override;
     Return<sp<V2_1::IGnssMeasurement>> getExtensionGnssMeasurement_2_1() override;
+    Return<sp<V2_1::IGnssConfiguration>> getExtensionGnssConfiguration_2_1() override;
 
   private:
     void reportLocation(const V2_0::GnssLocation&) const;
@@ -94,9 +96,11 @@ struct Gnss : public IGnss {
 
     static sp<V2_1::IGnssCallback> sGnssCallback_2_1;
     std::atomic<long> mMinIntervalMs;
+    sp<GnssConfiguration> mGnssConfiguration;
     std::atomic<bool> mIsActive;
     std::thread mThread;
     mutable std::mutex mMutex;
+    hidl_vec<GnssSvInfo> filterBlacklistedSatellitesV2_1(hidl_vec<GnssSvInfo> gnssSvInfoList);
 };
 
 }  // namespace implementation

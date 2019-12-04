@@ -23,6 +23,7 @@ cc_binary {
     srcs: [
         "Gnss.cpp",
         "GnssMeasurement.cpp",
+        "GnssConfiguration.cpp",
         "service.cpp"
     ],
     shared_libs: [
