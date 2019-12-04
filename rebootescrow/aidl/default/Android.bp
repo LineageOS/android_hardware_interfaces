@@ -15,6 +15,47 @@
 //
 
 cc_library_static {
+    name: "librebootescrowdefaultimpl",
+    vendor: true,
+    shared_libs: [
+        "libbase",
+        "libbinder_ndk",
+        "vintf-rebootescrow-ndk_platform",
+    ],
+    export_include_dirs: ["include"],
+    srcs: [
+        "RebootEscrow.cpp",
+    ],
+    visibility: [
+        ":__subpackages__",
+    ],
+}
+
+cc_binary {
+    name: "android.hardware.rebootescrow-service.default",
+    init_rc: ["rebootescrow-default.rc"],
+    relative_install_path: "hw",
+    vintf_fragments: ["rebootescrow-default.xml"],
+    vendor: true,
+    srcs: [
+        "service.cpp",
+    ],
+    cflags: [
+        "-Wall",
+        "-Werror",
+    ],
+    shared_libs: [
+        "libbase",
+        "libbinder_ndk",
+        "vintf-rebootescrow-ndk_platform",
+    ],
+    static_libs: [
+        "libhadamardutils",
+        "librebootescrowdefaultimpl",
+    ],
+}
+
+cc_library_static {
     name: "libhadamardutils",
     vendor_available: true,
     host_supported: true,
