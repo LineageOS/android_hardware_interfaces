@@ -17,22 +17,113 @@
 package android.hardware.gnss@2.1;
 
 import @1.0::IGnssMeasurementCallback;
-import @1.1::IGnssMeasurementCallback;
 import @2.0::IGnssMeasurementCallback;
 import @2.0::ElapsedRealtime;
+import GnssSignalType;
 
 /** The callback interface to report measurements from the HAL. */
 interface IGnssMeasurementCallback extends @2.0::IGnssMeasurementCallback {
 
     /**
-     * Extends a GNSS Measurement, adding a basebandCN0DbHz.
+     * Flags to indicate what fields in GnssMeasurement are valid.
+     */
+    enum GnssMeasurementFlags : uint32_t {
+        /** A valid 'snr' is stored in the data structure. */
+        HAS_SNR                           = 1 << 0,
+        /** A valid 'carrier frequency' is stored in the data structure. */
+        HAS_CARRIER_FREQUENCY             = 1 << 9,
+        /** A valid 'carrier cycles' is stored in the data structure. */
+        HAS_CARRIER_CYCLES                = 1 << 10,
+        /** A valid 'carrier phase' is stored in the data structure. */
+        HAS_CARRIER_PHASE                 = 1 << 11,
+        /** A valid 'carrier phase uncertainty' is stored in the data structure. */
+        HAS_CARRIER_PHASE_UNCERTAINTY     = 1 << 12,
+        /** A valid automatic gain control is stored in the data structure. */
+        HAS_AUTOMATIC_GAIN_CONTROL        = 1 << 13,
+        /** A valid receiver inter-signal bias is stored in the data structure. */
+        HAS_RECEIVER_ISB                  = 1 << 16,
+        /** A valid receiver inter-signal bias uncertainty is stored in the data structure. */
+        HAS_RECEIVER_ISB_UNCERTAINTY      = 1 << 17,
+        /** A valid satellite inter-signal bias is stored in the data structure. */
+        HAS_SATELLITE_ISB                 = 1 << 18,
+        /** A valid satellite inter-signal bias uncertainty is stored in the data structure. */
+        HAS_SATELLITE_ISB_UNCERTAINTY     = 1 << 19
+    };
+
+
+    /**
+     * Extends a GNSS Measurement, adding basebandCN0DbHz, GnssMeasurementFlags,
+     * receiverInterSignalBiasNs, receiverInterSignalBiasUncertaintyNs, satelliteInterSignalBiasNs
+     * and satelliteInterSignalBiasUncertaintyNs.
      */
     struct GnssMeasurement {
         /**
          * GNSS measurement information for a single satellite and frequency, as in the 2.0 version
          * of the HAL.
+         *
+         * In this version of the HAL, the field 'flags' in the v2_0.v1_1.v1_0 struct is deprecated,
+         * and is no longer used by the framework. The GNSS measurement flags are instead reported
+         * in @2.1::IGnssMeasurementCallback.GnssMeasurement.flags.
+         *
          */
         @2.0::IGnssMeasurementCallback.GnssMeasurement v2_0;
+
+        /**
+         * A set of flags indicating the validity of the fields in this data
+         * structure.
+         *
+         * Fields for which there is no corresponding flag must be filled in
+         * with a valid value.  For convenience, these are marked as mandatory.
+         *
+         * Others fields may have invalid information in them, if not marked as
+         * valid by the corresponding bit in flags.
+         */
+        bitfield<GnssMeasurementFlags> flags;
+
+        /**
+         * The receiver inter-signal bias (ISB) in nanoseconds.
+         *
+         * This value is the estimated receiver-side inter-system (different from the constellation
+         * in GnssClock.referenceSignalForIsb) bias and inter-frequency (different from the carrier
+         * frequency in GnssClock.referenceSignalForIsb) bias. The reported receiver ISB
+         * must include signal delays caused by
+         *
+         * - Receiver inter-constellation bias
+         * - Receiver inter-frequency bias
+         * - Receiver inter-code bias
+         *
+         * The value does not include the inter-frequency Ionospheric bias.
+         *
+         * The receiver ISB of GnssClock.referenceSignalForIsb is defined to be 0.0 nanoseconds.
+         */
+        double receiverInterSignalBiasNs;
+
+        /**
+         * 1-sigma uncertainty associated with the receiver inter-signal bias in nanoseconds.
+         */
+        double receiverInterSignalBiasUncertaintyNs;
+
+        /**
+         * The satellite inter-signal bias in nanoseconds.
+         *
+         * This value is the satellite-and-control-segment-side inter-system (different from the
+         * constellation in GnssClock.referenceSignalForIsb) bias and inter-frequency (different
+         * from the carrier frequency in GnssClock.referenceSignalForIsb) bias, including:
+         *
+         * - Master clock bias (e.g., GPS-GAL Time Offset (GGTO), GPT-UTC Time Offset (TauGps),
+         *   BDS-GLO Time Offset (BGTO))
+         * - Group delay (e.g., Total Group Delay (TGD))
+         * - Satellite inter-signal bias, which includes satellite inter-frequency bias (GLO only),
+         *   and satellite inter-code bias (e.g., Differential Code Bias (DCB)).
+         *
+         * The receiver ISB of GnssClock.referenceSignalForIsb is defined to be 0.0 nanoseconds.
+         */
+        double satelliteInterSignalBiasNs;
+
+        /**
+         * 1-sigma uncertainty associated with the satellite inter-signal bias in nanoseconds.
+         */
+        double satelliteInterSignalBiasUncertaintyNs;
 
         /**
          * Baseband Carrier-to-noise density in dB-Hz, typically in the range [0, 63]. It contains
@@ -51,8 +142,22 @@ interface IGnssMeasurementCallback extends @2.0::IGnssMeasurementCallback {
     };
 
     /**
-     * Complete set of GNSS Measurement data, same as 2.0 with additional double (i.e.,
-     * basebandCN0DbHz) in measurements.
+     * Extends a GNSS clock time, adding a referenceSignalTypeForIsb.
+     */
+    struct GnssClock {
+        /**
+         * GNSS clock time information, as in the 1.0 version of the HAL.
+         */
+        @1.0::IGnssMeasurementCallback.GnssClock v1_0;
+
+        /**
+         * Reference GNSS signal type for inter-signal bias.
+         */
+        GnssSignalType referenceSignalTypeForIsb;
+    };
+
+    /**
+     * Complete set of GNSS Measurement data, same as 2.0 with additional fields in measurements.
      */
     struct GnssData {
         /** The full set of satellite measurement observations. */
