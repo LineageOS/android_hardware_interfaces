@@ -120,6 +120,12 @@ Return<Result> Filter::flush() {
     return Result::SUCCESS;
 }
 
+Return<Result> Filter::releaseAvHandle(const hidl_handle& /*avMemory*/) {
+    ALOGV("%s", __FUNCTION__);
+
+    return Result::SUCCESS;
+}
+
 Return<Result> Filter::close() {
     ALOGV("%s", __FUNCTION__);
 
@@ -289,6 +295,9 @@ Result Filter::startFilterHandler() {
                 case DemuxTsFilterType::RECORD:
                     startRecordFilterHandler();
                     break;
+                case DemuxTsFilterType::TEMI:
+                    startTemiFilterHandler();
+                    break;
             }
             break;
         case DemuxFilterMainType::MMTP:
@@ -416,6 +425,11 @@ Result Filter::startRecordFilterHandler() {
 
 Result Filter::startPcrFilterHandler() {
     // TODO handle starting PCR filter
+    return Result::SUCCESS;
+}
+
+Result Filter::startTemiFilterHandler() {
+    // TODO handle starting TEMI filter
     return Result::SUCCESS;
 }
 
