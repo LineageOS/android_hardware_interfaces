@@ -25,7 +25,7 @@ namespace implementation {
 
 using ndk::ScopedAStatus;
 
-static const int32_t kAllCapabilities = OccupantAwareness::CAP_PRESENSE_DETECTION |
+static const int32_t kAllCapabilities = OccupantAwareness::CAP_PRESENCE_DETECTION |
                                         OccupantAwareness::CAP_GAZE_DETECTION |
                                         OccupantAwareness::CAP_DRIVER_MONITORING_DETECTION;
 
