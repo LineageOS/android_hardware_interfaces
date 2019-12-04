@@ -36,12 +36,17 @@ using ::android::hardware::wifi::supplicant::V1_0::SupplicantStatus;
 using ::android::hardware::wifi::supplicant::V1_0::SupplicantStatusCode;
 using ::android::hardware::wifi::supplicant::V1_2::DppAkm;
 using ::android::hardware::wifi::supplicant::V1_2::DppFailureCode;
+using ::android::hardware::wifi::supplicant::V1_2::DppNetRole;
 using ::android::hardware::wifi::supplicant::V1_2::DppProgressCode;
 using ::android::hardware::wifi::supplicant::V1_3::ConnectionCapabilities;
+using ::android::hardware::wifi::supplicant::V1_3::DppSuccessCode;
 using ::android::hardware::wifi::supplicant::V1_3::ISupplicantStaIface;
 using ::android::hardware::wifi::supplicant::V1_3::ISupplicantStaIfaceCallback;
 using ::android::hardware::wifi::supplicant::V1_3::ISupplicantStaNetwork;
 using ::android::hardware::wifi::supplicant::V1_3::WpaDriverCapabilitiesMask;
+
+#define TIMEOUT_PERIOD 60
+class IfaceDppCallback;
 
 class SupplicantStaIfaceHidlTest : public ::testing::VtsHalHidlTargetTestBase {
    public:
@@ -57,9 +62,64 @@ class SupplicantStaIfaceHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     int64_t pmkCacheExpirationTimeInSec;
     std::vector<uint8_t> serializedPmkCacheEntry;
 
+    enum DppCallbackType {
+        ANY_CALLBACK = -2,
+        INVALID = -1,
+
+        EVENT_SUCCESS = 0,
+        EVENT_PROGRESS,
+        EVENT_FAILURE,
+    };
+
+    DppCallbackType dppCallbackType;
+    uint32_t code;
+
+    /* Used as a mechanism to inform the test about data/event callback */
+    inline void notify() {
+        std::unique_lock<std::mutex> lock(mtx_);
+        count_++;
+        cv_.notify_one();
+    }
+
+    /* Test code calls this function to wait for data/event callback */
+    inline std::cv_status wait(DppCallbackType waitForCallbackType) {
+        std::unique_lock<std::mutex> lock(mtx_);
+        EXPECT_NE(INVALID, waitForCallbackType);  // can't ASSERT in a
+                                                  // non-void-returning method
+        auto now = std::chrono::system_clock::now();
+        std::cv_status status =
+            cv_.wait_until(lock, now + std::chrono::seconds(TIMEOUT_PERIOD));
+        return status;
+    }
+
+   private:
+    // synchronization objects
+    std::mutex mtx_;
+    std::condition_variable cv_;
+    int count_;
+
    protected:
     // ISupplicantStaIface object used for all tests in this fixture.
     sp<ISupplicantStaIface> sta_iface_;
+    bool isDppSupported() {
+        uint32_t keyMgmtMask = 0;
+
+        // We need to first get the key management capabilities from the device.
+        // If DPP is not supported, we just pass the test.
+        sta_iface_->getKeyMgmtCapabilities(
+            [&](const SupplicantStatus& status, uint32_t keyMgmtMaskInternal) {
+                EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+
+                keyMgmtMask = keyMgmtMaskInternal;
+            });
+
+        if (!(keyMgmtMask & ISupplicantStaNetwork::KeyMgmtMask::DPP)) {
+            // DPP not supported
+            return false;
+        }
+
+        return true;
+    }
 };
 
 class IfaceCallback : public ISupplicantStaIfaceCallback {
@@ -150,6 +210,20 @@ class IfaceCallback : public ISupplicantStaIfaceCallback {
     Return<void> onDppFailure(DppFailureCode /* code */) override {
         return Void();
     }
+    Return<void> onDppSuccess(DppSuccessCode /* code */) override {
+        return Void();
+    }
+    Return<void> onDppProgress_1_3(
+        ::android::hardware::wifi::supplicant::V1_3::DppProgressCode /* code */)
+        override {
+        return Void();
+    }
+    Return<void> onDppFailure_1_3(
+        ::android::hardware::wifi::supplicant::V1_3::DppFailureCode /* code */,
+        const hidl_string& /* ssid */, const hidl_string& /* channelList */,
+        const hidl_vec<uint16_t>& /* bandList */) override {
+        return Void();
+    }
     Return<void> onPmkCacheAdded(
         int64_t /* expirationTimeInSec */,
         const hidl_vec<uint8_t>& /* serializedEntry */) override {
@@ -172,6 +246,39 @@ class IfacePmkCacheCallback : public IfaceCallback {
         : parent_(parent) {}
 };
 
+class IfaceDppCallback : public IfaceCallback {
+    SupplicantStaIfaceHidlTest& parent_;
+    Return<void> onDppSuccess(DppSuccessCode code) override {
+        parent_.code = (uint32_t)code;
+        parent_.dppCallbackType =
+            SupplicantStaIfaceHidlTest::DppCallbackType::EVENT_SUCCESS;
+        parent_.notify();
+        return Void();
+    }
+    Return<void> onDppProgress_1_3(
+        ::android::hardware::wifi::supplicant::V1_3::DppProgressCode code)
+        override {
+        parent_.code = (uint32_t)code;
+        parent_.dppCallbackType =
+            SupplicantStaIfaceHidlTest::DppCallbackType::EVENT_PROGRESS;
+        parent_.notify();
+        return Void();
+    }
+    Return<void> onDppFailure_1_3(
+        ::android::hardware::wifi::supplicant::V1_3::DppFailureCode code,
+        const hidl_string& ssid __attribute__((unused)),
+        const hidl_string& channelList __attribute__((unused)),
+        const hidl_vec<uint16_t>& bandList __attribute__((unused))) override {
+        parent_.code = (uint32_t)code;
+        parent_.dppCallbackType =
+            SupplicantStaIfaceHidlTest::DppCallbackType::EVENT_FAILURE;
+        parent_.notify();
+        return Void();
+    }
+
+   public:
+    IfaceDppCallback(SupplicantStaIfaceHidlTest& parent) : parent_(parent){};
+};
 /*
  * RegisterCallback_1_3
  */
@@ -244,5 +351,112 @@ TEST_F(SupplicantStaIfaceHidlTest, GetKeyMgmtCapabilities_1_3) {
             EXPECT_TRUE(keyMgmtMask &
                         ISupplicantStaNetwork::KeyMgmtMask::IEEE8021X);
         }
+    });
+}
+
+/*
+ * StartDppEnrolleeInitiator
+ */
+TEST_F(SupplicantStaIfaceHidlTest, StartDppEnrolleeInitiator) {
+    // We need to first get the key management capabilities from the device.
+    // If DPP is not supported, we just pass the test.
+    if (!isDppSupported()) {
+        // DPP not supported
+        return;
+    }
+
+    hidl_string uri =
+        "DPP:C:81/1;M:48d6d5bd1de1;I:G1197843;K:MDkwEwYHKoZIzj0CAQYIKoZIzj"
+        "0DAQcDIgAD0edY4X3N//HhMFYsZfMbQJTiNFtNIWF/cIwMB/gzqOM=;;";
+    uint32_t peer_id = 0;
+
+    // Register callbacks
+    sta_iface_->registerCallback_1_3(
+        new IfaceDppCallback(*this), [](const SupplicantStatus& status) {
+            EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+        });
+
+    // Add a peer URI
+    sta_iface_->addDppPeerUri(
+        uri, [&](const SupplicantStatus& status, uint32_t id) {
+            EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+            EXPECT_NE(0, id);
+            EXPECT_NE(-1, id);
+
+            peer_id = id;
+        });
+
+    // Start DPP as Enrollee-Initiator. Since this operation requires two
+    // devices, we start the operation and expect a timeout.
+    sta_iface_->startDppEnrolleeInitiator(
+        peer_id, 0, [&](const SupplicantStatus& status) {
+            EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+        });
+
+    // Wait for the timeout callback
+    ASSERT_EQ(std::cv_status::no_timeout,
+              wait(SupplicantStaIfaceHidlTest::DppCallbackType::EVENT_FAILURE));
+    ASSERT_EQ(SupplicantStaIfaceHidlTest::DppCallbackType::EVENT_FAILURE,
+              dppCallbackType);
+
+    // ...and then remove the peer URI.
+    sta_iface_->removeDppUri(peer_id, [&](const SupplicantStatus& status) {
+        EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+    });
+}
+
+/*
+ * StartDppConfiguratorInitiator
+ */
+TEST_F(SupplicantStaIfaceHidlTest, StartDppConfiguratorInitiator) {
+    // We need to first get the key management capabilities from the device.
+    // If DPP is not supported, we just pass the test.
+    if (!isDppSupported()) {
+        // DPP not supported
+        return;
+    }
+
+    hidl_string uri =
+        "DPP:C:81/1;M:48d6d5bd1de1;I:G1197843;K:MDkwEwYHKoZIzj0CAQYIKoZIzj"
+        "0DAQcDIgAD0edY4X3N//HhMFYsZfMbQJTiNFtNIWF/cIwMB/gzqOM=;;";
+    uint32_t peer_id = 0;
+
+    // Register callbacks
+    sta_iface_->registerCallback_1_3(
+        new IfaceDppCallback(*this), [](const SupplicantStatus& status) {
+            EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+        });
+
+    // Add a peer URI
+    sta_iface_->addDppPeerUri(
+        uri, [&](const SupplicantStatus& status, uint32_t id) {
+            EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+            EXPECT_NE(0, id);
+            EXPECT_NE(-1, id);
+
+            peer_id = id;
+        });
+
+    std::string ssid =
+        "6D795F746573745F73736964";  // 'my_test_ssid' encoded in hex
+    std::string password = "746F70736563726574";  // 'topsecret' encoded in hex
+
+    // Start DPP as Configurator-Initiator. Since this operation requires two
+    // devices, we start the operation and expect a timeout.
+    sta_iface_->startDppConfiguratorInitiator(
+        peer_id, 0, ssid, password, NULL, DppNetRole::STA, DppAkm::PSK,
+        [&](const SupplicantStatus& status) {
+            EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+        });
+
+    // Wait for the timeout callback
+    ASSERT_EQ(std::cv_status::no_timeout,
+              wait(SupplicantStaIfaceHidlTest::DppCallbackType::EVENT_FAILURE));
+    ASSERT_EQ(SupplicantStaIfaceHidlTest::DppCallbackType::EVENT_FAILURE,
+              dppCallbackType);
+
+    // ...and then remove the peer URI.
+    sta_iface_->removeDppUri(peer_id, [&](const SupplicantStatus& status) {
+        EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
     });
 }
