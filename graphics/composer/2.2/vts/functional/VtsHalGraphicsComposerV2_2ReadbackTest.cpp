@@ -16,14 +16,15 @@
 
 #define LOG_TAG "graphics_composer_hidl_hal_readback_tests@2.2"
 
-#include <VtsHalHidlTargetTestBase.h>
-#include <VtsHalHidlTargetTestEnvBase.h>
 #include <composer-command-buffer/2.2/ComposerCommandBuffer.h>
 #include <composer-vts/2.1/GraphicsComposerCallback.h>
 #include <composer-vts/2.1/TestCommandReader.h>
 #include <composer-vts/2.2/ComposerVts.h>
 #include <composer-vts/2.2/ReadbackVts.h>
 #include <composer-vts/2.2/RenderEngineVts.h>
+#include <gtest/gtest.h>
+#include <hidl/GtestPrinter.h>
+#include <hidl/ServiceManagement.h>
 #include <ui/GraphicBuffer.h>
 #include <ui/GraphicBufferAllocator.h>
 #include <ui/PixelFormat.h>
@@ -50,29 +51,12 @@ using V2_1::Display;
 using V2_1::vts::TestCommandReader;
 using vts::Gralloc;
 
-// Test environment for graphics.composer
-class GraphicsComposerHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
-   public:
-    // get the test environment singleton
-    static GraphicsComposerHidlEnvironment* Instance() {
-        static GraphicsComposerHidlEnvironment* instance = new GraphicsComposerHidlEnvironment;
-        return instance;
-    }
-    virtual void registerTestServices() override { registerTestService<IComposer>(); }
-
-   private:
-    GraphicsComposerHidlEnvironment() {}
-    GTEST_DISALLOW_COPY_AND_ASSIGN_(GraphicsComposerHidlEnvironment);
-};
-
-class GraphicsCompositionTest : public ::testing::VtsHalHidlTargetTestBase {
+class GraphicsCompositionTestBase : public ::testing::Test {
   protected:
     using PowerMode = V2_1::IComposerClient::PowerMode;
-    void SetUp() override {
-        VtsHalHidlTargetTestBase::SetUp();
+    void SetUpBase(const std::string& service_name) {
         ASSERT_NO_FATAL_FAILURE(
-            mComposer = std::make_unique<Composer>(
-                GraphicsComposerHidlEnvironment::Instance()->getServiceName<IComposer>()));
+                mComposer = std::make_unique<Composer>(IComposer::getService(service_name)));
         ASSERT_NO_FATAL_FAILURE(mComposerClient = mComposer->createClient());
         mComposerCallback = new V2_1::vts::GraphicsComposerCallback;
         mComposerClient->registerCallback(mComposerCallback);
@@ -132,7 +116,6 @@ class GraphicsCompositionTest : public ::testing::VtsHalHidlTargetTestBase {
             EXPECT_EQ(0, mComposerCallback->getInvalidRefreshCount());
             EXPECT_EQ(0, mComposerCallback->getInvalidVsyncCount());
         }
-        VtsHalHidlTargetTestBase::TearDown();
     }
 
     void clearCommandReaderState() {
@@ -198,7 +181,13 @@ class GraphicsCompositionTest : public ::testing::VtsHalHidlTargetTestBase {
     }
 };
 
-TEST_F(GraphicsCompositionTest, SingleSolidColorLayer) {
+class GraphicsCompositionTest : public GraphicsCompositionTestBase,
+                                public testing::WithParamInterface<std::string> {
+  public:
+    void SetUp() override { SetUpBase(GetParam()); }
+};
+
+TEST_P(GraphicsCompositionTest, SingleSolidColorLayer) {
     for (ColorMode mode : mTestColorModes) {
         std::cout << "---Testing Color Mode " << ReadbackHelper::getColorModeString(mode) << "---"
                   << std::endl;
@@ -260,7 +249,7 @@ TEST_F(GraphicsCompositionTest, SingleSolidColorLayer) {
     }
 }
 
-TEST_F(GraphicsCompositionTest, SetLayerBuffer) {
+TEST_P(GraphicsCompositionTest, SetLayerBuffer) {
     for (ColorMode mode : mTestColorModes) {
         std::cout << "---Testing Color Mode " << ReadbackHelper::getColorModeString(mode) << "---"
                   << std::endl;
@@ -332,7 +321,7 @@ TEST_F(GraphicsCompositionTest, SetLayerBuffer) {
     }
 }
 
-TEST_F(GraphicsCompositionTest, SetLayerBufferNoEffect) {
+TEST_P(GraphicsCompositionTest, SetLayerBufferNoEffect) {
     for (ColorMode mode : mTestColorModes) {
         std::cout << "---Testing Color Mode " << ReadbackHelper::getColorModeString(mode) << "---"
                   << std::endl;
@@ -394,7 +383,7 @@ TEST_F(GraphicsCompositionTest, SetLayerBufferNoEffect) {
     }
 }
 
-TEST_F(GraphicsCompositionTest, ClientComposition) {
+TEST_P(GraphicsCompositionTest, ClientComposition) {
     ASSERT_NO_FATAL_FAILURE(
             mComposerClient->setClientTargetSlotCount(mPrimaryDisplay, kClientTargetSlotCount));
 
@@ -511,7 +500,7 @@ TEST_F(GraphicsCompositionTest, ClientComposition) {
     }
 }
 
-TEST_F(GraphicsCompositionTest, DeviceAndClientComposition) {
+TEST_P(GraphicsCompositionTest, DeviceAndClientComposition) {
     ASSERT_NO_FATAL_FAILURE(
             mComposerClient->setClientTargetSlotCount(mPrimaryDisplay, kClientTargetSlotCount));
 
@@ -637,7 +626,7 @@ TEST_F(GraphicsCompositionTest, DeviceAndClientComposition) {
     }
 }
 
-TEST_F(GraphicsCompositionTest, SetLayerDamage) {
+TEST_P(GraphicsCompositionTest, SetLayerDamage) {
     for (ColorMode mode : mTestColorModes) {
         std::cout << "---Testing Color Mode " << ReadbackHelper::getColorModeString(mode) << "---"
                   << std::endl;
@@ -722,7 +711,7 @@ TEST_F(GraphicsCompositionTest, SetLayerDamage) {
     }
 }
 
-TEST_F(GraphicsCompositionTest, SetLayerPlaneAlpha) {
+TEST_P(GraphicsCompositionTest, SetLayerPlaneAlpha) {
     for (ColorMode mode : mTestColorModes) {
         std::cout << "---Testing Color Mode " << ReadbackHelper::getColorModeString(mode) << "---"
                   << std::endl;
@@ -783,7 +772,7 @@ TEST_F(GraphicsCompositionTest, SetLayerPlaneAlpha) {
     }
 }
 
-TEST_F(GraphicsCompositionTest, SetLayerSourceCrop) {
+TEST_P(GraphicsCompositionTest, SetLayerSourceCrop) {
     for (ColorMode mode : mTestColorModes) {
         std::cout << "---Testing Color Mode " << ReadbackHelper::getColorModeString(mode) << "---"
                   << std::endl;
@@ -854,7 +843,7 @@ TEST_F(GraphicsCompositionTest, SetLayerSourceCrop) {
     }
 }
 
-TEST_F(GraphicsCompositionTest, SetLayerZOrder) {
+TEST_P(GraphicsCompositionTest, SetLayerZOrder) {
     for (ColorMode mode : mTestColorModes) {
         std::cout << "---Testing Color Mode " << ReadbackHelper::getColorModeString(mode) << "---"
                   << std::endl;
@@ -941,17 +930,16 @@ TEST_F(GraphicsCompositionTest, SetLayerZOrder) {
     }
 }
 
-class GraphicsBlendModeCompositionTest : public GraphicsCompositionTest,
-                                         public ::testing::WithParamInterface<float> {
+class GraphicsBlendModeCompositionTest
+    : public GraphicsCompositionTestBase,
+      public testing::WithParamInterface<std::tuple<string, string>> {
   public:
     void SetUp() override {
-        GraphicsCompositionTest::SetUp();
+        SetUpBase(std::get<0>(GetParam()));
         mTestColorModes = {ColorMode::SRGB};  // TODO: add more color mode support
         mBackgroundColor = BLACK;
         mTopLayerColor = RED;
     }
-
-    void TearDown() override { GraphicsCompositionTest::TearDown(); }
 
     void setBackgroundColor(IComposerClient::Color color) { mBackgroundColor = color; }
 
@@ -977,7 +965,7 @@ class GraphicsBlendModeCompositionTest : public GraphicsCompositionTest,
         ASSERT_NO_FATAL_FAILURE(layer->setBuffer(topLayerPixelColors));
 
         layer->setBlendMode(blendMode);
-        layer->setAlpha(GetParam());
+        layer->setAlpha(std::stof(std::get<1>(GetParam())));
 
         mLayers.push_back(backgroundLayer);
         mLayers.push_back(layer);
@@ -1023,7 +1011,8 @@ class GraphicsBlendModeCompositionTest : public GraphicsCompositionTest,
     IComposerClient::Color mTopLayerColor;
 };
 
-TEST_P(GraphicsBlendModeCompositionTest, None) {
+// TODO(b/145557764): Re-enable after the bug is fixed.
+TEST_P(GraphicsBlendModeCompositionTest, DISABLED_None) {
     for (ColorMode mode : mTestColorModes) {
         std::cout << "---Testing Color Mode " << ReadbackHelper::getColorModeString(mode) << "---"
                   << std::endl;
@@ -1188,9 +1177,6 @@ TEST_P(GraphicsBlendModeCompositionTest, Premultiplied) {
     }
 }
 
-INSTANTIATE_TEST_CASE_P(BlendModeTest, GraphicsBlendModeCompositionTest,
-                        ::testing::Values(.2, 1.0));
-
 class GraphicsTransformCompositionTest : public GraphicsCompositionTest {
   protected:
     void SetUp() override {
@@ -1229,7 +1215,7 @@ class GraphicsTransformCompositionTest : public GraphicsCompositionTest {
     int mSideLength;
 };
 
-TEST_F(GraphicsTransformCompositionTest, FLIP_H) {
+TEST_P(GraphicsTransformCompositionTest, FLIP_H) {
     for (ColorMode mode : mTestColorModes) {
         std::cout << "---Testing Color Mode " << ReadbackHelper::getColorModeString(mode) << "---"
                   << std::endl;
@@ -1284,7 +1270,7 @@ TEST_F(GraphicsTransformCompositionTest, FLIP_H) {
     }
 }
 
-TEST_F(GraphicsTransformCompositionTest, FLIP_V) {
+TEST_P(GraphicsTransformCompositionTest, FLIP_V) {
     for (ColorMode mode : mTestColorModes) {
         std::cout << "---Testing Color Mode " << ReadbackHelper::getColorModeString(mode) << "---"
                   << std::endl;
@@ -1339,7 +1325,7 @@ TEST_F(GraphicsTransformCompositionTest, FLIP_V) {
     }
 }
 
-TEST_F(GraphicsTransformCompositionTest, ROT_180) {
+TEST_P(GraphicsTransformCompositionTest, ROT_180) {
     for (ColorMode mode : mTestColorModes) {
         std::cout << "---Testing Color Mode " << ReadbackHelper::getColorModeString(mode) << "---"
                   << std::endl;
@@ -1394,6 +1380,23 @@ TEST_F(GraphicsTransformCompositionTest, ROT_180) {
         ASSERT_NO_FATAL_FAILURE(mTestRenderEngine->checkColorBuffer(expectedColors));
     }
 }
+
+INSTANTIATE_TEST_SUITE_P(
+        PerInstance, GraphicsCompositionTest,
+        testing::ValuesIn(android::hardware::getAllHalInstanceNames(IComposer::descriptor)),
+        android::hardware::PrintInstanceNameToString);
+
+INSTANTIATE_TEST_CASE_P(
+        BlendModeTest, GraphicsBlendModeCompositionTest,
+        testing::Combine(
+                testing::ValuesIn(android::hardware::getAllHalInstanceNames(IComposer::descriptor)),
+                testing::Values("0.2", "1.0")),
+        android::hardware::PrintInstanceTupleNameToString<>);
+
+INSTANTIATE_TEST_SUITE_P(
+        PerInstance, GraphicsTransformCompositionTest,
+        testing::ValuesIn(android::hardware::getAllHalInstanceNames(IComposer::descriptor)),
+        android::hardware::PrintInstanceNameToString);
 
 }  // anonymous namespace
 }  // namespace vts
