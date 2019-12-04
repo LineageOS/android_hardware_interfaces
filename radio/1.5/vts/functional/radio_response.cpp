@@ -915,3 +915,16 @@ Return<void> RadioResponse_v1_5::canToggleUiccApplicationsEnablementResponse(
     parent_v1_5.notify(info.serial);
     return Void();
 }
+
+Return<void> RadioResponse_v1_5::setSystemSelectionChannelsResponse_1_5(
+        const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_v1_5.notify(info.serial);
+    return Void();
+}
+
+Return<void> RadioResponse_v1_5::startNetworkScanResponse_1_5(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_v1_5.notify(info.serial);
+    return Void();
+}

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_GNSS_V2_0_GNSSMEASUREMENT_H
-#define ANDROID_HARDWARE_GNSS_V2_0_GNSSMEASUREMENT_H
+#pragma once
 
-#include <android/hardware/gnss/2.0/IGnssMeasurement.h>
+#include <android/hardware/gnss/2.1/IGnssMeasurement.h>
 #include <hidl/MQDescriptor.h>
 #include <hidl/Status.h>
 #include <atomic>
@@ -27,8 +26,10 @@
 namespace android {
 namespace hardware {
 namespace gnss {
-namespace V2_0 {
+namespace V2_1 {
 namespace implementation {
+
+using GnssDataV2_1 = V2_1::IGnssMeasurementCallback::GnssData;
 
 using ::android::sp;
 using ::android::hardware::hidl_array;
@@ -38,28 +39,30 @@ using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
 
-using GnssData = V2_0::IGnssMeasurementCallback::GnssData;
-
 struct GnssMeasurement : public IGnssMeasurement {
     GnssMeasurement();
     ~GnssMeasurement();
     // Methods from V1_0::IGnssMeasurement follow.
     Return<V1_0::IGnssMeasurement::GnssMeasurementStatus> setCallback(
-        const sp<V1_0::IGnssMeasurementCallback>& callback) override;
+            const sp<V1_0::IGnssMeasurementCallback>& callback) override;
     Return<void> close() override;
 
     // Methods from V1_1::IGnssMeasurement follow.
     Return<V1_0::IGnssMeasurement::GnssMeasurementStatus> setCallback_1_1(
-        const sp<V1_1::IGnssMeasurementCallback>& callback, bool enableFullTracking) override;
+            const sp<V1_1::IGnssMeasurementCallback>& callback, bool enableFullTracking) override;
 
     // Methods from V2_0::IGnssMeasurement follow.
     Return<V1_0::IGnssMeasurement::GnssMeasurementStatus> setCallback_2_0(
-        const sp<V2_0::IGnssMeasurementCallback>& callback, bool enableFullTracking) override;
+            const sp<V2_0::IGnssMeasurementCallback>& callback, bool enableFullTracking) override;
 
-   private:
+    // Methods from V2_1::IGnssMeasurement follow.
+    Return<V1_0::IGnssMeasurement::GnssMeasurementStatus> setCallback_2_1(
+            const sp<V2_1::IGnssMeasurementCallback>& callback, bool enableFullTracking) override;
+
+  private:
     void start();
     void stop();
-    void reportMeasurement(const GnssData&);
+    void reportMeasurement(const GnssDataV2_1&);
 
     static sp<IGnssMeasurementCallback> sCallback;
     std::atomic<long> mMinIntervalMillis;
@@ -69,9 +72,7 @@ struct GnssMeasurement : public IGnssMeasurement {
 };
 
 }  // namespace implementation
-}  // namespace V2_0
+}  // namespace V2_1
 }  // namespace gnss
 }  // namespace hardware
 }  // namespace android
-
-#endif  // ANDROID_HARDWARE_GNSS_V2_0_GNSSMEASUREMENT_H

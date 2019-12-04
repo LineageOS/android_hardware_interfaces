@@ -69,4 +69,28 @@ interface IRadioResponse extends @1.4::IRadioResponse {
      *   RadioError:INTERNAL_ERR
      */
     oneway canToggleUiccApplicationsEnablementResponse(RadioResponseInfo info, bool canToggle);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:INVALID_ARGUMENTS
+     */
+    oneway setSystemSelectionChannelsResponse_1_5(RadioResponseInfo info);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:DEVICE_IN_USE
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:MODEM_ERR
+     *   RadioError:INVALID_ARGUMENTS
+     */
+    oneway startNetworkScanResponse_1_5(RadioResponseInfo info);
 };

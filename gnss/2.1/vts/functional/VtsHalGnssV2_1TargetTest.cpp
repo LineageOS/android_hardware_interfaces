@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#define LOG_TAG "VtsHalGnssV2_1TargetTest"
 
-#include <radio_hidl_hal_utils_v1_5.h>
+#include <gtest/gtest.h>
+#include <hidl/GtestPrinter.h>
+#include <hidl/ServiceManagement.h>
 
-int main(int argc, char** argv) {
-    ::testing::AddGlobalTestEnvironment(RadioHidlEnvironment::Instance());
-    ::testing::InitGoogleTest(&argc, argv);
-    RadioHidlEnvironment::Instance()->init(&argc, argv);
-    int status = RUN_ALL_TESTS();
-    LOG(INFO) << "Test result = " << status;
-    return status;
-}
+#include "gnss_hal_test.h"
+
+using android::hardware::gnss::V2_1::IGnss;
+
+INSTANTIATE_TEST_SUITE_P(
+        PerInstance, GnssHalTest,
+        testing::ValuesIn(android::hardware::getAllHalInstanceNames(IGnss::descriptor)),
+        android::hardware::PrintInstanceNameToString);

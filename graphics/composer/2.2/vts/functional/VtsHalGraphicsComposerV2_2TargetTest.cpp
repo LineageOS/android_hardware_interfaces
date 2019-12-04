@@ -16,12 +16,14 @@
 
 #define LOG_TAG "graphics_composer_hidl_hal_test@2.2"
 
-#include <VtsHalHidlTargetTestBase.h>
 #include <android-base/logging.h>
 #include <android/hardware/graphics/mapper/2.0/IMapper.h>
 #include <composer-vts/2.1/GraphicsComposerCallback.h>
 #include <composer-vts/2.1/TestCommandReader.h>
 #include <composer-vts/2.2/ComposerVts.h>
+#include <gtest/gtest.h>
+#include <hidl/GtestPrinter.h>
+#include <hidl/ServiceManagement.h>
 #include <mapper-vts/2.0/MapperVts.h>
 
 namespace android {
@@ -41,29 +43,11 @@ using common::V1_1::PixelFormat;
 using common::V1_1::RenderIntent;
 using mapper::V2_0::IMapper;
 
-// Test environment for graphics.composer
-class GraphicsComposerHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
-   public:
-    // get the test environment singleton
-    static GraphicsComposerHidlEnvironment* Instance() {
-        static GraphicsComposerHidlEnvironment* instance = new GraphicsComposerHidlEnvironment;
-        return instance;
-    }
-
-    virtual void registerTestServices() override { registerTestService<IComposer>(); }
-
-   private:
-    GraphicsComposerHidlEnvironment() {}
-
-    GTEST_DISALLOW_COPY_AND_ASSIGN_(GraphicsComposerHidlEnvironment);
-};
-
-class GraphicsComposerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
-   protected:
+class GraphicsComposerHidlTest : public ::testing::TestWithParam<std::string> {
+  protected:
     void SetUp() override {
         ASSERT_NO_FATAL_FAILURE(
-            mComposer = std::make_unique<Composer>(
-                GraphicsComposerHidlEnvironment::Instance()->getServiceName<IComposer>()));
+                mComposer = std::make_unique<Composer>(IComposer::getService(GetParam())));
         ASSERT_NO_FATAL_FAILURE(mComposerClient = mComposer->createClient());
 
         mComposerCallback = new V2_1::vts::GraphicsComposerCallback;
@@ -188,7 +172,7 @@ class GraphicsComposerHidlCommandTest : public GraphicsComposerHidlTest {
 /**
  * Test IComposerClient::Command::SET_LAYER_PER_FRAME_METADATA.
  */
-TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_PER_FRAME_METADATA) {
+TEST_P(GraphicsComposerHidlCommandTest, SET_LAYER_PER_FRAME_METADATA) {
     Layer layer;
     ASSERT_NO_FATAL_FAILURE(layer =
                                 mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount));
@@ -239,7 +223,7 @@ TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_PER_FRAME_METADATA) {
 /**
  * Test IComposerClient::getPerFrameMetadataKeys.
  */
-TEST_F(GraphicsComposerHidlTest, GetPerFrameMetadataKeys) {
+TEST_P(GraphicsComposerHidlTest, GetPerFrameMetadataKeys) {
     std::vector<IComposerClient::PerFrameMetadataKey> keys;
     Error error = Error::NONE;
     mComposerClient->getRaw()->getPerFrameMetadataKeys(
@@ -261,7 +245,7 @@ TEST_F(GraphicsComposerHidlTest, GetPerFrameMetadataKeys) {
  *
  * Test that virtual displays can be created and has the correct display type.
  */
-TEST_F(GraphicsComposerHidlTest, CreateVirtualDisplay_2_2) {
+TEST_P(GraphicsComposerHidlTest, CreateVirtualDisplay_2_2) {
     if (mComposerClient->getMaxVirtualDisplayCount() == 0) {
         GTEST_SUCCEED() << "no virtual display support";
         return;
@@ -286,7 +270,7 @@ TEST_F(GraphicsComposerHidlTest, CreateVirtualDisplay_2_2) {
  * Test that IComposerClient::getClientTargetSupport returns true for the
  * required client targets.
  */
-TEST_F(GraphicsComposerHidlTest, GetClientTargetSupport_2_2) {
+TEST_P(GraphicsComposerHidlTest, GetClientTargetSupport_2_2) {
     std::vector<Config> configs = mComposerClient->getDisplayConfigs(mPrimaryDisplay);
     for (auto config : configs) {
         int32_t width = mComposerClient->getDisplayAttribute(mPrimaryDisplay, config,
@@ -310,7 +294,7 @@ TEST_F(GraphicsComposerHidlTest, GetClientTargetSupport_2_2) {
  * Error::BAD_DISPLAY when passed in an invalid display handle
  */
 
-TEST_F(GraphicsComposerHidlTest, GetClientTargetSupport_2_2BadDisplay) {
+TEST_P(GraphicsComposerHidlTest, GetClientTargetSupport_2_2BadDisplay) {
     std::vector<Config> configs = mComposerClient->getDisplayConfigs(mPrimaryDisplay);
     for (auto config : configs) {
         int32_t width = mComposerClient->getDisplayAttribute(mPrimaryDisplay, config,
@@ -332,7 +316,7 @@ TEST_F(GraphicsComposerHidlTest, GetClientTargetSupport_2_2BadDisplay) {
 /**
  * Test IComposerClient::setPowerMode_2_2.
  */
-TEST_F(GraphicsComposerHidlTest, SetPowerMode_2_2) {
+TEST_P(GraphicsComposerHidlTest, SetPowerMode_2_2) {
     std::vector<IComposerClient::PowerMode> modes;
     modes.push_back(IComposerClient::PowerMode::OFF);
     modes.push_back(IComposerClient::PowerMode::ON_SUSPEND);
@@ -349,7 +333,7 @@ TEST_F(GraphicsComposerHidlTest, SetPowerMode_2_2) {
  * Test that IComposerClient::setPowerMode_2_2 succeeds for different varations
  * of PowerMode
  */
-TEST_F(GraphicsComposerHidlTest, SetPowerMode_2_2Variations) {
+TEST_P(GraphicsComposerHidlTest, SetPowerMode_2_2Variations) {
     std::vector<IComposerClient::PowerMode> modes;
 
     modes.push_back(IComposerClient::PowerMode::OFF);
@@ -404,7 +388,7 @@ TEST_F(GraphicsComposerHidlTest, SetPowerMode_2_2Variations) {
  * Tests that IComposerClient::setPowerMode_2_2 returns BAD_DISPLAY when passed an
  * invalid display handle
  */
-TEST_F(GraphicsComposerHidlTest, SetPowerMode_2_2BadDisplay) {
+TEST_P(GraphicsComposerHidlTest, SetPowerMode_2_2BadDisplay) {
     Error error = mComposerClient->getRaw()->setPowerMode_2_2(mInvalidDisplayId,
                                                               IComposerClient::PowerMode::ON);
     ASSERT_EQ(Error::BAD_DISPLAY, error);
@@ -416,7 +400,7 @@ TEST_F(GraphicsComposerHidlTest, SetPowerMode_2_2BadDisplay) {
  * Test that IComposerClient::setPowerMode_2_2 returns BAD_PARAMETER when passed
  * an invalid PowerMode
  */
-TEST_F(GraphicsComposerHidlTest, SetPowerMode_2_2BadParameter) {
+TEST_P(GraphicsComposerHidlTest, SetPowerMode_2_2BadParameter) {
     Error error = mComposerClient->getRaw()->setPowerMode_2_2(
         mPrimaryDisplay, static_cast<IComposerClient::PowerMode>(-1));
     ASSERT_EQ(Error::BAD_PARAMETER, error);
@@ -428,7 +412,7 @@ TEST_F(GraphicsComposerHidlTest, SetPowerMode_2_2BadParameter) {
  * Test that IComposerClient::setPowerMode_2_2 returns UNSUPPORTED when passed
  * DOZE or DOZE_SUPPORT on a device that does not support these modes
  */
-TEST_F(GraphicsComposerHidlTest, SetPowerMode_2_2Unsupported) {
+TEST_P(GraphicsComposerHidlTest, SetPowerMode_2_2Unsupported) {
     if (!mComposerClient->getDozeSupport(mPrimaryDisplay)) {
         Error error = mComposerClient->getRaw()->setPowerMode_2_2(mPrimaryDisplay,
                                                                   IComposerClient::PowerMode::DOZE);
@@ -445,7 +429,7 @@ TEST_F(GraphicsComposerHidlTest, SetPowerMode_2_2Unsupported) {
  *
  * Test IComposerClient::setReadbackBuffer
  */
-TEST_F(GraphicsComposerHidlTest, SetReadbackBuffer) {
+TEST_P(GraphicsComposerHidlTest, SetReadbackBuffer) {
     if (!mHasReadbackBuffer) {
         return;
     }
@@ -469,7 +453,7 @@ TEST_F(GraphicsComposerHidlTest, SetReadbackBuffer) {
  * Test that IComposerClient::setReadbackBuffer returns an Error::BAD_DISPLAY
  * when passed an invalid display handle
  */
-TEST_F(GraphicsComposerHidlTest, SetReadbackBufferBadDisplay) {
+TEST_P(GraphicsComposerHidlTest, SetReadbackBufferBadDisplay) {
     if (!mHasReadbackBuffer) {
         return;
     }
@@ -493,7 +477,7 @@ TEST_F(GraphicsComposerHidlTest, SetReadbackBufferBadDisplay) {
  * Test that IComposerClient::setReadbackBuffer returns Error::BAD_PARAMETER
  * when passed an invalid buffer handle
  */
-TEST_F(GraphicsComposerHidlTest, SetReadbackBufferBadParameter) {
+TEST_P(GraphicsComposerHidlTest, SetReadbackBufferBadParameter) {
     if (!mHasReadbackBuffer) {
         return;
     }
@@ -502,7 +486,7 @@ TEST_F(GraphicsComposerHidlTest, SetReadbackBufferBadParameter) {
     ASSERT_EQ(Error::BAD_PARAMETER, error);
 }
 
-TEST_F(GraphicsComposerHidlTest, GetReadbackBufferFenceInactive) {
+TEST_P(GraphicsComposerHidlTest, GetReadbackBufferFenceInactive) {
     if (!mHasReadbackBuffer) {
         return;
     }
@@ -516,7 +500,7 @@ TEST_F(GraphicsComposerHidlTest, GetReadbackBufferFenceInactive) {
 /**
  * Test IComposerClient::Command::SET_LAYER_FLOAT_COLOR.
  */
-TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_FLOAT_COLOR) {
+TEST_P(GraphicsComposerHidlCommandTest, SET_LAYER_FLOAT_COLOR) {
     V2_1::Layer layer;
     ASSERT_NO_FATAL_FAILURE(layer =
                                 mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount));
@@ -554,7 +538,7 @@ TEST_F(GraphicsComposerHidlCommandTest, SET_LAYER_FLOAT_COLOR) {
 /**
  * Test IComposerClient::getDataspaceSaturationMatrix.
  */
-TEST_F(GraphicsComposerHidlTest, GetDataspaceSaturationMatrix) {
+TEST_P(GraphicsComposerHidlTest, GetDataspaceSaturationMatrix) {
     auto matrix = mComposerClient->getDataspaceSaturationMatrix(Dataspace::SRGB_LINEAR);
     // the last row is known
     ASSERT_EQ(0.0f, matrix[12]);
@@ -570,7 +554,7 @@ TEST_F(GraphicsComposerHidlTest, GetDataspaceSaturationMatrix) {
  * Error::BAD_PARAMETER when passed a dataspace other than
  * Dataspace::SRGB_LINEAR
  */
-TEST_F(GraphicsComposerHidlTest, GetDataspaceSaturationMatrixBadParameter) {
+TEST_P(GraphicsComposerHidlTest, GetDataspaceSaturationMatrixBadParameter) {
     mComposerClient->getRaw()->getDataspaceSaturationMatrix(
         Dataspace::UNKNOWN,
         [&](const auto& tmpError, const auto&) { ASSERT_EQ(Error::BAD_PARAMETER, tmpError); });
@@ -579,7 +563,7 @@ TEST_F(GraphicsComposerHidlTest, GetDataspaceSaturationMatrixBadParameter) {
 /**
  * Test IComposerClient::getColorMode_2_2.
  */
-TEST_F(GraphicsComposerHidlTest, GetColorMode_2_2) {
+TEST_P(GraphicsComposerHidlTest, GetColorMode_2_2) {
     std::vector<ColorMode> modes = mComposerClient->getColorModes(mPrimaryDisplay);
 
     auto nativeMode = std::find(modes.cbegin(), modes.cend(), ColorMode::NATIVE);
@@ -592,7 +576,7 @@ TEST_F(GraphicsComposerHidlTest, GetColorMode_2_2) {
  * Test that IComposerClient::getColorMode returns Error::BAD_DISPLAY when
  * passed an invalid display handle
  */
-TEST_F(GraphicsComposerHidlTest, GetColorMode_2_2BadDisplay) {
+TEST_P(GraphicsComposerHidlTest, GetColorMode_2_2BadDisplay) {
     mComposerClient->getRaw()->getColorModes_2_2(
         mInvalidDisplayId,
         [&](const auto& tmpError, const auto&) { ASSERT_EQ(Error::BAD_DISPLAY, tmpError); });
@@ -601,7 +585,7 @@ TEST_F(GraphicsComposerHidlTest, GetColorMode_2_2BadDisplay) {
 /**
  * Test IComposerClient::getRenderIntents.
  */
-TEST_F(GraphicsComposerHidlTest, GetRenderIntents) {
+TEST_P(GraphicsComposerHidlTest, GetRenderIntents) {
     std::vector<ColorMode> modes = mComposerClient->getColorModes(mPrimaryDisplay);
     for (auto mode : modes) {
         std::vector<RenderIntent> intents =
@@ -631,7 +615,7 @@ TEST_F(GraphicsComposerHidlTest, GetRenderIntents) {
  * Test that IComposerClient::getRenderIntent returns Error::BAD_DISPLAY when
  * passed an invalid display handle
  */
-TEST_F(GraphicsComposerHidlTest, GetRenderIntentsBadDisplay) {
+TEST_P(GraphicsComposerHidlTest, GetRenderIntentsBadDisplay) {
     std::vector<ColorMode> modes = mComposerClient->getColorModes(mPrimaryDisplay);
     for (auto mode : modes) {
         mComposerClient->getRaw()->getRenderIntents(
@@ -646,7 +630,7 @@ TEST_F(GraphicsComposerHidlTest, GetRenderIntentsBadDisplay) {
  * Test that IComposerClient::getRenderIntents returns Error::BAD_PARAMETER when
  * pased either an invalid Color mode or an invalid Render Intent
  */
-TEST_F(GraphicsComposerHidlTest, GetRenderIntentsBadParameter) {
+TEST_P(GraphicsComposerHidlTest, GetRenderIntentsBadParameter) {
     mComposerClient->getRaw()->getRenderIntents(
         mPrimaryDisplay, static_cast<ColorMode>(-1),
         [&](const auto& tmpError, const auto&) { EXPECT_EQ(Error::BAD_PARAMETER, tmpError); });
@@ -655,7 +639,7 @@ TEST_F(GraphicsComposerHidlTest, GetRenderIntentsBadParameter) {
 /**
  * Test IComposerClient::setColorMode_2_2.
  */
-TEST_F(GraphicsComposerHidlTest, SetColorMode_2_2) {
+TEST_P(GraphicsComposerHidlTest, SetColorMode_2_2) {
     std::vector<ColorMode> modes = mComposerClient->getColorModes(mPrimaryDisplay);
     for (auto mode : modes) {
         std::vector<RenderIntent> intents =
@@ -674,7 +658,7 @@ TEST_F(GraphicsComposerHidlTest, SetColorMode_2_2) {
  * Test that IComposerClient::setColorMode_2_2 returns an Error::BAD_DISPLAY
  * when passed an invalid display handle
  */
-TEST_F(GraphicsComposerHidlTest, SetColorMode_2_2BadDisplay) {
+TEST_P(GraphicsComposerHidlTest, SetColorMode_2_2BadDisplay) {
     Error error = mComposerClient->getRaw()->setColorMode_2_2(mInvalidDisplayId, ColorMode::NATIVE,
                                                               RenderIntent::COLORIMETRIC);
 
@@ -687,7 +671,7 @@ TEST_F(GraphicsComposerHidlTest, SetColorMode_2_2BadDisplay) {
  * Test that IComposerClient::setColorMode_2_2 returns Error::BAD_PARAMETER when
  * passed an invalid Color mode or an invalid render intent
  */
-TEST_F(GraphicsComposerHidlTest, SetColorMode_2_2BadParameter) {
+TEST_P(GraphicsComposerHidlTest, SetColorMode_2_2BadParameter) {
     Error colorModeError = mComposerClient->getRaw()->setColorMode_2_2(
         mPrimaryDisplay, static_cast<ColorMode>(-1), RenderIntent::COLORIMETRIC);
     EXPECT_EQ(Error::BAD_PARAMETER, colorModeError);
@@ -697,6 +681,16 @@ TEST_F(GraphicsComposerHidlTest, SetColorMode_2_2BadParameter) {
     EXPECT_EQ(Error::BAD_PARAMETER, renderIntentError);
 }
 
+INSTANTIATE_TEST_SUITE_P(
+        PerInstance, GraphicsComposerHidlTest,
+        testing::ValuesIn(android::hardware::getAllHalInstanceNames(IComposer::descriptor)),
+        android::hardware::PrintInstanceNameToString);
+
+INSTANTIATE_TEST_SUITE_P(
+        PerInstance, GraphicsComposerHidlCommandTest,
+        testing::ValuesIn(android::hardware::getAllHalInstanceNames(IComposer::descriptor)),
+        android::hardware::PrintInstanceNameToString);
+
 }  // namespace
 }  // namespace vts
 }  // namespace V2_2
@@ -704,12 +698,3 @@ TEST_F(GraphicsComposerHidlTest, SetColorMode_2_2BadParameter) {
 }  // namespace graphics
 }  // namespace hardware
 }  // namespace android
-
-int main(int argc, char** argv) {
-    using android::hardware::graphics::composer::V2_2::vts::GraphicsComposerHidlEnvironment;
-    ::testing::AddGlobalTestEnvironment(GraphicsComposerHidlEnvironment::Instance());
-    ::testing::InitGoogleTest(&argc, argv);
-    GraphicsComposerHidlEnvironment::Instance()->init(&argc, argv);
-    int status = RUN_ALL_TESTS();
-    return status;
-}

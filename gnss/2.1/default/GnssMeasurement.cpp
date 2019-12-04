@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,26 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #define LOG_TAG "GnssMeasurement"
 
 #include "GnssMeasurement.h"
-#include "Utils.h"
-
 #include <log/log.h>
-#include <utils/SystemClock.h>
+#include "Utils.h"
 
 namespace android {
 namespace hardware {
 namespace gnss {
-namespace V2_0 {
+
+using common::Utils;
+
+namespace V2_1 {
 namespace implementation {
 
-using GnssConstellationType = V2_0::GnssConstellationType;
-using GnssMeasurementFlags = V1_0::IGnssMeasurementCallback::GnssMeasurementFlags;
-using GnssMeasurementState = V2_0::IGnssMeasurementCallback::GnssMeasurementState;
-using Utils = common::Utils;
-
-sp<V2_0::IGnssMeasurementCallback> GnssMeasurement::sCallback = nullptr;
+sp<V2_1::IGnssMeasurementCallback> GnssMeasurement::sCallback = nullptr;
 
 GnssMeasurement::GnssMeasurement() : mMinIntervalMillis(1000) {}
 
@@ -42,7 +39,7 @@ GnssMeasurement::~GnssMeasurement() {
 
 // Methods from V1_0::IGnssMeasurement follow.
 Return<V1_0::IGnssMeasurement::GnssMeasurementStatus> GnssMeasurement::setCallback(
-    const sp<V1_0::IGnssMeasurementCallback>&) {
+        const sp<V1_0::IGnssMeasurementCallback>&) {
     // TODO implement
     return V1_0::IGnssMeasurement::GnssMeasurementStatus{};
 }
@@ -57,15 +54,22 @@ Return<void> GnssMeasurement::close() {
 
 // Methods from V1_1::IGnssMeasurement follow.
 Return<V1_0::IGnssMeasurement::GnssMeasurementStatus> GnssMeasurement::setCallback_1_1(
-    const sp<V1_1::IGnssMeasurementCallback>&, bool) {
+        const sp<V1_1::IGnssMeasurementCallback>&, bool) {
     // TODO implement
     return V1_0::IGnssMeasurement::GnssMeasurementStatus{};
 }
 
 // Methods from V2_0::IGnssMeasurement follow.
 Return<V1_0::IGnssMeasurement::GnssMeasurementStatus> GnssMeasurement::setCallback_2_0(
-    const sp<V2_0::IGnssMeasurementCallback>& callback, bool) {
-    ALOGD("setCallback_2_0");
+        const sp<V2_0::IGnssMeasurementCallback>&, bool) {
+    // TODO implement
+    return V1_0::IGnssMeasurement::GnssMeasurementStatus{};
+}
+
+// Methods from V2_1::IGnssMeasurement follow.
+Return<V1_0::IGnssMeasurement::GnssMeasurementStatus> GnssMeasurement::setCallback_2_1(
+        const sp<V2_1::IGnssMeasurementCallback>& callback, bool) {
+    ALOGD("setCallback_2_1");
     std::unique_lock<std::mutex> lock(mMutex);
     sCallback = callback;
 
@@ -83,7 +87,7 @@ void GnssMeasurement::start() {
     mIsActive = true;
     mThread = std::thread([this]() {
         while (mIsActive == true) {
-            auto measurement = Utils::getMockMeasurementV2_0();
+            auto measurement = Utils::getMockMeasurementV2_1();
             this->reportMeasurement(measurement);
 
             std::this_thread::sleep_for(std::chrono::milliseconds(mMinIntervalMillis));
@@ -99,18 +103,21 @@ void GnssMeasurement::stop() {
     }
 }
 
-void GnssMeasurement::reportMeasurement(const GnssData& data) {
+void GnssMeasurement::reportMeasurement(const GnssDataV2_1& data) {
     ALOGD("reportMeasurement()");
     std::unique_lock<std::mutex> lock(mMutex);
     if (sCallback == nullptr) {
         ALOGE("%s: GnssMeasurement::sCallback is null.", __func__);
         return;
     }
-    sCallback->gnssMeasurementCb_2_0(data);
+    auto ret = sCallback->gnssMeasurementCb_2_1(data);
+    if (!ret.isOk()) {
+        ALOGE("%s: Unable to invoke callback", __func__);
+    }
 }
 
 }  // namespace implementation
-}  // namespace V2_0
+}  // namespace V2_1
 }  // namespace gnss
 }  // namespace hardware
 }  // namespace android

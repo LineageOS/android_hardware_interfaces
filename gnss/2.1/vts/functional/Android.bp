@@ -14,24 +14,22 @@
 // limitations under the License.
 //
 
-cc_library_static {
-    name: "android.hardware.gnss@common-default-lib",
-    vendor_available: true,
-    relative_install_path: "hw",
-    cflags: [
-        "-Wall",
-        "-Wextra",
-        "-Werror",
-    ],
+cc_test {
+    name: "VtsHalGnssV2_1TargetTest",
+    defaults: ["VtsHalTargetTestDefaults"],
     srcs: [
-        "Utils.cpp",
+        "gnss_hal_test.cpp",
+        "gnss_hal_test_cases.cpp",
+        "VtsHalGnssV2_1TargetTest.cpp",
     ],
-    export_include_dirs: ["include"],
-    shared_libs: [
-        "libhidlbase",
-        "libutils",
+    static_libs: [
+        "android.hardware.gnss.measurement_corrections@1.0",
+        "android.hardware.gnss.visibility_control@1.0",
         "android.hardware.gnss@1.0",
+        "android.hardware.gnss@1.1",
         "android.hardware.gnss@2.0",
         "android.hardware.gnss@2.1",
+        "android.hardware.gnss@common-vts-lib",
     ],
+    test_suites: ["general-tests", "vts-core"],
 }
