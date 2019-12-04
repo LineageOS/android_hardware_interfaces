@@ -2230,8 +2230,6 @@ struct DemuxIpFilterSettings {
 
         DemuxFilterSectionSettings section;
 
-        DemuxFilterPesDataSettings pesData;
-
         /**
          * true if the data from IP subtype go to next filter directly
          */
@@ -2248,7 +2246,7 @@ struct DemuxTlvFilterSettings {
     /**
      * true if the filtered data is commpressed ip packet
      */
-    bool bIsCompressedIpPacket;
+    bool isCompressedIpPacket;
 
     safe_union FilterSettings {
         /**
