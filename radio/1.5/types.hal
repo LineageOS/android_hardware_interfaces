@@ -16,6 +16,13 @@
 
 package android.hardware.radio@1.5;
 
+import @1.1::EutranBands;
+import @1.1::GeranBands;
+import @1.1::RadioAccessNetworks;
+import @1.1::RadioAccessSpecifier;
+import @1.1::ScanType;
+import @1.1::UtranBands;
+import @1.2::NetworkScanRequest;
 import @1.4::AccessNetwork;
 
 /**
@@ -113,4 +120,142 @@ enum AccessNetwork : @1.4::AccessNetwork {
      *  Next-Generation Radio Access Network (NGRAN)
      */
     NGRAN = 6,
+};
+
+enum RadioAccessNetworks : @1.1::RadioAccessNetworks {
+    NGRAN = 4,
+};
+
+/**
+ * Overwritten from @1.1::RadioAccessSpecifier to add NGRAN and NgranBands
+ */
+struct RadioAccessSpecifier {
+    /**
+     * The type of network to scan.
+     */
+    RadioAccessNetworks radioAccessNetwork;
+
+    /**
+     * The frequency bands to scan.
+     * Maximum length of the vector is 8.
+     */
+    safe_union Bands {
+        /** Valid only if radioAccessNetwork = GERAN. */
+        vec<GeranBands> geranBands;
+        /** Valid only if radioAccessNetwork = UTRAN. */
+        vec<UtranBands> utranBands;
+        /** Valid only if radioAccessNetwork = EUTRAN. */
+        vec<EutranBands> eutranBands;
+        /** Valid only if radioAccessNetwork = NGRAN. */
+        vec<NgranBands> ngranBands;
+    } bands;
+
+    /**
+     * The radio channels to scan as defined in 3GPP TS 25.101 and 36.101.
+     * Maximum length of the vector is 32.
+     */
+    vec<int32_t> channels;
+};
+
+enum NgranBands : int32_t {
+    /** 3GPP TS 38.101-1, Table 5.2-1: FR1 bands */
+    BAND_1 = 1,
+    BAND_2 = 2,
+    BAND_3 = 3,
+    BAND_5 = 5,
+    BAND_7 = 7,
+    BAND_8 = 8,
+    BAND_12 = 12,
+    BAND_14 = 14,
+    BAND_18 = 18,
+    BAND_20 = 20,
+    BAND_25 = 25,
+    BAND_28 = 28,
+    BAND_29 = 29,
+    BAND_30 = 30,
+    BAND_34 = 34,
+    BAND_38 = 38,
+    BAND_39 = 39,
+    BAND_40 = 40,
+    BAND_41 = 41,
+    BAND_48 = 48,
+    BAND_50 = 50,
+    BAND_51 = 51,
+    BAND_65 = 65,
+    BAND_66 = 66,
+    BAND_70 = 70,
+    BAND_71 = 71,
+    BAND_74 = 74,
+    BAND_75 = 75,
+    BAND_76 = 76,
+    BAND_77 = 77,
+    BAND_78 = 78,
+    BAND_79 = 79,
+    BAND_80 = 80,
+    BAND_81 = 81,
+    BAND_82 = 82,
+    BAND_83 = 83,
+    BAND_84 = 84,
+    BAND_86 = 86,
+    BAND_90 = 90,
+    /** 3GPP TS 38.101-2, Table 5.2-1: FR2 bands */
+    BAND_257 = 257,
+    BAND_258 = 258,
+    BAND_260 = 260,
+    BAND_261 = 261,
+};
+
+/**
+ * Overwritten from @1.2::NetworkScanRequest to update
+ * RadioAccessSpecifier to 1.5 version
+ */
+struct NetworkScanRequest {
+    ScanType type;
+
+    /**
+     * Time interval in seconds between the completion of one scan and the start of
+     * a subsequent scan.
+     * Implementations may ignore this field unless the 'type' is 'PERIODIC'.
+     * Range: ScanIntervalRange:MIN to ScanIntervalRange:MAX
+     */
+    int32_t interval;
+
+    /**
+     * Networks with bands/channels to scan
+     * Maximum length of the vector is RadioConst:RADIO_ACCESS_SPECIFIER_MAX_SIZE
+     */
+    vec<RadioAccessSpecifier> specifiers;
+
+    /**
+     * Maximum duration of the periodic search (in seconds).
+     * If the search lasts maxSearchTime, it must be terminated.
+     * Range: MaxSearchTimeRange:MIN to MaxSearchTimeRange:MAX
+     */
+    int32_t maxSearchTime;
+
+    /**
+     * Indicates whether the modem must report incremental results of the network scan
+     * to the client.
+     * FALSE – Incremental results must not be reported.
+     * TRUE  – Incremental must be reported.
+     */
+    bool incrementalResults;
+
+    /**
+     * Indicates the periodicity with which the modem must report incremental results to
+     * the client (in seconds).
+     * Implementations may ignore this value if the incremental results are not requested.
+     * This value must be less than or equal to maxSearchTime.
+     * Range: IncrementalResultsPeriodicityRange:MIN to IncrementalResultsPeriodicityRange:MAX
+     */
+    int32_t incrementalResultsPeriodicity;
+
+    /**
+     * Describes the List of PLMN ids (MCC-MNC)
+     * If any PLMN of this list is found, search must end at that point and results with all
+     * PLMN found until that point should be sent as response.
+     * If the list is not sent, search to be completed until end and all PLMNs found to be
+     * reported.
+     */
+    vec<string> mccMncs;
 };
