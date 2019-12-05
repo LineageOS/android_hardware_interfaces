@@ -1280,25 +1280,7 @@ Error HWC2On1Adapter::Display::set(hwc_display_contents_1& hwcContents) {
     // Set up the client/framebuffer target
     auto numLayers = hwcContents.numHwLayers;
 
-    // Close acquire fences on FRAMEBUFFER layers, since they will not be used
-    // by HWC
-    for (size_t l = 0; l < numLayers - 1; ++l) {
-        auto& layer = hwcContents.hwLayers[l];
-        if (layer.compositionType == HWC_FRAMEBUFFER) {
-            ALOGV("Closing fence %d for layer %zd", layer.acquireFenceFd, l);
-            close(layer.acquireFenceFd);
-            layer.acquireFenceFd = -1;
-        }
-    }
-
-    auto& clientTargetLayer = hwcContents.hwLayers[numLayers - 1];
-    if (clientTargetLayer.compositionType == HWC_FRAMEBUFFER_TARGET) {
-        clientTargetLayer.handle = mClientTarget.getBuffer();
-        clientTargetLayer.acquireFenceFd = mClientTarget.getFence();
-    } else {
-        ALOGE("[%" PRIu64 "] set: last HWC layer wasn't FRAMEBUFFER_TARGET",
-                mId);
-    }
+    ALOGE("numLayers = %d", numLayers);
 
     mChanges.reset();
 
