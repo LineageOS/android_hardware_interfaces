@@ -709,7 +709,10 @@ Return<Result> Effect::close() {
 #elif MAJOR_VERSION >= 6
     // No need to join the processing thread, it is part of the API contract that the client
     // must finish processing before closing the effect.
-    return analyzeStatus("EffectRelease", "", sContextCallFunction, EffectRelease(mHandle));
+    Result retval =
+            analyzeStatus("EffectRelease", "", sContextCallFunction, EffectRelease(mHandle));
+    EffectMap::getInstance().remove(mHandle);
+    return retval;
 #endif
 }
 

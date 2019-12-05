@@ -20,6 +20,7 @@
 
 #include "BroadcastRadioFactory.h"
 
+using android::sp;
 using android::hardware::configureRpcThreadpool;
 using android::hardware::joinRpcThreadpool;
 using android::hardware::broadcastradio::V1_1::implementation::BroadcastRadioFactory;
@@ -27,8 +28,8 @@ using android::hardware::broadcastradio::V1_1::implementation::BroadcastRadioFac
 int main(int /* argc */, char** /* argv */) {
     configureRpcThreadpool(4, true);
 
-    BroadcastRadioFactory broadcastRadioFactory;
-    auto status = broadcastRadioFactory.registerAsService();
+    sp<BroadcastRadioFactory> broadcastRadioFactory(new BroadcastRadioFactory());
+    auto status = broadcastRadioFactory->registerAsService();
     CHECK_EQ(status, android::OK) << "Failed to register Broadcast Radio HAL implementation";
 
     joinRpcThreadpool();

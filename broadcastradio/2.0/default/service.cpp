@@ -19,6 +19,7 @@
 #include "BroadcastRadio.h"
 #include "VirtualRadio.h"
 
+using android::sp;
 using android::hardware::configureRpcThreadpool;
 using android::hardware::joinRpcThreadpool;
 using android::hardware::broadcastradio::V2_0::implementation::BroadcastRadio;
@@ -30,13 +31,13 @@ int main() {
     android::base::SetMinimumLogSeverity(android::base::VERBOSE);
     configureRpcThreadpool(4, true);
 
-    BroadcastRadio broadcastRadio(gAmFmRadio);
-    auto amFmStatus = broadcastRadio.registerAsService("amfm");
+    sp<BroadcastRadio> broadcastRadio(new BroadcastRadio(gAmFmRadio));
+    auto amFmStatus = broadcastRadio->registerAsService("amfm");
     CHECK_EQ(amFmStatus, android::OK)
         << "Failed to register Broadcast Radio AM/FM HAL implementation";
 
-    BroadcastRadio dabRadio(gDabRadio);
-    auto dabStatus = dabRadio.registerAsService("dab");
+    sp<BroadcastRadio> dabRadio(new BroadcastRadio(gDabRadio));
+    auto dabStatus = dabRadio->registerAsService("dab");
     CHECK_EQ(dabStatus, android::OK) << "Failed to register Broadcast Radio DAB HAL implementation";
 
     joinRpcThreadpool();
