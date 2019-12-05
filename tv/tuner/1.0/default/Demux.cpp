@@ -147,6 +147,20 @@ Return<void> Demux::openDvr(DvrType type, uint32_t bufferSize, const sp<IDvrCall
     return Void();
 }
 
+Return<Result> Demux::connectCiCam(uint32_t ciCamId) {
+    ALOGV("%s", __FUNCTION__);
+
+    mCiCamId = ciCamId;
+
+    return Result::SUCCESS;
+}
+
+Return<Result> Demux::disconnectCiCam() {
+    ALOGV("%s", __FUNCTION__);
+
+    return Result::SUCCESS;
+}
+
 Result Demux::removeFilter(uint32_t filterId) {
     ALOGV("%s", __FUNCTION__);
 
