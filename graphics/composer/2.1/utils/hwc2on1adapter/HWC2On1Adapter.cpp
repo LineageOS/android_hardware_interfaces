@@ -2514,6 +2514,14 @@ Error HWC2On1Adapter::setAllDisplays() {
             continue;
         }
 
+        auto numLayers = mHwc1Contents[hwc1Id]->numHwLayers;
+
+        auto& clientTargetLayer = mHwc1Contents[hwc1Id]->hwLayers[numLayers - 1];
+        if (clientTargetLayer.compositionType == HWC_FRAMEBUFFER_TARGET && clientTargetLayer.acquireFenceFd != -1) {
+            close(clientTargetLayer.acquireFenceFd);
+            clientTargetLayer.acquireFenceFd = -1;
+        }
+
         auto displayId = mHwc1DisplayMap[hwc1Id];
         auto& display = mDisplays[displayId];
         auto retireFenceFd = mHwc1Contents[hwc1Id]->retireFenceFd;
