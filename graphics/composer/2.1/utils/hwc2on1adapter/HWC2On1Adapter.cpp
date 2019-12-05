@@ -1294,7 +1294,8 @@ Error HWC2On1Adapter::Display::set(hwc_display_contents_1& hwcContents) {
     auto& clientTargetLayer = hwcContents.hwLayers[numLayers - 1];
     if (clientTargetLayer.compositionType == HWC_FRAMEBUFFER_TARGET) {
         clientTargetLayer.handle = mClientTarget.getBuffer();
-        clientTargetLayer.acquireFenceFd = mClientTarget.getFence();
+        close(mClientTarget.getFence());
+        clientTargetLayer.acquireFenceFd = -1;
     } else {
         ALOGE("[%" PRIu64 "] set: last HWC layer wasn't FRAMEBUFFER_TARGET",
                 mId);
