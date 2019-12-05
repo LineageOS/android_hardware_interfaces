@@ -11,6 +11,7 @@ hidl_interface {
         "IWifi.hal",
         "IWifiApIface.hal",
         "IWifiChip.hal",
+        "IWifiChipEventCallback.hal",
         "IWifiRttController.hal",
         "IWifiRttControllerEventCallback.hal",
         "IWifiStaIface.hal",
