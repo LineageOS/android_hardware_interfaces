@@ -446,3 +446,422 @@ TEST_F(RadioHidlTest_v1_5, areUiccApplicationsEnabled) {
         EXPECT_EQ(RadioError::NONE, radioRsp_v1_5->rspInfo.error);
     }
 }
+
+/*
+ * Test IRadio.setSystemSelectionChannels_1_5() for the response returned.
+ */
+TEST_F(RadioHidlTest_v1_5, setSystemSelectionChannels_1_5) {
+    serial = GetRandomSerialNumber();
+
+    ::android::hardware::radio::V1_5::RadioAccessSpecifier::Bands rasBands;
+    rasBands.geranBands() = {GeranBands::BAND_450, GeranBands::BAND_480};
+
+    ::android::hardware::radio::V1_5::RadioAccessSpecifier specifier = {
+            .radioAccessNetwork = ::android::hardware::radio::V1_5::RadioAccessNetworks::GERAN,
+            .bands = rasBands,
+            .channels = {1, 2}};
+
+    Return<void> res = radio_v1_5->setSystemSelectionChannels_1_5(serial, true, {specifier});
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_5->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
+    ALOGI("setSystemSelectionChannels, rspInfo.error = %s\n",
+          toString(radioRsp_v1_5->rspInfo.error).c_str());
+    ASSERT_TRUE(CheckAnyOfErrors(
+            radioRsp_v1_5->rspInfo.error,
+            {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::INTERNAL_ERR}));
+
+    if (radioRsp_v1_5->rspInfo.error == RadioError::NONE) {
+        serial = GetRandomSerialNumber();
+        Return<void> res = radio_v1_5->setSystemSelectionChannels_1_5(serial, false, {specifier});
+        ASSERT_OK(res);
+        EXPECT_EQ(std::cv_status::no_timeout, wait());
+        EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_5->rspInfo.type);
+        EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
+        ALOGI("setSystemSelectionChannels, rspInfo.error = %s\n",
+              toString(radioRsp_v1_5->rspInfo.error).c_str());
+        EXPECT_EQ(RadioError::NONE, radioRsp_v1_5->rspInfo.error);
+    }
+}
+
+/*
+ * Test IRadio.startNetworkScan_1_5() for the response returned.
+ */
+TEST_F(RadioHidlTest_v1_5, startNetworkScan) {
+    serial = GetRandomSerialNumber();
+
+    ::android::hardware::radio::V1_5::RadioAccessSpecifier::Bands rasBands;
+    rasBands.geranBands() = {GeranBands::BAND_450, GeranBands::BAND_480};
+
+    ::android::hardware::radio::V1_5::RadioAccessSpecifier specifier = {
+            .radioAccessNetwork = ::android::hardware::radio::V1_5::RadioAccessNetworks::GERAN,
+            .bands = rasBands,
+            .channels = {1, 2}};
+
+    ::android::hardware::radio::V1_5::NetworkScanRequest request = {
+            .type = ScanType::ONE_SHOT,
+            .interval = 60,
+            .specifiers = {specifier},
+            .maxSearchTime = 60,
+            .incrementalResults = false,
+            .incrementalResultsPeriodicity = 1};
+
+    Return<void> res = radio_v1_5->startNetworkScan_1_5(serial, request);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_5->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
+    ALOGI("startNetworkScan, rspInfo.error = %s\n", toString(radioRsp_v1_5->rspInfo.error).c_str());
+
+    if (cardStatus.base.base.cardState == CardState::ABSENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error, {RadioError::SIM_ABSENT}));
+    } else if (cardStatus.base.base.cardState == CardState::PRESENT) {
+        // OPERATION_NOT_ALLOWED should not be allowed; however, some vendors do
+        // not support the required manual GSM search functionality. This is
+        // tracked in b/112206766. Modems have "GSM" rat scan need to
+        // support scanning requests combined with some parameters.
+        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
+                                     {RadioError::NONE, RadioError::OPERATION_NOT_ALLOWED}));
+    }
+}
+
+/*
+ * Test IRadio.startNetworkScan_1_5() with invalid specifier.
+ */
+TEST_F(RadioHidlTest_v1_5, startNetworkScan_InvalidArgument) {
+    serial = GetRandomSerialNumber();
+
+    ::android::hardware::radio::V1_5::NetworkScanRequest request = {.type = ScanType::ONE_SHOT,
+                                                                    .interval = 60};
+
+    Return<void> res = radio_v1_5->startNetworkScan_1_5(serial, request);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_5->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
+    ALOGI("startNetworkScan_InvalidArgument, rspInfo.error = %s\n",
+          toString(radioRsp_v1_5->rspInfo.error).c_str());
+
+    if (cardStatus.base.base.cardState == CardState::ABSENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
+                                     {RadioError::SIM_ABSENT, RadioError::INVALID_ARGUMENTS}));
+    } else if (cardStatus.base.base.cardState == CardState::PRESENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(
+                radioRsp_v1_5->rspInfo.error,
+                {RadioError::INVALID_ARGUMENTS, RadioError::REQUEST_NOT_SUPPORTED}));
+    }
+}
+
+/*
+ * Test IRadio.startNetworkScan_1_5() with invalid interval (lower boundary).
+ */
+TEST_F(RadioHidlTest_v1_5, startNetworkScan_InvalidInterval1) {
+    serial = GetRandomSerialNumber();
+
+    ::android::hardware::radio::V1_5::RadioAccessSpecifier::Bands rasBands;
+    rasBands.geranBands() = {GeranBands::BAND_450, GeranBands::BAND_480};
+
+    ::android::hardware::radio::V1_5::RadioAccessSpecifier specifier = {
+            .radioAccessNetwork = ::android::hardware::radio::V1_5::RadioAccessNetworks::GERAN,
+            .bands = rasBands,
+            .channels = {1, 2}};
+
+    ::android::hardware::radio::V1_5::NetworkScanRequest request = {
+            .type = ScanType::ONE_SHOT,
+            .interval = 4,
+            .specifiers = {specifier},
+            .maxSearchTime = 60,
+            .incrementalResults = false,
+            .incrementalResultsPeriodicity = 1};
+
+    Return<void> res = radio_v1_5->startNetworkScan_1_5(serial, request);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_5->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
+    ALOGI("startNetworkScan_InvalidInterval1, rspInfo.error = %s\n",
+          toString(radioRsp_v1_5->rspInfo.error).c_str());
+    if (cardStatus.base.base.cardState == CardState::ABSENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
+                                     {RadioError::SIM_ABSENT, RadioError::INVALID_ARGUMENTS}));
+    } else if (cardStatus.base.base.cardState == CardState::PRESENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(
+                radioRsp_v1_5->rspInfo.error,
+                {RadioError::INVALID_ARGUMENTS, RadioError::REQUEST_NOT_SUPPORTED}));
+    }
+}
+
+/*
+ * Test IRadio.startNetworkScan_1_5() with invalid interval (upper boundary).
+ */
+TEST_F(RadioHidlTest_v1_5, startNetworkScan_InvalidInterval2) {
+    serial = GetRandomSerialNumber();
+
+    ::android::hardware::radio::V1_5::RadioAccessSpecifier::Bands rasBands;
+    rasBands.geranBands() = {GeranBands::BAND_450, GeranBands::BAND_480};
+
+    ::android::hardware::radio::V1_5::RadioAccessSpecifier specifier = {
+            .radioAccessNetwork = ::android::hardware::radio::V1_5::RadioAccessNetworks::GERAN,
+            .bands = rasBands,
+            .channels = {1, 2}};
+
+    ::android::hardware::radio::V1_5::NetworkScanRequest request = {
+            .type = ScanType::ONE_SHOT,
+            .interval = 301,
+            .specifiers = {specifier},
+            .maxSearchTime = 60,
+            .incrementalResults = false,
+            .incrementalResultsPeriodicity = 1};
+
+    Return<void> res = radio_v1_5->startNetworkScan_1_5(serial, request);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_5->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
+    ALOGI("startNetworkScan_InvalidInterval2, rspInfo.error = %s\n",
+          toString(radioRsp_v1_5->rspInfo.error).c_str());
+    if (cardStatus.base.base.cardState == CardState::ABSENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
+                                     {RadioError::SIM_ABSENT, RadioError::INVALID_ARGUMENTS}));
+    } else if (cardStatus.base.base.cardState == CardState::PRESENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(
+                radioRsp_v1_5->rspInfo.error,
+                {RadioError::INVALID_ARGUMENTS, RadioError::REQUEST_NOT_SUPPORTED}));
+    }
+}
+
+/*
+ * Test IRadio.startNetworkScan_1_5() with invalid max search time (lower boundary).
+ */
+TEST_F(RadioHidlTest_v1_5, startNetworkScan_InvalidMaxSearchTime1) {
+    serial = GetRandomSerialNumber();
+
+    ::android::hardware::radio::V1_5::RadioAccessSpecifier::Bands rasBands;
+    rasBands.geranBands() = {GeranBands::BAND_450, GeranBands::BAND_480};
+
+    ::android::hardware::radio::V1_5::RadioAccessSpecifier specifier = {
+            .radioAccessNetwork = ::android::hardware::radio::V1_5::RadioAccessNetworks::GERAN,
+            .bands = rasBands,
+            .channels = {1, 2}};
+
+    ::android::hardware::radio::V1_5::NetworkScanRequest request = {
+            .type = ScanType::ONE_SHOT,
+            .interval = 60,
+            .specifiers = {specifier},
+            .maxSearchTime = 59,
+            .incrementalResults = false,
+            .incrementalResultsPeriodicity = 1};
+
+    Return<void> res = radio_v1_5->startNetworkScan_1_5(serial, request);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_5->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
+    ALOGI("startNetworkScan_InvalidMaxSearchTime1, rspInfo.error = %s\n",
+          toString(radioRsp_v1_5->rspInfo.error).c_str());
+    if (cardStatus.base.base.cardState == CardState::ABSENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
+                                     {RadioError::SIM_ABSENT, RadioError::INVALID_ARGUMENTS}));
+    } else if (cardStatus.base.base.cardState == CardState::PRESENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(
+                radioRsp_v1_5->rspInfo.error,
+                {RadioError::INVALID_ARGUMENTS, RadioError::REQUEST_NOT_SUPPORTED}));
+    }
+}
+
+/*
+ * Test IRadio.startNetworkScan_1_5() with invalid max search time (upper boundary).
+ */
+TEST_F(RadioHidlTest_v1_5, startNetworkScan_InvalidMaxSearchTime2) {
+    serial = GetRandomSerialNumber();
+
+    ::android::hardware::radio::V1_5::RadioAccessSpecifier::Bands rasBands;
+    rasBands.geranBands() = {GeranBands::BAND_450, GeranBands::BAND_480};
+
+    ::android::hardware::radio::V1_5::RadioAccessSpecifier specifier = {
+            .radioAccessNetwork = ::android::hardware::radio::V1_5::RadioAccessNetworks::GERAN,
+            .bands = rasBands,
+            .channels = {1, 2}};
+
+    ::android::hardware::radio::V1_5::NetworkScanRequest request = {
+            .type = ScanType::ONE_SHOT,
+            .interval = 60,
+            .specifiers = {specifier},
+            .maxSearchTime = 3601,
+            .incrementalResults = false,
+            .incrementalResultsPeriodicity = 1};
+
+    Return<void> res = radio_v1_5->startNetworkScan_1_5(serial, request);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_5->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
+    ALOGI("startNetworkScan_InvalidMaxSearchTime2, rspInfo.error = %s\n",
+          toString(radioRsp_v1_5->rspInfo.error).c_str());
+    if (cardStatus.base.base.cardState == CardState::ABSENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
+                                     {RadioError::SIM_ABSENT, RadioError::INVALID_ARGUMENTS}));
+    } else if (cardStatus.base.base.cardState == CardState::PRESENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(
+                radioRsp_v1_5->rspInfo.error,
+                {RadioError::INVALID_ARGUMENTS, RadioError::REQUEST_NOT_SUPPORTED}));
+    }
+}
+
+/*
+ * Test IRadio.startNetworkScan_1_5() with invalid periodicity (lower boundary).
+ */
+TEST_F(RadioHidlTest_v1_5, startNetworkScan_InvalidPeriodicity1) {
+    serial = GetRandomSerialNumber();
+
+    ::android::hardware::radio::V1_5::RadioAccessSpecifier::Bands rasBands;
+    rasBands.geranBands() = {GeranBands::BAND_450, GeranBands::BAND_480};
+
+    ::android::hardware::radio::V1_5::RadioAccessSpecifier specifier = {
+            .radioAccessNetwork = ::android::hardware::radio::V1_5::RadioAccessNetworks::GERAN,
+            .bands = rasBands,
+            .channels = {1, 2}};
+
+    ::android::hardware::radio::V1_5::NetworkScanRequest request = {
+            .type = ScanType::ONE_SHOT,
+            .interval = 60,
+            .specifiers = {specifier},
+            .maxSearchTime = 600,
+            .incrementalResults = true,
+            .incrementalResultsPeriodicity = 0};
+
+    Return<void> res = radio_v1_5->startNetworkScan_1_5(serial, request);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_5->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
+    ALOGI("startNetworkScan_InvalidPeriodicity1, rspInfo.error = %s\n",
+          toString(radioRsp_v1_5->rspInfo.error).c_str());
+    if (cardStatus.base.base.cardState == CardState::ABSENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
+                                     {RadioError::SIM_ABSENT, RadioError::INVALID_ARGUMENTS}));
+    } else if (cardStatus.base.base.cardState == CardState::PRESENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(
+                radioRsp_v1_5->rspInfo.error,
+                {RadioError::INVALID_ARGUMENTS, RadioError::REQUEST_NOT_SUPPORTED}));
+    }
+}
+
+/*
+ * Test IRadio.startNetworkScan_1_5() with invalid periodicity (upper boundary).
+ */
+TEST_F(RadioHidlTest_v1_5, startNetworkScan_InvalidPeriodicity2) {
+    serial = GetRandomSerialNumber();
+
+    ::android::hardware::radio::V1_5::RadioAccessSpecifier::Bands rasBands;
+    rasBands.geranBands() = {GeranBands::BAND_450, GeranBands::BAND_480};
+
+    ::android::hardware::radio::V1_5::RadioAccessSpecifier specifier = {
+            .radioAccessNetwork = ::android::hardware::radio::V1_5::RadioAccessNetworks::GERAN,
+            .bands = rasBands,
+            .channels = {1, 2}};
+
+    ::android::hardware::radio::V1_5::NetworkScanRequest request = {
+            .type = ScanType::ONE_SHOT,
+            .interval = 60,
+            .specifiers = {specifier},
+            .maxSearchTime = 600,
+            .incrementalResults = true,
+            .incrementalResultsPeriodicity = 11};
+
+    Return<void> res = radio_v1_5->startNetworkScan_1_5(serial, request);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_5->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
+    ALOGI("startNetworkScan_InvalidPeriodicity2, rspInfo.error = %s\n",
+          toString(radioRsp_v1_5->rspInfo.error).c_str());
+    if (cardStatus.base.base.cardState == CardState::ABSENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
+                                     {RadioError::SIM_ABSENT, RadioError::INVALID_ARGUMENTS}));
+    } else if (cardStatus.base.base.cardState == CardState::PRESENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(
+                radioRsp_v1_5->rspInfo.error,
+                {RadioError::INVALID_ARGUMENTS, RadioError::REQUEST_NOT_SUPPORTED}));
+    }
+}
+
+/*
+ * Test IRadio.startNetworkScan_1_5() with valid periodicity
+ */
+TEST_F(RadioHidlTest_v1_5, startNetworkScan_GoodRequest1) {
+    serial = GetRandomSerialNumber();
+
+    ::android::hardware::radio::V1_5::RadioAccessSpecifier::Bands rasBands;
+    rasBands.geranBands() = {GeranBands::BAND_450, GeranBands::BAND_480};
+
+    ::android::hardware::radio::V1_5::RadioAccessSpecifier specifier = {
+            .radioAccessNetwork = ::android::hardware::radio::V1_5::RadioAccessNetworks::GERAN,
+            .bands = rasBands,
+            .channels = {1, 2}};
+
+    ::android::hardware::radio::V1_5::NetworkScanRequest request = {
+            .type = ScanType::ONE_SHOT,
+            .interval = 60,
+            .specifiers = {specifier},
+            .maxSearchTime = 360,
+            .incrementalResults = false,
+            .incrementalResultsPeriodicity = 10};
+
+    Return<void> res = radio_v1_5->startNetworkScan_1_5(serial, request);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_5->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
+    ALOGI("startNetworkScan_GoodRequest1, rspInfo.error = %s\n",
+          toString(radioRsp_v1_5->rspInfo.error).c_str());
+    if (cardStatus.base.base.cardState == CardState::ABSENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
+                                     {RadioError::NONE, RadioError::SIM_ABSENT}));
+    } else if (cardStatus.base.base.cardState == CardState::PRESENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
+                                     {RadioError::NONE, RadioError::INVALID_ARGUMENTS,
+                                      RadioError::REQUEST_NOT_SUPPORTED}));
+    }
+}
+
+/*
+ * Test IRadio.startNetworkScan_1_5() with valid periodicity and plmns
+ */
+TEST_F(RadioHidlTest_v1_5, startNetworkScan_GoodRequest2) {
+    serial = GetRandomSerialNumber();
+
+    ::android::hardware::radio::V1_5::RadioAccessSpecifier::Bands rasBands;
+    rasBands.geranBands() = {GeranBands::BAND_450, GeranBands::BAND_480};
+
+    ::android::hardware::radio::V1_5::RadioAccessSpecifier specifier = {
+            .radioAccessNetwork = ::android::hardware::radio::V1_5::RadioAccessNetworks::GERAN,
+            .bands = rasBands,
+            .channels = {1, 2}};
+
+    ::android::hardware::radio::V1_5::NetworkScanRequest request = {
+            .type = ScanType::ONE_SHOT,
+            .interval = 60,
+            .specifiers = {specifier},
+            .maxSearchTime = 360,
+            .incrementalResults = false,
+            .incrementalResultsPeriodicity = 10,
+            .mccMncs = {"310410"}};
+
+    Return<void> res = radio_v1_5->startNetworkScan_1_5(serial, request);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_5->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
+    ALOGI("startNetworkScan_GoodRequest2, rspInfo.error = %s\n",
+          toString(radioRsp_v1_5->rspInfo.error).c_str());
+    if (cardStatus.base.base.cardState == CardState::ABSENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
+                                     {RadioError::NONE, RadioError::SIM_ABSENT}));
+    } else if (cardStatus.base.base.cardState == CardState::PRESENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
+                                     {RadioError::NONE, RadioError::INVALID_ARGUMENTS,
+                                      RadioError::REQUEST_NOT_SUPPORTED}));
+    }
+}
