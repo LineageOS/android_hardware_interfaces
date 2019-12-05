@@ -18,10 +18,9 @@ cc_library_static {
 
 }
 
-cc_library_shared {
-    name: "android.hardware.health@1.0-impl",
+cc_library_static {
+    name: "android.hardware.health@1.0-impl-helper",
     vendor: true,
-    relative_install_path: "hw",
     srcs: ["Health.cpp"],
 
     header_libs: [
@@ -38,6 +37,17 @@ cc_library_shared {
     ],
 
     static_libs: [
+        "android.hardware.health@1.0-convert",
+    ],
+}
+
+cc_library_shared {
+    name: "android.hardware.health@1.0-impl",
+    vendor: true,
+    relative_install_path: "hw",
+
+    static_libs: [
+        "android.hardware.health@1.0-impl-helper",
         "android.hardware.health@1.0-convert",
         "libhealthd.default",
     ],
