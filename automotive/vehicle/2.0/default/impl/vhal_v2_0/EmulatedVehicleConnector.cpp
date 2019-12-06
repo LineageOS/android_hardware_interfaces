@@ -201,6 +201,36 @@ StatusCode EmulatedVehicleServer::onSetProperty(const VehiclePropValue& value, b
     switch (value.prop) {
         case kGenerateFakeDataControllingProperty:
             return handleGenerateFakeDataRequest(value);
+
+        // set the value from vehcile side, used in end to end test.
+        case kSetIntPropertyFromVehcileForTest: {
+            auto updatedPropValue = createVehiclePropValue(VehiclePropertyType::INT32, 1);
+            updatedPropValue->prop = value.value.int32Values[0];
+            updatedPropValue->value.int32Values[0] = value.value.int32Values[1];
+            updatedPropValue->timestamp = value.value.int64Values[0];
+            updatedPropValue->areaId = value.areaId;
+            onPropertyValueFromCar(*updatedPropValue, updateStatus);
+            return StatusCode::OK;
+        }
+        case kSetFloatPropertyFromVehcileForTest: {
+            auto updatedPropValue = createVehiclePropValue(VehiclePropertyType::FLOAT, 1);
+            updatedPropValue->prop = value.value.int32Values[0];
+            updatedPropValue->value.floatValues[0] = value.value.floatValues[0];
+            updatedPropValue->timestamp = value.value.int64Values[0];
+            updatedPropValue->areaId = value.areaId;
+            onPropertyValueFromCar(*updatedPropValue, updateStatus);
+            return StatusCode::OK;
+        }
+        case kSetBooleanPropertyFromVehcileForTest: {
+            auto updatedPropValue = createVehiclePropValue(VehiclePropertyType::BOOLEAN, 1);
+            updatedPropValue->prop = value.value.int32Values[1];
+            updatedPropValue->value.int32Values[0] = value.value.int32Values[0];
+            updatedPropValue->timestamp = value.value.int64Values[0];
+            updatedPropValue->areaId = value.areaId;
+            onPropertyValueFromCar(*updatedPropValue, updateStatus);
+            return StatusCode::OK;
+        }
+
         case AP_POWER_STATE_REPORT:
             switch (value.value.int32Values[0]) {
                 case toInt(VehicleApPowerStateReport::DEEP_SLEEP_EXIT):
@@ -237,7 +267,10 @@ StatusCode EmulatedVehicleServer::onSetProperty(const VehiclePropValue& value, b
 
     // In the real vhal, the value will be sent to Car ECU.
     // We just pretend it is done here and send back to HAL
-    onPropertyValueFromCar(value, updateStatus);
+    auto updatedPropValue = getValuePool()->obtain(value);
+    updatedPropValue->timestamp = elapsedRealtimeNano();
+
+    onPropertyValueFromCar(*updatedPropValue, updateStatus);
     return StatusCode::OK;
 }
 
