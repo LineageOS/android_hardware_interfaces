@@ -26,11 +26,34 @@ import @1.0::RttStatus;
 import @1.0::RttType;
 import @1.0::TimeSpanInPs;
 import @1.0::TimeStampInUs;
+import @1.0::WifiBand;
 import @1.0::WifiChannelInfo;
 import @1.0::WifiChannelWidthInMhz;
 import @1.0::WifiInformationElement;
 import @1.0::WifiRateNss;
 import @1.0::WifiRatePreamble;
+
+/**
+ * Wifi bands defined in 80211 spec.
+ */
+enum WifiBand : @1.0::WifiBand {
+  /**
+   * 6 GHz.
+   */
+  BAND_6GHZ = 8,
+  /**
+   * 5 GHz no DFS + 6 GHz.
+   */
+  BAND_5GHZ_6GHZ = 10,
+  /**
+   * 2.4 GHz + 5 GHz no DFS + 6 GHz.
+   */
+  BAND_24GHZ_5GHZ_6GHZ = 11,
+  /**
+   * 2.4 GHz + 5 GHz with DFS + 6 GHz.
+   */
+  BAND_24GHZ_5GHZ_WITH_DFS_6GHZ = 15
+};
 
 /**
  * Wifi Rate Preamble

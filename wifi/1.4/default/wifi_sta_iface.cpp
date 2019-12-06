@@ -113,7 +113,7 @@ Return<void> WifiStaIface::getBackgroundScanCapabilities(
 }
 
 Return<void> WifiStaIface::getValidFrequenciesForBand(
-    WifiBand band, getValidFrequenciesForBand_cb hidl_status_cb) {
+    V1_0::WifiBand band, getValidFrequenciesForBand_cb hidl_status_cb) {
     return validateAndCall(this, WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
                            &WifiStaIface::getValidFrequenciesForBandInternal,
                            hidl_status_cb, band);
@@ -344,7 +344,7 @@ WifiStaIface::getBackgroundScanCapabilitiesInternal() {
 }
 
 std::pair<WifiStatus, std::vector<WifiChannelInMhz>>
-WifiStaIface::getValidFrequenciesForBandInternal(WifiBand band) {
+WifiStaIface::getValidFrequenciesForBandInternal(V1_0::WifiBand band) {
     static_assert(sizeof(WifiChannelInMhz) == sizeof(uint32_t),
                   "Size mismatch");
     legacy_hal::wifi_error legacy_status;

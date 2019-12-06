@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include <utils/SystemClock.h>
+
 #include "OccupantAwareness.h"
 
 namespace android {
@@ -29,28 +31,36 @@ static const int32_t kAllCapabilities = OccupantAwareness::CAP_PRESENCE_DETECTIO
                                         OccupantAwareness::CAP_GAZE_DETECTION |
                                         OccupantAwareness::CAP_DRIVER_MONITORING_DETECTION;
 
+constexpr int64_t kNanoSecondsPerMilliSecond = 1000 * 1000;
+
 ScopedAStatus OccupantAwareness::startDetection(OccupantAwarenessStatus* status) {
     std::lock_guard<std::mutex> lock(mMutex);
-    if (mStatus != OccupantAwarenessStatus::NOT_SUPPORTED) {
-        mStatus = OccupantAwarenessStatus::NOT_SUPPORTED;
-        if (mCallback) {
-            mCallback->onSystemStatusChanged(kAllCapabilities,
-                                             OccupantAwarenessStatus::NOT_SUPPORTED);
-        }
+    if (mStatus != OccupantAwarenessStatus::NOT_INITIALIZED) {
+        return ScopedAStatus::fromExceptionCode(EX_TRANSACTION_FAILED);
     }
+
+    mStatus = OccupantAwarenessStatus::READY;
+    mWorkerThread = std::thread(startWorkerThread, this);
+    if (mCallback) {
+        mCallback->onSystemStatusChanged(kAllCapabilities, mStatus);
+    }
+
     *status = mStatus;
     return ScopedAStatus::ok();
 }
 
 ScopedAStatus OccupantAwareness::stopDetection(OccupantAwarenessStatus* status) {
     std::lock_guard<std::mutex> lock(mMutex);
-    if (mStatus != OccupantAwarenessStatus::NOT_INITIALIZED) {
-        mStatus = OccupantAwarenessStatus::NOT_INITIALIZED;
-        if (mCallback) {
-            mCallback->onSystemStatusChanged(kAllCapabilities,
-                                             OccupantAwarenessStatus::NOT_INITIALIZED);
-        }
+    if (mStatus != OccupantAwarenessStatus::READY) {
+        return ScopedAStatus::fromExceptionCode(EX_TRANSACTION_FAILED);
     }
+
+    mStatus = OccupantAwarenessStatus::NOT_INITIALIZED;
+    mWorkerThread.join();
+    if (mCallback) {
+        mCallback->onSystemStatusChanged(kAllCapabilities, mStatus);
+    }
+
     *status = mStatus;
     return ScopedAStatus::ok();
 }
@@ -60,8 +70,17 @@ ScopedAStatus OccupantAwareness::getCapabilityForRole(Role occupantRole, int32_t
         return ScopedAStatus::fromExceptionCode(EX_TRANSACTION_FAILED);
     }
 
-    // No awareness capability for default HAL.
-    *capabilities = 0;
+    int intVal = static_cast<int>(occupantRole);
+    if ((intVal & DetectionGenerator::getSupportedRoles()) == intVal) {
+        int capabilities_ = DetectionGenerator::getSupportedCapabilities();
+        if (occupantRole != Role::DRIVER) {
+            capabilities_ &= ~CAP_DRIVER_MONITORING_DETECTION;
+        }
+        *capabilities = capabilities_;
+    } else {
+        *capabilities = 0;
+    }
+
     return ScopedAStatus::ok();
 }
 
@@ -74,6 +93,15 @@ ScopedAStatus OccupantAwareness::getState(Role occupantRole, int detectionCapabi
     if (!isValidDetectionCapabilities(detectionCapability) ||
         !isSingularCapability(detectionCapability)) {
         return ScopedAStatus::fromExceptionCode(EX_TRANSACTION_FAILED);
+    }
+
+    int roleVal = static_cast<int>(occupantRole);
+
+    if (((roleVal & DetectionGenerator::getSupportedRoles()) != roleVal) ||
+        ((detectionCapability & DetectionGenerator::getSupportedCapabilities()) !=
+         detectionCapability)) {
+        *status = OccupantAwarenessStatus::NOT_SUPPORTED;
+        return ScopedAStatus::ok();
     }
 
     std::lock_guard<std::mutex> lock(mMutex);
@@ -93,9 +121,14 @@ ScopedAStatus OccupantAwareness::setCallback(
 }
 
 ScopedAStatus OccupantAwareness::getLatestDetection(OccupantDetections* detections) {
-    // No detection generated for default hal.
-    (void)detections;
-    return ScopedAStatus::fromExceptionCode(EX_TRANSACTION_FAILED);
+    std::lock_guard<std::mutex> lock(mMutex);
+
+    if (mStatus != OccupantAwarenessStatus::READY) {
+        return ScopedAStatus::fromExceptionCode(EX_TRANSACTION_FAILED);
+    }
+
+    *detections = mLatestDetections;
+    return ScopedAStatus::ok();
 }
 
 bool OccupantAwareness::isValidRole(Role occupantRole) {
@@ -105,13 +138,34 @@ bool OccupantAwareness::isValidRole(Role occupantRole) {
 }
 
 bool OccupantAwareness::isValidDetectionCapabilities(int detectionCapabilities) {
-    return (detectionCapabilities != CAP_NONE) &&
+    return (detectionCapabilities != OccupantAwareness::CAP_NONE) &&
            ((detectionCapabilities & (~kAllCapabilities)) == 0);
 }
 
 bool OccupantAwareness::isSingularCapability(int detectionCapability) {
     // Check whether the value is 0, or the value has only one bit set.
     return (detectionCapability & (detectionCapability - 1)) == 0;
+}
+
+void OccupantAwareness::startWorkerThread(OccupantAwareness* occupantAwareness) {
+    occupantAwareness->workerThreadFunction();
+}
+
+void OccupantAwareness::workerThreadFunction() {
+    bool isFirstDetection = true;
+    int64_t prevDetectionTimeMs;
+    while (mStatus == OccupantAwarenessStatus::READY) {
+        int64_t currentTimeMs = android::elapsedRealtimeNano() / kNanoSecondsPerMilliSecond;
+        if ((isFirstDetection) || (currentTimeMs - prevDetectionTimeMs > mDetectionDurationMs)) {
+            std::lock_guard<std::mutex> lock(mMutex);
+            mLatestDetections = mGenerator.GetNextDetections();
+            if (mCallback != nullptr) {
+                mCallback->onDetectionEvent(mLatestDetections);
+            }
+            isFirstDetection = false;
+            prevDetectionTimeMs = currentTimeMs;
+        }
+    }
 }
 
 }  // namespace implementation

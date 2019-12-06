@@ -30,7 +30,7 @@ interface IOccupantAwareness {
     /*
      * System is able to detect the presence of humans.
      */
-    const int CAP_PRESENSE_DETECTION = 1 << 0;
+    const int CAP_PRESENCE_DETECTION = 1 << 0;
     /*
      * System is able to detect the gaze of humans.
      */
