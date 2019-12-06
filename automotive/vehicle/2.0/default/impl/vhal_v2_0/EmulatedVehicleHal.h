@@ -68,7 +68,7 @@ private:
     }
 
     StatusCode handleGenerateFakeDataRequest(const VehiclePropValue& request);
-    void onPropertyValue(const VehiclePropValue& value);
+    void onPropertyValue(const VehiclePropValue& value, bool updateStatus);
 
     void onContinuousPropertyTimer(const std::vector<int32_t>& properties);
     bool isContinuousProperty(int32_t propId) const;

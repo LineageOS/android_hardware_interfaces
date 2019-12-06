@@ -35,13 +35,10 @@ namespace impl {
 class EmulatedVehicleClient : public IVehicleClient {
   public:
     // Type of callback function for handling the new property values
-    using PropertyCallBackType = std::function<void(const VehiclePropValue&)>;
+    using PropertyCallBackType = std::function<void(const VehiclePropValue&, bool updateStatus)>;
 
     // Method from IVehicleClient
-    void onPropertyValue(const VehiclePropValue& value) override;
-
-    // Request to change the value on the VEHICLE side (for testing)
-    virtual StatusCode setPropertyFromVehicle(const VehiclePropValue& value) = 0;
+    void onPropertyValue(const VehiclePropValue& value, bool updateStatus) override;
 
     void registerPropertyValueCallback(PropertyCallBackType&& callback);
 
@@ -55,10 +52,7 @@ class EmulatedVehicleServer : public IVehicleServer {
 
     std::vector<VehiclePropConfig> onGetAllPropertyConfig() const override;
 
-    StatusCode onSetProperty(const VehiclePropValue& value) override;
-
-    // Process the request to change the value on the VEHICLE side (for testing)
-    StatusCode onSetPropertyFromVehicle(const VehiclePropValue& value);
+    StatusCode onSetProperty(const VehiclePropValue& value, bool updateStatus) override;
 
     // Set the Property Value Pool used in this server
     void setValuePool(VehiclePropValuePool* valuePool);
@@ -85,16 +79,10 @@ class EmulatedVehicleServer : public IVehicleServer {
     VehiclePropValuePool* mValuePool{nullptr};
 };
 
-class EmulatedPassthroughConnector
-    : public IPassThroughConnector<EmulatedVehicleClient, EmulatedVehicleServer> {
-  public:
-    StatusCode setPropertyFromVehicle(const VehiclePropValue& value) override {
-        return this->onSetPropertyFromVehicle(value);
-    }
-};
-
 // Helper functions
 
+using EmulatedPassthroughConnector =
+        IPassThroughConnector<EmulatedVehicleClient, EmulatedVehicleServer>;
 using EmulatedPassthroughConnectorPtr = std::unique_ptr<EmulatedPassthroughConnector>;
 
 EmulatedPassthroughConnectorPtr makeEmulatedPassthroughConnector();
