@@ -32,8 +32,8 @@ static void canControllerService() {
     configureRpcThreadpool(16, true);
     LOG(DEBUG) << "CAN controller service starting...";
 
-    CanController canController;
-    if (canController.registerAsService("socketcan") != OK) {
+    sp<CanController> canController(new CanController);
+    if (canController->registerAsService("socketcan") != OK) {
         LOG(FATAL) << "Failed to register CAN controller";
         return;
     }
