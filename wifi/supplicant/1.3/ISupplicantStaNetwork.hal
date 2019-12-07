@@ -25,29 +25,44 @@ import @1.2::ISupplicantStaNetwork;
  * configuration it controls.
  */
 interface ISupplicantStaNetwork extends @1.2::ISupplicantStaNetwork {
-    /** Possble mask of values for Proto param. */
+    /**
+     * Possble mask of values for Proto param.
+     */
     enum ProtoMask : @1.0::ISupplicantStaNetwork.ProtoMask {
         WAPI = 1 << 2,
     };
 
-    /** Possble mask of values for KeyMgmt param. */
+    /**
+     * Possble mask of values for KeyMgmt param.
+     */
     enum KeyMgmtMask : @1.2::ISupplicantStaNetwork.KeyMgmtMask {
-        /* WAPI Psk */
+        /*
+         * WAPI Psk
+         */
         WAPI_PSK = 1 << 12,
-
-        /** WAPI Cert */
+        /**
+         * WAPI Cert
+         */
         WAPI_CERT = 1 << 13,
     };
 
-    /** Possble mask of values for PairwiseCipher param. */
+    /**
+     * Possble mask of values for PairwiseCipher param.
+     */
     enum PairwiseCipherMask : @1.2::ISupplicantStaNetwork.PairwiseCipherMask {
-        /** SMS4 Pairwise Cipher */
+        /**
+         * SMS4 Pairwise Cipher
+         */
         SMS4 = 1 << 7,
     };
 
-    /** Possble mask of values for GroupCipher param. */
+    /**
+     * Possble mask of values for GroupCipher param.
+     */
     enum GroupCipherMask : @1.2::ISupplicantStaNetwork.GroupCipherMask {
-        /** SMS4 Group Cipher */
+        /**
+         * SMS4 Group Cipher
+         */
         SMS4 = 1 << 7,
     };
 
@@ -99,8 +114,7 @@ interface ISupplicantStaNetwork extends @1.2::ISupplicantStaNetwork {
      *         |SupplicantStatusCode.FAILURE_UNKNOWN|
      * @return keyMgmtMask Combination of |KeyMgmtMask| values.
      */
-    getKeyMgmt_1_3()
-        generates (SupplicantStatus status, bitfield<KeyMgmtMask> keyMgmtMask);
+    getKeyMgmt_1_3() generates (SupplicantStatus status, bitfield<KeyMgmtMask> keyMgmtMask);
 
     /**
      * Set proto mask for the network.
@@ -154,8 +168,7 @@ interface ISupplicantStaNetwork extends @1.2::ISupplicantStaNetwork {
      * @return pairwiseCipherMask Combination of |PairwiseCipherMask| values.
      */
     getPairwiseCipher_1_3()
-        generates (SupplicantStatus status,
-            bitfield<PairwiseCipherMask> pairwiseCipherMask);
+        generates (SupplicantStatus status, bitfield<PairwiseCipherMask> pairwiseCipherMask);
 
     /**
      * Set pairwise cipher mask for the network.
@@ -183,8 +196,7 @@ interface ISupplicantStaNetwork extends @1.2::ISupplicantStaNetwork {
      * @return groupCipherMask Combination of |GroupCipherMask| values.
      */
     getGroupCipher_1_3()
-        generates (SupplicantStatus status,
-            bitfield<GroupCipherMask> groupCipherMask);
+        generates (SupplicantStatus status, bitfield<GroupCipherMask> groupCipherMask);
 
     /**
      * Set WAPI certificate suite for this network.
