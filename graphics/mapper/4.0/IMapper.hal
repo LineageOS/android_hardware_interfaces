@@ -56,6 +56,12 @@ interface IMapper {
          * BufferUsage.
          */
         bitfield<BufferUsage> usage;
+
+        /**
+         * The size in bytes of the reserved region associated with the buffer.
+         * See getReservedRegion for more information.
+         */
+        uint64_t reservedSize;
     };
 
     struct Rect {
@@ -71,9 +77,10 @@ interface IMapper {
      *
      * Since the buffer descriptor fully describes a buffer, any device
      * dependent or device independent checks must be performed here whenever
-     * possible. Specifically, when layered buffers are not supported, this
-     * function must return `UNSUPPORTED` if `description.layers` is great than
-     * 1.
+     * possible. When layered buffers are not supported, this function must
+     * return `UNSUPPORTED` if `description.layers` is great than 1. This
+     * function may return `UNSUPPORTED` if `description.reservedSize` is
+     * larger than a page.
      *
      * @param description Attributes of the descriptor.
      * @return error Error status of the call, which may be
@@ -560,5 +567,35 @@ interface IMapper {
      */
     dumpBuffers()
             generates (Error error, vec<BufferDump> bufferDumps);
+
+    /**
+     * Returns the region of shared memory associated with the buffer that is
+     * reserved for client use.
+     *
+     * The shared memory may be allocated from any shared memory allocator.
+     * The shared memory must be CPU-accessible and virtually contiguous. The
+     * starting address must be word-aligned.
+     *
+     * This function may only be called after importBuffer() has been called by the
+     * client. The reserved region must remain accessible until freeBuffer() has
+     * been called. After freeBuffer() has been called, the client must not access
+     * the reserved region.
+     *
+     * This reserved memory may be used in future versions of Android to
+     * help clients implement backwards compatible features without requiring
+     * IAllocator/IMapper updates.
+     *
+     * @param buffer Imported buffer handle.
+     * @return error Error status of the call, which may be
+     *     - `NONE` upon success.
+     *     - `BAD_BUFFER` if the buffer is invalid.
+     * @return reservedRegion CPU-accessible pointer to the reserved region
+     * @return reservedSize the size of the reservedRegion that was requested
+     *    in the BufferDescriptorInfo.
+     */
+    getReservedRegion(pointer buffer)
+            generates (Error error,
+                       pointer reservedRegion,
+                       uint64_t reservedSize);
 };
 

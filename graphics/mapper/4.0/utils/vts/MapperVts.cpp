@@ -310,6 +310,19 @@ Error Gralloc::getFromBufferDescriptorInfo(const IMapper::BufferDescriptorInfo& 
     return err;
 }
 
+Error Gralloc::getReservedRegion(const native_handle_t* bufferHandle, void** outReservedRegion,
+                                 uint64_t* outReservedSize) {
+    Error err;
+    mMapper->getReservedRegion(
+            const_cast<native_handle_t*>(bufferHandle),
+            [&](const auto& tmpError, const auto& tmpReservedRegion, const auto& tmpReservedSize) {
+                err = tmpError;
+                *outReservedRegion = tmpReservedRegion;
+                *outReservedSize = tmpReservedSize;
+            });
+    return err;
+}
+
 }  // namespace vts
 }  // namespace V4_0
 }  // namespace mapper
