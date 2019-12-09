@@ -29,13 +29,14 @@
 #include <android/hardware/neuralnetworks/1.2/IPreparedModelCallback.h>
 #include <android/hidl/allocator/1.0/IAllocator.h>
 #include <android/hidl/memory/1.0/IMemory.h>
+#include <gtest/gtest.h>
 #include <hidlmemory/mapping.h>
 
-#include <gtest/gtest.h>
 #include <algorithm>
 #include <chrono>
 #include <iostream>
 #include <numeric>
+#include <vector>
 
 #include "1.0/Utils.h"
 #include "1.2/Callbacks.h"
@@ -333,9 +334,9 @@ void EvaluatePreparedModel(const sp<IPreparedModel>& preparedModel, const TestMo
 
 void EvaluatePreparedModel(const sp<IPreparedModel>& preparedModel, const TestModel& testModel,
                            bool testDynamicOutputShape) {
-    std::initializer_list<OutputType> outputTypesList;
-    std::initializer_list<MeasureTiming> measureTimingList;
-    std::initializer_list<Executor> executorList;
+    std::vector<OutputType> outputTypesList;
+    std::vector<MeasureTiming> measureTimingList;
+    std::vector<Executor> executorList;
 
     if (testDynamicOutputShape) {
         outputTypesList = {OutputType::UNSPECIFIED, OutputType::INSUFFICIENT};
