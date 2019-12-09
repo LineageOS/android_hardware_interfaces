@@ -89,7 +89,7 @@ Return<void> SoundTriggerHw::getProperties(ISoundTriggerHw::getProperties_cb _hi
     ALOGV("getProperties() mHwDevice %p", mHwDevice);
     int ret;
     struct sound_trigger_properties halProperties;
-    ISoundTriggerHw::Properties properties;
+    V2_0::ISoundTriggerHw::Properties properties;
 
     if (mHwDevice == NULL) {
         ret = -ENODEV;
@@ -333,7 +333,7 @@ void SoundTriggerHw::convertUuidToHal(sound_trigger_uuid_t* halUuid, const Uuid*
 }
 
 void SoundTriggerHw::convertPropertiesFromHal(
-        ISoundTriggerHw::Properties* properties,
+        V2_0::ISoundTriggerHw::Properties* properties,
         const struct sound_trigger_properties* halProperties) {
     properties->implementor = halProperties->implementor;
     properties->description = halProperties->description;
@@ -348,6 +348,16 @@ void SoundTriggerHw::convertPropertiesFromHal(
     properties->concurrentCapture = halProperties->concurrent_capture;
     properties->triggerInEvent = halProperties->trigger_in_event;
     properties->powerConsumptionMw = halProperties->power_consumption_mw;
+}
+
+void SoundTriggerHw::convertPropertiesFromHal(
+        V2_3::Properties* properties, const struct sound_trigger_properties_header* header) {
+    if (header->version >= SOUND_TRIGGER_DEVICE_API_VERSION_1_3) {
+        const struct sound_trigger_properties_extended_1_3* halProperties =
+                (const struct sound_trigger_properties_extended_1_3*)header;
+        convertPropertiesFromHal(&properties->base, &halProperties->base);
+        properties->supportedModelArch = halProperties->supported_model_arch;
+    }
 }
 
 void SoundTriggerHw::convertTriggerPhraseToHal(struct sound_trigger_phrase* halTriggerPhrase,
@@ -707,6 +717,29 @@ Return<int32_t> SoundTriggerHw::getModelState(int32_t modelHandle) {
 }
 
 // Begin V2_3 implementation
+
+Return<void> SoundTriggerHw::getProperties_2_3(ISoundTriggerHw::getProperties_2_3_cb _hidl_cb) {
+    ALOGV("getProperties_2_3() mHwDevice %p", mHwDevice);
+    int ret = 0;
+    V2_3::Properties properties;
+    const struct sound_trigger_properties_header* header;
+
+    if (mHwDevice == NULL) {
+        ret = -ENODEV;
+        goto exit;
+    }
+
+    header = mHwDevice->get_properties_extended(mHwDevice);
+
+    convertPropertiesFromHal(&properties, header);
+
+    ALOGV("getProperties_2_3 implementor %s supportedModelArch %s",
+          properties.base.implementor.c_str(), properties.supportedModelArch.c_str());
+
+exit:
+    _hidl_cb(ret, properties);
+    return Void();
+}
 
 Return<int32_t> SoundTriggerHw::setParameter(V2_0::SoundModelHandle modelHandle,
                                              ModelParameter modelParam, int32_t value) {

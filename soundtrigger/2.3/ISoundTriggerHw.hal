@@ -26,6 +26,18 @@ import @2.2::ISoundTriggerHw;
 interface ISoundTriggerHw extends @2.2::ISoundTriggerHw {
 
     /**
+     * Retrieve extended implementation properties.
+     * The returned properties includes what is returned from the
+     * getProperties along with expanded implementation details.
+     *
+     * @return retval Operation completion status: 0 in case of success,
+     *                -ENODEV in case of initialization error.
+     * @return properties A Properties structure containing implementation
+     *                    description and capabilities.
+     */
+    getProperties_2_3() generates (int32_t retval, Properties properties);
+
+    /**
      * Set a model specific parameter with the given value. This parameter
      * will keep its value for the duration the model is loaded regardless of starting and stopping
      * recognition. Once the model is unloaded, the value will be lost.
