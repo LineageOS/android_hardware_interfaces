@@ -544,7 +544,7 @@ class RadioResponse_v1_5 : public ::android::hardware::radio::V1_5::IRadioRespon
 
     Return<void> setupDataCallResponse_1_5(
             const RadioResponseInfo& info,
-            const android::hardware::radio::V1_4::SetupDataCallResult& dcResponse);
+            const android::hardware::radio::V1_5::SetupDataCallResult& dcResponse);
 
     Return<void> setInitialAttachApnResponse_1_5(const RadioResponseInfo& info);
 
