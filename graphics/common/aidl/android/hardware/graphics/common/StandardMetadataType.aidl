@@ -279,4 +279,43 @@ enum StandardMetadataType {
      * 4 bytes written in little endian.
      */
     BLEND_MODE = 17,
+
+    /**
+     * Can be used to get or set static HDR metadata specified by SMPTE ST 2086.
+     *
+     * This metadata is a stable aidl android.hardware.graphics.common.Smpte2086.
+     *
+     * This is not used in tone mapping until it has been set for the first time.
+     *
+     * When it is encoded into a byte stream, each float member is represented by 4 bytes written in
+     * little endian. The ordering of float values follows the definition of Smpte2086 and XyColor.
+     * If this is unset when encoded into a byte stream, the byte stream is empty.
+     */
+    SMPTE2086 = 18,
+
+    /**
+     * Can be used to get or set static HDR metadata specified by CTA 861.3.
+     *
+     * This metadata is a stable aidl android.hardware.graphics.common.Cta861_3.
+     *
+     * This is not used in tone mapping until it has been set for the first time.
+     *
+     * When it is encoded into a byte stream, each float member is represented by 4 bytes written in
+     * little endian. The ordering of float values follows the definition of Cta861_3.
+     * If this is unset when encoded into a byte stream, the byte stream is empty.
+     */
+    CTA861_3 = 19,
+
+    /**
+     * Can be used to get or set dynamic HDR metadata specified by SMPTE ST 2094-40:2016.
+     *
+     * This metadata is uint8_t byte array.
+     *
+     * This is not used in tone mapping until it has been set for the first time.
+     *
+     * When it is encoded into a byte stream, the length of the HDR metadata byte array is written
+     * using 8 bytes in little endian. It is followed by the uint8_t byte array.
+     * If this is unset when encoded into a byte stream, the byte stream is empty.
+     */
+    SMPTE2094_40 = 20,
 }
