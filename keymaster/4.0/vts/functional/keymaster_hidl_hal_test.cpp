@@ -423,18 +423,25 @@ bool verify_attestation_record(const string& challenge, const string& app_id,
     EXPECT_EQ(ErrorCode::OK, error);
 
     if (avb_verification_enabled()) {
-        property_get("ro.boot.vbmeta.digest", property_value, "nogood");
-        EXPECT_NE(strcmp(property_value, "nogood"), 0);
+        EXPECT_NE(property_get("ro.boot.vbmeta.digest", property_value, ""), 0);
         string prop_string(property_value);
         EXPECT_EQ(prop_string.size(), 64);
         EXPECT_EQ(prop_string, bin2hex(verified_boot_hash));
 
-        property_get("ro.boot.vbmeta.device_state", property_value, "nogood");
-        EXPECT_NE(strcmp(property_value, "nogood"), 0);
+        EXPECT_NE(property_get("ro.boot.vbmeta.device_state", property_value, ""), 0);
         if (!strcmp(property_value, "unlocked")) {
             EXPECT_FALSE(device_locked);
         } else {
             EXPECT_TRUE(device_locked);
+        }
+
+        // Check that the expected result from VBMeta matches the build type. Only a user build
+        // should have AVB reporting the device is locked.
+        EXPECT_NE(property_get("ro.build.type", property_value, ""), 0);
+        if (!strcmp(property_value, "user")) {
+            EXPECT_TRUE(device_locked);
+        } else {
+            EXPECT_FALSE(device_locked);
         }
     }
 
@@ -442,8 +449,7 @@ bool verify_attestation_record(const string& challenge, const string& app_id,
     std::string empty_boot_key(32, '\0');
     std::string verified_boot_key_str((const char*)verified_boot_key.data(),
                                       verified_boot_key.size());
-    property_get("ro.boot.verifiedbootstate", property_value, "nogood");
-    EXPECT_NE(property_value, "nogood");
+    EXPECT_NE(property_get("ro.boot.verifiedbootstate", property_value, ""), 0);
     if (!strcmp(property_value, "green")) {
         EXPECT_EQ(verified_boot_state, KM_VERIFIED_BOOT_VERIFIED);
         EXPECT_NE(0, memcmp(verified_boot_key.data(), empty_boot_key.data(),
