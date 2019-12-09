@@ -197,9 +197,9 @@ class WifiChip : public V1_4::IWifiChip {
     std::pair<WifiStatus, sp<IWifiP2pIface>> getP2pIfaceInternal(
         const std::string& ifname);
     WifiStatus removeP2pIfaceInternal(const std::string& ifname);
-    std::pair<WifiStatus, sp<IWifiStaIface>> createStaIfaceInternal();
+    std::pair<WifiStatus, sp<V1_3::IWifiStaIface>> createStaIfaceInternal();
     std::pair<WifiStatus, std::vector<hidl_string>> getStaIfaceNamesInternal();
-    std::pair<WifiStatus, sp<IWifiStaIface>> getStaIfaceInternal(
+    std::pair<WifiStatus, sp<V1_3::IWifiStaIface>> getStaIfaceInternal(
         const std::string& ifname);
     WifiStatus removeStaIfaceInternal(const std::string& ifname);
     std::pair<WifiStatus, sp<V1_0::IWifiRttController>>
