@@ -16,9 +16,11 @@
 
 #define LOG_TAG "VtsHalGraphicsMapperV2_1TargetTest"
 
-#include <VtsHalHidlTargetTestBase.h>
 #include <android-base/logging.h>
 #include <android/hardware/graphics/mapper/2.1/IMapper.h>
+#include <gtest/gtest.h>
+#include <hidl/GtestPrinter.h>
+#include <hidl/ServiceManagement.h>
 #include <mapper-vts/2.1/MapperVts.h>
 
 namespace android {
@@ -34,28 +36,12 @@ using android::hardware::graphics::common::V1_1::BufferUsage;
 using android::hardware::graphics::common::V1_1::PixelFormat;
 using V2_0::Error;
 
-// Test environment for graphics.mapper.
-class GraphicsMapperHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
-   public:
-    // get the test environment singleton
-    static GraphicsMapperHidlEnvironment* Instance() {
-        static GraphicsMapperHidlEnvironment* instance = new GraphicsMapperHidlEnvironment;
-        return instance;
-    }
-
-    virtual void registerTestServices() override {
-        registerTestService<IAllocator>();
-        registerTestService<IMapper>();
-    }
-};
-
-class GraphicsMapperHidlTest : public ::testing::VtsHalHidlTargetTestBase {
-   protected:
+class GraphicsMapperHidlTest
+    : public ::testing::TestWithParam<std::tuple<std::string, std::string>> {
+  protected:
     void SetUp() override {
-        ASSERT_NO_FATAL_FAILURE(
-            mGralloc = std::make_unique<Gralloc>(
-                GraphicsMapperHidlEnvironment::Instance()->getServiceName<IAllocator>(),
-                GraphicsMapperHidlEnvironment::Instance()->getServiceName<IMapper>()));
+        ASSERT_NO_FATAL_FAILURE(mGralloc = std::make_unique<Gralloc>(std::get<0>(GetParam()),
+                                                                     std::get<1>(GetParam())));
 
         mDummyDescriptorInfo.width = 64;
         mDummyDescriptorInfo.height = 64;
@@ -74,7 +60,7 @@ class GraphicsMapperHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 /**
  * Test that IMapper::validateBufferSize works.
  */
-TEST_F(GraphicsMapperHidlTest, ValidateBufferSizeBasic) {
+TEST_P(GraphicsMapperHidlTest, ValidateBufferSizeBasic) {
     const native_handle_t* bufferHandle;
     uint32_t stride;
     ASSERT_NO_FATAL_FAILURE(bufferHandle = mGralloc->allocate(mDummyDescriptorInfo, true, &stride));
@@ -87,7 +73,7 @@ TEST_F(GraphicsMapperHidlTest, ValidateBufferSizeBasic) {
 /**
  * Test IMapper::validateBufferSize with invalid buffers.
  */
-TEST_F(GraphicsMapperHidlTest, ValidateBufferSizeBadBuffer) {
+TEST_P(GraphicsMapperHidlTest, ValidateBufferSizeBadBuffer) {
     native_handle_t* invalidHandle = nullptr;
     Error ret = mGralloc->getMapper()->validateBufferSize(invalidHandle, mDummyDescriptorInfo,
                                                           mDummyDescriptorInfo.width);
@@ -114,7 +100,7 @@ TEST_F(GraphicsMapperHidlTest, ValidateBufferSizeBadBuffer) {
 /**
  * Test IMapper::validateBufferSize with invalid descriptor and/or stride.
  */
-TEST_F(GraphicsMapperHidlTest, ValidateBufferSizeBadValue) {
+TEST_P(GraphicsMapperHidlTest, ValidateBufferSizeBadValue) {
     auto info = mDummyDescriptorInfo;
     info.width = 1024;
     info.height = 1024;
@@ -161,7 +147,7 @@ TEST_F(GraphicsMapperHidlTest, ValidateBufferSizeBadValue) {
 /**
  * Test IMapper::getTransportSize.
  */
-TEST_F(GraphicsMapperHidlTest, GetTransportSizeBasic) {
+TEST_P(GraphicsMapperHidlTest, GetTransportSizeBasic) {
     const native_handle_t* bufferHandle;
     uint32_t numFds;
     uint32_t numInts;
@@ -173,7 +159,7 @@ TEST_F(GraphicsMapperHidlTest, GetTransportSizeBasic) {
 /**
  * Test IMapper::getTransportSize with invalid buffers.
  */
-TEST_F(GraphicsMapperHidlTest, GetTransportSizeBadBuffer) {
+TEST_P(GraphicsMapperHidlTest, GetTransportSizeBadBuffer) {
     native_handle_t* invalidHandle = nullptr;
     mGralloc->getMapper()->getTransportSize(
         invalidHandle, [&](const auto& tmpError, const auto&, const auto&) {
@@ -203,20 +189,28 @@ TEST_F(GraphicsMapperHidlTest, GetTransportSizeBadBuffer) {
 /**
  * Test IMapper::createDescriptor with valid descriptor info.
  */
-TEST_F(GraphicsMapperHidlTest, CreateDescriptor_2_1Basic) {
+TEST_P(GraphicsMapperHidlTest, CreateDescriptor_2_1Basic) {
     ASSERT_NO_FATAL_FAILURE(mGralloc->createDescriptor(mDummyDescriptorInfo));
 }
 
 /**
  * Test IMapper::createDescriptor with invalid descriptor info.
  */
-TEST_F(GraphicsMapperHidlTest, CreateDescriptor_2_1Negative) {
+TEST_P(GraphicsMapperHidlTest, CreateDescriptor_2_1Negative) {
     auto info = mDummyDescriptorInfo;
     info.width = 0;
     mGralloc->getMapper()->createDescriptor_2_1(info, [&](const auto& tmpError, const auto&) {
         EXPECT_EQ(Error::BAD_VALUE, tmpError) << "createDescriptor did not fail with BAD_VALUE";
     });
 }
+
+INSTANTIATE_TEST_CASE_P(
+        PerInstance, GraphicsMapperHidlTest,
+        testing::Combine(
+                testing::ValuesIn(
+                        android::hardware::getAllHalInstanceNames(IAllocator::descriptor)),
+                testing::ValuesIn(android::hardware::getAllHalInstanceNames(IMapper::descriptor))),
+        android::hardware::PrintInstanceTupleNameToString<>);
 
 }  // namespace
 }  // namespace vts
@@ -225,15 +219,3 @@ TEST_F(GraphicsMapperHidlTest, CreateDescriptor_2_1Negative) {
 }  // namespace graphics
 }  // namespace hardware
 }  // namespace android
-
-int main(int argc, char** argv) {
-    using android::hardware::graphics::mapper::V2_1::vts::GraphicsMapperHidlEnvironment;
-    ::testing::AddGlobalTestEnvironment(GraphicsMapperHidlEnvironment::Instance());
-    ::testing::InitGoogleTest(&argc, argv);
-    GraphicsMapperHidlEnvironment::Instance()->init(&argc, argv);
-
-    int status = RUN_ALL_TESTS();
-    LOG(INFO) << "Test result = " << status;
-
-    return status;
-}
