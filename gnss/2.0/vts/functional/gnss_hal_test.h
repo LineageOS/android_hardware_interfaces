@@ -181,6 +181,12 @@ class GnssHalTest : public testing::TestWithParam<std::string> {
     void StopAndClearLocations();
 
     /*
+     * IsGnssHalVersion_2_0:
+     * returns  true if the GNSS HAL version is exactly 2.0.
+     */
+    bool IsGnssHalVersion_2_0() const;
+
+    /*
      * SetPositionMode:
      * Helper function to set positioning mode and verify output
      */

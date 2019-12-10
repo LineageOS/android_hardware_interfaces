@@ -23,8 +23,9 @@ cc_binary {
     srcs: [
         "Gnss.cpp",
         "GnssMeasurement.cpp",
+        "GnssMeasurementCorrections.cpp",
         "GnssConfiguration.cpp",
-        "service.cpp"
+        "service.cpp",
     ],
     shared_libs: [
         "libhidlbase",

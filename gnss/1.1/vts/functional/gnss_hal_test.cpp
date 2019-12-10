@@ -172,7 +172,14 @@ bool GnssHalTest::IsGnssHalVersion_1_1() const {
                 hasGnssHalVersion_2_0 = registered.size() != 0;
             });
 
-    return hasGnssHalVersion_1_1 && !hasGnssHalVersion_2_0;
+    bool hasGnssHalVersion_2_1 = false;
+    manager->listManifestByInterface(
+            "android.hardware.gnss@2.1::IGnss",
+            [&hasGnssHalVersion_2_1](const hidl_vec<hidl_string>& registered) {
+                hasGnssHalVersion_2_1 = registered.size() != 0;
+            });
+
+    return hasGnssHalVersion_1_1 && !hasGnssHalVersion_2_0 && !hasGnssHalVersion_2_1;
 }
 
 GnssConstellationType GnssHalTest::startLocationAndGetNonGpsConstellation(
