@@ -19,7 +19,7 @@
 
 #include <android-base/macros.h>
 #include <android/hardware/wifi/1.0/IWifiNanIfaceEventCallback.h>
-#include <android/hardware/wifi/1.2/IWifiNanIface.h>
+#include <android/hardware/wifi/1.4/IWifiNanIface.h>
 
 #include "hidl_callback_util.h"
 #include "wifi_iface_util.h"
@@ -31,11 +31,12 @@ namespace wifi {
 namespace V1_4 {
 namespace implementation {
 using namespace android::hardware::wifi::V1_0;
+using namespace android::hardware::wifi::V1_2;
 
 /**
  * HIDL interface object used to control a NAN Iface instance.
  */
-class WifiNanIface : public V1_2::IWifiNanIface {
+class WifiNanIface : public V1_4::IWifiNanIface {
    public:
     WifiNanIface(const std::string& ifname,
                  const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal,
@@ -53,9 +54,11 @@ class WifiNanIface : public V1_2::IWifiNanIface {
         registerEventCallback_cb hidl_status_cb) override;
     Return<void> getCapabilitiesRequest(
         uint16_t cmd_id, getCapabilitiesRequest_cb hidl_status_cb) override;
-    Return<void> enableRequest(uint16_t cmd_id, const NanEnableRequest& msg,
+    Return<void> enableRequest(uint16_t cmd_id,
+                               const V1_0::NanEnableRequest& msg,
                                enableRequest_cb hidl_status_cb) override;
-    Return<void> configRequest(uint16_t cmd_id, const NanConfigRequest& msg,
+    Return<void> configRequest(uint16_t cmd_id,
+                               const V1_0::NanConfigRequest& msg,
                                configRequest_cb hidl_status_cb) override;
     Return<void> disableRequest(uint16_t cmd_id,
                                 disableRequest_cb hidl_status_cb) override;
@@ -94,10 +97,18 @@ class WifiNanIface : public V1_2::IWifiNanIface {
         const sp<V1_2::IWifiNanIfaceEventCallback>& callback,
         registerEventCallback_1_2_cb hidl_status_cb) override;
     Return<void> enableRequest_1_2(
-        uint16_t cmd_id, const NanEnableRequest& msg1,
+        uint16_t cmd_id, const V1_0::NanEnableRequest& msg1,
         const V1_2::NanConfigRequestSupplemental& msg2,
         enableRequest_1_2_cb hidl_status_cb) override;
     Return<void> configRequest_1_2(
+        uint16_t cmd_id, const V1_0::NanConfigRequest& msg1,
+        const V1_2::NanConfigRequestSupplemental& msg2,
+        configRequest_1_2_cb hidl_status_cb) override;
+    Return<void> enableRequest_1_4(
+        uint16_t cmd_id, const NanEnableRequest& msg1,
+        const V1_2::NanConfigRequestSupplemental& msg2,
+        enableRequest_1_2_cb hidl_status_cb) override;
+    Return<void> configRequest_1_4(
         uint16_t cmd_id, const NanConfigRequest& msg1,
         const V1_2::NanConfigRequestSupplemental& msg2,
         configRequest_1_2_cb hidl_status_cb) override;
@@ -110,9 +121,9 @@ class WifiNanIface : public V1_2::IWifiNanIface {
         const sp<V1_0::IWifiNanIfaceEventCallback>& callback);
     WifiStatus getCapabilitiesRequestInternal(uint16_t cmd_id);
     WifiStatus enableRequestInternal(uint16_t cmd_id,
-                                     const NanEnableRequest& msg);
+                                     const V1_0::NanEnableRequest& msg);
     WifiStatus configRequestInternal(uint16_t cmd_id,
-                                     const NanConfigRequest& msg);
+                                     const V1_0::NanConfigRequest& msg);
     WifiStatus disableRequestInternal(uint16_t cmd_id);
     WifiStatus startPublishRequestInternal(uint16_t cmd_id,
                                            const NanPublishRequest& msg);
@@ -136,9 +147,15 @@ class WifiNanIface : public V1_2::IWifiNanIface {
     WifiStatus registerEventCallback_1_2Internal(
         const sp<V1_2::IWifiNanIfaceEventCallback>& callback);
     WifiStatus enableRequest_1_2Internal(
-        uint16_t cmd_id, const NanEnableRequest& msg1,
+        uint16_t cmd_id, const V1_0::NanEnableRequest& msg1,
         const V1_2::NanConfigRequestSupplemental& msg2);
     WifiStatus configRequest_1_2Internal(
+        uint16_t cmd_id, const V1_0::NanConfigRequest& msg,
+        const V1_2::NanConfigRequestSupplemental& msg2);
+    WifiStatus enableRequest_1_4Internal(
+        uint16_t cmd_id, const NanEnableRequest& msg1,
+        const V1_2::NanConfigRequestSupplemental& msg2);
+    WifiStatus configRequest_1_4Internal(
         uint16_t cmd_id, const NanConfigRequest& msg,
         const V1_2::NanConfigRequestSupplemental& msg2);
 
