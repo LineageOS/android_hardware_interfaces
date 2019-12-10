@@ -52,8 +52,7 @@ interface IWifiNanIface extends @1.2::IWifiNanIface {
      *         |WifiStatusCode.ERROR_UNKNOWN|
      */
     enableRequest_1_4(CommandIdShort cmdId, NanEnableRequest msg1,
-                      NanConfigRequestSupplemental msg2)
-        generates (WifiStatus status);
+        NanConfigRequestSupplemental msg2) generates (WifiStatus status);
 
     /**
      * Configure NAN: configures an existing NAN functionality (i.e. assumes
@@ -75,6 +74,5 @@ interface IWifiNanIface extends @1.2::IWifiNanIface {
      *         |WifiStatusCode.ERROR_UNKNOWN|
      */
     configRequest_1_4(CommandIdShort cmdId, NanConfigRequest msg1,
-                      NanConfigRequestSupplemental msg2)
-        generates (WifiStatus status);
+        NanConfigRequestSupplemental msg2) generates (WifiStatus status);
 };

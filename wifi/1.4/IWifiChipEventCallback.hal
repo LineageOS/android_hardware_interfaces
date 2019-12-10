@@ -33,6 +33,7 @@ interface IWifiChipEventCallback extends @1.2::IWifiChipEventCallback {
          * only for debugging purposes.
          */
         uint32_t radioId;
+
         /**
          * List of bands on which this radio chain is operating.
          * Can be one of:
@@ -47,7 +48,10 @@ interface IWifiChipEventCallback extends @1.2::IWifiChipEventCallback {
          * time sharing across the 3 bands).
          */
         WifiBand bandInfo;
-        /** List of interfaces on this radio chain (hardware MAC). */
+
+        /**
+         * List of interfaces on this radio chain (hardware MAC).
+         */
         vec<IfaceInfo> ifaceInfos;
     };
 
