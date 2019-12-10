@@ -42,16 +42,20 @@ interface IRadio extends @1.4::IRadio {
      * -EUTRAN   - RSRP/RSRQ/RSSNR
      * -NGRAN    - SSRSRP/SSRSRQ/SSSINR
      *
-     * Note: Reporting criteria must be individually set for each RAN. For any unset reporting
-     * criteria, the value is implementation-defined.
+     * Note: Reporting criteria must be individually set for each RAN. For each RAN, if none of
+     * reporting criteria of any measurement is set enabled
+     * (see @1.5::SignalThresholdInfo.isEnabled), the reporting criteria for this RAN is
+     * implementation-defined. For each RAN, if any of reporting criteria of any measure is set
+     * enabled, the reporting criteria of the other measures in this RAN are set disabled
+     * (see @1.5::SignalThresholdInfo.isEnabled) until they are set enabled.
      *
      * Response callback is
      * IRadioResponse.setSignalStrengthReportingCriteriaResponse_1_5()
      *
      * @param serial Serial number of request.
      * @param signalThresholdInfo Signal threshold info including the threshold values,
-     *                            hysteresisDb, and hysteresisMs. See @1.5::SignalThresholdInfo
-     *                            for details.
+     *                            hysteresisDb, hysteresisMs and isEnabled.
+     *                            See @1.5::SignalThresholdInfo for details.
      * @param accessNetwork The type of network for which to apply these thresholds.
      */
     oneway setSignalStrengthReportingCriteria_1_5(int32_t serial,
