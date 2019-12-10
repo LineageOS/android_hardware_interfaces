@@ -175,6 +175,11 @@ hidl_vec<GnssSvInfoV2_1> Utils::getMockSvInfoListV2_1() {
                                                         25.0, 66.0, 247.0),
                                       V2_0::GnssConstellationType::GLONASS),
                     20.0),
+            getMockSvInfoV2_1(
+                    getMockSvInfoV2_0(getMockSvInfoV1_0(3, V1_0::GnssConstellationType::UNKNOWN,
+                                                        22.0, 35.0, 112.0),
+                                      V2_0::GnssConstellationType::IRNSS),
+                    19.7),
     };
     return gnssSvInfoList;
 }

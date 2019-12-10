@@ -32,7 +32,7 @@ namespace implementation {
 
 sp<V2_1::IGnssCallback> Gnss::sGnssCallback_2_1 = nullptr;
 
-Gnss::Gnss() : mMinIntervalMs(1000) {}
+Gnss::Gnss() : mMinIntervalMs(1000), mGnssConfiguration{new GnssConfiguration()} {}
 
 Gnss::~Gnss() {
     stop();
@@ -48,7 +48,7 @@ Return<bool> Gnss::start() {
     mIsActive = true;
     mThread = std::thread([this]() {
         while (mIsActive == true) {
-            auto svStatus = Utils::getMockSvInfoListV2_1();
+            auto svStatus = filterBlacklistedSatellitesV2_1(Utils::getMockSvInfoListV2_1());
             this->reportSvStatus(svStatus);
 
             const auto location = Utils::getMockLocationV2_0();
@@ -58,6 +58,16 @@ Return<bool> Gnss::start() {
         }
     });
     return true;
+}
+
+hidl_vec<GnssSvInfo> Gnss::filterBlacklistedSatellitesV2_1(hidl_vec<GnssSvInfo> gnssSvInfoList) {
+    for (uint32_t i = 0; i < gnssSvInfoList.size(); i++) {
+        if (mGnssConfiguration->isBlacklistedV2_1(gnssSvInfoList[i])) {
+            gnssSvInfoList[i].v2_0.v1_0.svFlag &=
+                    ~static_cast<uint8_t>(V1_0::IGnssCallback::GnssSvFlags::USED_IN_FIX);
+        }
+    }
+    return gnssSvInfoList;
 }
 
 Return<bool> Gnss::stop() {
@@ -268,6 +278,10 @@ Return<bool> Gnss::setCallback_2_1(const sp<V2_1::IGnssCallback>& callback) {
 Return<sp<V2_1::IGnssMeasurement>> Gnss::getExtensionGnssMeasurement_2_1() {
     ALOGD("Gnss::getExtensionGnssMeasurement_2_1");
     return new GnssMeasurement();
+}
+
+Return<sp<V2_1::IGnssConfiguration>> Gnss::getExtensionGnssConfiguration_2_1() {
+    return mGnssConfiguration;
 }
 
 void Gnss::reportSvStatus(const hidl_vec<GnssSvInfo>& svInfoList) const {
