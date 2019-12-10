@@ -16,8 +16,6 @@
 
 #include <mapper-vts/2.1/MapperVts.h>
 
-#include <VtsHalHidlTargetTestBase.h>
-
 namespace android {
 namespace hardware {
 namespace graphics {
