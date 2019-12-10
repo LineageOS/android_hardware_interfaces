@@ -73,6 +73,9 @@ class Gralloc {
                const IMapper::Rect& accessRegion, int acquireFence);
     int unlock(const native_handle_t* bufferHandle);
 
+    int flushLockedBuffer(const native_handle_t* bufferHandle);
+    void rereadLockedBuffer(const native_handle_t* bufferHandle);
+
     bool validateBufferSize(const native_handle_t* bufferHandle,
                             const IMapper::BufferDescriptorInfo& descriptorInfo, uint32_t stride);
     void getTransportSize(const native_handle_t* bufferHandle, uint32_t* outNumFds,
@@ -89,6 +92,9 @@ class Gralloc {
     Error getFromBufferDescriptorInfo(const IMapper::BufferDescriptorInfo& descriptorInfo,
                                       const IMapper::MetadataType& metadataType,
                                       hidl_vec<uint8_t>* outVec);
+
+    Error getReservedRegion(const native_handle_t* bufferHandle, void** outReservedRegion,
+                            uint64_t* outReservedSize);
 
   private:
     void init(const std::string& allocatorServiceName, const std::string& mapperServiceName);

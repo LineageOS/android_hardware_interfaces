@@ -113,6 +113,15 @@ struct SignalThresholdInfo {
      * A vector size of 0 disables the use of thresholds for reporting.
      */
     vec<int32_t> thresholds;
+
+    /**
+     * Indicates whether the reporting criteria of the corresponding measurement is enabled
+     * (isEnabled==true) or disabled (isEnabled==false).
+     *
+     * If enabled, modem must trigger the report based on the criteria.
+     * If disabled, modem must not trigger the report based on the criteria.
+     */
+    bool isEnabled;
 };
 
 enum AccessNetwork : @1.4::AccessNetwork {

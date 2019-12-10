@@ -20,6 +20,7 @@ import @2.0::IGnss;
 
 import IGnssCallback;
 import IGnssMeasurement;
+import IGnssConfiguration;
 
 /**
  * Represents the standard GNSS (Global Navigation Satellite System) interface.
@@ -50,4 +51,15 @@ interface IGnss extends @2.0::IGnss {
      * @return gnssMeasurementIface Handle to the IGnssMeasurement interface.
      */
     getExtensionGnssMeasurement_2_1() generates (IGnssMeasurement gnssMeasurementIface);
+
+    /**
+     * This method returns the IGnssConfiguration interface.
+     *
+     * At least one of getExtensionGnssConfiguration(), getExtensionGnssConfiguration_1_1(),
+     * getExtensionGnssConfiguration_2_0(), and getExtensionGnssConfiguration_2_1() methods must
+     * return a non-null handle, and the other methods must return nullptr.
+     *
+     * @return gnssConfigurationIface Handle to the IGnssConfiguration interface.
+     */
+    getExtensionGnssConfiguration_2_1() generates (IGnssConfiguration gnssConfigurationIface);
 };
