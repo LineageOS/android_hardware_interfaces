@@ -72,8 +72,8 @@ interface IRadio extends @1.4::IRadio {
      * The preference is per SIM, and must be remembered over power cycle, modem reboot, or SIM
      * insertion / unplug.
      *
-     * @param serial: Serial number of request.
-     * @param enable: true if to enable uiccApplications, false to disable.
+     * @param serial Serial number of request.
+     * @param enable true if to enable uiccApplications, false to disable.
 
      * Response callback is IRadioResponse.enableUiccApplicationsResponse()
      */
@@ -90,17 +90,6 @@ interface IRadio extends @1.4::IRadio {
      * Response callback is IRadioResponse.areUiccApplicationsEnabledResponse()
      */
     oneway areUiccApplicationsEnabled(int32_t serial);
-
-    /**
-     * Query whether disabling and enabling UiccApplications functionality is supported. If not,
-     * calling enableUiccApplications with a different value will return
-     * RadioError:REQUEST_NOT_SUPPORTED.
-     *
-     * @param serial Serial number of request.
-     *
-     * Response callback is IRadioResponse.canToggleUiccApplicationsEnablementResponse()
-     */
-    oneway canToggleUiccApplicationsEnablement(int32_t serial);
 
     /**
      * Specify which bands modem's background scan must act on.
