@@ -274,6 +274,7 @@ interface IStream {
      *
      * @param minSizeFrames minimum buffer size requested. The actual buffer
      *                     size returned in struct MmapBufferInfo can be larger.
+     *                     The size must be a positive value.
      * @return retval OK in case the success.
      *                NOT_SUPPORTED on non mmap mode streams
      *                NOT_INITIALIZED in case of memory allocation error
