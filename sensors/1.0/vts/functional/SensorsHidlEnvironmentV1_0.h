@@ -32,22 +32,13 @@ class SensorsHidlTest;
 class SensorsHidlEnvironmentV1_0 : public SensorsHidlEnvironmentBase {
    public:
     using Event = ::android::hardware::sensors::V1_0::Event;
-    // get the test environment singleton
-    static SensorsHidlEnvironmentV1_0* Instance() {
-        static SensorsHidlEnvironmentV1_0* instance = new SensorsHidlEnvironmentV1_0();
-        return instance;
-    }
+    SensorsHidlEnvironmentV1_0(const std::string& service_name)
+        : SensorsHidlEnvironmentBase(service_name) {}
 
-    virtual void registerTestServices() override {
-        registerTestService<android::hardware::sensors::V1_0::ISensors>();
-    }
-
-   private:
+  private:
     friend SensorsHidlTest;
     // sensors hidl service
     sp<android::hardware::sensors::V1_0::ISensors> sensors;
-
-    SensorsHidlEnvironmentV1_0() {}
 
     bool resetHal() override;
     void startPollingThread() override;
