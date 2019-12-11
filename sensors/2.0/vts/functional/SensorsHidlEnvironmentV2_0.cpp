@@ -58,8 +58,7 @@ struct SensorsCallback : ISensorsCallback {
 bool SensorsHidlEnvironmentV2_0::resetHal() {
     bool succeed = false;
     do {
-        mSensors = ISensors::getService(
-            SensorsHidlEnvironmentV2_0::Instance()->getServiceName<ISensors>());
+        mSensors = ISensors::getService(mServiceName);
         if (mSensors == nullptr) {
             break;
         }
