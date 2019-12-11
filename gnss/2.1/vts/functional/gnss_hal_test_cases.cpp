@@ -384,7 +384,7 @@ TEST_P(GnssHalTest, BlacklistIndividualSatellites) {
 }
 
 /*
- * BlacklistConstellation:
+ * BlacklistConstellationLocationOff:
  *
  * 1) Turns on location, waits for 3 locations, ensuring they are valid, and checks corresponding
  * GnssStatus for any non-GPS constellations.
@@ -393,48 +393,17 @@ TEST_P(GnssHalTest, BlacklistIndividualSatellites) {
  * GnssStatus does not use any constellation but GPS.
  * 4a & b) Clean up by turning off location, and send in empty blacklist.
  */
-TEST_P(GnssHalTest, BlacklistConstellation) {
+TEST_P(GnssHalTest, BlacklistConstellationLocationOff) {
     const int kLocationsToAwait = 3;
-
-    gnss_cb_->location_cbq_.reset();
-    StartAndCheckLocations(kLocationsToAwait);
-    const int location_called_count = gnss_cb_->location_cbq_.calledCount();
-
-    // Tolerate 1 less sv status to handle edge cases in reporting.
-    int sv_info_list_cbq_size = gnss_cb_->sv_info_list_cbq_.size();
-    EXPECT_GE(sv_info_list_cbq_size + 1, kLocationsToAwait);
-    ALOGD("Observed %d GnssSvInfo, while awaiting %d Locations (%d received)",
-          sv_info_list_cbq_size, kLocationsToAwait, location_called_count);
+    const int kGnssSvInfoListTimeout = 2;
 
     // Find first non-GPS constellation to blacklist
-    const int kGnssSvInfoListTimeout = 2;
-    GnssConstellationType constellation_to_blacklist = GnssConstellationType::UNKNOWN;
-    for (int i = 0; i < sv_info_list_cbq_size; ++i) {
-        hidl_vec<IGnssCallback_2_1::GnssSvInfo> sv_info_vec;
-        gnss_cb_->sv_info_list_cbq_.retrieve(sv_info_vec, kGnssSvInfoListTimeout);
-        for (uint32_t iSv = 0; iSv < sv_info_vec.size(); iSv++) {
-            const auto& gnss_sv = sv_info_vec[iSv];
-            if ((gnss_sv.v2_0.v1_0.svFlag & IGnssCallback_1_0::GnssSvFlags::USED_IN_FIX) &&
-                (gnss_sv.v2_0.constellation != GnssConstellationType::UNKNOWN) &&
-                (gnss_sv.v2_0.constellation != GnssConstellationType::GPS)) {
-                // found a non-GPS constellation
-                constellation_to_blacklist = gnss_sv.v2_0.constellation;
-                break;
-            }
-        }
-        if (constellation_to_blacklist != GnssConstellationType::UNKNOWN) {
-            break;
-        }
-    }
+    GnssConstellationType constellation_to_blacklist =
+            startLocationAndGetNonGpsConstellation(kLocationsToAwait, kGnssSvInfoListTimeout);
 
     // Turns off location
     StopAndClearLocations();
 
-    if (constellation_to_blacklist == GnssConstellationType::UNKNOWN) {
-        ALOGI("No non-GPS constellations found, constellation blacklist test less effective.");
-        // Proceed functionally to blacklist something.
-        constellation_to_blacklist = GnssConstellationType::GLONASS;
-    }
     IGnssConfiguration::BlacklistedSource source_to_blacklist_1;
     source_to_blacklist_1.constellation = constellation_to_blacklist;
     source_to_blacklist_1.svid = 0;  // documented wildcard for all satellites in this constellation
@@ -466,7 +435,83 @@ TEST_P(GnssHalTest, BlacklistConstellation) {
     StartAndCheckLocations(kLocationsToAwait);
 
     // Tolerate 1 less sv status to handle edge cases in reporting.
-    sv_info_list_cbq_size = gnss_cb_->sv_info_list_cbq_.size();
+    int sv_info_list_cbq_size = gnss_cb_->sv_info_list_cbq_.size();
+    EXPECT_GE(sv_info_list_cbq_size + 1, kLocationsToAwait);
+    ALOGD("Observed %d GnssSvInfo, while awaiting %d Locations", sv_info_list_cbq_size,
+          kLocationsToAwait);
+    for (int i = 0; i < sv_info_list_cbq_size; ++i) {
+        hidl_vec<IGnssCallback_2_1::GnssSvInfo> sv_info_vec;
+        gnss_cb_->sv_info_list_cbq_.retrieve(sv_info_vec, kGnssSvInfoListTimeout);
+        for (uint32_t iSv = 0; iSv < sv_info_vec.size(); iSv++) {
+            const auto& gnss_sv = sv_info_vec[iSv];
+            EXPECT_FALSE((gnss_sv.v2_0.constellation == source_to_blacklist_1.constellation) &&
+                         (gnss_sv.v2_0.v1_0.svFlag & IGnssCallback_1_0::GnssSvFlags::USED_IN_FIX));
+            EXPECT_FALSE((gnss_sv.v2_0.constellation == source_to_blacklist_2.constellation) &&
+                         (gnss_sv.v2_0.v1_0.svFlag & IGnssCallback_1_0::GnssSvFlags::USED_IN_FIX));
+        }
+    }
+
+    // clean up
+    StopAndClearLocations();
+    sources.resize(0);
+    result = gnss_configuration_hal->setBlacklist_2_1(sources);
+    ASSERT_TRUE(result.isOk());
+    EXPECT_TRUE(result);
+}
+
+/*
+ * BlacklistConstellationLocationOn:
+ *
+ * 1) Turns on location, waits for 3 locations, ensuring they are valid, and checks corresponding
+ * GnssStatus for any non-GPS constellations.
+ * 2a & b) Blacklist first non-GPS constellation, and turn off location.
+ * 3) Restart location, wait for 3 locations, ensuring they are valid, and checks corresponding
+ * GnssStatus does not use any constellation but GPS.
+ * 4a & b) Clean up by turning off location, and send in empty blacklist.
+ */
+TEST_P(GnssHalTest, BlacklistConstellationLocationOn) {
+    const int kLocationsToAwait = 3;
+    const int kGnssSvInfoListTimeout = 2;
+
+    // Find first non-GPS constellation to blacklist
+    GnssConstellationType constellation_to_blacklist =
+            startLocationAndGetNonGpsConstellation(kLocationsToAwait, kGnssSvInfoListTimeout);
+
+    IGnssConfiguration::BlacklistedSource source_to_blacklist_1;
+    source_to_blacklist_1.constellation = constellation_to_blacklist;
+    source_to_blacklist_1.svid = 0;  // documented wildcard for all satellites in this constellation
+
+    // IRNSS was added in 2.0. Always attempt to blacklist IRNSS to verify that the new enum is
+    // supported.
+    IGnssConfiguration::BlacklistedSource source_to_blacklist_2;
+    source_to_blacklist_2.constellation = GnssConstellationType::IRNSS;
+    source_to_blacklist_2.svid = 0;  // documented wildcard for all satellites in this constellation
+
+    auto gnss_configuration_hal_return = gnss_hal_->getExtensionGnssConfiguration_2_1();
+    ASSERT_TRUE(gnss_configuration_hal_return.isOk());
+    sp<IGnssConfiguration> gnss_configuration_hal = gnss_configuration_hal_return;
+    ASSERT_NE(gnss_configuration_hal, nullptr);
+
+    hidl_vec<IGnssConfiguration::BlacklistedSource> sources;
+    sources.resize(2);
+    sources[0] = source_to_blacklist_1;
+    sources[1] = source_to_blacklist_2;
+
+    auto result = gnss_configuration_hal->setBlacklist_2_1(sources);
+    ASSERT_TRUE(result.isOk());
+    EXPECT_TRUE(result);
+
+    // Turns off location
+    StopAndClearLocations();
+
+    // retry and ensure constellation not used
+    gnss_cb_->sv_info_list_cbq_.reset();
+
+    gnss_cb_->location_cbq_.reset();
+    StartAndCheckLocations(kLocationsToAwait);
+
+    // Tolerate 1 less sv status to handle edge cases in reporting.
+    int sv_info_list_cbq_size = gnss_cb_->sv_info_list_cbq_.size();
     EXPECT_GE(sv_info_list_cbq_size + 1, kLocationsToAwait);
     ALOGD("Observed %d GnssSvInfo, while awaiting %d Locations", sv_info_list_cbq_size,
           kLocationsToAwait);
