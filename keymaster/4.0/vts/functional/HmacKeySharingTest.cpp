@@ -101,7 +101,7 @@ class HmacKeySharingTest : public KeymasterHidlTest {
     }
 };
 
-TEST_F(HmacKeySharingTest, GetParameters) {
+TEST_P(HmacKeySharingTest, GetParameters) {
     auto result1 = getHmacSharingParameters(keymaster());
     EXPECT_EQ(ErrorCode::OK, result1.error);
 
@@ -114,7 +114,7 @@ TEST_F(HmacKeySharingTest, GetParameters) {
         << "A given keymaster should always return the same nonce until restart.";
 }
 
-TEST_F(HmacKeySharingTest, ComputeSharedHmac) {
+TEST_P(HmacKeySharingTest, ComputeSharedHmac) {
     auto params = getHmacSharingParameters(all_keymasters());
     ASSERT_EQ(all_keymasters().size(), params.size())
         << "One or more keymasters failed to provide parameters.";
@@ -143,8 +143,8 @@ TEST_F(HmacKeySharingTest, ComputeSharedHmac) {
 template <class F>
 class final_action {
    public:
-    explicit final_action(F f) : f_(move(f)) {}
-    ~final_action() { f_(); }
+     explicit final_action(F f) : f_(std::move(f)) {}
+     ~final_action() { f_(); }
 
    private:
     F f_;
@@ -155,7 +155,7 @@ inline final_action<F> finally(const F& f) {
     return final_action<F>(f);
 }
 
-TEST_F(HmacKeySharingTest, ComputeSharedHmacCorruptNonce) {
+TEST_P(HmacKeySharingTest, ComputeSharedHmacCorruptNonce) {
     // Important: The execution of this test gets the keymaster implementations on the device out of
     // sync with respect to the HMAC key.  Granted that VTS tests aren't run on in-use production
     // devices, this still has the potential to cause confusion.  To mitigate that, we always
@@ -194,7 +194,7 @@ TEST_F(HmacKeySharingTest, ComputeSharedHmacCorruptNonce) {
     }
 }
 
-TEST_F(HmacKeySharingTest, ComputeSharedHmacCorruptSeed) {
+TEST_P(HmacKeySharingTest, ComputeSharedHmacCorruptSeed) {
     // Important: The execution of this test gets the keymaster implementations on the device out of
     // sync with respect to the HMAC key.  Granted that VTS tests aren't run on in-use production
     // devices, this still has the potential to cause confusion.  To mitigate that, we always
@@ -235,6 +235,11 @@ TEST_F(HmacKeySharingTest, ComputeSharedHmacCorruptSeed) {
         }
     }
 }
+
+INSTANTIATE_TEST_SUITE_P(
+        PerInstance, HmacKeySharingTest,
+        testing::ValuesIn(android::hardware::getAllHalInstanceNames(IKeymasterDevice::descriptor)),
+        android::hardware::PrintInstanceNameToString);
 
 }  // namespace test
 }  // namespace V4_0
