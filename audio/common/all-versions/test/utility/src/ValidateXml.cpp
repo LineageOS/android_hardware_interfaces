@@ -23,6 +23,8 @@
 #include <libxml/xmlschemastypes.h>
 #define LIBXML_XINCLUDE_ENABLED
 #include <libxml/xinclude.h>
+#define LIBXML_XPATH_ENABLED
+#include <libxml/xpath.h>
 
 #include <memory>
 #include <string>
@@ -47,6 +49,10 @@ template <>
 constexpr auto xmlDeleter<xmlSchemaParserCtxt> = xmlSchemaFreeParserCtxt;
 template <>
 constexpr auto xmlDeleter<xmlSchemaValidCtxt> = xmlSchemaFreeValidCtxt;
+template <>
+constexpr auto xmlDeleter<xmlXPathContext> = xmlXPathFreeContext;
+template <>
+constexpr auto xmlDeleter<xmlXPathObject> = xmlXPathFreeObject;
 
 /** @return a unique_ptr with the correct deleter for the libxml2 object. */
 template <class T>
@@ -129,6 +135,28 @@ struct Libxml2Global {
     return ::testing::AssertionSuccess();
 }
 
+std::vector<std::string> findValidXmlFiles(
+    const char* xsdFilePathExpr,
+    const char* xmlFileName, std::vector<const char*> xmlFileLocations, const char* xsdFilePath,
+    std::vector<std::string>* errors) {
+    using namespace std::string_literals;
+    std::vector<std::string> foundFiles;
+    for (const char* location : xmlFileLocations) {
+        std::string xmlFilePath = location + "/"s + xmlFileName;
+        if (access(xmlFilePath.c_str(), F_OK) != 0) {
+            // If the file does not exist ignore this location and fallback on the next one
+            continue;
+        }
+        auto result = validateXml("xmlFilePath", xsdFilePathExpr, xmlFilePath.c_str(), xsdFilePath);
+        if (!result) {
+            if (errors != nullptr) errors->push_back(result.message());
+        } else {
+            foundFiles.push_back(xmlFilePath);
+        }
+    }
+    return foundFiles;
+}
+
 template <bool atLeastOneRequired>
 ::testing::AssertionResult validateXmlMultipleLocations(
     const char* xmlFileNameExpr, const char* xmlFileLocationsExpr, const char* xsdFilePathExpr,
@@ -136,20 +164,8 @@ template <bool atLeastOneRequired>
     using namespace std::string_literals;
 
     std::vector<std::string> errors;
-    std::vector<std::string> foundFiles;
-
-    for (const char* location : xmlFileLocations) {
-        std::string xmlFilePath = location + "/"s + xmlFileName;
-        if (access(xmlFilePath.c_str(), F_OK) != 0) {
-            // If the file does not exist ignore this location and fallback on the next one
-            continue;
-        }
-        foundFiles.push_back("    " + xmlFilePath + '\n');
-        auto result = validateXml("xmlFilePath", xsdFilePathExpr, xmlFilePath.c_str(), xsdFilePath);
-        if (!result) {
-            errors.push_back(result.message());
-        }
-    }
+    std::vector<std::string> foundFiles = findValidXmlFiles(
+            xsdFilePathExpr, xmlFileName, xmlFileLocations, xsdFilePath, &errors);
 
     if (atLeastOneRequired && foundFiles.empty()) {
         errors.push_back("No xml file found in provided locations.\n");
@@ -174,6 +190,35 @@ template ::testing::AssertionResult validateXmlMultipleLocations<false>(const ch
                                                                         const char*, const char*,
                                                                         std::vector<const char*>,
                                                                         const char*);
+
+::testing::AssertionResult isNonEmptyXpath(
+        const char* xmlFilePath, const char* xpathQuery, bool* result) {
+    Libxml2Global libxml2;
+
+    auto context = [&]() {
+        return std::string() + "  In: " + xmlFilePath + "\nLibxml2 errors:\n" + libxml2.getErrors();
+    };
+
+    auto doc = make_xmlUnique(xmlReadFile(xmlFilePath, nullptr, 0));
+    if (doc == nullptr) {
+        return ::testing::AssertionFailure() << "Failed to parse xml\n" << context();
+    }
+    if (xmlXIncludeProcess(doc.get()) == -1) {
+        return ::testing::AssertionFailure() << "Failed to resolve xincludes in xml\n" << context();
+    }
+    auto xpathCtxt = make_xmlUnique(xmlXPathNewContext(doc.get()));
+    if (xpathCtxt == nullptr) {
+        return ::testing::AssertionFailure() << "Failed to create xpath context\n" << context();
+    }
+    auto xpathObj = make_xmlUnique(xmlXPathEvalExpression(BAD_CAST xpathQuery, xpathCtxt.get()));
+    if (xpathObj == nullptr) {
+        return ::testing::AssertionFailure() <<
+                "Failed to evaluate xpath: \'" << xpathQuery << "\'\n" << context();
+    }
+    auto nodeSet = xpathObj.get()->nodesetval;
+    *result = nodeSet ? nodeSet->nodeNr != 0 : false;
+    return ::testing::AssertionSuccess();
+}
 
 }  // namespace utility
 }  // namespace test

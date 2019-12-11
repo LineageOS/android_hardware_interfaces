@@ -45,12 +45,14 @@
 
 #include <common/all-versions/VersionUtils.h>
 
+#include "AudioPolicyConfiguration.h"
 #include "utility/AssertOk.h"
 #include "utility/Documentation.h"
 #include "utility/EnvironmentTearDown.h"
 #define AUDIO_HAL_VERSION V4_0
 #include "utility/PrettyPrintAudioTypes.h"
 #include "utility/ReturnIn.h"
+#include "utility/ValidateXml.h"
 
 using std::initializer_list;
 using std::string;
@@ -377,8 +379,29 @@ TEST_F(AudioPatchPrimaryHidlTest, AudioPatches) {
 /////////// TODO: move to the beginning of the file for easier update ////////
 //////////////////////////////////////////////////////////////////////////////
 
+static void hasDeviceTypeInModule(
+        const std::string& module, const std::string& device, bool* result) {
+    const std::vector<std::string> configs = findValidXmlFiles(
+            "", kAudioPolicyConfigurationXml, getApmConfigLocations(),
+            kAudioPolicyConfigurationXsd);
+    *result = true;  // If could not get the information, run all tests
+    ASSERT_EQ(1U, configs.size());
+    std::string query = "/audioPolicyConfiguration/modules/module[@name=\"" + module + "\"]" +
+            "/devicePorts/devicePort[@type=\"" + device + "\"]";
+    ASSERT_NO_FATAL_FAILURE(isNonEmptyXpath(configs[0].c_str(), query.c_str(), result));
+}
+
 class AudioConfigPrimaryTest : public AudioPatchPrimaryHidlTest {
    public:
+    static bool primaryHasMic() {
+            static const bool hasMic = []() {
+            bool result;
+            hasDeviceTypeInModule("primary", "AUDIO_DEVICE_IN_BUILTIN_MIC", &result);
+            return result;
+        }();
+        return hasMic;
+    }
+
     // Cache result ?
     static const vector<AudioConfig> getRequiredSupportPlaybackAudioConfig() {
         return combineAudioConfig({AudioChannelMask::OUT_STEREO, AudioChannelMask::OUT_MONO},
@@ -398,10 +421,12 @@ class AudioConfigPrimaryTest : public AudioPatchPrimaryHidlTest {
     }
 
     static const vector<AudioConfig> getRequiredSupportCaptureAudioConfig() {
+        if (!primaryHasMic()) return {};
         return combineAudioConfig({AudioChannelMask::IN_MONO}, {8000, 11025, 16000, 44100},
                                   {AudioFormat::PCM_16_BIT});
     }
     static const vector<AudioConfig> getRecommendedSupportCaptureAudioConfig() {
+        if (!primaryHasMic()) return {};
         return combineAudioConfig({AudioChannelMask::IN_STEREO}, {22050, 48000},
                                   {AudioFormat::PCM_16_BIT});
     }
@@ -548,6 +573,10 @@ TEST_F(AudioPrimaryHidlTest, GetMicrophonesTest) {
     SKIP_IF_NO_DEVICE;
     hidl_vec<MicrophoneInfo> microphones;
     ASSERT_OK(device->getMicrophones(returnIn(res, microphones)));
+    if (res == Result::NOT_SUPPORTED) {
+        doc::partialTest("getMicrophones is not supported");
+        return;
+    }
     ASSERT_OK(res);
     if (microphones.size() > 0) {
         // When there is microphone on the phone, try to open an input stream

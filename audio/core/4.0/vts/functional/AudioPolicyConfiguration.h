@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,9 @@
  * limitations under the License.
  */
 
-#include <unistd.h>
-#include <string>
+#include <vector>
 
-#include "utility/ValidateXml.h"
-#include "AudioPolicyConfiguration.h"
+extern const char* kAudioPolicyConfigurationXml;
+extern const char* kAudioPolicyConfigurationXsd;
 
-TEST(CheckConfig, audioPolicyConfigurationValidation) {
-    RecordProperty("description",
-                   "Verify that the audio policy configuration file "
-                   "is valid according to the schema");
-
-    EXPECT_ONE_VALID_XML_MULTIPLE_LOCATIONS(
-            kAudioPolicyConfigurationXml, getApmConfigLocations(),
-            kAudioPolicyConfigurationXsd);
-}
+const std::vector<const char*>& getApmConfigLocations();

@@ -34,6 +34,10 @@ namespace utility {
 ::testing::AssertionResult validateXml(const char* xmlFilePathExpr, const char* xsdFilePathExpr,
                                        const char* xmlFilePath, const char* xsdFilePath);
 
+std::vector<std::string> findValidXmlFiles(const char* xsdFilePathExpr,
+        const char* xmlFileName, std::vector<const char*> xmlFileLocations, const char* xsdFilePath,
+        std::vector<std::string>* errors = nullptr);
+
 /** Helper gtest ASSERT to test XML validity against an XSD. */
 #define ASSERT_VALID_XML(xmlFilePath, xsdFilePath)                                      \
     ASSERT_PRED_FORMAT2(::android::hardware::audio::common::test::utility::validateXml, \
@@ -77,6 +81,9 @@ template <bool atLeastOneRequired = true>
     EXPECT_PRED_FORMAT3(                                                                       \
         ::android::hardware::audio::common::test::utility::validateXmlMultipleLocations<true>, \
         xmlFileName, xmlFileLocations, xsdFilePath)
+
+::testing::AssertionResult isNonEmptyXpath(
+        const char* xmlFilePath, const char* xpathQuery, bool* result);
 
 }  // namespace utility
 }  // namespace test
