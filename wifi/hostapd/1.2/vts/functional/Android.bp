@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2016 The Android Open Source Project
+// Copyright (C) 2019 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,21 +15,22 @@
 //
 
 cc_test {
-    name: "VtsHalSensorsV1_0TargetTest",
-    cflags: ["-DLOG_TAG=\"sensors_hidl_hal_test\""],
+    name: "VtsHalWifiHostapdV1_2TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: [
-        "SensorsHidlEnvironmentV1_0.cpp",
-        "VtsHalSensorsV1_0TargetTest.cpp"
+        "VtsHalWifiHostapdV1_2TargetTest.cpp",
+        "hostapd_hidl_test.cpp",
     ],
     static_libs: [
-        "android.hardware.graphics.allocator@2.0",
-        "android.hardware.graphics.allocator@3.0",
-        "android.hardware.graphics.mapper@2.0",
-        "android.hardware.graphics.mapper@2.1",
-        "android.hardware.graphics.mapper@3.0",
-        "android.hardware.sensors@1.0",
-        "VtsHalSensorsTargetTestUtils",
+        "VtsHalWifiV1_0TargetTestUtil",
+        "VtsHalWifiHostapdV1_0TargetTestUtil",
+        "android.hardware.wifi.hostapd@1.0",
+        "android.hardware.wifi.hostapd@1.1",
+	"android.hardware.wifi.hostapd@1.2",
+        "android.hardware.wifi@1.0",
+        "libgmock",
+        "libwifi-system",
+        "libwifi-system-iface",
     ],
     test_suites: ["general-tests", "vts-core"],
 }

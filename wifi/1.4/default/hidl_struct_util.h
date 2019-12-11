@@ -118,11 +118,11 @@ bool convertHidlNanEnableRequestToLegacy(
 bool convertHidlNanConfigRequestToLegacy(
     const NanConfigRequest& hidl_request,
     legacy_hal::NanConfigRequest* legacy_request);
-bool convertHidlNanEnableRequest_1_2ToLegacy(
+bool convertHidlNanEnableRequest_1_4ToLegacy(
     const NanEnableRequest& hidl_request1,
     const V1_2::NanConfigRequestSupplemental& hidl_request2,
     legacy_hal::NanEnableRequest* legacy_request);
-bool convertHidlNanConfigRequest_1_2ToLegacy(
+bool convertHidlNanConfigRequest_1_4ToLegacy(
     const NanConfigRequest& hidl_request1,
     const V1_2::NanConfigRequestSupplemental& hidl_request2,
     legacy_hal::NanConfigRequest* legacy_request);

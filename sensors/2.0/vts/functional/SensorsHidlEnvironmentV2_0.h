@@ -42,22 +42,12 @@ class SensorsHalDeathRecipient : public ::android::hardware::hidl_death_recipien
 class SensorsHidlEnvironmentV2_0 : public SensorsHidlEnvironmentBase {
    public:
     using Event = ::android::hardware::sensors::V1_0::Event;
-    // get the test environment singleton
-    static SensorsHidlEnvironmentV2_0* Instance() {
-        static SensorsHidlEnvironmentV2_0* instance = new SensorsHidlEnvironmentV2_0();
-        return instance;
-    }
-
-    virtual void registerTestServices() override {
-        registerTestService<android::hardware::sensors::V2_0::ISensors>();
-    }
-
     virtual void HidlTearDown() override;
 
    protected:
     friend SensorsHidlTest;
-
-    SensorsHidlEnvironmentV2_0() : mEventQueueFlag(nullptr) {}
+    SensorsHidlEnvironmentV2_0(const std::string& service_name)
+        : SensorsHidlEnvironmentBase(service_name), mEventQueueFlag(nullptr) {}
 
     /**
      * Resets the HAL with new FMQs and a new Event Flag
