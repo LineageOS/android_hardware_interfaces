@@ -22,6 +22,7 @@
 #include <math.h>
 #include <set>
 #include "Demux.h"
+#include "Dvr.h"
 #include "Frontend.h"
 
 using namespace std;
@@ -44,6 +45,7 @@ using ::android::hardware::tv::tuner::V1_0::Result;
 using FilterMQ = MessageQueue<uint8_t, kSynchronizedReadWrite>;
 
 class Demux;
+class Dvr;
 
 class Filter : public IFilter {
   public:
@@ -80,11 +82,17 @@ class Filter : public IFilter {
     bool createFilterMQ();
     uint16_t getTpid();
     void updateFilterOutput(vector<uint8_t> data);
+    void updateRecordOutput(vector<uint8_t> data);
     Result startFilterHandler();
+    Result startRecordFilterHandler();
+    void attachFilterToRecord(const sp<Dvr> dvr);
+    void detachFilterFromRecord();
 
   private:
     // Tuner service
     sp<Demux> mDemux;
+    // Dvr reference once the filter is attached to any
+    sp<Dvr> mDvr = nullptr;
     /**
      * Filter callbacks used on filter events or FMQ status
      */
@@ -99,6 +107,7 @@ class Filter : public IFilter {
     sp<IFilter> mDataSource;
     bool mIsDataSourceDemux = true;
     vector<uint8_t> mFilterOutput;
+    vector<uint8_t> mRecordFilterOutput;
     unique_ptr<FilterMQ> mFilterMQ;
     EventFlag* mFilterEventFlag;
     DemuxFilterEvent mFilterEvent;
@@ -120,6 +129,8 @@ class Filter : public IFilter {
      */
     const uint16_t SECTION_WRITE_COUNT = 10;
 
+    bool DEBUG_FILTER = false;
+
     /**
      * Filter handlers to handle the data filtering.
      * They are also responsible to write the filtered output into the filter FMQ
@@ -129,7 +140,6 @@ class Filter : public IFilter {
     Result startPesFilterHandler();
     Result startTsFilterHandler();
     Result startMediaFilterHandler();
-    Result startRecordFilterHandler();
     Result startPcrFilterHandler();
     Result startTemiFilterHandler();
     Result startFilterLoop();
@@ -165,6 +175,7 @@ class Filter : public IFilter {
     std::mutex mFilterStatusLock;
     std::mutex mFilterThreadLock;
     std::mutex mFilterOutputLock;
+    std::mutex mRecordFilterOutputLock;
 
     // temp handle single PES filter
     // TODO handle mulptiple Pes filters
