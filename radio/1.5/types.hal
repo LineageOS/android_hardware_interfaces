@@ -22,13 +22,21 @@ import @1.1::RadioAccessNetworks;
 import @1.1::RadioAccessSpecifier;
 import @1.1::ScanType;
 import @1.1::UtranBands;
+import @1.2::CellIdentityCdma;
+import @1.2::CellIdentityGsm;
+import @1.2::CellIdentityWcdma;
+import @1.2::CellIdentityTdscdma;
+import @1.2::CellIdentityLte;
 import @1.2::NetworkScanRequest;
 import @1.4::AccessNetwork;
 import @1.4::ApnTypes;
+import @1.4::CellIdentityNr;
 import @1.4::DataCallFailCause;
 import @1.4::DataConnActiveStatus;
 import @1.4::DataProfileInfo;
 import @1.4::PdpProtocolType;
+
+import android.hidl.safe_union@1.0::Monostate;
 
 /**
  * Defining signal strength type.
@@ -397,3 +405,22 @@ struct SetupDataCallResult {
     int32_t mtu;
 };
 
+enum Domain : int32_t {
+    /** Circuit-switched */
+    CS = 1 << 0,
+
+    /** Packet-switched */
+    PS = 1 << 1,
+};
+
+/** A union representing the CellIdentity of a single cell */
+safe_union CellIdentity {
+    Monostate noinit;
+
+    CellIdentityGsm gsm;
+    CellIdentityWcdma wcdma;
+    CellIdentityTdscdma tdscdma;
+    CellIdentityCdma cdma;
+    CellIdentityLte lte;
+    CellIdentityNr nr;
+};
