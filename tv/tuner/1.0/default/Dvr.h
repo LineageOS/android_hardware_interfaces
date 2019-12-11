@@ -79,6 +79,8 @@ class Dvr : public IDvr {
      * Return false is any of the above processes fails.
      */
     bool createDvrMQ();
+    void sendBroadcastInputToDvrRecord(vector<uint8_t> byteBuffer);
+    bool writeRecordFMQ(const std::vector<uint8_t>& data);
 
   private:
     // Demux service
@@ -95,6 +97,8 @@ class Dvr : public IDvr {
     void maySendRecordStatusCallback();
     PlaybackStatus checkPlaybackStatusChange(uint32_t availableToWrite, uint32_t availableToRead,
                                              uint32_t highThreshold, uint32_t lowThreshold);
+    RecordStatus checkRecordStatusChange(uint32_t availableToWrite, uint32_t availableToRead,
+                                         uint32_t highThreshold, uint32_t lowThreshold);
     /**
      * A dispatcher to read and dispatch input data to all the started filters.
      * Each filter handler handles the data filtering/output writing/filterEvent updating.
@@ -103,9 +107,9 @@ class Dvr : public IDvr {
     void startTpidFilter(vector<uint8_t> data);
     bool startFilterDispatcher();
     static void* __threadLoopPlayback(void* user);
-    static void* __threadLoopBroadcast(void* user);
+    static void* __threadLoopRecord(void* user);
     void playbackThreadLoop();
-    void broadcastInputThreadLoop();
+    void recordThreadLoop();
 
     unique_ptr<DvrMQ> mDvrMQ;
     EventFlag* mDvrEventFlag;
@@ -121,6 +125,7 @@ class Dvr : public IDvr {
 
     // FMQ status local records
     PlaybackStatus mPlaybackStatus;
+    RecordStatus mRecordStatus;
     /**
      * If a specific filter's writing loop is still running
      */
@@ -135,10 +140,16 @@ class Dvr : public IDvr {
      * Lock to protect writes to the input status
      */
     std::mutex mPlaybackStatusLock;
+    std::mutex mRecordStatusLock;
     std::mutex mBroadcastInputThreadLock;
     std::mutex mDvrThreadLock;
 
     const bool DEBUG_DVR = false;
+
+    // Booleans to check if recording is running.
+    // Recording is ready when both of the following are set to true.
+    bool mIsRecordStarted = false;
+    bool mIsRecordFilterAttached = false;
 };
 
 }  // namespace implementation

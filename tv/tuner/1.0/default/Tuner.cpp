@@ -148,7 +148,7 @@ void Tuner::frontendStopTune(uint32_t frontendId) {
     uint32_t demuxId;
     if (it != mFrontendToDemux.end()) {
         demuxId = it->second;
-        mDemuxes[demuxId]->stopBroadcastInput();
+        mDemuxes[demuxId]->stopFrontendInput();
     }
 }
 

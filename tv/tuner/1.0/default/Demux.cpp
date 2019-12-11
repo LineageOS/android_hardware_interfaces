@@ -51,7 +51,8 @@ Return<Result> Demux::setFrontendDataSource(uint32_t frontendId) {
     mFrontendSourceFile = mFrontend->getSourceFile();
 
     mTunerService->setFrontendAsDemuxSource(frontendId, mDemuxId);
-    return startBroadcastInputLoop();
+
+    return startFrontendInputLoop();
 }
 
 Return<void> Demux::openFilter(const DemuxFilterType& type, uint32_t bufferSize,
@@ -136,14 +137,14 @@ Return<void> Demux::openDvr(DvrType type, uint32_t bufferSize, const sp<IDvrCall
         return Void();
     }
 
-    sp<Dvr> dvr = new Dvr(type, bufferSize, cb, this);
+    mDvr = new Dvr(type, bufferSize, cb, this);
 
-    if (!dvr->createDvrMQ()) {
-        _hidl_cb(Result::UNKNOWN_ERROR, dvr);
+    if (!mDvr->createDvrMQ()) {
+        _hidl_cb(Result::UNKNOWN_ERROR, mDvr);
         return Void();
     }
 
-    _hidl_cb(Result::SUCCESS, dvr);
+    _hidl_cb(Result::SUCCESS, mDvr);
     return Void();
 }
 
@@ -166,13 +167,14 @@ Result Demux::removeFilter(uint32_t filterId) {
 
     // resetFilterRecords(filterId);
     mUsedFilterIds.erase(filterId);
+    mRecordFilterIds.erase(filterId);
     mUnusedFilterIds.insert(filterId);
     mFilters.erase(filterId);
 
     return Result::SUCCESS;
 }
 
-void Demux::startTsFilter(vector<uint8_t> data) {
+void Demux::startBroadcastTsFilter(vector<uint8_t> data) {
     set<uint32_t>::iterator it;
     for (it = mUsedFilterIds.begin(); it != mUsedFilterIds.end(); it++) {
         uint16_t pid = ((data[1] & 0x1f) << 8) | ((data[2] & 0xff));
@@ -185,12 +187,34 @@ void Demux::startTsFilter(vector<uint8_t> data) {
     }
 }
 
-bool Demux::startFilterDispatcher() {
+void Demux::sendFrontendInputToRecord(vector<uint8_t> data) {
+    set<uint32_t>::iterator it;
+    for (it = mRecordFilterIds.begin(); it != mRecordFilterIds.end(); it++) {
+        if (DEBUG_FILTER) {
+            ALOGW("update record filter output");
+        }
+        mFilters[*it]->updateRecordOutput(data);
+    }
+}
+
+bool Demux::startBroadcastFilterDispatcher() {
     set<uint32_t>::iterator it;
 
     // Handle the output data per filter type
     for (it = mUsedFilterIds.begin(); it != mUsedFilterIds.end(); it++) {
         if (mFilters[*it]->startFilterHandler() != Result::SUCCESS) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool Demux::startRecordFilterDispatcher() {
+    set<uint32_t>::iterator it;
+
+    for (it = mRecordFilterIds.begin(); it != mRecordFilterIds.end(); it++) {
+        if (mFilters[*it]->startRecordFilterHandler() != Result::SUCCESS) {
             return false;
         }
     }
@@ -210,22 +234,22 @@ uint16_t Demux::getFilterTpid(uint32_t filterId) {
     return mFilters[filterId]->getTpid();
 }
 
-Result Demux::startBroadcastInputLoop() {
-    pthread_create(&mBroadcastInputThread, NULL, __threadLoopBroadcast, this);
-    pthread_setname_np(mBroadcastInputThread, "broadcast_input_thread");
+Result Demux::startFrontendInputLoop() {
+    pthread_create(&mFrontendInputThread, NULL, __threadLoopFrontend, this);
+    pthread_setname_np(mFrontendInputThread, "frontend_input_thread");
 
     return Result::SUCCESS;
 }
 
-void* Demux::__threadLoopBroadcast(void* user) {
+void* Demux::__threadLoopFrontend(void* user) {
     Demux* const self = static_cast<Demux*>(user);
-    self->broadcastInputThreadLoop();
+    self->frontendInputThreadLoop();
     return 0;
 }
 
-void Demux::broadcastInputThreadLoop() {
-    std::lock_guard<std::mutex> lock(mBroadcastInputThreadLock);
-    mBroadcastInputThreadRunning = true;
+void Demux::frontendInputThreadLoop() {
+    std::lock_guard<std::mutex> lock(mFrontendInputThreadLock);
+    mFrontendInputThreadRunning = true;
     mKeepFetchingDataFromFrontend = true;
 
     // open the stream and get its length
@@ -234,20 +258,20 @@ void Demux::broadcastInputThreadLoop() {
     int packetSize = 188;
     int writePacketAmount = 6;
     char* buffer = new char[packetSize];
-    ALOGW("[Demux] broadcast input thread loop start %s", mFrontendSourceFile.c_str());
+    ALOGW("[Demux] Frontend input thread loop start %s", mFrontendSourceFile.c_str());
     if (!inputData.is_open()) {
-        mBroadcastInputThreadRunning = false;
+        mFrontendInputThreadRunning = false;
         ALOGW("[Demux] Error %s", strerror(errno));
     }
 
-    while (mBroadcastInputThreadRunning) {
+    while (mFrontendInputThreadRunning) {
         // move the stream pointer for packet size * 6 every read until the end
         while (mKeepFetchingDataFromFrontend) {
             for (int i = 0; i < writePacketAmount; i++) {
                 inputData.read(buffer, packetSize);
                 if (!inputData) {
                     mKeepFetchingDataFromFrontend = false;
-                    mBroadcastInputThreadRunning = false;
+                    mFrontendInputThreadRunning = false;
                     break;
                 }
                 // filter and dispatch filter output
@@ -256,23 +280,61 @@ void Demux::broadcastInputThreadLoop() {
                 for (int index = 0; index < byteBuffer.size(); index++) {
                     byteBuffer[index] = static_cast<uint8_t>(buffer[index]);
                 }
-                startTsFilter(byteBuffer);
+                if (mIsRecording) {
+                    // Feed the data into the Dvr recording input
+                    sendFrontendInputToRecord(byteBuffer);
+                } else {
+                    // Feed the data into the broadcast demux filter
+                    startBroadcastTsFilter(byteBuffer);
+                }
             }
-            startFilterDispatcher();
+            if (mIsRecording) {
+                // Dispatch the data into the broadcasting filters.
+                startRecordFilterDispatcher();
+            } else {
+                // Dispatch the data into the broadcasting filters.
+                startBroadcastFilterDispatcher();
+            }
             usleep(100);
         }
     }
 
-    ALOGW("[Demux] Broadcast Input thread end.");
+    ALOGW("[Demux] Frontend Input thread end.");
     delete[] buffer;
     inputData.close();
 }
 
-void Demux::stopBroadcastInput() {
+void Demux::stopFrontendInput() {
     ALOGD("[Demux] stop frontend on demux");
     mKeepFetchingDataFromFrontend = false;
-    mBroadcastInputThreadRunning = false;
-    std::lock_guard<std::mutex> lock(mBroadcastInputThreadLock);
+    mFrontendInputThreadRunning = false;
+    std::lock_guard<std::mutex> lock(mFrontendInputThreadLock);
+}
+
+void Demux::setIsRecording(bool isRecording) {
+    mIsRecording = isRecording;
+}
+
+bool Demux::attachRecordFilter(int filterId) {
+    if (mFilters[filterId] == nullptr || mDvr == nullptr) {
+        return false;
+    }
+
+    mRecordFilterIds.insert(filterId);
+    mFilters[filterId]->attachFilterToRecord(mDvr);
+
+    return true;
+}
+
+bool Demux::detachRecordFilter(int filterId) {
+    if (mFilters[filterId] == nullptr || mDvr == nullptr) {
+        return false;
+    }
+
+    mRecordFilterIds.erase(filterId);
+    mFilters[filterId]->detachFilterFromRecord();
+
+    return true;
 }
 
 }  // namespace implementation
