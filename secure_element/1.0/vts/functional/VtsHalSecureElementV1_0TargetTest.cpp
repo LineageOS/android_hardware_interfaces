@@ -20,10 +20,11 @@
 #include <android/hardware/secure_element/1.0/ISecureElement.h>
 #include <android/hardware/secure_element/1.0/ISecureElementHalCallback.h>
 #include <android/hardware/secure_element/1.0/types.h>
+#include <gtest/gtest.h>
+#include <hidl/GtestPrinter.h>
+#include <hidl/ServiceManagement.h>
 
 #include <VtsHalHidlTargetCallbackBase.h>
-#include <VtsHalHidlTargetTestBase.h>
-#include <VtsHalHidlTargetTestEnvBase.h>
 
 using ::android::hardware::secure_element::V1_0::ISecureElement;
 using ::android::hardware::secure_element::V1_0::ISecureElementHalCallback;
@@ -32,7 +33,6 @@ using ::android::hardware::secure_element::V1_0::LogicalChannelResponse;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
 using ::android::sp;
-using ::testing::VtsHalHidlTargetTestEnvBase;
 
 #define DATA_APDU \
     { 0x00, 0x08, 0x00, 0x00, 0x00 }
@@ -63,30 +63,11 @@ class SecureElementHalCallback
     };
 };
 
-class SecureElementHidlEnvironment : public VtsHalHidlTargetTestEnvBase {
-   public:
-    // get the test environment singleton
-    static SecureElementHidlEnvironment* Instance() {
-        static SecureElementHidlEnvironment* instance = new SecureElementHidlEnvironment;
-        return instance;
-    }
-
-    virtual void registerTestServices() override { registerTestService<ISecureElement>(); }
-
-   private:
-    SecureElementHidlEnvironment() {}
-
-    GTEST_DISALLOW_COPY_AND_ASSIGN_(SecureElementHidlEnvironment);
-};
-
-class SecureElementHidlTest : public ::testing::VtsHalHidlTargetTestBase {
-   public:
+class SecureElementHidlTest : public ::testing::TestWithParam<std::string> {
+  public:
     virtual void SetUp() override {
-        std::string serviceName =
-            SecureElementHidlEnvironment::Instance()->getServiceName<ISecureElement>("eSE1");
-        LOG(INFO) << "get service with name:" << serviceName;
-        ASSERT_FALSE(serviceName.empty());
-        se_ = ::testing::VtsHalHidlTargetTestBase::getService<ISecureElement>(serviceName);
+        LOG(INFO) << "get service with name:" << GetParam();
+        se_ = ISecureElement::getService(GetParam());
         ASSERT_NE(se_, nullptr);
 
         se_cb_ = new SecureElementHalCallback();
@@ -105,7 +86,7 @@ class SecureElementHidlTest : public ::testing::VtsHalHidlTargetTestBase {
  * isCardPresent:
  * Expects the card to be present
  */
-TEST_F(SecureElementHidlTest, isCardPresent) {
+TEST_P(SecureElementHidlTest, isCardPresent) {
     EXPECT_TRUE(se_->isCardPresent());
 }
 
@@ -113,7 +94,7 @@ TEST_F(SecureElementHidlTest, isCardPresent) {
  * transmit:
  * Check status word in the response
  */
-TEST_F(SecureElementHidlTest, transmit) {
+TEST_P(SecureElementHidlTest, transmit) {
     std::vector<uint8_t> aid = ANDROID_TEST_AID;
     SecureElementStatus statusReturned;
     LogicalChannelResponse response;
@@ -153,7 +134,7 @@ TEST_F(SecureElementHidlTest, transmit) {
  * If the secure element allows opening of basic channel:
  *  open channel, check the length of selectResponse and close the channel
  */
-TEST_F(SecureElementHidlTest, openBasicChannel) {
+TEST_P(SecureElementHidlTest, openBasicChannel) {
     std::vector<uint8_t> aid = ANDROID_TEST_AID;
     SecureElementStatus statusReturned;
     std::vector<uint8_t> response;
@@ -179,7 +160,7 @@ TEST_F(SecureElementHidlTest, openBasicChannel) {
 /*
  * GetATR
  */
-TEST_F(SecureElementHidlTest, getAtr) {
+TEST_P(SecureElementHidlTest, getAtr) {
     std::vector<uint8_t> atr;
     se_->getAtr([&atr](std::vector<uint8_t> atrReturned) {
         atr.resize(atrReturned.size());
@@ -200,7 +181,7 @@ TEST_F(SecureElementHidlTest, getAtr) {
  * Check status
  * Close Channel
  */
-TEST_F(SecureElementHidlTest, openCloseLogicalChannel) {
+TEST_P(SecureElementHidlTest, openCloseLogicalChannel) {
     std::vector<uint8_t> aid = ANDROID_TEST_AID;
     SecureElementStatus statusReturned;
     LogicalChannelResponse response;
@@ -223,10 +204,7 @@ TEST_F(SecureElementHidlTest, openCloseLogicalChannel) {
     EXPECT_EQ(SecureElementStatus::SUCCESS, se_->closeChannel(response.channelNumber));
 }
 
-int main(int argc, char** argv) {
-    ::testing::AddGlobalTestEnvironment(SecureElementHidlEnvironment::Instance());
-    ::testing::InitGoogleTest(&argc, argv);
-    SecureElementHidlEnvironment::Instance()->init(&argc, argv);
-    int status = RUN_ALL_TESTS();
-    return status;
-}
+INSTANTIATE_TEST_SUITE_P(
+        PerInstance, SecureElementHidlTest,
+        testing::ValuesIn(android::hardware::getAllHalInstanceNames(ISecureElement::descriptor)),
+        android::hardware::PrintInstanceNameToString);
