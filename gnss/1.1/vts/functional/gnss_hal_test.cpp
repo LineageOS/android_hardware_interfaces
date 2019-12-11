@@ -175,25 +175,23 @@ bool GnssHalTest::IsGnssHalVersion_1_1() const {
     return hasGnssHalVersion_1_1 && !hasGnssHalVersion_2_0;
 }
 
-GnssConstellationType GnssHalTest::startLocationAndGetNonGpsConstellation() {
-    const int kLocationsToAwait = 3;
-
+GnssConstellationType GnssHalTest::startLocationAndGetNonGpsConstellation(
+        const int locations_to_await, const int gnss_sv_info_list_timeout) {
     gnss_cb_->location_cbq_.reset();
-    StartAndCheckLocations(kLocationsToAwait);
+    StartAndCheckLocations(locations_to_await);
     const int location_called_count = gnss_cb_->location_cbq_.calledCount();
 
     // Tolerate 1 less sv status to handle edge cases in reporting.
     int sv_status_cbq_size = gnss_cb_->sv_status_cbq_.size();
-    EXPECT_GE(sv_status_cbq_size + 1, kLocationsToAwait);
+    EXPECT_GE(sv_status_cbq_size + 1, locations_to_await);
     ALOGD("Observed %d GnssSvStatus, while awaiting %d Locations (%d received)", sv_status_cbq_size,
-          kLocationsToAwait, location_called_count);
+          locations_to_await, location_called_count);
 
     // Find first non-GPS constellation to blacklist
-    const int kGnssSvStatusTimeout = 2;
     GnssConstellationType constellation_to_blacklist = GnssConstellationType::UNKNOWN;
     for (int i = 0; i < sv_status_cbq_size; ++i) {
         IGnssCallback::GnssSvStatus gnss_sv_status;
-        gnss_cb_->sv_status_cbq_.retrieve(gnss_sv_status, kGnssSvStatusTimeout);
+        gnss_cb_->sv_status_cbq_.retrieve(gnss_sv_status, gnss_sv_info_list_timeout);
         for (uint32_t iSv = 0; iSv < gnss_sv_status.numSvs; iSv++) {
             const auto& gnss_sv = gnss_sv_status.gnssSvList[iSv];
             if ((gnss_sv.svFlag & IGnssCallback::GnssSvFlags::USED_IN_FIX) &&

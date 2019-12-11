@@ -368,8 +368,11 @@ TEST_P(GnssHalTest, BlacklistConstellationWithLocationOff) {
     }
 
     const int kLocationsToAwait = 3;
+    const int kGnssSvStatusTimeout = 2;
+
     // Find first non-GPS constellation to blacklist
-    GnssConstellationType constellation_to_blacklist = startLocationAndGetNonGpsConstellation();
+    GnssConstellationType constellation_to_blacklist =
+            startLocationAndGetNonGpsConstellation(kLocationsToAwait, kGnssSvStatusTimeout);
 
     // Turns off location
     StopAndClearLocations();
@@ -403,7 +406,6 @@ TEST_P(GnssHalTest, BlacklistConstellationWithLocationOff) {
     EXPECT_GE(sv_status_cbq_size + 1, kLocationsToAwait);
     ALOGD("Observed %d GnssSvStatus, while awaiting %d Locations", sv_status_cbq_size,
           kLocationsToAwait);
-    const int kGnssSvStatusTimeout = 2;
     for (int i = 0; i < sv_status_cbq_size; ++i) {
         IGnssCallback::GnssSvStatus gnss_sv_status;
         gnss_cb_->sv_status_cbq_.retrieve(gnss_sv_status, kGnssSvStatusTimeout);
@@ -439,8 +441,11 @@ TEST_P(GnssHalTest, BlacklistConstellationWithLocationOn) {
     }
 
     const int kLocationsToAwait = 3;
+    const int kGnssSvStatusTimeout = 2;
+
     // Find first non-GPS constellation to blacklist
-    GnssConstellationType constellation_to_blacklist = startLocationAndGetNonGpsConstellation();
+    GnssConstellationType constellation_to_blacklist =
+            startLocationAndGetNonGpsConstellation(kLocationsToAwait, kGnssSvStatusTimeout);
 
     IGnssConfiguration::BlacklistedSource source_to_blacklist;
     source_to_blacklist.constellation = constellation_to_blacklist;
@@ -474,7 +479,6 @@ TEST_P(GnssHalTest, BlacklistConstellationWithLocationOn) {
     EXPECT_GE(sv_status_cbq_size + 1, kLocationsToAwait);
     ALOGD("Observed %d GnssSvStatus, while awaiting %d Locations", sv_status_cbq_size,
           kLocationsToAwait);
-    const int kGnssSvStatusTimeout = 2;
     for (int i = 0; i < sv_status_cbq_size; ++i) {
         IGnssCallback::GnssSvStatus gnss_sv_status;
         gnss_cb_->sv_status_cbq_.retrieve(gnss_sv_status, kGnssSvStatusTimeout);
