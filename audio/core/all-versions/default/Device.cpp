@@ -269,12 +269,21 @@ Return<bool> Device::supportsAudioPatches() {
 Return<void> Device::createAudioPatch(const hidl_vec<AudioPortConfig>& sources,
                                       const hidl_vec<AudioPortConfig>& sinks,
                                       createAudioPatch_cb _hidl_cb) {
+    auto [retval, patch] = createOrUpdateAudioPatch(
+            static_cast<AudioPatchHandle>(AudioHandleConsts::AUDIO_PATCH_HANDLE_NONE), sources,
+            sinks);
+    _hidl_cb(retval, patch);
+    return Void();
+}
+
+std::tuple<Result, AudioPatchHandle> Device::createOrUpdateAudioPatch(
+        AudioPatchHandle patch, const hidl_vec<AudioPortConfig>& sources,
+        const hidl_vec<AudioPortConfig>& sinks) {
     Result retval(Result::NOT_SUPPORTED);
-    AudioPatchHandle patch = 0;
     if (version() >= AUDIO_DEVICE_API_VERSION_3_0) {
         std::unique_ptr<audio_port_config[]> halSources(HidlUtils::audioPortConfigsToHal(sources));
         std::unique_ptr<audio_port_config[]> halSinks(HidlUtils::audioPortConfigsToHal(sinks));
-        audio_patch_handle_t halPatch = AUDIO_PATCH_HANDLE_NONE;
+        audio_patch_handle_t halPatch = static_cast<audio_patch_handle_t>(patch);
         retval = analyzeStatus("create_audio_patch",
                                mDevice->create_audio_patch(mDevice, sources.size(), &halSources[0],
                                                            sinks.size(), &halSinks[0], &halPatch));
@@ -282,8 +291,7 @@ Return<void> Device::createAudioPatch(const hidl_vec<AudioPortConfig>& sources,
             patch = static_cast<AudioPatchHandle>(halPatch);
         }
     }
-    _hidl_cb(retval, patch);
-    return Void();
+    return {retval, patch};
 }
 
 Return<Result> Device::releaseAudioPatch(int32_t patch) {
@@ -436,6 +444,19 @@ Return<Result> Device::removeDeviceEffect(AudioPortHandle device, uint64_t effec
         ALOGW("%s Invalid effect ID passed from client: %" PRIu64 "", __func__, effectId);
         return Result::INVALID_ARGUMENTS;
     }
+}
+
+Return<void> Device::updateAudioPatch(int32_t previousPatch,
+                                      const hidl_vec<AudioPortConfig>& sources,
+                                      const hidl_vec<AudioPortConfig>& sinks,
+                                      createAudioPatch_cb _hidl_cb) {
+    if (previousPatch != static_cast<int32_t>(AudioHandleConsts::AUDIO_PATCH_HANDLE_NONE)) {
+        auto [retval, patch] = createOrUpdateAudioPatch(previousPatch, sources, sinks);
+        _hidl_cb(retval, patch);
+    } else {
+        _hidl_cb(Result::INVALID_ARGUMENTS, previousPatch);
+    }
+    return Void();
 }
 
 #endif
