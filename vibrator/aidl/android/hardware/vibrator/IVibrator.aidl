@@ -48,6 +48,10 @@ interface IVibrator {
      * Whether compose is supported.
      */
     const int CAP_COMPOSE_EFFECTS = 1 << 5;
+    /**
+     * Whether alwaysOnEnable/alwaysOnDisable is supported.
+     */
+    const int CAP_ALWAYS_ON_CONTROL = 1 << 6;
 
     /**
      * Determine capabilities of the vibrator HAL (CAP_* mask)
@@ -165,4 +169,31 @@ interface IVibrator {
      */
     void compose(in CompositeEffect[] composite, in IVibratorCallback callback);
 
+    /**
+     * List of supported always-on effects.
+     *
+     * Return the effects which are supported by the alwaysOnEnable (an effect
+     * is expected to be supported at every strength level.
+     */
+    Effect[] getSupportedAlwaysOnEffects();
+
+    /**
+     * Enable an always-on haptic source, assigning a specific effect. An
+     * always-on haptic source is a source that can be triggered externally
+     * once enabled and assigned an effect to play. This may not be supported
+     * and this support is reflected in getCapabilities (CAP_ALWAYS_ON_CONTROL).
+     *
+     * @param id The device-specific always-on source ID to enable.
+     * @param effect The type of haptic event to trigger.
+     * @param strength The intensity of haptic event to trigger.
+     */
+    void alwaysOnEnable(in int id, in Effect effect, in EffectStrength strength);
+
+    /**
+     * Disable an always-on haptic source. This may not be supported and this
+     * support is reflected in getCapabilities (CAP_ALWAYS_ON_CONTROL).
+     *
+     * @param id The device-specific always-on source ID to disable.
+     */
+    void alwaysOnDisable(in int id);
 }
