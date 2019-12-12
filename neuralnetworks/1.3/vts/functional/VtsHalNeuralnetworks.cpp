@@ -23,6 +23,7 @@
 #include <utility>
 #include "1.0/Utils.h"
 #include "1.3/Callbacks.h"
+#include "1.3/Utils.h"
 #include "GeneratedTestHarness.h"
 #include "TestHarness.h"
 #include "Utils.h"
@@ -32,7 +33,6 @@ namespace android::hardware::neuralnetworks::V1_3::vts::functional {
 using HidlToken =
         hidl_array<uint8_t, static_cast<uint32_t>(V1_2::Constant::BYTE_SIZE_OF_CACHE_TOKEN)>;
 using implementation::PreparedModelCallback;
-using V1_0::ErrorStatus;
 using V1_1::ExecutionPreference;
 
 // internal helper function
@@ -55,8 +55,8 @@ void createPreparedModel(const sp<IDevice>& device, const Model& model,
     // launch prepare model
     const sp<PreparedModelCallback> preparedModelCallback = new PreparedModelCallback();
     const Return<ErrorStatus> prepareLaunchStatus = device->prepareModel_1_3(
-            model, ExecutionPreference::FAST_SINGLE_ANSWER, hidl_vec<hidl_handle>(),
-            hidl_vec<hidl_handle>(), HidlToken(), preparedModelCallback);
+            model, ExecutionPreference::FAST_SINGLE_ANSWER, kDefaultPriority, {},
+            hidl_vec<hidl_handle>(), hidl_vec<hidl_handle>(), HidlToken(), preparedModelCallback);
     ASSERT_TRUE(prepareLaunchStatus.isOk());
     ASSERT_EQ(ErrorStatus::NONE, static_cast<ErrorStatus>(prepareLaunchStatus));
 

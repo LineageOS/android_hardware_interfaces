@@ -18,13 +18,13 @@
 
 #include "1.0/Utils.h"
 #include "1.3/Callbacks.h"
+#include "1.3/Utils.h"
 #include "GeneratedTestHarness.h"
 #include "VtsHalNeuralnetworks.h"
 
 namespace android::hardware::neuralnetworks::V1_3::vts::functional {
 
 using implementation::PreparedModelCallback;
-using V1_0::ErrorStatus;
 using V1_1::ExecutionPreference;
 using V1_2::SymmPerChannelQuantParams;
 using HidlToken =
@@ -48,9 +48,9 @@ static void validatePrepareModel(const sp<IDevice>& device, const std::string& m
     SCOPED_TRACE(message + " [prepareModel_1_3]");
 
     sp<PreparedModelCallback> preparedModelCallback = new PreparedModelCallback();
-    Return<ErrorStatus> prepareLaunchStatus =
-            device->prepareModel_1_3(model, preference, hidl_vec<hidl_handle>(),
-                                     hidl_vec<hidl_handle>(), HidlToken(), preparedModelCallback);
+    Return<ErrorStatus> prepareLaunchStatus = device->prepareModel_1_3(
+            model, preference, kDefaultPriority, {}, hidl_vec<hidl_handle>(),
+            hidl_vec<hidl_handle>(), HidlToken(), preparedModelCallback);
     ASSERT_TRUE(prepareLaunchStatus.isOk());
     ASSERT_EQ(ErrorStatus::INVALID_ARGUMENT, static_cast<ErrorStatus>(prepareLaunchStatus));
 
