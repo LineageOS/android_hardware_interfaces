@@ -20,17 +20,18 @@
 #include <set>
 #include <string>
 
-#include <VtsHalHidlTargetTestBase.h>
 #include <android-base/logging.h>
 #include <android/hardware/health/2.0/IHealth.h>
 #include <android/hardware/health/2.0/types.h>
 #include <gflags/gflags.h>
+#include <gtest/gtest.h>
+#include <hidl/GtestPrinter.h>
+#include <hidl/ServiceManagement.h>
+#include <log/log.h>
 
 using ::testing::AssertionFailure;
 using ::testing::AssertionResult;
 using ::testing::AssertionSuccess;
-using ::testing::VtsHalHidlTargetTestBase;
-using ::testing::VtsHalHidlTargetTestEnvBase;
 
 DEFINE_bool(force, false, "Force test healthd even when the default instance is present.");
 
@@ -74,30 +75,13 @@ namespace V2_0 {
 
 using V1_0::BatteryStatus;
 
-// Test environment for graphics.composer
-class HealthHidlEnvironment : public VtsHalHidlTargetTestEnvBase {
-   public:
-    // get the test environment singleton
-    static HealthHidlEnvironment* Instance() {
-        static HealthHidlEnvironment* instance = new HealthHidlEnvironment;
-        return instance;
-    }
-
-    virtual void registerTestServices() override { registerTestService<IHealth>(); }
-
-   private:
-    HealthHidlEnvironment() {}
-
-    GTEST_DISALLOW_COPY_AND_ASSIGN_(HealthHidlEnvironment);
-};
-
-class HealthHidlTest : public ::testing::VtsHalHidlTargetTestBase {
+class HealthHidlTest : public ::testing::TestWithParam<std::string> {
    public:
     virtual void SetUp() override {
-        std::string serviceName = HealthHidlEnvironment::Instance()->getServiceName<IHealth>();
+        std::string serviceName = GetParam();
 
         if (serviceName == "backup" && !FLAGS_force &&
-            ::testing::VtsHalHidlTargetTestBase::getService<IHealth>() != nullptr) {
+            IHealth::getService() != nullptr) {
             LOG(INFO) << "Skipping tests on healthd because the default instance is present. "
                       << "Use --force if you really want to test healthd.";
             GTEST_SKIP();
@@ -105,7 +89,7 @@ class HealthHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 
         LOG(INFO) << "get service with name:" << serviceName;
         ASSERT_FALSE(serviceName.empty());
-        mHealth = ::testing::VtsHalHidlTargetTestBase::getService<IHealth>(serviceName);
+        mHealth = IHealth::getService(serviceName);
         ASSERT_NE(mHealth, nullptr);
     }
 
@@ -156,7 +140,7 @@ AssertionResult isAllOk(const Return<Result>& r) {
  * Test whether callbacks work. Tested functions are IHealth::registerCallback,
  * unregisterCallback, and update.
  */
-TEST_F(HealthHidlTest, Callbacks) {
+TEST_P(HealthHidlTest, Callbacks) {
     SKIP_IF_SKIPPED();
     using namespace std::chrono_literals;
     sp<Callback> firstCallback = new Callback();
@@ -193,7 +177,7 @@ TEST_F(HealthHidlTest, Callbacks) {
     ASSERT_ALL_OK(mHealth->unregisterCallback(secondCallback));
 }
 
-TEST_F(HealthHidlTest, UnregisterNonExistentCallback) {
+TEST_P(HealthHidlTest, UnregisterNonExistentCallback) {
     SKIP_IF_SKIPPED();
     sp<Callback> callback = new Callback();
     auto ret = mHealth->unregisterCallback(callback);
@@ -278,7 +262,7 @@ bool verifyHealthInfo(const HealthInfo& health_info) {
 /*
  * Tests the values returned by getChargeCounter() from interface IHealth.
  */
-TEST_F(HealthHidlTest, getChargeCounter) {
+TEST_P(HealthHidlTest, getChargeCounter) {
     SKIP_IF_SKIPPED();
     EXPECT_OK(mHealth->getChargeCounter([](auto result, auto value) {
         EXPECT_VALID_OR_UNSUPPORTED_PROP(result, std::to_string(value), value > 0);
@@ -288,7 +272,7 @@ TEST_F(HealthHidlTest, getChargeCounter) {
 /*
  * Tests the values returned by getCurrentNow() from interface IHealth.
  */
-TEST_F(HealthHidlTest, getCurrentNow) {
+TEST_P(HealthHidlTest, getCurrentNow) {
     SKIP_IF_SKIPPED();
     EXPECT_OK(mHealth->getCurrentNow([](auto result, auto value) {
         EXPECT_VALID_OR_UNSUPPORTED_PROP(result, std::to_string(value), value != INT32_MIN);
@@ -298,7 +282,7 @@ TEST_F(HealthHidlTest, getCurrentNow) {
 /*
  * Tests the values returned by getCurrentAverage() from interface IHealth.
  */
-TEST_F(HealthHidlTest, getCurrentAverage) {
+TEST_P(HealthHidlTest, getCurrentAverage) {
     SKIP_IF_SKIPPED();
     EXPECT_OK(mHealth->getCurrentAverage([](auto result, auto value) {
         EXPECT_VALID_OR_UNSUPPORTED_PROP(result, std::to_string(value), value != INT32_MIN);
@@ -308,7 +292,7 @@ TEST_F(HealthHidlTest, getCurrentAverage) {
 /*
  * Tests the values returned by getCapacity() from interface IHealth.
  */
-TEST_F(HealthHidlTest, getCapacity) {
+TEST_P(HealthHidlTest, getCapacity) {
     SKIP_IF_SKIPPED();
     EXPECT_OK(mHealth->getCapacity([](auto result, auto value) {
         EXPECT_VALID_OR_UNSUPPORTED_PROP(result, std::to_string(value), 0 <= value && value <= 100);
@@ -318,7 +302,7 @@ TEST_F(HealthHidlTest, getCapacity) {
 /*
  * Tests the values returned by getEnergyCounter() from interface IHealth.
  */
-TEST_F(HealthHidlTest, getEnergyCounter) {
+TEST_P(HealthHidlTest, getEnergyCounter) {
     SKIP_IF_SKIPPED();
     EXPECT_OK(mHealth->getEnergyCounter([](auto result, auto value) {
         EXPECT_VALID_OR_UNSUPPORTED_PROP(result, std::to_string(value), value != INT64_MIN);
@@ -328,7 +312,7 @@ TEST_F(HealthHidlTest, getEnergyCounter) {
 /*
  * Tests the values returned by getChargeStatus() from interface IHealth.
  */
-TEST_F(HealthHidlTest, getChargeStatus) {
+TEST_P(HealthHidlTest, getChargeStatus) {
     SKIP_IF_SKIPPED();
     EXPECT_OK(mHealth->getChargeStatus([](auto result, auto value) {
         EXPECT_VALID_OR_UNSUPPORTED_PROP(
@@ -340,7 +324,7 @@ TEST_F(HealthHidlTest, getChargeStatus) {
 /*
  * Tests the values returned by getStorageInfo() from interface IHealth.
  */
-TEST_F(HealthHidlTest, getStorageInfo) {
+TEST_P(HealthHidlTest, getStorageInfo) {
     SKIP_IF_SKIPPED();
     EXPECT_OK(mHealth->getStorageInfo([](auto result, auto& value) {
         EXPECT_VALID_OR_UNSUPPORTED_PROP(result, toString(value), verifyStorageInfo(value));
@@ -350,7 +334,7 @@ TEST_F(HealthHidlTest, getStorageInfo) {
 /*
  * Tests the values returned by getDiskStats() from interface IHealth.
  */
-TEST_F(HealthHidlTest, getDiskStats) {
+TEST_P(HealthHidlTest, getDiskStats) {
     SKIP_IF_SKIPPED();
     EXPECT_OK(mHealth->getDiskStats([](auto result, auto& value) {
         EXPECT_VALID_OR_UNSUPPORTED_PROP(result, toString(value), true);
@@ -360,25 +344,24 @@ TEST_F(HealthHidlTest, getDiskStats) {
 /*
  * Tests the values returned by getHealthInfo() from interface IHealth.
  */
-TEST_F(HealthHidlTest, getHealthInfo) {
+TEST_P(HealthHidlTest, getHealthInfo) {
     SKIP_IF_SKIPPED();
     EXPECT_OK(mHealth->getHealthInfo([](auto result, auto& value) {
         EXPECT_VALID_OR_UNSUPPORTED_PROP(result, toString(value), verifyHealthInfo(value));
     }));
 }
 
+INSTANTIATE_TEST_SUITE_P(
+        PerInstance, HealthHidlTest,
+        testing::ValuesIn(android::hardware::getAllHalInstanceNames(IHealth::descriptor)),
+        android::hardware::PrintInstanceNameToString);
 }  // namespace V2_0
 }  // namespace health
 }  // namespace hardware
 }  // namespace android
 
 int main(int argc, char** argv) {
-    using ::android::hardware::health::V2_0::HealthHidlEnvironment;
-    ::testing::AddGlobalTestEnvironment(HealthHidlEnvironment::Instance());
     ::testing::InitGoogleTest(&argc, argv);
-    HealthHidlEnvironment::Instance()->init(&argc, argv);
     gflags::ParseCommandLineFlags(&argc, &argv, true /* remove flags */);
-    int status = RUN_ALL_TESTS();
-    LOG(INFO) << "Test result = " << status;
-    return status;
+    return RUN_ALL_TESTS();
 }
