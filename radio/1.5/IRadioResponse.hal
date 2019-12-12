@@ -18,6 +18,7 @@ package android.hardware.radio@1.5;
 
 import @1.0::RadioResponseInfo;
 import @1.4::IRadioResponse;
+import @1.4::SetupDataCallResult;
 
 /**
  * Interface declaring response functions to solicited radio requests.
@@ -80,4 +81,58 @@ interface IRadioResponse extends @1.4::IRadioResponse {
      *   RadioError:INVALID_ARGUMENTS
      */
     oneway startNetworkScanResponse_1_5(RadioResponseInfo info);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     * @param dcResponse SetupDataCallResult defined in types.hal
+     *
+     * Valid errors returned:
+     *   RadioError:NONE must be returned on both success and failure of setup with the
+     *              DataCallResponse.status containing the actual status
+     *              For all other errors the DataCallResponse is ignored.
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:OP_NOT_ALLOWED_BEFORE_REG_TO_NW
+     *   RadioError:OP_NOT_ALLOWED_DURING_VOICE_CALL
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:INVALID_ARGUMENTS
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:NO_RESOURCES
+     *   RadioError:SIM_ABSENT
+     */
+    oneway setupDataCallResponse_1_5(RadioResponseInfo info, SetupDataCallResult dcResponse);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:SUBSCRIPTION_NOT_AVAILABLE
+     *   RadioError:NO_MEMORY
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:SYSTEM_ERR
+     *   RadioError:MODEM_ERR
+     *   RadioError:INVALID_ARGUMENTS
+     *   RadioError:NOT_PROVISIONED
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:NO_RESOURCES
+     *   RadioError:CANCELLED
+     */
+    oneway setInitialAttachApnResponse_1_5(RadioResponseInfo info);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:SUBSCRIPTION_NOT_AVAILABLE
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:NO_MEMORY
+     *   RadioError:NO_RESOURCES
+     *   RadioError:CANCELLED
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:SIM_ABSENT
+     */
+    oneway setDataProfileResponse_1_5(RadioResponseInfo info);
 };
