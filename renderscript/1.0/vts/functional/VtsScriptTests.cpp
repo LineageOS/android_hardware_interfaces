@@ -22,7 +22,7 @@
  *
  * Calls: elementCreate, scriptIntrinsicCreate, scriptSetTimeZone
  */
-TEST_F(RenderscriptHidlTest, IntrinsicTest) {
+TEST_P(RenderscriptHidlTest, IntrinsicTest) {
     // uint8
     Element element = context->elementCreate(DataType::UNSIGNED_8, DataKind::USER, false, 1);
     EXPECT_NE(Element(0), element);
@@ -41,7 +41,7 @@ TEST_F(RenderscriptHidlTest, IntrinsicTest) {
  * scriptSetVarF, scriptSetVarD, elementCreate, typeCreate,
  * allocationCreateTyped, scriptSetVarObj, scriptSetVarV, scriptSetVarVE
  */
-TEST_F(RenderscriptHidlTest, ScriptVarTest) {
+TEST_P(RenderscriptHidlTest, ScriptVarTest) {
     hidl_vec<uint8_t> bitcode;
     bitcode.setToExternal((uint8_t*)bitCode, bitCodeLength);
     Script script = context->scriptCCreate("struct_test", "/data/local/tmp/", bitcode);
@@ -132,7 +132,7 @@ TEST_F(RenderscriptHidlTest, ScriptVarTest) {
  *
  * Calls: scriptCCreate, scriptInvoke, scriptGetVarV, scriptInvokeV
  */
-TEST_F(RenderscriptHidlTest, ScriptInvokeTest) {
+TEST_P(RenderscriptHidlTest, ScriptInvokeTest) {
     hidl_vec<uint8_t> bitcode;
     bitcode.setToExternal((uint8_t*)bitCode, bitCodeLength);
     Script script = context->scriptCCreate("struct_test", "/data/local/tmp/", bitcode);
@@ -191,7 +191,7 @@ TEST_F(RenderscriptHidlTest, ScriptInvokeTest) {
  * Calls: scriptCCreate, elementCreate, typeCreate, allocationCreateTyped,
  * allocation1DWrite, scriptForEach, allocationRead
  */
-TEST_F(RenderscriptHidlTest, ScriptForEachTest) {
+TEST_P(RenderscriptHidlTest, ScriptForEachTest) {
     hidl_vec<uint8_t> bitcode;
     bitcode.setToExternal((uint8_t*)bitCode, bitCodeLength);
     Script script = context->scriptCCreate("struct_test", "/data/local/tmp/", bitcode);
@@ -237,7 +237,7 @@ TEST_F(RenderscriptHidlTest, ScriptForEachTest) {
  * Calls: scriptCCreate, elementCreate, typeCreate, allocationCreateTyped,
  * allocation1DWrite, scriptReduce, contextFinish, allocationRead
  */
-TEST_F(RenderscriptHidlTest, ScriptReduceTest) {
+TEST_P(RenderscriptHidlTest, ScriptReduceTest) {
     hidl_vec<uint8_t> bitcode;
     bitcode.setToExternal((uint8_t*)bitCode, bitCodeLength);
     Script script = context->scriptCCreate("struct_test", "/data/local/tmp/", bitcode);
@@ -288,7 +288,7 @@ TEST_F(RenderscriptHidlTest, ScriptReduceTest) {
  * allocation1DWrite, scriptBindAllocation, scriptSetVarV, scriptBindAllocation,
  * allocationRead, scriptInvokeV, allocationRead
  */
-TEST_F(RenderscriptHidlTest, ScriptBindTest) {
+TEST_P(RenderscriptHidlTest, ScriptBindTest) {
     hidl_vec<uint8_t> bitcode;
     bitcode.setToExternal((uint8_t*)bitCode, bitCodeLength);
     Script script = context->scriptCCreate("struct_test", "/data/local/tmp/", bitcode);
@@ -333,7 +333,7 @@ TEST_F(RenderscriptHidlTest, ScriptBindTest) {
  * scriptGroupCreate, scriptGroupSetInput, scriptGroupSetOutput,
  * scriptGroupExecute, contextFinish, allocation2DRead
  */
-TEST_F(RenderscriptHidlTest, ScriptGroupTest) {
+TEST_P(RenderscriptHidlTest, ScriptGroupTest) {
     std::vector<uint8_t> dataIn(256 * 256 * 4, 128), dataOut(256 * 256 * 4, 0),
         zeros(256 * 256 * 4, 0);
     hidl_vec<uint8_t> _dataIn, _dataOut;
@@ -418,7 +418,7 @@ TEST_F(RenderscriptHidlTest, ScriptGroupTest) {
  * invokeClosureCreate, closureCreate, closureSetGlobal, scriptGroup2Create,
  * scriptGroupExecute, allocationRead
  */
-TEST_F(RenderscriptHidlTest, ScriptGroup2Test) {
+TEST_P(RenderscriptHidlTest, ScriptGroup2Test) {
     hidl_vec<uint8_t> bitcode;
     bitcode.setToExternal((uint8_t*)bitCode, bitCodeLength);
     Script script = context->scriptCCreate("struct_test", "/data/local/tmp/", bitcode);
@@ -495,7 +495,7 @@ TEST_F(RenderscriptHidlTest, ScriptGroup2Test) {
  * allocation1DWrite, scriptKernelIDCreate, closureCreate, closureSetArg,
  * scriptGroup2Create, scriptGroupExecute, allocationRead
  */
-TEST_F(RenderscriptHidlTest, ScriptGroup2KernelTest) {
+TEST_P(RenderscriptHidlTest, ScriptGroup2KernelTest) {
     hidl_vec<uint8_t> bitcode;
     bitcode.setToExternal((uint8_t*)bitCode, bitCodeLength);
     Script script = context->scriptCCreate("struct_test", "/data/local/tmp/", bitcode);
