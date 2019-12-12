@@ -27,7 +27,7 @@
  *
  * Expect: dataIn & dataOut are the same.
  */
-TEST_F(RenderscriptHidlTest, Simple1DCopyTest) {
+TEST_P(RenderscriptHidlTest, Simple1DCopyTest) {
     // float1
     Element element = context->elementCreate(DataType::FLOAT_32, DataKind::USER, false, 1);
     ASSERT_NE(Element(0), element);
@@ -63,7 +63,7 @@ TEST_F(RenderscriptHidlTest, Simple1DCopyTest) {
  *
  * Expect: dataIn & dataOut are the same.
  */
-TEST_F(RenderscriptHidlTest, Simple2DCopyTest) {
+TEST_P(RenderscriptHidlTest, Simple2DCopyTest) {
     // float1
     Element element = context->elementCreate(DataType::FLOAT_32, DataKind::USER, false, 1);
     ASSERT_NE(Element(0), element);
@@ -100,7 +100,7 @@ TEST_F(RenderscriptHidlTest, Simple2DCopyTest) {
  *
  * Expect: dataIn & dataOut are the same.
  */
-TEST_F(RenderscriptHidlTest, Simple3DCopyTest) {
+TEST_P(RenderscriptHidlTest, Simple3DCopyTest) {
     // float1
     Element element = context->elementCreate(DataType::FLOAT_32, DataKind::USER, false, 1);
     ASSERT_NE(Element(0), element);
@@ -137,7 +137,7 @@ TEST_F(RenderscriptHidlTest, Simple3DCopyTest) {
  *
  * Expect: dataIn & dataOut are the same.
  */
-TEST_F(RenderscriptHidlTest, SimpleBitmapTest) {
+TEST_P(RenderscriptHidlTest, SimpleBitmapTest) {
     // float1
     Element element = context->elementCreate(DataType::FLOAT_32, DataKind::USER, false, 1);
     ASSERT_NE(Element(0), element);
@@ -177,7 +177,7 @@ TEST_F(RenderscriptHidlTest, SimpleBitmapTest) {
  *
  * Expect: dataIn & dataOut are the same.
  */
-TEST_F(RenderscriptHidlTest, AllocationCopy2DRangeTest) {
+TEST_P(RenderscriptHidlTest, AllocationCopy2DRangeTest) {
     // float1
     Element element = context->elementCreate(DataType::FLOAT_32, DataKind::USER, false, 1);
     ASSERT_NE(Element(0), element);
@@ -229,7 +229,7 @@ TEST_F(RenderscriptHidlTest, AllocationCopy2DRangeTest) {
  *
  * Expect: dataIn & dataOut are the same.
  */
-TEST_F(RenderscriptHidlTest, AllocationCopy3DRangeTest) {
+TEST_P(RenderscriptHidlTest, AllocationCopy3DRangeTest) {
     // float1
     Element element = context->elementCreate(DataType::FLOAT_32, DataKind::USER, false, 1);
     ASSERT_NE(Element(0), element);
@@ -282,7 +282,7 @@ TEST_F(RenderscriptHidlTest, AllocationCopy3DRangeTest) {
  *
  * Expect: dataIn & dataOut are the same.
  */
-TEST_F(RenderscriptHidlTest, SimpleAdapterTest) {
+TEST_P(RenderscriptHidlTest, SimpleAdapterTest) {
     // float1
     Element element = context->elementCreate(DataType::FLOAT_32, DataKind::USER, false, 1);
     ASSERT_NE(Element(0), element);
@@ -339,7 +339,7 @@ TEST_F(RenderscriptHidlTest, SimpleAdapterTest) {
  *
  * Expect: dataIn & dataOut are the same.
  */
-TEST_F(RenderscriptHidlTest, SimpleMipmapTest) {
+TEST_P(RenderscriptHidlTest, SimpleMipmapTest) {
     // uint8_t
     Element element = context->elementCreate(DataType::UNSIGNED_8, DataKind::USER, false, 1);
     ASSERT_NE(Element(0), element);
@@ -386,7 +386,7 @@ TEST_F(RenderscriptHidlTest, SimpleMipmapTest) {
  *
  * Expect: dataIn & dataOut are the same.
  */
-TEST_F(RenderscriptHidlTest, SimpleCubemapTest) {
+TEST_P(RenderscriptHidlTest, SimpleCubemapTest) {
     // float1
     Element element = context->elementCreate(DataType::FLOAT_32, DataKind::USER, false, 1);
     ASSERT_NE(Element(0), element);
@@ -425,7 +425,7 @@ TEST_F(RenderscriptHidlTest, SimpleCubemapTest) {
  * typeCreate, allocationCreateTyped, allocationElementWrite,
  * allocationElementRead
  */
-TEST_F(RenderscriptHidlTest, ComplexElementTest) {
+TEST_P(RenderscriptHidlTest, ComplexElementTest) {
     Element element1 = context->elementCreate(DataType::UNSIGNED_8, DataKind::USER, false, 1);
     ASSERT_NE(Element(0), element1);
 
