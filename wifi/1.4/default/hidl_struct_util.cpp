@@ -1135,9 +1135,9 @@ bool convertHidlNanEnableRequestToLegacy(
     legacy_request->disc_mac_addr_rand_interval_sec =
         hidl_request.configParams.macAddressRandomizationIntervalSec;
     legacy_request->config_2dot4g_rssi_close = 1;
-    if (hidl_request.configParams.bandSpecificConfig.size() != 2) {
+    if (hidl_request.configParams.bandSpecificConfig.size() != 3) {
         LOG(ERROR) << "convertHidlNanEnableRequestToLegacy: "
-                      "bandSpecificConfig.size() != 2";
+                      "bandSpecificConfig.size() != 3";
         return false;
     }
     legacy_request->rssi_close_2dot4g_val =
