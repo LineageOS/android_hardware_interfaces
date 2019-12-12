@@ -16,7 +16,6 @@
 
 package android.hardware.neuralnetworks@1.3;
 
-import @1.0::ErrorStatus;
 import @1.2::IPreparedModelCallback;
 import IPreparedModel;
 
@@ -48,6 +47,10 @@ interface IPreparedModelCallback extends @1.2::IPreparedModelCallback {
      *                 unspecified error
      *               - INVALID_ARGUMENT if one of the input arguments to
      *                 prepareModel is invalid
+     *               - MISSED_DEADLINE_* if the deadline for executing a model
+     *                 cannot be met
+     *               - RESOURCE_EXHAUSTED_* if the task was aborted by the
+     *                 driver
      * @param preparedModel A model that has been asynchronously prepared for
      *                      execution. If the model was unable to be prepared
      *                      due to an error, nullptr must be passed in place of
