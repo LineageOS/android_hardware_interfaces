@@ -20,14 +20,6 @@ import android.hardware.graphics.mapper@4.0;
 
 interface IAllocator {
     /**
-     * Retrieves implementation-defined debug information, which will be
-     * displayed during, for example, `dumpsys SurfaceFlinger`.
-     *
-     * @return debugInfo is a string of debug information.
-     */
-    dumpDebugInfo() generates (string debugInfo);
-
-    /**
      * Allocates buffers with the properties specified by the descriptor.
      *
      * Allocations should be optimized for usage bits provided in the

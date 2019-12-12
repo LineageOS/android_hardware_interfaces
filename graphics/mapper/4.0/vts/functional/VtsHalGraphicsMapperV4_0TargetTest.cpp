@@ -306,13 +306,6 @@ const std::set<StandardMetadataType> GraphicsMapperHidlTest::sRequiredMetadataTy
 };
 
 /**
- * Test IAllocator::dumpDebugInfo by calling it.
- */
-TEST_P(GraphicsMapperHidlTest, AllocatorDumpDebugInfo) {
-    mGralloc->dumpDebugInfo();
-}
-
-/**
  * Test IAllocator::allocate with valid buffer descriptors.
  */
 TEST_P(GraphicsMapperHidlTest, AllocatorAllocate) {

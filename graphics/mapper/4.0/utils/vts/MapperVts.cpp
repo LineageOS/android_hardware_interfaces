@@ -71,13 +71,6 @@ sp<IAllocator> Gralloc::getAllocator() const {
     return mAllocator;
 }
 
-std::string Gralloc::dumpDebugInfo() {
-    std::string debugInfo;
-    mAllocator->dumpDebugInfo([&](const auto& tmpDebugInfo) { debugInfo = tmpDebugInfo.c_str(); });
-
-    return debugInfo;
-}
-
 const native_handle_t* Gralloc::cloneBuffer(const hidl_handle& rawHandle) {
     const native_handle_t* bufferHandle = native_handle_clone(rawHandle.getNativeHandle());
     EXPECT_NE(nullptr, bufferHandle);
