@@ -29,6 +29,7 @@
 #include <android/hardware/soundtrigger/2.0/ISoundTriggerHw.h>
 #include <android/hardware/soundtrigger/2.1/ISoundTriggerHw.h>
 #include <android/hardware/soundtrigger/2.2/ISoundTriggerHw.h>
+#include <android/hardware/soundtrigger/2.3/ISoundTriggerHw.h>
 #include <binder/ProcessState.h>
 #include <cutils/properties.h>
 #include <hidl/HidlTransportSupport.h>
@@ -78,9 +79,9 @@ int main(int /* argc */, char* /* argv */ []) {
                         "Could not register audio effect API");
     // clang-format on
 
-    ALOGW_IF((registerPassthroughServiceImplementations<soundtrigger::V2_2::ISoundTriggerHw,
-                                                        soundtrigger::V2_1::ISoundTriggerHw,
-                                                        soundtrigger::V2_0::ISoundTriggerHw>()),
+    ALOGW_IF((registerPassthroughServiceImplementations<
+                     soundtrigger::V2_3::ISoundTriggerHw, soundtrigger::V2_2::ISoundTriggerHw,
+                     soundtrigger::V2_1::ISoundTriggerHw, soundtrigger::V2_0::ISoundTriggerHw>()),
              "Could not register soundtrigger API");
 
     ALOGW_IF(registerPassthroughServiceImplementations<
