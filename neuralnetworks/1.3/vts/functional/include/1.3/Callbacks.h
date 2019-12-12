@@ -18,8 +18,11 @@
 #define ANDROID_HARDWARE_NEURALNETWORKS_V1_3_CALLBACKS_H
 
 #include <android-base/thread_annotations.h>
+#include <android/hardware/neuralnetworks/1.0/IExecutionCallback.h>
 #include <android/hardware/neuralnetworks/1.0/IPreparedModelCallback.h>
+#include <android/hardware/neuralnetworks/1.2/IExecutionCallback.h>
 #include <android/hardware/neuralnetworks/1.2/IPreparedModelCallback.h>
+#include <android/hardware/neuralnetworks/1.3/IExecutionCallback.h>
 #include <android/hardware/neuralnetworks/1.3/IPreparedModelCallback.h>
 #include <hidl/Status.h>
 #include <condition_variable>
@@ -136,7 +139,7 @@ class PreparedModelCallback : public IPreparedModelCallback {
      * @param preparedModel Returned model that has been prepared for execution,
      *     nullptr if the model was unable to be prepared.
      */
-    Return<void> notify_1_3(V1_0::ErrorStatus status,
+    Return<void> notify_1_3(V1_3::ErrorStatus status,
                             const sp<V1_3::IPreparedModel>& preparedModel) override;
 
     /**
@@ -158,7 +161,7 @@ class PreparedModelCallback : public IPreparedModelCallback {
      *     - GENERAL_FAILURE if there is an unspecified error
      *     - INVALID_ARGUMENT if the input model is invalid
      */
-    V1_0::ErrorStatus getStatus() const;
+    ErrorStatus getStatus() const;
 
     /**
      * Retrieves the model that has been prepared for execution from the
@@ -173,11 +176,214 @@ class PreparedModelCallback : public IPreparedModelCallback {
     sp<V1_0::IPreparedModel> getPreparedModel() const;
 
   private:
+    Return<void> notifyInternal(ErrorStatus status, const sp<V1_0::IPreparedModel>& preparedModel);
+
     mutable std::mutex mMutex;
     mutable std::condition_variable mCondition;
     bool mNotified GUARDED_BY(mMutex) = false;
-    V1_0::ErrorStatus mErrorStatus = V1_0::ErrorStatus::GENERAL_FAILURE;
+    ErrorStatus mErrorStatus = ErrorStatus::GENERAL_FAILURE;
     sp<V1_0::IPreparedModel> mPreparedModel;
+};
+
+/**
+ * The ExecutionCallback class is used to receive the results of the execution
+ * from a task executing asynchronously with respect to the runtime. If a
+ * calling thread calls wait or get* on a ExecutionCallback object and the
+ * corresponding asynchronous task has not finished the execution, the calling
+ * thread will block until the asynchronous task has either called one of the
+ * notify* methods.
+ *
+ * If the callback object is notified more than once, only the results of the
+ * first call to notify* are used, and the results from subsequent calls are
+ * discarded.
+ *
+ * This callback object is passed as an argument to IPreparedModel::execute*.
+ */
+class ExecutionCallback : public IExecutionCallback {
+  public:
+    /**
+     * IExecutionCallback::notify marks the callback object with the return
+     * status of the asynchronous execution that held this callback and enables
+     * all prior and future wait calls on the ExecutionCallback object to
+     * proceed.
+     *
+     * One of the IExecutionCallback::notify* methods must be called on a given
+     * ExecutionCallback object.
+     *
+     * If the callback object is notified more than once, only the results of
+     * the first call to notify* are used, and the results from subsequent calls
+     * are discarded.
+     *
+     * @param status Error status returned from launching the asynchronous task
+     *     (if the launch fails) or from the asynchronous task itself (if the
+     *     launch succeeds). Must be:
+     *     - NONE if the asynchronous execution was successful
+     *     - DEVICE_UNAVAILABLE if driver is offline or busy
+     *     - GENERAL_FAILURE if there is an unspecified error
+     *     - OUTPUT_INSUFFICIENT_SIZE if provided output buffer is not large
+     *         enough to store the resultant values
+     *     - INVALID_ARGUMENT if the input request is invalid
+     */
+    Return<void> notify(V1_0::ErrorStatus status) override;
+
+    /**
+     * IExecutionCallback::notify_1_2 marks the callback object with the results
+     * (error status, dynamic output shapes, and timing information) of the
+     * asynchronous execution that held this callback and enables all prior and
+     * future wait calls on the ExecutionCallback object to proceed.
+     *
+     * One of the IExecutionCallback::notify* methods must be called on a given
+     * ExecutionCallback object.
+     *
+     * If the callback object is notified more than once, only the results of
+     * the first call to notify* are used, and the results from subsequent calls
+     * are discarded.
+     *
+     * @param status Error status returned from launching the asynchronous task
+     *     (if the launch fails) or from the asynchronous task itself (if the
+     *     launch succeeds). Must be:
+     *     - NONE if the asynchronous execution was successful
+     *     - DEVICE_UNAVAILABLE if driver is offline or busy
+     *     - GENERAL_FAILURE if the asynchronous task resulted in an unspecified
+     *         error
+     *     - OUTPUT_INSUFFICIENT_SIZE if at least one output operand buffer is
+     *         not large enough to store the corresponding output
+     *     - INVALID_ARGUMENT if one of the input arguments to prepareModel is
+     *         invalid
+     * @param outputShapes A list of shape information of model output operands.
+     *     The index into "outputShapes" corresponds to the index of the output
+     *     operand in the Request outputs vector. outputShapes must be empty
+     *     unless the status is either NONE or OUTPUT_INSUFFICIENT_SIZE.
+     * @param Timing Duration of execution. Unless MeasureTiming::YES was passed
+     *     when launching the execution and status is NONE, all times must be
+     *     reported as UINT64_MAX. A driver may choose to report any time as
+     *     UINT64_MAX, indicating that particular measurement is not available.
+     */
+    Return<void> notify_1_2(V1_0::ErrorStatus status,
+                            const hidl_vec<V1_2::OutputShape>& outputShapes,
+                            const V1_2::Timing& timing) override;
+
+    /**
+     * IExecutionCallback::notify_1_3 marks the callback object with the results
+     * (error status, dynamic output shapes, and timing information) of the
+     * asynchronous execution that held this callback and enables all prior and
+     * future wait calls on the ExecutionCallback object to proceed.
+     *
+     * One of the IExecutionCallback::notify* methods must be called on a given
+     * ExecutionCallback object.
+     *
+     * If the callback object is notified more than once, only the results of
+     * the first call to notify* are used, and the results from subsequent calls
+     * are discarded.
+     *
+     * @param status Error status returned from launching the asynchronous task
+     *     (if the launch fails) or from the asynchronous task itself (if the
+     *     launch succeeds). Must be:
+     *     - NONE if the asynchronous execution was successful
+     *     - DEVICE_UNAVAILABLE if driver is offline or busy
+     *     - GENERAL_FAILURE if the asynchronous task resulted in an unspecified
+     *         error
+     *     - OUTPUT_INSUFFICIENT_SIZE if at least one output operand buffer is
+     *         not large enough to store the corresponding output
+     *     - INVALID_ARGUMENT if one of the input arguments to prepareModel is
+     *         invalid
+     *     - MISSED_DEADLINE_* if the deadline was not met
+     * @param outputShapes A list of shape information of model output operands.
+     *     The index into "outputShapes" corresponds to the index of the output
+     *     operand in the Request outputs vector. outputShapes must be empty
+     *     unless the status is either NONE or OUTPUT_INSUFFICIENT_SIZE.
+     * @param Timing Duration of execution. Unless MeasureTiming::YES was passed
+     *     when launching the execution and status is NONE, all times must be
+     *     reported as UINT64_MAX. A driver may choose to report any time as
+     *     UINT64_MAX, indicating that particular measurement is not available.
+     */
+    Return<void> notify_1_3(V1_3::ErrorStatus status,
+                            const hidl_vec<V1_2::OutputShape>& outputShapes,
+                            const V1_2::Timing& timing) override;
+
+    /**
+     * ExecutionCallback::wait blocks until notify* has been called on the
+     * callback object.
+     */
+    void wait() const;
+
+    /**
+     * Retrieves the error status returned from the asynchronous task launched
+     * by one of the IPreparedModel::execute* methods. If
+     * IPreparedModel::execute* (but not IPreparedModel::executeSynchronously*)
+     * has not finished asynchronously executing, this call will block until the
+     * asynchronous task notifies the object.
+     *
+     * @return status Error status returned from launching the asynchronous task
+     *     (if the launch fails) or from the asynchronous task itself (if the
+     *     launch succeeds). Must be:
+     *     - NONE if the asynchronous execution was successful
+     *     - DEVICE_UNAVAILABLE if driver is offline or busy
+     *     - GENERAL_FAILURE if the asynchronous task resulted in an unspecified
+     *         error
+     *     - OUTPUT_INSUFFICIENT_SIZE if at least one output operand buffer is
+     *         not large enough to store the corresponding output
+     *     - INVALID_ARGUMENT if one of the input arguments to prepareModel is
+     *         invalid
+     *     - MISSED_DEADLINE_* if the deadline could not be met
+     */
+    V1_3::ErrorStatus getStatus() const;
+
+    /**
+     * Retrieves the error status returned from the asynchronous task launched
+     * by one of the IPreparedModel::execute* methods. If
+     * IPreparedModel::execute* (but not IPreparedModel::executeSynchronously*)
+     * has not finished asynchronously executing, this call will block until the
+     * asynchronous task notifies the object.
+     *
+     * If the asynchronous task was launched by IPreparedModel::execute, an
+     * empty vector will be returned.
+     *
+     * @return outputShapes A list of shape information of model output
+     *     operands. The index into "outputShapes" corresponds to the index of
+     *     the output operand in the Request outputs vector. outputShapes must
+     *     be empty unless the status is either NONE or
+     *     OUTPUT_INSUFFICIENT_SIZE. outputShaps may be empty if the status is
+     *     NONE and all model output operands are fully-specified at execution
+     *     time. outputShapes must have the same number of elements as the
+     *     number of model output operands if the status is
+     *     OUTPUT_INSUFFICIENT_SIZE, or if the status is NONE and the model has
+     *     at least one output operand that is not fully-specified.
+     */
+    const std::vector<V1_2::OutputShape>& getOutputShapes() const;
+
+    /**
+     * Retrieves the error status returned from the asynchronous task launched
+     * by one of the IPreparedModel::execute* methods. If
+     * IPreparedModel::execute* (but not IPreparedModel::executeSynchronously*)
+     * has not finished asynchronously executing, this call will block until the
+     * asynchronous task notifies the object.
+     *
+     * If the asynchronous task was launched by IPreparedModel::execute, every
+     * time must be UINT64_MAX.
+     *
+     * @return timing Duration of the execution. Every time must be UINT64_MAX
+     *     unless the status is NONE.
+     */
+    V1_2::Timing getTiming() const;
+
+  private:
+    /*
+     * ExecutionCallback::notifyInternal stores the results of the execution
+     * (status, output shapes, and timing information) in the ExecutionCallback
+     * object before any call to wait or get* return. It then enables all prior
+     * and future wait calls on the ExecutionCallback object to proceed.
+     */
+    Return<void> notifyInternal(V1_3::ErrorStatus errorStatus,
+                                hidl_vec<V1_2::OutputShape> outputShapes, V1_2::Timing timing);
+
+    // members
+    mutable std::mutex mMutex;
+    mutable std::condition_variable mCondition;
+    bool mNotified GUARDED_BY(mMutex) = false;
+    V1_3::ErrorStatus mErrorStatus = V1_3::ErrorStatus::GENERAL_FAILURE;
+    std::vector<V1_2::OutputShape> mOutputShapes = {};
+    V1_2::Timing mTiming = {};
 };
 
 }  // namespace android::hardware::neuralnetworks::V1_3::implementation
