@@ -34,18 +34,10 @@ using android::hardware::vibrator::Effect;
 using android::hardware::vibrator::EffectStrength;
 using android::hardware::vibrator::IVibrator;
 
-// TODO(b/143992652): autogenerate
-const std::vector<Effect> kEffects = {
-        Effect::CLICK,       Effect::DOUBLE_CLICK, Effect::TICK,        Effect::THUD,
-        Effect::POP,         Effect::HEAVY_CLICK,  Effect::RINGTONE_1,  Effect::RINGTONE_2,
-        Effect::RINGTONE_3,  Effect::RINGTONE_4,   Effect::RINGTONE_5,  Effect::RINGTONE_6,
-        Effect::RINGTONE_7,  Effect::RINGTONE_8,   Effect::RINGTONE_9,  Effect::RINGTONE_10,
-        Effect::RINGTONE_11, Effect::RINGTONE_12,  Effect::RINGTONE_13, Effect::RINGTONE_14,
-        Effect::RINGTONE_15, Effect::TEXTURE_TICK};
-
-// TODO(b/143992652): autogenerate
-const std::vector<EffectStrength> kEffectStrengths = {EffectStrength::LIGHT, EffectStrength::MEDIUM,
-                                                      EffectStrength::STRONG};
+const std::vector<Effect> kEffects{android::enum_range<Effect>().begin(),
+                                   android::enum_range<Effect>().end()};
+const std::vector<EffectStrength> kEffectStrengths{android::enum_range<EffectStrength>().begin(),
+                                                   android::enum_range<EffectStrength>().end()};
 
 const std::vector<Effect> kInvalidEffects = {
         static_cast<Effect>(static_cast<int32_t>(kEffects.front()) - 1),
