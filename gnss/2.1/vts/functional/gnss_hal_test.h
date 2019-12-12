@@ -28,6 +28,7 @@ using android::hardware::Void;
 
 using android::hardware::gnss::common::GnssCallbackEventQueue;
 using android::hardware::gnss::V1_0::GnssLocationFlags;
+using android::hardware::gnss::V2_0::GnssConstellationType;
 using android::hardware::gnss::V2_1::IGnss;
 
 using GnssLocation_1_0 = android::hardware::gnss::V1_0::GnssLocation;
@@ -183,6 +184,17 @@ class GnssHalTest : public testing::TestWithParam<std::string> {
      * Helper function to set positioning mode and verify output
      */
     void SetPositionMode(const int min_interval_msec, const bool low_power_mode);
+
+    /*
+     * startLocationAndGetNonGpsConstellation:
+     * 1. Start location
+     * 2. Find and return first non-GPS constellation
+     *
+     * Note that location is not stopped in this method. The client should call
+     * StopAndClearLocations() after the call.
+     */
+    GnssConstellationType startLocationAndGetNonGpsConstellation(
+            const int locations_to_await, const int gnss_sv_info_list_timeout);
 
     sp<IGnss> gnss_hal_;        // GNSS HAL to call into
     sp<GnssCallback> gnss_cb_;  // Primary callback interface

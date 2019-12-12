@@ -38,6 +38,9 @@ class Vibrator : public BnVibrator {
     ndk::ScopedAStatus getCompositionSizeMax(int32_t* maxSize);
     ndk::ScopedAStatus compose(const std::vector<CompositeEffect>& composite,
                                const std::shared_ptr<IVibratorCallback>& callback) override;
+    ndk::ScopedAStatus getSupportedAlwaysOnEffects(std::vector<Effect>* _aidl_return) override;
+    ndk::ScopedAStatus alwaysOnEnable(int32_t id, Effect effect, EffectStrength strength) override;
+    ndk::ScopedAStatus alwaysOnDisable(int32_t id) override;
 };
 
 }  // namespace vibrator

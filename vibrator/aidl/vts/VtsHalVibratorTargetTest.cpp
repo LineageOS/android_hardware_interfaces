@@ -135,13 +135,12 @@ TEST_P(VibratorAidl, ValidateEffect) {
             Status status = vibrator->perform(effect, strength, nullptr /*callback*/, &lengthMs);
 
             if (isEffectSupported) {
-                EXPECT_TRUE(status.isOk())
-                        << static_cast<int>(effect) << " " << static_cast<int>(strength);
+                EXPECT_TRUE(status.isOk()) << toString(effect) << " " << toString(strength);
                 EXPECT_GT(lengthMs, 0);
                 usleep(lengthMs * 1000);
             } else {
                 EXPECT_EQ(status.exceptionCode(), Status::EX_UNSUPPORTED_OPERATION)
-                        << static_cast<int>(effect) << " " << static_cast<int>(strength);
+                        << toString(effect) << " " << toString(strength);
                 EXPECT_EQ(lengthMs, 0);
             }
         }
@@ -202,7 +201,7 @@ TEST_P(VibratorAidl, InvalidEffectsUnsupported) {
             int32_t lengthMs;
             Status status = vibrator->perform(effect, strength, nullptr /*callback*/, &lengthMs);
             EXPECT_EQ(status.exceptionCode(), Status::EX_UNSUPPORTED_OPERATION)
-                    << static_cast<int>(effect) << " " << static_cast<int>(strength);
+                    << toString(effect) << " " << toString(strength);
         }
     }
     for (Effect effect : kEffects) {
@@ -210,7 +209,7 @@ TEST_P(VibratorAidl, InvalidEffectsUnsupported) {
             int32_t lengthMs;
             Status status = vibrator->perform(effect, strength, nullptr /*callback*/, &lengthMs);
             EXPECT_EQ(status.exceptionCode(), Status::EX_UNSUPPORTED_OPERATION)
-                    << static_cast<int>(effect) << " " << static_cast<int>(strength);
+                    << toString(effect) << " " << toString(strength);
         }
     }
 }
@@ -368,6 +367,32 @@ TEST_P(VibratorAidl, CompseSizeBoundary) {
         EXPECT_EQ(Status::EX_ILLEGAL_ARGUMENT,
                   vibrator->compose(composite, nullptr).exceptionCode());
         vibrator->off();
+    }
+}
+
+TEST_P(VibratorAidl, AlwaysOn) {
+    if (capabilities & IVibrator::CAP_ALWAYS_ON_CONTROL) {
+        std::vector<Effect> supported;
+        ASSERT_TRUE(vibrator->getSupportedAlwaysOnEffects(&supported).isOk());
+
+        for (Effect effect : kEffects) {
+            bool isEffectSupported =
+                    std::find(supported.begin(), supported.end(), effect) != supported.end();
+
+            for (EffectStrength strength : kEffectStrengths) {
+                Status status = vibrator->alwaysOnEnable(0, effect, strength);
+
+                if (isEffectSupported) {
+                    EXPECT_EQ(Status::EX_NONE, status.exceptionCode())
+                            << toString(effect) << " " << toString(strength);
+                } else {
+                    EXPECT_EQ(Status::EX_UNSUPPORTED_OPERATION, status.exceptionCode())
+                            << toString(effect) << " " << toString(strength);
+                }
+            }
+        }
+
+        EXPECT_EQ(Status::EX_NONE, vibrator->alwaysOnDisable(0).exceptionCode());
     }
 }
 

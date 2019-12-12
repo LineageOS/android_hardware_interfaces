@@ -427,7 +427,7 @@ TEST_P(GnssHalTest, BlacklistConstellationWithLocationOff) {
  *
  * 1) Turns on location, waits for 3 locations, ensuring they are valid, and checks corresponding
  * GnssStatus for any non-GPS constellations.
- * 2a & b) Turns off location, and blacklist first non-GPS constellations.
+ * 2a & b) Blacklist first non-GPS constellation, and turn off location.
  * 3) Restart location, wait for 3 locations, ensuring they are valid, and checks corresponding
  * GnssStatus does not use any constellation but GPS.
  * 4a & b) Clean up by turning off location, and send in empty blacklist.

@@ -6309,7 +6309,7 @@ void CameraHidlTest::allocateGraphicBuffer(uint32_t width, uint32_t height, uint
     buffer_handle_t buffer;
     uint32_t stride;
 
-    android::status_t err = android::GraphicBufferAllocator::get().allocate(
+    android::status_t err = android::GraphicBufferAllocator::get().allocateRawHandle(
             width, height, static_cast<int32_t>(format), 1u /*layerCount*/, usage, &buffer, &stride,
             "VtsHalCameraProviderV2_4");
     ASSERT_EQ(err, android::NO_ERROR);

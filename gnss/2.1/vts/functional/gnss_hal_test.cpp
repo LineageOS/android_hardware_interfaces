@@ -148,6 +148,47 @@ void GnssHalTest::StartAndCheckLocations(int count) {
     }
 }
 
+GnssConstellationType GnssHalTest::startLocationAndGetNonGpsConstellation(
+        const int locations_to_await, const int gnss_sv_info_list_timeout) {
+    gnss_cb_->location_cbq_.reset();
+    StartAndCheckLocations(locations_to_await);
+    const int location_called_count = gnss_cb_->location_cbq_.calledCount();
+
+    // Tolerate 1 less sv status to handle edge cases in reporting.
+    int sv_info_list_cbq_size = gnss_cb_->sv_info_list_cbq_.size();
+    EXPECT_GE(sv_info_list_cbq_size + 1, locations_to_await);
+    ALOGD("Observed %d GnssSvInfo, while awaiting %d Locations (%d received)",
+          sv_info_list_cbq_size, locations_to_await, location_called_count);
+
+    // Find first non-GPS constellation to blacklist
+    GnssConstellationType constellation_to_blacklist = GnssConstellationType::UNKNOWN;
+    for (int i = 0; i < sv_info_list_cbq_size; ++i) {
+        hidl_vec<IGnssCallback_2_1::GnssSvInfo> sv_info_vec;
+        gnss_cb_->sv_info_list_cbq_.retrieve(sv_info_vec, gnss_sv_info_list_timeout);
+        for (uint32_t iSv = 0; iSv < sv_info_vec.size(); iSv++) {
+            const auto& gnss_sv = sv_info_vec[iSv];
+            if ((gnss_sv.v2_0.v1_0.svFlag & IGnssCallback_1_0::GnssSvFlags::USED_IN_FIX) &&
+                (gnss_sv.v2_0.constellation != GnssConstellationType::UNKNOWN) &&
+                (gnss_sv.v2_0.constellation != GnssConstellationType::GPS)) {
+                // found a non-GPS constellation
+                constellation_to_blacklist = gnss_sv.v2_0.constellation;
+                break;
+            }
+        }
+        if (constellation_to_blacklist != GnssConstellationType::UNKNOWN) {
+            break;
+        }
+    }
+
+    if (constellation_to_blacklist == GnssConstellationType::UNKNOWN) {
+        ALOGI("No non-GPS constellations found, constellation blacklist test less effective.");
+        // Proceed functionally to blacklist something.
+        constellation_to_blacklist = GnssConstellationType::GLONASS;
+    }
+
+    return constellation_to_blacklist;
+}
+
 GnssHalTest::GnssCallback::GnssCallback()
     : info_cbq_("system_info"),
       name_cbq_("name"),

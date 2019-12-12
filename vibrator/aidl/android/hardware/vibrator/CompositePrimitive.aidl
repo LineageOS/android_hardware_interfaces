@@ -19,11 +19,34 @@ package android.hardware.vibrator;
 @VintfStability
 @Backing(type="int")
 enum CompositePrimitive {
+    /**
+     * No haptic effect. Used to generate extended delays between primitives.
+     */
     NOOP,
+    /**
+     * This effect should produce a sharp, crisp click sensation.
+     */
     CLICK,
+    /**
+     * A haptic effect that simulates downwards movement with gravity. Often
+     * followed by extra energy of hitting and reverberation to augment
+     * physicality.
+     */
     THUD,
+    /**
+     * A haptic effect that simulates spinning momentum.
+     */
     SPIN,
+    /**
+     * A haptic effect that simulates quick upward movement against gravity.
+     */
     QUICK_RISE,
+    /**
+     * A haptic effect that simulates slow upward movement against gravity.
+     */
     SLOW_RISE,
+    /**
+     * A haptic effect that simulates quick downwards movement with gravity.
+     */
     QUICK_FALL,
 }
