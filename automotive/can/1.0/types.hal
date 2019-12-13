@@ -58,6 +58,15 @@ struct CanMessage {
      * If this flag is set, payload must be empty.
      */
     bool remoteTransmissionRequest;
+
+    /**
+     * Flag indicating if the message has an extended ID.
+     *
+     * Extended ID's are 29 bits long, as opposed to the standard 11 bit ID.
+     * It can not simply be inferred from the length of the ID itself, as the
+     * message ID 0x00000123 !=  message ID 0x123.
+     */
+    bool isExtendedId;
 };
 
 /**
@@ -70,11 +79,30 @@ struct CanMessage {
  * one) and all inverted filters must match. In other words:
  *  - a single matching non-inverted filter makes the whole set matching;
  *  - a single non-matching inverted filter makes the whole set non-matching.
+ *
+ * Additional less common options for filtering include:
+ * rtr - Remote Transmission Request; another ECU requests DLC bytes of data on this message ID
+ * extendedFormat - 29 bit message ID is used instead of 11 bits
  */
 struct CanMessageFilter {
     CanMessageId id;
     uint32_t mask;
     bool inverted;
+    FilterFlag rtr;
+    FilterFlag extendedFormat;
+};
+
+
+/**
+ * Types of filter that can be applied to a CanMessageFilter
+ */
+enum FilterFlag : uint8_t {
+    /** Default, FilterFlag doesn't effect what messages filtered */
+    DONT_CARE = 0,
+    /** This FilterFlag MUST be present in received messages to pass though the filter */
+    REQUIRE,
+    /** This FilterFlag must NOT be present in received messages to pass though the filter */
+    EXCLUDE,
 };
 
 enum Result : uint8_t {

@@ -22,6 +22,8 @@
 #include <libnetdevice/can.h>
 #include <libnetdevice/libnetdevice.h>
 #include <linux/can.h>
+#include <linux/can/error.h>
+#include <linux/can/raw.h>
 
 namespace android {
 namespace hardware {
@@ -220,6 +222,21 @@ bool CanBus::down() {
 }
 
 /**
+ * Helper function to determine if a flag meets the requirements of a
+ * FilterFlag. See definition of FilterFlag in types.hal
+ *
+ * \param filterFlag FilterFlag object to match flag against
+ * \param flag bool object from CanMessage object
+ */
+static bool satisfiesFilterFlag(FilterFlag filterFlag, bool flag) {
+    // TODO(b/144458917) add testing for this to VTS tests
+    if (filterFlag == FilterFlag::DONT_CARE) return true;
+    if (filterFlag == FilterFlag::REQUIRE) return flag;
+    if (filterFlag == FilterFlag::EXCLUDE) return !flag;
+    return false;
+}
+
+/**
  * Match the filter set against message id.
  *
  * For details on the filters syntax, please see CanMessageFilter at
@@ -229,13 +246,16 @@ bool CanBus::down() {
  * \param id Message id to filter
  * \return true if the message id matches the filter, false otherwise
  */
-static bool match(const hidl_vec<CanMessageFilter>& filter, CanMessageId id) {
+static bool match(const hidl_vec<CanMessageFilter>& filter, CanMessageId id, bool isExtendedId,
+                  bool isRtr) {
     if (filter.size() == 0) return true;
 
     bool anyNonInvertedPresent = false;
     bool anyNonInvertedSatisfied = false;
     for (auto& rule : filter) {
-        const bool satisfied = ((id & rule.mask) == rule.id) == !rule.inverted;
+        const bool satisfied = ((id & rule.mask) == rule.id) == !rule.inverted &&
+                               satisfiesFilterFlag(rule.rtr, isRtr) &&
+                               satisfiesFilterFlag(rule.extendedFormat, isExtendedId);
         if (rule.inverted) {
             // Any inverted (blacklist) rule not being satisfied invalidates the whole filter set.
             if (!satisfied) return false;
@@ -247,11 +267,54 @@ static bool match(const hidl_vec<CanMessageFilter>& filter, CanMessageId id) {
     return !anyNonInvertedPresent || anyNonInvertedSatisfied;
 }
 
+void CanBus::notifyErrorListeners(ErrorEvent err, bool isFatal) {
+    std::lock_guard<std::mutex> lck(mErrListenersGuard);
+    for (auto& listener : mErrListeners) {
+        if (!listener->onError(err, isFatal).isOk()) {
+            LOG(WARNING) << "Failed to notify listener about error";
+        }
+    }
+}
+
+static ErrorEvent parseErrorFrame(const struct canfd_frame& frame) {
+    // decode error frame (to a degree)
+    if ((frame.can_id & (CAN_ERR_BUSERROR | CAN_ERR_BUSOFF)) != 0) {
+        return ErrorEvent::BUS_ERROR;
+    }
+    if ((frame.data[1] & CAN_ERR_CRTL_TX_OVERFLOW) != 0) {
+        return ErrorEvent::TX_OVERFLOW;
+    }
+    if ((frame.data[1] & CAN_ERR_CRTL_RX_OVERFLOW) != 0) {
+        return ErrorEvent::RX_OVERFLOW;
+    }
+    if ((frame.data[2] & CAN_ERR_PROT_OVERLOAD) != 0) {
+        return ErrorEvent::BUS_OVERLOAD;
+    }
+    if ((frame.can_id & CAN_ERR_PROT) != 0) {
+        return ErrorEvent::MALFORMED_INPUT;
+    }
+    if ((frame.can_id & (CAN_ERR_CRTL | CAN_ERR_TRX | CAN_ERR_RESTARTED)) != 0) {
+        // "controller restarted" constitutes a HARDWARE_ERROR imo
+        return ErrorEvent::HARDWARE_ERROR;
+    }
+    return ErrorEvent::UNKNOWN_ERROR;
+}
+
 void CanBus::onRead(const struct canfd_frame& frame, std::chrono::nanoseconds timestamp) {
+    if ((frame.can_id & CAN_ERR_FLAG) != 0) {
+        // error bit is set
+        LOG(WARNING) << "CAN Error frame received";
+        // TODO(b/144458917) consider providing different values for isFatal, depending on error
+        notifyErrorListeners(parseErrorFrame(frame), false);
+        return;
+    }
+
     CanMessage message = {};
-    message.id = frame.can_id;
+    message.id = frame.can_id & CAN_EFF_MASK;  // mask out eff/rtr/err flags
     message.payload = hidl_vec<uint8_t>(frame.data, frame.data + frame.len);
     message.timestamp = timestamp.count();
+    message.isExtendedId = (frame.can_id & CAN_EFF_FLAG) != 0;
+    message.remoteTransmissionRequest = (frame.can_id & CAN_RTR_FLAG) != 0;
 
     if (UNLIKELY(kSuperVerbose)) {
         LOG(VERBOSE) << "Got message " << toString(message);
@@ -259,7 +322,9 @@ void CanBus::onRead(const struct canfd_frame& frame, std::chrono::nanoseconds ti
 
     std::lock_guard<std::mutex> lck(mMsgListenersGuard);
     for (auto& listener : mMsgListeners) {
-        if (!match(listener.filter, message.id)) continue;
+        if (!match(listener.filter, message.id, message.remoteTransmissionRequest,
+                   message.isExtendedId))
+            continue;
         if (!listener.callback->onReceive(message).isOk() && !listener.failedOnce) {
             listener.failedOnce = true;
             LOG(WARNING) << "Failed to notify listener about message";
@@ -274,15 +339,7 @@ void CanBus::onError(int errnoVal) {
         mDownAfterUse = false;
         eventType = ErrorEvent::INTERFACE_DOWN;
     }
-
-    {
-        std::lock_guard<std::mutex> lck(mErrListenersGuard);
-        for (auto& listener : mErrListeners) {
-            if (!listener->onError(eventType, true).isOk()) {
-                LOG(WARNING) << "Failed to notify listener about error";
-            }
-        }
-    }
+    notifyErrorListeners(eventType, true);
 
     const auto errcb = mErrCb;
     if (errcb != nullptr) errcb();

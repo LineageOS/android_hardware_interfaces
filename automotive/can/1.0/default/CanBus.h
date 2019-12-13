@@ -89,6 +89,8 @@ struct CanBus : public ICanBus {
     void clearMsgListeners();
     void clearErrListeners();
 
+    void notifyErrorListeners(ErrorEvent err, bool isFatal);
+
     void onRead(const struct canfd_frame& frame, std::chrono::nanoseconds timestamp);
     void onError(int errnoVal);
 
