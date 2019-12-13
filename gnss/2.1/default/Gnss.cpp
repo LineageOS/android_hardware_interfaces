@@ -31,6 +31,7 @@ namespace V2_1 {
 namespace implementation {
 
 sp<V2_1::IGnssCallback> Gnss::sGnssCallback_2_1 = nullptr;
+sp<V2_0::IGnssCallback> Gnss::sGnssCallback_2_0 = nullptr;
 
 Gnss::Gnss() : mMinIntervalMs(1000), mGnssConfiguration{new GnssConfiguration()} {}
 
@@ -190,14 +191,42 @@ Return<bool> Gnss::injectBestLocation(const V1_0::GnssLocation&) {
 }
 
 // Methods from V2_0::IGnss follow.
-Return<bool> Gnss::setCallback_2_0(const sp<V2_0::IGnssCallback>&) {
-    // TODO implement
-    return bool{};
+Return<bool> Gnss::setCallback_2_0(const sp<V2_0::IGnssCallback>& callback) {
+    ALOGD("Gnss::setCallback_2_0");
+    if (callback == nullptr) {
+        ALOGE("%s: Null callback ignored", __func__);
+        return false;
+    }
+
+    sGnssCallback_2_0 = callback;
+
+    using Capabilities = V2_0::IGnssCallback::Capabilities;
+    const auto capabilities = Capabilities::MEASUREMENTS | Capabilities::MEASUREMENT_CORRECTIONS |
+                              Capabilities::LOW_POWER_MODE | Capabilities::SATELLITE_BLACKLIST;
+    auto ret = sGnssCallback_2_0->gnssSetCapabilitiesCb_2_0(capabilities);
+    if (!ret.isOk()) {
+        ALOGE("%s: Unable to invoke callback", __func__);
+    }
+
+    V1_1::IGnssCallback::GnssSystemInfo gnssInfo = {.yearOfHw = 2019};
+
+    ret = sGnssCallback_2_0->gnssSetSystemInfoCb(gnssInfo);
+    if (!ret.isOk()) {
+        ALOGE("%s: Unable to invoke callback", __func__);
+    }
+
+    auto gnssName = "Google Mock GNSS Implementation v2.0";
+    ret = sGnssCallback_2_0->gnssNameCb(gnssName);
+    if (!ret.isOk()) {
+        ALOGE("%s: Unable to invoke callback", __func__);
+    }
+
+    return true;
 }
 
 Return<sp<V2_0::IGnssConfiguration>> Gnss::getExtensionGnssConfiguration_2_0() {
-    // TODO implement
-    return ::android::sp<V2_0::IGnssConfiguration>{};
+    ALOGD("Gnss::getExtensionGnssConfiguration_2_0");
+    return mGnssConfiguration;
 }
 
 Return<sp<V2_0::IGnssDebug>> Gnss::getExtensionGnssDebug_2_0() {
@@ -216,8 +245,8 @@ Return<sp<V2_0::IAGnssRil>> Gnss::getExtensionAGnssRil_2_0() {
 }
 
 Return<sp<V2_0::IGnssMeasurement>> Gnss::getExtensionGnssMeasurement_2_0() {
-    // TODO implement
-    return ::android::sp<V2_0::IGnssMeasurement>{};
+    ALOGD("Gnss::getExtensionGnssMeasurement_2_0");
+    return new GnssMeasurement();
 }
 
 Return<sp<measurement_corrections::V1_0::IMeasurementCorrections>>
@@ -281,6 +310,7 @@ Return<sp<V2_1::IGnssMeasurement>> Gnss::getExtensionGnssMeasurement_2_1() {
 }
 
 Return<sp<V2_1::IGnssConfiguration>> Gnss::getExtensionGnssConfiguration_2_1() {
+    ALOGD("Gnss::getExtensionGnssConfiguration_2_1");
     return mGnssConfiguration;
 }
 
