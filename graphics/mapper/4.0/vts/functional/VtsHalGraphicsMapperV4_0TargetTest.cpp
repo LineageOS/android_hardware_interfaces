@@ -1406,7 +1406,7 @@ TEST_P(GraphicsMapperHidlTest, SetPlaneLayouts) {
  * Test IMapper::set(Dataspace)
  */
 TEST_P(GraphicsMapperHidlTest, SetDataspace) {
-    Dataspace dataspace = Dataspace::V0_SRGB_LINEAR;
+    Dataspace dataspace = Dataspace::SRGB_LINEAR;
     hidl_vec<uint8_t> vec;
     ASSERT_EQ(NO_ERROR, gralloc4::encodeDataspace(dataspace, &vec));
 
