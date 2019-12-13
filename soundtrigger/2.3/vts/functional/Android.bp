@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2017 The Android Open Source Project
+// Copyright (C) 2019 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,13 +15,17 @@
 //
 
 cc_test {
-    name: "VtsHalUsbV1_1TargetTest",
+    name: "VtsHalSoundtriggerV2_3TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
-    srcs: ["VtsHalUsbV1_1TargetTest.cpp"],
+    srcs: ["VtsHalSoundtriggerV2_3TargetTest.cpp"],
     static_libs: [
-        "android.hardware.usb@1.0",
-        "android.hardware.usb@1.1",
+        "android.hardware.soundtrigger@2.0",
+        "android.hardware.soundtrigger@2.1",
+        "android.hardware.soundtrigger@2.2",
+        "android.hardware.soundtrigger@2.3",
     ],
-    test_suites: ["general-tests", "vts-core"],
+    test_suites: [
+        "general-tests",
+        "vts-core",
+    ],
 }
-

@@ -148,7 +148,8 @@ class GnssHalTest : public testing::TestWithParam<std::string> {
      * Note that location is not stopped in this method. The client should call
      * StopAndClearLocations() after the call.
      */
-    GnssConstellationType startLocationAndGetNonGpsConstellation();
+    GnssConstellationType startLocationAndGetNonGpsConstellation(
+            const int locations_to_await, const int gnss_sv_info_list_timeout);
 
     sp<IGnss> gnss_hal_;         // GNSS HAL to call into
     sp<GnssCallback> gnss_cb_;   // Primary callback interface

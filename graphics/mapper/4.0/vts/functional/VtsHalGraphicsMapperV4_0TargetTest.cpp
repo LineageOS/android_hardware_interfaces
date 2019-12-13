@@ -117,7 +117,9 @@ class GraphicsMapperHidlTest
         int64_t offsetInBitsA = -1;
 
         for (const auto& component : planeLayout.components) {
-            EXPECT_EQ(GRALLOC4_PLANE_LAYOUT_COMPONENT_TYPE, component.type.name);
+            if (!gralloc4::isStandardPlaneLayoutComponentType(component.type)) {
+                continue;
+            }
             EXPECT_EQ(8, component.sizeInBits);
             if (component.type.value == gralloc4::PlaneLayoutComponentType_R.value) {
                 offsetInBitsR = component.offsetInBits;
@@ -207,9 +209,7 @@ class GraphicsMapperHidlTest
 
         for (const auto& planeLayout : planeLayouts) {
             for (const auto& planeLayoutComponent : planeLayout.components) {
-                std::string componentTypeName = planeLayoutComponent.type.name;
-                if (!std::strncmp(componentTypeName.c_str(), GRALLOC4_PLANE_LAYOUT_COMPONENT_TYPE,
-                                  componentTypeName.size())) {
+                if (!gralloc4::isStandardPlaneLayoutComponentType(planeLayoutComponent.type)) {
                     continue;
                 }
                 ASSERT_EQ(0, planeLayoutComponent.offsetInBits % 8);

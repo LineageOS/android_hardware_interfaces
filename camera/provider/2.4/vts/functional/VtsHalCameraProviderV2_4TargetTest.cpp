@@ -47,8 +47,12 @@
 #include <gui/BufferItemConsumer.h>
 #include <gui/BufferQueue.h>
 #include <gui/Surface.h>
+#include <gtest/gtest.h>
 #include <hardware/gralloc.h>
 #include <hardware/gralloc1.h>
+#include <hidl/GtestPrinter.h>
+#include <hidl/ServiceManagement.h>
+#include <log/log.h>
 #include <system/camera.h>
 #include <system/camera_metadata.h>
 #include <ui/GraphicBuffer.h>
@@ -58,9 +62,6 @@
 #include <android/hidl/allocator/1.0/IAllocator.h>
 #include <android/hidl/memory/1.0/IMapper.h>
 #include <android/hidl/memory/1.0/IMemory.h>
-
-#include <VtsHalHidlTargetTestBase.h>
-#include <VtsHalHidlTargetTestEnvBase.h>
 
 using namespace ::android::hardware::camera::device;
 using ::android::hardware::Return;
@@ -282,27 +283,6 @@ namespace {
         return;
     }
 }
-
-// Test environment for camera
-class CameraHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
-   public:
-    // get the test environment singleton
-    static CameraHidlEnvironment* Instance() {
-        static CameraHidlEnvironment* instance = new CameraHidlEnvironment;
-        return instance;
-    }
-
-    virtual void HidlSetUp() override { ALOGI("SetUp CameraHidlEnvironment"); }
-
-    virtual void HidlTearDown() override { ALOGI("TearDown CameraHidlEnvironment"); }
-
-    virtual void registerTestServices() override { registerTestService<ICameraProvider>(); }
-
-   private:
-    CameraHidlEnvironment() {}
-
-    GTEST_DISALLOW_COPY_AND_ASSIGN_(CameraHidlEnvironment);
-};
 
 struct BufferItemHander: public BufferItemConsumer::FrameAvailableListener {
     BufferItemHander(wp<BufferItemConsumer> consumer) : mConsumer(consumer) {}
@@ -544,12 +524,13 @@ Return<Status> PreviewWindowCb::setTimestamp(int64_t timestamp) {
 }
 
 // The main test class for camera HIDL HAL.
-class CameraHidlTest : public ::testing::VtsHalHidlTargetTestBase {
+class CameraHidlTest : public ::testing::TestWithParam<std::string> {
 public:
  virtual void SetUp() override {
-     string service_name = CameraHidlEnvironment::Instance()->getServiceName<ICameraProvider>();
+     std::string service_name = GetParam();
      ALOGI("get service with name: %s", service_name.c_str());
-     mProvider = ::testing::VtsHalHidlTargetTestBase::getService<ICameraProvider>(service_name);
+     mProvider = ICameraProvider::getService(service_name);
+
      ASSERT_NE(mProvider, nullptr);
 
      uint32_t id;
@@ -878,7 +859,7 @@ protected:
         // return from HAL but framework.
         ::android::Vector<StreamBuffer> resultOutputBuffers;
 
-        std::unordered_set<string> expectedPhysicalResults;
+        std::unordered_set<std::string> expectedPhysicalResults;
 
         InFlightRequest() :
                 shutterTimestamp(0),
@@ -912,7 +893,7 @@ protected:
 
         InFlightRequest(ssize_t numBuffers, bool hasInput,
                 bool partialResults, uint32_t partialCount,
-                const std::unordered_set<string>& extraPhysicalResult,
+                const std::unordered_set<std::string>& extraPhysicalResult,
                 std::shared_ptr<ResultMetadataQueue> queue = nullptr) :
                 shutterTimestamp(0),
                 errorCodeValid(false),
@@ -1573,7 +1554,7 @@ hidl_vec<hidl_string> CameraHidlTest::getCameraDeviceNames(sp<ICameraProvider> p
 }
 
 // Test devices with first_api_level >= P does not advertise device@1.0
-TEST_F(CameraHidlTest, noHal1AfterP) {
+TEST_P(CameraHidlTest, noHal1AfterP) {
     constexpr int32_t HAL1_PHASE_OUT_API_LEVEL = 28;
     int32_t firstApiLevel = 0;
     getFirstApiLevel(&firstApiLevel);
@@ -1598,7 +1579,7 @@ TEST_F(CameraHidlTest, noHal1AfterP) {
 
 // Test if ICameraProvider::isTorchModeSupported returns Status::OK
 // Also if first_api_level >= Q torch API must be supported.
-TEST_F(CameraHidlTest, isTorchModeSupported) {
+TEST_P(CameraHidlTest, isTorchModeSupported) {
     constexpr int32_t API_LEVEL_Q = 29;
     int32_t firstApiLevel = 0;
     getFirstApiLevel(&firstApiLevel);
@@ -1615,7 +1596,7 @@ TEST_F(CameraHidlTest, isTorchModeSupported) {
 }
 
 // TODO: consider removing this test if getCameraDeviceNames() has the same coverage
-TEST_F(CameraHidlTest, getCameraIdList) {
+TEST_P(CameraHidlTest, getCameraIdList) {
     Return<void> ret;
     ret = mProvider->getCameraIdList([&](auto status, const auto& idList) {
         ALOGI("getCameraIdList returns status:%d", (int)status);
@@ -1628,7 +1609,7 @@ TEST_F(CameraHidlTest, getCameraIdList) {
 }
 
 // Test if ICameraProvider::getVendorTags returns Status::OK
-TEST_F(CameraHidlTest, getVendorTags) {
+TEST_P(CameraHidlTest, getVendorTags) {
     Return<void> ret;
     ret = mProvider->getVendorTags([&](auto status, const auto& vendorTagSecs) {
         ALOGI("getVendorTags returns status:%d numSections %zu", (int)status, vendorTagSecs.size());
@@ -1646,7 +1627,7 @@ TEST_F(CameraHidlTest, getVendorTags) {
 }
 
 // Test if ICameraProvider::setCallback returns Status::OK
-TEST_F(CameraHidlTest, setCallback) {
+TEST_P(CameraHidlTest, setCallback) {
     struct ProviderCb : public ICameraProviderCallback {
         virtual Return<void> cameraDeviceStatusChange(
                 const hidl_string& cameraDeviceName,
@@ -1674,7 +1655,7 @@ TEST_F(CameraHidlTest, setCallback) {
 }
 
 // Test if ICameraProvider::getCameraDeviceInterface returns Status::OK and non-null device
-TEST_F(CameraHidlTest, getCameraDeviceInterface) {
+TEST_P(CameraHidlTest, getCameraDeviceInterface) {
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
 
     for (const auto& name : cameraDeviceNames) {
@@ -1716,7 +1697,7 @@ TEST_F(CameraHidlTest, getCameraDeviceInterface) {
 
 // Verify that the device resource cost can be retrieved and the values are
 // sane.
-TEST_F(CameraHidlTest, getResourceCost) {
+TEST_P(CameraHidlTest, getResourceCost) {
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
 
     for (const auto& name : cameraDeviceNames) {
@@ -1786,7 +1767,7 @@ TEST_F(CameraHidlTest, getResourceCost) {
 
 // Verify that the static camera info can be retrieved
 // successfully.
-TEST_F(CameraHidlTest, getCameraInfo) {
+TEST_P(CameraHidlTest, getCameraInfo) {
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
 
     for (const auto& name : cameraDeviceNames) {
@@ -1834,7 +1815,7 @@ TEST_F(CameraHidlTest, getCameraInfo) {
 }
 
 // Check whether preview window can be configured
-TEST_F(CameraHidlTest, setPreviewWindow) {
+TEST_P(CameraHidlTest, setPreviewWindow) {
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
 
     for (const auto& name : cameraDeviceNames) {
@@ -1854,7 +1835,7 @@ TEST_F(CameraHidlTest, setPreviewWindow) {
 }
 
 // Verify that setting preview window fails in case device is not open
-TEST_F(CameraHidlTest, setPreviewWindowInvalid) {
+TEST_P(CameraHidlTest, setPreviewWindowInvalid) {
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
 
     for (const auto& name : cameraDeviceNames) {
@@ -1879,7 +1860,7 @@ TEST_F(CameraHidlTest, setPreviewWindowInvalid) {
 }
 
 // Start and stop preview checking whether it gets enabled in between.
-TEST_F(CameraHidlTest, startStopPreview) {
+TEST_P(CameraHidlTest, startStopPreview) {
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
 
     for (const auto& name : cameraDeviceNames) {
@@ -1904,7 +1885,7 @@ TEST_F(CameraHidlTest, startStopPreview) {
 
 // Start preview without active preview window. Preview should start as soon
 // as a valid active window gets configured.
-TEST_F(CameraHidlTest, startStopPreviewDelayed) {
+TEST_P(CameraHidlTest, startStopPreviewDelayed) {
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
 
     for (const auto& name : cameraDeviceNames) {
@@ -1934,7 +1915,7 @@ TEST_F(CameraHidlTest, startStopPreviewDelayed) {
 }
 
 // Verify that image capture behaves as expected along with preview callbacks.
-TEST_F(CameraHidlTest, takePicture) {
+TEST_P(CameraHidlTest, takePicture) {
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
 
     for (const auto& name : cameraDeviceNames) {
@@ -1983,7 +1964,7 @@ TEST_F(CameraHidlTest, takePicture) {
 }
 
 // Image capture should fail in case preview didn't get enabled first.
-TEST_F(CameraHidlTest, takePictureFail) {
+TEST_P(CameraHidlTest, takePictureFail) {
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
 
     for (const auto& name : cameraDeviceNames) {
@@ -2003,7 +1984,7 @@ TEST_F(CameraHidlTest, takePictureFail) {
 }
 
 // Verify that image capture can be cancelled.
-TEST_F(CameraHidlTest, cancelPicture) {
+TEST_P(CameraHidlTest, cancelPicture) {
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
 
     for (const auto& name : cameraDeviceNames) {
@@ -2030,7 +2011,7 @@ TEST_F(CameraHidlTest, cancelPicture) {
 }
 
 // Image capture cancel is a no-op when image capture is not running.
-TEST_F(CameraHidlTest, cancelPictureNOP) {
+TEST_P(CameraHidlTest, cancelPictureNOP) {
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
 
     for (const auto& name : cameraDeviceNames) {
@@ -2053,7 +2034,7 @@ TEST_F(CameraHidlTest, cancelPictureNOP) {
 }
 
 // Test basic video recording.
-TEST_F(CameraHidlTest, startStopRecording) {
+TEST_P(CameraHidlTest, startStopRecording) {
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
 
     for (const auto& name : cameraDeviceNames) {
@@ -2131,7 +2112,7 @@ TEST_F(CameraHidlTest, startStopRecording) {
 }
 
 // It shouldn't be possible to start recording without enabling preview first.
-TEST_F(CameraHidlTest, startRecordingFail) {
+TEST_P(CameraHidlTest, startRecordingFail) {
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
 
     for (const auto& name : cameraDeviceNames) {
@@ -2155,7 +2136,7 @@ TEST_F(CameraHidlTest, startRecordingFail) {
 }
 
 // Check autofocus support if available.
-TEST_F(CameraHidlTest, autoFocus) {
+TEST_P(CameraHidlTest, autoFocus) {
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
     std::vector<const char*> focusModes = {CameraParameters::FOCUS_MODE_AUTO,
                                            CameraParameters::FOCUS_MODE_CONTINUOUS_PICTURE,
@@ -2216,7 +2197,7 @@ TEST_F(CameraHidlTest, autoFocus) {
 }
 
 // In case autofocus is supported verify that it can be cancelled.
-TEST_F(CameraHidlTest, cancelAutoFocus) {
+TEST_P(CameraHidlTest, cancelAutoFocus) {
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
 
     for (const auto& name : cameraDeviceNames) {
@@ -2262,7 +2243,7 @@ TEST_F(CameraHidlTest, cancelAutoFocus) {
 }
 
 // Check whether face detection is available and try to enable&disable.
-TEST_F(CameraHidlTest, sendCommandFaceDetection) {
+TEST_P(CameraHidlTest, sendCommandFaceDetection) {
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
 
     for (const auto& name : cameraDeviceNames) {
@@ -2317,7 +2298,7 @@ TEST_F(CameraHidlTest, sendCommandFaceDetection) {
 }
 
 // Check whether smooth zoom is available and try to enable&disable.
-TEST_F(CameraHidlTest, sendCommandSmoothZoom) {
+TEST_P(CameraHidlTest, sendCommandSmoothZoom) {
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
 
     for (const auto& name : cameraDeviceNames) {
@@ -2365,7 +2346,7 @@ TEST_F(CameraHidlTest, sendCommandSmoothZoom) {
 }
 
 // Basic sanity tests related to camera parameters.
-TEST_F(CameraHidlTest, getSetParameters) {
+TEST_P(CameraHidlTest, getSetParameters) {
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
 
     for (const auto& name : cameraDeviceNames) {
@@ -2457,7 +2438,7 @@ TEST_F(CameraHidlTest, getSetParameters) {
 
 // Verify that the static camera characteristics can be retrieved
 // successfully.
-TEST_F(CameraHidlTest, getCameraCharacteristics) {
+TEST_P(CameraHidlTest, getCameraCharacteristics) {
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
 
     for (const auto& name : cameraDeviceNames) {
@@ -2523,7 +2504,7 @@ TEST_F(CameraHidlTest, getCameraCharacteristics) {
 
 //In case it is supported verify that torch can be enabled.
 //Check for corresponding toch callbacks as well.
-TEST_F(CameraHidlTest, setTorchMode) {
+TEST_P(CameraHidlTest, setTorchMode) {
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
     bool torchControlSupported = false;
     Return<void> ret;
@@ -2661,7 +2642,7 @@ TEST_F(CameraHidlTest, setTorchMode) {
 }
 
 // Check dump functionality.
-TEST_F(CameraHidlTest, dumpState) {
+TEST_P(CameraHidlTest, dumpState) {
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
     Return<void> ret;
 
@@ -2726,7 +2707,7 @@ TEST_F(CameraHidlTest, dumpState) {
 }
 
 // Open, dumpStates, then close
-TEST_F(CameraHidlTest, openClose) {
+TEST_P(CameraHidlTest, openClose) {
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
     Return<void> ret;
 
@@ -2819,7 +2800,7 @@ TEST_F(CameraHidlTest, openClose) {
 
 // Check whether all common default request settings can be sucessfully
 // constructed.
-TEST_F(CameraHidlTest, constructDefaultRequestSettings) {
+TEST_P(CameraHidlTest, constructDefaultRequestSettings) {
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
 
     for (const auto& name : cameraDeviceNames) {
@@ -2909,7 +2890,7 @@ TEST_F(CameraHidlTest, constructDefaultRequestSettings) {
 
 // Verify that all supported stream formats and sizes can be configured
 // successfully.
-TEST_F(CameraHidlTest, configureStreamsAvailableOutputs) {
+TEST_P(CameraHidlTest, configureStreamsAvailableOutputs) {
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
     std::vector<AvailableStream> outputStreams;
 
@@ -3017,7 +2998,7 @@ TEST_F(CameraHidlTest, configureStreamsAvailableOutputs) {
 }
 
 // Check for correct handling of invalid/incorrect configuration parameters.
-TEST_F(CameraHidlTest, configureStreamsInvalidOutputs) {
+TEST_P(CameraHidlTest, configureStreamsInvalidOutputs) {
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
     std::vector<AvailableStream> outputStreams;
 
@@ -3213,7 +3194,7 @@ TEST_F(CameraHidlTest, configureStreamsInvalidOutputs) {
 
 // Check whether all supported ZSL output stream combinations can be
 // configured successfully.
-TEST_F(CameraHidlTest, configureStreamsZSLInputOutputs) {
+TEST_P(CameraHidlTest, configureStreamsZSLInputOutputs) {
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
     std::vector<AvailableStream> inputStreams;
     std::vector<AvailableZSLInputOutput> inputOutputMap;
@@ -3379,7 +3360,7 @@ TEST_F(CameraHidlTest, configureStreamsZSLInputOutputs) {
 
 // Check whether session parameters are supported. If Hal support for them
 // exist, then try to configure a preview stream using them.
-TEST_F(CameraHidlTest, configureStreamsWithSessionParameters) {
+TEST_P(CameraHidlTest, configureStreamsWithSessionParameters) {
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
     std::vector<AvailableStream> outputPreviewStreams;
     AvailableStream previewThreshold = {kMaxPreviewWidth, kMaxPreviewHeight,
@@ -3498,7 +3479,7 @@ TEST_F(CameraHidlTest, configureStreamsWithSessionParameters) {
 
 // Verify that all supported preview + still capture stream combinations
 // can be configured successfully.
-TEST_F(CameraHidlTest, configureStreamsPreviewStillOutputs) {
+TEST_P(CameraHidlTest, configureStreamsPreviewStillOutputs) {
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
     std::vector<AvailableStream> outputBlobStreams;
     std::vector<AvailableStream> outputPreviewStreams;
@@ -3621,7 +3602,7 @@ TEST_F(CameraHidlTest, configureStreamsPreviewStillOutputs) {
 // In case constrained mode is supported, test whether it can be
 // configured. Additionally check for common invalid inputs when
 // using this mode.
-TEST_F(CameraHidlTest, configureStreamsConstrainedOutputs) {
+TEST_P(CameraHidlTest, configureStreamsConstrainedOutputs) {
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
 
     for (const auto& name : cameraDeviceNames) {
@@ -3826,7 +3807,7 @@ TEST_F(CameraHidlTest, configureStreamsConstrainedOutputs) {
 
 // Verify that all supported video + snapshot stream combinations can
 // be configured successfully.
-TEST_F(CameraHidlTest, configureStreamsVideoStillOutputs) {
+TEST_P(CameraHidlTest, configureStreamsVideoStillOutputs) {
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
     std::vector<AvailableStream> outputBlobStreams;
     std::vector<AvailableStream> outputVideoStreams;
@@ -3947,7 +3928,7 @@ TEST_F(CameraHidlTest, configureStreamsVideoStillOutputs) {
 }
 
 // Generate and verify a camera capture request
-TEST_F(CameraHidlTest, processCaptureRequestPreview) {
+TEST_P(CameraHidlTest, processCaptureRequestPreview) {
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
     AvailableStream previewThreshold = {kMaxPreviewWidth, kMaxPreviewHeight,
                                         static_cast<int32_t>(PixelFormat::IMPLEMENTATION_DEFINED)};
@@ -4115,7 +4096,7 @@ TEST_F(CameraHidlTest, processCaptureRequestPreview) {
 }
 
 // Generate and verify a multi-camera capture request
-TEST_F(CameraHidlTest, processMultiCaptureRequestPreview) {
+TEST_P(CameraHidlTest, processMultiCaptureRequestPreview) {
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
     AvailableStream previewThreshold = {kMaxPreviewWidth, kMaxPreviewHeight,
                                         static_cast<int32_t>(PixelFormat::YCBCR_420_888)};
@@ -4184,7 +4165,7 @@ TEST_F(CameraHidlTest, processMultiCaptureRequestPreview) {
 
         // Leave only 2 physical devices in the id set.
         auto it = physicalIds.begin();
-        string physicalDeviceId = *it; it++;
+        std::string physicalDeviceId = *it; it++;
         physicalIds.erase(++it, physicalIds.end());
         ASSERT_EQ(physicalIds.size(), 2u);
 
@@ -4362,7 +4343,7 @@ TEST_F(CameraHidlTest, processMultiCaptureRequestPreview) {
 }
 
 // Generate and verify a burst containing alternating sensor sensitivity values
-TEST_F(CameraHidlTest, processCaptureRequestBurstISO) {
+TEST_P(CameraHidlTest, processCaptureRequestBurstISO) {
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
     AvailableStream previewThreshold = {kMaxPreviewWidth, kMaxPreviewHeight,
                                         static_cast<int32_t>(PixelFormat::IMPLEMENTATION_DEFINED)};
@@ -4520,7 +4501,7 @@ TEST_F(CameraHidlTest, processCaptureRequestBurstISO) {
 
 // Test whether an incorrect capture request with missing settings will
 // be reported correctly.
-TEST_F(CameraHidlTest, processCaptureRequestInvalidSinglePreview) {
+TEST_P(CameraHidlTest, processCaptureRequestInvalidSinglePreview) {
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
     std::vector<AvailableStream> outputPreviewStreams;
     AvailableStream previewThreshold = {kMaxPreviewWidth, kMaxPreviewHeight,
@@ -4595,7 +4576,7 @@ TEST_F(CameraHidlTest, processCaptureRequestInvalidSinglePreview) {
 
 // Check whether an invalid capture request with missing output buffers
 // will be reported correctly.
-TEST_F(CameraHidlTest, processCaptureRequestInvalidBuffer) {
+TEST_P(CameraHidlTest, processCaptureRequestInvalidBuffer) {
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
     std::vector<AvailableStream> outputBlobStreams;
     AvailableStream previewThreshold = {kMaxPreviewWidth, kMaxPreviewHeight,
@@ -4660,7 +4641,7 @@ TEST_F(CameraHidlTest, processCaptureRequestInvalidBuffer) {
 }
 
 // Generate, trigger and flush a preview request
-TEST_F(CameraHidlTest, flushPreviewRequest) {
+TEST_P(CameraHidlTest, flushPreviewRequest) {
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
     std::vector<AvailableStream> outputPreviewStreams;
     AvailableStream previewThreshold = {kMaxPreviewWidth, kMaxPreviewHeight,
@@ -4803,7 +4784,7 @@ TEST_F(CameraHidlTest, flushPreviewRequest) {
 }
 
 // Verify that camera flushes correctly without any pending requests.
-TEST_F(CameraHidlTest, flushEmpty) {
+TEST_P(CameraHidlTest, flushEmpty) {
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
     std::vector<AvailableStream> outputPreviewStreams;
     AvailableStream previewThreshold = {kMaxPreviewWidth, kMaxPreviewHeight,
@@ -4848,7 +4829,7 @@ TEST_F(CameraHidlTest, flushEmpty) {
 }
 
 // Test camera provider@2.5 notify method
-TEST_F(CameraHidlTest, providerDeviceStateNotification) {
+TEST_P(CameraHidlTest, providerDeviceStateNotification) {
 
     notifyDeviceState(provider::V2_5::DeviceState::BACK_COVERED);
     notifyDeviceState(provider::V2_5::DeviceState::NORMAL);
@@ -6434,11 +6415,7 @@ void CameraHidlTest::verifySessionReconfigurationQuery(
     }
 }
 
-int main(int argc, char **argv) {
-  ::testing::AddGlobalTestEnvironment(CameraHidlEnvironment::Instance());
-  ::testing::InitGoogleTest(&argc, argv);
-  CameraHidlEnvironment::Instance()->init(&argc, argv);
-  int status = RUN_ALL_TESTS();
-  ALOGI("Test result = %d", status);
-  return status;
-}
+INSTANTIATE_TEST_SUITE_P(
+        PerInstance, CameraHidlTest,
+        testing::ValuesIn(android::hardware::getAllHalInstanceNames(ICameraProvider::descriptor)),
+        android::hardware::PrintInstanceNameToString);
