@@ -318,7 +318,8 @@ Return<Result> StreamOut::setVolume(float left, float right) {
         ALOGW("Can not set a stream output volume {%f, %f} outside [0,1]", left, right);
         return Result::INVALID_ARGUMENTS;
     }
-    return Stream::analyzeStatus("set_volume", mStream->set_volume(mStream, left, right));
+    return Stream::analyzeStatus("set_volume", mStream->set_volume(mStream, left, right),
+                                 {ENOSYS} /*ignore*/);
 }
 
 Return<void> StreamOut::prepareForWriting(uint32_t frameSize, uint32_t framesCount,
@@ -403,7 +404,8 @@ Return<void> StreamOut::prepareForWriting(uint32_t frameSize, uint32_t framesCou
 Return<void> StreamOut::getRenderPosition(getRenderPosition_cb _hidl_cb) {
     uint32_t halDspFrames;
     Result retval = Stream::analyzeStatus("get_render_position",
-                                          mStream->get_render_position(mStream, &halDspFrames));
+                                          mStream->get_render_position(mStream, &halDspFrames),
+                                          {ENOSYS} /*ignore*/);
     _hidl_cb(retval, halDspFrames);
     return Void();
 }
@@ -413,7 +415,8 @@ Return<void> StreamOut::getNextWriteTimestamp(getNextWriteTimestamp_cb _hidl_cb)
     int64_t timestampUs = 0;
     if (mStream->get_next_write_timestamp != NULL) {
         retval = Stream::analyzeStatus("get_next_write_timestamp",
-                                       mStream->get_next_write_timestamp(mStream, &timestampUs));
+                                       mStream->get_next_write_timestamp(mStream, &timestampUs),
+                                       {ENOSYS} /*ignore*/);
     }
     _hidl_cb(retval, timestampUs);
     return Void();
@@ -427,7 +430,7 @@ Return<Result> StreamOut::setCallback(const sp<IStreamOutCallback>& callback) {
     if (result == 0) {
         mCallback = callback;
     }
-    return Stream::analyzeStatus("set_callback", result);
+    return Stream::analyzeStatus("set_callback", result, {ENOSYS} /*ignore*/);
 }
 
 Return<Result> StreamOut::clearCallback() {
@@ -473,13 +476,15 @@ Return<void> StreamOut::supportsPauseAndResume(supportsPauseAndResume_cb _hidl_c
 }
 
 Return<Result> StreamOut::pause() {
-    return mStream->pause != NULL ? Stream::analyzeStatus("pause", mStream->pause(mStream))
-                                  : Result::NOT_SUPPORTED;
+    return mStream->pause != NULL
+                   ? Stream::analyzeStatus("pause", mStream->pause(mStream), {ENOSYS} /*ignore*/)
+                   : Result::NOT_SUPPORTED;
 }
 
 Return<Result> StreamOut::resume() {
-    return mStream->resume != NULL ? Stream::analyzeStatus("resume", mStream->resume(mStream))
-                                   : Result::NOT_SUPPORTED;
+    return mStream->resume != NULL
+                   ? Stream::analyzeStatus("resume", mStream->resume(mStream), {ENOSYS} /*ignore*/)
+                   : Result::NOT_SUPPORTED;
 }
 
 Return<bool> StreamOut::supportsDrain() {
@@ -488,14 +493,17 @@ Return<bool> StreamOut::supportsDrain() {
 
 Return<Result> StreamOut::drain(AudioDrain type) {
     return mStream->drain != NULL
-               ? Stream::analyzeStatus(
-                     "drain", mStream->drain(mStream, static_cast<audio_drain_type_t>(type)))
-               : Result::NOT_SUPPORTED;
+                   ? Stream::analyzeStatus(
+                             "drain",
+                             mStream->drain(mStream, static_cast<audio_drain_type_t>(type)),
+                             {ENOSYS} /*ignore*/)
+                   : Result::NOT_SUPPORTED;
 }
 
 Return<Result> StreamOut::flush() {
-    return mStream->flush != NULL ? Stream::analyzeStatus("flush", mStream->flush(mStream))
-                                  : Result::NOT_SUPPORTED;
+    return mStream->flush != NULL
+                   ? Stream::analyzeStatus("flush", mStream->flush(mStream), {ENOSYS} /*ignore*/)
+                   : Result::NOT_SUPPORTED;
 }
 
 // static
@@ -505,7 +513,7 @@ Result StreamOut::getPresentationPositionImpl(audio_stream_out_t* stream, uint64
     // to return it sometimes. EAGAIN may be returned by A2DP audio HAL
     // implementation. ENODATA can also be reported while the writer is
     // continuously querying it, but the stream has been stopped.
-    static const std::vector<int> ignoredErrors{EINVAL, EAGAIN, ENODATA};
+    static const std::vector<int> ignoredErrors{EINVAL, EAGAIN, ENODATA, ENOSYS};
     Result retval(Result::NOT_SUPPORTED);
     if (stream->get_presentation_position == NULL) return retval;
     struct timespec halTimeStamp;
