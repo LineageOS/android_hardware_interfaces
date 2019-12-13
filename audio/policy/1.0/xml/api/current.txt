@@ -1,0 +1,296 @@
+// Signature format: 2.0
+package audio.policy.V1_0 {
+
+  public class AttributesGroup {
+    ctor public AttributesGroup();
+    method public java.util.List<audio.policy.V1_0.AttributesType> getAttributes_optional();
+    method public audio.policy.V1_0.BundleType getBundle_optional();
+    method public audio.policy.V1_0.ContentTypeType getContentType_optional();
+    method public audio.policy.V1_0.FlagsType getFlags_optional();
+    method public audio.policy.V1_0.SourceType getSource_optional();
+    method public audio.policy.V1_0.Stream getStreamType();
+    method public audio.policy.V1_0.UsageType getUsage_optional();
+    method public String getVolumeGroup();
+    method public void setBundle_optional(audio.policy.V1_0.BundleType);
+    method public void setContentType_optional(audio.policy.V1_0.ContentTypeType);
+    method public void setFlags_optional(audio.policy.V1_0.FlagsType);
+    method public void setSource_optional(audio.policy.V1_0.SourceType);
+    method public void setStreamType(audio.policy.V1_0.Stream);
+    method public void setUsage_optional(audio.policy.V1_0.UsageType);
+    method public void setVolumeGroup(String);
+  }
+
+  public class AttributesRef {
+    ctor public AttributesRef();
+    method public java.util.List<audio.policy.V1_0.AttributesRefType> getReference();
+  }
+
+  public class AttributesRefType {
+    ctor public AttributesRefType();
+    method public audio.policy.V1_0.AttributesType getAttributes();
+    method public String getName();
+    method public void setAttributes(audio.policy.V1_0.AttributesType);
+    method public void setName(String);
+  }
+
+  public class AttributesType {
+    ctor public AttributesType();
+    method public String getAttributesRef();
+    method public audio.policy.V1_0.BundleType getBundle();
+    method public audio.policy.V1_0.ContentTypeType getContentType();
+    method public audio.policy.V1_0.FlagsType getFlags();
+    method public audio.policy.V1_0.SourceType getSource();
+    method public audio.policy.V1_0.UsageType getUsage();
+    method public void setAttributesRef(String);
+    method public void setBundle(audio.policy.V1_0.BundleType);
+    method public void setContentType(audio.policy.V1_0.ContentTypeType);
+    method public void setFlags(audio.policy.V1_0.FlagsType);
+    method public void setSource(audio.policy.V1_0.SourceType);
+    method public void setUsage(audio.policy.V1_0.UsageType);
+  }
+
+  public class BundleType {
+    ctor public BundleType();
+    method public String getKey();
+    method public String getValue();
+    method public void setKey(String);
+    method public void setValue(String);
+  }
+
+  public class Configuration {
+    ctor public Configuration();
+    method public java.util.List<audio.policy.V1_0.AttributesRef> getAttributesRef();
+    method public java.util.List<audio.policy.V1_0.CriteriaType> getCriteria();
+    method public java.util.List<audio.policy.V1_0.CriterionTypesType> getCriterion_types();
+    method public java.util.List<audio.policy.V1_0.ProductStrategies> getProductStrategies();
+    method public audio.policy.V1_0.Version getVersion();
+    method public java.util.List<audio.policy.V1_0.VolumeGroupsType> getVolumeGroups();
+    method public java.util.List<audio.policy.V1_0.VolumesType> getVolumes();
+    method public void setVersion(audio.policy.V1_0.Version);
+  }
+
+  public enum ContentType {
+    method public String getRawName();
+    enum_constant public static final audio.policy.V1_0.ContentType AUDIO_CONTENT_TYPE_MOVIE;
+    enum_constant public static final audio.policy.V1_0.ContentType AUDIO_CONTENT_TYPE_MUSIC;
+    enum_constant public static final audio.policy.V1_0.ContentType AUDIO_CONTENT_TYPE_SONIFICATION;
+    enum_constant public static final audio.policy.V1_0.ContentType AUDIO_CONTENT_TYPE_SPEECH;
+    enum_constant public static final audio.policy.V1_0.ContentType AUDIO_CONTENT_TYPE_UNKNOWN;
+  }
+
+  public class ContentTypeType {
+    ctor public ContentTypeType();
+    method public audio.policy.V1_0.ContentType getValue();
+    method public void setValue(audio.policy.V1_0.ContentType);
+  }
+
+  public class CriteriaType {
+    ctor public CriteriaType();
+    method public java.util.List<audio.policy.V1_0.CriterionType> getCriterion();
+  }
+
+  public class CriterionType {
+    ctor public CriterionType();
+    method public String getName();
+    method public String getType();
+    method public String get_default();
+    method public void setName(String);
+    method public void setType(String);
+    method public void set_default(String);
+  }
+
+  public class CriterionTypeType {
+    ctor public CriterionTypeType();
+    method public String getName();
+    method public audio.policy.V1_0.PfwCriterionTypeEnum getType();
+    method public audio.policy.V1_0.ValuesType getValues();
+    method public void setName(String);
+    method public void setType(audio.policy.V1_0.PfwCriterionTypeEnum);
+    method public void setValues(audio.policy.V1_0.ValuesType);
+  }
+
+  public class CriterionTypesType {
+    ctor public CriterionTypesType();
+    method public java.util.List<audio.policy.V1_0.CriterionTypeType> getCriterion_type();
+  }
+
+  public enum DeviceCategory {
+    method public String getRawName();
+    enum_constant public static final audio.policy.V1_0.DeviceCategory DEVICE_CATEGORY_EARPIECE;
+    enum_constant public static final audio.policy.V1_0.DeviceCategory DEVICE_CATEGORY_EXT_MEDIA;
+    enum_constant public static final audio.policy.V1_0.DeviceCategory DEVICE_CATEGORY_HEADSET;
+    enum_constant public static final audio.policy.V1_0.DeviceCategory DEVICE_CATEGORY_HEARING_AID;
+    enum_constant public static final audio.policy.V1_0.DeviceCategory DEVICE_CATEGORY_SPEAKER;
+  }
+
+  public enum FlagType {
+    method public String getRawName();
+    enum_constant public static final audio.policy.V1_0.FlagType AUDIO_FLAG_AUDIBILITY_ENFORCED;
+    enum_constant public static final audio.policy.V1_0.FlagType AUDIO_FLAG_BEACON;
+    enum_constant public static final audio.policy.V1_0.FlagType AUDIO_FLAG_BYPASS_INTERRUPTION_POLICY;
+    enum_constant public static final audio.policy.V1_0.FlagType AUDIO_FLAG_BYPASS_MUTE;
+    enum_constant public static final audio.policy.V1_0.FlagType AUDIO_FLAG_CAPTURE_PRIVATE;
+    enum_constant public static final audio.policy.V1_0.FlagType AUDIO_FLAG_DEEP_BUFFER;
+    enum_constant public static final audio.policy.V1_0.FlagType AUDIO_FLAG_HW_AV_SYNC;
+    enum_constant public static final audio.policy.V1_0.FlagType AUDIO_FLAG_HW_HOTWORD;
+    enum_constant public static final audio.policy.V1_0.FlagType AUDIO_FLAG_LOW_LATENCY;
+    enum_constant public static final audio.policy.V1_0.FlagType AUDIO_FLAG_MUTE_HAPTIC;
+    enum_constant public static final audio.policy.V1_0.FlagType AUDIO_FLAG_NONE;
+    enum_constant public static final audio.policy.V1_0.FlagType AUDIO_FLAG_NO_MEDIA_PROJECTION;
+    enum_constant public static final audio.policy.V1_0.FlagType AUDIO_FLAG_NO_SYSTEM_CAPTURE;
+    enum_constant public static final audio.policy.V1_0.FlagType AUDIO_FLAG_SCO;
+    enum_constant public static final audio.policy.V1_0.FlagType AUDIO_FLAG_SECURE;
+  }
+
+  public class FlagsType {
+    ctor public FlagsType();
+    method public java.util.List<audio.policy.V1_0.FlagType> getValue();
+    method public void setValue(java.util.List<audio.policy.V1_0.FlagType>);
+  }
+
+  public enum PfwCriterionTypeEnum {
+    method public String getRawName();
+    enum_constant public static final audio.policy.V1_0.PfwCriterionTypeEnum exclusive;
+    enum_constant public static final audio.policy.V1_0.PfwCriterionTypeEnum inclusive;
+  }
+
+  public class ProductStrategies {
+    ctor public ProductStrategies();
+    method public java.util.List<audio.policy.V1_0.ProductStrategies.ProductStrategy> getProductStrategy();
+  }
+
+  public static class ProductStrategies.ProductStrategy {
+    ctor public ProductStrategies.ProductStrategy();
+    method public java.util.List<audio.policy.V1_0.AttributesGroup> getAttributesGroup();
+    method public String getName();
+    method public void setName(String);
+  }
+
+  public enum SourceEnumType {
+    method public String getRawName();
+    enum_constant public static final audio.policy.V1_0.SourceEnumType AUDIO_SOURCE_CAMCORDER;
+    enum_constant public static final audio.policy.V1_0.SourceEnumType AUDIO_SOURCE_DEFAULT;
+    enum_constant public static final audio.policy.V1_0.SourceEnumType AUDIO_SOURCE_ECHO_REFERENCE;
+    enum_constant public static final audio.policy.V1_0.SourceEnumType AUDIO_SOURCE_FM_TUNER;
+    enum_constant public static final audio.policy.V1_0.SourceEnumType AUDIO_SOURCE_MIC;
+    enum_constant public static final audio.policy.V1_0.SourceEnumType AUDIO_SOURCE_REMOTE_SUBMIX;
+    enum_constant public static final audio.policy.V1_0.SourceEnumType AUDIO_SOURCE_UNPROCESSED;
+    enum_constant public static final audio.policy.V1_0.SourceEnumType AUDIO_SOURCE_VOICE_CALL;
+    enum_constant public static final audio.policy.V1_0.SourceEnumType AUDIO_SOURCE_VOICE_COMMUNICATION;
+    enum_constant public static final audio.policy.V1_0.SourceEnumType AUDIO_SOURCE_VOICE_DOWNLINK;
+    enum_constant public static final audio.policy.V1_0.SourceEnumType AUDIO_SOURCE_VOICE_PERFORMANCE;
+    enum_constant public static final audio.policy.V1_0.SourceEnumType AUDIO_SOURCE_VOICE_RECOGNITION;
+    enum_constant public static final audio.policy.V1_0.SourceEnumType AUDIO_SOURCE_VOICE_UPLINK;
+  }
+
+  public class SourceType {
+    ctor public SourceType();
+    method public audio.policy.V1_0.SourceEnumType getValue();
+    method public void setValue(audio.policy.V1_0.SourceEnumType);
+  }
+
+  public enum Stream {
+    method public String getRawName();
+    enum_constant public static final audio.policy.V1_0.Stream AUDIO_STREAM_ACCESSIBILITY;
+    enum_constant public static final audio.policy.V1_0.Stream AUDIO_STREAM_ALARM;
+    enum_constant public static final audio.policy.V1_0.Stream AUDIO_STREAM_ASSISTANT;
+    enum_constant public static final audio.policy.V1_0.Stream AUDIO_STREAM_BLUETOOTH_SCO;
+    enum_constant public static final audio.policy.V1_0.Stream AUDIO_STREAM_DEFAULT;
+    enum_constant public static final audio.policy.V1_0.Stream AUDIO_STREAM_DTMF;
+    enum_constant public static final audio.policy.V1_0.Stream AUDIO_STREAM_ENFORCED_AUDIBLE;
+    enum_constant public static final audio.policy.V1_0.Stream AUDIO_STREAM_MUSIC;
+    enum_constant public static final audio.policy.V1_0.Stream AUDIO_STREAM_NOTIFICATION;
+    enum_constant public static final audio.policy.V1_0.Stream AUDIO_STREAM_RING;
+    enum_constant public static final audio.policy.V1_0.Stream AUDIO_STREAM_SYSTEM;
+    enum_constant public static final audio.policy.V1_0.Stream AUDIO_STREAM_TTS;
+    enum_constant public static final audio.policy.V1_0.Stream AUDIO_STREAM_VOICE_CALL;
+  }
+
+  public enum UsageEnumType {
+    method public String getRawName();
+    enum_constant public static final audio.policy.V1_0.UsageEnumType AUDIO_USAGE_ALARM;
+    enum_constant public static final audio.policy.V1_0.UsageEnumType AUDIO_USAGE_ASSISTANCE_ACCESSIBILITY;
+    enum_constant public static final audio.policy.V1_0.UsageEnumType AUDIO_USAGE_ASSISTANCE_NAVIGATION_GUIDANCE;
+    enum_constant public static final audio.policy.V1_0.UsageEnumType AUDIO_USAGE_ASSISTANCE_SONIFICATION;
+    enum_constant public static final audio.policy.V1_0.UsageEnumType AUDIO_USAGE_ASSISTANT;
+    enum_constant public static final audio.policy.V1_0.UsageEnumType AUDIO_USAGE_CALL_ASSISTANT;
+    enum_constant public static final audio.policy.V1_0.UsageEnumType AUDIO_USAGE_GAME;
+    enum_constant public static final audio.policy.V1_0.UsageEnumType AUDIO_USAGE_MEDIA;
+    enum_constant public static final audio.policy.V1_0.UsageEnumType AUDIO_USAGE_NOTIFICATION;
+    enum_constant public static final audio.policy.V1_0.UsageEnumType AUDIO_USAGE_NOTIFICATION_TELEPHONY_RINGTONE;
+    enum_constant public static final audio.policy.V1_0.UsageEnumType AUDIO_USAGE_UNKNOWN;
+    enum_constant public static final audio.policy.V1_0.UsageEnumType AUDIO_USAGE_VIRTUAL_SOURCE;
+    enum_constant public static final audio.policy.V1_0.UsageEnumType AUDIO_USAGE_VOICE_COMMUNICATION;
+    enum_constant public static final audio.policy.V1_0.UsageEnumType AUDIO_USAGE_VOICE_COMMUNICATION_SIGNALLING;
+  }
+
+  public class UsageType {
+    ctor public UsageType();
+    method public audio.policy.V1_0.UsageEnumType getValue();
+    method public void setValue(audio.policy.V1_0.UsageEnumType);
+  }
+
+  public class ValueType {
+    ctor public ValueType();
+    method public String getLiteral();
+    method public int getNumerical();
+    method public void setLiteral(String);
+    method public void setNumerical(int);
+  }
+
+  public class ValuesType {
+    ctor public ValuesType();
+    method public java.util.List<audio.policy.V1_0.ValueType> getValue();
+  }
+
+  public enum Version {
+    method public String getRawName();
+    enum_constant public static final audio.policy.V1_0.Version _1_0;
+  }
+
+  public class Volume {
+    ctor public Volume();
+    method public audio.policy.V1_0.DeviceCategory getDeviceCategory();
+    method public java.util.List<java.lang.String> getPoint();
+    method public String getRef();
+    method public void setDeviceCategory(audio.policy.V1_0.DeviceCategory);
+    method public void setRef(String);
+  }
+
+  public class VolumeGroupsType {
+    ctor public VolumeGroupsType();
+    method public java.util.List<audio.policy.V1_0.VolumeGroupsType.VolumeGroup> getVolumeGroup();
+  }
+
+  public static class VolumeGroupsType.VolumeGroup {
+    ctor public VolumeGroupsType.VolumeGroup();
+    method public int getIndexMax();
+    method public int getIndexMin();
+    method public String getName();
+    method public java.util.List<audio.policy.V1_0.Volume> getVolume();
+    method public void setIndexMax(int);
+    method public void setIndexMin(int);
+    method public void setName(String);
+  }
+
+  public class VolumeRef {
+    ctor public VolumeRef();
+    method public String getName();
+    method public java.util.List<java.lang.String> getPoint();
+    method public void setName(String);
+  }
+
+  public class VolumesType {
+    ctor public VolumesType();
+    method public java.util.List<audio.policy.V1_0.VolumeRef> getReference();
+  }
+
+  public class XmlParser {
+    ctor public XmlParser();
+    method public static audio.policy.V1_0.Configuration read(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
+    method public static String readText(org.xmlpull.v1.XmlPullParser) throws java.io.IOException, org.xmlpull.v1.XmlPullParserException;
+    method public static void skip(org.xmlpull.v1.XmlPullParser) throws java.io.IOException, org.xmlpull.v1.XmlPullParserException;
+  }
+
+}
+
