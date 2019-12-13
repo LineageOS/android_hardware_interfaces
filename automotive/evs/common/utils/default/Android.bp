@@ -15,6 +15,7 @@
 //
 
 cc_library_static {
+    host_supported: true,
     name: "android.hardware.automotive.evs@common-default-lib",
     vendor_available: true,
     relative_install_path: "hw",
