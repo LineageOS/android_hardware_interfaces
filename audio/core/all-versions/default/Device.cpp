@@ -18,6 +18,7 @@
 
 #include "core/default/Device.h"
 #include <HidlUtils.h>
+#include "common/all-versions/default/EffectMap.h"
 #include "core/default/Conversions.h"
 #include "core/default/StreamIn.h"
 #include "core/default/StreamOut.h"
@@ -25,6 +26,7 @@
 
 //#define LOG_NDEBUG 0
 
+#include <inttypes.h>
 #include <memory.h>
 #include <string.h>
 #include <algorithm>
@@ -84,26 +86,29 @@ Return<Result> Device::setMasterVolume(float volume) {
         ALOGW("Can not set a master volume (%f) outside [0,1]", volume);
         return Result::INVALID_ARGUMENTS;
     }
-    return analyzeStatus("set_master_volume", mDevice->set_master_volume(mDevice, volume));
+    return analyzeStatus("set_master_volume", mDevice->set_master_volume(mDevice, volume),
+                         {ENOSYS} /*ignore*/);
 }
 
 Return<void> Device::getMasterVolume(getMasterVolume_cb _hidl_cb) {
     Result retval(Result::NOT_SUPPORTED);
     float volume = 0;
     if (mDevice->get_master_volume != NULL) {
-        retval = analyzeStatus("get_master_volume", mDevice->get_master_volume(mDevice, &volume));
+        retval = analyzeStatus("get_master_volume", mDevice->get_master_volume(mDevice, &volume),
+                               {ENOSYS} /*ignore*/);
     }
     _hidl_cb(retval, volume);
     return Void();
 }
 
 Return<Result> Device::setMicMute(bool mute) {
-    return analyzeStatus("set_mic_mute", mDevice->set_mic_mute(mDevice, mute));
+    return analyzeStatus("set_mic_mute", mDevice->set_mic_mute(mDevice, mute), {ENOSYS} /*ignore*/);
 }
 
 Return<void> Device::getMicMute(getMicMute_cb _hidl_cb) {
     bool mute = false;
-    Result retval = analyzeStatus("get_mic_mute", mDevice->get_mic_mute(mDevice, &mute));
+    Result retval = analyzeStatus("get_mic_mute", mDevice->get_mic_mute(mDevice, &mute),
+                                  {ENOSYS} /*ignore*/);
     _hidl_cb(retval, mute);
     return Void();
 }
@@ -111,7 +116,8 @@ Return<void> Device::getMicMute(getMicMute_cb _hidl_cb) {
 Return<Result> Device::setMasterMute(bool mute) {
     Result retval(Result::NOT_SUPPORTED);
     if (mDevice->set_master_mute != NULL) {
-        retval = analyzeStatus("set_master_mute", mDevice->set_master_mute(mDevice, mute));
+        retval = analyzeStatus("set_master_mute", mDevice->set_master_mute(mDevice, mute),
+                               {ENOSYS} /*ignore*/);
     }
     return retval;
 }
@@ -120,7 +126,8 @@ Return<void> Device::getMasterMute(getMasterMute_cb _hidl_cb) {
     Result retval(Result::NOT_SUPPORTED);
     bool mute = false;
     if (mDevice->get_master_mute != NULL) {
-        retval = analyzeStatus("get_master_mute", mDevice->get_master_mute(mDevice, &mute));
+        retval = analyzeStatus("get_master_mute", mDevice->get_master_mute(mDevice, &mute),
+                               {ENOSYS} /*ignore*/);
     }
     _hidl_cb(retval, mute);
     return Void();
@@ -398,6 +405,39 @@ Result Device::doClose() {
 Return<Result> Device::close() {
     return doClose();
 }
+
+Return<Result> Device::addDeviceEffect(AudioPortHandle device, uint64_t effectId) {
+    if (version() < AUDIO_DEVICE_API_VERSION_3_1 || mDevice->add_device_effect == nullptr) {
+        return Result::NOT_SUPPORTED;
+    }
+
+    effect_handle_t halEffect = EffectMap::getInstance().get(effectId);
+    if (halEffect != NULL) {
+        return analyzeStatus("add_device_effect",
+                             mDevice->add_device_effect(
+                                     mDevice, static_cast<audio_port_handle_t>(device), halEffect));
+    } else {
+        ALOGW("%s Invalid effect ID passed from client: %" PRIu64 "", __func__, effectId);
+        return Result::INVALID_ARGUMENTS;
+    }
+}
+
+Return<Result> Device::removeDeviceEffect(AudioPortHandle device, uint64_t effectId) {
+    if (version() < AUDIO_DEVICE_API_VERSION_3_1 || mDevice->remove_device_effect == nullptr) {
+        return Result::NOT_SUPPORTED;
+    }
+
+    effect_handle_t halEffect = EffectMap::getInstance().get(effectId);
+    if (halEffect != NULL) {
+        return analyzeStatus("remove_device_effect",
+                             mDevice->remove_device_effect(
+                                     mDevice, static_cast<audio_port_handle_t>(device), halEffect));
+    } else {
+        ALOGW("%s Invalid effect ID passed from client: %" PRIu64 "", __func__, effectId);
+        return Result::INVALID_ARGUMENTS;
+    }
+}
+
 #endif
 
 }  // namespace implementation

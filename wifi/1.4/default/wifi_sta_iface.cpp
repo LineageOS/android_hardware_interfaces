@@ -266,13 +266,6 @@ Return<void> WifiStaIface::getFactoryMacAddress(
                            hidl_status_cb);
 }
 
-Return<void> WifiStaIface::getCapabilities_1_4(
-    getCapabilities_cb hidl_status_cb) {
-    return validateAndCall(this, WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
-                           &WifiStaIface::getCapabilitiesInternal_1_4,
-                           hidl_status_cb);
-}
-
 std::pair<WifiStatus, std::string> WifiStaIface::getNameInternal() {
     return {createWifiStatus(WifiStatusCode::SUCCESS), ifname_};
 }
@@ -290,7 +283,26 @@ WifiStatus WifiStaIface::registerEventCallbackInternal(
 }
 
 std::pair<WifiStatus, uint32_t> WifiStaIface::getCapabilitiesInternal() {
-    return {createWifiStatus(WifiStatusCode::ERROR_NOT_SUPPORTED), 0};
+    legacy_hal::wifi_error legacy_status;
+    uint64_t legacy_feature_set;
+    std::tie(legacy_status, legacy_feature_set) =
+        legacy_hal_.lock()->getSupportedFeatureSet(ifname_);
+    if (legacy_status != legacy_hal::WIFI_SUCCESS) {
+        return {createWifiStatusFromLegacyError(legacy_status), 0};
+    }
+    uint32_t legacy_logger_feature_set;
+    std::tie(legacy_status, legacy_logger_feature_set) =
+        legacy_hal_.lock()->getLoggerSupportedFeatureSet(ifname_);
+    if (legacy_status != legacy_hal::WIFI_SUCCESS) {
+        // some devices don't support querying logger feature set
+        legacy_logger_feature_set = 0;
+    }
+    uint32_t hidl_caps;
+    if (!hidl_struct_util::convertLegacyFeaturesToHidlStaCapabilities(
+            legacy_feature_set, legacy_logger_feature_set, &hidl_caps)) {
+        return {createWifiStatus(WifiStatusCode::ERROR_UNKNOWN), 0};
+    }
+    return {createWifiStatus(WifiStatusCode::SUCCESS), hidl_caps};
 }
 
 std::pair<WifiStatus, StaApfPacketFilterCapabilities>
@@ -626,29 +638,6 @@ WifiStaIface::getFactoryMacAddressInternal() {
     std::array<uint8_t, 6> mac =
         iface_util_.lock()->getFactoryMacAddress(ifname_);
     return {createWifiStatus(WifiStatusCode::SUCCESS), mac};
-}
-
-std::pair<WifiStatus, uint32_t> WifiStaIface::getCapabilitiesInternal_1_4() {
-    legacy_hal::wifi_error legacy_status;
-    uint64_t legacy_feature_set;
-    std::tie(legacy_status, legacy_feature_set) =
-        legacy_hal_.lock()->getSupportedFeatureSet(ifname_);
-    if (legacy_status != legacy_hal::WIFI_SUCCESS) {
-        return {createWifiStatusFromLegacyError(legacy_status), 0};
-    }
-    uint32_t legacy_logger_feature_set;
-    std::tie(legacy_status, legacy_logger_feature_set) =
-        legacy_hal_.lock()->getLoggerSupportedFeatureSet(ifname_);
-    if (legacy_status != legacy_hal::WIFI_SUCCESS) {
-        // some devices don't support querying logger feature set
-        legacy_logger_feature_set = 0;
-    }
-    uint32_t hidl_caps;
-    if (!hidl_struct_util::convertLegacyFeaturesToHidlStaCapabilities(
-            legacy_feature_set, legacy_logger_feature_set, &hidl_caps)) {
-        return {createWifiStatus(WifiStatusCode::ERROR_UNKNOWN), 0};
-    }
-    return {createWifiStatus(WifiStatusCode::SUCCESS), hidl_caps};
 }
 
 }  // namespace implementation

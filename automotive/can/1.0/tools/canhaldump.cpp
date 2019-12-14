@@ -20,6 +20,7 @@
 #include <android/hidl/manager/1.2/IServiceManager.h>
 #include <hidl-utils/hidl-utils.h>
 
+#include <linux/can.h>
 #include <chrono>
 #include <iomanip>
 #include <iostream>
@@ -42,12 +43,14 @@ struct CanMessageListener : public V1_0::ICanMessageListener {
     CanMessageListener(std::string name) : name(name) {}
 
     virtual Return<void> onReceive(const V1_0::CanMessage& message) {
-        std::cout << "  " << name << "  " << std::hex << std::uppercase << std::setw(3)
+        int msgIdWidth = 3;
+        if (message.isExtendedId) msgIdWidth = 8;
+        std::cout << "  " << name << "  " << std::hex << std::uppercase << std::setw(msgIdWidth)
                   << std::setfill('0') << message.id << std::setw(0);
+        std::cout << "   [" << message.payload.size() << "] ";
         if (message.remoteTransmissionRequest) {
-            std::cout << " RTR";
+            std::cout << "remote request";
         } else {
-            std::cout << "   [" << message.payload.size() << "] ";
             for (const auto byte : message.payload) {
                 std::cout << " " << std::setfill('0') << std::setw(2) << unsigned(byte);
             }

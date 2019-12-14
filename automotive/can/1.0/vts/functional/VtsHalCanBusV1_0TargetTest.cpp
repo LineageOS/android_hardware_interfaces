@@ -123,9 +123,9 @@ TEST_F(CanBusHalTest, ListenNoFilter) {
 
 TEST_F(CanBusHalTest, ListenSomeFilter) {
     hidl_vec<CanMessageFilter> filters = {
-            {0x123, 0x1FF, false},
-            {0x001, 0x00F, true},
-            {0x200, 0x100, false},
+            {0x123, 0x1FF, false, FilterFlag::DONT_CARE, FilterFlag::DONT_CARE},
+            {0x001, 0x00F, true, FilterFlag::DONT_CARE, FilterFlag::DONT_CARE},
+            {0x200, 0x100, false, FilterFlag::DONT_CARE, FilterFlag::DONT_CARE},
     };
 
     const auto [result, closeHandle] = listen(filters, new CanMessageListener());

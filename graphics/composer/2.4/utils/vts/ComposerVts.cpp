@@ -106,6 +106,25 @@ Error ComposerClient::setActiveConfigWithConstraints(
     return error;
 }
 
+Error ComposerClient::setAutoLowLatencyMode(Display display, bool on) {
+    return mClient->setAutoLowLatencyMode(display, on);
+}
+
+Error ComposerClient::getSupportedContentTypes(
+        Display display, std::vector<IComposerClient::ContentType>* outSupportedContentTypes) {
+    Error error = Error::NONE;
+    mClient->getSupportedContentTypes(
+            display, [&](const auto& tmpError, const auto& tmpSupportedContentTypes) {
+                error = tmpError;
+                *outSupportedContentTypes = tmpSupportedContentTypes;
+            });
+    return error;
+}
+
+Error ComposerClient::setContentType(Display display, IComposerClient::ContentType contentType) {
+    return mClient->setContentType(display, contentType);
+}
+
 }  // namespace vts
 }  // namespace V2_4
 }  // namespace composer
