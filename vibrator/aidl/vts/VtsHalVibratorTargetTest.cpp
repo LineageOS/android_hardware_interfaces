@@ -370,6 +370,32 @@ TEST_P(VibratorAidl, CompseSizeBoundary) {
     }
 }
 
+TEST_P(VibratorAidl, AlwaysOn) {
+    if (capabilities & IVibrator::CAP_ALWAYS_ON_CONTROL) {
+        std::vector<Effect> supported;
+        ASSERT_TRUE(vibrator->getSupportedAlwaysOnEffects(&supported).isOk());
+
+        for (Effect effect : kEffects) {
+            bool isEffectSupported =
+                    std::find(supported.begin(), supported.end(), effect) != supported.end();
+
+            for (EffectStrength strength : kEffectStrengths) {
+                Status status = vibrator->alwaysOnEnable(0, effect, strength);
+
+                if (isEffectSupported) {
+                    EXPECT_EQ(Status::EX_NONE, status.exceptionCode())
+                            << toString(effect) << " " << toString(strength);
+                } else {
+                    EXPECT_EQ(Status::EX_UNSUPPORTED_OPERATION, status.exceptionCode())
+                            << toString(effect) << " " << toString(strength);
+                }
+            }
+        }
+
+        EXPECT_EQ(Status::EX_NONE, vibrator->alwaysOnDisable(0).exceptionCode());
+    }
+}
+
 INSTANTIATE_TEST_SUITE_P(Vibrator, VibratorAidl,
                          testing::ValuesIn(android::getAidlHalInstanceNames(IVibrator::descriptor)),
                          android::PrintInstanceNameToString);
