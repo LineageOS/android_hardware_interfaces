@@ -95,6 +95,7 @@ struct Gnss : public IGnss {
     void reportSvStatus(const hidl_vec<GnssSvInfo>&) const;
 
     static sp<V2_1::IGnssCallback> sGnssCallback_2_1;
+    static sp<V2_0::IGnssCallback> sGnssCallback_2_0;
     std::atomic<long> mMinIntervalMs;
     sp<GnssConfiguration> mGnssConfiguration;
     std::atomic<bool> mIsActive;
