@@ -18,6 +18,7 @@
 
 #include "core/default/Device.h"
 #include <HidlUtils.h>
+#include "common/all-versions/default/EffectMap.h"
 #include "core/default/Conversions.h"
 #include "core/default/StreamIn.h"
 #include "core/default/StreamOut.h"
@@ -25,6 +26,7 @@
 
 //#define LOG_NDEBUG 0
 
+#include <inttypes.h>
 #include <memory.h>
 #include <string.h>
 #include <algorithm>
@@ -403,6 +405,39 @@ Result Device::doClose() {
 Return<Result> Device::close() {
     return doClose();
 }
+
+Return<Result> Device::addDeviceEffect(AudioPortHandle device, uint64_t effectId) {
+    if (version() < AUDIO_DEVICE_API_VERSION_3_1 || mDevice->add_device_effect == nullptr) {
+        return Result::NOT_SUPPORTED;
+    }
+
+    effect_handle_t halEffect = EffectMap::getInstance().get(effectId);
+    if (halEffect != NULL) {
+        return analyzeStatus("add_device_effect",
+                             mDevice->add_device_effect(
+                                     mDevice, static_cast<audio_port_handle_t>(device), halEffect));
+    } else {
+        ALOGW("%s Invalid effect ID passed from client: %" PRIu64 "", __func__, effectId);
+        return Result::INVALID_ARGUMENTS;
+    }
+}
+
+Return<Result> Device::removeDeviceEffect(AudioPortHandle device, uint64_t effectId) {
+    if (version() < AUDIO_DEVICE_API_VERSION_3_1 || mDevice->remove_device_effect == nullptr) {
+        return Result::NOT_SUPPORTED;
+    }
+
+    effect_handle_t halEffect = EffectMap::getInstance().get(effectId);
+    if (halEffect != NULL) {
+        return analyzeStatus("remove_device_effect",
+                             mDevice->remove_device_effect(
+                                     mDevice, static_cast<audio_port_handle_t>(device), halEffect));
+    } else {
+        ALOGW("%s Invalid effect ID passed from client: %" PRIu64 "", __func__, effectId);
+        return Result::INVALID_ARGUMENTS;
+    }
+}
+
 #endif
 
 }  // namespace implementation
