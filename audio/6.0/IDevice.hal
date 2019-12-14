@@ -168,6 +168,25 @@ interface IDevice {
             generates (Result retval, AudioPatchHandle patch);
 
     /**
+     * Updates an audio patch.
+     *
+     * Use of this function is preferred to releasing and re-creating a patch
+     * as the HAL module can figure out a way of switching the route without
+     * causing audio disruption.
+     *
+     * @param previousPatch handle of the previous patch to update.
+     * @param sources new patch sources.
+     * @param sinks new patch sinks.
+     * @return retval operation completion status.
+     * @return patch updated patch handle.
+     */
+    updateAudioPatch(
+            AudioPatchHandle previousPatch,
+            vec<AudioPortConfig> sources,
+            vec<AudioPortConfig> sinks) generates (
+                    Result retval, AudioPatchHandle patch);
+
+    /**
      * Release an audio patch.
      *
      * @param patch patch handle.
