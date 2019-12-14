@@ -31,7 +31,8 @@ ndk::ScopedAStatus Vibrator::getCapabilities(int32_t* _aidl_return) {
     LOG(INFO) << "Vibrator reporting capabilities";
     *_aidl_return = IVibrator::CAP_ON_CALLBACK | IVibrator::CAP_PERFORM_CALLBACK |
                     IVibrator::CAP_AMPLITUDE_CONTROL | IVibrator::CAP_EXTERNAL_CONTROL |
-                    IVibrator::CAP_EXTERNAL_AMPLITUDE_CONTROL | IVibrator::CAP_COMPOSE_EFFECTS;
+                    IVibrator::CAP_EXTERNAL_AMPLITUDE_CONTROL | IVibrator::CAP_COMPOSE_EFFECTS |
+                    IVibrator::CAP_ALWAYS_ON_CONTROL;
     return ndk::ScopedAStatus::ok();
 }
 
@@ -148,6 +149,28 @@ ndk::ScopedAStatus Vibrator::compose(const std::vector<CompositeEffect>& composi
         }
     }).detach();
 
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus Vibrator::getSupportedAlwaysOnEffects(std::vector<Effect>* _aidl_return) {
+    return getSupportedEffects(_aidl_return);
+}
+
+ndk::ScopedAStatus Vibrator::alwaysOnEnable(int32_t id, Effect effect, EffectStrength strength) {
+    std::vector<Effect> effects;
+    getSupportedAlwaysOnEffects(&effects);
+
+    if (std::find(effects.begin(), effects.end(), effect) == effects.end()) {
+        return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+    } else {
+        LOG(INFO) << "Enabling always-on ID " << id << " with " << toString(effect) << "/"
+                  << toString(strength);
+        return ndk::ScopedAStatus::ok();
+    }
+}
+
+ndk::ScopedAStatus Vibrator::alwaysOnDisable(int32_t id) {
+    LOG(INFO) << "Disabling always-on ID " << id;
     return ndk::ScopedAStatus::ok();
 }
 
