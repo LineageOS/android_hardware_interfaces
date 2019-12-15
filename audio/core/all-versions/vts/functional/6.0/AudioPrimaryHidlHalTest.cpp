@@ -181,3 +181,12 @@ TEST_P(AudioHidlDeviceTest, CloseDeviceWithOpenedInputStreams) {
     ASSERT_OK(getDevice()->close());
     ASSERT_TRUE(resetDevice());
 }
+
+TEST_P(AudioPatchHidlTest, UpdatePatchInvalidHandle) {
+    doc::test("Verify that passing an invalid handle to updateAudioPatch is checked");
+    AudioPatchHandle ignored;
+    ASSERT_OK(getDevice()->updateAudioPatch(
+            static_cast<int32_t>(AudioHandleConsts::AUDIO_PATCH_HANDLE_NONE),
+            hidl_vec<AudioPortConfig>(), hidl_vec<AudioPortConfig>(), returnIn(res, ignored)));
+    ASSERT_RESULT(Result::INVALID_ARGUMENTS, res);
+}
