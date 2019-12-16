@@ -27,6 +27,7 @@
 using ::android::sp;
 using ::android::hardware::Return;
 using ::android::hardware::soundtrigger::V2_0::RecognitionMode;
+using ::android::hardware::soundtrigger::V2_3::AudioCapabilities;
 using ::android::hardware::soundtrigger::V2_3::ISoundTriggerHw;
 using ::android::hardware::soundtrigger::V2_3::Properties;
 
@@ -79,6 +80,8 @@ TEST_P(SoundTriggerHidlTest, GetProperties_2_3) {
     EXPECT_GT(halProperties.base.maxSoundModels, 0u);
     EXPECT_GT(halProperties.base.maxKeyPhrases, 0u);
     EXPECT_NE(0u, (halProperties.base.recognitionModes & (uint32_t)RecognitionMode::VOICE_TRIGGER));
+    EXPECT_TRUE(halProperties.audioCapabilities <=
+                (AudioCapabilities::ECHO_CANCELLATION | AudioCapabilities::NOISE_SUPPRESSION));
 }
 
 INSTANTIATE_TEST_SUITE_P(

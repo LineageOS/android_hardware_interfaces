@@ -17,7 +17,9 @@
 package android.hardware.soundtrigger@2.3;
 
 import @2.0::SoundModelHandle;
+import @2.0::ISoundTriggerHwCallback.CallbackCookie;
 import @2.2::ISoundTriggerHw;
+import @2.1::ISoundTriggerHwCallback;
 
 /**
  * SoundTrigger HAL interface. Used for hardware recognition of hotwords
@@ -36,6 +38,27 @@ interface ISoundTriggerHw extends @2.2::ISoundTriggerHw {
      *                    description and capabilities.
      */
     getProperties_2_3() generates (int32_t retval, Properties properties);
+
+    /**
+     * Start recognition on a given model. Only one recognition active
+     * at a time per model. Once recognition succeeds or fails, the callback
+     * associated with the model handle is called.
+     *
+     * Must have the exact same semantics as startRecognition from
+     * ISoundTriggerHw@2.1 except that the RecognitionConfig includes audio
+     * capabilities applied when the recognition is active.
+     *
+     * @param modelHandle the handle of the sound model to use for recognition
+     * @param config A RecognitionConfig structure containing attributes of the
+     *     recognition to perform
+     * @return retval Operation completion status: 0 in case of success,
+     *     -EINVAL in case of invalid recognition attributes,
+     *     -ENOSYS in case of invalid model handle,
+     *     -ENOMEM in case of memory allocation failure,
+     *     -ENODEV in case of initialization error.
+     */
+    startRecognition_2_3(SoundModelHandle modelHandle, RecognitionConfig config)
+            generates (int32_t retval);
 
     /**
      * Set a model specific parameter with the given value. This parameter

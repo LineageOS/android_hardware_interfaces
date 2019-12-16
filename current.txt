@@ -671,5 +671,5 @@ b27ab0cd40b0b078cdcd024bfe1061c4c4c065f3519eeb9347fa359a3268a5ae android.hardwar
 ##
 # END Radio HAL Merge Conflict Avoidance Buffer - STOPSHIP if present
 ##
-b46d358537168c478762c3d34d5fe1555a3fcd89cd1f43621350ada395e6f795 android.hardware.soundtrigger@2.3::types
-15924fbf38b3c282299a37e48c72405c97e322f844f815081db6acbca22d4165 android.hardware.soundtrigger@2.3::ISoundTriggerHw
+51d1c8d285e0456da2a3fdfbf4700c6277165d5e83219894d651c8ea0e39aa8b android.hardware.soundtrigger@2.3::types
+12d7533ff0754f45bf59ab300799074570a99a676545652c2c23abc73cb4515d android.hardware.soundtrigger@2.3::ISoundTriggerHw
