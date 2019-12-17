@@ -410,7 +410,7 @@ enum CameraMetadataTag : uint32_t {
      *
      * <p>List of the maximum number of regions that can be used for metering in
      * auto-exposure (AE), auto-white balance (AWB), and auto-focus (AF);
-     * this corresponds to the the maximum number of elements in
+     * this corresponds to the maximum number of elements in
      * ANDROID_CONTROL_AE_REGIONS, ANDROID_CONTROL_AWB_REGIONS,
      * and ANDROID_CONTROL_AF_REGIONS.</p>
      *

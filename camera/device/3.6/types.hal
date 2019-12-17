@@ -1,0 +1,143 @@
+/*
+ * Copyright (C) 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.camera.device@3.6;
+
+import @3.2::BufferCache;
+import @3.4::HalStream;
+
+/**
+ * OfflineRequest:
+ *
+ * Information about a capture request being switched to offline mode via the
+ * ICameraDeviceSession#switchToOffline method.
+ *
+ */
+struct OfflineRequest {
+    /**
+     * Must match a inflight CaptureRequest sent by camera service
+     */
+    uint32_t frameNumber;
+
+    /**
+     * Stream IDs for outputs that will be returned via ICameraDeviceCallback.
+     * The stream ID must be within one of offline stream listed in
+     * CameraOfflineSessionInfo.
+     * Camera service will validate these pending buffers are matching camera
+     * service's record to make sure no buffers are leaked during the
+     * switchToOffline call.
+     */
+    vec<int32_t> pendingStreams;
+};
+
+/**
+ * OfflineStream:
+ *
+ * Information about a stream being switched to offline mode via the
+ * ICameraDeviceSession#switchToOffline method.
+ *
+ */
+struct OfflineStream {
+    /**
+     * IDs of a stream to be transferred to offline session.
+     *
+     * For devices that do not support HAL buffer management, this must be
+     * one of stream ID listed in streamsToKeep argument of the
+     * switchToOffline call.
+     * For devices that support HAL buffer management, this could be any stream
+     * that was configured right before calling switchToOffline.
+     */
+    int32_t id;
+
+    /**
+     * Number of outstanding buffers that will be returned via offline session
+     */
+    uint32_t numOutstandingBuffers;
+
+    /**
+     * Buffer ID of buffers currently cached between camera service and this
+     * stream, which may or may not be owned by the camera HAL right now.
+     * See StreamBuffer#bufferId for more details.
+     */
+    vec<uint64_t> circulatingBufferIds;
+};
+
+/**
+ * CameraOfflineSessionInfo:
+ *
+ * Information about pending outputs that's being transferred to an offline
+ * session from an active session using the
+ * ICameraDeviceSession#switchToOffline method.
+ *
+ */
+struct CameraOfflineSessionInfo {
+    /**
+     * Information on what streams will be preserved in offline session.
+     * Streams not listed here will be removed by camera service after
+     * switchToOffline call returns.
+     */
+    vec<OfflineStream> offlineStreams;
+
+    /**
+     * Information for requests that will be handled by offline session
+     * Camera service will validate this matches what camera service has on
+     * record.
+     */
+    vec<OfflineRequest> offlineRequests;
+};
+
+/**
+ * HalStream:
+ *
+ * The camera HAL's response to each requested stream configuration.
+ *
+ * This version extends the @3.4 HalStream with the physicalCameraId
+ * field
+ */
+struct HalStream {
+    /**
+     * The definition of HalStream from the prior version.
+     */
+    @3.4::HalStream v3_4;
+
+    /**
+     * Whether this stream can be switch to offline mode.
+     *
+     * For devices that does not support the OFFLINE_PROCESSING capability, this
+     * fields will always be false.
+     *
+     * For devices support the OFFLINE_PROCESSING capability: any input stream
+     * and any output stream that can be output of the input stream must set
+     * this field to true. Also any stream of YUV420_888 format or JPEG format,
+     * with CPU_READ usage flag, must set this field to true. All other streams
+     * are up to camera HAL to advertise support or not, though it is not
+     * recommended to list support for streams with hardware composer or video
+     * encoder usage flags as these streams tend to be targeted continuously and
+     * can lead to long latency when trying to switch to offline.
+     *
+     */
+    bool supportOffline;
+};
+
+/**
+ * HalStreamConfiguration:
+ *
+ * Identical to @3.4::HalStreamConfiguration, except that it contains @3.6::HalStream entries.
+ *
+ */
+struct HalStreamConfiguration {
+    vec<HalStream> streams;
+};
