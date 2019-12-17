@@ -16,13 +16,14 @@
 
 #define LOG_TAG "contexthub_hidl_hal_test"
 
-#include <VtsHalHidlTargetTestBase.h>
-#include <VtsHalHidlTargetTestEnvBase.h>
 #include <android-base/logging.h>
 #include <android/hardware/contexthub/1.0/IContexthub.h>
 #include <android/hardware/contexthub/1.0/IContexthubCallback.h>
 #include <android/hardware/contexthub/1.0/types.h>
 #include <android/log.h>
+#include <gtest/gtest.h>
+#include <hidl/GtestPrinter.h>
+#include <hidl/ServiceManagement.h>
 #include <log/log.h>
 
 #include <cinttypes>
@@ -76,69 +77,44 @@ hidl_vec<ContextHub> getHubsSync(sp<IContexthub> hubApi) {
 }
 
 // Gets a list of valid hub IDs in the system
-std::vector<uint32_t> getHubIds() {
-  static std::vector<uint32_t> hubIds;
+std::vector<std::string> getHubIds(const std::string& service_name) {
+    std::vector<std::string> hubIds;
 
-  if (hubIds.size() == 0) {
-    sp<IContexthub> hubApi = ::testing::VtsHalHidlTargetTestBase::getService<IContexthub>();
+    sp<IContexthub> hubApi = IContexthub::getService(service_name);
 
     if (hubApi != nullptr) {
-      for (const ContextHub& hub : getHubsSync(hubApi)) {
-        hubIds.push_back(hub.hubId);
-      }
+        for (const ContextHub& hub : getHubsSync(hubApi)) {
+            hubIds.push_back(std::to_string(hub.hubId));
+        }
     }
-  }
 
-  ALOGD("Running tests against all %zu reported hubs", hubIds.size());
-  return hubIds;
+    ALOGD("Running tests against all %zu reported hubs for service %s", hubIds.size(),
+          service_name.c_str());
+    return hubIds;
 }
 
-// Test environment for Contexthub HIDL HAL.
-class ContexthubHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
- public:
-  // get the test environment singleton
-  static ContexthubHidlEnvironment* Instance() {
-    static ContexthubHidlEnvironment* instance = new ContexthubHidlEnvironment;
-    return instance;
-  }
+// Test fixture parameterized by hub ID, initializes the HAL and makes the context hub API handle
+// available.
+class ContexthubHidlTest : public ::testing::TestWithParam<std::tuple<std::string, std::string>> {
+  public:
+    virtual void SetUp() override {
+        hubApi = IContexthub::getService(std::get<0>(GetParam()));
+        ASSERT_NE(hubApi, nullptr);
 
-  virtual void registerTestServices() override { registerTestService<IContexthub>(); }
- private:
-  ContexthubHidlEnvironment() {}
-};
+        // getHubs() must be called at least once for proper initialization of the
+        // HAL implementation
+        getHubsSync(hubApi);
+    }
 
-// Base test fixture that initializes the HAL and makes the context hub API
-// handle available
-class ContexthubHidlTestBase : public ::testing::VtsHalHidlTargetTestBase {
- public:
-  virtual void SetUp() override {
-    hubApi = ::testing::VtsHalHidlTargetTestBase::getService<IContexthub>(
-        ContexthubHidlEnvironment::Instance()->getServiceName<IContexthub>());
-    ASSERT_NE(hubApi, nullptr);
+    uint32_t getHubId() { return std::stoi(std::get<1>(GetParam())); }
 
-    // getHubs() must be called at least once for proper initialization of the
-    // HAL implementation
-    getHubsSync(hubApi);
-  }
+    Result registerCallback(sp<IContexthubCallback> cb) {
+        Result result = hubApi->registerCallback(getHubId(), cb);
+        ALOGD("Registered callback, result %" PRIu32, result);
+        return result;
+    }
 
-  virtual void TearDown() override {}
-
-  sp<IContexthub> hubApi;
-};
-
-// Test fixture parameterized by hub ID
-class ContexthubHidlTest : public ContexthubHidlTestBase,
-                           public ::testing::WithParamInterface<uint32_t> {
- public:
-  uint32_t getHubId() {
-    return GetParam();
-  }
-
-  Result registerCallback(sp<IContexthubCallback> cb) {
-    Result result = hubApi->registerCallback(getHubId(), cb);
-    ALOGD("Registered callback, result %" PRIu32, result);
-    return result;
-  }
+    sp<IContexthub> hubApi;
 };
 
 // Base callback implementation that just logs all callbacks by default
@@ -202,24 +178,24 @@ bool waitForCallback(
 }
 
 // Ensures that the metadata reported in getHubs() is sane
-TEST_F(ContexthubHidlTestBase, TestGetHubs) {
-  hidl_vec<ContextHub> hubs = getHubsSync(hubApi);
-  ALOGD("System reports %zu hubs", hubs.size());
+TEST_P(ContexthubHidlTest, TestGetHubs) {
+    hidl_vec<ContextHub> hubs = getHubsSync(hubApi);
+    ALOGD("System reports %zu hubs", hubs.size());
 
-  for (const ContextHub& hub : hubs) {
-    ALOGD("Checking hub ID %" PRIu32, hub.hubId);
+    for (const ContextHub& hub : hubs) {
+        ALOGD("Checking hub ID %" PRIu32, hub.hubId);
 
-    EXPECT_FALSE(hub.name.empty());
-    EXPECT_FALSE(hub.vendor.empty());
-    EXPECT_FALSE(hub.toolchain.empty());
-    EXPECT_GT(hub.peakMips, 0);
-    EXPECT_GE(hub.stoppedPowerDrawMw, 0);
-    EXPECT_GE(hub.sleepPowerDrawMw, 0);
-    EXPECT_GT(hub.peakPowerDrawMw, 0);
+        EXPECT_FALSE(hub.name.empty());
+        EXPECT_FALSE(hub.vendor.empty());
+        EXPECT_FALSE(hub.toolchain.empty());
+        EXPECT_GT(hub.peakMips, 0);
+        EXPECT_GE(hub.stoppedPowerDrawMw, 0);
+        EXPECT_GE(hub.sleepPowerDrawMw, 0);
+        EXPECT_GT(hub.peakPowerDrawMw, 0);
 
-    // Minimum 128 byte MTU as required by CHRE API v1.0
-    EXPECT_GE(hub.maxSupportedMsgLen, UINT32_C(128));
-  }
+        // Minimum 128 byte MTU as required by CHRE API v1.0
+        EXPECT_GE(hub.maxSupportedMsgLen, UINT32_C(128));
+    }
 }
 
 TEST_P(ContexthubHidlTest, TestRegisterCallback) {
@@ -388,20 +364,28 @@ TEST_P(ContexthubTxnTest, TestDisableNonexistentNanoApp) {
                                       cb->promise.get_future()));
 }
 
-// Parameterize all SingleContexthubTest tests against each valid hub ID
-INSTANTIATE_TEST_CASE_P(HubIdSpecificTests, ContexthubHidlTest,
-                        ::testing::ValuesIn(getHubIds()));
-INSTANTIATE_TEST_CASE_P(HubIdSpecificTests, ContexthubTxnTest,
-                        ::testing::ValuesIn(getHubIds()));
+// Return the test parameters of a vecter of tuples for all IContexthub services and each of its hub
+// id: <service name of IContexthub, hub id of the IContexthub service>
+static std::vector<std::tuple<std::string, std::string>> get_parameters() {
+    std::vector<std::tuple<std::string, std::string>> parameters;
+    std::vector<std::string> service_names =
+            android::hardware::getAllHalInstanceNames(IContexthub::descriptor);
+    for (const std::string& service_name : service_names) {
+        std::vector<std::string> ids = getHubIds(service_name);
+        for (const std::string& id : ids) {
+            parameters.push_back(std::make_tuple(service_name, id));
+        }
+    }
 
-} // anonymous namespace
-
-int main(int argc, char **argv) {
-  ::testing::AddGlobalTestEnvironment(ContexthubHidlEnvironment::Instance());
-  ::testing::InitGoogleTest(&argc, argv);
-  ContexthubHidlEnvironment::Instance()->init(&argc, argv);
-  int status = RUN_ALL_TESTS();
-  ALOGI ("Test result = %d", status);
-  return status;
+    return parameters;
 }
 
+static std::vector<std::tuple<std::string, std::string>> kTestParameters = get_parameters();
+
+INSTANTIATE_TEST_SUITE_P(HubIdSpecificTests, ContexthubHidlTest, testing::ValuesIn(kTestParameters),
+                         android::hardware::PrintInstanceTupleNameToString<>);
+
+INSTANTIATE_TEST_SUITE_P(HubIdSpecificTests, ContexthubTxnTest, testing::ValuesIn(kTestParameters),
+                         android::hardware::PrintInstanceTupleNameToString<>);
+
+}  // anonymous namespace

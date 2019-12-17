@@ -45,8 +45,6 @@ class Gralloc {
 
     sp<IAllocator> getAllocator() const;
 
-    std::string dumpDebugInfo();
-
     // When import is false, this simply calls IAllocator::allocate. When import
     // is true, the returned buffers are also imported into the mapper.
     //
