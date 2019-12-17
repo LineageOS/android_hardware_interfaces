@@ -44,13 +44,11 @@ using android::hardware::graphics::common::V1_2::BufferUsage;
 using android::hardware::graphics::common::V1_2::PixelFormat;
 using MetadataType = android::hardware::graphics::mapper::V4_0::IMapper::MetadataType;
 using aidl::android::hardware::graphics::common::BlendMode;
-using aidl::android::hardware::graphics::common::Cta861_3;
 using aidl::android::hardware::graphics::common::Dataspace;
 using aidl::android::hardware::graphics::common::ExtendableType;
 using aidl::android::hardware::graphics::common::PlaneLayout;
 using aidl::android::hardware::graphics::common::PlaneLayoutComponent;
 using aidl::android::hardware::graphics::common::PlaneLayoutComponentType;
-using aidl::android::hardware::graphics::common::Smpte2086;
 using aidl::android::hardware::graphics::common::StandardMetadataType;
 
 using DecodeFunction = std::function<void(const IMapper::BufferDescriptorInfo& descriptorInfo,
@@ -1022,42 +1020,6 @@ TEST_P(GraphicsMapperHidlTest, GetBlendMode) {
 }
 
 /**
- * Test IMapper::get(Smpte2086)
- */
-TEST_F(GraphicsMapperHidlTest, GetSmpte2086) {
-    testGet(mDummyDescriptorInfo, gralloc4::MetadataType_Smpte2086,
-            [](const IMapper::BufferDescriptorInfo& /*info*/, const hidl_vec<uint8_t>& vec) {
-                std::optional<Smpte2086> smpte2086;
-                ASSERT_EQ(NO_ERROR, gralloc4::decodeSmpte2086(vec, &smpte2086));
-                EXPECT_FALSE(smpte2086.has_value());
-            });
-}
-
-/**
- * Test IMapper::get(Cta861_3)
- */
-TEST_F(GraphicsMapperHidlTest, GetCta861_3) {
-    testGet(mDummyDescriptorInfo, gralloc4::MetadataType_Cta861_3,
-            [](const IMapper::BufferDescriptorInfo& /*info*/, const hidl_vec<uint8_t>& vec) {
-                std::optional<Cta861_3> cta861_3;
-                ASSERT_EQ(NO_ERROR, gralloc4::decodeCta861_3(vec, &cta861_3));
-                EXPECT_FALSE(cta861_3.has_value());
-            });
-}
-
-/**
- * Test IMapper::get(Smpte2094_40)
- */
-TEST_F(GraphicsMapperHidlTest, GetSmpte2094_40) {
-    testGet(mDummyDescriptorInfo, gralloc4::MetadataType_Smpte2094_40,
-            [](const IMapper::BufferDescriptorInfo& /*info*/, const hidl_vec<uint8_t>& vec) {
-                std::optional<std::vector<uint8_t>> smpte2094_40;
-                ASSERT_EQ(NO_ERROR, gralloc4::decodeSmpte2094_40(vec, &smpte2094_40));
-                EXPECT_FALSE(smpte2094_40.has_value());
-            });
-}
-
-/**
  * Test IMapper::get(metadata) with a bad buffer
  */
 TEST_P(GraphicsMapperHidlTest, GetMetadataBadValue) {
@@ -1109,15 +1071,6 @@ TEST_P(GraphicsMapperHidlTest, GetMetadataBadValue) {
     ASSERT_EQ(0, vec.size());
     ASSERT_EQ(Error::BAD_BUFFER,
               mGralloc->get(bufferHandle, gralloc4::MetadataType_BlendMode, &vec));
-    ASSERT_EQ(0, vec.size());
-    ASSERT_EQ(Error::BAD_BUFFER,
-              mGralloc->get(bufferHandle, gralloc4::MetadataType_Smpte2086, &vec));
-    ASSERT_EQ(0, vec.size());
-    ASSERT_EQ(Error::BAD_BUFFER,
-              mGralloc->get(bufferHandle, gralloc4::MetadataType_Cta861_3, &vec));
-    ASSERT_EQ(0, vec.size());
-    ASSERT_EQ(Error::BAD_BUFFER,
-              mGralloc->get(bufferHandle, gralloc4::MetadataType_Smpte2094_40, &vec));
     ASSERT_EQ(0, vec.size());
 }
 
@@ -1475,90 +1428,6 @@ TEST_P(GraphicsMapperHidlTest, SetBlendMode) {
 }
 
 /**
- * Test IMapper::set(Smpte2086)
- */
-TEST_F(GraphicsMapperHidlTest, SetSmpte2086) {
-    /**
-     * DISPLAY_P3 is a color space that uses the DCI_P3 primaries,
-     * the D65 white point and the SRGB transfer functions.
-     * Rendering Intent: Colorimetric
-     * Primaries:
-     *                  x       y
-     *  green           0.265   0.690
-     *  blue            0.150   0.060
-     *  red             0.680   0.320
-     *  white (D65)     0.3127  0.3290
-     */
-    std::optional<Smpte2086> smpte2086;
-    smpte2086->primaryRed.x = 0.680;
-    smpte2086->primaryRed.y = 0.320;
-    smpte2086->primaryGreen.x = 0.265;
-    smpte2086->primaryGreen.y = 0.690;
-    smpte2086->primaryBlue.x = 0.150;
-    smpte2086->primaryBlue.y = 0.060;
-    smpte2086->whitePoint.x = 0.3127;
-    smpte2086->whitePoint.y = 0.3290;
-    smpte2086->maxLuminance = 100.0;
-    smpte2086->minLuminance = 0.1;
-
-    hidl_vec<uint8_t> vec;
-    ASSERT_EQ(NO_ERROR, gralloc4::encodeSmpte2086(smpte2086, &vec));
-
-    testSet(mDummyDescriptorInfo, gralloc4::MetadataType_Smpte2086, vec,
-            [&](const IMapper::BufferDescriptorInfo& /*info*/, const hidl_vec<uint8_t>& vec) {
-                std::optional<Smpte2086> realSmpte2086;
-                ASSERT_EQ(NO_ERROR, gralloc4::decodeSmpte2086(vec, &realSmpte2086));
-                ASSERT_TRUE(realSmpte2086.has_value());
-                EXPECT_EQ(smpte2086->primaryRed.x, realSmpte2086->primaryRed.x);
-                EXPECT_EQ(smpte2086->primaryRed.y, realSmpte2086->primaryRed.y);
-                EXPECT_EQ(smpte2086->primaryGreen.x, realSmpte2086->primaryGreen.x);
-                EXPECT_EQ(smpte2086->primaryGreen.y, realSmpte2086->primaryGreen.y);
-                EXPECT_EQ(smpte2086->primaryBlue.x, realSmpte2086->primaryBlue.x);
-                EXPECT_EQ(smpte2086->primaryBlue.y, realSmpte2086->primaryBlue.y);
-                EXPECT_EQ(smpte2086->whitePoint.x, realSmpte2086->whitePoint.x);
-                EXPECT_EQ(smpte2086->whitePoint.y, realSmpte2086->whitePoint.y);
-                EXPECT_EQ(smpte2086->maxLuminance, realSmpte2086->maxLuminance);
-                EXPECT_EQ(smpte2086->minLuminance, realSmpte2086->minLuminance);
-            });
-}
-
-/**
- * Test IMapper::set(Cta8613)
- */
-TEST_F(GraphicsMapperHidlTest, SetCta861_3) {
-    std::optional<Cta861_3> cta861_3;
-    cta861_3->maxContentLightLevel = 78.0;
-    cta861_3->maxFrameAverageLightLevel = 62.0;
-
-    hidl_vec<uint8_t> vec;
-    ASSERT_EQ(NO_ERROR, gralloc4::encodeCta861_3(cta861_3, &vec));
-
-    testSet(mDummyDescriptorInfo, gralloc4::MetadataType_Cta861_3, vec,
-            [&](const IMapper::BufferDescriptorInfo& /*info*/, const hidl_vec<uint8_t>& vec) {
-                std::optional<Cta861_3> realCta861_3;
-                ASSERT_EQ(NO_ERROR, gralloc4::decodeCta861_3(vec, &realCta861_3));
-                ASSERT_TRUE(realCta861_3.has_value());
-                EXPECT_EQ(cta861_3->maxContentLightLevel, realCta861_3->maxContentLightLevel);
-                EXPECT_EQ(cta861_3->maxFrameAverageLightLevel,
-                          realCta861_3->maxFrameAverageLightLevel);
-            });
-}
-
-/**
- * Test IMapper::set(Smpte2094_40)
- */
-TEST_F(GraphicsMapperHidlTest, SetSmpte2094_40) {
-    hidl_vec<uint8_t> vec;
-
-    testSet(mDummyDescriptorInfo, gralloc4::MetadataType_Smpte2094_40, vec,
-            [&](const IMapper::BufferDescriptorInfo& /*info*/, const hidl_vec<uint8_t>& vec) {
-                std::optional<std::vector<uint8_t>> realSmpte2094_40;
-                ASSERT_EQ(NO_ERROR, gralloc4::decodeSmpte2094_40(vec, &realSmpte2094_40));
-                EXPECT_FALSE(realSmpte2094_40.has_value());
-            });
-}
-
-/**
  * Test IMapper::set(metadata) with a bad buffer
  */
 TEST_P(GraphicsMapperHidlTest, SetMetadataNullBuffer) {
@@ -1593,11 +1462,6 @@ TEST_P(GraphicsMapperHidlTest, SetMetadataNullBuffer) {
               mGralloc->set(bufferHandle, gralloc4::MetadataType_Dataspace, vec));
     ASSERT_EQ(Error::BAD_BUFFER,
               mGralloc->set(bufferHandle, gralloc4::MetadataType_BlendMode, vec));
-    ASSERT_EQ(Error::BAD_BUFFER,
-              mGralloc->set(bufferHandle, gralloc4::MetadataType_Smpte2086, vec));
-    ASSERT_EQ(Error::BAD_BUFFER, mGralloc->set(bufferHandle, gralloc4::MetadataType_Cta861_3, vec));
-    ASSERT_EQ(Error::BAD_BUFFER,
-              mGralloc->set(bufferHandle, gralloc4::MetadataType_Smpte2094_40, vec));
 }
 
 /**
@@ -1657,10 +1521,6 @@ TEST_P(GraphicsMapperHidlTest, SetBadMetadata) {
               mGralloc->set(bufferHandle, gralloc4::MetadataType_Dataspace, vec));
     ASSERT_EQ(Error::UNSUPPORTED,
               mGralloc->set(bufferHandle, gralloc4::MetadataType_BlendMode, vec));
-    ASSERT_EQ(Error::UNSUPPORTED,
-              mGralloc->set(bufferHandle, gralloc4::MetadataType_Smpte2086, vec));
-    ASSERT_EQ(Error::UNSUPPORTED,
-              mGralloc->set(bufferHandle, gralloc4::MetadataType_Cta861_3, vec));
 }
 
 /**
@@ -1890,45 +1750,6 @@ TEST_P(GraphicsMapperHidlTest, GetFromBufferDescriptorInfoBlendMode) {
     BlendMode blendMode = BlendMode::COVERAGE;
     ASSERT_EQ(NO_ERROR, gralloc4::decodeBlendMode(vec, &blendMode));
     EXPECT_EQ(BlendMode::INVALID, blendMode);
-}
-
-/**
- * Test IMapper::getFromBufferDescriptorInfo(Smpte2086)
- */
-TEST_F(GraphicsMapperHidlTest, GetFromBufferDescriptorInfoSmpte2086) {
-    hidl_vec<uint8_t> vec;
-    ASSERT_EQ(Error::NONE, mGralloc->getFromBufferDescriptorInfo(
-                                   mDummyDescriptorInfo, gralloc4::MetadataType_Smpte2086, &vec));
-
-    std::optional<Smpte2086> smpte2086;
-    ASSERT_EQ(NO_ERROR, gralloc4::decodeSmpte2086(vec, &smpte2086));
-    EXPECT_FALSE(smpte2086.has_value());
-}
-
-/**
- * Test IMapper::getFromBufferDescriptorInfo(Cta861_3)
- */
-TEST_F(GraphicsMapperHidlTest, GetFromBufferDescriptorInfoCta861_3) {
-    hidl_vec<uint8_t> vec;
-    ASSERT_EQ(Error::NONE, mGralloc->getFromBufferDescriptorInfo(
-                                   mDummyDescriptorInfo, gralloc4::MetadataType_Cta861_3, &vec));
-
-    std::optional<Cta861_3> cta861_3;
-    ASSERT_EQ(NO_ERROR, gralloc4::decodeCta861_3(vec, &cta861_3));
-    EXPECT_FALSE(cta861_3.has_value());
-}
-
-/**
- * Test IMapper::getFromBufferDescriptorInfo(Smpte2094_40)
- */
-TEST_F(GraphicsMapperHidlTest, GetFromBufferDescriptorInfoSmpte2094_40) {
-    hidl_vec<uint8_t> vec;
-    ASSERT_EQ(Error::NONE,
-              mGralloc->getFromBufferDescriptorInfo(mDummyDescriptorInfo,
-                                                    gralloc4::MetadataType_Smpte2094_40, &vec));
-    std::optional<std::vector<uint8_t>> smpte2094_40;
-    ASSERT_EQ(NO_ERROR, gralloc4::decodeSmpte2094_40(vec, &smpte2094_40));
-    EXPECT_FALSE(smpte2094_40.has_value());
 }
 
 /**
