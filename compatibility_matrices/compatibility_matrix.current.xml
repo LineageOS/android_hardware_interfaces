@@ -388,6 +388,13 @@
             <instance>default</instance>
         </interface>
     </hal>
+    <hal format="aidl" optional="true">
+        <name>android.hardware.rebootescrow</name>
+        <interface>
+            <name>IRebootEscrow</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.secure_element</name>
         <version>1.0</version>
