@@ -1,0 +1,495 @@
+// Signature format: 2.0
+package audio.policy.configurable.V1_0 {
+
+  public class Adaptation {
+    ctor public Adaptation();
+    method public java.math.BigInteger getOffset();
+    method public void setOffset(java.math.BigInteger);
+  }
+
+  public class BitParameterBlock {
+    ctor public BitParameterBlock();
+    method public java.util.List<audio.policy.configurable.V1_0.BitParameterType> getBitParameter();
+    method public String getDescription();
+    method public String getMapping();
+    method public String getName();
+    method public java.math.BigInteger getSize();
+    method public void setDescription(String);
+    method public void setMapping(String);
+    method public void setName(String);
+    method public void setSize(java.math.BigInteger);
+  }
+
+  public class BitParameterBlockType {
+    ctor public BitParameterBlockType();
+    method public java.util.List<audio.policy.configurable.V1_0.IntegerParameterType> getBitParameter();
+    method public String getName();
+    method public void setName(String);
+  }
+
+  public class BitParameterType {
+    ctor public BitParameterType();
+    method public String getDescription();
+    method public java.math.BigInteger getMax();
+    method public String getName();
+    method public java.math.BigInteger getPos();
+    method public java.math.BigInteger getSize();
+    method public void setDescription(String);
+    method public void setMax(java.math.BigInteger);
+    method public void setName(String);
+    method public void setPos(java.math.BigInteger);
+    method public void setSize(java.math.BigInteger);
+  }
+
+  public class BooleanParameter extends audio.policy.configurable.V1_0.Parameter {
+    ctor public BooleanParameter();
+    method public java.math.BigInteger getSize();
+    method public void setSize(java.math.BigInteger);
+  }
+
+  public class BooleanParameterType extends audio.policy.configurable.V1_0.ParameterType {
+    ctor public BooleanParameterType();
+  }
+
+  public class ComponentInstance {
+    ctor public ComponentInstance();
+    method public java.math.BigInteger getArrayLength();
+    method public String getDescription();
+    method public String getMapping();
+    method public String getName();
+    method public String getType();
+    method public void setArrayLength(java.math.BigInteger);
+    method public void setDescription(String);
+    method public void setMapping(String);
+    method public void setName(String);
+    method public void setType(String);
+  }
+
+  public class ComponentType {
+    ctor public ComponentType();
+    method public audio.policy.configurable.V1_0.BitParameterBlock getBitParameterBlock();
+    method public audio.policy.configurable.V1_0.BooleanParameter getBooleanParameter();
+    method public audio.policy.configurable.V1_0.ComponentInstance getComponent_optional();
+    method public String getDescription();
+    method public audio.policy.configurable.V1_0.EnumParameterType getEnumParameter();
+    method public audio.policy.configurable.V1_0.FixedPointParameterType getFixedPointParameter();
+    method public audio.policy.configurable.V1_0.FloatingPointParameterType getFloatingPointParameter();
+    method public audio.policy.configurable.V1_0.IntegerParameterType getIntegerParameter();
+    method public String getMapping();
+    method public String getName();
+    method public audio.policy.configurable.V1_0.ParameterBlockType getParameterBlock_optional();
+    method public audio.policy.configurable.V1_0.StringParameter getStringParameter();
+    method public String get_extends();
+    method public void setBitParameterBlock(audio.policy.configurable.V1_0.BitParameterBlock);
+    method public void setBooleanParameter(audio.policy.configurable.V1_0.BooleanParameter);
+    method public void setComponent_optional(audio.policy.configurable.V1_0.ComponentInstance);
+    method public void setDescription(String);
+    method public void setEnumParameter(audio.policy.configurable.V1_0.EnumParameterType);
+    method public void setFixedPointParameter(audio.policy.configurable.V1_0.FixedPointParameterType);
+    method public void setFloatingPointParameter(audio.policy.configurable.V1_0.FloatingPointParameterType);
+    method public void setIntegerParameter(audio.policy.configurable.V1_0.IntegerParameterType);
+    method public void setMapping(String);
+    method public void setName(String);
+    method public void setParameterBlock_optional(audio.policy.configurable.V1_0.ParameterBlockType);
+    method public void setStringParameter(audio.policy.configurable.V1_0.StringParameter);
+    method public void set_extends(String);
+  }
+
+  public class ComponentTypeSetType {
+    ctor public ComponentTypeSetType();
+    method public String getBase();
+    method public audio.policy.configurable.V1_0.ComponentTypeSetType getComponentLibrary_optional();
+    method public audio.policy.configurable.V1_0.ComponentTypeSetType getComponentTypeSet_optional();
+    method public audio.policy.configurable.V1_0.ComponentType getComponentType_optional();
+    method public void setBase(String);
+    method public void setComponentLibrary_optional(audio.policy.configurable.V1_0.ComponentTypeSetType);
+    method public void setComponentTypeSet_optional(audio.policy.configurable.V1_0.ComponentTypeSetType);
+    method public void setComponentType_optional(audio.policy.configurable.V1_0.ComponentType);
+  }
+
+  public class CompoundRuleType {
+    ctor public CompoundRuleType();
+    method public audio.policy.configurable.V1_0.CompoundRuleType getCompoundRule_optional();
+    method public audio.policy.configurable.V1_0.SelectionCriterionRuleType getSelectionCriterionRule_optional();
+    method public audio.policy.configurable.V1_0.TypeEnum getType();
+    method public void setCompoundRule_optional(audio.policy.configurable.V1_0.CompoundRuleType);
+    method public void setSelectionCriterionRule_optional(audio.policy.configurable.V1_0.SelectionCriterionRuleType);
+    method public void setType(audio.policy.configurable.V1_0.TypeEnum);
+  }
+
+  public class ConfigurableDomainType {
+    ctor public ConfigurableDomainType();
+    method public audio.policy.configurable.V1_0.ConfigurableElementsType getConfigurableElements();
+    method public audio.policy.configurable.V1_0.ConfigurationsType getConfigurations();
+    method public String getName();
+    method public boolean getSequenceAware();
+    method public audio.policy.configurable.V1_0.SettingsType getSettings();
+    method public void setConfigurableElements(audio.policy.configurable.V1_0.ConfigurableElementsType);
+    method public void setConfigurations(audio.policy.configurable.V1_0.ConfigurationsType);
+    method public void setName(String);
+    method public void setSequenceAware(boolean);
+    method public void setSettings(audio.policy.configurable.V1_0.SettingsType);
+  }
+
+  public class ConfigurableDomains {
+    ctor public ConfigurableDomains();
+    method public java.util.List<audio.policy.configurable.V1_0.ConfigurableDomainType> getConfigurableDomain();
+    method public String getSystemClassName();
+    method public void setSystemClassName(String);
+  }
+
+  public class ConfigurableElementSettingsType {
+    ctor public ConfigurableElementSettingsType();
+    method public audio.policy.configurable.V1_0.IntegerParameterType getBitParameter_optional();
+    method public String getPath();
+    method public void setBitParameter_optional(audio.policy.configurable.V1_0.IntegerParameterType);
+    method public void setPath(String);
+  }
+
+  public class ConfigurableElementsType {
+    ctor public ConfigurableElementsType();
+    method public java.util.List<audio.policy.configurable.V1_0.ConfigurableElementsType.ConfigurableElement> getConfigurableElement();
+  }
+
+  public static class ConfigurableElementsType.ConfigurableElement {
+    ctor public ConfigurableElementsType.ConfigurableElement();
+    method public String getPath();
+    method public void setPath(String);
+  }
+
+  public class ConfigurationFilePath {
+    ctor public ConfigurationFilePath();
+    method public String getPath();
+    method public void setPath(String);
+  }
+
+  public class ConfigurationsType {
+    ctor public ConfigurationsType();
+    method public java.util.List<audio.policy.configurable.V1_0.ConfigurationsType.Configuration> getConfiguration();
+  }
+
+  public static class ConfigurationsType.Configuration {
+    ctor public ConfigurationsType.Configuration();
+    method public audio.policy.configurable.V1_0.CompoundRuleType getCompoundRule();
+    method public String getName();
+    method public void setCompoundRule(audio.policy.configurable.V1_0.CompoundRuleType);
+    method public void setName(String);
+  }
+
+  public class EnumParameterType extends audio.policy.configurable.V1_0.Parameter {
+    ctor public EnumParameterType();
+    method public java.math.BigInteger getSize();
+    method public java.util.List<audio.policy.configurable.V1_0.EnumParameterType.ValuePair> getValuePair();
+    method public void setSize(java.math.BigInteger);
+  }
+
+  public static class EnumParameterType.ValuePair {
+    ctor public EnumParameterType.ValuePair();
+    method public String getLiteral();
+    method public String getNumerical();
+    method public void setLiteral(String);
+    method public void setNumerical(String);
+  }
+
+  public class FileIncluderType {
+    ctor public FileIncluderType();
+    method public String getPath();
+    method public void setPath(String);
+  }
+
+  public class FixedPointParameterType extends audio.policy.configurable.V1_0.PointParameterType {
+    ctor public FixedPointParameterType();
+    method public java.math.BigInteger getFractional();
+    method public java.math.BigInteger getIntegral();
+    method public java.math.BigInteger getSize();
+    method public void setFractional(java.math.BigInteger);
+    method public void setIntegral(java.math.BigInteger);
+    method public void setSize(java.math.BigInteger);
+  }
+
+  public class FloatingPointParameterType extends audio.policy.configurable.V1_0.PointParameterType {
+    ctor public FloatingPointParameterType();
+    method public String getMax();
+    method public String getMin();
+    method public java.math.BigInteger getSize();
+    method public void setMax(String);
+    method public void setMin(String);
+    method public void setSize(java.math.BigInteger);
+  }
+
+  public class IntegerParameterType extends audio.policy.configurable.V1_0.Parameter {
+    ctor public IntegerParameterType();
+    method public audio.policy.configurable.V1_0.LinearAdaptationType getLinearAdaptation();
+    method public audio.policy.configurable.V1_0.LogarithmicAdaptation getLogarithmicAdaptation();
+    method public java.math.BigInteger getMax();
+    method public java.math.BigInteger getMin();
+    method public boolean getSigned();
+    method public java.math.BigInteger getSize();
+    method public String getUnit();
+    method public void setLinearAdaptation(audio.policy.configurable.V1_0.LinearAdaptationType);
+    method public void setLogarithmicAdaptation(audio.policy.configurable.V1_0.LogarithmicAdaptation);
+    method public void setMax(java.math.BigInteger);
+    method public void setMin(java.math.BigInteger);
+    method public void setSigned(boolean);
+    method public void setSize(java.math.BigInteger);
+    method public void setUnit(String);
+  }
+
+  public enum LangEnum {
+    method public String getRawName();
+    enum_constant public static final audio.policy.configurable.V1_0.LangEnum EMPTY;
+  }
+
+  public class LinearAdaptationType extends audio.policy.configurable.V1_0.Adaptation {
+    ctor public LinearAdaptationType();
+    method public double getSlopeDenominator();
+    method public double getSlopeNumerator();
+    method public void setSlopeDenominator(double);
+    method public void setSlopeNumerator(double);
+  }
+
+  public class LogarithmicAdaptation extends audio.policy.configurable.V1_0.LinearAdaptationType {
+    ctor public LogarithmicAdaptation();
+    method public double getFloorValue();
+    method public double getLogarithmBase();
+    method public void setFloorValue(double);
+    method public void setLogarithmBase(double);
+  }
+
+  public enum MatchesWhenEnum {
+    method public String getRawName();
+    enum_constant public static final audio.policy.configurable.V1_0.MatchesWhenEnum Excludes;
+    enum_constant public static final audio.policy.configurable.V1_0.MatchesWhenEnum Includes;
+    enum_constant public static final audio.policy.configurable.V1_0.MatchesWhenEnum Is;
+    enum_constant public static final audio.policy.configurable.V1_0.MatchesWhenEnum IsNot;
+  }
+
+  public class Parameter {
+    ctor public Parameter();
+    method public java.math.BigInteger getArrayLength();
+    method public String getDescription();
+    method public String getMapping();
+    method public String getName();
+    method public void setArrayLength(java.math.BigInteger);
+    method public void setDescription(String);
+    method public void setMapping(String);
+    method public void setName(String);
+  }
+
+  public class ParameterBlockType {
+    ctor public ParameterBlockType();
+    method public java.math.BigInteger getArrayLength();
+    method public audio.policy.configurable.V1_0.BitParameterBlock getBitParameterBlock();
+    method public audio.policy.configurable.V1_0.BooleanParameter getBooleanParameter();
+    method public audio.policy.configurable.V1_0.ComponentInstance getComponent_optional();
+    method public String getDescription();
+    method public audio.policy.configurable.V1_0.EnumParameterType getEnumParameter();
+    method public audio.policy.configurable.V1_0.FixedPointParameterType getFixedPointParameter();
+    method public audio.policy.configurable.V1_0.FloatingPointParameterType getFloatingPointParameter();
+    method public audio.policy.configurable.V1_0.IntegerParameterType getIntegerParameter();
+    method public String getMapping();
+    method public String getName();
+    method public audio.policy.configurable.V1_0.ParameterBlockType getParameterBlock_optional();
+    method public audio.policy.configurable.V1_0.StringParameter getStringParameter();
+    method public void setArrayLength(java.math.BigInteger);
+    method public void setBitParameterBlock(audio.policy.configurable.V1_0.BitParameterBlock);
+    method public void setBooleanParameter(audio.policy.configurable.V1_0.BooleanParameter);
+    method public void setComponent_optional(audio.policy.configurable.V1_0.ComponentInstance);
+    method public void setDescription(String);
+    method public void setEnumParameter(audio.policy.configurable.V1_0.EnumParameterType);
+    method public void setFixedPointParameter(audio.policy.configurable.V1_0.FixedPointParameterType);
+    method public void setFloatingPointParameter(audio.policy.configurable.V1_0.FloatingPointParameterType);
+    method public void setIntegerParameter(audio.policy.configurable.V1_0.IntegerParameterType);
+    method public void setMapping(String);
+    method public void setName(String);
+    method public void setParameterBlock_optional(audio.policy.configurable.V1_0.ParameterBlockType);
+    method public void setStringParameter(audio.policy.configurable.V1_0.StringParameter);
+  }
+
+  public class ParameterFrameworkConfiguration {
+    ctor public ParameterFrameworkConfiguration();
+    method public String getServerPort();
+    method public audio.policy.configurable.V1_0.SettingsConfigurationType getSettingsConfiguration();
+    method public audio.policy.configurable.V1_0.ConfigurationFilePath getStructureDescriptionFileLocation();
+    method public audio.policy.configurable.V1_0.SubsystemPlugins getSubsystemPlugins();
+    method public String getSystemClassName();
+    method public boolean getTuningAllowed();
+    method public void setServerPort(String);
+    method public void setSettingsConfiguration(audio.policy.configurable.V1_0.SettingsConfigurationType);
+    method public void setStructureDescriptionFileLocation(audio.policy.configurable.V1_0.ConfigurationFilePath);
+    method public void setSubsystemPlugins(audio.policy.configurable.V1_0.SubsystemPlugins);
+    method public void setSystemClassName(String);
+    method public void setTuningAllowed(boolean);
+  }
+
+  public class ParameterType {
+    ctor public ParameterType();
+    method public String getName();
+    method public String getValue();
+    method public audio.policy.configurable.V1_0.ValueSpaceEnum getValueSpace();
+    method public void setName(String);
+    method public void setValue(String);
+    method public void setValueSpace(audio.policy.configurable.V1_0.ValueSpaceEnum);
+  }
+
+  public class PluginFile {
+    ctor public PluginFile();
+    method public String getName();
+    method public void setName(String);
+  }
+
+  public class PluginLocation {
+    ctor public PluginLocation();
+    method public String getFolder();
+    method public java.util.List<audio.policy.configurable.V1_0.PluginFile> getPlugin();
+    method public void setFolder(String);
+  }
+
+  public class PointParameterType extends audio.policy.configurable.V1_0.Parameter {
+    ctor public PointParameterType();
+    method public String getUnit();
+    method public void setUnit(String);
+  }
+
+  public class SelectionCriterionRuleType {
+    ctor public SelectionCriterionRuleType();
+    method public audio.policy.configurable.V1_0.MatchesWhenEnum getMatchesWhen();
+    method public String getSelectionCriterion();
+    method public String getValue();
+    method public void setMatchesWhen(audio.policy.configurable.V1_0.MatchesWhenEnum);
+    method public void setSelectionCriterion(String);
+    method public void setValue(String);
+  }
+
+  public class SettingsConfigurationType {
+    ctor public SettingsConfigurationType();
+    method public audio.policy.configurable.V1_0.ConfigurationFilePath getConfigurableDomainsFileLocation();
+    method public void setConfigurableDomainsFileLocation(audio.policy.configurable.V1_0.ConfigurationFilePath);
+  }
+
+  public class SettingsType {
+    ctor public SettingsType();
+    method public java.util.List<audio.policy.configurable.V1_0.SettingsType.Configuration> getConfiguration();
+  }
+
+  public static class SettingsType.Configuration {
+    ctor public SettingsType.Configuration();
+    method public java.util.List<audio.policy.configurable.V1_0.ConfigurableElementSettingsType> getConfigurableElement();
+    method public String getName();
+    method public void setName(String);
+  }
+
+  public enum SpaceEnum {
+    method public String getRawName();
+    enum_constant public static final audio.policy.configurable.V1_0.SpaceEnum _default;
+    enum_constant public static final audio.policy.configurable.V1_0.SpaceEnum preserve;
+  }
+
+  public class StringParameter {
+    ctor public StringParameter();
+    method public String getDescription();
+    method public String getMapping();
+    method public java.math.BigInteger getMaxLength();
+    method public String getName();
+    method public void setDescription(String);
+    method public void setMapping(String);
+    method public void setMaxLength(java.math.BigInteger);
+    method public void setName(String);
+  }
+
+  public class StringParameterType {
+    ctor public StringParameterType();
+    method public String getName();
+    method public String getValue();
+    method public void setName(String);
+    method public void setValue(String);
+  }
+
+  public class SubsystemPlugins {
+    ctor public SubsystemPlugins();
+    method public java.util.List<audio.policy.configurable.V1_0.PluginLocation> getLocation();
+  }
+
+  public class SubsystemType {
+    ctor public SubsystemType();
+    method public audio.policy.configurable.V1_0.ComponentTypeSetType getComponentLibrary();
+    method public String getDescription();
+    method public audio.policy.configurable.V1_0.SubsystemType.InstanceDefinition getInstanceDefinition();
+    method public String getMapping();
+    method public String getName();
+    method public String getType();
+    method public void setComponentLibrary(audio.policy.configurable.V1_0.ComponentTypeSetType);
+    method public void setDescription(String);
+    method public void setInstanceDefinition(audio.policy.configurable.V1_0.SubsystemType.InstanceDefinition);
+    method public void setMapping(String);
+    method public void setName(String);
+    method public void setType(String);
+  }
+
+  public static class SubsystemType.InstanceDefinition {
+    ctor public SubsystemType.InstanceDefinition();
+    method public audio.policy.configurable.V1_0.BitParameterBlock getBitParameterBlock();
+    method public audio.policy.configurable.V1_0.BooleanParameter getBooleanParameter();
+    method public audio.policy.configurable.V1_0.ComponentInstance getComponent_optional();
+    method public audio.policy.configurable.V1_0.EnumParameterType getEnumParameter();
+    method public audio.policy.configurable.V1_0.FixedPointParameterType getFixedPointParameter();
+    method public audio.policy.configurable.V1_0.FloatingPointParameterType getFloatingPointParameter();
+    method public audio.policy.configurable.V1_0.IntegerParameterType getIntegerParameter();
+    method public audio.policy.configurable.V1_0.ParameterBlockType getParameterBlock_optional();
+    method public audio.policy.configurable.V1_0.StringParameter getStringParameter();
+    method public void setBitParameterBlock(audio.policy.configurable.V1_0.BitParameterBlock);
+    method public void setBooleanParameter(audio.policy.configurable.V1_0.BooleanParameter);
+    method public void setComponent_optional(audio.policy.configurable.V1_0.ComponentInstance);
+    method public void setEnumParameter(audio.policy.configurable.V1_0.EnumParameterType);
+    method public void setFixedPointParameter(audio.policy.configurable.V1_0.FixedPointParameterType);
+    method public void setFloatingPointParameter(audio.policy.configurable.V1_0.FloatingPointParameterType);
+    method public void setIntegerParameter(audio.policy.configurable.V1_0.IntegerParameterType);
+    method public void setParameterBlock_optional(audio.policy.configurable.V1_0.ParameterBlockType);
+    method public void setStringParameter(audio.policy.configurable.V1_0.StringParameter);
+  }
+
+  public class SystemClass {
+    ctor public SystemClass();
+    method public String getName();
+    method public java.util.List<audio.policy.configurable.V1_0.SubsystemType> getSubsystem();
+    method public java.util.List<audio.policy.configurable.V1_0.FileIncluderType> getSubsystemInclude_optional();
+    method public void setName(String);
+  }
+
+  public enum TypeEnum {
+    method public String getRawName();
+    enum_constant public static final audio.policy.configurable.V1_0.TypeEnum All;
+    enum_constant public static final audio.policy.configurable.V1_0.TypeEnum Any;
+  }
+
+  public enum ValueSpaceEnum {
+    method public String getRawName();
+    enum_constant public static final audio.policy.configurable.V1_0.ValueSpaceEnum Raw;
+    enum_constant public static final audio.policy.configurable.V1_0.ValueSpaceEnum Real;
+  }
+
+  public class XmlParser {
+    ctor public XmlParser();
+    method public static audio.policy.configurable.V1_0.BitParameterBlock readBitParameterBlock(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
+    method public static audio.policy.configurable.V1_0.BooleanParameter readBooleanParameter(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
+    method public static audio.policy.configurable.V1_0.ComponentTypeSetType readComponentTypeSetType(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
+    method public static audio.policy.configurable.V1_0.ComponentTypeSetType readComponentTypeSetType(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
+    method public static audio.policy.configurable.V1_0.ConfigurableDomainType readConfigurableDomainType(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
+    method public static audio.policy.configurable.V1_0.ConfigurableDomains readConfigurableDomains(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
+    method public static audio.policy.configurable.V1_0.EnumParameterType readEnumParameterType(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
+    method public static audio.policy.configurable.V1_0.FixedPointParameterType readFixedPointParameterType(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
+    method public static audio.policy.configurable.V1_0.FloatingPointParameterType readFloatingPointParameterType(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
+    method public static audio.policy.configurable.V1_0.IntegerParameterType readIntegerParameterType(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
+    method public static audio.policy.configurable.V1_0.LinearAdaptationType readLinearAdaptationType(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
+    method public static audio.policy.configurable.V1_0.LogarithmicAdaptation readLogarithmicAdaptation(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
+    method public static audio.policy.configurable.V1_0.ParameterFrameworkConfiguration readParameterFrameworkConfiguration(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
+    method public static audio.policy.configurable.V1_0.StringParameter readStringParameter(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
+    method public static audio.policy.configurable.V1_0.SubsystemPlugins readSubsystemPlugins(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
+    method public static audio.policy.configurable.V1_0.SubsystemType readSubsystemType(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
+    method public static audio.policy.configurable.V1_0.SystemClass readSystemClass(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
+    method public static String readText(org.xmlpull.v1.XmlPullParser) throws java.io.IOException, org.xmlpull.v1.XmlPullParserException;
+    method public static void skip(org.xmlpull.v1.XmlPullParser) throws java.io.IOException, org.xmlpull.v1.XmlPullParserException;
+  }
+
+}
+
