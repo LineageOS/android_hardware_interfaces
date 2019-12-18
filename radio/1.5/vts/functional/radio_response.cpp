@@ -948,3 +948,9 @@ Return<void> RadioResponse_v1_5::setDataProfileResponse_1_5(const RadioResponseI
     parent_v1_5.notify(info.serial);
     return Void();
 }
+
+Return<void> RadioResponse_v1_5::setRadioPowerResponse_1_5(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_v1_5.notify(info.serial);
+    return Void();
+}
