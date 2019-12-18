@@ -958,3 +958,31 @@ TEST_F(RadioHidlTest_v1_5, setDataProfile_1_5) {
                                      {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE}));
     }
 }
+
+TEST_F(RadioHidlTest_v1_5, setRadioPower_1_5_emergencyCall_cancalled) {
+    // Set radio power to off.
+    serial = GetRandomSerialNumber();
+    radio_v1_5->setRadioPower_1_5(serial, false, false, false);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_5->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
+    EXPECT_EQ(RadioError::NONE, radioRsp_v1_5->rspInfo.error);
+
+    // Set radio power to on with forEmergencyCall being true. This should put modem to only scan
+    // emergency call bands.
+    serial = GetRandomSerialNumber();
+    radio_v1_5->setRadioPower_1_5(serial, true, true, true);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_5->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
+    EXPECT_EQ(RadioError::NONE, radioRsp_v1_5->rspInfo.error);
+
+    // Set radio power to on with forEmergencyCall being false. This should put modem in regular
+    // operation modem.
+    serial = GetRandomSerialNumber();
+    radio_v1_5->setRadioPower_1_5(serial, true, false, false);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_5->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
+    EXPECT_EQ(RadioError::NONE, radioRsp_v1_5->rspInfo.error);
+}

@@ -194,4 +194,31 @@ interface IRadio extends @1.4::IRadio {
      * as the input param.
      */
     oneway setDataProfile_1_5(int32_t serial, vec<DataProfileInfo> profiles);
+
+    /**
+     * Toggle radio on and off (for "airplane" mode)
+     * If the radio is turned off/on the radio modem subsystem
+     * is expected return to an initialized state. For instance,
+     * any voice and data calls must be terminated and all associated
+     * lists emptied.
+     *
+     * When setting radio power on to exit from airplane mode to place an emergency call on this
+     * logical modem, powerOn, forEmergencyCall and preferredForEmergencyCall must be true. In
+     * this case, this modem is optimized to scan only emergency call bands, until:
+     * 1) Emergency call is completed; or
+     * 2) Another setRadioPower_1_5 is issued with forEmergencyCall being false or
+     * preferredForEmergencyCall being false; or
+     * 3) Timeout after a long period of time.
+     *
+     * @param serial Serial number of request.
+     * @param powerOn To turn on radio -> on = true, to turn off radio -> on = false.
+     * @param forEmergencyCall To indication to radio if this request is due to emergency call.
+     *      No effect if powerOn is false.
+     * @param preferredForEmergencyCall indicate whether the following emergency call will be sent
+     *      on this modem or not. No effect if forEmergencyCall is false, or powerOn is false.
+     *
+     * Response callback is IRadioConfigResponse. setRadioPowerResponse_1_5.
+     */
+    oneway setRadioPower_1_5(int32_t serial, bool powerOn, bool forEmergencyCall,
+            bool preferredForEmergencyCall);
 };

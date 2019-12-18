@@ -135,4 +135,14 @@ interface IRadioResponse extends @1.4::IRadioResponse {
      *   RadioError:SIM_ABSENT
      */
     oneway setDataProfileResponse_1_5(RadioResponseInfo info);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:INVALID_ARGUMENTS
+     */
+    oneway setRadioPowerResponse_1_5(RadioResponseInfo info);
 };
