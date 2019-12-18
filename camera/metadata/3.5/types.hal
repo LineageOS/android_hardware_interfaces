@@ -71,4 +71,5 @@ enum CameraMetadataEnumAndroidControlBokehMode : uint32_t {
 enum CameraMetadataEnumAndroidRequestAvailableCapabilities :
         @3.4::CameraMetadataEnumAndroidRequestAvailableCapabilities {
     ANDROID_REQUEST_AVAILABLE_CAPABILITIES_SYSTEM_CAMERA,
+    ANDROID_REQUEST_AVAILABLE_CAPABILITIES_OFFLINE_PROCESSING,
 };

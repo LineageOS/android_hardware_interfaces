@@ -1,0 +1,132 @@
+/*
+ * Copyright (C) 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.camera.device@3.6;
+
+import android.hardware.camera.common@1.0::Status;
+import @3.5::ICameraDeviceSession;
+import @3.5::StreamConfiguration;
+import ICameraOfflineSession;
+
+/**
+ * Camera device active session interface.
+ *
+ * Obtained via ICameraDevice::open(), this interface contains the methods to
+ * configure and request captures from an active camera device.
+ */
+interface ICameraDeviceSession extends @3.5::ICameraDeviceSession {
+    /**
+     * configureStreams_3_6:
+     *
+     * Identical to @3.5::ICameraDeviceSession.configureStreams, except that:
+     *
+     * - a boolean supportOffline is added to HalStreamConfiguration to indicate
+     *   if this stream can be switched to offline mode later.
+     *
+     * @return status Status code for the operation, one of:
+     *     OK:
+     *         On successful stream configuration.
+     *     INTERNAL_ERROR:
+     *         If there has been a fatal error and the device is no longer
+     *         operational. Only close() can be called successfully by the
+     *         framework after this error is returned.
+     *     ILLEGAL_ARGUMENT:
+     *         If the requested stream configuration is invalid. Some examples
+     *         of invalid stream configurations include:
+     *           - Including more than 1 INPUT stream
+     *           - Not including any OUTPUT streams
+     *           - Including streams with unsupported formats, or an unsupported
+     *             size for that format.
+     *           - Including too many output streams of a certain format.
+     *           - Unsupported rotation configuration
+     *           - Stream sizes/formats don't satisfy the
+     *             StreamConfigurationMode requirements
+     *             for non-NORMAL mode, or the requested operation_mode is not
+     *             supported by the HAL.
+     *           - Unsupported usage flag
+     *         The camera service cannot filter out all possible illegal stream
+     *         configurations, since some devices may support more simultaneous
+     *         streams or larger stream resolutions than the minimum required
+     *         for a given camera device hardware level. The HAL must return an
+     *         ILLEGAL_ARGUMENT for any unsupported stream set, and then be
+     *         ready to accept a future valid stream configuration in a later
+     *         configureStreams call.
+     * @return halConfiguration The stream parameters desired by the HAL for
+     *     each stream, including maximum buffers, the usage flags, and the
+     *     override format.
+     */
+    configureStreams_3_6(@3.5::StreamConfiguration requestedConfiguration)
+        generates (Status status, HalStreamConfiguration halConfiguration);
+
+    /**
+     * switchToOffline:
+     *
+     * Switch the current running session from actively streaming mode to the
+     * offline mode. See ICameraOfflineSession for more details.
+     *
+     * The streamsToKeep argument contains list of streams IDs where application
+     * still needs its output. For all streams application does not need anymore,
+     * camera HAL can send ERROR_BUFFER to speed up the transition, or even send
+     * ERROR_REQUEST if all output targets of a request is not needed. By the
+     * time this call returns, camera HAL must have returned all buffers coming
+     * from streams no longer needed and have erased buffer caches of such streams.
+     *
+     * For all requests that are going to be transferred to offline session,
+     * the ICameraDeviceSession is responsible to capture all input buffers from
+     * the image sensor before the switchToOffline call returns. Before
+     * switchToOffline returns, camera HAL must have completed all requests not
+     * switching to offline mode, and collected information on what streams and
+     * requests are going to continue in the offline session, in the
+     * offlineSessionInfo output argument.
+     *
+     * If there are no requests qualified to be transferred to offline session,
+     * the camera HAL must return a null ICameraOfflineSession object with OK
+     * status. In this scenario, the camera HAL still must flush all inflight
+     * requests and unconfigure all streams before returning this call.
+     *
+     * After switchToOffline returns, the ICameraDeviceSession must be back to
+     * unconfigured state as if it is just created and no streams are configured.
+     * Also, camera HAL must not call any methods in ICameraDeviceCallback since
+     * all unfinished requests are now transferred to the offline session.
+     * After the call returns, camera service may then call close to close
+     * the camera device, or call configureStream* again to reconfigure the
+     * camera and then send new capture requests with processCaptureRequest. In
+     * the latter case, it is legitimate for camera HAL to call methods in
+     * ICameraDeviceCallback again in response to the newly submitted capture
+     * requests.
+     *
+     * @return status Status code for the operation, one of:
+     *     OK:
+     *         On switching to offline session and unconfiguring streams
+     *         successfully.
+     *     ILLEGAL_ARGUMENT:
+     *         If camera does not support offline mode in any one of streams
+     *         in streamsToKeep argument. Note that the camera HAL must report
+     *         if a stream supports offline mode in HalStreamConfiguration
+     *         output of configureStreams_3_6 method. If all streams in
+     *         streamsToKeep argument support offline mode, then the camera HAL
+     *         must not return this error.
+     *
+     *
+     * @return offlineSessionInfo Information on what streams and requests will
+     *     be transferred to offline session to continue processing.
+     *
+     * @return offlineSession The offline session object camera service will use
+     *     to interact with.
+     */
+    switchToOffline(vec<int32_t> streamsToKeep) generates (Status status,
+        CameraOfflineSessionInfo offlineSessionInfo, ICameraOfflineSession offlineSession);
+};
