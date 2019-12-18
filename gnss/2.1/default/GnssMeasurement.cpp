@@ -29,7 +29,8 @@ using common::Utils;
 namespace V2_1 {
 namespace implementation {
 
-sp<V2_1::IGnssMeasurementCallback> GnssMeasurement::sCallback = nullptr;
+sp<V2_1::IGnssMeasurementCallback> GnssMeasurement::sCallback_2_1 = nullptr;
+sp<V2_0::IGnssMeasurementCallback> GnssMeasurement::sCallback_2_0 = nullptr;
 
 GnssMeasurement::GnssMeasurement() : mMinIntervalMillis(1000) {}
 
@@ -48,7 +49,8 @@ Return<void> GnssMeasurement::close() {
     ALOGD("close");
     std::unique_lock<std::mutex> lock(mMutex);
     stop();
-    sCallback = nullptr;
+    sCallback_2_1 = nullptr;
+    sCallback_2_0 = nullptr;
     return Void();
 }
 
@@ -61,9 +63,18 @@ Return<V1_0::IGnssMeasurement::GnssMeasurementStatus> GnssMeasurement::setCallba
 
 // Methods from V2_0::IGnssMeasurement follow.
 Return<V1_0::IGnssMeasurement::GnssMeasurementStatus> GnssMeasurement::setCallback_2_0(
-        const sp<V2_0::IGnssMeasurementCallback>&, bool) {
-    // TODO implement
-    return V1_0::IGnssMeasurement::GnssMeasurementStatus{};
+        const sp<V2_0::IGnssMeasurementCallback>& callback, bool) {
+    ALOGD("setCallback_2_0");
+    std::unique_lock<std::mutex> lock(mMutex);
+    sCallback_2_0 = callback;
+
+    if (mIsActive) {
+        ALOGW("GnssMeasurement callback already set. Resetting the callback...");
+        stop();
+    }
+    start();
+
+    return V1_0::IGnssMeasurement::GnssMeasurementStatus::SUCCESS;
 }
 
 // Methods from V2_1::IGnssMeasurement follow.
@@ -71,7 +82,7 @@ Return<V1_0::IGnssMeasurement::GnssMeasurementStatus> GnssMeasurement::setCallba
         const sp<V2_1::IGnssMeasurementCallback>& callback, bool) {
     ALOGD("setCallback_2_1");
     std::unique_lock<std::mutex> lock(mMutex);
-    sCallback = callback;
+    sCallback_2_1 = callback;
 
     if (mIsActive) {
         ALOGW("GnssMeasurement callback already set. Resetting the callback...");
@@ -87,8 +98,13 @@ void GnssMeasurement::start() {
     mIsActive = true;
     mThread = std::thread([this]() {
         while (mIsActive == true) {
-            auto measurement = Utils::getMockMeasurementV2_1();
-            this->reportMeasurement(measurement);
+            if (sCallback_2_1 != nullptr) {
+                auto measurement = Utils::getMockMeasurementV2_1();
+                this->reportMeasurement(measurement);
+            } else {
+                auto measurement = Utils::getMockMeasurementV2_0();
+                this->reportMeasurement(measurement);
+            }
 
             std::this_thread::sleep_for(std::chrono::milliseconds(mMinIntervalMillis));
         }
@@ -103,14 +119,27 @@ void GnssMeasurement::stop() {
     }
 }
 
+void GnssMeasurement::reportMeasurement(const GnssDataV2_0& data) {
+    ALOGD("reportMeasurement()");
+    std::unique_lock<std::mutex> lock(mMutex);
+    if (sCallback_2_0 == nullptr) {
+        ALOGE("%s: GnssMeasurement::sCallback_2_0 is null.", __func__);
+        return;
+    }
+    auto ret = sCallback_2_0->gnssMeasurementCb_2_0(data);
+    if (!ret.isOk()) {
+        ALOGE("%s: Unable to invoke callback", __func__);
+    }
+}
+
 void GnssMeasurement::reportMeasurement(const GnssDataV2_1& data) {
     ALOGD("reportMeasurement()");
     std::unique_lock<std::mutex> lock(mMutex);
-    if (sCallback == nullptr) {
-        ALOGE("%s: GnssMeasurement::sCallback is null.", __func__);
+    if (sCallback_2_1 == nullptr) {
+        ALOGE("%s: GnssMeasurement::sCallback_2_1 is null.", __func__);
         return;
     }
-    auto ret = sCallback->gnssMeasurementCb_2_1(data);
+    auto ret = sCallback_2_1->gnssMeasurementCb_2_1(data);
     if (!ret.isOk()) {
         ALOGE("%s: Unable to invoke callback", __func__);
     }

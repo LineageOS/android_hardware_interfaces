@@ -182,6 +182,10 @@ TEST_P(GnssHalTest, TestAGnssRil_UpdateNetworkState_2_0) {
  * 3. state is valid.
  */
 TEST_P(GnssHalTest, TestGnssMeasurementFields) {
+    if (!IsGnssHalVersion_2_0()) {
+        ALOGI("Test GnssMeasurementFields skipped. GNSS HAL version is greater than 2.0.");
+        return;
+    }
     const int kFirstGnssMeasurementTimeoutSeconds = 10;
 
     auto gnssMeasurement = gnss_hal_->getExtensionGnssMeasurement_2_0();
@@ -464,7 +468,7 @@ TEST_P(GnssHalTest, GetLocationLowPower) {
         }
         EXPECT_LE(location_called_count, i);
         if (location_called_count != i) {
-            ALOGW("GetLocationLowPower test - not enough locations received. %d vs. %d expected ",
+            ALOGW("GetLocationLowPower test - too many locations received. %d vs. %d expected ",
                   location_called_count, i);
         }
 
@@ -601,6 +605,11 @@ IGnssConfiguration_1_1::BlacklistedSource FindStrongFrequentNonGpsSource(
  * formerly strongest satellite
  */
 TEST_P(GnssHalTest, BlacklistIndividualSatellites) {
+    if (!IsGnssHalVersion_2_0()) {
+        ALOGI("Test BlacklistIndividualSatellites skipped. GNSS HAL version is greater than 2.0.");
+        return;
+    }
+
     if (!(gnss_cb_->last_capabilities_ & IGnssCallback::Capabilities::SATELLITE_BLACKLIST)) {
         ALOGI("Test BlacklistIndividualSatellites skipped. SATELLITE_BLACKLIST capability"
               " not supported.");
@@ -746,6 +755,11 @@ TEST_P(GnssHalTest, BlacklistIndividualSatellites) {
  * 4a & b) Clean up by turning off location, and send in empty blacklist.
  */
 TEST_P(GnssHalTest, BlacklistConstellation) {
+    if (!IsGnssHalVersion_2_0()) {
+        ALOGI("Test BlacklistConstellation skipped. GNSS HAL version is greater than 2.0.");
+        return;
+    }
+
     if (!(gnss_cb_->last_capabilities_ & IGnssCallback::Capabilities::SATELLITE_BLACKLIST)) {
         ALOGI("Test BlacklistConstellation skipped. SATELLITE_BLACKLIST capability not supported.");
         return;
