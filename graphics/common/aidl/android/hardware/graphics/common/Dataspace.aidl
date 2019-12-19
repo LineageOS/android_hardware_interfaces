@@ -208,8 +208,6 @@ enum Dataspace {
      */
     STANDARD_ADOBE_RGB = 11 << 16, // 11 << STANDARD_SHIFT
 
-
-
     TRANSFER_SHIFT = 22,
 
     /**
@@ -396,9 +394,7 @@ enum Dataspace {
      * The values are encoded using the full range ([0,255] for 8-bit) for all
      * components.
      */
-    SRGB_LINEAR = 1 << 16 | 1 << 22 | 1 << 27, // deprecated, use V0_SRGB_LINEAR
-
-    V0_SRGB_LINEAR = 1 << 16 | 1 << 22 | 1 << 27, // STANDARD_BT709 | TRANSFER_LINEAR | RANGE_FULL
+    SRGB_LINEAR = 1 << 16 | 1 << 22 | 1 << 27, // STANDARD_BT709 | TRANSFER_LINEAR | RANGE_FULL
 
 
     /**
@@ -413,7 +409,7 @@ enum Dataspace {
      * Values beyond the range [0.0 - 1.0] would correspond to other colors
      * spaces and/or HDR content.
      */
-    V0_SCRGB_LINEAR = 1 << 16 | 1 << 22 | 3 << 27, // STANDARD_BT709 | TRANSFER_LINEAR | RANGE_EXTENDED
+    SCRGB_LINEAR = 1 << 16 | 1 << 22 | 3 << 27, // STANDARD_BT709 | TRANSFER_LINEAR | RANGE_EXTENDED
 
 
     /**
@@ -429,9 +425,7 @@ enum Dataspace {
      *
      * Use full range and BT.709 standard.
      */
-    SRGB = 1 << 16 | 2 << 22 | 1 << 27, // deprecated, use V0_SRGB
-
-    V0_SRGB = 1 << 16 | 2 << 22 | 1 << 27, // STANDARD_BT709 | TRANSFER_SRGB | RANGE_FULL
+    SRGB = 1 << 16 | 2 << 22 | 1 << 27, // STANDARD_BT709 | TRANSFER_SRGB | RANGE_FULL
 
 
     /**
@@ -446,7 +440,7 @@ enum Dataspace {
      * Values beyond the range [0.0 - 1.0] would correspond to other colors
      * spaces and/or HDR content.
      */
-    V0_SCRGB = 1 << 16 | 2 << 22 | 3 << 27, // STANDARD_BT709 | TRANSFER_SRGB | RANGE_EXTENDED
+    SCRGB = 1 << 16 | 2 << 22 | 3 << 27, // STANDARD_BT709 | TRANSFER_SRGB | RANGE_EXTENDED
 
     /**
      * YCbCr Colorspaces
@@ -464,22 +458,18 @@ enum Dataspace {
      *
      * Same model as BT.601-625, but all values (Y, Cb, Cr) range from 0 to 255
      *
-     * Use full range, BT.601 transfer and BT.601_625 standard.
+     * Use full range, SMPTE 170M transfer and BT.601_625 standard.
      */
-    JFIF = 2 << 16 | 3 << 22 | 1 << 27, // deprecated, use V0_JFIF
-
-    V0_JFIF = 2 << 16 | 3 << 22 | 1 << 27, // STANDARD_BT601_625 | TRANSFER_SMPTE_170M | RANGE_FULL
+    JFIF = 2 << 16 | 3 << 22 | 1 << 27, // STANDARD_BT601_625 | TRANSFER_SMPTE_170M | RANGE_FULL
 
     /**
      * ITU-R Recommendation 601 (BT.601) - 625-line
      *
      * Standard-definition television, 625 Lines (PAL)
      *
-     * Use limited range, BT.601 transfer and BT.601_625 standard.
+     * Use limited range, SMPTE 170M transfer and BT.601_625 standard.
      */
-    BT601_625 = 2 << 16 | 3 << 22 | 2 << 27, // deprecated, use V0_BT601_625
-
-    V0_BT601_625 = 2 << 16 | 3 << 22 | 2 << 27, // STANDARD_BT601_625 | TRANSFER_SMPTE_170M | RANGE_LIMITED
+    BT601_625 = 2 << 16 | 3 << 22 | 2 << 27, // STANDARD_BT601_625 | TRANSFER_SMPTE_170M | RANGE_LIMITED
 
 
     /**
@@ -487,22 +477,18 @@ enum Dataspace {
      *
      * Standard-definition television, 525 Lines (NTSC)
      *
-     * Use limited range, BT.601 transfer and BT.601_525 standard.
+     * Use limited range, SMPTE 170M transfer and BT.601_525 standard.
      */
-    BT601_525 = 4 << 16 | 3 << 22 | 2 << 27, // deprecated, use V0_BT601_525
-
-    V0_BT601_525 = 4 << 16 | 3 << 22 | 2 << 27, // STANDARD_BT601_525 | TRANSFER_SMPTE_170M | RANGE_LIMITED
+    BT601_525 = 4 << 16 | 3 << 22 | 2 << 27, // STANDARD_BT601_525 | TRANSFER_SMPTE_170M | RANGE_LIMITED
 
     /**
      * ITU-R Recommendation 709 (BT.709)
      *
      * High-definition television
      *
-     * Use limited range, BT.709 transfer and BT.709 standard.
+     * Use limited range, SMPTE 170M transfer and BT.709 standard.
      */
-    BT709 = 1 << 16 | 3 << 22 | 2 << 27, // deprecated, use V0_BT709
-
-    V0_BT709 = 1 << 16 | 3 << 22 | 2 << 27, // STANDARD_BT709 | TRANSFER_SMPTE_170M | RANGE_LIMITED
+    BT709 = 1 << 16 | 3 << 22 | 2 << 27, // STANDARD_BT709 | TRANSFER_SMPTE_170M | RANGE_LIMITED
 
 
     /**
@@ -570,7 +556,7 @@ enum Dataspace {
      *
      * Ultra High-definition television
      *
-     * Use full range, BT.709 transfer and BT2020 standard
+     * Use full range, SMPTE 170M transfer and BT2020 standard
      */
     BT2020 = 6 << 16 | 3 << 22 | 1 << 27, // STANDARD_BT2020 | TRANSFER_SMPTE_170M | RANGE_FULL
 
@@ -622,7 +608,7 @@ enum Dataspace {
      *
      * Ultra High-definition television
      *
-     * Use limited range, BT.709 transfer and BT2020 standard
+     * Use limited range, SMPTE 170M transfer and BT2020 standard
      */
     BT2020_ITU = 6 << 16 | 3 << 22 | 2 << 27, // STANDARD_BT2020 | TRANSFER_SMPTE_170M | RANGE_LIMITED
 
@@ -679,4 +665,13 @@ enum Dataspace {
      * according to ISO/IEC 23008-12.
      */
     HEIF = 0x1004,
+
+    /**
+     * ITU-R Recommendation 709 (BT.709)
+     *
+     * High-definition television
+     *
+     * Use full range, SMPTE 170M transfer and BT.709 standard.
+     */
+    BT709_FULL_RANGE = 1 << 16 | 3 << 22 | 1 << 27, // STANDARD_BT709 | TRANSFER_SMPTE_170M | RANGE_FULL
 }
