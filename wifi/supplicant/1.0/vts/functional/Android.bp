@@ -19,7 +19,7 @@ cc_library_static {
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: ["supplicant_hidl_test_utils.cpp"],
     export_include_dirs: [
-        "."
+        ".",
     ],
     static_libs: [
         "VtsHalWifiV1_0TargetTestUtil",
@@ -51,14 +51,17 @@ cc_test {
         "libwifi-system",
         "libwifi-system-iface",
     ],
-    test_suites: ["general-tests", "vts-core"],
+    test_suites: [
+        "general-tests",
+        "vts-core",
+    ],
 }
 
 cc_test {
     name: "VtsHalWifiSupplicantP2pV1_0TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: [
-        "VtsHalWifiSupplicantV1_0TargetTest.cpp",
+        "VtsHalWifiSupplicantP2pV1_0TargetTest.cpp",
         "supplicant_p2p_iface_hidl_test.cpp",
     ],
     static_libs: [
@@ -71,5 +74,8 @@ cc_test {
         "libwifi-system",
         "libwifi-system-iface",
     ],
-    test_suites: ["general-tests", "vts-core"],
+    test_suites: [
+        "general-tests",
+        "vts-core",
+    ],
 }
