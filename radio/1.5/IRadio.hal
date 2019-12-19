@@ -16,10 +16,10 @@
 
 package android.hardware.radio@1.5;
 
-import @1.2::DataRequestReason;
 import @1.0::CdmaSmsMessage;
-import @1.4::IRadio;
+import @1.2::DataRequestReason;
 import @1.4::DataProfileInfo;
+import @1.4::IRadio;
 import @1.5::AccessNetwork;
 import @1.5::BarringInfo;
 import @1.5::DataProfileInfo;
@@ -27,6 +27,7 @@ import @1.5::IndicationFilter;
 import @1.5::LinkAddress;
 import @1.5::NetworkScanRequest;
 import @1.5::PersoSubstate;
+import @1.5::RadioAccessNetworks;
 import @1.5::RadioAccessSpecifier;
 import @1.5::SignalThresholdInfo;
 
@@ -266,16 +267,23 @@ interface IRadio extends @1.4::IRadio {
      */
     oneway getDataRegistrationState_1_5(int32_t serial);
 
-    /**
-     * Requests that deactivates one category of the device personalization.
+    /*
+     * Manually select a specified network.
+     * This request must not respond until the new operator is selected and registered.
+     * Per TS 23.122, the RAN is just the initial suggested value.
+     * If registration fails, the RAN is not available afterwards, or the RAN is not within
+     * the network types specified by IRadio::setPreferredNetworkTypeBitmap, then the modem
+     * will need to select the next best RAN for network registration.
      *
      * @param serial Serial number of request.
-     * @param persoType SIM personalization type.
-     * @param controlKey depersonalization code corresponding to persoType
+     * @param operatorNumeric String specifying MCCMNC of network to select (eg "310170").
+     * @param ran Initial suggested radio access network type. If value is UNKNOWN, the modem
+     *     will select the next best RAN for network registration.
      *
-     * Response function is IRadioResponse.supplySimDepersonalizationResponse()
+     * Response function is IRadioResponse.setNetworkSelectionModeManualResponse_1_5()
      */
-    oneway supplySimDepersonalization(int32_t serial, PersoSubstate persoType, string controlKey);
+    oneway setNetworkSelectionModeManual_1_5(int32_t serial, string operatorNumeric,
+            RadioAccessNetworks ran);
 
     /**
      * Send an SMS message. Identical to sendCdmaSms,
@@ -287,4 +295,15 @@ interface IRadio extends @1.4::IRadio {
      * Response callback is IRadioResponse.sendCdmaSMSExpectMoreResponse()
      */
     oneway sendCdmaSmsExpectMore(int32_t serial, CdmaSmsMessage sms);
+
+    /**
+     * Requests that deactivates one category of the device personalization.
+     *
+     * @param serial Serial number of request.
+     * @param persoType SIM personalization type.
+     * @param controlKey depersonalization code corresponding to persoType
+     *
+     * Response function is IRadioResponse.supplySimDepersonalizationResponse()
+     */
+    oneway supplySimDepersonalization(int32_t serial, PersoSubstate persoType, string controlKey);
 };
