@@ -104,11 +104,11 @@ interface IFilter {
      *
      * It is used by the client to ask the hardware resource id for the filter.
      *
-     * @param filterId the hardware resource Id for the filter.
      * @return result Result status of the operation.
      *         SUCCESS if successful,
      *         INVALID_STATE if failed for wrong state.
      *         UNKNOWN_ERROR if failed for other reasons.
+     * @return filterId the hardware resource Id for the filter.
      */
     getId() generates (Result result, uint32_t filterId);
 
