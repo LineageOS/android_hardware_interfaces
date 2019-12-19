@@ -478,7 +478,7 @@ interface IMapper {
      * particular Metadata field.
      *
      * The framework may attempt to set the following StandardMetadataType
-     * values: DATASPACE, PER_FRAME_METADATA, PER_FRAME_METADATA_BLOB and BLEND_MODE.
+     * values: DATASPACE, SMPTE2086, CTA861_3, SMPTE2094_40 and BLEND_MODE.
      * We strongly encourage everyone to support setting as many of those fields as
      * possible. If a device's Composer implementation supports a field, it should be
      * supported here. Over time these metadata fields will be moved out of
