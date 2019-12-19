@@ -18,9 +18,6 @@
 
 #include <stdint.h>
 
-#include <bitset>
-#include <queue>
-#include <utility>
 #include <vector>
 
 namespace aidl {
@@ -29,18 +26,14 @@ namespace hardware {
 namespace rebootescrow {
 namespace hadamard {
 
-constexpr uint32_t CODE_K = 15;
+constexpr auto BYTE_LENGTH = 8u;
+constexpr auto CODEWORD_BYTES = 2u;  // uint16_t
+constexpr auto CODEWORD_BITS = CODEWORD_BYTES * BYTE_LENGTH;
+constexpr uint32_t CODE_K = CODEWORD_BITS - 1;
 constexpr uint32_t ENCODE_LENGTH = 1u << CODE_K;
-constexpr auto KEY_SIZE_IN_BYTES = 32u;
-
-// Encodes a 2 bytes word with hadamard code. The encoding expands a word of k+1 bits to a 2^k
-// bitset. Returns the encoded bitset.
-std::bitset<ENCODE_LENGTH> EncodeWord(uint16_t word);
-
-// Decodes the input bitset, and returns a sorted list of pair with (score, value). The value with
-// a higher score indicates a greater likehood.
-std::priority_queue<std::pair<int32_t, uint16_t>> DecodeWord(
-        const std::bitset<ENCODE_LENGTH>& encoded);
+constexpr auto KEY_CODEWORDS = 16u;
+constexpr auto KEY_SIZE_IN_BYTES = KEY_CODEWORDS * CODEWORD_BYTES;
+constexpr auto OUTPUT_SIZE_BYTES = KEY_CODEWORDS * ENCODE_LENGTH / BYTE_LENGTH;
 
 // Encodes a key that has a size of KEY_SIZE_IN_BYTES. Returns a byte array representation of the
 // encoded bitset. So a 32 bytes key will expand to 16*(2^15) bits = 64KiB.
@@ -48,12 +41,6 @@ std::vector<uint8_t> EncodeKey(const std::vector<uint8_t>& input);
 
 // Given a byte array representation of the encoded keys, decodes it and return the result.
 std::vector<uint8_t> DecodeKey(const std::vector<uint8_t>& encoded);
-
-// Converts a bitset of length |ENCODE_LENGTH| to a byte array.
-std::vector<uint8_t> BitsetToBytes(const std::bitset<ENCODE_LENGTH>& encoded_bits);
-
-// Converts a byte array of encoded words back to the bitset.
-std::bitset<ENCODE_LENGTH> BytesToBitset(const std::vector<uint8_t>& encoded);
 
 }  // namespace hadamard
 }  // namespace rebootescrow
