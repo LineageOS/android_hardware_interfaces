@@ -265,8 +265,14 @@ uint16_t Filter::getTpid() {
 
 void Filter::updateFilterOutput(vector<uint8_t> data) {
     std::lock_guard<std::mutex> lock(mFilterOutputLock);
-    ALOGD("[Filter] handler output updated");
+    ALOGD("[Filter] filter output updated");
     mFilterOutput.insert(mFilterOutput.end(), data.begin(), data.end());
+}
+
+void Filter::updateRecordOutput(vector<uint8_t> data) {
+    std::lock_guard<std::mutex> lock(mRecordFilterOutputLock);
+    ALOGD("[Filter] record filter output updated");
+    mRecordFilterOutput.insert(mRecordFilterOutput.end(), data.begin(), data.end());
 }
 
 Result Filter::startFilterHandler() {
@@ -292,11 +298,10 @@ Result Filter::startFilterHandler() {
                 case DemuxTsFilterType::PCR:
                     startPcrFilterHandler();
                     break;
-                case DemuxTsFilterType::RECORD:
-                    startRecordFilterHandler();
-                    break;
                 case DemuxTsFilterType::TEMI:
                     startTemiFilterHandler();
+                    break;
+                default:
                     break;
             }
             break;
@@ -342,12 +347,16 @@ Result Filter::startPesFilterHandler() {
         if (mPesSizeLeft == 0) {
             uint32_t prefix = (mFilterOutput[i + 4] << 16) | (mFilterOutput[i + 5] << 8) |
                               mFilterOutput[i + 6];
-            ALOGD("[Filter] prefix %d", prefix);
+            if (DEBUG_FILTER) {
+                ALOGD("[Filter] prefix %d", prefix);
+            }
             if (prefix == 0x000001) {
                 // TODO handle mulptiple Pes filters
                 mPesSizeLeft = (mFilterOutput[i + 8] << 8) | mFilterOutput[i + 9];
                 mPesSizeLeft += 6;
-                ALOGD("[Filter] pes data length %d", mPesSizeLeft);
+                if (DEBUG_FILTER) {
+                    ALOGD("[Filter] pes data length %d", mPesSizeLeft);
+                }
             } else {
                 continue;
             }
@@ -360,7 +369,9 @@ Result Filter::startPesFilterHandler() {
         mPesOutput.insert(mPesOutput.end(), first, last);
         // size does not match then continue
         mPesSizeLeft -= endPoint;
-        ALOGD("[Filter] pes data left %d", mPesSizeLeft);
+        if (DEBUG_FILTER) {
+            ALOGD("[Filter] pes data left %d", mPesSizeLeft);
+        }
         if (mPesSizeLeft > 0) {
             continue;
         }
@@ -377,7 +388,9 @@ Result Filter::startPesFilterHandler() {
                 .streamId = mPesOutput[3],
                 .dataLength = static_cast<uint16_t>(mPesOutput.size()),
         };
-        ALOGD("[Filter] assembled pes data length %d", pesEvent.dataLength);
+        if (DEBUG_FILTER) {
+            ALOGD("[Filter] assembled pes data length %d", pesEvent.dataLength);
+        }
 
         int size = mFilterEvent.events.size();
         mFilterEvent.events.resize(size + 1);
@@ -413,13 +426,23 @@ Result Filter::startMediaFilterHandler() {
 }
 
 Result Filter::startRecordFilterHandler() {
-    DemuxFilterTsRecordEvent tsRecordEvent;
+    /*DemuxFilterTsRecordEvent tsRecordEvent;
     tsRecordEvent.pid.tPid(0);
     tsRecordEvent.indexMask.tsIndexMask(0x01);
     mFilterEvent.events.resize(1);
     mFilterEvent.events[0].tsRecord(tsRecordEvent);
+*/
+    std::lock_guard<std::mutex> lock(mRecordFilterOutputLock);
+    if (mRecordFilterOutput.empty()) {
+        return Result::SUCCESS;
+    }
 
-    mFilterOutput.clear();
+    if (mDvr == nullptr || !mDvr->writeRecordFMQ(mRecordFilterOutput)) {
+        ALOGD("[Filter] dvr fails to write into record FMQ.");
+        return Result::UNKNOWN_ERROR;
+    }
+
+    mRecordFilterOutput.clear();
     return Result::SUCCESS;
 }
 
@@ -460,6 +483,14 @@ bool Filter::writeDataToFilterMQ(const std::vector<uint8_t>& data) {
         return true;
     }
     return false;
+}
+
+void Filter::attachFilterToRecord(const sp<Dvr> dvr) {
+    mDvr = dvr;
+}
+
+void Filter::detachFilterFromRecord() {
+    mDvr = nullptr;
 }
 
 }  // namespace implementation
