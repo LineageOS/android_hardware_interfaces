@@ -24,6 +24,15 @@ package android.hardware.graphics.common;
  *
  * IMapper@4.x must support getting the following standard buffer metadata types. IMapper@4.x may
  * support setting these standard buffer metadata types as well.
+ *
+ * When encoding these StandardMetadataTypes into a byte stream, the associated MetadataType is
+ * is first encoded followed by the StandardMetadataType value. The MetadataType is encoded by
+ * writing the length of MetadataType.name using 8 bytes in little endian, followed by a char
+ * array of MetadataType.name's characters. The char array is not null terminated. Finally,
+ * MetadataType.value is represented by 8 bytes written in little endian.
+ *
+ * The StandardMetadataType encode/decode support library can be found in:
+ * frameworks/native/libs/gralloc/types/include/gralloctypes/Gralloc4.h.
  */
 @VintfStability
 @Backing(type="long")
