@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-syntax = "proto2";
+syntax = "proto3";
 
-package emulator;
+package vhal_proto;
 
 import "google/protobuf/empty.proto";
 import "VehicleHalProto.proto";
@@ -32,7 +32,7 @@ enum VehicleHalStatusCode {
 }
 
 message VehicleHalCallStatus {
-    required VehicleHalStatusCode status_code      = 1;
+    VehicleHalStatusCode status_code    = 1;
 }
 
 service VehicleServer {
