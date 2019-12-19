@@ -227,3 +227,22 @@ TEST_F(SupplicantStaIfaceHidlTest, SetMboCellularDataStatus) {
             EXPECT_EQ(expectedStatusCode, status.code);
         });
 }
+
+/*
+ * GetKeyMgmtCapabilities_1_3
+ */
+TEST_F(SupplicantStaIfaceHidlTest, GetKeyMgmtCapabilities_1_3) {
+    sta_iface_->getKeyMgmtCapabilities_1_3([&](const SupplicantStatus& status,
+                                               uint32_t keyMgmtMask) {
+        if (SupplicantStatusCode::SUCCESS != status.code) {
+            // for unsupport case
+            EXPECT_EQ(SupplicantStatusCode::FAILURE_UNKNOWN, status.code);
+        } else {
+            // Even though capabilities vary, these two are always set in HAL
+            // v1.3
+            EXPECT_TRUE(keyMgmtMask & ISupplicantStaNetwork::KeyMgmtMask::NONE);
+            EXPECT_TRUE(keyMgmtMask &
+                        ISupplicantStaNetwork::KeyMgmtMask::IEEE8021X);
+        }
+    });
+}

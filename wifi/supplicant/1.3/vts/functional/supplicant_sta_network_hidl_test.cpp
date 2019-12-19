@@ -17,15 +17,18 @@
 #include <android-base/logging.h>
 
 #include <VtsHalHidlTargetTestBase.h>
+#include <android/hardware/wifi/supplicant/1.3/ISupplicantStaIface.h>
 #include <android/hardware/wifi/supplicant/1.3/ISupplicantStaNetwork.h>
 
 #include "supplicant_hidl_test_utils.h"
 #include "supplicant_hidl_test_utils_1_3.h"
 
 using ::android::sp;
+using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::wifi::supplicant::V1_0::SupplicantStatus;
 using ::android::hardware::wifi::supplicant::V1_0::SupplicantStatusCode;
+using ::android::hardware::wifi::supplicant::V1_3::ISupplicantStaIface;
 using ::android::hardware::wifi::supplicant::V1_3::ISupplicantStaNetwork;
 using ::android::hardware::wifi::supplicant::V1_3::OcspType;
 namespace {
@@ -39,15 +42,37 @@ class SupplicantStaNetworkHidlTest
     virtual void SetUp() override {
         startSupplicantAndWaitForHidlService();
         EXPECT_TRUE(turnOnExcessiveLogging());
+        sta_iface_ = getSupplicantStaIface_1_3();
+        ASSERT_NE(nullptr, sta_iface_.get());
         sta_network_ = createSupplicantStaNetwork_1_3();
-        ASSERT_NE(sta_network_.get(), nullptr);
+        ASSERT_NE(nullptr, sta_network_.get());
     }
 
     virtual void TearDown() override { stopSupplicant(); }
 
    protected:
+    sp<ISupplicantStaIface> sta_iface_;
     // ISupplicantStaNetwork object used for all tests in this fixture.
     sp<ISupplicantStaNetwork> sta_network_;
+
+    bool isWapiSupported() {
+        uint32_t keyMgmtMask = 0;
+
+        // We need to first get the key management capabilities from the device.
+        // If WAPI is not supported, we just pass the test.
+        sta_iface_->getKeyMgmtCapabilities_1_3(
+            [&](const SupplicantStatus &status, uint32_t keyMgmtMaskInternal) {
+                EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+                keyMgmtMask = keyMgmtMaskInternal;
+            });
+
+        if (!(keyMgmtMask & ISupplicantStaNetwork::KeyMgmtMask::WAPI_PSK)) {
+            // WAPI not supported
+            return false;
+        }
+
+        return true;
+    }
 };
 
 /*
@@ -83,4 +108,161 @@ TEST_F(SupplicantStaNetworkHidlTest, SetPmkCache) {
         serializedEntry, [](const SupplicantStatus &status) {
             EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
         });
+}
+
+/*
+ * SetGetKeyMgmt_1_3, check new WAPI proto support
+ */
+TEST_F(SupplicantStaNetworkHidlTest, SetGetKeyMgmt_1_3) {
+    uint32_t keyMgmt = (uint32_t)ISupplicantStaNetwork::KeyMgmtMask::WAPI_PSK;
+
+    sta_network_->setKeyMgmt_1_3(keyMgmt, [](const SupplicantStatus &status) {
+        if (SupplicantStatusCode::SUCCESS != status.code) {
+            // for unsupport case
+            EXPECT_EQ(SupplicantStatusCode::FAILURE_UNKNOWN, status.code);
+        }
+    });
+
+    sta_network_->getKeyMgmt_1_3(
+        [&keyMgmt](const SupplicantStatus &status, uint32_t keyMgmtOut) {
+            if (SupplicantStatusCode::SUCCESS != status.code) {
+                // for unsupport case
+                EXPECT_EQ(SupplicantStatusCode::FAILURE_UNKNOWN, status.code);
+            } else {
+                EXPECT_EQ(keyMgmtOut, keyMgmt);
+            }
+        });
+
+    keyMgmt = (uint32_t)ISupplicantStaNetwork::KeyMgmtMask::WAPI_CERT;
+    sta_network_->setKeyMgmt_1_3(keyMgmt, [](const SupplicantStatus &status) {
+        if (SupplicantStatusCode::SUCCESS != status.code) {
+            // for unsupport case
+            EXPECT_EQ(SupplicantStatusCode::FAILURE_UNKNOWN, status.code);
+        }
+    });
+
+    sta_network_->getKeyMgmt_1_3(
+        [&keyMgmt](const SupplicantStatus &status, uint32_t keyMgmtOut) {
+            if (SupplicantStatusCode::SUCCESS != status.code) {
+                // for unsupport case
+                EXPECT_EQ(SupplicantStatusCode::FAILURE_UNKNOWN, status.code);
+            } else {
+                EXPECT_EQ(keyMgmtOut, keyMgmt);
+            }
+        });
+}
+
+/*
+ * SetGetProto_1_3, check new WAPI proto support
+ */
+TEST_F(SupplicantStaNetworkHidlTest, SetGetProto_1_3) {
+    uint32_t wapiProto = (uint32_t)ISupplicantStaNetwork::ProtoMask::WAPI;
+    sta_network_->setProto(wapiProto, [](const SupplicantStatus &status) {
+        if (SupplicantStatusCode::SUCCESS != status.code) {
+            // for unsupport case
+            EXPECT_EQ(SupplicantStatusCode::FAILURE_UNKNOWN, status.code);
+        }
+    });
+    sta_network_->getProto([&](const SupplicantStatus &status, uint32_t proto) {
+        if (SupplicantStatusCode::SUCCESS != status.code) {
+            // for unsupport case
+            EXPECT_EQ(SupplicantStatusCode::FAILURE_UNKNOWN, status.code);
+        } else {
+            EXPECT_EQ(proto, wapiProto);
+        }
+    });
+}
+
+/*
+ * SetGetGroupCipher_1_3, check new WAPI support
+ */
+TEST_F(SupplicantStaNetworkHidlTest, SetGetGroupCipher_1_3) {
+    uint32_t groupCipher =
+        (uint32_t)ISupplicantStaNetwork::GroupCipherMask::SMS4;
+
+    sta_network_->setGroupCipher_1_3(
+        groupCipher, [](const SupplicantStatus &status) {
+            if (SupplicantStatusCode::SUCCESS != status.code) {
+                // for unsupport case
+                EXPECT_EQ(SupplicantStatusCode::FAILURE_UNKNOWN, status.code);
+            }
+        });
+
+    sta_network_->getGroupCipher_1_3(
+        [&groupCipher](const SupplicantStatus &status,
+                       uint32_t groupCipherOut) {
+            if (SupplicantStatusCode::SUCCESS != status.code) {
+                // for unsupport case
+                EXPECT_EQ(SupplicantStatusCode::FAILURE_UNKNOWN, status.code);
+            } else {
+                EXPECT_EQ(groupCipherOut, groupCipher);
+            }
+        });
+}
+
+/*
+ * SetGetPairwiseCipher_1_3, check new WAPI support
+ */
+TEST_F(SupplicantStaNetworkHidlTest, SetGetPairwiseCipher_1_3) {
+    uint32_t pairwiseCipher =
+        (uint32_t)ISupplicantStaNetwork::PairwiseCipherMask::SMS4;
+
+    sta_network_->setPairwiseCipher_1_3(
+        pairwiseCipher, [](const SupplicantStatus &status) {
+            if (SupplicantStatusCode::SUCCESS != status.code) {
+                // for unsupport case
+                EXPECT_EQ(SupplicantStatusCode::FAILURE_UNKNOWN, status.code);
+            }
+        });
+
+    sta_network_->getPairwiseCipher_1_3(
+        [&pairwiseCipher](const SupplicantStatus &status,
+                          uint32_t pairwiseCipherOut) {
+            if (SupplicantStatusCode::SUCCESS != status.code) {
+                // for unsupport case
+                EXPECT_EQ(SupplicantStatusCode::FAILURE_UNKNOWN, status.code);
+            } else {
+                EXPECT_EQ(pairwiseCipherOut, pairwiseCipher);
+            }
+        });
+}
+
+/*
+ * SetGetWapiCertSuite
+ */
+TEST_F(SupplicantStaNetworkHidlTest, SetGetWapiCertSuite) {
+    hidl_string testWapiCertSuite = "suite";
+
+    if (isWapiSupported()) {
+        sta_network_->setWapiCertSuite(
+            testWapiCertSuite, [](const SupplicantStatus &status) {
+                if (SupplicantStatusCode::SUCCESS != status.code) {
+                    // for unsupport case
+                    EXPECT_EQ(SupplicantStatusCode::FAILURE_UNKNOWN,
+                              status.code);
+                }
+            });
+
+        sta_network_->getWapiCertSuite([testWapiCertSuite](
+                                           const SupplicantStatus &status,
+                                           const hidl_string &wapiCertSuite) {
+            if (SupplicantStatusCode::SUCCESS != status.code) {
+                // for unsupport case
+                EXPECT_EQ(SupplicantStatusCode::FAILURE_UNKNOWN, status.code);
+            } else {
+                EXPECT_EQ(testWapiCertSuite, wapiCertSuite);
+            }
+        });
+    } else {
+        sta_network_->setWapiCertSuite(
+            testWapiCertSuite, [](const SupplicantStatus &status) {
+                EXPECT_EQ(SupplicantStatusCode::FAILURE_UNKNOWN, status.code);
+            });
+
+        sta_network_->getWapiCertSuite(
+            [testWapiCertSuite](const SupplicantStatus &status,
+                                const hidl_string &wapiCertSuite __unused) {
+                EXPECT_EQ(SupplicantStatusCode::FAILURE_UNKNOWN, status.code);
+            });
+    }
 }
