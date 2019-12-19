@@ -70,7 +70,14 @@ Return<Result> Dvr::attachFilter(const sp<IFilter>& filter) {
         return status;
     }
 
+    // check if the attached filter is a record filter
+
     mFilters[filterId] = filter;
+    mIsRecordFilterAttached = true;
+    if (!mDemux->attachRecordFilter(filterId)) {
+        return Result::INVALID_ARGUMENT;
+    }
+    mDemux->setIsRecording(mIsRecordStarted | mIsRecordFilterAttached);
 
     return Result::SUCCESS;
 }
@@ -95,6 +102,15 @@ Return<Result> Dvr::detachFilter(const sp<IFilter>& filter) {
     it = mFilters.find(filterId);
     if (it != mFilters.end()) {
         mFilters.erase(filterId);
+        if (!mDemux->detachRecordFilter(filterId)) {
+            return Result::INVALID_ARGUMENT;
+        }
+    }
+
+    // If all the filters are detached, record can't be started
+    if (mFilters.empty()) {
+        mIsRecordFilterAttached = false;
+        mDemux->setIsRecording(mIsRecordStarted | mIsRecordFilterAttached);
     }
 
     return Result::SUCCESS;
@@ -115,8 +131,9 @@ Return<Result> Dvr::start() {
         pthread_create(&mDvrThread, NULL, __threadLoopPlayback, this);
         pthread_setname_np(mDvrThread, "playback_waiting_loop");
     } else if (mType == DvrType::RECORD) {
-        /*pthread_create(&mInputThread, NULL, __threadLoopInput, this);
-        pthread_setname_np(mInputThread, "playback_waiting_loop");*/
+        mRecordStatus = RecordStatus::DATA_READY;
+        mIsRecordStarted = true;
+        mDemux->setIsRecording(mIsRecordStarted | mIsRecordFilterAttached);
     }
 
     // TODO start another thread to send filter status callback to the framework
@@ -131,11 +148,16 @@ Return<Result> Dvr::stop() {
 
     std::lock_guard<std::mutex> lock(mDvrThreadLock);
 
+    mIsRecordStarted = false;
+    mDemux->setIsRecording(mIsRecordStarted | mIsRecordFilterAttached);
+
     return Result::SUCCESS;
 }
 
 Return<Result> Dvr::flush() {
     ALOGV("%s", __FUNCTION__);
+
+    mRecordStatus = RecordStatus::DATA_READY;
 
     return Result::SUCCESS;
 }
@@ -270,6 +292,45 @@ bool Dvr::startFilterDispatcher() {
     }
 
     return true;
+}
+
+bool Dvr::writeRecordFMQ(const std::vector<uint8_t>& data) {
+    std::lock_guard<std::mutex> lock(mWriteLock);
+    ALOGW("[Dvr] write record FMQ");
+    if (mDvrMQ->write(data.data(), data.size())) {
+        mDvrEventFlag->wake(static_cast<uint32_t>(DemuxQueueNotifyBits::DATA_READY));
+        maySendRecordStatusCallback();
+        return true;
+    }
+
+    maySendRecordStatusCallback();
+    return false;
+}
+
+void Dvr::maySendRecordStatusCallback() {
+    std::lock_guard<std::mutex> lock(mRecordStatusLock);
+    int availableToRead = mDvrMQ->availableToRead();
+    int availableToWrite = mDvrMQ->availableToWrite();
+
+    RecordStatus newStatus = checkRecordStatusChange(availableToWrite, availableToRead,
+                                                     mDvrSettings.record().highThreshold,
+                                                     mDvrSettings.record().lowThreshold);
+    if (mRecordStatus != newStatus) {
+        mCallback->onRecordStatus(newStatus);
+        mRecordStatus = newStatus;
+    }
+}
+
+RecordStatus Dvr::checkRecordStatusChange(uint32_t availableToWrite, uint32_t availableToRead,
+                                          uint32_t highThreshold, uint32_t lowThreshold) {
+    if (availableToWrite == 0) {
+        return DemuxFilterStatus::OVERFLOW;
+    } else if (availableToRead > highThreshold) {
+        return DemuxFilterStatus::HIGH_WATER;
+    } else if (availableToRead < lowThreshold) {
+        return DemuxFilterStatus::LOW_WATER;
+    }
+    return mRecordStatus;
 }
 
 }  // namespace implementation
