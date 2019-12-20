@@ -35,4 +35,31 @@ interface ISupplicantStaIfaceCallback extends @1.2::ISupplicantStaIfaceCallback 
      *              opaque for the framework and depends on the native implementation.
      */
     oneway onPmkCacheAdded(int64_t expirationTimeInSec, vec<uint8_t> serializedEntry);
+
+    /**
+     * Indicates a DPP success event.
+     */
+    oneway onDppSuccess(DppSuccessCode code);
+
+    /**
+     * Indicates a DPP progress event.
+     */
+    oneway onDppProgress_1_3(DppProgressCode code);
+
+    /**
+     * Indicates a DPP failure event.
+     *
+     * ssid: A string indicating the SSID for the AP that the Enrollee attempted to connect.
+     * channelList: A string containing a list of operating channels and operating classes
+     *     indicating the channels that the Enrollee scanned in attempting to discover the AP.
+     *     The list conforms to the following ABNF syntax:
+     *         channel-list2 = class-and-channels *(“,” class-and-channels)
+     *         class-and-channels = class “/” channel *(“,” channel)
+     *         class = 1*3DIGIT
+     *         channel = 1*3DIGIT
+     * bandList: A list of band parameters that are supported by the Enrollee expressed as the
+     *     Operating Class.
+     */
+    oneway onDppFailure_1_3(DppFailureCode code, string ssid, string channelList,
+        vec<uint16_t>bandList);
 };
