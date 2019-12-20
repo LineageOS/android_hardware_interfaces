@@ -14,13 +14,30 @@
 // limitations under the License.
 //
 
+cc_defaults {
+    name: "neuralnetworks_vts_functional_defaults",
+    defaults: ["VtsHalTargetTestDefaults"],
+    arch: {
+        x86: {
+            cflags: [ "-D_Float16=__fp16",
+                      "-Xclang", "-fnative-half-type",
+                      "-Xclang", "-fallow-half-arguments-and-returns" ],
+        },
+        x86_64: {
+            cflags: [ "-D_Float16=__fp16",
+                      "-Xclang", "-fnative-half-type",
+                      "-Xclang", "-fallow-half-arguments-and-returns" ],
+        },
+    },
+}
+
 cc_library_static {
     name: "VtsHalNeuralNetworksV1_0_utils",
     srcs: [
         "Callbacks.cpp",
         "Utils.cpp",
     ],
-    defaults: ["VtsHalTargetTestDefaults"],
+    defaults: ["neuralnetworks_vts_functional_defaults"],
     export_include_dirs: ["include"],
     shared_libs: [
         "libfmq",
@@ -42,7 +59,7 @@ cc_library_static {
 
 cc_test {
     name: "VtsHalNeuralnetworksV1_0TargetTest",
-    defaults: ["VtsHalTargetTestDefaults"],
+    defaults: ["neuralnetworks_vts_functional_defaults"],
     srcs: [
         "BasicTests.cpp",
         "TestAssertions.cpp",
