@@ -853,10 +853,11 @@ TEST_F(RadioHidlTest_v1_5, setupDataCall_1_5) {
 
     bool roamingAllowed = false;
 
+    std::vector<::android::hardware::radio::V1_5::LinkAddress> addresses = {};
+    std::vector<hidl_string> dnses = {};
+
     ::android::hardware::radio::V1_2::DataRequestReason reason =
             ::android::hardware::radio::V1_2::DataRequestReason::NORMAL;
-    std::vector<hidl_string> addresses = {""};
-    std::vector<hidl_string> dnses = {""};
 
     Return<void> res = radio_v1_5->setupDataCall_1_5(serial, accessNetwork, dataProfileInfo,
                                                      roamingAllowed, reason, addresses, dnses);

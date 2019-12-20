@@ -931,7 +931,7 @@ Return<void> RadioResponse_v1_5::startNetworkScanResponse_1_5(const RadioRespons
 
 Return<void> RadioResponse_v1_5::setupDataCallResponse_1_5(
         const RadioResponseInfo& info,
-        const android::hardware::radio::V1_4::SetupDataCallResult& /* dcResponse */) {
+        const android::hardware::radio::V1_5::SetupDataCallResult& /* dcResponse */) {
     rspInfo = info;
     parent_v1_5.notify(info.serial);
     return Void();
