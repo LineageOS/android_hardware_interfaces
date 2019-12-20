@@ -551,6 +551,7 @@
             <xs:enumeration value="AUDIO_STREAM_DTMF"/>
             <xs:enumeration value="AUDIO_STREAM_TTS"/>
             <xs:enumeration value="AUDIO_STREAM_ACCESSIBILITY"/>
+            <xs:enumeration value="AUDIO_STREAM_ASSISTANT"/>
             <xs:enumeration value="AUDIO_STREAM_REROUTING"/>
             <xs:enumeration value="AUDIO_STREAM_PATCH"/>
         </xs:restriction>
