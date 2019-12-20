@@ -18,8 +18,7 @@
 
 #include <string>
 
-namespace android {
-namespace netdevice {
+namespace android::netdevice {
 
 /**
  * Returns the index of a given network interface.
@@ -32,5 +31,4 @@ namespace netdevice {
  */
 unsigned int nametoindex(const std::string& ifname);
 
-}  // namespace netdevice
-}  // namespace android
+}  // namespace android::netdevice

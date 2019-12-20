@@ -24,12 +24,7 @@
 #include <chrono>
 #include <thread>
 
-namespace android {
-namespace hardware {
-namespace automotive {
-namespace can {
-namespace V1_0 {
-namespace implementation {
+namespace android::hardware::automotive::can::V1_0::implementation {
 
 /** Wrapper around SocketCAN socket. */
 struct CanSocket {
@@ -71,9 +66,4 @@ struct CanSocket {
     DISALLOW_COPY_AND_ASSIGN(CanSocket);
 };
 
-}  // namespace implementation
-}  // namespace V1_0
-}  // namespace can
-}  // namespace automotive
-}  // namespace hardware
-}  // namespace android
+}  // namespace android::hardware::automotive::can::V1_0::implementation

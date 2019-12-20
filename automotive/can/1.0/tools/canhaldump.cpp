@@ -27,10 +27,7 @@
 #include <string>
 #include <thread>
 
-namespace android {
-namespace hardware {
-namespace automotive {
-namespace can {
+namespace android::hardware::automotive::can {
 
 using namespace std::chrono_literals;
 
@@ -128,10 +125,7 @@ static int main(int argc, char* argv[]) {
     return candump(argv[0]);
 }
 
-}  // namespace can
-}  // namespace automotive
-}  // namespace hardware
-}  // namespace android
+}  // namespace android::hardware::automotive::can
 
 int main(int argc, char* argv[]) {
     if (argc < 1) return -1;

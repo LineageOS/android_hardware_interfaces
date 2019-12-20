@@ -23,8 +23,7 @@
 
 #include <linux/netlink.h>
 
-namespace android {
-namespace netdevice {
+namespace android::netdevice {
 
 /**
  * A wrapper around AF_NETLINK sockets.
@@ -64,5 +63,4 @@ struct NetlinkSocket {
     DISALLOW_COPY_AND_ASSIGN(NetlinkSocket);
 };
 
-}  // namespace netdevice
-}  // namespace android
+}  // namespace android::netdevice

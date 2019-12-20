@@ -18,13 +18,7 @@
 
 #include <VtsHalHidlTargetTestEnvBase.h>
 
-namespace android {
-namespace hardware {
-namespace automotive {
-namespace can {
-namespace V1_0 {
-namespace vts {
-namespace utils {
+namespace android::hardware::automotive::can::V1_0::vts::utils {
 
 /**
  * Simple test environment.
@@ -63,10 +57,4 @@ class SimpleHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
     }
 };
 
-}  // namespace utils
-}  // namespace vts
-}  // namespace V1_0
-}  // namespace can
-}  // namespace automotive
-}  // namespace hardware
-}  // namespace android
+}  // namespace android::hardware::automotive::can::V1_0::vts::utils

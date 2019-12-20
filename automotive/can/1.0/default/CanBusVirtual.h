@@ -18,12 +18,7 @@
 
 #include "CanBus.h"
 
-namespace android {
-namespace hardware {
-namespace automotive {
-namespace can {
-namespace V1_0 {
-namespace implementation {
+namespace android::hardware::automotive::can::V1_0::implementation {
 
 struct CanBusVirtual : public CanBus {
     CanBusVirtual(const std::string& ifname);
@@ -36,9 +31,4 @@ struct CanBusVirtual : public CanBus {
     bool mWasCreated = false;
 };
 
-}  // namespace implementation
-}  // namespace V1_0
-}  // namespace can
-}  // namespace automotive
-}  // namespace hardware
-}  // namespace android
+}  // namespace android::hardware::automotive::can::V1_0::implementation

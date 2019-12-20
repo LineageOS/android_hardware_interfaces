@@ -21,10 +21,7 @@
 #include <iostream>
 #include <string>
 
-namespace android {
-namespace hardware {
-namespace automotive {
-namespace can {
+namespace android::hardware::automotive::can {
 
 using ICanBus = V1_0::ICanBus;
 using Result = V1_0::Result;
@@ -125,10 +122,7 @@ static int main(int argc, char* argv[]) {
     return cansend(busname, msgid, payload);
 }
 
-}  // namespace can
-}  // namespace automotive
-}  // namespace hardware
-}  // namespace android
+}  // namespace android::hardware::automotive::can
 
 int main(int argc, char* argv[]) {
     if (argc < 1) return -1;

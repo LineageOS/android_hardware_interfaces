@@ -22,10 +22,7 @@
 #include <iostream>
 #include <string>
 
-namespace android {
-namespace hardware {
-namespace automotive {
-namespace can {
+namespace android::hardware::automotive::can {
 
 using ICanController = V1_0::ICanController;
 
@@ -170,10 +167,7 @@ static int main(int argc, char* argv[]) {
     }
 }
 
-}  // namespace can
-}  // namespace automotive
-}  // namespace hardware
-}  // namespace android
+}  // namespace android::hardware::automotive::can
 
 int main(int argc, char* argv[]) {
     if (argc < 1) return -1;
