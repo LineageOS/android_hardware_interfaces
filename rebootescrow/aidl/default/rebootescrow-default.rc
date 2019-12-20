@@ -1,0 +1,9 @@
+service vendor.rebootescrow-default /vendor/bin/hw/android.hardware.rebootescrow-service.default
+    interface aidl android.hardware.rebootescrow.IRebootEscrow/default
+    class hal
+    user system
+    group system
+
+on boot
+    chmod 770 /dev/access-kregistry
+    chown system system /dev/access-kregistry
