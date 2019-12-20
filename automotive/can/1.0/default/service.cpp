@@ -19,12 +19,7 @@
 #include <android-base/logging.h>
 #include <hidl/HidlTransportSupport.h>
 
-namespace android {
-namespace hardware {
-namespace automotive {
-namespace can {
-namespace V1_0 {
-namespace implementation {
+namespace android::hardware::automotive::can::V1_0::implementation {
 
 static void canControllerService() {
     base::SetDefaultTag("CanController");
@@ -42,12 +37,7 @@ static void canControllerService() {
     joinRpcThreadpool();
 }
 
-}  // namespace implementation
-}  // namespace V1_0
-}  // namespace can
-}  // namespace automotive
-}  // namespace hardware
-}  // namespace android
+}  // namespace android::hardware::automotive::can::V1_0::implementation
 
 int main() {
     ::android::hardware::automotive::can::V1_0::implementation::canControllerService();

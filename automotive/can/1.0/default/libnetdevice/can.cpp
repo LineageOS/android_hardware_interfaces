@@ -28,9 +28,7 @@
 #include <linux/can/netlink.h>
 #include <linux/can/raw.h>
 
-namespace android {
-namespace netdevice {
-namespace can {
+namespace android::netdevice::can {
 
 static constexpr can_err_mask_t kErrMask = CAN_ERR_MASK;
 
@@ -95,6 +93,4 @@ bool setBitrate(std::string ifname, uint32_t bitrate) {
     return sock.send(req) && sock.receiveAck();
 }
 
-}  // namespace can
-}  // namespace netdevice
-}  // namespace android
+}  // namespace android::netdevice::can

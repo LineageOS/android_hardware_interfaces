@@ -26,12 +26,7 @@
 #include <gmock/gmock.h>
 #include <hidl-utils/hidl-utils.h>
 
-namespace android {
-namespace hardware {
-namespace automotive {
-namespace can {
-namespace V1_0 {
-namespace vts {
+namespace android::hardware::automotive::can::V1_0::vts {
 
 using hardware::hidl_vec;
 using InterfaceType = ICanController::InterfaceType;
@@ -233,12 +228,7 @@ TEST_F(CanControllerHalTest, FailBadSocketcanAddress) {
     assertRegistered(name, false);
 }
 
-}  // namespace vts
-}  // namespace V1_0
-}  // namespace can
-}  // namespace automotive
-}  // namespace hardware
-}  // namespace android
+}  // namespace android::hardware::automotive::can::V1_0::vts
 
 /**
  * Example manual invocation:

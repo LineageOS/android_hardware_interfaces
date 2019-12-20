@@ -21,8 +21,7 @@
 
 #include <string>
 
-namespace android {
-namespace netdevice {
+namespace android::netdevice {
 
 typedef unsigned short rtattrtype_t;  // as in rtnetlink.h
 typedef __u16 nlmsgtype_t;            // as in netlink.h
@@ -151,5 +150,4 @@ struct NetlinkRequest {
     }
 };
 
-}  // namespace netdevice
-}  // namespace android
+}  // namespace android::netdevice

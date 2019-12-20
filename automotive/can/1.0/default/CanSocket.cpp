@@ -24,12 +24,7 @@
 
 #include <chrono>
 
-namespace android {
-namespace hardware {
-namespace automotive {
-namespace can {
-namespace V1_0 {
-namespace implementation {
+namespace android::hardware::automotive::can::V1_0::implementation {
 
 using namespace std::chrono_literals;
 
@@ -152,9 +147,4 @@ void CanSocket::readerThread() {
     LOG(VERBOSE) << "Reader thread stopped";
 }
 
-}  // namespace implementation
-}  // namespace V1_0
-}  // namespace can
-}  // namespace automotive
-}  // namespace hardware
-}  // namespace android
+}  // namespace android::hardware::automotive::can::V1_0::implementation

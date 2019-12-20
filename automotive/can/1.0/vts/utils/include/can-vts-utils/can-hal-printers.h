@@ -18,11 +18,7 @@
 
 #include <android/hardware/automotive/can/1.0/ICanController.h>
 
-namespace android {
-namespace hardware {
-namespace automotive {
-namespace can {
-namespace V1_0 {
+namespace android::hardware::automotive::can::V1_0 {
 
 /**
  * Define gTest printer for a given HIDL type, but skip definition for Return<T>.
@@ -48,8 +44,4 @@ DEFINE_CAN_HAL_PRINTER(Result, toString)
 #undef DEFINE_CAN_HAL_PRINTER
 #undef DEFINE_CAN_HAL_PRINTER_SIMPLE
 
-}  // namespace V1_0
-}  // namespace can
-}  // namespace automotive
-}  // namespace hardware
-}  // namespace android
+}  // namespace android::hardware::automotive::can::V1_0

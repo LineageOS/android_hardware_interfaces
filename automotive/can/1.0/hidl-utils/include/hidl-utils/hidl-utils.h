@@ -16,10 +16,7 @@
 
 #pragma once
 
-namespace android {
-namespace hardware {
-namespace automotive {
-namespace hidl_utils {
+namespace android::hardware::automotive::hidl_utils {
 
 /**
  * Helper functor to fetch results from multi-return HIDL calls.
@@ -61,7 +58,4 @@ struct fill : public std::function<void(const T&...)> {
     }
 };
 
-}  // namespace hidl_utils
-}  // namespace automotive
-}  // namespace hardware
-}  // namespace android
+}  // namespace android::hardware::automotive::hidl_utils

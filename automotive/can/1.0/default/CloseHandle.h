@@ -19,12 +19,7 @@
 #include <android-base/macros.h>
 #include <android/hardware/automotive/can/1.0/ICloseHandle.h>
 
-namespace android {
-namespace hardware {
-namespace automotive {
-namespace can {
-namespace V1_0 {
-namespace implementation {
+namespace android::hardware::automotive::can::V1_0::implementation {
 
 /** Generic ICloseHandle implementation ignoring double-close events. */
 struct CloseHandle : public ICloseHandle {
@@ -49,9 +44,4 @@ struct CloseHandle : public ICloseHandle {
     DISALLOW_COPY_AND_ASSIGN(CloseHandle);
 };
 
-}  // namespace implementation
-}  // namespace V1_0
-}  // namespace can
-}  // namespace automotive
-}  // namespace hardware
-}  // namespace android
+}  // namespace android::hardware::automotive::can::V1_0::implementation

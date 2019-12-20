@@ -31,12 +31,7 @@
 #include <chrono>
 #include <thread>
 
-namespace android {
-namespace hardware {
-namespace automotive {
-namespace can {
-namespace V1_0 {
-namespace vts {
+namespace android::hardware::automotive::can::V1_0::vts {
 
 using namespace std::chrono_literals;
 
@@ -290,12 +285,7 @@ TEST_F(CanBusVirtualHalTest, Filter) {
     ASSERT_EQ(expectedPositive, messagesPositive);
 }
 
-}  // namespace vts
-}  // namespace V1_0
-}  // namespace can
-}  // namespace automotive
-}  // namespace hardware
-}  // namespace android
+}  // namespace android::hardware::automotive::can::V1_0::vts
 
 /**
  * Example manual invocation:
