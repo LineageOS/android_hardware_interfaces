@@ -98,8 +98,9 @@ EmulatedVehicleHal::EmulatedVehicleHal(VehiclePropertyStore* propStore,
     for (size_t i = 0; i < arraysize(kVehicleProperties); i++) {
         mPropStore->registerProperty(kVehicleProperties[i].config);
     }
-    mVehicleClient->registerPropertyValueCallback(
-        std::bind(&EmulatedVehicleHal::onPropertyValue, this, std::placeholders::_1));
+    mVehicleClient->registerPropertyValueCallback(std::bind(&EmulatedVehicleHal::onPropertyValue,
+                                                            this, std::placeholders::_1,
+                                                            std::placeholders::_2));
 }
 
 VehicleHal::VehiclePropValuePtr EmulatedVehicleHal::get(
@@ -131,41 +132,15 @@ VehicleHal::VehiclePropValuePtr EmulatedVehicleHal::get(
 }
 
 StatusCode EmulatedVehicleHal::set(const VehiclePropValue& propValue) {
-    static constexpr bool shouldUpdateStatus = false;
-
-    // set the value from vehcile side, used in end to end test.
-    if (propValue.prop == kSetIntPropertyFromVehcileForTest) {
-        auto mockValue = createVehiclePropValue(VehiclePropertyType::INT32, 1);
-        mockValue->prop = propValue.value.int32Values[0];
-        mockValue->value.int32Values[0] = propValue.value.int32Values[1];
-        mockValue->timestamp = propValue.value.int64Values[0];
-        mockValue->areaId = propValue.areaId;
-        setPropertyFromVehicle(*mockValue);
-        return StatusCode::OK;
-    }
-
-    if (propValue.prop == kSetFloatPropertyFromVehcileForTest) {
-        auto mockValue = createVehiclePropValue(VehiclePropertyType::FLOAT, 1);
-        mockValue->prop = propValue.value.int32Values[0];
-        mockValue->value.floatValues[0] = propValue.value.floatValues[0];
-        mockValue->timestamp = propValue.value.int64Values[0];
-        mockValue->areaId = propValue.areaId;
-        setPropertyFromVehicle(*mockValue);
-        return StatusCode::OK;
-    }
-    if (propValue.prop == kSetBooleanPropertyFromVehcileForTest) {
-        auto mockValue = createVehiclePropValue(VehiclePropertyType::BOOLEAN, 1);
-        mockValue->prop = propValue.value.int32Values[1];
-        mockValue->value.int32Values[0] = propValue.value.int32Values[0];
-        mockValue->timestamp = propValue.value.int64Values[0];
-        mockValue->areaId = propValue.areaId;
-        setPropertyFromVehicle(*mockValue);
-        return StatusCode::OK;
-    }
+    constexpr bool updateStatus = false;
 
     if (propValue.prop == kGenerateFakeDataControllingProperty) {
-        // send the generator controlling request to the server
-        auto status = mVehicleClient->setPropertyFromVehicle(propValue);
+        // Send the generator controlling request to the server.
+        // 'updateStatus' flag is only for the value sent by setProperty (propValue in this case)
+        // instead of the generated values triggered by it. 'propValue' works as a control signal
+        // here, since we never send the control signal back, the value of 'updateStatus' flag
+        // does not matter here.
+        auto status = mVehicleClient->setProperty(propValue, updateStatus);
         if (status != StatusCode::OK) {
             return status;
         }
@@ -212,21 +187,12 @@ StatusCode EmulatedVehicleHal::set(const VehiclePropValue& propValue) {
      * After checking all conditions, such as the property is available, a real vhal will
      * sent the events to Car ECU to take actions.
      */
-    VehiclePropValuePtr updatedPropValue = getValuePool()->obtain(propValue);
-    updatedPropValue->timestamp = elapsedRealtimeNano();
 
     // Send the value to the vehicle server, the server will talk to the (real or emulated) car
-    auto setValueStatus = mVehicleClient->setProperty(*updatedPropValue);
+    auto setValueStatus = mVehicleClient->setProperty(propValue, updateStatus);
     if (setValueStatus != StatusCode::OK) {
         return setValueStatus;
     }
-
-    if (!mPropStore->writeValue(*updatedPropValue, shouldUpdateStatus)) {
-        return StatusCode::INTERNAL_ERROR;
-    }
-
-    getEmulatorOrDie()->doSetValueFromClient(*updatedPropValue);
-    doHalEvent(std::move(updatedPropValue));
 
     return StatusCode::OK;
 }
@@ -314,7 +280,6 @@ void EmulatedVehicleHal::onContinuousPropertyTimer(const std::vector<int32_t>& p
         }
 
         if (v.get()) {
-            v->timestamp = elapsedRealtimeNano();
             doHalEvent(std::move(v));
         }
     }
@@ -347,18 +312,19 @@ bool EmulatedVehicleHal::isContinuousProperty(int32_t propId) const {
 }
 
 bool EmulatedVehicleHal::setPropertyFromVehicle(const VehiclePropValue& propValue) {
-    return mVehicleClient->setPropertyFromVehicle(propValue) == StatusCode::OK;
+    constexpr bool updateStatus = true;
+    return mVehicleClient->setProperty(propValue, updateStatus) == StatusCode::OK;
 }
 
 std::vector<VehiclePropValue> EmulatedVehicleHal::getAllProperties() const  {
     return mPropStore->readAllValues();
 }
 
-void EmulatedVehicleHal::onPropertyValue(const VehiclePropValue& value) {
-    static constexpr bool shouldUpdateStatus = true;
+void EmulatedVehicleHal::onPropertyValue(const VehiclePropValue& value, bool updateStatus) {
     VehiclePropValuePtr updatedPropValue = getValuePool()->obtain(value);
 
-    if (mPropStore->writeValue(*updatedPropValue, shouldUpdateStatus)) {
+    if (mPropStore->writeValue(*updatedPropValue, updateStatus)) {
+        getEmulatorOrDie()->doSetValueFromClient(*updatedPropValue);
         doHalEvent(std::move(updatedPropValue));
     }
 }
