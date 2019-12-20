@@ -1,0 +1,88 @@
+//
+// Copyright (C) 2019 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+cc_library_static {
+    name: "librebootescrowdefaultimpl",
+    vendor: true,
+    shared_libs: [
+        "libbase",
+        "libbinder_ndk",
+        "vintf-rebootescrow-ndk_platform",
+    ],
+    export_include_dirs: ["include"],
+    srcs: [
+        "RebootEscrow.cpp",
+    ],
+    visibility: [
+        ":__subpackages__",
+    ],
+}
+
+cc_binary {
+    name: "android.hardware.rebootescrow-service.default",
+    init_rc: ["rebootescrow-default.rc"],
+    relative_install_path: "hw",
+    vintf_fragments: ["rebootescrow-default.xml"],
+    vendor: true,
+    srcs: [
+        "service.cpp",
+    ],
+    cflags: [
+        "-Wall",
+        "-Werror",
+    ],
+    shared_libs: [
+        "libbase",
+        "libbinder_ndk",
+        "vintf-rebootescrow-ndk_platform",
+    ],
+    static_libs: [
+        "libhadamardutils",
+        "librebootescrowdefaultimpl",
+    ],
+}
+
+cc_library_static {
+    name: "libhadamardutils",
+    vendor_available: true,
+    host_supported: true,
+    shared_libs: [
+        "libbase",
+    ],
+    srcs: [
+        "HadamardUtils.cpp",
+    ],
+    visibility: [
+        ":__subpackages__",
+    ],
+}
+
+cc_test {
+    name: "HadamardUtilsTest",
+    host_supported: true,
+    srcs: [
+        "HadamardUtilsTest.cpp",
+    ],
+    static_libs: [
+        "libhadamardutils",
+        "libgtest_prod",
+    ],
+    shared_libs: [
+        "liblog",
+        "libbase",
+    ],
+    test_suites: ["device-tests"],
+}

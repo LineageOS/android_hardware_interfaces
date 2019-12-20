@@ -206,6 +206,9 @@ interface IMapper {
      * outside of @p accessRegion is undefined, except that it must not cause
      * process termination.
      *
+     * An accessRegion of all-zeros means the entire buffer. That is, it is
+     * equivalent to '(0,0)-(buffer width, buffer height)'.
+     *
      * This function can lock both single-planar and multi-planar formats. The caller
      * should use get() to get information about the buffer they are locking.
      * get() can be used to get information about the planes, offsets, stride,
@@ -478,7 +481,7 @@ interface IMapper {
      * particular Metadata field.
      *
      * The framework may attempt to set the following StandardMetadataType
-     * values: DATASPACE, PER_FRAME_METADATA, PER_FRAME_METADATA_BLOB and BLEND_MODE.
+     * values: DATASPACE, SMPTE2086, CTA861_3, SMPTE2094_40 and BLEND_MODE.
      * We strongly encourage everyone to support setting as many of those fields as
      * possible. If a device's Composer implementation supports a field, it should be
      * supported here. Over time these metadata fields will be moved out of

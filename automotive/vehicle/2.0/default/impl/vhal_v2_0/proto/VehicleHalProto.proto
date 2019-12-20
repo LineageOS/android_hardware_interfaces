@@ -16,7 +16,7 @@
 
 syntax = "proto2";
 
-package emulator;
+package vhal_proto;
 
 // CMD messages are from workstation --> VHAL
 // RESP messages are from VHAL --> workstation

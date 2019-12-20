@@ -62,6 +62,7 @@ cc_library_static {
         "impl/vhal_v2_0/EmulatedVehicleHal.cpp",
         "impl/vhal_v2_0/VehicleEmulator.cpp",
         "impl/vhal_v2_0/PipeComm.cpp",
+        "impl/vhal_v2_0/ProtoMessageConverter.cpp",
         "impl/vhal_v2_0/SocketComm.cpp",
         "impl/vhal_v2_0/LinearFakeValueGenerator.cpp",
         "impl/vhal_v2_0/JsonFakeValueGenerator.cpp",
@@ -95,6 +96,21 @@ cc_test {
         "tests/VmsUtils_test.cpp",
     ],
     header_libs: ["libbase_headers"],
+    test_suites: ["general-tests"],
+}
+
+cc_test {
+    name: "android.hardware.automotive.vehicle@2.0-default-impl-unit-tests",
+    vendor: true,
+    defaults: ["vhal_v2_0_defaults"],
+    srcs: [
+        "impl/vhal_v2_0/tests/ProtoMessageConverter_test.cpp",
+    ],
+    static_libs: [
+        "android.hardware.automotive.vehicle@2.0-default-impl-lib",
+        "android.hardware.automotive.vehicle@2.0-libproto-native",
+        "libprotobuf-cpp-lite",
+    ],
     test_suites: ["general-tests"],
 }
 

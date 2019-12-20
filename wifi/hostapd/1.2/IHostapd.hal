@@ -16,6 +16,7 @@
 
 package android.hardware.wifi.hostapd@1.2;
 
+import @1.0::IHostapd.NetworkParams;
 import @1.1::IHostapd;
 import HostapdStatus;
 import MacAddress;
@@ -25,6 +26,86 @@ import Ieee80211ReasonCode;
  * Top-level object for managing SoftAPs.
  */
 interface IHostapd extends @1.1::IHostapd {
+    /**
+     * Band bitmMask to use for the SoftAp operations.
+     * A combinatoin of these bits are used to identify the allowed bands
+     * to start the softAp
+     */
+    enum BandMask : uint32_t {
+        /**
+         * 2.4 GHz band.
+         */
+        BAND_2_GHZ = 1 << 0,
+        /**
+         * 5 GHz band.
+         */
+        BAND_5_GHZ = 1 << 1,
+        /**
+         * 6 GHz band.
+         */
+        BAND_6_GHZ = 1 << 2,
+    };
+
+    /**
+     * Parameters to control the HW mode for the interface.
+     */
+    struct HwModeParams {
+        /**
+         * Whether IEEE 802.11ax (HE) is enabled or not.
+         * Note: hw_mode=a is used to specify that 5 GHz band or 6 GHz band is
+         * used with HE.
+         */
+        bool enable80211AX;
+        /**
+         * Whether 6GHz band enabled or not on softAp.
+         * Note: hw_mode=a is used to specify that 5 GHz band or 6 GHz band is
+         * used.
+         */
+        bool enable6GhzBand;
+    };
+
+    /**
+     * Parameters to control the channel selection for the interface.
+     */
+    struct ChannelParams {
+        /**
+         * Band to use for the SoftAp operations.
+         */
+        bitfield<BandMask> bandMask;
+    };
+
+    /**
+     * Parameters to use for setting up the access point interface.
+     */
+    struct IfaceParams {
+        /**
+         * Baseline information as defined in HAL 1.1.
+         */
+        @1.1::IHostapd.IfaceParams V1_1;
+        /** Additional Hw mode params for the interface */
+        HwModeParams hwModeParams;
+        /** Additional Channel params for the interface */
+        ChannelParams channelParams;
+    };
+
+    /**
+     * Adds a new access point for hostapd to control.
+     *
+     * This should trigger the setup of an access point with the specified
+     * interface and network params.
+     *
+     * @param ifaceParams AccessPoint Params for the access point.
+     * @param nwParams Network Params for the access point.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |HostapdStatusCode.SUCCESS|,
+     *         |HostapdStatusCode.FAILURE_ARGS_INVALID|,
+     *         |HostapdStatusCode.FAILURE_UNKNOWN|,
+     *         |HostapdStatusCode.FAILURE_IFACE_EXISTS|
+     */
+    addAccessPoint_1_2(IfaceParams ifaceParams, NetworkParams nwParams)
+        generates(HostapdStatus status);
+
     /**
      * force one of the hotspot clients disconnect..
      *
