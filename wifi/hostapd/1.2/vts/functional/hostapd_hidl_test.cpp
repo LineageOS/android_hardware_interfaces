@@ -109,28 +109,26 @@ class HostapdHidlTest
         return iface_params_1_2;
     }
 
-    IHostapd::IfaceParams getIfaceParamsWithAcsAndChannelRange() {
+    IHostapd::IfaceParams getIfaceParamsWithAcsAndFreqRange() {
         IHostapd::IfaceParams iface_params_1_2 = getIfaceParamsWithAcs();
-        ::android::hardware::wifi::hostapd::V1_1::IHostapd::ChannelParams
-            channelParams;
-        ::android::hardware::wifi::hostapd::V1_1::IHostapd::AcsChannelRange
-            acsChannelRange;
-        acsChannelRange.start = 1;
-        acsChannelRange.end = 11;
-        std::vector<
-            ::android::hardware::wifi::hostapd::V1_1::IHostapd::AcsChannelRange>
-            vec_acsChannelRange;
-        vec_acsChannelRange.push_back(acsChannelRange);
-        channelParams.acsChannelRanges = vec_acsChannelRange;
-        iface_params_1_2.V1_1.channelParams = channelParams;
+        ::android::hardware::wifi::hostapd::V1_2::IHostapd::AcsFrequencyRange
+            acsFrequencyRange;
+        acsFrequencyRange.start = 2412;
+        acsFrequencyRange.end = 2462;
+        std::vector<::android::hardware::wifi::hostapd::V1_2::IHostapd::
+                        AcsFrequencyRange>
+            vec_acsFrequencyRange;
+        vec_acsFrequencyRange.push_back(acsFrequencyRange);
+        iface_params_1_2.channelParams.acsChannelFreqRangesMhz =
+            vec_acsFrequencyRange;
         return iface_params_1_2;
     }
 
-    IHostapd::IfaceParams getIfaceParamsWithAcsAndInvalidChannelRange() {
+    IHostapd::IfaceParams getIfaceParamsWithAcsAndInvalidFreqRange() {
         IHostapd::IfaceParams iface_params_1_2 =
-            getIfaceParamsWithAcsAndChannelRange();
-        iface_params_1_2.V1_1.channelParams.acsChannelRanges[0].start = 222;
-        iface_params_1_2.V1_1.channelParams.acsChannelRanges[0].end = 999;
+            getIfaceParamsWithAcsAndFreqRange();
+        iface_params_1_2.channelParams.acsChannelFreqRangesMhz[0].start = 222;
+        iface_params_1_2.channelParams.acsChannelFreqRangesMhz[0].end = 999;
         return iface_params_1_2;
     }
 
@@ -186,13 +184,13 @@ TEST_P(HostapdHidlTest, AddPskAccessPointWithAcs) {
 }
 
 /**
- * Adds an access point with PSK network config, ACS enabled & channel Range.
+ * Adds an access point with PSK network config, ACS enabled & frequency Range.
  * Access point creation should pass.
  */
-TEST_P(HostapdHidlTest, AddPskAccessPointWithAcsAndChannelRange) {
+TEST_P(HostapdHidlTest, AddPskAccessPointWithAcsAndFreqRange) {
     auto status =
         HIDL_INVOKE(hostapd_, addAccessPoint_1_2,
-                    getIfaceParamsWithAcsAndChannelRange(), getPskNwParams());
+                    getIfaceParamsWithAcsAndFreqRange(), getPskNwParams());
     // TODO: b/140172237, fix this in R
     // EXPECT_EQ(HostapdStatusCode::SUCCESS, status.code);
 }
@@ -201,9 +199,9 @@ TEST_P(HostapdHidlTest, AddPskAccessPointWithAcsAndChannelRange) {
  * Adds an access point with invalid channel range.
  * Access point creation should fail.
  */
-TEST_P(HostapdHidlTest, AddPskAccessPointWithAcsAndInvalidChannelRange) {
+TEST_P(HostapdHidlTest, AddPskAccessPointWithAcsAndInvalidFreqRange) {
     auto status = HIDL_INVOKE(hostapd_, addAccessPoint_1_2,
-                              getIfaceParamsWithAcsAndInvalidChannelRange(),
+                              getIfaceParamsWithAcsAndInvalidFreqRange(),
                               getPskNwParams());
     // TODO: b/140172237, fix this in R
     // EXPECT_NE(HostapdStatusCode::SUCCESS, status.code);
@@ -245,14 +243,15 @@ TEST_P(HostapdHidlTest, AddOpenAccessPointWithoutAcs) {
  * Access point creation & removal should pass.
  */
 TEST_P(HostapdHidlTest, RemoveAccessPointWithAcs) {
-    auto status = HIDL_INVOKE(hostapd_, addAccessPoint_1_2,
-                              getIfaceParamsWithAcs(), getPskNwParams());
+    auto status_1_2 = HIDL_INVOKE(hostapd_, addAccessPoint_1_2,
+                                  getIfaceParamsWithAcs(), getPskNwParams());
     // TODO: b/140172237, fix this in R
     /*
-    EXPECT_EQ(HostapdStatusCode::SUCCESS, status.code);
-    status =
+    EXPECT_EQ(HostapdStatusCode::SUCCESS, status_1_2.code);
+    auto status =
         HIDL_INVOKE(hostapd_, removeAccessPoint, getPrimaryWlanIfaceName());
-    EXPECT_EQ(HostapdStatusCode::SUCCESS, status.code);
+    EXPECT_EQ(android::hardware::wifi::hostapd::V1_0::HostapdStatusCode::SUCCESS,
+    status.code);
     */
 }
 
