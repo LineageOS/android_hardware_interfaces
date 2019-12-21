@@ -20,12 +20,7 @@
 #include <libnetdevice/can.h>
 #include <libnetdevice/libnetdevice.h>
 
-namespace android {
-namespace hardware {
-namespace automotive {
-namespace can {
-namespace V1_0 {
-namespace implementation {
+namespace android::hardware::automotive::can::V1_0::implementation {
 
 CanBusNative::CanBusNative(const std::string& ifname, uint32_t baudrate)
     : CanBus(ifname), mBaudrate(baudrate) {}
@@ -49,9 +44,4 @@ ICanController::Result CanBusNative::preUp() {
     return ICanController::Result::OK;
 }
 
-}  // namespace implementation
-}  // namespace V1_0
-}  // namespace can
-}  // namespace automotive
-}  // namespace hardware
-}  // namespace android
+}  // namespace android::hardware::automotive::can::V1_0::implementation

@@ -19,8 +19,7 @@
 #include <optional>
 #include <string>
 
-namespace android {
-namespace netdevice {
+namespace android::netdevice {
 
 /**
  * Checks, if the network interface exists.
@@ -71,5 +70,4 @@ bool add(std::string dev, std::string type);
  */
 bool del(std::string dev);
 
-}  // namespace netdevice
-}  // namespace android
+}  // namespace android::netdevice

@@ -20,8 +20,7 @@
 
 #include <net/if.h>
 
-namespace android {
-namespace netdevice {
+namespace android::netdevice {
 
 unsigned int nametoindex(const std::string& ifname) {
     const auto ifidx = if_nametoindex(ifname.c_str());
@@ -34,5 +33,4 @@ unsigned int nametoindex(const std::string& ifname) {
     return 0;
 }
 
-}  // namespace netdevice
-}  // namespace android
+}  // namespace android::netdevice

@@ -20,9 +20,7 @@
 
 #include <string>
 
-namespace android {
-namespace netdevice {
-namespace can {
+namespace android::netdevice::can {
 
 /**
  * Opens and binds SocketCAN socket.
@@ -40,6 +38,4 @@ base::unique_fd socket(const std::string& ifname);
  */
 bool setBitrate(std::string ifname, uint32_t bitrate);
 
-}  // namespace can
-}  // namespace netdevice
-}  // namespace android
+}  // namespace android::netdevice::can

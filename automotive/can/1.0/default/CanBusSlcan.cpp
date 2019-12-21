@@ -25,12 +25,7 @@
 #include <sys/stat.h>
 #include <termios.h>
 
-namespace android {
-namespace hardware {
-namespace automotive {
-namespace can {
-namespace V1_0 {
-namespace implementation {
+namespace android::hardware::automotive::can::V1_0::implementation {
 
 namespace slcanprotocol {
 static const std::string kOpenCommand = "O\r";
@@ -158,9 +153,4 @@ bool CanBusSlcan::postDown() {
     return true;
 }
 
-}  // namespace implementation
-}  // namespace V1_0
-}  // namespace can
-}  // namespace automotive
-}  // namespace hardware
-}  // namespace android
+}  // namespace android::hardware::automotive::can::V1_0::implementation

@@ -18,8 +18,7 @@
 
 #include <android-base/logging.h>
 
-namespace android {
-namespace netdevice {
+namespace android::netdevice {
 
 NetlinkSocket::NetlinkSocket(int protocol) {
     mFd.reset(socket(AF_NETLINK, SOCK_RAW, protocol));
@@ -110,5 +109,4 @@ bool NetlinkSocket::receiveAck() {
     return false;
 }
 
-}  // namespace netdevice
-}  // namespace android
+}  // namespace android::netdevice

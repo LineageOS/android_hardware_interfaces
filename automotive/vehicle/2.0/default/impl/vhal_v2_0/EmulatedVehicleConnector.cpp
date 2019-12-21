@@ -30,12 +30,12 @@ namespace V2_0 {
 
 namespace impl {
 
-void EmulatedVehicleClient::onPropertyValue(const VehiclePropValue& value) {
+void EmulatedVehicleClient::onPropertyValue(const VehiclePropValue& value, bool updateStatus) {
     if (!mPropCallback) {
         LOG(ERROR) << __func__ << ": PropertyCallBackType is not registered!";
         return;
     }
-    return mPropCallback(value);
+    return mPropCallback(value, updateStatus);
 }
 
 void EmulatedVehicleClient::registerPropertyValueCallback(PropertyCallBackType&& callback) {
@@ -65,12 +65,13 @@ void EmulatedVehicleServer::setValuePool(VehiclePropValuePool* valuePool) {
 }
 
 void EmulatedVehicleServer::onFakeValueGenerated(const VehiclePropValue& value) {
+    constexpr bool updateStatus = true;
     LOG(DEBUG) << __func__ << ": " << toString(value);
     auto updatedPropValue = getValuePool()->obtain(value);
     if (updatedPropValue) {
         updatedPropValue->timestamp = value.timestamp;
         updatedPropValue->status = VehiclePropertyStatus::AVAILABLE;
-        onPropertyValueFromCar(*updatedPropValue);
+        onPropertyValueFromCar(*updatedPropValue, updateStatus);
     }
 }
 
@@ -86,6 +87,8 @@ std::vector<VehiclePropConfig> EmulatedVehicleServer::onGetAllPropertyConfig() c
 }
 
 StatusCode EmulatedVehicleServer::handleGenerateFakeDataRequest(const VehiclePropValue& request) {
+    constexpr bool updateStatus = true;
+
     LOG(INFO) << __func__;
     const auto& v = request.value;
     if (!v.int32Values.size()) {
@@ -153,9 +156,11 @@ StatusCode EmulatedVehicleServer::handleGenerateFakeDataRequest(const VehiclePro
             int32_t display = request.value.int32Values[3];
             // Send back to HAL
             onPropertyValueFromCar(
-                    *createHwInputKeyProp(VehicleHwKeyInputAction::ACTION_DOWN, keyCode, display));
+                    *createHwInputKeyProp(VehicleHwKeyInputAction::ACTION_DOWN, keyCode, display),
+                    updateStatus);
             onPropertyValueFromCar(
-                    *createHwInputKeyProp(VehicleHwKeyInputAction::ACTION_UP, keyCode, display));
+                    *createHwInputKeyProp(VehicleHwKeyInputAction::ACTION_UP, keyCode, display),
+                    updateStatus);
             break;
         }
         default: {
@@ -191,9 +196,41 @@ VehicleHal::VehiclePropValuePtr EmulatedVehicleServer::createHwInputKeyProp(
     return keyEvent;
 }
 
-StatusCode EmulatedVehicleServer::onSetProperty(const VehiclePropValue& value) {
+StatusCode EmulatedVehicleServer::onSetProperty(const VehiclePropValue& value, bool updateStatus) {
     // Some properties need to be treated non-trivially
     switch (value.prop) {
+        case kGenerateFakeDataControllingProperty:
+            return handleGenerateFakeDataRequest(value);
+
+        // set the value from vehcile side, used in end to end test.
+        case kSetIntPropertyFromVehcileForTest: {
+            auto updatedPropValue = createVehiclePropValue(VehiclePropertyType::INT32, 1);
+            updatedPropValue->prop = value.value.int32Values[0];
+            updatedPropValue->value.int32Values[0] = value.value.int32Values[1];
+            updatedPropValue->timestamp = value.value.int64Values[0];
+            updatedPropValue->areaId = value.areaId;
+            onPropertyValueFromCar(*updatedPropValue, updateStatus);
+            return StatusCode::OK;
+        }
+        case kSetFloatPropertyFromVehcileForTest: {
+            auto updatedPropValue = createVehiclePropValue(VehiclePropertyType::FLOAT, 1);
+            updatedPropValue->prop = value.value.int32Values[0];
+            updatedPropValue->value.floatValues[0] = value.value.floatValues[0];
+            updatedPropValue->timestamp = value.value.int64Values[0];
+            updatedPropValue->areaId = value.areaId;
+            onPropertyValueFromCar(*updatedPropValue, updateStatus);
+            return StatusCode::OK;
+        }
+        case kSetBooleanPropertyFromVehcileForTest: {
+            auto updatedPropValue = createVehiclePropValue(VehiclePropertyType::BOOLEAN, 1);
+            updatedPropValue->prop = value.value.int32Values[1];
+            updatedPropValue->value.int32Values[0] = value.value.int32Values[0];
+            updatedPropValue->timestamp = value.value.int64Values[0];
+            updatedPropValue->areaId = value.areaId;
+            onPropertyValueFromCar(*updatedPropValue, updateStatus);
+            return StatusCode::OK;
+        }
+
         case AP_POWER_STATE_REPORT:
             switch (value.value.int32Values[0]) {
                 case toInt(VehicleApPowerStateReport::DEEP_SLEEP_EXIT):
@@ -201,15 +238,18 @@ StatusCode EmulatedVehicleServer::onSetProperty(const VehiclePropValue& value) {
                 case toInt(VehicleApPowerStateReport::WAIT_FOR_VHAL):
                     // CPMS is in WAIT_FOR_VHAL state, simply move to ON
                     // Send back to HAL
-                    onPropertyValueFromCar(
-                            *createApPowerStateReq(VehicleApPowerStateReq::ON, 0));
+                    // ALWAYS update status for generated property value
+                    onPropertyValueFromCar(*createApPowerStateReq(VehicleApPowerStateReq::ON, 0),
+                                           true /* updateStatus */);
                     break;
                 case toInt(VehicleApPowerStateReport::DEEP_SLEEP_ENTRY):
                 case toInt(VehicleApPowerStateReport::SHUTDOWN_START):
                     // CPMS is in WAIT_FOR_FINISH state, send the FINISHED command
                     // Send back to HAL
+                    // ALWAYS update status for generated property value
                     onPropertyValueFromCar(
-                            *createApPowerStateReq(VehicleApPowerStateReq::FINISHED, 0));
+                            *createApPowerStateReq(VehicleApPowerStateReq::FINISHED, 0),
+                            true /* updateStatus */);
                     break;
                 case toInt(VehicleApPowerStateReport::ON):
                 case toInt(VehicleApPowerStateReport::SHUTDOWN_POSTPONE):
@@ -226,19 +266,12 @@ StatusCode EmulatedVehicleServer::onSetProperty(const VehiclePropValue& value) {
     }
 
     // In the real vhal, the value will be sent to Car ECU.
-    // We just pretend it is done here.
-    return StatusCode::OK;
-}
+    // We just pretend it is done here and send back to HAL
+    auto updatedPropValue = getValuePool()->obtain(value);
+    updatedPropValue->timestamp = elapsedRealtimeNano();
 
-StatusCode EmulatedVehicleServer::onSetPropertyFromVehicle(const VehiclePropValue& value) {
-    if (value.prop == kGenerateFakeDataControllingProperty) {
-        auto status = handleGenerateFakeDataRequest(value);
-        return status;
-    } else {
-        // Send back to HAL
-        onPropertyValueFromCar(value);
-        return StatusCode::OK;
-    }
+    onPropertyValueFromCar(*updatedPropValue, updateStatus);
+    return StatusCode::OK;
 }
 
 EmulatedPassthroughConnectorPtr makeEmulatedPassthroughConnector() {

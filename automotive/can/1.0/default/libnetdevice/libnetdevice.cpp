@@ -25,8 +25,7 @@
 #include <linux/can.h>
 #include <net/if.h>
 
-namespace android {
-namespace netdevice {
+namespace android::netdevice {
 
 bool exists(std::string ifname) {
     return nametoindex(ifname) != 0;
@@ -96,5 +95,4 @@ bool del(std::string dev) {
     return sock.send(req) && sock.receiveAck();
 }
 
-}  // namespace netdevice
-}  // namespace android
+}  // namespace android::netdevice

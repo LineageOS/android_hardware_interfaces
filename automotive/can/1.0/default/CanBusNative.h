@@ -18,12 +18,7 @@
 
 #include "CanBus.h"
 
-namespace android {
-namespace hardware {
-namespace automotive {
-namespace can {
-namespace V1_0 {
-namespace implementation {
+namespace android::hardware::automotive::can::V1_0::implementation {
 
 struct CanBusNative : public CanBus {
     CanBusNative(const std::string& ifname, uint32_t baudrate);
@@ -35,9 +30,4 @@ struct CanBusNative : public CanBus {
     const uint32_t mBaudrate;
 };
 
-}  // namespace implementation
-}  // namespace V1_0
-}  // namespace can
-}  // namespace automotive
-}  // namespace hardware
-}  // namespace android
+}  // namespace android::hardware::automotive::can::V1_0::implementation

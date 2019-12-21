@@ -22,12 +22,7 @@
 #include <termios.h>
 #include "CanBus.h"
 
-namespace android {
-namespace hardware {
-namespace automotive {
-namespace can {
-namespace V1_0 {
-namespace implementation {
+namespace android::hardware::automotive::can::V1_0::implementation {
 
 struct CanBusSlcan : public CanBus {
     CanBusSlcan(const std::string& uartName, uint32_t bitrate);
@@ -42,9 +37,4 @@ struct CanBusSlcan : public CanBus {
     base::unique_fd mFd;
 };
 
-}  // namespace implementation
-}  // namespace V1_0
-}  // namespace can
-}  // namespace automotive
-}  // namespace hardware
-}  // namespace android
+}  // namespace android::hardware::automotive::can::V1_0::implementation

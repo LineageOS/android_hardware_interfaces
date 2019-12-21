@@ -22,6 +22,8 @@
 #include <android/hardware/wifi/supplicant/1.2/ISupplicantStaIfaceCallback.h>
 #include <android/hardware/wifi/supplicant/1.2/ISupplicantStaNetwork.h>
 #include <android/hardware/wifi/supplicant/1.2/types.h>
+#include <android/hardware/wifi/supplicant/1.3/ISupplicantStaIface.h>
+#include <android/hardware/wifi/supplicant/1.3/types.h>
 #include <hidl/HidlSupport.h>
 #include <hidl/Status.h>
 
@@ -318,6 +320,19 @@ TEST_F(SupplicantStaIfaceHidlTest, StartDppEnrolleeInitiator) {
         return;
     }
 
+    /* Check if the underlying HAL version is 1.3 or higher and skip the test
+     * in this case. The 1.3 HAL uses different callbacks which are not
+     * supported by 1.2. This will cause this test to fail because the callbacks
+     * it is waiting for will never be called. Note that this test is also
+     * implemented in the 1.3 VTS test.
+     */
+    sp<::android::hardware::wifi::supplicant::V1_3::ISupplicantStaIface> v1_3 =
+        ::android::hardware::wifi::supplicant::V1_3::ISupplicantStaIface::
+            castFrom(sta_iface_);
+    if (v1_3 != nullptr) {
+        GTEST_SKIP() << "Test not supported with this HAL version";
+    }
+
     hidl_string uri =
         "DPP:C:81/1;M:48d6d5bd1de1;I:G1197843;K:MDkwEwYHKoZIzj0CAQYIKoZIzj"
         "0DAQcDIgAD0edY4X3N//HhMFYsZfMbQJTiNFtNIWF/cIwMB/gzqOM=;;";
@@ -366,6 +381,21 @@ TEST_F(SupplicantStaIfaceHidlTest, StartDppConfiguratorInitiator) {
     // If DPP is not supported, we just pass the test.
     if (!isDppSupported()) {
         // DPP not supported
+        return;
+    }
+
+    /* Check if the underlying HAL version is 1.3 or higher and skip the test
+     * in this case. The 1.3 HAL uses different callbacks which are not
+     * supported by 1.2. This will cause this test to fail because the callbacks
+     * it is waiting for will never be called. Note that this test is also
+     * implemented in the 1.3 VTS test.
+     */
+    sp<::android::hardware::wifi::supplicant::V1_3::ISupplicantStaIface> v1_3 =
+        ::android::hardware::wifi::supplicant::V1_3::ISupplicantStaIface::
+            castFrom(sta_iface_);
+
+    if (v1_3 != nullptr) {
+        GTEST_SKIP() << "Test not supported with this HAL version";
         return;
     }
 

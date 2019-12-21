@@ -25,7 +25,10 @@ import @1.1::UtranBands;
 import @1.2::NetworkScanRequest;
 import @1.4::AccessNetwork;
 import @1.4::ApnTypes;
+import @1.4::DataCallFailCause;
+import @1.4::DataConnActiveStatus;
 import @1.4::DataProfileInfo;
+import @1.4::PdpProtocolType;
 
 /**
  * Defining signal strength type.
@@ -289,3 +292,108 @@ struct DataProfileInfo {
     /** Supported APN types bitmap. See ApnTypes for the value of each bit. */
     bitfield<ApnTypes> supportedApnTypesBitmap;
 };
+
+/**
+ * The properties of the link address. This enum reflects the definition in
+ * if_addr.h in Linux kernel.
+ */
+enum AddressProperty : int32_t {
+    NONE = 0,
+
+    /** Indicates this address is deprecated */
+    DEPRECATED = 0x20,
+};
+
+/**
+ * Describes a data link address for mobile data connection.
+ */
+struct LinkAddress {
+    /**
+     * The format is IP address with optional "/"
+     * prefix length (The format is defined in RFC-4291 section 2.3). For example, "192.0.1.3",
+     * "192.0.1.11/16", or "2001:db8::1/64". Typically one IPv4 or one IPv6 or one of each. If
+     * the prefix length is absent, then the addresses are assumed to be point to point with
+     * IPv4 with prefix length 32 or IPv6 with prefix length 128.
+     */
+    string address;
+
+    /**
+     * The properties of the link address
+     */
+    bitfield<AddressProperty> properties;
+
+    /**
+     * The UTC time that this link address will be deprecated. 0 indicates this information is not
+     * available.
+     */
+    uint64_t deprecatedTime;
+
+    /**
+     * The UTC time that this link address will expire and no longer valid. 0 indicates this
+     * information is not available.
+     */
+    uint64_t expiredTime;
+};
+
+/**
+ * Overwritten from @1.4::SetupDataCallResult in order to update the addresses to 1.5
+ * version. In 1.5 the type of addresses changes to vector of LinkAddress.
+ */
+struct SetupDataCallResult {
+    /** Data call fail cause. DataCallFailCause.NONE if no error. */
+    DataCallFailCause cause;
+
+    /**
+     * If status != DataCallFailCause.NONE, this field indicates the suggested retry back-off timer
+     * value RIL wants to override the one pre-configured in FW. The unit is milliseconds.
+     * The value < 0 means no value is suggested.
+     * The value 0 means retry must be done ASAP.
+     * The value of INT_MAX(0x7fffffff) means no retry.
+     */
+    int32_t suggestedRetryTime;
+
+    /** Context ID, uniquely identifies this call. */
+    int32_t cid;
+
+    /** Data connection active status. */
+    DataConnActiveStatus active;
+
+    /**
+     * PDP_type values. If cause is DataCallFailCause.ONLY_SINGLE_BEARER_ALLOWED, this is the type
+     * supported such as "IP" or "IPV6".
+     */
+    PdpProtocolType type;
+
+    /** The network interface name. */
+    string ifname;
+
+    /**
+     * List of link address.
+     */
+    vec<LinkAddress> addresses;
+
+    /**
+     * List of DNS server addresses, e.g., "192.0.1.3" or "192.0.1.11 2001:db8::1". Empty if no dns
+     * server addresses returned.
+     */
+    vec<string> dnses;
+
+    /**
+     * List of default gateway addresses, e.g., "192.0.1.3" or "192.0.1.11 2001:db8::1".
+     * When empty, the addresses represent point to point connections.
+     */
+    vec<string> gateways;
+
+    /**
+     * List of P-CSCF(Proxy Call State Control Function) addresses via PCO(Protocol Configuration
+     * Option), e.g., "2001:db8::1 2001:db8::2 2001:db8::3". Empty if not IMS client.
+     */
+    vec<string> pcscf;
+
+    /**
+     * MTU received from network. Value <= 0 means network has either not sent a value or sent an
+     * invalid value.
+     */
+    int32_t mtu;
+};
+

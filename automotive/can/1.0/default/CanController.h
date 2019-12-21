@@ -20,12 +20,7 @@
 
 #include <android/hardware/automotive/can/1.0/ICanController.h>
 
-namespace android {
-namespace hardware {
-namespace automotive {
-namespace can {
-namespace V1_0 {
-namespace implementation {
+namespace android::hardware::automotive::can::V1_0::implementation {
 
 struct CanController : public ICanController {
     Return<void> getSupportedInterfaceTypes(getSupportedInterfaceTypes_cb _hidl_cb) override;
@@ -39,9 +34,4 @@ struct CanController : public ICanController {
     std::map<std::string, sp<CanBus>> mCanBuses GUARDED_BY(mCanBusesGuard);
 };
 
-}  // namespace implementation
-}  // namespace V1_0
-}  // namespace can
-}  // namespace automotive
-}  // namespace hardware
-}  // namespace android
+}  // namespace android::hardware::automotive::can::V1_0::implementation

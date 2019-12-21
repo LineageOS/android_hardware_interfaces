@@ -26,12 +26,7 @@
 #include <atomic>
 #include <thread>
 
-namespace android {
-namespace hardware {
-namespace automotive {
-namespace can {
-namespace V1_0 {
-namespace implementation {
+namespace android::hardware::automotive::can::V1_0::implementation {
 
 struct CanBus : public ICanBus {
     using ErrorCallback = std::function<void()>;
@@ -114,9 +109,4 @@ struct CanBus : public ICanBus {
     ErrorCallback mErrCb;
 };
 
-}  // namespace implementation
-}  // namespace V1_0
-}  // namespace can
-}  // namespace automotive
-}  // namespace hardware
-}  // namespace android
+}  // namespace android::hardware::automotive::can::V1_0::implementation
