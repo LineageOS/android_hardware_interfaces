@@ -2645,8 +2645,10 @@ TEST_P(EncryptionOperationsTest, AesWrongPurpose) {
                                    .Padding(PaddingMode::NONE));
     ASSERT_EQ(ErrorCode::OK, err) << "Got " << err;
 
-    err = Begin(KeyPurpose::DECRYPT,
-                AuthorizationSetBuilder().BlockMode(BlockMode::GCM).Padding(PaddingMode::NONE));
+    err = Begin(KeyPurpose::DECRYPT, AuthorizationSetBuilder()
+                                             .BlockMode(BlockMode::GCM)
+                                             .Padding(PaddingMode::NONE)
+                                             .Authorization(TAG_MAC_LENGTH, 128));
     EXPECT_EQ(ErrorCode::INCOMPATIBLE_PURPOSE, err) << "Got " << err;
 
     CheckedDeleteKey();
@@ -2659,8 +2661,10 @@ TEST_P(EncryptionOperationsTest, AesWrongPurpose) {
                                                  .Authorization(TAG_MIN_MAC_LENGTH, 128)
                                                  .Padding(PaddingMode::NONE)));
 
-    err = Begin(KeyPurpose::ENCRYPT,
-                AuthorizationSetBuilder().BlockMode(BlockMode::GCM).Padding(PaddingMode::NONE));
+    err = Begin(KeyPurpose::ENCRYPT, AuthorizationSetBuilder()
+                                             .BlockMode(BlockMode::GCM)
+                                             .Padding(PaddingMode::NONE)
+                                             .Authorization(TAG_MAC_LENGTH, 128));
     EXPECT_EQ(ErrorCode::INCOMPATIBLE_PURPOSE, err) << "Got " << err;
 }
 
