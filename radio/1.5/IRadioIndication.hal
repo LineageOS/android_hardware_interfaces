@@ -59,4 +59,21 @@ interface IRadioIndication extends @1.4::IRadioIndication {
     oneway registrationFailed(
             RadioIndicationType type, CellIdentity cellIdentity, string chosenPlmn,
             bitfield<Domain> domain, int32_t causeCode, int32_t additionalCauseCode);
+
+    /**
+     * Indicate barring information for the user’s access category / access class and PLMN.
+     *
+     * <p>Provide information about the barring status of the cell for the user. The information
+     * provided should describe all barring configurations that are applicable to the current user,
+     * even if the user is not currently barred (due to conditional barring). This informs Android
+     * of likely future (statistical) barring for specific services.
+     *
+     * <p>This indication should be sent whenever the cell’s barring config changes for the current
+     * user, or if the user’s conditional barring status changes due to re-evaluation of the
+     * barring conditions. Barring status will likely change when the device camps for service,
+     * when PLMN selection is completed, when the device attempts to access a conditionally barred
+     * service, and when the System Information including barring info for a camped cell is updated.
+     */
+    oneway barringInfoChanged(
+            RadioIndicationType type, CellIdentity cellIdentity, vec<BarringInfo> barringInfos);
 };
