@@ -34,6 +34,14 @@ static inline uint8_t read_bit(const std::vector<uint8_t>& input, size_t bit) {
     return (input[bit >> 3] >> (bit & 7)) & 1u;
 }
 
+// Use a simple LCG which is easy to run in reverse.
+// https://www.johndcook.com/blog/2017/07/05/simple-random-number-generator/
+constexpr uint64_t RNG_MODULUS = 0x7fffffff;
+constexpr uint64_t RNG_MUL = 742938285;
+constexpr uint64_t RNG_SEED = 20170705;
+constexpr uint64_t RNG_INV_MUL = 1413043504;   // (mul * inv_mul) % modulus == 1
+constexpr uint64_t RNG_INV_SEED = 1173538311;  // (seed * mul**65534) % modulus
+
 // Apply an error correcting encoding.
 //
 // The error correcting code used is an augmented Hadamard code with
@@ -45,6 +53,9 @@ static inline uint8_t read_bit(const std::vector<uint8_t>& input, size_t bit) {
 // codewords. Thus if a single 512-byte DRAM line is lost, instead of losing
 // 2^11 bits from the encoding of a single code word, we lose 2^7 bits
 // from the encoding of each of the 16 codewords.
+// In addition we apply a Fisher-Yates shuffle to the bytes of the encoding;
+// Hadamard encoding recovers much better from random errors than systematic
+// ones, and this ensures that errors will be random.
 std::vector<uint8_t> EncodeKey(const std::vector<uint8_t>& input) {
     CHECK_EQ(input.size(), KEY_SIZE_IN_BYTES);
     std::vector<uint8_t> result(OUTPUT_SIZE_BYTES, 0);
@@ -60,6 +71,16 @@ std::vector<uint8_t> EncodeKey(const std::vector<uint8_t>& input) {
             wi ^= wi >> 1u;
             or_bit(&result, (j * KEY_CODEWORDS) + i, wi & 1);
         }
+    }
+    // Apply the inverse shuffle here; we apply the forward shuffle in decoding.
+    uint64_t rng_state = RNG_INV_SEED;
+    for (size_t i = OUTPUT_SIZE_BYTES - 1; i > 0; i--) {
+        auto j = rng_state % (i + 1);
+        auto t = result[i];
+        result[i] = result[j];
+        result[j] = t;
+        rng_state *= RNG_INV_MUL;
+        rng_state %= RNG_MODULUS;
     }
     return result;
 }
@@ -106,8 +127,19 @@ static uint16_t DecodeWord(size_t word, const std::vector<uint8_t>& encoded) {
     return winner;
 }
 
-std::vector<uint8_t> DecodeKey(const std::vector<uint8_t>& encoded) {
-    CHECK_EQ(OUTPUT_SIZE_BYTES, encoded.size());
+std::vector<uint8_t> DecodeKey(const std::vector<uint8_t>& shuffled) {
+    CHECK_EQ(OUTPUT_SIZE_BYTES, shuffled.size());
+    // Apply the forward Fisher-Yates shuffle.
+    std::vector<uint8_t> encoded(OUTPUT_SIZE_BYTES, 0);
+    encoded[0] = shuffled[0];
+    uint64_t rng_state = RNG_SEED;
+    for (size_t i = 1; i < OUTPUT_SIZE_BYTES; i++) {
+        auto j = rng_state % (i + 1);
+        encoded[i] = encoded[j];
+        encoded[j] = shuffled[i];
+        rng_state *= RNG_MUL;
+        rng_state %= RNG_MODULUS;
+    }
     std::vector<uint8_t> result(KEY_SIZE_IN_BYTES, 0);
     for (size_t i = 0; i < KEY_CODEWORDS; i++) {
         uint16_t val = DecodeWord(i, encoded);
