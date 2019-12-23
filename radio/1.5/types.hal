@@ -57,9 +57,9 @@ enum SignalMeasurementType : int32_t {
     RSRP = 3,
     /**
      * Reference Signal Received Quality
-     * Range: -20 dB to -3 dB;
+     * Range: -34 dB to 3 dB;
      * Used RAN: EUTRAN
-     * Reference: 3GPP TS 36.133 9.1.7
+     * Reference: 3GPP TS 36.133 v12.6.0 section 9.1.7
      */
     RSRQ = 4,
     /**
