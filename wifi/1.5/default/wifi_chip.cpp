@@ -628,6 +628,13 @@ Return<void> WifiChip::getCapabilities_1_3(getCapabilities_cb hidl_status_cb) {
                            hidl_status_cb);
 }
 
+Return<void> WifiChip::getCapabilities_1_5(
+    getCapabilities_1_5_cb hidl_status_cb) {
+    return validateAndCall(this, WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
+                           &WifiChip::getCapabilitiesInternal_1_5,
+                           hidl_status_cb);
+}
+
 Return<void> WifiChip::debug(const hidl_handle& handle,
                              const hidl_vec<hidl_string>&) {
     if (handle != nullptr && handle->numFds >= 1) {
@@ -1237,8 +1244,13 @@ WifiStatus WifiChip::selectTxPowerScenarioInternal_1_2(
 }
 
 std::pair<WifiStatus, uint32_t> WifiChip::getCapabilitiesInternal_1_3() {
+    // Deprecated support for this callback.
+    return {createWifiStatus(WifiStatusCode::ERROR_NOT_SUPPORTED), 0};
+}
+
+std::pair<WifiStatus, uint32_t> WifiChip::getCapabilitiesInternal_1_5() {
     legacy_hal::wifi_error legacy_status;
-    uint32_t legacy_feature_set;
+    uint64_t legacy_feature_set;
     uint32_t legacy_logger_feature_set;
     const auto ifname = getFirstActiveWlanIfaceName();
     std::tie(legacy_status, legacy_feature_set) =

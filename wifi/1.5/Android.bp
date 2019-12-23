@@ -5,6 +5,7 @@ hidl_interface {
     root: "android.hardware",
     srcs: [
         "IWifi.hal",
+        "IWifiChip.hal",
     ],
     interfaces: [
         "android.hardware.wifi@1.0",
