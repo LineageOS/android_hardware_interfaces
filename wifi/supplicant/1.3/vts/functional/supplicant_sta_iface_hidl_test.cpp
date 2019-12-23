@@ -109,10 +109,9 @@ class SupplicantStaIfaceHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 
         // We need to first get the key management capabilities from the device.
         // If DPP is not supported, we just pass the test.
-        sta_iface_->getKeyMgmtCapabilities(
+        sta_iface_->getKeyMgmtCapabilities_1_3(
             [&](const SupplicantStatus& status, uint32_t keyMgmtMaskInternal) {
                 EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
-
                 keyMgmtMask = keyMgmtMaskInternal;
             });
 
