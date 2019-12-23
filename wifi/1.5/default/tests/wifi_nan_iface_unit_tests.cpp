@@ -112,10 +112,12 @@ class MockNanIfaceEventCallback : public IWifiNanIfaceEventCallback {
 
 class WifiNanIfaceTest : public Test {
    protected:
+    legacy_hal::wifi_hal_fn fake_func_table_;
     std::shared_ptr<NiceMock<wifi_system::MockInterfaceTool>> iface_tool_{
         new NiceMock<wifi_system::MockInterfaceTool>};
     std::shared_ptr<NiceMock<legacy_hal::MockWifiLegacyHal>> legacy_hal_{
-        new NiceMock<legacy_hal::MockWifiLegacyHal>(iface_tool_)};
+        new NiceMock<legacy_hal::MockWifiLegacyHal>(iface_tool_,
+                                                    fake_func_table_, true)};
     std::shared_ptr<NiceMock<iface_util::MockWifiIfaceUtil>> iface_util_{
         new NiceMock<iface_util::MockWifiIfaceUtil>(iface_tool_)};
 };
