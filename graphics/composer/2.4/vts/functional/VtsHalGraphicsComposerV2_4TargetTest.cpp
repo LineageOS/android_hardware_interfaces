@@ -184,6 +184,13 @@ TEST_P(GraphicsComposerHidlTest, getDisplayCapabilitiesBadDisplay) {
     EXPECT_EQ(Error::BAD_DISPLAY, error);
 }
 
+TEST_P(GraphicsComposerHidlTest, getDisplayCapabilities) {
+    for (Display display : mComposerCallback->getDisplays()) {
+        std::vector<IComposerClient::DisplayCapability> capabilities;
+        EXPECT_EQ(Error::NONE, mComposerClient->getDisplayCapabilities(display, &capabilities));
+    }
+}
+
 TEST_P(GraphicsComposerHidlTest, getDisplayConnectionType) {
     IComposerClient::DisplayConnectionType type;
     EXPECT_EQ(Error::BAD_DISPLAY,
