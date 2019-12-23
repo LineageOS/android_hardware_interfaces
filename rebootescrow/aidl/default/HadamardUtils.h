@@ -31,9 +31,10 @@ constexpr auto CODEWORD_BYTES = 2u;  // uint16_t
 constexpr auto CODEWORD_BITS = CODEWORD_BYTES * BYTE_LENGTH;
 constexpr uint32_t CODE_K = CODEWORD_BITS - 1;
 constexpr uint32_t ENCODE_LENGTH = 1u << CODE_K;
-constexpr auto KEY_CODEWORDS = 16u;
+constexpr auto KEY_CODEWORD_BYTES = 2u;  // uint16_t (after transpose)
+constexpr auto KEY_CODEWORDS = KEY_CODEWORD_BYTES * BYTE_LENGTH;
 constexpr auto KEY_SIZE_IN_BYTES = KEY_CODEWORDS * CODEWORD_BYTES;
-constexpr auto OUTPUT_SIZE_BYTES = KEY_CODEWORDS * ENCODE_LENGTH / BYTE_LENGTH;
+constexpr auto OUTPUT_SIZE_BYTES = ENCODE_LENGTH * KEY_CODEWORD_BYTES;
 
 // Encodes a key that has a size of KEY_SIZE_IN_BYTES. Returns a byte array representation of the
 // encoded bitset. So a 32 bytes key will expand to 16*(2^15) bits = 64KiB.

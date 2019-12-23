@@ -26,10 +26,6 @@ namespace hardware {
 namespace rebootescrow {
 namespace hadamard {
 
-static inline void or_bit(std::vector<uint8_t>* input, size_t bit, uint8_t val) {
-    (*input)[bit >> 3] |= (val & 1u) << (bit & 7);
-}
-
 static inline uint8_t read_bit(const std::vector<uint8_t>& input, size_t bit) {
     return (input[bit >> 3] >> (bit & 7)) & 1u;
 }
@@ -60,17 +56,28 @@ std::vector<uint8_t> EncodeKey(const std::vector<uint8_t>& input) {
     CHECK_EQ(input.size(), KEY_SIZE_IN_BYTES);
     std::vector<uint8_t> result(OUTPUT_SIZE_BYTES, 0);
     static_assert(OUTPUT_SIZE_BYTES == 64 * 1024);
-    for (size_t i = 0; i < KEY_CODEWORDS; i++) {
-        uint16_t word = input[i * 2 + 1] << 8 | input[i * 2];
-        for (size_t j = 0; j < ENCODE_LENGTH; j++) {
-            uint16_t wi = word & (j + ENCODE_LENGTH);
-            // Sum all the bits in the word and check its parity.
-            wi ^= wi >> 8u;
-            wi ^= wi >> 4u;
-            wi ^= wi >> 2u;
-            wi ^= wi >> 1u;
-            or_bit(&result, (j * KEY_CODEWORDS) + i, wi & 1);
+    // Transpose the key so that each row contains one bit from each codeword
+    uint16_t wordmatrix[CODEWORD_BITS];
+    for (size_t i = 0; i < CODEWORD_BITS; i++) {
+        uint16_t word = 0;
+        for (size_t j = 0; j < KEY_CODEWORDS; j++) {
+            word |= read_bit(input, i + j * CODEWORD_BITS) << j;
         }
+        wordmatrix[i] = word;
+    }
+    // Fill in the encodings in Gray code order for speed.
+    uint16_t val = wordmatrix[CODEWORD_BITS - 1];
+    size_t ix = 0;
+    for (size_t i = 0; i < ENCODE_LENGTH; i++) {
+        for (size_t b = 0; b < CODEWORD_BITS; b++) {
+            if (i & (1 << b)) {
+                ix ^= (1 << b);
+                val ^= wordmatrix[b];
+                break;
+            }
+        }
+        result[ix * KEY_CODEWORD_BYTES] = val & 0xffu;
+        result[ix * KEY_CODEWORD_BYTES + 1] = val >> 8u;
     }
     // Apply the inverse shuffle here; we apply the forward shuffle in decoding.
     uint64_t rng_state = RNG_INV_SEED;
