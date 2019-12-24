@@ -537,6 +537,16 @@ enum FrontendDvbsStandard : uint8_t {
 };
 
 /**
+ *   VCM mode in DVBS.
+ */
+@export
+enum FrontendDvbsVcmMode : uint32_t {
+    UNDEFINED,
+    AUTO,
+    MANUAL,
+};
+
+/**
  *  Signal Settings for an DVBS Frontend.
  */
 struct FrontendDvbsSettings {
@@ -561,6 +571,8 @@ struct FrontendDvbsSettings {
     uint32_t inputStreamId;
 
     FrontendDvbsStandard standard;
+
+    FrontendDvbsVcmMode vcmMode;
 };
 
 /**
@@ -960,7 +972,7 @@ enum FrontendIsdbs3Modulation : uint32_t {
     /**
      * hardware is able to detect and set Modulation automatically
      */
-    AUTO = 1 << 5,
+    AUTO = 1 << 0,
     MOD_BPSK = 1 << 1,
     MOD_QPSK = 1 << 2,
     MOD_8PSK = 1 << 3,
@@ -1105,7 +1117,7 @@ struct FrontendIsdbtCapabilities {
 
     bitfield<FrontendIsdbtBandwidth> bandwidthCap;
 
-    bitfield<FrontendIsdbtModulation> constellationCap;
+    bitfield<FrontendIsdbtModulation> modulationCap;
 
     bitfield<FrontendIsdbtCoderate> coderateCap;
 
@@ -1230,6 +1242,11 @@ enum FrontendScanMessageType : uint32_t {
      */
     SYMBOL_RATE,
     /**
+     * Locked HIERARCHY for DVBT2 frontend.
+     */
+    HIERARCHY,
+    ANALOG_TYPE,
+    /**
      * Locked Plp Ids for DVBT2 frontend.
      */
     PLP_IDS,
@@ -1274,14 +1291,18 @@ safe_union FrontendScanMessage {
     uint8_t progressPercent;
 
     /**
-     * Signal frequency in Hertz
+     * Signal frequencies in Hertz
      */
-    uint32_t frequency;
+    vec<uint32_t> frequencies;
 
     /**
      * Symbols per second
      */
-    uint32_t symbolRate;
+    vec<uint32_t> symbolRates;
+
+    FrontendDvbtHierarchy hierarchy;
+
+    FrontendAnalogType analogType;
 
     vec<uint8_t> plpIds;
 
@@ -1289,10 +1310,12 @@ safe_union FrontendScanMessage {
 
     vec<uint16_t> inputStreamIds;
 
-    safe_union standard {
+    safe_union Standard {
         FrontendDvbsStandard sStd;
 
         FrontendDvbtStandard tStd;
+
+        FrontendAnalogSifStandard sifStd;
     } std;
 
     /**
@@ -2019,18 +2042,14 @@ enum DemuxScHevcIndex : uint32_t {
 };
 
 /**
- * Index type to be used in the filter for record
+ * Start Code Index type to be used in the filter for record
  */
 @export
-enum DemuxRecordIndexType : uint32_t {
+enum DemuxRecordScIndexType : uint32_t {
     /**
-     * Don't use index
+     * Don't use SC index
      */
     NONE,
-    /**
-     * Use TS index
-     */
-    TS,
     /**
      * Use Start Code index
      */
@@ -2045,15 +2064,16 @@ enum DemuxRecordIndexType : uint32_t {
  *  Filter Settings for Record data.
  */
 struct DemuxFilterRecordSettings {
-    DemuxRecordIndexType indexType;
+    bitfield<DemuxTsIndex> tsIndexMask;
 
-    safe_union IndexMask {
-        bitfield<DemuxTsIndex> tsIndexMask;
+    DemuxRecordScIndexType scIndexType;
 
-        bitfield<DemuxScIndex> scIndexMask;
+    safe_union ScIndexMask {
 
-        bitfield<DemuxScHevcIndex> scHevcIndexMask;
-    } indexMask;
+        bitfield<DemuxScIndex> sc;
+
+        bitfield<DemuxScHevcIndex> scHevc;
+    } scIndexMask;
 };
 
 /**
@@ -2398,6 +2418,12 @@ struct DemuxFilterMediaEvent {
     uint32_t dataLength;
 
     /**
+     *  The offset in the memory block which is shared among multiple
+     *  MediaEvents.
+     */
+    uint32_t offset;
+
+    /**
      * A handle associated to the memory where audio or video data stays.
      */
     handle avMemory;
@@ -2406,6 +2432,12 @@ struct DemuxFilterMediaEvent {
      * True if the avMemory is in secure area, and isn't mappable.
      */
     bool isSecureMemory;
+
+    /**
+     * An Id is used by HAL to provide additional information for AV data.
+     * For secure audio, it's the audio handle used by Audio Track.
+     */
+    uint64_t avDataId;
 
     /**
      * MPU sequence number of filtered data (only for MMTP)
@@ -2447,16 +2479,17 @@ struct DemuxFilterPesEvent {
 struct DemuxFilterTsRecordEvent {
     DemuxPid pid;
 
+    bitfield<DemuxTsIndex> tsIndexMask;
+
     /**
      * Indexes of record output
      */
-    safe_union IndexMask {
-        bitfield<DemuxTsIndex> tsIndexMask;
+    safe_union ScIndexMask {
 
-        bitfield<DemuxScIndex> scIndexMask;
+        bitfield<DemuxScIndex> sc;
 
-        bitfield<DemuxScHevcIndex> scHevcIndexMask;
-    } indexMask;
+        bitfield<DemuxScHevcIndex> scHevc;
+    } scIndexMask;
 
     /**
      * Byte number from beginning of the filter's output

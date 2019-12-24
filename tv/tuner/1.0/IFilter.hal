@@ -120,12 +120,13 @@ interface IFilter {
      * presented by file descripor in the handle as released.
      *
      * @param avMemory A handle associated to the memory for audio or video.
+     * @param avDataId An Id provides additional information for AV data.
      * @return result Result status of the operation.
      *         SUCCESS if successful,
      *         INVALID_ARGUMENT if failed for wrong parameter.
      *         UNKNOWN_ERROR if failed for other reasons.
      */
-    releaseAvHandle(handle avMemory) generates (Result result);
+    releaseAvHandle(handle avMemory, uint64_t avDataId) generates (Result result);
 
     /**
      * Set the filter's data source.
