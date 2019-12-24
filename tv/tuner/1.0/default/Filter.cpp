@@ -120,7 +120,7 @@ Return<Result> Filter::flush() {
     return Result::SUCCESS;
 }
 
-Return<Result> Filter::releaseAvHandle(const hidl_handle& /*avMemory*/) {
+Return<Result> Filter::releaseAvHandle(const hidl_handle& /*avMemory*/, uint64_t /*avDataId*/) {
     ALOGV("%s", __FUNCTION__);
 
     return Result::SUCCESS;
