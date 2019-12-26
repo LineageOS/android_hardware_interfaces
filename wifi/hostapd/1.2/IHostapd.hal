@@ -16,6 +16,7 @@
 
 package android.hardware.wifi.hostapd@1.2;
 
+import @1.0::IHostapd.EncryptionType;
 import @1.0::IHostapd.NetworkParams;
 import @1.1::IHostapd;
 import HostapdStatus;
@@ -27,6 +28,12 @@ import DebugLevel;
  * Top-level object for managing SoftAPs.
  */
 interface IHostapd extends @1.1::IHostapd {
+    /** Possible Security types. */
+    enum EncryptionType : @1.0::IHostapd.EncryptionType {
+        WPA3_SAE_TRANSITION,
+        WPA3_SAE,
+    };
+
     /**
      * Band bitmMask to use for the SoftAp operations.
      * A combinatoin of these bits are used to identify the allowed bands
@@ -149,6 +156,24 @@ interface IHostapd extends @1.1::IHostapd {
          */
         ChannelParams channelParams;
     };
+
+    /**
+     * Parameters to use for setting up the access point network.
+     */
+    struct NetworkParams {
+        /**
+         * Baseline information as defined in HAL 1.0.
+         */
+        @1.0::IHostapd.NetworkParams V1_0;
+        /** Key management mask for the replace V1_0.encryptionType. */
+        EncryptionType encryptionType;
+        /**
+         * Passphrase for WPA3_SAE network, WPA3_SAE_TRANSITION and
+         * WPA2_PSK. Replaces @1.0::IHostapd.NetworkParams.pskPassphrase.
+         */
+        string passphrase;
+    };
+
 
     /**
      * Adds a new access point for hostapd to control.
