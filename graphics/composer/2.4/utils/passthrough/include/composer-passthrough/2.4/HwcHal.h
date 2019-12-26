@@ -167,6 +167,57 @@ class HwcHalImpl : public V2_3::passthrough::detail::HwcHalImpl<Hal> {
         return Error::NONE;
     }
 
+    Error setAutoLowLatencyMode(Display display, bool on) override {
+        if (!mDispatch.setAutoLowLatencyMode) {
+            return Error::UNSUPPORTED;
+        }
+
+        int32_t error = mDispatch.setAutoLowLatencyMode(mDevice, display, on);
+        if (error != HWC2_ERROR_NONE) {
+            return static_cast<Error>(error);
+        }
+        return Error::NONE;
+    }
+
+    Error getSupportedContentTypes(
+            Display display,
+            std::vector<IComposerClient::ContentType>* outSupportedContentTypes) override {
+        if (!mDispatch.getSupportedContentTypes) {
+            return Error::UNSUPPORTED;
+        }
+
+        uint32_t count = 0;
+        int32_t error = mDispatch.getSupportedContentTypes(mDevice, display, &count, nullptr);
+        if (error != HWC2_ERROR_NONE) {
+            return static_cast<Error>(error);
+        }
+
+        outSupportedContentTypes->resize(count);
+
+        error = mDispatch.getSupportedContentTypes(
+                mDevice, display, &count,
+                reinterpret_cast<std::underlying_type<IComposerClient::ContentType>::type*>(
+                        outSupportedContentTypes->data()));
+        if (error != HWC2_ERROR_NONE) {
+            *outSupportedContentTypes = std::vector<IComposerClient::ContentType>();
+            return static_cast<Error>(error);
+        }
+        return Error::NONE;
+    }
+
+    Error setContentType(Display display, IComposerClient::ContentType contentType) override {
+        if (!mDispatch.setContentType) {
+            return Error::UNSUPPORTED;
+        }
+
+        int32_t error =
+                mDispatch.setContentType(mDevice, display, static_cast<int32_t>(contentType));
+        if (error != HWC2_ERROR_NONE) {
+            return static_cast<Error>(error);
+        }
+        return Error::NONE;
+    }
+
   protected:
     bool initDispatch() override {
         if (!BaseType2_3::initDispatch()) {
@@ -179,6 +230,11 @@ class HwcHalImpl : public V2_3::passthrough::detail::HwcHalImpl<Hal> {
                                    &mDispatch.getDisplayVsyncPeriod);
         this->initOptionalDispatch(HWC2_FUNCTION_SET_ACTIVE_CONFIG_WITH_CONSTRAINTS,
                                    &mDispatch.setActiveConfigWithConstraints);
+        this->initOptionalDispatch(HWC2_FUNCTION_SET_AUTO_LOW_LATENCY_MODE,
+                                   &mDispatch.setAutoLowLatencyMode);
+        this->initOptionalDispatch(HWC2_FUNCTION_GET_SUPPORTED_CONTENT_TYPES,
+                                   &mDispatch.getSupportedContentTypes);
+        this->initOptionalDispatch(HWC2_FUNCTION_SET_CONTENT_TYPE, &mDispatch.setContentType);
         return true;
     }
 
@@ -222,6 +278,9 @@ class HwcHalImpl : public V2_3::passthrough::detail::HwcHalImpl<Hal> {
         HWC2_PFN_GET_DISPLAY_CONNECTION_TYPE getDisplayConnectionType;
         HWC2_PFN_GET_DISPLAY_VSYNC_PERIOD getDisplayVsyncPeriod;
         HWC2_PFN_SET_ACTIVE_CONFIG_WITH_CONSTRAINTS setActiveConfigWithConstraints;
+        HWC2_PFN_SET_AUTO_LOW_LATENCY_MODE setAutoLowLatencyMode;
+        HWC2_PFN_GET_SUPPORTED_CONTENT_TYPES getSupportedContentTypes;
+        HWC2_PFN_SET_CONTENT_TYPE setContentType;
     } mDispatch = {};
 
     hal::ComposerHal::EventCallback_2_4* mEventCallback_2_4 = nullptr;

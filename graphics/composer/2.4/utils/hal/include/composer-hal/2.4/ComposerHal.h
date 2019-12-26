@@ -67,6 +67,11 @@ class ComposerHal : public V2_3::hal::ComposerHal {
             Display display, Config config,
             const IComposerClient::VsyncPeriodChangeConstraints& vsyncPeriodChangeConstraints,
             VsyncPeriodChangeTimeline* timeline) = 0;
+    virtual Error setAutoLowLatencyMode(Display display, bool on) = 0;
+    virtual Error getSupportedContentTypes(
+            Display display,
+            std::vector<IComposerClient::ContentType>* outSupportedContentTypes) = 0;
+    virtual Error setContentType(Display display, IComposerClient::ContentType contentType) = 0;
 };
 
 }  // namespace hal

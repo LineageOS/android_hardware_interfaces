@@ -139,6 +139,24 @@ class ComposerClientImpl : public V2_3::hal::detail::ComposerClientImpl<Interfac
         return Void();
     }
 
+    Return<Error> setAutoLowLatencyMode(Display display, bool on) override {
+        return mHal->setAutoLowLatencyMode(display, on);
+    }
+
+    Return<void> getSupportedContentTypes(
+            Display display, IComposerClient::getSupportedContentTypes_cb hidl_cb) override {
+        std::vector<IComposerClient::ContentType> supportedContentTypes;
+        Error error = mHal->getSupportedContentTypes(display, &supportedContentTypes);
+
+        hidl_cb(error, supportedContentTypes);
+        return Void();
+    }
+
+    Return<Error> setContentType(Display display,
+                                 IComposerClient::ContentType contentType) override {
+        return mHal->setContentType(display, contentType);
+    }
+
     static std::unique_ptr<ComposerClientImpl> create(Hal* hal) {
         auto client = std::make_unique<ComposerClientImpl>(hal);
         return client->init() ? std::move(client) : nullptr;
