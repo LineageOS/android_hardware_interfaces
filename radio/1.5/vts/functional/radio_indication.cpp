@@ -333,3 +333,12 @@ Return<void> RadioIndication_v1_5::uiccApplicationsEnablementChanged(RadioIndica
                                                                      bool /*enabled*/) {
     return Void();
 }
+
+Return<void> RadioIndication_v1_5::registrationFailed(
+        RadioIndicationType /*type*/,
+        const ::android::hardware::radio::V1_5::CellIdentity& /*cellIdentity*/,
+        const ::android::hardware::hidl_string& /*chosenPlmn*/,
+        ::android::hardware::hidl_bitfield<::android::hardware::radio::V1_5::Domain> /*domain*/,
+        int32_t /*causeCode*/, int32_t /*additionalCauseCode*/) {
+    return Void();
+}
