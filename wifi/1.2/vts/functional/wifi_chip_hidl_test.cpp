@@ -176,7 +176,11 @@ TEST_P(WifiChipHidlTest, registerEventCallback_1_2) {
     sp<WifiChipEventCallback> wifiChipEventCallback = new WifiChipEventCallback();
     const auto& status =
         HIDL_INVOKE(wifi_chip_, registerEventCallback_1_2, wifiChipEventCallback);
-    EXPECT_EQ(WifiStatusCode::SUCCESS, status.code);
+
+    if (status.code != WifiStatusCode::SUCCESS) {
+        EXPECT_EQ(WifiStatusCode::ERROR_NOT_SUPPORTED, status.code);
+        return;
+    }
 }
 
 INSTANTIATE_TEST_SUITE_P(
