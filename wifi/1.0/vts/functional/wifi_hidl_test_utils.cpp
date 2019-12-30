@@ -209,23 +209,6 @@ sp<IWifiStaIface> getWifiStaIface(const std::string& instance_name) {
     return status_and_iface.second;
 }
 
-sp<IWifiRttController> getWifiRttController(const std::string& instance_name) {
-    sp<IWifiChip> wifi_chip = getWifiChip(instance_name);
-    if (!wifi_chip.get()) {
-        return nullptr;
-    }
-    sp<IWifiStaIface> wifi_sta_iface = getWifiStaIface(instance_name);
-    if (!wifi_sta_iface.get()) {
-        return nullptr;
-    }
-    const auto& status_and_controller =
-        HIDL_INVOKE(wifi_chip, createRttController, wifi_sta_iface);
-    if (status_and_controller.first.code != WifiStatusCode::SUCCESS) {
-        return nullptr;
-    }
-    return status_and_controller.second;
-}
-
 bool configureChipToSupportIfaceType(const sp<IWifiChip>& wifi_chip,
                                      IfaceType type,
                                      ChipModeId* configured_mode_id) {

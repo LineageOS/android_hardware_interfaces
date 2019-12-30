@@ -543,8 +543,12 @@ TEST_P(WifiChipHidlTest, CreateRttController) {
 
     const auto& status_and_rtt_controller =
         HIDL_INVOKE(wifi_chip_, createRttController, iface);
-    EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_rtt_controller.first.code);
-    EXPECT_NE(nullptr, status_and_rtt_controller.second.get());
+    if (status_and_rtt_controller.first.code !=
+        WifiStatusCode::ERROR_NOT_SUPPORTED) {
+        EXPECT_EQ(WifiStatusCode::SUCCESS,
+                  status_and_rtt_controller.first.code);
+        EXPECT_NE(nullptr, status_and_rtt_controller.second.get());
+    }
 }
 
 INSTANTIATE_TEST_SUITE_P(

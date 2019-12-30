@@ -44,8 +44,6 @@ android::sp<android::hardware::wifi::V1_0::IWifiP2pIface> getWifiP2pIface(
     const std::string& instance_name = "");
 android::sp<android::hardware::wifi::V1_0::IWifiStaIface> getWifiStaIface(
     const std::string& instance_name = "");
-android::sp<android::hardware::wifi::V1_0::IWifiRttController>
-getWifiRttController(const std::string& instance_name = "");
 // Configure the chip in a mode to support the creation of the provided
 // iface type.
 bool configureChipToSupportIfaceType(
