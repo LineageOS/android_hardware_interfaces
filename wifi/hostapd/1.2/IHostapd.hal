@@ -21,6 +21,7 @@ import @1.1::IHostapd;
 import HostapdStatus;
 import MacAddress;
 import Ieee80211ReasonCode;
+import DebugLevel;
 
 /**
  * Top-level object for managing SoftAPs.
@@ -120,4 +121,17 @@ interface IHostapd extends @1.1::IHostapd {
      */
     forceClientDisconnect(string ifaceName, MacAddress clientAddress,
         Ieee80211ReasonCode reasonCode) generates (HostapdStatus status);
+
+    /**
+     * Set debug parameters for the hostapd.
+     *
+     * @param level Debug logging level for the hostapd.
+     *        (one of |DebugLevel| values).
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |HostapdStatusCode.SUCCESS|,
+     *         |HostapdStatusCode.FAILURE_UNKNOWN|
+     */
+    setDebugParams(DebugLevel level)
+        generates (HostapdStatus status);
 };

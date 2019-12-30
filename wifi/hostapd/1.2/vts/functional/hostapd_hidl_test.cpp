@@ -31,6 +31,7 @@ using ::android::sp;
 using ::android::hardware::hidl_string;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
+using ::android::hardware::wifi::hostapd::V1_2::DebugLevel;
 using ::android::hardware::wifi::hostapd::V1_2::HostapdStatusCode;
 using ::android::hardware::wifi::hostapd::V1_2::Ieee80211ReasonCode;
 using ::android::hardware::wifi::hostapd::V1_2::IHostapd;
@@ -317,6 +318,14 @@ TEST_P(HostapdHidlTest, DisconnectClientWhenIfacAvailable) {
         HIDL_INVOKE(hostapd_, forceClientDisconnect, getPrimaryWlanIfaceName(),
                     kTestZeroMacAddr, kTestDisconnectReasonCode);
     EXPECT_EQ(HostapdStatusCode::FAILURE_CLIENT_UNKNOWN, status_1_2.code);
+}
+
+/*
+ * SetDebugParams
+ */
+TEST_P(HostapdHidlTest, SetDebugParams) {
+    auto status = HIDL_INVOKE(hostapd_, setDebugParams, DebugLevel::EXCESSIVE);
+    EXPECT_EQ(HostapdStatusCode::SUCCESS, status.code);
 }
 
 INSTANTIATE_TEST_CASE_P(
