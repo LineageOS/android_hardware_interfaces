@@ -207,6 +207,9 @@ class IfaceCallback : public ISupplicantStaIfaceCallback {
         ISupplicantStaIfaceCallback::EapErrorCode /* eapErrorCode */) override {
         return Void();
     }
+    Return<void> onEapFailure_1_3(uint32_t /* eapErrorCode */) override {
+        return Void();
+    }
     Return<void> onWpsEventSuccess() override { return Void(); }
     Return<void> onWpsEventFail(
         const hidl_array<uint8_t, 6>& /* bssid */,
