@@ -62,7 +62,7 @@ void H4Protocol::OnPacketReady() {
       iso_cb_(hci_packetizer_.GetPacket());
       break;
     default:
-      LOG_ALWAYS_FATAL("%s: Unimplemented packet type %d", __func__,
+      ALOGE("%s: Unimplemented packet type %d", __func__,
                        static_cast<int>(hci_packet_type_));
   }
   // Get ready for the next type byte.
@@ -91,7 +91,7 @@ void H4Protocol::OnDataReady(int fd) {
     if (hci_packet_type_ != HCI_PACKET_TYPE_ACL_DATA &&
         hci_packet_type_ != HCI_PACKET_TYPE_SCO_DATA &&
         hci_packet_type_ != HCI_PACKET_TYPE_EVENT) {
-      LOG_ALWAYS_FATAL("%s: Unimplemented packet type %d", __func__,
+      ALOGE("%s: Unimplemented packet type %d", __func__,
                        static_cast<int>(hci_packet_type_));
     }
   } else {
