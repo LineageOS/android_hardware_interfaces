@@ -44,6 +44,8 @@ size_t MctProtocol::Send(uint8_t type, const uint8_t* data, size_t length) {
     return WriteSafely(uart_fds_[CH_CMD], data, length);
   if (type == HCI_PACKET_TYPE_ACL_DATA)
     return WriteSafely(uart_fds_[CH_ACL_OUT], data, length);
+  if (type == HCI_PACKET_TYPE_UNKNOWN)
+    ALOGE("%s: Unknown packet sent", __func__);
   LOG_ALWAYS_FATAL("%s: Unimplemented packet type = %d", __func__, type);
   return 0;
 }
