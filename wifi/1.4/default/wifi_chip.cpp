@@ -992,7 +992,7 @@ WifiStatus WifiChip::removeStaIfaceInternal(const std::string& ifname) {
 std::pair<WifiStatus, sp<V1_0::IWifiRttController>>
 WifiChip::createRttControllerInternal(const sp<IWifiIface>& /*bound_iface*/) {
     LOG(ERROR) << "createRttController is not supported on this HAL";
-    return {createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE), {}};
+    return {createWifiStatus(WifiStatusCode::ERROR_NOT_SUPPORTED), {}};
 }
 
 std::pair<WifiStatus, std::vector<WifiDebugRingBufferStatus>>

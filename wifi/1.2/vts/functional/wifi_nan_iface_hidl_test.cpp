@@ -481,15 +481,18 @@ TEST_P(WifiNanIfaceHidlTest, enableRequest_1_2InvalidArgs) {
     callbackType = INVALID;
     NanEnableRequest nanEnableRequest = {};
     NanConfigRequestSupplemental nanConfigRequestSupp = {};
-    ASSERT_EQ(WifiStatusCode::SUCCESS,
-              HIDL_INVOKE(iwifiNanIface, enableRequest_1_2, inputCmdId,
-                          nanEnableRequest, nanConfigRequestSupp)
-                  .code);
-    // wait for a callback
-    ASSERT_EQ(std::cv_status::no_timeout, wait(NOTIFY_ENABLE_RESPONSE));
-    ASSERT_EQ(NOTIFY_ENABLE_RESPONSE, callbackType);
-    ASSERT_EQ(id, inputCmdId);
-    ASSERT_EQ(status.status, NanStatusType::INVALID_ARGS);
+    const auto& halStatus =
+        HIDL_INVOKE(iwifiNanIface, enableRequest_1_2, inputCmdId,
+                    nanEnableRequest, nanConfigRequestSupp);
+    if (halStatus.code != WifiStatusCode::ERROR_NOT_SUPPORTED) {
+        ASSERT_EQ(WifiStatusCode::SUCCESS, halStatus.code);
+
+        // wait for a callback
+        ASSERT_EQ(std::cv_status::no_timeout, wait(NOTIFY_ENABLE_RESPONSE));
+        ASSERT_EQ(NOTIFY_ENABLE_RESPONSE, callbackType);
+        ASSERT_EQ(id, inputCmdId);
+        ASSERT_EQ(status.status, NanStatusType::INVALID_ARGS);
+    }
 }
 
 /*
@@ -502,10 +505,12 @@ TEST_P(WifiNanIfaceHidlTest, enableRequest_1_2ShimInvalidArgs) {
     nanEnableRequest.configParams.numberOfPublishServiceIdsInBeacon =
         128;  // must be <= 127
     NanConfigRequestSupplemental nanConfigRequestSupp = {};
-    ASSERT_EQ(WifiStatusCode::ERROR_INVALID_ARGS,
-              HIDL_INVOKE(iwifiNanIface, enableRequest_1_2, inputCmdId,
-                          nanEnableRequest, nanConfigRequestSupp)
-                  .code);
+    const auto& halStatus =
+        HIDL_INVOKE(iwifiNanIface, enableRequest_1_2, inputCmdId,
+                    nanEnableRequest, nanConfigRequestSupp);
+    if (halStatus.code != WifiStatusCode::ERROR_NOT_SUPPORTED) {
+        ASSERT_EQ(WifiStatusCode::ERROR_INVALID_ARGS, halStatus.code);
+    }
 }
 
 /*
@@ -516,15 +521,19 @@ TEST_P(WifiNanIfaceHidlTest, configRequest_1_2InvalidArgs) {
     callbackType = INVALID;
     NanConfigRequest nanConfigRequest = {};
     NanConfigRequestSupplemental nanConfigRequestSupp = {};
-    ASSERT_EQ(WifiStatusCode::SUCCESS,
-              HIDL_INVOKE(iwifiNanIface, configRequest_1_2, inputCmdId,
-                          nanConfigRequest, nanConfigRequestSupp)
-                  .code);
-    // wait for a callback
-    ASSERT_EQ(std::cv_status::no_timeout, wait(NOTIFY_CONFIG_RESPONSE));
-    ASSERT_EQ(NOTIFY_CONFIG_RESPONSE, callbackType);
-    ASSERT_EQ(id, inputCmdId);
-    ASSERT_EQ(status.status, NanStatusType::INVALID_ARGS);
+    const auto& halStatus =
+        HIDL_INVOKE(iwifiNanIface, configRequest_1_2, inputCmdId,
+                    nanConfigRequest, nanConfigRequestSupp);
+
+    if (halStatus.code != WifiStatusCode::ERROR_NOT_SUPPORTED) {
+        ASSERT_EQ(WifiStatusCode::SUCCESS, halStatus.code);
+
+        // wait for a callback
+        ASSERT_EQ(std::cv_status::no_timeout, wait(NOTIFY_CONFIG_RESPONSE));
+        ASSERT_EQ(NOTIFY_CONFIG_RESPONSE, callbackType);
+        ASSERT_EQ(id, inputCmdId);
+        ASSERT_EQ(status.status, NanStatusType::INVALID_ARGS);
+    }
 }
 
 /*
@@ -536,10 +545,12 @@ TEST_P(WifiNanIfaceHidlTest, configRequest_1_2ShimInvalidArgs) {
     NanConfigRequest nanConfigRequest = {};
     nanConfigRequest.numberOfPublishServiceIdsInBeacon = 128;  // must be <= 127
     NanConfigRequestSupplemental nanConfigRequestSupp = {};
-    ASSERT_EQ(WifiStatusCode::ERROR_INVALID_ARGS,
-              HIDL_INVOKE(iwifiNanIface, configRequest_1_2, inputCmdId,
-                          nanConfigRequest, nanConfigRequestSupp)
-                  .code);
+    const auto& halStatus =
+        HIDL_INVOKE(iwifiNanIface, configRequest_1_2, inputCmdId,
+                    nanConfigRequest, nanConfigRequestSupp);
+    if (halStatus.code != WifiStatusCode::ERROR_NOT_SUPPORTED) {
+        ASSERT_EQ(WifiStatusCode::ERROR_INVALID_ARGS, halStatus.code);
+    }
 }
 
 INSTANTIATE_TEST_SUITE_P(
