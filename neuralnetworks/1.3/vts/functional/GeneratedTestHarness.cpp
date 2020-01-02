@@ -452,7 +452,7 @@ void Execute(const sp<IDevice>& device, const TestModel& testModel, TestKind tes
             EvaluatePreparedModel(preparedModel, testModel, TestKind::DYNAMIC_SHAPE);
         } break;
         case TestKind::QUANTIZATION_COUPLING: {
-            ASSERT_TRUE(testModel.hasQuant8AsymmOperands());
+            ASSERT_TRUE(testModel.hasQuant8CoupledOperands());
             createPreparedModel(device, model, &preparedModel, /*reportSkipping*/ false);
             TestModel signedQuantizedModel = convertQuant8AsymmOperandsToSigned(testModel);
             sp<IPreparedModel> preparedCoupledModel;
@@ -521,7 +521,7 @@ INSTANTIATE_GENERATED_TEST(DynamicOutputShapeTest,
                            [](const TestModel& testModel) { return !testModel.expectFailure; });
 
 INSTANTIATE_GENERATED_TEST(DISABLED_QuantizationCouplingTest, [](const TestModel& testModel) {
-    return testModel.hasQuant8AsymmOperands() && testModel.operations.size() == 1;
+    return testModel.hasQuant8CoupledOperands() && testModel.operations.size() == 1;
 });
 
 }  // namespace android::hardware::neuralnetworks::V1_3::vts::functional
