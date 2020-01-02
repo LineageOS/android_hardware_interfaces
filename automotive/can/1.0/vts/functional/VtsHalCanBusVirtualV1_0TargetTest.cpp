@@ -21,6 +21,7 @@
 #include <android/hardware/automotive/can/1.0/ICanController.h>
 #include <android/hardware/automotive/can/1.0/types.h>
 #include <android/hidl/manager/1.2/IServiceManager.h>
+#include <can-vts-utils/bus-enumerator.h>
 #include <can-vts-utils/can-hal-printers.h>
 #include <can-vts-utils/environment-utils.h>
 #include <gmock/gmock.h>
@@ -139,14 +140,20 @@ class CanBusVirtualHalTest : public ::testing::VtsHalHidlTargetTestBase {
 
     Bus makeBus();
 
+  protected:
+    static hidl_vec<hidl_string> mBusNames;
+
   private:
     unsigned mLastIface = 0;
     static sp<ICanController> mCanController;
     static bool mVirtualSupported;
+    static bool mTestCaseInitialized;
 };
 
 sp<ICanController> CanBusVirtualHalTest::mCanController = nullptr;
 bool CanBusVirtualHalTest::mVirtualSupported;
+hidl_vec<hidl_string> CanBusVirtualHalTest::mBusNames;
+bool CanBusVirtualHalTest::mTestCaseInitialized = false;
 
 static CanMessage makeMessage(CanMessageId id) {
     CanMessage msg = {};
@@ -160,6 +167,7 @@ static void clearTimestamps(std::vector<CanMessage>& messages) {
 
 void CanBusVirtualHalTest::SetUp() {
     if (!mVirtualSupported) GTEST_SKIP();
+    ASSERT_TRUE(mTestCaseInitialized);
 }
 
 void CanBusVirtualHalTest::SetUpTestCase() {
@@ -170,6 +178,11 @@ void CanBusVirtualHalTest::SetUpTestCase() {
     hidl_vec<InterfaceType> supported;
     mCanController->getSupportedInterfaceTypes(hidl_utils::fill(&supported)).assertOk();
     mVirtualSupported = supported.contains(InterfaceType::VIRTUAL);
+
+    mBusNames = utils::getBusNames();
+    ASSERT_NE(0u, mBusNames.size()) << "No ICanBus HALs defined in device manifest";
+
+    mTestCaseInitialized = true;
 }
 
 void CanBusVirtualHalTest::TearDownTestCase() {
@@ -177,10 +190,11 @@ void CanBusVirtualHalTest::TearDownTestCase() {
 }
 
 Bus CanBusVirtualHalTest::makeBus() {
-    const auto idx = ++mLastIface;
+    const auto idx = mLastIface++;
+    EXPECT_LT(idx, mBusNames.size());
 
     ICanController::BusConfiguration config = {};
-    config.name = "test" + std::to_string(idx);
+    config.name = mBusNames[idx];
     config.iftype = InterfaceType::VIRTUAL;
     config.interfaceId.address("vcan50");
 
@@ -207,6 +221,7 @@ TEST_F(CanBusVirtualHalTest, SendAfterClose) {
 }
 
 TEST_F(CanBusVirtualHalTest, SendAndRecv) {
+    if (mBusNames.size() < 2u) GTEST_SKIP() << "Not testable with less than two CAN buses.";
     auto bus1 = makeBus();
     auto bus2 = makeBus();
 
@@ -226,6 +241,8 @@ TEST_F(CanBusVirtualHalTest, SendAndRecv) {
 }
 
 TEST_F(CanBusVirtualHalTest, DownOneOfTwo) {
+    if (mBusNames.size() < 2u) GTEST_SKIP() << "Not testable with less than two CAN buses.";
+
     auto bus1 = makeBus();
     auto bus2 = makeBus();
 
@@ -235,6 +252,7 @@ TEST_F(CanBusVirtualHalTest, DownOneOfTwo) {
 }
 
 TEST_F(CanBusVirtualHalTest, Filter) {
+    if (mBusNames.size() < 2u) GTEST_SKIP() << "Not testable with less than two CAN buses.";
     auto bus1 = makeBus();
     auto bus2 = makeBus();
 
