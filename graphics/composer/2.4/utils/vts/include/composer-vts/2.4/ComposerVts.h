@@ -77,6 +77,8 @@ class ComposerClient : public V2_3::vts::ComposerClient {
     int32_t getDisplayAttribute_2_4(Display display, Config config,
                                     IComposerClient::Attribute attribute);
 
+    void registerCallback_2_4(const sp<IComposerCallback>& callback);
+
     Error getDisplayVsyncPeriod(Display display, VsyncPeriodNanos* outVsyncPeriods);
 
     Error setActiveConfigWithConstraints(
