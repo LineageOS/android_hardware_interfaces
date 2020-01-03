@@ -113,9 +113,6 @@ class KeymasterHidlTest : public ::testing::TestWithParam<std::string> {
     void CheckedDeleteKey(HidlBuf* key_blob, bool keep_key_blob = false);
     void CheckedDeleteKey();
 
-    static void CheckCreationDateTime(const AuthorizationSet& sw_enforced,
-                                      std::chrono::time_point<std::chrono::system_clock> creation);
-
     void CheckGetCharacteristics(const HidlBuf& key_blob, const HidlBuf& client_id,
                                  const HidlBuf& app_data, KeyCharacteristics* key_characteristics);
     ErrorCode GetCharacteristics(const HidlBuf& key_blob, const HidlBuf& client_id,

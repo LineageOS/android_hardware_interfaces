@@ -201,22 +201,6 @@ void KeymasterHidlTest::CheckedDeleteKey() {
     CheckedDeleteKey(&key_blob_);
 }
 
-void KeymasterHidlTest::CheckCreationDateTime(
-        const AuthorizationSet& sw_enforced,
-        std::chrono::time_point<std::chrono::system_clock> creation) {
-    for (int i = 0; i < sw_enforced.size(); i++) {
-        if (sw_enforced[i].tag == TAG_CREATION_DATETIME) {
-            std::chrono::time_point<std::chrono::system_clock> now =
-                    std::chrono::system_clock::now();
-            std::chrono::time_point<std::chrono::system_clock> reported_time{
-                    std::chrono::milliseconds(sw_enforced[i].f.dateTime)};
-            // The test is flaky for EC keys, so a buffer time of 120 seconds will be added.
-            EXPECT_LE(creation - std::chrono::seconds(120), reported_time);
-            EXPECT_LE(reported_time, now + std::chrono::seconds(1));
-        }
-    }
-}
-
 void KeymasterHidlTest::CheckGetCharacteristics(const HidlBuf& key_blob, const HidlBuf& client_id,
                                                 const HidlBuf& app_data,
                                                 KeyCharacteristics* key_characteristics) {
