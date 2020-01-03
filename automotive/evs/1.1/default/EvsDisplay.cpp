@@ -21,6 +21,8 @@
 #include <ui/GraphicBufferAllocator.h>
 #include <ui/GraphicBufferMapper.h>
 
+using ::android::frameworks::automotive::display::V1_0::HwDisplayConfig;
+using ::android::frameworks::automotive::display::V1_0::HwDisplayState;
 
 namespace android {
 namespace hardware {
@@ -31,6 +33,13 @@ namespace implementation {
 
 
 EvsDisplay::EvsDisplay() {
+    EvsDisplay(nullptr, 0);
+}
+
+
+EvsDisplay::EvsDisplay(sp<IAutomotiveDisplayProxyService> pDisplayProxy, uint64_t displayId)
+    : mDisplayProxy(pDisplayProxy),
+      mDisplayId(displayId) {
     ALOGD("EvsDisplay instantiated");
 
     // Set up our self description
@@ -324,6 +333,18 @@ Return<EvsResult> EvsDisplay::returnTargetBufferForDisplayImpl(const uint32_t bu
 
 Return<EvsResult> EvsDisplay::returnTargetBufferForDisplay(const BufferDesc_1_0& buffer)  {
     return returnTargetBufferForDisplayImpl(buffer.bufferId, buffer.memHandle);
+}
+
+
+Return<void> EvsDisplay::getDisplayInfo_1_1(getDisplayInfo_1_1_cb _info_cb) {
+    if (mDisplayProxy != nullptr) {
+        return mDisplayProxy->getDisplayInfo(mDisplayId, _info_cb);
+    } else {
+        HwDisplayConfig nullConfig;
+        HwDisplayState  nullState;
+        _info_cb(nullConfig, nullState);
+        return Void();
+    }
 }
 
 
