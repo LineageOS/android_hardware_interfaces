@@ -16,13 +16,16 @@
 
 cc_defaults {
     name: "android.hardware.automotive.can@vts-defaults",
-    defaults: ["VtsHalTargetTestDefaults", "android.hardware.automotive.can@defaults"],
+    defaults: [
+        "VtsHalTargetTestDefaults",
+        "android.hardware.automotive.can@defaults",
+    ],
     header_libs: [
         "android.hardware.automotive.can@hidl-utils-lib",
-        "android.hardware.automotive.can@vts-utils-lib",
     ],
     static_libs: [
         "android.hardware.automotive.can@1.0",
+        "android.hardware.automotive.can@vts-utils-lib",
         "libgmock",
     ],
     test_suites: ["general-tests"],
