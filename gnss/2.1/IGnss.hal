@@ -16,6 +16,7 @@
 
 package android.hardware.gnss@2.1;
 
+import android.hardware.gnss.measurement_corrections@1.1::IMeasurementCorrections;
 import @2.0::IGnss;
 
 import IGnssCallback;
@@ -62,4 +63,14 @@ interface IGnss extends @2.0::IGnss {
      * @return gnssConfigurationIface Handle to the IGnssConfiguration interface.
      */
     getExtensionGnssConfiguration_2_1() generates (IGnssConfiguration gnssConfigurationIface);
+
+    /**
+     * This method returns the IMeasurementCorrections interface.
+     *
+     * Both getExtensionMeasurementCorrections and getExtensionMeasurementCorrections_1_1 must
+     * return non-null. Both methods can return the same V1.1 IMeasurementCorrections object.
+     *
+     * @return measurementCorrectionsIface Handle to the IMeasurementCorrections interface.
+     */
+     getExtensionMeasurementCorrections_1_1() generates (IMeasurementCorrections measurementCorrectionsIface);
 };

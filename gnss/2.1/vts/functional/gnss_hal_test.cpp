@@ -256,3 +256,10 @@ Return<void> GnssHalTest::GnssMeasurementCallback::gnssMeasurementCb_2_1(
     measurement_cbq_.store(data);
     return Void();
 }
+
+Return<void> GnssHalTest::GnssMeasurementCorrectionsCallback::setCapabilitiesCb(
+        uint32_t capabilities) {
+    ALOGI("GnssMeasurementCorrectionsCallback capabilities received %d", capabilities);
+    capabilities_cbq_.store(capabilities);
+    return Void();
+}

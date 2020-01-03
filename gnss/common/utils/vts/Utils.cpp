@@ -92,7 +92,7 @@ void Utils::checkLocation(const GnssLocation& location, bool check_speed,
     EXPECT_GT(location.timestamp, 1.48e12);
 }
 
-const MeasurementCorrections Utils::getMockMeasurementCorrections() {
+const MeasurementCorrections_1_0 Utils::getMockMeasurementCorrections() {
     ReflectingPlane reflectingPlane = {
             .latitudeDegrees = 37.4220039,
             .longitudeDegrees = -122.0840991,
@@ -127,7 +127,7 @@ const MeasurementCorrections Utils::getMockMeasurementCorrections() {
 
     hidl_vec<SingleSatCorrection> singleSatCorrections = {singleSatCorrection1,
                                                           singleSatCorrection2};
-    MeasurementCorrections mockCorrections = {
+    MeasurementCorrections_1_0 mockCorrections = {
             .latitudeDegrees = 37.4219999,
             .longitudeDegrees = -122.0840575,
             .altitudeMeters = 30.60062531,
@@ -137,6 +137,18 @@ const MeasurementCorrections Utils::getMockMeasurementCorrections() {
             .satCorrections = singleSatCorrections,
     };
     return mockCorrections;
+}
+
+const MeasurementCorrections_1_1 Utils::getMockMeasurementCorrections_1_1() {
+    MeasurementCorrections_1_0 mockCorrections_1_0 = getMockMeasurementCorrections();
+
+    MeasurementCorrections_1_1 mockCorrections_1_1 = {
+            .v1_0 = mockCorrections_1_0,
+            .hasEnvironmentBearing = true,
+            .environmentBearingDegrees = 45.0,
+            .environmentBearingUncertaintyDegrees = 4.0,
+    };
+    return mockCorrections_1_1;
 }
 
 }  // namespace common

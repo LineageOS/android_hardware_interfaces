@@ -41,6 +41,8 @@ using android::hardware::gnss::V2_0::GnssConstellationType;
 using android::hardware::gnss::V2_1::IGnssConfiguration;
 
 using GnssMeasurementFlags = IGnssMeasurementCallback_2_1::GnssMeasurementFlags;
+using IMeasurementCorrections_1_1 =
+        android::hardware::gnss::measurement_corrections::V1_1::IMeasurementCorrections;
 
 /*
  * SetupTeardownCreateCleanup:
@@ -559,6 +561,38 @@ TEST_P(GnssHalTest, BlacklistConstellationLocationOn) {
     StopAndClearLocations();
     sources.resize(0);
     result = gnss_configuration_hal->setBlacklist_2_1(sources);
+    ASSERT_TRUE(result.isOk());
+    EXPECT_TRUE(result);
+}
+
+/*
+ * TestGnssMeasurementCorrections:
+ * If measurement corrections capability is supported, verifies that it supports the
+ * gnss.measurement_corrections@1.1::IMeasurementCorrections interface by invoking a method.
+ */
+TEST_P(GnssHalTest, TestGnssMeasurementCorrections) {
+    if (!(gnss_cb_->last_capabilities_ &
+          IGnssCallback_2_1::Capabilities::MEASUREMENT_CORRECTIONS)) {
+        return;
+    }
+
+    // Verify IMeasurementCorrections is supported.
+    auto measurementCorrections = gnss_hal_->getExtensionMeasurementCorrections_1_1();
+    ASSERT_TRUE(measurementCorrections.isOk());
+    sp<IMeasurementCorrections_1_1> iMeasurementCorrections = measurementCorrections;
+    ASSERT_NE(iMeasurementCorrections, nullptr);
+
+    sp<GnssMeasurementCorrectionsCallback> callback = new GnssMeasurementCorrectionsCallback();
+    iMeasurementCorrections->setCallback(callback);
+
+    const int kMeasurementCorrectionsCapabilitiesTimeoutSeconds = 5;
+    callback->capabilities_cbq_.retrieve(callback->last_capabilities_,
+                                         kMeasurementCorrectionsCapabilitiesTimeoutSeconds);
+    ASSERT_TRUE(callback->capabilities_cbq_.calledCount() > 0);
+
+    // Set a mock MeasurementCorrections.
+    auto result =
+            iMeasurementCorrections->setCorrections_1_1(Utils::getMockMeasurementCorrections_1_1());
     ASSERT_TRUE(result.isOk());
     EXPECT_TRUE(result);
 }

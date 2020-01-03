@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <android/hardware/gnss/measurement_corrections/1.0/IMeasurementCorrections.h>
+#include <android/hardware/gnss/measurement_corrections/1.1/IMeasurementCorrections.h>
 #include <hidl/MQDescriptor.h>
 #include <hidl/Status.h>
 
@@ -24,7 +24,7 @@ namespace android {
 namespace hardware {
 namespace gnss {
 namespace measurement_corrections {
-namespace V1_0 {
+namespace V1_1 {
 namespace implementation {
 
 using ::android::sp;
@@ -37,12 +37,15 @@ using ::android::hardware::Void;
 
 struct GnssMeasurementCorrections : public IMeasurementCorrections {
     // Methods from V1_0::IMeasurementCorrections follow.
-    Return<bool> setCorrections(const MeasurementCorrections& corrections) override;
+    Return<bool> setCorrections(const V1_0::MeasurementCorrections& corrections) override;
     Return<bool> setCallback(const sp<V1_0::IMeasurementCorrectionsCallback>& callback) override;
+
+    // Methods from V1_1::IMeasurementCorrections follow.
+    Return<bool> setCorrections_1_1(const V1_1::MeasurementCorrections& corrections) override;
 };
 
 }  // namespace implementation
-}  // namespace V1_0
+}  // namespace V1_1
 }  // namespace measurement_corrections
 }  // namespace gnss
 }  // namespace hardware
