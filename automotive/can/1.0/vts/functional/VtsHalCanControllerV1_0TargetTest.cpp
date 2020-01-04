@@ -21,6 +21,7 @@
 #include <android/hardware/automotive/can/1.0/ICanController.h>
 #include <android/hardware/automotive/can/1.0/types.h>
 #include <android/hidl/manager/1.2/IServiceManager.h>
+#include <can-vts-utils/bus-enumerator.h>
 #include <can-vts-utils/can-hal-printers.h>
 #include <can-vts-utils/environment-utils.h>
 #include <gmock/gmock.h>
@@ -37,6 +38,7 @@ class CanControllerHalTest : public ::testing::VtsHalHidlTargetTestBase {
   protected:
     virtual void SetUp() override;
     virtual void TearDown() override;
+    static void SetUpTestCase();
 
     hidl_vec<InterfaceType> getSupportedInterfaceTypes();
     bool isSupported(InterfaceType iftype);
@@ -46,9 +48,18 @@ class CanControllerHalTest : public ::testing::VtsHalHidlTargetTestBase {
     void assertRegistered(const std::string srvname, bool expectRegistered);
 
     sp<ICanController> mCanController;
+    static hidl_vec<hidl_string> mBusNames;
+
+  private:
+    static bool mTestCaseInitialized;
 };
 
+hidl_vec<hidl_string> CanControllerHalTest::mBusNames;
+bool CanControllerHalTest::mTestCaseInitialized = false;
+
 void CanControllerHalTest::SetUp() {
+    ASSERT_TRUE(mTestCaseInitialized);
+
     const auto serviceName = gEnv->getServiceName<ICanController>();
     mCanController = getService<ICanController>(serviceName);
     ASSERT_TRUE(mCanController) << "Couldn't open CAN Controller: " << serviceName;
@@ -56,6 +67,13 @@ void CanControllerHalTest::SetUp() {
 
 void CanControllerHalTest::TearDown() {
     mCanController.clear();
+}
+
+void CanControllerHalTest::SetUpTestCase() {
+    mBusNames = utils::getBusNames();
+    ASSERT_NE(0u, mBusNames.size()) << "No ICanBus HALs defined in device manifest";
+
+    mTestCaseInitialized = true;
 }
 
 hidl_vec<InterfaceType> CanControllerHalTest::getSupportedInterfaceTypes() {
@@ -104,7 +122,7 @@ TEST_F(CanControllerHalTest, SupportsSomething) {
 }
 
 TEST_F(CanControllerHalTest, BringUpDown) {
-    const std::string name = "dummy";
+    const std::string name = mBusNames[0];
 
     assertRegistered(name, false);
     if (!up(InterfaceType::VIRTUAL, name, "vcan57", ICanController::Result::OK)) GTEST_SKIP();
@@ -122,7 +140,7 @@ TEST_F(CanControllerHalTest, DownDummy) {
 }
 
 TEST_F(CanControllerHalTest, UpTwice) {
-    const std::string name = "dummy";
+    const std::string name = mBusNames[0];
 
     assertRegistered(name, false);
     if (!up(InterfaceType::VIRTUAL, name, "vcan72", ICanController::Result::OK)) GTEST_SKIP();
@@ -211,7 +229,7 @@ TEST_F(CanControllerHalTest, FailBadName) {
 }
 
 TEST_F(CanControllerHalTest, FailBadVirtualAddress) {
-    const std::string name = "dummy";
+    const std::string name = mBusNames[0];
 
     assertRegistered(name, false);
     if (!up(InterfaceType::VIRTUAL, name, "", ICanController::Result::BAD_ADDRESS)) GTEST_SKIP();
@@ -219,7 +237,7 @@ TEST_F(CanControllerHalTest, FailBadVirtualAddress) {
 }
 
 TEST_F(CanControllerHalTest, FailBadSocketcanAddress) {
-    const std::string name = "dummy";
+    const std::string name = mBusNames[0];
 
     assertRegistered(name, false);
     if (!up(InterfaceType::SOCKETCAN, name, "can87", ICanController::Result::BAD_ADDRESS)) {

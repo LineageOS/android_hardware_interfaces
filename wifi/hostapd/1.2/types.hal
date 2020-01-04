@@ -53,3 +53,17 @@ struct HostapdStatus {
      */
     string debugMessage;
 };
+
+/**
+ * Debug levels for the hostapd.
+ * Only log messages with a level greater than the set level
+ * (via |setDebugParams|) will be logged.
+ */
+enum DebugLevel : uint32_t {
+    EXCESSIVE = 0,
+    MSGDUMP = 1,
+    DEBUG = 2,
+    INFO = 3,
+    WARNING = 4,
+    ERROR = 5
+};

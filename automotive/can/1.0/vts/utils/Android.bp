@@ -14,7 +14,17 @@
 // limitations under the License.
 //
 
-cc_library_headers {
+cc_library_static {
     name: "android.hardware.automotive.can@vts-utils-lib",
+    defaults: ["android.hardware.automotive.can@defaults"],
+    srcs: [
+        "bus-enumerator.cpp",
+    ],
     export_include_dirs: ["include"],
+    header_libs: [
+        "android.hardware.automotive.can@hidl-utils-lib",
+    ],
+    static_libs: [
+        "android.hardware.automotive.can@1.0",
+    ],
 }
