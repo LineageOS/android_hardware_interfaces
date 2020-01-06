@@ -55,6 +55,14 @@ public:
      */
     static string trimString(const string &src,
                              const string &ws = " \n\r\t\f\v");
+
+    /**
+     * Convert a given string to corresponding camera capabilities
+     */
+    static bool convertToCameraCapability(
+        const char *name,
+        camera_metadata_enum_android_request_available_capabilities_t &cap);
+
 };
 
 #endif // CONFIG_MANAGER_UTIL_H

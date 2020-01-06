@@ -73,8 +73,9 @@ public:
     bool isRunning();
 
     void waitForFrameCount(unsigned frameCount);
-    bool waitForEvent(const EvsEventType aTargetEvent,
-                            EvsEvent &eventDesc);
+    bool waitForEvent(const EvsEventDesc& aTargetEvent,
+                            EvsEventDesc& aReceivedEvent,
+                            bool ignorePayload = false);
     void getFramesCounters(unsigned* received, unsigned* displayed);
     void getFrameDimension(unsigned* width, unsigned* height);
 
@@ -83,8 +84,8 @@ private:
     Return<void> deliverFrame(const BufferDesc_1_0& buffer) override;
 
     // Implementation for ::android::hardware::automotive::evs::V1_1::IEvsCameraStream
-    Return<void> deliverFrame_1_1(const BufferDesc_1_1& buffer) override;
-    Return<void> notify(const EvsEvent& event) override;
+    Return<void> deliverFrame_1_1(const hidl_vec<BufferDesc_1_1>& buffer) override;
+    Return<void> notify(const EvsEventDesc& event) override;
 
     // Local implementation details
     bool copyBufferContents(const BufferDesc_1_0& tgtBuffer, const BufferDesc_1_1& srcBuffer);
@@ -99,17 +100,18 @@ private:
     // Since we get frames delivered to us asynchronously via the IEvsCameraStream interface,
     // we need to protect all member variables that may be modified while we're streaming
     // (ie: those below)
-    std::mutex                  mLock;
-    std::condition_variable     mEventSignal;
-    std::condition_variable     mFrameSignal;
+    std::mutex                            mLock;
+    std::mutex                            mEventLock;
+    std::condition_variable               mEventSignal;
+    std::condition_variable               mFrameSignal;
+    std::queue<hidl_vec<BufferDesc_1_1>>  mHeldBuffers;
 
-    std::queue<BufferDesc_1_1>  mHeldBuffers;
     bool                        mRunning = false;
     unsigned                    mFramesReceived = 0;    // Simple counter -- rolls over eventually!
     unsigned                    mFramesDisplayed = 0;   // Simple counter -- rolls over eventually!
     unsigned                    mFrameWidth = 0;
     unsigned                    mFrameHeight = 0;
-    EvsEvent                    mLatestEventDesc;
+    EvsEventDesc                mLatestEventDesc;
 };
 
 

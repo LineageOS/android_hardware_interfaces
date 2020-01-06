@@ -16,7 +16,7 @@ cc_binary {
     shared_libs: [
         "android.hardware.automotive.evs@1.0",
         "android.hardware.automotive.evs@1.1",
-        "android.hardware.camera.device@3.2",
+        "android.hardware.camera.device@3.3",
         "libbase",
         "libbinder",
         "liblog",

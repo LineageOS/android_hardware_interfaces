@@ -62,9 +62,11 @@ public:
 
     // Methods from ::android::hardware::automotive::evs::V1_1::IEvsCamera follow.
     Return<void>      getCameraInfo_1_1(getCameraInfo_1_1_cb _hidl_cb)  override;
+    Return<void>      getPhysicalCameraInfo(const hidl_string& id,
+                                            getPhysicalCameraInfo_cb _hidl_cb)  override;
     Return<EvsResult> pauseVideoStream() override;
     Return<EvsResult> resumeVideoStream() override;
-    Return<EvsResult> doneWithFrame_1_1(const BufferDesc_1_1& buffer) override;
+    Return<EvsResult> doneWithFrame_1_1(const hidl_vec<BufferDesc_1_1>& buffer) override;
     Return<EvsResult> setMaster() override;
     Return<EvsResult> forceMaster(const sp<IEvsDisplay>& display) override;
     Return<EvsResult> unsetMaster() override;
