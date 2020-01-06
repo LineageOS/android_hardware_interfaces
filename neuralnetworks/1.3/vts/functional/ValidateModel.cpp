@@ -323,8 +323,8 @@ static bool mutateOperationOperandTypeSkip(size_t operand, OperandType type, con
         // - CAST's argument can be any of TENSOR_(FLOAT16|FLOAT32|INT32|QUANT8_ASYMM).
         // - RANDOM_MULTINOMIAL's argument can be either TENSOR_FLOAT16 or TENSOR_FLOAT32.
         // - DEQUANTIZE input can be any of
-        // TENSOR_(QUANT8_ASYMM|QUANT8_SYMM|QUANT8_SYMM_PER_CHANNEL), output can
-        // be of either TENSOR_FLOAT16 or TENSOR_FLOAT32.
+        // TENSOR_(QUANT8_ASYMM|QUANT8_ASYMM_SIGNED|QUANT8_SYMM|QUANT8_SYMM_PER_CHANNEL),
+        // output can be of either TENSOR_FLOAT16 or TENSOR_FLOAT32.
         // - QUANTIZE input can be either TENSOR_FLOAT16 or TENSOR_FLOAT32
         // - CONV_2D filter type (arg 1) can be QUANT8_ASYMM or QUANT8_SYMM_PER_CHANNEL
         // - DEPTHWISE_CONV_2D filter type (arg 1) can be QUANT8_ASYMM or QUANT8_SYMM_PER_CHANNEL
@@ -365,6 +365,7 @@ static bool mutateOperationOperandTypeSkip(size_t operand, OperandType type, con
             case OperationType::DEQUANTIZE: {
                 if (operand == operation.inputs[0] &&
                     (type == OperandType::TENSOR_QUANT8_ASYMM ||
+                     type == OperandType::TENSOR_QUANT8_ASYMM_SIGNED ||
                      type == OperandType::TENSOR_QUANT8_SYMM ||
                      type == OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL)) {
                     return true;
