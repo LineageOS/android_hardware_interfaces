@@ -1,7 +1,7 @@
 aidl_interface {
     // This is an example test interface showing how to add functionality
     // with setExtension/getExtension
-    name: "test-vintf-vibrator-ext",
+    name: "test-android.hardware.vibrator-ext",
     vendor_available: true,
     srcs: [
         // Using android.hardware as the package because this is in
@@ -18,7 +18,7 @@ aidl_interface {
     // This happens to use types from a core interface, so we import it, but
     // this won't always be needed.
     imports: [
-        "vintf-vibrator",
+        "android.hardware.vibrator",
     ],
 
     backend: {
