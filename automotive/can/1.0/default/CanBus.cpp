@@ -42,6 +42,8 @@ Return<Result> CanBus::send(const CanMessage& message) {
 
     struct canfd_frame frame = {};
     frame.can_id = message.id;
+    if (message.isExtendedId) frame.can_id |= CAN_EFF_FLAG;
+    if (message.remoteTransmissionRequest) frame.can_id |= CAN_RTR_FLAG;
     frame.len = message.payload.size();
     memcpy(frame.data, message.payload.data(), message.payload.size());
 
@@ -226,8 +228,8 @@ bool CanBus::down() {
 static bool satisfiesFilterFlag(FilterFlag filterFlag, bool flag) {
     // TODO(b/144458917) add testing for this to VTS tests
     if (filterFlag == FilterFlag::DONT_CARE) return true;
-    if (filterFlag == FilterFlag::REQUIRE) return flag;
-    if (filterFlag == FilterFlag::EXCLUDE) return !flag;
+    if (filterFlag == FilterFlag::SET) return flag;
+    if (filterFlag == FilterFlag::NOT_SET) return !flag;
     return false;
 }
 
@@ -241,25 +243,26 @@ static bool satisfiesFilterFlag(FilterFlag filterFlag, bool flag) {
  * \param id Message id to filter
  * \return true if the message id matches the filter, false otherwise
  */
-static bool match(const hidl_vec<CanMessageFilter>& filter, CanMessageId id, bool isExtendedId,
-                  bool isRtr) {
+static bool match(const hidl_vec<CanMessageFilter>& filter, CanMessageId id, bool isRtr,
+                  bool isExtendedId) {
     if (filter.size() == 0) return true;
 
-    bool anyNonInvertedPresent = false;
-    bool anyNonInvertedSatisfied = false;
+    bool anyNonExcludeRulePresent = false;
+    bool anyNonExcludeRuleSatisfied = false;
     for (auto& rule : filter) {
-        const bool satisfied = ((id & rule.mask) == rule.id) == !rule.inverted &&
+        const bool satisfied = ((id & rule.mask) == rule.id) &&
                                satisfiesFilterFlag(rule.rtr, isRtr) &&
                                satisfiesFilterFlag(rule.extendedFormat, isExtendedId);
-        if (rule.inverted) {
-            // Any inverted (blacklist) rule not being satisfied invalidates the whole filter set.
-            if (!satisfied) return false;
+
+        if (rule.exclude) {
+            // Any excluded (blacklist) rule not being satisfied invalidates the whole filter set.
+            if (satisfied) return false;
         } else {
-            anyNonInvertedPresent = true;
-            if (satisfied) anyNonInvertedSatisfied = true;
+            anyNonExcludeRulePresent = true;
+            if (satisfied) anyNonExcludeRuleSatisfied = true;
         }
     }
-    return !anyNonInvertedPresent || anyNonInvertedSatisfied;
+    return !anyNonExcludeRulePresent || anyNonExcludeRuleSatisfied;
 }
 
 void CanBus::notifyErrorListeners(ErrorEvent err, bool isFatal) {
