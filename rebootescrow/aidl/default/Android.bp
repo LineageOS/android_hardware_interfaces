@@ -20,7 +20,7 @@ cc_library_static {
     shared_libs: [
         "libbase",
         "libbinder_ndk",
-        "vintf-rebootescrow-ndk_platform",
+        "android.hardware.rebootescrow-ndk_platform",
     ],
     export_include_dirs: ["include"],
     srcs: [
@@ -47,7 +47,7 @@ cc_binary {
     shared_libs: [
         "libbase",
         "libbinder_ndk",
-        "vintf-rebootescrow-ndk_platform",
+        "android.hardware.rebootescrow-ndk_platform",
     ],
     static_libs: [
         "libhadamardutils",

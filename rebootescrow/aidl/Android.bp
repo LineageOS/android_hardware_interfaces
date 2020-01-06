@@ -1,5 +1,5 @@
 aidl_interface {
-    name: "vintf-rebootescrow",
+    name: "android.hardware.rebootescrow",
     vendor_available: true,
     srcs: [
         "android/hardware/rebootescrow/IRebootEscrow.aidl",
