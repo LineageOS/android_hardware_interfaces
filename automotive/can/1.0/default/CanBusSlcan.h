@@ -32,6 +32,8 @@ struct CanBusSlcan : public CanBus {
     virtual bool postDown() override;
 
   private:
+    ICanController::Result updateIfaceName(base::unique_fd& uartFd);
+
     const std::string mUartName;
     const uint32_t kBitrate;
     base::unique_fd mFd;
