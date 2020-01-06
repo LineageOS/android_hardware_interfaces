@@ -1,5 +1,5 @@
 aidl_interface {
-    name: "vintf-common",
+    name: "android.hardware.common",
     host_supported: true,
     vendor_available: true,
     vndk: {
