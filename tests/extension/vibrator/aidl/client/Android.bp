@@ -1,26 +1,24 @@
-
 // This example client is written as a test, but it is executing from a system
 // context. All this code would look the same if it was running in system
 // server for example.
 
 cc_test {
-    name: "test-vintf-vibrator-ext-client",
+    name: "test-android.hardware.vibrator-ext-client",
     srcs: [
-         // system code has the option to use the unstable C++ libbinder API
-         // or the NDK one. For maximum code portability, using the ndk client
-         // makes the most sense, but both are provided here as an example.
-         "test-cpp-client.cpp",
-         "test-ndk-client.cpp",
+        // system code has the option to use the unstable C++ libbinder API
+        // or the NDK one. For maximum code portability, using the ndk client
+        // makes the most sense, but both are provided here as an example.
+        "test-cpp-client.cpp",
+        "test-ndk-client.cpp",
     ],
     shared_libs: [
-         "libbinder",
-         "libutils",
-         "vintf-vibrator-cpp",
-         "test-vintf-vibrator-ext-cpp",
+        "libbinder",
+        "libutils",
+        "android.hardware.vibrator-cpp",
+        "test-android.hardware.vibrator-ext-cpp",
 
-         "libbinder_ndk",
-         "vintf-vibrator-ndk_platform",
-         "test-vintf-vibrator-ext-ndk_platform",
+        "libbinder_ndk",
+        "android.hardware.vibrator-ndk_platform",
+        "test-android.hardware.vibrator-ext-ndk_platform",
     ],
 }
-
