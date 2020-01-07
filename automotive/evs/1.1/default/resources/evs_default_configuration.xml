@@ -28,8 +28,31 @@
         <num_cameras value='1'/>
     </system>
 
-    <!-- camera device information -->
+    <!-- camera information -->
     <camera>
+        <!-- camera group starts -->
+        <group id='group1' synchronized='APPROXIMATE'>
+            <caps>
+                <stream id='0' width='640'  height='360'  format='RGBA_8888' framerate='30'/>
+            </caps>
+
+            <!-- list of parameters -->
+            <characteristics>
+                <parameter
+                    name='REQUEST_AVAILABLE_CAPABILITIES'
+                    type='enum'
+                    size='1'
+                    value='LOGICAL_MULTI_CAMERA'
+                />
+                <parameter
+                    name='LOGICAL_MULTI_CAMERA_PHYSICAL_IDS'
+                    type='byte[]'
+                    size='1'
+                    value='/dev/video1'
+                />
+            </characteristics>
+        </group>
+
         <!-- camera device starts -->
         <device id='/dev/video1' position='rear'>
             <caps>

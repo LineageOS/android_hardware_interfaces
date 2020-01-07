@@ -59,9 +59,6 @@ class HwcHalImpl : public V2_3::passthrough::detail::HwcHalImpl<Hal> {
                 mDevice, HWC2_CALLBACK_REFRESH, this,
                 reinterpret_cast<hwc2_function_pointer_t>(refreshHook));
         BaseType2_1::mDispatch.registerCallback(
-                mDevice, HWC2_CALLBACK_VSYNC, this,
-                reinterpret_cast<hwc2_function_pointer_t>(vsyncHook));
-        BaseType2_1::mDispatch.registerCallback(
                 mDevice, HWC2_CALLBACK_VSYNC_2_4, this,
                 reinterpret_cast<hwc2_function_pointer_t>(vsync_2_4_Hook));
 
@@ -80,7 +77,6 @@ class HwcHalImpl : public V2_3::passthrough::detail::HwcHalImpl<Hal> {
         // which is likely incorrect
         BaseType2_1::mDispatch.registerCallback(mDevice, HWC2_CALLBACK_HOTPLUG, this, nullptr);
         BaseType2_1::mDispatch.registerCallback(mDevice, HWC2_CALLBACK_REFRESH, this, nullptr);
-        BaseType2_1::mDispatch.registerCallback(mDevice, HWC2_CALLBACK_VSYNC, this, nullptr);
         BaseType2_1::mDispatch.registerCallback(mDevice, HWC2_CALLBACK_VSYNC_2_4, this, nullptr);
         BaseType2_1::mDispatch.registerCallback(mDevice, HWC2_CALLBACK_VSYNC_PERIOD_TIMING_CHANGED,
                                                 this, nullptr);

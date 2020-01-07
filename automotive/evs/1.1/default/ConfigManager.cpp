@@ -42,55 +42,32 @@ void ConfigManager::readCameraInfo(const XMLElement * const aCameraElem) {
     while (curElem != nullptr) {
         if (!strcmp(curElem->Name(), "group")) {
             /* camera group identifier */
-            const char *group_id = curElem->FindAttribute("group_id")->Value();
+            const char *id = curElem->FindAttribute("id")->Value();
 
-            /* create CameraGroup */
-            unique_ptr<ConfigManager::CameraGroup> aCameraGroup(new ConfigManager::CameraGroup());
+            /* create a camera group to be filled */
+            CameraGroupInfo *aCamera = new CameraGroupInfo();
 
-            /* add a camera device to its group */
-            addCameraDevices(curElem->FindAttribute("device_id")->Value(), aCameraGroup);
-
-            /* a list of camera stream configurations */
-            const XMLElement *childElem =
-                curElem->FirstChildElement("caps")->FirstChildElement("stream");
-            while (childElem != nullptr) {
-                /* read 5 attributes */
-                const XMLAttribute *idAttr     = childElem->FindAttribute("id");
-                const XMLAttribute *widthAttr  = childElem->FindAttribute("width");
-                const XMLAttribute *heightAttr = childElem->FindAttribute("height");
-                const XMLAttribute *fmtAttr    = childElem->FindAttribute("format");
-                const XMLAttribute *fpsAttr    = childElem->FindAttribute("framerate");
-
-                const int32_t id = stoi(idAttr->Value());
-                int32_t framerate = 0;
-                if (fpsAttr != nullptr) {
-                    framerate = stoi(fpsAttr->Value());
-                }
-
-                int32_t pixFormat;
-                if (ConfigManagerUtil::convertToPixelFormat(fmtAttr->Value(),
-                                                            pixFormat)) {
-                    RawStreamConfiguration cfg = {
-                        id,
-                        stoi(widthAttr->Value()),
-                        stoi(heightAttr->Value()),
-                        pixFormat,
-                        ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT,
-                        framerate
-                    };
-                    aCameraGroup->streamConfigurations[id] = cfg;
-                }
-
-                childElem = childElem->NextSiblingElement("stream");
+            /* read camera device information */
+            if (!readCameraDeviceInfo(aCamera, curElem)) {
+                ALOGW("Failed to read a camera information of %s", id);
+                delete aCamera;
+                continue;
             }
 
             /* camera group synchronization */
             const char *sync = curElem->FindAttribute("synchronized")->Value();
-            aCameraGroup->synchronized =
-                static_cast<bool>(strcmp(sync, "false"));
+            if (!strcmp(sync, "CALIBRATED")) {
+                aCamera->synchronized =
+                    ANDROID_LOGICAL_MULTI_CAMERA_SENSOR_SYNC_TYPE_CALIBRATED;
+            } else if (!strcmp(sync, "APPROXIMATE")) {
+                aCamera->synchronized =
+                    ANDROID_LOGICAL_MULTI_CAMERA_SENSOR_SYNC_TYPE_APPROXIMATE;
+            } else {
+                aCamera->synchronized = 0; // Not synchronized
+            }
 
             /* add a group to hash map */
-            mCameraGroups[group_id] = std::move(aCameraGroup);
+            mCameraGroupInfos.insert_or_assign(id, unique_ptr<CameraGroupInfo>(aCamera));
         } else if (!strcmp(curElem->Name(), "device")) {
             /* camera unique identifier */
             const char *id = curElem->FindAttribute("id")->Value();
@@ -98,8 +75,18 @@ void ConfigManager::readCameraInfo(const XMLElement * const aCameraElem) {
             /* camera mount location */
             const char *pos = curElem->FindAttribute("position")->Value();
 
+            /* create a camera device to be filled */
+            CameraInfo *aCamera = new CameraInfo();
+
+            /* read camera device information */
+            if (!readCameraDeviceInfo(aCamera, curElem)) {
+                ALOGW("Failed to read a camera information of %s", id);
+                delete aCamera;
+                continue;
+            }
+
             /* store read camera module information */
-            mCameraInfo[id] = readCameraDeviceInfo(curElem);
+            mCameraInfo.insert_or_assign(id, unique_ptr<CameraInfo>(aCamera));
 
             /* assign a camera device to a position group */
             mCameraPosition[pos].emplace(id);
@@ -113,14 +100,12 @@ void ConfigManager::readCameraInfo(const XMLElement * const aCameraElem) {
 }
 
 
-unique_ptr<ConfigManager::CameraInfo>
-ConfigManager::readCameraDeviceInfo(const XMLElement *aDeviceElem) {
-    if (aDeviceElem == nullptr) {
-        return nullptr;
+bool
+ConfigManager::readCameraDeviceInfo(CameraInfo *aCamera,
+                                    const XMLElement *aDeviceElem) {
+    if (aCamera == nullptr || aDeviceElem == nullptr) {
+        return false;
     }
-
-    /* create a CameraInfo to be filled */
-    unique_ptr<ConfigManager::CameraInfo> aCamera(new ConfigManager::CameraInfo());
 
     /* size information to allocate camera_metadata_t */
     size_t totalEntries = 0;
@@ -145,14 +130,15 @@ ConfigManager::readCameraDeviceInfo(const XMLElement *aDeviceElem) {
               "allocated memory was not large enough");
     }
 
-    return aCamera;
+    return true;
 }
 
 
-size_t ConfigManager::readCameraCapabilities(const XMLElement * const aCapElem,
-                                             unique_ptr<ConfigManager::CameraInfo> &aCamera,
-                                             size_t &dataSize) {
-    if (aCapElem == nullptr) {
+size_t
+ConfigManager::readCameraCapabilities(const XMLElement * const aCapElem,
+                                      CameraInfo *aCamera,
+                                      size_t &dataSize) {
+    if (aCapElem == nullptr || aCamera == nullptr) {
         return 0;
     }
 
@@ -214,7 +200,7 @@ size_t ConfigManager::readCameraCapabilities(const XMLElement * const aCapElem,
                 ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT,
                 framerate
             };
-            aCamera->streamConfigurations[id] = cfg;
+            aCamera->streamConfigurations.insert_or_assign(id, cfg);
         }
 
         curElem = curElem->NextSiblingElement("stream");
@@ -232,10 +218,11 @@ size_t ConfigManager::readCameraCapabilities(const XMLElement * const aCapElem,
 }
 
 
-size_t ConfigManager::readCameraMetadata(const XMLElement * const aParamElem,
-                                       unique_ptr<ConfigManager::CameraInfo> &aCamera,
-                                       size_t &dataSize) {
-    if (aParamElem == nullptr) {
+size_t
+ConfigManager::readCameraMetadata(const XMLElement * const aParamElem,
+                                  CameraInfo *aCamera,
+                                  size_t &dataSize) {
+    if (aParamElem == nullptr || aCamera == nullptr) {
         return 0;
     }
 
@@ -258,14 +245,61 @@ size_t ConfigManager::readCameraMetadata(const XMLElement * const aParamElem,
                                         count
                                    );
 
-                    aCamera->cameraMetadata[tag] =
-                        make_pair(make_unique<void *>(data), count);
+                    aCamera->cameraMetadata.insert_or_assign(
+                        tag, make_pair(make_unique<void *>(data), count)
+                    );
 
                     ++numEntries;
                     dataSize += calculate_camera_metadata_entry_data_size(
                                     get_camera_metadata_tag_type(tag), count
                                 );
 
+                    break;
+                }
+
+                case ANDROID_REQUEST_AVAILABLE_CAPABILITIES: {
+                    camera_metadata_enum_android_request_available_capabilities_t *data =
+                        new camera_metadata_enum_android_request_available_capabilities_t[1];
+                    if (ConfigManagerUtil::convertToCameraCapability(
+                            curElem->FindAttribute("value")->Value(), *data)) {
+                                        curElem->FindAttribute("value")->Value(),
+                        aCamera->cameraMetadata.insert_or_assign(
+                            tag, make_pair(make_unique<void *>(data), 1)
+                        );
+
+                        ++numEntries;
+                        dataSize += calculate_camera_metadata_entry_data_size(
+                                        get_camera_metadata_tag_type(tag), 1
+                                    );
+                    }
+                    break;
+                }
+
+                case ANDROID_LOGICAL_MULTI_CAMERA_PHYSICAL_IDS: {
+                    /* a comma-separated list of physical camera devices */
+                    size_t len = strlen(curElem->FindAttribute("value")->Value());
+                    char *data = new char[len + 1];
+                    memcpy(data,
+                           curElem->FindAttribute("value")->Value(),
+                           len * sizeof(char));
+
+                    /* replace commas with null char */
+                    char *p = data;
+                    while (*p != '\0') {
+                        if (*p == ',') {
+                            *p = '\0';
+                        }
+                        ++p;
+                    }
+
+                    aCamera->cameraMetadata.insert_or_assign(
+                        tag, make_pair(make_unique<void *>(data), len)
+                    );
+
+                    ++numEntries;
+                    dataSize += calculate_camera_metadata_entry_data_size(
+                                    get_camera_metadata_tag_type(tag), len
+                                );
                     break;
                 }
 
@@ -283,10 +317,11 @@ size_t ConfigManager::readCameraMetadata(const XMLElement * const aParamElem,
 }
 
 
-bool ConfigManager::constructCameraMetadata(unique_ptr<CameraInfo> &aCamera,
-                                            const size_t totalEntries,
-                                            const size_t totalDataSize) {
-    if (!aCamera->allocate(totalEntries, totalDataSize)) {
+bool
+ConfigManager::constructCameraMetadata(CameraInfo *aCamera,
+                                       const size_t totalEntries,
+                                       const size_t totalDataSize) {
+    if (aCamera == nullptr || !aCamera->allocate(totalEntries, totalDataSize)) {
         ALOGE("Failed to allocate memory for camera metadata");
         return false;
     }
@@ -401,14 +436,14 @@ void ConfigManager::readDisplayInfo(const XMLElement * const aDisplayElem) {
                         ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_INPUT,
                         0   // unused
                     };
-                    dpy->streamConfigurations[id] = cfg;
+                    dpy->streamConfigurations.insert_or_assign(id, cfg);
                 }
 
                 curStream = curStream->NextSiblingElement("stream");
             }
         }
 
-        mDisplayInfo[id] = std::move(dpy);
+        mDisplayInfo.insert_or_assign(id, std::move(dpy));
         curDev = curDev->NextSiblingElement("device");
     }
 
@@ -454,16 +489,6 @@ bool ConfigManager::readConfigDataFromXML() noexcept {
 
 
     return true;
-}
-
-
-void ConfigManager::addCameraDevices(const char *devices,
-                                     unique_ptr<CameraGroup> &aGroup) {
-    stringstream device_list(devices);
-    string token;
-    while (getline(device_list, token, ',')) {
-        aGroup->devices.emplace(token);
-    }
 }
 
 

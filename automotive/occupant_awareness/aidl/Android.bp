@@ -7,7 +7,12 @@ aidl_interface {
     stability: "vintf",
     backend: {
         java: {
-            enabled: false,
+            platform_apis: true,
         },
-    }
+        ndk: {
+            vndk: {
+                enabled: true,
+            },
+        },
+    },
 }

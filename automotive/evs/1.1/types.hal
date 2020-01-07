@@ -61,6 +61,14 @@ struct BufferDesc {
      * Opaque value from driver
      */
     uint32_t bufferId;
+    /**
+     * Unique identifier of the physical camera device that produces this buffer.
+     */
+    string deviceId;
+    /**
+     * Time that this buffer is being filled.
+     */
+    int64_t timestamp;
 };
 
 /**
@@ -97,11 +105,15 @@ enum EvsEventType : uint32_t {
 /**
  * Structure that describes informative events occurred during EVS is streaming
  */
-struct EvsEvent {
+struct EvsEventDesc {
     /**
      * Type of an informative event
      */
     EvsEventType aType;
+    /**
+     * Device identifier
+     */
+    string deviceId;
     /**
      * Possible additional information
      */

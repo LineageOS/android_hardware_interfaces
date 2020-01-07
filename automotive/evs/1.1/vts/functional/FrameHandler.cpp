@@ -80,7 +80,7 @@ void FrameHandler::blockingStopStream() {
     asyncStopStream();
 
     // Wait until the stream has actually stopped
-    std::unique_lock<std::mutex> lock(mLock);
+    std::unique_lock<std::mutex> lock(mEventLock);
     if (mRunning) {
         mEventSignal.wait(lock, [this]() { return !mRunning; });
     }
@@ -88,7 +88,7 @@ void FrameHandler::blockingStopStream() {
 
 
 bool FrameHandler::returnHeldBuffer() {
-    std::unique_lock<std::mutex> lock(mLock);
+    std::lock_guard<std::mutex> lock(mLock);
 
     // Return the oldest buffer we're holding
     if (mHeldBuffers.empty()) {
@@ -96,16 +96,16 @@ bool FrameHandler::returnHeldBuffer() {
         return false;
     }
 
-    BufferDesc_1_1 buffer = mHeldBuffers.front();
+    hidl_vec<BufferDesc_1_1> buffers = mHeldBuffers.front();
     mHeldBuffers.pop();
-    mCamera->doneWithFrame_1_1(buffer);
+    mCamera->doneWithFrame_1_1(buffers);
 
     return true;
 }
 
 
 bool FrameHandler::isRunning() {
-    std::unique_lock<std::mutex> lock(mLock);
+    std::lock_guard<std::mutex> lock(mLock);
     return mRunning;
 }
 
@@ -120,7 +120,7 @@ void FrameHandler::waitForFrameCount(unsigned frameCount) {
 
 
 void FrameHandler::getFramesCounters(unsigned* received, unsigned* displayed) {
-    std::unique_lock<std::mutex> lock(mLock);
+    std::lock_guard<std::mutex> lock(mLock);
 
     if (received) {
         *received = mFramesReceived;
@@ -138,11 +138,17 @@ Return<void> FrameHandler::deliverFrame(const BufferDesc_1_0& bufferArg) {
 }
 
 
-Return<void> FrameHandler::deliverFrame_1_1(const BufferDesc_1_1& bufDesc) {
+Return<void> FrameHandler::deliverFrame_1_1(const hidl_vec<BufferDesc_1_1>& buffers) {
+    mLock.lock();
+    // For VTS tests, FrameHandler uses a single frame among delivered frames.
+    auto bufferIdx = mFramesDisplayed % buffers.size();
+    auto buffer = buffers[bufferIdx];
+    mLock.unlock();
+
     const AHardwareBuffer_Desc* pDesc =
-        reinterpret_cast<const AHardwareBuffer_Desc *>(&bufDesc.buffer.description);
+        reinterpret_cast<const AHardwareBuffer_Desc *>(&buffer.buffer.description);
     ALOGD("Received a frame from the camera (%p)",
-          bufDesc.buffer.nativeHandle.getNativeHandle());
+          buffer.buffer.nativeHandle.getNativeHandle());
 
     // Store a dimension of a received frame.
     mFrameWidth = pDesc->width;
@@ -150,6 +156,7 @@ Return<void> FrameHandler::deliverFrame_1_1(const BufferDesc_1_1& bufDesc) {
 
     // If we were given an opened display at construction time, then send the received
     // image back down the camera.
+    bool displayed = false;
     if (mDisplay.get()) {
         // Get the output buffer we'll use to display the imagery
         BufferDesc_1_0 tgtBuffer = {};
@@ -163,7 +170,7 @@ Return<void> FrameHandler::deliverFrame_1_1(const BufferDesc_1_1& bufDesc) {
             ALOGE("Didn't get requested output buffer -- skipping this frame.");
         } else {
             // Copy the contents of the of buffer.memHandle into tgtBuffer
-            copyBufferContents(tgtBuffer, bufDesc);
+            copyBufferContents(tgtBuffer, buffer);
 
             // Send the target buffer back for display
             Return<EvsResult> result = mDisplay->returnTargetBufferForDisplay(tgtBuffer);
@@ -179,29 +186,29 @@ Return<void> FrameHandler::deliverFrame_1_1(const BufferDesc_1_1& bufDesc) {
             } else {
                 // Everything looks good!
                 // Keep track so tests or watch dogs can monitor progress
-                mLock.lock();
-                mFramesDisplayed++;
-                mLock.unlock();
+                displayed = true;
             }
         }
     }
 
+    mLock.lock();
+    // increases counters
+    ++mFramesReceived;
+    mFramesDisplayed += (int)displayed;
+    mLock.unlock();
+    mFrameSignal.notify_all();
 
     switch (mReturnMode) {
     case eAutoReturn:
         // Send the camera buffer back now that the client has seen it
         ALOGD("Calling doneWithFrame");
-        mCamera->doneWithFrame_1_1(bufDesc);
+        mCamera->doneWithFrame_1_1(buffers);
         break;
     case eNoAutoReturn:
-        // Hang onto the buffer handle for now -- the client will return it explicitly later
-        mHeldBuffers.push(bufDesc);
+        // Hang onto the buffer handles for now -- the client will return it explicitly later
+        mHeldBuffers.push(buffers);
+        break;
     }
-
-    mLock.lock();
-    ++mFramesReceived;
-    mLock.unlock();
-    mFrameSignal.notify_all();
 
     ALOGD("Frame handling complete");
 
@@ -209,10 +216,12 @@ Return<void> FrameHandler::deliverFrame_1_1(const BufferDesc_1_1& bufDesc) {
 }
 
 
-Return<void> FrameHandler::notify(const EvsEvent& event) {
+Return<void> FrameHandler::notify(const EvsEventDesc& event) {
     // Local flag we use to keep track of when the stream is stopping
-    mLock.lock();
-    mLatestEventDesc = event;
+    std::unique_lock<std::mutex> lock(mEventLock);
+    mLatestEventDesc.aType = event.aType;
+    mLatestEventDesc.payload[0] = event.payload[0];
+    mLatestEventDesc.payload[1] = event.payload[1];
     if (mLatestEventDesc.aType == EvsEventType::STREAM_STOPPED) {
         // Signal that the last frame has been received and the stream is stopped
         mRunning = false;
@@ -222,8 +231,8 @@ Return<void> FrameHandler::notify(const EvsEvent& event) {
     } else {
         ALOGD("Received an event %s", eventToString(mLatestEventDesc.aType));
     }
-    mLock.unlock();
-    mEventSignal.notify_all();
+    lock.unlock();
+    mEventSignal.notify_one();
 
     return Void();
 }
@@ -342,25 +351,34 @@ void FrameHandler::getFrameDimension(unsigned* width, unsigned* height) {
     }
 }
 
-bool FrameHandler::waitForEvent(const EvsEventType aTargetEvent,
-                                EvsEvent &event) {
+bool FrameHandler::waitForEvent(const EvsEventDesc& aTargetEvent,
+                                      EvsEventDesc& aReceivedEvent,
+                                      bool ignorePayload) {
     // Wait until we get an expected parameter change event.
-    std::unique_lock<std::mutex> lock(mLock);
+    std::unique_lock<std::mutex> lock(mEventLock);
     auto now = std::chrono::system_clock::now();
-    bool result = mEventSignal.wait_until(lock, now + 5s,
-        [this, aTargetEvent, &event](){
-            bool flag = mLatestEventDesc.aType == aTargetEvent;
-            if (flag) {
-                event.aType = mLatestEventDesc.aType;
-                event.payload[0] = mLatestEventDesc.payload[0];
-                event.payload[1] = mLatestEventDesc.payload[1];
+    bool found = false;
+    while (!found) {
+        bool result = mEventSignal.wait_until(lock, now + 5s,
+            [this, aTargetEvent, ignorePayload, &aReceivedEvent, &found](){
+                found = (mLatestEventDesc.aType == aTargetEvent.aType) &&
+                        (ignorePayload || (mLatestEventDesc.payload[0] == aTargetEvent.payload[0] &&
+                                           mLatestEventDesc.payload[1] == aTargetEvent.payload[1]));
+
+                aReceivedEvent.aType = mLatestEventDesc.aType;
+                aReceivedEvent.payload[0] = mLatestEventDesc.payload[0];
+                aReceivedEvent.payload[1] = mLatestEventDesc.payload[1];
+                return found;
             }
+        );
 
-            return flag;
+        if (!result) {
+            ALOGW("A timer is expired before a target event has happened.");
+            break;
         }
-    );
+    }
 
-    return !result;
+    return found;
 }
 
 const char *FrameHandler::eventToString(const EvsEventType aType) {

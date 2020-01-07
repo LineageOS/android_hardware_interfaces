@@ -34,6 +34,23 @@ interface IEvsCamera extends @1.0::IEvsCamera {
     getCameraInfo_1_1() generates (CameraDesc info);
 
     /**
+     * Returns the description of the physical camera device that backs this
+     * logical camera.
+     *
+     * If a requested device does not either exist or back this logical device,
+     * this method returns a null camera descriptor.  And, if this is called on
+     * a physical camera device, this method is the same as getCameraInfo_1_1()
+     * method if a given device ID is matched.  Otherwise, this will return a
+     * null camera descriptor.
+     *
+     * @param  deviceId Physical camera device identifier string.
+     * @return info     The description of a member physical camera device.
+     *                  This must be the same value as reported by
+     *                  EvsEnumerator::getCameraList_1_1().
+     */
+    getPhysicalCameraInfo(string deviceId) generates (CameraDesc info);
+
+    /**
      * Requests to pause EVS camera stream events.
      *
      * Like stopVideoStream(), events may continue to arrive for some time
@@ -51,7 +68,7 @@ interface IEvsCamera extends @1.0::IEvsCamera {
     resumeVideoStream() generates (EvsResult result);
 
     /**
-     * Returns a frame that was delivered by to the IEvsCameraStream.
+     * Returns frame that were delivered by to the IEvsCameraStream.
      *
      * When done consuming a frame delivered to the IEvsCameraStream
      * interface, it must be returned to the IEvsCamera for reuse.
@@ -59,10 +76,10 @@ interface IEvsCamera extends @1.0::IEvsCamera {
      * as one), and if the supply is exhausted, no further frames may be
      * delivered until a buffer is returned.
      *
-     * @param  buffer A buffer to be returned.
+     * @param  buffer Buffers to be returned.
      * @return result Return EvsResult::OK if this call is successful.
      */
-    doneWithFrame_1_1(BufferDesc buffer) generates (EvsResult result);
+    doneWithFrame_1_1(vec<BufferDesc> buffer) generates (EvsResult result);
 
     /**
      * Requests to be a master client.
@@ -127,8 +144,13 @@ interface IEvsCamera extends @1.0::IEvsCamera {
         generates (int32_t min, int32_t max, int32_t step);
 
     /**
-     * Requests to set a camera parameter.  Only a request from the master
-     * client will be processed successfully.
+     * Requests to set a camera parameter.
+     *
+     * Only a request from the master client will be processed successfully.
+     * When this method is called on a logical camera device, it will be forwarded
+     * to each physical device and, if it fails to program any physical device,
+     * it will return an error code with the same number of effective values as
+     * the number of backing camera devices.
      *
      * @param  id             The identifier of camera parameter, CameraParam enum.
      *         value          A desired parameter value.
@@ -138,21 +160,22 @@ interface IEvsCamera extends @1.0::IEvsCamera {
      *                        parameter is not supported.
      *                        EvsResult::UNDERLYING_SERVICE_ERROR if it fails to
      *                        program a value by any other reason.
-     *         effectiveValue A programmed parameter value.  This may differ
+     *         effectiveValue Programmed parameter values.  This may differ
      *                        from what the client gives if, for example, the
      *                        driver does not support a target parameter.
      */
     setIntParameter(CameraParam id, int32_t value)
-        generates (EvsResult result, int32_t effectiveValue);
+        generates (EvsResult result, vec<int32_t> effectiveValue);
 
     /**
-     * Retrieves a value of given camera parameter.
+     * Retrieves values of given camera parameter.
      *
      * @param  id     The identifier of camera parameter, CameraParam enum.
      * @return result EvsResult::OK if it succeeds to read a parameter.
      *                EvsResult::INVALID_ARG if either a requested parameter is
      *                not supported.
-     *         value  A value of requested camera parameter.
+     *         value  Values of requested camera parameter, the same number of
+     *                values as backing camera devices.
      */
-    getIntParameter(CameraParam id) generates(EvsResult result, int32_t value);
+    getIntParameter(CameraParam id) generates(EvsResult result, vec<int32_t> value);
 };

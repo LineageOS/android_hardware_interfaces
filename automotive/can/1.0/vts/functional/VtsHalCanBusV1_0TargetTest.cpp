@@ -78,7 +78,7 @@ sp<ICloseHandle> CanBusHalTest::listenForErrors(const sp<ICanErrorListener>& lis
 TEST_F(CanBusHalTest, SendNoPayload) {
     CanMessage msg = {};
     msg.id = 0x123;
-
+    ASSERT_NE(mCanBus, nullptr);
     const auto result = mCanBus->send(msg);
     ASSERT_EQ(Result::OK, result);
 }
@@ -118,9 +118,9 @@ TEST_F(CanBusHalTest, ListenNoFilter) {
 
 TEST_F(CanBusHalTest, ListenSomeFilter) {
     hidl_vec<CanMessageFilter> filters = {
-            {0x123, 0x1FF, false, FilterFlag::DONT_CARE, FilterFlag::DONT_CARE},
-            {0x001, 0x00F, true, FilterFlag::DONT_CARE, FilterFlag::DONT_CARE},
-            {0x200, 0x100, false, FilterFlag::DONT_CARE, FilterFlag::DONT_CARE},
+            {0x123, 0x1FF, FilterFlag::DONT_CARE, FilterFlag::DONT_CARE, false},
+            {0x001, 0x00F, FilterFlag::DONT_CARE, FilterFlag::DONT_CARE, true},
+            {0x200, 0x100, FilterFlag::DONT_CARE, FilterFlag::DONT_CARE, false},
     };
 
     const auto [result, closeHandle] = listen(filters, new CanMessageListener());
@@ -171,14 +171,20 @@ TEST_F(CanBusHalTest, DontCloseErrorListener) {
 }  // namespace android::hardware::automotive::can::V1_0::vts
 
 /**
+ * This test requires that you bring up a valid bus first.
+ *
+ * Before running:
+ * mma -j && adb root && adb remount && adb sync
+ *
  * Example manual invocation:
  * adb shell /data/nativetest64/VtsHalCanBusV1_0TargetTest/VtsHalCanBusV1_0TargetTest \
- *     --hal_service_instance=android.hardware.automotive.can@1.0::ICanBus/test
+ *     --hal_service_instance=android.hardware.automotive.can@1.0::ICanBus/<NAME_OF_VALID_BUS>
  */
 int main(int argc, char** argv) {
     using android::hardware::automotive::can::V1_0::ICanBus;
     using android::hardware::automotive::can::V1_0::vts::gEnv;
     using android::hardware::automotive::can::V1_0::vts::utils::SimpleHidlEnvironment;
+    setenv("TREBLE_TESTING_OVERRIDE", "true", true);
     android::base::SetDefaultTag("CanBusVts");
     android::base::SetMinimumLogSeverity(android::base::VERBOSE);
     gEnv = new SimpleHidlEnvironment<ICanBus>;
