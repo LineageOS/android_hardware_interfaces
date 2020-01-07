@@ -375,8 +375,8 @@ enum OperationType : int32_t {
      *      must be set to 0.
      * * 2: A 1-D tensor, of shape [depth_out], specifying the bias. For input
      *      tensor of type {@link OperandType::TENSOR_FLOAT32}
-     *      or {@link OperandType::TENSOR_FLOAT16} the bias must be of the same
-     *      type. For filter tensor of {@link OperandType::TENSOR_QUANT8_ASYMM},
+     *      or {@link OperandType::TENSOR_FLOAT16} the bias must be of the same type.
+     *      For filter tensor of {@link OperandType::TENSOR_QUANT8_ASYMM},
      *      the bias should be of {@link OperandType::TENSOR_INT32}, with zeroPoint
      *      of 0 and bias_scale == input_scale * filter_scale.
      *      For filter tensor of {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL},
@@ -425,7 +425,8 @@ enum OperationType : int32_t {
      * * 2: A 1-D tensor, of shape [depth_out], specifying the bias. For input
      *      tensor of type {@link OperandType::TENSOR_FLOAT32}
      *      or {@link OperandType::TENSOR_FLOAT16} the bias must be of the same
-     *      type. For filter tensor of {@link OperandType::TENSOR_QUANT8_ASYMM},
+     *      type.
+     *      For filter tensor of {@link OperandType::TENSOR_QUANT8_ASYMM},
      *      the bias should be of {@link OperandType::TENSOR_INT32}, with zeroPoint
      *      of 0 and bias_scale == input_scale * filter_scale.
      *      For filter tensor of {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL},
@@ -523,8 +524,8 @@ enum OperationType : int32_t {
      *      must be set to 3.
      * * 2: A 1-D tensor, of shape [depth_out], specifying the bias. For input
      *      tensor of type {@link OperandType::TENSOR_FLOAT32}
-     *      or {@link OperandType::TENSOR_FLOAT16} the bias must be of the same
-     *      type. For filter tensor of {@link OperandType::TENSOR_QUANT8_ASYMM},
+     *      or {@link OperandType::TENSOR_FLOAT16} the bias must be of the same type.
+     *      For filter tensor of {@link OperandType::TENSOR_QUANT8_ASYMM},
      *      the bias should be of {@link OperandType::TENSOR_INT32}, with zeroPoint
      *      of 0 and bias_scale == input_scale * filter_scale.
      *      For filter tensor of {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL},
@@ -569,8 +570,8 @@ enum OperationType : int32_t {
      *      specifying the filter.
      * * 2: A 1-D tensor, of shape [depth_out], specifying the bias. For input
      *      tensor of type {@link OperandType::TENSOR_FLOAT32}
-     *      or {@link OperandType::TENSOR_FLOAT16} the bias must be of the same
-     *      type. For filter tensor of {@link OperandType::TENSOR_QUANT8_ASYMM},
+     *      or {@link OperandType::TENSOR_FLOAT16} the bias must be of the same type.
+     *      For filter tensor of {@link OperandType::TENSOR_QUANT8_ASYMM},
      *      the bias should be of {@link OperandType::TENSOR_INT32}, with zeroPoint
      *      of 0 and bias_scale == input_scale * filter_scale.
      *      For filter tensor of {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL},
@@ -705,8 +706,8 @@ enum OperationType : int32_t {
      *
      * Supported value tensor {@link OperandType}:
      * * {@link OperandType::TENSOR_FLOAT32}
-     * * {@link OperandType::TENSOR_INT32}
-     * * {@link OperandType::TENSOR_QUANT8_ASYMM}
+     * * {@link OperandType::TENSOR_INT32} (since HAL version 1.2)
+     * * {@link OperandType::TENSOR_QUANT8_ASYMM} (since HAL version 1.2)
      *
      * Supported value tensor rank: from 2
      *
@@ -772,10 +773,10 @@ enum OperationType : int32_t {
      *      of output nodes.
      * * 2: A 1-D tensor, of shape [num_units], specifying the bias. For input
      *      tensor of {@link OperandType::TENSOR_FLOAT32}, the bias should
-     *      also be of {@link OperandType::TENSOR_FLOAT32}. For input tensor
-     *      of {@link OperandType::TENSOR_QUANT8_ASYMM}, the bias should be
-     *      of {@link OperandType::TENSOR_INT32}, with zeroPoint of 0 and
-     *      bias_scale == input_scale * filter_scale.
+     *      also be of {@link OperandType::TENSOR_FLOAT32}.
+     *      For input tensor of {@link OperandType::TENSOR_QUANT8_ASYMM},
+     *      the bias should be of {@link OperandType::TENSOR_INT32},
+     *      with zeroPoint of 0 and bias_scale == input_scale * filter_scale.
      * * 3: An {@link OperandType::INT32} scalar, and has to be one of the
      *      {@link FusedActivationFunc} values. Specifies the activation to
      *      invoke on the result.
@@ -2659,7 +2660,8 @@ enum OperationType : int32_t {
      *      order of the boxes corresponds with input0. For input0 of type
      *      {@link OperandType::TENSOR_QUANT8_ASYMM}, this tensor should be of
      *      {@link OperandType::TENSOR_QUANT16_ASYMM}, with zeroPoint of 0 and
-     *      scale of 0.125. Zero num_rois is supported for this tensor.
+     *      scale of 0.125.
+     *      Zero num_rois is supported for this tensor.
      * * 2: A 1-D {@link OperandType::TENSOR_INT32} tensor, of shape
      *      [num_rois], specifying the batch index of each box. Boxes with
      *      the same batch index are grouped together.
@@ -2686,6 +2688,7 @@ enum OperationType : int32_t {
      *      [num_output_rois], specifying the score of each output box. The boxes
      *      are grouped by batches, but the sequential order in each batch is not
      *      guaranteed. For type of {@link OperandType::TENSOR_QUANT8_ASYMM},
+     *      guaranteed. For type of {@link OperandType::TENSOR_QUANT8_ASYMM}
      *      the scale and zero point must be the same as input0.
      * * 1: A 2-D Tensor of the same {@link OperandType} as input1, with shape
      *      [num_output_rois, 4], specifying the coordinates of each
@@ -2703,7 +2706,7 @@ enum OperationType : int32_t {
     BOX_WITH_NMS_LIMIT = 44,
 
     /**
-     * Casts a tensor to a new type.
+     * Casts a tensor to a type.
      *
      * This operation ignores the scale and zeroPoint of quanized tensors,
      * e.g. it treats a {@link OperandType::TENSOR_QUANT8_ASYMM} input
@@ -3141,8 +3144,8 @@ enum OperationType : int32_t {
      *      {@link SymmPerChannelQuantParams}) must be set to 0.
      * * 2: A 1-D tensor, of shape [depth_out], specifying the bias. For input
      *      tensor of type {@link OperandType::TENSOR_FLOAT32} or
-     *      {@link OperandType::TENSOR_FLOAT16}, the bias must be of the same
-     *      type. For filter tensor of {@link OperandType::TENSOR_QUANT8_ASYMM},
+     *      {@link OperandType::TENSOR_FLOAT16}, the bias must be of the same type.
+     *      For filter tensor of {@link OperandType::TENSOR_QUANT8_ASYMM},
      *      the bias should be of {@link OperandType::TENSOR_INT32}, with zeroPoint
      *      of 0 and bias_scale == input_scale * filter_scale. For filter tensor
      *      of {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL}, the bias
@@ -3181,7 +3184,8 @@ enum OperationType : int32_t {
      * * 2: A 1-D tensor, of shape [depth_out], specifying the bias. For input
      *      tensor of type {@link OperandType::TENSOR_FLOAT32} or
      *      {@link OperandType::TENSOR_FLOAT16}, the bias must be of the same
-     *      type. For filter tensor of {@link OperandType::TENSOR_QUANT8_ASYMM},
+     *      {@link OperandType::TENSOR_FLOAT16}, the bias must be of the same type.
+     *      For filter tensor of {@link OperandType::TENSOR_QUANT8_ASYMM},
      *      the bias should be of {@link OperandType::TENSOR_INT32}, with zeroPoint
      *      of 0 and bias_scale == input_scale * filter_scale. For filter tensor
      *      of {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL}, the bias
@@ -3661,20 +3665,23 @@ enum OperationType : int32_t {
      * Outputs:
      * * 0: A tensor of the same {@link OperandType} as input0.
      *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
-     *      the scale and zeroPoint can be diffent from the input0 scale and zeroPoint.
+     *      the scales and zeroPoint can be different from input0 scale and zeroPoint.
      */
     PRELU = 71,
 
     /**
      * Quantizes the input tensor.
      *
-     * The formula is:
+     * The formula for {@link OperandType::TENSOR_QUANT8_ASYMM} output tensor is:
      *
      *     output = max(0, min(255, round(input / scale) + zeroPoint)
      *
-     * Supported tensor {@link OperandType}:
+     * Supported input tensor {@link OperandType}:
      * * {@link OperandType::TENSOR_FLOAT16}
      * * {@link OperandType::TENSOR_FLOAT32}
+     *
+     * Supported output tensor {@link OperandType}:
+     * * {@link OperandType::TENSOR_QUANT8_ASYMM}
      *
      * Supported tensor rank: from 1
      *
@@ -4325,15 +4332,15 @@ enum OperationType : int32_t {
      *      dimension (SymmPerChannelQuantParams::channelDim) must be set to 0.
      * * 2: A 1-D tensor, of shape [depth_out], specifying the bias. For input
      *      tensor of type {@link OperandType::TENSOR_FLOAT32} or
-     *      {@link OperandType::TENSOR_FLOAT16}, the bias should be of the
-     *      same type. For input tensor of type
-     *      {@link OperandType::TENSOR_QUANT8_ASYMM}, the bias should be
-     *      of {@link OperandType::TENSOR_INT32}, with zeroPoint of 0 and
-     *      bias_scale == input_scale * filter_scale. For filter tensor of
-     *      {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL}, the bias
-     *      must be of {@link OperandType::TENSOR_INT32}, with zeroPoint of
-     *      0 and bias_scale of 0. The actual scale of each value 'i' is equal
-     *      to bias_scale[i] = input_scale * filter_scale[i].
+     *      {@link OperandType::TENSOR_FLOAT16}, the bias must be of the
+     *      same type.
+     *      For filter tensor of {@link OperandType::TENSOR_QUANT8_ASYMM},
+     *      the bias should be of {@link OperandType::TENSOR_INT32},
+     *      with zeroPoint of 0 and bias_scale == input_scale * filter_scale.
+     *      For filter tensor of {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL},
+     *      the bias must be of {@link OperandType::TENSOR_INT32}, with zeroPoint of 0
+     *      and bias_scale of 0. The actual scale of each value 'i' is equal to
+     *      bias_scale[i] = input_scale * filter_scale[i].
      * * 3: An {@link OperandType::INT32} scalar, specifying the padding on
      *      the left, in the ‘width’ dimension.
      * * 4: An {@link OperandType::INT32} scalar, specifying the padding on
@@ -4363,14 +4370,14 @@ enum OperationType : int32_t {
      * * 2: A 1-D tensor, of shape [depth_out], specifying the bias. For input
      *      tensor of type {@link OperandType::TENSOR_FLOAT32} or
      *      {@link OperandType::TENSOR_FLOAT16}, the bias should be of the
-     *      same type. For input tensor of type
-     *      {@link OperandType::TENSOR_QUANT8_ASYMM}, the bias should be
-     *      of {@link OperandType::TENSOR_INT32}, with zeroPoint of 0 and
-     *      bias_scale == input_scale * filter_scale. For filter tensor of
-     *      {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL}, the bias
-     *      must be of {@link OperandType::TENSOR_INT32}, with zeroPoint of
-     *      0 and bias_scale of 0. The actual scale of each value 'i' is equal
-     *      to bias_scale[i] = input_scale * filter_scale[i].
+     *      same type.
+     *      For filter tensor of {@link OperandType::TENSOR_QUANT8_ASYMM},
+     *      the bias should be of {@link OperandType::TENSOR_INT32},
+     *      with zeroPoint of 0 and bias_scale == input_scale * filter_scale.
+     *      For filter tensor of {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL},
+     *      the bias must be of {@link OperandType::TENSOR_INT32}, with zeroPoint of 0
+     *      and bias_scale of 0. The actual scale of each value 'i' is equal to
+     *      bias_scale[i] = input_scale * filter_scale[i].
      * * 3: An {@link OperandType::TENSOR_INT32} tensor, specifying the output
      *      tensor shape.
      * * 4: An {@link OperandType::INT32} scalar, specifying the implicit
