@@ -739,6 +739,13 @@ class RadioIndication_v1_5 : public ::android::hardware::radio::V1_5::IRadioIndi
 
     Return<void> modemReset(RadioIndicationType type,
                             const ::android::hardware::hidl_string& reason);
+
+    Return<void> registrationFailed(
+            RadioIndicationType type,
+            const ::android::hardware::radio::V1_5::CellIdentity& cellIdentity,
+            const ::android::hardware::hidl_string& chosenPlmn,
+            ::android::hardware::hidl_bitfield<::android::hardware::radio::V1_5::Domain> domain,
+            int32_t causeCode, int32_t additionalCauseCode);
 };
 
 // Test environment for Radio HIDL HAL.
