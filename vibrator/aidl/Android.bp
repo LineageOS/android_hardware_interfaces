@@ -1,5 +1,5 @@
 aidl_interface {
-    name: "vintf-vibrator",
+    name: "android.hardware.vibrator",
     vendor_available: true,
     srcs: [
         "android/hardware/vibrator/*.aidl",

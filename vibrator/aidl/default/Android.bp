@@ -4,13 +4,13 @@ cc_library_static {
     shared_libs: [
         "libbase",
         "libbinder_ndk",
-        "vintf-vibrator-ndk_platform",
+        "android.hardware.vibrator-ndk_platform",
     ],
     export_include_dirs: ["include"],
     srcs: ["Vibrator.cpp"],
     visibility: [
-         ":__subpackages__",
-         "//hardware/interfaces/tests/extension/vibrator:__subpackages__",
+        ":__subpackages__",
+        "//hardware/interfaces/tests/extension/vibrator:__subpackages__",
     ],
 }
 
@@ -23,7 +23,7 @@ cc_binary {
     shared_libs: [
         "libbase",
         "libbinder_ndk",
-        "vintf-vibrator-ndk_platform",
+        "android.hardware.vibrator-ndk_platform",
     ],
     static_libs: [
         "libvibratorexampleimpl",
