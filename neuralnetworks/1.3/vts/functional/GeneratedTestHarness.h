@@ -36,6 +36,7 @@ class GeneratedTestBase : public testing::TestWithParam<GeneratedTestParam> {
     void SetUp() override;
     const sp<IDevice> kDevice = getData(std::get<NamedDevice>(GetParam()));
     const test_helper::TestModel& kTestModel = *getData(std::get<NamedModel>(GetParam()));
+    std::pair<bool, bool> mSupportsDeadlines;
 };
 
 using FilterFn = std::function<bool(const test_helper::TestModel&)>;
