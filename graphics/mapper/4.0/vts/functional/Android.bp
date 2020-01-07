@@ -19,10 +19,10 @@ cc_test {
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: ["VtsHalGraphicsMapperV4_0TargetTest.cpp"],
     static_libs: [
+        "android.hardware.graphics.common-ndk_platform",
         "android.hardware.graphics.mapper@4.0-vts",
         "libgralloctypes",
         "libsync",
-        "vintf-graphics-common-ndk_platform",
     ],
     shared_libs: [
         "android.hardware.graphics.allocator@4.0",
@@ -34,5 +34,8 @@ cc_test {
     header_libs: [
         "libsystem_headers",
     ],
-    test_suites: ["general-tests", "vts-core"],
+    test_suites: [
+        "general-tests",
+        "vts-core",
+    ],
 }
