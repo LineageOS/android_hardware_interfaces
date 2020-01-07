@@ -330,6 +330,8 @@ static bool mutateOperationOperandTypeSkip(size_t operand, OperandType type, con
         // - DEPTHWISE_CONV_2D filter type (arg 1) can be QUANT8_ASYMM or QUANT8_SYMM_PER_CHANNEL
         // - GROUPED_CONV_2D filter type (arg 1) can be QUANT8_ASYMM or QUANT8_SYMM_PER_CHANNEL
         // - TRANSPOSE_CONV_2D filter type (arg 1) can be QUANT8_ASYMM or QUANT8_SYMM_PER_CHANNEL
+        // - AXIS_ALIGNED_BBOX_TRANSFORM bounding boxes (arg 1) can be of
+        //     TENSOR_QUANT8_ASYMM or TENSOR_QUANT8_ASYMM_SIGNED.
         switch (operation.type) {
             case OperationType::LSH_PROJECTION: {
                 if (operand == operation.inputs[1]) {
@@ -382,6 +384,13 @@ static bool mutateOperationOperandTypeSkip(size_t operand, OperandType type, con
                 if (operand == operation.inputs[1] &&
                     (type == OperandType::TENSOR_QUANT8_ASYMM ||
                      type == OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL)) {
+                    return true;
+                }
+            } break;
+            case OperationType::AXIS_ALIGNED_BBOX_TRANSFORM: {
+                if (operand == operation.inputs[1] &&
+                    (type == OperandType::TENSOR_QUANT8_ASYMM ||
+                     type == OperandType::TENSOR_QUANT8_ASYMM_SIGNED)) {
                     return true;
                 }
             } break;
