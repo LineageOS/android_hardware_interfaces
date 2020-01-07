@@ -30,4 +30,33 @@ interface IRadioIndication extends @1.4::IRadioIndication {
      * @param enabled whether uiccApplications are enabled, or disabled
      */
     oneway uiccApplicationsEnablementChanged(RadioIndicationType type, bool enabled);
+
+    /**
+     * Report that Registration or a Location/Routing/Tracking Area update has failed.
+     *
+     * <p>Indicate whenever a registration procedure, including a location, routing, or tracking
+     * area update fails. This includes procedures that do not necessarily result in a change of
+     * the modem's registration status. If the modem's registration status changes, that is
+     * reflected in the onNetworkStateChanged() and subsequent get{Voice/Data}RegistrationState().
+     *
+     * @param cellIdentity the CellIdentity, which must include the globally unique identifier for
+     *        the cell (for example, all components of the CGI or ECGI).
+     * @param chosenPlmn a 5 or 6 digit alphanumeric PLMN (MCC|MNC) among those broadcast by the
+     *        cell that was chosen for the failed registration attempt.
+     * @param domain Domain::CS, Domain::PS, or both in case of a combined procedure.
+     * @param causeCode the primary failure cause code of the procedure.
+     *        For GSM/UMTS (MM), values are in TS 24.008 Sec 10.5.95
+     *        For GSM/UMTS (GMM), values are in TS 24.008 Sec 10.5.147
+     *        For LTE (EMM), cause codes are TS 24.301 Sec 9.9.3.9
+     *        For NR (5GMM), cause codes are TS 24.501 Sec 9.11.3.2
+     *        MAX_INT if this value is unused.
+     * @param additionalCauseCode the cause code of any secondary/combined procedure if appropriate.
+     *        For UMTS, if a combined attach succeeds for PS only, then the GMM cause code shall be
+     *        included as an additionalCauseCode.
+     *        For LTE (ESM), cause codes are in TS 24.301 9.9.4.4
+     *        MAX_INT if this value is unused.
+     */
+    oneway registrationFailed(
+            RadioIndicationType type, CellIdentity cellIdentity, string chosenPlmn,
+            bitfield<Domain> domain, int32_t causeCode, int32_t additionalCauseCode);
 };
