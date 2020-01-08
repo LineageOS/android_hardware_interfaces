@@ -26,17 +26,34 @@ enum Tag : @4.0::Tag {
      * IKeymasterDevice::earlyBootEnded() is called.
      */
     EARLY_BOOT_ONLY = TagType:BOOL | 305,
+
     /**
      * DEVICE_UNIQUE_ATTESTATION is an argument to IKeymasterDevice::attestKey().  It indicates that
-     * attestation using a device-unique key is requested, rather than a batch key.  Only
-     * SecurityLevel::STRONGBOX IKeymasterDevices may support device-unique attestations.
-     * SecurityLevel::TRUSTED_ENVIRONMENT IKeymasterDevices must return ErrorCode::INVALID_ARGUMENT
-     * if they receive DEVICE_UNIQUE_ATTESTATION.  SecurityLevel::STRONGBOX IKeymasterDevices need
-     * not support DEVICE_UNIQUE_ATTESTATION, and return ErrorCode::CANNOT_ATTEST_IDS if they do not
-     * support it.
+     * attestation using a device-unique key is requested, rather than a batch key.  When a
+     * device-unique key is used, only the attestation certificate is returned; no additional
+     * chained certificates are provided.  It's up to the caller to recognize the device-unique
+     * signing key.  Only SecurityLevel::STRONGBOX IKeymasterDevices may support device-unique
+     * attestations.  SecurityLevel::TRUSTED_ENVIRONMENT IKeymasterDevices must return
+     * ErrorCode::INVALID_ARGUMENT if they receive DEVICE_UNIQUE_ATTESTATION.
+     * SecurityLevel::STRONGBOX IKeymasterDevices need not support DEVICE_UNIQUE_ATTESTATION, and
+     * return ErrorCode::CANNOT_ATTEST_IDS if they do not support it.
      *
      * IKeymasterDevice implementations that support device-unique attestation MUST add the
      * DEVICE_UNIQUE_ATTESTATION tag to device-unique attestations.
      */
     DEVICE_UNIQUE_ATTESTATION = TagType:BOOL | 720,
+
+    /**
+     * IDENTITY_CREDENTIAL_KEY is never used by IKeymasterDevice, is not a valid argument to key
+     * generation or any operation, is never returned by any method and is never used in a key
+     * attestation.  It is used in attestations produced by the IIdentityCredential HAL when that
+     * HAL attests to Credential Keys.  IIdentityCredential produces Keymaster-style attestations.
+     */
+    IDENTITY_CREDENTIAL_KEY = TagType:BOOL | 721,
+};
+
+enum ErrorCode : @4.0::ErrorCode {
+    EARLY_BOOT_ENDED = -73,
+    ATTESTATION_KEYS_NOT_PROVISIONED = -74,
+    ATTESTATION_IDS_NOT_PROVISIONED = -75,
 };
