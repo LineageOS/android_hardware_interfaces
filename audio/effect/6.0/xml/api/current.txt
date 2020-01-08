@@ -82,6 +82,7 @@ package audio.effects.V6_0 {
   public enum StreamOutputType {
     method public String getRawName();
     enum_constant public static final audio.effects.V6_0.StreamOutputType alarm;
+    enum_constant public static final audio.effects.V6_0.StreamOutputType assistant;
     enum_constant public static final audio.effects.V6_0.StreamOutputType bluetooth_sco;
     enum_constant public static final audio.effects.V6_0.StreamOutputType dtmf;
     enum_constant public static final audio.effects.V6_0.StreamOutputType enforced_audible;

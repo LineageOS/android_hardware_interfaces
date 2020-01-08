@@ -106,6 +106,7 @@ enum AudioStreamType : int32_t {
     TTS              = 9,  // Transmitted Through Speaker.  Plays over speaker
                            // only, silent on other devices
     ACCESSIBILITY    = 10, // For accessibility talk back prompts
+    ASSISTANT        = 11, // For virtual assistant service
 };
 
 @export(name="audio_source_t", value_prefix="AUDIO_SOURCE_")
