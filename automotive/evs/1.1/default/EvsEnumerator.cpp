@@ -355,6 +355,28 @@ EvsEnumerator::CameraRecord* EvsEnumerator::findCameraById(const std::string& ca
     return pRecord;
 }
 
+// TODO(b/148608401): Add default implementation with dummy data.
+Return<void> EvsEnumerator::getUltrasonicsArrayList(getUltrasonicsArrayList_cb _hidl_cb) {
+    hidl_vec<UltrasonicsArrayDesc> ultrasonicsArrayDesc;
+    _hidl_cb(ultrasonicsArrayDesc);
+    return Void();
+}
+
+// TODO(b/148608401): Add default implementation with dummy data.
+Return<sp<IEvsUltrasonicsArray>> EvsEnumerator::openUltrasonicsArray(
+        const hidl_string& ultrasonicsArrayId) {
+    (void)ultrasonicsArrayId;
+    sp<IEvsUltrasonicsArray> pEvsUltrasonicsArray;
+    return pEvsUltrasonicsArray;
+}
+
+// TODO(b/148608401): Add default implementation with dummy data.
+Return<void> EvsEnumerator::closeUltrasonicsArray(
+        const ::android::sp<IEvsUltrasonicsArray>& evsUltrasonicsArray)  {
+    (void)evsUltrasonicsArray;
+    return Void();
+}
+
 } // namespace implementation
 } // namespace V1_1
 } // namespace evs

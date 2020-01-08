@@ -65,6 +65,11 @@ public:
     Return<bool> isHardware() override { return true; }
     Return<void>                getDisplayIdList(getDisplayIdList_cb _list_cb) override;
     Return<sp<IEvsDisplay_1_1>> openDisplay_1_1(uint8_t port) override;
+    Return<void> getUltrasonicsArrayList(getUltrasonicsArrayList_cb _hidl_cb) override;
+    Return<sp<IEvsUltrasonicsArray>> openUltrasonicsArray(
+            const hidl_string& ultrasonicsArrayId) override;
+    Return<void> closeUltrasonicsArray(
+            const ::android::sp<IEvsUltrasonicsArray>& evsUltrasonicsArray) override;
 
     // Implementation details
     EvsEnumerator(sp<IAutomotiveDisplayProxyService> windowService = nullptr);
