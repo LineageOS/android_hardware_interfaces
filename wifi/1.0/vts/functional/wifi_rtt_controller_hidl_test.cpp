@@ -37,7 +37,10 @@ using ::android::hardware::wifi::V1_0::WifiStatusCode;
  */
 class WifiRttControllerHidlTest : public ::testing::TestWithParam<std::string> {
    public:
-    virtual void SetUp() override {}
+    virtual void SetUp() override {
+        // Make sure test starts with a clean state
+        stopWifi(GetInstanceName());
+    }
 
     virtual void TearDown() override { stopWifi(GetInstanceName()); }
 

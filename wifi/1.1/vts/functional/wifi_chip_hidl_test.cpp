@@ -49,6 +49,9 @@ constexpr IWifiChip::TxPowerScenario kFakePowerScenario =
 class WifiChipHidlTest : public ::testing::TestWithParam<std::string> {
    public:
     virtual void SetUp() override {
+        // Make sure to start with a clean state
+        stopWifi(GetInstanceName());
+
         wifi_chip_ = IWifiChip::castFrom(getWifiChip(GetInstanceName()));
         ASSERT_NE(nullptr, wifi_chip_.get());
     }

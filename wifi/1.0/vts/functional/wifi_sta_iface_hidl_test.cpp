@@ -47,6 +47,9 @@ using ::android::hardware::wifi::V1_0::WifiStatusCode;
 class WifiStaIfaceHidlTest : public ::testing::TestWithParam<std::string> {
    public:
     virtual void SetUp() override {
+        // Make sure test starts with a clean state
+        stopWifi(GetInstanceName());
+
         wifi_sta_iface_ = getWifiStaIface(GetInstanceName());
         ASSERT_NE(nullptr, wifi_sta_iface_.get());
     }
