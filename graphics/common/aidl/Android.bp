@@ -1,5 +1,5 @@
 aidl_interface {
-    name: "vintf-graphics-common",
+    name: "android.hardware.graphics.common",
     host_supported: true,
     vendor_available: true,
     vndk: {
@@ -11,7 +11,7 @@ aidl_interface {
     ],
     stability: "vintf",
     imports: [
-        "vintf-common"
+        "android.hardware.common",
     ],
     backend: {
         java: {

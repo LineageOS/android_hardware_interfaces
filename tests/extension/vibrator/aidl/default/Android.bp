@@ -19,7 +19,7 @@ cc_binary {
     shared_libs: [
         "libbase",
         "libbinder_ndk",
-        "vintf-vibrator-ndk_platform",
-        "test-vintf-vibrator-ext-ndk_platform",
+        "android.hardware.vibrator-ndk_platform",
+        "test-android.hardware.vibrator-ext-ndk_platform",
     ],
 }
