@@ -1,4 +1,3 @@
-
 xsd_config {
     name: "audio_effects_conf_V6_0",
     srcs: ["audio_effects_conf.xsd"],
