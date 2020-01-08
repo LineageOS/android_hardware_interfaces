@@ -43,6 +43,7 @@ using common::V1_2::Hdr;
 using common::V1_2::PixelFormat;
 using V2_1::Config;
 using V2_1::Display;
+using V2_1::Layer;
 using V2_4::Error;
 
 // HwcHalImpl implements V2_*::hal::ComposerHal on top of hwcomposer2
@@ -218,6 +219,32 @@ class HwcHalImpl : public V2_3::passthrough::detail::HwcHalImpl<Hal> {
         return Error::NONE;
     }
 
+    Error validateDisplay_2_4(
+            Display display, std::vector<Layer>* outChangedLayers,
+            std::vector<IComposerClient::Composition>* outCompositionTypes,
+            uint32_t* outDisplayRequestMask, std::vector<Layer>* outRequestedLayers,
+            std::vector<uint32_t>* outRequestMasks,
+            IComposerClient::ClientTargetProperty* outClientTargetProperty) override {
+        auto err = static_cast<Error>(BaseType2_1::validateDisplay(
+                display, outChangedLayers, outCompositionTypes, outDisplayRequestMask,
+                outRequestedLayers, outRequestMasks));
+        if (err != Error::NONE) {
+            return err;
+        }
+
+        if (mDispatch.getClientTargetProperty) {
+            hwc_client_target_property_t clientTargetProperty;
+            err = static_cast<Error>(
+                    mDispatch.getClientTargetProperty(mDevice, display, &clientTargetProperty));
+            outClientTargetProperty->pixelFormat =
+                    static_cast<PixelFormat>(clientTargetProperty.pixelFormat);
+            outClientTargetProperty->dataspace =
+                    static_cast<Dataspace>(clientTargetProperty.dataspace);
+        }
+
+        return err;
+    }
+
   protected:
     bool initDispatch() override {
         if (!BaseType2_3::initDispatch()) {
@@ -238,6 +265,8 @@ class HwcHalImpl : public V2_3::passthrough::detail::HwcHalImpl<Hal> {
         this->initOptionalDispatch(HWC2_FUNCTION_GET_SUPPORTED_CONTENT_TYPES,
                                    &mDispatch.getSupportedContentTypes);
         this->initOptionalDispatch(HWC2_FUNCTION_SET_CONTENT_TYPE, &mDispatch.setContentType);
+        this->initOptionalDispatch(HWC2_FUNCTION_GET_CLIENT_TARGET_PROPERTY,
+                                   &mDispatch.getClientTargetProperty);
         return true;
     }
 
@@ -289,6 +318,7 @@ class HwcHalImpl : public V2_3::passthrough::detail::HwcHalImpl<Hal> {
         HWC2_PFN_SET_AUTO_LOW_LATENCY_MODE setAutoLowLatencyMode;
         HWC2_PFN_GET_SUPPORTED_CONTENT_TYPES getSupportedContentTypes;
         HWC2_PFN_SET_CONTENT_TYPE setContentType;
+        HWC2_PFN_GET_CLIENT_TARGET_PROPERTY getClientTargetProperty;
     } mDispatch = {};
 
     hal::ComposerHal::EventCallback_2_4* mEventCallback_2_4 = nullptr;
