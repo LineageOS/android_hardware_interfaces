@@ -50,6 +50,9 @@ android::sp<android::hardware::wifi::V1_2::IWifiNanIface> getWifiNanIface_1_2(
 class WifiNanIfaceHidlTest : public ::testing::TestWithParam<std::string> {
    public:
     virtual void SetUp() override {
+        // Make sure to start with a clean state
+        stopWifi(GetInstanceName());
+
         iwifiNanIface = getWifiNanIface_1_2(GetInstanceName());
         ASSERT_NE(nullptr, iwifiNanIface.get());
         ASSERT_EQ(WifiStatusCode::SUCCESS,
