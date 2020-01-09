@@ -46,8 +46,8 @@ using android::hardware::graphics::composer::V2_3::IComposerClient;
 class CommandWriterBase : public V2_2::CommandWriterBase {
    public:
     void setLayerPerFrameMetadata(const hidl_vec<IComposerClient::PerFrameMetadata>& metadataVec) {
-        beginCommand_2_3(IComposerClient::Command::SET_LAYER_PER_FRAME_METADATA,
-                         metadataVec.size() * 2);
+        beginCommand(IComposerClient::Command::SET_LAYER_PER_FRAME_METADATA,
+                     metadataVec.size() * 2);
         for (const auto& metadata : metadataVec) {
             writeSigned(static_cast<int32_t>(metadata.key));
             writeFloat(metadata.value);
@@ -69,8 +69,8 @@ class CommandWriterBase : public V2_2::CommandWriterBase {
 
     static constexpr uint16_t kSetLayerColorTransformLength = 16;
     void setLayerColorTransform(const float* matrix) {
-        beginCommand_2_3(IComposerClient::Command::SET_LAYER_COLOR_TRANSFORM,
-                         kSetLayerColorTransformLength);
+        beginCommand(IComposerClient::Command::SET_LAYER_COLOR_TRANSFORM,
+                     kSetLayerColorTransformLength);
         for (int i = 0; i < 16; i++) {
             writeFloat(matrix[i]);
         }
@@ -109,7 +109,7 @@ class CommandWriterBase : public V2_2::CommandWriterBase {
         // Blobs are written as:
         // {numElements, key1, size1, blob1, key2, size2, blob2, key3, size3...}
         uint16_t length = static_cast<uint16_t>(commandLength);
-        beginCommand_2_3(IComposerClient::Command::SET_LAYER_PER_FRAME_METADATA_BLOBS, length);
+        beginCommand(IComposerClient::Command::SET_LAYER_PER_FRAME_METADATA_BLOBS, length);
         write(static_cast<uint32_t>(metadata.size()));
         for (auto metadataBlob : metadata) {
             writeSigned(static_cast<int32_t>(metadataBlob.key));
@@ -125,12 +125,6 @@ class CommandWriterBase : public V2_2::CommandWriterBase {
         uint32_t numElements = length / 4;
         mDataWritten += numElements;
         mDataWritten += (length - (numElements * 4) > 0) ? 1 : 0;
-    }
-
-  private:
-    void beginCommand_2_3(IComposerClient::Command command, uint16_t length) {
-        V2_1::CommandWriterBase::beginCommand(
-                static_cast<V2_1::IComposerClient::Command>(static_cast<int32_t>(command)), length);
     }
 };
 
