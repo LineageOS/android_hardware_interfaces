@@ -500,7 +500,7 @@ class GeneratedTest : public GeneratedTestBase {};
 class DynamicOutputShapeTest : public GeneratedTest {};
 
 // Tag for the dynamic output shape tests
-class DISABLED_QuantizationCouplingTest : public GeneratedTest {};
+class QuantizationCouplingTest : public GeneratedTest {};
 
 TEST_P(GeneratedTest, Test) {
     Execute(kDevice, kTestModel, /*testKind=*/TestKind::GENERAL);
@@ -510,7 +510,7 @@ TEST_P(DynamicOutputShapeTest, Test) {
     Execute(kDevice, kTestModel, /*testKind=*/TestKind::DYNAMIC_SHAPE);
 }
 
-TEST_P(DISABLED_QuantizationCouplingTest, Test) {
+TEST_P(QuantizationCouplingTest, Test) {
     Execute(kDevice, kTestModel, /*testKind=*/TestKind::QUANTIZATION_COUPLING);
 }
 
@@ -520,7 +520,7 @@ INSTANTIATE_GENERATED_TEST(GeneratedTest,
 INSTANTIATE_GENERATED_TEST(DynamicOutputShapeTest,
                            [](const TestModel& testModel) { return !testModel.expectFailure; });
 
-INSTANTIATE_GENERATED_TEST(DISABLED_QuantizationCouplingTest, [](const TestModel& testModel) {
+INSTANTIATE_GENERATED_TEST(QuantizationCouplingTest, [](const TestModel& testModel) {
     return testModel.hasQuant8CoupledOperands() && testModel.operations.size() == 1;
 });
 
