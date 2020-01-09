@@ -44,6 +44,9 @@ using ::android::hardware::wifi::V1_0::IWifi;
 class WifiNanIfaceHidlTest : public ::testing::TestWithParam<std::string> {
    public:
     virtual void SetUp() override {
+        // Make sure test starts with a clean state
+        stopWifi(GetInstanceName());
+
         iwifiNanIface = getWifiNanIface(GetInstanceName());
         ASSERT_NE(nullptr, iwifiNanIface.get());
         ASSERT_EQ(WifiStatusCode::SUCCESS,

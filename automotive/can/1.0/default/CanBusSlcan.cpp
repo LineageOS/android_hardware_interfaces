@@ -47,13 +47,34 @@ static const std::map<uint32_t, std::string> kBitrateCommands = {
 CanBusSlcan::CanBusSlcan(const std::string& uartName, uint32_t bitrate)
     : CanBus(), mUartName(uartName), kBitrate(bitrate) {}
 
+/** helper function to update CanBusSlcan object's iface name */
+ICanController::Result CanBusSlcan::updateIfaceName(base::unique_fd& uartFd) {
+    struct ifreq ifrequest = {};
+    /*
+     * Fetching the iface name with an ioctl won't interfere with an open socketCAN iface attached
+     * to this tty. This is important in the event we are trying to register a SLCAN based iface
+     * that has already been configured and brought up.
+     */
+    if (ioctl(uartFd.get(), SIOCGIFNAME, ifrequest.ifr_name) < 0) {
+        LOG(ERROR) << "Failed to get the name of the created device: " << strerror(errno);
+        return ICanController::Result::UNKNOWN_ERROR;
+    }
+
+    // Update the CanBus object with name that was assigned to it
+    mIfname = ifrequest.ifr_name;
+    return ICanController::Result::OK;
+}
+
 ICanController::Result CanBusSlcan::preUp() {
     // verify valid bitrate and translate to serial command format
-    const auto lookupIt = slcanprotocol::kBitrateCommands.find(kBitrate);
-    if (lookupIt == slcanprotocol::kBitrateCommands.end()) {
-        return ICanController::Result::BAD_BAUDRATE;
+    std::optional<std::string> canBitrateCommand = std::nullopt;
+    if (kBitrate != 0) {
+        const auto lookupIt = slcanprotocol::kBitrateCommands.find(kBitrate);
+        if (lookupIt == slcanprotocol::kBitrateCommands.end()) {
+            return ICanController::Result::BAD_BAUDRATE;
+        }
+        canBitrateCommand = lookupIt->second;
     }
-    const auto canBitrateCommand = lookupIt->second;
 
     /* Attempt to open the uart in r/w without blocking or becoming the
      * controlling terminal */
@@ -61,6 +82,11 @@ ICanController::Result CanBusSlcan::preUp() {
     if (!mFd.ok()) {
         LOG(ERROR) << "SLCAN Failed to open " << mUartName << ": " << strerror(errno);
         return ICanController::Result::BAD_ADDRESS;
+    }
+
+    // If the device is already up, update the iface name in our CanBusSlcan object
+    if (kBitrate == 0) {
+        return updateIfaceName(mFd);
     }
 
     // blank terminal settings and pull them from the device
@@ -102,7 +128,7 @@ ICanController::Result CanBusSlcan::preUp() {
     }
 
     // apply speed setting for CAN
-    if (write(mFd.get(), canBitrateCommand.c_str(), canBitrateCommand.length()) <= 0) {
+    if (write(mFd.get(), canBitrateCommand->c_str(), canBitrateCommand->length()) <= 0) {
         LOG(ERROR) << "Failed to apply CAN bitrate: " << strerror(errno);
         return ICanController::Result::UNKNOWN_ERROR;
     }
@@ -120,17 +146,8 @@ ICanController::Result CanBusSlcan::preUp() {
         return ICanController::Result::UNKNOWN_ERROR;
     }
 
-    // get the name of the device we created
-    struct ifreq ifrequest = {};
-    if (ioctl(mFd.get(), SIOCGIFNAME, ifrequest.ifr_name) < 0) {
-        LOG(ERROR) << "Failed to get the name of the created device: " << strerror(errno);
-        return ICanController::Result::UNKNOWN_ERROR;
-    }
-
     // Update the CanBus object with name that was assigned to it
-    mIfname = ifrequest.ifr_name;
-
-    return ICanController::Result::OK;
+    return updateIfaceName(mFd);
 }
 
 bool CanBusSlcan::postDown() {

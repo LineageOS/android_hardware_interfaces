@@ -1307,18 +1307,15 @@ safe_union FrontendScanMessage {
 @export
 enum FrontendEventType : uint32_t {
     /**
-     * If frontend locked the signal which is specified by tune method, HAL sends
-     * Locked event.
+     * The frontend has locked to the signal specified by the tune method.
      */
     LOCKED,
     /**
-     * If frontend can't locked the signal which is specified by tune method,
-     * HAL sends NO_SIGNAL event.
+     * The frontend is unable to lock to the signal specified by the tune method.
      */
     NO_SIGNAL,
     /**
-     * If frontend detect that the locked signal get lost, HAL sends LOST_LOCK
-     * event.
+     * The frontend has lost the lock to the signal specified by the tune method.
      */
     LOST_LOCK,
 };

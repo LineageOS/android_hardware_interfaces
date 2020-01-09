@@ -26,14 +26,14 @@ import @1.2::ISupplicantStaNetwork;
  */
 interface ISupplicantStaNetwork extends @1.2::ISupplicantStaNetwork {
     /**
-     * Possble mask of values for Proto param.
+     * Possible mask of values for Proto param.
      */
     enum ProtoMask : @1.0::ISupplicantStaNetwork.ProtoMask {
         WAPI = 1 << 2,
     };
 
     /**
-     * Possble mask of values for KeyMgmt param.
+     * Possible mask of values for KeyMgmt param.
      */
     enum KeyMgmtMask : @1.2::ISupplicantStaNetwork.KeyMgmtMask {
         /*
@@ -47,7 +47,7 @@ interface ISupplicantStaNetwork extends @1.2::ISupplicantStaNetwork {
     };
 
     /**
-     * Possble mask of values for PairwiseCipher param.
+     * Possible mask of values for PairwiseCipher param.
      */
     enum PairwiseCipherMask : @1.2::ISupplicantStaNetwork.PairwiseCipherMask {
         /**
@@ -57,13 +57,20 @@ interface ISupplicantStaNetwork extends @1.2::ISupplicantStaNetwork {
     };
 
     /**
-     * Possble mask of values for GroupCipher param.
+     * Possible mask of values for GroupCipher param.
      */
     enum GroupCipherMask : @1.2::ISupplicantStaNetwork.GroupCipherMask {
         /**
          * SMS4 Group Cipher
          */
         SMS4 = 1 << 7,
+    };
+
+    /**
+     * Possible mask of values for AuthAlg param.
+     */
+    enum AuthAlgMask : @1.0::ISupplicantStaNetwork.AuthAlgMask {
+        SAE = 1 << 4,
     };
 
     /**
@@ -236,4 +243,29 @@ interface ISupplicantStaNetwork extends @1.2::ISupplicantStaNetwork {
      *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
      */
     setPmkCache(vec<uint8_t> serializedEntry) generates (SupplicantStatus status);
+
+    /**
+     * Set auth alg mask for the network.
+     *
+     * @param authAlgMask value to set.
+     *        Combination of |ProtoMask| values.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     */
+    setAuthAlg_1_3(bitfield<AuthAlgMask> authAlgMask) generates (SupplicantStatus status);
+
+    /**
+     * Get the auth alg mask set for the network.
+     *
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     * @return authAlgMask Combination of |AuthAlgMask| values.
+     */
+    getAuthAlg_1_3() generates (SupplicantStatus status, bitfield<AuthAlgMask> authAlgMask);
 };

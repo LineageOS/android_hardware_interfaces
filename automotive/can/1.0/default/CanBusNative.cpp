@@ -31,6 +31,11 @@ ICanController::Result CanBusNative::preUp() {
         return ICanController::Result::BAD_ADDRESS;
     }
 
+    if (mBaudrate == 0) {
+        // interface is already up and we just want to register it
+        return ICanController::Result::OK;
+    }
+
     if (!netdevice::down(mIfname)) {
         LOG(ERROR) << "Can't bring " << mIfname << " down (to configure it)";
         return ICanController::Result::UNKNOWN_ERROR;
