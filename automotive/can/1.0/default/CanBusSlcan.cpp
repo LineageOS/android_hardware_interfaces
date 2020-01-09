@@ -71,7 +71,7 @@ ICanController::Result CanBusSlcan::preUp() {
     if (kBitrate != 0) {
         const auto lookupIt = slcanprotocol::kBitrateCommands.find(kBitrate);
         if (lookupIt == slcanprotocol::kBitrateCommands.end()) {
-            return ICanController::Result::BAD_BAUDRATE;
+            return ICanController::Result::BAD_BITRATE;
         }
         canBitrateCommand = lookupIt->second;
     }

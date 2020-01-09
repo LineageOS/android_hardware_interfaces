@@ -22,8 +22,8 @@
 
 namespace android::hardware::automotive::can::V1_0::implementation {
 
-CanBusNative::CanBusNative(const std::string& ifname, uint32_t baudrate)
-    : CanBus(ifname), mBaudrate(baudrate) {}
+CanBusNative::CanBusNative(const std::string& ifname, uint32_t bitrate)
+    : CanBus(ifname), mBitrate(bitrate) {}
 
 ICanController::Result CanBusNative::preUp() {
     if (!netdevice::exists(mIfname)) {
@@ -31,7 +31,7 @@ ICanController::Result CanBusNative::preUp() {
         return ICanController::Result::BAD_ADDRESS;
     }
 
-    if (mBaudrate == 0) {
+    if (mBitrate == 0) {
         // interface is already up and we just want to register it
         return ICanController::Result::OK;
     }
@@ -41,9 +41,9 @@ ICanController::Result CanBusNative::preUp() {
         return ICanController::Result::UNKNOWN_ERROR;
     }
 
-    if (!netdevice::can::setBitrate(mIfname, mBaudrate)) {
-        LOG(ERROR) << "Can't set bitrate " << mBaudrate << " for " << mIfname;
-        return ICanController::Result::BAD_BAUDRATE;
+    if (!netdevice::can::setBitrate(mIfname, mBitrate)) {
+        LOG(ERROR) << "Can't set bitrate " << mBitrate << " for " << mIfname;
+        return ICanController::Result::BAD_BITRATE;
     }
 
     return ICanController::Result::OK;

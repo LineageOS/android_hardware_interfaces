@@ -172,7 +172,7 @@ TEST_F(CanControllerHalTest, IdentifierCompatibility) {
             ICanController::BusConfiguration config = {};
             config.name = "compattestsrv";
             config.iftype = iftype;
-            config.baudrate = 125000;
+            config.bitrate = 125000;
 
             // using random-ish addresses, which may not be valid - we can't test the success case
             if (iddisc == IdDisc::address) {
