@@ -657,6 +657,9 @@ c72cb37b3f66ef65aeb5c6438a3fbe17bbe847fdf62d1a76eafd7f3a8a526105 android.hardwar
 342a8e12db4dca643f2755eb4167e8f103d96502053a25a1f51f42107a4530f1 android.hardware.wifi.supplicant@1.3::ISupplicantStaIfaceCallback
 8835e9799cddf7c239f60beff467cbdf164331f70a8b6c06ed78982d7810d835 android.hardware.wifi.supplicant@1.3::ISupplicantStaNetwork
 91015479f5a0fba9872e98d3cca4680995de64f42ae71461b4b7e5acc5a196ab android.hardware.wifi.supplicant@1.3::types
+##
+# BEGIN Radio HAL Merge Conflict Avoidance Buffer - STOPSHIP if present
+##
 2c0587a1e83facba604949c31163486f21eb5b47a29c8f29119a47d3bd052103 android.hardware.radio@1.5::types
 b5cfa87882b416105fe01e8a40a856d36c93d64f1103d77e12b1281cea13b0bd android.hardware.radio@1.5::IRadio
 bc59237dbd93949238081f762710552e76670cb648c0e198138551460ac54b1e android.hardware.radio@1.5::IRadioIndication
@@ -665,5 +668,8 @@ ef10e15cdbe8ba63925302a95962d5679bbda6a4351400cc23e1589ca0e9f94b android.hardwar
 b27ab0cd40b0b078cdcd024bfe1061c4c4c065f3519eeb9347fa359a3268a5ae android.hardware.radio.config@1.3::IRadioConfig
 742360c775313438b0f82256eac62fb5bbc76a6ae6f388573f3aa142fb2c1eea android.hardware.radio.config@1.3::IRadioConfigIndication
 7683fed9d253956071f18b152e6be657719536f98d9b534433d5e411bcde5061 android.hardware.radio.config@1.3::IRadioConfigResponse
+##
+# END Radio HAL Merge Conflict Avoidance Buffer - STOPSHIP if present
+##
 b46d358537168c478762c3d34d5fe1555a3fcd89cd1f43621350ada395e6f795 android.hardware.soundtrigger@2.3::types
 15924fbf38b3c282299a37e48c72405c97e322f844f815081db6acbca22d4165 android.hardware.soundtrigger@2.3::ISoundTriggerHw
