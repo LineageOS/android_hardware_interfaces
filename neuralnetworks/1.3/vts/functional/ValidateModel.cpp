@@ -27,7 +27,6 @@ using implementation::PreparedModelCallback;
 using V1_0::ErrorStatus;
 using V1_0::OperandLifeTime;
 using V1_1::ExecutionPreference;
-using V1_2::OperationTypeRange;
 using V1_2::SymmPerChannelQuantParams;
 using HidlToken =
         hidl_array<uint8_t, static_cast<uint32_t>(V1_2::Constant::BYTE_SIZE_OF_CACHE_TOKEN)>;
