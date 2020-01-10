@@ -99,6 +99,11 @@ and `update()`, with an additional `energyCounter()` function.
 
 For example (replace `<device>` with the device name):
 ```
+# device/<manufacturer>/<device>/sepolicy/vendor/file_contexts
+# Required for charger to open passthrough implementation. Replace <device> with the proper device
+# name. File name must be consistent with `stem` of the implementation module.
+/vendor/lib(64)?/hw/android\.hardware\.health@2\.0-impl-2\.1-<device>\.so u:object_r:same_process_hal_file:s0
+
 # device/<manufacturer>/<device>/sepolicy/vendor/hal_health_default.te
 # Add device specific permissions to hal_health_default domain, especially
 # if a device-specific libhealthd is used and/or device-specific storage related
