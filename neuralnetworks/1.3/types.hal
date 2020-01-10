@@ -4747,7 +4747,7 @@ enum OperationType : int32_t {
     RESIZE_NEAREST_NEIGHBOR = @1.2::OperationType:RESIZE_NEAREST_NEIGHBOR,
 
     /**
-     * Quantized version of {@link OperationType:LSTM}.
+     * Quantized version of {@link OperationType::LSTM}.
      *
      * The input and the output use asymmetric quantized types, while the rest
      * use symmetric ones.
