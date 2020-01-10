@@ -21,6 +21,7 @@ import @1.4::IRadio;
 import @1.4::DataProfileInfo;
 import @1.5::AccessNetwork;
 import @1.5::DataProfileInfo;
+import @1.5::IndicationFilter;
 import @1.5::LinkAddress;
 import @1.5::NetworkScanRequest;
 import @1.5::RadioAccessSpecifier;
@@ -219,4 +220,19 @@ interface IRadio extends @1.4::IRadio {
      */
     oneway setRadioPower_1_5(int32_t serial, bool powerOn, bool forEmergencyCall,
             bool preferredForEmergencyCall);
+
+    /**
+     * Sets the indication filter.
+     *
+     * Prevents the reporting of specified unsolicited indications from the radio. This is used
+     * for power saving in instances when those indications are not needed. If unset, defaults to
+     * @1.2::IndicationFilter:ALL.
+     *
+     * @param serial Serial number of request.
+     * @param indicationFilter 32-bit bitmap of IndicationFilter. Bits set to 1 indicate the
+     *     indications are enabled. See @1.5::IndicationFilter for the definition of each bit.
+     *
+     * Response callback is IRadioResponse.setIndicationFilterResponse()
+     */
+    oneway setIndicationFilter_1_5(int32_t serial, bitfield<IndicationFilter> indicationFilter);
 };
