@@ -17,6 +17,21 @@
 package android.hardware.soundtrigger@2.3;
 
 import android.hidl.safe_union@1.0::Monostate;
+import @2.0::ISoundTriggerHw.Properties;
+
+/**
+ * Extended implementation properties providing verbose implementation
+ * details.
+ */
+struct Properties {
+    @2.0::ISoundTriggerHw.Properties base;
+
+    /**
+     * String naming the architecture used for running the supported models.
+     * (eg. DSP architecture)
+     */
+    string supportedModelArch;
+};
 
 /**
  * Model specific parameters to be used with parameter set and get APIs
