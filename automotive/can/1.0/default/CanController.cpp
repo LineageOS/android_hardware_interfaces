@@ -61,7 +61,7 @@ Return<ICanController::Result> CanController::upInterface(
     if (config.iftype == ICanController::InterfaceType::SOCKETCAN) {
         // TODO(b/135918744): support serialno
         if (config.interfaceId.getDiscriminator() == IfaceIdDisc::address) {
-            busService = new CanBusNative(config.interfaceId.address(), config.baudrate);
+            busService = new CanBusNative(config.interfaceId.address(), config.bitrate);
         } else {
             return ICanController::Result::BAD_ADDRESS;
         }
@@ -73,7 +73,7 @@ Return<ICanController::Result> CanController::upInterface(
         }
     } else if (config.iftype == ICanController::InterfaceType::SLCAN) {
         if (config.interfaceId.getDiscriminator() == IfaceIdDisc::address) {
-            busService = new CanBusSlcan(config.interfaceId.address(), config.baudrate);
+            busService = new CanBusSlcan(config.interfaceId.address(), config.bitrate);
         } else {
             return ICanController::Result::BAD_ADDRESS;
         }

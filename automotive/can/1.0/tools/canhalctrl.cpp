@@ -29,12 +29,12 @@ using ICanController = V1_0::ICanController;
 static void usage() {
     std::cerr << "CAN bus HAL Control tool" << std::endl;
     std::cerr << std::endl << "usage:" << std::endl << std::endl;
-    std::cerr << "canhalctrl up <bus name> <type> <interface> [baudrate]" << std::endl;
+    std::cerr << "canhalctrl up <bus name> <type> <interface> [bitrate]" << std::endl;
     std::cerr << "where:" << std::endl;
     std::cerr << " bus name - name under which ICanBus will be published" << std::endl;
     std::cerr << " type - one of: virtual, socketcan, slcan, indexed" << std::endl;
     std::cerr << " interface - hardware identifier (like can0, vcan0, /dev/ttyUSB0)" << std::endl;
-    std::cerr << " baudrate - such as 100000, 125000, 250000, 500000" << std::endl;
+    std::cerr << " bitrate - such as 100000, 125000, 250000, 500000" << std::endl;
     std::cerr << std::endl;
     std::cerr << "canhalctrl down <bus name>" << std::endl;
     std::cerr << "where:" << std::endl;
@@ -59,7 +59,7 @@ static bool isSupported(sp<ICanController> ctrl, ICanController::InterfaceType i
 }
 
 static int up(const std::string& busName, ICanController::InterfaceType type,
-              const std::string& interface, uint32_t baudrate) {
+              const std::string& interface, uint32_t bitrate) {
     bool anySupported = false;
     for (auto&& service : getControlServices()) {
         auto ctrl = ICanController::getService(service);
@@ -74,7 +74,7 @@ static int up(const std::string& busName, ICanController::InterfaceType type,
         ICanController::BusConfiguration config = {};
         config.name = busName;
         config.iftype = type;
-        config.baudrate = baudrate;
+        config.bitrate = bitrate;
 
         if (type == ICanController::InterfaceType::INDEXED) {
             config.interfaceId.index(std::stol(interface));
@@ -146,12 +146,12 @@ static int main(int argc, char* argv[]) {
             return -1;
         }
 
-        long long baudrate = 0;
+        long long bitrate = 0;
         if (argc == 4) {
-            baudrate = std::stoll(argv[3]);
+            bitrate = std::stoll(argv[3]);
         }
 
-        return up(busName, *type, interface, baudrate);
+        return up(busName, *type, interface, bitrate);
     } else if (cmd == "down") {
         if (argc != 1) {
             std::cerr << "Invalid number of arguments to down command: " << argc << std::endl;

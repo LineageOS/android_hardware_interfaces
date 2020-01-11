@@ -97,8 +97,8 @@ interface ICanController {
          */
         BAD_ADDRESS,
 
-        /** Provided baud rate is not supported by the hardware. */
-        BAD_BAUDRATE,
+        /** Provided bit rate is not supported by the hardware. */
+        BAD_BITRATE,
     };
 
     /**
@@ -152,13 +152,13 @@ interface ICanController {
         } interfaceId;
 
         /**
-         * Baud rate for CAN communication.
+         * Bit rate for CAN communication.
          *
-         * Typical baud rates are: 100000, 125000, 250000, 500000.
+         * Typical bit rates are: 100000, 125000, 250000, 500000.
          *
          * For virtual interfaces this value is ignored.
          */
-        uint32_t baudrate;
+        uint32_t bitrate;
     };
 
     /**

@@ -21,13 +21,13 @@
 namespace android::hardware::automotive::can::V1_0::implementation {
 
 struct CanBusNative : public CanBus {
-    CanBusNative(const std::string& ifname, uint32_t baudrate);
+    CanBusNative(const std::string& ifname, uint32_t bitrate);
 
   protected:
     virtual ICanController::Result preUp() override;
 
   private:
-    const uint32_t mBaudrate;
+    const uint32_t mBitrate;
 };
 
 }  // namespace android::hardware::automotive::can::V1_0::implementation
