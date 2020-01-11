@@ -49,6 +49,11 @@ class ComposerCommandEngine : public V2_1::hal::ComposerCommandEngine {
         }
     }
 
+    std::unique_ptr<V2_1::CommandWriterBase> createCommandWriter(
+            size_t writerInitialSize) override {
+        return std::make_unique<CommandWriterBase>(writerInitialSize);
+    }
+
     bool executeSetLayerPerFrameMetadata(uint16_t length) {
         // (key, value) pairs
         if (length % 2 != 0) {
@@ -65,7 +70,7 @@ class ComposerCommandEngine : public V2_1::hal::ComposerCommandEngine {
 
         auto err = mHal->setLayerPerFrameMetadata(mCurrentDisplay, mCurrentLayer, metadata);
         if (err != Error::NONE) {
-            mWriter.setError(getCommandLoc(), err);
+            mWriter->setError(getCommandLoc(), err);
         }
 
         return true;
@@ -78,7 +83,7 @@ class ComposerCommandEngine : public V2_1::hal::ComposerCommandEngine {
 
         auto err = mHal->setLayerFloatColor(mCurrentDisplay, mCurrentLayer, readFloatColor());
         if (err != Error::NONE) {
-            mWriter.setError(getCommandLoc(), err);
+            mWriter->setError(getCommandLoc(), err);
         }
 
         return true;
