@@ -18,6 +18,22 @@ package android.hardware.soundtrigger@2.3;
 
 import android.hidl.safe_union@1.0::Monostate;
 import @2.0::ISoundTriggerHw.Properties;
+import @2.1::ISoundTriggerHw.RecognitionConfig;
+
+/**
+ * AudioCapabilities supported by the implemented HAL
+ * driver.
+ */
+enum AudioCapabilities : uint32_t {
+    /**
+     * If set the underlying module supports AEC.
+     */
+    ECHO_CANCELLATION = 1 << 0,
+    /**
+     * If set, the underlying module supports noise suppression.
+     */
+    NOISE_SUPPRESSION = 1 << 1,
+};
 
 /**
  * Extended implementation properties providing verbose implementation
@@ -31,6 +47,26 @@ struct Properties {
      * (eg. DSP architecture)
      */
     string supportedModelArch;
+
+    /**
+     * Bit field encoding of the AudioCapabilities
+     * supported by the firmware.
+     */
+    bitfield<AudioCapabilities> audioCapabilities;
+};
+
+/**
+ * Configuration for sound trigger capture session passed to
+ * startRecognition_2_1() method.
+ */
+struct RecognitionConfig {
+    @2.1::ISoundTriggerHw.RecognitionConfig base;
+
+    /**
+     * Bit field encoding of the AudioCapabilities
+     * supported by the firmware.
+     */
+    uint32_t audioCapabilities;
 };
 
 /**
