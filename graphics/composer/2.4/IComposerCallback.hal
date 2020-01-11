@@ -42,4 +42,14 @@ interface IComposerCallback extends @2.1::IComposerCallback {
      * @param updatedTimeline is the new timeline for the vsync period change.
      */
     oneway onVsyncPeriodTimingChanged(Display display, VsyncPeriodChangeTimeline updatedTimeline);
+
+    /**
+     * Notifies the client that the conditions which previously led to returning
+     * SEAMLESS_NOT_POSSIBLE from setActiveConfigWithConstraints have changed and now seamless may
+     * be possible. Client should retry calling setActiveConfigWithConstraints.
+     *
+     * @param display is a display setActiveConfigWithConstraints previously failed with
+     * SEAMLESS_NOT_POSSIBLE.
+     */
+    oneway onSeamlessPossible(Display display);
 };

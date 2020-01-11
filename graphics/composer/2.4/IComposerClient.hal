@@ -185,6 +185,9 @@ interface IComposerClient extends @2.3::IComposerClient {
      *                              share the same config group as the current config.
      *         SEAMLESS_NOT_POSSIBLE when seamlessRequired was true but the display cannot achieve
      *                               the vsync period change without a noticeable visual artifact.
+     *                               When the conditions change and it may be possible to change
+     *                               the vsync period seamlessly, onSeamlessPossible callback
+     *                               must be called to indicate that caller should retry.
      * @return timeline is the timeline for the vsync period change.
      */
     setActiveConfigWithConstraints(Display display, Config config,
