@@ -83,6 +83,12 @@ class ComposerClientImpl : public V2_3::hal::detail::ComposerClientImpl<Interfac
                      ret.description().c_str());
         }
 
+        void onSeamlessPossible(Display display) override {
+            auto ret = mCallback->onSeamlessPossible(display);
+            ALOGE_IF(!ret.isOk(), "failed to send onSealmessPossible: %s",
+                     ret.description().c_str());
+        }
+
       protected:
         const sp<IComposerCallback> mCallback;
         V2_1::hal::ComposerResources* const mResources;

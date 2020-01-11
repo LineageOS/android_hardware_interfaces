@@ -26,7 +26,9 @@
 
 using ::android::sp;
 using ::android::hardware::Return;
+using ::android::hardware::soundtrigger::V2_0::RecognitionMode;
 using ::android::hardware::soundtrigger::V2_3::ISoundTriggerHw;
+using ::android::hardware::soundtrigger::V2_3::Properties;
 
 /**
  * Test class holding the instance of the SoundTriggerHW service to test.
@@ -52,6 +54,32 @@ class SoundTriggerHidlTest : public testing::TestWithParam<std::string> {
  * individual APIs is possible.
  */
 TEST_P(SoundTriggerHidlTest, ServiceIsInstantiated) {}
+
+/**
+ * Test ISoundTriggerHw::getProperties_2_3 method
+ *
+ * Verifies that:
+ * - the implementation implements the method
+ * - the method returns no error
+ * - the implementation supports at least one sound model and one key phrase
+ * - the implementation supports at least VOICE_TRIGGER recognition mode
+ */
+TEST_P(SoundTriggerHidlTest, GetProperties_2_3) {
+    Properties halProperties;
+    Return<void> hidlReturn;
+    int ret = -ENODEV;
+
+    hidlReturn = soundtrigger->getProperties_2_3([&](int rc, auto res) {
+        ret = rc;
+        halProperties = res;
+    });
+
+    EXPECT_TRUE(hidlReturn.isOk());
+    EXPECT_EQ(0, ret);
+    EXPECT_GT(halProperties.base.maxSoundModels, 0u);
+    EXPECT_GT(halProperties.base.maxKeyPhrases, 0u);
+    EXPECT_NE(0u, (halProperties.base.recognitionModes & (uint32_t)RecognitionMode::VOICE_TRIGGER));
+}
 
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, SoundTriggerHidlTest,

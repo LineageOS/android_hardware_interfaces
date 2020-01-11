@@ -145,4 +145,16 @@ interface IRadioResponse extends @1.4::IRadioResponse {
      *   RadioError:INVALID_ARGUMENTS
      */
     oneway setRadioPowerResponse_1_5(RadioResponseInfo info);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:INVALID_ARGUMENTS
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:SYSTEM_ERR
+     */
+    oneway setIndicationFilterResponse_1_5(RadioResponseInfo info);
 };

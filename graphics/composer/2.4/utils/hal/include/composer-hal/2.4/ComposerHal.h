@@ -49,6 +49,7 @@ class ComposerHal : public V2_3::hal::ComposerHal {
                                  VsyncPeriodNanos vsyncPeriodNanos) = 0;
         virtual void onVsyncPeriodTimingChanged(Display display,
                                                 const VsyncPeriodChangeTimeline& timeline) = 0;
+        virtual void onSeamlessPossible(Display display) = 0;
     };
 
     virtual void registerEventCallback_2_4(EventCallback_2_4* callback) = 0;

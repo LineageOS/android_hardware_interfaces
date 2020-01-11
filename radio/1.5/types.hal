@@ -27,6 +27,7 @@ import @1.2::CellIdentityGsm;
 import @1.2::CellIdentityWcdma;
 import @1.2::CellIdentityTdscdma;
 import @1.2::CellIdentityLte;
+import @1.2::IndicationFilter;
 import @1.2::NetworkScanRequest;
 import @1.4::AccessNetwork;
 import @1.4::ApnTypes;
@@ -423,4 +424,9 @@ safe_union CellIdentity {
     CellIdentityCdma cdma;
     CellIdentityLte lte;
     CellIdentityNr nr;
+};
+
+enum IndicationFilter : @1.2::IndicationFilter {
+    /** Control the unsolicited sending of registration failure reports via onRegistrationFailed */
+    REGISTRATION_FAILURE = 1 << 5,
 };

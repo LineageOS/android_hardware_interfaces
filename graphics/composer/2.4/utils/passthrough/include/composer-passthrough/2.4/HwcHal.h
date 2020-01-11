@@ -61,10 +61,12 @@ class HwcHalImpl : public V2_3::passthrough::detail::HwcHalImpl<Hal> {
         BaseType2_1::mDispatch.registerCallback(
                 mDevice, HWC2_CALLBACK_VSYNC_2_4, this,
                 reinterpret_cast<hwc2_function_pointer_t>(vsync_2_4_Hook));
-
         BaseType2_1::mDispatch.registerCallback(
                 mDevice, HWC2_CALLBACK_VSYNC_PERIOD_TIMING_CHANGED, this,
                 reinterpret_cast<hwc2_function_pointer_t>(vsyncPeriodTimingChangedHook));
+        BaseType2_1::mDispatch.registerCallback(
+                mDevice, HWC2_CALLBACK_SEAMLESS_POSSIBLE, this,
+                reinterpret_cast<hwc2_function_pointer_t>(seamlessPossibleHook));
     }
 
     void unregisterEventCallback_2_4() override {
@@ -80,6 +82,8 @@ class HwcHalImpl : public V2_3::passthrough::detail::HwcHalImpl<Hal> {
         BaseType2_1::mDispatch.registerCallback(mDevice, HWC2_CALLBACK_VSYNC_2_4, this, nullptr);
         BaseType2_1::mDispatch.registerCallback(mDevice, HWC2_CALLBACK_VSYNC_PERIOD_TIMING_CHANGED,
                                                 this, nullptr);
+        BaseType2_1::mDispatch.registerCallback(mDevice, HWC2_CALLBACK_SEAMLESS_POSSIBLE, this,
+                                                nullptr);
 
         mEventCallback_2_4 = nullptr;
     }
@@ -220,12 +224,15 @@ class HwcHalImpl : public V2_3::passthrough::detail::HwcHalImpl<Hal> {
             return false;
         }
 
+        if (!BaseType2_1::initDispatch(HWC2_FUNCTION_GET_DISPLAY_VSYNC_PERIOD,
+                                       &mDispatch.getDisplayVsyncPeriod) ||
+            !BaseType2_1::initDispatch(HWC2_FUNCTION_SET_ACTIVE_CONFIG_WITH_CONSTRAINTS,
+                                       &mDispatch.setActiveConfigWithConstraints)) {
+            return false;
+        }
+
         this->initOptionalDispatch(HWC2_FUNCTION_GET_DISPLAY_CONNECTION_TYPE,
                                    &mDispatch.getDisplayConnectionType);
-        this->initOptionalDispatch(HWC2_FUNCTION_GET_DISPLAY_VSYNC_PERIOD,
-                                   &mDispatch.getDisplayVsyncPeriod);
-        this->initOptionalDispatch(HWC2_FUNCTION_SET_ACTIVE_CONFIG_WITH_CONSTRAINTS,
-                                   &mDispatch.setActiveConfigWithConstraints);
         this->initOptionalDispatch(HWC2_FUNCTION_SET_AUTO_LOW_LATENCY_MODE,
                                    &mDispatch.setAutoLowLatencyMode);
         this->initOptionalDispatch(HWC2_FUNCTION_GET_SUPPORTED_CONTENT_TYPES,
@@ -267,6 +274,11 @@ class HwcHalImpl : public V2_3::passthrough::detail::HwcHalImpl<Hal> {
         timeline.refreshRequired = updated_timeline->refreshRequired;
         timeline.refreshTimeNanos = updated_timeline->refreshTimeNanos;
         hal->mEventCallback_2_4->onVsyncPeriodTimingChanged(display, timeline);
+    }
+
+    static void seamlessPossibleHook(hwc2_callback_data_t callbackData, hwc2_display_t display) {
+        auto hal = static_cast<HwcHalImpl*>(callbackData);
+        hal->mEventCallback_2_4->onSeamlessPossible(display);
     }
 
   private:

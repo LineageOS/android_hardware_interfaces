@@ -39,8 +39,10 @@ namespace hal {
 // TODO own a CommandReaderBase rather than subclassing
 class ComposerCommandEngine : protected CommandReaderBase {
    public:
-    ComposerCommandEngine(ComposerHal* hal, ComposerResources* resources)
-        : mHal(hal), mResources(resources) {}
+     ComposerCommandEngine(ComposerHal* hal, ComposerResources* resources)
+         : mHal(hal), mResources(resources) {
+         mWriter = createCommandWriter(kWriterInitialSize);
+     }
 
     virtual ~ComposerCommandEngine() = default;
 
@@ -74,16 +76,16 @@ class ComposerCommandEngine : protected CommandReaderBase {
             return Error::BAD_PARAMETER;
         }
 
-        return mWriter.writeQueue(outQueueChanged, outCommandLength, outCommandHandles)
-                   ? Error::NONE
-                   : Error::NO_RESOURCES;
+        return mWriter->writeQueue(outQueueChanged, outCommandLength, outCommandHandles)
+                       ? Error::NONE
+                       : Error::NO_RESOURCES;
     }
 
-    const MQDescriptorSync<uint32_t>* getOutputMQDescriptor() { return mWriter.getMQDescriptor(); }
+    const MQDescriptorSync<uint32_t>* getOutputMQDescriptor() { return mWriter->getMQDescriptor(); }
 
     void reset() {
         CommandReaderBase::reset();
-        mWriter.reset();
+        mWriter->reset();
     }
 
    protected:
@@ -140,13 +142,17 @@ class ComposerCommandEngine : protected CommandReaderBase {
         }
     }
 
+    virtual std::unique_ptr<CommandWriterBase> createCommandWriter(size_t writerInitialSize) {
+        return std::make_unique<CommandWriterBase>(writerInitialSize);
+    }
+
     bool executeSelectDisplay(uint16_t length) {
         if (length != CommandWriterBase::kSelectDisplayLength) {
             return false;
         }
 
         mCurrentDisplay = read64();
-        mWriter.selectDisplay(mCurrentDisplay);
+        mWriter->selectDisplay(mCurrentDisplay);
 
         return true;
     }
@@ -174,7 +180,7 @@ class ComposerCommandEngine : protected CommandReaderBase {
 
         auto err = mHal->setColorTransform(mCurrentDisplay, matrix, transform);
         if (err != Error::NONE) {
-            mWriter.setError(getCommandLoc(), err);
+            mWriter->setError(getCommandLoc(), err);
         }
 
         return true;
@@ -208,7 +214,7 @@ class ComposerCommandEngine : protected CommandReaderBase {
             close(fence);
         }
         if (err != Error::NONE) {
-            mWriter.setError(getCommandLoc(), err);
+            mWriter->setError(getCommandLoc(), err);
         }
 
         return true;
@@ -239,7 +245,7 @@ class ComposerCommandEngine : protected CommandReaderBase {
             close(fence);
         }
         if (err != Error::NONE) {
-            mWriter.setError(getCommandLoc(), err);
+            mWriter->setError(getCommandLoc(), err);
         }
 
         return true;
@@ -260,10 +266,10 @@ class ComposerCommandEngine : protected CommandReaderBase {
                                          &displayRequestMask, &requestedLayers, &requestMasks);
         mResources->setDisplayMustValidateState(mCurrentDisplay, false);
         if (err == Error::NONE) {
-            mWriter.setChangedCompositionTypes(changedLayers, compositionTypes);
-            mWriter.setDisplayRequests(displayRequestMask, requestedLayers, requestMasks);
+            mWriter->setChangedCompositionTypes(changedLayers, compositionTypes);
+            mWriter->setDisplayRequests(displayRequestMask, requestedLayers, requestMasks);
         } else {
-            mWriter.setError(getCommandLoc(), err);
+            mWriter->setError(getCommandLoc(), err);
         }
 
         return true;
@@ -283,9 +289,9 @@ class ComposerCommandEngine : protected CommandReaderBase {
                            ? Error::NOT_VALIDATED
                            : mHal->presentDisplay(mCurrentDisplay, &presentFence, &layers, &fences);
             if (err == Error::NONE) {
-                mWriter.setPresentOrValidateResult(1);
-                mWriter.setPresentFence(presentFence);
-                mWriter.setReleaseFences(layers, fences);
+                mWriter->setPresentOrValidateResult(1);
+                mWriter->setPresentFence(presentFence);
+                mWriter->setReleaseFences(layers, fences);
                 return true;
             }
         }
@@ -301,11 +307,11 @@ class ComposerCommandEngine : protected CommandReaderBase {
                                          &displayRequestMask, &requestedLayers, &requestMasks);
         mResources->setDisplayMustValidateState(mCurrentDisplay, false);
         if (err == Error::NONE) {
-            mWriter.setPresentOrValidateResult(0);
-            mWriter.setChangedCompositionTypes(changedLayers, compositionTypes);
-            mWriter.setDisplayRequests(displayRequestMask, requestedLayers, requestMasks);
+            mWriter->setPresentOrValidateResult(0);
+            mWriter->setChangedCompositionTypes(changedLayers, compositionTypes);
+            mWriter->setDisplayRequests(displayRequestMask, requestedLayers, requestMasks);
         } else {
-            mWriter.setError(getCommandLoc(), err);
+            mWriter->setError(getCommandLoc(), err);
         }
 
         return true;
@@ -318,7 +324,7 @@ class ComposerCommandEngine : protected CommandReaderBase {
 
         auto err = mHal->acceptDisplayChanges(mCurrentDisplay);
         if (err != Error::NONE) {
-            mWriter.setError(getCommandLoc(), err);
+            mWriter->setError(getCommandLoc(), err);
         }
 
         return true;
@@ -334,10 +340,10 @@ class ComposerCommandEngine : protected CommandReaderBase {
         std::vector<int> fences;
         auto err = mHal->presentDisplay(mCurrentDisplay, &presentFence, &layers, &fences);
         if (err == Error::NONE) {
-            mWriter.setPresentFence(presentFence);
-            mWriter.setReleaseFences(layers, fences);
+            mWriter->setPresentFence(presentFence);
+            mWriter->setReleaseFences(layers, fences);
         } else {
-            mWriter.setError(getCommandLoc(), err);
+            mWriter->setError(getCommandLoc(), err);
         }
 
         return true;
@@ -351,7 +357,7 @@ class ComposerCommandEngine : protected CommandReaderBase {
         auto err = mHal->setLayerCursorPosition(mCurrentDisplay, mCurrentLayer, readSigned(),
                                                 readSigned());
         if (err != Error::NONE) {
-            mWriter.setError(getCommandLoc(), err);
+            mWriter->setError(getCommandLoc(), err);
         }
 
         return true;
@@ -382,7 +388,7 @@ class ComposerCommandEngine : protected CommandReaderBase {
             close(fence);
         }
         if (err != Error::NONE) {
-            mWriter.setError(getCommandLoc(), err);
+            mWriter->setError(getCommandLoc(), err);
         }
 
         return true;
@@ -397,7 +403,7 @@ class ComposerCommandEngine : protected CommandReaderBase {
         auto damage = readRegion(length / 4);
         auto err = mHal->setLayerSurfaceDamage(mCurrentDisplay, mCurrentLayer, damage);
         if (err != Error::NONE) {
-            mWriter.setError(getCommandLoc(), err);
+            mWriter->setError(getCommandLoc(), err);
         }
 
         return true;
@@ -410,7 +416,7 @@ class ComposerCommandEngine : protected CommandReaderBase {
 
         auto err = mHal->setLayerBlendMode(mCurrentDisplay, mCurrentLayer, readSigned());
         if (err != Error::NONE) {
-            mWriter.setError(getCommandLoc(), err);
+            mWriter->setError(getCommandLoc(), err);
         }
 
         return true;
@@ -423,7 +429,7 @@ class ComposerCommandEngine : protected CommandReaderBase {
 
         auto err = mHal->setLayerColor(mCurrentDisplay, mCurrentLayer, readColor());
         if (err != Error::NONE) {
-            mWriter.setError(getCommandLoc(), err);
+            mWriter->setError(getCommandLoc(), err);
         }
 
         return true;
@@ -436,7 +442,7 @@ class ComposerCommandEngine : protected CommandReaderBase {
 
         auto err = mHal->setLayerCompositionType(mCurrentDisplay, mCurrentLayer, readSigned());
         if (err != Error::NONE) {
-            mWriter.setError(getCommandLoc(), err);
+            mWriter->setError(getCommandLoc(), err);
         }
 
         return true;
@@ -449,7 +455,7 @@ class ComposerCommandEngine : protected CommandReaderBase {
 
         auto err = mHal->setLayerDataspace(mCurrentDisplay, mCurrentLayer, readSigned());
         if (err != Error::NONE) {
-            mWriter.setError(getCommandLoc(), err);
+            mWriter->setError(getCommandLoc(), err);
         }
 
         return true;
@@ -462,7 +468,7 @@ class ComposerCommandEngine : protected CommandReaderBase {
 
         auto err = mHal->setLayerDisplayFrame(mCurrentDisplay, mCurrentLayer, readRect());
         if (err != Error::NONE) {
-            mWriter.setError(getCommandLoc(), err);
+            mWriter->setError(getCommandLoc(), err);
         }
 
         return true;
@@ -475,7 +481,7 @@ class ComposerCommandEngine : protected CommandReaderBase {
 
         auto err = mHal->setLayerPlaneAlpha(mCurrentDisplay, mCurrentLayer, readFloat());
         if (err != Error::NONE) {
-            mWriter.setError(getCommandLoc(), err);
+            mWriter->setError(getCommandLoc(), err);
         }
 
         return true;
@@ -496,7 +502,7 @@ class ComposerCommandEngine : protected CommandReaderBase {
             err = mHal->setLayerSidebandStream(mCurrentDisplay, mCurrentLayer, stream);
         }
         if (err != Error::NONE) {
-            mWriter.setError(getCommandLoc(), err);
+            mWriter->setError(getCommandLoc(), err);
         }
 
         return true;
@@ -509,7 +515,7 @@ class ComposerCommandEngine : protected CommandReaderBase {
 
         auto err = mHal->setLayerSourceCrop(mCurrentDisplay, mCurrentLayer, readFRect());
         if (err != Error::NONE) {
-            mWriter.setError(getCommandLoc(), err);
+            mWriter->setError(getCommandLoc(), err);
         }
 
         return true;
@@ -522,7 +528,7 @@ class ComposerCommandEngine : protected CommandReaderBase {
 
         auto err = mHal->setLayerTransform(mCurrentDisplay, mCurrentLayer, readSigned());
         if (err != Error::NONE) {
-            mWriter.setError(getCommandLoc(), err);
+            mWriter->setError(getCommandLoc(), err);
         }
 
         return true;
@@ -537,7 +543,7 @@ class ComposerCommandEngine : protected CommandReaderBase {
         auto region = readRegion(length / 4);
         auto err = mHal->setLayerVisibleRegion(mCurrentDisplay, mCurrentLayer, region);
         if (err != Error::NONE) {
-            mWriter.setError(getCommandLoc(), err);
+            mWriter->setError(getCommandLoc(), err);
         }
 
         return true;
@@ -550,7 +556,7 @@ class ComposerCommandEngine : protected CommandReaderBase {
 
         auto err = mHal->setLayerZOrder(mCurrentDisplay, mCurrentLayer, read());
         if (err != Error::NONE) {
-            mWriter.setError(getCommandLoc(), err);
+            mWriter->setError(getCommandLoc(), err);
         }
 
         return true;
@@ -579,12 +585,12 @@ class ComposerCommandEngine : protected CommandReaderBase {
         };
     }
 
-    ComposerHal* mHal;
-    ComposerResources* mResources;
-
     // 64KiB minus a small space for metadata such as read/write pointers
     static constexpr size_t kWriterInitialSize = 64 * 1024 / sizeof(uint32_t) - 16;
-    CommandWriterBase mWriter{kWriterInitialSize};
+
+    ComposerHal* mHal;
+    ComposerResources* mResources;
+    std::unique_ptr<CommandWriterBase> mWriter;
 
     Display mCurrentDisplay = 0;
     Layer mCurrentLayer = 0;

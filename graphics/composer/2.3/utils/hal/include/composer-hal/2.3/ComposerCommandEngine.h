@@ -50,6 +50,11 @@ class ComposerCommandEngine : public V2_2::hal::ComposerCommandEngine {
         }
     }
 
+    std::unique_ptr<V2_1::CommandWriterBase> createCommandWriter(
+            size_t writerInitialSize) override {
+        return std::make_unique<CommandWriterBase>(writerInitialSize);
+    }
+
     bool executeSetLayerColorTransform(uint16_t length) {
         if (length != CommandWriterBase::kSetLayerColorTransformLength) {
             return false;
@@ -61,7 +66,7 @@ class ComposerCommandEngine : public V2_2::hal::ComposerCommandEngine {
         }
         auto err = mHal->setLayerColorTransform(mCurrentDisplay, mCurrentLayer, matrix);
         if (err != Error::NONE) {
-            mWriter.setError(getCommandLoc(), err);
+            mWriter->setError(getCommandLoc(), err);
         }
 
         return true;
@@ -97,7 +102,7 @@ class ComposerCommandEngine : public V2_2::hal::ComposerCommandEngine {
         }
         auto err = mHal->setLayerPerFrameMetadataBlobs(mCurrentDisplay, mCurrentLayer, metadata);
         if (err != Error::NONE) {
-            mWriter.setError(getCommandLoc(), err);
+            mWriter->setError(getCommandLoc(), err);
         }
         return true;
     }
@@ -111,8 +116,8 @@ class ComposerCommandEngine : public V2_2::hal::ComposerCommandEngine {
 
    private:
     using BaseType2_1 = V2_1::hal::ComposerCommandEngine;
-    using BaseType2_1::mWriter;
     using BaseType2_2 = V2_2::hal::ComposerCommandEngine;
+    using BaseType2_1::mWriter;
 
     ComposerHal* mHal;
 };
