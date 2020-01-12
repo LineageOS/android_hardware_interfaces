@@ -14,13 +14,19 @@
  * limitations under the License.
  */
 
-#include <VtsHalHidlTargetTestBase.h>
+#include <VtsCoreUtil.h>
+#include <android/hardware/wifi/1.1/IWifi.h>
+#include <android/hardware/wifi/supplicant/1.1/ISupplicant.h>
 #include <android/hardware/wifi/supplicant/1.2/types.h>
+#include <android/hardware/wifi/supplicant/1.3/ISupplicant.h>
 #include <android/hardware/wifi/supplicant/1.3/ISupplicantStaIface.h>
 #include <android/hardware/wifi/supplicant/1.3/ISupplicantStaIfaceCallback.h>
 #include <android/hardware/wifi/supplicant/1.3/ISupplicantStaNetwork.h>
 #include <android/hardware/wifi/supplicant/1.3/types.h>
+#include <gtest/gtest.h>
+#include <hidl/GtestPrinter.h>
 #include <hidl/HidlSupport.h>
+#include <hidl/ServiceManagement.h>
 #include <hidl/Status.h>
 
 #include "supplicant_hidl_test_utils.h"
@@ -40,6 +46,7 @@ using ::android::hardware::wifi::supplicant::V1_2::DppNetRole;
 using ::android::hardware::wifi::supplicant::V1_2::DppProgressCode;
 using ::android::hardware::wifi::supplicant::V1_3::ConnectionCapabilities;
 using ::android::hardware::wifi::supplicant::V1_3::DppSuccessCode;
+using ::android::hardware::wifi::supplicant::V1_3::ISupplicant;
 using ::android::hardware::wifi::supplicant::V1_3::ISupplicantStaIface;
 using ::android::hardware::wifi::supplicant::V1_3::ISupplicantStaIfaceCallback;
 using ::android::hardware::wifi::supplicant::V1_3::ISupplicantStaNetwork;
@@ -48,16 +55,27 @@ using ::android::hardware::wifi::supplicant::V1_3::WpaDriverCapabilitiesMask;
 #define TIMEOUT_PERIOD 60
 class IfaceDppCallback;
 
-class SupplicantStaIfaceHidlTest : public ::testing::VtsHalHidlTargetTestBase {
+class SupplicantStaIfaceHidlTest
+    : public ::testing::TestWithParam<std::tuple<std::string, std::string>> {
    public:
     virtual void SetUp() override {
-        startSupplicantAndWaitForHidlService();
-        EXPECT_TRUE(turnOnExcessiveLogging());
-        sta_iface_ = getSupplicantStaIface_1_3();
+        wifi_v1_0_instance_name_ = std::get<0>(GetParam());
+        supplicant_v1_3_instance_name_ = std::get<1>(GetParam());
+        isP2pOn_ =
+            testing::deviceSupportsFeature("android.hardware.wifi.direct");
+
+        startSupplicantAndWaitForHidlService(wifi_v1_0_instance_name_,
+                                             supplicant_v1_3_instance_name_);
+        supplicant_ =
+            getSupplicant_1_3(supplicant_v1_3_instance_name_, isP2pOn_);
+        EXPECT_TRUE(turnOnExcessiveLogging(supplicant_));
+        sta_iface_ = getSupplicantStaIface_1_3(supplicant_);
         ASSERT_NE(sta_iface_.get(), nullptr);
     }
 
-    virtual void TearDown() override { stopSupplicant(); }
+    virtual void TearDown() override {
+        stopSupplicant(wifi_v1_0_instance_name_);
+    }
 
     int64_t pmkCacheExpirationTimeInSec;
     std::vector<uint8_t> serializedPmkCacheEntry;
@@ -104,6 +122,11 @@ class SupplicantStaIfaceHidlTest : public ::testing::VtsHalHidlTargetTestBase {
    protected:
     // ISupplicantStaIface object used for all tests in this fixture.
     sp<ISupplicantStaIface> sta_iface_;
+    sp<ISupplicant> supplicant_;
+    bool isP2pOn_ = false;
+    std::string wifi_v1_0_instance_name_;
+    std::string supplicant_v1_3_instance_name_;
+
     bool isDppSupported() {
         uint32_t keyMgmtMask = 0;
 
@@ -302,7 +325,7 @@ class IfaceBssTmHandlingDoneCallback : public IfaceCallback {
 /*
  * RegisterCallback_1_3
  */
-TEST_F(SupplicantStaIfaceHidlTest, RegisterCallback_1_3) {
+TEST_P(SupplicantStaIfaceHidlTest, RegisterCallback_1_3) {
     sta_iface_->registerCallback_1_3(
         new IfaceCallback(), [](const SupplicantStatus& status) {
             EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
@@ -312,7 +335,7 @@ TEST_F(SupplicantStaIfaceHidlTest, RegisterCallback_1_3) {
 /*
  * getConnectionCapabilities
  */
-TEST_F(SupplicantStaIfaceHidlTest, GetConnectionCapabilities) {
+TEST_P(SupplicantStaIfaceHidlTest, GetConnectionCapabilities) {
     sta_iface_->getConnectionCapabilities(
         [&](const SupplicantStatus& status,
             ConnectionCapabilities /* capabilities */) {
@@ -323,7 +346,7 @@ TEST_F(SupplicantStaIfaceHidlTest, GetConnectionCapabilities) {
 /*
  * GetWpaDriverCapabilities
  */
-TEST_F(SupplicantStaIfaceHidlTest, GetWpaDriverCapabilities) {
+TEST_P(SupplicantStaIfaceHidlTest, GetWpaDriverCapabilities) {
     sta_iface_->getWpaDriverCapabilities(
         [&](const SupplicantStatus& status, uint32_t) {
             EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
@@ -333,7 +356,7 @@ TEST_F(SupplicantStaIfaceHidlTest, GetWpaDriverCapabilities) {
 /*
  * SetMboCellularDataStatus
  */
-TEST_F(SupplicantStaIfaceHidlTest, SetMboCellularDataStatus) {
+TEST_P(SupplicantStaIfaceHidlTest, SetMboCellularDataStatus) {
     uint32_t driverCapMask = 0;
 
     // Get MBO support from the device.
@@ -358,7 +381,7 @@ TEST_F(SupplicantStaIfaceHidlTest, SetMboCellularDataStatus) {
 /*
  * GetKeyMgmtCapabilities_1_3
  */
-TEST_F(SupplicantStaIfaceHidlTest, GetKeyMgmtCapabilities_1_3) {
+TEST_P(SupplicantStaIfaceHidlTest, GetKeyMgmtCapabilities_1_3) {
     sta_iface_->getKeyMgmtCapabilities_1_3([&](const SupplicantStatus& status,
                                                uint32_t keyMgmtMask) {
         if (SupplicantStatusCode::SUCCESS != status.code) {
@@ -377,7 +400,7 @@ TEST_F(SupplicantStaIfaceHidlTest, GetKeyMgmtCapabilities_1_3) {
 /*
  * StartDppEnrolleeInitiator
  */
-TEST_F(SupplicantStaIfaceHidlTest, StartDppEnrolleeInitiator) {
+TEST_P(SupplicantStaIfaceHidlTest, StartDppEnrolleeInitiator) {
     // We need to first get the key management capabilities from the device.
     // If DPP is not supported, we just pass the test.
     if (!isDppSupported()) {
@@ -428,7 +451,7 @@ TEST_F(SupplicantStaIfaceHidlTest, StartDppEnrolleeInitiator) {
 /*
  * StartDppConfiguratorInitiator
  */
-TEST_F(SupplicantStaIfaceHidlTest, StartDppConfiguratorInitiator) {
+TEST_P(SupplicantStaIfaceHidlTest, StartDppConfiguratorInitiator) {
     // We need to first get the key management capabilities from the device.
     // If DPP is not supported, we just pass the test.
     if (!isDppSupported()) {
@@ -480,3 +503,12 @@ TEST_F(SupplicantStaIfaceHidlTest, StartDppConfiguratorInitiator) {
         EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
     });
 }
+INSTANTIATE_TEST_CASE_P(
+    PerInstance, SupplicantStaIfaceHidlTest,
+    testing::Combine(
+        testing::ValuesIn(android::hardware::getAllHalInstanceNames(
+            android::hardware::wifi::V1_0::IWifi::descriptor)),
+        testing::ValuesIn(android::hardware::getAllHalInstanceNames(
+            android::hardware::wifi::supplicant::V1_3::ISupplicant::
+                descriptor))),
+    android::hardware::PrintInstanceTupleNameToString<>);

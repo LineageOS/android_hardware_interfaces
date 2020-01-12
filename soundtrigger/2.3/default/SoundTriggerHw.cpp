@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #define LOG_TAG "SoundTriggerHw"
 
 #include "SoundTriggerHw.h"
@@ -357,6 +356,7 @@ void SoundTriggerHw::convertPropertiesFromHal(
                 (const struct sound_trigger_properties_extended_1_3*)header;
         convertPropertiesFromHal(&properties->base, &halProperties->base);
         properties->supportedModelArch = halProperties->supported_model_arch;
+        properties->audioCapabilities = halProperties->audio_capabilities;
     }
 }
 
@@ -458,6 +458,54 @@ struct sound_trigger_recognition_config* SoundTriggerHw::convertRecognitionConfi
     const uint8_t* src = reinterpret_cast<const uint8_t*>(&config->data[0]);
     memcpy(dst, src, config->data.size());
     return halConfig;
+}
+
+struct sound_trigger_recognition_config_header* SoundTriggerHw::convertRecognitionConfigToHalHeader(
+        const V2_3::RecognitionConfig* config) {
+    sp<IMemory> memory;
+    const V2_1::ISoundTriggerHw::RecognitionConfig* config_2_1 = &config->base;
+    const V2_0::ISoundTriggerHw::RecognitionConfig* config_2_0 = &config_2_1->header;
+
+    size_t allocSize =
+            sizeof(struct sound_trigger_recognition_config_extended_1_3) + config_2_1->data.size();
+    struct sound_trigger_recognition_config_extended_1_3* halConfigExtended =
+            static_cast<struct sound_trigger_recognition_config_extended_1_3*>(malloc(allocSize));
+    LOG_ALWAYS_FATAL_IF(halConfigExtended == nullptr,
+                        "malloc failed for size %zu in convertRecognitionConfigToHalHeader",
+                        allocSize);
+    halConfigExtended->header.version = SOUND_TRIGGER_DEVICE_API_VERSION_1_3;
+    halConfigExtended->header.size = allocSize;
+
+    struct sound_trigger_recognition_config* halConfigBase = &halConfigExtended->base;
+
+    halConfigBase->capture_handle = (audio_io_handle_t)config_2_0->captureHandle;
+    halConfigBase->capture_device = (audio_devices_t)config_2_0->captureDevice;
+    halConfigBase->capture_requested = config_2_0->captureRequested;
+
+    unsigned int i;
+    for (i = 0; i < config_2_0->phrases.size() && i < SOUND_TRIGGER_MAX_PHRASES; i++) {
+        convertPhraseRecognitionExtraToHal(&halConfigBase->phrases[i], &config_2_0->phrases[i]);
+    }
+    halConfigBase->num_phrases = i;
+
+    halConfigBase->data_offset = sizeof(struct sound_trigger_recognition_config_extended_1_3);
+    halConfigBase->data_size = config_2_1->data.size();
+    if (config_2_1->data.size() != 0) {
+        memory = mapMemory(config_2_1->data);
+        LOG_ALWAYS_FATAL_IF(memory == nullptr,
+                            "failed to map config memory in convertRecognitionConfigToHalHeader");
+        memory->read();
+
+        uint8_t* dst = reinterpret_cast<uint8_t*>(halConfigExtended) + halConfigBase->data_offset;
+        const uint8_t* src = static_cast<const uint8_t*>(static_cast<void*>(memory->getPointer()));
+        memcpy(dst, src, config_2_1->data.size());
+
+        memory->commit();
+    }
+
+    halConfigExtended->audio_capabilities = config->audioCapabilities;
+
+    return &halConfigExtended->header;
 }
 
 // static
@@ -739,6 +787,41 @@ Return<void> SoundTriggerHw::getProperties_2_3(ISoundTriggerHw::getProperties_2_
 exit:
     _hidl_cb(ret, properties);
     return Void();
+}
+
+Return<int32_t> SoundTriggerHw::startRecognition_2_3(int32_t modelHandle,
+                                                     const V2_3::RecognitionConfig& config) {
+    int32_t ret;
+    sp<SoundTriggerHw::SoundModelClient> client;
+    struct sound_trigger_recognition_config_header* header;
+
+    if (mHwDevice == NULL) {
+        ret = -ENODEV;
+        goto exit;
+    }
+
+    {
+        AutoMutex lock(mLock);
+        client = mClients.valueFor(modelHandle);
+        if (client == 0) {
+            ret = -ENOSYS;
+            goto exit;
+        }
+    }
+
+    header = convertRecognitionConfigToHalHeader(&config);
+
+    if (header == nullptr) {
+        ret = -EINVAL;
+        goto exit;
+    }
+    ret = mHwDevice->start_recognition_extended(mHwDevice, client->getHalHandle(), header,
+                                                recognitionCallback_, client.get());
+
+    free(header);
+
+exit:
+    return ret;
 }
 
 Return<int32_t> SoundTriggerHw::setParameter(V2_0::SoundModelHandle modelHandle,
