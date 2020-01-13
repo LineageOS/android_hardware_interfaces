@@ -168,6 +168,14 @@ Return<Result> PrimaryDevice::setConnectedState(const DeviceAddress& address, bo
 Return<Result> PrimaryDevice::close() {
     return mDevice->close();
 }
+
+Return<Result> PrimaryDevice::addDeviceEffect(AudioPortHandle device, uint64_t effectId) {
+    return mDevice->addDeviceEffect(device, effectId);
+}
+
+Return<Result> PrimaryDevice::removeDeviceEffect(AudioPortHandle device, uint64_t effectId) {
+    return mDevice->removeDeviceEffect(device, effectId);
+}
 #endif
 
 // Methods from ::android::hardware::audio::CPP_VERSION::IPrimaryDevice follow.
