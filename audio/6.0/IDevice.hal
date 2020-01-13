@@ -295,4 +295,28 @@ interface IDevice {
      */
     @exit
     close() generates (Result retval);
+
+    /**
+     * Applies an audio effect to an audio device.
+     *
+     * @param device identifies the sink or source device this effect must be applied to.
+     *               "device" is the AudioPortHandle indicated for the device when the audio
+     *                patch connecting that device was created.
+     * @param effectId effect ID (obtained from IEffectsFactory.createEffect) of
+     *                 the effect to add.
+     * @return retval operation completion status.
+     */
+    addDeviceEffect(AudioPortHandle device, uint64_t effectId) generates (Result retval);
+
+    /**
+     * Stops applying an audio effect to an audio device.
+     *
+     * @param device identifies the sink or source device this effect was applied to.
+     *               "device" is the AudioPortHandle indicated for the device when the audio
+     *               patch is created at the audio HAL.
+     * @param effectId effect ID (obtained from IEffectsFactory.createEffect) of
+     *                 the effect.
+     * @return retval operation completion status.
+     */
+    removeDeviceEffect(AudioPortHandle device, uint64_t effectId) generates (Result retval);
 };
