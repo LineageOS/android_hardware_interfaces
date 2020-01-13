@@ -84,6 +84,10 @@ int32_t ComposerClient::getDisplayAttribute_2_4(
     return value;
 }
 
+void ComposerClient::registerCallback_2_4(const sp<IComposerCallback>& callback) {
+    mClient->registerCallback_2_4(callback);
+}
+
 Error ComposerClient::getDisplayVsyncPeriod(Display display, VsyncPeriodNanos* outVsyncPeriod) {
     Error error = Error::NONE;
     mClient->getDisplayVsyncPeriod(display, [&](const auto& tmpError, const auto& tmpVsyncPeriod) {
