@@ -60,6 +60,7 @@ using implementation::PreparedModelCallback;
 using V1_0::DataLocation;
 using V1_0::ErrorStatus;
 using V1_0::OperandLifeTime;
+using V1_0::RequestArgument;
 using V1_1::ExecutionPreference;
 using V1_2::Constant;
 using V1_2::MeasureTiming;
@@ -75,25 +76,116 @@ enum class Executor { ASYNC, SYNC, BURST };
 
 enum class OutputType { FULLY_SPECIFIED, UNSPECIFIED, INSUFFICIENT };
 
+enum class MemoryType { SHARED, DEVICE };
+
+enum class IOType { INPUT, OUTPUT };
+
 struct TestConfig {
     Executor executor;
     MeasureTiming measureTiming;
     OutputType outputType;
+    MemoryType memoryType;
     // `reportSkipping` indicates if a test should print an info message in case
     // it is skipped. The field is set to true by default and is set to false in
     // quantization coupling tests to suppress skipping a test
     bool reportSkipping;
-    TestConfig(Executor executor, MeasureTiming measureTiming, OutputType outputType)
+    TestConfig(Executor executor, MeasureTiming measureTiming, OutputType outputType,
+               MemoryType memoryType)
         : executor(executor),
           measureTiming(measureTiming),
           outputType(outputType),
+          memoryType(memoryType),
           reportSkipping(true) {}
     TestConfig(Executor executor, MeasureTiming measureTiming, OutputType outputType,
-               bool reportSkipping)
+               MemoryType memoryType, bool reportSkipping)
         : executor(executor),
           measureTiming(measureTiming),
           outputType(outputType),
+          memoryType(memoryType),
           reportSkipping(reportSkipping) {}
+};
+
+class DeviceMemoryAllocator {
+  public:
+    DeviceMemoryAllocator(const sp<IDevice>& device, const sp<IPreparedModel>& preparedModel,
+                          const TestModel& testModel)
+        : kDevice(device), kPreparedModel(preparedModel), kTestModel(testModel) {}
+
+    // Allocate device memory for a target input/output operand.
+    // Return {IBuffer object, token} if successful.
+    // Return {nullptr, 0} if device memory is not supported.
+    template <IOType ioType>
+    std::pair<sp<IBuffer>, int32_t> allocate(uint32_t index) {
+        std::pair<sp<IBuffer>, int32_t> buffer;
+        allocateInternal<ioType>(index, &buffer);
+        return buffer;
+    }
+
+  private:
+    template <IOType ioType>
+    void allocateInternal(uint32_t index, std::pair<sp<IBuffer>, int32_t>* result) {
+        ASSERT_NE(result, nullptr);
+
+        // Prepare arguments.
+        BufferRole role = {.modelIndex = 0, .ioIndex = index, .frequency = 1.0f};
+        hidl_vec<BufferRole> inputRoles, outputRoles;
+        if constexpr (ioType == IOType::INPUT) {
+            inputRoles = {role};
+        } else {
+            outputRoles = {role};
+        }
+
+        // Allocate device memory.
+        ErrorStatus status;
+        sp<IBuffer> buffer;
+        int32_t token;
+        const auto ret = kDevice->allocate(
+                {}, {kPreparedModel}, inputRoles, outputRoles,
+                [&status, &buffer, &token](ErrorStatus error, const sp<IBuffer>& buf, int32_t tok) {
+                    status = error;
+                    buffer = buf;
+                    token = tok;
+                });
+
+        // Check allocation results.
+        ASSERT_TRUE(ret.isOk());
+        if (status == ErrorStatus::NONE) {
+            ASSERT_NE(buffer, nullptr);
+            ASSERT_GT(token, 0);
+        } else {
+            ASSERT_EQ(status, ErrorStatus::GENERAL_FAILURE);
+            ASSERT_EQ(buffer, nullptr);
+            ASSERT_EQ(token, 0);
+        }
+
+        // Initialize input data from TestBuffer.
+        if constexpr (ioType == IOType::INPUT) {
+            if (buffer != nullptr) {
+                // TestBuffer -> Shared memory.
+                const auto& testBuffer = kTestModel.operands[kTestModel.inputIndexes[index]].data;
+                ASSERT_GT(testBuffer.size(), 0);
+                hidl_memory tmp = nn::allocateSharedMemory(testBuffer.size());
+                sp<IMemory> inputMemory = mapMemory(tmp);
+                ASSERT_NE(inputMemory.get(), nullptr);
+                uint8_t* inputPtr =
+                        static_cast<uint8_t*>(static_cast<void*>(inputMemory->getPointer()));
+                ASSERT_NE(inputPtr, nullptr);
+                const uint8_t* begin = testBuffer.get<uint8_t>();
+                const uint8_t* end = begin + testBuffer.size();
+                std::copy(begin, end, inputPtr);
+
+                // Shared memory -> IBuffer.
+                auto ret = buffer->copyFrom(tmp, {});
+                ASSERT_TRUE(ret.isOk());
+                ASSERT_EQ(static_cast<ErrorStatus>(ret), ErrorStatus::NONE);
+            }
+        }
+        *result = {std::move(buffer), token};
+    }
+
+    const sp<IDevice> kDevice;
+    const sp<IPreparedModel> kPreparedModel;
+    const TestModel& kTestModel;
 };
 
 }  // namespace
@@ -191,7 +283,7 @@ static bool isOutputSizeGreaterThanOne(const TestModel& testModel, uint32_t inde
     return byteSize > 1u;
 }
 
-static void makeOutputInsufficientSize(uint32_t outputIndex, V1_0::Request* request) {
+static void makeOutputInsufficientSize(uint32_t outputIndex, Request* request) {
     auto& length = request->outputs[outputIndex].location.length;
     ASSERT_GT(length, 1u);
     length -= 1u;
@@ -202,6 +294,161 @@ static void makeOutputDimensionsUnspecified(Model* model) {
         auto& dims = model->operands[i].dimensions;
         std::fill(dims.begin(), dims.end(), 0);
     }
+}
+
+constexpr uint32_t kInputPoolIndex = 0;
+constexpr uint32_t kOutputPoolIndex = 1;
+constexpr uint32_t kDeviceMemoryBeginIndex = 2;
+
+static std::pair<Request, std::vector<sp<IBuffer>>> createRequest(
+        const sp<IDevice>& device, const sp<IPreparedModel>& preparedModel,
+        const TestModel& testModel, bool preferDeviceMemory) {
+    // Memory pools are organized as:
+    // - 0: Input shared memory pool
+    // - 1: Output shared memory pool
+    // - [2, 2+i): Input device memories
+    // - [2+i, 2+i+o): Output device memories
+    DeviceMemoryAllocator allocator(device, preparedModel, testModel);
+    std::vector<sp<IBuffer>> buffers;
+    std::vector<int32_t> tokens;
+
+    // Model inputs.
+    hidl_vec<RequestArgument> inputs(testModel.inputIndexes.size());
+    size_t inputSize = 0;
+    for (uint32_t i = 0; i < testModel.inputIndexes.size(); i++) {
+        const auto& op = testModel.operands[testModel.inputIndexes[i]];
+        if (op.data.size() == 0) {
+            // Omitted input.
+            inputs[i] = {.hasNoValue = true};
+            continue;
+        } else if (preferDeviceMemory) {
+            SCOPED_TRACE("Input index = " + std::to_string(i));
+            auto [buffer, token] = allocator.allocate<IOType::INPUT>(i);
+            if (buffer != nullptr) {
+                DataLocation loc = {.poolIndex = static_cast<uint32_t>(buffers.size() +
+                                                                       kDeviceMemoryBeginIndex)};
+                buffers.push_back(std::move(buffer));
+                tokens.push_back(token);
+                inputs[i] = {.hasNoValue = false, .location = loc, .dimensions = {}};
+                continue;
+            }
+        }
+
+        // Reserve shared memory for input.
+        DataLocation loc = {.poolIndex = kInputPoolIndex,
+                            .offset = static_cast<uint32_t>(inputSize),
+                            .length = static_cast<uint32_t>(op.data.size())};
+        inputSize += op.data.alignedSize();
+        inputs[i] = {.hasNoValue = false, .location = loc, .dimensions = {}};
+    }
+
+    // Model outputs.
+    hidl_vec<RequestArgument> outputs(testModel.outputIndexes.size());
+    size_t outputSize = 0;
+    for (uint32_t i = 0; i < testModel.outputIndexes.size(); i++) {
+        const auto& op = testModel.operands[testModel.outputIndexes[i]];
+        if (preferDeviceMemory) {
+            SCOPED_TRACE("Output index = " + std::to_string(i));
+            auto [buffer, token] = allocator.allocate<IOType::OUTPUT>(i);
+            if (buffer != nullptr) {
+                DataLocation loc = {.poolIndex = static_cast<uint32_t>(buffers.size() +
+                                                                       kDeviceMemoryBeginIndex)};
+                buffers.push_back(std::move(buffer));
+                tokens.push_back(token);
+                outputs[i] = {.hasNoValue = false, .location = loc, .dimensions = {}};
+                continue;
+            }
+        }
+
+        // In the case of zero-sized output, we should at least provide a one-byte buffer.
+        // This is because zero-sized tensors are only supported internally to the driver, or
+        // reported in output shapes. It is illegal for the client to pre-specify a zero-sized
+        // tensor as model output. Otherwise, we will have two semantic conflicts:
+        // - "Zero dimension" conflicts with "unspecified dimension".
+        // - "Omitted operand buffer" conflicts with "zero-sized operand buffer".
+        size_t bufferSize = std::max<size_t>(op.data.size(), 1);
+
+        // Reserve shared memory for output.
+        DataLocation loc = {.poolIndex = kOutputPoolIndex,
+                            .offset = static_cast<uint32_t>(outputSize),
+                            .length = static_cast<uint32_t>(bufferSize)};
+        outputSize += op.data.size() == 0 ? TestBuffer::kAlignment : op.data.alignedSize();
+        outputs[i] = {.hasNoValue = false, .location = loc, .dimensions = {}};
+    }
+
+    // Memory pools.
+    hidl_vec<Request::MemoryPool> pools(kDeviceMemoryBeginIndex + buffers.size());
+    pools[kInputPoolIndex].hidlMemory(nn::allocateSharedMemory(std::max<size_t>(inputSize, 1)));
+    pools[kOutputPoolIndex].hidlMemory(nn::allocateSharedMemory(std::max<size_t>(outputSize, 1)));
+    CHECK_NE(pools[kInputPoolIndex].hidlMemory().size(), 0u);
+    CHECK_NE(pools[kOutputPoolIndex].hidlMemory().size(), 0u);
+    for (uint32_t i = 0; i < buffers.size(); i++) {
+        pools[kDeviceMemoryBeginIndex + i].token(tokens[i]);
+    }
+
+    // Copy input data to the input shared memory pool.
+    sp<IMemory> inputMemory = mapMemory(pools[kInputPoolIndex].hidlMemory());
+    CHECK(inputMemory.get() != nullptr);
+    uint8_t* inputPtr = static_cast<uint8_t*>(static_cast<void*>(inputMemory->getPointer()));
+    CHECK(inputPtr != nullptr);
+    for (uint32_t i = 0; i < testModel.inputIndexes.size(); i++) {
+        if (!inputs[i].hasNoValue && inputs[i].location.poolIndex == kInputPoolIndex) {
+            const auto& op = testModel.operands[testModel.inputIndexes[i]];
+            const uint8_t* begin = op.data.get<uint8_t>();
+            const uint8_t* end = begin + op.data.size();
+            std::copy(begin, end, inputPtr + inputs[i].location.offset);
+        }
+    }
+
+    Request request = {
+            .inputs = std::move(inputs), .outputs = std::move(outputs), .pools = std::move(pools)};
+    return {std::move(request), std::move(buffers)};
+}
+
+// Get a TestBuffer with data copied from an IBuffer object.
+static void getBuffer(const sp<IBuffer>& buffer, size_t size, TestBuffer* testBuffer) {
+    // IBuffer -> Shared memory.
+    hidl_memory tmp = nn::allocateSharedMemory(size);
+    const auto ret = buffer->copyTo(tmp);
+    ASSERT_TRUE(ret.isOk());
+    ASSERT_EQ(static_cast<ErrorStatus>(ret), ErrorStatus::NONE);
+
+    // Shared memory -> TestBuffer.
+    sp<IMemory> outputMemory = mapMemory(tmp);
+    ASSERT_NE(outputMemory.get(), nullptr);
+    uint8_t* outputPtr = static_cast<uint8_t*>(static_cast<void*>(outputMemory->getPointer()));
+    ASSERT_NE(outputPtr, nullptr);
+    ASSERT_NE(testBuffer, nullptr);
+    *testBuffer = TestBuffer(size, outputPtr);
+}
+
+static std::vector<TestBuffer> getOutputBuffers(const TestModel& testModel, const Request& request,
+                                                const std::vector<sp<IBuffer>>& buffers) {
+    sp<IMemory> outputMemory = mapMemory(request.pools[kOutputPoolIndex].hidlMemory());
+    CHECK(outputMemory.get() != nullptr);
+    uint8_t* outputPtr = static_cast<uint8_t*>(static_cast<void*>(outputMemory->getPointer()));
+    CHECK(outputPtr != nullptr);
+
+    // Copy out output results.
+    std::vector<TestBuffer> outputBuffers;
+    for (uint32_t i = 0; i < request.outputs.size(); i++) {
+        const auto& outputLoc = request.outputs[i].location;
+        if (outputLoc.poolIndex == kOutputPoolIndex) {
+            outputBuffers.emplace_back(outputLoc.length, outputPtr + outputLoc.offset);
+        } else {
+            const auto& op = testModel.operands[testModel.outputIndexes[i]];
+            if (op.data.size() == 0) {
+                outputBuffers.emplace_back();
+            } else {
+                SCOPED_TRACE("Output index = " + std::to_string(i));
+                const uint32_t bufferIndex = outputLoc.poolIndex - kDeviceMemoryBeginIndex;
+                TestBuffer buffer;
+                getBuffer(buffers[bufferIndex], op.data.size(), &buffer);
+                outputBuffers.push_back(std::move(buffer));
+            }
+        }
+    }
+    return outputBuffers;
 }
 
 static Return<ErrorStatus> ExecutePreparedModel(const sp<IPreparedModel>& preparedModel,
@@ -233,8 +480,9 @@ static std::shared_ptr<::android::nn::ExecutionBurstController> CreateBurst(
                                                          std::chrono::microseconds{0});
 }
 
-void EvaluatePreparedModel(const sp<IPreparedModel>& preparedModel, const TestModel& testModel,
-                           const TestConfig& testConfig, bool* skipped = nullptr) {
+void EvaluatePreparedModel(const sp<IDevice>& device, const sp<IPreparedModel>& preparedModel,
+                           const TestModel& testModel, const TestConfig& testConfig,
+                           bool* skipped = nullptr) {
     if (skipped != nullptr) {
         *skipped = false;
     }
@@ -244,11 +492,16 @@ void EvaluatePreparedModel(const sp<IPreparedModel>& preparedModel, const TestMo
         return;
     }
 
-    V1_0::Request request10 = createRequest(testModel);
-    if (testConfig.outputType == OutputType::INSUFFICIENT) {
-        makeOutputInsufficientSize(/*outputIndex=*/0, &request10);
+    auto [request, buffers] =
+            createRequest(device, preparedModel, testModel,
+                          /*preferDeviceMemory=*/testConfig.memoryType == MemoryType::DEVICE);
+    // Skip if testing memory domain but no device memory has been allocated.
+    if (testConfig.memoryType == MemoryType::DEVICE && buffers.empty()) {
+        return;
     }
-    Request request = nn::convertToV1_3(request10);
+    if (testConfig.outputType == OutputType::INSUFFICIENT) {
+        makeOutputInsufficientSize(/*outputIndex=*/0, &request);
+    }
 
     ErrorStatus executionStatus;
     hidl_vec<OutputShape> outputShapes;
@@ -287,6 +540,10 @@ void EvaluatePreparedModel(const sp<IPreparedModel>& preparedModel, const TestMo
             // TODO(butlermichael): Check if we need to test burst in V1_3 if the interface remains
             //                      V1_2.
             SCOPED_TRACE("burst");
+
+            // check compliance
+            ASSERT_TRUE(nn::compliantWithV1_0(request));
+            V1_0::Request request10 = nn::convertToV1_0(request);
 
             // create burst
             const std::shared_ptr<::android::nn::ExecutionBurstController> controller =
@@ -363,17 +620,18 @@ void EvaluatePreparedModel(const sp<IPreparedModel>& preparedModel, const TestMo
     }
 
     // Retrieve execution results.
-    const std::vector<TestBuffer> outputs = getOutputBuffers(request10);
+    const std::vector<TestBuffer> outputs = getOutputBuffers(testModel, request, buffers);
 
     // We want "close-enough" results.
     checkResults(testModel, outputs);
 }
 
-void EvaluatePreparedModel(const sp<IPreparedModel>& preparedModel, const TestModel& testModel,
-                           TestKind testKind) {
+void EvaluatePreparedModel(const sp<IDevice>& device, const sp<IPreparedModel>& preparedModel,
+                           const TestModel& testModel, TestKind testKind) {
     std::vector<OutputType> outputTypesList;
     std::vector<MeasureTiming> measureTimingList;
     std::vector<Executor> executorList;
+    MemoryType memoryType = MemoryType::SHARED;
 
     switch (testKind) {
         case TestKind::GENERAL: {
@@ -386,6 +644,12 @@ void EvaluatePreparedModel(const sp<IPreparedModel>& preparedModel, const TestMo
             measureTimingList = {MeasureTiming::NO, MeasureTiming::YES};
             executorList = {Executor::ASYNC, Executor::SYNC, Executor::BURST};
         } break;
+        case TestKind::MEMORY_DOMAIN: {
+            outputTypesList = {OutputType::FULLY_SPECIFIED};
+            measureTimingList = {MeasureTiming::NO};
+            executorList = {Executor::ASYNC, Executor::SYNC};
+            memoryType = MemoryType::DEVICE;
+        } break;
         case TestKind::QUANTIZATION_COUPLING: {
             LOG(FATAL) << "Wrong TestKind for EvaluatePreparedModel";
             return;
@@ -395,14 +659,15 @@ void EvaluatePreparedModel(const sp<IPreparedModel>& preparedModel, const TestMo
     for (const OutputType outputType : outputTypesList) {
         for (const MeasureTiming measureTiming : measureTimingList) {
             for (const Executor executor : executorList) {
-                const TestConfig testConfig(executor, measureTiming, outputType);
-                EvaluatePreparedModel(preparedModel, testModel, testConfig);
+                const TestConfig testConfig(executor, measureTiming, outputType, memoryType);
+                EvaluatePreparedModel(device, preparedModel, testModel, testConfig);
             }
         }
     }
 }
 
-void EvaluatePreparedCoupledModels(const sp<IPreparedModel>& preparedModel,
+void EvaluatePreparedCoupledModels(const sp<IDevice>& device,
+                                   const sp<IPreparedModel>& preparedModel,
                                    const TestModel& testModel,
                                    const sp<IPreparedModel>& preparedCoupledModel,
                                    const TestModel& coupledModel) {
@@ -413,12 +678,12 @@ void EvaluatePreparedCoupledModels(const sp<IPreparedModel>& preparedModel,
     for (const OutputType outputType : outputTypesList) {
         for (const MeasureTiming measureTiming : measureTimingList) {
             for (const Executor executor : executorList) {
-                const TestConfig testConfig(executor, measureTiming, outputType,
+                const TestConfig testConfig(executor, measureTiming, outputType, MemoryType::SHARED,
                                             /*reportSkipping=*/false);
                 bool baseSkipped = false;
-                EvaluatePreparedModel(preparedModel, testModel, testConfig, &baseSkipped);
+                EvaluatePreparedModel(device, preparedModel, testModel, testConfig, &baseSkipped);
                 bool coupledSkipped = false;
-                EvaluatePreparedModel(preparedCoupledModel, coupledModel, testConfig,
+                EvaluatePreparedModel(device, preparedCoupledModel, coupledModel, testConfig,
                                       &coupledSkipped);
                 ASSERT_EQ(baseSkipped, coupledSkipped);
                 if (baseSkipped) {
@@ -443,15 +708,12 @@ void Execute(const sp<IDevice>& device, const TestModel& testModel, TestKind tes
 
     sp<IPreparedModel> preparedModel;
     switch (testKind) {
-        case TestKind::GENERAL: {
+        case TestKind::GENERAL:
+        case TestKind::DYNAMIC_SHAPE:
+        case TestKind::MEMORY_DOMAIN: {
             createPreparedModel(device, model, &preparedModel);
             if (preparedModel == nullptr) return;
-            EvaluatePreparedModel(preparedModel, testModel, TestKind::GENERAL);
-        } break;
-        case TestKind::DYNAMIC_SHAPE: {
-            createPreparedModel(device, model, &preparedModel);
-            if (preparedModel == nullptr) return;
-            EvaluatePreparedModel(preparedModel, testModel, TestKind::DYNAMIC_SHAPE);
+            EvaluatePreparedModel(device, preparedModel, testModel, testKind);
         } break;
         case TestKind::QUANTIZATION_COUPLING: {
             ASSERT_TRUE(testModel.hasQuant8CoupledOperands());
@@ -475,7 +737,7 @@ void Execute(const sp<IDevice>& device, const TestModel& testModel, TestKind tes
                 GTEST_SKIP();
             }
             ASSERT_NE(preparedCoupledModel, nullptr);
-            EvaluatePreparedCoupledModels(preparedModel, testModel, preparedCoupledModel,
+            EvaluatePreparedCoupledModels(device, preparedModel, testModel, preparedCoupledModel,
                                           signedQuantizedModel);
         } break;
     }
@@ -501,6 +763,9 @@ class GeneratedTest : public GeneratedTestBase {};
 // Tag for the dynamic output shape tests
 class DynamicOutputShapeTest : public GeneratedTest {};
 
+// Tag for the memory domain tests
+class MemoryDomainTest : public GeneratedTest {};
+
 // Tag for the dynamic output shape tests
 class QuantizationCouplingTest : public GeneratedTest {};
 
@@ -512,6 +777,10 @@ TEST_P(DynamicOutputShapeTest, Test) {
     Execute(kDevice, kTestModel, /*testKind=*/TestKind::DYNAMIC_SHAPE);
 }
 
+TEST_P(MemoryDomainTest, Test) {
+    Execute(kDevice, kTestModel, /*testKind=*/TestKind::MEMORY_DOMAIN);
+}
+
 TEST_P(QuantizationCouplingTest, Test) {
     Execute(kDevice, kTestModel, /*testKind=*/TestKind::QUANTIZATION_COUPLING);
 }
@@ -520,6 +789,9 @@ INSTANTIATE_GENERATED_TEST(GeneratedTest,
                            [](const TestModel& testModel) { return !testModel.expectFailure; });
 
 INSTANTIATE_GENERATED_TEST(DynamicOutputShapeTest,
+                           [](const TestModel& testModel) { return !testModel.expectFailure; });
+
+INSTANTIATE_GENERATED_TEST(MemoryDomainTest,
                            [](const TestModel& testModel) { return !testModel.expectFailure; });
 
 INSTANTIATE_GENERATED_TEST(QuantizationCouplingTest, [](const TestModel& testModel) {
