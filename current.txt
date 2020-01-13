@@ -591,7 +591,7 @@ fd65298e1e09e0e3c781ab18305920d757dbe55a3b459ce17814ec5cf6dfee99 android.hardwar
 
 # HALs released in Android R
 e966a3437d6a98d9d9e14e9d672088771716031900c0deb55a0946c751a03a44 android.hardware.audio@6.0::types
-2736c59abaccacac407ebe80c5e48d446edf015051d05632fb679ba471779e6e android.hardware.audio@6.0::IDevice
+4540d12fe1cea996f21bd1712d4ae0906dcbd58177dac494efc605b004902d43 android.hardware.audio@6.0::IDevice
 2402876cbc23c0de3690a665eca84fd3857d1808dba5cad25ce272f81ecef8c9 android.hardware.audio@6.0::IDevicesFactory
 bca5379d5065e2e08b6ad7308ffc8a71a972fc0698bec678ea32eea786d01cb5 android.hardware.audio@6.0::IPrimaryDevice
 7318b521ea12fdd4b6e3f381085c71784c810d1ec7a8d701ec2250f3f86712e4 android.hardware.audio@6.0::IStream
