@@ -18,6 +18,7 @@ package android.hardware.radio@1.5;
 
 import @1.0::RadioResponseInfo;
 import @1.4::IRadioResponse;
+import @1.5::BarringInfo;
 import @1.5::SetupDataCallResult;
 
 /**
@@ -157,4 +158,16 @@ interface IRadioResponse extends @1.4::IRadioResponse {
      *   RadioError:SYSTEM_ERR
      */
     oneway setIndicationFilterResponse_1_5(RadioResponseInfo info);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     * @param barringInfos a vector of barring info for all barring service types
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:MODEM_ERR
+     */
+    oneway getBarringInfoResponse(RadioResponseInfo info, vec<BarringInfo> barringInfos);
 };
