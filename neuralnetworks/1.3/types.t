@@ -57,6 +57,8 @@ enum OperationType : int32_t {
 
 %insert Operation_1.2
 
+%insert Operation_1.3
+
     /**
      * DEPRECATED. Since NNAPI 1.2, extensions are the preferred alternative to
      * OEM operation and data types.
