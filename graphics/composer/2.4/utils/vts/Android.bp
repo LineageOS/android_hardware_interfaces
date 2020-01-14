@@ -19,6 +19,7 @@ cc_library_static {
     defaults: ["hidl_defaults"],
     srcs: [
         "ComposerVts.cpp",
+        "GraphicsComposerCallback.cpp",
     ],
     static_libs: [
         "VtsHalHidlTargetTestBase",

@@ -92,10 +92,13 @@ struct Gnss : public IGnss {
 
   private:
     void reportLocation(const V2_0::GnssLocation&) const;
+    void reportLocation(const V1_0::GnssLocation&) const;
     void reportSvStatus(const hidl_vec<GnssSvInfo>&) const;
 
     static sp<V2_1::IGnssCallback> sGnssCallback_2_1;
     static sp<V2_0::IGnssCallback> sGnssCallback_2_0;
+    static sp<V1_1::IGnssCallback> sGnssCallback_1_1;
+    static sp<V1_0::IGnssCallback> sGnssCallback_1_0;
     std::atomic<long> mMinIntervalMs;
     sp<GnssConfiguration> mGnssConfiguration;
     std::atomic<bool> mIsActive;
