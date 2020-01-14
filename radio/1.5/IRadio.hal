@@ -20,6 +20,7 @@ import @1.2::DataRequestReason;
 import @1.4::IRadio;
 import @1.4::DataProfileInfo;
 import @1.5::AccessNetwork;
+import @1.5::BarringInfo;
 import @1.5::DataProfileInfo;
 import @1.5::IndicationFilter;
 import @1.5::LinkAddress;
@@ -235,4 +236,13 @@ interface IRadio extends @1.4::IRadio {
      * Response callback is IRadioResponse.setIndicationFilterResponse()
      */
     oneway setIndicationFilter_1_5(int32_t serial, bitfield<IndicationFilter> indicationFilter);
+
+    /**
+     * Get all the barring info for the current camped cell applicable to the current user.
+     *
+     * @param serial Serial number of request.
+     *
+     * Response callback is IRadioResponse.getBarringInfoResponse()
+     */
+    oneway getBarringInfo(int32_t serial);
 };
