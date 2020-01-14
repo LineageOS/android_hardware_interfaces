@@ -12,6 +12,7 @@ cc_test {
         "android.hardware.vibrator-cpp",
     ],
     test_suites: [
+        "general-tests",
         "vts-core",
     ],
 }
