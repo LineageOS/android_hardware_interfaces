@@ -37,6 +37,7 @@
 #include <android/hardware/camera/device/3.5/ICameraDevice.h>
 #include <android/hardware/camera/device/3.5/ICameraDeviceCallback.h>
 #include <android/hardware/camera/device/3.5/ICameraDeviceSession.h>
+#include <android/hardware/camera/device/3.6/ICameraDeviceSession.h>
 #include <android/hardware/camera/metadata/3.4/types.h>
 #include <android/hardware/camera/provider/2.4/ICameraProvider.h>
 #include <android/hardware/camera/provider/2.5/ICameraProvider.h>
@@ -724,6 +725,15 @@ public:
             ::android::hardware::camera::device::V3_5::StreamConfiguration *config3_5,
             uint32_t jpegBufferSize = 0);
 
+    void configureOfflinePreviewStream(const std::string &name,
+            sp<ICameraProvider> provider,
+            const AvailableStream *previewThreshold,
+            sp<device::V3_6::ICameraDeviceSession> *session/*out*/,
+            V3_2::Stream *previewStream /*out*/,
+            device::V3_6::HalStreamConfiguration *halStreamConfig /*out*/,
+            bool *supportsPartialResults /*out*/,
+            uint32_t *partialResultCount /*out*/,
+            sp<DeviceCb> *outCb /*out*/);
     void configurePreviewStreams3_4(const std::string &name, int32_t deviceVersion,
             sp<ICameraProvider> provider,
             const AvailableStream *previewThreshold,
@@ -789,6 +799,7 @@ public:
             uint32_t* outBufSize);
     static Status isConstrainedModeAvailable(camera_metadata_t *staticMeta);
     static Status isLogicalMultiCamera(const camera_metadata_t *staticMeta);
+    static Status isOfflineSessionSupported(const camera_metadata_t *staticMeta);
     static Status getPhysicalCameraIds(const camera_metadata_t *staticMeta,
             std::unordered_set<std::string> *physicalIds/*out*/);
     static Status getSupportedKeys(camera_metadata_t *staticMeta,
@@ -4572,6 +4583,157 @@ TEST_P(CameraHidlTest, processCaptureRequestInvalidSinglePreview) {
     }
 }
 
+// Verify camera offline session behavior
+TEST_P(CameraHidlTest, switchToOffline) {
+    hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
+    AvailableStream previewThreshold = {kMaxPreviewWidth, kMaxPreviewHeight,
+                                        static_cast<int32_t>(PixelFormat::IMPLEMENTATION_DEFINED)};
+    uint64_t bufferId = 1;
+    uint32_t frameNumber = 1;
+    ::android::hardware::hidl_vec<uint8_t> settings;
+
+    for (const auto& name : cameraDeviceNames) {
+        int deviceVersion = getCameraDeviceVersion(name, mProviderType);
+        if (deviceVersion == CAMERA_DEVICE_API_VERSION_1_0) {
+            continue;
+        } else if (deviceVersion <= 0) {
+            ALOGE("%s: Unsupported device version %d", __func__, deviceVersion);
+            ADD_FAILURE();
+            return;
+        }
+
+        camera_metadata_t* staticMetaBuffer;
+        {
+            Return<void> ret;
+            sp<ICameraDeviceSession> session;
+            openEmptyDeviceSession(name, mProvider, &session /*out*/, &staticMetaBuffer /*out*/);
+            ::android::hardware::camera::common::V1_0::helper::CameraMetadata staticMeta(
+                    staticMetaBuffer);
+
+            if (isOfflineSessionSupported(staticMetaBuffer) != Status::OK) {
+                ret = session->close();
+                ASSERT_TRUE(ret.isOk());
+                continue;
+            }
+            ret = session->close();
+            ASSERT_TRUE(ret.isOk());
+        }
+
+        bool supportsPartialResults = false;
+        uint32_t partialResultCount = 0;
+        V3_2::Stream previewStream;
+        V3_6::HalStreamConfiguration halStreamConfig;
+        sp<V3_6::ICameraDeviceSession> session;
+        sp<DeviceCb> cb;
+        configureOfflinePreviewStream(name, mProvider, &previewThreshold,
+                &session /*out*/, &previewStream /*out*/, &halStreamConfig /*out*/,
+                &supportsPartialResults /*out*/, &partialResultCount /*out*/, &cb /*out*/);
+
+        auto ret = session->constructDefaultRequestSettings(RequestTemplate::PREVIEW,
+            [&](auto status, const auto& req) {
+                ASSERT_EQ(Status::OK, status);
+                settings = req; });
+        ASSERT_TRUE(ret.isOk());
+
+        ::android::hardware::camera::common::V1_0::helper::CameraMetadata requestMeta;
+        StreamBuffer emptyInputBuffer = {-1, 0, nullptr, BufferStatus::ERROR, nullptr, nullptr};
+        hidl_handle buffers[kBurstFrameCount];
+        StreamBuffer outputBuffers[kBurstFrameCount];
+        CaptureRequest requests[kBurstFrameCount];
+        InFlightRequest inflightReqs[kBurstFrameCount];
+        hidl_vec<uint8_t> requestSettings[kBurstFrameCount];
+        auto halStreamConfig3_2 = halStreamConfig.streams[0].v3_4.v3_3.v3_2;
+        for (uint32_t i = 0; i < kBurstFrameCount; i++) {
+            std::unique_lock<std::mutex> l(mLock);
+
+            allocateGraphicBuffer(previewStream.width, previewStream.height,
+                    android_convertGralloc1To0Usage(halStreamConfig3_2.producerUsage,
+                        halStreamConfig3_2.consumerUsage),
+                    halStreamConfig3_2.overrideFormat, &buffers[i]);
+            outputBuffers[i] = {halStreamConfig3_2.id, bufferId + i,
+                buffers[i], BufferStatus::OK, nullptr, nullptr};
+
+            requestMeta.clear();
+            requestMeta.append(reinterpret_cast<camera_metadata_t *> (settings.data()));
+
+            camera_metadata_t *metaBuffer = requestMeta.release();
+            requestSettings[i].setToExternal(reinterpret_cast<uint8_t *> (metaBuffer),
+                    get_camera_metadata_size(metaBuffer), true);
+
+            requests[i] = {frameNumber + i, 0 /* fmqSettingsSize */, requestSettings[i],
+                emptyInputBuffer, {outputBuffers[i]}};
+
+            inflightReqs[i] = {1, false, supportsPartialResults, partialResultCount,
+                    nullptr /*resultQueue*/};
+            mInflightMap.add(frameNumber + i, &inflightReqs[i]);
+        }
+
+        Status status = Status::INTERNAL_ERROR;
+        hidl_vec<BufferCache> cachesToRemove;
+        hidl_vec<CaptureRequest> burstRequest;
+        burstRequest.setToExternal(requests, kBurstFrameCount);
+        Return<void> returnStatus = session->processCaptureRequest(burstRequest, cachesToRemove,
+                [] (auto , uint32_t ) {});
+        ASSERT_TRUE(returnStatus.isOk());
+        ASSERT_EQ(Status::OK, status);
+
+        hidl_vec<int32_t> offlineStreamIds = {halStreamConfig3_2.id};
+        V3_6::CameraOfflineSessionInfo offlineSessionInfo;
+        sp<device::V3_6::ICameraOfflineSession> offlineSession;
+        returnStatus = session->switchToOffline(offlineStreamIds,
+                [&status, &offlineSessionInfo, &offlineSession] (auto stat, auto info,
+                    auto offSession) {
+                    status = stat;
+                    offlineSessionInfo = info;
+                    offlineSession = offSession;
+                });
+        ASSERT_TRUE(returnStatus.isOk());
+
+        if (!halStreamConfig.streams[0].supportOffline) {
+            ASSERT_EQ(status, Status::ILLEGAL_ARGUMENT);
+            ret = session->close();
+            ASSERT_TRUE(ret.isOk());
+            continue;
+        }
+
+        ASSERT_EQ(status, Status::OK);
+        // Hal might be unable to find any requests qualified for offline mode.
+        if (offlineSession == nullptr) {
+            ret = session->close();
+            ASSERT_TRUE(ret.isOk());
+            continue;
+        }
+
+        ASSERT_EQ(offlineSessionInfo.offlineStreams.size(), 1u);
+        ASSERT_EQ(offlineSessionInfo.offlineStreams[0].id, halStreamConfig3_2.id);
+        ASSERT_NE(offlineSessionInfo.offlineRequests.size(), 0u);
+
+        ret = offlineSession->setCallback(cb);
+        ASSERT_TRUE(ret.isOk());
+
+        for (size_t i = 0; i < kBurstFrameCount; i++) {
+            std::unique_lock<std::mutex> l(mLock);
+            while (!inflightReqs[i].errorCodeValid && ((0 < inflightReqs[i].numBuffersLeft) ||
+                            (!inflightReqs[i].haveResultMetadata))) {
+                auto timeout = std::chrono::system_clock::now() +
+                        std::chrono::seconds(kStreamBufferTimeoutSec);
+                ASSERT_NE(std::cv_status::timeout, mResultCondition.wait_until(l, timeout));
+            }
+
+            ASSERT_FALSE(inflightReqs[i].errorCodeValid);
+            ASSERT_NE(inflightReqs[i].resultOutputBuffers.size(), 0u);
+            ASSERT_EQ(previewStream.id, inflightReqs[i].resultOutputBuffers[0].streamId);
+            ASSERT_FALSE(inflightReqs[i].collectedResult.isEmpty());
+        }
+
+        ret = session->close();
+        ASSERT_TRUE(ret.isOk());
+
+        ret = offlineSession->close();
+        ASSERT_TRUE(ret.isOk());
+    }
+}
+
 // Check whether an invalid capture request with missing output buffers
 // will be reported correctly.
 TEST_P(CameraHidlTest, processCaptureRequestInvalidBuffer) {
@@ -4923,6 +5085,30 @@ Status CameraHidlTest::isLogicalMultiCamera(const camera_metadata_t *staticMeta)
 
     for (size_t i = 0; i < entry.count; i++) {
         if (ANDROID_REQUEST_AVAILABLE_CAPABILITIES_LOGICAL_MULTI_CAMERA == entry.data.u8[i]) {
+            ret = Status::OK;
+            break;
+        }
+    }
+
+    return ret;
+}
+
+// Check if the camera device has logical multi-camera capability.
+Status CameraHidlTest::isOfflineSessionSupported(const camera_metadata_t *staticMeta) {
+    Status ret = Status::METHOD_NOT_SUPPORTED;
+    if (nullptr == staticMeta) {
+        return Status::ILLEGAL_ARGUMENT;
+    }
+
+    camera_metadata_ro_entry entry;
+    int rc = find_camera_metadata_ro_entry(staticMeta,
+            ANDROID_REQUEST_AVAILABLE_CAPABILITIES, &entry);
+    if (0 != rc) {
+        return Status::ILLEGAL_ARGUMENT;
+    }
+
+    for (size_t i = 0; i < entry.count; i++) {
+        if (ANDROID_REQUEST_AVAILABLE_CAPABILITIES_OFFLINE_PROCESSING == entry.data.u8[i]) {
             ret = Status::OK;
             break;
         }
@@ -5378,6 +5564,106 @@ void CameraHidlTest::configurePreviewStreams3_4(const std::string &name, int32_t
                 *halStreamConfig = halConfig;
                 });
     }
+    *previewStream = streams3_4[0].v3_2;
+    ASSERT_TRUE(ret.isOk());
+}
+
+// Configure preview stream with possible offline session support
+void CameraHidlTest::configureOfflinePreviewStream(const std::string &name,
+        sp<ICameraProvider> provider,
+        const AvailableStream *previewThreshold,
+        sp<device::V3_6::ICameraDeviceSession> *session/*out*/,
+        V3_2::Stream *previewStream /*out*/,
+        device::V3_6::HalStreamConfiguration *halStreamConfig /*out*/,
+        bool *supportsPartialResults /*out*/,
+        uint32_t *partialResultCount /*out*/,
+        sp<DeviceCb> *outCb /*out*/) {
+    ASSERT_NE(nullptr, session);
+    ASSERT_NE(nullptr, halStreamConfig);
+    ASSERT_NE(nullptr, previewStream);
+    ASSERT_NE(nullptr, supportsPartialResults);
+    ASSERT_NE(nullptr, partialResultCount);
+    ASSERT_NE(nullptr, outCb);
+
+    std::vector<AvailableStream> outputPreviewStreams;
+    ::android::sp<ICameraDevice> cameraDevice;
+    ALOGI("configureStreams: Testing camera device %s", name.c_str());
+    Return<void> ret;
+    ret = provider->getCameraDeviceInterface_V3_x(
+        name,
+        [&](auto status, const auto& device) {
+            ALOGI("getCameraDeviceInterface_V3_x returns status:%d",
+                  (int)status);
+            ASSERT_EQ(Status::OK, status);
+            ASSERT_NE(device, nullptr);
+            cameraDevice = device;
+        });
+    ASSERT_TRUE(ret.isOk());
+
+    camera_metadata_t *staticMeta;
+    ret = cameraDevice->getCameraCharacteristics([&] (Status s,
+            CameraMetadata metadata) {
+        ASSERT_EQ(Status::OK, s);
+        staticMeta = clone_camera_metadata(
+                reinterpret_cast<const camera_metadata_t*>(metadata.data()));
+        ASSERT_NE(nullptr, staticMeta);
+    });
+    ASSERT_TRUE(ret.isOk());
+
+    camera_metadata_ro_entry entry;
+    auto status = find_camera_metadata_ro_entry(staticMeta,
+            ANDROID_REQUEST_PARTIAL_RESULT_COUNT, &entry);
+    if ((0 == status) && (entry.count > 0)) {
+        *partialResultCount = entry.data.i32[0];
+        *supportsPartialResults = (*partialResultCount > 1);
+    }
+
+    ret = cameraDevice->open(*outCb, [&session](auto status, const auto& newSession) {
+            ALOGI("device::open returns status:%d", (int)status);
+            ASSERT_EQ(Status::OK, status);
+            ASSERT_NE(newSession, nullptr);
+            auto castResult = device::V3_6::ICameraDeviceSession::castFrom(newSession);
+            ASSERT_TRUE(castResult.isOk());
+            *session = castResult;
+        });
+    ASSERT_TRUE(ret.isOk());
+
+    outputPreviewStreams.clear();
+    auto rc = getAvailableOutputStreams(staticMeta,
+            outputPreviewStreams, previewThreshold);
+    free_camera_metadata(staticMeta);
+    ASSERT_EQ(Status::OK, rc);
+    ASSERT_FALSE(outputPreviewStreams.empty());
+
+    V3_2::DataspaceFlags dataspaceFlag = 0;
+    switch (static_cast<PixelFormat>(outputPreviewStreams[0].format)) {
+        case PixelFormat::Y16:
+            dataspaceFlag = static_cast<V3_2::DataspaceFlags>(Dataspace::DEPTH);
+            break;
+        default:
+            dataspaceFlag = static_cast<V3_2::DataspaceFlags>(Dataspace::UNKNOWN);
+    }
+
+    ::android::hardware::hidl_vec<V3_4::Stream> streams3_4;
+    V3_4::Stream stream3_4 = {{ 0 /*streamId*/, StreamType::OUTPUT,
+        static_cast<uint32_t> (outputPreviewStreams[0].width),
+        static_cast<uint32_t> (outputPreviewStreams[0].height),
+        static_cast<PixelFormat> (outputPreviewStreams[0].format),
+        GRALLOC1_CONSUMER_USAGE_HWCOMPOSER, dataspaceFlag, StreamRotation::ROTATION_0},
+        nullptr /*physicalId*/, /*bufferSize*/ 0};
+    streams3_4[0] = stream3_4;
+
+    ::android::hardware::camera::device::V3_4::StreamConfiguration config3_4;
+    ::android::hardware::camera::device::V3_5::StreamConfiguration config3_5;
+    config3_4 = {streams3_4, StreamConfigurationMode::NORMAL_MODE, {}};
+
+    config3_5.v3_4 = config3_4;
+    config3_5.streamConfigCounter = 0;
+    ret = (*session)->configureStreams_3_6(config3_5,
+            [&] (Status s, device::V3_6::HalStreamConfiguration halConfig) {
+                ASSERT_EQ(Status::OK, s);
+                *halStreamConfig = halConfig;
+            });
     *previewStream = streams3_4[0].v3_2;
     ASSERT_TRUE(ret.isOk());
 }
