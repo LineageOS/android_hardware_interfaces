@@ -773,6 +773,7 @@ enum FrontendDvbtTransmissionMode : uint32_t {
 /**
  *   Physical Layer Pipe (PLP) Mode for DVBT.
  */
+@export
 enum FrontendDvbtPlpMode : uint32_t {
     UNDEFINED,
     AUTO,
