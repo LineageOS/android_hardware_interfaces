@@ -118,7 +118,7 @@ void DrmHalTest::SetUp() {
     }
 
     // If drm scheme not installed skip subsequent tests
-    if (!drmFactory->isCryptoSchemeSupported(getVendorUUID())) {
+    if (drmFactory.get() == nullptr || !drmFactory->isCryptoSchemeSupported(getVendorUUID())) {
         vendorModule->setInstalled(false);
         return;
     }
