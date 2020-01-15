@@ -37,14 +37,17 @@
 
 using ::android::hardware::drm::V1_0::EventType;
 using ::android::hardware::drm::V1_0::KeyedVector;
-using KeyStatusV1_0 = ::android::hardware::drm::V1_0::KeyStatus;
 using ::android::hardware::drm::V1_0::KeyType;
 using ::android::hardware::drm::V1_0::Mode;
 using ::android::hardware::drm::V1_0::Pattern;
 using ::android::hardware::drm::V1_0::SessionId;
 using ::android::hardware::drm::V1_0::SubSample;
 
+using KeyStatusV1_0 = ::android::hardware::drm::V1_0::KeyStatus;
+using StatusV1_0 = ::android::hardware::drm::V1_0::Status;
+
 using ::android::hardware::drm::V1_1::ICryptoFactory;
+using ::android::hardware::drm::V1_1::SecurityLevel;
 
 using StatusV1_2 = ::android::hardware::drm::V1_2::Status;
 
@@ -108,6 +111,8 @@ class DrmHalTest : public ::testing::TestWithParam<std::string> {
 
    protected:
     hidl_array<uint8_t, 16> getVendorUUID();
+    void provision();
+    SessionId openSession(SecurityLevel level, StatusV1_0* err);
     SessionId openSession();
     void closeSession(const SessionId& sessionId);
     hidl_vec<uint8_t> loadKeys(const SessionId& sessionId,
