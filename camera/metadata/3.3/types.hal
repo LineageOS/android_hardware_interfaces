@@ -71,8 +71,10 @@ enum CameraMetadataTag : @3.2::CameraMetadataTag {
 
     /** android.lens.poseReference [static, enum, public]
      *
-     * <p>The origin for ANDROID_LENS_POSE_TRANSLATION.</p>
+     * <p>The origin for ANDROID_LENS_POSE_TRANSLATION, and the accuracy of
+     * ANDROID_LENS_POSE_TRANSLATION and ANDROID_LENS_POSE_ROTATION.</p>
      *
+     * @see ANDROID_LENS_POSE_ROTATION
      * @see ANDROID_LENS_POSE_TRANSLATION
      */
     ANDROID_LENS_POSE_REFERENCE = android.hardware.camera.metadata@3.2::CameraMetadataTag:ANDROID_LENS_END,
