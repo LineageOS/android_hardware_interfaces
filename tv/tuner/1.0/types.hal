@@ -1118,9 +1118,14 @@ struct FrontendIsdbtCapabilities {
 @export
 enum FrontendAnalogType : uint32_t {
     UNDEFINED = 0,
-    PAL = 1 << 0,
-    SECAM = 1 << 1,
-    NTSC = 1 << 2,
+    AUTO = 1 << 0,
+    PAL = 1 << 1,
+    PAL_M = 1 << 2,
+    PAL_N = 1 << 3,
+    PAL_60 = 1 << 4,
+    NTSC = 1 << 5,
+    NTSC_443 = 1 << 6,
+    SECAM = 1 << 7,
 };
 
 /**
@@ -1129,23 +1134,24 @@ enum FrontendAnalogType : uint32_t {
 @export
 enum FrontendAnalogSifStandard : uint32_t {
     UNDEFINED = 0,
-    BG = 1 << 0,
-    BG_A2 = 1 << 1,
-    BG_NICAM = 1 << 2,
-    I = 1 << 3,
-    DK = 1 << 4,
-    DK1 = 1 << 5,
-    DK2 = 1 << 6,
-    DK3 = 1 << 7,
-    DK_NICAM = 1 << 8,
-    L = 1 << 9,
-    M = 1 << 10,
-    M_BTSC = 1 << 11,
-    M_A2 = 1 << 12,
-    M_EIA_J = 1 << 13,
-    I_NICAM = 1 << 14,
-    L_NICAM = 1 << 15,
-    L_PRIME = 1 << 16,
+    AUTO = 1 << 0,
+    BG = 1 << 1,
+    BG_A2 = 1 << 2,
+    BG_NICAM = 1 << 3,
+    I = 1 << 4,
+    DK = 1 << 5,
+    DK1_A2 = 1 << 6,
+    DK2_A2 = 1 << 7,
+    DK3_A2 = 1 << 8,
+    DK_NICAM = 1 << 9,
+    L = 1 << 10,
+    M = 1 << 11,
+    M_BTSC = 1 << 12,
+    M_A2 = 1 << 13,
+    M_EIAJ = 1 << 14,
+    I_NICAM = 1 << 15,
+    L_NICAM = 1 << 16,
+    L_PRIME = 1 << 17,
 };
 
 /**
