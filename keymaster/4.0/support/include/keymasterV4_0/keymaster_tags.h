@@ -355,95 +355,61 @@ inline NullOr<const typename TypedTag2ValueType<TypedTag<tag_type, tag>>::type&>
     return accessTagValue(ttag, param);
 }
 
+inline bool operator<(const KeyParameter& a, const KeyParameter& b) {
+    if (a.tag != b.tag) return a.tag < b.tag;
+    int retval;
+    switch (typeFromTag(a.tag)) {
+        case TagType::INVALID:
+        case TagType::BOOL:
+            return false;
+        case TagType::ENUM:
+        case TagType::ENUM_REP:
+        case TagType::UINT:
+        case TagType::UINT_REP:
+            return a.f.integer < b.f.integer;
+        case TagType::ULONG:
+        case TagType::ULONG_REP:
+            return a.f.longInteger < b.f.longInteger;
+        case TagType::DATE:
+            return a.f.dateTime < b.f.dateTime;
+        case TagType::BIGNUM:
+        case TagType::BYTES:
+            // Handle the empty cases.
+            if (a.blob.size() == 0) return b.blob.size() != 0;
+            if (b.blob.size() == 0) return false;
+
+            retval = memcmp(&a.blob[0], &b.blob[0], std::min(a.blob.size(), b.blob.size()));
+            // if one is the prefix of the other the longer wins
+            if (retval == 0) return a.blob.size() < b.blob.size();
+            // Otherwise a is less if a is less.
+            else
+                return retval < 0;
+    }
+    return false;
+}
+
 inline bool operator==(const KeyParameter& a, const KeyParameter& b) {
-    if (a.tag != b.tag) {
-        return false;
-    }
+    if (a.tag != b.tag) return false;
 
-    switch (a.tag) {
-        /* Boolean tags */
-        case Tag::INVALID:
-        case Tag::CALLER_NONCE:
-        case Tag::INCLUDE_UNIQUE_ID:
-        case Tag::BOOTLOADER_ONLY:
-        case Tag::NO_AUTH_REQUIRED:
-        case Tag::ALLOW_WHILE_ON_BODY:
-        case Tag::UNLOCKED_DEVICE_REQUIRED:
-        case Tag::ROLLBACK_RESISTANCE:
-        case Tag::RESET_SINCE_ID_ROTATION:
-        case Tag::TRUSTED_CONFIRMATION_REQUIRED:
-        case Tag::TRUSTED_USER_PRESENCE_REQUIRED:
+    switch (typeFromTag(a.tag)) {
+        case TagType::INVALID:
+        case TagType::BOOL:
             return true;
-
-        /* Integer tags */
-        case Tag::KEY_SIZE:
-        case Tag::MIN_MAC_LENGTH:
-        case Tag::MIN_SECONDS_BETWEEN_OPS:
-        case Tag::MAX_USES_PER_BOOT:
-        case Tag::OS_VERSION:
-        case Tag::OS_PATCHLEVEL:
-        case Tag::MAC_LENGTH:
-        case Tag::USER_ID:
-        case Tag::AUTH_TIMEOUT:
-        case Tag::VENDOR_PATCHLEVEL:
-        case Tag::BOOT_PATCHLEVEL:
+        case TagType::ENUM:
+        case TagType::ENUM_REP:
+        case TagType::UINT:
+        case TagType::UINT_REP:
             return a.f.integer == b.f.integer;
-
-        /* Long integer tags */
-        case Tag::RSA_PUBLIC_EXPONENT:
-        case Tag::USER_SECURE_ID:
+        case TagType::ULONG:
+        case TagType::ULONG_REP:
             return a.f.longInteger == b.f.longInteger;
-
-        /* Date-time tags */
-        case Tag::ACTIVE_DATETIME:
-        case Tag::ORIGINATION_EXPIRE_DATETIME:
-        case Tag::USAGE_EXPIRE_DATETIME:
-        case Tag::CREATION_DATETIME:
+        case TagType::DATE:
             return a.f.dateTime == b.f.dateTime;
-
-        /* Bytes tags */
-        case Tag::APPLICATION_ID:
-        case Tag::APPLICATION_DATA:
-        case Tag::ROOT_OF_TRUST:
-        case Tag::UNIQUE_ID:
-        case Tag::ATTESTATION_CHALLENGE:
-        case Tag::ATTESTATION_APPLICATION_ID:
-        case Tag::ATTESTATION_ID_BRAND:
-        case Tag::ATTESTATION_ID_DEVICE:
-        case Tag::ATTESTATION_ID_PRODUCT:
-        case Tag::ATTESTATION_ID_SERIAL:
-        case Tag::ATTESTATION_ID_IMEI:
-        case Tag::ATTESTATION_ID_MEID:
-        case Tag::ATTESTATION_ID_MANUFACTURER:
-        case Tag::ATTESTATION_ID_MODEL:
-        case Tag::ASSOCIATED_DATA:
-        case Tag::CONFIRMATION_TOKEN:
-        case Tag::NONCE:
-            return a.blob == b.blob;
-
-        /* Enum tags */
-        case Tag::PURPOSE:
-            return a.f.purpose == b.f.purpose;
-        case Tag::ALGORITHM:
-            return a.f.algorithm == b.f.algorithm;
-        case Tag::BLOCK_MODE:
-            return a.f.blockMode == b.f.blockMode;
-        case Tag::DIGEST:
-            return a.f.digest == b.f.digest;
-        case Tag::PADDING:
-            return a.f.paddingMode == b.f.paddingMode;
-        case Tag::EC_CURVE:
-            return a.f.ecCurve == b.f.ecCurve;
-        case Tag::BLOB_USAGE_REQUIREMENTS:
-            return a.f.keyBlobUsageRequirements == b.f.keyBlobUsageRequirements;
-        case Tag::USER_AUTH_TYPE:
-            return a.f.integer == b.f.integer;
-        case Tag::ORIGIN:
-            return a.f.origin == b.f.origin;
-        case Tag::HARDWARE_TYPE:
-            return a.f.hardwareType == b.f.hardwareType;
+        case TagType::BIGNUM:
+        case TagType::BYTES:
+            if (a.blob.size() != b.blob.size()) return false;
+            return a.blob.size() == 0 || memcmp(&a.blob[0], &b.blob[0], a.blob.size()) == 0;
     }
-
     return false;
 }
 
