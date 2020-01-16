@@ -123,4 +123,21 @@ interface ITuner {
      * @return lnb the newly created Lnb interface.
      */
     openLnbById(LnbId lnbId) generates (Result result, ILnb lnb);
+
+    /**
+     * Create a new instance of Lnb given a LNB name.
+     *
+     * It is used by the client to create a LNB instance for external device.
+     *
+     * @param lnbName the name for an external LNB to be opened. The app
+     *        provides the name. Frammework doesn't depend on the name, instead
+     *        use lnbId return from this call.
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         UNAVAILABLE if no resource.
+     *         UNKNOWN_ERROR if creation failed for other reasons.
+     * @return lnbId the id of the LNB to be opened.
+     * @return lnb the newly created Lnb interface.
+     */
+    openLnbByName(string lnbName) generates (Result result, LnbId lnbId, ILnb lnb);
 };
