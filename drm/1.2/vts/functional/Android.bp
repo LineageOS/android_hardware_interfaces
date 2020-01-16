@@ -17,13 +17,13 @@
 cc_test {
     name: "VtsHalDrmV1_2TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
+    include_dirs: ["hardware/interfaces/drm/1.0/vts/functional"],
     srcs: [
         "drm_hal_clearkey_module.cpp",
         "drm_hal_common.cpp",
         "drm_hal_test.cpp",
         "vendor_modules.cpp",
     ],
-    include_dirs: ["hardware/interfaces/drm/1.0/vts/functional"],
     static_libs: [
         "android.hardware.drm@1.0",
         "android.hardware.drm@1.1",
@@ -36,5 +36,8 @@ cc_test {
         "libssl",
         "libcrypto_static",
     ],
-    test_suites: ["general-tests"],
+    test_suites: [
+        "general-tests",
+        "vts-core",
+    ],
 }
