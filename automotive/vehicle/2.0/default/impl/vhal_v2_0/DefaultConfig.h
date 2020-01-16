@@ -234,7 +234,7 @@ const ConfigDeclaration kVehicleProperties[]{
                  {
                          .prop = toInt(VehicleProperty::PERF_VEHICLE_SPEED),
                          .access = VehiclePropertyAccess::READ,
-                         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                         .changeMode = VehiclePropertyChangeMode::CONTINUOUS,
                          .minSampleRate = 1.0f,
                          .maxSampleRate = 10.0f,
                  },
