@@ -91,12 +91,6 @@ interface IHostapd extends @1.1::IHostapd {
         bool enableHeMultiUserBeamformer;
 
         /**
-         * Used BSS Color for softAp running in 802.11ax mode
-         * Note: this is only applicable if 802.11ax is supported for softAp
-         */
-        uint32_t heBssColor;
-
-        /**
          * Whether HE Target Wait Time (TWT) is enabled or not on softAp.
          * Note: this is only applicable if 802.11ax is supported for softAp
          */
