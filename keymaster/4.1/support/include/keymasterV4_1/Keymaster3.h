@@ -1,5 +1,4 @@
 /*
- **
  ** Copyright 2017, The Android Open Source Project
  **
  ** Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,18 +14,14 @@
  ** limitations under the License.
  */
 
-#ifndef HARDWARE_INTERFACES_KEYMASTER_40_SUPPORT_KEYMASTER_3_H_
-#define HARDWARE_INTERFACES_KEYMASTER_40_SUPPORT_KEYMASTER_3_H_
+#pragma once
 
 #include <android/hardware/keymaster/3.0/IKeymasterDevice.h>
 
 #include "Keymaster.h"
+#include "Operation.h"
 
-namespace android {
-namespace hardware {
-namespace keymaster {
-namespace V4_0 {
-namespace support {
+namespace android::hardware::keymaster::V4_1::support {
 
 using IKeymaster3Device = ::android::hardware::keymaster::V3_0::IKeymasterDevice;
 
@@ -38,8 +33,10 @@ using ::android::hardware::Void;
 using ::android::hardware::details::return_status;
 
 class Keymaster3 : public Keymaster {
-   public:
+  public:
+    // This definition is used for device enumeration.
     using WrappedIKeymasterDevice = IKeymaster3Device;
+
     Keymaster3(sp<IKeymaster3Device> km3_dev, const hidl_string& instanceName)
         : Keymaster(IKeymaster3Device::descriptor, instanceName),
           km3_dev_(km3_dev),
@@ -53,24 +50,24 @@ class Keymaster3 : public Keymaster {
     Return<void> getHardwareInfo(getHardwareInfo_cb _hidl_cb);
 
     Return<void> getHmacSharingParameters(getHmacSharingParameters_cb _hidl_cb) override {
-        _hidl_cb(ErrorCode::UNIMPLEMENTED, {});
+        _hidl_cb(V4_0::ErrorCode::UNIMPLEMENTED, {});
         return Void();
     }
 
     Return<void> computeSharedHmac(const hidl_vec<HmacSharingParameters>&,
                                    computeSharedHmac_cb _hidl_cb) override {
-        _hidl_cb(ErrorCode::UNIMPLEMENTED, {});
+        _hidl_cb(V4_0::ErrorCode::UNIMPLEMENTED, {});
         return Void();
     }
 
     Return<void> verifyAuthorization(uint64_t, const hidl_vec<KeyParameter>&,
                                      const HardwareAuthToken&,
                                      verifyAuthorization_cb _hidl_cb) override {
-        _hidl_cb(ErrorCode::UNIMPLEMENTED, {});
+        _hidl_cb(V4_0::ErrorCode::UNIMPLEMENTED, {});
         return Void();
     }
 
-    Return<ErrorCode> addRngEntropy(const hidl_vec<uint8_t>& data) override;
+    Return<V4_0::ErrorCode> addRngEntropy(const hidl_vec<uint8_t>& data) override;
     Return<void> generateKey(const hidl_vec<KeyParameter>& keyParams,
                              generateKey_cb _hidl_cb) override;
     Return<void> getKeyCharacteristics(const hidl_vec<uint8_t>& keyBlob,
@@ -86,7 +83,7 @@ class Keymaster3 : public Keymaster {
                                   const hidl_vec<KeyParameter>& /* unwrappingParams */,
                                   uint64_t /* passwordSid */, uint64_t /* biometricSid */,
                                   importWrappedKey_cb _hidl_cb) {
-        _hidl_cb(ErrorCode::UNIMPLEMENTED, {}, {});
+        _hidl_cb(V4_0::ErrorCode::UNIMPLEMENTED, {}, {});
         return Void();
     }
 
@@ -99,9 +96,9 @@ class Keymaster3 : public Keymaster {
     Return<void> upgradeKey(const hidl_vec<uint8_t>& keyBlobToUpgrade,
                             const hidl_vec<KeyParameter>& upgradeParams,
                             upgradeKey_cb _hidl_cb) override;
-    Return<ErrorCode> deleteKey(const hidl_vec<uint8_t>& keyBlob) override;
-    Return<ErrorCode> deleteAllKeys() override;
-    Return<ErrorCode> destroyAttestationIds() override;
+    Return<V4_0::ErrorCode> deleteKey(const hidl_vec<uint8_t>& keyBlob) override;
+    Return<V4_0::ErrorCode> deleteAllKeys() override;
+    Return<V4_0::ErrorCode> destroyAttestationIds() override;
     Return<void> begin(KeyPurpose purpose, const hidl_vec<uint8_t>& key,
                        const hidl_vec<KeyParameter>& inParams, const HardwareAuthToken& authToken,
                        begin_cb _hidl_cb) override;
@@ -112,9 +109,31 @@ class Keymaster3 : public Keymaster {
                         const hidl_vec<uint8_t>& input, const hidl_vec<uint8_t>& signature,
                         const HardwareAuthToken& authToken,
                         const VerificationToken& verificationToken, finish_cb _hidl_cb) override;
-    Return<ErrorCode> abort(uint64_t operationHandle) override;
+    Return<V4_0::ErrorCode> abort(uint64_t operationHandle) override;
 
-   private:
+    /**********************************
+     * V4_1::IKeymasterDevice methods *
+     *********************************/
+
+    Return<ErrorCode> deviceLocked(bool /* passwordOnly */,
+                                   const VerificationToken& /* verificationToken */) override {
+        return ErrorCode::UNIMPLEMENTED;
+    }
+
+    Return<ErrorCode> earlyBootEnded() override { return ErrorCode::UNIMPLEMENTED; }
+
+    Return<void> beginOp(KeyPurpose purpose, const hidl_vec<uint8_t>& keyBlob,
+                         const hidl_vec<KeyParameter>& inParams, const HardwareAuthToken& authToken,
+                         beginOp_cb _hidl_cb) override {
+        return begin(purpose, keyBlob, inParams, authToken,
+                     [&_hidl_cb](V4_0::ErrorCode errorCode, const hidl_vec<KeyParameter>& outParams,
+                                 OperationHandle operationHandle) {
+                         _hidl_cb(static_cast<ErrorCode>(errorCode), outParams,
+                                  new Operation(operationHandle));
+                     });
+    }
+
+  private:
     void getVersionIfNeeded();
 
     sp<IKeymaster3Device> km3_dev_;
@@ -126,10 +145,4 @@ class Keymaster3 : public Keymaster {
     bool supportsAllDigests_;
 };
 
-}  // namespace support
-}  // namespace V4_0
-}  // namespace keymaster
-}  // namespace hardware
-}  // namespace android
-
-#endif  // HARDWARE_INTERFACES_KEYMASTER_40_SUPPORT_KEYMASTER_3_H_
+}  // namespace android::hardware::keymaster::V4_1::support

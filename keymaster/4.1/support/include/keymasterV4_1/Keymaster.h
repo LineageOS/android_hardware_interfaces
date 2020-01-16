@@ -15,28 +15,28 @@
  ** limitations under the License.
  */
 
-#ifndef HARDWARE_INTERFACES_KEYMASTER_40_SUPPORT_KEYMASTER_H_
-#define HARDWARE_INTERFACES_KEYMASTER_40_SUPPORT_KEYMASTER_H_
-
-#include <android/hardware/keymaster/4.0/IKeymasterDevice.h>
+#pragma once
 
 #include <memory>
 #include <vector>
 
-namespace android {
-namespace hardware {
-namespace keymaster {
-namespace V4_0 {
-namespace support {
+#include <android/hardware/keymaster/4.1/IKeymasterDevice.h>
+#include <keymasterV4_1/keymaster_tags.h>
+
+namespace android::hardware::keymaster::V4_1::support {
 
 /**
- * Keymaster abstracts the underlying V4_0::IKeymasterDevice.  There is one implementation
- * (Keymaster4) which is a trivial passthrough and one that wraps a V3_0::IKeymasterDevice.
+ * Keymaster abstracts the underlying V4_1::IKeymasterDevice.  There are two implementations,
+ * Keymaster3 which wraps a V3_0::IKeymasterDevice and Keymaster4, which wraps either a
+ * V4_0::IKeymasterDevice or a V4_1::IKeymasterDevice.  There is a V3_0::IKeymasterDevice
+ * implementation that is used to wrap pre-HIDL keymaster implementations, and Keymaster3 will wrap
+ * that.
  *
  * The reason for adding this additional layer, rather than simply using the latest HAL directly and
  * subclassing it to wrap any older HAL, is because this provides a place to put additional methods
  * which clients can use when they need to distinguish between different underlying HAL versions,
- * while still having to use only the latest interface.
+ * while still having to use only the latest interface.  Plus it's a handy place to keep some
+ * convenience methods.
  */
 class Keymaster : public IKeymasterDevice {
   public:
@@ -50,12 +50,14 @@ class Keymaster : public IKeymasterDevice {
         hidl_string keymasterName;
         hidl_string authorName;
         uint8_t majorVersion;
+        uint8_t minorVersion;
         SecurityLevel securityLevel;
         bool supportsEc;
 
         bool operator>(const VersionResult& other) const {
-            auto lhs = std::tie(securityLevel, majorVersion, supportsEc);
-            auto rhs = std::tie(other.securityLevel, other.majorVersion, other.supportsEc);
+            auto lhs = std::tie(securityLevel, majorVersion, minorVersion, supportsEc);
+            auto rhs = std::tie(other.securityLevel, other.majorVersion, other.minorVersion,
+                                other.supportsEc);
             return lhs > rhs;
         }
     };
@@ -69,6 +71,9 @@ class Keymaster : public IKeymasterDevice {
      * There are no side effects otherwise.
      */
     void logIfKeymasterVendorError(ErrorCode ec) const;
+    void logIfKeymasterVendorError(V4_0::ErrorCode ec) const {
+        logIfKeymasterVendorError(static_cast<ErrorCode>(ec));
+    }
 
     /**
      * Returns all available Keymaster3 and Keymaster4 instances, in order of most secure to least
@@ -93,10 +98,4 @@ class Keymaster : public IKeymasterDevice {
 
 std::ostream& operator<<(std::ostream& os, const Keymaster& keymaster);
 
-}  // namespace support
-}  // namespace V4_0
-}  // namespace keymaster
-}  // namespace hardware
-}  // namespace android
-
-#endif  // HARDWARE_INTERFACES_KEYMASTER_40_SUPPORT_KEYMASTER_H_
+}  // namespace android::hardware::keymaster::V4_1::support
