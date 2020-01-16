@@ -14,4 +14,4 @@
  * limitations under the License.
  */
 
-const static char kEnumeratorServiceName[] = "EvsEnumeratorHw";
+const static char kEnumeratorServiceName[] = "hw/0";

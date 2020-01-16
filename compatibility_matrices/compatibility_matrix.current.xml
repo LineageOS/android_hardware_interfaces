@@ -45,6 +45,7 @@
         <interface>
             <name>IEvsEnumerator</name>
             <instance>default</instance>
+            <regex-instance>[a-z]+/[0-9]+</regex-instance>
         </interface>
     </hal>
     <hal format="aidl" optional="true">
