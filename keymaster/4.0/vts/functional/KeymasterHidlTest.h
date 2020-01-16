@@ -38,12 +38,14 @@ using hidl::base::V1_0::DebugInfo;
 using ::std::string;
 
 class HidlBuf : public hidl_vec<uint8_t> {
-    typedef hidl_vec<uint8_t> super;
+    using super = hidl_vec<uint8_t>;
 
   public:
     HidlBuf() {}
     HidlBuf(const super& other) : super(other) {}
-    HidlBuf(super&& other) : super(std::move(other)) {}
+    HidlBuf(super&& other) : super(std::move(other)) { other = {}; }
+    HidlBuf(const HidlBuf& other) : super(other) {}
+    HidlBuf(HidlBuf&& other) : super(std::move(other)) { other = HidlBuf(); }
     explicit HidlBuf(const std::string& other) : HidlBuf() { *this = other; }
 
     HidlBuf& operator=(const super& other) {
@@ -53,6 +55,18 @@ class HidlBuf : public hidl_vec<uint8_t> {
 
     HidlBuf& operator=(super&& other) {
         super::operator=(std::move(other));
+        other = {};
+        return *this;
+    }
+
+    HidlBuf& operator=(const HidlBuf& other) {
+        super::operator=(other);
+        return *this;
+    }
+
+    HidlBuf& operator=(HidlBuf&& other) {
+        super::operator=(std::move(other));
+        other.super::operator=({});
         return *this;
     }
 
@@ -77,7 +91,7 @@ class KeymasterHidlTest : public ::testing::TestWithParam<std::string> {
         AbortIfNeeded();
     }
 
-    void InitializeKeymaster();
+    void InitializeKeymaster(sp<IKeymasterDevice> keymaster);
     IKeymasterDevice& keymaster() { return *keymaster_; }
     uint32_t os_version() { return os_version_; }
     uint32_t os_patch_level() { return os_patch_level_; }

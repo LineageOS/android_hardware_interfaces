@@ -19,12 +19,24 @@ cc_test {
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: [
         "EarlyBootKeyTest.cpp",
+        "DeviceUniqueAttestationTest.cpp",
+        "Keymaster4_1HidlTest.cpp",
+        "UnlockedDeviceRequiredTest.cpp",
     ],
     static_libs: [
         "android.hardware.keymaster@4.0",
         "android.hardware.keymaster@4.1",
-        "libkeymaster4support",
+        "libcrypto_static",
         "libkeymaster4_1support",
+        "libkeymaster4support",
+        "libkeymaster4vtstest",
     ],
-    test_suites: ["vts-core"],
+    cflags: [
+        "-Wall",
+        "-O0",
+    ],
+    test_suites: [
+        "general-tests",
+        "vts-core",
+    ],
 }
