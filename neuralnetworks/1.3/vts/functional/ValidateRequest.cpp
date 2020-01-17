@@ -28,7 +28,6 @@
 namespace android::hardware::neuralnetworks::V1_3::vts::functional {
 
 using V1_0::ErrorStatus;
-using V1_0::Request;
 using V1_2::MeasureTiming;
 using V1_2::OutputShape;
 using V1_2::Timing;
@@ -93,8 +92,12 @@ static void validate(const sp<IPreparedModel>& preparedModel, const std::string&
     }
 
     // burst
+    // TODO(butlermichael): Check if we need to test burst in V1_3 if the interface remains V1_2.
     {
         SCOPED_TRACE(message + " [burst]");
+
+        ASSERT_TRUE(nn::compliantWithV1_0(request));
+        V1_0::Request request10 = nn::convertToV1_0(request);
 
         // create burst
         std::shared_ptr<::android::nn::ExecutionBurstController> burst =
@@ -103,13 +106,13 @@ static void validate(const sp<IPreparedModel>& preparedModel, const std::string&
         ASSERT_NE(nullptr, burst.get());
 
         // create memory keys
-        std::vector<intptr_t> keys(request.pools.size());
+        std::vector<intptr_t> keys(request10.pools.size());
         for (size_t i = 0; i < keys.size(); ++i) {
-            keys[i] = reinterpret_cast<intptr_t>(&request.pools[i]);
+            keys[i] = reinterpret_cast<intptr_t>(&request10.pools[i]);
         }
 
         // execute and verify
-        const auto [n, outputShapes, timing, fallback] = burst->compute(request, measure, keys);
+        const auto [n, outputShapes, timing, fallback] = burst->compute(request10, measure, keys);
         const ErrorStatus status = nn::convertResultCodeToErrorStatus(n);
         EXPECT_EQ(ErrorStatus::INVALID_ARGUMENT, status);
         EXPECT_EQ(outputShapes.size(), 0);
@@ -117,7 +120,7 @@ static void validate(const sp<IPreparedModel>& preparedModel, const std::string&
         EXPECT_FALSE(fallback);
 
         // additional burst testing
-        if (request.pools.size() > 0) {
+        if (request10.pools.size() > 0) {
             // valid free
             burst->freeMemory(keys.front());
 
