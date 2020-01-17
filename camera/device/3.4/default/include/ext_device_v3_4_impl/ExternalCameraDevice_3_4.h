@@ -105,7 +105,7 @@ protected:
     // Calls into virtual member function. Do not use it in constructor
     status_t initCameraCharacteristics();
     // Init available capabilities keys
-    status_t initAvailableCapabilities(
+    virtual status_t initAvailableCapabilities(
             ::android::hardware::camera::common::V1_0::helper::CameraMetadata*);
     // Init non-device dependent keys
     virtual status_t initDefaultCharsKeys(
