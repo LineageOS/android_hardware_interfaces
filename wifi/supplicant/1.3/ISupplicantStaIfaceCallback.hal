@@ -185,4 +185,9 @@ interface ISupplicantStaIfaceCallback extends @1.2::ISupplicantStaIfaceCallback 
      * request frame.
      */
     oneway onBssTmHandlingDone(BssTmData tmData);
+
+    /**
+     * Indicates an EAP authentication failure.
+     */
+    oneway onEapFailure_1_3(uint32_t errorCode);
 };

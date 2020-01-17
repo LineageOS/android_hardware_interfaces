@@ -5851,6 +5851,14 @@ void CameraHidlTest::verifyCameraCharacteristics(Status status, const CameraMeta
         }
     }
 
+    retcode = find_camera_metadata_ro_entry(metadata,
+            ANDROID_LENS_POSE_REFERENCE, &entry);
+    if (0 == retcode && entry.count > 0) {
+        uint8_t poseReference = entry.data.u8[0];
+        ASSERT_TRUE(poseReference <= ANDROID_LENS_POSE_REFERENCE_UNDEFINED &&
+                poseReference >= ANDROID_LENS_POSE_REFERENCE_PRIMARY_CAMERA);
+    }
+
     verifyBokehCharacteristics(metadata);
     verifyZoomCharacteristics(metadata);
 }

@@ -1,5 +1,4 @@
-//
-// Copyright (C) 2017 The Android Open Source Project
+// Copyright (C) 2020 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,28 +11,21 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
 cc_test {
-    name: "VtsHalDrmV1_0TargetTest",
-    defaults: ["VtsHalTargetTestDefaults"],
-    srcs: [
-        "drm_hal_clearkey_test.cpp",
-        "drm_hal_vendor_test.cpp",
-        "vendor_modules.cpp",
+    name: "VtsHalPowerTargetTest",
+    defaults: [
+        "VtsHalTargetTestDefaults",
+        "use_libaidlvintf_gtest_helper_static",
+    ],
+    srcs: ["VtsHalPowerTargetTest.cpp"],
+    shared_libs: [
+        "libbinder",
     ],
     static_libs: [
-        "android.hardware.drm@1.0",
-        "android.hardware.drm@1.0-helper",
-        "android.hidl.allocator@1.0",
-        "android.hidl.memory@1.0",
-        "libhidlmemory",
-        "libnativehelper",
-        "libssl",
-        "libcrypto_static",
+        "android.hardware.power-cpp",
     ],
     test_suites: [
-        "general-tests",
         "vts-core",
     ],
 }
