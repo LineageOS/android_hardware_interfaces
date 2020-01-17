@@ -21,35 +21,55 @@ import @2.0::IGnssMeasurementCallback;
 import @2.0::ElapsedRealtime;
 import GnssSignalType;
 
-/** The callback interface to report measurements from the HAL. */
+/**
+ * The callback interface to report measurements from the HAL.
+ */
 interface IGnssMeasurementCallback extends @2.0::IGnssMeasurementCallback {
-
     /**
      * Flags to indicate what fields in GnssMeasurement are valid.
      */
     enum GnssMeasurementFlags : uint32_t {
-        /** A valid 'snr' is stored in the data structure. */
-        HAS_SNR                           = 1 << 0,
-        /** A valid 'carrier frequency' is stored in the data structure. */
-        HAS_CARRIER_FREQUENCY             = 1 << 9,
-        /** A valid 'carrier cycles' is stored in the data structure. */
-        HAS_CARRIER_CYCLES                = 1 << 10,
-        /** A valid 'carrier phase' is stored in the data structure. */
-        HAS_CARRIER_PHASE                 = 1 << 11,
-        /** A valid 'carrier phase uncertainty' is stored in the data structure. */
-        HAS_CARRIER_PHASE_UNCERTAINTY     = 1 << 12,
-        /** A valid automatic gain control is stored in the data structure. */
-        HAS_AUTOMATIC_GAIN_CONTROL        = 1 << 13,
-        /** A valid receiver inter-signal bias is stored in the data structure. */
-        HAS_RECEIVER_ISB                  = 1 << 16,
-        /** A valid receiver inter-signal bias uncertainty is stored in the data structure. */
-        HAS_RECEIVER_ISB_UNCERTAINTY      = 1 << 17,
-        /** A valid satellite inter-signal bias is stored in the data structure. */
-        HAS_SATELLITE_ISB                 = 1 << 18,
-        /** A valid satellite inter-signal bias uncertainty is stored in the data structure. */
-        HAS_SATELLITE_ISB_UNCERTAINTY     = 1 << 19
+        /**
+         * A valid 'snr' is stored in the data structure.
+         */
+        HAS_SNR = 1 << 0,
+        /**
+         * A valid 'carrier frequency' is stored in the data structure.
+         */
+        HAS_CARRIER_FREQUENCY = 1 << 9,
+        /**
+         * A valid 'carrier cycles' is stored in the data structure.
+         */
+        HAS_CARRIER_CYCLES = 1 << 10,
+        /**
+         * A valid 'carrier phase' is stored in the data structure.
+         */
+        HAS_CARRIER_PHASE = 1 << 11,
+        /**
+         * A valid 'carrier phase uncertainty' is stored in the data structure.
+         */
+        HAS_CARRIER_PHASE_UNCERTAINTY = 1 << 12,
+        /**
+         * A valid automatic gain control is stored in the data structure.
+         */
+        HAS_AUTOMATIC_GAIN_CONTROL = 1 << 13,
+        /**
+         * A valid receiver inter-signal bias is stored in the data structure.
+         */
+        HAS_RECEIVER_ISB = 1 << 16,
+        /**
+         * A valid receiver inter-signal bias uncertainty is stored in the data structure.
+         */
+        HAS_RECEIVER_ISB_UNCERTAINTY = 1 << 17,
+        /**
+         * A valid satellite inter-signal bias is stored in the data structure.
+         */
+        HAS_SATELLITE_ISB = 1 << 18,
+        /**
+         * A valid satellite inter-signal bias uncertainty is stored in the data structure.
+         */
+        HAS_SATELLITE_ISB_UNCERTAINTY = 1 << 19,
     };
-
 
     /**
      * Extends a GNSS Measurement, adding basebandCN0DbHz, GnssMeasurementFlags,
@@ -160,10 +180,14 @@ interface IGnssMeasurementCallback extends @2.0::IGnssMeasurementCallback {
      * Complete set of GNSS Measurement data, same as 2.0 with additional fields in measurements.
      */
     struct GnssData {
-        /** The full set of satellite measurement observations. */
+        /**
+         * The full set of satellite measurement observations.
+         */
         vec<GnssMeasurement> measurements;
 
-        /** The GNSS clock time reading. */
+        /**
+         * The GNSS clock time reading.
+         */
         GnssClock clock;
 
         /**
