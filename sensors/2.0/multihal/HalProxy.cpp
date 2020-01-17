@@ -486,15 +486,14 @@ void HalProxy::handlePendingWrites() {
                 }
             }
             lock.lock();
+            mSizePendingWriteEventsQueue -= numToWrite;
             if (pendingWriteEvents.size() > eventQueueSize) {
                 // TODO(b/143302327): Check if this erase operation is too inefficient. It will copy
                 // all the events ahead of it down to fill gap off array at front after the erase.
                 pendingWriteEvents.erase(pendingWriteEvents.begin(),
                                          pendingWriteEvents.begin() + eventQueueSize);
-                mSizePendingWriteEventsQueue -= eventQueueSize;
             } else {
                 mPendingWriteEventsQueue.pop();
-                mSizePendingWriteEventsQueue -= pendingWriteEvents.size();
             }
         }
     }
