@@ -298,6 +298,28 @@ enum VehicleProperty : int32_t {
         | VehicleArea:SEAT),
 
     /**
+     * Exterior dimensions of vehicle.
+     *
+     *  int32Values[0] = height
+     *  int32Values[1] = length
+     *  int32Values[2] = width
+     *  int32Values[3] = width including mirrors
+     *  int32Values[4] = wheel base
+     *  int32Values[5] = track width front
+     *  int32Values[6] = track width rear
+     *  int32Values[7] = curb to curb turning radius
+     *
+     * @change_mode VehiclePropertyChangeMode:STATIC
+     * @access VehiclePropertyAccess:READ
+     * @unit VehicleUnit:MILLIMETER
+     */
+    INFO_EXTERIOR_DIMENSIONS = (
+        0x010B
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:INT32_VEC
+        | VehicleArea:GLOBAL),
+
+    /**
      * Current odometer value of the vehicle
      *
      * @change_mode VehiclePropertyChangeMode:CONTINUOUS
