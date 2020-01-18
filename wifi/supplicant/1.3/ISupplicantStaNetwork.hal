@@ -44,6 +44,14 @@ interface ISupplicantStaNetwork extends @1.2::ISupplicantStaNetwork {
          * WAPI Cert
          */
         WAPI_CERT = 1 << 13,
+        /**
+         * FILS shared key authentication with sha-256
+         */
+        FILS_SHA256 = 1 << 18,
+        /**
+         * FILS shared key authentication with sha-384
+         */
+        FILS_SHA384 = 1 << 19,
     };
 
     /**
@@ -268,4 +276,16 @@ interface ISupplicantStaNetwork extends @1.2::ISupplicantStaNetwork {
      * @return authAlgMask Combination of |AuthAlgMask| values.
      */
     getAuthAlg_1_3() generates (SupplicantStatus status, bitfield<AuthAlgMask> authAlgMask);
+
+    /**
+     * Enable EAP ERP for this network.
+     *
+     * @param enable true to set, false otherwise.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     */
+    setEapErp(bool enable) generates (SupplicantStatus status);
 };

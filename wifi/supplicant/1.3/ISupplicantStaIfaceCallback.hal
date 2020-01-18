@@ -17,6 +17,10 @@
 package android.hardware.wifi.supplicant@1.3;
 
 import @1.2::ISupplicantStaIfaceCallback;
+import @1.0::ISupplicantStaIfaceCallback.State;
+import @1.0::Bssid;
+import @1.0::SupplicantNetworkId;
+import @1.0::Ssid;
 
 /**
  * Callback Interface exposed by the supplicant service
@@ -190,4 +194,26 @@ interface ISupplicantStaIfaceCallback extends @1.2::ISupplicantStaIfaceCallback 
      * Indicates an EAP authentication failure.
      */
     oneway onEapFailure_1_3(uint32_t errorCode);
+
+    /**
+     * Used to indicate a state change event on this particular iface. If this
+     * event is triggered by a particular network, the |SupplicantNetworkId|,
+     * |ssid|, |bssid| parameters must indicate the parameters of the network/AP
+     * which caused this state transition.
+     *
+     * @param newState New State of the interface. This must be one of the |State|
+     *        values above.
+     * @param bssid BSSID of the corresponding AP which caused this state
+     *        change event. This must be zero'ed if this event is not
+     *        specific to a particular network.
+     * @param id ID of the corresponding network which caused this
+     *        state change event. This must be invalid (UINT32_MAX) if this
+     *        event is not specific to a particular network.
+     * @param ssid SSID of the corresponding network which caused this state
+     *        change event. This must be empty if this event is not specific
+     *        to a particular network.
+     * @param filsHlpSent If FILS HLP IEs were included in this association.
+     */
+    oneway onStateChanged_1_3(State newState, Bssid bssid, SupplicantNetworkId id, Ssid ssid,
+        bool filsHlpSent);
 };
