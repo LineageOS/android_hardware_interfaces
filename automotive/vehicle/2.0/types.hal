@@ -362,7 +362,7 @@ enum VehicleProperty : int32_t {
         | VehicleArea:GLOBAL),
 
     /**
-     * Steering angle of the vehicle
+     * Front bicycle model steering angle for vehicle
      *
      * Angle is in degrees.  Left is negative.
      *
@@ -372,6 +372,21 @@ enum VehicleProperty : int32_t {
      */
     PERF_STEERING_ANGLE = (
         0x0209
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:FLOAT
+        | VehicleArea:GLOBAL),
+
+    /**
+     * Rear bicycle model steering angle for vehicle
+     *
+     * Angle is in degrees.  Left is negative.
+     *
+     * @change_mode VehiclePropertyChangeMode:CONTINUOUS
+     * @access VehiclePropertyAccess:READ
+     * @unit VehicleUnit:DEGREES
+     */
+    PERF_REAR_STEERING_ANGLE = (
+        0x0210
         | VehiclePropertyGroup:SYSTEM
         | VehiclePropertyType:FLOAT
         | VehicleArea:GLOBAL),

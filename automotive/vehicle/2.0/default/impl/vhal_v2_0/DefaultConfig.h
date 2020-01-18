@@ -300,7 +300,24 @@ const ConfigDeclaration kVehicleProperties[]{
                          .maxSampleRate = 10.0f,
                  },
          .initialValue = {.floatValues = {0.0f}}},
-
+        {.config =
+                 {
+                         .prop = toInt(VehicleProperty::PERF_STEERING_ANGLE),
+                         .access = VehiclePropertyAccess::READ,
+                         .changeMode = VehiclePropertyChangeMode::CONTINUOUS,
+                         .minSampleRate = 0.0f,
+                         .maxSampleRate = 10.0f,
+                 },
+         .initialValue = {.floatValues = {0.0f}}},
+        {.config =
+                 {
+                         .prop = toInt(VehicleProperty::PERF_REAR_STEERING_ANGLE),
+                         .access = VehiclePropertyAccess::READ,
+                         .changeMode = VehiclePropertyChangeMode::CONTINUOUS,
+                         .minSampleRate = 0.0f,
+                         .maxSampleRate = 10.0f,
+                 },
+         .initialValue = {.floatValues = {0.0f}}},
         {
                 .config =
                         {
