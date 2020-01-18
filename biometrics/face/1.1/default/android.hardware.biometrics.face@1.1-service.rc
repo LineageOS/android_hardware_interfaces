@@ -1,0 +1,10 @@
+service vendor.face-hal-1-1-default /vendor/bin/hw/android.hardware.biometrics.face@1.1-service.example
+    # "class hal" causes a race condition on some devices due to files created
+    # in /data. As a workaround, postpone startup until later in boot once
+    # /data is mounted.
+    class late_start
+    user system
+    group system
+    writepid /dev/cpuset/foreground/tasks
+    capabilities SYS_NICE
+    rlimit rtprio 10 10
