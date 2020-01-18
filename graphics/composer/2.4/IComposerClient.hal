@@ -16,6 +16,9 @@
 
 package android.hardware.graphics.composer@2.4;
 
+import android.hardware.graphics.common@1.2::PixelFormat;
+import android.hardware.graphics.common@1.2::Dataspace;
+import android.hardware.graphics.composer@2.1::IComposerClient.Command;
 import IComposerCallback;
 import @2.1::Config;
 import @2.1::Display;
@@ -54,6 +57,20 @@ interface IComposerClient extends @2.3::IComposerClient {
          * support a low latency mode, such as HDMI 2.1 Auto Low Latency Mode.
          */
         AUTO_LOW_LATENCY_MODE = 5,
+    };
+
+    enum Command : @2.3::IComposerClient.Command {
+        /**
+         * SET_CLIENT_TARGET_PROPERTY has this pseudo prototype
+         *
+         * This command has the following binary layout in bytes:
+         *
+         *     0 - 3: clientTargetProperty.pixelFormat
+         *     4 - 7: clientTargetProperty.dataspace
+         *
+         *   setClientTargetProperty(ClientTargetProperty clientTargetProperty);
+         */
+         SET_CLIENT_TARGET_PROPERTY = 0x105 << @2.1::IComposerClient.Command:OPCODE_SHIFT,
     };
 
     /**
@@ -97,6 +114,11 @@ interface IComposerClient extends @2.3::IComposerClient {
          * a noticeable visual artifact.
          */
         bool seamlessRequired;
+    };
+
+    struct ClientTargetProperty {
+        PixelFormat pixelFormat;
+        Dataspace dataspace;
     };
 
     /**

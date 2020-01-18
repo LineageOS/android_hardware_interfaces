@@ -41,14 +41,25 @@ using android::hardware::graphics::composer::V2_4::IComposerClient;
 // units of uint32_t's.
 class CommandWriterBase : public V2_3::CommandWriterBase {
   public:
+    static constexpr uint16_t kSetClientTargetPropertyLength = 2;
+
     CommandWriterBase(uint32_t initialMaxSize) : V2_3::CommandWriterBase(initialMaxSize) {}
+
+    void setClientTargetProperty(
+            const IComposerClient::ClientTargetProperty& clientTargetProperty) {
+        beginCommand(IComposerClient::Command::SET_CLIENT_TARGET_PROPERTY,
+                     kSetClientTargetPropertyLength);
+        writeSigned(static_cast<int32_t>(clientTargetProperty.pixelFormat));
+        writeSigned(static_cast<int32_t>(clientTargetProperty.dataspace));
+        endCommand();
+    }
 };
 
 // This class helps parse a command queue.  Note that all sizes/lengths are in
 // units of uint32_t's.
 class CommandReaderBase : public V2_3::CommandReaderBase {
   public:
-    CommandReaderBase() : V2_3::CommandReaderBase(){};
+    CommandReaderBase() : V2_3::CommandReaderBase() {}
 };
 
 }  // namespace V2_4

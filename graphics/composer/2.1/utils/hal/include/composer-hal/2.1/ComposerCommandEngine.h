@@ -146,6 +146,25 @@ class ComposerCommandEngine : protected CommandReaderBase {
         return std::make_unique<CommandWriterBase>(writerInitialSize);
     }
 
+    virtual Error executeValidateDisplayInternal() {
+        std::vector<Layer> changedLayers;
+        std::vector<IComposerClient::Composition> compositionTypes;
+        uint32_t displayRequestMask = 0x0;
+        std::vector<Layer> requestedLayers;
+        std::vector<uint32_t> requestMasks;
+
+        auto err = mHal->validateDisplay(mCurrentDisplay, &changedLayers, &compositionTypes,
+                                         &displayRequestMask, &requestedLayers, &requestMasks);
+        mResources->setDisplayMustValidateState(mCurrentDisplay, false);
+        if (err == Error::NONE) {
+            mWriter->setChangedCompositionTypes(changedLayers, compositionTypes);
+            mWriter->setDisplayRequests(displayRequestMask, requestedLayers, requestMasks);
+        } else {
+            mWriter->setError(getCommandLoc(), err);
+        }
+        return err;
+    }
+
     bool executeSelectDisplay(uint16_t length) {
         if (length != CommandWriterBase::kSelectDisplayLength) {
             return false;
@@ -255,23 +274,7 @@ class ComposerCommandEngine : protected CommandReaderBase {
         if (length != CommandWriterBase::kValidateDisplayLength) {
             return false;
         }
-
-        std::vector<Layer> changedLayers;
-        std::vector<IComposerClient::Composition> compositionTypes;
-        uint32_t displayRequestMask = 0x0;
-        std::vector<Layer> requestedLayers;
-        std::vector<uint32_t> requestMasks;
-
-        auto err = mHal->validateDisplay(mCurrentDisplay, &changedLayers, &compositionTypes,
-                                         &displayRequestMask, &requestedLayers, &requestMasks);
-        mResources->setDisplayMustValidateState(mCurrentDisplay, false);
-        if (err == Error::NONE) {
-            mWriter->setChangedCompositionTypes(changedLayers, compositionTypes);
-            mWriter->setDisplayRequests(displayRequestMask, requestedLayers, requestMasks);
-        } else {
-            mWriter->setError(getCommandLoc(), err);
-        }
-
+        executeValidateDisplayInternal();
         return true;
     }
 
@@ -297,21 +300,9 @@ class ComposerCommandEngine : protected CommandReaderBase {
         }
 
         // Present has failed. We need to fallback to validate
-        std::vector<Layer> changedLayers;
-        std::vector<IComposerClient::Composition> compositionTypes;
-        uint32_t displayRequestMask = 0x0;
-        std::vector<Layer> requestedLayers;
-        std::vector<uint32_t> requestMasks;
-
-        auto err = mHal->validateDisplay(mCurrentDisplay, &changedLayers, &compositionTypes,
-                                         &displayRequestMask, &requestedLayers, &requestMasks);
-        mResources->setDisplayMustValidateState(mCurrentDisplay, false);
+        auto err = executeValidateDisplayInternal();
         if (err == Error::NONE) {
             mWriter->setPresentOrValidateResult(0);
-            mWriter->setChangedCompositionTypes(changedLayers, compositionTypes);
-            mWriter->setDisplayRequests(displayRequestMask, requestedLayers, requestMasks);
-        } else {
-            mWriter->setError(getCommandLoc(), err);
         }
 
         return true;

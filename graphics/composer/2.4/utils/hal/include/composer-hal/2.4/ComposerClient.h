@@ -22,6 +22,7 @@
 
 #include <android/hardware/graphics/composer/2.4/IComposerCallback.h>
 #include <android/hardware/graphics/composer/2.4/IComposerClient.h>
+#include <composer-hal/2.4/ComposerCommandEngine.h>
 #include <composer-hal/2.4/ComposerHal.h>
 #include <composer-resources/2.1/ComposerResources.h>
 
@@ -168,12 +169,18 @@ class ComposerClientImpl : public V2_3::hal::detail::ComposerClientImpl<Interfac
         return client->init() ? std::move(client) : nullptr;
     }
 
+  protected:
+    std::unique_ptr<V2_1::hal::ComposerCommandEngine> createCommandEngine() override {
+        return std::make_unique<ComposerCommandEngine>(
+                mHal, static_cast<V2_2::hal::ComposerResources*>(mResources.get()));
+    }
+
   private:
     using BaseType2_3 = V2_3::hal::detail::ComposerClientImpl<Interface, Hal>;
     using BaseType2_1 = V2_1::hal::detail::ComposerClientImpl<Interface, Hal>;
     using BaseType2_1::mHal;
-    std::unique_ptr<HalEventCallback> mHalEventCallback_2_4;
     using BaseType2_1::mResources;
+    std::unique_ptr<HalEventCallback> mHalEventCallback_2_4;
 };
 
 }  // namespace detail
