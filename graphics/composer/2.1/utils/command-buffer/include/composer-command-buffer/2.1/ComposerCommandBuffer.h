@@ -626,9 +626,15 @@ class CommandReaderBase {
     }
 
    protected:
+     template <typename T>
+     bool beginCommand(T* outCommand, uint16_t* outLength) {
+         return beginCommandBase(reinterpret_cast<IComposerClient::Command*>(outCommand),
+                                 outLength);
+     }
+
     bool isEmpty() const { return (mDataRead >= mDataSize); }
 
-    bool beginCommand(IComposerClient::Command* outCommand, uint16_t* outLength) {
+    bool beginCommandBase(IComposerClient::Command* outCommand, uint16_t* outLength) {
         if (mCommandEnd) {
             LOG_FATAL("endCommand was not called for last command");
         }

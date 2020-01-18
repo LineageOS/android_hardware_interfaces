@@ -255,6 +255,13 @@ const ConfigDeclaration kVehicleProperties[]{
          .initialValue = {.stringValue = "Toy Vehicle"}},
         {.config =
                  {
+                         .prop = toInt(VehicleProperty::INFO_EXTERIOR_DIMENSIONS),
+                         .access = VehiclePropertyAccess::READ,
+                         .changeMode = VehiclePropertyChangeMode::STATIC,
+                 },
+         .initialValue = {.floatValues = {1776, 4950, 2008, 2140, 2984, 1665, 1667, 11800}}},
+        {.config =
+                 {
                          .prop = toInt(VehicleProperty::PERF_VEHICLE_SPEED),
                          .access = VehiclePropertyAccess::READ,
                          .changeMode = VehiclePropertyChangeMode::CONTINUOUS,
@@ -293,7 +300,24 @@ const ConfigDeclaration kVehicleProperties[]{
                          .maxSampleRate = 10.0f,
                  },
          .initialValue = {.floatValues = {0.0f}}},
-
+        {.config =
+                 {
+                         .prop = toInt(VehicleProperty::PERF_STEERING_ANGLE),
+                         .access = VehiclePropertyAccess::READ,
+                         .changeMode = VehiclePropertyChangeMode::CONTINUOUS,
+                         .minSampleRate = 0.0f,
+                         .maxSampleRate = 10.0f,
+                 },
+         .initialValue = {.floatValues = {0.0f}}},
+        {.config =
+                 {
+                         .prop = toInt(VehicleProperty::PERF_REAR_STEERING_ANGLE),
+                         .access = VehiclePropertyAccess::READ,
+                         .changeMode = VehiclePropertyChangeMode::CONTINUOUS,
+                         .minSampleRate = 0.0f,
+                         .maxSampleRate = 10.0f,
+                 },
+         .initialValue = {.floatValues = {0.0f}}},
         {
                 .config =
                         {

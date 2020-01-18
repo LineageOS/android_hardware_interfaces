@@ -298,6 +298,28 @@ enum VehicleProperty : int32_t {
         | VehicleArea:SEAT),
 
     /**
+     * Exterior dimensions of vehicle.
+     *
+     *  int32Values[0] = height
+     *  int32Values[1] = length
+     *  int32Values[2] = width
+     *  int32Values[3] = width including mirrors
+     *  int32Values[4] = wheel base
+     *  int32Values[5] = track width front
+     *  int32Values[6] = track width rear
+     *  int32Values[7] = curb to curb turning radius
+     *
+     * @change_mode VehiclePropertyChangeMode:STATIC
+     * @access VehiclePropertyAccess:READ
+     * @unit VehicleUnit:MILLIMETER
+     */
+    INFO_EXTERIOR_DIMENSIONS = (
+        0x010B
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:INT32_VEC
+        | VehicleArea:GLOBAL),
+
+    /**
      * Current odometer value of the vehicle
      *
      * @change_mode VehiclePropertyChangeMode:CONTINUOUS
@@ -340,7 +362,7 @@ enum VehicleProperty : int32_t {
         | VehicleArea:GLOBAL),
 
     /**
-     * Steering angle of the vehicle
+     * Front bicycle model steering angle for vehicle
      *
      * Angle is in degrees.  Left is negative.
      *
@@ -350,6 +372,21 @@ enum VehicleProperty : int32_t {
      */
     PERF_STEERING_ANGLE = (
         0x0209
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:FLOAT
+        | VehicleArea:GLOBAL),
+
+    /**
+     * Rear bicycle model steering angle for vehicle
+     *
+     * Angle is in degrees.  Left is negative.
+     *
+     * @change_mode VehiclePropertyChangeMode:CONTINUOUS
+     * @access VehiclePropertyAccess:READ
+     * @unit VehicleUnit:DEGREES
+     */
+    PERF_REAR_STEERING_ANGLE = (
+        0x0210
         | VehiclePropertyGroup:SYSTEM
         | VehiclePropertyType:FLOAT
         | VehicleArea:GLOBAL),

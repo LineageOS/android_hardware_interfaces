@@ -26,11 +26,11 @@ cc_library_headers {
     ],
     header_libs: [
         "android.hardware.graphics.composer@2.3-hal",
-        "android.hardware.graphics.composer@2.3-command-buffer",
+        "android.hardware.graphics.composer@2.4-command-buffer",
     ],
     export_header_lib_headers: [
         "android.hardware.graphics.composer@2.3-hal",
-        "android.hardware.graphics.composer@2.3-command-buffer",
+        "android.hardware.graphics.composer@2.4-command-buffer",
     ],
     export_include_dirs: ["include"],
 }
