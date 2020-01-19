@@ -20,6 +20,7 @@ import @1.0::SupplicantStatus;
 import @1.2::ISupplicantStaIface;
 import ISupplicantStaNetwork;
 import ISupplicantStaIfaceCallback;
+import @1.0::MacAddress;
 
 /**
  * Interface exposed by the supplicant for each station mode network
@@ -90,4 +91,32 @@ interface ISupplicantStaIface extends @1.2::ISupplicantStaIface {
      */
     getKeyMgmtCapabilities_1_3()
         generates (SupplicantStatus status, bitfield<KeyMgmtMask> keyMgmtMask);
+
+    /**
+     * Flush FILS HLP IEs
+     * Use this to flush all the HLP IEs in wpa_supplicant
+     *
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_IFACE_DISABLED|
+     */
+    filsHlpFlushRequest() generates (SupplicantStatus status);
+
+    /**
+     * Add FILS HLP IEs
+     * Use this to add a HLP IE to wpa_supplicant
+     *
+     * @param dst_mac MAC address of the destination
+     * @param pkt The contents of the HLP IE starting from ethertype
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_IFACE_DISABLED|
+     */
+    filsHlpAddRequest(MacAddress dst_mac, vec<uint8_t> pkt) generates (SupplicantStatus status);
 };
