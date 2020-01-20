@@ -337,6 +337,7 @@ static bool mutateOperationOperandTypeSkip(size_t operand, OperandType type, con
         // - TRANSPOSE_CONV_2D filter type (arg 1) can be QUANT8_ASYMM or QUANT8_SYMM_PER_CHANNEL
         // - AXIS_ALIGNED_BBOX_TRANSFORM bounding boxes (arg 1) can be of
         //     TENSOR_QUANT8_ASYMM or TENSOR_QUANT8_ASYMM_SIGNED.
+        // - RANK's input can have any TENSOR_* type.
         switch (operation.type) {
             case OperationType::LSH_PROJECTION: {
                 if (operand == operation.inputs[1]) {
@@ -395,6 +396,20 @@ static bool mutateOperationOperandTypeSkip(size_t operand, OperandType type, con
             case OperationType::AXIS_ALIGNED_BBOX_TRANSFORM: {
                 if (operand == operation.inputs[1] &&
                     (type == OperandType::TENSOR_QUANT8_ASYMM ||
+                     type == OperandType::TENSOR_QUANT8_ASYMM_SIGNED)) {
+                    return true;
+                }
+            } break;
+            case OperationType::RANK: {
+                if (operand == operation.inputs[0] &&
+                    (type == OperandType::TENSOR_FLOAT16 || type == OperandType::TENSOR_FLOAT32 ||
+                     type == OperandType::TENSOR_INT32 ||
+                     type == OperandType::TENSOR_QUANT8_ASYMM ||
+                     type == OperandType::TENSOR_QUANT16_SYMM ||
+                     type == OperandType::TENSOR_BOOL8 ||
+                     type == OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL ||
+                     type == OperandType::TENSOR_QUANT16_ASYMM ||
+                     type == OperandType::TENSOR_QUANT8_SYMM ||
                      type == OperandType::TENSOR_QUANT8_ASYMM_SIGNED)) {
                     return true;
                 }
