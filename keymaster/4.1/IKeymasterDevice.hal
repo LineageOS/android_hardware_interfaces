@@ -22,6 +22,8 @@ import @4.0::IKeymasterDevice;
 import @4.0::KeyParameter;
 import @4.0::KeyPurpose;
 import @4.0::OperationHandle;
+import @4.0::VerificationToken;
+
 import IOperation;
 
 /**
@@ -31,6 +33,11 @@ import IOperation;
  * - Device-unique attestaion;
  * - Early boot only keys;
  * - Better cleanup of operations when clients die without completing or aborting them.
+ *
+ * @4.1::IKeymasterDevice::attestKey() must produce attestations with keymasterVersion 41.  An
+ * oversight in the original numbering left no room for minor versions, so starting with 4.1 the
+ * versions will be numbered as major_version * 10 + minor version.  The addition of new attestable
+ * tags changes the attestation format again, slightly, so the attestationVersion must be 4.
  */
 interface IKeymasterDevice extends @4.0::IKeymasterDevice {
     /**
@@ -42,10 +49,28 @@ interface IKeymasterDevice extends @4.0::IKeymasterDevice {
      * set to true the sufficiently-recent authentication token must indicate that the user
      * authenticated with a password, not a biometric.
      *
+     * Note that the IKeymasterDevice UNLOCKED_DEVICE_REQUIRED semantics are slightly different from
+     * the UNLOCKED_DEVICE_REQUIRED semantics enforced by keystore.  Keystore handles device locking
+     * on a per-user basis.  Because auth tokens do not contain an Android user ID, it's not
+     * possible to replicate the keystore enformcement logic in IKeymasterDevice.  So from the
+     * IKeymasterDevice perspective, any user unlock unlocks all UNLOCKED_DEVICE_REQUIRED keys.
+     * Keystore will continue enforcing the per-user device locking.
+     *
      * @param passwordOnly specifies whether the device must be unlocked with a password, rather
      * than a biometric, before UNLOCKED_DEVICE_REQUIRED keys can be used.
+     *
+     * @param verificationToken is used by StrongBox implementations of IKeymasterDevice.  It
+     * provides the StrongBox IKeymasterDevice with a fresh, MACed timestamp which it can use as the
+     * device-lock time, for future comparison against auth tokens when operations using
+     * UNLOCKED_DEVICE_REQUIRED keys are attempted.  Unless the auth token timestamp is newer than
+     * the timestamp in the verificationToken, the device is still considered to be locked.
+     * Crucially, if a StrongBox IKeymasterDevice receives a deviceLocked() call with a verification
+     * token timestamp that is less than the timestamp in the last deviceLocked() call, it must
+     * ignore the new timestamp.  TEE IKeymasterDevice implementations will receive an empty
+     * verificationToken (zero values and empty vectors) and should use their own clock as the
+     * device-lock time.
      */
-    deviceLocked(bool passwordOnly) generates (ErrorCode error);
+    deviceLocked(bool passwordOnly, VerificationToken verificationToken) generates (ErrorCode error);
 
     /**
      * Called by client to notify the IKeymasterDevice that the device has left the early boot
