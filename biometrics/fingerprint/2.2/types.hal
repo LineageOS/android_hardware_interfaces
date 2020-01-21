@@ -1,0 +1,42 @@
+/*
+ * Copyright 2020 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.biometrics.fingerprint@2.2;
+
+import @2.1::FingerprintAcquiredInfo;
+
+/**
+ * Fingerprint acquisition info is meant as feedback for the current operation.
+ * Anything but START and ACQUIRED_GOOD must be shown to the user as feedback on
+ * how to take action on the current operation. For example,
+ * ACQUIRED_IMAGER_DIRTY may be used to tell the user to clean the sensor if it
+ * is detected to be dirty.
+ * If this causes the current operation to fail, an additional ERROR_CANCELED
+ * must be sent to stop the operation in progress (e.g. enrollment).
+ * In general, these messages will result in a "Try again" message.
+ */
+enum FingerprintAcquiredInfo : @2.1::FingerprintAcquiredInfo {
+    /**
+     * This message represents the earliest message sent at the beginning of the
+     * authentication pipeline. It is expected to be used to measure latency. For
+     * example, in a camera-based authentication system it's expected to be sent
+     * prior to camera initialization. Note this should be sent whenever
+     * authentication is restarted (see IBiometricsFace#userActivity).
+     * The framework will measure latency based on the time between the last START
+     * message and the onAuthenticated callback.
+     */
+    START = 7,
+};
