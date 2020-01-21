@@ -16,6 +16,6 @@
 
 namespace android::hardware::keymaster::V4_1::test {
 
-// TODO(swillden): Put tests here.
+
 
 }  // namespace android::hardware::keymaster::V4_1::test

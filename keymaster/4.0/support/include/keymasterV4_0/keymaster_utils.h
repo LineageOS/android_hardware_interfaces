@@ -52,6 +52,9 @@ inline static hidl_vec<uint8_t> blob2hidlVec(const std::vector<uint8_t>& blob) {
 HardwareAuthToken hidlVec2AuthToken(const hidl_vec<uint8_t>& buffer);
 hidl_vec<uint8_t> authToken2HidlVec(const HardwareAuthToken& token);
 
+uint32_t getOsVersion();
+uint32_t getOsPatchlevel();
+
 }  // namespace support
 }  // namespace V4_0
 }  // namespace keymaster
