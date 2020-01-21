@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_CAMERA_DEVICE_V3_4_EXTCAMERADEVICE3SESSION_H
-#define ANDROID_HARDWARE_CAMERA_DEVICE_V3_4_EXTCAMERADEVICE3SESSION_H
+#ifndef ANDROID_HARDWARE_CAMERA_DEVICE_V3_4_EXTCAMERADEVICESESSION_H
+#define ANDROID_HARDWARE_CAMERA_DEVICE_V3_4_EXTCAMERADEVICESESSION_H
 
 #include <android/hardware/camera/device/3.2/ICameraDevice.h>
 #include <android/hardware/camera/device/3.4/ICameraDeviceSession.h>
@@ -84,7 +84,8 @@ using ::android::sp;
 using ::android::Mutex;
 using ::android::base::unique_fd;
 
-struct ExternalCameraDeviceSession : public virtual RefBase {
+struct ExternalCameraDeviceSession : public virtual RefBase,
+        public virtual OutputThreadInterface {
 
     ExternalCameraDeviceSession(const sp<ICameraDeviceCallback>&,
             const ExternalCameraConfig& cfg,
@@ -109,6 +110,82 @@ struct ExternalCameraDeviceSession : public virtual RefBase {
     static const int kMaxProcessedStream = 2;
     static const int kMaxStallStream = 1;
     static const uint32_t kMaxBytesPerPixel = 2;
+
+    class OutputThread : public android::Thread {
+    public:
+        OutputThread(wp<OutputThreadInterface> parent, CroppingType,
+                const common::V1_0::helper::CameraMetadata&);
+        virtual ~OutputThread();
+
+        Status allocateIntermediateBuffers(
+                const Size& v4lSize, const Size& thumbSize,
+                const hidl_vec<Stream>& streams,
+                uint32_t blobBufferSize);
+        Status submitRequest(const std::shared_ptr<HalRequest>&);
+        void flush();
+        void dump(int fd);
+        virtual bool threadLoop() override;
+
+        void setExifMakeModel(const std::string& make, const std::string& model);
+
+        // The remaining request list is returned for offline processing
+        std::list<std::shared_ptr<HalRequest>> switchToOffline();
+
+    protected:
+        // Methods to request output buffer in parallel
+        // No-op for device@3.4. Implemented in device@3.5
+        virtual int requestBufferStart(const std::vector<HalStreamBuffer>&) { return 0; }
+        virtual int waitForBufferRequestDone(
+                /*out*/std::vector<HalStreamBuffer>*) { return 0; }
+
+        static const int kFlushWaitTimeoutSec = 3; // 3 sec
+        static const int kReqWaitTimeoutMs = 33;   // 33ms
+        static const int kReqWaitTimesMax = 90;    // 33ms * 90 ~= 3 sec
+
+        void waitForNextRequest(std::shared_ptr<HalRequest>* out);
+        void signalRequestDone();
+
+        int cropAndScaleLocked(
+                sp<AllocatedFrame>& in, const Size& outSize,
+                YCbCrLayout* out);
+
+        int cropAndScaleThumbLocked(
+                sp<AllocatedFrame>& in, const Size& outSize,
+                YCbCrLayout* out);
+
+        int createJpegLocked(HalStreamBuffer &halBuf,
+                const common::V1_0::helper::CameraMetadata& settings);
+
+        void clearIntermediateBuffers();
+
+        const wp<OutputThreadInterface> mParent;
+        const CroppingType mCroppingType;
+        const common::V1_0::helper::CameraMetadata mCameraCharacteristics;
+
+        mutable std::mutex mRequestListLock;      // Protect acccess to mRequestList,
+                                                  // mProcessingRequest and mProcessingFrameNumer
+        std::condition_variable mRequestCond;     // signaled when a new request is submitted
+        std::condition_variable mRequestDoneCond; // signaled when a request is done processing
+        std::list<std::shared_ptr<HalRequest>> mRequestList;
+        bool mProcessingRequest = false;
+        uint32_t mProcessingFrameNumer = 0;
+
+        // V4L2 frameIn
+        // (MJPG decode)-> mYu12Frame
+        // (Scale)-> mScaledYu12Frames
+        // (Format convert) -> output gralloc frames
+        mutable std::mutex mBufferLock; // Protect access to intermediate buffers
+        sp<AllocatedFrame> mYu12Frame;
+        sp<AllocatedFrame> mYu12ThumbFrame;
+        std::unordered_map<Size, sp<AllocatedFrame>, SizeHasher> mIntermediateBuffers;
+        std::unordered_map<Size, sp<AllocatedFrame>, SizeHasher> mScaledYu12Frames;
+        YCbCrLayout mYu12FrameLayout;
+        YCbCrLayout mYu12ThumbFrameLayout;
+        uint32_t mBlobBufferSize = 0; // 0 -> HAL derive buffer size, else: use given size
+
+        std::string mExifMake;
+        std::string mExifModel;
+    };
 
 protected:
 
@@ -150,27 +227,22 @@ protected:
             ICameraDeviceSession::processCaptureRequest_3_4_cb _hidl_cb);
 
 protected:
-    struct HalStreamBuffer {
-        int32_t streamId;
-        uint64_t bufferId;
-        uint32_t width;
-        uint32_t height;
-        PixelFormat format;
-        V3_2::BufferUsageFlags usage;
-        buffer_handle_t* bufPtr;
-        int acquireFence;
-        bool fenceTimeout;
-    };
+    // Methods from OutputThreadInterface
+    virtual Status importBuffer(int32_t streamId,
+            uint64_t bufId, buffer_handle_t buf,
+            /*out*/buffer_handle_t** outBufPtr,
+            bool allowEmptyBuf) override;
 
-    struct HalRequest {
-        uint32_t frameNumber;
-        common::V1_0::helper::CameraMetadata setting;
-        sp<V4L2Frame> frameIn;
-        nsecs_t shutterTs;
-        std::vector<HalStreamBuffer> buffers;
-    };
+    virtual Status processCaptureResult(std::shared_ptr<HalRequest>&) override;
 
-    static const uint64_t BUFFER_ID_NO_BUFFER = 0;
+    virtual Status processCaptureRequestError(const std::shared_ptr<HalRequest>&,
+        /*out*/std::vector<NotifyMsg>* msgs = nullptr,
+        /*out*/std::vector<CaptureResult>* results = nullptr) override;
+
+    virtual ssize_t getJpegBufferSize(uint32_t width, uint32_t height) const override;
+
+    virtual void notifyError(uint32_t frameNumber, int32_t streamId, ErrorCode ec) override;
+    // End of OutputThreadInterface methods
 
     Status constructDefaultRequestSettingsRaw(RequestTemplate type,
             V3_2::CameraMetadata *outMetadata);
@@ -219,11 +291,6 @@ protected:
             // Optional argument for ICameraDeviceSession@3.5 impl
             bool allowEmptyBuf = false);
 
-    Status importBuffer(int32_t streamId,
-            uint64_t bufId, buffer_handle_t buf,
-            /*out*/buffer_handle_t** outBufPtr,
-            bool allowEmptyBuf);
-
     Status importBufferLocked(int32_t streamId,
             uint64_t bufId, buffer_handle_t buf,
             /*out*/buffer_handle_t** outBufPtr,
@@ -236,105 +303,14 @@ protected:
 
     Status processOneCaptureRequest(const CaptureRequest& request);
 
-    Status processCaptureResult(std::shared_ptr<HalRequest>&);
-    Status processCaptureRequestError(const std::shared_ptr<HalRequest>&);
     void notifyShutter(uint32_t frameNumber, nsecs_t shutterTs);
-    void notifyError(uint32_t frameNumber, int32_t streamId, ErrorCode ec);
     void invokeProcessCaptureResultCallback(
             hidl_vec<CaptureResult> &results, bool tryWriteFmq);
-    static void freeReleaseFences(hidl_vec<CaptureResult>&);
 
     Size getMaxJpegResolution() const;
     Size getMaxThumbResolution() const;
 
-    ssize_t getJpegBufferSize(uint32_t width, uint32_t height) const;
-
     int waitForV4L2BufferReturnLocked(std::unique_lock<std::mutex>& lk);
-
-    class OutputThread : public android::Thread {
-    public:
-        OutputThread(wp<ExternalCameraDeviceSession> parent, CroppingType);
-        virtual ~OutputThread();
-
-        Status allocateIntermediateBuffers(
-                const Size& v4lSize, const Size& thumbSize,
-                const hidl_vec<Stream>& streams,
-                uint32_t blobBufferSize);
-        Status submitRequest(const std::shared_ptr<HalRequest>&);
-        void flush();
-        void dump(int fd);
-        virtual bool threadLoop() override;
-
-        void setExifMakeModel(const std::string& make, const std::string& model);
-
-    protected:
-        // Methods to request output buffer in parallel
-        // No-op for device@3.4. Implemented in device@3.5
-        virtual int requestBufferStart(const std::vector<HalStreamBuffer>&) { return 0; }
-        virtual int waitForBufferRequestDone(
-                /*out*/std::vector<HalStreamBuffer>*) { return 0; }
-
-        static const uint32_t FLEX_YUV_GENERIC = static_cast<uint32_t>('F') |
-                static_cast<uint32_t>('L') << 8 | static_cast<uint32_t>('E') << 16 |
-                static_cast<uint32_t>('X') << 24;
-        // returns FLEX_YUV_GENERIC for formats other than YV12/YU12/NV12/NV21
-        static uint32_t getFourCcFromLayout(const YCbCrLayout&);
-        static int getCropRect(
-                CroppingType ct, const Size& inSize, const Size& outSize, IMapper::Rect* out);
-
-        static const int kFlushWaitTimeoutSec = 3; // 3 sec
-        static const int kReqWaitTimeoutMs = 33;   // 33ms
-        static const int kReqWaitTimesMax = 90;    // 33ms * 90 ~= 3 sec
-
-        void waitForNextRequest(std::shared_ptr<HalRequest>* out);
-        void signalRequestDone();
-
-        int cropAndScaleLocked(
-                sp<AllocatedFrame>& in, const Size& outSize,
-                YCbCrLayout* out);
-
-        int cropAndScaleThumbLocked(
-                sp<AllocatedFrame>& in, const Size& outSize,
-                YCbCrLayout* out);
-
-        int formatConvertLocked(const YCbCrLayout& in, const YCbCrLayout& out,
-                Size sz, uint32_t format);
-
-        static int encodeJpegYU12(const Size &inSz,
-                const YCbCrLayout& inLayout, int jpegQuality,
-                const void *app1Buffer, size_t app1Size,
-                void *out, size_t maxOutSize,
-                size_t &actualCodeSize);
-
-        int createJpegLocked(HalStreamBuffer &halBuf, const std::shared_ptr<HalRequest>& req);
-
-        const wp<ExternalCameraDeviceSession> mParent;
-        const CroppingType mCroppingType;
-
-        mutable std::mutex mRequestListLock;      // Protect acccess to mRequestList,
-                                                  // mProcessingRequest and mProcessingFrameNumer
-        std::condition_variable mRequestCond;     // signaled when a new request is submitted
-        std::condition_variable mRequestDoneCond; // signaled when a request is done processing
-        std::list<std::shared_ptr<HalRequest>> mRequestList;
-        bool mProcessingRequest = false;
-        uint32_t mProcessingFrameNumer = 0;
-
-        // V4L2 frameIn
-        // (MJPG decode)-> mYu12Frame
-        // (Scale)-> mScaledYu12Frames
-        // (Format convert) -> output gralloc frames
-        mutable std::mutex mBufferLock; // Protect access to intermediate buffers
-        sp<AllocatedFrame> mYu12Frame;
-        sp<AllocatedFrame> mYu12ThumbFrame;
-        std::unordered_map<Size, sp<AllocatedFrame>, SizeHasher> mIntermediateBuffers;
-        std::unordered_map<Size, sp<AllocatedFrame>, SizeHasher> mScaledYu12Frames;
-        YCbCrLayout mYu12FrameLayout;
-        YCbCrLayout mYu12ThumbFrameLayout;
-        uint32_t mBlobBufferSize = 0; // 0 -> HAL derive buffer size, else: use given size
-
-        std::string mExifMake;
-        std::string mExifModel;
-    };
 
     // Protect (most of) HIDL interface methods from synchronized-entering
     mutable Mutex mInterfaceLock;
@@ -381,12 +357,6 @@ protected:
     std::mutex mInflightFramesLock; // protect mInflightFrames
     std::unordered_set<uint32_t>  mInflightFrames;
 
-    // buffers currently circulating between HAL and camera service
-    // key: bufferId sent via HIDL interface
-    // value: imported buffer_handle_t
-    // Buffer will be imported during processCaptureRequest and will be freed
-    // when the its stream is deleted or camera device session is closed
-    typedef std::unordered_map<uint64_t, buffer_handle_t> CirculatingBuffers;
     // Stream ID -> circulating buffers map
     std::map<int, CirculatingBuffers> mCirculatingBuffers;
     // Protect mCirculatingBuffers, must not lock mLock after acquiring this lock
@@ -394,6 +364,8 @@ protected:
 
     std::mutex mAfTriggerLock; // protect mAfTrigger
     bool mAfTrigger = false;
+
+    uint32_t mBlobBufferSize = 0;
 
     static HandleImporter sHandleImporter;
 
@@ -410,6 +382,9 @@ protected:
 
     const Size mMaxThumbResolution;
     const Size mMaxJpegResolution;
+
+    std::string mExifMake;
+    std::string mExifModel;
     /* End of members not changed after initialize() */
 
 private:
@@ -484,4 +459,4 @@ private:
 }  // namespace hardware
 }  // namespace android
 
-#endif  // ANDROID_HARDWARE_CAMERA_DEVICE_V3_4_EXTCAMERADEVICE3SESSION_H
+#endif  // ANDROID_HARDWARE_CAMERA_DEVICE_V3_4_EXTCAMERADEVICESESSION_H
