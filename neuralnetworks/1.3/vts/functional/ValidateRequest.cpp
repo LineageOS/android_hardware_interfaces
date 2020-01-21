@@ -143,7 +143,7 @@ static void validate(const sp<IPreparedModel>& preparedModel, const std::string&
     {
         SCOPED_TRACE(message + " [executeFenced]");
         Return<void> ret = preparedModel->executeFenced(
-                request, {}, MeasureTiming::NO,
+                request, {}, MeasureTiming::NO, {}, {},
                 [](ErrorStatus error, const hidl_handle& handle,
                    const sp<IFencedExecutionCallback>& callback) {
                     if (error != ErrorStatus::DEVICE_UNAVAILABLE) {
