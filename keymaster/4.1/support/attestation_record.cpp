@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 The Android Open Source Project
+ * Copyright 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <keymasterV4_0/attestation_record.h>
+#include <keymasterV4_1/attestation_record.h>
 
 #include <android-base/logging.h>
 #include <assert.h>
@@ -29,10 +29,18 @@
 
 #define AT __FILE__ ":" << __LINE__
 
+/*
+ * NOTE: The contents of this file are *extremely* similar to the contents of the V4_0 copy of the
+ * same support file.  Unfortunately, small changes in the scheme mean that the schema types have to
+ * be distinct, which drives almost everything else to be different as well.  In the next version we
+ * plan to abandon not just this openssl mechanism for parsing ASN.1, but ASN.1 entirely, so
+ * eventually all of this duplication can be removed.
+ */
+
 namespace android {
 namespace hardware {
 namespace keymaster {
-namespace V4_0 {
+namespace V4_1 {
 
 struct stack_st_ASN1_TYPE_Delete {
     void operator()(stack_st_ASN1_TYPE* p) { sk_ASN1_TYPE_free(p); }
@@ -56,10 +64,10 @@ typedef struct km_root_of_trust {
 } KM_ROOT_OF_TRUST;
 
 ASN1_SEQUENCE(KM_ROOT_OF_TRUST) = {
-    ASN1_SIMPLE(KM_ROOT_OF_TRUST, verified_boot_key, ASN1_OCTET_STRING),
-    ASN1_SIMPLE(KM_ROOT_OF_TRUST, device_locked, ASN1_BOOLEAN),
-    ASN1_SIMPLE(KM_ROOT_OF_TRUST, verified_boot_state, ASN1_ENUMERATED),
-    ASN1_SIMPLE(KM_ROOT_OF_TRUST, verified_boot_hash, ASN1_OCTET_STRING),
+        ASN1_SIMPLE(KM_ROOT_OF_TRUST, verified_boot_key, ASN1_OCTET_STRING),
+        ASN1_SIMPLE(KM_ROOT_OF_TRUST, device_locked, ASN1_BOOLEAN),
+        ASN1_SIMPLE(KM_ROOT_OF_TRUST, verified_boot_state, ASN1_ENUMERATED),
+        ASN1_SIMPLE(KM_ROOT_OF_TRUST, verified_boot_hash, ASN1_OCTET_STRING),
 } ASN1_SEQUENCE_END(KM_ROOT_OF_TRUST);
 IMPLEMENT_ASN1_FUNCTIONS(KM_ROOT_OF_TRUST);
 
@@ -92,42 +100,51 @@ typedef struct km_auth_list {
     ASN1_NULL* unlocked_device_required;
     ASN1_INTEGER* vendor_patchlevel;
     ASN1_INTEGER* boot_patchlevel;
+    ASN1_NULL* early_boot_only;
+    ASN1_NULL* device_unique_attestation;
 } KM_AUTH_LIST;
 
 ASN1_SEQUENCE(KM_AUTH_LIST) = {
-    ASN1_EXP_SET_OF_OPT(KM_AUTH_LIST, purpose, ASN1_INTEGER, TAG_PURPOSE.maskedTag()),
-    ASN1_EXP_OPT(KM_AUTH_LIST, algorithm, ASN1_INTEGER, TAG_ALGORITHM.maskedTag()),
-    ASN1_EXP_OPT(KM_AUTH_LIST, key_size, ASN1_INTEGER, TAG_KEY_SIZE.maskedTag()),
-    ASN1_EXP_SET_OF_OPT(KM_AUTH_LIST, digest, ASN1_INTEGER, TAG_DIGEST.maskedTag()),
-    ASN1_EXP_SET_OF_OPT(KM_AUTH_LIST, padding, ASN1_INTEGER, TAG_PADDING.maskedTag()),
-    ASN1_EXP_OPT(KM_AUTH_LIST, ec_curve, ASN1_INTEGER, TAG_EC_CURVE.maskedTag()),
-    ASN1_EXP_OPT(KM_AUTH_LIST, rsa_public_exponent, ASN1_INTEGER,
-                 TAG_RSA_PUBLIC_EXPONENT.maskedTag()),
-    ASN1_EXP_OPT(KM_AUTH_LIST, rollback_resistance, ASN1_NULL, TAG_ROLLBACK_RESISTANCE.maskedTag()),
-    ASN1_EXP_OPT(KM_AUTH_LIST, active_date_time, ASN1_INTEGER, TAG_ACTIVE_DATETIME.maskedTag()),
-    ASN1_EXP_OPT(KM_AUTH_LIST, origination_expire_date_time, ASN1_INTEGER,
-                 TAG_ORIGINATION_EXPIRE_DATETIME.maskedTag()),
-    ASN1_EXP_OPT(KM_AUTH_LIST, usage_expire_date_time, ASN1_INTEGER,
-                 TAG_USAGE_EXPIRE_DATETIME.maskedTag()),
-    ASN1_EXP_OPT(KM_AUTH_LIST, no_auth_required, ASN1_NULL, TAG_NO_AUTH_REQUIRED.maskedTag()),
-    ASN1_EXP_OPT(KM_AUTH_LIST, user_auth_type, ASN1_INTEGER, TAG_USER_AUTH_TYPE.maskedTag()),
-    ASN1_EXP_OPT(KM_AUTH_LIST, auth_timeout, ASN1_INTEGER, TAG_AUTH_TIMEOUT.maskedTag()),
-    ASN1_EXP_OPT(KM_AUTH_LIST, allow_while_on_body, ASN1_NULL, TAG_ALLOW_WHILE_ON_BODY.maskedTag()),
-    ASN1_EXP_OPT(KM_AUTH_LIST, trusted_user_presence_required, ASN1_NULL,
-                 TAG_TRUSTED_USER_PRESENCE_REQUIRED.maskedTag()),
-    ASN1_EXP_OPT(KM_AUTH_LIST, trusted_confirmation_required, ASN1_NULL,
-                 TAG_TRUSTED_CONFIRMATION_REQUIRED.maskedTag()),
-    ASN1_EXP_OPT(KM_AUTH_LIST, unlocked_device_required, ASN1_NULL,
-                 TAG_UNLOCKED_DEVICE_REQUIRED.maskedTag()),
-    ASN1_EXP_OPT(KM_AUTH_LIST, creation_date_time, ASN1_INTEGER, TAG_CREATION_DATETIME.maskedTag()),
-    ASN1_EXP_OPT(KM_AUTH_LIST, origin, ASN1_INTEGER, TAG_ORIGIN.maskedTag()),
-    ASN1_EXP_OPT(KM_AUTH_LIST, root_of_trust, KM_ROOT_OF_TRUST, TAG_ROOT_OF_TRUST.maskedTag()),
-    ASN1_EXP_OPT(KM_AUTH_LIST, os_version, ASN1_INTEGER, TAG_OS_VERSION.maskedTag()),
-    ASN1_EXP_OPT(KM_AUTH_LIST, os_patchlevel, ASN1_INTEGER, TAG_OS_PATCHLEVEL.maskedTag()),
-    ASN1_EXP_OPT(KM_AUTH_LIST, vendor_patchlevel, ASN1_INTEGER, TAG_VENDOR_PATCHLEVEL.maskedTag()),
-    ASN1_EXP_OPT(KM_AUTH_LIST, boot_patchlevel, ASN1_INTEGER, TAG_BOOT_PATCHLEVEL.maskedTag()),
-    ASN1_EXP_OPT(KM_AUTH_LIST, attestation_application_id, ASN1_OCTET_STRING,
-                 TAG_ATTESTATION_APPLICATION_ID.maskedTag()),
+        ASN1_EXP_SET_OF_OPT(KM_AUTH_LIST, purpose, ASN1_INTEGER, TAG_PURPOSE.maskedTag()),
+        ASN1_EXP_OPT(KM_AUTH_LIST, algorithm, ASN1_INTEGER, TAG_ALGORITHM.maskedTag()),
+        ASN1_EXP_OPT(KM_AUTH_LIST, key_size, ASN1_INTEGER, TAG_KEY_SIZE.maskedTag()),
+        ASN1_EXP_SET_OF_OPT(KM_AUTH_LIST, digest, ASN1_INTEGER, TAG_DIGEST.maskedTag()),
+        ASN1_EXP_SET_OF_OPT(KM_AUTH_LIST, padding, ASN1_INTEGER, TAG_PADDING.maskedTag()),
+        ASN1_EXP_OPT(KM_AUTH_LIST, ec_curve, ASN1_INTEGER, TAG_EC_CURVE.maskedTag()),
+        ASN1_EXP_OPT(KM_AUTH_LIST, rsa_public_exponent, ASN1_INTEGER,
+                     TAG_RSA_PUBLIC_EXPONENT.maskedTag()),
+        ASN1_EXP_OPT(KM_AUTH_LIST, rollback_resistance, ASN1_NULL,
+                     TAG_ROLLBACK_RESISTANCE.maskedTag()),
+        ASN1_EXP_OPT(KM_AUTH_LIST, active_date_time, ASN1_INTEGER, TAG_ACTIVE_DATETIME.maskedTag()),
+        ASN1_EXP_OPT(KM_AUTH_LIST, origination_expire_date_time, ASN1_INTEGER,
+                     TAG_ORIGINATION_EXPIRE_DATETIME.maskedTag()),
+        ASN1_EXP_OPT(KM_AUTH_LIST, usage_expire_date_time, ASN1_INTEGER,
+                     TAG_USAGE_EXPIRE_DATETIME.maskedTag()),
+        ASN1_EXP_OPT(KM_AUTH_LIST, no_auth_required, ASN1_NULL, TAG_NO_AUTH_REQUIRED.maskedTag()),
+        ASN1_EXP_OPT(KM_AUTH_LIST, user_auth_type, ASN1_INTEGER, TAG_USER_AUTH_TYPE.maskedTag()),
+        ASN1_EXP_OPT(KM_AUTH_LIST, auth_timeout, ASN1_INTEGER, TAG_AUTH_TIMEOUT.maskedTag()),
+        ASN1_EXP_OPT(KM_AUTH_LIST, allow_while_on_body, ASN1_NULL,
+                     TAG_ALLOW_WHILE_ON_BODY.maskedTag()),
+        ASN1_EXP_OPT(KM_AUTH_LIST, trusted_user_presence_required, ASN1_NULL,
+                     TAG_TRUSTED_USER_PRESENCE_REQUIRED.maskedTag()),
+        ASN1_EXP_OPT(KM_AUTH_LIST, trusted_confirmation_required, ASN1_NULL,
+                     TAG_TRUSTED_CONFIRMATION_REQUIRED.maskedTag()),
+        ASN1_EXP_OPT(KM_AUTH_LIST, unlocked_device_required, ASN1_NULL,
+                     TAG_UNLOCKED_DEVICE_REQUIRED.maskedTag()),
+        ASN1_EXP_OPT(KM_AUTH_LIST, creation_date_time, ASN1_INTEGER,
+                     TAG_CREATION_DATETIME.maskedTag()),
+        ASN1_EXP_OPT(KM_AUTH_LIST, origin, ASN1_INTEGER, TAG_ORIGIN.maskedTag()),
+        ASN1_EXP_OPT(KM_AUTH_LIST, root_of_trust, KM_ROOT_OF_TRUST, TAG_ROOT_OF_TRUST.maskedTag()),
+        ASN1_EXP_OPT(KM_AUTH_LIST, os_version, ASN1_INTEGER, TAG_OS_VERSION.maskedTag()),
+        ASN1_EXP_OPT(KM_AUTH_LIST, os_patchlevel, ASN1_INTEGER, TAG_OS_PATCHLEVEL.maskedTag()),
+        ASN1_EXP_OPT(KM_AUTH_LIST, vendor_patchlevel, ASN1_INTEGER,
+                     TAG_VENDOR_PATCHLEVEL.maskedTag()),
+        ASN1_EXP_OPT(KM_AUTH_LIST, boot_patchlevel, ASN1_INTEGER, TAG_BOOT_PATCHLEVEL.maskedTag()),
+        ASN1_EXP_OPT(KM_AUTH_LIST, attestation_application_id, ASN1_OCTET_STRING,
+                     TAG_ATTESTATION_APPLICATION_ID.maskedTag()),
+        ASN1_EXP_OPT(KM_AUTH_LIST, early_boot_only, ASN1_NULL, TAG_EARLY_BOOT_ONLY.maskedTag()),
+        ASN1_EXP_OPT(KM_AUTH_LIST, device_unique_attestation, ASN1_NULL,
+                     TAG_DEVICE_UNIQUE_ATTESTATION.maskedTag()),
 } ASN1_SEQUENCE_END(KM_AUTH_LIST);
 IMPLEMENT_ASN1_FUNCTIONS(KM_AUTH_LIST);
 
@@ -143,36 +160,36 @@ typedef struct km_key_description {
 } KM_KEY_DESCRIPTION;
 
 ASN1_SEQUENCE(KM_KEY_DESCRIPTION) = {
-    ASN1_SIMPLE(KM_KEY_DESCRIPTION, attestation_version, ASN1_INTEGER),
-    ASN1_SIMPLE(KM_KEY_DESCRIPTION, attestation_security_level, ASN1_ENUMERATED),
-    ASN1_SIMPLE(KM_KEY_DESCRIPTION, keymaster_version, ASN1_INTEGER),
-    ASN1_SIMPLE(KM_KEY_DESCRIPTION, keymaster_security_level, ASN1_ENUMERATED),
-    ASN1_SIMPLE(KM_KEY_DESCRIPTION, attestation_challenge, ASN1_OCTET_STRING),
-    ASN1_SIMPLE(KM_KEY_DESCRIPTION, unique_id, ASN1_OCTET_STRING),
-    ASN1_SIMPLE(KM_KEY_DESCRIPTION, software_enforced, KM_AUTH_LIST),
-    ASN1_SIMPLE(KM_KEY_DESCRIPTION, tee_enforced, KM_AUTH_LIST),
+        ASN1_SIMPLE(KM_KEY_DESCRIPTION, attestation_version, ASN1_INTEGER),
+        ASN1_SIMPLE(KM_KEY_DESCRIPTION, attestation_security_level, ASN1_ENUMERATED),
+        ASN1_SIMPLE(KM_KEY_DESCRIPTION, keymaster_version, ASN1_INTEGER),
+        ASN1_SIMPLE(KM_KEY_DESCRIPTION, keymaster_security_level, ASN1_ENUMERATED),
+        ASN1_SIMPLE(KM_KEY_DESCRIPTION, attestation_challenge, ASN1_OCTET_STRING),
+        ASN1_SIMPLE(KM_KEY_DESCRIPTION, unique_id, ASN1_OCTET_STRING),
+        ASN1_SIMPLE(KM_KEY_DESCRIPTION, software_enforced, KM_AUTH_LIST),
+        ASN1_SIMPLE(KM_KEY_DESCRIPTION, tee_enforced, KM_AUTH_LIST),
 } ASN1_SEQUENCE_END(KM_KEY_DESCRIPTION);
 IMPLEMENT_ASN1_FUNCTIONS(KM_KEY_DESCRIPTION);
 
-template <Tag tag>
+template <V4_0::Tag tag>
 void copyAuthTag(const stack_st_ASN1_INTEGER* stack, TypedTag<TagType::ENUM_REP, tag> ttag,
                  AuthorizationSet* auth_list) {
-    typedef typename TypedTag2ValueType<decltype(ttag)>::type ValueT;
+    typedef typename V4_0::TypedTag2ValueType<decltype(ttag)>::type ValueT;
     for (size_t i = 0; i < sk_ASN1_INTEGER_num(stack); ++i) {
         auth_list->push_back(
-            ttag, static_cast<ValueT>(ASN1_INTEGER_get(sk_ASN1_INTEGER_value(stack, i))));
+                ttag, static_cast<ValueT>(ASN1_INTEGER_get(sk_ASN1_INTEGER_value(stack, i))));
     }
 }
 
-template <Tag tag>
+template <V4_0::Tag tag>
 void copyAuthTag(const ASN1_INTEGER* asn1_int, TypedTag<TagType::ENUM, tag> ttag,
                  AuthorizationSet* auth_list) {
-    typedef typename TypedTag2ValueType<decltype(ttag)>::type ValueT;
+    typedef typename V4_0::TypedTag2ValueType<decltype(ttag)>::type ValueT;
     if (!asn1_int) return;
     auth_list->push_back(ttag, static_cast<ValueT>(ASN1_INTEGER_get(asn1_int)));
 }
 
-template <Tag tag>
+template <V4_0::Tag tag>
 void copyAuthTag(const ASN1_INTEGER* asn1_int, TypedTag<TagType::UINT, tag> ttag,
                  AuthorizationSet* auth_list) {
     if (!asn1_int) return;
@@ -203,7 +220,7 @@ uint64_t BignumToUint64(BIGNUM* num) {
     }
 }
 
-template <Tag tag>
+template <V4_0::Tag tag>
 void copyAuthTag(const ASN1_INTEGER* asn1_int, TypedTag<TagType::ULONG, tag> ttag,
                  AuthorizationSet* auth_list) {
     if (!asn1_int) return;
@@ -211,7 +228,7 @@ void copyAuthTag(const ASN1_INTEGER* asn1_int, TypedTag<TagType::ULONG, tag> tta
     auth_list->push_back(ttag, BignumToUint64(num.get()));
 }
 
-template <Tag tag>
+template <V4_0::Tag tag>
 void copyAuthTag(const ASN1_INTEGER* asn1_int, TypedTag<TagType::DATE, tag> ttag,
                  AuthorizationSet* auth_list) {
     if (!asn1_int) return;
@@ -219,14 +236,14 @@ void copyAuthTag(const ASN1_INTEGER* asn1_int, TypedTag<TagType::DATE, tag> ttag
     auth_list->push_back(ttag, BignumToUint64(num.get()));
 }
 
-template <Tag tag>
+template <V4_0::Tag tag>
 void copyAuthTag(const ASN1_NULL* asn1_null, TypedTag<TagType::BOOL, tag> ttag,
                  AuthorizationSet* auth_list) {
     if (!asn1_null) return;
     auth_list->push_back(ttag);
 }
 
-template <Tag tag>
+template <V4_0::Tag tag>
 void copyAuthTag(const ASN1_OCTET_STRING* asn1_string, TypedTag<TagType::BYTES, tag> ttag,
                  AuthorizationSet* auth_list) {
     if (!asn1_string) return;
@@ -266,6 +283,8 @@ static ErrorCode extract_auth_list(const KM_AUTH_LIST* record, AuthorizationSet*
     copyAuthTag(record->trusted_confirmation_required, TAG_TRUSTED_CONFIRMATION_REQUIRED,
                 auth_list);
     copyAuthTag(record->unlocked_device_required, TAG_UNLOCKED_DEVICE_REQUIRED, auth_list);
+    copyAuthTag(record->early_boot_only, TAG_EARLY_BOOT_ONLY, auth_list);
+    copyAuthTag(record->device_unique_attestation, TAG_DEVICE_UNIQUE_ATTESTATION, auth_list);
 
     return ErrorCode::OK;
 }
@@ -274,53 +293,59 @@ MAKE_OPENSSL_PTR_TYPE(KM_KEY_DESCRIPTION)
 
 // Parse the DER-encoded attestation record, placing the results in keymaster_version,
 // attestation_challenge, software_enforced, tee_enforced and unique_id.
-ErrorCode parse_attestation_record(const uint8_t* asn1_key_desc, size_t asn1_key_desc_len,
-                                   uint32_t* attestation_version,  //
-                                   SecurityLevel* attestation_security_level,
-                                   uint32_t* keymaster_version,
-                                   SecurityLevel* keymaster_security_level,
-                                   hidl_vec<uint8_t>* attestation_challenge,
-                                   AuthorizationSet* software_enforced,
-                                   AuthorizationSet* tee_enforced,  //
-                                   hidl_vec<uint8_t>* unique_id) {
-    const uint8_t* p = asn1_key_desc;
-    KM_KEY_DESCRIPTION_Ptr record(d2i_KM_KEY_DESCRIPTION(nullptr, &p, asn1_key_desc_len));
-    if (!record.get()) return ErrorCode::UNKNOWN_ERROR;
+std::tuple<ErrorCode, AttestationRecord> parse_attestation_record(const hidl_vec<uint8_t>& cert) {
+    const uint8_t* p = cert.data();
+    X509_Ptr x509(d2i_X509(nullptr, &p, cert.size()));
 
-    *attestation_version = ASN1_INTEGER_get(record->attestation_version);
-    *attestation_security_level =
-        static_cast<SecurityLevel>(ASN1_ENUMERATED_get(record->attestation_security_level));
-    *keymaster_version = ASN1_INTEGER_get(record->keymaster_version);
-    *keymaster_security_level =
-        static_cast<SecurityLevel>(ASN1_ENUMERATED_get(record->keymaster_security_level));
+    ASN1_OBJECT_Ptr oid(OBJ_txt2obj(kAttestionRecordOid, 1 /* dotted string format */));
+    if (!oid.get()) {
+        LOG(ERROR) << "Error parsing OID";
+        return {ErrorCode::UNKNOWN_ERROR, {}};
+    }
+
+    int location = X509_get_ext_by_OBJ(x509.get(), oid.get(), -1 /* search from beginning */);
+    if (location == -1) {
+        LOG(ERROR) << "Attestation extension not found in certificate";
+        return {ErrorCode::UNKNOWN_ERROR, {}};
+    }
+
+    X509_EXTENSION* attest_rec_ext = X509_get_ext(x509.get(), location);
+    if (!attest_rec_ext) {
+        LOG(ERROR) << "Found extension but couldn't retrieve it.  Probably BoringSSL bug.";
+        return {ErrorCode::UNKNOWN_ERROR, {}};
+    }
+
+    ASN1_OCTET_STRING* attest_rec = X509_EXTENSION_get_data(attest_rec_ext);
+    if (!attest_rec_ext) {
+        LOG(ERROR) << "Attestation extension contained no data";
+        return {ErrorCode::UNKNOWN_ERROR, {}};
+    }
+
+    p = attest_rec->data;
+    KM_KEY_DESCRIPTION_Ptr record(d2i_KM_KEY_DESCRIPTION(nullptr, &p, attest_rec->length));
+    if (!record.get()) return {ErrorCode::UNKNOWN_ERROR, {}};
+
+    AttestationRecord result;
+
+    result.attestation_version = ASN1_INTEGER_get(record->attestation_version);
+    result.attestation_security_level =
+            static_cast<SecurityLevel>(ASN1_ENUMERATED_get(record->attestation_security_level));
+    result.keymaster_version = ASN1_INTEGER_get(record->keymaster_version);
+    result.keymaster_security_level =
+            static_cast<SecurityLevel>(ASN1_ENUMERATED_get(record->keymaster_security_level));
 
     auto& chall = record->attestation_challenge;
-    attestation_challenge->resize(chall->length);
-    memcpy(attestation_challenge->data(), chall->data, chall->length);
+    result.attestation_challenge.resize(chall->length);
+    memcpy(result.attestation_challenge.data(), chall->data, chall->length);
     auto& uid = record->unique_id;
-    unique_id->resize(uid->length);
-    memcpy(unique_id->data(), uid->data, uid->length);
+    result.unique_id.resize(uid->length);
+    memcpy(result.unique_id.data(), uid->data, uid->length);
 
-    ErrorCode error = extract_auth_list(record->software_enforced, software_enforced);
-    if (error != ErrorCode::OK) return error;
+    ErrorCode error = extract_auth_list(record->software_enforced, &result.software_enforced);
+    if (error != ErrorCode::OK) return {error, {}};
 
-    return extract_auth_list(record->tee_enforced, tee_enforced);
-}
-
-ErrorCode parse_root_of_trust(const uint8_t* asn1_key_desc, size_t asn1_key_desc_len,
-                              hidl_vec<uint8_t>* verified_boot_key,
-                              keymaster_verified_boot_t* verified_boot_state, bool* device_locked,
-                              hidl_vec<uint8_t>* verified_boot_hash) {
-    if (!verified_boot_key || !verified_boot_state || !device_locked || !verified_boot_hash) {
-        LOG(ERROR) << AT << "null pointer input(s)";
-        return ErrorCode::INVALID_ARGUMENT;
-    }
-    const uint8_t* p = asn1_key_desc;
-    KM_KEY_DESCRIPTION_Ptr record(d2i_KM_KEY_DESCRIPTION(nullptr, &p, asn1_key_desc_len));
-    if (!record.get()) {
-        LOG(ERROR) << AT << "Failed record parsing";
-        return ErrorCode::UNKNOWN_ERROR;
-    }
+    error = extract_auth_list(record->tee_enforced, &result.hardware_enforced);
+    if (error != ErrorCode::OK) return {error, {}};
 
     KM_ROOT_OF_TRUST* root_of_trust = nullptr;
     if (record->tee_enforced && record->tee_enforced->root_of_trust) {
@@ -329,41 +354,34 @@ ErrorCode parse_root_of_trust(const uint8_t* asn1_key_desc, size_t asn1_key_desc
         root_of_trust = record->software_enforced->root_of_trust;
     } else {
         LOG(ERROR) << AT << " Failed root of trust parsing";
-        return ErrorCode::INVALID_ARGUMENT;
+        return {ErrorCode::INVALID_ARGUMENT, {}};
     }
     if (!root_of_trust->verified_boot_key) {
         LOG(ERROR) << AT << " Failed verified boot key parsing";
-        return ErrorCode::INVALID_ARGUMENT;
+        return {ErrorCode::INVALID_ARGUMENT, {}};
     }
 
+    RootOfTrust& rot = result.root_of_trust;
     auto& vb_key = root_of_trust->verified_boot_key;
-    verified_boot_key->resize(vb_key->length);
-    memcpy(verified_boot_key->data(), vb_key->data, vb_key->length);
+    rot.verified_boot_key.resize(vb_key->length);
+    memcpy(rot.verified_boot_key.data(), vb_key->data, vb_key->length);
 
-    *verified_boot_state = static_cast<keymaster_verified_boot_t>(
+    rot.verified_boot_state = static_cast<keymaster_verified_boot_t>(
             ASN1_ENUMERATED_get(root_of_trust->verified_boot_state));
-    if (!verified_boot_state) {
-        LOG(ERROR) << AT << " Failed verified boot state parsing";
-        return ErrorCode::INVALID_ARGUMENT;
-    }
-
-    *device_locked = root_of_trust->device_locked;
-    if (!device_locked) {
-        LOG(ERROR) << AT << " Failed device locked parsing";
-        return ErrorCode::INVALID_ARGUMENT;
-    }
+    rot.device_locked = root_of_trust->device_locked;
 
     auto& vb_hash = root_of_trust->verified_boot_hash;
     if (!vb_hash) {
         LOG(ERROR) << AT << " Failed verified boot hash parsing";
-        return ErrorCode::INVALID_ARGUMENT;
+        return {ErrorCode::INVALID_ARGUMENT, {}};
     }
-    verified_boot_hash->resize(vb_hash->length);
-    memcpy(verified_boot_hash->data(), vb_hash->data, vb_hash->length);
-    return ErrorCode::OK;  // KM_ERROR_OK;
+    rot.verified_boot_hash.resize(vb_hash->length);
+    memcpy(rot.verified_boot_hash.data(), vb_hash->data, vb_hash->length);
+
+    return {ErrorCode::OK, result};
 }
 
-}  // namespace V4_0
+}  // namespace V4_1
 }  // namespace keymaster
 }  // namespace hardware
 }  // namespace android
