@@ -36,6 +36,9 @@ class Vibrator : public BnVibrator {
     ndk::ScopedAStatus setExternalControl(bool enabled) override;
     ndk::ScopedAStatus getCompositionDelayMax(int32_t* maxDelayMs);
     ndk::ScopedAStatus getCompositionSizeMax(int32_t* maxSize);
+    ndk::ScopedAStatus getSupportedPrimitives(std::vector<CompositePrimitive>* supported) override;
+    ndk::ScopedAStatus getPrimitiveDuration(CompositePrimitive primitive,
+                                            int32_t* durationMs) override;
     ndk::ScopedAStatus compose(const std::vector<CompositeEffect>& composite,
                                const std::shared_ptr<IVibratorCallback>& callback) override;
     ndk::ScopedAStatus getSupportedAlwaysOnEffects(std::vector<Effect>* _aidl_return) override;
