@@ -21,6 +21,7 @@ import @1.2::MeasureTiming;
 import @1.2::OutputShape;
 import @1.2::Timing;
 import ErrorStatus;
+import OptionalTimeoutDuration;
 import OptionalTimePoint;
 import Request;
 import IExecutionCallback;
@@ -68,7 +69,7 @@ interface IPreparedModel extends @1.2::IPreparedModel {
      *   There must be no failure unless the device itself is in a bad state.
      *
      * execute_1_3 can be called with an optional deadline. If the execution
-     * is not able to completed before the provided deadline, the execution
+     * is not able to be completed before the provided deadline, the execution
      * must be aborted, and either {@link
      * ErrorStatus::MISSED_DEADLINE_TRANSIENT} or {@link
      * ErrorStatus::MISSED_DEADLINE_PERSISTENT} must be returned. The error due
@@ -88,7 +89,7 @@ interface IPreparedModel extends @1.2::IPreparedModel {
      *                The duration runs from the time the driver sees the call
      *                to the execute_1_3 function to the time the driver invokes
      *                the callback.
-     * @param deadline The time by which execution must complete. If the
+     * @param deadline The time by which the execution must complete. If the
      *                 execution cannot be finished by the deadline, the
      *                 execution must be aborted.
      * @param callback A callback object used to return the error status of
@@ -139,7 +140,7 @@ interface IPreparedModel extends @1.2::IPreparedModel {
      * in a bad state.
      *
      * executeSynchronously_1_3 can be called with an optional deadline. If the
-     * execution is not able to completed before the provided deadline, the
+     * execution is not able to be completed before the provided deadline, the
      * execution must be aborted, and either {@link
      * ErrorStatus::MISSED_DEADLINE_TRANSIENT} or {@link
      * ErrorStatus::MISSED_DEADLINE_PERSISTENT} must be returned. The error due
@@ -159,7 +160,7 @@ interface IPreparedModel extends @1.2::IPreparedModel {
      *                The duration runs from the time the driver sees the call
      *                to the executeSynchronously_1_3 function to the time the driver
      *                returns from the function.
-     * @param deadline The time by which execution must complete. If the
+     * @param deadline The time by which the execution must complete. If the
      *                 execution cannot be finished by the deadline, the
      *                 execution must be aborted.
      * @return status Error status of the execution, must be:
@@ -194,52 +195,75 @@ interface IPreparedModel extends @1.2::IPreparedModel {
      * Launch a fenced asynchronous execution on a prepared model.
      *
      * The execution is performed asynchronously with respect to the caller.
-     * executeFenced must fully validate the request, and only accept one that is
-     * guaranteed to be completed, unless a hardware failure or kernel panic happens on the device.
-     * If there is an error during validation, executeFenced must immediately return with
-     * the corresponding ErrorStatus. If the request is valid and there is no error launching,
-     * executeFenced must dispatch an asynchronous task to perform the execution in the
-     * background, and immediately return with ErrorStatus::NONE, a sync_fence that will be
-     * signaled once the execution is completed, and a callback that can be used by the client
-     * to query the duration and runtime error status. If the task has finished
-     * before the call returns, empty handle may be returned for the sync fence. If the
-     * asynchronous task fails to launch, executeFenced must immediately return with
-     * ErrorStatus::GENERAL_FAILURE, and empty handle for the sync fence and nullptr
-     * for callback. The execution must wait for all the sync fences (if any) in wait_for to be
-     * signaled before starting the actual execution.
-     *
-     * If any of sync fences in wait_for changes to error status after the executeFenced
-     * call succeeds, the driver must immediately set the returned sync fence to error status.
+     * executeFenced must verify the inputs to the function are correct, and the usages
+     * of memory pools allocated by IDevice::allocate are valid. If there is an error,
+     * executeFenced must immediately return with the corresponding ErrorStatus, an empty
+     * handle for syncFence, and nullptr for callback. If the inputs to the function
+     * are valid and there is no error, executeFenced must dispatch an asynchronous task
+     * to perform the execution in the background, and immediately return with
+     * ErrorStatus::NONE, a sync fence that will be signaled once the execution is completed,
+     * and a callback that can be used by the client to query the duration and runtime error
+     * status. If the task has finished before the call returns, an empty handle may be returned
+     * for syncFence. The execution must wait for all the sync fences (if any) in waitFor
+     * to be signaled before starting the actual execution.
      *
      * When the asynchronous task has finished its execution, it must
-     * immediately signal the sync_fence created when dispatching. After
-     * the sync_fence is signaled, the task must not modify the content of
+     * immediately signal the syncFence returned from the executeFenced call. After
+     * the syncFence is signaled, the task must not modify the content of
      * any data object referenced by 'request' (described by the
      * {@link @1.0::DataLocation} of a {@link @1.0::RequestArgument}).
+     *
+     * executeFenced can be called with an optional deadline and an optional duration.
+     * If the execution is not able to be completed before the provided deadline or
+     * within the timeout duration (measured from when all sync fences in waitFor are
+     * signaled), whichever comes earlier, the execution must be aborted, and either
+     * {@link ErrorStatus::MISSED_DEADLINE_TRANSIENT} or {@link
+     * ErrorStatus::MISSED_DEADLINE_PERSISTENT} must be returned. The error due
+     * to an abort must be sent the same way as other errors, described above.
+     * If the service reports that it does not support execution deadlines via
+     * IDevice::supportsDeadlines, and executeFenced is called with a
+     * deadline or duration, then the argument is invalid, and
+     * {@link ErrorStatus::INVALID_ARGUMENT} must be returned.
+     *
+     * If any of the sync fences in waitFor changes to error status after the executeFenced
+     * call succeeds, or the execution is aborted because it cannot finish before the deadline
+     * has been reached or the duration has elapsed, the driver must immediately set the returned
+     * syncFence to error status.
      *
      * Any number of calls to the executeFenced, execute* and executeSynchronously*
      * functions, in any combination, may be made concurrently, even on the same
      * IPreparedModel object.
      *
      * @param request The input and output information on which the prepared
-     *                model is to be executed.
+     *                model is to be executed. The outputs in the request must have
+     *                fully specified dimensions.
      * @param waitFor A vector of sync fence file descriptors.
      *                Execution must not start until all sync fences have been signaled.
      * @param measure Specifies whether or not to measure duration of the execution.
-     *                The duration runs from the time the driver sees the call
-     *                to the executeFenced function to the time sync_fence is triggered.
+     * @param deadline The time by which the execution must complete. If the
+     *                 execution cannot be finished by the deadline, the
+     *                 execution must be aborted.
+     * @param duration The length of time within which the execution must
+     *                 complete after all sync fences in waitFor are signaled. If the
+     *                 execution cannot be finished within the duration, the execution
+     *                 must be aborted.
      * @return status Error status of the call, must be:
      *                - NONE if task is successfully launched
      *                - DEVICE_UNAVAILABLE if driver is offline or busy
      *                - GENERAL_FAILURE if there is an unspecified error
      *                - INVALID_ARGUMENT if one of the input arguments is invalid, including
      *                                   fences in error states.
-     * @return syncFence The sync fence that will be triggered when the task is completed.
+     *                - MISSED_DEADLINE_* if the deadline for executing a model
+     *                  cannot be met
+     *                - RESOURCE_EXHAUSTED_* if the task was aborted by the
+     *                  driver
+     * @return syncFence The sync fence that will be signaled when the task is completed.
      *                   The sync fence will be set to error if a critical error,
      *                   e.g. hardware failure or kernel panic, occurs when doing execution.
      * @return callback The IFencedExecutionCallback can be used to query information like duration
      *                  and error status when the execution is completed.
      */
-    executeFenced(Request request, vec<handle> waitFor, MeasureTiming measure)
+    executeFenced(Request request, vec<handle> waitFor, MeasureTiming measure,
+                  OptionalTimePoint deadline, OptionalTimeoutDuration duration)
         generates (ErrorStatus status, handle syncFence, IFencedExecutionCallback callback);
 };
