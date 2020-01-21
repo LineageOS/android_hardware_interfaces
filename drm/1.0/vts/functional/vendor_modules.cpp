@@ -23,6 +23,7 @@
 #include <utils/String8.h>
 #include <SharedLibrary.h>
 
+#include "drm_hal_vendor_module_api.h"
 #include "vendor_modules.h"
 
 using std::string;
@@ -68,5 +69,16 @@ DrmHalVTSVendorModule* VendorModules::getModule(const string& path) {
     typedef DrmHalVTSVendorModule* (*ModuleFactory)();
     ModuleFactory moduleFactory = reinterpret_cast<ModuleFactory>(symbol);
     return (*moduleFactory)();
+}
+
+DrmHalVTSVendorModule* VendorModules::getModuleByName(const string& name) {
+    for (const auto &path : mPathList) {
+        auto module = getModule(path);
+        if (module->getServiceName() == name) {
+            return module;
+        }
+
+    }
+    return NULL;
 }
 };
