@@ -15,23 +15,19 @@
  ** limitations under the License.
  */
 
-#include <keymasterV4_0/Keymaster3.h>
+#include <keymasterV4_1/Keymaster3.h>
 
 #include <android-base/logging.h>
 #include <keymasterV4_0/keymaster_utils.h>
 
-namespace android {
-namespace hardware {
-namespace keymaster {
-namespace V4_0 {
-namespace support {
+namespace android::hardware::keymaster::V4_1::support {
 
 using android::hardware::details::StatusOf;
 
 namespace {
 
-ErrorCode convert(V3_0::ErrorCode error) {
-    return static_cast<ErrorCode>(error);
+V4_0::ErrorCode convert(V3_0::ErrorCode error) {
+    return static_cast<V4_0::ErrorCode>(error);
 }
 
 V3_0::KeyPurpose convert(KeyPurpose purpose) {
@@ -53,7 +49,7 @@ V3_0::KeyParameter convert(const KeyParameter& param) {
 
 KeyParameter convert(const V3_0::KeyParameter& param) {
     KeyParameter converted;
-    converted.tag = static_cast<Tag>(param.tag);
+    converted.tag = static_cast<V4_0::Tag>(param.tag);
     static_assert(sizeof(converted.f) == sizeof(param.f), "This function assumes sizes match");
     memcpy(&converted.f, &param.f, sizeof(param.f));
     converted.blob = param.blob;
@@ -89,7 +85,7 @@ hidl_vec<V3_0::KeyParameter> convertAndAddAuthToken(const hidl_vec<KeyParameter>
         converted[i] = convert(params[i]);
     }
     converted[params.size()].tag = V3_0::Tag::AUTH_TOKEN;
-    converted[params.size()].blob = authToken2HidlVec(authToken);
+    converted[params.size()].blob = V4_0::support::authToken2HidlVec(authToken);
 
     return converted;
 }
@@ -107,16 +103,19 @@ void Keymaster3::getVersionIfNeeded() {
     if (haveVersion_) return;
 
     auto rc = km3_dev_->getHardwareFeatures(
-        [&](bool isSecure, bool supportsEllipticCurve, bool supportsSymmetricCryptography,
-            bool supportsAttestation, bool supportsAllDigests, const hidl_string& keymasterName,
-            const hidl_string& keymasterAuthorName) {
-            version_ = {keymasterName, keymasterAuthorName, 0 /* major version, filled below */,
-                        isSecure ? SecurityLevel::TRUSTED_ENVIRONMENT : SecurityLevel::SOFTWARE,
-                        supportsEllipticCurve};
-            supportsSymmetricCryptography_ = supportsSymmetricCryptography;
-            supportsAttestation_ = supportsAttestation;
-            supportsAllDigests_ = supportsAllDigests;
-        });
+            [&](bool isSecure, bool supportsEllipticCurve, bool supportsSymmetricCryptography,
+                bool supportsAttestation, bool supportsAllDigests, const hidl_string& keymasterName,
+                const hidl_string& keymasterAuthorName) {
+                version_ = {keymasterName,
+                            keymasterAuthorName,
+                            0 /* major version, filled below */,
+                            0 /* minor version */,
+                            isSecure ? SecurityLevel::TRUSTED_ENVIRONMENT : SecurityLevel::SOFTWARE,
+                            supportsEllipticCurve};
+                supportsSymmetricCryptography_ = supportsSymmetricCryptography;
+                supportsAttestation_ = supportsAttestation;
+                supportsAllDigests_ = supportsAllDigests;
+            });
 
     CHECK(rc.isOk()) << "Got error " << rc.description() << " trying to get hardware features";
 
@@ -139,10 +138,10 @@ Return<void> Keymaster3::getHardwareInfo(Keymaster3::getHardwareInfo_cb _hidl_cb
     return Void();
 }
 
-Return<ErrorCode> Keymaster3::addRngEntropy(const hidl_vec<uint8_t>& data) {
+Return<V4_0::ErrorCode> Keymaster3::addRngEntropy(const hidl_vec<uint8_t>& data) {
     auto rc = km3_dev_->addRngEntropy(data);
     if (!rc.isOk()) {
-        return StatusOf<V3_0::ErrorCode, ErrorCode>(rc);
+        return StatusOf<V3_0::ErrorCode, V4_0::ErrorCode>(rc);
     }
     return convert(rc);
 }
@@ -215,21 +214,21 @@ Return<void> Keymaster3::upgradeKey(const hidl_vec<uint8_t>& keyBlobToUpgrade,
     return rc;
 }
 
-Return<ErrorCode> Keymaster3::deleteKey(const hidl_vec<uint8_t>& keyBlob) {
+Return<V4_0::ErrorCode> Keymaster3::deleteKey(const hidl_vec<uint8_t>& keyBlob) {
     auto rc = km3_dev_->deleteKey(keyBlob);
-    if (!rc.isOk()) return StatusOf<V3_0::ErrorCode, ErrorCode>(rc);
+    if (!rc.isOk()) return StatusOf<V3_0::ErrorCode, V4_0::ErrorCode>(rc);
     return convert(rc);
 }
 
-Return<ErrorCode> Keymaster3::deleteAllKeys() {
+Return<V4_0::ErrorCode> Keymaster3::deleteAllKeys() {
     auto rc = km3_dev_->deleteAllKeys();
-    if (!rc.isOk()) return StatusOf<V3_0::ErrorCode, ErrorCode>(rc);
+    if (!rc.isOk()) return StatusOf<V3_0::ErrorCode, V4_0::ErrorCode>(rc);
     return convert(rc);
 }
 
-Return<ErrorCode> Keymaster3::destroyAttestationIds() {
+Return<V4_0::ErrorCode> Keymaster3::destroyAttestationIds() {
     auto rc = km3_dev_->destroyAttestationIds();
-    if (!rc.isOk()) return StatusOf<V3_0::ErrorCode, ErrorCode>(rc);
+    if (!rc.isOk()) return StatusOf<V3_0::ErrorCode, V4_0::ErrorCode>(rc);
     return convert(rc);
 }
 
@@ -242,7 +241,7 @@ Return<void> Keymaster3::begin(KeyPurpose purpose, const hidl_vec<uint8_t>& key,
     };
 
     auto rc =
-        km3_dev_->begin(convert(purpose), key, convertAndAddAuthToken(inParams, authToken), cb);
+            km3_dev_->begin(convert(purpose), key, convertAndAddAuthToken(inParams, authToken), cb);
     rc.isOk();  // move ctor prereq
     return rc;
 }
@@ -256,8 +255,8 @@ Return<void> Keymaster3::update(uint64_t operationHandle, const hidl_vec<KeyPara
         _hidl_cb(convert(error), inputConsumed, convert(outParams), output);
     };
 
-    auto rc =
-        km3_dev_->update(operationHandle, convertAndAddAuthToken(inParams, authToken), input, cb);
+    auto rc = km3_dev_->update(operationHandle, convertAndAddAuthToken(inParams, authToken), input,
+                               cb);
     rc.isOk();  // move ctor prereq
     return rc;
 }
@@ -278,14 +277,10 @@ Return<void> Keymaster3::finish(uint64_t operationHandle, const hidl_vec<KeyPara
     return rc;
 }
 
-Return<ErrorCode> Keymaster3::abort(uint64_t operationHandle) {
+Return<V4_0::ErrorCode> Keymaster3::abort(uint64_t operationHandle) {
     auto rc = km3_dev_->abort(operationHandle);
-    if (!rc.isOk()) return StatusOf<V3_0::ErrorCode, ErrorCode>(rc);
+    if (!rc.isOk()) return StatusOf<V3_0::ErrorCode, V4_0::ErrorCode>(rc);
     return convert(rc);
 }
 
-}  // namespace support
-}  // namespace V4_0
-}  // namespace keymaster
-}  // namespace hardware
-}  // namespace android
+}  // namespace android::hardware::keymaster::V4_1::support
