@@ -793,8 +793,9 @@ TEST_P(QuantizationCouplingTest, Test) {
 INSTANTIATE_GENERATED_TEST(GeneratedTest,
                            [](const TestModel& testModel) { return !testModel.expectFailure; });
 
-INSTANTIATE_GENERATED_TEST(DynamicOutputShapeTest,
-                           [](const TestModel& testModel) { return !testModel.expectFailure; });
+INSTANTIATE_GENERATED_TEST(DynamicOutputShapeTest, [](const TestModel& testModel) {
+    return !testModel.expectFailure && !testModel.hasScalarOutputs();
+});
 
 INSTANTIATE_GENERATED_TEST(MemoryDomainTest,
                            [](const TestModel& testModel) { return !testModel.expectFailure; });
