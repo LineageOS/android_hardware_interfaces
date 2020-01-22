@@ -166,7 +166,11 @@ enum AccessNetwork : @1.4::AccessNetwork {
 };
 
 enum RadioAccessNetworks : @1.1::RadioAccessNetworks {
+    UNKNOWN = 0,
+    /** Next Generation Radio Access Network */
     NGRAN = 4,
+    /** CDMA 2000 Network */
+    CDMA2000 = 5,
 };
 
 /**
@@ -610,6 +614,9 @@ struct CellIdentityNr {
 
     /** Additional PLMN-IDs beyond the primary PLMN broadcast for this cell */
     vec<string> additionalPlmns;
+
+    /** Band used by the cell */
+    NgranBands band;
 };
 
 struct CellInfoGsm {

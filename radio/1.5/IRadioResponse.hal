@@ -212,4 +212,28 @@ interface IRadioResponse extends @1.4::IRadioResponse {
      *   RadioError:INTERNAL_ERR
      */
     oneway getCellInfoListResponse_1_5(RadioResponseInfo info, vec<CellInfo> cellInfo);
+
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:ILLEGAL_SIM_OR_ME
+     *   RadioError:OPERATION_NOT_ALLOWED
+     *   RadioError:INVALID_STATE
+     *   RadioError:NO_MEMORY
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:SYSTEM_ERR
+     *   RadioError:INVALID_ARGUMENTS
+     *   RadioError:MODEM_ERR
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:NO_RESOURCES
+     *   RadioError:CANCELLED
+     *
+     * Returns RadioError:ILLEGAL_SIM_OR_ME when the failure is permanent and
+     * no retries needed, such as illegal SIM or ME.
+     */
+    oneway setNetworkSelectionModeManualResponse_1_5(RadioResponseInfo info);
 };
