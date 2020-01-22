@@ -663,7 +663,7 @@ a64467bae843569f0d465c5be7f0c7a5b987985b55a3ef4794dd5afc68538650 android.hardwar
 8aed0a8e03e7a67bfdfb78ad7529a9ae95bea36e6060473b204c89d772522126 android.hardware.wifi.supplicant@1.3::ISupplicantStaIface
 def77c7db95d374f11a111bfc4ed60f92451303642a43276c4e291988fcee625 android.hardware.wifi.supplicant@1.3::ISupplicantStaIfaceCallback
 62cf050c593c1ec34b49178b5bdde72dd9b80d9bad3eb184e4f0cd564d28678c android.hardware.wifi.supplicant@1.3::ISupplicantStaNetwork
-91015479f5a0fba9872e98d3cca4680995de64f42ae71461b4b7e5acc5a196ab android.hardware.wifi.supplicant@1.3::types
+98592d193a717066facf91428426e5abe211e3bd718bc372e29fb944ddbe6e7c android.hardware.wifi.supplicant@1.3::types
 ##
 # BEGIN Radio HAL Merge Conflict Avoidance Buffer - STOPSHIP if present
 ##

@@ -19,6 +19,8 @@ package android.hardware.wifi.supplicant@1.3;
 import @1.2::DppProgressCode;
 import @1.2::DppFailureCode;
 
+import android.hardware.wifi@1.0::WifiChannelWidthInMhz;
+
 /**
  * OcspType: The type of OCSP request.
  */
@@ -53,13 +55,25 @@ enum WifiTechnology : uint32_t {
 };
 
 /**
- * Connection Capabilities.
+ * Connection Capabilities supported by current network and device
  */
 struct ConnectionCapabilities {
     /**
      * Wifi Technology
      */
     WifiTechnology technology;
+    /**
+     * channel bandwidth
+     */
+    WifiChannelWidthInMhz channelBandwidth;
+    /**
+     * max number of Tx spatial streams
+     */
+    uint32_t maxNumberTxSpatialStreams;
+    /**
+     * max number of Rx spatial streams
+     */
+    uint32_t maxNumberRxSpatialStreams;
 };
 
 /**
