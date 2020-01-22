@@ -22,11 +22,25 @@ cc_library {
         "-Wextra",
         "-Werror",
     ],
+    srcs: [
+        "attestation_record.cpp",
+        "Keymaster.cpp",
+        "Keymaster3.cpp",
+        "Keymaster4.cpp",
+    ],
     export_include_dirs: ["include"],
     shared_libs: [
         "android.hardware.keymaster@3.0",
         "android.hardware.keymaster@4.0",
         "android.hardware.keymaster@4.1",
+        "libbase",
+        "libcrypto",
+        "libhidlbase",
         "libkeymaster4support",
-    ]
+        "libutils",
+    ],
+    export_shared_lib_headers: [
+        "android.hardware.keymaster@4.1",
+        "libkeymaster4support",
+    ],
 }

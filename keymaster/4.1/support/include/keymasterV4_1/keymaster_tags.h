@@ -23,16 +23,26 @@
 
 namespace android::hardware::keymaster::V4_1 {
 
+using V4_0::Algorithm;
 using V4_0::BlockMode;
 using V4_0::Digest;
 using V4_0::EcCurve;
-using V4_0::ErrorCode;
+using V4_0::HardwareAuthenticatorType;
 using V4_0::HardwareAuthToken;
+using V4_0::HmacSharingParameters;
+using V4_0::KeyBlobUsageRequirements;
+using V4_0::KeyCharacteristics;
+using V4_0::KeyFormat;
+using V4_0::KeyOrigin;
 using V4_0::KeyParameter;
+using V4_0::KeyPurpose;
+using V4_0::OperationHandle;
 using V4_0::PaddingMode;
+using V4_0::SecurityLevel;
 using V4_0::TagType;
 using V4_0::VerificationToken;
 
+using V4_0::NullOr;
 using V4_0::TypedTag;
 
 using V4_0::TAG_ACTIVE_DATETIME;

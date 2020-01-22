@@ -19,7 +19,6 @@ cc_test {
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: [
         "HmacKeySharingTest.cpp",
-        "KeymasterHidlTest.cpp",
         "VerificationTokenTest.cpp",
         "keymaster_hidl_hal_test.cpp",
     ],
@@ -27,7 +26,25 @@ cc_test {
         "android.hardware.keymaster@4.0",
         "libcrypto_static",
         "libkeymaster4support",
-        "libsoftkeymasterdevice",
+        "libkeymaster4vtstest",
     ],
-    test_suites: ["general-tests", "vts-core"],
+    test_suites: [
+        "general-tests",
+        "vts-core",
+    ],
+}
+
+cc_test_library {
+    name: "libkeymaster4vtstest",
+    defaults: ["VtsHalTargetTestDefaults"],
+    srcs: [
+        "KeymasterHidlTest.cpp",
+    ],
+    export_include_dirs: [
+        ".",
+    ],
+    static_libs: [
+        "android.hardware.keymaster@4.0",
+        "libkeymaster4support",
+    ],
 }
