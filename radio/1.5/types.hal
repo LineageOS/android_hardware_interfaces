@@ -16,6 +16,10 @@
 
 package android.hardware.radio@1.5;
 
+import @1.0::ApnAuthType;
+import @1.0::DataProfileId;
+import @1.0::DataProfileInfoType;
+import @1.0::RadioAccessFamily;
 import @1.1::EutranBands;
 import @1.1::GeranBands;
 import @1.1::RadioAccessNetworks;
@@ -303,13 +307,74 @@ enum ApnTypes : @1.4::ApnTypes {
 };
 
 /**
- * Extended from @1.4::DataProfileInfo to update ApnTypes to 1.5 version
+ * Extended from @1.4::DataProfileInfo to update ApnTypes to 1.5 version and replace mtu with
+ * mtuV4 and mtuV6. In the future, this must be extended instead of overwritten.
  */
 struct DataProfileInfo {
-    @1.4::DataProfileInfo base;
+
+    /** ID of the data profile. */
+    DataProfileId profileId;
+
+    /** The APN name. */
+    string apn;
+
+    /** PDP_type values. */
+    PdpProtocolType protocol;
+
+    /** PDP_type values used on roaming network. */
+    PdpProtocolType roamingProtocol;
+
+    /** APN authentication type. */
+    ApnAuthType authType;
+
+    /** The username for APN, or empty string. */
+    string user;
+
+    /** The password for APN, or empty string. */
+    string password;
+
+    /** Data profile technology type. */
+    DataProfileInfoType type;
+
+    /** The period in seconds to limit the maximum connections. */
+    int32_t maxConnsTime;
+
+    /** The maximum connections during maxConnsTime. */
+    int32_t maxConns;
+
+    /**
+     * The required wait time in seconds after a successful UE initiated disconnect of a given PDN
+     * connection before the device can send a new PDN connection request for that given PDN.
+     */
+    int32_t waitTime;
+
+    /** True to enable the profile, false to disable. */
+    bool enabled;
 
     /** Supported APN types bitmap. See ApnTypes for the value of each bit. */
     bitfield<ApnTypes> supportedApnTypesBitmap;
+
+    /** The bearer bitmap. See RadioAccessFamily for the value of each bit. */
+    bitfield<RadioAccessFamily> bearerBitmap;
+
+    /** Maximum transmission unit (MTU) size in bytes for IPv4. */
+    int32_t mtuV4;
+
+    /** Maximum transmission unit (MTU) size in bytes for IPv6. */
+    int32_t mtuV6;
+
+    /**
+     * True if this data profile was used to bring up the last default (i.e internet) data
+     * connection successfully.
+     */
+    bool preferred;
+
+    /**
+     * If true, modem must persist this data profile and profileId must not be
+     * set to DataProfileId.INVALID. If the same data profile exists, this data profile must
+     * overwrite it.
+     */
+    bool persistent;
 };
 
 /**
@@ -356,7 +421,8 @@ struct LinkAddress {
 
 /**
  * Overwritten from @1.4::SetupDataCallResult in order to update the addresses to 1.5
- * version. In 1.5 the type of addresses changes to vector of LinkAddress.
+ * version. In 1.5 the type of addresses changes to vector of LinkAddress, and mtu is replaced by
+ * mtuV4 and mtuV6.
  */
 struct SetupDataCallResult {
     /** Data call fail cause. DataCallFailCause.NONE if no error. */
@@ -410,10 +476,16 @@ struct SetupDataCallResult {
     vec<string> pcscf;
 
     /**
-     * MTU received from network. Value <= 0 means network has either not sent a value or sent an
-     * invalid value.
+     * MTU received from network for IPv4.
+     * Value <= 0 means network has either not sent a value or sent an invalid value.
      */
-    int32_t mtu;
+    int32_t mtuV4;
+
+    /**
+     * MTU received from network for IPv6.
+     * Value <= 0 means network has either not sent a value or sent an invalid value.
+     */
+    int32_t mtuV6;
 };
 
 enum Domain : int32_t {

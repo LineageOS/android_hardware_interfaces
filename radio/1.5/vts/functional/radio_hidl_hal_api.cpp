@@ -833,23 +833,24 @@ TEST_F(RadioHidlTest_v1_5, setupDataCall_1_5) {
 
     android::hardware::radio::V1_5::DataProfileInfo dataProfileInfo;
     memset(&dataProfileInfo, 0, sizeof(dataProfileInfo));
-    dataProfileInfo.base.profileId = DataProfileId::DEFAULT;
-    dataProfileInfo.base.apn = hidl_string("internet");
-    dataProfileInfo.base.protocol = PdpProtocolType::IP;
-    dataProfileInfo.base.roamingProtocol = PdpProtocolType::IP;
-    dataProfileInfo.base.authType = ApnAuthType::NO_PAP_NO_CHAP;
-    dataProfileInfo.base.user = hidl_string("username");
-    dataProfileInfo.base.password = hidl_string("password");
-    dataProfileInfo.base.type = DataProfileInfoType::THREE_GPP;
-    dataProfileInfo.base.maxConnsTime = 300;
-    dataProfileInfo.base.maxConns = 20;
-    dataProfileInfo.base.waitTime = 0;
-    dataProfileInfo.base.enabled = true;
+    dataProfileInfo.profileId = DataProfileId::DEFAULT;
+    dataProfileInfo.apn = hidl_string("internet");
+    dataProfileInfo.protocol = PdpProtocolType::IP;
+    dataProfileInfo.roamingProtocol = PdpProtocolType::IP;
+    dataProfileInfo.authType = ApnAuthType::NO_PAP_NO_CHAP;
+    dataProfileInfo.user = hidl_string("username");
+    dataProfileInfo.password = hidl_string("password");
+    dataProfileInfo.type = DataProfileInfoType::THREE_GPP;
+    dataProfileInfo.maxConnsTime = 300;
+    dataProfileInfo.maxConns = 20;
+    dataProfileInfo.waitTime = 0;
+    dataProfileInfo.enabled = true;
     dataProfileInfo.supportedApnTypesBitmap = 320;
-    dataProfileInfo.base.bearerBitmap = 161543;
-    dataProfileInfo.base.mtu = 0;
-    dataProfileInfo.base.preferred = true;
-    dataProfileInfo.base.persistent = false;
+    dataProfileInfo.bearerBitmap = 161543;
+    dataProfileInfo.mtuV4 = 0;
+    dataProfileInfo.mtuV6 = 0;
+    dataProfileInfo.preferred = true;
+    dataProfileInfo.persistent = false;
 
     bool roamingAllowed = false;
 
@@ -884,23 +885,24 @@ TEST_F(RadioHidlTest_v1_5, setInitialAttachApn_1_5) {
     // Create a dataProfileInfo
     android::hardware::radio::V1_5::DataProfileInfo dataProfileInfo;
     memset(&dataProfileInfo, 0, sizeof(dataProfileInfo));
-    dataProfileInfo.base.profileId = DataProfileId::DEFAULT;
-    dataProfileInfo.base.apn = hidl_string("internet");
-    dataProfileInfo.base.protocol = PdpProtocolType::IPV4V6;
-    dataProfileInfo.base.roamingProtocol = PdpProtocolType::IPV4V6;
-    dataProfileInfo.base.authType = ApnAuthType::NO_PAP_NO_CHAP;
-    dataProfileInfo.base.user = hidl_string("username");
-    dataProfileInfo.base.password = hidl_string("password");
-    dataProfileInfo.base.type = DataProfileInfoType::THREE_GPP;
-    dataProfileInfo.base.maxConnsTime = 300;
-    dataProfileInfo.base.maxConns = 20;
-    dataProfileInfo.base.waitTime = 0;
-    dataProfileInfo.base.enabled = true;
+    dataProfileInfo.profileId = DataProfileId::DEFAULT;
+    dataProfileInfo.apn = hidl_string("internet");
+    dataProfileInfo.protocol = PdpProtocolType::IPV4V6;
+    dataProfileInfo.roamingProtocol = PdpProtocolType::IPV4V6;
+    dataProfileInfo.authType = ApnAuthType::NO_PAP_NO_CHAP;
+    dataProfileInfo.user = hidl_string("username");
+    dataProfileInfo.password = hidl_string("password");
+    dataProfileInfo.type = DataProfileInfoType::THREE_GPP;
+    dataProfileInfo.maxConnsTime = 300;
+    dataProfileInfo.maxConns = 20;
+    dataProfileInfo.waitTime = 0;
+    dataProfileInfo.enabled = true;
     dataProfileInfo.supportedApnTypesBitmap = 320;
-    dataProfileInfo.base.bearerBitmap = 161543;
-    dataProfileInfo.base.mtu = 0;
-    dataProfileInfo.base.preferred = true;
-    dataProfileInfo.base.persistent = false;
+    dataProfileInfo.bearerBitmap = 161543;
+    dataProfileInfo.mtuV4 = 0;
+    dataProfileInfo.mtuV6 = 0;
+    dataProfileInfo.preferred = true;
+    dataProfileInfo.persistent = false;
 
     radio_v1_5->setInitialAttachApn_1_5(serial, dataProfileInfo);
 
@@ -923,23 +925,24 @@ TEST_F(RadioHidlTest_v1_5, setDataProfile_1_5) {
     // Create a dataProfileInfo
     android::hardware::radio::V1_5::DataProfileInfo dataProfileInfo;
     memset(&dataProfileInfo, 0, sizeof(dataProfileInfo));
-    dataProfileInfo.base.profileId = DataProfileId::DEFAULT;
-    dataProfileInfo.base.apn = hidl_string("internet");
-    dataProfileInfo.base.protocol = PdpProtocolType::IPV4V6;
-    dataProfileInfo.base.roamingProtocol = PdpProtocolType::IPV4V6;
-    dataProfileInfo.base.authType = ApnAuthType::NO_PAP_NO_CHAP;
-    dataProfileInfo.base.user = hidl_string("username");
-    dataProfileInfo.base.password = hidl_string("password");
-    dataProfileInfo.base.type = DataProfileInfoType::THREE_GPP;
-    dataProfileInfo.base.maxConnsTime = 300;
-    dataProfileInfo.base.maxConns = 20;
-    dataProfileInfo.base.waitTime = 0;
-    dataProfileInfo.base.enabled = true;
+    dataProfileInfo.profileId = DataProfileId::DEFAULT;
+    dataProfileInfo.apn = hidl_string("internet");
+    dataProfileInfo.protocol = PdpProtocolType::IPV4V6;
+    dataProfileInfo.roamingProtocol = PdpProtocolType::IPV4V6;
+    dataProfileInfo.authType = ApnAuthType::NO_PAP_NO_CHAP;
+    dataProfileInfo.user = hidl_string("username");
+    dataProfileInfo.password = hidl_string("password");
+    dataProfileInfo.type = DataProfileInfoType::THREE_GPP;
+    dataProfileInfo.maxConnsTime = 300;
+    dataProfileInfo.maxConns = 20;
+    dataProfileInfo.waitTime = 0;
+    dataProfileInfo.enabled = true;
     dataProfileInfo.supportedApnTypesBitmap = 320;
-    dataProfileInfo.base.bearerBitmap = 161543;
-    dataProfileInfo.base.mtu = 0;
-    dataProfileInfo.base.preferred = true;
-    dataProfileInfo.base.persistent = true;
+    dataProfileInfo.bearerBitmap = 161543;
+    dataProfileInfo.mtuV4 = 0;
+    dataProfileInfo.mtuV6 = 0;
+    dataProfileInfo.preferred = true;
+    dataProfileInfo.persistent = true;
 
     // Create a dataProfileInfoList
     android::hardware::hidl_vec<android::hardware::radio::V1_5::DataProfileInfo>
