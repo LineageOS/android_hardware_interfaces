@@ -47,6 +47,11 @@ class VendorModules {
     DrmHalVTSVendorModule* getModule(const std::string& path);
 
     /**
+     * Retrieve a DrmHalVTSVendorModule given a service name.
+     */
+    DrmHalVTSVendorModule* getModuleByName(const std::string& name);
+
+    /**
      * Return the list of paths to available vendor modules.
      */
     std::vector<std::string> getPathList() const {return mPathList;}
