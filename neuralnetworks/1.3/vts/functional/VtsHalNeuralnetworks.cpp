@@ -23,6 +23,7 @@
 #include <utility>
 #include "1.0/Utils.h"
 #include "1.3/Callbacks.h"
+#include "1.3/Utils.h"
 #include "GeneratedTestHarness.h"
 #include "TestHarness.h"
 #include "Utils.h"
@@ -32,7 +33,6 @@ namespace android::hardware::neuralnetworks::V1_3::vts::functional {
 using HidlToken =
         hidl_array<uint8_t, static_cast<uint32_t>(V1_2::Constant::BYTE_SIZE_OF_CACHE_TOKEN)>;
 using implementation::PreparedModelCallback;
-using V1_0::ErrorStatus;
 using V1_1::ExecutionPreference;
 
 // internal helper function
@@ -55,8 +55,8 @@ void createPreparedModel(const sp<IDevice>& device, const Model& model,
     // launch prepare model
     const sp<PreparedModelCallback> preparedModelCallback = new PreparedModelCallback();
     const Return<ErrorStatus> prepareLaunchStatus = device->prepareModel_1_3(
-            model, ExecutionPreference::FAST_SINGLE_ANSWER, hidl_vec<hidl_handle>(),
-            hidl_vec<hidl_handle>(), HidlToken(), preparedModelCallback);
+            model, ExecutionPreference::FAST_SINGLE_ANSWER, kDefaultPriority, {},
+            hidl_vec<hidl_handle>(), hidl_vec<hidl_handle>(), HidlToken(), preparedModelCallback);
     ASSERT_TRUE(prepareLaunchStatus.isOk());
     ASSERT_EQ(ErrorStatus::NONE, static_cast<ErrorStatus>(prepareLaunchStatus));
 
@@ -84,6 +84,7 @@ void createPreparedModel(const sp<IDevice>& device, const Model& model,
                   << std::endl;
         GTEST_SKIP();
     }
+
     ASSERT_EQ(ErrorStatus::NONE, prepareReturnStatus);
     ASSERT_NE(nullptr, preparedModel->get());
 }
@@ -122,23 +123,27 @@ std::string printNeuralnetworksHidlTest(
 INSTANTIATE_DEVICE_TEST(NeuralnetworksHidlTest);
 
 // Forward declaration from ValidateModel.cpp
-void validateModel(const sp<IDevice>& device, const Model& model);
+void validateModel(const sp<IDevice>& device, const Model& model,
+                   bool prepareModelDeadlineSupported);
 // Forward declaration from ValidateRequest.cpp
-void validateRequest(const sp<IPreparedModel>& preparedModel, const Request& request);
+void validateRequest(const sp<IPreparedModel>& preparedModel, const Request& request,
+                     bool executionDeadlineSupported);
 // Forward declaration from ValidateRequest.cpp
 void validateRequestFailure(const sp<IPreparedModel>& preparedModel, const Request& request);
 // Forward declaration from ValidateBurst.cpp
 void validateBurst(const sp<IPreparedModel>& preparedModel, const V1_0::Request& request);
 
-void validateEverything(const sp<IDevice>& device, const Model& model, const Request& request) {
-    validateModel(device, model);
+void validateEverything(const sp<IDevice>& device, const Model& model, const Request& request,
+                        std::pair<bool, bool> supportsDeadlines) {
+    const auto [prepareModelDeadlineSupported, executionDeadlineSupported] = supportsDeadlines;
+    validateModel(device, model, prepareModelDeadlineSupported);
 
     // Create IPreparedModel.
     sp<IPreparedModel> preparedModel;
     createPreparedModel(device, model, &preparedModel);
     if (preparedModel == nullptr) return;
 
-    validateRequest(preparedModel, request);
+    validateRequest(preparedModel, request, executionDeadlineSupported);
 
     // TODO(butlermichael): Check if we need to test burst in V1_3 if the interface remains V1_2.
     ASSERT_TRUE(nn::compliantWithV1_0(request));
@@ -146,10 +151,12 @@ void validateEverything(const sp<IDevice>& device, const Model& model, const Req
     validateBurst(preparedModel, request10);
 }
 
-void validateFailure(const sp<IDevice>& device, const Model& model, const Request& request) {
+void validateFailure(const sp<IDevice>& device, const Model& model, const Request& request,
+                     std::pair<bool, bool> supportsDeadlines) {
+    const bool prepareModelDeadlineSupported = supportsDeadlines.first;
     // TODO: Should this always succeed?
     //       What if the invalid input is part of the model (i.e., a parameter).
-    validateModel(device, model);
+    validateModel(device, model, prepareModelDeadlineSupported);
 
     // Create IPreparedModel.
     sp<IPreparedModel> preparedModel;
@@ -163,9 +170,9 @@ TEST_P(ValidationTest, Test) {
     const Model model = createModel(kTestModel);
     const Request request = nn::convertToV1_3(createRequest(kTestModel));
     if (kTestModel.expectFailure) {
-        validateFailure(kDevice, model, request);
+        validateFailure(kDevice, model, request, mSupportsDeadlines);
     } else {
-        validateEverything(kDevice, model, request);
+        validateEverything(kDevice, model, request, mSupportsDeadlines);
     }
 }
 

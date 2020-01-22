@@ -107,7 +107,7 @@ static void validate(const sp<IPreparedModel>& preparedModel, const std::string&
 
         // execute and verify
         const auto [n, outputShapes, timing, fallback] = burst->compute(request, measure, keys);
-        const ErrorStatus status = nn::convertResultCodeToErrorStatus(n);
+        const ErrorStatus status = nn::convertToV1_0(nn::convertResultCodeToErrorStatus(n));
         EXPECT_EQ(ErrorStatus::INVALID_ARGUMENT, status);
         EXPECT_EQ(outputShapes.size(), 0);
         EXPECT_TRUE(badTiming(timing));

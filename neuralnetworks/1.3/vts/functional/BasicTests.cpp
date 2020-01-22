@@ -21,7 +21,6 @@
 namespace android::hardware::neuralnetworks::V1_3::vts::functional {
 
 using V1_0::DeviceStatus;
-using V1_0::ErrorStatus;
 using V1_0::PerformanceInfo;
 using V1_2::Constant;
 using V1_2::DeviceType;
