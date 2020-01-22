@@ -27,6 +27,18 @@
     <option name="cleanup" value="true" />
     <option name="push" value="VtsHalAudioPolicyV1_0TargetTest->/data/local/tmp/VtsHalAudioPolicyV1_0TargetTest" />
     <option name="push" value="audio_policy_engine_conf_V1_0.xsd->/data/local/tmp/audio_policy_engine_configuration_V1_0.xsd" />
+    <option name="push" value="audio_policy_engine_configurable_configuration_V1_0.xsd->/data/local/tmp/audio_policy_engine_configurable_configuration_V1_0.xsd" />
+    <option name="push" value="audio_policy_engine_configurable_configuration_ComponentLibrary_V1_0.xsd->/data/local/tmp/Schemas/ComponentLibrary.xsd" />
+    <option name="push" value="audio_policy_engine_configurable_configuration_ComponentTypeSet_V1_0.xsd->/data/local/tmp/Schemas/ComponentTypeSet.xsd" />
+    <option name="push" value="audio_policy_engine_configurable_configuration_ConfigurableDomain_V1_0.xsd->/data/local/tmp/Schemas/ConfigurableDomain.xsd" />
+    <option name="push" value="audio_policy_engine_configurable_configuration_ConfigurableDomains_V1_0.xsd->/data/local/tmp/Schemas/ConfigurableDomains.xsd" />
+    <option name="push" value="audio_policy_engine_configurable_configuration_FileIncluder_V1_0.xsd->/data/local/tmp/Schemas/FileIncluder.xsd" />
+    <option name="push" value="audio_policy_engine_configurable_configuration_Parameter_V1_0.xsd->/data/local/tmp/Schemas/Parameter.xsd" />
+    <option name="push" value="audio_policy_engine_configurable_configuration_ParameterFrameworkConfiguration_V1_0.xsd->/data/local/tmp/Schemas/ParameterFrameworkConfiguration.xsd" />
+    <option name="push" value="audio_policy_engine_configurable_configuration_ParameterSettings_V1_0.xsd->/data/local/tmp/Schemas/ParameterSettings.xsd" />
+    <option name="push" value="audio_policy_engine_configurable_configuration_Subsystem_V1_0.xsd->/data/local/tmp/Schemas/Subsystem.xsd" />
+    <option name="push" value="audio_policy_engine_configurable_configuration_SystemClass_V1_0.xsd->/data/local/tmp/Schemas/SystemClass.xsd" />
+    <option name="push" value="audio_policy_engine_configurable_configuration_W3cXmlAttributes_V1_0.xsd->/data/local/tmp/Schemas/W3cXmlAttributes.xsd" />
   </target_preparer>
 
   <test class="com.android.tradefed.testtype.GTest" >
