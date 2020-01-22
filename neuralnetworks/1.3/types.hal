@@ -1415,6 +1415,7 @@ enum OperationType : int32_t {
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} (since HAL version 1.3)
+     * * {@link OperandType::TENSOR_INT32} (since HAL version 1.3)
      *
      * Supported tensor rank: up to 4
      *
@@ -1425,6 +1426,8 @@ enum OperationType : int32_t {
      * * 2: An {@link OperandType::INT32} scalar, and has to be one of the
      *      {@link FusedActivationFunc} values. Specifies the activation to
      *      invoke on the result.
+     *      For a {@link OperandType::TENSOR_INT32} tensor,
+     *      the {@link FusedActivationFunc} must be "NONE".
      *
      * Outputs:
      * * 0: The product, a tensor of the same {@link OperandType} as input0.
@@ -1905,6 +1908,11 @@ enum OperationType : int32_t {
      * dimensions. The output is the result of dividing the first input tensor
      * by the second, optionally modified by an activation function.
      *
+     * For inputs of {@link OperandType::TENSOR_INT32}, performs
+     * "floor division" ("//" in Python). For example,
+     *     5 // 2 = 2
+     *    -5 // 2 = -3
+     *
      * Two dimensions are compatible when:
      *     1. they are equal, or
      *     2. one of them is 1
@@ -1925,6 +1933,7 @@ enum OperationType : int32_t {
      * Supported tensor {@link OperandType}:
      * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_FLOAT32}
+     * * {@link OperandType::TENSOR_INT32} (since HAL version 1.3)
      *
      * Supported tensor rank: up to 4
      *
@@ -1935,6 +1944,8 @@ enum OperationType : int32_t {
      * * 2: An {@link OperandType::INT32} scalar, and has to be one of the
      *      {@link FusedActivationFunc} values. Specifies the activation to
      *      invoke on the result.
+     *      For a {@link OperandType::TENSOR_INT32} tensor,
+     *      the {@link FusedActivationFunc} must be "NONE".
      *
      * Outputs:
      * * 0: A tensor of the same {@link OperandType} as input0.
@@ -2186,6 +2197,7 @@ enum OperationType : int32_t {
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} (since HAL version 1.3)
+     * * {@link OperandType::TENSOR_INT32} (since HAL version 1.3)
      *
      * Supported tensor rank: up to 4
      *
@@ -2196,6 +2208,8 @@ enum OperationType : int32_t {
      * * 2: An {@link OperandType::INT32} scalar, and has to be one of the
      *      {@link FusedActivationFunc} values. Specifies the activation to
      *      invoke on the result.
+     *      For a {@link OperandType::TENSOR_INT32} tensor,
+     *      the {@link FusedActivationFunc} must be "NONE".
      *
      * Outputs:
      * * 0: A tensor of the same {@link OperandType} as input0.
@@ -2242,6 +2256,7 @@ enum OperationType : int32_t {
      * Supported tensor {@link OperandType}:
      * * {@link OperandType::TENSOR_FLOAT16}
      * * {@link OperandType::TENSOR_FLOAT32}
+     * * {@link OperandType::TENSOR_INT32} (since HAL version 1.3)
      *
      * Supported tensor rank: from 1.
      *
