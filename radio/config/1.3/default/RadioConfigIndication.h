@@ -31,10 +31,6 @@ namespace implementation {
 using namespace ::android::hardware::radio::V1_0;
 using namespace ::android::hardware::radio::config;
 
-using ::android::sp;
-using ::android::hardware::hidl_array;
-using ::android::hardware::hidl_memory;
-using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
