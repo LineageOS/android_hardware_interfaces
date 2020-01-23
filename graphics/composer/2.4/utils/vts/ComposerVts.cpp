@@ -129,6 +129,16 @@ Error ComposerClient::setContentType(Display display, IComposerClient::ContentTy
     return mClient->setContentType(display, contentType);
 }
 
+Error ComposerClient::getLayerGenericMetadataKeys(
+        std::vector<IComposerClient::LayerGenericMetadataKey>* outKeys) {
+    Error error = Error::NONE;
+    mClient->getLayerGenericMetadataKeys([&](const auto tmpError, const auto& tmpKeys) {
+        error = tmpError;
+        *outKeys = tmpKeys;
+    });
+    return error;
+}
+
 }  // namespace vts
 }  // namespace V2_4
 }  // namespace composer

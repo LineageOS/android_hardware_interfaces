@@ -93,6 +93,9 @@ class ComposerClient : public V2_3::vts::ComposerClient {
 
     Error setContentType(Display display, IComposerClient::ContentType contentType);
 
+    Error getLayerGenericMetadataKeys(
+            std::vector<IComposerClient::LayerGenericMetadataKey>* outKeys);
+
   private:
     const sp<IComposerClient> mClient;
 };

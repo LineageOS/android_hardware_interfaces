@@ -53,6 +53,27 @@ class CommandWriterBase : public V2_3::CommandWriterBase {
         writeSigned(static_cast<int32_t>(clientTargetProperty.dataspace));
         endCommand();
     }
+
+    void setLayerGenericMetadata(const hidl_string& key, const bool mandatory,
+                                 const hidl_vec<uint8_t>& value) {
+        const size_t commandSize = 3 + sizeToElements(key.size()) + sizeToElements(value.size());
+        if (commandSize > std::numeric_limits<uint16_t>::max()) {
+            LOG_FATAL("Too much generic metadata (%zu elements)", commandSize);
+            return;
+        }
+
+        beginCommand(IComposerClient::Command::SET_LAYER_GENERIC_METADATA,
+                     static_cast<uint16_t>(commandSize));
+        write(key.size());
+        writeBlob(key.size(), reinterpret_cast<const unsigned char*>(key.c_str()));
+        write(mandatory);
+        write(value.size());
+        writeBlob(value.size(), value.data());
+        endCommand();
+    }
+
+  protected:
+    uint32_t sizeToElements(uint32_t size) { return (size + 3) / 4; }
 };
 
 // This class helps parse a command queue.  Note that all sizes/lengths are in

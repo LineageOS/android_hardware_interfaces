@@ -74,6 +74,43 @@ class ComposerCommandEngine : public V2_3::hal::ComposerCommandEngine {
 
     CommandWriterBase* getWriter() { return static_cast<CommandWriterBase*>(mWriter.get()); }
 
+    bool executeCommand(V2_1::IComposerClient::Command command, uint16_t length) override {
+        switch (static_cast<IComposerClient::Command>(command)) {
+            case IComposerClient::Command::SET_LAYER_GENERIC_METADATA:
+                return executeSetLayerGenericMetadata(length);
+            default:
+                return BaseType2_3::executeCommand(command, length);
+        }
+    }
+
+    bool executeSetLayerGenericMetadata(uint16_t length) {
+        // We expect at least two buffer lengths and a mandatory flag
+        if (length < 3) {
+            return false;
+        }
+
+        const uint32_t keySize = read();
+        std::string key;
+        key.resize(keySize);
+        readBlob(keySize, key.data());
+
+        const bool mandatory = read();
+
+        const uint32_t valueSize = read();
+        std::vector<uint8_t> value(valueSize);
+        readBlob(valueSize, value.data());
+
+        auto error = mHal->setLayerGenericMetadata(mCurrentDisplay, mCurrentLayer, key, mandatory,
+                                                   value);
+        if (error != Error::NONE) {
+            // The error cast is safe because setLayerGenericMetadata doesn't
+            // return any of the new values added in V2_4::Error
+            mWriter->setError(getCommandLoc(), static_cast<V2_1::Error>(error));
+        }
+
+        return true;
+    }
+
     ComposerHal* mHal;
 };
 

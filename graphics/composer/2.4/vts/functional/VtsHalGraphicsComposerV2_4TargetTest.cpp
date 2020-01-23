@@ -17,6 +17,7 @@
 #define LOG_TAG "graphics_composer_hidl_hal_test@2.4"
 
 #include <algorithm>
+#include <regex>
 #include <thread>
 
 #include <android-base/logging.h>
@@ -624,6 +625,28 @@ INSTANTIATE_TEST_SUITE_P(
         PerInstance, GraphicsComposerHidlCommandTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(IComposer::descriptor)),
         android::hardware::PrintInstanceNameToString);
+
+TEST_F(GraphicsComposerHidlCommandTest, getLayerGenericMetadataKeys) {
+    std::vector<IComposerClient::LayerGenericMetadataKey> keys;
+    mComposerClient->getLayerGenericMetadataKeys(&keys);
+
+    std::regex reverseDomainName("^[a-zA-Z-]{2,}(\\.[a-zA-Z0-9-]+)+$");
+    std::unordered_set<std::string> uniqueNames;
+    for (const auto& key : keys) {
+        std::string name(key.name.c_str());
+
+        // Keys must not start with 'android' or 'com.android'
+        ASSERT_FALSE(name.find("android") == 0);
+        ASSERT_FALSE(name.find("com.android") == 0);
+
+        // Keys must be in reverse domain name format
+        ASSERT_TRUE(std::regex_match(name, reverseDomainName));
+
+        // Keys must be unique within this list
+        const auto& [iter, inserted] = uniqueNames.insert(name);
+        ASSERT_TRUE(inserted);
+    }
+}
 
 }  // namespace
 }  // namespace vts
