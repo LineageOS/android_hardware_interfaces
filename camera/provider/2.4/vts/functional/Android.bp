@@ -41,6 +41,7 @@ cc_test {
 	"android.hardware.camera.metadata@3.4",
         "android.hardware.camera.provider@2.4",
         "android.hardware.camera.provider@2.5",
+        "android.hardware.camera.provider@2.6",
         "android.hardware.graphics.common@1.0",
         "android.hidl.allocator@1.0",
         "libgrallocusage",

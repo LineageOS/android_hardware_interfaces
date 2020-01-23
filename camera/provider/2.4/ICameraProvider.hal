@@ -115,7 +115,7 @@ interface ICameraProvider {
      *     INTERNAL_ERROR:
      *         A camera ID list cannot be created. This may be due to
      *         a failure to initialize the camera subsystem, for example.
-     * @return cameraDeviceServiceNames The vector of internal camera device
+     * @return cameraDeviceNames The vector of internal camera device
      *     names known to this provider.
      */
     getCameraIdList()
