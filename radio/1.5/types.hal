@@ -16,6 +16,7 @@
 
 package android.hardware.radio@1.5;
 
+import @1.0::PersoSubstate;
 import @1.1::EutranBands;
 import @1.1::GeranBands;
 import @1.1::RadioAccessNetworks;
@@ -552,4 +553,20 @@ enum IndicationFilter : @1.2::IndicationFilter {
     REGISTRATION_FAILURE = 1 << 5,
     /** Control the unsolicited sending of barring info updates via onBarringInfo */
     BARRING_INFO = 1 << 6,
+};
+
+/**
+ * Additional personalization categories in addition to those specified in 3GPP TS 22.022 and 3GPP2 C.S0068-0.
+ */
+enum PersoSubstate : @1.0::PersoSubstate {
+    SIM_SPN,
+    SIM_SPN_PUK,
+    SIM_SP_EHPLMN,              // Equivalent Home PLMN
+    SIM_SP_EHPLMN_PUK,
+    SIM_ICCID,
+    SIM_ICCID_PUK,
+    SIM_IMPI,
+    SIM_IMPI_PUK,
+    SIM_NS_SP,                  // Network subset service provider
+    SIM_NS_SP_PUK,
 };
