@@ -259,8 +259,7 @@ class WifiLegacyHal {
     virtual wifi_error resetTxPowerScenario(const std::string& iface_name);
     wifi_error setLatencyMode(const std::string& iface_name,
                               wifi_latency_mode mode);
-    wifi_error setThermalMitigationMode(const std::string& iface_name,
-                                        wifi_thermal_mode mode,
+    wifi_error setThermalMitigationMode(wifi_thermal_mode mode,
                                         uint32_t completion_window);
     // Logger/debug functions.
     std::pair<wifi_error, uint32_t> getLoggerSupportedFeatureSet(

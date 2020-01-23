@@ -824,11 +824,10 @@ wifi_error WifiLegacyHal::setLatencyMode(const std::string& iface_name,
                                                     mode);
 }
 
-wifi_error WifiLegacyHal::setThermalMitigationMode(
-    const std::string& iface_name, wifi_thermal_mode mode,
-    uint32_t completion_window) {
+wifi_error WifiLegacyHal::setThermalMitigationMode(wifi_thermal_mode mode,
+                                                   uint32_t completion_window) {
     return global_func_table_.wifi_set_thermal_mitigation_mode(
-        getIfaceHandle(iface_name), mode, completion_window);
+        global_handle_, mode, completion_window);
 }
 
 std::pair<wifi_error, uint32_t> WifiLegacyHal::getLoggerSupportedFeatureSet(
