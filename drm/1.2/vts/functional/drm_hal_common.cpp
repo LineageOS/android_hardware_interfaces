@@ -176,6 +176,50 @@ hidl_array<uint8_t, 16> DrmHalTest::getVendorUUID() {
     return hidl_array<uint8_t, 16>(&uuid[0]);
 }
 
+void DrmHalTest::provision() {
+    hidl_string certificateType;
+    hidl_string certificateAuthority;
+    hidl_vec<uint8_t> provisionRequest;
+    hidl_string defaultUrl;
+    auto res = drmPlugin->getProvisionRequest_1_2(
+            certificateType, certificateAuthority,
+            [&](StatusV1_2 status, const hidl_vec<uint8_t>& request,
+                const hidl_string& url) {
+                if (status == StatusV1_2::OK) {
+                    EXPECT_NE(request.size(), 0u);
+                    provisionRequest = request;
+                    defaultUrl = url;
+                } else if (status == StatusV1_2::ERROR_DRM_CANNOT_HANDLE) {
+                    EXPECT_EQ(0u, request.size());
+                }
+            });
+    EXPECT_OK(res);
+
+    if (provisionRequest.size() > 0) {
+        vector<uint8_t> response = vendorModule->handleProvisioningRequest(
+                provisionRequest, defaultUrl);
+        ASSERT_NE(0u, response.size());
+
+        auto res = drmPlugin->provideProvisionResponse(
+                response, [&](StatusV1_0 status, const hidl_vec<uint8_t>&,
+                              const hidl_vec<uint8_t>&) {
+                    EXPECT_EQ(StatusV1_0::OK, status);
+                });
+        EXPECT_OK(res);
+    }
+}
+
+SessionId DrmHalTest::openSession(SecurityLevel level, StatusV1_0 *err) {
+    SessionId sessionId;
+    auto res = drmPlugin->openSession_1_1(level,
+        [&](StatusV1_0 status, const hidl_vec<unsigned char> &id) {
+            *err = status;
+            sessionId = id;
+    });
+    EXPECT_OK(res);
+    return sessionId;
+}
+
 /**
  * Helper method to open a session and verify that a non-empty
  * session ID is returned
