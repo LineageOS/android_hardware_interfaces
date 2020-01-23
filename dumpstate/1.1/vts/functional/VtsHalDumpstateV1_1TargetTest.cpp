@@ -18,6 +18,7 @@
 
 #include <fcntl.h>
 #include <unistd.h>
+
 #include <vector>
 
 #include <android/hardware/dumpstate/1.1/IDumpstateDevice.h>
@@ -27,6 +28,8 @@
 #include <hidl/GtestPrinter.h>
 #include <hidl/ServiceManagement.h>
 #include <log/log.h>
+
+namespace {
 
 using ::android::sp;
 using ::android::hardware::Return;
@@ -55,7 +58,7 @@ class DumpstateHidl1_1Test : public ::testing::TestWithParam<std::string> {
     TEST_FOR_DUMPSTATE_MODE(name, body, WIFI);         \
     TEST_FOR_DUMPSTATE_MODE(name, body, DEFAULT);
 
-const uint64_t kDefaultTimeoutMillis = 30 * 1000;  // 30 seconds
+constexpr uint64_t kDefaultTimeoutMillis = 30 * 1000;  // 30 seconds
 
 // Negative test: make sure dumpstateBoard() doesn't crash when passed a null pointer.
 TEST_FOR_ALL_DUMPSTATE_MODES(TestNullHandle, [this](DumpstateMode mode) {
@@ -169,3 +172,5 @@ INSTANTIATE_TEST_SUITE_P(
         PerInstance, DumpstateHidl1_1Test,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(IDumpstateDevice::descriptor)),
         android::hardware::PrintInstanceNameToString);
+
+}  // namespace
