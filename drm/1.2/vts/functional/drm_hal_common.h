@@ -62,14 +62,6 @@ using std::vector;
 
 #define EXPECT_OK(ret) EXPECT_TRUE(ret.isOk())
 
-#define RETURN_IF_SKIPPED                                                                \
-    if (!vendorModule->isInstalled()) {                                                  \
-        GTEST_SKIP() << "This drm scheme not supported."                                 \
-                     << " library:" << GetParam()                                        \
-                     << " service-name:" << vendorModule->getServiceName() << std::endl; \
-        return;                                                                          \
-    }
-
 namespace android {
 namespace hardware {
 namespace drm {
@@ -131,9 +123,11 @@ class DrmHalClearkeyTest : public DrmHalTest {
    public:
      virtual void SetUp() override {
          DrmHalTest::SetUp();
-
-         if (vendorModule == nullptr) {
-             GTEST_SKIP() << "Instance not supported";
+         const uint8_t kClearKeyUUID[16] = {
+             0xE2, 0x71, 0x9D, 0x58, 0xA9, 0x85, 0xB3, 0xC9,
+             0x78, 0x1A, 0xB0, 0x30, 0xAF, 0x78, 0xD3, 0x0E};
+         if (!drmFactory->isCryptoSchemeSupported(kClearKeyUUID)) {
+             GTEST_SKIP() << "ClearKey not supported by " << GetParam();
          }
      }
     virtual void TearDown() override {}
