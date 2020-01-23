@@ -40,6 +40,8 @@ void InitHealthdConfig(struct healthd_config* healthd_config) {
             .batteryChargeCounterPath = String8(String8::kEmptyString),
             .batteryFullChargePath = String8(String8::kEmptyString),
             .batteryCycleCountPath = String8(String8::kEmptyString),
+            .batteryCapacityLevelPath = String8(String8::kEmptyString),
+            .batteryChargeTimeToFullNowPath = String8(String8::kEmptyString),
             .energyCounter = NULL,
             .boot_min_cap = 0,
             .screen_on = NULL,
