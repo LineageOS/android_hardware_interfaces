@@ -48,6 +48,7 @@ static const char* const kDrmErrorTestKey = "drmErrorTest";
 static const char* const kDrmErrorInvalidState = "invalidState";
 static const char* const kDrmErrorResourceContention = "resourceContention";
 static const SecurityLevel kSwSecureCrypto = SecurityLevel::SW_SECURE_CRYPTO;
+static const SecurityLevel kHwSecureAll = SecurityLevel::HW_SECURE_ALL;
 
 /**
  * Ensure drm factory supports module UUID Scheme
@@ -97,35 +98,17 @@ TEST_P(DrmHalTest, BadMimeNotSupported) {
  * that is delivered back to the HAL.
  */
 TEST_P(DrmHalTest, DoProvisioning) {
-    hidl_string certificateType;
-    hidl_string certificateAuthority;
-    hidl_vec<uint8_t> provisionRequest;
-    hidl_string defaultUrl;
-    auto res = drmPlugin->getProvisionRequest_1_2(
-            certificateType, certificateAuthority,
-            [&](StatusV1_2 status, const hidl_vec<uint8_t>& request,
-                const hidl_string& url) {
-                if (status == StatusV1_2::OK) {
-                    EXPECT_NE(request.size(), 0u);
-                    provisionRequest = request;
-                    defaultUrl = url;
-                } else if (status == StatusV1_2::ERROR_DRM_CANNOT_HANDLE) {
-                    EXPECT_EQ(0u, request.size());
-                }
-            });
-    EXPECT_OK(res);
-
-    if (provisionRequest.size() > 0) {
-        vector<uint8_t> response = vendorModule->handleProvisioningRequest(
-                provisionRequest, defaultUrl);
-        ASSERT_NE(0u, response.size());
-
-        auto res = drmPlugin->provideProvisionResponse(
-                response, [&](Status status, const hidl_vec<uint8_t>&,
-                              const hidl_vec<uint8_t>&) {
-                    EXPECT_EQ(Status::OK, status);
-                });
-        EXPECT_OK(res);
+    for (auto level : {kHwSecureAll, kSwSecureCrypto}) {
+        StatusV1_0 err = StatusV1_0::OK;
+        auto sid = openSession(level, &err);
+        if (err == StatusV1_0::OK) {
+            closeSession(sid);
+        } else if (err == StatusV1_0::ERROR_DRM_CANNOT_HANDLE) {
+            continue;
+        } else {
+            EXPECT_EQ(StatusV1_0::ERROR_DRM_NOT_PROVISIONED, err);
+            provision();
+        }
     }
 }
 
@@ -416,7 +399,6 @@ TEST_P(DrmHalTest, EncryptedAesCtrSegmentTestNoKeys) {
  * Ensure clearkey drm factory doesn't support security level higher than supported
  */
 TEST_P(DrmHalClearkeyTest, BadLevelNotSupported) {
-    const SecurityLevel kHwSecureAll = SecurityLevel::HW_SECURE_ALL;
     EXPECT_FALSE(drmFactory->isCryptoSchemeSupported_1_2(getVendorUUID(), kVideoMp4, kHwSecureAll));
 }
 
