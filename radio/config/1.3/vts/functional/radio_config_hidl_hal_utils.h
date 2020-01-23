@@ -28,19 +28,18 @@
 #include <gtest/gtest.h>
 #include <hidl/GtestPrinter.h>
 #include <hidl/ServiceManagement.h>
+#include <log/log.h>
 
 #include "vts_test_util.h"
 
-using namespace ::android::hardware::radio::config::V1_1;
-using namespace ::android::hardware::radio::config::V1_2;
-using namespace ::android::hardware::radio::config::V1_3;
+using namespace ::android::hardware::radio::config;
 
 using ::android::sp;
-using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
 
+using ::android::hardware::radio::V1_0::RadioIndicationType;
 using ::android::hardware::radio::V1_0::RadioResponseInfo;
 using ::android::hardware::radio::V1_0::RadioResponseType;
 
@@ -49,43 +48,46 @@ using ::android::hardware::radio::V1_0::RadioResponseType;
 class RadioConfigHidlTest;
 
 /* Callback class for radio config response */
-class RadioConfigResponse : public ::android::hardware::radio::config::V1_3::IRadioConfigResponse {
+class RadioConfigResponse : public V1_3::IRadioConfigResponse {
   protected:
     RadioConfigHidlTest& parent;
 
   public:
     RadioResponseInfo rspInfo;
-    PhoneCapability phoneCap;
+    V1_1::PhoneCapability phoneCap_1_1;
+    V1_3::PhoneCapability phoneCap_1_3;
 
     RadioConfigResponse(RadioConfigHidlTest& parent);
     virtual ~RadioConfigResponse() = default;
 
     /* 1.0 Api */
-    Return<void> getSimSlotsStatusResponse(
-            const RadioResponseInfo& info,
-            const hidl_vec<::android::hardware::radio::config::V1_0::SimSlotStatus>& slotStatus);
+    Return<void> getSimSlotsStatusResponse(const RadioResponseInfo& info,
+                                           const hidl_vec<V1_0::SimSlotStatus>& slotStatus);
 
     Return<void> setSimSlotsMappingResponse(const RadioResponseInfo& info);
 
     /* 1.1 Api */
     Return<void> getPhoneCapabilityResponse(const RadioResponseInfo& info,
-                                            const PhoneCapability& phoneCapability);
+                                            const V1_1::PhoneCapability& phoneCapability);
 
     Return<void> setPreferredDataModemResponse(const RadioResponseInfo& info);
 
     Return<void> getModemsConfigResponse(const RadioResponseInfo& info,
-                                         const ModemsConfig& mConfig);
+                                         const V1_1::ModemsConfig& mConfig);
 
     Return<void> setModemsConfigResponse(const RadioResponseInfo& info);
 
     /* 1.2 Api */
     Return<void> getSimSlotsStatusResponse_1_2(const RadioResponseInfo& info,
-                                               const hidl_vec<SimSlotStatus>& slotStatus);
+                                               const hidl_vec<V1_2::SimSlotStatus>& slotStatus);
+
+    /* 1.3 Api */
+    Return<void> getPhoneCapabilityResponse_1_3(const RadioResponseInfo& info,
+                                                const V1_3::PhoneCapability& phoneCapability);
 };
 
 /* Callback class for radio config indication */
-class RadioConfigIndication
-    : public ::android::hardware::radio::config::V1_3::IRadioConfigIndication {
+class RadioConfigIndication : public V1_3::IRadioConfigIndication {
   protected:
     RadioConfigHidlTest& parent;
 
@@ -94,9 +96,8 @@ class RadioConfigIndication
     virtual ~RadioConfigIndication() = default;
 
     /* 1.2 Api */
-    Return<void> simSlotsStatusChanged_1_2(
-            ::android::hardware::radio::V1_0::RadioIndicationType type,
-            const hidl_vec<SimSlotStatus>& slotStatus);
+    Return<void> simSlotsStatusChanged_1_2(RadioIndicationType type,
+                                           const hidl_vec<V1_2::SimSlotStatus>& slotStatus);
 };
 
 // The main test class for Radio config HIDL.
@@ -121,7 +122,7 @@ class RadioConfigHidlTest : public ::testing::TestWithParam<std::string> {
     int serial;
 
     /* radio config service handle */
-    sp<::android::hardware::radio::config::V1_3::IRadioConfig> radioConfig;
+    sp<V1_3::IRadioConfig> radioConfig;
 
     /* radio config response handle */
     sp<RadioConfigResponse> radioConfigRsp;

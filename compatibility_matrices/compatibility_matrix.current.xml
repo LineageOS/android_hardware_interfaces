@@ -204,6 +204,8 @@
     </hal>
     <hal format="hidl" optional="false">
         <name>android.hardware.graphics.allocator</name>
+        <!-- TODO(b/136016160): deprecating 2.0. New devices should not use this -->
+        <version>2.0</version>
         <version>3.0</version>
         <version>4.0</version>
         <interface>
@@ -221,6 +223,8 @@
     </hal>
     <hal format="hidl" optional="false">
         <name>android.hardware.graphics.mapper</name>
+        <!-- TODO(b/136016160): deprecating 2.1. New devices should not use this -->
+        <version>2.1</version>
         <version>3.0</version>
         <version>4.0</version>
         <interface>
@@ -471,7 +475,7 @@
     </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.usb.gadget</name>
-        <version>1.0</version>
+        <version>1.0-1</version>
         <interface>
             <name>IUsbGadget</name>
             <instance>default</instance>

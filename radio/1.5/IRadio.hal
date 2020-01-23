@@ -25,6 +25,7 @@ import @1.5::DataProfileInfo;
 import @1.5::IndicationFilter;
 import @1.5::LinkAddress;
 import @1.5::NetworkScanRequest;
+import @1.5::RadioAccessNetworks;
 import @1.5::RadioAccessSpecifier;
 import @1.5::SignalThresholdInfo;
 
@@ -245,4 +246,40 @@ interface IRadio extends @1.4::IRadio {
      * Response callback is IRadioResponse.getBarringInfoResponse()
      */
     oneway getBarringInfo(int32_t serial);
+
+    /**
+     * Request current voice registration state
+     *
+     * @param serial Serial number of request.
+     *
+     * Response function is IRadioResponse.getVoiceRegistrationStateResponse_1_5()
+     */
+    oneway getVoiceRegistrationState_1_5(int32_t serial);
+
+    /**
+     * Request current data registration state
+     *
+     * @param serial Serial number of request.
+     *
+     * Response function is IRadioResponse.getDataRegistrationStateResponse_1_5()
+     */
+    oneway getDataRegistrationState_1_5(int32_t serial);
+
+    /*
+     * Manually select a specified network.
+     * This request must not respond until the new operator is selected and registered.
+     * Per TS 23.122, the RAN is just the initial suggested value.
+     * If registration fails, the RAN is not available afterwards, or the RAN is not within
+     * the network types specified by IRadio::setPreferredNetworkTypeBitmap, then the modem
+     * will need to select the next best RAN for network registration.
+     *
+     * @param serial Serial number of request.
+     * @param operatorNumeric String specifying MCCMNC of network to select (eg "310170").
+     * @param ran Initial suggested radio access network type. If value is UNKNOWN, the modem
+     *     will select the next best RAN for network registration.
+     *
+     * Response function is IRadioResponse.setNetworkSelectionModeManualResponse_1_5()
+     */
+    oneway setNetworkSelectionModeManual_1_5(int32_t serial, string operatorNumeric,
+            RadioAccessNetworks ran);
 };

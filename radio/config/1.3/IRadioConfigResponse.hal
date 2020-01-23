@@ -16,11 +16,22 @@
 
 package android.hardware.radio.config@1.3;
 
+import android.hardware.radio@1.0::RadioResponseInfo;
 import @1.2::IRadioConfigResponse;
+import @1.3::PhoneCapability;
 
 /**
  * Interface declaring response functions to solicited radio config requests.
  */
 interface IRadioConfigResponse extends @1.2::IRadioConfigResponse {
-
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     * @param phoneCapability <@1.3::PhoneCapability> it defines modem's capability for example
+     *        how many logical modems it has, how many data connections it supports.
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     */
+    oneway getPhoneCapabilityResponse_1_3(RadioResponseInfo info, PhoneCapability phoneCapability);
 };

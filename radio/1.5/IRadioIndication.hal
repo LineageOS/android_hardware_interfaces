@@ -76,4 +76,23 @@ interface IRadioIndication extends @1.4::IRadioIndication {
      */
     oneway barringInfoChanged(
             RadioIndicationType type, CellIdentity cellIdentity, vec<BarringInfo> barringInfos);
+
+    /**
+     * Report all of the current cell information known to the radio.
+     *
+     * This indication is updated from IRadioIndication@1.4 to report the @1.5 version of
+     * CellInfo.
+     *
+     * @param type Type of radio indication
+     * @param records Current cell information
+     */
+    oneway cellInfoList_1_5(RadioIndicationType type, vec<CellInfo> records);
+
+    /**
+     * Incremental network scan results.
+     *
+     * This indication is updated from IRadioIndication@1.4 to report the @1.5 version of
+     * CellInfo.
+     */
+    oneway networkScanResult_1_5(RadioIndicationType type, NetworkScanResult result);
 };

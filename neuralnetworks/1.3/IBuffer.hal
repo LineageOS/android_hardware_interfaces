@@ -16,7 +16,7 @@
 
 package android.hardware.neuralnetworks@1.3;
 
-import @1.0::ErrorStatus;
+import ErrorStatus;
 
 /**
  * This interface represents a device memory buffer.
