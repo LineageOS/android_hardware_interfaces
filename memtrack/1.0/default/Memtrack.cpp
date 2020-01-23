@@ -34,9 +34,7 @@ Memtrack::Memtrack(const memtrack_module_t *module) : mModule(module) {
         mModule->init(mModule);
 }
 
-Memtrack::~Memtrack() {
-    delete(mModule);
-}
+Memtrack::~Memtrack() {}
 
 Return<void> Memtrack::getMemory(int32_t pid, MemtrackType type,
         getMemory_cb _hidl_cb)  {
