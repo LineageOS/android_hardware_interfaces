@@ -90,6 +90,7 @@ interface IGnssCallback {
          * - QZSS:    193-200
          * - Galileo: 1-36
          * - Beidou:  1-37
+         * - IRNSS:   1-14
          */
         int16_t svid;
 
