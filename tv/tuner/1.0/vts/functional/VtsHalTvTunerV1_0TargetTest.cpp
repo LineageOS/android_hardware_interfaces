@@ -1322,7 +1322,7 @@ TEST_F(TunerHidlTest, CloseFrontend) {
     }
 }
 
-/*TEST_F(TunerHidlTest, CreateDemuxWithFrontend) {
+TEST_F(TunerHidlTest, CreateDemuxWithFrontend) {
     Result status;
     hidl_vec<FrontendId> feIds;
 
@@ -1347,7 +1347,7 @@ TEST_F(TunerHidlTest, CloseFrontend) {
         ASSERT_TRUE(createDemuxWithFrontend(feIds[i], settings));
         mFrontend->stopTune();
     }
-}*/
+}
 
 TEST_F(TunerHidlTest, CreateDemux) {
     description("Create Demux");
@@ -1371,8 +1371,10 @@ TEST_F(TunerHidlTest, CloseDescrambler) {
 
 /*
  * DATA FLOW TESTS
+ *
+ * TODO: re-enable the tests after finalizing the testing stream.
  */
-TEST_F(TunerHidlTest, PlaybackDataFlowWithSectionFilterTest) {
+/*TEST_F(TunerHidlTest, PlaybackDataFlowWithSectionFilterTest) {
     description("Feed ts data from playback and configure pes filter to get output");
 
     // todo modulize the filter conf parser
@@ -1481,7 +1483,7 @@ TEST_F(TunerHidlTest, RecordDataFlowWithTsRecordFilterTest) {
     vector<string> goldenOutputFiles;
 
     ASSERT_TRUE(recordDataFlowTest(filterConf, recordSetting, goldenOutputFiles));
-}
+}*/
 
 }  // namespace
 
