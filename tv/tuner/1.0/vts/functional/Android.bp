@@ -30,5 +30,10 @@ cc_test {
     shared_libs: [
         "libbinder",
     ],
-    test_suites: ["general-tests"],
+    test_suites: [
+        "general-tests",
+        "vts-core",
+    ],
+
+    require_root: true,
 }

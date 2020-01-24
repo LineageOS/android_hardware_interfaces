@@ -31,8 +31,11 @@
 #include <android/hardware/tv/tuner/1.0/types.h>
 #include <binder/MemoryDealer.h>
 #include <fmq/MessageQueue.h>
+#include <gtest/gtest.h>
+#include <hidl/GtestPrinter.h>
 #include <hidl/HidlSupport.h>
 #include <hidl/HidlTransportSupport.h>
+#include <hidl/ServiceManagement.h>
 #include <hidl/Status.h>
 #include <hidlmemory/FrameworkUtils.h>
 #include <utils/Condition.h>
@@ -633,23 +636,10 @@ void DvrCallback::stopRecordThread() {
     android::Mutex::Autolock autoLock(mRecordThreadLock);
 }
 
-// Test environment for Tuner HIDL HAL.
-class TunerHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
-  public:
-    // get the test environment singleton
-    static TunerHidlEnvironment* Instance() {
-        static TunerHidlEnvironment* instance = new TunerHidlEnvironment;
-        return instance;
-    }
-
-    virtual void registerTestServices() override { registerTestService<ITuner>(); }
-};
-
-class TunerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
+class TunerHidlTest : public testing::TestWithParam<std::string> {
   public:
     virtual void SetUp() override {
-        mService = ::testing::VtsHalHidlTargetTestBase::getService<ITuner>(
-                TunerHidlEnvironment::Instance()->getServiceName<ITuner>());
+        mService = ITuner::getService(GetParam());
         ASSERT_NE(mService, nullptr);
     }
 
@@ -1242,7 +1232,7 @@ class TunerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 /*
  * API STATUS TESTS
  */
-TEST_F(TunerHidlTest, CreateFrontend) {
+TEST_P(TunerHidlTest, CreateFrontend) {
     Result status;
     hidl_vec<FrontendId> feIds;
 
@@ -1262,7 +1252,7 @@ TEST_F(TunerHidlTest, CreateFrontend) {
     }
 }
 
-TEST_F(TunerHidlTest, TuneFrontend) {
+TEST_P(TunerHidlTest, TuneFrontend) {
     Result status;
     hidl_vec<FrontendId> feIds;
 
@@ -1282,7 +1272,7 @@ TEST_F(TunerHidlTest, TuneFrontend) {
     }
 }
 
-TEST_F(TunerHidlTest, StopTuneFrontend) {
+TEST_P(TunerHidlTest, StopTuneFrontend) {
     Result status;
     hidl_vec<FrontendId> feIds;
 
@@ -1302,7 +1292,7 @@ TEST_F(TunerHidlTest, StopTuneFrontend) {
     }
 }
 
-TEST_F(TunerHidlTest, CloseFrontend) {
+TEST_P(TunerHidlTest, CloseFrontend) {
     Result status;
     hidl_vec<FrontendId> feIds;
 
@@ -1322,7 +1312,7 @@ TEST_F(TunerHidlTest, CloseFrontend) {
     }
 }
 
-TEST_F(TunerHidlTest, CreateDemuxWithFrontend) {
+TEST_P(TunerHidlTest, CreateDemuxWithFrontend) {
     Result status;
     hidl_vec<FrontendId> feIds;
 
@@ -1349,22 +1339,22 @@ TEST_F(TunerHidlTest, CreateDemuxWithFrontend) {
     }
 }
 
-TEST_F(TunerHidlTest, CreateDemux) {
+TEST_P(TunerHidlTest, CreateDemux) {
     description("Create Demux");
     ASSERT_TRUE(createDemux());
 }
 
-TEST_F(TunerHidlTest, CloseDemux) {
+TEST_P(TunerHidlTest, CloseDemux) {
     description("Close Demux");
     ASSERT_TRUE(closeDemux());
 }
 
-TEST_F(TunerHidlTest, CreateDescrambler) {
+TEST_P(TunerHidlTest, CreateDescrambler) {
     description("Create Descrambler");
     ASSERT_TRUE(createDescrambler());
 }
 
-TEST_F(TunerHidlTest, CloseDescrambler) {
+TEST_P(TunerHidlTest, CloseDescrambler) {
     description("Close Descrambler");
     ASSERT_TRUE(closeDescrambler());
 }
@@ -1374,7 +1364,7 @@ TEST_F(TunerHidlTest, CloseDescrambler) {
  *
  * TODO: re-enable the tests after finalizing the testing stream.
  */
-/*TEST_F(TunerHidlTest, PlaybackDataFlowWithSectionFilterTest) {
+/*TEST_P(TunerHidlTest, PlaybackDataFlowWithSectionFilterTest) {
     description("Feed ts data from playback and configure pes filter to get output");
 
     // todo modulize the filter conf parser
@@ -1417,7 +1407,7 @@ TEST_F(TunerHidlTest, CloseDescrambler) {
     ASSERT_TRUE(playbackDataFlowTest(filterConf, playbackConf, goldenOutputFiles));
 }
 
-TEST_F(TunerHidlTest, BroadcastDataFlowWithPesFilterTest) {
+TEST_P(TunerHidlTest, BroadcastDataFlowWithPesFilterTest) {
     description("Feed ts data from frontend and test with PES filter");
 
     // todo modulize the filter conf parser
@@ -1447,7 +1437,7 @@ TEST_F(TunerHidlTest, BroadcastDataFlowWithPesFilterTest) {
     ASSERT_TRUE(broadcastDataFlowTest(filterConf, goldenOutputFiles));
 }
 
-TEST_F(TunerHidlTest, RecordDataFlowWithTsRecordFilterTest) {
+TEST_P(TunerHidlTest, RecordDataFlowWithTsRecordFilterTest) {
     description("Feed ts data from frontend to recording and test with ts record filter");
 
     // todo modulize the filter conf parser
@@ -1487,11 +1477,7 @@ TEST_F(TunerHidlTest, RecordDataFlowWithTsRecordFilterTest) {
 
 }  // namespace
 
-int main(int argc, char** argv) {
-    ::testing::AddGlobalTestEnvironment(TunerHidlEnvironment::Instance());
-    ::testing::InitGoogleTest(&argc, argv);
-    TunerHidlEnvironment::Instance()->init(&argc, argv);
-    int status = RUN_ALL_TESTS();
-    LOG(INFO) << "Test result = " << status;
-    return status;
-}
+INSTANTIATE_TEST_SUITE_P(
+        PerInstance, TunerHidlTest,
+        testing::ValuesIn(android::hardware::getAllHalInstanceNames(ITuner::descriptor)),
+        android::hardware::PrintInstanceNameToString);
