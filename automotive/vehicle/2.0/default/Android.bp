@@ -82,6 +82,20 @@ cc_library_static {
     ],
 }
 
+// VHal virtualization utils
+cc_library_static {
+    name: "android.hardware.automotive.vehicle@2.0-virtualization-utils",
+    vendor: true,
+    defaults: ["vhal_v2_0_defaults"],
+    srcs: [
+        "impl/vhal_v2_0/virtualization/Utils.cpp",
+    ],
+    export_include_dirs: ["impl"],
+    shared_libs: [
+        "libbase",
+    ],
+}
+
 cc_test {
     name: "android.hardware.automotive.vehicle@2.0-manager-unit-tests",
     vendor: true,
@@ -131,5 +145,61 @@ cc_binary {
         "android.hardware.automotive.vehicle@2.0-default-impl-lib",
         "android.hardware.automotive.vehicle@2.0-libproto-native",
         "libqemu_pipe",
+    ],
+}
+
+cc_binary {
+    name: "android.hardware.automotive.vehicle@2.0-virtualization-service",
+    defaults: ["vhal_v2_0_defaults"],
+    init_rc: ["android.hardware.automotive.vehicle@2.0-virtualization-service.rc"],
+    vendor: true,
+    relative_install_path: "hw",
+    srcs: [
+        "impl/vhal_v2_0/virtualization/GrpcVehicleClient.cpp",
+        "VirtualizedVehicleService.cpp",
+    ],
+    shared_libs: [
+        "libbase",
+        "libcutils",
+        "libjsoncpp",
+        "libprotobuf-cpp-full",
+        "libgrpc++",
+    ],
+    static_libs: [
+        "android.hardware.automotive.vehicle@2.0-manager-lib",
+        "android.hardware.automotive.vehicle@2.0-default-impl-lib",
+        "android.hardware.automotive.vehicle@2.0-grpc",
+        "android.hardware.automotive.vehicle@2.0-virtualization-utils",
+        "libqemu_pipe",
+    ],
+    cflags: [
+        "-Wno-unused-parameter"
+    ],
+}
+
+cc_binary {
+    name: "android.hardware.automotive.vehicle@2.0-virtualization-grpc-server",
+    init_rc: ["android.hardware.automotive.vehicle@2.0-virtualization-grpc-server.rc"],
+    defaults: ["vhal_v2_0_defaults"],
+    vendor: true,
+    relative_install_path: "hw",
+    srcs: [
+        "impl/vhal_v2_0/virtualization/GrpcVehicleServer.cpp",
+        "VirtualizationGrpcServer.cpp",
+    ],
+    shared_libs: [
+        "libbase",
+        "libjsoncpp",
+        "libprotobuf-cpp-full",
+        "libgrpc++",
+    ],
+    static_libs: [
+        "android.hardware.automotive.vehicle@2.0-manager-lib",
+        "android.hardware.automotive.vehicle@2.0-default-impl-lib",
+        "android.hardware.automotive.vehicle@2.0-grpc",
+        "android.hardware.automotive.vehicle@2.0-virtualization-utils",
+    ],
+    cflags: [
+        "-Wno-unused-parameter"
     ],
 }

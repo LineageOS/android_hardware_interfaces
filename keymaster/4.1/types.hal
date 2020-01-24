@@ -50,10 +50,29 @@ enum Tag : @4.0::Tag {
      * HAL attests to Credential Keys.  IIdentityCredential produces Keymaster-style attestations.
      */
     IDENTITY_CREDENTIAL_KEY = TagType:BOOL | 721,
+
+    /**
+     * To prevent keys from being compromised if an attacker acquires read access to system / kernel
+     * memory, some inline encryption hardware supports protecting storage encryption keys in hardware
+     * without software having access to or the ability to set the plaintext keys. Instead, software
+     * only sees wrapped version of these keys.
+     *
+     * STORAGE_KEY is used to denote that a key generated or imported is a key used for storage
+     * encryption. Keys of this type can either be generated or imported or secure imported using
+     * keymaster. exportKey() can be used to re-wrap storage key with a per-boot ephemeral key wrapped
+     * key once the key characteristics are enforced.
+     *
+     * Keys with this tag cannot be used for any operation within keymaster.
+     * ErrorCode::INVALID_OPERATION is returned when a key with Tag::STORAGE_KEY is provided to
+     * begin().
+     */
+    STORAGE_KEY = TagType:BOOL | 722,
 };
 
 enum ErrorCode : @4.0::ErrorCode {
     EARLY_BOOT_ENDED = -73,
     ATTESTATION_KEYS_NOT_PROVISIONED = -74,
     ATTESTATION_IDS_NOT_PROVISIONED = -75,
+    INVALID_OPERATION = -76,
+    STORAGE_KEY_UNSUPPORTED = -77,
 };

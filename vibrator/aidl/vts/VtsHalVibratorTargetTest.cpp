@@ -261,6 +261,29 @@ TEST_P(VibratorAidl, ExternalControlUnsupportedMatchingCapabilities) {
     }
 }
 
+TEST_P(VibratorAidl, GetSupportedPrimitives) {
+    if (capabilities & IVibrator::CAP_COMPOSE_EFFECTS) {
+        std::vector<CompositePrimitive> supported;
+
+        EXPECT_EQ(Status::EX_NONE, vibrator->getSupportedPrimitives(&supported).exceptionCode());
+
+        std::sort(supported.begin(), supported.end());
+
+        EXPECT_EQ(kCompositePrimitives, supported);
+    }
+}
+
+TEST_P(VibratorAidl, GetPrimitiveDuration) {
+    if (capabilities & IVibrator::CAP_COMPOSE_EFFECTS) {
+        int32_t duration;
+
+        for (auto primitive : kCompositePrimitives) {
+            EXPECT_EQ(Status::EX_NONE,
+                      vibrator->getPrimitiveDuration(primitive, &duration).exceptionCode());
+        }
+    }
+}
+
 TEST_P(VibratorAidl, ComposeValidPrimitives) {
     if (capabilities & IVibrator::CAP_COMPOSE_EFFECTS) {
         int32_t maxDelay, maxSize;
@@ -354,6 +377,30 @@ TEST_P(VibratorAidl, CompseSizeBoundary) {
         EXPECT_EQ(Status::EX_ILLEGAL_ARGUMENT,
                   vibrator->compose(composite, nullptr).exceptionCode());
         vibrator->off();
+    }
+}
+
+TEST_P(VibratorAidl, ComposeCallback) {
+    if (capabilities & IVibrator::CAP_COMPOSE_EFFECTS) {
+        std::promise<void> completionPromise;
+        std::future<void> completionFuture{completionPromise.get_future()};
+        sp<CompletionCallback> callback =
+                new CompletionCallback([&completionPromise] { completionPromise.set_value(); });
+        CompositePrimitive primitive = CompositePrimitive::CLICK;
+        CompositeEffect effect;
+        std::vector<CompositeEffect> composite;
+        int32_t duration;
+
+        effect.delayMs = 0;
+        effect.primitive = primitive;
+        effect.scale = 1.0f;
+        composite.emplace_back(effect);
+
+        EXPECT_EQ(Status::EX_NONE,
+                  vibrator->getPrimitiveDuration(primitive, &duration).exceptionCode());
+        EXPECT_EQ(Status::EX_NONE, vibrator->compose(composite, callback).exceptionCode());
+        EXPECT_EQ(completionFuture.wait_for(std::chrono::milliseconds(duration * 2)),
+                  std::future_status::ready);
     }
 }
 

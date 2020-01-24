@@ -16,7 +16,9 @@
 
 #define LOG_TAG "neuralnetworks_hidl_hal_test"
 
+#include <android/hardware/neuralnetworks/1.3/IFencedExecutionCallback.h>
 #include <chrono>
+
 #include "1.0/Utils.h"
 #include "1.3/Callbacks.h"
 #include "ExecutionBurstController.h"
@@ -135,6 +137,22 @@ static void validate(const sp<IPreparedModel>& preparedModel, const std::string&
             // negative test: double free of memory
             burst->freeMemory(keys.front());
         }
+    }
+
+    // dispatch
+    {
+        SCOPED_TRACE(message + " [executeFenced]");
+        Return<void> ret = preparedModel->executeFenced(
+                request, {}, MeasureTiming::NO,
+                [](ErrorStatus error, const hidl_handle& handle,
+                   const sp<IFencedExecutionCallback>& callback) {
+                    if (error != ErrorStatus::DEVICE_UNAVAILABLE) {
+                        ASSERT_EQ(ErrorStatus::INVALID_ARGUMENT, error);
+                    }
+                    ASSERT_EQ(handle.getNativeHandle(), nullptr);
+                    ASSERT_EQ(callback, nullptr);
+                });
+        ASSERT_TRUE(ret.isOk());
     }
 }
 

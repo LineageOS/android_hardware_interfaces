@@ -65,6 +65,7 @@ cc_test {
         "libhidlmemory",
         "libneuralnetworks_generated_test_harness",
         "libneuralnetworks_utils",
+        "libsync",
     ],
     whole_static_libs: [
         "neuralnetworks_generated_V1_0_example",

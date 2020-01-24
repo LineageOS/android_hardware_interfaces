@@ -87,7 +87,7 @@ static DrmHalVTSVendorModule_V1* getModuleForInstance(const std::string& instanc
         return new DrmHalVTSClearkeyModule();
     }
 
-    return static_cast<DrmHalVTSVendorModule_V1*>(DrmHalTest::gVendorModules->getModule(instance));
+    return static_cast<DrmHalVTSVendorModule_V1*>(DrmHalTest::gVendorModules->getModuleByName(instance));
 }
 
 /**
@@ -120,21 +120,12 @@ void DrmHalTest::SetUp() {
         GTEST_SKIP() << "No vendor module installed";
     }
 
-    if (instance == "clearkey") {
-        // TODO(b/147449315)
-        // Only the clearkey plugged into the "default" instance supports
-        // this test. Currently the "clearkey" instance fails some tests
-        // here.
-        GTEST_SKIP() << "Clearkey tests don't work with 'clearkey' instance yet.";
-    }
-
     ASSERT_EQ(instance, vendorModule->getServiceName());
     contentConfigurations = vendorModule->getContentConfigurations();
 
     // If drm scheme not installed skip subsequent tests
-    if (drmFactory.get() == nullptr || !drmFactory->isCryptoSchemeSupported(getVendorUUID())) {
-        vendorModule->setInstalled(false);
-        return;
+    if (!drmFactory->isCryptoSchemeSupported(getVendorUUID())) {
+        GTEST_SKIP() << "vendor module drm scheme not supported";
     }
 
     ASSERT_NE(nullptr, drmPlugin.get()) << "Can't find " << vendorModule->getServiceName() <<  " drm@1.2 plugin";

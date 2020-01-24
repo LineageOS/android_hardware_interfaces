@@ -1,0 +1,4 @@
+service vendor.vehicle-hal-2.0 /vendor/bin/hw/android.hardware.automotive.vehicle@2.0-virtualization-service
+    class hal
+    user vehicle_network
+    group system inet

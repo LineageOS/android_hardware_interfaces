@@ -1,0 +1,35 @@
+/*
+ * Copyright 2020 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.biometrics.fingerprint@2.2;
+
+import @2.1::IBiometricsFingerprintClientCallback;
+
+/*
+ * This HAL interface communicates asynchronous results from the
+ * fingerprint driver in response to user actions on the fingerprint sensor
+ */
+interface IBiometricsFingerprintClientCallback extends @2.1::IBiometricsFingerprintClientCallback {
+    /**
+     * Sent when a fingerprint image is acquired by the sensor
+     * @param deviceId the instance of this fingerprint device
+     * @param acquiredInfo a message about the quality of the acquired image
+     * @param vendorCode a vendor-specific message about the quality of the image. Only
+     *        valid when acquiredInfo == ACQUIRED_VENDOR
+     */
+    oneway onAcquired_2_2(uint64_t deviceId, FingerprintAcquiredInfo acquiredInfo,
+        int32_t vendorCode);
+};

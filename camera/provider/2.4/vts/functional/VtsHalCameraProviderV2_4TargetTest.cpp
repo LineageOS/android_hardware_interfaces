@@ -40,15 +40,17 @@
 #include <android/hardware/camera/metadata/3.4/types.h>
 #include <android/hardware/camera/provider/2.4/ICameraProvider.h>
 #include <android/hardware/camera/provider/2.5/ICameraProvider.h>
+#include <android/hardware/camera/provider/2.6/ICameraProvider.h>
+#include <android/hardware/camera/provider/2.6/ICameraProviderCallback.h>
 #include <android/hidl/manager/1.0/IServiceManager.h>
 #include <binder/MemoryHeapBase.h>
 #include <cutils/properties.h>
 #include <fmq/MessageQueue.h>
 #include <grallocusage/GrallocUsageConversion.h>
+#include <gtest/gtest.h>
 #include <gui/BufferItemConsumer.h>
 #include <gui/BufferQueue.h>
 #include <gui/Surface.h>
-#include <gtest/gtest.h>
 #include <hardware/gralloc.h>
 #include <hardware/gralloc1.h>
 #include <hidl/GtestPrinter.h>
@@ -537,7 +539,7 @@ public:
      uint32_t id;
      ASSERT_TRUE(parseProviderName(service_name, &mProviderType, &id));
 
-     castProvider(mProvider, &mProvider2_5);
+     castProvider(mProvider, &mProvider2_5, &mProvider2_6);
      notifyDeviceState(provider::V2_5::DeviceState::NORMAL);
  }
  virtual void TearDown() override {}
@@ -709,8 +711,9 @@ public:
             sp<ICameraDeviceSession> *session /*out*/,
             camera_metadata_t **staticMeta /*out*/,
             ::android::sp<ICameraDevice> *device = nullptr/*out*/);
-    void castProvider(const sp<provider::V2_4::ICameraProvider> &provider,
-            sp<provider::V2_5::ICameraProvider> *provider2_5 /*out*/);
+    void castProvider(const sp<provider::V2_4::ICameraProvider>& provider,
+                      sp<provider::V2_5::ICameraProvider>* provider2_5 /*out*/,
+                      sp<provider::V2_6::ICameraProvider>* provider2_6 /*out*/);
     void castSession(const sp<ICameraDeviceSession> &session, int32_t deviceVersion,
             sp<device::V3_3::ICameraDeviceSession> *session3_3 /*out*/,
             sp<device::V3_4::ICameraDeviceSession> *session3_4 /*out*/,
@@ -937,6 +940,7 @@ protected:
     // Camera provider service
     sp<ICameraProvider> mProvider;
     sp<::android::hardware::camera::provider::V2_5::ICameraProvider> mProvider2_5;
+    sp<::android::hardware::camera::provider::V2_6::ICameraProvider> mProvider2_6;
 
     // Camera provider type.
     std::string mProviderType;
@@ -1649,6 +1653,33 @@ TEST_P(CameraHidlTest, setCallback) {
             return Void();
         }
     };
+
+    struct ProviderCb2_6
+        : public ::android::hardware::camera::provider::V2_6::ICameraProviderCallback {
+        virtual Return<void> cameraDeviceStatusChange(const hidl_string& cameraDeviceName,
+                                                      CameraDeviceStatus newStatus) override {
+            ALOGI("camera device status callback name %s, status %d", cameraDeviceName.c_str(),
+                  (int)newStatus);
+            return Void();
+        }
+
+        virtual Return<void> torchModeStatusChange(const hidl_string& cameraDeviceName,
+                                                   TorchModeStatus newStatus) override {
+            ALOGI("Torch mode status callback name %s, status %d", cameraDeviceName.c_str(),
+                  (int)newStatus);
+            return Void();
+        }
+
+        virtual Return<void> physicalCameraDeviceStatusChange(
+                const hidl_string& cameraDeviceName, const hidl_string& physicalCameraDeviceName,
+                CameraDeviceStatus newStatus) override {
+            ALOGI("physical camera device status callback name %s, physical camera name %s,"
+                  " status %d",
+                  cameraDeviceName.c_str(), physicalCameraDeviceName.c_str(), (int)newStatus);
+            return Void();
+        }
+    };
+
     sp<ProviderCb> cb = new ProviderCb;
     auto status = mProvider->setCallback(cb);
     ASSERT_TRUE(status.isOk());
@@ -1656,6 +1687,16 @@ TEST_P(CameraHidlTest, setCallback) {
     status = mProvider->setCallback(nullptr);
     ASSERT_TRUE(status.isOk());
     ASSERT_EQ(Status::OK, status);
+
+    if (mProvider2_6.get() != nullptr) {
+        sp<ProviderCb2_6> cb = new ProviderCb2_6;
+        auto status = mProvider2_6->setCallback(cb);
+        ASSERT_TRUE(status.isOk());
+        ASSERT_EQ(Status::OK, status);
+        status = mProvider2_6->setCallback(nullptr);
+        ASSERT_TRUE(status.isOk());
+        ASSERT_EQ(Status::OK, status);
+    }
 }
 
 // Test if ICameraProvider::getCameraDeviceInterface returns Status::OK and non-null device
@@ -5596,12 +5637,19 @@ void CameraHidlTest::castDevice(const sp<device::V3_2::ICameraDevice> &device,
 }
 
 //Cast camera provider to corresponding version if available
-void CameraHidlTest::castProvider(const sp<ICameraProvider> &provider,
-        sp<provider::V2_5::ICameraProvider> *provider2_5 /*out*/) {
+void CameraHidlTest::castProvider(const sp<ICameraProvider>& provider,
+                                  sp<provider::V2_5::ICameraProvider>* provider2_5 /*out*/,
+                                  sp<provider::V2_6::ICameraProvider>* provider2_6 /*out*/) {
     ASSERT_NE(nullptr, provider2_5);
-    auto castResult = provider::V2_5::ICameraProvider::castFrom(provider);
-    if (castResult.isOk()) {
-        *provider2_5 = castResult;
+    auto castResult2_5 = provider::V2_5::ICameraProvider::castFrom(provider);
+    if (castResult2_5.isOk()) {
+        *provider2_5 = castResult2_5;
+    }
+
+    ASSERT_NE(nullptr, provider2_6);
+    auto castResult2_6 = provider::V2_6::ICameraProvider::castFrom(provider);
+    if (castResult2_6.isOk()) {
+        *provider2_6 = castResult2_6;
     }
 }
 

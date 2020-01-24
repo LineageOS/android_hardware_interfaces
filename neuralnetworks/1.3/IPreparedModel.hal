@@ -24,6 +24,7 @@ import ErrorStatus;
 import OptionalTimePoint;
 import Request;
 import IExecutionCallback;
+import IFencedExecutionCallback;
 
 /**
  * IPreparedModel describes a model that has been prepared for execution and
@@ -91,7 +92,8 @@ interface IPreparedModel extends @1.2::IPreparedModel {
      *                 execution cannot be finished by the deadline, the
      *                 execution must be aborted.
      * @param callback A callback object used to return the error status of
-     *                 the execution. The callback object's notify function must
+     *                 the execution, shape information of model output operands, and
+     *                 duration of execution. The callback object's notify function must
      *                 be called exactly once, even if the execution was
      *                 unsuccessful.
      * @return status Error status of the call, must be:
@@ -187,4 +189,57 @@ interface IPreparedModel extends @1.2::IPreparedModel {
                              OptionalTimePoint deadline)
                   generates (ErrorStatus status, vec<OutputShape> outputShapes,
                              Timing timing);
+
+    /**
+     * Launch a fenced asynchronous execution on a prepared model.
+     *
+     * The execution is performed asynchronously with respect to the caller.
+     * executeFenced must fully validate the request, and only accept one that is
+     * guaranteed to be completed, unless a hardware failure or kernel panic happens on the device.
+     * If there is an error during validation, executeFenced must immediately return with
+     * the corresponding ErrorStatus. If the request is valid and there is no error launching,
+     * executeFenced must dispatch an asynchronous task to perform the execution in the
+     * background, and immediately return with ErrorStatus::NONE, a sync_fence that will be
+     * signaled once the execution is completed, and a callback that can be used by the client
+     * to query the duration and runtime error status. If the task has finished
+     * before the call returns, empty handle may be returned for the sync fence. If the
+     * asynchronous task fails to launch, executeFenced must immediately return with
+     * ErrorStatus::GENERAL_FAILURE, and empty handle for the sync fence and nullptr
+     * for callback. The execution must wait for all the sync fences (if any) in wait_for to be
+     * signaled before starting the actual execution.
+     *
+     * If any of sync fences in wait_for changes to error status after the executeFenced
+     * call succeeds, the driver must immediately set the returned sync fence to error status.
+     *
+     * When the asynchronous task has finished its execution, it must
+     * immediately signal the sync_fence created when dispatching. After
+     * the sync_fence is signaled, the task must not modify the content of
+     * any data object referenced by 'request' (described by the
+     * {@link @1.0::DataLocation} of a {@link @1.0::RequestArgument}).
+     *
+     * Any number of calls to the executeFenced, execute* and executeSynchronously*
+     * functions, in any combination, may be made concurrently, even on the same
+     * IPreparedModel object.
+     *
+     * @param request The input and output information on which the prepared
+     *                model is to be executed.
+     * @param waitFor A vector of sync fence file descriptors.
+     *                Execution must not start until all sync fences have been signaled.
+     * @param measure Specifies whether or not to measure duration of the execution.
+     *                The duration runs from the time the driver sees the call
+     *                to the executeFenced function to the time sync_fence is triggered.
+     * @return status Error status of the call, must be:
+     *                - NONE if task is successfully launched
+     *                - DEVICE_UNAVAILABLE if driver is offline or busy
+     *                - GENERAL_FAILURE if there is an unspecified error
+     *                - INVALID_ARGUMENT if one of the input arguments is invalid, including
+     *                                   fences in error states.
+     * @return syncFence The sync fence that will be triggered when the task is completed.
+     *                   The sync fence will be set to error if a critical error,
+     *                   e.g. hardware failure or kernel panic, occurs when doing execution.
+     * @return callback The IFencedExecutionCallback can be used to query information like duration
+     *                  and error status when the execution is completed.
+     */
+    executeFenced(Request request, vec<handle> waitFor, MeasureTiming measure)
+        generates (ErrorStatus status, handle syncFence, IFencedExecutionCallback callback);
 };

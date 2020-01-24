@@ -71,6 +71,51 @@ interface IComposerClient extends @2.3::IComposerClient {
          *   setClientTargetProperty(ClientTargetProperty clientTargetProperty);
          */
          SET_CLIENT_TARGET_PROPERTY = 0x105 << @2.1::IComposerClient.Command:OPCODE_SHIFT,
+
+        /**
+         * SET_LAYER_GENERIC_METADATA has this pseudo prototype
+         *
+         *   setLayerGenericMetadata(string key, bool mandatory, vec<uint8_t> value);
+         *
+         * Sets a piece of generic metadata for the given layer. If this
+         * function is called twice with the same key but different values, the
+         * newer value must override the older one. Calling this function with a
+         * 0-length value must reset that key's metadata as if it had not been
+         * set.
+         *
+         * A given piece of metadata may either be mandatory or a hint
+         * (non-mandatory) as indicated by the second parameter. Mandatory
+         * metadata may affect the composition result, which is to say that it
+         * may cause a visible change in the final image. By contrast, hints may
+         * only affect the composition strategy, such as which layers are
+         * composited by the client, but must not cause a visible change in the
+         * final image. The value of the mandatory flag shall match the value
+         * returned from getLayerGenericMetadataKeys for the given key.
+         *
+         * Only keys which have been returned from getLayerGenericMetadataKeys()
+         * shall be accepted. Any other keys must result in an UNSUPPORTED error.
+         *
+         * The value passed into this function shall be the binary
+         * representation of a HIDL type corresponding to the given key. For
+         * example, a key of 'com.example.V1_3.Foo' shall be paired with a
+         * value of type com.example@1.3::Foo, which would be defined in a
+         * vendor HAL extension.
+         *
+         * This function will be encoded in the command buffer in this order:
+         *   1) The key length, stored as a uint32_t
+         *   2) The key itself, padded to a uint32_t boundary if necessary
+         *   3) The mandatory flag, stored as a uint32_t
+         *   4) The value length in bytes, stored as a uint32_t
+         *   5) The value itself, padded to a uint32_t boundary if necessary
+         *
+         * @param key indicates which metadata value should be set on this layer
+         * @param mandatory indicates whether this particular key represents
+         *        mandatory metadata or a hint (non-mandatory metadata), as
+         *        described above
+         * @param value is a binary representation of a HIDL struct
+         *        corresponding to the key as described above
+         */
+        SET_LAYER_GENERIC_METADATA = 0x40e << @2.1::IComposerClient.Command:OPCODE_SHIFT,
     };
 
     /**
@@ -271,4 +316,33 @@ interface IComposerClient extends @2.3::IComposerClient {
      */
     setContentType(Display display, ContentType type)
         generates (Error error);
+
+    struct LayerGenericMetadataKey {
+        /**
+         * Key names must comply with the requirements specified for
+         * getLayerGenericMetadataKeys below
+         */
+        string name;
+
+        /**
+         * The mandatory flag is defined in the description of
+         * setLayerGenericMetadata above
+         */
+        bool mandatory;
+    };
+
+    /**
+     * Retrieves the set of keys that may be passed into setLayerGenericMetadata
+     *
+     * Key names must meet the following requirements:
+     * - Must be specified in reverse domain name notation
+     * - Must not start with 'com.android' or 'android'
+     * - Must be unique within the returned vector
+     * - Must correspond to a matching HIDL struct type, which defines the
+     *   structure of its values. For example, the key 'com.example.V1-3.Foo'
+     *   should correspond to a value of type com.example@1.3::Foo, which is
+     *   defined in a vendor HAL extension
+     */
+    getLayerGenericMetadataKeys()
+        generates(Error error, vec<LayerGenericMetadataKey> keys);
 };

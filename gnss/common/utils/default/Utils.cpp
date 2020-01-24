@@ -24,24 +24,45 @@ namespace gnss {
 namespace common {
 
 using GnssSvFlags = V1_0::IGnssCallback::GnssSvFlags;
-using GnssMeasurementFlags = V1_0::IGnssMeasurementCallback::GnssMeasurementFlags;
+using GnssMeasurementFlagsV1_0 = V1_0::IGnssMeasurementCallback::GnssMeasurementFlags;
+using GnssMeasurementFlagsV2_1 = V2_1::IGnssMeasurementCallback::GnssMeasurementFlags;
 using GnssMeasurementStateV2_0 = V2_0::IGnssMeasurementCallback::GnssMeasurementState;
 using ElapsedRealtime = V2_0::ElapsedRealtime;
 using ElapsedRealtimeFlags = V2_0::ElapsedRealtimeFlags;
 using GnssConstellationTypeV2_0 = V2_0::GnssConstellationType;
 using IGnssMeasurementCallbackV2_0 = V2_0::IGnssMeasurementCallback;
+using GnssSignalType = V2_1::GnssSignalType;
 
 GnssDataV2_1 Utils::getMockMeasurementV2_1() {
     GnssDataV2_0 gnssDataV2_0 = Utils::getMockMeasurementV2_0();
     V2_1::IGnssMeasurementCallback::GnssMeasurement gnssMeasurementV2_1 = {
             .v2_0 = gnssDataV2_0.measurements[0],
+            .flags = (uint32_t)(GnssMeasurementFlagsV2_1::HAS_CARRIER_FREQUENCY |
+                                GnssMeasurementFlagsV2_1::HAS_CARRIER_PHASE |
+                                GnssMeasurementFlagsV2_1::HAS_RECEIVER_ISB |
+                                GnssMeasurementFlagsV2_1::HAS_RECEIVER_ISB_UNCERTAINTY |
+                                GnssMeasurementFlagsV2_1::HAS_SATELLITE_ISB |
+                                GnssMeasurementFlagsV2_1::HAS_SATELLITE_ISB_UNCERTAINTY),
+            .receiverInterSignalBiasNs = 10.0,
+            .receiverInterSignalBiasUncertaintyNs = 100.0,
+            .satelliteInterSignalBiasNs = 20.0,
+            .satelliteInterSignalBiasUncertaintyNs = 150.0,
             .basebandCN0DbHz = 25.0,
+    };
+    GnssSignalType referenceSignalTypeForIsb = {
+            .constellation = GnssConstellationTypeV2_0::GPS,
+            .carrierFrequencyHz = 1.59975e+09,
+            .codeType = "C",
+    };
+    V2_1::IGnssMeasurementCallback::GnssClock gnssClockV2_1 = {
+            .v1_0 = gnssDataV2_0.clock,
+            .referenceSignalTypeForIsb = referenceSignalTypeForIsb,
     };
     hidl_vec<V2_1::IGnssMeasurementCallback::GnssMeasurement> measurements(1);
     measurements[0] = gnssMeasurementV2_1;
     GnssDataV2_1 gnssDataV2_1 = {
             .measurements = measurements,
-            .clock = gnssDataV2_0.clock,
+            .clock = gnssClockV2_1,
             .elapsedRealtime = gnssDataV2_0.elapsedRealtime,
     };
     return gnssDataV2_1;
@@ -49,7 +70,7 @@ GnssDataV2_1 Utils::getMockMeasurementV2_1() {
 
 GnssDataV2_0 Utils::getMockMeasurementV2_0() {
     V1_0::IGnssMeasurementCallback::GnssMeasurement measurement_1_0 = {
-            .flags = (uint32_t)GnssMeasurementFlags::HAS_CARRIER_FREQUENCY,
+            .flags = (uint32_t)GnssMeasurementFlagsV1_0::HAS_CARRIER_FREQUENCY,
             .svid = (int16_t)6,
             .constellation = V1_0::GnssConstellationType::UNKNOWN,
             .timeOffsetNs = 0.0,

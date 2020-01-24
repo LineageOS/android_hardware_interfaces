@@ -79,6 +79,10 @@ class ComposerHal : public V2_3::hal::ComposerHal {
             uint32_t* outDisplayRequestMask, std::vector<Layer>* outRequestedLayers,
             std::vector<uint32_t>* outRequestMasks,
             IComposerClient::ClientTargetProperty* outClientTargetProperty) = 0;
+    virtual Error setLayerGenericMetadata(Display display, Layer layer, const std::string& key,
+                                          bool mandatory, const std::vector<uint8_t>& value) = 0;
+    virtual Error getLayerGenericMetadataKeys(
+            std::vector<IComposerClient::LayerGenericMetadataKey>* outKeys) = 0;
 };
 
 }  // namespace hal
