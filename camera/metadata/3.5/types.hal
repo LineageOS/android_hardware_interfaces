@@ -72,6 +72,23 @@ enum CameraMetadataTag : @3.4::CameraMetadataTag {
 
     ANDROID_CONTROL_END_3_5,
 
+    /** android.scaler.availableRotateAndCropModes [static, byte[], public]
+     *
+     * <p>List of rotate-and-crop modes for ANDROID_SCALER_ROTATE_AND_CROP that are supported by this camera device.</p>
+     *
+     * @see ANDROID_SCALER_ROTATE_AND_CROP
+     */
+    ANDROID_SCALER_AVAILABLE_ROTATE_AND_CROP_MODES = android.hardware.camera.metadata@3.4::CameraMetadataTag:ANDROID_SCALER_END_3_4,
+
+    /** android.scaler.rotateAndCrop [dynamic, enum, public]
+     *
+     * <p>Whether a rotation-and-crop operation is applied to processed
+     * outputs from the camera.</p>
+     */
+    ANDROID_SCALER_ROTATE_AND_CROP,
+
+    ANDROID_SCALER_END_3_5,
+
 };
 
 /*
@@ -102,4 +119,15 @@ enum CameraMetadataEnumAndroidRequestAvailableCapabilities :
         @3.4::CameraMetadataEnumAndroidRequestAvailableCapabilities {
     ANDROID_REQUEST_AVAILABLE_CAPABILITIES_SYSTEM_CAMERA,
     ANDROID_REQUEST_AVAILABLE_CAPABILITIES_OFFLINE_PROCESSING,
+};
+
+/** android.scaler.rotateAndCrop enumeration values
+ * @see ANDROID_SCALER_ROTATE_AND_CROP
+ */
+enum CameraMetadataEnumAndroidScalerRotateAndCrop : uint32_t {
+    ANDROID_SCALER_ROTATE_AND_CROP_NONE,
+    ANDROID_SCALER_ROTATE_AND_CROP_90,
+    ANDROID_SCALER_ROTATE_AND_CROP_180,
+    ANDROID_SCALER_ROTATE_AND_CROP_270,
+    ANDROID_SCALER_ROTATE_AND_CROP_AUTO,
 };
