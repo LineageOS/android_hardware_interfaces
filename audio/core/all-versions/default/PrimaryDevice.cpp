@@ -203,6 +203,9 @@ Return<Result> PrimaryDevice::setMode(AudioMode mode) {
         case AudioMode::RINGTONE:
         case AudioMode::IN_CALL:
         case AudioMode::IN_COMMUNICATION:
+#if MAJOR_VERSION >= 6
+        case AudioMode::CALL_SCREEN:
+#endif
             break;  // Valid values
         default:
             return Result::INVALID_ARGUMENTS;
