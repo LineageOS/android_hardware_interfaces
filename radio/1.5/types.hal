@@ -23,6 +23,7 @@ import @1.0::CdmaSignalStrength;
 import @1.0::EvdoSignalStrength;
 import @1.0::GsmSignalStrength;
 import @1.0::LteSignalStrength;
+import @1.0::PersoSubstate;
 import @1.0::RadioAccessFamily;
 import @1.0::RadioError;
 import @1.0::RegState;
@@ -1028,4 +1029,20 @@ struct NetworkScanResult {
      * List of network information as CellInfo.
      */
     vec<CellInfo> networkInfos;
+};
+
+/**
+ * Additional personalization categories in addition to those specified in 3GPP TS 22.022 and 3GPP2 C.S0068-0.
+ */
+enum PersoSubstate : @1.0::PersoSubstate {
+    SIM_SPN,
+    SIM_SPN_PUK,
+    SIM_SP_EHPLMN,              // Equivalent Home PLMN
+    SIM_SP_EHPLMN_PUK,
+    SIM_ICCID,
+    SIM_ICCID_PUK,
+    SIM_IMPI,
+    SIM_IMPI_PUK,
+    SIM_NS_SP,                  // Network subset service provider
+    SIM_NS_SP_PUK,
 };
