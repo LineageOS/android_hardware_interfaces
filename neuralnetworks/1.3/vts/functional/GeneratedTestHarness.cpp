@@ -603,7 +603,9 @@ void EvaluatePreparedModel(const sp<IDevice>& device, const sp<IPreparedModel>& 
         }
     }
 
-    if (testConfig.outputType != OutputType::FULLY_SPECIFIED &&
+    // The driver is allowed to reject executeFenced, and if they do, we should skip.
+    if ((testConfig.outputType != OutputType::FULLY_SPECIFIED ||
+         testConfig.executor == Executor::FENCED) &&
         executionStatus == ErrorStatus::GENERAL_FAILURE) {
         if (skipped != nullptr) {
             *skipped = true;
@@ -674,7 +676,7 @@ void EvaluatePreparedModel(const sp<IDevice>& device, const sp<IPreparedModel>& 
         case TestKind::GENERAL: {
             outputTypesList = {OutputType::FULLY_SPECIFIED};
             measureTimingList = {MeasureTiming::NO, MeasureTiming::YES};
-            executorList = {Executor::ASYNC, Executor::SYNC, Executor::BURST, Executor::FENCED};
+            executorList = {Executor::ASYNC, Executor::SYNC, Executor::BURST};
         } break;
         case TestKind::DYNAMIC_SHAPE: {
             outputTypesList = {OutputType::UNSPECIFIED, OutputType::INSUFFICIENT};
@@ -686,6 +688,11 @@ void EvaluatePreparedModel(const sp<IDevice>& device, const sp<IPreparedModel>& 
             measureTimingList = {MeasureTiming::NO};
             executorList = {Executor::ASYNC, Executor::SYNC};
             memoryType = MemoryType::DEVICE;
+        } break;
+        case TestKind::FENCED_COMPUTE: {
+            outputTypesList = {OutputType::FULLY_SPECIFIED};
+            measureTimingList = {MeasureTiming::NO, MeasureTiming::YES};
+            executorList = {Executor::FENCED};
         } break;
         case TestKind::QUANTIZATION_COUPLING: {
             LOG(FATAL) << "Wrong TestKind for EvaluatePreparedModel";
@@ -748,7 +755,8 @@ void Execute(const sp<IDevice>& device, const TestModel& testModel, TestKind tes
     switch (testKind) {
         case TestKind::GENERAL:
         case TestKind::DYNAMIC_SHAPE:
-        case TestKind::MEMORY_DOMAIN: {
+        case TestKind::MEMORY_DOMAIN:
+        case TestKind::FENCED_COMPUTE: {
             createPreparedModel(device, model, &preparedModel);
             if (preparedModel == nullptr) return;
             EvaluatePreparedModel(device, preparedModel, testModel, testKind);
@@ -811,6 +819,9 @@ class DynamicOutputShapeTest : public GeneratedTest {};
 // Tag for the memory domain tests
 class MemoryDomainTest : public GeneratedTest {};
 
+// Tag for the fenced compute tests
+class FencedComputeTest : public GeneratedTest {};
+
 // Tag for the dynamic output shape tests
 class QuantizationCouplingTest : public GeneratedTest {};
 
@@ -826,6 +837,10 @@ TEST_P(MemoryDomainTest, Test) {
     Execute(kDevice, kTestModel, /*testKind=*/TestKind::MEMORY_DOMAIN);
 }
 
+TEST_P(FencedComputeTest, Test) {
+    Execute(kDevice, kTestModel, /*testKind=*/TestKind::FENCED_COMPUTE);
+}
+
 TEST_P(QuantizationCouplingTest, Test) {
     Execute(kDevice, kTestModel, /*testKind=*/TestKind::QUANTIZATION_COUPLING);
 }
@@ -838,6 +853,9 @@ INSTANTIATE_GENERATED_TEST(DynamicOutputShapeTest, [](const TestModel& testModel
 });
 
 INSTANTIATE_GENERATED_TEST(MemoryDomainTest,
+                           [](const TestModel& testModel) { return !testModel.expectFailure; });
+
+INSTANTIATE_GENERATED_TEST(FencedComputeTest,
                            [](const TestModel& testModel) { return !testModel.expectFailure; });
 
 INSTANTIATE_GENERATED_TEST(QuantizationCouplingTest, [](const TestModel& testModel) {
