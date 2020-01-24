@@ -17,7 +17,10 @@
 #ifndef android_hardware_automotive_vehicle_V2_0_impl_virtualization_Utils_H_
 #define android_hardware_automotive_vehicle_V2_0_impl_virtualization_Utils_H_
 
+#include <optional>
 #include <string>
+
+#include <android-base/logging.h>
 
 namespace android {
 namespace hardware {
@@ -29,9 +32,12 @@ namespace impl {
 struct VsockServerInfo {
     unsigned int serverCid{0};
     unsigned int serverPort{0};
-};
 
-std::string getVsockUri(const VsockServerInfo& serverInfo);
+    static std::optional<VsockServerInfo> fromCommandLine(int argc, char* argv[]);
+    static std::optional<VsockServerInfo> fromRoPropertyStore();
+
+    std::string toUri();
+};
 
 }  // namespace impl
 }  // namespace V2_0
