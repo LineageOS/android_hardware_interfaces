@@ -651,12 +651,12 @@ void HalProxyCallback::postEvents(const std::vector<Event>& events, ScopedWakelo
     if (numWakeupEvents > 0) {
         ALOG_ASSERT(wakelock.isLocked(),
                     "Wakeup events posted while wakelock unlocked for subhal"
-                    " w/ index %zu.",
+                    " w/ index %" PRId32 ".",
                     mSubHalIndex);
     } else {
         ALOG_ASSERT(!wakelock.isLocked(),
                     "No Wakeup events posted but wakelock locked for subhal"
-                    " w/ index %zu.",
+                    " w/ index %" PRId32 ".",
                     mSubHalIndex);
     }
     mHalProxy->postEventsToMessageQueue(processedEvents, numWakeupEvents, std::move(wakelock));
