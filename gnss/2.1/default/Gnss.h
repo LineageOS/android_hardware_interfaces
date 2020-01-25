@@ -89,6 +89,8 @@ struct Gnss : public IGnss {
     Return<bool> setCallback_2_1(const sp<V2_1::IGnssCallback>& callback) override;
     Return<sp<V2_1::IGnssMeasurement>> getExtensionGnssMeasurement_2_1() override;
     Return<sp<V2_1::IGnssConfiguration>> getExtensionGnssConfiguration_2_1() override;
+    Return<sp<measurement_corrections::V1_1::IMeasurementCorrections>>
+    getExtensionMeasurementCorrections_1_1() override;
 
   private:
     void reportLocation(const V2_0::GnssLocation&) const;

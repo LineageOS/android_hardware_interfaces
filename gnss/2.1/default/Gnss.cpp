@@ -25,7 +25,7 @@
 #include <log/log.h>
 
 using ::android::hardware::gnss::common::Utils;
-using ::android::hardware::gnss::measurement_corrections::V1_0::implementation::
+using ::android::hardware::gnss::measurement_corrections::V1_1::implementation::
         GnssMeasurementCorrections;
 
 namespace android {
@@ -366,6 +366,12 @@ Return<sp<V2_1::IGnssMeasurement>> Gnss::getExtensionGnssMeasurement_2_1() {
 Return<sp<V2_1::IGnssConfiguration>> Gnss::getExtensionGnssConfiguration_2_1() {
     ALOGD("Gnss::getExtensionGnssConfiguration_2_1");
     return mGnssConfiguration;
+}
+
+Return<sp<measurement_corrections::V1_1::IMeasurementCorrections>>
+Gnss::getExtensionMeasurementCorrections_1_1() {
+    ALOGD("Gnss::getExtensionMeasurementCorrections_1_1()");
+    return new GnssMeasurementCorrections();
 }
 
 void Gnss::reportSvStatus(const hidl_vec<GnssSvInfo>& svInfoList) const {
