@@ -48,7 +48,7 @@ cc_test {
         "-DMAJOR_VERSION=2",
         "-DMINOR_VERSION=0",
         "-include common/all-versions/VersionMacro.h",
-    ]
+    ],
 }
 
 cc_test {
@@ -65,7 +65,7 @@ cc_test {
         "-DMAJOR_VERSION=4",
         "-DMINOR_VERSION=0",
         "-include common/all-versions/VersionMacro.h",
-    ]
+    ],
 }
 
 cc_test {
@@ -82,7 +82,7 @@ cc_test {
         "-DMAJOR_VERSION=5",
         "-DMINOR_VERSION=0",
         "-include common/all-versions/VersionMacro.h",
-    ]
+    ],
 }
 
 cc_test {
@@ -99,5 +99,15 @@ cc_test {
         "-DMAJOR_VERSION=6",
         "-DMINOR_VERSION=0",
         "-include common/all-versions/VersionMacro.h",
-    ]
+    ],
+    // Use test_config for vts-core suite.
+    // TODO(b/146104851): Add auto-gen rules and remove it.
+    test_config: "VtsHalAudioV6_0TargetTest.xml",
+    data: [
+        ":audio_policy_configuration_V6_0",
+    ],
+    test_suites: [
+        "general-tests",
+        "vts-core",
+    ],
 }
