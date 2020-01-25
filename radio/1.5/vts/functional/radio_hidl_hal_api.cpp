@@ -987,3 +987,47 @@ TEST_F(RadioHidlTest_v1_5, setRadioPower_1_5_emergencyCall_cancalled) {
     EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
     EXPECT_EQ(RadioError::NONE, radioRsp_v1_5->rspInfo.error);
 }
+
+/*
+ * Test IRadio.sendCdmaSmsExpectMore() for the response returned.
+ */
+TEST_F(RadioHidlTest_v1_5, sendCdmaSmsExpectMore) {
+    serial = GetRandomSerialNumber();
+
+    // Create a CdmaSmsAddress
+    CdmaSmsAddress cdmaSmsAddress;
+    cdmaSmsAddress.digitMode = CdmaSmsDigitMode::FOUR_BIT;
+    cdmaSmsAddress.numberMode = CdmaSmsNumberMode::NOT_DATA_NETWORK;
+    cdmaSmsAddress.numberType = CdmaSmsNumberType::UNKNOWN;
+    cdmaSmsAddress.numberPlan = CdmaSmsNumberPlan::UNKNOWN;
+    cdmaSmsAddress.digits = (std::vector<uint8_t>){11, 1, 6, 5, 10, 7, 7, 2, 10, 3, 10, 3};
+
+    // Create a CdmaSmsSubAddress
+    CdmaSmsSubaddress cdmaSmsSubaddress;
+    cdmaSmsSubaddress.subaddressType = CdmaSmsSubaddressType::NSAP;
+    cdmaSmsSubaddress.odd = false;
+    cdmaSmsSubaddress.digits = (std::vector<uint8_t>){};
+
+    // Create a CdmaSmsMessage
+    android::hardware::radio::V1_0::CdmaSmsMessage cdmaSmsMessage;
+    cdmaSmsMessage.teleserviceId = 4098;
+    cdmaSmsMessage.isServicePresent = false;
+    cdmaSmsMessage.serviceCategory = 0;
+    cdmaSmsMessage.address = cdmaSmsAddress;
+    cdmaSmsMessage.subAddress = cdmaSmsSubaddress;
+    cdmaSmsMessage.bearerData =
+        (std::vector<uint8_t>){15, 0, 3, 32, 3, 16, 1, 8, 16, 53, 76, 68, 6, 51, 106, 0};
+
+    radio_v1_5->sendCdmaSmsExpectMore(serial, cdmaSmsMessage);
+
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_5->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
+
+    if (cardStatus.base.base.cardState == CardState::ABSENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(
+            radioRsp_v1_5->rspInfo.error,
+            {RadioError::INVALID_ARGUMENTS, RadioError::INVALID_STATE, RadioError::SIM_ABSENT},
+            CHECK_GENERAL_ERROR));
+    }
+}

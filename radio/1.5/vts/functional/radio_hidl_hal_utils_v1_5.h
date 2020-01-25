@@ -293,6 +293,8 @@ class RadioResponse_v1_5 : public ::android::hardware::radio::V1_5::IRadioRespon
 
     Return<void> sendCdmaSmsResponse(const RadioResponseInfo& info, const SendSmsResult& sms);
 
+    Return<void> sendCdmaSmsExpectMoreResponse(const RadioResponseInfo& info, const SendSmsResult& sms);
+
     Return<void> acknowledgeLastIncomingCdmaSmsResponse(const RadioResponseInfo& info);
 
     Return<void> getGsmBroadcastConfigResponse(
