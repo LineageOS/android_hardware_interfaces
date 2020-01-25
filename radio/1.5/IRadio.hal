@@ -17,6 +17,7 @@
 package android.hardware.radio@1.5;
 
 import @1.2::DataRequestReason;
+import @1.0::CdmaSmsMessage;
 import @1.4::IRadio;
 import @1.4::DataProfileInfo;
 import @1.5::AccessNetwork;
@@ -257,4 +258,15 @@ interface IRadio extends @1.4::IRadio {
      * Response function is IRadioResponse.supplySimDepersonalizationResponse()
      */
     oneway supplySimDepersonalization(int32_t serial, PersoSubstate persoType, string controlKey);
+
+    /**
+     * Send an SMS message. Identical to sendCdmaSms,
+     * except that more messages are expected to be sent soon.
+     *
+     * @param serial Serial number of request.
+     * @param sms Cdma Sms to be sent described by CdmaSmsMessage in types.hal
+     *
+     * Response callback is IRadioResponse.sendCdmaSMSExpectMoreResponse()
+     */
+    oneway sendCdmaSmsExpectMore(int32_t serial, CdmaSmsMessage sms);
 };
