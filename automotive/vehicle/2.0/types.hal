@@ -2438,6 +2438,217 @@ enum VehicleProperty : int32_t {
         | VehiclePropertyType:STRING
         | VehicleArea:GLOBAL),
 
+    /**
+     * Defines the initial Android user to be used during initialization.
+     *
+     * This property is called by the Android system when it initializes and it lets the HAL
+     * define which Android user should be started.
+     *
+     * This request is made by setting a VehiclePropValue (defined by InitialUserInfoRequest),
+     * and the HAL must respond with a property change event (defined by InitialUserInfoResponse).
+     * If the HAL doesn't respond after some time (defined by the Android system), the Android
+     * system will proceed as if HAL returned a response of action
+     * InitialUserInfoResponseAction:DEFAULT.
+     *
+     * For example, on first boot, the request could be:
+     *
+     * int32[0]: 42  // request id (arbitrary number set by Android system)
+     * int32[1]: 1   // InitialUserInfoRequestType::FIRST_BOOT
+     * int32[2]: 0   // id of current user (usersInfo.currentUser.userId)
+     * int32[3]: 1   // flag of current user (usersInfo.currentUser.flags = SYSTEM)
+     * int32[4]: 1   // number of existing users (usersInfo.numberUsers);
+     * int32[5]: 0   // user #0  (usersInfo.existingUsers[0].userId)
+     * int32[6]: 1   // flags of user #0  (usersInfo.existingUsers[0].flags)
+     *
+     * And if the HAL want to respond with the creation of an admin user called "Admin", the
+     * response would be:
+     *
+     * int32[0]: 42    // must match the request id from the request
+     * int32[1]:  2    // action = InitialUserInfoResponseAction::CREATE
+     * int32[2]: -1    // userToSwitchOrCreate.userId (not used as user will be created)
+     * int32[3]:  8    // userToSwitchOrCreate.flags = ADMIN
+     * string: "Admin" // userNameToCreate
+     *
+     * NOTE: if the HAL doesn't support user management, then it should not define this property,
+     * which in turn would disable the other user-related properties (for example, the Android
+     * system would never issue them and user-related requests from the HAL layer would be ignored
+     * by the Android System). But if it supports user management, then it must support all
+     * user-related properties (INITIAL_USER_INFO, SWITCH_USER, TODO(b/146207078):others).
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
+     */
+    INITIAL_USER_INFO = (
+        0x0F07
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:MIXED
+        | VehicleArea:GLOBAL),
+
+    /**
+     * Defines a request to switch the foreground Android user.
+     *
+     * This property is used primarily by the Android System to inform the HAL that the
+     * current foreground Android user is switching, but it could also be used by the HAL to request
+     * the Android system to switch users - the
+     *
+     * When the request is made by Android, it sets a VehiclePropValue and the HAL must responde
+     * with a property change event; when the HAL is making the request, it must also do it through
+     * a property change event (the main difference is that the request id will be positive in the
+     * former case, and negative in the latter; the SwitchUserMessageType will also be different).
+     *
+     * The format of both request is defined by SwitchUserRequest and the format of the response
+     * (when needed) is defined by SwitchUserResponse. How the HAL (or Android System) should
+     * proceed depends on the message type (which is defined by the SwitchUserMessageType
+     * parameter), as defined below.
+     *
+     * 1.LEGACY_ANDROID_SWITCH
+     * -----------------------
+     *
+     * Called by the Android System to indicate the Android user is about to change, when the change
+     * request was made in a way that is not integrated with the HAL (for example, through
+     * adb shell am switch-user).
+     *
+     * The HAL can switch its internal user once it receives this request, but it doesn't need to
+     * reply back to the Android System. If its internal user cannot be changed for some reason,
+     * then it must wait for the SWITCH_USER(type=ANDROID_POST_SWITCH) call to recover
+     * (for example, it could issue a SWITCH_USER(type=VEHICLE_REQUEST) to switch back to
+     * the previous user), but ideally it should never fail (as switching back could result in a
+     * confusing experience for the end user).
+     *
+     * For example, if the system have users (0, 10, 11) and it's switching from 0 to 11 (where none
+     * of them have any special flag), the request would be:
+     *
+     * int32[0]:  42  // request id
+     * int32[1]:  1   // SwitchUserMessageType::LEGACY_ANDROID_SWITCH
+     * int32[2]:  11  // target user id
+     * int32[3]:  0   // target user flags (none)
+     * int32[4]:  10  // current user
+     * int32[5]:  0   // current user flags (none)
+     * int32[6]:  3   // number of users
+     * int32[7]:  0   // user #0 (Android user id 0)
+     * int32[8]:  0   // flags of user #0 (none)
+     * int32[9]:  10  // user #1 (Android user id 10)
+     * int32[10]: 0   // flags of user #1 (none)
+     * int32[11]: 11  // user #2 (Android user id 11)
+     * int32[12]: 0   // flags of user #2 (none)
+     *
+     * 2.ANDROID_SWITCH
+     * ----------------
+     * Called by the Android System to indicate the Android user is about to change, but Android
+     * will wait for the HAL's response (up to some time) before proceeding.
+     *
+     * The HAL must switch its internal user once it receives this request, then respond back to
+     * Android with a SWITCH_USER(type=VEHICLE_RESPONSE) indicating whether its internal
+     * user was switched or not (through the SwitchUserStatus enum).
+     *
+     * For example, if Android has users (0, 10, 11) and it's switching from 10 to 11 (where
+     * none of them have any special flag), the request would be:
+     *
+     * int32[0]:  42  // request id
+     * int32[1]:  2   // SwitchUserMessageType::ANDROID_SWITCH
+     * int32[2]:  11  // target user id
+     * int32[3]:  0   // target user flags (none)
+     * int32[4]:  10  // current user
+     * int32[5]:  0   // current user flags (none)
+     * int32[6]:  3   // number of users
+     * int32[7]:  0   // 1st user (user 0)
+     * int32[8]:  0   // 1st user flags (none)
+     * int32[9]:  10  // 2nd user (user 10)
+     * int32[10]: 0   // 2nd user flags (none)
+     * int32[11]: 11  // 3rd user (user 11)
+     * int32[12]: 0   // 3rd user flags (none)
+     *
+     * If the request succeeded, the HAL must update the propery with:
+     *
+     * int32[0]: 42  // request id
+     * int32[1]: 3   // messageType = SwitchUserMessageType::VEHICLE_RESPONSE
+     * int32[2]: 1   // status = SwitchUserStatus::SUCCESS
+     *
+     * But if it failed, the response would be something like:
+     *
+     * int32[0]: 42   // request id
+     * int32[1]: 3    // messageType = SwitchUserMessageType::VEHICLE_RESPONSE
+     * int32[2]: 2    // status = SwitchUserStatus::FAILURE
+     * string: "108-D'OH!" // OEM-spefic error message
+     *
+     * 3.VEHICLE_RESPONSE
+     * ------------------
+     * Called by the HAL to indicate whether a request of type ANDROID_SWITCH should proceed or
+     * abort - see the ANDROID_SWITCH section above for more info.
+     *
+     * 4.VEHICLE_REQUEST
+     * ------------------
+     * Called by the HAL to request that the current foreground Android user is switched.
+     *
+     * This is useful in situations where Android started as one user, but the vehicle identified
+     * the driver as another user. For example, user A unlocked the car using the key fob of user B;
+     * the INITIAL_USER_INFO request returned user B, but then a face recognition subsubsystem
+     * identified the user as A.
+     *
+     * The HAL makes this request by a property change event (passing a negative request id), and
+     * the Android system will response by issuye an ANDROID_POST_SWITCH call which the same
+     * request id.
+     *
+     * For example, if the current foreground Android user is 10 and the HAL asked it to switch to
+     * 11, the request would be:
+     *
+     * int32[0]: -108  // request id
+     * int32[1]: 4     // messageType = SwitchUserMessageType::VEHICLE_REQUEST
+     * int32[2]: 11    // Android user id
+     *
+     * If the request succeeded and Android has 3 users (0, 10, 11), the response would be:
+     *
+     * int32[0]: -108 // request id
+     * int32[1]:  5   // messageType = SwitchUserMessageType::ANDROID_SWITCH
+     * int32[2]:  11  // target user id
+     * int32[3]:  11  // target user id flags (none)
+     * int32[4]:  11  // current user
+     * int32[5]:  0   // current user flags (none)
+     * int32[6]:  3   // number of users
+     * int32[7]:  0   // 1st user (user 0)
+     * int32[8]:  0   // 1st user flags (none)
+     * int32[9]:  10  // 2nd user (user 10)
+     * int32[10]: 4   // 2nd user flags (none)
+     * int32[11]: 11  // 3rd user (user 11)
+     * int32[12]: 3   // 3rd user flags (none)
+     *
+     * Notice that both the current and target user ids are the same - if the request failed, then
+     * they would be different (i.e, target user would be 11, but current user would still be 10).
+     *
+     * 5.ANDROID_POST_SWITCH
+     * ---------------------
+     * Called by the Android System after a request to switch a user was made
+     *
+     * This property is called after switch requests of any type (i.e., LEGACY_ANDROID_SWITCH,
+     * ANDROID_SWITCH, or VEHICLE_REQUEST) and can be used to determine if the request succeeded or
+     * failed:
+     *
+     * 1. When it succeeded, it's called when the Android user is in the boot locked state and the
+     *    value of the current and target users ids in the response are different. This would be
+     *    equivalent to receiving an Intent.ACTION_LOCKED_BOOT_COMPLETED in an Android app.
+     * 2. When it failed it's called right away and the value of the current and target users ids
+     *    in the response are the same.
+     *
+     * The HAL can update its internal state once it receives this request, but it doesn't need to
+     * reply back to the Android System.
+     *
+     * Request: the first N values as defined by INITIAL_USER_INFO (where the request-specific
+     * value at index 1 is SwitchUserMessageType::ANDROID_POST_SWITCH), then 2 more values for the
+     * target user id (i.e., the Android user id that was requested to be switched to) and its flags
+     * (as defined by  UserFlags).
+     *
+     * Response: none.
+     *
+     * Example: see VEHICLE_REQUEST section above.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
+     */
+    SWITCH_USER = (
+        0x0F08
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:MIXED
+        | VehicleArea:GLOBAL),
 };
 
 /**
@@ -3732,4 +3943,259 @@ enum VmsAvailabilityStateIntegerValuesIndex : VmsBaseMessageIntegerValuesIndex {
  */
 enum VmsPublisherInformationIntegerValuesIndex : VmsBaseMessageIntegerValuesIndex {
     PUBLISHER_ID = 1,
+};
+
+/**
+ * Information about a specific Android user.
+ */
+struct UserInfo {
+
+    UserId userId;
+
+    UserFlags flags;
+};
+
+/**
+ * Id of an Android user.
+ *
+ * Must be > 0 for valid ids, or -1 when it's not used.
+ */
+typedef int32_t UserId;
+
+/**
+ * Flags used to define the characteristics of an Android user.
+ */
+enum UserFlags: int32_t {
+    /**
+     * No flags.
+     */
+    NONE = 0x0,
+
+    /**
+     * System user.
+     * On automotive, that user is always running, although never on foreground (except during
+     * boot or exceptional circumstances).
+     */
+    SYSTEM = 0x01,
+
+    /**
+     * Guest users have restrictions.
+     */
+    GUEST = 0x02,
+
+    /**
+     * Ephemeral users have non-persistent state.
+     */
+    EPHEMERAL = 0x04,
+
+    /**
+     * Admin users have additional privileges such as permission to create other users.
+     */
+    ADMIN = 0x08,
+};
+
+/**
+ * Information about all Android users.
+ *
+ * NOTE: this struct is not used in the HAL properties directly, it's part of other structs, which
+ * in turn are converted to a VehiclePropValue.RawValue through libraries provided by the default
+ * Vehicle HAL implementation.
+ */
+struct UsersInfo {
+
+    /** The current foreground user. */
+    UserInfo currentUser;
+
+    /** Number of existing users (includes the current user). */
+    int32_t numberUsers;
+
+    /** List of existing users (includes the current user). */
+    vec<UserInfo> existingUsers;
+ };
+
+/**
+ * Id of a request related to user management.
+ *
+ * This id can be used by the Android system to map responses sent by the HAL, and vice-versa.
+ *
+ * For requests originated by Android, the value is positive (> 0), while for requests originated by
+ * the HAL it must be negative (< 0).
+ */
+typedef int32_t UserRequestId;
+
+/**
+ * Defines the format of a INITIAL_USER_INFO request made by the Android system.
+ *
+ * NOTE: this struct is not used in the HAL properties directly, it must be converted to
+ * VehiclePropValue.RawValue through libraries provided by the default Vehicle HAL implementation.
+ */
+struct InitialUserInfoRequest {
+    /**
+     * Arbitrary id used to map the HAL response to the request.
+     */
+    UserRequestId requestId;
+
+    /**
+     * Type of request.
+     */
+    InitialUserInfoRequestType requestType;
+
+    /**
+     * Information about the current state of the Android system.
+     */
+    UsersInfo usersInfo;
+};
+
+/**
+ * Defines when a INITIAL_USER_INFO request was made.
+ */
+enum InitialUserInfoRequestType : int32_t {
+  /** At the first time Android was booted (or after a factory reset). */
+  FIRST_BOOT = 1,
+
+  /** At the first time Android was booted after the system was updated. */
+  FIRST_BOOT_AFTER_OTA = 2,
+
+  /** When Android was booted "from scratch". */
+  COLD_BOOT = 3,
+
+  /** When Android was resumed after the system was suspended to memory. */
+  RESUME = 4,
+};
+
+/**
+ * Defines the format of a HAL response to a INITIAL_USER_INFO request.
+ *
+ * NOTE: this struct is not used in the HAL properties directly, it must be converted to
+ * VehiclePropValue.RawValue through libraries provided by the default Vehicle HAL implementation.
+ */
+struct InitialUserInfoResponse {
+    /**
+     * Id of the request being responded.
+     */
+    UserRequestId requestId;
+
+    /**
+     * which action the Android system should take.
+     */
+    InitialUserInfoResponseAction action;
+
+    /**
+     * Information about the user that should be switched to or created.
+     */
+    UserInfo userToSwitchOrCreate;
+
+    /**
+     * Name of the user that should be created.
+     */
+    string userNameToCreate;
+};
+
+/**
+ * Defines which action the Android system should take in an INITIAL_USER_INFO request.
+ */
+enum InitialUserInfoResponseAction : int32_t {
+   /**
+    * Let the Android System decide what to do.
+    *
+    * For example, it might create a new user on first boot, and switch to the last
+    * active user afterwards.
+    */
+   DEFAULT = 0,
+
+   /**
+    * Switch to an existing Android user.
+    */
+   SWITCH = 1,
+
+   /**
+    * Create a new Android user (and switch to it).
+    */
+   CREATE = 2,
+};
+
+/**
+ * Defines the format of a SWITCH_USER property.
+ *
+ * NOTE: this struct is not used in the HAL properties directly, it must be converted to
+ * VehiclePropValue.RawValue through libraries provided by the default Vehicle HAL implementation.
+ */
+struct SwitchUserRequest {
+    /**
+     * Arbitrary id used to map the response to the request.
+     */
+    UserRequestId requestId;
+
+    /**
+     * Type of message.
+     */
+    SwitchUserMessageType messageType;
+
+    /**
+     * Information about the Android user being switched to.
+     *
+     * Only the user id (but not the flags) should be set when the request is made by HAL.
+     */
+    UserInfo targetUser;
+
+    /**
+     * Information about the current state of the Android system.
+     *
+     * Should not be set when the request is made by HAL.
+     */
+    UsersInfo usersInfo;
+};
+
+/**
+ * Defines the reason a SWITCH_USER call was made.
+ *
+ * The meaning of each constant is explained in that property.
+ */
+enum SwitchUserMessageType: int32_t {
+   LEGACY_ANDROID_SWITCH = 1,
+   ANDROID_SWITCH = 2,
+   VEHICLE_RESPONSE = 3,
+   VEHICLE_REQUEST = 4,
+   ANDROID_POST_SWITCH = 5,
+};
+
+/**
+ * Defines the result of a SwitchUserRequest.
+ *
+ * NOTE: this struct is not used in the HAL properties directly, it must be converted to
+ * VehiclePropValue.RawValue through libraries provided by the default Vehicle HAL implementation.
+ */
+struct SwitchUserResponse {
+    /**
+     * Id of the request being responded.
+     */
+    UserRequestId requestId;
+
+    /**
+     * Type of message.
+     */
+    SwitchUserMessageType messageType;
+
+    /**
+     * Status of the request.
+     */
+    SwitchUserStatus status;
+
+    /**
+     * HAL-specific error message.
+     *
+     * This argument is optional, and when defined (and the status is FAILURE), it's passed "as-is"
+     * to the caller. It could be used to show custom error messages to the end user.
+     */
+    string failureMessage;
+};
+
+/**
+ * Status of the response to a SwitchUserRequest.
+ */
+enum SwitchUserStatus : int32_t {
+   /** The request succeeded and the HAL user was switched. */
+   SUCCESS = 1,
+   /** The request failed and the HAL user remained the same. */
+   FAILURE = 2,
 };
