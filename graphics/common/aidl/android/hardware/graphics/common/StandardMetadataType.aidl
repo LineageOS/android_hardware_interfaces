@@ -280,7 +280,7 @@ enum StandardMetadataType {
      *
      * The default blend mode is INVALID. If the BlendMode is set to any
      * valid value other than INVALID, this BlendMode overrides all other
-     * dataspaces. For a longer description of this behavior see MetadataType::DATASPACE.
+     * blend modes. For a longer description of this behavior see MetadataType::DATASPACE.
      *
      * The blend mode is a stable aidl android.hardware.graphics.common.BlendMode.
      *

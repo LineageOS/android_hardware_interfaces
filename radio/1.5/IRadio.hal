@@ -26,6 +26,7 @@ import @1.5::DataProfileInfo;
 import @1.5::IndicationFilter;
 import @1.5::LinkAddress;
 import @1.5::NetworkScanRequest;
+import @1.5::PersoSubstate;
 import @1.5::RadioAccessNetworks;
 import @1.5::RadioAccessSpecifier;
 import @1.5::SignalThresholdInfo;
@@ -294,4 +295,15 @@ interface IRadio extends @1.4::IRadio {
      * Response callback is IRadioResponse.sendCdmaSMSExpectMoreResponse()
      */
     oneway sendCdmaSmsExpectMore(int32_t serial, CdmaSmsMessage sms);
+
+    /**
+     * Requests that deactivates one category of the device personalization.
+     *
+     * @param serial Serial number of request.
+     * @param persoType SIM personalization type.
+     * @param controlKey depersonalization code corresponding to persoType
+     *
+     * Response function is IRadioResponse.supplySimDepersonalizationResponse()
+     */
+    oneway supplySimDepersonalization(int32_t serial, PersoSubstate persoType, string controlKey);
 };
