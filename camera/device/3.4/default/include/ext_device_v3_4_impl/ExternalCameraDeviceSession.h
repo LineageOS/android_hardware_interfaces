@@ -321,7 +321,7 @@ protected:
     const common::V1_0::helper::CameraMetadata mCameraCharacteristics;
     const std::vector<SupportedV4L2Format> mSupportedFormats;
     const CroppingType mCroppingType;
-    const std::string& mCameraId;
+    const std::string mCameraId;
 
     // Not protected by mLock, this is almost a const.
     // Setup in constructor, reset in close() after OutputThread is joined

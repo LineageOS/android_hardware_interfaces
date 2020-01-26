@@ -182,9 +182,8 @@ void HandleImporter::freeBuffer(buffer_handle_t handle) {
     }
 
     Mutex::Autolock lock(mLock);
-    if (mMapperV4 == nullptr && mMapperV3 == nullptr && mMapperV2 == nullptr) {
-        ALOGE("%s: mMapperV4, mMapperV3 and mMapperV2 are all null!", __FUNCTION__);
-        return;
+    if (!mInitialized) {
+        initializeLocked();
     }
 
     if (mMapperV4 != nullptr) {
