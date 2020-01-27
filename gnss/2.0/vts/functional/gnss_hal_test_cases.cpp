@@ -296,6 +296,12 @@ TEST_P(GnssHalTest, TestGnssVisibilityControlExtension) {
  * capability flag is set.
  */
 TEST_P(GnssHalTest, TestGnssMeasurementCorrectionsCapabilities) {
+    if (!IsGnssHalVersion_2_0()) {
+        ALOGI("Test GnssMeasurementCorrectionsCapabilities skipped. GNSS HAL version is greater "
+              "than 2.0.");
+        return;
+    }
+
     if (!(gnss_cb_->last_capabilities_ & IGnssCallback::Capabilities::MEASUREMENT_CORRECTIONS)) {
         return;
     }

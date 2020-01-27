@@ -23,11 +23,12 @@ namespace android {
 namespace hardware {
 namespace gnss {
 namespace measurement_corrections {
-namespace V1_0 {
+namespace V1_1 {
 namespace implementation {
 
 // Methods from V1_0::IMeasurementCorrections follow.
-Return<bool> GnssMeasurementCorrections::setCorrections(const MeasurementCorrections& corrections) {
+Return<bool> GnssMeasurementCorrections::setCorrections(
+        const V1_0::MeasurementCorrections& corrections) {
     ALOGD("setCorrections");
     ALOGD("corrections = lat: %f, lng: %f, alt: %f, hUnc: %f, vUnc: %f, toa: %llu, "
           "satCorrections.size: %d",
@@ -67,8 +68,40 @@ Return<bool> GnssMeasurementCorrections::setCallback(
     return true;
 }
 
+// Methods from V1_1::IMeasurementCorrections follow.
+Return<bool> GnssMeasurementCorrections::setCorrections_1_1(
+        const V1_1::MeasurementCorrections& corrections) {
+    ALOGD("setCorrections_1_1");
+    ALOGD("corrections = lat: %f, lng: %f, alt: %f, hUnc: %f, vUnc: %f, toa: %llu,"
+          "satCorrections.size: %d, hasEnvironmentBearing: %d, environmentBearingDeg: %f,"
+          "environmentBearingUncDeg: %f",
+          corrections.v1_0.latitudeDegrees, corrections.v1_0.longitudeDegrees,
+          corrections.v1_0.altitudeMeters, corrections.v1_0.horizontalPositionUncertaintyMeters,
+          corrections.v1_0.verticalPositionUncertaintyMeters,
+          static_cast<unsigned long long>(corrections.v1_0.toaGpsNanosecondsOfWeek),
+          static_cast<int>(corrections.v1_0.satCorrections.size()),
+          corrections.hasEnvironmentBearing, corrections.environmentBearingDegrees,
+          corrections.environmentBearingUncertaintyDegrees);
+    for (auto singleSatCorrection : corrections.v1_0.satCorrections) {
+        ALOGD("singleSatCorrection = flags: %d, constellation: %d, svid: %d, cfHz: %f, probLos: %f,"
+              " epl: %f, eplUnc: %f",
+              static_cast<int>(singleSatCorrection.singleSatCorrectionFlags),
+              static_cast<int>(singleSatCorrection.constellation),
+              static_cast<int>(singleSatCorrection.svid), singleSatCorrection.carrierFrequencyHz,
+              singleSatCorrection.probSatIsLos, singleSatCorrection.excessPathLengthMeters,
+              singleSatCorrection.excessPathLengthUncertaintyMeters);
+        ALOGD("reflecting plane = lat: %f, lng: %f, alt: %f, azm: %f",
+              singleSatCorrection.reflectingPlane.latitudeDegrees,
+              singleSatCorrection.reflectingPlane.longitudeDegrees,
+              singleSatCorrection.reflectingPlane.altitudeMeters,
+              singleSatCorrection.reflectingPlane.azimuthDegrees);
+    }
+
+    return true;
+}
+
 }  // namespace implementation
-}  // namespace V1_0
+}  // namespace V1_1
 }  // namespace measurement_corrections
 }  // namespace gnss
 }  // namespace hardware

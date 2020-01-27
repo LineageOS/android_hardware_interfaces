@@ -27,6 +27,7 @@ using android::hardware::Return;
 using android::hardware::Void;
 
 using android::hardware::gnss::common::GnssCallbackEventQueue;
+using android::hardware::gnss::measurement_corrections::V1_0::IMeasurementCorrectionsCallback;
 using android::hardware::gnss::V1_0::GnssLocationFlags;
 using android::hardware::gnss::V2_0::GnssConstellationType;
 using android::hardware::gnss::V2_1::IGnss;
@@ -136,6 +137,19 @@ class GnssHalTest : public testing::TestWithParam<std::string> {
 
         // Methods from V2_1::IGnssMeasurementCallback follow.
         Return<void> gnssMeasurementCb_2_1(const IGnssMeasurementCallback_2_1::GnssData&) override;
+    };
+
+    /* Callback class for GnssMeasurementCorrections. */
+    class GnssMeasurementCorrectionsCallback : public IMeasurementCorrectionsCallback {
+      public:
+        uint32_t last_capabilities_;
+        GnssCallbackEventQueue<uint32_t> capabilities_cbq_;
+
+        GnssMeasurementCorrectionsCallback() : capabilities_cbq_("capabilities"){};
+        virtual ~GnssMeasurementCorrectionsCallback() = default;
+
+        // Methods from V1_0::IMeasurementCorrectionsCallback follow.
+        Return<void> setCapabilitiesCb(uint32_t capabilities) override;
     };
 
     /*
