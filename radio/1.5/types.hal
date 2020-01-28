@@ -229,6 +229,16 @@ enum NgranBands : int32_t {
     BAND_261 = 261,
 };
 
+enum UtranBands : @1.1::UtranBands {
+    /** TD-SCDMA bands. 3GPP TS 25.102, Table 5.2: Frequency bands */
+    BAND_A = 101,
+    BAND_B = 102,
+    BAND_C = 103,
+    BAND_D = 104,
+    BAND_E = 105,
+    BAND_F = 106,
+};
+
 /**
  * Overwritten from @1.2::NetworkScanRequest to update
  * RadioAccessSpecifier to 1.5 version
