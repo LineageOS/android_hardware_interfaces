@@ -23,11 +23,6 @@ namespace config {
 namespace V1_3 {
 namespace implementation {
 
-using namespace ::android::hardware::radio::V1_0;
-using namespace ::android::hardware::radio::config::V1_0;
-using namespace ::android::hardware::radio::config::V1_1;
-using namespace ::android::hardware::radio::config::V1_2;
-
 // Methods from ::android::hardware::radio::config::V1_0::IRadioConfigResponse follow.
 Return<void> RadioConfigResponse::getSimSlotsStatusResponse(
         const RadioResponseInfo& /* info */,
@@ -69,6 +64,13 @@ Return<void> RadioConfigResponse::getModemsConfigResponse(
 Return<void> RadioConfigResponse::getSimSlotsStatusResponse_1_2(
         const RadioResponseInfo& /* info */,
         const hidl_vec<V1_2::SimSlotStatus>& /* slotStatus */) {
+    // TODO implement
+    return Void();
+}
+
+// Methods from ::android::hardware::radio::config::V1_3::IRadioConfigResponse follow.
+Return<void> RadioConfigResponse::getPhoneCapabilityResponse_1_3(
+        const RadioResponseInfo& /* info */, const V1_3::PhoneCapability& /* phoneCapability */) {
     // TODO implement
     return Void();
 }

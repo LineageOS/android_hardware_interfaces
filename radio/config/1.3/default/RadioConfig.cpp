@@ -24,7 +24,6 @@ namespace V1_3 {
 namespace implementation {
 
 using namespace ::android::hardware::radio::V1_0;
-using namespace ::android::hardware::radio::config;
 
 // Methods from ::android::hardware::radio::config::V1_0::IRadioConfig follow.
 Return<void> RadioConfig::setResponseFunctions(
@@ -102,6 +101,14 @@ Return<void> RadioConfig::getModemsConfig(int32_t /* serial */) {
     V1_1::ModemsConfig modemsConfig;
     RadioResponseInfo info;
     mRadioConfigResponseV1_1->getModemsConfigResponse(info, modemsConfig);
+    return Void();
+}
+
+// Methods from ::android::hardware::radio::config::V1_3::IRadioConfig follow.
+Return<void> RadioConfig::getPhoneCapability_1_3(int32_t /* serial */) {
+    V1_3::PhoneCapability phoneCapability;
+    RadioResponseInfo info;
+    mRadioConfigResponseV1_3->getPhoneCapabilityResponse_1_3(info, phoneCapability);
     return Void();
 }
 
