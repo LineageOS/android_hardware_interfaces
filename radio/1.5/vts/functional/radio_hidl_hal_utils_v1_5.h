@@ -22,7 +22,7 @@
 #include <condition_variable>
 #include <mutex>
 
-#include <android/hardware/radio/config/1.1/IRadioConfig.h>
+#include <android/hardware/radio/config/1.3/IRadioConfig.h>
 
 #include <android/hardware/radio/1.5/IRadio.h>
 #include <android/hardware/radio/1.5/IRadioIndication.h>
@@ -563,6 +563,14 @@ class RadioResponse_v1_5 : public ::android::hardware::radio::V1_5::IRadioRespon
             const RadioResponseInfo& info,
             const ::android::hardware::hidl_vec<::android::hardware::radio::V1_5::BarringInfo>&
                     barringInfos);
+
+    Return<void> getVoiceRegistrationStateResponse_1_5(
+            const RadioResponseInfo& info,
+            const ::android::hardware::radio::V1_5::RegStateResult& regResponse);
+
+    Return<void> getDataRegistrationStateResponse_1_5(
+            const RadioResponseInfo& info,
+            const ::android::hardware::radio::V1_5::RegStateResult& regResponse);
 };
 
 /* Callback class for radio indication */

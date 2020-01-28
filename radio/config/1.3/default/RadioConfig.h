@@ -62,6 +62,9 @@ struct RadioConfig : public V1_3::IRadioConfig {
     Return<void> setPreferredDataModem(int32_t serial, uint8_t modemId);
     Return<void> setModemsConfig(int32_t serial, const V1_1::ModemsConfig& modemsConfig);
     Return<void> getModemsConfig(int32_t serial);
+
+    // Methods from ::android::hardware::radio::config::V1_3::IRadioConfig follow.
+    Return<void> getPhoneCapability_1_3(int32_t serial);
 };
 
 }  // namespace implementation
