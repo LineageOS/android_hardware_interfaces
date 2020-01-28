@@ -331,9 +331,7 @@ TEST_F(HealthHidlTest, getEnergyCounter) {
 TEST_F(HealthHidlTest, getChargeStatus) {
     SKIP_IF_SKIPPED();
     EXPECT_OK(mHealth->getChargeStatus([](auto result, auto value) {
-        EXPECT_VALID_OR_UNSUPPORTED_PROP(
-            result, toString(value),
-            value != BatteryStatus::UNKNOWN && verifyEnum<BatteryStatus>(value));
+        EXPECT_VALID_OR_UNSUPPORTED_PROP(result, toString(value), verifyEnum<BatteryStatus>(value));
     }));
 }
 
