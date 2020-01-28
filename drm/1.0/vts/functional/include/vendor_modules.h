@@ -51,6 +51,11 @@ class VendorModules {
      */
     std::vector<std::string> getPathList() const {return mPathList;}
 
+    /**
+     * Retrieve a DrmHalVTSVendorModule given a service name.
+     */
+    DrmHalVTSVendorModule* getModuleByName(const std::string& name);
+
    private:
     std::vector<std::string> mPathList;
     std::map<std::string, std::unique_ptr<SharedLibrary>> mOpenLibraries;
