@@ -62,13 +62,15 @@ enum class TestKind {
     GENERAL,
     // Same as GENERAL but sets dimensions for the output tensors to zeros
     DYNAMIC_SHAPE,
+    // Same as GENERAL but use device memories for inputs and outputs
+    MEMORY_DOMAIN,
     // Tests if quantized model with TENSOR_QUANT8_ASYMM produces the same result
     // (OK/SKIPPED/FAILED) as the model with all such tensors converted to
     // TENSOR_QUANT8_ASYMM_SIGNED.
     QUANTIZATION_COUPLING
 };
 
-void EvaluatePreparedModel(const sp<IPreparedModel>& preparedModel,
+void EvaluatePreparedModel(const sp<IDevice>& device, const sp<IPreparedModel>& preparedModel,
                            const test_helper::TestModel& testModel, TestKind testKind);
 
 }  // namespace android::hardware::neuralnetworks::V1_3::vts::functional

@@ -22,6 +22,12 @@ import @1.2::Constant;
 import @1.2::DeviceType;
 import @1.2::Extension;
 import @1.2::IDevice;
+import BufferDesc;
+import BufferRole;
+import Capabilities;
+import Model;
+import IBuffer;
+import IPreparedModel;
 import IPreparedModelCallback;
 
 /**
@@ -247,4 +253,61 @@ interface IDevice extends @1.2::IDevice {
                               uint8_t[Constant:BYTE_SIZE_OF_CACHE_TOKEN] token,
                               IPreparedModelCallback callback)
             generates (ErrorStatus status);
+
+    /**
+     * Allocates a driver-managed buffer with the properties specified by the buffer descriptor
+     * as well as the input and output roles.
+     *
+     * The allocate function must verify its inputs are correct. If there is an error, or if a
+     * certain role or property is not supported by the driver, the allocate
+     * function must return with an appropriate ErrorStatus, a nullptr as the IBuffer, and 0 as the
+     * buffer token. If the allocation is successful, this method must return with ErrorStatus::NONE
+     * and the produced IBuffer with a positive token identifying the allocated buffer. A successful
+     * allocation must accommodate all of the specified roles and buffer properties.
+     *
+     * The buffer is allocated to an uninitialized state. An uninitialized buffer may only be used
+     * in ways that are specified by outputRoles. A buffer is initialized after it is used as an
+     * output in a successful execution, or after a successful invocation of IBuffer::copyFrom on
+     * the buffer. An initialized buffer may be used according to all roles specified in inputRoles
+     * and outputRoles. A buffer will return to the uninitialized state if it is used as an output
+     * in a failed execution, or after a failed invocation of IBuffer::copyFrom on the buffer.
+     *
+     * The dimensions of the buffer can be deduced from the buffer descriptor as well as the
+     * dimensions of the corresponding model operands of the input and output roles. The dimensions
+     * or rank of the buffer may be unknown at this stage. As such, some driver services may only
+     * create a placeholder and defer the actual allocation until execution time. Note that the
+     * same buffer may be used for different shapes of outputs on different executions. When the
+     * buffer is used as an input, the input shape must be the same as the output shape from the
+     * last execution using this buffer as an output.
+     *
+     * The driver must apply proper validatation upon every usage of the buffer, and must fail the
+     * execution immediately if the usage is illegal.
+     *
+     * @param desc A buffer descriptor specifying the properties of the buffer to allocate.
+     * @param preparedModels A vector of IPreparedModel objects. Must only contain IPreparedModel
+     *     objects from the same IDevice as this method is being invoked on.
+     * @param inputRoles A vector of roles with each specifying an input to a prepared model.
+     * @param outputRoles A vector of roles with each specifying an output to a prepared model.
+     *     Each role specified in inputRoles and outputRoles must be unique. The corresponding
+     *     model operands of the roles must have the same OperandType, scale, zero point, and
+     *     ExtraParams. The dimensions of the operands and the dimensions specified in the buffer
+     *     descriptor must be compatible with each other. Two dimensions are incompatible if there
+     *     is at least one axis that is fully specified in both but has different values.
+     * @return status Error status of the buffer allocation. Must be:
+     *     - NONE if successful
+     *     - DEVICE_UNAVAILABLE if driver is offline or busy
+     *     - GENERAL_FAILURE if a certain buffer property or a certain role is not supported,
+     *       or if there is an unspecified error
+     *     - INVALID_ARGUMENT if one of the input arguments is invalid
+     * @return buffer The allocated IBuffer object. If the buffer was unable to be allocated
+     *     due to an error, nullptr must be returned.
+     * @return token A positive token identifying the allocated buffer. The same token will be
+     *     provided when referencing the buffer as one of the memory pools in the request of an
+     *     execution. The token must not collide with the tokens of other IBuffer objects that are
+     *     currently alive in the same driver service. If the buffer was unable to be allocated
+     *     due to an error, the token must be 0.
+     */
+    allocate(BufferDesc desc, vec<IPreparedModel> preparedModels, vec<BufferRole> inputRoles,
+             vec<BufferRole> outputRoles)
+            generates (ErrorStatus status, IBuffer buffer, int32_t token);
 };
