@@ -19,7 +19,6 @@
 package android.hardware.neuralnetworks@1.3;
 
 import @1.0::DataLocation;
-import @1.0::OperandLifeTime;
 import @1.0::PerformanceInfo;
 import @1.0::RequestArgument;
 import @1.2::Model.ExtensionNameAndPrefix;
@@ -90,7 +89,6 @@ enum OperationTypeRange : uint32_t {
     BASE_MAX        = 0xFFFF,
 };
 
-
 /**
  * The capabilities of a driver.
  *
@@ -152,6 +150,59 @@ struct Operation {
 };
 
 /**
+ * How an operand is used.
+ */
+enum OperandLifeTime : int32_t {
+    /**
+     * The operand is internal to the model. It's created by an operation and
+     * consumed by other operations. It must be an output operand of
+     * exactly one operation.
+     */
+    TEMPORARY_VARIABLE,
+
+    /**
+     * The operand is an input of a subgraph. It must not be an output
+     * operand of any operation.
+     *
+     * An operand can't be both input and output of a subgraph.
+     */
+    SUBGRAPH_INPUT,
+
+    /**
+     * The operand is an output of a subgraph. It must be an output
+     * operand of exactly one operation.
+     *
+     * An operand can't be both input and output of a subgraph.
+     */
+    SUBGRAPH_OUTPUT,
+
+    /**
+     * The operand is a constant found in Model.operandValues. It must
+     * not be an output operand of any operation.
+     */
+    CONSTANT_COPY,
+
+    /**
+     * The operand is a constant that was specified via a Memory
+     * object. It must not be an output operand of any operation.
+     */
+    CONSTANT_REFERENCE,
+
+    /**
+     * The operand does not have a value. This is valid only for optional
+     * arguments of operations.
+     */
+    NO_VALUE,
+
+    /**
+     * The operand is a reference to a subgraph. It must be an input to one
+     * or more {@link OperationType::IF} or {@link OperationType::WHILE}
+     * operations.
+     */
+    SUBGRAPH,
+};
+
+/**
  * Describes one operand of the model's graph.
  */
 struct Operand {
@@ -187,7 +238,7 @@ struct Operand {
      *     . The operand has lifetime CONSTANT_COPY or
      *       CONSTANT_REFERENCE.
      *
-     *     . The operand has lifetime MODEL_INPUT. Fully
+     *     . The operand has lifetime SUBGRAPH_INPUT. Fully
      *       specified dimensions must either be present in the
      *       Operand or they must be provided in the corresponding
      *       RequestArgument.
@@ -235,8 +286,8 @@ struct Operand {
 
     /**
      * Where to find the data for this operand.
-     * If the lifetime is TEMPORARY_VARIABLE, MODEL_INPUT, MODEL_OUTPUT, or
-     * NO_VALUE:
+     * If the lifetime is TEMPORARY_VARIABLE, SUBGRAPH_INPUT, SUBGRAPH_OUTPUT,
+     * or NO_VALUE:
      * - All the fields must be 0.
      * If the lifetime is CONSTANT_COPY:
      * - location.poolIndex is 0.
@@ -246,6 +297,11 @@ struct Operand {
      * - location.poolIndex is set.
      * - location.offset is the offset in bytes into the specified pool.
      * - location.length is set.
+     * If the lifetime is SUBGRAPH:
+     * - location.poolIndex is 0.
+     * - location.offset is the index of the referenced subgraph in
+     *   {@link Model::referenced}.
+     * - location.length is 0.
      */
     DataLocation location;
 
@@ -284,32 +340,19 @@ struct Operand {
  */
 struct Model {
     /**
-     * All operands included in the model.
+     * The top-level subgraph.
      */
-    vec<Operand> operands;
+    Subgraph main;
 
     /**
-     * All operations included in the model.
+     * Referenced subgraphs.
      *
-     * The operations are sorted into execution order. Every operand
-     * with lifetime MODEL_OUTPUT or TEMPORARY_VARIABLE must be
-     * written before it is read.
-     */
-    vec<Operation> operations;
-
-    /**
-     * Input indexes of the model. There must be at least one.
+     * Each subgraph is referenced by the main subgraph or at least one other
+     * referenced subgraph.
      *
-     * Each value corresponds to the index of the operand in "operands".
+     * There must be no reference cycles.
      */
-    vec<uint32_t> inputIndexes;
-
-    /**
-     * Output indexes of the model. There must be at least one.
-     *
-     * Each value corresponds to the index of the operand in "operands".
-     */
-    vec<uint32_t> outputIndexes;
+    vec<Subgraph> referenced;
 
     /**
      * A byte buffer containing operand data that were copied into the model.
@@ -359,6 +402,39 @@ struct Model {
      * name corresponding to each prefix.
      */
     vec<@1.2::Model.ExtensionNameAndPrefix> extensionNameToPrefix;
+};
+
+/**
+ * An excerpt of the execution graph.
+ */
+struct Subgraph {
+    /**
+     * All operands included in the subgraph.
+     */
+    vec<Operand> operands;
+
+    /**
+     * All operations included in the subgraph.
+     *
+     * The operations are sorted into execution order. Every operand
+     * with lifetime SUBGRAPH_OUTPUT or TEMPORARY_VARIABLE must be
+     * written before it is read.
+     */
+    vec<Operation> operations;
+
+    /**
+     * Input indexes of the subgraph. There must be at least one.
+     *
+     * Each value corresponds to the index of the operand in "operands".
+     */
+    vec<uint32_t> inputIndexes;
+
+    /**
+     * Output indexes of the subgraph. There must be at least one.
+     *
+     * Each value corresponds to the index of the operand in "operands".
+     */
+    vec<uint32_t> outputIndexes;
 };
 
 /**
