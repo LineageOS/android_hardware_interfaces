@@ -59,7 +59,6 @@ using hidl::memory::V1_0::IMemory;
 using implementation::PreparedModelCallback;
 using V1_0::DataLocation;
 using V1_0::ErrorStatus;
-using V1_0::OperandLifeTime;
 using V1_0::RequestArgument;
 using V1_1::ExecutionPreference;
 using V1_2::Constant;
@@ -269,10 +268,10 @@ Model createModel(const TestModel& testModel) {
         }
     }
 
-    return {.operands = std::move(operands),
-            .operations = std::move(operations),
-            .inputIndexes = testModel.inputIndexes,
-            .outputIndexes = testModel.outputIndexes,
+    return {.main = {.operands = std::move(operands),
+                     .operations = std::move(operations),
+                     .inputIndexes = testModel.inputIndexes,
+                     .outputIndexes = testModel.outputIndexes},
             .operandValues = std::move(operandValues),
             .pools = std::move(pools),
             .relaxComputationFloat32toFloat16 = testModel.isRelaxed};
@@ -290,8 +289,8 @@ static void makeOutputInsufficientSize(uint32_t outputIndex, Request* request) {
 }
 
 static void makeOutputDimensionsUnspecified(Model* model) {
-    for (auto i : model->outputIndexes) {
-        auto& dims = model->operands[i].dimensions;
+    for (auto i : model->main.outputIndexes) {
+        auto& dims = model->main.operands[i].dimensions;
         std::fill(dims.begin(), dims.end(), 0);
     }
 }

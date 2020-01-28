@@ -48,9 +48,14 @@ interface IDevice extends @1.2::IDevice {
     /**
      * Gets the supported operations in a model.
      *
-     * getSupportedOperations indicates which operations of a model are fully
-     * supported by the vendor driver. If an operation may not be supported for
-     * any reason, getSupportedOperations must return false for that operation.
+     * getSupportedOperations indicates which operations of the top-level
+     * subgraph are fully supported by the vendor driver. If an operation may
+     * not be supported for any reason, getSupportedOperations must return
+     * false for that operation.
+     *
+     * The {@link OperationType::IF} and {@link OperationType::WHILE}
+     * operations may only be fully supported if the vendor driver fully
+     * supports all operations in the referenced subgraphs.
      *
      * @param model A model whose operations--and their corresponding operands--
      *     are to be verified by the driver.
