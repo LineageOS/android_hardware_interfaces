@@ -22,6 +22,8 @@ import @1.0::DataLocation;
 import @1.0::OperandLifeTime;
 import @1.0::PerformanceInfo;
 import @1.0::RequestArgument;
+import @1.2::Model.ExtensionNameAndPrefix;
+import @1.2::Model.ExtensionTypeEncoding;
 import @1.2::OperandType;
 import @1.2::OperationType;
 import @1.2::SymmPerChannelQuantParams;
@@ -341,9 +343,9 @@ struct Model {
      * {@link OperandTypeRange::BASE_MAX} or
      * {@link OperationTypeRange::BASE_MAX} respectively should be interpreted
      * as an extension operand. The low
-     * {@link Model::ExtensionTypeEncoding::LOW_BITS_TYPE} bits of the value
-     * correspond to the type ID within the extension and the high
-     * {@link Model::ExtensionTypeEncoding::HIGH_BITS_PREFIX} bits encode
+     * {@link @1.2::Model::ExtensionTypeEncoding::LOW_BITS_TYPE} bits of the
+     * value correspond to the type ID within the extension and the high
+     * {@link @1.2::Model::ExtensionTypeEncoding::HIGH_BITS_PREFIX} bits encode
      * the "prefix", which maps uniquely to the extension name.
      *
      * For example, if a model contains an operation whose value is
@@ -356,39 +358,7 @@ struct Model {
      * prefix corresponding to each extension name and at most one extension
      * name corresponding to each prefix.
      */
-    vec<ExtensionNameAndPrefix> extensionNameToPrefix;
-
-    /**
-     * A correspondence between an extension name and a prefix of operand and
-     * operation type values.
-     */
-    struct ExtensionNameAndPrefix {
-        /**
-         * The extension name.
-         *
-         * See {@link Extension::name} for the format specification.
-         */
-        string name;
-
-        /**
-         * The unique extension identifier within the model.
-         *
-         * See {@link Model::extensionNameToPrefix}.
-         */
-        uint16_t prefix;
-    };
-
-    /**
-     * Numeric values of extension operand and operation types have the
-     * following structure:
-     * - 16 high bits represent the "prefix", which corresponds uniquely to the
-     *   extension name.
-     * - 16 low bits represent the type ID within the extension.
-     */
-    enum ExtensionTypeEncoding : uint8_t {
-        HIGH_BITS_PREFIX = 16,
-        LOW_BITS_TYPE = 16,
-    };
+    vec<@1.2::Model.ExtensionNameAndPrefix> extensionNameToPrefix;
 };
 
 /**
