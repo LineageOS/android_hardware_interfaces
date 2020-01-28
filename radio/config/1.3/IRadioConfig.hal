@@ -27,5 +27,13 @@ import @1.1::IRadioConfig;
  * serial to different methods), multiple responses (one for each method call) must still be served.
  */
 interface IRadioConfig extends @1.1::IRadioConfig {
-
+    /**
+     * Request current phone capability.
+     *
+     * @param serial Serial number of request.
+     *
+     * Response callback is IRadioResponse.getPhoneCapabilityResponse_1_3() which
+     * will return <@1.3::PhoneCapability>.
+     */
+    oneway getPhoneCapability_1_3(int32_t serial);
 };
