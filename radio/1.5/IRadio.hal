@@ -249,6 +249,24 @@ interface IRadio extends @1.4::IRadio {
     oneway getBarringInfo(int32_t serial);
 
     /**
+     * Request current voice registration state
+     *
+     * @param serial Serial number of request.
+     *
+     * Response function is IRadioResponse.getVoiceRegistrationStateResponse_1_5()
+     */
+    oneway getVoiceRegistrationState_1_5(int32_t serial);
+
+    /**
+     * Request current data registration state
+     *
+     * @param serial Serial number of request.
+     *
+     * Response function is IRadioResponse.getDataRegistrationStateResponse_1_5()
+     */
+    oneway getDataRegistrationState_1_5(int32_t serial);
+
+    /**
      * Requests that deactivates one category of the device personalization.
      *
      * @param serial Serial number of request.

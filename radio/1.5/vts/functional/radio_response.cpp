@@ -981,3 +981,19 @@ Return<void> RadioResponse_v1_5::getBarringInfoResponse(
     parent_v1_5.notify(info.serial);
     return Void();
 }
+
+Return<void> RadioResponse_v1_5::getVoiceRegistrationStateResponse_1_5(
+        const RadioResponseInfo& info,
+        const ::android::hardware::radio::V1_5::RegStateResult& /*regResponse*/) {
+    rspInfo = info;
+    parent_v1_5.notify(info.serial);
+    return Void();
+}
+
+Return<void> RadioResponse_v1_5::getDataRegistrationStateResponse_1_5(
+        const RadioResponseInfo& info,
+        const ::android::hardware::radio::V1_5::RegStateResult& /*regResponse*/) {
+    rspInfo = info;
+    parent_v1_5.notify(info.serial);
+    return Void();
+}
