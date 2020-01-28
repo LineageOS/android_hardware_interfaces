@@ -308,7 +308,7 @@ class CompilationCachingTestBase : public testing::Test {
                 model,
                 [&fullySupportsModel, &model](ErrorStatus status, const hidl_vec<bool>& supported) {
                     ASSERT_EQ(ErrorStatus::NONE, status);
-                    ASSERT_EQ(supported.size(), model.operations.size());
+                    ASSERT_EQ(supported.size(), model.main.operations.size());
                     fullySupportsModel = std::all_of(supported.begin(), supported.end(),
                                                      [](bool valid) { return valid; });
                 });
