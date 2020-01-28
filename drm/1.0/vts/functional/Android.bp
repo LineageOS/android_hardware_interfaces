@@ -14,13 +14,27 @@
 // limitations under the License.
 //
 
+cc_library_static {
+    name: "libdrmvtshelper",
+    defaults: ["VtsHalTargetTestDefaults"],
+    local_include_dirs: [
+        "include",
+    ],
+    srcs: [
+        "vendor_modules.cpp",
+    ],
+    static_libs: [
+       "android.hardware.drm@1.0-helper",
+    ],
+    export_include_dirs: ["include"],
+}
+
 cc_test {
     name: "VtsHalDrmV1_0TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: [
         "drm_hal_clearkey_test.cpp",
         "drm_hal_vendor_test.cpp",
-        "vendor_modules.cpp",
     ],
     static_libs: [
         "android.hardware.drm@1.0",
@@ -31,6 +45,7 @@ cc_test {
         "libnativehelper",
         "libssl",
         "libcrypto_static",
+        "libdrmvtshelper",
     ],
     test_suites: [
         "general-tests",

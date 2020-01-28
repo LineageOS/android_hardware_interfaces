@@ -17,14 +17,94 @@
 package android.hardware.camera.provider@2.6;
 
 import @2.5::ICameraProvider;
+import android.hardware.camera.common@1.0::Status;
+import android.hardware.camera.device@3.4::StreamConfiguration;
 
 /**
  * Camera provider HAL
+ *
+ * @2.6::adds support for the getConcurrentStreamingCameraIds() and
+ * isConcurrentStreamCombinationSupported()
+ * @2.6::ICameraProviderCallback to receive physical camera availability
+ * callbacks for logical multi-cameras.
  */
 interface ICameraProvider extends @2.5::ICameraProvider {
     /**
-     * @2.4::ICameraProvider::setCallback can be passed a
-     * @2.6::ICameraProviderCallback to receive physical camera availability
-     * callbacks for logical multi-cameras.
+     * getConcurrentStreamingCameraIds
+     *
+     * Get a vector of combinations of camera device ids that are able to
+     * configure streams concurrently. Each camera device advertised in a
+     * combination MUST at the very least support the following streams while
+     * streaming concurrently with the other camera ids in the combination.
+     *
+     *       Target 1                  Target 2
+     * ---------------------------------------------
+     * | Type  |   Size       |   Type  |   Size   |
+     * ---------------------------------------------
+     * | YUV   |  1280 X 720  |                    |
+     * ---------------------------------------------
+     * | PRIV  |  1280 X 720  |                    |
+     * ---------------------------------------------
+     * | YUV   |  1280 X 720  |   YUV   |1280 X 720|
+     * ---------------------------------------------
+     * | PRIV  |  1280 X 720  |   PRIV  |1280 X 720|
+     * ---------------------------------------------
+     * | PRIV  |  1280 X 720  |   YUV   |1280 X 720|
+     * ---------------------------------------------
+
+     * @return status Status code for the operation
+     * @return cameraIds a list of camera id combinations that support
+     *         concurrent stream configurations with the minimum guarantees
+     *         specified.
      */
+    getConcurrentStreamingCameraIds() generates (Status status, vec<vec<string>> cameraIds);
+
+    /**
+     * isConcurrentStreamCombinationSupported:
+     *
+     * Check for device support of specific camera stream combinations while
+     * streaming concurrently with other devices.
+     *
+     * The per device streamList must contain at least one output-capable stream, and may
+     * not contain more than one input-capable stream.
+     * In contrast to regular stream configuration the framework does not create
+     * or initialize any actual streams. This means that Hal must not use or
+     * consider the stream "id" value.
+     *
+     * ------------------------------------------------------------------------
+     *
+     * Preconditions:
+     *
+     * The framework can call this method at any time before, during and
+     * after active session configuration per device. This means that calls must not
+     * impact the performance of pending camera requests in any way. In
+     * particular there must not be any glitches or delays during normal
+     * camera streaming.
+     *
+     * The framework must not call this method with any combination of camera
+     * ids that is not a subset of the camera ids advertised by getConcurrentStreamingCameraIds of
+     * the same provider.
+     *
+     * Performance requirements:
+     * This call is expected to be significantly faster than stream
+     * configuration. In general HW and SW camera settings must not be
+     * changed and there must not be a user-visible impact on camera performance.
+     *
+     * @param configs a vector of camera ids and their corresponding stream
+     *                configurations that need to be queried for support.
+     *
+     * @return status Status code for the operation, one of:
+     *     OK:
+     *          On successful stream combination query.
+     *     METHOD_NOT_SUPPORTED:
+     *          The camera provider does not support stream combination query.
+     *     INTERNAL_ERROR:
+     *          The stream combination query cannot complete due to internal
+     *          error.
+     * @return true in case the stream combination is supported, false otherwise.
+     *
+     *
+     */
+    isConcurrentStreamCombinationSupported(vec<CameraIdAndStreamCombination> configs)
+        generates (Status status, bool queryStatus);
 };

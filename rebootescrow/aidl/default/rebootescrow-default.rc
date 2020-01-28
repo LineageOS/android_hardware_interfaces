@@ -3,7 +3,3 @@ service vendor.rebootescrow-default /vendor/bin/hw/android.hardware.rebootescrow
     class hal
     user system
     group system
-
-on boot
-    chmod 770 /dev/access-kregistry
-    chown system system /dev/access-kregistry
