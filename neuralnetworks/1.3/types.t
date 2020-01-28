@@ -21,6 +21,7 @@ package android.hardware.neuralnetworks@1.3;
 import @1.0::DataLocation;
 import @1.0::OperandLifeTime;
 import @1.0::PerformanceInfo;
+import @1.0::RequestArgument;
 import @1.2::OperandType;
 import @1.2::OperationType;
 import @1.2::SymmPerChannelQuantParams;
@@ -388,4 +389,93 @@ struct Model {
         HIGH_BITS_PREFIX = 16,
         LOW_BITS_TYPE = 16,
     };
+};
+
+/**
+ * A buffer descriptor. Describes the properties of a buffer.
+ */
+struct BufferDesc {
+    /**
+     * Dimensions of the buffer. May have unknown dimensions or rank. A buffer with some number
+     * of unspecified dimensions is represented by setting each unspecified dimension to 0. A
+     * buffer with unspecified rank is represented by providing an empty dimensions vector.
+     */
+    vec<uint32_t> dimensions;
+};
+
+/**
+ * Describes a role of an input or output to a prepared model.
+ */
+struct BufferRole {
+    /**
+     * The index of the IPreparedModel within the "preparedModel" argument passed in
+     * IDevice::allocate.
+     */
+    uint32_t modelIndex;
+
+    /**
+     * The index of the input or output operand.
+     */
+    uint32_t ioIndex;
+
+    /**
+     * A floating-point value within the range (0.0, 1.0]. Describes how likely the
+     * buffer is to be used in the specified role. This is provided as a hint to
+     * optimize the case when multiple roles prefer different buffer locations or data
+     * layouts.
+     */
+    float frequency;
+};
+
+/**
+ * Inputs to be sent to and outputs to be retrieved from a prepared model.
+ *
+ * A Request serves two primary tasks:
+ * 1) Provides the input and output data to be used when executing the model.
+ * 2) Specifies any updates to the input operand metadata that were left
+ *    unspecified at model preparation time.
+ *
+ * An output must not overlap with any other output, with an input, or
+ * with an operand of lifetime CONSTANT_REFERENCE.
+ */
+struct Request {
+    /**
+     * Input data and information to be used in the execution of a prepared
+     * model.
+     *
+     * The index of the input corresponds to the index in Model.inputIndexes.
+     *   E.g., input[i] corresponds to Model.inputIndexes[i].
+     */
+    vec<RequestArgument> inputs;
+
+    /**
+     * Output data and information to be used in the execution of a prepared
+     * model.
+     *
+     * The index of the output corresponds to the index in Model.outputIndexes.
+     *   E.g., output[i] corresponds to Model.outputIndexes[i].
+     */
+    vec<RequestArgument> outputs;
+
+    /**
+     * A memory pool.
+     */
+    safe_union MemoryPool {
+        /**
+         * Specifies a client-managed shared memory pool.
+         */
+        memory hidlMemory;
+
+        /**
+         * Specifies a driver-managed buffer. It is the token returned from IDevice::allocate,
+         * and is specific to the IDevice object.
+         */
+        int32_t token;
+    };
+
+    /**
+     * A collection of memory pools containing operand data for both the
+     * inputs and the outputs to a model.
+     */
+    vec<MemoryPool> pools;
 };
