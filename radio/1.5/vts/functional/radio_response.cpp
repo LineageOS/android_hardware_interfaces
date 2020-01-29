@@ -997,3 +997,10 @@ Return<void> RadioResponse_v1_5::getDataRegistrationStateResponse_1_5(
     parent_v1_5.notify(info.serial);
     return Void();
 }
+
+Return<void> RadioResponse_v1_5::getCellInfoListResponse_1_5(
+        const RadioResponseInfo& /*info*/,
+        const ::android::hardware::hidl_vec<
+                ::android::hardware::radio::V1_5::CellInfo>& /*cellInfo*/) {
+    return Void();
+}

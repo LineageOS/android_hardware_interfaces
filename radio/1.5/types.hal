@@ -17,24 +17,35 @@
 package android.hardware.radio@1.5;
 
 import @1.0::ApnAuthType;
+import @1.0::CdmaSignalStrength;
 import @1.0::DataProfileId;
 import @1.0::DataProfileInfoType;
+import @1.0::EvdoSignalStrength;
+import @1.0::GsmSignalStrength;
+import @1.0::LteSignalStrength;
 import @1.0::PersoSubstate;
 import @1.0::RadioAccessFamily;
+import @1.0::RadioError;
 import @1.0::RegState;
+import @1.0::TimeStampType;
 import @1.1::EutranBands;
 import @1.1::GeranBands;
 import @1.1::RadioAccessNetworks;
 import @1.1::RadioAccessSpecifier;
+import @1.1::ScanStatus;
 import @1.1::ScanType;
 import @1.1::UtranBands;
+import @1.2::CellConnectionStatus;
 import @1.2::CellIdentityCdma;
 import @1.2::CellIdentityGsm;
 import @1.2::CellIdentityWcdma;
 import @1.2::CellIdentityTdscdma;
 import @1.2::CellIdentityLte;
+import @1.2::CellInfoCdma;
 import @1.2::IndicationFilter;
 import @1.2::NetworkScanRequest;
+import @1.2::TdscdmaSignalStrength;
+import @1.2::WcdmaSignalStrength;
 import @1.4::AccessNetwork;
 import @1.4::ApnTypes;
 import @1.4::CellIdentityNr;
@@ -43,6 +54,7 @@ import @1.4::DataConnActiveStatus;
 import @1.4::DataProfileInfo;
 import @1.4::LteVopsInfo;
 import @1.4::NrIndicators;
+import @1.4::NrSignalStrength;
 import @1.4::PdpProtocolType;
 import @1.4::RadioTechnology;
 
@@ -433,6 +445,166 @@ enum Domain : int32_t {
     PS = 1 << 1,
 };
 
+struct ClosedSubscriberGroupInfo {
+    /**
+     * Indicates whether the cell is restricted to only CSG members. A cell not broadcasting the
+     * CSG Indication but reporting CSG information is considered a Hybrid Cell.
+     * Refer to the "csg-Indication" field in 3GPP TS 36.331 section 6.2.2
+     * SystemInformationBlockType1.
+     * Also refer to "CSG Indicator" in 3GPP TS 25.331 section 10.2.48.8.1 and TS 25.304.
+     */
+    bool csgIndication;
+
+    /**
+     * The human-readable name of the closed subscriber group operating this cell.
+     * Refer to "hnb-Name" in TS 36.331 section 6.2.2 SystemInformationBlockType9.
+     * Also refer to "HNB Name" in 3GPP TS25.331 section 10.2.48.8.23 and TS 23.003 section 4.8.
+     */
+    string homeNodebName;
+
+    /**
+     * The identity of the closed subscriber group that the cell belongs to.
+     * Refer to "CSG-Identity" in TS 36.336 section 6.3.4.
+     * Also refer to "CSG Identity" in 3GPP TS 25.331 section 10.3.2.8 and TS 23.003 section 4.7.
+     */
+    int32_t csgIdentity;
+};
+
+safe_union OptionalCsgInfo {
+    /**
+     * If no CSG info is provided by the cell, then this structure shall be present.
+     */
+    Monostate noinit;
+
+    /**
+     * If CSG info is provided by the cell, this structure shall be present.
+     */
+    ClosedSubscriberGroupInfo csgInfo;
+};
+
+struct CellIdentityGsm {
+    /**
+     * The fields "mcc" and "mnc" must contain the PLMN-ID of the primary PLMN of this cell.
+     */
+    @1.2::CellIdentityGsm base;
+
+    /** Additional PLMN-IDs beyond the primary PLMN broadcast for this cell */
+    vec<string> additionalPlmns;
+};
+
+struct CellIdentityWcdma {
+    /**
+     * The fields "mcc" and "mnc" must contain the PLMN-ID of the primary PLMN of this cell.
+     */
+    @1.2::CellIdentityWcdma base;
+
+    /** Additional PLMN-IDs beyond the primary PLMN broadcast for this cell */
+    vec<string> additionalPlmns;
+
+    /** Information about any closed subscriber group ID for this cell */
+    OptionalCsgInfo optionalCsgInfo;
+};
+
+struct CellIdentityTdscdma {
+    /**
+     * The fields "mcc" and "mnc" must contain the PLMN-ID of the primary PLMN of this cell.
+     */
+    @1.2::CellIdentityTdscdma base;
+
+    /** Additional PLMN-IDs beyond the primary PLMN broadcast for this cell */
+    vec<string> additionalPlmns;
+
+    /** Information about any closed subscriber group ID for this cell */
+    OptionalCsgInfo optionalCsgInfo;
+};
+
+struct CellIdentityLte {
+    /**
+     * The fields "mcc" and "mnc" must contain the PLMN-ID of the primary PLMN of this cell.
+     */
+    @1.2::CellIdentityLte base;
+
+    /** Additional PLMN-IDs beyond the primary PLMN broadcast for this cell */
+    vec<string> additionalPlmns;
+
+    /** Information about any closed subscriber group ID for this cell */
+    OptionalCsgInfo optionalCsgInfo;
+};
+
+/**
+ * The CellIdentity structure should be reported once for each element of the PLMN-IdentityInfoList
+ * broadcast in SIB1 CellAccessRelatedInfo as per 3GPP TS 38.331 Section 6.3.2.
+ */
+struct CellIdentityNr {
+    /**
+     * The fields "mcc" and "mnc" must contain the PLMN-ID of the primary PLMN of this cell.
+     */
+    @1.4::CellIdentityNr base;
+
+    /** Additional PLMN-IDs beyond the primary PLMN broadcast for this cell */
+    vec<string> additionalPlmns;
+};
+
+struct CellInfoGsm {
+    CellIdentityGsm cellIdentityGsm;
+    GsmSignalStrength signalStrengthGsm;
+};
+
+struct CellInfoWcdma {
+    CellIdentityWcdma cellIdentityWcdma;
+    WcdmaSignalStrength signalStrengthWcdma;
+};
+
+struct CellInfoTdscdma {
+    CellIdentityTdscdma cellIdentityTdscdma;
+    TdscdmaSignalStrength signalStrengthTdscdma;
+};
+
+struct CellInfoLte {
+    CellIdentityLte cellIdentityLte;
+    LteSignalStrength signalStrengthLte;
+};
+
+struct CellInfoNr {
+    CellIdentityNr cellIdentityNr;
+    NrSignalStrength signalStrengthNr;
+};
+
+struct CellInfo {
+    /**
+     * True if this cell is registered false if not registered.
+     */
+    bool registered;
+    /**
+     * Type of time stamp represented by timeStamp.
+     */
+    TimeStampType timeStampType;
+    /**
+     * Time in nanos as returned by ril_nano_time.
+     */
+    uint64_t timeStamp;
+    /**
+     * Connection status for the cell.
+     */
+    CellConnectionStatus connectionStatus;
+
+    safe_union CellInfoRatSpecificInfo {
+        /**
+         * 3gpp CellInfo types.
+         */
+        CellInfoGsm gsm;
+        CellInfoWcdma wcdma;
+        CellInfoTdscdma tdscdma;
+        CellInfoLte lte;
+        CellInfoNr nr;
+
+        /**
+         * 3gpp2 CellInfo types;
+         */
+        CellInfoCdma cdma;
+    } ratSpecificInfo;
+};
+
 /** A union representing the CellIdentity of a single cell */
 safe_union CellIdentity {
     Monostate noinit;
@@ -757,6 +929,24 @@ struct RegStateResult {
             NrIndicators nrIndicators;
         } eutranInfo;
     } accessTechnologySpecificInfo;
+};
+
+/** Overwritten from @1.4::NetworkScanResult in order to update the CellInfo to 1.5 version. */
+struct NetworkScanResult {
+    /**
+     * The status of the scan.
+     */
+    ScanStatus status;
+
+    /**
+     * The error code of the incremental result.
+     */
+    RadioError error;
+
+    /**
+     * List of network information as CellInfo.
+     */
+    vec<CellInfo> networkInfos;
 };
 
 /**
