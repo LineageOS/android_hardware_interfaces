@@ -642,10 +642,10 @@ c9273429fcf98d797d3bb07fdba6f1be95bf960f9255cde169fd1ca4db85f856 android.hardwar
 ##
 # BEGIN Radio HAL Merge Conflict Avoidance Buffer - STOPSHIP if present
 ##
-bbed8ec4b3e9bb419b61d3fe53ec2d7def943378d1de8eaa02d79b17b0838136 android.hardware.radio@1.5::types
+28f5cb307d95ca7b3e6e8118abe051446f799f1d8da6c668d4c8f684e622725c android.hardware.radio@1.5::types
 603851ca0f5360778049902fc7486d0ff60065b16e83b99f076487667aba1928 android.hardware.radio@1.5::IRadio
-20d52e66fd548f89bcb98cda42749a591ce8f439a2a7148617adac0c967ad937 android.hardware.radio@1.5::IRadioIndication
-afa9ba21fbf130e5cd6463b01ee34175a60220cdc8b657443e683494e6deca8d android.hardware.radio@1.5::IRadioResponse
+e96ae1c3a9c0689002ec2318e9c587f4f607c16a75a3cd38788b77eb91072021 android.hardware.radio@1.5::IRadioIndication
+04cce8fdae2b03becda4ee6fe17cb032fd7d30152f8ab36f642d794e4f5f6999 android.hardware.radio@1.5::IRadioResponse
 5971a891d7d8843e9fb9f44583a9a0a265ec42fd5e4e1c95c9803454d21fabf7 android.hardware.radio.config@1.3::types
 a2977755bc5f1ef47f04b7f2400632efda6218e1515dba847da487145cfabc4f android.hardware.radio.config@1.3::IRadioConfig
 742360c775313438b0f82256eac62fb5bbc76a6ae6f388573f3aa142fb2c1eea android.hardware.radio.config@1.3::IRadioConfigIndication

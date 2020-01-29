@@ -20,6 +20,7 @@ import @1.0::RadioResponseInfo;
 import @1.0::SendSmsResult;
 import @1.4::IRadioResponse;
 import @1.5::BarringInfo;
+import @1.5::CellInfo;
 import @1.5::PersoSubstate;
 import @1.5::RegStateResult;
 import @1.5::SetupDataCallResult;
@@ -200,6 +201,19 @@ interface IRadioResponse extends @1.4::IRadioResponse {
      */
     oneway getDataRegistrationStateResponse_1_5(RadioResponseInfo info,
             RegStateResult dataRegResponse);
+
+    /**
+     * This is identitcal to getCellInfoListResponse_1_4 but uses an updated version of CellInfo.
+     *
+     * @param info Response info struct containing response type, serial no. and error
+     * @param cellInfo List of current cell information known to radio
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INTERNAL_ERR
+     */
+    oneway getCellInfoListResponse_1_5(RadioResponseInfo info, vec<CellInfo> cellInfo);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
