@@ -879,6 +879,9 @@ TEST_F(RadioHidlTest_v1_5, setupDataCall_1_5) {
     }
 }
 
+/*
+ * Test IRadio.setInitialAttachApn_1_5() for the response returned.
+ */
 TEST_F(RadioHidlTest_v1_5, setInitialAttachApn_1_5) {
     serial = GetRandomSerialNumber();
 
@@ -919,6 +922,9 @@ TEST_F(RadioHidlTest_v1_5, setInitialAttachApn_1_5) {
     }
 }
 
+/*
+ * Test IRadio.setDataProfile_1_5() for the response returned.
+ */
 TEST_F(RadioHidlTest_v1_5, setDataProfile_1_5) {
     serial = GetRandomSerialNumber();
 
@@ -989,6 +995,32 @@ TEST_F(RadioHidlTest_v1_5, setRadioPower_1_5_emergencyCall_cancalled) {
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_5->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
     EXPECT_EQ(RadioError::NONE, radioRsp_v1_5->rspInfo.error);
+}
+
+/*
+ * Test IRadio.setNetworkSelectionModeManual_1_5() for the response returned.
+ */
+TEST_F(RadioHidlTest_v1_5, setNetworkSelectionModeManual_1_5) {
+    serial = GetRandomSerialNumber();
+
+    // can't camp on nonexistent MCCMNC, so we expect this to fail.
+    Return<void> res = radio_v1_5->setNetworkSelectionModeManual_1_5(
+            serial, "123456", android::hardware::radio::V1_5::RadioAccessNetworks::GERAN);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_5->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
+
+    if (cardStatus.base.base.cardState == CardState::ABSENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
+                                     {RadioError::NONE, RadioError::ILLEGAL_SIM_OR_ME,
+                                      RadioError::INVALID_ARGUMENTS, RadioError::INVALID_STATE},
+                                     CHECK_GENERAL_ERROR));
+    } else if (cardStatus.base.base.cardState == CardState::PRESENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
+                                     {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE,
+                                      RadioError::INVALID_ARGUMENTS, RadioError::INVALID_STATE},
+                                     CHECK_GENERAL_ERROR));
+    }
 }
 
 /*
