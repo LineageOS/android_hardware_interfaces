@@ -17,10 +17,10 @@
 package android.hardware.radio.config@1.3;
 
 import android.hardware.radio@1.1::GeranBands;
-import android.hardware.radio@1.1::UtranBands;
 import android.hardware.radio@1.1::EutranBands;
 import android.hardware.radio@1.4::RadioAccessFamily;
 import android.hardware.radio@1.5::NgranBands;
+import android.hardware.radio@1.5::UtranBands;
 
 /** Type for the SIM slot. */
 enum SlotType : int32_t {
