@@ -138,6 +138,8 @@ package audio.effects.V6_0 {
   public enum StreamInputType {
     method public String getRawName();
     enum_constant public static final audio.effects.V6_0.StreamInputType camcorder;
+    enum_constant public static final audio.effects.V6_0.StreamInputType echo_reference;
+    enum_constant public static final audio.effects.V6_0.StreamInputType fm_tuner;
     enum_constant public static final audio.effects.V6_0.StreamInputType mic;
     enum_constant public static final audio.effects.V6_0.StreamInputType unprocessed;
     enum_constant public static final audio.effects.V6_0.StreamInputType voice_call;

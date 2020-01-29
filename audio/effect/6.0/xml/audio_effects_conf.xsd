@@ -36,6 +36,8 @@
       <xs:enumeration value="voice_communication"/>
       <xs:enumeration value="unprocessed"/>
       <xs:enumeration value="voice_performance"/>
+      <xs:enumeration value="echo_reference"/>
+      <xs:enumeration value="fm_tuner"/>
     </xs:restriction>
   </xs:simpleType>
   <xs:simpleType name="streamOutputType">
