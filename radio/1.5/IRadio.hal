@@ -18,10 +18,8 @@ package android.hardware.radio@1.5;
 
 import @1.0::CdmaSmsMessage;
 import @1.2::DataRequestReason;
-import @1.4::DataProfileInfo;
 import @1.4::IRadio;
 import @1.5::AccessNetwork;
-import @1.5::BarringInfo;
 import @1.5::DataProfileInfo;
 import @1.5::IndicationFilter;
 import @1.5::LinkAddress;
@@ -118,13 +116,13 @@ interface IRadio extends @1.4::IRadio {
             vec<RadioAccessSpecifier> specifiers);
 
     /**
-     * Starts a network scan
+     * Starts a network scan.
      *
      * @param serial Serial number of request.
      * @param request Defines the radio networks/bands/channels which need to be scanned.
      *
-     * Same API as @1.4::IRadio.startNetworkScan_1_4, except using
-     * 1.5 version of NetworkScanRequest
+     * Same API as @1.4::IRadio.startNetworkScan_1_4, except using the
+     * 1.5 NetworkScanRequest as the input param.
      */
     oneway startNetworkScan_1_5(int32_t serial, NetworkScanRequest request);
 
@@ -166,14 +164,14 @@ interface IRadio extends @1.4::IRadio {
      * Response function is IRadioResponse.setupDataCallResponse_1_5()
      *
      * Note this API is the same as the 1.4 version except using the
-     * 1.5 AccessNetwork, DataProfileInto, and link addresses as the input param.
+     * 1.5 AccessNetwork, DataProfileInto, and LinkAddress as the input param.
      */
     oneway setupDataCall_1_5(int32_t serial, AccessNetwork accessNetwork,
             DataProfileInfo dataProfileInfo, bool roamingAllowed,
             DataRequestReason reason, vec<LinkAddress> addresses, vec<string> dnses);
 
     /**
-     * Set an apn to initial attach network
+     * Set an APN to initial attach network.
      *
      * @param serial Serial number of request.
      * @param dataProfileInfo data profile containing APN settings
@@ -189,7 +187,7 @@ interface IRadio extends @1.4::IRadio {
      * Send data profiles of the current carrier to the modem.
      *
      * @param serial Serial number of request.
-     * @param profiles Array of DataProfile to set.
+     * @param profiles Array of DataProfileInfo to set.
      *
      * Response callback is IRadioResponse.setDataProfileResponse_1_5()
      *
@@ -230,7 +228,7 @@ interface IRadio extends @1.4::IRadio {
      *
      * Prevents the reporting of specified unsolicited indications from the radio. This is used
      * for power saving in instances when those indications are not needed. If unset, defaults to
-     * @1.2::IndicationFilter:ALL.
+     * @1.5::IndicationFilter:ALL.
      *
      * @param serial Serial number of request.
      * @param indicationFilter 32-bit bitmap of IndicationFilter. Bits set to 1 indicate the
@@ -250,7 +248,7 @@ interface IRadio extends @1.4::IRadio {
     oneway getBarringInfo(int32_t serial);
 
     /**
-     * Request current voice registration state
+     * Request current voice registration state.
      *
      * @param serial Serial number of request.
      *
@@ -259,7 +257,7 @@ interface IRadio extends @1.4::IRadio {
     oneway getVoiceRegistrationState_1_5(int32_t serial);
 
     /**
-     * Request current data registration state
+     * Request current data registration state.
      *
      * @param serial Serial number of request.
      *
