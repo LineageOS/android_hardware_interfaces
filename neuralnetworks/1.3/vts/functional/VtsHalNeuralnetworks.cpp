@@ -192,4 +192,19 @@ sp<IPreparedModel> getPreparedModel_1_3(const sp<PreparedModelCallback>& callbac
     return IPreparedModel::castFrom(preparedModelV1_0).withDefault(nullptr);
 }
 
+std::string toString(Executor executor) {
+    switch (executor) {
+        case Executor::ASYNC:
+            return "ASYNC";
+        case Executor::SYNC:
+            return "SYNC";
+        case Executor::BURST:
+            return "BURST";
+        case Executor::FENCED:
+            return "FENCED";
+        default:
+            CHECK(false);
+    }
+}
+
 }  // namespace android::hardware::neuralnetworks::V1_3::vts::functional
