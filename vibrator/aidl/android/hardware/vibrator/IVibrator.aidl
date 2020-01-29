@@ -158,12 +158,31 @@ interface IVibrator {
     int getCompositionSizeMax();
 
     /**
+     * List of supported effect primitive.
+     *
+     * Return the effect primitives which are supported by the compose API.
+     * Implementations are expected to support all primitives of the interface
+     * version that they implement.
+     */
+    CompositePrimitive[] getSupportedPrimitives();
+
+    /**
+     * Retrieve effect primitive's duration in milliseconds.
+     *
+     * Support is reflected in getCapabilities (CAP_COMPOSE_EFFECTS).
+     *
+     * @return Best effort estimation of effect primitive's duration.
+     * @param primitive Effect primitive being queried.
+     */
+    int getPrimitiveDuration(CompositePrimitive primitive);
+
+    /**
      * Fire off a string of effect primitives, combined to perform richer effects.
      *
      * Support is reflected in getCapabilities (CAP_COMPOSE_EFFECTS).
      *
      * Doing this operation while the vibrator is already on is undefined behavior. Clients should
-     * explicitly call off.
+     * explicitly call off. IVibratorCallback.onComplete() support is required for this API.
      *
      * @param composite Array of composition parameters.
      */
