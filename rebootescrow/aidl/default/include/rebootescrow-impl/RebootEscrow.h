@@ -23,11 +23,14 @@ namespace android {
 namespace hardware {
 namespace rebootescrow {
 
-static const char* REBOOT_ESCROW_DEVICE = "/dev/access-kregistry";
-
 class RebootEscrow : public BnRebootEscrow {
+  public:
+    explicit RebootEscrow(const std::string& devicePath) : devicePath_(devicePath) {}
     ndk::ScopedAStatus storeKey(const std::vector<int8_t>& kek) override;
     ndk::ScopedAStatus retrieveKey(std::vector<int8_t>* _aidl_return) override;
+
+  private:
+    const std::string devicePath_;
 };
 
 }  // namespace rebootescrow
