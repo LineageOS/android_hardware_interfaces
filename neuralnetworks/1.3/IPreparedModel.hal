@@ -16,13 +16,14 @@
 
 package android.hardware.neuralnetworks@1.3;
 
-import @1.0::ErrorStatus;
-import @1.2::IExecutionCallback;
 import @1.2::IPreparedModel;
 import @1.2::MeasureTiming;
 import @1.2::OutputShape;
 import @1.2::Timing;
+import ErrorStatus;
+import OptionalTimePoint;
 import Request;
+import IExecutionCallback;
 
 /**
  * IPreparedModel describes a model that has been prepared for execution and
@@ -65,6 +66,17 @@ interface IPreparedModel extends @1.2::IPreparedModel {
      *   values, the execution should complete successfully (ErrorStatus::NONE):
      *   There must be no failure unless the device itself is in a bad state.
      *
+     * execute_1_3 can be called with an optional deadline. If the execution
+     * is not able to completed before the provided deadline, the execution
+     * must be aborted, and either {@link
+     * ErrorStatus::MISSED_DEADLINE_TRANSIENT} or {@link
+     * ErrorStatus::MISSED_DEADLINE_PERSISTENT} must be returned. The error due
+     * to an abort must be sent the same way as other errors, described above.
+     * If the service reports that it does not support execution deadlines via
+     * IDevice::supportsDeadlines, and execute_1_3 is called with a deadline,
+     * then the argument is invalid, and {@link ErrorStatus::INVALID_ARGUMENT}
+     * must be returned.
+     *
      * Any number of calls to the execute* and executeSynchronously* functions,
      * in any combination, may be made concurrently, even on the same
      * IPreparedModel object.
@@ -75,6 +87,9 @@ interface IPreparedModel extends @1.2::IPreparedModel {
      *                The duration runs from the time the driver sees the call
      *                to the execute_1_3 function to the time the driver invokes
      *                the callback.
+     * @param deadline The time by which execution must complete. If the
+     *                 execution cannot be finished by the deadline, the
+     *                 execution must be aborted.
      * @param callback A callback object used to return the error status of
      *                 the execution. The callback object's notify function must
      *                 be called exactly once, even if the execution was
@@ -87,8 +102,13 @@ interface IPreparedModel extends @1.2::IPreparedModel {
      *                  not large enough to store the resultant values
      *                - INVALID_ARGUMENT if one of the input arguments is
      *                  invalid
+     *                - MISSED_DEADLINE_* if the deadline for executing a model
+     *                  cannot be met
+     *                - RESOURCE_EXHAUSTED_* if the task was aborted by the
+     *                  driver
      */
-    execute_1_3(Request request, MeasureTiming measure, IExecutionCallback callback)
+    execute_1_3(Request request, MeasureTiming measure, OptionalTimePoint deadline,
+                IExecutionCallback callback)
         generates (ErrorStatus status);
 
     /**
@@ -116,6 +136,17 @@ interface IPreparedModel extends @1.2::IPreparedModel {
      * (ErrorStatus::NONE): There must be no failure unless the device itself is
      * in a bad state.
      *
+     * executeSynchronously_1_3 can be called with an optional deadline. If the
+     * execution is not able to completed before the provided deadline, the
+     * execution must be aborted, and either {@link
+     * ErrorStatus::MISSED_DEADLINE_TRANSIENT} or {@link
+     * ErrorStatus::MISSED_DEADLINE_PERSISTENT} must be returned. The error due
+     * to an abort must be sent the same way as other errors, described above.
+     * If the service reports that it does not support execution deadlines via
+     * IDevice::supportsDeadlines, and executeSynchronously_1_3 is called with a
+     * deadline, then the argument is invalid, and
+     * {@link ErrorStatus::INVALID_ARGUMENT} must be returned.
+     *
      * Any number of calls to the execute* and executeSynchronously* functions,
      * in any combination, may be made concurrently, even on the same
      * IPreparedModel object.
@@ -126,6 +157,9 @@ interface IPreparedModel extends @1.2::IPreparedModel {
      *                The duration runs from the time the driver sees the call
      *                to the executeSynchronously_1_3 function to the time the driver
      *                returns from the function.
+     * @param deadline The time by which execution must complete. If the
+     *                 execution cannot be finished by the deadline, the
+     *                 execution must be aborted.
      * @return status Error status of the execution, must be:
      *                - NONE if execution is performed successfully
      *                - DEVICE_UNAVAILABLE if driver is offline or busy
@@ -135,16 +169,22 @@ interface IPreparedModel extends @1.2::IPreparedModel {
      *                  corresponding output
      *                - INVALID_ARGUMENT if one of the input arguments is
      *                  invalid
+     *                - MISSED_DEADLINE_* if the deadline for executing a model
+     *                  cannot be met
+     *                - RESOURCE_EXHAUSTED_* if the task was aborted by the
+     *                  driver
      * @return outputShapes A list of shape information of model output operands.
      *                      The index into "outputShapes" corresponds to the index
      *                      of the output operand in the Request outputs vector.
      *                      outputShapes must be empty unless the status is either
      *                      NONE or OUTPUT_INSUFFICIENT_SIZE.
-     * @return Timing Duration of execution. Unless measure is YES and status is
+     * @return timing Duration of execution. Unless measure is YES and status is
      *                NONE, all times must be reported as UINT64_MAX. A driver may
      *                choose to report any time as UINT64_MAX, indicating that
      *                measurement is not available.
      */
-    executeSynchronously_1_3(Request request, MeasureTiming measure)
-            generates (ErrorStatus status, vec<OutputShape> outputShapes, Timing timing);
+    executeSynchronously_1_3(Request request, MeasureTiming measure,
+                             OptionalTimePoint deadline)
+                  generates (ErrorStatus status, vec<OutputShape> outputShapes,
+                             Timing timing);
 };
