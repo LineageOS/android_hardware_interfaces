@@ -233,9 +233,13 @@ TEST_P(HealthHidlTest, getHealthInfo_2_1) {
         EXPECT_TRUE(IsEnum(value.batteryCapacityLevel)) << " BatteryCapacityLevel";
         EXPECT_GE(value.batteryChargeTimeToFullNowSeconds, 0);
 
-        EXPECT_GE(value.batteryFullCapacityUah, 0) << "batteryFullCapacityUah is unknown";
-        EXPECT_GE(value.batteryFullCapacityUah, legacy.batteryFullCharge * 0.50);
-        EXPECT_LE(value.batteryFullCapacityUah, legacy.batteryFullCharge * 1.20);
+        EXPECT_GE(value.batteryFullCapacityUah, 0)
+                << "batteryFullCapacityUah should not be negative";
+
+        if (value.batteryFullCapacityUah > 0) {
+            EXPECT_GE(value.batteryFullCapacityUah, legacy.batteryFullCharge * 0.50);
+            EXPECT_LE(value.batteryFullCapacityUah, legacy.batteryFullCharge * 1.20);
+        }
     })));
 }
 
