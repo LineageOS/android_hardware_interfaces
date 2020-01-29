@@ -16,138 +16,46 @@
 
 #define LOG_TAG "drm_hal_vendor_test@1.0"
 
-#include <android/hardware/drm/1.0/ICryptoFactory.h>
-#include <android/hardware/drm/1.0/ICryptoPlugin.h>
-#include <android/hardware/drm/1.0/IDrmFactory.h>
-#include <android/hardware/drm/1.0/IDrmPlugin.h>
-#include <android/hardware/drm/1.0/IDrmPluginListener.h>
-#include <android/hardware/drm/1.0/types.h>
-#include <android/hidl/allocator/1.0/IAllocator.h>
-#include <gtest/gtest.h>
-#include <hidl/GtestPrinter.h>
-#include <hidl/ServiceManagement.h>
-#include <hidlmemory/mapping.h>
-#include <log/log.h>
 #include <openssl/aes.h>
-#include <memory>
 #include <random>
 
 #include "drm_hal_vendor_module_api.h"
 #include "vendor_modules.h"
 #include <VtsHalHidlTargetCallbackBase.h>
 
-using ::android::hardware::drm::V1_0::BufferType;
-using ::android::hardware::drm::V1_0::DestinationBuffer;
-using ::android::hardware::drm::V1_0::EventType;
-using ::android::hardware::drm::V1_0::ICryptoFactory;
-using ::android::hardware::drm::V1_0::ICryptoPlugin;
-using ::android::hardware::drm::V1_0::IDrmFactory;
-using ::android::hardware::drm::V1_0::IDrmPlugin;
-using ::android::hardware::drm::V1_0::IDrmPluginListener;
-using ::android::hardware::drm::V1_0::KeyedVector;
-using ::android::hardware::drm::V1_0::KeyRequestType;
-using ::android::hardware::drm::V1_0::KeyStatus;
-using ::android::hardware::drm::V1_0::KeyStatusType;
-using ::android::hardware::drm::V1_0::KeyType;
-using ::android::hardware::drm::V1_0::KeyValue;
-using ::android::hardware::drm::V1_0::Mode;
-using ::android::hardware::drm::V1_0::Pattern;
-using ::android::hardware::drm::V1_0::SecureStop;
-using ::android::hardware::drm::V1_0::SecureStopId;
-using ::android::hardware::drm::V1_0::SessionId;
-using ::android::hardware::drm::V1_0::SharedBuffer;
-using ::android::hardware::drm::V1_0::Status;
-using ::android::hardware::drm::V1_0::SubSample;
+#include "android/hardware/drm/1.0/vts/drm_hal_vendor_test.h"
 
-using ::android::hardware::hidl_array;
-using ::android::hardware::hidl_memory;
-using ::android::hardware::hidl_string;
-using ::android::hardware::hidl_vec;
-using ::android::hardware::Return;
-using ::android::hardware::Void;
-using ::android::hidl::allocator::V1_0::IAllocator;
-using ::android::hidl::memory::V1_0::IMemory;
-using ::android::sp;
-
-using std::string;
-using std::unique_ptr;
 using std::random_device;
-using std::map;
 using std::mt19937;
-using std::vector;
-
-using ContentConfiguration = ::DrmHalVTSVendorModule_V1::ContentConfiguration;
-using Key = ::DrmHalVTSVendorModule_V1::ContentConfiguration::Key;
-
-#define ASSERT_OK(ret) ASSERT_TRUE(ret.isOk())
-#define EXPECT_OK(ret) EXPECT_TRUE(ret.isOk())
-
-#define RETURN_IF_SKIPPED                                                                  \
-    if (vendorModule == nullptr || !vendorModule->isInstalled()) {                         \
-        GTEST_SKIP() << "This drm scheme not supported."                                   \
-                     << " library:" << GetParam() << " service-name:"                      \
-                     << (vendorModule == nullptr ? "N/A" : vendorModule->getServiceName()) \
-                     << std::endl;                                                         \
-        return;                                                                            \
-    }
 
 static const uint8_t kInvalidUUID[16] = {
         0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80,
         0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80,
 };
 
-static drm_vts::VendorModules* gVendorModules = nullptr;
-
-class DrmHalVendorFactoryTest : public testing::TestWithParam<std::string> {
-   public:
-     DrmHalVendorFactoryTest()
-         : vendorModule(
-                   static_cast<DrmHalVTSVendorModule_V1*>(gVendorModules->getModule(GetParam()))) {}
-
-     virtual ~DrmHalVendorFactoryTest() {}
-
-     virtual void SetUp() {
-         const ::testing::TestInfo* const test_info =
-                 ::testing::UnitTest::GetInstance()->current_test_info();
-         ALOGD("Running test %s.%s from vendor module %s", test_info->test_case_name(),
-               test_info->name(), GetParam().c_str());
-
-         const std::string instance = GetParam();
-         if (instance == "widevine") {
-             ASSERT_NE(nullptr, vendorModule.get());
-         }
-
-         if (vendorModule == nullptr) {
-             GTEST_SKIP() << "No vendor module available";
-         } else {
-             ASSERT_EQ(instance, vendorModule->getServiceName());
-             contentConfigurations = vendorModule->getContentConfigurations();
-         }
-
-         drmFactory = IDrmFactory::getService(instance);
-         ASSERT_NE(nullptr, drmFactory.get());
-         cryptoFactory = ICryptoFactory::getService(instance);
-         ASSERT_NE(nullptr, cryptoFactory.get());
-
-         // If drm scheme not installed skip subsequent tests
-         if (!drmFactory->isCryptoSchemeSupported(getVendorUUID())) {
-             // no GTEST_SKIP since only some tests require the module
-             vendorModule->setInstalled(false);
-         }
-     }
-
-   protected:
-    hidl_array<uint8_t, 16> getVendorUUID() {
-        if (vendorModule == nullptr) return {};
-        vector<uint8_t> uuid = vendorModule->getUUID();
-        return hidl_array<uint8_t, 16>(&uuid[0]);
+static drm_vts::VendorModules* gVendorModules = [] {
+#if defined(__LP64__)
+    const char* kModulePath = "/data/local/tmp/64/lib";
+#else
+    const char* kModulePath = "/data/local/tmp/32/lib";
+#endif
+    auto modules = new drm_vts::VendorModules(kModulePath);
+    if (modules->getPathList().size() == 0) {
+        std::cerr << "WARNING: No vendor modules found in " << kModulePath <<
+                ", all vendor tests will be skipped" << std::endl;
     }
+    return modules;
+}();
 
-    sp<IDrmFactory> drmFactory;
-    sp<ICryptoFactory> cryptoFactory;
-    unique_ptr<DrmHalVTSVendorModule_V1> vendorModule;
-    vector<ContentConfiguration> contentConfigurations;
-};
+namespace android {
+namespace hardware {
+namespace drm {
+namespace V1_0 {
+namespace vts {
+
+DrmHalVendorFactoryTest::DrmHalVendorFactoryTest()
+     : vendorModule(static_cast<DrmHalVTSVendorModule_V1*>(
+             gVendorModules->getModuleByName(GetParam().instance_))) {} // getModuleByName
 
 TEST_P(DrmHalVendorFactoryTest, ValidateConfigurations) {
     const char* kVendorStr = "Vendor module ";
@@ -195,8 +103,8 @@ TEST_P(DrmHalVendorFactoryTest, EmptyPluginUUIDNotSupported) {
  */
 TEST_P(DrmHalVendorFactoryTest, PluginConfigUUIDSupported) {
     RETURN_IF_SKIPPED;
-    EXPECT_TRUE(drmFactory->isCryptoSchemeSupported(getVendorUUID()));
-    EXPECT_TRUE(cryptoFactory->isCryptoSchemeSupported(getVendorUUID()));
+    EXPECT_TRUE(drmFactory->isCryptoSchemeSupported(getUUID()));
+    EXPECT_TRUE(cryptoFactory->isCryptoSchemeSupported(getUUID()));
 }
 
 /**
@@ -232,7 +140,7 @@ TEST_P(DrmHalVendorFactoryTest, CreateVendorDrmPlugin) {
     RETURN_IF_SKIPPED;
     hidl_string packageName("android.hardware.drm.test");
     auto res = drmFactory->createPlugin(
-            getVendorUUID(), packageName,
+            getUUID(), packageName,
             [&](Status status, const sp<IDrmPlugin>& plugin) {
                 EXPECT_EQ(Status::OK, status);
                 EXPECT_NE(nullptr, plugin.get());
@@ -247,7 +155,7 @@ TEST_P(DrmHalVendorFactoryTest, CreateVendorCryptoPlugin) {
     RETURN_IF_SKIPPED;
     hidl_vec<uint8_t> initVec;
     auto res = cryptoFactory->createPlugin(
-            getVendorUUID(), initVec,
+            getUUID(), initVec,
             [&](Status status, const sp<ICryptoPlugin>& plugin) {
                 EXPECT_EQ(Status::OK, status);
                 EXPECT_NE(nullptr, plugin.get());
@@ -284,50 +192,6 @@ TEST_P(DrmHalVendorFactoryTest, CreateInvalidCryptoPlugin) {
             });
     EXPECT_OK(res);
 }
-
-class DrmHalVendorPluginTest : public DrmHalVendorFactoryTest {
-   public:
-    virtual ~DrmHalVendorPluginTest() {}
-    virtual void SetUp() override {
-        // Create factories
-        DrmHalVendorFactoryTest::SetUp();
-        RETURN_IF_SKIPPED;
-
-        hidl_string packageName("android.hardware.drm.test");
-        auto res = drmFactory->createPlugin(
-                getVendorUUID(), packageName,
-                [this](Status status, const sp<IDrmPlugin>& plugin) {
-                    EXPECT_EQ(Status::OK, status);
-                    ASSERT_NE(nullptr, plugin.get());
-                    drmPlugin = plugin;
-                });
-        ASSERT_OK(res);
-
-        hidl_vec<uint8_t> initVec;
-        res = cryptoFactory->createPlugin(
-                getVendorUUID(), initVec,
-                [this](Status status, const sp<ICryptoPlugin>& plugin) {
-                    EXPECT_EQ(Status::OK, status);
-                    ASSERT_NE(nullptr, plugin.get());
-                    cryptoPlugin = plugin;
-                });
-        ASSERT_OK(res);
-    }
-
-    virtual void TearDown() override {}
-
-    SessionId openSession();
-    void closeSession(const SessionId& sessionId);
-    sp<IMemory> getDecryptMemory(size_t size, size_t index);
-    KeyedVector toHidlKeyedVector(const map<string, string>& params);
-    hidl_vec<uint8_t> loadKeys(const SessionId& sessionId,
-                               const ContentConfiguration& configuration,
-                               const KeyType& type);
-
-   protected:
-    sp<IDrmPlugin> drmPlugin;
-    sp<ICryptoPlugin> cryptoPlugin;
-};
 
 /**
  *  DrmPlugin tests
@@ -1193,7 +1057,7 @@ sp<IMemory> DrmHalVendorPluginTest::getDecryptMemory(size_t size,
 
     EXPECT_OK(res);
 
-    sp<IMemory> mappedMemory = mapMemory(hidlMemory);
+    sp<IMemory> mappedMemory = android::hardware::mapMemory(hidlMemory);
     EXPECT_NE(nullptr, mappedMemory.get());
     res = cryptoPlugin->setSharedBufferBase(hidlMemory, index);
     EXPECT_OK(res);
@@ -1236,29 +1100,6 @@ TEST_P(DrmHalVendorPluginTest, SetMediaDrmSessionEmptySession) {
 /**
  * Decrypt tests
  */
-
-class DrmHalVendorDecryptTest : public DrmHalVendorPluginTest {
-   public:
-    DrmHalVendorDecryptTest() = default;
-    virtual ~DrmHalVendorDecryptTest() {}
-
-   protected:
-    void fillRandom(const sp<IMemory>& memory);
-    hidl_array<uint8_t, 16> toHidlArray(const vector<uint8_t>& vec) {
-        EXPECT_EQ(vec.size(), 16u);
-        return hidl_array<uint8_t, 16>(&vec[0]);
-    }
-    hidl_vec<KeyValue> queryKeyStatus(SessionId sessionId);
-    void removeKeys(SessionId sessionId);
-    uint32_t decrypt(Mode mode, bool isSecure,
-            const hidl_array<uint8_t, 16>& keyId, uint8_t* iv,
-            const hidl_vec<SubSample>& subSamples, const Pattern& pattern,
-            const vector<uint8_t>& key, Status expectedStatus);
-    void aes_ctr_decrypt(uint8_t* dest, uint8_t* src, uint8_t* iv,
-            const hidl_vec<SubSample>& subSamples, const vector<uint8_t>& key);
-    void aes_cbc_decrypt(uint8_t* dest, uint8_t* src, uint8_t* iv,
-            const hidl_vec<SubSample>& subSamples, const vector<uint8_t>& key);
-};
 
 void DrmHalVendorDecryptTest::fillRandom(const sp<IMemory>& memory) {
     random_device rd;
@@ -1566,47 +1407,8 @@ TEST_P(DrmHalVendorDecryptTest, AttemptDecryptWithKeysRemoved) {
     }
 }
 
-
-/**
- * Instantiate the set of test cases for each vendor module
- */
-
-static const std::set<std::string> kAllInstances = [] {
-    std::vector<std::string> drmInstances =
-            android::hardware::getAllHalInstanceNames(IDrmFactory::descriptor);
-    std::vector<std::string> cryptoInstances =
-            android::hardware::getAllHalInstanceNames(ICryptoFactory::descriptor);
-    std::set<std::string> allInstances;
-    allInstances.insert(drmInstances.begin(), drmInstances.end());
-    allInstances.insert(cryptoInstances.begin(), cryptoInstances.end());
-    return allInstances;
-}();
-
-INSTANTIATE_TEST_CASE_P(DrmHalVendorFactoryTestCases, DrmHalVendorFactoryTest,
-                        testing::ValuesIn(kAllInstances),
-                        android::hardware::PrintInstanceNameToString);
-
-INSTANTIATE_TEST_CASE_P(DrmHalVendorPluginTestCases, DrmHalVendorPluginTest,
-                        testing::ValuesIn(kAllInstances),
-                        android::hardware::PrintInstanceNameToString);
-
-INSTANTIATE_TEST_CASE_P(DrmHalVendorDecryptTestCases, DrmHalVendorDecryptTest,
-                        testing::ValuesIn(kAllInstances),
-                        android::hardware::PrintInstanceNameToString);
-
-int main(int argc, char** argv) {
-#if defined(__LP64__)
-    const char* kModulePath = "/data/local/tmp/64/lib";
-#else
-    const char* kModulePath = "/data/local/tmp/32/lib";
-#endif
-    gVendorModules = new drm_vts::VendorModules(kModulePath);
-    if (gVendorModules->getPathList().size() == 0) {
-        std::cerr << "WARNING: No vendor modules found in " << kModulePath <<
-                ", all vendor tests will be skipped" << std::endl;
-    }
-    ::testing::InitGoogleTest(&argc, argv);
-    int status = RUN_ALL_TESTS();
-    ALOGI("Test result = %d", status);
-    return status;
-}
+}  // namespace vts
+}  // namespace V1_0
+}  // namespace drm
+}  // namespace hardware
+}  // namespace android
