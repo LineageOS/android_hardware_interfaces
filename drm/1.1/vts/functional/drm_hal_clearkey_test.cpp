@@ -16,205 +16,20 @@
 
 #define LOG_TAG "drm_hal_clearkey_test@1.1"
 
-#include <android/hardware/drm/1.0/ICryptoPlugin.h>
-#include <android/hardware/drm/1.0/IDrmPlugin.h>
-#include <android/hardware/drm/1.0/types.h>
-#include <android/hardware/drm/1.1/ICryptoFactory.h>
-#include <android/hardware/drm/1.1/IDrmFactory.h>
-#include <android/hardware/drm/1.1/IDrmPlugin.h>
-#include <android/hardware/drm/1.1/types.h>
-#include <android/hidl/allocator/1.0/IAllocator.h>
-#include <android/hidl/manager/1.2/IServiceManager.h>
-#include <gtest/gtest.h>
-#include <hidl/GtestPrinter.h>
-#include <hidl/HidlSupport.h>
-#include <hidl/ServiceManagement.h>
-#include <hidlmemory/mapping.h>
 #include <log/log.h>
-#include <openssl/aes.h>
-#include <memory>
-#include <random>
+#include <vector>
 
-namespace drm = ::android::hardware::drm;
-using ::android::hardware::drm::V1_0::BufferType;
-using ::android::hardware::drm::V1_0::DestinationBuffer;
-using ::android::hardware::drm::V1_0::ICryptoPlugin;
-using ::android::hardware::drm::V1_0::KeyedVector;
-using ::android::hardware::drm::V1_0::KeyValue;
-using ::android::hardware::drm::V1_0::KeyType;
-using ::android::hardware::drm::V1_0::Mode;
-using ::android::hardware::drm::V1_0::Pattern;
-using ::android::hardware::drm::V1_0::SecureStop;
-using ::android::hardware::drm::V1_0::SecureStopId;
-using ::android::hardware::drm::V1_0::SessionId;
-using ::android::hardware::drm::V1_0::SharedBuffer;
-using ::android::hardware::drm::V1_0::Status;
-using ::android::hardware::drm::V1_0::SubSample;
-using ::android::hardware::drm::V1_0::SubSample;
+#include "android/hardware/drm/1.1/vts/drm_hal_clearkey_test.h"
 
-using ::android::hardware::drm::V1_1::DrmMetricGroup;
-using ::android::hardware::drm::V1_1::HdcpLevel;
-using ::android::hardware::drm::V1_1::ICryptoFactory;
-using ::android::hardware::drm::V1_1::IDrmFactory;
-using ::android::hardware::drm::V1_1::IDrmPlugin;
-using ::android::hardware::drm::V1_1::KeyRequestType;
-using ::android::hardware::drm::V1_1::SecureStopRelease;
-using ::android::hardware::drm::V1_1::SecurityLevel;
-using ::android::hardware::drm::V1_1::SecurityLevel;
+namespace android {
+namespace hardware {
+namespace drm {
+namespace V1_1 {
+namespace vts {
 
-using ::android::hardware::hidl_array;
-using ::android::hardware::hidl_string;
-using ::android::hardware::hidl_memory;
-using ::android::hardware::hidl_vec;
-using ::android::hardware::Return;
-using ::android::hidl::allocator::V1_0::IAllocator;
-using ::android::hidl::memory::V1_0::IMemory;
-using ::android::sp;
-
-using std::string;
-using std::unique_ptr;
-using std::random_device;
-using std::map;
-using std::mt19937;
-using std::vector;
-
-/**
- * These clearkey tests use white box knowledge of the legacy clearkey
- * plugin to verify that the HIDL HAL services and interfaces are working.
- * It is not intended to verify any vendor's HAL implementation. If you
- * are looking for vendor HAL tests, see drm_hal_vendor_test.cpp
- */
-#define ASSERT_OK(ret) ASSERT_TRUE(ret.isOk())
-#define EXPECT_OK(ret) EXPECT_TRUE(ret.isOk())
-
-// To be used in mpd to specify drm scheme for players
-static const uint8_t kClearKeyUUID[16] = {
+const uint8_t kClearKeyUUID[16] = {
     0xE2, 0x71, 0x9D, 0x58, 0xA9, 0x85, 0xB3, 0xC9,
-    0x78, 0x1A, 0xB0, 0x30, 0xAF, 0x78, 0xD3, 0x0E};
-
-class DrmHalClearkeyTest : public ::testing::TestWithParam<std::string> {
-  public:
-    void SetUp() override {
-        const ::testing::TestInfo* const test_info =
-                ::testing::UnitTest::GetInstance()->current_test_info();
-
-        ALOGD("DrmHalClearkeyTest: Running test %s.%s", test_info->test_case_name(),
-                test_info->name());
-
-        const std::string instance = GetParam();
-
-        sp<IDrmFactory> drmFactory = IDrmFactory::getService(instance);
-        drmPlugin = createDrmPlugin(drmFactory);
-        sp<ICryptoFactory> cryptoFactory = ICryptoFactory::getService(instance);
-        cryptoPlugin = createCryptoPlugin(cryptoFactory);
-
-        if (drmPlugin == nullptr || cryptoPlugin == nullptr) {
-            if (instance == "clearkey") {
-                ASSERT_NE(nullptr, drmPlugin.get()) << "Can't get clearkey drm@1.1 plugin";
-                ASSERT_NE(nullptr, cryptoPlugin.get()) << "Can't get clearkey crypto@1.1 plugin";
-            }
-            GTEST_SKIP() << "Instance does not support clearkey";
-        }
-    }
-
-    SessionId openSession();
-    SessionId openSession(SecurityLevel level);
-    void closeSession(const SessionId& sessionId);
-    hidl_vec<uint8_t> loadKeys(const SessionId& sessionId, const KeyType& type);
-
-  private:
-    sp<IDrmPlugin> createDrmPlugin(sp<IDrmFactory> drmFactory) {
-        if (drmFactory == nullptr) {
-            return nullptr;
-        }
-        sp<IDrmPlugin> plugin = nullptr;
-        auto res = drmFactory->createPlugin(
-                kClearKeyUUID, "", [&](Status status, const sp<drm::V1_0::IDrmPlugin>& pluginV1_0) {
-                    EXPECT_EQ(Status::OK == status, pluginV1_0 != nullptr);
-                    plugin = IDrmPlugin::castFrom(pluginV1_0);
-                });
-
-        if (!res.isOk()) {
-            ALOGE("createDrmPlugin remote call failed");
-        }
-        return plugin;
-    }
-
-    sp<ICryptoPlugin> createCryptoPlugin(sp<ICryptoFactory> cryptoFactory) {
-        if (cryptoFactory == nullptr) {
-            return nullptr;
-        }
-        sp<ICryptoPlugin> plugin = nullptr;
-        hidl_vec<uint8_t> initVec;
-        auto res = cryptoFactory->createPlugin(
-                kClearKeyUUID, initVec,
-                [&](Status status, const sp<drm::V1_0::ICryptoPlugin>& pluginV1_0) {
-                    EXPECT_EQ(Status::OK == status, pluginV1_0 != nullptr);
-                    plugin = pluginV1_0;
-                });
-        if (!res.isOk()) {
-            ALOGE("createCryptoPlugin remote call failed");
-        }
-        return plugin;
-    }
-
-protected:
- template <typename CT>
- bool ValueEquals(DrmMetricGroup::ValueType type, const std::string& expected, const CT& actual) {
-     return type == DrmMetricGroup::ValueType::STRING_TYPE && expected == actual.stringValue;
- }
-
- template <typename CT>
- bool ValueEquals(DrmMetricGroup::ValueType type, const int64_t expected, const CT& actual) {
-     return type == DrmMetricGroup::ValueType::INT64_TYPE && expected == actual.int64Value;
- }
-
- template <typename CT>
- bool ValueEquals(DrmMetricGroup::ValueType type, const double expected, const CT& actual) {
-     return type == DrmMetricGroup::ValueType::DOUBLE_TYPE && expected == actual.doubleValue;
- }
-
- template <typename AT, typename VT>
- bool ValidateMetricAttributeAndValue(const DrmMetricGroup::Metric& metric,
-                                      const std::string& attributeName, const AT& attributeValue,
-                                      const std::string& componentName, const VT& componentValue) {
-     bool validAttribute = false;
-     bool validComponent = false;
-     for (const DrmMetricGroup::Attribute& attribute : metric.attributes) {
-         if (attribute.name == attributeName &&
-             ValueEquals(attribute.type, attributeValue, attribute)) {
-             validAttribute = true;
-         }
-     }
-     for (const DrmMetricGroup::Value& value : metric.values) {
-         if (value.componentName == componentName &&
-             ValueEquals(value.type, componentValue, value)) {
-             validComponent = true;
-         }
-     }
-     return validAttribute && validComponent;
- }
-
- template <typename AT, typename VT>
- bool ValidateMetricAttributeAndValue(const hidl_vec<DrmMetricGroup>& metricGroups,
-                                      const std::string& metricName,
-                                      const std::string& attributeName, const AT& attributeValue,
-                                      const std::string& componentName, const VT& componentValue) {
-     bool foundMetric = false;
-     for (const auto& group : metricGroups) {
-         for (const auto& metric : group.metrics) {
-             if (metric.name == metricName) {
-                 foundMetric = foundMetric || ValidateMetricAttributeAndValue(
-                                                  metric, attributeName, attributeValue,
-                                                  componentName, componentValue);
-             }
-         }
-     }
-     return foundMetric;
- }
-
- sp<IDrmPlugin> drmPlugin;
- sp<ICryptoPlugin> cryptoPlugin;
+    0x78, 0x1A, 0xB0, 0x30, 0xAF, 0x78, 0xD3, 0x0E
 };
 
 /**
@@ -812,16 +627,8 @@ TEST_P(DrmHalClearkeyTest, RemoveSecureStopById) {
     EXPECT_OK(res);
 }
 
-static const std::set<std::string> kAllInstances = [] {
-    std::vector<std::string> drmInstances =
-            android::hardware::getAllHalInstanceNames(IDrmFactory::descriptor);
-    std::vector<std::string> cryptoInstances =
-            android::hardware::getAllHalInstanceNames(ICryptoFactory::descriptor);
-    std::set<std::string> allInstances;
-    allInstances.insert(drmInstances.begin(), drmInstances.end());
-    allInstances.insert(cryptoInstances.begin(), cryptoInstances.end());
-    return allInstances;
-}();
-
-INSTANTIATE_TEST_SUITE_P(PerInstance, DrmHalClearkeyTest, testing::ValuesIn(kAllInstances),
-                         android::hardware::PrintInstanceNameToString);
+}  // namespace vts
+}  // namespace V1_1
+}  // namespace drm
+}  // namespace hardware
+}  // namespace android
