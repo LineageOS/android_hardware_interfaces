@@ -112,13 +112,23 @@ TEST_P(SupplicantStaNetworkHidlTest, SetGetKeyMgmt_1_2) {
     uint32_t keyMgmt = (uint32_t)ISupplicantStaNetwork::KeyMgmtMask::SAE;
 
     sta_network_->setKeyMgmt_1_2(keyMgmt, [](const SupplicantStatus &status) {
-        EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+        // Since this API is overridden by an upgraded API in newer HAL
+        // versions, allow FAILURE_UNKNOWN to indicate that the test is no
+        // longer supported on newer HALs.
+        if (status.code != SupplicantStatusCode::FAILURE_UNKNOWN) {
+            EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+        }
     });
 
     sta_network_->getKeyMgmt_1_2(
         [&keyMgmt](const SupplicantStatus &status, uint32_t keyMgmtOut) {
-            EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
-            EXPECT_EQ(keyMgmtOut, keyMgmt);
+            // Since this API is overridden by an upgraded API in newer HAL
+            // versions, allow FAILURE_UNKNOWN to indicate that the test is no
+            // longer supported on newer HALs.
+            if (status.code != SupplicantStatusCode::FAILURE_UNKNOWN) {
+                EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+                EXPECT_EQ(keyMgmtOut, keyMgmt);
+            }
         });
 }
 
@@ -131,14 +141,24 @@ TEST_P(SupplicantStaNetworkHidlTest, SetGetGroupCipher_1_2) {
 
     sta_network_->setGroupCipher_1_2(
         groupCipher, [](const SupplicantStatus &status) {
-            EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+            // Since this API is overridden by an upgraded API in newer HAL
+            // versions, allow FAILURE_UNKNOWN to indicate that the test is no
+            // longer supported on newer HALs.
+            if (status.code != SupplicantStatusCode::FAILURE_UNKNOWN) {
+                EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+            }
         });
 
     sta_network_->getGroupCipher_1_2(
         [&groupCipher](const SupplicantStatus &status,
                        uint32_t groupCipherOut) {
-            EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
-            EXPECT_EQ(groupCipherOut, groupCipher);
+            // Since this API is overridden by an upgraded API in newer HAL
+            // versions, allow FAILURE_UNKNOWN to indicate that the test is no
+            // longer supported on newer HALs.
+            if (status.code != SupplicantStatusCode::FAILURE_UNKNOWN) {
+                EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+                EXPECT_EQ(groupCipherOut, groupCipher);
+            }
         });
 }
 
@@ -151,14 +171,24 @@ TEST_P(SupplicantStaNetworkHidlTest, SetGetPairwiseCipher_1_2) {
 
     sta_network_->setPairwiseCipher_1_2(
         pairwiseCipher, [](const SupplicantStatus &status) {
-            EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+            // Since this API is overridden by an upgraded API in newer HAL
+            // versions, allow FAILURE_UNKNOWN to indicate that the test is no
+            // longer supported on newer HALs.
+            if (status.code != SupplicantStatusCode::FAILURE_UNKNOWN) {
+                EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+            }
         });
 
     sta_network_->getPairwiseCipher_1_2(
         [&pairwiseCipher](const SupplicantStatus &status,
                           uint32_t pairwiseCipherOut) {
-            EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
-            EXPECT_EQ(pairwiseCipherOut, pairwiseCipher);
+            // Since this API is overridden by an upgraded API in newer HAL
+            // versions, allow FAILURE_UNKNOWN to indicate that the test is no
+            // longer supported on newer HALs.
+            if (status.code != SupplicantStatusCode::FAILURE_UNKNOWN) {
+                EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+                EXPECT_EQ(pairwiseCipherOut, pairwiseCipher);
+            }
         });
 }
 
