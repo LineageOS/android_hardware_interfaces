@@ -40,6 +40,7 @@ cc_test {
         "BasicTests.cpp",
         "CompilationCachingTests.cpp",
         "GeneratedTestHarness.cpp",
+        "QualityOfServiceTests.cpp",
         "TestAssertions.cpp",
         "ValidateBurst.cpp",
         "ValidateModel.cpp",
