@@ -108,7 +108,12 @@ bool WritableIdentityCredential::initialize() {
     return true;
 }
 
+// TODO: use |attestationApplicationId| and |attestationChallenge| and also
+//       ensure the returned certificate chain satisfy the requirements listed in
+//       the docs for IWritableIdentityCredential::getAttestationCertificate()
+//
 Return<void> WritableIdentityCredential::getAttestationCertificate(
+        const hidl_vec<uint8_t>& /* attestationApplicationId */,
         const hidl_vec<uint8_t>& /* attestationChallenge */,
         getAttestationCertificate_cb _hidl_cb) {
     // For now, we dynamically generate an attestion key on each and every
@@ -181,7 +186,16 @@ Return<void> WritableIdentityCredential::getAttestationCertificate(
     certificateChain.insert(certificateChain.end(), attestationKeyCertificate.value().begin(),
                             attestationKeyCertificate.value().end());
 
-    _hidl_cb(support::resultOK(), certificateChain);
+    optional<vector<vector<uint8_t>>> splitCertChain =
+            support::certificateChainSplit(certificateChain);
+    if (!splitCertChain) {
+        _hidl_cb(support::result(ResultCode::FAILED, "Error splitting certificate chain"), {});
+        return Void();
+    }
+    hidl_vec<hidl_vec<uint8_t>> ret;
+    ret.resize(splitCertChain.value().size());
+    std::copy(splitCertChain.value().begin(), splitCertChain.value().end(), ret.begin());
+    _hidl_cb(support::resultOK(), ret);
     return Void();
 }
 
