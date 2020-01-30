@@ -45,6 +45,7 @@
 
 #include "1.0/Utils.h"
 #include "1.3/Callbacks.h"
+#include "1.3/Utils.h"
 #include "ExecutionBurstController.h"
 #include "MemoryUtils.h"
 #include "TestHarness.h"
@@ -714,7 +715,8 @@ void Execute(const sp<IDevice>& device, const TestModel& testModel, TestKind tes
         } break;
         case TestKind::QUANTIZATION_COUPLING: {
             ASSERT_TRUE(testModel.hasQuant8CoupledOperands());
-            createPreparedModel(device, model, &preparedModel, /*reportSkipping*/ false);
+            createPreparedModel(device, model, &preparedModel,
+                                /*reportSkipping*/ false);
             TestModel signedQuantizedModel = convertQuant8AsymmOperandsToSigned(testModel);
             sp<IPreparedModel> preparedCoupledModel;
             createPreparedModel(device, createModel(signedQuantizedModel), &preparedCoupledModel,
@@ -743,6 +745,12 @@ void Execute(const sp<IDevice>& device, const TestModel& testModel, TestKind tes
 void GeneratedTestBase::SetUp() {
     testing::TestWithParam<GeneratedTestParam>::SetUp();
     ASSERT_NE(kDevice, nullptr);
+
+    const Return<void> ret =
+            kDevice->supportsDeadlines([this](bool prepareModelDeadline, bool executionDeadline) {
+                mSupportsDeadlines = {prepareModelDeadline, executionDeadline};
+            });
+    ASSERT_TRUE(ret.isOk());
 }
 
 std::vector<NamedModel> getNamedModels(const FilterFn& filter) {
