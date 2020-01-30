@@ -17,6 +17,7 @@
 package android.hardware.neuralnetworks@1.3;
 
 import @1.0::DataLocation;
+import @1.0::ErrorStatus;
 import @1.0::PerformanceInfo;
 import @1.0::RequestArgument;
 import @1.2::Model.ExtensionNameAndPrefix;
@@ -4999,6 +5000,16 @@ enum OperationTypeRange : uint32_t {
 };
 
 /**
+ * Priority given to a prepared model for execution.
+ */
+enum Priority : int32_t {
+    LOW,
+    MEDIUM,
+    HIGH,
+};
+
+
+/**
  * The capabilities of a driver.
  *
  * Performance of an operation comes from the type of its first operand.
@@ -5433,4 +5444,50 @@ struct Request {
      * inputs and the outputs to a model.
      */
     vec<MemoryPool> pools;
+};
+
+/**
+ * Optional time point of the steady clock (as from std::chrono::steady_clock)
+ * measured in nanoseconds.
+ */
+safe_union OptionalTimePoint {
+    /** No time point provided. */
+    Monostate none;
+
+    /**
+     * Time point of the steady clock (as from std::chrono::steady_clock)
+     * measured in nanoseconds.
+     */
+    uint64_t nanoseconds;
+};
+
+/**
+ * Return status of a function.
+ */
+enum ErrorStatus : @1.0::ErrorStatus {
+    /**
+     * Failure because a deadline could not be met for a task, but future
+     * deadlines may still be met for the same task after a short delay.
+     */
+    MISSED_DEADLINE_TRANSIENT,
+
+    /**
+     * Failure because a deadline could not be met for a task, and future
+     * deadlines will likely also not be met for the same task even after a
+     * short delay.
+     */
+    MISSED_DEADLINE_PERSISTENT,
+
+    /**
+     * Failure because of a resource limitation within the driver, but future
+     * calls for the same task may still succeed after a short delay.
+     */
+    RESOURCE_EXHAUSTED_TRANSIENT,
+
+    /**
+     * Failure because of a resource limitation within the driver, and future
+     * calls for the same task will likely also fail even after a short
+     * delay.
+     */
+    RESOURCE_EXHAUSTED_PERSISTENT,
 };
