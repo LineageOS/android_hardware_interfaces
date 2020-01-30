@@ -36,6 +36,8 @@
       <xs:enumeration value="voice_communication"/>
       <xs:enumeration value="unprocessed"/>
       <xs:enumeration value="voice_performance"/>
+      <xs:enumeration value="echo_reference"/>
+      <xs:enumeration value="fm_tuner"/>
     </xs:restriction>
   </xs:simpleType>
   <xs:simpleType name="streamOutputType">
@@ -56,6 +58,65 @@
   <xs:simpleType name="relativePathType">
     <xs:restriction base="xs:string">
       <xs:pattern value="[^/].*"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="deviceType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="AUDIO_DEVICE_OUT_EARPIECE"/>
+      <xs:enumeration value="AUDIO_DEVICE_OUT_SPEAKER"/>
+      <xs:enumeration value="AUDIO_DEVICE_OUT_WIRED_HEADSET"/>
+      <xs:enumeration value="AUDIO_DEVICE_OUT_WIRED_HEADPHONE"/>
+      <xs:enumeration value="AUDIO_DEVICE_OUT_BLUETOOTH_SCO"/>
+      <xs:enumeration value="AUDIO_DEVICE_OUT_BLUETOOTH_SCO_HEADSET"/>
+      <xs:enumeration value="AUDIO_DEVICE_OUT_BLUETOOTH_SCO_CARKIT"/>
+      <xs:enumeration value="AUDIO_DEVICE_OUT_BLUETOOTH_A2DP"/>
+      <xs:enumeration value="AUDIO_DEVICE_OUT_BLUETOOTH_A2DP_HEADPHONES"/>
+      <xs:enumeration value="AUDIO_DEVICE_OUT_BLUETOOTH_A2DP_SPEAKER"/>
+      <xs:enumeration value="AUDIO_DEVICE_OUT_AUX_DIGITAL"/>
+      <xs:enumeration value="AUDIO_DEVICE_OUT_HDMI"/>
+      <xs:enumeration value="AUDIO_DEVICE_OUT_USB_ACCESSORY"/>
+      <xs:enumeration value="AUDIO_DEVICE_OUT_USB_DEVICE"/>
+      <xs:enumeration value="AUDIO_DEVICE_OUT_REMOTE_SUBMIX"/>
+      <xs:enumeration value="AUDIO_DEVICE_OUT_TELEPHONY_TX"/>
+      <xs:enumeration value="AUDIO_DEVICE_OUT_LINE"/>
+      <xs:enumeration value="AUDIO_DEVICE_OUT_HDMI_ARC"/>
+      <xs:enumeration value="AUDIO_DEVICE_OUT_SPDIF"/>
+      <xs:enumeration value="AUDIO_DEVICE_OUT_FM"/>
+      <xs:enumeration value="AUDIO_DEVICE_OUT_AUX_LINE"/>
+      <xs:enumeration value="AUDIO_DEVICE_OUT_SPEAKER_SAFE"/>
+      <xs:enumeration value="AUDIO_DEVICE_OUT_IP"/>
+      <xs:enumeration value="AUDIO_DEVICE_OUT_BUS"/>
+      <xs:enumeration value="AUDIO_DEVICE_OUT_PROXY"/>
+      <xs:enumeration value="AUDIO_DEVICE_OUT_USB_HEADSET"/>
+      <xs:enumeration value="AUDIO_DEVICE_OUT_HEARING_AID"/>
+      <xs:enumeration value="AUDIO_DEVICE_OUT_ECHO_CANCELLER"/>
+      <!-- Due to the xml format, IN types can not be a separated from OUT types -->
+      <xs:enumeration value="AUDIO_DEVICE_IN_COMMUNICATION"/>
+      <xs:enumeration value="AUDIO_DEVICE_IN_BUILTIN_MIC"/>
+      <xs:enumeration value="AUDIO_DEVICE_IN_BLUETOOTH_SCO_HEADSET"/>
+      <xs:enumeration value="AUDIO_DEVICE_IN_WIRED_HEADSET"/>
+      <xs:enumeration value="AUDIO_DEVICE_IN_AUX_DIGITAL"/>
+      <xs:enumeration value="AUDIO_DEVICE_IN_HDMI"/>
+      <xs:enumeration value="AUDIO_DEVICE_IN_VOICE_CALL"/>
+      <xs:enumeration value="AUDIO_DEVICE_IN_TELEPHONY_RX"/>
+      <xs:enumeration value="AUDIO_DEVICE_IN_BACK_MIC"/>
+      <xs:enumeration value="AUDIO_DEVICE_IN_REMOTE_SUBMIX"/>
+      <xs:enumeration value="AUDIO_DEVICE_IN_DGTL_DOCK_HEADSET"/>
+      <xs:enumeration value="AUDIO_DEVICE_IN_USB_ACCESSORY"/>
+      <xs:enumeration value="AUDIO_DEVICE_IN_USB_DEVICE"/>
+      <xs:enumeration value="AUDIO_DEVICE_IN_FM_TUNER"/>
+      <xs:enumeration value="AUDIO_DEVICE_IN_TV_TUNER"/>
+      <xs:enumeration value="AUDIO_DEVICE_IN_LINE"/>
+      <xs:enumeration value="AUDIO_DEVICE_IN_SPDIF"/>
+      <xs:enumeration value="AUDIO_DEVICE_IN_BLUETOOTH_A2DP"/>
+      <xs:enumeration value="AUDIO_DEVICE_IN_LOOPBACK"/>
+      <xs:enumeration value="AUDIO_DEVICE_IN_IP"/>
+      <xs:enumeration value="AUDIO_DEVICE_IN_BUS"/>
+      <xs:enumeration value="AUDIO_DEVICE_IN_PROXY"/>
+      <xs:enumeration value="AUDIO_DEVICE_IN_USB_HEADSET"/>
+      <xs:enumeration value="AUDIO_DEVICE_IN_BLUETOOTH_BLE"/>
+      <xs:enumeration value="AUDIO_DEVICE_IN_HDMI_ARC"/>
+      <xs:enumeration value="AUDIO_DEVICE_IN_ECHO_REFERENCE"/>
     </xs:restriction>
   </xs:simpleType>
   <!-- Complex types -->
@@ -174,6 +235,33 @@
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
+  <xs:complexType name="deviceProcessType">
+    <xs:annotation>
+      <xs:documentation xml:lang="en">
+        Audio Device Effects configuration. The processing configuration consists
+        of a list of effects to be automatically added on a device Port when involved in an audio
+        patch.
+        Valid device type are listed in "deviceType" and shall be aligned.
+        Each stream element contains a list of "apply" elements. The value of the
+        "effect" attr must correspond to the name of an "effect" element.
+        Note that if the device is involved in a hardware patch, the effect must be hardware
+        accelerated.
+        Example:
+        <devicePort address="BUS00_USAGE_MAIN" type="AUDIO_DEVICE_OUT_BUS">
+            <apply effect="equalizer"/>
+            <apply effect="effect2"/>
+        </devicePort>
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="aec:streamProcessingType">
+         <xs:complexType>
+             <xs:attribute name="address" type="xs:string" use="required"/>
+             <xs:attribute name="type" type="aec:deviceType" use="required"/>
+         </xs:complexType>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
   <!-- Root element -->
   <xs:element name="audio_effects_conf">
     <xs:complexType>
@@ -191,6 +279,13 @@
           <xs:complexType>
             <xs:sequence>
               <xs:element name="stream" type="aec:streamPreprocessType" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="deviceEffects" minOccurs="0" maxOccurs="1">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="devicePort" type="aec:deviceProcessType" minOccurs="0" maxOccurs="unbounded"/>
             </xs:sequence>
           </xs:complexType>
         </xs:element>
