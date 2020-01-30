@@ -26,6 +26,7 @@
 #include "ExternalCameraProviderImpl_2_4.h"
 #include "ExternalCameraDevice_3_4.h"
 #include "ExternalCameraDevice_3_5.h"
+#include "ExternalCameraDevice_3_6.h"
 
 namespace android {
 namespace hardware {
@@ -73,6 +74,7 @@ ExternalCameraProviderImpl_2_4::ExternalCameraProviderImpl_2_4() :
     switch(mPreferredHal3MinorVersion) {
         case 4:
         case 5:
+        case 6:
             // OK
             break;
         default:
@@ -171,6 +173,12 @@ Return<void> ExternalCameraProviderImpl_2_4::getCameraDeviceInterface_V3_x(
                     cameraId, mCfg);
             break;
         }
+        case 6: {
+            ALOGV("Constructing v3.6 external camera device");
+            deviceImpl = new device::V3_6::implementation::ExternalCameraDevice(
+                    cameraId, mCfg);
+            break;
+        }
         default:
             ALOGE("%s: Unknown HAL minor version %d!", __FUNCTION__, mPreferredHal3MinorVersion);
             _hidl_cb(Status::INTERNAL_ERROR, nullptr);
@@ -202,7 +210,9 @@ void ExternalCameraProviderImpl_2_4::addExternalCamera(const char* devName) {
     ALOGI("ExtCam: adding %s to External Camera HAL!", devName);
     Mutex::Autolock _l(mLock);
     std::string deviceName;
-    if (mPreferredHal3MinorVersion == 5) {
+    if (mPreferredHal3MinorVersion == 6) {
+        deviceName = std::string("device@3.6/external/") + devName;
+    } else if (mPreferredHal3MinorVersion == 5) {
         deviceName = std::string("device@3.5/external/") + devName;
     } else {
         deviceName = std::string("device@3.4/external/") + devName;
@@ -249,7 +259,9 @@ void ExternalCameraProviderImpl_2_4::deviceAdded(const char* devName) {
 void ExternalCameraProviderImpl_2_4::deviceRemoved(const char* devName) {
     Mutex::Autolock _l(mLock);
     std::string deviceName;
-    if (mPreferredHal3MinorVersion == 5) {
+    if (mPreferredHal3MinorVersion == 6) {
+        deviceName = std::string("device@3.6/external/") + devName;
+    } else if (mPreferredHal3MinorVersion == 5) {
         deviceName = std::string("device@3.5/external/") + devName;
     } else {
         deviceName = std::string("device@3.4/external/") + devName;
