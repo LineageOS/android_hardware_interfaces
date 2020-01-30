@@ -272,7 +272,7 @@ void EvaluatePreparedModel(const sp<IPreparedModel>& preparedModel, const TestMo
             int n;
             std::tie(n, outputShapes, timing, std::ignore) =
                     controller->compute(request, testConfig.measureTiming, keys);
-            executionStatus = nn::convertResultCodeToErrorStatus(n);
+            executionStatus = nn::convertToV1_0(nn::convertResultCodeToErrorStatus(n));
 
             break;
         }

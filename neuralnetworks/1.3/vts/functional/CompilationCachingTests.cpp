@@ -29,6 +29,7 @@
 #include <thread>
 
 #include "1.3/Callbacks.h"
+#include "1.3/Utils.h"
 #include "GeneratedTestHarness.h"
 #include "MemoryUtils.h"
 #include "TestHarness.h"
@@ -49,7 +50,6 @@ namespace android::hardware::neuralnetworks::V1_3::vts::functional {
 
 using namespace test_helper;
 using implementation::PreparedModelCallback;
-using V1_0::ErrorStatus;
 using V1_1::ExecutionPreference;
 using V1_2::Constant;
 using V1_2::OperationType;
@@ -238,8 +238,8 @@ class CompilationCachingTestBase : public testing::Test {
         mCacheDir.push_back('/');
 
         Return<void> ret = kDevice->getNumberOfCacheFilesNeeded(
-                [this](ErrorStatus status, uint32_t numModelCache, uint32_t numDataCache) {
-                    EXPECT_EQ(ErrorStatus::NONE, status);
+                [this](V1_0::ErrorStatus status, uint32_t numModelCache, uint32_t numDataCache) {
+                    EXPECT_EQ(V1_0::ErrorStatus::NONE, status);
                     mNumModelCache = numModelCache;
                     mNumDataCache = numDataCache;
                 });
@@ -324,9 +324,9 @@ class CompilationCachingTestBase : public testing::Test {
         // Launch prepare model.
         sp<PreparedModelCallback> preparedModelCallback = new PreparedModelCallback();
         hidl_array<uint8_t, sizeof(mToken)> cacheToken(mToken);
-        Return<ErrorStatus> prepareLaunchStatus =
-                kDevice->prepareModel_1_3(model, ExecutionPreference::FAST_SINGLE_ANSWER,
-                                          modelCache, dataCache, cacheToken, preparedModelCallback);
+        Return<ErrorStatus> prepareLaunchStatus = kDevice->prepareModel_1_3(
+                model, ExecutionPreference::FAST_SINGLE_ANSWER, kDefaultPriority, {}, modelCache,
+                dataCache, cacheToken, preparedModelCallback);
         ASSERT_TRUE(prepareLaunchStatus.isOk());
         ASSERT_EQ(static_cast<ErrorStatus>(prepareLaunchStatus), ErrorStatus::NONE);
 
@@ -370,7 +370,7 @@ class CompilationCachingTestBase : public testing::Test {
         sp<PreparedModelCallback> preparedModelCallback = new PreparedModelCallback();
         hidl_array<uint8_t, sizeof(mToken)> cacheToken(mToken);
         Return<ErrorStatus> prepareLaunchStatus = kDevice->prepareModelFromCache_1_3(
-                modelCache, dataCache, cacheToken, preparedModelCallback);
+                kDefaultPriority, {}, modelCache, dataCache, cacheToken, preparedModelCallback);
         ASSERT_TRUE(prepareLaunchStatus.isOk());
         if (static_cast<ErrorStatus>(prepareLaunchStatus) != ErrorStatus::NONE) {
             *preparedModel = nullptr;
