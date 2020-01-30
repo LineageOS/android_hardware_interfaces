@@ -42,7 +42,7 @@ EvsEnumerator::EvsEnumerator() {
     // Add sample camera data to our list of cameras
     // In a real driver, this would be expected to can the available hardware
     sConfigManager =
-        ConfigManager::Create("/etc/automotive/evs/evs_sample_configuration.xml");
+        ConfigManager::Create("/vendor/etc/automotive/evs/evs_default_configuration.xml");
     for (auto v : sConfigManager->getCameraList()) {
         sCameraList.emplace_back(v.c_str());
     }
