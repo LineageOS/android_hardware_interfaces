@@ -1415,6 +1415,7 @@ enum OperationType : int32_t {
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} (since HAL version 1.3)
+     * * {@link OperandType::TENSOR_INT32} (since HAL version 1.3)
      *
      * Supported tensor rank: up to 4
      *
@@ -1425,6 +1426,8 @@ enum OperationType : int32_t {
      * * 2: An {@link OperandType::INT32} scalar, and has to be one of the
      *      {@link FusedActivationFunc} values. Specifies the activation to
      *      invoke on the result.
+     *      For a {@link OperandType::TENSOR_INT32} tensor,
+     *      the {@link FusedActivationFunc} must be "NONE".
      *
      * Outputs:
      * * 0: The product, a tensor of the same {@link OperandType} as input0.
@@ -1905,6 +1908,11 @@ enum OperationType : int32_t {
      * dimensions. The output is the result of dividing the first input tensor
      * by the second, optionally modified by an activation function.
      *
+     * For inputs of {@link OperandType::TENSOR_INT32}, performs
+     * "floor division" ("//" in Python). For example,
+     *     5 // 2 = 2
+     *    -5 // 2 = -3
+     *
      * Two dimensions are compatible when:
      *     1. they are equal, or
      *     2. one of them is 1
@@ -1925,6 +1933,7 @@ enum OperationType : int32_t {
      * Supported tensor {@link OperandType}:
      * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_FLOAT32}
+     * * {@link OperandType::TENSOR_INT32} (since HAL version 1.3)
      *
      * Supported tensor rank: up to 4
      *
@@ -1935,6 +1944,8 @@ enum OperationType : int32_t {
      * * 2: An {@link OperandType::INT32} scalar, and has to be one of the
      *      {@link FusedActivationFunc} values. Specifies the activation to
      *      invoke on the result.
+     *      For a {@link OperandType::TENSOR_INT32} tensor,
+     *      the {@link FusedActivationFunc} must be "NONE".
      *
      * Outputs:
      * * 0: A tensor of the same {@link OperandType} as input0.
@@ -2186,6 +2197,7 @@ enum OperationType : int32_t {
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM} (since HAL version 1.2)
      * * {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} (since HAL version 1.3)
+     * * {@link OperandType::TENSOR_INT32} (since HAL version 1.3)
      *
      * Supported tensor rank: up to 4
      *
@@ -2196,6 +2208,8 @@ enum OperationType : int32_t {
      * * 2: An {@link OperandType::INT32} scalar, and has to be one of the
      *      {@link FusedActivationFunc} values. Specifies the activation to
      *      invoke on the result.
+     *      For a {@link OperandType::TENSOR_INT32} tensor,
+     *      the {@link FusedActivationFunc} must be "NONE".
      *
      * Outputs:
      * * 0: A tensor of the same {@link OperandType} as input0.
@@ -2242,6 +2256,7 @@ enum OperationType : int32_t {
      * Supported tensor {@link OperandType}:
      * * {@link OperandType::TENSOR_FLOAT16}
      * * {@link OperandType::TENSOR_FLOAT32}
+     * * {@link OperandType::TENSOR_INT32} (since HAL version 1.3)
      *
      * Supported tensor rank: from 1.
      *
@@ -4972,6 +4987,106 @@ enum OperationType : int32_t {
     WHILE = 97,
 
     /**
+     * Computes exponential linear activation on the input tensor element-wise.
+     *
+     * The output is calculated using the following formula:
+     *
+     *     ELU(x) = max(0, x) + min(0, alpha * (exp(x) - 1))
+     *
+     * Supported tensor {@link OperandType}:
+     * * {@link OperandType::TENSOR_FLOAT16}
+     * * {@link OperandType::TENSOR_FLOAT32}
+     *
+     * Inputs:
+     * * 0: A tensor, specifying the input. May be zero-sized.
+     * * 1: A scalar, specifying the alpha parameter.
+     *      For input tensor of {@link OperandType::TENSOR_FLOAT16},
+     *      the alpha value must be of {@link OperandType::FLOAT16}.
+     *      For input tensor of {@link OperandType::TENSOR_FLOAT32},
+     *      the alpha value must be of {@link OperandType::FLOAT32}.
+     *
+     * Outputs:
+     * * 0: The output tensor of same shape and type as input0.
+     */
+    ELU = 98,
+
+    /**
+     * Computes hard-swish activation on the input tensor element-wise.
+     *
+     * Hard swish activation is introduced in
+     * https://arxiv.org/pdf/1905.02244.pdf
+     *
+     * The output is calculated using the following formula:
+     *
+     *     h-swish(x) = x * max(0, min(6, (x + 3))) / 6
+
+     * Supported tensor {@link OperandType}:
+     * * {@link OperandType::TENSOR_FLOAT16}
+     * * {@link OperandType::TENSOR_FLOAT32}
+     * * {@link OperandType::TENSOR_QUANT8_ASYMM}
+     * * {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED}
+     *
+     * Inputs:
+     * * 0: A tensor, specifying the input. May be zero-sized.
+     *
+     * Outputs:
+     * * 0: The output tensor of same shape and type as input0.
+     *      Scale and zero point of this tensor may be different from the input
+     *      tensor's parameters.
+     */
+    HARD_SWISH = 99,
+
+    /**
+     * Creates a tensor filled with a scalar value.
+     *
+     * Supported output tensor {@link OperandType}:
+     * * {@link OperandType::TENSOR_FLOAT16}
+     * * {@link OperandType::TENSOR_FLOAT32}
+     * * {@link OperandType::TENSOR_INT32}
+     *
+     * Inputs:
+     * * 0: A 1-D tensor, specifying the desired output tensor shape.
+     * * 1: A scalar, specifying the value to fill the output tensors with.
+     *      For output tensor of {@link OperandType::TENSOR_FLOAT16},
+     *      the scalar must be of {@link OperandType::FLOAT16}.
+     *      For output tensor of {@link OperandType::TENSOR_FLOAT32},
+     *      the scalar must be of {@link OperandType::FLOAT32}.
+     *      For output tensor of {@link OperandType::TENSOR_INT32},
+     *      the scalar must be of {@link OperandType::INT32}.
+     *
+     * Outputs:
+     * * 0: The output tensor.
+     */
+    FILL = 100,
+
+    /**
+     * Returns the rank of a tensor.
+     *
+     * The rank of a tensor is the number of dimensions in it. Also known as
+     * "order", "degree", "ndims".
+     *
+     * Supported tensor {@link OperandType}:
+     * * {@link OperandType::TENSOR_FLOAT16}
+     * * {@link OperandType::TENSOR_FLOAT32}
+     * * {@link OperandType::TENSOR_INT32}
+     * * {@link OperandType::TENSOR_QUANT8_ASYMM}
+     * * {@link OperandType::TENSOR_QUANT16_SYMM}
+     * * {@link OperandType::TENSOR_BOOL8}
+     * * {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL}
+     * * {@link OperandType::TENSOR_QUANT16_ASYMM}
+     * * {@link OperandType::TENSOR_QUANT8_SYMM}
+     * * {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED}
+     *
+     * Inputs:
+     * * 0: The input tensor.
+     *
+     * Outputs:
+     * * 0: A scalar of {@link OperandType::INT32}, specifying the rank
+     *      of the input tensor.
+     */
+    RANK = 101,
+
+    /**
      * DEPRECATED. Since NNAPI 1.2, extensions are the preferred alternative to
      * OEM operation and data types.
      *
@@ -4993,7 +5108,7 @@ enum OperationType : int32_t {
 enum OperationTypeRange : uint32_t {
     BASE_MIN        = 0,
     FUNDAMENTAL_MIN = 0,
-    FUNDAMENTAL_MAX = 97,
+    FUNDAMENTAL_MAX = 101,
     OEM_MIN         = 10000,
     OEM_MAX         = 10000,
     BASE_MAX        = 0xFFFF,

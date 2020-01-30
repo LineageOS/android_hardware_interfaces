@@ -133,6 +133,23 @@ void validateRequestFailure(const sp<IPreparedModel>& preparedModel, const Reque
 // Forward declaration from ValidateBurst.cpp
 void validateBurst(const sp<IPreparedModel>& preparedModel, const V1_0::Request& request);
 
+// Validate sync_fence handles for dispatch with valid input
+void validateExecuteFenced(const sp<IPreparedModel>& preparedModel, const Request& request) {
+    SCOPED_TRACE("Expecting request to fail [executeFenced]");
+    Return<void> ret_null =
+            preparedModel->executeFenced(request, {hidl_handle(nullptr)}, V1_2::MeasureTiming::NO,
+                                         [](ErrorStatus error, const hidl_handle& handle,
+                                            const sp<IFencedExecutionCallback>& callback) {
+                                             // TODO: fix this once sample driver impl is merged.
+                                             if (error != ErrorStatus::DEVICE_UNAVAILABLE) {
+                                                 ASSERT_EQ(ErrorStatus::INVALID_ARGUMENT, error);
+                                             }
+                                             ASSERT_EQ(handle.getNativeHandle(), nullptr);
+                                             ASSERT_EQ(callback, nullptr);
+                                         });
+    ASSERT_TRUE(ret_null.isOk());
+}
+
 void validateEverything(const sp<IDevice>& device, const Model& model, const Request& request,
                         std::pair<bool, bool> supportsDeadlines) {
     const auto [prepareModelDeadlineSupported, executionDeadlineSupported] = supportsDeadlines;
@@ -144,6 +161,7 @@ void validateEverything(const sp<IDevice>& device, const Model& model, const Req
     if (preparedModel == nullptr) return;
 
     validateRequest(preparedModel, request, executionDeadlineSupported);
+    validateExecuteFenced(preparedModel, request);
 
     // TODO(butlermichael): Check if we need to test burst in V1_3 if the interface remains V1_2.
     ASSERT_TRUE(nn::compliantWithV1_0(request));
