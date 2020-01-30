@@ -18,7 +18,7 @@
 
 #include <chrono>
 #include "1.0/Utils.h"
-#include "1.2/Callbacks.h"
+#include "1.3/Callbacks.h"
 #include "ExecutionBurstController.h"
 #include "GeneratedTestHarness.h"
 #include "TestHarness.h"
@@ -27,11 +27,10 @@
 
 namespace android::hardware::neuralnetworks::V1_3::vts::functional {
 
-using V1_0::ErrorStatus;
+using implementation::ExecutionCallback;
 using V1_2::MeasureTiming;
 using V1_2::OutputShape;
 using V1_2::Timing;
-using V1_2::implementation::ExecutionCallback;
 
 ///////////////////////// UTILITY FUNCTIONS /////////////////////////
 
@@ -63,7 +62,7 @@ static void validate(const sp<IPreparedModel>& preparedModel, const std::string&
 
         sp<ExecutionCallback> executionCallback = new ExecutionCallback();
         Return<ErrorStatus> executeLaunchStatus =
-                preparedModel->execute_1_3(request, measure, executionCallback);
+                preparedModel->execute_1_3(request, measure, {}, executionCallback);
         ASSERT_TRUE(executeLaunchStatus.isOk());
         ASSERT_EQ(ErrorStatus::INVALID_ARGUMENT, static_cast<ErrorStatus>(executeLaunchStatus));
 
@@ -81,7 +80,7 @@ static void validate(const sp<IPreparedModel>& preparedModel, const std::string&
         SCOPED_TRACE(message + " [executeSynchronously_1_3]");
 
         Return<void> executeStatus = preparedModel->executeSynchronously_1_3(
-                request, measure,
+                request, measure, {},
                 [](ErrorStatus error, const hidl_vec<OutputShape>& outputShapes,
                    const Timing& timing) {
                     ASSERT_EQ(ErrorStatus::INVALID_ARGUMENT, error);
@@ -163,7 +162,7 @@ void validateRequest(const sp<IPreparedModel>& preparedModel, const Request& req
 void validateRequestFailure(const sp<IPreparedModel>& preparedModel, const Request& request) {
     SCOPED_TRACE("Expecting request to fail [executeSynchronously_1_3]");
     Return<void> executeStatus = preparedModel->executeSynchronously_1_3(
-            request, MeasureTiming::NO,
+            request, MeasureTiming::NO, {},
             [](ErrorStatus error, const hidl_vec<OutputShape>& outputShapes, const Timing& timing) {
                 ASSERT_NE(ErrorStatus::NONE, error);
                 EXPECT_EQ(outputShapes.size(), 0);
