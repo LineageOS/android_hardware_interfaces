@@ -17,16 +17,27 @@
 #ifndef ANDROID_HARDWARE_CAMERA_DEVICE_V3_4_EXTCAMUTIL_H
 #define ANDROID_HARDWARE_CAMERA_DEVICE_V3_4_EXTCAMUTIL_H
 
+#include <android/hardware/camera/common/1.0/types.h>
+#include <android/hardware/camera/device/3.2/types.h>
+#include <android/hardware/graphics/common/1.0/types.h>
 #include <android/hardware/graphics/mapper/2.0/IMapper.h>
 #include <inttypes.h>
 #include <mutex>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 #include "tinyxml2.h"  // XML parsing
 #include "utils/LightRefBase.h"
+#include "utils/Timers.h"
+#include <CameraMetadata.h>
+#include <HandleImporter.h>
 
-using android::hardware::graphics::mapper::V2_0::IMapper;
-using android::hardware::graphics::mapper::V2_0::YCbCrLayout;
+
+using ::android::hardware::graphics::mapper::V2_0::IMapper;
+using ::android::hardware::graphics::mapper::V2_0::YCbCrLayout;
+using ::android::hardware::camera::common::V1_0::helper::HandleImporter;
+using ::android::hardware::camera::common::V1_0::Status;
+using ::android::hardware::camera::device::V3_2::ErrorCode;
 
 namespace android {
 namespace hardware {
@@ -113,16 +124,28 @@ struct SupportedV4L2Format {
     std::vector<FrameRate> frameRates;
 };
 
+// A Base class with basic information about a frame
+struct Frame : public VirtualLightRefBase {
+public:
+    Frame(uint32_t width, uint32_t height, uint32_t fourcc);
+    const uint32_t mWidth;
+    const uint32_t mHeight;
+    const uint32_t mFourcc;
+
+    // getData might involve map/allocation
+    virtual int getData(uint8_t** outData, size_t* dataSize) = 0;
+};
+
 // A class provide access to a dequeued V4L2 frame buffer (mostly in MJPG format)
 // Also contains necessary information to enqueue the buffer back to V4L2 buffer queue
-class V4L2Frame : public virtual VirtualLightRefBase {
+class V4L2Frame : public Frame {
 public:
     V4L2Frame(uint32_t w, uint32_t h, uint32_t fourcc, int bufIdx, int fd,
               uint32_t dataSize, uint64_t offset);
     ~V4L2Frame() override;
-    const uint32_t mWidth;
-    const uint32_t mHeight;
-    const uint32_t mFourcc;
+
+    virtual int getData(uint8_t** outData, size_t* dataSize) override;
+
     const int mBufferIndex; // for later enqueue
     int map(uint8_t** data, size_t* dataSize);
     int unmap();
@@ -137,13 +160,13 @@ private:
 
 // A RAII class representing a CPU allocated YUV frame used as intermeidate buffers
 // when generating output images.
-class AllocatedFrame : public virtual VirtualLightRefBase {
+class AllocatedFrame : public Frame {
 public:
-    AllocatedFrame(uint32_t w, uint32_t h); // TODO: use Size?
+    AllocatedFrame(uint32_t w, uint32_t h); // only support V4L2_PIX_FMT_YUV420 for now
     ~AllocatedFrame() override;
-    const uint32_t mWidth;
-    const uint32_t mHeight;
-    const uint32_t mFourcc; // Only support YU12 format for now
+
+    virtual int getData(uint8_t** outData, size_t* dataSize) override;
+
     int allocate(YCbCrLayout* out = nullptr);
     int getLayout(YCbCrLayout* out);
     int getCroppedLayout(const IMapper::Rect&, YCbCrLayout* out); // return non-zero for bad input
@@ -165,8 +188,110 @@ const float kMinAspectRatio = 1.f;
 
 bool isAspectRatioClose(float ar1, float ar2);
 
+struct HalStreamBuffer {
+    int32_t streamId;
+    uint64_t bufferId;
+    uint32_t width;
+    uint32_t height;
+    ::android::hardware::graphics::common::V1_0::PixelFormat format;
+    ::android::hardware::camera::device::V3_2::BufferUsageFlags usage;
+    buffer_handle_t* bufPtr;
+    int acquireFence;
+    bool fenceTimeout;
+};
+
+struct HalRequest {
+    uint32_t frameNumber;
+    common::V1_0::helper::CameraMetadata setting;
+    sp<Frame> frameIn;
+    nsecs_t shutterTs;
+    std::vector<HalStreamBuffer> buffers;
+};
+
+static const uint64_t BUFFER_ID_NO_BUFFER = 0;
+
+// buffers currently circulating between HAL and camera service
+// key: bufferId sent via HIDL interface
+// value: imported buffer_handle_t
+// Buffer will be imported during processCaptureRequest (or requestStreamBuffer
+// in the case of HAL buffer manager is enabled) and will be freed
+// when the stream is deleted or camera device session is closed
+typedef std::unordered_map<uint64_t, buffer_handle_t> CirculatingBuffers;
+
+::android::hardware::camera::common::V1_0::Status importBufferImpl(
+        /*inout*/std::map<int, CirculatingBuffers>& circulatingBuffers,
+        /*inout*/HandleImporter& handleImporter,
+        int32_t streamId,
+        uint64_t bufId, buffer_handle_t buf,
+        /*out*/buffer_handle_t** outBufPtr,
+        bool allowEmptyBuf);
+
+static const uint32_t FLEX_YUV_GENERIC = static_cast<uint32_t>('F') |
+        static_cast<uint32_t>('L') << 8 | static_cast<uint32_t>('E') << 16 |
+        static_cast<uint32_t>('X') << 24;
+
+// returns FLEX_YUV_GENERIC for formats other than YV12/YU12/NV12/NV21
+uint32_t getFourCcFromLayout(const YCbCrLayout&);
+
+using ::android::hardware::camera::external::common::Size;
+int getCropRect(CroppingType ct, const Size& inSize,
+        const Size& outSize, IMapper::Rect* out);
+
+int formatConvert(const YCbCrLayout& in, const YCbCrLayout& out, Size sz, uint32_t format);
+
+int encodeJpegYU12(const Size &inSz,
+        const YCbCrLayout& inLayout, int jpegQuality,
+        const void *app1Buffer, size_t app1Size,
+        void *out, size_t maxOutSize,
+        size_t &actualCodeSize);
+
+Size getMaxThumbnailResolution(const common::V1_0::helper::CameraMetadata&);
+
+void freeReleaseFences(hidl_vec<V3_2::CaptureResult>&);
+
+status_t fillCaptureResultCommon(common::V1_0::helper::CameraMetadata& md, nsecs_t timestamp,
+        camera_metadata_ro_entry& activeArraySize);
+
+// Interface for OutputThread calling back to parent
+struct OutputThreadInterface : public virtual RefBase {
+    virtual ::android::hardware::camera::common::V1_0::Status importBuffer(
+            int32_t streamId, uint64_t bufId, buffer_handle_t buf,
+            /*out*/buffer_handle_t** outBufPtr, bool allowEmptyBuf) = 0;
+
+    virtual void notifyError(uint32_t frameNumber, int32_t streamId, ErrorCode ec) = 0;
+
+    // Callbacks are fired within the method if msgs/results are nullptr.
+    // Otherwise the callbacks will be returned and caller is responsible to
+    // fire the callback later
+    virtual ::android::hardware::camera::common::V1_0::Status processCaptureRequestError(
+            const std::shared_ptr<HalRequest>&,
+            /*out*/std::vector<V3_2::NotifyMsg>* msgs = nullptr,
+            /*out*/std::vector<V3_2::CaptureResult>* results = nullptr) = 0;
+
+    virtual ::android::hardware::camera::common::V1_0::Status processCaptureResult(
+            std::shared_ptr<HalRequest>&) = 0;
+
+    virtual ssize_t getJpegBufferSize(uint32_t width, uint32_t height) const = 0;
+};
+
 }  // namespace implementation
 }  // namespace V3_4
+
+namespace V3_6 {
+namespace implementation {
+
+// A CPU copy of a mapped V4L2Frame. Will map the input V4L2 frame.
+class AllocatedV4L2Frame : public V3_4::implementation::Frame {
+public:
+    AllocatedV4L2Frame(sp<V3_4::implementation::V4L2Frame> frameIn);
+    ~AllocatedV4L2Frame() override;
+    virtual int getData(uint8_t** outData, size_t* dataSize) override;
+private:
+    std::vector<uint8_t> mData;
+};
+
+} // namespace implementation
+} // namespace V3_6
 }  // namespace device
 }  // namespace camera
 }  // namespace hardware

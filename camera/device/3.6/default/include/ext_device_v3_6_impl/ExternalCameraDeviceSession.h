@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_CAMERA_DEVICE_V3_6_EXTCAMERADEVICE3SESSION_H
-#define ANDROID_HARDWARE_CAMERA_DEVICE_V3_6_EXTCAMERADEVICE3SESSION_H
+#ifndef ANDROID_HARDWARE_CAMERA_DEVICE_V3_6_EXTCAMERADEVICESESSION_H
+#define ANDROID_HARDWARE_CAMERA_DEVICE_V3_6_EXTCAMERADEVICESESSION_H
 
 #include <android/hardware/camera/device/3.5/ICameraDeviceCallback.h>
 #include <android/hardware/camera/device/3.6/ICameraDeviceSession.h>
 #include <../../3.5/default/include/ext_device_v3_5_impl/ExternalCameraDeviceSession.h>
+#include "ExternalCameraOfflineSession.h"
 
 namespace android {
 namespace hardware {
@@ -37,6 +38,7 @@ using ::android::hardware::camera::device::V3_2::RequestTemplate;
 using ::android::hardware::camera::device::V3_2::Stream;
 using ::android::hardware::camera::device::V3_5::StreamConfiguration;
 using ::android::hardware::camera::device::V3_6::ICameraDeviceSession;
+using ::android::hardware::camera::device::V3_6::ICameraOfflineSession;
 using ::android::hardware::camera::common::V1_0::Status;
 using ::android::hardware::camera::external::common::ExternalCameraConfig;
 using ::android::hardware::graphics::common::V1_0::PixelFormat;
@@ -69,13 +71,6 @@ struct ExternalCameraDeviceSession : public V3_5::implementation::ExternalCamera
         return new TrampolineSessionInterface_3_6(this);
     }
 
-    static Status isStreamCombinationSupported(const V3_2::StreamConfiguration& config,
-            const std::vector<SupportedV4L2Format>& supportedFormats,
-            const ExternalCameraConfig& devCfg) {
-        return V3_4::implementation::ExternalCameraDeviceSession::isStreamCombinationSupported(
-                config, supportedFormats, devCfg);
-    }
-
 protected:
     // Methods from v3.5 and earlier will trampoline to inherited implementation
     Return<void> configureStreams_3_6(
@@ -85,6 +80,28 @@ protected:
     Return<void> switchToOffline(
             const hidl_vec<int32_t>& streamsToKeep,
             ICameraDeviceSession::switchToOffline_cb _hidl_cb);
+
+    void fillOutputStream3_6(const V3_3::HalStreamConfiguration& outStreams_v33,
+            /*out*/V3_6::HalStreamConfiguration* outStreams_v36);
+    bool supportOfflineLocked(int32_t streamId);
+
+    // Main body of switchToOffline. This method does not invoke any callbacks
+    // but instead returns the necessary callbacks in output arguments so callers
+    // can callback later without holding any locks
+    Status switchToOffline(const hidl_vec<int32_t>& offlineStreams,
+            /*out*/std::vector<NotifyMsg>* msgs,
+            /*out*/std::vector<CaptureResult>* results,
+            /*out*/CameraOfflineSessionInfo* info,
+            /*out*/sp<ICameraOfflineSession>* session);
+
+    // Whether a request can be completely dropped when switching to offline
+    bool canDropRequest(const hidl_vec<int32_t>& offlineStreams,
+            std::shared_ptr<V3_4::implementation::HalRequest> halReq);
+
+    void fillOfflineSessionInfo(const hidl_vec<int32_t>& offlineStreams,
+            std::deque<std::shared_ptr<HalRequest>>& offlineReqs,
+            const std::map<int, CirculatingBuffers>& circulatingBuffers,
+            /*out*/CameraOfflineSessionInfo* info);
 
 private:
 
@@ -188,4 +205,4 @@ private:
 }  // namespace hardware
 }  // namespace android
 
-#endif  // ANDROID_HARDWARE_CAMERA_DEVICE_V3_6_EXTCAMERADEVICE3SESSION_H
+#endif  // ANDROID_HARDWARE_CAMERA_DEVICE_V3_6_EXTCAMERADEVICESESSION_H
