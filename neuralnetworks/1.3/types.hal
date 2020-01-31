@@ -5037,6 +5037,56 @@ enum OperationType : int32_t {
     HARD_SWISH = 99,
 
     /**
+     * Creates a tensor filled with a scalar value.
+     *
+     * Supported output tensor {@link OperandType}:
+     * * {@link OperandType::TENSOR_FLOAT16}
+     * * {@link OperandType::TENSOR_FLOAT32}
+     * * {@link OperandType::TENSOR_INT32}
+     *
+     * Inputs:
+     * * 0: A 1-D tensor, specifying the desired output tensor shape.
+     * * 1: A scalar, specifying the value to fill the output tensors with.
+     *      For output tensor of {@link OperandType::TENSOR_FLOAT16},
+     *      the scalar must be of {@link OperandType::FLOAT16}.
+     *      For output tensor of {@link OperandType::TENSOR_FLOAT32},
+     *      the scalar must be of {@link OperandType::FLOAT32}.
+     *      For output tensor of {@link OperandType::TENSOR_INT32},
+     *      the scalar must be of {@link OperandType::INT32}.
+     *
+     * Outputs:
+     * * 0: The output tensor.
+     */
+    FILL = 100,
+
+    /**
+     * Returns the rank of a tensor.
+     *
+     * The rank of a tensor is the number of dimensions in it. Also known as
+     * "order", "degree", "ndims".
+     *
+     * Supported tensor {@link OperandType}:
+     * * {@link OperandType::TENSOR_FLOAT16}
+     * * {@link OperandType::TENSOR_FLOAT32}
+     * * {@link OperandType::TENSOR_INT32}
+     * * {@link OperandType::TENSOR_QUANT8_ASYMM}
+     * * {@link OperandType::TENSOR_QUANT16_SYMM}
+     * * {@link OperandType::TENSOR_BOOL8}
+     * * {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL}
+     * * {@link OperandType::TENSOR_QUANT16_ASYMM}
+     * * {@link OperandType::TENSOR_QUANT8_SYMM}
+     * * {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED}
+     *
+     * Inputs:
+     * * 0: The input tensor.
+     *
+     * Outputs:
+     * * 0: A scalar of {@link OperandType::INT32}, specifying the rank
+     *      of the input tensor.
+     */
+    RANK = 101,
+
+    /**
      * DEPRECATED. Since NNAPI 1.2, extensions are the preferred alternative to
      * OEM operation and data types.
      *
@@ -5058,7 +5108,7 @@ enum OperationType : int32_t {
 enum OperationTypeRange : uint32_t {
     BASE_MIN        = 0,
     FUNDAMENTAL_MIN = 0,
-    FUNDAMENTAL_MAX = 99,
+    FUNDAMENTAL_MAX = 101,
     OEM_MIN         = 10000,
     OEM_MAX         = 10000,
     BASE_MAX        = 0xFFFF,
