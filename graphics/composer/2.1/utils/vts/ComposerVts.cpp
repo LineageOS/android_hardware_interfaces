@@ -16,19 +16,12 @@
 
 #include <composer-vts/2.1/ComposerVts.h>
 
-#include <VtsHalHidlTargetTestBase.h>
-
 namespace android {
 namespace hardware {
 namespace graphics {
 namespace composer {
 namespace V2_1 {
 namespace vts {
-
-Composer::Composer() : Composer(::testing::VtsHalHidlTargetTestBase::getService<IComposer>()) {}
-
-Composer::Composer(const std::string& name)
-    : Composer(::testing::VtsHalHidlTargetTestBase::getService<IComposer>(name)) {}
 
 Composer::Composer(const sp<IComposer>& composer) : mComposer(composer) {
     // ASSERT_* can only be used in functions returning void.

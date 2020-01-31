@@ -16,7 +16,6 @@
 
 #include <composer-vts/2.2/ComposerVts.h>
 
-#include <VtsHalHidlTargetTestBase.h>
 #include <composer-command-buffer/2.2/ComposerCommandBuffer.h>
 #include <hidl/HidlTransportUtils.h>
 

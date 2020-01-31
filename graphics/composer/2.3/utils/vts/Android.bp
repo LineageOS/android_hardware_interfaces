@@ -23,6 +23,7 @@ cc_library_static {
     static_libs: [
         "android.hardware.graphics.composer@2.2-vts",
         "android.hardware.graphics.composer@2.3",
+        "libgtest",
     ],
     export_static_lib_headers: [
         "android.hardware.graphics.composer@2.2-vts",
