@@ -28,7 +28,6 @@ cc_library_shared {
     srcs: [
         "ExternalCameraDevice.cpp",
         "ExternalCameraDeviceSession.cpp",
-        "ExternalCameraOfflineSession.cpp",
     ],
     shared_libs: [
         "libhidlbase",

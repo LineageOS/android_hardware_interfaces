@@ -80,7 +80,7 @@ Status ExternalCameraDeviceSession::importRequestLocked(
 
 
 ExternalCameraDeviceSession::BufferRequestThread::BufferRequestThread(
-        wp<OutputThreadInterface> parent,
+        wp<ExternalCameraDeviceSession> parent,
         sp<V3_5::ICameraDeviceCallback> callbacks) :
         mParent(parent),
         mCallbacks(callbacks) {}
@@ -254,8 +254,7 @@ void ExternalCameraDeviceSession::initOutputThread() {
         mBufferRequestThread = new BufferRequestThread(this, mCallback_3_5);
         mBufferRequestThread->run("ExtCamBufReq", PRIORITY_DISPLAY);
     }
-    mOutputThread = new OutputThread(
-            this, mCroppingType, mCameraCharacteristics, mBufferRequestThread);
+    mOutputThread = new OutputThread(this, mCroppingType, mBufferRequestThread);
 }
 
 void ExternalCameraDeviceSession::closeOutputThreadImpl() {
@@ -272,11 +271,10 @@ void ExternalCameraDeviceSession::closeOutputThread() {
 }
 
 ExternalCameraDeviceSession::OutputThread::OutputThread(
-        wp<OutputThreadInterface> parent,
+        wp<ExternalCameraDeviceSession> parent,
         CroppingType ct,
-        const common::V1_0::helper::CameraMetadata& chars,
         sp<BufferRequestThread> bufReqThread) :
-        V3_4::implementation::ExternalCameraDeviceSession::OutputThread(parent, ct, chars),
+        V3_4::implementation::ExternalCameraDeviceSession::OutputThread(parent, ct),
         mBufferRequestThread(bufReqThread) {}
 
 ExternalCameraDeviceSession::OutputThread::~OutputThread() {}
