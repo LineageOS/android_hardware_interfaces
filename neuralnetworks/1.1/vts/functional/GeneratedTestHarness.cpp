@@ -49,10 +49,11 @@ using V1_0::implementation::PreparedModelCallback;
 
 Model createModel(const TestModel& testModel) {
     // Model operands.
-    hidl_vec<Operand> operands(testModel.operands.size());
+    CHECK_EQ(testModel.referenced.size(), 0u);  // Not supported in 1.1.
+    hidl_vec<Operand> operands(testModel.main.operands.size());
     size_t constCopySize = 0, constRefSize = 0;
-    for (uint32_t i = 0; i < testModel.operands.size(); i++) {
-        const auto& op = testModel.operands[i];
+    for (uint32_t i = 0; i < testModel.main.operands.size(); i++) {
+        const auto& op = testModel.main.operands[i];
 
         DataLocation loc = {};
         if (op.lifetime == TestOperandLifeTime::CONSTANT_COPY) {
@@ -77,9 +78,9 @@ Model createModel(const TestModel& testModel) {
     }
 
     // Model operations.
-    hidl_vec<Operation> operations(testModel.operations.size());
-    std::transform(testModel.operations.begin(), testModel.operations.end(), operations.begin(),
-                   [](const TestOperation& op) -> Operation {
+    hidl_vec<Operation> operations(testModel.main.operations.size());
+    std::transform(testModel.main.operations.begin(), testModel.main.operations.end(),
+                   operations.begin(), [](const TestOperation& op) -> Operation {
                        return {.type = static_cast<OperationType>(op.type),
                                .inputs = op.inputs,
                                .outputs = op.outputs};
@@ -87,8 +88,8 @@ Model createModel(const TestModel& testModel) {
 
     // Constant copies.
     hidl_vec<uint8_t> operandValues(constCopySize);
-    for (uint32_t i = 0; i < testModel.operands.size(); i++) {
-        const auto& op = testModel.operands[i];
+    for (uint32_t i = 0; i < testModel.main.operands.size(); i++) {
+        const auto& op = testModel.main.operands[i];
         if (op.lifetime == TestOperandLifeTime::CONSTANT_COPY) {
             const uint8_t* begin = op.data.get<uint8_t>();
             const uint8_t* end = begin + op.data.size();
@@ -109,8 +110,8 @@ Model createModel(const TestModel& testModel) {
                 reinterpret_cast<uint8_t*>(static_cast<void*>(mappedMemory->getPointer()));
         CHECK(mappedPtr != nullptr);
 
-        for (uint32_t i = 0; i < testModel.operands.size(); i++) {
-            const auto& op = testModel.operands[i];
+        for (uint32_t i = 0; i < testModel.main.operands.size(); i++) {
+            const auto& op = testModel.main.operands[i];
             if (op.lifetime == TestOperandLifeTime::CONSTANT_REFERENCE) {
                 const uint8_t* begin = op.data.get<uint8_t>();
                 const uint8_t* end = begin + op.data.size();
@@ -121,8 +122,8 @@ Model createModel(const TestModel& testModel) {
 
     return {.operands = std::move(operands),
             .operations = std::move(operations),
-            .inputIndexes = testModel.inputIndexes,
-            .outputIndexes = testModel.outputIndexes,
+            .inputIndexes = testModel.main.inputIndexes,
+            .outputIndexes = testModel.main.outputIndexes,
             .operandValues = std::move(operandValues),
             .pools = std::move(pools),
             .relaxComputationFloat32toFloat16 = testModel.isRelaxed};
