@@ -21,9 +21,10 @@ import @1.0::SendSmsResult;
 import @1.4::IRadioResponse;
 import @1.5::BarringInfo;
 import @1.5::CellInfo;
-import @1.5::PersoSubstate;
 import @1.5::RegStateResult;
 import @1.5::SetupDataCallResult;
+import @1.4::SetupDataCallResult;
+import @1.5::PersoSubstate;
 
 /**
  * Interface declaring response functions to solicited radio requests.
@@ -176,7 +177,6 @@ interface IRadioResponse extends @1.4::IRadioResponse {
     oneway getBarringInfoResponse(RadioResponseInfo info, vec<BarringInfo> barringInfos);
 
     /**
-     * @param info Response info struct containing response type, serial no. and error
      * @param voiceRegResponse Current Voice registration response as defined by RegStateResult
      *        in types.hal
      *
@@ -215,27 +215,29 @@ interface IRadioResponse extends @1.4::IRadioResponse {
      */
     oneway getCellInfoListResponse_1_5(RadioResponseInfo info, vec<CellInfo> cellInfo);
 
+
     /**
      * @param info Response info struct containing response type, serial no. and error
-     * @param persoType SIM Personalisation type
-     * @param remainingRetries Positive values indicates number of retries remaining,
-     * must be equal to -1 if number of retries are infinite.
      *
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:PASSWORD_INCORRECT (code is invalid)
+     *   RadioError:ILLEGAL_SIM_OR_ME
+     *   RadioError:OPERATION_NOT_ALLOWED
+     *   RadioError:INVALID_STATE
      *   RadioError:NO_MEMORY
-     *   RadioError:INVALID_SIM_STATE
      *   RadioError:INTERNAL_ERR
      *   RadioError:SYSTEM_ERR
-     *   RadioError:MODEM_ERR
      *   RadioError:INVALID_ARGUMENTS
-     *   RadioError:NO_RESOURCES
+     *   RadioError:MODEM_ERR
      *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:NO_RESOURCES
+     *   RadioError:CANCELLED
+     *
+     * Returns RadioError:ILLEGAL_SIM_OR_ME when the failure is permanent and
+     * no retries needed, such as illegal SIM or ME.
      */
-    oneway supplySimDepersonalizationResponse(RadioResponseInfo info,
-        PersoSubstate persoType, int32_t remainingRetries);
+    oneway setNetworkSelectionModeManualResponse_1_5(RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -267,4 +269,26 @@ interface IRadioResponse extends @1.4::IRadioResponse {
      *   RadioError:SIM_ABSENT
      */
     oneway sendCdmaSmsExpectMoreResponse(RadioResponseInfo info, SendSmsResult sms);
+
+    /**
+     * @param info Response info struct contatining response type, serial no. and error
+     * @param persoType SIM Personalisation type
+     * @param remainingRetries postiive values indicates number of retries remaining,
+     * must be equal to -1 if number of retries is infinite.
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:PASSWORD_INCORRECT (code is invalid)
+     *   RadioError:NO_MEMORY
+     *   RadioError:INVALID_SIM_STATE
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:SYSTEM_ERR
+     *   RadioError:MODEM_ERR
+     *   RadioError:INVALID_ARGUMENTS
+     *   RadioError:NO_RESOURCES
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     */
+    oneway supplySimDepersonalizationResponse(RadioResponseInfo info,
+        PersoSubstate persoType, int32_t remainingRetries);
 };
