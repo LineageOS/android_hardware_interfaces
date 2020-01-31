@@ -4987,6 +4987,56 @@ enum OperationType : int32_t {
     WHILE = 97,
 
     /**
+     * Computes exponential linear activation on the input tensor element-wise.
+     *
+     * The output is calculated using the following formula:
+     *
+     *     ELU(x) = max(0, x) + min(0, alpha * (exp(x) - 1))
+     *
+     * Supported tensor {@link OperandType}:
+     * * {@link OperandType::TENSOR_FLOAT16}
+     * * {@link OperandType::TENSOR_FLOAT32}
+     *
+     * Inputs:
+     * * 0: A tensor, specifying the input. May be zero-sized.
+     * * 1: A scalar, specifying the alpha parameter.
+     *      For input tensor of {@link OperandType::TENSOR_FLOAT16},
+     *      the alpha value must be of {@link OperandType::FLOAT16}.
+     *      For input tensor of {@link OperandType::TENSOR_FLOAT32},
+     *      the alpha value must be of {@link OperandType::FLOAT32}.
+     *
+     * Outputs:
+     * * 0: The output tensor of same shape and type as input0.
+     */
+    ELU = 98,
+
+    /**
+     * Computes hard-swish activation on the input tensor element-wise.
+     *
+     * Hard swish activation is introduced in
+     * https://arxiv.org/pdf/1905.02244.pdf
+     *
+     * The output is calculated using the following formula:
+     *
+     *     h-swish(x) = x * max(0, min(6, (x + 3))) / 6
+
+     * Supported tensor {@link OperandType}:
+     * * {@link OperandType::TENSOR_FLOAT16}
+     * * {@link OperandType::TENSOR_FLOAT32}
+     * * {@link OperandType::TENSOR_QUANT8_ASYMM}
+     * * {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED}
+     *
+     * Inputs:
+     * * 0: A tensor, specifying the input. May be zero-sized.
+     *
+     * Outputs:
+     * * 0: The output tensor of same shape and type as input0.
+     *      Scale and zero point of this tensor may be different from the input
+     *      tensor's parameters.
+     */
+    HARD_SWISH = 99,
+
+    /**
      * DEPRECATED. Since NNAPI 1.2, extensions are the preferred alternative to
      * OEM operation and data types.
      *
@@ -5008,7 +5058,7 @@ enum OperationType : int32_t {
 enum OperationTypeRange : uint32_t {
     BASE_MIN        = 0,
     FUNDAMENTAL_MIN = 0,
-    FUNDAMENTAL_MAX = 97,
+    FUNDAMENTAL_MAX = 99,
     OEM_MIN         = 10000,
     OEM_MAX         = 10000,
     BASE_MAX        = 0xFFFF,
