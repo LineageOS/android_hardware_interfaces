@@ -49,6 +49,7 @@ cc_library_shared {
         "android.hardware.camera.device@3.3",
         "android.hardware.camera.device@3.4",
         "android.hardware.camera.device@3.5",
+        "android.hardware.camera.device@3.6",
         "android.hardware.camera.provider@2.4",
         "android.hardware.graphics.mapper@2.0",
         "android.hardware.graphics.mapper@3.0",
@@ -60,6 +61,7 @@ cc_library_shared {
         "camera.device@3.4-impl",
         "camera.device@3.5-external-impl",
         "camera.device@3.5-impl",
+        "camera.device@3.6-external-impl",
         "libcamera_metadata",
         "libcutils",
         "libhardware",
@@ -73,7 +75,8 @@ cc_library_shared {
     ],
     header_libs: [
         "camera.device@3.4-external-impl_headers",
-        "camera.device@3.5-external-impl_headers"
+        "camera.device@3.5-external-impl_headers",
+        "camera.device@3.6-external-impl_headers"
     ],
     export_include_dirs: ["."],
 }

@@ -47,4 +47,11 @@ interface IEvsEnumerator extends @1.0::IEvsEnumerator {
      *                   configured differently by another client.
      */
     openCamera_1_1(string cameraId, Stream streamCfg) generates (IEvsCamera evsCamera);
+
+    /**
+     * Tells whether this is EVS manager or HAL implementation.
+     *
+     * @return result False for EVS manager implementations and true for all others.
+     */
+    isHardware() generates (bool result);
 };

@@ -41,7 +41,7 @@ cc_binary {
 
 prebuilt_etc {
     name: "evs_default_configuration.xml",
-
+    soc_specific: true,
     src: "resources/evs_default_configuration.xml",
     sub_dir: "automotive/evs",
 }
