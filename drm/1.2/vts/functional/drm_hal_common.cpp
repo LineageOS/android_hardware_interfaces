@@ -26,7 +26,7 @@
 #include <random>
 
 #include "drm_hal_clearkey_module.h"
-#include "drm_hal_common.h"
+#include "android/hardware/drm/1.2/vts/drm_hal_common.h"
 
 using ::android::hardware::drm::V1_0::BufferType;
 using ::android::hardware::drm::V1_0::DestinationBuffer;
@@ -94,7 +94,7 @@ static DrmHalVTSVendorModule_V1* getModuleForInstance(const std::string& instanc
  * DrmHalTest
  */
 
-DrmHalTest::DrmHalTest() : vendorModule(getModuleForInstance(GetParam())) {}
+DrmHalTest::DrmHalTest() : vendorModule(getModuleForInstance(GetParamService())) {}
 
 void DrmHalTest::SetUp() {
     const ::testing::TestInfo* const test_info =
@@ -102,9 +102,9 @@ void DrmHalTest::SetUp() {
 
     ALOGD("Running test %s.%s from (vendor) module %s",
           test_info->test_case_name(), test_info->name(),
-          GetParam().c_str());
+          GetParamService().c_str());
 
-    const string instance = GetParam();
+    const string instance = GetParamService();
 
     drmFactory = IDrmFactory::getService(instance);
     ASSERT_NE(drmFactory, nullptr);
@@ -124,8 +124,12 @@ void DrmHalTest::SetUp() {
     contentConfigurations = vendorModule->getContentConfigurations();
 
     // If drm scheme not installed skip subsequent tests
-    if (!drmFactory->isCryptoSchemeSupported(getVendorUUID())) {
-        GTEST_SKIP() << "vendor module drm scheme not supported";
+    if (!drmFactory->isCryptoSchemeSupported(getUUID())) {
+        if (GetParamUUID() == hidl_array<uint8_t, 16>()) {
+            GTEST_SKIP() << "vendor module drm scheme not supported";
+        } else {
+            FAIL() << "param scheme must be supported: " << android::hardware::toString(GetParamUUID());
+        }
     }
 
     ASSERT_NE(nullptr, drmPlugin.get()) << "Can't find " << vendorModule->getServiceName() <<  " drm@1.2 plugin";
@@ -140,7 +144,7 @@ sp<IDrmPlugin> DrmHalTest::createDrmPlugin() {
     sp<IDrmPlugin> plugin = nullptr;
     hidl_string packageName("android.hardware.drm.test");
     auto res =
-            drmFactory->createPlugin(getVendorUUID(), packageName,
+            drmFactory->createPlugin(getUUID(), packageName,
                                      [&](StatusV1_0 status, const sp<IDrmPluginV1_0>& pluginV1_0) {
                                          EXPECT_EQ(StatusV1_0::OK == status, pluginV1_0 != nullptr);
                                          plugin = IDrmPlugin::castFrom(pluginV1_0);
@@ -159,7 +163,7 @@ sp<ICryptoPlugin> DrmHalTest::createCryptoPlugin() {
     sp<ICryptoPlugin> plugin = nullptr;
     hidl_vec<uint8_t> initVec;
     auto res = cryptoFactory->createPlugin(
-            getVendorUUID(), initVec,
+            getUUID(), initVec,
             [&](StatusV1_0 status, const sp<ICryptoPluginV1_0>& pluginV1_0) {
                 EXPECT_EQ(StatusV1_0::OK == status, pluginV1_0 != nullptr);
                 plugin = ICryptoPlugin::castFrom(pluginV1_0);
@@ -168,6 +172,13 @@ sp<ICryptoPlugin> DrmHalTest::createCryptoPlugin() {
         ALOGE("createCryptoPlugin remote call failed");
     }
     return plugin;
+}
+
+hidl_array<uint8_t, 16> DrmHalTest::getUUID() {
+    if (GetParamUUID() == hidl_array<uint8_t, 16>()) {
+        return getVendorUUID();
+    }
+    return GetParamUUID();
 }
 
 hidl_array<uint8_t, 16> DrmHalTest::getVendorUUID() {
@@ -509,7 +520,7 @@ void DrmHalTest::aes_cbc_decrypt(uint8_t* dest, uint8_t* src,
 /**
  * Helper method to test decryption with invalid keys is returned
  */
-void DrmHalClearkeyTest::decryptWithInvalidKeys(
+void DrmHalClearkeyTestV1_2::decryptWithInvalidKeys(
         hidl_vec<uint8_t>& invalidResponse,
         vector<uint8_t>& iv,
         const Pattern& noPattern,
