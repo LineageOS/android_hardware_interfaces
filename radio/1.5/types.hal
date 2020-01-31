@@ -17,9 +17,9 @@
 package android.hardware.radio@1.5;
 
 import @1.0::ApnAuthType;
-import @1.0::CdmaSignalStrength;
 import @1.0::DataProfileId;
 import @1.0::DataProfileInfoType;
+import @1.0::CdmaSignalStrength;
 import @1.0::EvdoSignalStrength;
 import @1.0::GsmSignalStrength;
 import @1.0::LteSignalStrength;
@@ -167,7 +167,11 @@ enum AccessNetwork : @1.4::AccessNetwork {
 };
 
 enum RadioAccessNetworks : @1.1::RadioAccessNetworks {
+    UNKNOWN = 0,
+    /** Next Generation Radio Access Network */
     NGRAN = 4,
+    /** CDMA 2000 Network */
+    CDMA2000 = 5,
 };
 
 /**
