@@ -75,38 +75,3 @@ TEST_P(RadioHidlTest_v1_3, getModemStackStatus) {
             radioRsp_v1_3->rspInfo.error,
             {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::MODEM_ERR}));
 }
-
-/*
- * Test IRadio.setSystemSelectionChannels() for the response returned.
- *
- * This test is excluded from manifest, due to non-implementation in Q. Tracked by b/130254624.
- */
-TEST_P(RadioHidlTest_v1_3, setSystemSelectionChannels) {
-    serial = GetRandomSerialNumber();
-
-    RadioAccessSpecifier specifier = {.radioAccessNetwork = RadioAccessNetworks::GERAN,
-                                      .geranBands = {GeranBands::BAND_450, GeranBands::BAND_480},
-                                      .channels = {1, 2}};
-
-    Return<void> res = radio_v1_3->setSystemSelectionChannels(serial, true, {specifier});
-    ASSERT_OK(res);
-    EXPECT_EQ(std::cv_status::no_timeout, wait());
-    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_3->rspInfo.type);
-    EXPECT_EQ(serial, radioRsp_v1_3->rspInfo.serial);
-    ALOGI("setSystemSelectionChannels, rspInfo.error = %s\n",
-          toString(radioRsp_v1_3->rspInfo.error).c_str());
-    ASSERT_TRUE(CheckAnyOfErrors(
-            radioRsp_v1_3->rspInfo.error,
-            {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::INTERNAL_ERR}));
-
-    if (radioRsp_v1_3->rspInfo.error == RadioError::NONE) {
-        Return<void> res = radio_v1_3->setSystemSelectionChannels(serial, false, {specifier});
-        ASSERT_OK(res);
-        EXPECT_EQ(std::cv_status::no_timeout, wait());
-        EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_3->rspInfo.type);
-        EXPECT_EQ(serial, radioRsp_v1_3->rspInfo.serial);
-        ALOGI("setSystemSelectionChannels, rspInfo.error = %s\n",
-              toString(radioRsp_v1_3->rspInfo.error).c_str());
-        EXPECT_EQ(RadioError::NONE, radioRsp_v1_3->rspInfo.error);
-    }
-}
