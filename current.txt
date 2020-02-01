@@ -600,6 +600,8 @@ fb382e986c10b8fbb797a8546e8f9ea6d1107bfe6f3fb7e57f6bbbf1f807a906 android.hardwar
 a785a57447a81e9c130eef6904c3a5c256076c6a04588c40620ebd6fa2660d77 android.hardware.radio@1.2::types
 1a6e2bd289f22931c526b21916910f1d4c436b7acb9556e4243de4ce8e6cc2e4 android.hardware.soundtrigger@2.0::ISoundTriggerHwCallback
 fd65298e1e09e0e3c781ab18305920d757dbe55a3b459ce17814ec5cf6dfee99 android.hardware.wifi@1.0::IWifiP2pIface
+ff5dd821c2c7a9c78607159c4d788960b725487263c49d956ca5fa3d37008b45 android.hardware.wifi@1.2::IWifiStaIface
+5751f230e86a36111e7c5b995577cbf89d8df76c8e6c7641199198f3db3a93f7 android.hardware.wifi@1.3::IWifiStaIface
 
 # HALs released in Android R
 e966a3437d6a98d9d9e14e9d672088771716031900c0deb55a0946c751a03a44 android.hardware.audio@6.0::types
