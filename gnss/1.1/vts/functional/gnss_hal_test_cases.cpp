@@ -19,6 +19,7 @@
 #include <gnss_hal_test.h>
 
 #include <android/hardware/gnss/1.1/IGnssConfiguration.h>
+#include <cutils/properties.h>
 #include <gtest/gtest.h>
 
 using android::hardware::hidl_vec;
@@ -31,6 +32,12 @@ using android::hardware::gnss::V1_0::GnssLocation;
 using android::hardware::gnss::V1_0::IGnssDebug;
 using android::hardware::gnss::V1_1::IGnssConfiguration;
 using android::hardware::gnss::V1_1::IGnssMeasurement;
+
+static bool IsAutomotiveDevice() {
+    char buffer[PROPERTY_VALUE_MAX] = {0};
+    property_get("ro.hardware.type", buffer, "");
+    return strncmp(buffer, "automotive", PROPERTY_VALUE_MAX) == 0;
+}
 
 /*
  * SetupTeardownCreateCleanup:
@@ -524,7 +531,8 @@ TEST_P(GnssHalTest, InjectBestLocation) {
 TEST_P(GnssHalTest, GnssDebugValuesSanityTest) {
     auto gnssDebug = gnss_hal_->getExtensionGnssDebug();
     ASSERT_TRUE(gnssDebug.isOk());
-    if (gnss_cb_->info_cbq_.calledCount() > 0 && gnss_cb_->last_info_.yearOfHw >= 2017) {
+    if (!IsAutomotiveDevice() && gnss_cb_->info_cbq_.calledCount() > 0 &&
+        gnss_cb_->last_info_.yearOfHw >= 2017) {
         sp<IGnssDebug> iGnssDebug = gnssDebug;
         EXPECT_NE(iGnssDebug, nullptr);
 
