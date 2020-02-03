@@ -38,6 +38,9 @@ enum Ieee80211ReasonCode : uint16_t {
     WLAN_REASON_DISASSOC_AP_BUSY = 5,
 };
 
+/**
+ * Mac Address type. 6 octets representing physical address of a device.
+ */
 typedef uint8_t[6] MacAddress;
 
 /**
