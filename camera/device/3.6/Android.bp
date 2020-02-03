@@ -8,6 +8,7 @@ hidl_interface {
     },
     srcs: [
         "types.hal",
+        "ICameraDevice.hal",
         "ICameraDeviceSession.hal",
         "ICameraOfflineSession.hal",
     ],
