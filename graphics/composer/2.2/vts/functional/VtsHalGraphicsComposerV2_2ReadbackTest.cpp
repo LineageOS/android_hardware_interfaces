@@ -932,7 +932,7 @@ TEST_P(GraphicsCompositionTest, SetLayerZOrder) {
 
 class GraphicsBlendModeCompositionTest
     : public GraphicsCompositionTestBase,
-      public testing::WithParamInterface<std::tuple<string, string>> {
+      public testing::WithParamInterface<std::tuple<std::string, std::string>> {
   public:
     void SetUp() override {
         SetUpBase(std::get<0>(GetParam()));

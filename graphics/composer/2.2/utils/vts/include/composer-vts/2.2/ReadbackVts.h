@@ -142,7 +142,7 @@ class TestBufferLayer : public TestLayer {
     const native_handle_t* mBufferHandle = nullptr;
 };
 
-class ReadbackHelper : public ::testing::VtsHalHidlTargetTestBase {
+class ReadbackHelper {
   public:
     static std::string getColorModeString(ColorMode mode);
 

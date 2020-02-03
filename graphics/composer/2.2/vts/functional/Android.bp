@@ -19,7 +19,7 @@ cc_test {
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: [
         "VtsHalGraphicsComposerV2_2ReadbackTest.cpp",
-        "VtsHalGraphicsComposerV2_2TargetTest.cpp"
+        "VtsHalGraphicsComposerV2_2TargetTest.cpp",
     ],
 
     // TODO(b/64437680): Assume these libs are always available on the device.
@@ -51,12 +51,16 @@ cc_test {
         "android.hardware.graphics.mapper@3.0-vts",
         "android.hardware.graphics.mapper@4.0",
         "android.hardware.graphics.mapper@4.0-vts",
-        "librenderengine"
+        "libgtest",
+        "librenderengine",
     ],
     header_libs: [
         "android.hardware.graphics.composer@2.1-command-buffer",
         "android.hardware.graphics.composer@2.2-command-buffer",
     ],
     disable_framework: true,
-    test_suites: ["general-tests", "vts-core"],
+    test_suites: [
+        "general-tests",
+        "vts-core",
+    ],
 }

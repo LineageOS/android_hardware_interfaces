@@ -22,7 +22,6 @@
 #include <unordered_set>
 #include <vector>
 
-#include <VtsHalHidlTargetTestBase.h>
 #include <android/hardware/graphics/composer/2.2/IComposer.h>
 #include <android/hardware/graphics/composer/2.2/IComposerClient.h>
 #include <composer-command-buffer/2.2/ComposerCommandBuffer.h>
