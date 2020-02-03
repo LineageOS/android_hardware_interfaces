@@ -55,13 +55,12 @@ ndk::ScopedAStatus RebootEscrow::retrieveKey(std::vector<int8_t>* _aidl_return) 
         return ndk::ScopedAStatus(AStatus_fromExceptionCode(EX_UNSUPPORTED_OPERATION));
     }
 
-    std::string encodedString;
-    if (!::android::base::ReadFdToString(fd, &encodedString)) {
-        LOG(WARNING) << "Could not read device to string";
+    std::vector<uint8_t> encodedBytes(hadamard::OUTPUT_SIZE_BYTES);
+    if (!::android::base::ReadFully(fd, &encodedBytes[0], encodedBytes.size())) {
+        LOG(WARNING) << "Could not read device";
         return ndk::ScopedAStatus(AStatus_fromExceptionCode(EX_UNSUPPORTED_OPERATION));
     }
 
-    std::vector<uint8_t> encodedBytes(encodedString.begin(), encodedString.end());
     auto keyBytes = hadamard::DecodeKey(encodedBytes);
 
     std::vector<int8_t> signedKeyBytes(keyBytes.begin(), keyBytes.end());
