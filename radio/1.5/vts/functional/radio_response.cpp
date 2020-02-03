@@ -62,13 +62,6 @@ Return<void> RadioResponse_v1_5::supplyNetworkDepersonalizationResponse(
     return Void();
 }
 
-Return<void> RadioResponse_v1_5::supplySimDepersonalizationResponse(
-        const RadioResponseInfo& /*info*/,
-        ::android::hardware::radio::V1_5::PersoSubstate /*persoType*/,
-        int32_t /*remainingRetries*/) {
-    return Void();
-}
-
 Return<void> RadioResponse_v1_5::getCurrentCallsResponse(
         const RadioResponseInfo& /*info*/,
         const ::android::hardware::hidl_vec<::android::hardware::radio::V1_0::Call>& /*calls*/) {
@@ -1009,5 +1002,12 @@ Return<void> RadioResponse_v1_5::setNetworkSelectionModeManualResponse_1_5(
 
 Return<void> RadioResponse_v1_5::sendCdmaSmsExpectMoreResponse(const RadioResponseInfo& /*info*/,
                                                                const SendSmsResult& /*sms*/) {
+    return Void();
+}
+
+Return<void> RadioResponse_v1_5::supplySimDepersonalizationResponse(
+        const RadioResponseInfo& /*info*/,
+        ::android::hardware::radio::V1_5::PersoSubstate /*persoType*/,
+        int32_t /*remainingRetries*/) {
     return Void();
 }
