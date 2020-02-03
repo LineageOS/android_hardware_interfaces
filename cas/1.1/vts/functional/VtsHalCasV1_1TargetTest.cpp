@@ -16,8 +16,6 @@
 
 #define LOG_TAG "mediacas_hidl_hal_test"
 
-#include <VtsHalHidlTargetTestBase.h>
-#include <VtsHalHidlTargetTestEnvBase.h>
 #include <android-base/logging.h>
 #include <android/hardware/cas/1.0/IDescramblerBase.h>
 #include <android/hardware/cas/1.0/types.h>
