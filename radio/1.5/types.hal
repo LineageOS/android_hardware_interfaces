@@ -695,125 +695,116 @@ safe_union CellIdentity {
     CellIdentityNr nr;
 };
 
-/**
- * Combined list of barring services for UTRAN, EUTRAN, and NGRAN.
- *
- * Barring information is defined in:
- * -UTRAN - 3gpp 25.331 Sec 10.2.48.8.6.
- * -EUTRAN - 3gpp 36.331 Sec 6.3.1 SystemInformationBlockType2
- * -NGRAN - 3gpp 38.331 Sec 6.3.2 UAC-BarringInfo and 22.261 Sec 6.22.2.[2-3]
- */
-enum BarringServiceType : int32_t {
-    /** Applicable to UTRAN */
-    /** Barring for all CS services, including registration */
-    CS_SERVICE,
-    /** Barring for all PS services, including registration */
-    PS_SERVICE,
-    /** Barring for mobile-originated circuit-switched voice calls */
-    CS_VOICE,
-
-    /** Applicable to EUTRAN, NGRAN */
-    /** Barring for mobile-originated signalling for any purpose */
-    MO_SIGNALLING,
-    /** Barring for mobile-originated internet or other interactive data */
-    MO_DATA,
-    /** Barring for circuit-switched fallback calling */
-    CS_FALLBACK,
-    /** Barring for IMS voice calling */
-    MMTEL_VOICE,
-    /** Barring for IMS video calling */
-    MMTEL_VIDEO,
-
-    /** Applicable to UTRAN, EUTRAN, NGRAN */
-    /** Barring for emergency services, either CS or emergency MMTEL */
-    EMERGENCY,
-    /** Barring for short message services */
-    SMS,
-
-    /** Operator-specific barring codes; applicable to NGRAN */
-    OPERATOR_1 = 1001,
-    OPERATOR_2 = 1002,
-    OPERATOR_3 = 1003,
-    OPERATOR_4 = 1004,
-    OPERATOR_5 = 1005,
-    OPERATOR_6 = 1006,
-    OPERATOR_7 = 1007,
-    OPERATOR_8 = 1008,
-    OPERATOR_9 = 1009,
-    OPERATOR_10 = 1010,
-    OPERATOR_11 = 1011,
-    OPERATOR_12 = 1012,
-    OPERATOR_13 = 1013,
-    OPERATOR_14 = 1014,
-    OPERATOR_15 = 1015,
-    OPERATOR_16 = 1016,
-    OPERATOR_17 = 1017,
-    OPERATOR_18 = 1018,
-    OPERATOR_19 = 1019,
-    OPERATOR_20 = 1020,
-    OPERATOR_21 = 1021,
-    OPERATOR_22 = 1022,
-    OPERATOR_23 = 1023,
-    OPERATOR_24 = 1024,
-    OPERATOR_25 = 1025,
-    OPERATOR_26 = 1026,
-    OPERATOR_27 = 1027,
-    OPERATOR_28 = 1028,
-    OPERATOR_29 = 1029,
-    OPERATOR_30 = 1030,
-    OPERATOR_31 = 1031,
-    OPERATOR_32 = 1032,
-};
-
-enum BarringType : int32_t {
-    /** Device is not barred for the given service */
-    NONE,
-    /** Device may be barred based on time and probability factors */
-    CONDITIONAL,
-    /* Device is unconditionally barred */
-    UNCONDITIONAL,
-};
-
-struct ConditionalBarringInfo {
-    /** The barring factor as a percentage 0-100 */
-    int32_t barringFactor;
-
-    /** The number of seconds between re-evaluations of barring */
-    int32_t barringTimeSeconds;
-
-    /**
-     * Indicates whether barring is currently being applied.
-     *
-     * <p>True if the UE applies barring to a conditionally barred
-     * service based on the conditional barring parameters.
-     *
-     * <p>False if the service is conditionally barred but barring
-     * is not currently applied, which could be due to either the
-     * barring criteria not having been evaluated (if the UE has not
-     * attempted to use the service) or due to the criteria being
-     * evaluated and the UE being permitted to use the service
-     * despite conditional barring.
-     */
-    bool isBarred;
-};
-
-safe_union BarringTypeSpecificInfo {
-    /** Barring type is either none or unconditional */
-    Monostate noinit;
-
-    /** Must be included if barring is conditional */
-    ConditionalBarringInfo conditionalBarringInfo;
-};
-
 struct BarringInfo {
-    /** Barring service */
-    BarringServiceType service;
+    /**
+     * Combined list of barring services for UTRAN, EUTRAN, and NGRAN.
+     *
+     * Barring information is defined in:
+     * -UTRAN - 3gpp 25.331 Sec 10.2.48.8.6.
+     * -EUTRAN - 3gpp 36.331 Sec 6.3.1 SystemInformationBlockType2
+     * -NGRAN - 3gpp 38.331 Sec 6.3.2 UAC-BarringInfo and 22.261 Sec 6.22.2.[2-3]
+     */
+    enum ServiceType : int32_t {
+        /** Applicable to UTRAN */
+        /** Barring for all CS services, including registration */
+        CS_SERVICE,
+        /** Barring for all PS services, including registration */
+        PS_SERVICE,
+        /** Barring for mobile-originated circuit-switched voice calls */
+        CS_VOICE,
+
+        /** Applicable to EUTRAN, NGRAN */
+        /** Barring for mobile-originated signalling for any purpose */
+        MO_SIGNALLING,
+        /** Barring for mobile-originated internet or other interactive data */
+        MO_DATA,
+        /** Barring for circuit-switched fallback calling */
+        CS_FALLBACK,
+        /** Barring for IMS voice calling */
+        MMTEL_VOICE,
+        /** Barring for IMS video calling */
+        MMTEL_VIDEO,
+
+        /** Applicable to UTRAN, EUTRAN, NGRAN */
+        /** Barring for emergency services, either CS or emergency MMTEL */
+        EMERGENCY,
+        /** Barring for short message services */
+        SMS,
+
+        /** Operator-specific barring codes; applicable to NGRAN */
+        OPERATOR_1 = 1001,
+        OPERATOR_2 = 1002,
+        OPERATOR_3 = 1003,
+        OPERATOR_4 = 1004,
+        OPERATOR_5 = 1005,
+        OPERATOR_6 = 1006,
+        OPERATOR_7 = 1007,
+        OPERATOR_8 = 1008,
+        OPERATOR_9 = 1009,
+        OPERATOR_10 = 1010,
+        OPERATOR_11 = 1011,
+        OPERATOR_12 = 1012,
+        OPERATOR_13 = 1013,
+        OPERATOR_14 = 1014,
+        OPERATOR_15 = 1015,
+        OPERATOR_16 = 1016,
+        OPERATOR_17 = 1017,
+        OPERATOR_18 = 1018,
+        OPERATOR_19 = 1019,
+        OPERATOR_20 = 1020,
+        OPERATOR_21 = 1021,
+        OPERATOR_22 = 1022,
+        OPERATOR_23 = 1023,
+        OPERATOR_24 = 1024,
+        OPERATOR_25 = 1025,
+        OPERATOR_26 = 1026,
+        OPERATOR_27 = 1027,
+        OPERATOR_28 = 1028,
+        OPERATOR_29 = 1029,
+        OPERATOR_30 = 1030,
+        OPERATOR_31 = 1031,
+        OPERATOR_32 = 1032,
+    } serviceType;
 
     /** The type of barring applied to the service */
-    BarringType type;
+    enum BarringType : int32_t {
+        /** Device is not barred for the given service */
+        NONE,
+        /** Device may be barred based on time and probability factors */
+        CONDITIONAL,
+        /* Device is unconditionally barred */
+        UNCONDITIONAL,
+    } barringType;
 
     /** Type-specific barring info if applicable */
-    BarringTypeSpecificInfo typeSpecificInfo;
+    safe_union BarringTypeSpecificInfo {
+        /** Barring type is either none or unconditional */
+        Monostate noinit;
+
+        /** Must be included if barring is conditional */
+        struct Conditional {
+            /** The barring factor as a percentage 0-100 */
+            int32_t factor;
+
+            /** The number of seconds between re-evaluations of barring */
+            int32_t timeSeconds;
+
+            /**
+             * Indicates whether barring is currently being applied.
+             *
+             * <p>True if the UE applies barring to a conditionally barred
+             * service based on the conditional barring parameters.
+             *
+             * <p>False if the service is conditionally barred but barring
+             * is not currently applied, which could be due to either the
+             * barring criteria not having been evaluated (if the UE has not
+             * attempted to use the service) or due to the criteria being
+             * evaluated and the UE being permitted to use the service
+             * despite conditional barring.
+             */
+            bool isBarred;
+        } conditional;
+    } barringTypeSpecificInfo;
 };
 
 enum IndicationFilter : @1.2::IndicationFilter {
