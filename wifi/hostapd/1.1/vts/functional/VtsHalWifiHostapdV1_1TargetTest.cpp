@@ -15,7 +15,6 @@
  */
 
 #include <android-base/logging.h>
-#include <android/hardware/wifi/1.0/IWifi.h>
 
 #include "hostapd_hidl_test_utils.h"
 #include "hostapd_hidl_test_utils_1_1.h"
@@ -30,7 +29,6 @@ class WifiHostapdHidlEnvironment_1_1 : public WifiHostapdHidlEnvironment {
     }
 
     virtual void registerTestServices() override {
-        registerTestService<::android::hardware::wifi::V1_0::IWifi>();
         registerTestService<android::hardware::wifi::hostapd::V1_0::IHostapd>();
         registerTestService<android::hardware::wifi::hostapd::V1_1::IHostapd>();
     }
