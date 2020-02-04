@@ -136,17 +136,17 @@ void validateBurst(const sp<IPreparedModel>& preparedModel, const V1_0::Request&
 // Validate sync_fence handles for dispatch with valid input
 void validateExecuteFenced(const sp<IPreparedModel>& preparedModel, const Request& request) {
     SCOPED_TRACE("Expecting request to fail [executeFenced]");
-    Return<void> ret_null =
-            preparedModel->executeFenced(request, {hidl_handle(nullptr)}, V1_2::MeasureTiming::NO,
-                                         [](ErrorStatus error, const hidl_handle& handle,
-                                            const sp<IFencedExecutionCallback>& callback) {
-                                             // TODO: fix this once sample driver impl is merged.
-                                             if (error != ErrorStatus::DEVICE_UNAVAILABLE) {
-                                                 ASSERT_EQ(ErrorStatus::INVALID_ARGUMENT, error);
-                                             }
-                                             ASSERT_EQ(handle.getNativeHandle(), nullptr);
-                                             ASSERT_EQ(callback, nullptr);
-                                         });
+    Return<void> ret_null = preparedModel->executeFenced(
+            request, {hidl_handle(nullptr)}, V1_2::MeasureTiming::NO, {}, {},
+            [](ErrorStatus error, const hidl_handle& handle,
+               const sp<IFencedExecutionCallback>& callback) {
+                // TODO: fix this once sample driver impl is merged.
+                if (error != ErrorStatus::DEVICE_UNAVAILABLE) {
+                    ASSERT_EQ(ErrorStatus::INVALID_ARGUMENT, error);
+                }
+                ASSERT_EQ(handle.getNativeHandle(), nullptr);
+                ASSERT_EQ(callback, nullptr);
+            });
     ASSERT_TRUE(ret_null.isOk());
 }
 
