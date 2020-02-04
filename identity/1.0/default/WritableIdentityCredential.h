@@ -51,7 +51,8 @@ class WritableIdentityCredential : public IWritableIdentityCredential {
 
     // Methods from ::android::hardware::identity::IWritableIdentityCredential
     // follow.
-    Return<void> getAttestationCertificate(const hidl_vec<uint8_t>& attestationChallenge,
+    Return<void> getAttestationCertificate(const hidl_vec<uint8_t>& attestationApplicationId,
+                                           const hidl_vec<uint8_t>& attestationChallenge,
                                            getAttestationCertificate_cb _hidl_cb) override;
 
     Return<void> startPersonalization(uint16_t accessControlProfileCount,
