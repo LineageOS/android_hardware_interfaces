@@ -38,11 +38,24 @@ interface IFencedExecutionCallback {
      *                - DEVICE_UNAVAILABLE if driver is offline or busy
      *                - GENERAL_FAILURE if the asynchronous task resulted in an
      *                  unspecified error
-     * @return timing Duration of execution. Unless MeasureTiming::YES was passed when
-     *                launching the execution and status is NONE, all times must
-     *                be reported as UINT64_MAX. A driver may choose to report
-     *                any time as UINT64_MAX, indicating that particular measurement is
-     *                not available.
+     *                - MISSED_DEADLINE_* if the deadline for executing a model
+     *                  cannot be met
+     *                - RESOURCE_EXHAUSTED_* if the task was aborted by the
+     *                  driver
+     * @return timingLaunched The duration starts when executeFenced is called and ends when
+     *                        executeFenced signals the returned syncFence.
+     *                        Unless MeasureTiming::YES was passed when
+     *                        launching the execution and status is NONE, all times
+     *                        must be reported as UINT64_MAX. A driver may choose to
+     *                        report any time as UINT64_MAX, indicating that particular
+     *                        measurement is not available.
+     * @return timingFenced The duration starts when all waitFor sync fences have been signaled
+     *                      and ends when executeFenced signals the returned syncFence.
+     *                      Unless MeasureTiming::YES was passed when
+     *                      launching the execution and status is NONE, all times
+     *                      must be reported as UINT64_MAX. A driver may choose to
+     *                      report any time as UINT64_MAX, indicating that particular
+     *                      measurement is not available.
      */
-    getExecutionInfo() generates (ErrorStatus status, Timing timing);
+    getExecutionInfo() generates (ErrorStatus status, Timing timingLaunched, Timing timingFenced);
 };
