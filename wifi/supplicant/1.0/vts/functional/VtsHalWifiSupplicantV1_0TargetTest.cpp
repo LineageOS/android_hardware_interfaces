@@ -28,7 +28,6 @@ class WifiSupplicantHidlEnvironment_1_0 : public WifiSupplicantHidlEnvironment {
         return instance;
     }
     virtual void registerTestServices() override {
-        registerTestService<::android::hardware::wifi::V1_0::IWifi>();
         registerTestService<
             ::android::hardware::wifi::supplicant::V1_0::ISupplicant>();
     }
