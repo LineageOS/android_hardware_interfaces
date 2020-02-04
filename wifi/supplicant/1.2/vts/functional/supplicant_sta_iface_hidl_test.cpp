@@ -111,9 +111,14 @@ class SupplicantStaIfaceHidlTest : public SupplicantHidlTestBase {
         // If DPP is not supported, we just pass the test.
         sta_iface_->getKeyMgmtCapabilities(
             [&](const SupplicantStatus& status, uint32_t keyMgmtMaskInternal) {
-                EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+                // Since getKeyMgmtCapabilities() is overridden by an
+                // upgraded API in newer HAL versions, allow for
+                // FAILURE_UNKNOWN and return DPP is not supported.
+                if (status.code != SupplicantStatusCode::FAILURE_UNKNOWN) {
+                    EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
 
-                keyMgmtMask = keyMgmtMaskInternal;
+                    keyMgmtMask = keyMgmtMaskInternal;
+                }
             });
 
         if (!(keyMgmtMask & ISupplicantStaNetwork::KeyMgmtMask::DPP)) {
@@ -268,8 +273,12 @@ TEST_P(SupplicantStaIfaceHidlTest, RegisterCallback_1_2) {
  * GetKeyMgmtCapabilities
  */
 TEST_P(SupplicantStaIfaceHidlTest, GetKeyMgmtCapabilities) {
-    sta_iface_->getKeyMgmtCapabilities(
-        [&](const SupplicantStatus& status, uint32_t keyMgmtMask) {
+    sta_iface_->getKeyMgmtCapabilities([&](const SupplicantStatus& status,
+                                           uint32_t keyMgmtMask) {
+        // Since this API is overridden by an upgraded API in newer HAL
+        // versions, allow FAILURE_UNKNOWN to indicate that the test is no
+        // longer supported on newer HAL.
+        if (status.code != SupplicantStatusCode::FAILURE_UNKNOWN) {
             EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
 
             // Even though capabilities vary, these two are always set in HAL
@@ -277,7 +286,8 @@ TEST_P(SupplicantStaIfaceHidlTest, GetKeyMgmtCapabilities) {
             EXPECT_TRUE(keyMgmtMask & ISupplicantStaNetwork::KeyMgmtMask::NONE);
             EXPECT_TRUE(keyMgmtMask &
                         ISupplicantStaNetwork::KeyMgmtMask::IEEE8021X);
-        });
+        }
+    });
 }
 
 /*
