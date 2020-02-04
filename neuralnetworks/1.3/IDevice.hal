@@ -260,11 +260,6 @@ interface IDevice extends @1.2::IDevice {
      * the model, the callback object must be invoked with the appropriate
      * ErrorStatus value and nullptr for the IPreparedModel.
      *
-     * The model is prepared with a priority. This priority is relative to other
-     * prepared models owned by the same client. Higher priority executions may
-     * use more compute resources than lower priority executions, and may
-     * preempt or starve lower priority executions.
-     *
      * prepareModelFromCache_1_3 can be called with an optional deadline. If the
      * model is not able to prepared before the provided deadline, the model
      * preparation must be aborted, and either {@link
@@ -284,8 +279,6 @@ interface IDevice extends @1.2::IDevice {
      * used with different shapes of inputs on different (possibly concurrent)
      * executions.
      *
-     * @param priority The priority of the prepared model relative to other
-     *     prepared models owned by the client.
      * @param deadline The time by which the model must be prepared. If the
      *     model cannot be prepared by the deadline, the preparation must be
      *     aborted.
@@ -318,7 +311,7 @@ interface IDevice extends @1.2::IDevice {
      *       met
      *     - RESOURCE_EXHAUSTED_* if the task was aborted by the driver
      */
-    prepareModelFromCache_1_3(Priority priority, OptionalTimePoint deadline,
+    prepareModelFromCache_1_3(OptionalTimePoint deadline,
                               vec<handle> modelCache, vec<handle> dataCache,
                               uint8_t[Constant:BYTE_SIZE_OF_CACHE_TOKEN] token,
                               IPreparedModelCallback callback)
