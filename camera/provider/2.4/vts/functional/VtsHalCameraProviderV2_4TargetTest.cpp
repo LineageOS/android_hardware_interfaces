@@ -37,6 +37,7 @@
 #include <android/hardware/camera/device/3.5/ICameraDevice.h>
 #include <android/hardware/camera/device/3.5/ICameraDeviceCallback.h>
 #include <android/hardware/camera/device/3.5/ICameraDeviceSession.h>
+#include <android/hardware/camera/device/3.6/ICameraDevice.h>
 #include <android/hardware/camera/device/3.6/ICameraDeviceSession.h>
 #include <android/hardware/camera/metadata/3.4/types.h>
 #include <android/hardware/camera/provider/2.4/ICameraProvider.h>
@@ -5719,17 +5720,19 @@ void CameraHidlTest::configureOfflineStillStream(const std::string &name,
     ASSERT_NE(nullptr, useHalBufManager);
 
     std::vector<AvailableStream> outputStreams;
-    ::android::sp<ICameraDevice> cameraDevice;
+    ::android::sp<device::V3_6::ICameraDevice> cameraDevice;
     ALOGI("configureStreams: Testing camera device %s", name.c_str());
     Return<void> ret;
     ret = provider->getCameraDeviceInterface_V3_x(
         name,
-        [&](auto status, const auto& device) {
+        [&cameraDevice](auto status, const auto& device) {
             ALOGI("getCameraDeviceInterface_V3_x returns status:%d",
                   (int)status);
             ASSERT_EQ(Status::OK, status);
             ASSERT_NE(device, nullptr);
-            cameraDevice = device;
+            auto castResult = device::V3_6::ICameraDevice::castFrom(device);
+            ASSERT_TRUE(castResult.isOk());
+            cameraDevice = castResult;
         });
     ASSERT_TRUE(ret.isOk());
 
