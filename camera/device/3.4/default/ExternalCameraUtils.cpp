@@ -519,6 +519,7 @@ int encodeJpegYU12(
         yLines[i]  = static_cast<JSAMPROW>(py + li * inLayout.yStride);
         if(i < paddedHeight / cVSubSampling)
         {
+            li = std::min(i, (inSz.height - 1) / cVSubSampling);
             crLines[i] = static_cast<JSAMPROW>(pcr + li * inLayout.cStride);
             cbLines[i] = static_cast<JSAMPROW>(pcb + li * inLayout.cStride);
         }
