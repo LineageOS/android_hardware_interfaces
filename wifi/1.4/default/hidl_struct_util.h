@@ -65,6 +65,8 @@ legacy_hal::wifi_power_scenario convertHidlTxPowerScenarioToLegacy_1_2(
 bool convertLegacyWifiMacInfosToHidl(
     const std::vector<legacy_hal::WifiMacInfo>& legacy_mac_infos,
     std::vector<IWifiChipEventCallback::RadioModeInfo>* hidl_radio_mode_infos);
+legacy_hal::wifi_interface_type convertHidlIfaceTypeToLegacy(
+    IfaceType hidl_interface_type);
 
 // STA iface conversion methods.
 bool convertLegacyFeaturesToHidlStaCapabilities(
