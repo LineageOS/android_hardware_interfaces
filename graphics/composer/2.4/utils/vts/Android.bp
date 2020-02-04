@@ -22,12 +22,12 @@ cc_library_static {
         "GraphicsComposerCallback.cpp",
     ],
     static_libs: [
-        "VtsHalHidlTargetTestBase",
         "android.hardware.graphics.composer@2.1",
         "android.hardware.graphics.composer@2.2",
         "android.hardware.graphics.composer@2.3-vts",
         "android.hardware.graphics.composer@2.3",
         "android.hardware.graphics.composer@2.4",
+        "libgtest",
     ],
     header_libs: [
         "android.hardware.graphics.composer@2.1-command-buffer",

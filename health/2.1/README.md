@@ -24,6 +24,9 @@
         ```mk
         # Install default passthrough implementation to vendor.
         PRODUCT_PACKAGES += android.hardware.health@2.1-impl
+
+        # For non-A/B devices, install default passthrough implementation to recovery.
+        PRODUCT_PACKAGES += android.hardware.health@2.1-impl.recovery
         ```
 
         You are done. Otherwise, go to the next step.
@@ -41,6 +44,8 @@
             * If you are upgrading from a customized 2.0 health HAL
               implementation, See
               [Upgrading from Health HAL 2.0](#update-from-2-0).
+
+        1. [Install the implementation](#install).
 
         1. [Update necessary SELinux permissions](#selinux).
 
@@ -95,15 +100,22 @@ and `update()`, with an additional `energyCounter()` function.
   `HealthImpl::getHealthInfo` or `HealthImpl::getHealthInfo_2_1` because they call
   `getDiskStats` and `getStorageInfo` to retrieve storage information.
 
+# Install the implementation {#install}
+
+In `device.mk`:
+
+```mk
+# Install the passthrough implementation to vendor.
+PRODUCT_PACKAGES += android.hardware.health@2.1-impl-<device>
+
+# For non-A/B devices, also install the passthrough implementation to recovery.
+PRODUCT_PACKAGES += android.hardware.health@2.1-impl-<device>.recovery
+```
+
 # Update necessary SELinux permissions {#selinux}
 
 For example (replace `<device>` with the device name):
 ```
-# device/<manufacturer>/<device>/sepolicy/vendor/file_contexts
-# Required for charger to open passthrough implementation. Replace <device> with the proper device
-# name. File name must be consistent with `stem` of the implementation module.
-/vendor/lib(64)?/hw/android\.hardware\.health@2\.0-impl-2\.1-<device>\.so u:object_r:same_process_hal_file:s0
-
 # device/<manufacturer>/<device>/sepolicy/vendor/hal_health_default.te
 # Add device specific permissions to hal_health_default domain, especially
 # if a device-specific libhealthd is used and/or device-specific storage related

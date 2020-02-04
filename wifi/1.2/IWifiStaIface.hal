@@ -23,7 +23,7 @@ import @1.0::IWifiStaIface;
 /**
  * Interface used to represent a single STA iface.
  *
- * IWifiChip.createStaIface() may return a @1.2::IWifiStaIface when supported.
+ * IWifiChip.createStaIface() must return a @1.2::IWifiStaIface when supported.
  */
 interface IWifiStaIface extends @1.0::IWifiStaIface {
     /**

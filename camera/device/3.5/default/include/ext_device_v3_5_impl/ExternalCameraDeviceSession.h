@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_CAMERA_DEVICE_V3_5_EXTCAMERADEVICE3SESSION_H
-#define ANDROID_HARDWARE_CAMERA_DEVICE_V3_5_EXTCAMERADEVICE3SESSION_H
+#ifndef ANDROID_HARDWARE_CAMERA_DEVICE_V3_5_EXTCAMERADEVICESESSION_H
+#define ANDROID_HARDWARE_CAMERA_DEVICE_V3_5_EXTCAMERADEVICESESSION_H
 
 #include <android/hardware/camera/device/3.5/ICameraDeviceCallback.h>
 #include <android/hardware/camera/device/3.5/ICameraDeviceSession.h>
@@ -72,6 +72,7 @@ using ::android::base::unique_fd;
 
 using ::android::hardware::camera::device::V3_4::implementation::SupportedV4L2Format;
 using ::android::hardware::camera::device::V3_4::implementation::CroppingType;
+using ::android::hardware::camera::device::V3_4::implementation::HalStreamBuffer;
 
 struct ExternalCameraDeviceSession : public V3_4::implementation::ExternalCameraDeviceSession {
 
@@ -97,6 +98,62 @@ struct ExternalCameraDeviceSession : public V3_4::implementation::ExternalCamera
                 config, supportedFormats, devCfg);
     }
 
+    class BufferRequestThread : public android::Thread {
+    public:
+        BufferRequestThread(
+                wp<OutputThreadInterface> parent,
+                sp<V3_5::ICameraDeviceCallback> callbacks);
+
+        int requestBufferStart(const std::vector<HalStreamBuffer>&);
+        int waitForBufferRequestDone(
+                /*out*/std::vector<HalStreamBuffer>*);
+
+        virtual bool threadLoop() override;
+
+    private:
+        void waitForNextRequest();
+
+        const wp<OutputThreadInterface> mParent;
+        const sp<V3_5::ICameraDeviceCallback> mCallbacks;
+
+        std::mutex mLock;
+        bool mRequestingBuffer = false;
+
+        std::vector<HalStreamBuffer> mBufferReqs;
+        std::vector<HalStreamBuffer> mPendingReturnBufferReqs;
+        // mHalBufferReqs is not under mLock protection during the HIDL transaction
+        hidl_vec<BufferRequest>      mHalBufferReqs;
+
+        // request buffers takes much less time in steady state, but can take much longer
+        // when requesting 1st buffer from a stream.
+        // TODO: consider a separate timeout for new vs. steady state?
+        // TODO: or make sure framework is warming up the pipeline during configure new stream?
+        static const int kReqProcTimeoutMs = 66;
+
+        static const int kReqWaitTimeoutMs = 33;
+        static const int kReqWaitTimesWarn = 90;  // 33ms * 90 ~= 3 sec
+        std::condition_variable mRequestCond;     // signaled when a new buffer request incoming
+        std::condition_variable mRequestDoneCond; // signaled when a request is done
+    };
+
+    class OutputThread :
+            public V3_4::implementation::ExternalCameraDeviceSession::OutputThread {
+    public:
+        // TODO: pass buffer request thread to OutputThread ctor
+        OutputThread(wp<OutputThreadInterface> parent, CroppingType,
+                const common::V1_0::helper::CameraMetadata&,
+                sp<BufferRequestThread> bufReqThread);
+        virtual ~OutputThread();
+
+    protected:
+        // Methods to request output buffer in parallel
+        virtual int requestBufferStart(const std::vector<HalStreamBuffer>&) override;
+        virtual int waitForBufferRequestDone(
+                /*out*/std::vector<HalStreamBuffer>*) override;
+
+        const sp<BufferRequestThread> mBufferRequestThread;
+    };
+
 protected:
     // Methods from v3.4 and earlier will trampoline to inherited implementation
     Return<void> configureStreams_3_5(
@@ -120,62 +177,7 @@ protected:
             hidl_vec<buffer_handle_t*>& allBufPtrs,
             hidl_vec<int>& allFences) override;
 
-    class BufferRequestThread : public android::Thread {
-    public:
-        BufferRequestThread(
-                wp<ExternalCameraDeviceSession> parent,
-                sp<V3_5::ICameraDeviceCallback> callbacks);
-
-        int requestBufferStart(const std::vector<HalStreamBuffer>&);
-        int waitForBufferRequestDone(
-                /*out*/std::vector<HalStreamBuffer>*);
-
-        virtual bool threadLoop() override;
-
-    private:
-        void waitForNextRequest();
-
-        const wp<ExternalCameraDeviceSession> mParent;
-        const sp<V3_5::ICameraDeviceCallback> mCallbacks;
-
-        std::mutex mLock;
-        bool mRequestingBuffer = false;
-
-        std::vector<HalStreamBuffer> mBufferReqs;
-        std::vector<HalStreamBuffer> mPendingReturnBufferReqs;
-        // mHalBufferReqs is not under mLock protection during the HIDL transaction
-        hidl_vec<BufferRequest>      mHalBufferReqs;
-
-        // request buffers takes much less time in steady state, but can take much longer
-        // when requesting 1st buffer from a stream.
-        // TODO: consider a separate timeout for new vs. steady state?
-        // TODO: or make sure framework is warming up the pipeline during configure new stream?
-        static const int kReqProcTimeoutMs = 66;
-
-        static const int kReqWaitTimeoutMs = 33;
-        static const int kReqWaitTimesWarn = 90;  // 33ms * 90 ~= 3 sec
-        std::condition_variable mRequestCond;     // signaled when a new buffer request incoming
-        std::condition_variable mRequestDoneCond; // signaled when a request is done
-    };
-
     sp<BufferRequestThread> mBufferRequestThread;
-
-    class OutputThread :
-            public V3_4::implementation::ExternalCameraDeviceSession::OutputThread {
-    public:
-        // TODO: pass buffer request thread to OutputThread ctor
-        OutputThread(wp<ExternalCameraDeviceSession> parent, CroppingType,
-                sp<BufferRequestThread> bufReqThread);
-        virtual ~OutputThread();
-
-    protected:
-        // Methods to request output buffer in parallel
-        virtual int requestBufferStart(const std::vector<HalStreamBuffer>&) override;
-        virtual int waitForBufferRequestDone(
-                /*out*/std::vector<HalStreamBuffer>*) override;
-
-        const sp<BufferRequestThread> mBufferRequestThread;
-    };
 
     sp<V3_5::ICameraDeviceCallback> mCallback_3_5;
     bool mSupportBufMgr;
@@ -270,4 +272,4 @@ private:
 }  // namespace hardware
 }  // namespace android
 
-#endif  // ANDROID_HARDWARE_CAMERA_DEVICE_V3_5_EXTCAMERADEVICE3SESSION_H
+#endif  // ANDROID_HARDWARE_CAMERA_DEVICE_V3_5_EXTCAMERADEVICESESSION_H
