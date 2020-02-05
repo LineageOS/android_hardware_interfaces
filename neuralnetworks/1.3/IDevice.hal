@@ -372,5 +372,5 @@ interface IDevice extends @1.2::IDevice {
      */
     allocate(BufferDesc desc, vec<IPreparedModel> preparedModels, vec<BufferRole> inputRoles,
              vec<BufferRole> outputRoles)
-            generates (ErrorStatus status, IBuffer buffer, int32_t token);
+            generates (ErrorStatus status, IBuffer buffer, uint32_t token);
 };
