@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#define LOG_TAG "automotive.vehicle@2.0-connector"
+
 #include <android-base/logging.h>
 #include <utils/SystemClock.h>
 
@@ -261,6 +264,8 @@ StatusCode EmulatedVehicleServer::onSetProperty(const VehiclePropValue& value, b
                     break;
             }
             break;
+        case INITIAL_USER_INFO:
+            return onSetInitialUserInfo(value, updateStatus);
         default:
             break;
     }
@@ -271,6 +276,97 @@ StatusCode EmulatedVehicleServer::onSetProperty(const VehiclePropValue& value, b
     updatedPropValue->timestamp = elapsedRealtimeNano();
 
     onPropertyValueFromCar(*updatedPropValue, updateStatus);
+    return StatusCode::OK;
+}
+
+/**
+ * INITIAL_USER_INFO is called by Android when it starts, and it's expecting a property change
+ * indicating what the initial user should be.
+ *
+ * During normal circumstances, the emulator will reply right away, passing a response if
+ * InitialUserInfoResponseAction::DEFAULT (so Android could use its own logic to decide which user
+ * to boot).
+ *
+ * But during development / testing, the behavior can be changed using lshal dump, which must use
+ * the areaId to indicate what should happen next.
+ *
+ * So, the behavior of set(INITIAL_USER_INFO) is:
+ *
+ * - if it has an areaId, store the property into mInitialUserResponseFromCmd (as it was called by
+ *   lshal).
+ * - else if mInitialUserResponseFromCmd is not set, return a response with the same request id and
+ *   InitialUserInfoResponseAction::DEFAULT
+ * - else the behavior is defined by the areaId on mInitialUserResponseFromCmd:
+ * - if it's 1, reply with mInitialUserResponseFromCmd and the right request id
+ * - if it's 2, reply with mInitialUserResponseFromCmd but a wrong request id (so Android can test
+ *   this error scenario)
+ * - if it's 3, then don't send a property change (so Android can emulate a timeout)
+ *
+ */
+StatusCode EmulatedVehicleServer::onSetInitialUserInfo(const VehiclePropValue& value,
+                                                       bool updateStatus) {
+    // TODO: LOG calls below might be more suited to be DEBUG, but those are not being logged
+    // (even when explicitly calling setprop log.tag. As this class should be using ALOG instead of
+    // LOG, it's not worth investigating why...
+
+    if (value.areaId != 0) {
+        LOG(INFO) << "set(INITIAL_USER_INFO) called from lshal; storing it: " << toString(value);
+        mInitialUserResponseFromCmd.reset(new VehiclePropValue(value));
+        return StatusCode::OK;
+    }
+    LOG(INFO) << "set(INITIAL_USER_INFO) called from Android: " << toString(value);
+
+    if (value.value.int32Values.size() == 0) {
+        LOG(ERROR) << "invalid request (no requestId): " << toString(value);
+        return StatusCode::INVALID_ARG;
+    }
+    int32_t requestId = value.value.int32Values[0];
+
+    // Create the update property and set common values
+    auto updatedValue = createVehiclePropValue(VehiclePropertyType::MIXED, 0);
+    updatedValue->prop = INITIAL_USER_INFO;
+    updatedValue->timestamp = elapsedRealtimeNano();
+
+    if (mInitialUserResponseFromCmd == nullptr) {
+        updatedValue->value.int32Values.resize(2);
+        updatedValue->value.int32Values[0] = requestId;
+        updatedValue->value.int32Values[1] = (int32_t)InitialUserInfoResponseAction::DEFAULT;
+        LOG(INFO) << "no lshal response; returning InitialUserInfoResponseAction::DEFAULT: "
+                  << toString(*updatedValue);
+        onPropertyValueFromCar(*updatedValue, updateStatus);
+        return StatusCode::OK;
+    }
+
+    // mInitialUserResponseFromCmd is used for just one request
+    std::unique_ptr<VehiclePropValue> response = std::move(mInitialUserResponseFromCmd);
+
+    // TODO(b/138709788): rather than populate the raw values directly, it should use the
+    // libraries that convert a InitialUserInfoResponse into a VehiclePropValue)
+
+    switch (response->areaId) {
+        case 1:
+            LOG(INFO) << "returning response with right request id";
+            *updatedValue = *response;
+            updatedValue->areaId = 0;
+            updatedValue->value.int32Values[0] = requestId;
+            break;
+        case 2:
+            LOG(INFO) << "returning response with wrong request id";
+            *updatedValue = *response;
+            updatedValue->areaId = 0;
+            updatedValue->value.int32Values[0] = -requestId;
+            break;
+        case 3:
+            LOG(INFO) << "not generating a property change event because of lshal prop: "
+                      << toString(*response);
+            return StatusCode::OK;
+        default:
+            LOG(ERROR) << "invalid action on lshal response: " << toString(*response);
+            return StatusCode::INTERNAL_ERROR;
+    }
+
+    LOG(INFO) << "updating property to: " << toString(*updatedValue);
+    onPropertyValueFromCar(*updatedValue, updateStatus);
     return StatusCode::OK;
 }
 
