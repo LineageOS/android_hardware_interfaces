@@ -46,7 +46,7 @@ cc_binary {
     ],
     init_rc: ["android.hardware.sensors@2.0-service-multihal.rc"],
     vintf_fragments: ["android.hardware.sensors@2.0-multihal.xml"],
-    shared_libs: ["android.hardware.sensors@2.0-ScopedWakelock"]
+    shared_libs: ["android.hardware.sensors@2.0-ScopedWakelock"],
 }
 
 cc_library_headers {
@@ -66,8 +66,8 @@ cc_library_shared {
     ],
     vendor_available: true,
     export_header_lib_headers: [
-        "android.hardware.sensors@2.0-multihal.header"
-    ]
+        "android.hardware.sensors@2.0-multihal.header",
+    ],
 }
 
 // The below targets should only be used for testing.
@@ -85,7 +85,7 @@ cc_test_library {
         "android.hardware.sensors@2.0-multihal.header",
     ],
     export_shared_lib_headers: [
-	"android.hardware.sensors@2.0-ScopedWakelock",
+        "android.hardware.sensors@2.0-ScopedWakelock",
     ],
     shared_libs: [
         "libutils",
