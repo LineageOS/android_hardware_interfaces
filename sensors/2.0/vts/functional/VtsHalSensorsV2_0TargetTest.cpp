@@ -303,7 +303,7 @@ int32_t SensorsHidlTest::getInvalidSensorHandle() {
     // Find a sensor handle that does not exist in the sensor list
     int32_t maxHandle = 0;
     for (const SensorInfo& sensor : getSensorsList()) {
-        maxHandle = max(maxHandle, sensor.sensorHandle);
+        maxHandle = std::max(maxHandle, sensor.sensorHandle);
     }
     return maxHandle + 1;
 }

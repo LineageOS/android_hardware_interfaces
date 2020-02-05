@@ -20,7 +20,6 @@
 #include "sensors-vts-utils/SensorEventsChecker.h"
 #include "sensors-vts-utils/SensorsHidlEnvironmentBase.h"
 
-#include <VtsHalHidlTargetTestBase.h>
 #include <android/hardware/sensors/1.0/ISensors.h>
 #include <android/hardware/sensors/1.0/types.h>
 #include <gtest/gtest.h>
