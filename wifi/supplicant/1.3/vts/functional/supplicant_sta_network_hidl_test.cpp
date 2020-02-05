@@ -17,7 +17,6 @@
 #include <android-base/logging.h>
 
 #include <VtsCoreUtil.h>
-#include <VtsHalHidlTargetTestBase.h>
 #include <android/hardware/wifi/1.0/IWifi.h>
 #include <android/hardware/wifi/1.1/IWifi.h>
 #include <android/hardware/wifi/supplicant/1.3/ISupplicant.h>

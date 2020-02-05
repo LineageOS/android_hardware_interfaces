@@ -2715,6 +2715,21 @@ bool convertLegacyVectorOfRttResultToHidl(
     }
     return true;
 }
+
+legacy_hal::wifi_interface_type convertHidlIfaceTypeToLegacy(
+    IfaceType hidl_interface_type) {
+    switch (hidl_interface_type) {
+        case IfaceType::STA:
+            return legacy_hal::WIFI_INTERFACE_TYPE_STA;
+        case IfaceType::AP:
+            return legacy_hal::WIFI_INTERFACE_TYPE_AP;
+        case IfaceType::P2P:
+            return legacy_hal::WIFI_INTERFACE_TYPE_P2P;
+        case IfaceType::NAN:
+            return legacy_hal::WIFI_INTERFACE_TYPE_NAN;
+    }
+    CHECK(false);
+}
 }  // namespace hidl_struct_util
 }  // namespace implementation
 }  // namespace V1_4

@@ -149,10 +149,6 @@ void ExternalCameraDeviceSession::fillOfflineSessionInfo(const hidl_vec<int32_t>
     info->offlineStreams.resize(offlineStreams.size());
     info->offlineRequests.resize(offlineReqs.size());
 
-    std::unordered_map<int32_t, uint32_t> outstandingBufs(offlineStreams.size());
-    for (const auto streamId : offlineStreams) {
-        outstandingBufs.insert({streamId, 0});
-    }
     // Fill in offline reqs and count outstanding buffers
     for (size_t i = 0; i < offlineReqs.size(); i++) {
         info->offlineRequests[i].frameNumber = offlineReqs[i]->frameNumber;
@@ -160,14 +156,15 @@ void ExternalCameraDeviceSession::fillOfflineSessionInfo(const hidl_vec<int32_t>
         for (size_t bIdx = 0; bIdx < offlineReqs[i]->buffers.size(); bIdx++) {
             int32_t streamId = offlineReqs[i]->buffers[bIdx].streamId;
             info->offlineRequests[i].pendingStreams[bIdx] = streamId;
-            outstandingBufs[streamId]++;
         }
     }
 
     for (size_t i = 0; i < offlineStreams.size(); i++) {
         int32_t streamId = offlineStreams[i];
         info->offlineStreams[i].id = streamId;
-        info->offlineStreams[i].numOutstandingBuffers = outstandingBufs[streamId];
+        // outstanding buffers are 0 since we are doing hal buffer management and
+        // offline session will ask for those buffers later
+        info->offlineStreams[i].numOutstandingBuffers = 0;
         const CirculatingBuffers& bufIdMap = circulatingBuffers.at(streamId);
         info->offlineStreams[i].circulatingBufferIds.resize(bufIdMap.size());
         size_t bIdx = 0;
@@ -345,7 +342,12 @@ Status ExternalCameraDeviceSession::switchToOffline(const hidl_vec<int32_t>& off
         return Status::INTERNAL_ERROR;
     }
 
-    *session = sessionImpl->getInterface();
+    // No need to return session if there is no offline requests left
+    if (offlineReqs.size() != 0) {
+        *session = sessionImpl->getInterface();
+    } else {
+        *session = nullptr;
+    }
     return Status::OK;
 }
 
