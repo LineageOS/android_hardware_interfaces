@@ -1425,18 +1425,6 @@ enum FrontendStatusType : uint32_t {
      */
     LAYER_ERROR,
     /**
-     * CN value by VBER.
-     */
-    VBER_CN,
-    /**
-     * CN value by LBER.
-     */
-    LBER_CN,
-    /**
-     * CN value by XER.
-     */
-    XER_CN,
-    /**
      * Moduration Error Ratio.
      */
     MER,
@@ -1557,21 +1545,6 @@ safe_union FrontendStatus {
     bool isLnaOn;
 
     vec<bool> isLayerError;
-
-    /**
-     * CN value by VBER measured by 0.001 dB
-     */
-    int32_t vberCn;
-
-    /**
-     * CN value by LBER measured by 0.001 dB
-     */
-    int32_t lberCn;
-
-    /**
-     * CN value by XER measured by 0.001 dB
-     */
-    int32_t xerCn;
 
     /**
      * MER value measured by 0.001 dB
