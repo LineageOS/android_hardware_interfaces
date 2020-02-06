@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,8 @@
 #include <iostream>
 #include <map>
 
+#include "VtsHalTvTunerV1_0TestConfigurations.h"
+
 #define WAIT_TIMEOUT 3000000000
 #define WAIT_TIMEOUT_data_ready 3000000000 * 4
 
@@ -84,9 +86,11 @@ using android::hardware::tv::tuner::V1_0::FrontendAtscSettings;
 using android::hardware::tv::tuner::V1_0::FrontendDvbtSettings;
 using android::hardware::tv::tuner::V1_0::FrontendEventType;
 using android::hardware::tv::tuner::V1_0::FrontendId;
+using android::hardware::tv::tuner::V1_0::FrontendInfo;
 using android::hardware::tv::tuner::V1_0::FrontendInnerFec;
 using android::hardware::tv::tuner::V1_0::FrontendScanMessage;
 using android::hardware::tv::tuner::V1_0::FrontendScanMessageType;
+using android::hardware::tv::tuner::V1_0::FrontendScanType;
 using android::hardware::tv::tuner::V1_0::FrontendSettings;
 using android::hardware::tv::tuner::V1_0::IDemux;
 using android::hardware::tv::tuner::V1_0::IDescrambler;
@@ -102,6 +106,8 @@ using android::hardware::tv::tuner::V1_0::PlaybackStatus;
 using android::hardware::tv::tuner::V1_0::RecordSettings;
 using android::hardware::tv::tuner::V1_0::RecordStatus;
 using android::hardware::tv::tuner::V1_0::Result;
+
+using ::testing::AssertionResult;
 
 namespace {
 
@@ -148,8 +154,9 @@ const std::vector<uint8_t> goldenDataOutputBuffer{
 };
 
 // const uint16_t FMQ_SIZE_4K = 0x1000;
-const uint32_t FMQ_SIZE_1M = 0x100000;
-const uint32_t FMQ_SIZE_16M = 0x1000000;
+// const uint32_t FMQ_SIZE_1M = 0x100000;
+// const uint32_t FMQ_SIZE_16M = 0x1000000;
+const uint8_t FRONTEND_EVENT_CALLBACK_WAIT_COUNT = 4;
 
 struct FilterConf {
     DemuxFilterType type;
@@ -172,6 +179,7 @@ struct PlaybackConf {
     PlaybackSettings setting;
 };
 
+/******************************** Start FrontendCallback **********************************/
 class FrontendCallback : public IFrontendCallback {
   public:
     virtual Return<void> onEvent(FrontendEventType frontendEventType) override {
@@ -182,28 +190,38 @@ class FrontendCallback : public IFrontendCallback {
         return Void();
     }
 
-    virtual Return<void> onScanMessage(FrontendScanMessageType /* type */,
-                                       const FrontendScanMessage& /* message */) override {
+    virtual Return<void> onScanMessage(FrontendScanMessageType type,
+                                       const FrontendScanMessage& message) override {
         android::Mutex::Autolock autoLock(mMsgLock);
+        ALOGD("[vts] scan message. Type: %d", mScanMessageType);
         mScanMessageReceived = true;
+        mScanMessageType = type;
+        mScanLockMessageReceived =
+                mScanLockMessageReceived | (type == FrontendScanMessageType::LOCKED);
+        mScanMessage = message;
         mMsgCondition.signal();
         return Void();
     };
 
-    void testOnEvent(sp<IFrontend>& frontend, FrontendSettings settings);
-    void testOnDiseqcMessage(sp<IFrontend>& frontend, FrontendSettings settings);
+    void tuneTestOnEventReceive(sp<IFrontend>& frontend, FrontendSettings settings);
+    void tuneTestOnLock(sp<IFrontend>& frontend, FrontendSettings settings);
+    void scanTestOnMessageLock(sp<IFrontend>& frontend, FrontendSettings settings,
+                               FrontendScanType type);
 
   private:
     bool mEventReceived = false;
-    bool mDiseqcMessageReceived = false;
     bool mScanMessageReceived = false;
+    bool mScanLockMessageReceived = false;
     FrontendEventType mEventType;
+    FrontendScanMessageType mScanMessageType;
+    FrontendScanMessage mScanMessage;
     hidl_vec<uint8_t> mEventMessage;
     android::Mutex mMsgLock;
     android::Condition mMsgCondition;
+    uint8_t mOnEvenRetry = 0;
 };
 
-void FrontendCallback::testOnEvent(sp<IFrontend>& frontend, FrontendSettings settings) {
+void FrontendCallback::tuneTestOnEventReceive(sp<IFrontend>& frontend, FrontendSettings settings) {
     Result result = frontend->tune(settings);
 
     EXPECT_TRUE(result == Result::SUCCESS);
@@ -215,22 +233,70 @@ void FrontendCallback::testOnEvent(sp<IFrontend>& frontend, FrontendSettings set
             return;
         }
     }
+    mEventReceived = false;
 }
 
-void FrontendCallback::testOnDiseqcMessage(sp<IFrontend>& frontend, FrontendSettings settings) {
+void FrontendCallback::tuneTestOnLock(sp<IFrontend>& frontend, FrontendSettings settings) {
     Result result = frontend->tune(settings);
 
     EXPECT_TRUE(result == Result::SUCCESS);
 
     android::Mutex::Autolock autoLock(mMsgLock);
-    while (!mDiseqcMessageReceived) {
+wait:
+    while (!mEventReceived) {
         if (-ETIMEDOUT == mMsgCondition.waitRelative(mMsgLock, WAIT_TIMEOUT)) {
-            EXPECT_TRUE(false) << "diseqc message not received within timeout";
+            EXPECT_TRUE(false) << "event not received within timeout";
             return;
         }
     }
+    if (mEventType != FrontendEventType::LOCKED) {
+        ALOGD("[vts] frontend callback event received. Type: %d", mEventType);
+        mEventReceived = false;
+        if (mOnEvenRetry++ < FRONTEND_EVENT_CALLBACK_WAIT_COUNT) {
+            goto wait;
+        }
+    }
+    EXPECT_TRUE(mEventType == FrontendEventType::LOCKED) << "LOCK event not received";
+    mEventReceived = false;
+    mOnEvenRetry = 0;
 }
 
+void FrontendCallback::scanTestOnMessageLock(sp<IFrontend>& frontend, FrontendSettings settings,
+                                             FrontendScanType type) {
+    Result result = frontend->scan(settings, type);
+    EXPECT_TRUE(result == Result::SUCCESS);
+    android::Mutex::Autolock autoLock(mMsgLock);
+    int messagesCount = 0;
+
+wait:
+    int count = 0;
+    while (!mScanMessageReceived) {
+        if (-ETIMEDOUT == mMsgCondition.waitRelative(mMsgLock, WAIT_TIMEOUT)) {
+            ALOGD("[vts] waiting for scan message callback...");
+            if (count++ > 10) {
+                EXPECT_TRUE(false) << "WAITING TOO LONG!!";
+                return;
+            }
+        }
+    }
+
+    if (mScanMessageType != FrontendScanMessageType::END) {
+        ALOGD("[vts] frontend scan message received. Type: %d", mScanMessageType);
+        mScanMessageReceived = false;
+        if (messagesCount++ > 3) {
+            EXPECT_TRUE(false) << "WAITING ON TOO MANY MSGS!!";
+            return;
+        }
+        goto wait;
+    }
+
+    EXPECT_TRUE(mScanLockMessageReceived) << "scan lock message not received before scan ended";
+    mScanMessageReceived = false;
+    mScanLockMessageReceived = false;
+}
+/******************************** End FrontendCallback **********************************/
+
+/******************************** Start FilterCallback **********************************/
 class FilterCallback : public IFilterCallback {
   public:
     virtual Return<void> onFilterEvent(const DemuxFilterEvent& filterEvent) override {
@@ -381,7 +447,9 @@ bool FilterCallback::readFilterEventData() {
     mFilterIdToMQEventFlag->wake(static_cast<uint32_t>(DemuxQueueNotifyBits::DATA_CONSUMED));
     return result;
 }
+/******************************** End FilterCallback **********************************/
 
+/******************************** Start DvrCallback **********************************/
 class DvrCallback : public IDvrCallback {
   public:
     virtual Return<void> onRecordStatus(DemuxFilterStatus status) override {
@@ -635,22 +703,32 @@ void DvrCallback::stopRecordThread() {
     mRecordThreadRunning = false;
     android::Mutex::Autolock autoLock(mRecordThreadLock);
 }
+/******************************** End DvrCallback **********************************/
 
+/******************************** Start Test Implementation**********************************/
 class TunerHidlTest : public testing::TestWithParam<std::string> {
   public:
     virtual void SetUp() override {
         mService = ITuner::getService(GetParam());
         ASSERT_NE(mService, nullptr);
+        initFrontendConfig();
+        initFrontendScanConfig();
+        initFilterConfig();
     }
 
     sp<ITuner> mService;
 
   protected:
+    static AssertionResult failure() { return ::testing::AssertionFailure(); }
+
+    static AssertionResult success() { return ::testing::AssertionSuccess(); }
+
     static void description(const std::string& description) {
         RecordProperty("description", description);
     }
 
     sp<IFrontend> mFrontend;
+    FrontendInfo mFrontendInfo;
     sp<FrontendCallback> mFrontendCallback;
     sp<IDescrambler> mDescrambler;
     sp<IDemux> mDemux;
@@ -664,6 +742,7 @@ class TunerHidlTest : public testing::TestWithParam<std::string> {
     MQDesc mPlaybackMQDescriptor;
     MQDesc mRecordMQDescriptor;
     vector<uint32_t> mUsedFilterIds;
+    hidl_vec<FrontendId> mFeIds;
 
     uint32_t mDemuxId;
     uint32_t mFilterId;
@@ -671,10 +750,16 @@ class TunerHidlTest : public testing::TestWithParam<std::string> {
     pthread_t mPlaybackshread;
     bool mPlaybackThreadRunning;
 
-    ::testing::AssertionResult createFrontend(int32_t frontendId);
-    ::testing::AssertionResult tuneFrontend(int32_t frontendId);
-    ::testing::AssertionResult stopTuneFrontend(int32_t frontendId);
-    ::testing::AssertionResult closeFrontend(int32_t frontendId);
+    AssertionResult getFrontendIds();
+    AssertionResult getFrontendInfo(uint32_t frontendId);
+    AssertionResult openFrontend(uint32_t frontendId);
+    AssertionResult setFrontendCallback();
+    AssertionResult scanFrontend(FrontendConfig config, FrontendScanType type);
+    AssertionResult stopScanFrontend();
+    AssertionResult tuneFrontend(FrontendConfig config);
+    AssertionResult stopTuneFrontend();
+    AssertionResult closeFrontend();
+
     ::testing::AssertionResult createDemux();
     ::testing::AssertionResult createDemuxWithFrontend(int32_t frontendId,
                                                        FrontendSettings settings);
@@ -698,68 +783,88 @@ class TunerHidlTest : public testing::TestWithParam<std::string> {
                                                      vector<string> goldenOutputFiles);
 };
 
-::testing::AssertionResult TunerHidlTest::createFrontend(int32_t frontendId) {
+/*============================Start Frontend APIs Tests Implementation============================*/
+AssertionResult TunerHidlTest::getFrontendIds() {
     Result status;
+    mService->getFrontendIds([&](Result result, const hidl_vec<FrontendId>& frontendIds) {
+        status = result;
+        mFeIds = frontendIds;
+    });
+    return AssertionResult(status == Result::SUCCESS);
+}
 
+AssertionResult TunerHidlTest::getFrontendInfo(uint32_t frontendId) {
+    Result status;
+    mService->getFrontendInfo(frontendId, [&](Result result, const FrontendInfo& frontendInfo) {
+        mFrontendInfo = frontendInfo;
+        status = result;
+    });
+    return AssertionResult(status == Result::SUCCESS);
+}
+
+AssertionResult TunerHidlTest::openFrontend(uint32_t frontendId) {
+    Result status;
     mService->openFrontendById(frontendId, [&](Result result, const sp<IFrontend>& frontend) {
         mFrontend = frontend;
         status = result;
     });
-    if (status != Result::SUCCESS) {
-        return ::testing::AssertionFailure();
-    }
+    return AssertionResult(status == Result::SUCCESS);
+}
 
+AssertionResult TunerHidlTest::setFrontendCallback() {
+    EXPECT_TRUE(mFrontend) << "Test with openFrontend first.";
     mFrontendCallback = new FrontendCallback();
     auto callbackStatus = mFrontend->setCallback(mFrontendCallback);
-
-    return ::testing::AssertionResult(callbackStatus.isOk());
+    return AssertionResult(callbackStatus.isOk());
 }
 
-::testing::AssertionResult TunerHidlTest::tuneFrontend(int32_t frontendId) {
-    if (createFrontend(frontendId) == ::testing::AssertionFailure()) {
-        return ::testing::AssertionFailure();
-    }
+AssertionResult TunerHidlTest::scanFrontend(FrontendConfig config, FrontendScanType type) {
+    EXPECT_TRUE(mFrontendCallback)
+            << "test with openFrontend/setFrontendCallback/getFrontendInfo first.";
 
-    // Frontend Settings for testing
-    FrontendSettings frontendSettings;
-    FrontendAtscSettings frontendAtscSettings{
-            .frequency = 0,
-            .modulation = FrontendAtscModulation::UNDEFINED,
-    };
-    frontendSettings.atsc(frontendAtscSettings);
-    mFrontendCallback->testOnEvent(mFrontend, frontendSettings);
+    EXPECT_TRUE(mFrontendInfo.type == config.type)
+            << "FrontendConfig does not match the frontend info of the given id.";
 
-    FrontendDvbtSettings frontendDvbtSettings{
-            .frequency = 0,
-    };
-    frontendSettings.dvbt(frontendDvbtSettings);
-    mFrontendCallback->testOnEvent(mFrontend, frontendSettings);
-
-    return ::testing::AssertionResult(true);
+    mFrontendCallback->scanTestOnMessageLock(mFrontend, config.settings, type);
+    return AssertionResult(true);
 }
 
-::testing::AssertionResult TunerHidlTest::stopTuneFrontend(int32_t frontendId) {
+AssertionResult TunerHidlTest::stopScanFrontend() {
+    EXPECT_TRUE(mFrontend) << "Test with openFrontend first.";
     Result status;
-    if (!mFrontend && createFrontend(frontendId) == ::testing::AssertionFailure()) {
-        return ::testing::AssertionFailure();
-    }
+    status = mFrontend->stopScan();
+    return AssertionResult(status == Result::SUCCESS);
+}
 
+AssertionResult TunerHidlTest::tuneFrontend(FrontendConfig config) {
+    EXPECT_TRUE(mFrontendCallback)
+            << "test with openFrontend/setFrontendCallback/getFrontendInfo first.";
+
+    EXPECT_TRUE(mFrontendInfo.type == config.type)
+            << "FrontendConfig does not match the frontend info of the given id.";
+
+    mFrontendCallback->tuneTestOnLock(mFrontend, config.settings);
+    return AssertionResult(true);
+}
+
+AssertionResult TunerHidlTest::stopTuneFrontend() {
+    EXPECT_TRUE(mFrontend) << "Test with openFrontend first.";
+    Result status;
     status = mFrontend->stopTune();
-    return ::testing::AssertionResult(status == Result::SUCCESS);
+    return AssertionResult(status == Result::SUCCESS);
 }
 
-::testing::AssertionResult TunerHidlTest::closeFrontend(int32_t frontendId) {
+AssertionResult TunerHidlTest::closeFrontend() {
+    EXPECT_TRUE(mFrontend) << "Test with openFrontend first.";
     Result status;
-    if (!mFrontend && createFrontend(frontendId) == ::testing::AssertionFailure()) {
-        return ::testing::AssertionFailure();
-    }
-
     status = mFrontend->close();
     mFrontend = nullptr;
-    return ::testing::AssertionResult(status == Result::SUCCESS);
+    mFrontendCallback = nullptr;
+    return AssertionResult(status == Result::SUCCESS);
 }
+/*============================End Frontend APIs Tests Implementation============================*/
 
-::testing::AssertionResult TunerHidlTest::createDemux() {
+/*::testing::AssertionResult TunerHidlTest::createDemux() {
     Result status;
 
     mService->openDemux([&](Result result, uint32_t demuxId, const sp<IDemux>& demux) {
@@ -984,16 +1089,16 @@ class TunerHidlTest : public testing::TestWithParam<std::string> {
             }
             break;
         case DemuxFilterMainType::MMTP:
-            /*mmtpSettings*/
+            \/\*mmtpSettings\*\/
             break;
         case DemuxFilterMainType::IP:
-            /*ipSettings*/
+            \/\*ipSettings\*\/
             break;
         case DemuxFilterMainType::TLV:
-            /*tlvSettings*/
+            \/\*tlvSettings\*\/
             break;
         case DemuxFilterMainType::ALP:
-            /*alpSettings*/
+            \/\*alpSettings\*\/
             break;
         default:
             break;
@@ -1023,7 +1128,7 @@ class TunerHidlTest : public testing::TestWithParam<std::string> {
 
 ::testing::AssertionResult TunerHidlTest::playbackDataFlowTest(
         vector<FilterConf> filterConf, PlaybackConf playbackConf,
-        vector<string> /*goldenOutputFiles*/) {
+        vector<string> \/\*goldenOutputFiles\*\/) {
     Result status;
     int filterIdsSize;
     // Filter Configuration Module
@@ -1087,7 +1192,7 @@ class TunerHidlTest : public testing::TestWithParam<std::string> {
 }
 
 ::testing::AssertionResult TunerHidlTest::broadcastDataFlowTest(
-        vector<FilterConf> filterConf, vector<string> /*goldenOutputFiles*/) {
+        vector<FilterConf> filterConf, vector<string> \/\*goldenOutputFiles\*\/) {
     Result status;
     hidl_vec<FrontendId> feIds;
 
@@ -1155,9 +1260,8 @@ class TunerHidlTest : public testing::TestWithParam<std::string> {
 
 ::testing::AssertionResult TunerHidlTest::recordDataFlowTest(vector<FilterConf> filterConf,
                                                              RecordSettings recordSetting,
-                                                             vector<string> /*goldenOutputFiles*/) {
-    Result status;
-    hidl_vec<FrontendId> feIds;
+                                                             vector<string>
+\/\*goldenOutputFiles\*\/) { Result status; hidl_vec<FrontendId> feIds;
 
     mService->getFrontendIds([&](Result result, const hidl_vec<FrontendId>& frontendIds) {
         status = result;
@@ -1227,92 +1331,71 @@ class TunerHidlTest : public testing::TestWithParam<std::string> {
     mFilterCallbacks.clear();
     mFilters.clear();
     return closeDemux();
+}*/
+/******************************** End Test Implementation**********************************/
+
+/******************************** Start Test Entry**********************************/
+/*============================Start Frontend Tests============================*/
+TEST_P(TunerHidlTest, getFrontendIds) {
+    description("Get Frontend ids and verify frontends exist");
+    ASSERT_TRUE(getFrontendIds());
+    ASSERT_TRUE(mFeIds.size() > 0);
 }
 
-/*
- * API STATUS TESTS
- */
-TEST_P(TunerHidlTest, CreateFrontend) {
-    Result status;
-    hidl_vec<FrontendId> feIds;
+TEST_P(TunerHidlTest, openFrontend) {
+    description("Open all the existing Frontends and close them");
+    ASSERT_TRUE(getFrontendIds());
+    ASSERT_TRUE(mFeIds.size() > 0);
 
-    description("Create Frontends");
-    mService->getFrontendIds([&](Result result, const hidl_vec<FrontendId>& frontendIds) {
-        status = result;
-        feIds = frontendIds;
-    });
-
-    if (feIds.size() == 0) {
-        ALOGW("[   WARN   ] Frontend isn't available");
-        return;
-    }
-
-    for (size_t i = 0; i < feIds.size(); i++) {
-        ASSERT_TRUE(createFrontend(feIds[i]));
+    for (size_t i = 0; i < mFeIds.size(); i++) {
+        ASSERT_TRUE(openFrontend(mFeIds[i]));
+        ASSERT_TRUE(closeFrontend());
     }
 }
 
 TEST_P(TunerHidlTest, TuneFrontend) {
-    Result status;
-    hidl_vec<FrontendId> feIds;
-
-    description("Tune Frontends and check callback onEvent");
-    mService->getFrontendIds([&](Result result, const hidl_vec<FrontendId>& frontendIds) {
-        status = result;
-        feIds = frontendIds;
-    });
-
-    if (feIds.size() == 0) {
-        ALOGW("[   WARN   ] Frontend isn't available");
-        return;
-    }
-
-    for (size_t i = 0; i < feIds.size(); i++) {
-        ASSERT_TRUE(tuneFrontend(feIds[i]));
-    }
-}
-
-TEST_P(TunerHidlTest, StopTuneFrontend) {
-    Result status;
-    hidl_vec<FrontendId> feIds;
-
-    description("stopTune Frontends");
-    mService->getFrontendIds([&](Result result, const hidl_vec<FrontendId>& frontendIds) {
-        status = result;
-        feIds = frontendIds;
-    });
-
-    if (feIds.size() == 0) {
-        ALOGW("[   WARN   ] Frontend isn't available");
-        return;
-    }
-
-    for (size_t i = 0; i < feIds.size(); i++) {
-        ASSERT_TRUE(stopTuneFrontend(feIds[i]));
+    description("Tune one Frontend with specific setting and check Lock event");
+    ASSERT_TRUE(getFrontendIds());
+    ASSERT_TRUE(mFeIds.size() > 0);
+    ALOGW("[vts] expected Frontend type is %d", frontendArray[0].type);
+    for (size_t i = 0; i < mFeIds.size(); i++) {
+        ASSERT_TRUE(getFrontendInfo(mFeIds[i]));
+        ALOGW("[vts] Frontend type is %d", mFrontendInfo.type);
+        if (mFrontendInfo.type != frontendArray[0].type) {
+            continue;
+        }
+        ASSERT_TRUE(openFrontend(mFeIds[i]));
+        ASSERT_TRUE(setFrontendCallback());
+        ASSERT_TRUE(stopTuneFrontend());
+        ASSERT_TRUE(tuneFrontend(frontendArray[0]));
+        ASSERT_TRUE(stopTuneFrontend());
+        ASSERT_TRUE(closeFrontend());
+        break;
     }
 }
 
-TEST_P(TunerHidlTest, CloseFrontend) {
-    Result status;
-    hidl_vec<FrontendId> feIds;
+TEST_P(TunerHidlTest, AutoScanFrontend) {
+    description("Run an auto frontend scan with specific setting and check lock scanMessage");
+    ASSERT_TRUE(getFrontendIds());
+    ASSERT_TRUE(mFeIds.size() > 0);
 
-    description("Close Frontends");
-    mService->getFrontendIds([&](Result result, const hidl_vec<FrontendId>& frontendIds) {
-        status = result;
-        feIds = frontendIds;
-    });
-
-    if (feIds.size() == 0) {
-        ALOGW("[   WARN   ] Frontend isn't available");
-        return;
-    }
-
-    for (size_t i = 0; i < feIds.size(); i++) {
-        ASSERT_TRUE(closeFrontend(feIds[i]));
+    for (size_t i = 0; i < mFeIds.size(); i++) {
+        ASSERT_TRUE(getFrontendInfo(mFeIds[i]));
+        if (mFrontendInfo.type != frontendArray[0].type) {
+            continue;
+        }
+        ASSERT_TRUE(openFrontend(mFeIds[i]));
+        ASSERT_TRUE(setFrontendCallback());
+        ASSERT_TRUE(stopScanFrontend());
+        ASSERT_TRUE(scanFrontend(frontendScanArray[0], FrontendScanType::SCAN_AUTO));
+        ASSERT_TRUE(stopScanFrontend());
+        ASSERT_TRUE(closeFrontend());
+        break;
     }
 }
+/*============================End Frontend Tests============================*/
 
-TEST_P(TunerHidlTest, CreateDemuxWithFrontend) {
+/*TEST_P(TunerHidlTest, CreateDemuxWithFrontend) {
     Result status;
     hidl_vec<FrontendId> feIds;
 
@@ -1357,7 +1440,7 @@ TEST_P(TunerHidlTest, CreateDescrambler) {
 TEST_P(TunerHidlTest, CloseDescrambler) {
     description("Close Descrambler");
     ASSERT_TRUE(closeDescrambler());
-}
+}*/
 
 /*
  * DATA FLOW TESTS
@@ -1474,7 +1557,7 @@ TEST_P(TunerHidlTest, RecordDataFlowWithTsRecordFilterTest) {
 
     ASSERT_TRUE(recordDataFlowTest(filterConf, recordSetting, goldenOutputFiles));
 }*/
-
+/******************************** End Test Entry**********************************/
 }  // namespace
 
 INSTANTIATE_TEST_SUITE_P(
