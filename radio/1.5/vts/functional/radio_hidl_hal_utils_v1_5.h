@@ -556,6 +556,7 @@ class RadioResponse_v1_5 : public ::android::hardware::radio::V1_5::IRadioRespon
 
     Return<void> getBarringInfoResponse(
             const RadioResponseInfo& info,
+            const ::android::hardware::radio::V1_5::CellIdentity& cellIdentity,
             const ::android::hardware::hidl_vec<::android::hardware::radio::V1_5::BarringInfo>&
                     barringInfos);
 
