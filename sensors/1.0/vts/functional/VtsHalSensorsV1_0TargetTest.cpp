@@ -33,8 +33,7 @@ using ::android::sp;
 using namespace ::android::hardware::sensors::V1_0;
 
 // The main test class for SENSORS HIDL HAL.
-
-class SensorsHidlTest : public SensorsHidlTestBase {
+class SensorsHidlTest : public SensorsHidlTestBase<SensorType, Event, SensorInfo> {
   public:
     virtual void SetUp() override {
         mEnvironment = new SensorsHidlEnvironmentV1_0(GetParam());
@@ -80,7 +79,7 @@ class SensorsHidlTest : public SensorsHidlTestBase {
 
     inline sp<ISensors>& S() { return mEnvironment->sensors; }
 
-    SensorsHidlEnvironmentBase* getEnvironment() override { return mEnvironment; }
+    SensorsHidlEnvironmentBase<Event>* getEnvironment() override { return mEnvironment; }
 
   private:
     // Test environment for sensors HAL.
@@ -257,55 +256,55 @@ TEST_P(SensorsHidlTest, InjectSensorEventData) {
 // Test if sensor hal can do UI speed accelerometer streaming properly
 TEST_P(SensorsHidlTest, AccelerometerStreamingOperationSlow) {
     testStreamingOperation(SensorType::ACCELEROMETER, std::chrono::milliseconds(200),
-                           std::chrono::seconds(5), sAccelNormChecker);
+                           std::chrono::seconds(5), mAccelNormChecker);
 }
 
 // Test if sensor hal can do normal speed accelerometer streaming properly
 TEST_P(SensorsHidlTest, AccelerometerStreamingOperationNormal) {
     testStreamingOperation(SensorType::ACCELEROMETER, std::chrono::milliseconds(20),
-                           std::chrono::seconds(5), sAccelNormChecker);
+                           std::chrono::seconds(5), mAccelNormChecker);
 }
 
 // Test if sensor hal can do game speed accelerometer streaming properly
 TEST_P(SensorsHidlTest, AccelerometerStreamingOperationFast) {
     testStreamingOperation(SensorType::ACCELEROMETER, std::chrono::milliseconds(5),
-                           std::chrono::seconds(5), sAccelNormChecker);
+                           std::chrono::seconds(5), mAccelNormChecker);
 }
 
 // Test if sensor hal can do UI speed gyroscope streaming properly
 TEST_P(SensorsHidlTest, GyroscopeStreamingOperationSlow) {
     testStreamingOperation(SensorType::GYROSCOPE, std::chrono::milliseconds(200),
-                           std::chrono::seconds(5), sGyroNormChecker);
+                           std::chrono::seconds(5), mGyroNormChecker);
 }
 
 // Test if sensor hal can do normal speed gyroscope streaming properly
 TEST_P(SensorsHidlTest, GyroscopeStreamingOperationNormal) {
     testStreamingOperation(SensorType::GYROSCOPE, std::chrono::milliseconds(20),
-                           std::chrono::seconds(5), sGyroNormChecker);
+                           std::chrono::seconds(5), mGyroNormChecker);
 }
 
 // Test if sensor hal can do game speed gyroscope streaming properly
 TEST_P(SensorsHidlTest, GyroscopeStreamingOperationFast) {
     testStreamingOperation(SensorType::GYROSCOPE, std::chrono::milliseconds(5),
-                           std::chrono::seconds(5), sGyroNormChecker);
+                           std::chrono::seconds(5), mGyroNormChecker);
 }
 
 // Test if sensor hal can do UI speed magnetometer streaming properly
 TEST_P(SensorsHidlTest, MagnetometerStreamingOperationSlow) {
     testStreamingOperation(SensorType::MAGNETIC_FIELD, std::chrono::milliseconds(200),
-                           std::chrono::seconds(5), NullChecker());
+                           std::chrono::seconds(5), NullChecker<Event>());
 }
 
 // Test if sensor hal can do normal speed magnetometer streaming properly
 TEST_P(SensorsHidlTest, MagnetometerStreamingOperationNormal) {
     testStreamingOperation(SensorType::MAGNETIC_FIELD, std::chrono::milliseconds(20),
-                           std::chrono::seconds(5), NullChecker());
+                           std::chrono::seconds(5), NullChecker<Event>());
 }
 
 // Test if sensor hal can do game speed magnetometer streaming properly
 TEST_P(SensorsHidlTest, MagnetometerStreamingOperationFast) {
     testStreamingOperation(SensorType::MAGNETIC_FIELD, std::chrono::milliseconds(5),
-                           std::chrono::seconds(5), NullChecker());
+                           std::chrono::seconds(5), NullChecker<Event>());
 }
 
 // Test if sensor hal can do accelerometer sampling rate switch properly when sensor is active
@@ -344,109 +343,109 @@ TEST_P(SensorsHidlTest, MagnetometerBatchingOperation) {
 // Test sensor event direct report with ashmem for accel sensor at normal rate
 TEST_P(SensorsHidlTest, AccelerometerAshmemDirectReportOperationNormal) {
     testDirectReportOperation(SensorType::ACCELEROMETER, SharedMemType::ASHMEM, RateLevel::NORMAL,
-                              sAccelNormChecker);
+                              mAccelNormChecker);
 }
 
 // Test sensor event direct report with ashmem for accel sensor at fast rate
 TEST_P(SensorsHidlTest, AccelerometerAshmemDirectReportOperationFast) {
     testDirectReportOperation(SensorType::ACCELEROMETER, SharedMemType::ASHMEM, RateLevel::FAST,
-                              sAccelNormChecker);
+                              mAccelNormChecker);
 }
 
 // Test sensor event direct report with ashmem for accel sensor at very fast rate
 TEST_P(SensorsHidlTest, AccelerometerAshmemDirectReportOperationVeryFast) {
     testDirectReportOperation(SensorType::ACCELEROMETER, SharedMemType::ASHMEM,
-                              RateLevel::VERY_FAST, sAccelNormChecker);
+                              RateLevel::VERY_FAST, mAccelNormChecker);
 }
 
 // Test sensor event direct report with ashmem for gyro sensor at normal rate
 TEST_P(SensorsHidlTest, GyroscopeAshmemDirectReportOperationNormal) {
     testDirectReportOperation(SensorType::GYROSCOPE, SharedMemType::ASHMEM, RateLevel::NORMAL,
-                              sGyroNormChecker);
+                              mGyroNormChecker);
 }
 
 // Test sensor event direct report with ashmem for gyro sensor at fast rate
 TEST_P(SensorsHidlTest, GyroscopeAshmemDirectReportOperationFast) {
     testDirectReportOperation(SensorType::GYROSCOPE, SharedMemType::ASHMEM, RateLevel::FAST,
-                              sGyroNormChecker);
+                              mGyroNormChecker);
 }
 
 // Test sensor event direct report with ashmem for gyro sensor at very fast rate
 TEST_P(SensorsHidlTest, GyroscopeAshmemDirectReportOperationVeryFast) {
     testDirectReportOperation(SensorType::GYROSCOPE, SharedMemType::ASHMEM, RateLevel::VERY_FAST,
-                              sGyroNormChecker);
+                              mGyroNormChecker);
 }
 
 // Test sensor event direct report with ashmem for mag sensor at normal rate
 TEST_P(SensorsHidlTest, MagnetometerAshmemDirectReportOperationNormal) {
     testDirectReportOperation(SensorType::MAGNETIC_FIELD, SharedMemType::ASHMEM, RateLevel::NORMAL,
-                              NullChecker());
+                              NullChecker<Event>());
 }
 
 // Test sensor event direct report with ashmem for mag sensor at fast rate
 TEST_P(SensorsHidlTest, MagnetometerAshmemDirectReportOperationFast) {
     testDirectReportOperation(SensorType::MAGNETIC_FIELD, SharedMemType::ASHMEM, RateLevel::FAST,
-                              NullChecker());
+                              NullChecker<Event>());
 }
 
 // Test sensor event direct report with ashmem for mag sensor at very fast rate
 TEST_P(SensorsHidlTest, MagnetometerAshmemDirectReportOperationVeryFast) {
     testDirectReportOperation(SensorType::MAGNETIC_FIELD, SharedMemType::ASHMEM,
-                              RateLevel::VERY_FAST, NullChecker());
+                              RateLevel::VERY_FAST, NullChecker<Event>());
 }
 
 // Test sensor event direct report with gralloc for accel sensor at normal rate
 TEST_P(SensorsHidlTest, AccelerometerGrallocDirectReportOperationNormal) {
     testDirectReportOperation(SensorType::ACCELEROMETER, SharedMemType::GRALLOC, RateLevel::NORMAL,
-                              sAccelNormChecker);
+                              mAccelNormChecker);
 }
 
 // Test sensor event direct report with gralloc for accel sensor at fast rate
 TEST_P(SensorsHidlTest, AccelerometerGrallocDirectReportOperationFast) {
     testDirectReportOperation(SensorType::ACCELEROMETER, SharedMemType::GRALLOC, RateLevel::FAST,
-                              sAccelNormChecker);
+                              mAccelNormChecker);
 }
 
 // Test sensor event direct report with gralloc for accel sensor at very fast rate
 TEST_P(SensorsHidlTest, AccelerometerGrallocDirectReportOperationVeryFast) {
     testDirectReportOperation(SensorType::ACCELEROMETER, SharedMemType::GRALLOC,
-                              RateLevel::VERY_FAST, sAccelNormChecker);
+                              RateLevel::VERY_FAST, mAccelNormChecker);
 }
 
 // Test sensor event direct report with gralloc for gyro sensor at normal rate
 TEST_P(SensorsHidlTest, GyroscopeGrallocDirectReportOperationNormal) {
     testDirectReportOperation(SensorType::GYROSCOPE, SharedMemType::GRALLOC, RateLevel::NORMAL,
-                              sGyroNormChecker);
+                              mGyroNormChecker);
 }
 
 // Test sensor event direct report with gralloc for gyro sensor at fast rate
 TEST_P(SensorsHidlTest, GyroscopeGrallocDirectReportOperationFast) {
     testDirectReportOperation(SensorType::GYROSCOPE, SharedMemType::GRALLOC, RateLevel::FAST,
-                              sGyroNormChecker);
+                              mGyroNormChecker);
 }
 
 // Test sensor event direct report with gralloc for gyro sensor at very fast rate
 TEST_P(SensorsHidlTest, GyroscopeGrallocDirectReportOperationVeryFast) {
     testDirectReportOperation(SensorType::GYROSCOPE, SharedMemType::GRALLOC, RateLevel::VERY_FAST,
-                              sGyroNormChecker);
+                              mGyroNormChecker);
 }
 
 // Test sensor event direct report with gralloc for mag sensor at normal rate
 TEST_P(SensorsHidlTest, MagnetometerGrallocDirectReportOperationNormal) {
     testDirectReportOperation(SensorType::MAGNETIC_FIELD, SharedMemType::GRALLOC, RateLevel::NORMAL,
-                              NullChecker());
+                              NullChecker<Event>());
 }
 
 // Test sensor event direct report with gralloc for mag sensor at fast rate
 TEST_P(SensorsHidlTest, MagnetometerGrallocDirectReportOperationFast) {
     testDirectReportOperation(SensorType::MAGNETIC_FIELD, SharedMemType::GRALLOC, RateLevel::FAST,
-                              NullChecker());
+                              NullChecker<Event>());
 }
 
 // Test sensor event direct report with gralloc for mag sensor at very fast rate
 TEST_P(SensorsHidlTest, MagnetometerGrallocDirectReportOperationVeryFast) {
     testDirectReportOperation(SensorType::MAGNETIC_FIELD, SharedMemType::GRALLOC,
-                              RateLevel::VERY_FAST, NullChecker());
+                              RateLevel::VERY_FAST, NullChecker<Event>());
 }
 
 INSTANTIATE_TEST_SUITE_P(
