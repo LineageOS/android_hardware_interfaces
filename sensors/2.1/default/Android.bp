@@ -14,22 +14,21 @@
 // limitations under the License.
 
 cc_binary {
-    name: "android.hardware.sensors@2.0-service.mock",
+    name: "android.hardware.sensors@2.1-service.mock",
     defaults: ["hidl_defaults"],
     vendor: true,
     relative_install_path: "hw",
     srcs: [
+        "SensorsV2_1.cpp",
         "service.cpp",
     ],
-    init_rc: ["android.hardware.sensors@2.0-service-mock.rc"],
+    init_rc: ["android.hardware.sensors@2.1-service-mock.rc"],
     header_libs: [
         "android.hardware.sensors@2.X-shared-utils",
     ],
     shared_libs: [
         "android.hardware.sensors@1.0",
         "android.hardware.sensors@2.0",
-        // Needed to compile some shared utilities for both 2.0/2.1 impls, but
-        // isn't normally needed for a HAL that only supports 2.0.
         "android.hardware.sensors@2.1",
         "libcutils",
         "libfmq",
@@ -42,5 +41,5 @@ cc_binary {
         "android.hardware.sensors@1.0-convert",
         "android.hardware.sensors@2.X-shared-impl",
     ],
-    vintf_fragments: ["android.hardware.sensors@2.0.xml"],
+    vintf_fragments: ["android.hardware.sensors@2.1.xml"],
 }

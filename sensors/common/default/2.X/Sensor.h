@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_SENSORS_V2_0_SENSOR_H
-#define ANDROID_HARDWARE_SENSORS_V2_0_SENSOR_H
+#ifndef ANDROID_HARDWARE_SENSORS_V2_X_SENSOR_H
+#define ANDROID_HARDWARE_SENSORS_V2_X_SENSOR_H
 
 #include <android/hardware/sensors/1.0/types.h>
 
@@ -25,26 +25,28 @@
 #include <thread>
 #include <vector>
 
-using ::android::hardware::sensors::V1_0::Event;
-using ::android::hardware::sensors::V1_0::OperationMode;
-using ::android::hardware::sensors::V1_0::Result;
-using ::android::hardware::sensors::V1_0::SensorInfo;
-using ::android::hardware::sensors::V1_0::SensorType;
-
 namespace android {
 namespace hardware {
 namespace sensors {
-namespace V2_0 {
+namespace V2_X {
 namespace implementation {
 
 class ISensorsEventCallback {
-   public:
+  public:
+    using Event = ::android::hardware::sensors::V1_0::Event;
+
     virtual ~ISensorsEventCallback(){};
     virtual void postEvents(const std::vector<Event>& events, bool wakeup) = 0;
 };
 
 class Sensor {
-   public:
+  public:
+    using Event = ::android::hardware::sensors::V1_0::Event;
+    using OperationMode = ::android::hardware::sensors::V1_0::OperationMode;
+    using Result = ::android::hardware::sensors::V1_0::Result;
+    using SensorInfo = ::android::hardware::sensors::V1_0::SensorInfo;
+    using SensorType = ::android::hardware::sensors::V1_0::SensorType;
+
     Sensor(ISensorsEventCallback* callback);
     virtual ~Sensor();
 
@@ -57,7 +59,7 @@ class Sensor {
     bool supportsDataInjection() const;
     Result injectEvent(const Event& event);
 
-   protected:
+  protected:
     void run();
     virtual std::vector<Event> readEvents();
     static void startThread(Sensor* sensor);
@@ -80,68 +82,68 @@ class Sensor {
 };
 
 class OnChangeSensor : public Sensor {
-   public:
+  public:
     OnChangeSensor(ISensorsEventCallback* callback);
 
     virtual void activate(bool enable) override;
 
-   protected:
+  protected:
     virtual std::vector<Event> readEvents() override;
 
-   protected:
+  protected:
     Event mPreviousEvent;
     bool mPreviousEventSet;
 };
 
 class AccelSensor : public Sensor {
-   public:
+  public:
     AccelSensor(int32_t sensorHandle, ISensorsEventCallback* callback);
 };
 
 class GyroSensor : public Sensor {
-   public:
+  public:
     GyroSensor(int32_t sensorHandle, ISensorsEventCallback* callback);
 };
 
 class AmbientTempSensor : public OnChangeSensor {
-   public:
+  public:
     AmbientTempSensor(int32_t sensorHandle, ISensorsEventCallback* callback);
 };
 
 class DeviceTempSensor : public OnChangeSensor {
-   public:
+  public:
     DeviceTempSensor(int32_t sensorHandle, ISensorsEventCallback* callback);
 };
 
 class PressureSensor : public Sensor {
-   public:
+  public:
     PressureSensor(int32_t sensorHandle, ISensorsEventCallback* callback);
 };
 
 class MagnetometerSensor : public Sensor {
-   public:
+  public:
     MagnetometerSensor(int32_t sensorHandle, ISensorsEventCallback* callback);
 };
 
 class LightSensor : public OnChangeSensor {
-   public:
+  public:
     LightSensor(int32_t sensorHandle, ISensorsEventCallback* callback);
 };
 
 class ProximitySensor : public OnChangeSensor {
-   public:
+  public:
     ProximitySensor(int32_t sensorHandle, ISensorsEventCallback* callback);
 };
 
 class RelativeHumiditySensor : public OnChangeSensor {
-   public:
+  public:
     RelativeHumiditySensor(int32_t sensorHandle, ISensorsEventCallback* callback);
 };
 
 }  // namespace implementation
-}  // namespace V2_0
+}  // namespace V2_X
 }  // namespace sensors
 }  // namespace hardware
 }  // namespace android
 
-#endif  // ANDROID_HARDWARE_SENSORS_V2_0_SENSOR_H
+#endif  // ANDROID_HARDWARE_SENSORS_V2_X_SENSOR_H
