@@ -2473,7 +2473,8 @@ enum VehicleProperty : int32_t {
      * which in turn would disable the other user-related properties (for example, the Android
      * system would never issue them and user-related requests from the HAL layer would be ignored
      * by the Android System). But if it supports user management, then it must support all
-     * user-related properties (INITIAL_USER_INFO, SWITCH_USER, TODO(b/146207078):others).
+     * user-related properties (INITIAL_USER_INFO, SWITCH_USER, CREATE_USER, REMOVE_USER,
+     *       and USER_IDENTIFICATION_ASSOCIATION).
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
@@ -2646,6 +2647,161 @@ enum VehicleProperty : int32_t {
      */
     SWITCH_USER = (
         0x0F08
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:MIXED
+        | VehicleArea:GLOBAL),
+
+    /**
+     * Called by the Android System after an Android user was created.
+     *
+     * The HAL can use this property to create its equivalent user.
+     *
+     * This is an async request: Android makes the request by setting a VehiclePropValue, and HAL
+     * must respond with a property change indicating whether the request succeeded or failed. If
+     * it failed, the Android system will remove the user.
+     *
+     * The format of the request is defined by CreateUserRequest and the format of the response by
+     * CreateUserResponse.
+     *
+     * For example, if system had 2 users (0 and 10) and a 3rd one (which is an ephemeral guest) was
+     * created, the request would be:
+     *
+     * int32[0]: 42  // request id
+     * int32[1]: 11  // Android id of the created user
+     * int32[2]: 3   // Android flags (ephemeral guest) of the created user
+     * int32[3]: 10  // current user
+     * int32[4]: 0   // current user flags (none)
+     * int32[5]: 3   // number of users
+     * int32[6]: 0   // 1st user (user 0)
+     * int32[7]: 0   // 1st user flags (none)
+     * int32[8]: 10  // 2nd user (user 10)
+     * int32[9]: 0   // 2nd user flags (none)
+     * int32[19]: 11 // 3rd user (user 11)
+     * int32[11]: 3  // 3rd user flags (ephemeral guest)
+     * string: "ElGuesto" // name of the new user
+     *
+     * Then if the request succeeded, the HAL would return:
+     *
+     * int32[0]: 42  // request id
+     * int32[1]: 1   // CreateUserStatus::SUCCESS
+     *
+     * But if it failed:
+     *
+     * int32[0]: 42  // request id
+     * int32[1]: 2   // CreateUserStatus::FAILURE
+     * string: "D'OH!" // The meaning is a blackbox - it's passed to the caller (like Settings UI),
+     *                 // which in turn can take the proper action.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
+     */
+    CREATE_USER = (
+        0x0F09
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:MIXED
+        | VehicleArea:GLOBAL),
+
+    /**
+     * Called by the Android System after an Android user was removed.
+     *
+     * The HAL can use this property to remove its equivalent user.
+     *
+     * This is write-only call - the Android System is not expecting a reply from the HAL. Hence,
+     * this request should not fail - if the equivalent HAL user cannot be removed, then HAL should
+     * mark it as inactive or recover in some other way.
+     *
+     * The request is made by setting the VehiclePropValue with the contents defined by
+     * RemoveUserRequest.
+     *
+     * For example, if system had 3 users (0, 10, and 11) and user 11 was removed, the request
+     * would be:
+     *
+     * int32[0]: 42  // request id
+     * int32[1]: 11  // (Android user id of the removed user)
+     * int32[2]: 0   // (Android user flags of the removed user)
+     * int32[3]: 10  // current user
+     * int32[4]: 0   // current user flags (none)
+     * int32[5]: 2   // number of users
+     * int32[6]: 0   // 1st user (user 0)
+     * int32[7]: 0   // 1st user flags (none)
+     * int32[8]: 10  // 2nd user (user 10)
+     * int32[9]: 0   // 2nd user flags (none)
+     *
+     * @change_mode VehiclePropertyChangeMode:STATIC
+     * @access VehiclePropertyAccess:WRITE
+     */
+    REMOVE_USER = (
+        0x0F0A
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:MIXED
+        | VehicleArea:GLOBAL),
+
+    /**
+     * Property used to associate (or query the association) the current user with vehicle-specific
+     * identification mechanisms (such as key FOB).
+     *
+     * To query the association, the Android system gets the property, passing a VehiclePropValue
+     * containing the types of associations are being queried, as defined by
+     * UserIdentificationGetRequest. The HAL must return right away, updating the VehiclePropValue
+     * with a UserIdentificationResponse. Notice that user identification should have already
+     * happened while system is booting up and the VHAL implementation should only return the
+     * already identified association (like the key FOB used to unlock the car), instead of starting
+     * a new association from the get call.
+     *
+     * To associate types, the Android system sets the property, passing a VehiclePropValue
+     * containing the types and values of associations being set, as defined by the
+     * UserIdentificationSetRequest. The HAL will then use a property change event (whose
+     * VehiclePropValue is defined by UserIdentificationResponse) indicating the current status of
+     * the types after the request.
+     *
+     * For example, to query if the current user (10) is associated with the FOB that unlocked the
+     * car and a custom mechanism provided by the OEM, the request would be:
+     *
+     * int32[0]: 10  (Android user id)
+     * int32[1]: 0   (Android user flags)
+     * int32[2]: 2   (number of types queried)
+     * int32[3]: 1   (1st type queried, UserIdentificationAssociationType::KEY_FOB)
+     * int32[4]: 101 (2nd type queried, UserIdentificationAssociationType::CUSTOM_1)
+     *
+     * If the user is associated with the FOB but not with the custom mechanism, the response would
+     * be:
+     *
+     * int32[9]: 2   (number of associations in the response)
+     * int32[1]: 1   (1st type: UserIdentificationAssociationType::KEY_FOB)
+     * int32[2]: 2   (1st value: UserIdentificationAssociationValue::ASSOCIATED_CURRENT_USER)
+     * int32[3]: 101 (2st type: UserIdentificationAssociationType::CUSTOM_1)
+     * int32[4]: 4   (2nd value: UserIdentificationAssociationValue::NOT_ASSOCIATED_ANY_USER)
+     *
+     * Then to associate the user with the custom mechanism, a set request would be made:
+     *
+     * int32[0]: 10  (Android user id)
+     * int32[0]: 0   (Android user flags)
+     * int32[1]: 1   (number of associations being set)
+     * int32[2]: 101 (1st type: UserIdentificationAssociationType::CUSTOM_1)
+     * int32[3]: 1   (1st value: UserIdentificationAssociationSETValue::ASSOCIATE_CURRENT_USER)
+     *
+     * If the request succeeded, the response would be simply:
+     *
+     * int32[0]: 2   (number of associations in the response)
+     * int32[1]: 101 (1st type: UserIdentificationAssociationType::CUSTOM_1)
+     * int32[2]: 1   (1st value: UserIdentificationAssociationValue::ASSOCIATED_CURRENT_USER)
+     *
+     * Notice that the set request adds associations, but doesn't remove the existing ones. In the
+     * example above, the end state would be 2 associations (FOB and CUSTOM_1). If we wanted to
+     * associate the user with just CUSTOM_1 but not FOB, then the request should have been:
+     *
+     * int32[0]: 10  (Android user id)
+     * int32[1]: 2   (number of types set)
+     * int32[2]: 1   (1st type: UserIdentificationAssociationType::KEY_FOB)
+     * int32[3]: 2   (1st value: UserIdentificationAssociationValue::DISASSOCIATE_CURRENT_USER)
+     * int32[3]: 101 (2nd type: UserIdentificationAssociationType::CUSTOM_1)
+     * int32[5]: 1   (2nd value: UserIdentificationAssociationValue::ASSOCIATE_CURRENT_USER)
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
+     */
+    USER_IDENTIFICATION_ASSOCIATION = (
+        0x0F0B
         | VehiclePropertyGroup:SYSTEM
         | VehiclePropertyType:MIXED
         | VehicleArea:GLOBAL),
@@ -4184,10 +4340,10 @@ struct SwitchUserResponse {
     /**
      * HAL-specific error message.
      *
-     * This argument is optional, and when defined (and the status is FAILURE), it's passed "as-is"
-     * to the caller. It could be used to show custom error messages to the end user.
+     * This argument is optional, and when defined, it's passed "as-is" to the caller. It could be
+     * used to show custom error messages to the end user.
      */
-    string failureMessage;
+    string errorMessage;
 };
 
 /**
@@ -4198,4 +4354,254 @@ enum SwitchUserStatus : int32_t {
    SUCCESS = 1,
    /** The request failed and the HAL user remained the same. */
    FAILURE = 2,
+};
+
+/**
+ * Defines the format of a CREATE_USER property.
+ *
+ * NOTE: this struct is not used in the HAL properties directly, it must be converted to
+ * VehiclePropValue.RawValue through libraries provided by the default Vehicle HAL implementation.
+ */
+struct CreateUserRequest {
+    /**
+     * Arbitrary id used to map the response to the request.
+     */
+    UserRequestId requestId;
+
+    /**
+     * Basic information about Android user that was created.
+     */
+    UserInfo newUserInfo;
+
+    /**
+     * Name of the new Android user.
+     */
+     string newUserName;
+
+    /**
+     * Information about the current state of the Android system.
+     */
+    UsersInfo usersInfo;
+};
+
+/**
+ * Defines the result of a CreateUserRequest.
+ *
+ * NOTE: this struct is not used in the HAL properties directly, it must be converted to
+ * VehiclePropValue.RawValue through libraries provided by the default Vehicle HAL implementation.
+ */
+struct CreateUserResponse {
+    /**
+     * Id of the request being responded.
+     */
+    UserRequestId requestId;
+
+    /**
+     * Status of the request.
+     */
+    CreateUserStatus status;
+
+    /**
+     * HAL-specific error message.
+     *
+     * This argument is optional, and when defined, it's passed "as-is" to the caller. It could be
+     * used to show custom error messages to the end user.
+     */
+    string errorMessage;
+};
+
+/**
+ * Status of the response to a CreateUserRequest.
+ */
+enum CreateUserStatus : int32_t {
+   /**
+    * The request succeeded (for example, HAL created a new internal user, or associated the
+    * Android user to an existing internal user).
+    */
+   SUCCESS = 1,
+
+   /**
+     * The request failed (and Android will remove the Android user).
+     */
+   FAILURE = 2,
+};
+
+/**
+ * Defines the format of a REMOVE_USER property.
+ *
+ * NOTE: this struct is not used in the HAL properties directly, it must be converted to
+ * VehiclePropValue.RawValue through libraries provided by the default Vehicle HAL implementation.
+ */
+struct RemoveUserRequest {
+    /**
+     * Arbitrary id used to map the response to the request.
+     */
+    UserRequestId requestId;
+
+    /**
+     * Information about the Android user that was removed.
+     */
+    UserInfo removedUserInfo;
+
+    /**
+     * Information about the current state of the Android system.
+     */
+    UsersInfo usersInfo;
+};
+
+/**
+  * Types of mechanisms used to identify an Android user.
+  *
+  * See USER_IDENTIFICATION_ASSOCIATION for more details and example.
+  */
+enum UserIdentificationAssociationType: int32_t {
+   /** Key used to unlock the car. */
+   KEY_FOB = 1,
+   /** Custom mechanism defined by the OEM. */
+   CUSTOM_1 = 101,
+   /** Custom mechanism defined by the OEM. */
+   CUSTOM_2 = 102,
+   /** Custom mechanism defined by the OEM. */
+   CUSTOM_3 = 103,
+   /** Custom mechanism defined by the OEM. */
+   CUSTOM_4 = 104,
+};
+
+/**
+ * Whether a UserIdentificationAssociationType is associate with an Android user.
+ */
+enum UserIdentificationAssociationValue : int32_t {
+   /**
+    * Used when the status of an association could not be determined.
+    *
+    * For example, in a set() request, it would indicate a failure to set the given type.
+    */
+   UNKNOWN = 1,
+
+   /**
+    * The identification type is associated with the current foreground Android user.
+    */
+   ASSOCIATED_CURRENT_USER = 2,
+
+   /**
+    * The identification type is associated with another Android user.
+    */
+   ASSOCIATED_ANOTHER_USER = 3,
+
+   /**
+    * The identification type is not associated with any Android user.
+    */
+   NOT_ASSOCIATED_ANY_USER = 4,
+};
+
+/**
+ * Used to set a UserIdentificationAssociationType with an Android user.
+ */
+enum UserIdentificationAssociationSetValue : int32_t {
+   /**
+    * Associate the identification type with the current foreground Android user.
+    */
+   ASSOCIATE_CURRENT_USER = 1,
+
+   /**
+    * Disassociate the identification type from the current foreground Android user.
+    */
+   DISASSOCIATE_CURRENT_USER = 2,
+
+   /**
+    * Disassociate the identification type from all Android users.
+    */
+   DISASSOCIATE_ALL_USERS = 3,
+};
+
+/**
+ * Defines the format of a get() call to USER_IDENTIFICATION_ASSOCIATION.
+ *
+ * NOTE: this struct is not used in the HAL properties directly, it must be converted to
+ * VehiclePropValue.RawValue through libraries provided by the default Vehicle HAL implementation.
+ */
+struct UserIdentificationGetRequest {
+    /**
+     * Information about the current foreground Android user.
+     */
+    UserInfo userInfo;
+
+    /**
+     * Number of association being queried.
+     */
+    int32_t numberAssociationTypes;
+
+    /**
+     * Types of association being queried.
+     */
+    vec<UserIdentificationAssociationType> associationTypes;
+};
+
+/**
+ * Defines the format of a set() call to USER_IDENTIFICATION_ASSOCIATION.
+ *
+ * NOTE: this struct is not used in the HAL properties directly, it must be converted to
+ * VehiclePropValue.RawValue through libraries provided by the default Vehicle HAL implementation.
+ */
+struct UserIdentificationSetRequest {
+    /**
+     * Information about the current foreground Android user.
+     */
+    UserInfo userInfo;
+
+    /**
+     * Number of association being set.
+     */
+    int32_t numberAssociations;
+
+    /**
+     * Associations being set.
+     */
+    vec<UserIdentificationAssociationSetValue> associations;
+};
+
+/**
+ * Defines the result of a USER_IDENTIFICATION_ASSOCIATION - both for get() and set().
+ *
+ * NOTE: this struct is not used in the HAL properties directly, it must be converted to
+ * VehiclePropValue.RawValue through libraries provided by the default Vehicle HAL implementation.
+ */
+struct UserIdentificationResponse {
+    /**
+     * Number of associations being returned.
+     */
+    int32_t numberAssociation;
+
+    /**
+     * Values associated with the user.
+     */
+    vec<UserIdentificationAssociation> associations;
+
+    /**
+     * HAL-specific error message.
+     *
+     * This argument is optional, and when defined, it's passed "as-is" to the caller. It could be
+     * used to show custom error messages to the end user.
+     */
+    string errorMessage;
+};
+
+/**
+ * Helper struct used when getting a user/identification association type.
+ */
+struct UserIdentificationAssociation {
+
+    UserIdentificationAssociationType type;
+
+    UserIdentificationAssociationValue value;
+};
+
+/**
+ * Helper struct used when setting a user/identification association type.
+ */
+struct UserIdentificationSetAssociation {
+
+    UserIdentificationAssociationType type;
+
+    UserIdentificationAssociationSetValue value;
 };
