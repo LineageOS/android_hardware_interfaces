@@ -109,7 +109,37 @@ Return<void> Tuner::openDescrambler(openDescrambler_cb _hidl_cb) {
 Return<void> Tuner::getFrontendInfo(FrontendId /* frontendId */, getFrontendInfo_cb _hidl_cb) {
     ALOGV("%s", __FUNCTION__);
 
-    FrontendInfo info;
+    vector<FrontendStatusType> statusCaps = {
+            FrontendStatusType::DEMOD_LOCK,
+            FrontendStatusType::SNR,
+            FrontendStatusType::FEC,
+            FrontendStatusType::MODULATION,
+            FrontendStatusType::PLP_ID,
+            FrontendStatusType::LAYER_ERROR,
+            FrontendStatusType::ATSC3_PLP_INFO,
+    };
+    FrontendInfo::FrontendCapabilities frontendCaps;
+    FrontendIsdbtCapabilities isdbtCaps{
+            .modeCap = FrontendIsdbtMode::MODE_1 | FrontendIsdbtMode::MODE_2,
+            .bandwidthCap = (unsigned int)FrontendIsdbtBandwidth::BANDWIDTH_6MHZ,
+            .modulationCap = (unsigned int)FrontendIsdbtModulation::MOD_16QAM,
+            // ISDBT shares coderate and guard interval with DVBT
+            .coderateCap = FrontendDvbtCoderate::CODERATE_4_5 | FrontendDvbtCoderate::CODERATE_6_7,
+            .guardIntervalCap = (unsigned int)FrontendDvbtGuardInterval::INTERVAL_1_128,
+    };
+    frontendCaps.isdbtCaps(isdbtCaps);
+    // assign randomly selected values for testing.
+    FrontendInfo info{
+            .type = FrontendType::ISDBT,
+            .minFrequency = 139,
+            .maxFrequency = 1139,
+            .minSymbolRate = 45,
+            .maxSymbolRate = 1145,
+            .acquireRange = 30,
+            .exclusiveGroupId = 57,
+            .statusCaps = statusCaps,
+            .frontendCaps = frontendCaps,
+    };
 
     _hidl_cb(Result::SUCCESS, info);
     return Void();
