@@ -21,10 +21,17 @@
 #include <cmath>
 #include <fstream>
 
-#include <android/log.h>
+#include <android-base/parseint.h>
+#include <android-base/strings.h>
 #include <android/hardware/automotive/vehicle/2.0/BpHwVehicleCallback.h>
+#include <android/log.h>
+
+#include <hwbinder/IPCThreadState.h>
 
 #include "VehicleUtils.h"
+
+// TODO: figure out how to include private/android_filesystem_config.h instead...
+#define AID_ROOT 0 /* traditional unix root user */
 
 namespace android {
 namespace hardware {
@@ -33,6 +40,10 @@ namespace vehicle {
 namespace V2_0 {
 
 using namespace std::placeholders;
+
+using ::android::base::EqualsIgnoreCase;
+using ::android::hardware::hidl_handle;
+using ::android::hardware::hidl_string;
 
 constexpr std::chrono::milliseconds kHalEventBatchingTimeWindow(10);
 
@@ -170,6 +181,231 @@ Return<StatusCode> VehicleHalManager::unsubscribe(const sp<IVehicleCallback>& ca
 Return<void> VehicleHalManager::debugDump(IVehicle::debugDump_cb _hidl_cb) {
     _hidl_cb("");
     return Void();
+}
+
+Return<void> VehicleHalManager::debug(const hidl_handle& fd, const hidl_vec<hidl_string>& options) {
+    if (fd.getNativeHandle() != nullptr && fd->numFds > 0) {
+        cmdDump(fd->data[0], options);
+    } else {
+        ALOGE("Invalid parameters passed to debug()");
+    }
+    return Void();
+}
+
+void VehicleHalManager::cmdDump(int fd, const hidl_vec<hidl_string>& options) {
+    if (options.size() == 0) {
+        cmdDumpAllProperties(fd);
+        return;
+    }
+    std::string option = options[0];
+    if (EqualsIgnoreCase(option, "--help")) {
+        cmdHelp(fd);
+    } else if (EqualsIgnoreCase(option, "--list")) {
+        cmdListAllProperties(fd);
+    } else if (EqualsIgnoreCase(option, "--get")) {
+        cmdDumpSpecificProperties(fd, options);
+    } else if (EqualsIgnoreCase(option, "--set")) {
+        cmdSetOneProperty(fd, options);
+    } else {
+        dprintf(fd, "Invalid option: %s\n", option.c_str());
+    }
+}
+
+bool VehicleHalManager::checkCallerHasWritePermissions(int fd) {
+    // Double check that's only called by root - it should be be blocked at the HIDL debug() level,
+    // but it doesn't hurt to make sure...
+    if (hardware::IPCThreadState::self()->getCallingUid() != AID_ROOT) {
+        dprintf(fd, "Must be root\n");
+        return false;
+    }
+    return true;
+}
+
+bool VehicleHalManager::checkArgumentsSize(int fd, const hidl_vec<hidl_string>& options,
+                                           size_t minSize) {
+    size_t size = options.size();
+    if (size >= minSize) {
+        return true;
+    }
+    dprintf(fd, "Invalid number of arguments: required at least %zu, got %zu\n", minSize, size);
+    return false;
+}
+
+bool VehicleHalManager::safelyParseInt(int fd, int index, std::string s, int* out) {
+    if (!android::base::ParseInt(s, out)) {
+        dprintf(fd, "non-integer argument at index %d: %s\n", index, s.c_str());
+        return false;
+    }
+    return true;
+}
+
+void VehicleHalManager::cmdHelp(int fd) const {
+    dprintf(fd, "Usage: \n\n");
+    dprintf(fd, "[no args]: dumps (id and value) all supported properties \n");
+    dprintf(fd, "--help: shows this help\n");
+    dprintf(fd, "--list: lists the ids of all supported properties\n");
+    dprintf(fd, "--get <PROP1> [PROP2] [PROPN]: dumps the value of specific properties \n");
+    // TODO: support other formats (int64, float, bytes)
+    dprintf(fd,
+            "--set <PROP> <i|s> <VALUE_1> [<i|s> <VALUE_N>]: sets the value of property PROP, using"
+            " arbitrary number of key/value parameters (i for int32, s for string). Notice that "
+            "the string value can be set just once, while the other can have multiple values "
+            "(so they're used in the respective array)\n");
+}
+
+void VehicleHalManager::cmdListAllProperties(int fd) const {
+    auto& halConfig = mConfigIndex->getAllConfigs();
+    size_t size = halConfig.size();
+    if (size == 0) {
+        dprintf(fd, "no properties to list\n");
+        return;
+    }
+    int i = 0;
+    dprintf(fd, "listing %zu properties\n", size);
+    for (const auto& config : halConfig) {
+        dprintf(fd, "%d: %d\n", ++i, config.prop);
+    }
+}
+
+void VehicleHalManager::cmdDumpAllProperties(int fd) {
+    auto& halConfig = mConfigIndex->getAllConfigs();
+    size_t size = halConfig.size();
+    if (size == 0) {
+        dprintf(fd, "no properties to dump\n");
+        return;
+    }
+    int rowNumber = 0;
+    dprintf(fd, "dumping %zu properties\n", size);
+    for (auto& config : halConfig) {
+        cmdDumpOneProperty(fd, ++rowNumber, config);
+    }
+}
+
+void VehicleHalManager::cmdDumpOneProperty(int fd, int rowNumber, const VehiclePropConfig& config) {
+    size_t numberAreas = config.areaConfigs.size();
+    if (numberAreas == 0) {
+        if (rowNumber > 0) {
+            dprintf(fd, "%d: ", rowNumber);
+        }
+        cmdDumpOneProperty(fd, config.prop, /* areaId= */ 0);
+        return;
+    }
+    for (size_t j = 0; j < numberAreas; ++j) {
+        if (rowNumber > 0) {
+            if (numberAreas > 1) {
+                dprintf(fd, "%d/%zu: ", rowNumber, j);
+            } else {
+                dprintf(fd, "%d: ", rowNumber);
+            }
+        }
+        cmdDumpOneProperty(fd, config.prop, config.areaConfigs[j].areaId);
+    }
+}
+
+void VehicleHalManager::cmdDumpSpecificProperties(int fd, const hidl_vec<hidl_string>& options) {
+    if (!checkArgumentsSize(fd, options, 2)) return;
+
+    // options[0] is the command itself...
+    int rowNumber = 0;
+    size_t size = options.size();
+    for (size_t i = 1; i < size; ++i) {
+        int prop;
+        if (!safelyParseInt(fd, i, options[i], &prop)) return;
+        const auto* config = getPropConfigOrNull(prop);
+        if (config == nullptr) {
+            dprintf(fd, "No property %d\n", prop);
+            continue;
+        }
+        if (size > 2) {
+            // Only show row number if there's more than 1
+            rowNumber++;
+        }
+        cmdDumpOneProperty(fd, rowNumber, *config);
+    }
+}
+
+void VehicleHalManager::cmdDumpOneProperty(int fd, int32_t prop, int32_t areaId) {
+    VehiclePropValue input;
+    input.prop = prop;
+    input.areaId = areaId;
+    auto callback = [&](StatusCode status, const VehiclePropValue& output) {
+        if (status == StatusCode::OK) {
+            dprintf(fd, "%s\n", toString(output).c_str());
+        } else {
+            dprintf(fd, "Could not get property %d. Error: %s\n", prop, toString(status).c_str());
+        }
+    };
+    get(input, callback);
+}
+
+void VehicleHalManager::cmdSetOneProperty(int fd, const hidl_vec<hidl_string>& options) {
+    if (!checkCallerHasWritePermissions(fd) || !checkArgumentsSize(fd, options, 3)) return;
+
+    size_t size = options.size();
+
+    // Syntax is --set PROP Type1 Value1 TypeN ValueN, so number of arguments must be even
+    if (size % 2 != 0) {
+        dprintf(fd, "must pass even number of arguments (passed %zu)\n", size);
+        return;
+    }
+    int numberValues = (size - 2) / 2;
+
+    VehiclePropValue prop;
+    if (!safelyParseInt(fd, 1, options[1], &prop.prop)) return;
+    prop.timestamp = 0;
+    prop.areaId = 0;  // TODO: add option to pass areaId as parameter
+    prop.status = VehiclePropertyStatus::AVAILABLE;
+
+    // First pass calculate sizes
+    int sizeInt32 = 0;
+    int stringIndex = 0;
+    for (int i = 2, kv = 1; kv <= numberValues; kv++) {
+        // iterate through the kv=1..n key/value pairs, accessing indexes i / i+1 at each step
+        std::string type = options[i];
+        std::string value = options[i + 1];
+        if (EqualsIgnoreCase(type, "i")) {
+            sizeInt32++;
+        } else if (EqualsIgnoreCase(type, "s")) {
+            if (stringIndex != 0) {
+                dprintf(fd,
+                        "defining string value (%s) again at index %d (already defined at %d=%s"
+                        ")\n",
+                        value.c_str(), i, stringIndex, options[stringIndex + 1].c_str());
+                return;
+            }
+            stringIndex = i;
+        } else {
+            dprintf(fd, "invalid (%s) type at index %d\n", type.c_str(), i);
+            return;
+        }
+        i += 2;
+    }
+    prop.value.int32Values.resize(sizeInt32);
+
+    // Second pass: populate it
+    int indexInt32 = 0;
+    for (int i = 2, kv = 1; kv <= numberValues; kv++) {
+        // iterate through the kv=1..n key/value pairs, accessing indexes i / i+1 at each step
+        int valueIndex = i + 1;
+        std::string type = options[i];
+        std::string value = options[valueIndex];
+        if (EqualsIgnoreCase(type, "i")) {
+            int safeInt;
+            if (!safelyParseInt(fd, valueIndex, value, &safeInt)) return;
+            prop.value.int32Values[indexInt32++] = safeInt;
+        } else if (EqualsIgnoreCase(type, "s")) {
+            prop.value.stringValue = value;
+        }
+        i += 2;
+    }
+    ALOGD("Setting prop %s", toString(prop).c_str());
+    auto status = set(prop);
+    if (status == StatusCode::OK) {
+        dprintf(fd, "Set property %s\n", toString(prop).c_str());
+    } else {
+        dprintf(fd, "Failed to set property %s: %s\n", toString(prop).c_str(),
+                toString(status).c_str());
+    }
 }
 
 void VehicleHalManager::init() {

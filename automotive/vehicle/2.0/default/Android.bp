@@ -47,6 +47,9 @@ cc_library {
         "common/src/VehicleUtils.cpp",
         "common/src/VmsUtils.cpp",
     ],
+    shared_libs: [
+        "libbase",
+    ],
     local_include_dirs: ["common/include/vhal_v2_0"],
     export_include_dirs: ["common/include"],
 }
@@ -108,6 +111,9 @@ cc_test {
         "tests/VehicleObjectPool_test.cpp",
         "tests/VehiclePropConfigIndex_test.cpp",
         "tests/VmsUtils_test.cpp",
+    ],
+    shared_libs: [
+        "libbase",
     ],
     header_libs: ["libbase_headers"],
     test_suites: ["general-tests"],
@@ -173,7 +179,7 @@ cc_binary {
         "libqemu_pipe",
     ],
     cflags: [
-        "-Wno-unused-parameter"
+        "-Wno-unused-parameter",
     ],
 }
 
@@ -200,6 +206,6 @@ cc_binary {
         "android.hardware.automotive.vehicle@2.0-virtualization-utils",
     ],
     cflags: [
-        "-Wno-unused-parameter"
+        "-Wno-unused-parameter",
     ],
 }
