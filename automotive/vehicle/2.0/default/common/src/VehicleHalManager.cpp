@@ -186,11 +186,19 @@ Return<void> VehicleHalManager::debugDump(IVehicle::debugDump_cb _hidl_cb) {
 }
 
 Return<void> VehicleHalManager::debug(const hidl_handle& fd, const hidl_vec<hidl_string>& options) {
-    if (fd.getNativeHandle() != nullptr && fd->numFds > 0) {
-        cmdDump(fd->data[0], options);
-    } else {
+    if (fd.getNativeHandle() == nullptr || fd->numFds == 0) {
         ALOGE("Invalid parameters passed to debug()");
+        return Void();
     }
+
+    bool shouldContinue = mHal->dump(fd, options);
+    if (!shouldContinue) {
+        ALOGI("Dumped HAL only");
+        return Void();
+    }
+
+    // Do our dump
+    cmdDump(fd->data[0], options);
     return Void();
 }
 
