@@ -69,6 +69,8 @@ struct BufferDesc {
      * Time that this buffer is being filled.
      */
     int64_t timestamp;
+
+    vec<uint8_t> metadata;
 };
 
 /**
