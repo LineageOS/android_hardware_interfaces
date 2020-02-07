@@ -553,6 +553,19 @@ safe_union OptionalTimePoint {
 };
 
 /**
+ * Optional timeout duration measured in nanoseconds.
+ */
+safe_union OptionalTimeoutDuration {
+    /** No time point provided. */
+    Monostate none;
+
+    /**
+     * Timeout duration measured in nanoseconds.
+     */
+    uint64_t nanoseconds;
+};
+
+/**
  * Return status of a function.
  */
 enum ErrorStatus : @1.0::ErrorStatus {
