@@ -760,16 +760,16 @@ class TunerHidlTest : public testing::TestWithParam<std::string> {
     AssertionResult stopTuneFrontend();
     AssertionResult closeFrontend();
 
-    ::testing::AssertionResult createDemux();
-    ::testing::AssertionResult createDemuxWithFrontend(int32_t frontendId,
-                                                       FrontendSettings settings);
+    AssertionResult openDemux();
+    AssertionResult setDemuxFrontendDataSource(uint32_t frontendId);
+    AssertionResult closeDemux();
+
     ::testing::AssertionResult getPlaybackMQDescriptor();
     ::testing::AssertionResult addPlaybackToDemux(PlaybackSettings setting);
     ::testing::AssertionResult getRecordMQDescriptor();
     ::testing::AssertionResult addRecordToDemux(RecordSettings setting);
     ::testing::AssertionResult addFilterToDemux(DemuxFilterType type, DemuxFilterSettings setting);
     ::testing::AssertionResult getFilterMQDescriptor();
-    ::testing::AssertionResult closeDemux();
     ::testing::AssertionResult createDescrambler();
     ::testing::AssertionResult closeDescrambler();
 
@@ -864,48 +864,33 @@ AssertionResult TunerHidlTest::closeFrontend() {
 }
 /*============================End Frontend APIs Tests Implementation============================*/
 
-/*::testing::AssertionResult TunerHidlTest::createDemux() {
+/*============================Start Demux APIs Tests Implementation============================*/
+AssertionResult TunerHidlTest::openDemux() {
     Result status;
-
     mService->openDemux([&](Result result, uint32_t demuxId, const sp<IDemux>& demux) {
         mDemux = demux;
         mDemuxId = demuxId;
         status = result;
     });
-    return ::testing::AssertionResult(status == Result::SUCCESS);
+    return AssertionResult(status == Result::SUCCESS);
 }
 
-::testing::AssertionResult TunerHidlTest::createDemuxWithFrontend(int32_t frontendId,
-                                                                  FrontendSettings settings) {
-    Result status;
-
-    if (!mDemux && createDemux() == ::testing::AssertionFailure()) {
-        return ::testing::AssertionFailure();
-    }
-
-    if (!mFrontend && createFrontend(frontendId) == ::testing::AssertionFailure()) {
-        return ::testing::AssertionFailure();
-    }
-
-    mFrontendCallback->testOnEvent(mFrontend, settings);
-
-    status = mDemux->setFrontendDataSource(frontendId);
-
-    return ::testing::AssertionResult(status == Result::SUCCESS);
+AssertionResult TunerHidlTest::setDemuxFrontendDataSource(uint32_t frontendId) {
+    EXPECT_TRUE(mDemux) << "Test with openDemux first.";
+    EXPECT_TRUE(mFrontend) << "Test with openFrontend first.";
+    auto status = mDemux->setFrontendDataSource(frontendId);
+    return AssertionResult(status.isOk());
 }
 
-::testing::AssertionResult TunerHidlTest::closeDemux() {
-    Result status;
-    if (!mDemux && createDemux() == ::testing::AssertionFailure()) {
-        return ::testing::AssertionFailure();
-    }
-
-    status = mDemux->close();
+AssertionResult TunerHidlTest::closeDemux() {
+    EXPECT_TRUE(mDemux) << "Test with openDemux first.";
+    auto status = mDemux->close();
     mDemux = nullptr;
-    return ::testing::AssertionResult(status == Result::SUCCESS);
+    return AssertionResult(status.isOk());
 }
+/*============================End Demux APIs Tests Implementation============================*/
 
-::testing::AssertionResult TunerHidlTest::createDescrambler() {
+/*::testing::AssertionResult TunerHidlTest::createDescrambler() {
     Result status;
 
     mService->openDescrambler([&](Result result, const sp<IDescrambler>& descrambler) {
@@ -1395,44 +1380,29 @@ TEST_P(TunerHidlTest, AutoScanFrontend) {
 }
 /*============================End Frontend Tests============================*/
 
-/*TEST_P(TunerHidlTest, CreateDemuxWithFrontend) {
-    Result status;
-    hidl_vec<FrontendId> feIds;
+/*============================Start Demux Tests============================*/
+TEST_P(TunerHidlTest, OpenDemuxWithFrontendDataSource) {
+    description("Open Demux with a Frontend as its data source.");
+    ASSERT_TRUE(getFrontendIds());
+    ASSERT_TRUE(mFeIds.size() > 0);
 
-    description("Create Demux with Frontend");
-    mService->getFrontendIds([&](Result result, const hidl_vec<FrontendId>& frontendIds) {
-        status = result;
-        feIds = frontendIds;
-    });
-
-    if (feIds.size() == 0) {
-        ALOGW("[   WARN   ] Frontend isn't available");
-        return;
-    }
-
-    FrontendDvbtSettings dvbt{
-        .frequency = 1000,
-    };
-    FrontendSettings settings;
-    settings.dvbt(dvbt);
-
-    for (size_t i = 0; i < feIds.size(); i++) {
-        ASSERT_TRUE(createDemuxWithFrontend(feIds[i], settings));
-        mFrontend->stopTune();
+    for (size_t i = 0; i < mFeIds.size(); i++) {
+        ASSERT_TRUE(getFrontendInfo(mFeIds[i]));
+        if (mFrontendInfo.type != frontendArray[0].type) {
+            continue;
+        }
+        ASSERT_TRUE(openFrontend(mFeIds[i]));
+        ASSERT_TRUE(setFrontendCallback());
+        ASSERT_TRUE(openDemux());
+        ASSERT_TRUE(setDemuxFrontendDataSource(mFeIds[i]));
+        ASSERT_TRUE(closeDemux());
+        ASSERT_TRUE(closeFrontend());
+        break;
     }
 }
+/*============================End Demux Tests============================*/
 
-TEST_P(TunerHidlTest, CreateDemux) {
-    description("Create Demux");
-    ASSERT_TRUE(createDemux());
-}
-
-TEST_P(TunerHidlTest, CloseDemux) {
-    description("Close Demux");
-    ASSERT_TRUE(closeDemux());
-}
-
-TEST_P(TunerHidlTest, CreateDescrambler) {
+/*TEST_P(TunerHidlTest, CreateDescrambler) {
     description("Create Descrambler");
     ASSERT_TRUE(createDescrambler());
 }
