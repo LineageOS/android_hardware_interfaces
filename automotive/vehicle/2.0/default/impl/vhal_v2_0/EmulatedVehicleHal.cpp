@@ -15,8 +15,9 @@
  */
 #define LOG_TAG "DefaultVehicleHal_v2_0"
 
-#include <android/log.h>
 #include <android-base/macros.h>
+#include <android/log.h>
+#include <sys/system_properties.h>
 
 #include "EmulatedVehicleHal.h"
 #include "JsonFakeValueGenerator.h"
@@ -203,8 +204,16 @@ StatusCode EmulatedVehicleHal::set(const VehiclePropValue& propValue) {
     }
 
     getEmulatorOrDie()->doSetValueFromClient(propValue);
-    doHalEvent(getValuePool()->obtain(propValue));
 
+    if (mInEmulator && propValue.prop == toInt(VehicleProperty::DISPLAY_BRIGHTNESS)) {
+        // Emulator does not support remote brightness control, b/139959479
+        // do not send it down so that it does not bring unnecessary property change event
+        // return other error code, such NOT_AVAILABLE, causes Emulator to be freezing
+        // TODO: return StatusCode::NOT_AVAILABLE once the above issue is fixed
+        return StatusCode::OK;
+    }
+
+    doHalEvent(getValuePool()->obtain(propValue));
     return StatusCode::OK;
 }
 
@@ -217,6 +226,17 @@ static bool isDiagnosticProperty(VehiclePropConfig propConfig) {
             return true;
     }
     return false;
+}
+
+// determine if it's running inside Android Emulator
+static bool isInEmulator() {
+    char propValue[PROP_VALUE_MAX];
+    bool isEmulator = (__system_property_get("ro.kernel.qemu", propValue) != 0);
+    if (!isEmulator) {
+        isEmulator = (__system_property_get("ro.hardware", propValue) != 0) &&
+                     (!strcmp(propValue, "ranchu") || !strcmp(propValue, "goldfish"));
+    }
+    return isEmulator;
 }
 
 // Parse supported properties list and generate vector of property values to hold current values.
@@ -269,6 +289,8 @@ void EmulatedVehicleHal::onCreate() {
     }
     initObd2LiveFrame(*mPropStore->getConfigOrDie(OBD2_LIVE_FRAME));
     initObd2FreezeFrame(*mPropStore->getConfigOrDie(OBD2_FREEZE_FRAME));
+    mInEmulator = isInEmulator();
+    ALOGD("mInEmulator=%s", mInEmulator ? "true" : "false");
 }
 
 std::vector<VehiclePropConfig> EmulatedVehicleHal::listProperties()  {
