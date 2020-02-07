@@ -77,6 +77,10 @@ class EmulatedVehicleServer : public IVehicleServer {
             std::bind(&EmulatedVehicleServer::onFakeValueGenerated, this, std::placeholders::_1)};
 
     VehiclePropValuePool* mValuePool{nullptr};
+
+    // TODO(b/146207078): it might be clearer to move members below to an EmulatedUserHal class
+    std::unique_ptr<VehiclePropValue> mInitialUserResponseFromCmd;
+    StatusCode onSetInitialUserInfo(const VehiclePropValue& value, bool updateStatus);
 };
 
 // Helper functions
