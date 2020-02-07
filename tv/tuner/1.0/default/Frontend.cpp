@@ -90,11 +90,66 @@ Return<Result> Frontend::stopScan() {
     return Result::SUCCESS;
 }
 
-Return<void> Frontend::getStatus(const hidl_vec<FrontendStatusType>& /* statusTypes */,
+Return<void> Frontend::getStatus(const hidl_vec<FrontendStatusType>& statusTypes,
                                  getStatus_cb _hidl_cb) {
     ALOGV("%s", __FUNCTION__);
 
     vector<FrontendStatus> statuses;
+    for (int i = 0; i < statusTypes.size(); i++) {
+        FrontendStatusType type = statusTypes[i];
+        FrontendStatus status;
+        // assign randomly selected values for testing.
+        switch (type) {
+            case FrontendStatusType::DEMOD_LOCK: {
+                status.isDemodLocked(true);
+                break;
+            }
+            case FrontendStatusType::SNR: {
+                status.snr(221);
+                break;
+            }
+            case FrontendStatusType::FEC: {
+                status.innerFec(FrontendInnerFec::FEC_2_9);  // value = 1 << 7
+                break;
+            }
+            case FrontendStatusType::MODULATION: {
+                FrontendModulationStatus modulationStatus;
+                modulationStatus.isdbt(FrontendIsdbtModulation::MOD_16QAM);  // value = 1 << 3
+                status.modulation(modulationStatus);
+                break;
+            }
+            case FrontendStatusType::PLP_ID: {
+                status.plpId(101);  // type uint8_t
+                break;
+            }
+            case FrontendStatusType::LAYER_ERROR: {
+                vector<bool> v = {false, true, true};
+                status.isLayerError(v);
+                break;
+            }
+            case FrontendStatusType::ATSC3_PLP_INFO: {
+                vector<FrontendStatusAtsc3PlpInfo> v;
+                FrontendStatusAtsc3PlpInfo info1{
+                        .plpId = 3,
+                        .isLocked = false,
+                        .uec = 313,
+                };
+                FrontendStatusAtsc3PlpInfo info2{
+                        .plpId = 5,
+                        .isLocked = true,
+                        .uec = 515,
+                };
+                v.push_back(info1);
+                v.push_back(info2);
+                status.plpInfo(v);
+                break;
+            }
+            default: {
+                continue;
+            }
+        }
+        statuses.push_back(status);
+    }
     _hidl_cb(Result::SUCCESS, statuses);
 
     return Void();
