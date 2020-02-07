@@ -122,15 +122,15 @@ class DeviceMemoryAllocator {
     // Return {IBuffer object, token} if successful.
     // Return {nullptr, 0} if device memory is not supported.
     template <IOType ioType>
-    std::pair<sp<IBuffer>, int32_t> allocate(uint32_t index) {
-        std::pair<sp<IBuffer>, int32_t> buffer;
+    std::pair<sp<IBuffer>, uint32_t> allocate(uint32_t index) {
+        std::pair<sp<IBuffer>, uint32_t> buffer;
         allocateInternal<ioType>(index, &buffer);
         return buffer;
     }
 
   private:
     template <IOType ioType>
-    void allocateInternal(uint32_t index, std::pair<sp<IBuffer>, int32_t>* result) {
+    void allocateInternal(uint32_t index, std::pair<sp<IBuffer>, uint32_t>* result) {
         ASSERT_NE(result, nullptr);
 
         // Prepare arguments.
@@ -145,14 +145,14 @@ class DeviceMemoryAllocator {
         // Allocate device memory.
         ErrorStatus status;
         sp<IBuffer> buffer;
-        int32_t token;
-        const auto ret = kDevice->allocate(
-                {}, {kPreparedModel}, inputRoles, outputRoles,
-                [&status, &buffer, &token](ErrorStatus error, const sp<IBuffer>& buf, int32_t tok) {
-                    status = error;
-                    buffer = buf;
-                    token = tok;
-                });
+        uint32_t token;
+        auto cb = [&status, &buffer, &token](ErrorStatus error, const sp<IBuffer>& buf,
+                                             uint32_t tok) {
+            status = error;
+            buffer = buf;
+            token = tok;
+        };
+        const auto ret = kDevice->allocate({}, {kPreparedModel}, inputRoles, outputRoles, cb);
 
         // Check allocation results.
         ASSERT_TRUE(ret.isOk());
@@ -217,7 +217,7 @@ Model createModel(const TestModel& testModel) {
             constRefSize += op.data.alignedSize();
         }
 
-        Operand::ExtraParams extraParams;
+        V1_2::Operand::ExtraParams extraParams;
         if (op.type == TestOperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL) {
             extraParams.channelQuant(SymmPerChannelQuantParams{
                     .scales = op.channelQuant.scales, .channelDim = op.channelQuant.channelDim});
@@ -317,7 +317,7 @@ static std::pair<Request, std::vector<sp<IBuffer>>> createRequest(
     // - [2+i, 2+i+o): Output device memories
     DeviceMemoryAllocator allocator(device, preparedModel, testModel);
     std::vector<sp<IBuffer>> buffers;
-    std::vector<int32_t> tokens;
+    std::vector<uint32_t> tokens;
 
     // Model inputs.
     hidl_vec<RequestArgument> inputs(testModel.inputIndexes.size());
