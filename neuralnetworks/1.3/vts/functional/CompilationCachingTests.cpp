@@ -370,7 +370,7 @@ class CompilationCachingTestBase : public testing::Test {
         sp<PreparedModelCallback> preparedModelCallback = new PreparedModelCallback();
         hidl_array<uint8_t, sizeof(mToken)> cacheToken(mToken);
         Return<ErrorStatus> prepareLaunchStatus = kDevice->prepareModelFromCache_1_3(
-                kDefaultPriority, {}, modelCache, dataCache, cacheToken, preparedModelCallback);
+                {}, modelCache, dataCache, cacheToken, preparedModelCallback);
         ASSERT_TRUE(prepareLaunchStatus.isOk());
         if (static_cast<ErrorStatus>(prepareLaunchStatus) != ErrorStatus::NONE) {
             *preparedModel = nullptr;
