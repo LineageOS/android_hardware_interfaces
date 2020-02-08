@@ -963,6 +963,7 @@ Return<void> RadioResponse_v1_5::setIndicationFilterResponse_1_5(const RadioResp
 
 Return<void> RadioResponse_v1_5::getBarringInfoResponse(
         const RadioResponseInfo& info,
+        const ::android::hardware::radio::V1_5::CellIdentity& /*cellIdentity*/,
         const ::android::hardware::hidl_vec<::android::hardware::radio::V1_5::BarringInfo>&
         /*barringInfos*/) {
     rspInfo = info;

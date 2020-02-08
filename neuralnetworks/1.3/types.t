@@ -24,9 +24,9 @@ import @1.0::PerformanceInfo;
 import @1.0::RequestArgument;
 import @1.2::Model.ExtensionNameAndPrefix;
 import @1.2::Model.ExtensionTypeEncoding;
+import @1.2::Operand.ExtraParams;
 import @1.2::OperandType;
 import @1.2::OperationType;
-import @1.2::SymmPerChannelQuantParams;
 
 import android.hidl.safe_union@1.0::Monostate;
 
@@ -319,27 +319,7 @@ struct Operand {
     /**
      * Additional parameters specific to a particular operand type.
      */
-    safe_union ExtraParams {
-       /**
-        * No additional parameters.
-        */
-       Monostate none;
-
-       /**
-        * Symmetric per-channel quantization parameters.
-        *
-        * Only applicable to operands of type TENSOR_QUANT8_SYMM_PER_CHANNEL.
-        */
-       SymmPerChannelQuantParams channelQuant;
-
-       /**
-        * Extension operand parameters.
-        *
-        * The framework treats this as an opaque data blob.
-        * The format is up to individual extensions.
-        */
-       vec<uint8_t> extension;
-    } extraParams;
+    @1.2::Operand.ExtraParams extraParams;
 };
 
 /**
@@ -527,7 +507,7 @@ struct Request {
          * Specifies a driver-managed buffer. It is the token returned from IDevice::allocate,
          * and is specific to the IDevice object.
          */
-        int32_t token;
+        uint32_t token;
     };
 
     /**
@@ -549,7 +529,7 @@ safe_union OptionalTimePoint {
      * Time point of the steady clock (as from std::chrono::steady_clock)
      * measured in nanoseconds.
      */
-    uint64_t nanoseconds;
+    uint64_t nanosecondsSinceEpoch;
 };
 
 /**

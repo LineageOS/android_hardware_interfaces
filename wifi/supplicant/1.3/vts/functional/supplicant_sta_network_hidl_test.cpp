@@ -56,6 +56,8 @@ class SupplicantStaNetworkHidlTest
         supplicant_ =
             getSupplicant_1_3(supplicant_v1_3_instance_name_, isP2pOn_);
         EXPECT_TRUE(turnOnExcessiveLogging(supplicant_));
+        sta_iface_ = getSupplicantStaIface_1_3(supplicant_);
+        ASSERT_NE(nullptr, sta_iface_.get());
         sta_network_ = createSupplicantStaNetwork_1_3(supplicant_);
         ASSERT_NE(sta_network_.get(), nullptr);
     }

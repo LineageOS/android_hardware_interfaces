@@ -34,6 +34,10 @@ package audio.effects.V6_0 {
 
   public class DeviceProcessType extends audio.effects.V6_0.StreamProcessingType {
     ctor public DeviceProcessType();
+    method public String getAddress();
+    method public audio.effects.V6_0.DeviceType getType();
+    method public void setAddress(String);
+    method public void setType(audio.effects.V6_0.DeviceType);
   }
 
   public enum DeviceType {
