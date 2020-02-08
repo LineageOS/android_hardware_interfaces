@@ -139,6 +139,15 @@ sp<Frontend> Tuner::getFrontendById(uint32_t frontendId) {
     return mFrontends[frontendId];
 }
 
+Return<void> Tuner::openLnbByName(const hidl_string& /*lnbName*/, openLnbByName_cb _hidl_cb) {
+    ALOGV("%s", __FUNCTION__);
+
+    sp<ILnb> lnb = new Lnb();
+
+    _hidl_cb(Result::SUCCESS, 1234, lnb);
+    return Void();
+}
+
 void Tuner::setFrontendAsDemuxSource(uint32_t frontendId, uint32_t demuxId) {
     mFrontendToDemux[frontendId] = demuxId;
 }
