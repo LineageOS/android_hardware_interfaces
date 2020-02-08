@@ -22,6 +22,7 @@
 #include <android/hardware/graphics/composer/2.4/IComposer.h>
 #include <android/hardware/graphics/composer/2.4/IComposerClient.h>
 #include <composer-vts/2.3/ComposerVts.h>
+#include <composer-vts/2.4/TestCommandReader.h>
 #include <utils/StrongPointer.h>
 
 namespace android {
@@ -91,6 +92,8 @@ class ComposerClient : public V2_3::vts::ComposerClient {
             Display display, std::vector<IComposerClient::ContentType>* outSupportedContentTypes);
 
     Error setContentType(Display display, IComposerClient::ContentType contentType);
+
+    void execute(TestCommandReader* reader, CommandWriterBase* writer);
 
     Error getLayerGenericMetadataKeys(
             std::vector<IComposerClient::LayerGenericMetadataKey>* outKeys);

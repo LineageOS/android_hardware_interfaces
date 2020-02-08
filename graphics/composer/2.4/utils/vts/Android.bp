@@ -20,6 +20,7 @@ cc_library_static {
     srcs: [
         "ComposerVts.cpp",
         "GraphicsComposerCallback.cpp",
+        "TestCommandReader.cpp",
     ],
     static_libs: [
         "android.hardware.graphics.composer@2.1",
@@ -33,6 +34,7 @@ cc_library_static {
         "android.hardware.graphics.composer@2.1-command-buffer",
         "android.hardware.graphics.composer@2.2-command-buffer",
         "android.hardware.graphics.composer@2.3-command-buffer",
+        "android.hardware.graphics.composer@2.4-command-buffer",
     ],
     cflags: [
         "-O0",
