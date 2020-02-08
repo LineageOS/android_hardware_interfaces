@@ -16,6 +16,8 @@
 
 #define LOG_TAG "automotive.vehicle@2.0-connector"
 
+#include <fstream>
+
 #include <android-base/logging.h>
 #include <utils/SystemClock.h>
 
@@ -368,6 +370,43 @@ StatusCode EmulatedVehicleServer::onSetInitialUserInfo(const VehiclePropValue& v
     LOG(INFO) << "updating property to: " << toString(*updatedValue);
     onPropertyValueFromCar(*updatedValue, updateStatus);
     return StatusCode::OK;
+}
+
+bool EmulatedVehicleServer::onDump(const hidl_handle& handle,
+                                   const hidl_vec<hidl_string>& options) {
+    int fd = handle->data[0];
+
+    if (options.size() > 0) {
+        if (options[0] == "--help") {
+            dprintf(fd, "Emulator-specific usage:\n");
+            dprintf(fd, "--user-hal: dumps state used for user management \n");
+            dprintf(fd, "\n");
+            // Include caller's help options
+            return true;
+        } else if (options[0] == "--user-hal") {
+            dumpUserHal(fd, "");
+            return false;
+
+        } else {
+            // Let caller handle the options...
+            return true;
+        }
+    }
+
+    dprintf(fd, "Emulator-specific state:\n");
+    dumpUserHal(fd, "  ");
+    dprintf(fd, "\n");
+
+    return true;
+}
+
+void EmulatedVehicleServer::dumpUserHal(int fd, std::string indent) {
+    if (mInitialUserResponseFromCmd != nullptr) {
+        dprintf(fd, "%sInitial User Info: %s\n", indent.c_str(),
+                toString(*mInitialUserResponseFromCmd).c_str());
+    } else {
+        dprintf(fd, "%sNo Initial User Info\n", indent.c_str());
+    }
 }
 
 EmulatedPassthroughConnectorPtr makeEmulatedPassthroughConnector() {

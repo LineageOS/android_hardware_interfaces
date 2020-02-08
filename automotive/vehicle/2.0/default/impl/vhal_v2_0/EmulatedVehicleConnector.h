@@ -54,6 +54,8 @@ class EmulatedVehicleServer : public IVehicleServer {
 
     StatusCode onSetProperty(const VehiclePropValue& value, bool updateStatus) override;
 
+    bool onDump(const hidl_handle& fd, const hidl_vec<hidl_string>& options) override;
+
     // Set the Property Value Pool used in this server
     void setValuePool(VehiclePropValuePool* valuePool);
 
@@ -81,6 +83,7 @@ class EmulatedVehicleServer : public IVehicleServer {
     // TODO(b/146207078): it might be clearer to move members below to an EmulatedUserHal class
     std::unique_ptr<VehiclePropValue> mInitialUserResponseFromCmd;
     StatusCode onSetInitialUserInfo(const VehiclePropValue& value, bool updateStatus);
+    void dumpUserHal(int fd, std::string indent);
 };
 
 // Helper functions
