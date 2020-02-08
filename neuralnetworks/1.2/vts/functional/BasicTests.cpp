@@ -79,6 +79,18 @@ TEST_P(NeuralnetworksHidlTest, GetDeviceTypeTest) {
     EXPECT_TRUE(ret.isOk());
 }
 
+// device name test
+TEST_P(NeuralnetworksHidlTest, GetDeviceNameTest) {
+    const std::string deviceName = getName(GetParam());
+    auto pos = deviceName.find('-');
+    EXPECT_NE(pos, std::string::npos);
+    // The separator should not be the first or last character.
+    EXPECT_NE(pos, 0);
+    EXPECT_NE(pos, deviceName.length() - 1);
+    // There should only be 1 separator.
+    EXPECT_EQ(std::string::npos, deviceName.find('-', pos + 1));
+}
+
 // device supported extensions test
 TEST_P(NeuralnetworksHidlTest, GetDeviceSupportedExtensionsTest) {
     Return<void> ret = kDevice->getSupportedExtensions(

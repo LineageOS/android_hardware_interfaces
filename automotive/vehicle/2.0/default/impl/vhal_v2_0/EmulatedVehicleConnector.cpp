@@ -202,8 +202,8 @@ StatusCode EmulatedVehicleServer::onSetProperty(const VehiclePropValue& value, b
         case kGenerateFakeDataControllingProperty:
             return handleGenerateFakeDataRequest(value);
 
-        // set the value from vehcile side, used in end to end test.
-        case kSetIntPropertyFromVehcileForTest: {
+        // set the value from vehicle side, used in end to end test.
+        case kSetIntPropertyFromVehicleForTest: {
             auto updatedPropValue = createVehiclePropValue(VehiclePropertyType::INT32, 1);
             updatedPropValue->prop = value.value.int32Values[0];
             updatedPropValue->value.int32Values[0] = value.value.int32Values[1];
@@ -212,7 +212,7 @@ StatusCode EmulatedVehicleServer::onSetProperty(const VehiclePropValue& value, b
             onPropertyValueFromCar(*updatedPropValue, updateStatus);
             return StatusCode::OK;
         }
-        case kSetFloatPropertyFromVehcileForTest: {
+        case kSetFloatPropertyFromVehicleForTest: {
             auto updatedPropValue = createVehiclePropValue(VehiclePropertyType::FLOAT, 1);
             updatedPropValue->prop = value.value.int32Values[0];
             updatedPropValue->value.floatValues[0] = value.value.floatValues[0];
@@ -221,7 +221,7 @@ StatusCode EmulatedVehicleServer::onSetProperty(const VehiclePropValue& value, b
             onPropertyValueFromCar(*updatedPropValue, updateStatus);
             return StatusCode::OK;
         }
-        case kSetBooleanPropertyFromVehcileForTest: {
+        case kSetBooleanPropertyFromVehicleForTest: {
             auto updatedPropValue = createVehiclePropValue(VehiclePropertyType::BOOLEAN, 1);
             updatedPropValue->prop = value.value.int32Values[1];
             updatedPropValue->value.int32Values[0] = value.value.int32Values[0];

@@ -149,7 +149,10 @@ interface IDevice {
                     AudioConfig suggestedConfig);
 
     /**
-     * Returns whether HAL supports audio patches.
+     * Returns whether HAL supports audio patches. Patch represents a connection
+     * between signal source(s) and signal sink(s). If HAL doesn't support
+     * patches natively (in hardware) then audio system will need to establish
+     * them in software.
      *
      * @return supports true if audio patches are supported.
      */
@@ -316,7 +319,9 @@ interface IDevice {
     close() generates (Result retval);
 
     /**
-     * Applies an audio effect to an audio device.
+     * Applies an audio effect to an audio device. The effect is inserted
+     * according to its insertion preference specified by INSERT_... EffectFlags
+     * in the EffectDescriptor.
      *
      * @param device identifies the sink or source device this effect must be applied to.
      *               "device" is the AudioPortHandle indicated for the device when the audio

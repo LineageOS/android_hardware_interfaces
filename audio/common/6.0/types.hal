@@ -91,37 +91,76 @@ struct Uuid {
 enum AudioStreamType : int32_t {
     // These values must kept in sync with
     //  frameworks/base/media/java/android/media/AudioSystem.java
+    /** Used to identify the default audio stream volume. */
     DEFAULT          = -1,
+    /** Specifies the minimum value for use in checks and loops. */
     MIN              = 0,
+    /** Used to identify the volume of audio streams for phone calls. */
     VOICE_CALL       = 0,
+    /** Used to identify the volume of audio streams for system sounds. */
     SYSTEM           = 1,
+    /**
+     * Used to identify the volume of audio streams for the phone ring
+     * and message alerts.
+     */
     RING             = 2,
+    /** Used to identify the volume of audio streams for music playback. */
     MUSIC            = 3,
+    /** Used to identify the volume of audio streams for alarms. */
     ALARM            = 4,
+    /** Used to identify the volume of audio streams for notifications. */
     NOTIFICATION     = 5,
+    /**
+     * Used to identify the volume of audio streams for phone calls
+     * when connected on bluetooth.
+     */
     BLUETOOTH_SCO    = 6,
-    ENFORCED_AUDIBLE = 7,  // Sounds that cannot be muted by user and must be
-                           // routed to speaker
+    /**
+     * Used to identify the volume of audio streams for enforced system
+     * sounds in certain countries (e.g camera in Japan). */
+    ENFORCED_AUDIBLE = 7,
+    /** Used to identify the volume of audio streams for DTMF tones. */
     DTMF             = 8,
-    TTS              = 9,  // Transmitted Through Speaker.  Plays over speaker
-                           // only, silent on other devices
-    ACCESSIBILITY    = 10, // For accessibility talk back prompts
-    ASSISTANT        = 11, // For virtual assistant service
+    /**
+     * Used to identify the volume of audio streams exclusively transmitted
+     * through the speaker (TTS) of the device.
+     */
+    TTS              = 9,
+    /**
+     * Used to identify the volume of audio streams for accessibility prompts.
+     */
+    ACCESSIBILITY    = 10,
+    /** Used to identify the volume of audio streams for virtual assistant. */
+    ASSISTANT        = 11,
 };
 
 @export(name="audio_source_t", value_prefix="AUDIO_SOURCE_")
 enum AudioSource : int32_t {
     // These values must kept in sync with
     //  frameworks/base/media/java/android/media/MediaRecorder.java,
-    //  frameworks/av/services/audiopolicy/AudioPolicyService.cpp,
     //  system/media/audio_effects/include/audio_effects/audio_effects_conf.h
+    /** Default audio source. */
     DEFAULT             = 0,
+    /** Microphone audio source. */
     MIC                 = 1,
+    /** Voice call uplink (Tx) audio source. */
     VOICE_UPLINK        = 2,
+    /** Voice call downlink (Rx) audio source. */
     VOICE_DOWNLINK      = 3,
+    /** Voice call uplink + downlink audio source. */
     VOICE_CALL          = 4,
+    /**
+     * Microphone audio source tuned for video recording, with the same
+     * orientation as the camera if available.
+     */
     CAMCORDER           = 5,
+    /** Microphone audio source tuned for voice recognition. */
     VOICE_RECOGNITION   = 6,
+    /**
+     * Microphone audio source tuned for voice communications such as VoIP. It
+     * will for instance take advantage of echo cancellation or automatic gain
+     * control if available.
+     */
     VOICE_COMMUNICATION = 7,
     /**
      * Source for the mix to be presented remotely. An example of remote
@@ -146,7 +185,9 @@ enum AudioSource : int32_t {
      * to include all post processing applied to the playback path.
      */
     ECHO_REFERENCE      = 1997,
+    /** Virtual source for the built-in FM tuner. */
     FM_TUNER            = 1998,
+    /** Virtual source for the last captured hotword. */
     HOTWORD             = 1999,
 };
 
@@ -562,7 +603,7 @@ enum AudioMode : int32_t {
     IN_CALL          = 2,
     /** Calls handled by apps (Eg: Hangout). */
     IN_COMMUNICATION = 3,
-    /** Call screening in progress */
+    /** Call screening in progress. */
     CALL_SCREEN      = 4,
 };
 
@@ -748,23 +789,85 @@ enum AudioUsage : int32_t {
     // These values must kept in sync with
     //  frameworks/base/media/java/android/media/AudioAttributes.java
     // Note that not all framework values are exposed
+    /**
+     * Usage value to use when the usage is unknown.
+     */
     UNKNOWN                            = 0,
+    /**
+     * Usage value to use when the usage is media, such as music, or movie
+     * soundtracks.
+     */
     MEDIA                              = 1,
+    /**
+     * Usage value to use when the usage is voice communications, such as
+     * telephony or VoIP.
+     */
     VOICE_COMMUNICATION                = 2,
+    /**
+     * Usage value to use when the usage is in-call signalling, such as with
+     * a "busy" beep, or DTMF tones.
+     */
     VOICE_COMMUNICATION_SIGNALLING     = 3,
+    /**
+     * Usage value to use when the usage is an alarm (e.g. wake-up alarm).
+     */
     ALARM                              = 4,
+    /**
+     * Usage value to use when the usage is a generic notification.
+     */
     NOTIFICATION                       = 5,
+    /**
+     * Usage value to use when the usage is telephony ringtone.
+     */
     NOTIFICATION_TELEPHONY_RINGTONE    = 6,
+    /**
+     * Usage value to use when the usage is for accessibility, such as with
+     * a screen reader.
+     */
     ASSISTANCE_ACCESSIBILITY           = 11,
+    /**
+     * Usage value to use when the usage is driving or navigation directions.
+     */
     ASSISTANCE_NAVIGATION_GUIDANCE     = 12,
+    /**
+     * Usage value to use when the usage is sonification, such as  with user
+     * interface sounds.
+     */
     ASSISTANCE_SONIFICATION            = 13,
+    /**
+     * Usage value to use when the usage is for game audio.
+     */
     GAME                               = 14,
+    /**
+     * Usage value to use when feeding audio to the platform and replacing
+     * "traditional" audio source, such as audio capture devices.
+     */
     VIRTUAL_SOURCE                     = 15,
+    /**
+     * Usage value to use for audio responses to user queries, audio
+     * instructions or help utterances.
+     */
     ASSISTANT                          = 16,
+    /**
+     * Usage value to use for assistant voice interaction with remote caller
+     * on Cell and VoIP calls.
+     */
     CALL_ASSISTANT                     = 17,
+    /**
+     * Usage value to use when the usage is an emergency.
+     */
     EMERGENCY                          = 1000,
+    /**
+     * Usage value to use when the usage is a safety sound.
+     */
     SAFETY                             = 1001,
+    /**
+     * Usage value to use when the usage is a vehicle status.
+     */
     VEHICLE_STATUS                     = 1002,
+    /**
+     * Usage value to use when the usage is an announcement.
+     */
     ANNOUNCEMENT                       = 1003,
 };
 
@@ -773,10 +876,30 @@ enum AudioUsage : int32_t {
 enum AudioContentType : uint32_t {
     // Do not change these values without updating their counterparts
     // in frameworks/base/media/java/android/media/AudioAttributes.java
+    /**
+     * Content type value to use when the content type is unknown, or other than
+     * the ones defined.
+     */
     UNKNOWN      = 0,
+    /**
+     * Content type value to use when the content type is speech.
+     */
     SPEECH       = 1,
+    /**
+     * Content type value to use when the content type is music.
+     */
     MUSIC        = 2,
+    /**
+     * Content type value to use when the content type is a soundtrack,
+     * typically accompanying a movie or TV program.
+     */
     MOVIE        = 3,
+    /**
+     * Content type value to use when the content type is a sound used to
+     * accompany a user action, such as a beep or sound effect expressing a key
+     * click, or event, such as the type of a sound for a bonus being received
+     * in a game. These sounds are mostly synthesized or short Foley sounds.
+     */
     SONIFICATION = 4,
 };
 
