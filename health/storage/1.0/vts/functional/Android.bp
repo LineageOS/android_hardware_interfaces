@@ -22,6 +22,9 @@ cc_test {
     shared_libs: [
         "libhidlbase",
     ],
-    test_suites: ["general-tests", "vts-core"],
+    test_suites: [
+        "general-tests",
+        "vts-core",
+    ],
+    test_config: "VtsHalHealthStorageV1_0TargetTest.config",
 }
-
