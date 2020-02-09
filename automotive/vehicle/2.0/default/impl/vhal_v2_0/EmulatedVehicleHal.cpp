@@ -131,6 +131,10 @@ VehicleHal::VehiclePropValuePtr EmulatedVehicleHal::get(
     return v;
 }
 
+bool EmulatedVehicleHal::dump(const hidl_handle& fd, const hidl_vec<hidl_string>& options) {
+    return mVehicleClient->dump(fd, options);
+}
+
 StatusCode EmulatedVehicleHal::set(const VehiclePropValue& propValue) {
     constexpr bool updateStatus = false;
 
