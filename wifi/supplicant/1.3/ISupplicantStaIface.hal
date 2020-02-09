@@ -69,7 +69,7 @@ interface ISupplicantStaIface extends @1.2::ISupplicantStaIface {
         bitfield<WpaDriverCapabilitiesMask> driverCapabilitiesMask);
 
     /**
-     * Set MBO cellular data status.
+     * Set Wi-Fi Alliance Agile Multiband (MBO) cellular data status.
      *
      * @param available true means cellular data available, false otherwise.
      * @return status Status of the operation.
@@ -93,8 +93,10 @@ interface ISupplicantStaIface extends @1.2::ISupplicantStaIface {
         generates (SupplicantStatus status, bitfield<KeyMgmtMask> keyMgmtMask);
 
     /**
-     * Flush FILS HLP IEs
-     * Use this to flush all the HLP IEs in wpa_supplicant
+     * Flush fast initial link setup (IEEE 802.11ai FILS) HLP packets.
+     * Use this to flush all the higher layer protocol (HLP) packets added in
+     * wpa_supplicant to send in FILS (Re)Association Request frame
+     * (Eg: DHCP discover packet).
      *
      * @return status Status of the operation.
      *         Possible status codes:
@@ -106,11 +108,12 @@ interface ISupplicantStaIface extends @1.2::ISupplicantStaIface {
     filsHlpFlushRequest() generates (SupplicantStatus status);
 
     /**
-     * Add FILS HLP IEs
-     * Use this to add a HLP IE to wpa_supplicant
+     * Add fast initial link setup (IEEE 802.11ai FILS) HLP packets.
+     * Use this to add higher layer protocol (HLP) packet in FILS (Re)Association Request frame
+     * (Eg: DHCP discover packet).
      *
      * @param dst_mac MAC address of the destination
-     * @param pkt The contents of the HLP IE starting from ethertype
+     * @param pkt The contents of the HLP packet starting from ethertype
      * @return status Status of the operation.
      *         Possible status codes:
      *         |SupplicantStatusCode.SUCCESS|,

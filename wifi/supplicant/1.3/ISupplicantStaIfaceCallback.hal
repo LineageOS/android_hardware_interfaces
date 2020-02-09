@@ -147,7 +147,7 @@ interface ISupplicantStaIfaceCallback extends @1.2::ISupplicantStaIfaceCallback 
     };
 
     /**
-     * Indicates PMK cache added event.
+     * Indicates pairwise master key (PMK) cache added event.
      *
      * @param expirationTimeInSec expiration time in seconds
      * @param serializedEntry is serialized PMK cache entry, the content is
@@ -192,6 +192,9 @@ interface ISupplicantStaIfaceCallback extends @1.2::ISupplicantStaIfaceCallback 
 
     /**
      * Indicates an EAP authentication failure.
+     * @param errorCode Error code for EAP authentication failure.
+     *        Either standard error code (enum EapErrorCode) or
+     *        private error code defined by network provider.
      */
     oneway onEapFailure_1_3(uint32_t errorCode);
 
