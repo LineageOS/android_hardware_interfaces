@@ -1628,16 +1628,48 @@ TEST_P(GraphicsMapperHidlTest, SetConstantMetadata) {
     const native_handle_t* bufferHandle = nullptr;
     ASSERT_NO_FATAL_FAILURE(bufferHandle = mGralloc->allocate(mDummyDescriptorInfo, true));
 
-    hidl_vec<uint8_t> vec;
-    ASSERT_EQ(Error::BAD_VALUE, mGralloc->set(bufferHandle, gralloc4::MetadataType_BufferId, vec));
-    ASSERT_EQ(Error::BAD_VALUE, mGralloc->set(bufferHandle, gralloc4::MetadataType_Name, vec));
-    ASSERT_EQ(Error::BAD_VALUE, mGralloc->set(bufferHandle, gralloc4::MetadataType_Width, vec));
-    ASSERT_EQ(Error::BAD_VALUE, mGralloc->set(bufferHandle, gralloc4::MetadataType_Height, vec));
+    uint64_t bufferId = 2;
+    hidl_vec<uint8_t> bufferIdVec;
+    ASSERT_EQ(NO_ERROR, gralloc4::encodeBufferId(bufferId, &bufferIdVec));
     ASSERT_EQ(Error::BAD_VALUE,
-              mGralloc->set(bufferHandle, gralloc4::MetadataType_LayerCount, vec));
+              mGralloc->set(bufferHandle, gralloc4::MetadataType_BufferId, bufferIdVec));
+
+    std::string name{"new name"};
+    hidl_vec<uint8_t> nameVec;
+    ASSERT_EQ(NO_ERROR, gralloc4::encodeName(name, &nameVec));
+    ASSERT_EQ(Error::BAD_VALUE, mGralloc->set(bufferHandle, gralloc4::MetadataType_Name, nameVec));
+
+    uint64_t width = 32;
+    hidl_vec<uint8_t> widthVec;
+    ASSERT_EQ(NO_ERROR, gralloc4::encodeWidth(width, &widthVec));
     ASSERT_EQ(Error::BAD_VALUE,
-              mGralloc->set(bufferHandle, gralloc4::MetadataType_PixelFormatRequested, vec));
-    ASSERT_EQ(Error::BAD_VALUE, mGralloc->set(bufferHandle, gralloc4::MetadataType_Usage, vec));
+              mGralloc->set(bufferHandle, gralloc4::MetadataType_Width, widthVec));
+
+    uint64_t height = 32;
+    hidl_vec<uint8_t> heightVec;
+    ASSERT_EQ(NO_ERROR, gralloc4::encodeHeight(height, &heightVec));
+    ASSERT_EQ(Error::BAD_VALUE,
+              mGralloc->set(bufferHandle, gralloc4::MetadataType_Height, heightVec));
+
+    uint64_t layerCount = 2;
+    hidl_vec<uint8_t> layerCountVec;
+    ASSERT_EQ(NO_ERROR, gralloc4::encodeLayerCount(layerCount, &layerCountVec));
+    ASSERT_EQ(Error::BAD_VALUE,
+              mGralloc->set(bufferHandle, gralloc4::MetadataType_LayerCount, layerCountVec));
+
+    hardware::graphics::common::V1_2::PixelFormat pixelFormatRequested = PixelFormat::BLOB;
+    hidl_vec<uint8_t> pixelFormatRequestedVec;
+    ASSERT_EQ(NO_ERROR,
+              gralloc4::encodePixelFormatRequested(pixelFormatRequested, &pixelFormatRequestedVec));
+    ASSERT_EQ(Error::BAD_VALUE,
+              mGralloc->set(bufferHandle, gralloc4::MetadataType_PixelFormatRequested,
+                            pixelFormatRequestedVec));
+
+    uint64_t usage = 0;
+    hidl_vec<uint8_t> usageVec;
+    ASSERT_EQ(NO_ERROR, gralloc4::encodeUsage(usage, &usageVec));
+    ASSERT_EQ(Error::BAD_VALUE,
+              mGralloc->set(bufferHandle, gralloc4::MetadataType_Usage, usageVec));
 }
 
 /**
@@ -1649,19 +1681,9 @@ TEST_P(GraphicsMapperHidlTest, SetBadMetadata) {
 
     hidl_vec<uint8_t> vec;
     ASSERT_EQ(Error::UNSUPPORTED,
-              mGralloc->set(bufferHandle, gralloc4::MetadataType_BufferId, vec));
-    ASSERT_EQ(Error::UNSUPPORTED, mGralloc->set(bufferHandle, gralloc4::MetadataType_Name, vec));
-    ASSERT_EQ(Error::UNSUPPORTED, mGralloc->set(bufferHandle, gralloc4::MetadataType_Width, vec));
-    ASSERT_EQ(Error::UNSUPPORTED, mGralloc->set(bufferHandle, gralloc4::MetadataType_Height, vec));
-    ASSERT_EQ(Error::UNSUPPORTED,
-              mGralloc->set(bufferHandle, gralloc4::MetadataType_LayerCount, vec));
-    ASSERT_EQ(Error::UNSUPPORTED,
-              mGralloc->set(bufferHandle, gralloc4::MetadataType_PixelFormatRequested, vec));
-    ASSERT_EQ(Error::UNSUPPORTED,
               mGralloc->set(bufferHandle, gralloc4::MetadataType_PixelFormatFourCC, vec));
     ASSERT_EQ(Error::UNSUPPORTED,
               mGralloc->set(bufferHandle, gralloc4::MetadataType_PixelFormatModifier, vec));
-    ASSERT_EQ(Error::UNSUPPORTED, mGralloc->set(bufferHandle, gralloc4::MetadataType_Usage, vec));
     ASSERT_EQ(Error::UNSUPPORTED,
               mGralloc->set(bufferHandle, gralloc4::MetadataType_AllocationSize, vec));
     ASSERT_EQ(Error::UNSUPPORTED,
