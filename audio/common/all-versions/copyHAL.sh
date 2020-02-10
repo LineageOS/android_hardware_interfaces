@@ -21,7 +21,7 @@ readonly HAL_SERVICE_CPP=service.cpp
 
 readonly FWK_DIRECTORY=frameworks/av/media/libaudiohal
 readonly IMPL_DIRECTORY=impl
-readonly IMPL_FACTORYHAL=$IMPL_DIRECTORY/include/libaudiohal/FactoryHalHidl.h
+readonly IMPL_FACTORYHAL=FactoryHalHidl.cpp
 
 readonly VTS_DIRECTORY=test/vts-testcase/hal/audio
 readonly VTS_LIST=test/vts/tools/build/tasks/list/vts_test_lib_hidl_package_list.mk
@@ -150,7 +150,7 @@ runIfNeeded $HAL_DIRECTORY createHALVersion
 
 createFrameworkAdapter() {
     updateVersion -v original_before=1 Android.bp
-    updateVersion -v original_before=1 -v RS= -v ORS='\n\n' $IMPL_FACTORYHAL/Android.bp
+    updateVersion -v original_before=1 -v RS= -v ORS='\n\n' $IMPL_DIRECTORY/Android.bp
     updateVersion -v original_after=1 $IMPL_FACTORYHAL
 }
 echo "Now creating the framework adapter version"
