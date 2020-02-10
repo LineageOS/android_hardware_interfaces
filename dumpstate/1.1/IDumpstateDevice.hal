@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package android.hardware.dumpstate@1.1;
 
 import @1.0::IDumpstateDevice;
@@ -28,14 +29,19 @@ interface IDumpstateDevice extends @1.0::IDumpstateDevice {
      * The 1.0 version of #dumpstateBoard(handle) should just delegate to this new method and pass
      * DumpstateMode::DEFAULT and a timeout of 30,000ms (30 seconds).
      *
+     * This method may still be called by the dumpstate routine even if getDeviceLoggingEnabled
+     * returns false. In this case, it must return DumpstateStatus::DEVICE_LOGGING_NOT_ENABLED.
+     *
      * @param h A native handle with one or two valid file descriptors. The first FD is for text
      *     output, the second (if present) is for binary output.
      * @param mode A mode value to restrict dumped content.
      * @param timeoutMillis An approximate "budget" for how much time this call has been allotted.
      *     If execution runs longer than this, the IDumpstateDevice service may be killed and only
      *     partial information will be included in the report.
+     * @return status A DumpstateStatus value indicating the final result.
      */
-    dumpstateBoard_1_1(handle h, DumpstateMode mode, uint64_t timeoutMillis);
+    dumpstateBoard_1_1(handle h, DumpstateMode mode, uint64_t timeoutMillis)
+        generates (DumpstateStatus status);
 
     /**
      * Turns device vendor logging on or off.
@@ -46,8 +52,20 @@ interface IDumpstateDevice extends @1.0::IDumpstateDevice {
      * memory/storage/battery impacts, calling this method on a user build should only be done after
      * user consent has been obtained, e.g. from a toggle in developer settings.
      *
+     * Even if device logging has been disabled, dumpstateBoard may still be called by the dumpstate
+     * routine. In this case, it must return DumpstateStatus::DEVICE_LOGGING_NOT_ENABLED.
+     *
      * @param enable Whether to enable or disable device vendor logging.
-     * @return success Whether or not the change took effect.
      */
-    setDeviceLoggingEnabled(bool enable) generates (bool success);
+    setDeviceLoggingEnabled(bool enable);
+
+    /**
+     * Queries the current state of device logging. Primarily for UI and informative purposes.
+     *
+     * Even if device logging has been disabled, dumpstateBoard may still be called by the dumpstate
+     * routine. In this case, it must return DumpstateStatus::DEVICE_LOGGING_NOT_ENABLED.
+     *
+     * @return enabled Whether or not vendor logging is currently enabled.
+     */
+    getDeviceLoggingEnabled() generates (bool enabled);
 };
