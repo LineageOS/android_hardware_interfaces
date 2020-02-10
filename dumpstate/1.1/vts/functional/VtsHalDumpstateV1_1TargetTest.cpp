@@ -19,6 +19,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include <functional>
 #include <vector>
 
 #include <android/hardware/dumpstate/1.1/IDumpstateDevice.h>
@@ -34,14 +35,45 @@ namespace {
 using ::android::sp;
 using ::android::hardware::Return;
 using ::android::hardware::dumpstate::V1_1::DumpstateMode;
+using ::android::hardware::dumpstate::V1_1::DumpstateStatus;
 using ::android::hardware::dumpstate::V1_1::IDumpstateDevice;
+using ::android::hardware::dumpstate::V1_1::toString;
 
 class DumpstateHidl1_1Test : public ::testing::TestWithParam<std::string> {
-  public:
-    virtual void SetUp() override {
+  protected:
+    virtual void SetUp() override { GetService(); }
+
+    void GetService() {
         dumpstate = IDumpstateDevice::getService(GetParam());
         ASSERT_NE(dumpstate, nullptr) << "Could not get HIDL instance";
     }
+
+    void ToggleDeviceLogging(bool enable) {
+        Return<void> status = dumpstate->setDeviceLoggingEnabled(enable);
+        ASSERT_TRUE(status.isOk()) << "Status should be ok: " << status.description();
+
+        if (!dumpstate->ping().isOk()) {
+            ALOGW("IDumpstateDevice service appears to have exited lazily, attempting to get "
+                  "again");
+            GetService();
+        }
+
+        Return<bool> logging_enabled = dumpstate->getDeviceLoggingEnabled();
+        ASSERT_TRUE(logging_enabled.isOk())
+                << "Status should be ok: " << logging_enabled.description();
+        ASSERT_EQ(logging_enabled, enable)
+                << "Device logging should now be " << (enable ? "enabled" : "disabled");
+
+        if (!dumpstate->ping().isOk()) {
+            ALOGW("IDumpstateDevice service appears to have exited lazily, attempting to get "
+                  "again");
+            GetService();
+        }
+    }
+
+    void EnableDeviceLogging() { ToggleDeviceLogging(true); }
+
+    void DisableDeviceLogging() { ToggleDeviceLogging(false); }
 
     sp<IDumpstateDevice> dumpstate;
 };
@@ -49,6 +81,10 @@ class DumpstateHidl1_1Test : public ::testing::TestWithParam<std::string> {
 #define TEST_FOR_DUMPSTATE_MODE(name, body, mode) \
     TEST_P(DumpstateHidl1_1Test, name##_##mode) { body(DumpstateMode::mode); }
 
+// We use a macro to define individual test cases instead of hidl_enum_range<> because some HAL
+// implementations are lazy and may call exit() at the end of dumpstateBoard(), which would cause
+// DEAD_OBJECT errors after the first iteration. Separate cases re-get the service each time as part
+// of SetUp(), and also provide better separation of concerns when specific modes are problematic.
 #define TEST_FOR_ALL_DUMPSTATE_MODES(name, body)       \
     TEST_FOR_DUMPSTATE_MODE(name, body, FULL);         \
     TEST_FOR_DUMPSTATE_MODE(name, body, INTERACTIVE);  \
@@ -60,21 +96,51 @@ class DumpstateHidl1_1Test : public ::testing::TestWithParam<std::string> {
 
 constexpr uint64_t kDefaultTimeoutMillis = 30 * 1000;  // 30 seconds
 
+// Will only execute additional_assertions when status == expected.
+void AssertStatusForMode(const DumpstateMode mode, const Return<DumpstateStatus>& status,
+                         const DumpstateStatus expected,
+                         std::function<void()> additional_assertions = nullptr) {
+    ASSERT_TRUE(status.isOk()) << "Status should be ok and return a more specific DumpstateStatus: "
+                               << status.description();
+    if (mode == DumpstateMode::DEFAULT) {
+        ASSERT_EQ(expected, status) << "Required mode (DumpstateMode::" << toString(mode)
+                                    << "): status should be DumpstateStatus::" << toString(expected)
+                                    << ", but got DumpstateStatus::" << toString(status);
+    } else {
+        // The rest of the modes are optional to support, but they MUST return either the expected
+        // value or UNSUPPORTED_MODE.
+        ASSERT_TRUE(status == expected || status == DumpstateStatus::UNSUPPORTED_MODE)
+                << "Optional mode (DumpstateMode::" << toString(mode)
+                << "): status should be DumpstateStatus::" << toString(expected)
+                << " or DumpstateStatus::UNSUPPORTED_MODE, but got DumpstateStatus::"
+                << toString(status);
+    }
+    if (status == expected && additional_assertions != nullptr) {
+        additional_assertions();
+    }
+}
+
 // Negative test: make sure dumpstateBoard() doesn't crash when passed a null pointer.
 TEST_FOR_ALL_DUMPSTATE_MODES(TestNullHandle, [this](DumpstateMode mode) {
-    Return<void> status = dumpstate->dumpstateBoard_1_1(nullptr, mode, kDefaultTimeoutMillis);
+    EnableDeviceLogging();
 
-    ASSERT_TRUE(status.isOk()) << "Status should be ok: " << status.description();
+    Return<DumpstateStatus> status =
+            dumpstate->dumpstateBoard_1_1(nullptr, mode, kDefaultTimeoutMillis);
+
+    AssertStatusForMode(mode, status, DumpstateStatus::ILLEGAL_ARGUMENT);
 });
 
 // Negative test: make sure dumpstateBoard() ignores a handle with no FD.
 TEST_FOR_ALL_DUMPSTATE_MODES(TestHandleWithNoFd, [this](DumpstateMode mode) {
+    EnableDeviceLogging();
+
     native_handle_t* handle = native_handle_create(0, 0);
     ASSERT_NE(handle, nullptr) << "Could not create native_handle";
 
-    Return<void> status = dumpstate->dumpstateBoard_1_1(handle, mode, kDefaultTimeoutMillis);
+    Return<DumpstateStatus> status =
+            dumpstate->dumpstateBoard_1_1(handle, mode, kDefaultTimeoutMillis);
 
-    ASSERT_TRUE(status.isOk()) << "Status should be ok: " << status.description();
+    AssertStatusForMode(mode, status, DumpstateStatus::ILLEGAL_ARGUMENT);
 
     native_handle_close(handle);
     native_handle_delete(handle);
@@ -82,6 +148,8 @@ TEST_FOR_ALL_DUMPSTATE_MODES(TestHandleWithNoFd, [this](DumpstateMode mode) {
 
 // Positive test: make sure dumpstateBoard() writes something to the FD.
 TEST_FOR_ALL_DUMPSTATE_MODES(TestOk, [this](DumpstateMode mode) {
+    EnableDeviceLogging();
+
     // Index 0 corresponds to the read end of the pipe; 1 to the write end.
     int fds[2];
     ASSERT_EQ(0, pipe2(fds, O_NONBLOCK)) << errno;
@@ -90,12 +158,14 @@ TEST_FOR_ALL_DUMPSTATE_MODES(TestOk, [this](DumpstateMode mode) {
     ASSERT_NE(handle, nullptr) << "Could not create native_handle";
     handle->data[0] = fds[1];
 
-    Return<void> status = dumpstate->dumpstateBoard_1_1(handle, mode, kDefaultTimeoutMillis);
-    ASSERT_TRUE(status.isOk()) << "Status should be ok: " << status.description();
+    Return<DumpstateStatus> status =
+            dumpstate->dumpstateBoard_1_1(handle, mode, kDefaultTimeoutMillis);
 
-    // Check that at least one byte was written
-    char buff;
-    ASSERT_EQ(1, read(fds[0], &buff, 1)) << "dumped nothing";
+    AssertStatusForMode(mode, status, DumpstateStatus::OK, [&fds]() {
+        // Check that at least one byte was written.
+        char buff;
+        ASSERT_EQ(1, read(fds[0], &buff, 1)) << "Dumped nothing";
+    });
 
     native_handle_close(handle);
     native_handle_delete(handle);
@@ -103,6 +173,8 @@ TEST_FOR_ALL_DUMPSTATE_MODES(TestOk, [this](DumpstateMode mode) {
 
 // Positive test: make sure dumpstateBoard() doesn't crash with two FDs.
 TEST_FOR_ALL_DUMPSTATE_MODES(TestHandleWithTwoFds, [this](DumpstateMode mode) {
+    EnableDeviceLogging();
+
     int fds1[2];
     int fds2[2];
     ASSERT_EQ(0, pipe2(fds1, O_NONBLOCK)) << errno;
@@ -113,8 +185,17 @@ TEST_FOR_ALL_DUMPSTATE_MODES(TestHandleWithTwoFds, [this](DumpstateMode mode) {
     handle->data[0] = fds1[1];
     handle->data[1] = fds2[1];
 
-    Return<void> status = dumpstate->dumpstateBoard_1_1(handle, mode, kDefaultTimeoutMillis);
-    ASSERT_TRUE(status.isOk()) << "Status should be ok: " << status.description();
+    Return<DumpstateStatus> status =
+            dumpstate->dumpstateBoard_1_1(handle, mode, kDefaultTimeoutMillis);
+
+    AssertStatusForMode(mode, status, DumpstateStatus::OK, [&fds1, &fds2]() {
+        // Check that at least one byte was written to one of the FDs.
+        char buff;
+        size_t read1 = read(fds1[0], &buff, 1);
+        size_t read2 = read(fds2[0], &buff, 1);
+        // Sometimes read returns -1, so we can't just add them together and expect >= 1.
+        ASSERT_TRUE(read1 == 1 || read2 == 1) << "Dumped nothing";
+    });
 
     native_handle_close(handle);
     native_handle_delete(handle);
@@ -122,6 +203,8 @@ TEST_FOR_ALL_DUMPSTATE_MODES(TestHandleWithTwoFds, [this](DumpstateMode mode) {
 
 // Make sure dumpstateBoard_1_1 actually validates its arguments.
 TEST_P(DumpstateHidl1_1Test, TestInvalidModeArgument_Negative) {
+    EnableDeviceLogging();
+
     int fds[2];
     ASSERT_EQ(0, pipe2(fds, O_NONBLOCK)) << errno;
 
@@ -129,16 +212,21 @@ TEST_P(DumpstateHidl1_1Test, TestInvalidModeArgument_Negative) {
     ASSERT_NE(handle, nullptr) << "Could not create native_handle";
     handle->data[0] = fds[1];
 
-    Return<void> status = dumpstate->dumpstateBoard_1_1(handle, static_cast<DumpstateMode>(-100),
-                                                        kDefaultTimeoutMillis);
-    ASSERT_FALSE(status.isOk()) << "Status should not be ok with invalid mode param: "
-                                << status.description();
+    Return<DumpstateStatus> status = dumpstate->dumpstateBoard_1_1(
+            handle, static_cast<DumpstateMode>(-100), kDefaultTimeoutMillis);
+
+    ASSERT_TRUE(status.isOk()) << "Status should be ok and return a more specific DumpstateStatus: "
+                               << status.description();
+    ASSERT_EQ(status, DumpstateStatus::ILLEGAL_ARGUMENT)
+            << "Should return DumpstateStatus::ILLEGAL_ARGUMENT for invalid mode param";
 
     native_handle_close(handle);
     native_handle_delete(handle);
 }
 
 TEST_P(DumpstateHidl1_1Test, TestInvalidModeArgument_Undefined) {
+    EnableDeviceLogging();
+
     int fds[2];
     ASSERT_EQ(0, pipe2(fds, O_NONBLOCK)) << errno;
 
@@ -146,26 +234,84 @@ TEST_P(DumpstateHidl1_1Test, TestInvalidModeArgument_Undefined) {
     ASSERT_NE(handle, nullptr) << "Could not create native_handle";
     handle->data[0] = fds[1];
 
-    Return<void> status = dumpstate->dumpstateBoard_1_1(handle, static_cast<DumpstateMode>(9001),
-                                                        kDefaultTimeoutMillis);
-    ASSERT_FALSE(status.isOk()) << "Status should not be ok with invalid mode param: "
-                                << status.description();
+    Return<DumpstateStatus> status = dumpstate->dumpstateBoard_1_1(
+            handle, static_cast<DumpstateMode>(9001), kDefaultTimeoutMillis);
+
+    ASSERT_TRUE(status.isOk()) << "Status should be ok and return a more specific DumpstateStatus: "
+                               << status.description();
+    ASSERT_EQ(status, DumpstateStatus::ILLEGAL_ARGUMENT)
+            << "Should return DumpstateStatus::ILLEGAL_ARGUMENT for invalid mode param";
 
     native_handle_close(handle);
     native_handle_delete(handle);
 }
 
-// Make sure toggling device logging doesn't crash.
-TEST_P(DumpstateHidl1_1Test, TestEnableDeviceLogging) {
-    Return<bool> status = dumpstate->setDeviceLoggingEnabled(true);
+// Positive test: make sure dumpstateBoard() from 1.0 doesn't fail.
+TEST_P(DumpstateHidl1_1Test, Test1_0MethodOk) {
+    EnableDeviceLogging();
+
+    int fds[2];
+    ASSERT_EQ(0, pipe2(fds, O_NONBLOCK)) << errno;
+
+    native_handle_t* handle = native_handle_create(1, 0);
+    ASSERT_NE(handle, nullptr) << "Could not create native_handle";
+    handle->data[0] = fds[1];
+
+    Return<void> status = dumpstate->dumpstateBoard(handle);
 
     ASSERT_TRUE(status.isOk()) << "Status should be ok: " << status.description();
+
+    // Check that at least one byte was written.
+    char buff;
+    ASSERT_EQ(1, read(fds[0], &buff, 1)) << "Dumped nothing";
+
+    native_handle_close(handle);
+    native_handle_delete(handle);
 }
 
-TEST_P(DumpstateHidl1_1Test, TestDisableDeviceLogging) {
-    Return<bool> status = dumpstate->setDeviceLoggingEnabled(false);
+// Make sure disabling device logging behaves correctly.
+TEST_FOR_ALL_DUMPSTATE_MODES(TestDeviceLoggingDisabled, [this](DumpstateMode mode) {
+    DisableDeviceLogging();
 
-    ASSERT_TRUE(status.isOk()) << "Status should be ok: " << status.description();
+    // Index 0 corresponds to the read end of the pipe; 1 to the write end.
+    int fds[2];
+    ASSERT_EQ(0, pipe2(fds, O_NONBLOCK)) << errno;
+
+    native_handle_t* handle = native_handle_create(1, 0);
+    ASSERT_NE(handle, nullptr) << "Could not create native_handle";
+    handle->data[0] = fds[1];
+
+    Return<DumpstateStatus> status =
+            dumpstate->dumpstateBoard_1_1(handle, mode, kDefaultTimeoutMillis);
+
+    AssertStatusForMode(mode, status, DumpstateStatus::DEVICE_LOGGING_NOT_ENABLED, [&fds]() {
+        // Check that nothing was written. Could return 0 or -1.
+        char buff;
+        ASSERT_NE(1, read(fds[0], &buff, 1)) << "Dumped something when device logging is disabled";
+    });
+
+    native_handle_close(handle);
+    native_handle_delete(handle);
+});
+
+// Double-enable is perfectly valid, but the second call shouldn't do anything.
+TEST_P(DumpstateHidl1_1Test, TestRepeatedEnable) {
+    EnableDeviceLogging();
+    EnableDeviceLogging();
+}
+
+// Double-disable is perfectly valid, but the second call shouldn't do anything.
+TEST_P(DumpstateHidl1_1Test, TestRepeatedDisable) {
+    DisableDeviceLogging();
+    DisableDeviceLogging();
+}
+
+// Toggling in short order is perfectly valid.
+TEST_P(DumpstateHidl1_1Test, TestRepeatedToggle) {
+    EnableDeviceLogging();
+    DisableDeviceLogging();
+    EnableDeviceLogging();
+    DisableDeviceLogging();
 }
 
 INSTANTIATE_TEST_SUITE_P(
