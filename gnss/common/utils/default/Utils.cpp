@@ -235,6 +235,58 @@ GnssSvInfoV1_0 Utils::getMockSvInfoV1_0(int16_t svid, V1_0::GnssConstellationTyp
     return svInfo;
 }
 
+hidl_vec<GnssAntennaInfo> Utils::getMockAntennaInfos() {
+    GnssAntennaInfo mockAntennaInfo_1 = {
+            .carrierFrequencyMHz = 123412.12,
+            .phaseCenterOffsetCoordinateMillimeters = Coord{.x = 1,
+                                                            .xUncertainty = 0.1,
+                                                            .y = 2,
+                                                            .yUncertainty = 0.1,
+                                                            .z = 3,
+                                                            .zUncertainty = 0.1},
+            .phaseCenterVariationCorrectionMillimeters =
+                    {
+                            Row{hidl_vec<double>{1, -1, 5, -2, 3, -1}},
+                            Row{hidl_vec<double>{-2, 3, 2, 0, 1, 2}},
+                            Row{hidl_vec<double>{1, 3, 2, -1, -3, 5}},
+                    },
+            .phaseCenterVariationCorrectionUncertaintyMillimeters =
+                    {
+                            Row{hidl_vec<double>{0.1, 0.2, 0.4, 0.1, 0.2, 0.3}},
+                            Row{hidl_vec<double>{0.3, 0.2, 0.3, 0.6, 0.1, 0.1}},
+                            Row{hidl_vec<double>{0.1, 0.1, 0.4, 0.2, 0.5, 0.3}},
+                    },
+            .signalGainCorrectionDbi =
+                    {
+                            Row{hidl_vec<double>{2, -3, 1, -3, 0, -4}},
+                            Row{hidl_vec<double>{1, 0, -4, 1, 3, -2}},
+                            Row{hidl_vec<double>{3, -2, 0, -2, 3, 0}},
+                    },
+            .signalGainCorrectionUncertaintyDbi =
+                    {
+                            Row{hidl_vec<double>{0.3, 0.1, 0.2, 0.6, 0.1, 0.3}},
+                            Row{hidl_vec<double>{0.1, 0.1, 0.5, 0.2, 0.3, 0.1}},
+                            Row{hidl_vec<double>{0.2, 0.4, 0.2, 0.1, 0.1, 0.2}},
+                    },
+    };
+
+    GnssAntennaInfo mockAntennaInfo_2 = {
+            .carrierFrequencyMHz = 532324.23,
+            .phaseCenterOffsetCoordinateMillimeters = Coord{.x = 5,
+                                                            .xUncertainty = 0.1,
+                                                            .y = 6,
+                                                            .yUncertainty = 0.1,
+                                                            .z = 7,
+                                                            .zUncertainty = 0.1},
+    };
+
+    hidl_vec<GnssAntennaInfo> mockAntennaInfos = {
+            mockAntennaInfo_1,
+            mockAntennaInfo_2,
+    };
+    return mockAntennaInfos;
+}
+
 }  // namespace common
 }  // namespace gnss
 }  // namespace hardware

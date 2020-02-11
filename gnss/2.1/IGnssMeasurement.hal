@@ -25,7 +25,6 @@ import IGnssMeasurementCallback;
  * Extended interface for GNSS Measurements support.
  */
 interface IGnssMeasurement extends @2.0::IGnssMeasurement {
-
     /**
      * Initializes the interface and registers the callback routines with the HAL. After a
      * successful call to 'setCallback_2_1' the HAL must begin to provide updates at an average
@@ -47,5 +46,5 @@ interface IGnssMeasurement extends @2.0::IGnssMeasurement {
      *     error code.
      */
     setCallback_2_1(IGnssMeasurementCallback callback, bool enableFullTracking)
-         generates (GnssMeasurementStatus initRet);
+        generates (GnssMeasurementStatus initRet);
 };
