@@ -33,6 +33,9 @@ using GnssDataV2_1 = V2_1::IGnssMeasurementCallback::GnssData;
 using GnssSvInfoV1_0 = V1_0::IGnssCallback::GnssSvInfo;
 using GnssSvInfoV2_0 = V2_0::IGnssCallback::GnssSvInfo;
 using GnssSvInfoV2_1 = V2_1::IGnssCallback::GnssSvInfo;
+using GnssAntennaInfo = ::android::hardware::gnss::V2_1::IGnssAntennaInfoCallback::GnssAntennaInfo;
+using Row = ::android::hardware::gnss::V2_1::IGnssAntennaInfoCallback::Row;
+using Coord = ::android::hardware::gnss::V2_1::IGnssAntennaInfoCallback::Coord;
 
 struct Utils {
     static GnssDataV2_0 getMockMeasurementV2_0();
@@ -46,6 +49,7 @@ struct Utils {
     static GnssSvInfoV1_0 getMockSvInfoV1_0(int16_t svid, V1_0::GnssConstellationType type,
                                             float cN0DbHz, float elevationDegrees,
                                             float azimuthDegrees);
+    static hidl_vec<GnssAntennaInfo> getMockAntennaInfos();
 };
 
 }  // namespace common

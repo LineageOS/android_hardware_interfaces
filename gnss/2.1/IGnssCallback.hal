@@ -24,8 +24,20 @@ import @2.0::IGnssCallback;
  * the interfaces and passes a handle to the HAL.
  */
 interface IGnssCallback extends @2.0::IGnssCallback {
+    /**
+     * Flags for the gnssSetCapabilities callback.
+     */
+    @export(name = "", value_prefix = "GPS_CAPABILITY_")
+    enum Capabilities : @2.0::IGnssCallback.Capabilities {
+        /**
+         * GNSS supports measurement corrections
+         */
+        ANTENNA_INFO = 1 << 11,
+    };
 
-    /** Extends a GnssSvInfo, adding a basebandCN0DbHz. */
+    /**
+     * Extends a GnssSvInfo, adding a basebandCN0DbHz.
+     */
     struct GnssSvInfo {
         /**
          * GNSS satellite information for a single satellite and frequency.
