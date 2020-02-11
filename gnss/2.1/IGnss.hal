@@ -18,10 +18,10 @@ package android.hardware.gnss@2.1;
 
 import android.hardware.gnss.measurement_corrections@1.1::IMeasurementCorrections;
 import @2.0::IGnss;
-
 import IGnssCallback;
 import IGnssMeasurement;
 import IGnssConfiguration;
+import IGnssAntennaInfo;
 
 /**
  * Represents the standard GNSS (Global Navigation Satellite System) interface.
@@ -72,5 +72,15 @@ interface IGnss extends @2.0::IGnss {
      *
      * @return measurementCorrectionsIface Handle to the IMeasurementCorrections interface.
      */
-     getExtensionMeasurementCorrections_1_1() generates (IMeasurementCorrections measurementCorrectionsIface);
+    getExtensionMeasurementCorrections_1_1()
+        generates (IMeasurementCorrections measurementCorrectionsIface);
+
+    /**
+     * This method returns the IGnssAntennaInfo interface.
+     *
+     * This method must return non-null.
+     *
+     * @return gnssAntennaInfoIface Handle to the IGnssAntennaInfo interface.
+     */
+    getExtensionGnssAntennaInfo() generates (IGnssAntennaInfo gnssAntennaInfoIface);
 };

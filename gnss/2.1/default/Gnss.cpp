@@ -17,6 +17,7 @@
 #define LOG_TAG "Gnss"
 
 #include "Gnss.h"
+#include "GnssAntennaInfo.h"
 #include "GnssDebug.h"
 #include "GnssMeasurement.h"
 #include "GnssMeasurementCorrections.h"
@@ -334,9 +335,10 @@ Return<bool> Gnss::setCallback_2_1(const sp<V2_1::IGnssCallback>& callback) {
 
     sGnssCallback_2_1 = callback;
 
-    using Capabilities = V2_0::IGnssCallback::Capabilities;
+    using Capabilities = V2_1::IGnssCallback::Capabilities;
     const auto capabilities = Capabilities::MEASUREMENTS | Capabilities::MEASUREMENT_CORRECTIONS |
-                              Capabilities::LOW_POWER_MODE | Capabilities::SATELLITE_BLACKLIST;
+                              Capabilities::LOW_POWER_MODE | Capabilities::SATELLITE_BLACKLIST |
+                              Capabilities::ANTENNA_INFO;
     auto ret = sGnssCallback_2_1->gnssSetCapabilitiesCb_2_0(capabilities);
     if (!ret.isOk()) {
         ALOGE("%s: Unable to invoke callback", __func__);
@@ -372,6 +374,11 @@ Return<sp<measurement_corrections::V1_1::IMeasurementCorrections>>
 Gnss::getExtensionMeasurementCorrections_1_1() {
     ALOGD("Gnss::getExtensionMeasurementCorrections_1_1()");
     return new GnssMeasurementCorrections();
+}
+
+Return<sp<V2_1::IGnssAntennaInfo>> Gnss::getExtensionGnssAntennaInfo() {
+    ALOGD("Gnss::getExtensionGnssAntennaInfo");
+    return new GnssAntennaInfo();
 }
 
 void Gnss::reportSvStatus(const hidl_vec<GnssSvInfo>& svInfoList) const {

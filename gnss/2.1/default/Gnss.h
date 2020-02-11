@@ -22,6 +22,7 @@
 #include <atomic>
 #include <mutex>
 #include <thread>
+#include "GnssAntennaInfo.h"
 #include "GnssConfiguration.h"
 
 namespace android {
@@ -91,6 +92,7 @@ struct Gnss : public IGnss {
     Return<sp<V2_1::IGnssConfiguration>> getExtensionGnssConfiguration_2_1() override;
     Return<sp<measurement_corrections::V1_1::IMeasurementCorrections>>
     getExtensionMeasurementCorrections_1_1() override;
+    Return<sp<V2_1::IGnssAntennaInfo>> getExtensionGnssAntennaInfo() override;
 
   private:
     void reportLocation(const V2_0::GnssLocation&) const;
