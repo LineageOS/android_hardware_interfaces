@@ -260,6 +260,32 @@ enum StandardMetadataType {
     PLANE_LAYOUTS = 15,
 
     /**
+     * Can be used to get the crop of the buffer.
+     *
+     * Some buffer producers require extra padding to their output buffer; therefore the
+     * physical size of the native buffer will be larger than its logical size.
+     * The crop rectangle(s) determine the offset and logical size of the buffer that should be
+     * read by consumers.
+     *
+     * The crop is defined per plane. The crop(s) are represented by an array of
+     * android.hardware.graphics.common.Rects. The array must be the same length and in the same
+     * order as the array of PlaneLayouts. Eg. the first crop in the array is the crop for the
+     * first PlaneLayout in the PlaneLayout array.
+     *
+     * Each crop Rect is measured in samples and is relative to the offset of the plane. Valid crop
+     * rectangles are within the boundaries of the plane: [0, 0, widthInSamples, heightInSamples].
+     * The default crop rectangle of each plane is a rectangle the same size as the plane:
+     * [0, 0, widthInSamples, heightInSamples].
+     *
+     * When it is encoded into a byte stream, the total number of Rects is written using
+     * 8 bytes in little endian. It is followed by each Rect.
+     *
+     * To encode a Rect, write the following fields in this order each as 8 bytes in little endian:
+     * left, top, right and bottom.
+     */
+    CROP = 16,
+
+    /**
      * Can be used to get or set the dataspace of the buffer. The framework may attempt to set
      * this value.
      *
@@ -273,7 +299,7 @@ enum StandardMetadataType {
      * When it is encoded into a byte stream, it is first cast to a int32_t and then represented in
      * the byte stream by 4 bytes written in little endian.
      */
-    DATASPACE = 16,
+    DATASPACE = 17,
 
     /**
      * Can be used to get or set the BlendMode. The framework may attempt to set this value.
@@ -287,7 +313,7 @@ enum StandardMetadataType {
      * When it is encoded into a byte stream, it is first cast to a int32_t and then represented by
      * 4 bytes written in little endian.
      */
-    BLEND_MODE = 17,
+    BLEND_MODE = 18,
 
     /**
      * Can be used to get or set static HDR metadata specified by SMPTE ST 2086.
@@ -300,7 +326,7 @@ enum StandardMetadataType {
      * little endian. The ordering of float values follows the definition of Smpte2086 and XyColor.
      * If this is unset when encoded into a byte stream, the byte stream is empty.
      */
-    SMPTE2086 = 18,
+    SMPTE2086 = 19,
 
     /**
      * Can be used to get or set static HDR metadata specified by CTA 861.3.
@@ -313,7 +339,7 @@ enum StandardMetadataType {
      * little endian. The ordering of float values follows the definition of Cta861_3.
      * If this is unset when encoded into a byte stream, the byte stream is empty.
      */
-    CTA861_3 = 19,
+    CTA861_3 = 20,
 
     /**
      * Can be used to get or set dynamic HDR metadata specified by SMPTE ST 2094-40:2016.
@@ -326,5 +352,5 @@ enum StandardMetadataType {
      * using 8 bytes in little endian. It is followed by the uint8_t byte array.
      * If this is unset when encoded into a byte stream, the byte stream is empty.
      */
-    SMPTE2094_40 = 20,
+    SMPTE2094_40 = 21,
 }
