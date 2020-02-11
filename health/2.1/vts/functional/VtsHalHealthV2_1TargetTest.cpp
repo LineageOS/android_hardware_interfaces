@@ -228,17 +228,18 @@ TEST_P(HealthHidlTest, getHealthInfo_2_1) {
             return;
         }
         ASSERT_EQ(Result::SUCCESS, result);
-        const auto& legacy = value.legacy.legacy;
 
         EXPECT_TRUE(IsEnum(value.batteryCapacityLevel)) << " BatteryCapacityLevel";
         EXPECT_GE(value.batteryChargeTimeToFullNowSeconds, 0);
 
-        EXPECT_GE(value.batteryFullCapacityUah, 0)
-                << "batteryFullCapacityUah should not be negative";
+        EXPECT_GE(value.batteryFullChargeDesignCapacityUah, 0)
+                << "batteryFullChargeDesignCapacityUah should not be negative";
 
-        if (value.batteryFullCapacityUah > 0) {
-            EXPECT_GE(value.batteryFullCapacityUah, legacy.batteryFullCharge * 0.50);
-            EXPECT_LE(value.batteryFullCapacityUah, legacy.batteryFullCharge * 1.20);
+        // Check for extreme outliers
+        const auto& legacy = value.legacy.legacy;
+        if (value.batteryFullChargeDesignCapacityUah > 0) {
+            EXPECT_LT((long)legacy.batteryFullCharge,
+                      ((long)value.batteryFullChargeDesignCapacityUah * 1000));
         }
     })));
 }
