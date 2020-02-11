@@ -310,6 +310,99 @@ TEST_F(RadioHidlTest_v1_5, setSignalStrengthReportingCriteria_1_5_NGRAN_SSSINR) 
 }
 
 /*
+ * Test IRadio.setLinkCapacityReportingCriteria_1_5() invalid hysteresisDlKbps
+ */
+TEST_F(RadioHidlTest_v1_5, setLinkCapacityReportingCriteria_1_5_invalidHysteresisDlKbps) {
+    serial = GetRandomSerialNumber();
+
+    Return<void> res = radio_v1_5->setLinkCapacityReportingCriteria_1_5(
+            serial, 5000,
+            5000,  // hysteresisDlKbps too big for thresholds delta
+            100, {1000, 5000, 10000, 20000}, {500, 1000, 5000, 10000},
+            ::android::hardware::radio::V1_5::AccessNetwork::GERAN);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_5->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
+
+    ALOGI("setLinkCapacityReportingCriteria_1_5_invalidHysteresisDlKbps, rspInfo.error = %s\n",
+          toString(radioRsp_v1_5->rspInfo.error).c_str());
+    // Allow REQUEST_NOT_SUPPORTED as setLinkCapacityReportingCriteria_1_5() may not be supported
+    // for GERAN
+    ASSERT_TRUE(
+            CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
+                             {RadioError::INVALID_ARGUMENTS, RadioError::REQUEST_NOT_SUPPORTED}));
+}
+
+/*
+ * Test IRadio.setLinkCapacityReportingCriteria_1_5() invalid hysteresisUlKbps
+ */
+TEST_F(RadioHidlTest_v1_5, setLinkCapacityReportingCriteria_1_5_invalidHysteresisUlKbps) {
+    serial = GetRandomSerialNumber();
+
+    Return<void> res = radio_v1_5->setLinkCapacityReportingCriteria_1_5(
+            serial, 5000, 500,
+            1000,  // hysteresisUlKbps too big for thresholds delta
+            {1000, 5000, 10000, 20000}, {500, 1000, 5000, 10000},
+            ::android::hardware::radio::V1_5::AccessNetwork::GERAN);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_5->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
+
+    ALOGI("setLinkCapacityReportingCriteria_1_5_invalidHysteresisUlKbps, rspInfo.error = %s\n",
+          toString(radioRsp_v1_5->rspInfo.error).c_str());
+    // Allow REQUEST_NOT_SUPPORTED as setLinkCapacityReportingCriteria_1_5() may not be supported
+    // for GERAN
+    ASSERT_TRUE(
+            CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
+                             {RadioError::INVALID_ARGUMENTS, RadioError::REQUEST_NOT_SUPPORTED}));
+}
+
+/*
+ * Test IRadio.setLinkCapacityReportingCriteria_1_5() empty params
+ */
+TEST_F(RadioHidlTest_v1_5, setLinkCapacityReportingCriteria_1_5_emptyParams) {
+    serial = GetRandomSerialNumber();
+
+    Return<void> res = radio_v1_5->setLinkCapacityReportingCriteria_1_5(
+            serial, 0, 0, 0, {}, {}, ::android::hardware::radio::V1_5::AccessNetwork::GERAN);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_5->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
+
+    ALOGI("setLinkCapacityReportingCriteria_1_5_emptyParams, rspInfo.error = %s\n",
+          toString(radioRsp_v1_5->rspInfo.error).c_str());
+    // Allow REQUEST_NOT_SUPPORTED as setLinkCapacityReportingCriteria_1_5() may not be supported
+    // for GERAN
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
+                                 {RadioError::NONE, RadioError::REQUEST_NOT_SUPPORTED}));
+}
+
+/*
+ * Test IRadio.setLinkCapacityReportingCriteria_1_5() for GERAN
+ */
+TEST_F(RadioHidlTest_v1_5, setLinkCapacityReportingCriteria_1_5_Geran) {
+    serial = GetRandomSerialNumber();
+
+    Return<void> res = radio_v1_5->setLinkCapacityReportingCriteria_1_5(
+            serial, 5000, 500, 100, {1000, 5000, 10000, 20000}, {500, 1000, 5000, 10000},
+            ::android::hardware::radio::V1_5::AccessNetwork::GERAN);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_5->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
+
+    ALOGI("setLinkCapacityReportingCriteria_1_5_Geran, rspInfo.error = %s\n",
+          toString(radioRsp_v1_5->rspInfo.error).c_str());
+    // Allow REQUEST_NOT_SUPPORTED as setLinkCapacityReportingCriteria_1_5() may not be supported
+    // for GERAN
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
+                                 {RadioError::NONE, RadioError::REQUEST_NOT_SUPPORTED}));
+}
+
+/*
  * Test IRadio.enableUiccApplications() for the response returned.
  * For SIM ABSENT case.
  */

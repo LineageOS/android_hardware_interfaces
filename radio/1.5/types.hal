@@ -156,7 +156,8 @@ struct SignalThresholdInfo {
 
 enum AccessNetwork : @1.4::AccessNetwork {
     /**
-     *  Next-Generation Radio Access Network (NGRAN)
+     * Next-Generation Radio Access Network (NGRAN).
+     * Note NGRAN is only for standalone mode. Non-standalone mode uses AccessNetwork EUTRAN.
      */
     NGRAN = 6,
 };
