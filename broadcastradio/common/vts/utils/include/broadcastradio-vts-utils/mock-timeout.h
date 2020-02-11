@@ -82,33 +82,44 @@ inline void EGMockFlippedComma_(std::function<void()> returned, std::function<vo
     };                                                                \
     return EGMockFlippedComma_<decltype(invokeMock())>(invokeMock, notify);
 
+// We define this as a variadic macro in case F contains unprotected
+// commas (the same reason that we use variadic macros in other places
+// in this file).
+#define EGMOCK_RESULT_(tn, ...) \
+    tn ::testing::internal::Function<__VA_ARGS__>::Result
+
+// The type of argument N of the given function type.
+// INTERNAL IMPLEMENTATION - DON'T USE IN USER CODE!!!
+#define EGMOCK_ARG_(tn, N, ...) \
+    tn ::testing::internal::Function<__VA_ARGS__>::template Arg<N-1>::type
+
 /**
  * Gmock MOCK_METHOD0 timeout-capable extension.
  */
 #define MOCK_TIMEOUT_METHOD0(Method, ...)       \
     MOCK_METHOD0(egmock_##Method, __VA_ARGS__); \
     EGMOCK_TIMEOUT_METHOD_DEF_(Method);         \
-    virtual GMOCK_RESULT_(, __VA_ARGS__) Method() { EGMOCK_TIMEOUT_METHOD_BODY_(Method); }
+    virtual EGMOCK_RESULT_(, __VA_ARGS__) Method() { EGMOCK_TIMEOUT_METHOD_BODY_(Method); }
 
 /**
  * Gmock MOCK_METHOD1 timeout-capable extension.
  */
-#define MOCK_TIMEOUT_METHOD1(Method, ...)                                                 \
-    MOCK_METHOD1(egmock_##Method, __VA_ARGS__);                                           \
-    EGMOCK_TIMEOUT_METHOD_DEF_(Method);                                                   \
-    virtual GMOCK_RESULT_(, __VA_ARGS__) Method(GMOCK_ARG_(, 1, __VA_ARGS__) egmock_a1) { \
-        EGMOCK_TIMEOUT_METHOD_BODY_(Method, egmock_a1);                                   \
+#define MOCK_TIMEOUT_METHOD1(Method, ...)                                                   \
+    MOCK_METHOD1(egmock_##Method, __VA_ARGS__);                                             \
+    EGMOCK_TIMEOUT_METHOD_DEF_(Method);                                                     \
+    virtual EGMOCK_RESULT_(, __VA_ARGS__) Method(EGMOCK_ARG_(, 1, __VA_ARGS__) egmock_a1) { \
+        EGMOCK_TIMEOUT_METHOD_BODY_(Method, egmock_a1);                                     \
     }
 
 /**
  * Gmock MOCK_METHOD2 timeout-capable extension.
  */
-#define MOCK_TIMEOUT_METHOD2(Method, ...)                                                        \
-    MOCK_METHOD2(egmock_##Method, __VA_ARGS__);                                                  \
-    EGMOCK_TIMEOUT_METHOD_DEF_(Method);                                                          \
-    virtual GMOCK_RESULT_(, __VA_ARGS__)                                                         \
-        Method(GMOCK_ARG_(, 1, __VA_ARGS__) egmock_a1, GMOCK_ARG_(, 2, __VA_ARGS__) egmock_a2) { \
-        EGMOCK_TIMEOUT_METHOD_BODY_(Method, egmock_a1, egmock_a2);                               \
+#define MOCK_TIMEOUT_METHOD2(Method, ...)                                                          \
+    MOCK_METHOD2(egmock_##Method, __VA_ARGS__);                                                    \
+    EGMOCK_TIMEOUT_METHOD_DEF_(Method);                                                            \
+    virtual EGMOCK_RESULT_(, __VA_ARGS__)                                                          \
+        Method(EGMOCK_ARG_(, 1, __VA_ARGS__) egmock_a1, EGMOCK_ARG_(, 2, __VA_ARGS__) egmock_a2) { \
+        EGMOCK_TIMEOUT_METHOD_BODY_(Method, egmock_a1, egmock_a2);                                 \
     }
 
 /**
