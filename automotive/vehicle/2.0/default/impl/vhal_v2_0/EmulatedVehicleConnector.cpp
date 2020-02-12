@@ -311,6 +311,11 @@ StatusCode EmulatedVehicleServer::onSetInitialUserInfo(const VehiclePropValue& v
     // (even when explicitly calling setprop log.tag. As this class should be using ALOG instead of
     // LOG, it's not worth investigating why...
 
+    if (value.value.int32Values.size() == 0) {
+        LOG(ERROR) << "set(INITIAL_USER_INFO): no int32values, ignoring it: " << toString(value);
+        return StatusCode::INVALID_ARG;
+    }
+
     if (value.areaId != 0) {
         LOG(INFO) << "set(INITIAL_USER_INFO) called from lshal; storing it: " << toString(value);
         mInitialUserResponseFromCmd.reset(new VehiclePropValue(value));
@@ -318,10 +323,6 @@ StatusCode EmulatedVehicleServer::onSetInitialUserInfo(const VehiclePropValue& v
     }
     LOG(INFO) << "set(INITIAL_USER_INFO) called from Android: " << toString(value);
 
-    if (value.value.int32Values.size() == 0) {
-        LOG(ERROR) << "invalid request (no requestId): " << toString(value);
-        return StatusCode::INVALID_ARG;
-    }
     int32_t requestId = value.value.int32Values[0];
 
     // Create the update property and set common values
