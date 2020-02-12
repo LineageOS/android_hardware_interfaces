@@ -1,0 +1,21 @@
+cc_test {
+    name: "VtsHalIdentityTargetTest",
+    defaults: [
+        "VtsHalTargetTestDefaults",
+        "use_libaidlvintf_gtest_helper_static",
+    ],
+    srcs: ["VtsHalIdentityTargetTest.cpp"],
+    shared_libs: [
+        "libbinder",
+        "libcppbor",
+        "android.hardware.identity-support-lib",
+    ],
+    static_libs: [
+        "android.hardware.identity-cpp",
+        "android.hardware.keymaster-cpp",
+    ],
+    test_suites: [
+        "general-tests",
+        "vts-core",
+    ],
+}
