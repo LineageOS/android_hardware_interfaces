@@ -23,6 +23,7 @@
 #include <android/hidl/manager/1.0/IServiceManager.h>
 
 #include <keymasterV4_0/key_param_output.h>
+#include <keymasterV4_0/keymaster_utils.h>
 
 namespace android {
 namespace hardware {
@@ -41,39 +42,27 @@ namespace V4_0 {
 
 namespace test {
 
+using namespace std::literals::chrono_literals;
+
 void KeymasterHidlTest::InitializeKeymaster() {
-    service_name_ = GetParam();
-    keymaster_ = IKeymasterDevice::getService(service_name_);
+    keymaster_ = IKeymasterDevice::getService(GetParam());
     ASSERT_NE(keymaster_, nullptr);
 
     ASSERT_TRUE(keymaster_
-                    ->getHardwareInfo([&](SecurityLevel securityLevel, const hidl_string& name,
-                                          const hidl_string& author) {
-                        securityLevel_ = securityLevel;
-                        name_ = name;
-                        author_ = author;
-                    })
-                    .isOk());
+                        ->getHardwareInfo([&](SecurityLevel securityLevel, const hidl_string& name,
+                                              const hidl_string& author) {
+                            securityLevel_ = securityLevel;
+                            name_ = name;
+                            author_ = author;
+                        })
+                        .isOk());
 }
 
 void KeymasterHidlTest::SetUp() {
     InitializeKeymaster();
 
-    os_version_ = ::keymaster::GetOsVersion();
-    os_patch_level_ = ::keymaster::GetOsPatchlevel();
-
-    auto service_manager = android::hidl::manager::V1_0::IServiceManager::getService();
-    ASSERT_NE(nullptr, service_manager.get());
-    all_keymasters_.push_back(keymaster_);
-    service_manager->listByInterface(
-        IKeymasterDevice::descriptor, [&](const hidl_vec<hidl_string>& names) {
-            for (auto& name : names) {
-                if (name == service_name_) continue;
-                auto keymaster = IKeymasterDevice::getService(name);
-                ASSERT_NE(keymaster, nullptr);
-                all_keymasters_.push_back(keymaster);
-            }
-        });
+    os_version_ = support::getOsVersion();
+    os_patch_level_ = support::getOsPatchlevel();
 }
 
 ErrorCode KeymasterHidlTest::GenerateKey(const AuthorizationSet& key_desc, HidlBuf* key_blob,
