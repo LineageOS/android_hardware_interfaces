@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,11 @@
 
 #pragma once
 
-#include <keymasterV4_0/authorization_set.h>
+#include <keymasterV4_0/keymaster_utils.h>
 
-#include <keymasterV4_1/keymaster_tags.h>
+namespace android::hardware::keymaster::V4_1::support {
 
-namespace android::hardware::keymaster::V4_1 {
+using V4_0::support::blob2hidlVec;
+using V4_0::support::hidlVec2AuthToken;
 
-using V4_0::AuthorizationSet;
-using V4_0::AuthorizationSetBuilder;
-using V4_0::KeyParameter;
-
-}  // namespace android::hardware::keymaster::V4_1
+}  // namespace android::hardware::keymaster::V4_1::support
