@@ -44,11 +44,9 @@ namespace test {
 
 using namespace std::literals::chrono_literals;
 
-void KeymasterHidlTest::InitializeKeymaster() {
-    std::string instance_name = GetParam();
-    keymaster_ = IKeymasterDevice::getService(GetParam());
-    ASSERT_NE(keymaster_, nullptr);
-
+void KeymasterHidlTest::InitializeKeymaster(sp<IKeymasterDevice> keymaster) {
+    ASSERT_NE(keymaster, nullptr);
+    keymaster_ = keymaster;
     ASSERT_TRUE(keymaster_
                         ->getHardwareInfo([&](SecurityLevel securityLevel, const hidl_string& name,
                                               const hidl_string& author) {
@@ -57,13 +55,13 @@ void KeymasterHidlTest::InitializeKeymaster() {
                             author_ = author;
                         })
                         .isOk());
-}
-
-void KeymasterHidlTest::SetUp() {
-    InitializeKeymaster();
 
     os_version_ = support::getOsVersion();
     os_patch_level_ = support::getOsPatchlevel();
+}
+
+void KeymasterHidlTest::SetUp() {
+    InitializeKeymaster(IKeymasterDevice::getService(GetParam()));
 }
 
 ErrorCode KeymasterHidlTest::GenerateKey(const AuthorizationSet& key_desc, HidlBuf* key_blob,

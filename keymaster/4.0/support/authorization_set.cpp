@@ -25,7 +25,7 @@ namespace hardware {
 namespace keymaster {
 namespace V4_0 {
 
-inline bool keyParamLess(const KeyParameter& a, const KeyParameter& b) {
+bool keyParamLess(const KeyParameter& a, const KeyParameter& b) {
     if (a.tag != b.tag) return a.tag < b.tag;
     int retval;
     switch (typeFromTag(a.tag)) {
@@ -58,7 +58,7 @@ inline bool keyParamLess(const KeyParameter& a, const KeyParameter& b) {
     return false;
 }
 
-inline bool keyParamEqual(const KeyParameter& a, const KeyParameter& b) {
+bool keyParamEqual(const KeyParameter& a, const KeyParameter& b) {
     if (a.tag != b.tag) return false;
 
     switch (typeFromTag(a.tag)) {
