@@ -18,6 +18,8 @@
 #define HARDWARE_INTERFACES_KEYMASTER_4_0_SUPPORT_OPENSSL_UTILS_H_
 
 #include <android/hardware/keymaster/4.0/types.h>
+#include <openssl/evp.h>
+#include <openssl/x509.h>
 
 template <typename T, void (*F)(T*)>
 struct UniquePtrDeleter {

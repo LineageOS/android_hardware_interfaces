@@ -352,11 +352,11 @@ bool verify_attestation_record(const string& challenge, const string& app_id,
     EXPECT_EQ(ErrorCode::OK, error);
     if (error != ErrorCode::OK) return false;
 
-    EXPECT_TRUE(att_attestation_version == 3);
+    EXPECT_GE(att_attestation_version, 3U);
 
     expected_sw_enforced.push_back(TAG_ATTESTATION_APPLICATION_ID, HidlBuf(app_id));
 
-    EXPECT_EQ(att_keymaster_version, 4U);
+    EXPECT_GE(att_keymaster_version, 4U);
     EXPECT_EQ(security_level, att_keymaster_security_level);
     EXPECT_EQ(security_level, att_attestation_security_level);
 
