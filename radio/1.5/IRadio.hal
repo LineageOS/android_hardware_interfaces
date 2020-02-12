@@ -69,6 +69,35 @@ interface IRadio extends @1.4::IRadio {
             SignalThresholdInfo signalThresholdInfo, AccessNetwork accessNetwork);
 
     /**
+     * Sets the link capacity reporting criteria.
+     *
+     * The resulting reporting criteria are the AND of all the supplied criteria.
+     *
+     * Note: Reporting criteria must be individually set for each RAN. If unset, reporting criteria
+     * for that RAN are implementation-defined.
+     *
+     * Response callback is IRadioResponse.setLinkCapacityReportingCriteriaResponse_1_5().
+     *
+     * @param serial Serial number of request.
+     * @param hysteresisMs A hysteresis time in milliseconds to prevent flapping. A value of 0
+     *     disables hysteresis.
+     * @param hysteresisDlKbps An interval in kbps defining the required magnitude change between DL
+     *     reports. hysteresisDlKbps must be smaller than the smallest threshold delta. A value of 0
+     *     disables hysteresis.
+     * @param hysteresisUlKbps An interval in kbps defining the required magnitude change between UL
+     *     reports. hysteresisUlKbps must be smaller than the smallest threshold delta. A value of 0
+     *     disables hysteresis.
+     * @param thresholdsDownlinkKbps A vector of trigger thresholds in kbps for downlink reports. A
+     *     vector size of 0 disables the use of DL thresholds for reporting.
+     * @param thresholdsUplinkKbps A vector of trigger thresholds in kbps for uplink reports. A
+     *     vector size of 0 disables the use of UL thresholds for reporting.
+     * @param accessNetwork The type of network for which to apply these thresholds.
+     */
+    oneway setLinkCapacityReportingCriteria_1_5(int32_t serial, int32_t hysteresisMs,
+            int32_t hysteresisDlKbps, int32_t hysteresisUlKbps, vec<int32_t> thresholdsDownlinkKbps,
+            vec<int32_t> thresholdsUplinkKbps, AccessNetwork accessNetwork);
+
+    /**
      * Enable or disable UiccApplications on the SIM. If disabled:
      *  - Modem will not register on any network.
      *  - SIM must be PRESENT, and the IccId of the SIM must still be accessible.
