@@ -9,6 +9,8 @@ hidl_interface {
     srcs: [
         "types.hal",
         "IGnss.hal",
+        "IGnssAntennaInfo.hal",
+        "IGnssAntennaInfoCallback.hal",
         "IGnssCallback.hal",
         "IGnssMeasurement.hal",
         "IGnssMeasurementCallback.hal",

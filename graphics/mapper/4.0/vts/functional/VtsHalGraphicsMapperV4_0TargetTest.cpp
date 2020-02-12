@@ -151,11 +151,6 @@ class GraphicsMapperHidlTest
                   planeLayout.totalSizeInBytes);
         EXPECT_EQ(1, planeLayout.horizontalSubsampling);
         EXPECT_EQ(1, planeLayout.verticalSubsampling);
-
-        EXPECT_EQ(0, planeLayout.crop.left);
-        EXPECT_EQ(0, planeLayout.crop.top);
-        EXPECT_EQ(planeLayout.widthInSamples, planeLayout.crop.right);
-        EXPECT_EQ(planeLayout.heightInSamples, planeLayout.crop.bottom);
     }
 
     void verifyBufferDump(const IMapper::BufferDump& bufferDump,
@@ -998,6 +993,22 @@ TEST_P(GraphicsMapperHidlTest, GetPlaneLayouts) {
 }
 
 /**
+ * Test IMapper::get(Crop)
+ */
+TEST_P(GraphicsMapperHidlTest, GetCrop) {
+    auto info = mDummyDescriptorInfo;
+    info.format = PixelFormat::RGBA_8888;
+    info.usage = static_cast<uint64_t>(BufferUsage::CPU_WRITE_OFTEN | BufferUsage::CPU_READ_OFTEN);
+
+    testGet(info, gralloc4::MetadataType_Crop,
+            [](const IMapper::BufferDescriptorInfo& /*info*/, const hidl_vec<uint8_t>& vec) {
+                std::vector<aidl::android::hardware::graphics::common::Rect> crops;
+                ASSERT_EQ(NO_ERROR, gralloc4::decodeCrop(vec, &crops));
+                EXPECT_EQ(1, crops.size());
+            });
+}
+
+/**
  * Test IMapper::get(Dataspace)
  */
 TEST_P(GraphicsMapperHidlTest, GetDataspace) {
@@ -1103,6 +1114,8 @@ TEST_P(GraphicsMapperHidlTest, GetMetadataBadValue) {
     ASSERT_EQ(0, vec.size());
     ASSERT_EQ(Error::BAD_BUFFER,
               mGralloc->get(bufferHandle, gralloc4::MetadataType_PlaneLayouts, &vec));
+    ASSERT_EQ(0, vec.size());
+    ASSERT_EQ(Error::BAD_BUFFER, mGralloc->get(bufferHandle, gralloc4::MetadataType_Crop, &vec));
     ASSERT_EQ(0, vec.size());
     ASSERT_EQ(Error::BAD_BUFFER,
               mGralloc->get(bufferHandle, gralloc4::MetadataType_Dataspace, &vec));
@@ -1362,10 +1375,6 @@ TEST_P(GraphicsMapperHidlTest, SetPlaneLayouts) {
     planeLayoutA.totalSizeInBytes = planeLayoutA.strideInBytes * info.height;
     planeLayoutA.horizontalSubsampling = 1;
     planeLayoutA.verticalSubsampling = 1;
-    planeLayoutA.crop.left = 0;
-    planeLayoutA.crop.top = 0;
-    planeLayoutA.crop.right = info.width;
-    planeLayoutA.crop.bottom = info.height;
 
     component.type = gralloc4::PlaneLayoutComponentType_A;
     component.offsetInBits = 0;
@@ -1382,10 +1391,6 @@ TEST_P(GraphicsMapperHidlTest, SetPlaneLayouts) {
     planeLayoutRGB.totalSizeInBytes = planeLayoutRGB.strideInBytes * info.height;
     planeLayoutRGB.horizontalSubsampling = 1;
     planeLayoutRGB.verticalSubsampling = 1;
-    planeLayoutRGB.crop.left = 0;
-    planeLayoutRGB.crop.top = 0;
-    planeLayoutRGB.crop.right = info.width;
-    planeLayoutRGB.crop.bottom = info.height;
 
     component.type = gralloc4::PlaneLayoutComponentType_R;
     planeLayoutRGB.components.push_back(component);
@@ -1423,11 +1428,6 @@ TEST_P(GraphicsMapperHidlTest, SetPlaneLayouts) {
         EXPECT_EQ(planeLayout.horizontalSubsampling, realPlaneLayout.horizontalSubsampling);
         EXPECT_EQ(planeLayout.verticalSubsampling, realPlaneLayout.verticalSubsampling);
 
-        EXPECT_EQ(planeLayout.crop.left, realPlaneLayout.crop.left);
-        EXPECT_EQ(planeLayout.crop.top, realPlaneLayout.crop.top);
-        EXPECT_EQ(planeLayout.crop.right, realPlaneLayout.crop.right);
-        EXPECT_EQ(planeLayout.crop.bottom, realPlaneLayout.crop.bottom);
-
         ASSERT_EQ(planeLayout.components.size(), realPlaneLayout.components.size());
 
         for (int j = 0; j < realPlaneLayout.components.size(); j++) {
@@ -1440,6 +1440,26 @@ TEST_P(GraphicsMapperHidlTest, SetPlaneLayouts) {
             EXPECT_EQ(component.offsetInBits, realComponent.offsetInBits);
         }
     }
+}
+
+/**
+ * Test IMapper::set(Crop)
+ */
+TEST_P(GraphicsMapperHidlTest, SetCrop) {
+    std::vector<aidl::android::hardware::graphics::common::Rect> crops{{0, 0, 32, 32}};
+    hidl_vec<uint8_t> vec;
+    ASSERT_EQ(NO_ERROR, gralloc4::encodeCrop(crops, &vec));
+
+    testSet(mDummyDescriptorInfo, gralloc4::MetadataType_Crop, vec,
+            [&](const IMapper::BufferDescriptorInfo& /*info*/, const hidl_vec<uint8_t>& vec) {
+                std::vector<aidl::android::hardware::graphics::common::Rect> realCrops;
+                ASSERT_EQ(NO_ERROR, gralloc4::decodeCrop(vec, &realCrops));
+                ASSERT_EQ(1, realCrops.size());
+                ASSERT_EQ(crops.front().left, realCrops.front().left);
+                ASSERT_EQ(crops.front().top, realCrops.front().top);
+                ASSERT_EQ(crops.front().right, realCrops.front().right);
+                ASSERT_EQ(crops.front().bottom, realCrops.front().bottom);
+            });
 }
 
 /**
@@ -1589,6 +1609,7 @@ TEST_P(GraphicsMapperHidlTest, SetMetadataNullBuffer) {
               mGralloc->set(bufferHandle, gralloc4::MetadataType_ChromaSiting, vec));
     ASSERT_EQ(Error::BAD_BUFFER,
               mGralloc->set(bufferHandle, gralloc4::MetadataType_PlaneLayouts, vec));
+    ASSERT_EQ(Error::BAD_BUFFER, mGralloc->set(bufferHandle, gralloc4::MetadataType_Crop, vec));
     ASSERT_EQ(Error::BAD_BUFFER,
               mGralloc->set(bufferHandle, gralloc4::MetadataType_Dataspace, vec));
     ASSERT_EQ(Error::BAD_BUFFER,
@@ -1607,16 +1628,48 @@ TEST_P(GraphicsMapperHidlTest, SetConstantMetadata) {
     const native_handle_t* bufferHandle = nullptr;
     ASSERT_NO_FATAL_FAILURE(bufferHandle = mGralloc->allocate(mDummyDescriptorInfo, true));
 
-    hidl_vec<uint8_t> vec;
-    ASSERT_EQ(Error::BAD_VALUE, mGralloc->set(bufferHandle, gralloc4::MetadataType_BufferId, vec));
-    ASSERT_EQ(Error::BAD_VALUE, mGralloc->set(bufferHandle, gralloc4::MetadataType_Name, vec));
-    ASSERT_EQ(Error::BAD_VALUE, mGralloc->set(bufferHandle, gralloc4::MetadataType_Width, vec));
-    ASSERT_EQ(Error::BAD_VALUE, mGralloc->set(bufferHandle, gralloc4::MetadataType_Height, vec));
+    uint64_t bufferId = 2;
+    hidl_vec<uint8_t> bufferIdVec;
+    ASSERT_EQ(NO_ERROR, gralloc4::encodeBufferId(bufferId, &bufferIdVec));
     ASSERT_EQ(Error::BAD_VALUE,
-              mGralloc->set(bufferHandle, gralloc4::MetadataType_LayerCount, vec));
+              mGralloc->set(bufferHandle, gralloc4::MetadataType_BufferId, bufferIdVec));
+
+    std::string name{"new name"};
+    hidl_vec<uint8_t> nameVec;
+    ASSERT_EQ(NO_ERROR, gralloc4::encodeName(name, &nameVec));
+    ASSERT_EQ(Error::BAD_VALUE, mGralloc->set(bufferHandle, gralloc4::MetadataType_Name, nameVec));
+
+    uint64_t width = 32;
+    hidl_vec<uint8_t> widthVec;
+    ASSERT_EQ(NO_ERROR, gralloc4::encodeWidth(width, &widthVec));
     ASSERT_EQ(Error::BAD_VALUE,
-              mGralloc->set(bufferHandle, gralloc4::MetadataType_PixelFormatRequested, vec));
-    ASSERT_EQ(Error::BAD_VALUE, mGralloc->set(bufferHandle, gralloc4::MetadataType_Usage, vec));
+              mGralloc->set(bufferHandle, gralloc4::MetadataType_Width, widthVec));
+
+    uint64_t height = 32;
+    hidl_vec<uint8_t> heightVec;
+    ASSERT_EQ(NO_ERROR, gralloc4::encodeHeight(height, &heightVec));
+    ASSERT_EQ(Error::BAD_VALUE,
+              mGralloc->set(bufferHandle, gralloc4::MetadataType_Height, heightVec));
+
+    uint64_t layerCount = 2;
+    hidl_vec<uint8_t> layerCountVec;
+    ASSERT_EQ(NO_ERROR, gralloc4::encodeLayerCount(layerCount, &layerCountVec));
+    ASSERT_EQ(Error::BAD_VALUE,
+              mGralloc->set(bufferHandle, gralloc4::MetadataType_LayerCount, layerCountVec));
+
+    hardware::graphics::common::V1_2::PixelFormat pixelFormatRequested = PixelFormat::BLOB;
+    hidl_vec<uint8_t> pixelFormatRequestedVec;
+    ASSERT_EQ(NO_ERROR,
+              gralloc4::encodePixelFormatRequested(pixelFormatRequested, &pixelFormatRequestedVec));
+    ASSERT_EQ(Error::BAD_VALUE,
+              mGralloc->set(bufferHandle, gralloc4::MetadataType_PixelFormatRequested,
+                            pixelFormatRequestedVec));
+
+    uint64_t usage = 0;
+    hidl_vec<uint8_t> usageVec;
+    ASSERT_EQ(NO_ERROR, gralloc4::encodeUsage(usage, &usageVec));
+    ASSERT_EQ(Error::BAD_VALUE,
+              mGralloc->set(bufferHandle, gralloc4::MetadataType_Usage, usageVec));
 }
 
 /**
@@ -1628,19 +1681,9 @@ TEST_P(GraphicsMapperHidlTest, SetBadMetadata) {
 
     hidl_vec<uint8_t> vec;
     ASSERT_EQ(Error::UNSUPPORTED,
-              mGralloc->set(bufferHandle, gralloc4::MetadataType_BufferId, vec));
-    ASSERT_EQ(Error::UNSUPPORTED, mGralloc->set(bufferHandle, gralloc4::MetadataType_Name, vec));
-    ASSERT_EQ(Error::UNSUPPORTED, mGralloc->set(bufferHandle, gralloc4::MetadataType_Width, vec));
-    ASSERT_EQ(Error::UNSUPPORTED, mGralloc->set(bufferHandle, gralloc4::MetadataType_Height, vec));
-    ASSERT_EQ(Error::UNSUPPORTED,
-              mGralloc->set(bufferHandle, gralloc4::MetadataType_LayerCount, vec));
-    ASSERT_EQ(Error::UNSUPPORTED,
-              mGralloc->set(bufferHandle, gralloc4::MetadataType_PixelFormatRequested, vec));
-    ASSERT_EQ(Error::UNSUPPORTED,
               mGralloc->set(bufferHandle, gralloc4::MetadataType_PixelFormatFourCC, vec));
     ASSERT_EQ(Error::UNSUPPORTED,
               mGralloc->set(bufferHandle, gralloc4::MetadataType_PixelFormatModifier, vec));
-    ASSERT_EQ(Error::UNSUPPORTED, mGralloc->set(bufferHandle, gralloc4::MetadataType_Usage, vec));
     ASSERT_EQ(Error::UNSUPPORTED,
               mGralloc->set(bufferHandle, gralloc4::MetadataType_AllocationSize, vec));
     ASSERT_EQ(Error::UNSUPPORTED,
@@ -1653,6 +1696,7 @@ TEST_P(GraphicsMapperHidlTest, SetBadMetadata) {
               mGralloc->set(bufferHandle, gralloc4::MetadataType_ChromaSiting, vec));
     ASSERT_EQ(Error::UNSUPPORTED,
               mGralloc->set(bufferHandle, gralloc4::MetadataType_PlaneLayouts, vec));
+    ASSERT_EQ(Error::UNSUPPORTED, mGralloc->set(bufferHandle, gralloc4::MetadataType_Crop, vec));
     ASSERT_EQ(Error::UNSUPPORTED,
               mGralloc->set(bufferHandle, gralloc4::MetadataType_Dataspace, vec));
     ASSERT_EQ(Error::UNSUPPORTED,
@@ -1864,6 +1908,23 @@ TEST_P(GraphicsMapperHidlTest, GetFromBufferDescriptorInfoPlaneLayouts) {
     std::vector<PlaneLayout> planeLayouts;
     ASSERT_EQ(NO_ERROR, gralloc4::decodePlaneLayouts(vec, &planeLayouts));
     ASSERT_NO_FATAL_FAILURE(verifyDummyDescriptorInfoPlaneLayouts(planeLayouts));
+}
+
+/**
+ * Test IMapper::getFromBufferDescriptorInfo(Crop)
+ */
+TEST_P(GraphicsMapperHidlTest, GetFromBufferDescriptorInfoCrop) {
+    auto info = mDummyDescriptorInfo;
+    info.format = PixelFormat::RGBA_8888;
+    info.usage = static_cast<uint64_t>(BufferUsage::CPU_WRITE_OFTEN | BufferUsage::CPU_READ_OFTEN);
+
+    hidl_vec<uint8_t> vec;
+    ASSERT_EQ(Error::NONE,
+              mGralloc->getFromBufferDescriptorInfo(info, gralloc4::MetadataType_Crop, &vec));
+
+    std::vector<aidl::android::hardware::graphics::common::Rect> crops;
+    ASSERT_EQ(NO_ERROR, gralloc4::decodeCrop(vec, &crops));
+    EXPECT_EQ(1, crops.size());
 }
 
 /**

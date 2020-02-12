@@ -263,3 +263,10 @@ Return<void> GnssHalTest::GnssMeasurementCorrectionsCallback::setCapabilitiesCb(
     capabilities_cbq_.store(capabilities);
     return Void();
 }
+
+Return<void> GnssHalTest::GnssAntennaInfoCallback::gnssAntennaInfoCb(
+        const hidl_vec<IGnssAntennaInfoCallback::GnssAntennaInfo>& gnssAntennaInfos) {
+    ALOGD("GnssAntennaInfo v2.1 received. Size = %d", (int)gnssAntennaInfos.size());
+    antenna_info_cbq_.store(gnssAntennaInfos);
+    return Void();
+}

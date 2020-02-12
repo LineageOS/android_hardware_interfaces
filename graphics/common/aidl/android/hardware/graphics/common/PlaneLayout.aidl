@@ -107,19 +107,4 @@ parcelable PlaneLayout {
      */
     long horizontalSubsampling;
     long verticalSubsampling;
-
-    /**
-     * Some buffer producers require extra padding to their output buffer; therefore the
-     * physical size of the native buffer will be larger than its logical size.
-     * The crop rectangle determines the offset and logical size of the buffer that should be
-     * read by consumers.
-     *
-     * The crop rectangle is measured in samples and is relative to the offset of the
-     * plane. Valid crop rectangles are within the boundaries of the plane:
-     * [0, 0, widthInSamples, heightInSamples].
-     *
-     * The default crop rectangle is a rectangle the same size as the plane:
-     * [0, 0, widthInSamples, heightInSamples].
-     */
-    Rect crop;
 }
