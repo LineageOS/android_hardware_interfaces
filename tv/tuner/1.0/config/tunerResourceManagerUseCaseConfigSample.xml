@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright 2020 The Android Open Source Project
+
+         Licensed under the Apache License, Version 2.0 (the "License");
+         you may not use this file except in compliance with the License.
+         You may obtain a copy of the License at
+
+                    http://www.apache.org/licenses/LICENSE-2.0
+
+         Unless required by applicable law or agreed to in writing, software
+         distributed under the License is distributed on an "AS IS" BASIS,
+         WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+         See the License for the specific language governing permissions and
+         limitations under the License.
+-->
+<!-- A sample Tuner Resource Manager use case priority configuration xml -->
+<config version="1.0" xmlns:xi="http://www.w3.org/2001/XMLSchema">
+    <!-- useCaseDefault section:
+        Default value for predefined use cases priority hint.
+            "fgPriority": priority when the use case is in foreground. Value range [0-1000].
+            "bgPriority": priority when the use case is in background. Value range [0-1000].
+    -->
+    <useCaseDefault fgPriority="150" bgPriority="50"/>
+    <!-- useCasePreDefined section:
+        A list of predefined use cases and their foreground/background priority hint.
+        Each use case has the following attributes:
+            "type": type of the use case. Pre-defined use cases start with "USE_CASE_"
+                    and could only use the types defined in "predefinedUseCaseType" in xsd.
+            "fgPriority": priority when the use case is in foreground. Value range [0-1000].
+            "bgPriority": priority when the use case is in background. Value range [0-1000].
+    -->
+    <useCasePreDefined type="USE_CASE_RECORD" fgPriority="600" bgPriority="500"/>
+    <useCasePreDefined type="USE_CASE_LIVE" fgPriority="490" bgPriority="400"/>
+    <useCasePreDefined type="USE_CASE_PLAYBACK" fgPriority="480" bgPriority="300"/>
+    <useCasePreDefined type="USE_CASE_SCAN" fgPriority="450" bgPriority="200"/>
+    <useCasePreDefined type="USE_CASE_BACKGROUND" fgPriority="180" bgPriority="100"/>
+    <!-- useCaseVendor section:
+        A list of vendor defined use cases and their foreground/background priority hint.
+        Each use case has the following attributes:
+            "type": type of the use case. Vendor defined use cases start with "VENDOR_USE_CASE_".
+            "fgPriority": priority when the use case is in foreground. Value range [0-1000].
+            "bgPriority": priority when the use case is in background. Value range [0-1000].
+            "id": Vendor defined use case must have an id greater than 1000 to be associated with.
+    -->
+    <useCaseVendor type="VENDOR_USE_CASE_SPECIAL_1" id="1001" fgPriority="300" bgPriority="80"/>
+    <useCaseVendor type="VENDOR_USE_CASE_SPECIAL_2" id="1002" fgPriority="200" bgPriority="40"/>
+</config>
