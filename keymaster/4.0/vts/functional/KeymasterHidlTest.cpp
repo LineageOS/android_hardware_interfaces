@@ -23,6 +23,7 @@
 #include <android/hidl/manager/1.0/IServiceManager.h>
 
 #include <keymasterV4_0/key_param_output.h>
+#include <keymasterV4_0/keymaster_utils.h>
 
 namespace android {
 namespace hardware {
@@ -56,11 +57,11 @@ void KeymasterHidlTest::InitializeKeymaster() {
                     .isOk());
 }
 
-void KeymasterHidlTest::SetUp() {
+void KeymasterHidlTest::SetUpTestCase() {
     InitializeKeymaster();
 
-    os_version_ = ::keymaster::GetOsVersion();
-    os_patch_level_ = ::keymaster::GetOsPatchlevel();
+    os_version_ = support::getOsVersion();
+    os_patch_level_ = support::getOsPatchlevel();
 
     auto service_manager = android::hidl::manager::V1_0::IServiceManager::getService();
     ASSERT_NE(nullptr, service_manager.get());

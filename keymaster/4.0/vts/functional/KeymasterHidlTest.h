@@ -18,10 +18,8 @@
 
 #include <android/hardware/keymaster/4.0/IKeymasterDevice.h>
 #include <android/hardware/keymaster/4.0/types.h>
-#include <gtest/gtest.h>
-#include <hidl/GtestPrinter.h>
-#include <hidl/ServiceManagement.h>
-#include <keymaster/keymaster_configuration.h>
+
+#include <VtsHalHidlTargetTestBase.h>
 
 #include <keymasterV4_0/authorization_set.h>
 
