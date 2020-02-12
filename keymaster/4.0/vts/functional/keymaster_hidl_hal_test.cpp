@@ -4601,9 +4601,9 @@ INSTANTIATE_KEYMASTER_HIDL_TEST(ClearOperationsTest);
 typedef KeymasterHidlTest TransportLimitTest;
 
 /*
- * TransportLimitTest.LargeFinishInput
+ * TransportLimitTest.FinishInput
  *
- * Verifies that passing large input data to finish either succeeds or fails as expected.
+ * Verifies that passing input data to finish succeeds as expected.
  */
 TEST_P(TransportLimitTest, LargeFinishInput) {
     ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
@@ -4612,7 +4612,7 @@ TEST_P(TransportLimitTest, LargeFinishInput) {
                                                  .BlockMode(BlockMode::ECB)
                                                  .Padding(PaddingMode::NONE)));
 
-    for (int msg_size = 10 /*1KB*/; msg_size <= 17 /*128KB*/; msg_size++) {
+    for (int msg_size = 8 /* 256 bytes */; msg_size <= 11 /* 2 KiB */; msg_size++) {
         auto cipher_params =
                 AuthorizationSetBuilder().BlockMode(BlockMode::ECB).Padding(PaddingMode::NONE);
 
@@ -4623,31 +4623,19 @@ TEST_P(TransportLimitTest, LargeFinishInput) {
         string encrypted_message;
         auto rc = Finish(plain_message, &encrypted_message);
 
-        if (rc == ErrorCode::OK) {
-            EXPECT_EQ(plain_message.size(), encrypted_message.size())
-                    << "Encrypt finish returned OK, but did not consume all of the given input";
-        } else {
-            EXPECT_EQ(ErrorCode::INVALID_INPUT_LENGTH, rc)
-                    << "Encrypt finish failed in an unexpected way when given a large input";
-            continue;
-        }
+        EXPECT_EQ(ErrorCode::OK, rc);
+        EXPECT_EQ(plain_message.size(), encrypted_message.size())
+                << "Encrypt finish returned OK, but did not consume all of the given input";
         cipher_params.push_back(out_params);
 
         EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, cipher_params));
 
         string decrypted_message;
         rc = Finish(encrypted_message, &decrypted_message);
-
-        if (rc == ErrorCode::OK) {
-            EXPECT_EQ(plain_message.size(), decrypted_message.size())
-                    << "Decrypt finish returned OK, did not consume all of the given input";
-        } else {
-            EXPECT_EQ(ErrorCode::INVALID_INPUT_LENGTH, rc)
-                    << "Encrypt finish failed in an unexpected way when given a large input";
-        }
+        EXPECT_EQ(ErrorCode::OK, rc);
+        EXPECT_EQ(plain_message.size(), decrypted_message.size())
+                << "Decrypt finish returned OK, did not consume all of the given input";
     }
-
-    CheckedDeleteKey();
 }
 
 INSTANTIATE_KEYMASTER_HIDL_TEST(TransportLimitTest);
