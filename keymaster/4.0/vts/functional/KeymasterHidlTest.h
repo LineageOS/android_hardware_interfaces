@@ -18,8 +18,9 @@
 
 #include <android/hardware/keymaster/4.0/IKeymasterDevice.h>
 #include <android/hardware/keymaster/4.0/types.h>
-
-#include <VtsHalHidlTargetTestBase.h>
+#include <gtest/gtest.h>
+#include <hidl/GtestPrinter.h>
+#include <hidl/ServiceManagement.h>
 
 #include <keymasterV4_0/authorization_set.h>
 
@@ -33,13 +34,13 @@ namespace V4_0 {
 namespace test {
 
 using ::android::sp;
-using ::std::string;
 using hidl::base::V1_0::DebugInfo;
+using ::std::string;
 
 class HidlBuf : public hidl_vec<uint8_t> {
     typedef hidl_vec<uint8_t> super;
 
-   public:
+  public:
     HidlBuf() {}
     HidlBuf(const super& other) : super(other) {}
     HidlBuf(super&& other) : super(std::move(other)) {}
@@ -68,20 +69,16 @@ constexpr uint64_t kOpHandleSentinel = 0xFFFFFFFFFFFFFFFF;
 
 class KeymasterHidlTest : public ::testing::TestWithParam<std::string> {
   public:
-    void SetUp();
+    void SetUp() override;
     void TearDown() override {
         if (key_blob_.size()) {
             CheckedDeleteKey();
         }
         AbortIfNeeded();
-        keymaster_.clear();
-        all_keymasters_.clear();
     }
 
     void InitializeKeymaster();
-
     IKeymasterDevice& keymaster() { return *keymaster_; }
-    const std::vector<sp<IKeymasterDevice>>& all_keymasters() { return all_keymasters_; }
     uint32_t os_version() { return os_version_; }
     uint32_t os_patch_level() { return os_patch_level_; }
 
@@ -207,17 +204,21 @@ class KeymasterHidlTest : public ::testing::TestWithParam<std::string> {
     KeyCharacteristics key_characteristics_;
     OperationHandle op_handle_ = kOpHandleSentinel;
 
-   private:
-     sp<IKeymasterDevice> keymaster_;
-     std::vector<sp<IKeymasterDevice>> all_keymasters_;
-     uint32_t os_version_;
-     uint32_t os_patch_level_;
+  private:
+    sp<IKeymasterDevice> keymaster_;
+    uint32_t os_version_;
+    uint32_t os_patch_level_;
 
-     SecurityLevel securityLevel_;
-     hidl_string name_;
-     hidl_string author_;
-     string service_name_;
+    SecurityLevel securityLevel_;
+    hidl_string name_;
+    hidl_string author_;
 };
+
+#define INSTANTIATE_KEYMASTER_HIDL_TEST(name)                                             \
+    INSTANTIATE_TEST_SUITE_P(PerInstance, name,                                           \
+                             testing::ValuesIn(android::hardware::getAllHalInstanceNames( \
+                                     IKeymasterDevice::descriptor)),                      \
+                             android::hardware::PrintInstanceNameToString)
 
 }  // namespace test
 }  // namespace V4_0

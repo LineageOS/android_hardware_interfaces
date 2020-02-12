@@ -185,10 +185,7 @@ TEST_P(VerificationTokenTest, MacChangesOnChangingTimestamp) {
               memcmp(result1.token.mac.data(), result2.token.mac.data(), result1.token.mac.size()));
 }
 
-INSTANTIATE_TEST_SUITE_P(
-        PerInstance, VerificationTokenTest,
-        testing::ValuesIn(android::hardware::getAllHalInstanceNames(IKeymasterDevice::descriptor)),
-        android::hardware::PrintInstanceNameToString);
+INSTANTIATE_KEYMASTER_HIDL_TEST(VerificationTokenTest);
 
 }  // namespace test
 }  // namespace V4_0
