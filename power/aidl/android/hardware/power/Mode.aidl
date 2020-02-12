@@ -26,20 +26,20 @@ enum Mode {
     DOUBLE_TAP_TO_WAKE,
 
     /**
-     * This mode indidates Low power mode is activated or not. Low power
+     * This mode indicates Low power mode is activated or not. Low power
      * mode is intended to save battery at the cost of performance.
      */
     LOW_POWER,
 
     /**
-     * This mode indidates Sustained Performance mode is activated or not.
+     * This mode indicates Sustained Performance mode is activated or not.
      * Sustained performance mode is intended to provide a consistent level of
      * performance for a prolonged amount of time.
      */
     SUSTAINED_PERFORMANCE,
 
     /**
-     * This mode indidates VR Mode is activated or not. VR mode is intended
+     * This mode indicates VR Mode is activated or not. VR mode is intended
      * to provide minimum guarantee for performance for the amount of time the
      * device can sustain it.
      */
@@ -76,6 +76,18 @@ enum Mode {
      */
     INTERACTIVE,
 
+    /**
+     * This mode indicates the device is in device idle, externally known as doze.
+     * More details on:
+     * https://developer.android.com/training/monitoring-device-state/doze-standby
+     */
+    DEVICE_IDLE,
+
+    /**
+     * This mode indicates that display is either off or still on but is optimized
+     * for low-power.
+     */
+    DISPLAY_INACTIVE,
 
     /**
      * Below hints are currently not sent in Android framework but OEM might choose to
