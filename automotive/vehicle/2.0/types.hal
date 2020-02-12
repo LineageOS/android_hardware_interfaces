@@ -65,8 +65,8 @@ enum VehiclePropertyType : int32_t {
  * particular door, thus this property must be marked with
  * VehicleArea:DOOR flag.
  *
- * Other properties may not be associated with particular vehicle area,
- * these kind of properties must have VehicleArea:GLOBAL flag.
+ * Other properties may not be associated with particular vehicle area.
+ * These kinds of properties must have VehicleArea:GLOBAL flag.
  *
  * [Definition] Area: An area represents a unique element of an AreaType.
  *   For instance, if AreaType is WINDOW, then an area may be FRONT_WINDSHIELD.
@@ -79,9 +79,9 @@ enum VehiclePropertyType : int32_t {
  * Rules for mapping a zoned property to AreaIDs:
  *  - A property must be mapped to an array of AreaIDs that are impacted when
  *    the property value changes.
- *  - Each element in the array must represent an AreaID, in which, the
+ *  - Each element in the array must represent an AreaID, in which the
  *    property value can only be changed together in all the areas within
- *    an AreaID and never independently. That is, when the property value
+ *    the AreaID and never independently. That is, when the property value
  *    changes in one of the areas in an AreaID in the array, then it must
  *    automatically change in all other areas in the AreaID.
  *  - The property value must be independently controllable in any two
@@ -140,7 +140,7 @@ enum VehiclePropertyGroup : int32_t {
  *  - vehicle area (VehicleArea)
  *
  * Vendors are allowed to extend this enum with their own properties. In this
- * case they must use VehiclePropertyGroup:VENDOR flag when property is
+ * case they must use VehiclePropertyGroup:VENDOR flag when the property is
  * declared.
  *
  * When a property's status field is not set to AVAILABLE:
@@ -3041,26 +3041,52 @@ enum VehicleApPowerStateConfigFlag : int32_t {
 };
 
 enum VehicleApPowerStateReq : int32_t {
-    /** Transition Android from WAIT_FOR_VHAL to ON state */
+    /**
+     * This requests Android to enter its normal operating state.
+     * This may be sent after the AP has reported
+     * VehicleApPowerStateReport#DEEP_SLEEP_EXIT,
+     * VehicleApPowerStateReport#SHUTDOWN_CANCELLED, or
+     * VehicleApPowerStateReport#WAIT_FOR_VHAL.
+     */
     ON = 0,
 
     /**
-     * The power controller has requested AP to shutdown. AP can either enter
-     * sleep state or start full shutdown. AP can also request postponing
-     * shutdown by sending VehicleApPowerSetState#SHUTDOWN_POSTPONE message. The
-     * power controller must change power state to this state to shutdown
-     * system.
+     * The power controller issues this request to shutdown the system.
+     * This may be sent after the AP has reported
+     * VehicleApPowerStateReport#DEEP_SLEEP_EXIT,
+     * VehicleApPowerStateReport#ON,
+     * VehicleApPowerStateReport#SHUTDOWN_CANCELLED,
+     * VehicleApPowerStateReport#SHUTDOWN_POSTPONE,
+     * VehicleApPowerStateReport#SHUTDOWN_PREPARE, or
+     * VehicleApPowerStateReport#WAIT_FOR_VHAL.
      *
-     * int32Values[1] : one of VehicleApPowerStateShutdownParam
-     *
-     * SHUTDOWN_PRPARE may be requested from either WAIT_FOR_VHAL or ON states.
+     * int32Values[1] : One of VehicleApPowerStateShutdownParam.
+     *                  This parameter indicates if the AP should shut
+     *                  down fully or sleep. This parameter also
+     *                  indicates if the shutdown should be immediate
+     *                  or if it can be postponed. If the shutdown can
+     *                  be postponed, AP requests postponing by sending
+     *                  VehicleApPowerStateReport#SHUTDOWN_POSTPONE.
      */
     SHUTDOWN_PREPARE = 1,
 
-    /** Cancel the shutdown and transition from SHUTDOWN_PREPARE to WAIT_FOR_VHAL state */
+    /**
+     * Cancel the shutdown.
+     * This may be sent after the AP has reported
+     * VehicleApPowerStateReport#SHUTDOWN_POSTPONE or
+     * VehicleApPowerStateReport#SHUTDOWN_PREPARE.
+     * After receiving this request, the AP will report
+     * VehicleApPowerStateReport#WAIT_FOR_VHAL in preparation to going ON.
+     */
     CANCEL_SHUTDOWN = 2,
 
-    /** VHAL is finished with shutdown procedures and ready for Android to suspend/shutdown */
+    /**
+     * Completes the shutdown process.
+     * This may be sent after the AP has reported
+     * VehicleApPowerStateReport#DEEP_SLEEP_ENTRY or
+     * VehicleApPowerStateReport#SHUTDOWN_START. The AP will not report new
+     * state information after receiving this request.
+     */
     FINISHED = 3,
 };
 
@@ -3092,61 +3118,80 @@ enum VehicleApPowerStateShutdownParam : int32_t {
 
 enum VehicleApPowerStateReport : int32_t {
     /**
-     * Device has booted, CarService has initialized and is ready to accept commands from VHAL.
-     * Device starts in WAIT_FOR_VHAL state.  The user is not logged in, and vendor apps/services
-     * are expected to control the display and audio.
+     * The device has booted. CarService has initialized and is ready to accept commands
+     * from VHAL. The user is not logged in, and vendor apps and services are expected to
+     * control the display and audio.
+     * After reporting this state, AP will accept VehicleApPowerStateReq#ON or
+     * VehicleApPowerStateReq#SHUTDOWN_PREPARE. Other power state requests are ignored.
      */
     WAIT_FOR_VHAL = 0x1,
 
     /**
-     * AP is ready to suspend and has entered WAIT_FOR_FINISHED state.
+     * AP is ready to suspend.
+     * The AP will not send any more state reports after this.
+     * After reporting this state, AP will accept VehicleApPowerStateReq#FINISHED.
+     * Other power state requests are ignored.
      *
-     * int32Values[1]: Time to turn on AP in secs. Power controller may turn on
-     *                 AP after specified time so that AP can run tasks like
-     *                 update. If it is set to 0, there is no wake up, and power
-     *                 controller may not necessarily support wake-up.
+     * int32Values[1]: Time to turn AP back on, in seconds. Power controller should turn on
+     *                 AP after the specified time has elapsed, so AP can run tasks like
+     *                 update. If this value is 0, no wake up is requested. The power
+     *                 controller may not necessarily support timed wake-up.
      */
     DEEP_SLEEP_ENTRY = 0x2,
 
     /**
-     * AP is exiting from deep sleep state, and is in WAIT_FOR_VHAL state.
+     * AP is exiting from deep sleep state.
+     * After reporting this state, AP will accept VehicleApPowerStateReq#ON or
+     * VehicleApPowerStateReq#SHUTDOWN_PREPARE. Other power state requests are ignored.
      */
     DEEP_SLEEP_EXIT = 0x3,
 
     /**
-     * AP remains in SHUTDOWN_PREPARE state as idle and cleanup tasks execute.
+     * AP sends this message repeatedly while cleanup and idle tasks execute.
+     * After reporting this state, AP will accept VehicleApPowerStateReq#SHUTDOWN_PREPARE
+     * requesting immediate shutdown or VehicleApPowerStateReq#CANCEL_SHUTDOWN. Other
+     * power state requests are ignored.
      *
-     * int32Values[1]: Time to postpone shutdown in ms. Maximum value can be
+     * int32Values[1]: Time to postpone shutdown in ms. Maximum value is
      *                 5000 ms.
-     *                 If AP needs more time, it will send another POSTPONE
+     *                 If AP needs more time, it will send another SHUTDOWN_POSTPONE
      *                 message before the previous one expires.
      */
     SHUTDOWN_POSTPONE = 0x4,
 
     /**
-     * AP is ready to shutdown and has entered WAIT_FOR_FINISHED state.
+     * AP is ready to shutdown.
+     * The AP will not send any more state reports after this.
+     * After reporting this state, AP will accept VehicleApPowerStateReq#FINISHED.
+     * Other power state requests are ignored.
      *
-     * int32Values[1]: Time to turn on AP in secs. Power controller may turn on
-     *                 AP after specified time so that AP can run tasks like
-     *                 update. If it is set to 0, there is no wake up, and power
-     *                 controller may not necessarily support wake-up.
+     * int32Values[1]: Time to turn AP back on, in seconds. Power controller should turn on
+     *                 AP after the specified time has elapsed so AP can run tasks like
+     *                 update. If this value is 0, no wake up is specified. The power
+     *                 controller may not necessarily support timed wake-up.
      */
     SHUTDOWN_START = 0x5,
 
     /**
-     * AP has transitioned from WAIT_FOR_VHAL state to ON.
+     * AP is entering its normal operating state.
+     * After reporting this state, AP will accept VehicleApPowerStateReq#SHUTDOWN_PREPARE.
+     * Other power state requests are ignored.
      */
     ON = 0x6,
 
     /**
-     * AP has transitions to SHUTDOWN_PREPARE state.  In this state, Garage Mode will execute idle
-     * tasks, and other services that have registered for this state transition may execute
-     * cleanup activities.
+     * AP is preparing to shut down. In this state, Garage Mode is active and idle
+     * tasks are allowed to run.
+     * After reporting this state, AP will accept VehicleApPowerStateReq#SHUTDOWN_PREPARE
+     * requesting immediate shutdown or VehicleApPowerStateReq#CANCEL_SHUTDOWN. Other
+     * power state requests are ignored.
      */
     SHUTDOWN_PREPARE = 0x7,
 
     /**
-     * AP has transitioned from SHUTDOWN_PREPARE state to WAIT_FOR_VHAL.
+     * AP has stopped preparing to shut down.
+     * After reporting this state, AP will accept VehicleApPowerStateReq#ON or
+     * VehicleApPowerStateReq#SHUTDOWN_PREPARE. Other power state requests are ignored.
      */
     SHUTDOWN_CANCELLED = 0x8,
 };
