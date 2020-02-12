@@ -321,19 +321,20 @@ ErrorCode parse_root_of_trust(const uint8_t* asn1_key_desc, size_t asn1_key_desc
         LOG(ERROR) << AT << "Failed record parsing";
         return ErrorCode::UNKNOWN_ERROR;
     }
-    if (!record->tee_enforced) {
-        LOG(ERROR) << AT << "Failed hardware characteristic parsing";
+
+    KM_ROOT_OF_TRUST* root_of_trust = nullptr;
+    if (record->tee_enforced && record->tee_enforced->root_of_trust) {
+        root_of_trust = record->tee_enforced->root_of_trust;
+    } else if (record->software_enforced && record->software_enforced->root_of_trust) {
+        root_of_trust = record->software_enforced->root_of_trust;
+    } else {
+        LOG(ERROR) << AT << " Failed root of trust parsing";
         return ErrorCode::INVALID_ARGUMENT;
     }
-    if (!record->tee_enforced->root_of_trust) {
-        LOG(ERROR) << AT << "Failed root of trust parsing";
+    if (!root_of_trust->verified_boot_key) {
+        LOG(ERROR) << AT << " Failed verified boot key parsing";
         return ErrorCode::INVALID_ARGUMENT;
     }
-    if (!record->tee_enforced->root_of_trust->verified_boot_key) {
-        LOG(ERROR) << AT << "Failed verified boot key parsing";
-        return ErrorCode::INVALID_ARGUMENT;
-    }
-    KM_ROOT_OF_TRUST* root_of_trust = record->tee_enforced->root_of_trust;
 
     auto& vb_key = root_of_trust->verified_boot_key;
     verified_boot_key->resize(vb_key->length);
@@ -342,19 +343,19 @@ ErrorCode parse_root_of_trust(const uint8_t* asn1_key_desc, size_t asn1_key_desc
     *verified_boot_state = static_cast<keymaster_verified_boot_t>(
             ASN1_ENUMERATED_get(root_of_trust->verified_boot_state));
     if (!verified_boot_state) {
-        LOG(ERROR) << AT << "Failed verified boot state parsing";
+        LOG(ERROR) << AT << " Failed verified boot state parsing";
         return ErrorCode::INVALID_ARGUMENT;
     }
 
     *device_locked = root_of_trust->device_locked;
     if (!device_locked) {
-        LOG(ERROR) << AT << "Failed device locked parsing";
+        LOG(ERROR) << AT << " Failed device locked parsing";
         return ErrorCode::INVALID_ARGUMENT;
     }
 
     auto& vb_hash = root_of_trust->verified_boot_hash;
     if (!vb_hash) {
-        LOG(ERROR) << AT << "Failed verified boot hash parsing";
+        LOG(ERROR) << AT << " Failed verified boot hash parsing";
         return ErrorCode::INVALID_ARGUMENT;
     }
     verified_boot_hash->resize(vb_hash->length);
