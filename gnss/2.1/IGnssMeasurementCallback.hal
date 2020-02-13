@@ -28,31 +28,7 @@ interface IGnssMeasurementCallback extends @2.0::IGnssMeasurementCallback {
     /**
      * Flags to indicate what fields in GnssMeasurement are valid.
      */
-    enum GnssMeasurementFlags : uint32_t {
-        /**
-         * A valid 'snr' is stored in the data structure.
-         */
-        HAS_SNR = 1 << 0,
-        /**
-         * A valid 'carrier frequency' is stored in the data structure.
-         */
-        HAS_CARRIER_FREQUENCY = 1 << 9,
-        /**
-         * A valid 'carrier cycles' is stored in the data structure.
-         */
-        HAS_CARRIER_CYCLES = 1 << 10,
-        /**
-         * A valid 'carrier phase' is stored in the data structure.
-         */
-        HAS_CARRIER_PHASE = 1 << 11,
-        /**
-         * A valid 'carrier phase uncertainty' is stored in the data structure.
-         */
-        HAS_CARRIER_PHASE_UNCERTAINTY = 1 << 12,
-        /**
-         * A valid automatic gain control is stored in the data structure.
-         */
-        HAS_AUTOMATIC_GAIN_CONTROL = 1 << 13,
+    enum GnssMeasurementFlags : @1.0::IGnssMeasurementCallback.GnssMeasurementFlags {
         /**
          * A valid receiver inter-signal bias is stored in the data structure.
          */
@@ -104,8 +80,8 @@ interface IGnssMeasurementCallback extends @2.0::IGnssMeasurementCallback {
          * The receiver inter-signal bias (ISB) in nanoseconds.
          *
          * This value is the estimated receiver-side inter-system (different from the constellation
-         * in GnssClock.referenceSignalForIsb) bias and inter-frequency (different from the carrier
-         * frequency in GnssClock.referenceSignalForIsb) bias. The reported receiver ISB
+         * in GnssClock.referenceSignalTypeForIsb) bias and inter-frequency (different from the
+         * carrier frequency in GnssClock.referenceSignalTypeForIsb) bias. The reported receiver ISB
          * must include signal delays caused by
          *
          * - Receiver inter-constellation bias
@@ -114,7 +90,7 @@ interface IGnssMeasurementCallback extends @2.0::IGnssMeasurementCallback {
          *
          * The value does not include the inter-frequency Ionospheric bias.
          *
-         * The receiver ISB of GnssClock.referenceSignalForIsb is defined to be 0.0 nanoseconds.
+         * The receiver ISB of GnssClock.referenceSignalTypeForIsb is defined to be 0.0 nanoseconds.
          */
         double receiverInterSignalBiasNs;
 
@@ -127,8 +103,8 @@ interface IGnssMeasurementCallback extends @2.0::IGnssMeasurementCallback {
          * The satellite inter-signal bias in nanoseconds.
          *
          * This value is the satellite-and-control-segment-side inter-system (different from the
-         * constellation in GnssClock.referenceSignalForIsb) bias and inter-frequency (different
-         * from the carrier frequency in GnssClock.referenceSignalForIsb) bias, including:
+         * constellation in GnssClock.referenceSignalTypeForIsb) bias and inter-frequency (different
+         * from the carrier frequency in GnssClock.referenceSignalTypeForIsb) bias, including:
          *
          * - Master clock bias (e.g., GPS-GAL Time Offset (GGTO), GPT-UTC Time Offset (TauGps),
          *   BDS-GLO Time Offset (BGTO))
@@ -136,7 +112,7 @@ interface IGnssMeasurementCallback extends @2.0::IGnssMeasurementCallback {
          * - Satellite inter-signal bias, which includes satellite inter-frequency bias (GLO only),
          *   and satellite inter-code bias (e.g., Differential Code Bias (DCB)).
          *
-         * The receiver ISB of GnssClock.referenceSignalForIsb is defined to be 0.0 nanoseconds.
+         * The receiver ISB of GnssClock.referenceSignalTypeForIsb is defined to be 0.0 nanoseconds.
          */
         double satelliteInterSignalBiasNs;
 
