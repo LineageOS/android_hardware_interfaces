@@ -55,6 +55,13 @@ enum DumpstateMode : uint32_t {
      * This mode MUST be supported if the dumpstate HAL is implemented.
      */
     DEFAULT = 6,
+    /**
+     * Takes a report in protobuf.
+     *
+     * The content, if implemented, must be a binary protobuf message written to the first file
+     * descriptor of the native handle. The protobuf schema shall be defined by the vendor.
+     */
+    PROTO = 7,
 };
 
 /**
