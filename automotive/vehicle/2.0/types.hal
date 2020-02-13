@@ -4114,7 +4114,8 @@ struct UserInfo {
 /**
  * Id of an Android user.
  *
- * Must be > 0 for valid ids, or -1 when it's not used.
+ * Must be > 0 for valid ids, or -10000 (which is the same as Android.UserHandle.USER_NULL) when
+ * it's not used.
  */
 typedef int32_t UserId;
 
