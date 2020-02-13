@@ -1,0 +1,111 @@
+<?xml version="1.0"?>
+<!-- Copyright 2020 The Android Open Source Project
+
+         Licensed under the Apache License, Version 2.0 (the "License");
+         you may not use this file except in compliance with the License.
+         You may obtain a copy of the License at
+
+                    http://www.apache.org/licenses/LICENSE-2.0
+
+         Unless required by applicable law or agreed to in writing, software
+         distributed under the License is distributed on an "AS IS" BASIS,
+         WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+         See the License for the specific language governing permissions and
+         limitations under the License.
+-->
+<xs:schema version="1.0"
+           xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    <!-- List of the Tuner Resource Manager client use case priority hint. -->
+    <xs:simpleType name="version">
+        <xs:restriction base="xs:decimal">
+            <xs:enumeration value="1.0"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:complexType name="config">
+        <xs:sequence>
+            <xs:element name="useCaseDefault" type="useCaseDefault" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="useCasePreDefined" type="useCasePreDefined" minOccurs="0" maxOccurs="5"/>
+            <xs:element name="useCaseVendor" type="useCaseVendor" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+        <xs:attribute name="version" type="version"/>
+    </xs:complexType>
+
+    <xs:complexType name="useCaseDefault">
+        <xs:annotation>
+            <xs:documentation xml:lang="en">
+                useCaseDefault section:
+                Default value for predefined use cases priority hint.
+                    "fgPriority": priority when the use case is in foreground.
+                    "bgPriority": priority when the use case is in background.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:attribute name="fgPriority" type="priority"/>
+        <xs:attribute name="bgPriority" type="priority"/>
+    </xs:complexType>
+
+    <xs:complexType name="useCasePreDefined">
+        <xs:annotation>
+            <xs:documentation xml:lang="en">
+                useCasePreDefined section:
+                A list of predefined use cases and their foreground/background priority hint.
+                Each use case has the following attributes:
+                    "type": type of the use case. Pre-defined use cases start with "USE_CASE_"
+                            and have been predefined in "predefinedUseCaseType".
+                    "fgPriority": priority when the use case is in foreground.
+                    "bgPriority": priority when the use case is in background.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:attribute name="type" type="predefinedUseCaseType"/>
+        <xs:attribute name="fgPriority" type="priority"/>
+        <xs:attribute name="bgPriority" type="priority"/>
+    </xs:complexType>
+
+    <xs:complexType name="useCaseVendor">
+        <xs:annotation>
+            <xs:documentation xml:lang="en">
+                useCaseVendor section:
+                A list of vendor defined use cases and their foreground/background priority hint.
+                Each use case has the following attributes:
+                    "type": type of the use case. Vendor defined use cases start with "VENDOR_USE_CASE_".
+                    "fgPriority": priority when the use case is in foreground.
+                    "bgPriority": priority when the use case is in background.
+                    "id": Vendor defined use case must have an id greater than 1000 to be associated with.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:attribute name="type" type="vendorUseCaseType"/>
+        <xs:attribute name="id" type="id"/>
+        <xs:attribute name="fgPriority" type="priority"/>
+        <xs:attribute name="bgPriority" type="priority"/>
+    </xs:complexType>
+
+    <xs:simpleType name="predefinedUseCaseType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="USE_CASE_RECORD"/>
+            <xs:enumeration value="USE_CASE_LIVE"/>
+            <xs:enumeration value="USE_CASE_PLAYBACK"/>
+            <xs:enumeration value="USE_CASE_SCAN"/>
+            <xs:enumeration value="USE_CASE_BACKGROUND"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="vendorUseCaseType">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="VENDOR_USE_CASE_[_A-Z0-9]+"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="priority">
+        <xs:restriction base="xs:integer">
+            <xs:minInclusive value="0"/>
+            <xs:maxInclusive value="1000"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="id">
+        <xs:restriction base="xs:integer">
+            <xs:minInclusive value="1001"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:element name="config" type="config"/>
+</xs:schema>
