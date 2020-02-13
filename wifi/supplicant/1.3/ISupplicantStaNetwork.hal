@@ -214,7 +214,7 @@ interface ISupplicantStaNetwork extends @1.2::ISupplicantStaNetwork {
         generates (SupplicantStatus status, bitfield<GroupCipherMask> groupCipherMask);
 
     /**
-     * Set WAPI certificate suite for this network.
+     * Set WAPI certificate suite name for this network.
      *
      * @param suite value to set.
      * @return status Status of the operation.
@@ -227,7 +227,7 @@ interface ISupplicantStaNetwork extends @1.2::ISupplicantStaNetwork {
     setWapiCertSuite(string suite) generates (SupplicantStatus status);
 
     /**
-     * Get WAPI certificate suite set for this network.
+     * Get WAPI certificate suite name set for this network.
      *
      * @return status Status of the operation.
      *         Possible status codes:
@@ -239,7 +239,7 @@ interface ISupplicantStaNetwork extends @1.2::ISupplicantStaNetwork {
     getWapiCertSuite() generates (SupplicantStatus status, string suite);
 
     /**
-     * Add a PMK into supplicant PMK cache.
+     * Add a pairwise master key (PMK) into supplicant PMK cache.
      *
      * @param serializedEntry is serialized PMK cache entry, the content is
      *              opaque for the framework and depends on the native implementation.
@@ -278,7 +278,7 @@ interface ISupplicantStaNetwork extends @1.2::ISupplicantStaNetwork {
     getAuthAlg_1_3() generates (SupplicantStatus status, bitfield<AuthAlgMask> authAlgMask);
 
     /**
-     * Enable EAP ERP for this network.
+     * Enable Extensible Authentication (EAP) - Re-authentication Protocol (ERP) for this network.
      *
      * @param enable true to set, false otherwise.
      * @return status Status of the operation.
