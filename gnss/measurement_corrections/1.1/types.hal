@@ -48,11 +48,20 @@ struct MeasurementCorrections {
      * If the road is curved in the vicinity of the user location, then
      * environmentBearingUncertaintyDegrees will include the amount by which the road direction
      * changes in the area of position uncertainty.
+     *
+     * hasEnvironmentBearing should be checked to verify the environment bearing is available
+     * before calling this method. The value is undefined if hasEnvironmentBearing is false.
      */
     float environmentBearingDegrees;
 
     /**
-     * Bearing uncertainty [0 to 180].
+     * Environment bearing uncertainty [0 to 180]. It represents the standard deviation of the
+     * physical structure in the circle of position uncertainty. hasEnvironmentBearing becomes false
+     * as the uncertainty value passes a predefined threshold depending on the physical structure
+     * around the user.
+     *
+     * hasEnvironmentBearing should be checked to verify the environment bearing is available
+     * before calling this method. The value is undefined if hasEnvironmentBearing is false.
      */
     float environmentBearingUncertaintyDegrees;
 };
