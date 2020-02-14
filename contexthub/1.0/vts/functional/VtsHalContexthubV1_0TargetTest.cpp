@@ -16,6 +16,10 @@
 
 #define LOG_TAG "contexthub_hidl_hal_test"
 
+#include "ContexthubCallbackBase.h"
+#include "ContexthubHidlTestBase.h"
+#include "VtsHalContexthubUtils.h"
+
 #include <android-base/logging.h>
 #include <android/hardware/contexthub/1.0/IContexthub.h>
 #include <android/hardware/contexthub/1.0/IContexthubCallback.h>
@@ -23,7 +27,6 @@
 #include <android/log.h>
 #include <gtest/gtest.h>
 #include <hidl/GtestPrinter.h>
-#include <hidl/ServiceManagement.h>
 #include <log/log.h>
 
 #include <cinttypes>
@@ -44,9 +47,11 @@ using ::android::hardware::contexthub::V1_0::IContexthubCallback;
 using ::android::hardware::contexthub::V1_0::NanoAppBinary;
 using ::android::hardware::contexthub::V1_0::Result;
 using ::android::hardware::contexthub::V1_0::TransactionResult;
-
-#define ASSERT_OK(result) ASSERT_EQ(result, Result::OK)
-#define EXPECT_OK(result) EXPECT_EQ(result, Result::OK)
+using ::android::hardware::contexthub::vts_utils::asBaseType;
+using ::android::hardware::contexthub::vts_utils::ContexthubCallbackBase;
+using ::android::hardware::contexthub::vts_utils::ContexthubHidlTestBase;
+using ::android::hardware::contexthub::vts_utils::getHalAndHubIdList;
+using ::android::hardware::contexthub::vts_utils::getHubsSync;
 
 namespace {
 
@@ -54,100 +59,10 @@ namespace {
 // app ID is reserved and must never appear in the list of loaded apps.
 constexpr uint64_t kNonExistentAppId = 0x476f6f6754555555;
 
-// Helper that does explicit conversion of an enum class to its underlying/base
-// type. Useful for stream output of enum values.
-template <typename EnumType>
-constexpr typename std::underlying_type<EnumType>::type asBaseType(EnumType value) {
-    return static_cast<typename std::underlying_type<EnumType>::type>(value);
-}
+const std::vector<std::tuple<std::string, std::string>> kTestParameters =
+        getHalAndHubIdList<IContexthub>();
 
-// Synchronously queries IContexthub::getHubs() and returns the result
-hidl_vec<ContextHub> getHubsSync(sp<IContexthub> hubApi) {
-    hidl_vec<ContextHub> hubList;
-    std::promise<void> barrier;
-
-    hubApi->getHubs([&hubList, &barrier](const hidl_vec<ContextHub>& hubs) {
-        hubList = hubs;
-        barrier.set_value();
-    });
-    barrier.get_future().wait_for(std::chrono::seconds(1));
-
-    return hubList;
-}
-
-// Gets a list of valid hub IDs in the system
-std::vector<std::string> getHubIds(const std::string& service_name) {
-    std::vector<std::string> hubIds;
-
-    sp<IContexthub> hubApi = IContexthub::getService(service_name);
-
-    if (hubApi != nullptr) {
-        for (const ContextHub& hub : getHubsSync(hubApi)) {
-            hubIds.push_back(std::to_string(hub.hubId));
-        }
-    }
-
-    ALOGD("Running tests against all %zu reported hubs for service %s", hubIds.size(),
-          service_name.c_str());
-    return hubIds;
-}
-
-// Test fixture parameterized by hub ID, initializes the HAL and makes the context hub API handle
-// available.
-class ContexthubHidlTest : public ::testing::TestWithParam<std::tuple<std::string, std::string>> {
-  public:
-    virtual void SetUp() override {
-        hubApi = IContexthub::getService(std::get<0>(GetParam()));
-        ASSERT_NE(hubApi, nullptr);
-
-        // getHubs() must be called at least once for proper initialization of the
-        // HAL implementation
-        getHubsSync(hubApi);
-    }
-
-    uint32_t getHubId() { return std::stoi(std::get<1>(GetParam())); }
-
-    Result registerCallback(sp<IContexthubCallback> cb) {
-        Result result = hubApi->registerCallback(getHubId(), cb);
-        ALOGD("Registered callback, result %" PRIu32, result);
-        return result;
-    }
-
-    sp<IContexthub> hubApi;
-};
-
-// Base callback implementation that just logs all callbacks by default
-class ContexthubCallbackBase : public IContexthubCallback {
-  public:
-    virtual Return<void> handleClientMsg(const ContextHubMsg& /*msg*/) override {
-        ALOGD("Got client message callback");
-        return Void();
-    }
-
-    virtual Return<void> handleTxnResult(uint32_t txnId, TransactionResult result) override {
-        ALOGD("Got transaction result callback for txnId %" PRIu32 " with result %" PRId32, txnId,
-              result);
-        return Void();
-    }
-
-    virtual Return<void> handleHubEvent(AsyncEventType evt) override {
-        ALOGD("Got hub event callback for event type %" PRIu32, evt);
-        return Void();
-    }
-
-    virtual Return<void> handleAppAbort(uint64_t appId, uint32_t abortCode) override {
-        ALOGD("Got app abort notification for appId 0x%" PRIx64
-              " with abort code "
-              "0x%" PRIx32,
-              appId, abortCode);
-        return Void();
-    }
-
-    virtual Return<void> handleAppsInfo(const hidl_vec<HubAppInfo>& /*appInfo*/) override {
-        ALOGD("Got app info callback");
-        return Void();
-    }
-};
+class ContexthubHidlTest : public ContexthubHidlTestBase<IContexthub> {};
 
 // Wait for a callback to occur (signaled by the given future) up to the
 // provided timeout. If the future is invalid or the callback does not come
@@ -174,7 +89,7 @@ bool waitForCallback(std::future<ReturnType> future, ReturnType* result,
 
 // Ensures that the metadata reported in getHubs() is sane
 TEST_P(ContexthubHidlTest, TestGetHubs) {
-    hidl_vec<ContextHub> hubs = getHubsSync(hubApi);
+    hidl_vec<ContextHub> hubs = getHubsSync(hubApi.get());
     ALOGD("System reports %zu hubs", hubs.size());
 
     for (const ContextHub& hub : hubs) {
@@ -345,24 +260,6 @@ TEST_P(ContexthubTxnTest, TestDisableNonexistentNanoApp) {
     Result result = hubApi->disableNanoApp(getHubId(), kNonExistentAppId, cb->expectedTxnId);
     EXPECT_TRUE(checkFailureSyncOrAsync(result, Result::BAD_PARAMS, cb->promise.get_future()));
 }
-
-// Return the test parameters of a vecter of tuples for all IContexthub services and each of its hub
-// id: <service name of IContexthub, hub id of the IContexthub service>
-static std::vector<std::tuple<std::string, std::string>> get_parameters() {
-    std::vector<std::tuple<std::string, std::string>> parameters;
-    std::vector<std::string> service_names =
-            android::hardware::getAllHalInstanceNames(IContexthub::descriptor);
-    for (const std::string& service_name : service_names) {
-        std::vector<std::string> ids = getHubIds(service_name);
-        for (const std::string& id : ids) {
-            parameters.push_back(std::make_tuple(service_name, id));
-        }
-    }
-
-    return parameters;
-}
-
-static std::vector<std::tuple<std::string, std::string>> kTestParameters = get_parameters();
 
 INSTANTIATE_TEST_SUITE_P(HubIdSpecificTests, ContexthubHidlTest, testing::ValuesIn(kTestParameters),
                          android::hardware::PrintInstanceTupleNameToString<>);
