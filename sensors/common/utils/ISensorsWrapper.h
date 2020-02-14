@@ -18,23 +18,19 @@
 #define ANDROID_HARDWARE_SENSORS_V2_1_ISENSORSWRAPPER_H
 
 #include "EventMessageQueueWrapper.h"
-#include "convertV2_1.h"
+#include "ISensorsWrapper.h"
 
-#include <android/hardware/sensors/2.1/ISensors.h>
-#include <android/hardware/sensors/2.1/types.h>
-#include <binder/IBinder.h>
-#include <fmq/MessageQueue.h>
-#include <hidl/MQDescriptor.h>
-#include <hidl/Status.h>
-#include <log/log.h>
+#include "android/hardware/sensors/1.0/ISensors.h"
+#include "android/hardware/sensors/1.0/types.h"
+#include "android/hardware/sensors/2.0/ISensors.h"
+#include "android/hardware/sensors/2.0/ISensorsCallback.h"
+#include "android/hardware/sensors/2.1/ISensors.h"
+#include "android/hardware/sensors/2.1/ISensorsCallback.h"
+#include "android/hardware/sensors/2.1/types.h"
 
-#include <atomic>
+#include <utils/LightRefBase.h>
 
-/**
- * ISensorsWrapperBase wraps around the V2_1::ISensors APIs to make any HAL 2.0/2.1 interface
- * appear as a HAL 2.1 implementation. This ensures the maximum amount of code can be shared
- * between VTS, default implementations, and the sensors framework.
- */
+#include <cassert>
 
 namespace android {
 namespace hardware {
@@ -42,135 +38,212 @@ namespace sensors {
 namespace V2_1 {
 namespace implementation {
 
-using ::android::sp;
+using ::android::hardware::MessageQueue;
+using ::android::hardware::MQDescriptorSync;
 using ::android::hardware::Return;
-using ::android::hardware::Void;
+using ::android::hardware::sensors::V1_0::ISensors;
 using ::android::hardware::sensors::V1_0::OperationMode;
 using ::android::hardware::sensors::V1_0::RateLevel;
 using ::android::hardware::sensors::V1_0::Result;
 using ::android::hardware::sensors::V1_0::SharedMemInfo;
+using ::android::hardware::sensors::V2_1::Event;
+using ::android::hardware::sensors::V2_1::ISensorsCallback;
 
 // TODO: Look into providing this as a param if it needs to be a different value
 // than the framework.
 static constexpr size_t MAX_RECEIVE_BUFFER_EVENT_COUNT = 256;
 
-class ISensorsWrapperBase : public RefBase {
+/*
+ * The ISensorsWrapper interface includes all function from supported Sensors HAL versions. This
+ * allows for the SensorDevice to use the ISensorsWrapper interface to interact with the Sensors
+ * HAL regardless of the current version of the Sensors HAL that is loaded. Each concrete
+ * instantiation of ISensorsWrapper must correspond to a specific Sensors HAL version. This design
+ * is beneficial because only the functions that change between Sensors HAL versions must be newly
+ * implemented, any previously implemented function that does not change may remain the same.
+ *
+ * Functions that exist across all versions of the Sensors HAL should be implemented as pure
+ * virtual functions which forces the concrete instantiations to implement the functions.
+ *
+ * Functions that do not exist across all versions of the Sensors HAL should include a default
+ * implementation that generates an error if called. The default implementation should never
+ * be called and must be overridden by Sensors HAL versions that support the function.
+ */
+class ISensorsWrapperBase : public VirtualLightRefBase {
   public:
-    virtual ~ISensorsWrapperBase() {}
+    virtual bool supportsPolling() const = 0;
 
-    virtual EventMessageQueueWrapperBase& getEventQueue() = 0;
-    virtual Return<void> getSensorsList(V2_1::ISensors::getSensorsList_2_1_cb _hidl_cb) = 0;
-    virtual Return<Result> injectSensorData(const V2_1::Event& event) = 0;
-    virtual Return<Result> initialize(
-            const ::android::hardware::MQDescriptorSync<uint32_t>& wakeLockDescriptor,
-            const sp<V2_1::ISensorsCallback>& sensorsCallback) = 0;
+    virtual bool supportsMessageQueues() const = 0;
 
-    // V2_0::ISensors implementation
-    void linkToDeath(android::sp<android::hardware::hidl_death_recipient> deathRecipient,
-                     uint64_t cookie) {
-        getSensors()->linkToDeath(deathRecipient, cookie);
+    virtual void linkToDeath(android::sp<android::hardware::hidl_death_recipient> deathRecipient,
+                             uint64_t cookie) = 0;
+
+    virtual Return<void> getSensorsList(
+            ::android::hardware::sensors::V2_1::ISensors::getSensorsList_2_1_cb _hidl_cb) = 0;
+
+    virtual Return<Result> setOperationMode(OperationMode mode) = 0;
+
+    virtual Return<Result> activate(int32_t sensorHandle, bool enabled) = 0;
+
+    virtual Return<Result> batch(int32_t sensorHandle, int64_t samplingPeriodNs,
+                                 int64_t maxReportLatencyNs) = 0;
+
+    virtual Return<Result> flush(int32_t sensorHandle) = 0;
+
+    virtual Return<Result> injectSensorData(const Event& event) = 0;
+
+    virtual Return<void> registerDirectChannel(const SharedMemInfo& mem,
+                                               ISensors::registerDirectChannel_cb _hidl_cb) = 0;
+
+    virtual Return<Result> unregisterDirectChannel(int32_t channelHandle) = 0;
+
+    virtual Return<void> configDirectReport(int32_t sensorHandle, int32_t channelHandle,
+                                            RateLevel rate,
+                                            ISensors::configDirectReport_cb _hidl_cb) = 0;
+
+    virtual Return<void> poll(int32_t /* maxCount */, ISensors::poll_cb /* _hidl_cb */) {
+        // Enforce this method is never invoked as it should be overridden if it's meant to be used.
+        assert(false);
+        return Return<void>();
     }
 
-    Return<Result> activate(int32_t sensorHandle, bool enabled) {
-        return getSensors()->activate(sensorHandle, enabled);
+    virtual EventMessageQueueWrapperBase* getEventQueue() { return nullptr; }
+
+    virtual Return<Result> initialize(const MQDescriptorSync<uint32_t>& /* wakeLockDesc */,
+                                      const ::android::sp<ISensorsCallback>& /* callback */) {
+        // Enforce this method is never invoked as it should be overridden if it's meant to be used.
+        assert(false);
+        return Result::INVALID_OPERATION;
     }
-
-    Return<Result> batch(int32_t sensorHandle, int64_t samplingPeriodNs,
-                         int64_t maxReportLatencyNs) {
-        return getSensors()->batch(sensorHandle, samplingPeriodNs, maxReportLatencyNs);
-    }
-
-    Return<Result> flush(int32_t sensorHandle) { return getSensors()->flush(sensorHandle); }
-
-    Return<void> registerDirectChannel(const SharedMemInfo& mem,
-                                       V2_0::ISensors::registerDirectChannel_cb _hidl_cb) {
-        return getSensors()->registerDirectChannel(mem, _hidl_cb);
-    }
-
-    Return<Result> unregisterDirectChannel(int32_t channelHandle) {
-        return getSensors()->unregisterDirectChannel(channelHandle);
-    }
-
-    Return<void> configDirectReport(int32_t sensorHandle, int32_t channelHandle, RateLevel rate,
-                                    V2_0::ISensors::configDirectReport_cb _hidl_cb) {
-        return getSensors()->configDirectReport(sensorHandle, channelHandle, rate, _hidl_cb);
-    }
-
-    Return<Result> setOperationMode(OperationMode mode) {
-        return getSensors()->setOperationMode(mode);
-    }
-
-  private:
-    virtual V2_0::ISensors* getSensors() = 0;
 };
 
-class ISensorsWrapperV2_0 : public ISensorsWrapperBase {
+template <typename T>
+class SensorsWrapperBase : public ISensorsWrapperBase {
   public:
-    typedef MessageQueue<V1_0::Event, ::android::hardware::kSynchronizedReadWrite>
-            EventMessageQueue;
+    SensorsWrapperBase(sp<T> sensors) : mSensors(sensors){};
 
-    ISensorsWrapperV2_0(sp<V2_0::ISensors>& sensors) : mSensors(sensors) {
-        auto eventQueue = std::make_unique<EventMessageQueue>(MAX_RECEIVE_BUFFER_EVENT_COUNT,
-                                                              true /* configureEventFlagWord */);
-        mEventQueue = std::make_unique<EventMessageQueueWrapperV1_0>(eventQueue);
+    void linkToDeath(android::sp<android::hardware::hidl_death_recipient> deathRecipient,
+                     uint64_t cookie) override {
+        mSensors->linkToDeath(deathRecipient, cookie);
     }
 
-    EventMessageQueueWrapperBase& getEventQueue() override { return *mEventQueue; }
-
-    Return<Result> initialize(
-            const ::android::hardware::MQDescriptorSync<uint32_t>& wakeLockDescriptor,
-            const sp<V2_1::ISensorsCallback>& sensorsCallback) override {
-        return mSensors->initialize(*mEventQueue->getDesc(), wakeLockDescriptor, sensorsCallback);
-    }
-
-    Return<void> getSensorsList(V2_1::ISensors::getSensorsList_2_1_cb _hidl_cb) override {
-        return getSensors()->getSensorsList(
+    virtual Return<void> getSensorsList(
+            ::android::hardware::sensors::V2_1::ISensors::getSensorsList_2_1_cb _hidl_cb) override {
+        return mSensors->getSensorsList(
                 [&](const auto& list) { _hidl_cb(convertToNewSensorInfos(list)); });
     }
 
-    Return<Result> injectSensorData(const V2_1::Event& event) override {
+    Return<Result> setOperationMode(OperationMode mode) override {
+        return mSensors->setOperationMode(mode);
+    }
+
+    Return<Result> activate(int32_t sensorHandle, bool enabled) override {
+        return mSensors->activate(sensorHandle, enabled);
+    }
+
+    Return<Result> batch(int32_t sensorHandle, int64_t samplingPeriodNs,
+                         int64_t maxReportLatencyNs) override {
+        return mSensors->batch(sensorHandle, samplingPeriodNs, maxReportLatencyNs);
+    }
+
+    Return<Result> flush(int32_t sensorHandle) override { return mSensors->flush(sensorHandle); }
+
+    virtual Return<Result> injectSensorData(const Event& event) override {
         return mSensors->injectSensorData(convertToOldEvent(event));
     }
 
-  private:
-    V2_0::ISensors* getSensors() override { return mSensors.get(); }
+    Return<void> registerDirectChannel(const SharedMemInfo& mem,
+                                       ISensors::registerDirectChannel_cb _hidl_cb) override {
+        return mSensors->registerDirectChannel(mem, _hidl_cb);
+    }
 
-    sp<V2_0::ISensors> mSensors;
+    Return<Result> unregisterDirectChannel(int32_t channelHandle) override {
+        return mSensors->unregisterDirectChannel(channelHandle);
+    }
+
+    Return<void> configDirectReport(int32_t sensorHandle, int32_t channelHandle, RateLevel rate,
+                                    ISensors::configDirectReport_cb _hidl_cb) override {
+        return mSensors->configDirectReport(sensorHandle, channelHandle, rate, _hidl_cb);
+    }
+
+  protected:
+    sp<T> mSensors;
+};
+
+class ISensorsWrapperV1_0 : public SensorsWrapperBase<hardware::sensors::V1_0::ISensors> {
+  public:
+    ISensorsWrapperV1_0(sp<hardware::sensors::V1_0::ISensors> sensors)
+        : SensorsWrapperBase(sensors){};
+
+    bool supportsPolling() const override { return true; }
+
+    bool supportsMessageQueues() const override { return false; }
+
+    Return<void> poll(int32_t maxCount,
+                      hardware::sensors::V1_0::ISensors::poll_cb _hidl_cb) override {
+        return mSensors->poll(maxCount, _hidl_cb);
+    }
+};
+
+class ISensorsWrapperV2_0 : public SensorsWrapperBase<hardware::sensors::V2_0::ISensors> {
+  public:
+    typedef MessageQueue<::android::hardware::sensors::V1_0::Event,
+                         ::android::hardware::kSynchronizedReadWrite>
+            EventMessageQueue;
+
+    ISensorsWrapperV2_0(sp<hardware::sensors::V2_0::ISensors> sensors)
+        : SensorsWrapperBase(sensors) {
+        auto eventQueue = std::make_unique<EventMessageQueue>(MAX_RECEIVE_BUFFER_EVENT_COUNT,
+                                                              true /* configureEventFlagWord */);
+        mEventQueue = std::make_unique<EventMessageQueueWrapperV1_0>(eventQueue);
+    };
+
+    bool supportsPolling() const override { return false; }
+
+    bool supportsMessageQueues() const override { return true; }
+
+    EventMessageQueueWrapperBase* getEventQueue() override { return mEventQueue.get(); }
+
+    Return<Result> initialize(const MQDescriptorSync<uint32_t>& wakeLockDesc,
+                              const ::android::sp<ISensorsCallback>& callback) override {
+        return mSensors->initialize(*mEventQueue->getDesc(), wakeLockDesc, callback);
+    }
+
+  private:
     std::unique_ptr<EventMessageQueueWrapperV1_0> mEventQueue;
 };
 
-class ISensorsWrapperV2_1 : public ISensorsWrapperBase {
+class ISensorsWrapperV2_1 : public SensorsWrapperBase<hardware::sensors::V2_1::ISensors> {
   public:
-    typedef MessageQueue<V2_1::Event, ::android::hardware::kSynchronizedReadWrite>
-            EventMessageQueue;
+    typedef MessageQueue<Event, ::android::hardware::kSynchronizedReadWrite> EventMessageQueueV2_1;
 
-    ISensorsWrapperV2_1(sp<V2_1::ISensors>& sensors) : mSensors(sensors) {
-        auto eventQueue = std::make_unique<EventMessageQueue>(MAX_RECEIVE_BUFFER_EVENT_COUNT,
-                                                              true /* configureEventFlagWord */);
+    ISensorsWrapperV2_1(sp<hardware::sensors::V2_1::ISensors> sensors)
+        : SensorsWrapperBase(sensors) {
+        auto eventQueue = std::make_unique<EventMessageQueueV2_1>(
+                MAX_RECEIVE_BUFFER_EVENT_COUNT, true /* configureEventFlagWord */);
         mEventQueue = std::make_unique<EventMessageQueueWrapperV2_1>(eventQueue);
-    }
+    };
 
-    EventMessageQueueWrapperBase& getEventQueue() override { return *mEventQueue; }
+    bool supportsPolling() const override { return false; }
 
-    Return<Result> initialize(
-            const ::android::hardware::MQDescriptorSync<uint32_t>& wakeLockDescriptor,
-            const sp<V2_1::ISensorsCallback>& sensorsCallback) override {
-        return mSensors->initialize_2_1(*mEventQueue->getDesc(), wakeLockDescriptor,
-                                        sensorsCallback);
-    }
+    bool supportsMessageQueues() const override { return true; }
 
-    Return<void> getSensorsList(V2_1::ISensors::getSensorsList_2_1_cb _hidl_cb) override {
+    EventMessageQueueWrapperBase* getEventQueue() override { return mEventQueue.get(); }
+
+    Return<void> getSensorsList(
+            ::android::hardware::sensors::V2_1::ISensors::getSensorsList_2_1_cb _hidl_cb) override {
         return mSensors->getSensorsList_2_1(_hidl_cb);
     }
 
-    Return<Result> injectSensorData(const V2_1::Event& event) override {
+    Return<Result> injectSensorData(const Event& event) override {
         return mSensors->injectSensorData_2_1(event);
     }
 
-  private:
-    V2_0::ISensors* getSensors() override { return mSensors.get(); }
+    Return<Result> initialize(const MQDescriptorSync<uint32_t>& wakeLockDesc,
+                              const ::android::sp<ISensorsCallback>& callback) override {
+        return mSensors->initialize_2_1(*mEventQueue->getDesc(), wakeLockDesc, callback);
+    }
 
-    sp<V2_1::ISensors> mSensors;
+  private:
     std::unique_ptr<EventMessageQueueWrapperV2_1> mEventQueue;
 };
 

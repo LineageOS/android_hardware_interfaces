@@ -67,7 +67,7 @@ bool SensorsHidlEnvironmentV2_X::resetHal() {
         }
 
         EventFlag::deleteEventFlag(&mEventQueueFlag);
-        EventFlag::createEventFlag(mSensors->getEventQueue().getEventFlagWord(), &mEventQueueFlag);
+        EventFlag::createEventFlag(mSensors->getEventQueue()->getEventFlagWord(), &mEventQueueFlag);
         if (mEventQueueFlag == nullptr) {
             break;
         }
@@ -124,18 +124,18 @@ void SensorsHidlEnvironmentV2_X::startPollingThread() {
 }
 
 void SensorsHidlEnvironmentV2_X::readEvents() {
-    size_t availableEvents = mSensors->getEventQueue().availableToRead();
+    size_t availableEvents = mSensors->getEventQueue()->availableToRead();
 
     if (availableEvents == 0) {
         uint32_t eventFlagState = 0;
 
         mEventQueueFlag->wait(asBaseType(EventQueueFlagBits::READ_AND_PROCESS), &eventFlagState);
-        availableEvents = mSensors->getEventQueue().availableToRead();
+        availableEvents = mSensors->getEventQueue()->availableToRead();
     }
 
     size_t eventsToRead = std::min(availableEvents, mEventBuffer.size());
     if (eventsToRead > 0) {
-        if (mSensors->getEventQueue().read(mEventBuffer.data(), eventsToRead)) {
+        if (mSensors->getEventQueue()->read(mEventBuffer.data(), eventsToRead)) {
             mEventQueueFlag->wake(asBaseType(EventQueueFlagBits::EVENTS_READ));
             for (size_t i = 0; i < eventsToRead; i++) {
                 addEvent(mEventBuffer[i]);
