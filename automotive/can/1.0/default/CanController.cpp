@@ -27,7 +27,8 @@
 
 namespace android::hardware::automotive::can::V1_0::implementation {
 
-using IfaceIdDisc = ICanController::BusConfiguration::InterfaceIdentifier::hidl_discriminator;
+using IfId = ICanController::BusConfig::InterfaceId;
+using IfIdDisc = ICanController::BusConfig::InterfaceId::hidl_discriminator;
 
 Return<void> CanController::getSupportedInterfaceTypes(getSupportedInterfaceTypes_cb _hidl_cb) {
     _hidl_cb({ICanController::InterfaceType::VIRTUAL, ICanController::InterfaceType::SOCKETCAN,
@@ -40,8 +41,7 @@ static bool isValidName(const std::string& name) {
     return std::regex_match(name, nameRE);
 }
 
-Return<ICanController::Result> CanController::upInterface(
-        const ICanController::BusConfiguration& config) {
+Return<ICanController::Result> CanController::upInterface(const ICanController::BusConfig& config) {
     LOG(VERBOSE) << "Attempting to bring interface up: " << toString(config);
 
     std::lock_guard<std::mutex> lck(mCanBusesGuard);
@@ -58,24 +58,23 @@ Return<ICanController::Result> CanController::upInterface(
 
     sp<CanBus> busService;
 
-    if (config.iftype == ICanController::InterfaceType::SOCKETCAN) {
-        // TODO(b/135918744): support serialno
-        if (config.interfaceId.getDiscriminator() == IfaceIdDisc::address) {
-            busService = new CanBusNative(config.interfaceId.address(), config.bitrate);
+    if (config.interfaceId.getDiscriminator() == IfIdDisc::socketcan) {
+        // TODO(b/142654031): support serialno
+        auto& socketcan = config.interfaceId.socketcan();
+        if (socketcan.getDiscriminator() == IfId::Socketcan::hidl_discriminator::ifname) {
+            busService = new CanBusNative(socketcan.ifname(), config.bitrate);
         } else {
-            return ICanController::Result::BAD_ADDRESS;
+            return ICanController::Result::BAD_INTERFACE_ID;
         }
-    } else if (config.iftype == ICanController::InterfaceType::VIRTUAL) {
-        if (config.interfaceId.getDiscriminator() == IfaceIdDisc::address) {
-            busService = new CanBusVirtual(config.interfaceId.address());
+    } else if (config.interfaceId.getDiscriminator() == IfIdDisc::virtualif) {
+        busService = new CanBusVirtual(config.interfaceId.virtualif().ifname);
+    } else if (config.interfaceId.getDiscriminator() == IfIdDisc::slcan) {
+        // TODO(b/142654031): support serialno
+        auto& slcan = config.interfaceId.slcan();
+        if (slcan.getDiscriminator() == IfId::Slcan::hidl_discriminator::ttyname) {
+            busService = new CanBusSlcan(slcan.ttyname(), config.bitrate);
         } else {
-            return ICanController::Result::BAD_ADDRESS;
-        }
-    } else if (config.iftype == ICanController::InterfaceType::SLCAN) {
-        if (config.interfaceId.getDiscriminator() == IfaceIdDisc::address) {
-            busService = new CanBusSlcan(config.interfaceId.address(), config.bitrate);
-        } else {
-            return ICanController::Result::BAD_ADDRESS;
+            return ICanController::Result::BAD_INTERFACE_ID;
         }
     } else {
         return ICanController::Result::NOT_SUPPORTED;

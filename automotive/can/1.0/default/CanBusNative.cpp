@@ -28,7 +28,7 @@ CanBusNative::CanBusNative(const std::string& ifname, uint32_t bitrate)
 ICanController::Result CanBusNative::preUp() {
     if (!netdevice::exists(mIfname)) {
         LOG(ERROR) << "Interface " << mIfname << " doesn't exist";
-        return ICanController::Result::BAD_ADDRESS;
+        return ICanController::Result::BAD_INTERFACE_ID;
     }
 
     if (mBitrate == 0) {
