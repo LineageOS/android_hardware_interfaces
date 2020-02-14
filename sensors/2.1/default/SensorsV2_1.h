@@ -49,6 +49,8 @@ class ISensorsCallbackWrapper : public V2_0::ISensorsCallback {
 };
 
 struct SensorsV2_1 : public Sensors {
+    SensorsV2_1();
+
     // Methods from ::android::hardware::sensors::V2_1::ISensors follow.
     Return<void> getSensorsList_2_1(ISensors::getSensorsList_2_1_cb _hidl_cb) override;
 

@@ -26,16 +26,14 @@ namespace sensors {
 namespace V2_X {
 namespace implementation {
 
-using ::android::hardware::sensors::V1_0::Event;
 using ::android::hardware::sensors::V1_0::MetaDataEventType;
 using ::android::hardware::sensors::V1_0::OperationMode;
 using ::android::hardware::sensors::V1_0::Result;
 using ::android::hardware::sensors::V1_0::SensorFlagBits;
-using ::android::hardware::sensors::V1_0::SensorInfo;
 using ::android::hardware::sensors::V1_0::SensorStatus;
-using ::android::hardware::sensors::V1_0::SensorType;
-
-static constexpr float kDefaultMaxDelayUs = 10 * 1000 * 1000;
+using ::android::hardware::sensors::V2_1::Event;
+using ::android::hardware::sensors::V2_1::SensorInfo;
+using ::android::hardware::sensors::V2_1::SensorType;
 
 Sensor::Sensor(ISensorsEventCallback* callback)
     : mIsEnabled(false),

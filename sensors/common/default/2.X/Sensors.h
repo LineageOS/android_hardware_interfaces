@@ -82,7 +82,8 @@ struct Sensors : public ISensorsInterface, public ISensorsEventCallback {
     Return<void> getSensorsList(V2_0::ISensors::getSensorsList_cb _hidl_cb) override {
         std::vector<V1_0::SensorInfo> sensors;
         for (const auto& sensor : mSensors) {
-            sensors.push_back(sensor.second->getSensorInfo());
+            sensors.push_back(
+                    V2_1::implementation::convertToOldSensorInfo(sensor.second->getSensorInfo()));
         }
 
         // Call the HIDL callback with the SensorInfo
@@ -187,7 +188,7 @@ struct Sensors : public ISensorsInterface, public ISensorsEventCallback {
     Return<Result> injectSensorData(const Event& event) override {
         auto sensor = mSensors.find(event.sensorHandle);
         if (sensor != mSensors.end()) {
-            return sensor->second->injectEvent(event);
+            return sensor->second->injectEvent(V2_1::implementation::convertToNewEvent(event));
         }
 
         return Result::BAD_VALUE;
@@ -210,9 +211,9 @@ struct Sensors : public ISensorsInterface, public ISensorsEventCallback {
         return Return<void>();
     }
 
-    void postEvents(const std::vector<Event>& events, bool wakeup) override {
+    void postEvents(const std::vector<V2_1::Event>& events, bool wakeup) override {
         std::lock_guard<std::mutex> lock(mWriteLock);
-        if (mEventQueue->write(V2_1::implementation::convertToNewEvents(events))) {
+        if (mEventQueue->write(events)) {
             mEventQueueFlag->wake(static_cast<uint32_t>(EventQueueFlagBits::READ_AND_PROCESS));
 
             if (wakeup) {

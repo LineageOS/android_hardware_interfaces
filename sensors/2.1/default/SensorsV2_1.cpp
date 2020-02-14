@@ -16,17 +16,48 @@
 
 #include "SensorsV2_1.h"
 
+#include "Sensor.h"
+
 namespace android {
 namespace hardware {
 namespace sensors {
 namespace V2_1 {
 namespace implementation {
 
+using V2_X::implementation::ISensorsEventCallback;
+using V2_X::implementation::OnChangeSensor;
+
+class HingeAngleSensor : public OnChangeSensor {
+  public:
+    HingeAngleSensor(int32_t sensorHandle, ISensorsEventCallback* callback)
+        : OnChangeSensor(callback) {
+        mSensorInfo.sensorHandle = sensorHandle;
+        mSensorInfo.name = "Hinge Angle Sensor";
+        mSensorInfo.vendor = "Vendor String";
+        mSensorInfo.version = 1;
+        mSensorInfo.type = SensorType::HINGE_ANGLE;
+        mSensorInfo.typeAsString = "";
+        mSensorInfo.maxRange = 360.0f;
+        mSensorInfo.resolution = 1.0f;
+        mSensorInfo.power = 0.001f;
+        mSensorInfo.minDelay = 40 * 1000;  // microseconds
+        mSensorInfo.maxDelay = V2_X::implementation::kDefaultMaxDelayUs;
+        mSensorInfo.fifoReservedEventCount = 0;
+        mSensorInfo.fifoMaxEventCount = 0;
+        mSensorInfo.requiredPermission = "";
+        mSensorInfo.flags = static_cast<uint32_t>(V1_0::SensorFlagBits::ON_CHANGE_MODE);
+    }
+};
+
+SensorsV2_1::SensorsV2_1() {
+    AddSensor<HingeAngleSensor>();
+}
+
 // Methods from ::android::hardware::sensors::V2_1::ISensors follow.
 Return<void> SensorsV2_1::getSensorsList_2_1(ISensors::getSensorsList_2_1_cb _hidl_cb) {
     std::vector<SensorInfo> sensors;
     for (const auto& sensor : mSensors) {
-        sensors.push_back(convertToNewSensorInfo(sensor.second->getSensorInfo()));
+        sensors.push_back(sensor.second->getSensorInfo());
     }
 
     // Call the HIDL callback with the SensorInfo

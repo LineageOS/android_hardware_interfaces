@@ -18,6 +18,7 @@
 #define ANDROID_HARDWARE_SENSORS_V2_X_SENSOR_H
 
 #include <android/hardware/sensors/1.0/types.h>
+#include <android/hardware/sensors/2.1/types.h>
 
 #include <condition_variable>
 #include <memory>
@@ -31,9 +32,11 @@ namespace sensors {
 namespace V2_X {
 namespace implementation {
 
+static constexpr float kDefaultMaxDelayUs = 10 * 1000 * 1000;
+
 class ISensorsEventCallback {
   public:
-    using Event = ::android::hardware::sensors::V1_0::Event;
+    using Event = ::android::hardware::sensors::V2_1::Event;
 
     virtual ~ISensorsEventCallback(){};
     virtual void postEvents(const std::vector<Event>& events, bool wakeup) = 0;
@@ -41,11 +44,11 @@ class ISensorsEventCallback {
 
 class Sensor {
   public:
-    using Event = ::android::hardware::sensors::V1_0::Event;
     using OperationMode = ::android::hardware::sensors::V1_0::OperationMode;
     using Result = ::android::hardware::sensors::V1_0::Result;
-    using SensorInfo = ::android::hardware::sensors::V1_0::SensorInfo;
-    using SensorType = ::android::hardware::sensors::V1_0::SensorType;
+    using Event = ::android::hardware::sensors::V2_1::Event;
+    using SensorInfo = ::android::hardware::sensors::V2_1::SensorInfo;
+    using SensorType = ::android::hardware::sensors::V2_1::SensorType;
 
     Sensor(ISensorsEventCallback* callback);
     virtual ~Sensor();
