@@ -45,8 +45,7 @@ static bool badTiming(Timing timing) {
 // that use the request. Note that the request here is passed by value, and any
 // mutation to the request does not leave this function.
 static void validate(const sp<IPreparedModel>& preparedModel, const std::string& message,
-                     Request request, const std::function<void(Request*)>& mutation,
-                     bool testDeadline = false) {
+                     Request request, const std::function<void(Request*)>& mutation) {
     mutation(&request);
 
     // We'd like to test both with timing requested and without timing
@@ -59,18 +58,13 @@ static void validate(const sp<IPreparedModel>& preparedModel, const std::string&
     };
     MeasureTiming measure = (hash & 1) ? MeasureTiming::YES : MeasureTiming::NO;
 
-    OptionalTimePoint deadline;
-    if (testDeadline) {
-        deadline.nanosecondsSinceEpoch(std::numeric_limits<uint64_t>::max());
-    }
-
     // asynchronous
     {
         SCOPED_TRACE(message + " [execute_1_3]");
 
         sp<ExecutionCallback> executionCallback = new ExecutionCallback();
         Return<ErrorStatus> executeLaunchStatus =
-                preparedModel->execute_1_3(request, measure, deadline, {}, executionCallback);
+                preparedModel->execute_1_3(request, measure, {}, {}, executionCallback);
         ASSERT_TRUE(executeLaunchStatus.isOk());
         ASSERT_EQ(ErrorStatus::INVALID_ARGUMENT, static_cast<ErrorStatus>(executeLaunchStatus));
 
@@ -88,7 +82,7 @@ static void validate(const sp<IPreparedModel>& preparedModel, const std::string&
         SCOPED_TRACE(message + " [executeSynchronously_1_3]");
 
         Return<void> executeStatus = preparedModel->executeSynchronously_1_3(
-                request, measure, deadline, {},
+                request, measure, {}, {},
                 [](ErrorStatus error, const hidl_vec<OutputShape>& outputShapes,
                    const Timing& timing) {
                     ASSERT_EQ(ErrorStatus::INVALID_ARGUMENT, error);
@@ -100,7 +94,7 @@ static void validate(const sp<IPreparedModel>& preparedModel, const std::string&
 
     // burst
     // TODO(butlermichael): Check if we need to test burst in V1_3 if the interface remains V1_2.
-    if (!testDeadline) {
+    {
         SCOPED_TRACE(message + " [burst]");
 
         ASSERT_TRUE(nn::compliantWithV1_0(request));
@@ -143,7 +137,7 @@ static void validate(const sp<IPreparedModel>& preparedModel, const std::string&
     {
         SCOPED_TRACE(message + " [executeFenced]");
         Return<void> ret =
-                preparedModel->executeFenced(request, {}, MeasureTiming::NO, deadline, {}, {},
+                preparedModel->executeFenced(request, {}, MeasureTiming::NO, {}, {}, {},
                                              [](ErrorStatus error, const hidl_handle& handle,
                                                 const sp<IFencedExecutionCallback>& callback) {
                                                  ASSERT_EQ(ErrorStatus::INVALID_ARGUMENT, error);
@@ -174,23 +168,11 @@ static void removeOutputTest(const sp<IPreparedModel>& preparedModel, const Requ
     }
 }
 
-///////////////////////// DEADLINE ////////////////////////////////////
-
-static void deadlineTest(const sp<IPreparedModel>& preparedModel, const Request& request) {
-    const std::string message = "deadlineTest: deadline not supported";
-    const auto noop = [](Request*) {};
-    validate(preparedModel, message, request, noop, /*testDeadline=*/true);
-}
-
 ///////////////////////////// ENTRY POINT //////////////////////////////////
 
-void validateRequest(const sp<IPreparedModel>& preparedModel, const Request& request,
-                     bool executionDeadlineSupported) {
+void validateRequest(const sp<IPreparedModel>& preparedModel, const Request& request) {
     removeInputTest(preparedModel, request);
     removeOutputTest(preparedModel, request);
-    if (!executionDeadlineSupported) {
-        deadlineTest(preparedModel, request);
-    }
 }
 
 void validateRequestFailure(const sp<IPreparedModel>& preparedModel, const Request& request) {
