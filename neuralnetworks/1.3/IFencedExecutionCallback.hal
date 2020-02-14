@@ -38,8 +38,8 @@ interface IFencedExecutionCallback {
      *                - DEVICE_UNAVAILABLE if driver is offline or busy
      *                - GENERAL_FAILURE if the asynchronous task resulted in an
      *                  unspecified error
-     *                - MISSED_DEADLINE_* if the deadline for executing a model
-     *                  cannot be met
+     *                - MISSED_DEADLINE_* if the execution is aborted because it
+     *                  cannot be completed by the deadline
      *                - RESOURCE_EXHAUSTED_* if the task was aborted by the
      *                  driver
      * @return timingLaunched The duration starts when executeFenced is called and ends when
