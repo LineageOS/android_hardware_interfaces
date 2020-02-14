@@ -29,6 +29,13 @@ enum Boost {
     INTERACTION,
 
     /**
+     * This boost indicates that the framework is likely to provide a new
+     * display frame soon. This implies that the device should ensure that the
+     * display processing path is powered up and ready to receive that update.
+     */
+    DISPLAY_UPDATE_IMMINENT,
+
+    /**
      * Below hints are currently not sent in Android framework but OEM might choose to
      * implement for power/perf optimizations.
      */
