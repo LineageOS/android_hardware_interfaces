@@ -16,6 +16,7 @@
 #include <aidl/Gtest.h>
 #include <aidl/Vintf.h>
 
+#include <android-base/properties.h>
 #include <android/hardware/power/Boost.h>
 #include <android/hardware/power/IPower.h>
 #include <android/hardware/power/Mode.h>
@@ -27,6 +28,7 @@
 using android::ProcessState;
 using android::sp;
 using android::String16;
+using android::base::GetUintProperty;
 using android::binder::Status;
 using android::hardware::power::Boost;
 using android::hardware::power::IPower;
@@ -77,7 +79,7 @@ TEST_P(PowerAidl, isModeSupported) {
     for (const auto& mode : kInvalidModes) {
         bool supported;
         ASSERT_TRUE(power->isModeSupported(mode, &supported).isOk());
-        // Should return false for values outsides enum
+        // Should return false for values outside enum
         ASSERT_FALSE(supported);
     }
 }
@@ -103,8 +105,24 @@ TEST_P(PowerAidl, isBoostSupported) {
     for (const auto& boost : kInvalidBoosts) {
         bool supported;
         ASSERT_TRUE(power->isBoostSupported(boost, &supported).isOk());
-        // Should return false for values outsides enum
+        // Should return false for values outside enum
         ASSERT_FALSE(supported);
+    }
+}
+
+// FIXED_PERFORMANCE mode is required for all devices which ship on Android 11
+// or later
+TEST_P(PowerAidl, hasFixedPerformance) {
+    auto apiLevel = GetUintProperty<uint64_t>("ro.product.first_api_level", 0);
+    if (apiLevel == 0) {
+        apiLevel = GetUintProperty<uint64_t>("ro.build.version.sdk", 0);
+    }
+    ASSERT_NE(apiLevel, 0);
+
+    if (apiLevel >= 30) {
+        bool supported;
+        ASSERT_TRUE(power->isModeSupported(Mode::FIXED_PERFORMANCE, &supported).isOk());
+        ASSERT_TRUE(supported);
     }
 }
 
