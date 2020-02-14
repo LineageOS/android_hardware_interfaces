@@ -50,7 +50,7 @@ static void validatePrepareModel(const sp<IDevice>& device, const std::string& m
 
     OptionalTimePoint deadline;
     if (testDeadline) {
-        deadline.nanoseconds(std::numeric_limits<uint64_t>::max());
+        deadline.nanosecondsSinceEpoch(std::numeric_limits<uint64_t>::max());
     }
 
     sp<PreparedModelCallback> preparedModelCallback = new PreparedModelCallback();
