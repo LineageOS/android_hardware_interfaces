@@ -39,6 +39,50 @@ enum Mode {
     SUSTAINED_PERFORMANCE,
 
     /**
+     * Sets the device to a fixed performance level which can be sustained under
+     * normal indoor conditions for at least 10 minutes.
+     *
+     * This is similar to sustained performance mode, except that whereas
+     * sustained performance mode puts an upper bound on performance in the
+     * interest of long-term stability, fixed performance mode puts both upper
+     * and lower bounds on performance such that any workload run while in a
+     * fixed performance mode should complete in a repeatable amount of time
+     * (except if the device is under thermal throttling).
+     *
+     * This mode is not intended for general purpose use, but rather to enable
+     * games and other performance-sensitive applications to reduce the number
+     * of variables during profiling and performance debugging. As such, while
+     * it is valid to set the device to minimum clocks for all subsystems in
+     * this mode, it is preferable to attempt to make the relative performance
+     * of the CPU, GPU, and other subsystems match typical usage, even if the
+     * frequencies have to be reduced to provide sustainability.
+     *
+     * To calibrate this mode, follow these steps:
+     *
+     * 1) Build and push the HWUI macrobench as described in
+     *    //frameworks/base/libs/hwui/tests/macrobench/how_to_run.txt
+     * 2) Run the macrobench as follows:
+     *    while true; do \
+     *      adb shell /data/benchmarktest/hwuimacro/hwuimacro shadowgrid2 -c 200 -r 10; \
+     *    done
+     * 3) Determine a fixed set of device clocks such that the loop in (2) can
+     *    run for at least 10 minutes, starting from an idle device on a desk
+     *    at room temperature (roughly 22 Celsius), without hitting thermal
+     *    throttling.
+     * 4) After setting those clocks, set the system property
+     *    ro.power.fixed_performance_scale_factor to a value N, where N is the
+     *    number of times the loop from (2) runs during the 10 minute test
+     *    cycle. It is expected that in FIXED_PERFORMANCE mode, unless there is
+     *    thermal throttling, the loop will run N to N+1 times (inclusive).
+     *
+     * After calibrating this, while in FIXED_PERFORMANCE mode, the macrobench
+     * results obtained while running the loop in (2) should be consistent both
+     * within a given run and from the first run in the 10 minute window through
+     * the last run in the window.
+     */
+    FIXED_PERFORMANCE,
+
+    /**
      * This mode indicates VR Mode is activated or not. VR mode is intended
      * to provide minimum guarantee for performance for the amount of time the
      * device can sustain it.
