@@ -43,7 +43,7 @@ interface IPower {
      */
     boolean isModeSupported(in Mode type);
 
-   /**
+    /**
      * setBoost() indicates the device may need to boost some resources, as the
      * the load is likely to increase before the kernel governors can react.
      * Depending on the boost, it may be appropriate to raise the frequencies of
