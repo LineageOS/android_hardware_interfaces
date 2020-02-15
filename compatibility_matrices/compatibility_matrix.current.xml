@@ -348,7 +348,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
+    <hal format="aidl" optional="false">
         <name>android.hardware.power</name>
         <interface>
             <name>IPower</name>
