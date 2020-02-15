@@ -156,7 +156,7 @@ Return<Result> Health::update() {
     const HealthInfo_1_0& health_info = battery_monitor_->getHealthInfo_1_0();
     struct BatteryProperties props;
     convertFromHealthInfo(health_info, &props);
-    bool log = healthd_board_battery_update(&props);
+    bool log = (healthd_board_battery_update(&props) == 0);
     if (log) {
         battery_monitor_->logValues();
     }
