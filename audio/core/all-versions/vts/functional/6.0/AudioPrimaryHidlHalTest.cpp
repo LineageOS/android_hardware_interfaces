@@ -190,3 +190,30 @@ TEST_P(AudioPatchHidlTest, UpdatePatchInvalidHandle) {
             hidl_vec<AudioPortConfig>(), hidl_vec<AudioPortConfig>(), returnIn(res, ignored)));
     ASSERT_RESULT(Result::INVALID_ARGUMENTS, res);
 }
+
+using DualMonoModeAccessorHidlTest = AccessorHidlTest<DualMonoMode, OutputStreamTest>;
+TEST_P(DualMonoModeAccessorHidlTest, DualMonoModeTest) {
+    doc::test("Check that dual mono mode can be set and retrieved");
+    testAccessors<OPTIONAL>(&OutputStreamTest::getStream, "dual mono mode",
+                            Initial{DualMonoMode::OFF},
+                            {DualMonoMode::LR, DualMonoMode::LL, DualMonoMode::RR},
+                            &IStreamOut::setDualMonoMode, &IStreamOut::getDualMonoMode);
+}
+
+INSTANTIATE_TEST_CASE_P(DualMonoModeHidl, DualMonoModeAccessorHidlTest,
+                        ::testing::ValuesIn(getOutputDeviceConfigParameters()),
+                        &DeviceConfigParameterToString);
+
+using AudioDescriptionMixLevelHidlTest = AccessorHidlTest<float, OutputStreamTest>;
+TEST_P(AudioDescriptionMixLevelHidlTest, AudioDescriptionMixLevelTest) {
+    doc::test("Check that audio description mix level can be set and retrieved");
+    testAccessors<OPTIONAL>(
+            &OutputStreamTest::getStream, "audio description mix level",
+            Initial{-std::numeric_limits<float>::infinity()}, {-48.0f, -1.0f, 0.0f, 1.0f, 48.0f},
+            &IStreamOut::setAudioDescriptionMixLevel, &IStreamOut::getAudioDescriptionMixLevel,
+            {48.5f, 1000.0f, std::numeric_limits<float>::infinity()});
+}
+
+INSTANTIATE_TEST_CASE_P(AudioDescriptionMixLevelHidl, AudioDescriptionMixLevelHidlTest,
+                        ::testing::ValuesIn(getOutputDeviceConfigParameters()),
+                        &DeviceConfigParameterToString);

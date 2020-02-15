@@ -121,6 +121,12 @@ struct StreamOut : public IStreamOut {
     Return<void> updateSourceMetadata(const SourceMetadata& sourceMetadata) override;
     Return<Result> selectPresentation(int32_t presentationId, int32_t programId) override;
 #endif
+#if MAJOR_VERSION >= 6
+    Return<void> getDualMonoMode(getDualMonoMode_cb _hidl_cb) override;
+    Return<Result> setDualMonoMode(DualMonoMode mode) override;
+    Return<void> getAudioDescriptionMixLevel(getAudioDescriptionMixLevel_cb _hidl_cb) override;
+    Return<Result> setAudioDescriptionMixLevel(float leveldB) override;
+#endif
 
     static Result getPresentationPositionImpl(audio_stream_out_t* stream, uint64_t* frames,
                                               TimeSpec* timeStamp);

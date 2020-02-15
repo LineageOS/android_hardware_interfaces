@@ -582,6 +582,26 @@ Return<Result> StreamOut::selectPresentation(int32_t /*presentationId*/, int32_t
 }
 #endif
 
+#if MAJOR_VERSION >= 6
+Return<void> StreamOut::getDualMonoMode(getDualMonoMode_cb _hidl_cb) {
+    _hidl_cb(Result::NOT_SUPPORTED, DualMonoMode::OFF);
+    return Void();
+}
+
+Return<Result> StreamOut::setDualMonoMode(DualMonoMode /*mode*/) {
+    return Result::NOT_SUPPORTED;
+}
+
+Return<void> StreamOut::getAudioDescriptionMixLevel(getAudioDescriptionMixLevel_cb _hidl_cb) {
+    _hidl_cb(Result::NOT_SUPPORTED, -std::numeric_limits<float>::infinity());
+    return Void();
+}
+
+Return<Result> StreamOut::setAudioDescriptionMixLevel(float /*leveldB*/) {
+    return Result::NOT_SUPPORTED;
+}
+#endif
+
 }  // namespace implementation
 }  // namespace CPP_VERSION
 }  // namespace audio

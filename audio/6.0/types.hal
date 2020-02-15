@@ -247,3 +247,53 @@ enum MicrophoneDirection : int32_t {
      */
     EXTERNAL = 3,
 };
+
+
+/* Dual Mono handling is used when a stereo audio stream
+ * contains separate audio content on the left and right channels.
+ * Such information about the content of the stream may be found, for example,
+ * in ITU T-REC-J.94-201610 A.6.2.3 Component descriptor.
+ */
+@export(name="audio_dual_mono_mode_t", value_prefix="AUDIO_DUAL_MONO_MODE_")
+enum DualMonoMode : int32_t {
+    // Need to be in sync with DUAL_MONO_MODE* constants in
+    // frameworks/base/media/java/android/media/AudioTrack.java
+    /**
+     * Disable any Dual Mono presentation effect.
+     *
+     */
+    OFF = 0,
+    /**
+     * This mode indicates that a stereo stream should be presented
+     * with the left and right audio channels blended together
+     * and delivered to both channels.
+     *
+     * Behavior for non-stereo streams is implementation defined.
+     * A suggested guideline is that the left-right stereo symmetric
+     * channels are pairwise blended, the other channels such as center
+     * are left alone.
+     */
+    LR = 1,
+    /**
+     * This mode indicates that a stereo stream should be presented
+     * with the left audio channel replicated into the right audio channel.
+     *
+     * Behavior for non-stereo streams is implementation defined.
+     * A suggested guideline is that all channels with left-right
+     * stereo symmetry will have the left channel position replicated
+     * into the right channel position. The center channels (with no
+     * left/right symmetry) or unbalanced channels are left alone.
+     */
+    LL = 2,
+    /**
+     * This mode indicates that a stereo stream should be presented
+     * with the right audio channel replicated into the left audio channel.
+     *
+     * Behavior for non-stereo streams is implementation defined.
+     * A suggested guideline is that all channels with left-right
+     * stereo symmetry will have the right channel position replicated
+     * into the left channel position. The center channels (with no
+     * left/right symmetry) or unbalanced channels are left alone.
+     */
+    RR = 3,
+};

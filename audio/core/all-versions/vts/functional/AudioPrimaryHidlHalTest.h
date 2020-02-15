@@ -140,6 +140,11 @@ using HidlTestBase = ::testing::Test;
 class HidlTest : public HidlTestBase {
   public:
     virtual ~HidlTest() = default;
+    // public access to avoid annoyances when using this method in template classes
+    // derived from test classes
+    sp<IDevice> getDevice() const {
+        return DeviceManager::getInstance().get(getFactoryName(), getDeviceName());
+    }
 
   protected:
     // Factory and device name getters to be overridden in subclasses.
@@ -148,9 +153,6 @@ class HidlTest : public HidlTestBase {
 
     sp<IDevicesFactory> getDevicesFactory() const {
         return DevicesFactoryManager::getInstance().get(getFactoryName());
-    }
-    sp<IDevice> getDevice() const {
-        return DeviceManager::getInstance().get(getFactoryName(), getDeviceName());
     }
     bool resetDevice() const {
         return DeviceManager::getInstance().reset(getFactoryName(), getDeviceName());
@@ -419,7 +421,8 @@ class AudioPrimaryHidlTest : public AudioHidlDeviceTest {
         ASSERT_TRUE(getDevice() != nullptr);
     }
 
-  protected:
+    // public access to avoid annoyances when using this method in template classes
+    // derived from test classes
     sp<IPrimaryDevice> getDevice() const {
         return DeviceManager::getInstance().getPrimary(getFactoryName());
     }
@@ -450,15 +453,15 @@ class AccessorHidlTest : public BaseTestClass {
     /** Test a property getter and setter.
      *  The getter and/or the setter may return NOT_SUPPORTED if optionality == OPTIONAL.
      */
-    template <Optionality optionality = REQUIRED, class Getter, class Setter>
-    void testAccessors(const string& propertyName, const Initial expectedInitial,
-                       list<Property> valuesToTest, Setter setter, Getter getter,
-                       const vector<Property>& invalidValues = {}) {
+    template <Optionality optionality = REQUIRED, class IUTGetter, class Getter, class Setter>
+    void testAccessors(IUTGetter iutGetter, const string& propertyName,
+                       const Initial expectedInitial, list<Property> valuesToTest, Setter setter,
+                       Getter getter, const vector<Property>& invalidValues = {}) {
         const auto expectedResults = {Result::OK,
                                       optionality == OPTIONAL ? Result::NOT_SUPPORTED : Result::OK};
 
         Property initialValue = expectedInitial.value;
-        ASSERT_OK((BaseTestClass::getDevice().get()->*getter)(returnIn(res, initialValue)));
+        ASSERT_OK(((this->*iutGetter)().get()->*getter)(returnIn(res, initialValue)));
         ASSERT_RESULT(expectedResults, res);
         if (res == Result::OK && expectedInitial.check == REQUIRED) {
             EXPECT_EQ(expectedInitial.value, initialValue);
@@ -469,7 +472,7 @@ class AccessorHidlTest : public BaseTestClass {
         for (Property setValue : valuesToTest) {
             SCOPED_TRACE("Test " + propertyName + " getter and setter for " +
                          testing::PrintToString(setValue));
-            auto ret = (BaseTestClass::getDevice().get()->*setter)(setValue);
+            auto ret = ((this->*iutGetter)().get()->*setter)(setValue);
             ASSERT_RESULT(expectedResults, ret);
             if (ret == Result::NOT_SUPPORTED) {
                 doc::partialTest(propertyName + " setter is not supported");
@@ -477,7 +480,7 @@ class AccessorHidlTest : public BaseTestClass {
             }
             Property getValue;
             // Make sure the getter returns the same value just set
-            ASSERT_OK((BaseTestClass::getDevice().get()->*getter)(returnIn(res, getValue)));
+            ASSERT_OK(((this->*iutGetter)().get()->*getter)(returnIn(res, getValue)));
             ASSERT_RESULT(expectedResults, res);
             if (res == Result::NOT_SUPPORTED) {
                 doc::partialTest(propertyName + " getter is not supported");
@@ -490,11 +493,18 @@ class AccessorHidlTest : public BaseTestClass {
             SCOPED_TRACE("Try to set " + propertyName + " with the invalid value " +
                          testing::PrintToString(invalidValue));
             EXPECT_RESULT(invalidArgsOrNotSupported,
-                          (BaseTestClass::getDevice().get()->*setter)(invalidValue));
+                          ((this->*iutGetter)().get()->*setter)(invalidValue));
         }
 
         // Restore initial value
-        EXPECT_RESULT(expectedResults, (BaseTestClass::getDevice().get()->*setter)(initialValue));
+        EXPECT_RESULT(expectedResults, ((this->*iutGetter)().get()->*setter)(initialValue));
+    }
+    template <Optionality optionality = REQUIRED, class Getter, class Setter>
+    void testAccessors(const string& propertyName, const Initial expectedInitial,
+                       list<Property> valuesToTest, Setter setter, Getter getter,
+                       const vector<Property>& invalidValues = {}) {
+        testAccessors<optionality>(&BaseTestClass::getDevice, propertyName, expectedInitial,
+                                   valuesToTest, setter, getter, invalidValues);
     }
 };
 
@@ -872,6 +882,11 @@ class StreamHelper {
 
 template <class Stream>
 class OpenStreamTest : public AudioHidlTestWithDeviceConfigParameter {
+  public:
+    // public access to avoid annoyances when using this method in template classes
+    // derived from test classes
+    sp<Stream> getStream() const { return stream; }
+
   protected:
     OpenStreamTest() : AudioHidlTestWithDeviceConfigParameter(), helper(stream) {}
     template <class Open>
