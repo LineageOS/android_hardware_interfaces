@@ -109,6 +109,7 @@ class GnssHalTest : public testing::TestWithParam<std::string> {
         // New in v2.1
         Return<void> gnssSvStatusCb_2_1(
                 const hidl_vec<IGnssCallback_2_1::GnssSvInfo>& svInfoList) override;
+        Return<void> gnssSetCapabilitiesCb_2_1(uint32_t capabilities) override;
 
       private:
         Return<void> gnssLocationCbImpl(const GnssLocation_2_0& location);

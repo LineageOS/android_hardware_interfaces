@@ -36,6 +36,13 @@ interface IGnssCallback extends @2.0::IGnssCallback {
     };
 
     /**
+     * Callback to inform framework of the GNSS HAL implementation's capabilities.
+     *
+     * @param capabilities Capability parameter is a bit field of the Capabilities enum.
+     */
+    gnssSetCapabilitiesCb_2_1(bitfield<Capabilities> capabilities);
+
+    /**
      * Extends a GnssSvInfo, adding a basebandCN0DbHz.
      */
     struct GnssSvInfo {

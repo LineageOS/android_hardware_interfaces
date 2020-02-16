@@ -339,7 +339,7 @@ Return<bool> Gnss::setCallback_2_1(const sp<V2_1::IGnssCallback>& callback) {
     const auto capabilities = Capabilities::MEASUREMENTS | Capabilities::MEASUREMENT_CORRECTIONS |
                               Capabilities::LOW_POWER_MODE | Capabilities::SATELLITE_BLACKLIST |
                               Capabilities::ANTENNA_INFO;
-    auto ret = sGnssCallback_2_1->gnssSetCapabilitiesCb_2_0(capabilities);
+    auto ret = sGnssCallback_2_1->gnssSetCapabilitiesCb_2_1(capabilities);
     if (!ret.isOk()) {
         ALOGE("%s: Unable to invoke callback", __func__);
     }

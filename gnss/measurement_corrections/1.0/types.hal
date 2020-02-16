@@ -92,16 +92,16 @@ struct MeasurementCorrections {
     double altitudeMeters;
 
     /**
-     * Represents the horizontal uncertainty (68% confidence) in meters on the device position at
-     * which the corrections are provided.
+     * Represents the horizontal uncertainty (63% to 68% confidence) in meters on the device
+     * position at which the corrections are provided.
      *
      * This value is useful for example to judge how accurate the provided corrections are.
      */
     double horizontalPositionUncertaintyMeters;
 
     /**
-     * Represents the vertical uncertainty (68% confidence) in meters on the device position at
-     * which the corrections are provided.
+     * Represents the vertical uncertainty (63% to 68% confidence) in meters on the device position
+     * at which the corrections are provided.
      *
      * This value is useful for example to judge how accurate the provided corrections are.
      */
