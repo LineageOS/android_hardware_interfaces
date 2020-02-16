@@ -85,9 +85,10 @@ struct HealthInfo {
 
     /**
      * Estimated battery full charge design capacity (in microamp hours, uAh).
-     * batteryFullCharge must be less than (value * 1000).
      * Value must be 0 if unknown.
      * Value must be positive if known.
+     * Value must be greater than 100 000 uAh.
+     * Value must be less than 100 000 000 uAh.
      */
     int32_t batteryFullChargeDesignCapacityUah;
 };
