@@ -17,6 +17,7 @@
 package android.hardware.automotive.evs@1.1;
 
 import IEvsCamera;
+import IEvsDisplay;
 import @1.0::IEvsEnumerator;
 import @1.0::EvsResult;
 import android.hardware.camera.device@3.2::Stream;
@@ -54,4 +55,25 @@ interface IEvsEnumerator extends @1.0::IEvsEnumerator {
      * @return result False for EVS manager implementations and true for all others.
      */
     isHardware() generates (bool result);
+
+    /**
+     * Returns a list of all EVS displays available to the system
+     *
+     * @return displayIds Identifiers of available displays.
+     */
+    getDisplayIdList() generates (vec<uint8_t> displayIds);
+
+    /**
+     * Get exclusive access to IEvsDisplay for the system
+     *
+     * There can be more than one EVS display objects for the system and this function
+     * requests access to the display identified by a given ID. If the target EVS display
+     * is not available or is already in use the old instance shall be closed and give
+     * the new caller exclusive access.
+     * When done using the display, the caller may release it by calling closeDisplay().
+     *
+     * @param  id      Target display identifier.
+     * @return display EvsDisplay object to be used.
+     */
+    openDisplay_1_1(uint8_t id) generates (IEvsDisplay display);
 };

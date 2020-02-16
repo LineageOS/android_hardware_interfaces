@@ -10,9 +10,11 @@ hidl_interface {
         "types.hal",
         "IEvsCamera.hal",
         "IEvsCameraStream.hal",
+        "IEvsDisplay.hal",
         "IEvsEnumerator.hal",
     ],
     interfaces: [
+        "android.frameworks.automotive.display@1.0",
         "android.hardware.automotive.evs@1.0",
         "android.hardware.camera.device@3.2",
         "android.hardware.graphics.common@1.0",
