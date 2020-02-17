@@ -280,7 +280,7 @@ Return<EvsResult> EvsCamera::setMaster() {
     return EvsResult::OK;
 }
 
-Return<EvsResult> EvsCamera::forceMaster(const sp<IEvsDisplay>& ) {
+Return<EvsResult> EvsCamera::forceMaster(const sp<IEvsDisplay_1_0>& ) {
     // Default implementation does not expect multiple subscribers and therefore
     // return a success code always.
     return EvsResult::OK;

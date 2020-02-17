@@ -54,9 +54,11 @@ static const float kNanoToSeconds = 0.000000001f;
 #include <android/hardware/automotive/evs/1.1/IEvsCamera.h>
 #include <android/hardware/automotive/evs/1.1/IEvsCameraStream.h>
 #include <android/hardware/automotive/evs/1.1/IEvsEnumerator.h>
-#include <android/hardware/automotive/evs/1.0/IEvsDisplay.h>
+#include <android/hardware/automotive/evs/1.1/IEvsDisplay.h>
 #include <android/hardware/camera/device/3.2/ICameraDevice.h>
 #include <system/camera_metadata.h>
+#include <ui/DisplayConfig.h>
+#include <ui/DisplayState.h>
 
 #include <VtsHalHidlTargetTestBase.h>
 #include <VtsHalHidlTargetTestEnvBase.h>
@@ -76,6 +78,8 @@ using ::android::hardware::automotive::evs::V1_0::DisplayState;
 using ::android::hardware::graphics::common::V1_0::PixelFormat;
 using IEvsCamera_1_0 = ::android::hardware::automotive::evs::V1_0::IEvsCamera;
 using IEvsCamera_1_1 = ::android::hardware::automotive::evs::V1_1::IEvsCamera;
+using IEvsDisplay_1_0 = ::android::hardware::automotive::evs::V1_0::IEvsDisplay;
+using IEvsDisplay_1_1 = ::android::hardware::automotive::evs::V1_1::IEvsDisplay;
 
 /*
  * Plese note that this is different from what is defined in
@@ -567,9 +571,30 @@ TEST_F(EvsHidlTest, CameraToDisplayRoundTrip) {
     // output format.
     Stream nullCfg = {};
 
-    // Request exclusive access to the EVS display
-    sp<IEvsDisplay> pDisplay = pEnumerator->openDisplay();
+    // Request available display IDs
+    uint8_t targetDisplayId = 0;
+    pEnumerator->getDisplayIdList([&targetDisplayId](auto ids) {
+        ASSERT_GT(ids.size(), 0);
+        targetDisplayId = ids[0];
+    });
+
+    // Request exclusive access to the first EVS display
+    sp<IEvsDisplay_1_1> pDisplay = pEnumerator->openDisplay_1_1(targetDisplayId);
     ASSERT_NE(pDisplay, nullptr);
+    ALOGI("Display %d is in use.", targetDisplayId);
+
+    // Get the display descriptor
+    pDisplay->getDisplayInfo_1_1([](const auto& config, const auto& state) {
+        android::DisplayConfig* pConfig = (android::DisplayConfig*)config.data();
+        const auto width = pConfig->resolution.getWidth();
+        const auto height = pConfig->resolution.getHeight();
+        ALOGI("    Resolution: %dx%d", width, height);
+        ASSERT_GT(width, 0);
+        ASSERT_GT(height, 0);
+
+        android::ui::DisplayState* pState = (android::ui::DisplayState*)state.data();
+        ASSERT_NE(pState->layerStack, -1);
+    });
 
     // Test each reported camera
     for (auto&& cam: cameraInfo) {
@@ -1556,7 +1581,7 @@ TEST_F(EvsHidlTest, HighPriorityCameraClient) {
     Stream nullCfg = {};
 
     // Request exclusive access to the EVS display
-    sp<IEvsDisplay> pDisplay = pEnumerator->openDisplay();
+    sp<IEvsDisplay_1_0> pDisplay = pEnumerator->openDisplay();
     ASSERT_NE(pDisplay, nullptr);
 
     // Test each reported camera
@@ -1920,7 +1945,7 @@ TEST_F(EvsHidlTest, CameraUseStreamConfigToDisplay) {
     loadCameraList();
 
     // Request exclusive access to the EVS display
-    sp<IEvsDisplay> pDisplay = pEnumerator->openDisplay();
+    sp<IEvsDisplay_1_0> pDisplay = pEnumerator->openDisplay();
     ASSERT_NE(pDisplay, nullptr);
 
     // Test each reported camera

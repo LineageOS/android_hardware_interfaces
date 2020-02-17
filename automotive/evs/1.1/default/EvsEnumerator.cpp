@@ -34,17 +34,37 @@ namespace implementation {
 std::list<EvsEnumerator::CameraRecord>   EvsEnumerator::sCameraList;
 wp<EvsDisplay>                           EvsEnumerator::sActiveDisplay;
 unique_ptr<ConfigManager>                EvsEnumerator::sConfigManager;
+sp<IAutomotiveDisplayProxyService>       EvsEnumerator::sDisplayProxyService;
+std::unordered_map<uint8_t, uint64_t>    EvsEnumerator::sDisplayPortList;
 
 
-EvsEnumerator::EvsEnumerator() {
+EvsEnumerator::EvsEnumerator(sp<IAutomotiveDisplayProxyService> windowService) {
     ALOGD("EvsEnumerator created");
 
     // Add sample camera data to our list of cameras
     // In a real driver, this would be expected to can the available hardware
     sConfigManager =
         ConfigManager::Create("/vendor/etc/automotive/evs/evs_default_configuration.xml");
+
+    // Add available cameras
     for (auto v : sConfigManager->getCameraList()) {
         sCameraList.emplace_back(v.c_str());
+    }
+
+    if (sDisplayProxyService == nullptr) {
+        /* sets a car-window service handle */
+        sDisplayProxyService = windowService;
+    }
+
+    // Add available displays
+    if (sDisplayProxyService != nullptr) {
+        // Get a display ID list.
+        sDisplayProxyService->getDisplayIdList([](const auto& displayIds) {
+            for (const auto& id : displayIds) {
+                const auto port = id & 0xF;
+                sDisplayPortList.insert_or_assign(port, id);
+            }
+        });
     }
 }
 
@@ -165,7 +185,7 @@ Return<void> EvsEnumerator::closeCamera(const ::android::sp<IEvsCamera_1_0>& pCa
 }
 
 
-Return<sp<IEvsDisplay>> EvsEnumerator::openDisplay() {
+Return<sp<IEvsDisplay_1_0>> EvsEnumerator::openDisplay() {
     ALOGD("openDisplay");
 
     // If we already have a display active, then we need to shut it down so we can
@@ -185,7 +205,42 @@ Return<sp<IEvsDisplay>> EvsEnumerator::openDisplay() {
 }
 
 
-Return<void> EvsEnumerator::closeDisplay(const ::android::sp<IEvsDisplay>& pDisplay) {
+Return<void> EvsEnumerator::getDisplayIdList(getDisplayIdList_cb _list_cb) {
+    hidl_vec<uint8_t> ids;
+
+    ids.resize(sDisplayPortList.size());
+    unsigned i = 0;
+    for (const auto& [port, id] : sDisplayPortList) {
+        ids[i++] = port;
+    }
+
+    _list_cb(ids);
+    return Void();
+}
+
+
+Return<sp<IEvsDisplay>> EvsEnumerator::openDisplay_1_1(uint8_t port) {
+    ALOGD("%s", __FUNCTION__);
+
+    // If we already have a display active, then we need to shut it down so we can
+    // give exclusive access to the new caller.
+    sp<EvsDisplay> pActiveDisplay = sActiveDisplay.promote();
+    if (pActiveDisplay != nullptr) {
+        ALOGW("Killing previous display because of new caller");
+        closeDisplay(pActiveDisplay);
+    }
+
+    // Create a new display interface and return it
+    pActiveDisplay = new EvsDisplay(sDisplayProxyService, sDisplayPortList[port]);
+    sActiveDisplay = pActiveDisplay;
+
+    ALOGD("Returning new EvsDisplay object %p", pActiveDisplay.get());
+    return pActiveDisplay;
+}
+
+
+
+Return<void> EvsEnumerator::closeDisplay(const ::android::sp<IEvsDisplay_1_0>& pDisplay) {
     ALOGD("closeDisplay");
 
     // Do we still have a display object we think should be active?
