@@ -2314,7 +2314,38 @@ enum OperationType : int32_t {
     AXIS_ALIGNED_BBOX_TRANSFORM = 41,
 
     /**
-     * Performs a forward LSTM on the input followed by a backward LSTM.
+     * A recurrent neural network layer that applies an LSTM cell to a
+     * sequence of inputs in forward and backward directions.
+     *
+     * The op supports cross-linking via an auxiliary input. Regular cell feeds
+     * one input into the two RNN cells in the following way:
+     *
+     *       INPUT  (INPUT_REVERSED)
+     *         |         |
+     *    ---------------------
+     *    | FW_LSTM   BW_LSTM |
+     *    ---------------------
+     *         |         |
+     *      FW_OUT     BW_OUT
+     *
+     * An op with cross-linking takes two inputs and feeds them into the RNN
+     * cells in the following way:
+     *
+     *       AUX_INPUT   (AUX_INPUT_REVERSED)
+     *           |             |
+     *     INPUT | (INPUT_R'D.)|
+     *       |   |       |     |
+     *    -----------------------
+     *    |  \  /        \    / |
+     *    | FW_LSTM     BW_LSTM |
+     *    -----------------------
+     *         |           |
+     *      FW_OUT      BW_OUT
+     *
+     * The cross-linking mode is enabled iff auxiliary input and auxiliary
+     * weights are present. While stacking this op on top of itself, this
+     * allows to connect both forward and backward outputs from previous cell
+     * to the next cell's input.
      *
      * Supported tensor {@link OperandType}:
      * * {@link OperandType::TENSOR_FLOAT16}
@@ -2323,7 +2354,6 @@ enum OperationType : int32_t {
      * Supported tensor rank: 3, either time-major or batch-major.
      *
      * All input and output tensors must be of the same type.
-     *
      *
      * Inputs:
      * * 0: The input.
@@ -2533,8 +2563,8 @@ enum OperationType : int32_t {
      * * “activation” is the function passed as the “fused_activation_function”
      *   argument (if not “NONE”).
      *
-     * The op also supports an auxiliary input. Regular cell feeds one input
-     * into the two RNN cells in the following way:
+     * The op supports cross-linking via an auxiliary input. Regular cell feeds
+     * one input into the two RNN cells in the following way:
      *
      *       INPUT  (INPUT_REVERSED)
      *         |         |
@@ -2544,8 +2574,8 @@ enum OperationType : int32_t {
      *         |         |
      *      FW_OUT     BW_OUT
      *
-     * An op with an auxiliary input takes two inputs and feeds them into the
-     * RNN cells in the following way:
+     * An op with cross-linking takes two inputs and feeds them into the RNN
+     * cells in the following way:
      *
      *       AUX_INPUT   (AUX_INPUT_REVERSED)
      *           |             |
@@ -2558,9 +2588,10 @@ enum OperationType : int32_t {
      *         |           |
      *      FW_OUT      BW_OUT
      *
-     * While stacking this op on top of itself, this allows to connect both
-     * forward and backward outputs from previous cell to the next cell's
-     * inputs.
+     * The cross-linking mode is enabled iff auxiliary input and auxiliary
+     * weights are present. While stacking this op on top of itself, this
+     * allows to connect both forward and backward outputs from previous cell
+     * to the next cell's input.
      *
      * Supported tensor {@link OperandType}:
      * * {@link OperandType::TENSOR_FLOAT16}
