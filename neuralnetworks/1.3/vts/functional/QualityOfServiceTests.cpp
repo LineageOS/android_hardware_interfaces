@@ -239,12 +239,13 @@ void runExecutionTest(const sp<IPreparedModel>& preparedModel, const TestModel& 
 
     // If the model output operands are fully specified, outputShapes must be either
     // either empty, or have the same number of elements as the number of outputs.
-    ASSERT_TRUE(outputShapes.size() == 0 || outputShapes.size() == testModel.outputIndexes.size());
+    ASSERT_TRUE(outputShapes.size() == 0 ||
+                outputShapes.size() == testModel.main.outputIndexes.size());
 
     // Go through all outputs, check returned output shapes.
     for (uint32_t i = 0; i < outputShapes.size(); i++) {
         EXPECT_TRUE(outputShapes[i].isSufficient);
-        const auto& expect = testModel.operands[testModel.outputIndexes[i]].dimensions;
+        const auto& expect = testModel.main.operands[testModel.main.outputIndexes[i]].dimensions;
         const std::vector<uint32_t> actual = outputShapes[i].dimensions;
         EXPECT_EQ(expect, actual);
     }
