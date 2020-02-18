@@ -578,6 +578,8 @@ static bool removeOperationInputSkip(const Operation& op, size_t input) {
     // - CONV_2D, DEPTHWISE_CONV_2D, MAX_POOL_2D, AVERAGE_POOL_2D, L2_POOL_2D, RESIZE_BILINEAR,
     //   SPACE_TO_DEPTH, SPACE_TO_DEPTH, SPACE_TO_BATCH_ND, BATCH_TO_SPACE_ND can have an optional
     //   layout parameter.
+    //   RESIZE_BILINEAR and RESIZE_NEAREST_NEIGHBOR can have optional
+    //   align_corners and half_pixel_centers parameters.
     // - L2_NORMALIZATION, LOCAL_RESPONSE_NORMALIZATION, SOFTMAX can have an optional axis
     //   parameter.
     switch (op.type) {
@@ -600,7 +602,12 @@ static bool removeOperationInputSkip(const Operation& op, size_t input) {
             }
         } break;
         case OperationType::RESIZE_BILINEAR: {
-            if (op.inputs.size() == 4 && input == 3) {
+            if (op.inputs.size() >= 4 && input >= 3) {
+                return true;
+            }
+        } break;
+        case OperationType::RESIZE_NEAREST_NEIGHBOR: {
+            if (op.inputs.size() >= 5 && input >= 3) {
                 return true;
             }
         } break;
@@ -686,7 +693,9 @@ static bool addOperationInputSkip(const Operation& op) {
     //   parameter.
     if ((op.type == OperationType::L2_NORMALIZATION && op.inputs.size() == 1) ||
         (op.type == OperationType::LOCAL_RESPONSE_NORMALIZATION && op.inputs.size() == 5) ||
-        (op.type == OperationType::SOFTMAX && op.inputs.size() == 2)) {
+        (op.type == OperationType::SOFTMAX && op.inputs.size() == 2) ||
+        (op.type == OperationType::RESIZE_BILINEAR && op.inputs.size() < 6) ||
+        (op.type == OperationType::RESIZE_NEAREST_NEIGHBOR && op.inputs.size() < 6)) {
         return true;
     }
     return false;
