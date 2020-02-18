@@ -48,7 +48,7 @@ Return<ICanController::Result> CanController::upInterface(const ICanController::
 
     if (!isValidName(config.name)) {
         LOG(ERROR) << "Bus name " << config.name << " is invalid";
-        return ICanController::Result::UNKNOWN_ERROR;
+        return ICanController::Result::BAD_SERVICE_NAME;
     }
 
     if (mCanBuses.find(config.name) != mCanBuses.end()) {
@@ -90,7 +90,7 @@ Return<ICanController::Result> CanController::upInterface(const ICanController::
         if (!busService->down()) {
             LOG(WARNING) << "Failed to bring down CAN bus that failed to register";
         }
-        return ICanController::Result::UNKNOWN_ERROR;
+        return ICanController::Result::BAD_SERVICE_NAME;
     }
 
     mCanBuses[config.name] = busService;

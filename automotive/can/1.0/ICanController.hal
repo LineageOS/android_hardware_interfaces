@@ -70,6 +70,12 @@ interface ICanController {
 
         /** Provided bit rate is not supported by the hardware. */
         BAD_BITRATE,
+
+        /**
+         * Provided service name ({@see BusConfig#name}) either has invalid
+         * format or is not listed in device manifest file.
+         */
+        BAD_SERVICE_NAME,
     };
 
     /**
