@@ -70,7 +70,9 @@ enum class TestKind {
     // Tests if quantized model with TENSOR_QUANT8_ASYMM produces the same result
     // (OK/SKIPPED/FAILED) as the model with all such tensors converted to
     // TENSOR_QUANT8_ASYMM_SIGNED.
-    QUANTIZATION_COUPLING
+    QUANTIZATION_COUPLING,
+    // Runs a test model and verifies that MISSED_DEADLINE_* is returned.
+    INTINITE_LOOP_TIMEOUT
 };
 
 void EvaluatePreparedModel(const sp<IDevice>& device, const sp<IPreparedModel>& preparedModel,
