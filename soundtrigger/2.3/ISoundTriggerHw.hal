@@ -114,8 +114,10 @@ interface ISoundTriggerHw extends @2.2::ISoundTriggerHw {
      * @return status Operation completion status: 0 in case of success
      *                -ENODEV if the native service cannot be reached
      *                -EINVAL invalid input parameter
-     * @return retval ModelParameter structure indicating supported attributes
-     *                of the parameter for the given model handle
+     * @return retval OptionalModelParameterRange safe union structure wrapping
+     *                ModelParameterRange. This structure indicates supported attributes
+     *                of the parameter for the given model handle. If the parameter is not
+     *                supported the Monostate of the union is used.
      */
     queryParameter(SoundModelHandle modelHandle, ModelParameter modelParam)
             generates (int32_t status, OptionalModelParameterRange retval);

@@ -889,7 +889,7 @@ Return<void> SoundTriggerHw::queryParameter(V2_0::SoundModelHandle modelHandle,
     int32_t status = mHwDevice->query_parameter(
             mHwDevice, client->getHalHandle(), convertModelParameterToHal(modelParam), &paramRange);
 
-    if (status == 0) {
+    if (status == 0 && paramRange.is_supported) {
         optionalParamRange.range({.start = paramRange.start, .end = paramRange.end});
     }
     _hidl_cb(status, optionalParamRange);
