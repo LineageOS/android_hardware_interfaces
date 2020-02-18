@@ -545,3 +545,9 @@ TEST_P(WifiNanIfaceHidlTest, configRequest_1_4ShimInvalidArgs) {
                           nanConfigRequest, nanConfigRequestSupp)
                   .code);
 }
+
+INSTANTIATE_TEST_SUITE_P(
+    PerInstance, WifiNanIfaceHidlTest,
+    testing::ValuesIn(android::hardware::getAllHalInstanceNames(
+        ::android::hardware::wifi::V1_4::IWifi::descriptor)),
+    android::hardware::PrintInstanceNameToString);
