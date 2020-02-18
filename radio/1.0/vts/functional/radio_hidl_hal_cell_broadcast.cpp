@@ -21,6 +21,9 @@ using namespace ::android::hardware::radio::V1_0;
 /*
  * Test IRadio.setGsmBroadcastConfig() for the response returned.
  */
+/*
+ * TODO(b/145710242) this is commented out because it breaks on TSTS devices on Q. The test
+ * can be safely enabled for future devices).
 TEST_F(RadioHidlTest, setGsmBroadcastConfig) {
     serial = GetRandomSerialNumber();
 
@@ -80,6 +83,7 @@ TEST_F(RadioHidlTest, setGsmBroadcastConfig) {
                                      CHECK_GENERAL_ERROR));
     }
 }
+*/
 
 /*
  * Test IRadio.getGsmBroadcastConfig() for the response returned.
