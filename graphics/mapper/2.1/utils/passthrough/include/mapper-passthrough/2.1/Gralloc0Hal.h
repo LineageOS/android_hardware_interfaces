@@ -49,7 +49,12 @@ class Gralloc0HalImpl : public V2_0::passthrough::detail::Gralloc0HalImpl<Hal> {
                  mModule, bufferHandle, descriptorInfo.width, descriptorInfo.height,
                  static_cast<int32_t>(descriptorInfo.format),
                  static_cast<uint64_t>(descriptorInfo.usage), stride);
-         return static_cast<Error>(ret);
+         if (ret == -EINVAL) {
+             return Error::BAD_BUFFER;
+         } else if (ret < 0) {
+             return Error::BAD_VALUE;
+         }
+         return Error::NONE;
      }
      Error getTransportSize(const native_handle_t* bufferHandle, uint32_t* outNumFds,
                             uint32_t* outNumInts) override {
