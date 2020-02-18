@@ -92,7 +92,8 @@ class DumpstateHidl1_1Test : public ::testing::TestWithParam<std::string> {
     TEST_FOR_DUMPSTATE_MODE(name, body, WEAR);         \
     TEST_FOR_DUMPSTATE_MODE(name, body, CONNECTIVITY); \
     TEST_FOR_DUMPSTATE_MODE(name, body, WIFI);         \
-    TEST_FOR_DUMPSTATE_MODE(name, body, DEFAULT);
+    TEST_FOR_DUMPSTATE_MODE(name, body, DEFAULT);      \
+    TEST_FOR_DUMPSTATE_MODE(name, body, PROTO);
 
 constexpr uint64_t kDefaultTimeoutMillis = 30 * 1000;  // 30 seconds
 
