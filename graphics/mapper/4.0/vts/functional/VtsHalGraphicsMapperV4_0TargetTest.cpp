@@ -143,7 +143,7 @@ class GraphicsMapperHidlTest
         EXPECT_EQ(24, offsetInBitsA);
 
         EXPECT_EQ(0, planeLayout.offsetInBytes);
-        EXPECT_EQ(8, planeLayout.sampleIncrementInBits);
+        EXPECT_EQ(32, planeLayout.sampleIncrementInBits);
         // Skip testing stride because any stride is valid
         EXPECT_EQ(mDummyDescriptorInfo.width, planeLayout.widthInSamples);
         EXPECT_EQ(mDummyDescriptorInfo.height, planeLayout.heightInSamples);
@@ -1384,7 +1384,7 @@ TEST_P(GraphicsMapperHidlTest, SetPlaneLayouts) {
     planeLayouts.push_back(planeLayoutA);
 
     planeLayoutRGB.offsetInBytes = 0;
-    planeLayoutRGB.sampleIncrementInBits = 32;
+    planeLayoutRGB.sampleIncrementInBits = 24;
     planeLayoutRGB.strideInBytes = info.width + 20;
     planeLayoutRGB.widthInSamples = info.width;
     planeLayoutRGB.heightInSamples = info.height;
