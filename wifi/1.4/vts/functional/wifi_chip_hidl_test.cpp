@@ -136,3 +136,9 @@ TEST_P(WifiChipHidlTest, registerEventCallback_1_4) {
         return;
     }
 }
+
+INSTANTIATE_TEST_SUITE_P(
+    PerInstance, WifiChipHidlTest,
+    testing::ValuesIn(android::hardware::getAllHalInstanceNames(
+        ::android::hardware::wifi::V1_4::IWifi::descriptor)),
+    android::hardware::PrintInstanceNameToString);
