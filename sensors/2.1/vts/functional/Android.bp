@@ -15,11 +15,14 @@
 //
 
 cc_test {
-    name: "VtsHalSensorsV2_0TargetTest",
-    cflags: ["-DLOG_TAG=\"sensors_hidl_hal_test\""],
+    name: "VtsHalSensorsV2_1TargetTest",
+    cflags: [
+        "-DLOG_TAG=\"sensors_hidl_hal_test\"",
+        "-DSENSORS_HAL_2_1",
+    ],
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: [
-        "VtsHalSensorsV2_0TargetTest.cpp",
+        "VtsHalSensorsV2_1TargetTest.cpp",
     ],
     header_libs: [
         "android.hardware.sensors@2.X-shared-utils",

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,7 @@
 
 #include "VtsHalSensorsV2_XTargetTest.h"
 
-TEST_P(SensorsHidlTest, SensorListDoesntContainInvalidType) {
-    getSensors()->getSensorsList([&](const auto& list) {
-        const size_t count = list.size();
-        for (size_t i = 0; i < count; ++i) {
-            const auto& s = list[i];
-            EXPECT_FALSE(s.type == ::android::hardware::sensors::V2_1::SensorType::HINGE_ANGLE);
-        }
-    });
-}
-
 INSTANTIATE_TEST_SUITE_P(PerInstance, SensorsHidlTest,
                          testing::ValuesIn(android::hardware::getAllHalInstanceNames(
-                                 android::hardware::sensors::V2_0::ISensors::descriptor)),
+                                 android::hardware::sensors::V2_1::ISensors::descriptor)),
                          android::hardware::PrintInstanceNameToString);

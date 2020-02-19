@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2018 The Android Open Source Project
+// Copyright (C) 2020 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,24 +13,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-cc_binary {
-    name: "android.hardware.sensors@2.0-service.mock",
+cc_library_headers {
+    name: "android.hardware.sensors@2.X-shared-utils",
+    vendor_available: true,
     defaults: ["hidl_defaults"],
-    vendor: true,
-    relative_install_path: "hw",
-    srcs: [
-        "service.cpp",
-    ],
-    init_rc: ["android.hardware.sensors@2.0-service-mock.rc"],
-    header_libs: [
-        "android.hardware.sensors@2.X-shared-utils",
-    ],
+    export_include_dirs: ["."],
     shared_libs: [
         "android.hardware.sensors@1.0",
         "android.hardware.sensors@2.0",
-        // Needed to compile some shared utilities for both 2.0/2.1 impls, but
-        // isn't normally needed for a HAL that only supports 2.0.
         "android.hardware.sensors@2.1",
+        "libbinder",
         "libcutils",
         "libfmq",
         "libhidlbase",
@@ -40,7 +32,5 @@ cc_binary {
     ],
     static_libs: [
         "android.hardware.sensors@1.0-convert",
-        "android.hardware.sensors@2.X-shared-impl",
     ],
-    vintf_fragments: ["android.hardware.sensors@2.0.xml"],
 }

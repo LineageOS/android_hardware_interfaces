@@ -14,23 +14,23 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "android.hardware.sensors@2.0-service"
+#define LOG_TAG "android.hardware.sensors@2.1-service"
 
-#include <android/hardware/sensors/2.0/ISensors.h>
+#include <android/hardware/sensors/2.1/ISensors.h>
 #include <hidl/HidlTransportSupport.h>
 #include <log/log.h>
 #include <utils/StrongPointer.h>
-#include "SensorsV2_0.h"
+#include "SensorsV2_1.h"
 
 using android::hardware::configureRpcThreadpool;
 using android::hardware::joinRpcThreadpool;
-using android::hardware::sensors::V2_0::ISensors;
-using android::hardware::sensors::V2_0::implementation::SensorsV2_0;
+using android::hardware::sensors::V2_1::ISensors;
+using android::hardware::sensors::V2_1::implementation::SensorsV2_1;
 
 int main(int /* argc */, char** /* argv */) {
     configureRpcThreadpool(1, true);
 
-    android::sp<ISensors> sensors = new SensorsV2_0();
+    android::sp<ISensors> sensors = new SensorsV2_1();
     if (sensors->registerAsService() != ::android::OK) {
         ALOGE("Failed to register Sensors HAL instance");
         return -1;
