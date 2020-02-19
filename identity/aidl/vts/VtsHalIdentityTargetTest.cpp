@@ -13,62 +13,56 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#define LOG_TAG "VtsHalIdentityTargetTest"
 
-#define LOG_TAG "IdentityCredentialHidlHalTest"
-
-#include <map>
-
+#include <aidl/Gtest.h>
+#include <aidl/Vintf.h>
 #include <android-base/logging.h>
-#include <android/hardware/identity/1.0/IIdentityCredentialStore.h>
-#include <android/hardware/identity/1.0/types.h>
+#include <android/hardware/identity/IIdentityCredentialStore.h>
 #include <android/hardware/identity/support/IdentityCredentialSupport.h>
-
+#include <binder/IServiceManager.h>
+#include <binder/ProcessState.h>
 #include <cppbor.h>
 #include <cppbor_parse.h>
 #include <gtest/gtest.h>
-#include <hidl/GtestPrinter.h>
-#include <hidl/ServiceManagement.h>
+#include <future>
+#include <map>
+
+namespace android::hardware::identity {
 
 using std::map;
 using std::optional;
 using std::string;
 using std::vector;
 
-namespace android {
-namespace hardware {
-namespace identity {
-namespace test {
+using ::android::sp;
+using ::android::String16;
+using ::android::binder::Status;
 
-using ::android::hardware::identity::V1_0::IIdentityCredential;
-using ::android::hardware::identity::V1_0::IIdentityCredentialStore;
-using ::android::hardware::identity::V1_0::IWritableIdentityCredential;
-using ::android::hardware::identity::V1_0::Result;
-using ::android::hardware::identity::V1_0::ResultCode;
-using ::android::hardware::identity::V1_0::SecureAccessControlProfile;
-using ::android::hardware::keymaster::V4_0::HardwareAuthToken;
+using ::android::hardware::keymaster::HardwareAuthToken;
 
 // ---------------------------------------------------------------------------
 // Test Data.
 // ---------------------------------------------------------------------------
 
 struct TestEntryData {
-    TestEntryData(string nameSpace, string name, vector<uint16_t> profileIds)
+    TestEntryData(string nameSpace, string name, vector<int32_t> profileIds)
         : nameSpace(nameSpace), name(name), profileIds(profileIds) {}
 
-    TestEntryData(string nameSpace, string name, const string& value, vector<uint16_t> profileIds)
+    TestEntryData(string nameSpace, string name, const string& value, vector<int32_t> profileIds)
         : TestEntryData(nameSpace, name, profileIds) {
         valueCbor = cppbor::Tstr(((const char*)value.data())).encode();
     }
     TestEntryData(string nameSpace, string name, const vector<uint8_t>& value,
-                  vector<uint16_t> profileIds)
+                  vector<int32_t> profileIds)
         : TestEntryData(nameSpace, name, profileIds) {
         valueCbor = cppbor::Bstr(value).encode();
     }
-    TestEntryData(string nameSpace, string name, bool value, vector<uint16_t> profileIds)
+    TestEntryData(string nameSpace, string name, bool value, vector<int32_t> profileIds)
         : TestEntryData(nameSpace, name, profileIds) {
         valueCbor = cppbor::Bool(value).encode();
     }
-    TestEntryData(string nameSpace, string name, int64_t value, vector<uint16_t> profileIds)
+    TestEntryData(string nameSpace, string name, int64_t value, vector<int32_t> profileIds)
         : TestEntryData(nameSpace, name, profileIds) {
         if (value >= 0) {
             valueCbor = cppbor::Uint(value).encode();
@@ -80,63 +74,38 @@ struct TestEntryData {
     string nameSpace;
     string name;
     vector<uint8_t> valueCbor;
-    vector<uint16_t> profileIds;
+    vector<int32_t> profileIds;
 };
 
 struct TestProfile {
     uint16_t id;
-    hidl_vec<uint8_t> readerCertificate;
+    vector<uint8_t> readerCertificate;
     bool userAuthenticationRequired;
     uint64_t timeoutMillis;
 };
 
-/************************************
- *   TEST DATA FOR AUTHENTICATION
- ************************************/
-// Test authentication token for user authentication
+// ----------------------------------------------------------------
 
-class IdentityCredentialStoreHidlTest : public ::testing::TestWithParam<std::string> {
+class IdentityAidl : public testing::TestWithParam<std::string> {
   public:
     virtual void SetUp() override {
-        string serviceName = GetParam();
-        ASSERT_FALSE(serviceName.empty());
-        credentialStore_ = IIdentityCredentialStore::getService(serviceName);
+        credentialStore_ = android::waitForDeclaredService<IIdentityCredentialStore>(
+                String16(GetParam().c_str()));
         ASSERT_NE(credentialStore_, nullptr);
-
-        credentialStore_->getHardwareInformation(
-                [&](const Result& result, const hidl_string& credentialStoreName,
-                    const hidl_string& credentialStoreAuthorName, uint32_t chunkSize,
-                    bool /* isDirectAccess */,
-                    const hidl_vec<hidl_string> /* supportedDocTypes */) {
-                    EXPECT_EQ("", result.message);
-                    ASSERT_EQ(ResultCode::OK, result.code);
-                    ASSERT_GT(credentialStoreName.size(), 0u);
-                    ASSERT_GT(credentialStoreAuthorName.size(), 0u);
-                    ASSERT_GE(chunkSize, 256u);  // Chunk sizes < APDU buffer won't be supported
-                    dataChunkSize_ = chunkSize;
-                });
     }
-    virtual void TearDown() override {}
-
-    uint32_t dataChunkSize_ = 0;
 
     sp<IIdentityCredentialStore> credentialStore_;
 };
 
-TEST_P(IdentityCredentialStoreHidlTest, HardwareConfiguration) {
-    credentialStore_->getHardwareInformation(
-            [&](const Result& result, const hidl_string& credentialStoreName,
-                const hidl_string& credentialStoreAuthorName, uint32_t chunkSize,
-                bool /* isDirectAccess */, const hidl_vec<hidl_string> /* supportedDocTypes */) {
-                EXPECT_EQ("", result.message);
-                ASSERT_EQ(ResultCode::OK, result.code);
-                ASSERT_GT(credentialStoreName.size(), 0u);
-                ASSERT_GT(credentialStoreAuthorName.size(), 0u);
-                ASSERT_GE(chunkSize, 256u);  // Chunk sizes < APDU buffer won't be supported
-            });
+TEST_P(IdentityAidl, hardwareInformation) {
+    HardwareInformation info;
+    ASSERT_TRUE(credentialStore_->getHardwareInformation(&info).isOk());
+    ASSERT_GT(info.credentialStoreName.size(), 0);
+    ASSERT_GT(info.credentialStoreAuthorName.size(), 0);
+    ASSERT_GE(info.dataChunkSize, 256);
 }
 
-TEST_P(IdentityCredentialStoreHidlTest, createAndRetrieveCredential) {
+TEST_P(IdentityAidl, createAndRetrieveCredential) {
     // First, generate a key-pair for the reader since its public key will be
     // part of the request data.
     optional<vector<uint8_t>> readerKeyPKCS8 = support::createEcKeyPair();
@@ -168,75 +137,59 @@ TEST_P(IdentityCredentialStoreHidlTest, createAndRetrieveCredential) {
                                               // Profile 1 (no authentication)
                                               {1, {}, false, 0}};
 
-    HardwareAuthToken authToken = {};
+    HardwareAuthToken authToken;
 
     // Here's the actual test data:
     const vector<TestEntryData> testEntries = {
-            {"PersonalData", "Last name", string("Turing"), vector<uint16_t>{0, 1}},
-            {"PersonalData", "Birth date", string("19120623"), vector<uint16_t>{0, 1}},
-            {"PersonalData", "First name", string("Alan"), vector<uint16_t>{0, 1}},
+            {"PersonalData", "Last name", string("Turing"), vector<int32_t>{0, 1}},
+            {"PersonalData", "Birth date", string("19120623"), vector<int32_t>{0, 1}},
+            {"PersonalData", "First name", string("Alan"), vector<int32_t>{0, 1}},
             {"PersonalData", "Home address", string("Maida Vale, London, England"),
-             vector<uint16_t>{0}},
-            {"Image", "Portrait image", portraitImage, vector<uint16_t>{0, 1}},
+             vector<int32_t>{0}},
+            {"Image", "Portrait image", portraitImage, vector<int32_t>{0, 1}},
     };
-    const vector<uint16_t> testEntriesEntryCounts = {static_cast<uint16_t>(testEntries.size() - 1),
-                                                     1u};
+    const vector<int32_t> testEntriesEntryCounts = {static_cast<int32_t>(testEntries.size() - 1),
+                                                    1u};
+    HardwareInformation hwInfo;
+    ASSERT_TRUE(credentialStore_->getHardwareInformation(&hwInfo).isOk());
 
     string cborPretty;
     sp<IWritableIdentityCredential> writableCredential;
-
-    hidl_vec<uint8_t> empty{0};
-
     string docType = "org.iso.18013-5.2019.mdl";
     bool testCredential = true;
-    Result result;
-    credentialStore_->createCredential(
-            docType, testCredential,
-            [&](const Result& _result, const sp<IWritableIdentityCredential>& _writableCredential) {
-                result = _result;
-                writableCredential = _writableCredential;
-            });
-    EXPECT_EQ("", result.message);
-    ASSERT_EQ(ResultCode::OK, result.code);
+    ASSERT_TRUE(credentialStore_->createCredential(docType, testCredential, &writableCredential)
+                        .isOk());
     ASSERT_NE(writableCredential, nullptr);
 
     string challenge = "attestationChallenge";
     // TODO: set it to something random and check it's in the cert chain
     vector<uint8_t> attestationApplicationId = {};
     vector<uint8_t> attestationChallenge(challenge.begin(), challenge.end());
-    vector<uint8_t> attestationCertificate;
-    writableCredential->getAttestationCertificate(
-            attestationApplicationId, attestationChallenge,
-            [&](const Result& _result, const hidl_vec<hidl_vec<uint8_t>>& _splitCertChain) {
-                result = _result;
-                vector<vector<uint8_t>> splitCerts;
-                std::copy(_splitCertChain.begin(), _splitCertChain.end(),
-                          std::back_inserter(splitCerts));
-                attestationCertificate = support::certificateChainJoin(splitCerts);
-            });
-    EXPECT_EQ("", result.message);
-    ASSERT_EQ(ResultCode::OK, result.code);
+    vector<Certificate> attestationCertificates;
+    ASSERT_TRUE(writableCredential
+                        ->getAttestationCertificate(attestationApplicationId, attestationChallenge,
+                                                    &attestationCertificates)
+                        .isOk());
+    ASSERT_GE(attestationCertificates.size(), 2);
 
-    writableCredential->startPersonalization(testProfiles.size(), testEntriesEntryCounts,
-                                             [&](const Result& _result) { result = _result; });
-    EXPECT_EQ("", result.message);
-    ASSERT_EQ(ResultCode::OK, result.code);
+    ASSERT_TRUE(
+            writableCredential->startPersonalization(testProfiles.size(), testEntriesEntryCounts)
+                    .isOk());
 
     vector<SecureAccessControlProfile> returnedSecureProfiles;
     for (const auto& testProfile : testProfiles) {
         SecureAccessControlProfile profile;
-        writableCredential->addAccessControlProfile(
-                testProfile.id, testProfile.readerCertificate,
-                testProfile.userAuthenticationRequired, testProfile.timeoutMillis,
-                0,  // secureUserId
-                [&](const Result& _result, const SecureAccessControlProfile& _profile) {
-                    result = _result;
-                    profile = _profile;
-                });
-        EXPECT_EQ("", result.message);
-        ASSERT_EQ(ResultCode::OK, result.code);
+        Certificate cert;
+        cert.encodedCertificate = testProfile.readerCertificate;
+        ASSERT_TRUE(writableCredential
+                            ->addAccessControlProfile(testProfile.id, cert,
+                                                      testProfile.userAuthenticationRequired,
+                                                      testProfile.timeoutMillis,
+                                                      0,  // secureUserId
+                                                      &profile)
+                            .isOk());
         ASSERT_EQ(testProfile.id, profile.id);
-        ASSERT_EQ(testProfile.readerCertificate, profile.readerCertificate);
+        ASSERT_EQ(testProfile.readerCertificate, profile.readerCertificate.encodedCertificate);
         ASSERT_EQ(testProfile.userAuthenticationRequired, profile.userAuthenticationRequired);
         ASSERT_EQ(testProfile.timeoutMillis, profile.timeoutMillis);
         ASSERT_EQ(support::kAesGcmTagSize + support::kAesGcmIvSize, profile.mac.size());
@@ -248,38 +201,28 @@ TEST_P(IdentityCredentialStoreHidlTest, createAndRetrieveCredential) {
     map<const TestEntryData*, vector<vector<uint8_t>>> encryptedBlobs;
 
     for (const auto& entry : testEntries) {
-        vector<vector<uint8_t>> chunks = support::chunkVector(entry.valueCbor, dataChunkSize_);
+        vector<vector<uint8_t>> chunks =
+                support::chunkVector(entry.valueCbor, hwInfo.dataChunkSize);
 
-        writableCredential->beginAddEntry(entry.profileIds, entry.nameSpace, entry.name,
-                                          entry.valueCbor.size(),
-                                          [&](const Result& _result) { result = _result; });
-        EXPECT_EQ("", result.message);
-        ASSERT_EQ(ResultCode::OK, result.code);
+        ASSERT_TRUE(writableCredential
+                            ->beginAddEntry(entry.profileIds, entry.nameSpace, entry.name,
+                                            entry.valueCbor.size())
+                            .isOk());
 
         vector<vector<uint8_t>> encryptedChunks;
         for (const auto& chunk : chunks) {
-            writableCredential->addEntryValue(
-                    chunk, [&](const Result& result, hidl_vec<uint8_t> encryptedContent) {
-                        EXPECT_EQ("", result.message);
-                        ASSERT_EQ(ResultCode::OK, result.code);
-                        ASSERT_GT(encryptedContent.size(), 0u);
-                        encryptedChunks.push_back(encryptedContent);
-                    });
+            vector<uint8_t> encryptedChunk;
+            ASSERT_TRUE(writableCredential->addEntryValue(chunk, &encryptedChunk).isOk());
+            encryptedChunks.push_back(encryptedChunk);
         }
         encryptedBlobs[&entry] = encryptedChunks;
     }
 
     vector<uint8_t> credentialData;
     vector<uint8_t> proofOfProvisioningSignature;
-    writableCredential->finishAddingEntries(
-            [&](const Result& _result, const hidl_vec<uint8_t>& _credentialData,
-                const hidl_vec<uint8_t>& _proofOfProvisioningSignature) {
-                result = _result;
-                credentialData = _credentialData;
-                proofOfProvisioningSignature = _proofOfProvisioningSignature;
-            });
-    EXPECT_EQ("", result.message);
-    ASSERT_EQ(ResultCode::OK, result.code);
+    ASSERT_TRUE(
+            writableCredential->finishAddingEntries(&credentialData, &proofOfProvisioningSignature)
+                    .isOk());
 
     optional<vector<uint8_t>> proofOfProvisioning =
             support::coseSignGetPayload(proofOfProvisioningSignature);
@@ -334,7 +277,7 @@ TEST_P(IdentityCredentialStoreHidlTest, createAndRetrieveCredential) {
             cborPretty);
 
     optional<vector<uint8_t>> credentialPubKey =
-            support::certificateChainGetTopMostKey(attestationCertificate);
+            support::certificateChainGetTopMostKey(attestationCertificates[0].encodedCertificate);
     ASSERT_TRUE(credentialPubKey);
     EXPECT_TRUE(support::coseCheckEcDsaSignature(proofOfProvisioningSignature,
                                                  {},  // Additional data
@@ -344,32 +287,21 @@ TEST_P(IdentityCredentialStoreHidlTest, createAndRetrieveCredential) {
     // Now that the credential has been provisioned, read it back and check the
     // correct data is returned.
     sp<IIdentityCredential> credential;
-    credentialStore_->getCredential(
-            credentialData, [&](const Result& _result, const sp<IIdentityCredential>& _credential) {
-                result = _result;
-                credential = _credential;
-            });
-    EXPECT_EQ("", result.message);
-    ASSERT_EQ(ResultCode::OK, result.code);
+    ASSERT_TRUE(credentialStore_
+                        ->getCredential(
+                                CipherSuite::CIPHERSUITE_ECDHE_HKDF_ECDSA_WITH_AES_256_GCM_SHA256,
+                                credentialData, &credential)
+                        .isOk());
     ASSERT_NE(credential, nullptr);
 
     optional<vector<uint8_t>> readerEphemeralKeyPair = support::createEcKeyPair();
     ASSERT_TRUE(readerEphemeralKeyPair);
     optional<vector<uint8_t>> readerEphemeralPublicKey =
             support::ecKeyPairGetPublicKey(readerEphemeralKeyPair.value());
-    credential->setReaderEphemeralPublicKey(readerEphemeralPublicKey.value(),
-                                            [&](const Result& _result) { result = _result; });
-    EXPECT_EQ("", result.message);
-    ASSERT_EQ(ResultCode::OK, result.code);
+    ASSERT_TRUE(credential->setReaderEphemeralPublicKey(readerEphemeralPublicKey.value()).isOk());
 
     vector<uint8_t> ephemeralKeyPair;
-    credential->createEphemeralKeyPair(
-            [&](const Result& _result, const hidl_vec<uint8_t>& _ephemeralKeyPair) {
-                result = _result;
-                ephemeralKeyPair = _ephemeralKeyPair;
-            });
-    EXPECT_EQ("", result.message);
-    ASSERT_EQ(ResultCode::OK, result.code);
+    ASSERT_TRUE(credential->createEphemeralKeyPair(&ephemeralKeyPair).isOk());
     optional<vector<uint8_t>> ephemeralPublicKey = support::ecKeyPairGetPublicKey(ephemeralKeyPair);
 
     // Calculate requestData field and sign it with the reader key.
@@ -420,19 +352,17 @@ TEST_P(IdentityCredentialStoreHidlTest, createAndRetrieveCredential) {
                                    readerCertificate.value());
     ASSERT_TRUE(readerSignature);
 
-    credential->startRetrieval(returnedSecureProfiles, authToken, itemsRequestBytes,
-                               sessionTranscriptBytes, readerSignature.value(),
-                               testEntriesEntryCounts,
-                               [&](const Result& _result) { result = _result; });
-    EXPECT_EQ("", result.message);
-    ASSERT_EQ(ResultCode::OK, result.code);
+    ASSERT_TRUE(credential
+                        ->startRetrieval(returnedSecureProfiles, authToken, itemsRequestBytes,
+                                         sessionTranscriptBytes, readerSignature.value(),
+                                         testEntriesEntryCounts)
+                        .isOk());
 
     for (const auto& entry : testEntries) {
-        credential->startRetrieveEntryValue(entry.nameSpace, entry.name, entry.valueCbor.size(),
-                                            entry.profileIds,
-                                            [&](const Result& _result) { result = _result; });
-        EXPECT_EQ("", result.message);
-        ASSERT_EQ(ResultCode::OK, result.code);
+        ASSERT_TRUE(credential
+                            ->startRetrieveEntryValue(entry.nameSpace, entry.name,
+                                                      entry.valueCbor.size(), entry.profileIds)
+                            .isOk());
 
         auto it = encryptedBlobs.find(&entry);
         ASSERT_NE(it, encryptedBlobs.end());
@@ -441,13 +371,7 @@ TEST_P(IdentityCredentialStoreHidlTest, createAndRetrieveCredential) {
         vector<uint8_t> content;
         for (const auto& encryptedChunk : encryptedChunks) {
             vector<uint8_t> chunk;
-            credential->retrieveEntryValue(
-                    encryptedChunk, [&](const Result& _result, const hidl_vec<uint8_t>& _chunk) {
-                        result = _result;
-                        chunk = _chunk;
-                    });
-            EXPECT_EQ("", result.message);
-            ASSERT_EQ(ResultCode::OK, result.code);
+            ASSERT_TRUE(credential->retrieveEntryValue(encryptedChunk, &chunk).isOk());
             content.insert(content.end(), chunk.begin(), chunk.end());
         }
         EXPECT_EQ(content, entry.valueCbor);
@@ -455,28 +379,12 @@ TEST_P(IdentityCredentialStoreHidlTest, createAndRetrieveCredential) {
 
     // Generate the key that will be used to sign AuthenticatedData.
     vector<uint8_t> signingKeyBlob;
-    vector<uint8_t> signingKeyCertificate;
-    credential->generateSigningKeyPair([&](const Result& _result,
-                                           const hidl_vec<uint8_t> _signingKeyBlob,
-                                           const hidl_vec<uint8_t> _signingKeyCertificate) {
-        result = _result;
-        signingKeyBlob = _signingKeyBlob;
-        signingKeyCertificate = _signingKeyCertificate;
-    });
-    EXPECT_EQ("", result.message);
-    ASSERT_EQ(ResultCode::OK, result.code);
+    Certificate signingKeyCertificate;
+    ASSERT_TRUE(credential->generateSigningKeyPair(&signingKeyBlob, &signingKeyCertificate).isOk());
 
     vector<uint8_t> mac;
     vector<uint8_t> deviceNameSpacesBytes;
-    credential->finishRetrieval(signingKeyBlob,
-                                [&](const Result& _result, const hidl_vec<uint8_t> _mac,
-                                    const hidl_vec<uint8_t> _deviceNameSpacesBytes) {
-                                    result = _result;
-                                    mac = _mac;
-                                    deviceNameSpacesBytes = _deviceNameSpacesBytes;
-                                });
-    EXPECT_EQ("", result.message);
-    ASSERT_EQ(ResultCode::OK, result.code);
+    ASSERT_TRUE(credential->finishRetrieval(signingKeyBlob, &mac, &deviceNameSpacesBytes).isOk());
     cborPretty = support::cborPrettyPrint(deviceNameSpacesBytes, 32, {});
     ASSERT_EQ(
             "{\n"
@@ -501,7 +409,7 @@ TEST_P(IdentityCredentialStoreHidlTest, createAndRetrieveCredential) {
     deviceAuthentication.add(cppbor::Semantic(24, deviceNameSpacesBytes));
     vector<uint8_t> encodedDeviceAuthentication = deviceAuthentication.encode();
     optional<vector<uint8_t>> signingPublicKey =
-            support::certificateChainGetTopMostKey(signingKeyCertificate);
+            support::certificateChainGetTopMostKey(signingKeyCertificate.encodedCertificate);
     EXPECT_TRUE(signingPublicKey);
 
     // Derive the key used for MACing.
@@ -521,12 +429,18 @@ TEST_P(IdentityCredentialStoreHidlTest, createAndRetrieveCredential) {
     EXPECT_EQ(mac, calculatedMac);
 }
 
-INSTANTIATE_TEST_SUITE_P(PerInstance, IdentityCredentialStoreHidlTest,
-                         testing::ValuesIn(android::hardware::getAllHalInstanceNames(
-                                 IIdentityCredentialStore::descriptor)),
-                         android::hardware::PrintInstanceNameToString);
+INSTANTIATE_TEST_SUITE_P(
+        Identity, IdentityAidl,
+        testing::ValuesIn(android::getAidlHalInstanceNames(IIdentityCredentialStore::descriptor)),
+        android::PrintInstanceNameToString);
+// INSTANTIATE_TEST_SUITE_P(Identity, IdentityAidl,
+// testing::Values("android.hardware.identity.IIdentityCredentialStore/default"));
 
-}  // namespace test
-}  // namespace identity
-}  // namespace hardware
-}  // namespace android
+}  // namespace android::hardware::identity
+
+int main(int argc, char** argv) {
+    ::testing::InitGoogleTest(&argc, argv);
+    ::android::ProcessState::self()->setThreadPoolMaxThreadCount(1);
+    ::android::ProcessState::self()->startThreadPool();
+    return RUN_ALL_TESTS();
+}

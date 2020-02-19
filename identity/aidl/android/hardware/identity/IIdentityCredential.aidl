@@ -14,10 +14,13 @@
  * limitations under the License.
  */
 
-package android.hardware.identity@1.0;
+package android.hardware.identity;
 
-import android.hardware.keymaster@4.0::HardwareAuthToken;
+import android.hardware.identity.Certificate;
+import android.hardware.identity.SecureAccessControlProfile;
+import android.hardware.keymaster.HardwareAuthToken;
 
+@VintfStability
 interface IIdentityCredential {
     /**
      * Delete a credential.
@@ -35,10 +38,9 @@ interface IIdentityCredential {
      * After this method has been called, the persistent storage used for credentialData should
      * be deleted.
      *
-     * @return proofOfDeletionSignature is a COSE_Sign1 signature described above.
+     * @return a COSE_Sign1 signature described above.
      */
-    deleteCredential()
-        generates(Result result, vec<uint8_t> proofOfDeletionSignature);
+    byte[] deleteCredential();
 
     /**
      * Creates an ephemeral EC key pair, for use in establishing a seceure session with a reader.
@@ -46,39 +48,33 @@ interface IIdentityCredential {
      * with the reader.  The reason for generating the key pair in the secure environment is so that
      * the secure environment knows what public key to expect to find in the session transcript.
      *
-     * This method may only be called once per instance. If called more than once, FAILED
+     * This method may only be called once per instance. If called more than once, STATUS_FAILED
      * will be returned.
      *
-     * @return result is OK on success or FAILED if an error occurred.
-     *
-     * @return keyPair contains the unencrypted key-pair in PKCS#8 format.
+     * @return the unencrypted key-pair in PKCS#8 format.
      */
-    createEphemeralKeyPair() generates (Result result, vec<uint8_t> keyPair);
+    byte[] createEphemeralKeyPair();
 
     /**
      * Sets the public part of the reader's ephemeral key pair.
      *
-     * This method may only be called once per instance. If called more than once, FAILED
+     * This method may only be called once per instance. If called more than once, STATUS_FAILED
      * will be returned.
      *
      * @param publicKey contains the reader's ephemeral public key, in uncompressed form.
-     *
-     * @return result is OK on success or FAILED if an error occurred.
      */
-    setReaderEphemeralPublicKey(vec<uint8_t> publicKey) generates (Result result);
+    void setReaderEphemeralPublicKey(in byte[] publicKey);
 
     /**
      * Creates a challenge value to be used for proving successful user authentication. This
      * is included in the authToken passed to the startRetrieval() method.
      *
-     * This method may only be called once per instance. If called more than once, FAILED
+     * This method may only be called once per instance. If called more than once, STATUS_FAILED
      * will be returned.
      *
-     * @return result is OK on success or FAILED if an error occurred.
-     *
-     * @return challenge on success, is a non-zero number.
+     * @return challenge, a non-zero number.
      */
-    createAuthChallenge() generates (Result result, uint64_t challenge);
+    long createAuthChallenge();
 
     /**
      * Start an entry retrieval process.
@@ -92,12 +88,12 @@ interface IIdentityCredential {
      * startRetrieval(), then multiple calls of startRetrieveEntryValue(), retrieveEntryValue(),
      * then finally finishRetrieval()) but if this is done, the sessionTranscript parameter
      * must be identical for each startRetrieval() invocation. If this is not the case, this call
-     * fails with the SESSION_TRANSCRIPT_MISMATCH error.
+     * fails with the STATUS_SESSION_TRANSCRIPT_MISMATCH error.
      *
-     * If the provided authToken is not valid this method fails with INVALID_AUTH_TOKEN.
+     * If the provided authToken is not valid this method fails with STATUS_INVALID_AUTH_TOKEN.
      *
      * Each of the provided accessControlProfiles is checked in this call. If they are not
-     * all valid, the call fails with INVALID_DATA.
+     * all valid, the call fails with STATUS_INVALID_DATA.
      *
      * For the itemsRequest parameter, the content can be defined in the way appropriate for
      * the credential, but there are three requirements that must be met to work with this HAL:
@@ -108,7 +104,7 @@ interface IIdentityCredential {
      *     the example below.
      *
      * If these requirements are not met the startRetrieval() call fails with
-     * INVALID_ITEMS_REQUEST_MESSAGE.
+     * STATUS_INVALID_ITEMS_REQUEST_MESSAGE.
      *
      * Here's an example of ItemsRequest CBOR which conforms to this requirement:
      *
@@ -156,17 +152,18 @@ interface IIdentityCredential {
      * 'x5chain' unprotected header element of the COSE_Sign1 structure (as as described
      * in 'draft-ietf-cose-x509-04'). There will be at least one certificate in said element
      * and there may be more (and if so, each certificate must be signed by its successor).
-     * This is checked and if the check fails the call fails with READER_SIGNATURE_CHECK_FAILED.
+     * This is checked and if the check fails the call fails with
+     * STATUS_READER_SIGNATURE_CHECK_FAILED.
      *
      * The SessionTranscript CBOR is conveyed in the sessionTranscript parameter. It
      * is permissible for this to be empty in which case the readerSignature parameter
-     * must also be empty. If this is not the case, the call fails with FAILED.
+     * must also be empty. If this is not the case, the call fails with STATUS_FAILED.
      *
      * If the SessionTranscript CBOR is not empty, the X and Y coordinates of the public
      * part of the key-pair previously generated by createEphemeralKeyPair() must appear
      * somewhere in the bytes of DeviceEngagement structure. Both X and Y should be in
      * uncompressed form. If this is not satisfied, the call fails with
-     * EPHEMERAL_PUBLIC_KEY_NOT_FOUND.
+     * STATUS_EPHEMERAL_PUBLIC_KEY_NOT_FOUND.
      *
      * @param accessControlProfiles
      *   Access control profiles that are required to retrieve the entries that are going to be
@@ -196,16 +193,11 @@ interface IIdentityCredential {
      *   will succeed (i.e. that the access control profile checks will succeed).  This means that
      *   it's the responsibility of the caller to determine which access control checks will fail
      *   and remove the corresponding requests from the counts.
-     *
-     * @return result is OK on success. If an error occurs one of the values described above
-     *   will be returned.
      */
-    startRetrieval(vec<SecureAccessControlProfile> accessControlProfiles,
-                   HardwareAuthToken authToken,
-                   vec<uint8_t> itemsRequest,
-                   vec<uint8_t> sessionTranscript,
-                   vec<uint8_t> readerSignature,
-                   vec<uint16_t> requestCounts) generates(Result result);
+    void startRetrieval(in SecureAccessControlProfile[] accessControlProfiles,
+        in HardwareAuthToken authToken,
+        in byte[] itemsRequest,
+        in byte[] sessionTranscript, in byte[] readerSignature, in int[] requestCounts);
 
     /**
      * Starts retrieving an entry, subject to access control requirements.  Entries must be
@@ -213,15 +205,15 @@ interface IIdentityCredential {
      *
      * If the requestData parameter as passed to startRetrieval() was non-empty
      * this method must only be called with entries specified in that field. If this
-     * requirement is not met, the call fails with NOT_IN_REQUEST_MESSAGE.
+     * requirement is not met, the call fails with STATUS_NOT_IN_REQUEST_MESSAGE.
      *
-     * If nameSpace or name is empty this call fails with INVALID_DATA.
+     * If nameSpace or name is empty this call fails with STATUS_INVALID_DATA.
      *
      * Each access control profile for the entry is checked. If user authentication
      * is required and the supplied auth token doesn't provide it the call fails
-     * with USER_AUTHENTICATION_FAILED. If reader authentication is required and
+     * with STATUS_USER_AUTHENTICATION_FAILED. If reader authentication is required and
      * a suitable reader certificate chain isn't presented, the call fails with
-     * READER_AUTHENTICATION_FAILED.
+     * STATUS_READER_AUTHENTICATION_FAILED.
      *
      * It is permissible to keep retrieving values if an access control check fails.
      *
@@ -231,38 +223,29 @@ interface IIdentityCredential {
      *
      * @param entrySize is the size of the entry value, if it's a text string or a byte string.
      *     It must be zero if the entry value is an integer or boolean. If this requirement
-     *     is not met the call fails with INVALID_DATA.
+     *     is not met the call fails with STATUS_INVALID_DATA.
      *
      * @param accessControlProfileIds specifies the set of access control profiles that can
      *     authorize access to the provisioned element. If an identifier of a profile
      *     is given and this profile wasn't passed to startRetrieval() this call fails
-     *     with INVALID_DATA.
-     *
-     * @return result is OK on success. Otherwise one of INVALID_DATA, FAILED,
-     *     USER_AUTHENTICATION_FAILED, READER_AUTHENTICATION_FAILED.
+     *     with STATUS_INVALID_DATA.
      */
-    startRetrieveEntryValue(string nameSpace, string name, uint32_t entrySize,
-                            vec<uint16_t> accessControlProfileIds)
-        generates (Result result);
-
+    void startRetrieveEntryValue(in @utf8InCpp String nameSpace, in @utf8InCpp String name,
+                                 in int entrySize, in int[] accessControlProfileIds);
 
     /**
      * Retrieves an entry value, or part of one, if the entry value is larger than gcmChunkSize.
      * May only be called after startRetrieveEntry().
      *
      * If the passed in data is not authentic, can't be decrypted, is of the wrong size, or can't
-     * be decoded, this call fails with INVALID_DATA.
+     * be decoded, this call fails with STATUS_INVALID_DATA.
      *
      * @param encryptedContent contains the encrypted and MACed content.
      *
-     * @return result is OK on success, INVALID_DATA, or FAILED if an error occurred.
-     *
-     * @return content is the entry value as CBOR, or part of the entry value in the case the
+     * @return the entry value as CBOR, or part of the entry value in the case the
      *    content exceeds gcmChunkSize in length.
      */
-    retrieveEntryValue(vec<uint8_t> encryptedContent)
-        generates (Result result, vec<uint8_t> content);
-
+    byte[] retrieveEntryValue(in byte[] encryptedContent);
 
     /**
      * End retrieval of data, optionally returning a message authentication code over the
@@ -273,11 +256,9 @@ interface IIdentityCredential {
      *
      * @param signingKeyBlob is either empty or a signingKeyBlob (see generateSigningKeyPair(),
      *    below) containing the signing key to use to sign the data retrieved. If this
-     *    is not in the right format the call fails with INVALID_DATA.
+     *    is not in the right format the call fails with STATUS_INVALID_DATA.
      *
-     * @return result is OK on success, INVALID_DATA or FAILED if an error occurred.
-     *
-     * @return mac is empty if signingKeyBlob or the sessionTranscript passed to
+     * @param out mac is empty if signingKeyBlob or the sessionTranscript passed to
      *    startRetrieval() is empty. Otherwise it is a COSE_Mac0 with empty payload
      *    and the detached content is set to DeviceAuthentication as defined below.
      *    The key used for the MAC operation is EMacKey and is derived as follows:
@@ -321,23 +302,17 @@ interface IIdentityCredential {
      *        DataItemValue = any
      *
      *
-     * @return deviceNameSpaces the bytes of DeviceNameSpaces.
+     * @param out deviceNameSpaces the bytes of DeviceNameSpaces.
      */
-    finishRetrieval(vec<uint8_t> signingKeyBlob)
-        generates(Result result, vec<uint8_t> mac, vec<uint8_t> deviceNameSpaces);
-
+    void finishRetrieval(in byte[] signingKeyBlob, out byte[] mac, out byte[] deviceNameSpaces);
 
     /**
      * Generate a key pair to be used for signing session data and retrieved data items.
      *
-     * @return result is OK on success or FAILED if an error occurred.
+     * @param out signingKeyBlob contains an encrypted copy of the newly-generated private
+     *     signing key.
      *
-     * @return signingKeyBlob contains an encrypted copy of the newly-generated private signing key.
-     *
-     * @return signingKeyCertificate contains an X.509 certificate for the new signing key, signed
-     *     by the credential key.
+     * @return an X.509 certificate for the new signing key, signed by the credential key.
      */
-    generateSigningKeyPair()
-        generates(Result result, vec<uint8_t> signingKeyBlob,
-                  vec<uint8_t> signingKeyCertificate);
-};
+    Certificate generateSigningKeyPair(out byte[] signingKeyBlob);
+}
