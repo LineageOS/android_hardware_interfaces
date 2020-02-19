@@ -45,9 +45,9 @@ interface IGnss extends @2.0::IGnss {
     /**
      * This method returns the IGnssMeasurement interface.
      *
-     * At least one of getExtensionGnssMeasurement(), getExtensionGnssMeasurement_1_1(),
+     * getExtensionGnssMeasurement(), getExtensionGnssMeasurement_1_1(),
      * getExtensionGnssMeasurement_2_0(), and getExtensionGnssMeasurement_2_1() methods must return
-     * a non-null handle, and the other methods must return nullptr.
+     * non-null. They can all return the same, latest version of IGnssMeasurement.
      *
      * @return gnssMeasurementIface Handle to the IGnssMeasurement interface.
      */
@@ -56,9 +56,9 @@ interface IGnss extends @2.0::IGnss {
     /**
      * This method returns the IGnssConfiguration interface.
      *
-     * At least one of getExtensionGnssConfiguration(), getExtensionGnssConfiguration_1_1(),
+     * getExtensionGnssConfiguration(), getExtensionGnssConfiguration_1_1(),
      * getExtensionGnssConfiguration_2_0(), and getExtensionGnssConfiguration_2_1() methods must
-     * return a non-null handle, and the other methods must return nullptr.
+     * return non-null. They can all return the same, latest version of IGnssConfiguration.
      *
      * @return gnssConfigurationIface Handle to the IGnssConfiguration interface.
      */
