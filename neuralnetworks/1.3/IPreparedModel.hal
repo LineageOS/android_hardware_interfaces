@@ -92,6 +92,17 @@ interface IPreparedModel extends @1.2::IPreparedModel {
      * @param deadline The time by which the execution must complete. If the
      *                 execution cannot be finished by the deadline, the
      *                 execution must be aborted.
+     * @param loopTimeoutDuration The maximum amount of time that should be spent
+     *                            executing a {@link OperationType::WHILE}
+     *                            operation. If a loop condition model does not
+     *                            output false within this duration, the
+     *                            execution must be aborted. If the model
+     *                            contains a {@link OperationType::WHILE}
+     *                            operation and no loop timeout duration is
+     *                            provided, the maximum amount of time is {@link
+     *                            LoopTimeoutDurationNs::DEFAULT}. When
+     *                            provided, the duration must not exceed {@link
+     *                            LoopTimeoutDurationNs::MAXIMUM}.
      * @param callback A callback object used to return the error status of
      *                 the execution, shape information of model output operands, and
      *                 duration of execution. The callback object's notify function must
@@ -111,7 +122,7 @@ interface IPreparedModel extends @1.2::IPreparedModel {
      *                  driver
      */
     execute_1_3(Request request, MeasureTiming measure, OptionalTimePoint deadline,
-                IExecutionCallback callback)
+                OptionalTimeoutDuration loopTimeoutDuration, IExecutionCallback callback)
         generates (ErrorStatus status);
 
     /**
@@ -163,6 +174,17 @@ interface IPreparedModel extends @1.2::IPreparedModel {
      * @param deadline The time by which the execution must complete. If the
      *                 execution cannot be finished by the deadline, the
      *                 execution must be aborted.
+     * @param loopTimeoutDuration The maximum amount of time that should be spent
+     *                            executing a {@link OperationType::WHILE}
+     *                            operation. If a loop condition model does not
+     *                            output false within this duration, the
+     *                            execution must be aborted. If the model
+     *                            contains a {@link OperationType::WHILE}
+     *                            operation and no loop timeout duration is
+     *                            provided, the maximum amount of time is {@link
+     *                            LoopTimeoutDurationNs::DEFAULT}. When
+     *                            provided, the duration must not exceed {@link
+     *                            LoopTimeoutDurationNs::MAXIMUM}.
      * @return status Error status of the execution, must be:
      *                - NONE if execution is performed successfully
      *                - DEVICE_UNAVAILABLE if driver is offline or busy
@@ -187,7 +209,8 @@ interface IPreparedModel extends @1.2::IPreparedModel {
      *                measurement is not available.
      */
     executeSynchronously_1_3(Request request, MeasureTiming measure,
-                             OptionalTimePoint deadline)
+                             OptionalTimePoint deadline,
+                             OptionalTimeoutDuration loopTimeoutDuration)
                   generates (ErrorStatus status, vec<OutputShape> outputShapes,
                              Timing timing);
 
@@ -243,6 +266,17 @@ interface IPreparedModel extends @1.2::IPreparedModel {
      * @param deadline The time by which the execution must complete. If the
      *                 execution cannot be finished by the deadline, the
      *                 execution must be aborted.
+     * @param loopTimeoutDuration The maximum amount of time that should be spent
+     *                            executing a {@link OperationType::WHILE}
+     *                            operation. If a loop condition model does not
+     *                            output false within this duration, the
+     *                            execution must be aborted. If the model
+     *                            contains a {@link OperationType::WHILE}
+     *                            operation and no loop timeout duration is
+     *                            provided, the maximum amount of time is {@link
+     *                            LoopTimeoutDurationNs::DEFAULT}. When
+     *                            provided, the duration must not exceed {@link
+     *                            LoopTimeoutDurationNs::MAXIMUM}.
      * @param duration The length of time within which the execution must
      *                 complete after all sync fences in waitFor are signaled. If the
      *                 execution cannot be finished within the duration, the execution
@@ -264,6 +298,7 @@ interface IPreparedModel extends @1.2::IPreparedModel {
      *                  and error status when the execution is completed.
      */
     executeFenced(Request request, vec<handle> waitFor, MeasureTiming measure,
-                  OptionalTimePoint deadline, OptionalTimeoutDuration duration)
+                  OptionalTimePoint deadline, OptionalTimeoutDuration loopTimeoutDuration,
+                  OptionalTimeoutDuration duration)
         generates (ErrorStatus status, handle syncFence, IFencedExecutionCallback callback);
 };

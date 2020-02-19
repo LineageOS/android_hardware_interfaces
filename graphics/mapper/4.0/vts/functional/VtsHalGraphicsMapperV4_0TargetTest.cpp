@@ -97,6 +97,7 @@ class GraphicsMapperHidlTest
         Error err = mGralloc->set(bufferHandle, metadataType, metadata);
         if (err == Error::UNSUPPORTED) {
             GTEST_SUCCEED() << "setting this metadata is unsupported";
+            return;
         }
         ASSERT_EQ(err, Error::NONE);
 
@@ -143,7 +144,7 @@ class GraphicsMapperHidlTest
         EXPECT_EQ(24, offsetInBitsA);
 
         EXPECT_EQ(0, planeLayout.offsetInBytes);
-        EXPECT_EQ(8, planeLayout.sampleIncrementInBits);
+        EXPECT_EQ(32, planeLayout.sampleIncrementInBits);
         // Skip testing stride because any stride is valid
         EXPECT_EQ(mDummyDescriptorInfo.width, planeLayout.widthInSamples);
         EXPECT_EQ(mDummyDescriptorInfo.height, planeLayout.heightInSamples);
@@ -920,6 +921,7 @@ TEST_P(GraphicsMapperHidlTest, GetProtectedContent) {
     bufferHandle = mGralloc->allocate(info, true, true);
     if (bufferHandle) {
         GTEST_SUCCEED() << "unable to allocate protected content";
+        return;
     }
 
     hidl_vec<uint8_t> vec;
@@ -1237,6 +1239,7 @@ TEST_P(GraphicsMapperHidlTest, SetUsageProtected) {
     bufferHandle = mGralloc->allocate(info, true, true);
     if (bufferHandle) {
         GTEST_SUCCEED() << "unable to allocate protected content";
+        return;
     }
 
     uint64_t usage = static_cast<uint64_t>(BufferUsage::COMPOSER_OVERLAY);
@@ -1280,6 +1283,7 @@ TEST_P(GraphicsMapperHidlTest, SetProtectedContent) {
     bufferHandle = mGralloc->allocate(info, true, true);
     if (bufferHandle) {
         GTEST_SUCCEED() << "unable to allocate protected content";
+        return;
     }
 
     uint64_t protectedContent = 0;
@@ -1384,7 +1388,7 @@ TEST_P(GraphicsMapperHidlTest, SetPlaneLayouts) {
     planeLayouts.push_back(planeLayoutA);
 
     planeLayoutRGB.offsetInBytes = 0;
-    planeLayoutRGB.sampleIncrementInBits = 32;
+    planeLayoutRGB.sampleIncrementInBits = 24;
     planeLayoutRGB.strideInBytes = info.width + 20;
     planeLayoutRGB.widthInSamples = info.width;
     planeLayoutRGB.heightInSamples = info.height;
@@ -1407,6 +1411,7 @@ TEST_P(GraphicsMapperHidlTest, SetPlaneLayouts) {
     Error err = mGralloc->set(bufferHandle, gralloc4::MetadataType_PlaneLayouts, vec);
     if (err == Error::UNSUPPORTED) {
         GTEST_SUCCEED() << "setting this metadata is unsupported";
+        return;
     }
     ASSERT_EQ(err, Error::NONE);
 
@@ -1779,6 +1784,7 @@ TEST_P(GraphicsMapperHidlTest, GetFromBufferDescriptorInfoPixelFormatFourCC) {
             mDummyDescriptorInfo, gralloc4::MetadataType_PixelFormatFourCC, &vec);
     if (err == Error::UNSUPPORTED) {
         GTEST_SUCCEED() << "setting this metadata is unsupported";
+        return;
     }
     ASSERT_EQ(err, Error::NONE);
 
@@ -1795,6 +1801,7 @@ TEST_P(GraphicsMapperHidlTest, GetFromBufferDescriptorInfoPixelFormatModifier) {
             mDummyDescriptorInfo, gralloc4::MetadataType_PixelFormatModifier, &vec);
     if (err == Error::UNSUPPORTED) {
         GTEST_SUCCEED() << "setting this metadata is unsupported";
+        return;
     }
     ASSERT_EQ(err, Error::NONE);
 
@@ -1824,6 +1831,7 @@ TEST_P(GraphicsMapperHidlTest, GetFromBufferDescriptorInfoAllocationSize) {
                                                       gralloc4::MetadataType_AllocationSize, &vec);
     if (err == Error::UNSUPPORTED) {
         GTEST_SUCCEED() << "setting this metadata is unsupported";
+        return;
     }
     ASSERT_EQ(err, Error::NONE);
 

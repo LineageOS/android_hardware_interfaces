@@ -5671,3 +5671,14 @@ enum ErrorStatus : @1.0::ErrorStatus {
      */
     RESOURCE_EXHAUSTED_PERSISTENT,
 };
+
+/**
+ * Each {@link OperationType::WHILE} operation in the model has an implicit
+ * execution timeout duration associated with it ("loop timeout duration").
+ * This duration is configurable on a per-execution basis and must not exceed
+ * 15 seconds. The default value is 2 seconds.
+ */
+enum LoopTimeoutDurationNs : uint64_t {
+    DEFAULT = 2000000000,
+    MAXIMUM = 15000000000,
+};
