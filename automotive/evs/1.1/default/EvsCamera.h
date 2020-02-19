@@ -78,6 +78,10 @@ public:
                                       setIntParameter_cb _hidl_cb) override;
     Return<void>      getIntParameter(CameraParam id,
                                       getIntParameter_cb _hidl_cb) override;
+    Return<EvsResult> setExtendedInfo_1_1(uint32_t opaqueIdentifier,
+                                          const hidl_vec<uint8_t>& opaqueValue) override;
+    Return<void>      getExtendedInfo_1_1(uint32_t opaqueIdentifier,
+                                          getExtendedInfo_1_1_cb _hidl_cb) override;
 
     static sp<EvsCamera> Create(const char *deviceName);
     static sp<EvsCamera> Create(const char *deviceName,
