@@ -36,7 +36,7 @@ cc_test {
         "android.hardware.sensors@2.1",
         "libfmq",
         "VtsHalSensorsTargetTestUtils",
-        "VtsHalSensorsV2_XTargetTest",
+        "VtsHalSensorsV2_0TargetTest-lib",
     ],
     test_suites: [
         "general-tests",
