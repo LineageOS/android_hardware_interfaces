@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2017 The Android Open Source Project
+// Copyright (C) 2020 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,11 +15,12 @@
 //
 
 cc_test {
-    name: "VtsHalContexthubV1_0TargetTest",
+    name: "VtsHalContexthubV1_1TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
-    srcs: ["VtsHalContexthubV1_0TargetTest.cpp"],
+    srcs: ["VtsHalContexthubV1_1TargetTest.cpp"],
     static_libs: [
         "android.hardware.contexthub@1.0",
+        "android.hardware.contexthub@1.1",
         "VtsHalContexthubUtils",
     ],
     test_suites: [
