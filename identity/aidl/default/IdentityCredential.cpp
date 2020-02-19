@@ -18,6 +18,7 @@
 
 #include "IdentityCredential.h"
 #include "IdentityCredentialStore.h"
+#include "Util.h"
 
 #include <android/hardware/identity/support/IdentityCredentialSupport.h>
 
@@ -28,71 +29,24 @@
 #include <cppbor.h>
 #include <cppbor_parse.h>
 
-namespace android {
-namespace hardware {
-namespace identity {
-namespace implementation {
+namespace aidl::android::hardware::identity {
 
-using ::android::hardware::keymaster::V4_0::Timestamp;
+using ::aidl::android::hardware::keymaster::Timestamp;
 using ::std::optional;
 
-Return<void> IdentityCredential::deleteCredential(deleteCredential_cb _hidl_cb) {
-    cppbor::Array array = {"ProofOfDeletion", docType_, testCredential_};
-    vector<uint8_t> proofOfDeletion = array.encode();
+using namespace ::android::hardware::identity;
 
-    optional<vector<uint8_t>> proofOfDeletionSignature =
-            support::coseSignEcDsa(credentialPrivKey_,
-                                   proofOfDeletion,  // payload
-                                   {},               // additionalData
-                                   {});              // certificateChain
-    if (!proofOfDeletionSignature) {
-        _hidl_cb(support::result(ResultCode::FAILED, "Error signing data"), {});
-        return Void();
-    }
-
-    _hidl_cb(support::resultOK(), proofOfDeletionSignature.value());
-    return Void();
-}
-
-Return<void> IdentityCredential::createEphemeralKeyPair(createEphemeralKeyPair_cb _hidl_cb) {
-    optional<vector<uint8_t>> keyPair = support::createEcKeyPair();
-    if (!keyPair) {
-        _hidl_cb(support::result(ResultCode::FAILED, "Error creating ephemeral key pair"), {});
-        return Void();
-    }
-
-    // Stash public key of this key-pair for later check in startRetrieval().
-    optional<vector<uint8_t>> publicKey = support::ecKeyPairGetPublicKey(keyPair.value());
-    if (!publicKey) {
-        _hidl_cb(support::result(ResultCode::FAILED,
-                                 "Error getting public part of ephemeral key pair"),
-                 {});
-        return Void();
-    }
-    ephemeralPublicKey_ = publicKey.value();
-
-    _hidl_cb(support::resultOK(), keyPair.value());
-    return Void();
-}
-
-Return<void> IdentityCredential::setReaderEphemeralPublicKey(
-        const hidl_vec<uint8_t>& publicKey, setReaderEphemeralPublicKey_cb _hidl_cb) {
-    readerPublicKey_ = publicKey;
-    _hidl_cb(support::resultOK());
-    return Void();
-}
-
-ResultCode IdentityCredential::initialize() {
+int IdentityCredential::initialize() {
     auto [item, _, message] = cppbor::parse(credentialData_);
     if (item == nullptr) {
         LOG(ERROR) << "CredentialData is not valid CBOR: " << message;
-        return ResultCode::INVALID_DATA;
+        return IIdentityCredentialStore::STATUS_INVALID_DATA;
     }
 
     const cppbor::Array* arrayItem = item->asArray();
     if (arrayItem == nullptr || arrayItem->size() != 3) {
         LOG(ERROR) << "CredentialData is not an array with three elements";
-        return ResultCode::INVALID_DATA;
+        return IIdentityCredentialStore::STATUS_INVALID_DATA;
     }
 
     const cppbor::Tstr* docTypeItem = (*arrayItem)[0]->asTstr();
@@ -103,7 +57,7 @@ ResultCode IdentityCredential::initialize() {
     if (docTypeItem == nullptr || testCredentialItem == nullptr ||
         encryptedCredentialKeysItem == nullptr) {
         LOG(ERROR) << "CredentialData unexpected item types";
-        return ResultCode::INVALID_DATA;
+        return IIdentityCredentialStore::STATUS_INVALID_DATA;
     }
 
     docType_ = docTypeItem->value();
@@ -113,7 +67,7 @@ ResultCode IdentityCredential::initialize() {
     if (testCredential_) {
         hardwareBoundKey = support::getTestHardwareBoundKey();
     } else {
-        hardwareBoundKey = support::getHardwareBoundKey();
+        hardwareBoundKey = getHardwareBoundKey();
     }
 
     const vector<uint8_t>& encryptedCredentialKeys = encryptedCredentialKeysItem->value();
@@ -122,39 +76,83 @@ ResultCode IdentityCredential::initialize() {
             support::decryptAes128Gcm(hardwareBoundKey, encryptedCredentialKeys, docTypeVec);
     if (!decryptedCredentialKeys) {
         LOG(ERROR) << "Error decrypting CredentialKeys";
-        return ResultCode::INVALID_DATA;
+        return IIdentityCredentialStore::STATUS_INVALID_DATA;
     }
 
     auto [dckItem, dckPos, dckMessage] = cppbor::parse(decryptedCredentialKeys.value());
     if (dckItem == nullptr) {
         LOG(ERROR) << "Decrypted CredentialKeys is not valid CBOR: " << dckMessage;
-        return ResultCode::INVALID_DATA;
+        return IIdentityCredentialStore::STATUS_INVALID_DATA;
     }
     const cppbor::Array* dckArrayItem = dckItem->asArray();
     if (dckArrayItem == nullptr || dckArrayItem->size() != 2) {
         LOG(ERROR) << "Decrypted CredentialKeys is not an array with two elements";
-        return ResultCode::INVALID_DATA;
+        return IIdentityCredentialStore::STATUS_INVALID_DATA;
     }
     const cppbor::Bstr* storageKeyItem = (*dckArrayItem)[0]->asBstr();
     const cppbor::Bstr* credentialPrivKeyItem = (*dckArrayItem)[1]->asBstr();
     if (storageKeyItem == nullptr || credentialPrivKeyItem == nullptr) {
         LOG(ERROR) << "CredentialKeys unexpected item types";
-        return ResultCode::INVALID_DATA;
+        return IIdentityCredentialStore::STATUS_INVALID_DATA;
     }
     storageKey_ = storageKeyItem->value();
     credentialPrivKey_ = credentialPrivKeyItem->value();
 
-    return ResultCode::OK;
+    return IIdentityCredentialStore::STATUS_OK;
 }
 
-Return<void> IdentityCredential::createAuthChallenge(createAuthChallenge_cb _hidl_cb) {
+ndk::ScopedAStatus IdentityCredential::deleteCredential(
+        vector<int8_t>* outProofOfDeletionSignature) {
+    cppbor::Array array = {"ProofOfDeletion", docType_, testCredential_};
+    vector<uint8_t> proofOfDeletion = array.encode();
+
+    optional<vector<uint8_t>> signature = support::coseSignEcDsa(credentialPrivKey_,
+                                                                 proofOfDeletion,  // payload
+                                                                 {},               // additionalData
+                                                                 {});  // certificateChain
+    if (!signature) {
+        return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                IIdentityCredentialStore::STATUS_FAILED, "Error signing data"));
+    }
+
+    *outProofOfDeletionSignature = byteStringToSigned(signature.value());
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus IdentityCredential::createEphemeralKeyPair(vector<int8_t>* outKeyPair) {
+    optional<vector<uint8_t>> kp = support::createEcKeyPair();
+    if (!kp) {
+        return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                IIdentityCredentialStore::STATUS_FAILED, "Error creating ephemeral key pair"));
+    }
+
+    // Stash public key of this key-pair for later check in startRetrieval().
+    optional<vector<uint8_t>> publicKey = support::ecKeyPairGetPublicKey(kp.value());
+    if (!publicKey) {
+        return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                IIdentityCredentialStore::STATUS_FAILED,
+                "Error getting public part of ephemeral key pair"));
+    }
+    ephemeralPublicKey_ = publicKey.value();
+
+    *outKeyPair = byteStringToSigned(kp.value());
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus IdentityCredential::setReaderEphemeralPublicKey(
+        const vector<int8_t>& publicKey) {
+    readerPublicKey_ = byteStringToUnsigned(publicKey);
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus IdentityCredential::createAuthChallenge(int64_t* outChallenge) {
     uint64_t challenge = 0;
     while (challenge == 0) {
         optional<vector<uint8_t>> bytes = support::getRandom(8);
         if (!bytes) {
-            _hidl_cb(support::result(ResultCode::FAILED, "Error getting random data for challenge"),
-                     0);
-            return Void();
+            return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                    IIdentityCredentialStore::STATUS_FAILED,
+                    "Error getting random data for challenge"));
         }
 
         challenge = 0;
@@ -163,17 +161,16 @@ Return<void> IdentityCredential::createAuthChallenge(createAuthChallenge_cb _hid
         }
     }
 
-    authChallenge_ = challenge;
-    _hidl_cb(support::resultOK(), challenge);
-    return Void();
+    *outChallenge = challenge;
+    return ndk::ScopedAStatus::ok();
 }
 
 // TODO: this could be a lot faster if we did all the splitting and pubkey extraction
 // ahead of time.
 bool checkReaderAuthentication(const SecureAccessControlProfile& profile,
                                const vector<uint8_t>& readerCertificateChain) {
-    optional<vector<uint8_t>> acpPubKey =
-            support::certificateChainGetTopMostKey(profile.readerCertificate);
+    optional<vector<uint8_t>> acpPubKey = support::certificateChainGetTopMostKey(
+            byteStringToUnsigned(profile.readerCertificate.encodedCertificate));
     if (!acpPubKey) {
         LOG(ERROR) << "Error extracting public key from readerCertificate in profile";
         return false;
@@ -202,7 +199,9 @@ bool checkReaderAuthentication(const SecureAccessControlProfile& profile,
 Timestamp clockGetTime() {
     struct timespec time;
     clock_gettime(CLOCK_MONOTONIC, &time);
-    return time.tv_sec * 1000 + time.tv_nsec / 1000000;
+    Timestamp ts;
+    ts.milliSeconds = time.tv_sec * 1000 + time.tv_nsec / 1000000;
+    return ts;
 }
 
 bool checkUserAuthentication(const SecureAccessControlProfile& profile,
@@ -219,7 +218,7 @@ bool checkUserAuthentication(const SecureAccessControlProfile& profile,
             return false;
         }
 
-        if (authToken.challenge != authChallenge) {
+        if (authToken.challenge != int64_t(authChallenge)) {
             LOG(ERROR) << "Challenge in authToken doesn't match the challenge we created";
             return false;
         }
@@ -239,42 +238,44 @@ bool checkUserAuthentication(const SecureAccessControlProfile& profile,
     // implementation should never be used on a real device.
     //
     Timestamp now = clockGetTime();
-    if (authToken.timestamp > now) {
-        LOG(ERROR) << "Timestamp in authToken (" << authToken.timestamp
-                   << ") is in the future (now: " << now << ")";
+    if (authToken.timestamp.milliSeconds > now.milliSeconds) {
+        LOG(ERROR) << "Timestamp in authToken (" << authToken.timestamp.milliSeconds
+                   << ") is in the future (now: " << now.milliSeconds << ")";
         return false;
     }
-    if (now > authToken.timestamp + profile.timeoutMillis) {
-        LOG(ERROR) << "Deadline for authToken (" << authToken.timestamp << " + "
+    if (now.milliSeconds > authToken.timestamp.milliSeconds + profile.timeoutMillis) {
+        LOG(ERROR) << "Deadline for authToken (" << authToken.timestamp.milliSeconds << " + "
                    << profile.timeoutMillis << " = "
-                   << (authToken.timestamp + profile.timeoutMillis)
-                   << ") is in the past (now: " << now << ")";
+                   << (authToken.timestamp.milliSeconds + profile.timeoutMillis)
+                   << ") is in the past (now: " << now.milliSeconds << ")";
         return false;
     }
-
     return true;
 }
 
-Return<void> IdentityCredential::startRetrieval(
-        const hidl_vec<SecureAccessControlProfile>& accessControlProfiles,
-        const HardwareAuthToken& authToken, const hidl_vec<uint8_t>& itemsRequest,
-        const hidl_vec<uint8_t>& sessionTranscript, const hidl_vec<uint8_t>& readerSignature,
-        const hidl_vec<uint16_t>& requestCounts, startRetrieval_cb _hidl_cb) {
+ndk::ScopedAStatus IdentityCredential::startRetrieval(
+        const vector<SecureAccessControlProfile>& accessControlProfiles,
+        const HardwareAuthToken& authToken, const vector<int8_t>& itemsRequestS,
+        const vector<int8_t>& sessionTranscriptS, const vector<int8_t>& readerSignatureS,
+        const vector<int32_t>& requestCounts) {
+    auto sessionTranscript = byteStringToUnsigned(sessionTranscriptS);
+    auto itemsRequest = byteStringToUnsigned(itemsRequestS);
+    auto readerSignature = byteStringToUnsigned(readerSignatureS);
+
     if (sessionTranscript.size() > 0) {
         auto [item, _, message] = cppbor::parse(sessionTranscript);
         if (item == nullptr) {
-            _hidl_cb(support::result(ResultCode::INVALID_DATA,
-                                     "SessionTranscript contains invalid CBOR"));
-            return Void();
+            return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                    IIdentityCredentialStore::STATUS_INVALID_DATA,
+                    "SessionTranscript contains invalid CBOR"));
         }
         sessionTranscriptItem_ = std::move(item);
     }
     if (numStartRetrievalCalls_ > 0) {
-        if (sessionTranscript_ != vector<uint8_t>(sessionTranscript)) {
-            _hidl_cb(support::result(
-                    ResultCode::SESSION_TRANSCRIPT_MISMATCH,
+        if (sessionTranscript_ != sessionTranscript) {
+            return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                    IIdentityCredentialStore::STATUS_SESSION_TRANSCRIPT_MISMATCH,
                     "Passed-in SessionTranscript doesn't match previously used SessionTranscript"));
-            return Void();
         }
     }
     sessionTranscript_ = sessionTranscript;
@@ -285,23 +286,23 @@ Return<void> IdentityCredential::startRetrieval(
     if (readerSignature.size() > 0) {
         readerCertificateChain = support::coseSignGetX5Chain(readerSignature);
         if (!readerCertificateChain) {
-            _hidl_cb(support::result(ResultCode::READER_SIGNATURE_CHECK_FAILED,
-                                     "Unable to get reader certificate chain from COSE_Sign1"));
-            return Void();
+            return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                    IIdentityCredentialStore::STATUS_READER_SIGNATURE_CHECK_FAILED,
+                    "Unable to get reader certificate chain from COSE_Sign1"));
         }
 
         if (!support::certificateChainValidate(readerCertificateChain.value())) {
-            _hidl_cb(support::result(ResultCode::READER_SIGNATURE_CHECK_FAILED,
-                                     "Error validating reader certificate chain"));
-            return Void();
+            return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                    IIdentityCredentialStore::STATUS_READER_SIGNATURE_CHECK_FAILED,
+                    "Error validating reader certificate chain"));
         }
 
         optional<vector<uint8_t>> readerPublicKey =
                 support::certificateChainGetTopMostKey(readerCertificateChain.value());
         if (!readerPublicKey) {
-            _hidl_cb(support::result(ResultCode::READER_SIGNATURE_CHECK_FAILED,
-                                     "Unable to get public key from reader certificate chain"));
-            return Void();
+            return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                    IIdentityCredentialStore::STATUS_READER_SIGNATURE_CHECK_FAILED,
+                    "Unable to get public key from reader certificate chain"));
         }
 
         const vector<uint8_t>& itemsRequestBytes = itemsRequest;
@@ -313,9 +314,9 @@ Return<void> IdentityCredential::startRetrieval(
         if (!support::coseCheckEcDsaSignature(readerSignature,
                                               dataThatWasSigned,  // detached content
                                               readerPublicKey.value())) {
-            _hidl_cb(support::result(ResultCode::READER_SIGNATURE_CHECK_FAILED,
-                                     "readerSignature check failed"));
-            return Void();
+            return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                    IIdentityCredentialStore::STATUS_READER_SIGNATURE_CHECK_FAILED,
+                    "readerSignature check failed"));
         }
     }
 
@@ -334,39 +335,39 @@ Return<void> IdentityCredential::startRetrieval(
     if (sessionTranscript.size() > 0) {
         const cppbor::Array* array = sessionTranscriptItem_->asArray();
         if (array == nullptr || array->size() != 2) {
-            _hidl_cb(support::result(ResultCode::EPHEMERAL_PUBLIC_KEY_NOT_FOUND,
-                                     "SessionTranscript is not an array with two items"));
-            return Void();
+            return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                    IIdentityCredentialStore::STATUS_EPHEMERAL_PUBLIC_KEY_NOT_FOUND,
+                    "SessionTranscript is not an array with two items"));
         }
         const cppbor::Semantic* taggedEncodedDE = (*array)[0]->asSemantic();
         if (taggedEncodedDE == nullptr || taggedEncodedDE->value() != 24) {
-            _hidl_cb(support::result(ResultCode::EPHEMERAL_PUBLIC_KEY_NOT_FOUND,
-                                     "First item in SessionTranscript array is not a "
-                                     "semantic with value 24"));
-            return Void();
+            return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                    IIdentityCredentialStore::STATUS_EPHEMERAL_PUBLIC_KEY_NOT_FOUND,
+                    "First item in SessionTranscript array is not a "
+                    "semantic with value 24"));
         }
         const cppbor::Bstr* encodedDE = (taggedEncodedDE->child())->asBstr();
         if (encodedDE == nullptr) {
-            _hidl_cb(support::result(ResultCode::EPHEMERAL_PUBLIC_KEY_NOT_FOUND,
-                                     "Child of semantic in first item in SessionTranscript "
-                                     "array is not a bstr"));
-            return Void();
+            return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                    IIdentityCredentialStore::STATUS_EPHEMERAL_PUBLIC_KEY_NOT_FOUND,
+                    "Child of semantic in first item in SessionTranscript "
+                    "array is not a bstr"));
         }
         const vector<uint8_t>& bytesDE = encodedDE->value();
 
         auto [getXYSuccess, ePubX, ePubY] = support::ecPublicKeyGetXandY(ephemeralPublicKey_);
         if (!getXYSuccess) {
-            _hidl_cb(support::result(ResultCode::EPHEMERAL_PUBLIC_KEY_NOT_FOUND,
-                                     "Error extracting X and Y from ePub"));
-            return Void();
+            return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                    IIdentityCredentialStore::STATUS_EPHEMERAL_PUBLIC_KEY_NOT_FOUND,
+                    "Error extracting X and Y from ePub"));
         }
         if (sessionTranscript.size() > 0 &&
             !(memmem(bytesDE.data(), bytesDE.size(), ePubX.data(), ePubX.size()) != nullptr &&
               memmem(bytesDE.data(), bytesDE.size(), ePubY.data(), ePubY.size()) != nullptr)) {
-            _hidl_cb(support::result(ResultCode::EPHEMERAL_PUBLIC_KEY_NOT_FOUND,
-                                     "Did not find ephemeral public key's X and Y coordinates in "
-                                     "SessionTranscript (make sure leading zeroes are not used)"));
-            return Void();
+            return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                    IIdentityCredentialStore::STATUS_EPHEMERAL_PUBLIC_KEY_NOT_FOUND,
+                    "Did not find ephemeral public key's X and Y coordinates in "
+                    "SessionTranscript (make sure leading zeroes are not used)"));
         }
     }
 
@@ -378,17 +379,17 @@ Return<void> IdentityCredential::startRetrieval(
         // 1. The content must be a CBOR-encoded structure.
         auto [item, _, message] = cppbor::parse(itemsRequest);
         if (item == nullptr) {
-            _hidl_cb(support::result(ResultCode::INVALID_ITEMS_REQUEST_MESSAGE,
-                                     "Error decoding CBOR in itemsRequest: %s", message.c_str()));
-            return Void();
+            return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                    IIdentityCredentialStore::STATUS_INVALID_ITEMS_REQUEST_MESSAGE,
+                    "Error decoding CBOR in itemsRequest"));
         }
 
         // 2. The CBOR structure must be a map.
         const cppbor::Map* map = item->asMap();
         if (map == nullptr) {
-            _hidl_cb(support::result(ResultCode::INVALID_ITEMS_REQUEST_MESSAGE,
-                                     "itemsRequest is not a CBOR map"));
-            return Void();
+            return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                    IIdentityCredentialStore::STATUS_INVALID_ITEMS_REQUEST_MESSAGE,
+                    "itemsRequest is not a CBOR map"));
         }
 
         // 3. The map must contain a key "nameSpaces" whose value contains a map, as described in
@@ -435,9 +436,9 @@ Return<void> IdentityCredential::startRetrieval(
             }
         }
         if (nsMap == nullptr) {
-            _hidl_cb(support::result(ResultCode::INVALID_ITEMS_REQUEST_MESSAGE,
-                                     "No nameSpaces map in top-most map"));
-            return Void();
+            return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                    IIdentityCredentialStore::STATUS_INVALID_ITEMS_REQUEST_MESSAGE,
+                    "No nameSpaces map in top-most map"));
         }
 
         for (size_t n = 0; n < nsMap->size(); n++) {
@@ -445,9 +446,9 @@ Return<void> IdentityCredential::startRetrieval(
             const cppbor::Tstr* nsKey = nsKeyItem->asTstr();
             const cppbor::Map* nsInnerMap = nsValueItem->asMap();
             if (nsKey == nullptr || nsInnerMap == nullptr) {
-                _hidl_cb(support::result(ResultCode::INVALID_ITEMS_REQUEST_MESSAGE,
-                                         "Type mismatch in nameSpaces map"));
-                return Void();
+                return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                        IIdentityCredentialStore::STATUS_INVALID_ITEMS_REQUEST_MESSAGE,
+                        "Type mismatch in nameSpaces map"));
             }
             string requestedNamespace = nsKey->value();
             vector<string> requestedKeys;
@@ -458,9 +459,9 @@ Return<void> IdentityCredential::startRetrieval(
                 const cppbor::Bool* intentToRetainItem =
                         (simple != nullptr) ? simple->asBool() : nullptr;
                 if (nameItem == nullptr || intentToRetainItem == nullptr) {
-                    _hidl_cb(support::result(ResultCode::INVALID_ITEMS_REQUEST_MESSAGE,
-                                             "Type mismatch in value in nameSpaces map"));
-                    return Void();
+                    return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                            IIdentityCredentialStore::STATUS_INVALID_ITEMS_REQUEST_MESSAGE,
+                            "Type mismatch in value in nameSpaces map"));
                 }
                 requestedKeys.push_back(nameItem->value());
             }
@@ -471,20 +472,20 @@ Return<void> IdentityCredential::startRetrieval(
     // Finally, validate all the access control profiles in the requestData.
     bool haveAuthToken = (authToken.mac.size() > 0);
     for (const auto& profile : accessControlProfiles) {
-        if (!support::secureAccessControlProfileCheckMac(profile, storageKey_)) {
-            _hidl_cb(support::result(ResultCode::INVALID_DATA,
-                                     "Error checking MAC for profile with id %d", int(profile.id)));
-            return Void();
+        if (!secureAccessControlProfileCheckMac(profile, storageKey_)) {
+            return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                    IIdentityCredentialStore::STATUS_INVALID_DATA,
+                    "Error checking MAC for profile"));
         }
-        ResultCode accessControlCheck = ResultCode::OK;
+        int accessControlCheck = IIdentityCredentialStore::STATUS_OK;
         if (profile.userAuthenticationRequired) {
             if (!haveAuthToken || !checkUserAuthentication(profile, authToken, authChallenge_)) {
-                accessControlCheck = ResultCode::USER_AUTHENTICATION_FAILED;
+                accessControlCheck = IIdentityCredentialStore::STATUS_USER_AUTHENTICATION_FAILED;
             }
-        } else if (profile.readerCertificate.size() > 0) {
+        } else if (profile.readerCertificate.encodedCertificate.size() > 0) {
             if (!readerCertificateChain ||
                 !checkReaderAuthentication(profile, readerCertificateChain.value())) {
-                accessControlCheck = ResultCode::READER_AUTHENTICATION_FAILED;
+                accessControlCheck = IIdentityCredentialStore::STATUS_READER_AUTHENTICATION_FAILED;
             }
         }
         profileIdToAccessCheckResult_[profile.id] = accessControlCheck;
@@ -499,26 +500,25 @@ Return<void> IdentityCredential::startRetrieval(
     itemsRequest_ = itemsRequest;
 
     numStartRetrievalCalls_ += 1;
-    _hidl_cb(support::resultOK());
-    return Void();
+    return ndk::ScopedAStatus::ok();
 }
 
-Return<void> IdentityCredential::startRetrieveEntryValue(
-        const hidl_string& nameSpace, const hidl_string& name, uint32_t entrySize,
-        const hidl_vec<uint16_t>& accessControlProfileIds, startRetrieveEntryValue_cb _hidl_cb) {
+ndk::ScopedAStatus IdentityCredential::startRetrieveEntryValue(
+        const string& nameSpace, const string& name, int32_t entrySize,
+        const vector<int32_t>& accessControlProfileIds) {
     if (name.empty()) {
-        _hidl_cb(support::result(ResultCode::INVALID_DATA, "Name cannot be empty"));
-        return Void();
+        return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                IIdentityCredentialStore::STATUS_INVALID_DATA, "Name cannot be empty"));
     }
     if (nameSpace.empty()) {
-        _hidl_cb(support::result(ResultCode::INVALID_DATA, "Name space cannot be empty"));
-        return Void();
+        return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                IIdentityCredentialStore::STATUS_INVALID_DATA, "Name space cannot be empty"));
     }
 
     if (requestCountsRemaining_.size() == 0) {
-        _hidl_cb(support::result(ResultCode::INVALID_DATA,
-                                 "No more name spaces left to go through"));
-        return Void();
+        return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                IIdentityCredentialStore::STATUS_INVALID_DATA,
+                "No more name spaces left to go through"));
     }
 
     if (currentNameSpace_ == "") {
@@ -529,19 +529,18 @@ Return<void> IdentityCredential::startRetrieveEntryValue(
     if (nameSpace == currentNameSpace_) {
         // Same namespace.
         if (requestCountsRemaining_[0] == 0) {
-            _hidl_cb(support::result(ResultCode::INVALID_DATA,
-                                     "No more entries to be retrieved in current name space"));
-            return Void();
+            return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                    IIdentityCredentialStore::STATUS_INVALID_DATA,
+                    "No more entries to be retrieved in current name space"));
         }
         requestCountsRemaining_[0] -= 1;
     } else {
         // New namespace.
         if (requestCountsRemaining_[0] != 0) {
-            _hidl_cb(support::result(ResultCode::INVALID_DATA,
-                                     "Moved to new name space but %d entries need to be retrieved "
-                                     "in current name space",
-                                     int(requestCountsRemaining_[0])));
-            return Void();
+            return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                    IIdentityCredentialStore::STATUS_INVALID_DATA,
+                    "Moved to new name space but one or more entries need to be retrieved "
+                    "in current name space"));
         }
         if (currentNameSpaceDeviceNameSpacesMap_.size() > 0) {
             deviceNameSpacesMap_.add(currentNameSpace_,
@@ -558,18 +557,15 @@ Return<void> IdentityCredential::startRetrieveEntryValue(
     if (itemsRequest_.size() > 0) {
         const auto& it = requestedNameSpacesAndNames_.find(nameSpace);
         if (it == requestedNameSpacesAndNames_.end()) {
-            _hidl_cb(support::result(ResultCode::NOT_IN_REQUEST_MESSAGE,
-                                     "Name space '%s' was not requested in startRetrieval",
-                                     nameSpace.c_str()));
-            return Void();
+            return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                    IIdentityCredentialStore::STATUS_NOT_IN_REQUEST_MESSAGE,
+                    "Name space was not requested in startRetrieval"));
         }
         const auto& dataItemNames = it->second;
         if (std::find(dataItemNames.begin(), dataItemNames.end(), name) == dataItemNames.end()) {
-            _hidl_cb(support::result(
-                    ResultCode::NOT_IN_REQUEST_MESSAGE,
-                    "Data item name '%s' in name space '%s' was not requested in startRetrieval",
-                    name.c_str(), nameSpace.c_str()));
-            return Void();
+            return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                    IIdentityCredentialStore::STATUS_NOT_IN_REQUEST_MESSAGE,
+                    "Data item name in name space was not requested in startRetrieval"));
         }
     }
 
@@ -579,44 +575,44 @@ Return<void> IdentityCredential::startRetrieveEntryValue(
     //
     // If an item is configured without any profiles, access is denied.
     //
-    ResultCode accessControl = ResultCode::NO_ACCESS_CONTROL_PROFILES;
+    int accessControl = IIdentityCredentialStore::STATUS_NO_ACCESS_CONTROL_PROFILES;
     for (auto id : accessControlProfileIds) {
         auto search = profileIdToAccessCheckResult_.find(id);
         if (search == profileIdToAccessCheckResult_.end()) {
-            _hidl_cb(support::result(ResultCode::INVALID_DATA,
-                                     "Requested entry with unvalidated profile id %d", (int(id))));
-            return Void();
+            return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                    IIdentityCredentialStore::STATUS_INVALID_DATA,
+                    "Requested entry with unvalidated profile id"));
         }
-        ResultCode accessControlForProfile = search->second;
-        if (accessControlForProfile == ResultCode::OK) {
-            accessControl = ResultCode::OK;
+        int accessControlForProfile = search->second;
+        if (accessControlForProfile == IIdentityCredentialStore::STATUS_OK) {
+            accessControl = IIdentityCredentialStore::STATUS_OK;
             break;
         }
         accessControl = accessControlForProfile;
     }
-    if (accessControl != ResultCode::OK) {
-        _hidl_cb(support::result(accessControl, "Access control check failed"));
-        return Void();
+    if (accessControl != IIdentityCredentialStore::STATUS_OK) {
+        return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                int(accessControl), "Access control check failed"));
     }
 
-    entryAdditionalData_ =
-            support::entryCreateAdditionalData(nameSpace, name, accessControlProfileIds);
+    entryAdditionalData_ = entryCreateAdditionalData(nameSpace, name, accessControlProfileIds);
 
     currentName_ = name;
     entryRemainingBytes_ = entrySize;
     entryValue_.resize(0);
 
-    _hidl_cb(support::resultOK());
-    return Void();
+    return ndk::ScopedAStatus::ok();
 }
 
-Return<void> IdentityCredential::retrieveEntryValue(const hidl_vec<uint8_t>& encryptedContent,
-                                                    retrieveEntryValue_cb _hidl_cb) {
+ndk::ScopedAStatus IdentityCredential::retrieveEntryValue(const vector<int8_t>& encryptedContentS,
+                                                          vector<int8_t>* outContent) {
+    auto encryptedContent = byteStringToUnsigned(encryptedContentS);
+
     optional<vector<uint8_t>> content =
             support::decryptAes128Gcm(storageKey_, encryptedContent, entryAdditionalData_);
     if (!content) {
-        _hidl_cb(support::result(ResultCode::INVALID_DATA, "Error decrypting data"), {});
-        return Void();
+        return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                IIdentityCredentialStore::STATUS_INVALID_DATA, "Error decrypting data"));
     }
 
     size_t chunkSize = content.value().size();
@@ -624,23 +620,17 @@ Return<void> IdentityCredential::retrieveEntryValue(const hidl_vec<uint8_t>& enc
     if (chunkSize > entryRemainingBytes_) {
         LOG(ERROR) << "Retrieved chunk of size " << chunkSize
                    << " is bigger than remaining space of size " << entryRemainingBytes_;
-        _hidl_cb(support::result(ResultCode::INVALID_DATA,
-                                 "Retrieved chunk of size %zd is bigger than remaining space "
-                                 "of size %zd",
-                                 chunkSize, entryRemainingBytes_),
-                 {});
-        return Void();
+        return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                IIdentityCredentialStore::STATUS_INVALID_DATA,
+                "Retrieved chunk is bigger than remaining space"));
     }
 
     entryRemainingBytes_ -= chunkSize;
     if (entryRemainingBytes_ > 0) {
         if (chunkSize != IdentityCredentialStore::kGcmChunkSize) {
-            _hidl_cb(support::result(ResultCode::INVALID_DATA,
-                                     "Retrieved non-final chunk of size %zd but expected "
-                                     "kGcmChunkSize which is %zd",
-                                     chunkSize, IdentityCredentialStore::kGcmChunkSize),
-                     {});
-            return Void();
+            return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                    IIdentityCredentialStore::STATUS_INVALID_DATA,
+                    "Retrieved non-final chunk of size which isn't kGcmChunkSize"));
         }
     }
 
@@ -649,18 +639,22 @@ Return<void> IdentityCredential::retrieveEntryValue(const hidl_vec<uint8_t>& enc
     if (entryRemainingBytes_ == 0) {
         auto [entryValueItem, _, message] = cppbor::parse(entryValue_);
         if (entryValueItem == nullptr) {
-            _hidl_cb(support::result(ResultCode::INVALID_DATA, "Retrieved data invalid CBOR"), {});
-            return Void();
+            return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                    IIdentityCredentialStore::STATUS_INVALID_DATA,
+                    "Retrieved data which is invalid CBOR"));
         }
         currentNameSpaceDeviceNameSpacesMap_.add(currentName_, std::move(entryValueItem));
     }
 
-    _hidl_cb(support::resultOK(), content.value());
-    return Void();
+    *outContent = byteStringToSigned(content.value());
+    return ndk::ScopedAStatus::ok();
 }
 
-Return<void> IdentityCredential::finishRetrieval(const hidl_vec<uint8_t>& signingKeyBlob,
-                                                 finishRetrieval_cb _hidl_cb) {
+ndk::ScopedAStatus IdentityCredential::finishRetrieval(const vector<int8_t>& signingKeyBlobS,
+                                                       vector<int8_t>* outMac,
+                                                       vector<int8_t>* outDeviceNameSpaces) {
+    auto signingKeyBlob = byteStringToUnsigned(signingKeyBlobS);
+
     if (currentNameSpaceDeviceNameSpacesMap_.size() > 0) {
         deviceNameSpacesMap_.add(currentNameSpace_,
                                  std::move(currentNameSpaceDeviceNameSpacesMap_));
@@ -682,40 +676,42 @@ Return<void> IdentityCredential::finishRetrieval(const hidl_vec<uint8_t>& signin
         optional<vector<uint8_t>> signingKey =
                 support::decryptAes128Gcm(storageKey_, signingKeyBlob, docTypeAsBlob);
         if (!signingKey) {
-            _hidl_cb(support::result(ResultCode::INVALID_DATA, "Error decrypting signingKeyBlob"),
-                     {}, {});
-            return Void();
+            return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                    IIdentityCredentialStore::STATUS_INVALID_DATA,
+                    "Error decrypting signingKeyBlob"));
         }
 
         optional<vector<uint8_t>> sharedSecret =
                 support::ecdh(readerPublicKey_, signingKey.value());
         if (!sharedSecret) {
-            _hidl_cb(support::result(ResultCode::FAILED, "Error doing ECDH"), {}, {});
-            return Void();
+            return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                    IIdentityCredentialStore::STATUS_FAILED, "Error doing ECDH"));
         }
 
         vector<uint8_t> salt = {0x00};
         vector<uint8_t> info = {};
         optional<vector<uint8_t>> derivedKey = support::hkdf(sharedSecret.value(), salt, info, 32);
         if (!derivedKey) {
-            _hidl_cb(support::result(ResultCode::FAILED, "Error deriving key from shared secret"),
-                     {}, {});
-            return Void();
+            return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                    IIdentityCredentialStore::STATUS_FAILED,
+                    "Error deriving key from shared secret"));
         }
 
         mac = support::coseMac0(derivedKey.value(), {},        // payload
                                 encodedDeviceAuthentication);  // additionalData
         if (!mac) {
-            _hidl_cb(support::result(ResultCode::FAILED, "Error MACing data"), {}, {});
-            return Void();
+            return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                    IIdentityCredentialStore::STATUS_FAILED, "Error MACing data"));
         }
     }
 
-    _hidl_cb(support::resultOK(), mac.value_or(vector<uint8_t>({})), encodedDeviceNameSpaces);
-    return Void();
+    *outMac = byteStringToSigned(mac.value_or(vector<uint8_t>({})));
+    *outDeviceNameSpaces = byteStringToSigned(encodedDeviceNameSpaces);
+    return ndk::ScopedAStatus::ok();
 }
 
-Return<void> IdentityCredential::generateSigningKeyPair(generateSigningKeyPair_cb _hidl_cb) {
+ndk::ScopedAStatus IdentityCredential::generateSigningKeyPair(
+        vector<int8_t>* outSigningKeyBlob, Certificate* outSigningKeyCertificate) {
     string serialDecimal = "0";  // TODO: set serial to something unique
     string issuer = "Android Open Source Project";
     string subject = "Android IdentityCredential Reference Implementation";
@@ -724,50 +720,49 @@ Return<void> IdentityCredential::generateSigningKeyPair(generateSigningKeyPair_c
 
     optional<vector<uint8_t>> signingKeyPKCS8 = support::createEcKeyPair();
     if (!signingKeyPKCS8) {
-        _hidl_cb(support::result(ResultCode::FAILED, "Error creating signingKey"), {}, {});
-        return Void();
+        return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                IIdentityCredentialStore::STATUS_FAILED, "Error creating signingKey"));
     }
 
     optional<vector<uint8_t>> signingPublicKey =
             support::ecKeyPairGetPublicKey(signingKeyPKCS8.value());
     if (!signingPublicKey) {
-        _hidl_cb(support::result(ResultCode::FAILED, "Error getting public part of signingKey"), {},
-                 {});
-        return Void();
+        return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                IIdentityCredentialStore::STATUS_FAILED,
+                "Error getting public part of signingKey"));
     }
 
     optional<vector<uint8_t>> signingKey = support::ecKeyPairGetPrivateKey(signingKeyPKCS8.value());
     if (!signingKey) {
-        _hidl_cb(support::result(ResultCode::FAILED, "Error getting private part of signingKey"),
-                 {}, {});
-        return Void();
+        return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                IIdentityCredentialStore::STATUS_FAILED,
+                "Error getting private part of signingKey"));
     }
 
     optional<vector<uint8_t>> certificate = support::ecPublicKeyGenerateCertificate(
             signingPublicKey.value(), credentialPrivKey_, serialDecimal, issuer, subject,
             validityNotBefore, validityNotAfter);
     if (!certificate) {
-        _hidl_cb(support::result(ResultCode::FAILED, "Error creating signingKey"), {}, {});
-        return Void();
+        return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                IIdentityCredentialStore::STATUS_FAILED, "Error creating signingKey"));
     }
 
     optional<vector<uint8_t>> nonce = support::getRandom(12);
     if (!nonce) {
-        _hidl_cb(support::result(ResultCode::FAILED, "Error getting random"), {}, {});
-        return Void();
+        return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                IIdentityCredentialStore::STATUS_FAILED, "Error getting random"));
     }
     vector<uint8_t> docTypeAsBlob(docType_.begin(), docType_.end());
     optional<vector<uint8_t>> encryptedSigningKey = support::encryptAes128Gcm(
             storageKey_, nonce.value(), signingKey.value(), docTypeAsBlob);
     if (!encryptedSigningKey) {
-        _hidl_cb(support::result(ResultCode::FAILED, "Error encrypting signingKey"), {}, {});
-        return Void();
+        return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                IIdentityCredentialStore::STATUS_FAILED, "Error encrypting signingKey"));
     }
-    _hidl_cb(support::resultOK(), encryptedSigningKey.value(), certificate.value());
-    return Void();
+    *outSigningKeyBlob = byteStringToSigned(encryptedSigningKey.value());
+    *outSigningKeyCertificate = Certificate();
+    outSigningKeyCertificate->encodedCertificate = byteStringToSigned(certificate.value());
+    return ndk::ScopedAStatus::ok();
 }
 
-}  // namespace implementation
-}  // namespace identity
-}  // namespace hardware
-}  // namespace android
+}  // namespace aidl::android::hardware::identity

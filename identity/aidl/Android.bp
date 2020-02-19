@@ -1,0 +1,21 @@
+aidl_interface {
+    name: "android.hardware.identity",
+    vendor_available: true,
+    srcs: [
+        "android/hardware/identity/*.aidl",
+    ],
+    imports: [
+        "android.hardware.keymaster",
+    ],
+    stability: "vintf",
+    backend: {
+        java: {
+            platform_apis: true,
+        },
+        ndk: {
+            vndk: {
+                enabled: true,
+            },
+        },
+    },
+}

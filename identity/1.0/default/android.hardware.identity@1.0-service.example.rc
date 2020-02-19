@@ -1,3 +1,0 @@
-service vendor.identity-1-0 /vendor/bin/hw/android.hardware.identity@1.0-service.example
-    class hal
-    user nobody

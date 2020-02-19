@@ -1682,35 +1682,8 @@ optional<vector<uint8_t>> coseMac0(const vector<uint8_t>& key, const vector<uint
 }
 
 // ---------------------------------------------------------------------------
-// Platform abstraction.
-// ---------------------------------------------------------------------------
-
-// This is not a very random HBK but that's OK because this is the SW
-// implementation where it can't be kept secret.
-vector<uint8_t> hardwareBoundKey = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
-
-const vector<uint8_t>& getHardwareBoundKey() {
-    return hardwareBoundKey;
-}
-
-// ---------------------------------------------------------------------------
 // Utility functions specific to IdentityCredential.
 // ---------------------------------------------------------------------------
-
-Result okResult{ResultCode::OK, ""};
-
-const Result& resultOK() {
-    return okResult;
-}
-
-Result result(ResultCode code, const char* format, ...) {
-    va_list ap;
-    va_start(ap, format);
-    string str;
-    android::base::StringAppendV(&str, format, ap);
-    va_end(ap);
-    return Result{code, str};
-}
 
 vector<vector<uint8_t>> chunkVector(const vector<uint8_t>& content, size_t maxChunkSize) {
     vector<vector<uint8_t>> ret;
@@ -1738,75 +1711,11 @@ vector<vector<uint8_t>> chunkVector(const vector<uint8_t>& content, size_t maxCh
     return ret;
 }
 
-vector<uint8_t> secureAccessControlProfileEncodeCbor(const SecureAccessControlProfile& profile) {
-    cppbor::Map map;
-    map.add("id", profile.id);
-
-    if (profile.readerCertificate.size() > 0) {
-        map.add("readerCertificate", cppbor::Bstr(profile.readerCertificate));
-    }
-
-    if (profile.userAuthenticationRequired) {
-        map.add("userAuthenticationRequired", profile.userAuthenticationRequired);
-        map.add("timeoutMillis", profile.timeoutMillis);
-        map.add("secureUserId", profile.secureUserId);
-    }
-
-    return map.encode();
-}
-
-optional<vector<uint8_t>> secureAccessControlProfileCalcMac(
-        const SecureAccessControlProfile& profile, const vector<uint8_t>& storageKey) {
-    vector<uint8_t> cborData = secureAccessControlProfileEncodeCbor(profile);
-
-    optional<vector<uint8_t>> nonce = getRandom(12);
-    if (!nonce) {
-        return {};
-    }
-    optional<vector<uint8_t>> macO = encryptAes128Gcm(storageKey, nonce.value(), {}, cborData);
-    if (!macO) {
-        return {};
-    }
-    return macO.value();
-}
-
-bool secureAccessControlProfileCheckMac(const SecureAccessControlProfile& profile,
-                                        const vector<uint8_t>& storageKey) {
-    vector<uint8_t> cborData = secureAccessControlProfileEncodeCbor(profile);
-
-    if (profile.mac.size() < kAesGcmIvSize) {
-        return false;
-    }
-    vector<uint8_t> nonce =
-            vector<uint8_t>(profile.mac.begin(), profile.mac.begin() + kAesGcmIvSize);
-    optional<vector<uint8_t>> mac = encryptAes128Gcm(storageKey, nonce, {}, cborData);
-    if (!mac) {
-        return false;
-    }
-    if (mac.value() != vector<uint8_t>(profile.mac)) {
-        return false;
-    }
-    return true;
-}
 
 vector<uint8_t> testHardwareBoundKey = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 const vector<uint8_t>& getTestHardwareBoundKey() {
     return testHardwareBoundKey;
-}
-
-vector<uint8_t> entryCreateAdditionalData(const string& nameSpace, const string& name,
-                                          const vector<uint16_t> accessControlProfileIds) {
-    cppbor::Map map;
-    map.add("Namespace", nameSpace);
-    map.add("Name", name);
-
-    cppbor::Array acpIds;
-    for (auto id : accessControlProfileIds) {
-        acpIds.add(id);
-    }
-    map.add("AccessControlProfileIds", std::move(acpIds));
-    return map.encode();
 }
 
 }  // namespace support
