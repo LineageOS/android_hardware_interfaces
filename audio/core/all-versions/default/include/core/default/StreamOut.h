@@ -126,6 +126,8 @@ struct StreamOut : public IStreamOut {
     Return<Result> setDualMonoMode(DualMonoMode mode) override;
     Return<void> getAudioDescriptionMixLevel(getAudioDescriptionMixLevel_cb _hidl_cb) override;
     Return<Result> setAudioDescriptionMixLevel(float leveldB) override;
+    Return<void> getPlaybackRateParameters(getPlaybackRateParameters_cb _hidl_cb) override;
+    Return<Result> setPlaybackRateParameters(const PlaybackRate& playbackRate) override;
 #endif
 
     static Result getPresentationPositionImpl(audio_stream_out_t* stream, uint64_t* frames,

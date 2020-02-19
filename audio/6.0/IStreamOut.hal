@@ -333,4 +333,33 @@ interface IStreamOut extends IStream {
      * @return retval operation completion status.
      */
     setAudioDescriptionMixLevel(float leveldB) generates (Result retval);
+
+    /**
+     * Retrieves current playback rate parameters.
+     *
+     * Optional method
+     *
+     * @return retval operation completion status.
+     * @return playbackRate current playback parameters
+     */
+    getPlaybackRateParameters()
+            generates (Result retval, PlaybackRate playbackRate);
+
+    /**
+     * Sets the playback rate parameters that control playback behavior.
+     * This is normally used when playing encoded content and decoding
+     * is performed in hardware. Otherwise, the framework can apply
+     * necessary transformations.
+     *
+     * Optional method
+     *
+     * If the HAL supports setting the playback rate, it is recommended
+     * to support speed and pitch values at least in the range
+     * from 0.5f to 2.0f, inclusive (see the definition of PlaybackRate struct).
+     *
+     * @param playbackRate playback parameters
+     * @return retval operation completion status.
+     */
+    setPlaybackRateParameters(PlaybackRate playbackRate)
+            generates (Result retval);
 };

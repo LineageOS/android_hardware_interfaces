@@ -217,3 +217,37 @@ TEST_P(AudioDescriptionMixLevelHidlTest, AudioDescriptionMixLevelTest) {
 INSTANTIATE_TEST_CASE_P(AudioDescriptionMixLevelHidl, AudioDescriptionMixLevelHidlTest,
                         ::testing::ValuesIn(getOutputDeviceConfigParameters()),
                         &DeviceConfigParameterToString);
+
+using PlaybackRateParametersHidlTest = AccessorHidlTest<PlaybackRate, OutputStreamTest>;
+TEST_P(PlaybackRateParametersHidlTest, PlaybackRateParametersTest) {
+    doc::test("Check that playback rate parameters can be set and retrieved");
+    testAccessors<OPTIONAL>(
+            &OutputStreamTest::getStream, "playback rate parameters",
+            Initial{PlaybackRate{1.0f, 1.0f, TimestretchMode::DEFAULT,
+                                 TimestretchFallbackMode::FAIL}},
+            {// Speed and pitch values in the range from 0.5f to 2.0f must be supported
+             // (see the definition of IStreamOut::setPlaybackRateParameters).
+             PlaybackRate{1.0f, 1.0f, TimestretchMode::DEFAULT, TimestretchFallbackMode::MUTE},
+             PlaybackRate{2.0f, 2.0f, TimestretchMode::DEFAULT, TimestretchFallbackMode::MUTE},
+             PlaybackRate{0.5f, 0.5f, TimestretchMode::DEFAULT, TimestretchFallbackMode::MUTE},
+             // Gross speed / pitch values must not be rejected if the fallback mode is "mute"
+             PlaybackRate{1000.0f, 1000.0f, TimestretchMode::DEFAULT,
+                          TimestretchFallbackMode::MUTE},
+             // Default speed / pitch values must not be rejected in "fail" fallback mode
+             PlaybackRate{1.0f, 1.0f, TimestretchMode::DEFAULT, TimestretchFallbackMode::FAIL},
+             // Same for "voice" mode
+             PlaybackRate{1.0f, 1.0f, TimestretchMode::VOICE, TimestretchFallbackMode::MUTE},
+             PlaybackRate{2.0f, 2.0f, TimestretchMode::VOICE, TimestretchFallbackMode::MUTE},
+             PlaybackRate{0.5f, 0.5f, TimestretchMode::VOICE, TimestretchFallbackMode::MUTE},
+             PlaybackRate{1000.0f, 1000.0f, TimestretchMode::VOICE, TimestretchFallbackMode::MUTE},
+             PlaybackRate{1.0f, 1.0f, TimestretchMode::VOICE, TimestretchFallbackMode::FAIL}},
+            &IStreamOut::setPlaybackRateParameters, &IStreamOut::getPlaybackRateParameters,
+            {PlaybackRate{1000.0f, 1000.0f, TimestretchMode::DEFAULT,
+                          TimestretchFallbackMode::FAIL},
+             PlaybackRate{1000.0f, 1000.0f, TimestretchMode::VOICE,
+                          TimestretchFallbackMode::FAIL}});
+}
+
+INSTANTIATE_TEST_CASE_P(PlaybackRateParametersHidl, PlaybackRateParametersHidlTest,
+                        ::testing::ValuesIn(getOutputDeviceConfigParameters()),
+                        &DeviceConfigParameterToString);
