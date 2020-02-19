@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-package android.hardware.identity@1.0;
+package android.hardware.identity;
 
-import IWritableIdentityCredential;
-import IIdentityCredential;
+import android.hardware.identity.IIdentityCredential;
+import android.hardware.identity.IWritableIdentityCredential;
+import android.hardware.identity.HardwareInformation;
+import android.hardware.identity.CipherSuite;
 
 /**
  * IIdentityCredentialStore provides an interface to a secure store for user identity documents.
@@ -98,37 +100,90 @@ import IIdentityCredential;
  * define appropriate encodings, those are used.  For example, X.509 certificates.  Where new
  * encodings are needed, CBOR is used.  CBOR maps are described in CDDL notation
  * (https://tools.ietf.org/html/draft-ietf-cbor-cddl-06).
+ *
+ * All binder calls in the HAL may return a ServiceSpecificException with statuses from the
+ * STATUS_* integers defined in this interface. Each method states which status can be returned
+ * and under which circumstances.
  */
+@VintfStability
 interface IIdentityCredentialStore {
+    /**
+     * Success.
+     */
+    const int STATUS_OK = 0;
+
+    /**
+     * The operation failed. This is used as a generic catch-all for errors that don't belong
+     * in other categories, including memory/resource allocation failures and I/O errors.
+     */
+    const int STATUS_FAILED = 1;
+
+    /**
+     * Unsupported cipher suite.
+     */
+    const int STATUS_CIPHER_SUITE_NOT_SUPPORTED = 2;
+
+    /**
+     * The passed data was invalid. This is a generic catch all for errors that don't belong
+     * in other categories related to parameter validation.
+     */
+    const int STATUS_INVALID_DATA = 3;
+
+    /**
+     * The authToken parameter passed to IIdentityCredential.startRetrieval() is not valid.
+     */
+    const int STATUS_INVALID_AUTH_TOKEN = 4;
+
+    /**
+     * The itemsRequest parameter passed to IIdentityCredential.startRetrieval() does not meet
+     * the requirements described in the documentation for that method.
+     */
+    const int STATUS_INVALID_ITEMS_REQUEST_MESSAGE = 5;
+
+    /**
+     * The readerSignature parameter in IIdentityCredential.startRetrieval() is invalid,
+     * doesn't contain an embedded certificate chain, or the signature failed to
+     * validate.
+     */
+    const int STATUS_READER_SIGNATURE_CHECK_FAILED = 6;
+
+    /**
+     * The sessionTranscript passed to startRetrieval() did not contain the ephmeral public
+     * key returned by createEphemeralPublicKey().
+     */
+    const int STATUS_EPHEMERAL_PUBLIC_KEY_NOT_FOUND = 7;
+
+    /**
+     * An access condition related to user authentication was not satisfied.
+     */
+    const int STATUS_USER_AUTHENTICATION_FAILED = 8;
+
+    /**
+     * An access condition related to reader authentication was not satisfied.
+     */
+    const int STATUS_READER_AUTHENTICATION_FAILED = 9;
+
+    /**
+     * The request data element has no access control profiles associated so it cannot be accessed.
+     */
+    const int STATUS_NO_ACCESS_CONTROL_PROFILES = 10;
+
+    /**
+     * The requested data element is not in the provided non-empty itemsRequest message.
+     */
+    const int STATUS_NOT_IN_REQUEST_MESSAGE = 11;
+
+    /**
+     * The passed-in sessionTranscript doesn't match the previously passed-in sessionTranscript.
+     */
+    const int STATUS_SESSION_TRANSCRIPT_MISMATCH = 12;
 
     /**
      * Returns information about hardware.
      *
-     * The isDirectAccess output parameter indicates whether this credential store
-     * implementation is for direct access. Credentials provisioned in credential
-     * stores with this set to true, should use reader authentication on all data elements.
-     *
-     * @return result is OK on success, FAILED if an error occurred.
-     *
-     * @return credentialStoreName the name of the credential store implementation.
-     *
-     * @return credentialStoreAuthorName the name of the credential store author.
-     *
-     * @return dataChunkSize the maximum size of data chunks.
-     *
-     * @return isDirectAccess whether the provisioned credential is available through
-     *     direct access.
-     *
-     * @return supportedDocTypes if empty, then any document type is supported, otherwise
-     *     only the document types returned are supported.
+     * @return a HardwareInformation with information about the hardware.
      */
-    getHardwareInformation()
-        generates(Result result,
-                  string credentialStoreName,
-                  string credentialStoreAuthorName,
-                  uint32_t dataChunkSize,
-                  bool isDirectAccess,
-                  vec<string> supportedDocTypes);
+    HardwareInformation getHardwareInformation();
 
     /**
      * createCredential creates a new Credential.  When a Credential is created, two cryptographic
@@ -147,16 +202,14 @@ interface IIdentityCredentialStore {
      *     all-zeros hardware-bound key (HBK) and must set the test bit in the
      *     personalizationReceipt (see finishAddingEntries(), in IWritableIdentityCredential).
      *
-     * @return result is OK on success, FAILED if an error occurred.
-     *
-     * @return writableCredential is an IWritableIdentityCredential HIDL interface that provides
-     *     operations to provision a credential.
+     * @return an IWritableIdentityCredential interface that provides operations to
+     *     provision a credential.
      */
-    createCredential(string docType, bool testCredential)
-        generates(Result result, IWritableIdentityCredential writableCredential);
+    IWritableIdentityCredential createCredential(in @utf8InCpp String docType,
+                                                 in boolean testCredential);
 
     /**
-     * getCredential retrieves an IIdentityCredential HIDL interface which allows use of a stored
+     * getCredential retrieves an IIdentityCredential interface which allows use of a stored
      * Credential.
      *
      * The cipher suite used to communicate with the remote verifier must also be specified. Currently
@@ -170,16 +223,17 @@ interface IIdentityCredentialStore {
      *
      * Support for other cipher suites may be added in a future version of this HAL.
      *
+     * This method fails with STATUS_INVALID_DATA if the passed in credentialData cannot be
+     * decoded or decrypted.
+     *
+     * @param cipherSuite is the cipher suite to use.
+     *
      * @param credentialData is a CBOR-encoded structure containing metadata about the credential
      *     and an encrypted byte array that contains data used to secure the credential.  See the
-     *     return argument of the same name in finishAddingEntries(), in IWritableIdentityCredential.
+     *     return argument of the same name in finishAddingEntries(), in
+     *     IWritableIdentityCredential.
      *
-     * @return result is OK on success or INVALID_DATA if the passed in credentialData
-     *     cannot be decoded or decrypted.
-     *
-     * @return credential is an IIdentityCredential HIDL interface that provides operations on the
-     *     Credential.
+     * @return an IIdentityCredential HIDL interface that provides operations on the Credential.
      */
-    getCredential(vec<uint8_t> credentialData)
-        generates (Result result, IIdentityCredential credential);
-};
+    IIdentityCredential getCredential(in CipherSuite cipherSuite, in byte[] credentialData);
+}

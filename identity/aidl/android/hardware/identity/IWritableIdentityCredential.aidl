@@ -14,12 +14,16 @@
  * limitations under the License.
  */
 
-package android.hardware.identity@1.0;
+package android.hardware.identity;
+
+import android.hardware.identity.Certificate;
+import android.hardware.identity.SecureAccessControlProfile;
 
 /**
  * IWritableIdentityCredential is used to personalize a new identity credential.  Credentials cannot
  * be updated or modified after creation; any changes require deletion and re-creation.
  */
+@VintfStability
 interface IWritableIdentityCredential {
     /**
      * Gets the certificate chain for credentialKey which can be used to prove the hardware
@@ -69,31 +73,23 @@ interface IWritableIdentityCredential {
      *
      * @param attestationChallenge a challenge set by the issuer to ensure freshness.
      *
-     * @return result is OK on success, FAILED if an error occurred.
-     *
-     * @return certificateChain is the X.509 certificate chain for the credentialKey
+     * @return the X.509 certificate chain for the credentialKey
      */
-    getAttestationCertificate(vec<uint8_t> attestationApplicationId,
-                              vec<uint8_t> attestationChallenge)
-        generates(Result result, vec<vec<uint8_t>> certificateChain);
+    Certificate[] getAttestationCertificate(in byte[] attestationApplicationId, in byte[] attestationChallenge);
 
     /**
      * Start the personalization process.
      *
      * startPersonalization must not be called more than once.
      *
-     * @param accessControlProfileCount specifies the number of access control profiles that will be
-     *     provisioned with addAccessControlProfile().
+     * @param accessControlProfileCount specifies the number of access control profiles that will
+     *     be provisioned with addAccessControlProfile().
      *
      * @param entryCounts specifies the number of data entries that will be provisioned with
      *     beginAddEntry() and addEntry(). Each item in the array specifies how many entries
      *     will be added for each name space.
-     *
-     * @return result is OK on success, FAILED if an error occurred.
-     *
      */
-    startPersonalization(uint16_t accessControlProfileCount, vec<uint16_t> entryCounts)
-        generates(Result result);
+    void startPersonalization(in int accessControlProfileCount, in int[] entryCounts);
 
     /**
      * Add an access control profile, which defines the requirements or retrieval of one or more
@@ -103,15 +99,15 @@ interface IWritableIdentityCredential {
      *
      * This method must be called exactly as many times as specified in the startPersonalization()
      * accessControlProfileCount parameter. If this is requirement is not met, the method fails
-     * with INVALID_DATA.
+     * with STATUS_INVALID_DATA.
      *
      * @param id a numeric identifier that must be unique within the context of a Credential and may
      *     be used to reference the profile. If this is not satisfied the call fails with
-     *     INVALID_DATA.
+     *     STATUS_INVALID_DATA.
      *
-     * @param readerCertificate if non-empty, specifies a X.509 certificate (or chain of certificates)
-     *     that must be used to authenticate requests (see the readerSignature parameter in
-     *     IIdentityCredential.startRetrieval).
+     * @param readerCertificate if non-empty, specifies a X.509 certificate (or chain of
+     *     certificates) that must be used to authenticate requests (see the readerSignature
+     *     parameter in IIdentityCredential.startRetrieval).
      *
      * @param userAuthenticationRequired if true, specifies that the user is required to
      *     authenticate to allow requests.  Required authentication freshness is specified by
@@ -121,22 +117,18 @@ interface IWritableIdentityCredential {
      *     authentication (see userAuthenticationRequired above) is valid, if
      *     userAuthenticationRequired is true. If the timout is zero then authentication is
      *     required for each reader session. If userAuthenticationRequired is false, the timeout
-     *     must be zero. If this requirement is not met the call fails with INVALID_DATA.
+     *     must be zero. If this requirement is not met the call fails with STATUS_INVALID_DATA.
      *
      * @param secureUserId must be non-zero if userAuthenticationRequired is true. It is not
      *     related to any Android user ID or UID, but is created in the Gatekeeper application
      *     in the secure environment. If this requirement is not met the call fails with
-     *     INVALID_DATA.
+     *     STATUS_INVALID_DATA.
      *
-     * @return result is OK on success, INVALID_DATA or FAILED if an error occurred.
-     *
-     * @return secureAccessControlProfile is a structure with the passed-in data and MAC created
-     *     with storageKey for authenticating the data at a later point in time.
+     * @return a structure with the passed-in data and MAC created with storageKey for authenticating
+     *     the data at a later point in time.
      */
-    addAccessControlProfile(uint16_t id, vec<uint8_t> readerCertificate,
-                            bool userAuthenticationRequired, uint64_t timeoutMillis,
-                            uint64_t secureUserId)
-        generates(Result result, SecureAccessControlProfile secureAccessControlProfile);
+    SecureAccessControlProfile addAccessControlProfile(in int id, in Certificate readerCertificate,
+        in boolean userAuthenticationRequired, in long timeoutMillis, in long secureUserId);
 
     /**
      * Begins the process of adding an entry to the credential.  All access control profiles must be
@@ -145,7 +137,7 @@ interface IWritableIdentityCredential {
      *
      * This method must be called exactly as many times as the sum of the items in the entryCounts
      * parameter specified in the startPersonalization(), and must be followed by one or more calls
-     * to addEntryValue(). If this requirement is not met the method fails with INVALID_DATA.
+     * to addEntryValue(). If this requirement is not met the method fails with STATUS_INVALID_DATA.
      *
      * @param accessControlProfileIds specifies the set of access control profiles that can
      *     authorize access to the provisioned element.
@@ -155,13 +147,10 @@ interface IWritableIdentityCredential {
      * @param name is the name of the element.
      *
      * @param entrySize is the size of the entry value. If this requirement
-     *     is not met this method fails with INVALID_DATA.
-     *
-     * @return result is OK on success, INVALID_DATA or FAILED if an error occurred.
+     *     is not met this method fails with STATUS_INVALID_DATA.
      */
-    beginAddEntry(vec<uint16_t> accessControlProfileIds, string nameSpace,
-                  string name, uint32_t entrySize)
-        generates(Result result);
+    void beginAddEntry(in int[] accessControlProfileIds, in @utf8InCpp String nameSpace,
+        in @utf8InCpp String name, in int entrySize);
 
     /**
      * Continues the process of adding an entry, providing a value or part of a value.
@@ -171,18 +160,13 @@ interface IWritableIdentityCredential {
      * (see IIdentityCredentialStore.getHardwareInformation()), the caller must provide the
      * value in chunks.  All chunks must be exactly gcmChunkSize except the last and the sum of all
      * chunk sizes must equal the value of the beginAddEntry() entrySize argument. If this
-     * requirement is not met the call fails with INVALID_DATA.
+     * requirement is not met the call fails with STATUS_INVALID_DATA.
      *
      * @param content is the entry value, encoded as CBOR. In the case the content exceeds gcmChunkSize,
      *     this may be partial content up to gcmChunkSize bytes long.
      *
-     * @return result is OK on success, INVALID_DATA or FAILED if an error occurred.
-     *
-     * @return encryptedContent contains the encrypted and MACed content.  For directly-available
-     *     credentials the contents are implementation-defined but must not exceed 32 bytes in
-     *     length.
-     *
-     *     For other credentials, encryptedContent contains:
+     * @return the encrypted and MACed content.  For directly-available credentials the contents are
+     *     implementation-defined. For other credentials, the result contains
      *
      *         AES-GCM-ENC(storageKey, R, Data, AdditionalData)
      *
@@ -196,18 +180,15 @@ interface IWritableIdentityCredential {
      *             "AccessControlProfileIds" : [ + uint ],
      *         }
      */
-    addEntryValue(vec<uint8_t> content)
-        generates(Result result, vec<uint8_t> encryptedContent);
+    byte[] addEntryValue(in byte[] content);
 
     /**
-     * Finishes adding entries and returns a signature that an issuing authority may use to validate
-     * that all data was provisioned correctly.
+     * Finishes adding entries and returns a signature that an issuing authority may use to
+     * validate that all data was provisioned correctly.
      *
      * After this method is called, the IWritableIdentityCredential is no longer usable.
      *
-     * @return result is OK on success or FAILED if an error occurred.
-     *
-     * @return credentialData is a CBOR-encoded structure (in CDDL notation):
+     * @param out credentialData is a CBOR-encoded structure (in CDDL notation):
      *
      *         CredentialData = [
      *              tstr,   ; docType, an optional name that identifies the type of credential
@@ -230,10 +211,10 @@ interface IWritableIdentityCredential {
      *              bstr    ; credentialPrivKey, the private key for credentialKey
      *         ]
      *
-     * @return proofOfProvisioningSignature proves to the IA that the credential was imported into the
-     *     secure hardware without alteration or error.  When the final addEntry() call is made
-     *     (when the number of provisioned entries equals the sum of the items in
-     *     startPersonalization() entryCounts parameter), it a COSE_Sign1 structure
+     * @param out proofOfProvisioningSignature proves to the IA that the credential was imported
+     *     into the secure hardware without alteration or error.  When the final addEntry() call is
+     *     made (when the number of provisioned entries equals the sum of the items in
+     *     startPersonalization() entryCounts parameter), a COSE_Sign1 structure
      *     signed by CredentialKey with payload set to the ProofOfProvisioning CBOR below:
      *
      *          ProofOfProvisioning = [
@@ -266,7 +247,6 @@ interface IWritableIdentityCredential {
      *              "accessControlProfiles" : [ * uint ],
      *          }
      */
-    finishAddingEntries()
-        generates(Result result, vec<uint8_t> credentialData,
-                  vec<uint8_t> proofOfProvisioningSignature);
-};
+    void finishAddingEntries(out byte[] credentialData,
+        out byte[] proofOfProvisioningSignature);
+}

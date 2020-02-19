@@ -18,11 +18,10 @@
 #define IDENTITY_SUPPORT_INCLUDE_IDENTITY_CREDENTIAL_UTILS_H_
 
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <tuple>
 #include <vector>
-
-#include <android/hardware/identity/1.0/types.h>
 
 namespace android {
 namespace hardware {
@@ -33,10 +32,6 @@ using ::std::optional;
 using ::std::string;
 using ::std::tuple;
 using ::std::vector;
-
-using ::android::hardware::identity::V1_0::Result;
-using ::android::hardware::identity::V1_0::ResultCode;
-using ::android::hardware::identity::V1_0::SecureAccessControlProfile;
 
 // ---------------------------------------------------------------------------
 // Miscellaneous utilities.
@@ -258,42 +253,17 @@ optional<vector<uint8_t>> coseMac0(const vector<uint8_t>& key, const vector<uint
                                    const vector<uint8_t>& detachedContent);
 
 // ---------------------------------------------------------------------------
-// Platform abstraction.
-// ---------------------------------------------------------------------------
-
-// Returns the hardware-bound AES-128 key.
-const vector<uint8_t>& getHardwareBoundKey();
-
-// ---------------------------------------------------------------------------
 // Utility functions specific to IdentityCredential.
 // ---------------------------------------------------------------------------
 
-// Returns a reference to a Result with code OK and empty message.
-const Result& resultOK();
-
-// Returns a new Result with the given code and message.
-Result result(ResultCode code, const char* format, ...) __attribute__((format(printf, 2, 3)));
+// Returns the testing AES-128 key where all bits are set to 0.
+const vector<uint8_t>& getTestHardwareBoundKey();
 
 // Splits the given bytestring into chunks. If the given vector is smaller or equal to
 // |maxChunkSize| a vector with |content| as the only element is returned. Otherwise
 // |content| is split into N vectors each of size |maxChunkSize| except the final element
 // may be smaller than |maxChunkSize|.
 vector<vector<uint8_t>> chunkVector(const vector<uint8_t>& content, size_t maxChunkSize);
-
-// Calculates the MAC for |profile| using |storageKey|.
-optional<vector<uint8_t>> secureAccessControlProfileCalcMac(
-        const SecureAccessControlProfile& profile, const vector<uint8_t>& storageKey);
-
-// Checks authenticity of the MAC in |profile| using |storageKey|.
-bool secureAccessControlProfileCheckMac(const SecureAccessControlProfile& profile,
-                                        const vector<uint8_t>& storageKey);
-
-// Returns the testing AES-128 key where all bits are set to 0.
-const vector<uint8_t>& getTestHardwareBoundKey();
-
-// Creates the AdditionalData CBOR used in the addEntryValue() HIDL method.
-vector<uint8_t> entryCreateAdditionalData(const string& nameSpace, const string& name,
-                                          const vector<uint16_t> accessControlProfileIds);
 
 }  // namespace support
 }  // namespace identity
