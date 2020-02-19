@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-cc_test_library {
-    name: "VtsHalSensorsV2_XTargetTest",
+cc_defaults {
+    name: "VtsHalSensorsV2_XTargetTest-defaults",
     cflags: ["-DLOG_TAG=\"sensors_hidl_hal_test\""],
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: [
@@ -41,4 +41,15 @@ cc_test_library {
         "libfmq",
         "VtsHalSensorsTargetTestUtils",
     ],
+}
+
+cc_test_library {
+    name: "VtsHalSensorsV2_0TargetTest-lib",
+    defaults: ["VtsHalSensorsV2_XTargetTest-defaults"],
+}
+
+cc_test_library {
+    name: "VtsHalSensorsV2_1TargetTest-lib",
+    cflags: ["-DSENSORS_HAL_2_1"],
+    defaults: ["VtsHalSensorsV2_XTargetTest-defaults"],
 }

@@ -18,7 +18,6 @@ cc_test {
     name: "VtsHalSensorsV2_1TargetTest",
     cflags: [
         "-DLOG_TAG=\"sensors_hidl_hal_test\"",
-        "-DSENSORS_HAL_2_1",
     ],
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: [
@@ -39,7 +38,7 @@ cc_test {
         "android.hardware.sensors@2.1",
         "libfmq",
         "VtsHalSensorsTargetTestUtils",
-        "VtsHalSensorsV2_XTargetTest",
+        "VtsHalSensorsV2_1TargetTest-lib",
     ],
     test_suites: [
         "general-tests",
