@@ -81,7 +81,7 @@ ICanController::Result CanBusSlcan::preUp() {
     mFd = base::unique_fd(open(mUartName.c_str(), O_RDWR | O_NONBLOCK | O_NOCTTY));
     if (!mFd.ok()) {
         LOG(ERROR) << "SLCAN Failed to open " << mUartName << ": " << strerror(errno);
-        return ICanController::Result::BAD_ADDRESS;
+        return ICanController::Result::BAD_INTERFACE_ID;
     }
 
     // If the device is already up, update the iface name in our CanBusSlcan object

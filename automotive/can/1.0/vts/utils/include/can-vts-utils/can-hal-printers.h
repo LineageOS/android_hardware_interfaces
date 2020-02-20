@@ -35,8 +35,7 @@ namespace android::hardware::automotive::can::V1_0 {
 
 DEFINE_CAN_HAL_PRINTER(CanMessage, toString)
 DEFINE_CAN_HAL_PRINTER(ErrorEvent, toString)
-DEFINE_CAN_HAL_PRINTER_SIMPLE(
-        ICanController::BusConfiguration::InterfaceIdentifier::hidl_discriminator, int)
+DEFINE_CAN_HAL_PRINTER(ICanController::BusConfig::InterfaceId, toString);
 DEFINE_CAN_HAL_PRINTER(ICanController::InterfaceType, toString)
 DEFINE_CAN_HAL_PRINTER(ICanController::Result, toString)
 DEFINE_CAN_HAL_PRINTER(Result, toString)

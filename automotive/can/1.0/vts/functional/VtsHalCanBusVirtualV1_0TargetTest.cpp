@@ -81,7 +81,7 @@ struct CanMessageListener : public can::V1_0::ICanMessageListener {
 struct Bus {
     DISALLOW_COPY_AND_ASSIGN(Bus);
 
-    Bus(sp<ICanController> controller, const ICanController::BusConfiguration& config)
+    Bus(sp<ICanController> controller, const ICanController::BusConfig& config)
         : mIfname(config.name), mController(controller) {
         const auto result = controller->upInterface(config);
         EXPECT_EQ(ICanController::Result::OK, result);
@@ -122,6 +122,7 @@ struct Bus {
 
     void send(const CanMessage& msg) {
         EXPECT_NE(mBus, nullptr);
+        if (!mBus) return;
         const auto result = mBus->send(msg);
         EXPECT_EQ(Result::OK, result);
     }
@@ -196,10 +197,9 @@ Bus CanBusVirtualHalTest::makeBus() {
     const auto idx = mLastIface++;
     EXPECT_LT(idx, mBusNames.size());
 
-    ICanController::BusConfiguration config = {};
+    ICanController::BusConfig config = {};
     config.name = mBusNames[idx];
-    config.iftype = InterfaceType::VIRTUAL;
-    config.interfaceId.address("vcan50");
+    config.interfaceId.virtualif({"vcan50"});
 
     return Bus(mCanController, config);
 }

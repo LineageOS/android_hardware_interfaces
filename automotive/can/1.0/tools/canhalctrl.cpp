@@ -71,15 +71,31 @@ static int up(const std::string& busName, ICanController::InterfaceType type,
         if (!isSupported(ctrl, type)) continue;
         anySupported = true;
 
-        ICanController::BusConfiguration config = {};
+        ICanController::BusConfig config = {};
         config.name = busName;
-        config.iftype = type;
         config.bitrate = bitrate;
 
-        if (type == ICanController::InterfaceType::INDEXED) {
-            config.interfaceId.index(std::stol(interface));
+        // TODO(b/146214370): move interfaceId constructors to a library
+        using IfCfg = ICanController::BusConfig::InterfaceId;
+        if (type == ICanController::InterfaceType::VIRTUAL) {
+            config.interfaceId.virtualif({interface});
+        } else if (type == ICanController::InterfaceType::SOCKETCAN) {
+            IfCfg::Socketcan socketcan = {};
+            socketcan.ifname(interface);
+            config.interfaceId.socketcan(socketcan);
+        } else if (type == ICanController::InterfaceType::SLCAN) {
+            IfCfg::Slcan slcan = {};
+            slcan.ttyname(interface);
+            config.interfaceId.slcan(slcan);
+        } else if (type == ICanController::InterfaceType::INDEXED) {
+            auto idx = std::stol(interface);
+            if (idx < 0 || idx > UINT8_MAX) {
+                std::cerr << "Interface index out of range: " << idx;
+                return -1;
+            }
+            config.interfaceId.indexed({uint8_t(idx)});
         } else {
-            config.interfaceId.address(interface);
+            CHECK(false) << "Unexpected interface type: " << toString(type);
         }
 
         const auto upresult = ctrl->upInterface(config);
