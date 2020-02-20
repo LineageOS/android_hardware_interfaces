@@ -1413,6 +1413,33 @@ enum VehicleProperty : int32_t {
         | VehiclePropertyType:INT32_VEC
         | VehicleArea:GLOBAL),
 
+    /**
+     * Property to feed H/W rotary events to android
+     *
+     * int32Values[0] : RotaryInputType identifying which rotary knob rotated
+     * int32Values[1] : number of detents (clicks), positive for clockwise,
+     *                  negative for counterclockwise
+     * int32Values[2] : target display defined in VehicleDisplay. Events not
+     *                  tied to specific display must be sent to
+     *                  VehicleDisplay#MAIN.
+     * int32values[3 .. 3 + abs(number of detents) - 2]:
+     *                  nanosecond deltas between pairs of consecutive detents,
+     *                  if the number of detents is > 1 or < -1
+     *
+     * VehiclePropValue.timestamp: when the rotation occurred. If the number of
+     *                             detents is > 1 or < -1, this is when the
+     *                             first detent of rotation occurred.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @data_enum RotaryInputType
+     * @access VehiclePropertyAccess:READ
+     */
+    HW_ROTARY_INPUT = (
+        0x0A20
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:INT32_VEC
+        | VehicleArea:GLOBAL),
+
     /***************************************************************************
      * Most Car Cabin properties have both a POSition and MOVE parameter.  These
      * are used to control the various movements for seats, doors, and windows
@@ -4651,3 +4678,18 @@ struct UserIdentificationSetAssociation {
 
     UserIdentificationAssociationSetValue value;
 };
+
+/**
+ * A rotary control which can rotate without limits. These controls use HW_ROTARY_INPUT to report
+ * relative clockwise or counterclockwise motion. They have no absolute position.
+ */
+enum RotaryInputType : int32_t {
+    /**
+      * Main rotary control, typically in the center console, used to navigate the user interface.
+      */
+    ROTARY_INPUT_TYPE_SYSTEM_NAVIGATION = 0,
+
+    /** Volume control for adjusting audio volume. */
+    ROTARY_INPUT_TYPE_AUDIO_VOLUME = 1,
+};
+

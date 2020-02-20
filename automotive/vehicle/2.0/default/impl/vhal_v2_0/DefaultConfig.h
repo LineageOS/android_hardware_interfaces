@@ -457,6 +457,14 @@ const ConfigDeclaration kVehicleProperties[]{
                  },
          .initialValue = {.int32Values = {0, 0, 0}}},
 
+        {.config =
+                 {
+                         .prop = toInt(VehicleProperty::HW_ROTARY_INPUT),
+                         .access = VehiclePropertyAccess::READ,
+                         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                 },
+         .initialValue = {.int32Values = {0, 0, 0}}},
+
         {.config = {.prop = toInt(VehicleProperty::HVAC_POWER_ON),
                     .access = VehiclePropertyAccess::READ_WRITE,
                     .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
