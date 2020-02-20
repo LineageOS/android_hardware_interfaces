@@ -439,7 +439,7 @@ class WifiNanIfaceHidlTest : public ::testing::TestWithParam<std::string> {
     // synchronization objects
     std::mutex mtx_;
     std::condition_variable cv_;
-    int count_;
+    int count_ = 0;
 
    protected:
     android::sp<::android::hardware::wifi::V1_2::IWifiNanIface> iwifiNanIface;
