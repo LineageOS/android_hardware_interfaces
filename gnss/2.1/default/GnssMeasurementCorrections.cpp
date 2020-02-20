@@ -82,19 +82,20 @@ Return<bool> GnssMeasurementCorrections::setCorrections_1_1(
           static_cast<int>(corrections.v1_0.satCorrections.size()),
           corrections.hasEnvironmentBearing, corrections.environmentBearingDegrees,
           corrections.environmentBearingUncertaintyDegrees);
-    for (auto singleSatCorrection : corrections.v1_0.satCorrections) {
+    for (auto singleSatCorrection : corrections.satCorrections) {
         ALOGD("singleSatCorrection = flags: %d, constellation: %d, svid: %d, cfHz: %f, probLos: %f,"
               " epl: %f, eplUnc: %f",
-              static_cast<int>(singleSatCorrection.singleSatCorrectionFlags),
+              static_cast<int>(singleSatCorrection.v1_0.singleSatCorrectionFlags),
               static_cast<int>(singleSatCorrection.constellation),
-              static_cast<int>(singleSatCorrection.svid), singleSatCorrection.carrierFrequencyHz,
-              singleSatCorrection.probSatIsLos, singleSatCorrection.excessPathLengthMeters,
-              singleSatCorrection.excessPathLengthUncertaintyMeters);
+              static_cast<int>(singleSatCorrection.v1_0.svid),
+              singleSatCorrection.v1_0.carrierFrequencyHz, singleSatCorrection.v1_0.probSatIsLos,
+              singleSatCorrection.v1_0.excessPathLengthMeters,
+              singleSatCorrection.v1_0.excessPathLengthUncertaintyMeters);
         ALOGD("reflecting plane = lat: %f, lng: %f, alt: %f, azm: %f",
-              singleSatCorrection.reflectingPlane.latitudeDegrees,
-              singleSatCorrection.reflectingPlane.longitudeDegrees,
-              singleSatCorrection.reflectingPlane.altitudeMeters,
-              singleSatCorrection.reflectingPlane.azimuthDegrees);
+              singleSatCorrection.v1_0.reflectingPlane.latitudeDegrees,
+              singleSatCorrection.v1_0.reflectingPlane.longitudeDegrees,
+              singleSatCorrection.v1_0.reflectingPlane.altitudeMeters,
+              singleSatCorrection.v1_0.reflectingPlane.azimuthDegrees);
     }
 
     return true;
