@@ -41,7 +41,7 @@ class TestRenderEngine {
     static constexpr uint32_t sMaxFrameBufferAcquireBuffers = 2;
 
     TestRenderEngine(const RenderEngineCreationArgs& args);
-    ~TestRenderEngine() = default;
+    ~TestRenderEngine();
 
     void setRenderLayers(std::vector<std::shared_ptr<TestLayer>> layers);
     void initGraphicBuffer(uint32_t width, uint32_t height, uint32_t layerCount, uint64_t usage);

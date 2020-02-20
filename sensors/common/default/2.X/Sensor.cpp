@@ -23,14 +23,17 @@
 namespace android {
 namespace hardware {
 namespace sensors {
-namespace V2_0 {
+namespace V2_X {
 namespace implementation {
 
 using ::android::hardware::sensors::V1_0::MetaDataEventType;
+using ::android::hardware::sensors::V1_0::OperationMode;
+using ::android::hardware::sensors::V1_0::Result;
 using ::android::hardware::sensors::V1_0::SensorFlagBits;
 using ::android::hardware::sensors::V1_0::SensorStatus;
-
-static constexpr float kDefaultMaxDelayUs = 10 * 1000 * 1000;
+using ::android::hardware::sensors::V2_1::Event;
+using ::android::hardware::sensors::V2_1::SensorInfo;
+using ::android::hardware::sensors::V2_1::SensorType;
 
 Sensor::Sensor(ISensorsEventCallback* callback)
     : mIsEnabled(false),
@@ -204,8 +207,8 @@ AccelSensor::AccelSensor(int32_t sensorHandle, ISensorsEventCallback* callback) 
     mSensorInfo.typeAsString = "";
     mSensorInfo.maxRange = 78.4f;  // +/- 8g
     mSensorInfo.resolution = 1.52e-5;
-    mSensorInfo.power = 0.001f;          // mA
-    mSensorInfo.minDelay = 20 * 1000;    // microseconds
+    mSensorInfo.power = 0.001f;        // mA
+    mSensorInfo.minDelay = 20 * 1000;  // microseconds
     mSensorInfo.maxDelay = kDefaultMaxDelayUs;
     mSensorInfo.fifoReservedEventCount = 0;
     mSensorInfo.fifoMaxEventCount = 0;
@@ -221,9 +224,9 @@ PressureSensor::PressureSensor(int32_t sensorHandle, ISensorsEventCallback* call
     mSensorInfo.version = 1;
     mSensorInfo.type = SensorType::PRESSURE;
     mSensorInfo.typeAsString = "";
-    mSensorInfo.maxRange = 1100.0f;   // hPa
-    mSensorInfo.resolution = 0.005f;  // hPa
-    mSensorInfo.power = 0.001f;       // mA
+    mSensorInfo.maxRange = 1100.0f;     // hPa
+    mSensorInfo.resolution = 0.005f;    // hPa
+    mSensorInfo.power = 0.001f;         // mA
     mSensorInfo.minDelay = 100 * 1000;  // microseconds
     mSensorInfo.maxDelay = kDefaultMaxDelayUs;
     mSensorInfo.fifoReservedEventCount = 0;
@@ -242,7 +245,7 @@ MagnetometerSensor::MagnetometerSensor(int32_t sensorHandle, ISensorsEventCallba
     mSensorInfo.typeAsString = "";
     mSensorInfo.maxRange = 1300.0f;
     mSensorInfo.resolution = 0.01f;
-    mSensorInfo.power = 0.001f;       // mA
+    mSensorInfo.power = 0.001f;        // mA
     mSensorInfo.minDelay = 20 * 1000;  // microseconds
     mSensorInfo.maxDelay = kDefaultMaxDelayUs;
     mSensorInfo.fifoReservedEventCount = 0;
@@ -261,8 +264,8 @@ LightSensor::LightSensor(int32_t sensorHandle, ISensorsEventCallback* callback)
     mSensorInfo.typeAsString = "";
     mSensorInfo.maxRange = 43000.0f;
     mSensorInfo.resolution = 10.0f;
-    mSensorInfo.power = 0.001f;           // mA
-    mSensorInfo.minDelay = 200 * 1000;    // microseconds
+    mSensorInfo.power = 0.001f;         // mA
+    mSensorInfo.minDelay = 200 * 1000;  // microseconds
     mSensorInfo.maxDelay = kDefaultMaxDelayUs;
     mSensorInfo.fifoReservedEventCount = 0;
     mSensorInfo.fifoMaxEventCount = 0;
@@ -280,7 +283,7 @@ ProximitySensor::ProximitySensor(int32_t sensorHandle, ISensorsEventCallback* ca
     mSensorInfo.typeAsString = "";
     mSensorInfo.maxRange = 5.0f;
     mSensorInfo.resolution = 1.0f;
-    mSensorInfo.power = 0.012f;  // mA
+    mSensorInfo.power = 0.012f;         // mA
     mSensorInfo.minDelay = 200 * 1000;  // microseconds
     mSensorInfo.maxDelay = kDefaultMaxDelayUs;
     mSensorInfo.fifoReservedEventCount = 0;
@@ -367,7 +370,7 @@ RelativeHumiditySensor::RelativeHumiditySensor(int32_t sensorHandle,
 }
 
 }  // namespace implementation
-}  // namespace V2_0
+}  // namespace V2_X
 }  // namespace sensors
 }  // namespace hardware
 }  // namespace android

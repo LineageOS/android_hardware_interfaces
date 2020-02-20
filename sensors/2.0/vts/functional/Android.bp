@@ -19,8 +19,10 @@ cc_test {
     cflags: ["-DLOG_TAG=\"sensors_hidl_hal_test\""],
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: [
-        "SensorsHidlEnvironmentV2_0.cpp",
-        "VtsHalSensorsV2_0TargetTest.cpp"
+        "VtsHalSensorsV2_0TargetTest.cpp",
+    ],
+    header_libs: [
+        "android.hardware.sensors@2.X-shared-utils",
     ],
     static_libs: [
         "android.hardware.graphics.allocator@2.0",
@@ -29,9 +31,15 @@ cc_test {
         "android.hardware.graphics.mapper@2.1",
         "android.hardware.graphics.mapper@3.0",
         "android.hardware.sensors@1.0",
+        "android.hardware.sensors@1.0-convert",
         "android.hardware.sensors@2.0",
+        "android.hardware.sensors@2.1",
         "libfmq",
         "VtsHalSensorsTargetTestUtils",
+        "VtsHalSensorsV2_0TargetTest-lib",
+    ],
+    test_suites: [
+        "general-tests",
+        "vts-core",
     ],
 }
-

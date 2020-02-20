@@ -334,6 +334,27 @@ Return<void> EvsCamera::getIntParameter(CameraParam id,
 }
 
 
+Return<EvsResult> EvsCamera::setExtendedInfo_1_1(uint32_t opaqueIdentifier,
+                                                 const hidl_vec<uint8_t>& opaqueValue) {
+    // Default implementation does not use an extended info.
+    (void)opaqueIdentifier;
+    (void)opaqueValue;
+    return EvsResult::INVALID_ARG;
+}
+
+
+Return<void> EvsCamera::getExtendedInfo_1_1(uint32_t opaqueIdentifier,
+                                            getExtendedInfo_1_1_cb _hidl_cb) {
+    // Default implementation does not use an extended info.
+    (void)opaqueIdentifier;
+
+    hidl_vec<uint8_t> value;
+    _hidl_cb(EvsResult::INVALID_ARG, value);
+    return Void();
+}
+
+
+
 bool EvsCamera::setAvailableFrames_Locked(unsigned bufferCount) {
     if (bufferCount < 1) {
         ALOGE("Ignoring request to set buffer count to zero");

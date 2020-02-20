@@ -296,6 +296,17 @@ TEST_F(EvsHidlTest, CameraOpenClean) {
                                     }
             );
 
+            // Verify methods for extended info
+            const auto id = 0xFFFFFFFF; // meaningless id
+            hidl_vec<uint8_t> values;
+            auto err = pCam->setExtendedInfo_1_1(id, values);
+            ASSERT_EQ(EvsResult::INVALID_ARG, err);
+
+            pCam->getExtendedInfo_1_1(id, [](const auto& result, const auto& data) {
+                ASSERT_EQ(EvsResult::INVALID_ARG, result);
+                ASSERT_EQ(0, data.size());
+            });
+
             // Explicitly close the camera so resources are released right away
             pEnumerator->closeCamera(pCam);
         }

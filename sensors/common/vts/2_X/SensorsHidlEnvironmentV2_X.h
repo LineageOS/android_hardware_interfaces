@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_SENSORS_HIDL_ENVIRONMENT_V2_0_H
-#define ANDROID_SENSORS_HIDL_ENVIRONMENT_V2_0_H
+#ifndef ANDROID_SENSORS_HIDL_ENVIRONMENT_V2_X_H
+#define ANDROID_SENSORS_HIDL_ENVIRONMENT_V2_X_H
 
+#include "ISensorsWrapper.h"
 #include "sensors-vts-utils/SensorsHidlEnvironmentBase.h"
 
-#include <android/hardware/sensors/1.0/types.h>
-#include <android/hardware/sensors/2.0/ISensors.h>
+#include <android/hardware/sensors/2.1/ISensors.h>
+#include <android/hardware/sensors/2.1/types.h>
+
 #include <fmq/MessageQueue.h>
 #include <utils/StrongPointer.h>
 
@@ -30,6 +32,10 @@
 
 using ::android::sp;
 using ::android::hardware::MessageQueue;
+using ::android::hardware::sensors::V2_1::implementation::ISensorsWrapperBase;
+using ::android::hardware::sensors::V2_1::implementation::MAX_RECEIVE_BUFFER_EVENT_COUNT;
+using ::android::hardware::sensors::V2_1::implementation::NoOpSensorsCallback;
+using ::android::hardware::sensors::V2_1::implementation::wrapISensors;
 
 class SensorsHidlTest;
 
@@ -39,14 +45,14 @@ class SensorsHalDeathRecipient : public ::android::hardware::hidl_death_recipien
             const ::android::wp<::android::hidl::base::V1_0::IBase>& service) override;
 };
 
-class SensorsHidlEnvironmentV2_0 : public SensorsHidlEnvironmentBase {
-   public:
-    using Event = ::android::hardware::sensors::V1_0::Event;
+class SensorsHidlEnvironmentV2_X
+    : public SensorsHidlEnvironmentBase<::android::hardware::sensors::V2_1::Event> {
+  public:
     virtual void HidlTearDown() override;
 
-   protected:
+  protected:
     friend SensorsHidlTest;
-    SensorsHidlEnvironmentV2_0(const std::string& service_name)
+    SensorsHidlEnvironmentV2_X(const std::string& service_name)
         : SensorsHidlEnvironmentBase(service_name), mEventQueueFlag(nullptr) {}
 
     /**
@@ -66,19 +72,19 @@ class SensorsHidlEnvironmentV2_0 : public SensorsHidlEnvironmentBase {
      *
      * @param env SensorEnvironment to being polling for events on
      */
-    static void pollingThread(SensorsHidlEnvironmentV2_0* env);
+    static void pollingThread(SensorsHidlEnvironmentV2_X* env);
 
     /**
      * Reads and saves sensor events from the Event FMQ
      */
     void readEvents();
 
-    GTEST_DISALLOW_COPY_AND_ASSIGN_(SensorsHidlEnvironmentV2_0);
+    GTEST_DISALLOW_COPY_AND_ASSIGN_(SensorsHidlEnvironmentV2_X);
 
     /**
      * Pointer to the Sensors HAL Interface that allows the test to call HAL functions.
      */
-    sp<android::hardware::sensors::V2_0::ISensors> mSensors;
+    sp<ISensorsWrapperBase> mSensors;
 
     /**
      * Monitors the HAL for crashes, triggering test failure if seen
@@ -86,20 +92,9 @@ class SensorsHidlEnvironmentV2_0 : public SensorsHidlEnvironmentBase {
     sp<SensorsHalDeathRecipient> mDeathRecipient = new SensorsHalDeathRecipient();
 
     /**
-     * Type used to simplify the creation of the Event FMQ
-     */
-    typedef MessageQueue<Event, ::android::hardware::kSynchronizedReadWrite> EventMessageQueue;
-
-    /**
      * Type used to simplify the creation of the Wake Lock FMQ
      */
     typedef MessageQueue<uint32_t, ::android::hardware::kSynchronizedReadWrite> WakeLockQueue;
-
-    /**
-     * The Event FMQ where the test framework is able to read sensor events that the Sensors HAL
-     * has written.
-     */
-    std::unique_ptr<EventMessageQueue> mEventQueue;
 
     /**
      * The Wake Lock FMQ is used by the test to notify the Sensors HAL whenever it has processed
@@ -114,14 +109,10 @@ class SensorsHidlEnvironmentV2_0 : public SensorsHidlEnvironmentBase {
     ::android::hardware::EventFlag* mEventQueueFlag;
 
     /**
-     * The maximum number of sensor events that can be read from the Event FMQ at one time.
-     */
-    static constexpr size_t MAX_RECEIVE_BUFFER_EVENT_COUNT = 128;
-
-    /**
      * An array that is used to store sensor events read from the Event FMQ
      */
-    std::array<Event, MAX_RECEIVE_BUFFER_EVENT_COUNT> mEventBuffer;
+    std::array<::android::hardware::sensors::V2_1::Event, MAX_RECEIVE_BUFFER_EVENT_COUNT>
+            mEventBuffer;
 };
 
-#endif  // ANDROID_SENSORS_HIDL_ENVIRONMENT_V2_0_H
+#endif  // ANDROID_SENSORS_HIDL_ENVIRONMENT_V2_X_H

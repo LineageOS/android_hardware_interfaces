@@ -18,7 +18,10 @@ cc_test {
     name: "VtsHalContexthubV1_0TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: ["VtsHalContexthubV1_0TargetTest.cpp"],
-    static_libs: ["android.hardware.contexthub@1.0"],
+    static_libs: [
+        "android.hardware.contexthub@1.0",
+        "VtsHalContexthubUtils",
+    ],
     test_suites: [
         "general-tests",
         "vts-core",
