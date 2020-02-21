@@ -320,6 +320,25 @@ enum VehicleProperty : int32_t {
         | VehicleArea:GLOBAL),
 
     /**
+     * Multiple EV port locations
+     *
+     * Implement this property if the vehicle has multiple EV ports.
+     * Port locations are defined in PortLocationType.
+     * For example, a car has one port in front left and one port in rear left:
+     *   int32Values[0] = PortLocationType::FRONT_LEFT
+     *   int32Values[0] = PortLocationType::REAR_LEFT
+     *
+     * @change_mode VehiclePropertyChangeMode:STATIC
+     * @access VehiclePropertyAccess:READ
+     * @data_enum PortLocationType
+     */
+    INFO_MULTI_EV_PORT_LOCATIONS = (
+        0x010C
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:INT32_VEC
+        | VehicleArea:GLOBAL),
+
+    /**
      * Current odometer value of the vehicle
      *
      * @change_mode VehiclePropertyChangeMode:CONTINUOUS
