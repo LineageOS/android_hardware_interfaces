@@ -119,14 +119,20 @@ struct HalStream {
      * For devices that does not support the OFFLINE_PROCESSING capability, this
      * fields will always be false.
      *
-     * For devices support the OFFLINE_PROCESSING capability: any input stream
-     * and any output stream that can be output of the input stream must set
-     * this field to true. Also any stream of YUV420_888 format or JPEG format,
-     * with CPU_READ usage flag, must set this field to true. All other streams
-     * are up to camera HAL to advertise support or not, though it is not
-     * recommended to list support for streams with hardware composer or video
-     * encoder usage flags as these streams tend to be targeted continuously and
-     * can lead to long latency when trying to switch to offline.
+     * For backward compatible camera devices that support the
+     * OFFLINE_PROCESSING capability: any input stream and any output stream
+     * that can be output of the input stream must set this field to true. Also
+     * any stream of YUV420_888 format or JPEG format, with CPU_READ usage flag,
+     * must set this field to true.
+     *
+     * For depth only camera devices that support the OFFLINE_PROCESSING
+     * capability: any DEPTH16 output stream must set this field to true.
+     *
+     * All other streams are up to camera HAL to advertise support or not,
+     * though it is not recommended to list support for streams with
+     * hardware composer or video encoder usage flags as these streams tend
+     * to be targeted continuously and can lead to long latency when trying to
+     * switch to offline.
      *
      */
     bool supportOffline;
