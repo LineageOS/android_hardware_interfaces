@@ -336,7 +336,7 @@ TEST_F(ConfirmationUIHidlTest, UserCancelTest) {
     ASSERT_EQ(0U, result.args->formattedMessage_.size());
 }
 
-// Simulates the framework candelling an ongoing prompt
+// Simulates the framework cancelling an ongoing prompt
 TEST_F(ConfirmationUIHidlTest, AbortTest) {
     static constexpr char test_prompt[] = "Me first, gimme gimme!";
     static constexpr uint8_t test_extra[] = {0x1, 0x2, 0x3};
@@ -345,6 +345,92 @@ TEST_F(ConfirmationUIHidlTest, AbortTest) {
     hidl_vec<uint8_t> extra(test_extra, test_extra + 3);
     ASSERT_HAL_CALL(ResponseCode::OK,
                     confirmator().promptUserConfirmation(conf_cb, prompt_text, extra, "en", {}));
+
+    confirmator().abort();
+
+    auto result = conf_cb->WaitForCallback();
+    ASSERT_EQ(ResponseCode::Aborted, result.args->error_);
+    ASSERT_EQ(0U, result.args->confirmationToken_.size());
+    ASSERT_EQ(0U, result.args->formattedMessage_.size());
+}
+
+// Tests if the confirmation dialog can successfully render 100 'W' characters as required by
+// the design guidelines.
+TEST_F(ConfirmationUIHidlTest, PortableMessageTest1) {
+    static constexpr char test_prompt[] =
+            "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"
+            "WWWWWWWWWWWWWW";
+    static constexpr uint8_t test_extra[] = {0x1, 0x2, 0x3};
+    sp<ConfirmationTestCallback> conf_cb = new ConfirmationTestCallback;
+    hidl_string prompt_text(test_prompt);
+    hidl_vec<uint8_t> extra(test_extra, test_extra + 3);
+    ASSERT_HAL_CALL(ResponseCode::OK,
+                    confirmator().promptUserConfirmation(conf_cb, prompt_text, extra, "en", {}));
+
+    confirmator().abort();
+
+    auto result = conf_cb->WaitForCallback();
+    ASSERT_EQ(ResponseCode::Aborted, result.args->error_);
+    ASSERT_EQ(0U, result.args->confirmationToken_.size());
+    ASSERT_EQ(0U, result.args->formattedMessage_.size());
+}
+
+// Tests if the confirmation dialog can successfully render 100 'W' characters as required by
+// the design guidelines in magnified mode.
+TEST_F(ConfirmationUIHidlTest, PortableMessageTest1Magnified) {
+    static constexpr char test_prompt[] =
+            "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"
+            "WWWWWWWWWWWWWW";
+    static constexpr uint8_t test_extra[] = {0x1, 0x2, 0x3};
+    sp<ConfirmationTestCallback> conf_cb = new ConfirmationTestCallback;
+    hidl_string prompt_text(test_prompt);
+    hidl_vec<uint8_t> extra(test_extra, test_extra + 3);
+    ASSERT_HAL_CALL(ResponseCode::OK,
+                    confirmator().promptUserConfirmation(conf_cb, prompt_text, extra, "en",
+                                                         {UIOption::AccessibilityMagnified}));
+
+    confirmator().abort();
+
+    auto result = conf_cb->WaitForCallback();
+    ASSERT_EQ(ResponseCode::Aborted, result.args->error_);
+    ASSERT_EQ(0U, result.args->confirmationToken_.size());
+    ASSERT_EQ(0U, result.args->formattedMessage_.size());
+}
+
+// Tests if the confirmation dialog can successfully render 8 groups of 12 'W' characters as
+// required by the design guidelines.
+TEST_F(ConfirmationUIHidlTest, PortableMessageTest2) {
+    static constexpr char test_prompt[] =
+            "WWWWWWWWWWWW WWWWWWWWWWWW WWWWWWWWWWWW WWWWWWWWWWWW WWWWWWWWWWWW WWWWWWWWWWWW "
+            "WWWWWWWWWWWW WWWWWWWWWWWW";
+    static constexpr uint8_t test_extra[] = {0x1, 0x2, 0x3};
+    sp<ConfirmationTestCallback> conf_cb = new ConfirmationTestCallback;
+    hidl_string prompt_text(test_prompt);
+    hidl_vec<uint8_t> extra(test_extra, test_extra + 3);
+    ASSERT_HAL_CALL(ResponseCode::OK,
+                    confirmator().promptUserConfirmation(conf_cb, prompt_text, extra, "en", {}));
+
+    confirmator().abort();
+
+    auto result = conf_cb->WaitForCallback();
+    ASSERT_EQ(ResponseCode::Aborted, result.args->error_);
+    ASSERT_EQ(0U, result.args->confirmationToken_.size());
+    ASSERT_EQ(0U, result.args->formattedMessage_.size());
+}
+
+// Tests if the confirmation dialog can successfully render 8 groups of 12 'W' characters as
+// required by the design guidelines in magnified mode.
+TEST_F(ConfirmationUIHidlTest, PortableMessageTest2Magnified) {
+    static constexpr char test_prompt[] =
+            "WWWWWWWWWWWW WWWWWWWWWWWW WWWWWWWWWWWW WWWWWWWWWWWW WWWWWWWWWWWW WWWWWWWWWWWW "
+            "WWWWWWWWWWWW WWWWWWWWWWWW";
+    static constexpr uint8_t test_extra[] = {0x1, 0x2, 0x3};
+    sp<ConfirmationTestCallback> conf_cb = new ConfirmationTestCallback;
+    hidl_string prompt_text(test_prompt);
+    hidl_vec<uint8_t> extra(test_extra, test_extra + 3);
+    ASSERT_HAL_CALL(ResponseCode::OK,
+                    confirmator().promptUserConfirmation(conf_cb, prompt_text, extra, "en",
+                                                         {UIOption::AccessibilityMagnified}));
 
     confirmator().abort();
 
