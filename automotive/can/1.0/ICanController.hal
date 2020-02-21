@@ -27,51 +27,22 @@ package android.hardware.automotive.can@1.0;
  */
 interface ICanController {
     /**
-     * Type of an interface, a mean to express the domain of device address.
+     * Type of an interface, an equivalent to BusConfig::InterfaceId
+     * union discriminator. Defines a number of specific standard hardware
+     * families and a generic catch-all type of {@see INDEXED}.
      */
     enum InterfaceType : uint8_t {
-        /**
-         * Virtual SocketCAN interface.
-         *
-         * The address is an interface name, such as vcan0. If the interface
-         * doesn't exist, HAL server must create it.
-         *
-         * Valid InterfaceIdentifier types:
-         *  - address.
-         */
+        /** Virtual SocketCAN interface. */
         VIRTUAL,
 
-        /**
-         * Native SocketCAN interface.
-         *
-         * The address is an interface name, such as can0.
-         *
-         * Valid InterfaceIdentifier types:
-         *  - address;
-         *  - serialno.
-         */
+        /** Native SocketCAN interface. */
         SOCKETCAN,
 
-        /**
-         * Serial-based interface.
-         *
-         * The address is a patch to a device, such as /dev/ttyUSB0.
-         *
-         * Valid InterfaceIdentifier types:
-         *  - address;
-         *  - serialno.
-         */
+        /** Serial line CAN interface. */
         SLCAN,
 
-        /**
-         * Proprietary interface, specific to the hardware system Android
-         * is running on. Instead of using address field, the interface is
-         * addressed with 0-based index.
-         *
-         * Valid InterfaceIdentifier types:
-         *  - index
-         */
-        INDEXED
+        /** Proprietary, device-specific interface. */
+        INDEXED,
     };
 
     enum Result : uint8_t {
@@ -92,13 +63,19 @@ interface ICanController {
         NOT_SUPPORTED,
 
         /**
-         * Provided address (interface name, device path) doesn't exist or there
-         * is no device with a given serial no.
+         * Provided interface ID (index, name, device path) doesn't exist or
+         * there is no device with a given serial number.
          */
-        BAD_ADDRESS,
+        BAD_INTERFACE_ID,
 
         /** Provided bit rate is not supported by the hardware. */
         BAD_BITRATE,
+
+        /**
+         * Provided service name ({@see BusConfig#name}) either has invalid
+         * format or is not listed in device manifest file.
+         */
+        BAD_SERVICE_NAME,
     };
 
     /**
@@ -106,49 +83,76 @@ interface ICanController {
      *
      * ISO TP and CAN FD are currently not supported.
      */
-    struct BusConfiguration {
+    struct BusConfig {
         /**
          * Name under which ICanBus HIDL service should be published.
          *
          * It must consist of only alphanumeric characters and underscore
          * (a-z, A-Z, 0-9, '_'), at least 1 and at most 32 characters long.
+         *
+         * This field is *not* meant to distinguish between hardware interfaces
+         * nor preselect parameters like bitrate. The only intended side-effect
+         * of changing it should be a different ICanBus HIDL service name and
+         * the HIDL service should make no assumptions on its contents.
          */
         string name;
 
         /**
-         * Type of the hardware (or virtual) CAN interface.
+         * Hardware interface configuration.
+         *
+         * This union's discriminator has an equivalent enum
+         * {@see InterfaceType} to express compatibility via
+         * getSupportedInterfaceTypes().
          */
-        InterfaceType iftype;
+        safe_union InterfaceId {
+            /** Virtual SocketCAN interface. */
+            struct Virtual {
+                /** Interface name, such as vcan0. If the interface doesn't
+                 * exist, HAL server must create it.
+                 */
+                string ifname;
+            } virtualif;
 
-        /**
-         * Identification of hardware interface to configure.
-         */
-        safe_union InterfaceIdentifier {
-            /**
-             * Interface name or other mean of identification of the specific
-             * interface port. Syntax depends on {@see iftype}, for details
-             * {@see InterfaceType}.
-             */
-            string address;
+            /** Native SocketCAN interface. */
+            safe_union Socketcan {
+                /** Interface name, such as can0. */
+                string ifname;
+                /**
+                 * Alternatively to providing {@see ifname}, one may provide a
+                 * list of interface serial number suffixes. If there happens to
+                 * be a device (like USB2CAN) with a matching serial number
+                 * suffix, the HAL service will have to select it.
+                 *
+                 * Client may utilize this in two ways: by matching against the
+                 * entire serial number, or the last few characters (usually
+                 * one). The former is better for small-scale test deployments
+                 * (with just a handful of vehicles), the latter is good for
+                 * larger scale (where a small suffix list may support large
+                 * test fleet).
+                 */
+                vec<string> serialno;
+            } socketcan;
+
+            /** Serial line CAN interface. */
+            safe_union Slcan {
+                /** Path to a device, such as /dev/ttyUSB0. */
+                string ttyname;
+                /**
+                 * List of interface serial number suffixes.
+                 * {@see Socketcan::serialno}
+                 */
+                vec<string> serialno;
+            } slcan;
 
             /**
-             * Numerical identifier of interface, used for InterfaceType#INDEXED.
-             */
-            uint8_t index;
-
-            /**
-             * Alternatively to providing {@see address}, one may provide a list
-             * of interface serial number suffixes. If there happens to be
-             * a device (like USB2CAN) with a matching serial number suffix,
-             * it gets selected.
+             * Proprietary, device-specific interface.
              *
-             * Client may utilize this in two ways: by matching against the
-             * entire serial number, or the last few characters (usually one).
-             * The former is better for small-scale test deployments (with just
-             * a handful of vehicles), the latter is good for larger scale
-             * (where a small suffix list may support large test fleet).
+             * Non-SocketCAN interfaces should use this variant.
              */
-            vec<string> serialno;
+            struct Indexed {
+                /** Interface number, 0-based. */
+                uint8_t index;
+            } indexed;
         } interfaceId;
 
         /**
@@ -156,7 +160,8 @@ interface ICanController {
          *
          * Typical bit rates are: 100000, 125000, 250000, 500000.
          *
-         * For virtual interfaces this value is ignored.
+         * For {@see interfaceId#virtual} and pre-configured
+         * {@see interfaceId#indexed} interfaces this value is ignored.
          */
         uint32_t bitrate;
     };
@@ -164,17 +169,17 @@ interface ICanController {
     /**
      * Fetches the list of interface types supported by this HAL server.
      *
-     * @return iftypes The list of supported interface types
+     * @return iftypes The list of supported interface types.
      */
     getSupportedInterfaceTypes() generates (vec<InterfaceType> iftypes);
 
     /**
      * Bring up the CAN interface and publish ICanBus server instance.
      *
-     * @param config Configuration of the CAN interface
+     * @param config Configuration of the CAN interface.
      * @return result OK if the operation succeeded; error code otherwise.
      */
-    upInterface(BusConfiguration config) generates (Result result);
+    upInterface(BusConfig config) generates (Result result);
 
     /**
      * Unpublish ICanBus server instance and bring down the CAN interface.
@@ -182,9 +187,9 @@ interface ICanController {
      * In case of failure, at least the ICanBus server instance must be
      * unpublished and resources freed on best-effort basis.
      *
-     * @param name Name of the interface (@see BusConfiguration#name} to
-     * bring down
-     * @return success true in case of success, false otherwise
+     * @param name Name of the interface (@see BusConfig#name} to
+     * bring down.
+     * @return success true in case of success, false otherwise.
      */
     downInterface(string name) generates (bool success);
 };

@@ -22,7 +22,8 @@ cc_test {
         "VtsHalWifiV1_4TargetTest.cpp",
         "wifi_ap_iface_hidl_test.cpp",
         "wifi_chip_hidl_test.cpp",
-		"wifi_nan_iface_hidl_test.cpp"
+        "wifi_nan_iface_hidl_test.cpp",
+        "wifi_rtt_controller_hidl_test.cpp",
     ],
     static_libs: [
         "VtsHalWifiV1_0TargetTestUtil",
@@ -31,7 +32,10 @@ cc_test {
         "android.hardware.wifi@1.2",
         "android.hardware.wifi@1.3",
         "android.hardware.wifi@1.4",
-        "libwifi-system-iface"
+        "libwifi-system-iface",
     ],
-    test_suites: ["general-tests", "vts-core"],
+    test_suites: [
+        "general-tests",
+        "vts-core",
+    ],
 }

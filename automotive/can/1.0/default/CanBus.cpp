@@ -124,7 +124,7 @@ ICanController::Result CanBus::up() {
     if (!isUp.has_value()) {
         // preUp() should prepare the interface (either create or make sure it's there)
         LOG(ERROR) << "Interface " << mIfname << " didn't get prepared";
-        return ICanController::Result::BAD_ADDRESS;
+        return ICanController::Result::BAD_INTERFACE_ID;
     }
 
     if (!*isUp && !netdevice::up(mIfname)) {

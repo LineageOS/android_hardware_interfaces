@@ -38,20 +38,29 @@ interface ICameraProvider extends @2.5::ICameraProvider {
      * streaming concurrently with the other camera ids in the combination.
      *
      *       Target 1                  Target 2
-     * ---------------------------------------------
-     * | Type  |   Size       |   Type  |   Size   |
-     * ---------------------------------------------
-     * | YUV   |  1280 X 720  |                    |
-     * ---------------------------------------------
-     * | PRIV  |  1280 X 720  |                    |
-     * ---------------------------------------------
-     * | YUV   |  1280 X 720  |   YUV   |1280 X 720|
-     * ---------------------------------------------
-     * | PRIV  |  1280 X 720  |   PRIV  |1280 X 720|
-     * ---------------------------------------------
-     * | PRIV  |  1280 X 720  |   YUV   |1280 X 720|
-     * ---------------------------------------------
-
+     * -----------------------------------------------------
+     * | Type         |   Size   |   Type       |   Size   |
+     * -----------------------------------------------------
+     * | YUV          |  s1440p  |                         |
+     * -----------------------------------------------------
+     * | JPEG         |  s1440p  |                         |
+     * -----------------------------------------------------
+     * | PRIV         |  s1440p  |                         |
+     * -----------------------------------------------------
+     * | YUV / PRIV   |  s720p   |  YUV / PRIV   | s1440p  |
+     * -----------------------------------------------------
+     * | YUV / PRIV   |  s720p   |  JPEG         | s1440p  |
+     * -----------------------------------------------------
+     *
+     * where:
+     * s720p - min (max output resolution for the given format, 1280 X 720)
+     * s1440p - min (max output resolution for the given format, 1920 X 1440)
+     *
+     * The camera framework must call this method whenever it gets a
+     * cameraDeviceStatusChange callback adding a new camera device or removing
+     * a camera device known to it. This is so that the camera framework can get new combinations
+     * of camera ids that can stream concurrently, that might have potentially appeared.
+     *
      * @return status Status code for the operation
      * @return cameraIds a list of camera id combinations that support
      *         concurrent stream configurations with the minimum guarantees

@@ -1198,65 +1198,6 @@ TEST_P(GraphicsMapperHidlTest, SetPixelFormatModifier) {
 }
 
 /**
- * Test IMapper::set(Usage) remove flag
- */
-TEST_P(GraphicsMapperHidlTest, SetUsageRemoveBit) {
-    uint64_t usage = static_cast<uint64_t>(BufferUsage::CPU_WRITE_OFTEN);
-    hidl_vec<uint8_t> vec;
-    ASSERT_EQ(NO_ERROR, gralloc4::encodeUsage(usage, &vec));
-
-    testSet(mDummyDescriptorInfo, gralloc4::MetadataType_Usage, vec,
-            [&](const IMapper::BufferDescriptorInfo& /*info*/, const hidl_vec<uint8_t>& vec) {
-                uint64_t realUsage = 0;
-                ASSERT_EQ(NO_ERROR, gralloc4::decodeUsage(vec, &realUsage));
-                EXPECT_EQ(usage, realUsage);
-            });
-}
-/**
- * Test IMapper::set(Usage) add flag
- */
-TEST_P(GraphicsMapperHidlTest, SetUsageAddBit) {
-    uint64_t usage = mDummyDescriptorInfo.usage | static_cast<uint64_t>(BufferUsage::GPU_TEXTURE);
-    hidl_vec<uint8_t> vec;
-    ASSERT_EQ(NO_ERROR, gralloc4::encodeUsage(usage, &vec));
-
-    testSet(mDummyDescriptorInfo, gralloc4::MetadataType_Usage, vec,
-            [&](const IMapper::BufferDescriptorInfo& /*info*/, const hidl_vec<uint8_t>& vec) {
-                uint64_t realUsage = 0;
-                ASSERT_EQ(NO_ERROR, gralloc4::decodeUsage(vec, &realUsage));
-                EXPECT_EQ(usage, realUsage);
-            });
-}
-
-/**
- * Test IMapper::set(Usage) to test protected content
- */
-TEST_P(GraphicsMapperHidlTest, SetUsageProtected) {
-    const native_handle_t* bufferHandle = nullptr;
-    auto info = mDummyDescriptorInfo;
-    info.usage = BufferUsage::PROTECTED | BufferUsage::COMPOSER_OVERLAY;
-
-    bufferHandle = mGralloc->allocate(info, true, true);
-    if (bufferHandle) {
-        GTEST_SUCCEED() << "unable to allocate protected content";
-        return;
-    }
-
-    uint64_t usage = static_cast<uint64_t>(BufferUsage::COMPOSER_OVERLAY);
-    hidl_vec<uint8_t> vec;
-    ASSERT_EQ(NO_ERROR, gralloc4::encodeUsage(usage, &vec));
-
-    Error err = mGralloc->set(bufferHandle, gralloc4::MetadataType_Usage, vec);
-    ASSERT_EQ(err, Error::UNSUPPORTED);
-    vec.resize(0);
-
-    uint64_t realUsage = 0;
-    ASSERT_EQ(Error::NONE, mGralloc->get(bufferHandle, gralloc4::MetadataType_Usage, &vec));
-    ASSERT_EQ(NO_ERROR, gralloc4::decodeUsage(vec, &realUsage));
-    EXPECT_EQ(info.usage, realUsage);
-}
-
-/**
  * Test IMapper::set(AllocationSize)
  */
 TEST_P(GraphicsMapperHidlTest, SetAllocationSize) {
