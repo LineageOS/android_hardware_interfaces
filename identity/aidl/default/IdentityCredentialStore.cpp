@@ -51,7 +51,7 @@ ndk::ScopedAStatus IdentityCredentialStore::createCredential(
 }
 
 ndk::ScopedAStatus IdentityCredentialStore::getCredential(
-        CipherSuite cipherSuite, const vector<int8_t>& credentialData,
+        CipherSuite cipherSuite, const vector<uint8_t>& credentialData,
         shared_ptr<IIdentityCredential>* outCredential) {
     // We only support CIPHERSUITE_ECDHE_HKDF_ECDSA_WITH_AES_256_GCM_SHA256 right now.
     if (cipherSuite != CipherSuite::CIPHERSUITE_ECDHE_HKDF_ECDSA_WITH_AES_256_GCM_SHA256) {
@@ -60,8 +60,8 @@ ndk::ScopedAStatus IdentityCredentialStore::getCredential(
                 "Unsupported cipher suite"));
     }
 
-    vector<uint8_t> data = vector<uint8_t>(credentialData.begin(), credentialData.end());
-    shared_ptr<IdentityCredential> credential = ndk::SharedRefBase::make<IdentityCredential>(data);
+    shared_ptr<IdentityCredential> credential =
+            ndk::SharedRefBase::make<IdentityCredential>(credentialData);
     auto ret = credential->initialize();
     if (ret != IIdentityCredentialStore::STATUS_OK) {
         return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(

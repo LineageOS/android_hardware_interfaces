@@ -39,7 +39,7 @@ class IdentityCredentialStore : public BnIdentityCredentialStore {
             const string& docType, bool testCredential,
             shared_ptr<IWritableIdentityCredential>* outWritableCredential) override;
 
-    ndk::ScopedAStatus getCredential(CipherSuite cipherSuite, const vector<int8_t>& credentialData,
+    ndk::ScopedAStatus getCredential(CipherSuite cipherSuite, const vector<uint8_t>& credentialData,
                                      shared_ptr<IIdentityCredential>* outCredential) override;
 };
 
