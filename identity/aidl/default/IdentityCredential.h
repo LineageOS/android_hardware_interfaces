@@ -47,23 +47,23 @@ class IdentityCredential : public BnIdentityCredential {
     int initialize();
 
     // Methods from IIdentityCredential follow.
-    ndk::ScopedAStatus deleteCredential(vector<int8_t>* outProofOfDeletionSignature) override;
-    ndk::ScopedAStatus createEphemeralKeyPair(vector<int8_t>* outKeyPair) override;
-    ndk::ScopedAStatus setReaderEphemeralPublicKey(const vector<int8_t>& publicKey) override;
+    ndk::ScopedAStatus deleteCredential(vector<uint8_t>* outProofOfDeletionSignature) override;
+    ndk::ScopedAStatus createEphemeralKeyPair(vector<uint8_t>* outKeyPair) override;
+    ndk::ScopedAStatus setReaderEphemeralPublicKey(const vector<uint8_t>& publicKey) override;
     ndk::ScopedAStatus createAuthChallenge(int64_t* outChallenge) override;
     ndk::ScopedAStatus startRetrieval(
             const vector<SecureAccessControlProfile>& accessControlProfiles,
-            const HardwareAuthToken& authToken, const vector<int8_t>& itemsRequest,
-            const vector<int8_t>& signingKeyBlob, const vector<int8_t>& sessionTranscript,
-            const vector<int8_t>& readerSignature, const vector<int32_t>& requestCounts) override;
+            const HardwareAuthToken& authToken, const vector<uint8_t>& itemsRequest,
+            const vector<uint8_t>& signingKeyBlob, const vector<uint8_t>& sessionTranscript,
+            const vector<uint8_t>& readerSignature, const vector<int32_t>& requestCounts) override;
     ndk::ScopedAStatus startRetrieveEntryValue(
             const string& nameSpace, const string& name, int32_t entrySize,
             const vector<int32_t>& accessControlProfileIds) override;
-    ndk::ScopedAStatus retrieveEntryValue(const vector<int8_t>& encryptedContent,
-                                          vector<int8_t>* outContent) override;
-    ndk::ScopedAStatus finishRetrieval(vector<int8_t>* outMac,
-                                       vector<int8_t>* outDeviceNameSpaces) override;
-    ndk::ScopedAStatus generateSigningKeyPair(vector<int8_t>* outSigningKeyBlob,
+    ndk::ScopedAStatus retrieveEntryValue(const vector<uint8_t>& encryptedContent,
+                                          vector<uint8_t>* outContent) override;
+    ndk::ScopedAStatus finishRetrieval(vector<uint8_t>* outMac,
+                                       vector<uint8_t>* outDeviceNameSpaces) override;
+    ndk::ScopedAStatus generateSigningKeyPair(vector<uint8_t>* outSigningKeyBlob,
                                               Certificate* outSigningKeyCertificate) override;
 
   private:

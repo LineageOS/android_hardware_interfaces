@@ -39,21 +39,12 @@ const vector<uint8_t>& getHardwareBoundKey() {
     return hardwareBoundKey;
 }
 
-vector<uint8_t> byteStringToUnsigned(const vector<int8_t>& value) {
-    return vector<uint8_t>(value.begin(), value.end());
-}
-
-vector<int8_t> byteStringToSigned(const vector<uint8_t>& value) {
-    return vector<int8_t>(value.begin(), value.end());
-}
-
 vector<uint8_t> secureAccessControlProfileEncodeCbor(const SecureAccessControlProfile& profile) {
     cppbor::Map map;
     map.add("id", profile.id);
 
     if (profile.readerCertificate.encodedCertificate.size() > 0) {
-        map.add("readerCertificate",
-                cppbor::Bstr(byteStringToUnsigned(profile.readerCertificate.encodedCertificate)));
+        map.add("readerCertificate", cppbor::Bstr(profile.readerCertificate.encodedCertificate));
     }
 
     if (profile.userAuthenticationRequired) {
@@ -94,7 +85,7 @@ bool secureAccessControlProfileCheckMac(const SecureAccessControlProfile& profil
     if (!mac) {
         return false;
     }
-    if (mac.value() != byteStringToUnsigned(profile.mac)) {
+    if (mac.value() != profile.mac) {
         return false;
     }
     return true;
