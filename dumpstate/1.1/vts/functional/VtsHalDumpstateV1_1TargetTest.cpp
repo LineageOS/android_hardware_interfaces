@@ -48,8 +48,8 @@ class DumpstateHidl1_1Test : public ::testing::TestWithParam<std::string> {
         ASSERT_NE(dumpstate, nullptr) << "Could not get HIDL instance";
     }
 
-    void ToggleDeviceLogging(bool enable) {
-        Return<void> status = dumpstate->setDeviceLoggingEnabled(enable);
+    void ToggleVerboseLogging(bool enable) {
+        Return<void> status = dumpstate->setVerboseLoggingEnabled(enable);
         ASSERT_TRUE(status.isOk()) << "Status should be ok: " << status.description();
 
         if (!dumpstate->ping().isOk()) {
@@ -58,11 +58,11 @@ class DumpstateHidl1_1Test : public ::testing::TestWithParam<std::string> {
             GetService();
         }
 
-        Return<bool> logging_enabled = dumpstate->getDeviceLoggingEnabled();
+        Return<bool> logging_enabled = dumpstate->getVerboseLoggingEnabled();
         ASSERT_TRUE(logging_enabled.isOk())
                 << "Status should be ok: " << logging_enabled.description();
         ASSERT_EQ(logging_enabled, enable)
-                << "Device logging should now be " << (enable ? "enabled" : "disabled");
+                << "Verbose logging should now be " << (enable ? "enabled" : "disabled");
 
         if (!dumpstate->ping().isOk()) {
             ALOGW("IDumpstateDevice service appears to have exited lazily, attempting to get "
@@ -71,9 +71,9 @@ class DumpstateHidl1_1Test : public ::testing::TestWithParam<std::string> {
         }
     }
 
-    void EnableDeviceLogging() { ToggleDeviceLogging(true); }
+    void EnableVerboseLogging() { ToggleVerboseLogging(true); }
 
-    void DisableDeviceLogging() { ToggleDeviceLogging(false); }
+    void DisableVerboseLogging() { ToggleVerboseLogging(false); }
 
     sp<IDumpstateDevice> dumpstate;
 };
@@ -123,7 +123,7 @@ void AssertStatusForMode(const DumpstateMode mode, const Return<DumpstateStatus>
 
 // Negative test: make sure dumpstateBoard() doesn't crash when passed a null pointer.
 TEST_FOR_ALL_DUMPSTATE_MODES(TestNullHandle, [this](DumpstateMode mode) {
-    EnableDeviceLogging();
+    EnableVerboseLogging();
 
     Return<DumpstateStatus> status =
             dumpstate->dumpstateBoard_1_1(nullptr, mode, kDefaultTimeoutMillis);
@@ -133,7 +133,7 @@ TEST_FOR_ALL_DUMPSTATE_MODES(TestNullHandle, [this](DumpstateMode mode) {
 
 // Negative test: make sure dumpstateBoard() ignores a handle with no FD.
 TEST_FOR_ALL_DUMPSTATE_MODES(TestHandleWithNoFd, [this](DumpstateMode mode) {
-    EnableDeviceLogging();
+    EnableVerboseLogging();
 
     native_handle_t* handle = native_handle_create(0, 0);
     ASSERT_NE(handle, nullptr) << "Could not create native_handle";
@@ -149,7 +149,7 @@ TEST_FOR_ALL_DUMPSTATE_MODES(TestHandleWithNoFd, [this](DumpstateMode mode) {
 
 // Positive test: make sure dumpstateBoard() writes something to the FD.
 TEST_FOR_ALL_DUMPSTATE_MODES(TestOk, [this](DumpstateMode mode) {
-    EnableDeviceLogging();
+    EnableVerboseLogging();
 
     // Index 0 corresponds to the read end of the pipe; 1 to the write end.
     int fds[2];
@@ -174,7 +174,7 @@ TEST_FOR_ALL_DUMPSTATE_MODES(TestOk, [this](DumpstateMode mode) {
 
 // Positive test: make sure dumpstateBoard() doesn't crash with two FDs.
 TEST_FOR_ALL_DUMPSTATE_MODES(TestHandleWithTwoFds, [this](DumpstateMode mode) {
-    EnableDeviceLogging();
+    EnableVerboseLogging();
 
     int fds1[2];
     int fds2[2];
@@ -204,7 +204,7 @@ TEST_FOR_ALL_DUMPSTATE_MODES(TestHandleWithTwoFds, [this](DumpstateMode mode) {
 
 // Make sure dumpstateBoard_1_1 actually validates its arguments.
 TEST_P(DumpstateHidl1_1Test, TestInvalidModeArgument_Negative) {
-    EnableDeviceLogging();
+    EnableVerboseLogging();
 
     int fds[2];
     ASSERT_EQ(0, pipe2(fds, O_NONBLOCK)) << errno;
@@ -226,7 +226,7 @@ TEST_P(DumpstateHidl1_1Test, TestInvalidModeArgument_Negative) {
 }
 
 TEST_P(DumpstateHidl1_1Test, TestInvalidModeArgument_Undefined) {
-    EnableDeviceLogging();
+    EnableVerboseLogging();
 
     int fds[2];
     ASSERT_EQ(0, pipe2(fds, O_NONBLOCK)) << errno;
@@ -249,7 +249,7 @@ TEST_P(DumpstateHidl1_1Test, TestInvalidModeArgument_Undefined) {
 
 // Positive test: make sure dumpstateBoard() from 1.0 doesn't fail.
 TEST_P(DumpstateHidl1_1Test, Test1_0MethodOk) {
-    EnableDeviceLogging();
+    EnableVerboseLogging();
 
     int fds[2];
     ASSERT_EQ(0, pipe2(fds, O_NONBLOCK)) << errno;
@@ -270,9 +270,10 @@ TEST_P(DumpstateHidl1_1Test, Test1_0MethodOk) {
     native_handle_delete(handle);
 }
 
-// Make sure disabling device logging behaves correctly.
-TEST_FOR_ALL_DUMPSTATE_MODES(TestDeviceLoggingDisabled, [this](DumpstateMode mode) {
-    DisableDeviceLogging();
+// Make sure disabling verbose logging behaves correctly. Some info is still allowed to be emitted,
+// but it can't have privacy/storage/battery impacts.
+TEST_FOR_ALL_DUMPSTATE_MODES(TestVerboseLoggingDisabled, [this](DumpstateMode mode) {
+    DisableVerboseLogging();
 
     // Index 0 corresponds to the read end of the pipe; 1 to the write end.
     int fds[2];
@@ -285,11 +286,10 @@ TEST_FOR_ALL_DUMPSTATE_MODES(TestDeviceLoggingDisabled, [this](DumpstateMode mod
     Return<DumpstateStatus> status =
             dumpstate->dumpstateBoard_1_1(handle, mode, kDefaultTimeoutMillis);
 
-    AssertStatusForMode(mode, status, DumpstateStatus::DEVICE_LOGGING_NOT_ENABLED, [&fds]() {
-        // Check that nothing was written. Could return 0 or -1.
-        char buff;
-        ASSERT_NE(1, read(fds[0], &buff, 1)) << "Dumped something when device logging is disabled";
-    });
+    // We don't include additional assertions here about the file passed in. If verbose logging is
+    // disabled, the OEM may choose to include nothing at all, but it is allowed to include some
+    // essential information based on the mode as long as it isn't private user information.
+    AssertStatusForMode(mode, status, DumpstateStatus::OK);
 
     native_handle_close(handle);
     native_handle_delete(handle);
@@ -297,22 +297,22 @@ TEST_FOR_ALL_DUMPSTATE_MODES(TestDeviceLoggingDisabled, [this](DumpstateMode mod
 
 // Double-enable is perfectly valid, but the second call shouldn't do anything.
 TEST_P(DumpstateHidl1_1Test, TestRepeatedEnable) {
-    EnableDeviceLogging();
-    EnableDeviceLogging();
+    EnableVerboseLogging();
+    EnableVerboseLogging();
 }
 
 // Double-disable is perfectly valid, but the second call shouldn't do anything.
 TEST_P(DumpstateHidl1_1Test, TestRepeatedDisable) {
-    DisableDeviceLogging();
-    DisableDeviceLogging();
+    DisableVerboseLogging();
+    DisableVerboseLogging();
 }
 
 // Toggling in short order is perfectly valid.
 TEST_P(DumpstateHidl1_1Test, TestRepeatedToggle) {
-    EnableDeviceLogging();
-    DisableDeviceLogging();
-    EnableDeviceLogging();
-    DisableDeviceLogging();
+    EnableVerboseLogging();
+    DisableVerboseLogging();
+    EnableVerboseLogging();
+    DisableVerboseLogging();
 }
 
 INSTANTIATE_TEST_SUITE_P(
