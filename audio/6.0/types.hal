@@ -247,3 +247,111 @@ enum MicrophoneDirection : int32_t {
      */
     EXTERNAL = 3,
 };
+
+
+/* Dual Mono handling is used when a stereo audio stream
+ * contains separate audio content on the left and right channels.
+ * Such information about the content of the stream may be found, for example,
+ * in ITU T-REC-J.94-201610 A.6.2.3 Component descriptor.
+ */
+@export(name="audio_dual_mono_mode_t", value_prefix="AUDIO_DUAL_MONO_MODE_")
+enum DualMonoMode : int32_t {
+    // Need to be in sync with DUAL_MONO_MODE* constants in
+    // frameworks/base/media/java/android/media/AudioTrack.java
+    /**
+     * Disable any Dual Mono presentation effect.
+     *
+     */
+    OFF = 0,
+    /**
+     * This mode indicates that a stereo stream should be presented
+     * with the left and right audio channels blended together
+     * and delivered to both channels.
+     *
+     * Behavior for non-stereo streams is implementation defined.
+     * A suggested guideline is that the left-right stereo symmetric
+     * channels are pairwise blended, the other channels such as center
+     * are left alone.
+     */
+    LR = 1,
+    /**
+     * This mode indicates that a stereo stream should be presented
+     * with the left audio channel replicated into the right audio channel.
+     *
+     * Behavior for non-stereo streams is implementation defined.
+     * A suggested guideline is that all channels with left-right
+     * stereo symmetry will have the left channel position replicated
+     * into the right channel position. The center channels (with no
+     * left/right symmetry) or unbalanced channels are left alone.
+     */
+    LL = 2,
+    /**
+     * This mode indicates that a stereo stream should be presented
+     * with the right audio channel replicated into the left audio channel.
+     *
+     * Behavior for non-stereo streams is implementation defined.
+     * A suggested guideline is that all channels with left-right
+     * stereo symmetry will have the right channel position replicated
+     * into the left channel position. The center channels (with no
+     * left/right symmetry) or unbalanced channels are left alone.
+     */
+    RR = 3,
+};
+
+/**
+ * Algorithms used for timestretching (preserving pitch while playing audio
+ * content at different speed).
+ */
+@export(name="audio_timestretch_stretch_mode_t", value_prefix="AUDIO_TIMESTRETCH_STRETCH_")
+enum TimestretchMode : int32_t {
+    // Need to be in sync with AUDIO_STRETCH_MODE_* constants in
+    // frameworks/base/media/java/android/media/PlaybackParams.java
+    DEFAULT = 0,
+    /** Selects timestretch algorithm best suitable for voice (speech) content. */
+    VOICE = 1,
+};
+
+/**
+ * Behavior when the values for speed and / or pitch are out
+ * of applicable range.
+ */
+@export(name="audio_timestretch_fallback_mode_t", value_prefix="AUDIO_TIMESTRETCH_FALLBACK_")
+enum TimestretchFallbackMode : int32_t {
+    // Need to be in sync with AUDIO_FALLBACK_MODE_* constants in
+    // frameworks/base/media/java/android/media/PlaybackParams.java
+    /** Play silence for parameter values that are out of range. */
+    MUTE = 1,
+    /** Return an error while trying to set the parameters. */
+    FAIL = 2,
+};
+
+/**
+ * Parameters determining playback behavior. They are used to speed up or
+ * slow down playback and / or change the tonal frequency of the audio content
+ * (pitch).
+ */
+struct PlaybackRate {
+    /**
+     * Speed factor (multiplier). Normal speed has the value of 1.0f.
+     * Values less than 1.0f slow down playback, value greater than 1.0f
+     * speed it up.
+     */
+    float speed;
+    /**
+     * Pitch factor (multiplier). Setting pitch value to 1.0f together
+     * with changing playback speed preserves the pitch, this is often
+     * called "timestretching." Setting the pitch value equal to speed produces
+     * the same effect as playing audio content at different sampling rate.
+     */
+    float pitch;
+    /**
+     * Selects the algorithm used for timestretching (preserving pitch while
+     * playing audio at different speed).
+     */
+    TimestretchMode timestretchMode;
+    /**
+     * Selects the behavior when the specified values for speed and / or pitch
+     * are out of applicable range.
+     */
+    TimestretchFallbackMode fallbackMode;
+};
