@@ -37,6 +37,7 @@ static const float kNanoToSeconds = 0.000000001f;
 
 
 #include "FrameHandler.h"
+#include "FrameHandlerUltrasonics.h"
 
 #include <cstdio>
 #include <cstring>
@@ -151,9 +152,21 @@ protected:
                 }
             }
         );
+    }
 
-        // We insist on at least one camera for EVS to pass any camera tests
-        ASSERT_GE(cameraInfo.size(), 1u);
+    void loadUltrasonicsArrayList() {
+        // SetUp() must run first!
+        assert(pEnumerator != nullptr);
+
+        // Get the ultrasonics array list
+        pEnumerator->getUltrasonicsArrayList([this](hidl_vec<UltrasonicsArrayDesc> ultraList) {
+            ALOGI("Ultrasonics array list callback received %zu arrays", ultraList.size());
+            ultrasonicsArraysInfo.reserve(ultraList.size());
+            for (auto&& ultraArray : ultraList) {
+                ALOGI("Found ultrasonics array %s", ultraArray.ultrasonicsArrayId.c_str());
+                ultrasonicsArraysInfo.push_back(ultraArray);
+            }
+        });
     }
 
     bool isLogicalCamera(const camera_metadata_t *metadata) {
@@ -240,6 +253,11 @@ protected:
                                                    // is HW module implementation.
     std::deque<wp<IEvsCamera_1_1>>  activeCameras; // A list of active camera handles that are
                                                    // needed to be cleaned up.
+    std::vector<UltrasonicsArrayDesc>
+            ultrasonicsArraysInfo;                           // Empty unless/until
+                                                             // loadUltrasonicsArrayList() is called
+    std::deque<wp<IEvsCamera_1_1>> activeUltrasonicsArrays;  // A list of active ultrasonic array
+                                                             // handles that are to be cleaned up.
 };
 
 
@@ -2216,6 +2234,110 @@ TEST_F(EvsHidlTest, LogicalCameraMetadata) {
             ASSERT_GE(devices.size(), 1) <<
                 "Logical camera device must have at least one physical camera device ID in its metadata.";
         }
+    }
+}
+
+
+/*
+ * UltrasonicsArrayOpenClean:
+ * Opens each ultrasonics arrays reported by the enumerator and then explicitly closes it via a
+ * call to closeUltrasonicsArray. Then repeats the test to ensure all ultrasonics arrays
+ * can be reopened.
+ */
+TEST_F(EvsHidlTest, UltrasonicsArrayOpenClean) {
+    ALOGI("Starting UltrasonicsArrayOpenClean test");
+
+    // Get the ultrasonics array list
+    loadUltrasonicsArrayList();
+
+    // Open and close each ultrasonics array twice
+    for (auto&& ultraInfo : ultrasonicsArraysInfo) {
+        for (int pass = 0; pass < 2; pass++) {
+            sp<IEvsUltrasonicsArray> pUltrasonicsArray =
+                    pEnumerator->openUltrasonicsArray(ultraInfo.ultrasonicsArrayId);
+            ASSERT_NE(pUltrasonicsArray, nullptr);
+
+            // Verify that this ultrasonics array self-identifies correctly
+            pUltrasonicsArray->getUltrasonicArrayInfo([&ultraInfo](UltrasonicsArrayDesc desc) {
+                ALOGD("Found ultrasonics array %s", ultraInfo.ultrasonicsArrayId.c_str());
+                EXPECT_EQ(ultraInfo.ultrasonicsArrayId, desc.ultrasonicsArrayId);
+            });
+
+            // Explicitly close the ultrasonics array so resources are released right away
+            pEnumerator->closeUltrasonicsArray(pUltrasonicsArray);
+        }
+    }
+}
+
+
+// Starts a stream and verifies all data received is valid.
+TEST_F(EvsHidlTest, UltrasonicsVerifyStreamData) {
+    ALOGI("Starting UltrasonicsVerifyStreamData");
+
+    // Get the ultrasonics array list
+    loadUltrasonicsArrayList();
+
+    // For each ultrasonics array.
+    for (auto&& ultraInfo : ultrasonicsArraysInfo) {
+        ALOGD("Testing ultrasonics array: %s", ultraInfo.ultrasonicsArrayId.c_str());
+
+        sp<IEvsUltrasonicsArray> pUltrasonicsArray =
+                pEnumerator->openUltrasonicsArray(ultraInfo.ultrasonicsArrayId);
+        ASSERT_NE(pUltrasonicsArray, nullptr);
+
+        sp<FrameHandlerUltrasonics> frameHandler = new FrameHandlerUltrasonics(pUltrasonicsArray);
+
+        // Start stream.
+        EvsResult result = pUltrasonicsArray->startStream(frameHandler);
+        ASSERT_EQ(result, EvsResult::OK);
+
+        // Wait 5 seconds to receive frames.
+        sleep(5);
+
+        // Stop stream.
+        pUltrasonicsArray->stopStream();
+
+        EXPECT_GT(frameHandler->getReceiveFramesCount(), 0);
+        EXPECT_TRUE(frameHandler->areAllFramesValid());
+
+        // Explicitly close the ultrasonics array so resources are released right away
+        pEnumerator->closeUltrasonicsArray(pUltrasonicsArray);
+    }
+}
+
+
+// Sets frames in flight before and after start of stream and verfies success.
+TEST_F(EvsHidlTest, UltrasonicsSetFramesInFlight) {
+    ALOGI("Starting UltrasonicsSetFramesInFlight");
+
+    // Get the ultrasonics array list
+    loadUltrasonicsArrayList();
+
+    // For each ultrasonics array.
+    for (auto&& ultraInfo : ultrasonicsArraysInfo) {
+        ALOGD("Testing ultrasonics array: %s", ultraInfo.ultrasonicsArrayId.c_str());
+
+        sp<IEvsUltrasonicsArray> pUltrasonicsArray =
+                pEnumerator->openUltrasonicsArray(ultraInfo.ultrasonicsArrayId);
+        ASSERT_NE(pUltrasonicsArray, nullptr);
+
+        EvsResult result = pUltrasonicsArray->setMaxFramesInFlight(10);
+        EXPECT_EQ(result, EvsResult::OK);
+
+        sp<FrameHandlerUltrasonics> frameHandler = new FrameHandlerUltrasonics(pUltrasonicsArray);
+
+        // Start stream.
+        result = pUltrasonicsArray->startStream(frameHandler);
+        ASSERT_EQ(result, EvsResult::OK);
+
+        result = pUltrasonicsArray->setMaxFramesInFlight(5);
+        EXPECT_EQ(result, EvsResult::OK);
+
+        // Stop stream.
+        pUltrasonicsArray->stopStream();
+
+        // Explicitly close the ultrasonics array so resources are released right away
+        pEnumerator->closeUltrasonicsArray(pUltrasonicsArray);
     }
 }
 

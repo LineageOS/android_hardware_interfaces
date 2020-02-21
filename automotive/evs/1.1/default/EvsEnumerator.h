@@ -21,6 +21,7 @@
 #include <android/hardware/automotive/evs/1.1/IEvsCamera.h>
 #include <android/hardware/automotive/evs/1.1/IEvsDisplay.h>
 #include <android/frameworks/automotive/display/1.0/IAutomotiveDisplayProxyService.h>
+#include <android/hardware/automotive/evs/1.1/IEvsUltrasonicsArray.h>
 
 #include <list>
 
@@ -46,6 +47,7 @@ namespace implementation {
 
 class EvsCamera;    // from EvsCamera.h
 class EvsDisplay;   // from EvsDisplay.h
+class EvsUltrasonicsArray;  // from EvsUltrasonicsArray.h
 
 
 class EvsEnumerator : public IEvsEnumerator {
@@ -65,6 +67,11 @@ public:
     Return<bool> isHardware() override { return true; }
     Return<void>                getDisplayIdList(getDisplayIdList_cb _list_cb) override;
     Return<sp<IEvsDisplay_1_1>> openDisplay_1_1(uint8_t port) override;
+    Return<void> getUltrasonicsArrayList(getUltrasonicsArrayList_cb _hidl_cb) override;
+    Return<sp<IEvsUltrasonicsArray>> openUltrasonicsArray(
+            const hidl_string& ultrasonicsArrayId) override;
+    Return<void> closeUltrasonicsArray(
+            const ::android::sp<IEvsUltrasonicsArray>& evsUltrasonicsArray) override;
 
     // Implementation details
     EvsEnumerator(sp<IAutomotiveDisplayProxyService> windowService = nullptr);
@@ -80,9 +87,20 @@ private:
         CameraRecord(const char *cameraId) : desc() { desc.v1.cameraId = cameraId; }
     };
 
+    struct UltrasonicsArrayRecord {
+        UltrasonicsArrayDesc desc;
+        wp<EvsUltrasonicsArray> activeInstance;
+
+        UltrasonicsArrayRecord(const UltrasonicsArrayDesc& arrayDesc) : desc(arrayDesc) {};
+    };
+
     static CameraRecord* findCameraById(const std::string& cameraId);
 
     static std::list<CameraRecord>   sCameraList;
+
+    static UltrasonicsArrayRecord* findUltrasonicsArrayById(const std::string& ultrasonicsArrayId);
+
+    static std::list<UltrasonicsArrayRecord> sUltrasonicsArrayRecordList;
 
     // Weak pointer. Object destructs if client dies.
     static wp<EvsDisplay>            sActiveDisplay;

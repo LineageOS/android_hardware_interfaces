@@ -12,6 +12,8 @@ hidl_interface {
         "IEvsCameraStream.hal",
         "IEvsDisplay.hal",
         "IEvsEnumerator.hal",
+        "IEvsUltrasonicsArray.hal",
+        "IEvsUltrasonicsArrayStream.hal",
     ],
     interfaces: [
         "android.frameworks.automotive.display@1.0",

@@ -177,3 +177,194 @@ enum CameraParam : uint32_t {
      */
     ABSOLUTE_ZOOM,
 };
+
+/**
+ * Structure identifies and describes an ultrasonics array in the car.
+ *
+ * A ultrasonics array represents a group of ultrasonic sensors within the
+ * car. These may be sensors that are physically connected to the same hardware
+ * control unit or represent a logical group of sensors like front and back.
+ * The HAL is responsible for filling out this structure for each Ultrasonics
+ * Array.
+ */
+struct UltrasonicsArrayDesc {
+    /**
+     * Unique identifier for the ultrasonic array. This may be a path or name of the
+     * physical control device or a string identifying a logical group of sensors forming an array
+     * such as "front_array" and "back_array".
+     */
+    string ultrasonicsArrayId;
+
+    /**
+     * Maximum number of readings (points on waveform) provided per sensor in
+     * each data frame. Used by client to pre-allocate required memory buffer for
+     * incoming data.
+     */
+    uint32_t maxReadingsPerSensorCount;
+
+    /**
+     * Maximum number of receiver sensors in a data frame. Must be between 1
+     * and sensorCount. Used by client to pre-allocate required memory buffer for
+     * incoming data.
+     */
+    uint32_t maxReceiversCount;
+
+    /**
+     * The order of sensors specified should preferably be in clockwise order
+     * around the car, starting from front left-most sensor.
+     */
+    vec<UltrasonicSensor> sensors;
+};
+
+/**
+ * Structure for rotation expressed as quaternions.
+ * Convention used: Unit quaternion with hamilton convention.
+ */
+struct RotationQuat {
+    float x;
+    float y;
+    float z;
+    float w;
+};
+
+/** Structure for translation with x, y and z units. */
+struct Translation {
+    float x;
+    float y;
+    float z;
+};
+
+/**
+ * Provides the orientation and location of a car sensor relative to the android automotive
+ * coordinate system:
+ * https://source.android.com/devices/sensors/sensor-types#auto_axes
+ * The sensor pose defines the transformation to be applied to the android automotive axes to
+ * obtain the sensor local axes.
+ * The pose consists of rotation, (specified as a quaternions) and translation
+ * (vector with x, y, z).
+ * This rotation and translation applied to the sensor data in the sensor's local coordinate
+ * system transform the data to the automotive coordinate system.
+ * i.e   Pcar =  ( Rot * Psensor ) + Trans
+ * Here Pcar is a point in automotive coordinate system and Psensor is a point in the sensor's
+ * coordinate system.
+ * Example:
+ * For a sensor on the front bumper and on the left corner of the car with its X axis pointing to
+ * the front, the sensor is located at (-2, 4, 0) meters w.r.t android automotive axes and the
+ * sensor local axes has a rotation of 90 degrees counter-clockwise w.r.t android automotive axes
+ * when viewing the car from top on the +Z axis side:
+ *
+ *      ↑X sensor
+ *    Y←∘______
+ *      |      |  front
+ *      | car  |
+ *      |  ↑Y  |
+ *      |  ∘→X |  rear
+ *      |______|
+ *
+ * For this example the rotation and translation will be:
+ * Rotation = + 90 degrees around Z axis = (0.7071, 0, 0, 0.7071) as a unit quaternion.
+ * Translation = (-2, 4, 0) in meters = (-2000, 4000, 0) in milli-meters.
+ * Note: Every sensor type must specify its own pose.
+ */
+struct SensorPose {
+    /**
+     * Rotation part of the sensor pose, expressed as a unit quaternion.
+     */
+    RotationQuat rotation;
+
+    /**
+     * Translation part of the sensor pose, in (x, y, z) format with milli-meter units.
+     */
+    Translation translation;
+};
+
+/**
+ * Structure that contains all information of an ultrasonic sensor.
+ */
+struct UltrasonicSensor {
+    /**
+     * Pose provides the orientation and location of the ultrasonic sensor within the car.
+     * The +Y axis points along the center of the beam spread the X axis to the right and the Z
+     * axis in the up direction.
+     */
+    SensorPose pose;
+
+    /**
+     * Maximum range of the sensor in milli-metres.
+     */
+    float maxRange;
+
+    /**
+     * Half-angle of the angle of measurement of the sensor, relative to the
+     * sensor’s x axis, in radians.
+     */
+    float angleOfMeasurement;
+};
+
+/**
+ * Structure that describes the data frame received from an ultrasonics array.
+ *
+ * Each data frame returned consists of received waveform signals from a subset
+ * of sensors in an array as indicated by the receiversIdList. The signal is
+ * transmitted at a particular time instant indicated by timestampNs from a
+ * subset of sensors in the array as provided in the transmittersIdList.
+ */
+struct UltrasonicsDataFrameDesc {
+    /**
+     * Timestamp of the start of the transmit signal for this data frame.
+     * Timestamp unit is nanoseconds and is obtained from android elapsed realtime clock which is
+     * the time since system was booted and includes deep sleep.
+     * timeOfFlight readings are future-deltas to this timestamp.
+     */
+    uint64_t timestampNs;
+
+    /**
+     * Identifier of data frame. Used by implementation for managing multiple frames in flight.
+     */
+    uint32_t dataFrameId;
+
+    /**
+     * List of indexes of sensors in range [0, sensorCount - 1] that
+     * transmitted the signal for this data frame.
+     */
+    vec<uint8_t> transmittersIdList;
+
+    /**
+     * List of indexes of sensors in range [0, sensorCount - 1] that received
+     * the signal. The order of ids must match the order of the waveforms in the
+     * waveformsData.
+     * Size of list is upper bound by maxReceiversCount.
+     */
+    vec<uint8_t> receiversIdList;
+
+    /**
+     * List of the number of readings corresponding to each ultrasonics sensor in
+     * the receiversIdList. Order of the readings count must match the order in
+     * receiversIdList.
+     * Size of list is upper bound by maxReadingsPerSensorCount.
+     */
+    vec<uint32_t> receiversReadingsCountList;
+
+    /**
+     * Shared memory object containing the waveforms data. Contains one waveform
+     * for each sensor specified in receiversIdList, in order.
+     * Each waveform is represented by a number of readings, which are sample
+     * points on the waveform. The number of readings for each waveform is as
+     * specified in the receiversReadingsCountList.
+     * Each reading is a pair of time Of flight and resonance.
+     * Time of flight (float): Time between transmit and receive signal in nanoseconds.
+     * Resonance (float): Resonance at time on waveform in range [0.0, 1.0].
+     *
+     * The structure of shared memory (example with 2 waveforms, each with 2 readings):
+     *
+     * Byte: |   0    |  1-4  |  5-8  | 9-12  | 13-16 ||   17   |  18-21 | 22-25  | 26-29 | 30-33 |
+     * Data: | RecId1 | TOF1  | RES1  | TOF2  | RES2  || RecId2 |  TOF1  |  RES1  | TOF2  | RES2  |
+     *       |              Waveform1                 ||             Waveform2                    |
+     * Here:
+     * RecId : Receiver's Id. Order matches the receiversIdList, type uint8_t
+     * TOF : Time of flight, type float (4 bytes)
+     * RES : Resonance, type float (4 bytes)
+     * Note: All readings and waveforms are contigious with no padding.
+     */
+    memory waveformsData;
+};
