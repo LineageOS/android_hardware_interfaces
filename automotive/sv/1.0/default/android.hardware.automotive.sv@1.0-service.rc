@@ -1,0 +1,5 @@
+service sv_service /vendor/bin/hw/android.hardware.automotive.sv@1.0-service
+    class hal
+    user automotive_evs
+    group automotive_evs
+    disabled

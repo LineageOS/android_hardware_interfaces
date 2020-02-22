@@ -18,12 +18,13 @@ package android.hardware.automotive.evs@1.1;
 
 import IEvsCamera;
 import IEvsDisplay;
+import IEvsUltrasonicsArray;
 import @1.0::IEvsEnumerator;
 import @1.0::EvsResult;
 import android.hardware.camera.device@3.2::Stream;
 
 /**
- * Provides the mechanism for EVS camera discovery
+ * Provides the mechanism for EVS camera and ultrasonics array discovery
  */
 interface IEvsEnumerator extends @1.0::IEvsEnumerator {
     /**
@@ -76,4 +77,33 @@ interface IEvsEnumerator extends @1.0::IEvsEnumerator {
      * @return display EvsDisplay object to be used.
      */
     openDisplay_1_1(uint8_t id) generates (IEvsDisplay display);
+
+    /**
+     * Returns a list of all ultrasonics array available to the system.
+     * Will return an empty vector if ultrasonics is not supported.
+     *
+     * @return ultrasonicsArrays A list of ultrasonics available for EVS service.
+     */
+    getUltrasonicsArrayList() generates (vec<UltrasonicsArrayDesc> ultrasonicsArrays);
+
+    /**
+     * Gets the IEvsUltrasonicsArray associated with a ultrasonicsArrayId from a
+     * UltrasonicsDataDesc
+     *
+     * @param  ultrasonicsArrayId  A unique identifier of the ultrasonic array.
+     * @return evsUltrasonicsArray IEvsUltrasonicsArray object associated with a
+     *                             given ultrasonicsArrayId.
+     */
+    openUltrasonicsArray(string ultrasonicsArrayId) generates (
+            IEvsUltrasonicsArray evsUltrasonicsArray);
+
+    /**
+     * Return the specified IEvsUltrasonicsArray interface as no longer in use
+     *
+     * When the IEvsUltrasonicsArray object is no longer required, it must be released.
+     * NOTE: Data streaming must be cleanly stopped before making this call.
+     *
+     * @param  evsUltrasonicsArray EvsUltrasonics array object to be closed.
+     */
+    closeUltrasonicsArray(IEvsUltrasonicsArray evsUltrasonicsArray);
 };

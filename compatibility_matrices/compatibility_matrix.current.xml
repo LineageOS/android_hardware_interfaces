@@ -56,6 +56,14 @@
         </interface>
     </hal>
     <hal format="hidl" optional="true">
+        <name>android.hardware.automotive.sv</name>
+        <version>1.0</version>
+        <interface>
+            <name>ISurroundView</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="hidl" optional="true">
         <name>android.hardware.automotive.vehicle</name>
         <version>2.0</version>
         <interface>

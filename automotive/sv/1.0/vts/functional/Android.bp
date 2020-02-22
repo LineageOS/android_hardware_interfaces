@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2019 The Android Open Source Project
+// Copyright (C) 2020 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,30 +15,25 @@
 //
 
 cc_test {
-    name: "VtsHalEvsV1_1TargetTest",
+    name: "VtsHalSurroundViewV1_0TargetTest",
     srcs: [
-        "FrameHandler.cpp",
-        "FrameHandlerUltrasonics.cpp",
-        "VtsHalEvsV1_1TargetTest.cpp",
+        "VtsHalSurroundViewV1_0TargetTest.cpp",
+        "SurroundViewStreamHandler.cpp",
     ],
     defaults: ["VtsHalTargetTestDefaults"],
-    shared_libs: [
-        "libui",
-        "libcamera_metadata",
-        "libhidlmemory",
-        "android.hidl.allocator@1.0",
-        "android.hidl.memory@1.0",
-    ],
     static_libs: [
-        "android.hardware.automotive.evs@1.0",
-        "android.hardware.automotive.evs@1.1",
-        "android.hardware.automotive.evs@common-default-lib",
+        "libnativewindow",
+        "android.hardware.automotive.sv@1.0",
         "android.hardware.graphics.common@1.0",
         "android.hardware.graphics.common@1.1",
         "android.hardware.graphics.common@1.2",
-        "android.hardware.camera.device@3.2",
     ],
-    test_suites: ["vts-core"],
+    shared_libs: [
+        "android.hidl.allocator@1.0",
+        "android.hidl.memory@1.0",
+        "libhidlmemory",
+    ],
+    test_suites: ["general-tests", "vts-core"],
     cflags: [
         "-O0",
         "-g",

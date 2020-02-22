@@ -70,6 +70,7 @@ constexpr int VENDOR_EXTENSION_STRING_PROPERTY =
     (int)(0x104 | VehiclePropertyGroup::VENDOR | VehiclePropertyType::STRING | VehicleArea::GLOBAL);
 constexpr int FUEL_DOOR_REAR_LEFT = (int)PortLocationType::REAR_LEFT;
 constexpr int CHARGE_PORT_FRONT_LEFT = (int)PortLocationType::FRONT_LEFT;
+constexpr int CHARGE_PORT_REAR_LEFT = (int)PortLocationType::REAR_LEFT;
 constexpr int LIGHT_STATE_ON = (int)VehicleLightState::ON;
 constexpr int LIGHT_SWITCH_AUTO = (int)VehicleLightSwitch::AUTOMATIC;
 constexpr int WHEEL_FRONT_LEFT = (int)VehicleAreaWheel::LEFT_FRONT;
@@ -246,6 +247,14 @@ const ConfigDeclaration kVehicleProperties[]{
                          .changeMode = VehiclePropertyChangeMode::STATIC,
                  },
          .initialValue = {.int32Values = {CHARGE_PORT_FRONT_LEFT}}},
+
+        {.config =
+                 {
+                         .prop = toInt(VehicleProperty::INFO_MULTI_EV_PORT_LOCATIONS),
+                         .access = VehiclePropertyAccess::READ,
+                         .changeMode = VehiclePropertyChangeMode::STATIC,
+                 },
+         .initialValue = {.int32Values = {CHARGE_PORT_FRONT_LEFT, CHARGE_PORT_REAR_LEFT}}},
 
         {.config =
                  {
