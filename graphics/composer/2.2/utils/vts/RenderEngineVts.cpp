@@ -69,9 +69,8 @@ void TestRenderEngine::drawLayers() {
                    [](renderengine::LayerSettings& settings) -> renderengine::LayerSettings* {
                        return &settings;
                    });
-    mRenderEngine->drawLayers(mDisplaySettings, compositionLayerPointers,
-                              mGraphicBuffer->getNativeBuffer(), true, std::move(bufferFence),
-                              &readyFence);
+    mRenderEngine->drawLayers(mDisplaySettings, compositionLayerPointers, mGraphicBuffer, true,
+                              std::move(bufferFence), &readyFence);
     int fd = readyFence.release();
     if (fd != -1) {
         ASSERT_EQ(0, sync_wait(fd, -1));
