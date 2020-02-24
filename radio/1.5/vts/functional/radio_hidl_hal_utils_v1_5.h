@@ -531,6 +531,8 @@ class RadioResponse_v1_5 : public ::android::hardware::radio::V1_5::IRadioRespon
     /* 1.5 Api */
     Return<void> setSignalStrengthReportingCriteriaResponse_1_5(const RadioResponseInfo& info);
 
+    Return<void> setLinkCapacityReportingCriteriaResponse_1_5(const RadioResponseInfo& info);
+
     Return<void> enableUiccApplicationsResponse(const RadioResponseInfo& info);
 
     Return<void> areUiccApplicationsEnabledResponse(const RadioResponseInfo& info, bool enabled);
