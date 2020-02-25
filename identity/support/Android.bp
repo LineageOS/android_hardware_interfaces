@@ -23,10 +23,14 @@ cc_library {
         "include",
     ],
     shared_libs: [
+        "android.hardware.keymaster@4.0",
         "libcrypto",
         "libbase",
         "libhidlbase",
         "libhardware",
+        "libkeymaster_portable",
+        "libsoft_attestation_cert",
+        "libpuresoftkeymasterdevice",
     ],
     static_libs: [
         "libcppbor",
