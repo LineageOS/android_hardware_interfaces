@@ -1990,7 +1990,7 @@ TEST_P(GraphicsMapperHidlTest, ListSupportedMetadataTypes) {
         const auto& metadataType = description.metadataType;
 
         if (!gralloc4::isStandardMetadataType(metadataType)) {
-            EXPECT_GT(0, description.description.size());
+            EXPECT_GT(description.description.size(), 0);
             continue;
         }
 
@@ -2074,7 +2074,7 @@ TEST_P(GraphicsMapperHidlTest, GetReservedRegion) {
     auto info = mDummyDescriptorInfo;
 
     const int pageSize = getpagesize();
-    ASSERT_GE(0, pageSize);
+    ASSERT_GE(pageSize, 0);
     std::vector<uint64_t> requestedReservedSizes{1, 10, 333, static_cast<uint64_t>(pageSize) / 2,
                                                  static_cast<uint64_t>(pageSize)};
 
@@ -2106,7 +2106,7 @@ TEST_P(GraphicsMapperHidlTest, GetLargeReservedRegion) {
     auto info = mDummyDescriptorInfo;
 
     const int pageSize = getpagesize();
-    ASSERT_GE(0, pageSize);
+    ASSERT_GE(pageSize, 0);
     std::vector<uint64_t> requestedReservedSizes{static_cast<uint64_t>(pageSize) * 2,
                                                  static_cast<uint64_t>(pageSize) * 10,
                                                  static_cast<uint64_t>(pageSize) * 1000};
@@ -2144,7 +2144,7 @@ TEST_P(GraphicsMapperHidlTest, GetReservedRegionMultiple) {
     auto info = mDummyDescriptorInfo;
 
     const int pageSize = getpagesize();
-    ASSERT_GE(0, pageSize);
+    ASSERT_GE(pageSize, 0);
     info.reservedSize = pageSize;
 
     ASSERT_NO_FATAL_FAILURE(bufferHandle = mGralloc->allocate(info, true));
