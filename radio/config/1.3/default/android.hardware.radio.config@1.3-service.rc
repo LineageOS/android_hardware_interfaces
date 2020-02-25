@@ -1,7 +1,0 @@
-service vendor.radio-config-hal-1-3 /vendor/bin/hw/android.hardware.radio.config@1.3-service
-    interface android.hardware.radio.config@1.0::IRadioConfig default
-    interface android.hardware.radio.config@1.1::IRadioConfig default
-    interface android.hardware.radio.config@1.3::IRadioConfig default
-    class hal
-    user system
-    group system
