@@ -68,6 +68,9 @@ struct ExternalCameraConfig {
     static const char* kDefaultCfgPath;
     static ExternalCameraConfig loadFromCfg(const char* cfgPath = kDefaultCfgPath);
 
+    // CameraId base offset for numerical representation
+    uint32_t cameraIdOffset;
+
     // List of internal V4L2 video nodes external camera HAL must ignore.
     std::unordered_set<std::string> mInternalDevices;
 
