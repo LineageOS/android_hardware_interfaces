@@ -22,7 +22,7 @@
 #include <condition_variable>
 #include <mutex>
 
-#include <android/hardware/radio/config/1.3/IRadioConfig.h>
+#include <android/hardware/radio/config/1.1/IRadioConfig.h>
 
 #include <android/hardware/radio/1.5/IRadio.h>
 #include <android/hardware/radio/1.5/IRadioIndication.h>
