@@ -238,7 +238,8 @@ interface IRadio extends @1.4::IRadio {
      * 1) Emergency call is completed; or
      * 2) Another setRadioPower_1_5 is issued with forEmergencyCall being false or
      * preferredForEmergencyCall being false; or
-     * 3) Timeout after a long period of time.
+     * 3) Timeout after 30 seconds if dial or emergencyDial is not called.
+     * Once one of these conditions is reached, the modem should move into normal operation.
      *
      * @param serial Serial number of request.
      * @param powerOn To turn on radio -> on = true, to turn off radio -> on = false.
