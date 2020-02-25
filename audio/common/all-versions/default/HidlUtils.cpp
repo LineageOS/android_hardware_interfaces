@@ -28,12 +28,13 @@ namespace common {
 namespace CPP_VERSION {
 namespace implementation {
 
-void HidlUtils::audioConfigFromHal(const audio_config_t& halConfig, AudioConfig* config) {
+status_t HidlUtils::audioConfigFromHal(const audio_config_t& halConfig, AudioConfig* config) {
     config->sampleRateHz = halConfig.sample_rate;
     config->channelMask = EnumBitfield<AudioChannelMask>(halConfig.channel_mask);
     config->format = AudioFormat(halConfig.format);
-    audioOffloadInfoFromHal(halConfig.offload_info, &config->offloadInfo);
+    status_t status = audioOffloadInfoFromHal(halConfig.offload_info, &config->offloadInfo);
     config->frameCount = halConfig.frame_count;
+    return status;
 }
 
 void HidlUtils::audioConfigToHal(const AudioConfig& config, audio_config_t* halConfig) {
@@ -106,8 +107,8 @@ audio_usage_t HidlUtils::audioUsageToHal(const AudioUsage usage) {
     return static_cast<audio_usage_t>(usage);
 }
 
-void HidlUtils::audioOffloadInfoFromHal(const audio_offload_info_t& halOffload,
-                                        AudioOffloadInfo* offload) {
+status_t HidlUtils::audioOffloadInfoFromHal(const audio_offload_info_t& halOffload,
+                                            AudioOffloadInfo* offload) {
     offload->sampleRateHz = halOffload.sample_rate;
     offload->channelMask = EnumBitfield<AudioChannelMask>(halOffload.channel_mask);
     offload->format = AudioFormat(halOffload.format);
@@ -119,6 +120,26 @@ void HidlUtils::audioOffloadInfoFromHal(const audio_offload_info_t& halOffload,
     offload->bitWidth = halOffload.bit_width;
     offload->bufferSize = halOffload.offload_buffer_size;
     offload->usage = audioUsageFromHal(halOffload.usage);
+#if MAJOR_VERSION >= 6
+    if (halOffload.version >= AUDIO_OFFLOAD_INFO_VERSION_0_2) {
+        offload->encapsulationMode =
+                static_cast<AudioEncapsulationMode>(halOffload.encapsulation_mode);
+        offload->contentId = halOffload.content_id;
+        offload->syncId = halOffload.sync_id;
+    } else {
+        offload->encapsulationMode = AudioEncapsulationMode::NONE;
+        offload->contentId = 0;
+        offload->syncId = 0;
+    }
+#else
+    // nonzero values here are not compatible with HAL versions below 6.
+    if (halOffload.version >= AUDIO_OFFLOAD_INFO_VERSION_0_2 &&
+        (halOffload.encapsulation_mode != AUDIO_ENCAPSULATION_MODE_NONE ||
+         halOffload.content_id != 0 || halOffload.sync_id != 0)) {
+        return BAD_VALUE;
+    }
+#endif
+    return OK;
 }
 
 void HidlUtils::audioOffloadInfoToHal(const AudioOffloadInfo& offload,
@@ -135,6 +156,14 @@ void HidlUtils::audioOffloadInfoToHal(const AudioOffloadInfo& offload,
     halOffload->bit_width = offload.bitWidth;
     halOffload->offload_buffer_size = offload.bufferSize;
     halOffload->usage = audioUsageToHal(offload.usage);
+#if MAJOR_VERSION >= 6
+    halOffload->encapsulation_mode =
+            static_cast<audio_encapsulation_mode_t>(offload.encapsulationMode);
+    halOffload->content_id = offload.contentId;
+    halOffload->sync_id = offload.syncId;
+#else
+    // offload doesn't contain encapsulationMode, contentId, syncId, so this is OK.
+#endif
 }
 
 void HidlUtils::audioPortConfigFromHal(const struct audio_port_config& halConfig,
