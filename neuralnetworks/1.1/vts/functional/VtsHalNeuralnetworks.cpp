@@ -132,7 +132,8 @@ void validateEverything(const sp<IDevice>& device, const Model& model, const Req
 
 TEST_P(ValidationTest, Test) {
     const Model model = createModel(kTestModel);
-    const Request request = createRequest(kTestModel);
+    ExecutionContext context;
+    const Request request = context.createRequest(kTestModel);
     ASSERT_FALSE(kTestModel.expectFailure);
     validateEverything(kDevice, model, request);
 }
