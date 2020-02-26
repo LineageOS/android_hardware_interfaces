@@ -81,16 +81,17 @@ static std::optional<std::tuple<V1_0::CanMessageId, std::vector<uint8_t>>> parse
     const std::string msgidStr = msg.substr(0, hashpos);
     const std::string payloadStr = msg.substr(hashpos + 1);
 
-    size_t idx = 0;
-    V1_0::CanMessageId msgid = std::stoi(msgidStr, &idx, 16);
-    if (msgidStr[idx] != '\0') return std::nullopt;
+    V1_0::CanMessageId msgid;
+    // "0x" must be prepended to msgidStr, since ParseUint doesn't accept a base argument.
+    if (!android::base::ParseUint("0x" + msgidStr, &msgid)) return std::nullopt;
 
     std::vector<uint8_t> payload;
     if (payloadStr.size() % 2 != 0) return std::nullopt;
     for (size_t i = 0; i < payloadStr.size(); i += 2) {
         std::string byteStr(payloadStr, i, 2);
-        payload.emplace_back(std::stoi(byteStr, &idx, 16));
-        if (byteStr[idx] != '\0') return std::nullopt;
+        uint8_t byteBuf;
+        if (!android::base::ParseUint("0x" + byteStr, &byteBuf)) return std::nullopt;
+        payload.emplace_back(byteBuf);
     }
 
     return {{msgid, payload}};

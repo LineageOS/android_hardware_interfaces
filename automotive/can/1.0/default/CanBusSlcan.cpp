@@ -56,7 +56,7 @@ ICanController::Result CanBusSlcan::updateIfaceName(base::unique_fd& uartFd) {
      * that has already been configured and brought up.
      */
     if (ioctl(uartFd.get(), SIOCGIFNAME, ifrequest.ifr_name) < 0) {
-        LOG(ERROR) << "Failed to get the name of the created device: " << strerror(errno);
+        PLOG(ERROR) << "Failed to get the name of the created device";
         return ICanController::Result::UNKNOWN_ERROR;
     }
 
@@ -80,7 +80,7 @@ ICanController::Result CanBusSlcan::preUp() {
      * controlling terminal */
     mFd = base::unique_fd(open(mUartName.c_str(), O_RDWR | O_NONBLOCK | O_NOCTTY));
     if (!mFd.ok()) {
-        LOG(ERROR) << "SLCAN Failed to open " << mUartName << ": " << strerror(errno);
+        PLOG(ERROR) << "SLCAN Failed to open " << mUartName;
         return ICanController::Result::BAD_INTERFACE_ID;
     }
 
@@ -92,7 +92,7 @@ ICanController::Result CanBusSlcan::preUp() {
     // blank terminal settings and pull them from the device
     struct termios terminalSettings = {};
     if (tcgetattr(mFd.get(), &terminalSettings) < 0) {
-        LOG(ERROR) << "Failed to read attrs of" << mUartName << ": " << strerror(errno);
+        PLOG(ERROR) << "Failed to read attrs of" << mUartName;
         return ICanController::Result::UNKNOWN_ERROR;
     }
 
@@ -107,42 +107,40 @@ ICanController::Result CanBusSlcan::preUp() {
     struct serial_struct serialSettings;
     // get serial settings
     if (ioctl(mFd.get(), TIOCGSERIAL, &serialSettings) < 0) {
-        LOG(ERROR) << "Failed to read serial settings from " << mUartName << ": "
-                   << strerror(errno);
+        PLOG(ERROR) << "Failed to read serial settings from " << mUartName;
         return ICanController::Result::UNKNOWN_ERROR;
     }
     // set low latency mode
     serialSettings.flags |= ASYNC_LOW_LATENCY;
     // apply serial settings
     if (ioctl(mFd.get(), TIOCSSERIAL, &serialSettings) < 0) {
-        LOG(ERROR) << "Failed to set low latency mode on " << mUartName << ": " << strerror(errno);
+        PLOG(ERROR) << "Failed to set low latency mode on " << mUartName;
         return ICanController::Result::UNKNOWN_ERROR;
     }
 
     /* TCSADRAIN applies settings after we finish writing the rest of our
      * changes (as opposed to TCSANOW, which changes immediately) */
     if (tcsetattr(mFd.get(), TCSADRAIN, &terminalSettings) < 0) {
-        LOG(ERROR) << "Failed to apply terminal settings to " << mUartName << ": "
-                   << strerror(errno);
+        PLOG(ERROR) << "Failed to apply terminal settings to " << mUartName;
         return ICanController::Result::UNKNOWN_ERROR;
     }
 
     // apply speed setting for CAN
     if (write(mFd.get(), canBitrateCommand->c_str(), canBitrateCommand->length()) <= 0) {
-        LOG(ERROR) << "Failed to apply CAN bitrate: " << strerror(errno);
+        PLOG(ERROR) << "Failed to apply CAN bitrate";
         return ICanController::Result::UNKNOWN_ERROR;
     }
 
     // set open flag TODO: also support listen only
     if (write(mFd.get(), slcanprotocol::kOpenCommand.c_str(),
               slcanprotocol::kOpenCommand.length()) <= 0) {
-        LOG(ERROR) << "Failed to set open flag: " << strerror(errno);
+        PLOG(ERROR) << "Failed to set open flag";
         return ICanController::Result::UNKNOWN_ERROR;
     }
 
     // set line discipline to slcan
     if (ioctl(mFd.get(), TIOCSETD, &slcanprotocol::kSlcanDiscipline) < 0) {
-        LOG(ERROR) << "Failed to set line discipline to slcan: " << strerror(errno);
+        PLOG(ERROR) << "Failed to set line discipline to slcan";
         return ICanController::Result::UNKNOWN_ERROR;
     }
 
