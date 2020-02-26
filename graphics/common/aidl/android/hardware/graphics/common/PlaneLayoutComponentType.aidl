@@ -41,6 +41,9 @@ enum PlaneLayoutComponentType {
     /* Blue */
     B = 1 << 12,
 
+    /* Raw */
+    RAW = 1 << 20,
+
     /* Alpha */
     A = 1 << 30,
 }

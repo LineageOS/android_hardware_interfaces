@@ -903,6 +903,25 @@ enum AudioContentType : uint32_t {
     SONIFICATION = 4,
 };
 
+/** Encapsulation mode used for sending audio compressed data. */
+@export(name="audio_encapsulation_mode_t", value_prefix="AUDIO_ENCAPSULATION_MODE_")
+enum AudioEncapsulationMode : int32_t {
+    // Do not change these values without updating their counterparts
+    // in frameworks/base/media/java/android/media/AudioTrack.java
+    /**
+     * No encapsulation mode for metadata.
+     */
+    NONE              = 0,
+    /**
+     * Elementary stream payload with metadata
+     */
+    ELEMENTARY_STREAM = 1,
+    /**
+     *  Handle-based payload with metadata
+     */
+    HANDLE            = 2,
+};
+
 /**
  * Additional information about the stream passed to hardware decoders.
  */
@@ -918,6 +937,9 @@ struct AudioOffloadInfo {
     uint32_t bitWidth;
     uint32_t bufferSize;
     AudioUsage usage;
+    AudioEncapsulationMode encapsulationMode;
+    int32_t contentId;
+    int32_t syncId;
 };
 
 /**
