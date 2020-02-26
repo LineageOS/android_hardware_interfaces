@@ -152,9 +152,11 @@ class GnssHalTest : public testing::TestWithParam<std::string> {
      *   <p> Note this leaves the Location request active, to enable Stop call vs. other call
      *   reordering tests.
      *
+     *   <p> if 'strict' is true, the test will fail if no location is generated.
+     *
      * returns  true if a location was successfully generated
      */
-    bool StartAndCheckFirstLocation();
+    bool StartAndCheckFirstLocation(bool strict);
 
     /*
      * CheckLocation:
