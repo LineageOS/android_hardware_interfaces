@@ -19,6 +19,7 @@ package android.hardware.audio@6.0;
 import android.hardware.audio.common@6.0;
 import IStream;
 import IStreamOutCallback;
+import IStreamOutEventCallback;
 
 interface IStreamOut extends IStream {
     /**
@@ -166,6 +167,18 @@ interface IStreamOut extends IStream {
      * @return retval operation completion status: OK or NOT_SUPPORTED.
      */
     clearCallback() generates (Result retval);
+
+    /**
+     * Set the callback interface for notifying about an output stream event.
+     *
+     * Calling this method with a null pointer will result in releasing
+     * the local callback proxy on the server side and thus dereference
+     * the callback implementation on the client side.
+     *
+     * @return retval operation completion status.
+     */
+    setEventCallback(IStreamOutEventCallback callback)
+            generates (Result retval);
 
     /**
      * Returns whether HAL supports pausing and resuming of streams.
