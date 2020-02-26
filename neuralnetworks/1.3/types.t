@@ -103,8 +103,10 @@ enum Priority : int32_t {
 /**
  * The capabilities of a driver.
  *
- * Performance of an operation comes from the type of its first operand.
- * This represents performance for non extension operand types.
+ * This represents performance of non-extension operations.
+ *
+ * Performance of an operation other than {@link OperationType::IF} and
+ * {@link OperationType::WHILE} comes from the type of its first operand.
  */
 struct Capabilities {
     /**
@@ -127,11 +129,32 @@ struct Capabilities {
 
     /**
      * Performance by operand type. Must be sorted by OperandType.
-     * If a particular OperandType is not present in operandPerformance,
+     *
+     * If a particular {@link OperandType} is not present in operandPerformance,
      * its performance is treated as
      * { .execTime = FLT_MAX, .powerUsage = FLT_MAX }.
+     *
+     * Performance does not apply to {@link OperandType::SUBGRAPH}, and a driver
+     * must not report operand performance for {@link OperandType::SUBGRAPH}.
      */
     vec<OperandPerformance> operandPerformance;
+
+    /**
+     * Performance of an {@link OperationType::IF} operation is the sum of
+     * {@link Capabilities::ifPerformance} and the mean of performance for the
+     * two branch subgraphs, where performance for a subgraph is the sum of the
+     * performance of all operations within the subgraph.
+     */
+    PerformanceInfo ifPerformance;
+
+    /**
+     * Performance of a {@link OperationType::WHILE} operation is the sum of
+     * {@link Capabilities::whilePerformance}, performance for the condition
+     * subgraph and performance for the body subgraph, where performance for a
+     * subgraph is the sum of the performance of all operations within the
+     * subgraph.
+     */
+    PerformanceInfo whilePerformance;
 };
 
 /**
@@ -574,4 +597,15 @@ enum ErrorStatus : @1.0::ErrorStatus {
      * delay.
      */
     RESOURCE_EXHAUSTED_PERSISTENT,
+};
+
+/**
+ * Each {@link OperationType::WHILE} operation in the model has an implicit
+ * execution timeout duration associated with it ("loop timeout duration").
+ * This duration is configurable on a per-execution basis and must not exceed
+ * 15 seconds. The default value is 2 seconds.
+ */
+enum LoopTimeoutDurationNs : uint64_t {
+    DEFAULT = 2000000000,
+    MAXIMUM = 15000000000,
 };
