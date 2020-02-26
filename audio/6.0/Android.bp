@@ -15,6 +15,7 @@ hidl_interface {
         "IStreamIn.hal",
         "IStreamOut.hal",
         "IStreamOutCallback.hal",
+        "IStreamOutEventCallback.hal",
     ],
     interfaces: [
         "android.hardware.audio.common@6.0",
