@@ -31,12 +31,12 @@ cc_library_static {
         "android.hardware.drm@1.2",
         "android.hidl.allocator@1.0",
         "android.hidl.memory@1.0",
+        "libcrypto",
         "libhidlmemory",
         "libnativehelper",
     ],
     static_libs: [
         "android.hardware.drm@1.0-helper",
-        "libcrypto_static",
         "libdrmvtshelper",
     ],
     export_shared_lib_headers: [
@@ -63,11 +63,11 @@ cc_test {
         "android.hardware.drm@1.0",
         "android.hardware.drm@1.2",
         "android.hidl.allocator@1.0",
+        "libcrypto",
         "libhidlmemory",
     ],
     static_libs: [
         "android.hardware.drm@1.0-helper",
-        "libcrypto_static",
         "libdrmvtshelper",
     ],
     test_suites: [
