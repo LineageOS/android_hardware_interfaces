@@ -496,7 +496,7 @@ static std::vector<TestBuffer> getOutputBuffers(const TestModel& testModel, cons
 static Return<ErrorStatus> ExecutePreparedModel(const sp<IPreparedModel>& preparedModel,
                                                 const Request& request, MeasureTiming measure,
                                                 sp<ExecutionCallback>& callback) {
-    return preparedModel->execute_1_3(request, measure, {}, callback);
+    return preparedModel->execute_1_3(request, measure, {}, {}, callback);
 }
 static Return<ErrorStatus> ExecutePreparedModel(const sp<IPreparedModel>& preparedModel,
                                                 const Request& request, MeasureTiming measure,
@@ -504,7 +504,7 @@ static Return<ErrorStatus> ExecutePreparedModel(const sp<IPreparedModel>& prepar
                                                 Timing* timing) {
     ErrorStatus result;
     Return<void> ret = preparedModel->executeSynchronously_1_3(
-            request, measure, {},
+            request, measure, {}, {},
             [&result, outputShapes, timing](ErrorStatus error, const hidl_vec<OutputShape>& shapes,
                                             const Timing& time) {
                 result = error;
@@ -612,7 +612,7 @@ void EvaluatePreparedModel(const sp<IDevice>& device, const sp<IPreparedModel>& 
             hidl_handle syncFenceHandle;
             sp<IFencedExecutionCallback> fencedCallback;
             Return<void> ret = preparedModel->executeFenced(
-                    request, {}, testConfig.measureTiming, {}, {},
+                    request, {}, testConfig.measureTiming, {}, {}, {},
                     [&result, &syncFenceHandle, &fencedCallback](
                             ErrorStatus error, const hidl_handle& handle,
                             const sp<IFencedExecutionCallback>& callback) {
