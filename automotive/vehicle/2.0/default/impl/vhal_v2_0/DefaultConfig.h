@@ -17,8 +17,10 @@
 #ifndef android_hardware_automotive_vehicle_V2_0_impl_DefaultConfig_H_
 #define android_hardware_automotive_vehicle_V2_0_impl_DefaultConfig_H_
 
-#include <android/hardware/automotive/vehicle/2.0/IVehicle.h>
+#include <android/hardware/automotive/vehicle/2.0/types.h>
 #include <vhal_v2_0/VehicleUtils.h>
+
+#include <map>
 
 namespace android {
 namespace hardware {
@@ -1017,7 +1019,6 @@ const ConfigDeclaration kVehicleProperties[]{
                                 .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
                         },
         },
-
 };
 
 }  // impl

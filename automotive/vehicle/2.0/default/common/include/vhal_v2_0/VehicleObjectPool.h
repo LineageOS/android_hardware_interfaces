@@ -21,6 +21,7 @@
 #include <deque>
 #include <map>
 #include <mutex>
+#include <memory>
 
 #include <android/hardware/automotive/vehicle/2.0/types.h>
 
