@@ -279,23 +279,48 @@ TEST_P(GraphicsComposerHidlTest, getDisplayVsyncPeriod_BadDisplay) {
               mComposerClient->getDisplayVsyncPeriod(mInvalidDisplayId, &vsyncPeriodNanos));
 }
 
-TEST_P(GraphicsComposerHidlTest, getDisplayVsyncPeriod) {
+TEST_P(GraphicsComposerHidlCommandTest, getDisplayVsyncPeriod) {
     for (Display display : mComposerCallback->getDisplays()) {
         for (Config config : mComposerClient->getDisplayConfigs(display)) {
             VsyncPeriodNanos expectedVsyncPeriodNanos = mComposerClient->getDisplayAttribute_2_4(
                     display, config, IComposerClient::IComposerClient::Attribute::VSYNC_PERIOD);
 
-            mComposerClient->setActiveConfig(display, config);
+            VsyncPeriodChangeTimeline timeline;
+            IComposerClient::VsyncPeriodChangeConstraints constraints;
+
+            constraints.desiredTimeNanos = systemTime();
+            constraints.seamlessRequired = false;
+            EXPECT_EQ(Error::NONE, mComposerClient->setActiveConfigWithConstraints(
+                                           display, config, constraints, &timeline));
+
+            if (timeline.refreshRequired) {
+                sendRefreshFrame(timeline);
+            }
+            waitForVsyncPeriodChange(display, timeline, constraints.desiredTimeNanos, 0,
+                                     expectedVsyncPeriodNanos);
+
             VsyncPeriodNanos vsyncPeriodNanos;
             int retryCount = 100;
             do {
                 std::this_thread::sleep_for(10ms);
+                vsyncPeriodNanos = 0;
                 EXPECT_EQ(Error::NONE,
                           mComposerClient->getDisplayVsyncPeriod(display, &vsyncPeriodNanos));
                 --retryCount;
             } while (vsyncPeriodNanos != expectedVsyncPeriodNanos && retryCount > 0);
 
             EXPECT_EQ(vsyncPeriodNanos, expectedVsyncPeriodNanos);
+
+            // Make sure that the vsync period stays the same if the active config is not changed.
+            auto timeout = 1ms;
+            for (int i = 0; i < 10; i++) {
+                std::this_thread::sleep_for(timeout);
+                timeout *= 2;
+                vsyncPeriodNanos = 0;
+                EXPECT_EQ(Error::NONE,
+                          mComposerClient->getDisplayVsyncPeriod(display, &vsyncPeriodNanos));
+                EXPECT_EQ(vsyncPeriodNanos, expectedVsyncPeriodNanos);
+            }
         }
     }
 }
