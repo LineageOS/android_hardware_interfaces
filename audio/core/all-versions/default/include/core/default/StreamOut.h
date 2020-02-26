@@ -133,12 +133,19 @@ struct StreamOut : public IStreamOut {
     static Result getPresentationPositionImpl(audio_stream_out_t* stream, uint64_t* frames,
                                               TimeSpec* timeStamp);
 
-   private:
+#if MAJOR_VERSION >= 6
+    Return<Result> setEventCallback(const sp<IStreamOutEventCallback>& callback) override;
+#endif
+
+  private:
     const sp<Device> mDevice;
     audio_stream_out_t* mStream;
     const sp<Stream> mStreamCommon;
     const sp<StreamMmap<audio_stream_out_t>> mStreamMmap;
-    sp<IStreamOutCallback> mCallback;
+    sp<IStreamOutCallback> mCallback;  // Callback for non-blocking write and drain
+#if MAJOR_VERSION >= 6
+    sp<IStreamOutEventCallback> mEventCallback;
+#endif
     std::unique_ptr<CommandMQ> mCommandMQ;
     std::unique_ptr<DataMQ> mDataMQ;
     std::unique_ptr<StatusMQ> mStatusMQ;
@@ -149,6 +156,10 @@ struct StreamOut : public IStreamOut {
     virtual ~StreamOut();
 
     static int asyncCallback(stream_callback_event_t event, void* param, void* cookie);
+
+#if MAJOR_VERSION >= 6
+    static int asyncEventCallback(stream_event_callback_type_t event, void* param, void* cookie);
+#endif
 };
 
 }  // namespace implementation
