@@ -75,10 +75,11 @@ struct TestConfig {
 
 Model createModel(const TestModel& testModel) {
     // Model operands.
-    hidl_vec<Operand> operands(testModel.operands.size());
+    CHECK_EQ(testModel.referenced.size(), 0u);  // Not supported in 1.1.
+    hidl_vec<Operand> operands(testModel.main.operands.size());
     size_t constCopySize = 0, constRefSize = 0;
-    for (uint32_t i = 0; i < testModel.operands.size(); i++) {
-        const auto& op = testModel.operands[i];
+    for (uint32_t i = 0; i < testModel.main.operands.size(); i++) {
+        const auto& op = testModel.main.operands[i];
 
         DataLocation loc = {};
         if (op.lifetime == TestOperandLifeTime::CONSTANT_COPY) {
@@ -110,9 +111,9 @@ Model createModel(const TestModel& testModel) {
     }
 
     // Model operations.
-    hidl_vec<Operation> operations(testModel.operations.size());
-    std::transform(testModel.operations.begin(), testModel.operations.end(), operations.begin(),
-                   [](const TestOperation& op) -> Operation {
+    hidl_vec<Operation> operations(testModel.main.operations.size());
+    std::transform(testModel.main.operations.begin(), testModel.main.operations.end(),
+                   operations.begin(), [](const TestOperation& op) -> Operation {
                        return {.type = static_cast<OperationType>(op.type),
                                .inputs = op.inputs,
                                .outputs = op.outputs};
@@ -120,8 +121,8 @@ Model createModel(const TestModel& testModel) {
 
     // Constant copies.
     hidl_vec<uint8_t> operandValues(constCopySize);
-    for (uint32_t i = 0; i < testModel.operands.size(); i++) {
-        const auto& op = testModel.operands[i];
+    for (uint32_t i = 0; i < testModel.main.operands.size(); i++) {
+        const auto& op = testModel.main.operands[i];
         if (op.lifetime == TestOperandLifeTime::CONSTANT_COPY) {
             const uint8_t* begin = op.data.get<uint8_t>();
             const uint8_t* end = begin + op.data.size();
@@ -142,8 +143,8 @@ Model createModel(const TestModel& testModel) {
                 reinterpret_cast<uint8_t*>(static_cast<void*>(mappedMemory->getPointer()));
         CHECK(mappedPtr != nullptr);
 
-        for (uint32_t i = 0; i < testModel.operands.size(); i++) {
-            const auto& op = testModel.operands[i];
+        for (uint32_t i = 0; i < testModel.main.operands.size(); i++) {
+            const auto& op = testModel.main.operands[i];
             if (op.lifetime == TestOperandLifeTime::CONSTANT_REFERENCE) {
                 const uint8_t* begin = op.data.get<uint8_t>();
                 const uint8_t* end = begin + op.data.size();
@@ -154,15 +155,15 @@ Model createModel(const TestModel& testModel) {
 
     return {.operands = std::move(operands),
             .operations = std::move(operations),
-            .inputIndexes = testModel.inputIndexes,
-            .outputIndexes = testModel.outputIndexes,
+            .inputIndexes = testModel.main.inputIndexes,
+            .outputIndexes = testModel.main.outputIndexes,
             .operandValues = std::move(operandValues),
             .pools = std::move(pools),
             .relaxComputationFloat32toFloat16 = testModel.isRelaxed};
 }
 
 static bool isOutputSizeGreaterThanOne(const TestModel& testModel, uint32_t index) {
-    const auto byteSize = testModel.operands[testModel.outputIndexes[index]].data.size();
+    const auto byteSize = testModel.main.operands[testModel.main.outputIndexes[index]].data.size();
     return byteSize > 1u;
 }
 
@@ -302,17 +303,17 @@ void EvaluatePreparedModel(const sp<IPreparedModel>& preparedModel, const TestMo
             // either empty, or have the same number of elements as the number of outputs.
             ASSERT_EQ(ErrorStatus::NONE, executionStatus);
             ASSERT_TRUE(outputShapes.size() == 0 ||
-                        outputShapes.size() == testModel.outputIndexes.size());
+                        outputShapes.size() == testModel.main.outputIndexes.size());
             break;
         case OutputType::UNSPECIFIED:
             // If the model output operands are not fully specified, outputShapes must have
             // the same number of elements as the number of outputs.
             ASSERT_EQ(ErrorStatus::NONE, executionStatus);
-            ASSERT_EQ(outputShapes.size(), testModel.outputIndexes.size());
+            ASSERT_EQ(outputShapes.size(), testModel.main.outputIndexes.size());
             break;
         case OutputType::INSUFFICIENT:
             ASSERT_EQ(ErrorStatus::OUTPUT_INSUFFICIENT_SIZE, executionStatus);
-            ASSERT_EQ(outputShapes.size(), testModel.outputIndexes.size());
+            ASSERT_EQ(outputShapes.size(), testModel.main.outputIndexes.size());
             ASSERT_FALSE(outputShapes[0].isSufficient);
             return;
     }
@@ -320,7 +321,7 @@ void EvaluatePreparedModel(const sp<IPreparedModel>& preparedModel, const TestMo
     // Go through all outputs, check returned output shapes.
     for (uint32_t i = 0; i < outputShapes.size(); i++) {
         EXPECT_TRUE(outputShapes[i].isSufficient);
-        const auto& expect = testModel.operands[testModel.outputIndexes[i]].dimensions;
+        const auto& expect = testModel.main.operands[testModel.main.outputIndexes[i]].dimensions;
         const std::vector<uint32_t> actual = outputShapes[i].dimensions;
         EXPECT_EQ(expect, actual);
     }

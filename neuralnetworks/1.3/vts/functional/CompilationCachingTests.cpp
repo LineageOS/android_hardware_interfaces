@@ -209,10 +209,10 @@ TestModel createLargeTestModelImpl(TestOperationType op, uint32_t len) {
     };
 
     return {
-            .operands = std::move(operands),
-            .operations = std::move(operations),
-            .inputIndexes = {1},
-            .outputIndexes = {len * 2 + 1},
+            .main = {.operands = std::move(operands),
+                     .operations = std::move(operations),
+                     .inputIndexes = {1},
+                     .outputIndexes = {len * 2 + 1}},
             .isRelaxed = false,
     };
 }
