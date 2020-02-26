@@ -42,10 +42,10 @@ constexpr uint32_t kOutputPoolIndex = 1;
 
 Request createRequest(const TestModel& testModel) {
     // Model inputs.
-    hidl_vec<RequestArgument> inputs(testModel.inputIndexes.size());
+    hidl_vec<RequestArgument> inputs(testModel.main.inputIndexes.size());
     size_t inputSize = 0;
-    for (uint32_t i = 0; i < testModel.inputIndexes.size(); i++) {
-        const auto& op = testModel.operands[testModel.inputIndexes[i]];
+    for (uint32_t i = 0; i < testModel.main.inputIndexes.size(); i++) {
+        const auto& op = testModel.main.operands[testModel.main.inputIndexes[i]];
         if (op.data.size() == 0) {
             // Omitted input.
             inputs[i] = {.hasNoValue = true};
@@ -59,10 +59,10 @@ Request createRequest(const TestModel& testModel) {
     }
 
     // Model outputs.
-    hidl_vec<RequestArgument> outputs(testModel.outputIndexes.size());
+    hidl_vec<RequestArgument> outputs(testModel.main.outputIndexes.size());
     size_t outputSize = 0;
-    for (uint32_t i = 0; i < testModel.outputIndexes.size(); i++) {
-        const auto& op = testModel.operands[testModel.outputIndexes[i]];
+    for (uint32_t i = 0; i < testModel.main.outputIndexes.size(); i++) {
+        const auto& op = testModel.main.operands[testModel.main.outputIndexes[i]];
 
         // In the case of zero-sized output, we should at least provide a one-byte buffer.
         // This is because zero-sized tensors are only supported internally to the driver, or
@@ -90,8 +90,8 @@ Request createRequest(const TestModel& testModel) {
     CHECK(inputPtr != nullptr);
 
     // Copy input data to the memory pool.
-    for (uint32_t i = 0; i < testModel.inputIndexes.size(); i++) {
-        const auto& op = testModel.operands[testModel.inputIndexes[i]];
+    for (uint32_t i = 0; i < testModel.main.inputIndexes.size(); i++) {
+        const auto& op = testModel.main.operands[testModel.main.inputIndexes[i]];
         if (op.data.size() > 0) {
             const uint8_t* begin = op.data.get<uint8_t>();
             const uint8_t* end = begin + op.data.size();
