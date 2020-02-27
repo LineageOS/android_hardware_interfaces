@@ -1,0 +1,148 @@
+/*
+ * Copyright (C) 2020 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.sensors@2.1;
+
+import @1.0::Result;
+import @2.0::ISensors;
+import @2.1::ISensorsCallback;
+
+interface ISensors extends @2.0::ISensors {
+    /**
+     * Enumerate all available (static) sensors.
+     *
+     * The SensorInfo for each sensor returned by getSensorsList must be stable
+     * from the initial call to getSensorsList after a device boot until the
+     * entire system restarts. The SensorInfo for each sensor must not change
+     * between subsequent calls to getSensorsList, even across restarts of the
+     * HAL and its dependencies (for example, the sensor handle for a given
+     * sensor must not change across HAL restarts).
+     */
+    getSensorsList_2_1() generates (vec<SensorInfo> list);
+
+    /**
+     * Initialize the Sensors HAL's Fast Message Queues (FMQ) and callback.
+     *
+     * The Fast Message Queues (FMQ) that are used to send data between the
+     * framework and the HAL. The callback is used by the HAL to notify the
+     * framework of asynchronous events, such as a dynamic sensor connection.
+     *
+     * The Event FMQ is used to transport sensor events from the HAL to the
+     * framework. The Event FMQ is created using the eventQueueDescriptor.
+     * Data may only be written to the Event FMQ. Data must not be read from
+     * the Event FMQ since the framework is the only reader. Upon receiving
+     * sensor events, the HAL writes the sensor events to the Event FMQ.
+     *
+     * Once the HAL is finished writing sensor events to the Event FMQ, the HAL
+     * must notify the framework that sensor events are available to be read and
+     * processed. This is accomplished by either:
+     *     1) Calling the Event FMQ’s EventFlag::wake() function with
+              EventQueueFlagBits::READ_AND_PROCESS
+     *     2) Setting the write notification in the Event FMQ’s writeBlocking()
+     *        function to EventQueueFlagBits::READ_AND_PROCESS.
+     *
+     * If the Event FMQ’s writeBlocking() function is used, the read
+     * notification must be set to EventQueueFlagBits::EVENTS_READ in order to
+     * be notified and unblocked when the framework has successfully read events
+     * from the Event FMQ.
+     *
+     * The Wake Lock FMQ is used by the framework to notify the HAL when it is
+     * safe to release its wake_lock. When the framework receives WAKE_UP events
+     * from the Event FMQ and the framework has acquired a wake_lock, the
+     * framework must write the number of WAKE_UP events processed to the Wake
+     * Lock FMQ. When the HAL reads the data from the Wake Lock FMQ, the HAL
+     * decrements its current count of unprocessed WAKE_UP events and releases
+     * its wake_lock if the current count of unprocessed WAKE_UP events is
+     * zero. It is important to note that the HAL must acquire the wake lock and
+     * update its internal state regarding the number of outstanding WAKE_UP
+     * events _before_ posting the event to the Wake Lock FMQ, in order to avoid
+     * a race condition that can lead to loss of wake lock synchronization with
+     * the framework.
+     *
+     * The framework must use the WakeLockQueueFlagBits::DATA_WRITTEN value to
+     * notify the HAL that data has been written to the Wake Lock FMQ and must
+     * be read by HAL.
+     *
+     * The ISensorsCallback is used by the HAL to notify the framework of
+     * asynchronous events, such as a dynamic sensor connection.
+     *
+     * The name of any wake_lock acquired by the Sensors HAL for WAKE_UP events
+     * must begin with "SensorsHAL_WAKEUP".
+     *
+     * If WAKE_LOCK_TIMEOUT_SECONDS has elapsed since the most recent WAKE_UP
+     * event was written to the Event FMQ without receiving a message on the
+     * Wake Lock FMQ, then any held wake_lock for WAKE_UP events must be
+     * released.
+     *
+     * If either the Event FMQ or the Wake Lock FMQ is already initialized when
+     * initialize is invoked, then both existing FMQs must be discarded and the
+     * new descriptors must be used to create new FMQs within the HAL. The
+     * number of outstanding WAKE_UP events should also be reset to zero, and
+     * any outstanding wake_locks held as a result of WAKE_UP events should be
+     * released.
+     *
+     * All active sensor requests and direct channels must be closed and
+     * properly cleaned up when initialize is called in order to ensure that the
+     * HAL and framework's state is consistent (e.g. after a runtime restart).
+     *
+     * initialize must be thread safe and prevent concurrent calls
+     * to initialize from simultaneously modifying state.
+     *
+     * @param eventQueueDescriptor Fast Message Queue descriptor that is used to
+     *     create the Event FMQ which is where sensor events are written. The
+     *     descriptor is obtained from the framework's FMQ that is used to read
+     *     sensor events.
+     * @param wakeLockDescriptor Fast Message Queue descriptor that is used to
+     *     create the Wake Lock FMQ which is where wake_lock events are read
+     *     from. The descriptor is obtained from the framework's FMQ that is
+     *     used to write wake_lock events.
+     * @param sensorsCallback sensors callback that receives asynchronous data
+     *     from the Sensors HAL.
+     * @return result OK on success; BAD_VALUE if descriptor is invalid (such
+     *     as null)
+     */
+    @entry
+    @callflow(next = {"getSensorsList"})
+    initialize_2_1(fmq_sync<Event> eventQueueDescriptor,
+                   fmq_sync<uint32_t> wakeLockDescriptor,
+                   ISensorsCallback sensorsCallback)
+        generates
+              (Result result);
+
+    /**
+     * Inject a single sensor event or push operation environment parameters to
+     * device.
+     *
+     * When device is in NORMAL mode, this function is called to push operation
+     * environment data to device. In this operation, Event is always of
+     * SensorType::AdditionalInfo type. See operation evironment parameters
+     * section in AdditionalInfoType.
+     *
+     * When device is in DATA_INJECTION mode, this function is also used for
+     * injecting sensor events.
+     *
+     * Regardless of OperationMode, injected SensorType::ADDITIONAL_INFO
+     * type events should not be routed back to the sensor event queue.
+     *
+     * @see AdditionalInfoType
+     * @see OperationMode
+     * @param event sensor event to be injected
+     * @return result OK on success; PERMISSION_DENIED if operation is not
+     *     allowed; INVALID_OPERATION, if this functionality is unsupported;
+     *     BAD_VALUE if sensor event cannot be injected.
+     */
+    injectSensorData_2_1(Event event) generates (Result result);
+};

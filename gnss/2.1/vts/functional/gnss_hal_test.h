@@ -31,6 +31,8 @@ using android::hardware::gnss::measurement_corrections::V1_0::IMeasurementCorrec
 using android::hardware::gnss::V1_0::GnssLocationFlags;
 using android::hardware::gnss::V2_0::GnssConstellationType;
 using android::hardware::gnss::V2_1::IGnss;
+using android::hardware::gnss::V2_1::IGnssAntennaInfo;
+using android::hardware::gnss::V2_1::IGnssAntennaInfoCallback;
 
 using GnssLocation_1_0 = android::hardware::gnss::V1_0::GnssLocation;
 using GnssLocation_2_0 = android::hardware::gnss::V2_0::GnssLocation;
@@ -107,6 +109,7 @@ class GnssHalTest : public testing::TestWithParam<std::string> {
         // New in v2.1
         Return<void> gnssSvStatusCb_2_1(
                 const hidl_vec<IGnssCallback_2_1::GnssSvInfo>& svInfoList) override;
+        Return<void> gnssSetCapabilitiesCb_2_1(uint32_t capabilities) override;
 
       private:
         Return<void> gnssLocationCbImpl(const GnssLocation_2_0& location);
@@ -150,6 +153,20 @@ class GnssHalTest : public testing::TestWithParam<std::string> {
 
         // Methods from V1_0::IMeasurementCorrectionsCallback follow.
         Return<void> setCapabilitiesCb(uint32_t capabilities) override;
+    };
+
+    /* Callback class for GnssAntennaInfo. */
+    class GnssAntennaInfoCallback : public IGnssAntennaInfoCallback {
+      public:
+        GnssCallbackEventQueue<hidl_vec<IGnssAntennaInfoCallback::GnssAntennaInfo>>
+                antenna_info_cbq_;
+
+        GnssAntennaInfoCallback() : antenna_info_cbq_("info"){};
+        virtual ~GnssAntennaInfoCallback() = default;
+
+        // Methods from V2_1::GnssAntennaInfoCallback follow.
+        Return<void> gnssAntennaInfoCb(
+                const hidl_vec<IGnssAntennaInfoCallback::GnssAntennaInfo>& gnssAntennaInfos);
     };
 
     /*

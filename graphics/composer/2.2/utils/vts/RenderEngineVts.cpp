@@ -33,6 +33,10 @@ TestRenderEngine::TestRenderEngine(const RenderEngineCreationArgs& args) {
     mRenderEngine = renderengine::RenderEngine::create(args);
 }
 
+TestRenderEngine::~TestRenderEngine() {
+    mRenderEngine.release();
+}
+
 void TestRenderEngine::setRenderLayers(std::vector<std::shared_ptr<TestLayer>> layers) {
     sort(layers.begin(), layers.end(),
          [](const std::shared_ptr<TestLayer>& lhs, const std::shared_ptr<TestLayer>& rhs) -> bool {
@@ -65,9 +69,8 @@ void TestRenderEngine::drawLayers() {
                    [](renderengine::LayerSettings& settings) -> renderengine::LayerSettings* {
                        return &settings;
                    });
-    mRenderEngine->drawLayers(mDisplaySettings, compositionLayerPointers,
-                              mGraphicBuffer->getNativeBuffer(), true, std::move(bufferFence),
-                              &readyFence);
+    mRenderEngine->drawLayers(mDisplaySettings, compositionLayerPointers, mGraphicBuffer, true,
+                              std::move(bufferFence), &readyFence);
     int fd = readyFence.release();
     if (fd != -1) {
         ASSERT_EQ(0, sync_wait(fd, -1));

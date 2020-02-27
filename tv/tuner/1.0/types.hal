@@ -1425,18 +1425,6 @@ enum FrontendStatusType : uint32_t {
      */
     LAYER_ERROR,
     /**
-     * CN value by VBER.
-     */
-    VBER_CN,
-    /**
-     * CN value by LBER.
-     */
-    LBER_CN,
-    /**
-     * CN value by XER.
-     */
-    XER_CN,
-    /**
      * Moduration Error Ratio.
      */
     MER,
@@ -1557,21 +1545,6 @@ safe_union FrontendStatus {
     bool isLnaOn;
 
     vec<bool> isLayerError;
-
-    /**
-     * CN value by VBER measured by 0.001 dB
-     */
-    int32_t vberCn;
-
-    /**
-     * CN value by LBER measured by 0.001 dB
-     */
-    int32_t lberCn;
-
-    /**
-     * CN value by XER measured by 0.001 dB
-     */
-    int32_t xerCn;
 
     /**
      * MER value measured by 0.001 dB
@@ -1951,7 +1924,7 @@ safe_union DemuxPid {
 };
 
 @export
-enum Constant : uint16_t {
+enum Constant : uint32_t {
     /**
      * An invalid packet ID in transport stream according to ISO/IEC 13818-1.
      */
@@ -1960,6 +1933,14 @@ enum Constant : uint16_t {
      * An invalid Stream ID.
      */
     INVALID_STREAM_ID = 0xFFFF,
+    /**
+     * An invalid Filter ID.
+     */
+    INVALID_FILTER_ID = 0xFFFFFFFF,
+    /**
+     * An invalid AV sync hardware ID.
+     */
+    INVALID_AV_SYNC_ID = 0xFFFFFFFF,
 };
 
 /**
@@ -2178,19 +2159,37 @@ struct DemuxFilterDownloadSettings {
  */
 struct DemuxIpAddress {
     safe_union SrcIpAddress {
+        /**
+         * 0.0.0.0 is invalid. should be ignored.
+         */
         uint8_t[4] v4;
 
+        /**
+         * 0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0 is invalid. should be ignored.
+         */
         uint8_t[16] v6;
     } srcIpAddress;
 
     safe_union DstIpAddress {
+        /**
+         * 0.0.0.0 is invalid. should be ignored.
+         */
         uint8_t[4] v4;
 
+        /**
+         * 0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0 is invalid. should be ignored.
+         */
         uint8_t[16] v6;
     } dstIpAddress;
 
+    /**
+     * 0 is invalid. should be ignored.
+     */
     uint16_t srcPort;
 
+    /**
+     * 0 is invalid. should be ignored.
+     */
     uint16_t dstPort;
 };
 

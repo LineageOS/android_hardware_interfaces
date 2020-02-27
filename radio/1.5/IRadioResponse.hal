@@ -20,6 +20,7 @@ import @1.0::RadioResponseInfo;
 import @1.0::SendSmsResult;
 import @1.4::IRadioResponse;
 import @1.5::BarringInfo;
+import @1.5::CellIdentity;
 import @1.5::CellInfo;
 import @1.5::PersoSubstate;
 import @1.5::RegStateResult;
@@ -38,6 +39,17 @@ interface IRadioResponse extends @1.4::IRadioResponse {
      *   RadioError:RADIO_NOT_AVAILABLE
      */
     oneway setSignalStrengthReportingCriteriaResponse_1_5(RadioResponseInfo info);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:INVALID_ARGUMENTS
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INTERNAL_ERR
+     */
+    oneway setLinkCapacityReportingCriteriaResponse_1_5(RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -165,6 +177,7 @@ interface IRadioResponse extends @1.4::IRadioResponse {
 
     /**
      * @param info Response info struct containing response type, serial no. and error
+     * @param cellIdentity CellIdentity for the barring infos.
      * @param barringInfos a vector of barring info for all barring service types
      *
      * Valid errors returned:
@@ -173,7 +186,8 @@ interface IRadioResponse extends @1.4::IRadioResponse {
      *   RadioError:INTERNAL_ERR
      *   RadioError:MODEM_ERR
      */
-    oneway getBarringInfoResponse(RadioResponseInfo info, vec<BarringInfo> barringInfos);
+    oneway getBarringInfoResponse(RadioResponseInfo info, CellIdentity cellIdentity,
+            vec<BarringInfo> barringInfos);
 
     /**
      * @param info Response info struct containing response type, serial no. and error

@@ -22,9 +22,9 @@ import @1.0::PerformanceInfo;
 import @1.0::RequestArgument;
 import @1.2::Model.ExtensionNameAndPrefix;
 import @1.2::Model.ExtensionTypeEncoding;
+import @1.2::Operand.ExtraParams;
 import @1.2::OperandType;
 import @1.2::OperationType;
-import @1.2::SymmPerChannelQuantParams;
 
 import android.hidl.safe_union@1.0::Monostate;
 
@@ -1584,6 +1584,17 @@ enum OperationType : int32_t {
      * * 3: An optional {@link OperandType::BOOL} scalar, default to false.
      *      Set to true to specify NCHW data layout for input0 and output0.
      *      Available since HAL version 1.2.
+     * * 4: Align corners. An optional {@link OperandType::BOOL}
+     *      scalar, default to false.  If True, the centers of the 4 corner
+     *      pixels of the input and output tensors are aligned, preserving the
+     *      values at the corner pixels.
+     *      Available since HAL version 1.3.
+     * * 5: Half pixel centers. An optional {@link OperandType::BOOL}
+     *      scalar, default to false. If True, the pixel centers are assumed to
+     *      be at (0.5, 0.5). This is the default behavior of image.resize in
+     *      TF 2.0. If this parameter is True, then align_corners parameter
+     *      must be False.
+     *      Available since HAL version 1.3.
      *
      * Inputs (resizing by scale, since HAL version 1.2):
      * * 0: A 4-D tensor, of shape [batches, height, width, depth], specifying
@@ -1602,6 +1613,17 @@ enum OperationType : int32_t {
      *      {@link OperandType::FLOAT32} otherwise.
      * * 3: An optional {@link OperandType::BOOL} scalar, default to false.
      *      Set to true to specify NCHW data layout for input0 and output0.
+     * * 4: Align corners. An optional {@link OperandType::BOOL}
+     *      scalar, default to false.  If True, the centers of the 4 corner
+     *      pixels of the input and output tensors are aligned, preserving the
+     *      values at the corner pixels.
+     *      Available since HAL version 1.3.
+     * * 5: Half pixel centers. An optional {@link OperandType::BOOL}
+     *      scalar, default to false. If True, the pixel centers are assumed to
+     *      be at (0.5, 0.5). This is the default behavior of image.resize in
+     *      TF 2.0. If this parameter is True, then align_corners parameter
+     *      must be False.
+     *      Available since HAL version 1.3.
      *
      * Outputs:
      * * 0: The output 4-D tensor, of shape
@@ -2364,7 +2386,54 @@ enum OperationType : int32_t {
     AXIS_ALIGNED_BBOX_TRANSFORM = @1.2::OperationType:AXIS_ALIGNED_BBOX_TRANSFORM,
 
     /**
-     * Performs a forward LSTM on the input followed by a backward LSTM.
+     * A recurrent neural network layer that applies an LSTM cell to a
+     * sequence of inputs in forward and backward directions.
+     *
+     * The op supports cross-linking via an auxiliary input. Regular cell feeds
+     * one input into the two RNN cells in the following way:
+     *
+     *       INPUT  (INPUT_REVERSED)
+     *         |         |
+     *    ---------------------
+     *    | FW_LSTM   BW_LSTM |
+     *    ---------------------
+     *         |         |
+     *      FW_OUT     BW_OUT
+     *
+     * An op with cross-linking takes two inputs and feeds them into the RNN
+     * cells in the following way:
+     *
+     *       AUX_INPUT   (AUX_INPUT_REVERSED)
+     *           |             |
+     *     INPUT | (INPUT_R'D.)|
+     *       |   |       |     |
+     *    -----------------------
+     *    |  \  /        \    / |
+     *    | FW_LSTM     BW_LSTM |
+     *    -----------------------
+     *         |           |
+     *      FW_OUT      BW_OUT
+     *
+     * The cross-linking mode is enabled iff auxiliary input and auxiliary
+     * weights are present. While stacking this op on top of itself, this
+     * allows to connect both forward and backward outputs from previous cell
+     * to the next cell's input.
+     *
+     * Since HAL version 1.3 parallel linking mode is supported. The mode is
+     * enabled if auxiliary input is present but auxiliary weights are omitted.
+     * In this case, the cell feeds inputs into the RNN in the following way:
+     *
+     *       INPUT (AUX_INPUT_REVERSED)
+     *         |         |
+     *    ---------------------
+     *    | FW_LSTM   BW_LSTM |
+     *    ---------------------
+     *         |         |
+     *      FW_OUT     BW_OUT
+     *
+     * While stacking this op on top of itself, this allows to connect both
+     * forward and backward outputs from previous cell to the next cell's
+     * corresponding inputs.
      *
      * Supported tensor {@link OperandType}:
      * * {@link OperandType::TENSOR_FLOAT16}
@@ -2373,7 +2442,6 @@ enum OperationType : int32_t {
      * Supported tensor rank: 3, either time-major or batch-major.
      *
      * All input and output tensors must be of the same type.
-     *
      *
      * Inputs:
      * * 0: The input.
@@ -2466,25 +2534,34 @@ enum OperationType : int32_t {
      * * 38: The backward input cell state.
      *       A 2-D tensor of shape [batch_size, bw_num_units].
      * * 39: The auxiliary input. Optional.
-     *       A 3-D tensor of shape [max_time, batch_size, input_size], where “batch_size”
-     *       corresponds to the batching dimension, and “input_size” is the size
-     *       of the input.
-     * * 40: The forward auxiliary input-to-input weights. Optional.
-     *       A 2-D tensor of shape [fw_num_units, input_size].
-     * * 41: The forward auxiliary input-to-forget weights. Optional.
-     *       A 2-D tensor of shape [fw_num_units, input_size].
-     * * 42: The forward auxiliary input-to-cell weights. Optional.
-     *       A 2-D tensor of shape [fw_num_units, input_size].
-     * * 43: The forward auxiliary input-to-output weights. Optional.
-     *       A 2-D tensor of shape [fw_num_units, input_size].
-     * * 44: The backward auxiliary input-to-input weights. Optional.
-     *       A 2-D tensor of shape [bw_num_units, input_size].
-     * * 45: The backward auxiliary input-to-forget weights. Optional.
-     *       A 2-D tensor of shape [bw_num_units, input_size].
-     * * 46: The backward auxiliary input-to-cell weights. Optional.
-     *       A 2-D tensor of shape [bw_num_units, input_size].
-     * * 47: The backward auxiliary input-to-output weights. Optional.
-     *       A 2-D tensor of shape [bw_num_units, input_size].
+     *       A 3-D tensor of shape [max_time, batch_size, aux_input_size],
+     *       where “batch_size” corresponds to the batching dimension, and
+     *       “aux_input_size” is the size of the auxiliary input. Optional. See
+     *       the docs above for the usage modes explanation.
+     * * 40: The forward auxiliary input-to-input weights.
+     *       Optional. See the docs above for the usage modes explanation.
+     *       A 2-D tensor of shape [fw_num_units, aux_input_size].
+     * * 41: The forward auxiliary input-to-forget weights.
+     *       Optional. See the docs above for the usage modes explanation.
+     *       A 2-D tensor of shape [fw_num_units, aux_input_size].
+     * * 42: The forward auxiliary input-to-cell weights.
+     *       Optional. See the docs above for the usage modes explanation.
+     *       A 2-D tensor of shape [fw_num_units, aux_input_size].
+     * * 43: The forward auxiliary input-to-output weights.
+     *       Optional. See the docs above for the usage modes explanation.
+     *       A 2-D tensor of shape [fw_num_units, aux_input_size].
+     * * 44: The backward auxiliary input-to-input weights.
+     *       Optional. See the docs above for the usage modes explanation.
+     *       A 2-D tensor of shape [bw_num_units, aux_input_size].
+     * * 45: The backward auxiliary input-to-forget weights.
+     *       Optional. See the docs above for the usage modes explanation.
+     *       A 2-D tensor of shape [bw_num_units, aux_input_size].
+     * * 46: The backward auxiliary input-to-cell weights.
+     *       Optional. See the docs above for the usage modes explanation.
+     *       A 2-D tensor of shape [bw_num_units, aux_input_size].
+     * * 47: The backward auxiliary input-to-output weights.
+     *       Optional. See the docs above for the usage modes explanation.
+     *       A 2-D tensor of shape [bw_num_units, aux_input_size].
      * * 48: The activation function.
      *       A value indicating the activation function:
      *       <ul>
@@ -2556,6 +2633,30 @@ enum OperationType : int32_t {
      *      A 3-D tensor of shape:
      *        If time-major: [max_time, batch_size, bw_output_size]
      *        If batch-major: [batch_size, max_time, bw_output_size]
+     * * 2: The forward activation state output.
+     *      A 2-D tensor of shape [batch_size, fw_output_size] containing an
+     *      activation state from the last time step in the sequence. This
+     *      output is optional and can be omitted. If this output is present
+     *      then outputs 3-5 must be present as well.
+     *      Available since HAL version 1.3.
+     * * 3: The forward cell state output.
+     *      A tensor of shape [batch_size, fw_cell_size] containing a cell state
+     *      from the last time step in the sequence. This output is optional
+     *      and can be omitted. If this output is present
+     *      then outputs 2, 4, 5 must be present as well.
+     *      Available since HAL version 1.3.
+     * * 4: The backward activation state output.
+     *      A 2-D tensor of shape [batch_size, bw_output_size] containing an
+     *      activation state from the last time step in the sequence. This
+     *      output is optional and can be omitted. If this output is present
+     *      then outputs 2, 3, 5 must be present as well.
+     *      Available since HAL version 1.3.
+     * * 5: The backward cell state output.
+     *      A tensor of shape [batch_size, bw_cell_size] containing a cell state
+     *      from the last time step in the sequence. This output is optional
+     *      and can be omitted. If this output is present
+     *      then outputs 2-4 must be present as well.
+     *      Available since HAL version 1.3.
      */
     BIDIRECTIONAL_SEQUENCE_LSTM = @1.2::OperationType:BIDIRECTIONAL_SEQUENCE_LSTM,
 
@@ -2583,8 +2684,8 @@ enum OperationType : int32_t {
      * * “activation” is the function passed as the “fused_activation_function”
      *   argument (if not “NONE”).
      *
-     * The op also supports an auxiliary input. Regular cell feeds one input
-     * into the two RNN cells in the following way:
+     * The op supports cross-linking via an auxiliary input. Regular cell feeds
+     * one input into the two RNN cells in the following way:
      *
      *       INPUT  (INPUT_REVERSED)
      *         |         |
@@ -2594,8 +2695,8 @@ enum OperationType : int32_t {
      *         |         |
      *      FW_OUT     BW_OUT
      *
-     * An op with an auxiliary input takes two inputs and feeds them into the
-     * RNN cells in the following way:
+     * An op with cross-linking takes two inputs and feeds them into the RNN
+     * cells in the following way:
      *
      *       AUX_INPUT   (AUX_INPUT_REVERSED)
      *           |             |
@@ -2608,9 +2709,26 @@ enum OperationType : int32_t {
      *         |           |
      *      FW_OUT      BW_OUT
      *
+     * The cross-linking mode is enabled iff auxiliary input and auxiliary
+     * weights are present. While stacking this op on top of itself, this
+     * allows to connect both forward and backward outputs from previous cell
+     * to the next cell's input.
+     *
+     * Since HAL version 1.3 parallel linking mode is supported. The mode is
+     * enabled if auxiliary input is present but auxiliary weights are omitted.
+     * In this case, the cell feeds inputs into the RNN in the following way:
+     *
+     *       INPUT (AUX_INPUT_REVERSED)
+     *         |         |
+     *    ---------------------
+     *    | FW_RNN     BW_RNN |
+     *    ---------------------
+     *         |         |
+     *      FW_OUT     BW_OUT
+     *
      * While stacking this op on top of itself, this allows to connect both
      * forward and backward outputs from previous cell to the next cell's
-     * inputs.
+     * corresponding inputs.
      *
      * Supported tensor {@link OperandType}:
      * * {@link OperandType::TENSOR_FLOAT16}
@@ -2643,11 +2761,17 @@ enum OperationType : int32_t {
      *      A 2-D tensor of shape [batchSize, bwNumUnits]. Specifies a hidden
      *      state input for the first time step of the computation.
      * * 9: auxInput.
-     *      A 3-D tensor. The shape is the same as of the input 0.
+     *      A 3-D tensor. The shape is defined by the input 6 (timeMajor). If
+     *      it is set to true, then the input has a shape [maxTime, batchSize,
+     *      auxInputSize], otherwise the input has a shape [batchSize, maxTime,
+     *      auxInputSize]. Can be omitted. See the docs above for the usage
+     *      modes explanation.
      * * 10:fwAuxWeights.
-     *      A 2-D tensor of shape [fwNumUnits, inputSize].
+     *      A 2-D tensor of shape [fwNumUnits, auxInputSize]. Can be omitted.
+     *      See the docs above for the usage modes explanation.
      * * 11:bwAuxWeights.
-     *      A 2-D tensor of shape [bwNumUnits, inputSize].
+     *      A 2-D tensor of shape [bwNumUnits, auxInputSize]. Can be omitted.
+     *      See the docs above for the usage modes explanation.
      * * 12:fusedActivationFunction.
      *      A {@link FusedActivationFunc} value indicating the activation function. If
      *      “NONE” is specified then it results in a linear activation.
@@ -2673,6 +2797,18 @@ enum OperationType : int32_t {
      *      (timeMajor). If it is set to true, then the shape is set to
      *      [maxTime, batchSize, bwNumUnits], otherwise the shape is set to
      *      [batchSize, maxTime, bwNumUnits].
+     * * 2: The forward hidden state output.
+     *      A 2-D tensor of shape [batchSize, fwNumUnits] containing a hidden
+     *      state from the last time step in the sequence. This output is
+     *      optional and can be omitted. If this output is present then output
+     *      3 must be present as well.
+     *      Available since HAL version 1.3.
+     * * 3: The backward hidden state output.
+     *      A 2-D tensor of shape [batchSize, bwNumUnits] containing a hidden
+     *      state from the last time step in the sequence. This output is
+     *      optional and can be omitted. If this output is present then output
+     *      2 must be present as well.
+     *      Available since HAL version 1.3.
      */
     BIDIRECTIONAL_SEQUENCE_RNN = @1.2::OperationType:BIDIRECTIONAL_SEQUENCE_RNN,
 
@@ -3253,7 +3389,7 @@ enum OperationType : int32_t {
      * * 8: An {@link OperandType::INT32} scalar, specifying the stride when
      *      walking through input in the ‘height’ dimension.
      * * 9: An {@link OperandType::INT32} scalar, specifying the number of
-            groups.
+     *      groups.
      * * 10: An {@link OperandType::INT32} scalar, and has to be one of the
      *       {@link FusedActivationFunc} values. Specifies the activation to
      *       invoke on the result.
@@ -4656,6 +4792,15 @@ enum OperationType : int32_t {
      *      A 3-D tensor of shape:
      *        If time-major: [max_time, batch_size, output_size]
      *        If batch-major: [batch_size, max_time, output_size]
+     * * 1: A tensor of shape [batch_size, output_size] containing a hidden
+     *      state from the last time step in the sequence. This output is
+     *      optional and can be omitted. If this output is present then
+     *      output #2 must be present as well.
+     *      Available since HAL version 1.3.
+     * * 2: A tensor of shape [batch_size, cell_size] containing a cell state
+     *      from the last time step in the sequence. This output is optional
+     *      and can be omitted.
+     *      Available since HAL version 1.3.
      */
     UNIDIRECTIONAL_SEQUENCE_LSTM = @1.2::OperationType:UNIDIRECTIONAL_SEQUENCE_LSTM,
 
@@ -4711,6 +4856,10 @@ enum OperationType : int32_t {
      *      it is set to 1, then the output has a shape [maxTime, batchSize,
      *      numUnits], otherwise the output has a shape [batchSize, maxTime,
      *      numUnits].
+     * * 1: A tensor of shape [batchSize, numUnits] containing hidden state
+     *      from the last time step in the sequence. This output is optional
+     *      and can be omitted.
+     *      Available since HAL version 1.3.
      */
     UNIDIRECTIONAL_SEQUENCE_RNN = @1.2::OperationType:UNIDIRECTIONAL_SEQUENCE_RNN,
 
@@ -4743,6 +4892,17 @@ enum OperationType : int32_t {
      *      height of the output tensor.
      * * 3: An {@link OperandType::BOOL} scalar, default to false.
      *      Set to true to specify NCHW data layout for input0 and output0.
+     * * 4: Align corners. An optional {@link OperandType::BOOL}
+     *      scalar, default to false.  If True, the centers of the 4 corner
+     *      pixels of the input and output tensors are aligned, preserving the
+     *      values at the corner pixels.
+     *      Available since HAL version 1.3.
+     * * 5: Half pixel centers. An optional {@link OperandType::BOOL}
+     *      scalar, default to false. If True, the pixel centers are assumed to
+     *      be at (0.5, 0.5). This is the default behavior of image.resize in
+     *      TF 2.0. If this parameter is True, then align_corners parameter
+     *      must be False.
+     *      Available since HAL version 1.3.
      *
      * Inputs (resizing by scale):
      * * 0: A 4-D tensor, of shape [batches, height, width, depth], specifying
@@ -4761,6 +4921,17 @@ enum OperationType : int32_t {
      *      {@link OperandType::FLOAT32} otherwise.
      * * 3: An {@link OperandType::BOOL} scalar, default to false.
      *      Set to true to specify NCHW data layout for input0 and output0.
+     * * 4: Align corners. An optional {@link OperandType::BOOL}
+     *      scalar, default to false.  If True, the centers of the 4 corner
+     *      pixels of the input and output tensors are aligned, preserving the
+     *      values at the corner pixels.
+     *      Available since HAL version 1.3.
+     * * 5: Half pixel centers. An optional {@link OperandType::BOOL}
+     *      scalar, default to false. If True, the pixel centers are assumed to
+     *      be at (0.5, 0.5). This is the default behavior of image.resize in
+     *      TF 2.0. If this parameter is True, then align_corners parameter
+     *      must be False.
+     *      Available since HAL version 1.3.
      *
      * Outputs:
      * * 0: The output 4-D tensor, of shape
@@ -5127,8 +5298,10 @@ enum Priority : int32_t {
 /**
  * The capabilities of a driver.
  *
- * Performance of an operation comes from the type of its first operand.
- * This represents performance for non extension operand types.
+ * This represents performance of non-extension operations.
+ *
+ * Performance of an operation other than {@link OperationType::IF} and
+ * {@link OperationType::WHILE} comes from the type of its first operand.
  */
 struct Capabilities {
     /**
@@ -5151,11 +5324,32 @@ struct Capabilities {
 
     /**
      * Performance by operand type. Must be sorted by OperandType.
-     * If a particular OperandType is not present in operandPerformance,
+     *
+     * If a particular {@link OperandType} is not present in operandPerformance,
      * its performance is treated as
      * { .execTime = FLT_MAX, .powerUsage = FLT_MAX }.
+     *
+     * Performance does not apply to {@link OperandType::SUBGRAPH}, and a driver
+     * must not report operand performance for {@link OperandType::SUBGRAPH}.
      */
     vec<OperandPerformance> operandPerformance;
+
+    /**
+     * Performance of an {@link OperationType::IF} operation is the sum of
+     * {@link Capabilities::ifPerformance} and the mean of performance for the
+     * two branch subgraphs, where performance for a subgraph is the sum of the
+     * performance of all operations within the subgraph.
+     */
+    PerformanceInfo ifPerformance;
+
+    /**
+     * Performance of a {@link OperationType::WHILE} operation is the sum of
+     * {@link Capabilities::whilePerformance}, performance for the condition
+     * subgraph and performance for the body subgraph, where performance for a
+     * subgraph is the sum of the performance of all operations within the
+     * subgraph.
+     */
+    PerformanceInfo whilePerformance;
 };
 
 /**
@@ -5343,27 +5537,7 @@ struct Operand {
     /**
      * Additional parameters specific to a particular operand type.
      */
-    safe_union ExtraParams {
-       /**
-        * No additional parameters.
-        */
-       Monostate none;
-
-       /**
-        * Symmetric per-channel quantization parameters.
-        *
-        * Only applicable to operands of type TENSOR_QUANT8_SYMM_PER_CHANNEL.
-        */
-       SymmPerChannelQuantParams channelQuant;
-
-       /**
-        * Extension operand parameters.
-        *
-        * The framework treats this as an opaque data blob.
-        * The format is up to individual extensions.
-        */
-       vec<uint8_t> extension;
-    } extraParams;
+    @1.2::Operand.ExtraParams extraParams;
 };
 
 /**
@@ -5551,7 +5725,7 @@ struct Request {
          * Specifies a driver-managed buffer. It is the token returned from IDevice::allocate,
          * and is specific to the IDevice object.
          */
-        int32_t token;
+        uint32_t token;
     };
 
     /**
@@ -5573,7 +5747,7 @@ safe_union OptionalTimePoint {
      * Time point of the steady clock (as from std::chrono::steady_clock)
      * measured in nanoseconds.
      */
-    uint64_t nanoseconds;
+    uint64_t nanosecondsSinceEpoch;
 };
 
 /**
@@ -5618,4 +5792,15 @@ enum ErrorStatus : @1.0::ErrorStatus {
      * delay.
      */
     RESOURCE_EXHAUSTED_PERSISTENT,
+};
+
+/**
+ * Each {@link OperationType::WHILE} operation in the model has an implicit
+ * execution timeout duration associated with it ("loop timeout duration").
+ * This duration is configurable on a per-execution basis and must not exceed
+ * 15 seconds. The default value is 2 seconds.
+ */
+enum LoopTimeoutDurationNs : uint64_t {
+    DEFAULT = 2000000000,
+    MAXIMUM = 15000000000,
 };

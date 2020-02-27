@@ -23,9 +23,9 @@
 #include <android-base/logging.h>
 #include <android/hardware/graphics/mapper/2.0/IMapper.h>
 #include <composer-command-buffer/2.4/ComposerCommandBuffer.h>
-#include <composer-vts/2.1/TestCommandReader.h>
 #include <composer-vts/2.4/ComposerVts.h>
 #include <composer-vts/2.4/GraphicsComposerCallback.h>
+#include <composer-vts/2.4/TestCommandReader.h>
 #include <gtest/gtest.h>
 #include <hidl/GtestPrinter.h>
 #include <hidl/ServiceManagement.h>
@@ -77,7 +77,7 @@ class GraphicsComposerHidlTest : public ::testing::TestWithParam<std::string> {
         mComposerCallback->setVsyncAllowed(false);
 
         mWriter = std::make_unique<CommandWriterBase>(1024);
-        mReader = std::make_unique<V2_1::vts::TestCommandReader>();
+        mReader = std::make_unique<TestCommandReader>();
     }
 
     void TearDown() override {
@@ -153,7 +153,7 @@ class GraphicsComposerHidlTest : public ::testing::TestWithParam<std::string> {
     Display mPrimaryDisplay;
     Display mInvalidDisplayId;
     std::unique_ptr<CommandWriterBase> mWriter;
-    std::unique_ptr<V2_1::vts::TestCommandReader> mReader;
+    std::unique_ptr<TestCommandReader> mReader;
 
   private:
     Display waitForFirstDisplay() {
@@ -184,7 +184,7 @@ class GraphicsComposerHidlCommandTest : public GraphicsComposerHidlTest {
                 mPrimaryDisplay, activeConfig, IComposerClient::Attribute::HEIGHT);
 
         mWriter = std::make_unique<CommandWriterBase>(1024);
-        mReader = std::make_unique<V2_1::vts::TestCommandReader>();
+        mReader = std::make_unique<TestCommandReader>();
     }
 
     void TearDown() override {
@@ -211,7 +211,7 @@ class GraphicsComposerHidlCommandTest : public GraphicsComposerHidlTest {
                                   int64_t newPeriodNanos);
 
     std::unique_ptr<CommandWriterBase> mWriter;
-    std::unique_ptr<V2_1::vts::TestCommandReader> mReader;
+    std::unique_ptr<TestCommandReader> mReader;
     int32_t mDisplayWidth;
     int32_t mDisplayHeight;
 
@@ -279,23 +279,48 @@ TEST_P(GraphicsComposerHidlTest, getDisplayVsyncPeriod_BadDisplay) {
               mComposerClient->getDisplayVsyncPeriod(mInvalidDisplayId, &vsyncPeriodNanos));
 }
 
-TEST_P(GraphicsComposerHidlTest, getDisplayVsyncPeriod) {
+TEST_P(GraphicsComposerHidlCommandTest, getDisplayVsyncPeriod) {
     for (Display display : mComposerCallback->getDisplays()) {
         for (Config config : mComposerClient->getDisplayConfigs(display)) {
             VsyncPeriodNanos expectedVsyncPeriodNanos = mComposerClient->getDisplayAttribute_2_4(
                     display, config, IComposerClient::IComposerClient::Attribute::VSYNC_PERIOD);
 
-            mComposerClient->setActiveConfig(display, config);
+            VsyncPeriodChangeTimeline timeline;
+            IComposerClient::VsyncPeriodChangeConstraints constraints;
+
+            constraints.desiredTimeNanos = systemTime();
+            constraints.seamlessRequired = false;
+            EXPECT_EQ(Error::NONE, mComposerClient->setActiveConfigWithConstraints(
+                                           display, config, constraints, &timeline));
+
+            if (timeline.refreshRequired) {
+                sendRefreshFrame(timeline);
+            }
+            waitForVsyncPeriodChange(display, timeline, constraints.desiredTimeNanos, 0,
+                                     expectedVsyncPeriodNanos);
+
             VsyncPeriodNanos vsyncPeriodNanos;
             int retryCount = 100;
             do {
                 std::this_thread::sleep_for(10ms);
+                vsyncPeriodNanos = 0;
                 EXPECT_EQ(Error::NONE,
                           mComposerClient->getDisplayVsyncPeriod(display, &vsyncPeriodNanos));
                 --retryCount;
             } while (vsyncPeriodNanos != expectedVsyncPeriodNanos && retryCount > 0);
 
             EXPECT_EQ(vsyncPeriodNanos, expectedVsyncPeriodNanos);
+
+            // Make sure that the vsync period stays the same if the active config is not changed.
+            auto timeout = 1ms;
+            for (int i = 0; i < 10; i++) {
+                std::this_thread::sleep_for(timeout);
+                timeout *= 2;
+                vsyncPeriodNanos = 0;
+                EXPECT_EQ(Error::NONE,
+                          mComposerClient->getDisplayVsyncPeriod(display, &vsyncPeriodNanos));
+                EXPECT_EQ(vsyncPeriodNanos, expectedVsyncPeriodNanos);
+            }
         }
     }
 }

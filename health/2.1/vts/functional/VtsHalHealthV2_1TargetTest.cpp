@@ -219,6 +219,9 @@ AssertionResult IsEnum(T value) {
     return AssertionFailure() << static_cast<std::underlying_type_t<T>>(value) << " is not valid";
 }
 
+#define FULL_CHARGE_DESIGN_CAP_MIN ((long)100 * 1000)
+#define FULL_CHARGE_DESIGN_CAP_MAX ((long)100000 * 1000)
+
 /*
  * Tests the values returned by getHealthInfo() from interface IHealth.
  */
@@ -228,18 +231,18 @@ TEST_P(HealthHidlTest, getHealthInfo_2_1) {
             return;
         }
         ASSERT_EQ(Result::SUCCESS, result);
-        const auto& legacy = value.legacy.legacy;
 
         EXPECT_TRUE(IsEnum(value.batteryCapacityLevel)) << " BatteryCapacityLevel";
         EXPECT_GE(value.batteryChargeTimeToFullNowSeconds, 0);
 
-        EXPECT_GE(value.batteryFullCapacityUah, 0)
-                << "batteryFullCapacityUah should not be negative";
+        EXPECT_GE(value.batteryFullChargeDesignCapacityUah, 0)
+                << "batteryFullChargeDesignCapacityUah should not be negative";
 
-        if (value.batteryFullCapacityUah > 0) {
-            EXPECT_GE(value.batteryFullCapacityUah, legacy.batteryFullCharge * 0.50);
-            EXPECT_LE(value.batteryFullCapacityUah, legacy.batteryFullCharge * 1.20);
-        }
+        EXPECT_GT((long)value.batteryFullChargeDesignCapacityUah, FULL_CHARGE_DESIGN_CAP_MIN)
+                << "batteryFullChargeDesignCapacityUah should be greater than 100 mAh";
+
+        EXPECT_LT((long)value.batteryFullChargeDesignCapacityUah, FULL_CHARGE_DESIGN_CAP_MAX)
+                << "batteryFullChargeDesignCapacityUah should be less than 100,000 mAh";
     })));
 }
 

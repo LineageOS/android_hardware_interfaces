@@ -139,7 +139,7 @@ TEST_P(GnssHalTest, TestGnssMeasurementFields) {
             std::string codeType = lastMeasurement.clock.referenceSignalTypeForIsb.codeType;
 
             ASSERT_TRUE(referenceConstellation >= GnssConstellationType::UNKNOWN &&
-                        referenceConstellation >= GnssConstellationType::IRNSS);
+                        referenceConstellation <= GnssConstellationType::IRNSS);
             ASSERT_TRUE(carrierFrequencyHz > 0);
             ASSERT_TRUE(codeType != "");
 
@@ -151,6 +151,85 @@ TEST_P(GnssHalTest, TestGnssMeasurementFields) {
     }
 
     iGnssMeasurement->close();
+}
+
+/*
+ * TestGnssAntennaInfo:
+ * Sets a GnssAntennaInfoCallback, waits for report, and verifies
+ * 1. phaseCenterOffsetCoordinateMillimeters is valid
+ * 2. phaseCenterOffsetCoordinateUncertaintyMillimeters is valid.
+ * PhaseCenterVariationCorrections and SignalGainCorrections are optional.
+ */
+TEST_P(GnssHalTest, TestGnssAntennaInfo) {
+    const int kAntennaInfoTimeoutSeconds = 2;
+
+    auto gnssAntennaInfo = gnss_hal_->getExtensionGnssAntennaInfo();
+    ASSERT_TRUE(gnssAntennaInfo.isOk());
+
+    // Skip test if GnssAntennaInfo v2.1 is not supported
+    sp<IGnssAntennaInfo> iGnssAntennaInfo = gnssAntennaInfo;
+    if (!(gnss_cb_->last_capabilities_ & IGnssCallback_2_1::Capabilities::ANTENNA_INFO) ||
+        iGnssAntennaInfo == nullptr) {
+        ALOGD("GnssAntennaInfo v2.1 is not supported.");
+        return;
+    }
+
+    sp<GnssAntennaInfoCallback> callback = new GnssAntennaInfoCallback();
+    auto result = iGnssAntennaInfo->setCallback(callback);
+    ASSERT_TRUE(result.isOk());
+    EXPECT_EQ(result, IGnssAntennaInfo::GnssAntennaInfoStatus::SUCCESS);
+
+    hidl_vec<IGnssAntennaInfoCallback::GnssAntennaInfo> antennaInfos;
+    ASSERT_TRUE(callback->antenna_info_cbq_.retrieve(antennaInfos, kAntennaInfoTimeoutSeconds));
+    EXPECT_EQ(callback->antenna_info_cbq_.calledCount(), 1);
+    ASSERT_TRUE(antennaInfos.size() > 0);
+
+    for (auto antennaInfo : antennaInfos) {
+        // Remaining fields are optional
+        if (antennaInfo.phaseCenterVariationCorrectionMillimeters != NULL) {
+            int numRows = antennaInfo.phaseCenterVariationCorrectionMillimeters.size();
+            int numColumns = antennaInfo.phaseCenterVariationCorrectionMillimeters[0].row.size();
+            // Must have at least 1 row and 2 columns
+            ASSERT_TRUE(numRows >= 1 && numColumns >= 2);
+
+            // Corrections and uncertainties must have same dimensions
+            ASSERT_TRUE(antennaInfo.phaseCenterVariationCorrectionMillimeters.size() ==
+                        antennaInfo.phaseCenterVariationCorrectionUncertaintyMillimeters.size());
+            ASSERT_TRUE(
+                    antennaInfo.phaseCenterVariationCorrectionMillimeters[0].row.size() ==
+                    antennaInfo.phaseCenterVariationCorrectionUncertaintyMillimeters[0].row.size());
+
+            // Must be rectangular
+            for (auto row : antennaInfo.phaseCenterVariationCorrectionMillimeters) {
+                ASSERT_TRUE(row.row.size() == numColumns);
+            }
+            for (auto row : antennaInfo.phaseCenterVariationCorrectionUncertaintyMillimeters) {
+                ASSERT_TRUE(row.row.size() == numColumns);
+            }
+        }
+        if (antennaInfo.signalGainCorrectionDbi != NULL) {
+            int numRows = antennaInfo.signalGainCorrectionDbi.size();
+            int numColumns = antennaInfo.signalGainCorrectionUncertaintyDbi[0].row.size();
+            // Must have at least 1 row and 2 columns
+            ASSERT_TRUE(numRows >= 1 && numColumns >= 2);
+
+            // Corrections and uncertainties must have same dimensions
+            ASSERT_TRUE(antennaInfo.signalGainCorrectionDbi.size() ==
+                        antennaInfo.signalGainCorrectionUncertaintyDbi.size());
+            ASSERT_TRUE(antennaInfo.signalGainCorrectionDbi[0].row.size() ==
+                        antennaInfo.signalGainCorrectionUncertaintyDbi[0].row.size());
+
+            // Must be rectangular
+            for (auto row : antennaInfo.signalGainCorrectionDbi) {
+                ASSERT_TRUE(row.row.size() == numColumns);
+            }
+            for (auto row : antennaInfo.signalGainCorrectionUncertaintyDbi) {
+                ASSERT_TRUE(row.row.size() == numColumns);
+            }
+        }
+    }
+
+    iGnssAntennaInfo->close();
 }
 
 /*

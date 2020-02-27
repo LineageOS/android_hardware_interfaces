@@ -47,9 +47,9 @@ void RadioHidlTest_v1_5::SetUp() {
     EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
     EXPECT_EQ(RadioError::NONE, radioRsp_v1_5->rspInfo.error);
 
-    sp<::android::hardware::radio::config::V1_3::IRadioConfig> radioConfig =
+    sp<::android::hardware::radio::config::V1_1::IRadioConfig> radioConfig =
             ::testing::VtsHalHidlTargetTestBase::getService<
-                    ::android::hardware::radio::config::V1_3::IRadioConfig>();
+                    ::android::hardware::radio::config::V1_1::IRadioConfig>();
 
     /* Enforce Vts tesing with RadioConfig is existed. */
     ASSERT_NE(nullptr, radioConfig.get());

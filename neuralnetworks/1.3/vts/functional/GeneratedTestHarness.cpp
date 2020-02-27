@@ -74,7 +74,7 @@ namespace {
 
 enum class Executor { ASYNC, SYNC, BURST, FENCED };
 
-enum class OutputType { FULLY_SPECIFIED, UNSPECIFIED, INSUFFICIENT };
+enum class OutputType { FULLY_SPECIFIED, UNSPECIFIED, INSUFFICIENT, MISSED_DEADLINE };
 
 enum class MemoryType { SHARED, DEVICE };
 
@@ -122,15 +122,15 @@ class DeviceMemoryAllocator {
     // Return {IBuffer object, token} if successful.
     // Return {nullptr, 0} if device memory is not supported.
     template <IOType ioType>
-    std::pair<sp<IBuffer>, int32_t> allocate(uint32_t index) {
-        std::pair<sp<IBuffer>, int32_t> buffer;
+    std::pair<sp<IBuffer>, uint32_t> allocate(uint32_t index) {
+        std::pair<sp<IBuffer>, uint32_t> buffer;
         allocateInternal<ioType>(index, &buffer);
         return buffer;
     }
 
   private:
     template <IOType ioType>
-    void allocateInternal(uint32_t index, std::pair<sp<IBuffer>, int32_t>* result) {
+    void allocateInternal(uint32_t index, std::pair<sp<IBuffer>, uint32_t>* result) {
         ASSERT_NE(result, nullptr);
 
         // Prepare arguments.
@@ -145,14 +145,14 @@ class DeviceMemoryAllocator {
         // Allocate device memory.
         ErrorStatus status;
         sp<IBuffer> buffer;
-        int32_t token;
-        const auto ret = kDevice->allocate(
-                {}, {kPreparedModel}, inputRoles, outputRoles,
-                [&status, &buffer, &token](ErrorStatus error, const sp<IBuffer>& buf, int32_t tok) {
-                    status = error;
-                    buffer = buf;
-                    token = tok;
-                });
+        uint32_t token;
+        auto cb = [&status, &buffer, &token](ErrorStatus error, const sp<IBuffer>& buf,
+                                             uint32_t tok) {
+            status = error;
+            buffer = buf;
+            token = tok;
+        };
+        const auto ret = kDevice->allocate({}, {kPreparedModel}, inputRoles, outputRoles, cb);
 
         // Check allocation results.
         ASSERT_TRUE(ret.isOk());
@@ -169,7 +169,8 @@ class DeviceMemoryAllocator {
         if constexpr (ioType == IOType::INPUT) {
             if (buffer != nullptr) {
                 // TestBuffer -> Shared memory.
-                const auto& testBuffer = kTestModel.operands[kTestModel.inputIndexes[index]].data;
+                const auto& testBuffer =
+                        kTestModel.main.operands[kTestModel.main.inputIndexes[index]].data;
                 ASSERT_GT(testBuffer.size(), 0);
                 hidl_memory tmp = nn::allocateSharedMemory(testBuffer.size());
                 sp<IMemory> inputMemory = mapMemory(tmp);
@@ -195,29 +196,45 @@ class DeviceMemoryAllocator {
     const TestModel& kTestModel;
 };
 
-}  // namespace
+Subgraph createSubgraph(const TestSubgraph& testSubgraph, uint32_t* constCopySize,
+                        std::vector<const TestBuffer*>* constCopies, uint32_t* constRefSize,
+                        std::vector<const TestBuffer*>* constReferences) {
+    CHECK(constCopySize != nullptr);
+    CHECK(constCopies != nullptr);
+    CHECK(constRefSize != nullptr);
+    CHECK(constReferences != nullptr);
 
-Model createModel(const TestModel& testModel) {
-    // Model operands.
-    hidl_vec<Operand> operands(testModel.operands.size());
-    size_t constCopySize = 0, constRefSize = 0;
-    for (uint32_t i = 0; i < testModel.operands.size(); i++) {
-        const auto& op = testModel.operands[i];
+    // Operands.
+    hidl_vec<Operand> operands(testSubgraph.operands.size());
+    for (uint32_t i = 0; i < testSubgraph.operands.size(); i++) {
+        const auto& op = testSubgraph.operands[i];
 
         DataLocation loc = {};
         if (op.lifetime == TestOperandLifeTime::CONSTANT_COPY) {
-            loc = {.poolIndex = 0,
-                   .offset = static_cast<uint32_t>(constCopySize),
-                   .length = static_cast<uint32_t>(op.data.size())};
-            constCopySize += op.data.alignedSize();
+            loc = {
+                    .poolIndex = 0,
+                    .offset = *constCopySize,
+                    .length = static_cast<uint32_t>(op.data.size()),
+            };
+            constCopies->push_back(&op.data);
+            *constCopySize += op.data.alignedSize();
         } else if (op.lifetime == TestOperandLifeTime::CONSTANT_REFERENCE) {
-            loc = {.poolIndex = 0,
-                   .offset = static_cast<uint32_t>(constRefSize),
-                   .length = static_cast<uint32_t>(op.data.size())};
-            constRefSize += op.data.alignedSize();
+            loc = {
+                    .poolIndex = 0,
+                    .offset = *constRefSize,
+                    .length = static_cast<uint32_t>(op.data.size()),
+            };
+            constReferences->push_back(&op.data);
+            *constRefSize += op.data.alignedSize();
+        } else if (op.lifetime == TestOperandLifeTime::SUBGRAPH) {
+            loc = {
+                    .poolIndex = 0,
+                    .offset = *op.data.get<uint32_t>(),
+                    .length = 0,
+            };
         }
 
-        Operand::ExtraParams extraParams;
+        V1_2::Operand::ExtraParams extraParams;
         if (op.type == TestOperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL) {
             extraParams.channelQuant(SymmPerChannelQuantParams{
                     .scales = op.channelQuant.scales, .channelDim = op.channelQuant.channelDim});
@@ -233,25 +250,52 @@ Model createModel(const TestModel& testModel) {
                        .extraParams = std::move(extraParams)};
     }
 
-    // Model operations.
-    hidl_vec<Operation> operations(testModel.operations.size());
-    std::transform(testModel.operations.begin(), testModel.operations.end(), operations.begin(),
-                   [](const TestOperation& op) -> Operation {
+    // Operations.
+    hidl_vec<Operation> operations(testSubgraph.operations.size());
+    std::transform(testSubgraph.operations.begin(), testSubgraph.operations.end(),
+                   operations.begin(), [](const TestOperation& op) -> Operation {
                        return {.type = static_cast<OperationType>(op.type),
                                .inputs = op.inputs,
                                .outputs = op.outputs};
                    });
 
+    return {.operands = std::move(operands),
+            .operations = std::move(operations),
+            .inputIndexes = testSubgraph.inputIndexes,
+            .outputIndexes = testSubgraph.outputIndexes};
+}
+
+void copyTestBuffers(const std::vector<const TestBuffer*>& buffers, uint8_t* output) {
+    uint32_t offset = 0;
+    for (const TestBuffer* buffer : buffers) {
+        const uint8_t* begin = buffer->get<uint8_t>();
+        const uint8_t* end = begin + buffer->size();
+        std::copy(begin, end, output + offset);
+        offset += buffer->alignedSize();
+    }
+}
+
+}  // namespace
+
+Model createModel(const TestModel& testModel) {
+    uint32_t constCopySize = 0;
+    uint32_t constRefSize = 0;
+    std::vector<const TestBuffer*> constCopies;
+    std::vector<const TestBuffer*> constReferences;
+
+    Subgraph mainSubgraph = createSubgraph(testModel.main, &constCopySize, &constCopies,
+                                           &constRefSize, &constReferences);
+    hidl_vec<Subgraph> refSubgraphs(testModel.referenced.size());
+    std::transform(testModel.referenced.begin(), testModel.referenced.end(), refSubgraphs.begin(),
+                   [&constCopySize, &constCopies, &constRefSize,
+                    &constReferences](const TestSubgraph& testSubgraph) {
+                       return createSubgraph(testSubgraph, &constCopySize, &constCopies,
+                                             &constRefSize, &constReferences);
+                   });
+
     // Constant copies.
     hidl_vec<uint8_t> operandValues(constCopySize);
-    for (uint32_t i = 0; i < testModel.operands.size(); i++) {
-        const auto& op = testModel.operands[i];
-        if (op.lifetime == TestOperandLifeTime::CONSTANT_COPY) {
-            const uint8_t* begin = op.data.get<uint8_t>();
-            const uint8_t* end = begin + op.data.size();
-            std::copy(begin, end, operandValues.data() + operands[i].location.offset);
-        }
-    }
+    copyTestBuffers(constCopies, operandValues.data());
 
     // Shared memory.
     hidl_vec<hidl_memory> pools = {};
@@ -266,27 +310,18 @@ Model createModel(const TestModel& testModel) {
                 reinterpret_cast<uint8_t*>(static_cast<void*>(mappedMemory->getPointer()));
         CHECK(mappedPtr != nullptr);
 
-        for (uint32_t i = 0; i < testModel.operands.size(); i++) {
-            const auto& op = testModel.operands[i];
-            if (op.lifetime == TestOperandLifeTime::CONSTANT_REFERENCE) {
-                const uint8_t* begin = op.data.get<uint8_t>();
-                const uint8_t* end = begin + op.data.size();
-                std::copy(begin, end, mappedPtr + operands[i].location.offset);
-            }
-        }
+        copyTestBuffers(constReferences, mappedPtr);
     }
 
-    return {.main = {.operands = std::move(operands),
-                     .operations = std::move(operations),
-                     .inputIndexes = testModel.inputIndexes,
-                     .outputIndexes = testModel.outputIndexes},
+    return {.main = std::move(mainSubgraph),
+            .referenced = std::move(refSubgraphs),
             .operandValues = std::move(operandValues),
             .pools = std::move(pools),
             .relaxComputationFloat32toFloat16 = testModel.isRelaxed};
 }
 
 static bool isOutputSizeGreaterThanOne(const TestModel& testModel, uint32_t index) {
-    const auto byteSize = testModel.operands[testModel.outputIndexes[index]].data.size();
+    const auto byteSize = testModel.main.operands[testModel.main.outputIndexes[index]].data.size();
     return byteSize > 1u;
 }
 
@@ -317,13 +352,13 @@ static std::pair<Request, std::vector<sp<IBuffer>>> createRequest(
     // - [2+i, 2+i+o): Output device memories
     DeviceMemoryAllocator allocator(device, preparedModel, testModel);
     std::vector<sp<IBuffer>> buffers;
-    std::vector<int32_t> tokens;
+    std::vector<uint32_t> tokens;
 
     // Model inputs.
-    hidl_vec<RequestArgument> inputs(testModel.inputIndexes.size());
+    hidl_vec<RequestArgument> inputs(testModel.main.inputIndexes.size());
     size_t inputSize = 0;
-    for (uint32_t i = 0; i < testModel.inputIndexes.size(); i++) {
-        const auto& op = testModel.operands[testModel.inputIndexes[i]];
+    for (uint32_t i = 0; i < testModel.main.inputIndexes.size(); i++) {
+        const auto& op = testModel.main.operands[testModel.main.inputIndexes[i]];
         if (op.data.size() == 0) {
             // Omitted input.
             inputs[i] = {.hasNoValue = true};
@@ -350,10 +385,10 @@ static std::pair<Request, std::vector<sp<IBuffer>>> createRequest(
     }
 
     // Model outputs.
-    hidl_vec<RequestArgument> outputs(testModel.outputIndexes.size());
+    hidl_vec<RequestArgument> outputs(testModel.main.outputIndexes.size());
     size_t outputSize = 0;
-    for (uint32_t i = 0; i < testModel.outputIndexes.size(); i++) {
-        const auto& op = testModel.operands[testModel.outputIndexes[i]];
+    for (uint32_t i = 0; i < testModel.main.outputIndexes.size(); i++) {
+        const auto& op = testModel.main.operands[testModel.main.outputIndexes[i]];
         if (preferDeviceMemory) {
             SCOPED_TRACE("Output index = " + std::to_string(i));
             auto [buffer, token] = allocator.allocate<IOType::OUTPUT>(i);
@@ -398,9 +433,9 @@ static std::pair<Request, std::vector<sp<IBuffer>>> createRequest(
     CHECK(inputMemory.get() != nullptr);
     uint8_t* inputPtr = static_cast<uint8_t*>(static_cast<void*>(inputMemory->getPointer()));
     CHECK(inputPtr != nullptr);
-    for (uint32_t i = 0; i < testModel.inputIndexes.size(); i++) {
+    for (uint32_t i = 0; i < testModel.main.inputIndexes.size(); i++) {
         if (!inputs[i].hasNoValue && inputs[i].location.poolIndex == kInputPoolIndex) {
-            const auto& op = testModel.operands[testModel.inputIndexes[i]];
+            const auto& op = testModel.main.operands[testModel.main.inputIndexes[i]];
             const uint8_t* begin = op.data.get<uint8_t>();
             const uint8_t* end = begin + op.data.size();
             std::copy(begin, end, inputPtr + inputs[i].location.offset);
@@ -443,7 +478,7 @@ static std::vector<TestBuffer> getOutputBuffers(const TestModel& testModel, cons
         if (outputLoc.poolIndex == kOutputPoolIndex) {
             outputBuffers.emplace_back(outputLoc.length, outputPtr + outputLoc.offset);
         } else {
-            const auto& op = testModel.operands[testModel.outputIndexes[i]];
+            const auto& op = testModel.main.operands[testModel.main.outputIndexes[i]];
             if (op.data.size() == 0) {
                 outputBuffers.emplace_back();
             } else {
@@ -460,16 +495,18 @@ static std::vector<TestBuffer> getOutputBuffers(const TestModel& testModel, cons
 
 static Return<ErrorStatus> ExecutePreparedModel(const sp<IPreparedModel>& preparedModel,
                                                 const Request& request, MeasureTiming measure,
+                                                const OptionalTimeoutDuration& loopTimeoutDuration,
                                                 sp<ExecutionCallback>& callback) {
-    return preparedModel->execute_1_3(request, measure, {}, callback);
+    return preparedModel->execute_1_3(request, measure, {}, loopTimeoutDuration, callback);
 }
 static Return<ErrorStatus> ExecutePreparedModel(const sp<IPreparedModel>& preparedModel,
                                                 const Request& request, MeasureTiming measure,
+                                                const OptionalTimeoutDuration& loopTimeoutDuration,
                                                 hidl_vec<OutputShape>* outputShapes,
                                                 Timing* timing) {
     ErrorStatus result;
     Return<void> ret = preparedModel->executeSynchronously_1_3(
-            request, measure, {},
+            request, measure, {}, loopTimeoutDuration,
             [&result, outputShapes, timing](ErrorStatus error, const hidl_vec<OutputShape>& shapes,
                                             const Timing& time) {
                 result = error;
@@ -510,6 +547,17 @@ void EvaluatePreparedModel(const sp<IDevice>& device, const sp<IPreparedModel>& 
         makeOutputInsufficientSize(/*outputIndex=*/0, &request);
     }
 
+    OptionalTimeoutDuration loopTimeoutDuration;
+    // OutputType::MISSED_DEADLINE is only used by
+    // TestKind::INTINITE_LOOP_TIMEOUT tests to verify that an infinite loop is
+    // aborted after a timeout.
+    if (testConfig.outputType == OutputType::MISSED_DEADLINE) {
+        // Override the default loop timeout duration with a small value to
+        // speed up test execution.
+        constexpr uint64_t kMillisecond = 1'000'000;
+        loopTimeoutDuration.nanoseconds(1 * kMillisecond);
+    }
+
     ErrorStatus executionStatus;
     hidl_vec<OutputShape> outputShapes;
     Timing timing;
@@ -519,8 +567,9 @@ void EvaluatePreparedModel(const sp<IDevice>& device, const sp<IPreparedModel>& 
 
             // launch execution
             sp<ExecutionCallback> executionCallback = new ExecutionCallback();
-            Return<ErrorStatus> executionLaunchStatus = ExecutePreparedModel(
-                    preparedModel, request, testConfig.measureTiming, executionCallback);
+            Return<ErrorStatus> executionLaunchStatus =
+                    ExecutePreparedModel(preparedModel, request, testConfig.measureTiming,
+                                         loopTimeoutDuration, executionCallback);
             ASSERT_TRUE(executionLaunchStatus.isOk());
             EXPECT_EQ(ErrorStatus::NONE, static_cast<ErrorStatus>(executionLaunchStatus));
 
@@ -536,8 +585,9 @@ void EvaluatePreparedModel(const sp<IDevice>& device, const sp<IPreparedModel>& 
             SCOPED_TRACE("synchronous");
 
             // execute
-            Return<ErrorStatus> executionReturnStatus = ExecutePreparedModel(
-                    preparedModel, request, testConfig.measureTiming, &outputShapes, &timing);
+            Return<ErrorStatus> executionReturnStatus =
+                    ExecutePreparedModel(preparedModel, request, testConfig.measureTiming,
+                                         loopTimeoutDuration, &outputShapes, &timing);
             ASSERT_TRUE(executionReturnStatus.isOk());
             executionStatus = static_cast<ErrorStatus>(executionReturnStatus);
 
@@ -577,7 +627,7 @@ void EvaluatePreparedModel(const sp<IDevice>& device, const sp<IPreparedModel>& 
             hidl_handle syncFenceHandle;
             sp<IFencedExecutionCallback> fencedCallback;
             Return<void> ret = preparedModel->executeFenced(
-                    request, {}, testConfig.measureTiming, {}, {},
+                    request, {}, testConfig.measureTiming, {}, loopTimeoutDuration, {},
                     [&result, &syncFenceHandle, &fencedCallback](
                             ErrorStatus error, const hidl_handle& handle,
                             const sp<IFencedExecutionCallback>& callback) {
@@ -638,25 +688,30 @@ void EvaluatePreparedModel(const sp<IDevice>& device, const sp<IPreparedModel>& 
             // either empty, or have the same number of elements as the number of outputs.
             ASSERT_EQ(ErrorStatus::NONE, executionStatus);
             ASSERT_TRUE(outputShapes.size() == 0 ||
-                        outputShapes.size() == testModel.outputIndexes.size());
+                        outputShapes.size() == testModel.main.outputIndexes.size());
             break;
         case OutputType::UNSPECIFIED:
             // If the model output operands are not fully specified, outputShapes must have
             // the same number of elements as the number of outputs.
             ASSERT_EQ(ErrorStatus::NONE, executionStatus);
-            ASSERT_EQ(outputShapes.size(), testModel.outputIndexes.size());
+            ASSERT_EQ(outputShapes.size(), testModel.main.outputIndexes.size());
             break;
         case OutputType::INSUFFICIENT:
             ASSERT_EQ(ErrorStatus::OUTPUT_INSUFFICIENT_SIZE, executionStatus);
-            ASSERT_EQ(outputShapes.size(), testModel.outputIndexes.size());
+            ASSERT_EQ(outputShapes.size(), testModel.main.outputIndexes.size());
             ASSERT_FALSE(outputShapes[0].isSufficient);
+            return;
+        case OutputType::MISSED_DEADLINE:
+            ASSERT_TRUE(executionStatus == ErrorStatus::MISSED_DEADLINE_TRANSIENT ||
+                        executionStatus == ErrorStatus::MISSED_DEADLINE_PERSISTENT)
+                    << "executionStatus = " << executionStatus;
             return;
     }
 
     // Go through all outputs, check returned output shapes.
     for (uint32_t i = 0; i < outputShapes.size(); i++) {
         EXPECT_TRUE(outputShapes[i].isSufficient);
-        const auto& expect = testModel.operands[testModel.outputIndexes[i]].dimensions;
+        const auto& expect = testModel.main.operands[testModel.main.outputIndexes[i]].dimensions;
         const std::vector<uint32_t> actual = outputShapes[i].dimensions;
         EXPECT_EQ(expect, actual);
     }
@@ -700,6 +755,12 @@ void EvaluatePreparedModel(const sp<IDevice>& device, const sp<IPreparedModel>& 
         case TestKind::QUANTIZATION_COUPLING: {
             LOG(FATAL) << "Wrong TestKind for EvaluatePreparedModel";
             return;
+        } break;
+        case TestKind::INTINITE_LOOP_TIMEOUT: {
+            outputTypesList = {OutputType::MISSED_DEADLINE};
+            measureTimingList = {MeasureTiming::NO, MeasureTiming::YES};
+            // Burst does not support V1_3 loop timeout.
+            executorList = {Executor::ASYNC, Executor::SYNC, Executor::FENCED};
         } break;
     }
 
@@ -759,7 +820,8 @@ void Execute(const sp<IDevice>& device, const TestModel& testModel, TestKind tes
         case TestKind::GENERAL:
         case TestKind::DYNAMIC_SHAPE:
         case TestKind::MEMORY_DOMAIN:
-        case TestKind::FENCED_COMPUTE: {
+        case TestKind::FENCED_COMPUTE:
+        case TestKind::INTINITE_LOOP_TIMEOUT: {
             createPreparedModel(device, model, &preparedModel);
             if (preparedModel == nullptr) return;
             EvaluatePreparedModel(device, preparedModel, testModel, testKind);
@@ -796,12 +858,6 @@ void Execute(const sp<IDevice>& device, const TestModel& testModel, TestKind tes
 void GeneratedTestBase::SetUp() {
     testing::TestWithParam<GeneratedTestParam>::SetUp();
     ASSERT_NE(kDevice, nullptr);
-
-    const Return<void> ret =
-            kDevice->supportsDeadlines([this](bool prepareModelDeadline, bool executionDeadline) {
-                mSupportsDeadlines = {prepareModelDeadline, executionDeadline};
-            });
-    ASSERT_TRUE(ret.isOk());
 }
 
 std::vector<NamedModel> getNamedModels(const FilterFn& filter) {
@@ -828,24 +884,31 @@ class FencedComputeTest : public GeneratedTest {};
 // Tag for the dynamic output shape tests
 class QuantizationCouplingTest : public GeneratedTest {};
 
+// Tag for the loop timeout tests
+class InfiniteLoopTimeoutTest : public GeneratedTest {};
+
 TEST_P(GeneratedTest, Test) {
-    Execute(kDevice, kTestModel, /*testKind=*/TestKind::GENERAL);
+    Execute(kDevice, kTestModel, TestKind::GENERAL);
 }
 
 TEST_P(DynamicOutputShapeTest, Test) {
-    Execute(kDevice, kTestModel, /*testKind=*/TestKind::DYNAMIC_SHAPE);
+    Execute(kDevice, kTestModel, TestKind::DYNAMIC_SHAPE);
 }
 
 TEST_P(MemoryDomainTest, Test) {
-    Execute(kDevice, kTestModel, /*testKind=*/TestKind::MEMORY_DOMAIN);
+    Execute(kDevice, kTestModel, TestKind::MEMORY_DOMAIN);
 }
 
 TEST_P(FencedComputeTest, Test) {
-    Execute(kDevice, kTestModel, /*testKind=*/TestKind::FENCED_COMPUTE);
+    Execute(kDevice, kTestModel, TestKind::FENCED_COMPUTE);
 }
 
 TEST_P(QuantizationCouplingTest, Test) {
-    Execute(kDevice, kTestModel, /*testKind=*/TestKind::QUANTIZATION_COUPLING);
+    Execute(kDevice, kTestModel, TestKind::QUANTIZATION_COUPLING);
+}
+
+TEST_P(InfiniteLoopTimeoutTest, Test) {
+    Execute(kDevice, kTestModel, TestKind::INTINITE_LOOP_TIMEOUT);
 }
 
 INSTANTIATE_GENERATED_TEST(GeneratedTest,
@@ -862,7 +925,11 @@ INSTANTIATE_GENERATED_TEST(FencedComputeTest,
                            [](const TestModel& testModel) { return !testModel.expectFailure; });
 
 INSTANTIATE_GENERATED_TEST(QuantizationCouplingTest, [](const TestModel& testModel) {
-    return testModel.hasQuant8CoupledOperands() && testModel.operations.size() == 1;
+    return testModel.hasQuant8CoupledOperands() && testModel.main.operations.size() == 1;
+});
+
+INSTANTIATE_GENERATED_TEST(InfiniteLoopTimeoutTest, [](const TestModel& testModel) {
+    return testModel.isInfiniteLoopTimeoutTest();
 });
 
 }  // namespace android::hardware::neuralnetworks::V1_3::vts::functional

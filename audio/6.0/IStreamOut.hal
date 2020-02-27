@@ -19,6 +19,7 @@ package android.hardware.audio@6.0;
 import android.hardware.audio.common@6.0;
 import IStream;
 import IStreamOutCallback;
+import IStreamOutEventCallback;
 
 interface IStreamOut extends IStream {
     /**
@@ -168,6 +169,18 @@ interface IStreamOut extends IStream {
     clearCallback() generates (Result retval);
 
     /**
+     * Set the callback interface for notifying about an output stream event.
+     *
+     * Calling this method with a null pointer will result in releasing
+     * the local callback proxy on the server side and thus dereference
+     * the callback implementation on the client side.
+     *
+     * @return retval operation completion status.
+     */
+    setEventCallback(IStreamOutEventCallback callback)
+            generates (Result retval);
+
+    /**
      * Returns whether HAL supports pausing and resuming of streams.
      *
      * @return supportsPause true if pausing is supported.
@@ -275,5 +288,91 @@ interface IStreamOut extends IStream {
      * @return retval operation completion status.
      */
     selectPresentation(int32_t presentationId, int32_t programId)
+            generates (Result retval);
+
+    /**
+     * Returns the Dual Mono mode presentation setting.
+     *
+     * Optional method
+     *
+     * @return retval operation completion status.
+     * @return mode current setting of Dual Mono mode.
+     */
+    getDualMonoMode() generates (Result retval, DualMonoMode mode);
+
+    /**
+     * Sets the Dual Mono mode presentation on the output device.
+     *
+     * The Dual Mono mode is generally applied to stereo audio streams
+     * where the left and right channels come from separate sources.
+     *
+     * Optional method
+     *
+     * @param mode selected Dual Mono mode.
+     * @return retval operation completion status.
+     */
+    setDualMonoMode(DualMonoMode mode) generates (Result retval);
+
+    /**
+     * Returns the Audio Description Mix level in dB.
+     *
+     * The level is applied to streams incorporating a secondary Audio
+     * Description stream. It specifies the relative level of mixing for
+     * the Audio Description with a reference to the Main Audio.
+     *
+     * Optional method
+     *
+     * The value of the relative level is in the range from negative infinity
+     * to +48.
+     *
+     * @return retval operation completion status.
+     * @return leveldB the current Audio Description Mix Level in dB.
+     */
+    getAudioDescriptionMixLevel() generates (Result retval, float leveldB);
+
+    /**
+     * Sets the Audio Description Mix level in dB.
+     *
+     * For streams incorporating a secondary Audio Description stream
+     * the relative level of mixing of the Audio Description to the Main Audio
+     * is controlled by this method.
+     *
+     * Optional method
+     *
+     * The value of the relative level must be in the range from negative
+     * infinity to +48.
+     *
+     * @param leveldB Audio Description Mix Level in dB
+     * @return retval operation completion status.
+     */
+    setAudioDescriptionMixLevel(float leveldB) generates (Result retval);
+
+    /**
+     * Retrieves current playback rate parameters.
+     *
+     * Optional method
+     *
+     * @return retval operation completion status.
+     * @return playbackRate current playback parameters
+     */
+    getPlaybackRateParameters()
+            generates (Result retval, PlaybackRate playbackRate);
+
+    /**
+     * Sets the playback rate parameters that control playback behavior.
+     * This is normally used when playing encoded content and decoding
+     * is performed in hardware. Otherwise, the framework can apply
+     * necessary transformations.
+     *
+     * Optional method
+     *
+     * If the HAL supports setting the playback rate, it is recommended
+     * to support speed and pitch values at least in the range
+     * from 0.5f to 2.0f, inclusive (see the definition of PlaybackRate struct).
+     *
+     * @param playbackRate playback parameters
+     * @return retval operation completion status.
+     */
+    setPlaybackRateParameters(PlaybackRate playbackRate)
             generates (Result retval);
 };

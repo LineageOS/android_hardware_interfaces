@@ -29,6 +29,11 @@ using MeasurementCorrections_1_0 =
 using MeasurementCorrections_1_1 =
         android::hardware::gnss::measurement_corrections::V1_1::MeasurementCorrections;
 
+using SingleSatCorrection_V1_0 =
+        android::hardware::gnss::measurement_corrections::V1_0::SingleSatCorrection;
+using SingleSatCorrection_V1_1 =
+        android::hardware::gnss::measurement_corrections::V1_1::SingleSatCorrection;
+
 namespace android {
 namespace hardware {
 namespace gnss {

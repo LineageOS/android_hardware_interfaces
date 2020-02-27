@@ -97,6 +97,7 @@ class GraphicsMapperHidlTest
         Error err = mGralloc->set(bufferHandle, metadataType, metadata);
         if (err == Error::UNSUPPORTED) {
             GTEST_SUCCEED() << "setting this metadata is unsupported";
+            return;
         }
         ASSERT_EQ(err, Error::NONE);
 
@@ -143,7 +144,7 @@ class GraphicsMapperHidlTest
         EXPECT_EQ(24, offsetInBitsA);
 
         EXPECT_EQ(0, planeLayout.offsetInBytes);
-        EXPECT_EQ(8, planeLayout.sampleIncrementInBits);
+        EXPECT_EQ(32, planeLayout.sampleIncrementInBits);
         // Skip testing stride because any stride is valid
         EXPECT_EQ(mDummyDescriptorInfo.width, planeLayout.widthInSamples);
         EXPECT_EQ(mDummyDescriptorInfo.height, planeLayout.heightInSamples);
@@ -151,11 +152,6 @@ class GraphicsMapperHidlTest
                   planeLayout.totalSizeInBytes);
         EXPECT_EQ(1, planeLayout.horizontalSubsampling);
         EXPECT_EQ(1, planeLayout.verticalSubsampling);
-
-        EXPECT_EQ(0, planeLayout.crop.left);
-        EXPECT_EQ(0, planeLayout.crop.top);
-        EXPECT_EQ(planeLayout.widthInSamples, planeLayout.crop.right);
-        EXPECT_EQ(planeLayout.heightInSamples, planeLayout.crop.bottom);
     }
 
     void verifyBufferDump(const IMapper::BufferDump& bufferDump,
@@ -281,6 +277,8 @@ class GraphicsMapperHidlTest
             data += strideInBytes;
         }
     }
+
+    bool isEqual(float a, float b) { return abs(a - b) < 0.0001; }
 
     std::unique_ptr<Gralloc> mGralloc;
     IMapper::BufferDescriptorInfo mDummyDescriptorInfo{};
@@ -729,8 +727,10 @@ TEST_P(GraphicsMapperHidlTest, FlushRereadBasic) {
 
     int fence;
     ASSERT_NO_FATAL_FAILURE(fence = mGralloc->flushLockedBuffer(writeBufferHandle));
-    ASSERT_EQ(0, sync_wait(fence, 3500));
-    close(fence);
+    if (fence >= 0) {
+        ASSERT_EQ(0, sync_wait(fence, 3500));
+        close(fence);
+    }
 
     ASSERT_NO_FATAL_FAILURE(mGralloc->rereadLockedBuffer(readBufferHandle));
 
@@ -925,6 +925,7 @@ TEST_P(GraphicsMapperHidlTest, GetProtectedContent) {
     bufferHandle = mGralloc->allocate(info, true, true);
     if (bufferHandle) {
         GTEST_SUCCEED() << "unable to allocate protected content";
+        return;
     }
 
     hidl_vec<uint8_t> vec;
@@ -995,6 +996,22 @@ TEST_P(GraphicsMapperHidlTest, GetPlaneLayouts) {
     ASSERT_EQ(NO_ERROR, gralloc4::decodePlaneLayouts(vec, &planeLayouts));
 
     ASSERT_NO_FATAL_FAILURE(verifyDummyDescriptorInfoPlaneLayouts(planeLayouts));
+}
+
+/**
+ * Test IMapper::get(Crop)
+ */
+TEST_P(GraphicsMapperHidlTest, GetCrop) {
+    auto info = mDummyDescriptorInfo;
+    info.format = PixelFormat::RGBA_8888;
+    info.usage = static_cast<uint64_t>(BufferUsage::CPU_WRITE_OFTEN | BufferUsage::CPU_READ_OFTEN);
+
+    testGet(info, gralloc4::MetadataType_Crop,
+            [](const IMapper::BufferDescriptorInfo& /*info*/, const hidl_vec<uint8_t>& vec) {
+                std::vector<aidl::android::hardware::graphics::common::Rect> crops;
+                ASSERT_EQ(NO_ERROR, gralloc4::decodeCrop(vec, &crops));
+                EXPECT_EQ(1, crops.size());
+            });
 }
 
 /**
@@ -1104,6 +1121,8 @@ TEST_P(GraphicsMapperHidlTest, GetMetadataBadValue) {
     ASSERT_EQ(Error::BAD_BUFFER,
               mGralloc->get(bufferHandle, gralloc4::MetadataType_PlaneLayouts, &vec));
     ASSERT_EQ(0, vec.size());
+    ASSERT_EQ(Error::BAD_BUFFER, mGralloc->get(bufferHandle, gralloc4::MetadataType_Crop, &vec));
+    ASSERT_EQ(0, vec.size());
     ASSERT_EQ(Error::BAD_BUFFER,
               mGralloc->get(bufferHandle, gralloc4::MetadataType_Dataspace, &vec));
     ASSERT_EQ(0, vec.size());
@@ -1183,64 +1202,6 @@ TEST_P(GraphicsMapperHidlTest, SetPixelFormatModifier) {
 }
 
 /**
- * Test IMapper::set(Usage) remove flag
- */
-TEST_P(GraphicsMapperHidlTest, SetUsageRemoveBit) {
-    uint64_t usage = static_cast<uint64_t>(BufferUsage::CPU_WRITE_OFTEN);
-    hidl_vec<uint8_t> vec;
-    ASSERT_EQ(NO_ERROR, gralloc4::encodeUsage(usage, &vec));
-
-    testSet(mDummyDescriptorInfo, gralloc4::MetadataType_Usage, vec,
-            [&](const IMapper::BufferDescriptorInfo& /*info*/, const hidl_vec<uint8_t>& vec) {
-                uint64_t realUsage = 0;
-                ASSERT_EQ(NO_ERROR, gralloc4::decodeUsage(vec, &realUsage));
-                EXPECT_EQ(usage, realUsage);
-            });
-}
-/**
- * Test IMapper::set(Usage) add flag
- */
-TEST_P(GraphicsMapperHidlTest, SetUsageAddBit) {
-    uint64_t usage = mDummyDescriptorInfo.usage | static_cast<uint64_t>(BufferUsage::GPU_TEXTURE);
-    hidl_vec<uint8_t> vec;
-    ASSERT_EQ(NO_ERROR, gralloc4::encodeUsage(usage, &vec));
-
-    testSet(mDummyDescriptorInfo, gralloc4::MetadataType_Usage, vec,
-            [&](const IMapper::BufferDescriptorInfo& /*info*/, const hidl_vec<uint8_t>& vec) {
-                uint64_t realUsage = 0;
-                ASSERT_EQ(NO_ERROR, gralloc4::decodeUsage(vec, &realUsage));
-                EXPECT_EQ(usage, realUsage);
-            });
-}
-
-/**
- * Test IMapper::set(Usage) to test protected content
- */
-TEST_P(GraphicsMapperHidlTest, SetUsageProtected) {
-    const native_handle_t* bufferHandle = nullptr;
-    auto info = mDummyDescriptorInfo;
-    info.usage = BufferUsage::PROTECTED | BufferUsage::COMPOSER_OVERLAY;
-
-    bufferHandle = mGralloc->allocate(info, true, true);
-    if (bufferHandle) {
-        GTEST_SUCCEED() << "unable to allocate protected content";
-    }
-
-    uint64_t usage = static_cast<uint64_t>(BufferUsage::COMPOSER_OVERLAY);
-    hidl_vec<uint8_t> vec;
-    ASSERT_EQ(NO_ERROR, gralloc4::encodeUsage(usage, &vec));
-
-    Error err = mGralloc->set(bufferHandle, gralloc4::MetadataType_Usage, vec);
-    ASSERT_EQ(err, Error::UNSUPPORTED);
-    vec.resize(0);
-
-    uint64_t realUsage = 0;
-    ASSERT_EQ(Error::NONE, mGralloc->get(bufferHandle, gralloc4::MetadataType_Usage, &vec));
-    ASSERT_EQ(NO_ERROR, gralloc4::decodeUsage(vec, &realUsage));
-    EXPECT_EQ(info.usage, realUsage);
-}
-
-/**
  * Test IMapper::set(AllocationSize)
  */
 TEST_P(GraphicsMapperHidlTest, SetAllocationSize) {
@@ -1267,6 +1228,7 @@ TEST_P(GraphicsMapperHidlTest, SetProtectedContent) {
     bufferHandle = mGralloc->allocate(info, true, true);
     if (bufferHandle) {
         GTEST_SUCCEED() << "unable to allocate protected content";
+        return;
     }
 
     uint64_t protectedContent = 0;
@@ -1362,10 +1324,6 @@ TEST_P(GraphicsMapperHidlTest, SetPlaneLayouts) {
     planeLayoutA.totalSizeInBytes = planeLayoutA.strideInBytes * info.height;
     planeLayoutA.horizontalSubsampling = 1;
     planeLayoutA.verticalSubsampling = 1;
-    planeLayoutA.crop.left = 0;
-    planeLayoutA.crop.top = 0;
-    planeLayoutA.crop.right = info.width;
-    planeLayoutA.crop.bottom = info.height;
 
     component.type = gralloc4::PlaneLayoutComponentType_A;
     component.offsetInBits = 0;
@@ -1375,17 +1333,13 @@ TEST_P(GraphicsMapperHidlTest, SetPlaneLayouts) {
     planeLayouts.push_back(planeLayoutA);
 
     planeLayoutRGB.offsetInBytes = 0;
-    planeLayoutRGB.sampleIncrementInBits = 32;
+    planeLayoutRGB.sampleIncrementInBits = 24;
     planeLayoutRGB.strideInBytes = info.width + 20;
     planeLayoutRGB.widthInSamples = info.width;
     planeLayoutRGB.heightInSamples = info.height;
     planeLayoutRGB.totalSizeInBytes = planeLayoutRGB.strideInBytes * info.height;
     planeLayoutRGB.horizontalSubsampling = 1;
     planeLayoutRGB.verticalSubsampling = 1;
-    planeLayoutRGB.crop.left = 0;
-    planeLayoutRGB.crop.top = 0;
-    planeLayoutRGB.crop.right = info.width;
-    planeLayoutRGB.crop.bottom = info.height;
 
     component.type = gralloc4::PlaneLayoutComponentType_R;
     planeLayoutRGB.components.push_back(component);
@@ -1402,6 +1356,7 @@ TEST_P(GraphicsMapperHidlTest, SetPlaneLayouts) {
     Error err = mGralloc->set(bufferHandle, gralloc4::MetadataType_PlaneLayouts, vec);
     if (err == Error::UNSUPPORTED) {
         GTEST_SUCCEED() << "setting this metadata is unsupported";
+        return;
     }
     ASSERT_EQ(err, Error::NONE);
 
@@ -1423,11 +1378,6 @@ TEST_P(GraphicsMapperHidlTest, SetPlaneLayouts) {
         EXPECT_EQ(planeLayout.horizontalSubsampling, realPlaneLayout.horizontalSubsampling);
         EXPECT_EQ(planeLayout.verticalSubsampling, realPlaneLayout.verticalSubsampling);
 
-        EXPECT_EQ(planeLayout.crop.left, realPlaneLayout.crop.left);
-        EXPECT_EQ(planeLayout.crop.top, realPlaneLayout.crop.top);
-        EXPECT_EQ(planeLayout.crop.right, realPlaneLayout.crop.right);
-        EXPECT_EQ(planeLayout.crop.bottom, realPlaneLayout.crop.bottom);
-
         ASSERT_EQ(planeLayout.components.size(), realPlaneLayout.components.size());
 
         for (int j = 0; j < realPlaneLayout.components.size(); j++) {
@@ -1440,6 +1390,26 @@ TEST_P(GraphicsMapperHidlTest, SetPlaneLayouts) {
             EXPECT_EQ(component.offsetInBits, realComponent.offsetInBits);
         }
     }
+}
+
+/**
+ * Test IMapper::set(Crop)
+ */
+TEST_P(GraphicsMapperHidlTest, SetCrop) {
+    std::vector<aidl::android::hardware::graphics::common::Rect> crops{{0, 0, 32, 32}};
+    hidl_vec<uint8_t> vec;
+    ASSERT_EQ(NO_ERROR, gralloc4::encodeCrop(crops, &vec));
+
+    testSet(mDummyDescriptorInfo, gralloc4::MetadataType_Crop, vec,
+            [&](const IMapper::BufferDescriptorInfo& /*info*/, const hidl_vec<uint8_t>& vec) {
+                std::vector<aidl::android::hardware::graphics::common::Rect> realCrops;
+                ASSERT_EQ(NO_ERROR, gralloc4::decodeCrop(vec, &realCrops));
+                ASSERT_EQ(1, realCrops.size());
+                ASSERT_EQ(crops.front().left, realCrops.front().left);
+                ASSERT_EQ(crops.front().top, realCrops.front().top);
+                ASSERT_EQ(crops.front().right, realCrops.front().right);
+                ASSERT_EQ(crops.front().bottom, realCrops.front().bottom);
+            });
 }
 
 /**
@@ -1489,17 +1459,17 @@ TEST_P(GraphicsMapperHidlTest, SetSmpte2086) {
      *  red             0.680   0.320
      *  white (D65)     0.3127  0.3290
      */
-    std::optional<Smpte2086> smpte2086;
-    smpte2086->primaryRed.x = 0.680;
-    smpte2086->primaryRed.y = 0.320;
-    smpte2086->primaryGreen.x = 0.265;
-    smpte2086->primaryGreen.y = 0.690;
-    smpte2086->primaryBlue.x = 0.150;
-    smpte2086->primaryBlue.y = 0.060;
-    smpte2086->whitePoint.x = 0.3127;
-    smpte2086->whitePoint.y = 0.3290;
-    smpte2086->maxLuminance = 100.0;
-    smpte2086->minLuminance = 0.1;
+    Smpte2086 smpte2086;
+    smpte2086.primaryRed.x = 0.680;
+    smpte2086.primaryRed.y = 0.320;
+    smpte2086.primaryGreen.x = 0.265;
+    smpte2086.primaryGreen.y = 0.690;
+    smpte2086.primaryBlue.x = 0.150;
+    smpte2086.primaryBlue.y = 0.060;
+    smpte2086.whitePoint.x = 0.3127;
+    smpte2086.whitePoint.y = 0.3290;
+    smpte2086.maxLuminance = 100.0;
+    smpte2086.minLuminance = 0.1;
 
     hidl_vec<uint8_t> vec;
     ASSERT_EQ(NO_ERROR, gralloc4::encodeSmpte2086(smpte2086, &vec));
@@ -1509,16 +1479,16 @@ TEST_P(GraphicsMapperHidlTest, SetSmpte2086) {
                 std::optional<Smpte2086> realSmpte2086;
                 ASSERT_EQ(NO_ERROR, gralloc4::decodeSmpte2086(vec, &realSmpte2086));
                 ASSERT_TRUE(realSmpte2086.has_value());
-                EXPECT_EQ(smpte2086->primaryRed.x, realSmpte2086->primaryRed.x);
-                EXPECT_EQ(smpte2086->primaryRed.y, realSmpte2086->primaryRed.y);
-                EXPECT_EQ(smpte2086->primaryGreen.x, realSmpte2086->primaryGreen.x);
-                EXPECT_EQ(smpte2086->primaryGreen.y, realSmpte2086->primaryGreen.y);
-                EXPECT_EQ(smpte2086->primaryBlue.x, realSmpte2086->primaryBlue.x);
-                EXPECT_EQ(smpte2086->primaryBlue.y, realSmpte2086->primaryBlue.y);
-                EXPECT_EQ(smpte2086->whitePoint.x, realSmpte2086->whitePoint.x);
-                EXPECT_EQ(smpte2086->whitePoint.y, realSmpte2086->whitePoint.y);
-                EXPECT_EQ(smpte2086->maxLuminance, realSmpte2086->maxLuminance);
-                EXPECT_EQ(smpte2086->minLuminance, realSmpte2086->minLuminance);
+                EXPECT_TRUE(isEqual(smpte2086.primaryRed.x, realSmpte2086->primaryRed.x));
+                EXPECT_TRUE(isEqual(smpte2086.primaryRed.y, realSmpte2086->primaryRed.y));
+                EXPECT_TRUE(isEqual(smpte2086.primaryGreen.x, realSmpte2086->primaryGreen.x));
+                EXPECT_TRUE(isEqual(smpte2086.primaryGreen.y, realSmpte2086->primaryGreen.y));
+                EXPECT_TRUE(isEqual(smpte2086.primaryBlue.x, realSmpte2086->primaryBlue.x));
+                EXPECT_TRUE(isEqual(smpte2086.primaryBlue.y, realSmpte2086->primaryBlue.y));
+                EXPECT_TRUE(isEqual(smpte2086.whitePoint.x, realSmpte2086->whitePoint.x));
+                EXPECT_TRUE(isEqual(smpte2086.whitePoint.y, realSmpte2086->whitePoint.y));
+                EXPECT_TRUE(isEqual(smpte2086.maxLuminance, realSmpte2086->maxLuminance));
+                EXPECT_TRUE(isEqual(smpte2086.minLuminance, realSmpte2086->minLuminance));
             });
 }
 
@@ -1526,9 +1496,9 @@ TEST_P(GraphicsMapperHidlTest, SetSmpte2086) {
  * Test IMapper::set(Cta8613)
  */
 TEST_P(GraphicsMapperHidlTest, SetCta861_3) {
-    std::optional<Cta861_3> cta861_3;
-    cta861_3->maxContentLightLevel = 78.0;
-    cta861_3->maxFrameAverageLightLevel = 62.0;
+    Cta861_3 cta861_3;
+    cta861_3.maxContentLightLevel = 78.0;
+    cta861_3.maxFrameAverageLightLevel = 62.0;
 
     hidl_vec<uint8_t> vec;
     ASSERT_EQ(NO_ERROR, gralloc4::encodeCta861_3(cta861_3, &vec));
@@ -1538,9 +1508,10 @@ TEST_P(GraphicsMapperHidlTest, SetCta861_3) {
                 std::optional<Cta861_3> realCta861_3;
                 ASSERT_EQ(NO_ERROR, gralloc4::decodeCta861_3(vec, &realCta861_3));
                 ASSERT_TRUE(realCta861_3.has_value());
-                EXPECT_EQ(cta861_3->maxContentLightLevel, realCta861_3->maxContentLightLevel);
-                EXPECT_EQ(cta861_3->maxFrameAverageLightLevel,
-                          realCta861_3->maxFrameAverageLightLevel);
+                EXPECT_TRUE(
+                        isEqual(cta861_3.maxContentLightLevel, realCta861_3->maxContentLightLevel));
+                EXPECT_TRUE(isEqual(cta861_3.maxFrameAverageLightLevel,
+                                    realCta861_3->maxFrameAverageLightLevel));
             });
 }
 
@@ -1589,6 +1560,7 @@ TEST_P(GraphicsMapperHidlTest, SetMetadataNullBuffer) {
               mGralloc->set(bufferHandle, gralloc4::MetadataType_ChromaSiting, vec));
     ASSERT_EQ(Error::BAD_BUFFER,
               mGralloc->set(bufferHandle, gralloc4::MetadataType_PlaneLayouts, vec));
+    ASSERT_EQ(Error::BAD_BUFFER, mGralloc->set(bufferHandle, gralloc4::MetadataType_Crop, vec));
     ASSERT_EQ(Error::BAD_BUFFER,
               mGralloc->set(bufferHandle, gralloc4::MetadataType_Dataspace, vec));
     ASSERT_EQ(Error::BAD_BUFFER,
@@ -1607,16 +1579,48 @@ TEST_P(GraphicsMapperHidlTest, SetConstantMetadata) {
     const native_handle_t* bufferHandle = nullptr;
     ASSERT_NO_FATAL_FAILURE(bufferHandle = mGralloc->allocate(mDummyDescriptorInfo, true));
 
-    hidl_vec<uint8_t> vec;
-    ASSERT_EQ(Error::BAD_VALUE, mGralloc->set(bufferHandle, gralloc4::MetadataType_BufferId, vec));
-    ASSERT_EQ(Error::BAD_VALUE, mGralloc->set(bufferHandle, gralloc4::MetadataType_Name, vec));
-    ASSERT_EQ(Error::BAD_VALUE, mGralloc->set(bufferHandle, gralloc4::MetadataType_Width, vec));
-    ASSERT_EQ(Error::BAD_VALUE, mGralloc->set(bufferHandle, gralloc4::MetadataType_Height, vec));
+    uint64_t bufferId = 2;
+    hidl_vec<uint8_t> bufferIdVec;
+    ASSERT_EQ(NO_ERROR, gralloc4::encodeBufferId(bufferId, &bufferIdVec));
     ASSERT_EQ(Error::BAD_VALUE,
-              mGralloc->set(bufferHandle, gralloc4::MetadataType_LayerCount, vec));
+              mGralloc->set(bufferHandle, gralloc4::MetadataType_BufferId, bufferIdVec));
+
+    std::string name{"new name"};
+    hidl_vec<uint8_t> nameVec;
+    ASSERT_EQ(NO_ERROR, gralloc4::encodeName(name, &nameVec));
+    ASSERT_EQ(Error::BAD_VALUE, mGralloc->set(bufferHandle, gralloc4::MetadataType_Name, nameVec));
+
+    uint64_t width = 32;
+    hidl_vec<uint8_t> widthVec;
+    ASSERT_EQ(NO_ERROR, gralloc4::encodeWidth(width, &widthVec));
     ASSERT_EQ(Error::BAD_VALUE,
-              mGralloc->set(bufferHandle, gralloc4::MetadataType_PixelFormatRequested, vec));
-    ASSERT_EQ(Error::BAD_VALUE, mGralloc->set(bufferHandle, gralloc4::MetadataType_Usage, vec));
+              mGralloc->set(bufferHandle, gralloc4::MetadataType_Width, widthVec));
+
+    uint64_t height = 32;
+    hidl_vec<uint8_t> heightVec;
+    ASSERT_EQ(NO_ERROR, gralloc4::encodeHeight(height, &heightVec));
+    ASSERT_EQ(Error::BAD_VALUE,
+              mGralloc->set(bufferHandle, gralloc4::MetadataType_Height, heightVec));
+
+    uint64_t layerCount = 2;
+    hidl_vec<uint8_t> layerCountVec;
+    ASSERT_EQ(NO_ERROR, gralloc4::encodeLayerCount(layerCount, &layerCountVec));
+    ASSERT_EQ(Error::BAD_VALUE,
+              mGralloc->set(bufferHandle, gralloc4::MetadataType_LayerCount, layerCountVec));
+
+    hardware::graphics::common::V1_2::PixelFormat pixelFormatRequested = PixelFormat::BLOB;
+    hidl_vec<uint8_t> pixelFormatRequestedVec;
+    ASSERT_EQ(NO_ERROR,
+              gralloc4::encodePixelFormatRequested(pixelFormatRequested, &pixelFormatRequestedVec));
+    ASSERT_EQ(Error::BAD_VALUE,
+              mGralloc->set(bufferHandle, gralloc4::MetadataType_PixelFormatRequested,
+                            pixelFormatRequestedVec));
+
+    uint64_t usage = 0;
+    hidl_vec<uint8_t> usageVec;
+    ASSERT_EQ(NO_ERROR, gralloc4::encodeUsage(usage, &usageVec));
+    ASSERT_EQ(Error::BAD_VALUE,
+              mGralloc->set(bufferHandle, gralloc4::MetadataType_Usage, usageVec));
 }
 
 /**
@@ -1628,19 +1632,9 @@ TEST_P(GraphicsMapperHidlTest, SetBadMetadata) {
 
     hidl_vec<uint8_t> vec;
     ASSERT_EQ(Error::UNSUPPORTED,
-              mGralloc->set(bufferHandle, gralloc4::MetadataType_BufferId, vec));
-    ASSERT_EQ(Error::UNSUPPORTED, mGralloc->set(bufferHandle, gralloc4::MetadataType_Name, vec));
-    ASSERT_EQ(Error::UNSUPPORTED, mGralloc->set(bufferHandle, gralloc4::MetadataType_Width, vec));
-    ASSERT_EQ(Error::UNSUPPORTED, mGralloc->set(bufferHandle, gralloc4::MetadataType_Height, vec));
-    ASSERT_EQ(Error::UNSUPPORTED,
-              mGralloc->set(bufferHandle, gralloc4::MetadataType_LayerCount, vec));
-    ASSERT_EQ(Error::UNSUPPORTED,
-              mGralloc->set(bufferHandle, gralloc4::MetadataType_PixelFormatRequested, vec));
-    ASSERT_EQ(Error::UNSUPPORTED,
               mGralloc->set(bufferHandle, gralloc4::MetadataType_PixelFormatFourCC, vec));
     ASSERT_EQ(Error::UNSUPPORTED,
               mGralloc->set(bufferHandle, gralloc4::MetadataType_PixelFormatModifier, vec));
-    ASSERT_EQ(Error::UNSUPPORTED, mGralloc->set(bufferHandle, gralloc4::MetadataType_Usage, vec));
     ASSERT_EQ(Error::UNSUPPORTED,
               mGralloc->set(bufferHandle, gralloc4::MetadataType_AllocationSize, vec));
     ASSERT_EQ(Error::UNSUPPORTED,
@@ -1653,6 +1647,7 @@ TEST_P(GraphicsMapperHidlTest, SetBadMetadata) {
               mGralloc->set(bufferHandle, gralloc4::MetadataType_ChromaSiting, vec));
     ASSERT_EQ(Error::UNSUPPORTED,
               mGralloc->set(bufferHandle, gralloc4::MetadataType_PlaneLayouts, vec));
+    ASSERT_EQ(Error::UNSUPPORTED, mGralloc->set(bufferHandle, gralloc4::MetadataType_Crop, vec));
     ASSERT_EQ(Error::UNSUPPORTED,
               mGralloc->set(bufferHandle, gralloc4::MetadataType_Dataspace, vec));
     ASSERT_EQ(Error::UNSUPPORTED,
@@ -1735,6 +1730,7 @@ TEST_P(GraphicsMapperHidlTest, GetFromBufferDescriptorInfoPixelFormatFourCC) {
             mDummyDescriptorInfo, gralloc4::MetadataType_PixelFormatFourCC, &vec);
     if (err == Error::UNSUPPORTED) {
         GTEST_SUCCEED() << "setting this metadata is unsupported";
+        return;
     }
     ASSERT_EQ(err, Error::NONE);
 
@@ -1751,6 +1747,7 @@ TEST_P(GraphicsMapperHidlTest, GetFromBufferDescriptorInfoPixelFormatModifier) {
             mDummyDescriptorInfo, gralloc4::MetadataType_PixelFormatModifier, &vec);
     if (err == Error::UNSUPPORTED) {
         GTEST_SUCCEED() << "setting this metadata is unsupported";
+        return;
     }
     ASSERT_EQ(err, Error::NONE);
 
@@ -1780,6 +1777,7 @@ TEST_P(GraphicsMapperHidlTest, GetFromBufferDescriptorInfoAllocationSize) {
                                                       gralloc4::MetadataType_AllocationSize, &vec);
     if (err == Error::UNSUPPORTED) {
         GTEST_SUCCEED() << "setting this metadata is unsupported";
+        return;
     }
     ASSERT_EQ(err, Error::NONE);
 
@@ -1864,6 +1862,23 @@ TEST_P(GraphicsMapperHidlTest, GetFromBufferDescriptorInfoPlaneLayouts) {
     std::vector<PlaneLayout> planeLayouts;
     ASSERT_EQ(NO_ERROR, gralloc4::decodePlaneLayouts(vec, &planeLayouts));
     ASSERT_NO_FATAL_FAILURE(verifyDummyDescriptorInfoPlaneLayouts(planeLayouts));
+}
+
+/**
+ * Test IMapper::getFromBufferDescriptorInfo(Crop)
+ */
+TEST_P(GraphicsMapperHidlTest, GetFromBufferDescriptorInfoCrop) {
+    auto info = mDummyDescriptorInfo;
+    info.format = PixelFormat::RGBA_8888;
+    info.usage = static_cast<uint64_t>(BufferUsage::CPU_WRITE_OFTEN | BufferUsage::CPU_READ_OFTEN);
+
+    hidl_vec<uint8_t> vec;
+    ASSERT_EQ(Error::NONE,
+              mGralloc->getFromBufferDescriptorInfo(info, gralloc4::MetadataType_Crop, &vec));
+
+    std::vector<aidl::android::hardware::graphics::common::Rect> crops;
+    ASSERT_EQ(NO_ERROR, gralloc4::decodeCrop(vec, &crops));
+    EXPECT_EQ(1, crops.size());
 }
 
 /**
@@ -1980,7 +1995,7 @@ TEST_P(GraphicsMapperHidlTest, ListSupportedMetadataTypes) {
         const auto& metadataType = description.metadataType;
 
         if (!gralloc4::isStandardMetadataType(metadataType)) {
-            EXPECT_GT(0, description.description.size());
+            EXPECT_GT(description.description.size(), 0);
             continue;
         }
 
@@ -2064,7 +2079,7 @@ TEST_P(GraphicsMapperHidlTest, GetReservedRegion) {
     auto info = mDummyDescriptorInfo;
 
     const int pageSize = getpagesize();
-    ASSERT_GE(0, pageSize);
+    ASSERT_GE(pageSize, 0);
     std::vector<uint64_t> requestedReservedSizes{1, 10, 333, static_cast<uint64_t>(pageSize) / 2,
                                                  static_cast<uint64_t>(pageSize)};
 
@@ -2096,7 +2111,7 @@ TEST_P(GraphicsMapperHidlTest, GetLargeReservedRegion) {
     auto info = mDummyDescriptorInfo;
 
     const int pageSize = getpagesize();
-    ASSERT_GE(0, pageSize);
+    ASSERT_GE(pageSize, 0);
     std::vector<uint64_t> requestedReservedSizes{static_cast<uint64_t>(pageSize) * 2,
                                                  static_cast<uint64_t>(pageSize) * 10,
                                                  static_cast<uint64_t>(pageSize) * 1000};
@@ -2134,7 +2149,7 @@ TEST_P(GraphicsMapperHidlTest, GetReservedRegionMultiple) {
     auto info = mDummyDescriptorInfo;
 
     const int pageSize = getpagesize();
-    ASSERT_GE(0, pageSize);
+    ASSERT_GE(pageSize, 0);
     info.reservedSize = pageSize;
 
     ASSERT_NO_FATAL_FAILURE(bufferHandle = mGralloc->allocate(info, true));

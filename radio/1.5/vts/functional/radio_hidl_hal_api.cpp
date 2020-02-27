@@ -310,6 +310,99 @@ TEST_F(RadioHidlTest_v1_5, setSignalStrengthReportingCriteria_1_5_NGRAN_SSSINR) 
 }
 
 /*
+ * Test IRadio.setLinkCapacityReportingCriteria_1_5() invalid hysteresisDlKbps
+ */
+TEST_F(RadioHidlTest_v1_5, setLinkCapacityReportingCriteria_1_5_invalidHysteresisDlKbps) {
+    serial = GetRandomSerialNumber();
+
+    Return<void> res = radio_v1_5->setLinkCapacityReportingCriteria_1_5(
+            serial, 5000,
+            5000,  // hysteresisDlKbps too big for thresholds delta
+            100, {1000, 5000, 10000, 20000}, {500, 1000, 5000, 10000},
+            ::android::hardware::radio::V1_5::AccessNetwork::GERAN);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_5->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
+
+    ALOGI("setLinkCapacityReportingCriteria_1_5_invalidHysteresisDlKbps, rspInfo.error = %s\n",
+          toString(radioRsp_v1_5->rspInfo.error).c_str());
+    // Allow REQUEST_NOT_SUPPORTED as setLinkCapacityReportingCriteria_1_5() may not be supported
+    // for GERAN
+    ASSERT_TRUE(
+            CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
+                             {RadioError::INVALID_ARGUMENTS, RadioError::REQUEST_NOT_SUPPORTED}));
+}
+
+/*
+ * Test IRadio.setLinkCapacityReportingCriteria_1_5() invalid hysteresisUlKbps
+ */
+TEST_F(RadioHidlTest_v1_5, setLinkCapacityReportingCriteria_1_5_invalidHysteresisUlKbps) {
+    serial = GetRandomSerialNumber();
+
+    Return<void> res = radio_v1_5->setLinkCapacityReportingCriteria_1_5(
+            serial, 5000, 500,
+            1000,  // hysteresisUlKbps too big for thresholds delta
+            {1000, 5000, 10000, 20000}, {500, 1000, 5000, 10000},
+            ::android::hardware::radio::V1_5::AccessNetwork::GERAN);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_5->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
+
+    ALOGI("setLinkCapacityReportingCriteria_1_5_invalidHysteresisUlKbps, rspInfo.error = %s\n",
+          toString(radioRsp_v1_5->rspInfo.error).c_str());
+    // Allow REQUEST_NOT_SUPPORTED as setLinkCapacityReportingCriteria_1_5() may not be supported
+    // for GERAN
+    ASSERT_TRUE(
+            CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
+                             {RadioError::INVALID_ARGUMENTS, RadioError::REQUEST_NOT_SUPPORTED}));
+}
+
+/*
+ * Test IRadio.setLinkCapacityReportingCriteria_1_5() empty params
+ */
+TEST_F(RadioHidlTest_v1_5, setLinkCapacityReportingCriteria_1_5_emptyParams) {
+    serial = GetRandomSerialNumber();
+
+    Return<void> res = radio_v1_5->setLinkCapacityReportingCriteria_1_5(
+            serial, 0, 0, 0, {}, {}, ::android::hardware::radio::V1_5::AccessNetwork::GERAN);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_5->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
+
+    ALOGI("setLinkCapacityReportingCriteria_1_5_emptyParams, rspInfo.error = %s\n",
+          toString(radioRsp_v1_5->rspInfo.error).c_str());
+    // Allow REQUEST_NOT_SUPPORTED as setLinkCapacityReportingCriteria_1_5() may not be supported
+    // for GERAN
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
+                                 {RadioError::NONE, RadioError::REQUEST_NOT_SUPPORTED}));
+}
+
+/*
+ * Test IRadio.setLinkCapacityReportingCriteria_1_5() for GERAN
+ */
+TEST_F(RadioHidlTest_v1_5, setLinkCapacityReportingCriteria_1_5_Geran) {
+    serial = GetRandomSerialNumber();
+
+    Return<void> res = radio_v1_5->setLinkCapacityReportingCriteria_1_5(
+            serial, 5000, 500, 100, {1000, 5000, 10000, 20000}, {500, 1000, 5000, 10000},
+            ::android::hardware::radio::V1_5::AccessNetwork::GERAN);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_5->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
+
+    ALOGI("setLinkCapacityReportingCriteria_1_5_Geran, rspInfo.error = %s\n",
+          toString(radioRsp_v1_5->rspInfo.error).c_str());
+    // Allow REQUEST_NOT_SUPPORTED as setLinkCapacityReportingCriteria_1_5() may not be supported
+    // for GERAN
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
+                                 {RadioError::NONE, RadioError::REQUEST_NOT_SUPPORTED}));
+}
+
+/*
  * Test IRadio.enableUiccApplications() for the response returned.
  * For SIM ABSENT case.
  */
@@ -1068,4 +1161,111 @@ TEST_F(RadioHidlTest_v1_5, sendCdmaSmsExpectMore) {
                 {RadioError::INVALID_ARGUMENTS, RadioError::INVALID_STATE, RadioError::SIM_ABSENT},
                 CHECK_GENERAL_ERROR));
     }
+}
+
+/*
+ * Test IRadio.getBarringInfo() for the response returned.
+ */
+TEST_F(RadioHidlTest_v1_5, getBarringInfo) {
+    serial = GetRandomSerialNumber();
+
+    Return<void> res = radio_v1_5->getBarringInfo(serial);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_5->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
+
+    ASSERT_TRUE(radioRsp_v1_5->barringInfos.size() > 0);
+
+    std::set<BarringInfo::ServiceType> reportedServices;
+
+    // validate that the service types are in range
+    for (const auto& info : radioRsp_v1_5->barringInfos) {
+        ASSERT_TRUE((info.serviceType >= BarringInfo::ServiceType::CS_SERVICE &&
+                     info.serviceType <= BarringInfo::ServiceType::SMS) ||
+                    (info.serviceType >= BarringInfo::ServiceType::OPERATOR_1 &&
+                     info.serviceType <= BarringInfo::ServiceType::OPERATOR_32));
+        reportedServices.insert(info.serviceType);
+
+        // Any type that is "conditional" must have sane values for conditional barring
+        // factor and time.
+        switch (info.barringType) {
+            case BarringInfo::BarringType::NONE:  // fall through
+            case BarringInfo::BarringType::UNCONDITIONAL:
+                break;
+            case BarringInfo::BarringType::CONDITIONAL: {
+                const int32_t barringFactor = info.barringTypeSpecificInfo.conditional().factor;
+                ASSERT_TRUE(barringFactor >= 0 && barringFactor <= 100);
+                ASSERT_TRUE(info.barringTypeSpecificInfo.conditional().timeSeconds > 0);
+                break;
+            }
+            default:
+                FAIL();
+        }
+    }
+
+    // Certain types of barring are relevant for certain RANs. Ensure that only the right
+    // types are reported. Note that no types are required, simply that for a given technology
+    // only certain types are valid. This is one way to sanity check that implementations are
+    // not providing information that they don't have.
+    static const std::set<BarringInfo::ServiceType> UTRA_SERVICES{
+            BarringInfo::ServiceType::CS_SERVICE, BarringInfo::ServiceType::PS_SERVICE,
+            BarringInfo::ServiceType::CS_VOICE,   BarringInfo::ServiceType::EMERGENCY,
+            BarringInfo::ServiceType::SMS,
+    };
+
+    static const std::set<BarringInfo::ServiceType> EUTRA_SERVICES{
+            BarringInfo::ServiceType::MO_SIGNALLING, BarringInfo::ServiceType::MO_DATA,
+            BarringInfo::ServiceType::CS_FALLBACK,   BarringInfo::ServiceType::MMTEL_VOICE,
+            BarringInfo::ServiceType::MMTEL_VIDEO,   BarringInfo::ServiceType::EMERGENCY,
+            BarringInfo::ServiceType::SMS,
+    };
+
+    static const std::set<BarringInfo::ServiceType> NGRA_SERVICES = {
+            BarringInfo::ServiceType::MO_SIGNALLING, BarringInfo::ServiceType::MO_DATA,
+            BarringInfo::ServiceType::CS_FALLBACK,   BarringInfo::ServiceType::MMTEL_VOICE,
+            BarringInfo::ServiceType::MMTEL_VIDEO,   BarringInfo::ServiceType::EMERGENCY,
+            BarringInfo::ServiceType::SMS,           BarringInfo::ServiceType::OPERATOR_1,
+            BarringInfo::ServiceType::OPERATOR_2,    BarringInfo::ServiceType::OPERATOR_3,
+            BarringInfo::ServiceType::OPERATOR_4,    BarringInfo::ServiceType::OPERATOR_5,
+            BarringInfo::ServiceType::OPERATOR_6,    BarringInfo::ServiceType::OPERATOR_7,
+            BarringInfo::ServiceType::OPERATOR_8,    BarringInfo::ServiceType::OPERATOR_9,
+            BarringInfo::ServiceType::OPERATOR_10,   BarringInfo::ServiceType::OPERATOR_11,
+            BarringInfo::ServiceType::OPERATOR_12,   BarringInfo::ServiceType::OPERATOR_13,
+            BarringInfo::ServiceType::OPERATOR_14,   BarringInfo::ServiceType::OPERATOR_15,
+            BarringInfo::ServiceType::OPERATOR_16,   BarringInfo::ServiceType::OPERATOR_17,
+            BarringInfo::ServiceType::OPERATOR_18,   BarringInfo::ServiceType::OPERATOR_19,
+            BarringInfo::ServiceType::OPERATOR_20,   BarringInfo::ServiceType::OPERATOR_21,
+            BarringInfo::ServiceType::OPERATOR_22,   BarringInfo::ServiceType::OPERATOR_23,
+            BarringInfo::ServiceType::OPERATOR_24,   BarringInfo::ServiceType::OPERATOR_25,
+            BarringInfo::ServiceType::OPERATOR_26,   BarringInfo::ServiceType::OPERATOR_27,
+            BarringInfo::ServiceType::OPERATOR_28,   BarringInfo::ServiceType::OPERATOR_29,
+            BarringInfo::ServiceType::OPERATOR_30,   BarringInfo::ServiceType::OPERATOR_31,
+    };
+
+    const std::set<BarringInfo::ServiceType>* compareTo = nullptr;
+
+    switch (radioRsp_v1_5->barringCellIdentity.getDiscriminator()) {
+        case android::hardware::radio::V1_5::CellIdentity::hidl_discriminator::wcdma:
+            // fall through
+        case android::hardware::radio::V1_5::CellIdentity::hidl_discriminator::tdscdma:
+            compareTo = &UTRA_SERVICES;
+            break;
+        case android::hardware::radio::V1_5::CellIdentity::hidl_discriminator::lte:
+            compareTo = &EUTRA_SERVICES;
+            break;
+        case android::hardware::radio::V1_5::CellIdentity::hidl_discriminator::nr:
+            compareTo = &NGRA_SERVICES;
+            break;
+
+        case android::hardware::radio::V1_5::CellIdentity::hidl_discriminator::cdma:
+            // fall through
+        default:
+            FAIL();
+            break;
+    }
+
+    std::set<BarringInfo::ServiceType> diff;
+
+    std::set_difference(reportedServices.begin(), reportedServices.end(), compareTo->begin(),
+                        compareTo->end(), std::inserter(diff, diff.begin()));
 }

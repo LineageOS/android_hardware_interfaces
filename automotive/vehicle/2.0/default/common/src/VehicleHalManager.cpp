@@ -28,6 +28,8 @@
 
 #include <hwbinder/IPCThreadState.h>
 
+#include <utils/SystemClock.h>
+
 #include "VehicleUtils.h"
 
 // TODO: figure out how to include private/android_filesystem_config.h instead...
@@ -184,11 +186,19 @@ Return<void> VehicleHalManager::debugDump(IVehicle::debugDump_cb _hidl_cb) {
 }
 
 Return<void> VehicleHalManager::debug(const hidl_handle& fd, const hidl_vec<hidl_string>& options) {
-    if (fd.getNativeHandle() != nullptr && fd->numFds > 0) {
-        cmdDump(fd->data[0], options);
-    } else {
+    if (fd.getNativeHandle() == nullptr || fd->numFds == 0) {
         ALOGE("Invalid parameters passed to debug()");
+        return Void();
     }
+
+    bool shouldContinue = mHal->dump(fd, options);
+    if (!shouldContinue) {
+        ALOGI("Dumped HAL only");
+        return Void();
+    }
+
+    // Do our dump
+    cmdDump(fd->data[0], options);
     return Void();
 }
 
@@ -247,10 +257,11 @@ void VehicleHalManager::cmdHelp(int fd) const {
     dprintf(fd, "--get <PROP1> [PROP2] [PROPN]: dumps the value of specific properties \n");
     // TODO: support other formats (int64, float, bytes)
     dprintf(fd,
-            "--set <PROP> <i|s> <VALUE_1> [<i|s> <VALUE_N>]: sets the value of property PROP, using"
-            " arbitrary number of key/value parameters (i for int32, s for string). Notice that "
-            "the string value can be set just once, while the other can have multiple values "
-            "(so they're used in the respective array)\n");
+            "--set <PROP> <i|s> <VALUE_1> [<i|s> <VALUE_N>] [a AREA_ID] : sets the value of "
+            "property PROP, using arbitrary number of key/value parameters (i for int32, "
+            "s for string) and an optional area.\n"
+            "Notice that the string value can be set just once, while the other can have multiple "
+            "values (so they're used in the respective array)\n");
 }
 
 void VehicleHalManager::cmdListAllProperties(int fd) const {
@@ -352,13 +363,13 @@ void VehicleHalManager::cmdSetOneProperty(int fd, const hidl_vec<hidl_string>& o
 
     VehiclePropValue prop;
     if (!safelyParseInt(fd, 1, options[1], &prop.prop)) return;
-    prop.timestamp = 0;
-    prop.areaId = 0;  // TODO: add option to pass areaId as parameter
+    prop.timestamp = elapsedRealtimeNano();
     prop.status = VehiclePropertyStatus::AVAILABLE;
 
-    // First pass calculate sizes
+    // First pass: calculate sizes
     int sizeInt32 = 0;
     int stringIndex = 0;
+    int areaIndex = 0;
     for (int i = 2, kv = 1; kv <= numberValues; kv++) {
         // iterate through the kv=1..n key/value pairs, accessing indexes i / i+1 at each step
         std::string type = options[i];
@@ -374,6 +385,15 @@ void VehicleHalManager::cmdSetOneProperty(int fd, const hidl_vec<hidl_string>& o
                 return;
             }
             stringIndex = i;
+        } else if (EqualsIgnoreCase(type, "a")) {
+            if (areaIndex != 0) {
+                dprintf(fd,
+                        "defining area value (%s) again at index %d (already defined at %d=%s"
+                        ")\n",
+                        value.c_str(), i, areaIndex, options[areaIndex + 1].c_str());
+                return;
+            }
+            areaIndex = i;
         } else {
             dprintf(fd, "invalid (%s) type at index %d\n", type.c_str(), i);
             return;
@@ -395,6 +415,8 @@ void VehicleHalManager::cmdSetOneProperty(int fd, const hidl_vec<hidl_string>& o
             prop.value.int32Values[indexInt32++] = safeInt;
         } else if (EqualsIgnoreCase(type, "s")) {
             prop.value.stringValue = value;
+        } else if (EqualsIgnoreCase(type, "a")) {
+            if (!safelyParseInt(fd, valueIndex, value, &prop.areaId)) return;
         }
         i += 2;
     }

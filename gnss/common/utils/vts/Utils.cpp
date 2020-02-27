@@ -22,7 +22,9 @@ namespace hardware {
 namespace gnss {
 namespace common {
 
-using V1_0::GnssConstellationType;
+using GnssConstellationType_V1_0 = V1_0::GnssConstellationType;
+using GnssConstellationType_V2_0 = V2_0::GnssConstellationType;
+
 using V1_0::GnssLocationFlags;
 
 void Utils::checkLocation(const GnssLocation& location, bool check_speed,
@@ -100,12 +102,12 @@ const MeasurementCorrections_1_0 Utils::getMockMeasurementCorrections() {
             .azimuthDegrees = 203.0,
     };
 
-    SingleSatCorrection singleSatCorrection1 = {
+    SingleSatCorrection_V1_0 singleSatCorrection1 = {
             .singleSatCorrectionFlags = GnssSingleSatCorrectionFlags::HAS_SAT_IS_LOS_PROBABILITY |
                                         GnssSingleSatCorrectionFlags::HAS_EXCESS_PATH_LENGTH |
                                         GnssSingleSatCorrectionFlags::HAS_EXCESS_PATH_LENGTH_UNC |
                                         GnssSingleSatCorrectionFlags::HAS_REFLECTING_PLANE,
-            .constellation = GnssConstellationType::GPS,
+            .constellation = GnssConstellationType_V1_0::GPS,
             .svid = 12,
             .carrierFrequencyHz = 1.59975e+09,
             .probSatIsLos = 0.50001,
@@ -113,11 +115,11 @@ const MeasurementCorrections_1_0 Utils::getMockMeasurementCorrections() {
             .excessPathLengthUncertaintyMeters = 25.5,
             .reflectingPlane = reflectingPlane,
     };
-    SingleSatCorrection singleSatCorrection2 = {
+    SingleSatCorrection_V1_0 singleSatCorrection2 = {
             .singleSatCorrectionFlags = GnssSingleSatCorrectionFlags::HAS_SAT_IS_LOS_PROBABILITY |
                                         GnssSingleSatCorrectionFlags::HAS_EXCESS_PATH_LENGTH |
                                         GnssSingleSatCorrectionFlags::HAS_EXCESS_PATH_LENGTH_UNC,
-            .constellation = GnssConstellationType::GPS,
+            .constellation = GnssConstellationType_V1_0::GPS,
             .svid = 9,
             .carrierFrequencyHz = 1.59975e+09,
             .probSatIsLos = 0.873,
@@ -125,8 +127,8 @@ const MeasurementCorrections_1_0 Utils::getMockMeasurementCorrections() {
             .excessPathLengthUncertaintyMeters = 10.0,
     };
 
-    hidl_vec<SingleSatCorrection> singleSatCorrections = {singleSatCorrection1,
-                                                          singleSatCorrection2};
+    hidl_vec<SingleSatCorrection_V1_0> singleSatCorrections = {singleSatCorrection1,
+                                                               singleSatCorrection2};
     MeasurementCorrections_1_0 mockCorrections = {
             .latitudeDegrees = 37.4219999,
             .longitudeDegrees = -122.0840575,
@@ -142,11 +144,27 @@ const MeasurementCorrections_1_0 Utils::getMockMeasurementCorrections() {
 const MeasurementCorrections_1_1 Utils::getMockMeasurementCorrections_1_1() {
     MeasurementCorrections_1_0 mockCorrections_1_0 = getMockMeasurementCorrections();
 
+    SingleSatCorrection_V1_1 singleSatCorrection1 = {
+            .v1_0 = mockCorrections_1_0.satCorrections[0],
+            .constellation = GnssConstellationType_V2_0::IRNSS,
+    };
+    SingleSatCorrection_V1_1 singleSatCorrection2 = {
+            .v1_0 = mockCorrections_1_0.satCorrections[1],
+            .constellation = GnssConstellationType_V2_0::IRNSS,
+    };
+
+    mockCorrections_1_0.satCorrections[0].constellation = GnssConstellationType_V1_0::UNKNOWN;
+    mockCorrections_1_0.satCorrections[1].constellation = GnssConstellationType_V1_0::UNKNOWN;
+
+    hidl_vec<SingleSatCorrection_V1_1> singleSatCorrections = {singleSatCorrection1,
+                                                               singleSatCorrection2};
+
     MeasurementCorrections_1_1 mockCorrections_1_1 = {
             .v1_0 = mockCorrections_1_0,
             .hasEnvironmentBearing = true,
             .environmentBearingDegrees = 45.0,
             .environmentBearingUncertaintyDegrees = 4.0,
+            .satCorrections = singleSatCorrections,
     };
     return mockCorrections_1_1;
 }

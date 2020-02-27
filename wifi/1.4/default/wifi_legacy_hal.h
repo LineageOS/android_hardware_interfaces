@@ -261,6 +261,9 @@ class WifiLegacyHal {
                               wifi_latency_mode mode);
     wifi_error setThermalMitigationMode(wifi_thermal_mode mode,
                                         uint32_t completion_window);
+    wifi_error setDscpToAccessCategoryMapping(uint32_t start, uint32_t end,
+                                              uint32_t access_category);
+    wifi_error resetDscpToAccessCategoryMapping();
     // Logger/debug functions.
     std::pair<wifi_error, uint32_t> getLoggerSupportedFeatureSet(
         const std::string& iface_name);

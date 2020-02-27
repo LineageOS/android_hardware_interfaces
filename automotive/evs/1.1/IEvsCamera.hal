@@ -178,4 +178,41 @@ interface IEvsCamera extends @1.0::IEvsCamera {
      *                values as backing camera devices.
      */
     getIntParameter(CameraParam id) generates(EvsResult result, vec<int32_t> value);
+
+    /**
+     * Request driver specific information from the HAL implementation.
+     *
+     * The values allowed for opaqueIdentifier are driver specific,
+     * but no value passed in may crash the driver. The driver should
+     * return EvsResult::INVALID_ARG for any unrecognized opaqueIdentifier.
+     *
+     * @param  opaqueIdentifier An unique identifier of the information to
+     *                          request.
+     * @return result           EvsResult::OK if the driver recognizes a given
+     *                          identifier.
+     *                          EvsResult::INVALID_ARG, otherwise.
+     * @return value            Requested information.  Zero-size vector is
+     *                          returned if the driver does not recognize a
+     *                          given identifier.
+     */
+    getExtendedInfo_1_1(uint32_t opaqueIdentifier)
+        generates (EvsResult result, vec<uint8_t> value);
+
+    /**
+     * Send a driver specific value to the HAL implementation.
+     *
+     * This extension is provided to facilitate car specific
+     * extensions, but no HAL implementation may require this call
+     * in order to function in a default state.
+     * INVALID_ARG is returned if the opaqueValue is not meaningful to
+     * the driver implementation.
+     *
+     * @param  opaqueIdentifier An unique identifier of the information to
+     *                          program.
+     *         opaqueValue      A value to program.
+     * @return result           EvsResult::OK is returned if this call is successful.
+     *                          EvsResult::INVALID_ARG, otherwise.
+     */
+    setExtendedInfo_1_1(uint32_t opaqueIdentifier, vec<uint8_t> opaqueValue)
+        generates (EvsResult result);
 };

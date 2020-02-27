@@ -1,0 +1,113 @@
+/*
+ * Copyright 2020 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.automotive.sv@1.0;
+
+import ISurroundViewSession;
+
+/**
+ * Interface representing a surround view 3d session.
+ *
+ * Surround view 3d provides a virtual view from any desired position in the 3d space around the
+ * car. Surround view 3d creates an approximate 3d surface around the car to match the surrounds
+ * and provides a virtual view as seen on this surface.
+ */
+interface ISurroundView3dSession extends ISurroundViewSession {
+
+    /**
+     * Sets the desired views of surround view 3d.
+     *
+     * Surround view 3d takes a list of desired virtual view points and provides an output frame
+     * for each view. Default view list is a single view from behind the car front facing in the
+     * front direction.
+     * A call to setViews() results in the views set by a previous call to be discarded.
+     * Each view set is identified by an Id which is returned with the corresponding output frame
+     * of that view.
+     * Clients can call setViews() at any stage of the session (before/after startStream). Client
+     * may continue to receive frames of previous views after setViews() call for a while and can
+     * identify updated set of views once effective using the view Id provided in the updated
+     * views frames.
+     *
+     * @param views     List of desired views to generate output frames.
+     * @return svResult Returns OK if successful, appropriate error result otherwise.
+     */
+    setViews(vec<View3d> views) generates (SvResult svResult);
+
+    /**
+     * Sets the configuration of 3d surround view.
+     *
+     * Configuration is used for supported different target use-cases of the surround view eg.
+     * fullscreen view or preview. A set config call can be performed at anytime (before or after
+     * startStream) of the session.
+     * Once config change is complete, a CONFIG_CHANGED event is sent, after which
+     * all frames received will be of the updated config.
+     *
+     * @param sv3dConfig Configuration to set.
+     * @return svResult  Returns OK if successful, appropriate error result otherwise.
+     */
+    set3dConfig(Sv3dConfig sv3dConfig) generates (SvResult svResult);
+
+    /**
+     * Gets the current configuration of the 3d surround view.
+     *
+     * Configuration is used for supported different target use-cases of the surround view eg.
+     * fullscreen view or preview. Use setConfig call to set a configuration.
+     *
+     * @return sv3dConfig The current active configuration of the 3d session.
+     */
+    get3dConfig() generates (Sv3dConfig sv3dConfig);
+
+    /**
+     * Updates 3d overlays in scene.
+     *
+     * updateOverlays() provides a way to set a 3d overlay object in the scene. An overlay is an
+     * 3d object in the scene which can be a visual indicator to provide additional information eg.
+     * parking sensor distance indicators or overlays for objects in scene.
+     *
+     * An overlay object is defined by a set of points (forming triangles) with some color and
+     * transparency values and each overlay is identified by an overlay Id.
+     * When an overlay with a new Id is passed, a new overlay is added to the scene.
+     * When an overlay with previous id is passed, its vertices/color are updated with passed data.
+     * If the overlay data is empty, the overlay is removed from the scene.
+     *
+     * @param overlaysData   Object with shared memory containing overlays to add/update in the
+     *                       scene. Refer to OverlaysData structure for layout in shared memory.
+     * @return svResult      Returns OK if successful, appropriate error result otherwise.
+     */
+    updateOverlays(OverlaysData overlaysData) generates (SvResult svResult);
+
+    /**
+     * Projects points on camera image to surround view 3D surface.
+     *
+     * Useful for mapping points detected on individual camera frames onto the surround view 3D
+     * surface, these 3d points can then be used to set overlays using the updateOverlays() for
+     * the detected objects in the scene.
+     * Note:
+     * 3d points returned are projected on an approximate 3d surface and do not provide the exact
+     * 3d location.
+     *
+     * @param cameraPoints  List of camera pixel points to be projected in range including (0, 0)
+     *                      and (width - 1, height -1) of camera frame. If point is outside camera
+                            frame INVALID_ARG error is returned.
+     * @param cameraId      Id of the EvsCamera to use for projecting points. Id must be one of the
+     *                      cameras as returned by getCameraIds() else INVALID_ARG error is returned
+     * @return points3d     Returns a list of 3d points on the approximate 3d surface in the
+     *                      automotive coordinate system in the same order as cameraPoints.
+     *                      Points that do not project to 3d surface are set with inValid true.
+     */
+    projectCameraPointsTo3dSurface(vec<Point2dInt> cameraPoints, string cameraId) generates (
+            vec<Point3dFloat> points3d);
+};

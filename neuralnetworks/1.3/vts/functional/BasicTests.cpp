@@ -57,6 +57,11 @@ TEST_P(NeuralnetworksHidlTest, GetCapabilitiesTest) {
                                    [](const OperandPerformance& a, const OperandPerformance& b) {
                                        return a.type < b.type;
                                    }));
+        EXPECT_TRUE(std::all_of(opPerf.begin(), opPerf.end(), [](const OperandPerformance& a) {
+            return a.type != OperandType::SUBGRAPH;
+        }));
+        EXPECT_TRUE(isPositive(capabilities.ifPerformance));
+        EXPECT_TRUE(isPositive(capabilities.whilePerformance));
     });
     EXPECT_TRUE(ret.isOk());
 }

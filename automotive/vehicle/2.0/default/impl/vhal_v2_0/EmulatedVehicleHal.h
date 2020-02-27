@@ -46,7 +46,7 @@ namespace impl {
 class EmulatedVehicleHal : public EmulatedVehicleHalIface {
 public:
     EmulatedVehicleHal(VehiclePropertyStore* propStore,
-                       EmulatedVehicleClient* client);
+                       VehicleHalClient* client);
     ~EmulatedVehicleHal() = default;
 
     //  Methods from VehicleHal
@@ -57,6 +57,7 @@ public:
     StatusCode set(const VehiclePropValue& propValue) override;
     StatusCode subscribe(int32_t property, float sampleRate) override;
     StatusCode unsubscribe(int32_t property) override;
+    bool dump(const hidl_handle& fd, const hidl_vec<hidl_string>& options) override;
 
     //  Methods from EmulatedVehicleHalIface
     bool setPropertyFromVehicle(const VehiclePropValue& propValue) override;
@@ -84,7 +85,7 @@ private:
     VehiclePropertyStore* mPropStore;
     std::unordered_set<int32_t> mHvacPowerProps;
     RecurrentTimer mRecurrentTimer;
-    EmulatedVehicleClient* mVehicleClient;
+    VehicleHalClient* mVehicleClient;
 };
 
 }  // impl

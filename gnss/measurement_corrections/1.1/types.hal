@@ -17,11 +17,14 @@
 package android.hardware.gnss.measurement_corrections@1.1;
 
 import @1.0::MeasurementCorrections;
+import @1.0::SingleSatCorrection;
+import android.hardware.gnss@2.0::GnssConstellationType;
 
 /**
  * A struct containing a set of measurement corrections for all used GNSS satellites at the location
  * specified by latitudeDegrees, longitudeDegrees, altitudeMeters and at the time of week specified
- * toaGpsNanosecondsOfWeek
+ * toaGpsNanosecondsOfWeek. The v1_0.satCorrections field is deprecated and is no longer used by
+ * framework.
  */
 struct MeasurementCorrections {
     @1.0::MeasurementCorrections v1_0;
@@ -48,11 +51,41 @@ struct MeasurementCorrections {
      * If the road is curved in the vicinity of the user location, then
      * environmentBearingUncertaintyDegrees will include the amount by which the road direction
      * changes in the area of position uncertainty.
+     *
+     * hasEnvironmentBearing should be checked to verify the environment bearing is available
+     * before calling this method. The value is undefined if hasEnvironmentBearing is false.
      */
     float environmentBearingDegrees;
 
     /**
-     * Bearing uncertainty [0 to 180].
+     * Environment bearing uncertainty [0 to 180]. It represents the standard deviation of the
+     * physical structure in the circle of position uncertainty. hasEnvironmentBearing becomes false
+     * as the uncertainty value passes a predefined threshold depending on the physical structure
+     * around the user.
+     *
+     * hasEnvironmentBearing should be checked to verify the environment bearing is available
+     * before calling this method. The value is undefined if hasEnvironmentBearing is false.
      */
     float environmentBearingUncertaintyDegrees;
+
+    /**
+     * A set of SingleSatCorrection each containing measurement corrections for a satellite in view
+     */
+    vec<SingleSatCorrection> satCorrections;
+};
+
+/**
+ * A struct with measurement corrections for a single visible satellites, updating the
+ * GnssConstellationType to 2.0, which supports IRNSS. The v1_0.constellation is deprecated and is
+ * no longer used by framework.
+ *
+ * The bit mask singleSatCorrectionFlags indicates which correction values are valid in the struct
+ */
+struct SingleSatCorrection {
+    @1.0::SingleSatCorrection v1_0;
+
+    /**
+     * Defines the constellation of the given satellite.
+     */
+    GnssConstellationType constellation;
 };

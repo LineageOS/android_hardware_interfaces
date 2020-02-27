@@ -21,18 +21,6 @@ using android::hardware::health::V2_0::IHealth;
 using android::hardware::health::V2_0::implementation::Health;
 
 static struct healthd_config gHealthdConfig = {
-    .batteryStatusPath = android::String8(android::String8::kEmptyString),
-    .batteryHealthPath = android::String8(android::String8::kEmptyString),
-    .batteryPresentPath = android::String8(android::String8::kEmptyString),
-    .batteryCapacityPath = android::String8(android::String8::kEmptyString),
-    .batteryVoltagePath = android::String8(android::String8::kEmptyString),
-    .batteryTemperaturePath = android::String8(android::String8::kEmptyString),
-    .batteryTechnologyPath = android::String8(android::String8::kEmptyString),
-    .batteryCurrentNowPath = android::String8(android::String8::kEmptyString),
-    .batteryCurrentAvgPath = android::String8(android::String8::kEmptyString),
-    .batteryChargeCounterPath = android::String8(android::String8::kEmptyString),
-    .batteryFullChargePath = android::String8(android::String8::kEmptyString),
-    .batteryCycleCountPath = android::String8(android::String8::kEmptyString),
     .energyCounter = nullptr,
     .boot_min_cap = 0,
     .screen_on = nullptr};

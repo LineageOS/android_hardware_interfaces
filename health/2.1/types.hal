@@ -19,6 +19,10 @@ package android.hardware.health@2.1;
 import @1.0::HealthConfig;
 import @2.0::HealthInfo;
 
+enum Constants : int64_t {
+    BATTERY_CHARGE_TIME_TO_FULL_NOW_SECONDS_UNSUPPORTED = -1,
+};
+
 /**
  * Battery capacity level. This enum provides additional information along side
  * with the battery capacity.
@@ -27,11 +31,17 @@ import @2.0::HealthInfo;
  */
 enum BatteryCapacityLevel : int32_t {
     /**
+     * Battery capacity level is unsupported.
+     * Battery capacity level must be set to this value if and only if the
+     * implementation is unsupported.
+     */
+    UNSUPPORTED = -1,
+    /**
      * Battery capacity level is unknown.
      * Battery capacity level must be set to this value if and only if battery
-     * is not present.
+     * is not present or the battery capacity level is unknown/uninitialized.
      */
-    UNKNOWN = 0,
+    UNKNOWN,
     /**
      * Battery is at critical level. The Android framework must schedule a
      * shutdown when it sees this value from the HAL.
@@ -78,18 +88,21 @@ struct HealthInfo {
 
     /**
      * Estimated time to fully charge the device (in seconds).
+     * Value must be BATTERY_CHARGE_TIME_TO_FULL_NOW_SECONDS_UNSUPPORTED if and
+     * only if the implementation is unsupported.
      * Value must be 0 if and only if batteryCapacityLevel is FULL or UNKNOWN.
      * Otherwise, value must be positive.
      */
     int64_t batteryChargeTimeToFullNowSeconds;
 
     /**
-     * Estimated battery full capacity (in microamp hours, uAh).
+     * Estimated battery full charge design capacity (in microamp hours, uAh).
      * Value must be 0 if unknown.
-     * Value must be positive if known, and must be between [50%, 120%] of
-     * batteryFullCharge (the designed capacity).
+     * Value must be positive if known.
+     * Value must be greater than 100 000 uAh.
+     * Value must be less than 100 000 000 uAh.
      */
-    int32_t batteryFullCapacityUah;
+    int32_t batteryFullChargeDesignCapacityUah;
 };
 
 /**

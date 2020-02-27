@@ -81,7 +81,7 @@ ICanController::Result CanBusSlcan::preUp() {
     mFd = base::unique_fd(open(mUartName.c_str(), O_RDWR | O_NONBLOCK | O_NOCTTY));
     if (!mFd.ok()) {
         LOG(ERROR) << "SLCAN Failed to open " << mUartName << ": " << strerror(errno);
-        return ICanController::Result::BAD_ADDRESS;
+        return ICanController::Result::BAD_INTERFACE_ID;
     }
 
     // If the device is already up, update the iface name in our CanBusSlcan object
@@ -133,7 +133,7 @@ ICanController::Result CanBusSlcan::preUp() {
         return ICanController::Result::UNKNOWN_ERROR;
     }
 
-    // set open flag TODO: also support listen only
+    // TODO(b/144775286): set open flag & support listen only
     if (write(mFd.get(), slcanprotocol::kOpenCommand.c_str(),
               slcanprotocol::kOpenCommand.length()) <= 0) {
         LOG(ERROR) << "Failed to set open flag: " << strerror(errno);

@@ -70,14 +70,10 @@ interface IPreparedModel extends @1.2::IPreparedModel {
      *
      * execute_1_3 can be called with an optional deadline. If the execution
      * is not able to be completed before the provided deadline, the execution
-     * must be aborted, and either {@link
+     * may be aborted, and either {@link
      * ErrorStatus::MISSED_DEADLINE_TRANSIENT} or {@link
-     * ErrorStatus::MISSED_DEADLINE_PERSISTENT} must be returned. The error due
+     * ErrorStatus::MISSED_DEADLINE_PERSISTENT} may be returned. The error due
      * to an abort must be sent the same way as other errors, described above.
-     * If the service reports that it does not support execution deadlines via
-     * IDevice::supportsDeadlines, and execute_1_3 is called with a deadline,
-     * then the argument is invalid, and {@link ErrorStatus::INVALID_ARGUMENT}
-     * must be returned.
      *
      * Any number of calls to the execute* and executeSynchronously* functions,
      * in any combination, may be made concurrently, even on the same
@@ -89,9 +85,20 @@ interface IPreparedModel extends @1.2::IPreparedModel {
      *                The duration runs from the time the driver sees the call
      *                to the execute_1_3 function to the time the driver invokes
      *                the callback.
-     * @param deadline The time by which the execution must complete. If the
-     *                 execution cannot be finished by the deadline, the
-     *                 execution must be aborted.
+     * @param deadline The time by which the execution is expected to complete.
+     *                 If the execution cannot be completed by the deadline, the
+     *                 execution may be aborted.
+     * @param loopTimeoutDuration The maximum amount of time that should be spent
+     *                            executing a {@link OperationType::WHILE}
+     *                            operation. If a loop condition model does not
+     *                            output false within this duration, the
+     *                            execution must be aborted. If the model
+     *                            contains a {@link OperationType::WHILE}
+     *                            operation and no loop timeout duration is
+     *                            provided, the maximum amount of time is {@link
+     *                            LoopTimeoutDurationNs::DEFAULT}. When
+     *                            provided, the duration must not exceed {@link
+     *                            LoopTimeoutDurationNs::MAXIMUM}.
      * @param callback A callback object used to return the error status of
      *                 the execution, shape information of model output operands, and
      *                 duration of execution. The callback object's notify function must
@@ -105,13 +112,13 @@ interface IPreparedModel extends @1.2::IPreparedModel {
      *                  not large enough to store the resultant values
      *                - INVALID_ARGUMENT if one of the input arguments is
      *                  invalid
-     *                - MISSED_DEADLINE_* if the deadline for executing a model
-     *                  cannot be met
+     *                - MISSED_DEADLINE_* if the execution is aborted because it
+     *                  cannot be completed by the deadline
      *                - RESOURCE_EXHAUSTED_* if the task was aborted by the
      *                  driver
      */
     execute_1_3(Request request, MeasureTiming measure, OptionalTimePoint deadline,
-                IExecutionCallback callback)
+                OptionalTimeoutDuration loopTimeoutDuration, IExecutionCallback callback)
         generates (ErrorStatus status);
 
     /**
@@ -139,16 +146,12 @@ interface IPreparedModel extends @1.2::IPreparedModel {
      * (ErrorStatus::NONE): There must be no failure unless the device itself is
      * in a bad state.
      *
-     * executeSynchronously_1_3 can be called with an optional deadline. If the
+     * executeSynchronously_1_3 may be called with an optional deadline. If the
      * execution is not able to be completed before the provided deadline, the
-     * execution must be aborted, and either {@link
+     * execution may be aborted, and either {@link
      * ErrorStatus::MISSED_DEADLINE_TRANSIENT} or {@link
-     * ErrorStatus::MISSED_DEADLINE_PERSISTENT} must be returned. The error due
+     * ErrorStatus::MISSED_DEADLINE_PERSISTENT} may be returned. The error due
      * to an abort must be sent the same way as other errors, described above.
-     * If the service reports that it does not support execution deadlines via
-     * IDevice::supportsDeadlines, and executeSynchronously_1_3 is called with a
-     * deadline, then the argument is invalid, and
-     * {@link ErrorStatus::INVALID_ARGUMENT} must be returned.
      *
      * Any number of calls to the execute* and executeSynchronously* functions,
      * in any combination, may be made concurrently, even on the same
@@ -160,9 +163,20 @@ interface IPreparedModel extends @1.2::IPreparedModel {
      *                The duration runs from the time the driver sees the call
      *                to the executeSynchronously_1_3 function to the time the driver
      *                returns from the function.
-     * @param deadline The time by which the execution must complete. If the
-     *                 execution cannot be finished by the deadline, the
-     *                 execution must be aborted.
+     * @param deadline The time by which the execution is expected to complete.
+     *                 If the execution cannot be finished by the deadline, the
+     *                 execution may be aborted.
+     * @param loopTimeoutDuration The maximum amount of time that should be spent
+     *                            executing a {@link OperationType::WHILE}
+     *                            operation. If a loop condition model does not
+     *                            output false within this duration, the
+     *                            execution must be aborted. If the model
+     *                            contains a {@link OperationType::WHILE}
+     *                            operation and no loop timeout duration is
+     *                            provided, the maximum amount of time is {@link
+     *                            LoopTimeoutDurationNs::DEFAULT}. When
+     *                            provided, the duration must not exceed {@link
+     *                            LoopTimeoutDurationNs::MAXIMUM}.
      * @return status Error status of the execution, must be:
      *                - NONE if execution is performed successfully
      *                - DEVICE_UNAVAILABLE if driver is offline or busy
@@ -172,8 +186,8 @@ interface IPreparedModel extends @1.2::IPreparedModel {
      *                  corresponding output
      *                - INVALID_ARGUMENT if one of the input arguments is
      *                  invalid
-     *                - MISSED_DEADLINE_* if the deadline for executing a model
-     *                  cannot be met
+     *                - MISSED_DEADLINE_* if the execution is aborted because it
+     *                  cannot be completed by the deadline
      *                - RESOURCE_EXHAUSTED_* if the task was aborted by the
      *                  driver
      * @return outputShapes A list of shape information of model output operands.
@@ -187,7 +201,8 @@ interface IPreparedModel extends @1.2::IPreparedModel {
      *                measurement is not available.
      */
     executeSynchronously_1_3(Request request, MeasureTiming measure,
-                             OptionalTimePoint deadline)
+                             OptionalTimePoint deadline,
+                             OptionalTimeoutDuration loopTimeoutDuration)
                   generates (ErrorStatus status, vec<OutputShape> outputShapes,
                              Timing timing);
 
@@ -213,17 +228,13 @@ interface IPreparedModel extends @1.2::IPreparedModel {
      * any data object referenced by 'request' (described by the
      * {@link @1.0::DataLocation} of a {@link @1.0::RequestArgument}).
      *
-     * executeFenced can be called with an optional deadline and an optional duration.
+     * executeFenced may be called with an optional deadline and an optional duration.
      * If the execution is not able to be completed before the provided deadline or
      * within the timeout duration (measured from when all sync fences in waitFor are
-     * signaled), whichever comes earlier, the execution must be aborted, and either
+     * signaled), whichever comes earlier, the execution may be aborted, and either
      * {@link ErrorStatus::MISSED_DEADLINE_TRANSIENT} or {@link
-     * ErrorStatus::MISSED_DEADLINE_PERSISTENT} must be returned. The error due
+     * ErrorStatus::MISSED_DEADLINE_PERSISTENT} may be returned. The error due
      * to an abort must be sent the same way as other errors, described above.
-     * If the service reports that it does not support execution deadlines via
-     * IDevice::supportsDeadlines, and executeFenced is called with a
-     * deadline or duration, then the argument is invalid, and
-     * {@link ErrorStatus::INVALID_ARGUMENT} must be returned.
      *
      * If any of the sync fences in waitFor changes to error status after the executeFenced
      * call succeeds, or the execution is aborted because it cannot finish before the deadline
@@ -240,21 +251,32 @@ interface IPreparedModel extends @1.2::IPreparedModel {
      * @param waitFor A vector of sync fence file descriptors.
      *                Execution must not start until all sync fences have been signaled.
      * @param measure Specifies whether or not to measure duration of the execution.
-     * @param deadline The time by which the execution must complete. If the
-     *                 execution cannot be finished by the deadline, the
-     *                 execution must be aborted.
-     * @param duration The length of time within which the execution must
-     *                 complete after all sync fences in waitFor are signaled. If the
-     *                 execution cannot be finished within the duration, the execution
-     *                 must be aborted.
+     * @param deadline The time by which the execution is expected to complete.
+     *                 If the execution cannot be finished by the deadline, the
+     *                 execution may be aborted.
+     * @param loopTimeoutDuration The maximum amount of time that should be spent
+     *                            executing a {@link OperationType::WHILE}
+     *                            operation. If a loop condition model does not
+     *                            output false within this duration, the
+     *                            execution must be aborted. If the model
+     *                            contains a {@link OperationType::WHILE}
+     *                            operation and no loop timeout duration is
+     *                            provided, the maximum amount of time is {@link
+     *                            LoopTimeoutDurationNs::DEFAULT}. When
+     *                            provided, the duration must not exceed {@link
+     *                            LoopTimeoutDurationNs::MAXIMUM}.
+     * @param duration The length of time within which the execution is expected
+     *                 to complete after all sync fences in waitFor are signaled.
+     *                 If the execution cannot be finished within the duration,
+     *                 the execution may be aborted.
      * @return status Error status of the call, must be:
      *                - NONE if task is successfully launched
      *                - DEVICE_UNAVAILABLE if driver is offline or busy
      *                - GENERAL_FAILURE if there is an unspecified error
      *                - INVALID_ARGUMENT if one of the input arguments is invalid, including
      *                                   fences in error states.
-     *                - MISSED_DEADLINE_* if the deadline for executing a model
-     *                  cannot be met
+     *                - MISSED_DEADLINE_* if the execution is aborted because it
+     *                  cannot be completed by the deadline
      *                - RESOURCE_EXHAUSTED_* if the task was aborted by the
      *                  driver
      * @return syncFence The sync fence that will be signaled when the task is completed.
@@ -264,6 +286,7 @@ interface IPreparedModel extends @1.2::IPreparedModel {
      *                  and error status when the execution is completed.
      */
     executeFenced(Request request, vec<handle> waitFor, MeasureTiming measure,
-                  OptionalTimePoint deadline, OptionalTimeoutDuration duration)
+                  OptionalTimePoint deadline, OptionalTimeoutDuration loopTimeoutDuration,
+                  OptionalTimeoutDuration duration)
         generates (ErrorStatus status, handle syncFence, IFencedExecutionCallback callback);
 };

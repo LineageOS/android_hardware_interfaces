@@ -17,15 +17,6 @@
 #define LOG_TAG "VtsHalEvsTest"
 
 
-// Note:  We have't got a great way to indicate which target
-// should be tested, so we'll leave the interface served by the
-// default (mock) EVS driver here for easy reference.  All
-// actual EVS drivers should serve on the EvsEnumeratorHw name,
-// however, so the code is checked in that way.
-//const static char kEnumeratorName[]  = "EvsEnumeratorHw-Mock";
-const static char kEnumeratorName[]  = "EvsEnumeratorHw";
-
-
 // These values are called out in the EVS design doc (as of Mar 8, 2017)
 static const int kMaxStreamStartMilliseconds = 500;
 static const int kMinimumFramesPerSecond = 10;
@@ -37,6 +28,7 @@ static const float kNanoToSeconds = 0.000000001f;
 
 
 #include "FrameHandler.h"
+#include "FrameHandlerUltrasonics.h"
 
 #include <cstdio>
 #include <cstring>
@@ -54,14 +46,18 @@ static const float kNanoToSeconds = 0.000000001f;
 #include <android/hardware/automotive/evs/1.1/IEvsCamera.h>
 #include <android/hardware/automotive/evs/1.1/IEvsCameraStream.h>
 #include <android/hardware/automotive/evs/1.1/IEvsEnumerator.h>
-#include <android/hardware/automotive/evs/1.0/IEvsDisplay.h>
+#include <android/hardware/automotive/evs/1.1/IEvsDisplay.h>
 #include <android/hardware/camera/device/3.2/ICameraDevice.h>
 #include <system/camera_metadata.h>
+#include <ui/DisplayConfig.h>
+#include <ui/DisplayState.h>
 
-#include <VtsHalHidlTargetTestBase.h>
-#include <VtsHalHidlTargetTestEnvBase.h>
+#include <gtest/gtest.h>
+#include <hidl/GtestPrinter.h>
+#include <hidl/ServiceManagement.h>
 
 using namespace ::android::hardware::automotive::evs::V1_1;
+using namespace std::chrono_literals;
 
 using ::android::hardware::Return;
 using ::android::hardware::Void;
@@ -76,6 +72,8 @@ using ::android::hardware::automotive::evs::V1_0::DisplayState;
 using ::android::hardware::graphics::common::V1_0::PixelFormat;
 using IEvsCamera_1_0 = ::android::hardware::automotive::evs::V1_0::IEvsCamera;
 using IEvsCamera_1_1 = ::android::hardware::automotive::evs::V1_1::IEvsCamera;
+using IEvsDisplay_1_0 = ::android::hardware::automotive::evs::V1_0::IEvsDisplay;
+using IEvsDisplay_1_1 = ::android::hardware::automotive::evs::V1_1::IEvsDisplay;
 
 /*
  * Plese note that this is different from what is defined in
@@ -92,29 +90,13 @@ typedef struct {
 } RawStreamConfig;
 
 
-// Test environment for Evs HIDL HAL.
-class EvsHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
-   public:
-    // get the test environment singleton
-    static EvsHidlEnvironment* Instance() {
-        static EvsHidlEnvironment* instance = new EvsHidlEnvironment;
-        return instance;
-    }
-
-    virtual void registerTestServices() override { registerTestService<IEvsEnumerator>(); }
-
-   private:
-    EvsHidlEnvironment() {}
-};
-
 // The main test class for EVS
-class EvsHidlTest : public ::testing::VtsHalHidlTargetTestBase {
+class EvsHidlTest : public ::testing::TestWithParam<std::string> {
 public:
     virtual void SetUp() override {
         // Make sure we can connect to the enumerator
-        string service_name =
-            EvsHidlEnvironment::Instance()->getServiceName<IEvsEnumerator>(kEnumeratorName);
-        pEnumerator = getService<IEvsEnumerator>(service_name);
+        std::string service_name = GetParam();
+        pEnumerator = IEvsEnumerator::getService(service_name);
         ASSERT_NE(pEnumerator.get(), nullptr);
 
         mIsHwModule = pEnumerator->isHardware();
@@ -147,9 +129,21 @@ protected:
                 }
             }
         );
+    }
 
-        // We insist on at least one camera for EVS to pass any camera tests
-        ASSERT_GE(cameraInfo.size(), 1u);
+    void loadUltrasonicsArrayList() {
+        // SetUp() must run first!
+        assert(pEnumerator != nullptr);
+
+        // Get the ultrasonics array list
+        pEnumerator->getUltrasonicsArrayList([this](hidl_vec<UltrasonicsArrayDesc> ultraList) {
+            ALOGI("Ultrasonics array list callback received %zu arrays", ultraList.size());
+            ultrasonicsArraysInfo.reserve(ultraList.size());
+            for (auto&& ultraArray : ultraList) {
+                ALOGI("Found ultrasonics array %s", ultraArray.ultrasonicsArrayId.c_str());
+                ultrasonicsArraysInfo.push_back(ultraArray);
+            }
+        });
     }
 
     bool isLogicalCamera(const camera_metadata_t *metadata) {
@@ -236,6 +230,11 @@ protected:
                                                    // is HW module implementation.
     std::deque<wp<IEvsCamera_1_1>>  activeCameras; // A list of active camera handles that are
                                                    // needed to be cleaned up.
+    std::vector<UltrasonicsArrayDesc>
+            ultrasonicsArraysInfo;                           // Empty unless/until
+                                                             // loadUltrasonicsArrayList() is called
+    std::deque<wp<IEvsCamera_1_1>> activeUltrasonicsArrays;  // A list of active ultrasonic array
+                                                             // handles that are to be cleaned up.
 };
 
 
@@ -247,7 +246,7 @@ protected:
  * Opens each camera reported by the enumerator and then explicitly closes it via a
  * call to closeCamera.  Then repeats the test to ensure all cameras can be reopened.
  */
-TEST_F(EvsHidlTest, CameraOpenClean) {
+TEST_P(EvsHidlTest, CameraOpenClean) {
     ALOGI("Starting CameraOpenClean test");
 
     // Get the camera list
@@ -292,6 +291,17 @@ TEST_F(EvsHidlTest, CameraOpenClean) {
                                     }
             );
 
+            // Verify methods for extended info
+            const auto id = 0xFFFFFFFF; // meaningless id
+            hidl_vec<uint8_t> values;
+            auto err = pCam->setExtendedInfo_1_1(id, values);
+            ASSERT_EQ(EvsResult::INVALID_ARG, err);
+
+            pCam->getExtendedInfo_1_1(id, [](const auto& result, const auto& data) {
+                ASSERT_EQ(EvsResult::INVALID_ARG, result);
+                ASSERT_EQ(0, data.size());
+            });
+
             // Explicitly close the camera so resources are released right away
             pEnumerator->closeCamera(pCam);
         }
@@ -305,7 +315,7 @@ TEST_F(EvsHidlTest, CameraOpenClean) {
  * call.  This ensures that the intended "aggressive open" behavior works.  This is necessary for
  * the system to be tolerant of shutdown/restart race conditions.
  */
-TEST_F(EvsHidlTest, CameraOpenAggressive) {
+TEST_P(EvsHidlTest, CameraOpenAggressive) {
     ALOGI("Starting CameraOpenAggressive test");
 
     // Get the camera list
@@ -382,7 +392,7 @@ TEST_F(EvsHidlTest, CameraOpenAggressive) {
  * CameraStreamPerformance:
  * Measure and qualify the stream start up time and streaming frame rate of each reported camera
  */
-TEST_F(EvsHidlTest, CameraStreamPerformance) {
+TEST_P(EvsHidlTest, CameraStreamPerformance) {
     ALOGI("Starting CameraStreamPerformance test");
 
     // Get the camera list
@@ -472,7 +482,7 @@ TEST_F(EvsHidlTest, CameraStreamPerformance) {
  * Ensure the camera implementation behaves properly when the client holds onto buffers for more
  * than one frame time.  The camera must cleanly skip frames until the client is ready again.
  */
-TEST_F(EvsHidlTest, CameraStreamBuffering) {
+TEST_P(EvsHidlTest, CameraStreamBuffering) {
     ALOGI("Starting CameraStreamBuffering test");
 
     // Arbitrary constant (should be > 1 and less than crazy)
@@ -557,7 +567,7 @@ TEST_F(EvsHidlTest, CameraStreamBuffering) {
  * imagery is simply copied to the display buffer and presented on screen.  This is the one test
  * which a human could observe to see the operation of the system on the physical display.
  */
-TEST_F(EvsHidlTest, CameraToDisplayRoundTrip) {
+TEST_P(EvsHidlTest, CameraToDisplayRoundTrip) {
     ALOGI("Starting CameraToDisplayRoundTrip test");
 
     // Get the camera list
@@ -567,9 +577,30 @@ TEST_F(EvsHidlTest, CameraToDisplayRoundTrip) {
     // output format.
     Stream nullCfg = {};
 
-    // Request exclusive access to the EVS display
-    sp<IEvsDisplay> pDisplay = pEnumerator->openDisplay();
+    // Request available display IDs
+    uint8_t targetDisplayId = 0;
+    pEnumerator->getDisplayIdList([&targetDisplayId](auto ids) {
+        ASSERT_GT(ids.size(), 0);
+        targetDisplayId = ids[0];
+    });
+
+    // Request exclusive access to the first EVS display
+    sp<IEvsDisplay_1_1> pDisplay = pEnumerator->openDisplay_1_1(targetDisplayId);
     ASSERT_NE(pDisplay, nullptr);
+    ALOGI("Display %d is in use.", targetDisplayId);
+
+    // Get the display descriptor
+    pDisplay->getDisplayInfo_1_1([](const auto& config, const auto& state) {
+        android::DisplayConfig* pConfig = (android::DisplayConfig*)config.data();
+        const auto width = pConfig->resolution.getWidth();
+        const auto height = pConfig->resolution.getHeight();
+        ALOGI("    Resolution: %dx%d", width, height);
+        ASSERT_GT(width, 0);
+        ASSERT_GT(height, 0);
+
+        android::ui::DisplayState* pState = (android::ui::DisplayState*)state.data();
+        ASSERT_NE(pState->layerStack, -1);
+    });
 
     // Test each reported camera
     for (auto&& cam: cameraInfo) {
@@ -635,7 +666,7 @@ TEST_F(EvsHidlTest, CameraToDisplayRoundTrip) {
  * Verify that each client can start and stop video streams on the same
  * underlying camera.
  */
-TEST_F(EvsHidlTest, MultiCameraStream) {
+TEST_P(EvsHidlTest, MultiCameraStream) {
     ALOGI("Starting MultiCameraStream test");
 
     if (mIsHwModule) {
@@ -742,7 +773,7 @@ TEST_F(EvsHidlTest, MultiCameraStream) {
  * CameraParameter:
  * Verify that a client can adjust a camera parameter.
  */
-TEST_F(EvsHidlTest, CameraParameter) {
+TEST_P(EvsHidlTest, CameraParameter) {
     ALOGI("Starting CameraParameter test");
 
     // Get the camera list
@@ -886,7 +917,7 @@ TEST_F(EvsHidlTest, CameraParameter) {
  * Verify that non-master client gets notified when the master client either
  * terminates or releases a role.
  */
-TEST_F(EvsHidlTest, CameraMasterRelease) {
+TEST_P(EvsHidlTest, CameraMasterRelease) {
     ALOGI("Starting CameraMasterRelease test");
 
     if (mIsHwModule) {
@@ -1067,7 +1098,7 @@ TEST_F(EvsHidlTest, CameraMasterRelease) {
  * Verify that master and non-master clients behave as expected when they try to adjust
  * camera parameters.
  */
-TEST_F(EvsHidlTest, MultiCameraParameter) {
+TEST_P(EvsHidlTest, MultiCameraParameter) {
     ALOGI("Starting MultiCameraParameter test");
 
     if (mIsHwModule) {
@@ -1350,7 +1381,7 @@ TEST_F(EvsHidlTest, MultiCameraParameter) {
 
         std::mutex eventLock;
         auto timer = std::chrono::system_clock::now();
-        unique_lock<std::mutex> lock(eventLock);
+        std::unique_lock<std::mutex> lock(eventLock);
         while (!listening) {
             eventCond.wait_until(lock, timer + 1s);
         }
@@ -1540,7 +1571,7 @@ TEST_F(EvsHidlTest, MultiCameraParameter) {
  * EVS client, which owns the display, is priortized and therefore can take over
  * a master role from other EVS clients without the display.
  */
-TEST_F(EvsHidlTest, HighPriorityCameraClient) {
+TEST_P(EvsHidlTest, HighPriorityCameraClient) {
     ALOGI("Starting HighPriorityCameraClient test");
 
     if (mIsHwModule) {
@@ -1556,7 +1587,7 @@ TEST_F(EvsHidlTest, HighPriorityCameraClient) {
     Stream nullCfg = {};
 
     // Request exclusive access to the EVS display
-    sp<IEvsDisplay> pDisplay = pEnumerator->openDisplay();
+    sp<IEvsDisplay_1_0> pDisplay = pEnumerator->openDisplay();
     ASSERT_NE(pDisplay, nullptr);
 
     // Test each reported camera
@@ -1913,14 +1944,14 @@ TEST_F(EvsHidlTest, HighPriorityCameraClient) {
  * CameraToDisplayRoundTrip test case but this case retrieves available stream
  * configurations from EVS and uses one of them to start a video stream.
  */
-TEST_F(EvsHidlTest, CameraUseStreamConfigToDisplay) {
+TEST_P(EvsHidlTest, CameraUseStreamConfigToDisplay) {
     ALOGI("Starting CameraUseStreamConfigToDisplay test");
 
     // Get the camera list
     loadCameraList();
 
     // Request exclusive access to the EVS display
-    sp<IEvsDisplay> pDisplay = pEnumerator->openDisplay();
+    sp<IEvsDisplay_1_0> pDisplay = pEnumerator->openDisplay();
     ASSERT_NE(pDisplay, nullptr);
 
     // Test each reported camera
@@ -2017,7 +2048,7 @@ TEST_F(EvsHidlTest, CameraUseStreamConfigToDisplay) {
  * Verify that each client can start and stop video streams on the same
  * underlying camera with same configuration.
  */
-TEST_F(EvsHidlTest, MultiCameraStreamUseConfig) {
+TEST_P(EvsHidlTest, MultiCameraStreamUseConfig) {
     ALOGI("Starting MultiCameraStream test");
 
     if (mIsHwModule) {
@@ -2166,7 +2197,7 @@ TEST_F(EvsHidlTest, MultiCameraStreamUseConfig) {
  * checking its capability and locating supporting physical camera device
  * identifiers.
  */
-TEST_F(EvsHidlTest, LogicalCameraMetadata) {
+TEST_P(EvsHidlTest, LogicalCameraMetadata) {
     ALOGI("Starting LogicalCameraMetadata test");
 
     // Get the camera list
@@ -2184,11 +2215,113 @@ TEST_F(EvsHidlTest, LogicalCameraMetadata) {
 }
 
 
-int main(int argc, char** argv) {
-    ::testing::AddGlobalTestEnvironment(EvsHidlEnvironment::Instance());
-    ::testing::InitGoogleTest(&argc, argv);
-    EvsHidlEnvironment::Instance()->init(&argc, argv);
-    int status = RUN_ALL_TESTS();
-    ALOGI("Test result = %d", status);
-    return status;
+/*
+ * UltrasonicsArrayOpenClean:
+ * Opens each ultrasonics arrays reported by the enumerator and then explicitly closes it via a
+ * call to closeUltrasonicsArray. Then repeats the test to ensure all ultrasonics arrays
+ * can be reopened.
+ */
+TEST_P(EvsHidlTest, UltrasonicsArrayOpenClean) {
+    ALOGI("Starting UltrasonicsArrayOpenClean test");
+
+    // Get the ultrasonics array list
+    loadUltrasonicsArrayList();
+
+    // Open and close each ultrasonics array twice
+    for (auto&& ultraInfo : ultrasonicsArraysInfo) {
+        for (int pass = 0; pass < 2; pass++) {
+            sp<IEvsUltrasonicsArray> pUltrasonicsArray =
+                    pEnumerator->openUltrasonicsArray(ultraInfo.ultrasonicsArrayId);
+            ASSERT_NE(pUltrasonicsArray, nullptr);
+
+            // Verify that this ultrasonics array self-identifies correctly
+            pUltrasonicsArray->getUltrasonicArrayInfo([&ultraInfo](UltrasonicsArrayDesc desc) {
+                ALOGD("Found ultrasonics array %s", ultraInfo.ultrasonicsArrayId.c_str());
+                EXPECT_EQ(ultraInfo.ultrasonicsArrayId, desc.ultrasonicsArrayId);
+            });
+
+            // Explicitly close the ultrasonics array so resources are released right away
+            pEnumerator->closeUltrasonicsArray(pUltrasonicsArray);
+        }
+    }
 }
+
+
+// Starts a stream and verifies all data received is valid.
+TEST_P(EvsHidlTest, UltrasonicsVerifyStreamData) {
+    ALOGI("Starting UltrasonicsVerifyStreamData");
+
+    // Get the ultrasonics array list
+    loadUltrasonicsArrayList();
+
+    // For each ultrasonics array.
+    for (auto&& ultraInfo : ultrasonicsArraysInfo) {
+        ALOGD("Testing ultrasonics array: %s", ultraInfo.ultrasonicsArrayId.c_str());
+
+        sp<IEvsUltrasonicsArray> pUltrasonicsArray =
+                pEnumerator->openUltrasonicsArray(ultraInfo.ultrasonicsArrayId);
+        ASSERT_NE(pUltrasonicsArray, nullptr);
+
+        sp<FrameHandlerUltrasonics> frameHandler = new FrameHandlerUltrasonics(pUltrasonicsArray);
+
+        // Start stream.
+        EvsResult result = pUltrasonicsArray->startStream(frameHandler);
+        ASSERT_EQ(result, EvsResult::OK);
+
+        // Wait 5 seconds to receive frames.
+        sleep(5);
+
+        // Stop stream.
+        pUltrasonicsArray->stopStream();
+
+        EXPECT_GT(frameHandler->getReceiveFramesCount(), 0);
+        EXPECT_TRUE(frameHandler->areAllFramesValid());
+
+        // Explicitly close the ultrasonics array so resources are released right away
+        pEnumerator->closeUltrasonicsArray(pUltrasonicsArray);
+    }
+}
+
+
+// Sets frames in flight before and after start of stream and verfies success.
+TEST_P(EvsHidlTest, UltrasonicsSetFramesInFlight) {
+    ALOGI("Starting UltrasonicsSetFramesInFlight");
+
+    // Get the ultrasonics array list
+    loadUltrasonicsArrayList();
+
+    // For each ultrasonics array.
+    for (auto&& ultraInfo : ultrasonicsArraysInfo) {
+        ALOGD("Testing ultrasonics array: %s", ultraInfo.ultrasonicsArrayId.c_str());
+
+        sp<IEvsUltrasonicsArray> pUltrasonicsArray =
+                pEnumerator->openUltrasonicsArray(ultraInfo.ultrasonicsArrayId);
+        ASSERT_NE(pUltrasonicsArray, nullptr);
+
+        EvsResult result = pUltrasonicsArray->setMaxFramesInFlight(10);
+        EXPECT_EQ(result, EvsResult::OK);
+
+        sp<FrameHandlerUltrasonics> frameHandler = new FrameHandlerUltrasonics(pUltrasonicsArray);
+
+        // Start stream.
+        result = pUltrasonicsArray->startStream(frameHandler);
+        ASSERT_EQ(result, EvsResult::OK);
+
+        result = pUltrasonicsArray->setMaxFramesInFlight(5);
+        EXPECT_EQ(result, EvsResult::OK);
+
+        // Stop stream.
+        pUltrasonicsArray->stopStream();
+
+        // Explicitly close the ultrasonics array so resources are released right away
+        pEnumerator->closeUltrasonicsArray(pUltrasonicsArray);
+    }
+}
+
+
+INSTANTIATE_TEST_SUITE_P(
+    PerInstance,
+    EvsHidlTest,
+    testing::ValuesIn(android::hardware::getAllHalInstanceNames(IEvsEnumerator::descriptor)),
+    android::hardware::PrintInstanceNameToString);
+

@@ -19,6 +19,7 @@
 
 #undef NAN  // NAN is defined in bionic/libc/include/math.h:38
 
+#include <android/hardware/wifi/1.3/IWifiStaIface.h>
 #include <android/hardware/wifi/1.4/IWifi.h>
 #include <android/hardware/wifi/1.4/IWifiChip.h>
 #include <android/hardware/wifi/1.4/IWifiChipEventCallback.h>
@@ -34,10 +35,12 @@ using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
+using ::android::hardware::wifi::V1_0::ChipModeId;
 using ::android::hardware::wifi::V1_0::IfaceType;
 using ::android::hardware::wifi::V1_0::WifiDebugRingBufferStatus;
 using ::android::hardware::wifi::V1_0::WifiStatus;
 using ::android::hardware::wifi::V1_0::WifiStatusCode;
+using ::android::hardware::wifi::V1_3::IWifiStaIface;
 using ::android::hardware::wifi::V1_4::IWifiChip;
 using ::android::hardware::wifi::V1_4::IWifiChipEventCallback;
 
@@ -110,6 +113,16 @@ class WifiChipHidlTest : public ::testing::TestWithParam<std::string> {
     };
 
    protected:
+    // Helper function to configure the Chip in one of the supported modes.
+    // Most of the non-mode-configuration-related methods require chip
+    // to be first configured.
+    ChipModeId configureChipForIfaceType(IfaceType type, bool expectSuccess) {
+        ChipModeId mode_id;
+        EXPECT_EQ(expectSuccess,
+                  configureChipToSupportIfaceType(wifi_chip_, type, &mode_id));
+        return mode_id;
+    }
+
     sp<IWifiChip> wifi_chip_;
 
    private:
@@ -136,3 +149,31 @@ TEST_P(WifiChipHidlTest, registerEventCallback_1_4) {
         return;
     }
 }
+
+/*
+ * createRttController_1_4
+ * Ensures that an instance of the IWifiRttController proxy object is
+ * successfully created.
+ */
+TEST_P(WifiChipHidlTest, createRttController_1_4) {
+    configureChipForIfaceType(IfaceType::STA, true);
+
+    const auto& status_and_iface = HIDL_INVOKE(wifi_chip_, createStaIface);
+    EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_iface.first.code);
+    sp<IWifiStaIface> iface = IWifiStaIface::castFrom(status_and_iface.second);
+    EXPECT_NE(nullptr, iface.get());
+
+    const auto& status_and_controller =
+        HIDL_INVOKE(wifi_chip_, createRttController_1_4, iface);
+    if (status_and_controller.first.code !=
+        WifiStatusCode::ERROR_NOT_SUPPORTED) {
+        EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_controller.first.code);
+        EXPECT_NE(nullptr, status_and_controller.second.get());
+    }
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    PerInstance, WifiChipHidlTest,
+    testing::ValuesIn(android::hardware::getAllHalInstanceNames(
+        ::android::hardware::wifi::V1_4::IWifi::descriptor)),
+    android::hardware::PrintInstanceNameToString);

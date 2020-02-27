@@ -831,6 +831,16 @@ wifi_error WifiLegacyHal::setThermalMitigationMode(wifi_thermal_mode mode,
         global_handle_, mode, completion_window);
 }
 
+wifi_error WifiLegacyHal::setDscpToAccessCategoryMapping(
+    uint32_t start, uint32_t end, uint32_t access_category) {
+    return global_func_table_.wifi_map_dscp_access_category(
+        global_handle_, start, end, access_category);
+}
+
+wifi_error WifiLegacyHal::resetDscpToAccessCategoryMapping() {
+    return global_func_table_.wifi_reset_dscp_mapping(global_handle_);
+}
+
 std::pair<wifi_error, uint32_t> WifiLegacyHal::getLoggerSupportedFeatureSet(
     const std::string& iface_name) {
     uint32_t supported_feature_flags;

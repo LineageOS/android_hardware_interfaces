@@ -215,6 +215,12 @@ Return<void> GnssHalTest::GnssCallback::gnssSetCapabilitiesCb_2_0(uint32_t capab
     return Void();
 }
 
+Return<void> GnssHalTest::GnssCallback::gnssSetCapabilitiesCb_2_1(uint32_t capabilities) {
+    ALOGI("Capabilities (v2.1) received %d", capabilities);
+    capabilities_cbq_.store(capabilities);
+    return Void();
+}
+
 Return<void> GnssHalTest::GnssCallback::gnssNameCb(const android::hardware::hidl_string& name) {
     ALOGI("Name received: %s", name.c_str());
     name_cbq_.store(name);
@@ -261,5 +267,12 @@ Return<void> GnssHalTest::GnssMeasurementCorrectionsCallback::setCapabilitiesCb(
         uint32_t capabilities) {
     ALOGI("GnssMeasurementCorrectionsCallback capabilities received %d", capabilities);
     capabilities_cbq_.store(capabilities);
+    return Void();
+}
+
+Return<void> GnssHalTest::GnssAntennaInfoCallback::gnssAntennaInfoCb(
+        const hidl_vec<IGnssAntennaInfoCallback::GnssAntennaInfo>& gnssAntennaInfos) {
+    ALOGD("GnssAntennaInfo v2.1 received. Size = %d", (int)gnssAntennaInfos.size());
+    antenna_info_cbq_.store(gnssAntennaInfos);
     return Void();
 }

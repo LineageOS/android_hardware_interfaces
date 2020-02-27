@@ -1,0 +1,84 @@
+/*
+ * Copyright 2020 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.automotive.sv@1.0;
+
+import ISurroundViewSession;
+
+/**
+ * Interface representing a surround view 2d session.
+ *
+ * Surround view 2d provides a top/bird's eye view of the car and its surroundings.
+ */
+interface ISurroundView2dSession extends ISurroundViewSession {
+
+    /**
+     * Gets mapping information for 2d surround view.
+     *
+     * Mapping information maps the output frame of 2d surround view to actual dimensions
+     * covered on the ground. Mapping information is fixed for a car and is based upon its camera
+     * coverage. Mapping information can be used for doing overlays of objects in 3d space
+     * onto the surround view 2d output frame.
+     *
+     * @param sv2dConfig Configuration to set.
+     * @return sv2dMappingInfo mapping information of the 2d surround view.
+     */
+    get2dMappingInfo() generates (Sv2dMappingInfo sv2dMappingInfo);
+
+    /**
+     * Sets the configuration of 2d surround view.
+     *
+     * Configuration is used for supported different target use-cases of the surround view eg.
+     * fullscreen or preview. Default configuration is FULLSCREEN.
+     * A set config call can be performed at any time (before or after startStream) of the session.
+     * Once config change is complete, a CONFIG_CHANGED event is sent, after which
+     * all frames received will be of the updated config.
+     *
+     * @param sv2dConfig Configuration to set.
+     * @return svResult  Returns OK if successful, appropriate error result otherwise.
+     */
+    set2dConfig(Sv2dConfig sv2dConfig) generates (SvResult svResult);
+
+    /**
+     * Gets the current configuration of the 2d surround view.
+     *
+     * Configuration is used for supported different target use-cases of the surround view eg.
+     * fullscreen view or preview. Use setConfig call to set a configuration.
+     *
+     * @return sv2dConfig the active current configuration of the 2d session.
+     */
+    get2dConfig() generates (Sv2dConfig sv2dConfig);
+
+    /**
+     * Projects points on camera image to surround view 2d image.
+     *
+     * Useful for mapping points detected on individual camera frames onto the surround view 2d
+     * output frame.
+     *
+     * @param cameraPoints  List of camera pixel points to be projected in range including (0, 0)
+     *                      and (width - 1, height -1) of camera frame. If point is outside camera
+                            frame INVALID_ARG error is returned.
+     * @param cameraId      Id of the EvsCamera to use for projecting points. Id must be one of the
+     *                      cameras as returned by getCameraIds() else INVALID_ARG error is returned
+     * @return points2d     Returns a list of 2d pixel points projecting into surround view 2d
+     *                      frame in the same order as cameraPoints. Point projected maybe outside
+     *                      surround view frame i.e. outside (0, 0) and
+     *                      (sv_width - 1, sv_height - 1). Points that do not project to ground
+     *                      plane are set with inValid true.
+     */
+    projectCameraPoints(vec<Point2dInt> cameraPoints, string cameraId) generates (
+            vec<Point2dFloat> points2d);
+};

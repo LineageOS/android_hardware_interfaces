@@ -31,6 +31,7 @@ namespace android::hardware::automotive::can::V1_0::vts {
 
 using hardware::hidl_vec;
 using InterfaceType = ICanController::InterfaceType;
+using IfId = ICanController::BusConfig::InterfaceId;
 
 static utils::SimpleHidlEnvironment<ICanController>* gEnv = nullptr;
 
@@ -89,10 +90,23 @@ bool CanControllerHalTest::isSupported(InterfaceType iftype) {
 
 bool CanControllerHalTest::up(InterfaceType iftype, std::string srvname, std::string ifname,
                               ICanController::Result expected) {
-    ICanController::BusConfiguration config = {};
+    ICanController::BusConfig config = {};
     config.name = srvname;
-    config.iftype = iftype;
-    config.interfaceId.address(ifname);
+
+    // TODO(b/146214370): move interfaceId constructors to a library
+    if (iftype == InterfaceType::SOCKETCAN) {
+        IfId::Socketcan socketcan = {};
+        socketcan.ifname(ifname);
+        config.interfaceId.socketcan(socketcan);
+    } else if (iftype == InterfaceType::SLCAN) {
+        IfId::Slcan slcan = {};
+        slcan.ttyname(ifname);
+        config.interfaceId.slcan(slcan);
+    } else if (iftype == InterfaceType::VIRTUAL) {
+        config.interfaceId.virtualif({ifname});
+    } else {
+        EXPECT_TRUE(false) << "Unexpected iftype: " << toString(iftype);
+    }
 
     const auto upresult = mCanController->upInterface(config);
 
@@ -155,54 +169,64 @@ TEST_F(CanControllerHalTest, UpTwice) {
     assertRegistered(name, false);
 }
 
-TEST_F(CanControllerHalTest, IdentifierCompatibility) {
-    using IdDisc = ICanController::BusConfiguration::InterfaceIdentifier::hidl_discriminator;
-    static const std::map<InterfaceType, std::vector<IdDisc>> compatMatrix = {
-            {InterfaceType::VIRTUAL, {IdDisc::address}},
-            {InterfaceType::SOCKETCAN, {IdDisc::address, IdDisc::serialno}},
-            {InterfaceType::SLCAN, {IdDisc::address, IdDisc::serialno}},
-            {InterfaceType::INDEXED, {IdDisc::index}},
+TEST_F(CanControllerHalTest, ConfigCompatibility) {
+    // using random-ish addresses, which may not be valid - we can't test the success case
+    // TODO(b/146214370): move interfaceId constructors to a library
+    IfId virtualCfg = {};
+    virtualCfg.virtualif({"vcan70"});
+
+    IfId::Socketcan socketcanIfname = {};
+    socketcanIfname.ifname("can0");
+    IfId socketcanIfnameCfg = {};
+    socketcanIfnameCfg.socketcan(socketcanIfname);
+
+    IfId::Socketcan socketcanSerial = {};
+    socketcanSerial.serialno({"1234", "2345"});
+    IfId socketcanSerialCfg = {};
+    socketcanSerialCfg.socketcan(socketcanSerial);
+
+    IfId::Slcan slcanTtyname = {};
+    slcanTtyname.ttyname("/dev/ttyUSB0");
+    IfId slcanTtynameCfg = {};
+    slcanTtynameCfg.slcan(slcanTtyname);
+
+    IfId::Slcan slcanSerial = {};
+    slcanSerial.serialno({"dead", "beef"});
+    IfId slcanSerialCfg = {};
+    slcanSerialCfg.slcan(slcanSerial);
+
+    IfId indexedCfg = {};
+    indexedCfg.indexed({0});
+
+    static const std::vector<std::pair<InterfaceType, IfId>> compatMatrix = {
+            {InterfaceType::VIRTUAL, virtualCfg},
+            {InterfaceType::SOCKETCAN, socketcanIfnameCfg},
+            {InterfaceType::SOCKETCAN, socketcanSerialCfg},
+            {InterfaceType::SLCAN, slcanTtynameCfg},
+            {InterfaceType::SLCAN, slcanSerialCfg},
+            {InterfaceType::INDEXED, indexedCfg},
     };
-    static const std::vector<IdDisc> allDisc = {IdDisc::address, IdDisc::index, IdDisc::serialno};
 
-    for (const auto [iftype, supported] : compatMatrix) {
-        for (const auto iddisc : allDisc) {
-            LOG(INFO) << "Compatibility testing: " << iftype << " / " << iddisc;
+    for (const auto [iftype, cfg] : compatMatrix) {
+        LOG(INFO) << "Compatibility testing: " << iftype << " / " << cfg;
 
-            ICanController::BusConfiguration config = {};
-            config.name = "compattestsrv";
-            config.iftype = iftype;
-            config.bitrate = 125000;
+        ICanController::BusConfig config = {};
+        config.name = "compattestsrv";
+        config.bitrate = 125000;
+        config.interfaceId = cfg;
 
-            // using random-ish addresses, which may not be valid - we can't test the success case
-            if (iddisc == IdDisc::address) {
-                config.interfaceId.address("can0");
-            } else if (iddisc == IdDisc::index) {
-                config.interfaceId.index(0);
-            } else if (iddisc == IdDisc::serialno) {
-                config.interfaceId.serialno({"dummy", "dummier"});
-            }
+        const auto upresult = mCanController->upInterface(config);
 
-            const auto upresult = mCanController->upInterface(config);
+        if (!isSupported(iftype)) {
+            ASSERT_EQ(ICanController::Result::NOT_SUPPORTED, upresult);
+            continue;
+        }
+        ASSERT_NE(ICanController::Result::NOT_SUPPORTED, upresult);
 
-            if (!isSupported(iftype)) {
-                ASSERT_EQ(ICanController::Result::NOT_SUPPORTED, upresult);
-                continue;
-            }
-            ASSERT_NE(ICanController::Result::NOT_SUPPORTED, upresult);
-
-            bool isSupportedDisc =
-                    std::find(supported.begin(), supported.end(), iddisc) != supported.end();
-            if (!isSupportedDisc) {
-                ASSERT_EQ(ICanController::Result::BAD_ADDRESS, upresult);
-                continue;
-            }
-
-            if (upresult == ICanController::Result::OK) {
-                const auto dnresult = mCanController->downInterface(config.name);
-                ASSERT_TRUE(dnresult);
-                continue;
-            }
+        if (upresult == ICanController::Result::OK) {
+            const auto dnresult = mCanController->downInterface(config.name);
+            ASSERT_TRUE(dnresult);
+            continue;
         }
     }
 }
@@ -211,7 +235,7 @@ TEST_F(CanControllerHalTest, FailEmptyName) {
     const std::string name = "";
 
     assertRegistered(name, false);
-    if (!up(InterfaceType::VIRTUAL, name, "vcan57", ICanController::Result::UNKNOWN_ERROR)) {
+    if (!up(InterfaceType::VIRTUAL, name, "vcan57", ICanController::Result::BAD_SERVICE_NAME)) {
         GTEST_SKIP();
     }
     assertRegistered(name, false);
@@ -222,7 +246,7 @@ TEST_F(CanControllerHalTest, FailBadName) {
     const std::string name = "ab012345678901234567890123456789c";
 
     assertRegistered(name, false);
-    if (!up(InterfaceType::VIRTUAL, name, "vcan57", ICanController::Result::UNKNOWN_ERROR)) {
+    if (!up(InterfaceType::VIRTUAL, name, "vcan57", ICanController::Result::BAD_SERVICE_NAME)) {
         GTEST_SKIP();
     }
     assertRegistered(name, false);
@@ -232,7 +256,9 @@ TEST_F(CanControllerHalTest, FailBadVirtualAddress) {
     const std::string name = mBusNames[0];
 
     assertRegistered(name, false);
-    if (!up(InterfaceType::VIRTUAL, name, "", ICanController::Result::BAD_ADDRESS)) GTEST_SKIP();
+    if (!up(InterfaceType::VIRTUAL, name, "", ICanController::Result::BAD_INTERFACE_ID)) {
+        GTEST_SKIP();
+    }
     assertRegistered(name, false);
 }
 
@@ -240,9 +266,29 @@ TEST_F(CanControllerHalTest, FailBadSocketcanAddress) {
     const std::string name = mBusNames[0];
 
     assertRegistered(name, false);
-    if (!up(InterfaceType::SOCKETCAN, name, "can87", ICanController::Result::BAD_ADDRESS)) {
+    if (!up(InterfaceType::SOCKETCAN, name, "can87", ICanController::Result::BAD_INTERFACE_ID)) {
         GTEST_SKIP();
     }
+    assertRegistered(name, false);
+
+    auto supported =
+            up(InterfaceType::SOCKETCAN, name, "", ICanController::Result::BAD_INTERFACE_ID);
+    ASSERT_TRUE(supported);
+    assertRegistered(name, false);
+}
+
+TEST_F(CanControllerHalTest, FailBadSlcanAddress) {
+    const std::string name = mBusNames[0];
+
+    assertRegistered(name, false);
+    if (!up(InterfaceType::SLCAN, name, "/dev/shouldnotexist123",
+            ICanController::Result::BAD_INTERFACE_ID)) {
+        GTEST_SKIP();
+    }
+    assertRegistered(name, false);
+
+    auto supported = up(InterfaceType::SLCAN, name, "", ICanController::Result::BAD_INTERFACE_ID);
+    ASSERT_TRUE(supported);
     assertRegistered(name, false);
 }
 

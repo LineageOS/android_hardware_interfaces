@@ -440,7 +440,7 @@ class WifiNanIfaceHidlTest : public ::testing::TestWithParam<std::string> {
     // synchronization objects
     std::mutex mtx_;
     std::condition_variable cv_;
-    int count_;
+    int count_ = 0;
 
    protected:
     android::sp<::android::hardware::wifi::V1_4::IWifiNanIface> iwifiNanIface;
@@ -545,3 +545,9 @@ TEST_P(WifiNanIfaceHidlTest, configRequest_1_4ShimInvalidArgs) {
                           nanConfigRequest, nanConfigRequestSupp)
                   .code);
 }
+
+INSTANTIATE_TEST_SUITE_P(
+    PerInstance, WifiNanIfaceHidlTest,
+    testing::ValuesIn(android::hardware::getAllHalInstanceNames(
+        ::android::hardware::wifi::V1_4::IWifi::descriptor)),
+    android::hardware::PrintInstanceNameToString);

@@ -132,6 +132,38 @@ Error ComposerClient::getLayerGenericMetadataKeys(
     return error;
 }
 
+void ComposerClient::execute(TestCommandReader* reader, CommandWriterBase* writer) {
+    bool queueChanged = false;
+    uint32_t commandLength = 0;
+    hidl_vec<hidl_handle> commandHandles;
+    ASSERT_TRUE(writer->writeQueue(&queueChanged, &commandLength, &commandHandles));
+
+    if (queueChanged) {
+        auto ret = mClient->setInputCommandQueue(*writer->getMQDescriptor());
+        ASSERT_EQ(V2_1::Error::NONE, ret);
+    }
+
+    mClient->executeCommands_2_3(
+            commandLength, commandHandles,
+            [&](const auto& tmpError, const auto& tmpOutQueueChanged, const auto& tmpOutLength,
+                const auto& tmpOutHandles) {
+                ASSERT_EQ(V2_1::Error::NONE, tmpError);
+
+                if (tmpOutQueueChanged) {
+                    mClient->getOutputCommandQueue(
+                            [&](const auto& tmpError, const auto& tmpDescriptor) {
+                                ASSERT_EQ(V2_3::Error::NONE, tmpError);
+                                reader->setMQDescriptor(tmpDescriptor);
+                            });
+                }
+
+                ASSERT_TRUE(reader->readQueue(tmpOutLength, tmpOutHandles));
+                reader->parse();
+            });
+    reader->reset();
+    writer->reset();
+}
+
 }  // namespace vts
 }  // namespace V2_4
 }  // namespace composer

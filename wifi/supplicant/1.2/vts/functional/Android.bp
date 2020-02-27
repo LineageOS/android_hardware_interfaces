@@ -68,7 +68,7 @@ cc_test {
     name: "VtsHalWifiSupplicantP2pV1_2TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: [
-        "VtsHalWifiSupplicantV1_2TargetTest.cpp",
+        "VtsHalWifiSupplicantP2pV1_2TargetTest.cpp",
         "supplicant_p2p_iface_hidl_test.cpp",
     ],
     static_libs: [
