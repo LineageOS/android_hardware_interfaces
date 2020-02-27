@@ -60,11 +60,25 @@ cc_test {
         "drm_hal_test_main.cpp",
     ],
     whole_static_libs: [
-        "android.hardware.drm@1.1-vts"
+        "android.hardware.drm@1.1-vts",
     ],
     shared_libs: [
         "android.hardware.drm@1.1",
     ],
+    arch: {
+        arm: {
+            data: [":libvtswidevine-arm-prebuilts"],
+        },
+        arm64: {
+            data: [":libvtswidevine-arm64-prebuilts"],
+        },
+        x86: {
+            data: [":libvtswidevine-x86-prebuilts"],
+        },
+        x86_64: {
+            data: [":libvtswidevine-x86_64-prebuilts"],
+        },
+    },
     test_suites: [
         "general-tests",
         "vts-core",
