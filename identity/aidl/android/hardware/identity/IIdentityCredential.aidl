@@ -176,6 +176,10 @@ interface IIdentityCredential {
      * @param itemsRequest
      *   If non-empty, contains request data that is signed by the reader. See above.
      *
+     * @param signingKeyBlob is either empty or a signingKeyBlob (see generateSigningKeyPair(),
+     *    below) containing the signing key to use to sign the data retrieved. If this
+     *    is not in the right format the call fails with STATUS_INVALID_DATA.
+     *
      * @param sessionTranscript
      *   Either empty or the CBOR of the SessionTranscript. See above.
      *
@@ -195,8 +199,7 @@ interface IIdentityCredential {
      *   and remove the corresponding requests from the counts.
      */
     void startRetrieval(in SecureAccessControlProfile[] accessControlProfiles,
-        in HardwareAuthToken authToken,
-        in byte[] itemsRequest,
+        in HardwareAuthToken authToken, in byte[] itemsRequest, in byte[] signingKeyBlob,
         in byte[] sessionTranscript, in byte[] readerSignature, in int[] requestCounts);
 
     /**
@@ -254,10 +257,6 @@ interface IIdentityCredential {
      * If signingKeyBlob or the sessionTranscript parameter passed to startRetrieval() is
      * empty then the returned MAC will be empty.
      *
-     * @param signingKeyBlob is either empty or a signingKeyBlob (see generateSigningKeyPair(),
-     *    below) containing the signing key to use to sign the data retrieved. If this
-     *    is not in the right format the call fails with STATUS_INVALID_DATA.
-     *
      * @param out mac is empty if signingKeyBlob or the sessionTranscript passed to
      *    startRetrieval() is empty. Otherwise it is a COSE_Mac0 with empty payload
      *    and the detached content is set to DeviceAuthentication as defined below.
@@ -304,7 +303,7 @@ interface IIdentityCredential {
      *
      * @param out deviceNameSpaces the bytes of DeviceNameSpaces.
      */
-    void finishRetrieval(in byte[] signingKeyBlob, out byte[] mac, out byte[] deviceNameSpaces);
+    void finishRetrieval(out byte[] mac, out byte[] deviceNameSpaces);
 
     /**
      * Generate a key pair to be used for signing session data and retrieved data items.
