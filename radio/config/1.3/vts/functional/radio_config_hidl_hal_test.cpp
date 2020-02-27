@@ -17,7 +17,7 @@
 #include <radio_config_hidl_hal_utils.h>
 
 void RadioConfigHidlTest::SetUp() {
-    radioConfig = V1_3::IRadioConfig::getService(GetParam());
+    radioConfig = ::android::hardware::radio::config::V1_3::IRadioConfig::getService(GetParam());
     ASSERT_NE(nullptr, radioConfig.get());
 
     radioConfigRsp = new (std::nothrow) RadioConfigResponse(*this);
