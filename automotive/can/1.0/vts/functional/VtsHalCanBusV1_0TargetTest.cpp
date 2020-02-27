@@ -14,21 +14,19 @@
  * limitations under the License.
  */
 
-#include <VtsHalHidlTargetTestBase.h>
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <android/hardware/automotive/can/1.0/ICanBus.h>
 #include <android/hardware/automotive/can/1.0/types.h>
 #include <can-vts-utils/can-hal-printers.h>
-#include <can-vts-utils/environment-utils.h>
 #include <gmock/gmock.h>
 #include <hidl-utils/hidl-utils.h>
+#include <hidl/GtestPrinter.h>
+#include <hidl/ServiceManagement.h>
 
 namespace android::hardware::automotive::can::V1_0::vts {
 
 using hardware::hidl_vec;
-
-static utils::SimpleHidlEnvironment<ICanBus>* gEnv = nullptr;
 
 struct CanMessageListener : public can::V1_0::ICanMessageListener {
     virtual Return<void> onReceive(const can::V1_0::CanMessage&) override { return {}; }
@@ -38,7 +36,7 @@ struct CanErrorListener : public can::V1_0::ICanErrorListener {
     virtual Return<void> onError(ErrorEvent, bool) override { return {}; }
 };
 
-class CanBusHalTest : public ::testing::VtsHalHidlTargetTestBase {
+class CanBusHalTest : public ::testing::TestWithParam<std::string> {
   protected:
     virtual void SetUp() override;
     virtual void TearDown() override;
@@ -51,9 +49,8 @@ class CanBusHalTest : public ::testing::VtsHalHidlTargetTestBase {
 };
 
 void CanBusHalTest::SetUp() {
-    const auto serviceName = gEnv->getServiceName<ICanBus>();
-    mCanBus = getService<ICanBus>(serviceName);
-    ASSERT_TRUE(mCanBus) << "Couldn't open CAN Bus: " << serviceName;
+    mCanBus = ICanBus::getService(GetParam());
+    ASSERT_TRUE(mCanBus) << "Couldn't open CAN Bus: " << GetParam();
 }
 
 void CanBusHalTest::TearDown() {
@@ -75,7 +72,7 @@ sp<ICloseHandle> CanBusHalTest::listenForErrors(const sp<ICanErrorListener>& lis
     return res;
 }
 
-TEST_F(CanBusHalTest, SendNoPayload) {
+TEST_P(CanBusHalTest, SendNoPayload) {
     CanMessage msg = {};
     msg.id = 0x123;
     ASSERT_NE(mCanBus, nullptr);
@@ -83,7 +80,7 @@ TEST_F(CanBusHalTest, SendNoPayload) {
     ASSERT_EQ(Result::OK, result);
 }
 
-TEST_F(CanBusHalTest, Send8B) {
+TEST_P(CanBusHalTest, Send8B) {
     CanMessage msg = {};
     msg.id = 0x234;
     msg.payload = {1, 2, 3, 4, 5, 6, 7, 8};
@@ -92,7 +89,7 @@ TEST_F(CanBusHalTest, Send8B) {
     ASSERT_EQ(Result::OK, result);
 }
 
-TEST_F(CanBusHalTest, SendZeroId) {
+TEST_P(CanBusHalTest, SendZeroId) {
     CanMessage msg = {};
     msg.payload = {1, 2, 3};
 
@@ -100,7 +97,7 @@ TEST_F(CanBusHalTest, SendZeroId) {
     ASSERT_EQ(Result::OK, result);
 }
 
-TEST_F(CanBusHalTest, SendTooLong) {
+TEST_P(CanBusHalTest, SendTooLong) {
     CanMessage msg = {};
     msg.id = 0x123;
     msg.payload = hidl_vec<uint8_t>(102400);  // 100kiB
@@ -109,14 +106,14 @@ TEST_F(CanBusHalTest, SendTooLong) {
     ASSERT_EQ(Result::PAYLOAD_TOO_LONG, result);
 }
 
-TEST_F(CanBusHalTest, ListenNoFilter) {
+TEST_P(CanBusHalTest, ListenNoFilter) {
     const auto [result, closeHandle] = listen({}, new CanMessageListener());
     ASSERT_EQ(Result::OK, result);
 
     closeHandle->close().assertOk();
 }
 
-TEST_F(CanBusHalTest, ListenSomeFilter) {
+TEST_P(CanBusHalTest, ListenSomeFilter) {
     hidl_vec<CanMessageFilter> filters = {
             {0x123, 0x1FF, FilterFlag::DONT_CARE, FilterFlag::DONT_CARE, false},
             {0x001, 0x00F, FilterFlag::DONT_CARE, FilterFlag::DONT_CARE, true},
@@ -129,12 +126,12 @@ TEST_F(CanBusHalTest, ListenSomeFilter) {
     closeHandle->close().assertOk();
 }
 
-TEST_F(CanBusHalTest, ListenNull) {
+TEST_P(CanBusHalTest, ListenNull) {
     const auto [result, closeHandle] = listen({}, nullptr);
     ASSERT_EQ(Result::INVALID_ARGUMENTS, result);
 }
 
-TEST_F(CanBusHalTest, DoubleCloseListener) {
+TEST_P(CanBusHalTest, DoubleCloseListener) {
     const auto [result, closeHandle] = listen({}, new CanMessageListener());
     ASSERT_EQ(Result::OK, result);
 
@@ -142,12 +139,12 @@ TEST_F(CanBusHalTest, DoubleCloseListener) {
     closeHandle->close().assertOk();
 }
 
-TEST_F(CanBusHalTest, DontCloseListener) {
+TEST_P(CanBusHalTest, DontCloseListener) {
     const auto [result, closeHandle] = listen({}, new CanMessageListener());
     ASSERT_EQ(Result::OK, result);
 }
 
-TEST_F(CanBusHalTest, DoubleCloseErrorListener) {
+TEST_P(CanBusHalTest, DoubleCloseErrorListener) {
     auto closeHandle = listenForErrors(new CanErrorListener());
     ASSERT_NE(nullptr, closeHandle.get());
 
@@ -155,7 +152,7 @@ TEST_F(CanBusHalTest, DoubleCloseErrorListener) {
     closeHandle->close().assertOk();
 }
 
-TEST_F(CanBusHalTest, DoubleCloseNullErrorListener) {
+TEST_P(CanBusHalTest, DoubleCloseNullErrorListener) {
     auto closeHandle = listenForErrors(nullptr);
     ASSERT_NE(nullptr, closeHandle.get());
 
@@ -163,12 +160,10 @@ TEST_F(CanBusHalTest, DoubleCloseNullErrorListener) {
     closeHandle->close().assertOk();
 }
 
-TEST_F(CanBusHalTest, DontCloseErrorListener) {
+TEST_P(CanBusHalTest, DontCloseErrorListener) {
     auto closeHandle = listenForErrors(new CanErrorListener());
     ASSERT_NE(nullptr, closeHandle.get());
 }
-
-}  // namespace android::hardware::automotive::can::V1_0::vts
 
 /**
  * This test requires that you bring up a valid bus first.
@@ -177,19 +172,12 @@ TEST_F(CanBusHalTest, DontCloseErrorListener) {
  * mma -j && adb root && adb remount && adb sync
  *
  * Example manual invocation:
- * adb shell /data/nativetest64/VtsHalCanBusV1_0TargetTest/VtsHalCanBusV1_0TargetTest \
- *     --hal_service_instance=android.hardware.automotive.can@1.0::ICanBus/<NAME_OF_VALID_BUS>
+ * adb shell canhalctrl up <NAME_OF_VALID_BUS> socketcan can0 125000
+ * adb shell /data/nativetest64/VtsHalCanBusV1_0TargetTest/VtsHalCanBusV1_0TargetTest\
+ *     --gtest_filter=*_<NAME_OF_VALID_BUS>
  */
-int main(int argc, char** argv) {
-    using android::hardware::automotive::can::V1_0::ICanBus;
-    using android::hardware::automotive::can::V1_0::vts::gEnv;
-    using android::hardware::automotive::can::V1_0::vts::utils::SimpleHidlEnvironment;
-    setenv("TREBLE_TESTING_OVERRIDE", "true", true);
-    android::base::SetDefaultTag("CanBusVts");
-    android::base::SetMinimumLogSeverity(android::base::VERBOSE);
-    gEnv = new SimpleHidlEnvironment<ICanBus>;
-    ::testing::AddGlobalTestEnvironment(gEnv);
-    ::testing::InitGoogleTest(&argc, argv);
-    gEnv->init(&argc, argv);
-    return RUN_ALL_TESTS();
-}
+INSTANTIATE_TEST_SUITE_P(  //
+        PerInstance, CanBusHalTest, testing::ValuesIn(getAllHalInstanceNames(ICanBus::descriptor)),
+        PrintInstanceNameToString);
+
+}  // namespace android::hardware::automotive::can::V1_0::vts

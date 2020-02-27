@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <VtsHalHidlTargetTestBase.h>
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <android/hardware/automotive/can/1.0/ICanBus.h>
@@ -23,9 +22,11 @@
 #include <android/hidl/manager/1.2/IServiceManager.h>
 #include <can-vts-utils/bus-enumerator.h>
 #include <can-vts-utils/can-hal-printers.h>
-#include <can-vts-utils/environment-utils.h>
 #include <gmock/gmock.h>
+#include <gtest/gtest.h>
 #include <hidl-utils/hidl-utils.h>
+#include <hidl/GtestPrinter.h>
+#include <hidl/ServiceManagement.h>
 #include <utils/Mutex.h>
 #include <utils/SystemClock.h>
 
@@ -38,8 +39,6 @@ using namespace std::chrono_literals;
 
 using hardware::hidl_vec;
 using InterfaceType = ICanController::InterfaceType;
-
-static utils::SimpleHidlEnvironment<ICanController>* gEnv = nullptr;
 
 struct CanMessageListener : public can::V1_0::ICanMessageListener {
     DISALLOW_COPY_AND_ASSIGN(CanMessageListener);
@@ -133,12 +132,11 @@ struct Bus {
     sp<ICanBus> mBus;
 };
 
-class CanBusVirtualHalTest : public ::testing::VtsHalHidlTargetTestBase {
+class CanBusVirtualHalTest : public ::testing::TestWithParam<std::string> {
   protected:
     virtual void SetUp() override;
-
+    virtual void TearDown() override;
     static void SetUpTestCase();
-    static void TearDownTestCase();
 
     Bus makeBus();
 
@@ -147,13 +145,10 @@ class CanBusVirtualHalTest : public ::testing::VtsHalHidlTargetTestBase {
 
   private:
     unsigned mLastIface = 0;
-    static sp<ICanController> mCanController;
-    static bool mVirtualSupported;
+    sp<ICanController> mCanController = nullptr;
     static bool mTestCaseInitialized;
 };
 
-sp<ICanController> CanBusVirtualHalTest::mCanController = nullptr;
-bool CanBusVirtualHalTest::mVirtualSupported;
 hidl_vec<hidl_string> CanBusVirtualHalTest::mBusNames;
 bool CanBusVirtualHalTest::mTestCaseInitialized = false;
 
@@ -170,27 +165,25 @@ static void clearTimestamps(std::vector<CanMessage>& messages) {
 }
 
 void CanBusVirtualHalTest::SetUp() {
-    if (!mVirtualSupported) GTEST_SKIP();
     ASSERT_TRUE(mTestCaseInitialized);
-}
 
-void CanBusVirtualHalTest::SetUpTestCase() {
-    const auto serviceName = gEnv->getServiceName<ICanController>();
-    mCanController = getService<ICanController>(serviceName);
-    ASSERT_TRUE(mCanController) << "Couldn't open CAN Controller: " << serviceName;
+    mCanController = ICanController::getService(GetParam());
+    ASSERT_TRUE(mCanController) << "Couldn't open CAN Controller: " << GetParam();
 
     hidl_vec<InterfaceType> supported;
     mCanController->getSupportedInterfaceTypes(hidl_utils::fill(&supported)).assertOk();
-    mVirtualSupported = supported.contains(InterfaceType::VIRTUAL);
+    if (!supported.contains(InterfaceType::VIRTUAL)) GTEST_SKIP();
+}
 
+void CanBusVirtualHalTest::TearDown() {
+    mCanController.clear();
+}
+
+void CanBusVirtualHalTest::SetUpTestCase() {
     mBusNames = utils::getBusNames();
     ASSERT_NE(0u, mBusNames.size()) << "No ICanBus HALs defined in device manifest";
 
     mTestCaseInitialized = true;
-}
-
-void CanBusVirtualHalTest::TearDownTestCase() {
-    mCanController.clear();
 }
 
 Bus CanBusVirtualHalTest::makeBus() {
@@ -204,7 +197,7 @@ Bus CanBusVirtualHalTest::makeBus() {
     return Bus(mCanController, config);
 }
 
-TEST_F(CanBusVirtualHalTest, Send) {
+TEST_P(CanBusVirtualHalTest, Send) {
     auto bus = makeBus();
 
     CanMessage msg = {};
@@ -214,7 +207,7 @@ TEST_F(CanBusVirtualHalTest, Send) {
     bus.send(msg);
 }
 
-TEST_F(CanBusVirtualHalTest, SendAfterClose) {
+TEST_P(CanBusVirtualHalTest, SendAfterClose) {
     auto bus = makeBus();
     auto zombie = bus.get();
     bus.reset();
@@ -223,7 +216,7 @@ TEST_F(CanBusVirtualHalTest, SendAfterClose) {
     ASSERT_EQ(Result::INTERFACE_DOWN, result);
 }
 
-TEST_F(CanBusVirtualHalTest, SendAndRecv) {
+TEST_P(CanBusVirtualHalTest, SendAndRecv) {
     if (mBusNames.size() < 2u) GTEST_SKIP() << "Not testable with less than two CAN buses.";
     auto bus1 = makeBus();
     auto bus2 = makeBus();
@@ -243,7 +236,7 @@ TEST_F(CanBusVirtualHalTest, SendAndRecv) {
     ASSERT_EQ(msg, messages[0]);
 }
 
-TEST_F(CanBusVirtualHalTest, DownOneOfTwo) {
+TEST_P(CanBusVirtualHalTest, DownOneOfTwo) {
     if (mBusNames.size() < 2u) GTEST_SKIP() << "Not testable with less than two CAN buses.";
 
     auto bus1 = makeBus();
@@ -254,7 +247,7 @@ TEST_F(CanBusVirtualHalTest, DownOneOfTwo) {
     bus1.send({});
 }
 
-TEST_F(CanBusVirtualHalTest, FilterPositive) {
+TEST_P(CanBusVirtualHalTest, FilterPositive) {
     if (mBusNames.size() < 2u) GTEST_SKIP() << "Not testable with less than two CAN buses.";
     auto bus1 = makeBus();
     auto bus2 = makeBus();
@@ -418,7 +411,7 @@ TEST_F(CanBusVirtualHalTest, FilterPositive) {
     ASSERT_EQ(expectedPositive, messagesPositive);
 }
 
-TEST_F(CanBusVirtualHalTest, FilterNegative) {
+TEST_P(CanBusVirtualHalTest, FilterNegative) {
     if (mBusNames.size() < 2u) GTEST_SKIP() << "Not testable with less than two CAN buses.";
     auto bus1 = makeBus();
     auto bus2 = makeBus();
@@ -612,7 +605,7 @@ TEST_F(CanBusVirtualHalTest, FilterNegative) {
     ASSERT_EQ(expectedNegative, messagesNegative);
 }
 
-TEST_F(CanBusVirtualHalTest, FilterMixed) {
+TEST_P(CanBusVirtualHalTest, FilterMixed) {
     if (mBusNames.size() < 2u) GTEST_SKIP() << "Not testable with less than two CAN buses.";
     auto bus1 = makeBus();
     auto bus2 = makeBus();
@@ -871,22 +864,13 @@ TEST_F(CanBusVirtualHalTest, FilterMixed) {
     ASSERT_EQ(expectedMixed, messagesMixed);
 }
 
-}  // namespace android::hardware::automotive::can::V1_0::vts
-
 /**
  * Example manual invocation:
- * adb shell /data/nativetest64/VtsHalCanBusVirtualV1_0TargetTest/VtsHalCanBusVirtualV1_0TargetTest\
- *     --hal_service_instance=android.hardware.automotive.can@1.0::ICanController/socketcan
+ * adb shell /data/nativetest64/VtsHalCanBusVirtualV1_0TargetTest/VtsHalCanBusVirtualV1_0TargetTest
  */
-int main(int argc, char** argv) {
-    using android::hardware::automotive::can::V1_0::ICanController;
-    using android::hardware::automotive::can::V1_0::vts::gEnv;
-    using android::hardware::automotive::can::V1_0::vts::utils::SimpleHidlEnvironment;
-    android::base::SetDefaultTag("CanBusVirtualVts");
-    android::base::SetMinimumLogSeverity(android::base::VERBOSE);
-    gEnv = new SimpleHidlEnvironment<ICanController>;
-    ::testing::AddGlobalTestEnvironment(gEnv);
-    ::testing::InitGoogleTest(&argc, argv);
-    gEnv->init(&argc, argv);
-    return RUN_ALL_TESTS();
-}
+INSTANTIATE_TEST_SUITE_P(  //
+        PerInstance, CanBusVirtualHalTest,
+        testing::ValuesIn(getAllHalInstanceNames(ICanController::descriptor)),
+        PrintInstanceNameToString);
+
+}  // namespace android::hardware::automotive::can::V1_0::vts

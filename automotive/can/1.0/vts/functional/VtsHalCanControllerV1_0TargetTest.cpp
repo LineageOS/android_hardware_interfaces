@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <VtsHalHidlTargetTestBase.h>
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <android/hardware/automotive/can/1.0/ICanBus.h>
@@ -23,9 +22,10 @@
 #include <android/hidl/manager/1.2/IServiceManager.h>
 #include <can-vts-utils/bus-enumerator.h>
 #include <can-vts-utils/can-hal-printers.h>
-#include <can-vts-utils/environment-utils.h>
 #include <gmock/gmock.h>
 #include <hidl-utils/hidl-utils.h>
+#include <hidl/GtestPrinter.h>
+#include <hidl/ServiceManagement.h>
 
 namespace android::hardware::automotive::can::V1_0::vts {
 
@@ -33,9 +33,7 @@ using hardware::hidl_vec;
 using InterfaceType = ICanController::InterfaceType;
 using IfId = ICanController::BusConfig::InterfaceId;
 
-static utils::SimpleHidlEnvironment<ICanController>* gEnv = nullptr;
-
-class CanControllerHalTest : public ::testing::VtsHalHidlTargetTestBase {
+class CanControllerHalTest : public ::testing::TestWithParam<std::string> {
   protected:
     virtual void SetUp() override;
     virtual void TearDown() override;
@@ -61,9 +59,8 @@ bool CanControllerHalTest::mTestCaseInitialized = false;
 void CanControllerHalTest::SetUp() {
     ASSERT_TRUE(mTestCaseInitialized);
 
-    const auto serviceName = gEnv->getServiceName<ICanController>();
-    mCanController = getService<ICanController>(serviceName);
-    ASSERT_TRUE(mCanController) << "Couldn't open CAN Controller: " << serviceName;
+    mCanController = ICanController::getService(GetParam());
+    ASSERT_TRUE(mCanController) << "Couldn't open CAN Controller: " << GetParam();
 }
 
 void CanControllerHalTest::TearDown() {
@@ -130,12 +127,12 @@ void CanControllerHalTest::assertRegistered(std::string srvname, bool expectRegi
             << " (should be otherwise)";
 }
 
-TEST_F(CanControllerHalTest, SupportsSomething) {
+TEST_P(CanControllerHalTest, SupportsSomething) {
     const auto supported = getSupportedInterfaceTypes();
     ASSERT_GT(supported.size(), 0u);
 }
 
-TEST_F(CanControllerHalTest, BringUpDown) {
+TEST_P(CanControllerHalTest, BringUpDown) {
     const std::string name = mBusNames[0];
 
     assertRegistered(name, false);
@@ -148,12 +145,12 @@ TEST_F(CanControllerHalTest, BringUpDown) {
     assertRegistered(name, false);
 }
 
-TEST_F(CanControllerHalTest, DownDummy) {
+TEST_P(CanControllerHalTest, DownDummy) {
     const auto result = mCanController->downInterface("imnotup");
     ASSERT_FALSE(result);
 }
 
-TEST_F(CanControllerHalTest, UpTwice) {
+TEST_P(CanControllerHalTest, UpTwice) {
     const std::string name = mBusNames[0];
 
     assertRegistered(name, false);
@@ -169,7 +166,7 @@ TEST_F(CanControllerHalTest, UpTwice) {
     assertRegistered(name, false);
 }
 
-TEST_F(CanControllerHalTest, ConfigCompatibility) {
+TEST_P(CanControllerHalTest, ConfigCompatibility) {
     // using random-ish addresses, which may not be valid - we can't test the success case
     // TODO(b/146214370): move interfaceId constructors to a library
     IfId virtualCfg = {};
@@ -231,7 +228,7 @@ TEST_F(CanControllerHalTest, ConfigCompatibility) {
     }
 }
 
-TEST_F(CanControllerHalTest, FailEmptyName) {
+TEST_P(CanControllerHalTest, FailEmptyName) {
     const std::string name = "";
 
     assertRegistered(name, false);
@@ -241,7 +238,7 @@ TEST_F(CanControllerHalTest, FailEmptyName) {
     assertRegistered(name, false);
 }
 
-TEST_F(CanControllerHalTest, FailBadName) {
+TEST_P(CanControllerHalTest, FailBadName) {
     // 33 characters (name can be at most 32 characters long)
     const std::string name = "ab012345678901234567890123456789c";
 
@@ -252,7 +249,7 @@ TEST_F(CanControllerHalTest, FailBadName) {
     assertRegistered(name, false);
 }
 
-TEST_F(CanControllerHalTest, FailBadVirtualAddress) {
+TEST_P(CanControllerHalTest, FailBadVirtualAddress) {
     const std::string name = mBusNames[0];
 
     assertRegistered(name, false);
@@ -262,7 +259,7 @@ TEST_F(CanControllerHalTest, FailBadVirtualAddress) {
     assertRegistered(name, false);
 }
 
-TEST_F(CanControllerHalTest, FailBadSocketcanAddress) {
+TEST_P(CanControllerHalTest, FailBadSocketcanAddress) {
     const std::string name = mBusNames[0];
 
     assertRegistered(name, false);
@@ -277,7 +274,7 @@ TEST_F(CanControllerHalTest, FailBadSocketcanAddress) {
     assertRegistered(name, false);
 }
 
-TEST_F(CanControllerHalTest, FailBadSlcanAddress) {
+TEST_P(CanControllerHalTest, FailBadSlcanAddress) {
     const std::string name = mBusNames[0];
 
     assertRegistered(name, false);
@@ -292,22 +289,13 @@ TEST_F(CanControllerHalTest, FailBadSlcanAddress) {
     assertRegistered(name, false);
 }
 
-}  // namespace android::hardware::automotive::can::V1_0::vts
-
 /**
  * Example manual invocation:
- * adb shell /data/nativetest64/VtsHalCanControllerV1_0TargetTest/VtsHalCanControllerV1_0TargetTest\
- *     --hal_service_instance=android.hardware.automotive.can@1.0::ICanController/socketcan
+ * adb shell /data/nativetest64/VtsHalCanControllerV1_0TargetTest/VtsHalCanControllerV1_0TargetTest
  */
-int main(int argc, char** argv) {
-    using android::hardware::automotive::can::V1_0::ICanController;
-    using android::hardware::automotive::can::V1_0::vts::gEnv;
-    using android::hardware::automotive::can::V1_0::vts::utils::SimpleHidlEnvironment;
-    android::base::SetDefaultTag("CanControllerVts");
-    android::base::SetMinimumLogSeverity(android::base::VERBOSE);
-    gEnv = new SimpleHidlEnvironment<ICanController>;
-    ::testing::AddGlobalTestEnvironment(gEnv);
-    ::testing::InitGoogleTest(&argc, argv);
-    gEnv->init(&argc, argv);
-    return RUN_ALL_TESTS();
-}
+INSTANTIATE_TEST_SUITE_P(  //
+        PerInstance, CanControllerHalTest,
+        testing::ValuesIn(getAllHalInstanceNames(ICanController::descriptor)),
+        PrintInstanceNameToString);
+
+}  // namespace android::hardware::automotive::can::V1_0::vts
