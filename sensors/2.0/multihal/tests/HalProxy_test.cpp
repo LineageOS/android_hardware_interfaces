@@ -724,6 +724,45 @@ TEST(HalProxyTest, PostedEventSensorHandleSubHalIndexValid) {
     EXPECT_EQ(eventOut.sensorHandle, (subhal2Index << 24) | sensorHandleToPost);
 }
 
+TEST(HalProxyTest, FillAndDrainPendingQueueTest) {
+    constexpr size_t kQueueSize = 5;
+    // TODO: Make this constant linked to same limit in HalProxy.h
+    constexpr size_t kMaxPendingQueueSize = 100000;
+    AllSensorsSubHal subhal;
+    std::vector<ISensorsSubHal*> subHals{&subhal};
+
+    std::unique_ptr<EventMessageQueue> eventQueue = makeEventFMQ(kQueueSize);
+    std::unique_ptr<WakeupMessageQueue> wakeLockQueue = makeWakelockFMQ(kQueueSize);
+    ::android::sp<ISensorsCallback> callback = new SensorsCallback();
+    EventFlag* eventQueueFlag;
+    EventFlag::createEventFlag(eventQueue->getEventFlagWord(), &eventQueueFlag);
+    HalProxy proxy(subHals);
+    proxy.initialize(*eventQueue->getDesc(), *wakeLockQueue->getDesc(), callback);
+
+    // Fill pending queue
+    std::vector<Event> events = makeMultipleAccelerometerEvents(kQueueSize);
+    subhal.postEvents(events, false);
+    events = makeMultipleAccelerometerEvents(kMaxPendingQueueSize);
+    subhal.postEvents(events, false);
+
+    // Drain pending queue
+    for (int i = 0; i < kMaxPendingQueueSize + kQueueSize; i += kQueueSize) {
+        ASSERT_TRUE(readEventsOutOfQueue(kQueueSize, eventQueue, eventQueueFlag));
+    }
+
+    // Put one event on pending queue
+    events = makeMultipleAccelerometerEvents(kQueueSize);
+    subhal.postEvents(events, false);
+    events = {makeAccelerometerEvent()};
+    subhal.postEvents(events, false);
+
+    // Read out to make room for one event on pending queue to write to FMQ
+    ASSERT_TRUE(readEventsOutOfQueue(kQueueSize, eventQueue, eventQueueFlag));
+
+    // Should be able to read that last event off queue
+    EXPECT_TRUE(readEventsOutOfQueue(1, eventQueue, eventQueueFlag));
+}
+
 // Helper implementations follow
 void testSensorsListFromProxyAndSubHal(const std::vector<SensorInfo>& proxySensorsList,
                                        const std::vector<SensorInfo>& subHalSensorsList) {
