@@ -56,10 +56,25 @@ interface ICameraProvider extends @2.5::ICameraProvider {
      * s720p - min (max output resolution for the given format, 1280 X 720)
      * s1440p - min (max output resolution for the given format, 1920 X 1440)
      *
+     * If a device has MONOCHROME capability (device's capabilities include
+     * ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MONOCHROME) and therefore supports Y8
+     * outputs, stream combinations mentioned above, where YUV is substituted by
+     * Y8 must be also supported.
+     *
      * The camera framework must call this method whenever it gets a
      * cameraDeviceStatusChange callback adding a new camera device or removing
      * a camera device known to it. This is so that the camera framework can get new combinations
      * of camera ids that can stream concurrently, that might have potentially appeared.
+     *
+     * For each combination (and their subsets) of camera device ids returned by
+     * getConcurrentStreamingCameraIds(): If only the mandatory combinations can
+     * be supported concurrently by each device, then the resource costs must
+     * sum up to > 100 for the concurrent set, to ensure arbitration between
+     * camera applications work as expected. Only if resources are sufficient
+     * to run a set of cameras at full capability (maximally
+     * resource-consuming framerate and stream size settings available in the
+     * configuration settings exposed through camera metadata), should the sum
+     * of resource costs for the combination be <= 100.
      *
      * @return status Status code for the operation
      * @return cameraIds a list of camera id combinations that support
