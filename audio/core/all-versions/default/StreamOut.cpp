@@ -22,6 +22,8 @@
 //#define LOG_NDEBUG 0
 #define ATRACE_TAG ATRACE_TAG_AUDIO
 
+#include <string.h>
+
 #include <memory>
 
 #include <android/log.h>
@@ -612,6 +614,33 @@ Return<Result> StreamOut::setPlaybackRateParameters(const PlaybackRate& /*playba
     return Result::NOT_SUPPORTED;
 }
 
+Return<Result> StreamOut::setEventCallback(const sp<IStreamOutEventCallback>& callback) {
+    if (mStream->set_event_callback == nullptr) return Result::NOT_SUPPORTED;
+    int result = mStream->set_event_callback(mStream, StreamOut::asyncEventCallback, this);
+    if (result == 0) {
+        mEventCallback = callback;
+    }
+    return Stream::analyzeStatus("set_stream_out_callback", result, {ENOSYS} /*ignore*/);
+}
+
+// static
+int StreamOut::asyncEventCallback(stream_event_callback_type_t event, void* param, void* cookie) {
+    StreamOut* self = reinterpret_cast<StreamOut*>(cookie);
+    sp<IStreamOutEventCallback> eventCallback = self->mEventCallback;
+    if (eventCallback.get() == nullptr) return 0;
+    ALOGV("%s event %d", __func__, event);
+    switch (event) {
+        case STREAM_EVENT_CBK_TYPE_CODEC_FORMAT_CHANGED: {
+            hidl_vec<uint8_t> audioMetadata;
+            audioMetadata.setToExternal((uint8_t*)param, strlen((char*)param));
+            eventCallback->onCodecFormatChanged(audioMetadata);
+        } break;
+        default:
+            ALOGW("%s unknown event %d", __func__, event);
+            break;
+    }
+    return 0;
+}
 #endif
 
 }  // namespace implementation

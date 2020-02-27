@@ -251,3 +251,21 @@ TEST_P(PlaybackRateParametersHidlTest, PlaybackRateParametersTest) {
 INSTANTIATE_TEST_CASE_P(PlaybackRateParametersHidl, PlaybackRateParametersHidlTest,
                         ::testing::ValuesIn(getOutputDeviceConfigParameters()),
                         &DeviceConfigParameterToString);
+
+/** Stub implementation of IStreamOutEventCallback **/
+class MockOutEventCallbacks : public IStreamOutEventCallback {
+    Return<void> onCodecFormatChanged(const hidl_vec<uint8_t>& audioMetadata __unused) override {
+        return {};
+    }
+};
+
+TEST_P(OutputStreamTest, SetEventCallback) {
+    doc::test("If supported, set event callback for output stream should never fail");
+    auto res = stream->setEventCallback(new MockOutEventCallbacks);
+    EXPECT_RESULT(okOrNotSupported, res);
+    if (res == Result::OK) {
+        ASSERT_OK(stream->setEventCallback(nullptr));
+    } else {
+        doc::partialTest("The stream does not support event callback");
+    }
+}
