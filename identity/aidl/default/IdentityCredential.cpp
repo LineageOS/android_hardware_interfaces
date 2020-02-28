@@ -256,8 +256,8 @@ bool checkUserAuthentication(const SecureAccessControlProfile& profile,
 ndk::ScopedAStatus IdentityCredential::startRetrieval(
         const vector<SecureAccessControlProfile>& accessControlProfiles,
         const HardwareAuthToken& authToken, const vector<int8_t>& itemsRequestS,
-        const vector<int8_t>& sessionTranscriptS, const vector<int8_t>& readerSignatureS,
-        const vector<int32_t>& requestCounts) {
+        const vector<int8_t>& signingKeyBlobS, const vector<int8_t>& sessionTranscriptS,
+        const vector<int8_t>& readerSignatureS, const vector<int32_t>& requestCounts) {
     auto sessionTranscript = byteStringToUnsigned(sessionTranscriptS);
     auto itemsRequest = byteStringToUnsigned(itemsRequestS);
     auto readerSignature = byteStringToUnsigned(readerSignatureS);
@@ -498,6 +498,7 @@ ndk::ScopedAStatus IdentityCredential::startRetrieval(
     currentNameSpace_ = "";
 
     itemsRequest_ = itemsRequest;
+    signingKeyBlob_ = byteStringToUnsigned(signingKeyBlobS);
 
     numStartRetrievalCalls_ += 1;
     return ndk::ScopedAStatus::ok();
@@ -650,11 +651,8 @@ ndk::ScopedAStatus IdentityCredential::retrieveEntryValue(const vector<int8_t>& 
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus IdentityCredential::finishRetrieval(const vector<int8_t>& signingKeyBlobS,
-                                                       vector<int8_t>* outMac,
+ndk::ScopedAStatus IdentityCredential::finishRetrieval(vector<int8_t>* outMac,
                                                        vector<int8_t>* outDeviceNameSpaces) {
-    auto signingKeyBlob = byteStringToUnsigned(signingKeyBlobS);
-
     if (currentNameSpaceDeviceNameSpacesMap_.size() > 0) {
         deviceNameSpacesMap_.add(currentNameSpace_,
                                  std::move(currentNameSpaceDeviceNameSpacesMap_));
@@ -664,7 +662,8 @@ ndk::ScopedAStatus IdentityCredential::finishRetrieval(const vector<int8_t>& sig
     // If there's no signing key or no sessionTranscript or no reader ephemeral
     // public key, we return the empty MAC.
     optional<vector<uint8_t>> mac;
-    if (signingKeyBlob.size() > 0 && sessionTranscript_.size() > 0 && readerPublicKey_.size() > 0) {
+    if (signingKeyBlob_.size() > 0 && sessionTranscript_.size() > 0 &&
+        readerPublicKey_.size() > 0) {
         cppbor::Array array;
         array.add("DeviceAuthentication");
         array.add(sessionTranscriptItem_->clone());
@@ -674,7 +673,7 @@ ndk::ScopedAStatus IdentityCredential::finishRetrieval(const vector<int8_t>& sig
 
         vector<uint8_t> docTypeAsBlob(docType_.begin(), docType_.end());
         optional<vector<uint8_t>> signingKey =
-                support::decryptAes128Gcm(storageKey_, signingKeyBlob, docTypeAsBlob);
+                support::decryptAes128Gcm(storageKey_, signingKeyBlob_, docTypeAsBlob);
         if (!signingKey) {
             return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
                     IIdentityCredentialStore::STATUS_INVALID_DATA,
