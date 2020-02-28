@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,8 @@
 #include <iostream>
 #include <map>
 
+#include "VtsHalTvTunerV1_0TestConfigurations.h"
+
 #define WAIT_TIMEOUT 3000000000
 #define WAIT_TIMEOUT_data_ready 3000000000 * 4
 
@@ -84,9 +86,11 @@ using android::hardware::tv::tuner::V1_0::FrontendAtscSettings;
 using android::hardware::tv::tuner::V1_0::FrontendDvbtSettings;
 using android::hardware::tv::tuner::V1_0::FrontendEventType;
 using android::hardware::tv::tuner::V1_0::FrontendId;
+using android::hardware::tv::tuner::V1_0::FrontendInfo;
 using android::hardware::tv::tuner::V1_0::FrontendInnerFec;
 using android::hardware::tv::tuner::V1_0::FrontendScanMessage;
 using android::hardware::tv::tuner::V1_0::FrontendScanMessageType;
+using android::hardware::tv::tuner::V1_0::FrontendScanType;
 using android::hardware::tv::tuner::V1_0::FrontendSettings;
 using android::hardware::tv::tuner::V1_0::IDemux;
 using android::hardware::tv::tuner::V1_0::IDescrambler;
@@ -102,6 +106,8 @@ using android::hardware::tv::tuner::V1_0::PlaybackStatus;
 using android::hardware::tv::tuner::V1_0::RecordSettings;
 using android::hardware::tv::tuner::V1_0::RecordStatus;
 using android::hardware::tv::tuner::V1_0::Result;
+
+using ::testing::AssertionResult;
 
 namespace {
 
@@ -150,11 +156,7 @@ const std::vector<uint8_t> goldenDataOutputBuffer{
 // const uint16_t FMQ_SIZE_4K = 0x1000;
 const uint32_t FMQ_SIZE_1M = 0x100000;
 const uint32_t FMQ_SIZE_16M = 0x1000000;
-
-struct FilterConf {
-    DemuxFilterType type;
-    DemuxFilterSettings setting;
-};
+const uint8_t FRONTEND_EVENT_CALLBACK_WAIT_COUNT = 4;
 
 enum FilterEventType : uint8_t {
     UNDEFINED,
@@ -172,6 +174,7 @@ struct PlaybackConf {
     PlaybackSettings setting;
 };
 
+/******************************** Start FrontendCallback **********************************/
 class FrontendCallback : public IFrontendCallback {
   public:
     virtual Return<void> onEvent(FrontendEventType frontendEventType) override {
@@ -182,28 +185,38 @@ class FrontendCallback : public IFrontendCallback {
         return Void();
     }
 
-    virtual Return<void> onScanMessage(FrontendScanMessageType /* type */,
-                                       const FrontendScanMessage& /* message */) override {
+    virtual Return<void> onScanMessage(FrontendScanMessageType type,
+                                       const FrontendScanMessage& message) override {
         android::Mutex::Autolock autoLock(mMsgLock);
+        ALOGD("[vts] scan message. Type: %d", mScanMessageType);
         mScanMessageReceived = true;
+        mScanMessageType = type;
+        mScanLockMessageReceived =
+                mScanLockMessageReceived | (type == FrontendScanMessageType::LOCKED);
+        mScanMessage = message;
         mMsgCondition.signal();
         return Void();
     };
 
-    void testOnEvent(sp<IFrontend>& frontend, FrontendSettings settings);
-    void testOnDiseqcMessage(sp<IFrontend>& frontend, FrontendSettings settings);
+    void tuneTestOnEventReceive(sp<IFrontend>& frontend, FrontendSettings settings);
+    void tuneTestOnLock(sp<IFrontend>& frontend, FrontendSettings settings);
+    void scanTestOnMessageLock(sp<IFrontend>& frontend, FrontendSettings settings,
+                               FrontendScanType type);
 
   private:
     bool mEventReceived = false;
-    bool mDiseqcMessageReceived = false;
     bool mScanMessageReceived = false;
+    bool mScanLockMessageReceived = false;
     FrontendEventType mEventType;
+    FrontendScanMessageType mScanMessageType;
+    FrontendScanMessage mScanMessage;
     hidl_vec<uint8_t> mEventMessage;
     android::Mutex mMsgLock;
     android::Condition mMsgCondition;
+    uint8_t mOnEvenRetry = 0;
 };
 
-void FrontendCallback::testOnEvent(sp<IFrontend>& frontend, FrontendSettings settings) {
+void FrontendCallback::tuneTestOnEventReceive(sp<IFrontend>& frontend, FrontendSettings settings) {
     Result result = frontend->tune(settings);
 
     EXPECT_TRUE(result == Result::SUCCESS);
@@ -215,29 +228,77 @@ void FrontendCallback::testOnEvent(sp<IFrontend>& frontend, FrontendSettings set
             return;
         }
     }
+    mEventReceived = false;
 }
 
-void FrontendCallback::testOnDiseqcMessage(sp<IFrontend>& frontend, FrontendSettings settings) {
+void FrontendCallback::tuneTestOnLock(sp<IFrontend>& frontend, FrontendSettings settings) {
     Result result = frontend->tune(settings);
 
     EXPECT_TRUE(result == Result::SUCCESS);
 
     android::Mutex::Autolock autoLock(mMsgLock);
-    while (!mDiseqcMessageReceived) {
+wait:
+    while (!mEventReceived) {
         if (-ETIMEDOUT == mMsgCondition.waitRelative(mMsgLock, WAIT_TIMEOUT)) {
-            EXPECT_TRUE(false) << "diseqc message not received within timeout";
+            EXPECT_TRUE(false) << "event not received within timeout";
             return;
         }
     }
+    if (mEventType != FrontendEventType::LOCKED) {
+        ALOGD("[vts] frontend callback event received. Type: %d", mEventType);
+        mEventReceived = false;
+        if (mOnEvenRetry++ < FRONTEND_EVENT_CALLBACK_WAIT_COUNT) {
+            goto wait;
+        }
+    }
+    EXPECT_TRUE(mEventType == FrontendEventType::LOCKED) << "LOCK event not received";
+    mEventReceived = false;
+    mOnEvenRetry = 0;
 }
 
+void FrontendCallback::scanTestOnMessageLock(sp<IFrontend>& frontend, FrontendSettings settings,
+                                             FrontendScanType type) {
+    Result result = frontend->scan(settings, type);
+    EXPECT_TRUE(result == Result::SUCCESS);
+    android::Mutex::Autolock autoLock(mMsgLock);
+    int messagesCount = 0;
+
+wait:
+    int count = 0;
+    while (!mScanMessageReceived) {
+        if (-ETIMEDOUT == mMsgCondition.waitRelative(mMsgLock, WAIT_TIMEOUT)) {
+            ALOGD("[vts] waiting for scan message callback...");
+            if (count++ > 10) {
+                EXPECT_TRUE(false) << "WAITING TOO LONG!!";
+                return;
+            }
+        }
+    }
+
+    if (mScanMessageType != FrontendScanMessageType::END) {
+        ALOGD("[vts] frontend scan message received. Type: %d", mScanMessageType);
+        mScanMessageReceived = false;
+        if (messagesCount++ > 3) {
+            EXPECT_TRUE(false) << "WAITING ON TOO MANY MSGS!!";
+            return;
+        }
+        goto wait;
+    }
+
+    EXPECT_TRUE(mScanLockMessageReceived) << "scan lock message not received before scan ended";
+    mScanMessageReceived = false;
+    mScanLockMessageReceived = false;
+}
+/******************************** End FrontendCallback **********************************/
+
+/******************************** Start FilterCallback **********************************/
 class FilterCallback : public IFilterCallback {
   public:
     virtual Return<void> onFilterEvent(const DemuxFilterEvent& filterEvent) override {
         android::Mutex::Autolock autoLock(mMsgLock);
         // Temprarily we treat the first coming back filter data on the matching pid a success
         // once all of the MQ are cleared, means we got all the expected output
-        mFilterIdToEvent = filterEvent;
+        mFilterEvent = filterEvent;
         readFilterEventData();
         mPidFilterOutputCount++;
         // mFilterIdToMQ.erase(filterEvent.filterId);
@@ -276,9 +337,9 @@ class FilterCallback : public IFilterCallback {
 
     uint32_t mFilterId;
     FilterEventType mFilterEventType;
-    std::unique_ptr<FilterMQ> mFilterIdToMQ;
-    EventFlag* mFilterIdToMQEventFlag;
-    DemuxFilterEvent mFilterIdToEvent;
+    std::unique_ptr<FilterMQ> mFilterMQ;
+    EventFlag* mFilterMQEventFlag;
+    DemuxFilterEvent mFilterEvent;
 
     android::Mutex mMsgLock;
     android::Mutex mFilterOutputLock;
@@ -313,10 +374,10 @@ void FilterCallback::testFilterDataOutput() {
 }
 
 void FilterCallback::updateFilterMQ(MQDesc& filterMQDescriptor) {
-    mFilterIdToMQ = std::make_unique<FilterMQ>(filterMQDescriptor, true /* resetPointers */);
-    EXPECT_TRUE(mFilterIdToMQ);
-    EXPECT_TRUE(EventFlag::createEventFlag(mFilterIdToMQ->getEventFlagWord(),
-                                           &mFilterIdToMQEventFlag) == android::OK);
+    mFilterMQ = std::make_unique<FilterMQ>(filterMQDescriptor, true /* resetPointers */);
+    EXPECT_TRUE(mFilterMQ);
+    EXPECT_TRUE(EventFlag::createEventFlag(mFilterMQ->getEventFlagWord(), &mFilterMQEventFlag) ==
+                android::OK);
 }
 
 void FilterCallback::updateGoldenOutputMap(string goldenOutputFile) {
@@ -332,7 +393,7 @@ void* FilterCallback::__threadLoopFilter(void* threadArgs) {
 
 void FilterCallback::filterThreadLoop(DemuxFilterEvent& /* event */) {
     android::Mutex::Autolock autoLock(mFilterOutputLock);
-    // Read from mFilterIdToMQ[event.filterId] per event and filter type
+    // Read from mFilterMQ[event.filterId] per event and filter type
 
     // Assemble to filterOutput[filterId]
 
@@ -345,7 +406,7 @@ void FilterCallback::filterThreadLoop(DemuxFilterEvent& /* event */) {
 
 bool FilterCallback::readFilterEventData() {
     bool result = false;
-    DemuxFilterEvent filterEvent = mFilterIdToEvent;
+    DemuxFilterEvent filterEvent = mFilterEvent;
     ALOGW("[vts] reading from filter FMQ %d", mFilterId);
     // todo separate filter handlers
     for (int i = 0; i < filterEvent.events.size(); i++) {
@@ -357,6 +418,7 @@ bool FilterCallback::readFilterEventData() {
                 mDataLength = filterEvent.events[i].pes().dataLength;
                 break;
             case FilterEventType::MEDIA:
+                mDataLength = filterEvent.events[i].media().dataLength;
                 break;
             case FilterEventType::RECORD:
                 break;
@@ -371,17 +433,19 @@ bool FilterCallback::readFilterEventData() {
         // match";
 
         mDataOutputBuffer.resize(mDataLength);
-        result = mFilterIdToMQ->read(mDataOutputBuffer.data(), mDataLength);
+        result = mFilterMQ->read(mDataOutputBuffer.data(), mDataLength);
         EXPECT_TRUE(result) << "can't read from Filter MQ";
 
         /*for (int i = 0; i < mDataLength; i++) {
             EXPECT_TRUE(goldenDataOutputBuffer[i] == mDataOutputBuffer[i]) << "data does not match";
         }*/
     }
-    mFilterIdToMQEventFlag->wake(static_cast<uint32_t>(DemuxQueueNotifyBits::DATA_CONSUMED));
+    mFilterMQEventFlag->wake(static_cast<uint32_t>(DemuxQueueNotifyBits::DATA_CONSUMED));
     return result;
 }
+/******************************** End FilterCallback **********************************/
 
+/******************************** Start DvrCallback **********************************/
 class DvrCallback : public IDvrCallback {
   public:
     virtual Return<void> onRecordStatus(DemuxFilterStatus status) override {
@@ -445,11 +509,10 @@ class DvrCallback : public IDvrCallback {
     uint16_t mDataLength = 0;
     std::vector<uint8_t> mDataOutputBuffer;
 
-    std::map<uint32_t, std::unique_ptr<FilterMQ>> mFilterIdToMQ;
+    std::map<uint32_t, std::unique_ptr<FilterMQ>> mFilterMQ;
     std::unique_ptr<FilterMQ> mPlaybackMQ;
     std::unique_ptr<FilterMQ> mRecordMQ;
-    std::map<uint32_t, EventFlag*> mFilterIdToMQEventFlag;
-    std::map<uint32_t, DemuxFilterEvent> mFilterIdToEvent;
+    std::map<uint32_t, EventFlag*> mFilterMQEventFlag;
 
     android::Mutex mMsgLock;
     android::Mutex mPlaybackThreadLock;
@@ -635,22 +698,32 @@ void DvrCallback::stopRecordThread() {
     mRecordThreadRunning = false;
     android::Mutex::Autolock autoLock(mRecordThreadLock);
 }
+/********************************** End DvrCallback ************************************/
 
+/***************************** Start Test Implementation ******************************/
 class TunerHidlTest : public testing::TestWithParam<std::string> {
   public:
     virtual void SetUp() override {
         mService = ITuner::getService(GetParam());
         ASSERT_NE(mService, nullptr);
+        initFrontendConfig();
+        initFrontendScanConfig();
+        initFilterConfig();
     }
 
     sp<ITuner> mService;
 
   protected:
+    static AssertionResult failure() { return ::testing::AssertionFailure(); }
+
+    static AssertionResult success() { return ::testing::AssertionSuccess(); }
+
     static void description(const std::string& description) {
         RecordProperty("description", description);
     }
 
     sp<IFrontend> mFrontend;
+    FrontendInfo mFrontendInfo;
     sp<FrontendCallback> mFrontendCallback;
     sp<IDescrambler> mDescrambler;
     sp<IDemux> mDemux;
@@ -661,274 +734,165 @@ class TunerHidlTest : public testing::TestWithParam<std::string> {
     sp<FilterCallback> mFilterCallback;
     sp<DvrCallback> mDvrCallback;
     MQDesc mFilterMQDescriptor;
-    MQDesc mPlaybackMQDescriptor;
+    MQDesc mDvrMQDescriptor;
     MQDesc mRecordMQDescriptor;
     vector<uint32_t> mUsedFilterIds;
+    hidl_vec<FrontendId> mFeIds;
 
     uint32_t mDemuxId;
-    uint32_t mFilterId;
+    uint32_t mFilterId = -1;
 
     pthread_t mPlaybackshread;
     bool mPlaybackThreadRunning;
 
-    ::testing::AssertionResult createFrontend(int32_t frontendId);
-    ::testing::AssertionResult tuneFrontend(int32_t frontendId);
-    ::testing::AssertionResult stopTuneFrontend(int32_t frontendId);
-    ::testing::AssertionResult closeFrontend(int32_t frontendId);
-    ::testing::AssertionResult createDemux();
-    ::testing::AssertionResult createDemuxWithFrontend(int32_t frontendId,
-                                                       FrontendSettings settings);
-    ::testing::AssertionResult getPlaybackMQDescriptor();
-    ::testing::AssertionResult addPlaybackToDemux(PlaybackSettings setting);
-    ::testing::AssertionResult getRecordMQDescriptor();
-    ::testing::AssertionResult addRecordToDemux(RecordSettings setting);
-    ::testing::AssertionResult addFilterToDemux(DemuxFilterType type, DemuxFilterSettings setting);
-    ::testing::AssertionResult getFilterMQDescriptor();
-    ::testing::AssertionResult closeDemux();
-    ::testing::AssertionResult createDescrambler();
-    ::testing::AssertionResult closeDescrambler();
+    AssertionResult getFrontendIds();
+    AssertionResult getFrontendInfo(uint32_t frontendId);
+    AssertionResult openFrontend(uint32_t frontendId);
+    AssertionResult setFrontendCallback();
+    AssertionResult scanFrontend(FrontendConfig config, FrontendScanType type);
+    AssertionResult stopScanFrontend();
+    AssertionResult tuneFrontend(FrontendConfig config);
+    AssertionResult stopTuneFrontend();
+    AssertionResult closeFrontend();
 
-    ::testing::AssertionResult playbackDataFlowTest(vector<FilterConf> filterConf,
-                                                    PlaybackConf playbackConf,
-                                                    vector<string> goldenOutputFiles);
-    ::testing::AssertionResult recordDataFlowTest(vector<FilterConf> filterConf,
-                                                  RecordSettings recordSetting,
-                                                  vector<string> goldenOutputFiles);
-    ::testing::AssertionResult broadcastDataFlowTest(vector<FilterConf> filterConf,
-                                                     vector<string> goldenOutputFiles);
+    AssertionResult openDemux();
+    AssertionResult setDemuxFrontendDataSource(uint32_t frontendId);
+    AssertionResult closeDemux();
+
+    AssertionResult openDvrInDemux(DvrType type);
+    AssertionResult configDvr(DvrSettings setting);
+    AssertionResult getDvrMQDescriptor();
+
+    AssertionResult openFilterInDemux(DemuxFilterType type);
+    AssertionResult getNewlyOpenedFilterId(uint32_t& filterId);
+    AssertionResult configFilter(DemuxFilterSettings setting, uint32_t filterId);
+    AssertionResult getFilterMQDescriptor(uint32_t filterId);
+    AssertionResult startFilter(uint32_t filterId);
+    AssertionResult stopFilter(uint32_t filterId);
+    AssertionResult closeFilter(uint32_t filterId);
+
+    AssertionResult createDescrambler();
+    AssertionResult closeDescrambler();
+
+    AssertionResult playbackDataFlowTest(vector<FilterConfig> filterConf, PlaybackConf playbackConf,
+                                         vector<string> goldenOutputFiles);
+    AssertionResult recordDataFlowTest(vector<FilterConfig> filterConf,
+                                       RecordSettings recordSetting,
+                                       vector<string> goldenOutputFiles);
+    AssertionResult broadcastDataFlowTest(vector<string> goldenOutputFiles);
+
+    FilterEventType getFilterEventType(DemuxFilterType type);
 };
 
-::testing::AssertionResult TunerHidlTest::createFrontend(int32_t frontendId) {
+/*========================== Start Frontend APIs Tests Implementation ==========================*/
+AssertionResult TunerHidlTest::getFrontendIds() {
     Result status;
+    mService->getFrontendIds([&](Result result, const hidl_vec<FrontendId>& frontendIds) {
+        status = result;
+        mFeIds = frontendIds;
+    });
+    return AssertionResult(status == Result::SUCCESS);
+}
 
+AssertionResult TunerHidlTest::getFrontendInfo(uint32_t frontendId) {
+    Result status;
+    mService->getFrontendInfo(frontendId, [&](Result result, const FrontendInfo& frontendInfo) {
+        mFrontendInfo = frontendInfo;
+        status = result;
+    });
+    return AssertionResult(status == Result::SUCCESS);
+}
+
+AssertionResult TunerHidlTest::openFrontend(uint32_t frontendId) {
+    Result status;
     mService->openFrontendById(frontendId, [&](Result result, const sp<IFrontend>& frontend) {
         mFrontend = frontend;
         status = result;
     });
-    if (status != Result::SUCCESS) {
-        return ::testing::AssertionFailure();
-    }
+    return AssertionResult(status == Result::SUCCESS);
+}
 
+AssertionResult TunerHidlTest::setFrontendCallback() {
+    EXPECT_TRUE(mFrontend) << "Test with openFrontend first.";
     mFrontendCallback = new FrontendCallback();
     auto callbackStatus = mFrontend->setCallback(mFrontendCallback);
-
-    return ::testing::AssertionResult(callbackStatus.isOk());
+    return AssertionResult(callbackStatus.isOk());
 }
 
-::testing::AssertionResult TunerHidlTest::tuneFrontend(int32_t frontendId) {
-    if (createFrontend(frontendId) == ::testing::AssertionFailure()) {
-        return ::testing::AssertionFailure();
-    }
+AssertionResult TunerHidlTest::scanFrontend(FrontendConfig config, FrontendScanType type) {
+    EXPECT_TRUE(mFrontendCallback)
+            << "test with openFrontend/setFrontendCallback/getFrontendInfo first.";
 
-    // Frontend Settings for testing
-    FrontendSettings frontendSettings;
-    FrontendAtscSettings frontendAtscSettings{
-            .frequency = 0,
-            .modulation = FrontendAtscModulation::UNDEFINED,
-    };
-    frontendSettings.atsc(frontendAtscSettings);
-    mFrontendCallback->testOnEvent(mFrontend, frontendSettings);
+    EXPECT_TRUE(mFrontendInfo.type == config.type)
+            << "FrontendConfig does not match the frontend info of the given id.";
 
-    FrontendDvbtSettings frontendDvbtSettings{
-            .frequency = 0,
-    };
-    frontendSettings.dvbt(frontendDvbtSettings);
-    mFrontendCallback->testOnEvent(mFrontend, frontendSettings);
-
-    return ::testing::AssertionResult(true);
+    mFrontendCallback->scanTestOnMessageLock(mFrontend, config.settings, type);
+    return AssertionResult(true);
 }
 
-::testing::AssertionResult TunerHidlTest::stopTuneFrontend(int32_t frontendId) {
+AssertionResult TunerHidlTest::stopScanFrontend() {
+    EXPECT_TRUE(mFrontend) << "Test with openFrontend first.";
     Result status;
-    if (!mFrontend && createFrontend(frontendId) == ::testing::AssertionFailure()) {
-        return ::testing::AssertionFailure();
-    }
+    status = mFrontend->stopScan();
+    return AssertionResult(status == Result::SUCCESS);
+}
 
+AssertionResult TunerHidlTest::tuneFrontend(FrontendConfig config) {
+    EXPECT_TRUE(mFrontendCallback)
+            << "test with openFrontend/setFrontendCallback/getFrontendInfo first.";
+
+    EXPECT_TRUE(mFrontendInfo.type == config.type)
+            << "FrontendConfig does not match the frontend info of the given id.";
+
+    mFrontendCallback->tuneTestOnLock(mFrontend, config.settings);
+    return AssertionResult(true);
+}
+
+AssertionResult TunerHidlTest::stopTuneFrontend() {
+    EXPECT_TRUE(mFrontend) << "Test with openFrontend first.";
+    Result status;
     status = mFrontend->stopTune();
-    return ::testing::AssertionResult(status == Result::SUCCESS);
+    return AssertionResult(status == Result::SUCCESS);
 }
 
-::testing::AssertionResult TunerHidlTest::closeFrontend(int32_t frontendId) {
+AssertionResult TunerHidlTest::closeFrontend() {
+    EXPECT_TRUE(mFrontend) << "Test with openFrontend first.";
     Result status;
-    if (!mFrontend && createFrontend(frontendId) == ::testing::AssertionFailure()) {
-        return ::testing::AssertionFailure();
-    }
-
     status = mFrontend->close();
     mFrontend = nullptr;
-    return ::testing::AssertionResult(status == Result::SUCCESS);
+    mFrontendCallback = nullptr;
+    return AssertionResult(status == Result::SUCCESS);
 }
+/*=========================== End Frontend APIs Tests Implementation ===========================*/
 
-::testing::AssertionResult TunerHidlTest::createDemux() {
+/*============================ Start Demux APIs Tests Implementation ============================*/
+AssertionResult TunerHidlTest::openDemux() {
     Result status;
-
     mService->openDemux([&](Result result, uint32_t demuxId, const sp<IDemux>& demux) {
         mDemux = demux;
         mDemuxId = demuxId;
         status = result;
     });
-    return ::testing::AssertionResult(status == Result::SUCCESS);
+    return AssertionResult(status == Result::SUCCESS);
 }
 
-::testing::AssertionResult TunerHidlTest::createDemuxWithFrontend(int32_t frontendId,
-                                                                  FrontendSettings settings) {
-    Result status;
-
-    if (!mDemux && createDemux() == ::testing::AssertionFailure()) {
-        return ::testing::AssertionFailure();
-    }
-
-    if (!mFrontend && createFrontend(frontendId) == ::testing::AssertionFailure()) {
-        return ::testing::AssertionFailure();
-    }
-
-    mFrontendCallback->testOnEvent(mFrontend, settings);
-
-    status = mDemux->setFrontendDataSource(frontendId);
-
-    return ::testing::AssertionResult(status == Result::SUCCESS);
+AssertionResult TunerHidlTest::setDemuxFrontendDataSource(uint32_t frontendId) {
+    EXPECT_TRUE(mDemux) << "Test with openDemux first.";
+    EXPECT_TRUE(mFrontend) << "Test with openFrontend first.";
+    auto status = mDemux->setFrontendDataSource(frontendId);
+    return AssertionResult(status.isOk());
 }
 
-::testing::AssertionResult TunerHidlTest::closeDemux() {
-    Result status;
-    if (!mDemux && createDemux() == ::testing::AssertionFailure()) {
-        return ::testing::AssertionFailure();
-    }
-
-    status = mDemux->close();
+AssertionResult TunerHidlTest::closeDemux() {
+    EXPECT_TRUE(mDemux) << "Test with openDemux first.";
+    auto status = mDemux->close();
     mDemux = nullptr;
-    return ::testing::AssertionResult(status == Result::SUCCESS);
+    return AssertionResult(status.isOk());
 }
 
-::testing::AssertionResult TunerHidlTest::createDescrambler() {
+AssertionResult TunerHidlTest::openFilterInDemux(DemuxFilterType type) {
     Result status;
-
-    mService->openDescrambler([&](Result result, const sp<IDescrambler>& descrambler) {
-        mDescrambler = descrambler;
-        status = result;
-    });
-    if (status != Result::SUCCESS) {
-        return ::testing::AssertionFailure();
-    }
-
-    if (!mDemux && createDemux() == ::testing::AssertionFailure()) {
-        return ::testing::AssertionFailure();
-    }
-
-    status = mDescrambler->setDemuxSource(mDemuxId);
-    if (status != Result::SUCCESS) {
-        return ::testing::AssertionFailure();
-    }
-
-    // Test if demux source can be set more than once.
-    status = mDescrambler->setDemuxSource(mDemuxId);
-    return ::testing::AssertionResult(status == Result::INVALID_STATE);
-}
-
-::testing::AssertionResult TunerHidlTest::closeDescrambler() {
-    Result status;
-    if (!mDescrambler && createDescrambler() == ::testing::AssertionFailure()) {
-        return ::testing::AssertionFailure();
-    }
-
-    status = mDescrambler->close();
-    mDescrambler = nullptr;
-    return ::testing::AssertionResult(status == Result::SUCCESS);
-}
-
-::testing::AssertionResult TunerHidlTest::addPlaybackToDemux(PlaybackSettings setting) {
-    Result status;
-
-    if (!mDemux && createDemux() == ::testing::AssertionFailure()) {
-        return ::testing::AssertionFailure();
-    }
-
-    // Create dvr callback
-    mDvrCallback = new DvrCallback();
-
-    // Add playback input to the local demux
-    mDemux->openDvr(DvrType::PLAYBACK, FMQ_SIZE_1M, mDvrCallback,
-                    [&](Result result, const sp<IDvr>& dvr) {
-                        mDvr = dvr;
-                        status = result;
-                    });
-
-    if (status != Result::SUCCESS) {
-        return ::testing::AssertionFailure();
-    }
-
-    DvrSettings dvrSetting;
-    dvrSetting.playback(setting);
-    status = mDvr->configure(dvrSetting);
-
-    return ::testing::AssertionResult(status == Result::SUCCESS);
-}
-
-::testing::AssertionResult TunerHidlTest::getPlaybackMQDescriptor() {
-    Result status;
-
-    if ((!mDemux && createDemux() == ::testing::AssertionFailure()) || !mDvr) {
-        return ::testing::AssertionFailure();
-    }
-
-    mDvr->getQueueDesc([&](Result result, const MQDesc& dvrMQDesc) {
-        mPlaybackMQDescriptor = dvrMQDesc;
-        status = result;
-    });
-
-    return ::testing::AssertionResult(status == Result::SUCCESS);
-}
-
-::testing::AssertionResult TunerHidlTest::addRecordToDemux(RecordSettings setting) {
-    Result status;
-
-    if (!mDemux && createDemux() == ::testing::AssertionFailure()) {
-        return ::testing::AssertionFailure();
-    }
-
-    // Create dvr callback
-    mDvrCallback = new DvrCallback();
-
-    // Add playback input to the local demux
-    mDemux->openDvr(DvrType::RECORD, FMQ_SIZE_1M, mDvrCallback,
-                    [&](Result result, const sp<IDvr>& dvr) {
-                        mDvr = dvr;
-                        status = result;
-                    });
-
-    if (status != Result::SUCCESS) {
-        return ::testing::AssertionFailure();
-    }
-
-    DvrSettings dvrSetting;
-    dvrSetting.record(setting);
-    status = mDvr->configure(dvrSetting);
-
-    return ::testing::AssertionResult(status == Result::SUCCESS);
-}
-
-::testing::AssertionResult TunerHidlTest::getRecordMQDescriptor() {
-    Result status;
-
-    if ((!mDemux && createDemux() == ::testing::AssertionFailure()) || !mDvr) {
-        return ::testing::AssertionFailure();
-    }
-
-    mDvr->getQueueDesc([&](Result result, const MQDesc& dvrMQDesc) {
-        mRecordMQDescriptor = dvrMQDesc;
-        status = result;
-    });
-
-    return ::testing::AssertionResult(status == Result::SUCCESS);
-}
-
-::testing::AssertionResult TunerHidlTest::addFilterToDemux(DemuxFilterType type,
-                                                           DemuxFilterSettings setting) {
-    Result status;
-
-    if (!mDemux && createDemux() == ::testing::AssertionFailure()) {
-        return ::testing::AssertionFailure();
-    }
+    EXPECT_TRUE(mDemux) << "Test with openDemux first.";
 
     // Create demux callback
     mFilterCallback = new FilterCallback();
@@ -940,21 +904,322 @@ class TunerHidlTest : public testing::TestWithParam<std::string> {
                            status = result;
                        });
 
-    if (status != Result::SUCCESS) {
-        return ::testing::AssertionFailure();
+    if (status == Result::SUCCESS) {
+        mFilterCallback->setFilterEventType(getFilterEventType(type));
     }
+
+    return AssertionResult(status == Result::SUCCESS);
+}
+/*============================ End Demux APIs Tests Implementation ============================*/
+
+/*=========================== Start Filter APIs Tests Implementation ===========================*/
+AssertionResult TunerHidlTest::getNewlyOpenedFilterId(uint32_t& filterId) {
+    Result status;
+    EXPECT_TRUE(mDemux) << "Test with openDemux first.";
+    EXPECT_TRUE(mFilter) << "Test with openFilterInDemux first.";
+    EXPECT_TRUE(mFilterCallback) << "Test with openFilterInDemux first.";
 
     mFilter->getId([&](Result result, uint32_t filterId) {
         mFilterId = filterId;
         status = result;
     });
 
-    if (status != Result::SUCCESS) {
-        return ::testing::AssertionFailure();
+    if (status == Result::SUCCESS) {
+        mFilterCallback->setFilterId(mFilterId);
+        mUsedFilterIds.insert(mUsedFilterIds.end(), mFilterId);
+        mFilters[mFilterId] = mFilter;
+        mFilterCallbacks[mFilterId] = mFilterCallback;
+        filterId = mFilterId;
     }
 
-    mFilterCallback->setFilterId(mFilterId);
+    return AssertionResult(status == Result::SUCCESS || status == Result::UNAVAILABLE);
+}
 
+AssertionResult TunerHidlTest::configFilter(DemuxFilterSettings setting, uint32_t filterId) {
+    Result status;
+    EXPECT_TRUE(mFilters[filterId]) << "Test with getNewlyOpenedFilterId first.";
+    status = mFilters[filterId]->configure(setting);
+
+    return AssertionResult(status == Result::SUCCESS);
+}
+
+AssertionResult TunerHidlTest::getFilterMQDescriptor(uint32_t filterId) {
+    Result status;
+    EXPECT_TRUE(mFilters[filterId]) << "Test with getNewlyOpenedFilterId first.";
+    EXPECT_TRUE(mFilterCallbacks[filterId]) << "Test with getNewlyOpenedFilterId first.";
+
+    mFilter->getQueueDesc([&](Result result, const MQDesc& filterMQDesc) {
+        mFilterMQDescriptor = filterMQDesc;
+        status = result;
+    });
+
+    if (status == Result::SUCCESS) {
+        mFilterCallbacks[filterId]->updateFilterMQ(mFilterMQDescriptor);
+    }
+
+    return AssertionResult(status == Result::SUCCESS);
+}
+
+AssertionResult TunerHidlTest::startFilter(uint32_t filterId) {
+    EXPECT_TRUE(mFilters[filterId]) << "Test with getNewlyOpenedFilterId first.";
+    Result status = mFilters[filterId]->start();
+    return AssertionResult(status == Result::SUCCESS);
+}
+
+AssertionResult TunerHidlTest::stopFilter(uint32_t filterId) {
+    EXPECT_TRUE(mFilters[filterId]) << "Test with getNewlyOpenedFilterId first.";
+    Result status = mFilters[filterId]->stop();
+    return AssertionResult(status == Result::SUCCESS);
+}
+
+AssertionResult TunerHidlTest::closeFilter(uint32_t filterId) {
+    EXPECT_TRUE(mFilters[filterId]) << "Test with getNewlyOpenedFilterId first.";
+    Result status = mFilters[filterId]->close();
+    if (status == Result::SUCCESS) {
+        for (int i = 0; i < mUsedFilterIds.size(); i++) {
+            if (mUsedFilterIds[i] == filterId) {
+                mUsedFilterIds.erase(mUsedFilterIds.begin() + i);
+                break;
+            }
+        }
+        mFilterCallbacks.erase(filterId);
+        mFilters.erase(filterId);
+    }
+    return AssertionResult(status == Result::SUCCESS);
+}
+/*=========================== End Filter APIs Tests Implementation ===========================*/
+
+/*======================== Start Descrambler APIs Tests Implementation ========================*/
+AssertionResult TunerHidlTest::createDescrambler() {
+    Result status;
+    EXPECT_TRUE(mDemux) << "Test with openDemux first.";
+    mService->openDescrambler([&](Result result, const sp<IDescrambler>& descrambler) {
+        mDescrambler = descrambler;
+        status = result;
+    });
+    if (status != Result::SUCCESS) {
+        return failure();
+    }
+
+    status = mDescrambler->setDemuxSource(mDemuxId);
+    if (status != Result::SUCCESS) {
+        return failure();
+    }
+
+    // Test if demux source can be set more than once.
+    status = mDescrambler->setDemuxSource(mDemuxId);
+    return AssertionResult(status == Result::INVALID_STATE);
+}
+
+AssertionResult TunerHidlTest::closeDescrambler() {
+    Result status;
+    if (!mDescrambler && createDescrambler() == failure()) {
+        return failure();
+    }
+
+    status = mDescrambler->close();
+    mDescrambler = nullptr;
+    return AssertionResult(status == Result::SUCCESS);
+}
+/*========================= End Descrambler APIs Tests Implementation =========================*/
+
+/*============================ Start Dvr APIs Tests Implementation ============================*/
+AssertionResult TunerHidlTest::openDvrInDemux(DvrType type) {
+    Result status;
+    EXPECT_TRUE(mDemux) << "Test with openDemux first.";
+
+    // Create dvr callback
+    mDvrCallback = new DvrCallback();
+
+    mDemux->openDvr(type, FMQ_SIZE_1M, mDvrCallback, [&](Result result, const sp<IDvr>& dvr) {
+        mDvr = dvr;
+        status = result;
+    });
+
+    return AssertionResult(status == Result::SUCCESS);
+}
+
+AssertionResult TunerHidlTest::configDvr(DvrSettings setting) {
+    Result status = mDvr->configure(setting);
+
+    return AssertionResult(status == Result::SUCCESS);
+}
+
+AssertionResult TunerHidlTest::getDvrMQDescriptor() {
+    Result status;
+    EXPECT_TRUE(mDemux) << "Test with openDemux first.";
+    EXPECT_TRUE(mDvr) << "Test with openDvr first.";
+
+    mDvr->getQueueDesc([&](Result result, const MQDesc& dvrMQDesc) {
+        mDvrMQDescriptor = dvrMQDesc;
+        status = result;
+    });
+
+    return AssertionResult(status == Result::SUCCESS);
+}
+/*============================ End Dvr APIs Tests Implementation ============================*/
+
+/*========================== Start Data Flow Tests Implementation ==========================*/
+AssertionResult TunerHidlTest::broadcastDataFlowTest(vector<string> /*goldenOutputFiles*/) {
+    EXPECT_TRUE(mFrontend) << "Test with openFilterInDemux first.";
+    EXPECT_TRUE(mDemux) << "Test with openDemux first.";
+    EXPECT_TRUE(mFilterCallback) << "Test with getFilterMQDescriptor first.";
+
+    // Data Verify Module
+    std::map<uint32_t, sp<FilterCallback>>::iterator it;
+    for (it = mFilterCallbacks.begin(); it != mFilterCallbacks.end(); it++) {
+        it->second->testFilterDataOutput();
+    }
+    return success();
+}
+
+/*
+ * TODO: re-enable the tests after finalizing the test refactoring.
+ */
+/*AssertionResult TunerHidlTest::playbackDataFlowTest(
+        vector<FilterConf> filterConf, PlaybackConf playbackConf,
+        vector<string> \/\*goldenOutputFiles\*\/) {
+    Result status;
+    int filterIdsSize;
+    // Filter Configuration Module
+    for (int i = 0; i < filterConf.size(); i++) {
+        if (addFilterToDemux(filterConf[i].type, filterConf[i].setting) ==
+                    failure() ||
+            // TODO use a map to save the FMQs/EvenFlags and pass to callback
+            getFilterMQDescriptor() == failure()) {
+            return failure();
+        }
+        filterIdsSize = mUsedFilterIds.size();
+        mUsedFilterIds.resize(filterIdsSize + 1);
+        mUsedFilterIds[filterIdsSize] = mFilterId;
+        mFilters[mFilterId] = mFilter;
+        mFilterCallbacks[mFilterId] = mFilterCallback;
+        mFilterCallback->updateFilterMQ(mFilterMQDescriptor);
+        // mDemuxCallback->updateGoldenOutputMap(goldenOutputFiles[i]);
+        status = mFilter->start();
+        if (status != Result::SUCCESS) {
+            return failure();
+        }
+    }
+
+    // Playback Input Module
+    PlaybackSettings playbackSetting = playbackConf.setting;
+    if (addPlaybackToDemux(playbackSetting) == failure() ||
+        getPlaybackMQDescriptor() == failure()) {
+        return failure();
+    }
+    for (int i = 0; i <= filterIdsSize; i++) {
+        if (mDvr->attachFilter(mFilters[mUsedFilterIds[i]]) != Result::SUCCESS) {
+            return failure();
+        }
+    }
+    mDvrCallback->startPlaybackInputThread(playbackConf, mPlaybackMQDescriptor);
+    status = mDvr->start();
+    if (status != Result::SUCCESS) {
+        return failure();
+    }
+
+    // Data Verify Module
+    std::map<uint32_t, sp<FilterCallback>>::iterator it;
+    for (it = mFilterCallbacks.begin(); it != mFilterCallbacks.end(); it++) {
+        it->second->testFilterDataOutput();
+    }
+    mDvrCallback->stopPlaybackThread();
+
+    // Clean Up Module
+    for (int i = 0; i <= filterIdsSize; i++) {
+        if (mFilters[mUsedFilterIds[i]]->stop() != Result::SUCCESS) {
+            return failure();
+        }
+    }
+    if (mDvr->stop() != Result::SUCCESS) {
+        return failure();
+    }
+    mUsedFilterIds.clear();
+    mFilterCallbacks.clear();
+    mFilters.clear();
+    return closeDemux();
+}
+
+AssertionResult TunerHidlTest::recordDataFlowTest(vector<FilterConf> filterConf,
+                                                  RecordSettings recordSetting,
+                                                  vector<string> goldenOutputFiles) {
+    Result status;
+    hidl_vec<FrontendId> feIds;
+
+    mService->getFrontendIds([&](Result result, const hidl_vec<FrontendId>& frontendIds) {
+        status = result;
+        feIds = frontendIds;
+    });
+
+    if (feIds.size() == 0) {
+        ALOGW("[   WARN   ] Frontend isn't available");
+        return failure();
+    }
+
+    FrontendDvbtSettings dvbt{
+            .frequency = 1000,
+    };
+    FrontendSettings settings;
+    settings.dvbt(dvbt);
+
+    int filterIdsSize;
+    // Filter Configuration Module
+    for (int i = 0; i < filterConf.size(); i++) {
+        if (addFilterToDemux(filterConf[i].type, filterConf[i].setting) ==
+                    failure() ||
+            // TODO use a map to save the FMQs/EvenFlags and pass to callback
+            getFilterMQDescriptor() == failure()) {
+            return failure();
+        }
+        filterIdsSize = mUsedFilterIds.size();
+        mUsedFilterIds.resize(filterIdsSize + 1);
+        mUsedFilterIds[filterIdsSize] = mFilterId;
+        mFilters[mFilterId] = mFilter;
+    }
+
+    // Record Config Module
+    if (addRecordToDemux(recordSetting) == failure() ||
+        getRecordMQDescriptor() == failure()) {
+        return failure();
+    }
+    for (int i = 0; i <= filterIdsSize; i++) {
+        if (mDvr->attachFilter(mFilters[mUsedFilterIds[i]]) != Result::SUCCESS) {
+            return failure();
+        }
+    }
+
+    mDvrCallback->startRecordOutputThread(recordSetting, mRecordMQDescriptor);
+    status = mDvr->start();
+    if (status != Result::SUCCESS) {
+        return failure();
+    }
+
+    if (setDemuxFrontendDataSource(feIds[0]) != success()) {
+        return failure();
+    }
+
+    // Data Verify Module
+    mDvrCallback->testRecordOutput();
+
+    // Clean Up Module
+    for (int i = 0; i <= filterIdsSize; i++) {
+        if (mFilters[mUsedFilterIds[i]]->stop() != Result::SUCCESS) {
+            return failure();
+        }
+    }
+    if (mFrontend->stopTune() != Result::SUCCESS) {
+        return failure();
+    }
+    mUsedFilterIds.clear();
+    mFilterCallbacks.clear();
+    mFilters.clear();
+    return closeDemux();
+}*/
+/*========================= End Data Flow Tests Implementation =========================*/
+
+/*=============================== Start Helper Functions ===============================*/
+FilterEventType TunerHidlTest::getFilterEventType(DemuxFilterType type) {
     FilterEventType eventType = FilterEventType::UNDEFINED;
     switch (type.mainType) {
         case DemuxFilterMainType::TS:
@@ -998,358 +1263,151 @@ class TunerHidlTest : public testing::TestWithParam<std::string> {
         default:
             break;
     }
-    mFilterCallback->setFilterEventType(eventType);
+    return eventType;
+}
+/*============================== End Helper Functions ==============================*/
+/***************************** End Test Implementation *****************************/
 
-    // Configure the filter
-    status = mFilter->configure(setting);
-
-    return ::testing::AssertionResult(status == Result::SUCCESS);
+/******************************** Start Test Entry **********************************/
+/*============================== Start Frontend Tests ==============================*/
+TEST_P(TunerHidlTest, getFrontendIds) {
+    description("Get Frontend ids and verify frontends exist");
+    ASSERT_TRUE(getFrontendIds());
+    ASSERT_TRUE(mFeIds.size() > 0);
 }
 
-::testing::AssertionResult TunerHidlTest::getFilterMQDescriptor() {
-    Result status;
+TEST_P(TunerHidlTest, openFrontend) {
+    description("Open all the existing Frontends and close them");
+    ASSERT_TRUE(getFrontendIds());
+    ASSERT_TRUE(mFeIds.size() > 0);
 
-    if (!mDemux || !mFilter) {
-        return ::testing::AssertionFailure();
-    }
-
-    mFilter->getQueueDesc([&](Result result, const MQDesc& filterMQDesc) {
-        mFilterMQDescriptor = filterMQDesc;
-        status = result;
-    });
-
-    return ::testing::AssertionResult(status == Result::SUCCESS);
-}
-
-::testing::AssertionResult TunerHidlTest::playbackDataFlowTest(
-        vector<FilterConf> filterConf, PlaybackConf playbackConf,
-        vector<string> /*goldenOutputFiles*/) {
-    Result status;
-    int filterIdsSize;
-    // Filter Configuration Module
-    for (int i = 0; i < filterConf.size(); i++) {
-        if (addFilterToDemux(filterConf[i].type, filterConf[i].setting) ==
-                    ::testing::AssertionFailure() ||
-            // TODO use a map to save the FMQs/EvenFlags and pass to callback
-            getFilterMQDescriptor() == ::testing::AssertionFailure()) {
-            return ::testing::AssertionFailure();
-        }
-        filterIdsSize = mUsedFilterIds.size();
-        mUsedFilterIds.resize(filterIdsSize + 1);
-        mUsedFilterIds[filterIdsSize] = mFilterId;
-        mFilters[mFilterId] = mFilter;
-        mFilterCallbacks[mFilterId] = mFilterCallback;
-        mFilterCallback->updateFilterMQ(mFilterMQDescriptor);
-        // mDemuxCallback->updateGoldenOutputMap(goldenOutputFiles[i]);
-        status = mFilter->start();
-        if (status != Result::SUCCESS) {
-            return ::testing::AssertionFailure();
-        }
-    }
-
-    // Playback Input Module
-    PlaybackSettings playbackSetting = playbackConf.setting;
-    if (addPlaybackToDemux(playbackSetting) == ::testing::AssertionFailure() ||
-        getPlaybackMQDescriptor() == ::testing::AssertionFailure()) {
-        return ::testing::AssertionFailure();
-    }
-    for (int i = 0; i <= filterIdsSize; i++) {
-        if (mDvr->attachFilter(mFilters[mUsedFilterIds[i]]) != Result::SUCCESS) {
-            return ::testing::AssertionFailure();
-        }
-    }
-    mDvrCallback->startPlaybackInputThread(playbackConf, mPlaybackMQDescriptor);
-    status = mDvr->start();
-    if (status != Result::SUCCESS) {
-        return ::testing::AssertionFailure();
-    }
-
-    // Data Verify Module
-    std::map<uint32_t, sp<FilterCallback>>::iterator it;
-    for (it = mFilterCallbacks.begin(); it != mFilterCallbacks.end(); it++) {
-        it->second->testFilterDataOutput();
-    }
-    mDvrCallback->stopPlaybackThread();
-
-    // Clean Up Module
-    for (int i = 0; i <= filterIdsSize; i++) {
-        if (mFilters[mUsedFilterIds[i]]->stop() != Result::SUCCESS) {
-            return ::testing::AssertionFailure();
-        }
-    }
-    if (mDvr->stop() != Result::SUCCESS) {
-        return ::testing::AssertionFailure();
-    }
-    mUsedFilterIds.clear();
-    mFilterCallbacks.clear();
-    mFilters.clear();
-    return closeDemux();
-}
-
-::testing::AssertionResult TunerHidlTest::broadcastDataFlowTest(
-        vector<FilterConf> filterConf, vector<string> /*goldenOutputFiles*/) {
-    Result status;
-    hidl_vec<FrontendId> feIds;
-
-    mService->getFrontendIds([&](Result result, const hidl_vec<FrontendId>& frontendIds) {
-        status = result;
-        feIds = frontendIds;
-    });
-
-    if (feIds.size() == 0) {
-        ALOGW("[   WARN   ] Frontend isn't available");
-        return ::testing::AssertionFailure();
-    }
-
-    FrontendDvbtSettings dvbt{
-            .frequency = 1000,
-    };
-    FrontendSettings settings;
-    settings.dvbt(dvbt);
-
-    if (createDemuxWithFrontend(feIds[0], settings) != ::testing::AssertionSuccess()) {
-        return ::testing::AssertionFailure();
-    }
-
-    int filterIdsSize;
-    // Filter Configuration Module
-    for (int i = 0; i < filterConf.size(); i++) {
-        if (addFilterToDemux(filterConf[i].type, filterConf[i].setting) ==
-                    ::testing::AssertionFailure() ||
-            // TODO use a map to save the FMQs/EvenFlags and pass to callback
-            getFilterMQDescriptor() == ::testing::AssertionFailure()) {
-            return ::testing::AssertionFailure();
-        }
-        filterIdsSize = mUsedFilterIds.size();
-        mUsedFilterIds.resize(filterIdsSize + 1);
-        mUsedFilterIds[filterIdsSize] = mFilterId;
-        mFilters[mFilterId] = mFilter;
-        mFilterCallbacks[mFilterId] = mFilterCallback;
-        mFilterCallback->updateFilterMQ(mFilterMQDescriptor);
-        status = mFilter->start();
-        if (status != Result::SUCCESS) {
-            return ::testing::AssertionFailure();
-        }
-    }
-
-    // Data Verify Module
-    std::map<uint32_t, sp<FilterCallback>>::iterator it;
-    for (it = mFilterCallbacks.begin(); it != mFilterCallbacks.end(); it++) {
-        it->second->testFilterDataOutput();
-    }
-
-    // Clean Up Module
-    for (int i = 0; i <= filterIdsSize; i++) {
-        if (mFilters[mUsedFilterIds[i]]->stop() != Result::SUCCESS) {
-            return ::testing::AssertionFailure();
-        }
-    }
-    if (mFrontend->stopTune() != Result::SUCCESS) {
-        return ::testing::AssertionFailure();
-    }
-    mUsedFilterIds.clear();
-    mFilterCallbacks.clear();
-    mFilters.clear();
-    return closeDemux();
-}
-
-::testing::AssertionResult TunerHidlTest::recordDataFlowTest(vector<FilterConf> filterConf,
-                                                             RecordSettings recordSetting,
-                                                             vector<string> /*goldenOutputFiles*/) {
-    Result status;
-    hidl_vec<FrontendId> feIds;
-
-    mService->getFrontendIds([&](Result result, const hidl_vec<FrontendId>& frontendIds) {
-        status = result;
-        feIds = frontendIds;
-    });
-
-    if (feIds.size() == 0) {
-        ALOGW("[   WARN   ] Frontend isn't available");
-        return ::testing::AssertionFailure();
-    }
-
-    FrontendDvbtSettings dvbt{
-            .frequency = 1000,
-    };
-    FrontendSettings settings;
-    settings.dvbt(dvbt);
-
-    int filterIdsSize;
-    // Filter Configuration Module
-    for (int i = 0; i < filterConf.size(); i++) {
-        if (addFilterToDemux(filterConf[i].type, filterConf[i].setting) ==
-                    ::testing::AssertionFailure() ||
-            // TODO use a map to save the FMQs/EvenFlags and pass to callback
-            getFilterMQDescriptor() == ::testing::AssertionFailure()) {
-            return ::testing::AssertionFailure();
-        }
-        filterIdsSize = mUsedFilterIds.size();
-        mUsedFilterIds.resize(filterIdsSize + 1);
-        mUsedFilterIds[filterIdsSize] = mFilterId;
-        mFilters[mFilterId] = mFilter;
-    }
-
-    // Record Config Module
-    if (addRecordToDemux(recordSetting) == ::testing::AssertionFailure() ||
-        getRecordMQDescriptor() == ::testing::AssertionFailure()) {
-        return ::testing::AssertionFailure();
-    }
-    for (int i = 0; i <= filterIdsSize; i++) {
-        if (mDvr->attachFilter(mFilters[mUsedFilterIds[i]]) != Result::SUCCESS) {
-            return ::testing::AssertionFailure();
-        }
-    }
-
-    mDvrCallback->startRecordOutputThread(recordSetting, mRecordMQDescriptor);
-    status = mDvr->start();
-    if (status != Result::SUCCESS) {
-        return ::testing::AssertionFailure();
-    }
-
-    if (createDemuxWithFrontend(feIds[0], settings) != ::testing::AssertionSuccess()) {
-        return ::testing::AssertionFailure();
-    }
-
-    // Data Verify Module
-    mDvrCallback->testRecordOutput();
-
-    // Clean Up Module
-    for (int i = 0; i <= filterIdsSize; i++) {
-        if (mFilters[mUsedFilterIds[i]]->stop() != Result::SUCCESS) {
-            return ::testing::AssertionFailure();
-        }
-    }
-    if (mFrontend->stopTune() != Result::SUCCESS) {
-        return ::testing::AssertionFailure();
-    }
-    mUsedFilterIds.clear();
-    mFilterCallbacks.clear();
-    mFilters.clear();
-    return closeDemux();
-}
-
-/*
- * API STATUS TESTS
- */
-TEST_P(TunerHidlTest, CreateFrontend) {
-    Result status;
-    hidl_vec<FrontendId> feIds;
-
-    description("Create Frontends");
-    mService->getFrontendIds([&](Result result, const hidl_vec<FrontendId>& frontendIds) {
-        status = result;
-        feIds = frontendIds;
-    });
-
-    if (feIds.size() == 0) {
-        ALOGW("[   WARN   ] Frontend isn't available");
-        return;
-    }
-
-    for (size_t i = 0; i < feIds.size(); i++) {
-        ASSERT_TRUE(createFrontend(feIds[i]));
+    for (size_t i = 0; i < mFeIds.size(); i++) {
+        ASSERT_TRUE(openFrontend(mFeIds[i]));
+        ASSERT_TRUE(closeFrontend());
     }
 }
 
 TEST_P(TunerHidlTest, TuneFrontend) {
-    Result status;
-    hidl_vec<FrontendId> feIds;
-
-    description("Tune Frontends and check callback onEvent");
-    mService->getFrontendIds([&](Result result, const hidl_vec<FrontendId>& frontendIds) {
-        status = result;
-        feIds = frontendIds;
-    });
-
-    if (feIds.size() == 0) {
-        ALOGW("[   WARN   ] Frontend isn't available");
-        return;
-    }
-
-    for (size_t i = 0; i < feIds.size(); i++) {
-        ASSERT_TRUE(tuneFrontend(feIds[i]));
-    }
-}
-
-TEST_P(TunerHidlTest, StopTuneFrontend) {
-    Result status;
-    hidl_vec<FrontendId> feIds;
-
-    description("stopTune Frontends");
-    mService->getFrontendIds([&](Result result, const hidl_vec<FrontendId>& frontendIds) {
-        status = result;
-        feIds = frontendIds;
-    });
-
-    if (feIds.size() == 0) {
-        ALOGW("[   WARN   ] Frontend isn't available");
-        return;
-    }
-
-    for (size_t i = 0; i < feIds.size(); i++) {
-        ASSERT_TRUE(stopTuneFrontend(feIds[i]));
+    description("Tune one Frontend with specific setting and check Lock event");
+    ASSERT_TRUE(getFrontendIds());
+    ASSERT_TRUE(mFeIds.size() > 0);
+    ALOGW("[vts] expected Frontend type is %d", frontendArray[0].type);
+    for (size_t i = 0; i < mFeIds.size(); i++) {
+        ASSERT_TRUE(getFrontendInfo(mFeIds[i]));
+        ALOGW("[vts] Frontend type is %d", mFrontendInfo.type);
+        if (mFrontendInfo.type != frontendArray[0].type) {
+            continue;
+        }
+        ASSERT_TRUE(openFrontend(mFeIds[i]));
+        ASSERT_TRUE(setFrontendCallback());
+        ASSERT_TRUE(stopTuneFrontend());
+        ASSERT_TRUE(tuneFrontend(frontendArray[0]));
+        ASSERT_TRUE(stopTuneFrontend());
+        ASSERT_TRUE(closeFrontend());
+        break;
     }
 }
 
-TEST_P(TunerHidlTest, CloseFrontend) {
-    Result status;
-    hidl_vec<FrontendId> feIds;
+TEST_P(TunerHidlTest, AutoScanFrontend) {
+    description("Run an auto frontend scan with specific setting and check lock scanMessage");
+    ASSERT_TRUE(getFrontendIds());
+    ASSERT_TRUE(mFeIds.size() > 0);
 
-    description("Close Frontends");
-    mService->getFrontendIds([&](Result result, const hidl_vec<FrontendId>& frontendIds) {
-        status = result;
-        feIds = frontendIds;
-    });
-
-    if (feIds.size() == 0) {
-        ALOGW("[   WARN   ] Frontend isn't available");
-        return;
-    }
-
-    for (size_t i = 0; i < feIds.size(); i++) {
-        ASSERT_TRUE(closeFrontend(feIds[i]));
+    for (size_t i = 0; i < mFeIds.size(); i++) {
+        ASSERT_TRUE(getFrontendInfo(mFeIds[i]));
+        if (mFrontendInfo.type != frontendArray[0].type) {
+            continue;
+        }
+        ASSERT_TRUE(openFrontend(mFeIds[i]));
+        ASSERT_TRUE(setFrontendCallback());
+        ASSERT_TRUE(stopScanFrontend());
+        ASSERT_TRUE(scanFrontend(frontendScanArray[0], FrontendScanType::SCAN_AUTO));
+        ASSERT_TRUE(stopScanFrontend());
+        ASSERT_TRUE(closeFrontend());
+        break;
     }
 }
+/*=============================== End Frontend Tests ===============================*/
 
-TEST_P(TunerHidlTest, CreateDemuxWithFrontend) {
-    Result status;
-    hidl_vec<FrontendId> feIds;
+/*============================ Start Demux/Filter Tests ============================*/
+TEST_P(TunerHidlTest, OpenDemuxWithFrontendDataSource) {
+    description("Open Demux with a Frontend as its data source.");
+    ASSERT_TRUE(getFrontendIds());
+    ASSERT_TRUE(mFeIds.size() > 0);
 
-    description("Create Demux with Frontend");
-    mService->getFrontendIds([&](Result result, const hidl_vec<FrontendId>& frontendIds) {
-        status = result;
-        feIds = frontendIds;
-    });
-
-    if (feIds.size() == 0) {
-        ALOGW("[   WARN   ] Frontend isn't available");
-        return;
-    }
-
-    FrontendDvbtSettings dvbt{
-        .frequency = 1000,
-    };
-    FrontendSettings settings;
-    settings.dvbt(dvbt);
-
-    for (size_t i = 0; i < feIds.size(); i++) {
-        ASSERT_TRUE(createDemuxWithFrontend(feIds[i], settings));
-        mFrontend->stopTune();
+    for (size_t i = 0; i < mFeIds.size(); i++) {
+        ASSERT_TRUE(getFrontendInfo(mFeIds[i]));
+        if (mFrontendInfo.type != frontendArray[0].type) {
+            continue;
+        }
+        ASSERT_TRUE(openFrontend(mFeIds[i]));
+        ASSERT_TRUE(setFrontendCallback());
+        ASSERT_TRUE(openDemux());
+        ASSERT_TRUE(setDemuxFrontendDataSource(mFeIds[i]));
+        ASSERT_TRUE(closeDemux());
+        ASSERT_TRUE(closeFrontend());
+        break;
     }
 }
 
-TEST_P(TunerHidlTest, CreateDemux) {
-    description("Create Demux");
-    ASSERT_TRUE(createDemux());
+TEST_P(TunerHidlTest, OpenFilterInDemux) {
+    description("Open a filter in Demux.");
+    ASSERT_TRUE(getFrontendIds());
+    ASSERT_TRUE(mFeIds.size() > 0);
+
+    for (size_t i = 0; i < mFeIds.size(); i++) {
+        ASSERT_TRUE(getFrontendInfo(mFeIds[i]));
+        if (mFrontendInfo.type != frontendArray[0].type) {
+            continue;
+        }
+        ASSERT_TRUE(openFrontend(mFeIds[i]));
+        ASSERT_TRUE(setFrontendCallback());
+        ASSERT_TRUE(openDemux());
+        ASSERT_TRUE(setDemuxFrontendDataSource(mFeIds[i]));
+        ASSERT_TRUE(openFilterInDemux(filterArray[0].type));
+        uint32_t filterId;
+        ASSERT_TRUE(getNewlyOpenedFilterId(filterId));
+        ASSERT_TRUE(closeFilter(filterId));
+        ASSERT_TRUE(closeDemux());
+        ASSERT_TRUE(closeFrontend());
+        break;
+    }
 }
 
-TEST_P(TunerHidlTest, CloseDemux) {
-    description("Close Demux");
-    ASSERT_TRUE(closeDemux());
-}
+TEST_P(TunerHidlTest, StartFilterInDemux) {
+    description("Open and start a filter in Demux.");
+    ASSERT_TRUE(getFrontendIds());
+    ASSERT_TRUE(mFeIds.size() > 0);
 
-TEST_P(TunerHidlTest, CreateDescrambler) {
+    for (size_t i = 0; i < mFeIds.size(); i++) {
+        ASSERT_TRUE(getFrontendInfo(mFeIds[i]));
+        if (mFrontendInfo.type != frontendArray[0].type) {
+            continue;
+        }
+        ASSERT_TRUE(openFrontend(mFeIds[i]));
+        ASSERT_TRUE(setFrontendCallback());
+        ASSERT_TRUE(openDemux());
+        ASSERT_TRUE(setDemuxFrontendDataSource(mFeIds[i]));
+        ASSERT_TRUE(openFilterInDemux(filterArray[0].type));
+        uint32_t filterId;
+        ASSERT_TRUE(getNewlyOpenedFilterId(filterId));
+        ASSERT_TRUE(configFilter(filterArray[0].setting, filterId));
+        ASSERT_TRUE(getFilterMQDescriptor(filterId));
+        ASSERT_TRUE(startFilter(filterId));
+        ASSERT_TRUE(stopFilter(filterId));
+        ASSERT_TRUE(closeFilter(filterId));
+        ASSERT_TRUE(closeDemux());
+        ASSERT_TRUE(closeFrontend());
+        break;
+    }
+}
+/*============================ End Demux/Filter Tests ============================*/
+
+/*============================ Start Descrambler Tests ============================*/
+/*
+ * TODO: re-enable the tests after finalizing the test refactoring.
+ */
+/*TEST_P(TunerHidlTest, CreateDescrambler) {
     description("Create Descrambler");
     ASSERT_TRUE(createDescrambler());
 }
@@ -1357,11 +1415,44 @@ TEST_P(TunerHidlTest, CreateDescrambler) {
 TEST_P(TunerHidlTest, CloseDescrambler) {
     description("Close Descrambler");
     ASSERT_TRUE(closeDescrambler());
+}*/
+/*============================== End Descrambler Tests ==============================*/
+
+/*============================== Start Data Flow Tests ==============================*/
+TEST_P(TunerHidlTest, BroadcastDataFlowWithAudioFilterTest) {
+    description("Open Demux with a Frontend as its data source.");
+    ASSERT_TRUE(getFrontendIds());
+    ASSERT_TRUE(mFeIds.size() > 0);
+
+    for (size_t i = 0; i < mFeIds.size(); i++) {
+        ASSERT_TRUE(getFrontendInfo(mFeIds[i]));
+        if (mFrontendInfo.type != frontendArray[0].type) {
+            continue;
+        }
+        ASSERT_TRUE(openFrontend(mFeIds[i]));
+        ASSERT_TRUE(setFrontendCallback());
+        ASSERT_TRUE(openDemux());
+        ASSERT_TRUE(setDemuxFrontendDataSource(mFeIds[i]));
+        ASSERT_TRUE(openFilterInDemux(filterArray[0].type));
+        uint32_t filterId;
+        ASSERT_TRUE(getNewlyOpenedFilterId(filterId));
+        ASSERT_TRUE(configFilter(filterArray[0].setting, filterId));
+        ASSERT_TRUE(getFilterMQDescriptor(filterId));
+        ASSERT_TRUE(startFilter(filterId));
+        // tune test
+        ASSERT_TRUE(tuneFrontend(frontendArray[0]));
+        // broadcast data flow test
+        ASSERT_TRUE(broadcastDataFlowTest(goldenOutputFiles));
+        ASSERT_TRUE(stopTuneFrontend());
+        ASSERT_TRUE(stopFilter(filterId));
+        ASSERT_TRUE(closeFilter(filterId));
+        ASSERT_TRUE(closeDemux());
+        ASSERT_TRUE(closeFrontend());
+        break;
+    }
 }
 
 /*
- * DATA FLOW TESTS
- *
  * TODO: re-enable the tests after finalizing the testing stream.
  */
 /*TEST_P(TunerHidlTest, PlaybackDataFlowWithSectionFilterTest) {
@@ -1407,36 +1498,6 @@ TEST_P(TunerHidlTest, CloseDescrambler) {
     ASSERT_TRUE(playbackDataFlowTest(filterConf, playbackConf, goldenOutputFiles));
 }
 
-TEST_P(TunerHidlTest, BroadcastDataFlowWithPesFilterTest) {
-    description("Feed ts data from frontend and test with PES filter");
-
-    // todo modulize the filter conf parser
-    vector<FilterConf> filterConf;
-    filterConf.resize(1);
-
-    DemuxFilterSettings filterSetting;
-    DemuxTsFilterSettings tsFilterSetting{
-            .tpid = 119,
-    };
-    DemuxFilterPesDataSettings pesFilterSetting;
-    tsFilterSetting.filterSettings.pesData(pesFilterSetting);
-    filterSetting.ts(tsFilterSetting);
-
-    DemuxFilterType type{
-            .mainType = DemuxFilterMainType::TS,
-    };
-    type.subType.tsFilterType(DemuxTsFilterType::PES);
-    FilterConf pesFilterConf{
-            .type = type,
-            .setting = filterSetting,
-    };
-    filterConf[0] = pesFilterConf;
-
-    vector<string> goldenOutputFiles;
-
-    ASSERT_TRUE(broadcastDataFlowTest(filterConf, goldenOutputFiles));
-}
-
 TEST_P(TunerHidlTest, RecordDataFlowWithTsRecordFilterTest) {
     description("Feed ts data from frontend to recording and test with ts record filter");
 
@@ -1474,7 +1535,8 @@ TEST_P(TunerHidlTest, RecordDataFlowWithTsRecordFilterTest) {
 
     ASSERT_TRUE(recordDataFlowTest(filterConf, recordSetting, goldenOutputFiles));
 }*/
-
+/*============================== End Data Flow Tests ==============================*/
+/******************************** End Test Entry **********************************/
 }  // namespace
 
 INSTANTIATE_TEST_SUITE_P(
