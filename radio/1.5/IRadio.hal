@@ -325,11 +325,15 @@ interface IRadio extends @1.4::IRadio {
     oneway sendCdmaSmsExpectMore(int32_t serial, CdmaSmsMessage sms);
 
     /**
-     * Requests that deactivates one category of the device personalization.
+     * Request that deactivates one category of device personalization. Device personalization
+     * generally binds the device so it can only be used on one carrier or even one carrier subnet
+     * (See TS 22.022). When the user has gained the rights to unbind the device (at the end of a
+     * contract period or other event), the controlKey will be delivered to either the user for
+     * manual entry or to a carrier app on the device for automatic entry.
      *
      * @param serial Serial number of request.
      * @param persoType SIM personalization type.
-     * @param controlKey depersonalization code corresponding to persoType
+     * @param controlKey the unlock code for removing persoType personalization from this device
      *
      * Response function is IRadioResponse.supplySimDepersonalizationResponse()
      */
