@@ -352,10 +352,15 @@ TEST_P(IdentityAidl, createAndRetrieveCredential) {
                                    readerCertificate.value());
     ASSERT_TRUE(readerSignature);
 
+    // Generate the key that will be used to sign AuthenticatedData.
+    vector<uint8_t> signingKeyBlob;
+    Certificate signingKeyCertificate;
+    ASSERT_TRUE(credential->generateSigningKeyPair(&signingKeyBlob, &signingKeyCertificate).isOk());
+
     ASSERT_TRUE(credential
                         ->startRetrieval(returnedSecureProfiles, authToken, itemsRequestBytes,
-                                         sessionTranscriptBytes, readerSignature.value(),
-                                         testEntriesEntryCounts)
+                                         signingKeyBlob, sessionTranscriptBytes,
+                                         readerSignature.value(), testEntriesEntryCounts)
                         .isOk());
 
     for (const auto& entry : testEntries) {
@@ -377,14 +382,9 @@ TEST_P(IdentityAidl, createAndRetrieveCredential) {
         EXPECT_EQ(content, entry.valueCbor);
     }
 
-    // Generate the key that will be used to sign AuthenticatedData.
-    vector<uint8_t> signingKeyBlob;
-    Certificate signingKeyCertificate;
-    ASSERT_TRUE(credential->generateSigningKeyPair(&signingKeyBlob, &signingKeyCertificate).isOk());
-
     vector<uint8_t> mac;
     vector<uint8_t> deviceNameSpacesBytes;
-    ASSERT_TRUE(credential->finishRetrieval(signingKeyBlob, &mac, &deviceNameSpacesBytes).isOk());
+    ASSERT_TRUE(credential->finishRetrieval(&mac, &deviceNameSpacesBytes).isOk());
     cborPretty = support::cborPrettyPrint(deviceNameSpacesBytes, 32, {});
     ASSERT_EQ(
             "{\n"
