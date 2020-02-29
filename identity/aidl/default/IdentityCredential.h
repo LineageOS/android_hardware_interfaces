@@ -54,14 +54,14 @@ class IdentityCredential : public BnIdentityCredential {
     ndk::ScopedAStatus startRetrieval(
             const vector<SecureAccessControlProfile>& accessControlProfiles,
             const HardwareAuthToken& authToken, const vector<int8_t>& itemsRequest,
-            const vector<int8_t>& sessionTranscript, const vector<int8_t>& readerSignature,
-            const vector<int32_t>& requestCounts) override;
+            const vector<int8_t>& signingKeyBlob, const vector<int8_t>& sessionTranscript,
+            const vector<int8_t>& readerSignature, const vector<int32_t>& requestCounts) override;
     ndk::ScopedAStatus startRetrieveEntryValue(
             const string& nameSpace, const string& name, int32_t entrySize,
             const vector<int32_t>& accessControlProfileIds) override;
     ndk::ScopedAStatus retrieveEntryValue(const vector<int8_t>& encryptedContent,
                                           vector<int8_t>* outContent) override;
-    ndk::ScopedAStatus finishRetrieval(const vector<int8_t>& signingKeyBlob, vector<int8_t>* outMac,
+    ndk::ScopedAStatus finishRetrieval(vector<int8_t>* outMac,
                                        vector<int8_t>* outDeviceNameSpaces) override;
     ndk::ScopedAStatus generateSigningKeyPair(vector<int8_t>* outSigningKeyBlob,
                                               Certificate* outSigningKeyCertificate) override;
@@ -88,6 +88,7 @@ class IdentityCredential : public BnIdentityCredential {
 
     // Set at startRetrieval() time.
     map<int32_t, int> profileIdToAccessCheckResult_;
+    vector<uint8_t> signingKeyBlob_;
     vector<uint8_t> sessionTranscript_;
     std::unique_ptr<cppbor::Item> sessionTranscriptItem_;
     vector<uint8_t> itemsRequest_;
