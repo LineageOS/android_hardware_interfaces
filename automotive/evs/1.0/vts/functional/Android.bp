@@ -28,7 +28,7 @@ cc_test {
         "android.hardware.automotive.evs@1.0",
         "android.hardware.automotive.evs@common-default-lib",
     ],
-    test_suites: ["general-tests"],
+    test_suites: ["vts-core"],
     cflags: [
         "-O0",
         "-g",
