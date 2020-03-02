@@ -106,7 +106,7 @@ void GnssHalTest::SetPositionMode(const int min_interval_msec, const bool low_po
     EXPECT_TRUE(result);
 }
 
-bool GnssHalTest::StartAndCheckFirstLocation() {
+bool GnssHalTest::StartAndCheckFirstLocation(bool strict) {
     auto result = gnss_hal_->start();
 
     EXPECT_TRUE(result.isOk());
@@ -119,7 +119,9 @@ bool GnssHalTest::StartAndCheckFirstLocation() {
     const int kFirstGnssLocationTimeoutSeconds = 75;
 
     wait(kFirstGnssLocationTimeoutSeconds);
-    EXPECT_EQ(location_called_count_, 1);
+    if (strict) {
+        EXPECT_EQ(location_called_count_, 1);
+    }
 
     if (location_called_count_ > 0) {
         // don't require speed on first fix
@@ -142,7 +144,7 @@ void GnssHalTest::StartAndCheckLocations(int count) {
 
     SetPositionMode(kMinIntervalMsec, kLowPowerMode);
 
-    EXPECT_TRUE(StartAndCheckFirstLocation());
+    EXPECT_TRUE(StartAndCheckFirstLocation(/* strict= */ true));
 
     for (int i = 1; i < count; i++) {
         EXPECT_EQ(std::cv_status::no_timeout, wait(kLocationTimeoutSubsequentSec));
