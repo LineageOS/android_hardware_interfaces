@@ -221,7 +221,7 @@ class GraphicsMapperHidlTest
                     case PlaneLayoutComponentType::Y:
                         ASSERT_EQ(nullptr, outYCbCr->y);
                         ASSERT_EQ(8, planeLayoutComponent.sizeInBits);
-                        ASSERT_EQ(8, planeLayout.sampleIncrementInBits);
+                        ASSERT_EQ(32, planeLayout.sampleIncrementInBits);
                         outYCbCr->y = tmpData;
                         outYCbCr->ystride = planeLayout.strideInBytes;
                         break;
