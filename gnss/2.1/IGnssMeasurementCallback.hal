@@ -30,13 +30,13 @@ interface IGnssMeasurementCallback extends @2.0::IGnssMeasurementCallback {
      */
     enum GnssMeasurementFlags : @1.0::IGnssMeasurementCallback.GnssMeasurementFlags {
         /**
-         * A valid receiver inter-signal bias is stored in the data structure.
+         * A valid full inter-signal bias is stored in the data structure.
          */
-        HAS_RECEIVER_ISB = 1 << 16,
+        HAS_FULL_ISB = 1 << 16,
         /**
-         * A valid receiver inter-signal bias uncertainty is stored in the data structure.
+         * A valid full inter-signal bias uncertainty is stored in the data structure.
          */
-        HAS_RECEIVER_ISB_UNCERTAINTY = 1 << 17,
+        HAS_FULL_ISB_UNCERTAINTY = 1 << 17,
         /**
          * A valid satellite inter-signal bias is stored in the data structure.
          */
@@ -77,42 +77,58 @@ interface IGnssMeasurementCallback extends @2.0::IGnssMeasurementCallback {
         bitfield<GnssMeasurementFlags> flags;
 
         /**
-         * The receiver inter-signal bias (ISB) in nanoseconds.
+         * The full inter-signal bias (ISB) in nanoseconds.
          *
-         * This value is the estimated receiver-side inter-system (different from the constellation
-         * in GnssClock.referenceSignalTypeForIsb) bias and inter-frequency (different from the
-         * carrier frequency in GnssClock.referenceSignalTypeForIsb) bias. The reported receiver ISB
-         * must include signal delays caused by
+         * This value is the sum of the estimated receiver-side and the space-segment-side
+         * inter-system bias, inter-frequency bias and inter-code bias, including
          *
-         * - Receiver inter-constellation bias
-         * - Receiver inter-frequency bias
-         * - Receiver inter-code bias
+         * - Receiver inter-constellation bias (with respect to the constellation in
+         *   GnssClock.referenceSignalTypeForIsb)
+         * - Receiver inter-frequency bias (with respect to the carrier frequency in
+         *   GnssClock.referenceSignalTypeForIsb)
+         * - Receiver inter-code bias (with respect to the code type in
+         *   GnssClock.referenceSignalTypeForIsb)
+         * - Master clock bias (e.g., GPS-GAL Time Offset (GGTO), GPS-UTC Time Offset
+         *   (TauGps), BDS-GLO Time Offset (BGTO)) (with respect to the constellation in
+         *   GnssClock.referenceSignalTypeForIsb)
+         * - Group delay (e.g., Total Group Delay (TGD))
+         * - Satellite inter-frequency bias (GLO only) (with respect to the carrier frequency in
+         *   GnssClock.referenceSignalTypeForIsb)
+         * - Satellite inter-code bias (e.g., Differential Code Bias (DCB)) (with respect to the
+         *   code type in GnssClock.referenceSignalTypeForIsb)
+         *
+         * If a component of the above is already compensated in the provided
+         * GnssMeasurement.receivedSvTimeInNs, then it must not be included in the reported full
+         * ISB.
          *
          * The value does not include the inter-frequency Ionospheric bias.
          *
-         * The receiver ISB of GnssClock.referenceSignalTypeForIsb is defined to be 0.0 nanoseconds.
+         * The full ISB of GnssClock.referenceSignalTypeForIsb is defined to be 0.0 nanoseconds.
          */
-        double receiverInterSignalBiasNs;
+        double fullInterSignalBiasNs;
 
         /**
-         * 1-sigma uncertainty associated with the receiver inter-signal bias in nanoseconds.
+         * 1-sigma uncertainty associated with the full inter-signal bias in nanoseconds.
          */
-        double receiverInterSignalBiasUncertaintyNs;
+        double fullInterSignalBiasUncertaintyNs;
 
         /**
          * The satellite inter-signal bias in nanoseconds.
          *
-         * This value is the satellite-and-control-segment-side inter-system (different from the
-         * constellation in GnssClock.referenceSignalTypeForIsb) bias and inter-frequency (different
-         * from the carrier frequency in GnssClock.referenceSignalTypeForIsb) bias, including:
+         * This value is the sum of the space-segment-side inter-system bias, inter-frequency bias
+         * and inter-code bias, including
          *
-         * - Master clock bias (e.g., GPS-GAL Time Offset (GGTO), GPT-UTC Time Offset (TauGps),
-         *   BDS-GLO Time Offset (BGTO))
+         * - Master clock bias (e.g., GPS-GAL Time Offset (GGTO), GPS-UTC Time Offset
+         *   (TauGps), BDS-GLO Time Offset (BGTO)) (with respect to the constellation in
+         *   GnssClock.referenceSignalTypeForIsb)
          * - Group delay (e.g., Total Group Delay (TGD))
-         * - Satellite inter-signal bias, which includes satellite inter-frequency bias (GLO only),
-         *   and satellite inter-code bias (e.g., Differential Code Bias (DCB)).
+         * - Satellite inter-frequency bias (GLO only) (with respect to the carrier frequency in
+         *   GnssClock.referenceSignalTypeForIsb)
+         * - Satellite inter-code bias (e.g., Differential Code Bias (DCB)) (with respect to the
+         *   code type in GnssClock.referenceSignalTypeForIsb)
          *
-         * The receiver ISB of GnssClock.referenceSignalTypeForIsb is defined to be 0.0 nanoseconds.
+         * The satellite ISB of GnssClock.referenceSignalTypeForIsb is defined to be 0.0
+         * nanoseconds.
          */
         double satelliteInterSignalBiasNs;
 

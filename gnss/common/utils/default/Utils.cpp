@@ -39,12 +39,12 @@ GnssDataV2_1 Utils::getMockMeasurementV2_1() {
             .v2_0 = gnssDataV2_0.measurements[0],
             .flags = (uint32_t)(GnssMeasurementFlagsV2_1::HAS_CARRIER_FREQUENCY |
                                 GnssMeasurementFlagsV2_1::HAS_CARRIER_PHASE |
-                                GnssMeasurementFlagsV2_1::HAS_RECEIVER_ISB |
-                                GnssMeasurementFlagsV2_1::HAS_RECEIVER_ISB_UNCERTAINTY |
+                                GnssMeasurementFlagsV2_1::HAS_FULL_ISB |
+                                GnssMeasurementFlagsV2_1::HAS_FULL_ISB_UNCERTAINTY |
                                 GnssMeasurementFlagsV2_1::HAS_SATELLITE_ISB |
                                 GnssMeasurementFlagsV2_1::HAS_SATELLITE_ISB_UNCERTAINTY),
-            .receiverInterSignalBiasNs = 10.0,
-            .receiverInterSignalBiasUncertaintyNs = 100.0,
+            .fullInterSignalBiasNs = 30.0,
+            .fullInterSignalBiasUncertaintyNs = 250.0,
             .satelliteInterSignalBiasNs = 20.0,
             .satelliteInterSignalBiasUncertaintyNs = 150.0,
             .basebandCN0DbHz = 25.0,
