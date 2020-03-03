@@ -320,7 +320,7 @@ StatusCode VehicleHalServer::onSetInitialUserInfo(const VehiclePropValue& value,
     // mInitialUserResponseFromCmd is used for just one request
     std::unique_ptr<VehiclePropValue> response = std::move(mInitialUserResponseFromCmd);
 
-    // TODO(b/138709788): rather than populate the raw values directly, it should use the
+    // TODO(b/150409377): rather than populate the raw values directly, it should use the
     // libraries that convert a InitialUserInfoResponse into a VehiclePropValue)
 
     switch (response->areaId) {
