@@ -517,7 +517,10 @@ TEST_P(SupplicantStaIfaceHidlTest, StartDppConfiguratorInitiator) {
  * FilsHlpAddRequest
  */
 TEST_P(SupplicantStaIfaceHidlTest, FilsHlpAddRequest) {
-    uint32_t keyMgmtMask = 0;
+    if (!isFilsSupported(sta_iface_)) {
+        GTEST_SKIP()
+            << "Skipping test since driver/supplicant doesn't support FILS";
+    }
     uint8_t destMacAddr[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55};
     std::vector<uint8_t> pktBuffer = {
         0x08, 0x00, 0x45, 0x10, 0x01, 0x3a, 0x00, 0x00, 0x40, 0x00, 0x40, 0x11,
@@ -548,22 +551,9 @@ TEST_P(SupplicantStaIfaceHidlTest, FilsHlpAddRequest) {
         0x63, 0x70, 0x2d, 0x52, 0x37, 0x0a, 0x01, 0x03, 0x06, 0x0f, 0x1a, 0x1c,
         0x33, 0x3a, 0x3b, 0x2b, 0xff, 0x00};
 
-    sta_iface_->getKeyMgmtCapabilities_1_3(
-        [&](const SupplicantStatus& status, uint32_t keyMgmtMaskInternal) {
-            EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
-            keyMgmtMask = keyMgmtMaskInternal;
-        });
-
-    SupplicantStatusCode expectedStatusCode =
-        (keyMgmtMask & (ISupplicantStaNetwork::KeyMgmtMask::FILS_SHA256 |
-                        ISupplicantStaNetwork::KeyMgmtMask::FILS_SHA384))
-            ? SupplicantStatusCode::SUCCESS
-            : SupplicantStatusCode::FAILURE_UNKNOWN;
-
     sta_iface_->filsHlpAddRequest(
-        destMacAddr, pktBuffer,
-        [expectedStatusCode](const SupplicantStatus& status) {
-            EXPECT_EQ(expectedStatusCode, status.code);
+        destMacAddr, pktBuffer, [](const SupplicantStatus& status) {
+            EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
         });
 }
 
@@ -571,23 +561,14 @@ TEST_P(SupplicantStaIfaceHidlTest, FilsHlpAddRequest) {
  * FilsHlpFlushRequest
  */
 TEST_P(SupplicantStaIfaceHidlTest, FilsHlpFlushRequest) {
-    uint32_t keyMgmtMask = 0;
-    sta_iface_->getKeyMgmtCapabilities_1_3(
-        [&](const SupplicantStatus& status, uint32_t keyMgmtMaskInternal) {
-            EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
-            keyMgmtMask = keyMgmtMaskInternal;
-        });
+    if (!isFilsSupported(sta_iface_)) {
+        GTEST_SKIP()
+            << "Skipping test since driver/supplicant doesn't support FILS";
+    }
 
-    SupplicantStatusCode expectedStatusCode =
-        (keyMgmtMask & (ISupplicantStaNetwork::KeyMgmtMask::FILS_SHA256 |
-                        ISupplicantStaNetwork::KeyMgmtMask::FILS_SHA384))
-            ? SupplicantStatusCode::SUCCESS
-            : SupplicantStatusCode::FAILURE_UNKNOWN;
-
-    sta_iface_->filsHlpFlushRequest(
-        [expectedStatusCode](const SupplicantStatus& status) {
-            EXPECT_EQ(expectedStatusCode, status.code);
-        });
+    sta_iface_->filsHlpFlushRequest([](const SupplicantStatus& status) {
+        EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+    });
 }
 INSTANTIATE_TEST_CASE_P(
     PerInstance, SupplicantStaIfaceHidlTest,
