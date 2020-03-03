@@ -69,65 +69,67 @@
 #include <android/hidl/memory/1.0/IMemory.h>
 
 using namespace ::android::hardware::camera::device;
-using ::android::hardware::Return;
-using ::android::hardware::Void;
+using ::android::BufferItemConsumer;
+using ::android::BufferQueue;
+using ::android::GraphicBuffer;
+using ::android::IGraphicBufferConsumer;
+using ::android::IGraphicBufferProducer;
+using ::android::sp;
+using ::android::Surface;
+using ::android::wp;
 using ::android::hardware::hidl_bitfield;
 using ::android::hardware::hidl_handle;
 using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
-using ::android::sp;
-using ::android::wp;
-using ::android::GraphicBuffer;
-using ::android::IGraphicBufferProducer;
-using ::android::IGraphicBufferConsumer;
-using ::android::BufferQueue;
-using ::android::BufferItemConsumer;
-using ::android::Surface;
-using ::android::hardware::graphics::common::V1_0::BufferUsage;
-using ::android::hardware::graphics::common::V1_0::Dataspace;
-using ::android::hardware::graphics::common::V1_0::PixelFormat;
-using ::android::hardware::camera::common::V1_0::Status;
+using ::android::hardware::kSynchronizedReadWrite;
+using ::android::hardware::MessageQueue;
+using ::android::hardware::Return;
+using ::android::hardware::Void;
 using ::android::hardware::camera::common::V1_0::CameraDeviceStatus;
+using ::android::hardware::camera::common::V1_0::Status;
 using ::android::hardware::camera::common::V1_0::TorchMode;
 using ::android::hardware::camera::common::V1_0::TorchModeStatus;
 using ::android::hardware::camera::common::V1_0::helper::CameraParameters;
 using ::android::hardware::camera::common::V1_0::helper::Size;
-using ::android::hardware::camera::provider::V2_4::ICameraProvider;
-using ::android::hardware::camera::provider::V2_4::ICameraProviderCallback;
-using ::android::hardware::camera::device::V3_2::ICameraDevice;
-using ::android::hardware::camera::device::V3_2::BufferCache;
-using ::android::hardware::camera::device::V3_2::CaptureRequest;
-using ::android::hardware::camera::device::V3_2::CaptureResult;
-using ::android::hardware::camera::device::V3_2::ICameraDeviceSession;
-using ::android::hardware::camera::device::V3_2::NotifyMsg;
-using ::android::hardware::camera::device::V3_2::RequestTemplate;
-using ::android::hardware::camera::device::V3_2::StreamType;
-using ::android::hardware::camera::device::V3_2::StreamRotation;
-using ::android::hardware::camera::device::V3_2::StreamConfiguration;
-using ::android::hardware::camera::device::V3_2::StreamConfigurationMode;
-using ::android::hardware::camera::device::V3_2::CameraMetadata;
-using ::android::hardware::camera::device::V3_2::HalStreamConfiguration;
-using ::android::hardware::camera::device::V3_2::BufferStatus;
-using ::android::hardware::camera::device::V3_2::StreamBuffer;
-using ::android::hardware::camera::device::V3_2::MsgType;
-using ::android::hardware::camera::device::V3_2::ErrorMsg;
-using ::android::hardware::camera::device::V3_2::ErrorCode;
 using ::android::hardware::camera::device::V1_0::CameraFacing;
-using ::android::hardware::camera::device::V1_0::NotifyCallbackMsg;
+using ::android::hardware::camera::device::V1_0::CameraFrameMetadata;
 using ::android::hardware::camera::device::V1_0::CommandType;
 using ::android::hardware::camera::device::V1_0::DataCallbackMsg;
-using ::android::hardware::camera::device::V1_0::CameraFrameMetadata;
-using ::android::hardware::camera::device::V1_0::ICameraDevicePreviewCallback;
 using ::android::hardware::camera::device::V1_0::FrameCallbackFlag;
 using ::android::hardware::camera::device::V1_0::HandleTimestampMessage;
-using ::android::hardware::camera::metadata::V3_4::CameraMetadataEnumAndroidSensorInfoColorFilterArrangement;
-using ::android::hardware::camera::metadata::V3_4::CameraMetadataTag;
+using ::android::hardware::camera::device::V1_0::ICameraDevicePreviewCallback;
+using ::android::hardware::camera::device::V1_0::NotifyCallbackMsg;
+using ::android::hardware::camera::device::V3_2::BufferCache;
+using ::android::hardware::camera::device::V3_2::BufferStatus;
+using ::android::hardware::camera::device::V3_2::CameraMetadata;
+using ::android::hardware::camera::device::V3_2::CaptureRequest;
+using ::android::hardware::camera::device::V3_2::CaptureResult;
+using ::android::hardware::camera::device::V3_2::ErrorCode;
+using ::android::hardware::camera::device::V3_2::ErrorMsg;
+using ::android::hardware::camera::device::V3_2::HalStreamConfiguration;
+using ::android::hardware::camera::device::V3_2::ICameraDevice;
+using ::android::hardware::camera::device::V3_2::ICameraDeviceSession;
+using ::android::hardware::camera::device::V3_2::MsgType;
+using ::android::hardware::camera::device::V3_2::NotifyMsg;
+using ::android::hardware::camera::device::V3_2::RequestTemplate;
+using ::android::hardware::camera::device::V3_2::StreamBuffer;
+using ::android::hardware::camera::device::V3_2::StreamConfiguration;
+using ::android::hardware::camera::device::V3_2::StreamConfigurationMode;
+using ::android::hardware::camera::device::V3_2::StreamRotation;
+using ::android::hardware::camera::device::V3_2::StreamType;
 using ::android::hardware::camera::device::V3_4::PhysicalCameraMetadata;
-using ::android::hardware::MessageQueue;
-using ::android::hardware::kSynchronizedReadWrite;
+using ::android::hardware::camera::metadata::V3_4::
+        CameraMetadataEnumAndroidSensorInfoColorFilterArrangement;
+using ::android::hardware::camera::metadata::V3_4::CameraMetadataTag;
+using ::android::hardware::camera::provider::V2_4::ICameraProvider;
+using ::android::hardware::camera::provider::V2_4::ICameraProviderCallback;
+using ::android::hardware::camera::provider::V2_6::CameraIdAndStreamCombination;
+using ::android::hardware::graphics::common::V1_0::BufferUsage;
+using ::android::hardware::graphics::common::V1_0::Dataspace;
+using ::android::hardware::graphics::common::V1_0::PixelFormat;
 using ::android::hidl::allocator::V1_0::IAllocator;
-using ::android::hidl::memory::V1_0::IMemory;
 using ::android::hidl::memory::V1_0::IMapper;
+using ::android::hidl::memory::V1_0::IMemory;
 using ResultMetadataQueue = MessageQueue<uint8_t, kSynchronizedReadWrite>;
 using ::android::hidl::manager::V1_0::IServiceManager;
 
@@ -554,7 +556,12 @@ public:
 
  hidl_vec<hidl_string> getCameraDeviceNames(sp<ICameraProvider> provider);
 
-    struct EmptyDeviceCb : public V3_5::ICameraDeviceCallback {
+ std::map<hidl_string, hidl_string> getCameraDeviceIdToNameMap(sp<ICameraProvider> provider);
+
+ hidl_vec<hidl_vec<hidl_string>> getConcurrentDeviceCombinations(
+         sp<::android::hardware::camera::provider::V2_6::ICameraProvider>&);
+
+ struct EmptyDeviceCb : public V3_5::ICameraDeviceCallback {
      virtual Return<void> processCaptureResult(
          const hidl_vec<CaptureResult>& /*results*/) override {
          ALOGI("processCaptureResult callback");
@@ -591,8 +598,7 @@ public:
          ADD_FAILURE();  // Empty callback should not reach here
          return Void();
      }
-
-    };
+ };
 
     struct DeviceCb : public V3_5::ICameraDeviceCallback {
         DeviceCb(CameraHidlTest *parent, int deviceVersion, const camera_metadata_t *staticMeta) :
@@ -808,6 +814,13 @@ public:
     static Status getAvailableOutputStreams(const camera_metadata_t *staticMeta,
             std::vector<AvailableStream> &outputStreams,
             const AvailableStream *threshold = nullptr);
+
+    static Status getMaxOutputSizeForFormat(const camera_metadata_t* staticMeta, PixelFormat format,
+                                            Size* size);
+
+    static Status getMandatoryConcurrentStreams(const camera_metadata_t* staticMeta,
+                                                std::vector<AvailableStream>* outputStreams);
+
     static Status getJpegBufferSize(camera_metadata_t *staticMeta,
             uint32_t* outBufSize);
     static Status isConstrainedModeAvailable(camera_metadata_t *staticMeta);
@@ -1535,6 +1548,20 @@ Return<void> CameraHidlTest::DeviceCb::returnStreamBuffers(
     return Void();
 }
 
+std::map<hidl_string, hidl_string> CameraHidlTest::getCameraDeviceIdToNameMap(
+        sp<ICameraProvider> provider) {
+    hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(provider);
+    std::map<hidl_string, hidl_string> idToNameMap;
+    for (auto& name : cameraDeviceNames) {
+        std::string version, cameraId;
+        if (!matchDeviceName(name, mProviderType, &version, &cameraId)) {
+            ADD_FAILURE();
+        }
+        idToNameMap.insert(std::make_pair(hidl_string(cameraId), name));
+    }
+    return idToNameMap;
+}
+
 hidl_vec<hidl_string> CameraHidlTest::getCameraDeviceNames(sp<ICameraProvider> provider) {
     std::vector<std::string> cameraDeviceNames;
     Return<void> ret;
@@ -1589,6 +1616,21 @@ hidl_vec<hidl_string> CameraHidlTest::getCameraDeviceNames(sp<ICameraProvider> p
         retList[i] = cameraDeviceNames[i];
     }
     return retList;
+}
+
+hidl_vec<hidl_vec<hidl_string>> CameraHidlTest::getConcurrentDeviceCombinations(
+        sp<::android::hardware::camera::provider::V2_6::ICameraProvider>& provider2_6) {
+    hidl_vec<hidl_vec<hidl_string>> combinations;
+    Return<void> ret = provider2_6->getConcurrentStreamingCameraIds(
+            [&combinations](Status concurrentIdStatus,
+                            const hidl_vec<hidl_vec<hidl_string>>& cameraDeviceIdCombinations) {
+                ASSERT_EQ(concurrentIdStatus, Status::OK);
+                combinations = cameraDeviceIdCombinations;
+            });
+    if (!ret.isOk()) {
+        ADD_FAILURE();
+    }
+    return combinations;
 }
 
 // Test devices with first_api_level >= P does not advertise device@1.0
@@ -3075,6 +3117,157 @@ TEST_P(CameraHidlTest, configureStreamsAvailableOutputs) {
         free_camera_metadata(staticMeta);
         ret = session->close();
         ASSERT_TRUE(ret.isOk());
+    }
+}
+
+// Verify that mandatory concurrent streams and outputs are supported.
+TEST_P(CameraHidlTest, configureConcurrentStreamsAvailableOutputs) {
+    struct CameraTestInfo {
+        camera_metadata_t* staticMeta = nullptr;
+        sp<ICameraDeviceSession> session;
+        sp<device::V3_3::ICameraDeviceSession> session3_3;
+        sp<device::V3_4::ICameraDeviceSession> session3_4;
+        sp<device::V3_5::ICameraDeviceSession> session3_5;
+        sp<device::V3_6::ICameraDeviceSession> session3_6;
+        sp<device::V3_2::ICameraDevice> cameraDevice;
+        sp<device::V3_5::ICameraDevice> cameraDevice3_5;
+        ::android::hardware::camera::device::V3_5::StreamConfiguration config3_5;
+        ::android::hardware::camera::device::V3_4::StreamConfiguration config3_4;
+        ::android::hardware::camera::device::V3_2::StreamConfiguration config3_2;
+    };
+    if (mProvider2_6 == nullptr) {
+        // This test is provider@2.6 specific
+        ALOGW("%s provider not 2_6, skipping", __func__);
+        return;
+    }
+
+    std::map<hidl_string, hidl_string> idToNameMap = getCameraDeviceIdToNameMap(mProvider2_6);
+    hidl_vec<hidl_vec<hidl_string>> concurrentDeviceCombinations =
+            getConcurrentDeviceCombinations(mProvider2_6);
+    std::vector<AvailableStream> outputStreams;
+    for (const auto& cameraDeviceIds : concurrentDeviceCombinations) {
+        std::vector<CameraIdAndStreamCombination> cameraIdsAndStreamCombinations;
+        std::vector<CameraTestInfo> cameraTestInfos;
+        size_t i = 0;
+        for (const auto& id : cameraDeviceIds) {
+            CameraTestInfo cti;
+            Return<void> ret;
+            auto it = idToNameMap.find(id);
+            ASSERT_TRUE(idToNameMap.end() != it);
+            hidl_string name = it->second;
+            int deviceVersion = getCameraDeviceVersion(name, mProviderType);
+            if (deviceVersion == CAMERA_DEVICE_API_VERSION_1_0) {
+                continue;
+            } else if (deviceVersion <= 0) {
+                ALOGE("%s: Unsupported device version %d", __func__, deviceVersion);
+                ADD_FAILURE();
+                return;
+            }
+            openEmptyDeviceSession(name, mProvider2_6, &cti.session /*out*/,
+                                   &cti.staticMeta /*out*/, &cti.cameraDevice /*out*/);
+            castSession(cti.session, deviceVersion, &cti.session3_3, &cti.session3_4,
+                        &cti.session3_5, &cti.session3_6);
+            castDevice(cti.cameraDevice, deviceVersion, &cti.cameraDevice3_5);
+
+            outputStreams.clear();
+            ASSERT_EQ(Status::OK, getMandatoryConcurrentStreams(cti.staticMeta, &outputStreams));
+            ASSERT_NE(0u, outputStreams.size());
+
+            uint32_t jpegBufferSize = 0;
+            ASSERT_EQ(Status::OK, getJpegBufferSize(cti.staticMeta, &jpegBufferSize));
+            ASSERT_NE(0u, jpegBufferSize);
+
+            int32_t streamId = 0;
+            ::android::hardware::hidl_vec<V3_2::Stream> streams3_2(outputStreams.size());
+            size_t j = 0;
+            for (const auto& it : outputStreams) {
+                V3_2::Stream stream3_2;
+                V3_2::DataspaceFlags dataspaceFlag = 0;
+                switch (static_cast<PixelFormat>(it.format)) {
+                    case PixelFormat::BLOB:
+                        dataspaceFlag = static_cast<V3_2::DataspaceFlags>(Dataspace::V0_JFIF);
+                        break;
+                    case PixelFormat::Y16:
+                        dataspaceFlag = static_cast<V3_2::DataspaceFlags>(Dataspace::DEPTH);
+                        break;
+                    default:
+                        dataspaceFlag = static_cast<V3_2::DataspaceFlags>(Dataspace::UNKNOWN);
+                }
+                stream3_2 = {streamId++,
+                             StreamType::OUTPUT,
+                             static_cast<uint32_t>(it.width),
+                             static_cast<uint32_t>(it.height),
+                             static_cast<PixelFormat>(it.format),
+                             GRALLOC1_CONSUMER_USAGE_HWCOMPOSER,
+                             dataspaceFlag,
+                             StreamRotation::ROTATION_0};
+                streams3_2[j] = stream3_2;
+                j++;
+            }
+
+            // Add the created stream configs to cameraIdsAndStreamCombinations
+            createStreamConfiguration(streams3_2, StreamConfigurationMode::NORMAL_MODE,
+                                      &cti.config3_2, &cti.config3_4, &cti.config3_5,
+                                      jpegBufferSize);
+
+            cti.config3_5.streamConfigCounter = outputStreams.size();
+            CameraIdAndStreamCombination cameraIdAndStreamCombination;
+            cameraIdAndStreamCombination.cameraId = id;
+            cameraIdAndStreamCombination.streamConfiguration = cti.config3_4;
+            cameraIdsAndStreamCombinations.push_back(cameraIdAndStreamCombination);
+            i++;
+            cameraTestInfos.push_back(cti);
+        }
+        // Now verify that concurrent streams are supported
+        auto cb = [](Status s, bool supported) {
+            ASSERT_EQ(Status::OK, s);
+            ASSERT_EQ(supported, true);
+        };
+
+        auto ret = mProvider2_6->isConcurrentStreamCombinationSupported(
+                cameraIdsAndStreamCombinations, cb);
+
+        // Test the stream can actually be configured
+        for (const auto& cti : cameraTestInfos) {
+            if (cti.session3_5 != nullptr) {
+                bool expectStreamCombQuery = (isLogicalMultiCamera(cti.staticMeta) == Status::OK);
+                verifyStreamCombination(cti.cameraDevice3_5, cti.config3_4,
+                                        /*expectedStatus*/ true, expectStreamCombQuery);
+                ret = cti.session3_5->configureStreams_3_5(
+                        cti.config3_5,
+                        [&cti](Status s, device::V3_4::HalStreamConfiguration halConfig) {
+                            ASSERT_EQ(Status::OK, s);
+                            ASSERT_EQ(cti.config3_5.v3_4.streams.size(), halConfig.streams.size());
+                        });
+            } else if (cti.session3_4 != nullptr) {
+                ret = cti.session3_4->configureStreams_3_4(
+                        cti.config3_4,
+                        [&cti](Status s, device::V3_4::HalStreamConfiguration halConfig) {
+                            ASSERT_EQ(Status::OK, s);
+                            ASSERT_EQ(cti.config3_4.streams.size(), halConfig.streams.size());
+                        });
+            } else if (cti.session3_3 != nullptr) {
+                ret = cti.session3_3->configureStreams_3_3(
+                        cti.config3_2,
+                        [&cti](Status s, device::V3_3::HalStreamConfiguration halConfig) {
+                            ASSERT_EQ(Status::OK, s);
+                            ASSERT_EQ(cti.config3_2.streams.size(), halConfig.streams.size());
+                        });
+            } else {
+                ret = cti.session->configureStreams(
+                        cti.config3_2, [&cti](Status s, HalStreamConfiguration halConfig) {
+                            ASSERT_EQ(Status::OK, s);
+                            ASSERT_EQ(cti.config3_2.streams.size(), halConfig.streams.size());
+                        });
+            }
+            ASSERT_TRUE(ret.isOk());
+        }
+
+        for (const auto& cti : cameraTestInfos) {
+            free_camera_metadata(cti.staticMeta);
+            ret = cti.session->close();
+            ASSERT_TRUE(ret.isOk());
+        }
     }
 }
 
@@ -5155,6 +5348,65 @@ Status CameraHidlTest::getAvailableOutputStreams(const camera_metadata_t *static
                 ANDROID_DEPTH_AVAILABLE_DEPTH_STREAM_CONFIGURATIONS_OUTPUT);
     }
 
+    return Status::OK;
+}
+
+static Size getMinSize(Size a, Size b) {
+    if (a.width * a.height < b.width * b.height) {
+        return a;
+    }
+    return b;
+}
+
+// TODO: Add more combinations
+Status CameraHidlTest::getMandatoryConcurrentStreams(const camera_metadata_t* staticMeta,
+                                                     std::vector<AvailableStream>* outputStreams) {
+    if (nullptr == staticMeta) {
+        return Status::ILLEGAL_ARGUMENT;
+    }
+    Size yuvMaxSize(1280, 720);
+    Size jpegMaxSize(1920, 1440);
+    Size maxAvailableYuvSize;
+    Size maxAvailableJpegSize;
+    getMaxOutputSizeForFormat(staticMeta, PixelFormat::YCBCR_420_888, &maxAvailableYuvSize);
+    getMaxOutputSizeForFormat(staticMeta, PixelFormat::BLOB, &maxAvailableJpegSize);
+    Size yuvChosenSize = getMinSize(yuvMaxSize, maxAvailableYuvSize);
+    Size jpegChosenSize = getMinSize(jpegMaxSize, maxAvailableJpegSize);
+
+    AvailableStream yuvStream = {.width = yuvChosenSize.width,
+                                 .height = yuvChosenSize.height,
+                                 .format = static_cast<int32_t>(PixelFormat::YCBCR_420_888)};
+
+    AvailableStream jpegStream = {.width = jpegChosenSize.width,
+                                  .height = jpegChosenSize.height,
+                                  .format = static_cast<int32_t>(PixelFormat::BLOB)};
+    outputStreams->push_back(yuvStream);
+    outputStreams->push_back(jpegStream);
+
+    return Status::OK;
+}
+
+Status CameraHidlTest::getMaxOutputSizeForFormat(const camera_metadata_t* staticMeta,
+                                                 PixelFormat format, Size* size) {
+    std::vector<AvailableStream> outputStreams;
+    if (size == nullptr || getAvailableOutputStreams(staticMeta, outputStreams) != Status::OK) {
+        return Status::ILLEGAL_ARGUMENT;
+    }
+    Size maxSize;
+    bool found = false;
+    for (auto& outputStream : outputStreams) {
+        if (static_cast<int32_t>(format) == outputStream.format &&
+            (outputStream.width * outputStream.height > maxSize.width * maxSize.height)) {
+            maxSize.width = outputStream.width;
+            maxSize.height = outputStream.height;
+            found = true;
+        }
+    }
+    if (!found) {
+        ALOGE("%s :chosen format %d not found", __FUNCTION__, static_cast<int32_t>(format));
+        return Status::ILLEGAL_ARGUMENT;
+    }
+    *size = maxSize;
     return Status::OK;
 }
 
