@@ -31,4 +31,7 @@ createSupplicantStaNetwork_1_3(
         supplicant);
 android::sp<android::hardware::wifi::supplicant::V1_3::ISupplicant>
 getSupplicant_1_3(const std::string& supplicant_instance_name, bool isP2pOn);
+bool isFilsSupported(
+    android::sp<android::hardware::wifi::supplicant::V1_3::ISupplicantStaIface>
+        sta_iface);
 #endif /* SUPPLICANT_HIDL_TEST_UTILS_1_3_H */
