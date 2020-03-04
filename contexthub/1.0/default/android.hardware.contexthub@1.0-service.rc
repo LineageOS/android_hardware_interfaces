@@ -1,5 +1,5 @@
 service vendor.contexthub-hal-1-0 /vendor/bin/hw/android.hardware.contexthub@1.0-service
     interface android.hardware.contexthub@1.0::IContexthub default
     class hal
-    user system
-    group system
+    user context_hub
+    group context_hub
