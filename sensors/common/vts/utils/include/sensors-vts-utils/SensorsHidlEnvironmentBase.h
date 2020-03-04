@@ -46,12 +46,7 @@ class SensorsHidlEnvironmentBase {
         std::this_thread::sleep_for(std::chrono::seconds(3));
     }
 
-    virtual void HidlTearDown() {
-        mStopThread = true;
-        if (mPollThread.joinable()) {
-            mPollThread.join();
-        }
-    }
+    virtual void HidlTearDown() = 0;
 
     // Get and clear all events collected so far (like "cat" shell command).
     // If output is nullptr, it clears all collected events.
