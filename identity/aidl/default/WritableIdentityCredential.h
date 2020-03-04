@@ -21,9 +21,11 @@
 #include <android/hardware/identity/support/IdentityCredentialSupport.h>
 
 #include <cppbor.h>
+#include <set>
 
 namespace aidl::android::hardware::identity {
 
+using ::std::set;
 using ::std::string;
 using ::std::vector;
 
@@ -66,6 +68,8 @@ class WritableIdentityCredential : public BnWritableIdentityCredential {
 
     // This is set in initialize().
     vector<uint8_t> storageKey_;
+    bool startPersonalizationCalled_;
+    bool firstEntry_;
 
     // These are set in getAttestationCertificate().
     vector<uint8_t> credentialPrivKey_;
@@ -79,6 +83,9 @@ class WritableIdentityCredential : public BnWritableIdentityCredential {
     cppbor::Map signedDataNamespaces_;
     cppbor::Array signedDataCurrentNamespace_;
 
+    // This field is initialized in addAccessControlProfile
+    set<int32_t> accessControlProfileIds_;
+
     // These fields are initialized during beginAddEntry()
     size_t entryRemainingBytes_;
     vector<uint8_t> entryAdditionalData_;
@@ -86,6 +93,7 @@ class WritableIdentityCredential : public BnWritableIdentityCredential {
     string entryName_;
     vector<int32_t> entryAccessControlProfileIds_;
     vector<uint8_t> entryBytes_;
+    set<string> allNameSpaces_;
 };
 
 }  // namespace aidl::android::hardware::identity
