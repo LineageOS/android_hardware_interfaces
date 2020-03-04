@@ -32,6 +32,8 @@ class SensorsHidlTest;
 class SensorsHidlEnvironmentV1_0
     : public SensorsHidlEnvironmentBase<::android::hardware::sensors::V1_0::Event> {
   public:
+    void HidlTearDown() override;
+
     using Event = ::android::hardware::sensors::V1_0::Event;
     SensorsHidlEnvironmentV1_0(const std::string& service_name)
         : SensorsHidlEnvironmentBase(service_name) {}
