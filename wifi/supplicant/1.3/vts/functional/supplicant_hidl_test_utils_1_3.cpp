@@ -21,6 +21,8 @@
 #include "supplicant_hidl_test_utils_1_3.h"
 
 using ::android::sp;
+using ::android::hardware::wifi::supplicant::V1_0::SupplicantStatus;
+using ::android::hardware::wifi::supplicant::V1_0::SupplicantStatusCode;
 using ::android::hardware::wifi::supplicant::V1_3::ISupplicant;
 using ::android::hardware::wifi::supplicant::V1_3::ISupplicantStaIface;
 using ::android::hardware::wifi::supplicant::V1_3::ISupplicantStaNetwork;
@@ -42,4 +44,16 @@ sp<ISupplicant> getSupplicant_1_3(const std::string& supplicant_instance_name,
                                   bool isP2pOn) {
     return ISupplicant::castFrom(
         getSupplicant(supplicant_instance_name, isP2pOn));
+}
+
+bool isFilsSupported(sp<ISupplicantStaIface> sta_iface) {
+    uint32_t keyMgmtMask = 0;
+    sta_iface->getKeyMgmtCapabilities_1_3(
+        [&](const SupplicantStatus& status, uint32_t keyMgmtMaskInternal) {
+            EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+            keyMgmtMask = keyMgmtMaskInternal;
+        });
+
+    return (keyMgmtMask & (ISupplicantStaNetwork::KeyMgmtMask::FILS_SHA256 |
+                           ISupplicantStaNetwork::KeyMgmtMask::FILS_SHA384));
 }
