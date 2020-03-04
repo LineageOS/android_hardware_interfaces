@@ -92,3 +92,18 @@ cc_test_library {
         "android.hardware.sensors@2.0-ScopedWakelock",
     ],
 }
+
+cc_test_library {
+    name: "android.hardware.sensors@2.0-ScopedWakelock.testlib",
+    defaults: [
+        "hidl_defaults",
+        "android.hardware.sensors@2.0-multihal-defaults",
+    ],
+    srcs: [
+        "ScopedWakelock.cpp",
+    ],
+    vendor_available: true,
+    export_header_lib_headers: [
+        "android.hardware.sensors@2.0-multihal.header",
+    ],
+}
