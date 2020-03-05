@@ -52,7 +52,7 @@ std::unique_ptr<VehiclePropValue> createVehiclePropValue(
         case VehiclePropertyType::MIXED:
             break; // Valid, but nothing to do.
         default:
-            ALOGE("createVehiclePropValue: unknown type: %d", type);
+            ALOGE("createVehiclePropValue: unknown type: %d", toInt(type));
             val.reset(nullptr);
     }
     return val;
@@ -78,13 +78,6 @@ size_t getVehicleRawValueVectorSize(
     }
 }
 
-template<typename T>
-inline void copyHidlVec(hidl_vec <T>* dest, const hidl_vec <T>& src) {
-    for (size_t i = 0; i < std::min(dest->size(), src.size()); i++) {
-        (*dest)[i] = src[i];
-    }
-}
-
 void copyVehicleRawValue(VehiclePropValue::RawValue* dest,
                          const VehiclePropValue::RawValue& src) {
     dest->int32Values = src.int32Values;
@@ -92,6 +85,15 @@ void copyVehicleRawValue(VehiclePropValue::RawValue* dest,
     dest->int64Values = src.int64Values;
     dest->bytes = src.bytes;
     dest->stringValue = src.stringValue;
+}
+
+#ifdef __ANDROID__
+
+template<typename T>
+inline void copyHidlVec(hidl_vec <T>* dest, const hidl_vec <T>& src) {
+    for (size_t i = 0; i < std::min(dest->size(), src.size()); i++) {
+        (*dest)[i] = src[i];
+    }
 }
 
 template<typename T>
@@ -123,6 +125,7 @@ void shallowCopy(VehiclePropValue* dest, const VehiclePropValue& src) {
     shallowCopyHidlStr(&dest->value.stringValue, src.value.stringValue);
 }
 
+#endif  // __ANDROID__
 
 //}  // namespace utils
 
