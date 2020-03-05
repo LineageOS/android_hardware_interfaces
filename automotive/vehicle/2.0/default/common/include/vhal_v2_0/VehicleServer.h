@@ -20,11 +20,7 @@
 
 #include <android/hardware/automotive/vehicle/2.0/types.h>
 
-namespace android {
-namespace hardware {
-namespace automotive {
-namespace vehicle {
-namespace V2_0 {
+namespace android::hardware::automotive::vehicle::V2_0 {
 
 /**
  *  Server lives on the vehicle side to talk to Android HAL.
@@ -69,8 +65,4 @@ class IVehicleServer {
 #endif  // __ANDROID__
 };
 
-}  // namespace V2_0
-}  // namespace vehicle
-}  // namespace automotive
-}  // namespace hardware
-}  // namespace android
+}  // namespace android::hardware::automotive::vehicle::V2_0
