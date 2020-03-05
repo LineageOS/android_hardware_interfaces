@@ -87,12 +87,11 @@ static std::unique_ptr<Obd2SensorStore> fillDefaultObd2Frame(size_t numVendorInt
     return sensorStore;
 }
 
-EmulatedVehicleHal::EmulatedVehicleHal(VehiclePropertyStore* propStore,
-                                       EmulatedVehicleClient* client)
+EmulatedVehicleHal::EmulatedVehicleHal(VehiclePropertyStore* propStore, VehicleHalClient* client)
     : mPropStore(propStore),
       mHvacPowerProps(std::begin(kHvacPowerProperties), std::end(kHvacPowerProperties)),
-      mRecurrentTimer(
-          std::bind(&EmulatedVehicleHal::onContinuousPropertyTimer, this, std::placeholders::_1)),
+      mRecurrentTimer(std::bind(&EmulatedVehicleHal::onContinuousPropertyTimer, this,
+                                std::placeholders::_1)),
       mVehicleClient(client) {
     initStaticConfig();
     for (size_t i = 0; i < arraysize(kVehicleProperties); i++) {
