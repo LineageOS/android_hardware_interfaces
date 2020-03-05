@@ -19,7 +19,9 @@
 
 #include <memory>
 
+#ifdef __ANDROID__
 #include <hidl/HidlSupport.h>
+#endif
 
 #include <android/hardware/automotive/vehicle/2.0/types.h>
 
@@ -69,12 +71,16 @@ size_t getVehicleRawValueVectorSize(
 void copyVehicleRawValue(VehiclePropValue::RawValue* dest,
                                 const VehiclePropValue::RawValue& src);
 
+#ifdef __ANDROID__
+
 template<typename T>
 void shallowCopyHidlVec(hidl_vec<T>* dest, const hidl_vec<T>& src);
 
 void shallowCopyHidlStr(hidl_string* dest, const hidl_string& src);
 
 void shallowCopy(VehiclePropValue* dest, const VehiclePropValue& src);
+
+#endif  // __ANDROID__
 
 }  // namespace V2_0
 }  // namespace vehicle
