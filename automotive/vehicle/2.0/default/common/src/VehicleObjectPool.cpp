@@ -131,7 +131,7 @@ void VehiclePropValuePool::InternalPool::recycle(VehiclePropValue* o) {
         ALOGE("Discarding value for prop 0x%x because it contains "
                   "data that is not consistent with this pool. "
                   "Expected type: %d, vector size: %zu",
-              o->prop, mPropType, mVectorSize);
+              o->prop, toInt(mPropType), mVectorSize);
         delete o;
     } else {
         ObjectPool<VehiclePropValue>::recycle(o);
