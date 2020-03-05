@@ -46,7 +46,7 @@ namespace impl {
 class EmulatedVehicleHal : public EmulatedVehicleHalIface {
 public:
     EmulatedVehicleHal(VehiclePropertyStore* propStore,
-                       EmulatedVehicleClient* client);
+                       VehicleHalClient* client);
     ~EmulatedVehicleHal() = default;
 
     //  Methods from VehicleHal
@@ -85,7 +85,7 @@ private:
     VehiclePropertyStore* mPropStore;
     std::unordered_set<int32_t> mHvacPowerProps;
     RecurrentTimer mRecurrentTimer;
-    EmulatedVehicleClient* mVehicleClient;
+    VehicleHalClient* mVehicleClient;
 };
 
 }  // impl
