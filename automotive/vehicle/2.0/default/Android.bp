@@ -63,6 +63,8 @@ cc_library_static {
         "impl/vhal_v2_0/CommConn.cpp",
         "impl/vhal_v2_0/EmulatedVehicleConnector.cpp",
         "impl/vhal_v2_0/EmulatedVehicleHal.cpp",
+        "impl/vhal_v2_0/VehicleHalClient.cpp",
+        "impl/vhal_v2_0/VehicleHalServer.cpp",
         "impl/vhal_v2_0/VehicleEmulator.cpp",
         "impl/vhal_v2_0/PipeComm.cpp",
         "impl/vhal_v2_0/ProtoMessageConverter.cpp",
