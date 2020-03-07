@@ -20,6 +20,7 @@ import @1.0::RadioResponseInfo;
 import @1.0::SendSmsResult;
 import @1.4::IRadioResponse;
 import @1.5::BarringInfo;
+import @1.5::CardStatus;
 import @1.5::CellIdentity;
 import @1.5::CellInfo;
 import @1.5::PersoSubstate;
@@ -117,6 +118,20 @@ interface IRadioResponse extends @1.4::IRadioResponse {
      *   RadioError:SIM_ABSENT
      */
     oneway setupDataCallResponse_1_5(RadioResponseInfo info, SetupDataCallResult dcResponse);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     * @param dcResponse List of SetupDataCallResult as defined in types.hal
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:NO_RESOURCES
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:SIM_ABSENT
+     */
+    oneway getDataCallListResponse_1_5(RadioResponseInfo info, vec<SetupDataCallResult> dcResponse);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -303,5 +318,18 @@ interface IRadioResponse extends @1.4::IRadioResponse {
      *   RadioError:REQUEST_NOT_SUPPORTED
      */
     oneway supplySimDepersonalizationResponse(RadioResponseInfo info,
-        PersoSubstate persoType, int32_t remainingRetries);
+            PersoSubstate persoType, int32_t remainingRetries);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     * @param cardStatus ICC card status as defined by CardStatus in types.hal
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:NO_RESOURCES
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     */
+    oneway getIccCardStatusResponse_1_5(RadioResponseInfo info, CardStatus cardStatus);
 };
