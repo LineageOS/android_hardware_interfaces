@@ -47,10 +47,14 @@ struct GnssAntennaInfo : public IGnssAntennaInfo {
     void reportAntennaInfo(
             const hidl_vec<IGnssAntennaInfoCallback::GnssAntennaInfo>& antennaInfo) const;
 
+    // Guarded by mMutex
     static sp<IGnssAntennaInfoCallback> sCallback;
+
     std::atomic<long> mMinIntervalMillis;
     std::atomic<bool> mIsActive;
     std::thread mThread;
+
+    // Synchronization lock for sCallback
     mutable std::mutex mMutex;
 };
 

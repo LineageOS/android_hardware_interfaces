@@ -55,8 +55,8 @@ Return<GnssAntennaInfo::GnssAntennaInfoStatus> GnssAntennaInfo::setCallback(
 
 Return<void> GnssAntennaInfo::close() {
     ALOGD("close");
-    std::unique_lock<std::mutex> lock(mMutex);
     stop();
+    std::unique_lock<std::mutex> lock(mMutex);
     sCallback = nullptr;
     return Void();
 }
