@@ -18,6 +18,46 @@
 
 RadioIndication_v1_5::RadioIndication_v1_5(RadioHidlTest_v1_5& parent) : parent_v1_5(parent) {}
 
+/* 1.5 Apis */
+Return<void> RadioIndication_v1_5::uiccApplicationsEnablementChanged(RadioIndicationType /*type*/,
+                                                                     bool /*enabled*/) {
+    return Void();
+}
+
+Return<void> RadioIndication_v1_5::registrationFailed(
+        RadioIndicationType /*type*/,
+        const ::android::hardware::radio::V1_5::CellIdentity& /*cellIdentity*/,
+        const hidl_string& /*chosenPlmn*/,
+        ::android::hardware::hidl_bitfield<::android::hardware::radio::V1_5::Domain> /*domain*/,
+        int32_t /*causeCode*/, int32_t /*additionalCauseCode*/) {
+    return Void();
+}
+
+Return<void> RadioIndication_v1_5::barringInfoChanged(
+        RadioIndicationType /*type*/,
+        const ::android::hardware::radio::V1_5::CellIdentity& /*cellIdentity*/,
+        const hidl_vec<::android::hardware::radio::V1_5::BarringInfo>& /*barringInfos*/) {
+    return Void();
+}
+
+Return<void> RadioIndication_v1_5::networkScanResult_1_5(
+        RadioIndicationType /*type*/,
+        const ::android::hardware::radio::V1_5::NetworkScanResult& /*result*/) {
+    return Void();
+}
+
+Return<void> RadioIndication_v1_5::cellInfoList_1_5(
+        RadioIndicationType /*type*/,
+        const hidl_vec<::android::hardware::radio::V1_5::CellInfo>& /*records*/) {
+    return Void();
+}
+
+Return<void> RadioIndication_v1_5::dataCallListChanged_1_5(
+        RadioIndicationType /*type*/,
+        const hidl_vec<android::hardware::radio::V1_5::SetupDataCallResult>& /*dcList*/) {
+    return Void();
+}
+
 /* 1.4 Apis */
 Return<void> RadioIndication_v1_5::currentPhysicalChannelConfigs_1_4(
         RadioIndicationType /*type*/,
@@ -326,40 +366,5 @@ Return<void> RadioIndication_v1_5::pcoData(RadioIndicationType /*type*/,
 
 Return<void> RadioIndication_v1_5::modemReset(RadioIndicationType /*type*/,
                                               const ::android::hardware::hidl_string& /*reason*/) {
-    return Void();
-}
-
-Return<void> RadioIndication_v1_5::uiccApplicationsEnablementChanged(RadioIndicationType /*type*/,
-                                                                     bool /*enabled*/) {
-    return Void();
-}
-
-Return<void> RadioIndication_v1_5::registrationFailed(
-        RadioIndicationType /*type*/,
-        const ::android::hardware::radio::V1_5::CellIdentity& /*cellIdentity*/,
-        const ::android::hardware::hidl_string& /*chosenPlmn*/,
-        ::android::hardware::hidl_bitfield<::android::hardware::radio::V1_5::Domain> /*domain*/,
-        int32_t /*causeCode*/, int32_t /*additionalCauseCode*/) {
-    return Void();
-}
-
-Return<void> RadioIndication_v1_5::barringInfoChanged(
-        RadioIndicationType /*type*/,
-        const ::android::hardware::radio::V1_5::CellIdentity& /*cellIdentity*/,
-        const ::android::hardware::hidl_vec<::android::hardware::radio::V1_5::BarringInfo>&
-        /*barringInfos*/) {
-    return Void();
-}
-
-Return<void> RadioIndication_v1_5::networkScanResult_1_5(
-        RadioIndicationType /*type*/,
-        const ::android::hardware::radio::V1_5::NetworkScanResult& /*result*/) {
-    return Void();
-}
-
-Return<void> RadioIndication_v1_5::cellInfoList_1_5(
-        RadioIndicationType /*type*/,
-        const ::android::hardware::hidl_vec<
-                ::android::hardware::radio::V1_5::CellInfo>& /*records*/) {
     return Void();
 }
