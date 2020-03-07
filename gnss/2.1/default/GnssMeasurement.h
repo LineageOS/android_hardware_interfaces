@@ -66,11 +66,17 @@ struct GnssMeasurement : public IGnssMeasurement {
     void reportMeasurement(const GnssDataV2_0&);
     void reportMeasurement(const GnssDataV2_1&);
 
+    // Guarded by mMutex
     static sp<V2_1::IGnssMeasurementCallback> sCallback_2_1;
+
+    // Guarded by mMutex
     static sp<V2_0::IGnssMeasurementCallback> sCallback_2_0;
+
     std::atomic<long> mMinIntervalMillis;
     std::atomic<bool> mIsActive;
     std::thread mThread;
+
+    // Synchronization lock for sCallback_2_1 and sCallback_2_0
     mutable std::mutex mMutex;
 };
 
