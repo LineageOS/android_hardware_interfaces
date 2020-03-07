@@ -17,6 +17,7 @@
 package android.hardware.radio@1.5;
 
 import @1.0::ApnAuthType;
+import @1.0::AppStatus;
 import @1.0::DataProfileId;
 import @1.0::DataProfileInfoType;
 import @1.0::GsmSignalStrength;
@@ -43,6 +44,7 @@ import @1.2::TdscdmaSignalStrength;
 import @1.2::WcdmaSignalStrength;
 import @1.4::AccessNetwork;
 import @1.4::ApnTypes;
+import @1.4::CardStatus;
 import @1.4::CellIdentityNr;
 import @1.4::DataCallFailCause;
 import @1.4::DataConnActiveStatus;
@@ -1033,4 +1035,21 @@ enum PersoSubstate : @1.0::PersoSubstate {
     /** Network subset service provider */
     SIM_NS_SP,
     SIM_NS_SP_PUK,
+};
+
+/** Extended from @1.0::AppStatus to update PersoSubstate to 1.5 version. */
+struct AppStatus {
+    @1.0::AppStatus base;
+
+    /** Applicable only if appState == SUBSCRIPTION_PERSO */
+    PersoSubstate persoSubstate;
+};
+
+
+/** Extended from @1.4::CardStatus to use 1.5 version of AppStatus. */
+struct CardStatus {
+    @1.4::CardStatus base;
+
+    /** size <= RadioConst::CARD_MAX_APPS */
+    vec<AppStatus> applications;
 };
