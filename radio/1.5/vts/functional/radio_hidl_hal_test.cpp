@@ -41,7 +41,7 @@ void RadioHidlTest_v1_5::SetUp() {
     ASSERT_NE(nullptr, radioConfig.get());
 
     /* Enforce Vts Testing with Sim Status Present only. */
-    EXPECT_EQ(CardState::PRESENT, cardStatus.base.base.cardState);
+    EXPECT_EQ(CardState::PRESENT, cardStatus.base.base.base.cardState);
 }
 
 /*
