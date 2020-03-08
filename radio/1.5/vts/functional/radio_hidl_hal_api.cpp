@@ -408,7 +408,7 @@ TEST_P(RadioHidlTest_v1_5, setLinkCapacityReportingCriteria_1_5_Geran) {
  */
 TEST_P(RadioHidlTest_v1_5, togglingUiccApplicationsSimAbsent) {
     // This test case only test SIM ABSENT case.
-    if (cardStatus.base.base.cardState != CardState::ABSENT) return;
+    if (cardStatus.base.base.base.cardState != CardState::ABSENT) return;
 
     // Disable Uicc applications.
     serial = GetRandomSerialNumber();
@@ -435,7 +435,7 @@ TEST_P(RadioHidlTest_v1_5, togglingUiccApplicationsSimAbsent) {
  */
 TEST_P(RadioHidlTest_v1_5, togglingUiccApplicationsSimPresent) {
     // This test case only test SIM ABSENT case.
-    if (cardStatus.base.base.cardState != CardState::PRESENT) return;
+    if (cardStatus.base.base.base.cardState != CardState::PRESENT) return;
 
     // Disable Uicc applications.
     serial = GetRandomSerialNumber();
@@ -489,9 +489,9 @@ TEST_P(RadioHidlTest_v1_5, areUiccApplicationsEnabled) {
 
     // If SIM is absent, RadioError::SIM_ABSENT should be thrown. Otherwise there shouldn't be any
     // error.
-    if (cardStatus.base.base.cardState == CardState::ABSENT) {
+    if (cardStatus.base.base.base.cardState == CardState::ABSENT) {
         EXPECT_EQ(RadioError::SIM_ABSENT, radioRsp_v1_5->rspInfo.error);
-    } else if (cardStatus.base.base.cardState == CardState::PRESENT) {
+    } else if (cardStatus.base.base.base.cardState == CardState::PRESENT) {
         EXPECT_EQ(RadioError::NONE, radioRsp_v1_5->rspInfo.error);
     }
 }
@@ -563,9 +563,9 @@ TEST_P(RadioHidlTest_v1_5, startNetworkScan) {
     EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
     ALOGI("startNetworkScan, rspInfo.error = %s\n", toString(radioRsp_v1_5->rspInfo.error).c_str());
 
-    if (cardStatus.base.base.cardState == CardState::ABSENT) {
+    if (cardStatus.base.base.base.cardState == CardState::ABSENT) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error, {RadioError::SIM_ABSENT}));
-    } else if (cardStatus.base.base.cardState == CardState::PRESENT) {
+    } else if (cardStatus.base.base.base.cardState == CardState::PRESENT) {
         // OPERATION_NOT_ALLOWED should not be allowed; however, some vendors do
         // not support the required manual GSM search functionality. This is
         // tracked in b/112206766. Modems have "GSM" rat scan need to
@@ -592,10 +592,10 @@ TEST_P(RadioHidlTest_v1_5, startNetworkScan_InvalidArgument) {
     ALOGI("startNetworkScan_InvalidArgument, rspInfo.error = %s\n",
           toString(radioRsp_v1_5->rspInfo.error).c_str());
 
-    if (cardStatus.base.base.cardState == CardState::ABSENT) {
+    if (cardStatus.base.base.base.cardState == CardState::ABSENT) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
                                      {RadioError::SIM_ABSENT, RadioError::INVALID_ARGUMENTS}));
-    } else if (cardStatus.base.base.cardState == CardState::PRESENT) {
+    } else if (cardStatus.base.base.base.cardState == CardState::PRESENT) {
         ASSERT_TRUE(CheckAnyOfErrors(
                 radioRsp_v1_5->rspInfo.error,
                 {RadioError::INVALID_ARGUMENTS, RadioError::REQUEST_NOT_SUPPORTED}));
@@ -631,10 +631,10 @@ TEST_P(RadioHidlTest_v1_5, startNetworkScan_InvalidInterval1) {
     EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
     ALOGI("startNetworkScan_InvalidInterval1, rspInfo.error = %s\n",
           toString(radioRsp_v1_5->rspInfo.error).c_str());
-    if (cardStatus.base.base.cardState == CardState::ABSENT) {
+    if (cardStatus.base.base.base.cardState == CardState::ABSENT) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
                                      {RadioError::SIM_ABSENT, RadioError::INVALID_ARGUMENTS}));
-    } else if (cardStatus.base.base.cardState == CardState::PRESENT) {
+    } else if (cardStatus.base.base.base.cardState == CardState::PRESENT) {
         ASSERT_TRUE(CheckAnyOfErrors(
                 radioRsp_v1_5->rspInfo.error,
                 {RadioError::INVALID_ARGUMENTS, RadioError::REQUEST_NOT_SUPPORTED}));
@@ -670,10 +670,10 @@ TEST_P(RadioHidlTest_v1_5, startNetworkScan_InvalidInterval2) {
     EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
     ALOGI("startNetworkScan_InvalidInterval2, rspInfo.error = %s\n",
           toString(radioRsp_v1_5->rspInfo.error).c_str());
-    if (cardStatus.base.base.cardState == CardState::ABSENT) {
+    if (cardStatus.base.base.base.cardState == CardState::ABSENT) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
                                      {RadioError::SIM_ABSENT, RadioError::INVALID_ARGUMENTS}));
-    } else if (cardStatus.base.base.cardState == CardState::PRESENT) {
+    } else if (cardStatus.base.base.base.cardState == CardState::PRESENT) {
         ASSERT_TRUE(CheckAnyOfErrors(
                 radioRsp_v1_5->rspInfo.error,
                 {RadioError::INVALID_ARGUMENTS, RadioError::REQUEST_NOT_SUPPORTED}));
@@ -709,10 +709,10 @@ TEST_P(RadioHidlTest_v1_5, startNetworkScan_InvalidMaxSearchTime1) {
     EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
     ALOGI("startNetworkScan_InvalidMaxSearchTime1, rspInfo.error = %s\n",
           toString(radioRsp_v1_5->rspInfo.error).c_str());
-    if (cardStatus.base.base.cardState == CardState::ABSENT) {
+    if (cardStatus.base.base.base.cardState == CardState::ABSENT) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
                                      {RadioError::SIM_ABSENT, RadioError::INVALID_ARGUMENTS}));
-    } else if (cardStatus.base.base.cardState == CardState::PRESENT) {
+    } else if (cardStatus.base.base.base.cardState == CardState::PRESENT) {
         ASSERT_TRUE(CheckAnyOfErrors(
                 radioRsp_v1_5->rspInfo.error,
                 {RadioError::INVALID_ARGUMENTS, RadioError::REQUEST_NOT_SUPPORTED}));
@@ -748,10 +748,10 @@ TEST_P(RadioHidlTest_v1_5, startNetworkScan_InvalidMaxSearchTime2) {
     EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
     ALOGI("startNetworkScan_InvalidMaxSearchTime2, rspInfo.error = %s\n",
           toString(radioRsp_v1_5->rspInfo.error).c_str());
-    if (cardStatus.base.base.cardState == CardState::ABSENT) {
+    if (cardStatus.base.base.base.cardState == CardState::ABSENT) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
                                      {RadioError::SIM_ABSENT, RadioError::INVALID_ARGUMENTS}));
-    } else if (cardStatus.base.base.cardState == CardState::PRESENT) {
+    } else if (cardStatus.base.base.base.cardState == CardState::PRESENT) {
         ASSERT_TRUE(CheckAnyOfErrors(
                 radioRsp_v1_5->rspInfo.error,
                 {RadioError::INVALID_ARGUMENTS, RadioError::REQUEST_NOT_SUPPORTED}));
@@ -787,10 +787,10 @@ TEST_P(RadioHidlTest_v1_5, startNetworkScan_InvalidPeriodicity1) {
     EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
     ALOGI("startNetworkScan_InvalidPeriodicity1, rspInfo.error = %s\n",
           toString(radioRsp_v1_5->rspInfo.error).c_str());
-    if (cardStatus.base.base.cardState == CardState::ABSENT) {
+    if (cardStatus.base.base.base.cardState == CardState::ABSENT) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
                                      {RadioError::SIM_ABSENT, RadioError::INVALID_ARGUMENTS}));
-    } else if (cardStatus.base.base.cardState == CardState::PRESENT) {
+    } else if (cardStatus.base.base.base.cardState == CardState::PRESENT) {
         ASSERT_TRUE(CheckAnyOfErrors(
                 radioRsp_v1_5->rspInfo.error,
                 {RadioError::INVALID_ARGUMENTS, RadioError::REQUEST_NOT_SUPPORTED}));
@@ -826,10 +826,10 @@ TEST_P(RadioHidlTest_v1_5, startNetworkScan_InvalidPeriodicity2) {
     EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
     ALOGI("startNetworkScan_InvalidPeriodicity2, rspInfo.error = %s\n",
           toString(radioRsp_v1_5->rspInfo.error).c_str());
-    if (cardStatus.base.base.cardState == CardState::ABSENT) {
+    if (cardStatus.base.base.base.cardState == CardState::ABSENT) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
                                      {RadioError::SIM_ABSENT, RadioError::INVALID_ARGUMENTS}));
-    } else if (cardStatus.base.base.cardState == CardState::PRESENT) {
+    } else if (cardStatus.base.base.base.cardState == CardState::PRESENT) {
         ASSERT_TRUE(CheckAnyOfErrors(
                 radioRsp_v1_5->rspInfo.error,
                 {RadioError::INVALID_ARGUMENTS, RadioError::REQUEST_NOT_SUPPORTED}));
@@ -865,10 +865,10 @@ TEST_P(RadioHidlTest_v1_5, startNetworkScan_GoodRequest1) {
     EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
     ALOGI("startNetworkScan_GoodRequest1, rspInfo.error = %s\n",
           toString(radioRsp_v1_5->rspInfo.error).c_str());
-    if (cardStatus.base.base.cardState == CardState::ABSENT) {
+    if (cardStatus.base.base.base.cardState == CardState::ABSENT) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
                                      {RadioError::NONE, RadioError::SIM_ABSENT}));
-    } else if (cardStatus.base.base.cardState == CardState::PRESENT) {
+    } else if (cardStatus.base.base.base.cardState == CardState::PRESENT) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
                                      {RadioError::NONE, RadioError::INVALID_ARGUMENTS,
                                       RadioError::REQUEST_NOT_SUPPORTED}));
@@ -905,10 +905,10 @@ TEST_P(RadioHidlTest_v1_5, startNetworkScan_GoodRequest2) {
     EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
     ALOGI("startNetworkScan_GoodRequest2, rspInfo.error = %s\n",
           toString(radioRsp_v1_5->rspInfo.error).c_str());
-    if (cardStatus.base.base.cardState == CardState::ABSENT) {
+    if (cardStatus.base.base.base.cardState == CardState::ABSENT) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
                                      {RadioError::NONE, RadioError::SIM_ABSENT}));
-    } else if (cardStatus.base.base.cardState == CardState::PRESENT) {
+    } else if (cardStatus.base.base.base.cardState == CardState::PRESENT) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
                                      {RadioError::NONE, RadioError::INVALID_ARGUMENTS,
                                       RadioError::REQUEST_NOT_SUPPORTED}));
@@ -961,11 +961,11 @@ TEST_P(RadioHidlTest_v1_5, setupDataCall_1_5) {
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_5->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
 
-    if (cardStatus.base.base.cardState == CardState::ABSENT) {
+    if (cardStatus.base.base.base.cardState == CardState::ABSENT) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
                                      {RadioError::SIM_ABSENT, RadioError::RADIO_NOT_AVAILABLE,
                                       RadioError::OP_NOT_ALLOWED_BEFORE_REG_TO_NW}));
-    } else if (cardStatus.base.base.cardState == CardState::PRESENT) {
+    } else if (cardStatus.base.base.base.cardState == CardState::PRESENT) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
                                      {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE,
                                       RadioError::OP_NOT_ALLOWED_BEFORE_REG_TO_NW}));
@@ -1006,10 +1006,10 @@ TEST_P(RadioHidlTest_v1_5, setInitialAttachApn_1_5) {
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_5->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
 
-    if (cardStatus.base.base.cardState == CardState::ABSENT) {
+    if (cardStatus.base.base.base.cardState == CardState::ABSENT) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
                                      {RadioError::SIM_ABSENT, RadioError::RADIO_NOT_AVAILABLE}));
-    } else if (cardStatus.base.base.cardState == CardState::PRESENT) {
+    } else if (cardStatus.base.base.base.cardState == CardState::PRESENT) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
                                      {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE}));
     }
@@ -1053,10 +1053,10 @@ TEST_P(RadioHidlTest_v1_5, setDataProfile_1_5) {
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_5->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
 
-    if (cardStatus.base.base.cardState == CardState::ABSENT) {
+    if (cardStatus.base.base.base.cardState == CardState::ABSENT) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
                                      {RadioError::SIM_ABSENT, RadioError::RADIO_NOT_AVAILABLE}));
-    } else if (cardStatus.base.base.cardState == CardState::PRESENT) {
+    } else if (cardStatus.base.base.base.cardState == CardState::PRESENT) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
                                      {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE}));
     }
@@ -1106,12 +1106,12 @@ TEST_P(RadioHidlTest_v1_5, setNetworkSelectionModeManual_1_5) {
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_5->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
 
-    if (cardStatus.base.base.cardState == CardState::ABSENT) {
+    if (cardStatus.base.base.base.cardState == CardState::ABSENT) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
                                      {RadioError::NONE, RadioError::ILLEGAL_SIM_OR_ME,
                                       RadioError::INVALID_ARGUMENTS, RadioError::INVALID_STATE},
                                      CHECK_GENERAL_ERROR));
-    } else if (cardStatus.base.base.cardState == CardState::PRESENT) {
+    } else if (cardStatus.base.base.base.cardState == CardState::PRESENT) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
                                      {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE,
                                       RadioError::INVALID_ARGUMENTS, RadioError::INVALID_STATE},
@@ -1155,7 +1155,7 @@ TEST_P(RadioHidlTest_v1_5, sendCdmaSmsExpectMore) {
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_5->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
 
-    if (cardStatus.base.base.cardState == CardState::ABSENT) {
+    if (cardStatus.base.base.base.cardState == CardState::ABSENT) {
         ASSERT_TRUE(CheckAnyOfErrors(
                 radioRsp_v1_5->rspInfo.error,
                 {RadioError::INVALID_ARGUMENTS, RadioError::INVALID_STATE, RadioError::SIM_ABSENT},
