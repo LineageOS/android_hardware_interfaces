@@ -1584,6 +1584,17 @@ enum OperationType : int32_t {
      * * 3: An optional {@link OperandType::BOOL} scalar, default to false.
      *      Set to true to specify NCHW data layout for input0 and output0.
      *      Available since HAL version 1.2.
+     * * 4: Align corners. An optional {@link OperandType::BOOL}
+     *      scalar, default to false.  If True, the centers of the 4 corner
+     *      pixels of the input and output tensors are aligned, preserving the
+     *      values at the corner pixels.
+     *      Available since HAL version 1.3.
+     * * 5: Half pixel centers. An optional {@link OperandType::BOOL}
+     *      scalar, default to false. If True, the pixel centers are assumed to
+     *      be at (0.5, 0.5). This is the default behavior of image.resize in
+     *      TF 2.0. If this parameter is True, then align_corners parameter
+     *      must be False.
+     *      Available since HAL version 1.3.
      *
      * Inputs (resizing by scale, since HAL version 1.2):
      * * 0: A 4-D tensor, of shape [batches, height, width, depth], specifying
@@ -1602,6 +1613,17 @@ enum OperationType : int32_t {
      *      {@link OperandType::FLOAT32} otherwise.
      * * 3: An optional {@link OperandType::BOOL} scalar, default to false.
      *      Set to true to specify NCHW data layout for input0 and output0.
+     * * 4: Align corners. An optional {@link OperandType::BOOL}
+     *      scalar, default to false.  If True, the centers of the 4 corner
+     *      pixels of the input and output tensors are aligned, preserving the
+     *      values at the corner pixels.
+     *      Available since HAL version 1.3.
+     * * 5: Half pixel centers. An optional {@link OperandType::BOOL}
+     *      scalar, default to false. If True, the pixel centers are assumed to
+     *      be at (0.5, 0.5). This is the default behavior of image.resize in
+     *      TF 2.0. If this parameter is True, then align_corners parameter
+     *      must be False.
+     *      Available since HAL version 1.3.
      *
      * Outputs:
      * * 0: The output 4-D tensor, of shape
@@ -4870,6 +4892,17 @@ enum OperationType : int32_t {
      *      height of the output tensor.
      * * 3: An {@link OperandType::BOOL} scalar, default to false.
      *      Set to true to specify NCHW data layout for input0 and output0.
+     * * 4: Align corners. An optional {@link OperandType::BOOL}
+     *      scalar, default to false.  If True, the centers of the 4 corner
+     *      pixels of the input and output tensors are aligned, preserving the
+     *      values at the corner pixels.
+     *      Available since HAL version 1.3.
+     * * 5: Half pixel centers. An optional {@link OperandType::BOOL}
+     *      scalar, default to false. If True, the pixel centers are assumed to
+     *      be at (0.5, 0.5). This is the default behavior of image.resize in
+     *      TF 2.0. If this parameter is True, then align_corners parameter
+     *      must be False.
+     *      Available since HAL version 1.3.
      *
      * Inputs (resizing by scale):
      * * 0: A 4-D tensor, of shape [batches, height, width, depth], specifying
@@ -4888,6 +4921,17 @@ enum OperationType : int32_t {
      *      {@link OperandType::FLOAT32} otherwise.
      * * 3: An {@link OperandType::BOOL} scalar, default to false.
      *      Set to true to specify NCHW data layout for input0 and output0.
+     * * 4: Align corners. An optional {@link OperandType::BOOL}
+     *      scalar, default to false.  If True, the centers of the 4 corner
+     *      pixels of the input and output tensors are aligned, preserving the
+     *      values at the corner pixels.
+     *      Available since HAL version 1.3.
+     * * 5: Half pixel centers. An optional {@link OperandType::BOOL}
+     *      scalar, default to false. If True, the pixel centers are assumed to
+     *      be at (0.5, 0.5). This is the default behavior of image.resize in
+     *      TF 2.0. If this parameter is True, then align_corners parameter
+     *      must be False.
+     *      Available since HAL version 1.3.
      *
      * Outputs:
      * * 0: The output 4-D tensor, of shape

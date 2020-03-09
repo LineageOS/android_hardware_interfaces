@@ -47,7 +47,8 @@ interface IExecutionCallback extends @1.2::IExecutionCallback {
      *                 corresponding output
      *               - INVALID_ARGUMENT if one of the input arguments to
      *                 prepareModel is invalid
-     *               - MISSED_DEADLINE_* if the deadline could not be met
+     *               - MISSED_DEADLINE_* if the execution is aborted because it
+     *                 cannot be completed by the deadline
      *               - RESOURCE_EXHAUSTED_* if the task was aborted by the driver
      * @param outputShapes A list of shape information of model output operands.
      *                     The index into "outputShapes" corresponds with to index

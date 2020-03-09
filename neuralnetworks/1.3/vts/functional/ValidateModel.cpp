@@ -44,18 +44,12 @@ static void validateGetSupportedOperations(const sp<IDevice>& device, const std:
 }
 
 static void validatePrepareModel(const sp<IDevice>& device, const std::string& message,
-                                 const Model& model, ExecutionPreference preference,
-                                 bool testDeadline) {
+                                 const Model& model, ExecutionPreference preference) {
     SCOPED_TRACE(message + " [prepareModel_1_3]");
-
-    OptionalTimePoint deadline;
-    if (testDeadline) {
-        deadline.nanosecondsSinceEpoch(std::numeric_limits<uint64_t>::max());
-    }
 
     sp<PreparedModelCallback> preparedModelCallback = new PreparedModelCallback();
     Return<ErrorStatus> prepareLaunchStatus = device->prepareModel_1_3(
-            model, preference, kDefaultPriority, deadline, hidl_vec<hidl_handle>(),
+            model, preference, kDefaultPriority, {}, hidl_vec<hidl_handle>(),
             hidl_vec<hidl_handle>(), HidlToken(), preparedModelCallback);
     ASSERT_TRUE(prepareLaunchStatus.isOk());
     ASSERT_EQ(ErrorStatus::INVALID_ARGUMENT, static_cast<ErrorStatus>(prepareLaunchStatus));
@@ -79,13 +73,12 @@ static bool validExecutionPreference(ExecutionPreference preference) {
 // to the model does not leave this function.
 static void validate(const sp<IDevice>& device, const std::string& message, Model model,
                      const std::function<void(Model*)>& mutation,
-                     ExecutionPreference preference = ExecutionPreference::FAST_SINGLE_ANSWER,
-                     bool testDeadline = false) {
+                     ExecutionPreference preference = ExecutionPreference::FAST_SINGLE_ANSWER) {
     mutation(&model);
-    if (validExecutionPreference(preference) && !testDeadline) {
+    if (validExecutionPreference(preference)) {
         validateGetSupportedOperations(device, message, model);
     }
-    validatePrepareModel(device, message, model, preference, testDeadline);
+    validatePrepareModel(device, message, model, preference);
 }
 
 static uint32_t addOperand(Model* model) {
@@ -585,6 +578,8 @@ static bool removeOperationInputSkip(const Operation& op, size_t input) {
     // - CONV_2D, DEPTHWISE_CONV_2D, MAX_POOL_2D, AVERAGE_POOL_2D, L2_POOL_2D, RESIZE_BILINEAR,
     //   SPACE_TO_DEPTH, SPACE_TO_DEPTH, SPACE_TO_BATCH_ND, BATCH_TO_SPACE_ND can have an optional
     //   layout parameter.
+    //   RESIZE_BILINEAR and RESIZE_NEAREST_NEIGHBOR can have optional
+    //   align_corners and half_pixel_centers parameters.
     // - L2_NORMALIZATION, LOCAL_RESPONSE_NORMALIZATION, SOFTMAX can have an optional axis
     //   parameter.
     switch (op.type) {
@@ -607,7 +602,12 @@ static bool removeOperationInputSkip(const Operation& op, size_t input) {
             }
         } break;
         case OperationType::RESIZE_BILINEAR: {
-            if (op.inputs.size() == 4 && input == 3) {
+            if (op.inputs.size() >= 4 && input >= 3) {
+                return true;
+            }
+        } break;
+        case OperationType::RESIZE_NEAREST_NEIGHBOR: {
+            if (op.inputs.size() >= 5 && input >= 3) {
                 return true;
             }
         } break;
@@ -693,7 +693,9 @@ static bool addOperationInputSkip(const Operation& op) {
     //   parameter.
     if ((op.type == OperationType::L2_NORMALIZATION && op.inputs.size() == 1) ||
         (op.type == OperationType::LOCAL_RESPONSE_NORMALIZATION && op.inputs.size() == 5) ||
-        (op.type == OperationType::SOFTMAX && op.inputs.size() == 2)) {
+        (op.type == OperationType::SOFTMAX && op.inputs.size() == 2) ||
+        (op.type == OperationType::RESIZE_BILINEAR && op.inputs.size() < 6) ||
+        (op.type == OperationType::RESIZE_NEAREST_NEIGHBOR && op.inputs.size() < 6)) {
         return true;
     }
     return false;
@@ -744,19 +746,9 @@ static void mutateExecutionPreferenceTest(const sp<IDevice>& device, const Model
     }
 }
 
-///////////////////////// DEADLINE /////////////////////////
-
-static void deadlineTest(const sp<IDevice>& device, const Model& model) {
-    const std::string message = "deadlineTest: deadline not supported";
-    const auto noop = [](Model*) {};
-    validate(device, message, model, noop, ExecutionPreference::FAST_SINGLE_ANSWER,
-             /*testDeadline=*/true);
-}
-
 ////////////////////////// ENTRY POINT //////////////////////////////
 
-void validateModel(const sp<IDevice>& device, const Model& model,
-                   bool prepareModelDeadlineSupported) {
+void validateModel(const sp<IDevice>& device, const Model& model) {
     mutateOperandTypeTest(device, model);
     mutateOperandRankTest(device, model);
     mutateOperandScaleTest(device, model);
@@ -772,9 +764,6 @@ void validateModel(const sp<IDevice>& device, const Model& model,
     addOperationInputTest(device, model);
     addOperationOutputTest(device, model);
     mutateExecutionPreferenceTest(device, model);
-    if (!prepareModelDeadlineSupported) {
-        deadlineTest(device, model);
-    }
 }
 
 }  // namespace android::hardware::neuralnetworks::V1_3::vts::functional

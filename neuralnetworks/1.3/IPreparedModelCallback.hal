@@ -47,8 +47,8 @@ interface IPreparedModelCallback extends @1.2::IPreparedModelCallback {
      *                 unspecified error
      *               - INVALID_ARGUMENT if one of the input arguments to
      *                 prepareModel is invalid
-     *               - MISSED_DEADLINE_* if the deadline for executing a model
-     *                 cannot be met
+     *               - MISSED_DEADLINE_* if the preparation is aborted because
+     *                 the model cannot be prepared by the deadline
      *               - RESOURCE_EXHAUSTED_* if the task was aborted by the
      *                 driver
      * @param preparedModel A model that has been asynchronously prepared for
