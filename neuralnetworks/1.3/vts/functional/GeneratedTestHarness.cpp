@@ -858,12 +858,6 @@ void Execute(const sp<IDevice>& device, const TestModel& testModel, TestKind tes
 void GeneratedTestBase::SetUp() {
     testing::TestWithParam<GeneratedTestParam>::SetUp();
     ASSERT_NE(kDevice, nullptr);
-
-    const Return<void> ret =
-            kDevice->supportsDeadlines([this](bool prepareModelDeadline, bool executionDeadline) {
-                mSupportsDeadlines = {prepareModelDeadline, executionDeadline};
-            });
-    ASSERT_TRUE(ret.isOk());
 }
 
 std::vector<NamedModel> getNamedModels(const FilterFn& filter) {

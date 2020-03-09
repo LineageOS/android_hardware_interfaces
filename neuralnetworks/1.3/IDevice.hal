@@ -48,19 +48,6 @@ interface IDevice extends @1.2::IDevice {
     getCapabilities_1_3() generates (ErrorStatus status, Capabilities capabilities);
 
     /**
-     * Returns whether the device is able to complete or abort a task within a
-     * specified duration.
-     *
-     * @return prepareModelDeadline 'true' if the device supports completing or
-     *     aborting model preparation by the deadline when the deadline is supplied,
-     *     'false' otherwise.
-     * @return executionDeadline 'true' if the device supports completing or
-     *     aborting an execution by the deadline when the deadline is supplied,
-     *     'false' otherwise.
-     */
-    supportsDeadlines() generates (bool prepareModelDeadline, bool executionDeadline);
-
-    /**
      * Gets the supported operations in a model.
      *
      * getSupportedOperations indicates which operations of the top-level
@@ -140,14 +127,10 @@ interface IDevice extends @1.2::IDevice {
      *
      * prepareModel_1_3 can be called with an optional deadline. If the model
      * is not able to be prepared before the provided deadline, the model
-     * preparation must be aborted, and either {@link
+     * preparation may be aborted, and either {@link
      * ErrorStatus::MISSED_DEADLINE_TRANSIENT} or {@link
-     * ErrorStatus::MISSED_DEADLINE_PERSISTENT} must be returned. The error due
+     * ErrorStatus::MISSED_DEADLINE_PERSISTENT} may be returned. The error due
      * to an abort must be sent the same way as other errors, described above.
-     * If the service reports that it does not support preparation deadlines via
-     * IDevice::supportsDeadlines, and prepareModel_1_3 is called with a
-     * deadline, then the argument is invalid, and {@link
-     * ErrorStatus::INVALID_ARGUMENT} must be returned.
      *
      * Optionally, the driver may save the prepared model to cache during the
      * asynchronous preparation. Any error that occurs when saving to cache must
@@ -172,9 +155,9 @@ interface IDevice extends @1.2::IDevice {
      *     model.
      * @param priority The priority of the prepared model relative to other
      *     prepared models owned by the client.
-     * @param deadline The time by which the model must be prepared. If the
-     *     model cannot be prepared by the deadline, the preparation must be
-     *     aborted.
+     * @param deadline The time by which the model is expected to be prepared.
+     *     If the model cannot be prepared by the deadline, the preparation may
+     *     be aborted.
      * @param modelCache A vector of handles with each entry holding exactly one
      *     cache file descriptor for the security-sensitive cache. The length of
      *     the vector must either be 0 indicating that caching information is
@@ -209,8 +192,8 @@ interface IDevice extends @1.2::IDevice {
      *     - GENERAL_FAILURE if there is an unspecified error
      *     - INVALID_ARGUMENT if one of the input arguments related to preparing
      *       the model is invalid
-     *     - MISSED_DEADLINE_* if the deadline for preparing a model cannot be
-     *       met
+     *     - MISSED_DEADLINE_* if the preparation is aborted because the model
+     *       cannot be prepared by the deadline
      *     - RESOURCE_EXHAUSTED_* if the task was aborted by the driver
      */
     prepareModel_1_3(Model model, ExecutionPreference preference,
@@ -262,14 +245,11 @@ interface IDevice extends @1.2::IDevice {
      *
      * prepareModelFromCache_1_3 can be called with an optional deadline. If the
      * model is not able to prepared before the provided deadline, the model
-     * preparation must be aborted, and either {@link
+     * preparation may be aborted, and either {@link
      * ErrorStatus::MISSED_DEADLINE_TRANSIENT}
-     * or {@link ErrorStatus::MISSED_DEADLINE_PERSISTENT} must be returned. The
+     * or {@link ErrorStatus::MISSED_DEADLINE_PERSISTENT} may be returned. The
      * error due to an abort must be sent the same way as other errors,
-     * described above. If the service reports that it does not support
-     * preparation deadlines via IDevice::supportsDeadlines, and
-     * prepareModelFromCache_1_3 is called with a deadline, then the argument is
-     * invalid, and {@link ErrorStatus::INVALID_ARGUMENT} must be returned.
+     * described above.
      *
      * The only information that may be unknown to the model at this stage is
      * the shape of the tensors, which may only be known at execution time. As
@@ -279,9 +259,9 @@ interface IDevice extends @1.2::IDevice {
      * used with different shapes of inputs on different (possibly concurrent)
      * executions.
      *
-     * @param deadline The time by which the model must be prepared. If the
-     *     model cannot be prepared by the deadline, the preparation must be
-     *     aborted.
+     * @param deadline The time by which the model is expected to be prepared.
+     *     If the model cannot be prepared by the deadline, the preparation may
+     *     be aborted.
      * @param modelCache A vector of handles with each entry holding exactly one
      *     cache file descriptor for the security-sensitive cache. The length of
      *     the vector must match the numModelCache returned from getNumberOfCacheFilesNeeded.
@@ -307,8 +287,8 @@ interface IDevice extends @1.2::IDevice {
      *     - GENERAL_FAILURE if caching is not supported or if there is an
      *       unspecified error
      *     - INVALID_ARGUMENT if one of the input arguments is invalid
-     *     - MISSED_DEADLINE_* if the deadline for preparing a model cannot be
-     *       met
+     *     - MISSED_DEADLINE_* if the preparation is aborted because the model
+     *       cannot be prepared by the deadline
      *     - RESOURCE_EXHAUSTED_* if the task was aborted by the driver
      */
     prepareModelFromCache_1_3(OptionalTimePoint deadline,
