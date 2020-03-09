@@ -39,7 +39,7 @@ parcelable PlaneLayoutComponent {
     /**
      * The type of this plane layout component.
      *
-     * android.hardware.graphics.common.PlaneLayoutComponent defines the standard
+     * android.hardware.graphics.common.PlaneLayoutComponentType defines the standard
      * plane layout component types. Vendors may extend this type to include any
      * non-standard plane layout component types. For instructions on how to
      * create a vendor extension, refer to ExtendableType.aidl.
