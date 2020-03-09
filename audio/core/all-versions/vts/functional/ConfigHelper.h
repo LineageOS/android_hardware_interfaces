@@ -40,7 +40,7 @@ struct ConfigHelper {
             return devs.getDevice(AUDIO_DEVICE_IN_BUILTIN_MIC, {}, AUDIO_FORMAT_DEFAULT);
         };
         auto primaryMic = getMic(policyConfig.getPrimaryModule()->getDeclaredDevices());
-        auto availableMic = getMic(policyConfig.getAvailableInputDevices());
+        auto availableMic = getMic(policyConfig.getInputDevices());
 
         return primaryMic != nullptr && primaryMic->equals(availableMic);
     }
