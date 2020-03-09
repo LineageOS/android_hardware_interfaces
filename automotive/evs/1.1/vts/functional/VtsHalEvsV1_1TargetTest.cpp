@@ -97,18 +97,19 @@ public:
         std::string service_name = GetParam();
         pEnumerator = IEvsEnumerator::getService(service_name);
         ASSERT_NE(pEnumerator.get(), nullptr);
+        LOG(INFO) << "Test target service: " << service_name;
 
         mIsHwModule = pEnumerator->isHardware();
     }
 
     virtual void TearDown() override {
         // Attempt to close any active camera
-        for (auto &&c : activeCameras) {
-            sp<IEvsCamera_1_1> cam = c.promote();
+        for (auto &&cam : activeCameras) {
             if (cam != nullptr) {
                 pEnumerator->closeCamera(cam);
             }
         }
+        activeCameras.clear();
     }
 
 protected:
@@ -235,7 +236,7 @@ protected:
     std::vector<CameraDesc>         cameraInfo;    // Empty unless/until loadCameraList() is called
     bool                            mIsHwModule;   // boolean to tell current module under testing
                                                    // is HW module implementation.
-    std::deque<wp<IEvsCamera_1_1>>  activeCameras; // A list of active camera handles that are
+    std::deque<sp<IEvsCamera_1_1>>  activeCameras; // A list of active camera handles that are
                                                    // needed to be cleaned up.
     std::vector<UltrasonicsArrayDesc>
             ultrasonicsArraysInfo;                           // Empty unless/until
@@ -273,10 +274,7 @@ TEST_P(EvsHidlTest, CameraOpenClean) {
         }
 
         for (int pass = 0; pass < 2; pass++) {
-            activeCameras.clear();
-            sp<IEvsCamera_1_1> pCam =
-                IEvsCamera_1_1::castFrom(pEnumerator->openCamera_1_1(cam.v1.cameraId, nullCfg))
-                .withDefault(nullptr);
+            sp<IEvsCamera_1_1> pCam = pEnumerator->openCamera_1_1(cam.v1.cameraId, nullCfg);
             ASSERT_NE(pCam, nullptr);
 
             for (auto&& devName : devices) {
@@ -302,15 +300,16 @@ TEST_P(EvsHidlTest, CameraOpenClean) {
             const auto id = 0xFFFFFFFF; // meaningless id
             hidl_vec<uint8_t> values;
             auto err = pCam->setExtendedInfo_1_1(id, values);
-            ASSERT_EQ(EvsResult::INVALID_ARG, err);
+            ASSERT_NE(EvsResult::INVALID_ARG, err);
 
             pCam->getExtendedInfo_1_1(id, [](const auto& result, const auto& data) {
-                ASSERT_EQ(EvsResult::INVALID_ARG, result);
+                ASSERT_NE(EvsResult::INVALID_ARG, result);
                 ASSERT_EQ(0, data.size());
             });
 
             // Explicitly close the camera so resources are released right away
             pEnumerator->closeCamera(pCam);
+            activeCameras.clear();
         }
     }
 }
@@ -378,6 +377,7 @@ TEST_P(EvsHidlTest, CameraOpenAggressive) {
 
         // Close the superceded camera
         pEnumerator->closeCamera(pCam);
+        activeCameras.pop_front();
 
         // Verify that the second camera instance self-identifies correctly
         pCam2->getCameraInfo_1_1([&cam](CameraDesc desc) {
@@ -388,6 +388,7 @@ TEST_P(EvsHidlTest, CameraOpenAggressive) {
 
         // Close the second camera instance
         pEnumerator->closeCamera(pCam2);
+        activeCameras.pop_front();
     }
 
     // Sleep here to ensure the destructor cleanup has time to run so we don't break follow on tests
@@ -418,7 +419,6 @@ TEST_P(EvsHidlTest, CameraStreamPerformance) {
             continue;
         }
 
-        activeCameras.clear();
         sp<IEvsCamera_1_1> pCam =
             IEvsCamera_1_1::castFrom(pEnumerator->openCamera_1_1(cam.v1.cameraId, nullCfg))
             .withDefault(nullptr);
@@ -484,6 +484,7 @@ TEST_P(EvsHidlTest, CameraStreamPerformance) {
 
         // Explicitly release the camera
         pEnumerator->closeCamera(pCam);
+        activeCameras.clear();
     }
 }
 
@@ -515,7 +516,6 @@ TEST_P(EvsHidlTest, CameraStreamBuffering) {
             continue;
         }
 
-        activeCameras.clear();
         sp<IEvsCamera_1_1> pCam =
             IEvsCamera_1_1::castFrom(pEnumerator->openCamera_1_1(cam.v1.cameraId, nullCfg))
             .withDefault(nullptr);
@@ -568,6 +568,7 @@ TEST_P(EvsHidlTest, CameraStreamBuffering) {
 
         // Explicitly release the camera
         pEnumerator->closeCamera(pCam);
+        activeCameras.clear();
     }
 }
 
@@ -622,7 +623,6 @@ TEST_P(EvsHidlTest, CameraToDisplayRoundTrip) {
             continue;
         }
 
-        activeCameras.clear();
         sp<IEvsCamera_1_1> pCam =
             IEvsCamera_1_1::castFrom(pEnumerator->openCamera_1_1(cam.v1.cameraId, nullCfg))
             .withDefault(nullptr);
@@ -665,6 +665,7 @@ TEST_P(EvsHidlTest, CameraToDisplayRoundTrip) {
 
         // Explicitly release the camera
         pEnumerator->closeCamera(pCam);
+        activeCameras.clear();
     }
 
     // Explicitly release the display
@@ -694,7 +695,6 @@ TEST_P(EvsHidlTest, MultiCameraStream) {
 
     // Test each reported camera
     for (auto&& cam: cameraInfo) {
-        activeCameras.clear();
         // Create two camera clients.
         sp<IEvsCamera_1_1> pCam0 =
             IEvsCamera_1_1::castFrom(pEnumerator->openCamera_1_1(cam.v1.cameraId, nullCfg))
@@ -773,6 +773,7 @@ TEST_P(EvsHidlTest, MultiCameraStream) {
         // Explicitly release the camera
         pEnumerator->closeCamera(pCam0);
         pEnumerator->closeCamera(pCam1);
+        activeCameras.clear();
 
         // TODO(b/145459970, b/145457727): below sleep() is added to ensure the
         // destruction of active camera objects; this may be related with two
@@ -808,7 +809,6 @@ TEST_P(EvsHidlTest, CameraParameter) {
             continue;
         }
 
-        activeCameras.clear();
         // Create a camera client
         sp<IEvsCamera_1_1> pCam =
             IEvsCamera_1_1::castFrom(pEnumerator->openCamera_1_1(cam.v1.cameraId, nullCfg))
@@ -921,6 +921,7 @@ TEST_P(EvsHidlTest, CameraParameter) {
 
         // Explicitly release the camera
         pEnumerator->closeCamera(pCam);
+        activeCameras.clear();
     }
 }
 
@@ -956,7 +957,6 @@ TEST_P(EvsHidlTest, CameraMasterRelease) {
             continue;
         }
 
-        activeCameras.clear();
         // Create two camera clients.
         sp<IEvsCamera_1_1> pCamMaster =
             IEvsCamera_1_1::castFrom(pEnumerator->openCamera_1_1(cam.v1.cameraId, nullCfg))
@@ -1102,6 +1102,7 @@ TEST_P(EvsHidlTest, CameraMasterRelease) {
         // Explicitly release the camera
         pEnumerator->closeCamera(pCamMaster);
         pEnumerator->closeCamera(pCamNonMaster);
+        activeCameras.clear();
     }
 }
 
@@ -1137,7 +1138,6 @@ TEST_P(EvsHidlTest, MultiCameraParameter) {
             continue;
         }
 
-        activeCameras.clear();
         // Create two camera clients.
         sp<IEvsCamera_1_1> pCamMaster =
             IEvsCamera_1_1::castFrom(pEnumerator->openCamera_1_1(cam.v1.cameraId, nullCfg))
@@ -1575,6 +1575,7 @@ TEST_P(EvsHidlTest, MultiCameraParameter) {
         // Explicitly release the camera
         pEnumerator->closeCamera(pCamMaster);
         pEnumerator->closeCamera(pCamNonMaster);
+        activeCameras.clear();
     }
 }
 
@@ -1605,8 +1606,6 @@ TEST_P(EvsHidlTest, HighPriorityCameraClient) {
 
     // Test each reported camera
     for (auto&& cam: cameraInfo) {
-        activeCameras.clear();
-
         // Create two clients
         sp<IEvsCamera_1_1> pCam0 =
             IEvsCamera_1_1::castFrom(pEnumerator->openCamera_1_1(cam.v1.cameraId, nullCfg))
@@ -1944,6 +1943,8 @@ TEST_P(EvsHidlTest, HighPriorityCameraClient) {
         // Explicitly release the camera
         pEnumerator->closeCamera(pCam0);
         pEnumerator->closeCamera(pCam1);
+        activeCameras.clear();
+
     }
 
     // Explicitly release the display
@@ -1969,7 +1970,6 @@ TEST_P(EvsHidlTest, CameraUseStreamConfigToDisplay) {
 
     // Test each reported camera
     for (auto&& cam: cameraInfo) {
-        activeCameras.clear();
         // choose a configuration that has a frame rate faster than minReqFps.
         Stream targetCfg = {};
         const int32_t minReqFps = 15;
@@ -2049,6 +2049,7 @@ TEST_P(EvsHidlTest, CameraUseStreamConfigToDisplay) {
 
         // Explicitly release the camera
         pEnumerator->closeCamera(pCam);
+        activeCameras.clear();
     }
 
     // Explicitly release the display
@@ -2074,7 +2075,6 @@ TEST_P(EvsHidlTest, MultiCameraStreamUseConfig) {
 
     // Test each reported camera
     for (auto&& cam: cameraInfo) {
-        activeCameras.clear();
         // choose a configuration that has a frame rate faster than minReqFps.
         Stream targetCfg = {};
         const int32_t minReqFps = 15;
@@ -2201,6 +2201,7 @@ TEST_P(EvsHidlTest, MultiCameraStreamUseConfig) {
         // Explicitly release the camera
         pEnumerator->closeCamera(pCam0);
         pEnumerator->closeCamera(pCam1);
+        activeCameras.clear();
     }
 }
 
