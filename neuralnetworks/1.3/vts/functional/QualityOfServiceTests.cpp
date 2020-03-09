@@ -134,10 +134,9 @@ void runPrepareModelTest(const sp<IDevice>& device, const Model& model, Priority
     } else {
         switch (deadlineBound.value()) {
             case DeadlineBoundType::NOW:
-                // If the execution was launched with a deadline of NOW, the
-                // deadline has already passed when the driver would launch the
-                // execution. In this case, the driver must return
-                // MISSED_DEADLINE_*.
+            case DeadlineBoundType::SHORT:
+                // Either the driver successfully completed the task or it
+                // aborted and returned MISSED_DEADLINE_*.
                 EXPECT_TRUE(prepareReturnStatus == ErrorStatus::NONE ||
                             prepareReturnStatus == ErrorStatus::MISSED_DEADLINE_TRANSIENT ||
                             prepareReturnStatus == ErrorStatus::MISSED_DEADLINE_PERSISTENT);
@@ -147,13 +146,6 @@ void runPrepareModelTest(const sp<IDevice>& device, const Model& model, Priority
                 // proceed normally. In this case, check it normally by breaking out
                 // of the switch statement.
                 EXPECT_EQ(ErrorStatus::NONE, prepareReturnStatus);
-                break;
-            case DeadlineBoundType::SHORT:
-                // Either the driver successfully completed the task in time or
-                // it aborted within the compliance time.
-                EXPECT_TRUE(prepareReturnStatus == ErrorStatus::NONE ||
-                            prepareReturnStatus == ErrorStatus::MISSED_DEADLINE_TRANSIENT ||
-                            prepareReturnStatus == ErrorStatus::MISSED_DEADLINE_PERSISTENT);
                 break;
         }
     }
@@ -206,7 +198,10 @@ static MaybeResults executeSynchronously(const sp<IPreparedModel>& preparedModel
 
     // configure results callback
     MaybeResults results;
-    const auto cb = [&results](const auto&... args) { *results = {args...}; };
+    const auto cb = [&results](ErrorStatus status, const hidl_vec<OutputShape>& outputShapes,
+                               const Timing& timing) {
+        results.emplace(status, outputShapes, timing);
+    };
 
     // run execution
     const Return<void> ret =
@@ -235,26 +230,18 @@ void runExecutionTest(const sp<IPreparedModel>& preparedModel, const TestModel& 
     // Validate deadline information if applicable.
     switch (deadlineBound) {
         case DeadlineBoundType::NOW:
-            // If the execution was launched with a deadline of NOW, the
-            // deadline has already passed when the driver would launch the
-            // execution. In this case, the driver must return
-            // MISSED_DEADLINE_*.
+        case DeadlineBoundType::SHORT:
+            // Either the driver successfully completed the task or it
+            // aborted and returned MISSED_DEADLINE_*.
             ASSERT_TRUE(status == ErrorStatus::NONE ||
                         status == ErrorStatus::MISSED_DEADLINE_TRANSIENT ||
                         status == ErrorStatus::MISSED_DEADLINE_PERSISTENT);
-            return;
+            break;
         case DeadlineBoundType::UNLIMITED:
             // If an unlimited deadline is supplied, we expect the execution to
             // proceed normally. In this case, check it normally by breaking out
             // of the switch statement.
             ASSERT_EQ(ErrorStatus::NONE, status);
-            break;
-        case DeadlineBoundType::SHORT:
-            // Either the driver successfully completed the task in time or
-            // it aborted within the compliance time.
-            EXPECT_TRUE(status == ErrorStatus::NONE ||
-                        status == ErrorStatus::MISSED_DEADLINE_TRANSIENT ||
-                        status == ErrorStatus::MISSED_DEADLINE_PERSISTENT);
             break;
     }
 
@@ -277,7 +264,9 @@ void runExecutionTest(const sp<IPreparedModel>& preparedModel, const TestModel& 
     const std::vector<TestBuffer> outputs = getOutputBuffers(request10);
 
     // We want "close-enough" results.
-    checkResults(testModel, outputs);
+    if (status == ErrorStatus::NONE) {
+        checkResults(testModel, outputs);
+    }
 }
 
 void runExecutionTests(const sp<IPreparedModel>& preparedModel, const TestModel& testModel,
