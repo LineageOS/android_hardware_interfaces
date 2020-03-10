@@ -2124,8 +2124,14 @@ TEST_P(GraphicsMapperHidlTest, GetLargeReservedRegion) {
 
         Error err;
         mGralloc->getAllocator()->allocate(
-                descriptor, 1,
-                [&](const auto& tmpError, const auto&, const auto&) { err = tmpError; });
+                descriptor, 1, [&](const auto& tmpError, const auto&, const auto& tmpBuffers) {
+                    err = tmpError;
+                    if (err == Error::NONE) {
+                        ASSERT_EQ(1, tmpBuffers.size());
+                        ASSERT_NO_FATAL_FAILURE(bufferHandle =
+                                                        mGralloc->importBuffer(tmpBuffers[0]));
+                    }
+                });
         if (err == Error::UNSUPPORTED) {
             continue;
         }
