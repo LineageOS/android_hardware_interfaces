@@ -578,7 +578,7 @@ TEST_P(RadioHidlTest, nvWriteCdmaPrl) {
 TEST_P(RadioHidlTest, nvResetConfig) {
     serial = GetRandomSerialNumber();
 
-    radio->nvResetConfig(serial, ResetNvType::ERASE);
+    radio->nvResetConfig(serial, ResetNvType::FACTORY_RESET);
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp->rspInfo.type);
     EXPECT_EQ(serial, radioRsp->rspInfo.serial);
