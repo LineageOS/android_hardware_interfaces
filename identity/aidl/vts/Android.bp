@@ -7,10 +7,11 @@ cc_test {
     srcs: ["VtsHalIdentityTargetTest.cpp"],
     shared_libs: [
         "libbinder",
-        "libcppbor",
-        "android.hardware.identity-support-lib",
+        "libcrypto",
     ],
     static_libs: [
+        "libcppbor",
+        "android.hardware.identity-support-lib",
         "android.hardware.identity-cpp",
         "android.hardware.keymaster-cpp",
     ],
