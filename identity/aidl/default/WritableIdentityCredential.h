@@ -64,10 +64,13 @@ class WritableIdentityCredential : public BnWritableIdentityCredential {
     string docType_;
     bool testCredential_;
 
-    // These are set in initialize().
+    // This is set in initialize().
     vector<uint8_t> storageKey_;
+
+    // These are set in getAttestationCertificate().
     vector<uint8_t> credentialPrivKey_;
     vector<uint8_t> credentialPubKey_;
+    vector<vector<uint8_t>> certificateChain_;
 
     // These fields are initialized during startPersonalization()
     size_t numAccessControlProfileRemaining_;

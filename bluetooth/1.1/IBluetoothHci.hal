@@ -35,8 +35,8 @@ interface IBluetoothHci extends @1.0::IBluetoothHci {
     initialize_1_1(@1.1::IBluetoothHciCallbacks callback);
 
     /**
-     * Send an ISO data packet (as specified in the Bluetooth Specification
-     * V6.0) to the Bluetooth controller.
+     * Send an ISO data packet (as specified in the Bluetooth Core
+     * Specification v5.2) to the Bluetooth controller.
      * Packets must be processed in order.
      * @param data HCI data packet to be sent
      */
