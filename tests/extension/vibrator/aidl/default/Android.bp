@@ -20,6 +20,6 @@ cc_binary {
         "libbase",
         "libbinder_ndk",
         "android.hardware.vibrator-ndk_platform",
-        "test-android.hardware.vibrator-ext-ndk_platform",
+        "android.hardware.tests.extension.vibrator-ndk_platform",
     ],
 }
