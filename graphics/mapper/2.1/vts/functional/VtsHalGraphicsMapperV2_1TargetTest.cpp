@@ -94,7 +94,7 @@ TEST_P(GraphicsMapperHidlTest, ValidateBufferSizeBadBuffer) {
                                                     mDummyDescriptorInfo.width);
     ASSERT_EQ(Error::BAD_BUFFER, ret)
         << "validateBufferSize with raw buffer handle did not fail with BAD_BUFFER";
-    native_handle_delete(rawBufferHandle);
+    ASSERT_NO_FATAL_FAILURE(mGralloc->freeBuffer(rawBufferHandle));
 }
 
 /**
@@ -179,11 +179,11 @@ TEST_P(GraphicsMapperHidlTest, GetTransportSizeBadBuffer) {
     ASSERT_NO_FATAL_FAILURE(rawBufferHandle = const_cast<native_handle_t*>(
                                 mGralloc->allocate(mDummyDescriptorInfo, false)));
     mGralloc->getMapper()->getTransportSize(
-        invalidHandle, [&](const auto& tmpError, const auto&, const auto&) {
-            ASSERT_EQ(Error::BAD_BUFFER, tmpError)
-                << "getTransportSize with raw buffer handle did not fail with BAD_BUFFER";
-        });
-    native_handle_delete(rawBufferHandle);
+            rawBufferHandle, [&](const auto& tmpError, const auto&, const auto&) {
+                ASSERT_EQ(Error::BAD_BUFFER, tmpError)
+                        << "getTransportSize with raw buffer handle did not fail with BAD_BUFFER";
+            });
+    ASSERT_NO_FATAL_FAILURE(mGralloc->freeBuffer(rawBufferHandle));
 }
 
 /**
