@@ -977,9 +977,11 @@ Return<void> RadioResponse_v1_5::setIndicationFilterResponse_1_5(const RadioResp
 
 Return<void> RadioResponse_v1_5::getBarringInfoResponse(
         const RadioResponseInfo& info,
-        const ::android::hardware::radio::V1_5::CellIdentity& /*cellIdentity*/,
+        const ::android::hardware::radio::V1_5::CellIdentity& cellIdentity,
         const ::android::hardware::hidl_vec<::android::hardware::radio::V1_5::BarringInfo>&
-        /*barringInfos*/) {
+                barringInfos) {
+    this->barringCellIdentity = cellIdentity;
+    this->barringInfos = barringInfos;
     rspInfo = info;
     parent_v1_5.notify(info.serial);
     return Void();
