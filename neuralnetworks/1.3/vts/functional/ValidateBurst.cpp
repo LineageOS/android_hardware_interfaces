@@ -42,6 +42,8 @@ using V1_2::MeasureTiming;
 using V1_2::Timing;
 using ExecutionBurstCallback = ExecutionBurstController::ExecutionBurstCallback;
 
+using BurstExecutionMutation = std::function<void(std::vector<FmqRequestDatum>*)>;
+
 // This constant value represents the length of an FMQ that is large enough to
 // return a result from a burst execution for all of the generated test cases.
 constexpr size_t kExecutionBurstChannelLength = 1024;
@@ -121,13 +123,13 @@ static void createBurstWithResultChannelLength(
 
 // Primary validation function. This function will take a valid serialized
 // request, apply a mutation to it to invalidate the serialized request, then
-// pass it to interface calls that use the serialized request. Note that the
-// serialized request here is passed by value, and any mutation to the
-// serialized request does not leave this function.
+// pass it to interface calls that use the serialized request.
 static void validate(RequestChannelSender* sender, ResultChannelReceiver* receiver,
-                     const std::string& message, std::vector<FmqRequestDatum> serialized,
-                     const std::function<void(std::vector<FmqRequestDatum>*)>& mutation) {
-    mutation(&serialized);
+                     const std::string& message,
+                     const std::vector<FmqRequestDatum>& originalSerialized,
+                     const BurstExecutionMutation& mutate) {
+    std::vector<FmqRequestDatum> serialized = originalSerialized;
+    mutate(&serialized);
 
     // skip if packet is too large to send
     if (serialized.size() > kExecutionBurstChannelLength) {
