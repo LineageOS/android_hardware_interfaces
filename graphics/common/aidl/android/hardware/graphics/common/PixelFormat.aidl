@@ -403,10 +403,6 @@ enum PixelFormat {
      *   cr_offset = y_size
      *   cb_offset = y_size + c_size
      *
-     * This range is reserved for vendor extensions. Formats in this range
-     * must support BufferUsage::GPU_TEXTURE. Clients must assume they do not
-     * have an alpha component.
-     *
      * This format must be accepted by the allocator when used with the
      * following usage flags:
      *
