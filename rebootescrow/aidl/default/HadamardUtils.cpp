@@ -16,8 +16,6 @@
 
 #include <HadamardUtils.h>
 
-#include <limits>
-
 #include <android-base/logging.h>
 
 namespace aidl {
@@ -92,6 +90,31 @@ std::vector<uint8_t> EncodeKey(const std::vector<uint8_t>& input) {
     return result;
 }
 
+// Constant-time conditional copy, to fix b/146520538
+// ctl must be 0 or 1; we do the copy if it's 1.
+static void CondCopy(uint32_t ctl, void* dest, const void* src, size_t len) {
+    const auto cdest = reinterpret_cast<uint8_t*>(dest);
+    const auto csrc = reinterpret_cast<const uint8_t*>(src);
+    for (size_t i = 0; i < len; i++) {
+        const uint32_t d = cdest[i];
+        const uint32_t s = csrc[i];
+        cdest[i] = d ^ (-ctl & (s ^ d));
+    }
+}
+
+struct CodewordWinner {
+    uint16_t codeword;
+    int32_t score;
+};
+
+// Replace dest with src if it has a higher score
+static void CopyWinner(CodewordWinner* dest, const CodewordWinner& src) {
+    // Scores are between - 2^15 and 2^15, so taking the difference won't
+    // overflow; we use the sign bit of the difference here.
+    CondCopy(static_cast<uint32_t>(dest->score - src.score) >> 31, dest, &src,
+             sizeof(CodewordWinner));
+}
+
 // Decode a single codeword. Because of the way codewords are striped together
 // this takes the entire input, plus an offset telling it which word to decode.
 static uint16_t DecodeWord(size_t word, const std::vector<uint8_t>& encoded) {
@@ -118,20 +141,15 @@ static uint16_t DecodeWord(size_t word, const std::vector<uint8_t>& encoded) {
             }
         }
     }
-    auto hiscore = std::numeric_limits<int32_t>::min();
-    uint16_t winner;
-    // TODO(b/146520538): this needs to be constant time
+    // -ENCODE_LENGTH is least possible score, so start one less than that
+    auto best = CodewordWinner{0, -static_cast<int32_t>(ENCODE_LENGTH + 1)};
+    // For every possible codeword value, look at its score, and replace best if it's higher,
+    // in constant time.
     for (size_t i = 0; i < ENCODE_LENGTH; i++) {
-        if (scores[i] > hiscore) {
-            winner = i;
-            hiscore = scores[i];
-
-        } else if (-scores[i] > hiscore) {
-            winner = i | (1 << CODE_K);
-            hiscore = -scores[i];
-        }
+        CopyWinner(&best, CodewordWinner{static_cast<uint16_t>(i), scores[i]});
+        CopyWinner(&best, CodewordWinner{static_cast<uint16_t>(i | (1 << CODE_K)), -scores[i]});
     }
-    return winner;
+    return best.codeword;
 }
 
 std::vector<uint8_t> DecodeKey(const std::vector<uint8_t>& shuffled) {
