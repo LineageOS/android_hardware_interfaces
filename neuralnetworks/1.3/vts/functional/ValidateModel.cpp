@@ -30,6 +30,8 @@ using V1_2::SymmPerChannelQuantParams;
 using HidlToken =
         hidl_array<uint8_t, static_cast<uint32_t>(V1_2::Constant::BYTE_SIZE_OF_CACHE_TOKEN)>;
 
+using PrepareModelMutation = std::function<void(Model*, ExecutionPreference*, Priority*)>;
+
 ///////////////////////// UTILITY FUNCTIONS /////////////////////////
 
 static void validateGetSupportedOperations(const sp<IDevice>& device, const std::string& message,
@@ -44,13 +46,14 @@ static void validateGetSupportedOperations(const sp<IDevice>& device, const std:
 }
 
 static void validatePrepareModel(const sp<IDevice>& device, const std::string& message,
-                                 const Model& model, ExecutionPreference preference) {
+                                 const Model& model, ExecutionPreference preference,
+                                 Priority priority) {
     SCOPED_TRACE(message + " [prepareModel_1_3]");
 
     sp<PreparedModelCallback> preparedModelCallback = new PreparedModelCallback();
-    Return<ErrorStatus> prepareLaunchStatus = device->prepareModel_1_3(
-            model, preference, kDefaultPriority, {}, hidl_vec<hidl_handle>(),
-            hidl_vec<hidl_handle>(), HidlToken(), preparedModelCallback);
+    Return<ErrorStatus> prepareLaunchStatus =
+            device->prepareModel_1_3(model, preference, priority, {}, hidl_vec<hidl_handle>(),
+                                     hidl_vec<hidl_handle>(), HidlToken(), preparedModelCallback);
     ASSERT_TRUE(prepareLaunchStatus.isOk());
     ASSERT_EQ(ErrorStatus::INVALID_ARGUMENT, static_cast<ErrorStatus>(prepareLaunchStatus));
 
@@ -67,18 +70,26 @@ static bool validExecutionPreference(ExecutionPreference preference) {
            preference == ExecutionPreference::SUSTAINED_SPEED;
 }
 
+static bool validExecutionPriority(Priority priority) {
+    return priority == Priority::LOW || priority == Priority::MEDIUM || priority == Priority::HIGH;
+}
+
 // Primary validation function. This function will take a valid model, apply a
-// mutation to it to invalidate the model, then pass it to interface calls that
-// use the model. Note that the model here is passed by value, and any mutation
-// to the model does not leave this function.
-static void validate(const sp<IDevice>& device, const std::string& message, Model model,
-                     const std::function<void(Model*)>& mutation,
-                     ExecutionPreference preference = ExecutionPreference::FAST_SINGLE_ANSWER) {
-    mutation(&model);
-    if (validExecutionPreference(preference)) {
+// mutation to invalidate the model, the execution preference, or the priority,
+// then pass these to supportedOperations and/or prepareModel if that method is
+// called with an invalid argument.
+static void validate(const sp<IDevice>& device, const std::string& message,
+                     const Model& originalModel, const PrepareModelMutation& mutate) {
+    Model model = originalModel;
+    ExecutionPreference preference = ExecutionPreference::FAST_SINGLE_ANSWER;
+    Priority priority = kDefaultPriority;
+    mutate(&model, &preference, &priority);
+
+    if (validExecutionPreference(preference) && validExecutionPriority(priority)) {
         validateGetSupportedOperations(device, message, model);
     }
-    validatePrepareModel(device, message, model, preference);
+
+    validatePrepareModel(device, message, model, preference, priority);
 }
 
 static uint32_t addOperand(Model* model) {
@@ -116,9 +127,11 @@ static void mutateOperandTypeTest(const sp<IDevice>& device, const Model& model)
             const std::string message = "mutateOperandTypeTest: operand " +
                                         std::to_string(operand) + " set to value " +
                                         std::to_string(invalidOperandType);
-            validate(device, message, model, [operand, invalidOperandType](Model* model) {
-                model->main.operands[operand].type = static_cast<OperandType>(invalidOperandType);
-            });
+            validate(device, message, model,
+                     [operand, invalidOperandType](Model* model, ExecutionPreference*, Priority*) {
+                         model->main.operands[operand].type =
+                                 static_cast<OperandType>(invalidOperandType);
+                     });
         }
     }
 }
@@ -156,9 +169,11 @@ static void mutateOperandRankTest(const sp<IDevice>& device, const Model& model)
         }
         const std::string message = "mutateOperandRankTest: operand " + std::to_string(operand) +
                                     " has rank of " + std::to_string(invalidRank);
-        validate(device, message, model, [operand, invalidRank](Model* model) {
-            model->main.operands[operand].dimensions = std::vector<uint32_t>(invalidRank, 0);
-        });
+        validate(device, message, model,
+                 [operand, invalidRank](Model* model, ExecutionPreference*, Priority*) {
+                     model->main.operands[operand].dimensions =
+                             std::vector<uint32_t>(invalidRank, 0);
+                 });
     }
 }
 
@@ -194,9 +209,10 @@ static void mutateOperandScaleTest(const sp<IDevice>& device, const Model& model
         const float invalidScale = getInvalidScale(model.main.operands[operand].type);
         const std::string message = "mutateOperandScaleTest: operand " + std::to_string(operand) +
                                     " has scale of " + std::to_string(invalidScale);
-        validate(device, message, model, [operand, invalidScale](Model* model) {
-            model->main.operands[operand].scale = invalidScale;
-        });
+        validate(device, message, model,
+                 [operand, invalidScale](Model* model, ExecutionPreference*, Priority*) {
+                     model->main.operands[operand].scale = invalidScale;
+                 });
     }
 }
 
@@ -237,9 +253,10 @@ static void mutateOperandZeroPointTest(const sp<IDevice>& device, const Model& m
             const std::string message = "mutateOperandZeroPointTest: operand " +
                                         std::to_string(operand) + " has zero point of " +
                                         std::to_string(invalidZeroPoint);
-            validate(device, message, model, [operand, invalidZeroPoint](Model* model) {
-                model->main.operands[operand].zeroPoint = invalidZeroPoint;
-            });
+            validate(device, message, model,
+                     [operand, invalidZeroPoint](Model* model, ExecutionPreference*, Priority*) {
+                         model->main.operands[operand].zeroPoint = invalidZeroPoint;
+                     });
         }
     }
 }
@@ -425,9 +442,10 @@ static void mutateOperationOperandTypeTest(const sp<IDevice>& device, const Mode
             const std::string message = "mutateOperationOperandTypeTest: operand " +
                                         std::to_string(operand) + " set to type " +
                                         toString(invalidOperandType);
-            validate(device, message, model, [operand, invalidOperandType](Model* model) {
-                mutateOperand(&model->main.operands[operand], invalidOperandType);
-            });
+            validate(device, message, model,
+                     [operand, invalidOperandType](Model* model, ExecutionPreference*, Priority*) {
+                         mutateOperand(&model->main.operands[operand], invalidOperandType);
+                     });
         }
     }
 }
@@ -446,10 +464,12 @@ static void mutateOperationTypeTest(const sp<IDevice>& device, const Model& mode
             const std::string message = "mutateOperationTypeTest: operation " +
                                         std::to_string(operation) + " set to value " +
                                         std::to_string(invalidOperationType);
-            validate(device, message, model, [operation, invalidOperationType](Model* model) {
-                model->main.operations[operation].type =
-                        static_cast<OperationType>(invalidOperationType);
-            });
+            validate(device, message, model,
+                     [operation, invalidOperationType](Model* model, ExecutionPreference*,
+                                                       Priority*) {
+                         model->main.operations[operation].type =
+                                 static_cast<OperationType>(invalidOperationType);
+                     });
         }
     }
 }
@@ -463,9 +483,11 @@ static void mutateOperationInputOperandIndexTest(const sp<IDevice>& device, cons
             const std::string message = "mutateOperationInputOperandIndexTest: operation " +
                                         std::to_string(operation) + " input " +
                                         std::to_string(input);
-            validate(device, message, model, [operation, input, invalidOperand](Model* model) {
-                model->main.operations[operation].inputs[input] = invalidOperand;
-            });
+            validate(device, message, model,
+                     [operation, input, invalidOperand](Model* model, ExecutionPreference*,
+                                                        Priority*) {
+                         model->main.operations[operation].inputs[input] = invalidOperand;
+                     });
         }
     }
 }
@@ -480,9 +502,11 @@ static void mutateOperationOutputOperandIndexTest(const sp<IDevice>& device, con
             const std::string message = "mutateOperationOutputOperandIndexTest: operation " +
                                         std::to_string(operation) + " output " +
                                         std::to_string(output);
-            validate(device, message, model, [operation, output, invalidOperand](Model* model) {
-                model->main.operations[operation].outputs[output] = invalidOperand;
-            });
+            validate(device, message, model,
+                     [operation, output, invalidOperand](Model* model, ExecutionPreference*,
+                                                         Priority*) {
+                         model->main.operations[operation].outputs[output] = invalidOperand;
+                     });
         }
     }
 }
@@ -548,8 +572,9 @@ static void removeOperandTest(const sp<IDevice>& device, const Model& model) {
             continue;
         }
         const std::string message = "removeOperandTest: operand " + std::to_string(operand);
-        validate(device, message, model,
-                 [operand](Model* model) { removeOperand(model, operand); });
+        validate(device, message, model, [operand](Model* model, ExecutionPreference*, Priority*) {
+            removeOperand(model, operand);
+        });
     }
 }
 
@@ -566,7 +591,9 @@ static void removeOperationTest(const sp<IDevice>& device, const Model& model) {
     for (size_t operation = 0; operation < model.main.operations.size(); ++operation) {
         const std::string message = "removeOperationTest: operation " + std::to_string(operation);
         validate(device, message, model,
-                 [operation](Model* model) { removeOperation(model, operation); });
+                 [operation](Model* model, ExecutionPreference*, Priority*) {
+                     removeOperation(model, operation);
+                 });
     }
 }
 
@@ -654,11 +681,12 @@ static void removeOperationInputTest(const sp<IDevice>& device, const Model& mod
             const std::string message = "removeOperationInputTest: operation " +
                                         std::to_string(operation) + ", input " +
                                         std::to_string(input);
-            validate(device, message, model, [operation, input](Model* model) {
-                uint32_t operand = model->main.operations[operation].inputs[input];
-                model->main.operands[operand].numberOfConsumers--;
-                hidl_vec_removeAt(&model->main.operations[operation].inputs, input);
-            });
+            validate(device, message, model,
+                     [operation, input](Model* model, ExecutionPreference*, Priority*) {
+                         uint32_t operand = model->main.operations[operation].inputs[input];
+                         model->main.operands[operand].numberOfConsumers--;
+                         hidl_vec_removeAt(&model->main.operations[operation].inputs, input);
+                     });
         }
     }
 }
@@ -672,9 +700,10 @@ static void removeOperationOutputTest(const sp<IDevice>& device, const Model& mo
             const std::string message = "removeOperationOutputTest: operation " +
                                         std::to_string(operation) + ", output " +
                                         std::to_string(output);
-            validate(device, message, model, [operation, output](Model* model) {
-                hidl_vec_removeAt(&model->main.operations[operation].outputs, output);
-            });
+            validate(device, message, model,
+                     [operation, output](Model* model, ExecutionPreference*, Priority*) {
+                         hidl_vec_removeAt(&model->main.operations[operation].outputs, output);
+                     });
         }
     }
 }
@@ -707,11 +736,12 @@ static void addOperationInputTest(const sp<IDevice>& device, const Model& model)
             continue;
         }
         const std::string message = "addOperationInputTest: operation " + std::to_string(operation);
-        validate(device, message, model, [operation](Model* model) {
-            uint32_t index = addOperand(model, OperandLifeTime::SUBGRAPH_INPUT);
-            hidl_vec_push_back(&model->main.operations[operation].inputs, index);
-            hidl_vec_push_back(&model->main.inputIndexes, index);
-        });
+        validate(device, message, model,
+                 [operation](Model* model, ExecutionPreference*, Priority*) {
+                     uint32_t index = addOperand(model, OperandLifeTime::SUBGRAPH_INPUT);
+                     hidl_vec_push_back(&model->main.operations[operation].inputs, index);
+                     hidl_vec_push_back(&model->main.inputIndexes, index);
+                 });
     }
 }
 
@@ -721,11 +751,12 @@ static void addOperationOutputTest(const sp<IDevice>& device, const Model& model
     for (size_t operation = 0; operation < model.main.operations.size(); ++operation) {
         const std::string message =
                 "addOperationOutputTest: operation " + std::to_string(operation);
-        validate(device, message, model, [operation](Model* model) {
-            uint32_t index = addOperand(model, OperandLifeTime::SUBGRAPH_OUTPUT);
-            hidl_vec_push_back(&model->main.operations[operation].outputs, index);
-            hidl_vec_push_back(&model->main.outputIndexes, index);
-        });
+        validate(device, message, model,
+                 [operation](Model* model, ExecutionPreference*, Priority*) {
+                     uint32_t index = addOperand(model, OperandLifeTime::SUBGRAPH_OUTPUT);
+                     hidl_vec_push_back(&model->main.operations[operation].outputs, index);
+                     hidl_vec_push_back(&model->main.outputIndexes, index);
+                 });
     }
 }
 
@@ -737,12 +768,31 @@ static const int32_t invalidExecutionPreferences[] = {
 };
 
 static void mutateExecutionPreferenceTest(const sp<IDevice>& device, const Model& model) {
-    for (int32_t preference : invalidExecutionPreferences) {
+    for (int32_t invalidPreference : invalidExecutionPreferences) {
         const std::string message =
-                "mutateExecutionPreferenceTest: preference " + std::to_string(preference);
-        validate(
-                device, message, model, [](Model*) {},
-                static_cast<ExecutionPreference>(preference));
+                "mutateExecutionPreferenceTest: preference " + std::to_string(invalidPreference);
+        validate(device, message, model,
+                 [invalidPreference](Model*, ExecutionPreference* preference, Priority*) {
+                     *preference = static_cast<ExecutionPreference>(invalidPreference);
+                 });
+    }
+}
+
+///////////////////////// VALIDATE PRIORITY /////////////////////////
+
+static const int32_t invalidPriorities[] = {
+        static_cast<int32_t>(Priority::LOW) - 1,   // lower bound
+        static_cast<int32_t>(Priority::HIGH) + 1,  // upper bound
+};
+
+static void mutateExecutionPriorityTest(const sp<IDevice>& device, const Model& model) {
+    for (int32_t invalidPriority : invalidPriorities) {
+        const std::string message =
+                "mutatePriorityTest: priority " + std::to_string(invalidPriority);
+        validate(device, message, model,
+                 [invalidPriority](Model*, ExecutionPreference*, Priority* priority) {
+                     *priority = static_cast<Priority>(invalidPriority);
+                 });
     }
 }
 
@@ -764,6 +814,7 @@ void validateModel(const sp<IDevice>& device, const Model& model) {
     addOperationInputTest(device, model);
     addOperationOutputTest(device, model);
     mutateExecutionPreferenceTest(device, model);
+    mutateExecutionPriorityTest(device, model);
 }
 
 }  // namespace android::hardware::neuralnetworks::V1_3::vts::functional
