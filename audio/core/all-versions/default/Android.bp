@@ -18,8 +18,11 @@ cc_defaults {
 
     export_include_dirs: ["include"],
 
-    shared_libs: [
+    static_libs: [
         "libaudiofoundation",
+    ],
+
+    shared_libs: [
         "libbase",
         "libcutils",
         "libfmq",
@@ -55,7 +58,7 @@ cc_library_shared {
         "-DMAJOR_VERSION=2",
         "-DMINOR_VERSION=0",
         "-include common/all-versions/VersionMacro.h",
-    ]
+    ],
 }
 
 cc_library_shared {
@@ -71,7 +74,7 @@ cc_library_shared {
         "-DMAJOR_VERSION=4",
         "-DMINOR_VERSION=0",
         "-include common/all-versions/VersionMacro.h",
-    ]
+    ],
 }
 
 cc_library_shared {
@@ -86,7 +89,7 @@ cc_library_shared {
         "-DMAJOR_VERSION=5",
         "-DMINOR_VERSION=0",
         "-include common/all-versions/VersionMacro.h",
-    ]
+    ],
 }
 
 cc_library_shared {
@@ -101,5 +104,5 @@ cc_library_shared {
         "-DMAJOR_VERSION=6",
         "-DMINOR_VERSION=0",
         "-include common/all-versions/VersionMacro.h",
-    ]
+    ],
 }
