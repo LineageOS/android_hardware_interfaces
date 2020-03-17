@@ -34,6 +34,8 @@ using V1_2::MeasureTiming;
 using V1_2::OutputShape;
 using V1_2::Timing;
 
+using ExecutionMutation = std::function<void(Request*)>;
+
 ///////////////////////// UTILITY FUNCTIONS /////////////////////////
 
 static bool badTiming(Timing timing) {
@@ -42,11 +44,11 @@ static bool badTiming(Timing timing) {
 
 // Primary validation function. This function will take a valid request, apply a
 // mutation to it to invalidate the request, then pass it to interface calls
-// that use the request. Note that the request here is passed by value, and any
-// mutation to the request does not leave this function.
+// that use the request.
 static void validate(const sp<IPreparedModel>& preparedModel, const std::string& message,
-                     Request request, const std::function<void(Request*)>& mutation) {
-    mutation(&request);
+                     const Request& originalRequest, const ExecutionMutation& mutate) {
+    Request request = originalRequest;
+    mutate(&request);
 
     // We'd like to test both with timing requested and without timing
     // requested. Rather than running each test both ways, we'll decide whether

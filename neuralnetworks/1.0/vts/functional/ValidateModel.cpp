@@ -24,6 +24,8 @@ namespace android::hardware::neuralnetworks::V1_0::vts::functional {
 
 using implementation::PreparedModelCallback;
 
+using PrepareModelMutation = std::function<void(Model*)>;
+
 ///////////////////////// UTILITY FUNCTIONS /////////////////////////
 
 static void validateGetSupportedOperations(const sp<IDevice>& device, const std::string& message,
@@ -54,12 +56,13 @@ static void validatePrepareModel(const sp<IDevice>& device, const std::string& m
 }
 
 // Primary validation function. This function will take a valid model, apply a
-// mutation to it to invalidate the model, then pass it to interface calls that
-// use the model. Note that the model here is passed by value, and any mutation
-// to the model does not leave this function.
-static void validate(const sp<IDevice>& device, const std::string& message, Model model,
-                     const std::function<void(Model*)>& mutation) {
-    mutation(&model);
+// mutation to invalidate the model, then pass these to supportedOperations and
+// prepareModel.
+static void validate(const sp<IDevice>& device, const std::string& message,
+                     const Model& originalModel, const PrepareModelMutation& mutate) {
+    Model model = originalModel;
+    mutate(&model);
+
     validateGetSupportedOperations(device, message, model);
     validatePrepareModel(device, message, model);
 }
