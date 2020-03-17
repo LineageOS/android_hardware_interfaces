@@ -493,6 +493,13 @@ static std::vector<TestBuffer> getOutputBuffers(const TestModel& testModel, cons
     return outputBuffers;
 }
 
+static bool hasZeroSizedOutput(const TestModel& testModel) {
+    return std::any_of(testModel.main.outputIndexes.begin(), testModel.main.outputIndexes.end(),
+                       [&testModel](uint32_t index) {
+                           return testModel.main.operands[index].data.size() == 0;
+                       });
+}
+
 static Return<ErrorStatus> ExecutePreparedModel(const sp<IPreparedModel>& preparedModel,
                                                 const Request& request, MeasureTiming measure,
                                                 const OptionalTimeoutDuration& loopTimeoutDuration,
@@ -689,6 +696,11 @@ void EvaluatePreparedModel(const sp<IDevice>& device, const sp<IPreparedModel>& 
 
     switch (testConfig.outputType) {
         case OutputType::FULLY_SPECIFIED:
+            if (testConfig.executor == Executor::FENCED && hasZeroSizedOutput(testModel)) {
+                // Executor::FENCED does not support zero-sized output.
+                ASSERT_EQ(ErrorStatus::INVALID_ARGUMENT, executionStatus);
+                return;
+            }
             // If the model output operands are fully specified, outputShapes must be either
             // either empty, or have the same number of elements as the number of outputs.
             ASSERT_EQ(ErrorStatus::NONE, executionStatus);
@@ -936,13 +948,8 @@ INSTANTIATE_GENERATED_TEST(DynamicOutputShapeTest, [](const TestModel& testModel
 INSTANTIATE_GENERATED_TEST(MemoryDomainTest,
                            [](const TestModel& testModel) { return !testModel.expectFailure; });
 
-INSTANTIATE_GENERATED_TEST(FencedComputeTest, [](const TestModel& testModel) {
-    return !testModel.expectFailure &&
-           std::all_of(testModel.main.outputIndexes.begin(), testModel.main.outputIndexes.end(),
-                       [&testModel](uint32_t index) {
-                           return testModel.main.operands[index].data.size() > 0;
-                       });
-});
+INSTANTIATE_GENERATED_TEST(FencedComputeTest,
+                           [](const TestModel& testModel) { return !testModel.expectFailure; });
 
 INSTANTIATE_GENERATED_TEST(QuantizationCouplingTest, [](const TestModel& testModel) {
     return testModel.hasQuant8CoupledOperands() && testModel.main.operations.size() == 1;
