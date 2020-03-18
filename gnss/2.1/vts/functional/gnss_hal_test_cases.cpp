@@ -98,7 +98,7 @@ TEST_P(GnssHalTest, TestGnssConfigurationExtension) {
  * TestGnssMeasurementFields:
  * Sets a GnssMeasurementCallback, waits for a measurement, and verifies
  * 1. basebandCN0DbHz is valid
- * 2. ISB fields are valid if HAS_INTER_SIGNAL_BIAS is true.
+ * 2. ISB fields are valid
  */
 TEST_P(GnssHalTest, TestGnssMeasurementFields) {
     const int kFirstGnssMeasurementTimeoutSeconds = 10;
@@ -126,9 +126,8 @@ TEST_P(GnssHalTest, TestGnssMeasurementFields) {
         // Verify basebandCn0DbHz is valid.
         ASSERT_TRUE(measurement.basebandCN0DbHz > 0.0 && measurement.basebandCN0DbHz <= 65.0);
 
-        if (((uint32_t)(measurement.flags & GnssMeasurementFlags::HAS_RECEIVER_ISB) > 0) &&
-            ((uint32_t)(measurement.flags & GnssMeasurementFlags::HAS_RECEIVER_ISB_UNCERTAINTY) >
-             0) &&
+        if (((uint32_t)(measurement.flags & GnssMeasurementFlags::HAS_FULL_ISB) > 0) &&
+            ((uint32_t)(measurement.flags & GnssMeasurementFlags::HAS_FULL_ISB_UNCERTAINTY) > 0) &&
             ((uint32_t)(measurement.flags & GnssMeasurementFlags::HAS_SATELLITE_ISB) > 0) &&
             ((uint32_t)(measurement.flags & GnssMeasurementFlags::HAS_SATELLITE_ISB_UNCERTAINTY) >
              0)) {
@@ -143,8 +142,8 @@ TEST_P(GnssHalTest, TestGnssMeasurementFields) {
             ASSERT_TRUE(carrierFrequencyHz > 0);
             ASSERT_TRUE(codeType != "");
 
-            ASSERT_TRUE(std::abs(measurement.receiverInterSignalBiasNs) < 1.0e6);
-            ASSERT_TRUE(measurement.receiverInterSignalBiasUncertaintyNs >= 0);
+            ASSERT_TRUE(std::abs(measurement.fullInterSignalBiasNs) < 1.0e6);
+            ASSERT_TRUE(measurement.fullInterSignalBiasUncertaintyNs >= 0);
             ASSERT_TRUE(std::abs(measurement.satelliteInterSignalBiasNs) < 1.0e6);
             ASSERT_TRUE(measurement.satelliteInterSignalBiasUncertaintyNs >= 0);
         }
