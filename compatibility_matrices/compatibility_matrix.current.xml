@@ -40,6 +40,18 @@
         </interface>
     </hal>
     <hal format="hidl" optional="true">
+        <name>android.hardware.automotive.can</name>
+        <version>1.0</version>
+        <interface>
+            <name>ICanBus</name>
+            <regex-instance>.*</regex-instance>
+        </interface>
+        <interface>
+            <name>ICanController</name>
+            <regex-instance>.*</regex-instance>
+        </interface>
+    </hal>
+    <hal format="hidl" optional="true">
         <name>android.hardware.automotive.evs</name>
         <version>1.0</version>
         <interface>
@@ -252,6 +264,13 @@
         <version>1.0</version>
         <interface>
             <name>IStorage</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
+        <name>android.hardware.identity</name>
+        <interface>
+            <name>IIdentityCredentialStore</name>
             <instance>default</instance>
         </interface>
     </hal>
