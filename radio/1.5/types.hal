@@ -203,6 +203,9 @@ struct RadioAccessSpecifier {
     vec<int32_t> channels;
 };
 
+/**
+ * IRadio 1.5 supports NGRAN bands up to V16.2.0
+ */
 enum NgranBands : int32_t {
     /** 3GPP TS 38.101-1, Table 5.2-1: FR1 bands */
     BAND_1 = 1,
@@ -243,7 +246,13 @@ enum NgranBands : int32_t {
     BAND_83 = 83,
     BAND_84 = 84,
     BAND_86 = 86,
+    BAND_89 = 89,
     BAND_90 = 90,
+    BAND_91 = 91,
+    BAND_92 = 92,
+    BAND_93 = 93,
+    BAND_94 = 94,
+    BAND_95 = 95,
     /** 3GPP TS 38.101-2, Table 5.2-1: FR2 bands */
     BAND_257 = 257,
     BAND_258 = 258,
@@ -251,6 +260,10 @@ enum NgranBands : int32_t {
     BAND_261 = 261,
 };
 
+/**
+ * Extended from @1.1 UtranBands to add TD-SCDMA bands
+ * IRadio 1.5 supports UTRAN bands up to V15.0.0
+ */
 enum UtranBands : @1.1::UtranBands {
     /** TD-SCDMA bands. 3GPP TS 25.102, Table 5.2: Frequency bands */
     BAND_A = 101,
@@ -259,6 +272,25 @@ enum UtranBands : @1.1::UtranBands {
     BAND_D = 104,
     BAND_E = 105,
     BAND_F = 106,
+};
+
+/**
+ * Extended from @1.1 EutranBands to add more bands from 3GPP TS 36.101, Table 5.5: Operating bands
+ * IRadio 1.5 supports EUTRAN bands up to V16.4.0
+ */
+enum EutranBands : @1.1::EutranBands {
+    BAND_49 = 49,
+    BAND_50 = 50,
+    BAND_51 = 51,
+    BAND_52 = 52,
+    BAND_53 = 53,
+    BAND_71 = 71,
+    BAND_72 = 72,
+    BAND_73 = 73,
+    BAND_74 = 74,
+    BAND_85 = 85,
+    BAND_87 = 87,
+    BAND_88 = 88,
 };
 
 /**
