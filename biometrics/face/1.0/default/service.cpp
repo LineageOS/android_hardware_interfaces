@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "android.hardware.biometrics.face@1.1-service"
+#define LOG_TAG "android.hardware.biometrics.face@1.0-service"
 
 #include <android/hardware/biometrics/face/1.0/types.h>
-#include <android/hardware/biometrics/face/1.1/IBiometricsFace.h>
+#include <android/hardware/biometrics/face/1.0/IBiometricsFace.h>
 #include <android/log.h>
 #include <hidl/HidlSupport.h>
 #include <hidl/HidlTransportSupport.h>
@@ -27,7 +27,7 @@ using android::sp;
 using android::hardware::configureRpcThreadpool;
 using android::hardware::joinRpcThreadpool;
 using android::hardware::biometrics::face::implementation::BiometricsFace;
-using android::hardware::biometrics::face::V1_1::IBiometricsFace;
+using android::hardware::biometrics::face::V1_0::IBiometricsFace;
 
 int main() {
     ALOGI("BiometricsFace HAL is being started.");
