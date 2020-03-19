@@ -35,3 +35,14 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/etc/seccomp_policy
 LOCAL_SRC_FILES := seccomp_policy/configstore@1.1-$(TARGET_ARCH).policy
 include $(BUILD_PREBUILT)
 endif
+
+# disable configstore
+include $(CLEAR_VARS)
+LOCAL_MODULE := disable_configstore
+LOCAL_MODULE_CLASS := EXECUTABLES
+LOCAL_SRC_FILES:= disable_configstore.cpp
+LOCAL_OVERRIDES_MODULES := android.hardware.configstore@1.1-service
+LOCAL_VENDOR_MODULE := true
+LOCAL_UNINSTALLABLE_MODULE := true
+
+include $(BUILD_EXECUTABLE)
