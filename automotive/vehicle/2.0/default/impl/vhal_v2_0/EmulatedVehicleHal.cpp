@@ -127,7 +127,9 @@ VehicleHal::VehiclePropValuePtr EmulatedVehicleHal::get(
             *outStatus = v != nullptr ? StatusCode::OK : StatusCode::INVALID_ARG;
             break;
     }
-
+    if (v.get()) {
+        v->timestamp = elapsedRealtimeNano();
+    }
     return v;
 }
 
@@ -305,6 +307,7 @@ void EmulatedVehicleHal::onContinuousPropertyTimer(const std::vector<int32_t>& p
         }
 
         if (v.get()) {
+            v->timestamp = elapsedRealtimeNano();
             doHalEvent(std::move(v));
         }
     }
