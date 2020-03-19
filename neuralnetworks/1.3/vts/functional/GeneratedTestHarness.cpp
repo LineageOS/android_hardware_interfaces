@@ -952,7 +952,8 @@ INSTANTIATE_GENERATED_TEST(FencedComputeTest,
                            [](const TestModel& testModel) { return !testModel.expectFailure; });
 
 INSTANTIATE_GENERATED_TEST(QuantizationCouplingTest, [](const TestModel& testModel) {
-    return testModel.hasQuant8CoupledOperands() && testModel.main.operations.size() == 1;
+    return !testModel.expectFailure && testModel.hasQuant8CoupledOperands() &&
+           testModel.main.operations.size() == 1;
 });
 
 INSTANTIATE_GENERATED_TEST(InfiniteLoopTimeoutTest, [](const TestModel& testModel) {
