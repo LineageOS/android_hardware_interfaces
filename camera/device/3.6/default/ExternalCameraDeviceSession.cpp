@@ -272,16 +272,17 @@ Status ExternalCameraDeviceSession::switchToOffline(const hidl_vec<int32_t>& off
 
     // convert hal requests to offline request
     std::deque<std::shared_ptr<HalRequest>> offlineReqs(halReqs.size());
+    size_t i = 0;
     for (auto& v4lReq : halReqs) {
-        std::shared_ptr<HalRequest> halReq = std::make_shared<HalRequest>();
-        halReq->frameNumber = v4lReq->frameNumber;
-        halReq->setting = v4lReq->setting;
-        halReq->shutterTs = v4lReq->shutterTs;
-        halReq->buffers = v4lReq->buffers;
+        offlineReqs[i] = std::make_shared<HalRequest>();
+        offlineReqs[i]->frameNumber = v4lReq->frameNumber;
+        offlineReqs[i]->setting = v4lReq->setting;
+        offlineReqs[i]->shutterTs = v4lReq->shutterTs;
+        offlineReqs[i]->buffers = v4lReq->buffers;
         sp<V3_4::implementation::V4L2Frame> v4l2Frame =
                 static_cast<V3_4::implementation::V4L2Frame*>(v4lReq->frameIn.get());
-        halReq->frameIn = new AllocatedV4L2Frame(v4l2Frame);
-        offlineReqs.push_back(halReq);
+        offlineReqs[i]->frameIn = new AllocatedV4L2Frame(v4l2Frame);
+        i++;
         // enqueue V4L2 frame
         enqueueV4l2Frame(v4l2Frame);
     }
