@@ -455,20 +455,22 @@ int StreamOut::asyncCallback(stream_callback_event_t event, void*, void* cookie)
     sp<IStreamOutCallback> callback = self->mCallback;
     if (callback.get() == nullptr) return 0;
     ALOGV("asyncCallback() event %d", event);
+    Return<void> result;
     switch (event) {
         case STREAM_CBK_EVENT_WRITE_READY:
-            callback->onWriteReady();
+            result = callback->onWriteReady();
             break;
         case STREAM_CBK_EVENT_DRAIN_READY:
-            callback->onDrainReady();
+            result = callback->onDrainReady();
             break;
         case STREAM_CBK_EVENT_ERROR:
-            callback->onError();
+            result = callback->onError();
             break;
         default:
             ALOGW("asyncCallback() unknown event %d", event);
             break;
     }
+    ALOGW_IF(!result.isOk(), "Client callback failed: %s", result.description().c_str());
     return 0;
 }
 
@@ -629,16 +631,18 @@ int StreamOut::asyncEventCallback(stream_event_callback_type_t event, void* para
     sp<IStreamOutEventCallback> eventCallback = self->mEventCallback;
     if (eventCallback.get() == nullptr) return 0;
     ALOGV("%s event %d", __func__, event);
+    Return<void> result;
     switch (event) {
         case STREAM_EVENT_CBK_TYPE_CODEC_FORMAT_CHANGED: {
             hidl_vec<uint8_t> audioMetadata;
             audioMetadata.setToExternal((uint8_t*)param, strlen((char*)param));
-            eventCallback->onCodecFormatChanged(audioMetadata);
+            result = eventCallback->onCodecFormatChanged(audioMetadata);
         } break;
         default:
             ALOGW("%s unknown event %d", __func__, event);
             break;
     }
+    ALOGW_IF(!result.isOk(), "Client callback failed: %s", result.description().c_str());
     return 0;
 }
 #endif
