@@ -86,6 +86,7 @@ private:
     std::unordered_set<int32_t> mHvacPowerProps;
     RecurrentTimer mRecurrentTimer;
     GeneratorHub mGeneratorHub;
+    bool mInEmulator;
 };
 
 }  // impl
