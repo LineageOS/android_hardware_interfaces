@@ -24,6 +24,7 @@
 #include <thread>
 #include "GnssAntennaInfo.h"
 #include "GnssConfiguration.h"
+#include "NmeaFixInfo.h"
 
 namespace android {
 namespace hardware {
@@ -31,8 +32,13 @@ namespace gnss {
 namespace V2_1 {
 
 using GnssSvInfo = IGnssCallback::GnssSvInfo;
+using ::android::hardware::gnss::common::NmeaFixInfo;
 
 namespace implementation {
+
+constexpr int INPUT_BUFFER_SIZE = 128;
+constexpr char CMD_GET_LOCATION[] = "CMD_GET_LOCATION";
+constexpr char GNSS_PATH[] = "/dev/gnss0";
 
 struct Gnss : public IGnss {
     Gnss();
@@ -95,6 +101,7 @@ struct Gnss : public IGnss {
     Return<sp<V2_1::IGnssAntennaInfo>> getExtensionGnssAntennaInfo() override;
 
   private:
+    std::unique_ptr<V2_0::GnssLocation> getLocationFromHW();
     void reportLocation(const V2_0::GnssLocation&) const;
     void reportLocation(const V1_0::GnssLocation&) const;
     void reportSvStatus(const hidl_vec<GnssSvInfo>&) const;
@@ -106,7 +113,10 @@ struct Gnss : public IGnss {
     std::atomic<long> mMinIntervalMs;
     sp<GnssConfiguration> mGnssConfiguration;
     std::atomic<bool> mIsActive;
+    std::atomic<bool> mHardwareModeOn;
+    std::atomic<int> mGnssFd;
     std::thread mThread;
+
     mutable std::mutex mMutex;
     hidl_vec<GnssSvInfo> filterBlacklistedSatellitesV2_1(hidl_vec<GnssSvInfo> gnssSvInfoList);
 };

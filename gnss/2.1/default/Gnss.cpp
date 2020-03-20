@@ -17,13 +17,14 @@
 #define LOG_TAG "Gnss"
 
 #include "Gnss.h"
+#include <log/log.h>
+#include <sys/epoll.h>
+#include <string>
 #include "GnssAntennaInfo.h"
 #include "GnssDebug.h"
 #include "GnssMeasurement.h"
 #include "GnssMeasurementCorrections.h"
 #include "Utils.h"
-
-#include <log/log.h>
 
 using ::android::hardware::gnss::common::Utils;
 using ::android::hardware::gnss::measurement_corrections::V1_1::implementation::
@@ -40,14 +41,55 @@ sp<V2_0::IGnssCallback> Gnss::sGnssCallback_2_0 = nullptr;
 sp<V1_1::IGnssCallback> Gnss::sGnssCallback_1_1 = nullptr;
 sp<V1_0::IGnssCallback> Gnss::sGnssCallback_1_0 = nullptr;
 
-Gnss::Gnss() : mMinIntervalMs(1000), mGnssConfiguration{new GnssConfiguration()} {}
+Gnss::Gnss()
+    : mMinIntervalMs(1000),
+      mGnssConfiguration{new GnssConfiguration()},
+      mHardwareModeOn(false),
+      mGnssFd(-1) {}
 
 Gnss::~Gnss() {
     stop();
 }
 
+std::unique_ptr<V2_0::GnssLocation> Gnss::getLocationFromHW() {
+    char inputBuffer[INPUT_BUFFER_SIZE];
+    mHardwareModeOn = false;
+    if (mGnssFd == -1) {
+        mGnssFd = open(GNSS_PATH, O_RDWR | O_NONBLOCK);
+    }
+    if (mGnssFd == -1) {
+        return nullptr;
+    }
+    // Send control message to device
+    int bytes_write = write(mGnssFd, CMD_GET_LOCATION, strlen(CMD_GET_LOCATION));
+    if (bytes_write <= 0) {
+        return nullptr;
+    }
+
+    struct epoll_event ev, events[1];
+    ev.data.fd = mGnssFd;
+    ev.events = EPOLLIN;
+    int epoll_fd = epoll_create1(0);
+    epoll_ctl(epoll_fd, EPOLL_CTL_ADD, mGnssFd, &ev);
+    int bytes_read = -1;
+    std::string inputStr = "";
+    int epoll_ret = epoll_wait(epoll_fd, events, 1, mMinIntervalMs);
+    // Indicates it is a hardwareMode, don't need to wait outside.
+    mHardwareModeOn = true;
+    if (epoll_ret == -1) {
+        return nullptr;
+    }
+    while (true) {
+        bytes_read = read(mGnssFd, &inputBuffer, INPUT_BUFFER_SIZE);
+        if (bytes_read <= 0) {
+            break;
+        }
+        inputStr += std::string(inputBuffer, bytes_read);
+    }
+    return NmeaFixInfo::getLocationFromInputStr(inputStr);
+}
+
 Return<bool> Gnss::start() {
-    ALOGD("start");
     if (mIsActive) {
         ALOGW("Gnss has started. Restarting...");
         stop();
@@ -59,15 +101,24 @@ Return<bool> Gnss::start() {
             auto svStatus = filterBlacklistedSatellitesV2_1(Utils::getMockSvInfoListV2_1());
             this->reportSvStatus(svStatus);
 
-            if (sGnssCallback_2_1 != nullptr || sGnssCallback_2_0 != nullptr) {
-                const auto location = Utils::getMockLocationV2_0();
-                this->reportLocation(location);
+            auto currentLocation = getLocationFromHW();
+            if (currentLocation != nullptr) {
+                this->reportLocation(*currentLocation);
             } else {
-                const auto location = Utils::getMockLocationV1_0();
-                this->reportLocation(location);
-            }
+                if (sGnssCallback_2_1 != nullptr || sGnssCallback_2_0 != nullptr) {
+                    const auto location = Utils::getMockLocationV2_0();
+                    this->reportLocation(location);
+                } else {
+                    const auto location = Utils::getMockLocationV1_0();
+                    this->reportLocation(location);
+                }
 
-            std::this_thread::sleep_for(std::chrono::milliseconds(mMinIntervalMs));
+                // Only need do the sleep in the static location mode, which mocks the "wait
+                // for" hardware behavior.
+                if (!mHardwareModeOn) {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(mMinIntervalMs));
+                }
+            }
         }
     });
     return true;
@@ -88,6 +139,10 @@ Return<bool> Gnss::stop() {
     mIsActive = false;
     if (mThread.joinable()) {
         mThread.join();
+    }
+    if (mGnssFd != -1) {
+        close(mGnssFd);
+        mGnssFd = -1;
     }
     return true;
 }
