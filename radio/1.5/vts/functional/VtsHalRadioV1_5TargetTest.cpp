@@ -16,11 +16,7 @@
 
 #include <radio_hidl_hal_utils_v1_5.h>
 
-int main(int argc, char** argv) {
-    ::testing::AddGlobalTestEnvironment(RadioHidlEnvironment::Instance());
-    ::testing::InitGoogleTest(&argc, argv);
-    RadioHidlEnvironment::Instance()->init(&argc, argv);
-    int status = RUN_ALL_TESTS();
-    LOG(INFO) << "Test result = " << status;
-    return status;
-}
+INSTANTIATE_TEST_SUITE_P(PerInstance, RadioHidlTest_v1_5,
+                         testing::ValuesIn(android::hardware::getAllHalInstanceNames(
+                                 android::hardware::radio::V1_5::IRadio::descriptor)),
+                         android::hardware::PrintInstanceNameToString);
