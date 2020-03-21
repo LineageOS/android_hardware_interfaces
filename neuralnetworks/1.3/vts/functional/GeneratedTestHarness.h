@@ -77,6 +77,8 @@ enum class TestKind {
 void EvaluatePreparedModel(const sp<IDevice>& device, const sp<IPreparedModel>& preparedModel,
                            const test_helper::TestModel& testModel, TestKind testKind);
 
+void waitForSyncFence(int syncFd);
+
 }  // namespace android::hardware::neuralnetworks::V1_3::vts::functional
 
 #endif  // ANDROID_HARDWARE_NEURALNETWORKS_V1_3_GENERATED_TEST_HARNESS_H
