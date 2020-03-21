@@ -1023,16 +1023,37 @@ struct NetworkScanResult {
  * 3GPP2 C.S0068-0.
  */
 enum PersoSubstate : @1.0::PersoSubstate {
+    /**
+     * The device is personalized using the content of the Service Provider Name (SPN) in the SIM
+     * card.
+     */
     SIM_SPN,
     SIM_SPN_PUK,
-    /** Equivalent Home PLMN */
+    /**
+     * Service Provider and Equivalent Home PLMN
+     * The device is personalized using both the content of the GID1 (equivalent to service provider
+     * personalization) and the content of the Equivalent Home PLMN (EHPLMN) in the SIM card.
+     * If the GID1 in the SIM is absent, then just the content of the Equivalent Home PLMN
+     * is matched.
+     */
     SIM_SP_EHPLMN,
     SIM_SP_EHPLMN_PUK,
+    /**
+     * Device is personalized using the first digits of the ICCID of the SIM card.
+     */
     SIM_ICCID,
     SIM_ICCID_PUK,
+    /**
+     * Device is personalized using the content of the IMPI in the ISIM.
+     */
     SIM_IMPI,
     SIM_IMPI_PUK,
-    /** Network subset service provider */
+    /**
+     * Network Subset and Service Provider
+     * Device is personalized using both the content of GID1 (equivalent to service provider
+     * personalization) and the first digits of the IMSI (equivalent to network subset
+     * personalization).
+     */
     SIM_NS_SP,
     SIM_NS_SP_PUK,
 };
