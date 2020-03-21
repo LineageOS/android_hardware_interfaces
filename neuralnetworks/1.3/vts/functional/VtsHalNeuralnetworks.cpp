@@ -177,7 +177,8 @@ void validateFailure(const sp<IDevice>& device, const Model& model, const Reques
 
 TEST_P(ValidationTest, Test) {
     const Model model = createModel(kTestModel);
-    const Request request = nn::convertToV1_3(createRequest(kTestModel));
+    ExecutionContext context;
+    const Request request = nn::convertToV1_3(context.createRequest(kTestModel));
     if (kTestModel.expectFailure) {
         validateFailure(kDevice, model, request);
     } else {
