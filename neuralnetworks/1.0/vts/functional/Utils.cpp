@@ -21,10 +21,13 @@
 
 #include <android-base/logging.h>
 #include <android/hardware/neuralnetworks/1.0/types.h>
+#include <android/hardware_buffer.h>
 #include <android/hidl/allocator/1.0/IAllocator.h>
 #include <android/hidl/memory/1.0/IMemory.h>
 #include <hidlmemory/mapping.h>
+#include <vndk/hardware_buffer.h>
 
+#include <gtest/gtest.h>
 #include <algorithm>
 #include <iostream>
 #include <vector>
@@ -37,10 +40,64 @@ using V1_0::DataLocation;
 using V1_0::Request;
 using V1_0::RequestArgument;
 
-constexpr uint32_t kInputPoolIndex = 0;
-constexpr uint32_t kOutputPoolIndex = 1;
+std::unique_ptr<TestAshmem> TestAshmem::create(uint32_t size) {
+    auto ashmem = std::make_unique<TestAshmem>(size);
+    return ashmem->mIsValid ? std::move(ashmem) : nullptr;
+}
 
-Request createRequest(const TestModel& testModel) {
+void TestAshmem::initialize(uint32_t size) {
+    mIsValid = false;
+    ASSERT_GT(size, 0);
+    mHidlMemory = nn::allocateSharedMemory(size);
+    ASSERT_TRUE(mHidlMemory.valid());
+    mMappedMemory = mapMemory(mHidlMemory);
+    ASSERT_NE(mMappedMemory, nullptr);
+    mPtr = static_cast<uint8_t*>(static_cast<void*>(mMappedMemory->getPointer()));
+    ASSERT_NE(mPtr, nullptr);
+    mIsValid = true;
+}
+
+std::unique_ptr<TestBlobAHWB> TestBlobAHWB::create(uint32_t size) {
+    auto ahwb = std::make_unique<TestBlobAHWB>(size);
+    return ahwb->mIsValid ? std::move(ahwb) : nullptr;
+}
+
+void TestBlobAHWB::initialize(uint32_t size) {
+    mIsValid = false;
+    ASSERT_GT(size, 0);
+    const auto usage = AHARDWAREBUFFER_USAGE_CPU_READ_OFTEN | AHARDWAREBUFFER_USAGE_CPU_WRITE_OFTEN;
+    const AHardwareBuffer_Desc desc = {
+            .width = size,
+            .height = 1,
+            .layers = 1,
+            .format = AHARDWAREBUFFER_FORMAT_BLOB,
+            .usage = usage,
+            .stride = size,
+    };
+    ASSERT_EQ(AHardwareBuffer_allocate(&desc, &mAhwb), 0);
+    ASSERT_NE(mAhwb, nullptr);
+
+    void* buffer = nullptr;
+    ASSERT_EQ(AHardwareBuffer_lock(mAhwb, usage, -1, nullptr, &buffer), 0);
+    ASSERT_NE(buffer, nullptr);
+    mPtr = static_cast<uint8_t*>(buffer);
+
+    const native_handle_t* handle = AHardwareBuffer_getNativeHandle(mAhwb);
+    ASSERT_NE(handle, nullptr);
+    mHidlMemory = hidl_memory("hardware_buffer_blob", handle, desc.width);
+    mIsValid = true;
+}
+
+TestBlobAHWB::~TestBlobAHWB() {
+    if (mAhwb) {
+        AHardwareBuffer_unlock(mAhwb, nullptr);
+        AHardwareBuffer_release(mAhwb);
+    }
+}
+
+Request ExecutionContext::createRequest(const TestModel& testModel, MemoryType memoryType) {
+    CHECK(memoryType == MemoryType::ASHMEM || memoryType == MemoryType::BLOB_AHWB);
+
     // Model inputs.
     hidl_vec<RequestArgument> inputs(testModel.main.inputIndexes.size());
     size_t inputSize = 0;
@@ -80,16 +137,19 @@ Request createRequest(const TestModel& testModel) {
     }
 
     // Allocate memory pools.
-    hidl_vec<hidl_memory> pools = {nn::allocateSharedMemory(inputSize),
-                                   nn::allocateSharedMemory(outputSize)};
-    CHECK_NE(pools[kInputPoolIndex].size(), 0u);
-    CHECK_NE(pools[kOutputPoolIndex].size(), 0u);
-    sp<IMemory> inputMemory = mapMemory(pools[kInputPoolIndex]);
-    CHECK(inputMemory.get() != nullptr);
-    uint8_t* inputPtr = static_cast<uint8_t*>(static_cast<void*>(inputMemory->getPointer()));
-    CHECK(inputPtr != nullptr);
+    if (memoryType == MemoryType::ASHMEM) {
+        mInputMemory = TestAshmem::create(inputSize);
+        mOutputMemory = TestAshmem::create(outputSize);
+    } else {
+        mInputMemory = TestBlobAHWB::create(inputSize);
+        mOutputMemory = TestBlobAHWB::create(outputSize);
+    }
+    EXPECT_NE(mInputMemory, nullptr);
+    EXPECT_NE(mOutputMemory, nullptr);
+    hidl_vec<hidl_memory> pools = {mInputMemory->getHidlMemory(), mOutputMemory->getHidlMemory()};
 
     // Copy input data to the memory pool.
+    uint8_t* inputPtr = mInputMemory->getPointer();
     for (uint32_t i = 0; i < testModel.main.inputIndexes.size(); i++) {
         const auto& op = testModel.main.operands[testModel.main.inputIndexes[i]];
         if (op.data.size() > 0) {
@@ -102,18 +162,13 @@ Request createRequest(const TestModel& testModel) {
     return {.inputs = std::move(inputs), .outputs = std::move(outputs), .pools = std::move(pools)};
 }
 
-std::vector<TestBuffer> getOutputBuffers(const Request& request) {
-    sp<IMemory> outputMemory = mapMemory(request.pools[kOutputPoolIndex]);
-    CHECK(outputMemory.get() != nullptr);
-    uint8_t* outputPtr = static_cast<uint8_t*>(static_cast<void*>(outputMemory->getPointer()));
-    CHECK(outputPtr != nullptr);
-
+std::vector<TestBuffer> ExecutionContext::getOutputBuffers(const Request& request) const {
     // Copy out output results.
+    uint8_t* outputPtr = mOutputMemory->getPointer();
     std::vector<TestBuffer> outputBuffers;
     for (const auto& output : request.outputs) {
         outputBuffers.emplace_back(output.location.length, outputPtr + output.location.offset);
     }
-
     return outputBuffers;
 }
 
