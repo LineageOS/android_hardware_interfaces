@@ -52,6 +52,10 @@ void createPreparedModel(const sp<IDevice>& device, const Model& model,
 // Utility function to get PreparedModel from callback and downcast to V1_2.
 sp<IPreparedModel> getPreparedModel_1_3(const sp<implementation::PreparedModelCallback>& callback);
 
+enum class Executor { ASYNC, SYNC, BURST, FENCED };
+
+std::string toString(Executor executor);
+
 }  // namespace android::hardware::neuralnetworks::V1_3::vts::functional
 
 #endif  // ANDROID_HARDWARE_NEURALNETWORKS_V1_3_VTS_HAL_NEURALNETWORKS_H
