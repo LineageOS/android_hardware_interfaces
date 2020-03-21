@@ -784,7 +784,7 @@ public:
             const CameraMetadata& chars, int deviceVersion,
             const hidl_vec<hidl_string>& deviceNames);
     void verifyCameraCharacteristics(Status status, const CameraMetadata& chars);
-    void verifyBokehCharacteristics(const camera_metadata_t* metadata);
+    void verifyExtendedSceneModeCharacteristics(const camera_metadata_t* metadata);
     void verifyZoomCharacteristics(const camera_metadata_t* metadata);
     void verifyRecommendedConfigs(const CameraMetadata& metadata);
     void verifyMonochromeCharacteristics(const CameraMetadata& chars, int deviceVersion);
@@ -6588,77 +6588,98 @@ void CameraHidlTest::verifyCameraCharacteristics(Status status, const CameraMeta
                 poseReference >= ANDROID_LENS_POSE_REFERENCE_PRIMARY_CAMERA);
     }
 
-    verifyBokehCharacteristics(metadata);
+    verifyExtendedSceneModeCharacteristics(metadata);
     verifyZoomCharacteristics(metadata);
 }
 
-void CameraHidlTest::verifyBokehCharacteristics(const camera_metadata_t* metadata) {
+void CameraHidlTest::verifyExtendedSceneModeCharacteristics(const camera_metadata_t* metadata) {
     camera_metadata_ro_entry entry;
     int retcode = 0;
+
+    retcode = find_camera_metadata_ro_entry(metadata, ANDROID_CONTROL_AVAILABLE_MODES, &entry);
+    if ((0 == retcode) && (entry.count > 0)) {
+        for (auto i = 0; i < entry.count; i++) {
+            ASSERT_TRUE(entry.data.u8[i] >= ANDROID_CONTROL_MODE_OFF &&
+                        entry.data.u8[i] <= ANDROID_CONTROL_MODE_USE_EXTENDED_SCENE_MODE);
+        }
+    } else {
+        ADD_FAILURE() << "Get camera controlAvailableModes failed!";
+    }
 
     // Check key availability in capabilities, request and result.
 
     retcode = find_camera_metadata_ro_entry(metadata,
             ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS, &entry);
-    bool hasBokehRequestKey = false;
+    bool hasExtendedSceneModeRequestKey = false;
     if ((0 == retcode) && (entry.count > 0)) {
-        hasBokehRequestKey = std::find(entry.data.i32, entry.data.i32+entry.count,
-                ANDROID_CONTROL_BOKEH_MODE) != entry.data.i32+entry.count;
+        hasExtendedSceneModeRequestKey =
+                std::find(entry.data.i32, entry.data.i32 + entry.count,
+                          ANDROID_CONTROL_EXTENDED_SCENE_MODE) != entry.data.i32 + entry.count;
     } else {
         ADD_FAILURE() << "Get camera availableRequestKeys failed!";
     }
 
     retcode = find_camera_metadata_ro_entry(metadata,
             ANDROID_REQUEST_AVAILABLE_RESULT_KEYS, &entry);
-    bool hasBokehResultKey = false;
+    bool hasExtendedSceneModeResultKey = false;
     if ((0 == retcode) && (entry.count > 0)) {
-        hasBokehResultKey = std::find(entry.data.i32, entry.data.i32+entry.count,
-                ANDROID_CONTROL_BOKEH_MODE) != entry.data.i32+entry.count;
+        hasExtendedSceneModeResultKey =
+                std::find(entry.data.i32, entry.data.i32 + entry.count,
+                          ANDROID_CONTROL_EXTENDED_SCENE_MODE) != entry.data.i32 + entry.count;
     } else {
         ADD_FAILURE() << "Get camera availableResultKeys failed!";
     }
 
     retcode = find_camera_metadata_ro_entry(metadata,
             ANDROID_REQUEST_AVAILABLE_CHARACTERISTICS_KEYS, &entry);
-    bool hasBokehMaxSizesKey = false;
-    bool hasBokehZoomRatioRangesKey = false;
+    bool hasExtendedSceneModeMaxSizesKey = false;
+    bool hasExtendedSceneModeZoomRatioRangesKey = false;
     if ((0 == retcode) && (entry.count > 0)) {
-        hasBokehMaxSizesKey = std::find(entry.data.i32, entry.data.i32+entry.count,
-                ANDROID_CONTROL_AVAILABLE_BOKEH_MAX_SIZES) != entry.data.i32+entry.count;
-        hasBokehZoomRatioRangesKey = std::find(entry.data.i32, entry.data.i32+entry.count,
-                ANDROID_CONTROL_AVAILABLE_BOKEH_ZOOM_RATIO_RANGES) != entry.data.i32+entry.count;
+        hasExtendedSceneModeMaxSizesKey =
+                std::find(entry.data.i32, entry.data.i32 + entry.count,
+                          ANDROID_CONTROL_AVAILABLE_EXTENDED_SCENE_MODE_MAX_SIZES) !=
+                entry.data.i32 + entry.count;
+        hasExtendedSceneModeZoomRatioRangesKey =
+                std::find(entry.data.i32, entry.data.i32 + entry.count,
+                          ANDROID_CONTROL_AVAILABLE_EXTENDED_SCENE_MODE_ZOOM_RATIO_RANGES) !=
+                entry.data.i32 + entry.count;
     } else {
         ADD_FAILURE() << "Get camera availableCharacteristicsKeys failed!";
     }
 
     camera_metadata_ro_entry maxSizesEntry;
-    retcode = find_camera_metadata_ro_entry(metadata,
-            ANDROID_CONTROL_AVAILABLE_BOKEH_MAX_SIZES, &maxSizesEntry);
-    bool hasBokehMaxSizes = (0 == retcode && maxSizesEntry.count > 0);
+    retcode = find_camera_metadata_ro_entry(
+            metadata, ANDROID_CONTROL_AVAILABLE_EXTENDED_SCENE_MODE_MAX_SIZES, &maxSizesEntry);
+    bool hasExtendedSceneModeMaxSizes = (0 == retcode && maxSizesEntry.count > 0);
 
     camera_metadata_ro_entry zoomRatioRangesEntry;
-    retcode = find_camera_metadata_ro_entry(metadata,
-            ANDROID_CONTROL_AVAILABLE_BOKEH_ZOOM_RATIO_RANGES, &zoomRatioRangesEntry);
-    bool hasBokehZoomRatioRanges = (0 == retcode && zoomRatioRangesEntry.count > 0);
+    retcode = find_camera_metadata_ro_entry(
+            metadata, ANDROID_CONTROL_AVAILABLE_EXTENDED_SCENE_MODE_ZOOM_RATIO_RANGES,
+            &zoomRatioRangesEntry);
+    bool hasExtendedSceneModeZoomRatioRanges = (0 == retcode && zoomRatioRangesEntry.count > 0);
 
-    // Bokeh keys must all be available, or all be unavailable.
-    bool noBokeh = !hasBokehRequestKey && !hasBokehResultKey && !hasBokehMaxSizesKey &&
-            !hasBokehZoomRatioRangesKey && !hasBokehMaxSizes && !hasBokehZoomRatioRanges;
-    if (noBokeh) {
+    // Extended scene mode keys must all be available, or all be unavailable.
+    bool noExtendedSceneMode =
+            !hasExtendedSceneModeRequestKey && !hasExtendedSceneModeResultKey &&
+            !hasExtendedSceneModeMaxSizesKey && !hasExtendedSceneModeZoomRatioRangesKey &&
+            !hasExtendedSceneModeMaxSizes && !hasExtendedSceneModeZoomRatioRanges;
+    if (noExtendedSceneMode) {
         return;
     }
-    bool hasBokeh = hasBokehRequestKey && hasBokehResultKey && hasBokehMaxSizesKey &&
-            hasBokehZoomRatioRangesKey && hasBokehMaxSizes && hasBokehZoomRatioRanges;
-    ASSERT_TRUE(hasBokeh);
+    bool hasExtendedSceneMode = hasExtendedSceneModeRequestKey && hasExtendedSceneModeResultKey &&
+                                hasExtendedSceneModeMaxSizesKey &&
+                                hasExtendedSceneModeZoomRatioRangesKey &&
+                                hasExtendedSceneModeMaxSizes && hasExtendedSceneModeZoomRatioRanges;
+    ASSERT_TRUE(hasExtendedSceneMode);
 
-    // Must have OFF, and must have one of STILL_CAPTURE and CONTINUOUS.
-    // Only valid combinations: {OFF, CONTINUOUS}, {OFF, STILL_CAPTURE}, and
-    // {OFF, CONTINUOUS, STILL_CAPTURE}.
+    // Must have DISABLED, and must have one of BOKEH_STILL_CAPTURE, BOKEH_CONTINUOUS, or a VENDOR
+    // mode.
     ASSERT_TRUE((maxSizesEntry.count == 6 && zoomRatioRangesEntry.count == 2) ||
             (maxSizesEntry.count == 9 && zoomRatioRangesEntry.count == 4));
-    bool hasOffMode = false;
-    bool hasStillCaptureMode = false;
-    bool hasContinuousMode = false;
+    bool hasDisabledMode = false;
+    bool hasBokehStillCaptureMode = false;
+    bool hasBokehContinuousMode = false;
+    bool hasVendorMode = false;
     std::vector<AvailableStream> outputStreams;
     ASSERT_EQ(Status::OK, getAvailableOutputStreams(metadata, outputStreams));
     for (int i = 0, j = 0; i < maxSizesEntry.count && j < zoomRatioRangesEntry.count; i += 3) {
@@ -6666,24 +6687,29 @@ void CameraHidlTest::verifyBokehCharacteristics(const camera_metadata_t* metadat
         int32_t maxWidth = maxSizesEntry.data.i32[i+1];
         int32_t maxHeight = maxSizesEntry.data.i32[i+2];
         switch (mode) {
-            case ANDROID_CONTROL_BOKEH_MODE_OFF:
-                hasOffMode = true;
+            case ANDROID_CONTROL_EXTENDED_SCENE_MODE_DISABLED:
+                hasDisabledMode = true;
                 ASSERT_TRUE(maxWidth == 0 && maxHeight == 0);
                 break;
-            case ANDROID_CONTROL_BOKEH_MODE_STILL_CAPTURE:
-                hasStillCaptureMode = true;
+            case ANDROID_CONTROL_EXTENDED_SCENE_MODE_BOKEH_STILL_CAPTURE:
+                hasBokehStillCaptureMode = true;
                 j += 2;
                 break;
-            case ANDROID_CONTROL_BOKEH_MODE_CONTINUOUS:
-                hasContinuousMode = true;
+            case ANDROID_CONTROL_EXTENDED_SCENE_MODE_BOKEH_CONTINUOUS:
+                hasBokehContinuousMode = true;
                 j += 2;
                 break;
             default:
-                ADD_FAILURE() << "Invalid bokehMode advertised: " << mode;
+                if (mode < ANDROID_CONTROL_EXTENDED_SCENE_MODE_VENDOR_START) {
+                    ADD_FAILURE() << "Invalid extended scene mode advertised: " << mode;
+                } else {
+                    hasVendorMode = true;
+                    j += 2;
+                }
                 break;
         }
 
-        if (mode != ANDROID_CONTROL_BOKEH_MODE_OFF) {
+        if (mode != ANDROID_CONTROL_EXTENDED_SCENE_MODE_DISABLED) {
             // Make sure size is supported.
             bool sizeSupported = false;
             for (const auto& stream : outputStreams) {
@@ -6703,8 +6729,8 @@ void CameraHidlTest::verifyBokehCharacteristics(const camera_metadata_t* metadat
             ASSERT_LE(minZoomRatio, maxZoomRatio);
         }
     }
-    ASSERT_TRUE(hasOffMode);
-    ASSERT_TRUE(hasStillCaptureMode || hasContinuousMode);
+    ASSERT_TRUE(hasDisabledMode);
+    ASSERT_TRUE(hasBokehStillCaptureMode || hasBokehContinuousMode || hasVendorMode);
 }
 
 void CameraHidlTest::verifyZoomCharacteristics(const camera_metadata_t* metadata) {
