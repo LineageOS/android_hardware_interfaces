@@ -19,6 +19,8 @@
 
 #include <android-base/logging.h>
 #include <android/hardware/neuralnetworks/1.0/types.h>
+#include <android/hardware_buffer.h>
+#include <android/hidl/memory/1.0/IMemory.h>
 #include <algorithm>
 #include <iosfwd>
 #include <string>
@@ -28,11 +30,73 @@
 
 namespace android::hardware::neuralnetworks {
 
-// Create HIDL Request from the TestModel struct.
-V1_0::Request createRequest(const test_helper::TestModel& testModel);
+// Convenience class to manage the lifetime of memory resources.
+class TestMemoryBase {
+    DISALLOW_COPY_AND_ASSIGN(TestMemoryBase);
 
-// After execution, copy out output results from the output memory pool.
-std::vector<::test_helper::TestBuffer> getOutputBuffers(const V1_0::Request& request);
+  public:
+    TestMemoryBase() = default;
+    virtual ~TestMemoryBase() = default;
+    uint8_t* getPointer() const { return mPtr; }
+    hidl_memory getHidlMemory() const { return mHidlMemory; }
+
+  protected:
+    uint8_t* mPtr = nullptr;
+    hidl_memory mHidlMemory;
+    bool mIsValid = false;
+};
+
+class TestAshmem : public TestMemoryBase {
+  public:
+    static std::unique_ptr<TestAshmem> create(uint32_t size);
+
+    // Prefer TestAshmem::create.
+    // The constructor calls initialize, which constructs the memory resources. This is a workaround
+    // that gtest macros cannot be used directly in a constructor.
+    TestAshmem(uint32_t size) { initialize(size); }
+
+  private:
+    void initialize(uint32_t size);
+    sp<hidl::memory::V1_0::IMemory> mMappedMemory;
+};
+
+class TestBlobAHWB : public TestMemoryBase {
+  public:
+    static std::unique_ptr<TestBlobAHWB> create(uint32_t size);
+
+    // Prefer TestBlobAHWB::create.
+    // The constructor calls initialize, which constructs the memory resources. This is a
+    // workaround that gtest macros cannot be used directly in a constructor.
+    TestBlobAHWB(uint32_t size) { initialize(size); }
+    ~TestBlobAHWB();
+
+  private:
+    void initialize(uint32_t size);
+    AHardwareBuffer* mAhwb = nullptr;
+};
+
+enum class MemoryType { ASHMEM, BLOB_AHWB, DEVICE };
+
+// Manages the lifetime of memory resources used in an execution.
+class ExecutionContext {
+    DISALLOW_COPY_AND_ASSIGN(ExecutionContext);
+
+  public:
+    static constexpr uint32_t kInputPoolIndex = 0;
+    static constexpr uint32_t kOutputPoolIndex = 1;
+
+    ExecutionContext() = default;
+
+    // Create HIDL Request from the TestModel struct.
+    V1_0::Request createRequest(const test_helper::TestModel& testModel,
+                                MemoryType memoryType = MemoryType::ASHMEM);
+
+    // After execution, copy out output results from the output memory pool.
+    std::vector<test_helper::TestBuffer> getOutputBuffers(const V1_0::Request& request) const;
+
+  private:
+    std::unique_ptr<TestMemoryBase> mInputMemory, mOutputMemory;
+};
 
 // Delete element from hidl_vec. hidl_vec doesn't support a "remove" operation,
 // so this is efficiently accomplished by moving the element to the end and
