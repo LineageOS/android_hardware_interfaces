@@ -177,7 +177,8 @@ void validateFailure(const sp<IDevice>& device, const Model& model, const Reques
 
 TEST_P(ValidationTest, Test) {
     const Model model = createModel(kTestModel);
-    const Request request = nn::convertToV1_3(createRequest(kTestModel));
+    ExecutionContext context;
+    const Request request = nn::convertToV1_3(context.createRequest(kTestModel));
     if (kTestModel.expectFailure) {
         validateFailure(kDevice, model, request);
     } else {
@@ -190,6 +191,21 @@ INSTANTIATE_GENERATED_TEST(ValidationTest, [](const test_helper::TestModel&) { r
 sp<IPreparedModel> getPreparedModel_1_3(const sp<PreparedModelCallback>& callback) {
     sp<V1_0::IPreparedModel> preparedModelV1_0 = callback->getPreparedModel();
     return IPreparedModel::castFrom(preparedModelV1_0).withDefault(nullptr);
+}
+
+std::string toString(Executor executor) {
+    switch (executor) {
+        case Executor::ASYNC:
+            return "ASYNC";
+        case Executor::SYNC:
+            return "SYNC";
+        case Executor::BURST:
+            return "BURST";
+        case Executor::FENCED:
+            return "FENCED";
+        default:
+            CHECK(false);
+    }
 }
 
 }  // namespace android::hardware::neuralnetworks::V1_3::vts::functional
