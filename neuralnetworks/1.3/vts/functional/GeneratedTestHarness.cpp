@@ -72,8 +72,6 @@ using HidlToken = hidl_array<uint8_t, static_cast<uint32_t>(Constant::BYTE_SIZE_
 
 namespace {
 
-enum class Executor { ASYNC, SYNC, BURST, FENCED };
-
 enum class OutputType { FULLY_SPECIFIED, UNSPECIFIED, INSUFFICIENT, MISSED_DEADLINE };
 
 enum class MemoryType { SHARED, DEVICE };
