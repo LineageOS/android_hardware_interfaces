@@ -28,7 +28,7 @@ namespace rebootescrow {
 
 using ::android::base::unique_fd;
 
-ndk::ScopedAStatus RebootEscrow::storeKey(const std::vector<int8_t>& kek) {
+ndk::ScopedAStatus RebootEscrow::storeKey(const std::vector<uint8_t>& ukek) {
     int rawFd = TEMP_FAILURE_RETRY(::open(devicePath_.c_str(), O_WRONLY | O_NOFOLLOW | O_CLOEXEC));
     unique_fd fd(rawFd);
     if (fd.get() < 0) {
@@ -36,7 +36,6 @@ ndk::ScopedAStatus RebootEscrow::storeKey(const std::vector<int8_t>& kek) {
         return ndk::ScopedAStatus(AStatus_fromExceptionCode(EX_UNSUPPORTED_OPERATION));
     }
 
-    std::vector<uint8_t> ukek(kek.begin(), kek.end());
     auto encoded = hadamard::EncodeKey(ukek);
 
     if (!::android::base::WriteFully(fd, encoded.data(), encoded.size())) {
@@ -47,7 +46,7 @@ ndk::ScopedAStatus RebootEscrow::storeKey(const std::vector<int8_t>& kek) {
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RebootEscrow::retrieveKey(std::vector<int8_t>* _aidl_return) {
+ndk::ScopedAStatus RebootEscrow::retrieveKey(std::vector<uint8_t>* _aidl_return) {
     int rawFd = TEMP_FAILURE_RETRY(::open(devicePath_.c_str(), O_RDONLY | O_NOFOLLOW | O_CLOEXEC));
     unique_fd fd(rawFd);
     if (fd.get() < 0) {
@@ -63,8 +62,7 @@ ndk::ScopedAStatus RebootEscrow::retrieveKey(std::vector<int8_t>* _aidl_return) 
 
     auto keyBytes = hadamard::DecodeKey(encodedBytes);
 
-    std::vector<int8_t> signedKeyBytes(keyBytes.begin(), keyBytes.end());
-    *_aidl_return = signedKeyBytes;
+    *_aidl_return = keyBytes;
     return ndk::ScopedAStatus::ok();
 }
 

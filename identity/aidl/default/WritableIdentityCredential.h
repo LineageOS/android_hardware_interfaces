@@ -37,8 +37,8 @@ class WritableIdentityCredential : public BnWritableIdentityCredential {
     bool initialize();
 
     // Methods from IWritableIdentityCredential follow.
-    ndk::ScopedAStatus getAttestationCertificate(const vector<int8_t>& attestationApplicationId,
-                                                 const vector<int8_t>& attestationChallenge,
+    ndk::ScopedAStatus getAttestationCertificate(const vector<uint8_t>& attestationApplicationId,
+                                                 const vector<uint8_t>& attestationChallenge,
                                                  vector<Certificate>* outCertificateChain) override;
 
     ndk::ScopedAStatus startPersonalization(int32_t accessControlProfileCount,
@@ -53,12 +53,12 @@ class WritableIdentityCredential : public BnWritableIdentityCredential {
                                      const string& nameSpace, const string& name,
                                      int32_t entrySize) override;
 
-    ndk::ScopedAStatus addEntryValue(const vector<int8_t>& content,
-                                     vector<int8_t>* outEncryptedContent) override;
+    ndk::ScopedAStatus addEntryValue(const vector<uint8_t>& content,
+                                     vector<uint8_t>* outEncryptedContent) override;
 
     ndk::ScopedAStatus finishAddingEntries(
-            vector<int8_t>* outCredentialData,
-            vector<int8_t>* outProofOfProvisioningSignature) override;
+            vector<uint8_t>* outCredentialData,
+            vector<uint8_t>* outProofOfProvisioningSignature) override;
 
     // private:
     string docType_;
