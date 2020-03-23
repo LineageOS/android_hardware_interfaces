@@ -83,8 +83,8 @@ vintf_compatibility_matrix {
         "compatibility_matrix.current.xml",
     ],
     kernel_configs: [
-        "kernel_config_current_4.14",
-        "kernel_config_current_4.19",
-        "kernel_config_current_5.4",
+        "kernel_config_r_4.14",
+        "kernel_config_r_4.19",
+        "kernel_config_r_5.4",
     ]
 }
