@@ -32,6 +32,8 @@
 #include <android/hardware/graphics/mapper/2.0/types.h>
 #include <android/hardware/graphics/mapper/3.0/IMapper.h>
 #include <android/hardware/graphics/mapper/3.0/types.h>
+#include <gtest/gtest.h>
+#include <hidl/ServiceManagement.h>
 #include <media/stagefright/foundation/ALooper.h>
 #include <utils/Condition.h>
 #include <utils/List.h>
@@ -43,8 +45,6 @@
 #include <media/openmax/OMX_IndexExt.h>
 #include <media/openmax/OMX_AudioExt.h>
 #include <media/openmax/OMX_VideoExt.h>
-
-#include <VtsHalHidlTargetTestEnvBase.h>
 
 /* TIME OUTS (Wait time in dequeueMessage()) */
 
@@ -77,6 +77,20 @@ enum bufferOwner {
     component,
     unknown,
 };
+
+// White list audio/video roles to be tested.
+static std::set<std::string> kWhiteListRoles{
+        "audio_encoder.aac",      "audio_encoder.amrnb", "audio_encoder.amrwb",
+        "audio_encoder.flac",     "audio_decoder.aac",   "audio_decoder.amrnb",
+        "audio_decoder.amrwb",    "audio_decoder.flac",  "audio_decoder.g711alaw",
+        "audio_decoder.g711mlaw", "audio_decoder.gsm",   "audio_decoder.mp3",
+        "audio_decoder.opus",     "audio_decoder.raw",   "audio_decoder.vorbis",
+        "video_encoder.avc",      "video_encoder.h263",  "video_encoder.mpeg4",
+        "video_encoder.vp8",      "video_encoder.vp9",   "video_decoder.avc",
+        "video_decoder.h263",     "video_decoder.hevc",  "video_decoder.mpeg4",
+        "video_decoder.vp8",      "video_decoder.vp9"};
+
+static std::vector<std::tuple<std::string, std::string, std::string>> kTestParameters;
 
 /*
  * TODO: below definitions are borrowed from Conversion.h.
@@ -328,8 +342,8 @@ struct GrallocV3 {
     using Rect = IMapper::Rect;
 };
 
-Return<android::hardware::media::omx::V1_0::Status> setRole(
-    sp<IOmxNode> omxNode, const char* role);
+Return<android::hardware::media::omx::V1_0::Status> setRole(sp<IOmxNode> omxNode,
+                                                            const std::string& role);
 
 Return<android::hardware::media::omx::V1_0::Status> setPortBufferSize(
     sp<IOmxNode> omxNode, OMX_U32 portIndex, OMX_U32 size);
@@ -400,77 +414,10 @@ void testEOS(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
              portreconfig fptr = nullptr, OMX_U32 kPortIndexInput = 0,
              OMX_U32 kPortIndexOutput = 1, void* args = nullptr);
 
-// A class for test environment setup
-class ComponentTestEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
-   private:
-    typedef ::testing::VtsHalHidlTargetTestEnvBase Super;
+hidl_vec<IOmx::ComponentInfo> getComponentInfoList(sp<IOmx> omx);
 
-   public:
-    virtual void registerTestServices() override { registerTestService<IOmx>(); }
-
-    ComponentTestEnvironment() : res("/data/local/tmp/media/") {}
-
-    void setComponent(const char* _component) { component = _component; }
-
-    void setRole(const char* _role) { role = _role; }
-
-    void setRes(const char* _res) { res = _res; }
-
-    const hidl_string getInstance() { return Super::getServiceName<IOmx>(); }
-
-    const hidl_string getComponent() const { return component; }
-
-    const hidl_string getRole() const { return role; }
-
-    const hidl_string getRes() const { return res; }
-
-    int initFromOptions(int argc, char** argv) {
-        static struct option options[] = {{"component", required_argument, 0, 'C'},
-                                          {"role", required_argument, 0, 'R'},
-                                          {"res", required_argument, 0, 'P'},
-                                          {0, 0, 0, 0}};
-
-        while (true) {
-            int index = 0;
-            int c = getopt_long(argc, argv, "C:R:P:", options, &index);
-            if (c == -1) {
-                break;
-            }
-
-            switch (c) {
-                case 'C':
-                    setComponent(optarg);
-                    break;
-                case 'R':
-                    setRole(optarg);
-                    break;
-                case 'P':
-                    setRes(optarg);
-                    break;
-                case '?':
-                    break;
-            }
-        }
-
-        if (optind < argc) {
-            fprintf(stderr,
-                    "unrecognized option: %s\n\n"
-                    "usage: %s <gtest options> <test options>\n\n"
-                    "test options are:\n\n"
-                    "-C, --component: OMX component to test\n"
-                    "-R, --role: OMX component Role\n"
-                    "-P, --res: Resource files directory location\n",
-                    argv[optind ?: 1], argv[0]);
-            return 2;
-        }
-        return 0;
-    }
-
-   private:
-    hidl_string instance;
-    hidl_string component;
-    hidl_string role;
-    hidl_string res;
-};
+// Return all test parameters, a list of tuple of <instance, component, role>
+const std::vector<std::tuple<std::string, std::string, std::string>>& getTestParameters(
+        const std::string& filter);
 
 #endif  // MEDIA_HIDL_TEST_COMMON_H
