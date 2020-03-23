@@ -666,6 +666,7 @@ void EvaluatePreparedModel(const sp<IDevice>& device, const sp<IPreparedModel>& 
                 ASSERT_EQ(syncFenceHandle.getNativeHandle(), nullptr);
                 ASSERT_EQ(fencedCallback, nullptr);
                 executionStatus = result;
+                timing = {UINT64_MAX, UINT64_MAX};
             } else if (syncFenceHandle.getNativeHandle()) {
                 // If a sync fence is returned, try start another run waiting for the sync fence.
                 ret = preparedModel->executeFenced(request, {syncFenceHandle},
