@@ -155,11 +155,20 @@ static const Uuid LOUDNESS_ENHANCER_EFFECT_TYPE = {
     0xfe3199be, 0xaed0, 0x413f, 0x87bb,
     std::array<uint8_t, 6>{{0x11, 0x26, 0x0e, 0xb6, 0x3c, 0xf1}}};
 
+enum { PARAM_FACTORY_NAME, PARAM_EFFECT_UUID };
+using EffectParameter = std::tuple<std::string, Uuid>;
+
+static inline std::string EffectParameterToString(
+        const ::testing::TestParamInfo<EffectParameter>& info) {
+    return ::android::hardware::PrintInstanceNameToString(::testing::TestParamInfo<std::string>{
+            std::get<PARAM_FACTORY_NAME>(info.param), info.index});
+}
+
 // The main test class for Audio Effect HIDL HAL.
-class AudioEffectHidlTest : public ::testing::TestWithParam<std::string> {
+class AudioEffectHidlTest : public ::testing::TestWithParam<EffectParameter> {
   public:
     void SetUp() override {
-        effectsFactory = IEffectsFactory::getService(GetParam());
+        effectsFactory = IEffectsFactory::getService(std::get<PARAM_FACTORY_NAME>(GetParam()));
         ASSERT_NE(nullptr, effectsFactory.get());
 
         findAndCreateEffect(getEffectType());
@@ -180,7 +189,7 @@ class AudioEffectHidlTest : public ::testing::TestWithParam<std::string> {
         RecordProperty("description", description);
     }
 
-    virtual Uuid getEffectType() { return EQUALIZER_EFFECT_TYPE; }
+    Uuid getEffectType() const { return std::get<PARAM_EFFECT_UUID>(GetParam()); }
 
     void findAndCreateEffect(const Uuid& type);
     void findEffectInstance(const Uuid& type, Uuid* uuid);
@@ -369,7 +378,9 @@ TEST_P(AudioEffectHidlTest, DisableEnableDisable) {
     description("Verify Disable -> Enable -> Disable sequence for an effect");
     Return<Result> ret = effect->disable();
     EXPECT_TRUE(ret.isOk());
-    EXPECT_EQ(Result::INVALID_ARGUMENTS, ret);
+    // Note: some legacy effects may return -EINVAL (INVALID_ARGUMENTS),
+    //       more canonical is to return -ENOSYS (NOT_SUPPORTED)
+    EXPECT_TRUE(ret == Result::NOT_SUPPORTED || ret == Result::INVALID_ARGUMENTS);
     ret = effect->enable();
     EXPECT_TRUE(ret.isOk());
     EXPECT_EQ(Result::OK, ret);
@@ -519,15 +530,19 @@ TEST_P(AudioEffectHidlTest, SetCurrentConfigForFeature) {
 
 // The main test class for Equalizer Audio Effect HIDL HAL.
 class EqualizerAudioEffectHidlTest : public AudioEffectHidlTest {
-   public:
+  public:
     void SetUp() override {
         AudioEffectHidlTest::SetUp();
         equalizer = IEqualizerEffect::castFrom(effect);
         ASSERT_NE(nullptr, equalizer.get());
     }
 
-   protected:
-    Uuid getEffectType() override { return EQUALIZER_EFFECT_TYPE; }
+    void TearDown() override {
+        equalizer.clear();
+        AudioEffectHidlTest::TearDown();
+    }
+
+  protected:
     void getNumBands(uint16_t* numBands);
     void getLevelRange(int16_t* minLevel, int16_t* maxLevel);
     void getBandFrequencyRange(uint16_t band, uint32_t* minFreq, uint32_t* centerFreq,
@@ -765,16 +780,19 @@ TEST_P(EqualizerAudioEffectHidlTest, GetSetAllProperties) {
 
 // The main test class for Equalizer Audio Effect HIDL HAL.
 class LoudnessEnhancerAudioEffectHidlTest : public AudioEffectHidlTest {
-   public:
+  public:
     void SetUp() override {
         AudioEffectHidlTest::SetUp();
         enhancer = ILoudnessEnhancerEffect::castFrom(effect);
         ASSERT_NE(nullptr, enhancer.get());
     }
 
-   protected:
-    Uuid getEffectType() override { return LOUDNESS_ENHANCER_EFFECT_TYPE; }
+    void TearDown() override {
+        enhancer.clear();
+        AudioEffectHidlTest::TearDown();
+    }
 
+  protected:
     sp<ILoudnessEnhancerEffect> enhancer;
 };
 
@@ -799,19 +817,31 @@ TEST_P(LoudnessEnhancerAudioEffectHidlTest, GetSetTargetGain) {
     EXPECT_EQ(gain, actualGain);
 }
 
+INSTANTIATE_TEST_SUITE_P(EffectsFactory, AudioEffectsFactoryHidlTest,
+                         ::testing::ValuesIn(::android::hardware::getAllHalInstanceNames(
+                                 IEffectsFactory::descriptor)),
+                         ::android::hardware::PrintInstanceNameToString);
 INSTANTIATE_TEST_SUITE_P(
-        EffectsFactory, AudioEffectsFactoryHidlTest,
-        testing::ValuesIn(android::hardware::getAllHalInstanceNames(IEffectsFactory::descriptor)),
-        android::hardware::PrintInstanceNameToString);
+        Equalizer_IEffect, AudioEffectHidlTest,
+        ::testing::Combine(::testing::ValuesIn(::android::hardware::getAllHalInstanceNames(
+                                   IEffectsFactory::descriptor)),
+                           ::testing::Values(EQUALIZER_EFFECT_TYPE)),
+        EffectParameterToString);
 INSTANTIATE_TEST_SUITE_P(
-        Equalizer, AudioEffectHidlTest,
-        testing::ValuesIn(android::hardware::getAllHalInstanceNames(IEffectsFactory::descriptor)),
-        android::hardware::PrintInstanceNameToString);
+        LoudnessEnhancer_IEffect, AudioEffectHidlTest,
+        ::testing::Combine(::testing::ValuesIn(::android::hardware::getAllHalInstanceNames(
+                                   IEffectsFactory::descriptor)),
+                           ::testing::Values(LOUDNESS_ENHANCER_EFFECT_TYPE)),
+        EffectParameterToString);
 INSTANTIATE_TEST_SUITE_P(
         Equalizer, EqualizerAudioEffectHidlTest,
-        testing::ValuesIn(android::hardware::getAllHalInstanceNames(IEffectsFactory::descriptor)),
-        android::hardware::PrintInstanceNameToString);
+        ::testing::Combine(::testing::ValuesIn(::android::hardware::getAllHalInstanceNames(
+                                   IEffectsFactory::descriptor)),
+                           ::testing::Values(EQUALIZER_EFFECT_TYPE)),
+        EffectParameterToString);
 INSTANTIATE_TEST_SUITE_P(
         LoudnessEnhancer, LoudnessEnhancerAudioEffectHidlTest,
-        testing::ValuesIn(android::hardware::getAllHalInstanceNames(IEffectsFactory::descriptor)),
-        android::hardware::PrintInstanceNameToString);
+        ::testing::Combine(::testing::ValuesIn(::android::hardware::getAllHalInstanceNames(
+                                   IEffectsFactory::descriptor)),
+                           ::testing::Values(LOUDNESS_ENHANCER_EFFECT_TYPE)),
+        EffectParameterToString);
