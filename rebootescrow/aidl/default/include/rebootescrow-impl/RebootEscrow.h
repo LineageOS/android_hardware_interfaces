@@ -26,8 +26,8 @@ namespace rebootescrow {
 class RebootEscrow : public BnRebootEscrow {
   public:
     explicit RebootEscrow(const std::string& devicePath) : devicePath_(devicePath) {}
-    ndk::ScopedAStatus storeKey(const std::vector<int8_t>& kek) override;
-    ndk::ScopedAStatus retrieveKey(std::vector<int8_t>* _aidl_return) override;
+    ndk::ScopedAStatus storeKey(const std::vector<uint8_t>& kek) override;
+    ndk::ScopedAStatus retrieveKey(std::vector<uint8_t>* _aidl_return) override;
 
   private:
     const std::string devicePath_;
