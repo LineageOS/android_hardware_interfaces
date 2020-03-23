@@ -53,7 +53,7 @@
     </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.automotive.evs</name>
-        <version>1.0</version>
+        <version>1.0-1</version>
         <interface>
             <name>IEvsEnumerator</name>
             <instance>default</instance>
