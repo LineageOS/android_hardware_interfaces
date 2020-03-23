@@ -138,6 +138,11 @@ TEST_P(ValidationTest, Test) {
     validateEverything(kDevice, model, request);
 }
 
-INSTANTIATE_GENERATED_TEST(ValidationTest, [](const test_helper::TestModel&) { return true; });
+INSTANTIATE_GENERATED_TEST(ValidationTest, [](const std::string& testName) {
+    // Skip validation for the "inputs_as_internal" and "all_tensors_as_inputs"
+    // generated tests.
+    return testName.find("inputs_as_internal") == std::string::npos &&
+           testName.find("all_tensors_as_inputs") == std::string::npos;
+});
 
 }  // namespace android::hardware::neuralnetworks::V1_1::vts::functional
