@@ -181,6 +181,12 @@
     </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.gnss</name>
+        <!--
+         - Both versions are listed here as a workaround for libvintf since 2.0 extends 1.1.
+         - Devices launched with Q must support gnss@2.0, see VtsTrebleVendorVintfTest
+         - test DeviceManifestTest#GnssHalVersionCompatibility.
+        -->
+        <version>1.1</version>
         <version>2.0</version>
         <interface>
             <name>IGnss</name>
@@ -423,6 +429,7 @@
     </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.thermal</name>
+        <version>1.0-1</version>
         <version>2.0</version>
         <interface>
             <name>IThermal</name>
