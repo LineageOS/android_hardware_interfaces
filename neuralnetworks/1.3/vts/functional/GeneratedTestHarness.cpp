@@ -666,6 +666,7 @@ void EvaluatePreparedModel(const sp<IDevice>& device, const sp<IPreparedModel>& 
                 ASSERT_EQ(syncFenceHandle.getNativeHandle(), nullptr);
                 ASSERT_EQ(fencedCallback, nullptr);
                 executionStatus = result;
+                timing = {UINT64_MAX, UINT64_MAX};
             } else if (syncFenceHandle.getNativeHandle()) {
                 // If a sync fence is returned, try start another run waiting for the sync fence.
                 ret = preparedModel->executeFenced(request, {syncFenceHandle},
@@ -912,6 +913,10 @@ void GeneratedTestBase::SetUp() {
 }
 
 std::vector<NamedModel> getNamedModels(const FilterFn& filter) {
+    return TestModelManager::get().getTestModels(filter);
+}
+
+std::vector<NamedModel> getNamedModels(const FilterNameFn& filter) {
     return TestModelManager::get().getTestModels(filter);
 }
 

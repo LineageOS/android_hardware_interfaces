@@ -18,6 +18,12 @@
 #include <iterator>
 
 #include <media/EffectsConfig.h>
+// clang-format off
+#include PATH(android/hardware/audio/effect/FILE_VERSION/IEffectsFactory.h)
+// clang-format on
+
+#include <gtest/gtest.h>
+#include <hidl/ServiceManagement.h>
 
 #include "utility/ValidateXml.h"
 
@@ -29,6 +35,11 @@ TEST(CheckConfig, audioEffectsConfigurationValidation) {
     RecordProperty("description",
                    "Verify that the effects configuration file is valid according to the schema");
     using namespace android::effectsConfig;
+    if (android::hardware::getAllHalInstanceNames(
+                ::android::hardware::audio::effect::CPP_VERSION::IEffectsFactory::descriptor)
+                .size() == 0) {
+        GTEST_SKIP() << "No Effects HAL version " STRINGIFY(CPP_VERSION) " on this device";
+    }
 
     std::vector<const char*> locations(std::begin(DEFAULT_LOCATIONS), std::end(DEFAULT_LOCATIONS));
     const char* xsd = "/data/local/tmp/audio_effects_conf_" STRINGIFY(CPP_VERSION) ".xsd";
