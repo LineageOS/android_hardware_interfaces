@@ -16,8 +16,6 @@
 
 #include "HalProxy.h"
 
-#include "SubHal.h"
-
 #include <android/hardware/sensors/2.0/types.h>
 
 #include <android-base/file.h>

@@ -26,6 +26,7 @@ cc_defaults {
         "android.hardware.sensors@1.0",
         "android.hardware.sensors@2.0",
         "android.hardware.sensors@2.0-ScopedWakelock",
+        "android.hardware.sensors@2.1",
         "libcutils",
         "libfmq",
         "libhardware",
@@ -85,6 +86,8 @@ cc_test {
     shared_libs: [
         "android.hardware.sensors@1.0",
         "android.hardware.sensors@2.0",
+        "android.hardware.sensors@2.0-ScopedWakelock",
+        "android.hardware.sensors@2.1",
         "libbase",
         "libcutils",
         "libfmq",
