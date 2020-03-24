@@ -19,8 +19,8 @@
 #include <fmq/MessageQueue.h>
 
 #include "HalProxy.h"
-#include "ScopedWakelock.h"
 #include "SensorsSubHal.h"
+#include "V2_0/ScopedWakelock.h"
 
 #include <chrono>
 #include <set>

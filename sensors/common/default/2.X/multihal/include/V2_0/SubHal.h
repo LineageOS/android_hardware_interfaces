@@ -159,7 +159,7 @@ using ::android::hardware::sensors::V2_0::implementation::ISensorsSubHal;
  * library. This function will only be invoked once at initialization time.
  *
  * NOTE: The supported sensors HAL version must match SUB_HAL_2_0_VERSION exactly or the HalProxy
- * will fail to initialize.
+ *     will fail to initialize.
  *
  * @param uint32_t when this function returns, this parameter must contain the HAL version that
  *     this sub-HAL supports. To support this version of multi-HAL, this must be set to
