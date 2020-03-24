@@ -1,6 +1,10 @@
 # Do not change this file except to add new interfaces. Changing
 # pre-existing interfaces will fail VTS and break framework-only OTAs
 
+# Test HALs
+
+717c17cd380bb48710dff601d1a03351d4ebc28028353d5d60489248f506523c android.hardware.tests.lazy@1.0::ILazy
+
 # HALs released in Android O
 
 f219c3b5b8c6cb1d659d4c7328f67246abfe1a8613f469826fd3b9ad090417a2 android.hardware.audio@2.0::IDevice
