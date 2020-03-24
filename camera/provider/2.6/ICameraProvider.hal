@@ -76,6 +76,13 @@ interface ICameraProvider extends @2.5::ICameraProvider {
      * configuration settings exposed through camera metadata), should the sum
      * of resource costs for the combination be <= 100.
      *
+     * The lists of camera id combinations returned by this method may contain
+     * hidden physical camera ids. If a combination does contain hidden physical
+     * camera ids, the camera framework must be able to open any logical cameras
+     * that contain these hidden physical camera ids in their
+     * ANDROID_LOGICAL_MULTI_CAMERA_PHYSICAL_IDS list, in addition to the other
+     * camera ids advertised in the combination, for concurrent operation.
+     *
      * @return status Status code for the operation
      * @return cameraIds a list of camera id combinations that support
      *         concurrent stream configurations with the minimum guarantees
