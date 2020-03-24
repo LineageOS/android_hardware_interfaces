@@ -49,10 +49,6 @@ bool secureAccessControlProfileCheckMac(const SecureAccessControlProfile& profil
 vector<uint8_t> entryCreateAdditionalData(const string& nameSpace, const string& name,
                                           const vector<int32_t> accessControlProfileIds);
 
-vector<uint8_t> byteStringToUnsigned(const vector<int8_t>& value);
-
-vector<int8_t> byteStringToSigned(const vector<uint8_t>& value);
-
 }  // namespace aidl::android::hardware::identity
 
 #endif  // ANDROID_HARDWARE_IDENTITY_UTIL_H
