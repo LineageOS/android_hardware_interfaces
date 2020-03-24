@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "ScopedWakelock.h"
+#include "V2_0/ScopedWakelock.h"
 
 namespace android {
 namespace hardware {
