@@ -23,7 +23,7 @@ cc_library_static {
     export_include_dirs: ["."],
 
     static_libs: [
-        "VtsHalHidlTargetTestBase",
+        "libgtest",
         "libhidlmemory",
         "android.hidl.allocator@1.0",
         "android.hidl.memory@1.0",

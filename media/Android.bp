@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2017 The Android Open Source Project
+// Copyright (C) 2020 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,11 +14,14 @@
 // limitations under the License.
 //
 
-cc_test {
-    name: "VtsHalMediaOmxV1_0TargetMasterTest",
-    defaults: ["VtsHalMediaOmxV1_0Defaults"],
-    srcs: ["VtsHalMediaOmxV1_0TargetMasterTest.cpp"],
-    test_suites: [
-        "vts-core",
-    ],
+filegroup {
+    name: "media_omx_audio_res",
+    path: "res",
+    srcs: ["res/*hz*"],
+}
+
+filegroup {
+    name: "media_omx_video_res",
+    path: "res",
+    srcs: ["res/*fps*"],
 }
