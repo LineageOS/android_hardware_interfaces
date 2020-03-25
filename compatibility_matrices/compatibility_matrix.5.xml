@@ -217,7 +217,7 @@
     </hal>
     <hal format="hidl" optional="false">
         <name>android.hardware.graphics.allocator</name>
-        <!-- TODO(b/136016160): deprecating 2.0. New devices should not use this -->
+        <!-- New, non-Go devices should use 4.0, tested in vts_treble_vintf_vendor_test -->
         <version>2.0</version>
         <version>3.0</version>
         <version>4.0</version>
@@ -236,7 +236,7 @@
     </hal>
     <hal format="hidl" optional="false">
         <name>android.hardware.graphics.mapper</name>
-        <!-- TODO(b/136016160): deprecating 2.1. New devices should not use this -->
+        <!-- New, non-Go devices should use 4.0, tested in vts_treble_vintf_vendor_test -->
         <version>2.1</version>
         <version>3.0</version>
         <version>4.0</version>
