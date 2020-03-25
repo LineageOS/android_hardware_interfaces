@@ -15,10 +15,10 @@
  */
 
 cc_binary {
-    name: "android.hardware.biometrics.face@1.1-service.example",
+    name: "android.hardware.biometrics.face@1.0-service.example",
     defaults: ["hidl_defaults"],
     vendor: true,
-    init_rc: ["android.hardware.biometrics.face@1.1-service.rc"],
+    init_rc: ["android.hardware.biometrics.face@1.0-service.rc"],
     vintf_fragments: ["manifest_face_default.xml"],
     relative_install_path: "hw",
     proprietary: true,
@@ -31,6 +31,5 @@ cc_binary {
         "libutils",
         "liblog",
         "android.hardware.biometrics.face@1.0",
-        "android.hardware.biometrics.face@1.1",
     ],
 }

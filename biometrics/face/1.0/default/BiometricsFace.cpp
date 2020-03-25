@@ -110,20 +110,4 @@ Return<Status> BiometricsFace::resetLockout(const hidl_vec<uint8_t>& /* hat */) 
     return Status::OK;
 }
 
-// Methods from ::android::hardware::biometrics::face::V1_1::IBiometricsFace follow.
-Return<Status> BiometricsFace::enroll_1_1(const hidl_vec<uint8_t>& /* hat */,
-                                          uint32_t /* timeoutSec */,
-                                          const hidl_vec<Feature>& /* disabledFeatures */,
-                                          const hidl_handle& /* windowId */) {
-    mClientCallback->onError(kDeviceId, mUserId, FaceError::UNABLE_TO_PROCESS, 0 /* vendorCode */);
-    return Status::OK;
-}
-
-Return<Status> BiometricsFace::enrollRemotely(const hidl_vec<uint8_t>& /* hat */,
-                                              uint32_t /* timeoutSec */,
-                                              const hidl_vec<Feature>& /* disabledFeatures */) {
-    mClientCallback->onError(kDeviceId, mUserId, FaceError::UNABLE_TO_PROCESS, 0 /* vendorCode */);
-    return Status::OK;
-}
-
 }  // namespace android::hardware::biometrics::face::implementation
