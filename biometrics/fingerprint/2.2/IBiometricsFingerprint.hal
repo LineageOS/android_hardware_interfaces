@@ -17,42 +17,12 @@
 package android.hardware.biometrics.fingerprint@2.2;
 
 import @2.1::IBiometricsFingerprint;
-import @2.1::RequestStatus;
 
+/**
+ * The HAL interface for biometric fingerprint authentication.
+ *
+ * This interface is required because all top-level interfaces need to be
+ * updated in a minor uprev.
+ */
 interface IBiometricsFingerprint extends @2.1::IBiometricsFingerprint {
-    /**
-     * Fingerprint enroll request:
-     * Switches the HAL state machine to collect and store a new fingerprint
-     * template. Switches back as soon as enroll is complete, signalled by
-     * (fingerprintMsg.type == FINGERPRINT_TEMPLATE_ENROLLING &&
-     *  fingerprintMsg.data.enroll.samplesRemaining == 0)
-     * or after timeoutSec seconds.
-     * The fingerprint template must be assigned to the group gid.
-     *
-     * @param hat a valid Hardware Authentication Token (HAT), generated
-     * as a result of a preEnroll() call.
-     * @param gid a framework defined fingerprint set (group) id.
-     * @param timeoutSec a timeout in seconds.
-     * @param windowId optional ID of an illumination window for optical under
-     * display fingerprint sensors. Must contain a null pointer if not used.
-     *
-     * @return debugErrno is a value the framework logs in case it is not 0.
-     *
-     * A notify() function may be called with a more detailed error structure.
-     */
-    enroll_2_2(vec<uint8_t> hat, uint32_t gid, uint32_t timeoutSec, handle windowId)
-        generates (RequestStatus debugErrno);
-
-    /**
-     * Authenticates an operation identified by operationId
-     *
-     * @param operationId operation id.
-     * @param gid fingerprint group id.
-     * @param windowId optional ID of an illumination window for optical under
-     * display fingerprint sensors. Must contain a null pointer if not used.
-     *
-     * @return debugErrno is a value the framework logs in case it is not 0.
-     */
-    authenticate_2_2(uint64_t operationId, uint32_t gid, handle windowId)
-        generates (RequestStatus debugErrno);
 };
