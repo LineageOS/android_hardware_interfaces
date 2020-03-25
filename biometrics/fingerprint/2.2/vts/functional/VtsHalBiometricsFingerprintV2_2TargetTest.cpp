@@ -18,65 +18,66 @@
 
 #include <VtsHalHidlTargetCallbackBase.h>
 #include <android-base/properties.h>
-#include <android/hardware/biometrics/fingerprint/2.1/IBiometricsFingerprintClientCallback.h>
-#include <android/hardware/biometrics/fingerprint/2.2/IBiometricsFingerprint.h>
+#include <android/hardware/biometrics/fingerprint/2.1/IBiometricsFingerprint.h>
+#include <android/hardware/biometrics/fingerprint/2.2/IBiometricsFingerprintClientCallback.h>
 #include <gtest/gtest.h>
 #include <hidl/GtestPrinter.h>
 #include <hidl/HidlSupport.h>
 #include <hidl/ServiceManagement.h>
 
 #include <cinttypes>
-#include <random>
+
+namespace {
+
+namespace hidl_interface = android::hardware::biometrics::fingerprint::V2_1;
+namespace hidl_interface_2_2 = android::hardware::biometrics::fingerprint::V2_2;
+
+using hidl_interface::FingerprintError;
+using hidl_interface::IBiometricsFingerprint;
+using hidl_interface::RequestStatus;
 
 using android::sp;
 using android::base::GetUintProperty;
-using android::hardware::hidl_handle;
 using android::hardware::hidl_vec;
 using android::hardware::Return;
 using android::hardware::Void;
-using android::hardware::biometrics::fingerprint::V2_1::FingerprintAcquiredInfo;
-using android::hardware::biometrics::fingerprint::V2_1::FingerprintError;
-using android::hardware::biometrics::fingerprint::V2_1::IBiometricsFingerprintClientCallback;
-using android::hardware::biometrics::fingerprint::V2_1::RequestStatus;
-using android::hardware::biometrics::fingerprint::V2_2::IBiometricsFingerprint;
-
-namespace {
 
 constexpr uint32_t kTimeoutSec = 3;
 constexpr auto kTimeout = std::chrono::seconds(kTimeoutSec);
 constexpr uint32_t kGroupId = 99;
-constexpr char kCallbackNameOnError[] = "onError";
+constexpr char kCallbackNameOnAcquired[] = "onAcquired";
 
 // Callback arguments that need to be captured for the tests.
 struct FingerprintCallbackArgs {
-    // The error passed to the last onError() callback.
-    FingerprintError error;
-
-    // The deviceId passed to the last callback.
-    uint64_t deviceId;
+    // The info passed to the last onAcquired() callback.
+    hidl_interface_2_2::FingerprintAcquiredInfo info;
 };
 
 // Test callback class for the BiometricsFingerprint HAL.
 // The HAL will call these callback methods to notify about completed operations
 // or encountered errors.
 class FingerprintCallback : public ::testing::VtsHalHidlTargetCallbackBase<FingerprintCallbackArgs>,
-                            public IBiometricsFingerprintClientCallback {
+                            public hidl_interface_2_2::IBiometricsFingerprintClientCallback {
   public:
     Return<void> onEnrollResult(uint64_t, uint32_t, uint32_t, uint32_t) override { return Void(); }
 
-    Return<void> onAcquired(uint64_t, FingerprintAcquiredInfo, int32_t) override { return Void(); }
+    Return<void> onAcquired(uint64_t, hidl_interface::FingerprintAcquiredInfo, int32_t) override {
+        return Void();
+    }
+
+    Return<void> onAcquired_2_2(uint64_t, hidl_interface_2_2::FingerprintAcquiredInfo info,
+                                int32_t) override {
+        FingerprintCallbackArgs args = {};
+        args.info = info;
+        NotifyFromCallback(kCallbackNameOnAcquired, args);
+        return Void();
+    }
 
     Return<void> onAuthenticated(uint64_t, uint32_t, uint32_t, const hidl_vec<uint8_t>&) override {
         return Void();
     }
 
-    Return<void> onError(uint64_t deviceId, FingerprintError error, int32_t) override {
-        FingerprintCallbackArgs args = {};
-        args.error = error;
-        args.deviceId = deviceId;
-        NotifyFromCallback(kCallbackNameOnError, args);
-        return Void();
-    }
+    Return<void> onError(uint64_t, FingerprintError, int32_t) override { return Void(); }
 
     Return<void> onRemoved(uint64_t, uint32_t, uint32_t, uint32_t) override { return Void(); }
 
@@ -121,41 +122,16 @@ class FingerprintHidlTest : public ::testing::TestWithParam<std::string> {
     sp<FingerprintCallback> mCallback;
 };
 
-// Enroll with an invalid (all zeroes) HAT should fail.
-TEST_P(FingerprintHidlTest, EnrollZeroHatTest) {
-    // Filling HAT with zeros
-    hidl_vec<uint8_t> token(69);
-    for (size_t i = 0; i < 69; i++) {
-        token[i] = 0;
-    }
-
-    hidl_handle windowId = nullptr;
-    Return<RequestStatus> ret = mService->enroll_2_2(token, kGroupId, kTimeoutSec, windowId);
-    ASSERT_EQ(RequestStatus::SYS_OK, static_cast<RequestStatus>(ret));
-
-    // At least one call to onError should occur
-    auto res = mCallback->WaitForCallback(kCallbackNameOnError);
-    ASSERT_NE(FingerprintError::ERROR_NO_ERROR, res.args->error);
-}
-
-// Enroll with an invalid (null) HAT should fail.
-TEST_P(FingerprintHidlTest, EnrollGarbageHatTest) {
-    // Filling HAT with pseudorandom invalid data.
-    // Using default seed to make the test reproducible.
-    std::mt19937 gen(std::mt19937::default_seed);
-    std::uniform_int_distribution<uint8_t> dist;
-    hidl_vec<uint8_t> token(69);
-    for (size_t i = 0; i < 69; ++i) {
-        token[i] = dist(gen);
-    }
-
-    hidl_handle windowId = nullptr;
-    Return<RequestStatus> ret = mService->enroll_2_2(token, kGroupId, kTimeoutSec, windowId);
-    ASSERT_EQ(RequestStatus::SYS_OK, static_cast<RequestStatus>(ret));
-
-    // At least one call to onError should occur
-    auto res = mCallback->WaitForCallback(kCallbackNameOnError);
-    ASSERT_NE(FingerprintError::ERROR_NO_ERROR, res.args->error);
+// The START message and onAcquired_2_2 method should exist and work together correctly.
+// Note, this test doesn't use the HAL. It just makes sure that the newly added constant and
+// callback compile. Unfortunately, there is no way to test the usage of the constant within the
+// actual HAL.
+TEST_P(FingerprintHidlTest, acquiredInfoStartTest) {
+    mCallback->SetWaitTimeoutDefault(kTimeout);
+    mCallback->onAcquired_2_2(0 /* deviceId */, hidl_interface_2_2::FingerprintAcquiredInfo::START,
+                              0 /* vendorCode */);
+    auto res = mCallback->WaitForCallback(kCallbackNameOnAcquired);
+    ASSERT_EQ(hidl_interface_2_2::FingerprintAcquiredInfo::START, res.args->info);
 }
 
 }  // anonymous namespace
