@@ -72,6 +72,10 @@ class BiometricsFace : public V1_1::IBiometricsFace {
     Return<Status> resetLockout(const hidl_vec<uint8_t>& hat) override;
 
     // Methods from ::android::hardware::biometrics::face::V1_1::IBiometricsFace follow.
+    Return<Status> enroll_1_1(const hidl_vec<uint8_t>& hat, uint32_t timeoutSec,
+                              const hidl_vec<Feature>& disabledFeatures,
+                              const hidl_handle& windowId) override;
+
     Return<Status> enrollRemotely(const hidl_vec<uint8_t>& hat, uint32_t timeoutSec,
                                   const hidl_vec<Feature>& disabledFeatures) override;
 

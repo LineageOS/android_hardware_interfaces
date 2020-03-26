@@ -30,6 +30,7 @@
 #include <random>
 
 using android::sp;
+using android::hardware::hidl_handle;
 using android::hardware::hidl_vec;
 using android::hardware::Return;
 using android::hardware::Void;
@@ -115,6 +116,47 @@ class FaceHidlTest : public ::testing::TestWithParam<std::string> {
     sp<IBiometricsFace> mService;
     sp<FaceCallback> mCallback;
 };
+
+// enroll with an invalid (all zeroes) HAT should fail.
+TEST_P(FaceHidlTest, Enroll1_1ZeroHatTest) {
+    // Filling HAT with zeros
+    hidl_vec<uint8_t> token(69);
+    for (size_t i = 0; i < 69; i++) {
+        token[i] = 0;
+    }
+
+    hidl_handle windowId = nullptr;
+    Return<Status> ret = mService->enroll_1_1(token, kTimeoutSec, {}, windowId);
+    ASSERT_EQ(Status::OK, static_cast<Status>(ret));
+
+    // onError should be called with a meaningful (nonzero) error.
+    auto res = mCallback->WaitForCallback(kCallbackNameOnError);
+    EXPECT_TRUE(res.no_timeout);
+    EXPECT_EQ(kUserId, res.args->userId);
+    EXPECT_EQ(FaceError::UNABLE_TO_PROCESS, res.args->error);
+}
+
+// enroll with an invalid HAT should fail.
+TEST_P(FaceHidlTest, Enroll1_1GarbageHatTest) {
+    // Filling HAT with pseudorandom invalid data.
+    // Using default seed to make the test reproducible.
+    std::mt19937 gen(std::mt19937::default_seed);
+    std::uniform_int_distribution<uint8_t> dist;
+    hidl_vec<uint8_t> token(69);
+    for (size_t i = 0; i < 69; ++i) {
+        token[i] = dist(gen);
+    }
+
+    hidl_handle windowId = nullptr;
+    Return<Status> ret = mService->enroll_1_1(token, kTimeoutSec, {}, windowId);
+    ASSERT_EQ(Status::OK, static_cast<Status>(ret));
+
+    // onError should be called with a meaningful (nonzero) error.
+    auto res = mCallback->WaitForCallback(kCallbackNameOnError);
+    EXPECT_TRUE(res.no_timeout);
+    EXPECT_EQ(kUserId, res.args->userId);
+    EXPECT_EQ(FaceError::UNABLE_TO_PROCESS, res.args->error);
+}
 
 // enroll with an invalid (all zeroes) HAT should fail.
 TEST_P(FaceHidlTest, EnrollRemotelyZeroHatTest) {
