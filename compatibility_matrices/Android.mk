@@ -97,7 +97,7 @@ my_system_matrix_deps := \
     framework_compatibility_matrix.2.xml \
     framework_compatibility_matrix.3.xml \
     framework_compatibility_matrix.4.xml \
-    framework_compatibility_matrix.current.xml \
+    framework_compatibility_matrix.5.xml \
     framework_compatibility_matrix.device.xml \
 
 my_framework_matrix_deps += \
