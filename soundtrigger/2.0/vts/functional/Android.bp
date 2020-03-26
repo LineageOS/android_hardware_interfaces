@@ -19,5 +19,5 @@ cc_test {
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: ["VtsHalSoundtriggerV2_0TargetTest.cpp"],
     static_libs: ["android.hardware.soundtrigger@2.0"],
-    test_suites: ["general-tests", "vts-core"],
+    test_suites: ["general-tests", "vts"],
 }
