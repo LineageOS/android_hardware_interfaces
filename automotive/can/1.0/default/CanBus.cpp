@@ -226,7 +226,6 @@ bool CanBus::down() {
  * \param flag bool object from CanMessage object
  */
 static bool satisfiesFilterFlag(FilterFlag filterFlag, bool flag) {
-    // TODO(b/144458917) add testing for this to VTS tests
     if (filterFlag == FilterFlag::DONT_CARE) return true;
     if (filterFlag == FilterFlag::SET) return flag;
     if (filterFlag == FilterFlag::NOT_SET) return !flag;
@@ -302,7 +301,6 @@ void CanBus::onRead(const struct canfd_frame& frame, std::chrono::nanoseconds ti
     if ((frame.can_id & CAN_ERR_FLAG) != 0) {
         // error bit is set
         LOG(WARNING) << "CAN Error frame received";
-        // TODO(b/144458917) consider providing different values for isFatal, depending on error
         notifyErrorListeners(parseErrorFrame(frame), false);
         return;
     }
