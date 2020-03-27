@@ -23,8 +23,9 @@ vintf_compatibility_matrix {
         "kernel_config_o_3.18",
         "kernel_config_o_4.4",
         "kernel_config_o_4.9",
-    ]
+    ],
 }
+
 vintf_compatibility_matrix {
     name: "framework_compatibility_matrix.1.xml",
     stem: "compatibility_matrix.1.xml",
@@ -35,8 +36,9 @@ vintf_compatibility_matrix {
         "kernel_config_o_3.18",
         "kernel_config_o_4.4",
         "kernel_config_o_4.9",
-    ]
+    ],
 }
+
 vintf_compatibility_matrix {
     name: "framework_compatibility_matrix.2.xml",
     stem: "compatibility_matrix.2.xml",
@@ -47,7 +49,7 @@ vintf_compatibility_matrix {
         "kernel_config_o_mr1_3.18",
         "kernel_config_o_mr1_4.4",
         "kernel_config_o_mr1_4.9",
-    ]
+    ],
 }
 
 vintf_compatibility_matrix {
@@ -60,7 +62,7 @@ vintf_compatibility_matrix {
         "kernel_config_p_4.4",
         "kernel_config_p_4.9",
         "kernel_config_p_4.14",
-    ]
+    ],
 }
 
 vintf_compatibility_matrix {
@@ -73,18 +75,18 @@ vintf_compatibility_matrix {
         "kernel_config_q_4.9",
         "kernel_config_q_4.14",
         "kernel_config_q_4.19",
-    ]
+    ],
 }
 
 vintf_compatibility_matrix {
-    name: "framework_compatibility_matrix.current.xml",
-    stem: "compatibility_matrix.current.xml",
+    name: "framework_compatibility_matrix.5.xml",
+    stem: "compatibility_matrix.5.xml",
     srcs: [
-        "compatibility_matrix.current.xml",
+        "compatibility_matrix.5.xml",
     ],
     kernel_configs: [
         "kernel_config_r_4.14",
         "kernel_config_r_4.19",
         "kernel_config_r_5.4",
-    ]
+    ],
 }
