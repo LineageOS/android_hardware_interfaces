@@ -846,7 +846,7 @@ enum OperationType : int32_t {
     HASHTABLE_LOOKUP = @1.1::OperationType:HASHTABLE_LOOKUP,
 
     /**
-     * Applies L2 normalization along the depth dimension.
+     * Applies L2 normalization along the axis dimension.
      *
      * The values in the output tensor are computed as:
      *
@@ -854,8 +854,7 @@ enum OperationType : int32_t {
      *         input[batch, row, col, channel] /
      *         sqrt(sum_{c} pow(input[batch, row, col, c], 2))
      *
-     * For input tensor with rank less than 4, independently normalizes each
-     * 1-D slice along dimension dim.
+     * By default the axis dimension is the last dimension of the input tensor.
      *
      * Supported tensor {@link OperandType}:
      * * {@link OperandType::TENSOR_FLOAT16} (since HAL version 1.2)
@@ -3843,7 +3842,8 @@ enum OperationType : int32_t {
      * * 1: A scalar {@link OperandType::INT32}, specifying the number of
      *      independent samples to draw for each row slice.
      * * 2: A 1-D {@link OperandType::TENSOR_INT32} tensor with shape [2],
-     *      specifying seeds used to initialize the random distribution.
+     *      specifying seeds used to initialize the random distribution. If both
+     *      provided seeds are 0, both will be randomly generated.
      * Outputs:
      * * 0: A 2-D {@link OperandType::TENSOR_INT32} tensor with shape
      *      [batches, samples], containing the drawn samples.
