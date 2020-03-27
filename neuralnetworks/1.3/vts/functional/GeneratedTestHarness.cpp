@@ -72,20 +72,9 @@ using HidlToken = hidl_array<uint8_t, static_cast<uint32_t>(Constant::BYTE_SIZE_
 
 namespace {
 
-enum class Executor { ASYNC, SYNC, BURST, FENCED };
-
 enum class OutputType { FULLY_SPECIFIED, UNSPECIFIED, INSUFFICIENT, MISSED_DEADLINE };
 
-enum class MemoryType { SHARED, DEVICE };
-
 enum class IOType { INPUT, OUTPUT };
-
-static void waitForSyncFence(int syncFd) {
-    constexpr int kInfiniteTimeout = -1;
-    ASSERT_GT(syncFd, 0);
-    int r = sync_wait(syncFd, kInfiniteTimeout);
-    ASSERT_GE(r, 0);
-}
 
 struct TestConfig {
     Executor executor;
@@ -277,6 +266,13 @@ void copyTestBuffers(const std::vector<const TestBuffer*>& buffers, uint8_t* out
 
 }  // namespace
 
+void waitForSyncFence(int syncFd) {
+    constexpr int kInfiniteTimeout = -1;
+    ASSERT_GT(syncFd, 0);
+    int r = sync_wait(syncFd, kInfiniteTimeout);
+    ASSERT_GE(r, 0);
+}
+
 Model createModel(const TestModel& testModel) {
     uint32_t constCopySize = 0;
     uint32_t constRefSize = 0;
@@ -338,21 +334,39 @@ static void makeOutputDimensionsUnspecified(Model* model) {
     }
 }
 
-constexpr uint32_t kInputPoolIndex = 0;
-constexpr uint32_t kOutputPoolIndex = 1;
-constexpr uint32_t kDeviceMemoryBeginIndex = 2;
+class ExecutionContextV1_3 {
+  public:
+    ExecutionContextV1_3(sp<IDevice> device, sp<IPreparedModel> preparedModel)
+        : kDevice(std::move(device)), kPreparedModel(std::move(preparedModel)) {}
 
-static std::pair<Request, std::vector<sp<IBuffer>>> createRequest(
-        const sp<IDevice>& device, const sp<IPreparedModel>& preparedModel,
-        const TestModel& testModel, bool preferDeviceMemory) {
+    std::optional<Request> createRequest(const TestModel& testModel, MemoryType memoryType);
+    std::vector<TestBuffer> getOutputBuffers(const TestModel& testModel,
+                                             const Request& request) const;
+
+  private:
+    // Get a TestBuffer with data copied from an IBuffer object.
+    void getBuffer(const sp<IBuffer>& buffer, size_t size, TestBuffer* testBuffer) const;
+
+    static constexpr uint32_t kInputPoolIndex = 0;
+    static constexpr uint32_t kOutputPoolIndex = 1;
+    static constexpr uint32_t kDeviceMemoryBeginIndex = 2;
+
+    const sp<IDevice> kDevice;
+    const sp<IPreparedModel> kPreparedModel;
+    std::unique_ptr<TestMemoryBase> mInputMemory, mOutputMemory;
+    std::vector<sp<IBuffer>> mBuffers;
+};
+
+std::optional<Request> ExecutionContextV1_3::createRequest(const TestModel& testModel,
+                                                           MemoryType memoryType) {
     // Memory pools are organized as:
     // - 0: Input shared memory pool
     // - 1: Output shared memory pool
     // - [2, 2+i): Input device memories
     // - [2+i, 2+i+o): Output device memories
-    DeviceMemoryAllocator allocator(device, preparedModel, testModel);
-    std::vector<sp<IBuffer>> buffers;
+    DeviceMemoryAllocator allocator(kDevice, kPreparedModel, testModel);
     std::vector<uint32_t> tokens;
+    mBuffers.clear();
 
     // Model inputs.
     hidl_vec<RequestArgument> inputs(testModel.main.inputIndexes.size());
@@ -363,13 +377,13 @@ static std::pair<Request, std::vector<sp<IBuffer>>> createRequest(
             // Omitted input.
             inputs[i] = {.hasNoValue = true};
             continue;
-        } else if (preferDeviceMemory) {
+        } else if (memoryType == MemoryType::DEVICE) {
             SCOPED_TRACE("Input index = " + std::to_string(i));
             auto [buffer, token] = allocator.allocate<IOType::INPUT>(i);
             if (buffer != nullptr) {
-                DataLocation loc = {.poolIndex = static_cast<uint32_t>(buffers.size() +
+                DataLocation loc = {.poolIndex = static_cast<uint32_t>(mBuffers.size() +
                                                                        kDeviceMemoryBeginIndex)};
-                buffers.push_back(std::move(buffer));
+                mBuffers.push_back(std::move(buffer));
                 tokens.push_back(token);
                 inputs[i] = {.hasNoValue = false, .location = loc, .dimensions = {}};
                 continue;
@@ -389,13 +403,13 @@ static std::pair<Request, std::vector<sp<IBuffer>>> createRequest(
     size_t outputSize = 0;
     for (uint32_t i = 0; i < testModel.main.outputIndexes.size(); i++) {
         const auto& op = testModel.main.operands[testModel.main.outputIndexes[i]];
-        if (preferDeviceMemory) {
+        if (memoryType == MemoryType::DEVICE) {
             SCOPED_TRACE("Output index = " + std::to_string(i));
             auto [buffer, token] = allocator.allocate<IOType::OUTPUT>(i);
             if (buffer != nullptr) {
-                DataLocation loc = {.poolIndex = static_cast<uint32_t>(buffers.size() +
+                DataLocation loc = {.poolIndex = static_cast<uint32_t>(mBuffers.size() +
                                                                        kDeviceMemoryBeginIndex)};
-                buffers.push_back(std::move(buffer));
+                mBuffers.push_back(std::move(buffer));
                 tokens.push_back(token);
                 outputs[i] = {.hasNoValue = false, .location = loc, .dimensions = {}};
                 continue;
@@ -418,21 +432,29 @@ static std::pair<Request, std::vector<sp<IBuffer>>> createRequest(
         outputs[i] = {.hasNoValue = false, .location = loc, .dimensions = {}};
     }
 
+    if (memoryType == MemoryType::DEVICE && mBuffers.empty()) {
+        return std::nullopt;
+    }
+
     // Memory pools.
-    hidl_vec<Request::MemoryPool> pools(kDeviceMemoryBeginIndex + buffers.size());
-    pools[kInputPoolIndex].hidlMemory(nn::allocateSharedMemory(std::max<size_t>(inputSize, 1)));
-    pools[kOutputPoolIndex].hidlMemory(nn::allocateSharedMemory(std::max<size_t>(outputSize, 1)));
-    CHECK_NE(pools[kInputPoolIndex].hidlMemory().size(), 0u);
-    CHECK_NE(pools[kOutputPoolIndex].hidlMemory().size(), 0u);
-    for (uint32_t i = 0; i < buffers.size(); i++) {
+    hidl_vec<Request::MemoryPool> pools(kDeviceMemoryBeginIndex + mBuffers.size());
+    if (memoryType == MemoryType::BLOB_AHWB) {
+        mInputMemory = TestBlobAHWB::create(std::max<size_t>(inputSize, 1));
+        mOutputMemory = TestBlobAHWB::create(std::max<size_t>(outputSize, 1));
+    } else {
+        mInputMemory = TestAshmem::create(std::max<size_t>(inputSize, 1));
+        mOutputMemory = TestAshmem::create(std::max<size_t>(outputSize, 1));
+    }
+    EXPECT_NE(mInputMemory, nullptr);
+    EXPECT_NE(mOutputMemory, nullptr);
+    pools[kInputPoolIndex].hidlMemory(mInputMemory->getHidlMemory());
+    pools[kOutputPoolIndex].hidlMemory(mOutputMemory->getHidlMemory());
+    for (uint32_t i = 0; i < mBuffers.size(); i++) {
         pools[kDeviceMemoryBeginIndex + i].token(tokens[i]);
     }
 
     // Copy input data to the input shared memory pool.
-    sp<IMemory> inputMemory = mapMemory(pools[kInputPoolIndex].hidlMemory());
-    CHECK(inputMemory.get() != nullptr);
-    uint8_t* inputPtr = static_cast<uint8_t*>(static_cast<void*>(inputMemory->getPointer()));
-    CHECK(inputPtr != nullptr);
+    uint8_t* inputPtr = mInputMemory->getPointer();
     for (uint32_t i = 0; i < testModel.main.inputIndexes.size(); i++) {
         if (!inputs[i].hasNoValue && inputs[i].location.poolIndex == kInputPoolIndex) {
             const auto& op = testModel.main.operands[testModel.main.inputIndexes[i]];
@@ -441,14 +463,38 @@ static std::pair<Request, std::vector<sp<IBuffer>>> createRequest(
             std::copy(begin, end, inputPtr + inputs[i].location.offset);
         }
     }
-
-    Request request = {
+    return Request{
             .inputs = std::move(inputs), .outputs = std::move(outputs), .pools = std::move(pools)};
-    return {std::move(request), std::move(buffers)};
+}
+
+std::vector<TestBuffer> ExecutionContextV1_3::getOutputBuffers(const TestModel& testModel,
+                                                               const Request& request) const {
+    // Copy out output results.
+    uint8_t* outputPtr = mOutputMemory->getPointer();
+    std::vector<TestBuffer> outputBuffers;
+    for (uint32_t i = 0; i < request.outputs.size(); i++) {
+        const auto& outputLoc = request.outputs[i].location;
+        if (outputLoc.poolIndex == kOutputPoolIndex) {
+            outputBuffers.emplace_back(outputLoc.length, outputPtr + outputLoc.offset);
+        } else {
+            const auto& op = testModel.main.operands[testModel.main.outputIndexes[i]];
+            if (op.data.size() == 0) {
+                outputBuffers.emplace_back(0, nullptr);
+            } else {
+                SCOPED_TRACE("Output index = " + std::to_string(i));
+                const uint32_t bufferIndex = outputLoc.poolIndex - kDeviceMemoryBeginIndex;
+                TestBuffer buffer;
+                getBuffer(mBuffers[bufferIndex], op.data.size(), &buffer);
+                outputBuffers.push_back(std::move(buffer));
+            }
+        }
+    }
+    return outputBuffers;
 }
 
 // Get a TestBuffer with data copied from an IBuffer object.
-static void getBuffer(const sp<IBuffer>& buffer, size_t size, TestBuffer* testBuffer) {
+void ExecutionContextV1_3::getBuffer(const sp<IBuffer>& buffer, size_t size,
+                                     TestBuffer* testBuffer) const {
     // IBuffer -> Shared memory.
     hidl_memory tmp = nn::allocateSharedMemory(size);
     const auto ret = buffer->copyTo(tmp);
@@ -462,35 +508,6 @@ static void getBuffer(const sp<IBuffer>& buffer, size_t size, TestBuffer* testBu
     ASSERT_NE(outputPtr, nullptr);
     ASSERT_NE(testBuffer, nullptr);
     *testBuffer = TestBuffer(size, outputPtr);
-}
-
-static std::vector<TestBuffer> getOutputBuffers(const TestModel& testModel, const Request& request,
-                                                const std::vector<sp<IBuffer>>& buffers) {
-    sp<IMemory> outputMemory = mapMemory(request.pools[kOutputPoolIndex].hidlMemory());
-    CHECK(outputMemory.get() != nullptr);
-    uint8_t* outputPtr = static_cast<uint8_t*>(static_cast<void*>(outputMemory->getPointer()));
-    CHECK(outputPtr != nullptr);
-
-    // Copy out output results.
-    std::vector<TestBuffer> outputBuffers;
-    for (uint32_t i = 0; i < request.outputs.size(); i++) {
-        const auto& outputLoc = request.outputs[i].location;
-        if (outputLoc.poolIndex == kOutputPoolIndex) {
-            outputBuffers.emplace_back(outputLoc.length, outputPtr + outputLoc.offset);
-        } else {
-            const auto& op = testModel.main.operands[testModel.main.outputIndexes[i]];
-            if (op.data.size() == 0) {
-                outputBuffers.emplace_back();
-            } else {
-                SCOPED_TRACE("Output index = " + std::to_string(i));
-                const uint32_t bufferIndex = outputLoc.poolIndex - kDeviceMemoryBeginIndex;
-                TestBuffer buffer;
-                getBuffer(buffers[bufferIndex], op.data.size(), &buffer);
-                outputBuffers.push_back(std::move(buffer));
-            }
-        }
-    }
-    return outputBuffers;
 }
 
 static bool hasZeroSizedOutput(const TestModel& testModel) {
@@ -543,13 +560,14 @@ void EvaluatePreparedModel(const sp<IDevice>& device, const sp<IPreparedModel>& 
         return;
     }
 
-    auto [request, buffers] =
-            createRequest(device, preparedModel, testModel,
-                          /*preferDeviceMemory=*/testConfig.memoryType == MemoryType::DEVICE);
+    ExecutionContextV1_3 context(device, preparedModel);
+    auto maybeRequest = context.createRequest(testModel, testConfig.memoryType);
     // Skip if testing memory domain but no device memory has been allocated.
-    if (testConfig.memoryType == MemoryType::DEVICE && buffers.empty()) {
+    if (!maybeRequest.has_value()) {
         return;
     }
+
+    Request request = std::move(maybeRequest.value());
     if (testConfig.outputType == OutputType::INSUFFICIENT) {
         makeOutputInsufficientSize(/*outputIndex=*/0, &request);
     }
@@ -648,6 +666,7 @@ void EvaluatePreparedModel(const sp<IDevice>& device, const sp<IPreparedModel>& 
                 ASSERT_EQ(syncFenceHandle.getNativeHandle(), nullptr);
                 ASSERT_EQ(fencedCallback, nullptr);
                 executionStatus = result;
+                timing = {UINT64_MAX, UINT64_MAX};
             } else if (syncFenceHandle.getNativeHandle()) {
                 // If a sync fence is returned, try start another run waiting for the sync fence.
                 ret = preparedModel->executeFenced(request, {syncFenceHandle},
@@ -744,7 +763,7 @@ void EvaluatePreparedModel(const sp<IDevice>& device, const sp<IPreparedModel>& 
     }
 
     // Retrieve execution results.
-    const std::vector<TestBuffer> outputs = getOutputBuffers(testModel, request, buffers);
+    const std::vector<TestBuffer> outputs = context.getOutputBuffers(testModel, request);
 
     // We want "close-enough" results.
     checkResults(testModel, outputs);
@@ -755,29 +774,32 @@ void EvaluatePreparedModel(const sp<IDevice>& device, const sp<IPreparedModel>& 
     std::vector<OutputType> outputTypesList;
     std::vector<MeasureTiming> measureTimingList;
     std::vector<Executor> executorList;
-    MemoryType memoryType = MemoryType::SHARED;
+    std::vector<MemoryType> memoryTypeList;
 
     switch (testKind) {
         case TestKind::GENERAL: {
             outputTypesList = {OutputType::FULLY_SPECIFIED};
             measureTimingList = {MeasureTiming::NO, MeasureTiming::YES};
             executorList = {Executor::ASYNC, Executor::SYNC, Executor::BURST};
+            memoryTypeList = {MemoryType::ASHMEM};
         } break;
         case TestKind::DYNAMIC_SHAPE: {
             outputTypesList = {OutputType::UNSPECIFIED, OutputType::INSUFFICIENT};
             measureTimingList = {MeasureTiming::NO, MeasureTiming::YES};
             executorList = {Executor::ASYNC, Executor::SYNC, Executor::BURST, Executor::FENCED};
+            memoryTypeList = {MemoryType::ASHMEM};
         } break;
         case TestKind::MEMORY_DOMAIN: {
             outputTypesList = {OutputType::FULLY_SPECIFIED};
             measureTimingList = {MeasureTiming::NO};
             executorList = {Executor::ASYNC, Executor::SYNC, Executor::FENCED};
-            memoryType = MemoryType::DEVICE;
+            memoryTypeList = {MemoryType::BLOB_AHWB, MemoryType::DEVICE};
         } break;
         case TestKind::FENCED_COMPUTE: {
             outputTypesList = {OutputType::FULLY_SPECIFIED};
             measureTimingList = {MeasureTiming::NO, MeasureTiming::YES};
             executorList = {Executor::FENCED};
+            memoryTypeList = {MemoryType::ASHMEM};
         } break;
         case TestKind::QUANTIZATION_COUPLING: {
             LOG(FATAL) << "Wrong TestKind for EvaluatePreparedModel";
@@ -788,14 +810,17 @@ void EvaluatePreparedModel(const sp<IDevice>& device, const sp<IPreparedModel>& 
             measureTimingList = {MeasureTiming::NO, MeasureTiming::YES};
             // Burst does not support V1_3 loop timeout.
             executorList = {Executor::ASYNC, Executor::SYNC, Executor::FENCED};
+            memoryTypeList = {MemoryType::ASHMEM};
         } break;
     }
 
     for (const OutputType outputType : outputTypesList) {
         for (const MeasureTiming measureTiming : measureTimingList) {
             for (const Executor executor : executorList) {
-                const TestConfig testConfig(executor, measureTiming, outputType, memoryType);
-                EvaluatePreparedModel(device, preparedModel, testModel, testConfig);
+                for (const MemoryType memoryType : memoryTypeList) {
+                    const TestConfig testConfig(executor, measureTiming, outputType, memoryType);
+                    EvaluatePreparedModel(device, preparedModel, testModel, testConfig);
+                }
             }
         }
     }
@@ -814,7 +839,7 @@ void EvaluatePreparedCoupledModels(const sp<IDevice>& device,
     for (const OutputType outputType : outputTypesList) {
         for (const MeasureTiming measureTiming : measureTimingList) {
             for (const Executor executor : executorList) {
-                const TestConfig testConfig(executor, measureTiming, outputType, MemoryType::SHARED,
+                const TestConfig testConfig(executor, measureTiming, outputType, MemoryType::ASHMEM,
                                             /*reportSkipping=*/false);
                 bool baseSkipped = false;
                 EvaluatePreparedModel(device, preparedModel, testModel, testConfig, &baseSkipped);
@@ -888,6 +913,10 @@ void GeneratedTestBase::SetUp() {
 }
 
 std::vector<NamedModel> getNamedModels(const FilterFn& filter) {
+    return TestModelManager::get().getTestModels(filter);
+}
+
+std::vector<NamedModel> getNamedModels(const FilterNameFn& filter) {
     return TestModelManager::get().getTestModels(filter);
 }
 

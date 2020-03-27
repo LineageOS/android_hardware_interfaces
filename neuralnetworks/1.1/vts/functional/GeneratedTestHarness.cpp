@@ -133,7 +133,9 @@ Model createModel(const TestModel& testModel) {
 // Test driver for those generated from ml/nn/runtime/test/spec
 void Execute(const sp<IDevice>& device, const TestModel& testModel) {
     const Model model = createModel(testModel);
-    const Request request = createRequest(testModel);
+
+    ExecutionContext context;
+    const Request request = context.createRequest(testModel);
 
     // Create IPreparedModel.
     sp<IPreparedModel> preparedModel;
@@ -151,7 +153,7 @@ void Execute(const sp<IDevice>& device, const TestModel& testModel) {
     ASSERT_EQ(ErrorStatus::NONE, executionCallback->getStatus());
 
     // Retrieve execution results.
-    const std::vector<TestBuffer> outputs = getOutputBuffers(request);
+    const std::vector<TestBuffer> outputs = context.getOutputBuffers(request);
 
     // We want "close-enough" results.
     checkResults(testModel, outputs);
@@ -163,6 +165,10 @@ void GeneratedTestBase::SetUp() {
 }
 
 std::vector<NamedModel> getNamedModels(const FilterFn& filter) {
+    return TestModelManager::get().getTestModels(filter);
+}
+
+std::vector<NamedModel> getNamedModels(const FilterNameFn& filter) {
     return TestModelManager::get().getTestModels(filter);
 }
 

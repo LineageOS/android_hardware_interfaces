@@ -153,7 +153,8 @@ void validateFailure(const sp<IDevice>& device, const Model& model, const Reques
 
 TEST_P(ValidationTest, Test) {
     const Model model = createModel(kTestModel);
-    const Request request = createRequest(kTestModel);
+    ExecutionContext context;
+    const Request request = context.createRequest(kTestModel);
     if (kTestModel.expectFailure) {
         validateFailure(kDevice, model, request);
     } else {
@@ -161,7 +162,12 @@ TEST_P(ValidationTest, Test) {
     }
 }
 
-INSTANTIATE_GENERATED_TEST(ValidationTest, [](const test_helper::TestModel&) { return true; });
+INSTANTIATE_GENERATED_TEST(ValidationTest, [](const std::string& testName) {
+    // Skip validation for the "inputs_as_internal" and "all_tensors_as_inputs"
+    // generated tests.
+    return testName.find("inputs_as_internal") == std::string::npos &&
+           testName.find("all_tensors_as_inputs") == std::string::npos;
+});
 
 sp<IPreparedModel> getPreparedModel_1_2(const sp<implementation::PreparedModelCallback>& callback) {
     sp<V1_0::IPreparedModel> preparedModelV1_0 = callback->getPreparedModel();

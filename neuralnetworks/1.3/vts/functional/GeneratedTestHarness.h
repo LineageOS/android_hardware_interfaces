@@ -41,6 +41,9 @@ class GeneratedTestBase : public testing::TestWithParam<GeneratedTestParam> {
 using FilterFn = std::function<bool(const test_helper::TestModel&)>;
 std::vector<NamedModel> getNamedModels(const FilterFn& filter);
 
+using FilterNameFn = std::function<bool(const std::string&)>;
+std::vector<NamedModel> getNamedModels(const FilterNameFn& filter);
+
 std::string printGeneratedTest(const testing::TestParamInfo<GeneratedTestParam>& info);
 
 #define INSTANTIATE_GENERATED_TEST(TestSuite, filter)                                     \
@@ -76,6 +79,8 @@ enum class TestKind {
 
 void EvaluatePreparedModel(const sp<IDevice>& device, const sp<IPreparedModel>& preparedModel,
                            const test_helper::TestModel& testModel, TestKind testKind);
+
+void waitForSyncFence(int syncFd);
 
 }  // namespace android::hardware::neuralnetworks::V1_3::vts::functional
 
