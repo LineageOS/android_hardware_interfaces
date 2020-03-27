@@ -23,12 +23,37 @@
 #include <android-base/logging.h>
 #include <android/hidl/manager/1.2/IServiceManager.h>
 
+#include <filesystem>
+#include <fstream>
 #include <regex>
 
 namespace android::hardware::automotive::can::V1_0::implementation {
 
 using IfId = ICanController::BusConfig::InterfaceId;
 using IfIdDisc = ICanController::BusConfig::InterfaceId::hidl_discriminator;
+
+namespace fsErrors {
+static const std::error_code ok;
+static const std::error_code eperm(EPERM, std::generic_category());
+static const std::error_code enoent(ENOENT, std::generic_category());
+static const std::error_code eacces(EACCES, std::generic_category());
+}  // namespace fsErrors
+
+/* In the /sys/devices tree, there are files called "serial", which contain the serial numbers
+ * for various devices. The exact location inside of this directory is dependent upon the
+ * hardware we are running on, so we have to start from /sys/devices and work our way down. */
+static const std::filesystem::path kDevPath("/sys/devices/");
+static const std::regex kTtyRe("^tty[A-Z]+[0-9]+$");
+static constexpr auto kOpts = ~(std::filesystem::directory_options::follow_directory_symlink |
+                                std::filesystem::directory_options::skip_permission_denied);
+
+/**
+ * A helper object to associate the interface name and type of a USB to CAN adapter.
+ */
+struct UsbCanIface {
+    ICanController::InterfaceType iftype;
+    std::string ifaceName;
+};
 
 Return<void> CanController::getSupportedInterfaceTypes(getSupportedInterfaceTypes_cb _hidl_cb) {
     _hidl_cb({ICanController::InterfaceType::VIRTUAL, ICanController::InterfaceType::SOCKETCAN,
@@ -39,6 +64,152 @@ Return<void> CanController::getSupportedInterfaceTypes(getSupportedInterfaceType
 static bool isValidName(const std::string& name) {
     static const std::regex nameRE("^[a-zA-Z0-9_]{1,32}$");
     return std::regex_match(name, nameRE);
+}
+
+/**
+ * Given a UsbCanIface object, get the ifaceName given the serialPath.
+ *
+ * \param serialPath - Absolute path to a "serial" file for a given device in /sys.
+ * \return A populated UsbCanIface. On failure, nullopt is returned.
+ */
+static std::optional<UsbCanIface> getIfaceName(std::filesystem::path serialPath) {
+    std::error_code fsStatus;
+    // Since the path is to a file called "serial", we need to search its parent directory.
+    std::filesystem::recursive_directory_iterator fsItr(serialPath.parent_path(), kOpts, fsStatus);
+    if (fsStatus != fsErrors::ok) {
+        LOG(ERROR) << "Failed to open " << serialPath.parent_path();
+        return std::nullopt;
+    }
+
+    for (; fsStatus == fsErrors::ok && fsItr != std::filesystem::recursive_directory_iterator();
+         fsItr.increment(fsStatus)) {
+        /* We want either a directory called "net" or a directory that looks like tty<something>, so
+         * skip files. */
+        bool isDir = fsItr->is_directory(fsStatus);
+        if (fsStatus != fsErrors::ok || !isDir) continue;
+
+        /* path() returns an iterator that steps through directories from / to the leaf.
+         * end() returns one past the leaf of the path, but we want the leaf. Decrementing the
+         * path gives us a pointer to the leaf, which we then dereference.*/
+        std::string currentDir = *(--(fsItr->path().end()));
+        if (currentDir == "net") {
+            /* This device is a SocketCAN device. The iface name is the only directory under
+             * net/. Multiple directories under net/ is an error.*/
+            std::filesystem::directory_iterator netItr(fsItr->path(), kOpts, fsStatus);
+            if (fsStatus != fsErrors::ok) {
+                LOG(ERROR) << "Failed to open " << fsItr->path() << " to get net name!";
+                return std::nullopt;
+            }
+
+            // Get the leaf of the path. This is the interface name, assuming it's the only leaf.
+            std::string netName = *(--(netItr->path().end()));
+
+            // Check if there is more than one item in net/
+            netItr.increment(fsStatus);
+            if (fsStatus != fsErrors::ok) {
+                // It's possible we have a valid net name, but this is most likely an error.
+                LOG(ERROR) << "Failed to verify " << fsItr->path() << " has valid net name!";
+                return std::nullopt;
+            }
+            if (netItr != std::filesystem::directory_iterator()) {
+                // There should never be more than one name under net/
+                LOG(ERROR) << "Found more than one net name in " << fsItr->path() << "!";
+                return std::nullopt;
+            }
+            return {{ICanController::InterfaceType::SOCKETCAN, netName}};
+        } else if (std::regex_match(currentDir, kTtyRe)) {
+            // This device is a USB serial device, and currentDir is the tty name.
+            return {{ICanController::InterfaceType::SLCAN, "/dev/" + currentDir}};
+        }
+    }
+
+    // check if the loop above exited due to a c++fs error.
+    if (fsStatus != fsErrors::ok) {
+        LOG(ERROR) << "Failed search filesystem: " << fsStatus;
+    }
+    return std::nullopt;
+}
+
+/**
+ * A helper function to read the serial number from a "serial" file in /sys/devices/
+ *
+ * \param serialnoPath - path to the file to read.
+ * \return the serial number, or nullopt on failure.
+ */
+static std::optional<std::string> readSerialNo(const std::string& serialnoPath) {
+    std::ifstream serialnoStream(serialnoPath);
+    std::string serialno;
+    if (!serialnoStream.good()) {
+        LOG(ERROR) << "Failed to read serial number from " << serialnoPath;
+        return std::nullopt;
+    }
+    std::getline(serialnoStream, serialno);
+    return serialno;
+}
+
+/**
+ * Searches for USB devices found in /sys/devices/, and attempts to find a device matching the
+ * provided list of serial numbers.
+ *
+ * \param configSerialnos - a list of serial number (suffixes) from the HAL config.
+ * \param iftype - the type of the interface to be located.
+ * \return a matching USB device. On failure, std::nullopt is returned.
+ */
+static std::optional<UsbCanIface> findUsbDevice(const hidl_vec<hidl_string>& configSerialnos) {
+    std::error_code fsStatus;
+    std::filesystem::recursive_directory_iterator fsItr(kDevPath, kOpts, fsStatus);
+    if (fsStatus != fsErrors::ok) {
+        LOG(ERROR) << "Failed to open " << kDevPath;
+        return std::nullopt;
+    }
+
+    for (; fsStatus == fsErrors::ok && fsItr != std::filesystem::recursive_directory_iterator();
+         fsItr.increment(fsStatus)) {
+        // We want to find a file called "serial", which is in a directory somewhere. Skip files.
+        bool isDir = fsItr->is_directory(fsStatus);
+        if (fsStatus != fsErrors::ok) {
+            LOG(ERROR) << "Failed check if " << fsStatus;
+            return std::nullopt;
+        }
+        if (!isDir) continue;
+
+        auto serialnoPath = fsItr->path() / "serial";
+        bool isReg = std::filesystem::is_regular_file(serialnoPath, fsStatus);
+
+        /* Make sure we have permissions to this directory, ignore enoent, since the file
+         * "serial" may not exist, which is ok. */
+        if (fsStatus == fsErrors::eperm || fsStatus == fsErrors::eacces) {
+            /* This means we  don't have access to this directory. If we recurse into it, this
+             * will cause the iterator to loose its state and we'll crash. */
+            fsItr.disable_recursion_pending();
+            continue;
+        }
+        if (fsStatus == fsErrors::enoent) continue;
+        if (fsStatus != fsErrors::ok) {
+            LOG(WARNING) << "An unexpected error occurred while checking for serialno: "
+                         << fsStatus;
+            continue;
+        }
+        if (!isReg) continue;
+
+        // we found a serial number
+        auto serialno = readSerialNo(serialnoPath);
+        if (!serialno.has_value()) continue;
+
+        // see if the serial number exists in the config
+        for (auto&& cfgSn : configSerialnos) {
+            if (serialno->ends_with(std::string(cfgSn))) {
+                auto ifaceInfo = getIfaceName(serialnoPath);
+                if (!ifaceInfo.has_value()) break;
+                return ifaceInfo;
+            }
+        }
+    }
+    if (fsStatus != fsErrors::ok) {
+        LOG(ERROR) << "Error searching filesystem: " << fsStatus;
+        return std::nullopt;
+    }
+    return std::nullopt;
 }
 
 Return<ICanController::Result> CanController::upInterface(const ICanController::BusConfig& config) {
@@ -58,24 +229,46 @@ Return<ICanController::Result> CanController::upInterface(const ICanController::
 
     sp<CanBus> busService;
 
+    // SocketCAN native type interface.
     if (config.interfaceId.getDiscriminator() == IfIdDisc::socketcan) {
-        // TODO(b/142654031): support serialno
         auto& socketcan = config.interfaceId.socketcan();
-        if (socketcan.getDiscriminator() == IfId::Socketcan::hidl_discriminator::ifname) {
-            busService = new CanBusNative(socketcan.ifname(), config.bitrate);
+        std::string ifaceName;
+        if (socketcan.getDiscriminator() == IfId::Socketcan::hidl_discriminator::serialno) {
+            // Configure by serial number.
+            auto selectedDevice = findUsbDevice(socketcan.serialno());
+            // verify the returned device is the correct one
+            if (!selectedDevice.has_value() ||
+                selectedDevice->iftype != ICanController::InterfaceType::SOCKETCAN) {
+                return ICanController::Result::BAD_INTERFACE_ID;
+            }
+            ifaceName = selectedDevice->ifaceName;
         } else {
-            return ICanController::Result::BAD_INTERFACE_ID;
+            // configure by iface name.
+            ifaceName = socketcan.ifname();
         }
-    } else if (config.interfaceId.getDiscriminator() == IfIdDisc::virtualif) {
+        busService = new CanBusNative(ifaceName, config.bitrate);
+    }
+    // Virtual interface.
+    else if (config.interfaceId.getDiscriminator() == IfIdDisc::virtualif) {
         busService = new CanBusVirtual(config.interfaceId.virtualif().ifname);
-    } else if (config.interfaceId.getDiscriminator() == IfIdDisc::slcan) {
-        // TODO(b/142654031): support serialno
+    }
+    // SLCAN interface.
+    else if (config.interfaceId.getDiscriminator() == IfIdDisc::slcan) {
         auto& slcan = config.interfaceId.slcan();
-        if (slcan.getDiscriminator() == IfId::Slcan::hidl_discriminator::ttyname) {
-            busService = new CanBusSlcan(slcan.ttyname(), config.bitrate);
+        std::string ttyName;
+        if (slcan.getDiscriminator() == IfId::Slcan::hidl_discriminator::serialno) {
+            // Configure by serial number.
+            auto selectedDevice = findUsbDevice(slcan.serialno());
+            if (!selectedDevice.has_value() ||
+                selectedDevice->iftype != ICanController::InterfaceType::SLCAN) {
+                return ICanController::Result::BAD_INTERFACE_ID;
+            }
+            ttyName = selectedDevice->ifaceName;
         } else {
-            return ICanController::Result::BAD_INTERFACE_ID;
+            // Configure by tty name.
+            ttyName = slcan.ttyname();
         }
+        busService = new CanBusSlcan(ttyName, config.bitrate);
     } else {
         return ICanController::Result::NOT_SUPPORTED;
     }
