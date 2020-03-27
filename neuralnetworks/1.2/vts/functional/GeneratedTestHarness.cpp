@@ -390,6 +390,10 @@ std::vector<NamedModel> getNamedModels(const FilterFn& filter) {
     return TestModelManager::get().getTestModels(filter);
 }
 
+std::vector<NamedModel> getNamedModels(const FilterNameFn& filter) {
+    return TestModelManager::get().getTestModels(filter);
+}
+
 std::string printGeneratedTest(const testing::TestParamInfo<GeneratedTestParam>& info) {
     const auto& [namedDevice, namedModel] = info.param;
     return gtestCompliantName(getName(namedDevice) + "_" + getName(namedModel));
