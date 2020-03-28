@@ -113,9 +113,19 @@ inline void initFrontendConfig() {
 
 /** Configuration array for the frontend scan test */
 inline void initFrontendScanConfig() {
-    frontendScanArray[0].type = FrontendType::DVBT, frontendScanArray[0].settings.dvbt({
-                                                            .frequency = 577000,
-                                                    });
+    frontendScanArray[0].type = FrontendType::DVBT;
+    frontendScanArray[0].settings.dvbt({
+            .frequency = 578000,
+            .transmissionMode = FrontendDvbtTransmissionMode::MODE_8K,
+            .bandwidth = FrontendDvbtBandwidth::BANDWIDTH_8MHZ,
+            .constellation = FrontendDvbtConstellation::AUTO,
+            .hierarchy = FrontendDvbtHierarchy::AUTO,
+            .hpCoderate = FrontendDvbtCoderate::AUTO,
+            .lpCoderate = FrontendDvbtCoderate::AUTO,
+            .guardInterval = FrontendDvbtGuardInterval::AUTO,
+            .isHighPriority = true,
+            .standard = FrontendDvbtStandard::T,
+    });
 };
 
 /** Configuration array for the filter test */
