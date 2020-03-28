@@ -47,7 +47,6 @@
 #include "VtsHalTvTunerV1_0TestConfigurations.h"
 
 #define WAIT_TIMEOUT 3000000000
-#define WAIT_TIMEOUT_data_ready 3000000000 * 4
 
 using android::Condition;
 using android::IMemory;
@@ -57,6 +56,7 @@ using android::Mutex;
 using android::sp;
 using android::hardware::EventFlag;
 using android::hardware::fromHeap;
+using android::hardware::hidl_handle;
 using android::hardware::hidl_string;
 using android::hardware::hidl_vec;
 using android::hardware::HidlMemory;
@@ -68,6 +68,7 @@ using android::hardware::Void;
 using android::hardware::tv::tuner::V1_0::DataFormat;
 using android::hardware::tv::tuner::V1_0::DemuxFilterEvent;
 using android::hardware::tv::tuner::V1_0::DemuxFilterMainType;
+using android::hardware::tv::tuner::V1_0::DemuxFilterMediaEvent;
 using android::hardware::tv::tuner::V1_0::DemuxFilterPesDataSettings;
 using android::hardware::tv::tuner::V1_0::DemuxFilterPesEvent;
 using android::hardware::tv::tuner::V1_0::DemuxFilterRecordSettings;
@@ -156,7 +157,6 @@ const std::vector<uint8_t> goldenDataOutputBuffer{
 // const uint16_t FMQ_SIZE_4K = 0x1000;
 const uint32_t FMQ_SIZE_1M = 0x100000;
 const uint32_t FMQ_SIZE_16M = 0x1000000;
-const uint8_t FRONTEND_EVENT_CALLBACK_WAIT_COUNT = 4;
 
 enum FilterEventType : uint8_t {
     UNDEFINED,
@@ -179,52 +179,65 @@ class FrontendCallback : public IFrontendCallback {
   public:
     virtual Return<void> onEvent(FrontendEventType frontendEventType) override {
         android::Mutex::Autolock autoLock(mMsgLock);
+        ALOGD("[vts] frontend event received. Type: %d", frontendEventType);
         mEventReceived = true;
-        mEventType = frontendEventType;
         mMsgCondition.signal();
-        return Void();
+        switch (frontendEventType) {
+            case FrontendEventType::LOCKED:
+                mLockMsgReceived = true;
+                mLockMsgCondition.signal();
+                return Void();
+            default:
+                // do nothing
+                return Void();
+        }
     }
 
     virtual Return<void> onScanMessage(FrontendScanMessageType type,
                                        const FrontendScanMessage& message) override {
         android::Mutex::Autolock autoLock(mMsgLock);
-        ALOGD("[vts] scan message. Type: %d", mScanMessageType);
+        while (!mScanMsgProcessed) {
+            mMsgCondition.wait(mMsgLock);
+        }
+        ALOGD("[vts] frontend scan message. Type: %d", type);
         mScanMessageReceived = true;
+        mScanMsgProcessed = false;
         mScanMessageType = type;
-        mScanLockMessageReceived =
-                mScanLockMessageReceived | (type == FrontendScanMessageType::LOCKED);
         mScanMessage = message;
         mMsgCondition.signal();
         return Void();
-    };
+    }
 
     void tuneTestOnEventReceive(sp<IFrontend>& frontend, FrontendSettings settings);
     void tuneTestOnLock(sp<IFrontend>& frontend, FrontendSettings settings);
-    void scanTestOnMessageLock(sp<IFrontend>& frontend, FrontendSettings settings,
-                               FrontendScanType type);
+    void scanTest(sp<IFrontend>& frontend, FrontendConfig config, FrontendScanType type);
+
+    // Helper methods
+    uint32_t getTargetFrequency(FrontendSettings settings, FrontendType type);
+    void resetBlindScanStartingFrequency(FrontendConfig config, uint32_t resetingFreq);
 
   private:
     bool mEventReceived = false;
     bool mScanMessageReceived = false;
-    bool mScanLockMessageReceived = false;
-    FrontendEventType mEventType;
+    bool mLockMsgReceived = false;
+    bool mScanMsgProcessed = true;
     FrontendScanMessageType mScanMessageType;
     FrontendScanMessage mScanMessage;
     hidl_vec<uint8_t> mEventMessage;
     android::Mutex mMsgLock;
     android::Condition mMsgCondition;
-    uint8_t mOnEvenRetry = 0;
+    android::Condition mLockMsgCondition;
 };
 
 void FrontendCallback::tuneTestOnEventReceive(sp<IFrontend>& frontend, FrontendSettings settings) {
     Result result = frontend->tune(settings);
-
     EXPECT_TRUE(result == Result::SUCCESS);
 
     android::Mutex::Autolock autoLock(mMsgLock);
     while (!mEventReceived) {
         if (-ETIMEDOUT == mMsgCondition.waitRelative(mMsgLock, WAIT_TIMEOUT)) {
-            EXPECT_TRUE(false) << "event not received within timeout";
+            EXPECT_TRUE(false) << "Event not received within timeout";
+            mLockMsgReceived = false;
             return;
         }
     }
@@ -233,61 +246,134 @@ void FrontendCallback::tuneTestOnEventReceive(sp<IFrontend>& frontend, FrontendS
 
 void FrontendCallback::tuneTestOnLock(sp<IFrontend>& frontend, FrontendSettings settings) {
     Result result = frontend->tune(settings);
-
     EXPECT_TRUE(result == Result::SUCCESS);
 
     android::Mutex::Autolock autoLock(mMsgLock);
-wait:
-    while (!mEventReceived) {
-        if (-ETIMEDOUT == mMsgCondition.waitRelative(mMsgLock, WAIT_TIMEOUT)) {
-            EXPECT_TRUE(false) << "event not received within timeout";
+    while (!mLockMsgReceived) {
+        if (-ETIMEDOUT == mLockMsgCondition.waitRelative(mMsgLock, WAIT_TIMEOUT)) {
+            EXPECT_TRUE(false) << "Event LOCKED not received within timeout";
+            mLockMsgReceived = false;
             return;
         }
     }
-    if (mEventType != FrontendEventType::LOCKED) {
-        ALOGD("[vts] frontend callback event received. Type: %d", mEventType);
-        mEventReceived = false;
-        if (mOnEvenRetry++ < FRONTEND_EVENT_CALLBACK_WAIT_COUNT) {
-            goto wait;
-        }
-    }
-    EXPECT_TRUE(mEventType == FrontendEventType::LOCKED) << "LOCK event not received";
-    mEventReceived = false;
-    mOnEvenRetry = 0;
+    mLockMsgReceived = false;
 }
 
-void FrontendCallback::scanTestOnMessageLock(sp<IFrontend>& frontend, FrontendSettings settings,
-                                             FrontendScanType type) {
-    Result result = frontend->scan(settings, type);
-    EXPECT_TRUE(result == Result::SUCCESS);
-    android::Mutex::Autolock autoLock(mMsgLock);
-    int messagesCount = 0;
+void FrontendCallback::scanTest(sp<IFrontend>& frontend, FrontendConfig config,
+                                FrontendScanType type) {
+    uint32_t targetFrequency = getTargetFrequency(config.settings, config.type);
+    if (type == FrontendScanType::SCAN_BLIND) {
+        // reset the frequency in the scan configuration to test blind scan. The settings param of
+        // passed in means the real input config on the transponder connected to the DUT.
+        // We want the blind the test to start from lower frequency than this to check the blind
+        // scan implementation.
+        resetBlindScanStartingFrequency(config, targetFrequency - 100);
+    }
 
+    Result result = frontend->scan(config.settings, type);
+    EXPECT_TRUE(result == Result::SUCCESS);
+
+    bool scanMsgLockedReceived = false;
+    bool targetFrequencyReceived = false;
+
+    android::Mutex::Autolock autoLock(mMsgLock);
 wait:
-    int count = 0;
     while (!mScanMessageReceived) {
         if (-ETIMEDOUT == mMsgCondition.waitRelative(mMsgLock, WAIT_TIMEOUT)) {
-            ALOGD("[vts] waiting for scan message callback...");
-            if (count++ > 10) {
-                EXPECT_TRUE(false) << "WAITING TOO LONG!!";
-                return;
-            }
+            EXPECT_TRUE(false) << "Scan message not received within timeout";
+            mScanMessageReceived = false;
+            mScanMsgProcessed = true;
+            return;
         }
     }
 
     if (mScanMessageType != FrontendScanMessageType::END) {
-        ALOGD("[vts] frontend scan message received. Type: %d", mScanMessageType);
-        mScanMessageReceived = false;
-        if (messagesCount++ > 3) {
-            EXPECT_TRUE(false) << "WAITING ON TOO MANY MSGS!!";
-            return;
+        if (mScanMessageType == FrontendScanMessageType::LOCKED) {
+            scanMsgLockedReceived = true;
+            Result result = frontend->scan(config.settings, type);
+            EXPECT_TRUE(result == Result::SUCCESS);
         }
+
+        if (mScanMessageType == FrontendScanMessageType::FREQUENCY) {
+            targetFrequencyReceived = mScanMessage.frequencies().size() > 0 &&
+                                      mScanMessage.frequencies()[0] == targetFrequency;
+        }
+
+        if (mScanMessageType == FrontendScanMessageType::PROGRESS_PERCENT) {
+            ALOGD("[vts] Scan in progress...[%d%%]", mScanMessage.progressPercent());
+        }
+
+        mScanMessageReceived = false;
+        mScanMsgProcessed = true;
+        mMsgCondition.signal();
         goto wait;
     }
 
-    EXPECT_TRUE(mScanLockMessageReceived) << "scan lock message not received before scan ended";
+    EXPECT_TRUE(scanMsgLockedReceived) << "Scan message LOCKED not received before END";
+    EXPECT_TRUE(targetFrequencyReceived) << "frequency not received before LOCKED on blindScan";
     mScanMessageReceived = false;
-    mScanLockMessageReceived = false;
+    mScanMsgProcessed = true;
+}
+
+uint32_t FrontendCallback::getTargetFrequency(FrontendSettings settings, FrontendType type) {
+    switch (type) {
+        case FrontendType::ANALOG:
+            return settings.analog().frequency;
+        case FrontendType::ATSC:
+            return settings.atsc().frequency;
+        case FrontendType::ATSC3:
+            return settings.atsc3().frequency;
+        case FrontendType::DVBC:
+            return settings.dvbc().frequency;
+        case FrontendType::DVBS:
+            return settings.dvbs().frequency;
+        case FrontendType::DVBT:
+            return settings.dvbt().frequency;
+        case FrontendType::ISDBS:
+            return settings.isdbs().frequency;
+        case FrontendType::ISDBS3:
+            return settings.isdbs3().frequency;
+        case FrontendType::ISDBT:
+            return settings.isdbt().frequency;
+        default:
+            return 0;
+    }
+}
+
+void FrontendCallback::resetBlindScanStartingFrequency(FrontendConfig config,
+                                                       uint32_t resetingFreq) {
+    switch (config.type) {
+        case FrontendType::ANALOG:
+            config.settings.analog().frequency = resetingFreq;
+            break;
+        case FrontendType::ATSC:
+            config.settings.atsc().frequency = resetingFreq;
+            break;
+        case FrontendType::ATSC3:
+            config.settings.atsc3().frequency = resetingFreq;
+            break;
+        case FrontendType::DVBC:
+            config.settings.dvbc().frequency = resetingFreq;
+            break;
+        case FrontendType::DVBS:
+            config.settings.dvbs().frequency = resetingFreq;
+            break;
+        case FrontendType::DVBT:
+            config.settings.dvbt().frequency = resetingFreq;
+            break;
+        case FrontendType::ISDBS:
+            config.settings.isdbs().frequency = resetingFreq;
+            break;
+        case FrontendType::ISDBS3:
+            config.settings.isdbs3().frequency = resetingFreq;
+            break;
+        case FrontendType::ISDBT:
+            config.settings.isdbt().frequency = resetingFreq;
+            break;
+        default:
+            // do nothing
+            return;
+    }
 }
 /******************************** End FrontendCallback **********************************/
 
@@ -313,6 +399,7 @@ class FilterCallback : public IFilterCallback {
     }
 
     void setFilterId(uint32_t filterId) { mFilterId = filterId; }
+    void setFilterInterface(sp<IFilter> filter) { mFilter = filter; }
     void setFilterEventType(FilterEventType type) { mFilterEventType = type; }
 
     void testFilterDataOutput();
@@ -324,6 +411,7 @@ class FilterCallback : public IFilterCallback {
     void updateFilterMQ(MQDesc& filterMQDescriptor);
     void updateGoldenOutputMap(string goldenOutputFile);
     bool readFilterEventData();
+    bool dumpAvData(DemuxFilterMediaEvent event);
 
   private:
     struct FilterThreadArgs {
@@ -336,6 +424,7 @@ class FilterCallback : public IFilterCallback {
     string mFilterIdToGoldenOutput;
 
     uint32_t mFilterId;
+    sp<IFilter> mFilter;
     FilterEventType mFilterEventType;
     std::unique_ptr<FilterMQ> mFilterMQ;
     EventFlag* mFilterMQEventFlag;
@@ -407,7 +496,7 @@ void FilterCallback::filterThreadLoop(DemuxFilterEvent& /* event */) {
 bool FilterCallback::readFilterEventData() {
     bool result = false;
     DemuxFilterEvent filterEvent = mFilterEvent;
-    ALOGW("[vts] reading from filter FMQ %d", mFilterId);
+    ALOGW("[vts] reading from filter FMQ or buffer %d", mFilterId);
     // todo separate filter handlers
     for (int i = 0; i < filterEvent.events.size(); i++) {
         switch (mFilterEventType) {
@@ -418,8 +507,7 @@ bool FilterCallback::readFilterEventData() {
                 mDataLength = filterEvent.events[i].pes().dataLength;
                 break;
             case FilterEventType::MEDIA:
-                mDataLength = filterEvent.events[i].media().dataLength;
-                break;
+                return dumpAvData(filterEvent.events[i].media());
             case FilterEventType::RECORD:
                 break;
             case FilterEventType::MMTPRECORD:
@@ -442,6 +530,26 @@ bool FilterCallback::readFilterEventData() {
     }
     mFilterMQEventFlag->wake(static_cast<uint32_t>(DemuxQueueNotifyBits::DATA_CONSUMED));
     return result;
+}
+
+bool FilterCallback::dumpAvData(DemuxFilterMediaEvent event) {
+    uint32_t length = event.dataLength;
+    uint64_t dataId = event.avDataId;
+    // read data from buffer pointed by a handle
+    hidl_handle handle = event.avMemory;
+
+    int av_fd = handle.getNativeHandle()->data[0];
+    uint8_t* buffer = static_cast<uint8_t*>(
+            mmap(NULL, length, PROT_READ | PROT_WRITE, MAP_SHARED, av_fd, 0 /*offset*/));
+    if (buffer == MAP_FAILED) {
+        ALOGE("[vts] fail to allocate av buffer, errno=%d", errno);
+        return false;
+    }
+    uint8_t output[length + 1];
+    memcpy(output, buffer, length);
+    // print buffer and check with golden output.
+    EXPECT_TRUE(mFilter->releaseAvHandle(handle, dataId) == Result::SUCCESS);
+    return true;
 }
 /******************************** End FilterCallback **********************************/
 
@@ -731,6 +839,7 @@ class TunerHidlTest : public testing::TestWithParam<std::string> {
     sp<IFilter> mFilter;
     std::map<uint32_t, sp<IFilter>> mFilters;
     std::map<uint32_t, sp<FilterCallback>> mFilterCallbacks;
+
     sp<FilterCallback> mFilterCallback;
     sp<DvrCallback> mDvrCallback;
     MQDesc mFilterMQDescriptor;
@@ -826,7 +935,7 @@ AssertionResult TunerHidlTest::scanFrontend(FrontendConfig config, FrontendScanT
     EXPECT_TRUE(mFrontendInfo.type == config.type)
             << "FrontendConfig does not match the frontend info of the given id.";
 
-    mFrontendCallback->scanTestOnMessageLock(mFrontend, config.settings, type);
+    mFrontendCallback->scanTest(mFrontend, config, type);
     return AssertionResult(true);
 }
 
@@ -926,13 +1035,14 @@ AssertionResult TunerHidlTest::getNewlyOpenedFilterId(uint32_t& filterId) {
 
     if (status == Result::SUCCESS) {
         mFilterCallback->setFilterId(mFilterId);
+        mFilterCallback->setFilterInterface(mFilter);
         mUsedFilterIds.insert(mUsedFilterIds.end(), mFilterId);
         mFilters[mFilterId] = mFilter;
         mFilterCallbacks[mFilterId] = mFilterCallback;
         filterId = mFilterId;
     }
 
-    return AssertionResult(status == Result::SUCCESS || status == Result::UNAVAILABLE);
+    return AssertionResult(status == Result::SUCCESS);
 }
 
 AssertionResult TunerHidlTest::configFilter(DemuxFilterSettings setting, uint32_t filterId) {
@@ -1300,7 +1410,6 @@ TEST_P(TunerHidlTest, TuneFrontend) {
         }
         ASSERT_TRUE(openFrontend(mFeIds[i]));
         ASSERT_TRUE(setFrontendCallback());
-        ASSERT_TRUE(stopTuneFrontend());
         ASSERT_TRUE(tuneFrontend(frontendArray[0]));
         ASSERT_TRUE(stopTuneFrontend());
         ASSERT_TRUE(closeFrontend());
@@ -1320,8 +1429,26 @@ TEST_P(TunerHidlTest, AutoScanFrontend) {
         }
         ASSERT_TRUE(openFrontend(mFeIds[i]));
         ASSERT_TRUE(setFrontendCallback());
-        ASSERT_TRUE(stopScanFrontend());
         ASSERT_TRUE(scanFrontend(frontendScanArray[0], FrontendScanType::SCAN_AUTO));
+        ASSERT_TRUE(stopScanFrontend());
+        ASSERT_TRUE(closeFrontend());
+        break;
+    }
+}
+
+TEST_P(TunerHidlTest, BlindScanFrontend) {
+    description("Run an blind frontend scan with specific setting and check lock scanMessage");
+    ASSERT_TRUE(getFrontendIds());
+    ASSERT_TRUE(mFeIds.size() > 0);
+
+    for (size_t i = 0; i < mFeIds.size(); i++) {
+        ASSERT_TRUE(getFrontendInfo(mFeIds[i]));
+        if (mFrontendInfo.type != frontendArray[0].type) {
+            continue;
+        }
+        ASSERT_TRUE(openFrontend(mFeIds[i]));
+        ASSERT_TRUE(setFrontendCallback());
+        ASSERT_TRUE(scanFrontend(frontendScanArray[0], FrontendScanType::SCAN_BLIND));
         ASSERT_TRUE(stopScanFrontend());
         ASSERT_TRUE(closeFrontend());
         break;
@@ -1535,6 +1662,39 @@ TEST_P(TunerHidlTest, RecordDataFlowWithTsRecordFilterTest) {
 
     ASSERT_TRUE(recordDataFlowTest(filterConf, recordSetting, goldenOutputFiles));
 }*/
+
+TEST_P(TunerHidlTest, AvBufferTest) {
+    description("Test the av filter data bufferring.");
+
+    ASSERT_TRUE(getFrontendIds());
+    ASSERT_TRUE(mFeIds.size() > 0);
+
+    for (size_t i = 0; i < mFeIds.size(); i++) {
+        ASSERT_TRUE(getFrontendInfo(mFeIds[i]));
+        if (mFrontendInfo.type != frontendArray[1].type) {
+            continue;
+        }
+        ASSERT_TRUE(openFrontend(mFeIds[i]));
+        ASSERT_TRUE(setFrontendCallback());
+        ASSERT_TRUE(openDemux());
+        ASSERT_TRUE(openFilterInDemux(filterArray[0].type));
+        uint32_t filterId;
+        ASSERT_TRUE(getNewlyOpenedFilterId(filterId));
+        ASSERT_TRUE(configFilter(filterArray[0].setting, filterId));
+        ASSERT_TRUE(startFilter(filterId));
+        ASSERT_TRUE(setDemuxFrontendDataSource(mFeIds[i]));
+        // tune test
+        ASSERT_TRUE(tuneFrontend(frontendArray[1]));
+        // broadcast data flow test
+        ASSERT_TRUE(broadcastDataFlowTest(goldenOutputFiles));
+        ASSERT_TRUE(stopTuneFrontend());
+        ASSERT_TRUE(stopFilter(filterId));
+        ASSERT_TRUE(closeFilter(filterId));
+        ASSERT_TRUE(closeDemux());
+        ASSERT_TRUE(closeFrontend());
+        break;
+    }
+}
 /*============================== End Data Flow Tests ==============================*/
 /******************************** End Test Entry **********************************/
 }  // namespace

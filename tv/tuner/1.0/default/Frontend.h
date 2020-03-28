@@ -76,7 +76,6 @@ class Frontend : public IFrontend {
     FrontendId mId = 0;
 
     const string FRONTEND_STREAM_FILE = "/vendor/etc/dumpTs3.ts";
-    string mSourceStreamFile;
     std::ifstream mFrontendData;
 };
 
