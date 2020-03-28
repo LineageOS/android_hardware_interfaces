@@ -57,6 +57,7 @@ using android::Mutex;
 using android::sp;
 using android::hardware::EventFlag;
 using android::hardware::fromHeap;
+using android::hardware::hidl_handle;
 using android::hardware::hidl_string;
 using android::hardware::hidl_vec;
 using android::hardware::HidlMemory;
@@ -68,6 +69,7 @@ using android::hardware::Void;
 using android::hardware::tv::tuner::V1_0::DataFormat;
 using android::hardware::tv::tuner::V1_0::DemuxFilterEvent;
 using android::hardware::tv::tuner::V1_0::DemuxFilterMainType;
+using android::hardware::tv::tuner::V1_0::DemuxFilterMediaEvent;
 using android::hardware::tv::tuner::V1_0::DemuxFilterPesDataSettings;
 using android::hardware::tv::tuner::V1_0::DemuxFilterPesEvent;
 using android::hardware::tv::tuner::V1_0::DemuxFilterRecordSettings;
@@ -313,6 +315,7 @@ class FilterCallback : public IFilterCallback {
     }
 
     void setFilterId(uint32_t filterId) { mFilterId = filterId; }
+    void setFilterInterface(sp<IFilter> filter) { mFilter = filter; }
     void setFilterEventType(FilterEventType type) { mFilterEventType = type; }
 
     void testFilterDataOutput();
@@ -324,6 +327,7 @@ class FilterCallback : public IFilterCallback {
     void updateFilterMQ(MQDesc& filterMQDescriptor);
     void updateGoldenOutputMap(string goldenOutputFile);
     bool readFilterEventData();
+    bool dumpAvData(DemuxFilterMediaEvent event);
 
   private:
     struct FilterThreadArgs {
@@ -336,6 +340,7 @@ class FilterCallback : public IFilterCallback {
     string mFilterIdToGoldenOutput;
 
     uint32_t mFilterId;
+    sp<IFilter> mFilter;
     FilterEventType mFilterEventType;
     std::unique_ptr<FilterMQ> mFilterMQ;
     EventFlag* mFilterMQEventFlag;
@@ -407,7 +412,7 @@ void FilterCallback::filterThreadLoop(DemuxFilterEvent& /* event */) {
 bool FilterCallback::readFilterEventData() {
     bool result = false;
     DemuxFilterEvent filterEvent = mFilterEvent;
-    ALOGW("[vts] reading from filter FMQ %d", mFilterId);
+    ALOGW("[vts] reading from filter FMQ or buffer %d", mFilterId);
     // todo separate filter handlers
     for (int i = 0; i < filterEvent.events.size(); i++) {
         switch (mFilterEventType) {
@@ -418,8 +423,7 @@ bool FilterCallback::readFilterEventData() {
                 mDataLength = filterEvent.events[i].pes().dataLength;
                 break;
             case FilterEventType::MEDIA:
-                mDataLength = filterEvent.events[i].media().dataLength;
-                break;
+                return dumpAvData(filterEvent.events[i].media());
             case FilterEventType::RECORD:
                 break;
             case FilterEventType::MMTPRECORD:
@@ -442,6 +446,26 @@ bool FilterCallback::readFilterEventData() {
     }
     mFilterMQEventFlag->wake(static_cast<uint32_t>(DemuxQueueNotifyBits::DATA_CONSUMED));
     return result;
+}
+
+bool FilterCallback::dumpAvData(DemuxFilterMediaEvent event) {
+    uint32_t length = event.dataLength;
+    uint64_t dataId = event.avDataId;
+    // read data from buffer pointed by a handle
+    hidl_handle handle = event.avMemory;
+
+    int av_fd = handle.getNativeHandle()->data[0];
+    uint8_t* buffer = static_cast<uint8_t*>(
+            mmap(NULL, length, PROT_READ | PROT_WRITE, MAP_SHARED, av_fd, 0 /*offset*/));
+    if (buffer == MAP_FAILED) {
+        ALOGE("[vts] fail to allocate av buffer, errno=%d", errno);
+        return false;
+    }
+    uint8_t output[length + 1];
+    memcpy(output, buffer, length);
+    // print buffer and check with golden output.
+    EXPECT_TRUE(mFilter->releaseAvHandle(handle, dataId) == Result::SUCCESS);
+    return true;
 }
 /******************************** End FilterCallback **********************************/
 
@@ -731,6 +755,7 @@ class TunerHidlTest : public testing::TestWithParam<std::string> {
     sp<IFilter> mFilter;
     std::map<uint32_t, sp<IFilter>> mFilters;
     std::map<uint32_t, sp<FilterCallback>> mFilterCallbacks;
+
     sp<FilterCallback> mFilterCallback;
     sp<DvrCallback> mDvrCallback;
     MQDesc mFilterMQDescriptor;
@@ -926,6 +951,7 @@ AssertionResult TunerHidlTest::getNewlyOpenedFilterId(uint32_t& filterId) {
 
     if (status == Result::SUCCESS) {
         mFilterCallback->setFilterId(mFilterId);
+        mFilterCallback->setFilterInterface(mFilter);
         mUsedFilterIds.insert(mUsedFilterIds.end(), mFilterId);
         mFilters[mFilterId] = mFilter;
         mFilterCallbacks[mFilterId] = mFilterCallback;
@@ -1535,6 +1561,39 @@ TEST_P(TunerHidlTest, RecordDataFlowWithTsRecordFilterTest) {
 
     ASSERT_TRUE(recordDataFlowTest(filterConf, recordSetting, goldenOutputFiles));
 }*/
+
+TEST_P(TunerHidlTest, AvBufferTest) {
+    description("Test the av filter data bufferring.");
+
+    ASSERT_TRUE(getFrontendIds());
+    ASSERT_TRUE(mFeIds.size() > 0);
+
+    for (size_t i = 0; i < mFeIds.size(); i++) {
+        ASSERT_TRUE(getFrontendInfo(mFeIds[i]));
+        if (mFrontendInfo.type != frontendArray[1].type) {
+            continue;
+        }
+        ASSERT_TRUE(openFrontend(mFeIds[i]));
+        ASSERT_TRUE(setFrontendCallback());
+        ASSERT_TRUE(openDemux());
+        ASSERT_TRUE(openFilterInDemux(filterArray[0].type));
+        uint32_t filterId;
+        ASSERT_TRUE(getNewlyOpenedFilterId(filterId));
+        ASSERT_TRUE(configFilter(filterArray[0].setting, filterId));
+        ASSERT_TRUE(startFilter(filterId));
+        ASSERT_TRUE(setDemuxFrontendDataSource(mFeIds[i]));
+        // tune test
+        ASSERT_TRUE(tuneFrontend(frontendArray[1]));
+        // broadcast data flow test
+        ASSERT_TRUE(broadcastDataFlowTest(goldenOutputFiles));
+        ASSERT_TRUE(stopTuneFrontend());
+        ASSERT_TRUE(stopFilter(filterId));
+        ASSERT_TRUE(closeFilter(filterId));
+        ASSERT_TRUE(closeDemux());
+        ASSERT_TRUE(closeFrontend());
+        break;
+    }
+}
 /*============================== End Data Flow Tests ==============================*/
 /******************************** End Test Entry **********************************/
 }  // namespace
