@@ -60,6 +60,8 @@ Return<Result> Filter::setDataSource(const sp<IFilter>& filter) {
 Return<void> Filter::getQueueDesc(getQueueDesc_cb _hidl_cb) {
     ALOGV("%s", __FUNCTION__);
 
+    mIsUsingFMQ = true;
+
     _hidl_cb(Result::SUCCESS, *mFilterMQ->getDesc());
     return Void();
 }
@@ -120,9 +122,13 @@ Return<Result> Filter::flush() {
     return Result::SUCCESS;
 }
 
-Return<Result> Filter::releaseAvHandle(const hidl_handle& /*avMemory*/, uint64_t /*avDataId*/) {
+Return<Result> Filter::releaseAvHandle(const hidl_handle& /*avMemory*/, uint64_t avDataId) {
     ALOGV("%s", __FUNCTION__);
+    if (mDataId2Avfd.find(avDataId) == mDataId2Avfd.end()) {
+        return Result::INVALID_ARGUMENT;
+    }
 
+    ::close(mDataId2Avfd[avDataId]);
     return Result::SUCCESS;
 }
 
@@ -174,14 +180,21 @@ void Filter::filterThreadLoop() {
     // Event Callback without waiting for the DATA_CONSUMED to init the process.
     while (mFilterThreadRunning) {
         if (mFilterEvent.events.size() == 0) {
-            ALOGD("[Filter] wait for filter data output.");
+            if (DEBUG_FILTER) {
+                ALOGD("[Filter] wait for filter data output.");
+            }
             usleep(1000 * 1000);
             continue;
         }
         // After successfully write, send a callback and wait for the read to be done
         mCallback->onFilterEvent(mFilterEvent);
+        freeAvHandle();
         mFilterEvent.events.resize(0);
         mFilterStatus = DemuxFilterStatus::DATA_READY;
+        if (mCallback == nullptr) {
+            ALOGD("[Filter] filter %d does not hava callback. Ending thread", mFilterId);
+            break;
+        }
         mCallback->onFilterStatus(mFilterStatus);
         break;
     }
@@ -191,7 +204,7 @@ void Filter::filterThreadLoop() {
         // We do not wait for the last round of written data to be read to finish the thread
         // because the VTS can verify the reading itself.
         for (int i = 0; i < SECTION_WRITE_COUNT; i++) {
-            while (mFilterThreadRunning) {
+            while (mFilterThreadRunning && mIsUsingFMQ) {
                 status_t status = mFilterEventFlag->wait(
                         static_cast<uint32_t>(DemuxQueueNotifyBits::DATA_CONSUMED), &efState,
                         WAIT_TIMEOUT, true /* retry on spurious wake */);
@@ -199,11 +212,6 @@ void Filter::filterThreadLoop() {
                     ALOGD("[Filter] wait for data consumed");
                     continue;
                 }
-                break;
-            }
-
-            if (mCallback == nullptr) {
-                ALOGD("[Filter] filter %d does not hava callback. Ending thread", mFilterId);
                 break;
             }
 
@@ -232,7 +240,22 @@ void Filter::filterThreadLoop() {
     ALOGD("[Filter] filter thread ended.");
 }
 
+void Filter::freeAvHandle() {
+    if (mType.mainType != DemuxFilterMainType::TS ||
+        (mType.subType.tsFilterType() == DemuxTsFilterType::AUDIO &&
+         mType.subType.tsFilterType() == DemuxTsFilterType::VIDEO)) {
+        return;
+    }
+    for (int i = 0; i < mFilterEvent.events.size(); i++) {
+        ::close(mFilterEvent.events[i].media().avMemory.getNativeHandle()->data[0]);
+        native_handle_close(mFilterEvent.events[i].media().avMemory.getNativeHandle());
+    }
+}
+
 void Filter::maySendFilterStatusCallback() {
+    if (!mIsUsingFMQ) {
+        return;
+    }
     std::lock_guard<std::mutex> lock(mFilterStatusLock);
     int availableToRead = mFilterMQ->availableToRead();
     int availableToWrite = mFilterMQ->availableToWrite();
@@ -409,19 +432,88 @@ Result Filter::startTsFilterHandler() {
 }
 
 Result Filter::startMediaFilterHandler() {
-    DemuxFilterMediaEvent mediaEvent;
-    mediaEvent = {
-            // temp dump meta data
-            .pts = 0,
-            .dataLength = 530,
-            .avMemory = nullptr,
-            .isSecureMemory = false,
-    };
-    mFilterEvent.events.resize(1);
-    mFilterEvent.events[0].media(mediaEvent);
+    std::lock_guard<std::mutex> lock(mFilterEventLock);
+    if (mFilterOutput.empty()) {
+        return Result::SUCCESS;
+    }
+
+    for (int i = 0; i < mFilterOutput.size(); i += 188) {
+        if (mPesSizeLeft == 0) {
+            uint32_t prefix = (mFilterOutput[i + 4] << 16) | (mFilterOutput[i + 5] << 8) |
+                              mFilterOutput[i + 6];
+            if (DEBUG_FILTER) {
+                ALOGD("[Filter] prefix %d", prefix);
+            }
+            if (prefix == 0x000001) {
+                // TODO handle mulptiple Pes filters
+                mPesSizeLeft = (mFilterOutput[i + 8] << 8) | mFilterOutput[i + 9];
+                mPesSizeLeft += 6;
+                if (DEBUG_FILTER) {
+                    ALOGD("[Filter] pes data length %d", mPesSizeLeft);
+                }
+            } else {
+                continue;
+            }
+        }
+
+        int endPoint = min(184, mPesSizeLeft);
+        // append data and check size
+        vector<uint8_t>::const_iterator first = mFilterOutput.begin() + i + 4;
+        vector<uint8_t>::const_iterator last = mFilterOutput.begin() + i + 4 + endPoint;
+        mPesOutput.insert(mPesOutput.end(), first, last);
+        // size does not match then continue
+        mPesSizeLeft -= endPoint;
+        if (DEBUG_FILTER) {
+            ALOGD("[Filter] pes data left %d", mPesSizeLeft);
+        }
+        if (mPesSizeLeft > 0 || mAvBufferCopyCount++ < 10) {
+            continue;
+        }
+
+        int av_fd = createAvIonFd(mPesOutput.size());
+        if (av_fd == -1) {
+            return Result::UNKNOWN_ERROR;
+        }
+        // copy the filtered data to the buffer
+        uint8_t* avBuffer = getIonBuffer(av_fd, mPesOutput.size());
+        if (avBuffer == NULL) {
+            return Result::UNKNOWN_ERROR;
+        }
+        memcpy(avBuffer, mPesOutput.data(), mPesOutput.size() * sizeof(uint8_t));
+
+        native_handle_t* nativeHandle = createNativeHandle(av_fd);
+        if (nativeHandle == NULL) {
+            return Result::UNKNOWN_ERROR;
+        }
+        hidl_handle handle;
+        handle.setTo(nativeHandle, /*shouldOwn=*/true);
+
+        // Create a dataId and add a <dataId, av_fd> pair into the dataId2Avfd map
+        uint64_t dataId = mLastUsedDataId++ /*createdUID*/;
+        mDataId2Avfd[dataId] = dup(av_fd);
+
+        // Create mediaEvent and send callback
+        DemuxFilterMediaEvent mediaEvent;
+        mediaEvent = {
+                .avMemory = std::move(handle),
+                .dataLength = static_cast<uint32_t>(mPesOutput.size()),
+                .avDataId = dataId,
+        };
+        int size = mFilterEvent.events.size();
+        mFilterEvent.events.resize(size + 1);
+        mFilterEvent.events[size].media(mediaEvent);
+
+        // Clear and log
+        mPesOutput.clear();
+        mAvBufferCopyCount = 0;
+        ::close(av_fd);
+        if (DEBUG_FILTER) {
+            ALOGD("[Filter] assembled av data length %d", mediaEvent.dataLength);
+        }
+    }
 
     mFilterOutput.clear();
-    // TODO handle write FQM for media stream
+
     return Result::SUCCESS;
 }
 
@@ -493,6 +585,42 @@ void Filter::detachFilterFromRecord() {
     mDvr = nullptr;
 }
 
+int Filter::createAvIonFd(int size) {
+    // Create an ion fd and allocate an av fd mapped to a buffer to it.
+    int ion_fd = ion_open();
+    if (ion_fd == -1) {
+        ALOGE("[Filter] Failed to open ion fd %d", errno);
+        return -1;
+    }
+    int av_fd = -1;
+    ion_alloc_fd(dup(ion_fd), size, 0 /*align*/, ION_HEAP_SYSTEM_MASK, 0 /*flags*/, &av_fd);
+    if (av_fd == -1) {
+        ALOGE("[Filter] Failed to create av fd %d", errno);
+        return -1;
+    }
+    return av_fd;
+}
+
+uint8_t* Filter::getIonBuffer(int fd, int size) {
+    uint8_t* avBuf = static_cast<uint8_t*>(
+            mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0 /*offset*/));
+    if (avBuf == MAP_FAILED) {
+        ALOGE("[Filter] fail to allocate buffer %d", errno);
+        return NULL;
+    }
+    return avBuf;
+}
+
+native_handle_t* Filter::createNativeHandle(int fd) {
+    // Create a native handle to pass the av fd via the callback event.
+    native_handle_t* nativeHandle = native_handle_create(/*numFd*/ 1, 0);
+    if (nativeHandle == NULL) {
+        ALOGE("[Filter] Failed to create native_handle %d", errno);
+        return NULL;
+    }
+    nativeHandle->data[0] = dup(fd);
+    return nativeHandle;
+}
 }  // namespace implementation
 }  // namespace V1_0
 }  // namespace tuner

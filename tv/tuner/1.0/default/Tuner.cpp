@@ -106,7 +106,7 @@ Return<void> Tuner::openDescrambler(openDescrambler_cb _hidl_cb) {
     return Void();
 }
 
-Return<void> Tuner::getFrontendInfo(FrontendId /* frontendId */, getFrontendInfo_cb _hidl_cb) {
+Return<void> Tuner::getFrontendInfo(FrontendId /*frontendId*/, getFrontendInfo_cb _hidl_cb) {
     ALOGV("%s", __FUNCTION__);
 
     vector<FrontendStatusType> statusCaps = {
