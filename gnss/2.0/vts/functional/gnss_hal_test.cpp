@@ -97,7 +97,7 @@ void GnssHalTest::SetPositionMode(const int min_interval_msec, const bool low_po
     EXPECT_TRUE(result);
 }
 
-bool GnssHalTest::StartAndCheckFirstLocation() {
+bool GnssHalTest::StartAndCheckFirstLocation(bool strict) {
     const auto result = gnss_hal_->start();
 
     EXPECT_TRUE(result.isOk());
@@ -107,12 +107,14 @@ bool GnssHalTest::StartAndCheckFirstLocation() {
      * so allow time to demodulate ephemeris over the air.
      */
     const int kFirstGnssLocationTimeoutSeconds = 75;
+    int locationCalledCount = 0;
 
-    EXPECT_TRUE(gnss_cb_->location_cbq_.retrieve(gnss_cb_->last_location_,
-                                                 kFirstGnssLocationTimeoutSeconds));
-    int locationCalledCount = gnss_cb_->location_cbq_.calledCount();
-    EXPECT_EQ(locationCalledCount, 1);
-
+    if (strict) {
+        EXPECT_TRUE(gnss_cb_->location_cbq_.retrieve(gnss_cb_->last_location_,
+                                                     kFirstGnssLocationTimeoutSeconds));
+        locationCalledCount = gnss_cb_->location_cbq_.calledCount();
+        EXPECT_EQ(locationCalledCount, 1);
+    }
     if (locationCalledCount > 0) {
         // don't require speed on first fix
         CheckLocation(gnss_cb_->last_location_, false);
@@ -135,7 +137,7 @@ void GnssHalTest::StartAndCheckLocations(int count) {
 
     SetPositionMode(kMinIntervalMsec, kLowPowerMode);
 
-    EXPECT_TRUE(StartAndCheckFirstLocation());
+    EXPECT_TRUE(StartAndCheckFirstLocation(/* strict= */ true));
 
     for (int i = 1; i < count; i++) {
         EXPECT_TRUE(gnss_cb_->location_cbq_.retrieve(gnss_cb_->last_location_,
