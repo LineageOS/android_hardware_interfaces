@@ -63,9 +63,6 @@ Return<Result> Frontend::tune(const FrontendSettings& /* settings */) {
         return Result::INVALID_STATE;
     }
 
-    // TODO dynamically allocate file to the source file
-    mSourceStreamFile = FRONTEND_STREAM_FILE;
-
     mCallback->onEvent(FrontendEventType::LOCKED);
     return Result::SUCCESS;
 }
@@ -180,7 +177,7 @@ FrontendId Frontend::getFrontendId() {
 }
 
 string Frontend::getSourceFile() {
-    return mSourceStreamFile;
+    return FRONTEND_STREAM_FILE;
 }
 
 }  // namespace implementation
