@@ -45,6 +45,10 @@ cc_binary {
     required: [
         "evs_default_configuration.xml",
     ],
+
+    vintf_fragments: [
+        "manifest_android.hardware.automotive.evs@1.1-service.xml",
+    ],
 }
 
 prebuilt_etc {
