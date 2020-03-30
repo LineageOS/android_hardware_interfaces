@@ -24,8 +24,6 @@ import @4.0::KeyPurpose;
 import @4.0::OperationHandle;
 import @4.0::VerificationToken;
 
-import IOperation;
-
 /**
  * @4.1::IKeymasterDevice is a minor extension to @4.0::IKeymasterDevice.  It adds support for
  *
@@ -78,18 +76,4 @@ interface IKeymasterDevice extends @4.0::IKeymasterDevice {
      * an EARLY_BOOT_ONLY key after this method is called must fail with Error::INVALID_KEY_BLOB.
      */
     earlyBootEnded() generates (ErrorCode error);
-
-    /**
-     * Begins a cryptographic operation.  beginOp() is a variation on begin().  beginOp() has
-     * identical functionality to begin, but instead of an OperationHandle it returns an IOperation
-     * object.  An IKeymasterDevice HAL service must call linkToDeath() on the Operation before
-     * returning it, and the provided hidl_death_recipient, if called, must abort() the operation.
-     * This is to ensure that in the event a client crashes while an operation is in progress, the
-     * operation slot is freed and available for use by other clients.
-     *
-     * @4.1::IKeymasterDevices must implement both beginOp() and begin().
-     */
-    beginOp(KeyPurpose purpose, vec<uint8_t> keyBlob, vec<KeyParameter> inParams,
-        HardwareAuthToken authToken)
-        generates (ErrorCode error, vec<KeyParameter> outParam, IOperation operation);
 };
