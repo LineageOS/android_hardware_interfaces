@@ -96,7 +96,6 @@ std::optional<ICanController::BusConfig> fromPbBus(const Bus& pb_bus) {
             if (!ifname.empty()) socketcan.ifname(ifname);
             if (!serialno.empty()) socketcan.serialno({serialno.begin(), serialno.end()});
             bus_cfg.interfaceId.socketcan(socketcan);
-            // TODO(b/142654031) - add support for serial number as an option instead of ifname.
             break;
         }
         case Bus::kSlcan: {
