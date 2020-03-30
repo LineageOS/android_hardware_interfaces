@@ -1855,13 +1855,15 @@ TEST_P(GraphicsMapperHidlTest, GetFromBufferDescriptorInfoChromaSiting) {
  */
 TEST_P(GraphicsMapperHidlTest, GetFromBufferDescriptorInfoPlaneLayouts) {
     hidl_vec<uint8_t> vec;
-    ASSERT_EQ(Error::NONE,
-              mGralloc->getFromBufferDescriptorInfo(mDummyDescriptorInfo,
-                                                    gralloc4::MetadataType_PlaneLayouts, &vec));
-
-    std::vector<PlaneLayout> planeLayouts;
-    ASSERT_EQ(NO_ERROR, gralloc4::decodePlaneLayouts(vec, &planeLayouts));
-    ASSERT_NO_FATAL_FAILURE(verifyDummyDescriptorInfoPlaneLayouts(planeLayouts));
+    const auto ret = mGralloc->getFromBufferDescriptorInfo(
+            mDummyDescriptorInfo, gralloc4::MetadataType_PlaneLayouts, &vec);
+    if (ret == Error::NONE) {
+        std::vector<PlaneLayout> planeLayouts;
+        ASSERT_EQ(NO_ERROR, gralloc4::decodePlaneLayouts(vec, &planeLayouts));
+        ASSERT_NO_FATAL_FAILURE(verifyDummyDescriptorInfoPlaneLayouts(planeLayouts));
+    } else {
+        ASSERT_EQ(Error::UNSUPPORTED, ret);
+    }
 }
 
 /**
