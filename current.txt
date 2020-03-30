@@ -651,3 +651,8 @@ c9273429fcf98d797d3bb07fdba6f1be95bf960f9255cde169fd1ca4db85f856 android.hardwar
 b454df853441c12f6e425e8a60dd29fda20f5e6e39b93d1103e4b37495db38aa android.hardware.radio@1.5::IRadio
 fcbb0742a88215ee7a6d7ce0825d253eb2b50391fc6c8c48667f9fd7f6d4549e android.hardware.radio@1.5::IRadioIndication
 b809193970a91ca637a4b0184767315601d32e3ef3d5992ffbc7a8d14a14f015 android.hardware.radio@1.5::IRadioResponse
+
+# ABI preserving changes to HALs during Android S
+
+# HALs released in Android S
+# NOTE: new HALs are recommended to be in AIDL
