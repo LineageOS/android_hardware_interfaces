@@ -41,7 +41,7 @@ static bool sendIfreq(unsigned long request, struct ifreq& ifr) {
     }
 
     if (ioctl(sock.get(), request, &ifr) < 0) {
-        LOG(ERROR) << "ioctl(" << std::hex << request << std::dec << ") failed: " << errno;
+        PLOG(ERROR) << "ioctl(" << std::hex << request << std::dec << ") failed";
         return false;
     }
 
