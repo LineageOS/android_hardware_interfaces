@@ -48,7 +48,7 @@ base::unique_fd socket(const std::string& ifname) {
     }
 
     if (setsockopt(sock.get(), SOL_CAN_RAW, CAN_RAW_ERR_FILTER, &kErrMask, sizeof(kErrMask)) < 0) {
-        LOG(ERROR) << "Can't receive error frames, CAN setsockpt failed: " << strerror(errno);
+        PLOG(ERROR) << "Can't receive error frames, CAN setsockpt failed";
         return {};
     }
 
