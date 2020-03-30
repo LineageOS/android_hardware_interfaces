@@ -73,10 +73,16 @@ bool EmulatedPassthroughConnector::onDump(const hidl_handle& handle,
 
 void EmulatedPassthroughConnector::dumpUserHal(int fd, std::string indent) {
     if (mInitialUserResponseFromCmd != nullptr) {
-        dprintf(fd, "%sInitial User Info: %s\n", indent.c_str(),
+        dprintf(fd, "%sInitialUserInfo response: %s\n", indent.c_str(),
                 toString(*mInitialUserResponseFromCmd).c_str());
     } else {
-        dprintf(fd, "%sNo Initial User Info\n", indent.c_str());
+        dprintf(fd, "%sNo InitialUserInfo response\n", indent.c_str());
+    }
+    if (mSwitchUserResponseFromCmd != nullptr) {
+        dprintf(fd, "%sSwitchUser response: %s\n", indent.c_str(),
+                toString(*mSwitchUserResponseFromCmd).c_str());
+    } else {
+        dprintf(fd, "%sNo SwitchUser response\n", indent.c_str());
     }
 }
 
