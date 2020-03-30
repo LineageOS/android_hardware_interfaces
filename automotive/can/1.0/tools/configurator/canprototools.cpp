@@ -85,26 +85,31 @@ std::optional<ICanController::BusConfig> fromPbBus(const Bus& pb_bus) {
     switch (pb_bus.iface_type_case()) {
         case Bus::kNative: {
             const auto ifname = pb_bus.native().ifname();
-            if (ifname.empty()) {
-                LOG(ERROR) << "Invalid config: native type bus must have an iface name";
+            const auto serialno = pb_bus.native().serialno();
+            if (ifname.empty() == serialno.empty()) {
+                LOG(ERROR) << "Invalid config: native type bus must have an iface name xor a "
+                           << "serial number";
                 return std::nullopt;
             }
             bus_cfg.bitrate = pb_bus.bitrate();
             ICanController::BusConfig::InterfaceId::Socketcan socketcan = {};
-            socketcan.ifname(ifname);
+            if (!ifname.empty()) socketcan.ifname(ifname);
+            if (!serialno.empty()) socketcan.serialno({serialno.begin(), serialno.end()});
             bus_cfg.interfaceId.socketcan(socketcan);
             // TODO(b/142654031) - add support for serial number as an option instead of ifname.
             break;
         }
         case Bus::kSlcan: {
             const auto ttyname = pb_bus.slcan().ttyname();
-            if (ttyname.empty()) {
+            const auto serialno = pb_bus.slcan().serialno();
+            if (ttyname.empty() == serialno.empty()) {
                 LOG(ERROR) << "Invalid config: slcan type bus must have a tty name";
                 return std::nullopt;
             }
             bus_cfg.bitrate = pb_bus.bitrate();
             ICanController::BusConfig::InterfaceId::Slcan slcan = {};
-            slcan.ttyname(pb_bus.slcan().ttyname());
+            if (!ttyname.empty()) slcan.ttyname(ttyname);
+            if (!serialno.empty()) slcan.serialno({serialno.begin(), serialno.end()});
             bus_cfg.interfaceId.slcan(slcan);
             break;
         }
