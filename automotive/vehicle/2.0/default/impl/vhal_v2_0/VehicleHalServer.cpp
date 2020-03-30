@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#define LOG_TAG "VehicleHalServer"
+
 #include "VehicleHalServer.h"
 
 #include <fstream>
@@ -244,7 +246,9 @@ StatusCode VehicleHalServer::onSetProperty(const VehiclePropValue& value, bool u
             }
             break;
         case INITIAL_USER_INFO:
-            return onSetInitialUserInfo(value, updateStatus);
+            return onSetInitialUserInfoResponse(value, updateStatus);
+        case SWITCH_USER:
+            return onSetSwitchUserResponse(value, updateStatus);
         default:
             break;
     }
@@ -282,8 +286,8 @@ StatusCode VehicleHalServer::onSetProperty(const VehiclePropValue& value, bool u
  * - if it's 3, then don't send a property change (so Android can emulate a timeout)
  *
  */
-StatusCode VehicleHalServer::onSetInitialUserInfo(const VehiclePropValue& value,
-                                                  bool updateStatus) {
+StatusCode VehicleHalServer::onSetInitialUserInfoResponse(const VehiclePropValue& value,
+                                                          bool updateStatus) {
     // TODO: LOG calls below might be more suited to be DEBUG, but those are not being logged
     // (even when explicitly calling setprop log.tag. As this class should be using ALOG instead of
     // LOG, it's not worth investigating why...
@@ -320,7 +324,7 @@ StatusCode VehicleHalServer::onSetInitialUserInfo(const VehiclePropValue& value,
     // mInitialUserResponseFromCmd is used for just one request
     std::unique_ptr<VehiclePropValue> response = std::move(mInitialUserResponseFromCmd);
 
-    // TODO(b/138709788): rather than populate the raw values directly, it should use the
+    // TODO(b/150409377): rather than populate the raw values directly, it should use the
     // libraries that convert a InitialUserInfoResponse into a VehiclePropValue)
 
     switch (response->areaId) {
@@ -347,6 +351,75 @@ StatusCode VehicleHalServer::onSetInitialUserInfo(const VehiclePropValue& value,
 
     LOG(INFO) << "updating property to: " << toString(*updatedValue);
     onPropertyValueFromCar(*updatedValue, updateStatus);
+    return StatusCode::OK;
+}
+
+/**
+ * Used to emulate SWITCH_USER - see onSetInitialUserInfoResponse() for usage.
+ */
+StatusCode VehicleHalServer::onSetSwitchUserResponse(const VehiclePropValue& value,
+                                                     bool updateStatus) {
+    if (value.value.int32Values.size() == 0) {
+        LOG(ERROR) << "set(SWITCH_USER): no int32values, ignoring it: " << toString(value);
+        return StatusCode::INVALID_ARG;
+    }
+
+    if (value.areaId != 0) {
+        LOG(INFO) << "set(SWITCH_USER) called from lshal; storing it: " << toString(value);
+        mSwitchUserResponseFromCmd.reset(new VehiclePropValue(value));
+        return StatusCode::OK;
+    }
+    LOG(INFO) << "set(SWITCH_USER) called from Android: " << toString(value);
+
+    int32_t requestId = value.value.int32Values[0];
+
+    // Create the update property and set common values
+    auto updatedValue = createVehiclePropValue(VehiclePropertyType::MIXED, 0);
+    updatedValue->prop = SWITCH_USER;
+    updatedValue->timestamp = elapsedRealtimeNano();
+
+    if (mSwitchUserResponseFromCmd == nullptr) {
+        updatedValue->value.int32Values.resize(3);
+        updatedValue->value.int32Values[0] = requestId;
+        updatedValue->value.int32Values[1] = (int32_t)SwitchUserMessageType::VEHICLE_RESPONSE;
+        updatedValue->value.int32Values[2] = (int32_t)SwitchUserStatus::SUCCESS;
+        LOG(INFO) << "no lshal response; returning VEHICLE_RESPONSE / SUCCESS: "
+                  << toString(*updatedValue);
+        onPropertyValueFromCar(*updatedValue, updateStatus);
+        return StatusCode::OK;
+    }
+
+    // mSwitchUserResponseFromCmd is used for just one request
+    std::unique_ptr<VehiclePropValue> response = std::move(mSwitchUserResponseFromCmd);
+
+    // TODO(b/150409377): move code below to a local function like sendUserHalResponse(),
+    // as it's the same for all (like onSetInitialUserInfoResponse)
+
+    switch (response->areaId) {
+        case 1:
+            LOG(INFO) << "returning response with right request id";
+            *updatedValue = *response;
+            updatedValue->areaId = 0;
+            updatedValue->value.int32Values[0] = requestId;
+            break;
+        case 2:
+            LOG(INFO) << "returning response with wrong request id";
+            *updatedValue = *response;
+            updatedValue->areaId = 0;
+            updatedValue->value.int32Values[0] = -requestId;
+            break;
+        case 3:
+            LOG(INFO) << "not generating a property change event because of lshal prop: "
+                      << toString(*response);
+            return StatusCode::OK;
+        default:
+            LOG(ERROR) << "invalid action on lshal response: " << toString(*response);
+            return StatusCode::INTERNAL_ERROR;
+    }
+
+    LOG(INFO) << "updating property to: " << toString(*updatedValue);
+    onPropertyValueFromCar(*updatedValue, updateStatus);
+
     return StatusCode::OK;
 }
 
