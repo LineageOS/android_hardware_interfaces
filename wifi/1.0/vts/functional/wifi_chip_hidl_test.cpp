@@ -377,7 +377,7 @@ TEST_P(WifiChipHidlTest, GetP2pIfaceNames) {
 
     sp<IWifiP2pIface> iface;
     EXPECT_EQ(WifiStatusCode::SUCCESS, createP2pIface(&iface));
-    EXPECT_NE(nullptr, iface.get());
+    ASSERT_NE(nullptr, iface.get());
 
     std::string iface_name = getIfaceName(iface);
     const auto& status_and_iface_names2 =
@@ -404,7 +404,7 @@ TEST_P(WifiChipHidlTest, GetP2pIface) {
 
     sp<IWifiP2pIface> p2p_iface;
     EXPECT_EQ(WifiStatusCode::SUCCESS, createP2pIface(&p2p_iface));
-    EXPECT_NE(nullptr, p2p_iface.get());
+    ASSERT_NE(nullptr, p2p_iface.get());
 
     std::string iface_name = getIfaceName(p2p_iface);
     const auto& status_and_iface1 =
@@ -430,7 +430,7 @@ TEST_P(WifiChipHidlTest, RemoveP2pIface) {
 
     sp<IWifiP2pIface> p2p_iface;
     EXPECT_EQ(WifiStatusCode::SUCCESS, createP2pIface(&p2p_iface));
-    EXPECT_NE(nullptr, p2p_iface.get());
+    ASSERT_NE(nullptr, p2p_iface.get());
 
     std::string iface_name = getIfaceName(p2p_iface);
     std::string invalid_name = iface_name + "0";
@@ -470,7 +470,7 @@ TEST_P(WifiChipHidlTest, GetStaIfaceNames) {
 
     sp<IWifiStaIface> iface;
     EXPECT_EQ(WifiStatusCode::SUCCESS, createStaIface(&iface));
-    EXPECT_NE(nullptr, iface.get());
+    ASSERT_NE(nullptr, iface.get());
 
     std::string iface_name = getIfaceName(iface);
     const auto& status_and_iface_names2 =
@@ -497,7 +497,7 @@ TEST_P(WifiChipHidlTest, GetStaIface) {
 
     sp<IWifiStaIface> sta_iface;
     EXPECT_EQ(WifiStatusCode::SUCCESS, createStaIface(&sta_iface));
-    EXPECT_NE(nullptr, sta_iface.get());
+    ASSERT_NE(nullptr, sta_iface.get());
 
     std::string iface_name = getIfaceName(sta_iface);
     const auto& status_and_iface1 =
@@ -523,7 +523,7 @@ TEST_P(WifiChipHidlTest, RemoveStaIface) {
 
     sp<IWifiStaIface> sta_iface;
     EXPECT_EQ(WifiStatusCode::SUCCESS, createStaIface(&sta_iface));
-    EXPECT_NE(nullptr, sta_iface.get());
+    ASSERT_NE(nullptr, sta_iface.get());
 
     std::string iface_name = getIfaceName(sta_iface);
     std::string invalid_name = iface_name + "0";
@@ -542,7 +542,7 @@ TEST_P(WifiChipHidlTest, CreateRttController) {
 
     sp<IWifiStaIface> iface;
     EXPECT_EQ(WifiStatusCode::SUCCESS, createStaIface(&iface));
-    EXPECT_NE(nullptr, iface.get());
+    ASSERT_NE(nullptr, iface.get());
 
     const auto& status_and_rtt_controller =
         HIDL_INVOKE(wifi_chip_, createRttController, iface);
