@@ -23,7 +23,7 @@ namespace android::netdevice {
 NetlinkSocket::NetlinkSocket(int protocol) {
     mFd.reset(socket(AF_NETLINK, SOCK_RAW, protocol));
     if (!mFd.ok()) {
-        LOG(ERROR) << "Can't open Netlink socket: " << errno;
+        PLOG(ERROR) << "Can't open Netlink socket";
         mFailed = true;
         return;
     }
@@ -32,7 +32,7 @@ NetlinkSocket::NetlinkSocket(int protocol) {
     sa.nl_family = AF_NETLINK;
 
     if (bind(mFd.get(), reinterpret_cast<struct sockaddr*>(&sa), sizeof(sa)) < 0) {
-        LOG(ERROR) << "Can't bind Netlink socket: " << errno;
+        PLOG(ERROR) << "Can't bind Netlink socket";
         mFd.reset();
         mFailed = true;
     }
@@ -57,7 +57,7 @@ bool NetlinkSocket::send(struct nlmsghdr* nlmsg) {
     msg.msg_iovlen = 1;
 
     if (sendmsg(mFd.get(), &msg, 0) < 0) {
-        LOG(ERROR) << "Can't send Netlink message: " << errno;
+        PLOG(ERROR) << "Can't send Netlink message";
         return false;
     }
     return true;
@@ -79,7 +79,7 @@ bool NetlinkSocket::receiveAck() {
 
     const ssize_t status = recvmsg(mFd.get(), &msg, 0);
     if (status < 0) {
-        LOG(ERROR) << "Failed to receive Netlink message: " << errno;
+        PLOG(ERROR) << "Failed to receive Netlink message";
         return false;
     }
     size_t remainingLen = status;
