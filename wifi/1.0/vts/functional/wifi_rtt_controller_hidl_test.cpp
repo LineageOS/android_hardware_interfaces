@@ -59,10 +59,10 @@ TEST_P(WifiRttControllerHidlTest, Create) {
     const std::string& instance_name = GetInstanceName();
 
     sp<IWifiChip> wifi_chip = getWifiChip(instance_name);
-    EXPECT_NE(nullptr, wifi_chip.get());
+    ASSERT_NE(nullptr, wifi_chip.get());
 
     sp<IWifiStaIface> wifi_sta_iface = getWifiStaIface(instance_name);
-    EXPECT_NE(nullptr, wifi_sta_iface.get());
+    ASSERT_NE(nullptr, wifi_sta_iface.get());
 
     const auto& status_and_controller =
         HIDL_INVOKE(wifi_chip, createRttController, wifi_sta_iface);
