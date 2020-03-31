@@ -64,7 +64,7 @@ using android::hardware::tv::tuner::V1_0::FrontendType;
 
 namespace {
 
-#define frontend_transponders_count 1
+#define frontend_transponders_count 2
 #define channels_count 1
 #define frontend_scan_count 1
 #define filter_count 2
@@ -108,13 +108,24 @@ inline void initFrontendConfig() {
             .standard = FrontendDvbtStandard::T,
     };
     frontendArray[0].type = FrontendType::DVBT, frontendArray[0].settings.dvbt(dvbtSettings);
+    frontendArray[1].type = FrontendType::DVBS;
 };
 
 /** Configuration array for the frontend scan test */
 inline void initFrontendScanConfig() {
-    frontendScanArray[0].type = FrontendType::DVBT, frontendScanArray[0].settings.dvbt({
-                                                            .frequency = 577000,
-                                                    });
+    frontendScanArray[0].type = FrontendType::DVBT;
+    frontendScanArray[0].settings.dvbt({
+            .frequency = 578000,
+            .transmissionMode = FrontendDvbtTransmissionMode::MODE_8K,
+            .bandwidth = FrontendDvbtBandwidth::BANDWIDTH_8MHZ,
+            .constellation = FrontendDvbtConstellation::AUTO,
+            .hierarchy = FrontendDvbtHierarchy::AUTO,
+            .hpCoderate = FrontendDvbtCoderate::AUTO,
+            .lpCoderate = FrontendDvbtCoderate::AUTO,
+            .guardInterval = FrontendDvbtGuardInterval::AUTO,
+            .isHighPriority = true,
+            .standard = FrontendDvbtStandard::T,
+    });
 };
 
 /** Configuration array for the filter test */
@@ -122,7 +133,7 @@ inline void initFilterConfig() {
     // TS Video filter setting
     filterArray[0].type.mainType = DemuxFilterMainType::TS;
     filterArray[0].type.subType.tsFilterType(DemuxTsFilterType::VIDEO);
-    filterArray[0].setting.ts().tpid = 49;
+    filterArray[0].setting.ts().tpid = 119;
     filterArray[0].setting.ts().filterSettings.av({.isPassthrough = false});
     // TS PES filter setting
     filterArray[1].type.mainType = DemuxFilterMainType::TS;
