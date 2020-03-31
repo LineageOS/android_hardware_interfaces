@@ -172,61 +172,6 @@ class SoundTriggerHidlTest : public ::testing::TestWithParam<std::string> {
 };
 
 /**
- * Test ISoundTriggerHw::getProperties() method
- *
- * Verifies that:
- *  - the implementation implements the method
- *  - the method returns 0 (no error)
- *  - the implementation supports at least one sound model and one key phrase
- *  - the implementation supports at least VOICE_TRIGGER recognition mode
- */
-TEST_P(SoundTriggerHidlTest, GetProperties) {
-    ISoundTriggerHw::Properties halProperties;
-    Return<void> hidlReturn;
-    int ret = -ENODEV;
-
-    hidlReturn = mSoundTriggerHal->getProperties([&](int rc, auto res) {
-        ret = rc;
-        halProperties = res;
-    });
-
-    EXPECT_TRUE(hidlReturn.isOk());
-    EXPECT_EQ(0, ret);
-    EXPECT_GT(halProperties.maxSoundModels, 0u);
-    EXPECT_GT(halProperties.maxKeyPhrases, 0u);
-    EXPECT_NE(0u, (halProperties.recognitionModes & (uint32_t)RecognitionMode::VOICE_TRIGGER));
-}
-
-/**
- * Test ISoundTriggerHw::loadPhraseSoundModel() method
- *
- * Verifies that:
- *  - the implementation implements the method
- *  - the implementation returns an error when passed a malformed sound model
- *
- * There is no way to verify that implementation actually can load a sound model because each
- * sound model is vendor specific.
- */
-TEST_P(SoundTriggerHidlTest, LoadInvalidModelFail) {
-    Return<void> hidlReturn;
-    int ret = -ENODEV;
-    V2_0_ISoundTriggerHw::PhraseSoundModel model;
-    SoundModelHandle handle;
-
-    model.common.type = SoundModelType::UNKNOWN;
-
-    hidlReturn =
-        mSoundTriggerHal->loadPhraseSoundModel(model, mCallback, 0, [&](int32_t retval, auto res) {
-            ret = retval;
-            handle = res;
-        });
-
-    EXPECT_TRUE(hidlReturn.isOk());
-    EXPECT_NE(0, ret);
-    EXPECT_FALSE(monitor.wait(SHORT_TIMEOUT_PERIOD));
-}
-
-/**
  * Test ISoundTriggerHw::loadPhraseSoundModel_2_1() method
  *
  * Verifies that:
@@ -267,34 +212,6 @@ TEST_P(SoundTriggerHidlTest, LoadEmptyGenericSoundModelFail) {
     SoundModelHandle handle = 0;
 
     model.type = SoundModelType::GENERIC;
-
-    Return<void> loadReturn =
-        mSoundTriggerHal->loadSoundModel(model, mCallback, 0, [&](int32_t retval, auto res) {
-            ret = retval;
-            handle = res;
-        });
-
-    EXPECT_TRUE(loadReturn.isOk());
-    EXPECT_NE(0, ret);
-    EXPECT_FALSE(monitor.wait(SHORT_TIMEOUT_PERIOD));
-}
-
-/**
- * Test ISoundTriggerHw::loadSoundModel() method
- *
- * Verifies that:
- *  - the implementation returns error when passed a sound model with random data.
- */
-TEST_P(SoundTriggerHidlTest, LoadGenericSoundModelFail) {
-    int ret = -ENODEV;
-    V2_0_ISoundTriggerHw::SoundModel model;
-    SoundModelHandle handle = 0;
-
-    model.type = SoundModelType::GENERIC;
-    model.data.resize(100);
-    for (auto& d : model.data) {
-        d = rand();
-    }
 
     Return<void> loadReturn =
         mSoundTriggerHal->loadSoundModel(model, mCallback, 0, [&](int32_t retval, auto res) {
@@ -371,54 +288,6 @@ TEST_P(SoundTriggerHidlTest, LoadGenericSoundModelFail_2_1) {
 }
 
 /**
- * Test ISoundTriggerHw::unloadSoundModel() method
- *
- * Verifies that:
- *  - the implementation implements the method
- *  - the implementation returns an error when called without a valid loaded sound model
- *
- */
-TEST_P(SoundTriggerHidlTest, UnloadModelNoModelFail) {
-    Return<int32_t> hidlReturn(0);
-    SoundModelHandle halHandle = 0;
-
-    hidlReturn = mSoundTriggerHal->unloadSoundModel(halHandle);
-
-    EXPECT_TRUE(hidlReturn.isOk());
-    EXPECT_NE(0, hidlReturn);
-}
-
-/**
- * Test ISoundTriggerHw::startRecognition() method
- *
- * Verifies that:
- *  - the implementation implements the method
- *  - the implementation returns an error when called without a valid loaded sound model
- *
- * There is no way to verify that implementation actually starts recognition because no model can
- * be loaded.
- */
-TEST_P(SoundTriggerHidlTest, StartRecognitionNoModelFail) {
-    Return<int32_t> hidlReturn(0);
-    SoundModelHandle handle = 0;
-    PhraseRecognitionExtra phrase;
-    V2_0_ISoundTriggerHw::RecognitionConfig config;
-
-    config.captureHandle = 0;
-    config.captureDevice = AudioDevice::IN_BUILTIN_MIC;
-    phrase.id = 0;
-    phrase.recognitionModes = (uint32_t)RecognitionMode::VOICE_TRIGGER;
-    phrase.confidenceLevel = 0;
-
-    config.phrases.setToExternal(&phrase, 1);
-
-    hidlReturn = mSoundTriggerHal->startRecognition(handle, config, mCallback, 0);
-
-    EXPECT_TRUE(hidlReturn.isOk());
-    EXPECT_NE(0, hidlReturn);
-}
-
-/**
  * Test ISoundTriggerHw::startRecognition_2_1() method
  *
  * Verifies that:
@@ -446,40 +315,6 @@ TEST_P(SoundTriggerHidlTest, StartRecognitionNoModelFail_2_1) {
 
     EXPECT_TRUE(hidlReturn.isOk());
     EXPECT_NE(0, hidlReturn);
-}
-
-/**
- * Test ISoundTriggerHw::stopRecognition() method
- *
- * Verifies that:
- *  - the implementation implements the method
- *  - the implementation returns an error when called without an active recognition running
- *
- */
-TEST_P(SoundTriggerHidlTest, StopRecognitionNoAStartFail) {
-    Return<int32_t> hidlReturn(0);
-    SoundModelHandle handle = 0;
-
-    hidlReturn = mSoundTriggerHal->stopRecognition(handle);
-
-    EXPECT_TRUE(hidlReturn.isOk());
-    EXPECT_NE(0, hidlReturn);
-}
-
-/**
- * Test ISoundTriggerHw::stopAllRecognitions() method
- *
- * Verifies that:
- *  - the implementation implements this optional method or indicates it is not supported by
- *  returning -ENOSYS
- */
-TEST_P(SoundTriggerHidlTest, stopAllRecognitions) {
-    Return<int32_t> hidlReturn(0);
-
-    hidlReturn = mSoundTriggerHal->stopAllRecognitions();
-
-    EXPECT_TRUE(hidlReturn.isOk());
-    EXPECT_TRUE(hidlReturn == 0 || hidlReturn == -ENOSYS);
 }
 
 INSTANTIATE_TEST_SUITE_P(
