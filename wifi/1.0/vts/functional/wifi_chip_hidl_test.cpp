@@ -44,8 +44,6 @@ using ::android::hardware::wifi::V1_0::WifiDebugRingBufferVerboseLevel;
 using ::android::hardware::wifi::V1_0::WifiStatus;
 using ::android::hardware::wifi::V1_0::WifiStatusCode;
 
-extern WifiHidlEnvironment* gEnv;
-
 namespace {
 constexpr WifiDebugRingBufferVerboseLevel kDebugRingBufferVerboseLvl =
     WifiDebugRingBufferVerboseLevel::VERBOSE;

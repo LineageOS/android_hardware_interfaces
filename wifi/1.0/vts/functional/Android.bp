@@ -38,7 +38,6 @@ cc_test {
     name: "VtsHalWifiV1_0TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: [
-        "VtsHalWifiV1_0TargetTest.cpp",
         "wifi_chip_hidl_test.cpp",
         "wifi_p2p_iface_hidl_test.cpp",
         "wifi_rtt_controller_hidl_test.cpp",
@@ -61,7 +60,6 @@ cc_test {
     name: "VtsHalWifiNanV1_0TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: [
-        "VtsHalWifiV1_0TargetTest.cpp",
         "wifi_chip_hidl_nan_test.cpp",
         "wifi_nan_iface_hidl_test.cpp",
     ],
@@ -79,7 +77,6 @@ cc_test {
     name: "VtsHalWifiApV1_0TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: [
-        "VtsHalWifiV1_0TargetTest.cpp",
         "wifi_ap_iface_hidl_test.cpp",
         "wifi_chip_hidl_ap_test.cpp",
     ],
