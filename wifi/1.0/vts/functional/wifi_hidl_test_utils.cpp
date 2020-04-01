@@ -41,8 +41,6 @@ using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
 using ::android::wifi_system::InterfaceTool;
 
-extern WifiHidlEnvironment* gEnv;
-
 namespace {
 constexpr uint32_t kHalStartRetryMaxCount = 5;
 constexpr uint32_t kHalStartRetryIntervalInMs = 2;
@@ -93,21 +91,8 @@ bool configureChipToSupportIfaceTypeInternal(const sp<IWifiChip>& wifi_chip,
 }
 }  // namespace
 
-sp<IWifi> getWifi(const std::string& instance_name) {
-    if ((!gEnv && instance_name.empty()) || (gEnv && !instance_name.empty())) {
-        ALOGE("instance_name and gEnv must have one and only one set.");
-        return nullptr;
-    }
-    if (gEnv) {
-        return ::testing::VtsHalHidlTargetTestBase::getService<IWifi>(
-            gEnv->getServiceName<IWifi>());
-    } else {
-        return IWifi::getService(instance_name);
-    }
-}
-
 sp<IWifiChip> getWifiChip(const std::string& instance_name) {
-    sp<IWifi> wifi = getWifi(instance_name);
+    sp<IWifi> wifi = IWifi::getService(instance_name);
     if (!wifi.get()) {
         return nullptr;
     }
@@ -217,7 +202,7 @@ bool configureChipToSupportIfaceType(const sp<IWifiChip>& wifi_chip,
 }
 
 void stopWifi(const std::string& instance_name) {
-    sp<IWifi> wifi = getWifi(instance_name);
+    sp<IWifi> wifi = IWifi::getService(instance_name);
     ASSERT_NE(wifi, nullptr);
     HIDL_INVOKE(wifi, stop);
 }
