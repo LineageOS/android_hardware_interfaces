@@ -221,7 +221,7 @@ class GraphicsMapperHidlTest
                     case PlaneLayoutComponentType::Y:
                         ASSERT_EQ(nullptr, outYCbCr->y);
                         ASSERT_EQ(8, planeLayoutComponent.sizeInBits);
-                        ASSERT_EQ(32, planeLayout.sampleIncrementInBits);
+                        ASSERT_EQ(8, planeLayout.sampleIncrementInBits);
                         outYCbCr->y = tmpData;
                         outYCbCr->ystride = planeLayout.strideInBytes;
                         break;
@@ -569,15 +569,21 @@ TEST_P(GraphicsMapperHidlTest, Lock_YCBCR_420_888) {
     auto cStride = yCbCr.cstride;
     auto chromaStep = yCbCr.chroma_step;
 
+    constexpr uint32_t kCbCrSubSampleFactor = 2;
+
     for (uint32_t y = 0; y < info.height; y++) {
         for (uint32_t x = 0; x < info.width; x++) {
             auto val = static_cast<uint8_t>(info.height * y + x);
 
             yData[yStride * y + x] = val;
 
-            if (y % chromaStep && x % chromaStep == 0) {
-                cbData[cStride * y / chromaStep + x / chromaStep] = val;
-                crData[cStride * y / chromaStep + x / chromaStep] = val;
+            if (y % kCbCrSubSampleFactor && x % kCbCrSubSampleFactor == 0) {
+                uint32_t subSampleX = x / kCbCrSubSampleFactor;
+                uint32_t subSampleY = y / kCbCrSubSampleFactor;
+                auto subSampleVal = static_cast<uint8_t>(info.height * subSampleY + subSampleX);
+
+                cbData[cStride * subSampleY + chromaStep * subSampleX] = subSampleVal;
+                crData[cStride * subSampleY + chromaStep * subSampleX] = subSampleVal;
             }
         }
     }
@@ -599,9 +605,13 @@ TEST_P(GraphicsMapperHidlTest, Lock_YCBCR_420_888) {
 
             EXPECT_EQ(val, yData[yStride * y + x]);
 
-            if (y % chromaStep == 0 && x % chromaStep == 0) {
-                EXPECT_EQ(val, cbData[cStride * y / chromaStep + x / chromaStep]);
-                EXPECT_EQ(val, crData[cStride * y / chromaStep + x / chromaStep]);
+            if (y % kCbCrSubSampleFactor == 0 && x % kCbCrSubSampleFactor == 0) {
+                uint32_t subSampleX = x / kCbCrSubSampleFactor;
+                uint32_t subSampleY = y / kCbCrSubSampleFactor;
+                auto subSampleVal = static_cast<uint8_t>(info.height * subSampleY + subSampleX);
+
+                EXPECT_EQ(subSampleVal, cbData[cStride * subSampleY + chromaStep * subSampleX]);
+                EXPECT_EQ(subSampleVal, crData[cStride * subSampleY + chromaStep * subSampleX]);
             }
         }
     }
@@ -1855,13 +1865,15 @@ TEST_P(GraphicsMapperHidlTest, GetFromBufferDescriptorInfoChromaSiting) {
  */
 TEST_P(GraphicsMapperHidlTest, GetFromBufferDescriptorInfoPlaneLayouts) {
     hidl_vec<uint8_t> vec;
-    ASSERT_EQ(Error::NONE,
-              mGralloc->getFromBufferDescriptorInfo(mDummyDescriptorInfo,
-                                                    gralloc4::MetadataType_PlaneLayouts, &vec));
-
-    std::vector<PlaneLayout> planeLayouts;
-    ASSERT_EQ(NO_ERROR, gralloc4::decodePlaneLayouts(vec, &planeLayouts));
-    ASSERT_NO_FATAL_FAILURE(verifyDummyDescriptorInfoPlaneLayouts(planeLayouts));
+    const auto ret = mGralloc->getFromBufferDescriptorInfo(
+            mDummyDescriptorInfo, gralloc4::MetadataType_PlaneLayouts, &vec);
+    if (ret == Error::NONE) {
+        std::vector<PlaneLayout> planeLayouts;
+        ASSERT_EQ(NO_ERROR, gralloc4::decodePlaneLayouts(vec, &planeLayouts));
+        ASSERT_NO_FATAL_FAILURE(verifyDummyDescriptorInfoPlaneLayouts(planeLayouts));
+    } else {
+        ASSERT_EQ(Error::UNSUPPORTED, ret);
+    }
 }
 
 /**
