@@ -36,7 +36,6 @@ cc_test {
     name: "VtsHalWifiSupplicantV1_0TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: [
-        "VtsHalWifiSupplicantV1_0TargetTest.cpp",
         "supplicant_hidl_test.cpp",
         "supplicant_sta_iface_hidl_test.cpp",
         "supplicant_sta_network_hidl_test.cpp",
