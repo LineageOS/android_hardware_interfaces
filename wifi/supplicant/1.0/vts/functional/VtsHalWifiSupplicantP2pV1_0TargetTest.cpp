@@ -17,10 +17,6 @@
 #include <VtsCoreUtil.h>
 #include "supplicant_hidl_test_utils.h"
 
-// TODO(b/143892896): Remove this line after wifi_hidl_test_utils.cpp is
-// updated.
-WifiSupplicantHidlEnvironment* gEnv = nullptr;
-
 int main(int argc, char** argv) {
     if (!::testing::deviceSupportsFeature("android.hardware.wifi.direct"))
         return 0;
