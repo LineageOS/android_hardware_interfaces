@@ -1,0 +1,117 @@
+/*
+ * Copyright (C) 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.biometrics.face@1.1;
+
+import @1.0::IBiometricsFace;
+import @1.0::Status;
+import @1.0::Feature;
+
+/**
+ * The HAL interface for biometric face authentication.
+ */
+interface IBiometricsFace extends @1.0::IBiometricsFace {
+    /**
+     * Enrolls a user's face for a remote client, for example Android Auto.
+     *
+     * The HAL implementation is responsible for creating a secure communication
+     * channel and receiving the enrollment images from a mobile device with
+     * face authentication hardware.
+     *
+     * Note that the Hardware Authentication Token must be valid for the
+     * duration of enrollment and thus should be explicitly invalidated by a
+     * call to revokeChallenge() when enrollment is complete, to reduce the
+     * window of opportunity to re-use the challenge and HAT. For example,
+     * Settings calls generateChallenge() once to allow the user to enroll one
+     * or more faces or toggle secure settings without having to re-enter the
+     * PIN/pattern/password. Once the user completes the operation, Settings
+     * invokes revokeChallenge() to close the transaction. If the HAT is expired,
+     * the implementation must invoke onError with UNABLE_TO_PROCESS.
+     *
+     * Requirements for using this API:
+     * - Mobile devices MUST NOT delegate enrollment to another device by calling
+     * this API. This feature is intended only to allow enrollment on devices
+     * where it is impossible to enroll locally on the device.
+     * - The path MUST be protected by a secret key with rollback protection.
+     * - Synchronizing between devices MUST be accomplished by having both
+     * devices agree on a secret PIN entered by the user (similar to BT
+     * pairing procedure) and use a salted version of that PIN plus other secret
+     * to encrypt traffic.
+     * - All communication to/from the remote device MUST be encrypted and signed
+     * to prevent image injection and other man-in-the-middle type attacks.
+     * - generateChallenge() and revokeChallenge() MUST be implemented on both
+     * remote and local host (e.g. hash the result of the remote host with a
+     * local secret before responding to the API call) and any transmission of
+     * the challenge between hosts MUST be signed to prevent man-in-the-middle
+     * attacks.
+     * - In the event of a lost connection, the result of the last
+     * generateChallenge() MUST be invalidated and the process started over.
+     * - Both the remote and local host MUST honor the timeout and invalidate the
+     * challenge.
+     *
+     * This method triggers the IBiometricsFaceClientCallback#onEnrollResult()
+     * method.
+     *
+     * @param hat A valid Hardware Authentication Token, generated as a result
+     *     of a generateChallenge() challenge being wrapped by the gatekeeper
+     *     after a successful strong authentication request.
+     * @param timeoutSec A timeout in seconds, after which this enroll
+     *     attempt is cancelled. Note that the framework can continue
+     *     enrollment by calling this again with a valid HAT. This timeout is
+     *     expected to be used to limit power usage if the device becomes idle
+     *     during enrollment. The implementation is expected to send
+     *     ERROR_TIMEOUT if this happens.
+     * @param disabledFeatures A list of features to be disabled during
+     *     enrollment. Note that all features are enabled by default.
+     * @return status The status of this method call.
+     */
+    enrollRemotely(vec<uint8_t> hat, uint32_t timeoutSec, vec<Feature> disabledFeatures)
+        generates (Status status);
+
+    /**
+     * Enrolls a user's face.
+     *
+     * Note that the Hardware Authentication Token must be valid for the
+     * duration of enrollment and thus should be explicitly invalidated by a
+     * call to revokeChallenge() when enrollment is complete, to reduce the
+     * window of opportunity to re-use the challenge and HAT. For example,
+     * Settings calls generateChallenge() once to allow the user to enroll one
+     * or more faces or toggle secure settings without having to re-enter the
+     * PIN/pattern/password. Once the user completes the operation, Settings
+     * invokes revokeChallenge() to close the transaction. If the HAT is expired,
+     * the implementation must invoke onError with UNABLE_TO_PROCESS.
+     *
+     * This method triggers the IBiometricsFaceClientCallback#onEnrollResult()
+     * method.
+     *
+     * @param hat A valid Hardware Authentication Token, generated as a result
+     *     of a generateChallenge() challenge being wrapped by the gatekeeper
+     *     after a successful strong authentication request.
+     * @param timeoutSec A timeout in seconds, after which this enroll
+     *     attempt is cancelled. Note that the framework can continue
+     *     enrollment by calling this again with a valid HAT. This timeout is
+     *     expected to be used to limit power usage if the device becomes idle
+     *     during enrollment. The implementation is expected to send
+     *     ERROR_TIMEOUT if this happens.
+     * @param disabledFeatures A list of features to be disabled during
+     *     enrollment. Note that all features are enabled by default.
+     * @param windowId optional ID of a camera preview window for a
+     *     single-camera device. Must be null if not used.
+     * @return status The status of this method call.
+     */
+    enroll_1_1(vec<uint8_t> hat, uint32_t timeoutSec, vec<Feature> disabledFeatures,
+        handle windowId) generates (Status status);
+};
