@@ -58,7 +58,7 @@ struct ASN1_TYPE_Delete {
 
 typedef struct km_root_of_trust {
     ASN1_OCTET_STRING* verified_boot_key;
-    ASN1_BOOLEAN* device_locked;
+    ASN1_BOOLEAN device_locked;
     ASN1_ENUMERATED* verified_boot_state;
     ASN1_OCTET_STRING* verified_boot_hash;
 } KM_ROOT_OF_TRUST;
