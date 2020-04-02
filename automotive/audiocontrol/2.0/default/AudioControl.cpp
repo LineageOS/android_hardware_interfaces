@@ -16,11 +16,15 @@
 
 #include "AudioControl.h"
 
-#include <android-base/logging.h>
-#include <android-base/strings.h>
-#include <hidl/HidlTransportSupport.h>
-
 #include <stdio.h>
+
+#include <android-base/logging.h>
+#include <android-base/parseint.h>
+#include <android-base/strings.h>
+
+#include <hidl/HidlTransportSupport.h>
+#include <hwbinder/IPCThreadState.h>
+#include <private/android_filesystem_config.h>
 
 #include "CloseHandle.h"
 
@@ -104,6 +108,8 @@ void AudioControl::cmdDump(int fd, const hidl_vec<hidl_string>& options) {
     std::string option = options[0];
     if (EqualsIgnoreCase(option, "--help")) {
         cmdHelp(fd);
+    } else if (EqualsIgnoreCase(option, "--request")) {
+        cmdRequestFocus(fd, options);
     } else {
         dprintf(fd, "Invalid option: %s\n", option.c_str());
     }
@@ -121,6 +127,66 @@ void AudioControl::cmdHelp(int fd) const {
     dprintf(fd, "Usage: \n\n");
     dprintf(fd, "[no args]: dumps focus listener status\n");
     dprintf(fd, "--help: shows this help\n");
+    dprintf(fd,
+            "--request <USAGE> <ZONE_ID> <FOCUS_GAIN>: requests audio focus for specified "
+            "usage (int), audio zone ID (int), and focus gain type (int)\n");
+}
+
+void AudioControl::cmdRequestFocus(int fd, const hidl_vec<hidl_string>& options) {
+    if (!checkCallerHasWritePermissions(fd) || !checkArgumentsSize(fd, options, 3)) return;
+
+    hidl_bitfield<AudioUsage> usage;
+    if (!safelyParseInt(options[1], &usage)) {
+        dprintf(fd, "Non-integer usage provided with request: %s\n", options[1].c_str());
+        return;
+    }
+    int zoneId;
+    if (!safelyParseInt(options[2], &zoneId)) {
+        dprintf(fd, "Non-integer zoneId provided with request: %s\n", options[2].c_str());
+        return;
+    }
+    hidl_bitfield<AudioFocusChange> focusGain;
+    if (!safelyParseInt(options[3], &focusGain)) {
+        dprintf(fd, "Non-integer focusGain provided with request: %s\n", options[3].c_str());
+        return;
+    }
+
+    if (mFocusListener == nullptr) {
+        dprintf(fd, "Unable to request focus - no focus listener registered\n");
+        return;
+    }
+
+    mFocusListener->requestAudioFocus(usage, zoneId, focusGain);
+    dprintf(fd, "Requested focus for usage %d, zoneId %d, and focusGain %d\n", usage, zoneId,
+            focusGain);
+}
+
+bool AudioControl::checkCallerHasWritePermissions(int fd) {
+    // Double check that's only called by root - it should be be blocked at the HIDL debug() level,
+    // but it doesn't hurt to make sure...
+    if (hardware::IPCThreadState::self()->getCallingUid() != AID_ROOT) {
+        dprintf(fd, "Must be root\n");
+        return false;
+    }
+    return true;
+}
+
+bool AudioControl::checkArgumentsSize(int fd, const hidl_vec<hidl_string>& options,
+                                      size_t expectedSize) {
+    // options includes the command, so reducing size by one
+    size_t size = options.size() - 1;
+    if (size == expectedSize) {
+        return true;
+    }
+    dprintf(fd, "Invalid number of arguments: required %zu, got %zu\n", expectedSize, size);
+    return false;
+}
+
+bool AudioControl::safelyParseInt(std::string s, int* out) {
+    if (!android::base::ParseInt(s, out)) {
+        return false;
+    }
+    return true;
 }
 
 }  // namespace android::hardware::automotive::audiocontrol::V2_0::implementation

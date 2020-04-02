@@ -43,10 +43,14 @@ class AudioControl : public IAudioControl {
   private:
     sp<IFocusListener> mFocusListener;
 
+    static bool checkArgumentsSize(int fd, const hidl_vec<hidl_string>& options, size_t minSize);
+    static bool checkCallerHasWritePermissions(int fd);
     static bool isValidValue(float value);
+    static bool safelyParseInt(std::string s, int* out);
 
     void cmdDump(int fd, const hidl_vec<hidl_string>& options);
     void cmdHelp(int fd) const;
+    void cmdRequestFocus(int fd, const hidl_vec<hidl_string>& options);
     void dump(int fd);
 };
 
