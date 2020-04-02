@@ -293,22 +293,6 @@ TEST_P(SoundTriggerHidlTest, StopRecognitionNoAStartFail) {
     EXPECT_NE(0, hidlReturn);
 }
 
-/**
- * Test ISoundTriggerHw::stopAllRecognitions() method
- *
- * Verifies that:
- *  - the implementation implements this optional method or indicates it is not support by
- *  returning -ENOSYS
- */
-TEST_P(SoundTriggerHidlTest, stopAllRecognitions) {
-    Return<int32_t> hidlReturn(0);
-
-    hidlReturn = mSoundTriggerHal->stopAllRecognitions();
-
-    EXPECT_TRUE(hidlReturn.isOk());
-    EXPECT_TRUE(hidlReturn == 0 || hidlReturn == -ENOSYS);
-}
-
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, SoundTriggerHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(ISoundTriggerHw::descriptor)),

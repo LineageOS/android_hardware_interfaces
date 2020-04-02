@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,16 @@
  * limitations under the License.
  */
 
-#include <VtsHalHidlTargetTestEnvBase.h>
-
-// TODO(b/143892896): Remove this file after wifi_hidl_test_utils.cpp is
-// updated.
-::testing::VtsHalHidlTargetTestEnvBase* gEnv = nullptr;
+cc_test {
+    name: "VtsHalBiometricsFaceV1_1TargetTest",
+    defaults: ["VtsHalTargetTestDefaults"],
+    srcs: ["VtsHalBiometricsFaceV1_1TargetTest.cpp"],
+    static_libs: [
+        "android.hardware.biometrics.face@1.0",
+        "android.hardware.biometrics.face@1.1",
+    ],
+    test_suites: [
+        "general-tests",
+        "vts-core",
+    ],
+}
