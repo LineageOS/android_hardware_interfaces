@@ -33,7 +33,7 @@ cc_defaults {
     ],
     test_suites: [
         "general-tests",
-        "vts-core",
+        "vts",
     ],
 }
 
