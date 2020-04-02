@@ -110,6 +110,8 @@ void AudioControl::cmdDump(int fd, const hidl_vec<hidl_string>& options) {
         cmdHelp(fd);
     } else if (EqualsIgnoreCase(option, "--request")) {
         cmdRequestFocus(fd, options);
+    } else if (EqualsIgnoreCase(option, "--abandon")) {
+        cmdAbandonFocus(fd, options);
     } else {
         dprintf(fd, "Invalid option: %s\n", option.c_str());
     }
@@ -130,6 +132,9 @@ void AudioControl::cmdHelp(int fd) const {
     dprintf(fd,
             "--request <USAGE> <ZONE_ID> <FOCUS_GAIN>: requests audio focus for specified "
             "usage (int), audio zone ID (int), and focus gain type (int)\n");
+    dprintf(fd,
+            "--abandon <USAGE> <ZONE_ID>: abandons audio focus for specified usage (int) and "
+            "audio zone ID (int)\n");
 }
 
 void AudioControl::cmdRequestFocus(int fd, const hidl_vec<hidl_string>& options) {
@@ -159,6 +164,29 @@ void AudioControl::cmdRequestFocus(int fd, const hidl_vec<hidl_string>& options)
     mFocusListener->requestAudioFocus(usage, zoneId, focusGain);
     dprintf(fd, "Requested focus for usage %d, zoneId %d, and focusGain %d\n", usage, zoneId,
             focusGain);
+}
+
+void AudioControl::cmdAbandonFocus(int fd, const hidl_vec<hidl_string>& options) {
+    if (!checkCallerHasWritePermissions(fd) || !checkArgumentsSize(fd, options, 2)) return;
+
+    hidl_bitfield<AudioUsage> usage;
+    if (!safelyParseInt(options[1], &usage)) {
+        dprintf(fd, "Non-integer usage provided with abandon: %s\n", options[1].c_str());
+        return;
+    }
+    int zoneId;
+    if (!safelyParseInt(options[2], &zoneId)) {
+        dprintf(fd, "Non-integer zoneId provided with abandon: %s\n", options[2].c_str());
+        return;
+    }
+
+    if (mFocusListener == nullptr) {
+        dprintf(fd, "Unable to abandon focus - no focus listener registered\n");
+        return;
+    }
+
+    mFocusListener->abandonAudioFocus(usage, zoneId);
+    dprintf(fd, "Abandoned focus for usage %d and zoneId %d\n", usage, zoneId);
 }
 
 bool AudioControl::checkCallerHasWritePermissions(int fd) {

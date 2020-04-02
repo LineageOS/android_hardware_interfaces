@@ -51,6 +51,7 @@ class AudioControl : public IAudioControl {
     void cmdDump(int fd, const hidl_vec<hidl_string>& options);
     void cmdHelp(int fd) const;
     void cmdRequestFocus(int fd, const hidl_vec<hidl_string>& options);
+    void cmdAbandonFocus(int fd, const hidl_vec<hidl_string>& options);
     void dump(int fd);
 };
 
