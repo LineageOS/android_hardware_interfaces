@@ -354,6 +354,14 @@ Return<void> EvsCamera::getExtendedInfo_1_1(uint32_t opaqueIdentifier,
 }
 
 
+Return<void>
+EvsCamera::importExternalBuffers(const hidl_vec<BufferDesc_1_1>& /* buffers */,
+                                 importExternalBuffers_cb _hidl_cb) {
+    ALOGW("%s is not implemented yet.", __FUNCTION__);
+    _hidl_cb(EvsResult::UNDERLYING_SERVICE_ERROR, 0);
+    return {};
+}
+
 
 bool EvsCamera::setAvailableFrames_Locked(unsigned bufferCount) {
     if (bufferCount < 1) {
