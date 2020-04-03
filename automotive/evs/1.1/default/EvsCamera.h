@@ -82,6 +82,8 @@ public:
                                           const hidl_vec<uint8_t>& opaqueValue) override;
     Return<void>      getExtendedInfo_1_1(uint32_t opaqueIdentifier,
                                           getExtendedInfo_1_1_cb _hidl_cb) override;
+    Return<void>      importExternalBuffers(const hidl_vec<BufferDesc_1_1>& buffers,
+                                            importExternalBuffers_cb _hidl_cb) override;
 
     static sp<EvsCamera> Create(const char *deviceName);
     static sp<EvsCamera> Create(const char *deviceName,
