@@ -23,6 +23,8 @@ cc_test {
         "android.hardware.boot@1.1",
         "libgmock",
     ],
-    test_suites: ["device-tests"],
+    test_suites: [
+        "device-tests",
+        "vts",
+    ],
 }
-
