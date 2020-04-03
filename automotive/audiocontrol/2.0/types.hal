@@ -19,7 +19,7 @@ package android.hardware.automotive.audiocontrol@2.0;
 /**
  * Changes in audio focus that can be experienced
  */
-enum AudioFocusChange : uint32_t {
+enum AudioFocusChange : int32_t {
     NONE = 0,
     GAIN = 1,
     GAIN_TRANSIENT = 2,
