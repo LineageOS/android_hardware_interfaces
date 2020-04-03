@@ -215,4 +215,22 @@ interface IEvsCamera extends @1.0::IEvsCamera {
      */
     setExtendedInfo_1_1(uint32_t opaqueIdentifier, vec<uint8_t> opaqueValue)
         generates (EvsResult result);
+
+    /**
+     * Import external buffers to capture frames
+     *
+     * This API must be called with a physical camera device identifier.
+     *
+     * @param  buffers  A list of buffers allocated by the caller.  EvsCamera
+     *                  will use these buffers to capture frames, in addition to
+     *                  other buffers already in its buffer pool.
+     * @return result   EvsResult::OK if it succeeds to import buffers.
+     *                  EvsResult::UNDERLYING_SERVICE_ERROR if this is called
+     *                  for logical camera devices or EVS fails to import
+     *                  buffers.
+     *         delta    The amount of buffer pool size changes after importing
+     *                  given buffers.
+     */
+    importExternalBuffers(vec<BufferDesc> buffers)
+        generates (EvsResult result, int32_t delta);
 };
