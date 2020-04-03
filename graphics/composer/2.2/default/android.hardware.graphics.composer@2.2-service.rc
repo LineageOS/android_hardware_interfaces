@@ -1,6 +1,4 @@
 service vendor.hwcomposer-2-2 /vendor/bin/hw/android.hardware.graphics.composer@2.2-service
-    interface android.hardware.graphics.composer@2.1::IComposer default
-    interface android.hardware.graphics.composer@2.2::IComposer default
     class hal animation
     user system
     group graphics drmrpc
