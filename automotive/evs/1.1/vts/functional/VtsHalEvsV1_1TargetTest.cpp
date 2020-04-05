@@ -50,6 +50,8 @@ static const float kNanoToSeconds = 0.000000001f;
 #include <system/camera_metadata.h>
 #include <ui/DisplayConfig.h>
 #include <ui/DisplayState.h>
+#include <ui/GraphicBuffer.h>
+#include <ui/GraphicBufferAllocator.h>
 
 #include <gtest/gtest.h>
 #include <hidl/GtestPrinter.h>
@@ -66,6 +68,7 @@ using ::android::hardware::hidl_string;
 using ::android::sp;
 using ::android::wp;
 using ::android::hardware::camera::device::V3_2::Stream;
+using ::android::hardware::automotive::evs::V1_1::BufferDesc;
 using ::android::hardware::automotive::evs::V1_0::DisplayDesc;
 using ::android::hardware::automotive::evs::V1_0::DisplayState;
 using ::android::hardware::graphics::common::V1_0::PixelFormat;
@@ -2227,6 +2230,140 @@ TEST_P(EvsHidlTest, LogicalCameraMetadata) {
                 "Logical camera device must have at least one physical camera device ID in its metadata.";
         }
     }
+}
+
+
+/*
+ * CameraStreamExternalBuffering:
+ * This is same with CameraStreamBuffering except frame buffers are allocated by
+ * the test client and then imported by EVS framework.
+ */
+TEST_P(EvsHidlTest, CameraStreamExternalBuffering) {
+    LOG(INFO) << "Starting CameraStreamExternalBuffering test";
+
+    // Arbitrary constant (should be > 1 and less than crazy)
+    static const unsigned int kBuffersToHold = 6;
+
+    // Get the camera list
+    loadCameraList();
+
+    // Using null stream configuration makes EVS uses the default resolution and
+    // output format.
+    Stream nullCfg = {};
+
+    // Acquire the graphics buffer allocator
+    android::GraphicBufferAllocator& alloc(android::GraphicBufferAllocator::get());
+    const auto usage = GRALLOC_USAGE_HW_TEXTURE |
+                       GRALLOC_USAGE_SW_READ_RARELY |
+                       GRALLOC_USAGE_SW_WRITE_OFTEN;
+    const auto format = HAL_PIXEL_FORMAT_RGBA_8888;
+    const auto width = 640;
+    const auto height = 360;
+
+    // Allocate buffers to use
+    hidl_vec<BufferDesc> buffers;
+    for (auto i = 0; i < kBuffersToHold; ++i) {
+        unsigned pixelsPerLine;
+        buffer_handle_t memHandle = nullptr;
+        android::status_t result = alloc.allocate(width,
+                                                  height,
+                                                  format,
+                                                  1,
+                                                  usage,
+                                                  &memHandle,
+                                                  &pixelsPerLine,
+                                                  0,
+                                                  "EvsApp");
+        if (result != android::NO_ERROR) {
+            LOG(ERROR) << __FUNCTION__ << " failed to allocate memory.";
+        } else {
+            BufferDesc buf;
+            AHardwareBuffer_Desc* pDesc =
+                reinterpret_cast<AHardwareBuffer_Desc *>(&buf.buffer.description);
+            pDesc->width = width;
+            pDesc->height = height;
+            pDesc->layers = 1;
+            pDesc->format = format;
+            pDesc->usage = usage;
+            pDesc->stride = pixelsPerLine;
+            buf.buffer.nativeHandle = memHandle;
+            buf.bufferId = i;   // Unique number to identify this buffer
+            buffers[i] = buf;
+        }
+    }
+
+    // Test each reported camera
+    for (auto&& cam: cameraInfo) {
+        bool isLogicalCam = false;
+        getPhysicalCameraIds(cam.v1.cameraId, isLogicalCam);
+
+        sp<IEvsCamera_1_1> pCam =
+            IEvsCamera_1_1::castFrom(pEnumerator->openCamera_1_1(cam.v1.cameraId, nullCfg))
+            .withDefault(nullptr);
+        ASSERT_NE(pCam, nullptr);
+
+        // Store a camera handle for a clean-up
+        activeCameras.push_back(pCam);
+
+        // Request to import buffers
+        EvsResult result = EvsResult::OK;
+        int delta = 0;
+        pCam->importExternalBuffers(buffers,
+                                    [&] (auto _result, auto _delta) {
+                                        result = _result;
+                                        delta = _delta;
+                                    });
+        if (isLogicalCam) {
+            EXPECT_EQ(result, EvsResult::UNDERLYING_SERVICE_ERROR);
+            continue;
+        }
+
+        EXPECT_EQ(result, EvsResult::OK);
+        EXPECT_GE(delta, 0);
+
+        // Set up a frame receiver object which will fire up its own thread.
+        sp<FrameHandler> frameHandler = new FrameHandler(pCam, cam,
+                                                         nullptr,
+                                                         FrameHandler::eNoAutoReturn);
+
+        // Start the camera's video stream
+        bool startResult = frameHandler->startStream();
+        ASSERT_TRUE(startResult);
+
+        // Check that the video stream stalls once we've gotten exactly the number of buffers
+        // we requested since we told the frameHandler not to return them.
+        sleep(1);   // 1 second should be enough for at least 5 frames to be delivered worst case
+        unsigned framesReceived = 0;
+        frameHandler->getFramesCounters(&framesReceived, nullptr);
+        ASSERT_EQ(kBuffersToHold, framesReceived) << "Stream didn't stall at expected buffer limit";
+
+
+        // Give back one buffer
+        bool didReturnBuffer = frameHandler->returnHeldBuffer();
+        EXPECT_TRUE(didReturnBuffer);
+
+        // Once we return a buffer, it shouldn't take more than 1/10 second to get a new one
+        // filled since we require 10fps minimum -- but give a 10% allowance just in case.
+        usleep(110 * kMillisecondsToMicroseconds);
+        frameHandler->getFramesCounters(&framesReceived, nullptr);
+        EXPECT_EQ(kBuffersToHold+1, framesReceived) << "Stream should've resumed";
+
+        // Even when the camera pointer goes out of scope, the FrameHandler object will
+        // keep the stream alive unless we tell it to shutdown.
+        // Also note that the FrameHandle and the Camera have a mutual circular reference, so
+        // we have to break that cycle in order for either of them to get cleaned up.
+        frameHandler->shutdown();
+
+        // Explicitly release the camera
+        pEnumerator->closeCamera(pCam);
+        activeCameras.clear();
+    }
+
+    // Release buffers
+    for (auto& b : buffers) {
+        alloc.free(b.buffer.nativeHandle);
+    }
+    buffers.resize(0);
 }
 
 

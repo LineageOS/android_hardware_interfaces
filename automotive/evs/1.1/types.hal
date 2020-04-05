@@ -70,6 +70,9 @@ struct BufferDesc {
      */
     int64_t timestamp;
 
+    /**
+     * Frame metadata.  This is opaque to EVS manager.
+     */
     vec<uint8_t> metadata;
 };
 
