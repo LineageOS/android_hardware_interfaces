@@ -51,7 +51,7 @@ cc_test {
         "android.hardware.wifi@1.3",
         "libwifi-system-iface"
     ],
-    test_suites: ["general-tests", "vts-core"],
+    test_suites: ["general-tests", "vts"],
 }
 
 // These tests are split out so that they can be conditioned on presence of the
@@ -68,7 +68,7 @@ cc_test {
         "android.hardware.wifi@1.0",
         "libwifi-system-iface"
     ],
-    test_suites: ["general-tests", "vts-core"],
+    test_suites: ["general-tests", "vts"],
 }
 
 // These tests are split out so that they can be conditioned on presence of
@@ -85,5 +85,5 @@ cc_test {
         "android.hardware.wifi@1.0",
         "libwifi-system-iface"
     ],
-    test_suites: ["general-tests", "vts-core"],
+    test_suites: ["general-tests", "vts"],
 }
