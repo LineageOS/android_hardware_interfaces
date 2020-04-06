@@ -25,5 +25,8 @@ cc_test {
     static_libs: [
         "android.hardware.automotive.audiocontrol@1.0",
     ],
-    test_suites: ["general-tests"],
+    test_suites: [
+        "general-tests",
+        "vts",
+    ],
 }
