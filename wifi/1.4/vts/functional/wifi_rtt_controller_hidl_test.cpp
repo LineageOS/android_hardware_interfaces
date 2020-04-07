@@ -140,6 +140,18 @@ TEST_P(WifiRttControllerHidlTest, RegisterEventCallback_1_4) {
  * rangeRequest_1_4
  */
 TEST_P(WifiRttControllerHidlTest, RangeRequest_1_4) {
+    std::pair<WifiStatus, RttCapabilities> status_and_caps;
+
+    // Get the Capabilities
+    status_and_caps = HIDL_INVOKE(wifi_rtt_controller_, getCapabilities_1_4);
+    EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_caps.first.code);
+    // Get the highest support preamble
+    int preamble = 1;
+    status_and_caps.second.preambleSupport >>= 1;
+    while (status_and_caps.second.preambleSupport != 0) {
+        status_and_caps.second.preambleSupport >>= 1;
+        preamble <<= 1;
+    }
     std::vector<RttConfig> configs;
     RttConfig config;
     int cmdId = 55;
@@ -148,13 +160,13 @@ TEST_P(WifiRttControllerHidlTest, RangeRequest_1_4) {
         config.addr[i] = i;
     }
     config.type = RttType::ONE_SIDED;
-    config.peer = RttPeerType::STA;
+    config.peer = RttPeerType::AP;
     config.channel.width = WifiChannelWidthInMhz::WIDTH_80;
     config.channel.centerFreq = 5765;
     config.channel.centerFreq0 = 5775;
     config.channel.centerFreq1 = 0;
     config.bw = RttBw::BW_80MHZ;
-    config.preamble = RttPreamble::HE;
+    config.preamble = (RttPreamble)preamble;
     config.mustRequestLci = false;
     config.mustRequestLcr = false;
     config.burstPeriod = 0;
