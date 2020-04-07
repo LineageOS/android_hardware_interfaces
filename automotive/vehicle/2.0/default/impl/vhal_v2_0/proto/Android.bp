@@ -27,7 +27,17 @@ cc_library_static {
         "-Wall",
         "-Werror",
     ],
-    srcs: ["VehicleHalProto.proto"]
+    srcs: ["VehicleHalProto.proto"],
+}
+
+filegroup {
+    name: "vhal-proto-src",
+    visibility: [
+        "//device/google/trout/hal/vehicle/2.0:__subpackages__",
+    ],
+    srcs: [
+        "VehicleHalProto.proto",
+    ],
 }
 
 cc_library_static {
@@ -49,7 +59,7 @@ cc_library_static {
         "libgrpc++_unsecure",
     ],
     cflags: [
-        "-Wno-unused-parameter"
+        "-Wno-unused-parameter",
     ],
 }
 
