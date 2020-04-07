@@ -62,6 +62,7 @@ public:
     //  Methods from EmulatedVehicleHalIface
     bool setPropertyFromVehicle(const VehiclePropValue& propValue) override;
     std::vector<VehiclePropValue> getAllProperties() const override;
+    void getAllPropertiesOverride();
 
 private:
     constexpr std::chrono::nanoseconds hertzToNanoseconds(float hz) const {
@@ -87,6 +88,8 @@ private:
     RecurrentTimer mRecurrentTimer;
     VehicleHalClient* mVehicleClient;
     bool mInEmulator;
+    bool mInitVhalValueOverride;
+    std::vector<VehiclePropValue> mVehiclePropertiesOverride;
 };
 
 }  // impl
