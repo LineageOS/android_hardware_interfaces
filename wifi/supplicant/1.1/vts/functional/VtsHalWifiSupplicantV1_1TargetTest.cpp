@@ -15,7 +15,6 @@
  */
 
 #include <android-base/logging.h>
-#include <android/hardware/wifi/1.1/IWifi.h>
 #include <android/hardware/wifi/supplicant/1.1/ISupplicant.h>
 
 #include "supplicant_hidl_test_utils.h"
@@ -30,8 +29,6 @@ class WifiSupplicantHidlEnvironment_1_1 : public WifiSupplicantHidlEnvironment {
         return instance;
     }
     virtual void registerTestServices() override {
-        registerTestService<::android::hardware::wifi::V1_0::IWifi>();
-        registerTestService<::android::hardware::wifi::V1_1::IWifi>();
         registerTestService<
             ::android::hardware::wifi::supplicant::V1_0::ISupplicant>();
         registerTestService<
