@@ -100,6 +100,6 @@ cc_test {
     },
     test_suites: [
         "general-tests",
-        "vts-core",
+        "vts",
     ],
 }

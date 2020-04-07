@@ -30,5 +30,5 @@ cc_test {
     header_libs: [
         "radio.util.header@1.0",
     ],
-    test_suites: ["general-tests", "vts-core"],
+    test_suites: ["general-tests", "vts"],
 }
