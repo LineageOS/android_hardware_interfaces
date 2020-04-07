@@ -92,13 +92,11 @@ interface IPreparedModel extends @1.2::IPreparedModel {
      *                            executing a {@link OperationType::WHILE}
      *                            operation. If a loop condition model does not
      *                            output false within this duration, the
-     *                            execution must be aborted. If the model
-     *                            contains a {@link OperationType::WHILE}
-     *                            operation and no loop timeout duration is
-     *                            provided, the maximum amount of time is {@link
-     *                            LoopTimeoutDurationNs::DEFAULT}. When
-     *                            provided, the duration must not exceed {@link
-     *                            LoopTimeoutDurationNs::MAXIMUM}.
+     *                            execution must be aborted. If no loop timeout
+     *                            duration is provided, the maximum amount of
+     *                            time is {@link LoopTimeoutDurationNs::DEFAULT}.
+     *                            When provided, the duration must not exceed
+     *                            {@link LoopTimeoutDurationNs::MAXIMUM}.
      * @param callback A callback object used to return the error status of
      *                 the execution, shape information of model output operands, and
      *                 duration of execution. The callback object's notify function must
@@ -170,13 +168,11 @@ interface IPreparedModel extends @1.2::IPreparedModel {
      *                            executing a {@link OperationType::WHILE}
      *                            operation. If a loop condition model does not
      *                            output false within this duration, the
-     *                            execution must be aborted. If the model
-     *                            contains a {@link OperationType::WHILE}
-     *                            operation and no loop timeout duration is
-     *                            provided, the maximum amount of time is {@link
-     *                            LoopTimeoutDurationNs::DEFAULT}. When
-     *                            provided, the duration must not exceed {@link
-     *                            LoopTimeoutDurationNs::MAXIMUM}.
+     *                            execution must be aborted. If no loop timeout
+     *                            duration is provided, the maximum amount of
+     *                            time is {@link LoopTimeoutDurationNs::DEFAULT}.
+     *                            When provided, the duration must not exceed
+     *                            {@link LoopTimeoutDurationNs::MAXIMUM}.
      * @return status Error status of the execution, must be:
      *                - NONE if execution is performed successfully
      *                - DEVICE_UNAVAILABLE if driver is offline or busy
@@ -258,13 +254,11 @@ interface IPreparedModel extends @1.2::IPreparedModel {
      *                            executing a {@link OperationType::WHILE}
      *                            operation. If a loop condition model does not
      *                            output false within this duration, the
-     *                            execution must be aborted. If the model
-     *                            contains a {@link OperationType::WHILE}
-     *                            operation and no loop timeout duration is
-     *                            provided, the maximum amount of time is {@link
-     *                            LoopTimeoutDurationNs::DEFAULT}. When
-     *                            provided, the duration must not exceed {@link
-     *                            LoopTimeoutDurationNs::MAXIMUM}.
+     *                            execution must be aborted. If no loop timeout
+     *                            duration is provided, the maximum amount of
+     *                            time is {@link LoopTimeoutDurationNs::DEFAULT}.
+     *                            When provided, the duration must not exceed
+     *                            {@link LoopTimeoutDurationNs::MAXIMUM}.
      * @param duration The length of time within which the execution is expected
      *                 to complete after all sync fences in waitFor are signaled.
      *                 If the execution cannot be finished within the duration,
