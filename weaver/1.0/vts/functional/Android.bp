@@ -19,5 +19,5 @@ cc_test {
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: ["VtsHalWeaverV1_0TargetTest.cpp"],
     static_libs: ["android.hardware.weaver@1.0"],
-    test_suites: ["general-tests", "vts-core"],
+    test_suites: ["general-tests", "vts"],
 }
