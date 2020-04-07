@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-#include <VtsHalHidlTargetTestBase.h>
-#include <VtsHalHidlTargetTestEnvBase.h>
 #include <android-base/logging.h>
 #include <android/hardware/tv/tuner/1.0/IFrontend.h>
 #include <android/hardware/tv/tuner/1.0/IFrontendCallback.h>
@@ -65,6 +63,8 @@ using android::hardware::tv::tuner::V1_0::ITuner;
 using android::hardware::tv::tuner::V1_0::Result;
 
 using ::testing::AssertionResult;
+
+using namespace std;
 
 #define INVALID_ID -1
 #define WAIT_TIMEOUT 3000000000

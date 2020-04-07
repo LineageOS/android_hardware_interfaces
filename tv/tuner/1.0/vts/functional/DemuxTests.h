@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-#include <VtsHalHidlTargetTestBase.h>
-#include <VtsHalHidlTargetTestEnvBase.h>
 #include <android-base/logging.h>
 #include <android/hardware/tv/tuner/1.0/IDemux.h>
 #include <android/hardware/tv/tuner/1.0/ITuner.h>
