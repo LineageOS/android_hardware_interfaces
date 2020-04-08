@@ -31,5 +31,5 @@ cc_test {
         "android.hardware.gnss@2.1",
         "android.hardware.gnss@common-vts-lib",
     ],
-    test_suites: ["general-tests", "vts-core"],
+    test_suites: ["general-tests", "vts"],
 }

@@ -23,5 +23,5 @@ cc_test {
         "android.hardware.secure_element@1.1",
         "android.hardware.secure_element@1.2",
     ],
-    test_suites: ["general-tests", "vts-core"],
+    test_suites: ["general-tests", "vts"],
 }

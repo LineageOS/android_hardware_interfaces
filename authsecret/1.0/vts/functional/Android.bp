@@ -21,7 +21,7 @@ cc_test {
     static_libs: ["android.hardware.authsecret@1.0"],
     test_suites: [
         "general-tests",
-        "vts-core",
+        "vts",
     ],
     require_root: true,
 }
