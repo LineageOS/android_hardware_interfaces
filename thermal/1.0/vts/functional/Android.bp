@@ -19,6 +19,6 @@ cc_test {
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: ["VtsHalThermalV1_0TargetTest.cpp"],
     static_libs: ["android.hardware.thermal@1.0"],
-    test_suites: ["general-tests", "vts-core"],
+    test_suites: ["general-tests", "vts"],
 }
 

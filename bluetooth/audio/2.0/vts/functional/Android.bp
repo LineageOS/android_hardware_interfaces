@@ -9,5 +9,5 @@ cc_test {
     shared_libs: [
         "libfmq",
     ],
-    test_suites: ["general-tests", "vts-core"],
+    test_suites: ["general-tests", "vts"],
 }
