@@ -49,5 +49,5 @@ cc_test {
         "libhidlmemory",
         "libgralloctypes",
     ],
-    test_suites: ["general-tests", "vts-core"],
+    test_suites: ["general-tests", "vts"],
 }

@@ -30,5 +30,5 @@ cc_test {
         "libwifi-system-iface"
     ],
     disable_framework: true,
-    test_suites: ["general-tests", "vts-core"],
+    test_suites: ["general-tests", "vts"],
 }
