@@ -19,6 +19,6 @@ cc_test {
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: ["VtsHalBiometricsFaceV1_0TargetTest.cpp"],
     static_libs: ["android.hardware.biometrics.face@1.0"],
-    test_suites: ["general-tests", "vts-core"],
+    test_suites: ["general-tests", "vts"],
 }
 
