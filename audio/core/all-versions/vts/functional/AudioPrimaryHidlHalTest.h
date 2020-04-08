@@ -34,10 +34,6 @@
 
 #include <hwbinder/IPCThreadState.h>
 
-#if MAJOR_VERSION <= 5
-#include <VtsHalHidlTargetTestBase.h>
-#endif
-
 #include <android-base/logging.h>
 
 #include PATH(android/hardware/audio/FILE_VERSION/IDevice.h)
@@ -49,10 +45,8 @@
 #include <Serializer.h>
 #include <fmq/EventFlag.h>
 #include <fmq/MessageQueue.h>
-#if MAJOR_VERSION >= 6
 #include <hidl/GtestPrinter.h>
 #include <hidl/ServiceManagement.h>
-#endif
 
 #include <common/all-versions/VersionUtils.h>
 
@@ -60,12 +54,6 @@
 #include "utility/Documentation.h"
 #include "utility/ReturnIn.h"
 #include "utility/ValidateXml.h"
-
-#if MAJOR_VERSION <= 5
-#include "2.0/EnvironmentTearDown.h"
-#elif MAJOR_VERSION >= 6
-#include "6.0/EnvironmentTearDown.h"
-#endif
 
 /** Provide version specific functions that are used in the generic tests */
 #if MAJOR_VERSION == 2
@@ -114,30 +102,10 @@ static auto okOrInvalidStateOrNotSupported = {Result::OK, Result::INVALID_STATE,
 static auto invalidArgsOrNotSupported = {Result::INVALID_ARGUMENTS, Result::NOT_SUPPORTED};
 static auto invalidStateOrNotSupported = {Result::INVALID_STATE, Result::NOT_SUPPORTED};
 
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////// Environment /////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
-
-class AudioHidlTestEnvironment : public ::Environment {
-   public:
-#if MAJOR_VERSION <= 5
-     void registerTestServices() override { registerTestService<IDevicesFactory>(); }
-#endif
-};
-
-// Instance to register global tearDown
-static AudioHidlTestEnvironment* environment;
-
 #define AUDIO_PRIMARY_HIDL_HAL_TEST
 #include "DeviceManager.h"
 
-#if MAJOR_VERSION <= 5
-using HidlTestBase = ::testing::VtsHalHidlTargetTestBase;
-#elif MAJOR_VERSION >= 6
-using HidlTestBase = ::testing::Test;
-#endif
-
-class HidlTest : public HidlTestBase {
+class HidlTest : public ::testing::Test {
   public:
     virtual ~HidlTest() = default;
     // public access to avoid annoyances when using this method in template classes
@@ -173,15 +141,6 @@ static constexpr char kConfigFileName[] = "audio_policy_configuration.xml";
 // Stringify the argument.
 #define QUOTE(x) #x
 #define STRINGIFY(x) QUOTE(x)
-
-TEST(CheckConfig, audioPolicyConfigurationValidation) {
-    RecordProperty("description",
-                   "Verify that the audio policy configuration file "
-                   "is valid according to the schema");
-
-    const char* xsd = "/data/local/tmp/audio_policy_configuration_" STRINGIFY(CPP_VERSION) ".xsd";
-    EXPECT_ONE_VALID_XML_MULTIPLE_LOCATIONS(kConfigFileName, kConfigLocations, xsd);
-}
 
 struct PolicyConfigData {
     android::HwModuleCollection hwModules;
@@ -254,30 +213,9 @@ class PolicyConfig : private PolicyConfigData, public AudioPolicyConfig {
 const PolicyConfig& getCachedPolicyConfig() {
     static std::unique_ptr<PolicyConfig> policyConfig = [] {
         auto config = std::make_unique<PolicyConfig>();
-        environment->registerTearDown([] { policyConfig.reset(); });
         return config;
     }();
     return *policyConfig;
-}
-
-class AudioPolicyConfigTest : public HidlTestBase {
-  public:
-    void SetUp() override {
-        ASSERT_NO_FATAL_FAILURE(HidlTestBase::SetUp());  // setup base
-        auto& policyConfig = getCachedPolicyConfig();
-        ASSERT_EQ(0, policyConfig.getStatus()) << policyConfig.getError();
-    }
-};
-
-TEST_F(AudioPolicyConfigTest, LoadAudioPolicyXMLConfiguration) {
-    doc::test("Test parsing audio_policy_configuration.xml (called in SetUp)");
-}
-
-TEST_F(AudioPolicyConfigTest, HasPrimaryModule) {
-    auto& policyConfig = getCachedPolicyConfig();
-    ASSERT_TRUE(policyConfig.getPrimaryModule() != nullptr)
-            << "Could not find primary module in configuration file: "
-            << policyConfig.getFilePath();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -290,53 +228,59 @@ using DeviceParameter = std::tuple<std::string, std::string>;
 static inline std::string DeviceParameterToString(
         const ::testing::TestParamInfo<DeviceParameter>& info) {
     const auto& deviceName = std::get<PARAM_DEVICE_NAME>(info.param);
-#if MAJOR_VERSION <= 5
-    return !deviceName.empty() ? deviceName : std::to_string(info.index);
-#elif MAJOR_VERSION >= 6
     const auto factoryName =
             ::android::hardware::PrintInstanceNameToString(::testing::TestParamInfo<std::string>{
                     std::get<PARAM_FACTORY_NAME>(info.param), info.index});
     return !deviceName.empty() ? factoryName + "_" + deviceName : factoryName;
-#endif
 }
 
-#if MAJOR_VERSION <= 5
-// For V2..5 the factory is looked up using the instance name passed
-// in the environment, only one factory is returned. This is because the VTS
-// framework will call the test for each instance. Only the primary device of
-// the default service factory can be tested.
-
-// Return a pair of <"default", "primary"> or <[non-default name], "">
-// This is used to parametrize device factory tests.
-// The device name is used to indicate whether IPrimaryDevice is required.
-const std::vector<DeviceParameter>& getDeviceParametersForFactoryTests() {
-    static std::vector<DeviceParameter> parameters = {
-            {environment->getServiceName<IDevicesFactory>(),
-             environment->getServiceName<IDevicesFactory>() == kDefaultServiceName
-                     ? DeviceManager::kPrimaryDevice
-                     : ""}};
-    return parameters;
-}
-// Return a pair of <"default", "primary"> or nothing.
-// This is used to parametrize primary device tests.
-const std::vector<DeviceParameter>& getDeviceParametersForPrimaryDeviceTests() {
-    static std::vector<DeviceParameter> parameters =
-            !std::get<PARAM_DEVICE_NAME>(*getDeviceParametersForFactoryTests().begin()).empty()
-                    ? getDeviceParametersForFactoryTests()
-                    : std::vector<DeviceParameter>{};
-    return parameters;
-}
-// In V2..5 device tests must only test the primary device.
-// No device tests are executed for non-primary devices.
 const std::vector<DeviceParameter>& getDeviceParameters() {
-    return getDeviceParametersForPrimaryDeviceTests();
+    static std::vector<DeviceParameter> parameters = [] {
+        std::vector<DeviceParameter> result;
+        const auto factories =
+                ::android::hardware::getAllHalInstanceNames(IDevicesFactory::descriptor);
+        const auto devices = getCachedPolicyConfig().getModulesWithDevicesNames();
+        result.reserve(devices.size());
+        for (const auto& factoryName : factories) {
+            for (const auto& deviceName : devices) {
+                if (DeviceManager::getInstance().get(factoryName, deviceName) != nullptr) {
+                    result.emplace_back(factoryName, deviceName);
+                }
+            }
+        }
+        return result;
+    }();
+    return parameters;
 }
-#elif MAJOR_VERSION >= 6
-// For V6 and above these functions are implemented in 6.0/AudioPrimaryHidlHalTest.cpp
-const std::vector<DeviceParameter>& getDeviceParametersForFactoryTests();
-const std::vector<DeviceParameter>& getDeviceParametersForPrimaryDeviceTests();
-const std::vector<DeviceParameter>& getDeviceParameters();
-#endif
+
+const std::vector<DeviceParameter>& getDeviceParametersForFactoryTests() {
+    static std::vector<DeviceParameter> parameters = [] {
+        std::vector<DeviceParameter> result;
+        const auto factories =
+                ::android::hardware::getAllHalInstanceNames(IDevicesFactory::descriptor);
+        for (const auto& factoryName : factories) {
+            result.emplace_back(factoryName,
+                                DeviceManager::getInstance().getPrimary(factoryName) != nullptr
+                                        ? DeviceManager::kPrimaryDevice
+                                        : "");
+        }
+        return result;
+    }();
+    return parameters;
+}
+
+const std::vector<DeviceParameter>& getDeviceParametersForPrimaryDeviceTests() {
+    static std::vector<DeviceParameter> parameters = [] {
+        std::vector<DeviceParameter> result;
+        const auto primary = std::find_if(
+                getDeviceParameters().begin(), getDeviceParameters().end(), [](const auto& elem) {
+                    return std::get<PARAM_DEVICE_NAME>(elem) == DeviceManager::kPrimaryDevice;
+                });
+        if (primary != getDeviceParameters().end()) result.push_back(*primary);
+        return result;
+    }();
+    return parameters;
+}
 
 class AudioHidlTestWithDeviceParameter : public HidlTest,
                                          public ::testing::WithParamInterface<DeviceParameter> {
@@ -348,6 +292,44 @@ class AudioHidlTestWithDeviceParameter : public HidlTest,
         return std::get<PARAM_DEVICE_NAME>(GetParam());
     }
 };
+
+TEST(CheckConfig, audioPolicyConfigurationValidation) {
+    auto deviceParameters = getDeviceParametersForFactoryTests();
+    if (deviceParameters.size() == 0) {
+        GTEST_SKIP() << "Skipping audioPolicyConfigurationValidation because no device parameter "
+                        "is found.";
+    }
+    RecordProperty("description",
+                   "Verify that the audio policy configuration file "
+                   "is valid according to the schema");
+
+    const char* xsd = "/data/local/tmp/audio_policy_configuration_" STRINGIFY(CPP_VERSION) ".xsd";
+    EXPECT_ONE_VALID_XML_MULTIPLE_LOCATIONS(kConfigFileName, kConfigLocations, xsd);
+}
+
+class AudioPolicyConfigTest : public AudioHidlTestWithDeviceParameter {
+  public:
+    void SetUp() override {
+        ASSERT_NO_FATAL_FAILURE(AudioHidlTestWithDeviceParameter::SetUp());  // setup base
+        auto& policyConfig = getCachedPolicyConfig();
+        ASSERT_EQ(0, policyConfig.getStatus()) << policyConfig.getError();
+    }
+};
+
+TEST_P(AudioPolicyConfigTest, LoadAudioPolicyXMLConfiguration) {
+    doc::test("Test parsing audio_policy_configuration.xml (called in SetUp)");
+}
+
+TEST_P(AudioPolicyConfigTest, HasPrimaryModule) {
+    auto& policyConfig = getCachedPolicyConfig();
+    ASSERT_TRUE(policyConfig.getPrimaryModule() != nullptr)
+            << "Could not find primary module in configuration file: "
+            << policyConfig.getFilePath();
+}
+
+INSTANTIATE_TEST_CASE_P(AudioHidl, AudioPolicyConfigTest,
+                        ::testing::ValuesIn(getDeviceParametersForFactoryTests()),
+                        &DeviceParameterToString);
 
 //////////////////////////////////////////////////////////////////////////////
 ////////////////////// getService audio_devices_factory //////////////////////
@@ -1575,21 +1557,4 @@ TEST_P(BoolAccessorPrimaryHidlTest, setGetHac) {
     doc::test("Query and set the HAC state");
     testAccessors<OPTIONAL>("HAC", Initial{false}, {true}, &IPrimaryDevice::setHacEnabled,
                             &IPrimaryDevice::getHacEnabled);
-}
-
-//////////////////////////////////////////////////////////////////////////////
-//////////////////// Clean caches on global tear down ////////////////////////
-//////////////////////////////////////////////////////////////////////////////
-
-int main(int argc, char** argv) {
-    environment = new AudioHidlTestEnvironment;
-    // For V2..5 it's critical to initialize environment before GTest.
-    // The environment parses the service name from the command line,
-    // then it can be used in GTest parameter generators which are
-    // initialized during the call to InitGoogleTest.
-    environment->init(&argc, argv);
-    ::testing::AddGlobalTestEnvironment(environment);
-    ::testing::InitGoogleTest(&argc, argv);
-    int status = RUN_ALL_TESTS();
-    return status;
 }
