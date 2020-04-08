@@ -28,6 +28,8 @@
 #include <android/hidl/allocator/1.0/IAllocator.h>
 #include <android/hidl/memory/1.0/IMapper.h>
 #include <android/hidl/memory/1.0/IMemory.h>
+#include <gtest/gtest.h>
+#include <hidl/GtestPrinter.h>
 
 using ::android::hardware::media::omx::V1_0::IOmx;
 using ::android::hardware::media::omx::V1_0::IOmxObserver;
@@ -44,42 +46,37 @@ using ::android::hardware::hidl_vec;
 using ::android::hardware::hidl_string;
 using ::android::sp;
 
-#include <VtsHalHidlTargetTestBase.h>
 #include <getopt.h>
 #include <media_hidl_test_common.h>
 
-static ComponentTestEnvironment* gEnv = nullptr;
-
 // generic component test fixture class
-class ComponentHidlTest : public ::testing::VtsHalHidlTargetTestBase {
-   private:
-    typedef ::testing::VtsHalHidlTargetTestBase Super;
-   public:
-    ::std::string getTestCaseInfo() const override {
-        return ::std::string() +
-                "Component: " + gEnv->getComponent().c_str() + " | " +
-                "Role: " + gEnv->getRole().c_str() + " | " +
-                "Instance: " + gEnv->getInstance().c_str();
+class ComponentHidlTest
+    : public ::testing::TestWithParam<std::tuple<std::string, std::string, std::string>> {
+  public:
+    ::std::string getTestCaseInfo() const {
+        return ::std::string() + "Component: " + component_ + " | " + "Role: " + role_ + " | " +
+               "Instance: " + instance_;
     }
 
     virtual void SetUp() override {
-        Super::SetUp();
+        instance_ = std::get<0>(GetParam());
+        component_ = std::get<1>(GetParam());
+        role_ = std::get<2>(GetParam());
+
         disableTest = false;
         android::hardware::media::omx::V1_0::Status status;
-        omx = Super::getService<IOmx>(gEnv->getInstance());
+        omx = IOmx::getService(instance_);
         ASSERT_NE(omx, nullptr);
         observer = new CodecObserver(nullptr);
         ASSERT_NE(observer, nullptr);
-        if (strncmp(gEnv->getComponent().c_str(), "OMX.", 4) != 0)
-            disableTest = true;
-        EXPECT_TRUE(omx->allocateNode(
-                           gEnv->getComponent(), observer,
-                           [&](android::hardware::media::omx::V1_0::Status _s,
-                               sp<IOmxNode> const& _nl) {
-                               status = _s;
-                               this->omxNode = _nl;
-                           })
-                        .isOk());
+        if (component_.find("OMX.") != 0) disableTest = true;
+        EXPECT_TRUE(omx->allocateNode(component_, observer,
+                                      [&](android::hardware::media::omx::V1_0::Status _s,
+                                          sp<IOmxNode> const& _nl) {
+                                          status = _s;
+                                          this->omxNode = _nl;
+                                      })
+                            .isOk());
         if (status == android::hardware::media::omx::V1_0::Status::NAME_NOT_FOUND) {
             disableTest = true;
             std::cout << "[   WARN   ] Test Disabled, component not present\n";
@@ -87,7 +84,7 @@ class ComponentHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         }
         ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
         ASSERT_NE(omxNode, nullptr);
-        ASSERT_NE(gEnv->getRole().empty(), true) << "Invalid Component Role";
+        ASSERT_NE(role_.empty(), true) << "Invalid Component Role";
         struct StringToClass {
             const char* Class;
             standardCompClass CompClass;
@@ -102,7 +99,7 @@ class ComponentHidlTest : public ::testing::VtsHalHidlTargetTestBase {
             sizeof(kStringToClass) / sizeof(kStringToClass[0]);
         const char* pch;
         char substring[OMX_MAX_STRINGNAME_SIZE];
-        strcpy(substring, gEnv->getRole().c_str());
+        strcpy(substring, role_.c_str());
         pch = strchr(substring, '.');
         ASSERT_NE(pch, nullptr) << "Invalid Component Role";
         substring[pch - substring] = '\0';
@@ -117,11 +114,8 @@ class ComponentHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         isSecure = false;
         mTunnel = false;
         size_t suffixLen = strlen(".secure");
-        if (strlen(gEnv->getComponent().c_str()) >= suffixLen) {
-            isSecure =
-                !strcmp(gEnv->getComponent().c_str() +
-                            strlen(gEnv->getComponent().c_str()) - suffixLen,
-                        ".secure");
+        if (component_.rfind(".secure") == component_.length() - suffixLen) {
+            isSecure = true;
         }
         if (compClass == video_decoder) {
             omxNode->configureVideoTunnelMode(
@@ -147,7 +141,6 @@ class ComponentHidlTest : public ::testing::VtsHalHidlTargetTestBase {
             EXPECT_TRUE((omxNode->freeNode()).isOk());
             omxNode = nullptr;
         }
-        Super::TearDown();
     }
 
     enum standardCompClass {
@@ -157,6 +150,10 @@ class ComponentHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         video_encoder,
         unknown_class,
     };
+
+    std::string component_;
+    std::string role_;
+    std::string instance_;
 
     sp<IOmx> omx;
     sp<CodecObserver> observer;
@@ -191,7 +188,7 @@ void initPortMode(PortMode* pm, bool isSecure,
 }
 
 // test dispatch message API call
-TEST_F(ComponentHidlTest, dispatchMsg) {
+TEST_P(ComponentHidlTest, dispatchMsg) {
     description("test dispatch message API call");
     if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
@@ -216,22 +213,22 @@ TEST_F(ComponentHidlTest, dispatchMsg) {
 }
 
 // set component role
-TEST_F(ComponentHidlTest, SetRole) {
+TEST_P(ComponentHidlTest, SetRole) {
     description("Test Set Component Role");
     if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
-    status = setRole(omxNode, gEnv->getRole().c_str());
+    status = setRole(omxNode, role_);
     ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
 }
 
 // port indices enumeration
-TEST_F(ComponentHidlTest, DISABLED_GetPortIndices) {
+TEST_P(ComponentHidlTest, DISABLED_GetPortIndices) {
     description("Test Component on Mandatory Port Parameters (Port Indices)");
     if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
     OMX_PORT_PARAM_TYPE params;
 
-    status = setRole(omxNode, gEnv->getRole().c_str());
+    status = setRole(omxNode, role_);
     ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
 
     // Get Number of Ports and their Indices for all Domains
@@ -248,13 +245,13 @@ TEST_F(ComponentHidlTest, DISABLED_GetPortIndices) {
 }
 
 // port format enumeration
-TEST_F(ComponentHidlTest, EnumeratePortFormat) {
+TEST_P(ComponentHidlTest, EnumeratePortFormat) {
     description("Test Component on Mandatory Port Parameters (Port Format)");
     if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
     uint32_t kPortIndexInput = 0, kPortIndexOutput = 1;
 
-    status = setRole(omxNode, gEnv->getRole().c_str());
+    status = setRole(omxNode, role_);
     ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
     OMX_PORT_PARAM_TYPE params;
     if (compClass == audio_decoder || compClass == audio_encoder) {
@@ -308,14 +305,14 @@ TEST_F(ComponentHidlTest, EnumeratePortFormat) {
 }
 
 // get/set default port settings of a component
-TEST_F(ComponentHidlTest, DISABLED_SetDefaultPortParams) {
+TEST_P(ComponentHidlTest, DISABLED_SetDefaultPortParams) {
     description(
         "Test Component on Mandatory Port Parameters (Port Definition)");
     if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
     uint32_t kPortIndexInput = 0, kPortIndexOutput = 1;
 
-    status = setRole(omxNode, gEnv->getRole().c_str());
+    status = setRole(omxNode, role_);
     ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
     OMX_PORT_PARAM_TYPE params;
     if (compClass == audio_decoder || compClass == audio_encoder) {
@@ -398,7 +395,7 @@ TEST_F(ComponentHidlTest, DISABLED_SetDefaultPortParams) {
             portDef = mirror;
             OMX_U32 nBufferSize = portDef.nBufferSize >> 1;
             if (nBufferSize != 0) {
-                if (!strncmp(gEnv->getComponent().c_str(), "OMX.google.", 11)) {
+                if (component_.find("OMX.google.") != 0) {
                     portDef.nBufferSize = nBufferSize;
                 } else {
                     // Probable alignment requirements of vendor component
@@ -438,13 +435,13 @@ TEST_F(ComponentHidlTest, DISABLED_SetDefaultPortParams) {
 }
 
 // populate port test
-TEST_F(ComponentHidlTest, DISABLED_PopulatePort) {
+TEST_P(ComponentHidlTest, DISABLED_PopulatePort) {
     description("Verify bPopulated field of a component port");
     if (disableTest || isSecure) return;
     android::hardware::media::omx::V1_0::Status status;
     OMX_U32 portBase = 0;
 
-    status = setRole(omxNode, gEnv->getRole().c_str());
+    status = setRole(omxNode, role_);
     ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
     OMX_PORT_PARAM_TYPE params;
     if (compClass == audio_decoder || compClass == audio_encoder) {
@@ -490,14 +487,14 @@ TEST_F(ComponentHidlTest, DISABLED_PopulatePort) {
 }
 
 // Flush test
-TEST_F(ComponentHidlTest, Flush) {
+TEST_P(ComponentHidlTest, Flush) {
     description("Test Flush");
     if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
     uint32_t kPortIndexInput = 0, kPortIndexOutput = 1;
     Message msg;
 
-    status = setRole(omxNode, gEnv->getRole().c_str());
+    status = setRole(omxNode, role_);
     ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
     OMX_PORT_PARAM_TYPE params;
     if (compClass == audio_decoder || compClass == audio_encoder) {
@@ -561,14 +558,14 @@ TEST_F(ComponentHidlTest, Flush) {
 }
 
 // Flush test - monkeying
-TEST_F(ComponentHidlTest, Flush_M) {
+TEST_P(ComponentHidlTest, Flush_M) {
     description("Test Flush monkeying");
     if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
     uint32_t kPortIndexInput = 0, kPortIndexOutput = 1;
     Message msg;
 
-    status = setRole(omxNode, gEnv->getRole().c_str());
+    status = setRole(omxNode, role_);
     ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
     OMX_PORT_PARAM_TYPE params;
     if (compClass == audio_decoder || compClass == audio_encoder) {
@@ -669,14 +666,14 @@ TEST_F(ComponentHidlTest, Flush_M) {
 }
 
 // test port mode configuration when the component is in various states
-TEST_F(ComponentHidlTest, PortModeConfig) {
+TEST_P(ComponentHidlTest, PortModeConfig) {
     description("Test Port Mode Configuration");
     if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
     uint32_t kPortIndexInput = 0, kPortIndexOutput = 1;
     Message msg;
 
-    status = setRole(omxNode, gEnv->getRole().c_str());
+    status = setRole(omxNode, role_);
     ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
     OMX_PORT_PARAM_TYPE params;
     if (compClass == audio_decoder || compClass == audio_encoder) {
@@ -733,14 +730,14 @@ TEST_F(ComponentHidlTest, PortModeConfig) {
 }
 
 // state transitions test
-TEST_F(ComponentHidlTest, StateTransitions) {
+TEST_P(ComponentHidlTest, StateTransitions) {
     description("Test State Transitions Loaded<->Idle<->Execute");
     if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
     uint32_t kPortIndexInput = 0, kPortIndexOutput = 1;
     OMX_U32 portBase = 0;
     Message msg;
-    status = setRole(omxNode, gEnv->getRole().c_str());
+    status = setRole(omxNode, role_);
     ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
     OMX_PORT_PARAM_TYPE params;
     if (compClass == audio_decoder || compClass == audio_encoder) {
@@ -852,14 +849,14 @@ TEST_F(ComponentHidlTest, StateTransitions) {
 }
 
 // state transitions test - monkeying
-TEST_F(ComponentHidlTest, DISABLED_StateTransitions_M) {
+TEST_P(ComponentHidlTest, DISABLED_StateTransitions_M) {
     description("Test State Transitions monkeying");
     if (disableTest || isSecure) return;
     android::hardware::media::omx::V1_0::Status status;
     uint32_t kPortIndexInput = 0, kPortIndexOutput = 1;
     Message msg;
 
-    status = setRole(omxNode, gEnv->getRole().c_str());
+    status = setRole(omxNode, role_);
     ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
     OMX_PORT_PARAM_TYPE params;
     if (compClass == audio_decoder || compClass == audio_encoder) {
@@ -918,13 +915,13 @@ TEST_F(ComponentHidlTest, DISABLED_StateTransitions_M) {
 }
 
 // port enable disable test
-TEST_F(ComponentHidlTest, DISABLED_PortEnableDisable_Loaded) {
+TEST_P(ComponentHidlTest, DISABLED_PortEnableDisable_Loaded) {
     description("Test Port Enable and Disable (Component State :: Loaded)");
     if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
     OMX_U32 portBase = 0;
     Message msg;
-    status = setRole(omxNode, gEnv->getRole().c_str());
+    status = setRole(omxNode, role_);
     ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
     OMX_PORT_PARAM_TYPE params;
     if (compClass == audio_decoder || compClass == audio_encoder) {
@@ -968,14 +965,14 @@ TEST_F(ComponentHidlTest, DISABLED_PortEnableDisable_Loaded) {
 }
 
 // port enable disable test
-TEST_F(ComponentHidlTest, PortEnableDisable_Idle) {
+TEST_P(ComponentHidlTest, PortEnableDisable_Idle) {
     description("Test Port Enable and Disable (Component State :: Idle)");
     if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
     uint32_t kPortIndexInput = 0, kPortIndexOutput = 1;
     OMX_U32 portBase = 0;
     Message msg;
-    status = setRole(omxNode, gEnv->getRole().c_str());
+    status = setRole(omxNode, role_);
     ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
     OMX_PORT_PARAM_TYPE params;
     if (compClass == audio_decoder || compClass == audio_encoder) {
@@ -1074,14 +1071,14 @@ TEST_F(ComponentHidlTest, PortEnableDisable_Idle) {
 }
 
 // port enable disable test
-TEST_F(ComponentHidlTest, PortEnableDisable_Execute) {
+TEST_P(ComponentHidlTest, PortEnableDisable_Execute) {
     description("Test Port Enable and Disable (Component State :: Execute)");
     if (disableTest) return;
     android::hardware::media::omx::V1_0::Status status;
     uint32_t kPortIndexInput = 0, kPortIndexOutput = 1;
     OMX_U32 portBase = 0;
     Message msg;
-    status = setRole(omxNode, gEnv->getRole().c_str());
+    status = setRole(omxNode, role_);
     ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
     OMX_PORT_PARAM_TYPE params;
     if (compClass == audio_decoder || compClass == audio_encoder) {
@@ -1192,14 +1189,14 @@ TEST_F(ComponentHidlTest, PortEnableDisable_Execute) {
 }
 
 // port enable disable test - monkeying
-TEST_F(ComponentHidlTest, DISABLED_PortEnableDisable_M) {
+TEST_P(ComponentHidlTest, DISABLED_PortEnableDisable_M) {
     description(
         "Test Port Enable and Disable Monkeying (Component State :: Loaded)");
     if (disableTest || isSecure) return;
     android::hardware::media::omx::V1_0::Status status;
     OMX_U32 portBase = 0;
     Message msg;
-    status = setRole(omxNode, gEnv->getRole().c_str());
+    status = setRole(omxNode, role_);
     ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);
     OMX_PORT_PARAM_TYPE params;
     if (compClass == audio_decoder || compClass == audio_encoder) {
@@ -1267,15 +1264,11 @@ TEST_F(ComponentHidlTest, DISABLED_PortEnableDisable_M) {
     }
 }
 
+INSTANTIATE_TEST_SUITE_P(PerInstance, ComponentHidlTest, testing::ValuesIn(kTestParameters),
+                         android::hardware::PrintInstanceTupleNameToString<>);
+
 int main(int argc, char** argv) {
-    gEnv = new ComponentTestEnvironment();
-    ::testing::AddGlobalTestEnvironment(gEnv);
+    kTestParameters = getTestParameters("");
     ::testing::InitGoogleTest(&argc, argv);
-    gEnv->init(&argc, argv);
-    int status = gEnv->initFromOptions(argc, argv);
-    if (status == 0) {
-        status = RUN_ALL_TESTS();
-        ALOGI("Test result = %d", status);
-    }
-    return status;
+    return RUN_ALL_TESTS();
 }
