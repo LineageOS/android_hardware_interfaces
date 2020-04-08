@@ -25,7 +25,7 @@ cc_test {
     data: [":media_omx_video_res"],
     test_config: "VtsHalMediaOmxV1_0TargetVideoDecTest.xml",
     test_suites: [
-        "vts-core",
+        "vts",
     ],
 }
 
@@ -43,6 +43,6 @@ cc_test {
     data: [":media_omx_video_res"],
     test_config: "VtsHalMediaOmxV1_0TargetVideoEncTest.xml",
     test_suites: [
-        "vts-core",
+        "vts",
     ],
 }
