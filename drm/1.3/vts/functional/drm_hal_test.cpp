@@ -39,10 +39,10 @@ TEST_P(DrmHalTestV1_3, SignRsaNotAllowed) {
     }
 
     // signRSA
-    const hidl_vec<uint8_t>& sessionId{};
-    const hidl_string& algorithm{};
-    const hidl_vec<uint8_t>& message{};
-    const hidl_vec<uint8_t>& wrappedKey{};
+    const hidl_vec<uint8_t>& sessionId{0};
+    const hidl_string& algorithm{"RSASSA-PSS-SHA1"};
+    const hidl_vec<uint8_t>& message{0};
+    const hidl_vec<uint8_t>& wrappedKey{0};
     auto res = drmPlugin_->signRSA(
         sessionId, algorithm, message, wrappedKey,
         [&](StatusV1_0 status, const hidl_vec<uint8_t>& signature) {
