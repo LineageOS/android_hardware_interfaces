@@ -40,8 +40,6 @@ using ::testing::AssertionResult;
 
 class DemuxTests {
   public:
-    sp<ITuner> mService;
-
     void setService(sp<ITuner> tuner) { mService = tuner; }
 
     AssertionResult openDemux(sp<IDemux>& demux, uint32_t& demuxId);
@@ -53,5 +51,6 @@ class DemuxTests {
 
     static AssertionResult success() { return ::testing::AssertionSuccess(); }
 
+    sp<ITuner> mService;
     sp<IDemux> mDemux;
 };

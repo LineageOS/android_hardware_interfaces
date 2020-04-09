@@ -236,6 +236,15 @@ void Tuner::frontendStopTune(uint32_t frontendId) {
     }
 }
 
+void Tuner::frontendStartTune(uint32_t frontendId) {
+    map<uint32_t, uint32_t>::iterator it = mFrontendToDemux.find(frontendId);
+    uint32_t demuxId;
+    if (it != mFrontendToDemux.end()) {
+        demuxId = it->second;
+        mDemuxes[demuxId]->startFrontendInputLoop();
+    }
+}
+
 }  // namespace implementation
 }  // namespace V1_0
 }  // namespace tuner
