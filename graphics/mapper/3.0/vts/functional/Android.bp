@@ -26,5 +26,5 @@ cc_test {
         "android.hardware.graphics.mapper@3.0",
         "android.hardware.graphics.mapper@3.0-vts",
     ],
-    test_suites: ["general-tests", "vts-core"],
+    test_suites: ["general-tests", "vts"],
 }

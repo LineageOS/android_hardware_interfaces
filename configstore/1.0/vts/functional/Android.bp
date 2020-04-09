@@ -19,6 +19,6 @@ cc_test {
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: ["VtsHalConfigstoreV1_0TargetTest.cpp"],
     static_libs: ["android.hardware.configstore@1.0"],
-    test_suites: ["general-tests", "vts-core"],
+    test_suites: ["general-tests", "vts"],
 }
 

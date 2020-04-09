@@ -71,8 +71,22 @@ cc_test {
         "android.hardware.drm@1.0-helper",
         "libdrmvtshelper",
     ],
+    arch: {
+        arm: {
+            data: [":libvtswidevine-arm-prebuilts"],
+        },
+        arm64: {
+            data: [":libvtswidevine-arm64-prebuilts"],
+        },
+        x86: {
+            data: [":libvtswidevine-x86-prebuilts"],
+        },
+        x86_64: {
+            data: [":libvtswidevine-x86_64-prebuilts"],
+        },
+    },
     test_suites: [
         "general-tests",
-        "vts-core",
+        "vts",
     ],
 }

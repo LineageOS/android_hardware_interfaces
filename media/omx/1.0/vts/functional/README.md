@@ -6,29 +6,27 @@ The scope of the tests presented here is not restricted solely to testing omx ha
 #### master :
 Functionality of master is to enumerate all the omx components (and the roles it supports) available in android media framework.
 
-usage: VtsHalMediaOmxV1\_0TargetMasterTest -I default
+usage: atest VtsHalMediaOmxV1\_0TargetMasterTest
 
 #### component :
 This folder includes test fixtures that tests aspects common to all omx compatible components. For instance, port enabling/disabling, enumerating port formats, state transitions, flush, ..., stay common to all components irrespective of the service they offer. Test fixtures here are directed towards testing these (omx core). Every standard OMX compatible component is expected to pass these tests.
 
-usage: VtsHalMediaOmxV1\_0TargetComponentTest -I default -C <comp name> -R <comp role>
+usage: atest VtsHalMediaOmxV1\_0TargetComponentTest
 
 #### audio :
 This folder includes test fixtures associated with testing audio encoder and decoder components such as simple encoding of a raw clip or decoding of an elementary stream, end of stream test, timestamp deviations test, flush test and so on. These tests are aimed towards testing the plugin that connects the component to the omx core.
 
 usage:
 
-VtsHalMediaOmxV1\_0TargetAudioDecTest -I default -C <comp name> -R audio_decoder.<comp class> -P /data/local/tmp/media/
+atest VtsHalMediaOmxV1\_0TargetAudioDecTest
 
-VtsHalMediaOmxV1\_0TargetAudioEncTest -I default -C <comp name> -R audio_encoder.<comp class> -P /data/local/tmp/media/
+atest VtsHalMediaOmxV1\_0TargetAudioEncTest
 
 #### video :
 This folder includes test fixtures associated with testing video encoder and decoder components such as simple encoding of a raw clip or decoding of an elementary stream, end of stream test, timestamp deviations test, flush test and so on. These tests are aimed towards testing the plugin that connects the component to the omx core.
 
 usage:
 
-VtsHalMediaOmxV1\_0TargetVideoDecTest -I default -C <comp name> -R video_decoder.<comp class> -P /data/local/tmp/media/
+atest VtsHalMediaOmxV1\_0TargetVideoDecTest
 
-VtsHalMediaOmxV1\_0TargetVideoEncTest -I default -C <comp name> -R video_encoder.<comp class> -P /data/local/tmp/media/
-
-While tesing audio/video encoder, decoder components, test fixtures require input files. These input are files are present in the folder 'res'. Before running the tests all the files in 'res' have to be placed in '/data/local/tmp/media' or a path of your choice and this path needs to be provided as an argument to the test application
+atest VtsHalMediaOmxV1\_0TargetVideoEncTest

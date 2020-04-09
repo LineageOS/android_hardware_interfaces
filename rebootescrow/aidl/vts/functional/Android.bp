@@ -28,7 +28,7 @@ cc_test {
         "android.hardware.rebootescrow-cpp",
     ],
     test_suites: [
-        "vts-core",
+        "vts",
     ],
     require_root: true,
 }

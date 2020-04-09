@@ -30,6 +30,6 @@ cc_test {
         "android.hardware.light-cpp",
     ],
     test_suites: [
-        "vts-core",
+        "vts",
     ],
 }

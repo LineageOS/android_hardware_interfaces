@@ -29,5 +29,5 @@ cc_test {
         "libcrypto_static",
         "libsoftkeymasterdevice",
     ],
-    test_suites: ["general-tests", "vts-core"],
+    test_suites: ["general-tests", "vts"],
 }

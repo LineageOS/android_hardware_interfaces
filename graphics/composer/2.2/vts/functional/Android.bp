@@ -61,6 +61,6 @@ cc_test {
     disable_framework: true,
     test_suites: [
         "general-tests",
-        "vts-core",
+        "vts",
     ],
 }

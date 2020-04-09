@@ -24,7 +24,7 @@ cc_test {
     shared_libs: [
         "libaudiofoundation",
     ],
-    // Use test_config for vts-core suite.
+    // Use test_config for vts suite.
     // TODO(b/146104851): Add auto-gen rules and remove it.
     test_config: "VtsHalAudioPolicyV1_0TargetTest.xml",
     cflags: [
@@ -54,6 +54,6 @@ cc_test {
     gtest: true,
     test_suites: [
         "general-tests",
-        "vts-core",
+        "vts",
     ],
 }

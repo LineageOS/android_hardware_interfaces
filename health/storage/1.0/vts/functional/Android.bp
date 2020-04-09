@@ -24,7 +24,7 @@ cc_test {
     ],
     test_suites: [
         "general-tests",
-        "vts-core",
+        "vts",
     ],
     test_config: "VtsHalHealthStorageV1_0TargetTest.config",
 }

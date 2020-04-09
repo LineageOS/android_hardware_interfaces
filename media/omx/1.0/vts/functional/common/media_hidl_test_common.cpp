@@ -56,17 +56,16 @@ using ::android::hardware::hidl_vec;
 using ::android::hardware::hidl_string;
 using ::android::sp;
 
-#include <VtsHalHidlTargetTestBase.h>
 #include <hidlmemory/mapping.h>
 #include <media/hardware/HardwareAPI.h>
 #include <media_hidl_test_common.h>
 #include <memory>
 
 // set component role
-Return<android::hardware::media::omx::V1_0::Status> setRole(
-    sp<IOmxNode> omxNode, const char* role) {
+Return<android::hardware::media::omx::V1_0::Status> setRole(sp<IOmxNode> omxNode,
+                                                            const std::string& role) {
     OMX_PARAM_COMPONENTROLETYPE params;
-    strcpy((char*)params.cRole, role);
+    strcpy((char*)params.cRole, role.c_str());
     return setParam(omxNode, OMX_IndexParamStandardComponentRole, &params);
 }
 
@@ -758,4 +757,47 @@ void testEOS(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
     // test for flag
     EXPECT_EQ(eosFlag, true);
     eosFlag = false;
+}
+
+hidl_vec<IOmx::ComponentInfo> getComponentInfoList(sp<IOmx> omx) {
+    android::hardware::media::omx::V1_0::Status status;
+    hidl_vec<IOmx::ComponentInfo> nodeList;
+    omx->listNodes([&status, &nodeList](android::hardware::media::omx::V1_0::Status _s,
+                                        hidl_vec<IOmx::ComponentInfo> const& _nl) {
+        status = _s;
+        nodeList = _nl;
+    });
+    if (status != android::hardware::media::omx::V1_0::Status::OK) {
+        ALOGE("Failed to get ComponentInfo list for IOmx.");
+    }
+    return nodeList;
+}
+
+// Return all test parameters, a list of tuple of <instance, component, role>
+const std::vector<std::tuple<std::string, std::string, std::string>>& getTestParameters(
+        const std::string& filter) {
+    static std::vector<std::tuple<std::string, std::string, std::string>> parameters;
+
+    auto instances = android::hardware::getAllHalInstanceNames(IOmx::descriptor);
+    for (std::string instance : instances) {
+        sp<IOmx> omx = IOmx::getService(instance);
+        hidl_vec<IOmx::ComponentInfo> componentInfos = getComponentInfoList(omx);
+        for (IOmx::ComponentInfo info : componentInfos) {
+            for (std::string role : info.mRoles) {
+                if (filter.empty()) {
+                    if (kWhiteListRoles.find(role.c_str()) == kWhiteListRoles.end()) {
+                        // This is for component test and the role is not in the white list.
+                        continue;
+                    }
+                } else if (role.find(filter) == std::string::npos) {
+                    // The role doesn't match the given filter, e.g., video_decoder_vp8 role doesn't
+                    // need to run for audio_decoder tests.
+                    continue;
+                }
+                parameters.push_back(std::make_tuple(instance, info.mName.c_str(), role.c_str()));
+            }
+        }
+    }
+
+    return parameters;
 }

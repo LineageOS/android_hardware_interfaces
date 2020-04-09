@@ -19,12 +19,14 @@
 #include <android-base/logging.h>
 #include <android/hardware/bluetooth/a2dp/1.0/IBluetoothAudioHost.h>
 #include <android/hardware/bluetooth/a2dp/1.0/IBluetoothAudioOffload.h>
+#include <gtest/gtest.h>
 #include <hardware/bluetooth.h>
+#include <hidl/GtestPrinter.h>
+#include <hidl/MQDescriptor.h>
+#include <hidl/ServiceManagement.h>
 #include <utils/Log.h>
 
 #include <VtsHalHidlTargetCallbackBase.h>
-#include <VtsHalHidlTargetTestBase.h>
-#include <VtsHalHidlTargetTestEnvBase.h>
 
 using ::android::sp;
 using ::android::hardware::Return;
@@ -38,34 +40,12 @@ using ::android::hardware::bluetooth::a2dp::V1_0::IBluetoothAudioOffload;
 using ::android::hardware::bluetooth::a2dp::V1_0::SampleRate;
 using ::android::hardware::bluetooth::a2dp::V1_0::Status;
 
-// Test environment for Bluetooth HIDL A2DP HAL.
-class BluetoothA2dpHidlEnvironment
-    : public ::testing::VtsHalHidlTargetTestEnvBase {
- public:
-  // get the test environment singleton
-  static BluetoothA2dpHidlEnvironment* Instance() {
-    static BluetoothA2dpHidlEnvironment* instance =
-        new BluetoothA2dpHidlEnvironment;
-    return instance;
-  }
-
-  virtual void registerTestServices() override {
-    registerTestService<IBluetoothAudioOffload>();
-  }
-
- private:
-  BluetoothA2dpHidlEnvironment() {}
-};
-
 // The main test class for Bluetooth A2DP HIDL HAL.
-class BluetoothA2dpHidlTest : public ::testing::VtsHalHidlTargetTestBase {
+class BluetoothA2dpHidlTest : public ::testing::TestWithParam<std::string> {
  public:
   virtual void SetUp() override {
     // currently test passthrough mode only
-    audio_offload =
-        ::testing::VtsHalHidlTargetTestBase::getService<IBluetoothAudioOffload>(
-            BluetoothA2dpHidlEnvironment::Instance()
-                ->getServiceName<IBluetoothAudioOffload>());
+    audio_offload = IBluetoothAudioOffload::getService(GetParam());
     ASSERT_NE(audio_offload, nullptr);
 
     audio_host = new BluetoothAudioHost(*this);
@@ -115,19 +95,16 @@ class BluetoothA2dpHidlTest : public ::testing::VtsHalHidlTargetTestBase {
 };
 
 // Empty test: Initialize()/Close() are called in SetUp()/TearDown().
-TEST_F(BluetoothA2dpHidlTest, InitializeAndClose) {}
+TEST_P(BluetoothA2dpHidlTest, InitializeAndClose) {}
 
 // Test start and end session
-TEST_F(BluetoothA2dpHidlTest, StartAndEndSession) {
+TEST_P(BluetoothA2dpHidlTest, StartAndEndSession) {
   EXPECT_EQ(Status::SUCCESS, audio_offload->startSession(audio_host, codec));
   audio_offload->endSession();
 }
 
-int main(int argc, char** argv) {
-  ::testing::AddGlobalTestEnvironment(BluetoothA2dpHidlEnvironment::Instance());
-  ::testing::InitGoogleTest(&argc, argv);
-  BluetoothA2dpHidlEnvironment::Instance()->init(&argc, argv);
-  int status = RUN_ALL_TESTS();
-  LOG(INFO) << "Test result = " << status;
-  return status;
-}
+INSTANTIATE_TEST_SUITE_P(
+    PerInstance, BluetoothA2dpHidlTest,
+    testing::ValuesIn(android::hardware::getAllHalInstanceNames(
+        IBluetoothAudioOffload::descriptor)),
+    android::hardware::PrintInstanceNameToString);

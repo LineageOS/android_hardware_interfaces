@@ -23,5 +23,5 @@ cc_test {
         "android.hardware.soundtrigger@2.1",
         "android.hardware.soundtrigger@2.2",
     ],
-    test_suites: ["general-tests", "vts-core"],
+    test_suites: ["general-tests", "vts"],
 }
