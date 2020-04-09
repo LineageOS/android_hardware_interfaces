@@ -260,9 +260,14 @@ Return<void> HalProxy::configDirectReport(int32_t sensorHandle, int32_t channelH
                                           RateLevel rate, configDirectReport_cb _hidl_cb) {
     if (mDirectChannelSubHal == nullptr) {
         _hidl_cb(Result::INVALID_OPERATION, -1 /* reportToken */);
+    } else if (sensorHandle == -1 && rate != RateLevel::STOP) {
+        _hidl_cb(Result::BAD_VALUE, -1 /* reportToken */);
     } else {
-        mDirectChannelSubHal->configDirectReport(clearSubHalIndex(sensorHandle), channelHandle,
-                                                 rate, _hidl_cb);
+        // -1 denotes all sensors should be disabled
+        if (sensorHandle != -1) {
+            sensorHandle = clearSubHalIndex(sensorHandle);
+        }
+        mDirectChannelSubHal->configDirectReport(sensorHandle, channelHandle, rate, _hidl_cb);
     }
     return Return<void>();
 }
