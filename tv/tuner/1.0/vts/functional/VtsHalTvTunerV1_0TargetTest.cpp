@@ -889,6 +889,7 @@ class TunerHidlTest : public testing::TestWithParam<std::string> {
                                        RecordSettings recordSetting,
                                        vector<string> goldenOutputFiles);
     AssertionResult broadcastDataFlowTest(vector<string> goldenOutputFiles);
+    void broadcastFilterTest(int selectedFilter, int feId);
 
     FilterEventType getFilterEventType(DemuxFilterType type);
 };
@@ -1183,6 +1184,28 @@ AssertionResult TunerHidlTest::broadcastDataFlowTest(vector<string> /*goldenOutp
     return success();
 }
 
+void TunerHidlTest::broadcastFilterTest(int selectedFilter, int feId) {
+    ASSERT_TRUE(openFrontend(feId));
+    ASSERT_TRUE(setFrontendCallback());
+    ASSERT_TRUE(openDemux());
+    ASSERT_TRUE(setDemuxFrontendDataSource(feId));
+    ASSERT_TRUE(openFilterInDemux(filterArray[selectedFilter].type));
+    uint32_t filterId;
+    ASSERT_TRUE(getNewlyOpenedFilterId(filterId));
+    ASSERT_TRUE(configFilter(filterArray[selectedFilter].setting, filterId));
+    ASSERT_TRUE(getFilterMQDescriptor(filterId));
+    ASSERT_TRUE(startFilter(filterId));
+    // tune test
+    ASSERT_TRUE(tuneFrontend(frontendArray[DVBT]));
+    // broadcast data flow test
+    ASSERT_TRUE(broadcastDataFlowTest(goldenOutputFiles));
+    ASSERT_TRUE(stopTuneFrontend());
+    ASSERT_TRUE(stopFilter(filterId));
+    ASSERT_TRUE(closeFilter(filterId));
+    ASSERT_TRUE(closeDemux());
+    ASSERT_TRUE(closeFrontend());
+}
+
 /*
  * TODO: re-enable the tests after finalizing the test refactoring.
  */
@@ -1401,16 +1424,14 @@ TEST_P(TunerHidlTest, TuneFrontend) {
     description("Tune one Frontend with specific setting and check Lock event");
     ASSERT_TRUE(getFrontendIds());
     ASSERT_TRUE(mFeIds.size() > 0);
-    ALOGW("[vts] expected Frontend type is %d", frontendArray[0].type);
     for (size_t i = 0; i < mFeIds.size(); i++) {
         ASSERT_TRUE(getFrontendInfo(mFeIds[i]));
-        ALOGW("[vts] Frontend type is %d", mFrontendInfo.type);
-        if (mFrontendInfo.type != frontendArray[0].type) {
+        if (mFrontendInfo.type != frontendArray[DVBT].type) {
             continue;
         }
         ASSERT_TRUE(openFrontend(mFeIds[i]));
         ASSERT_TRUE(setFrontendCallback());
-        ASSERT_TRUE(tuneFrontend(frontendArray[0]));
+        ASSERT_TRUE(tuneFrontend(frontendArray[DVBT]));
         ASSERT_TRUE(stopTuneFrontend());
         ASSERT_TRUE(closeFrontend());
         break;
@@ -1424,12 +1445,12 @@ TEST_P(TunerHidlTest, AutoScanFrontend) {
 
     for (size_t i = 0; i < mFeIds.size(); i++) {
         ASSERT_TRUE(getFrontendInfo(mFeIds[i]));
-        if (mFrontendInfo.type != frontendArray[0].type) {
+        if (mFrontendInfo.type != frontendScanArray[SCAN_DVBT].type) {
             continue;
         }
         ASSERT_TRUE(openFrontend(mFeIds[i]));
         ASSERT_TRUE(setFrontendCallback());
-        ASSERT_TRUE(scanFrontend(frontendScanArray[0], FrontendScanType::SCAN_AUTO));
+        ASSERT_TRUE(scanFrontend(frontendScanArray[SCAN_DVBT], FrontendScanType::SCAN_AUTO));
         ASSERT_TRUE(stopScanFrontend());
         ASSERT_TRUE(closeFrontend());
         break;
@@ -1443,12 +1464,12 @@ TEST_P(TunerHidlTest, BlindScanFrontend) {
 
     for (size_t i = 0; i < mFeIds.size(); i++) {
         ASSERT_TRUE(getFrontendInfo(mFeIds[i]));
-        if (mFrontendInfo.type != frontendArray[0].type) {
+        if (mFrontendInfo.type != frontendScanArray[SCAN_DVBT].type) {
             continue;
         }
         ASSERT_TRUE(openFrontend(mFeIds[i]));
         ASSERT_TRUE(setFrontendCallback());
-        ASSERT_TRUE(scanFrontend(frontendScanArray[0], FrontendScanType::SCAN_BLIND));
+        ASSERT_TRUE(scanFrontend(frontendScanArray[SCAN_DVBT], FrontendScanType::SCAN_BLIND));
         ASSERT_TRUE(stopScanFrontend());
         ASSERT_TRUE(closeFrontend());
         break;
@@ -1464,7 +1485,7 @@ TEST_P(TunerHidlTest, OpenDemuxWithFrontendDataSource) {
 
     for (size_t i = 0; i < mFeIds.size(); i++) {
         ASSERT_TRUE(getFrontendInfo(mFeIds[i]));
-        if (mFrontendInfo.type != frontendArray[0].type) {
+        if (mFrontendInfo.type != frontendArray[DVBT].type) {
             continue;
         }
         ASSERT_TRUE(openFrontend(mFeIds[i]));
@@ -1484,14 +1505,14 @@ TEST_P(TunerHidlTest, OpenFilterInDemux) {
 
     for (size_t i = 0; i < mFeIds.size(); i++) {
         ASSERT_TRUE(getFrontendInfo(mFeIds[i]));
-        if (mFrontendInfo.type != frontendArray[0].type) {
+        if (mFrontendInfo.type != frontendArray[DVBT].type) {
             continue;
         }
         ASSERT_TRUE(openFrontend(mFeIds[i]));
         ASSERT_TRUE(setFrontendCallback());
         ASSERT_TRUE(openDemux());
         ASSERT_TRUE(setDemuxFrontendDataSource(mFeIds[i]));
-        ASSERT_TRUE(openFilterInDemux(filterArray[0].type));
+        ASSERT_TRUE(openFilterInDemux(filterArray[TS_VIDEO0].type));
         uint32_t filterId;
         ASSERT_TRUE(getNewlyOpenedFilterId(filterId));
         ASSERT_TRUE(closeFilter(filterId));
@@ -1508,17 +1529,17 @@ TEST_P(TunerHidlTest, StartFilterInDemux) {
 
     for (size_t i = 0; i < mFeIds.size(); i++) {
         ASSERT_TRUE(getFrontendInfo(mFeIds[i]));
-        if (mFrontendInfo.type != frontendArray[0].type) {
+        if (mFrontendInfo.type != frontendArray[DVBT].type) {
             continue;
         }
         ASSERT_TRUE(openFrontend(mFeIds[i]));
         ASSERT_TRUE(setFrontendCallback());
         ASSERT_TRUE(openDemux());
         ASSERT_TRUE(setDemuxFrontendDataSource(mFeIds[i]));
-        ASSERT_TRUE(openFilterInDemux(filterArray[0].type));
+        ASSERT_TRUE(openFilterInDemux(filterArray[TS_VIDEO0].type));
         uint32_t filterId;
         ASSERT_TRUE(getNewlyOpenedFilterId(filterId));
-        ASSERT_TRUE(configFilter(filterArray[0].setting, filterId));
+        ASSERT_TRUE(configFilter(filterArray[TS_VIDEO0].setting, filterId));
         ASSERT_TRUE(getFilterMQDescriptor(filterId));
         ASSERT_TRUE(startFilter(filterId));
         ASSERT_TRUE(stopFilter(filterId));
@@ -1546,35 +1567,62 @@ TEST_P(TunerHidlTest, CloseDescrambler) {
 /*============================== End Descrambler Tests ==============================*/
 
 /*============================== Start Data Flow Tests ==============================*/
-TEST_P(TunerHidlTest, BroadcastDataFlowWithAudioFilterTest) {
-    description("Open Demux with a Frontend as its data source.");
+TEST_P(TunerHidlTest, BroadcastDataFlowVideoFilterTest) {
+    description("Test Video Filter functionality in Broadcast use case.");
     ASSERT_TRUE(getFrontendIds());
     ASSERT_TRUE(mFeIds.size() > 0);
 
     for (size_t i = 0; i < mFeIds.size(); i++) {
         ASSERT_TRUE(getFrontendInfo(mFeIds[i]));
-        if (mFrontendInfo.type != frontendArray[0].type) {
+        if (mFrontendInfo.type != frontendArray[DVBT].type) {
             continue;
         }
-        ASSERT_TRUE(openFrontend(mFeIds[i]));
-        ASSERT_TRUE(setFrontendCallback());
-        ASSERT_TRUE(openDemux());
-        ASSERT_TRUE(setDemuxFrontendDataSource(mFeIds[i]));
-        ASSERT_TRUE(openFilterInDemux(filterArray[0].type));
-        uint32_t filterId;
-        ASSERT_TRUE(getNewlyOpenedFilterId(filterId));
-        ASSERT_TRUE(configFilter(filterArray[0].setting, filterId));
-        ASSERT_TRUE(getFilterMQDescriptor(filterId));
-        ASSERT_TRUE(startFilter(filterId));
-        // tune test
-        ASSERT_TRUE(tuneFrontend(frontendArray[0]));
-        // broadcast data flow test
-        ASSERT_TRUE(broadcastDataFlowTest(goldenOutputFiles));
-        ASSERT_TRUE(stopTuneFrontend());
-        ASSERT_TRUE(stopFilter(filterId));
-        ASSERT_TRUE(closeFilter(filterId));
-        ASSERT_TRUE(closeDemux());
-        ASSERT_TRUE(closeFrontend());
+        broadcastFilterTest(TS_VIDEO1, mFeIds[i]);
+        break;
+    }
+}
+
+TEST_P(TunerHidlTest, BroadcastDataFlowAudioFilterTest) {
+    description("Test Audio Filter functionality in Broadcast use case.");
+    ASSERT_TRUE(getFrontendIds());
+    ASSERT_TRUE(mFeIds.size() > 0);
+
+    for (size_t i = 0; i < mFeIds.size(); i++) {
+        ASSERT_TRUE(getFrontendInfo(mFeIds[i]));
+        if (mFrontendInfo.type != frontendArray[DVBT].type) {
+            continue;
+        }
+        broadcastFilterTest(TS_AUDIO0, mFeIds[i]);
+        break;
+    }
+}
+
+TEST_P(TunerHidlTest, BroadcastDataFlowTsFilterTest) {
+    description("Test TS Filter functionality in Broadcast use case.");
+    ASSERT_TRUE(getFrontendIds());
+    ASSERT_TRUE(mFeIds.size() > 0);
+
+    for (size_t i = 0; i < mFeIds.size(); i++) {
+        ASSERT_TRUE(getFrontendInfo(mFeIds[i]));
+        if (mFrontendInfo.type != frontendArray[DVBT].type) {
+            continue;
+        }
+        broadcastFilterTest(TS_TS0, mFeIds[i]);
+        break;
+    }
+}
+
+TEST_P(TunerHidlTest, BroadcastDataFlowSectionFilterTest) {
+    description("Test Section Filter functionality in Broadcast use case.");
+    ASSERT_TRUE(getFrontendIds());
+    ASSERT_TRUE(mFeIds.size() > 0);
+
+    for (size_t i = 0; i < mFeIds.size(); i++) {
+        ASSERT_TRUE(getFrontendInfo(mFeIds[i]));
+        if (mFrontendInfo.type != frontendArray[DVBT].type) {
+            continue;
+        }
+        broadcastFilterTest(TS_SECTION0, mFeIds[i]);
         break;
     }
 }
@@ -1671,20 +1719,20 @@ TEST_P(TunerHidlTest, AvBufferTest) {
 
     for (size_t i = 0; i < mFeIds.size(); i++) {
         ASSERT_TRUE(getFrontendInfo(mFeIds[i]));
-        if (mFrontendInfo.type != frontendArray[1].type) {
+        if (mFrontendInfo.type != frontendArray[DVBS].type) {
             continue;
         }
         ASSERT_TRUE(openFrontend(mFeIds[i]));
         ASSERT_TRUE(setFrontendCallback());
         ASSERT_TRUE(openDemux());
-        ASSERT_TRUE(openFilterInDemux(filterArray[0].type));
+        ASSERT_TRUE(openFilterInDemux(filterArray[TS_VIDEO0].type));
         uint32_t filterId;
         ASSERT_TRUE(getNewlyOpenedFilterId(filterId));
-        ASSERT_TRUE(configFilter(filterArray[0].setting, filterId));
+        ASSERT_TRUE(configFilter(filterArray[TS_VIDEO0].setting, filterId));
         ASSERT_TRUE(startFilter(filterId));
         ASSERT_TRUE(setDemuxFrontendDataSource(mFeIds[i]));
         // tune test
-        ASSERT_TRUE(tuneFrontend(frontendArray[1]));
+        ASSERT_TRUE(tuneFrontend(frontendArray[DVBS]));
         // broadcast data flow test
         ASSERT_TRUE(broadcastDataFlowTest(goldenOutputFiles));
         ASSERT_TRUE(stopTuneFrontend());
