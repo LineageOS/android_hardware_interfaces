@@ -68,6 +68,7 @@ class Tuner : public ITuner {
     virtual ~Tuner();
     // Static mFrontends array to maintain local frontends information
     vector<sp<Frontend>> mFrontends;
+    vector<FrontendInfo::FrontendCapabilities> mFrontendCaps;
     std::map<uint32_t, uint32_t> mFrontendToDemux;
     std::map<uint32_t, sp<Demux>> mDemuxes;
     // To maintain how many Frontends we have
