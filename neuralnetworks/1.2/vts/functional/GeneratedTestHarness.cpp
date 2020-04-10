@@ -350,7 +350,7 @@ void EvaluatePreparedModel(const sp<IPreparedModel>& preparedModel, const TestMo
         outputTypesList = {OutputType::FULLY_SPECIFIED};
         measureTimingList = {MeasureTiming::NO, MeasureTiming::YES};
         executorList = {Executor::ASYNC, Executor::SYNC, Executor::BURST};
-        memoryTypeList = {MemoryType::ASHMEM, MemoryType::BLOB_AHWB};
+        memoryTypeList = {MemoryType::ASHMEM};
     }
 
     for (const OutputType outputType : outputTypesList) {
