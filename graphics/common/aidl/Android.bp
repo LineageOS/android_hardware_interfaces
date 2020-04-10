@@ -21,4 +21,5 @@ aidl_interface {
             enabled: false,
         },
     },
+    versions: ["1"],
 }
