@@ -27,13 +27,10 @@
 #include <android/log.h>
 
 #include <hwbinder/IPCThreadState.h>
-
+#include <private/android_filesystem_config.h>
 #include <utils/SystemClock.h>
 
 #include "VehicleUtils.h"
-
-// TODO: figure out how to include private/android_filesystem_config.h instead...
-#define AID_ROOT 0 /* traditional unix root user */
 
 namespace android {
 namespace hardware {
