@@ -38,9 +38,6 @@ void RadioHidlTest_v1_3::SetUp() {
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_3->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_v1_3->rspInfo.serial);
     EXPECT_EQ(RadioError::NONE, radioRsp_v1_3->rspInfo.error);
-
-    /* Enforce Vts Testing with Sim Status Present only. */
-    EXPECT_EQ(CardState::PRESENT, cardStatus.base.cardState);
 }
 
 /*
