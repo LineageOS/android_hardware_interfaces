@@ -107,7 +107,7 @@ class GraphicsMapperHidlTest
         ASSERT_NO_FATAL_FAILURE(decode(descriptorInfo, vec));
     }
 
-    void verifyDummyDescriptorInfoPlaneLayouts(const std::vector<PlaneLayout>& planeLayouts) {
+    void verifyRGBA8888PlaneLayouts(const std::vector<PlaneLayout>& planeLayouts) {
         ASSERT_EQ(1, planeLayouts.size());
 
         const auto& planeLayout = planeLayouts.front();
@@ -191,7 +191,7 @@ class GraphicsMapperHidlTest
     }
 
     void getAndroidYCbCr(const native_handle_t* bufferHandle, uint8_t* data,
-                         android_ycbcr* outYCbCr) {
+                         android_ycbcr* outYCbCr, int64_t* hSubsampling, int64_t* vSubsampling) {
         hidl_vec<uint8_t> vec;
         ASSERT_EQ(Error::NONE,
                   mGralloc->get(bufferHandle, gralloc4::MetadataType_PlaneLayouts, &vec));
@@ -241,6 +241,14 @@ class GraphicsMapperHidlTest
                             ASSERT_EQ(outYCbCr->chroma_step, sampleIncrementInBytes);
                         }
 
+                        if (*hSubsampling == 0 && *vSubsampling == 0) {
+                            *hSubsampling = planeLayout.horizontalSubsampling;
+                            *vSubsampling = planeLayout.verticalSubsampling;
+                        } else {
+                            ASSERT_EQ(*hSubsampling, planeLayout.horizontalSubsampling);
+                            ASSERT_EQ(*vSubsampling, planeLayout.verticalSubsampling);
+                        }
+
                         if (type == PlaneLayoutComponentType::CB) {
                             ASSERT_EQ(nullptr, outYCbCr->cb);
                             outYCbCr->cb = tmpData;
@@ -268,8 +276,16 @@ class GraphicsMapperHidlTest
         }
     }
 
-    void verifyRGBA8888(uint8_t* data, uint32_t height, size_t strideInBytes, size_t widthInBytes,
-                        uint32_t seed = 0) {
+    void verifyRGBA8888(const native_handle_t* bufferHandle, uint8_t* data, uint32_t height,
+                        size_t strideInBytes, size_t widthInBytes, uint32_t seed = 0) {
+        hidl_vec<uint8_t> vec;
+        ASSERT_EQ(Error::NONE,
+                  mGralloc->get(bufferHandle, gralloc4::MetadataType_PlaneLayouts, &vec));
+        std::vector<PlaneLayout> planeLayouts;
+        ASSERT_EQ(NO_ERROR, gralloc4::decodePlaneLayouts(vec, &planeLayouts));
+
+        verifyRGBA8888PlaneLayouts(planeLayouts);
+
         for (uint32_t y = 0; y < height; y++) {
             for (size_t i = 0; i < widthInBytes; i++) {
                 EXPECT_EQ(static_cast<uint8_t>(y + seed), data[i]);
@@ -534,7 +550,9 @@ TEST_P(GraphicsMapperHidlTest, LockUnlockBasic) {
     // lock again for reading
     ASSERT_NO_FATAL_FAILURE(
             data = static_cast<uint8_t*>(mGralloc->lock(bufferHandle, info.usage, region, fence)));
-    ASSERT_NO_FATAL_FAILURE(verifyRGBA8888(data, info.height, stride * 4, info.width * 4));
+
+    ASSERT_NO_FATAL_FAILURE(
+            verifyRGBA8888(bufferHandle, data, info.height, stride * 4, info.width * 4));
 
     ASSERT_NO_FATAL_FAILURE(fence = mGralloc->unlock(bufferHandle));
     if (fence >= 0) {
@@ -542,9 +560,9 @@ TEST_P(GraphicsMapperHidlTest, LockUnlockBasic) {
     }
 }
 
-TEST_P(GraphicsMapperHidlTest, Lock_YCBCR_420_888) {
+TEST_P(GraphicsMapperHidlTest, Lock_YCRCB_420_SP) {
     auto info = mDummyDescriptorInfo;
-    info.format = PixelFormat::YCBCR_420_888;
+    info.format = PixelFormat::YCRCB_420_SP;
 
     const native_handle_t* bufferHandle;
     uint32_t stride;
@@ -560,7 +578,10 @@ TEST_P(GraphicsMapperHidlTest, Lock_YCBCR_420_888) {
             data = static_cast<uint8_t*>(mGralloc->lock(bufferHandle, info.usage, region, fence)));
 
     android_ycbcr yCbCr;
-    ASSERT_NO_FATAL_FAILURE(getAndroidYCbCr(bufferHandle, data, &yCbCr));
+    int64_t hSubsampling = 0;
+    int64_t vSubsampling = 0;
+    ASSERT_NO_FATAL_FAILURE(
+            getAndroidYCbCr(bufferHandle, data, &yCbCr, &hSubsampling, &vSubsampling));
 
     auto yData = static_cast<uint8_t*>(yCbCr.y);
     auto cbData = static_cast<uint8_t*>(yCbCr.cb);
@@ -570,6 +591,10 @@ TEST_P(GraphicsMapperHidlTest, Lock_YCBCR_420_888) {
     auto chromaStep = yCbCr.chroma_step;
 
     constexpr uint32_t kCbCrSubSampleFactor = 2;
+    ASSERT_EQ(crData + 1, cbData);
+    ASSERT_EQ(2, chromaStep);
+    ASSERT_EQ(kCbCrSubSampleFactor, hSubsampling);
+    ASSERT_EQ(kCbCrSubSampleFactor, vSubsampling);
 
     for (uint32_t y = 0; y < info.height; y++) {
         for (uint32_t x = 0; x < info.width; x++) {
@@ -577,13 +602,15 @@ TEST_P(GraphicsMapperHidlTest, Lock_YCBCR_420_888) {
 
             yData[yStride * y + x] = val;
 
-            if (y % kCbCrSubSampleFactor && x % kCbCrSubSampleFactor == 0) {
-                uint32_t subSampleX = x / kCbCrSubSampleFactor;
-                uint32_t subSampleY = y / kCbCrSubSampleFactor;
-                auto subSampleVal = static_cast<uint8_t>(info.height * subSampleY + subSampleX);
+            if (y % vSubsampling == 0 && x % hSubsampling == 0) {
+                uint32_t subSampleX = x / hSubsampling;
+                uint32_t subSampleY = y / vSubsampling;
+                const auto subSampleOffset = cStride * subSampleY + chromaStep * subSampleX;
+                const auto subSampleVal =
+                        static_cast<uint8_t>(info.height * subSampleY + subSampleX);
 
-                cbData[cStride * subSampleY + chromaStep * subSampleX] = subSampleVal;
-                crData[cStride * subSampleY + chromaStep * subSampleX] = subSampleVal;
+                cbData[subSampleOffset] = subSampleVal;
+                crData[subSampleOffset] = subSampleVal + 1;
             }
         }
     }
@@ -594,24 +621,28 @@ TEST_P(GraphicsMapperHidlTest, Lock_YCBCR_420_888) {
     ASSERT_NO_FATAL_FAILURE(
             data = static_cast<uint8_t*>(mGralloc->lock(bufferHandle, info.usage, region, fence)));
 
-    ASSERT_NO_FATAL_FAILURE(getAndroidYCbCr(bufferHandle, data, &yCbCr));
+    ASSERT_NO_FATAL_FAILURE(
+            getAndroidYCbCr(bufferHandle, data, &yCbCr, &hSubsampling, &vSubsampling));
 
     yData = static_cast<uint8_t*>(yCbCr.y);
     cbData = static_cast<uint8_t*>(yCbCr.cb);
     crData = static_cast<uint8_t*>(yCbCr.cr);
+
     for (uint32_t y = 0; y < info.height; y++) {
         for (uint32_t x = 0; x < info.width; x++) {
             auto val = static_cast<uint8_t>(info.height * y + x);
 
             EXPECT_EQ(val, yData[yStride * y + x]);
 
-            if (y % kCbCrSubSampleFactor == 0 && x % kCbCrSubSampleFactor == 0) {
-                uint32_t subSampleX = x / kCbCrSubSampleFactor;
-                uint32_t subSampleY = y / kCbCrSubSampleFactor;
-                auto subSampleVal = static_cast<uint8_t>(info.height * subSampleY + subSampleX);
+            if (y % vSubsampling == 0 && x % hSubsampling == 0) {
+                uint32_t subSampleX = x / hSubsampling;
+                uint32_t subSampleY = y / vSubsampling;
+                const auto subSampleOffset = cStride * subSampleY + chromaStep * subSampleX;
+                const auto subSampleVal =
+                        static_cast<uint8_t>(info.height * subSampleY + subSampleX);
 
-                EXPECT_EQ(subSampleVal, cbData[cStride * subSampleY + chromaStep * subSampleX]);
-                EXPECT_EQ(subSampleVal, crData[cStride * subSampleY + chromaStep * subSampleX]);
+                EXPECT_EQ(subSampleVal, cbData[subSampleOffset]);
+                EXPECT_EQ(subSampleVal + 1, crData[subSampleOffset]);
             }
         }
     }
@@ -744,7 +775,8 @@ TEST_P(GraphicsMapperHidlTest, FlushRereadBasic) {
 
     ASSERT_NO_FATAL_FAILURE(mGralloc->rereadLockedBuffer(readBufferHandle));
 
-    ASSERT_NO_FATAL_FAILURE(verifyRGBA8888(readData, info.height, stride * 4, info.width * 4));
+    ASSERT_NO_FATAL_FAILURE(
+            verifyRGBA8888(readBufferHandle, readData, info.height, stride * 4, info.width * 4));
 
     ASSERT_NO_FATAL_FAILURE(fence = mGralloc->unlock(readBufferHandle));
     if (fence >= 0) {
@@ -1005,7 +1037,7 @@ TEST_P(GraphicsMapperHidlTest, GetPlaneLayouts) {
     std::vector<PlaneLayout> planeLayouts;
     ASSERT_EQ(NO_ERROR, gralloc4::decodePlaneLayouts(vec, &planeLayouts));
 
-    ASSERT_NO_FATAL_FAILURE(verifyDummyDescriptorInfoPlaneLayouts(planeLayouts));
+    ASSERT_NO_FATAL_FAILURE(verifyRGBA8888PlaneLayouts(planeLayouts));
 }
 
 /**
@@ -1870,7 +1902,7 @@ TEST_P(GraphicsMapperHidlTest, GetFromBufferDescriptorInfoPlaneLayouts) {
     if (ret == Error::NONE) {
         std::vector<PlaneLayout> planeLayouts;
         ASSERT_EQ(NO_ERROR, gralloc4::decodePlaneLayouts(vec, &planeLayouts));
-        ASSERT_NO_FATAL_FAILURE(verifyDummyDescriptorInfoPlaneLayouts(planeLayouts));
+        ASSERT_NO_FATAL_FAILURE(verifyRGBA8888PlaneLayouts(planeLayouts));
     } else {
         ASSERT_EQ(Error::UNSUPPORTED, ret);
     }
