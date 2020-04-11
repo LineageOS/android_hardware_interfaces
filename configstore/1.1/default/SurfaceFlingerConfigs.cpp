@@ -16,6 +16,7 @@
 
 #include "SurfaceFlingerConfigs.h"
 
+#include <android-base/properties.h>
 #include <android/hardware/configstore/1.1/types.h>
 #include <log/log.h>
 
@@ -163,6 +164,16 @@ Return<void> SurfaceFlingerConfigs::primaryDisplayOrientation(
     specified = true;
     orientation = PRIMARY_DISPLAY_ORIENTATION;
 #endif
+
+    int prop_orientation = std::stoi(android::base::GetProperty(
+            "ro.surface_flinger.primary_display_orientation", "0"));
+    if (prop_orientation == 0 || prop_orientation == 90 ||
+        prop_orientation == 180 || prop_orientation == 270) {
+        specified = true;
+        orientation = prop_orientation;
+    } else {
+        ALOGE("Primary display orientation property must be 0/90/180/270");
+    }
 
     switch (orientation) {
         case 0: {
