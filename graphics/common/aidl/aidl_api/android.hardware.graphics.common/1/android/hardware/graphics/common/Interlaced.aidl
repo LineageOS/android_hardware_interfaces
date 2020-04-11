@@ -15,11 +15,10 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.tests.extension.vibrator;
-@VintfStability
-interface ICustomVibrator {
-  int getVendorCapabilities();
-  void setDirectionality(android.hardware.tests.extension.vibrator.Directionality directionality);
-  int perform(android.hardware.tests.extension.vibrator.VendorEffect effect, android.hardware.vibrator.IVibratorCallback callback);
-  const int CAP_VENDOR_DIRECTIONALITY = 1;
+package android.hardware.graphics.common;
+@Backing(type="long") @VintfStability
+enum Interlaced {
+  NONE = 0,
+  TOP_BOTTOM = 1,
+  RIGHT_LEFT = 2,
 }

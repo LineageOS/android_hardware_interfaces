@@ -15,10 +15,9 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.tests.extension.vibrator;
-@Backing(type="int") @VintfStability
-enum Directionality {
+package android.hardware.graphics.common;
+@Backing(type="long") @VintfStability
+enum Compression {
   NONE = 0,
-  TRANSVERSE = 1,
-  LONGITUDINAL = 2,
+  DISPLAY_STREAM_COMPRESSION = 1,
 }

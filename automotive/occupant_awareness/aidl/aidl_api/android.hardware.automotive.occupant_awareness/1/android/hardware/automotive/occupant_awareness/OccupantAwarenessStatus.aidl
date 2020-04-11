@@ -15,9 +15,11 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.tests.extension.vibrator;
-@Backing(type="int") @VintfStability
-enum VendorEffect {
-  CRACKLE = 0,
-  WIGGLE = 1,
+package android.hardware.automotive.occupant_awareness;
+@Backing(type="byte") @VintfStability
+enum OccupantAwarenessStatus {
+  READY = 0,
+  NOT_SUPPORTED = 1,
+  NOT_INITIALIZED = 2,
+  FAILURE = 3,
 }
