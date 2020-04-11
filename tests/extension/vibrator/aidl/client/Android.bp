@@ -3,7 +3,7 @@
 // server for example.
 
 cc_test {
-    name: "test-android.hardware.vibrator-ext-client",
+    name: "android.hardware.tests.extension.vibrator-client",
     srcs: [
         // system code has the option to use the unstable C++ libbinder API
         // or the NDK one. For maximum code portability, using the ndk client
@@ -15,10 +15,10 @@ cc_test {
         "libbinder",
         "libutils",
         "android.hardware.vibrator-cpp",
-        "test-android.hardware.vibrator-ext-cpp",
+        "android.hardware.tests.extension.vibrator-cpp",
 
         "libbinder_ndk",
         "android.hardware.vibrator-ndk_platform",
-        "test-android.hardware.vibrator-ext-ndk_platform",
+        "android.hardware.tests.extension.vibrator-ndk_platform",
     ],
 }
