@@ -1314,13 +1314,18 @@ WifiStatus WifiChip::registerDebugRingBufferCallback() {
                 LOG(ERROR) << "Error converting ring buffer status";
                 return;
             }
-            const auto& target = shared_ptr_this->ringbuffer_map_.find(name);
-            if (target != shared_ptr_this->ringbuffer_map_.end()) {
-                Ringbuffer& cur_buffer = target->second;
-                cur_buffer.append(data);
-            } else {
-                LOG(ERROR) << "Ringname " << name << " not found";
-                return;
+            {
+                std::unique_lock<std::mutex> lk(shared_ptr_this->lock_t);
+                const auto& target =
+                    shared_ptr_this->ringbuffer_map_.find(name);
+                if (target != shared_ptr_this->ringbuffer_map_.end()) {
+                    Ringbuffer& cur_buffer = target->second;
+                    cur_buffer.append(data);
+                } else {
+                    LOG(ERROR) << "Ringname " << name << " not found";
+                    return;
+                }
+                // unlock
             }
         };
     legacy_hal::wifi_error legacy_status =
@@ -1595,25 +1600,29 @@ bool WifiChip::writeRingbufferFilesInternal() {
         return false;
     }
     // write ringbuffers to file
-    for (const auto& item : ringbuffer_map_) {
-        const Ringbuffer& cur_buffer = item.second;
-        if (cur_buffer.getData().empty()) {
-            continue;
-        }
-        const std::string file_path_raw =
-            kTombstoneFolderPath + item.first + "XXXXXXXXXX";
-        const int dump_fd = mkstemp(makeCharVec(file_path_raw).data());
-        if (dump_fd == -1) {
-            PLOG(ERROR) << "create file failed";
-            return false;
-        }
-        unique_fd file_auto_closer(dump_fd);
-        for (const auto& cur_block : cur_buffer.getData()) {
-            if (write(dump_fd, cur_block.data(),
-                      sizeof(cur_block[0]) * cur_block.size()) == -1) {
-                PLOG(ERROR) << "Error writing to file";
+    {
+        std::unique_lock<std::mutex> lk(lock_t);
+        for (const auto& item : ringbuffer_map_) {
+            const Ringbuffer& cur_buffer = item.second;
+            if (cur_buffer.getData().empty()) {
+                continue;
+            }
+            const std::string file_path_raw =
+                kTombstoneFolderPath + item.first + "XXXXXXXXXX";
+            const int dump_fd = mkstemp(makeCharVec(file_path_raw).data());
+            if (dump_fd == -1) {
+                PLOG(ERROR) << "create file failed";
+                return false;
+            }
+            unique_fd file_auto_closer(dump_fd);
+            for (const auto& cur_block : cur_buffer.getData()) {
+                if (write(dump_fd, cur_block.data(),
+                          sizeof(cur_block[0]) * cur_block.size()) == -1) {
+                    PLOG(ERROR) << "Error writing to file";
+                }
             }
         }
+        // unlock
     }
     return true;
 }
