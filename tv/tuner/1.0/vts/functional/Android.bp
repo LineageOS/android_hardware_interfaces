@@ -20,6 +20,8 @@ cc_test {
     srcs: [
         "VtsHalTvTunerV1_0TargetTest.cpp",
         "FrontendTests.cpp",
+        "DemuxTests.cpp",
+        "FilterTests.cpp",
     ],
     static_libs: [
         "android.hardware.tv.tuner@1.0",
