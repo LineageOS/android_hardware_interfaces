@@ -15,6 +15,9 @@
  */
 
 #define LOG_TAG "CamDev@1.0-impl"
+
+#include <fcntl.h>
+
 #include <hardware/camera.h>
 #include <hardware/gralloc1.h>
 #include <hidlmemory/mapping.h>
