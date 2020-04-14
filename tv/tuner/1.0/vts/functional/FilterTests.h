@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-#include <VtsHalHidlTargetTestBase.h>
-#include <VtsHalHidlTargetTestEnvBase.h>
 #include <android-base/logging.h>
 #include <android/hardware/tv/tuner/1.0/IFilter.h>
 #include <android/hardware/tv/tuner/1.0/IFilterCallback.h>
@@ -63,6 +61,8 @@ using android::hardware::tv::tuner::V1_0::ITuner;
 using android::hardware::tv::tuner::V1_0::Result;
 
 using ::testing::AssertionResult;
+
+using namespace std;
 
 enum FilterEventType : uint8_t {
     UNDEFINED,

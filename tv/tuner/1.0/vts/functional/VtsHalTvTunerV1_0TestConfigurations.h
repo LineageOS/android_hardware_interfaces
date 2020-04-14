@@ -38,6 +38,8 @@ using android::hardware::tv::tuner::V1_0::FrontendDvbtTransmissionMode;
 using android::hardware::tv::tuner::V1_0::FrontendSettings;
 using android::hardware::tv::tuner::V1_0::FrontendType;
 
+using namespace std;
+
 typedef enum {
     TS_VIDEO0,
     TS_VIDEO1,
