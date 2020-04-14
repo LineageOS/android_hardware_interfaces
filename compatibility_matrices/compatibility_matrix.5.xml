@@ -72,7 +72,7 @@
         <name>android.hardware.automotive.sv</name>
         <version>1.0</version>
         <interface>
-            <name>ISurroundView</name>
+            <name>ISurroundViewService</name>
             <instance>default</instance>
         </interface>
     </hal>
