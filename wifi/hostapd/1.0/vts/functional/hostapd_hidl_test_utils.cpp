@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <VtsHalHidlTargetTestBase.h>
 #include <android-base/logging.h>
 
 #include <android/hidl/manager/1.0/IServiceManager.h>
