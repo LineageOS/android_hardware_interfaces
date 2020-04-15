@@ -898,6 +898,8 @@ TEST_P(SensorsHidlTest, NoStaleEvents) {
     callback.waitForEvents(sensors, kFiveHundredMs + (5 * maxMinDelay));
     activateAllSensors(false);
 
+    getEnvironment()->unregisterCallback();
+
     for (const SensorInfo& sensor : sensors) {
         // Skip sensors that did not previously report an event
         if (lastEventTimestampMap.find(sensor.sensorHandle) == lastEventTimestampMap.end()) {
