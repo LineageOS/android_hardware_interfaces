@@ -107,6 +107,15 @@ std::string getP2pIfaceName() {
     return buffer.data();
 }
 
+// Returns the dedicated iface name if one is defined.
+std::string getNanIfaceName() {
+    std::array<char, PROPERTY_VALUE_MAX> buffer;
+    if (property_get("wifi.aware.interface", buffer.data(), nullptr) == 0) {
+        return {};
+    }
+    return buffer.data();
+}
+
 void setActiveWlanIfaceNameProperty(const std::string& ifname) {
     auto res = property_set(kActiveWlanIfaceNameProperty, ifname.data());
     if (res != 0) {
@@ -864,9 +873,16 @@ std::pair<WifiStatus, sp<IWifiNanIface>> WifiChip::createNanIfaceInternal() {
     if (!canCurrentModeSupportIfaceOfTypeWithCurrentIfaces(IfaceType::NAN)) {
         return {createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE), {}};
     }
-    // These are still assumed to be based on wlan0.
-    std::string ifname = getFirstActiveWlanIfaceName();
-    sp<WifiNanIface> iface = new WifiNanIface(ifname, legacy_hal_, iface_util_);
+    bool is_dedicated_iface = true;
+    std::string ifname = getNanIfaceName();
+    if (ifname.empty()) {
+        // Use the first shared STA iface (wlan0) if a dedicated aware iface is
+        // not defined.
+        ifname = getFirstActiveWlanIfaceName();
+        is_dedicated_iface = false;
+    }
+    sp<WifiNanIface> iface =
+        new WifiNanIface(ifname, is_dedicated_iface, legacy_hal_, iface_util_);
     nan_ifaces_.push_back(iface);
     for (const auto& callback : event_cb_handler_.getCallbacks()) {
         if (!callback->onIfaceAdded(IfaceType::NAN, ifname).isOk()) {
