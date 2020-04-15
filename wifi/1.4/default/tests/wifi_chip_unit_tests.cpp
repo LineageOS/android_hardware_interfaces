@@ -292,6 +292,7 @@ class WifiChipTest : public Test {
         // mock).
         property_set("wifi.interface", "wlan0");
         property_set("wifi.concurrent.interface", "wlan1");
+        property_set("wifi.aware.interface", nullptr);
     }
 };
 
@@ -771,6 +772,28 @@ TEST_F(WifiChipV2_AwareIfaceCombinationTest,
             ASSERT_EQ(WifiStatusCode::ERROR_WIFI_RTT_CONTROLLER_INVALID,
                       status.code);
         });
+}
+
+TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateNanWithSharedNanIface) {
+    property_set("wifi.aware.interface", nullptr);
+    findModeAndConfigureForIfaceType(IfaceType::STA);
+    ASSERT_EQ(createIface(IfaceType::STA), "wlan0");
+    ASSERT_EQ(createIface(IfaceType::NAN), "wlan0");
+    removeIface(IfaceType::NAN, "wlan0");
+    EXPECT_CALL(*iface_util_, setUpState(testing::_, testing::_)).Times(0);
+}
+
+TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateNanWithDedicatedNanIface) {
+    property_set("wifi.aware.interface", "aware0");
+    findModeAndConfigureForIfaceType(IfaceType::STA);
+    ASSERT_EQ(createIface(IfaceType::STA), "wlan0");
+    EXPECT_CALL(*iface_util_, setUpState("aware0", true))
+        .WillOnce(testing::Return(true));
+    ASSERT_EQ(createIface(IfaceType::NAN), "aware0");
+
+    EXPECT_CALL(*iface_util_, setUpState("aware0", false))
+        .WillOnce(testing::Return(true));
+    removeIface(IfaceType::NAN, "aware0");
 }
 
 ////////// V1 Iface Combinations when AP creation is disabled //////////
