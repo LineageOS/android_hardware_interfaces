@@ -110,6 +110,14 @@ std::array<uint8_t, 6> WifiIfaceUtil::createRandomMacAddress() {
     address[0] &= ~kMacAddressMulticastMask;
     return address;
 }
+
+bool WifiIfaceUtil::setUpState(const std::string& iface_name, bool request_up) {
+    if (!iface_tool_.lock()->SetUpState(iface_name.c_str(), request_up)) {
+        LOG(ERROR) << "SetUpState to " << request_up << " failed";
+        return false;
+    }
+    return true;
+}
 }  // namespace iface_util
 }  // namespace implementation
 }  // namespace V1_4
