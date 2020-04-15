@@ -261,7 +261,7 @@ enum OperationType : int32_t {
      *      filter.
      * * 2: A 1-D tensor, of shape [depth_out], specifying the bias. For input
      *      tensor of type {@link OperandType::TENSOR_FLOAT32}
-     *      the bias must be of the same type.
+     *       the bias must be of the same type.
      *      For filter tensor of {@link OperandType::TENSOR_QUANT8_ASYMM},
      *      the bias should be of {@link OperandType::TENSOR_INT32}, with zeroPoint
      *      of 0 and bias_scale == input_scale * filter_scale.
@@ -289,7 +289,7 @@ enum OperationType : int32_t {
      *      filter.
      * * 2: A 1-D tensor, of shape [depth_out], specifying the bias. For input
      *      tensor of type {@link OperandType::TENSOR_FLOAT32}
-     *      the bias must be of the same
+     *       the bias must be of the same
      *      type.
      *      For filter tensor of {@link OperandType::TENSOR_QUANT8_ASYMM},
      *      the bias should be of {@link OperandType::TENSOR_INT32}, with zeroPoint
@@ -356,7 +356,7 @@ enum OperationType : int32_t {
      *      specifying the filter.
      * * 2: A 1-D tensor, of shape [depth_out], specifying the bias. For input
      *      tensor of type {@link OperandType::TENSOR_FLOAT32}
-     *      the bias must be of the same type.
+     *       the bias must be of the same type.
      *      For filter tensor of {@link OperandType::TENSOR_QUANT8_ASYMM},
      *      the bias should be of {@link OperandType::TENSOR_INT32}, with zeroPoint
      *      of 0 and bias_scale == input_scale * filter_scale.
@@ -385,7 +385,7 @@ enum OperationType : int32_t {
      *      specifying the filter.
      * * 2: A 1-D tensor, of shape [depth_out], specifying the bias. For input
      *      tensor of type {@link OperandType::TENSOR_FLOAT32}
-     *      the bias must be of the same type.
+     *       the bias must be of the same type.
      *      For filter tensor of {@link OperandType::TENSOR_QUANT8_ASYMM},
      *      the bias should be of {@link OperandType::TENSOR_INT32}, with zeroPoint
      *      of 0 and bias_scale == input_scale * filter_scale.
@@ -628,7 +628,7 @@ enum OperationType : int32_t {
     HASHTABLE_LOOKUP = 10,
 
     /**
-     * Applies L2 normalization along the depth dimension.
+     * Applies L2 normalization along the axis dimension.
      *
      * The values in the output tensor are computed as:
      *
