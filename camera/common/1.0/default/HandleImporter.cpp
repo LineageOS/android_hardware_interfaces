@@ -16,6 +16,8 @@
 
 #define LOG_TAG "HandleImporter"
 #include "HandleImporter.h"
+
+#include <gralloctypes/Gralloc4.h>
 #include <log/log.h>
 
 namespace android {
@@ -25,6 +27,9 @@ namespace common {
 namespace V1_0 {
 namespace helper {
 
+using aidl::android::hardware::graphics::common::PlaneLayout;
+using aidl::android::hardware::graphics::common::PlaneLayoutComponent;
+using aidl::android::hardware::graphics::common::PlaneLayoutComponentType;
 using MapperErrorV2 = android::hardware::graphics::mapper::V2_0::Error;
 using MapperErrorV3 = android::hardware::graphics::mapper::V3_0::Error;
 using MapperErrorV4 = android::hardware::graphics::mapper::V4_0::Error;
@@ -115,6 +120,79 @@ YCbCrLayout HandleImporter::lockYCbCrInternal(const sp<M> mapper, buffer_handle_
                     ALOGE("%s: failed to lockYCbCr error %d!", __FUNCTION__, tmpError);
                 }
            });
+    return layout;
+}
+
+template <>
+YCbCrLayout HandleImporter::lockYCbCrInternal<IMapperV4, MapperErrorV4>(
+        const sp<IMapperV4> mapper, buffer_handle_t& buf, uint64_t cpuUsage,
+        const IMapper::Rect& accessRegion) {
+    hidl_handle acquireFenceHandle;
+    auto buffer = const_cast<native_handle_t*>(buf);
+    YCbCrLayout layout = {};
+    void* mapped = nullptr;
+
+    typename IMapperV4::Rect accessRegionV4 = {accessRegion.left, accessRegion.top,
+                                               accessRegion.width, accessRegion.height};
+    mapper->lock(buffer, cpuUsage, accessRegionV4, acquireFenceHandle,
+                 [&](const auto& tmpError, const auto& tmpPtr) {
+                     if (tmpError == MapperErrorV4::NONE) {
+                         mapped = tmpPtr;
+                     } else {
+                         ALOGE("%s: failed to lock error %d!", __FUNCTION__, tmpError);
+                     }
+                 });
+
+    if (mapped == nullptr) {
+        return layout;
+    }
+
+    hidl_vec<uint8_t> encodedPlaneLayouts;
+    mapper->get(buffer, gralloc4::MetadataType_PlaneLayouts,
+                [&](const auto& tmpError, const auto& tmpEncodedPlaneLayouts) {
+                    if (tmpError == MapperErrorV4::NONE) {
+                        encodedPlaneLayouts = tmpEncodedPlaneLayouts;
+                    } else {
+                        ALOGE("%s: failed to get plane layouts %d!", __FUNCTION__, tmpError);
+                    }
+                });
+
+    std::vector<PlaneLayout> planeLayouts;
+    gralloc4::decodePlaneLayouts(encodedPlaneLayouts, &planeLayouts);
+
+    for (const auto& planeLayout : planeLayouts) {
+        for (const auto& planeLayoutComponent : planeLayout.components) {
+            const auto& type = planeLayoutComponent.type;
+
+            if (!gralloc4::isStandardPlaneLayoutComponentType(type)) {
+                continue;
+            }
+
+            uint8_t* data = reinterpret_cast<uint8_t*>(mapped);
+            data += planeLayout.offsetInBytes;
+            data += planeLayoutComponent.offsetInBits / 8;
+
+            switch (static_cast<PlaneLayoutComponentType>(type.value)) {
+                case PlaneLayoutComponentType::Y:
+                    layout.y = data;
+                    layout.yStride = planeLayout.strideInBytes;
+                    break;
+                case PlaneLayoutComponentType::CB:
+                    layout.cb = data;
+                    layout.cStride = planeLayout.strideInBytes;
+                    layout.chromaStep = planeLayout.sampleIncrementInBits / 8;
+                    break;
+                case PlaneLayoutComponentType::CR:
+                    layout.cr = data;
+                    layout.cStride = planeLayout.strideInBytes;
+                    layout.chromaStep = planeLayout.sampleIncrementInBits / 8;
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
     return layout;
 }
 
@@ -299,13 +377,7 @@ YCbCrLayout HandleImporter::lockYCbCr(
     }
 
     if (mMapperV4 != nullptr) {
-        // No device currently supports IMapper 4.0 so it is safe to just return an error code here.
-        //
-        // This will be supported by a combination of lock and BufferMetadata getters. We are going
-        // to refactor all the IAllocator/IMapper versioning code into a shared library. We will
-        // then add the IMapper 4.0 lockYCbCr support then.
-        ALOGE("%s: MapperV4 doesn't support lockYCbCr directly!", __FUNCTION__);
-        return {};
+        return lockYCbCrInternal<IMapperV4, MapperErrorV4>(mMapperV4, buf, cpuUsage, accessRegion);
     }
 
     if (mMapperV3 != nullptr) {

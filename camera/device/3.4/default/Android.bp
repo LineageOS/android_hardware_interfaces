@@ -17,13 +17,13 @@
 cc_library_headers {
     name: "camera.device@3.4-impl_headers",
     vendor: true,
-    export_include_dirs: ["include/device_v3_4_impl"]
+    export_include_dirs: ["include/device_v3_4_impl"],
 }
 
 cc_library_headers {
     name: "camera.device@3.4-external-impl_headers",
     vendor: true,
-    export_include_dirs: ["include/ext_device_v3_4_impl"]
+    export_include_dirs: ["include/ext_device_v3_4_impl"],
 }
 
 cc_library_shared {
@@ -34,7 +34,7 @@ cc_library_shared {
     srcs: [
         "CameraDevice.cpp",
         "CameraDeviceSession.cpp",
-        "convert.cpp"
+        "convert.cpp",
     ],
     shared_libs: [
         "libhidlbase",
@@ -50,6 +50,7 @@ cc_library_shared {
         "android.hardware.graphics.mapper@3.0",
         "android.hardware.graphics.mapper@4.0",
         "liblog",
+        "libgralloctypes",
         "libhardware",
         "libcamera_metadata",
         "libfmq",
@@ -87,6 +88,7 @@ cc_library_shared {
         "android.hardware.graphics.mapper@3.0",
         "android.hardware.graphics.mapper@4.0",
         "liblog",
+        "libgralloctypes",
         "libhardware",
         "libcamera_metadata",
         "libfmq",
@@ -94,7 +96,7 @@ cc_library_shared {
         "libyuv",
         "libjpeg",
         "libexif",
-        "libtinyxml2"
+        "libtinyxml2",
     ],
     static_libs: [
         "android.hardware.camera.common@1.0-helper",

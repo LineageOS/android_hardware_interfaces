@@ -20,15 +20,15 @@ cc_library_shared {
         "android.hidl.memory@1.0",
         "libcutils",
         "liblog",
+        "libgralloctypes",
         "libhardware",
         "libcamera_metadata",
     ],
     static_libs: [
-        "android.hardware.camera.common@1.0-helper"
+        "android.hardware.camera.common@1.0-helper",
     ],
     header_libs: [
         "media_plugin_headers",
     ],
-    export_include_dirs: ["."]
+    export_include_dirs: ["."],
 }
-
