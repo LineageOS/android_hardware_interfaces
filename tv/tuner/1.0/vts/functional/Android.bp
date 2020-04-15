@@ -17,7 +17,12 @@
 cc_test {
     name: "VtsHalTvTunerV1_0TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
-    srcs: ["VtsHalTvTunerV1_0TargetTest.cpp"],
+    srcs: [
+        "VtsHalTvTunerV1_0TargetTest.cpp",
+        "FrontendTests.cpp",
+        "DemuxTests.cpp",
+        "FilterTests.cpp",
+    ],
     static_libs: [
         "android.hardware.tv.tuner@1.0",
         "android.hidl.allocator@1.0",
