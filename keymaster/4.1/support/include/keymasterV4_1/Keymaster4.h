@@ -31,17 +31,11 @@ class Keymaster4 : public Keymaster {
     // enumerate 4.1. devices.
     using WrappedIKeymasterDevice = V4_0::IKeymasterDevice;
 
-    Keymaster4(sp<V4_1::IKeymasterDevice> km4_1_dev, const hidl_string& instanceName)
-        : Keymaster(V4_1::IKeymasterDevice::descriptor, instanceName),
-          haveVersion_(false),
-          km4_0_dev_(km4_1_dev),
-          km4_1_dev_(km4_1_dev) {}
-
     Keymaster4(sp<V4_0::IKeymasterDevice> km4_0_dev, const hidl_string& instanceName)
         : Keymaster(V4_1::IKeymasterDevice::descriptor, instanceName),
           haveVersion_(false),
           km4_0_dev_(km4_0_dev),
-          km4_1_dev_() {}
+          km4_1_dev_(V4_1::IKeymasterDevice::castFrom(km4_0_dev)) {}
 
     const VersionResult& halVersion() const override {
         const_cast<Keymaster4*>(this)->getVersionIfNeeded();
