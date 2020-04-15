@@ -373,9 +373,9 @@ class WifiLegacyHal {
                               std::array<int8_t, 2> code);
 
     // interface functions.
-    wifi_error createVirtualInterface(const std::string& ifname,
-                                      wifi_interface_type iftype);
-    wifi_error deleteVirtualInterface(const std::string& ifname);
+    virtual wifi_error createVirtualInterface(const std::string& ifname,
+                                              wifi_interface_type iftype);
+    virtual wifi_error deleteVirtualInterface(const std::string& ifname);
 
    private:
     // Retrieve interface handles for all the available interfaces.
