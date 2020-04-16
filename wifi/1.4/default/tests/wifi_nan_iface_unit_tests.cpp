@@ -131,7 +131,7 @@ TEST_F(WifiNanIfaceTest, IfacEventHandlers_OnStateToggleOffOn) {
             bind(CaptureIfaceEventHandlers, std::placeholders::_1,
                  std::placeholders::_2, &captured_iface_event_handlers)));
     sp<WifiNanIface> nan_iface =
-        new WifiNanIface(kIfaceName, legacy_hal_, iface_util_);
+        new WifiNanIface(kIfaceName, false, legacy_hal_, iface_util_);
 
     // Register a mock nan event callback.
     sp<NiceMock<MockNanIfaceEventCallback>> mock_event_callback{
