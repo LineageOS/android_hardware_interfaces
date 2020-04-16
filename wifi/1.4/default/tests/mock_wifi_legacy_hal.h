@@ -57,6 +57,10 @@ class MockWifiLegacyHal : public WifiLegacyHal {
     MOCK_METHOD3(nanDataInterfaceDelete,
                  wifi_error(const std::string&, transaction_id,
                             const std::string&));
+    MOCK_METHOD2(createVirtualInterface,
+                 wifi_error(const std::string& ifname,
+                            wifi_interface_type iftype));
+    MOCK_METHOD1(deleteVirtualInterface, wifi_error(const std::string& ifname));
 };
 }  // namespace legacy_hal
 }  // namespace implementation
