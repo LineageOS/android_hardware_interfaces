@@ -764,6 +764,4 @@ a64467bae843569f0d465c5be7f0c7a5b987985b55a3ef4794dd5afc68538650 android.hardwar
 # ABI preserving changes to HALs during Android S
 
 # HALs released in Android S
-7e8e1c3d0173c5d503dd01cecff8e3864478557ca6b9e8cc2291598b1a4aea62 android.hardware.biometrics.face@1.1::IBiometricsFace
-
 # NOTE: new HALs are recommended to be in AIDL
