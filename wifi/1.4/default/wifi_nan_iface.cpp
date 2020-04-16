@@ -29,13 +29,22 @@ namespace implementation {
 using hidl_return_util::validateAndCall;
 
 WifiNanIface::WifiNanIface(
-    const std::string& ifname,
+    const std::string& ifname, bool is_dedicated_iface,
     const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal,
     const std::weak_ptr<iface_util::WifiIfaceUtil> iface_util)
     : ifname_(ifname),
+      is_dedicated_iface_(is_dedicated_iface),
       legacy_hal_(legacy_hal),
       iface_util_(iface_util),
       is_valid_(true) {
+    if (is_dedicated_iface_) {
+        // If using a dedicated iface, set the iface up first.
+        if (!iface_util_.lock()->setUpState(ifname_, true)) {
+            // Fatal failure, invalidate the iface object.
+            invalidate();
+            return;
+        }
+    }
     // Register all the callbacks here. these should be valid for the lifetime
     // of the object. Whenever the mode changes legacy HAL will remove
     // all of these callbacks.
@@ -534,6 +543,10 @@ void WifiNanIface::invalidate() {
     event_cb_handler_.invalidate();
     event_cb_handler_1_2_.invalidate();
     is_valid_ = false;
+    if (is_dedicated_iface_) {
+        // If using a dedicated iface, set the iface down.
+        iface_util_.lock()->setUpState(ifname_, false);
+    }
 }
 
 bool WifiNanIface::isValid() { return is_valid_; }
