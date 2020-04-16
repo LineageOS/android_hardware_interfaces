@@ -81,6 +81,9 @@ Return<Result> Frontend::stopTune() {
 Return<Result> Frontend::scan(const FrontendSettings& settings, FrontendScanType type) {
     ALOGV("%s", __FUNCTION__);
 
+    if (mType == FrontendType::ATSC) {
+        return Result::SUCCESS;
+    }
     if (mType != FrontendType::DVBT) {
         return Result::UNAVAILABLE;
     }
