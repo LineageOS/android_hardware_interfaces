@@ -79,8 +79,6 @@ constexpr int WHEEL_FRONT_LEFT = (int)VehicleAreaWheel::LEFT_FRONT;
 constexpr int WHEEL_FRONT_RIGHT = (int)VehicleAreaWheel::RIGHT_FRONT;
 constexpr int WHEEL_REAR_LEFT = (int)VehicleAreaWheel::LEFT_REAR;
 constexpr int WHEEL_REAR_RIGHT = (int)VehicleAreaWheel::RIGHT_REAR;
-constexpr int INITIAL_USER_INFO = (int)VehicleProperty::INITIAL_USER_INFO;
-constexpr int SWITCH_USER = (int)VehicleProperty::SWITCH_USER;
 
 /**
  * This property is used for test purpose to generate fake events. Here is the test package that

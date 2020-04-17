@@ -38,9 +38,6 @@ namespace impl {
 class EmulatedPassthroughConnector : public PassthroughConnector {
   public:
     bool onDump(const hidl_handle& fd, const hidl_vec<hidl_string>& options) override;
-
-  private:
-    void dumpUserHal(int fd, std::string indent);
 };
 
 bool EmulatedPassthroughConnector::onDump(const hidl_handle& handle,
@@ -50,12 +47,12 @@ bool EmulatedPassthroughConnector::onDump(const hidl_handle& handle,
     if (options.size() > 0) {
         if (options[0] == "--help") {
             dprintf(fd, "Emulator-specific usage:\n");
-            dprintf(fd, "--user-hal: dumps state used for user management \n");
+            mEmulatedUserHal.showDumpHelp(fd);
             dprintf(fd, "\n");
             // Include caller's help options
             return true;
-        } else if (options[0] == "--user-hal") {
-            dumpUserHal(fd, "");
+        } else if (options[0] == kUserHalDumpOption) {
+            mEmulatedUserHal.dump(fd, "");
             return false;
 
         } else {
@@ -65,25 +62,10 @@ bool EmulatedPassthroughConnector::onDump(const hidl_handle& handle,
     }
 
     dprintf(fd, "Emulator-specific state:\n");
-    dumpUserHal(fd, "  ");
+    mEmulatedUserHal.dump(fd, "  ");
     dprintf(fd, "\n");
 
     return true;
-}
-
-void EmulatedPassthroughConnector::dumpUserHal(int fd, std::string indent) {
-    if (mInitialUserResponseFromCmd != nullptr) {
-        dprintf(fd, "%sInitialUserInfo response: %s\n", indent.c_str(),
-                toString(*mInitialUserResponseFromCmd).c_str());
-    } else {
-        dprintf(fd, "%sNo InitialUserInfo response\n", indent.c_str());
-    }
-    if (mSwitchUserResponseFromCmd != nullptr) {
-        dprintf(fd, "%sSwitchUser response: %s\n", indent.c_str(),
-                toString(*mSwitchUserResponseFromCmd).c_str());
-    } else {
-        dprintf(fd, "%sNo SwitchUser response\n", indent.c_str());
-    }
 }
 
 PassthroughConnectorPtr makeEmulatedPassthroughConnector() {
