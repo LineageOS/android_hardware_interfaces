@@ -18,6 +18,7 @@
 #include <iterator>
 
 #include <media/EffectsConfig.h>
+#include <system/audio_config.h>
 // clang-format off
 #include PATH(android/hardware/audio/effect/FILE_VERSION/IEffectsFactory.h)
 // clang-format on
@@ -41,13 +42,14 @@ TEST(CheckConfig, audioEffectsConfigurationValidation) {
         GTEST_SKIP() << "No Effects HAL version " STRINGIFY(CPP_VERSION) " on this device";
     }
 
-    std::vector<const char*> locations(std::begin(DEFAULT_LOCATIONS), std::end(DEFAULT_LOCATIONS));
     const char* xsd = "/data/local/tmp/audio_effects_conf_" STRINGIFY(CPP_VERSION) ".xsd";
 #if MAJOR_VERSION == 2
     // In V2, audio effect XML is not required. .conf is still allowed though deprecated
-    EXPECT_VALID_XML_MULTIPLE_LOCATIONS(DEFAULT_NAME, locations, xsd);
+    EXPECT_VALID_XML_MULTIPLE_LOCATIONS(DEFAULT_NAME, android::audio_get_configuration_paths(),
+                                        xsd);
 #elif MAJOR_VERSION >= 4
     // Starting with V4, audio effect XML is required
-    EXPECT_ONE_VALID_XML_MULTIPLE_LOCATIONS(DEFAULT_NAME, locations, xsd);
+    EXPECT_ONE_VALID_XML_MULTIPLE_LOCATIONS(DEFAULT_NAME, android::audio_get_configuration_paths(),
+                                            xsd);
 #endif
 }
