@@ -260,8 +260,8 @@ TEST_P(WifiStaIfaceHidlTest, EnableNDOffload) {
 
 /*
  * SetScanningMacOui:
- * Ensures that calls to set scanning MAC OUI will return a success status
- * code.
+ * Ensures that calls to set scanning MAC OUI will return a NOT_SUPPORTED
+ * code since it is now deprecated.
  */
 TEST_P(WifiStaIfaceHidlTest, SetScanningMacOui) {
     if (!isCapabilitySupported(
@@ -271,7 +271,7 @@ TEST_P(WifiStaIfaceHidlTest, SetScanningMacOui) {
     }
     const android::hardware::hidl_array<uint8_t, 3> kOui{
         std::array<uint8_t, 3>{{0x10, 0x22, 0x33}}};
-    EXPECT_EQ(WifiStatusCode::SUCCESS,
+    EXPECT_EQ(WifiStatusCode::ERROR_NOT_SUPPORTED,
               HIDL_INVOKE(wifi_sta_iface_, setScanningMacOui, kOui).code);
 }
 
