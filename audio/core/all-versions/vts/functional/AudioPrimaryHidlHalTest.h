@@ -35,6 +35,7 @@
 #include <hwbinder/IPCThreadState.h>
 
 #include <android-base/logging.h>
+#include <system/audio_config.h>
 
 #include PATH(android/hardware/audio/FILE_VERSION/IDevice.h)
 #include PATH(android/hardware/audio/FILE_VERSION/IDevicesFactory.h)
@@ -135,7 +136,6 @@ class HidlTest : public ::testing::Test {
 ////////////////////////// Audio policy configuration ////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
-static const std::vector<const char*> kConfigLocations = {"/odm/etc", "/vendor/etc", "/system/etc"};
 static constexpr char kConfigFileName[] = "audio_policy_configuration.xml";
 
 // Stringify the argument.
@@ -154,8 +154,8 @@ class PolicyConfig : private PolicyConfigData, public AudioPolicyConfig {
     PolicyConfig()
         : AudioPolicyConfig(hwModules, availableOutputDevices, availableInputDevices,
                             defaultOutputDevice) {
-        for (const char* location : kConfigLocations) {
-            std::string path = std::string(location) + '/' + kConfigFileName;
+        for (const auto& location : android::audio_get_configuration_paths()) {
+            std::string path = location + '/' + kConfigFileName;
             if (access(path.c_str(), F_OK) == 0) {
                 mFilePath = path;
                 break;
@@ -188,7 +188,7 @@ class PolicyConfig : private PolicyConfigData, public AudioPolicyConfig {
     std::string getError() const {
         if (mFilePath.empty()) {
             return std::string{"Could not find "} + kConfigFileName +
-                   " file in: " + testing::PrintToString(kConfigLocations);
+                   " file in: " + testing::PrintToString(android::audio_get_configuration_paths());
         } else {
             return "Invalid config file: " + mFilePath;
         }
@@ -304,7 +304,8 @@ TEST(CheckConfig, audioPolicyConfigurationValidation) {
                    "is valid according to the schema");
 
     const char* xsd = "/data/local/tmp/audio_policy_configuration_" STRINGIFY(CPP_VERSION) ".xsd";
-    EXPECT_ONE_VALID_XML_MULTIPLE_LOCATIONS(kConfigFileName, kConfigLocations, xsd);
+    EXPECT_ONE_VALID_XML_MULTIPLE_LOCATIONS(kConfigFileName,
+                                            android::audio_get_configuration_paths(), xsd);
 }
 
 class AudioPolicyConfigTest : public AudioHidlTestWithDeviceParameter {
