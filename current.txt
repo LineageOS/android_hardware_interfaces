@@ -654,4 +654,5 @@ b809193970a91ca637a4b0184767315601d32e3ef3d5992ffbc7a8d14a14f015 android.hardwar
 # ABI preserving changes to HALs during Android S
 
 # HALs released in Android S
+# NOTE: waiting to freeze HALs until later in the release
 # NOTE: new HALs are recommended to be in AIDL
