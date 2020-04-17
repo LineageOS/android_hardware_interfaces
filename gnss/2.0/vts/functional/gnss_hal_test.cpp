@@ -221,3 +221,46 @@ Return<void> GnssHalTest::GnssMeasurementCorrectionsCallback::setCapabilitiesCb(
     capabilities_cbq_.store(capabilities);
     return Void();
 }
+
+GnssConstellationType_1_0 GnssHalTest::startLocationAndGetNonGpsConstellation() {
+    const int kLocationsToAwait = 3;
+
+    gnss_cb_->location_cbq_.reset();
+    StartAndCheckLocations(kLocationsToAwait);
+    const int location_called_count = gnss_cb_->location_cbq_.calledCount();
+
+    // Tolerate 1 less sv status to handle edge cases in reporting.
+    int sv_info_list_cbq_size = gnss_cb_->sv_info_list_cbq_.size();
+    EXPECT_GE(sv_info_list_cbq_size + 1, kLocationsToAwait);
+    ALOGD("Observed %d GnssSvStatus, while awaiting %d Locations (%d received)",
+          sv_info_list_cbq_size, kLocationsToAwait, location_called_count);
+
+    // Find first non-GPS constellation to blacklist. Exclude IRNSS in GnssConstellationType_2_0
+    // as blacklisting of this constellation is not supported in gnss@2.0.
+    const int kGnssSvStatusTimeout = 2;
+    GnssConstellationType_1_0 constellation_to_blacklist = GnssConstellationType_1_0::UNKNOWN;
+    for (int i = 0; i < sv_info_list_cbq_size; ++i) {
+        hidl_vec<IGnssCallback_2_0::GnssSvInfo> sv_info_list;
+        gnss_cb_->sv_info_list_cbq_.retrieve(sv_info_list, kGnssSvStatusTimeout);
+        for (IGnssCallback_2_0::GnssSvInfo sv_info : sv_info_list) {
+            if ((sv_info.v1_0.svFlag & IGnssCallback_2_0::GnssSvFlags::USED_IN_FIX) &&
+                (sv_info.constellation != GnssConstellationType_2_0::UNKNOWN) &&
+                (sv_info.constellation != GnssConstellationType_2_0::IRNSS) &&
+                (sv_info.constellation != GnssConstellationType_2_0::GPS)) {
+                // found a non-GPS V1_0 constellation
+                constellation_to_blacklist = Utils::mapConstellationType(sv_info.constellation);
+                break;
+            }
+        }
+        if (constellation_to_blacklist != GnssConstellationType_1_0::UNKNOWN) {
+            break;
+        }
+    }
+
+    if (constellation_to_blacklist == GnssConstellationType_1_0::UNKNOWN) {
+        ALOGI("No non-GPS constellations found, constellation blacklist test less effective.");
+        // Proceed functionally to blacklist something.
+        constellation_to_blacklist = GnssConstellationType_1_0::GLONASS;
+    }
+    return constellation_to_blacklist;
+}
