@@ -535,13 +535,18 @@ static void removeOperand(Model* model, uint32_t index) {
     removeValueAndDecrementGreaterValues(&model->main.outputIndexes, index);
 }
 
-static bool removeOperandSkip(size_t operand, const Model& model) {
+static bool removeOperandSkip(size_t operandIndex, const Model& model) {
+    const Operand& operand = model.main.operands[operandIndex];
+    if (operand.numberOfConsumers == 0) {
+        // Removing an unused operand has no effect.
+        return true;
+    }
     for (const Operation& operation : model.main.operations) {
         // Skip removeOperandTest for the following operations.
         // - SPLIT's outputs are not checked during prepareModel.
         if (operation.type == OperationType::SPLIT) {
-            for (const size_t outOprand : operation.outputs) {
-                if (operand == outOprand) {
+            for (const size_t index : operation.outputs) {
+                if (index == operandIndex) {
                     return true;
                 }
             }
@@ -556,8 +561,8 @@ static bool removeOperandSkip(size_t operand, const Model& model) {
             operation.type == OperationType::UNIDIRECTIONAL_SEQUENCE_RNN ||
             operation.type == OperationType::BIDIRECTIONAL_SEQUENCE_LSTM ||
             operation.type == OperationType::BIDIRECTIONAL_SEQUENCE_RNN) {
-            for (const size_t outOprand : operation.outputs) {
-                if (operand == outOprand) {
+            for (const size_t index : operation.outputs) {
+                if (index == operandIndex) {
                     return true;
                 }
             }
