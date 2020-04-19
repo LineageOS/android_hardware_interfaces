@@ -801,13 +801,6 @@ wifi_error WifiLegacyHal::stopSendingOffloadedPacket(
         cmd_id, getIfaceHandle(iface_name));
 }
 
-wifi_error WifiLegacyHal::setScanningMacOui(const std::string& iface_name,
-                                            const std::array<uint8_t, 3>& oui) {
-    std::vector<uint8_t> oui_internal(oui.data(), oui.data() + oui.size());
-    return global_func_table_.wifi_set_scanning_mac_oui(
-        getIfaceHandle(iface_name), oui_internal.data());
-}
-
 wifi_error WifiLegacyHal::selectTxPowerScenario(const std::string& iface_name,
                                                 wifi_power_scenario scenario) {
     return global_func_table_.wifi_select_tx_power_scenario(
