@@ -19,7 +19,6 @@
 
 cc_defaults {
     name: "android.hardware.automotive@libc++fsdefaults",
-    host_supported: true,
     local_include_dirs: ["include"],
     export_include_dirs: ["include"],
     cflags: [
@@ -28,33 +27,12 @@ cc_defaults {
         "-Wno-unused-parameter",
     ],
     cppflags: [
-        "-std=c++14",
+        "-std=c++17",
         "-fexceptions",
         "-DLIBCXX_BUILDING_LIBCXXABI",
         "-D_LIBCPP_BUILDING_LIBRARY",
     ],
     rtti: true,
-    stl: "none",
-    target: {
-        linux_bionic: {
-            enabled: true,
-        },
-        windows: {
-            enabled: true,
-            cflags: [
-                "-D_LIBCPP_HAS_THREAD_API_WIN32",
-                "-D_LIBCXXABI_BUILDING_LIBRARY",
-                "-D_LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS",
-                "-D_LIBCXXABI_DISABLE_VISIBILITY_ANNOTATIONS",
-                "-UWIN32_LEAN_AND_MEAN",
-            ],
-        },
-        windows_x86: {
-            cflags: [
-                "-fsjlj-exceptions",
-            ],
-        },
-    },
 }
 
 cc_library_static {
