@@ -64,6 +64,14 @@ class WifiRttControllerHidlTest : public ::testing::TestWithParam<std::string> {
 
         wifi_rtt_controller_ = getWifiRttController();
         ASSERT_NE(nullptr, wifi_rtt_controller_.get());
+
+        // Check RTT support before we run the test.
+        std::pair<WifiStatus, RttCapabilities> status_and_caps;
+        status_and_caps =
+            HIDL_INVOKE(wifi_rtt_controller_, getCapabilities_1_4);
+        if (status_and_caps.first.code == WifiStatusCode::ERROR_NOT_SUPPORTED) {
+            GTEST_SKIP() << "Skipping this test since RTT is not supported.";
+        }
     }
 
     virtual void TearDown() override { stopWifi(GetInstanceName()); }
