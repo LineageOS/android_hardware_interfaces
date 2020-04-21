@@ -24,13 +24,15 @@ package android.hardware.identity;
 enum CipherSuite {
     /**
      * Specifies that the cipher suite that will be used to secure communications between the reader
-     * is:
+     * and the prover is using the following primitives
      *
-     * - ECDHE with HKDF-SHA-256 for key agreement.
-     * - AES-256 with GCM block mode for authenticated encryption (nonces are incremented by
-     *   one for every message).
-     * - ECDSA with SHA-256 for signing (used for signing session transcripts to defeat
-     *   man-in-the-middle attacks), signing keys are not ephemeral.
+     *  - ECKA-DH (Elliptic Curve Key Agreement Algorithm - Diffie-Hellman, see BSI TR-03111)
+     *  - HKDF-SHA-256 (see RFC 5869)
+     *  - AES-256-GCM (see NIST SP 800-38D)
+     *  - HMAC-SHA-256 (see RFC 2104)
+     *
+     * The exact way these primitives are combined to derive the session key is specified in
+     * section 9.2.1.4 of ISO/IEC 18013-5 (see description of cipher suite '1').
      *
      * At present this is the only supported cipher suite and it is mandatory for all
      * implementations to support it.
