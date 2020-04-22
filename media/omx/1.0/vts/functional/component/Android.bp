@@ -19,6 +19,6 @@ cc_test {
     defaults: ["VtsHalMediaOmxV1_0Defaults"],
     srcs: ["VtsHalMediaOmxV1_0TargetComponentTest.cpp"],
     test_suites: [
-        "vts-core",
+        "vts",
     ],
 }
