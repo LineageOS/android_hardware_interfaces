@@ -23,7 +23,7 @@
 #include <android-base/logging.h>
 #include <android/hidl/manager/1.2/IServiceManager.h>
 
-#include <filesystem>
+#include <automotive/filesystem>
 #include <fstream>
 #include <regex>
 
@@ -31,6 +31,7 @@ namespace android::hardware::automotive::can::V1_0::implementation {
 
 using IfId = ICanController::BusConfig::InterfaceId;
 using IfIdDisc = ICanController::BusConfig::InterfaceId::hidl_discriminator;
+namespace fs = android::hardware::automotive::filesystem;
 
 namespace fsErrors {
 static const std::error_code ok;
@@ -42,10 +43,10 @@ static const std::error_code eacces(EACCES, std::generic_category());
 /* In the /sys/devices tree, there are files called "serial", which contain the serial numbers
  * for various devices. The exact location inside of this directory is dependent upon the
  * hardware we are running on, so we have to start from /sys/devices and work our way down. */
-static const std::filesystem::path kDevPath("/sys/devices/");
+static const fs::path kDevPath("/sys/devices/");
 static const std::regex kTtyRe("^tty[A-Z]+[0-9]+$");
-static constexpr auto kOpts = ~(std::filesystem::directory_options::follow_directory_symlink |
-                                std::filesystem::directory_options::skip_permission_denied);
+static constexpr auto kOpts = ~(fs::directory_options::follow_directory_symlink |
+                                fs::directory_options::skip_permission_denied);
 
 /**
  * A helper object to associate the interface name and type of a USB to CAN adapter.
@@ -72,16 +73,16 @@ static bool isValidName(const std::string& name) {
  * \param serialPath - Absolute path to a "serial" file for a given device in /sys.
  * \return A populated UsbCanIface. On failure, nullopt is returned.
  */
-static std::optional<UsbCanIface> getIfaceName(std::filesystem::path serialPath) {
+static std::optional<UsbCanIface> getIfaceName(fs::path serialPath) {
     std::error_code fsStatus;
     // Since the path is to a file called "serial", we need to search its parent directory.
-    std::filesystem::recursive_directory_iterator fsItr(serialPath.parent_path(), kOpts, fsStatus);
+    fs::recursive_directory_iterator fsItr(serialPath.parent_path(), kOpts, fsStatus);
     if (fsStatus != fsErrors::ok) {
         LOG(ERROR) << "Failed to open " << serialPath.parent_path();
         return std::nullopt;
     }
 
-    for (; fsStatus == fsErrors::ok && fsItr != std::filesystem::recursive_directory_iterator();
+    for (; fsStatus == fsErrors::ok && fsItr != fs::recursive_directory_iterator();
          fsItr.increment(fsStatus)) {
         /* We want either a directory called "net" or a directory that looks like tty<something>, so
          * skip files. */
@@ -95,7 +96,7 @@ static std::optional<UsbCanIface> getIfaceName(std::filesystem::path serialPath)
         if (currentDir == "net") {
             /* This device is a SocketCAN device. The iface name is the only directory under
              * net/. Multiple directories under net/ is an error.*/
-            std::filesystem::directory_iterator netItr(fsItr->path(), kOpts, fsStatus);
+            fs::directory_iterator netItr(fsItr->path(), kOpts, fsStatus);
             if (fsStatus != fsErrors::ok) {
                 LOG(ERROR) << "Failed to open " << fsItr->path() << " to get net name!";
                 return std::nullopt;
@@ -111,7 +112,7 @@ static std::optional<UsbCanIface> getIfaceName(std::filesystem::path serialPath)
                 LOG(ERROR) << "Failed to verify " << fsItr->path() << " has valid net name!";
                 return std::nullopt;
             }
-            if (netItr != std::filesystem::directory_iterator()) {
+            if (netItr != fs::directory_iterator()) {
                 // There should never be more than one name under net/
                 LOG(ERROR) << "Found more than one net name in " << fsItr->path() << "!";
                 return std::nullopt;
@@ -157,13 +158,13 @@ static std::optional<std::string> readSerialNo(const std::string& serialnoPath) 
  */
 static std::optional<UsbCanIface> findUsbDevice(const hidl_vec<hidl_string>& configSerialnos) {
     std::error_code fsStatus;
-    std::filesystem::recursive_directory_iterator fsItr(kDevPath, kOpts, fsStatus);
+    fs::recursive_directory_iterator fsItr(kDevPath, kOpts, fsStatus);
     if (fsStatus != fsErrors::ok) {
         LOG(ERROR) << "Failed to open " << kDevPath;
         return std::nullopt;
     }
 
-    for (; fsStatus == fsErrors::ok && fsItr != std::filesystem::recursive_directory_iterator();
+    for (; fsStatus == fsErrors::ok && fsItr != fs::recursive_directory_iterator();
          fsItr.increment(fsStatus)) {
         // We want to find a file called "serial", which is in a directory somewhere. Skip files.
         bool isDir = fsItr->is_directory(fsStatus);
@@ -174,7 +175,7 @@ static std::optional<UsbCanIface> findUsbDevice(const hidl_vec<hidl_string>& con
         if (!isDir) continue;
 
         auto serialnoPath = fsItr->path() / "serial";
-        bool isReg = std::filesystem::is_regular_file(serialnoPath, fsStatus);
+        bool isReg = fs::is_regular_file(serialnoPath, fsStatus);
 
         /* Make sure we have permissions to this directory, ignore enoent, since the file
          * "serial" may not exist, which is ok. */
