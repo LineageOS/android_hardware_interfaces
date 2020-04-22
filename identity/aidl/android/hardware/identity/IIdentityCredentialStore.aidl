@@ -55,8 +55,8 @@ import android.hardware.identity.CipherSuite;
  *
  * - For each namespase, a set of name/value pairs, each with an associated set of access control
  *   profile IDs.  Names are UTF-8 strings of up to 256 bytes in length (most should be much
- *   shorter).  Values stored must be encoed as valid CBOR (https://tools.ietf.org/html/rfc7049) and
- *   the encoeded size is is limited to at most 512 KiB.
+ *   shorter).  Values stored must be encoded as CBOR (https://tools.ietf.org/html/rfc7049) and
+ *   the encoded size is is limited to at most 512 KiB.
  *
  * - A set of access control profiles, each with a profile ID and a specification of the
  *   conditions which satisfy the profile's requirements.
@@ -108,12 +108,13 @@ import android.hardware.identity.CipherSuite;
 @VintfStability
 interface IIdentityCredentialStore {
     /**
-     * Success.
+     * Success. This is never returned but included for completeness and for use by code
+     * using these statuses for internal use.
      */
     const int STATUS_OK = 0;
 
     /**
-     * The operation failed. This is used as a generic catch-all for errors that don't belong
+     * The operation failed.  This is used as a generic catch-all for errors that don't belong
      * in other categories, including memory/resource allocation failures and I/O errors.
      */
     const int STATUS_FAILED = 1;
@@ -124,7 +125,7 @@ interface IIdentityCredentialStore {
     const int STATUS_CIPHER_SUITE_NOT_SUPPORTED = 2;
 
     /**
-     * The passed data was invalid. This is a generic catch all for errors that don't belong
+     * The passed data was invalid.  This is a generic catch all for errors that don't belong
      * in other categories related to parameter validation.
      */
     const int STATUS_INVALID_DATA = 3;
@@ -186,16 +187,19 @@ interface IIdentityCredentialStore {
     HardwareInformation getHardwareInformation();
 
     /**
-     * createCredential creates a new Credential.  When a Credential is created, two cryptographic
+     * createCredential creates a new credential.  When a credential is created, two cryptographic
      * keys are created: StorageKey, an AES key used to secure the externalized Credential
-     * contents, and CredentialKeyPair, an EC key pair used to authenticate the store to the IA.  In
-     * addition, all of the Credential data content is imported and a certificate for the
-     * CredentialKeyPair and a signature produced with the CredentialKeyPair are created.  These
+     * contents, and CredentialKey, an EC key pair used to authenticate the store to the IA.
+     *
+     * CredentialKey must be an EC key using the P-256 curve.
+     *
+     * In addition, all of the Credential data content is imported and a certificate for the
+     * CredentialKey and a signature produced with the CredentialKey are created.  These
      * latter values may be checked by an issuing authority to verify that the data was imported
      * into secure hardware and that it was imported unmodified.
      *
      * @param docType is an optional name (may be an empty string) that identifies the type of
-     *     credential being created, e.g. "org.iso.18013-5.2019.mdl" (the doc type of the ISO
+     *     credential being created, e.g. "org.iso.18013.5.1.mDL" (the doc type of the ISO
      *     driving license standard).
      *
      * @param testCredential indicates if this is a test store.  Test credentials must use an
@@ -213,15 +217,8 @@ interface IIdentityCredentialStore {
      * Credential.
      *
      * The cipher suite used to communicate with the remote verifier must also be specified. Currently
-     * only a single cipher-suite is supported and the details of this are as follow:
-     *
-     *  - ECDHE with HKDF-SHA-256 for key agreement.
-     *  - AES-256 with GCM block mode for authenticated encryption (nonces are incremented by one
-     *    for every message).
-     *  - ECDSA with SHA-256 for signing (used for signing session transcripts to defeat
-     *    man-in-the-middle attacks), signing keys are not ephemeral.
-     *
-     * Support for other cipher suites may be added in a future version of this HAL.
+     * only a single cipher-suite is supported. Support for other cipher suites may be added in a
+     * future version of this HAL.
      *
      * This method fails with STATUS_INVALID_DATA if the passed in credentialData cannot be
      * decoded or decrypted.
@@ -233,7 +230,7 @@ interface IIdentityCredentialStore {
      *     return argument of the same name in finishAddingEntries(), in
      *     IWritableIdentityCredential.
      *
-     * @return an IIdentityCredential HIDL interface that provides operations on the Credential.
+     * @return an IIdentityCredential interface that provides operations on the Credential.
      */
     IIdentityCredential getCredential(in CipherSuite cipherSuite, in byte[] credentialData);
 }
