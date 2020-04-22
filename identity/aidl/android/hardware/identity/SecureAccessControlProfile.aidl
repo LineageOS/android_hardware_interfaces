@@ -29,7 +29,7 @@ parcelable SecureAccessControlProfile {
     /**
      * readerCertificate, if non-empty, specifies a single X.509 certificate (not a chain
      * of certificates) that must be used to authenticate requests. For details about how
-     * this is done, see the readerSignature paremter of IIdentityCredential.startRetrieval.
+     * this is done, see the readerSignature parameter of IIdentityCredential.startRetrieval.
      */
     Certificate readerCertificate;
 
