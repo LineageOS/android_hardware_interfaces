@@ -25,7 +25,7 @@ cc_test {
     data: [":media_omx_audio_res"],
     test_config: "VtsHalMediaOmxV1_0TargetAudioEncTest.xml",
     test_suites: [
-        "vts-core",
+        "vts",
     ],
 }
 
@@ -40,6 +40,6 @@ cc_test {
     data: [":media_omx_audio_res"],
     test_config: "VtsHalMediaOmxV1_0TargetAudioDecTest.xml",
     test_suites: [
-        "vts-core",
+        "vts",
     ],
 }
