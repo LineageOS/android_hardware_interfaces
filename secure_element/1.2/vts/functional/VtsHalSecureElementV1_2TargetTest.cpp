@@ -85,12 +85,17 @@ class SecureElementHidlTest : public ::testing::TestWithParam<std::string> {
  * Reset:
  * Calls reset()
  * Checks status
+ * Check onStateChange is received with connected state set to false
  * Check onStateChange is received with connected state set to true
  */
 TEST_P(SecureElementHidlTest, Reset) {
     EXPECT_EQ(SecureElementStatus::SUCCESS, se_->reset());
 
     auto res = se_cb_->WaitForCallback(kCallbackNameOnStateChange);
+    EXPECT_TRUE(res.no_timeout);
+    EXPECT_FALSE(res.args->state_);
+
+    res = se_cb_->WaitForCallback(kCallbackNameOnStateChange);
     EXPECT_TRUE(res.no_timeout);
     EXPECT_TRUE(res.args->state_);
 }
