@@ -125,6 +125,9 @@ cc_test {
 cc_binary {
     name: "android.hardware.automotive.vehicle@2.0-service",
     defaults: ["vhal_v2_0_defaults"],
+    vintf_fragments: [
+        "android.hardware.automotive.vehicle@2.0-service.xml",
+    ],
     init_rc: ["android.hardware.automotive.vehicle@2.0-service.rc"],
     vendor: true,
     relative_install_path: "hw",
