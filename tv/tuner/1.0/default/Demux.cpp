@@ -71,7 +71,7 @@ Return<void> Demux::openFilter(const DemuxFilterType& type, uint32_t bufferSize,
     mUsedFilterIds.insert(filterId);
 
     if (cb == nullptr) {
-        ALOGW("callback can't be null");
+        ALOGW("[Demux] callback can't be null");
         _hidl_cb(Result::INVALID_ARGUMENT, new Filter());
         return Void();
     }
@@ -82,9 +82,14 @@ Return<void> Demux::openFilter(const DemuxFilterType& type, uint32_t bufferSize,
         _hidl_cb(Result::UNKNOWN_ERROR, filter);
         return Void();
     }
-    mFilters[filterId] = filter;
 
-    _hidl_cb(Result::SUCCESS, filter);
+    mFilters[filterId] = filter;
+    bool result = true;
+    if (mDvr != nullptr && mDvr->getType() == DvrType::PLAYBACK) {
+        result = mDvr->addPlaybackFilter(filter);
+    }
+
+    _hidl_cb(result ? Result::SUCCESS : Result::INVALID_ARGUMENT, filter);
     return Void();
 }
 
@@ -130,7 +135,7 @@ Return<void> Demux::openDvr(DvrType type, uint32_t bufferSize, const sp<IDvrCall
     ALOGV("%s", __FUNCTION__);
 
     if (cb == nullptr) {
-        ALOGW("DVR callback can't be null");
+        ALOGW("[Demux] DVR callback can't be null");
         _hidl_cb(Result::INVALID_ARGUMENT, new Dvr());
         return Void();
     }
@@ -174,11 +179,11 @@ Result Demux::removeFilter(uint32_t filterId) {
 
 void Demux::startBroadcastTsFilter(vector<uint8_t> data) {
     set<uint32_t>::iterator it;
+    uint16_t pid = ((data[1] & 0x1f) << 8) | ((data[2] & 0xff));
+    if (DEBUG_DEMUX) {
+        ALOGW("[Demux] start ts filter pid: %d", pid);
+    }
     for (it = mUsedFilterIds.begin(); it != mUsedFilterIds.end(); it++) {
-        uint16_t pid = ((data[1] & 0x1f) << 8) | ((data[2] & 0xff));
-        if (DEBUG_FILTER) {
-            ALOGW("start ts filter pid: %d", pid);
-        }
         if (pid == mFilters[*it]->getTpid()) {
             mFilters[*it]->updateFilterOutput(data);
         }
@@ -187,10 +192,10 @@ void Demux::startBroadcastTsFilter(vector<uint8_t> data) {
 
 void Demux::sendFrontendInputToRecord(vector<uint8_t> data) {
     set<uint32_t>::iterator it;
+    if (DEBUG_DEMUX) {
+        ALOGW("[Demux] update record filter output");
+    }
     for (it = mRecordFilterIds.begin(); it != mRecordFilterIds.end(); it++) {
-        if (DEBUG_FILTER) {
-            ALOGW("update record filter output");
-        }
         mFilters[*it]->updateRecordOutput(data);
     }
 }
