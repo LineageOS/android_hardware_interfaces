@@ -439,6 +439,16 @@ const ConfigDeclaration kVehicleProperties[]{
 
         {.config =
                  {
+                         .prop = toInt(VehicleProperty::TIRE_PRESSURE_DISPLAY_UNITS),
+                         .access = VehiclePropertyAccess::READ_WRITE,
+                         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                         .configArray = {(int)VehicleUnit::KILOPASCAL, (int)VehicleUnit::PSI,
+                                         (int)VehicleUnit::BAR},
+                 },
+         .initialValue = {.int32Values = {toInt(VehicleUnit::PSI)}}},
+
+        {.config =
+                 {
                          .prop = toInt(VehicleProperty::CURRENT_GEAR),
                          .access = VehiclePropertyAccess::READ,
                          .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
@@ -1024,6 +1034,14 @@ const ConfigDeclaration kVehicleProperties[]{
                 .config =
                         {
                                 .prop = toInt(VehicleProperty::SWITCH_USER),
+                                .access = VehiclePropertyAccess::READ_WRITE,
+                                .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                        },
+        },
+        {
+                .config =
+                        {
+                                .prop = toInt(VehicleProperty::USER_IDENTIFICATION_ASSOCIATION),
                                 .access = VehiclePropertyAccess::READ_WRITE,
                                 .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
                         },
