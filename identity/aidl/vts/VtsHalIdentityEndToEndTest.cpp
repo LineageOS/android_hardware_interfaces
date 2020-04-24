@@ -28,8 +28,11 @@
 #include <future>
 #include <map>
 
+#include "VtsIdentityTestUtils.h"
+
 namespace android::hardware::identity {
 
+using std::endl;
 using std::map;
 using std::optional;
 using std::string;
@@ -40,51 +43,6 @@ using ::android::String16;
 using ::android::binder::Status;
 
 using ::android::hardware::keymaster::HardwareAuthToken;
-
-// ---------------------------------------------------------------------------
-// Test Data.
-// ---------------------------------------------------------------------------
-
-struct TestEntryData {
-    TestEntryData(string nameSpace, string name, vector<int32_t> profileIds)
-        : nameSpace(nameSpace), name(name), profileIds(profileIds) {}
-
-    TestEntryData(string nameSpace, string name, const string& value, vector<int32_t> profileIds)
-        : TestEntryData(nameSpace, name, profileIds) {
-        valueCbor = cppbor::Tstr(((const char*)value.data())).encode();
-    }
-    TestEntryData(string nameSpace, string name, const vector<uint8_t>& value,
-                  vector<int32_t> profileIds)
-        : TestEntryData(nameSpace, name, profileIds) {
-        valueCbor = cppbor::Bstr(value).encode();
-    }
-    TestEntryData(string nameSpace, string name, bool value, vector<int32_t> profileIds)
-        : TestEntryData(nameSpace, name, profileIds) {
-        valueCbor = cppbor::Bool(value).encode();
-    }
-    TestEntryData(string nameSpace, string name, int64_t value, vector<int32_t> profileIds)
-        : TestEntryData(nameSpace, name, profileIds) {
-        if (value >= 0) {
-            valueCbor = cppbor::Uint(value).encode();
-        } else {
-            valueCbor = cppbor::Nint(-value).encode();
-        }
-    }
-
-    string nameSpace;
-    string name;
-    vector<uint8_t> valueCbor;
-    vector<int32_t> profileIds;
-};
-
-struct TestProfile {
-    uint16_t id;
-    vector<uint8_t> readerCertificate;
-    bool userAuthenticationRequired;
-    uint64_t timeoutMillis;
-};
-
-// ----------------------------------------------------------------
 
 class IdentityAidl : public testing::TestWithParam<std::string> {
   public:
@@ -108,39 +66,26 @@ TEST_P(IdentityAidl, hardwareInformation) {
 TEST_P(IdentityAidl, createAndRetrieveCredential) {
     // First, generate a key-pair for the reader since its public key will be
     // part of the request data.
-    optional<vector<uint8_t>> readerKeyPKCS8 = support::createEcKeyPair();
-    ASSERT_TRUE(readerKeyPKCS8);
-    optional<vector<uint8_t>> readerPublicKey =
-            support::ecKeyPairGetPublicKey(readerKeyPKCS8.value());
-    optional<vector<uint8_t>> readerKey = support::ecKeyPairGetPrivateKey(readerKeyPKCS8.value());
-    string serialDecimal = "1234";
-    string issuer = "Android Open Source Project";
-    string subject = "Android IdentityCredential VTS Test";
-    time_t validityNotBefore = time(nullptr);
-    time_t validityNotAfter = validityNotBefore + 365 * 24 * 3600;
-    optional<vector<uint8_t>> readerCertificate = support::ecPublicKeyGenerateCertificate(
-            readerPublicKey.value(), readerKey.value(), serialDecimal, issuer, subject,
-            validityNotBefore, validityNotAfter);
+    vector<uint8_t> readerKey;
+    optional<vector<uint8_t>> readerCertificate =
+            test_utils::GenerateReaderCertificate("1234", readerKey);
     ASSERT_TRUE(readerCertificate);
 
     // Make the portrait image really big (just shy of 256 KiB) to ensure that
     // the chunking code gets exercised.
     vector<uint8_t> portraitImage;
-    portraitImage.resize(256 * 1024 - 10);
-    for (size_t n = 0; n < portraitImage.size(); n++) {
-        portraitImage[n] = (uint8_t)n;
-    }
+    test_utils::SetImageData(portraitImage);
 
     // Access control profiles:
-    const vector<TestProfile> testProfiles = {// Profile 0 (reader authentication)
-                                              {0, readerCertificate.value(), false, 0},
-                                              // Profile 1 (no authentication)
-                                              {1, {}, false, 0}};
+    const vector<test_utils::TestProfile> testProfiles = {// Profile 0 (reader authentication)
+                                                          {0, readerCertificate.value(), false, 0},
+                                                          // Profile 1 (no authentication)
+                                                          {1, {}, false, 0}};
 
     HardwareAuthToken authToken;
 
     // Here's the actual test data:
-    const vector<TestEntryData> testEntries = {
+    const vector<test_utils::TestEntryData> testEntries = {
             {"PersonalData", "Last name", string("Turing"), vector<int32_t>{0, 1}},
             {"PersonalData", "Birth date", string("19120623"), vector<int32_t>{0, 1}},
             {"PersonalData", "First name", string("Alan"), vector<int32_t>{0, 1}},
@@ -155,67 +100,33 @@ TEST_P(IdentityAidl, createAndRetrieveCredential) {
 
     string cborPretty;
     sp<IWritableIdentityCredential> writableCredential;
-    string docType = "org.iso.18013-5.2019.mdl";
-    bool testCredential = true;
-    ASSERT_TRUE(credentialStore_->createCredential(docType, testCredential, &writableCredential)
-                        .isOk());
-    ASSERT_NE(writableCredential, nullptr);
+    ASSERT_TRUE(test_utils::SetupWritableCredential(writableCredential, credentialStore_));
 
     string challenge = "attestationChallenge";
+    test_utils::AttestationData attData(writableCredential, challenge, {});
+    ASSERT_TRUE(attData.result.isOk())
+            << attData.result.exceptionCode() << "; " << attData.result.exceptionMessage() << endl;
+    ASSERT_EQ(binder::Status::EX_NONE, attData.result.exceptionCode());
+    ASSERT_EQ(IIdentityCredentialStore::STATUS_OK, attData.result.serviceSpecificErrorCode());
+
     // TODO: set it to something random and check it's in the cert chain
-    vector<uint8_t> attestationApplicationId = {};
-    vector<uint8_t> attestationChallenge(challenge.begin(), challenge.end());
-    vector<Certificate> attestationCertificates;
-    ASSERT_TRUE(writableCredential
-                        ->getAttestationCertificate(attestationApplicationId, attestationChallenge,
-                                                    &attestationCertificates)
-                        .isOk());
-    ASSERT_GE(attestationCertificates.size(), 2);
+    ASSERT_GE(attData.attestationCertificate.size(), 2);
 
     ASSERT_TRUE(
             writableCredential->startPersonalization(testProfiles.size(), testEntriesEntryCounts)
                     .isOk());
 
-    vector<SecureAccessControlProfile> returnedSecureProfiles;
-    for (const auto& testProfile : testProfiles) {
-        SecureAccessControlProfile profile;
-        Certificate cert;
-        cert.encodedCertificate = testProfile.readerCertificate;
-        ASSERT_TRUE(writableCredential
-                            ->addAccessControlProfile(testProfile.id, cert,
-                                                      testProfile.userAuthenticationRequired,
-                                                      testProfile.timeoutMillis,
-                                                      0,  // secureUserId
-                                                      &profile)
-                            .isOk());
-        ASSERT_EQ(testProfile.id, profile.id);
-        ASSERT_EQ(testProfile.readerCertificate, profile.readerCertificate.encodedCertificate);
-        ASSERT_EQ(testProfile.userAuthenticationRequired, profile.userAuthenticationRequired);
-        ASSERT_EQ(testProfile.timeoutMillis, profile.timeoutMillis);
-        ASSERT_EQ(support::kAesGcmTagSize + support::kAesGcmIvSize, profile.mac.size());
-        returnedSecureProfiles.push_back(profile);
-    }
+    optional<vector<SecureAccessControlProfile>> secureProfiles =
+            test_utils::AddAccessControlProfiles(writableCredential, testProfiles);
+    ASSERT_TRUE(secureProfiles);
 
     // Uses TestEntryData* pointer as key and values are the encrypted blobs. This
     // is a little hacky but it works well enough.
-    map<const TestEntryData*, vector<vector<uint8_t>>> encryptedBlobs;
+    map<const test_utils::TestEntryData*, vector<vector<uint8_t>>> encryptedBlobs;
 
     for (const auto& entry : testEntries) {
-        vector<vector<uint8_t>> chunks =
-                support::chunkVector(entry.valueCbor, hwInfo.dataChunkSize);
-
-        ASSERT_TRUE(writableCredential
-                            ->beginAddEntry(entry.profileIds, entry.nameSpace, entry.name,
-                                            entry.valueCbor.size())
-                            .isOk());
-
-        vector<vector<uint8_t>> encryptedChunks;
-        for (const auto& chunk : chunks) {
-            vector<uint8_t> encryptedChunk;
-            ASSERT_TRUE(writableCredential->addEntryValue(chunk, &encryptedChunk).isOk());
-            encryptedChunks.push_back(encryptedChunk);
-        }
-        encryptedBlobs[&entry] = encryptedChunks;
+        ASSERT_TRUE(test_utils::AddEntry(writableCredential, entry, hwInfo.dataChunkSize,
+                                         encryptedBlobs, true));
     }
 
     vector<uint8_t> credentialData;
@@ -276,8 +187,8 @@ TEST_P(IdentityAidl, createAndRetrieveCredential) {
             "]",
             cborPretty);
 
-    optional<vector<uint8_t>> credentialPubKey =
-            support::certificateChainGetTopMostKey(attestationCertificates[0].encodedCertificate);
+    optional<vector<uint8_t>> credentialPubKey = support::certificateChainGetTopMostKey(
+            attData.attestationCertificate[0].encodedCertificate);
     ASSERT_TRUE(credentialPubKey);
     EXPECT_TRUE(support::coseCheckEcDsaSignature(proofOfProvisioningSignature,
                                                  {},  // Additional data
@@ -347,8 +258,8 @@ TEST_P(IdentityAidl, createAndRetrieveCredential) {
                                          .add(cppbor::Semantic(24, itemsRequestBytes))
                                          .encode();
     optional<vector<uint8_t>> readerSignature =
-            support::coseSignEcDsa(readerKey.value(), {},  // content
-                                   dataToSign,             // detached content
+            support::coseSignEcDsa(readerKey, {},  // content
+                                   dataToSign,     // detached content
                                    readerCertificate.value());
     ASSERT_TRUE(readerSignature);
 
@@ -358,7 +269,7 @@ TEST_P(IdentityAidl, createAndRetrieveCredential) {
     ASSERT_TRUE(credential->generateSigningKeyPair(&signingKeyBlob, &signingKeyCertificate).isOk());
 
     ASSERT_TRUE(credential
-                        ->startRetrieval(returnedSecureProfiles, authToken, itemsRequestBytes,
+                        ->startRetrieval(secureProfiles.value(), authToken, itemsRequestBytes,
                                          signingKeyBlob, sessionTranscriptBytes,
                                          readerSignature.value(), testEntriesEntryCounts)
                         .isOk());
@@ -405,6 +316,8 @@ TEST_P(IdentityAidl, createAndRetrieveCredential) {
     cppbor::Array deviceAuthentication;
     deviceAuthentication.add("DeviceAuthentication");
     deviceAuthentication.add(sessionTranscript.clone());
+
+    string docType = "org.iso.18013-5.2019.mdl";
     deviceAuthentication.add(docType);
     deviceAuthentication.add(cppbor::Semantic(24, deviceNameSpacesBytes));
     vector<uint8_t> encodedDeviceAuthentication = deviceAuthentication.encode();
