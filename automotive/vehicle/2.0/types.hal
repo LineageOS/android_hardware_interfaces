@@ -2646,9 +2646,9 @@ enum VehicleProperty : int32_t {
      * If the request succeeded and Android has 3 users (0, 10, 11), the response would be:
      *
      * int32[0]: -108 // request id
-     * int32[1]:  5   // messageType = SwitchUserMessageType::ANDROID_SWITCH
+     * int32[1]:  5   // messageType = SwitchUserMessageType::ANDROID_POST_SWITCH
      * int32[2]:  11  // target user id
-     * int32[3]:  11  // target user id flags (none)
+     * int32[3]:  0   // target user id flags (none)
      * int32[4]:  11  // current user
      * int32[5]:  0   // current user flags (none)
      * int32[6]:  3   // number of users
@@ -2664,17 +2664,21 @@ enum VehicleProperty : int32_t {
      *
      * 5.ANDROID_POST_SWITCH
      * ---------------------
-     * Called by the Android System after a request to switch a user was made
+     * Called by the Android System after a request to switch a user was made.
      *
      * This property is called after switch requests of any type (i.e., LEGACY_ANDROID_SWITCH,
      * ANDROID_SWITCH, or VEHICLE_REQUEST) and can be used to determine if the request succeeded or
      * failed:
      *
-     * 1. When it succeeded, it's called when the Android user is in the boot locked state and the
-     *    value of the current and target users ids in the response are different. This would be
-     *    equivalent to receiving an Intent.ACTION_LOCKED_BOOT_COMPLETED in an Android app.
+     * 1. When it succeeded, it's called when the Android user is in the unlocked state and the
+     *    value of the current and target users ids in the response are the same. This would be
+     *    equivalent to receiving an Intent.ACTION_USER_UNLOCKED in an Android app.
      * 2. When it failed it's called right away and the value of the current and target users ids
-     *    in the response are the same.
+     *    in the response are different (as the current user didn't change to the target).
+     * 3. If a new switch request is made before the HAL responded to the previous one or before
+     *    the user was unlocked, then the ANDROID_POST_SWITCH request is not made. For example,
+     *    the driver could accidentally switch to the wrong user which has lock crentials, then
+     *    switch to the right one before entering the credentials.
      *
      * The HAL can update its internal state once it receives this request, but it doesn't need to
      * reply back to the Android System.
@@ -2824,7 +2828,7 @@ enum VehicleProperty : int32_t {
      * int32[0]: 0   (Android user flags)
      * int32[1]: 1   (number of associations being set)
      * int32[2]: 101 (1st type: UserIdentificationAssociationType::CUSTOM_1)
-     * int32[3]: 1   (1st value: UserIdentificationAssociationSETValue::ASSOCIATE_CURRENT_USER)
+     * int32[3]: 1   (1st value: UserIdentificationAssociationSetValue::ASSOCIATE_CURRENT_USER)
      *
      * If the request succeeded, the response would be simply:
      *
