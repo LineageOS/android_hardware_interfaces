@@ -1038,6 +1038,14 @@ const ConfigDeclaration kVehicleProperties[]{
                                 .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
                         },
         },
+        {
+                .config =
+                        {
+                                .prop = toInt(VehicleProperty::USER_IDENTIFICATION_ASSOCIATION),
+                                .access = VehiclePropertyAccess::READ_WRITE,
+                                .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                        },
+        },
 };
 
 }  // impl
