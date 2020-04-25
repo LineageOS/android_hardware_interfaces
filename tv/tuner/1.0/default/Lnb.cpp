@@ -27,6 +27,9 @@ namespace V1_0 {
 namespace implementation {
 
 Lnb::Lnb() {}
+Lnb::Lnb(int id) {
+    mId = id;
+}
 
 Lnb::~Lnb() {}
 
@@ -64,6 +67,10 @@ Return<Result> Lnb::close() {
     ALOGV("%s", __FUNCTION__);
 
     return Result::SUCCESS;
+}
+
+int Lnb::getId() {
+    return mId;
 }
 
 }  // namespace implementation
