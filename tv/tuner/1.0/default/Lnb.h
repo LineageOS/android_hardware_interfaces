@@ -38,6 +38,7 @@ using ::android::hardware::tv::tuner::V1_0::Result;
 class Lnb : public ILnb {
   public:
     Lnb();
+    Lnb(int id);
 
     virtual Return<Result> setCallback(const sp<ILnbCallback>& callback) override;
 
@@ -51,7 +52,10 @@ class Lnb : public ILnb {
 
     virtual Return<Result> close() override;
 
+    int getId();
+
   private:
+    int mId;
     virtual ~Lnb();
 };
 
