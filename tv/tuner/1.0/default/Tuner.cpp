@@ -88,6 +88,10 @@ Tuner::Tuner() {
     caps = FrontendInfo::FrontendCapabilities();
     caps.atscCaps(FrontendAtscCapabilities());
     mFrontendCaps[7] = caps;
+
+    mLnbs.resize(2);
+    mLnbs[0] = new Lnb(0);
+    mLnbs[1] = new Lnb(1);
 }
 
 Tuner::~Tuner() {}
@@ -194,17 +198,24 @@ Return<void> Tuner::getLnbIds(getLnbIds_cb _hidl_cb) {
     ALOGV("%s", __FUNCTION__);
 
     vector<LnbId> lnbIds;
+    lnbIds.resize(mLnbs.size());
+    for (int i = 0; i < lnbIds.size(); i++) {
+        lnbIds[i] = mLnbs[i]->getId();
+    }
 
     _hidl_cb(Result::SUCCESS, lnbIds);
     return Void();
 }
 
-Return<void> Tuner::openLnbById(LnbId /* lnbId */, openLnbById_cb _hidl_cb) {
+Return<void> Tuner::openLnbById(LnbId lnbId, openLnbById_cb _hidl_cb) {
     ALOGV("%s", __FUNCTION__);
 
-    sp<ILnb> lnb = new Lnb();
+    if (lnbId >= mLnbs.size()) {
+        _hidl_cb(Result::INVALID_ARGUMENT, nullptr);
+        return Void();
+    }
 
-    _hidl_cb(Result::SUCCESS, lnb);
+    _hidl_cb(Result::SUCCESS, mLnbs[lnbId]);
     return Void();
 }
 
