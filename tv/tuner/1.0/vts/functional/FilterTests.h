@@ -149,6 +149,7 @@ class FilterTests {
   public:
     void setService(sp<ITuner> tuner) { mService = tuner; }
     void setDemux(sp<IDemux> demux) { mDemux = demux; }
+    sp<IFilter> getFilterById(uint32_t filterId) { return mFilters[filterId]; }
 
     std::map<uint32_t, sp<FilterCallback>> getFilterCallbacks() { return mFilterCallbacks; }
 

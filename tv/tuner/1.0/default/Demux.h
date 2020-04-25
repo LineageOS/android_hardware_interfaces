@@ -89,6 +89,7 @@ class Demux : public IDemux {
     void updateFilterOutput(uint16_t filterId, vector<uint8_t> data);
     uint16_t getFilterTpid(uint32_t filterId);
     void setIsRecording(bool isRecording);
+    void startFrontendInputLoop();
 
   private:
     // Tuner service
@@ -104,7 +105,6 @@ class Demux : public IDemux {
         uint32_t filterId;
     };
 
-    Result startFrontendInputLoop();
     static void* __threadLoopFrontend(void* user);
     void frontendInputThreadLoop();
 
