@@ -75,7 +75,10 @@ cc_library_static {
     ],
     local_include_dirs: ["common/include/vhal_v2_0"],
     export_include_dirs: ["impl"],
-    whole_static_libs: ["android.hardware.automotive.vehicle@2.0-manager-lib"],
+    whole_static_libs: [
+        "android.hardware.automotive.vehicle@2.0-emulated-user-hal-lib",
+        "android.hardware.automotive.vehicle@2.0-manager-lib",
+    ],
     shared_libs: [
         "libbase",
         "libjsoncpp",
@@ -84,6 +87,16 @@ cc_library_static {
     static_libs: [
         "libqemu_pipe",
         "android.hardware.automotive.vehicle@2.0-libproto-native",
+    ],
+}
+
+// Library used  to emulate User HAL behavior through lshal debug requests.
+cc_library_static {
+    name: "android.hardware.automotive.vehicle@2.0-emulated-user-hal-lib",
+    vendor: true,
+    defaults: ["vhal_v2_0_defaults"],
+    srcs: [
+        "impl/vhal_v2_0/EmulatedUserHal.cpp",
     ],
 }
 
