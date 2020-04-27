@@ -641,6 +641,40 @@ TEST_P(IdentityCredentialTests, verifyInterleavingEntryNameSpaceOrderingFails) {
     EXPECT_EQ(IIdentityCredentialStore::STATUS_INVALID_DATA, result.serviceSpecificErrorCode());
 }
 
+TEST_P(IdentityCredentialTests, verifyAccessControlProfileIdOutOfRange) {
+    sp<IWritableIdentityCredential> writableCredential;
+    ASSERT_TRUE(test_utils::SetupWritableCredential(writableCredential, credentialStore_));
+
+    const vector<int32_t> entryCounts = {1};
+    Status result = writableCredential->startPersonalization(1, entryCounts);
+    ASSERT_TRUE(result.isOk()) << result.exceptionCode() << "; " << result.exceptionMessage()
+                               << endl;
+
+    SecureAccessControlProfile profile;
+
+    // This should fail because the id is >= 32
+    result = writableCredential->addAccessControlProfile(32,     // id
+                                                         {},     // readerCertificate
+                                                         false,  // userAuthenticationRequired
+                                                         0,      // timeoutMillis
+                                                         42,     // secureUserId
+                                                         &profile);
+    ASSERT_FALSE(result.isOk()) << result.exceptionCode() << "; " << result.exceptionMessage();
+    ASSERT_EQ(binder::Status::EX_SERVICE_SPECIFIC, result.exceptionCode());
+    ASSERT_EQ(IIdentityCredentialStore::STATUS_INVALID_DATA, result.serviceSpecificErrorCode());
+
+    // This should fail because the id is < 0
+    result = writableCredential->addAccessControlProfile(-1,     // id
+                                                         {},     // readerCertificate
+                                                         false,  // userAuthenticationRequired
+                                                         0,      // timeoutMillis
+                                                         42,     // secureUserId
+                                                         &profile);
+    ASSERT_FALSE(result.isOk()) << result.exceptionCode() << "; " << result.exceptionMessage();
+    ASSERT_EQ(binder::Status::EX_SERVICE_SPECIFIC, result.exceptionCode());
+    ASSERT_EQ(IIdentityCredentialStore::STATUS_INVALID_DATA, result.serviceSpecificErrorCode());
+}
+
 INSTANTIATE_TEST_SUITE_P(
         Identity, IdentityCredentialTests,
         testing::ValuesIn(android::getAidlHalInstanceNames(IIdentityCredentialStore::descriptor)),
