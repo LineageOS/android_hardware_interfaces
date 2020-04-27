@@ -143,6 +143,12 @@ ndk::ScopedAStatus WritableIdentityCredential::addAccessControlProfile(
     }
     accessControlProfileIds_.insert(id);
 
+    if (id < 0 || id >= 32) {
+        return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                IIdentityCredentialStore::STATUS_INVALID_DATA,
+                "Access Control Profile id must be non-negative and less than 32"));
+    }
+
     // Spec requires if |userAuthenticationRequired| is false, then |timeoutMillis| must also
     // be zero.
     if (!userAuthenticationRequired && timeoutMillis != 0) {
