@@ -19,6 +19,7 @@
 #include <vhal_v2_0/VehicleObjectPool.h>
 #include <vhal_v2_0/VehicleServer.h>
 
+#include "EmulatedUserHal.h"
 #include "GeneratorHub.h"
 
 namespace android::hardware::automotive::vehicle::V2_0::impl {
@@ -53,15 +54,10 @@ class VehicleHalServer : public IVehicleServer {
     VehiclePropValuePtr createHwInputKeyProp(VehicleHwKeyInputAction action, int32_t keyCode,
                                              int32_t targetDisplay);
 
-    StatusCode onSetInitialUserInfoResponse(const VehiclePropValue& value, bool updateStatus);
-    StatusCode onSetSwitchUserResponse(const VehiclePropValue& value, bool updateStatus);
-
     // data members
 
   protected:
-    // TODO(b/146207078): it might be clearer to move members below to an EmulatedUserHal class
-    std::unique_ptr<VehiclePropValue> mInitialUserResponseFromCmd;
-    std::unique_ptr<VehiclePropValue> mSwitchUserResponseFromCmd;
+    EmulatedUserHal mEmulatedUserHal;
 
   private:
     GeneratorHub mGeneratorHub{
