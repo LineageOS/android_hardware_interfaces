@@ -17,6 +17,7 @@
 package android.hardware.identity;
 
 import android.hardware.identity.Certificate;
+import android.hardware.identity.RequestNamespace;
 import android.hardware.identity.SecureAccessControlProfile;
 import android.hardware.keymaster.HardwareAuthToken;
 
@@ -81,6 +82,8 @@ interface IIdentityCredential {
 
     /**
      * Start an entry retrieval process.
+     *
+     * The setRequestedNamespaces() method will be called before this method.
      *
      * This method be called after createEphemeralKeyPair(), setReaderEphemeralPublicKey(),
      * createAuthChallenge() and before startRetrieveEntry(). This method call is followed by
@@ -274,7 +277,7 @@ interface IIdentityCredential {
      *            "DeviceAuthentication",
      *            SessionTranscript,
      *            DocType,
-     *            DeviceNameSpaceBytes,
+     *            DeviceNameSpacesBytes,
      *        ]
      *
      *        DocType = tstr
@@ -343,4 +346,16 @@ interface IIdentityCredential {
      * @return an X.509 certificate for the new signing key, signed by the credential key.
      */
     Certificate generateSigningKeyPair(out byte[] signingKeyBlob);
+
+    /**
+     * Sets the namespaces and data items (including their size and access control profiles)
+     * which will be requested. This method must be called before startRetrieval() is called.
+     *
+     * This information is provided to make it possible for a HAL implementation to
+     * incrementally build up cryptographically authenticated data which includes the
+     * DeviceNameSpaces CBOR.
+     *
+     * @param requestNamespaces Namespaces and data items which will be requested.
+     */
+    void setRequestedNamespaces(in RequestNamespace[] requestNamespaces);
 }
