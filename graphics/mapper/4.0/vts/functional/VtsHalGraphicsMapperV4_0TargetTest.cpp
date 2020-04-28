@@ -277,7 +277,7 @@ class GraphicsMapperHidlTest
         }
     }
 
-    void verifyRGBA8888(const native_handle_t* bufferHandle, uint8_t* data, uint32_t height,
+    void verifyRGBA8888(const native_handle_t* bufferHandle, const uint8_t* data, uint32_t height,
                         size_t strideInBytes, size_t widthInBytes, uint32_t seed = 0) {
         hidl_vec<uint8_t> vec;
         ASSERT_EQ(Error::NONE,
@@ -293,6 +293,49 @@ class GraphicsMapperHidlTest
             }
             data += strideInBytes;
         }
+    }
+
+    void traverseYCbCr888Data(const android_ycbcr& yCbCr, int32_t width, int32_t height,
+                              int64_t hSubsampling, int64_t vSubsampling,
+                              std::function<void(uint8_t*, uint8_t)> traverseFuncion) {
+        auto yData = static_cast<uint8_t*>(yCbCr.y);
+        auto cbData = static_cast<uint8_t*>(yCbCr.cb);
+        auto crData = static_cast<uint8_t*>(yCbCr.cr);
+        auto yStride = yCbCr.ystride;
+        auto cStride = yCbCr.cstride;
+        auto chromaStep = yCbCr.chroma_step;
+
+        for (uint32_t y = 0; y < height; y++) {
+            for (uint32_t x = 0; x < width; x++) {
+                auto val = static_cast<uint8_t>(height * y + x);
+
+                traverseFuncion(yData + yStride * y + x, val);
+
+                if (y % vSubsampling == 0 && x % hSubsampling == 0) {
+                    uint32_t subSampleX = x / hSubsampling;
+                    uint32_t subSampleY = y / vSubsampling;
+                    const auto subSampleOffset = cStride * subSampleY + chromaStep * subSampleX;
+                    const auto subSampleVal =
+                            static_cast<uint8_t>(height * subSampleY + subSampleX);
+
+                    traverseFuncion(cbData + subSampleOffset, subSampleVal);
+                    traverseFuncion(crData + subSampleOffset, subSampleVal + 1);
+                }
+            }
+        }
+    }
+
+    void fillYCbCr888Data(const android_ycbcr& yCbCr, int32_t width, int32_t height,
+                          int64_t hSubsampling, int64_t vSubsampling) {
+        traverseYCbCr888Data(yCbCr, width, height, hSubsampling, vSubsampling,
+                             [](auto address, auto fillingData) { *address = fillingData; });
+    }
+
+    void verifyYCbCr888Data(const android_ycbcr& yCbCr, int32_t width, int32_t height,
+                            int64_t hSubsampling, int64_t vSubsampling) {
+        traverseYCbCr888Data(
+                yCbCr, width, height, hSubsampling, vSubsampling,
+                [](auto address, auto expectedData) { EXPECT_EQ(*address, expectedData); });
     }
 
     bool isEqual(float a, float b) { return abs(a - b) < 0.0001; }
@@ -591,37 +634,16 @@ TEST_P(GraphicsMapperHidlTest, Lock_YCRCB_420_SP) {
     ASSERT_NO_FATAL_FAILURE(
             getAndroidYCbCr(bufferHandle, data, &yCbCr, &hSubsampling, &vSubsampling));
 
-    auto yData = static_cast<uint8_t*>(yCbCr.y);
-    auto cbData = static_cast<uint8_t*>(yCbCr.cb);
-    auto crData = static_cast<uint8_t*>(yCbCr.cr);
-    auto yStride = yCbCr.ystride;
-    auto cStride = yCbCr.cstride;
-    auto chromaStep = yCbCr.chroma_step;
-
     constexpr uint32_t kCbCrSubSampleFactor = 2;
-    ASSERT_EQ(crData + 1, cbData);
-    ASSERT_EQ(2, chromaStep);
     ASSERT_EQ(kCbCrSubSampleFactor, hSubsampling);
     ASSERT_EQ(kCbCrSubSampleFactor, vSubsampling);
 
-    for (uint32_t y = 0; y < info.height; y++) {
-        for (uint32_t x = 0; x < info.width; x++) {
-            auto val = static_cast<uint8_t>(info.height * y + x);
+    auto cbData = static_cast<uint8_t*>(yCbCr.cb);
+    auto crData = static_cast<uint8_t*>(yCbCr.cr);
+    ASSERT_EQ(crData + 1, cbData);
+    ASSERT_EQ(2, yCbCr.chroma_step);
 
-            yData[yStride * y + x] = val;
-
-            if (y % vSubsampling == 0 && x % hSubsampling == 0) {
-                uint32_t subSampleX = x / hSubsampling;
-                uint32_t subSampleY = y / vSubsampling;
-                const auto subSampleOffset = cStride * subSampleY + chromaStep * subSampleX;
-                const auto subSampleVal =
-                        static_cast<uint8_t>(info.height * subSampleY + subSampleX);
-
-                cbData[subSampleOffset] = subSampleVal;
-                crData[subSampleOffset] = subSampleVal + 1;
-            }
-        }
-    }
+    fillYCbCr888Data(yCbCr, info.width, info.height, hSubsampling, vSubsampling);
 
     ASSERT_NO_FATAL_FAILURE(fence = mGralloc->unlock(bufferHandle));
 
@@ -632,28 +654,7 @@ TEST_P(GraphicsMapperHidlTest, Lock_YCRCB_420_SP) {
     ASSERT_NO_FATAL_FAILURE(
             getAndroidYCbCr(bufferHandle, data, &yCbCr, &hSubsampling, &vSubsampling));
 
-    yData = static_cast<uint8_t*>(yCbCr.y);
-    cbData = static_cast<uint8_t*>(yCbCr.cb);
-    crData = static_cast<uint8_t*>(yCbCr.cr);
-
-    for (uint32_t y = 0; y < info.height; y++) {
-        for (uint32_t x = 0; x < info.width; x++) {
-            auto val = static_cast<uint8_t>(info.height * y + x);
-
-            EXPECT_EQ(val, yData[yStride * y + x]);
-
-            if (y % vSubsampling == 0 && x % hSubsampling == 0) {
-                uint32_t subSampleX = x / hSubsampling;
-                uint32_t subSampleY = y / vSubsampling;
-                const auto subSampleOffset = cStride * subSampleY + chromaStep * subSampleX;
-                const auto subSampleVal =
-                        static_cast<uint8_t>(info.height * subSampleY + subSampleX);
-
-                EXPECT_EQ(subSampleVal, cbData[subSampleOffset]);
-                EXPECT_EQ(subSampleVal + 1, crData[subSampleOffset]);
-            }
-        }
-    }
+    verifyYCbCr888Data(yCbCr, info.width, info.height, hSubsampling, vSubsampling);
 
     ASSERT_NO_FATAL_FAILURE(fence = mGralloc->unlock(bufferHandle));
     if (fence >= 0) {
