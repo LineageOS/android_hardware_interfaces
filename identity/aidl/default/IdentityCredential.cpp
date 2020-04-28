@@ -25,6 +25,7 @@
 #include <string.h>
 
 #include <android-base/logging.h>
+#include <android-base/stringprintf.h>
 
 #include <cppbor.h>
 #include <cppbor_parse.h>
@@ -32,6 +33,7 @@
 namespace aidl::android::hardware::identity {
 
 using ::aidl::android::hardware::keymaster::Timestamp;
+using ::android::base::StringPrintf;
 using ::std::optional;
 
 using namespace ::android::hardware::identity;
@@ -253,6 +255,12 @@ bool checkUserAuthentication(const SecureAccessControlProfile& profile,
     return true;
 }
 
+ndk::ScopedAStatus IdentityCredential::setRequestedNamespaces(
+        const vector<RequestNamespace>& requestNamespaces) {
+    requestNamespaces_ = requestNamespaces;
+    return ndk::ScopedAStatus::ok();
+}
+
 ndk::ScopedAStatus IdentityCredential::startRetrieval(
         const vector<SecureAccessControlProfile>& accessControlProfiles,
         const HardwareAuthToken& authToken, const vector<int8_t>& itemsRequestS,
@@ -451,7 +459,7 @@ ndk::ScopedAStatus IdentityCredential::startRetrieval(
                         "Type mismatch in nameSpaces map"));
             }
             string requestedNamespace = nsKey->value();
-            vector<string> requestedKeys;
+            set<string> requestedKeys;
             for (size_t m = 0; m < nsInnerMap->size(); m++) {
                 const auto& [innerMapKeyItem, innerMapValueItem] = (*nsInnerMap)[m];
                 const cppbor::Tstr* nameItem = innerMapKeyItem->asTstr();
@@ -463,13 +471,13 @@ ndk::ScopedAStatus IdentityCredential::startRetrieval(
                             IIdentityCredentialStore::STATUS_INVALID_ITEMS_REQUEST_MESSAGE,
                             "Type mismatch in value in nameSpaces map"));
                 }
-                requestedKeys.push_back(nameItem->value());
+                requestedKeys.insert(nameItem->value());
             }
             requestedNameSpacesAndNames_[requestedNamespace] = requestedKeys;
         }
     }
 
-    // Finally, validate all the access control profiles in the requestData.
+    // Validate all the access control profiles in the requestData.
     bool haveAuthToken = (authToken.mac.size() > 0);
     for (const auto& profile : accessControlProfiles) {
         if (!secureAccessControlProfileCheckMac(profile, storageKey_)) {
@@ -500,8 +508,116 @@ ndk::ScopedAStatus IdentityCredential::startRetrieval(
     itemsRequest_ = itemsRequest;
     signingKeyBlob_ = byteStringToUnsigned(signingKeyBlobS);
 
+    // Finally, calculate the size of DeviceNameSpaces. We need to know it ahead of time.
+    expectedDeviceNameSpacesSize_ = calcDeviceNameSpacesSize();
+
     numStartRetrievalCalls_ += 1;
     return ndk::ScopedAStatus::ok();
+}
+
+size_t cborNumBytesForLength(size_t length) {
+    if (length < 24) {
+        return 0;
+    } else if (length <= 0xff) {
+        return 1;
+    } else if (length <= 0xffff) {
+        return 2;
+    } else if (length <= 0xffffffff) {
+        return 4;
+    }
+    return 8;
+}
+
+size_t cborNumBytesForTstr(const string& value) {
+    return 1 + cborNumBytesForLength(value.size()) + value.size();
+}
+
+size_t IdentityCredential::calcDeviceNameSpacesSize() {
+    /*
+     * This is how DeviceNameSpaces is defined:
+     *
+     *        DeviceNameSpaces = {
+     *            * NameSpace => DeviceSignedItems
+     *        }
+     *        DeviceSignedItems = {
+     *            + DataItemName => DataItemValue
+     *        }
+     *
+     *        Namespace = tstr
+     *        DataItemName = tstr
+     *        DataItemValue = any
+     *
+     * This function will calculate its length using knowledge of how CBOR is
+     * encoded.
+     */
+    size_t ret = 0;
+    size_t numNamespacesWithValues = 0;
+    for (const RequestNamespace& rns : requestNamespaces_) {
+        vector<RequestDataItem> itemsToInclude;
+
+        for (const RequestDataItem& rdi : rns.items) {
+            // If we have a CBOR request message, skip if item isn't in it
+            if (itemsRequest_.size() > 0) {
+                const auto& it = requestedNameSpacesAndNames_.find(rns.namespaceName);
+                if (it == requestedNameSpacesAndNames_.end()) {
+                    continue;
+                }
+                const set<string>& dataItemNames = it->second;
+                if (dataItemNames.find(rdi.name) == dataItemNames.end()) {
+                    continue;
+                }
+            }
+
+            // Access is granted if at least one of the profiles grants access.
+            //
+            // If an item is configured without any profiles, access is denied.
+            //
+            bool authorized = false;
+            for (auto id : rdi.accessControlProfileIds) {
+                auto it = profileIdToAccessCheckResult_.find(id);
+                if (it != profileIdToAccessCheckResult_.end()) {
+                    int accessControlForProfile = it->second;
+                    if (accessControlForProfile == IIdentityCredentialStore::STATUS_OK) {
+                        authorized = true;
+                        break;
+                    }
+                }
+            }
+            if (!authorized) {
+                continue;
+            }
+
+            itemsToInclude.push_back(rdi);
+        }
+
+        // If no entries are to be in the namespace, we don't include it...
+        if (itemsToInclude.size() == 0) {
+            continue;
+        }
+
+        // Key: NameSpace
+        ret += cborNumBytesForTstr(rns.namespaceName);
+
+        // Value: Open the DeviceSignedItems map
+        ret += 1 + cborNumBytesForLength(itemsToInclude.size());
+
+        for (const RequestDataItem& item : itemsToInclude) {
+            // Key: DataItemName
+            ret += cborNumBytesForTstr(item.name);
+
+            // Value: DataItemValue - entryData.size is the length of serialized CBOR so we use
+            // that.
+            ret += item.size;
+        }
+
+        numNamespacesWithValues++;
+    }
+
+    // Now that we now the nunber of namespaces with values, we know how many
+    // bytes the DeviceNamespaces map in the beginning is going to take up.
+    ret += 1 + cborNumBytesForLength(numNamespacesWithValues);
+
+    return ret;
 }
 
 ndk::ScopedAStatus IdentityCredential::startRetrieveEntryValue(
@@ -562,8 +678,8 @@ ndk::ScopedAStatus IdentityCredential::startRetrieveEntryValue(
                     IIdentityCredentialStore::STATUS_NOT_IN_REQUEST_MESSAGE,
                     "Name space was not requested in startRetrieval"));
         }
-        const auto& dataItemNames = it->second;
-        if (std::find(dataItemNames.begin(), dataItemNames.end(), name) == dataItemNames.end()) {
+        const set<string>& dataItemNames = it->second;
+        if (dataItemNames.find(name) == dataItemNames.end()) {
             return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
                     IIdentityCredentialStore::STATUS_NOT_IN_REQUEST_MESSAGE,
                     "Data item name in name space was not requested in startRetrieval"));
@@ -608,7 +724,6 @@ ndk::ScopedAStatus IdentityCredential::startRetrieveEntryValue(
 ndk::ScopedAStatus IdentityCredential::retrieveEntryValue(const vector<int8_t>& encryptedContentS,
                                                           vector<int8_t>* outContent) {
     auto encryptedContent = byteStringToUnsigned(encryptedContentS);
-
     optional<vector<uint8_t>> content =
             support::decryptAes128Gcm(storageKey_, encryptedContent, entryAdditionalData_);
     if (!content) {
@@ -658,6 +773,17 @@ ndk::ScopedAStatus IdentityCredential::finishRetrieval(vector<int8_t>* outMac,
                                  std::move(currentNameSpaceDeviceNameSpacesMap_));
     }
     vector<uint8_t> encodedDeviceNameSpaces = deviceNameSpacesMap_.encode();
+
+    if (encodedDeviceNameSpaces.size() != expectedDeviceNameSpacesSize_) {
+        LOG(ERROR) << "encodedDeviceNameSpaces is " << encodedDeviceNameSpaces.size() << " bytes, "
+                   << "was expecting " << expectedDeviceNameSpacesSize_;
+        return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                IIdentityCredentialStore::STATUS_INVALID_DATA,
+                StringPrintf(
+                        "Unexpected CBOR size %zd for encodedDeviceNameSpaces, was expecting %zd",
+                        encodedDeviceNameSpaces.size(), expectedDeviceNameSpacesSize_)
+                        .c_str()));
+    }
 
     // If there's no signing key or no sessionTranscript or no reader ephemeral
     // public key, we return the empty MAC.

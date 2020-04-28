@@ -18,5 +18,9 @@ aidl_interface {
             },
         },
     },
-    versions: ["1"],
+    versions: [
+        "1",
+        "2",
+    ],
+    version_for_vndk_options: "1",
 }
