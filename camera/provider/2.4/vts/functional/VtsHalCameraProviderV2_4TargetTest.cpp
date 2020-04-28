@@ -18,12 +18,13 @@
 
 #include <algorithm>
 #include <chrono>
+#include <condition_variable>
+#include <list>
 #include <mutex>
 #include <regex>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
-#include <condition_variable>
 
 #include <inttypes.h>
 
@@ -163,6 +164,26 @@ struct AvailableZSLInputOutput {
 enum ReprocessType {
     PRIV_REPROCESS,
     YUV_REPROCESS,
+};
+
+enum SystemCameraKind {
+    /**
+     * These camera devices are visible to all apps and system components alike
+     */
+    PUBLIC = 0,
+
+    /**
+     * These camera devices are visible only to processes having the
+     * android.permission.SYSTEM_CAMERA permission. They are not exposed to 3P
+     * apps.
+     */
+    SYSTEM_ONLY_CAMERA,
+
+    /**
+     * These camera devices are visible only to HAL clients (that try to connect
+     * on a hwbinder thread).
+     */
+    HIDDEN_SECURE_CAMERA
 };
 
 namespace {
@@ -851,6 +872,8 @@ public:
     static Status isAutoFocusModeAvailable(
             CameraParameters &cameraParams, const char *mode) ;
     static Status isMonochromeCamera(const camera_metadata_t *staticMeta);
+    static Status getSystemCameraKind(const camera_metadata_t* staticMeta,
+                                      SystemCameraKind* systemCameraKind);
 
     // Used by switchToOffline where a new result queue is created for offline reqs
     void updateInflightResultQueue(std::shared_ptr<ResultMetadataQueue> resultQueue);
@@ -2551,6 +2574,90 @@ TEST_P(CameraHidlTest, getSetParameters) {
 
             Return<void> ret = device1->close();
             ASSERT_TRUE(ret.isOk());
+        }
+    }
+}
+
+TEST_P(CameraHidlTest, systemCameraTest) {
+    hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
+    std::map<std::string, std::list<SystemCameraKind>> hiddenPhysicalIdToLogicalMap;
+    for (const auto& name : cameraDeviceNames) {
+        int deviceVersion = getCameraDeviceVersion(name, mProviderType);
+        switch (deviceVersion) {
+            case CAMERA_DEVICE_API_VERSION_3_6:
+            case CAMERA_DEVICE_API_VERSION_3_5:
+            case CAMERA_DEVICE_API_VERSION_3_4:
+            case CAMERA_DEVICE_API_VERSION_3_3:
+            case CAMERA_DEVICE_API_VERSION_3_2: {
+                ::android::sp<::android::hardware::camera::device::V3_2::ICameraDevice> device3_x;
+                ALOGI("getCameraCharacteristics: Testing camera device %s", name.c_str());
+                Return<void> ret;
+                ret = mProvider->getCameraDeviceInterface_V3_x(
+                        name, [&](auto status, const auto& device) {
+                            ALOGI("getCameraDeviceInterface_V3_x returns status:%d", (int)status);
+                            ASSERT_EQ(Status::OK, status);
+                            ASSERT_NE(device, nullptr);
+                            device3_x = device;
+                        });
+                ASSERT_TRUE(ret.isOk());
+
+                ret = device3_x->getCameraCharacteristics([&](auto status, const auto& chars) {
+                    ASSERT_EQ(status, Status::OK);
+                    const camera_metadata_t* staticMeta =
+                            reinterpret_cast<const camera_metadata_t*>(chars.data());
+                    ASSERT_NE(staticMeta, nullptr);
+                    Status rc = isLogicalMultiCamera(staticMeta);
+                    ASSERT_TRUE(Status::OK == rc || Status::METHOD_NOT_SUPPORTED == rc);
+                    if (Status::METHOD_NOT_SUPPORTED == rc) {
+                        return;
+                    }
+                    std::unordered_set<std::string> physicalIds;
+                    ASSERT_EQ(Status::OK, getPhysicalCameraIds(staticMeta, &physicalIds));
+                    SystemCameraKind systemCameraKind = SystemCameraKind::PUBLIC;
+                    rc = getSystemCameraKind(staticMeta, &systemCameraKind);
+                    ASSERT_EQ(rc, Status::OK);
+                    for (auto physicalId : physicalIds) {
+                        bool isPublicId = false;
+                        for (auto& deviceName : cameraDeviceNames) {
+                            std::string publicVersion, publicId;
+                            ASSERT_TRUE(::matchDeviceName(deviceName, mProviderType, &publicVersion,
+                                                          &publicId));
+                            if (physicalId == publicId) {
+                                isPublicId = true;
+                                break;
+                            }
+                        }
+                        // For hidden physical cameras, collect their associated logical cameras
+                        // and store the system camera kind.
+                        if (!isPublicId) {
+                            auto it = hiddenPhysicalIdToLogicalMap.find(physicalId);
+                            if (it == hiddenPhysicalIdToLogicalMap.end()) {
+                                hiddenPhysicalIdToLogicalMap.insert(std::make_pair(
+                                        physicalId, std::list<SystemCameraKind>(systemCameraKind)));
+                            } else {
+                                it->second.push_back(systemCameraKind);
+                            }
+                        }
+                    }
+                });
+                ASSERT_TRUE(ret.isOk());
+            } break;
+            case CAMERA_DEVICE_API_VERSION_1_0: {
+                // Not applicable
+            } break;
+            default: {
+                ALOGE("%s: Unsupported device version %d", __func__, deviceVersion);
+                ADD_FAILURE();
+            } break;
+        }
+    }
+
+    // Check that the system camera kind of the logical cameras associated with
+    // each hidden physical camera is the same.
+    for (const auto& it : hiddenPhysicalIdToLogicalMap) {
+        SystemCameraKind neededSystemCameraKind = it.second.front();
+        for (auto foundSystemCamera : it.second) {
+            ASSERT_EQ(neededSystemCameraKind, foundSystemCamera);
         }
     }
 }
@@ -5671,6 +5778,39 @@ Status CameraHidlTest::isZSLModeAvailable(const camera_metadata_t *staticMeta,
     return ret;
 }
 
+Status CameraHidlTest::getSystemCameraKind(const camera_metadata_t* staticMeta,
+                                           SystemCameraKind* systemCameraKind) {
+    Status ret = Status::OK;
+    if (nullptr == staticMeta || nullptr == systemCameraKind) {
+        return Status::ILLEGAL_ARGUMENT;
+    }
+
+    camera_metadata_ro_entry entry;
+    int rc = find_camera_metadata_ro_entry(staticMeta, ANDROID_REQUEST_AVAILABLE_CAPABILITIES,
+                                           &entry);
+    if (0 != rc) {
+        return Status::ILLEGAL_ARGUMENT;
+    }
+
+    if (entry.count == 1 &&
+        entry.data.u8[0] == ANDROID_REQUEST_AVAILABLE_CAPABILITIES_SECURE_IMAGE_DATA) {
+        *systemCameraKind = SystemCameraKind::HIDDEN_SECURE_CAMERA;
+        return ret;
+    }
+
+    // Go through the capabilities and check if it has
+    // ANDROID_REQUEST_AVAILABLE_CAPABILITIES_SYSTEM_CAMERA
+    for (size_t i = 0; i < entry.count; ++i) {
+        uint8_t capability = entry.data.u8[i];
+        if (capability == ANDROID_REQUEST_AVAILABLE_CAPABILITIES_SYSTEM_CAMERA) {
+            *systemCameraKind = SystemCameraKind::SYSTEM_ONLY_CAMERA;
+            return ret;
+        }
+    }
+    *systemCameraKind = SystemCameraKind::PUBLIC;
+    return ret;
+}
+
 // Check whether this is a monochrome camera using the static camera characteristics.
 Status CameraHidlTest::isMonochromeCamera(const camera_metadata_t *staticMeta) {
     Status ret = Status::METHOD_NOT_SUPPORTED;
@@ -6391,8 +6531,10 @@ void CameraHidlTest::verifyLogicalCameraMetadata(const std::string& cameraName,
         const hidl_vec<hidl_string>& deviceNames) {
     const camera_metadata_t* metadata = (camera_metadata_t*)chars.data();
     ASSERT_NE(nullptr, metadata);
-
-    Status rc = isLogicalMultiCamera(metadata);
+    SystemCameraKind systemCameraKind = SystemCameraKind::PUBLIC;
+    Status rc = getSystemCameraKind(metadata, &systemCameraKind);
+    ASSERT_EQ(rc, Status::OK);
+    rc = isLogicalMultiCamera(metadata);
     ASSERT_TRUE(Status::OK == rc || Status::METHOD_NOT_SUPPORTED == rc);
     if (Status::METHOD_NOT_SUPPORTED == rc) {
         return;
@@ -6411,6 +6553,7 @@ void CameraHidlTest::verifyLogicalCameraMetadata(const std::string& cameraName,
         ASSERT_NE(physicalId, cameraId);
         bool isPublicId = false;
         std::string fullPublicId;
+        SystemCameraKind physSystemCameraKind = SystemCameraKind::PUBLIC;
         for (auto& deviceName : deviceNames) {
             std::string publicVersion, publicId;
             ASSERT_TRUE(::matchDeviceName(deviceName, mProviderType, &publicVersion, &publicId));
@@ -6434,9 +6577,16 @@ void CameraHidlTest::verifyLogicalCameraMetadata(const std::string& cameraName,
             ret = subDevice->getCameraCharacteristics(
                     [&](auto status, const auto& chars) {
                 ASSERT_EQ(Status::OK, status);
-                retcode = find_camera_metadata_ro_entry(
-                        (const camera_metadata_t *)chars.data(),
-                        ANDROID_CONTROL_ZOOM_RATIO_RANGE, &entry);
+                const camera_metadata_t* staticMeta =
+                        reinterpret_cast<const camera_metadata_t*>(chars.data());
+                rc = getSystemCameraKind(staticMeta, &physSystemCameraKind);
+                ASSERT_EQ(rc, Status::OK);
+                // Make sure that the system camera kind of a non-hidden
+                // physical cameras is the same as the logical camera associated
+                // with it.
+                ASSERT_EQ(physSystemCameraKind, systemCameraKind);
+                retcode = find_camera_metadata_ro_entry(staticMeta,
+                                                        ANDROID_CONTROL_ZOOM_RATIO_RANGE, &entry);
                 bool subCameraHasZoomRatioRange = (0 == retcode && entry.count == 2);
                 ASSERT_EQ(hasZoomRatioRange, subCameraHasZoomRatioRange);
             });
@@ -6452,17 +6602,16 @@ void CameraHidlTest::verifyLogicalCameraMetadata(const std::string& cameraName,
         ASSERT_NE(device3_5, nullptr);
 
         // Check camera characteristics for hidden camera id
-        Return<void> ret = device3_5->getPhysicalCameraCharacteristics(physicalId,
-                [&](auto status, const auto& chars) {
-            verifyCameraCharacteristics(status, chars);
-            verifyMonochromeCharacteristics(chars, deviceVersion);
-
-            retcode = find_camera_metadata_ro_entry(
-                    (const camera_metadata_t *)chars.data(),
-                    ANDROID_CONTROL_ZOOM_RATIO_RANGE, &entry);
-            bool subCameraHasZoomRatioRange = (0 == retcode && entry.count == 2);
-            ASSERT_EQ(hasZoomRatioRange, subCameraHasZoomRatioRange);
-        });
+        Return<void> ret = device3_5->getPhysicalCameraCharacteristics(
+                physicalId, [&](auto status, const auto& chars) {
+                    verifyCameraCharacteristics(status, chars);
+                    verifyMonochromeCharacteristics(chars, deviceVersion);
+                    retcode =
+                            find_camera_metadata_ro_entry((const camera_metadata_t*)chars.data(),
+                                                          ANDROID_CONTROL_ZOOM_RATIO_RANGE, &entry);
+                    bool subCameraHasZoomRatioRange = (0 == retcode && entry.count == 2);
+                    ASSERT_EQ(hasZoomRatioRange, subCameraHasZoomRatioRange);
+                });
         ASSERT_TRUE(ret.isOk());
 
         // Check calling getCameraDeviceInterface_V3_x() on hidden camera id returns
