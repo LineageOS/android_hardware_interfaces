@@ -20,6 +20,7 @@
 #endif
 
 #include <android-base/logging.h>
+#include <android-base/strings.h>
 
 #include <android/hardware/media/omx/1.0/IOmx.h>
 #include <android/hardware/media/omx/1.0/IOmxNode.h>
@@ -33,21 +34,22 @@
 #include <hidl/GtestPrinter.h>
 #include <hidl/ServiceManagement.h>
 
-using ::android::hardware::media::omx::V1_0::IOmx;
-using ::android::hardware::media::omx::V1_0::IOmxObserver;
-using ::android::hardware::media::omx::V1_0::IOmxNode;
-using ::android::hardware::media::omx::V1_0::IOmxStore;
-using ::android::hardware::media::omx::V1_0::Message;
-using ::android::hardware::media::omx::V1_0::CodecBuffer;
-using ::android::hardware::media::omx::V1_0::PortMode;
-using ::android::hidl::allocator::V1_0::IAllocator;
-using ::android::hidl::memory::V1_0::IMemory;
-using ::android::hidl::memory::V1_0::IMapper;
+using ::android::sp;
+using ::android::base::Join;
+using ::android::hardware::hidl_string;
+using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
-using ::android::hardware::hidl_vec;
-using ::android::hardware::hidl_string;
-using ::android::sp;
+using ::android::hardware::media::omx::V1_0::CodecBuffer;
+using ::android::hardware::media::omx::V1_0::IOmx;
+using ::android::hardware::media::omx::V1_0::IOmxNode;
+using ::android::hardware::media::omx::V1_0::IOmxObserver;
+using ::android::hardware::media::omx::V1_0::IOmxStore;
+using ::android::hardware::media::omx::V1_0::Message;
+using ::android::hardware::media::omx::V1_0::PortMode;
+using ::android::hidl::allocator::V1_0::IAllocator;
+using ::android::hidl::memory::V1_0::IMapper;
+using ::android::hidl::memory::V1_0::IMemory;
 
 #include <getopt.h>
 #include <media_hidl_test_common.h>
@@ -70,6 +72,11 @@ class MasterHidlTest : public ::testing::TestWithParam<std::string> {
     }
 };
 
+struct AttributePattern {
+    const testing::internal::RE key;
+    const testing::internal::RE value;
+};
+
 void displayComponentInfo(hidl_vec<IOmx::ComponentInfo>& nodeList) {
     for (size_t i = 0; i < nodeList.size(); i++) {
         printf("%s | ", nodeList[i].mName.c_str());
@@ -77,6 +84,109 @@ void displayComponentInfo(hidl_vec<IOmx::ComponentInfo>& nodeList) {
             printf("%s ", nodeList[i].mRoles[j].c_str());
         }
         printf("\n");
+    }
+}
+
+/*
+ * Returns the role based on is_encoder and mime.
+ *
+ * The mapping from a pair (is_encoder, mime) to a role string is
+ * defined in frameworks/av/media/libmedia/MediaDefs.cpp and
+ * frameworks/av/media/libstagefright/omx/OMXUtils.cpp. This function
+ * does essentially the same work as GetComponentRole() in
+ * OMXUtils.cpp.
+ *
+ * Args:
+ *   is_encoder: A boolean indicating whether the role is for an
+ *       encoder or a decoder.
+ *   mime: A string of the desired mime type.
+ *
+ * Returns:
+ *   A const string for the requested role name, empty if mime is not
+ *   recognized.
+ */
+const std::string getComponentRole(bool isEncoder, const std::string mime) {
+    // Mapping from mime types to roles.
+    // These values come from MediaDefs.cpp and OMXUtils.cpp
+    const std::map<const std::string, const std::string> audioMimeToRole = {
+            {"3gpp", "amrnb"},         {"ac3", "ac3"},     {"amr-wb", "amrwb"},
+            {"eac3", "eac3"},          {"flac", "flac"},   {"g711-alaw", "g711alaw"},
+            {"g711-mlaw", "g711mlaw"}, {"gsm", "gsm"},     {"mp4a-latm", "aac"},
+            {"mpeg", "mp3"},           {"mpeg-L1", "mp1"}, {"mpeg-L2", "mp2"},
+            {"opus", "opus"},          {"raw", "raw"},     {"vorbis", "vorbis"},
+    };
+    const std::map<const std::string, const std::string> videoMimeToRole = {
+            {"3gpp", "h263"},         {"avc", "avc"},           {"dolby-vision", "dolby-vision"},
+            {"hevc", "hevc"},         {"mp4v-es", "mpeg4"},     {"mpeg2", "mpeg2"},
+            {"x-vnd.on2.vp8", "vp8"}, {"x-vnd.on2.vp9", "vp9"},
+    };
+    const std::map<const std::string, const std::string> imageMimeToRole = {
+            {"vnd.android.heic", "heic"},
+    };
+
+    // Suffix begins after the mime prefix.
+    const size_t prefixEnd = mime.find("/");
+    if (prefixEnd == std::string::npos || prefixEnd == mime.size()) return "";
+    const std::string mime_suffix = mime.substr(prefixEnd + 1, mime.size() - 1);
+    const std::string middle = isEncoder ? "encoder." : "decoder.";
+    std::string prefix;
+    std::string suffix;
+    if (mime.rfind("audio/", 0) != std::string::npos) {
+        const auto it = audioMimeToRole.find(mime_suffix);
+        if (it == audioMimeToRole.end()) return "";
+        prefix = "audio_";
+        suffix = it->second;
+    } else if (mime.rfind("video/", 0) != std::string::npos) {
+        const auto it = videoMimeToRole.find(mime_suffix);
+        if (it == videoMimeToRole.end()) return "";
+        prefix = "video_";
+        suffix = it->second;
+    } else if (mime.rfind("image/", 0) != std::string::npos) {
+        const auto it = imageMimeToRole.find(mime_suffix);
+        if (it == imageMimeToRole.end()) return "";
+        prefix = "image_";
+        suffix = it->second;
+    } else {
+        return "";
+    }
+    return prefix + middle + suffix;
+}
+
+void validateAttributes(
+        const std::map<const std::string, const testing::internal::RE>& knownPatterns,
+        const std::vector<const struct AttributePattern>& unknownPatterns,
+        hidl_vec<IOmxStore::Attribute> attributes) {
+    std::set<const std::string> attributeKeys;
+    for (const auto& attr : attributes) {
+        // Make sure there are no duplicates
+        const auto [nodeIter, inserted] = attributeKeys.insert(attr.key);
+        EXPECT_EQ(inserted, true) << "Attribute \"" << attr.key << "\" has duplicates.";
+
+        // Check the value against the corresponding regular
+        // expression.
+        const auto knownPattern = knownPatterns.find(attr.key);
+        if (knownPattern != knownPatterns.end()) {
+            EXPECT_EQ(testing::internal::RE::FullMatch(attr.value, knownPattern->second), true)
+                    << "Attribute \"" << attr.key << "\" has invalid value \"" << attr.value << ".";
+            ;
+        } else {
+            // Failed to find exact attribute, check against
+            // possible patterns.
+            bool keyFound = false;
+            for (const auto& unknownPattern : unknownPatterns) {
+                if (testing::internal::RE::PartialMatch(attr.key, unknownPattern.key)) {
+                    keyFound = true;
+                    EXPECT_EQ(testing::internal::RE::FullMatch(attr.value, unknownPattern.value),
+                              true)
+                            << "Attribute \"" << attr.key << "\" has invalid value \"" << attr.value
+                            << ".";
+                }
+            }
+            if (!keyFound) {
+                std::cout << "Warning, Unrecognized attribute \"" << attr.key << "\" with value \""
+                          << attr.value << "\"." << std::endl;
+            }
+        }
     }
 }
 
@@ -91,7 +201,7 @@ TEST(MasterHidlTest, instanceMatchValidation) {
     }
 }
 
-// list service attributes
+// list service attributes and verify expected formats
 TEST_P(MasterHidlTest, ListServiceAttr) {
     description("list service attributes");
     android::hardware::media::omx::V1_0::Status status;
@@ -105,7 +215,36 @@ TEST_P(MasterHidlTest, ListServiceAttr) {
                     })
                     .isOk());
     ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
-    if (attributes.size() == 0) ALOGV("Warning, Attribute list empty");
+    if (attributes.size() == 0) {
+        std::cout << "Warning, Attribute list empty" << std::endl;
+    } else {
+        /*
+         * knownPatterns is a map whose keys are the known "key" for a service
+         * attribute pair (see IOmxStore::Attribute), and whose values are the
+         * corresponding regular expressions that will have to match with the
+         * "value" of the attribute pair. If listServiceAttributes() returns an
+         * attribute that has a matching key but an unmatched value, the test
+         * will fail.
+         */
+        const std::map<const std::string, const testing::internal::RE> knownPatterns = {
+                {"max-video-encoder-input-buffers", "0|[1-9][0-9]*"},
+                {"supports-multiple-secure-codecs", "0|1"},
+                {"supports-secure-with-non-secure-codec", "0|1"},
+        };
+        /*
+         * unknownPatterns is a vector of pairs of regular expressions.
+         * For each attribute whose key is not known (i.e., does not match any
+         * of the keys in the "knownPatterns" variable defined above), that key will be
+         * tried for a match with the first element of each pair of the variable
+         * "unknownPatterns". If a match occurs, the value of that same attribute will be
+         * tried for a match with the second element of the pair. If this second
+         * match fails, the test will fail.
+         */
+        const std::vector<const struct AttributePattern> unknownPatterns = {
+                {"supports-[a-z0-9-]*", "0|1"}};
+
+        validateAttributes(knownPatterns, unknownPatterns, attributes);
+    }
 }
 
 // get node prefix
@@ -114,17 +253,183 @@ TEST_P(MasterHidlTest, getNodePrefix) {
     hidl_string prefix;
     omxStore->getNodePrefix(
         [&prefix](hidl_string const& _nl) { prefix = _nl; });
-    if (prefix.empty()) ALOGV("Warning, Node Prefix empty");
+    if (prefix.empty()) std::cout << "Warning, Node Prefix empty" << std::endl;
 }
 
-// list roles
+// list roles and validate all RoleInfo objects
 TEST_P(MasterHidlTest, ListRoles) {
     description("list roles");
     hidl_vec<IOmxStore::RoleInfo> roleList;
     omxStore->listRoles([&roleList](hidl_vec<IOmxStore::RoleInfo> const& _nl) {
         roleList = _nl;
     });
-    if (roleList.size() == 0) ALOGV("Warning, RoleInfo list empty");
+    if (roleList.size() == 0) {
+        GTEST_SKIP() << "Warning, RoleInfo list empty";
+        return;
+    }
+
+    // Basic patterns for matching
+    const std::string toggle = "(0|1)";
+    const std::string string = "(.*)";
+    const std::string num = "(0|([1-9][0-9]*))";
+    const std::string size = "(" + num + "x" + num + ")";
+    const std::string ratio = "(" + num + ":" + num + ")";
+    const std::string range_num = "((" + num + "-" + num + ")|" + num + ")";
+    const std::string range_size = "((" + size + "-" + size + ")|" + size + ")";
+    const std::string range_ratio = "((" + ratio + "-" + ratio + ")|" + ratio + ")";
+    const std::string list_range_num = "(" + range_num + "(," + range_num + ")*)";
+
+    // Matching rules for node attributes with fixed keys
+    const std::map<const std::string, const testing::internal::RE> knownPatterns = {
+            {"alignment", size},
+            {"bitrate-range", range_num},
+            {"block-aspect-ratio-range", range_ratio},
+            {"block-count-range", range_num},
+            {"block-size", size},
+            {"blocks-per-second-range", range_num},
+            {"complexity-default", num},
+            {"complexity-range", range_num},
+            {"feature-adaptive-playback", toggle},
+            {"feature-bitrate-control", "(VBR|CBR|CQ)[,(VBR|CBR|CQ)]*"},
+            {"feature-can-swap-width-height", toggle},
+            {"feature-intra-refresh", toggle},
+            {"feature-partial-frame", toggle},
+            {"feature-secure-playback", toggle},
+            {"feature-tunneled-playback", toggle},
+            {"frame-rate-range", range_num},
+            {"max-channel-count", num},
+            {"max-concurrent-instances", num},
+            {"max-supported-instances", num},
+            {"pixel-aspect-ratio-range", range_ratio},
+            {"quality-default", num},
+            {"quality-range", range_num},
+            {"quality-scale", string},
+            {"sample-rate-ranges", list_range_num},
+            {"size-range", range_size},
+    };
+
+    // Strings for matching rules for node attributes with key patterns
+    const std::vector<const struct AttributePattern> unknownPatterns = {
+            {"measured-frame-rate-" + size + "-range", range_num},
+            {"feature-[a-zA-Z0-9_-]+", string},
+    };
+
+    // Matching rules for node names and owners
+    const testing::internal::RE nodeNamePattern = "[a-zA-Z0-9.-]+";
+    const testing::internal::RE nodeOwnerPattern = "[a-zA-Z0-9._-]+";
+
+    std::set<const std::string> roleKeys;
+    std::map<const std::string, std::set<const std::string>> nodeToRoles;
+    std::map<const std::string, std::set<const std::string>> ownerToNodes;
+    for (const IOmxStore::RoleInfo& role : roleList) {
+        // Make sure there are no duplicates
+        const auto [roleIter, inserted] = roleKeys.insert(role.role);
+        EXPECT_EQ(inserted, true) << "Role \"" << role.role << "\" has duplicates.";
+
+        // Make sure role name follows expected format based on type and
+        // isEncoder
+        const std::string role_name = getComponentRole(role.isEncoder, role.type);
+        EXPECT_EQ(role_name, role.role) << "Role \"" << role.role << "\" does not match "
+                                        << (role.isEncoder ? "an encoder " : "a decoder ")
+                                        << "for mime type \"" << role.type << ".";
+
+        // Check the nodes for this role
+        std::set<const std::string> nodeKeys;
+        for (const IOmxStore::NodeInfo& node : role.nodes) {
+            // Make sure there are no duplicates
+            const auto [nodeIter, inserted] = nodeKeys.insert(node.name);
+            EXPECT_EQ(inserted, true) << "Node \"" << node.name << "\" has duplicates.";
+
+            // Check the format of node name
+            EXPECT_EQ(testing::internal::RE::FullMatch(node.name, nodeNamePattern), true)
+                    << "Node name \"" << node.name << " is invalid.";
+            // Check the format of node owner
+            EXPECT_EQ(testing::internal::RE::FullMatch(node.owner, nodeOwnerPattern), true)
+                    << "Node owner \"" << node.owner << " is invalid.";
+
+            validateAttributes(knownPatterns, unknownPatterns, node.attributes);
+
+            ownerToNodes[node.owner].insert(node.name);
+            nodeToRoles[node.name].insert(role.role);
+        }
+    }
+
+    // Verify the information with IOmx::listNodes().
+    // IOmxStore::listRoles() and IOmx::listNodes() should give consistent
+    // information about nodes and roles.
+    for (const auto& [owner, nodes] : ownerToNodes) {
+        // Obtain the IOmx instance for each "owner"
+        const sp<IOmx> omx = omxStore->getOmx(owner);
+        EXPECT_NE(nullptr, omx);
+
+        // Invoke IOmx::listNodes()
+        android::hardware::media::omx::V1_0::Status status;
+        hidl_vec<IOmx::ComponentInfo> nodeList;
+        EXPECT_TRUE(
+                omx->listNodes([&status, &nodeList](android::hardware::media::omx::V1_0::Status _s,
+                                                    hidl_vec<IOmx::ComponentInfo> const& _nl) {
+                       status = _s;
+                       nodeList = _nl;
+                   }).isOk());
+        ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
+
+        // Verify that roles for each node match with the information from
+        // IOmxStore::listRoles().
+        std::set<const std::string> nodeKeys;
+        for (IOmx::ComponentInfo node : nodeList) {
+            // Make sure there are no duplicates
+            const auto [nodeIter, inserted] = nodeKeys.insert(node.mName);
+            EXPECT_EQ(inserted, true)
+                    << "IOmx::listNodes() lists duplicate nodes \"" << node.mName << "\".";
+
+            // Skip "hidden" nodes, i.e. those that are not advertised by
+            // IOmxStore::listRoles().
+            if (nodes.find(node.mName) == nodes.end()) {
+                std::cout << "Warning, IOmx::listNodes() lists unknown node \"" << node.mName
+                          << "\" for IOmx instance \"" << owner << "\"." << std::endl;
+                continue;
+            }
+
+            // All the roles advertised by IOmxStore::listRoles() for this
+            // node must be included in roleKeys.
+            std::set<const std::string> difference;
+            std::set_difference(nodeToRoles[node.mName].begin(), nodeToRoles[node.mName].end(),
+                                roleKeys.begin(), roleKeys.end(),
+                                std::inserter(difference, difference.begin()));
+            EXPECT_EQ(difference.empty(), true) << "IOmx::listNodes() for IOmx "
+                                                   "instance \""
+                                                << owner
+                                                << "\" does not report some "
+                                                   "expected nodes: "
+                                                << android::base::Join(difference, ", ") << ".";
+        }
+        // Check that all nodes obtained from IOmxStore::listRoles() are
+        // supported by the their corresponding IOmx instances.
+        std::set<const std::string> difference;
+        std::set_difference(nodes.begin(), nodes.end(), nodeKeys.begin(), nodeKeys.end(),
+                            std::inserter(difference, difference.begin()));
+        EXPECT_EQ(difference.empty(), true) << "IOmx::listNodes() for IOmx "
+                                               "instance \""
+                                            << owner
+                                            << "\" does not report some "
+                                               "expected nodes: "
+                                            << android::base::Join(difference, ", ") << ".";
+    }
+
+    if (!nodeToRoles.empty()) {
+        // Check that the prefix is a sensible string.
+        hidl_string prefix;
+        omxStore->getNodePrefix([&prefix](hidl_string const& _nl) { prefix = _nl; });
+        EXPECT_EQ(testing::internal::RE::PartialMatch(prefix, nodeNamePattern), true)
+                << "\"" << prefix << "\" is not a valid prefix for node names.";
+
+        // Check that all node names have the said prefix.
+        for (const auto& node : nodeToRoles) {
+            EXPECT_NE(node.first.rfind(prefix, 0), std::string::npos)
+                    << "Node \"" << node.first << "\" does not start with prefix \"" << prefix
+                    << "\".";
+        }
+    }
 }
 
 // list components and roles.
@@ -143,7 +448,7 @@ TEST_P(MasterHidlTest, ListNodes) {
             .isOk());
     ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
     if (nodeList.size() == 0)
-        ALOGV("Warning, ComponentInfo list empty");
+        std::cout << "Warning, ComponentInfo list empty" << std::endl;
     else {
         // displayComponentInfo(nodeList);
         for (size_t i = 0; i < nodeList.size(); i++) {
