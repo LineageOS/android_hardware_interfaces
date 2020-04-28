@@ -140,7 +140,8 @@ interface IWritableIdentityCredential {
      * with STATUS_INVALID_DATA.
      *
      * @param id a numeric identifier that must be unique within the context of a Credential and may
-     *     be used to reference the profile. If this is not satisfied the call fails with
+     *     be used to reference the profile. This id must be non-negative and less than 32 (allowing
+     *     for a total of 32 profiles). If this is not satisfied the call fails with
      *     STATUS_INVALID_DATA.
      *
      * @param readerCertificate if non-empty, specifies a single X.509 certificate (not a chain of
