@@ -69,7 +69,7 @@ Return<void> AudioControl::setBalanceTowardRight(float value) {
 }
 
 Return<void> AudioControl::setFadeTowardFront(float value) {
-    if (!isValidValue(value)) {
+    if (isValidValue(value)) {
         // Just log in this default mock implementation
         LOG(INFO) << "Fader set to " << value;
     } else {
