@@ -39,14 +39,8 @@ class EventMessageQueueWrapperBase : public RefBase {
 
     virtual std::atomic<uint32_t>* getEventFlagWord() = 0;
     virtual size_t availableToRead() = 0;
-    virtual size_t availableToWrite() = 0;
     virtual bool read(V2_1::Event* events, size_t numToRead) = 0;
-    virtual bool write(const V2_1::Event* events, size_t numToWrite) = 0;
     virtual bool write(const std::vector<V2_1::Event>& events) = 0;
-    virtual bool writeBlocking(const V2_1::Event* events, size_t count, uint32_t readNotification,
-                               uint32_t writeNotification, int64_t timeOutNanos,
-                               android::hardware::EventFlag* evFlag) = 0;
-    virtual size_t getQuantumCount() = 0;
 };
 
 class EventMessageQueueWrapperV1_0 : public EventMessageQueueWrapperBase {
@@ -66,29 +60,14 @@ class EventMessageQueueWrapperV1_0 : public EventMessageQueueWrapperBase {
 
     virtual size_t availableToRead() override { return mQueue->availableToRead(); }
 
-    size_t availableToWrite() override { return mQueue->availableToWrite(); }
-
     virtual bool read(V2_1::Event* events, size_t numToRead) override {
         return mQueue->read(reinterpret_cast<V1_0::Event*>(events), numToRead);
-    }
-
-    bool write(const V2_1::Event* events, size_t numToWrite) override {
-        return mQueue->write(reinterpret_cast<const V1_0::Event*>(events), numToWrite);
     }
 
     virtual bool write(const std::vector<V2_1::Event>& events) override {
         const std::vector<V1_0::Event>& oldEvents = convertToOldEvents(events);
         return mQueue->write(oldEvents.data(), oldEvents.size());
     }
-
-    bool writeBlocking(const V2_1::Event* events, size_t count, uint32_t readNotification,
-                       uint32_t writeNotification, int64_t timeOutNanos,
-                       android::hardware::EventFlag* evFlag) override {
-        return mQueue->writeBlocking(reinterpret_cast<const V1_0::Event*>(events), count,
-                                     readNotification, writeNotification, timeOutNanos, evFlag);
-    }
-
-    size_t getQuantumCount() override { return mQueue->getQuantumCount(); }
 
   private:
     std::unique_ptr<EventMessageQueue> mQueue;
@@ -109,28 +88,13 @@ class EventMessageQueueWrapperV2_1 : public EventMessageQueueWrapperBase {
 
     virtual size_t availableToRead() override { return mQueue->availableToRead(); }
 
-    size_t availableToWrite() override { return mQueue->availableToWrite(); }
-
     virtual bool read(V2_1::Event* events, size_t numToRead) override {
         return mQueue->read(events, numToRead);
-    }
-
-    bool write(const V2_1::Event* events, size_t numToWrite) override {
-        return mQueue->write(events, numToWrite);
     }
 
     bool write(const std::vector<V2_1::Event>& events) override {
         return mQueue->write(events.data(), events.size());
     }
-
-    bool writeBlocking(const V2_1::Event* events, size_t count, uint32_t readNotification,
-                       uint32_t writeNotification, int64_t timeOutNanos,
-                       android::hardware::EventFlag* evFlag) override {
-        return mQueue->writeBlocking(events, count, readNotification, writeNotification,
-                                     timeOutNanos, evFlag);
-    }
-
-    size_t getQuantumCount() override { return mQueue->getQuantumCount(); }
 
   private:
     std::unique_ptr<EventMessageQueue> mQueue;
