@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2019 The Android Open Source Project
+// Copyright (C) 2020 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 // limitations under the License.
 
 cc_binary {
-    name: "android.hardware.sensors@2.0-service.multihal",
+    name: "android.hardware.sensors@2.1-service.multihal",
     defaults: [
         "hidl_defaults",
     ],
@@ -23,8 +23,8 @@ cc_binary {
     srcs: [
         "service.cpp",
     ],
-    init_rc: ["android.hardware.sensors@2.0-service-multihal.rc"],
-    vintf_fragments: ["android.hardware.sensors@2.0-multihal.xml"],
+    init_rc: ["android.hardware.sensors@2.1-service-multihal.rc"],
+    vintf_fragments: ["android.hardware.sensors@2.1-multihal.xml"],
     header_libs: [
         "android.hardware.sensors@2.X-shared-utils",
     ],
