@@ -40,8 +40,8 @@ using ::android::hardware::sensors::V1_0::SensorType;
 using ::android::hardware::sensors::V2_0::EventQueueFlagBits;
 using ::android::hardware::sensors::V2_0::ISensorsCallback;
 using ::android::hardware::sensors::V2_0::WakeLockQueueFlagBits;
-using ::android::hardware::sensors::V2_0::implementation::HalProxyCallbackBase;
-using ::android::hardware::sensors::V2_0::implementation::ScopedWakelock;
+using ::android::hardware::sensors::V2_0::implementation::HalProxy;
+using ::android::hardware::sensors::V2_0::implementation::HalProxyCallback;
 using ::android::hardware::sensors::V2_0::subhal::implementation::AddAndRemoveDynamicSensorsSubHal;
 using ::android::hardware::sensors::V2_0::subhal::implementation::AllSensorsSubHal;
 using ::android::hardware::sensors::V2_0::subhal::implementation::
@@ -53,7 +53,6 @@ using ::android::hardware::sensors::V2_0::subhal::implementation::OnChangeSensor
 using ::android::hardware::sensors::V2_0::subhal::implementation::SensorsSubHal;
 using ::android::hardware::sensors::V2_0::subhal::implementation::
         SetOperationModeFailingSensorsSubHal;
-using ::android::hardware::sensors::V2_1::implementation::HalProxy;
 
 using EventMessageQueue = MessageQueue<Event, ::android::hardware::kSynchronizedReadWrite>;
 using WakeupMessageQueue = MessageQueue<uint32_t, ::android::hardware::kSynchronizedReadWrite>;

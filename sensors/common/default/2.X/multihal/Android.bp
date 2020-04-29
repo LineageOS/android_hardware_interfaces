@@ -17,7 +17,6 @@ cc_defaults {
     name: "android.hardware.sensors@2.X-multihal-defaults",
     header_libs: [
         "android.hardware.sensors@2.X-multihal.header",
-        "android.hardware.sensors@2.X-shared-utils",
     ],
     shared_libs: [
         "android.hardware.sensors@1.0",
@@ -30,9 +29,6 @@ cc_defaults {
         "liblog",
         "libpower",
         "libutils",
-    ],
-    static_libs: [
-        "android.hardware.sensors@1.0-convert",
     ],
     cflags: ["-DLOG_TAG=\"SensorsMultiHal\""],
 }
@@ -66,7 +62,6 @@ cc_library_static {
     ],
     srcs: [
         "HalProxy.cpp",
-        "HalProxyCallback.cpp",
     ],
     vendor_available: true,
     export_header_lib_headers: [
