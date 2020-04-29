@@ -14,19 +14,14 @@
  * limitations under the License.
  */
 
-package android.hardware.keymaster;
+package android.hardware.keymint;
+
 
 /**
- * Device security levels.
+ * This is used to contain a byte[], to make out parameters of byte arrays
+ * more convenient for callers.
  */
 @VintfStability
-@Backing(type="int")
-enum SecurityLevel {
-    SOFTWARE = 0,
-    TRUSTED_ENVIRONMENT = 1,
-    /**
-     * STRONGBOX specifies that the secure hardware satisfies the requirements specified in CDD
-     * 9.11.2.
-     */
-    STRONGBOX = 2,
+parcelable ByteArray {
+    byte[] data;
 }

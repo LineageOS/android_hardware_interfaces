@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.hardware.keymaster;
+package android.hardware.keymint;
 
 /**
  * Device security levels.
