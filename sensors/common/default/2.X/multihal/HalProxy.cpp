@@ -32,17 +32,15 @@
 namespace android {
 namespace hardware {
 namespace sensors {
-namespace V2_1 {
+namespace V2_0 {
 namespace implementation {
 
-using ::android::hardware::sensors::V1_0::Result;
 using ::android::hardware::sensors::V2_0::EventQueueFlagBits;
 using ::android::hardware::sensors::V2_0::WakeLockQueueFlagBits;
 using ::android::hardware::sensors::V2_0::implementation::getTimeNow;
 using ::android::hardware::sensors::V2_0::implementation::kWakelockTimeoutNs;
 
-typedef V2_0::implementation::ISensorsSubHal*(SensorsHalGetSubHalFunc)(uint32_t*);
-typedef V2_1::implementation::ISensorsSubHal*(SensorsHalGetSubHalV2_1Func)(uint32_t*);
+typedef ISensorsSubHal*(SensorsHalGetSubHalFunc)(uint32_t*);
 
 static constexpr int32_t kBitsAfterSubHalIndex = 24;
 
@@ -87,24 +85,7 @@ HalProxy::HalProxy() {
     init();
 }
 
-HalProxy::HalProxy(std::vector<ISensorsSubHalV2_0*>& subHalList) {
-    for (ISensorsSubHalV2_0* subHal : subHalList) {
-        mSubHalList.push_back(std::make_unique<SubHalWrapperV2_0>(subHal));
-    }
-
-    init();
-}
-
-HalProxy::HalProxy(std::vector<ISensorsSubHalV2_0*>& subHalList,
-                   std::vector<ISensorsSubHalV2_1*>& subHalListV2_1) {
-    for (ISensorsSubHalV2_0* subHal : subHalList) {
-        mSubHalList.push_back(std::make_unique<SubHalWrapperV2_0>(subHal));
-    }
-
-    for (ISensorsSubHalV2_1* subHal : subHalListV2_1) {
-        mSubHalList.push_back(std::make_unique<SubHalWrapperV2_1>(subHal));
-    }
-
+HalProxy::HalProxy(std::vector<ISensorsSubHal*>& subHalList) : mSubHalList(subHalList) {
     init();
 }
 
@@ -112,19 +93,10 @@ HalProxy::~HalProxy() {
     stopThreads();
 }
 
-Return<void> HalProxy::getSensorsList_2_1(ISensorsV2_1::getSensorsList_2_1_cb _hidl_cb) {
-    std::vector<V2_1::SensorInfo> sensors;
+Return<void> HalProxy::getSensorsList(getSensorsList_cb _hidl_cb) {
+    std::vector<SensorInfo> sensors;
     for (const auto& iter : mSensors) {
         sensors.push_back(iter.second);
-    }
-    _hidl_cb(sensors);
-    return Void();
-}
-
-Return<void> HalProxy::getSensorsList(ISensorsV2_0::getSensorsList_cb _hidl_cb) {
-    std::vector<V1_0::SensorInfo> sensors;
-    for (const auto& iter : mSensors) {
-        sensors.push_back(convertToOldSensorInfo(iter.second));
     }
     _hidl_cb(sensors);
     return Void();
@@ -134,18 +106,18 @@ Return<Result> HalProxy::setOperationMode(OperationMode mode) {
     Result result = Result::OK;
     size_t subHalIndex;
     for (subHalIndex = 0; subHalIndex < mSubHalList.size(); subHalIndex++) {
-        result = mSubHalList[subHalIndex]->setOperationMode(mode);
+        ISensorsSubHal* subHal = mSubHalList[subHalIndex];
+        result = subHal->setOperationMode(mode);
         if (result != Result::OK) {
-            ALOGE("setOperationMode failed for SubHal: %s",
-                  mSubHalList[subHalIndex]->getName().c_str());
+            ALOGE("setOperationMode failed for SubHal: %s", subHal->getName().c_str());
             break;
         }
     }
-
     if (result != Result::OK) {
         // Reset the subhal operation modes that have been flipped
         for (size_t i = 0; i < subHalIndex; i++) {
-            mSubHalList[i]->setOperationMode(mCurrentOperationMode);
+            ISensorsSubHal* subHal = mSubHalList[i];
+            subHal->setOperationMode(mCurrentOperationMode);
         }
     } else {
         mCurrentOperationMode = mode;
@@ -161,42 +133,10 @@ Return<Result> HalProxy::activate(int32_t sensorHandle, bool enabled) {
             ->activate(clearSubHalIndex(sensorHandle), enabled);
 }
 
-Return<Result> HalProxy::initialize_2_1(
-        const ::android::hardware::MQDescriptorSync<V2_1::Event>& eventQueueDescriptor,
-        const ::android::hardware::MQDescriptorSync<uint32_t>& wakeLockDescriptor,
-        const sp<V2_1::ISensorsCallback>& sensorsCallback) {
-    sp<ISensorsCallbackWrapperBase> dynamicCallback =
-            new ISensorsCallbackWrapperV2_1(sensorsCallback);
-
-    // Create the Event FMQ from the eventQueueDescriptor. Reset the read/write positions.
-    auto eventQueue =
-            std::make_unique<EventMessageQueueV2_1>(eventQueueDescriptor, true /* resetPointers */);
-    std::unique_ptr<EventMessageQueueWrapperBase> queue =
-            std::make_unique<EventMessageQueueWrapperV2_1>(eventQueue);
-
-    return initializeCommon(queue, wakeLockDescriptor, dynamicCallback);
-}
-
 Return<Result> HalProxy::initialize(
-        const ::android::hardware::MQDescriptorSync<V1_0::Event>& eventQueueDescriptor,
+        const ::android::hardware::MQDescriptorSync<Event>& eventQueueDescriptor,
         const ::android::hardware::MQDescriptorSync<uint32_t>& wakeLockDescriptor,
-        const sp<V2_0::ISensorsCallback>& sensorsCallback) {
-    sp<ISensorsCallbackWrapperBase> dynamicCallback =
-            new ISensorsCallbackWrapperV2_0(sensorsCallback);
-
-    // Create the Event FMQ from the eventQueueDescriptor. Reset the read/write positions.
-    auto eventQueue =
-            std::make_unique<EventMessageQueueV2_0>(eventQueueDescriptor, true /* resetPointers */);
-    std::unique_ptr<EventMessageQueueWrapperBase> queue =
-            std::make_unique<EventMessageQueueWrapperV1_0>(eventQueue);
-
-    return initializeCommon(queue, wakeLockDescriptor, dynamicCallback);
-}
-
-Return<Result> HalProxy::initializeCommon(
-        std::unique_ptr<EventMessageQueueWrapperBase>& eventQueue,
-        const ::android::hardware::MQDescriptorSync<uint32_t>& wakeLockDescriptor,
-        const sp<ISensorsCallbackWrapperBase>& sensorsCallback) {
+        const sp<ISensorsCallback>& sensorsCallback) {
     Result result = Result::OK;
 
     stopThreads();
@@ -207,7 +147,7 @@ Return<Result> HalProxy::initializeCommon(
     disableAllSensors();
 
     // Clears the queue if any events were pending write before.
-    mPendingWriteEventsQueue = std::queue<std::pair<std::vector<V2_1::Event>, size_t>>();
+    mPendingWriteEventsQueue = std::queue<std::pair<std::vector<Event>, size_t>>();
     mSizePendingWriteEventsQueue = 0;
 
     // Clears previously connected dynamic sensors
@@ -216,7 +156,8 @@ Return<Result> HalProxy::initializeCommon(
     mDynamicSensorsCallback = sensorsCallback;
 
     // Create the Event FMQ from the eventQueueDescriptor. Reset the read/write positions.
-    mEventQueue = std::move(eventQueue);
+    mEventQueue =
+            std::make_unique<EventMessageQueue>(eventQueueDescriptor, true /* resetPointers */);
 
     // Create the Wake Lock FMQ that is used by the framework to communicate whenever WAKE_UP
     // events have been successfully read and handled by the framework.
@@ -245,10 +186,12 @@ Return<Result> HalProxy::initializeCommon(
     mWakelockThread = std::thread(startWakelockThread, this);
 
     for (size_t i = 0; i < mSubHalList.size(); i++) {
-        Result currRes = mSubHalList[i]->initialize(this, this, i);
+        auto subHal = mSubHalList[i];
+        const auto& subHalCallback = mSubHalCallbacks[i];
+        Result currRes = subHal->initialize(subHalCallback);
         if (currRes != Result::OK) {
             result = currRes;
-            ALOGE("Subhal '%s' failed to initialize.", mSubHalList[i]->getName().c_str());
+            ALOGE("Subhal '%s' failed to initialize.", subHal->getName().c_str());
             break;
         }
     }
@@ -274,11 +217,7 @@ Return<Result> HalProxy::flush(int32_t sensorHandle) {
     return getSubHalForSensorHandle(sensorHandle)->flush(clearSubHalIndex(sensorHandle));
 }
 
-Return<Result> HalProxy::injectSensorData_2_1(const V2_1::Event& event) {
-    return injectSensorData(convertToOldEvent(event));
-}
-
-Return<Result> HalProxy::injectSensorData(const V1_0::Event& event) {
+Return<Result> HalProxy::injectSensorData(const Event& event) {
     Result result = Result::OK;
     if (mCurrentOperationMode == OperationMode::NORMAL &&
         event.sensorType != V1_0::SensorType::ADDITIONAL_INFO) {
@@ -287,19 +226,18 @@ Return<Result> HalProxy::injectSensorData(const V1_0::Event& event) {
         result = Result::BAD_VALUE;
     }
     if (result == Result::OK) {
-        V1_0::Event subHalEvent = event;
+        Event subHalEvent = event;
         if (!isSubHalIndexValid(event.sensorHandle)) {
             return Result::BAD_VALUE;
         }
         subHalEvent.sensorHandle = clearSubHalIndex(event.sensorHandle);
-        result = getSubHalForSensorHandle(event.sensorHandle)
-                         ->injectSensorData(convertToNewEvent(subHalEvent));
+        result = getSubHalForSensorHandle(event.sensorHandle)->injectSensorData(subHalEvent);
     }
     return result;
 }
 
 Return<void> HalProxy::registerDirectChannel(const SharedMemInfo& mem,
-                                             ISensorsV2_0::registerDirectChannel_cb _hidl_cb) {
+                                             registerDirectChannel_cb _hidl_cb) {
     if (mDirectChannelSubHal == nullptr) {
         _hidl_cb(Result::INVALID_OPERATION, -1 /* channelHandle */);
     } else {
@@ -319,8 +257,7 @@ Return<Result> HalProxy::unregisterDirectChannel(int32_t channelHandle) {
 }
 
 Return<void> HalProxy::configDirectReport(int32_t sensorHandle, int32_t channelHandle,
-                                          RateLevel rate,
-                                          ISensorsV2_0::configDirectReport_cb _hidl_cb) {
+                                          RateLevel rate, configDirectReport_cb _hidl_cb) {
     if (mDirectChannelSubHal == nullptr) {
         _hidl_cb(Result::INVALID_OPERATION, -1 /* reportToken */);
     } else if (sensorHandle == -1 && rate != RateLevel::STOP) {
@@ -365,7 +302,7 @@ Return<void> HalProxy::debug(const hidl_handle& fd, const hidl_vec<hidl_string>&
     stream << "  # of non-dynamic sensors across all subhals: " << mSensors.size() << std::endl;
     stream << "  # of dynamic sensors across all subhals: " << mDynamicSensors.size() << std::endl;
     stream << "SubHals (" << mSubHalList.size() << "):" << std::endl;
-    for (auto& subHal : mSubHalList) {
+    for (ISensorsSubHal* subHal : mSubHalList) {
         stream << "  Name: " << subHal->getName() << std::endl;
         stream << "  Debug dump: " << std::endl;
         android::base::WriteStringToFd(stream.str(), writeFd);
@@ -432,37 +369,20 @@ void HalProxy::initializeSubHalListFromConfigFile(const char* configFileName) {
             } else {
                 SensorsHalGetSubHalFunc* sensorsHalGetSubHalPtr =
                         (SensorsHalGetSubHalFunc*)dlsym(handle, "sensorsHalGetSubHal");
-                if (sensorsHalGetSubHalPtr != nullptr) {
+                if (sensorsHalGetSubHalPtr == nullptr) {
+                    ALOGE("Failed to locate sensorsHalGetSubHal function for library: %s",
+                          subHalLibraryFile.c_str());
+                } else {
                     std::function<SensorsHalGetSubHalFunc> sensorsHalGetSubHal =
                             *sensorsHalGetSubHalPtr;
                     uint32_t version;
-                    ISensorsSubHalV2_0* subHal = sensorsHalGetSubHal(&version);
+                    ISensorsSubHal* subHal = sensorsHalGetSubHal(&version);
                     if (version != SUB_HAL_2_0_VERSION) {
                         ALOGE("SubHal version was not 2.0 for library: %s",
                               subHalLibraryFile.c_str());
                     } else {
                         ALOGV("Loaded SubHal from library: %s", subHalLibraryFile.c_str());
-                        mSubHalList.push_back(std::make_unique<SubHalWrapperV2_0>(subHal));
-                    }
-                } else {
-                    SensorsHalGetSubHalV2_1Func* getSubHalV2_1Ptr =
-                            (SensorsHalGetSubHalV2_1Func*)dlsym(handle, "sensorsHalGetSubHal_2_1");
-
-                    if (getSubHalV2_1Ptr == nullptr) {
-                        ALOGE("Failed to locate sensorsHalGetSubHal function for library: %s",
-                              subHalLibraryFile.c_str());
-                    } else {
-                        std::function<SensorsHalGetSubHalV2_1Func> sensorsHalGetSubHal_2_1 =
-                                *getSubHalV2_1Ptr;
-                        uint32_t version;
-                        ISensorsSubHalV2_1* subHal = sensorsHalGetSubHal_2_1(&version);
-                        if (version != SUB_HAL_2_1_VERSION) {
-                            ALOGE("SubHal version was not 2.1 for library: %s",
-                                  subHalLibraryFile.c_str());
-                        } else {
-                            ALOGV("Loaded SubHal from library: %s", subHalLibraryFile.c_str());
-                            mSubHalList.push_back(std::make_unique<SubHalWrapperV2_1>(subHal));
-                        }
+                        mSubHalList.push_back(subHal);
                     }
                 }
             }
@@ -470,28 +390,36 @@ void HalProxy::initializeSubHalListFromConfigFile(const char* configFileName) {
     }
 }
 
+void HalProxy::initializeSubHalCallbacks() {
+    for (size_t subHalIndex = 0; subHalIndex < mSubHalList.size(); subHalIndex++) {
+        sp<IHalProxyCallback> callback = new HalProxyCallback(this, subHalIndex);
+        mSubHalCallbacks.push_back(callback);
+    }
+}
+
 void HalProxy::initializeSensorList() {
     for (size_t subHalIndex = 0; subHalIndex < mSubHalList.size(); subHalIndex++) {
-        auto result = mSubHalList[subHalIndex]->getSensorsList([&](const auto& list) {
+        ISensorsSubHal* subHal = mSubHalList[subHalIndex];
+        auto result = subHal->getSensorsList([&](const auto& list) {
             for (SensorInfo sensor : list) {
                 if (!subHalIndexIsClear(sensor.sensorHandle)) {
                     ALOGE("SubHal sensorHandle's first byte was not 0");
                 } else {
                     ALOGV("Loaded sensor: %s", sensor.name.c_str());
                     sensor.sensorHandle = setSubHalIndex(sensor.sensorHandle, subHalIndex);
-                    setDirectChannelFlags(&sensor, mSubHalList[subHalIndex]);
+                    setDirectChannelFlags(&sensor, subHal);
                     mSensors[sensor.sensorHandle] = sensor;
                 }
             }
         });
         if (!result.isOk()) {
-            ALOGE("getSensorsList call failed for SubHal: %s",
-                  mSubHalList[subHalIndex]->getName().c_str());
+            ALOGE("getSensorsList call failed for SubHal: %s", subHal->getName().c_str());
         }
     }
 }
 
 void HalProxy::init() {
+    initializeSubHalCallbacks();
     initializeSensorList();
 }
 
@@ -624,7 +552,7 @@ void HalProxy::resetSharedWakelock() {
 }
 
 void HalProxy::postEventsToMessageQueue(const std::vector<Event>& events, size_t numWakeupEvents,
-                                        V2_0::implementation::ScopedWakelock wakelock) {
+                                        ScopedWakelock wakelock) {
     size_t numToWrite = 0;
     std::lock_guard<std::mutex> lock(mEventQueueWriteMutex);
     if (wakelock.isLocked()) {
@@ -682,8 +610,7 @@ void HalProxy::decrementRefCountAndMaybeReleaseWakelock(size_t delta,
     }
 }
 
-void HalProxy::setDirectChannelFlags(SensorInfo* sensorInfo,
-                                     std::shared_ptr<ISubHalWrapperBase> subHal) {
+void HalProxy::setDirectChannelFlags(SensorInfo* sensorInfo, ISensorsSubHal* subHal) {
     bool sensorSupportsDirectChannel =
             (sensorInfo->flags & (V1_0::SensorFlagBits::MASK_DIRECT_REPORT |
                                   V1_0::SensorFlagBits::MASK_DIRECT_CHANNEL)) != 0;
@@ -697,7 +624,7 @@ void HalProxy::setDirectChannelFlags(SensorInfo* sensorInfo,
     }
 }
 
-std::shared_ptr<ISubHalWrapperBase> HalProxy::getSubHalForSensorHandle(int32_t sensorHandle) {
+ISensorsSubHal* HalProxy::getSubHalForSensorHandle(int32_t sensorHandle) {
     return mSubHalList[extractSubHalIndex(sensorHandle)];
 }
 
@@ -724,8 +651,46 @@ bool HalProxy::subHalIndexIsClear(int32_t sensorHandle) {
     return (sensorHandle & kSensorHandleSubHalIndexMask) == 0;
 }
 
+void HalProxyCallback::postEvents(const std::vector<Event>& events, ScopedWakelock wakelock) {
+    if (events.empty() || !mHalProxy->areThreadsRunning()) return;
+    size_t numWakeupEvents;
+    std::vector<Event> processedEvents = processEvents(events, &numWakeupEvents);
+    if (numWakeupEvents > 0) {
+        ALOG_ASSERT(wakelock.isLocked(),
+                    "Wakeup events posted while wakelock unlocked for subhal"
+                    " w/ index %" PRId32 ".",
+                    mSubHalIndex);
+    } else {
+        ALOG_ASSERT(!wakelock.isLocked(),
+                    "No Wakeup events posted but wakelock locked for subhal"
+                    " w/ index %" PRId32 ".",
+                    mSubHalIndex);
+    }
+    mHalProxy->postEventsToMessageQueue(processedEvents, numWakeupEvents, std::move(wakelock));
+}
+
+ScopedWakelock HalProxyCallback::createScopedWakelock(bool lock) {
+    ScopedWakelock wakelock(mHalProxy, lock);
+    return wakelock;
+}
+
+std::vector<Event> HalProxyCallback::processEvents(const std::vector<Event>& events,
+                                                   size_t* numWakeupEvents) const {
+    *numWakeupEvents = 0;
+    std::vector<Event> eventsOut;
+    for (Event event : events) {
+        event.sensorHandle = setSubHalIndex(event.sensorHandle, mSubHalIndex);
+        eventsOut.push_back(event);
+        const SensorInfo& sensor = mHalProxy->getSensorInfo(event.sensorHandle);
+        if ((sensor.flags & V1_0::SensorFlagBits::WAKE_UP) != 0) {
+            (*numWakeupEvents)++;
+        }
+    }
+    return eventsOut;
+}
+
 }  // namespace implementation
-}  // namespace V2_1
+}  // namespace V2_0
 }  // namespace sensors
 }  // namespace hardware
 }  // namespace android
