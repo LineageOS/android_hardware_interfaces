@@ -120,6 +120,8 @@ interface IWritableIdentityCredential {
      *
      * startPersonalization must not be called more than once.
      *
+     * The setExpectedProofOfProvisioningSize() method will be called before this method.
+     *
      * @param accessControlProfileCount specifies the number of access control profiles that will
      *     be provisioned with addAccessControlProfile().
      *
@@ -288,4 +290,16 @@ interface IWritableIdentityCredential {
      */
     void finishAddingEntries(out byte[] credentialData,
         out byte[] proofOfProvisioningSignature);
+
+    /**
+     * Sets the expected size of the ProofOfProvisioning returned by finishAddingEntries(). This
+     * method must be called before startPersonalization() is called.
+     *
+     * This information is provided to make it possible for a HAL implementation to
+     * incrementally build up cryptographically authenticated data which includes the
+     * ProofOfProvisioning CBOR.
+     *
+     * @param expectedProofOfProvisioningSize the expected size of ProofOfProvisioning.
+     */
+    void setExpectedProofOfProvisioningSize(in int expectedProofOfProvisioningSize);
 }
