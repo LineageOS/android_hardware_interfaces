@@ -20,6 +20,7 @@ cc_defaults {
     ],
     header_libs: [
         "android.hardware.sensors@2.0-multihal.header",
+        "android.hardware.sensors@2.X-shared-utils",
     ],
     export_include_dirs: ["fake_subhal"],
     shared_libs: [
@@ -36,6 +37,7 @@ cc_defaults {
         "libutils",
     ],
     static_libs: [
+        "android.hardware.sensors@1.0-convert",
         "android.hardware.sensors@2.X-multihal",
     ],
     cflags: [
@@ -48,6 +50,7 @@ cc_library {
     vendor: true,
     defaults: ["android.hardware.sensors@2.X-fakesubhal-defaults"],
     cflags: [
+        "-DSUB_HAL_VERSION_2_0",
         "-DSUPPORT_CONTINUOUS_SENSORS",
         "-DSUB_HAL_NAME=\"FakeSubHal-Continuous\"",
     ],
@@ -55,6 +58,17 @@ cc_library {
 
 cc_library {
     name: "android.hardware.sensors@2.X-fakesubhal-config2",
+    vendor: true,
+    defaults: ["android.hardware.sensors@2.X-fakesubhal-defaults"],
+    cflags: [
+        "-DSUB_HAL_VERSION_2_0",
+        "-DSUPPORT_ON_CHANGE_SENSORS",
+        "-DSUB_HAL_NAME=\"FakeSubHal-OnChange\"",
+    ],
+}
+
+cc_library {
+    name: "android.hardware.sensors@2.X-fakesubhal-config3",
     vendor: true,
     defaults: ["android.hardware.sensors@2.X-fakesubhal-defaults"],
     cflags: [
@@ -78,7 +92,11 @@ cc_test {
     name: "android.hardware.sensors@2.X-halproxy-unit-tests",
     srcs: ["HalProxy_test.cpp"],
     vendor: true,
+    header_libs: [
+        "android.hardware.sensors@2.X-shared-utils",
+    ],
     static_libs: [
+        "android.hardware.sensors@1.0-convert",
         "android.hardware.sensors@2.0-ScopedWakelock.testlib",
         "android.hardware.sensors@2.X-multihal",
         "android.hardware.sensors@2.X-fakesubhal-unittest",

@@ -88,7 +88,7 @@ class ScopedWakelock {
     bool isLocked() const { return mLocked; }
 
   private:
-    friend class HalProxyCallback;
+    friend class HalProxyCallbackBase;
     IScopedWakelockRefCounter* mRefCounter;
     int64_t mCreatedAtTimeNs;
     bool mLocked;
