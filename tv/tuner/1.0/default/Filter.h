@@ -103,6 +103,7 @@ class Filter : public IFilter {
     uint32_t mFilterId;
     uint32_t mBufferSize;
     DemuxFilterType mType;
+    bool mIsMediaFilter = false;
     DemuxFilterSettings mFilterSettings;
 
     uint16_t mTpid;
