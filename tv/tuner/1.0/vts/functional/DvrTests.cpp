@@ -186,14 +186,14 @@ void DvrCallback::stopRecordThread() {
     android::Mutex::Autolock autoLock(mRecordThreadLock);
 }
 
-AssertionResult DvrTests::openDvrInDemux(DvrType type) {
+AssertionResult DvrTests::openDvrInDemux(DvrType type, uint32_t bufferSize) {
     Result status;
     EXPECT_TRUE(mDemux) << "Test with openDemux first.";
 
     // Create dvr callback
     mDvrCallback = new DvrCallback();
 
-    mDemux->openDvr(type, FMQ_SIZE_1M, mDvrCallback, [&](Result result, const sp<IDvr>& dvr) {
+    mDemux->openDvr(type, bufferSize, mDvrCallback, [&](Result result, const sp<IDvr>& dvr) {
         mDvr = dvr;
         status = result;
     });
