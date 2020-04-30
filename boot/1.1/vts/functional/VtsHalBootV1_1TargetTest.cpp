@@ -76,7 +76,11 @@ TEST_P(BootHidlTest, SetSnapshotMergeStatus) {
     for (const auto value : ValidMergeStatusValues()) {
         EXPECT_TRUE(boot->setSnapshotMergeStatus(value).withDefault(false));
         auto status = boot->getSnapshotMergeStatus();
-        EXPECT_EQ(status, value);
+        if (value == MergeStatus::SNAPSHOTTED) {
+            EXPECT_TRUE(status == MergeStatus::SNAPSHOTTED || status == MergeStatus::NONE);
+        } else {
+            EXPECT_EQ(status, value);
+        }
     }
 }
 
