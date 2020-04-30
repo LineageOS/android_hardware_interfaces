@@ -176,4 +176,28 @@ void SetImageData(vector<uint8_t>& image) {
     }
 }
 
+vector<RequestNamespace> buildRequestNamespaces(const vector<TestEntryData> entries) {
+    vector<RequestNamespace> ret;
+    RequestNamespace curNs;
+    for (const TestEntryData& testEntry : entries) {
+        if (testEntry.nameSpace != curNs.namespaceName) {
+            if (curNs.namespaceName.size() > 0) {
+                ret.push_back(curNs);
+            }
+            curNs.namespaceName = testEntry.nameSpace;
+            curNs.items.clear();
+        }
+
+        RequestDataItem item;
+        item.name = testEntry.name;
+        item.size = testEntry.valueCbor.size();
+        item.accessControlProfileIds = testEntry.profileIds;
+        curNs.items.push_back(item);
+    }
+    if (curNs.namespaceName.size() > 0) {
+        ret.push_back(curNs);
+    }
+    return ret;
+}
+
 }  // namespace android::hardware::identity::test_utils

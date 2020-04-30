@@ -279,13 +279,16 @@ TEST_P(IdentityCredentialTests, verifyOneProfileAndEntryPass) {
     EXPECT_TRUE(attData.result.isOk())
             << attData.result.exceptionCode() << "; " << attData.result.exceptionMessage() << endl;
 
-    const vector<int32_t> entryCounts = {1u};
-    writableCredential->startPersonalization(1, entryCounts);
-    ASSERT_TRUE(result.isOk()) << result.exceptionCode() << "; " << result.exceptionMessage()
-                               << endl;
-
     optional<vector<uint8_t>> readerCertificate1 = test_utils::GenerateReaderCertificate("123456");
     ASSERT_TRUE(readerCertificate1);
+
+    const vector<int32_t> entryCounts = {1u};
+    size_t expectedPoPSize = 186 + readerCertificate1.value().size();
+    // OK to fail, not available in v1 HAL
+    writableCredential->setExpectedProofOfProvisioningSize(expectedPoPSize);
+    result = writableCredential->startPersonalization(1, entryCounts);
+    ASSERT_TRUE(result.isOk()) << result.exceptionCode() << "; " << result.exceptionMessage()
+                               << endl;
 
     const vector<test_utils::TestProfile> testProfiles = {{1, readerCertificate1.value(), true, 1}};
 
@@ -374,7 +377,11 @@ TEST_P(IdentityCredentialTests, verifyManyProfilesAndEntriesPass) {
             {2, readerCertificate2.value(), true, 2},
     };
     const vector<int32_t> entryCounts = {1u, 3u, 1u, 1u, 2u};
-    writableCredential->startPersonalization(testProfiles.size(), entryCounts);
+    size_t expectedPoPSize =
+            525021 + readerCertificate1.value().size() + readerCertificate2.value().size();
+    // OK to fail, not available in v1 HAL
+    writableCredential->setExpectedProofOfProvisioningSize(expectedPoPSize);
+    result = writableCredential->startPersonalization(testProfiles.size(), entryCounts);
     ASSERT_TRUE(result.isOk()) << result.exceptionCode() << "; " << result.exceptionMessage()
                                << endl;
 
@@ -518,17 +525,22 @@ TEST_P(IdentityCredentialTests, verifyEmptyNameSpaceMixedWithNonEmptyWorks) {
     ASSERT_TRUE(attData.result.isOk())
             << attData.result.exceptionCode() << "; " << attData.result.exceptionMessage() << endl;
 
-    const vector<int32_t> entryCounts = {2u, 2u};
-    writableCredential->startPersonalization(3, entryCounts);
-    ASSERT_TRUE(result.isOk()) << result.exceptionCode() << "; " << result.exceptionMessage()
-                               << endl;
-
     optional<vector<uint8_t>> readerCertificate1 = test_utils::GenerateReaderCertificate("123456");
     ASSERT_TRUE(readerCertificate1);
 
     optional<vector<uint8_t>> readerCertificate2 =
             test_utils::GenerateReaderCertificate("123456987987987987987987");
     ASSERT_TRUE(readerCertificate2);
+
+    const vector<int32_t> entryCounts = {2u, 2u};
+    size_t expectedPoPSize =
+            377 + readerCertificate1.value().size() + readerCertificate2.value().size();
+    ;
+    // OK to fail, not available in v1 HAL
+    writableCredential->setExpectedProofOfProvisioningSize(expectedPoPSize);
+    writableCredential->startPersonalization(3, entryCounts);
+    ASSERT_TRUE(result.isOk()) << result.exceptionCode() << "; " << result.exceptionMessage()
+                               << endl;
 
     const vector<test_utils::TestProfile> testProfiles = {{0, readerCertificate1.value(), false, 0},
                                                           {1, readerCertificate2.value(), true, 1},
