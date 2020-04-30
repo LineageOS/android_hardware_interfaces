@@ -32,15 +32,17 @@ namespace aidl::android::hardware::identity {
 
 using ::aidl::android::hardware::keymaster::HardwareAuthToken;
 using ::std::map;
+using ::std::set;
 using ::std::string;
 using ::std::vector;
-
-using MapStringToVectorOfStrings = map<string, vector<string>>;
 
 class IdentityCredential : public BnIdentityCredential {
   public:
     IdentityCredential(const vector<uint8_t>& credentialData)
-        : credentialData_(credentialData), numStartRetrievalCalls_(0), authChallenge_(0) {}
+        : credentialData_(credentialData),
+          numStartRetrievalCalls_(0),
+          authChallenge_(0),
+          expectedDeviceNameSpacesSize_(0) {}
 
     // Parses and decrypts credentialData_, return a status code from
     // IIdentityCredentialStore. Must be called right after construction.
@@ -51,6 +53,8 @@ class IdentityCredential : public BnIdentityCredential {
     ndk::ScopedAStatus createEphemeralKeyPair(vector<uint8_t>* outKeyPair) override;
     ndk::ScopedAStatus setReaderEphemeralPublicKey(const vector<uint8_t>& publicKey) override;
     ndk::ScopedAStatus createAuthChallenge(int64_t* outChallenge) override;
+    ndk::ScopedAStatus setRequestedNamespaces(
+            const vector<RequestNamespace>& requestNamespaces) override;
     ndk::ScopedAStatus startRetrieval(
             const vector<SecureAccessControlProfile>& accessControlProfiles,
             const HardwareAuthToken& authToken, const vector<uint8_t>& itemsRequest,
@@ -86,6 +90,9 @@ class IdentityCredential : public BnIdentityCredential {
     // Set by createAuthChallenge()
     uint64_t authChallenge_;
 
+    // Set by setRequestedNamespaces()
+    vector<RequestNamespace> requestNamespaces_;
+
     // Set at startRetrieval() time.
     map<int32_t, int> profileIdToAccessCheckResult_;
     vector<uint8_t> signingKeyBlob_;
@@ -93,9 +100,12 @@ class IdentityCredential : public BnIdentityCredential {
     std::unique_ptr<cppbor::Item> sessionTranscriptItem_;
     vector<uint8_t> itemsRequest_;
     vector<int32_t> requestCountsRemaining_;
-    MapStringToVectorOfStrings requestedNameSpacesAndNames_;
+    map<string, set<string>> requestedNameSpacesAndNames_;
     cppbor::Map deviceNameSpacesMap_;
     cppbor::Map currentNameSpaceDeviceNameSpacesMap_;
+
+    // Calculated at startRetrieval() time.
+    size_t expectedDeviceNameSpacesSize_;
 
     // Set at startRetrieveEntryValue() time.
     string currentNameSpace_;
@@ -103,6 +113,8 @@ class IdentityCredential : public BnIdentityCredential {
     size_t entryRemainingBytes_;
     vector<uint8_t> entryValue_;
     vector<uint8_t> entryAdditionalData_;
+
+    size_t calcDeviceNameSpacesSize();
 };
 
 }  // namespace aidl::android::hardware::identity
