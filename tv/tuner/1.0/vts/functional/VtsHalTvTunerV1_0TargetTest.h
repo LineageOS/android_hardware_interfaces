@@ -33,13 +33,19 @@ static AssertionResult success() {
 
 namespace {
 
+void initConfiguration() {
+    initFrontendConfig();
+    initFrontendScanConfig();
+    initFilterConfig();
+    initDvrConfig();
+}
+
 class TunerFrontendHidlTest : public testing::TestWithParam<std::string> {
   public:
     virtual void SetUp() override {
         mService = ITuner::getService(GetParam());
         ASSERT_NE(mService, nullptr);
-        initFrontendConfig();
-        initFrontendScanConfig();
+        initConfiguration();
 
         mFrontendTests.setService(mService);
     }
@@ -58,9 +64,7 @@ class TunerDemuxHidlTest : public testing::TestWithParam<std::string> {
     virtual void SetUp() override {
         mService = ITuner::getService(GetParam());
         ASSERT_NE(mService, nullptr);
-        initFrontendConfig();
-        initFrontendScanConfig();
-        initFilterConfig();
+        initConfiguration();
 
         mFrontendTests.setService(mService);
         mDemuxTests.setService(mService);
@@ -81,9 +85,7 @@ class TunerFilterHidlTest : public testing::TestWithParam<std::string> {
     virtual void SetUp() override {
         mService = ITuner::getService(GetParam());
         ASSERT_NE(mService, nullptr);
-        initFrontendConfig();
-        initFrontendScanConfig();
-        initFilterConfig();
+        initConfiguration();
 
         mFrontendTests.setService(mService);
         mDemuxTests.setService(mService);
@@ -103,15 +105,39 @@ class TunerFilterHidlTest : public testing::TestWithParam<std::string> {
     FilterTests mFilterTests;
 };
 
-class TunerDvrHidlTest : public testing::TestWithParam<std::string> {
+class TunerBroadcastHidlTest : public testing::TestWithParam<std::string> {
   public:
     virtual void SetUp() override {
         mService = ITuner::getService(GetParam());
         ASSERT_NE(mService, nullptr);
-        initFrontendConfig();
-        initFrontendScanConfig();
-        initFilterConfig();
-        initDvrConfig();
+        initConfiguration();
+
+        mFrontendTests.setService(mService);
+        mDemuxTests.setService(mService);
+        mFilterTests.setService(mService);
+    }
+
+  protected:
+    static void description(const std::string& description) {
+        RecordProperty("description", description);
+    }
+
+    sp<ITuner> mService;
+    FrontendTests mFrontendTests;
+    DemuxTests mDemuxTests;
+    FilterTests mFilterTests;
+
+    AssertionResult filterDataOutputTest(vector<string> goldenOutputFiles);
+
+    void broadcastSingleFilterTest(FilterConfig filterConf, FrontendConfig frontendConf);
+};
+
+class TunerPlaybackHidlTest : public testing::TestWithParam<std::string> {
+  public:
+    virtual void SetUp() override {
+        mService = ITuner::getService(GetParam());
+        ASSERT_NE(mService, nullptr);
+        initConfiguration();
 
         mFrontendTests.setService(mService);
         mDemuxTests.setService(mService);
@@ -124,8 +150,39 @@ class TunerDvrHidlTest : public testing::TestWithParam<std::string> {
         RecordProperty("description", description);
     }
 
-    void attachSingleFilterToDvrTest(FilterConfig filterConf, FrontendConfig frontendConf,
-                                     DvrConfig dvrConf);
+    sp<ITuner> mService;
+    FrontendTests mFrontendTests;
+    DemuxTests mDemuxTests;
+    FilterTests mFilterTests;
+    DvrTests mDvrTests;
+
+    AssertionResult filterDataOutputTest(vector<string> goldenOutputFiles);
+
+    void playbackSingleFilterTest(FilterConfig filterConf, DvrConfig dvrConf);
+};
+
+class TunerRecordHidlTest : public testing::TestWithParam<std::string> {
+  public:
+    virtual void SetUp() override {
+        mService = ITuner::getService(GetParam());
+        ASSERT_NE(mService, nullptr);
+        initConfiguration();
+
+        mFrontendTests.setService(mService);
+        mDemuxTests.setService(mService);
+        mFilterTests.setService(mService);
+        mDvrTests.setService(mService);
+    }
+
+  protected:
+    static void description(const std::string& description) {
+        RecordProperty("description", description);
+    }
+
+    void attachSingleFilterToRecordDvrTest(FilterConfig filterConf, FrontendConfig frontendConf,
+                                           DvrConfig dvrConf);
+    void recordSingleFilterTest(FilterConfig filterConf, FrontendConfig frontendConf,
+                                DvrConfig dvrConf);
 
     sp<ITuner> mService;
     FrontendTests mFrontendTests;
@@ -139,13 +196,10 @@ class TunerHidlTest : public testing::TestWithParam<std::string> {
     virtual void SetUp() override {
         mService = ITuner::getService(GetParam());
         ASSERT_NE(mService, nullptr);
-        initFrontendConfig();
-        initFrontendScanConfig();
-        initFilterConfig();
+        initConfiguration();
 
         mFrontendTests.setService(mService);
         mDemuxTests.setService(mService);
-        mFilterTests.setService(mService);
     }
 
   protected:
@@ -156,20 +210,10 @@ class TunerHidlTest : public testing::TestWithParam<std::string> {
     sp<ITuner> mService;
     FrontendTests mFrontendTests;
     DemuxTests mDemuxTests;
-    FilterTests mFilterTests;
 
     sp<IDescrambler> mDescrambler;
 
     AssertionResult createDescrambler(uint32_t demuxId);
     AssertionResult closeDescrambler();
-
-    AssertionResult playbackDataFlowTest(vector<FilterConfig> filterConf, PlaybackConf playbackConf,
-                                         vector<string> goldenOutputFiles);
-    AssertionResult recordDataFlowTest(vector<FilterConfig> filterConf,
-                                       RecordSettings recordSetting,
-                                       vector<string> goldenOutputFiles);
-    AssertionResult broadcastDataFlowTest(vector<string> goldenOutputFiles);
-
-    void broadcastSingleFilterTest(FilterConfig filterConf, FrontendConfig frontendConf);
 };
 }  // namespace
