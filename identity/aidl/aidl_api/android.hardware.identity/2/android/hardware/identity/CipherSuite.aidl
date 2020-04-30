@@ -16,13 +16,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.identity;
-@VintfStability
-interface IWritableIdentityCredential {
-  android.hardware.identity.Certificate[] getAttestationCertificate(in byte[] attestationApplicationId, in byte[] attestationChallenge);
-  void startPersonalization(in int accessControlProfileCount, in int[] entryCounts);
-  android.hardware.identity.SecureAccessControlProfile addAccessControlProfile(in int id, in android.hardware.identity.Certificate readerCertificate, in boolean userAuthenticationRequired, in long timeoutMillis, in long secureUserId);
-  void beginAddEntry(in int[] accessControlProfileIds, in @utf8InCpp String nameSpace, in @utf8InCpp String name, in int entrySize);
-  byte[] addEntryValue(in byte[] content);
-  void finishAddingEntries(out byte[] credentialData, out byte[] proofOfProvisioningSignature);
-  void setExpectedProofOfProvisioningSize(in int expectedProofOfProvisioningSize);
+@Backing(type="int") @VintfStability
+enum CipherSuite {
+  CIPHERSUITE_ECDHE_HKDF_ECDSA_WITH_AES_256_GCM_SHA256 = 1,
 }
