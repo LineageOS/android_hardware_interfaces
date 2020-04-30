@@ -146,7 +146,7 @@ class DvrTests {
     void setService(sp<ITuner> tuner) { mService = tuner; }
     void setDemux(sp<IDemux> demux) { mDemux = demux; }
 
-    void startPlaybackInputThread(string dataInputFile, PlaybackSettings settings) {
+    void startPlaybackInputThread(string& dataInputFile, PlaybackSettings& settings) {
         PlaybackConf conf{
                 .inputDataFile = dataInputFile,
                 .setting = settings,
@@ -162,7 +162,7 @@ class DvrTests {
     void testRecordOutput() { mDvrCallback->testRecordOutput(); }
     void stopRecordThread() { mDvrCallback->stopPlaybackThread(); }
 
-    AssertionResult openDvrInDemux(DvrType type);
+    AssertionResult openDvrInDemux(DvrType type, uint32_t bufferSize);
     AssertionResult configDvr(DvrSettings setting);
     AssertionResult getDvrMQDescriptor();
     AssertionResult attachFilterToDvr(sp<IFilter> filter);
