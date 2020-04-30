@@ -16,12 +16,17 @@
 
 #pragma once
 
+#include "EventMessageQueueWrapper.h"
+#include "HalProxyCallback.h"
+#include "ISensorsCallbackWrapper.h"
+#include "SubHalWrapper.h"
 #include "V2_0/ScopedWakelock.h"
 #include "V2_0/SubHal.h"
 #include "V2_1/SubHal.h"
+#include "convertV2_1.h"
 
-#include <android/hardware/sensors/2.0/ISensors.h>
-#include <android/hardware/sensors/2.0/types.h>
+#include <android/hardware/sensors/2.1/ISensors.h>
+#include <android/hardware/sensors/2.1/types.h>
 #include <fmq/MessageQueue.h>
 #include <hardware_legacy/power.h>
 #include <hidl/MQDescriptor.h>
@@ -38,96 +43,97 @@
 namespace android {
 namespace hardware {
 namespace sensors {
-namespace V2_0 {
+namespace V2_1 {
 namespace implementation {
 
-using ::android::sp;
-using ::android::hardware::EventFlag;
-using ::android::hardware::hidl_string;
-using ::android::hardware::hidl_vec;
-using ::android::hardware::MessageQueue;
-using ::android::hardware::MQDescriptor;
-using ::android::hardware::Return;
-using ::android::hardware::Void;
-
-class HalProxy : public ISensors, public IScopedWakelockRefCounter {
+/**
+ * HalProxy is the main interface for Multi-HAL. It is responsible for managing  subHALs and
+ * proxying function calls to/from the subHAL APIs from the sensors framework. It also manages any
+ * wakelocks allocated through the IHalProxyCallback and manages posting events to the sensors
+ * framework.
+ */
+class HalProxy : public V2_0::implementation::IScopedWakelockRefCounter,
+                 public V2_0::implementation::ISubHalCallback {
   public:
-    using Event = ::android::hardware::sensors::V1_0::Event;
+    using Event = ::android::hardware::sensors::V2_1::Event;
     using OperationMode = ::android::hardware::sensors::V1_0::OperationMode;
     using RateLevel = ::android::hardware::sensors::V1_0::RateLevel;
     using Result = ::android::hardware::sensors::V1_0::Result;
-    using SensorInfo = ::android::hardware::sensors::V1_0::SensorInfo;
+    using SensorInfo = ::android::hardware::sensors::V2_1::SensorInfo;
     using SharedMemInfo = ::android::hardware::sensors::V1_0::SharedMemInfo;
-    using ISensorsSubHal = ::android::hardware::sensors::V2_0::implementation::ISensorsSubHal;
+    using IHalProxyCallbackV2_0 = V2_0::implementation::IHalProxyCallback;
+    using IHalProxyCallbackV2_1 = V2_1::implementation::IHalProxyCallback;
+    using ISensorsSubHalV2_0 = V2_0::implementation::ISensorsSubHal;
+    using ISensorsSubHalV2_1 = V2_1::implementation::ISensorsSubHal;
+    using ISensorsV2_0 = V2_0::ISensors;
+    using ISensorsV2_1 = V2_1::ISensors;
+    using HalProxyCallbackBase = V2_0::implementation::HalProxyCallbackBase;
 
     explicit HalProxy();
     // Test only constructor.
-    explicit HalProxy(std::vector<ISensorsSubHal*>& subHalList);
+    explicit HalProxy(std::vector<ISensorsSubHalV2_0*>& subHalList);
+    explicit HalProxy(std::vector<ISensorsSubHalV2_0*>& subHalList,
+                      std::vector<ISensorsSubHalV2_1*>& subHalListV2_1);
     ~HalProxy();
 
+    // Methods from ::android::hardware::sensors::V2_1::ISensors follow.
+    Return<void> getSensorsList_2_1(ISensorsV2_1::getSensorsList_2_1_cb _hidl_cb);
+
+    Return<Result> initialize_2_1(
+            const ::android::hardware::MQDescriptorSync<V2_1::Event>& eventQueueDescriptor,
+            const ::android::hardware::MQDescriptorSync<uint32_t>& wakeLockDescriptor,
+            const sp<V2_1::ISensorsCallback>& sensorsCallback);
+
+    Return<Result> injectSensorData_2_1(const Event& event);
+
     // Methods from ::android::hardware::sensors::V2_0::ISensors follow.
-    Return<void> getSensorsList(getSensorsList_cb _hidl_cb) override;
+    Return<void> getSensorsList(ISensorsV2_0::getSensorsList_cb _hidl_cb);
 
-    Return<Result> setOperationMode(OperationMode mode) override;
+    Return<Result> setOperationMode(OperationMode mode);
 
-    Return<Result> activate(int32_t sensorHandle, bool enabled) override;
+    Return<Result> activate(int32_t sensorHandle, bool enabled);
 
     Return<Result> initialize(
-            const ::android::hardware::MQDescriptorSync<Event>& eventQueueDescriptor,
+            const ::android::hardware::MQDescriptorSync<V1_0::Event>& eventQueueDescriptor,
             const ::android::hardware::MQDescriptorSync<uint32_t>& wakeLockDescriptor,
-            const sp<ISensorsCallback>& sensorsCallback) override;
+            const sp<V2_0::ISensorsCallback>& sensorsCallback);
+
+    Return<Result> initializeCommon(
+            std::unique_ptr<EventMessageQueueWrapperBase>& eventQueue,
+            const ::android::hardware::MQDescriptorSync<uint32_t>& wakeLockDescriptor,
+            const sp<ISensorsCallbackWrapperBase>& sensorsCallback);
 
     Return<Result> batch(int32_t sensorHandle, int64_t samplingPeriodNs,
-                         int64_t maxReportLatencyNs) override;
+                         int64_t maxReportLatencyNs);
 
-    Return<Result> flush(int32_t sensorHandle) override;
+    Return<Result> flush(int32_t sensorHandle);
 
-    Return<Result> injectSensorData(const Event& event) override;
+    Return<Result> injectSensorData(const V1_0::Event& event);
 
     Return<void> registerDirectChannel(const SharedMemInfo& mem,
-                                       registerDirectChannel_cb _hidl_cb) override;
+                                       ISensorsV2_0::registerDirectChannel_cb _hidl_cb);
 
-    Return<Result> unregisterDirectChannel(int32_t channelHandle) override;
+    Return<Result> unregisterDirectChannel(int32_t channelHandle);
 
     Return<void> configDirectReport(int32_t sensorHandle, int32_t channelHandle, RateLevel rate,
-                                    configDirectReport_cb _hidl_cb) override;
+                                    ISensorsV2_0::configDirectReport_cb _hidl_cb);
 
-    Return<void> debug(const hidl_handle& fd, const hidl_vec<hidl_string>& args) override;
+    Return<void> debug(const hidl_handle& fd, const hidl_vec<hidl_string>& args);
 
-    // Below methods from ::android::hardware::sensors::V2_0::ISensorsCallback with a minor change
-    // to pass in the sub-HAL index. While the above methods are invoked from the sensors framework
-    // via the binder, these methods are invoked from a callback provided to sub-HALs inside the
-    // same process as the HalProxy, but potentially running on different threads.
     Return<void> onDynamicSensorsConnected(const hidl_vec<SensorInfo>& dynamicSensorsAdded,
-                                           int32_t subHalIndex);
+                                           int32_t subHalIndex) override;
 
     Return<void> onDynamicSensorsDisconnected(const hidl_vec<int32_t>& dynamicSensorHandlesRemoved,
-                                              int32_t subHalIndex);
+                                              int32_t subHalIndex) override;
 
-    // Below methods are for HalProxyCallback
-
-    /**
-     * Post events to the event message queue if there is room to write them. Otherwise post the
-     * remaining events to a background thread for a blocking write with a kPendingWriteTimeoutNs
-     * timeout.
-     *
-     * @param events The list of events to post to the message queue.
-     * @param numWakeupEvents The number of wakeup events in events.
-     * @param wakelock The wakelock associated with this post of events.
-     */
     void postEventsToMessageQueue(const std::vector<Event>& events, size_t numWakeupEvents,
-                                  ScopedWakelock wakelock);
+                                  V2_0::implementation::ScopedWakelock wakelock) override;
 
-    /**
-     * Get the sensor info associated with that sensorHandle.
-     *
-     * @param sensorHandle The sensor handle.
-     *
-     * @return The sensor info object in the mapping.
-     */
-    const SensorInfo& getSensorInfo(int32_t sensorHandle) { return mSensors[sensorHandle]; }
+    const SensorInfo& getSensorInfo(int32_t sensorHandle) override {
+        return mSensors[sensorHandle];
+    }
 
-    bool areThreadsRunning() { return mThreadsRun.load(); }
+    bool areThreadsRunning() override { return mThreadsRun.load(); }
 
     // Below methods are from IScopedWakelockRefCounter interface
     bool incrementRefCountAndMaybeAcquireWakelock(size_t delta,
@@ -136,13 +142,14 @@ class HalProxy : public ISensors, public IScopedWakelockRefCounter {
     void decrementRefCountAndMaybeReleaseWakelock(size_t delta, int64_t timeoutStart = -1) override;
 
   private:
-    using EventMessageQueue = MessageQueue<Event, kSynchronizedReadWrite>;
+    using EventMessageQueueV2_1 = MessageQueue<V2_1::Event, kSynchronizedReadWrite>;
+    using EventMessageQueueV2_0 = MessageQueue<V1_0::Event, kSynchronizedReadWrite>;
     using WakeLockMessageQueue = MessageQueue<uint32_t, kSynchronizedReadWrite>;
 
     /**
      * The Event FMQ where sensor events are written
      */
-    std::unique_ptr<EventMessageQueue> mEventQueue;
+    std::unique_ptr<EventMessageQueueWrapperBase> mEventQueue;
 
     /**
      * The Wake Lock FMQ that is read to determine when the framework has handled WAKE_UP events
@@ -161,15 +168,12 @@ class HalProxy : public ISensors, public IScopedWakelockRefCounter {
     /**
      * Callback to the sensors framework to inform it that new sensors have been added or removed.
      */
-    sp<ISensorsCallback> mDynamicSensorsCallback;
+    sp<ISensorsCallbackWrapperBase> mDynamicSensorsCallback;
 
     /**
-     * SubHal object pointers that have been saved from vendor dynamic libraries.
+     * SubHal objects that have been saved from vendor dynamic libraries.
      */
-    std::vector<ISensorsSubHal*> mSubHalList;
-
-    //! The list of subhal callbacks for each subhal where the indices correlate with mSubHalList
-    std::vector<const sp<IHalProxyCallback>> mSubHalCallbacks;
+    std::vector<std::shared_ptr<ISubHalWrapperBase>> mSubHalList;
 
     /**
      * Map of sensor handles to SensorInfo objects that contains the sensor info from subhals as
@@ -187,7 +191,7 @@ class HalProxy : public ISensors, public IScopedWakelockRefCounter {
     OperationMode mCurrentOperationMode = OperationMode::NORMAL;
 
     //! The single subHal that supports directChannel reporting.
-    ISensorsSubHal* mDirectChannelSubHal = nullptr;
+    std::shared_ptr<ISubHalWrapperBase> mDirectChannelSubHal;
 
     //! The timeout for each pending write on background thread for events.
     static const int64_t kPendingWriteTimeoutNs = 5 * INT64_C(1000000000) /* 5 seconds */;
@@ -239,9 +243,9 @@ class HalProxy : public ISensors, public IScopedWakelockRefCounter {
     //! The refcount of how many ScopedWakelocks and pending wakeup events are active
     size_t mWakelockRefCount = 0;
 
-    int64_t mWakelockTimeoutStartTime = getTimeNow();
+    int64_t mWakelockTimeoutStartTime = V2_0::implementation::getTimeNow();
 
-    int64_t mWakelockTimeoutResetTime = getTimeNow();
+    int64_t mWakelockTimeoutResetTime = V2_0::implementation::getTimeNow();
 
     const char* kWakelockName = "SensorsHAL_WAKEUP";
 
@@ -321,7 +325,7 @@ class HalProxy : public ISensors, public IScopedWakelockRefCounter {
      *    disabled.
      * @param subHal The subhal pointer that the current sensorInfo object came from.
      */
-    void setDirectChannelFlags(SensorInfo* sensorInfo, ISensorsSubHal* subHal);
+    void setDirectChannelFlags(SensorInfo* sensorInfo, std::shared_ptr<ISubHalWrapperBase> subHal);
 
     /*
      * Get the subhal pointer which can be found by indexing into the mSubHalList vector
@@ -329,7 +333,7 @@ class HalProxy : public ISensors, public IScopedWakelockRefCounter {
      *
      * @param sensorHandle The handle used to identify a sensor in one of the subhals.
      */
-    ISensorsSubHal* getSubHalForSensorHandle(int32_t sensorHandle);
+    std::shared_ptr<ISubHalWrapperBase> getSubHalForSensorHandle(int32_t sensorHandle);
 
     /**
      * Checks that sensorHandle's subhal index byte is within bounds of mSubHalList.
@@ -368,39 +372,81 @@ class HalProxy : public ISensors, public IScopedWakelockRefCounter {
 };
 
 /**
- * Callback class used to provide the HalProxy with the index of which subHal is invoking
+ * Since a newer HAL can't masquerade as a older HAL, IHalProxy enables the HalProxy to be compiled
+ * either for HAL 2.0 or HAL 2.1 depending on the build configuration.
  */
-class HalProxyCallback : public IHalProxyCallback {
-    using SensorInfo = ::android::hardware::sensors::V1_0::SensorInfo;
-
-  public:
-    HalProxyCallback(HalProxy* halProxy, int32_t subHalIndex)
-        : mHalProxy(halProxy), mSubHalIndex(subHalIndex) {}
-
-    Return<void> onDynamicSensorsConnected(
-            const hidl_vec<SensorInfo>& dynamicSensorsAdded) override {
-        return mHalProxy->onDynamicSensorsConnected(dynamicSensorsAdded, mSubHalIndex);
+template <class ISensorsVersion>
+class IHalProxy : public HalProxy, public ISensorsVersion {
+    Return<void> getSensorsList(ISensorsV2_0::getSensorsList_cb _hidl_cb) override {
+        return HalProxy::getSensorsList(_hidl_cb);
     }
 
-    Return<void> onDynamicSensorsDisconnected(
-            const hidl_vec<int32_t>& dynamicSensorHandlesRemoved) override {
-        return mHalProxy->onDynamicSensorsDisconnected(dynamicSensorHandlesRemoved, mSubHalIndex);
+    Return<Result> setOperationMode(OperationMode mode) override {
+        return HalProxy::setOperationMode(mode);
     }
 
-    void postEvents(const std::vector<Event>& events, ScopedWakelock wakelock);
+    Return<Result> activate(int32_t sensorHandle, bool enabled) override {
+        return HalProxy::activate(sensorHandle, enabled);
+    }
 
-    ScopedWakelock createScopedWakelock(bool lock);
+    Return<Result> initialize(
+            const ::android::hardware::MQDescriptorSync<V1_0::Event>& eventQueueDescriptor,
+            const ::android::hardware::MQDescriptorSync<uint32_t>& wakeLockDescriptor,
+            const sp<V2_0::ISensorsCallback>& sensorsCallback) override {
+        return HalProxy::initialize(eventQueueDescriptor, wakeLockDescriptor, sensorsCallback);
+    }
 
-  private:
-    HalProxy* mHalProxy;
-    int32_t mSubHalIndex;
+    Return<Result> batch(int32_t sensorHandle, int64_t samplingPeriodNs,
+                         int64_t maxReportLatencyNs) override {
+        return HalProxy::batch(sensorHandle, samplingPeriodNs, maxReportLatencyNs);
+    }
 
-    std::vector<Event> processEvents(const std::vector<Event>& events,
-                                     size_t* numWakeupEvents) const;
+    Return<Result> flush(int32_t sensorHandle) override { return HalProxy::flush(sensorHandle); }
+
+    Return<Result> injectSensorData(const V1_0::Event& event) override {
+        return HalProxy::injectSensorData(event);
+    }
+
+    Return<void> registerDirectChannel(const SharedMemInfo& mem,
+                                       ISensorsV2_0::registerDirectChannel_cb _hidl_cb) override {
+        return HalProxy::registerDirectChannel(mem, _hidl_cb);
+    }
+
+    Return<Result> unregisterDirectChannel(int32_t channelHandle) override {
+        return HalProxy::unregisterDirectChannel(channelHandle);
+    }
+
+    Return<void> configDirectReport(int32_t sensorHandle, int32_t channelHandle, RateLevel rate,
+                                    ISensorsV2_0::configDirectReport_cb _hidl_cb) override {
+        return HalProxy::configDirectReport(sensorHandle, channelHandle, rate, _hidl_cb);
+    }
+
+    Return<void> debug(const hidl_handle& fd, const hidl_vec<hidl_string>& args) override {
+        return HalProxy::debug(fd, args);
+    }
+};
+
+class HalProxyV2_0 : public IHalProxy<V2_0::ISensors> {};
+
+class HalProxyV2_1 : public IHalProxy<V2_1::ISensors> {
+    Return<void> getSensorsList_2_1(ISensorsV2_1::getSensorsList_2_1_cb _hidl_cb) override {
+        return HalProxy::getSensorsList_2_1(_hidl_cb);
+    }
+
+    Return<Result> initialize_2_1(
+            const ::android::hardware::MQDescriptorSync<V2_1::Event>& eventQueueDescriptor,
+            const ::android::hardware::MQDescriptorSync<uint32_t>& wakeLockDescriptor,
+            const sp<V2_1::ISensorsCallback>& sensorsCallback) override {
+        return HalProxy::initialize_2_1(eventQueueDescriptor, wakeLockDescriptor, sensorsCallback);
+    }
+
+    Return<Result> injectSensorData_2_1(const Event& event) override {
+        return HalProxy::injectSensorData_2_1(event);
+    }
 };
 
 }  // namespace implementation
-}  // namespace V2_0
+}  // namespace V2_1
 }  // namespace sensors
 }  // namespace hardware
 }  // namespace android
