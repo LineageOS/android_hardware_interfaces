@@ -16,33 +16,66 @@
 
 #include "SensorsSubHal.h"
 
-#include <android/hardware/sensors/2.0/types.h>
+#include <android/hardware/sensors/2.1/types.h>
 #include <log/log.h>
 
-ISensorsSubHal* sensorsHalGetSubHal(uint32_t* version) {
+#ifdef SUB_HAL_VERSION_2_0
+::android::hardware::sensors::V2_0::implementation::ISensorsSubHal* sensorsHalGetSubHal(
+        uint32_t* version) {
 #if defined SUPPORT_CONTINUOUS_SENSORS && defined SUPPORT_ON_CHANGE_SENSORS
-    static ::android::hardware::sensors::V2_0::subhal::implementation::AllSensorsSubHal subHal;
+    static ::android::hardware::sensors::V2_1::subhal::implementation::AllSensorsSubHal<
+            ::android::hardware::sensors::V2_1::subhal::implementation::SensorsSubHalV2_0>
+            subHal;
 #elif defined SUPPORT_CONTINUOUS_SENSORS
-    static ::android::hardware::sensors::V2_0::subhal::implementation::ContinuousSensorsSubHal
+    static ::android::hardware::sensors::V2_1::subhal::implementation::ContinuousSensorsSubHal<
+            ::android::hardware::sensors::V2_1::subhal::implementation::SensorsSubHalV2_0>
             subHal;
 #elif defined SUPPORT_ON_CHANGE_SENSORS
-    static ::android::hardware::sensors::V2_0::subhal::implementation::OnChangeSensorsSubHal subHal;
+    static ::android::hardware::sensors::V2_1::subhal::implementation::OnChangeSensorsSubHal<
+            ::android::hardware::sensors::V2_1::subhal::implementation::SensorsSubHalV2_0>
+            subHal;
 #else
-    static ::android::hardware::sensors::V2_0::subhal::implementation::SensorsSubHal subHal;
+    static ::android::hardware::sensors::V2_1::subhal::implementation::SensorsSubHal<
+            ::android::hardware::sensors::V2_1::subhal::implementation::SensorsSubHalV2_0>
+            subHal;
 #endif  // defined SUPPORT_CONTINUOUS_SENSORS && defined SUPPORT_ON_CHANGE_SENSORS
     *version = SUB_HAL_2_0_VERSION;
     return &subHal;
 }
 
+#else  // SUB_HAL_VERSION_2_0
+
+::android::hardware::sensors::V2_1::implementation::ISensorsSubHal* sensorsHalGetSubHal_2_1(
+        uint32_t* version) {
+#if defined SUPPORT_CONTINUOUS_SENSORS && defined SUPPORT_ON_CHANGE_SENSORS
+    static ::android::hardware::sensors::V2_1::subhal::implementation::AllSensorsSubHal<
+            ::android::hardware::sensors::V2_1::subhal::implementation::SensorsSubHalV2_1>
+            subHal;
+#elif defined SUPPORT_CONTINUOUS_SENSORS
+    static ::android::hardware::sensors::V2_1::subhal::implementation::ContinuousSensorsSubHal<
+            ::android::hardware::sensors::V2_1::subhal::implementation::SensorsSubHalV2_1>
+            subHal;
+#elif defined SUPPORT_ON_CHANGE_SENSORS
+    static ::android::hardware::sensors::V2_1::subhal::implementation::OnChangeSensorsSubHal<
+            ::android::hardware::sensors::V2_1::subhal::implementation::SensorsSubHalV2_1>
+            subHal;
+#else
+    static ::android::hardware::sensors::V2_1::subhal::implementation::SensorsSubHalV2_1 subHal;
+#endif  // defined SUPPORT_CONTINUOUS_SENSORS && defined SUPPORT_ON_CHANGE_SENSORS
+    *version = SUB_HAL_2_1_VERSION;
+    return &subHal;
+}
+
+#endif  // SUB_HAL_VERSION_2_0
+
 namespace android {
 namespace hardware {
 namespace sensors {
-namespace V2_0 {
+namespace V2_1 {
 namespace subhal {
 namespace implementation {
 
 using ::android::hardware::Void;
-using ::android::hardware::sensors::V1_0::Event;
 using ::android::hardware::sensors::V1_0::OperationMode;
 using ::android::hardware::sensors::V1_0::RateLevel;
 using ::android::hardware::sensors::V1_0::Result;
@@ -50,11 +83,12 @@ using ::android::hardware::sensors::V1_0::SharedMemInfo;
 using ::android::hardware::sensors::V2_0::SensorTimeout;
 using ::android::hardware::sensors::V2_0::WakeLockQueueFlagBits;
 using ::android::hardware::sensors::V2_0::implementation::ScopedWakelock;
+using ::android::hardware::sensors::V2_1::Event;
 
-SensorsSubHal::SensorsSubHal() : mCallback(nullptr), mNextHandle(1) {}
+ISensorsSubHalBase::ISensorsSubHalBase() : mCallback(nullptr), mNextHandle(1) {}
 
 // Methods from ::android::hardware::sensors::V2_0::ISensors follow.
-Return<void> SensorsSubHal::getSensorsList(getSensorsList_cb _hidl_cb) {
+Return<void> ISensorsSubHalBase::getSensorsList(V2_1::ISensors::getSensorsList_2_1_cb _hidl_cb) {
     std::vector<SensorInfo> sensors;
     for (const auto& sensor : mSensors) {
         sensors.push_back(sensor.second->getSensorInfo());
@@ -64,7 +98,7 @@ Return<void> SensorsSubHal::getSensorsList(getSensorsList_cb _hidl_cb) {
     return Void();
 }
 
-Return<Result> SensorsSubHal::setOperationMode(OperationMode mode) {
+Return<Result> ISensorsSubHalBase::setOperationMode(OperationMode mode) {
     for (auto sensor : mSensors) {
         sensor.second->setOperationMode(mode);
     }
@@ -72,7 +106,7 @@ Return<Result> SensorsSubHal::setOperationMode(OperationMode mode) {
     return Result::OK;
 }
 
-Return<Result> SensorsSubHal::activate(int32_t sensorHandle, bool enabled) {
+Return<Result> ISensorsSubHalBase::activate(int32_t sensorHandle, bool enabled) {
     auto sensor = mSensors.find(sensorHandle);
     if (sensor != mSensors.end()) {
         sensor->second->activate(enabled);
@@ -81,8 +115,8 @@ Return<Result> SensorsSubHal::activate(int32_t sensorHandle, bool enabled) {
     return Result::BAD_VALUE;
 }
 
-Return<Result> SensorsSubHal::batch(int32_t sensorHandle, int64_t samplingPeriodNs,
-                                    int64_t /* maxReportLatencyNs */) {
+Return<Result> ISensorsSubHalBase::batch(int32_t sensorHandle, int64_t samplingPeriodNs,
+                                         int64_t /* maxReportLatencyNs */) {
     auto sensor = mSensors.find(sensorHandle);
     if (sensor != mSensors.end()) {
         sensor->second->batch(samplingPeriodNs);
@@ -91,7 +125,7 @@ Return<Result> SensorsSubHal::batch(int32_t sensorHandle, int64_t samplingPeriod
     return Result::BAD_VALUE;
 }
 
-Return<Result> SensorsSubHal::flush(int32_t sensorHandle) {
+Return<Result> ISensorsSubHalBase::flush(int32_t sensorHandle) {
     auto sensor = mSensors.find(sensorHandle);
     if (sensor != mSensors.end()) {
         return sensor->second->flush();
@@ -99,7 +133,7 @@ Return<Result> SensorsSubHal::flush(int32_t sensorHandle) {
     return Result::BAD_VALUE;
 }
 
-Return<Result> SensorsSubHal::injectSensorData(const Event& event) {
+Return<Result> ISensorsSubHalBase::injectSensorData(const Event& event) {
     auto sensor = mSensors.find(event.sensorHandle);
     if (sensor != mSensors.end()) {
         return sensor->second->injectEvent(event);
@@ -108,24 +142,24 @@ Return<Result> SensorsSubHal::injectSensorData(const Event& event) {
     return Result::BAD_VALUE;
 }
 
-Return<void> SensorsSubHal::registerDirectChannel(const SharedMemInfo& /* mem */,
-                                                  registerDirectChannel_cb _hidl_cb) {
+Return<void> ISensorsSubHalBase::registerDirectChannel(
+        const SharedMemInfo& /* mem */, V2_0::ISensors::registerDirectChannel_cb _hidl_cb) {
     _hidl_cb(Result::INVALID_OPERATION, -1 /* channelHandle */);
     return Return<void>();
 }
 
-Return<Result> SensorsSubHal::unregisterDirectChannel(int32_t /* channelHandle */) {
+Return<Result> ISensorsSubHalBase::unregisterDirectChannel(int32_t /* channelHandle */) {
     return Result::INVALID_OPERATION;
 }
 
-Return<void> SensorsSubHal::configDirectReport(int32_t /* sensorHandle */,
-                                               int32_t /* channelHandle */, RateLevel /* rate */,
-                                               configDirectReport_cb _hidl_cb) {
+Return<void> ISensorsSubHalBase::configDirectReport(
+        int32_t /* sensorHandle */, int32_t /* channelHandle */, RateLevel /* rate */,
+        V2_0::ISensors::configDirectReport_cb _hidl_cb) {
     _hidl_cb(Result::INVALID_OPERATION, 0 /* reportToken */);
     return Return<void>();
 }
 
-Return<void> SensorsSubHal::debug(const hidl_handle& fd, const hidl_vec<hidl_string>& args) {
+Return<void> ISensorsSubHalBase::debug(const hidl_handle& fd, const hidl_vec<hidl_string>& args) {
     if (fd.getNativeHandle() == nullptr || fd->numFds < 1) {
         ALOGE("%s: missing fd for writing", __FUNCTION__);
         return Void();
@@ -156,42 +190,16 @@ Return<void> SensorsSubHal::debug(const hidl_handle& fd, const hidl_vec<hidl_str
     return Return<void>();
 }
 
-Return<Result> SensorsSubHal::initialize(const sp<IHalProxyCallback>& halProxyCallback) {
-    mCallback = halProxyCallback;
+Return<Result> ISensorsSubHalBase::initialize(
+        std::unique_ptr<IHalProxyCallbackWrapperBase>& halProxyCallback) {
+    mCallback = std::move(halProxyCallback);
     setOperationMode(OperationMode::NORMAL);
     return Result::OK;
 }
 
-void SensorsSubHal::postEvents(const std::vector<Event>& events, bool wakeup) {
+void ISensorsSubHalBase::postEvents(const std::vector<Event>& events, bool wakeup) {
     ScopedWakelock wakelock = mCallback->createScopedWakelock(wakeup);
     mCallback->postEvents(events, std::move(wakelock));
-}
-
-ContinuousSensorsSubHal::ContinuousSensorsSubHal() {
-    AddSensor<AccelSensor>();
-    AddSensor<GyroSensor>();
-    AddSensor<MagnetometerSensor>();
-    AddSensor<PressureSensor>();
-    AddSensor<DeviceTempSensor>();
-}
-
-OnChangeSensorsSubHal::OnChangeSensorsSubHal() {
-    AddSensor<AmbientTempSensor>();
-    AddSensor<LightSensor>();
-    AddSensor<ProximitySensor>();
-    AddSensor<RelativeHumiditySensor>();
-}
-
-AllSensorsSubHal::AllSensorsSubHal() {
-    AddSensor<AccelSensor>();
-    AddSensor<GyroSensor>();
-    AddSensor<MagnetometerSensor>();
-    AddSensor<PressureSensor>();
-    AddSensor<DeviceTempSensor>();
-    AddSensor<AmbientTempSensor>();
-    AddSensor<LightSensor>();
-    AddSensor<ProximitySensor>();
-    AddSensor<RelativeHumiditySensor>();
 }
 
 Return<Result> SetOperationModeFailingSensorsSubHal::setOperationMode(OperationMode /*mode*/) {
@@ -206,7 +214,7 @@ Return<void> AllSupportDirectChannelSensorsSubHal::getSensorsList(getSensorsList
         sensorInfo.flags |= V1_0::SensorFlagBits::MASK_DIRECT_REPORT;
         sensors.push_back(sensorInfo);
     }
-    _hidl_cb(sensors);
+    _hidl_cb(V2_1::implementation::convertToOldSensorInfos(sensors));
     return Void();
 }
 
@@ -218,7 +226,7 @@ Return<void> DoesNotSupportDirectChannelSensorsSubHal::getSensorsList(getSensors
         sensorInfo.flags &= ~static_cast<uint32_t>(V1_0::SensorFlagBits::MASK_DIRECT_REPORT);
         sensors.push_back(sensorInfo);
     }
-    _hidl_cb(sensors);
+    _hidl_cb(V2_1::implementation::convertToOldSensorInfos(sensors));
     return Void();
 }
 
@@ -234,7 +242,7 @@ void AddAndRemoveDynamicSensorsSubHal::removeDynamicSensors(
 
 }  // namespace implementation
 }  // namespace subhal
-}  // namespace V2_0
+}  // namespace V2_1
 }  // namespace sensors
 }  // namespace hardware
 }  // namespace android
