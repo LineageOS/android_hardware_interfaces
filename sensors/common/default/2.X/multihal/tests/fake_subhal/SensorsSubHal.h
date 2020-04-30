@@ -17,7 +17,9 @@
 #pragma once
 
 #include "V2_0/SubHal.h"
+#include "V2_1/SubHal.h"
 
+#include "IHalProxyCallbackWrapper.h"
 #include "Sensor.h"
 
 #include <vector>
@@ -25,62 +27,60 @@
 namespace android {
 namespace hardware {
 namespace sensors {
-namespace V2_0 {
+namespace V2_1 {
 namespace subhal {
 namespace implementation {
 
 using ::android::hardware::sensors::V1_0::OperationMode;
 using ::android::hardware::sensors::V1_0::Result;
-using ::android::hardware::sensors::V2_0::implementation::IHalProxyCallback;
 
 /**
  * Implementation of a ISensorsSubHal that can be used to test the implementation of multihal 2.0.
  * See the README file for more details on how this class can be used for testing.
  */
-class SensorsSubHal : public ISensorsSubHal, public ISensorsEventCallback {
-    using Event = ::android::hardware::sensors::V1_0::Event;
+class ISensorsSubHalBase : public ISensorsEventCallback {
+  protected:
+    using Event = ::android::hardware::sensors::V2_1::Event;
     using RateLevel = ::android::hardware::sensors::V1_0::RateLevel;
     using SharedMemInfo = ::android::hardware::sensors::V1_0::SharedMemInfo;
 
   public:
-    SensorsSubHal();
+    ISensorsSubHalBase();
+
+    Return<void> getSensorsList(V2_1::ISensors::getSensorsList_2_1_cb _hidl_cb);
+    Return<Result> injectSensorData(const Event& event);
+    Return<Result> initialize(std::unique_ptr<IHalProxyCallbackWrapperBase>& halProxyCallback);
 
     // Methods from ::android::hardware::sensors::V2_0::ISensors follow.
-    virtual Return<void> getSensorsList(getSensorsList_cb _hidl_cb) override;
-
-    virtual Return<Result> setOperationMode(OperationMode mode) override;
+    virtual Return<Result> setOperationMode(OperationMode mode);
 
     OperationMode getOperationMode() const { return mCurrentOperationMode; }
 
-    Return<Result> activate(int32_t sensorHandle, bool enabled) override;
+    Return<Result> activate(int32_t sensorHandle, bool enabled);
 
     Return<Result> batch(int32_t sensorHandle, int64_t samplingPeriodNs,
-                         int64_t maxReportLatencyNs) override;
+                         int64_t maxReportLatencyNs);
 
-    Return<Result> flush(int32_t sensorHandle) override;
-
-    Return<Result> injectSensorData(const Event& event) override;
+    Return<Result> flush(int32_t sensorHandle);
 
     Return<void> registerDirectChannel(const SharedMemInfo& mem,
-                                       registerDirectChannel_cb _hidl_cb) override;
+                                       V2_0::ISensors::registerDirectChannel_cb _hidl_cb);
 
-    Return<Result> unregisterDirectChannel(int32_t channelHandle) override;
+    Return<Result> unregisterDirectChannel(int32_t channelHandle);
 
     Return<void> configDirectReport(int32_t sensorHandle, int32_t channelHandle, RateLevel rate,
-                                    configDirectReport_cb _hidl_cb) override;
+                                    V2_0::ISensors::configDirectReport_cb _hidl_cb);
 
-    Return<void> debug(const hidl_handle& fd, const hidl_vec<hidl_string>& args) override;
+    Return<void> debug(const hidl_handle& fd, const hidl_vec<hidl_string>& args);
 
     // Methods from ::android::hardware::sensors::V2_0::implementation::ISensorsSubHal follow.
-    const std::string getName() override {
+    const std::string getName() {
 #ifdef SUB_HAL_NAME
         return SUB_HAL_NAME;
 #else   // SUB_HAL_NAME
         return "FakeSubHal";
 #endif  // SUB_HAL_NAME
     }
-
-    Return<Result> initialize(const sp<IHalProxyCallback>& halProxyCallback) override;
 
     // Method from ISensorsEventCallback.
     void postEvents(const std::vector<Event>& events, bool wakeup) override;
@@ -103,7 +103,7 @@ class SensorsSubHal : public ISensorsSubHal, public ISensorsEventCallback {
      * disconnected, sensor events need to be sent to the framework, and when a wakelock should be
      * acquired.
      */
-    sp<IHalProxyCallback> mCallback;
+    std::unique_ptr<IHalProxyCallbackWrapperBase> mCallback;
 
   private:
     /**
@@ -118,40 +118,143 @@ class SensorsSubHal : public ISensorsSubHal, public ISensorsEventCallback {
     int32_t mNextHandle;
 };
 
-// SubHal that has continuous sensors for testing purposes.
-class ContinuousSensorsSubHal : public SensorsSubHal {
+template <class SubHalClass>
+class SensorsSubHalBase : public ISensorsSubHalBase, public SubHalClass {
   public:
-    ContinuousSensorsSubHal();
+    Return<Result> setOperationMode(OperationMode mode) override {
+        return ISensorsSubHalBase::setOperationMode(mode);
+    }
+
+    Return<Result> activate(int32_t sensorHandle, bool enabled) override {
+        return ISensorsSubHalBase::activate(sensorHandle, enabled);
+    }
+
+    Return<Result> batch(int32_t sensorHandle, int64_t samplingPeriodNs,
+                         int64_t maxReportLatencyNs) override {
+        return ISensorsSubHalBase::batch(sensorHandle, samplingPeriodNs, maxReportLatencyNs);
+    }
+
+    Return<Result> flush(int32_t sensorHandle) override {
+        return ISensorsSubHalBase::flush(sensorHandle);
+    }
+
+    Return<void> registerDirectChannel(const SharedMemInfo& mem,
+                                       V2_0::ISensors::registerDirectChannel_cb _hidl_cb) override {
+        return ISensorsSubHalBase::registerDirectChannel(mem, _hidl_cb);
+    }
+
+    Return<Result> unregisterDirectChannel(int32_t channelHandle) override {
+        return ISensorsSubHalBase::unregisterDirectChannel(channelHandle);
+    }
+
+    Return<void> configDirectReport(int32_t sensorHandle, int32_t channelHandle, RateLevel rate,
+                                    V2_0::ISensors::configDirectReport_cb _hidl_cb) override {
+        return ISensorsSubHalBase::configDirectReport(sensorHandle, channelHandle, rate, _hidl_cb);
+    }
+
+    Return<void> debug(const hidl_handle& fd, const hidl_vec<hidl_string>& args) override {
+        return ISensorsSubHalBase::debug(fd, args);
+    }
+
+    const std::string getName() override { return ISensorsSubHalBase::getName(); }
+};
+
+class SensorsSubHalV2_0 : public SensorsSubHalBase<V2_0::implementation::ISensorsSubHal> {
+  public:
+    virtual Return<void> getSensorsList(V2_0::ISensors::getSensorsList_cb _hidl_cb) override {
+        return ISensorsSubHalBase::getSensorsList([&](const auto& list) {
+            _hidl_cb(V2_1::implementation::convertToOldSensorInfos(list));
+        });
+    }
+
+    Return<Result> injectSensorData(const V1_0::Event& event) override {
+        return ISensorsSubHalBase::injectSensorData(V2_1::implementation::convertToNewEvent(event));
+    }
+
+    Return<Result> initialize(
+            const sp<V2_0::implementation::IHalProxyCallback>& halProxyCallback) override {
+        std::unique_ptr<IHalProxyCallbackWrapperBase> wrapper =
+                std::make_unique<HalProxyCallbackWrapperV2_0>(halProxyCallback);
+        return ISensorsSubHalBase::initialize(wrapper);
+    }
+};
+
+class SensorsSubHalV2_1 : public SensorsSubHalBase<V2_1::implementation::ISensorsSubHal> {
+  public:
+    Return<void> getSensorsList_2_1(V2_1::ISensors::getSensorsList_2_1_cb _hidl_cb) override {
+        return ISensorsSubHalBase::getSensorsList(_hidl_cb);
+    }
+
+    Return<Result> injectSensorData_2_1(const V2_1::Event& event) override {
+        return ISensorsSubHalBase::injectSensorData(event);
+    }
+
+    Return<Result> initialize(
+            const sp<V2_1::implementation::IHalProxyCallback>& halProxyCallback) override {
+        std::unique_ptr<IHalProxyCallbackWrapperBase> wrapper =
+                std::make_unique<HalProxyCallbackWrapperV2_1>(halProxyCallback);
+        return ISensorsSubHalBase::initialize(wrapper);
+    }
+};
+
+// SubHal that has continuous sensors for testing purposes.
+template <class SubHalVersion>
+class ContinuousSensorsSubHal : public SubHalVersion {
+  public:
+    ContinuousSensorsSubHal() {
+        ISensorsSubHalBase::AddSensor<AccelSensor>();
+        ISensorsSubHalBase::AddSensor<GyroSensor>();
+        ISensorsSubHalBase::AddSensor<MagnetometerSensor>();
+        ISensorsSubHalBase::AddSensor<PressureSensor>();
+        ISensorsSubHalBase::AddSensor<DeviceTempSensor>();
+    }
 };
 
 // SubHal that has on-change sensors for testing purposes.
-class OnChangeSensorsSubHal : public SensorsSubHal {
+template <class SubHalVersion>
+class OnChangeSensorsSubHal : public SubHalVersion {
   public:
-    OnChangeSensorsSubHal();
+    OnChangeSensorsSubHal() {
+        ISensorsSubHalBase::AddSensor<AmbientTempSensor>();
+        ISensorsSubHalBase::AddSensor<LightSensor>();
+        ISensorsSubHalBase::AddSensor<ProximitySensor>();
+        ISensorsSubHalBase::AddSensor<RelativeHumiditySensor>();
+    }
 };
 
 // SubHal that has both continuous and on-change sensors for testing purposes.
-class AllSensorsSubHal : public SensorsSubHal {
+template <class SubHalVersion>
+class AllSensorsSubHal : public SubHalVersion {
   public:
-    AllSensorsSubHal();
+    AllSensorsSubHal() {
+        ISensorsSubHalBase::AddSensor<AccelSensor>();
+        ISensorsSubHalBase::AddSensor<GyroSensor>();
+        ISensorsSubHalBase::AddSensor<MagnetometerSensor>();
+        ISensorsSubHalBase::AddSensor<PressureSensor>();
+        ISensorsSubHalBase::AddSensor<DeviceTempSensor>();
+        ISensorsSubHalBase::AddSensor<AmbientTempSensor>();
+        ISensorsSubHalBase::AddSensor<LightSensor>();
+        ISensorsSubHalBase::AddSensor<ProximitySensor>();
+        ISensorsSubHalBase::AddSensor<RelativeHumiditySensor>();
+    }
 };
 
-class SetOperationModeFailingSensorsSubHal : public AllSensorsSubHal {
+class SetOperationModeFailingSensorsSubHal : public AllSensorsSubHal<SensorsSubHalV2_0> {
   public:
     Return<Result> setOperationMode(OperationMode mode) override;
 };
 
-class AllSupportDirectChannelSensorsSubHal : public AllSensorsSubHal {
+class AllSupportDirectChannelSensorsSubHal : public AllSensorsSubHal<SensorsSubHalV2_0> {
   public:
-    Return<void> getSensorsList(getSensorsList_cb _hidl_cb) override;
+    Return<void> getSensorsList(V2_0::ISensors::getSensorsList_cb _hidl_cb) override;
 };
 
-class DoesNotSupportDirectChannelSensorsSubHal : public AllSensorsSubHal {
+class DoesNotSupportDirectChannelSensorsSubHal : public AllSensorsSubHal<SensorsSubHalV2_0> {
   public:
-    Return<void> getSensorsList(getSensorsList_cb _hidl_cb) override;
+    Return<void> getSensorsList(V2_0::ISensors::getSensorsList_cb _hidl_cb) override;
 };
 
-class AddAndRemoveDynamicSensorsSubHal : public AllSensorsSubHal {
+class AddAndRemoveDynamicSensorsSubHal : public AllSensorsSubHal<SensorsSubHalV2_0> {
   public:
     void addDynamicSensors(const std::vector<SensorInfo>& sensorsAdded);
     void removeDynamicSensors(const std::vector<int32_t>& sensorHandlesAdded);
@@ -159,7 +262,7 @@ class AddAndRemoveDynamicSensorsSubHal : public AllSensorsSubHal {
 
 }  // namespace implementation
 }  // namespace subhal
-}  // namespace V2_0
+}  // namespace V2_1
 }  // namespace sensors
 }  // namespace hardware
 }  // namespace android
