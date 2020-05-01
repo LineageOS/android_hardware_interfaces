@@ -606,8 +606,23 @@ enum VehicleProperty : int32_t {
     /**
      * Tire pressure
      *
-     * min/max value indicates tire pressure sensor range.  Each tire will have a separate min/max
-     * value denoted by its areaConfig.areaId.
+     * Each tires is identified by its areaConfig.areaId config and their
+     * minFloatValue/maxFloatValue are used to store OEM recommended pressure
+     * range.
+     * The Min value in the areaConfig data represents the lower bound of
+     * the recommended tire pressure.
+     * The Max value in the areaConfig data represents the upper bound of
+     * the recommended tire pressure.
+     * For example:
+     * The following areaConfig indicates the recommended tire pressure
+     * of left_front tire is from 200.0 KILOPASCAL to 240.0 KILOPASCAL.
+     * .areaConfigs = {
+     *      VehicleAreaConfig {
+     *          .areaId = VehicleAreaWheel::LEFT_FRONT,
+     *          .minFloatValue = 200.0,
+     *          .maxFloatValue = 240.0,
+     *      }
+     * },
      *
      * @change_mode VehiclePropertyChangeMode:CONTINUOUS
      * @access VehiclePropertyAccess:READ
@@ -786,7 +801,8 @@ enum VehicleProperty : int32_t {
     /*
      * HVAC Properties
      *
-     * Additional rules for mapping a zoned HVAC property to AreaIDs:
+     * Additional rules for mapping a zoned HVAC property (except
+     * HVAC_MAX_DEFROST_ON) to AreaIDs:
      *  - Every seat in VehicleAreaSeat that is available in the car, must be
      *    part of an AreaID in the AreaID array.
      *
@@ -919,6 +935,11 @@ enum VehicleProperty : int32_t {
      * possible.  Any parameters modified as a side effect of turning on/off
      * the MAX DEFROST parameter shall generate onPropertyEvent() callbacks to
      * the VHAL.
+     * The AreaIDs for HVAC_MAX_DEFROST_ON indicate MAX DEFROST can be controlled
+     * in the area.
+     * For example:
+     * areaConfig.areaId = {ROW_1_LEFT | ROW_1_RIGHT} indicates HVAC_MAX_DEFROST_ON
+     * only can be controlled for the front rows.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
