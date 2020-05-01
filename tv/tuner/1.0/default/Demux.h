@@ -188,7 +188,7 @@ class Demux : public IDemux {
     int mPesSizeLeft = 0;
     vector<uint8_t> mPesOutput;
 
-    const bool DEBUG_FILTER = false;
+    const bool DEBUG_DEMUX = false;
 };
 
 }  // namespace implementation
