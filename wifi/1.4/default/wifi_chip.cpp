@@ -101,6 +101,16 @@ std::string getWlanIfaceName(unsigned idx) {
     return "wlan" + std::to_string(idx);
 }
 
+// Returns the dedicated iface name if one is defined.
+std::string getApIfaceName() {
+    std::array<char, PROPERTY_VALUE_MAX> buffer;
+    if (property_get("ro.vendor.wifi.sap.interface", buffer.data(), nullptr) ==
+        0) {
+        return {};
+    }
+    return buffer.data();
+}
+
 std::string getP2pIfaceName() {
     std::array<char, PROPERTY_VALUE_MAX> buffer;
     property_get("wifi.direct.interface", buffer.data(), "p2p0");
@@ -1582,6 +1592,11 @@ std::string WifiChip::allocateApOrStaIfaceName(uint32_t start_idx) {
 // AP iface names start with idx 1 for modes supporting
 // concurrent STA and not dual AP, else start with idx 0.
 std::string WifiChip::allocateApIfaceName() {
+    // Check if we have a dedicated iface for AP.
+    std::string ifname = getApIfaceName();
+    if (!ifname.empty()) {
+        return ifname;
+    }
     return allocateApOrStaIfaceName((isStaApConcurrencyAllowedInCurrentMode() &&
                                      !isDualApAllowedInCurrentMode())
                                         ? 1

@@ -26,6 +26,7 @@ using android::hardware::tv::tuner::V1_0::DemuxFilterEvent;
 using android::hardware::tv::tuner::V1_0::DemuxFilterMainType;
 using android::hardware::tv::tuner::V1_0::DemuxFilterSettings;
 using android::hardware::tv::tuner::V1_0::DemuxFilterType;
+using android::hardware::tv::tuner::V1_0::DemuxRecordScIndexType;
 using android::hardware::tv::tuner::V1_0::DemuxTpid;
 using android::hardware::tv::tuner::V1_0::DemuxTsFilterType;
 using android::hardware::tv::tuner::V1_0::DvrSettings;
@@ -45,6 +46,10 @@ using android::hardware::tv::tuner::V1_0::RecordSettings;
 
 using namespace std;
 
+const uint32_t FMQ_SIZE_1M = 0x100000;
+const uint32_t FMQ_SIZE_4M = 0x400000;
+const uint32_t FMQ_SIZE_16M = 0x1000000;
+
 typedef enum {
     TS_VIDEO0,
     TS_VIDEO1,
@@ -53,6 +58,7 @@ typedef enum {
     TS_PCR0,
     TS_SECTION0,
     TS_TS0,
+    TS_RECORD0,
     FILTER_MAX,
 } Filter;
 
@@ -74,6 +80,7 @@ typedef enum {
 } Dvr;
 
 struct FilterConfig {
+    uint32_t bufferSize;
     DemuxFilterType type;
     DemuxFilterSettings settings;
 };
@@ -93,7 +100,9 @@ struct ChannelConfig {
 
 struct DvrConfig {
     DvrType type;
+    uint32_t bufferSize;
     DvrSettings settings;
+    string playbackInputFile;
 };
 
 static FrontendConfig frontendArray[FILTER_MAX];
@@ -143,20 +152,24 @@ inline void initFilterConfig() {
     // TS VIDEO filter setting for default implementation testing
     filterArray[TS_VIDEO0].type.mainType = DemuxFilterMainType::TS;
     filterArray[TS_VIDEO0].type.subType.tsFilterType(DemuxTsFilterType::VIDEO);
+    filterArray[TS_VIDEO0].bufferSize = FMQ_SIZE_16M;
     filterArray[TS_VIDEO0].settings.ts().tpid = 119;
     filterArray[TS_VIDEO0].settings.ts().filterSettings.av({.isPassthrough = false});
     filterArray[TS_VIDEO1].type.mainType = DemuxFilterMainType::TS;
     filterArray[TS_VIDEO1].type.subType.tsFilterType(DemuxTsFilterType::VIDEO);
+    filterArray[TS_VIDEO1].bufferSize = FMQ_SIZE_16M;
     filterArray[TS_VIDEO1].settings.ts().tpid = 81;
     filterArray[TS_VIDEO1].settings.ts().filterSettings.av({.isPassthrough = false});
     // TS AUDIO filter setting
     filterArray[TS_AUDIO0].type.mainType = DemuxFilterMainType::TS;
     filterArray[TS_AUDIO0].type.subType.tsFilterType(DemuxTsFilterType::AUDIO);
+    filterArray[TS_AUDIO0].bufferSize = FMQ_SIZE_16M;
     filterArray[TS_AUDIO0].settings.ts().tpid = 84;
     filterArray[TS_AUDIO0].settings.ts().filterSettings.av({.isPassthrough = false});
     // TS PES filter setting
     filterArray[TS_PES0].type.mainType = DemuxFilterMainType::TS;
     filterArray[TS_PES0].type.subType.tsFilterType(DemuxTsFilterType::PES);
+    filterArray[TS_PES0].bufferSize = FMQ_SIZE_16M;
     filterArray[TS_PES0].settings.ts().tpid = 256;
     filterArray[TS_PES0].settings.ts().filterSettings.pesData({
             .isRaw = false,
@@ -165,19 +178,29 @@ inline void initFilterConfig() {
     // TS PCR filter setting
     filterArray[TS_PCR0].type.mainType = DemuxFilterMainType::TS;
     filterArray[TS_PCR0].type.subType.tsFilterType(DemuxTsFilterType::PCR);
+    filterArray[TS_PCR0].bufferSize = FMQ_SIZE_16M;
     filterArray[TS_PCR0].settings.ts().tpid = 81;
     filterArray[TS_PCR0].settings.ts().filterSettings.noinit();
     // TS filter setting
     filterArray[TS_TS0].type.mainType = DemuxFilterMainType::TS;
     filterArray[TS_TS0].type.subType.tsFilterType(DemuxTsFilterType::TS);
-    filterArray[TS_TS0].settings.ts().tpid = 48;
+    filterArray[TS_TS0].bufferSize = FMQ_SIZE_16M;
+    filterArray[TS_TS0].settings.ts().tpid = 18;
     filterArray[TS_TS0].settings.ts().filterSettings.noinit();
     // TS SECTION filter setting
     filterArray[TS_SECTION0].type.mainType = DemuxFilterMainType::TS;
     filterArray[TS_SECTION0].type.subType.tsFilterType(DemuxTsFilterType::SECTION);
+    filterArray[TS_SECTION0].bufferSize = FMQ_SIZE_16M;
     filterArray[TS_SECTION0].settings.ts().tpid = 48;
     filterArray[TS_SECTION0].settings.ts().filterSettings.section({
             .isRaw = false,
+    });
+    // TS RECORD filter setting
+    filterArray[TS_RECORD0].type.mainType = DemuxFilterMainType::TS;
+    filterArray[TS_RECORD0].type.subType.tsFilterType(DemuxTsFilterType::RECORD);
+    filterArray[TS_RECORD0].settings.ts().tpid = 81;
+    filterArray[TS_RECORD0].settings.ts().filterSettings.record({
+            .scIndexType = DemuxRecordScIndexType::NONE,
     });
 };
 
@@ -191,6 +214,7 @@ inline void initDvrConfig() {
             .packetSize = 188,
     };
     dvrArray[DVR_RECORD0].type = DvrType::RECORD;
+    dvrArray[DVR_RECORD0].bufferSize = FMQ_SIZE_4M;
     dvrArray[DVR_RECORD0].settings.record(recordSettings);
     PlaybackSettings playbackSettings{
             .statusMask = 0xf,
@@ -200,5 +224,7 @@ inline void initDvrConfig() {
             .packetSize = 188,
     };
     dvrArray[DVR_PLAYBACK0].type = DvrType::PLAYBACK;
+    dvrArray[DVR_PLAYBACK0].playbackInputFile = "/vendor/etc/test1.ts";
+    dvrArray[DVR_PLAYBACK0].bufferSize = FMQ_SIZE_4M;
     dvrArray[DVR_PLAYBACK0].settings.playback(playbackSettings);
 };
