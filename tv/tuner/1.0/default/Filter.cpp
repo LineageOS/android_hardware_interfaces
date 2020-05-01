@@ -149,7 +149,7 @@ bool Filter::createFilterMQ() {
     std::unique_ptr<FilterMQ> tmpFilterMQ =
             std::unique_ptr<FilterMQ>(new (std::nothrow) FilterMQ(mBufferSize, true));
     if (!tmpFilterMQ->isValid()) {
-        ALOGW("Failed to create FMQ of filter with id: %d", mFilterId);
+        ALOGW("[Filter] Failed to create FMQ of filter with id: %d", mFilterId);
         return false;
     }
 
@@ -290,13 +290,11 @@ uint16_t Filter::getTpid() {
 
 void Filter::updateFilterOutput(vector<uint8_t> data) {
     std::lock_guard<std::mutex> lock(mFilterOutputLock);
-    ALOGD("[Filter] filter output updated");
     mFilterOutput.insert(mFilterOutput.end(), data.begin(), data.end());
 }
 
 void Filter::updateRecordOutput(vector<uint8_t> data) {
     std::lock_guard<std::mutex> lock(mRecordFilterOutputLock);
-    ALOGD("[Filter] record filter output updated");
     mRecordFilterOutput.insert(mRecordFilterOutput.end(), data.begin(), data.end());
 }
 
@@ -438,7 +436,6 @@ Result Filter::startMediaFilterHandler() {
     if (mFilterOutput.empty()) {
         return Result::SUCCESS;
     }
-
     for (int i = 0; i < mFilterOutput.size(); i += 188) {
         if (mPesSizeLeft == 0) {
             uint32_t prefix = (mFilterOutput[i + 4] << 16) | (mFilterOutput[i + 5] << 8) |

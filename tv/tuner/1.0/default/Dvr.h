@@ -81,6 +81,8 @@ class Dvr : public IDvr {
     bool createDvrMQ();
     void sendBroadcastInputToDvrRecord(vector<uint8_t> byteBuffer);
     bool writeRecordFMQ(const std::vector<uint8_t>& data);
+    DvrType getType();
+    bool addPlaybackFilter(sp<IFilter> filter);
 
   private:
     // Demux service
