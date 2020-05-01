@@ -36,6 +36,9 @@ endif
 ifdef WIFI_HIDL_FEATURE_DISABLE_AP_MAC_RANDOMIZATION
 LOCAL_CPPFLAGS += -DWIFI_HIDL_FEATURE_DISABLE_AP_MAC_RANDOMIZATION
 endif
+ifdef WIFI_AVOID_IFACE_RESET_MAC_CHANGE
+LOCAL_CPPFLAGS += -DWIFI_AVOID_IFACE_RESET_MAC_CHANGE
+endif
 # Allow implicit fallthroughs in wifi_legacy_hal.cpp until they are fixed.
 LOCAL_CFLAGS += -Wno-error=implicit-fallthrough
 LOCAL_SRC_FILES := \
