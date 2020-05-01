@@ -5,4 +5,4 @@ service vendor.camera-provider-2-4 /vendor/bin/hw/android.hardware.camera.provid
     group audio camera input drmrpc
     ioprio rt 4
     capabilities SYS_NICE
-    writepid /dev/cpuset/camera-daemon/tasks /dev/stune/top-app/tasks
+    task_profiles CameraServiceCapacity MaxPerformance
