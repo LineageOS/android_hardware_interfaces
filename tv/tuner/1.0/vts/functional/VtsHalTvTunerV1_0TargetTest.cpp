@@ -130,7 +130,6 @@ void TunerPlaybackHidlTest::playbackSingleFilterTest(FilterConfig filterConf, Dv
     uint32_t demuxId;
     sp<IDemux> demux;
     uint32_t filterId;
-    sp<IFilter> filter;
 
     ASSERT_TRUE(mDemuxTests.openDemux(demux, demuxId));
     mFilterTests.setDemux(demux);
@@ -142,8 +141,6 @@ void TunerPlaybackHidlTest::playbackSingleFilterTest(FilterConfig filterConf, Dv
     ASSERT_TRUE(mFilterTests.getNewlyOpenedFilterId(filterId));
     ASSERT_TRUE(mFilterTests.configFilter(filterConf.settings, filterId));
     ASSERT_TRUE(mFilterTests.getFilterMQDescriptor(filterId));
-    filter = mFilterTests.getFilterById(filterId);
-    ASSERT_TRUE(filter != nullptr);
     mDvrTests.startPlaybackInputThread(dvrConf.playbackInputFile, dvrConf.settings.playback());
     ASSERT_TRUE(mDvrTests.startDvr());
     ASSERT_TRUE(mFilterTests.startFilter(filterId));
@@ -181,12 +178,14 @@ void TunerRecordHidlTest::recordSingleFilterTest(FilterConfig filterConf,
     ASSERT_TRUE(mFilterTests.getFilterMQDescriptor(filterId));
     filter = mFilterTests.getFilterById(filterId);
     ASSERT_TRUE(filter != nullptr);
-    ASSERT_TRUE(mDvrTests.attachFilterToDvr(filter));
     mDvrTests.startRecordOutputThread(dvrConf.settings.record());
+    ASSERT_TRUE(mDvrTests.attachFilterToDvr(filter));
     ASSERT_TRUE(mDvrTests.startDvr());
     ASSERT_TRUE(mFilterTests.startFilter(filterId));
+    ASSERT_TRUE(mFrontendTests.tuneFrontend(frontendConf));
     mDvrTests.testRecordOutput();
     mDvrTests.stopRecordThread();
+    ASSERT_TRUE(mFrontendTests.stopTuneFrontend());
     ASSERT_TRUE(mFilterTests.stopFilter(filterId));
     ASSERT_TRUE(mDvrTests.stopDvr());
     ASSERT_TRUE(mDvrTests.detachFilterToDvr(filter));
@@ -280,11 +279,6 @@ TEST_P(TunerBroadcastHidlTest, BroadcastDataFlowAudioFilterTest) {
     broadcastSingleFilterTest(filterArray[TS_AUDIO0], frontendArray[DVBS]);
 }
 
-TEST_P(TunerBroadcastHidlTest, BroadcastDataFlowTsFilterTest) {
-    description("Test TS Filter functionality in Broadcast use case.");
-    broadcastSingleFilterTest(filterArray[TS_TS0], frontendArray[DVBS]);
-}
-
 TEST_P(TunerBroadcastHidlTest, BroadcastDataFlowSectionFilterTest) {
     description("Test Section Filter functionality in Broadcast use case.");
     broadcastSingleFilterTest(filterArray[TS_SECTION0], frontendArray[DVBS]);
@@ -295,9 +289,9 @@ TEST_P(TunerBroadcastHidlTest, IonBufferTest) {
     broadcastSingleFilterTest(filterArray[TS_VIDEO0], frontendArray[DVBS]);
 }
 
-TEST_P(TunerPlaybackHidlTest, PlaybackDataFlowWithTsRecordFilterTest) {
-    description("Feed ts data from playback and configure Ts filter to get output");
-    playbackSingleFilterTest(filterArray[TS_VIDEO1], dvrArray[DVR_PLAYBACK0]);
+TEST_P(TunerPlaybackHidlTest, PlaybackDataFlowWithTsSectionFilterTest) {
+    description("Feed ts data from playback and configure Ts section filter to get output");
+    playbackSingleFilterTest(filterArray[TS_SECTION0], dvrArray[DVR_PLAYBACK0]);
 }
 
 TEST_P(TunerRecordHidlTest, AttachFiltersToRecordTest) {
