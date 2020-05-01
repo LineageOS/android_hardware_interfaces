@@ -22,6 +22,7 @@
 #include <android/hardware/identity/support/IdentityCredentialSupport.h>
 
 #include <android-base/logging.h>
+#include <android-base/stringprintf.h>
 
 #include <cppbor/cppbor.h>
 #include <cppbor/cppbor_parse.h>
@@ -34,6 +35,7 @@
 
 namespace aidl::android::hardware::identity {
 
+using ::android::base::StringPrintf;
 using ::std::optional;
 using namespace ::android::hardware::identity;
 
@@ -102,6 +104,12 @@ ndk::ScopedAStatus WritableIdentityCredential::getAttestationCertificate(
         c.encodedCertificate = cert;
         outCertificateChain->push_back(std::move(c));
     }
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus WritableIdentityCredential::setExpectedProofOfProvisioningSize(
+        int32_t expectedProofOfProvisioningSize) {
+    expectedProofOfProvisioningSize_ = expectedProofOfProvisioningSize;
     return ndk::ScopedAStatus::ok();
 }
 
@@ -381,6 +389,16 @@ ndk::ScopedAStatus WritableIdentityCredential::finishAddingEntries(
             .add(std::move(signedDataNamespaces_))
             .add(testCredential_);
     vector<uint8_t> encodedCbor = popArray.encode();
+
+    if (encodedCbor.size() != expectedProofOfProvisioningSize_) {
+        LOG(ERROR) << "CBOR for proofOfProvisioning is " << encodedCbor.size() << " bytes, "
+                   << "was expecting " << expectedProofOfProvisioningSize_;
+        return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                IIdentityCredentialStore::STATUS_INVALID_DATA,
+                StringPrintf("Unexpected CBOR size %zd for proofOfProvisioning, was expecting %zd",
+                             encodedCbor.size(), expectedProofOfProvisioningSize_)
+                        .c_str()));
+    }
 
     optional<vector<uint8_t>> signature = support::coseSignEcDsa(credentialPrivKey_,
                                                                  encodedCbor,  // payload
