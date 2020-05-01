@@ -153,18 +153,18 @@ inline void initFilterConfig() {
     filterArray[TS_VIDEO0].type.mainType = DemuxFilterMainType::TS;
     filterArray[TS_VIDEO0].type.subType.tsFilterType(DemuxTsFilterType::VIDEO);
     filterArray[TS_VIDEO0].bufferSize = FMQ_SIZE_16M;
-    filterArray[TS_VIDEO0].settings.ts().tpid = 119;
+    filterArray[TS_VIDEO0].settings.ts().tpid = 256;
     filterArray[TS_VIDEO0].settings.ts().filterSettings.av({.isPassthrough = false});
     filterArray[TS_VIDEO1].type.mainType = DemuxFilterMainType::TS;
     filterArray[TS_VIDEO1].type.subType.tsFilterType(DemuxTsFilterType::VIDEO);
     filterArray[TS_VIDEO1].bufferSize = FMQ_SIZE_16M;
-    filterArray[TS_VIDEO1].settings.ts().tpid = 81;
+    filterArray[TS_VIDEO1].settings.ts().tpid = 256;
     filterArray[TS_VIDEO1].settings.ts().filterSettings.av({.isPassthrough = false});
     // TS AUDIO filter setting
     filterArray[TS_AUDIO0].type.mainType = DemuxFilterMainType::TS;
     filterArray[TS_AUDIO0].type.subType.tsFilterType(DemuxTsFilterType::AUDIO);
     filterArray[TS_AUDIO0].bufferSize = FMQ_SIZE_16M;
-    filterArray[TS_AUDIO0].settings.ts().tpid = 84;
+    filterArray[TS_AUDIO0].settings.ts().tpid = 256;
     filterArray[TS_AUDIO0].settings.ts().filterSettings.av({.isPassthrough = false});
     // TS PES filter setting
     filterArray[TS_PES0].type.mainType = DemuxFilterMainType::TS;
@@ -179,19 +179,19 @@ inline void initFilterConfig() {
     filterArray[TS_PCR0].type.mainType = DemuxFilterMainType::TS;
     filterArray[TS_PCR0].type.subType.tsFilterType(DemuxTsFilterType::PCR);
     filterArray[TS_PCR0].bufferSize = FMQ_SIZE_16M;
-    filterArray[TS_PCR0].settings.ts().tpid = 81;
+    filterArray[TS_PCR0].settings.ts().tpid = 256;
     filterArray[TS_PCR0].settings.ts().filterSettings.noinit();
     // TS filter setting
     filterArray[TS_TS0].type.mainType = DemuxFilterMainType::TS;
     filterArray[TS_TS0].type.subType.tsFilterType(DemuxTsFilterType::TS);
     filterArray[TS_TS0].bufferSize = FMQ_SIZE_16M;
-    filterArray[TS_TS0].settings.ts().tpid = 18;
+    filterArray[TS_TS0].settings.ts().tpid = 256;
     filterArray[TS_TS0].settings.ts().filterSettings.noinit();
     // TS SECTION filter setting
     filterArray[TS_SECTION0].type.mainType = DemuxFilterMainType::TS;
     filterArray[TS_SECTION0].type.subType.tsFilterType(DemuxTsFilterType::SECTION);
     filterArray[TS_SECTION0].bufferSize = FMQ_SIZE_16M;
-    filterArray[TS_SECTION0].settings.ts().tpid = 48;
+    filterArray[TS_SECTION0].settings.ts().tpid = 256;
     filterArray[TS_SECTION0].settings.ts().filterSettings.section({
             .isRaw = false,
     });
@@ -224,7 +224,7 @@ inline void initDvrConfig() {
             .packetSize = 188,
     };
     dvrArray[DVR_PLAYBACK0].type = DvrType::PLAYBACK;
-    dvrArray[DVR_PLAYBACK0].playbackInputFile = "/vendor/etc/test1.ts";
+    dvrArray[DVR_PLAYBACK0].playbackInputFile = "/vendor/etc/segment000000.ts";
     dvrArray[DVR_PLAYBACK0].bufferSize = FMQ_SIZE_4M;
     dvrArray[DVR_PLAYBACK0].settings.playback(playbackSettings);
 };

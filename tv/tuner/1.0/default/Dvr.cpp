@@ -71,13 +71,10 @@ Return<Result> Dvr::attachFilter(const sp<IFilter>& filter) {
     }
 
     // check if the attached filter is a record filter
-
     mFilters[filterId] = filter;
-    mIsRecordFilterAttached = true;
     if (!mDemux->attachRecordFilter(filterId)) {
         return Result::INVALID_ARGUMENT;
     }
-    mDemux->setIsRecording(mIsRecordStarted | mIsRecordFilterAttached);
 
     return Result::SUCCESS;
 }
@@ -110,7 +107,6 @@ Return<Result> Dvr::detachFilter(const sp<IFilter>& filter) {
     // If all the filters are detached, record can't be started
     if (mFilters.empty()) {
         mIsRecordFilterAttached = false;
-        mDemux->setIsRecording(mIsRecordStarted | mIsRecordFilterAttached);
     }
 
     return Result::SUCCESS;
@@ -132,8 +128,7 @@ Return<Result> Dvr::start() {
         pthread_setname_np(mDvrThread, "playback_waiting_loop");
     } else if (mType == DvrType::RECORD) {
         mRecordStatus = RecordStatus::DATA_READY;
-        mIsRecordStarted = true;
-        mDemux->setIsRecording(mIsRecordStarted | mIsRecordFilterAttached);
+        mDemux->setIsRecording(mType == DvrType::RECORD);
     }
 
     // TODO start another thread to send filter status callback to the framework
@@ -149,7 +144,7 @@ Return<Result> Dvr::stop() {
     std::lock_guard<std::mutex> lock(mDvrThreadLock);
 
     mIsRecordStarted = false;
-    mDemux->setIsRecording(mIsRecordStarted | mIsRecordFilterAttached);
+    mDemux->setIsRecording(false);
 
     return Result::SUCCESS;
 }
@@ -175,7 +170,7 @@ bool Dvr::createDvrMQ() {
     std::unique_ptr<DvrMQ> tmpDvrMQ =
             std::unique_ptr<DvrMQ>(new (std::nothrow) DvrMQ(mBufferSize, true));
     if (!tmpDvrMQ->isValid()) {
-        ALOGW("Failed to create FMQ of DVR");
+        ALOGW("[Dvr] Failed to create FMQ of DVR");
         return false;
     }
 
@@ -256,7 +251,6 @@ bool Dvr::readPlaybackFMQ() {
     int playbackPacketSize = mDvrSettings.playback().packetSize;
     vector<uint8_t> dataOutputBuffer;
     dataOutputBuffer.resize(playbackPacketSize);
-
     // Dispatch the packet to the PID matching filter output buffer
     for (int i = 0; i < size / playbackPacketSize; i++) {
         if (!mDvrMQ->read(dataOutputBuffer.data(), playbackPacketSize)) {
@@ -283,7 +277,6 @@ void Dvr::startTpidFilter(vector<uint8_t> data) {
 
 bool Dvr::startFilterDispatcher() {
     std::map<uint32_t, sp<IFilter>>::iterator it;
-
     // Handle the output data per filter type
     for (it = mFilters.begin(); it != mFilters.end(); it++) {
         if (mDemux->startFilterHandler(it->first) != Result::SUCCESS) {
@@ -296,7 +289,10 @@ bool Dvr::startFilterDispatcher() {
 
 bool Dvr::writeRecordFMQ(const std::vector<uint8_t>& data) {
     std::lock_guard<std::mutex> lock(mWriteLock);
-    ALOGW("[Dvr] write record FMQ");
+    if (mRecordStatus == RecordStatus::OVERFLOW) {
+        ALOGW("[Dvr] stops writing and wait for the client side flushing.");
+        return true;
+    }
     if (mDvrMQ->write(data.data(), data.size())) {
         mDvrEventFlag->wake(static_cast<uint32_t>(DemuxQueueNotifyBits::DATA_READY));
         maySendRecordStatusCallback();
@@ -331,6 +327,27 @@ RecordStatus Dvr::checkRecordStatusChange(uint32_t availableToWrite, uint32_t av
         return DemuxFilterStatus::LOW_WATER;
     }
     return mRecordStatus;
+}
+
+bool Dvr::addPlaybackFilter(sp<IFilter> filter) {
+    uint32_t filterId;
+    Result status;
+
+    filter->getId([&](Result result, uint32_t id) {
+        filterId = id;
+        status = result;
+    });
+
+    if (status != Result::SUCCESS) {
+        return false;
+    }
+
+    mFilters[filterId] = filter;
+    return true;
+}
+
+DvrType Dvr::getType() {
+    return mType;
 }
 
 }  // namespace implementation
