@@ -64,6 +64,7 @@ class SupplicantStaIfaceHidlTest
         isP2pOn_ =
             testing::deviceSupportsFeature("android.hardware.wifi.direct");
 
+        stopSupplicant(wifi_v1_0_instance_name_);
         startSupplicantAndWaitForHidlService(wifi_v1_0_instance_name_,
                                              supplicant_v1_3_instance_name_);
         supplicant_ =
