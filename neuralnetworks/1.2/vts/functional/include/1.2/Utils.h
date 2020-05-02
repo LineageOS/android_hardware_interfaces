@@ -14,35 +14,29 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_NEURALNETWORKS_V1_3_UTILS_H
-#define ANDROID_HARDWARE_NEURALNETWORKS_V1_3_UTILS_H
+#ifndef ANDROID_HARDWARE_NEURALNETWORKS_V1_2_UTILS_H
+#define ANDROID_HARDWARE_NEURALNETWORKS_V1_2_UTILS_H
 
-#include <android/hardware/neuralnetworks/1.3/types.h>
-#include <iosfwd>
+#include <android/hardware/neuralnetworks/1.2/types.h>
 
-namespace android::hardware::neuralnetworks {
-
-inline constexpr V1_3::Priority kDefaultPriority = V1_3::Priority::MEDIUM;
+namespace android {
+namespace hardware {
+namespace neuralnetworks {
 
 // Returns the amount of space needed to store a value of the specified type.
 //
 // Aborts if the specified type is an extension type or OEM type.
-uint32_t sizeOfData(V1_3::OperandType type);
+uint32_t sizeOfData(V1_2::OperandType type);
 
 // Returns the amount of space needed to store a value of the dimensions and
 // type of this operand. For a non-extension, non-OEM tensor with unspecified
 // rank or at least one unspecified dimension, returns zero.
 //
 // Aborts if the specified type is an extension type or OEM type.
-uint32_t sizeOfData(const V1_3::Operand& operand);
+uint32_t sizeOfData(const V1_2::Operand& operand);
 
-}  // namespace android::hardware::neuralnetworks
+}  // namespace neuralnetworks
+}  // namespace hardware
+}  // namespace android
 
-namespace android::hardware::neuralnetworks::V1_3 {
-
-// pretty-print values for error messages
-::std::ostream& operator<<(::std::ostream& os, ErrorStatus errorStatus);
-
-}  // namespace android::hardware::neuralnetworks::V1_3
-
-#endif  // ANDROID_HARDWARE_NEURALNETWORKS_V1_3_UTILS_H
+#endif  // ANDROID_HARDWARE_NEURALNETWORKS_V1_2_UTILS_H
