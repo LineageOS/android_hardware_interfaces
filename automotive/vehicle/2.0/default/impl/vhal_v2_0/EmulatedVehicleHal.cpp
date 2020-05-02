@@ -175,9 +175,7 @@ StatusCode EmulatedVehicleHal::set(const VehiclePropValue& propValue) {
         // here, since we never send the control signal back, the value of 'updateStatus' flag
         // does not matter here.
         auto status = mVehicleClient->setProperty(propValue, updateStatus);
-        if (status != StatusCode::OK) {
-            return status;
-        }
+        return status;
     } else if (mHvacPowerProps.count(propValue.prop)) {
         auto hvacPowerOn = mPropStore->readValueOrNull(
             toInt(VehicleProperty::HVAC_POWER_ON),
