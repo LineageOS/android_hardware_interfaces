@@ -21,6 +21,7 @@
 #include <android/hardware/neuralnetworks/1.0/types.h>
 #include <android/hardware_buffer.h>
 #include <android/hidl/memory/1.0/IMemory.h>
+#include <gtest/gtest.h>
 #include <algorithm>
 #include <iosfwd>
 #include <string>
@@ -108,6 +109,15 @@ inline void hidl_vec_removeAt(hidl_vec<Type>* vec, uint32_t index) {
     vec->resize(vec->size() - 1);
 }
 
+// Assumes there is exactly one instance of the value in the vector.
+template <typename Type>
+inline void hidl_vec_remove(hidl_vec<Type>* vec, const Type& val) {
+    CHECK(vec != nullptr);
+    auto where = std::find(vec->begin(), vec->end(), val);
+    ASSERT_NE(where, vec->end());
+    hidl_vec_removeAt(vec, where - vec->begin());
+}
+
 template <typename Type>
 inline uint32_t hidl_vec_push_back(hidl_vec<Type>* vec, const Type& value) {
     CHECK(vec != nullptr);
@@ -116,6 +126,18 @@ inline uint32_t hidl_vec_push_back(hidl_vec<Type>* vec, const Type& value) {
     (*vec)[index] = value;
     return index;
 }
+
+// Returns the amount of space needed to store a value of the specified type.
+//
+// Aborts if the specified type is an extension type or OEM type.
+uint32_t sizeOfData(V1_0::OperandType type);
+
+// Returns the amount of space needed to store a value of the dimensions and
+// type of this operand. For a non-extension, non-OEM tensor with unspecified
+// rank or at least one unspecified dimension, returns zero.
+//
+// Aborts if the specified type is an extension type or OEM type.
+uint32_t sizeOfData(const V1_0::Operand& operand);
 
 template <typename Type>
 using Named = std::pair<std::string, Type>;
