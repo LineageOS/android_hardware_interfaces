@@ -161,34 +161,27 @@ Return<void> Tuner::getFrontendInfo(FrontendId frontendId, getFrontendInfo_cb _h
         return Void();
     }
 
-    switch (mFrontends[frontendId]->getFrontendType()) {
-        case FrontendType::DVBT:
-            info.type = FrontendType::DVBT;
-            break;
-        default:
-            vector<FrontendStatusType> statusCaps = {
-                    FrontendStatusType::DEMOD_LOCK,
-                    FrontendStatusType::SNR,
-                    FrontendStatusType::FEC,
-                    FrontendStatusType::MODULATION,
-                    FrontendStatusType::PLP_ID,
-                    FrontendStatusType::LAYER_ERROR,
-                    FrontendStatusType::ATSC3_PLP_INFO,
-            };
-            // assign randomly selected values for testing.
-            info = {
-                    .type = mFrontends[frontendId]->getFrontendType(),
-                    .minFrequency = 139,
-                    .maxFrequency = 1139,
-                    .minSymbolRate = 45,
-                    .maxSymbolRate = 1145,
-                    .acquireRange = 30,
-                    .exclusiveGroupId = 57,
-                    .statusCaps = statusCaps,
-                    .frontendCaps = mFrontendCaps[frontendId],
-            };
-            break;
-    }
+    vector<FrontendStatusType> statusCaps = {
+            FrontendStatusType::DEMOD_LOCK,
+            FrontendStatusType::SNR,
+            FrontendStatusType::FEC,
+            FrontendStatusType::MODULATION,
+            FrontendStatusType::PLP_ID,
+            FrontendStatusType::LAYER_ERROR,
+            FrontendStatusType::ATSC3_PLP_INFO,
+    };
+    // assign randomly selected values for testing.
+    info = {
+            .type = mFrontends[frontendId]->getFrontendType(),
+            .minFrequency = 139,
+            .maxFrequency = 1139,
+            .minSymbolRate = 45,
+            .maxSymbolRate = 1145,
+            .acquireRange = 30,
+            .exclusiveGroupId = 57,
+            .statusCaps = statusCaps,
+            .frontendCaps = mFrontendCaps[frontendId],
+    };
 
     _hidl_cb(Result::SUCCESS, info);
     return Void();
