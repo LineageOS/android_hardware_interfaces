@@ -68,11 +68,11 @@ cc_defaults {
         "android.hidl.allocator@1.0",
         "android.hidl.memory@1.0",
         "libhidlmemory",
-        "libnativehelper",
     ],
 
     // TODO(b/64437680): Assume these libs are always available on the device.
     shared_libs: [
+        "libnativehelper",
         "libstagefright_foundation",
     ],
 }
