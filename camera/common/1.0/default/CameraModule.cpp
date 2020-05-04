@@ -194,16 +194,6 @@ void CameraModule::deriveCameraCharacteristicsKeys(
         }
     }
 
-    // Always add a default for the pre-correction active array if the vendor chooses to omit this
-    camera_metadata_entry entry = chars.find(ANDROID_SENSOR_INFO_PRE_CORRECTION_ACTIVE_ARRAY_SIZE);
-    if (entry.count == 0) {
-        Vector<int32_t> preCorrectionArray;
-        entry = chars.find(ANDROID_SENSOR_INFO_ACTIVE_ARRAY_SIZE);
-        preCorrectionArray.appendArray(entry.data.i32, entry.count);
-        chars.update(ANDROID_SENSOR_INFO_PRE_CORRECTION_ACTIVE_ARRAY_SIZE, preCorrectionArray);
-        derivedCharKeys.push(ANDROID_SENSOR_INFO_PRE_CORRECTION_ACTIVE_ARRAY_SIZE);
-    }
-
     // Add those newly added keys to AVAILABLE_CHARACTERISTICS_KEYS
     // This has to be done at this end of this function.
     if (derivedCharKeys.size() > 0) {
