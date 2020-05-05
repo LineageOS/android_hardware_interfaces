@@ -367,11 +367,13 @@ TEST_P(SensorsHidlTest, SensorListValid) {
                          << s.sensorHandle << std::dec << " type=" << static_cast<int>(s.type)
                          << " name=" << s.name);
 
-            // Test non-empty type string
-            EXPECT_FALSE(s.typeAsString.empty());
-
-            // Test defined type matches defined string type
-            EXPECT_NO_FATAL_FAILURE(assertTypeMatchStringType(s.type, s.typeAsString));
+            // Test type string non-empty only for private sensor types.
+            if (s.type >= SensorTypeVersion::DEVICE_PRIVATE_BASE) {
+                EXPECT_FALSE(s.typeAsString.empty());
+            } else if (!s.typeAsString.empty()) {
+                // Test type string matches framework string if specified for non-private types.
+                EXPECT_NO_FATAL_FAILURE(assertTypeMatchStringType(s.type, s.typeAsString));
+            }
 
             // Test if all sensor has name and vendor
             EXPECT_FALSE(s.name.empty());
