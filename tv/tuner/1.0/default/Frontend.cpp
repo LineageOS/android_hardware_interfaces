@@ -139,6 +139,30 @@ Return<void> Frontend::getStatus(const hidl_vec<FrontendStatusType>& statusTypes
                 status.snr(221);
                 break;
             }
+            case FrontendStatusType::BER: {
+                status.ber(1);
+                break;
+            }
+            case FrontendStatusType::PER: {
+                status.per(2);
+                break;
+            }
+            case FrontendStatusType::PRE_BER: {
+                status.preBer(3);
+                break;
+            }
+            case FrontendStatusType::SIGNAL_QUALITY: {
+                status.signalQuality(4);
+                break;
+            }
+            case FrontendStatusType::SIGNAL_STRENGTH: {
+                status.signalStrength(5);
+                break;
+            }
+            case FrontendStatusType::SYMBOL_RATE: {
+                status.symbolRate(6);
+                break;
+            }
             case FrontendStatusType::FEC: {
                 status.innerFec(FrontendInnerFec::FEC_2_9);  // value = 1 << 7
                 break;
@@ -149,13 +173,49 @@ Return<void> Frontend::getStatus(const hidl_vec<FrontendStatusType>& statusTypes
                 status.modulation(modulationStatus);
                 break;
             }
+            case FrontendStatusType::SPECTRAL: {
+                status.inversion(FrontendDvbcSpectralInversion::NORMAL);
+                break;
+            }
+            case FrontendStatusType::LNB_VOLTAGE: {
+                status.lnbVoltage(LnbVoltage::VOLTAGE_5V);
+                break;
+            }
             case FrontendStatusType::PLP_ID: {
                 status.plpId(101);  // type uint8_t
+                break;
+            }
+            case FrontendStatusType::EWBS: {
+                status.isEWBS(false);
+                break;
+            }
+            case FrontendStatusType::AGC: {
+                status.agc(7);
+                break;
+            }
+            case FrontendStatusType::LNA: {
+                status.isLnaOn(false);
                 break;
             }
             case FrontendStatusType::LAYER_ERROR: {
                 vector<bool> v = {false, true, true};
                 status.isLayerError(v);
+                break;
+            }
+            case FrontendStatusType::MER: {
+                status.mer(8);
+                break;
+            }
+            case FrontendStatusType::FREQ_OFFSET: {
+                status.freqOffset(9);
+                break;
+            }
+            case FrontendStatusType::HIERARCHY: {
+                status.hierarchy(FrontendDvbtHierarchy::HIERARCHY_1_NATIVE);
+                break;
+            }
+            case FrontendStatusType::RF_LOCK: {
+                status.isRfLocked(false);
                 break;
             }
             case FrontendStatusType::ATSC3_PLP_INFO: {
