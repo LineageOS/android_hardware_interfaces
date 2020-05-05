@@ -632,13 +632,13 @@ bool ExifUtilsImpl::setGpsTimestamp(const struct tm& t) {
 }
 
 bool ExifUtilsImpl::setImageHeight(uint32_t length) {
-    SET_LONG(EXIF_IFD_0, EXIF_TAG_IMAGE_LENGTH, length);
+    SET_SHORT(EXIF_IFD_0, EXIF_TAG_IMAGE_LENGTH, length);
     SET_LONG(EXIF_IFD_EXIF, EXIF_TAG_PIXEL_Y_DIMENSION, length);
     return true;
 }
 
 bool ExifUtilsImpl::setImageWidth(uint32_t width) {
-    SET_LONG(EXIF_IFD_0, EXIF_TAG_IMAGE_WIDTH, width);
+    SET_SHORT(EXIF_IFD_0, EXIF_TAG_IMAGE_WIDTH, width);
     SET_LONG(EXIF_IFD_EXIF, EXIF_TAG_PIXEL_X_DIMENSION, width);
     return true;
 }
