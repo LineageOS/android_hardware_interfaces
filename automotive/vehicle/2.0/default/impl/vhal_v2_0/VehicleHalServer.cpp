@@ -41,6 +41,10 @@ VehiclePropValuePool* VehicleHalServer::getValuePool() const {
     return mValuePool;
 }
 
+EmulatedUserHal* VehicleHalServer::getEmulatedUserHal() {
+    return &mEmulatedUserHal;
+}
+
 void VehicleHalServer::setValuePool(VehiclePropValuePool* valuePool) {
     if (!valuePool) {
         LOG(WARNING) << __func__ << ": Setting value pool to nullptr!";
@@ -197,6 +201,7 @@ StatusCode VehicleHalServer::onSetProperty(const VehiclePropValue& value, bool u
         }
         return StatusCode::OK;
     }
+    LOG(DEBUG) << "onSetProperty(" << value.prop << ")";
 
     // Some properties need to be treated non-trivially
     switch (value.prop) {
