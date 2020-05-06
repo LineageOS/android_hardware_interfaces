@@ -2813,7 +2813,7 @@ enum VehicleProperty : int32_t {
      *
      * To query the association, the Android system gets the property, passing a VehiclePropValue
      * containing the types of associations are being queried, as defined by
-     * UserIdentificationGetRequest. The HAL must return right away, updating the VehiclePropValue
+     * UserIdentificationGetRequest. The HAL must return right away, returning a VehiclePropValue
      * with a UserIdentificationResponse. Notice that user identification should have already
      * happened while system is booting up and the VHAL implementation should only return the
      * already identified association (like the key FOB used to unlock the car), instead of starting
@@ -2828,45 +2828,50 @@ enum VehicleProperty : int32_t {
      * For example, to query if the current user (10) is associated with the FOB that unlocked the
      * car and a custom mechanism provided by the OEM, the request would be:
      *
-     * int32[0]: 10  (Android user id)
-     * int32[1]: 0   (Android user flags)
-     * int32[2]: 2   (number of types queried)
-     * int32[3]: 1   (1st type queried, UserIdentificationAssociationType::KEY_FOB)
-     * int32[4]: 101 (2nd type queried, UserIdentificationAssociationType::CUSTOM_1)
+     * int32[0]: 42  // request id
+     * int32[1]: 10  (Android user id)
+     * int32[2]: 0   (Android user flags)
+     * int32[3]: 2   (number of types queried)
+     * int32[4]: 1   (1st type queried, UserIdentificationAssociationType::KEY_FOB)
+     * int32[5]: 101 (2nd type queried, UserIdentificationAssociationType::CUSTOM_1)
      *
      * If the user is associated with the FOB but not with the custom mechanism, the response would
      * be:
      *
-     * int32[9]: 2   (number of associations in the response)
-     * int32[1]: 1   (1st type: UserIdentificationAssociationType::KEY_FOB)
-     * int32[2]: 2   (1st value: UserIdentificationAssociationValue::ASSOCIATED_CURRENT_USER)
-     * int32[3]: 101 (2st type: UserIdentificationAssociationType::CUSTOM_1)
-     * int32[4]: 4   (2nd value: UserIdentificationAssociationValue::NOT_ASSOCIATED_ANY_USER)
+     * int32[0]: 42  // request id
+     * int32[1]: 2   (number of associations in the response)
+     * int32[2]: 1   (1st type: UserIdentificationAssociationType::KEY_FOB)
+     * int32[3]: 2   (1st value: UserIdentificationAssociationValue::ASSOCIATED_CURRENT_USER)
+     * int32[4]: 101 (2st type: UserIdentificationAssociationType::CUSTOM_1)
+     * int32[5]: 4   (2nd value: UserIdentificationAssociationValue::NOT_ASSOCIATED_ANY_USER)
      *
      * Then to associate the user with the custom mechanism, a set request would be made:
      *
-     * int32[0]: 10  (Android user id)
-     * int32[0]: 0   (Android user flags)
-     * int32[1]: 1   (number of associations being set)
-     * int32[2]: 101 (1st type: UserIdentificationAssociationType::CUSTOM_1)
-     * int32[3]: 1   (1st value: UserIdentificationAssociationSetValue::ASSOCIATE_CURRENT_USER)
+     * int32[0]: 42  // request id
+     * int32[1]: 10  (Android user id)
+     * int32[2]: 0   (Android user flags)
+     * int32[3]: 1   (number of associations being set)
+     * int32[4]: 101 (1st type: UserIdentificationAssociationType::CUSTOM_1)
+     * int32[5]: 1   (1st value: UserIdentificationAssociationSetValue::ASSOCIATE_CURRENT_USER)
      *
      * If the request succeeded, the response would be simply:
      *
-     * int32[0]: 2   (number of associations in the response)
-     * int32[1]: 101 (1st type: UserIdentificationAssociationType::CUSTOM_1)
-     * int32[2]: 1   (1st value: UserIdentificationAssociationValue::ASSOCIATED_CURRENT_USER)
+     * int32[0]: 42  // request id
+     * int32[1]: 1   (number of associations in the response)
+     * int32[2]: 101 (1st type: UserIdentificationAssociationType::CUSTOM_1)
+     * int32[3]: 1   (1st value: UserIdentificationAssociationValue::ASSOCIATED_CURRENT_USER)
      *
      * Notice that the set request adds associations, but doesn't remove the existing ones. In the
      * example above, the end state would be 2 associations (FOB and CUSTOM_1). If we wanted to
      * associate the user with just CUSTOM_1 but not FOB, then the request should have been:
      *
-     * int32[0]: 10  (Android user id)
-     * int32[1]: 2   (number of types set)
-     * int32[2]: 1   (1st type: UserIdentificationAssociationType::KEY_FOB)
-     * int32[3]: 2   (1st value: UserIdentificationAssociationValue::DISASSOCIATE_CURRENT_USER)
-     * int32[3]: 101 (2nd type: UserIdentificationAssociationType::CUSTOM_1)
-     * int32[5]: 1   (2nd value: UserIdentificationAssociationValue::ASSOCIATE_CURRENT_USER)
+     * int32[0]: 42  // request id
+     * int32[1]: 10  (Android user id)
+     * int32[2]: 2   (number of types set)
+     * int32[3]: 1   (1st type: UserIdentificationAssociationType::KEY_FOB)
+     * int32[4]: 2   (1st value: UserIdentificationAssociationValue::DISASSOCIATE_CURRENT_USER)
+     * int32[5]: 101 (2nd type: UserIdentificationAssociationType::CUSTOM_1)
+     * int32[6]: 1   (2nd value: UserIdentificationAssociationValue::ASSOCIATE_CURRENT_USER)
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
@@ -4639,6 +4644,11 @@ enum UserIdentificationAssociationSetValue : int32_t {
  */
 struct UserIdentificationGetRequest {
     /**
+     * Id of the request being responded.
+     */
+    UserRequestId requestId;
+
+    /**
      * Information about the current foreground Android user.
      */
     UserInfo userInfo;
@@ -4662,6 +4672,11 @@ struct UserIdentificationGetRequest {
  */
 struct UserIdentificationSetRequest {
     /**
+     * Id of the request being responded.
+     */
+    UserRequestId requestId;
+
+    /**
      * Information about the current foreground Android user.
      */
     UserInfo userInfo;
@@ -4674,7 +4689,7 @@ struct UserIdentificationSetRequest {
     /**
      * Associations being set.
      */
-    vec<UserIdentificationAssociationSetValue> associations;
+    vec<UserIdentificationSetAssociation> associations;
 };
 
 /**
@@ -4684,6 +4699,11 @@ struct UserIdentificationSetRequest {
  * VehiclePropValue.RawValue through libraries provided by the default Vehicle HAL implementation.
  */
 struct UserIdentificationResponse {
+    /**
+     * Id of the request being responded.
+     */
+    UserRequestId requestId;
+
     /**
      * Number of associations being returned.
      */
