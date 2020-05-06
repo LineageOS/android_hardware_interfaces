@@ -360,7 +360,7 @@ void HalProxy::initializeSubHalListFromConfigFile(const char* configFileName) {
     } else {
         std::string subHalLibraryFile;
         while (subHalConfigStream >> subHalLibraryFile) {
-            void* handle = dlopen(subHalLibraryFile.c_str(), RTLD_NOW);
+            void* handle = getHandleForSubHalSharedObject(subHalLibraryFile);
             if (handle == nullptr) {
                 ALOGE("dlopen failed for library: %s", subHalLibraryFile.c_str());
             } else {
@@ -413,6 +413,25 @@ void HalProxy::initializeSensorList() {
             ALOGE("getSensorsList call failed for SubHal: %s", subHal->getName().c_str());
         }
     }
+}
+
+void* HalProxy::getHandleForSubHalSharedObject(const std::string& filename) {
+    static const std::string kSubHalShareObjectLocations[] = {
+            "",  // Default locations will be searched
+#ifdef __LP64__
+            "/vendor/lib64/hw/", "/odm/lib64/", "/odm/lib64/hw/"
+#else
+            "/vendor/lib/hw/", "/odm/lib/", "/odm/lib/hw/"
+#endif
+    };
+
+    for (const std::string& dir : kSubHalShareObjectLocations) {
+        void* handle = dlopen((dir + filename).c_str(), RTLD_NOW);
+        if (handle != nullptr) {
+            return handle;
+        }
+    }
+    return nullptr;
 }
 
 void HalProxy::init() {

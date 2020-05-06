@@ -262,6 +262,16 @@ class HalProxy : public ISensors, public IScopedWakelockRefCounter {
     void initializeSensorList();
 
     /**
+     * Try using the default include directories as well as the directories defined in
+     * kSubHalShareObjectLocations to get a handle for dlsym for a subhal.
+     *
+     * @param filename The file name to search for.
+     *
+     * @return The handle or nullptr if search failed.
+     */
+    void* getHandleForSubHalSharedObject(const std::string& filename);
+
+    /**
      * Calls the helper methods that all ctors use.
      */
     void init();
