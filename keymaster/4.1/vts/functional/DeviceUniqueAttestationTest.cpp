@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+#define LOG_TAG "keymaster_hidl_hal_test"
+#include <cutils/log.h>
+
 #include "Keymaster4_1HidlTest.h"
 
 #include <cutils/properties.h>
@@ -22,6 +25,10 @@
 
 #include <keymasterV4_1/attestation_record.h>
 #include <keymasterV4_1/authorization_set.h>
+
+// Not to dump the attestation by default. Can enable by specify the parameter
+// "--dump_attestations" on lunching VTS
+static bool dumpAttestations = false;
 
 namespace android::hardware::keymaster::V4_0 {
 
@@ -55,6 +62,10 @@ string bin2hex(const hidl_vec<uint8_t>& data) {
         retval.push_back(nibble2hex[0x0F & byte]);
     }
     return retval;
+}
+
+inline void dumpContent(string content) {
+    std::cout << content << std::endl;
 }
 
 struct AuthorizationSetDifferences {
@@ -126,6 +137,23 @@ void check_root_of_trust(const RootOfTrust& root_of_trust) {
     }
 }
 
+bool tag_in_list(const KeyParameter& entry) {
+    // Attestations don't contain everything in key authorization lists, so we need to filter
+    // the key lists to produce the lists that we expect to match the attestations.
+    auto tag_list = {
+            Tag::INCLUDE_UNIQUE_ID, Tag::BLOB_USAGE_REQUIREMENTS, Tag::EC_CURVE,
+            Tag::HARDWARE_TYPE,     Tag::VENDOR_PATCHLEVEL,       Tag::BOOT_PATCHLEVEL,
+            Tag::CREATION_DATETIME,
+    };
+    return std::find(tag_list.begin(), tag_list.end(), (V4_1::Tag)entry.tag) != tag_list.end();
+}
+
+AuthorizationSet filter_tags(const AuthorizationSet& set) {
+    AuthorizationSet filtered;
+    std::remove_copy_if(set.begin(), set.end(), std::back_inserter(filtered), tag_in_list);
+    return filtered;
+}
+
 void check_attestation_record(AttestationRecord attestation, const HidlBuf& challenge,
                               AuthorizationSet expected_sw_enforced,
                               AuthorizationSet expected_hw_enforced,
@@ -144,9 +172,9 @@ void check_attestation_record(AttestationRecord attestation, const HidlBuf& chal
     attestation.software_enforced.Sort();
     attestation.hardware_enforced.Sort();
 
-    EXPECT_EQ(expected_sw_enforced, attestation.software_enforced)
+    EXPECT_EQ(filter_tags(expected_sw_enforced), filter_tags(attestation.software_enforced))
             << DIFFERENCE(expected_sw_enforced, attestation.software_enforced);
-    EXPECT_EQ(expected_hw_enforced, attestation.hardware_enforced)
+    EXPECT_EQ(filter_tags(expected_hw_enforced), filter_tags(attestation.hardware_enforced))
             << DIFFERENCE(expected_hw_enforced, attestation.hardware_enforced);
 }
 
@@ -193,11 +221,11 @@ TEST_P(DeviceUniqueAttestationTest, Rsa) {
     if (SecLevel() != SecurityLevel::STRONGBOX) return;
     ASSERT_EQ(ErrorCode::OK,
               convert(GenerateKey(AuthorizationSetBuilder()
-                                          .Authorization(TAG_NO_AUTH_REQUIRED)
-                                          .RsaSigningKey(2048, 65537)
-                                          .Digest(Digest::SHA_2_256)
-                                          .Padding(PaddingMode::RSA_PKCS1_1_5_SIGN)
-                                          .Authorization(TAG_CREATION_DATETIME, 1))));
+                                  .Authorization(TAG_NO_AUTH_REQUIRED)
+                                  .RsaSigningKey(2048, 65537)
+                                  .Digest(Digest::SHA_2_256)
+                                  .Padding(PaddingMode::RSA_PKCS1_1_5_SIGN)
+                                  .Authorization(TAG_INCLUDE_UNIQUE_ID))));
 
     hidl_vec<hidl_vec<uint8_t>> cert_chain;
     HidlBuf challenge("challenge");
@@ -209,14 +237,14 @@ TEST_P(DeviceUniqueAttestationTest, Rsa) {
                                         .Authorization(TAG_ATTESTATION_APPLICATION_ID, app_id),
                                 &cert_chain)));
 
-    EXPECT_EQ(1U, cert_chain.size());
+    EXPECT_EQ(2U, cert_chain.size());
+    if (dumpAttestations) dumpContent(bin2hex(cert_chain[0]));
     auto [err, attestation] = parse_attestation_record(cert_chain[0]);
-    EXPECT_EQ(ErrorCode::OK, err);
+    ASSERT_EQ(ErrorCode::OK, err);
 
     check_attestation_record(attestation, challenge,
                              /* sw_enforced */
                              AuthorizationSetBuilder()
-                                     .Authorization(TAG_CREATION_DATETIME, 1)
                                      .Authorization(TAG_ATTESTATION_APPLICATION_ID, app_id),
                              /* hw_enforced */
                              AuthorizationSetBuilder()
@@ -238,7 +266,7 @@ TEST_P(DeviceUniqueAttestationTest, Ecdsa) {
                                           .Authorization(TAG_NO_AUTH_REQUIRED)
                                           .EcdsaSigningKey(256)
                                           .Digest(Digest::SHA_2_256)
-                                          .Authorization(TAG_CREATION_DATETIME, 1))));
+                                          .Authorization(TAG_INCLUDE_UNIQUE_ID))));
 
     hidl_vec<hidl_vec<uint8_t>> cert_chain;
     HidlBuf challenge("challenge");
@@ -250,29 +278,42 @@ TEST_P(DeviceUniqueAttestationTest, Ecdsa) {
                                         .Authorization(TAG_ATTESTATION_APPLICATION_ID, app_id),
                                 &cert_chain)));
 
-    EXPECT_EQ(1U, cert_chain.size());
+    EXPECT_EQ(2U, cert_chain.size());
+    if (dumpAttestations) dumpContent(bin2hex(cert_chain[0]));
     auto [err, attestation] = parse_attestation_record(cert_chain[0]);
-    EXPECT_EQ(ErrorCode::OK, err);
+    ASSERT_EQ(ErrorCode::OK, err);
 
     check_attestation_record(attestation, challenge,
-                             /* sw_enforced */
-                             AuthorizationSetBuilder()
-                                     .Authorization(TAG_CREATION_DATETIME, 1)
-                                     .Authorization(TAG_ATTESTATION_APPLICATION_ID, app_id),
-                             /* hw_enforced */
-                             AuthorizationSetBuilder()
-                                     .Authorization(TAG_DEVICE_UNIQUE_ATTESTATION)
-                                     .Authorization(TAG_NO_AUTH_REQUIRED)
-                                     .EcdsaSigningKey(256)
-                                     .Digest(Digest::SHA_2_256)
-                                     .Authorization(TAG_EC_CURVE, EcCurve::P_256)
-                                     .Authorization(TAG_ORIGIN, KeyOrigin::GENERATED)
-                                     .Authorization(TAG_OS_VERSION, os_version())
-                                     .Authorization(TAG_OS_PATCHLEVEL, os_patch_level()),
-                             SecLevel());
+            /* sw_enforced */
+            AuthorizationSetBuilder().Authorization(TAG_ATTESTATION_APPLICATION_ID, app_id),
+            /* hw_enforced */
+            AuthorizationSetBuilder()
+                    .Authorization(TAG_DEVICE_UNIQUE_ATTESTATION)
+                    .Authorization(TAG_NO_AUTH_REQUIRED)
+                    .EcdsaSigningKey(256)
+                    .Digest(Digest::SHA_2_256)
+                    .Authorization(TAG_EC_CURVE, EcCurve::P_256)
+                    .Authorization(TAG_ORIGIN, KeyOrigin::GENERATED)
+                    .Authorization(TAG_OS_VERSION, os_version())
+                    .Authorization(TAG_OS_PATCHLEVEL, os_patch_level()),
+            SecLevel());
 }
 
 INSTANTIATE_KEYMASTER_4_1_HIDL_TEST(DeviceUniqueAttestationTest);
 
 }  // namespace test
 }  // namespace android::hardware::keymaster::V4_1
+
+int main(int argc, char** argv) {
+    ::testing::InitGoogleTest(&argc, argv);
+    for (int i = 1; i < argc; ++i) {
+        if (argv[i][0] == '-') {
+            if (std::string(argv[i]) == "--dump_attestations") {
+                dumpAttestations = true;
+            }
+        }
+    }
+    int status = RUN_ALL_TESTS();
+    ALOGI("Test result = %d", status);
+    return status;
+}
