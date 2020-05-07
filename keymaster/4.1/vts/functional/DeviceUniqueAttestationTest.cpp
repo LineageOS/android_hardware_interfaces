@@ -155,8 +155,8 @@ void check_attestation_record(AttestationRecord attestation, const HidlBuf& chal
 using std::string;
 using DeviceUniqueAttestationTest = Keymaster4_1HidlTest;
 
-TEST_P(DeviceUniqueAttestationTest, StrongBoxOnly) {
-    if (SecLevel() != SecurityLevel::STRONGBOX) return;
+TEST_P(DeviceUniqueAttestationTest, NonStrongBoxOnly) {
+    if (SecLevel() == SecurityLevel::STRONGBOX) return;
 
     ASSERT_EQ(ErrorCode::OK, convert(GenerateKey(AuthorizationSetBuilder()
                                                          .Authorization(TAG_NO_AUTH_REQUIRED)
