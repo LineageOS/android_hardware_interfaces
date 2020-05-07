@@ -452,6 +452,10 @@ TEST_P(SensorsHidlTest, InjectSensorEventData) {
     for (const auto& s : sensors) {
         auto events = callback.getEvents(s.sensorHandle);
         auto lastEvent = events.back();
+        SCOPED_TRACE(::testing::Message()
+                     << " handle=0x" << std::hex << std::setw(8) << std::setfill('0')
+                     << s.sensorHandle << std::dec << " type=" << static_cast<int>(s.type)
+                     << " name=" << s.name);
 
         // Verify that only a single event has been received
         ASSERT_EQ(events.size(), 1);
@@ -578,6 +582,12 @@ void SensorsHidlTest::runFlushTest(const std::vector<SensorInfoType>& sensors, b
 
         // Flush the sensor
         for (int32_t i = 0; i < flushCalls; i++) {
+            SCOPED_TRACE(::testing::Message()
+                         << "Flush " << i << "/" << flushCalls << ": "
+                         << " handle=0x" << std::hex << std::setw(8) << std::setfill('0')
+                         << sensor.sensorHandle << std::dec
+                         << " type=" << static_cast<int>(sensor.type) << " name=" << sensor.name);
+
             Result flushResult = flush(sensor.sensorHandle);
             ASSERT_EQ(flushResult, expectedResponse);
         }
@@ -595,6 +605,10 @@ void SensorsHidlTest::runFlushTest(const std::vector<SensorInfoType>& sensors, b
 
     // Check that the correct number of flushes are present for each sensor
     for (const SensorInfoType& sensor : sensors) {
+        SCOPED_TRACE(::testing::Message()
+                     << " handle=0x" << std::hex << std::setw(8) << std::setfill('0')
+                     << sensor.sensorHandle << std::dec << " type=" << static_cast<int>(sensor.type)
+                     << " name=" << sensor.name);
         ASSERT_EQ(callback.getFlushCount(sensor.sensorHandle), expectedFlushCount);
     }
 }
@@ -643,6 +657,11 @@ TEST_P(SensorsHidlTest, Batch) {
 
     activateAllSensors(false /* enable */);
     for (const SensorInfoType& sensor : getSensorsList()) {
+        SCOPED_TRACE(::testing::Message()
+                     << " handle=0x" << std::hex << std::setw(8) << std::setfill('0')
+                     << sensor.sensorHandle << std::dec << " type=" << static_cast<int>(sensor.type)
+                     << " name=" << sensor.name);
+
         // Call batch on inactive sensor
         // One shot sensors have minDelay set to -1 which is an invalid
         // parameter. Use 0 instead to avoid errors.
@@ -675,6 +694,11 @@ TEST_P(SensorsHidlTest, Activate) {
 
     // Verify that sensor events are generated when activate is called
     for (const SensorInfoType& sensor : getSensorsList()) {
+        SCOPED_TRACE(::testing::Message()
+                     << " handle=0x" << std::hex << std::setw(8) << std::setfill('0')
+                     << sensor.sensorHandle << std::dec << " type=" << static_cast<int>(sensor.type)
+                     << " name=" << sensor.name);
+
         batch(sensor.sensorHandle, sensor.minDelay, 0 /* maxReportLatencyNs */);
         ASSERT_EQ(activate(sensor.sensorHandle, true), Result::OK);
 
@@ -722,6 +746,10 @@ TEST_P(SensorsHidlTest, NoStaleEvents) {
     // Save the last received event for each sensor
     std::map<int32_t, int64_t> lastEventTimestampMap;
     for (const SensorInfoType& sensor : sensors) {
+        SCOPED_TRACE(::testing::Message()
+                     << " handle=0x" << std::hex << std::setw(8) << std::setfill('0')
+                     << sensor.sensorHandle << std::dec << " type=" << static_cast<int>(sensor.type)
+                     << " name=" << sensor.name);
         // Some on-change sensors may not report an event without stimulus
         if (extractReportMode(sensor.flags) != SensorFlagBits::ON_CHANGE_MODE) {
             ASSERT_GE(callback.getEvents(sensor.sensorHandle).size(), 1);
@@ -742,6 +770,11 @@ TEST_P(SensorsHidlTest, NoStaleEvents) {
     getEnvironment()->unregisterCallback();
 
     for (const SensorInfoType& sensor : sensors) {
+        SCOPED_TRACE(::testing::Message()
+                     << " handle=0x" << std::hex << std::setw(8) << std::setfill('0')
+                     << sensor.sensorHandle << std::dec << " type=" << static_cast<int>(sensor.type)
+                     << " name=" << sensor.name);
+
         // Skip sensors that did not previously report an event
         if (lastEventTimestampMap.find(sensor.sensorHandle) == lastEventTimestampMap.end()) {
             continue;
@@ -764,6 +797,12 @@ void SensorsHidlTest::checkRateLevel(const SensorInfoType& sensor, int32_t direc
                                      RateLevel rateLevel) {
     configDirectReport(sensor.sensorHandle, directChannelHandle, rateLevel,
                        [&](Result result, int32_t reportToken) {
+                           SCOPED_TRACE(::testing::Message()
+                                        << " handle=0x" << std::hex << std::setw(8)
+                                        << std::setfill('0') << sensor.sensorHandle << std::dec
+                                        << " type=" << static_cast<int>(sensor.type)
+                                        << " name=" << sensor.name);
+
                            if (isDirectReportRateSupported(sensor, rateLevel)) {
                                ASSERT_EQ(result, Result::OK);
                                if (rateLevel != RateLevel::STOP) {
@@ -821,6 +860,11 @@ void SensorsHidlTest::verifyRegisterDirectChannel(
 
 void SensorsHidlTest::verifyConfigure(const SensorInfoType& sensor, SharedMemType memType,
                                       int32_t directChannelHandle, bool supportsAnyDirectChannel) {
+    SCOPED_TRACE(::testing::Message()
+                 << " handle=0x" << std::hex << std::setw(8) << std::setfill('0')
+                 << sensor.sensorHandle << std::dec << " type=" << static_cast<int>(sensor.type)
+                 << " name=" << sensor.name);
+
     if (isDirectChannelTypeSupported(sensor, memType)) {
         // Verify that each rate level is properly supported
         checkRateLevel(sensor, directChannelHandle, RateLevel::NORMAL);
