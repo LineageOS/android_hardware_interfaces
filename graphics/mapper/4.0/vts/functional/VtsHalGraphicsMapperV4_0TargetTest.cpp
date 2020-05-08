@@ -965,7 +965,7 @@ TEST_P(GraphicsMapperHidlTest, GetProtectedContent) {
 
     const native_handle_t* bufferHandle = nullptr;
     bufferHandle = mGralloc->allocate(info, true, true);
-    if (bufferHandle) {
+    if (!bufferHandle) {
         GTEST_SUCCEED() << "unable to allocate protected content";
         return;
     }
@@ -1268,7 +1268,7 @@ TEST_P(GraphicsMapperHidlTest, SetProtectedContent) {
     info.usage = BufferUsage::PROTECTED | BufferUsage::COMPOSER_OVERLAY;
 
     bufferHandle = mGralloc->allocate(info, true, true);
-    if (bufferHandle) {
+    if (!bufferHandle) {
         GTEST_SUCCEED() << "unable to allocate protected content";
         return;
     }
