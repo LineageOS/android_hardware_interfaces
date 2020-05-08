@@ -204,7 +204,7 @@ class GraphicsComposerHidlCommandTest : public GraphicsComposerHidlTest {
     void Test_setActiveConfigWithConstraints(
             const IComposerClient::VsyncPeriodChangeConstraints& constraints, bool refreshMiss);
 
-    void sendRefreshFrame(const VsyncPeriodChangeTimeline&);
+    void sendRefreshFrame(const VsyncPeriodChangeTimeline*);
 
     void waitForVsyncPeriodChange(Display display, const VsyncPeriodChangeTimeline& timeline,
                                   int64_t desiredTimeNanos, int64_t oldPeriodNanos,
@@ -294,7 +294,7 @@ TEST_P(GraphicsComposerHidlCommandTest, getDisplayVsyncPeriod) {
                                            display, config, constraints, &timeline));
 
             if (timeline.refreshRequired) {
-                sendRefreshFrame(timeline);
+                sendRefreshFrame(&timeline);
             }
             waitForVsyncPeriodChange(display, timeline, constraints.desiredTimeNanos, 0,
                                      expectedVsyncPeriodNanos);
@@ -350,7 +350,7 @@ TEST_P(GraphicsComposerHidlTest, setActiveConfigWithConstraints_BadConfig) {
     }
 }
 
-TEST_P(GraphicsComposerHidlTest, setActiveConfigWithConstraints_SeamlessNotAllowed) {
+TEST_P(GraphicsComposerHidlCommandTest, setActiveConfigWithConstraints_SeamlessNotAllowed) {
     VsyncPeriodChangeTimeline timeline;
     IComposerClient::VsyncPeriodChangeConstraints constraints;
 
@@ -365,6 +365,7 @@ TEST_P(GraphicsComposerHidlTest, setActiveConfigWithConstraints_SeamlessNotAllow
                     display, config2, IComposerClient::IComposerClient::Attribute::CONFIG_GROUP);
             if (configGroup1 != configGroup2) {
                 mComposerClient->setActiveConfig(display, config1);
+                sendRefreshFrame(nullptr);
                 EXPECT_EQ(Error::SEAMLESS_NOT_ALLOWED,
                           mComposerClient->setActiveConfigWithConstraints(display, config2,
                                                                           constraints, &timeline));
@@ -377,11 +378,13 @@ static inline auto toTimePoint(nsecs_t time) {
     return std::chrono::time_point<std::chrono::steady_clock>(std::chrono::nanoseconds(time));
 }
 
-void GraphicsComposerHidlCommandTest::sendRefreshFrame(const VsyncPeriodChangeTimeline& timeline) {
-    // Refresh time should be before newVsyncAppliedTimeNanos
-    EXPECT_LT(timeline.refreshTimeNanos, timeline.newVsyncAppliedTimeNanos);
+void GraphicsComposerHidlCommandTest::sendRefreshFrame(const VsyncPeriodChangeTimeline* timeline) {
+    if (timeline != nullptr) {
+        // Refresh time should be before newVsyncAppliedTimeNanos
+        EXPECT_LT(timeline->refreshTimeNanos, timeline->newVsyncAppliedTimeNanos);
 
-    std::this_thread::sleep_until(toTimePoint(timeline.refreshTimeNanos));
+        std::this_thread::sleep_until(toTimePoint(timeline->refreshTimeNanos));
+    }
 
     mWriter->selectDisplay(mPrimaryDisplay);
     mComposerClient->setPowerMode(mPrimaryDisplay, V2_1::IComposerClient::PowerMode::ON);
@@ -453,6 +456,7 @@ void GraphicsComposerHidlCommandTest::Test_setActiveConfigWithConstraints(
     for (Display display : mComposerCallback->getDisplays()) {
         forEachTwoConfigs(display, [&](Config config1, Config config2) {
             mComposerClient->setActiveConfig(display, config1);
+            sendRefreshFrame(nullptr);
 
             int32_t vsyncPeriod1 = mComposerClient->getDisplayAttribute_2_4(
                     display, config1, IComposerClient::IComposerClient::Attribute::VSYNC_PERIOD);
@@ -478,7 +482,7 @@ void GraphicsComposerHidlCommandTest::Test_setActiveConfigWithConstraints(
                     // callback
                     std::this_thread::sleep_until(toTimePoint(timeline.refreshTimeNanos) + 100ms);
                 }
-                sendRefreshFrame(timeline);
+                sendRefreshFrame(&timeline);
             }
             waitForVsyncPeriodChange(display, timeline, constraints.desiredTimeNanos, vsyncPeriod1,
                                      vsyncPeriod2);
@@ -493,7 +497,7 @@ void GraphicsComposerHidlCommandTest::Test_setActiveConfigWithConstraints(
 
             if (newTimelime.has_value()) {
                 if (timeline.refreshRequired) {
-                    sendRefreshFrame(newTimelime.value());
+                    sendRefreshFrame(&newTimelime.value());
                 }
                 waitForVsyncPeriodChange(display, newTimelime.value(), constraints.desiredTimeNanos,
                                          vsyncPeriod1, vsyncPeriod2);

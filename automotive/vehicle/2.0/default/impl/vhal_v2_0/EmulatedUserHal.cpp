@@ -28,8 +28,8 @@ namespace V2_0 {
 
 namespace impl {
 
-constexpr int INITIAL_USER_INFO = (int)VehicleProperty::INITIAL_USER_INFO;
-constexpr int SWITCH_USER = (int)VehicleProperty::SWITCH_USER;
+constexpr int INITIAL_USER_INFO = static_cast<int>(VehicleProperty::INITIAL_USER_INFO);
+constexpr int SWITCH_USER = static_cast<int>(VehicleProperty::SWITCH_USER);
 
 bool EmulatedUserHal::isSupported(int32_t prop) {
     switch (prop) {
