@@ -16,6 +16,7 @@
 
 #include <regex.h>
 
+#include <android-base/logging.h>
 #include <android-base/properties.h>
 #include <hardware/hw_auth_token.h>
 #include <keymasterV4_0/keymaster_utils.h>
@@ -107,6 +108,80 @@ HardwareAuthToken hidlVec2AuthToken(const hidl_vec<uint8_t>& buffer) {
     token.mac.resize(kHmacSize);
     std::copy(pos, pos + kHmacSize, token.mac.data());
 
+    return token;
+}
+
+void appendUint64(std::vector<uint8_t>& vec, uint64_t value) {
+    for (size_t n = 0; n < sizeof(uint64_t); n++) {
+        uint8_t byte = (value >> (n * 8)) & 0xff;
+        vec.push_back(byte);
+    }
+}
+
+uint64_t extractUint64(const std::vector<uint8_t>& data, size_t offset) {
+    uint64_t value = 0;
+    for (size_t n = 0; n < sizeof(uint64_t); n++) {
+        uint8_t byte = data[offset + n];
+        value |= byte << (n * 8);
+    }
+    return value;
+}
+
+void appendUint32(std::vector<uint8_t>& vec, uint32_t value) {
+    for (size_t n = 0; n < sizeof(uint32_t); n++) {
+        uint8_t byte = (value >> (n * 8)) & 0xff;
+        vec.push_back(byte);
+    }
+}
+
+uint32_t extractUint32(const std::vector<uint8_t>& data, size_t offset) {
+    uint32_t value = 0;
+    for (size_t n = 0; n < sizeof(uint32_t); n++) {
+        uint8_t byte = data[offset + n];
+        value |= byte << (n * 8);
+    }
+    return value;
+}
+
+std::optional<std::vector<uint8_t>> serializeVerificationToken(const VerificationToken& token) {
+    if (token.parametersVerified.size() > 0) {
+        LOG(ERROR) << "Serializing verification tokens with parametersVerified is not supported";
+        return {};
+    }
+    if (!(token.mac.size() == 0 || token.mac.size() == 32)) {
+        LOG(ERROR) << "Unexpected MAC size " << token.mac.size() << ", expected 0 or 32";
+        return {};
+    }
+    std::vector<uint8_t> serializedToken;
+    appendUint64(serializedToken, token.challenge);
+    appendUint64(serializedToken, token.timestamp);
+    appendUint32(serializedToken, uint32_t(token.securityLevel));
+    appendUint32(serializedToken, token.mac.size());
+    serializedToken.insert(serializedToken.end(), token.mac.begin(), token.mac.end());
+    return serializedToken;
+}
+
+std::optional<VerificationToken> deserializeVerificationToken(
+        const std::vector<uint8_t>& serializedToken) {
+    if (serializedToken.size() < 24) {
+        LOG(ERROR) << "Unexpected serialized VerificationToken size " << serializedToken.size()
+                   << ", expected at least 24 bytes";
+        return {};
+    }
+    VerificationToken token;
+    token.challenge = extractUint64(serializedToken, 0);
+    token.timestamp = extractUint64(serializedToken, 8);
+    token.securityLevel = SecurityLevel(extractUint32(serializedToken, 16));
+    size_t macSize = extractUint32(serializedToken, 20);
+    size_t expectedSerializedSize = 24 + macSize;
+    if (serializedToken.size() != expectedSerializedSize) {
+        LOG(ERROR) << "Unexpected serialized VerificationToken size " << serializedToken.size()
+                   << ", expected " << expectedSerializedSize;
+        return {};
+    }
+    if (macSize > 0) {
+        token.mac = std::vector<uint8_t>(serializedToken.begin() + 24, serializedToken.end());
+    }
     return token;
 }
 
