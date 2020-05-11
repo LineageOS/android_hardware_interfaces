@@ -19,15 +19,20 @@
 
 #include <aidl/android/hardware/identity/BnIdentityCredentialStore.h>
 
+#include "SecureHardwareProxy.h"
+
 namespace aidl::android::hardware::identity {
 
+using ::android::sp;
+using ::android::hardware::identity::SecureHardwareProxyFactory;
 using ::std::shared_ptr;
 using ::std::string;
 using ::std::vector;
 
 class IdentityCredentialStore : public BnIdentityCredentialStore {
   public:
-    IdentityCredentialStore() {}
+    IdentityCredentialStore(sp<SecureHardwareProxyFactory> hwProxyFactory)
+        : hwProxyFactory_(hwProxyFactory) {}
 
     // The GCM chunk size used by this implementation is 64 KiB.
     static constexpr size_t kGcmChunkSize = 64 * 1024;
@@ -41,6 +46,9 @@ class IdentityCredentialStore : public BnIdentityCredentialStore {
 
     ndk::ScopedAStatus getCredential(CipherSuite cipherSuite, const vector<uint8_t>& credentialData,
                                      shared_ptr<IIdentityCredential>* outCredential) override;
+
+  private:
+    sp<SecureHardwareProxyFactory> hwProxyFactory_;
 };
 
 }  // namespace aidl::android::hardware::identity
