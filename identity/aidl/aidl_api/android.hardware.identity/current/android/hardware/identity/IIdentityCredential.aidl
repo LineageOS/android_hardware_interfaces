@@ -28,4 +28,5 @@ interface IIdentityCredential {
   void finishRetrieval(out byte[] mac, out byte[] deviceNameSpaces);
   android.hardware.identity.Certificate generateSigningKeyPair(out byte[] signingKeyBlob);
   void setRequestedNamespaces(in android.hardware.identity.RequestNamespace[] requestNamespaces);
+  void setVerificationToken(in android.hardware.keymaster.VerificationToken verificationToken);
 }

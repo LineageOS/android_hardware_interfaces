@@ -198,19 +198,21 @@ bool checkReaderAuthentication(const SecureAccessControlProfile& profile,
     return false;
 }
 
-Timestamp clockGetTime() {
-    struct timespec time;
-    clock_gettime(CLOCK_MONOTONIC, &time);
-    Timestamp ts;
-    ts.milliSeconds = time.tv_sec * 1000 + time.tv_nsec / 1000000;
-    return ts;
-}
-
 bool checkUserAuthentication(const SecureAccessControlProfile& profile,
+                             const VerificationToken& verificationToken,
                              const HardwareAuthToken& authToken, uint64_t authChallenge) {
     if (profile.secureUserId != authToken.userId) {
         LOG(ERROR) << "secureUserId in profile (" << profile.secureUserId
                    << ") differs from userId in authToken (" << authToken.userId << ")";
+        return false;
+    }
+
+    if (verificationToken.timestamp.milliSeconds == 0) {
+        LOG(ERROR) << "VerificationToken is not set";
+        return false;
+    }
+    if (authToken.timestamp.milliSeconds == 0) {
+        LOG(ERROR) << "AuthToken is not set";
         return false;
     }
 
@@ -227,19 +229,11 @@ bool checkUserAuthentication(const SecureAccessControlProfile& profile,
         return true;
     }
 
-    // Note that the Epoch for timestamps in HardwareAuthToken is at the
-    // discretion of the vendor:
+    // Timeout-based user auth follows. The verification token conveys what the
+    // time is right now in the environment which generated the auth token. This
+    // is what makes it possible to do timeout-based checks.
     //
-    //   "[...] since some starting point (generally the most recent device
-    //    boot) which all of the applications within one secure environment
-    //    must agree upon."
-    //
-    // Therefore, if this software implementation is used on a device which isn't
-    // the emulator then the assumption that the epoch is the same as used in
-    // clockGetTime above will not hold. This is OK as this software
-    // implementation should never be used on a real device.
-    //
-    Timestamp now = clockGetTime();
+    const Timestamp now = verificationToken.timestamp;
     if (authToken.timestamp.milliSeconds > now.milliSeconds) {
         LOG(ERROR) << "Timestamp in authToken (" << authToken.timestamp.milliSeconds
                    << ") is in the future (now: " << now.milliSeconds << ")";
@@ -258,6 +252,12 @@ bool checkUserAuthentication(const SecureAccessControlProfile& profile,
 ndk::ScopedAStatus IdentityCredential::setRequestedNamespaces(
         const vector<RequestNamespace>& requestNamespaces) {
     requestNamespaces_ = requestNamespaces;
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus IdentityCredential::setVerificationToken(
+        const VerificationToken& verificationToken) {
+    verificationToken_ = verificationToken;
     return ndk::ScopedAStatus::ok();
 }
 
@@ -483,7 +483,8 @@ ndk::ScopedAStatus IdentityCredential::startRetrieval(
         }
         int accessControlCheck = IIdentityCredentialStore::STATUS_OK;
         if (profile.userAuthenticationRequired) {
-            if (!haveAuthToken || !checkUserAuthentication(profile, authToken, authChallenge_)) {
+            if (!haveAuthToken ||
+                !checkUserAuthentication(profile, verificationToken_, authToken, authChallenge_)) {
                 accessControlCheck = IIdentityCredentialStore::STATUS_USER_AUTHENTICATION_FAILED;
             }
         } else if (profile.readerCertificate.encodedCertificate.size() > 0) {
