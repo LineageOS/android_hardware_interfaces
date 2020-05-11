@@ -43,6 +43,7 @@ using ::android::String16;
 using ::android::binder::Status;
 
 using ::android::hardware::keymaster::HardwareAuthToken;
+using ::android::hardware::keymaster::VerificationToken;
 
 class IdentityAidl : public testing::TestWithParam<std::string> {
   public:
@@ -82,7 +83,20 @@ TEST_P(IdentityAidl, createAndRetrieveCredential) {
                                                           // Profile 1 (no authentication)
                                                           {1, {}, false, 0}};
 
+    // It doesn't matter since no user auth is needed in this particular test,
+    // but for good measure, clear out the tokens we pass to the HAL.
     HardwareAuthToken authToken;
+    VerificationToken verificationToken;
+    authToken.challenge = 0;
+    authToken.userId = 0;
+    authToken.authenticatorId = 0;
+    authToken.authenticatorType = ::android::hardware::keymaster::HardwareAuthenticatorType::NONE;
+    authToken.timestamp.milliSeconds = 0;
+    authToken.mac.clear();
+    verificationToken.challenge = 0;
+    verificationToken.timestamp.milliSeconds = 0;
+    verificationToken.securityLevel = ::android::hardware::keymaster::SecurityLevel::SOFTWARE;
+    verificationToken.mac.clear();
 
     // Here's the actual test data:
     const vector<test_utils::TestEntryData> testEntries = {
@@ -274,7 +288,10 @@ TEST_P(IdentityAidl, createAndRetrieveCredential) {
     ASSERT_TRUE(credential->generateSigningKeyPair(&signingKeyBlob, &signingKeyCertificate).isOk());
 
     vector<RequestNamespace> requestedNamespaces = test_utils::buildRequestNamespaces(testEntries);
-    ASSERT_TRUE(credential->setRequestedNamespaces(requestedNamespaces).isOk());
+    // OK to fail, not available in v1 HAL
+    credential->setRequestedNamespaces(requestedNamespaces).isOk();
+    // OK to fail, not available in v1 HAL
+    credential->setVerificationToken(verificationToken);
     ASSERT_TRUE(credential
                         ->startRetrieval(secureProfiles.value(), authToken, itemsRequestBytes,
                                          signingKeyBlob, sessionTranscriptBytes,
