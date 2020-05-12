@@ -15,5 +15,17 @@ aidl_interface {
             },
         },
     },
-    versions: ["1"],
+    versions: [
+        "1",
+        "2",
+    ],
+}
+
+// This is a reminder that the next version of keymaster should be frozen at
+// version "5" to avoid confusion with other versions of this interface.
+cc_library {
+    name: "android.hardware.keymaster-V3-java",
+}
+cc_library {
+    name: "android.hardware.keymaster-V4-java",
 }

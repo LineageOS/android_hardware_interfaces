@@ -18,6 +18,8 @@
 #define HARDWARE_INTERFACES_KEYMASTER_40_SUPPORT_KEYMASTER_UTILS_H_
 
 #include <android/hardware/keymaster/4.0/types.h>
+#include <optional>
+#include <vector>
 
 namespace android {
 namespace hardware {
@@ -51,6 +53,15 @@ inline static hidl_vec<uint8_t> blob2hidlVec(const std::vector<uint8_t>& blob) {
 
 HardwareAuthToken hidlVec2AuthToken(const hidl_vec<uint8_t>& buffer);
 hidl_vec<uint8_t> authToken2HidlVec(const HardwareAuthToken& token);
+
+// Serializes and deserializes a verification token. This format is private and
+// not stable between releases and should not be persisted to disk.
+//
+// Currently doesn't support the |parametersVerified| field, will fail if set.
+//
+std::optional<VerificationToken> deserializeVerificationToken(
+        const std::vector<uint8_t>& serializedToken);
+std::optional<std::vector<uint8_t>> serializeVerificationToken(const VerificationToken& token);
 
 uint32_t getOsVersion();
 uint32_t getOsPatchlevel();
