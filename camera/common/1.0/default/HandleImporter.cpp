@@ -232,12 +232,19 @@ void HandleImporter::closeFence(int fd) const {
 
 void* HandleImporter::lock(
         buffer_handle_t& buf, uint64_t cpuUsage, size_t size) {
+    IMapper::Rect accessRegion{0, 0, static_cast<int>(size), 1};
+    return lock(buf, cpuUsage, accessRegion);
+}
+
+void* HandleImporter::lock(buffer_handle_t& buf, uint64_t cpuUsage,
+                           const IMapper::Rect& accessRegion) {
     Mutex::Autolock lock(mLock);
-    void *ret = 0;
 
     if (!mInitialized) {
         initializeLocked();
     }
+
+    void* ret = nullptr;
 
     if (mMapperV4 == nullptr && mMapperV3 == nullptr && mMapperV2 == nullptr) {
         ALOGE("%s: mMapperV4, mMapperV3 and mMapperV2 are all null!", __FUNCTION__);
@@ -247,10 +254,10 @@ void* HandleImporter::lock(
     hidl_handle acquireFenceHandle;
     auto buffer = const_cast<native_handle_t*>(buf);
     if (mMapperV4 != nullptr) {
-        IMapperV4::Rect accessRegion{0, 0, static_cast<int>(size), 1};
-        // No need to use bytesPerPixel and bytesPerStride because we are using
-        // an 1-D buffer and accressRegion.
-        mMapperV4->lock(buffer, cpuUsage, accessRegion, acquireFenceHandle,
+        IMapperV4::Rect accessRegionV4{accessRegion.left, accessRegion.top, accessRegion.width,
+                                       accessRegion.height};
+
+        mMapperV4->lock(buffer, cpuUsage, accessRegionV4, acquireFenceHandle,
                         [&](const auto& tmpError, const auto& tmpPtr) {
                             if (tmpError == MapperErrorV4::NONE) {
                                 ret = tmpPtr;
@@ -259,33 +266,33 @@ void* HandleImporter::lock(
                             }
                         });
     } else if (mMapperV3 != nullptr) {
-        IMapperV3::Rect accessRegion { 0, 0, static_cast<int>(size), 1 };
-        // No need to use bytesPerPixel and bytesPerStride because we are using
-        // an 1-D buffer and accressRegion.
-        mMapperV3->lock(buffer, cpuUsage, accessRegion, acquireFenceHandle,
-                [&](const auto& tmpError, const auto& tmpPtr, const auto& /*bytesPerPixel*/,
-                        const auto& /*bytesPerStride*/) {
-                    if (tmpError == MapperErrorV3::NONE) {
-                        ret = tmpPtr;
-                    } else {
-                        ALOGE("%s: failed to lock error %d!",
-                              __FUNCTION__, tmpError);
-                    }
-               });
+        IMapperV3::Rect accessRegionV3{accessRegion.left, accessRegion.top, accessRegion.width,
+                                       accessRegion.height};
+
+        mMapperV3->lock(buffer, cpuUsage, accessRegionV3, acquireFenceHandle,
+                        [&](const auto& tmpError, const auto& tmpPtr, const auto& /*bytesPerPixel*/,
+                            const auto& /*bytesPerStride*/) {
+                            if (tmpError == MapperErrorV3::NONE) {
+                                ret = tmpPtr;
+                            } else {
+                                ALOGE("%s: failed to lock error %d!", __FUNCTION__, tmpError);
+                            }
+                        });
     } else {
-        IMapper::Rect accessRegion { 0, 0, static_cast<int>(size), 1 };
         mMapperV2->lock(buffer, cpuUsage, accessRegion, acquireFenceHandle,
                 [&](const auto& tmpError, const auto& tmpPtr) {
                     if (tmpError == MapperErrorV2::NONE) {
                         ret = tmpPtr;
                     } else {
-                        ALOGE("%s: failed to lock error %d!",
-                              __FUNCTION__, tmpError);
+                        ALOGE("%s: failed to lock error %d!", __FUNCTION__, tmpError);
                     }
                });
     }
 
-    ALOGV("%s: ptr %p size: %zu", __FUNCTION__, ret, size);
+    ALOGV("%s: ptr %p accessRegion.top: %d accessRegion.left: %d accessRegion.width: %d "
+          "accessRegion.height: %d",
+          __FUNCTION__, ret, accessRegion.top, accessRegion.left, accessRegion.width,
+          accessRegion.height);
     return ret;
 }
 
