@@ -46,10 +46,13 @@ public:
     bool importFence(const native_handle_t* handle, int& fd) const;
     void closeFence(int fd) const;
 
-    // Assume caller has done waiting for acquire fences
+    // Locks 1-D buffer. Assumes caller has waited for acquire fences.
     void* lock(buffer_handle_t& buf, uint64_t cpuUsage, size_t size);
 
-    // Assume caller has done waiting for acquire fences
+    // Locks 2-D buffer. Assumes caller has waited for acquire fences.
+    void* lock(buffer_handle_t& buf, uint64_t cpuUsage, const IMapper::Rect& accessRegion);
+
+    // Assumes caller has waited for acquire fences.
     YCbCrLayout lockYCbCr(buffer_handle_t& buf, uint64_t cpuUsage,
                           const IMapper::Rect& accessRegion);
 
