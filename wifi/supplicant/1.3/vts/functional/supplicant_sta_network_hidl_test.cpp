@@ -288,6 +288,49 @@ TEST_P(SupplicantStaNetworkHidlTest, SetGetWapiCertSuite) {
             });
     }
 }
+
+/*
+ * SetGetWapiPsk
+ */
+TEST_P(SupplicantStaNetworkHidlTest, SetGetWapiPsk) {
+    uint32_t keyMgmt = (uint32_t)ISupplicantStaNetwork::KeyMgmtMask::WAPI_PSK;
+    char kTestPskPassphrase[] = "\"123456780abcdef0123456780abcdef0deadbeef\"";
+    char kTestPskHex[] = "12345678";
+
+    if (!isWapiSupported()) {
+        GTEST_SKIP() << "Skipping test since WAPI is not supported.";
+    }
+
+    sta_network_->setKeyMgmt_1_3(keyMgmt, [](const SupplicantStatus &status) {
+        if (SupplicantStatusCode::SUCCESS != status.code) {
+            // for unsupport case
+            EXPECT_EQ(SupplicantStatusCode::FAILURE_UNKNOWN, status.code);
+        }
+    });
+
+    sta_network_->setPskPassphrase(
+        kTestPskPassphrase, [](const SupplicantStatus &status) {
+            EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+        });
+
+    sta_network_->getPskPassphrase(
+        [&](const SupplicantStatus &status, const hidl_string &psk) {
+            EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+            EXPECT_EQ(kTestPskPassphrase, std::string(psk.c_str()));
+        });
+
+    sta_network_->setPskPassphrase(
+        kTestPskHex, [](const SupplicantStatus &status) {
+            EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+        });
+
+    sta_network_->getPskPassphrase(
+        [&](const SupplicantStatus &status, const hidl_string &psk) {
+            EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+            EXPECT_EQ(kTestPskHex, std::string(psk.c_str()));
+        });
+}
+
 /*
  * SetEapErp
  */
