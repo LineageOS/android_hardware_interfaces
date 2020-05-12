@@ -42,6 +42,7 @@ namespace {
 
 using android::hardware::graphics::common::V1_2::BufferUsage;
 using android::hardware::graphics::common::V1_2::PixelFormat;
+using Tolerance = ::android::hardware::graphics::mapper::V4_0::vts::Gralloc::Tolerance;
 using MetadataType = android::hardware::graphics::mapper::V4_0::IMapper::MetadataType;
 using aidl::android::hardware::graphics::common::BlendMode;
 using aidl::android::hardware::graphics::common::Cta861_3;
@@ -331,8 +332,9 @@ TEST_P(GraphicsMapperHidlTest, AllocatorAllocate) {
     for (uint32_t count = 0; count < 5; count++) {
         std::vector<const native_handle_t*> bufferHandles;
         uint32_t stride;
-        ASSERT_NO_FATAL_FAILURE(
-                bufferHandles = mGralloc->allocate(descriptor, count, false, false, &stride));
+        ASSERT_NO_FATAL_FAILURE(bufferHandles =
+                                        mGralloc->allocate(descriptor, count, false,
+                                                           Tolerance::kToleranceStrict, &stride));
 
         if (count >= 1) {
             EXPECT_LE(mDummyDescriptorInfo.width, stride) << "invalid buffer stride";
@@ -532,7 +534,8 @@ TEST_P(GraphicsMapperHidlTest, LockUnlockBasic) {
 
     const native_handle_t* bufferHandle;
     uint32_t stride;
-    ASSERT_NO_FATAL_FAILURE(bufferHandle = mGralloc->allocate(info, true, false, &stride));
+    ASSERT_NO_FATAL_FAILURE(
+            bufferHandle = mGralloc->allocate(info, true, Tolerance::kToleranceStrict, &stride));
 
     // lock buffer for writing
     const IMapper::Rect region{0, 0, static_cast<int32_t>(info.width),
@@ -566,7 +569,12 @@ TEST_P(GraphicsMapperHidlTest, Lock_YCRCB_420_SP) {
 
     const native_handle_t* bufferHandle;
     uint32_t stride;
-    ASSERT_NO_FATAL_FAILURE(bufferHandle = mGralloc->allocate(info, true, false, &stride));
+    ASSERT_NO_FATAL_FAILURE(bufferHandle = mGralloc->allocate(
+                                    info, true, Tolerance::kToleranceUnSupported, &stride));
+    if (bufferHandle == nullptr) {
+        GTEST_SUCCEED() << "YCRCB_420_SP format is unsupported";
+        return;
+    }
 
     // lock buffer for writing
     const IMapper::Rect region{0, 0, static_cast<int32_t>(info.width),
@@ -741,8 +749,8 @@ TEST_P(GraphicsMapperHidlTest, FlushRereadBasic) {
 
     const native_handle_t* rawHandle;
     uint32_t stride;
-    ASSERT_NO_FATAL_FAILURE(
-            rawHandle = mGralloc->allocate(mDummyDescriptorInfo, false, false, &stride));
+    ASSERT_NO_FATAL_FAILURE(rawHandle = mGralloc->allocate(mDummyDescriptorInfo, false,
+                                                           Tolerance::kToleranceStrict, &stride));
 
     const native_handle_t* writeBufferHandle;
     const native_handle_t* readBufferHandle;
@@ -964,7 +972,7 @@ TEST_P(GraphicsMapperHidlTest, GetProtectedContent) {
     info.usage = BufferUsage::PROTECTED | BufferUsage::COMPOSER_OVERLAY;
 
     const native_handle_t* bufferHandle = nullptr;
-    bufferHandle = mGralloc->allocate(info, true, true);
+    bufferHandle = mGralloc->allocate(info, true, Tolerance::kToleranceAllErrors);
     if (!bufferHandle) {
         GTEST_SUCCEED() << "unable to allocate protected content";
         return;
@@ -1267,7 +1275,7 @@ TEST_P(GraphicsMapperHidlTest, SetProtectedContent) {
     auto info = mDummyDescriptorInfo;
     info.usage = BufferUsage::PROTECTED | BufferUsage::COMPOSER_OVERLAY;
 
-    bufferHandle = mGralloc->allocate(info, true, true);
+    bufferHandle = mGralloc->allocate(info, true, Tolerance::kToleranceAllErrors);
     if (!bufferHandle) {
         GTEST_SUCCEED() << "unable to allocate protected content";
         return;
