@@ -43,6 +43,9 @@ class SupplicantP2pIfaceHidlTest : public SupplicantHidlTestBase {
     virtual void SetUp() override {
         SupplicantHidlTestBase::SetUp();
         EXPECT_TRUE(turnOnExcessiveLogging(supplicant_));
+        if (!::testing::deviceSupportsFeature("android.hardware.wifi.direct")) {
+            GTEST_SKIP() << "Wi-Fi Direct is not supported, skip this test.";
+        }
         p2p_iface_ = getSupplicantP2pIface_1_2(supplicant_);
         ASSERT_NE(p2p_iface_.get(), nullptr);
     }
