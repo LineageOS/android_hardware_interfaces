@@ -93,25 +93,28 @@ struct TestProfile {
     uint64_t timeoutMillis;
 };
 
-bool SetupWritableCredential(sp<IWritableIdentityCredential>& writableCredential,
+bool setupWritableCredential(sp<IWritableIdentityCredential>& writableCredential,
                              sp<IIdentityCredentialStore>& credentialStore);
 
-optional<vector<uint8_t>> GenerateReaderCertificate(string serialDecimal);
+optional<vector<uint8_t>> generateReaderCertificate(string serialDecimal);
 
-optional<vector<uint8_t>> GenerateReaderCertificate(string serialDecimal,
-                                                    vector<uint8_t>& readerPrivateKey);
+optional<vector<uint8_t>> generateReaderCertificate(string serialDecimal,
+                                                    vector<uint8_t>* outReaderPrivateKey);
 
-optional<vector<SecureAccessControlProfile>> AddAccessControlProfiles(
+optional<vector<SecureAccessControlProfile>> addAccessControlProfiles(
         sp<IWritableIdentityCredential>& writableCredential,
         const vector<TestProfile>& testProfiles);
 
-bool AddEntry(sp<IWritableIdentityCredential>& writableCredential, const TestEntryData& entry,
+bool addEntry(sp<IWritableIdentityCredential>& writableCredential, const TestEntryData& entry,
               int dataChunkSize, map<const TestEntryData*, vector<vector<uint8_t>>>& encryptedBlobs,
               bool expectSuccess);
 
-bool ValidateAttestationCertificate(vector<Certificate>& inputCertificates);
+void setImageData(vector<uint8_t>& image);
 
-void SetImageData(vector<uint8_t>& image);
+bool validateAttestationCertificate(const vector<Certificate>& inputCertificates,
+                                    const vector<uint8_t>& expectedChallenge,
+                                    const vector<uint8_t>& expectedAppId,
+                                    const HardwareInformation& hwInfo);
 
 vector<RequestNamespace> buildRequestNamespaces(const vector<TestEntryData> entries);
 
