@@ -37,6 +37,16 @@ using android::hardware::graphics::allocator::V4_0::IAllocator;
 // A wrapper to IAllocator and IMapper.
 class Gralloc {
   public:
+    enum class Tolerance : uint32_t {
+        kToleranceStrict = 0x0U,
+        kToleranceBadDescriptor = 0x1U << std::underlying_type_t<Error>(Error::BAD_DESCRIPTOR),
+        kToleranceBadBuffer = 0x1U << std::underlying_type_t<Error>(Error::BAD_BUFFER),
+        kToleranceBadValue = 0x1U << std::underlying_type_t<Error>(Error::BAD_VALUE),
+        kToleranceNoResource = 0x1U << std::underlying_type_t<Error>(Error::NO_RESOURCES),
+        kToleranceUnSupported = 0x1U << std::underlying_type_t<Error>(Error::UNSUPPORTED),
+        kToleranceAllErrors = ~0x0U,
+    };
+
     Gralloc(const std::string& allocatorServiceName = "default",
             const std::string& mapperServiceName = "default", bool errOnFailure = true);
     ~Gralloc();
@@ -49,12 +59,27 @@ class Gralloc {
     // is true, the returned buffers are also imported into the mapper.
     //
     // Either case, the returned buffers must be freed with freeBuffer.
-    std::vector<const native_handle_t*> allocate(const BufferDescriptor& descriptor, uint32_t count,
-                                                 bool import = true, bool allowFailure = false,
-                                                 uint32_t* outStride = nullptr);
+    std::vector<const native_handle_t*> allocate(
+            const BufferDescriptor& descriptor, uint32_t count, bool import = true,
+            enum Tolerance tolerance = Tolerance::kToleranceStrict, uint32_t* outStride = nullptr);
+
     const native_handle_t* allocate(const IMapper::BufferDescriptorInfo& descriptorInfo,
-                                    bool import = true, bool allowFailure = false,
-                                    uint32_t* outStride = nullptr);
+                                    bool import, enum Tolerance tolerance, uint32_t* outStride);
+
+    const native_handle_t* allocate(const IMapper::BufferDescriptorInfo& descriptorInfo,
+                                    bool import) {
+        return allocate(descriptorInfo, import, Tolerance::kToleranceStrict);
+    }
+
+    const native_handle_t* allocate(const IMapper::BufferDescriptorInfo& descriptorInfo,
+                                    bool import, enum Tolerance tolerance) {
+        return allocate(descriptorInfo, import, tolerance, nullptr);
+    }
+
+    const native_handle_t* allocate(const IMapper::BufferDescriptorInfo& descriptorInfo,
+                                    bool import, uint32_t* outStride) {
+        return allocate(descriptorInfo, import, Tolerance::kToleranceStrict, outStride);
+    }
 
     // IMapper methods
 
@@ -62,7 +87,11 @@ class Gralloc {
 
     BufferDescriptor createDescriptor(const IMapper::BufferDescriptorInfo& descriptorInfo);
 
-    const native_handle_t* importBuffer(const hidl_handle& rawHandle);
+    const native_handle_t* importBuffer(const hidl_handle& rawHandle, enum Tolerance tolerance);
+    const native_handle_t* importBuffer(const hidl_handle& rawHandle) {
+        return importBuffer(rawHandle, Tolerance::kToleranceStrict);
+    }
+
     void freeBuffer(const native_handle_t* bufferHandle);
 
     // We use fd instead of hidl_handle in these functions to pass fences
@@ -96,11 +125,19 @@ class Gralloc {
                             uint64_t* outReservedSize);
 
   private:
+    bool canTolerate(Tolerance tolerance, Error error) {
+        return (std::underlying_type_t<Tolerance>(tolerance) &
+                0x1U << std::underlying_type_t<Error>(error)) != 0;
+    }
+
     void init(const std::string& allocatorServiceName, const std::string& mapperServiceName);
 
     // initialize without checking for failure to get service
     void initNoErr(const std::string& allocatorServiceName, const std::string& mapperServiceName);
-    const native_handle_t* cloneBuffer(const hidl_handle& rawHandle);
+    const native_handle_t* cloneBuffer(const hidl_handle& rawHandle, enum Tolerance tolerance);
+    const native_handle_t* cloneBuffer(const hidl_handle& rawHandle) {
+        return cloneBuffer(rawHandle, Tolerance::kToleranceStrict);
+    }
 
     sp<IAllocator> mAllocator;
     sp<IMapper> mMapper;
