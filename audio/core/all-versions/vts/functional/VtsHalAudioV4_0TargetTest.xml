@@ -17,13 +17,11 @@
     <option name="test-suite-tag" value="apct" />
     <option name="test-suite-tag" value="apct-native" />
 
-    <target_preparer class="com.android.tradefed.targetprep.RootTargetPreparer">
-    </target_preparer>
+    <target_preparer class="com.android.tradefed.targetprep.RootTargetPreparer"/>
+    <target_preparer class="com.android.tradefed.targetprep.StopServicesSetup"/>
 
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
-        <option name="run-command" value="stop"/>
         <option name="run-command" value="setprop vts.native_server.on 1"/>
-        <option name="teardown-command" value="start"/>
         <option name="teardown-command" value="setprop vts.native_server.on 0"/>
     </target_preparer>
 
