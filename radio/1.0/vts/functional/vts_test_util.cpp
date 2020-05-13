@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#define LOG_TAG "RadioTest"
+
 #include <vts_test_util.h>
 #include <iostream>
 
@@ -53,4 +55,27 @@ int GetRandomSerialNumber() {
         }
     }
     return testing::AssertionFailure() << "SapError:" + toString(err) + " is returned";
+}
+
+// Runs "pm list features" and attempts to find the specified feature in its output.
+bool deviceSupportsFeature(const char* feature) {
+    bool hasFeature = false;
+    FILE* p = popen("/system/bin/pm list features", "re");
+    if (p) {
+        char* line = NULL;
+        size_t len = 0;
+        while (getline(&line, &len, p) > 0) {
+            if (strstr(line, feature)) {
+                hasFeature = true;
+                break;
+            }
+        }
+        pclose(p);
+    } else {
+        __android_log_print(ANDROID_LOG_FATAL, LOG_TAG, "popen failed: %d", errno);
+        _exit(EXIT_FAILURE);
+    }
+    __android_log_print(ANDROID_LOG_INFO, LOG_TAG, "Feature %s: %ssupported", feature,
+                        hasFeature ? "" : "not ");
+    return hasFeature;
 }
