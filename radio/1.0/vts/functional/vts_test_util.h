@@ -19,6 +19,8 @@
 #include <VtsHalHidlTargetTestBase.h>
 
 #include <android/hardware/radio/1.0/types.h>
+#include <android/log.h>
+#include <gtest/gtest.h>
 
 using ::android::hardware::radio::V1_0::RadioError;
 using ::android::hardware::radio::V1_0::SapResultCode;
@@ -31,6 +33,8 @@ enum CheckFlag {
     CHECK_OEM_AND_GENERAL_ERROR = 3,
     CHECK_SAP_ERROR = 4,
 };
+
+static constexpr const char* FEATURE_VOICE_CALL = "android.software.connectionservice";
 
 /*
  * Generate random serial number for radio test
@@ -48,3 +52,8 @@ int GetRandomSerialNumber();
  * vendor/devices implementations.
  */
 ::testing::AssertionResult CheckAnyOfErrors(SapResultCode err, std::vector<SapResultCode> errors);
+
+/*
+ * Check if device supports feature.
+ */
+bool deviceSupportsFeature(const char* feature);
