@@ -24,6 +24,7 @@
 #include <aidl/android/hardware/graphics/common/PlaneLayoutComponentType.h>
 
 #include <android-base/logging.h>
+#include <android-base/unique_fd.h>
 #include <android/sync.h>
 #include <gralloctypes/Gralloc4.h>
 #include <gtest/gtest.h>
@@ -40,8 +41,10 @@ namespace V4_0 {
 namespace vts {
 namespace {
 
+using ::android::base::unique_fd;
 using android::hardware::graphics::common::V1_2::BufferUsage;
 using android::hardware::graphics::common::V1_2::PixelFormat;
+using Tolerance = ::android::hardware::graphics::mapper::V4_0::vts::Gralloc::Tolerance;
 using MetadataType = android::hardware::graphics::mapper::V4_0::IMapper::MetadataType;
 using aidl::android::hardware::graphics::common::BlendMode;
 using aidl::android::hardware::graphics::common::Cta861_3;
@@ -276,7 +279,7 @@ class GraphicsMapperHidlTest
         }
     }
 
-    void verifyRGBA8888(const native_handle_t* bufferHandle, uint8_t* data, uint32_t height,
+    void verifyRGBA8888(const native_handle_t* bufferHandle, const uint8_t* data, uint32_t height,
                         size_t strideInBytes, size_t widthInBytes, uint32_t seed = 0) {
         hidl_vec<uint8_t> vec;
         ASSERT_EQ(Error::NONE,
@@ -292,6 +295,49 @@ class GraphicsMapperHidlTest
             }
             data += strideInBytes;
         }
+    }
+
+    void traverseYCbCr888Data(const android_ycbcr& yCbCr, int32_t width, int32_t height,
+                              int64_t hSubsampling, int64_t vSubsampling,
+                              std::function<void(uint8_t*, uint8_t)> traverseFuncion) {
+        auto yData = static_cast<uint8_t*>(yCbCr.y);
+        auto cbData = static_cast<uint8_t*>(yCbCr.cb);
+        auto crData = static_cast<uint8_t*>(yCbCr.cr);
+        auto yStride = yCbCr.ystride;
+        auto cStride = yCbCr.cstride;
+        auto chromaStep = yCbCr.chroma_step;
+
+        for (uint32_t y = 0; y < height; y++) {
+            for (uint32_t x = 0; x < width; x++) {
+                auto val = static_cast<uint8_t>(height * y + x);
+
+                traverseFuncion(yData + yStride * y + x, val);
+
+                if (y % vSubsampling == 0 && x % hSubsampling == 0) {
+                    uint32_t subSampleX = x / hSubsampling;
+                    uint32_t subSampleY = y / vSubsampling;
+                    const auto subSampleOffset = cStride * subSampleY + chromaStep * subSampleX;
+                    const auto subSampleVal =
+                            static_cast<uint8_t>(height * subSampleY + subSampleX);
+
+                    traverseFuncion(cbData + subSampleOffset, subSampleVal);
+                    traverseFuncion(crData + subSampleOffset, subSampleVal + 1);
+                }
+            }
+        }
+    }
+
+    void fillYCbCr888Data(const android_ycbcr& yCbCr, int32_t width, int32_t height,
+                          int64_t hSubsampling, int64_t vSubsampling) {
+        traverseYCbCr888Data(yCbCr, width, height, hSubsampling, vSubsampling,
+                             [](auto address, auto fillingData) { *address = fillingData; });
+    }
+
+    void verifyYCbCr888Data(const android_ycbcr& yCbCr, int32_t width, int32_t height,
+                            int64_t hSubsampling, int64_t vSubsampling) {
+        traverseYCbCr888Data(
+                yCbCr, width, height, hSubsampling, vSubsampling,
+                [](auto address, auto expectedData) { EXPECT_EQ(*address, expectedData); });
     }
 
     bool isEqual(float a, float b) { return abs(a - b) < 0.0001; }
@@ -331,8 +377,9 @@ TEST_P(GraphicsMapperHidlTest, AllocatorAllocate) {
     for (uint32_t count = 0; count < 5; count++) {
         std::vector<const native_handle_t*> bufferHandles;
         uint32_t stride;
-        ASSERT_NO_FATAL_FAILURE(
-                bufferHandles = mGralloc->allocate(descriptor, count, false, false, &stride));
+        ASSERT_NO_FATAL_FAILURE(bufferHandles =
+                                        mGralloc->allocate(descriptor, count, false,
+                                                           Tolerance::kToleranceStrict, &stride));
 
         if (count >= 1) {
             EXPECT_LE(mDummyDescriptorInfo.width, stride) << "invalid buffer stride";
@@ -532,32 +579,30 @@ TEST_P(GraphicsMapperHidlTest, LockUnlockBasic) {
 
     const native_handle_t* bufferHandle;
     uint32_t stride;
-    ASSERT_NO_FATAL_FAILURE(bufferHandle = mGralloc->allocate(info, true, false, &stride));
+    ASSERT_NO_FATAL_FAILURE(
+            bufferHandle = mGralloc->allocate(info, true, Tolerance::kToleranceStrict, &stride));
 
     // lock buffer for writing
     const IMapper::Rect region{0, 0, static_cast<int32_t>(info.width),
                                static_cast<int32_t>(info.height)};
-    int fence = -1;
+    unique_fd fence;
     uint8_t* data;
-    ASSERT_NO_FATAL_FAILURE(
-            data = static_cast<uint8_t*>(mGralloc->lock(bufferHandle, info.usage, region, fence)));
+    ASSERT_NO_FATAL_FAILURE(data = static_cast<uint8_t*>(
+                                    mGralloc->lock(bufferHandle, info.usage, region, fence.get())));
 
     // RGBA_8888
     fillRGBA8888(data, info.height, stride * 4, info.width * 4);
 
-    ASSERT_NO_FATAL_FAILURE(fence = mGralloc->unlock(bufferHandle));
+    ASSERT_NO_FATAL_FAILURE(fence.reset(mGralloc->unlock(bufferHandle)));
 
     // lock again for reading
-    ASSERT_NO_FATAL_FAILURE(
-            data = static_cast<uint8_t*>(mGralloc->lock(bufferHandle, info.usage, region, fence)));
+    ASSERT_NO_FATAL_FAILURE(data = static_cast<uint8_t*>(
+                                    mGralloc->lock(bufferHandle, info.usage, region, fence.get())));
 
     ASSERT_NO_FATAL_FAILURE(
             verifyRGBA8888(bufferHandle, data, info.height, stride * 4, info.width * 4));
 
-    ASSERT_NO_FATAL_FAILURE(fence = mGralloc->unlock(bufferHandle));
-    if (fence >= 0) {
-        close(fence);
-    }
+    ASSERT_NO_FATAL_FAILURE(fence.reset(mGralloc->unlock(bufferHandle)));
 }
 
 TEST_P(GraphicsMapperHidlTest, Lock_YCRCB_420_SP) {
@@ -566,16 +611,21 @@ TEST_P(GraphicsMapperHidlTest, Lock_YCRCB_420_SP) {
 
     const native_handle_t* bufferHandle;
     uint32_t stride;
-    ASSERT_NO_FATAL_FAILURE(bufferHandle = mGralloc->allocate(info, true, false, &stride));
+    ASSERT_NO_FATAL_FAILURE(bufferHandle = mGralloc->allocate(
+                                    info, true, Tolerance::kToleranceUnSupported, &stride));
+    if (bufferHandle == nullptr) {
+        GTEST_SUCCEED() << "YCRCB_420_SP format is unsupported";
+        return;
+    }
 
     // lock buffer for writing
     const IMapper::Rect region{0, 0, static_cast<int32_t>(info.width),
                                static_cast<int32_t>(info.height)};
-    int fence = -1;
+    unique_fd fence;
     uint8_t* data;
 
-    ASSERT_NO_FATAL_FAILURE(
-            data = static_cast<uint8_t*>(mGralloc->lock(bufferHandle, info.usage, region, fence)));
+    ASSERT_NO_FATAL_FAILURE(data = static_cast<uint8_t*>(
+                                    mGralloc->lock(bufferHandle, info.usage, region, fence.get())));
 
     android_ycbcr yCbCr;
     int64_t hSubsampling = 0;
@@ -583,74 +633,122 @@ TEST_P(GraphicsMapperHidlTest, Lock_YCRCB_420_SP) {
     ASSERT_NO_FATAL_FAILURE(
             getAndroidYCbCr(bufferHandle, data, &yCbCr, &hSubsampling, &vSubsampling));
 
-    auto yData = static_cast<uint8_t*>(yCbCr.y);
-    auto cbData = static_cast<uint8_t*>(yCbCr.cb);
-    auto crData = static_cast<uint8_t*>(yCbCr.cr);
-    auto yStride = yCbCr.ystride;
-    auto cStride = yCbCr.cstride;
-    auto chromaStep = yCbCr.chroma_step;
-
     constexpr uint32_t kCbCrSubSampleFactor = 2;
-    ASSERT_EQ(crData + 1, cbData);
-    ASSERT_EQ(2, chromaStep);
     ASSERT_EQ(kCbCrSubSampleFactor, hSubsampling);
     ASSERT_EQ(kCbCrSubSampleFactor, vSubsampling);
 
-    for (uint32_t y = 0; y < info.height; y++) {
-        for (uint32_t x = 0; x < info.width; x++) {
-            auto val = static_cast<uint8_t>(info.height * y + x);
+    auto cbData = static_cast<uint8_t*>(yCbCr.cb);
+    auto crData = static_cast<uint8_t*>(yCbCr.cr);
+    ASSERT_EQ(crData + 1, cbData);
+    ASSERT_EQ(2, yCbCr.chroma_step);
 
-            yData[yStride * y + x] = val;
+    fillYCbCr888Data(yCbCr, info.width, info.height, hSubsampling, vSubsampling);
 
-            if (y % vSubsampling == 0 && x % hSubsampling == 0) {
-                uint32_t subSampleX = x / hSubsampling;
-                uint32_t subSampleY = y / vSubsampling;
-                const auto subSampleOffset = cStride * subSampleY + chromaStep * subSampleX;
-                const auto subSampleVal =
-                        static_cast<uint8_t>(info.height * subSampleY + subSampleX);
-
-                cbData[subSampleOffset] = subSampleVal;
-                crData[subSampleOffset] = subSampleVal + 1;
-            }
-        }
-    }
-
-    ASSERT_NO_FATAL_FAILURE(fence = mGralloc->unlock(bufferHandle));
+    ASSERT_NO_FATAL_FAILURE(fence.reset(mGralloc->unlock(bufferHandle)));
 
     // lock again for reading
-    ASSERT_NO_FATAL_FAILURE(
-            data = static_cast<uint8_t*>(mGralloc->lock(bufferHandle, info.usage, region, fence)));
+    ASSERT_NO_FATAL_FAILURE(data = static_cast<uint8_t*>(
+                                    mGralloc->lock(bufferHandle, info.usage, region, fence.get())));
 
     ASSERT_NO_FATAL_FAILURE(
             getAndroidYCbCr(bufferHandle, data, &yCbCr, &hSubsampling, &vSubsampling));
 
-    yData = static_cast<uint8_t*>(yCbCr.y);
-    cbData = static_cast<uint8_t*>(yCbCr.cb);
-    crData = static_cast<uint8_t*>(yCbCr.cr);
+    verifyYCbCr888Data(yCbCr, info.width, info.height, hSubsampling, vSubsampling);
 
-    for (uint32_t y = 0; y < info.height; y++) {
-        for (uint32_t x = 0; x < info.width; x++) {
-            auto val = static_cast<uint8_t>(info.height * y + x);
+    ASSERT_NO_FATAL_FAILURE(fence.reset(mGralloc->unlock(bufferHandle)));
+}
 
-            EXPECT_EQ(val, yData[yStride * y + x]);
+TEST_P(GraphicsMapperHidlTest, Lock_YV12) {
+    auto info = mDummyDescriptorInfo;
+    info.format = PixelFormat::YV12;
 
-            if (y % vSubsampling == 0 && x % hSubsampling == 0) {
-                uint32_t subSampleX = x / hSubsampling;
-                uint32_t subSampleY = y / vSubsampling;
-                const auto subSampleOffset = cStride * subSampleY + chromaStep * subSampleX;
-                const auto subSampleVal =
-                        static_cast<uint8_t>(info.height * subSampleY + subSampleX);
+    const native_handle_t* bufferHandle;
+    uint32_t stride;
+    ASSERT_NO_FATAL_FAILURE(
+            bufferHandle = mGralloc->allocate(info, true, Tolerance::kToleranceStrict, &stride));
 
-                EXPECT_EQ(subSampleVal, cbData[subSampleOffset]);
-                EXPECT_EQ(subSampleVal + 1, crData[subSampleOffset]);
-            }
-        }
-    }
+    // lock buffer for writing
+    const IMapper::Rect region{0, 0, static_cast<int32_t>(info.width),
+                               static_cast<int32_t>(info.height)};
+    unique_fd fence;
+    uint8_t* data;
 
-    ASSERT_NO_FATAL_FAILURE(fence = mGralloc->unlock(bufferHandle));
-    if (fence >= 0) {
-        close(fence);
-    }
+    ASSERT_NO_FATAL_FAILURE(data = static_cast<uint8_t*>(
+                                    mGralloc->lock(bufferHandle, info.usage, region, fence.get())));
+
+    android_ycbcr yCbCr;
+    int64_t hSubsampling = 0;
+    int64_t vSubsampling = 0;
+    ASSERT_NO_FATAL_FAILURE(
+            getAndroidYCbCr(bufferHandle, data, &yCbCr, &hSubsampling, &vSubsampling));
+
+    constexpr uint32_t kCbCrSubSampleFactor = 2;
+    ASSERT_EQ(kCbCrSubSampleFactor, hSubsampling);
+    ASSERT_EQ(kCbCrSubSampleFactor, vSubsampling);
+
+    auto cbData = static_cast<uint8_t*>(yCbCr.cb);
+    auto crData = static_cast<uint8_t*>(yCbCr.cr);
+    ASSERT_EQ(crData + yCbCr.cstride * info.height / vSubsampling, cbData);
+    ASSERT_EQ(1, yCbCr.chroma_step);
+
+    fillYCbCr888Data(yCbCr, info.width, info.height, hSubsampling, vSubsampling);
+
+    ASSERT_NO_FATAL_FAILURE(fence.reset(mGralloc->unlock(bufferHandle)));
+
+    // lock again for reading
+    ASSERT_NO_FATAL_FAILURE(data = static_cast<uint8_t*>(
+                                    mGralloc->lock(bufferHandle, info.usage, region, fence.get())));
+
+    ASSERT_NO_FATAL_FAILURE(
+            getAndroidYCbCr(bufferHandle, data, &yCbCr, &hSubsampling, &vSubsampling));
+
+    verifyYCbCr888Data(yCbCr, info.width, info.height, hSubsampling, vSubsampling);
+
+    ASSERT_NO_FATAL_FAILURE(fence.reset(mGralloc->unlock(bufferHandle)));
+}
+
+TEST_P(GraphicsMapperHidlTest, Lock_YCBCR_420_888) {
+    auto info = mDummyDescriptorInfo;
+    info.format = PixelFormat::YCBCR_420_888;
+
+    const native_handle_t* bufferHandle;
+    uint32_t stride;
+    ASSERT_NO_FATAL_FAILURE(
+            bufferHandle = mGralloc->allocate(info, true, Tolerance::kToleranceStrict, &stride));
+
+    // lock buffer for writing
+    const IMapper::Rect region{0, 0, static_cast<int32_t>(info.width),
+                               static_cast<int32_t>(info.height)};
+    unique_fd fence;
+    uint8_t* data;
+
+    ASSERT_NO_FATAL_FAILURE(data = static_cast<uint8_t*>(
+                                    mGralloc->lock(bufferHandle, info.usage, region, fence.get())));
+
+    android_ycbcr yCbCr;
+    int64_t hSubsampling = 0;
+    int64_t vSubsampling = 0;
+    ASSERT_NO_FATAL_FAILURE(
+            getAndroidYCbCr(bufferHandle, data, &yCbCr, &hSubsampling, &vSubsampling));
+
+    constexpr uint32_t kCbCrSubSampleFactor = 2;
+    ASSERT_EQ(kCbCrSubSampleFactor, hSubsampling);
+    ASSERT_EQ(kCbCrSubSampleFactor, vSubsampling);
+
+    fillYCbCr888Data(yCbCr, info.width, info.height, hSubsampling, vSubsampling);
+
+    ASSERT_NO_FATAL_FAILURE(fence.reset(mGralloc->unlock(bufferHandle)));
+
+    // lock again for reading
+    ASSERT_NO_FATAL_FAILURE(data = static_cast<uint8_t*>(
+                                    mGralloc->lock(bufferHandle, info.usage, region, fence.get())));
+
+    ASSERT_NO_FATAL_FAILURE(
+            getAndroidYCbCr(bufferHandle, data, &yCbCr, &hSubsampling, &vSubsampling));
+
+    verifyYCbCr888Data(yCbCr, info.width, info.height, hSubsampling, vSubsampling);
+
+    ASSERT_NO_FATAL_FAILURE(fence.reset(mGralloc->unlock(bufferHandle)));
 }
 
 /**
@@ -741,8 +839,8 @@ TEST_P(GraphicsMapperHidlTest, FlushRereadBasic) {
 
     const native_handle_t* rawHandle;
     uint32_t stride;
-    ASSERT_NO_FATAL_FAILURE(
-            rawHandle = mGralloc->allocate(mDummyDescriptorInfo, false, false, &stride));
+    ASSERT_NO_FATAL_FAILURE(rawHandle = mGralloc->allocate(mDummyDescriptorInfo, false,
+                                                           Tolerance::kToleranceStrict, &stride));
 
     const native_handle_t* writeBufferHandle;
     const native_handle_t* readBufferHandle;
@@ -766,11 +864,10 @@ TEST_P(GraphicsMapperHidlTest, FlushRereadBasic) {
 
     fillRGBA8888(writeData, info.height, stride * 4, info.width * 4);
 
-    int fence;
-    ASSERT_NO_FATAL_FAILURE(fence = mGralloc->flushLockedBuffer(writeBufferHandle));
+    unique_fd fence;
+    ASSERT_NO_FATAL_FAILURE(fence.reset(mGralloc->flushLockedBuffer(writeBufferHandle)));
     if (fence >= 0) {
         ASSERT_EQ(0, sync_wait(fence, 3500));
-        close(fence);
     }
 
     ASSERT_NO_FATAL_FAILURE(mGralloc->rereadLockedBuffer(readBufferHandle));
@@ -778,14 +875,9 @@ TEST_P(GraphicsMapperHidlTest, FlushRereadBasic) {
     ASSERT_NO_FATAL_FAILURE(
             verifyRGBA8888(readBufferHandle, readData, info.height, stride * 4, info.width * 4));
 
-    ASSERT_NO_FATAL_FAILURE(fence = mGralloc->unlock(readBufferHandle));
-    if (fence >= 0) {
-        close(fence);
-    }
-    ASSERT_NO_FATAL_FAILURE(fence = mGralloc->unlock(writeBufferHandle));
-    if (fence >= 0) {
-        close(fence);
-    }
+    ASSERT_NO_FATAL_FAILURE(fence.reset(mGralloc->unlock(readBufferHandle)));
+
+    ASSERT_NO_FATAL_FAILURE(fence.reset(mGralloc->unlock(writeBufferHandle)));
 }
 
 /**
@@ -964,7 +1056,7 @@ TEST_P(GraphicsMapperHidlTest, GetProtectedContent) {
     info.usage = BufferUsage::PROTECTED | BufferUsage::COMPOSER_OVERLAY;
 
     const native_handle_t* bufferHandle = nullptr;
-    bufferHandle = mGralloc->allocate(info, true, true);
+    bufferHandle = mGralloc->allocate(info, true, Tolerance::kToleranceAllErrors);
     if (!bufferHandle) {
         GTEST_SUCCEED() << "unable to allocate protected content";
         return;
@@ -1267,7 +1359,7 @@ TEST_P(GraphicsMapperHidlTest, SetProtectedContent) {
     auto info = mDummyDescriptorInfo;
     info.usage = BufferUsage::PROTECTED | BufferUsage::COMPOSER_OVERLAY;
 
-    bufferHandle = mGralloc->allocate(info, true, true);
+    bufferHandle = mGralloc->allocate(info, true, Tolerance::kToleranceAllErrors);
     if (!bufferHandle) {
         GTEST_SUCCEED() << "unable to allocate protected content";
         return;
