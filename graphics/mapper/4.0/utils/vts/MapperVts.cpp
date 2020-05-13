@@ -90,6 +90,9 @@ std::vector<const native_handle_t*> Gralloc::allocate(const BufferDescriptor& de
     mAllocator->allocate(
             descriptor, count,
             [&](const auto& tmpError, const auto& tmpStride, const auto& tmpBuffers) {
+                if (allowFailure && tmpError == Error::UNSUPPORTED) {
+                    return;
+                }
                 ASSERT_EQ(Error::NONE, tmpError) << "failed to allocate buffers";
                 ASSERT_EQ(count, tmpBuffers.size()) << "invalid buffer array";
 
