@@ -71,7 +71,8 @@ sp<IAllocator> Gralloc::getAllocator() const {
     return mAllocator;
 }
 
-const native_handle_t* Gralloc::cloneBuffer(const hidl_handle& rawHandle) {
+const native_handle_t* Gralloc::cloneBuffer(const hidl_handle& rawHandle,
+                                            enum Tolerance /*tolerance*/) {
     const native_handle_t* bufferHandle = native_handle_clone(rawHandle.getNativeHandle());
     EXPECT_NE(nullptr, bufferHandle);
 
@@ -84,42 +85,37 @@ const native_handle_t* Gralloc::cloneBuffer(const hidl_handle& rawHandle) {
 
 std::vector<const native_handle_t*> Gralloc::allocate(const BufferDescriptor& descriptor,
                                                       uint32_t count, bool import,
-                                                      bool allowFailure, uint32_t* outStride) {
+                                                      enum Tolerance tolerance,
+                                                      uint32_t* outStride) {
     std::vector<const native_handle_t*> bufferHandles;
     bufferHandles.reserve(count);
-    mAllocator->allocate(
-            descriptor, count,
-            [&](const auto& tmpError, const auto& tmpStride, const auto& tmpBuffers) {
-                if (allowFailure && tmpError == Error::UNSUPPORTED) {
-                    return;
-                }
-                ASSERT_EQ(Error::NONE, tmpError) << "failed to allocate buffers";
-                ASSERT_EQ(count, tmpBuffers.size()) << "invalid buffer array";
+    mAllocator->allocate(descriptor, count,
+                         [&](const auto& tmpError, const auto& tmpStride, const auto& tmpBuffers) {
+                             if (canTolerate(tolerance, tmpError)) {
+                                 return;
+                             }
 
-                for (uint32_t i = 0; i < count; i++) {
-                    const native_handle_t* bufferHandle = nullptr;
-                    if (import) {
-                        if (allowFailure) {
-                            bufferHandle = importBuffer(tmpBuffers[i]);
-                        } else {
-                            ASSERT_NO_FATAL_FAILURE(bufferHandle = importBuffer(tmpBuffers[i]));
-                        }
-                    } else {
-                        if (allowFailure) {
-                            bufferHandle = cloneBuffer(tmpBuffers[i]);
-                        } else {
-                            ASSERT_NO_FATAL_FAILURE(bufferHandle = cloneBuffer(tmpBuffers[i]));
-                        }
-                    }
-                    if (bufferHandle) {
-                        bufferHandles.push_back(bufferHandle);
-                    }
-                }
+                             ASSERT_EQ(Error::NONE, tmpError) << "failed to allocate buffers";
+                             ASSERT_EQ(count, tmpBuffers.size()) << "invalid buffer array";
 
-                if (outStride) {
-                    *outStride = tmpStride;
-                }
-            });
+                             for (uint32_t i = 0; i < count; i++) {
+                                 const native_handle_t* bufferHandle = nullptr;
+                                 if (import) {
+                                     ASSERT_NO_FATAL_FAILURE(
+                                             bufferHandle = importBuffer(tmpBuffers[i], tolerance));
+                                 } else {
+                                     ASSERT_NO_FATAL_FAILURE(
+                                             bufferHandle = cloneBuffer(tmpBuffers[i], tolerance));
+                                 }
+                                 if (bufferHandle) {
+                                     bufferHandles.push_back(bufferHandle);
+                                 }
+                             }
+
+                             if (outStride) {
+                                 *outStride = tmpStride;
+                             }
+                         });
 
     if (::testing::Test::HasFatalFailure()) {
         bufferHandles.clear();
@@ -129,13 +125,14 @@ std::vector<const native_handle_t*> Gralloc::allocate(const BufferDescriptor& de
 }
 
 const native_handle_t* Gralloc::allocate(const IMapper::BufferDescriptorInfo& descriptorInfo,
-                                         bool import, bool allowFailure, uint32_t* outStride) {
+                                         bool import, enum Tolerance tolerance,
+                                         uint32_t* outStride) {
     BufferDescriptor descriptor = createDescriptor(descriptorInfo);
     if (::testing::Test::HasFatalFailure()) {
         return nullptr;
     }
 
-    auto buffers = allocate(descriptor, 1, import, allowFailure, outStride);
+    auto buffers = allocate(descriptor, 1, import, tolerance, outStride);
     if (::testing::Test::HasFatalFailure()) {
         return nullptr;
     }
@@ -160,11 +157,14 @@ BufferDescriptor Gralloc::createDescriptor(const IMapper::BufferDescriptorInfo& 
     return descriptor;
 }
 
-const native_handle_t* Gralloc::importBuffer(const hidl_handle& rawHandle) {
+const native_handle_t* Gralloc::importBuffer(const hidl_handle& rawHandle,
+                                             enum Tolerance tolerance) {
     const native_handle_t* bufferHandle = nullptr;
     mMapper->importBuffer(rawHandle, [&](const auto& tmpError, const auto& tmpBuffer) {
-        ASSERT_EQ(Error::NONE, tmpError)
-                << "failed to import buffer %p" << rawHandle.getNativeHandle();
+        if (!canTolerate(tolerance, tmpError)) {
+            ASSERT_EQ(Error::NONE, tmpError)
+                    << "failed to import buffer %p" << rawHandle.getNativeHandle();
+        }
         bufferHandle = static_cast<const native_handle_t*>(tmpBuffer);
     });
 

@@ -150,28 +150,6 @@ TEST_P(WifiChipHidlTest, registerEventCallback_1_4) {
     }
 }
 
-/*
- * createRttController_1_4
- * Ensures that an instance of the IWifiRttController proxy object is
- * successfully created.
- */
-TEST_P(WifiChipHidlTest, createRttController_1_4) {
-    configureChipForIfaceType(IfaceType::STA, true);
-
-    const auto& status_and_iface = HIDL_INVOKE(wifi_chip_, createStaIface);
-    EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_iface.first.code);
-    sp<IWifiStaIface> iface = IWifiStaIface::castFrom(status_and_iface.second);
-    EXPECT_NE(nullptr, iface.get());
-
-    const auto& status_and_controller =
-        HIDL_INVOKE(wifi_chip_, createRttController_1_4, iface);
-    if (status_and_controller.first.code !=
-        WifiStatusCode::ERROR_NOT_SUPPORTED) {
-        EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_controller.first.code);
-        EXPECT_NE(nullptr, status_and_controller.second.get());
-    }
-}
-
 INSTANTIATE_TEST_SUITE_P(
     PerInstance, WifiChipHidlTest,
     testing::ValuesIn(android::hardware::getAllHalInstanceNames(
