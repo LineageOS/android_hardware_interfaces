@@ -2,9 +2,11 @@ cc_library_shared {
     name: "camera.device@3.3-impl",
     defaults: ["hidl_defaults"],
     proprietary: true,
-    srcs: ["CameraDevice.cpp",
-           "CameraDeviceSession.cpp",
-           "convert.cpp"],
+    srcs: [
+        "CameraDevice.cpp",
+        "CameraDeviceSession.cpp",
+        "convert.cpp",
+    ],
     shared_libs: [
         "libhidlbase",
         "libutils",
@@ -17,15 +19,16 @@ cc_library_shared {
         "android.hardware.graphics.mapper@3.0",
         "android.hardware.graphics.mapper@4.0",
         "liblog",
+        "libgralloctypes",
         "libhardware",
         "libcamera_metadata",
-        "libfmq"
+        "libfmq",
     ],
     static_libs: [
-        "android.hardware.camera.common@1.0-helper"
+        "android.hardware.camera.common@1.0-helper",
     ],
     export_include_dirs: ["."],
     export_shared_lib_headers: [
         "libfmq",
-    ]
+    ],
 }
