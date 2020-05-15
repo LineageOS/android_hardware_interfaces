@@ -575,7 +575,10 @@ public:
  }
  virtual void TearDown() override {}
 
- hidl_vec<hidl_string> getCameraDeviceNames(sp<ICameraProvider> provider);
+ hidl_vec<hidl_string> getCameraDeviceNames(sp<ICameraProvider> provider,
+                                            bool addSecureOnly = false);
+
+ bool isSecureOnly(sp<ICameraProvider> provider, const hidl_string& name);
 
  std::map<hidl_string, hidl_string> getCameraDeviceIdToNameMap(sp<ICameraProvider> provider);
 
@@ -1585,7 +1588,8 @@ std::map<hidl_string, hidl_string> CameraHidlTest::getCameraDeviceIdToNameMap(
     return idToNameMap;
 }
 
-hidl_vec<hidl_string> CameraHidlTest::getCameraDeviceNames(sp<ICameraProvider> provider) {
+hidl_vec<hidl_string> CameraHidlTest::getCameraDeviceNames(sp<ICameraProvider> provider,
+                                                           bool addSecureOnly) {
     std::vector<std::string> cameraDeviceNames;
     Return<void> ret;
     ret = provider->getCameraIdList(
@@ -1634,11 +1638,51 @@ hidl_vec<hidl_string> CameraHidlTest::getCameraDeviceNames(sp<ICameraProvider> p
         }
     }
 
-    hidl_vec<hidl_string> retList(cameraDeviceNames.size());
+    std::vector<hidl_string> retList;
     for (size_t i = 0; i < cameraDeviceNames.size(); i++) {
-        retList[i] = cameraDeviceNames[i];
+        bool isSecureOnlyCamera = isSecureOnly(mProvider, cameraDeviceNames[i]);
+        if (addSecureOnly) {
+            if (isSecureOnlyCamera) {
+                retList.emplace_back(cameraDeviceNames[i]);
+            }
+        } else if (!isSecureOnlyCamera) {
+            retList.emplace_back(cameraDeviceNames[i]);
+        }
     }
-    return retList;
+    hidl_vec<hidl_string> finalRetList = std::move(retList);
+    return finalRetList;
+}
+
+bool CameraHidlTest::isSecureOnly(sp<ICameraProvider> provider, const hidl_string& name) {
+    Return<void> ret;
+    ::android::sp<ICameraDevice> device3_x;
+    bool retVal = false;
+    if (getCameraDeviceVersion(mProviderType, name) == CAMERA_DEVICE_API_VERSION_1_0) {
+        return false;
+    }
+    ret = provider->getCameraDeviceInterface_V3_x(name, [&](auto status, const auto& device) {
+        ALOGI("getCameraDeviceInterface_V3_x returns status:%d", (int)status);
+        ASSERT_EQ(Status::OK, status);
+        ASSERT_NE(device, nullptr);
+        device3_x = device;
+    });
+    if (!ret.isOk()) {
+        ADD_FAILURE() << "Failed to get camera device interface for " << name;
+    }
+    ret = device3_x->getCameraCharacteristics([&](Status s, CameraMetadata metadata) {
+        ASSERT_EQ(Status::OK, s);
+        camera_metadata_t* chars = (camera_metadata_t*)metadata.data();
+        SystemCameraKind systemCameraKind = SystemCameraKind::PUBLIC;
+        Status status = getSystemCameraKind(chars, &systemCameraKind);
+        ASSERT_EQ(status, Status::OK);
+        if (systemCameraKind == SystemCameraKind::HIDDEN_SECURE_CAMERA) {
+            retVal = true;
+        }
+    });
+    if (!ret.isOk()) {
+        ADD_FAILURE() << "Failed to get camera characteristics for device " << name;
+    }
+    return retVal;
 }
 
 hidl_vec<hidl_vec<hidl_string>> CameraHidlTest::getConcurrentDeviceCombinations(
