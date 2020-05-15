@@ -8,7 +8,7 @@ cc_library_static {
         "CameraParameters.cpp",
         "VendorTagDescriptor.cpp",
         "HandleImporter.cpp",
-        "Exif.cpp"
+        "Exif.cpp",
     ],
     cflags: [
         "-Werror",
@@ -17,6 +17,7 @@ cc_library_static {
     ],
     shared_libs: [
         "liblog",
+        "libgralloctypes",
         "libhardware",
         "libcamera_metadata",
         "android.hardware.graphics.mapper@2.0",
@@ -25,6 +26,5 @@ cc_library_static {
         "libexif",
     ],
     include_dirs: ["system/media/private/camera/include"],
-    export_include_dirs : ["include"]
+    export_include_dirs: ["include"],
 }
-

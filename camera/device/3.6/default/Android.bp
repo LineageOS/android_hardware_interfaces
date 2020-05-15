@@ -17,7 +17,7 @@
 cc_library_headers {
     name: "camera.device@3.6-external-impl_headers",
     vendor: true,
-    export_include_dirs: ["include/ext_device_v3_6_impl"]
+    export_include_dirs: ["include/ext_device_v3_6_impl"],
 }
 
 cc_library_shared {
@@ -48,6 +48,7 @@ cc_library_shared {
         "android.hardware.graphics.mapper@3.0",
         "android.hardware.graphics.mapper@4.0",
         "liblog",
+        "libgralloctypes",
         "libhardware",
         "libcamera_metadata",
         "libfmq",
@@ -55,7 +56,7 @@ cc_library_shared {
         "libyuv",
         "libjpeg",
         "libexif",
-        "libtinyxml2"
+        "libtinyxml2",
     ],
     static_libs: [
         "android.hardware.camera.common@1.0-helper",
