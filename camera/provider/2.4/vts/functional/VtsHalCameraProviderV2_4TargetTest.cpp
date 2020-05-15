@@ -565,7 +565,9 @@ public:
 
  hidl_vec<hidl_string> getCameraDeviceNames(sp<ICameraProvider> provider);
 
-    struct EmptyDeviceCb : public V3_5::ICameraDeviceCallback {
+ bool isSecureOnly(sp<ICameraProvider> provider, const hidl_string& name);
+
+ struct EmptyDeviceCb : public V3_5::ICameraDeviceCallback {
      virtual Return<void> processCaptureResult(
          const hidl_vec<CaptureResult>& /*results*/) override {
          ALOGI("processCaptureResult callback");
@@ -1498,11 +1500,52 @@ hidl_vec<hidl_string> CameraHidlTest::getCameraDeviceNames(sp<ICameraProvider> p
         }
     }
 
-    hidl_vec<hidl_string> retList(cameraDeviceNames.size());
+    std::vector<hidl_string> nonSecureCameraDeviceNames;
     for (size_t i = 0; i < cameraDeviceNames.size(); i++) {
-        retList[i] = cameraDeviceNames[i];
+        // Skip adding secure only cameras, since we don't know their exact
+        // capabilities.
+        if (!isSecureOnly(mProvider, cameraDeviceNames[i])) {
+            nonSecureCameraDeviceNames.emplace_back(cameraDeviceNames[i]);
+        }
     }
+    hidl_vec<hidl_string> retList(std::move(nonSecureCameraDeviceNames));
     return retList;
+}
+
+bool CameraHidlTest::isSecureOnly(sp<ICameraProvider> provider, const hidl_string& name) {
+    Return<void> ret;
+    ::android::sp<ICameraDevice> device3_x;
+    bool retVal = false;
+    if (getCameraDeviceVersion(mProviderType, name) == CAMERA_DEVICE_API_VERSION_1_0) {
+        return false;
+    }
+    ret = provider->getCameraDeviceInterface_V3_x(name, [&](auto status, const auto& device) {
+        ALOGI("getCameraDeviceInterface_V3_x returns status:%d", (int)status);
+        ASSERT_EQ(Status::OK, status);
+        ASSERT_NE(device, nullptr);
+        device3_x = device;
+    });
+    if (!ret.isOk()) {
+        ADD_FAILURE() << "Failed to get camera device interface for " << name;
+    }
+    ret = device3_x->getCameraCharacteristics([&](Status s, CameraMetadata metadata) {
+        ASSERT_EQ(Status::OK, s);
+        camera_metadata_ro_entry scalarEntry;
+        camera_metadata_t* chars = (camera_metadata_t*)metadata.data();
+        int rc = find_camera_metadata_ro_entry(chars, ANDROID_REQUEST_AVAILABLE_CAPABILITIES,
+                                               &scalarEntry);
+        if (rc) {
+            ADD_FAILURE();
+        }
+        if (scalarEntry.count == 1 &&
+            scalarEntry.data.u8[0] == ANDROID_REQUEST_AVAILABLE_CAPABILITIES_SECURE_IMAGE_DATA) {
+            retVal = true;
+        }
+    });
+    if (!ret.isOk()) {
+        ADD_FAILURE() << "Failed to get camera characteristics for device " << name;
+    }
+    return retVal;
 }
 
 // Test devices with first_api_level >= P does not advertise device@1.0
