@@ -27,10 +27,13 @@ cc_test {
         "android.hardware.wifi@1.1",
         "android.hardware.wifi@1.2",
         "android.hardware.wifi@1.3",
-        "libwifi-system-iface"
+        "libwifi-system-iface",
     ],
     disable_framework: true,
-    test_suites: ["general-tests", "vts-core"],
+    test_suites: [
+        "general-tests",
+        "vts",
+    ],
 }
 
 cc_test {
@@ -44,8 +47,10 @@ cc_test {
         "android.hardware.wifi@1.0",
         "android.hardware.wifi@1.1",
         "android.hardware.wifi@1.2",
-        "libwifi-system-iface"
+        "libwifi-system-iface",
     ],
-    disable_framework: true,
-    test_suites: ["general-tests", "vts-core"],
+    test_suites: [
+        "general-tests",
+        "vts",
+    ],
 }
