@@ -80,8 +80,9 @@ TEST_P(BootHidlTest, MarkBootSuccessful) {
     }
 }
 
+// TODO(b/156557331): The test should switch back to the original boot slot.
 // Sanity check Boot::setActiveBootSlot() on good and bad inputs.
-TEST_P(BootHidlTest, SetActiveBootSlot) {
+TEST_P(BootHidlTest, DISABLED_SetActiveBootSlot) {
     for (Slot s = 0; s < 2; s++) {
         CommandResult cr;
         Return<void> result = boot->setActiveBootSlot(s, generate_callback(&cr));
@@ -103,8 +104,9 @@ TEST_P(BootHidlTest, SetActiveBootSlot) {
     }
 }
 
+// TODO(b/156557331): It should switch back the original boot slot after testing.
 // Sanity check Boot::setSlotAsUnbootable() on good and bad inputs.
-TEST_P(BootHidlTest, SetSlotAsUnbootable) {
+TEST_P(BootHidlTest, DISABLED_SetSlotAsUnbootable) {
     {
         CommandResult cr;
         Slot curSlot = boot->getCurrentSlot();
