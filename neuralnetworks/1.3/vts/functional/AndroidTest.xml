@@ -13,25 +13,24 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<configuration description="Runs VtsHalDrmV1_1TargetTest.">
+<configuration description="Runs VtsHalNeuralnetworksV1_3TargetTest.">
     <option name="test-suite-tag" value="apct" />
     <option name="test-suite-tag" value="apct-native" />
 
-    <target_preparer class="com.android.tradefed.targetprep.RootTargetPreparer"/>
-
-    <target_preparer class="com.android.tradefed.targetprep.WifiPreparer" >
-        <option name="verify-only" value="true" />
+    <target_preparer class="com.android.tradefed.targetprep.RootTargetPreparer">
     </target_preparer>
 
     <target_preparer class="com.android.tradefed.targetprep.PushFilePreparer">
         <option name="cleanup" value="true" />
-        <option name="push-file" key="VtsHalDrmV1_1TargetTest" value="/data/local/tmp/VtsHalDrmV1_1TargetTest" />
-        <option name="push-file" key="libvtswidevine64.so" value="/data/local/tmp/64/lib/libvtswidevine.so" />
-        <option name="push-file" key="libvtswidevine32.so" value="/data/local/tmp/32/lib/libvtswidevine.so" />
+        <option name="push" value="VtsHalNeuralnetworksV1_3TargetTest->/data/local/tmp/VtsHalNeuralnetworksV1_3TargetTest" />
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.GTest" >
+        <!-- b/156691406, b/155577050, b/155674368, b/153876253, temporarily disable the test.
+             Must be deleted after corresponding driver issues are fixed.
+        -->
+        <option name="native-test-flag" value="--gtest_filter=-*Validation*:*DynamicOutputShapeTest*:*FencedComputeTest*:*MemoryDomain*:*QuantizationCouplingTest*:*DeadlineTest*:*resize_*_v1_3*:*squeeze*_all*_inputs*:*strided_slice*_all*_inputs*:*transpose*_all*_inputs*:*l2_normalization_axis_corner_case*:*sample_float_fast*:*sample_float_slow*:*sample_minimal*:*sample_quant*" />
         <option name="native-test-device-path" value="/data/local/tmp" />
-        <option name="module-name" value="VtsHalDrmV1_1TargetTest" />
+        <option name="module-name" value="VtsHalNeuralnetworksV1_3TargetTest" />
     </test>
 </configuration>
