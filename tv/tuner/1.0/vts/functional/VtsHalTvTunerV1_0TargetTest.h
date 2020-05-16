@@ -14,18 +14,13 @@
  * limitations under the License.
  */
 
-#include <android/hardware/tv/tuner/1.0/IDescrambler.h>
-
 #include "DemuxTests.h"
+#include "DescramblerTests.h"
 #include "DvrTests.h"
 #include "FrontendTests.h"
 
 using android::hardware::tv::tuner::V1_0::DataFormat;
 using android::hardware::tv::tuner::V1_0::IDescrambler;
-
-static AssertionResult failure() {
-    return ::testing::AssertionFailure();
-}
 
 static AssertionResult success() {
     return ::testing::AssertionSuccess();
@@ -38,6 +33,17 @@ void initConfiguration() {
     initFrontendScanConfig();
     initFilterConfig();
     initDvrConfig();
+    initDescramblerConfig();
+}
+
+AssertionResult filterDataOutputTestBase(FilterTests tests) {
+    // Data Verify Module
+    std::map<uint32_t, sp<FilterCallback>>::iterator it;
+    std::map<uint32_t, sp<FilterCallback>> filterCallbacks = tests.getFilterCallbacks();
+    for (it = filterCallbacks.begin(); it != filterCallbacks.end(); it++) {
+        it->second->testFilterDataOutput();
+    }
+    return success();
 }
 
 class TunerFrontendHidlTest : public testing::TestWithParam<std::string> {
@@ -191,15 +197,19 @@ class TunerRecordHidlTest : public testing::TestWithParam<std::string> {
     DvrTests mDvrTests;
 };
 
-class TunerHidlTest : public testing::TestWithParam<std::string> {
+class TunerDescramblerHidlTest : public testing::TestWithParam<std::string> {
   public:
     virtual void SetUp() override {
         mService = ITuner::getService(GetParam());
+        mCasService = IMediaCasService::getService();
         ASSERT_NE(mService, nullptr);
+        ASSERT_NE(mCasService, nullptr);
         initConfiguration();
 
         mFrontendTests.setService(mService);
         mDemuxTests.setService(mService);
+        mDescramblerTests.setService(mService);
+        mDescramblerTests.setCasService(mCasService);
     }
 
   protected:
@@ -207,13 +217,15 @@ class TunerHidlTest : public testing::TestWithParam<std::string> {
         RecordProperty("description", description);
     }
 
+    void scrambledBroadcastTest(set<struct FilterConfig> mediaFilterConfs,
+                                FrontendConfig frontendConf, DescramblerConfig descConfig);
+    AssertionResult filterDataOutputTest(vector<string> /*goldenOutputFiles*/);
+
     sp<ITuner> mService;
+    sp<IMediaCasService> mCasService;
     FrontendTests mFrontendTests;
     DemuxTests mDemuxTests;
-
-    sp<IDescrambler> mDescrambler;
-
-    AssertionResult createDescrambler(uint32_t demuxId);
-    AssertionResult closeDescrambler();
+    FilterTests mFilterTests;
+    DescramblerTests mDescramblerTests;
 };
 }  // namespace

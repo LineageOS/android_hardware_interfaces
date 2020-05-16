@@ -50,6 +50,19 @@ const uint32_t FMQ_SIZE_1M = 0x100000;
 const uint32_t FMQ_SIZE_4M = 0x400000;
 const uint32_t FMQ_SIZE_16M = 0x1000000;
 
+#define CLEAR_KEY_SYSTEM_ID 0xF6D8
+#define PROVISION_STR                                      \
+    "{                                                   " \
+    "  \"id\": 21140844,                                 " \
+    "  \"name\": \"Test Title\",                         " \
+    "  \"lowercase_organization_name\": \"Android\",     " \
+    "  \"asset_key\": {                                  " \
+    "  \"encryption_key\": \"nezAr3CHFrmBR9R8Tedotw==\"  " \
+    "  },                                                " \
+    "  \"cas_type\": 1,                                  " \
+    "  \"track_types\": [ ]                              " \
+    "}                                                   "
+
 typedef enum {
     TS_VIDEO0,
     TS_VIDEO1,
@@ -79,10 +92,17 @@ typedef enum {
     DVR_MAX,
 } Dvr;
 
+typedef enum {
+    DESC_0,
+    DESC_MAX,
+} Descrambler;
+
 struct FilterConfig {
     uint32_t bufferSize;
     DemuxFilterType type;
     DemuxFilterSettings settings;
+
+    bool operator<(const FilterConfig& /*c*/) const { return false; }
 };
 
 struct FrontendConfig {
@@ -105,11 +125,18 @@ struct DvrConfig {
     string playbackInputFile;
 };
 
+struct DescramblerConfig {
+    uint32_t casSystemId;
+    string provisionStr;
+    vector<uint8_t> hidlPvtData;
+};
+
 static FrontendConfig frontendArray[FILTER_MAX];
 static FrontendConfig frontendScanArray[SCAN_MAX];
 static ChannelConfig channelArray[FRONTEND_MAX];
 static FilterConfig filterArray[FILTER_MAX];
 static DvrConfig dvrArray[DVR_MAX];
+static DescramblerConfig descramblerArray[DESC_MAX];
 static vector<string> goldenOutputFiles;
 
 /** Configuration array for the frontend tune test */
@@ -227,4 +254,11 @@ inline void initDvrConfig() {
     dvrArray[DVR_PLAYBACK0].playbackInputFile = "/vendor/etc/segment000000.ts";
     dvrArray[DVR_PLAYBACK0].bufferSize = FMQ_SIZE_4M;
     dvrArray[DVR_PLAYBACK0].settings.playback(playbackSettings);
+};
+
+/** Configuration array for the descrambler test */
+inline void initDescramblerConfig() {
+    descramblerArray[DESC_0].casSystemId = CLEAR_KEY_SYSTEM_ID;
+    descramblerArray[DESC_0].provisionStr = PROVISION_STR;
+    descramblerArray[DESC_0].hidlPvtData.resize(256);
 };
