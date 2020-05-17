@@ -4096,6 +4096,8 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: A tensor of the same {@link OperandType} as input0.
+     *      If all dimensions are reduced and keep_dims is false, the output
+     *      shape is [1].
      */
     REDUCE_ALL = @1.2::OperationType:REDUCE_ALL,
 
@@ -4121,6 +4123,8 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: A tensor of the same {@link OperandType} as input0.
+     *      If all dimensions are reduced and keep_dims is false, the output
+     *      shape is [1].
      */
     REDUCE_ANY = @1.2::OperationType:REDUCE_ANY,
 
@@ -4149,6 +4153,8 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: A tensor of the same {@link OperandType} as input0.
+     *      If all dimensions are reduced and keep_dims is false, the output
+     *      shape is [1].
      *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} and
      *      {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} tensor,
      *      the scale and zeroPoint must be the same as input0.
@@ -4180,6 +4186,8 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: A tensor of the same {@link OperandType} as input0.
+     *      If all dimensions are reduced and keep_dims is false, the output
+     *      shape is [1].
      *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} and
      *      {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} tensor,
      *      the scale and zeroPoint must be the same as input0.
@@ -4208,6 +4216,8 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: A tensor of the same {@link OperandType} as input0.
+     *      If all dimensions are reduced and keep_dims is false, the output
+     *      shape is [1].
      */
     REDUCE_PROD = @1.2::OperationType:REDUCE_PROD,
 
@@ -4233,6 +4243,8 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: A tensor of the same {@link OperandType} as input0.
+     *      If all dimensions are reduced and keep_dims is false, the output
+     *      shape is [1].
      */
     REDUCE_SUM = @1.2::OperationType:REDUCE_SUM,
 
