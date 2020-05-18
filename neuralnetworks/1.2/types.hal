@@ -1955,6 +1955,8 @@ enum OperationType : int32_t {
      * * 0: A tensor of the same {@link OperandType} as input0.
      *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
      *      the scale and zeroPoint must be the same as input0.
+     *      If all dimensions are reduced and keep_dims is false, the output
+     *      shape is [1].
      */
     MEAN = @1.1::OperationType:MEAN,
 
@@ -2078,6 +2080,8 @@ enum OperationType : int32_t {
      *      removed.
      *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
      *      the scale and zeroPoint must be the same as input0.
+     *      If all input dimensions are equal to 1 and are to be squeezed, the
+     *      output shape is [1].
      */
     SQUEEZE = @1.1::OperationType:SQUEEZE,
 
@@ -2125,6 +2129,8 @@ enum OperationType : int32_t {
      *      where k is the number of bits set in shrink_axis_mask.
      *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
      *      the scale and zeroPoint must be the same as input0.
+     *      If shrink_axis_mask is true for all input dimensions, the output
+     *      shape is [1].
      */
     STRIDED_SLICE = @1.1::OperationType:STRIDED_SLICE,
 
@@ -2239,6 +2245,7 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: An (n - 1)-D {@link OperandType::TENSOR_INT32} tensor.
+     *      If input is 1-dimensional, the output shape is [1].
      */
     // There is no underscore in ARG_MAX to avoid name conflict with
     // the macro defined in libc/kernel/uapi/linux/limits.h.
@@ -2263,6 +2270,7 @@ enum OperationType : int32_t {
      *
      * Outputs:
      * * 0: An (n - 1)-D {@link OperandType::TENSOR_INT32} tensor.
+     *      If input is 1-dimensional, the output shape is [1].
      */
     ARGMIN = 40,  // See ARGMAX for naming discussion.
 
