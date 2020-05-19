@@ -23,14 +23,14 @@ cc_library_static {
         "wifi_hidl_test_utils.cpp",
     ],
     export_include_dirs: [
-        "."
+        ".",
     ],
     shared_libs: [
         "libnativehelper",
     ],
     static_libs: [
         "android.hardware.wifi@1.0",
-        "libwifi-system-iface"
+        "libwifi-system-iface",
     ],
 }
 
@@ -49,9 +49,12 @@ cc_test {
         "android.hardware.wifi@1.1",
         "android.hardware.wifi@1.2",
         "android.hardware.wifi@1.3",
-        "libwifi-system-iface"
+        "libwifi-system-iface",
     ],
-    test_suites: ["general-tests", "vts-core"],
+    test_suites: [
+        "general-tests",
+        "vts",
+    ],
 }
 
 // These tests are split out so that they can be conditioned on presence of the
@@ -66,9 +69,12 @@ cc_test {
     static_libs: [
         "VtsHalWifiV1_0TargetTestUtil",
         "android.hardware.wifi@1.0",
-        "libwifi-system-iface"
+        "libwifi-system-iface",
     ],
-    test_suites: ["general-tests", "vts-core"],
+    test_suites: [
+        "general-tests",
+        "vts",
+    ],
 }
 
 // These tests are split out so that they can be conditioned on presence of
@@ -83,7 +89,10 @@ cc_test {
     static_libs: [
         "VtsHalWifiV1_0TargetTestUtil",
         "android.hardware.wifi@1.0",
-        "libwifi-system-iface"
+        "libwifi-system-iface",
     ],
-    test_suites: ["general-tests", "vts-core"],
+    test_suites: [
+        "general-tests",
+        "vts",
+    ],
 }
