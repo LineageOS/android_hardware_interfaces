@@ -16,6 +16,7 @@
 
 #include <android-base/logging.h>
 
+#include <VtsCoreUtil.h>
 #include <android/hardware/wifi/1.0/IWifi.h>
 #include <android/hardware/wifi/1.0/IWifiRttController.h>
 #include <gtest/gtest.h>
@@ -38,6 +39,8 @@ using ::android::hardware::wifi::V1_0::WifiStatusCode;
 class WifiRttControllerHidlTest : public ::testing::TestWithParam<std::string> {
    public:
     virtual void SetUp() override {
+        if (!::testing::deviceSupportsFeature("android.hardware.wifi.rtt"))
+            GTEST_SKIP() << "Skipping this test since RTT is not supported.";
         // Make sure test starts with a clean state
         stopWifi(GetInstanceName());
     }
