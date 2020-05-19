@@ -126,6 +126,8 @@ enum OperationType : @1.0::OperationType {
      * * 0: A tensor of the same {@link OperandType} as input0.
      *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
      *      the scale and zeroPoint must be the same as input0.
+     *      If all dimensions are reduced and keep_dims is false, the output
+     *      shape is [1].
      */
     MEAN = 31,
 
@@ -232,6 +234,8 @@ enum OperationType : @1.0::OperationType {
      *      removed.
      *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
      *      the scale and zeroPoint must be the same as input0.
+     *      If all input dimensions are equal to 1 and are to be squeezed, the
+     *      output shape is [1].
      */
     SQUEEZE = 34,
 
@@ -278,6 +282,8 @@ enum OperationType : @1.0::OperationType {
      *      where k is the number of bits set in shrink_axis_mask.
      *      For a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
      *      the scale and zeroPoint must be the same as input0.
+     *      If shrink_axis_mask is true for all input dimensions, the output
+     *      shape is [1].
      */
     STRIDED_SLICE = 35,
 
