@@ -246,6 +246,120 @@ AssertionResult FrontendTests::stopScanFrontend() {
     return AssertionResult(status == Result::SUCCESS);
 }
 
+void FrontendTests::verifyFrontendStatus(vector<FrontendStatusType> statusTypes,
+                                         vector<FrontendStatus> expectStatuses) {
+    ASSERT_TRUE(mFrontend) << "Frontend is not opened yet.";
+    Result status;
+    vector<FrontendStatus> realStatuses;
+
+    mFrontend->getStatus(statusTypes, [&](Result result, const hidl_vec<FrontendStatus>& statuses) {
+        status = result;
+        realStatuses = statuses;
+    });
+
+    ASSERT_TRUE(realStatuses.size() == statusTypes.size());
+    for (int i = 0; i < statusTypes.size(); i++) {
+        FrontendStatusType type = statusTypes[i];
+        switch (type) {
+            case FrontendStatusType::DEMOD_LOCK: {
+                ASSERT_TRUE(realStatuses[i].isDemodLocked() == expectStatuses[i].isDemodLocked());
+                break;
+            }
+            case FrontendStatusType::SNR: {
+                ASSERT_TRUE(realStatuses[i].snr() == expectStatuses[i].snr());
+                break;
+            }
+            case FrontendStatusType::BER: {
+                ASSERT_TRUE(realStatuses[i].ber() == expectStatuses[i].ber());
+                break;
+            }
+            case FrontendStatusType::PER: {
+                ASSERT_TRUE(realStatuses[i].per() == expectStatuses[i].per());
+                break;
+            }
+            case FrontendStatusType::PRE_BER: {
+                ASSERT_TRUE(realStatuses[i].preBer() == expectStatuses[i].preBer());
+                break;
+            }
+            case FrontendStatusType::SIGNAL_QUALITY: {
+                ASSERT_TRUE(realStatuses[i].signalQuality() == expectStatuses[i].signalQuality());
+                break;
+            }
+            case FrontendStatusType::SIGNAL_STRENGTH: {
+                ASSERT_TRUE(realStatuses[i].signalStrength() == expectStatuses[i].signalStrength());
+                break;
+            }
+            case FrontendStatusType::SYMBOL_RATE: {
+                ASSERT_TRUE(realStatuses[i].symbolRate() == expectStatuses[i].symbolRate());
+                break;
+            }
+            case FrontendStatusType::FEC: {
+                ASSERT_TRUE(realStatuses[i].innerFec() == expectStatuses[i].innerFec());
+                break;
+            }
+            case FrontendStatusType::MODULATION: {
+                // TODO: check modulation status
+                break;
+            }
+            case FrontendStatusType::SPECTRAL: {
+                ASSERT_TRUE(realStatuses[i].inversion() == expectStatuses[i].inversion());
+                break;
+            }
+            case FrontendStatusType::LNB_VOLTAGE: {
+                ASSERT_TRUE(realStatuses[i].lnbVoltage() == expectStatuses[i].lnbVoltage());
+                break;
+            }
+            case FrontendStatusType::PLP_ID: {
+                ASSERT_TRUE(realStatuses[i].plpId() == expectStatuses[i].plpId());
+                break;
+            }
+            case FrontendStatusType::EWBS: {
+                ASSERT_TRUE(realStatuses[i].isEWBS() == expectStatuses[i].isEWBS());
+                break;
+            }
+            case FrontendStatusType::AGC: {
+                ASSERT_TRUE(realStatuses[i].agc() == expectStatuses[i].agc());
+                break;
+            }
+            case FrontendStatusType::LNA: {
+                ASSERT_TRUE(realStatuses[i].isLnaOn() == expectStatuses[i].isLnaOn());
+                break;
+            }
+            case FrontendStatusType::LAYER_ERROR: {
+                vector<bool> realLayberError = realStatuses[i].isLayerError();
+                vector<bool> expectLayerError = expectStatuses[i].isLayerError();
+                ASSERT_TRUE(realLayberError.size() == expectLayerError.size());
+                for (int i = 0; i < realLayberError.size(); i++) {
+                    ASSERT_TRUE(realLayberError[i] == expectLayerError[i]);
+                }
+                break;
+            }
+            case FrontendStatusType::MER: {
+                ASSERT_TRUE(realStatuses[i].mer() == expectStatuses[i].mer());
+                break;
+            }
+            case FrontendStatusType::FREQ_OFFSET: {
+                ASSERT_TRUE(realStatuses[i].freqOffset() == expectStatuses[i].freqOffset());
+                break;
+            }
+            case FrontendStatusType::HIERARCHY: {
+                ASSERT_TRUE(realStatuses[i].hierarchy() == expectStatuses[i].hierarchy());
+                break;
+            }
+            case FrontendStatusType::RF_LOCK: {
+                ASSERT_TRUE(realStatuses[i].isRfLocked() == expectStatuses[i].isRfLocked());
+                break;
+            }
+            case FrontendStatusType::ATSC3_PLP_INFO:
+                // TODO: verify plpinfo
+                break;
+            default:
+                continue;
+        }
+    }
+    ASSERT_TRUE(status == Result::SUCCESS);
+}
+
 AssertionResult FrontendTests::tuneFrontend(FrontendConfig config) {
     EXPECT_TRUE(mFrontendCallback)
             << "test with openFrontendById/setFrontendCallback/getFrontendInfo first.";
@@ -294,6 +408,7 @@ void FrontendTests::tuneTest(FrontendConfig frontendConf) {
     ASSERT_TRUE(openFrontendById(feId));
     ASSERT_TRUE(setFrontendCallback());
     ASSERT_TRUE(tuneFrontend(frontendConf));
+    verifyFrontendStatus(frontendConf.tuneStatusTypes, frontendConf.expectTuneStatuses);
     ASSERT_TRUE(stopTuneFrontend());
     ASSERT_TRUE(closeFrontend());
 }
