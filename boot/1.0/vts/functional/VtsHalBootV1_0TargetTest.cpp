@@ -82,6 +82,10 @@ TEST_P(BootHidlTest, MarkBootSuccessful) {
 
 // Sanity check Boot::setActiveBootSlot() on good and bad inputs.
 TEST_P(BootHidlTest, SetActiveBootSlot) {
+    Slot curSlot = boot->getCurrentSlot();
+    Slot otherSlot = curSlot ? 0 : 1;
+    auto otherBootable = boot->isSlotBootable(otherSlot);
+
     for (Slot s = 0; s < 2; s++) {
         CommandResult cr;
         Return<void> result = boot->setActiveBootSlot(s, generate_callback(&cr));
@@ -90,7 +94,17 @@ TEST_P(BootHidlTest, SetActiveBootSlot) {
     {
         // Restore original flags to avoid problems on reboot
         CommandResult cr;
-        Return<void> result = boot->markBootSuccessful(generate_callback(&cr));
+        auto result = boot->setActiveBootSlot(curSlot, generate_callback(&cr));
+        EXPECT_TRUE(result.isOk());
+        EXPECT_TRUE(cr.success);
+
+        if (otherBootable == BoolResult::FALSE) {
+            result = boot->setSlotAsUnbootable(otherSlot, generate_callback(&cr));
+            EXPECT_TRUE(result.isOk());
+            EXPECT_TRUE(cr.success);
+        }
+
+        result = boot->markBootSuccessful(generate_callback(&cr));
         EXPECT_TRUE(result.isOk());
         EXPECT_TRUE(cr.success);
     }
@@ -105,19 +119,22 @@ TEST_P(BootHidlTest, SetActiveBootSlot) {
 
 // Sanity check Boot::setSlotAsUnbootable() on good and bad inputs.
 TEST_P(BootHidlTest, SetSlotAsUnbootable) {
+    Slot curSlot = boot->getCurrentSlot();
+    Slot otherSlot = curSlot ? 0 : 1;
+    auto otherBootable = boot->isSlotBootable(otherSlot);
     {
         CommandResult cr;
-        Slot curSlot = boot->getCurrentSlot();
-        Slot otherSlot = curSlot ? 0 : 1;
         Return<void> result = boot->setSlotAsUnbootable(otherSlot, generate_callback(&cr));
         EXPECT_TRUE(result.isOk());
         if (cr.success) {
             EXPECT_EQ(BoolResult::FALSE, boot->isSlotBootable(otherSlot));
 
             // Restore original flags to avoid problems on reboot
-            result = boot->setActiveBootSlot(otherSlot, generate_callback(&cr));
-            EXPECT_TRUE(result.isOk());
-            EXPECT_TRUE(cr.success);
+            if (otherBootable == BoolResult::TRUE) {
+                result = boot->setActiveBootSlot(otherSlot, generate_callback(&cr));
+                EXPECT_TRUE(result.isOk());
+                EXPECT_TRUE(cr.success);
+            }
             result = boot->setActiveBootSlot(curSlot, generate_callback(&cr));
             EXPECT_TRUE(result.isOk());
             EXPECT_TRUE(cr.success);
