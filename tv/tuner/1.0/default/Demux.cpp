@@ -60,13 +60,7 @@ Return<void> Demux::openFilter(const DemuxFilterType& type, uint32_t bufferSize,
     ALOGV("%s", __FUNCTION__);
 
     uint32_t filterId;
-    if (!mUnusedFilterIds.empty()) {
-        filterId = *mUnusedFilterIds.begin();
-
-        mUnusedFilterIds.erase(filterId);
-    } else {
-        filterId = ++mLastUsedFilterId;
-    }
+    filterId = ++mLastUsedFilterId;
 
     mUsedFilterIds.insert(filterId);
 
@@ -84,6 +78,9 @@ Return<void> Demux::openFilter(const DemuxFilterType& type, uint32_t bufferSize,
     }
 
     mFilters[filterId] = filter;
+    if (filter->isPcrFilter()) {
+        mPcrFilterIds.insert(filterId);
+    }
     bool result = true;
     if (mDvr != nullptr && mDvr->getType() == DvrType::PLAYBACK) {
         result = mDvr->addPlaybackFilter(filter);
@@ -102,19 +99,53 @@ Return<void> Demux::openTimeFilter(openTimeFilter_cb _hidl_cb) {
     return Void();
 }
 
-Return<void> Demux::getAvSyncHwId(const sp<IFilter>& /* filter */, getAvSyncHwId_cb _hidl_cb) {
+Return<void> Demux::getAvSyncHwId(const sp<IFilter>& filter, getAvSyncHwId_cb _hidl_cb) {
     ALOGV("%s", __FUNCTION__);
 
-    AvSyncHwId avSyncHwId = 0;
+    uint32_t avSyncHwId = -1;
+    int id;
+    Result status;
 
-    _hidl_cb(Result::SUCCESS, avSyncHwId);
+    filter->getId([&](Result result, uint32_t filterId) {
+        id = filterId;
+        status = result;
+    });
+
+    if (status != Result::SUCCESS) {
+        ALOGE("[Demux] Can't get filter Id.");
+        _hidl_cb(Result::INVALID_STATE, avSyncHwId);
+        return Void();
+    }
+
+    if (!mFilters[id]->isMediaFilter()) {
+        ALOGE("[Demux] Given filter is not a media filter.");
+        _hidl_cb(Result::INVALID_ARGUMENT, avSyncHwId);
+        return Void();
+    }
+
+    if (!mPcrFilterIds.empty()) {
+        ALOGE("[Demux] No PCR filter opened.");
+        // Return the lowest pcr filter id in the default implementation as the av sync id
+        _hidl_cb(Result::SUCCESS, *mPcrFilterIds.begin());
+        return Void();
+    }
+
+    _hidl_cb(Result::INVALID_STATE, avSyncHwId);
     return Void();
 }
 
-Return<void> Demux::getAvSyncTime(AvSyncHwId /* avSyncHwId */, getAvSyncTime_cb _hidl_cb) {
+Return<void> Demux::getAvSyncTime(AvSyncHwId avSyncHwId, getAvSyncTime_cb _hidl_cb) {
     ALOGV("%s", __FUNCTION__);
 
-    uint64_t avSyncTime = 0;
+    uint64_t avSyncTime = -1;
+    if (mPcrFilterIds.empty()) {
+        _hidl_cb(Result::INVALID_STATE, avSyncTime);
+        return Void();
+    }
+    if (avSyncHwId != *mPcrFilterIds.begin()) {
+        _hidl_cb(Result::INVALID_ARGUMENT, avSyncTime);
+        return Void();
+    }
 
     _hidl_cb(Result::SUCCESS, avSyncTime);
     return Void();
@@ -123,7 +154,6 @@ Return<void> Demux::getAvSyncTime(AvSyncHwId /* avSyncHwId */, getAvSyncTime_cb 
 Return<Result> Demux::close() {
     ALOGV("%s", __FUNCTION__);
 
-    mUnusedFilterIds.clear();
     mUsedFilterIds.clear();
     mLastUsedFilterId = -1;
 
@@ -171,7 +201,6 @@ Result Demux::removeFilter(uint32_t filterId) {
     // resetFilterRecords(filterId);
     mUsedFilterIds.erase(filterId);
     mRecordFilterIds.erase(filterId);
-    mUnusedFilterIds.insert(filterId);
     mFilters.erase(filterId);
 
     return Result::SUCCESS;
