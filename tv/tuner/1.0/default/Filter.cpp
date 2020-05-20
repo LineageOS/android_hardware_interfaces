@@ -37,6 +37,32 @@ Filter::Filter(DemuxFilterType type, uint32_t filterId, uint32_t bufferSize,
     mBufferSize = bufferSize;
     mCallback = cb;
     mDemux = demux;
+
+    switch (mType.mainType) {
+        case DemuxFilterMainType::TS:
+            if (mType.subType.tsFilterType() == DemuxTsFilterType::AUDIO ||
+                mType.subType.tsFilterType() == DemuxTsFilterType::VIDEO) {
+                mIsMediaFilter = true;
+            }
+            if (mType.subType.tsFilterType() == DemuxTsFilterType::PCR) {
+                mIsPcrFilter = true;
+            }
+            break;
+        case DemuxFilterMainType::MMTP:
+            if (mType.subType.mmtpFilterType() == DemuxMmtpFilterType::AUDIO ||
+                mType.subType.mmtpFilterType() == DemuxMmtpFilterType::VIDEO) {
+                mIsMediaFilter = true;
+            }
+            break;
+        case DemuxFilterMainType::IP:
+            break;
+        case DemuxFilterMainType::TLV:
+            break;
+        case DemuxFilterMainType::ALP:
+            break;
+        default:
+            break;
+    }
 }
 
 Filter::~Filter() {}
@@ -73,16 +99,8 @@ Return<Result> Filter::configure(const DemuxFilterSettings& settings) {
     switch (mType.mainType) {
         case DemuxFilterMainType::TS:
             mTpid = settings.ts().tpid;
-            if (mType.subType.tsFilterType() == DemuxTsFilterType::AUDIO ||
-                mType.subType.tsFilterType() == DemuxTsFilterType::VIDEO) {
-                mIsMediaFilter = true;
-            }
             break;
         case DemuxFilterMainType::MMTP:
-            if (mType.subType.mmtpFilterType() == DemuxMmtpFilterType::AUDIO ||
-                mType.subType.mmtpFilterType() == DemuxMmtpFilterType::VIDEO) {
-                mIsMediaFilter = true;
-            }
             break;
         case DemuxFilterMainType::IP:
             break;
