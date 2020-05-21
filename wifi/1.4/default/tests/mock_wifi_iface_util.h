@@ -41,6 +41,7 @@ class MockWifiIfaceUtil : public WifiIfaceUtil {
                  void(const std::string&, IfaceEventHandlers));
     MOCK_METHOD1(unregisterIfaceEventHandlers, void(const std::string&));
     MOCK_METHOD2(setUpState, bool(const std::string&, bool));
+    MOCK_METHOD1(ifNameToIndex, unsigned(const std::string&));
 };
 }  // namespace iface_util
 }  // namespace implementation
