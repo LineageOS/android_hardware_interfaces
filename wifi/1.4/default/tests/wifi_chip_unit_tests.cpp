@@ -787,6 +787,8 @@ TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateNanWithDedicatedNanIface) {
     property_set("wifi.aware.interface", "aware0");
     findModeAndConfigureForIfaceType(IfaceType::STA);
     ASSERT_EQ(createIface(IfaceType::STA), "wlan0");
+    EXPECT_CALL(*iface_util_, ifNameToIndex("aware0"))
+        .WillOnce(testing::Return(4));
     EXPECT_CALL(*iface_util_, setUpState("aware0", true))
         .WillOnce(testing::Return(true));
     ASSERT_EQ(createIface(IfaceType::NAN), "aware0");

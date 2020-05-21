@@ -19,7 +19,6 @@
 #include <android-base/logging.h>
 #include <android-base/unique_fd.h>
 #include <cutils/properties.h>
-#include <net/if.h>
 #include <sys/stat.h>
 #include <sys/sysmacros.h>
 
@@ -886,7 +885,7 @@ std::pair<WifiStatus, sp<IWifiNanIface>> WifiChip::createNanIfaceInternal() {
     }
     bool is_dedicated_iface = true;
     std::string ifname = getNanIfaceName();
-    if (ifname.empty() || if_nametoindex(ifname.c_str())) {
+    if (ifname.empty() || !iface_util_.lock()->ifNameToIndex(ifname)) {
         // Use the first shared STA iface (wlan0) if a dedicated aware iface is
         // not defined.
         ifname = getFirstActiveWlanIfaceName();
