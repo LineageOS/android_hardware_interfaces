@@ -263,6 +263,41 @@ TEST_P(TunerDemuxHidlTest, openDemux) {
     ASSERT_TRUE(mFrontendTests.closeFrontend());
 }
 
+TEST_P(TunerDemuxHidlTest, getAvSyncTime) {
+    description("Get the A/V sync time from a PCR filter.");
+    uint32_t feId;
+    uint32_t demuxId;
+    sp<IDemux> demux;
+    uint32_t mediaFilterId;
+    uint32_t pcrFilterId;
+    uint32_t avSyncHwId;
+    sp<IFilter> mediaFilter;
+
+    mFrontendTests.getFrontendIdByType(frontendArray[DVBT].type, feId);
+    ASSERT_TRUE(feId != INVALID_ID);
+    ASSERT_TRUE(mFrontendTests.openFrontendById(feId));
+    ASSERT_TRUE(mFrontendTests.setFrontendCallback());
+    ASSERT_TRUE(mDemuxTests.openDemux(demux, demuxId));
+    ASSERT_TRUE(mDemuxTests.setDemuxFrontendDataSource(feId));
+    mFilterTests.setDemux(demux);
+    ASSERT_TRUE(mFilterTests.openFilterInDemux(filterArray[TS_VIDEO1].type,
+                                               filterArray[TS_VIDEO1].bufferSize));
+    ASSERT_TRUE(mFilterTests.getNewlyOpenedFilterId(mediaFilterId));
+    ASSERT_TRUE(mFilterTests.configFilter(filterArray[TS_VIDEO1].settings, mediaFilterId));
+    mediaFilter = mFilterTests.getFilterById(mediaFilterId);
+    ASSERT_TRUE(mFilterTests.openFilterInDemux(filterArray[TS_PCR0].type,
+                                               filterArray[TS_PCR0].bufferSize));
+    ASSERT_TRUE(mFilterTests.getNewlyOpenedFilterId(pcrFilterId));
+    ASSERT_TRUE(mFilterTests.configFilter(filterArray[TS_PCR0].settings, pcrFilterId));
+    mDemuxTests.getAvSyncId(mediaFilter, avSyncHwId);
+    ASSERT_TRUE(pcrFilterId == avSyncHwId);
+    mDemuxTests.getAvSyncTime(pcrFilterId);
+    ASSERT_TRUE(mFilterTests.closeFilter(pcrFilterId));
+    ASSERT_TRUE(mFilterTests.closeFilter(mediaFilterId));
+    ASSERT_TRUE(mDemuxTests.closeDemux());
+    ASSERT_TRUE(mFrontendTests.closeFrontend());
+}
+
 TEST_P(TunerFilterHidlTest, StartFilterInDemux) {
     description("Open and start a filter in Demux.");
     // TODO use paramterized tests
