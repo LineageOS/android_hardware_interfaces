@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <net/if.h>
 #include <cstddef>
 #include <iostream>
 #include <limits>
@@ -121,6 +122,10 @@ bool WifiIfaceUtil::setUpState(const std::string& iface_name, bool request_up) {
         return false;
     }
     return true;
+}
+
+unsigned WifiIfaceUtil::ifNameToIndex(const std::string& iface_name) {
+    return if_nametoindex(iface_name.c_str());
 }
 }  // namespace iface_util
 }  // namespace implementation
