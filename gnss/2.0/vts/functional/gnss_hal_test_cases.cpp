@@ -216,9 +216,10 @@ TEST_F(GnssHalTest, TestGnssMeasurementFields) {
                 static_cast<uint32_t>(measurement.state) >=
                         static_cast<uint32_t>(IGnssMeasurementCallback_2_0::GnssMeasurementState::
                                                       STATE_UNKNOWN) &&
-                static_cast<uint32_t>(measurement.state) <=
-                        static_cast<uint32_t>(IGnssMeasurementCallback_2_0::GnssMeasurementState::
-                                                      STATE_2ND_CODE_LOCK));
+                static_cast<uint32_t>(measurement.state) <
+                        (static_cast<uint32_t>(IGnssMeasurementCallback_2_0::GnssMeasurementState::
+                                                       STATE_2ND_CODE_LOCK)
+                         << 1));
     }
 
     iGnssMeasurement->close();
