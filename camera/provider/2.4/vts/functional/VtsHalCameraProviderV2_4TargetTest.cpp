@@ -6942,8 +6942,11 @@ void CameraHidlTest::verifyZoomCharacteristics(const camera_metadata_t* metadata
 
     float minZoomRatio = entry.data.f[0];
     float maxZoomRatio = entry.data.f[1];
-    if (maxDigitalZoom != maxZoomRatio) {
-        ADD_FAILURE() << "Maximum zoom ratio is different than maximum digital zoom!";
+    constexpr float FLOATING_POINT_THRESHOLD = 0.00001f;
+    if (maxDigitalZoom > maxZoomRatio + FLOATING_POINT_THRESHOLD) {
+        ADD_FAILURE() << "Maximum digital zoom " << maxDigitalZoom
+                      << " is larger than maximum zoom ratio " << maxZoomRatio << " + threshold "
+                      << FLOATING_POINT_THRESHOLD << "!";
     }
     if (minZoomRatio > maxZoomRatio) {
         ADD_FAILURE() << "Maximum zoom ratio is less than minimum zoom ratio!";
