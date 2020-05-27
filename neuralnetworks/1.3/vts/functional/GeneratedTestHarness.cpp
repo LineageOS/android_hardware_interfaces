@@ -568,8 +568,10 @@ void EvaluatePreparedModel(const sp<IDevice>& device, const sp<IPreparedModel>& 
     }
 
     Request request = std::move(maybeRequest.value());
+
+    constexpr uint32_t kInsufficientOutputIndex = 0;
     if (testConfig.outputType == OutputType::INSUFFICIENT) {
-        makeOutputInsufficientSize(/*outputIndex=*/0, &request);
+        makeOutputInsufficientSize(kInsufficientOutputIndex, &request);
     }
 
     OptionalTimeoutDuration loopTimeoutDuration;
@@ -745,7 +747,21 @@ void EvaluatePreparedModel(const sp<IDevice>& device, const sp<IPreparedModel>& 
             }
             ASSERT_EQ(ErrorStatus::OUTPUT_INSUFFICIENT_SIZE, executionStatus);
             ASSERT_EQ(outputShapes.size(), testModel.main.outputIndexes.size());
-            ASSERT_FALSE(outputShapes[0].isSufficient);
+            // Check that all returned output dimensions are at least as fully specified as the
+            // union of the information about the corresponding operand in the model and in the
+            // request. In this test, all model outputs have known rank with all dimensions
+            // unspecified, and no dimensional information is provided in the request.
+            for (uint32_t i = 0; i < outputShapes.size(); i++) {
+                ASSERT_EQ(outputShapes[i].isSufficient, i != kInsufficientOutputIndex);
+                const auto& actual = outputShapes[i].dimensions;
+                const auto& golden =
+                        testModel.main.operands[testModel.main.outputIndexes[i]].dimensions;
+                ASSERT_EQ(actual.size(), golden.size());
+                for (uint32_t j = 0; j < actual.size(); j++) {
+                    if (actual[j] == 0) continue;
+                    EXPECT_EQ(actual[j], golden[j]) << "index: " << j;
+                }
+            }
             return;
         case OutputType::MISSED_DEADLINE:
             ASSERT_TRUE(executionStatus == ErrorStatus::MISSED_DEADLINE_TRANSIENT ||
