@@ -102,13 +102,13 @@ cc_test_host {
     srcs: [
         "bluetooth_address.cc",
         "test/bluetooth_address_test.cc",
-        "test/properties.cc",
     ],
     local_include_dirs: [
         "test",
     ],
     shared_libs: [
         "libbase",
+        "libcutils",
         "liblog",
     ],
 }
