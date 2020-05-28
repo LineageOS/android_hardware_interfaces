@@ -20,6 +20,7 @@ import android.hardware.identity.Certificate;
 import android.hardware.identity.RequestNamespace;
 import android.hardware.identity.SecureAccessControlProfile;
 import android.hardware.keymaster.HardwareAuthToken;
+import android.hardware.keymaster.VerificationToken;
 
 @VintfStability
 interface IIdentityCredential {
@@ -71,10 +72,11 @@ interface IIdentityCredential {
 
     /**
      * Creates a challenge value to be used for proving successful user authentication. This
-     * is included in the authToken passed to the startRetrieval() method.
+     * is included in the authToken passed to the startRetrieval() method and the
+     * verificationToken passed to the setVerificationToken() method.
      *
      * This method may only be called once per instance. If called more than once, STATUS_FAILED
-     * will be returned.
+     * will be returned. If user authentication is not needed, this method may not be called.
      *
      * @return challenge, a non-zero number.
      */
@@ -83,7 +85,8 @@ interface IIdentityCredential {
     /**
      * Start an entry retrieval process.
      *
-     * The setRequestedNamespaces() method will be called before this method.
+     * The setRequestedNamespaces() and setVerificationToken() methods will be called before
+     * this method is called.
      *
      * This method be called after createEphemeralKeyPair(), setReaderEphemeralPublicKey(),
      * createAuthChallenge() and before startRetrieveEntry(). This method call is followed by
@@ -96,7 +99,19 @@ interface IIdentityCredential {
      * must be identical for each startRetrieval() invocation. If this is not the case, this call
      * fails with the STATUS_SESSION_TRANSCRIPT_MISMATCH error.
      *
-     * If the provided authToken is not valid this method fails with STATUS_INVALID_AUTH_TOKEN.
+     * If either authToken or verificationToken (as passed with setVerificationToken())
+     * is not valid this method fails with STATUS_INVALID_AUTH_TOKEN. Note that valid tokens
+     * are only passed if they are actually needed and available (this can be detected by
+     * the timestamp being set to zero). For example, if no data items with access control
+     * profiles using user authentication are requested, the tokens are not filled in.
+     * It's also possible that no usable auth token is actually available (it could be the user
+     * never unlocked the device within the timeouts in the access control profiles) and
+     * in this case the tokens aren't filled in either.
+     *
+     * For test credentials (identified by the testCredential boolean in the CredentialData
+     * CBOR created at provisioning time), the |mac| field in both the authToken and
+     * verificationToken should not be checked against the shared HMAC key (see IKeyMasterDevice
+     * for details). This is to enable VTS tests to check for correct behavior.
      *
      * Each of the provided accessControlProfiles is checked in this call. If they are not
      * all valid, the call fails with STATUS_INVALID_DATA.
@@ -179,7 +194,8 @@ interface IIdentityCredential {
      *
      * @param authToken
      *   The authentication token that proves the user was authenticated, as required
-     *   by one or more of the provided accessControlProfiles. See above.
+     *   by one or more of the provided accessControlProfiles. This token is only valid
+     *   if the timestamp field is non-zero. See above.
      *
      * @param itemsRequest
      *   If non-empty, contains request data that is signed by the reader. See above.
@@ -358,4 +374,13 @@ interface IIdentityCredential {
      * @param requestNamespaces Namespaces and data items which will be requested.
      */
     void setRequestedNamespaces(in RequestNamespace[] requestNamespaces);
+
+   /**
+    * Sets the VerificationToken. This method must be called before startRetrieval() is
+    * called. This token uses the same challenge as returned by createAuthChallenge().
+    *
+    * @param verificationToken
+    *   The verification token. This token is only valid if the timestamp field is non-zero.
+    */
+    void setVerificationToken(in VerificationToken verificationToken);
 }
