@@ -112,6 +112,11 @@ TEST_P(IdentityAidl, createAndRetrieveCredential) {
     // TODO: set it to something random and check it's in the cert chain
     ASSERT_GE(attData.attestationCertificate.size(), 2);
 
+    // This is kinda of a hack but we need to give the size of
+    // ProofOfProvisioning that we'll expect to receive.
+    const int32_t expectedProofOfProvisioningSize = 262861 - 326 + readerCertificate.value().size();
+    // OK to fail, not available in v1 HAL
+    writableCredential->setExpectedProofOfProvisioningSize(expectedProofOfProvisioningSize);
     ASSERT_TRUE(
             writableCredential->startPersonalization(testProfiles.size(), testEntriesEntryCounts)
                     .isOk());
@@ -268,6 +273,8 @@ TEST_P(IdentityAidl, createAndRetrieveCredential) {
     Certificate signingKeyCertificate;
     ASSERT_TRUE(credential->generateSigningKeyPair(&signingKeyBlob, &signingKeyCertificate).isOk());
 
+    vector<RequestNamespace> requestedNamespaces = test_utils::buildRequestNamespaces(testEntries);
+    ASSERT_TRUE(credential->setRequestedNamespaces(requestedNamespaces).isOk());
     ASSERT_TRUE(credential
                         ->startRetrieval(secureProfiles.value(), authToken, itemsRequestBytes,
                                          signingKeyBlob, sessionTranscriptBytes,
