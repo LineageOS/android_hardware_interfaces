@@ -8,10 +8,16 @@ cc_test {
         "VtsHalIdentityEndToEndTest.cpp",
         "VtsIWritableIdentityCredentialTests.cpp",
         "VtsIdentityTestUtils.cpp",
+        "VtsAttestationTests.cpp",
+        "VtsAttestationParserSupport.cpp",
     ],
     shared_libs: [
+        "android.hardware.keymaster@4.0",
         "libbinder",
         "libcrypto",
+        "libkeymaster_portable",
+        "libsoft_attestation_cert",
+        "libpuresoftkeymasterdevice",
     ],
     static_libs: [
         "libcppbor",
