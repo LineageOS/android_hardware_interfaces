@@ -22,6 +22,17 @@
 namespace android::netdevice {
 
 /**
+ * Configures libnetdevice to use PF_CAN sockets instead of AF_INET,
+ * what requires less permissive SEPolicy rules for a given process.
+ *
+ * In such case, the process would only be able to control CAN interfaces.
+ *
+ * TODO(b/158011272): consider less hacky solution
+ * \param yes true to use CAN sockets, false for general sockets
+ */
+void useCanSockets(bool yes);
+
+/**
  * Checks, if the network interface exists.
  *
  * \param ifname Interface to check
@@ -36,6 +47,16 @@ bool exists(std::string ifname);
  * \return true/false if the check succeeded, nullopt otherwise
  */
 std::optional<bool> isUp(std::string ifname);
+
+/**
+ * Checks, if the network interface exists and is up.
+ *
+ * This is a convenience function to call both exists() and isUp().
+ *
+ * \param ifname Interface to check
+ * \return true if the interface is up, false otherwise
+ */
+bool existsAndIsUp(const std::string& ifname);
 
 /**
  * Brings network interface up.
