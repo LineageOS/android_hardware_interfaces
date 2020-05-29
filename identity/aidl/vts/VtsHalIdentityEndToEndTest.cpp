@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#define LOG_TAG "VtsHalIdentityTargetTest"
+#define LOG_TAG "VtsHalIdentityEndToEndTest"
 
 #include <aidl/Gtest.h>
 #include <aidl/Vintf.h>
@@ -45,6 +45,8 @@ using ::android::binder::Status;
 using ::android::hardware::keymaster::HardwareAuthToken;
 using ::android::hardware::keymaster::VerificationToken;
 
+using test_utils::validateAttestationCertificate;
+
 class IdentityAidl : public testing::TestWithParam<std::string> {
   public:
     virtual void SetUp() override {
@@ -69,13 +71,13 @@ TEST_P(IdentityAidl, createAndRetrieveCredential) {
     // part of the request data.
     vector<uint8_t> readerKey;
     optional<vector<uint8_t>> readerCertificate =
-            test_utils::GenerateReaderCertificate("1234", readerKey);
+            test_utils::generateReaderCertificate("1234", &readerKey);
     ASSERT_TRUE(readerCertificate);
 
     // Make the portrait image really big (just shy of 256 KiB) to ensure that
     // the chunking code gets exercised.
     vector<uint8_t> portraitImage;
-    test_utils::SetImageData(portraitImage);
+    test_utils::setImageData(portraitImage);
 
     // Access control profiles:
     const vector<test_utils::TestProfile> testProfiles = {// Profile 0 (reader authentication)
@@ -114,17 +116,16 @@ TEST_P(IdentityAidl, createAndRetrieveCredential) {
 
     string cborPretty;
     sp<IWritableIdentityCredential> writableCredential;
-    ASSERT_TRUE(test_utils::SetupWritableCredential(writableCredential, credentialStore_));
+    ASSERT_TRUE(test_utils::setupWritableCredential(writableCredential, credentialStore_));
 
     string challenge = "attestationChallenge";
     test_utils::AttestationData attData(writableCredential, challenge, {});
     ASSERT_TRUE(attData.result.isOk())
             << attData.result.exceptionCode() << "; " << attData.result.exceptionMessage() << endl;
-    ASSERT_EQ(binder::Status::EX_NONE, attData.result.exceptionCode());
-    ASSERT_EQ(IIdentityCredentialStore::STATUS_OK, attData.result.serviceSpecificErrorCode());
 
-    // TODO: set it to something random and check it's in the cert chain
-    ASSERT_GE(attData.attestationCertificate.size(), 2);
+    EXPECT_TRUE(validateAttestationCertificate(attData.attestationCertificate,
+                                               attData.attestationChallenge,
+                                               attData.attestationApplicationId, hwInfo));
 
     // This is kinda of a hack but we need to give the size of
     // ProofOfProvisioning that we'll expect to receive.
@@ -136,7 +137,7 @@ TEST_P(IdentityAidl, createAndRetrieveCredential) {
                     .isOk());
 
     optional<vector<SecureAccessControlProfile>> secureProfiles =
-            test_utils::AddAccessControlProfiles(writableCredential, testProfiles);
+            test_utils::addAccessControlProfiles(writableCredential, testProfiles);
     ASSERT_TRUE(secureProfiles);
 
     // Uses TestEntryData* pointer as key and values are the encrypted blobs. This
@@ -144,7 +145,7 @@ TEST_P(IdentityAidl, createAndRetrieveCredential) {
     map<const test_utils::TestEntryData*, vector<vector<uint8_t>>> encryptedBlobs;
 
     for (const auto& entry : testEntries) {
-        ASSERT_TRUE(test_utils::AddEntry(writableCredential, entry, hwInfo.dataChunkSize,
+        ASSERT_TRUE(test_utils::addEntry(writableCredential, entry, hwInfo.dataChunkSize,
                                          encryptedBlobs, true));
     }
 
