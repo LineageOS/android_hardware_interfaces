@@ -17,16 +17,21 @@
 
 package android.hardware.identity;
 @VintfStability
-interface IIdentityCredential {
-  byte[] deleteCredential();
-  byte[] createEphemeralKeyPair();
-  void setReaderEphemeralPublicKey(in byte[] publicKey);
-  long createAuthChallenge();
-  void startRetrieval(in android.hardware.identity.SecureAccessControlProfile[] accessControlProfiles, in android.hardware.keymaster.HardwareAuthToken authToken, in byte[] itemsRequest, in byte[] signingKeyBlob, in byte[] sessionTranscript, in byte[] readerSignature, in int[] requestCounts);
-  void startRetrieveEntryValue(in @utf8InCpp String nameSpace, in @utf8InCpp String name, in int entrySize, in int[] accessControlProfileIds);
-  byte[] retrieveEntryValue(in byte[] encryptedContent);
-  void finishRetrieval(out byte[] mac, out byte[] deviceNameSpaces);
-  android.hardware.identity.Certificate generateSigningKeyPair(out byte[] signingKeyBlob);
-  void setRequestedNamespaces(in android.hardware.identity.RequestNamespace[] requestNamespaces);
-  void setVerificationToken(in android.hardware.keymaster.VerificationToken verificationToken);
+interface IIdentityCredentialStore {
+  android.hardware.identity.HardwareInformation getHardwareInformation();
+  android.hardware.identity.IWritableIdentityCredential createCredential(in @utf8InCpp String docType, in boolean testCredential);
+  android.hardware.identity.IIdentityCredential getCredential(in android.hardware.identity.CipherSuite cipherSuite, in byte[] credentialData);
+  const int STATUS_OK = 0;
+  const int STATUS_FAILED = 1;
+  const int STATUS_CIPHER_SUITE_NOT_SUPPORTED = 2;
+  const int STATUS_INVALID_DATA = 3;
+  const int STATUS_INVALID_AUTH_TOKEN = 4;
+  const int STATUS_INVALID_ITEMS_REQUEST_MESSAGE = 5;
+  const int STATUS_READER_SIGNATURE_CHECK_FAILED = 6;
+  const int STATUS_EPHEMERAL_PUBLIC_KEY_NOT_FOUND = 7;
+  const int STATUS_USER_AUTHENTICATION_FAILED = 8;
+  const int STATUS_READER_AUTHENTICATION_FAILED = 9;
+  const int STATUS_NO_ACCESS_CONTROL_PROFILES = 10;
+  const int STATUS_NOT_IN_REQUEST_MESSAGE = 11;
+  const int STATUS_SESSION_TRANSCRIPT_MISMATCH = 12;
 }

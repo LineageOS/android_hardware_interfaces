@@ -16,17 +16,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.identity;
-@VintfStability
-interface IIdentityCredential {
-  byte[] deleteCredential();
-  byte[] createEphemeralKeyPair();
-  void setReaderEphemeralPublicKey(in byte[] publicKey);
-  long createAuthChallenge();
-  void startRetrieval(in android.hardware.identity.SecureAccessControlProfile[] accessControlProfiles, in android.hardware.keymaster.HardwareAuthToken authToken, in byte[] itemsRequest, in byte[] signingKeyBlob, in byte[] sessionTranscript, in byte[] readerSignature, in int[] requestCounts);
-  void startRetrieveEntryValue(in @utf8InCpp String nameSpace, in @utf8InCpp String name, in int entrySize, in int[] accessControlProfileIds);
-  byte[] retrieveEntryValue(in byte[] encryptedContent);
-  void finishRetrieval(out byte[] mac, out byte[] deviceNameSpaces);
-  android.hardware.identity.Certificate generateSigningKeyPair(out byte[] signingKeyBlob);
-  void setRequestedNamespaces(in android.hardware.identity.RequestNamespace[] requestNamespaces);
-  void setVerificationToken(in android.hardware.keymaster.VerificationToken verificationToken);
+@Backing(type="int") @VintfStability
+enum CipherSuite {
+  CIPHERSUITE_ECDHE_HKDF_ECDSA_WITH_AES_256_GCM_SHA256 = 1,
 }
