@@ -438,10 +438,10 @@ bool verify_attestation_record(const string& challenge, const string& app_id,
             EXPECT_TRUE(device_locked);
         }
 
-        // Check that the expected result from VBMeta matches the build type. Only a user build
-        // should have AVB reporting the device is locked.
-        EXPECT_NE(property_get("ro.build.type", property_value, ""), 0);
-        if (!strcmp(property_value, "user")) {
+        // Check that the device is locked if not debuggable, e.g., user build
+        // images in CTS. For VTS, debuggable images are used to allow adb root
+        // and the device is unlocked.
+        if (!property_get_bool("ro.debuggable", false)) {
             EXPECT_TRUE(device_locked);
         } else {
             EXPECT_FALSE(device_locked);
