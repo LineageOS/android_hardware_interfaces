@@ -802,6 +802,16 @@ public:
             bool *useHalBufManager /*out*/,
             sp<DeviceCb> *cb /*out*/,
             uint32_t streamConfigCounter = 0);
+    void configureSingleStream(const std::string& name, int32_t deviceVersion,
+            sp<ICameraProvider> provider,
+            const AvailableStream* previewThreshold, uint64_t bufferUsage,
+            RequestTemplate reqTemplate,
+            sp<ICameraDeviceSession>* session /*out*/,
+            V3_2::Stream* previewStream /*out*/,
+            HalStreamConfiguration* halStreamConfig /*out*/,
+            bool* supportsPartialResults /*out*/,
+            uint32_t* partialResultCount /*out*/, bool* useHalBufManager /*out*/,
+            sp<DeviceCb>* cb /*out*/, uint32_t streamConfigCounter = 0);
 
     void verifyLogicalCameraMetadata(const std::string& cameraName,
             const ::android::sp<::android::hardware::camera::device::V3_2::ICameraDevice>& device,
@@ -877,6 +887,9 @@ public:
     static Status isMonochromeCamera(const camera_metadata_t *staticMeta);
     static Status getSystemCameraKind(const camera_metadata_t* staticMeta,
                                       SystemCameraKind* systemCameraKind);
+
+    void processCaptureRequestInternal(uint64_t bufferusage, RequestTemplate reqTemplate,
+                                       bool useSecureOnlyCameras);
 
     // Used by switchToOffline where a new result queue is created for offline reqs
     void updateInflightResultQueue(std::shared_ptr<ResultMetadataQueue> resultQueue);
@@ -4360,8 +4373,21 @@ TEST_P(CameraHidlTest, configureStreamsVideoStillOutputs) {
 
 // Generate and verify a camera capture request
 TEST_P(CameraHidlTest, processCaptureRequestPreview) {
-    hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
-    AvailableStream previewThreshold = {kMaxPreviewWidth, kMaxPreviewHeight,
+    processCaptureRequestInternal(GRALLOC1_CONSUMER_USAGE_HWCOMPOSER, RequestTemplate::PREVIEW,
+                                  false /*secureOnlyCameras*/);
+}
+
+// Generate and verify a secure camera capture request
+TEST_P(CameraHidlTest, processSecureCaptureRequest) {
+    processCaptureRequestInternal(GRALLOC1_PRODUCER_USAGE_PROTECTED, RequestTemplate::STILL_CAPTURE,
+                                  true /*secureOnlyCameras*/);
+}
+
+void CameraHidlTest::processCaptureRequestInternal(uint64_t bufferUsage,
+                                                   RequestTemplate reqTemplate,
+                                                   bool useSecureOnlyCameras) {
+    hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider, useSecureOnlyCameras);
+    AvailableStream streamThreshold = {kMaxPreviewWidth, kMaxPreviewHeight,
                                         static_cast<int32_t>(PixelFormat::IMPLEMENTATION_DEFINED)};
     uint64_t bufferId = 1;
     uint32_t frameNumber = 1;
@@ -4377,17 +4403,17 @@ TEST_P(CameraHidlTest, processCaptureRequestPreview) {
             return;
         }
 
-        V3_2::Stream previewStream;
+        V3_2::Stream testStream;
         HalStreamConfiguration halStreamConfig;
         sp<ICameraDeviceSession> session;
         sp<DeviceCb> cb;
         bool supportsPartialResults = false;
         bool useHalBufManager = false;
         uint32_t partialResultCount = 0;
-        configurePreviewStream(name, deviceVersion, mProvider, &previewThreshold, &session /*out*/,
-                &previewStream /*out*/, &halStreamConfig /*out*/,
-                &supportsPartialResults /*out*/,
-                &partialResultCount /*out*/, &useHalBufManager /*out*/, &cb /*out*/);
+        configureSingleStream(name, deviceVersion, mProvider, &streamThreshold, bufferUsage,
+                              reqTemplate, &session /*out*/, &testStream /*out*/,
+                              &halStreamConfig /*out*/, &supportsPartialResults /*out*/,
+                              &partialResultCount /*out*/, &useHalBufManager /*out*/, &cb /*out*/);
 
         std::shared_ptr<ResultMetadataQueue> resultQueue;
         auto resultQueueRet =
@@ -4408,7 +4434,6 @@ TEST_P(CameraHidlTest, processCaptureRequestPreview) {
         InFlightRequest inflightReq = {1, false, supportsPartialResults,
                                        partialResultCount, resultQueue};
 
-        RequestTemplate reqTemplate = RequestTemplate::PREVIEW;
         Return<void> ret;
         ret = session->constructDefaultRequestSettings(reqTemplate,
                                                        [&](auto status, const auto& req) {
@@ -4427,7 +4452,7 @@ TEST_P(CameraHidlTest, processCaptureRequestPreview) {
                             nullptr,
                             nullptr};
         } else {
-            allocateGraphicBuffer(previewStream.width, previewStream.height,
+            allocateGraphicBuffer(testStream.width, testStream.height,
                     android_convertGralloc1To0Usage(halStreamConfig.streams[0].producerUsage,
                         halStreamConfig.streams[0].consumerUsage),
                     halStreamConfig.streams[0].overrideFormat, &buffer_handle);
@@ -4476,7 +4501,7 @@ TEST_P(CameraHidlTest, processCaptureRequestPreview) {
 
             ASSERT_FALSE(inflightReq.errorCodeValid);
             ASSERT_NE(inflightReq.resultOutputBuffers.size(), 0u);
-            ASSERT_EQ(previewStream.id, inflightReq.resultOutputBuffers[0].streamId);
+            ASSERT_EQ(testStream.id, inflightReq.resultOutputBuffers[0].streamId);
 
             request.frameNumber++;
             // Empty settings should be supported after the first call
@@ -4514,11 +4539,11 @@ TEST_P(CameraHidlTest, processCaptureRequestPreview) {
 
             ASSERT_FALSE(inflightReq.errorCodeValid);
             ASSERT_NE(inflightReq.resultOutputBuffers.size(), 0u);
-            ASSERT_EQ(previewStream.id, inflightReq.resultOutputBuffers[0].streamId);
+            ASSERT_EQ(testStream.id, inflightReq.resultOutputBuffers[0].streamId);
         }
 
         if (useHalBufManager) {
-            verifyBuffersReturned(session, deviceVersion, previewStream.id, cb);
+            verifyBuffersReturned(session, deviceVersion, testStream.id, cb);
         }
 
         ret = session->close();
@@ -6322,6 +6347,19 @@ void CameraHidlTest::configurePreviewStream(const std::string &name, int32_t dev
         bool *useHalBufManager /*out*/,
         sp<DeviceCb> *outCb /*out*/,
         uint32_t streamConfigCounter) {
+    configureSingleStream(name, deviceVersion, provider, previewThreshold,
+                          GRALLOC1_CONSUMER_USAGE_HWCOMPOSER, RequestTemplate::PREVIEW, session,
+                          previewStream, halStreamConfig, supportsPartialResults,
+                          partialResultCount, useHalBufManager, outCb, streamConfigCounter);
+}
+// Open a device session and configure a preview stream.
+void CameraHidlTest::configureSingleStream(
+        const std::string& name, int32_t deviceVersion, sp<ICameraProvider> provider,
+        const AvailableStream* previewThreshold, uint64_t bufferUsage, RequestTemplate reqTemplate,
+        sp<ICameraDeviceSession>* session /*out*/, V3_2::Stream* previewStream /*out*/,
+        HalStreamConfiguration* halStreamConfig /*out*/, bool* supportsPartialResults /*out*/,
+        uint32_t* partialResultCount /*out*/, bool* useHalBufManager /*out*/,
+        sp<DeviceCb>* outCb /*out*/, uint32_t streamConfigCounter) {
     ASSERT_NE(nullptr, session);
     ASSERT_NE(nullptr, previewStream);
     ASSERT_NE(nullptr, halStreamConfig);
@@ -6410,11 +6448,14 @@ void CameraHidlTest::configurePreviewStream(const std::string &name, int32_t dev
             dataspaceFlag = static_cast<V3_2::DataspaceFlags>(Dataspace::UNKNOWN);
     }
 
-    V3_2::Stream stream3_2 = {0, StreamType::OUTPUT,
-            static_cast<uint32_t> (outputPreviewStreams[0].width),
-            static_cast<uint32_t> (outputPreviewStreams[0].height),
-            static_cast<PixelFormat> (outputPreviewStreams[0].format),
-            GRALLOC1_CONSUMER_USAGE_HWCOMPOSER, dataspaceFlag, StreamRotation::ROTATION_0};
+    V3_2::Stream stream3_2 = {0,
+                              StreamType::OUTPUT,
+                              static_cast<uint32_t>(outputPreviewStreams[0].width),
+                              static_cast<uint32_t>(outputPreviewStreams[0].height),
+                              static_cast<PixelFormat>(outputPreviewStreams[0].format),
+                              bufferUsage,
+                              dataspaceFlag,
+                              StreamRotation::ROTATION_0};
     ::android::hardware::hidl_vec<V3_2::Stream> streams3_2 = {stream3_2};
     ::android::hardware::camera::device::V3_2::StreamConfiguration config3_2;
     ::android::hardware::camera::device::V3_4::StreamConfiguration config3_4;
@@ -6422,7 +6463,6 @@ void CameraHidlTest::configurePreviewStream(const std::string &name, int32_t dev
     createStreamConfiguration(streams3_2, StreamConfigurationMode::NORMAL_MODE,
                               &config3_2, &config3_4, &config3_5, jpegBufferSize);
     if (session3_5 != nullptr) {
-        RequestTemplate reqTemplate = RequestTemplate::PREVIEW;
         ret = session3_5->constructDefaultRequestSettings(reqTemplate,
                                                        [&config3_5](auto status, const auto& req) {
                                                            ASSERT_EQ(Status::OK, status);
@@ -6445,7 +6485,6 @@ void CameraHidlTest::configurePreviewStream(const std::string &name, int32_t dev
                     }
                 });
     } else if (session3_4 != nullptr) {
-        RequestTemplate reqTemplate = RequestTemplate::PREVIEW;
         ret = session3_4->constructDefaultRequestSettings(reqTemplate,
                                                        [&config3_4](auto status, const auto& req) {
                                                            ASSERT_EQ(Status::OK, status);
