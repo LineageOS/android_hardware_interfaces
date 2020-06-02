@@ -21,6 +21,7 @@
 #include <VtsHalHidlTargetTestBase.h>
 
 #include <android/hardware/gnss/1.1/IGnssConfiguration.h>
+#include <cutils/properties.h>
 
 using android::hardware::hidl_vec;
 
@@ -32,6 +33,12 @@ using android::hardware::gnss::V1_0::GnssLocation;
 using android::hardware::gnss::V1_0::IGnssDebug;
 using android::hardware::gnss::V1_1::IGnssConfiguration;
 using android::hardware::gnss::V1_1::IGnssMeasurement;
+
+static bool IsAutomotiveDevice() {
+  char buffer[PROPERTY_VALUE_MAX] = {0};
+  property_get("ro.hardware.type", buffer, "");
+  return strncmp(buffer, "automotive", PROPERTY_VALUE_MAX) == 0;
+}
 
 /*
  * SetupTeardownCreateCleanup:
@@ -447,7 +454,7 @@ TEST_F(GnssHalTest, InjectBestLocation) {
 TEST_F(GnssHalTest, GnssDebugValuesSanityTest) {
     auto gnssDebug = gnss_hal_->getExtensionGnssDebug();
     ASSERT_TRUE(gnssDebug.isOk());
-    if (info_called_count_ > 0 && last_info_.yearOfHw >= 2017) {
+    if (!IsAutomotiveDevice() && info_called_count_ > 0 && last_info_.yearOfHw >= 2017) {
         sp<IGnssDebug> iGnssDebug = gnssDebug;
         EXPECT_NE(iGnssDebug, nullptr);
 
