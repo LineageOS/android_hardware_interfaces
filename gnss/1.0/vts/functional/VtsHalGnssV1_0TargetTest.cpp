@@ -25,6 +25,8 @@
 #include <condition_variable>
 #include <mutex>
 
+#include <cutils/properties.h>
+
 using android::hardware::Return;
 using android::hardware::Void;
 
@@ -35,6 +37,12 @@ using android::hardware::gnss::V1_0::IGnssCallback;
 using android::hardware::gnss::V1_0::IGnssDebug;
 using android::hardware::gnss::V1_0::IGnssMeasurement;
 using android::sp;
+
+static bool IsAutomotiveDevice() {
+  char buffer[PROPERTY_VALUE_MAX] = {0};
+  property_get("ro.hardware.type", buffer, "");
+  return strncmp(buffer, "automotive", PROPERTY_VALUE_MAX) == 0;
+}
 
 #define TIMEOUT_SEC 2  // for basic commands/responses
 
@@ -460,9 +468,9 @@ TEST_F(GnssHalTest, GetAllExtensions) {
 
   auto gnssDebug = gnss_hal_->getExtensionGnssDebug();
   ASSERT_TRUE(gnssDebug.isOk());
-  if (info_called_count_ > 0 && last_info_.yearOfHw >= 2017) {
-    sp<IGnssDebug> iGnssDebug = gnssDebug;
-    EXPECT_NE(iGnssDebug, nullptr);
+  if (!IsAutomotiveDevice() && info_called_count_ > 0 && last_info_.yearOfHw >= 2017) {
+      sp<IGnssDebug> iGnssDebug = gnssDebug;
+      EXPECT_NE(iGnssDebug, nullptr);
   }
 }
 
