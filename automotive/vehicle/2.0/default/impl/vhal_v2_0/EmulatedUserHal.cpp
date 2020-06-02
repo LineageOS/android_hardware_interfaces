@@ -30,6 +30,8 @@ namespace impl {
 
 constexpr int INITIAL_USER_INFO = static_cast<int>(VehicleProperty::INITIAL_USER_INFO);
 constexpr int SWITCH_USER = static_cast<int>(VehicleProperty::SWITCH_USER);
+constexpr int CREATE_USER = static_cast<int>(VehicleProperty::CREATE_USER);
+constexpr int REMOVE_USER = static_cast<int>(VehicleProperty::REMOVE_USER);
 constexpr int USER_IDENTIFICATION_ASSOCIATION =
         static_cast<int>(VehicleProperty::USER_IDENTIFICATION_ASSOCIATION);
 
@@ -37,6 +39,8 @@ bool EmulatedUserHal::isSupported(int32_t prop) {
     switch (prop) {
         case INITIAL_USER_INFO:
         case SWITCH_USER:
+        case CREATE_USER:
+        case REMOVE_USER:
         case USER_IDENTIFICATION_ASSOCIATION:
             return true;
         default:
@@ -53,6 +57,11 @@ android::base::Result<std::unique_ptr<VehiclePropValue>> EmulatedUserHal::onSetP
             return onSetInitialUserInfoResponse(value);
         case SWITCH_USER:
             return onSetSwitchUserResponse(value);
+        case CREATE_USER:
+            return onSetCreateUserResponse(value);
+        case REMOVE_USER:
+            ALOGI("REMOVE_USER is FYI only, nothing to do...");
+            return {};
         case USER_IDENTIFICATION_ASSOCIATION:
             return onSetUserIdentificationAssociation(value);
         default:
@@ -67,6 +76,8 @@ android::base::Result<std::unique_ptr<VehiclePropValue>> EmulatedUserHal::onGetP
     switch (prop) {
         case INITIAL_USER_INFO:
         case SWITCH_USER:
+        case CREATE_USER:
+        case REMOVE_USER:
             ALOGE("onGetProperty(): %d is only supported on SET", prop);
             return android::base::Error(static_cast<int>(StatusCode::INVALID_ARG))
                    << "only supported on SET";
@@ -162,6 +173,41 @@ android::base::Result<std::unique_ptr<VehiclePropValue>> EmulatedUserHal::onSetS
     return updatedValue;
 }
 
+android::base::Result<std::unique_ptr<VehiclePropValue>> EmulatedUserHal::onSetCreateUserResponse(
+        const VehiclePropValue& value) {
+    if (value.value.int32Values.size() == 0) {
+        ALOGE("set(CREATE_USER): no int32values, ignoring it: %s", toString(value).c_str());
+        return android::base::Error(static_cast<int>(StatusCode::INVALID_ARG))
+               << "no int32values on " << toString(value);
+    }
+
+    if (value.areaId != 0) {
+        ALOGD("set(CREATE_USER) called from lshal; storing it: %s", toString(value).c_str());
+        mCreateUserResponseFromCmd.reset(new VehiclePropValue(value));
+        return {};
+    }
+    ALOGD("set(CREATE_USER) called from Android: %s", toString(value).c_str());
+
+    int32_t requestId = value.value.int32Values[0];
+    if (mCreateUserResponseFromCmd != nullptr) {
+        ALOGI("replying CREATE_USER with lshal value:  %s",
+              toString(*mCreateUserResponseFromCmd).c_str());
+        return sendUserHalResponse(std::move(mCreateUserResponseFromCmd), requestId);
+    }
+
+    // Returns default response
+    auto updatedValue = std::unique_ptr<VehiclePropValue>(new VehiclePropValue);
+    updatedValue->prop = CREATE_USER;
+    updatedValue->timestamp = elapsedRealtimeNano();
+    updatedValue->value.int32Values.resize(2);
+    updatedValue->value.int32Values[0] = requestId;
+    updatedValue->value.int32Values[1] = (int32_t)CreateUserStatus::SUCCESS;
+
+    ALOGI("no lshal response; replying with SUCCESS: %s", toString(*updatedValue).c_str());
+
+    return updatedValue;
+}
+
 android::base::Result<std::unique_ptr<VehiclePropValue>>
 EmulatedUserHal::onSetUserIdentificationAssociation(const VehiclePropValue& value) {
     if (value.value.int32Values.size() == 0) {
@@ -246,6 +292,12 @@ void EmulatedUserHal::dump(int fd, std::string indent) {
                 toString(*mSwitchUserResponseFromCmd).c_str());
     } else {
         dprintf(fd, "%sNo SwitchUser response\n", indent.c_str());
+    }
+    if (mCreateUserResponseFromCmd != nullptr) {
+        dprintf(fd, "%sCreateUser response: %s\n", indent.c_str(),
+                toString(*mCreateUserResponseFromCmd).c_str());
+    } else {
+        dprintf(fd, "%sNo CreateUser response\n", indent.c_str());
     }
     if (mSetUserIdentificationAssociationResponseFromCmd != nullptr) {
         dprintf(fd, "%sSetUserIdentificationAssociation response: %s\n", indent.c_str(),
