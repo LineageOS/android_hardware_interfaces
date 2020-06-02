@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-#include <VtsHalHidlTargetTestBase.h>
-#include <VtsHalHidlTargetTestEnvBase.h>
 #include <android-base/logging.h>
 #include <android/hardware/cas/1.0/types.h>
 #include <android/hardware/cas/1.2/ICas.h>
@@ -28,6 +26,8 @@
 #include <android/hardware/tv/tuner/1.0/ITuner.h>
 #include <android/hardware/tv/tuner/1.0/types.h>
 #include <fmq/MessageQueue.h>
+#include <gtest/gtest.h>
+#include <hidl/HidlSupport.h>
 #include <hidl/Status.h>
 #include <utils/Condition.h>
 #include <utils/Mutex.h>
@@ -68,6 +68,8 @@ using android::hardware::tv::tuner::V1_0::Result;
 using android::hardware::tv::tuner::V1_0::TunerKeyToken;
 
 using ::testing::AssertionResult;
+
+using namespace std;
 
 class MediaCasListener : public ICasListener {
   public:
