@@ -1794,6 +1794,84 @@ TEST_P(GraphicsMapperHidlTest, SetMetadataNullBuffer) {
 }
 
 /**
+ * Test get::metadata with cloned native_handle
+ */
+TEST_P(GraphicsMapperHidlTest, GetMetadataClonedHandle) {
+    const native_handle_t* bufferHandle = nullptr;
+    ASSERT_NO_FATAL_FAILURE(bufferHandle = mGralloc->allocate(mDummyDescriptorInfo, true));
+
+    const auto dataspace = Dataspace::SRGB_LINEAR;
+    {
+        hidl_vec<uint8_t> metadata;
+        ASSERT_EQ(NO_ERROR, gralloc4::encodeDataspace(dataspace, &metadata));
+
+        Error err = mGralloc->set(bufferHandle, gralloc4::MetadataType_Dataspace, metadata);
+        if (err == Error::UNSUPPORTED) {
+            GTEST_SUCCEED() << "setting this metadata is unsupported";
+            return;
+        }
+        ASSERT_EQ(Error::NONE, err);
+    }
+
+    const native_handle_t* importedHandle;
+    {
+        auto clonedHandle = native_handle_clone(bufferHandle);
+        ASSERT_NO_FATAL_FAILURE(importedHandle = mGralloc->importBuffer(clonedHandle));
+        native_handle_close(clonedHandle);
+        native_handle_delete(clonedHandle);
+    }
+
+    Dataspace realSpace = Dataspace::UNKNOWN;
+    {
+        hidl_vec<uint8_t> metadata;
+        ASSERT_EQ(Error::NONE,
+                  mGralloc->get(importedHandle, gralloc4::MetadataType_Dataspace, &metadata));
+        ASSERT_NO_FATAL_FAILURE(gralloc4::decodeDataspace(metadata, &realSpace));
+    }
+
+    EXPECT_EQ(dataspace, realSpace);
+}
+
+/**
+ * Test set::metadata with cloned native_handle
+ */
+TEST_P(GraphicsMapperHidlTest, SetMetadataClonedHandle) {
+    const native_handle_t* bufferHandle = nullptr;
+    ASSERT_NO_FATAL_FAILURE(bufferHandle = mGralloc->allocate(mDummyDescriptorInfo, true));
+
+    const native_handle_t* importedHandle;
+    {
+        auto clonedHandle = native_handle_clone(bufferHandle);
+        ASSERT_NO_FATAL_FAILURE(importedHandle = mGralloc->importBuffer(clonedHandle));
+        native_handle_close(clonedHandle);
+        native_handle_delete(clonedHandle);
+    }
+
+    const auto dataspace = Dataspace::SRGB_LINEAR;
+    {
+        hidl_vec<uint8_t> metadata;
+        ASSERT_EQ(NO_ERROR, gralloc4::encodeDataspace(dataspace, &metadata));
+
+        Error err = mGralloc->set(importedHandle, gralloc4::MetadataType_Dataspace, metadata);
+        if (err == Error::UNSUPPORTED) {
+            GTEST_SUCCEED() << "setting this metadata is unsupported";
+            return;
+        }
+        ASSERT_EQ(Error::NONE, err);
+    }
+
+    Dataspace realSpace = Dataspace::UNKNOWN;
+    {
+        hidl_vec<uint8_t> metadata;
+        ASSERT_EQ(Error::NONE,
+                  mGralloc->get(bufferHandle, gralloc4::MetadataType_Dataspace, &metadata));
+        ASSERT_NO_FATAL_FAILURE(gralloc4::decodeDataspace(metadata, &realSpace));
+    }
+
+    EXPECT_EQ(dataspace, realSpace);
+}
+
+/**
  * Test IMapper::set(metadata) for constant metadata
  */
 TEST_P(GraphicsMapperHidlTest, SetConstantMetadata) {
