@@ -69,11 +69,10 @@ TEST_P(IdentityCredentialTests, verifyAttestationWithEmptyChallenge) {
     result = writableCredential->getAttestationCertificate(
             attestationApplicationId, attestationChallenge, &attestationCertificate);
 
-    EXPECT_TRUE(result.isOk()) << result.exceptionCode() << "; " << result.exceptionMessage()
-                               << endl;
-
-    EXPECT_TRUE(test_utils::validateAttestationCertificate(
-            attestationCertificate, attestationChallenge, attestationApplicationId, hwInfo));
+    EXPECT_FALSE(result.isOk()) << result.exceptionCode() << "; " << result.exceptionMessage()
+                                << endl;
+    EXPECT_EQ(binder::Status::EX_SERVICE_SPECIFIC, result.exceptionCode());
+    EXPECT_EQ(IIdentityCredentialStore::STATUS_INVALID_DATA, result.serviceSpecificErrorCode());
 }
 
 TEST_P(IdentityCredentialTests, verifyAttestationSuccessWithChallenge) {
@@ -130,6 +129,7 @@ TEST_P(IdentityCredentialTests, verifyStartPersonalization) {
 
     // First call should go through
     const vector<int32_t> entryCounts = {2, 4};
+    writableCredential->setExpectedProofOfProvisioningSize(123456);
     result = writableCredential->startPersonalization(5, entryCounts);
     ASSERT_TRUE(result.isOk()) << result.exceptionCode() << "; " << result.exceptionMessage()
                                << endl;
@@ -151,18 +151,8 @@ TEST_P(IdentityCredentialTests, verifyStartPersonalizationMin) {
 
     // Verify minimal number of profile count and entry count
     const vector<int32_t> entryCounts = {1, 1};
-    writableCredential->startPersonalization(1, entryCounts);
-    EXPECT_TRUE(result.isOk()) << result.exceptionCode() << "; " << result.exceptionMessage()
-                               << endl;
-}
-
-TEST_P(IdentityCredentialTests, verifyStartPersonalizationZero) {
-    Status result;
-    sp<IWritableIdentityCredential> writableCredential;
-    ASSERT_TRUE(test_utils::setupWritableCredential(writableCredential, credentialStore_));
-
-    const vector<int32_t> entryCounts = {0};
-    writableCredential->startPersonalization(0, entryCounts);
+    writableCredential->setExpectedProofOfProvisioningSize(123456);
+    result = writableCredential->startPersonalization(1, entryCounts);
     EXPECT_TRUE(result.isOk()) << result.exceptionCode() << "; " << result.exceptionMessage()
                                << endl;
 }
@@ -174,7 +164,8 @@ TEST_P(IdentityCredentialTests, verifyStartPersonalizationOne) {
 
     // Verify minimal number of profile count and entry count
     const vector<int32_t> entryCounts = {1};
-    writableCredential->startPersonalization(1, entryCounts);
+    writableCredential->setExpectedProofOfProvisioningSize(123456);
+    result = writableCredential->startPersonalization(1, entryCounts);
     EXPECT_TRUE(result.isOk()) << result.exceptionCode() << "; " << result.exceptionMessage()
                                << endl;
 }
@@ -186,7 +177,8 @@ TEST_P(IdentityCredentialTests, verifyStartPersonalizationLarge) {
 
     // Verify set a large number of profile count and entry count is ok
     const vector<int32_t> entryCounts = {3000};
-    writableCredential->startPersonalization(3500, entryCounts);
+    writableCredential->setExpectedProofOfProvisioningSize(123456);
+    result = writableCredential->startPersonalization(25, entryCounts);
     EXPECT_TRUE(result.isOk()) << result.exceptionCode() << "; " << result.exceptionMessage()
                                << endl;
 }
@@ -198,7 +190,8 @@ TEST_P(IdentityCredentialTests, verifyProfileNumberMismatchShouldFail) {
 
     // Enter mismatched entry and profile numbers
     const vector<int32_t> entryCounts = {5, 6};
-    writableCredential->startPersonalization(5, entryCounts);
+    writableCredential->setExpectedProofOfProvisioningSize(123456);
+    result = writableCredential->startPersonalization(5, entryCounts);
     ASSERT_TRUE(result.isOk()) << result.exceptionCode() << "; " << result.exceptionMessage()
                                << endl;
 
@@ -234,7 +227,8 @@ TEST_P(IdentityCredentialTests, verifyDuplicateProfileId) {
     ASSERT_TRUE(test_utils::setupWritableCredential(writableCredential, credentialStore_));
 
     const vector<int32_t> entryCounts = {3, 6};
-    writableCredential->startPersonalization(3, entryCounts);
+    writableCredential->setExpectedProofOfProvisioningSize(123456);
+    result = writableCredential->startPersonalization(3, entryCounts);
     ASSERT_TRUE(result.isOk()) << result.exceptionCode() << "; " << result.exceptionMessage()
                                << endl;
 
@@ -251,9 +245,10 @@ TEST_P(IdentityCredentialTests, verifyDuplicateProfileId) {
         SecureAccessControlProfile profile;
         Certificate cert;
         cert.encodedCertificate = testProfile.readerCertificate;
+        int64_t secureUserId = testProfile.userAuthenticationRequired ? 66 : 0;
         result = writableCredential->addAccessControlProfile(
                 testProfile.id, cert, testProfile.userAuthenticationRequired,
-                testProfile.timeoutMillis, 0, &profile);
+                testProfile.timeoutMillis, secureUserId, &profile);
 
         if (expectOk) {
             expectOk = false;
@@ -554,7 +549,7 @@ TEST_P(IdentityCredentialTests, verifyEmptyNameSpaceMixedWithNonEmptyWorks) {
     ;
     // OK to fail, not available in v1 HAL
     writableCredential->setExpectedProofOfProvisioningSize(expectedPoPSize);
-    writableCredential->startPersonalization(3, entryCounts);
+    result = writableCredential->startPersonalization(3, entryCounts);
     ASSERT_TRUE(result.isOk()) << result.exceptionCode() << "; " << result.exceptionMessage()
                                << endl;
 
@@ -608,7 +603,8 @@ TEST_P(IdentityCredentialTests, verifyInterleavingEntryNameSpaceOrderingFails) {
     // before "Image" and 2 after image, which is not correct.  All of same name
     // space should occur together.  Let's see if this fails.
     const vector<int32_t> entryCounts = {2u, 1u, 2u};
-    writableCredential->startPersonalization(3, entryCounts);
+    writableCredential->setExpectedProofOfProvisioningSize(123456);
+    result = writableCredential->startPersonalization(3, entryCounts);
     ASSERT_TRUE(result.isOk()) << result.exceptionCode() << "; " << result.exceptionMessage()
                                << endl;
 
@@ -674,6 +670,7 @@ TEST_P(IdentityCredentialTests, verifyAccessControlProfileIdOutOfRange) {
     ASSERT_TRUE(test_utils::setupWritableCredential(writableCredential, credentialStore_));
 
     const vector<int32_t> entryCounts = {1};
+    writableCredential->setExpectedProofOfProvisioningSize(123456);
     Status result = writableCredential->startPersonalization(1, entryCounts);
     ASSERT_TRUE(result.isOk()) << result.exceptionCode() << "; " << result.exceptionMessage()
                                << endl;
