@@ -414,12 +414,9 @@ void GraphicsComposerHidlCommandTest::sendRefreshFrame(const VsyncPeriodChangeTi
 
     mWriter->validateDisplay();
     execute();
-    if (mReader->mCompositionChanges.size() != 0) {
-        GTEST_SUCCEED() << "Composition change requested, skipping test";
-        return;
-    }
-
     ASSERT_EQ(0, mReader->mErrors.size());
+    mReader->mCompositionChanges.clear();
+
     mWriter->presentDisplay();
     execute();
     ASSERT_EQ(0, mReader->mErrors.size());
@@ -427,8 +424,14 @@ void GraphicsComposerHidlCommandTest::sendRefreshFrame(const VsyncPeriodChangeTi
     mWriter->selectLayer(layer);
     auto handle2 = allocate();
     ASSERT_NE(nullptr, handle2);
+
     mWriter->setLayerBuffer(0, handle2, -1);
     mWriter->setLayerSurfaceDamage(std::vector<IComposerClient::Rect>(1, {0, 0, 10, 10}));
+    mWriter->validateDisplay();
+    execute();
+    ASSERT_EQ(0, mReader->mErrors.size());
+    mReader->mCompositionChanges.clear();
+
     mWriter->presentDisplay();
     execute();
 }
