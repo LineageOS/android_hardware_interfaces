@@ -43,7 +43,7 @@ struct NetlinkSocket {
     template <class T, unsigned int BUFSIZE>
     bool send(NetlinkRequest<T, BUFSIZE>& req) {
         if (!req.isGood()) return false;
-        return send(req.header());
+        return send(req.header(), req.totalLength);
     }
 
     /**
@@ -54,11 +54,13 @@ struct NetlinkSocket {
     bool receiveAck();
 
   private:
+    const int mProtocol;
+
     uint32_t mSeq = 0;
     base::unique_fd mFd;
     bool mFailed = false;
 
-    bool send(struct nlmsghdr* msg);
+    bool send(struct nlmsghdr* msg, size_t totalLen);
 
     DISALLOW_COPY_AND_ASSIGN(NetlinkSocket);
 };
