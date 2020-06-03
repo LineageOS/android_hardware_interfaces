@@ -23,8 +23,9 @@
 #include <android/hardware/wifi/supplicant/1.0/ISupplicantStaNetwork.h>
 #include <android/hardware/wifi/supplicant/1.1/ISupplicant.h>
 
-#include <VtsHalHidlTargetTestEnvBase.h>
+#include <getopt.h>
 
+#include <VtsHalHidlTargetTestEnvBase.h>
 // Used to stop the android wifi framework before every test.
 void stopWifiFramework();
 void startWifiFramework();
@@ -50,10 +51,47 @@ bool turnOnExcessiveLogging();
 
 class WifiSupplicantHidlEnvironment
     : public ::testing::VtsHalHidlTargetTestEnvBase {
-   public:
+   protected:
     virtual void HidlSetUp() override { stopSupplicant(); }
     virtual void HidlTearDown() override {
         startSupplicantAndWaitForHidlService();
+    }
+
+   public:
+    // Whether P2P feature is supported on the device.
+    bool isP2pOn = true;
+
+    void usage(char* me, char* arg) {
+        fprintf(stderr,
+                "unrecognized option: %s\n\n"
+                "usage: %s <gtest options> <test options>\n\n"
+                "test options are:\n\n"
+                "-P, --p2p_on: Whether P2P feature is supported\n",
+                arg, me);
+    }
+
+    int initFromOptions(int argc, char** argv) {
+        static struct option options[] = {{"p2p_off", no_argument, 0, 'P'},
+                                          {0, 0, 0, 0}};
+
+        int c;
+        while ((c = getopt_long(argc, argv, "P", options, NULL)) >= 0) {
+            switch (c) {
+                case 'P':
+                    isP2pOn = false;
+                    break;
+                default:
+                    usage(argv[0], argv[optind]);
+                    return 2;
+            }
+        }
+
+        if (optind < argc) {
+            usage(argv[0], argv[optind]);
+            return 2;
+        }
+
+        return 0;
     }
 };
 
