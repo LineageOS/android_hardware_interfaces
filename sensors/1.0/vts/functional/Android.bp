@@ -23,11 +23,6 @@ cc_test {
         "VtsHalSensorsV1_0TargetTest.cpp",
     ],
     static_libs: [
-        "android.hardware.graphics.allocator@2.0",
-        "android.hardware.graphics.allocator@3.0",
-        "android.hardware.graphics.mapper@2.0",
-        "android.hardware.graphics.mapper@2.1",
-        "android.hardware.graphics.mapper@3.0",
         "android.hardware.sensors@1.0",
         "VtsHalSensorsTargetTestUtils",
     ],
