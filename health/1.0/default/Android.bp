@@ -51,6 +51,12 @@ cc_library_shared {
         "android.hardware.health@1.0-convert",
         "libhealthd.default",
     ],
+
+    shared_libs: [
+        "libhidlbase",
+        "libutils",
+        "android.hardware.health@1.0",
+    ],
 }
 
 cc_binary {
