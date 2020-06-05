@@ -33,6 +33,19 @@ AssertionResult DemuxTests::setDemuxFrontendDataSource(uint32_t frontendId) {
     return AssertionResult(status.isOk());
 }
 
+AssertionResult DemuxTests::getDemuxCaps(DemuxCapabilities& demuxCaps) {
+    if (!mDemux) {
+        ALOGW("[vts] Test with openDemux first.");
+        return failure();
+    }
+    Result status;
+    mService->getDemuxCaps([&](Result result, DemuxCapabilities caps) {
+        status = result;
+        demuxCaps = caps;
+    });
+    return AssertionResult(status == Result::SUCCESS);
+}
+
 AssertionResult DemuxTests::closeDemux() {
     EXPECT_TRUE(mDemux) << "Test with openDemux first.";
     auto status = mDemux->close();
