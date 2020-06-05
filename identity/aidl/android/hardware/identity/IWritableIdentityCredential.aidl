@@ -29,9 +29,27 @@ interface IWritableIdentityCredential {
      * Gets the certificate chain for credentialKey which can be used to prove the hardware
      * characteristics to an issuing authority.  Must not be called more than once.
      *
+     * The following non-optional fields for the X.509 certificate shall be set as follows:
+     *
+     *  - version: INTEGER 2 (means v3 certificate).
+     *
+     *  - serialNumber: INTEGER 1 (fixed value: same on all certs).
+     *
+     *  - signature: must be set to ECDSA.
+     *
+     *  - subject: CN shall be set to "Android Identity Credential Key".
+     *
+     *  - issuer: shall be set to "credentialStoreName (credentialStoreAuthorName)" using the
+     *    values returned in HardwareInformation.
+     *
+     *  - validity: should be from current time and expire at the same time as the
+     *    attestation batch certificate used.
+     *
+     *  - subjectPublicKeyInfo: must contain attested public key.
+     *
      * The certificate chain must be generated using Keymaster Attestation
      * (see https://source.android.com/security/keystore/attestation) with the
-     * following additional requirements:
+     * following additional requirements on the data in the attestation extension:
      *
      *  - The attestationVersion field in the attestation extension must be at least 3.
      *
@@ -109,7 +127,8 @@ interface IWritableIdentityCredential {
      *     in Tag::ATTESTATION_APPLICATION_ID. This schema is described in
      *     https://developer.android.com/training/articles/security-key-attestation#certificate_schema_attestationid
      *
-     * @param attestationChallenge a challenge set by the issuer to ensure freshness.
+     * @param attestationChallenge a challenge set by the issuer to ensure freshness. If
+     *    this is empty, the call fails with STATUS_INVALID_DATA.
      *
      * @return the X.509 certificate chain for the credentialKey
      */
@@ -250,6 +269,7 @@ interface IWritableIdentityCredential {
      *         CredentialKeys = [
      *              bstr,   ; storageKey, a 128-bit AES key
      *              bstr    ; credentialPrivKey, the private key for credentialKey
+     *                      ; in uncompressed form
      *         ]
      *
      * @param out proofOfProvisioningSignature proves to the IA that the credential was imported
