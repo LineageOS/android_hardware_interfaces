@@ -25,6 +25,7 @@ cc_library_static {
         "can.cpp",
         "common.cpp",
         "libnetdevice.cpp",
+        "vlan.cpp",
     ],
     export_include_dirs: ["include"],
 }
