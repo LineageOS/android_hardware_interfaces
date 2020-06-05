@@ -331,6 +331,36 @@ TEST_P(TunerFilterHidlTest, StartFilterInDemux) {
     configSingleFilterInDemuxTest(filterArray[TS_VIDEO0], frontendArray[DVBT]);
 }
 
+TEST_P(TunerFilterHidlTest, SetFilterLinkage) {
+    description("Pick up all the possible linkages from the demux caps and set them up.");
+    DemuxCapabilities caps;
+    uint32_t demuxId;
+    sp<IDemux> demux;
+    ASSERT_TRUE(mDemuxTests.openDemux(demux, demuxId));
+    ASSERT_TRUE(mDemuxTests.getDemuxCaps(caps));
+    mFilterTests.setDemux(demux);
+    for (int i = 0; i < caps.linkCaps.size(); i++) {
+        uint32_t bitMask = 1;
+        for (int j = 0; j < FILTER_MAIN_TYPE_BIT_COUNT; j++) {
+            if (caps.linkCaps[i] & (bitMask << j)) {
+                uint32_t sourceFilterId;
+                uint32_t sinkFilterId;
+                ASSERT_TRUE(mFilterTests.openFilterInDemux(filterLinkageTypes[SOURCE][i],
+                                                           FMQ_SIZE_16M));
+                ASSERT_TRUE(mFilterTests.getNewlyOpenedFilterId(sourceFilterId));
+                ASSERT_TRUE(
+                        mFilterTests.openFilterInDemux(filterLinkageTypes[SINK][j], FMQ_SIZE_16M));
+                ASSERT_TRUE(mFilterTests.getNewlyOpenedFilterId(sinkFilterId));
+                ASSERT_TRUE(mFilterTests.setFilterDataSource(sourceFilterId, sinkFilterId));
+                ASSERT_TRUE(mFilterTests.setFilterDataSourceToDemux(sinkFilterId));
+                ASSERT_TRUE(mFilterTests.closeFilter(sinkFilterId));
+                ASSERT_TRUE(mFilterTests.closeFilter(sourceFilterId));
+            }
+        }
+    }
+    ASSERT_TRUE(mDemuxTests.closeDemux());
+}
+
 TEST_P(TunerBroadcastHidlTest, BroadcastDataFlowVideoFilterTest) {
     description("Test Video Filter functionality in Broadcast use case.");
     broadcastSingleFilterTest(filterArray[TS_VIDEO1], frontendArray[DVBS]);
@@ -393,7 +423,7 @@ TEST_P(TunerDescramblerHidlTest, ScrambledBroadcastDataFlowMediaFiltersTest) {
     scrambledBroadcastTest(filterConfs, frontendArray[DVBT], descramblerArray[DESC_0]);
 }
 
-/*INSTANTIATE_TEST_SUITE_P(
+INSTANTIATE_TEST_SUITE_P(
         PerInstance, TunerFrontendHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(ITuner::descriptor)),
         android::hardware::PrintInstanceNameToString);
@@ -421,7 +451,7 @@ INSTANTIATE_TEST_SUITE_P(
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, TunerRecordHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(ITuner::descriptor)),
-        android::hardware::PrintInstanceNameToString);*/
+        android::hardware::PrintInstanceNameToString);
 
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, TunerDescramblerHidlTest,
