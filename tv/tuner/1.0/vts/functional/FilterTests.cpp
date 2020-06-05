@@ -197,6 +197,26 @@ AssertionResult FilterTests::getFilterMQDescriptor(uint32_t filterId) {
     return AssertionResult(status == Result::SUCCESS);
 }
 
+AssertionResult FilterTests::setFilterDataSource(uint32_t sourceFilterId, uint32_t sinkFilterId) {
+    if (!mFilters[sourceFilterId] || !mFilters[sinkFilterId]) {
+        ALOGE("[vts] setFilterDataSource filter not opened.");
+        return failure();
+    }
+
+    auto status = mFilters[sinkFilterId]->setDataSource(mFilters[sourceFilterId]);
+    return AssertionResult(status == Result::SUCCESS);
+}
+
+AssertionResult FilterTests::setFilterDataSourceToDemux(uint32_t filterId) {
+    if (!mFilters[filterId]) {
+        ALOGE("[vts] setFilterDataSourceToDemux filter not opened.");
+        return failure();
+    }
+
+    auto status = mFilters[filterId]->setDataSource(NULL);
+    return AssertionResult(status == Result::SUCCESS);
+}
+
 AssertionResult FilterTests::startFilter(uint32_t filterId) {
     EXPECT_TRUE(mFilters[filterId]) << "Test with getNewlyOpenedFilterId first.";
     Result status = mFilters[filterId]->start();
