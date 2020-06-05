@@ -65,6 +65,10 @@ ndk::ScopedAStatus WritableIdentityCredential::getAttestationCertificate(
                 IIdentityCredentialStore::STATUS_FAILED,
                 "Error attestation certificate previously generated"));
     }
+    if (attestationChallenge.empty()) {
+        return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                IIdentityCredentialStore::STATUS_INVALID_DATA, "Challenge can not be empty"));
+    }
 
     vector<uint8_t> challenge(attestationChallenge.begin(), attestationChallenge.end());
     vector<uint8_t> appId(attestationApplicationId.begin(), attestationApplicationId.end());
@@ -163,6 +167,13 @@ ndk::ScopedAStatus WritableIdentityCredential::addAccessControlProfile(
         return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
                 IIdentityCredentialStore::STATUS_INVALID_DATA,
                 "userAuthenticationRequired is false but timeout is non-zero"));
+    }
+
+    // If |userAuthenticationRequired| is true, then |secureUserId| must be non-zero.
+    if (userAuthenticationRequired && secureUserId == 0) {
+        return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                IIdentityCredentialStore::STATUS_INVALID_DATA,
+                "userAuthenticationRequired is true but secureUserId is zero"));
     }
 
     profile.id = id;
