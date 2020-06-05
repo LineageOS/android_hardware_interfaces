@@ -37,8 +37,6 @@ class GrallocWrapper {
     // returns false, other methods are not safe to call.
     bool isInitialized() const { return (mGrallocHal != nullptr); };
 
-    std::string dumpDebugInfo();
-
     // Allocates a gralloc buffer suitable for direct channel sensors usage with the given size.
     // The buffer should be freed using freeBuffer when it's not needed anymore; otherwise it'll
     // be freed when this object is destroyed.
