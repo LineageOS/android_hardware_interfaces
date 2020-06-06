@@ -33,9 +33,5 @@ cc_test {
         "libfmq",
         "VtsHalSensorsTargetTestUtils",
     ],
-    test_suites: [
-        "general-tests",
-        "vts",
-    ],
 }
 
