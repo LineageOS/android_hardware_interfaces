@@ -47,6 +47,9 @@ using android::hardware::tv::tuner::V1_0::FrontendSettings;
 using android::hardware::tv::tuner::V1_0::FrontendStatus;
 using android::hardware::tv::tuner::V1_0::FrontendStatusType;
 using android::hardware::tv::tuner::V1_0::FrontendType;
+using android::hardware::tv::tuner::V1_0::LnbPosition;
+using android::hardware::tv::tuner::V1_0::LnbTone;
+using android::hardware::tv::tuner::V1_0::LnbVoltage;
 using android::hardware::tv::tuner::V1_0::PlaybackSettings;
 using android::hardware::tv::tuner::V1_0::RecordSettings;
 
@@ -95,6 +98,16 @@ typedef enum {
 } Frontend;
 
 typedef enum {
+    LNB0,
+    LNB_MAX,
+} Lnb;
+
+typedef enum {
+    DISEQC_POWER_ON,
+    DISEQC_MAX,
+} Diseqc;
+
+typedef enum {
     SCAN_DVBT,
     SCAN_MAX,
 } FrontendScan;
@@ -125,6 +138,13 @@ struct FrontendConfig {
     vector<FrontendStatus> expectTuneStatuses;
 };
 
+struct LnbConfig {
+    bool usingLnb;
+    LnbVoltage voltage;
+    LnbTone tone;
+    LnbPosition position;
+};
+
 struct ChannelConfig {
     int32_t frontendId;
     int32_t channelId;
@@ -148,6 +168,8 @@ struct DescramblerConfig {
 
 static FrontendConfig frontendArray[FILTER_MAX];
 static FrontendConfig frontendScanArray[SCAN_MAX];
+static LnbConfig lnbArray[LNB_MAX];
+static vector<uint8_t> diseqcMsgArray[DISEQC_MAX];
 static ChannelConfig channelArray[FRONTEND_MAX];
 static FilterConfig filterArray[FILTER_MAX];
 static DemuxFilterType filterLinkageTypes[LINKAGE_DIR][FILTER_MAIN_TYPE_BIT_COUNT];
@@ -196,6 +218,19 @@ inline void initFrontendScanConfig() {
             .isHighPriority = true,
             .standard = FrontendDvbtStandard::T,
     });
+};
+
+/** Configuration array for the Lnb test */
+inline void initLnbConfig() {
+    lnbArray[LNB0].usingLnb = true;
+    lnbArray[LNB0].voltage = LnbVoltage::VOLTAGE_12V;
+    lnbArray[LNB0].tone = LnbTone::NONE;
+    lnbArray[LNB0].position = LnbPosition::UNDEFINED;
+};
+
+/** Diseqc messages array for the Lnb test */
+inline void initDiseqcMsg() {
+    diseqcMsgArray[DISEQC_POWER_ON] = {0xE, 0x0, 0x0, 0x0, 0x0, 0x3};
 };
 
 /** Configuration array for the filter test */
