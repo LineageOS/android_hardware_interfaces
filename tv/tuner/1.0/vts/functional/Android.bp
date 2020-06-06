@@ -24,6 +24,7 @@ cc_test {
         "FilterTests.cpp",
         "DvrTests.cpp",
         "DescramblerTests.cpp",
+        "LnbTests.cpp",
     ],
     static_libs: [
         "android.hardware.cas@1.0",

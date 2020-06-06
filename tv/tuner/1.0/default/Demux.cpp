@@ -124,12 +124,12 @@ Return<void> Demux::getAvSyncHwId(const sp<IFilter>& filter, getAvSyncHwId_cb _h
     }
 
     if (!mPcrFilterIds.empty()) {
-        ALOGE("[Demux] No PCR filter opened.");
         // Return the lowest pcr filter id in the default implementation as the av sync id
         _hidl_cb(Result::SUCCESS, *mPcrFilterIds.begin());
         return Void();
     }
 
+    ALOGE("[Demux] No PCR filter opened.");
     _hidl_cb(Result::INVALID_STATE, avSyncHwId);
     return Void();
 }

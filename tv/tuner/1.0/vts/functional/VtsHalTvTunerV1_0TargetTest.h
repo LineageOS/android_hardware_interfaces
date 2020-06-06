@@ -18,6 +18,7 @@
 #include "DescramblerTests.h"
 #include "DvrTests.h"
 #include "FrontendTests.h"
+#include "LnbTests.h"
 
 using android::hardware::tv::tuner::V1_0::DataFormat;
 using android::hardware::tv::tuner::V1_0::IDescrambler;
@@ -31,6 +32,7 @@ namespace {
 void initConfiguration() {
     initFrontendConfig();
     initFrontendScanConfig();
+    initLnbConfig();
     initFilterConfig();
     initDvrConfig();
     initDescramblerConfig();
@@ -63,6 +65,25 @@ class TunerFrontendHidlTest : public testing::TestWithParam<std::string> {
 
     sp<ITuner> mService;
     FrontendTests mFrontendTests;
+};
+
+class TunerLnbHidlTest : public testing::TestWithParam<std::string> {
+  public:
+    virtual void SetUp() override {
+        mService = ITuner::getService(GetParam());
+        ASSERT_NE(mService, nullptr);
+        initConfiguration();
+
+        mLnbTests.setService(mService);
+    }
+
+  protected:
+    static void description(const std::string& description) {
+        RecordProperty("description", description);
+    }
+
+    sp<ITuner> mService;
+    LnbTests mLnbTests;
 };
 
 class TunerDemuxHidlTest : public testing::TestWithParam<std::string> {
