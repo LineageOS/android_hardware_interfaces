@@ -139,6 +139,7 @@ struct FrontendConfig {
 };
 
 struct LnbConfig {
+    bool usingLnb;
     LnbVoltage voltage;
     LnbTone tone;
     LnbPosition position;
@@ -221,6 +222,7 @@ inline void initFrontendScanConfig() {
 
 /** Configuration array for the Lnb test */
 inline void initLnbConfig() {
+    lnbArray[LNB0].usingLnb = true;
     lnbArray[LNB0].voltage = LnbVoltage::VOLTAGE_12V;
     lnbArray[LNB0].tone = LnbTone::NONE;
     lnbArray[LNB0].position = LnbPosition::UNDEFINED;
