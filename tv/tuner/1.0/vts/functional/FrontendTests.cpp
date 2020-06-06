@@ -371,6 +371,14 @@ AssertionResult FrontendTests::tuneFrontend(FrontendConfig config) {
     return AssertionResult(true);
 }
 
+AssertionResult FrontendTests::setLnb(uint32_t lnbId) {
+    if (!mFrontendCallback) {
+        ALOGW("[vts] open and set frontend callback first.");
+        return failure();
+    }
+    return AssertionResult(mFrontend->setLnb(lnbId) == Result::SUCCESS);
+}
+
 AssertionResult FrontendTests::stopTuneFrontend() {
     EXPECT_TRUE(mFrontend) << "Test with openFrontendById first.";
     Result status;
