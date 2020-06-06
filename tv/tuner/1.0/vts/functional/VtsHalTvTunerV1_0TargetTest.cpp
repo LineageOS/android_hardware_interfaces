@@ -275,6 +275,22 @@ TEST_P(TunerFrontendHidlTest, BlindScanFrontend) {
     mFrontendTests.scanTest(frontendScanArray[SCAN_DVBT], FrontendScanType::SCAN_BLIND);
 }
 
+TEST_P(TunerLnbHidlTest, SendDiseqcMessageToLnb) {
+    description("Open and configure an Lnb with specific settings then send a diseqc msg to it.");
+    vector<uint32_t> ids;
+    ASSERT_TRUE(mLnbTests.getLnbIds(ids));
+    if (ids.size() == 0) {
+        return;
+    }
+    ASSERT_TRUE(mLnbTests.openLnbById(ids[0]));
+    ASSERT_TRUE(mLnbTests.setLnbCallback());
+    ASSERT_TRUE(mLnbTests.setVoltage(lnbArray[LNB0].voltage));
+    ASSERT_TRUE(mLnbTests.setTone(lnbArray[LNB0].tone));
+    ASSERT_TRUE(mLnbTests.setSatellitePosition(lnbArray[LNB0].position));
+    ASSERT_TRUE(mLnbTests.sendDiseqcMessage(diseqcMsgArray[DISEQC_POWER_ON]));
+    ASSERT_TRUE(mLnbTests.closeLnb());
+}
+
 TEST_P(TunerDemuxHidlTest, openDemux) {
     description("Open and close a Demux.");
     uint32_t feId;
@@ -425,6 +441,11 @@ TEST_P(TunerDescramblerHidlTest, ScrambledBroadcastDataFlowMediaFiltersTest) {
 
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, TunerFrontendHidlTest,
+        testing::ValuesIn(android::hardware::getAllHalInstanceNames(ITuner::descriptor)),
+        android::hardware::PrintInstanceNameToString);
+
+INSTANTIATE_TEST_SUITE_P(
+        PerInstance, TunerLnbHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(ITuner::descriptor)),
         android::hardware::PrintInstanceNameToString);
 

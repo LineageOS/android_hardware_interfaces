@@ -15,11 +15,12 @@
  */
 
 #include <android-base/logging.h>
-#include <android/hardware/tv/tuner/1.0/IDemux.h>
+#include <android/hardware/tv/tuner/1.0/ILnb.h>
 #include <android/hardware/tv/tuner/1.0/ITuner.h>
 #include <android/hardware/tv/tuner/1.0/types.h>
-#include <binder/MemoryDealer.h>
 #include <gtest/gtest.h>
+#include <hidl/HidlSupport.h>
+#include <hidl/HidlTransportSupport.h>
 #include <hidl/ServiceManagement.h>
 #include <hidl/Status.h>
 #include <hidlmemory/FrameworkUtils.h>
@@ -27,27 +28,49 @@
 #include <utils/Mutex.h>
 #include <map>
 
+using android::Condition;
+using android::Mutex;
 using android::sp;
+using android::hardware::hidl_vec;
 using android::hardware::Return;
 using android::hardware::Void;
-using android::hardware::tv::tuner::V1_0::DemuxCapabilities;
-using android::hardware::tv::tuner::V1_0::IDemux;
-using android::hardware::tv::tuner::V1_0::IFilter;
+using android::hardware::tv::tuner::V1_0::ILnb;
+using android::hardware::tv::tuner::V1_0::ILnbCallback;
 using android::hardware::tv::tuner::V1_0::ITuner;
+using android::hardware::tv::tuner::V1_0::LnbEventType;
+using android::hardware::tv::tuner::V1_0::LnbPosition;
+using android::hardware::tv::tuner::V1_0::LnbTone;
+using android::hardware::tv::tuner::V1_0::LnbVoltage;
 using android::hardware::tv::tuner::V1_0::Result;
 
 using ::testing::AssertionResult;
 
-class DemuxTests {
+using namespace std;
+
+class LnbCallback : public ILnbCallback {
+  public:
+    virtual Return<void> onEvent(LnbEventType lnbEventType) override;
+    virtual Return<void> onDiseqcMessage(const hidl_vec<uint8_t>& diseqcMessage) override;
+
+  private:
+    bool mEventReceived = false;
+    android::Mutex mMsgLock;
+    android::Condition mMsgCondition;
+};
+
+class LnbTests {
   public:
     void setService(sp<ITuner> tuner) { mService = tuner; }
 
-    AssertionResult openDemux(sp<IDemux>& demux, uint32_t& demuxId);
-    AssertionResult setDemuxFrontendDataSource(uint32_t frontendId);
-    AssertionResult getAvSyncId(sp<IFilter> filter, uint32_t& avSyncHwId);
-    AssertionResult getAvSyncTime(uint32_t avSyncId);
-    AssertionResult getDemuxCaps(DemuxCapabilities& demuxCaps);
-    AssertionResult closeDemux();
+    AssertionResult getLnbIds(vector<uint32_t>& ids);
+    AssertionResult openLnbById(uint32_t lnbId);
+    AssertionResult openLnbByName(string lnbName);
+    AssertionResult setLnbCallback();
+    AssertionResult setVoltage(LnbVoltage voltage);
+    AssertionResult setTone(LnbTone tone);
+    AssertionResult setSatellitePosition(LnbPosition position);
+    AssertionResult sendDiseqcMessage(vector<uint8_t> diseqcMsg);
+    AssertionResult closeLnb();
 
   protected:
     static AssertionResult failure() { return ::testing::AssertionFailure(); }
@@ -55,5 +78,7 @@ class DemuxTests {
     static AssertionResult success() { return ::testing::AssertionSuccess(); }
 
     sp<ITuner> mService;
-    sp<IDemux> mDemux;
+    sp<ILnb> mLnb;
+    sp<LnbCallback> mLnbCallback;
+    hidl_vec<uint32_t> mLnbIds;
 };
