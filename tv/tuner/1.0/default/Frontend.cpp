@@ -254,7 +254,9 @@ Return<Result> Frontend::setLna(bool /* bEnable */) {
 
 Return<Result> Frontend::setLnb(uint32_t /* lnb */) {
     ALOGV("%s", __FUNCTION__);
-
+    if (!supportsSatellite()) {
+        return Result::INVALID_STATE;
+    }
     return Result::SUCCESS;
 }
 
@@ -270,6 +272,10 @@ string Frontend::getSourceFile() {
     return FRONTEND_STREAM_FILE;
 }
 
+bool Frontend::supportsSatellite() {
+    return mType == FrontendType::DVBS || mType == FrontendType::ISDBS ||
+           mType == FrontendType::ISDBS3;
+}
 }  // namespace implementation
 }  // namespace V1_0
 }  // namespace tuner
