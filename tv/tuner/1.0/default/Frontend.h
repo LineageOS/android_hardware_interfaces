@@ -70,6 +70,7 @@ class Frontend : public IFrontend {
 
   private:
     virtual ~Frontend();
+    bool supportsSatellite();
     sp<IFrontendCallback> mCallback;
     sp<Tuner> mTunerService;
     FrontendType mType = FrontendType::UNDEFINED;
