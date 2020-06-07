@@ -33,6 +33,19 @@ AssertionResult DemuxTests::setDemuxFrontendDataSource(uint32_t frontendId) {
     return AssertionResult(status.isOk());
 }
 
+AssertionResult DemuxTests::getDemuxCaps(DemuxCapabilities& demuxCaps) {
+    if (!mDemux) {
+        ALOGW("[vts] Test with openDemux first.");
+        return failure();
+    }
+    Result status;
+    mService->getDemuxCaps([&](Result result, DemuxCapabilities caps) {
+        status = result;
+        demuxCaps = caps;
+    });
+    return AssertionResult(status == Result::SUCCESS);
+}
+
 AssertionResult DemuxTests::closeDemux() {
     EXPECT_TRUE(mDemux) << "Test with openDemux first.";
     auto status = mDemux->close();
@@ -40,23 +53,23 @@ AssertionResult DemuxTests::closeDemux() {
     return AssertionResult(status.isOk());
 }
 
-void DemuxTests::getAvSyncId(sp<IFilter> filter, uint32_t& avSyncHwId) {
-    ASSERT_TRUE(mDemux) << "Demux is not opened yet.";
+AssertionResult DemuxTests::getAvSyncId(sp<IFilter> filter, uint32_t& avSyncHwId) {
+    EXPECT_TRUE(mDemux) << "Demux is not opened yet.";
     Result status;
     mDemux->getAvSyncHwId(filter, [&](Result result, uint32_t id) {
         status = result;
         avSyncHwId = id;
     });
-    ASSERT_TRUE(status == Result::SUCCESS) << "Fail to get avSyncHwId.";
+    return AssertionResult(status == Result::SUCCESS);
 }
 
-void DemuxTests::getAvSyncTime(uint32_t avSyncId) {
-    ASSERT_TRUE(mDemux) << "Demux is not opened yet.";
+AssertionResult DemuxTests::getAvSyncTime(uint32_t avSyncId) {
+    EXPECT_TRUE(mDemux) << "Demux is not opened yet.";
     Result status;
     uint64_t syncTime;
     mDemux->getAvSyncTime(avSyncId, [&](Result result, uint64_t time) {
         status = result;
         syncTime = time;
     });
-    ASSERT_TRUE(status == Result::SUCCESS) << "Fail to get avSyncTime.";
+    return AssertionResult(status == Result::SUCCESS);
 }
