@@ -169,6 +169,31 @@ const MeasurementCorrections_1_1 Utils::getMockMeasurementCorrections_1_1() {
     return mockCorrections_1_1;
 }
 
+/*
+ * MapConstellationType:
+ * Given a GnssConstellationType_2_0 type constellation, maps to its equivalent
+ * GnssConstellationType_1_0 type constellation. For constellations that do not have
+ * an equivalent value, maps to GnssConstellationType_1_0::UNKNOWN
+ */
+GnssConstellationType_1_0 Utils::mapConstellationType(GnssConstellationType_2_0 constellation) {
+    switch (constellation) {
+        case GnssConstellationType_2_0::GPS:
+            return GnssConstellationType_1_0::GPS;
+        case GnssConstellationType_2_0::SBAS:
+            return GnssConstellationType_1_0::SBAS;
+        case GnssConstellationType_2_0::GLONASS:
+            return GnssConstellationType_1_0::GLONASS;
+        case GnssConstellationType_2_0::QZSS:
+            return GnssConstellationType_1_0::QZSS;
+        case GnssConstellationType_2_0::BEIDOU:
+            return GnssConstellationType_1_0::BEIDOU;
+        case GnssConstellationType_2_0::GALILEO:
+            return GnssConstellationType_1_0::GALILEO;
+        default:
+            return GnssConstellationType_1_0::UNKNOWN;
+    }
+}
+
 }  // namespace common
 }  // namespace gnss
 }  // namespace hardware
