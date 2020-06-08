@@ -95,7 +95,8 @@ interface ICameraDeviceCallback {
      * statuses must be STATUS_ERROR, and the result metadata must be an
      * empty buffer. In addition, notify() must be called with a ERROR_REQUEST
      * message. In this case, individual ERROR_RESULT/ERROR_BUFFER messages
-     * must not be sent.
+     * must not be sent. Note that valid partial results are still allowed
+     * as long as the final result metadata fails to be generated.
      *
      * Performance requirements:
      *
