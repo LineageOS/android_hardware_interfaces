@@ -721,6 +721,7 @@ ee9dc34b9925b8367b1111c72bd6d9d375432735e451572ca5a665d8516a7744 android.hardwar
 eee3430cc86c97c7b407495863d8fb61da6f1a64b7721e77b9b4909b11b174e9 android.hardware.neuralnetworks@1.3::IPreparedModelCallback
 acf84925f8ee0a651f2ec547ac334034de266479b93af5434f6c1f25e66aba96 android.hardware.neuralnetworks@1.3::types
 e9080d04218e98512b63aace9ff3da52f0130238391f15cbbf7df396a3ec9072 android.hardware.neuralnetworks@1.3::types # b/155508675, b/155662254, b/155238914, b/155660285
+583dc88b41e702e940fd954edda1beb8b4151eab55a5c6d7e69e2781bce84b59 android.hardware.neuralnetworks@1.3::types # b/156918813
 b454df853441c12f6e425e8a60dd29fda20f5e6e39b93d1103e4b37495db38aa android.hardware.radio@1.5::IRadio
 fcbb0742a88215ee7a6d7ce0825d253eb2b50391fc6c8c48667f9fd7f6d4549e android.hardware.radio@1.5::IRadioIndication
 b809193970a91ca637a4b0184767315601d32e3ef3d5992ffbc7a8d14a14f015 android.hardware.radio@1.5::IRadioResponse
