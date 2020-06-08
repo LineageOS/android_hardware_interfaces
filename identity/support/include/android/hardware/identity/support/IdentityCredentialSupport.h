@@ -134,6 +134,11 @@ optional<vector<uint8_t>> ecKeyPairGetPublicKey(const vector<uint8_t>& keyPair);
 //
 optional<vector<uint8_t>> ecKeyPairGetPrivateKey(const vector<uint8_t>& keyPair);
 
+// Creates a PKCS#8 encoded key-pair from a private key (which must be uncompressed,
+// e.g. 32 bytes). The public key is derived from the given private key..
+//
+optional<vector<uint8_t>> ecPrivateKeyToKeyPair(const vector<uint8_t>& privateKey);
+
 // For an EC key |keyPair| encoded in PKCS#8 format, creates a PKCS#12 structure
 // with the key-pair (not using a password to encrypt the data). The public key
 // in the created structure is included as a certificate, using the given fields

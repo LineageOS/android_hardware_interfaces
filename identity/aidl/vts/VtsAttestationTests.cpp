@@ -61,51 +61,6 @@ class VtsAttestationTests : public testing::TestWithParam<std::string> {
     sp<IIdentityCredentialStore> credentialStore_;
 };
 
-TEST_P(VtsAttestationTests, verifyAttestationWithEmptyChallengeEmptyId) {
-    Status result;
-
-    HardwareInformation hwInfo;
-    ASSERT_TRUE(credentialStore_->getHardwareInformation(&hwInfo).isOk());
-
-    sp<IWritableIdentityCredential> writableCredential;
-    ASSERT_TRUE(test_utils::setupWritableCredential(writableCredential, credentialStore_));
-
-    vector<uint8_t> attestationChallenge;
-    vector<Certificate> attestationCertificate;
-    vector<uint8_t> attestationApplicationId = {};
-    result = writableCredential->getAttestationCertificate(
-            attestationApplicationId, attestationChallenge, &attestationCertificate);
-
-    ASSERT_TRUE(result.isOk()) << result.exceptionCode() << "; " << result.exceptionMessage()
-                               << endl;
-
-    EXPECT_TRUE(validateAttestationCertificate(attestationCertificate, attestationChallenge,
-                                               attestationApplicationId, hwInfo));
-}
-
-TEST_P(VtsAttestationTests, verifyAttestationWithEmptyChallengeNonemptyId) {
-    Status result;
-
-    HardwareInformation hwInfo;
-    ASSERT_TRUE(credentialStore_->getHardwareInformation(&hwInfo).isOk());
-
-    sp<IWritableIdentityCredential> writableCredential;
-    ASSERT_TRUE(setupWritableCredential(writableCredential, credentialStore_));
-
-    vector<uint8_t> attestationChallenge;
-    vector<Certificate> attestationCertificate;
-    string applicationId = "Attestation Verification";
-    vector<uint8_t> attestationApplicationId = {applicationId.begin(), applicationId.end()};
-
-    result = writableCredential->getAttestationCertificate(
-            attestationApplicationId, attestationChallenge, &attestationCertificate);
-
-    ASSERT_TRUE(result.isOk()) << result.exceptionCode() << "; " << result.exceptionMessage()
-                               << endl;
-    EXPECT_TRUE(validateAttestationCertificate(attestationCertificate, attestationChallenge,
-                                               attestationApplicationId, hwInfo));
-}
-
 TEST_P(VtsAttestationTests, verifyAttestationWithNonemptyChallengeEmptyId) {
     Status result;
 
