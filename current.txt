@@ -588,6 +588,7 @@ c3ec182ce325862b7d79e526f3e170c02cfee1497ed309d7c60d0de4ca636b0b android.hardwar
 578f640c653726d58f99c84a7e1bb63862e21ef7cbb4f7d95c3cc62de00dca35 android.hardware.automotive.evs@1.0::IEvsDisplay
 f5bc6aa840db933cb9fd36668b06d3e2021cf5384bb70e459f22e2f2f921fba5 android.hardware.automotive.evs@1.0::IEvsEnumerator
 d3a344b7bd4c0d2658ae7209f55a979b8f53f361fd00f4fca29d5baa56d11fd2 android.hardware.automotive.evs@1.0::types
+d123013165a19b6353cdc46a57b2ff4a17179619d36dbd595dfcf15dcd099af6 android.hardware.camera.device@3.2::ICameraDeviceCallback # b/155353799
 2410dd02d67786a732d36e80b0f8ccf55086604ef37f9838e2013ff2c571e404 android.hardware.camera.device@3.5::types
 cd06a7911b9acd4a653bbf7133888878fbcb3f84be177c7a3f1becaae3d8618f android.hardware.camera.metadata@3.2::types
 5cf81b1001296fbb3c5b3d275a859244f61cec5fa858d7be9cca46c5b7dfa733 android.hardware.camera.metadata@3.2::types # b/150331548
