@@ -18,9 +18,12 @@
 #define android_hardware_gnss_common_vts_Utils_H_
 
 #include <android/hardware/gnss/1.0/IGnss.h>
+#include <android/hardware/gnss/2.0/IGnss.h>
 #include <android/hardware/gnss/measurement_corrections/1.0/IMeasurementCorrections.h>
 #include <android/hardware/gnss/measurement_corrections/1.1/IMeasurementCorrections.h>
 
+using GnssConstellationType_1_0 = android::hardware::gnss::V1_0::GnssConstellationType;
+using GnssConstellationType_2_0 = android::hardware::gnss::V2_0::GnssConstellationType;
 using GnssLocation = ::android::hardware::gnss::V1_0::GnssLocation;
 using namespace android::hardware::gnss::measurement_corrections::V1_0;
 
@@ -44,6 +47,8 @@ struct Utils {
                               bool check_more_accuracies);
     static const MeasurementCorrections_1_0 getMockMeasurementCorrections();
     static const MeasurementCorrections_1_1 getMockMeasurementCorrections_1_1();
+
+    static GnssConstellationType_1_0 mapConstellationType(GnssConstellationType_2_0 constellation);
 };
 
 }  // namespace common
