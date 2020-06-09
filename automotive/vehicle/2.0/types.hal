@@ -2546,9 +2546,8 @@ enum VehicleProperty : int32_t {
      * NOTE: if the HAL doesn't support user management, then it should not define this property,
      * which in turn would disable the other user-related properties (for example, the Android
      * system would never issue them and user-related requests from the HAL layer would be ignored
-     * by the Android System). But if it supports user management, then it must support all
-     * user-related properties (INITIAL_USER_INFO, SWITCH_USER, CREATE_USER, REMOVE_USER,
-     *       and USER_IDENTIFICATION_ASSOCIATION).
+     * by the Android System). But if it supports user management, then it must support all core
+     * user-related properties (INITIAL_USER_INFO, SWITCH_USER, CREATE_USER, and REMOVE_USER).
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
@@ -2817,6 +2816,10 @@ enum VehicleProperty : int32_t {
     /**
      * Property used to associate (or query the association) the current user with vehicle-specific
      * identification mechanisms (such as key FOB).
+     *
+     * This is an optional user management property - the OEM could still support user management
+     * without defining it. In fact, this property could be used without supporting the core
+     * user-related functions described on INITIAL_USER_INFO.
      *
      * To query the association, the Android system gets the property, passing a VehiclePropValue
      * containing the types of associations are being queried, as defined by
