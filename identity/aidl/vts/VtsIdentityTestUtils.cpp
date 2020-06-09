@@ -96,9 +96,10 @@ optional<vector<SecureAccessControlProfile>> addAccessControlProfiles(
         SecureAccessControlProfile profile;
         Certificate cert;
         cert.encodedCertificate = testProfile.readerCertificate;
+        int64_t secureUserId = testProfile.userAuthenticationRequired ? 66 : 0;
         result = writableCredential->addAccessControlProfile(
                 testProfile.id, cert, testProfile.userAuthenticationRequired,
-                testProfile.timeoutMillis, 0, &profile);
+                testProfile.timeoutMillis, secureUserId, &profile);
 
         // Don't use assert so all errors can be outputed.  Then return
         // instead of exit even on errors so caller can decide.
