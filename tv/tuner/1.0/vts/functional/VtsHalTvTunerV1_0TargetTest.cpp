@@ -321,6 +321,17 @@ TEST_P(TunerFrontendHidlTest, BlindScanFrontend) {
     mFrontendTests.scanTest(frontendScanArray[SCAN_DVBT], FrontendScanType::SCAN_BLIND);
 }
 
+TEST_P(TunerLnbHidlTest, OpenLnbByName) {
+    description("Open and configure an Lnb with name then send a diseqc msg to it.");
+    ASSERT_TRUE(mLnbTests.openLnbByName(lnbArray[LNB_EXTERNAL].name));
+    ASSERT_TRUE(mLnbTests.setLnbCallback());
+    ASSERT_TRUE(mLnbTests.setVoltage(lnbArray[LNB_EXTERNAL].voltage));
+    ASSERT_TRUE(mLnbTests.setTone(lnbArray[LNB_EXTERNAL].tone));
+    ASSERT_TRUE(mLnbTests.setSatellitePosition(lnbArray[LNB_EXTERNAL].position));
+    ASSERT_TRUE(mLnbTests.sendDiseqcMessage(diseqcMsgArray[DISEQC_POWER_ON]));
+    ASSERT_TRUE(mLnbTests.closeLnb());
+}
+
 TEST_P(TunerLnbHidlTest, SendDiseqcMessageToLnb) {
     description("Open and configure an Lnb with specific settings then send a diseqc msg to it.");
     vector<uint32_t> ids;
