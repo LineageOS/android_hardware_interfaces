@@ -115,6 +115,20 @@ android::base::Result<std::unique_ptr<VehiclePropValue>> EmulatedUserHal::onSetS
         return sendUserHalResponse(std::move(mSwitchUserResponseFromCmd), requestId);
     }
 
+    if (value.value.int32Values.size() > 1) {
+        auto messageType = static_cast<SwitchUserMessageType>(value.value.int32Values[1]);
+        switch (messageType) {
+            case SwitchUserMessageType::LEGACY_ANDROID_SWITCH:
+                ALOGI("request is LEGACY_ANDROID_SWITCH; ignoring it");
+                return {};
+            case SwitchUserMessageType::ANDROID_POST_SWITCH:
+                ALOGI("request is ANDROID_POST_SWITCH; ignoring it");
+                return {};
+            default:
+                break;
+        }
+    }
+
     // Returns default response
     auto updatedValue = std::unique_ptr<VehiclePropValue>(new VehiclePropValue);
     updatedValue->prop = SWITCH_USER;
