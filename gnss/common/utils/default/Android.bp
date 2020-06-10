@@ -24,6 +24,11 @@ cc_library_static {
         "-Werror",
     ],
     srcs: [
+        "v2_1/GnssAntennaInfo.cpp",
+        "v2_1/GnssConfiguration.cpp",
+        "v2_1/GnssDebug.cpp",
+        "v2_1/GnssMeasurement.cpp",
+        "v2_1/GnssMeasurementCorrections.cpp",
         "Utils.cpp",
         "NmeaFixInfo.cpp",
     ],
@@ -34,5 +39,7 @@ cc_library_static {
         "android.hardware.gnss@1.0",
         "android.hardware.gnss@2.0",
         "android.hardware.gnss@2.1",
+        "android.hardware.gnss.measurement_corrections@1.1",
+        "android.hardware.gnss.measurement_corrections@1.0",
     ],
 }

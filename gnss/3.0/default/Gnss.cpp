@@ -14,12 +14,19 @@
  * limitations under the License.
  */
 
-#pragma once
+#define LOG_TAG "Gnss"
 
-#include <android/hardware/gnss/2.1/IGnss.h>
-#include "v2_1/gnss_hal_test_template.h"
+#include "Gnss.h"
+#include <log/log.h>
+#include "GnssPsds.h"
+#include "Utils.h"
 
-using android::hardware::gnss::V2_1::IGnss;
+namespace android::hardware::gnss::V3_0::implementation {
 
-// The main test class for GNSS HAL.
-class GnssHalTest : public GnssHalTestTemplate<IGnss> {};
+// Methods from V3_0::IGnss follow.
+Return<sp<V3_0::IGnssPsds>> Gnss::getExtensionPsds() {
+    ALOGD("Gnss::getExtensionPsds");
+    return new GnssPsds();
+}
+
+}  // namespace android::hardware::gnss::V3_0::implementation

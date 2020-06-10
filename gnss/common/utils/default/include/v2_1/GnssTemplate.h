@@ -14,44 +14,149 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "Gnss"
+#pragma once
 
-#include "Gnss.h"
+#include <android/hardware/gnss/2.1/IGnss.h>
+#include <fcntl.h>
+#include <hidl/MQDescriptor.h>
+#include <hidl/Status.h>
 #include <log/log.h>
 #include <sys/epoll.h>
+#include <atomic>
+#include <mutex>
 #include <string>
+#include <thread>
+
 #include "GnssAntennaInfo.h"
+#include "GnssConfiguration.h"
 #include "GnssDebug.h"
 #include "GnssMeasurement.h"
 #include "GnssMeasurementCorrections.h"
+#include "NmeaFixInfo.h"
 #include "Utils.h"
 
-using ::android::hardware::gnss::common::Utils;
-using ::android::hardware::gnss::measurement_corrections::V1_1::implementation::
-        GnssMeasurementCorrections;
+namespace android::hardware::gnss::common::implementation {
 
-namespace android {
-namespace hardware {
-namespace gnss {
-namespace V2_1 {
-namespace implementation {
+using GnssSvInfo = V2_1::IGnssCallback::GnssSvInfo;
 
-sp<V2_1::IGnssCallback> Gnss::sGnssCallback_2_1 = nullptr;
-sp<V2_0::IGnssCallback> Gnss::sGnssCallback_2_0 = nullptr;
-sp<V1_1::IGnssCallback> Gnss::sGnssCallback_1_1 = nullptr;
-sp<V1_0::IGnssCallback> Gnss::sGnssCallback_1_0 = nullptr;
+using common::NmeaFixInfo;
+using common::Utils;
+using measurement_corrections::V1_1::implementation::GnssMeasurementCorrections;
 
-Gnss::Gnss()
+using V2_1::implementation::GnssAntennaInfo;
+using V2_1::implementation::GnssConfiguration;
+using V2_1::implementation::GnssMeasurement;
+
+constexpr int INPUT_BUFFER_SIZE = 128;
+constexpr char CMD_GET_LOCATION[] = "CMD_GET_LOCATION";
+constexpr char GNSS_PATH[] = "/dev/gnss0";
+
+template <class T_IGnss>
+struct GnssTemplate : public T_IGnss {
+    GnssTemplate();
+    ~GnssTemplate();
+    // Methods from V1_0::IGnss follow.
+    Return<bool> setCallback(const sp<V1_0::IGnssCallback>& callback) override;
+    Return<bool> start() override;
+    Return<bool> stop() override;
+    Return<void> cleanup() override;
+    Return<bool> injectTime(int64_t timeMs, int64_t timeReferenceMs,
+                            int32_t uncertaintyMs) override;
+    Return<bool> injectLocation(double latitudeDegrees, double longitudeDegrees,
+                                float accuracyMeters) override;
+    Return<void> deleteAidingData(V1_0::IGnss::GnssAidingData aidingDataFlags) override;
+    Return<bool> setPositionMode(V1_0::IGnss::GnssPositionMode mode,
+                                 V1_0::IGnss::GnssPositionRecurrence recurrence,
+                                 uint32_t minIntervalMs, uint32_t preferredAccuracyMeters,
+                                 uint32_t preferredTimeMs) override;
+    Return<sp<V1_0::IAGnssRil>> getExtensionAGnssRil() override;
+    Return<sp<V1_0::IGnssGeofencing>> getExtensionGnssGeofencing() override;
+    Return<sp<V1_0::IAGnss>> getExtensionAGnss() override;
+    Return<sp<V1_0::IGnssNi>> getExtensionGnssNi() override;
+    Return<sp<V1_0::IGnssMeasurement>> getExtensionGnssMeasurement() override;
+    Return<sp<V1_0::IGnssNavigationMessage>> getExtensionGnssNavigationMessage() override;
+    Return<sp<V1_0::IGnssXtra>> getExtensionXtra() override;
+    Return<sp<V1_0::IGnssConfiguration>> getExtensionGnssConfiguration() override;
+    Return<sp<V1_0::IGnssDebug>> getExtensionGnssDebug() override;
+    Return<sp<V1_0::IGnssBatching>> getExtensionGnssBatching() override;
+
+    // Methods from V1_1::IGnss follow.
+    Return<bool> setCallback_1_1(const sp<V1_1::IGnssCallback>& callback) override;
+    Return<bool> setPositionMode_1_1(V1_0::IGnss::GnssPositionMode mode,
+                                     V1_0::IGnss::GnssPositionRecurrence recurrence,
+                                     uint32_t minIntervalMs, uint32_t preferredAccuracyMeters,
+                                     uint32_t preferredTimeMs, bool lowPowerMode) override;
+    Return<sp<V1_1::IGnssConfiguration>> getExtensionGnssConfiguration_1_1() override;
+    Return<sp<V1_1::IGnssMeasurement>> getExtensionGnssMeasurement_1_1() override;
+    Return<bool> injectBestLocation(const V1_0::GnssLocation& location) override;
+
+    // Methods from V2_0::IGnss follow.
+    Return<bool> setCallback_2_0(const sp<V2_0::IGnssCallback>& callback) override;
+    Return<sp<V2_0::IGnssConfiguration>> getExtensionGnssConfiguration_2_0() override;
+    Return<sp<V2_0::IGnssDebug>> getExtensionGnssDebug_2_0() override;
+    Return<sp<V2_0::IAGnss>> getExtensionAGnss_2_0() override;
+    Return<sp<V2_0::IAGnssRil>> getExtensionAGnssRil_2_0() override;
+    Return<sp<V2_0::IGnssMeasurement>> getExtensionGnssMeasurement_2_0() override;
+    Return<sp<measurement_corrections::V1_0::IMeasurementCorrections>>
+    getExtensionMeasurementCorrections() override;
+    Return<sp<visibility_control::V1_0::IGnssVisibilityControl>> getExtensionVisibilityControl()
+            override;
+    Return<sp<V2_0::IGnssBatching>> getExtensionGnssBatching_2_0() override;
+    Return<bool> injectBestLocation_2_0(const V2_0::GnssLocation& location) override;
+
+    // Methods from V2_1::IGnss follow.
+    Return<bool> setCallback_2_1(const sp<V2_1::IGnssCallback>& callback) override;
+    Return<sp<V2_1::IGnssMeasurement>> getExtensionGnssMeasurement_2_1() override;
+    Return<sp<V2_1::IGnssConfiguration>> getExtensionGnssConfiguration_2_1() override;
+    Return<sp<measurement_corrections::V1_1::IMeasurementCorrections>>
+    getExtensionMeasurementCorrections_1_1() override;
+    Return<sp<V2_1::IGnssAntennaInfo>> getExtensionGnssAntennaInfo() override;
+
+  private:
+    std::unique_ptr<V2_0::GnssLocation> getLocationFromHW();
+    void reportLocation(const V2_0::GnssLocation&) const;
+    void reportLocation(const V1_0::GnssLocation&) const;
+    void reportSvStatus(const hidl_vec<GnssSvInfo>&) const;
+
+    static sp<V2_1::IGnssCallback> sGnssCallback_2_1;
+    static sp<V2_0::IGnssCallback> sGnssCallback_2_0;
+    static sp<V1_1::IGnssCallback> sGnssCallback_1_1;
+    static sp<V1_0::IGnssCallback> sGnssCallback_1_0;
+
+    std::atomic<long> mMinIntervalMs;
+    sp<GnssConfiguration> mGnssConfiguration;
+    std::atomic<bool> mIsActive;
+    std::atomic<bool> mHardwareModeOn;
+    std::atomic<int> mGnssFd;
+    std::thread mThread;
+
+    mutable std::mutex mMutex;
+    hidl_vec<GnssSvInfo> filterBlacklistedSatellitesV2_1(hidl_vec<GnssSvInfo> gnssSvInfoList);
+};
+
+template <class T_IGnss>
+sp<V2_1::IGnssCallback> GnssTemplate<T_IGnss>::sGnssCallback_2_1 = nullptr;
+template <class T_IGnss>
+sp<V2_0::IGnssCallback> GnssTemplate<T_IGnss>::sGnssCallback_2_0 = nullptr;
+template <class T_IGnss>
+sp<V1_1::IGnssCallback> GnssTemplate<T_IGnss>::sGnssCallback_1_1 = nullptr;
+template <class T_IGnss>
+sp<V1_0::IGnssCallback> GnssTemplate<T_IGnss>::sGnssCallback_1_0 = nullptr;
+
+template <class T_IGnss>
+GnssTemplate<T_IGnss>::GnssTemplate()
     : mMinIntervalMs(1000),
       mGnssConfiguration{new GnssConfiguration()},
       mHardwareModeOn(false),
       mGnssFd(-1) {}
 
-Gnss::~Gnss() {
+template <class T_IGnss>
+GnssTemplate<T_IGnss>::~GnssTemplate() {
     stop();
 }
 
-std::unique_ptr<V2_0::GnssLocation> Gnss::getLocationFromHW() {
+template <class T_IGnss>
+std::unique_ptr<V2_0::GnssLocation> GnssTemplate<T_IGnss>::getLocationFromHW() {
     char inputBuffer[INPUT_BUFFER_SIZE];
     mHardwareModeOn = false;
     if (mGnssFd == -1) {
@@ -89,7 +194,8 @@ std::unique_ptr<V2_0::GnssLocation> Gnss::getLocationFromHW() {
     return NmeaFixInfo::getLocationFromInputStr(inputStr);
 }
 
-Return<bool> Gnss::start() {
+template <class T_IGnss>
+Return<bool> GnssTemplate<T_IGnss>::start() {
     if (mIsActive) {
         ALOGW("Gnss has started. Restarting...");
         stop();
@@ -124,7 +230,9 @@ Return<bool> Gnss::start() {
     return true;
 }
 
-hidl_vec<GnssSvInfo> Gnss::filterBlacklistedSatellitesV2_1(hidl_vec<GnssSvInfo> gnssSvInfoList) {
+template <class T_IGnss>
+hidl_vec<GnssSvInfo> GnssTemplate<T_IGnss>::filterBlacklistedSatellitesV2_1(
+        hidl_vec<GnssSvInfo> gnssSvInfoList) {
     for (uint32_t i = 0; i < gnssSvInfoList.size(); i++) {
         if (mGnssConfiguration->isBlacklistedV2_1(gnssSvInfoList[i])) {
             gnssSvInfoList[i].v2_0.v1_0.svFlag &=
@@ -134,7 +242,8 @@ hidl_vec<GnssSvInfo> Gnss::filterBlacklistedSatellitesV2_1(hidl_vec<GnssSvInfo> 
     return gnssSvInfoList;
 }
 
-Return<bool> Gnss::stop() {
+template <class T_IGnss>
+Return<bool> GnssTemplate<T_IGnss>::stop() {
     ALOGD("stop");
     mIsActive = false;
     if (mThread.joinable()) {
@@ -148,7 +257,8 @@ Return<bool> Gnss::stop() {
 }
 
 // Methods from V1_0::IGnss follow.
-Return<bool> Gnss::setCallback(const sp<V1_0::IGnssCallback>& callback) {
+template <class T_IGnss>
+Return<bool> GnssTemplate<T_IGnss>::setCallback(const sp<V1_0::IGnssCallback>& callback) {
     if (callback == nullptr) {
         ALOGE("%s: Null callback ignored", __func__);
         return false;
@@ -163,7 +273,7 @@ Return<bool> Gnss::setCallback(const sp<V1_0::IGnssCallback>& callback) {
         ALOGE("%s: Unable to invoke callback", __func__);
     }
 
-    IGnssCallback::GnssSystemInfo gnssInfo = {.yearOfHw = 2018};
+    V2_1::IGnssCallback::GnssSystemInfo gnssInfo = {.yearOfHw = 2018};
 
     ret = sGnssCallback_1_0->gnssSetSystemInfoCb(gnssInfo);
     if (!ret.isOk()) {
@@ -173,83 +283,100 @@ Return<bool> Gnss::setCallback(const sp<V1_0::IGnssCallback>& callback) {
     return true;
 }
 
-Return<void> Gnss::cleanup() {
+template <class T_IGnss>
+Return<void> GnssTemplate<T_IGnss>::cleanup() {
     sGnssCallback_2_1 = nullptr;
     sGnssCallback_2_0 = nullptr;
     return Void();
 }
 
-Return<bool> Gnss::injectTime(int64_t, int64_t, int32_t) {
+template <class T_IGnss>
+Return<bool> GnssTemplate<T_IGnss>::injectTime(int64_t, int64_t, int32_t) {
     return true;
 }
 
-Return<bool> Gnss::injectLocation(double, double, float) {
+template <class T_IGnss>
+Return<bool> GnssTemplate<T_IGnss>::injectLocation(double, double, float) {
     return true;
 }
 
-Return<void> Gnss::deleteAidingData(V1_0::IGnss::GnssAidingData) {
+template <class T_IGnss>
+Return<void> GnssTemplate<T_IGnss>::deleteAidingData(V1_0::IGnss::GnssAidingData) {
     // TODO implement
     return Void();
 }
 
-Return<bool> Gnss::setPositionMode(V1_0::IGnss::GnssPositionMode,
-                                   V1_0::IGnss::GnssPositionRecurrence, uint32_t minIntervalMs,
-                                   uint32_t, uint32_t) {
+template <class T_IGnss>
+Return<bool> GnssTemplate<T_IGnss>::setPositionMode(V1_0::IGnss::GnssPositionMode,
+                                                    V1_0::IGnss::GnssPositionRecurrence,
+                                                    uint32_t minIntervalMs, uint32_t, uint32_t) {
     mMinIntervalMs = minIntervalMs;
     return true;
 }
 
-Return<sp<V1_0::IAGnssRil>> Gnss::getExtensionAGnssRil() {
+template <class T_IGnss>
+Return<sp<V1_0::IAGnssRil>> GnssTemplate<T_IGnss>::getExtensionAGnssRil() {
     // TODO implement
     return ::android::sp<V1_0::IAGnssRil>{};
 }
 
-Return<sp<V1_0::IGnssGeofencing>> Gnss::getExtensionGnssGeofencing() {
+template <class T_IGnss>
+Return<sp<V1_0::IGnssGeofencing>> GnssTemplate<T_IGnss>::getExtensionGnssGeofencing() {
     // TODO implement
     return ::android::sp<V1_0::IGnssGeofencing>{};
 }
 
-Return<sp<V1_0::IAGnss>> Gnss::getExtensionAGnss() {
+template <class T_IGnss>
+Return<sp<V1_0::IAGnss>> GnssTemplate<T_IGnss>::getExtensionAGnss() {
     // TODO implement
     return ::android::sp<V1_0::IAGnss>{};
 }
 
-Return<sp<V1_0::IGnssNi>> Gnss::getExtensionGnssNi() {
+template <class T_IGnss>
+Return<sp<V1_0::IGnssNi>> GnssTemplate<T_IGnss>::getExtensionGnssNi() {
     // TODO implement
     return ::android::sp<V1_0::IGnssNi>{};
 }
 
-Return<sp<V1_0::IGnssMeasurement>> Gnss::getExtensionGnssMeasurement() {
+template <class T_IGnss>
+Return<sp<V1_0::IGnssMeasurement>> GnssTemplate<T_IGnss>::getExtensionGnssMeasurement() {
     ALOGD("Gnss::getExtensionGnssMeasurement");
     return new GnssMeasurement();
 }
 
-Return<sp<V1_0::IGnssNavigationMessage>> Gnss::getExtensionGnssNavigationMessage() {
+template <class T_IGnss>
+Return<sp<V1_0::IGnssNavigationMessage>>
+GnssTemplate<T_IGnss>::getExtensionGnssNavigationMessage() {
     // TODO implement
     return ::android::sp<V1_0::IGnssNavigationMessage>{};
 }
 
-Return<sp<V1_0::IGnssXtra>> Gnss::getExtensionXtra() {
+template <class T_IGnss>
+Return<sp<V1_0::IGnssXtra>> GnssTemplate<T_IGnss>::getExtensionXtra() {
     // TODO implement
     return ::android::sp<V1_0::IGnssXtra>{};
 }
 
-Return<sp<V1_0::IGnssConfiguration>> Gnss::getExtensionGnssConfiguration() {
+template <class T_IGnss>
+Return<sp<V1_0::IGnssConfiguration>> GnssTemplate<T_IGnss>::getExtensionGnssConfiguration() {
     // TODO implement
     return ::android::sp<V1_0::IGnssConfiguration>{};
 }
 
-Return<sp<V1_0::IGnssDebug>> Gnss::getExtensionGnssDebug() {
+template <class T_IGnss>
+Return<sp<V1_0::IGnssDebug>> GnssTemplate<T_IGnss>::getExtensionGnssDebug() {
     return new V1_1::implementation::GnssDebug();
 }
 
-Return<sp<V1_0::IGnssBatching>> Gnss::getExtensionGnssBatching() {
+template <class T_IGnss>
+Return<sp<V1_0::IGnssBatching>> GnssTemplate<T_IGnss>::getExtensionGnssBatching() {
     // TODO implement
     return ::android::sp<V1_0::IGnssBatching>{};
 }
 
 // Methods from V1_1::IGnss follow.
-Return<bool> Gnss::setCallback_1_1(const sp<V1_1::IGnssCallback>& callback) {
+template <class T_IGnss>
+Return<bool> GnssTemplate<T_IGnss>::setCallback_1_1(const sp<V1_1::IGnssCallback>& callback) {
     if (callback == nullptr) {
         ALOGE("%s: Null callback ignored", __func__);
         return false;
@@ -263,7 +390,7 @@ Return<bool> Gnss::setCallback_1_1(const sp<V1_1::IGnssCallback>& callback) {
         ALOGE("%s: Unable to invoke callback", __func__);
     }
 
-    IGnssCallback::GnssSystemInfo gnssInfo = {.yearOfHw = 2018};
+    V2_1::IGnssCallback::GnssSystemInfo gnssInfo = {.yearOfHw = 2018};
 
     ret = sGnssCallback_1_1->gnssSetSystemInfoCb(gnssInfo);
     if (!ret.isOk()) {
@@ -279,29 +406,35 @@ Return<bool> Gnss::setCallback_1_1(const sp<V1_1::IGnssCallback>& callback) {
     return true;
 }
 
-Return<bool> Gnss::setPositionMode_1_1(V1_0::IGnss::GnssPositionMode,
-                                       V1_0::IGnss::GnssPositionRecurrence, uint32_t minIntervalMs,
-                                       uint32_t, uint32_t, bool) {
+template <class T_IGnss>
+Return<bool> GnssTemplate<T_IGnss>::setPositionMode_1_1(V1_0::IGnss::GnssPositionMode,
+                                                        V1_0::IGnss::GnssPositionRecurrence,
+                                                        uint32_t minIntervalMs, uint32_t, uint32_t,
+                                                        bool) {
     mMinIntervalMs = minIntervalMs;
     return true;
 }
 
-Return<sp<V1_1::IGnssConfiguration>> Gnss::getExtensionGnssConfiguration_1_1() {
+template <class T_IGnss>
+Return<sp<V1_1::IGnssConfiguration>> GnssTemplate<T_IGnss>::getExtensionGnssConfiguration_1_1() {
     // TODO implement
     return ::android::sp<V1_1::IGnssConfiguration>{};
 }
 
-Return<sp<V1_1::IGnssMeasurement>> Gnss::getExtensionGnssMeasurement_1_1() {
+template <class T_IGnss>
+Return<sp<V1_1::IGnssMeasurement>> GnssTemplate<T_IGnss>::getExtensionGnssMeasurement_1_1() {
     // TODO implement
     return ::android::sp<V1_1::IGnssMeasurement>{};
 }
 
-Return<bool> Gnss::injectBestLocation(const V1_0::GnssLocation&) {
+template <class T_IGnss>
+Return<bool> GnssTemplate<T_IGnss>::injectBestLocation(const V1_0::GnssLocation&) {
     return true;
 }
 
 // Methods from V2_0::IGnss follow.
-Return<bool> Gnss::setCallback_2_0(const sp<V2_0::IGnssCallback>& callback) {
+template <class T_IGnss>
+Return<bool> GnssTemplate<T_IGnss>::setCallback_2_0(const sp<V2_0::IGnssCallback>& callback) {
     ALOGD("Gnss::setCallback_2_0");
     if (callback == nullptr) {
         ALOGE("%s: Null callback ignored", __func__);
@@ -334,54 +467,65 @@ Return<bool> Gnss::setCallback_2_0(const sp<V2_0::IGnssCallback>& callback) {
     return true;
 }
 
-Return<sp<V2_0::IGnssConfiguration>> Gnss::getExtensionGnssConfiguration_2_0() {
+template <class T_IGnss>
+Return<sp<V2_0::IGnssConfiguration>> GnssTemplate<T_IGnss>::getExtensionGnssConfiguration_2_0() {
     ALOGD("Gnss::getExtensionGnssConfiguration_2_0");
     return mGnssConfiguration;
 }
 
-Return<sp<V2_0::IGnssDebug>> Gnss::getExtensionGnssDebug_2_0() {
+template <class T_IGnss>
+Return<sp<V2_0::IGnssDebug>> GnssTemplate<T_IGnss>::getExtensionGnssDebug_2_0() {
     // TODO implement
     return ::android::sp<V2_0::IGnssDebug>{};
 }
 
-Return<sp<V2_0::IAGnss>> Gnss::getExtensionAGnss_2_0() {
+template <class T_IGnss>
+Return<sp<V2_0::IAGnss>> GnssTemplate<T_IGnss>::getExtensionAGnss_2_0() {
     // TODO implement
     return ::android::sp<V2_0::IAGnss>{};
 }
 
-Return<sp<V2_0::IAGnssRil>> Gnss::getExtensionAGnssRil_2_0() {
+template <class T_IGnss>
+Return<sp<V2_0::IAGnssRil>> GnssTemplate<T_IGnss>::getExtensionAGnssRil_2_0() {
     // TODO implement
     return ::android::sp<V2_0::IAGnssRil>{};
 }
 
-Return<sp<V2_0::IGnssMeasurement>> Gnss::getExtensionGnssMeasurement_2_0() {
+template <class T_IGnss>
+Return<sp<V2_0::IGnssMeasurement>> GnssTemplate<T_IGnss>::getExtensionGnssMeasurement_2_0() {
     ALOGD("Gnss::getExtensionGnssMeasurement_2_0");
     return new GnssMeasurement();
 }
 
+template <class T_IGnss>
 Return<sp<measurement_corrections::V1_0::IMeasurementCorrections>>
-Gnss::getExtensionMeasurementCorrections() {
+GnssTemplate<T_IGnss>::getExtensionMeasurementCorrections() {
     ALOGD("Gnss::getExtensionMeasurementCorrections()");
     return new GnssMeasurementCorrections();
 }
 
-Return<sp<visibility_control::V1_0::IGnssVisibilityControl>> Gnss::getExtensionVisibilityControl() {
+template <class T_IGnss>
+Return<sp<visibility_control::V1_0::IGnssVisibilityControl>>
+GnssTemplate<T_IGnss>::getExtensionVisibilityControl() {
     // TODO implement
     return ::android::sp<visibility_control::V1_0::IGnssVisibilityControl>{};
 }
 
-Return<sp<V2_0::IGnssBatching>> Gnss::getExtensionGnssBatching_2_0() {
+template <class T_IGnss>
+Return<sp<V2_0::IGnssBatching>> GnssTemplate<T_IGnss>::getExtensionGnssBatching_2_0() {
     // TODO implement
     return ::android::sp<V2_0::IGnssBatching>{};
 }
 
-Return<bool> Gnss::injectBestLocation_2_0(const V2_0::GnssLocation&) {
+template <class T_IGnss>
+Return<bool> GnssTemplate<T_IGnss>::injectBestLocation_2_0(const V2_0::GnssLocation&) {
     // TODO(b/124012850): Implement function.
     return bool{};
 }
 
 // Methods from V2_1::IGnss follow.
-Return<bool> Gnss::setCallback_2_1(const sp<V2_1::IGnssCallback>& callback) {
+template <class T_IGnss>
+Return<bool> GnssTemplate<T_IGnss>::setCallback_2_1(const sp<V2_1::IGnssCallback>& callback) {
     ALOGD("Gnss::setCallback_2_1");
     if (callback == nullptr) {
         ALOGE("%s: Null callback ignored", __func__);
@@ -415,28 +559,33 @@ Return<bool> Gnss::setCallback_2_1(const sp<V2_1::IGnssCallback>& callback) {
     return true;
 }
 
-Return<sp<V2_1::IGnssMeasurement>> Gnss::getExtensionGnssMeasurement_2_1() {
+template <class T_IGnss>
+Return<sp<V2_1::IGnssMeasurement>> GnssTemplate<T_IGnss>::getExtensionGnssMeasurement_2_1() {
     ALOGD("Gnss::getExtensionGnssMeasurement_2_1");
     return new GnssMeasurement();
 }
 
-Return<sp<V2_1::IGnssConfiguration>> Gnss::getExtensionGnssConfiguration_2_1() {
+template <class T_IGnss>
+Return<sp<V2_1::IGnssConfiguration>> GnssTemplate<T_IGnss>::getExtensionGnssConfiguration_2_1() {
     ALOGD("Gnss::getExtensionGnssConfiguration_2_1");
     return mGnssConfiguration;
 }
 
+template <class T_IGnss>
 Return<sp<measurement_corrections::V1_1::IMeasurementCorrections>>
-Gnss::getExtensionMeasurementCorrections_1_1() {
+GnssTemplate<T_IGnss>::getExtensionMeasurementCorrections_1_1() {
     ALOGD("Gnss::getExtensionMeasurementCorrections_1_1()");
     return new GnssMeasurementCorrections();
 }
 
-Return<sp<V2_1::IGnssAntennaInfo>> Gnss::getExtensionGnssAntennaInfo() {
+template <class T_IGnss>
+Return<sp<V2_1::IGnssAntennaInfo>> GnssTemplate<T_IGnss>::getExtensionGnssAntennaInfo() {
     ALOGD("Gnss::getExtensionGnssAntennaInfo");
     return new GnssAntennaInfo();
 }
 
-void Gnss::reportSvStatus(const hidl_vec<GnssSvInfo>& svInfoList) const {
+template <class T_IGnss>
+void GnssTemplate<T_IGnss>::reportSvStatus(const hidl_vec<GnssSvInfo>& svInfoList) const {
     std::unique_lock<std::mutex> lock(mMutex);
     // TODO(skz): update this to call 2_0 callback if non-null
     if (sGnssCallback_2_1 == nullptr) {
@@ -449,7 +598,8 @@ void Gnss::reportSvStatus(const hidl_vec<GnssSvInfo>& svInfoList) const {
     }
 }
 
-void Gnss::reportLocation(const V1_0::GnssLocation& location) const {
+template <class T_IGnss>
+void GnssTemplate<T_IGnss>::reportLocation(const V1_0::GnssLocation& location) const {
     std::unique_lock<std::mutex> lock(mMutex);
     if (sGnssCallback_1_1 != nullptr) {
         auto ret = sGnssCallback_1_1->gnssLocationCb(location);
@@ -468,7 +618,8 @@ void Gnss::reportLocation(const V1_0::GnssLocation& location) const {
     }
 }
 
-void Gnss::reportLocation(const V2_0::GnssLocation& location) const {
+template <class T_IGnss>
+void GnssTemplate<T_IGnss>::reportLocation(const V2_0::GnssLocation& location) const {
     std::unique_lock<std::mutex> lock(mMutex);
     if (sGnssCallback_2_1 != nullptr) {
         auto ret = sGnssCallback_2_1->gnssLocationCb_2_0(location);
@@ -487,8 +638,4 @@ void Gnss::reportLocation(const V2_0::GnssLocation& location) const {
     }
 }
 
-}  // namespace implementation
-}  // namespace V2_1
-}  // namespace gnss
-}  // namespace hardware
-}  // namespace android
+}  // namespace android::hardware::gnss::common::implementation

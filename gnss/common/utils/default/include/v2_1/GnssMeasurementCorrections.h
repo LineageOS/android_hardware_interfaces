@@ -20,22 +20,15 @@
 #include <hidl/MQDescriptor.h>
 #include <hidl/Status.h>
 
-namespace android {
-namespace hardware {
-namespace gnss {
-namespace measurement_corrections {
-namespace V1_1 {
-namespace implementation {
+namespace android::hardware::gnss::measurement_corrections::V1_1::implementation {
 
 using ::android::sp;
-using ::android::hardware::hidl_array;
-using ::android::hardware::hidl_memory;
-using ::android::hardware::hidl_string;
-using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
-using ::android::hardware::Void;
 
 struct GnssMeasurementCorrections : public IMeasurementCorrections {
+    GnssMeasurementCorrections();
+    ~GnssMeasurementCorrections();
+
     // Methods from V1_0::IMeasurementCorrections follow.
     Return<bool> setCorrections(const V1_0::MeasurementCorrections& corrections) override;
     Return<bool> setCallback(const sp<V1_0::IMeasurementCorrectionsCallback>& callback) override;
@@ -44,9 +37,4 @@ struct GnssMeasurementCorrections : public IMeasurementCorrections {
     Return<bool> setCorrections_1_1(const V1_1::MeasurementCorrections& corrections) override;
 };
 
-}  // namespace implementation
-}  // namespace V1_1
-}  // namespace measurement_corrections
-}  // namespace gnss
-}  // namespace hardware
-}  // namespace android
+}  // namespace android::hardware::gnss::measurement_corrections::V1_1::implementation

@@ -16,18 +16,13 @@
 
 #define LOG_TAG "GnssMeasurement"
 
-#include "GnssMeasurement.h"
+#include "v2_1/GnssMeasurement.h"
 #include <log/log.h>
 #include "Utils.h"
 
-namespace android {
-namespace hardware {
-namespace gnss {
+namespace android::hardware::gnss::V2_1::implementation {
 
 using common::Utils;
-
-namespace V2_1 {
-namespace implementation {
 
 sp<V2_1::IGnssMeasurementCallback> GnssMeasurement::sCallback_2_1 = nullptr;
 sp<V2_0::IGnssMeasurementCallback> GnssMeasurement::sCallback_2_0 = nullptr;
@@ -145,8 +140,4 @@ void GnssMeasurement::reportMeasurement(const GnssDataV2_1& data) {
     }
 }
 
-}  // namespace implementation
-}  // namespace V2_1
-}  // namespace gnss
-}  // namespace hardware
-}  // namespace android
+}  // namespace android::hardware::gnss::V2_1::implementation

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,24 +14,24 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "android.hardware.gnss@2.1-service"
+#define LOG_TAG "android.hardware.gnss@3.0-service"
 
 #include <hidl/HidlSupport.h>
 #include <hidl/HidlTransportSupport.h>
-#include "v2_1/GnssTemplate.h"
+#include "Gnss.h"
 
 using ::android::OK;
 using ::android::sp;
 using ::android::hardware::configureRpcThreadpool;
 using ::android::hardware::joinRpcThreadpool;
-using ::android::hardware::gnss::common::implementation::GnssTemplate;
-using ::android::hardware::gnss::V2_1::IGnss;
+using ::android::hardware::gnss::V3_0::IGnss;
+using ::android::hardware::gnss::V3_0::implementation::Gnss;
 
 int main(int /* argc */, char* /* argv */[]) {
-    sp<IGnss> gnss = new GnssTemplate<IGnss>();
+    sp<IGnss> gnss = new Gnss();
     configureRpcThreadpool(1, true /* will join */);
     if (gnss->registerAsService() != OK) {
-        ALOGE("Could not register gnss 2.1 service.");
+        ALOGE("Could not register gnss 3.0 service.");
         return 1;
     }
     joinRpcThreadpool();
