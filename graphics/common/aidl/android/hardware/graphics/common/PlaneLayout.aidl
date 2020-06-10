@@ -100,10 +100,11 @@ parcelable PlaneLayout {
     long totalSizeInBytes;
 
     /**
-     * Horizontal and vertical subsampling. Must be a positive power of 2.
+     * Horizontal and vertical subsampling. Must be a positive power of 2. A value of 1
+     * indicates no subsampling.
      *
      * These fields indicate the number of horizontally or vertically adjacent pixels that use
-     * the same pixel data. A value of 1 indicates no subsampling.
+     * the same pixel data.
      */
     long horizontalSubsampling;
     long verticalSubsampling;
