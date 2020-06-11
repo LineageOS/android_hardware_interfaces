@@ -93,9 +93,9 @@ Return<void> Demux::openFilter(const DemuxFilterType& type, uint32_t bufferSize,
 Return<void> Demux::openTimeFilter(openTimeFilter_cb _hidl_cb) {
     ALOGV("%s", __FUNCTION__);
 
-    sp<TimeFilter> timeFilter = new TimeFilter(this);
+    mTimeFilter = new TimeFilter(this);
 
-    _hidl_cb(Result::SUCCESS, timeFilter);
+    _hidl_cb(Result::SUCCESS, mTimeFilter);
     return Void();
 }
 
