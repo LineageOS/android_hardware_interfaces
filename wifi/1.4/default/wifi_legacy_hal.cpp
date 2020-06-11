@@ -367,8 +367,8 @@ wifi_error WifiLegacyHal::start() {
     }
     LOG(DEBUG) << "Waiting for the driver ready";
     wifi_error status = global_func_table_.wifi_wait_for_driver_ready();
-    if (status == WIFI_ERROR_TIMED_OUT) {
-        LOG(ERROR) << "Timed out awaiting driver ready";
+    if (status == WIFI_ERROR_TIMED_OUT || status == WIFI_ERROR_UNKNOWN) {
+        LOG(ERROR) << "Failed or timed out awaiting driver ready";
         return status;
     }
     property_set(kDriverPropName, "ok");
