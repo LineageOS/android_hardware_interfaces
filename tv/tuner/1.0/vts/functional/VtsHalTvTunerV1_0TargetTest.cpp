@@ -56,6 +56,23 @@ void TunerFilterHidlTest::configSingleFilterInDemuxTest(FilterConfig filterConf,
     ASSERT_TRUE(mFrontendTests.closeFrontend());
 }
 
+void TunerFilterHidlTest::testTimeFilter(TimeFilterConfig filterConf) {
+    if (!filterConf.supportTimeFilter) {
+        return;
+    }
+    uint32_t demuxId;
+    sp<IDemux> demux;
+
+    ASSERT_TRUE(mDemuxTests.openDemux(demux, demuxId));
+    mFilterTests.setDemux(demux);
+    ASSERT_TRUE(mFilterTests.openTimeFilterInDemux());
+    ASSERT_TRUE(mFilterTests.setTimeStamp(filterConf.timeStamp));
+    ASSERT_TRUE(mFilterTests.getTimeStamp());
+    ASSERT_TRUE(mFilterTests.clearTimeStamp());
+    ASSERT_TRUE(mFilterTests.closeTimeFilter());
+    ASSERT_TRUE(mDemuxTests.closeDemux());
+}
+
 void TunerBroadcastHidlTest::broadcastSingleFilterTest(FilterConfig filterConf,
                                                        FrontendConfig frontendConf) {
     uint32_t feId;
@@ -433,6 +450,12 @@ TEST_P(TunerFilterHidlTest, SetFilterLinkage) {
         }
     }
     ASSERT_TRUE(mDemuxTests.closeDemux());
+}
+
+TEST_P(TunerFilterHidlTest, testTimeFilter) {
+    description("Open a timer filter in Demux and set time stamp.");
+    // TODO use paramterized tests
+    testTimeFilter(timeFilterArray[TIMER0]);
 }
 
 TEST_P(TunerBroadcastHidlTest, BroadcastDataFlowVideoFilterTest) {
