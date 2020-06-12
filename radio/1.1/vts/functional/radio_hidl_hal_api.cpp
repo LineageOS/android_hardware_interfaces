@@ -60,6 +60,7 @@ TEST_P(RadioHidlTest_v1_1, setSimCardPower_1_1) {
     ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_1->rspInfo.error,
                                  {RadioError::NONE, RadioError::REQUEST_NOT_SUPPORTED,
                                   RadioError::INVALID_ARGUMENTS, RadioError::RADIO_NOT_AVAILABLE}));
+#endif
 
     /**
      * If the sim card status for the testing environment is PRESENT,
