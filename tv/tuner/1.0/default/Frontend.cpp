@@ -66,7 +66,7 @@ Return<Result> Frontend::tune(const FrontendSettings& /* settings */) {
 
     mTunerService->frontendStartTune(mId);
     mCallback->onEvent(FrontendEventType::LOCKED);
-    mIsLocked = false;
+    mIsLocked = true;
     return Result::SUCCESS;
 }
 
@@ -275,6 +275,10 @@ string Frontend::getSourceFile() {
 bool Frontend::supportsSatellite() {
     return mType == FrontendType::DVBS || mType == FrontendType::ISDBS ||
            mType == FrontendType::ISDBS3;
+}
+
+bool Frontend::isLocked() {
+    return mIsLocked;
 }
 }  // namespace implementation
 }  // namespace V1_0
