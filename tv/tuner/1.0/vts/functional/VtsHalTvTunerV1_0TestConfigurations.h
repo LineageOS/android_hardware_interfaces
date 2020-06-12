@@ -86,6 +86,11 @@ typedef enum {
 } Filter;
 
 typedef enum {
+    TIMER0,
+    TIMER_MAX,
+} TimeFilter;
+
+typedef enum {
     SOURCE,
     SINK,
     LINKAGE_DIR,
@@ -132,6 +137,11 @@ struct FilterConfig {
     bool operator<(const FilterConfig& /*c*/) const { return false; }
 };
 
+struct TimeFilterConfig {
+    bool supportTimeFilter;
+    uint64_t timeStamp;
+};
+
 struct FrontendConfig {
     FrontendType type;
     FrontendSettings settings;
@@ -174,6 +184,7 @@ static LnbConfig lnbArray[LNB_MAX];
 static vector<uint8_t> diseqcMsgArray[DISEQC_MAX];
 static ChannelConfig channelArray[FRONTEND_MAX];
 static FilterConfig filterArray[FILTER_MAX];
+static TimeFilterConfig timeFilterArray[TIMER_MAX];
 static DemuxFilterType filterLinkageTypes[LINKAGE_DIR][FILTER_MAIN_TYPE_BIT_COUNT];
 static DvrConfig dvrArray[DVR_MAX];
 static DescramblerConfig descramblerArray[DESC_MAX];
@@ -317,6 +328,12 @@ inline void initFilterConfig() {
     filterLinkageTypes[SOURCE][4].subType.alpFilterType(DemuxAlpFilterType::PTP);
     filterLinkageTypes[SINK][4] = filterLinkageTypes[SOURCE][4];
 };
+
+/** Configuration array for the timer filter test */
+inline void initTimeFilterConfig() {
+    timeFilterArray[TIMER0].supportTimeFilter = true;
+    timeFilterArray[TIMER0].timeStamp = 1;
+}
 
 /** Configuration array for the dvr test */
 inline void initDvrConfig() {
