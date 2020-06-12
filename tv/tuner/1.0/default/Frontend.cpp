@@ -268,10 +268,6 @@ FrontendId Frontend::getFrontendId() {
     return mId;
 }
 
-string Frontend::getSourceFile() {
-    return FRONTEND_STREAM_FILE;
-}
-
 bool Frontend::supportsSatellite() {
     return mType == FrontendType::DVBS || mType == FrontendType::ISDBS ||
            mType == FrontendType::ISDBS3;
