@@ -121,6 +121,7 @@ typedef enum {
 typedef enum {
     DVR_RECORD0,
     DVR_PLAYBACK0,
+    DVR_SOFTWARE_FE,
     DVR_MAX,
 } Dvr;
 
@@ -143,6 +144,7 @@ struct TimeFilterConfig {
 };
 
 struct FrontendConfig {
+    bool isSoftwareFe;
     FrontendType type;
     FrontendSettings settings;
     vector<FrontendStatusType> tuneStatusTypes;
@@ -213,7 +215,9 @@ inline void initFrontendConfig() {
     statuses.push_back(status);
     frontendArray[DVBT].tuneStatusTypes = types;
     frontendArray[DVBT].expectTuneStatuses = statuses;
+    frontendArray[DVBT].isSoftwareFe = true;
     frontendArray[DVBS].type = FrontendType::DVBS;
+    frontendArray[DVBS].isSoftwareFe = true;
 };
 
 /** Configuration array for the frontend scan test */
@@ -355,9 +359,20 @@ inline void initDvrConfig() {
             .packetSize = 188,
     };
     dvrArray[DVR_PLAYBACK0].type = DvrType::PLAYBACK;
-    dvrArray[DVR_PLAYBACK0].playbackInputFile = "/vendor/etc/segment000000.ts";
+    dvrArray[DVR_PLAYBACK0].playbackInputFile = "/data/local/tmp/segment000000.ts";
     dvrArray[DVR_PLAYBACK0].bufferSize = FMQ_SIZE_4M;
     dvrArray[DVR_PLAYBACK0].settings.playback(playbackSettings);
+    PlaybackSettings softwareFePlaybackSettings{
+            .statusMask = 0xf,
+            .lowThreshold = 0x1000,
+            .highThreshold = 0x07fff,
+            .dataFormat = DataFormat::TS,
+            .packetSize = 188,
+    };
+    dvrArray[DVR_SOFTWARE_FE].type = DvrType::PLAYBACK;
+    dvrArray[DVR_SOFTWARE_FE].playbackInputFile = "/data/local/tmp/segment000000.ts";
+    dvrArray[DVR_SOFTWARE_FE].bufferSize = FMQ_SIZE_4M;
+    dvrArray[DVR_SOFTWARE_FE].settings.playback(softwareFePlaybackSettings);
 };
 
 /** Configuration array for the descrambler test */
