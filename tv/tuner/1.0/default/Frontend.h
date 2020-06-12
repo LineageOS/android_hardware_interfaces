@@ -68,6 +68,8 @@ class Frontend : public IFrontend {
 
     string getSourceFile();
 
+    bool isLocked();
+
   private:
     virtual ~Frontend();
     bool supportsSatellite();
