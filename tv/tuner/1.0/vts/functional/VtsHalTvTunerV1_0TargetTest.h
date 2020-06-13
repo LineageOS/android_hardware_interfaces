@@ -16,7 +16,6 @@
 
 #include "DemuxTests.h"
 #include "DescramblerTests.h"
-#include "DvrTests.h"
 #include "FrontendTests.h"
 #include "LnbTests.h"
 
@@ -147,6 +146,7 @@ class TunerBroadcastHidlTest : public testing::TestWithParam<std::string> {
         mDemuxTests.setService(mService);
         mFilterTests.setService(mService);
         mLnbTests.setService(mService);
+        mDvrTests.setService(mService);
     }
 
   protected:
@@ -159,6 +159,7 @@ class TunerBroadcastHidlTest : public testing::TestWithParam<std::string> {
     DemuxTests mDemuxTests;
     FilterTests mFilterTests;
     LnbTests mLnbTests;
+    DvrTests mDvrTests;
 
     AssertionResult filterDataOutputTest(vector<string> goldenOutputFiles);
 
@@ -247,6 +248,7 @@ class TunerDescramblerHidlTest : public testing::TestWithParam<std::string> {
 
         mFrontendTests.setService(mService);
         mDemuxTests.setService(mService);
+        mDvrTests.setService(mService);
         mDescramblerTests.setService(mService);
         mDescramblerTests.setCasService(mCasService);
     }
@@ -266,5 +268,6 @@ class TunerDescramblerHidlTest : public testing::TestWithParam<std::string> {
     DemuxTests mDemuxTests;
     FilterTests mFilterTests;
     DescramblerTests mDescramblerTests;
+    DvrTests mDvrTests;
 };
 }  // namespace

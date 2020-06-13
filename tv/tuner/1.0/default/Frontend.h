@@ -68,6 +68,8 @@ class Frontend : public IFrontend {
 
     string getSourceFile();
 
+    bool isLocked();
+
   private:
     virtual ~Frontend();
     bool supportsSatellite();
@@ -77,7 +79,6 @@ class Frontend : public IFrontend {
     FrontendId mId = 0;
     bool mIsLocked = false;
 
-    const string FRONTEND_STREAM_FILE = "/vendor/etc/segment000000.ts";
     std::ifstream mFrontendData;
 };
 

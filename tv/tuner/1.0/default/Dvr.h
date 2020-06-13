@@ -81,8 +81,11 @@ class Dvr : public IDvr {
     bool createDvrMQ();
     void sendBroadcastInputToDvrRecord(vector<uint8_t> byteBuffer);
     bool writeRecordFMQ(const std::vector<uint8_t>& data);
-    DvrType getType();
-    bool addPlaybackFilter(sp<IFilter> filter);
+    bool addPlaybackFilter(uint32_t filterId, sp<IFilter> filter);
+    bool removePlaybackFilter(uint32_t filterId);
+    bool readPlaybackFMQ(bool isVirtualFrontend, bool isRecording);
+    bool startFilterDispatcher(bool isVirtualFrontend, bool isRecording);
+    EventFlag* getDvrEventFlag();
 
   private:
     // Demux service
@@ -105,9 +108,7 @@ class Dvr : public IDvr {
      * A dispatcher to read and dispatch input data to all the started filters.
      * Each filter handler handles the data filtering/output writing/filterEvent updating.
      */
-    bool readPlaybackFMQ();
     void startTpidFilter(vector<uint8_t> data);
-    bool startFilterDispatcher();
     static void* __threadLoopPlayback(void* user);
     static void* __threadLoopRecord(void* user);
     void playbackThreadLoop();
@@ -123,7 +124,6 @@ class Dvr : public IDvr {
 
     // Thread handlers
     pthread_t mDvrThread;
-    pthread_t mBroadcastInputThread;
 
     // FMQ status local records
     PlaybackStatus mPlaybackStatus;
@@ -132,7 +132,6 @@ class Dvr : public IDvr {
      * If a specific filter's writing loop is still running
      */
     bool mDvrThreadRunning;
-    bool mBroadcastInputThreadRunning;
     bool mKeepFetchingDataFromFrontend;
     /**
      * Lock to protect writes to the FMQs
@@ -143,7 +142,6 @@ class Dvr : public IDvr {
      */
     std::mutex mPlaybackStatusLock;
     std::mutex mRecordStatusLock;
-    std::mutex mBroadcastInputThreadLock;
     std::mutex mDvrThreadLock;
 
     const bool DEBUG_DVR = false;
@@ -151,7 +149,6 @@ class Dvr : public IDvr {
     // Booleans to check if recording is running.
     // Recording is ready when both of the following are set to true.
     bool mIsRecordStarted = false;
-    bool mIsRecordFilterAttached = false;
 };
 
 }  // namespace implementation
