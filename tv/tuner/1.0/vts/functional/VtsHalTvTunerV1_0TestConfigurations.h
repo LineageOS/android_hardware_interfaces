@@ -86,6 +86,11 @@ typedef enum {
 } Filter;
 
 typedef enum {
+    TIMER0,
+    TIMER_MAX,
+} TimeFilter;
+
+typedef enum {
     SOURCE,
     SINK,
     LINKAGE_DIR,
@@ -116,6 +121,7 @@ typedef enum {
 typedef enum {
     DVR_RECORD0,
     DVR_PLAYBACK0,
+    DVR_SOFTWARE_FE,
     DVR_MAX,
 } Dvr;
 
@@ -132,7 +138,13 @@ struct FilterConfig {
     bool operator<(const FilterConfig& /*c*/) const { return false; }
 };
 
+struct TimeFilterConfig {
+    bool supportTimeFilter;
+    uint64_t timeStamp;
+};
+
 struct FrontendConfig {
+    bool isSoftwareFe;
     FrontendType type;
     FrontendSettings settings;
     vector<FrontendStatusType> tuneStatusTypes;
@@ -174,6 +186,7 @@ static LnbConfig lnbArray[LNB_MAX];
 static vector<uint8_t> diseqcMsgArray[DISEQC_MAX];
 static ChannelConfig channelArray[FRONTEND_MAX];
 static FilterConfig filterArray[FILTER_MAX];
+static TimeFilterConfig timeFilterArray[TIMER_MAX];
 static DemuxFilterType filterLinkageTypes[LINKAGE_DIR][FILTER_MAIN_TYPE_BIT_COUNT];
 static DvrConfig dvrArray[DVR_MAX];
 static DescramblerConfig descramblerArray[DESC_MAX];
@@ -202,7 +215,9 @@ inline void initFrontendConfig() {
     statuses.push_back(status);
     frontendArray[DVBT].tuneStatusTypes = types;
     frontendArray[DVBT].expectTuneStatuses = statuses;
+    frontendArray[DVBT].isSoftwareFe = true;
     frontendArray[DVBS].type = FrontendType::DVBS;
+    frontendArray[DVBS].isSoftwareFe = true;
 };
 
 /** Configuration array for the frontend scan test */
@@ -318,6 +333,12 @@ inline void initFilterConfig() {
     filterLinkageTypes[SINK][4] = filterLinkageTypes[SOURCE][4];
 };
 
+/** Configuration array for the timer filter test */
+inline void initTimeFilterConfig() {
+    timeFilterArray[TIMER0].supportTimeFilter = true;
+    timeFilterArray[TIMER0].timeStamp = 1;
+}
+
 /** Configuration array for the dvr test */
 inline void initDvrConfig() {
     RecordSettings recordSettings{
@@ -338,9 +359,20 @@ inline void initDvrConfig() {
             .packetSize = 188,
     };
     dvrArray[DVR_PLAYBACK0].type = DvrType::PLAYBACK;
-    dvrArray[DVR_PLAYBACK0].playbackInputFile = "/vendor/etc/segment000000.ts";
+    dvrArray[DVR_PLAYBACK0].playbackInputFile = "/data/local/tmp/segment000000.ts";
     dvrArray[DVR_PLAYBACK0].bufferSize = FMQ_SIZE_4M;
     dvrArray[DVR_PLAYBACK0].settings.playback(playbackSettings);
+    PlaybackSettings softwareFePlaybackSettings{
+            .statusMask = 0xf,
+            .lowThreshold = 0x1000,
+            .highThreshold = 0x07fff,
+            .dataFormat = DataFormat::TS,
+            .packetSize = 188,
+    };
+    dvrArray[DVR_SOFTWARE_FE].type = DvrType::PLAYBACK;
+    dvrArray[DVR_SOFTWARE_FE].playbackInputFile = "/data/local/tmp/segment000000.ts";
+    dvrArray[DVR_SOFTWARE_FE].bufferSize = FMQ_SIZE_4M;
+    dvrArray[DVR_SOFTWARE_FE].settings.playback(softwareFePlaybackSettings);
 };
 
 /** Configuration array for the descrambler test */

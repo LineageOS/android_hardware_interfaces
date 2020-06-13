@@ -56,6 +56,23 @@ void TunerFilterHidlTest::configSingleFilterInDemuxTest(FilterConfig filterConf,
     ASSERT_TRUE(mFrontendTests.closeFrontend());
 }
 
+void TunerFilterHidlTest::testTimeFilter(TimeFilterConfig filterConf) {
+    if (!filterConf.supportTimeFilter) {
+        return;
+    }
+    uint32_t demuxId;
+    sp<IDemux> demux;
+
+    ASSERT_TRUE(mDemuxTests.openDemux(demux, demuxId));
+    mFilterTests.setDemux(demux);
+    ASSERT_TRUE(mFilterTests.openTimeFilterInDemux());
+    ASSERT_TRUE(mFilterTests.setTimeStamp(filterConf.timeStamp));
+    ASSERT_TRUE(mFilterTests.getTimeStamp());
+    ASSERT_TRUE(mFilterTests.clearTimeStamp());
+    ASSERT_TRUE(mFilterTests.closeTimeFilter());
+    ASSERT_TRUE(mDemuxTests.closeDemux());
+}
+
 void TunerBroadcastHidlTest::broadcastSingleFilterTest(FilterConfig filterConf,
                                                        FrontendConfig frontendConf) {
     uint32_t feId;
@@ -77,6 +94,7 @@ void TunerBroadcastHidlTest::broadcastSingleFilterTest(FilterConfig filterConf,
     }
     ASSERT_TRUE(mDemuxTests.openDemux(demux, demuxId));
     ASSERT_TRUE(mDemuxTests.setDemuxFrontendDataSource(feId));
+    mFrontendTests.setDemux(demux);
     mFilterTests.setDemux(demux);
     ASSERT_TRUE(mFilterTests.openFilterInDemux(filterConf.type, filterConf.bufferSize));
     ASSERT_TRUE(mFilterTests.getNewlyOpenedFilterId(filterId));
@@ -84,9 +102,9 @@ void TunerBroadcastHidlTest::broadcastSingleFilterTest(FilterConfig filterConf,
     ASSERT_TRUE(mFilterTests.getFilterMQDescriptor(filterId));
     ASSERT_TRUE(mFilterTests.startFilter(filterId));
     // tune test
-    ASSERT_TRUE(mFrontendTests.tuneFrontend(frontendConf));
+    ASSERT_TRUE(mFrontendTests.tuneFrontend(frontendConf, true /*testWithDemux*/));
     ASSERT_TRUE(filterDataOutputTest(goldenOutputFiles));
-    ASSERT_TRUE(mFrontendTests.stopTuneFrontend());
+    ASSERT_TRUE(mFrontendTests.stopTuneFrontend(true /*testWithDemux*/));
     ASSERT_TRUE(mFilterTests.stopFilter(filterId));
     ASSERT_TRUE(mFilterTests.closeFilter(filterId));
     ASSERT_TRUE(mDemuxTests.closeDemux());
@@ -122,21 +140,21 @@ void TunerPlaybackHidlTest::playbackSingleFilterTest(FilterConfig filterConf, Dv
     mFilterTests.setDemux(demux);
     mDvrTests.setDemux(demux);
     ASSERT_TRUE(mDvrTests.openDvrInDemux(dvrConf.type, dvrConf.bufferSize));
-    ASSERT_TRUE(mDvrTests.configDvr(dvrConf.settings));
-    ASSERT_TRUE(mDvrTests.getDvrMQDescriptor());
+    ASSERT_TRUE(mDvrTests.configDvrPlayback(dvrConf.settings));
+    ASSERT_TRUE(mDvrTests.getDvrPlaybackMQDescriptor());
     ASSERT_TRUE(mFilterTests.openFilterInDemux(filterConf.type, filterConf.bufferSize));
     ASSERT_TRUE(mFilterTests.getNewlyOpenedFilterId(filterId));
     ASSERT_TRUE(mFilterTests.configFilter(filterConf.settings, filterId));
     ASSERT_TRUE(mFilterTests.getFilterMQDescriptor(filterId));
     mDvrTests.startPlaybackInputThread(dvrConf.playbackInputFile, dvrConf.settings.playback());
-    ASSERT_TRUE(mDvrTests.startDvr());
+    ASSERT_TRUE(mDvrTests.startDvrPlayback());
     ASSERT_TRUE(mFilterTests.startFilter(filterId));
     ASSERT_TRUE(filterDataOutputTest(goldenOutputFiles));
     mDvrTests.stopPlaybackThread();
     ASSERT_TRUE(mFilterTests.stopFilter(filterId));
-    ASSERT_TRUE(mDvrTests.stopDvr());
+    ASSERT_TRUE(mDvrTests.stopDvrPlayback());
     ASSERT_TRUE(mFilterTests.closeFilter(filterId));
-    mDvrTests.closeDvr();
+    mDvrTests.closeDvrPlayback();
     ASSERT_TRUE(mDemuxTests.closeDemux());
 }
 
@@ -159,9 +177,10 @@ void TunerRecordHidlTest::recordSingleFilterTest(FilterConfig filterConf,
     ASSERT_TRUE(mDemuxTests.setDemuxFrontendDataSource(feId));
     mFilterTests.setDemux(demux);
     mDvrTests.setDemux(demux);
+    mFrontendTests.setDvrTests(mDvrTests);
     ASSERT_TRUE(mDvrTests.openDvrInDemux(dvrConf.type, dvrConf.bufferSize));
-    ASSERT_TRUE(mDvrTests.configDvr(dvrConf.settings));
-    ASSERT_TRUE(mDvrTests.getDvrMQDescriptor());
+    ASSERT_TRUE(mDvrTests.configDvrRecord(dvrConf.settings));
+    ASSERT_TRUE(mDvrTests.getDvrRecordMQDescriptor());
     ASSERT_TRUE(mFilterTests.openFilterInDemux(filterConf.type, filterConf.bufferSize));
     ASSERT_TRUE(mFilterTests.getNewlyOpenedFilterId(filterId));
     ASSERT_TRUE(mFilterTests.configFilter(filterConf.settings, filterId));
@@ -170,17 +189,17 @@ void TunerRecordHidlTest::recordSingleFilterTest(FilterConfig filterConf,
     ASSERT_TRUE(filter != nullptr);
     mDvrTests.startRecordOutputThread(dvrConf.settings.record());
     ASSERT_TRUE(mDvrTests.attachFilterToDvr(filter));
-    ASSERT_TRUE(mDvrTests.startDvr());
+    ASSERT_TRUE(mDvrTests.startDvrRecord());
     ASSERT_TRUE(mFilterTests.startFilter(filterId));
-    ASSERT_TRUE(mFrontendTests.tuneFrontend(frontendConf));
+    ASSERT_TRUE(mFrontendTests.tuneFrontend(frontendConf, true /*testWithDemux*/));
     mDvrTests.testRecordOutput();
     mDvrTests.stopRecordThread();
-    ASSERT_TRUE(mFrontendTests.stopTuneFrontend());
+    ASSERT_TRUE(mFrontendTests.stopTuneFrontend(true /*testWithDemux*/));
     ASSERT_TRUE(mFilterTests.stopFilter(filterId));
-    ASSERT_TRUE(mDvrTests.stopDvr());
+    ASSERT_TRUE(mDvrTests.stopDvrRecord());
     ASSERT_TRUE(mDvrTests.detachFilterToDvr(filter));
     ASSERT_TRUE(mFilterTests.closeFilter(filterId));
-    mDvrTests.closeDvr();
+    mDvrTests.closeDvrRecord();
     ASSERT_TRUE(mDemuxTests.closeDemux());
     ASSERT_TRUE(mFrontendTests.closeFrontend());
 }
@@ -223,8 +242,8 @@ void TunerRecordHidlTest::attachSingleFilterToRecordDvrTest(FilterConfig filterC
     mFilterTests.setDemux(demux);
     mDvrTests.setDemux(demux);
     ASSERT_TRUE(mDvrTests.openDvrInDemux(dvrConf.type, dvrConf.bufferSize));
-    ASSERT_TRUE(mDvrTests.configDvr(dvrConf.settings));
-    ASSERT_TRUE(mDvrTests.getDvrMQDescriptor());
+    ASSERT_TRUE(mDvrTests.configDvrRecord(dvrConf.settings));
+    ASSERT_TRUE(mDvrTests.getDvrRecordMQDescriptor());
     ASSERT_TRUE(mFilterTests.openFilterInDemux(filterConf.type, filterConf.bufferSize));
     ASSERT_TRUE(mFilterTests.getNewlyOpenedFilterId(filterId));
     ASSERT_TRUE(mFilterTests.configFilter(filterConf.settings, filterId));
@@ -232,13 +251,13 @@ void TunerRecordHidlTest::attachSingleFilterToRecordDvrTest(FilterConfig filterC
     filter = mFilterTests.getFilterById(filterId);
     ASSERT_TRUE(filter != nullptr);
     ASSERT_TRUE(mDvrTests.attachFilterToDvr(filter));
-    ASSERT_TRUE(mDvrTests.startDvr());
+    ASSERT_TRUE(mDvrTests.startDvrRecord());
     ASSERT_TRUE(mFilterTests.startFilter(filterId));
     ASSERT_TRUE(mFilterTests.stopFilter(filterId));
-    ASSERT_TRUE(mDvrTests.stopDvr());
+    ASSERT_TRUE(mDvrTests.stopDvrRecord());
     ASSERT_TRUE(mDvrTests.detachFilterToDvr(filter));
     ASSERT_TRUE(mFilterTests.closeFilter(filterId));
-    mDvrTests.closeDvr();
+    mDvrTests.closeDvrRecord();
     ASSERT_TRUE(mDemuxTests.closeDemux());
     ASSERT_TRUE(mFrontendTests.closeFrontend());
 }
@@ -266,6 +285,7 @@ void TunerDescramblerHidlTest::scrambledBroadcastTest(set<struct FilterConfig> m
     ASSERT_TRUE(mDemuxTests.openDemux(demux, demuxId));
     ASSERT_TRUE(mDemuxTests.setDemuxFrontendDataSource(feId));
     mFilterTests.setDemux(demux);
+    mFrontendTests.setDemux(demux);
     for (config = mediaFilterConfs.begin(); config != mediaFilterConfs.end(); config++) {
         ASSERT_TRUE(mFilterTests.openFilterInDemux((*config).type, (*config).bufferSize));
         ASSERT_TRUE(mFilterTests.getNewlyOpenedFilterId(filterId));
@@ -289,9 +309,9 @@ void TunerDescramblerHidlTest::scrambledBroadcastTest(set<struct FilterConfig> m
         ASSERT_TRUE(mFilterTests.startFilter(*id));
     }
     // tune test
-    ASSERT_TRUE(mFrontendTests.tuneFrontend(frontendConf));
+    ASSERT_TRUE(mFrontendTests.tuneFrontend(frontendConf, true /*testWithDemux*/));
     ASSERT_TRUE(filterDataOutputTest(goldenOutputFiles));
-    ASSERT_TRUE(mFrontendTests.stopTuneFrontend());
+    ASSERT_TRUE(mFrontendTests.stopTuneFrontend(true /*testWithDemux*/));
     for (id = filterIds.begin(); id != filterIds.end(); id++) {
         ASSERT_TRUE(mFilterTests.stopFilter(*id));
     }
@@ -433,6 +453,12 @@ TEST_P(TunerFilterHidlTest, SetFilterLinkage) {
         }
     }
     ASSERT_TRUE(mDemuxTests.closeDemux());
+}
+
+TEST_P(TunerFilterHidlTest, testTimeFilter) {
+    description("Open a timer filter in Demux and set time stamp.");
+    // TODO use paramterized tests
+    testTimeFilter(timeFilterArray[TIMER0]);
 }
 
 TEST_P(TunerBroadcastHidlTest, BroadcastDataFlowVideoFilterTest) {
