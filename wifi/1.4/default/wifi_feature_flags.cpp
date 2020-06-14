@@ -80,16 +80,32 @@ constexpr ChipModeId kMainModeId = chip_mode_ids::kV3;
 #    endif
 #  else
 #    ifdef QC_WIFI_HIDL_FEATURE_DUAL_AP
-#      ifdef WIFI_HIDL_FEATURE_AWARE
-//       (1 STA + 1 AP) or (1 STA + 1 of (P2P or NAN)) or (2 AP)
-#        define WIFI_HAL_INTERFACE_COMBINATIONS {{{STA}, 1}, {{AP}, 1}},\
-                                                {{{STA}, 1}, {{P2P, NAN}, 1}},\
-                                                {{{AP}, 2}}
+#      ifdef QC_WIFI_HIDL_FEATURE_DUAL_STA
+#        ifdef WIFI_HIDL_FEATURE_AWARE
+//         (1 STA + 1 AP) or (1 STA + 1 of (P2P or NAN)) or (2 AP) or (2 STA)
+#          define WIFI_HAL_INTERFACE_COMBINATIONS {{{STA}, 1}, {{AP}, 1}},\
+                                                  {{{STA}, 1}, {{P2P, NAN}, 1}},\
+                                                  {{{AP}, 2}},\
+                                                  {{{STA}, 2}}
+#        else
+//         (1 STA + 1 AP) or (1 STA + 1 P2P) or (2 AP) or (2 STA)
+#          define WIFI_HAL_INTERFACE_COMBINATIONS {{{STA}, 1}, {{AP}, 1}},\
+                                                  {{{STA}, 1}, {{P2P}, 1}},\
+                                                  {{{AP}, 2}},\
+                                                  {{{STA}, 2}}
+#        endif
 #      else
-//       (1 STA + 1 AP) or (1 STA + 1 P2P) or (2 AP)
-#        define WIFI_HAL_INTERFACE_COMBINATIONS {{{STA}, 1}, {{AP}, 1}},\
-                                                {{{STA}, 1}, {{P2P}, 1}},\
-                                                {{{AP}, 2}}
+#        ifdef WIFI_HIDL_FEATURE_AWARE
+//         (1 STA + 1 AP) or (1 STA + 1 of (P2P or NAN)) or (2 AP)
+#          define WIFI_HAL_INTERFACE_COMBINATIONS {{{STA}, 1}, {{AP}, 1}},\
+                                                  {{{STA}, 1}, {{P2P, NAN}, 1}},\
+                                                  {{{AP}, 2}}
+#        else
+//         (1 STA + 1 AP) or (1 STA + 1 P2P) or (2 AP)
+#          define WIFI_HAL_INTERFACE_COMBINATIONS {{{STA}, 1}, {{AP}, 1}},\
+                                                  {{{STA}, 1}, {{P2P}, 1}},\
+                                                  {{{AP}, 2}}
+#        endif
 #      endif
 #    else
 #      ifdef WIFI_HIDL_FEATURE_AWARE
