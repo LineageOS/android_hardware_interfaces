@@ -49,49 +49,73 @@ void DvrCallback::playbackThreadLoop() {
     EXPECT_TRUE(EventFlag::createEventFlag(mPlaybackMQ->getEventFlagWord(), &playbackMQEventFlag) ==
                 android::OK);
 
-    // open the stream and get its length
-    std::ifstream inputData(mInputDataFile.c_str(), std::ifstream::binary);
-    int writeSize = mPlaybackSettings.packetSize * 6;
-    char* buffer = new char[writeSize];
-    ALOGW("[vts] playback thread loop start %s!", mInputDataFile.c_str());
-    if (!inputData.is_open()) {
+    int fd = open(mInputDataFile.c_str(), O_RDONLY | O_LARGEFILE);
+    int readBytes;
+    uint32_t regionSize = 0;
+    uint8_t* buffer;
+    ALOGW("[vts] playback thread loop start %s", mInputDataFile.c_str());
+    if (fd < 0) {
         mPlaybackThreadRunning = false;
         ALOGW("[vts] Error %s", strerror(errno));
     }
 
     while (mPlaybackThreadRunning) {
-        // move the stream pointer for packet size * 6 every read until the end
         while (mKeepWritingPlaybackFMQ) {
-            inputData.read(buffer, writeSize);
-            if (!inputData) {
-                int leftSize = inputData.gcount();
-                if (leftSize == 0) {
-                    mPlaybackThreadRunning = false;
-                    break;
-                }
-                inputData.clear();
-                inputData.read(buffer, leftSize);
-                // Write the left over of the input data and quit the thread
-                if (leftSize > 0) {
-                    EXPECT_TRUE(mPlaybackMQ->write((unsigned char*)&buffer[0], leftSize));
-                    playbackMQEventFlag->wake(
-                            static_cast<uint32_t>(DemuxQueueNotifyBits::DATA_READY));
-                }
+            int totalWrite = mPlaybackMQ->availableToWrite();
+            if (totalWrite * 4 < mPlaybackMQ->getQuantumCount()) {
+                // Wait for the HAL implementation to read more data then write.
+                continue;
+            }
+            MessageQueue<uint8_t, kSynchronizedReadWrite>::MemTransaction memTx;
+            if (!mPlaybackMQ->beginWrite(totalWrite, &memTx)) {
+                ALOGW("[vts] Fail to write into Playback fmq.");
                 mPlaybackThreadRunning = false;
                 break;
             }
-            // Write input FMQ and notify the Tuner Implementation
-            EXPECT_TRUE(mPlaybackMQ->write((unsigned char*)&buffer[0], writeSize));
+            auto first = memTx.getFirstRegion();
+            buffer = first.getAddress();
+            regionSize = first.getLength();
+
+            if (regionSize > 0) {
+                readBytes = read(fd, buffer, regionSize);
+                if (readBytes <= 0) {
+                    if (readBytes < 0) {
+                        ALOGW("[vts] Read from %s failed.", mInputDataFile.c_str());
+                    } else {
+                        ALOGW("[vts] playback input EOF.");
+                    }
+                    mPlaybackThreadRunning = false;
+                    break;
+                }
+            }
+            if (regionSize == 0 || (readBytes == regionSize && regionSize < totalWrite)) {
+                auto second = memTx.getSecondRegion();
+                buffer = second.getAddress();
+                regionSize = second.getLength();
+                int ret = read(fd, buffer, regionSize);
+                if (ret <= 0) {
+                    if (ret < 0) {
+                        ALOGW("[vts] Read from %s failed.", mInputDataFile.c_str());
+                    } else {
+                        ALOGW("[vts] playback input EOF.");
+                    }
+                    mPlaybackThreadRunning = false;
+                    break;
+                }
+                readBytes += ret;
+            }
+            if (!mPlaybackMQ->commitWrite(readBytes)) {
+                ALOGW("[vts] Failed to commit write playback fmq.");
+                mPlaybackThreadRunning = false;
+                break;
+            }
             playbackMQEventFlag->wake(static_cast<uint32_t>(DemuxQueueNotifyBits::DATA_READY));
-            inputData.seekg(writeSize, inputData.cur);
-            sleep(1);
         }
     }
 
+    mPlaybackThreadRunning = false;
     ALOGW("[vts] Playback thread end.");
-
-    delete[] buffer;
-    inputData.close();
+    close(fd);
 }
 
 void DvrCallback::testRecordOutput() {
@@ -186,32 +210,65 @@ AssertionResult DvrTests::openDvrInDemux(DvrType type, uint32_t bufferSize) {
     EXPECT_TRUE(mDemux) << "Test with openDemux first.";
 
     // Create dvr callback
-    mDvrCallback = new DvrCallback();
+    if (type == DvrType::PLAYBACK) {
+        mDvrPlaybackCallback = new DvrCallback();
+        mDemux->openDvr(type, bufferSize, mDvrPlaybackCallback,
+                        [&](Result result, const sp<IDvr>& dvr) {
+                            mDvrPlayback = dvr;
+                            status = result;
+                        });
+        if (status == Result::SUCCESS) {
+            mDvrPlaybackCallback->setDvr(mDvrPlayback);
+        }
+    }
 
-    mDemux->openDvr(type, bufferSize, mDvrCallback, [&](Result result, const sp<IDvr>& dvr) {
-        mDvr = dvr;
+    if (type == DvrType::RECORD) {
+        mDvrRecordCallback = new DvrCallback();
+        mDemux->openDvr(type, bufferSize, mDvrRecordCallback,
+                        [&](Result result, const sp<IDvr>& dvr) {
+                            mDvrRecord = dvr;
+                            status = result;
+                        });
+        if (status == Result::SUCCESS) {
+            mDvrRecordCallback->setDvr(mDvrRecord);
+        }
+    }
+
+    return AssertionResult(status == Result::SUCCESS);
+}
+
+AssertionResult DvrTests::configDvrPlayback(DvrSettings setting) {
+    Result status = mDvrPlayback->configure(setting);
+
+    return AssertionResult(status == Result::SUCCESS);
+}
+
+AssertionResult DvrTests::configDvrRecord(DvrSettings setting) {
+    Result status = mDvrRecord->configure(setting);
+
+    return AssertionResult(status == Result::SUCCESS);
+}
+
+AssertionResult DvrTests::getDvrPlaybackMQDescriptor() {
+    Result status;
+    EXPECT_TRUE(mDemux) << "Test with openDemux first.";
+    EXPECT_TRUE(mDvrPlayback) << "Test with openDvr first.";
+
+    mDvrPlayback->getQueueDesc([&](Result result, const MQDesc& dvrMQDesc) {
+        mDvrPlaybackMQDescriptor = dvrMQDesc;
         status = result;
     });
 
-    if (status == Result::SUCCESS) {
-        mDvrCallback->setDvr(mDvr);
-    }
     return AssertionResult(status == Result::SUCCESS);
 }
 
-AssertionResult DvrTests::configDvr(DvrSettings setting) {
-    Result status = mDvr->configure(setting);
-
-    return AssertionResult(status == Result::SUCCESS);
-}
-
-AssertionResult DvrTests::getDvrMQDescriptor() {
+AssertionResult DvrTests::getDvrRecordMQDescriptor() {
     Result status;
     EXPECT_TRUE(mDemux) << "Test with openDemux first.";
-    EXPECT_TRUE(mDvr) << "Test with openDvr first.";
+    EXPECT_TRUE(mDvrRecord) << "Test with openDvr first.";
 
-    mDvr->getQueueDesc([&](Result result, const MQDesc& dvrMQDesc) {
-        mDvrMQDescriptor = dvrMQDesc;
+    mDvrRecord->getQueueDesc([&](Result result, const MQDesc& dvrMQDesc) {
+        mDvrRecordMQDescriptor = dvrMQDesc;
         status = result;
     });
 
@@ -221,9 +278,9 @@ AssertionResult DvrTests::getDvrMQDescriptor() {
 AssertionResult DvrTests::attachFilterToDvr(sp<IFilter> filter) {
     Result status;
     EXPECT_TRUE(mDemux) << "Test with openDemux first.";
-    EXPECT_TRUE(mDvr) << "Test with openDvr first.";
+    EXPECT_TRUE(mDvrRecord) << "Test with openDvr first.";
 
-    status = mDvr->attachFilter(filter);
+    status = mDvrRecord->attachFilter(filter);
 
     return AssertionResult(status == Result::SUCCESS);
 }
@@ -231,35 +288,61 @@ AssertionResult DvrTests::attachFilterToDvr(sp<IFilter> filter) {
 AssertionResult DvrTests::detachFilterToDvr(sp<IFilter> filter) {
     Result status;
     EXPECT_TRUE(mDemux) << "Test with openDemux first.";
-    EXPECT_TRUE(mDvr) << "Test with openDvr first.";
+    EXPECT_TRUE(mDvrRecord) << "Test with openDvr first.";
 
-    status = mDvr->detachFilter(filter);
+    status = mDvrRecord->detachFilter(filter);
 
     return AssertionResult(status == Result::SUCCESS);
 }
 
-AssertionResult DvrTests::startDvr() {
+AssertionResult DvrTests::startDvrPlayback() {
     Result status;
     EXPECT_TRUE(mDemux) << "Test with openDemux first.";
-    EXPECT_TRUE(mDvr) << "Test with openDvr first.";
+    EXPECT_TRUE(mDvrPlayback) << "Test with openDvr first.";
 
-    status = mDvr->start();
+    status = mDvrPlayback->start();
 
     return AssertionResult(status == Result::SUCCESS);
 }
 
-AssertionResult DvrTests::stopDvr() {
+AssertionResult DvrTests::stopDvrPlayback() {
     Result status;
     EXPECT_TRUE(mDemux) << "Test with openDemux first.";
-    EXPECT_TRUE(mDvr) << "Test with openDvr first.";
+    EXPECT_TRUE(mDvrPlayback) << "Test with openDvr first.";
 
-    status = mDvr->stop();
+    status = mDvrPlayback->stop();
 
     return AssertionResult(status == Result::SUCCESS);
 }
 
-void DvrTests::closeDvr() {
+void DvrTests::closeDvrPlayback() {
     ASSERT_TRUE(mDemux);
-    ASSERT_TRUE(mDvr);
-    ASSERT_TRUE(mDvr->close() == Result::SUCCESS);
+    ASSERT_TRUE(mDvrPlayback);
+    ASSERT_TRUE(mDvrPlayback->close() == Result::SUCCESS);
+}
+
+AssertionResult DvrTests::startDvrRecord() {
+    Result status;
+    EXPECT_TRUE(mDemux) << "Test with openDemux first.";
+    EXPECT_TRUE(mDvrRecord) << "Test with openDvr first.";
+
+    status = mDvrRecord->start();
+
+    return AssertionResult(status == Result::SUCCESS);
+}
+
+AssertionResult DvrTests::stopDvrRecord() {
+    Result status;
+    EXPECT_TRUE(mDemux) << "Test with openDemux first.";
+    EXPECT_TRUE(mDvrRecord) << "Test with openDvr first.";
+
+    status = mDvrRecord->stop();
+
+    return AssertionResult(status == Result::SUCCESS);
+}
+
+void DvrTests::closeDvrRecord() {
+    ASSERT_TRUE(mDemux);
+    ASSERT_TRUE(mDvrRecord);
+    ASSERT_TRUE(mDvrRecord->close() == Result::SUCCESS);
 }
