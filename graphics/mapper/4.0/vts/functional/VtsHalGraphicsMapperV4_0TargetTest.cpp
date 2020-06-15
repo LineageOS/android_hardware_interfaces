@@ -605,6 +605,9 @@ TEST_P(GraphicsMapperHidlTest, LockUnlockBasic) {
     ASSERT_NO_FATAL_FAILURE(fence.reset(mGralloc->unlock(bufferHandle)));
 }
 
+/**
+ *  Test multiple operations associated with different color formats
+ */
 TEST_P(GraphicsMapperHidlTest, Lock_YCRCB_420_SP) {
     auto info = mDummyDescriptorInfo;
     info.format = PixelFormat::YCRCB_420_SP;
@@ -747,6 +750,90 @@ TEST_P(GraphicsMapperHidlTest, Lock_YCBCR_420_888) {
             getAndroidYCbCr(bufferHandle, data, &yCbCr, &hSubsampling, &vSubsampling));
 
     verifyYCbCr888Data(yCbCr, info.width, info.height, hSubsampling, vSubsampling);
+
+    ASSERT_NO_FATAL_FAILURE(fence.reset(mGralloc->unlock(bufferHandle)));
+}
+
+TEST_P(GraphicsMapperHidlTest, Lock_RAW10) {
+    auto info = mDummyDescriptorInfo;
+    info.format = PixelFormat::RAW10;
+
+    const native_handle_t* bufferHandle;
+    uint32_t stride;
+    ASSERT_NO_FATAL_FAILURE(bufferHandle = mGralloc->allocate(
+                                    info, true, Tolerance::kToleranceUnSupported, &stride));
+    if (bufferHandle == nullptr) {
+        GTEST_SUCCEED() << "RAW10 format is unsupported";
+        return;
+    }
+
+    const IMapper::Rect region{0, 0, static_cast<int32_t>(info.width),
+                               static_cast<int32_t>(info.height)};
+    unique_fd fence;
+
+    ASSERT_NO_FATAL_FAILURE(mGralloc->lock(bufferHandle, info.usage, region, fence.get()));
+
+    hidl_vec<uint8_t> vec;
+    ASSERT_EQ(Error::NONE, mGralloc->get(bufferHandle, gralloc4::MetadataType_PlaneLayouts, &vec));
+    std::vector<PlaneLayout> planeLayouts;
+    ASSERT_EQ(NO_ERROR, gralloc4::decodePlaneLayouts(vec, &planeLayouts));
+
+    ASSERT_EQ(1, planeLayouts.size());
+    auto planeLayout = planeLayouts[0];
+
+    EXPECT_EQ(0, planeLayout.sampleIncrementInBits);
+    EXPECT_EQ(1, planeLayout.horizontalSubsampling);
+    EXPECT_EQ(1, planeLayout.verticalSubsampling);
+
+    ASSERT_EQ(1, planeLayout.components.size());
+    auto planeLayoutComponent = planeLayout.components[0];
+
+    EXPECT_EQ(PlaneLayoutComponentType::RAW,
+              static_cast<PlaneLayoutComponentType>(planeLayoutComponent.type.value));
+    EXPECT_EQ(0, planeLayoutComponent.offsetInBits % 8);
+    EXPECT_EQ(-1, planeLayoutComponent.sizeInBits);
+
+    ASSERT_NO_FATAL_FAILURE(fence.reset(mGralloc->unlock(bufferHandle)));
+}
+
+TEST_P(GraphicsMapperHidlTest, Lock_RAW12) {
+    auto info = mDummyDescriptorInfo;
+    info.format = PixelFormat::RAW12;
+
+    const native_handle_t* bufferHandle;
+    uint32_t stride;
+    ASSERT_NO_FATAL_FAILURE(bufferHandle = mGralloc->allocate(
+                                    info, true, Tolerance::kToleranceUnSupported, &stride));
+    if (bufferHandle == nullptr) {
+        GTEST_SUCCEED() << "RAW12 format is unsupported";
+        return;
+    }
+
+    const IMapper::Rect region{0, 0, static_cast<int32_t>(info.width),
+                               static_cast<int32_t>(info.height)};
+    unique_fd fence;
+
+    ASSERT_NO_FATAL_FAILURE(mGralloc->lock(bufferHandle, info.usage, region, fence.get()));
+
+    hidl_vec<uint8_t> vec;
+    ASSERT_EQ(Error::NONE, mGralloc->get(bufferHandle, gralloc4::MetadataType_PlaneLayouts, &vec));
+    std::vector<PlaneLayout> planeLayouts;
+    ASSERT_EQ(NO_ERROR, gralloc4::decodePlaneLayouts(vec, &planeLayouts));
+
+    ASSERT_EQ(1, planeLayouts.size());
+    auto planeLayout = planeLayouts[0];
+
+    EXPECT_EQ(0, planeLayout.sampleIncrementInBits);
+    EXPECT_EQ(1, planeLayout.horizontalSubsampling);
+    EXPECT_EQ(1, planeLayout.verticalSubsampling);
+
+    ASSERT_EQ(1, planeLayout.components.size());
+    auto planeLayoutComponent = planeLayout.components[0];
+
+    EXPECT_EQ(PlaneLayoutComponentType::RAW,
+              static_cast<PlaneLayoutComponentType>(planeLayoutComponent.type.value));
+    EXPECT_EQ(0, planeLayoutComponent.offsetInBits % 8);
+    EXPECT_EQ(-1, planeLayoutComponent.sizeInBits);
 
     ASSERT_NO_FATAL_FAILURE(fence.reset(mGralloc->unlock(bufferHandle)));
 }
@@ -1704,6 +1791,84 @@ TEST_P(GraphicsMapperHidlTest, SetMetadataNullBuffer) {
     ASSERT_EQ(Error::BAD_BUFFER, mGralloc->set(bufferHandle, gralloc4::MetadataType_Cta861_3, vec));
     ASSERT_EQ(Error::BAD_BUFFER,
               mGralloc->set(bufferHandle, gralloc4::MetadataType_Smpte2094_40, vec));
+}
+
+/**
+ * Test get::metadata with cloned native_handle
+ */
+TEST_P(GraphicsMapperHidlTest, GetMetadataClonedHandle) {
+    const native_handle_t* bufferHandle = nullptr;
+    ASSERT_NO_FATAL_FAILURE(bufferHandle = mGralloc->allocate(mDummyDescriptorInfo, true));
+
+    const auto dataspace = Dataspace::SRGB_LINEAR;
+    {
+        hidl_vec<uint8_t> metadata;
+        ASSERT_EQ(NO_ERROR, gralloc4::encodeDataspace(dataspace, &metadata));
+
+        Error err = mGralloc->set(bufferHandle, gralloc4::MetadataType_Dataspace, metadata);
+        if (err == Error::UNSUPPORTED) {
+            GTEST_SUCCEED() << "setting this metadata is unsupported";
+            return;
+        }
+        ASSERT_EQ(Error::NONE, err);
+    }
+
+    const native_handle_t* importedHandle;
+    {
+        auto clonedHandle = native_handle_clone(bufferHandle);
+        ASSERT_NO_FATAL_FAILURE(importedHandle = mGralloc->importBuffer(clonedHandle));
+        native_handle_close(clonedHandle);
+        native_handle_delete(clonedHandle);
+    }
+
+    Dataspace realSpace = Dataspace::UNKNOWN;
+    {
+        hidl_vec<uint8_t> metadata;
+        ASSERT_EQ(Error::NONE,
+                  mGralloc->get(importedHandle, gralloc4::MetadataType_Dataspace, &metadata));
+        ASSERT_NO_FATAL_FAILURE(gralloc4::decodeDataspace(metadata, &realSpace));
+    }
+
+    EXPECT_EQ(dataspace, realSpace);
+}
+
+/**
+ * Test set::metadata with cloned native_handle
+ */
+TEST_P(GraphicsMapperHidlTest, SetMetadataClonedHandle) {
+    const native_handle_t* bufferHandle = nullptr;
+    ASSERT_NO_FATAL_FAILURE(bufferHandle = mGralloc->allocate(mDummyDescriptorInfo, true));
+
+    const native_handle_t* importedHandle;
+    {
+        auto clonedHandle = native_handle_clone(bufferHandle);
+        ASSERT_NO_FATAL_FAILURE(importedHandle = mGralloc->importBuffer(clonedHandle));
+        native_handle_close(clonedHandle);
+        native_handle_delete(clonedHandle);
+    }
+
+    const auto dataspace = Dataspace::SRGB_LINEAR;
+    {
+        hidl_vec<uint8_t> metadata;
+        ASSERT_EQ(NO_ERROR, gralloc4::encodeDataspace(dataspace, &metadata));
+
+        Error err = mGralloc->set(importedHandle, gralloc4::MetadataType_Dataspace, metadata);
+        if (err == Error::UNSUPPORTED) {
+            GTEST_SUCCEED() << "setting this metadata is unsupported";
+            return;
+        }
+        ASSERT_EQ(Error::NONE, err);
+    }
+
+    Dataspace realSpace = Dataspace::UNKNOWN;
+    {
+        hidl_vec<uint8_t> metadata;
+        ASSERT_EQ(Error::NONE,
+                  mGralloc->get(bufferHandle, gralloc4::MetadataType_Dataspace, &metadata));
+        ASSERT_NO_FATAL_FAILURE(gralloc4::decodeDataspace(metadata, &realSpace));
+    }
+
+    EXPECT_EQ(dataspace, realSpace);
 }
 
 /**
