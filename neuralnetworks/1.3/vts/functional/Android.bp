@@ -43,6 +43,7 @@ cc_test {
         "MemoryDomainTests.cpp",
         "QualityOfServiceTests.cpp",
         "TestAssertions.cpp",
+        "TestMain.cpp",
         "ValidateBurst.cpp",
         "ValidateModel.cpp",
         "ValidateRequest.cpp",
