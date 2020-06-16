@@ -318,7 +318,8 @@ class CompilationCachingTestBase : public testing::Test {
 
     void saveModelToCache(const Model& model, const hidl_vec<hidl_handle>& modelCache,
                           const hidl_vec<hidl_handle>& dataCache,
-                          sp<IPreparedModel>* preparedModel = nullptr) {
+                          sp<IPreparedModel>* preparedModel = nullptr,
+                          bool allowGeneralFailure = false) {
         if (preparedModel != nullptr) *preparedModel = nullptr;
 
         // Launch prepare model.
@@ -332,7 +333,10 @@ class CompilationCachingTestBase : public testing::Test {
 
         // Retrieve prepared model.
         preparedModelCallback->wait();
-        ASSERT_EQ(preparedModelCallback->getStatus(), ErrorStatus::NONE);
+        const auto prepareCallbackStatus = preparedModelCallback->getStatus();
+        if (!allowGeneralFailure || prepareCallbackStatus != ErrorStatus::GENERAL_FAILURE) {
+            ASSERT_EQ(prepareCallbackStatus, ErrorStatus::NONE);
+        }
         if (preparedModel != nullptr) {
             *preparedModel = IPreparedModel::castFrom(preparedModelCallback->getPreparedModel())
                                      .withDefault(nullptr);
@@ -1013,7 +1017,8 @@ static void copyCacheFiles(const std::vector<std::vector<std::string>>& from,
 
 // Number of operations in the large test model.
 constexpr uint32_t kLargeModelSize = 100;
-constexpr uint32_t kNumIterationsTOCTOU = 100;
+constexpr uint32_t kNumSuccessfulIterationsTOCTOU = 100;
+constexpr uint32_t kMaxNumFailedIterationsTOCTOU = 100;
 
 TEST_P(CompilationCachingTest, SaveToCache_TOCTOU) {
     if (!mIsCachingSupported) return;
@@ -1041,18 +1046,30 @@ TEST_P(CompilationCachingTest, SaveToCache_TOCTOU) {
     // Use a different token for modelAdd.
     mToken[0]++;
 
-    // This test is probabilistic, so we run it multiple times.
-    for (uint32_t i = 0; i < kNumIterationsTOCTOU; i++) {
+    // This test is probabilistic, so we run it multiple times. We allow the compilation to fail
+    // because it is not related to the security aspect of the TOCTOU test. However, we need to have
+    // enough successful iterations to ensure the test coverage.
+    uint32_t numSuccessfulIterations = 0, numFailedIterations = 0;
+    while (numSuccessfulIterations < kNumSuccessfulIterationsTOCTOU) {
         // Save the modelAdd compilation to cache.
         {
             hidl_vec<hidl_handle> modelCache, dataCache;
             createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
             createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
 
+            sp<IPreparedModel> preparedModel = nullptr;
             // Spawn a thread to copy the cache content concurrently while saving to cache.
             std::thread thread(copyCacheFiles, std::cref(modelCacheMul), std::cref(mModelCache));
-            saveModelToCache(modelAdd, modelCache, dataCache);
+            saveModelToCache(modelAdd, modelCache, dataCache, &preparedModel,
+                             /*allowGeneralFailure=*/true);
             thread.join();
+
+            if (preparedModel == nullptr) {
+                numFailedIterations++;
+                ASSERT_LE(numFailedIterations, kMaxNumFailedIterationsTOCTOU);
+            } else {
+                numSuccessfulIterations++;
+            }
         }
 
         // Retrieve preparedModel from cache.
@@ -1103,14 +1120,26 @@ TEST_P(CompilationCachingTest, PrepareFromCache_TOCTOU) {
     // Use a different token for modelAdd.
     mToken[0]++;
 
-    // This test is probabilistic, so we run it multiple times.
-    for (uint32_t i = 0; i < kNumIterationsTOCTOU; i++) {
+    // This test is probabilistic, so we run it multiple times. We allow the compilation to fail
+    // because it is not related to the security aspect of the TOCTOU test. However, we need to have
+    // enough successful iterations to ensure the test coverage.
+    uint32_t numSuccessfulIterations = 0, numFailedIterations = 0;
+    while (numSuccessfulIterations < kNumSuccessfulIterationsTOCTOU) {
         // Save the modelAdd compilation to cache.
         {
             hidl_vec<hidl_handle> modelCache, dataCache;
             createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
             createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
-            saveModelToCache(modelAdd, modelCache, dataCache);
+            sp<IPreparedModel> preparedModel = nullptr;
+            saveModelToCache(modelAdd, modelCache, dataCache, &preparedModel,
+                             /*allowGeneralFailure=*/true);
+
+            if (preparedModel == nullptr) {
+                numFailedIterations++;
+                ASSERT_LE(numFailedIterations, kMaxNumFailedIterationsTOCTOU);
+            } else {
+                numSuccessfulIterations++;
+            }
         }
 
         // Retrieve preparedModel from cache.
