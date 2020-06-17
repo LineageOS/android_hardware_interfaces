@@ -62,11 +62,12 @@ cc_test {
     defaults: ["neuralnetworks_vts_functional_defaults"],
     srcs: [
         "BasicTests.cpp",
+        "GeneratedTestHarness.cpp",
         "TestAssertions.cpp",
+        "TestMain.cpp",
         "ValidateModel.cpp",
         "ValidateRequest.cpp",
         "VtsHalNeuralnetworks.cpp",
-        "GeneratedTestHarness.cpp",
     ],
     shared_libs: [
         "libfmq",
