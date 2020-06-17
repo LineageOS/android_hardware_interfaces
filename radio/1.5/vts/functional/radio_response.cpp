@@ -1017,8 +1017,10 @@ Return<void> RadioResponse_v1_5::setNetworkSelectionModeManualResponse_1_5(
     return Void();
 }
 
-Return<void> RadioResponse_v1_5::sendCdmaSmsExpectMoreResponse(const RadioResponseInfo& /*info*/,
+Return<void> RadioResponse_v1_5::sendCdmaSmsExpectMoreResponse(const RadioResponseInfo& info,
                                                                const SendSmsResult& /*sms*/) {
+    rspInfo = info;
+    parent_v1_5.notify(info.serial);
     return Void();
 }
 
