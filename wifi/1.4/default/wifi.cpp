@@ -107,9 +107,23 @@ WifiStatus Wifi::startInternal() {
     }
     WifiStatus wifi_status = initializeModeControllerAndLegacyHal();
     if (wifi_status.code == WifiStatusCode::SUCCESS) {
+        // Register the callback for subsystem restart
+        const auto& on_subsystem_restart_callback =
+            [this](const std::string& error) {
+                WifiStatus wifi_status =
+                    createWifiStatus(WifiStatusCode::ERROR_UNKNOWN, error);
+                for (const auto& callback : event_cb_handler_.getCallbacks()) {
+                    if (!callback->onFailure(wifi_status).isOk()) {
+                        LOG(ERROR) << "Failed to invoke onFailure callback";
+                    }
+                }
+            };
+
         // Create the chip instance once the HAL is started.
-        chip_ = new WifiChip(kChipId, legacy_hal_, mode_controller_,
-                             iface_util_, feature_flags_);
+        // Need to consider the case of multiple chips TODO(156998862)
+        chip_ =
+            new WifiChip(kChipId, legacy_hal_, mode_controller_, iface_util_,
+                         feature_flags_, on_subsystem_restart_callback);
         run_state_ = RunState::STARTED;
         for (const auto& callback : event_cb_handler_.getCallbacks()) {
             if (!callback->onStart().isOk()) {

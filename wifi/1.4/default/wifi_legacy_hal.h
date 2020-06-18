@@ -142,6 +142,9 @@ using on_ring_buffer_data_callback =
 using on_error_alert_callback =
     std::function<void(int32_t, const std::vector<uint8_t>&)>;
 
+// Callback for subsystem restart
+using on_subsystem_restart_callback = std::function<void(const std::string&)>;
+
 // Struct for the mac info from the legacy HAL. This is a cleaner version
 // of the |wifi_mac_info| & |wifi_iface_info|.
 typedef struct {
@@ -277,6 +280,8 @@ class WifiLegacyHal {
         const on_ring_buffer_data_callback& on_data_callback);
     wifi_error deregisterRingBufferCallbackHandler(
         const std::string& iface_name);
+    wifi_error registerSubsystemRestartCallbackHandler(
+        const on_subsystem_restart_callback& on_restart_callback);
     std::pair<wifi_error, std::vector<wifi_ring_buffer_status>>
     getRingBuffersStatus(const std::string& iface_name);
     wifi_error startRingBufferLogging(const std::string& iface_name,
