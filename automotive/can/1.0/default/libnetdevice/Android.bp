@@ -35,6 +35,8 @@ cc_library_static {
         "NetlinkSocket.cpp",
         "can.cpp",
         "common.cpp",
+        "ethtool.cpp",
+        "ifreqs.cpp",
         "libnetdevice.cpp",
         "printer.cpp",
         "vlan.cpp",
