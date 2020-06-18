@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include "types.h"
+
 #include <android-base/macros.h>
 #include <linux/rtnetlink.h>
 
@@ -23,12 +25,10 @@
 
 namespace android::netdevice {
 
-typedef unsigned short rtattrtype_t;  // as in rtnetlink.h
-typedef __u16 nlmsgtype_t;            // as in netlink.h
-
 /** Implementation details, do not use outside NetlinkRequest template. */
 namespace impl {
 
+// TODO(twasilczyk): use nlattr instead of rtattr
 struct rtattr* addattr_l(struct nlmsghdr* n, size_t maxLen, rtattrtype_t type, const void* data,
                          size_t dataLen);
 struct rtattr* addattr_nest(struct nlmsghdr* n, size_t maxLen, rtattrtype_t type);
@@ -36,6 +36,7 @@ void addattr_nest_end(struct nlmsghdr* n, struct rtattr* nest);
 
 }  // namespace impl
 
+// TODO(twasilczyk): rename to NetlinkMessage
 /**
  * Wrapper around NETLINK_ROUTE messages, to build them in C++ style.
  *
@@ -44,6 +45,14 @@ void addattr_nest_end(struct nlmsghdr* n, struct rtattr* nest);
  */
 template <class T, unsigned int BUFSIZE = 128>
 struct NetlinkRequest {
+    struct RequestData {
+        struct nlmsghdr nlmsg;
+        T data;
+        char buf[BUFSIZE];
+    };
+
+    static constexpr size_t totalLength = sizeof(RequestData);
+
     /**
      * Create empty message.
      *
@@ -131,12 +140,7 @@ struct NetlinkRequest {
 
   private:
     bool mIsGood = true;
-
-    struct {
-        struct nlmsghdr nlmsg;
-        T data;
-        char buf[BUFSIZE];
-    } mRequest = {};
+    RequestData mRequest = {};
 
     struct rtattr* nestStart(rtattrtype_t type) {
         if (!mIsGood) return nullptr;
