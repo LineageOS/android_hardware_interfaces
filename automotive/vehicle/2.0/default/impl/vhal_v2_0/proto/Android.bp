@@ -16,6 +16,7 @@
 cc_library_static {
     name: "android.hardware.automotive.vehicle@2.0-libproto-native",
     vendor: true,
+    host_supported: true,
     proto: {
         export_proto_headers: true,
         type: "lite",
