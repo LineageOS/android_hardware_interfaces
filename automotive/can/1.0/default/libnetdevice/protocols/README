@@ -1,0 +1,8 @@
+This folder contains message definitions for various protocols based on Netlink.
+
+The structure is as follows:
+protocols/*.(cpp|h)                - base definition classes and protocol definition lookup
+protocols/common/                  - common message types that apply to all protocols
+protocols/<proto>/<proto>.(cpp|h)  - protocol definition (usually just a list of message types)
+protocols/<proto>/*.(cpp|h)        - message definition that covers all message types with the same
+                                     header (T type in MessageDefinition template) and attributes
