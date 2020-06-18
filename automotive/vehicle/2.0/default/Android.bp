@@ -15,17 +15,24 @@
 cc_defaults {
     name: "vhal_v2_0_defaults",
     shared_libs: [
-        "libbinder_ndk",
         "libhidlbase",
         "liblog",
         "libutils",
         "android.hardware.automotive.vehicle@2.0",
-        "carwatchdog_aidl_interface-ndk_platform",
     ],
     cflags: [
         "-Wall",
         "-Wextra",
         "-Werror",
+    ],
+}
+
+cc_defaults {
+    name: "vhal_v2_0_target_defaults",
+    defaults: ["vhal_v2_0_defaults"],
+    shared_libs: [
+        "libbinder_ndk",
+        "carwatchdog_aidl_interface-ndk_platform",
     ],
 }
 
@@ -39,7 +46,7 @@ cc_library_headers {
 cc_library {
     name: "android.hardware.automotive.vehicle@2.0-manager-lib",
     vendor: true,
-    defaults: ["vhal_v2_0_defaults"],
+    defaults: ["vhal_v2_0_target_defaults"],
     srcs: [
         "common/src/Obd2SensorStore.cpp",
         "common/src/SubscriptionManager.cpp",
@@ -61,7 +68,7 @@ cc_library {
 cc_library_static {
     name: "android.hardware.automotive.vehicle@2.0-default-impl-lib",
     vendor: true,
-    defaults: ["vhal_v2_0_defaults"],
+    defaults: ["vhal_v2_0_target_defaults"],
     srcs: [
         "impl/vhal_v2_0/CommConn.cpp",
         "impl/vhal_v2_0/EmulatedVehicleConnector.cpp",
@@ -97,16 +104,59 @@ cc_library_static {
 cc_library_static {
     name: "android.hardware.automotive.vehicle@2.0-emulated-user-hal-lib",
     vendor: true,
-    defaults: ["vhal_v2_0_defaults"],
+    defaults: ["vhal_v2_0_target_defaults"],
     srcs: [
         "impl/vhal_v2_0/EmulatedUserHal.cpp",
+    ],
+}
+
+// Vehicle HAL Server reference impl lib
+cc_library_static {
+    name: "android.hardware.automotive.vehicle@2.0-server-common-lib",
+    vendor: true,
+    host_supported: true,
+    defaults: ["vhal_v2_0_defaults"],
+    local_include_dirs: ["common/include/vhal_v2_0"],
+    export_include_dirs: ["common/include"],
+    srcs: [
+        "common/src/Obd2SensorStore.cpp",
+        "common/src/VehicleObjectPool.cpp",
+        "common/src/VehicleUtils.cpp",
+    ],
+}
+
+// Vehicle HAL Server default implementation
+cc_library_static {
+    name: "android.hardware.automotive.vehicle@2.0-server-impl-lib",
+    vendor: true,
+    host_supported: true,
+    defaults: ["vhal_v2_0_defaults"],
+    local_include_dirs: ["common/include/vhal_v2_0"],
+    export_include_dirs: ["impl"],
+    srcs: [
+        "impl/vhal_v2_0/EmulatedUserHal.cpp",
+        "impl/vhal_v2_0/GeneratorHub.cpp",
+        "impl/vhal_v2_0/JsonFakeValueGenerator.cpp",
+        "impl/vhal_v2_0/LinearFakeValueGenerator.cpp",
+        "impl/vhal_v2_0/ProtoMessageConverter.cpp",
+        "impl/vhal_v2_0/VehicleHalServer.cpp",
+    ],
+    whole_static_libs: [
+        "android.hardware.automotive.vehicle@2.0-server-common-lib",
+    ],
+    static_libs: [
+        "android.hardware.automotive.vehicle@2.0-libproto-native",
+    ],
+    shared_libs: [
+        "libbase",
+        "libjsoncpp",
     ],
 }
 
 cc_test {
     name: "android.hardware.automotive.vehicle@2.0-manager-unit-tests",
     vendor: true,
-    defaults: ["vhal_v2_0_defaults"],
+    defaults: ["vhal_v2_0_target_defaults"],
     whole_static_libs: ["android.hardware.automotive.vehicle@2.0-manager-lib"],
     srcs: [
         "tests/RecurrentTimer_test.cpp",
@@ -126,7 +176,7 @@ cc_test {
 cc_test {
     name: "android.hardware.automotive.vehicle@2.0-default-impl-unit-tests",
     vendor: true,
-    defaults: ["vhal_v2_0_defaults"],
+    defaults: ["vhal_v2_0_target_defaults"],
     srcs: [
         "impl/vhal_v2_0/tests/ProtoMessageConverter_test.cpp",
     ],
@@ -140,7 +190,7 @@ cc_test {
 
 cc_binary {
     name: "android.hardware.automotive.vehicle@2.0-service",
-    defaults: ["vhal_v2_0_defaults"],
+    defaults: ["vhal_v2_0_target_defaults"],
     vintf_fragments: [
         "android.hardware.automotive.vehicle@2.0-service.xml",
     ],
