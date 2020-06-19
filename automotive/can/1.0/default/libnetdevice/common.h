@@ -16,9 +16,29 @@
 
 #pragma once
 
+#include "nlbuf.h"
+
+#include <linux/can.h>
+#include <net/if.h>
+
 #include <string>
 
 namespace android::netdevice {
+
+namespace socketparams {
+
+struct Params {
+    int domain;
+    int type;
+    int protocol;
+};
+
+constexpr Params general = {AF_INET, SOCK_DGRAM, 0};
+constexpr Params can = {PF_CAN, SOCK_RAW, CAN_RAW};
+
+extern Params current;
+
+}  // namespace socketparams
 
 /**
  * Returns the index of a given network interface.
@@ -30,5 +50,25 @@ namespace android::netdevice {
  * \return Interface index, or 0 if the interface doesn't exist
  */
 unsigned int nametoindex(const std::string& ifname);
+
+/**
+ * Sanitize a string of unknown contents.
+ *
+ * Trims the string to the first '\0' character and replaces all non-printable characters with '?'.
+ */
+std::string sanitize(std::string str);
+
+/**
+ * Calculates a (optionally running) CRC16 checksum.
+ *
+ * CRC16 isn't a strong checksum, but is good for quick comparison purposes.
+ * One benefit (and also a drawback too) is that all-zero payloads with any length will
+ * always have a checksum of 0x0000.
+ *
+ * \param data Buffer to calculate checksum for
+ * \param crc Previous CRC16 value to continue calculating running checksum
+ * \return CRC16 checksum
+ */
+uint16_t crc16(const nlbuf<uint8_t> data, uint16_t crc = 0);
 
 }  // namespace android::netdevice
