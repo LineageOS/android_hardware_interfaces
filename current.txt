@@ -766,6 +766,7 @@ a64467bae843569f0d465c5be7f0c7a5b987985b55a3ef4794dd5afc68538650 android.hardwar
 98592d193a717066facf91428426e5abe211e3bd718bc372e29fb944ddbe6e7c android.hardware.wifi.supplicant@1.3::types
 
 # ABI preserving changes to HALs during Android S
+cd84ab19c590e0e73dd2307b591a3093ee18147ef95e6d5418644463a6620076 android.hardware.neuralnetworks@1.2::IDevice
 
 # HALs released in Android S
 # NOTE: waiting to freeze HALs until later in the release
