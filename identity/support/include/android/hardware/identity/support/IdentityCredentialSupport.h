@@ -33,6 +33,7 @@ using ::std::optional;
 using ::std::string;
 using ::std::tuple;
 using ::std::vector;
+using ::std::pair;
 
 // ---------------------------------------------------------------------------
 // Miscellaneous utilities.
@@ -119,6 +120,12 @@ optional<vector<uint8_t>> encryptAes128Gcm(const vector<uint8_t>& key, const vec
 optional<std::pair<vector<uint8_t>, vector<vector<uint8_t>>>> createEcKeyPairAndAttestation(
         const vector<uint8_t>& challenge, const vector<uint8_t>& applicationId);
 
+// Like createEcKeyPairAndAttestation() but allows you to choose the public key.
+//
+optional<vector<vector<uint8_t>>> createAttestationForEcPublicKey(
+        const vector<uint8_t>& publicKey, const vector<uint8_t>& challenge,
+        const vector<uint8_t>& applicationId);
+
 // Creates an 256-bit EC key using the NID_X9_62_prime256v1 curve, returns the
 // PKCS#8 encoded key-pair.
 //
@@ -155,6 +162,12 @@ optional<vector<uint8_t>> ecKeyPairGetPkcs12(const vector<uint8_t>& keyPair, con
 //
 optional<vector<uint8_t>> signEcDsa(const vector<uint8_t>& key, const vector<uint8_t>& data);
 
+// Like signEcDsa() but instead of taking the data to be signed, takes a digest
+// of it instead.
+//
+optional<vector<uint8_t>> signEcDsaDigest(const vector<uint8_t>& key,
+                                          const vector<uint8_t>& dataDigest);
+
 // Calculates the HMAC with SHA-256 for |data| using |key|. The calculated HMAC
 // is returned and will be 32 bytes.
 //
@@ -174,6 +187,27 @@ bool checkEcDsaSignature(const vector<uint8_t>& digest, const vector<uint8_t>& s
 // ecKeyPairGetPublicKey().
 //
 optional<vector<uint8_t>> certificateChainGetTopMostKey(const vector<uint8_t>& certificateChain);
+
+// Extracts the public-key from the top-most certificate in |certificateChain|
+// (which should be a concatenated chain of DER-encoded X.509 certificates).
+//
+// Return offset and size of the public-key
+//
+optional<pair<size_t, size_t>> certificateFindPublicKey(const vector<uint8_t>& x509Certificate);
+
+// Extracts the TbsCertificate from the top-most certificate in |certificateChain|
+// (which should be a concatenated chain of DER-encoded X.509 certificates).
+//
+// Return offset and size of the TbsCertificate
+//
+optional<pair<size_t, size_t>> certificateTbsCertificate(const vector<uint8_t>& x509Certificate);
+
+// Extracts the Signature from the top-most certificate in |certificateChain|
+// (which should be a concatenated chain of DER-encoded X.509 certificates).
+//
+// Return offset and size of the Signature
+//
+optional<pair<size_t, size_t>> certificateFindSignature(const vector<uint8_t>& x509Certificate);
 
 // Generates a X.509 certificate for |publicKey| (which must be in the format
 // returned by ecKeyPairGetPublicKey()).
@@ -231,6 +265,11 @@ optional<vector<vector<uint8_t>>> certificateChainSplit(const vector<uint8_t>& c
 //
 bool certificateChainValidate(const vector<uint8_t>& certificateChain);
 
+// Returns true if |certificate| is signed by |publicKey|.
+//
+bool certificateSignedByPublicKey(const vector<uint8_t>& certificate,
+                                  const vector<uint8_t>& publicKey);
+
 // Signs |data| and |detachedContent| with |key| (which must be in the format
 // returned by ecKeyPairGetPrivateKey()).
 //
@@ -243,6 +282,21 @@ optional<vector<uint8_t>> coseSignEcDsa(const vector<uint8_t>& key, const vector
                                         const vector<uint8_t>& detachedContent,
                                         const vector<uint8_t>& certificateChain);
 
+// Creates a COSE_Signature1 where |signatureToBeSigned| is the ECDSA signature
+// of the ToBeSigned CBOR from RFC 8051 "4.4. Signing and Verification Process".
+//
+// The |signatureToBeSigned| is expected to be 64 bytes and contain the R value,
+// then the S value.
+//
+// The |data| parameter will be included in the COSE_Sign1 CBOR.
+//
+// If |certificateChain| is non-empty it's included in the 'x5chain'
+// protected header element (as as described in'draft-ietf-cose-x509-04').
+//
+optional<vector<uint8_t>> coseSignEcDsaWithSignature(const vector<uint8_t>& signatureToBeSigned,
+                                                     const vector<uint8_t>& data,
+                                                     const vector<uint8_t>& certificateChain);
+
 // Checks that |signatureCoseSign1| (in COSE_Sign1 format) is a valid signature
 // made with |public_key| (which must be in the format returned by
 // ecKeyPairGetPublicKey()) where |detachedContent| is the detached content.
@@ -251,8 +305,22 @@ bool coseCheckEcDsaSignature(const vector<uint8_t>& signatureCoseSign1,
                              const vector<uint8_t>& detachedContent,
                              const vector<uint8_t>& publicKey);
 
+// Converts a DER-encoded signature to the format used in 'signature' bstr in COSE_Sign1.
+bool ecdsaSignatureDerToCose(const vector<uint8_t>& ecdsaDerSignature,
+                             vector<uint8_t>& ecdsaCoseSignature);
+
+// Converts from the format in in 'signature' bstr in COSE_Sign1 to DER encoding.
+bool ecdsaSignatureCoseToDer(const vector<uint8_t>& ecdsaCoseSignature,
+                             vector<uint8_t>& ecdsaDerSignature);
+
 // Extracts the payload from a COSE_Sign1.
 optional<vector<uint8_t>> coseSignGetPayload(const vector<uint8_t>& signatureCoseSign1);
+
+// Extracts the signature (of the ToBeSigned CBOR) from a COSE_Sign1.
+optional<vector<uint8_t>> coseSignGetSignature(const vector<uint8_t>& signatureCoseSign1);
+
+// Extracts the signature algorithm from a COSE_Sign1.
+optional<int> coseSignGetAlg(const vector<uint8_t>& signatureCoseSign1);
 
 // Extracts the X.509 certificate chain, if present. Returns the data as a
 // concatenated chain of DER-encoded X.509 certificates
@@ -268,6 +336,16 @@ optional<vector<uint8_t>> coseSignGetX5Chain(const vector<uint8_t>& signatureCos
 //
 optional<vector<uint8_t>> coseMac0(const vector<uint8_t>& key, const vector<uint8_t>& data,
                                    const vector<uint8_t>& detachedContent);
+
+// Creates a COSE_Mac0 where |digestToBeMaced| is the HMAC-SHA256
+// of the ToBeMaced CBOR from RFC 8051 "6.3. How to Compute and Verify a MAC".
+//
+// The |digestToBeMaced| is expected to be 32 bytes.
+//
+// The |data| parameter will be included in the COSE_Mac0 CBOR.
+//
+optional<vector<uint8_t>> coseMacWithDigest(const vector<uint8_t>& digestToBeMaced,
+                                            const vector<uint8_t>& data);
 
 // ---------------------------------------------------------------------------
 // Utility functions specific to IdentityCredential.
