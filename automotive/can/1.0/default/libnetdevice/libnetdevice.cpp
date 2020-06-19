@@ -19,6 +19,7 @@
 #include "NetlinkRequest.h"
 #include "NetlinkSocket.h"
 #include "common.h"
+#include "ifreqs.h"
 
 #include <android-base/logging.h>
 
@@ -26,21 +27,6 @@
 #include <net/if.h>
 
 namespace android::netdevice {
-
-namespace socketparams {
-
-struct Params {
-    int domain;
-    int type;
-    int protocol;
-};
-
-static constexpr Params general = {AF_INET, SOCK_DGRAM, 0};
-static constexpr Params can = {PF_CAN, SOCK_RAW, CAN_RAW};
-
-static Params current = general;
-
-}  // namespace socketparams
 
 void useCanSockets(bool yes) {
     socketparams::current = yes ? socketparams::can : socketparams::general;
@@ -50,31 +36,9 @@ bool exists(std::string ifname) {
     return nametoindex(ifname) != 0;
 }
 
-static bool sendIfreq(unsigned long request, struct ifreq& ifr) {
-    base::unique_fd sock(socket(socketparams::current.domain, socketparams::current.type,
-                                socketparams::current.protocol));
-    if (!sock.ok()) {
-        LOG(ERROR) << "Can't create socket";
-        return false;
-    }
-
-    if (ioctl(sock.get(), request, &ifr) < 0) {
-        PLOG(ERROR) << "ioctl(" << std::hex << request << std::dec << ") failed";
-        return false;
-    }
-
-    return true;
-}
-
-static struct ifreq ifreqFromName(const std::string& ifname) {
-    struct ifreq ifr = {};
-    strlcpy(ifr.ifr_name, ifname.c_str(), IF_NAMESIZE);
-    return ifr;
-}
-
 std::optional<bool> isUp(std::string ifname) {
-    struct ifreq ifr = ifreqFromName(ifname);
-    if (!sendIfreq(SIOCGIFFLAGS, ifr)) return std::nullopt;
+    auto ifr = ifreqs::fromName(ifname);
+    if (!ifreqs::send(SIOCGIFFLAGS, ifr)) return std::nullopt;
     return ifr.ifr_flags & IFF_UP;
 }
 
@@ -83,17 +47,17 @@ bool existsAndIsUp(const std::string& ifname) {
 }
 
 bool up(std::string ifname) {
-    struct ifreq ifr = ifreqFromName(ifname);
-    if (!sendIfreq(SIOCGIFFLAGS, ifr)) return false;
+    auto ifr = ifreqs::fromName(ifname);
+    if (!ifreqs::send(SIOCGIFFLAGS, ifr)) return false;
     ifr.ifr_flags |= IFF_UP;
-    return sendIfreq(SIOCSIFFLAGS, ifr);
+    return ifreqs::send(SIOCSIFFLAGS, ifr);
 }
 
 bool down(std::string ifname) {
-    struct ifreq ifr = ifreqFromName(ifname);
-    if (!sendIfreq(SIOCGIFFLAGS, ifr)) return false;
+    auto ifr = ifreqs::fromName(ifname);
+    if (!ifreqs::send(SIOCGIFFLAGS, ifr)) return false;
     ifr.ifr_flags &= ~IFF_UP;
-    return sendIfreq(SIOCSIFFLAGS, ifr);
+    return ifreqs::send(SIOCSIFFLAGS, ifr);
 }
 
 bool add(std::string dev, std::string type) {
