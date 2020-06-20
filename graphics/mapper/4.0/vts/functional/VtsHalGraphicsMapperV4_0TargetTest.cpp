@@ -587,8 +587,8 @@ TEST_P(GraphicsMapperHidlTest, LockUnlockBasic) {
                                static_cast<int32_t>(info.height)};
     unique_fd fence;
     uint8_t* data;
-    ASSERT_NO_FATAL_FAILURE(data = static_cast<uint8_t*>(
-                                    mGralloc->lock(bufferHandle, info.usage, region, fence.get())));
+    ASSERT_NO_FATAL_FAILURE(data = static_cast<uint8_t*>(mGralloc->lock(bufferHandle, info.usage,
+                                                                        region, fence.release())));
 
     // RGBA_8888
     fillRGBA8888(data, info.height, stride * 4, info.width * 4);
@@ -596,8 +596,8 @@ TEST_P(GraphicsMapperHidlTest, LockUnlockBasic) {
     ASSERT_NO_FATAL_FAILURE(fence.reset(mGralloc->unlock(bufferHandle)));
 
     // lock again for reading
-    ASSERT_NO_FATAL_FAILURE(data = static_cast<uint8_t*>(
-                                    mGralloc->lock(bufferHandle, info.usage, region, fence.get())));
+    ASSERT_NO_FATAL_FAILURE(data = static_cast<uint8_t*>(mGralloc->lock(bufferHandle, info.usage,
+                                                                        region, fence.release())));
 
     ASSERT_NO_FATAL_FAILURE(
             verifyRGBA8888(bufferHandle, data, info.height, stride * 4, info.width * 4));
@@ -627,8 +627,8 @@ TEST_P(GraphicsMapperHidlTest, Lock_YCRCB_420_SP) {
     unique_fd fence;
     uint8_t* data;
 
-    ASSERT_NO_FATAL_FAILURE(data = static_cast<uint8_t*>(
-                                    mGralloc->lock(bufferHandle, info.usage, region, fence.get())));
+    ASSERT_NO_FATAL_FAILURE(data = static_cast<uint8_t*>(mGralloc->lock(bufferHandle, info.usage,
+                                                                        region, fence.release())));
 
     android_ycbcr yCbCr;
     int64_t hSubsampling = 0;
@@ -650,8 +650,8 @@ TEST_P(GraphicsMapperHidlTest, Lock_YCRCB_420_SP) {
     ASSERT_NO_FATAL_FAILURE(fence.reset(mGralloc->unlock(bufferHandle)));
 
     // lock again for reading
-    ASSERT_NO_FATAL_FAILURE(data = static_cast<uint8_t*>(
-                                    mGralloc->lock(bufferHandle, info.usage, region, fence.get())));
+    ASSERT_NO_FATAL_FAILURE(data = static_cast<uint8_t*>(mGralloc->lock(bufferHandle, info.usage,
+                                                                        region, fence.release())));
 
     ASSERT_NO_FATAL_FAILURE(
             getAndroidYCbCr(bufferHandle, data, &yCbCr, &hSubsampling, &vSubsampling));
@@ -676,8 +676,8 @@ TEST_P(GraphicsMapperHidlTest, Lock_YV12) {
     unique_fd fence;
     uint8_t* data;
 
-    ASSERT_NO_FATAL_FAILURE(data = static_cast<uint8_t*>(
-                                    mGralloc->lock(bufferHandle, info.usage, region, fence.get())));
+    ASSERT_NO_FATAL_FAILURE(data = static_cast<uint8_t*>(mGralloc->lock(bufferHandle, info.usage,
+                                                                        region, fence.release())));
 
     android_ycbcr yCbCr;
     int64_t hSubsampling = 0;
@@ -699,8 +699,8 @@ TEST_P(GraphicsMapperHidlTest, Lock_YV12) {
     ASSERT_NO_FATAL_FAILURE(fence.reset(mGralloc->unlock(bufferHandle)));
 
     // lock again for reading
-    ASSERT_NO_FATAL_FAILURE(data = static_cast<uint8_t*>(
-                                    mGralloc->lock(bufferHandle, info.usage, region, fence.get())));
+    ASSERT_NO_FATAL_FAILURE(data = static_cast<uint8_t*>(mGralloc->lock(bufferHandle, info.usage,
+                                                                        region, fence.release())));
 
     ASSERT_NO_FATAL_FAILURE(
             getAndroidYCbCr(bufferHandle, data, &yCbCr, &hSubsampling, &vSubsampling));
@@ -725,8 +725,8 @@ TEST_P(GraphicsMapperHidlTest, Lock_YCBCR_420_888) {
     unique_fd fence;
     uint8_t* data;
 
-    ASSERT_NO_FATAL_FAILURE(data = static_cast<uint8_t*>(
-                                    mGralloc->lock(bufferHandle, info.usage, region, fence.get())));
+    ASSERT_NO_FATAL_FAILURE(data = static_cast<uint8_t*>(mGralloc->lock(bufferHandle, info.usage,
+                                                                        region, fence.release())));
 
     android_ycbcr yCbCr;
     int64_t hSubsampling = 0;
@@ -743,8 +743,8 @@ TEST_P(GraphicsMapperHidlTest, Lock_YCBCR_420_888) {
     ASSERT_NO_FATAL_FAILURE(fence.reset(mGralloc->unlock(bufferHandle)));
 
     // lock again for reading
-    ASSERT_NO_FATAL_FAILURE(data = static_cast<uint8_t*>(
-                                    mGralloc->lock(bufferHandle, info.usage, region, fence.get())));
+    ASSERT_NO_FATAL_FAILURE(data = static_cast<uint8_t*>(mGralloc->lock(bufferHandle, info.usage,
+                                                                        region, fence.release())));
 
     ASSERT_NO_FATAL_FAILURE(
             getAndroidYCbCr(bufferHandle, data, &yCbCr, &hSubsampling, &vSubsampling));
@@ -771,7 +771,7 @@ TEST_P(GraphicsMapperHidlTest, Lock_RAW10) {
                                static_cast<int32_t>(info.height)};
     unique_fd fence;
 
-    ASSERT_NO_FATAL_FAILURE(mGralloc->lock(bufferHandle, info.usage, region, fence.get()));
+    ASSERT_NO_FATAL_FAILURE(mGralloc->lock(bufferHandle, info.usage, region, fence.release()));
 
     hidl_vec<uint8_t> vec;
     ASSERT_EQ(Error::NONE, mGralloc->get(bufferHandle, gralloc4::MetadataType_PlaneLayouts, &vec));
@@ -813,7 +813,7 @@ TEST_P(GraphicsMapperHidlTest, Lock_RAW12) {
                                static_cast<int32_t>(info.height)};
     unique_fd fence;
 
-    ASSERT_NO_FATAL_FAILURE(mGralloc->lock(bufferHandle, info.usage, region, fence.get()));
+    ASSERT_NO_FATAL_FAILURE(mGralloc->lock(bufferHandle, info.usage, region, fence.release()));
 
     hidl_vec<uint8_t> vec;
     ASSERT_EQ(Error::NONE, mGralloc->get(bufferHandle, gralloc4::MetadataType_PlaneLayouts, &vec));
