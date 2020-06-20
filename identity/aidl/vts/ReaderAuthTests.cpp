@@ -289,16 +289,19 @@ void ReaderAuthTests::retrieveData(const vector<uint8_t>& readerPrivateKey,
                                                             .add("Accessible by None", false)))
                         .encode();
     }
-    vector<uint8_t> dataToSign = cppbor::Array()
-                                         .add("ReaderAuthentication")
-                                         .add(sessionTranscript.clone())
-                                         .add(cppbor::Semantic(24, itemsRequestBytes))
-                                         .encode();
+    vector<uint8_t> encodedReaderAuthentication =
+            cppbor::Array()
+                    .add("ReaderAuthentication")
+                    .add(sessionTranscript.clone())
+                    .add(cppbor::Semantic(24, itemsRequestBytes))
+                    .encode();
+    vector<uint8_t> encodedReaderAuthenticationBytes =
+            cppbor::Semantic(24, encodedReaderAuthentication).encode();
 
     optional<vector<uint8_t>> readerSignature =
-            support::coseSignEcDsa(readerPrivateKey,  // private key for reader
-                                   {},                // content
-                                   dataToSign,        // detached content
+            support::coseSignEcDsa(readerPrivateKey,                  // private key for reader
+                                   {},                                // content
+                                   encodedReaderAuthenticationBytes,  // detached content
                                    support::certificateChainJoin(readerCertChain));
     ASSERT_TRUE(readerSignature);
 
@@ -528,17 +531,20 @@ TEST_P(ReaderAuthTests, ephemeralKeyNotInSessionTranscript) {
                                                         .add("Accessible by C", false)
                                                         .add("Accessible by None", false)))
                     .encode();
-    vector<uint8_t> dataToSign = cppbor::Array()
-                                         .add("ReaderAuthentication")
-                                         .add(sessionTranscript.clone())
-                                         .add(cppbor::Semantic(24, itemsRequestBytes))
-                                         .encode();
+    vector<uint8_t> encodedReaderAuthentication =
+            cppbor::Array()
+                    .add("ReaderAuthentication")
+                    .add(sessionTranscript.clone())
+                    .add(cppbor::Semantic(24, itemsRequestBytes))
+                    .encode();
+    vector<uint8_t> encodedReaderAuthenticationBytes =
+            cppbor::Semantic(24, encodedReaderAuthentication).encode();
 
     vector<vector<uint8_t>> readerCertChain = {cert_reader_SelfSigned_};
     optional<vector<uint8_t>> readerSignature =
-            support::coseSignEcDsa(readerPrivateKey_,  // private key for reader
-                                   {},                 // content
-                                   dataToSign,         // detached content
+            support::coseSignEcDsa(readerPrivateKey_,                 // private key for reader
+                                   {},                                // content
+                                   encodedReaderAuthenticationBytes,  // detached content
                                    support::certificateChainJoin(readerCertChain));
     ASSERT_TRUE(readerSignature);
 
