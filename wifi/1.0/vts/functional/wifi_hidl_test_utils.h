@@ -58,25 +58,32 @@ class WifiHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
    public:
     // Whether NaN feature is supported on the device.
     bool isNanOn = false;
+    // Whether SoftAp feature is supported on the device.
+    bool isSoftApOn = false;
 
     void usage(char* me, char* arg) {
         fprintf(stderr,
                 "unrecognized option: %s\n\n"
                 "usage: %s <gtest options> <test options>\n\n"
                 "test options are:\n\n"
-                "-N, --nan_on: Whether NAN feature is supported\n",
+                "-N, --nan_on: Whether NAN feature is supported\n"
+                "-S, --softap_on: Whether SOFTAP feature is supported\n",
                 arg, me);
     }
 
     int initFromOptions(int argc, char** argv) {
         static struct option options[] = {{"nan_on", no_argument, 0, 'N'},
+                                          {"softap_on", no_argument, 0, 'S'},
                                           {0, 0, 0, 0}};
 
         int c;
-        while ((c = getopt_long(argc, argv, "N", options, NULL)) >= 0) {
+        while ((c = getopt_long(argc, argv, "NS", options, NULL)) >= 0) {
             switch (c) {
                 case 'N':
                     isNanOn = true;
+                    break;
+                case 'S':
+                    isSoftApOn = true;
                     break;
                 default:
                     usage(argv[0], argv[optind]);
