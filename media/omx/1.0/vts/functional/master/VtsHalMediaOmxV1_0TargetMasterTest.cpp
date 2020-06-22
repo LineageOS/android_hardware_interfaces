@@ -33,6 +33,7 @@
 #include <gtest/gtest.h>
 #include <hidl/GtestPrinter.h>
 #include <hidl/ServiceManagement.h>
+#include <media/stagefright/omx/OMXUtils.h>
 
 using ::android::sp;
 using ::android::base::Join;
@@ -85,71 +86,6 @@ void displayComponentInfo(hidl_vec<IOmx::ComponentInfo>& nodeList) {
         }
         printf("\n");
     }
-}
-
-/*
- * Returns the role based on is_encoder and mime.
- *
- * The mapping from a pair (is_encoder, mime) to a role string is
- * defined in frameworks/av/media/libmedia/MediaDefs.cpp and
- * frameworks/av/media/libstagefright/omx/OMXUtils.cpp. This function
- * does essentially the same work as GetComponentRole() in
- * OMXUtils.cpp.
- *
- * Args:
- *   is_encoder: A boolean indicating whether the role is for an
- *       encoder or a decoder.
- *   mime: A string of the desired mime type.
- *
- * Returns:
- *   A const string for the requested role name, empty if mime is not
- *   recognized.
- */
-const std::string getComponentRole(bool isEncoder, const std::string mime) {
-    // Mapping from mime types to roles.
-    // These values come from MediaDefs.cpp and OMXUtils.cpp
-    const std::map<const std::string, const std::string> audioMimeToRole = {
-            {"3gpp", "amrnb"},         {"ac3", "ac3"},     {"amr-wb", "amrwb"},
-            {"eac3", "eac3"},          {"flac", "flac"},   {"g711-alaw", "g711alaw"},
-            {"g711-mlaw", "g711mlaw"}, {"gsm", "gsm"},     {"mp4a-latm", "aac"},
-            {"mpeg", "mp3"},           {"mpeg-L1", "mp1"}, {"mpeg-L2", "mp2"},
-            {"opus", "opus"},          {"raw", "raw"},     {"vorbis", "vorbis"},
-    };
-    const std::map<const std::string, const std::string> videoMimeToRole = {
-            {"3gpp", "h263"},         {"avc", "avc"},           {"dolby-vision", "dolby-vision"},
-            {"hevc", "hevc"},         {"mp4v-es", "mpeg4"},     {"mpeg2", "mpeg2"},
-            {"x-vnd.on2.vp8", "vp8"}, {"x-vnd.on2.vp9", "vp9"},
-    };
-    const std::map<const std::string, const std::string> imageMimeToRole = {
-            {"vnd.android.heic", "heic"},
-    };
-
-    // Suffix begins after the mime prefix.
-    const size_t prefixEnd = mime.find("/");
-    if (prefixEnd == std::string::npos || prefixEnd == mime.size()) return "";
-    const std::string mime_suffix = mime.substr(prefixEnd + 1, mime.size() - 1);
-    const std::string middle = isEncoder ? "encoder." : "decoder.";
-    std::string prefix;
-    std::string suffix;
-    if (mime.rfind("audio/", 0) != std::string::npos) {
-        const auto it = audioMimeToRole.find(mime_suffix);
-        if (it == audioMimeToRole.end()) return "";
-        prefix = "audio_";
-        suffix = it->second;
-    } else if (mime.rfind("video/", 0) != std::string::npos) {
-        const auto it = videoMimeToRole.find(mime_suffix);
-        if (it == videoMimeToRole.end()) return "";
-        prefix = "video_";
-        suffix = it->second;
-    } else if (mime.rfind("image/", 0) != std::string::npos) {
-        const auto it = imageMimeToRole.find(mime_suffix);
-        if (it == imageMimeToRole.end()) return "";
-        prefix = "image_";
-        suffix = it->second;
-    } else {
-        return "";
-    }
-    return prefix + middle + suffix;
 }
 
 void validateAttributes(
@@ -328,7 +264,8 @@ TEST_P(MasterHidlTest, ListRoles) {
 
         // Make sure role name follows expected format based on type and
         // isEncoder
-        const std::string role_name = getComponentRole(role.isEncoder, role.type);
+        const std::string role_name(
+                ::android::GetComponentRole(role.isEncoder, role.type.c_str()));
         EXPECT_EQ(role_name, role.role) << "Role \"" << role.role << "\" does not match "
                                         << (role.isEncoder ? "an encoder " : "a decoder ")
                                         << "for mime type \"" << role.type << ".";
