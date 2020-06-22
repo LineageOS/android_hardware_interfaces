@@ -1894,7 +1894,7 @@ TEST_P(CameraHidlTest, getCameraDeviceInterface) {
 }
 
 // Verify that the device resource cost can be retrieved and the values are
-// sane.
+// correct.
 TEST_P(CameraHidlTest, getResourceCost) {
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
 
@@ -2544,7 +2544,7 @@ TEST_P(CameraHidlTest, sendCommandSmoothZoom) {
     }
 }
 
-// Basic sanity tests related to camera parameters.
+// Basic correctness tests related to camera parameters.
 TEST_P(CameraHidlTest, getSetParameters) {
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
 
