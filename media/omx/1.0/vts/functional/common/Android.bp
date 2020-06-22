@@ -74,5 +74,6 @@ cc_defaults {
     shared_libs: [
         "libnativehelper",
         "libstagefright_foundation",
+        "libstagefright_omx_utils",
     ],
 }
