@@ -38,7 +38,7 @@ bool convertFromHidl(const CameraMetadata &src, const camera_metadata_t** dst) {
     }
 
     const uint8_t* data = src.data();
-    // sanity check the size of CameraMetadata match underlying camera_metadata_t
+    // check that the size of CameraMetadata match underlying camera_metadata_t
     if (get_camera_metadata_size((camera_metadata_t*)data) != src.size()) {
         ALOGE("%s: input CameraMetadata is corrupt!", __FUNCTION__);
         return false;
