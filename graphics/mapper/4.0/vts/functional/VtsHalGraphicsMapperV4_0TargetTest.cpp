@@ -661,6 +661,56 @@ TEST_P(GraphicsMapperHidlTest, Lock_YCRCB_420_SP) {
     ASSERT_NO_FATAL_FAILURE(fence.reset(mGralloc->unlock(bufferHandle)));
 }
 
+TEST_P(GraphicsMapperHidlTest, YV12SubsampleMetadata) {
+    auto info = mDummyDescriptorInfo;
+    info.format = PixelFormat::YV12;
+
+    const native_handle_t* bufferHandle;
+    uint32_t stride;
+    ASSERT_NO_FATAL_FAILURE(
+            bufferHandle = mGralloc->allocate(info, true, Tolerance::kToleranceStrict, &stride));
+
+    const IMapper::Rect region{0, 0, static_cast<int32_t>(info.width),
+                               static_cast<int32_t>(info.height)};
+    unique_fd fence;
+    ASSERT_NO_FATAL_FAILURE(mGralloc->lock(bufferHandle, info.usage, region, fence.release()));
+
+    hidl_vec<uint8_t> vec;
+    ASSERT_EQ(Error::NONE, mGralloc->get(bufferHandle, gralloc4::MetadataType_PlaneLayouts, &vec));
+    std::vector<PlaneLayout> planeLayouts;
+    ASSERT_EQ(NO_ERROR, gralloc4::decodePlaneLayouts(vec, &planeLayouts));
+
+    ASSERT_EQ(3, planeLayouts.size());
+
+    auto yPlane = planeLayouts[0];
+    auto crPlane = planeLayouts[1];
+    auto cbPlane = planeLayouts[2];
+
+    constexpr uint32_t kCbCrSubSampleFactor = 2;
+    EXPECT_EQ(kCbCrSubSampleFactor, crPlane.horizontalSubsampling);
+    EXPECT_EQ(kCbCrSubSampleFactor, crPlane.verticalSubsampling);
+
+    EXPECT_EQ(kCbCrSubSampleFactor, cbPlane.horizontalSubsampling);
+    EXPECT_EQ(kCbCrSubSampleFactor, cbPlane.verticalSubsampling);
+
+    const long chromaSampleWidth = info.width / kCbCrSubSampleFactor;
+    const long chromaSampleHeight = info.height / kCbCrSubSampleFactor;
+
+    EXPECT_EQ(info.width, yPlane.widthInSamples);
+    EXPECT_EQ(info.height, yPlane.heightInSamples);
+
+    EXPECT_EQ(chromaSampleWidth, crPlane.widthInSamples);
+    EXPECT_EQ(chromaSampleHeight, crPlane.heightInSamples);
+
+    EXPECT_EQ(chromaSampleWidth, cbPlane.widthInSamples);
+    EXPECT_EQ(chromaSampleHeight, cbPlane.heightInSamples);
+
+    EXPECT_LE(crPlane.widthInSamples, crPlane.strideInBytes);
+    EXPECT_LE(cbPlane.widthInSamples, cbPlane.strideInBytes);
+
+    ASSERT_NO_FATAL_FAILURE(fence.reset(mGralloc->unlock(bufferHandle)));
+}
+
 TEST_P(GraphicsMapperHidlTest, Lock_YV12) {
     auto info = mDummyDescriptorInfo;
     info.format = PixelFormat::YV12;
