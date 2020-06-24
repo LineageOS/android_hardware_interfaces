@@ -23,6 +23,10 @@ cc_test {
     shared_libs: [
         "libfmq",
         "libsync",
+        "android.hardware.graphics.mapper@2.0",
+        "android.hardware.graphics.mapper@2.1",
+        "android.hardware.graphics.mapper@3.0",
+        "android.hardware.graphics.mapper@4.0",
     ],
     static_libs: [
         "android.hardware.graphics.allocator@2.0",
@@ -36,13 +40,9 @@ cc_test {
         "android.hardware.graphics.composer@2.3-vts",
         "android.hardware.graphics.composer@2.4",
         "android.hardware.graphics.composer@2.4-vts",
-        "android.hardware.graphics.mapper@2.0",
         "android.hardware.graphics.mapper@2.0-vts",
-        "android.hardware.graphics.mapper@2.1",
         "android.hardware.graphics.mapper@2.1-vts",
-        "android.hardware.graphics.mapper@3.0",
         "android.hardware.graphics.mapper@3.0-vts",
-        "android.hardware.graphics.mapper@4.0",
         "android.hardware.graphics.mapper@4.0-vts",
     ],
     header_libs: [
