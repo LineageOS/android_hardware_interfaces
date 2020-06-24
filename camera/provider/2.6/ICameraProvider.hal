@@ -61,6 +61,12 @@ interface ICameraProvider extends @2.5::ICameraProvider {
      * outputs, stream combinations mentioned above, where YUV is substituted by
      * Y8 must be also supported.
      *
+     * Devices whose capabilities do not include
+     * ANDROID_REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE, must support
+     * at least a single Y16 stream, Dataspace::DEPTH with sVGA resolution,
+     * during concurrent operation.
+     * Where sVGA -  min (max output resolution for the given format, 640 X 480)
+     *
      * The camera framework must call this method whenever it gets a
      * cameraDeviceStatusChange callback adding a new camera device or removing
      * a camera device known to it. This is so that the camera framework can get new combinations
