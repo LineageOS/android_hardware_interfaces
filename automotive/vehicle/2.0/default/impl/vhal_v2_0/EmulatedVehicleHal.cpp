@@ -153,7 +153,7 @@ VehicleHal::VehiclePropValuePtr EmulatedVehicleHal::get(
         default:
             if (mEmulatedUserHal != nullptr && mEmulatedUserHal->isSupported(propId)) {
                 ALOGI("get(): getting value for prop %d from User HAL", propId);
-                const auto& ret = mEmulatedUserHal->onGetProperty(propId);
+                const auto& ret = mEmulatedUserHal->onGetProperty(requestedPropValue);
                 if (!ret.ok()) {
                     ALOGE("get(): User HAL returned error: %s", ret.error().message().c_str());
                     *outStatus = StatusCode(ret.error().code());
