@@ -319,7 +319,7 @@ TEST_P(IdentityAidl, createAndRetrieveCredential) {
     cppbor::Array sessionTranscript = cppbor::Array()
                                               .add(cppbor::Semantic(24, deviceEngagementBytes))
                                               .add(cppbor::Semantic(24, eReaderPubBytes));
-    vector<uint8_t> sessionTranscriptBytes = sessionTranscript.encode();
+    vector<uint8_t> sessionTranscriptEncoded = sessionTranscript.encode();
 
     vector<uint8_t> itemsRequestBytes =
             cppbor::Map("nameSpaces",
@@ -347,14 +347,17 @@ TEST_P(IdentityAidl, createAndRetrieveCredential) {
             "  },\n"
             "}",
             cborPretty);
-    vector<uint8_t> dataToSign = cppbor::Array()
-                                         .add("ReaderAuthentication")
-                                         .add(sessionTranscript.clone())
-                                         .add(cppbor::Semantic(24, itemsRequestBytes))
-                                         .encode();
+    vector<uint8_t> encodedReaderAuthentication =
+            cppbor::Array()
+                    .add("ReaderAuthentication")
+                    .add(sessionTranscript.clone())
+                    .add(cppbor::Semantic(24, itemsRequestBytes))
+                    .encode();
+    vector<uint8_t> encodedReaderAuthenticationBytes =
+            cppbor::Semantic(24, encodedReaderAuthentication).encode();
     optional<vector<uint8_t>> readerSignature =
-            support::coseSignEcDsa(readerKey, {},  // content
-                                   dataToSign,     // detached content
+            support::coseSignEcDsa(readerKey, {},                     // content
+                                   encodedReaderAuthenticationBytes,  // detached content
                                    readerCertificate.value());
     ASSERT_TRUE(readerSignature);
 
@@ -388,7 +391,7 @@ TEST_P(IdentityAidl, createAndRetrieveCredential) {
     credential->setVerificationToken(verificationToken);
     ASSERT_TRUE(credential
                         ->startRetrieval(secureProfiles.value(), authToken, itemsRequestBytes,
-                                         signingKeyBlob, sessionTranscriptBytes,
+                                         signingKeyBlob, sessionTranscriptEncoded,
                                          readerSignature.value(), testEntriesEntryCounts)
                         .isOk());
 
@@ -432,7 +435,7 @@ TEST_P(IdentityAidl, createAndRetrieveCredential) {
             "  },\n"
             "}",
             cborPretty);
-    // The data that is MACed is ["DeviceAuthentication", sessionTranscriptBytes, docType,
+    // The data that is MACed is ["DeviceAuthentication", sessionTranscript, docType,
     // deviceNameSpacesBytes] so build up that structure
     cppbor::Array deviceAuthentication;
     deviceAuthentication.add("DeviceAuthentication");
@@ -441,7 +444,8 @@ TEST_P(IdentityAidl, createAndRetrieveCredential) {
     string docType = "org.iso.18013-5.2019.mdl";
     deviceAuthentication.add(docType);
     deviceAuthentication.add(cppbor::Semantic(24, deviceNameSpacesBytes));
-    vector<uint8_t> encodedDeviceAuthentication = deviceAuthentication.encode();
+    vector<uint8_t> deviceAuthenticationBytes =
+            cppbor::Semantic(24, deviceAuthentication.encode()).encode();
 
     // Derive the key used for MACing.
     optional<vector<uint8_t>> readerEphemeralPrivateKey =
@@ -449,13 +453,20 @@ TEST_P(IdentityAidl, createAndRetrieveCredential) {
     optional<vector<uint8_t>> sharedSecret =
             support::ecdh(signingPubKey.value(), readerEphemeralPrivateKey.value());
     ASSERT_TRUE(sharedSecret);
+    // Mix-in SessionTranscriptBytes
+    vector<uint8_t> sessionTranscriptBytes =
+            cppbor::Semantic(24, sessionTranscript.encode()).encode();
+    vector<uint8_t> sharedSecretWithSessionTranscriptBytes = sharedSecret.value();
+    std::copy(sessionTranscriptBytes.begin(), sessionTranscriptBytes.end(),
+              std::back_inserter(sharedSecretWithSessionTranscriptBytes));
     vector<uint8_t> salt = {0x00};
     vector<uint8_t> info = {};
-    optional<vector<uint8_t>> derivedKey = support::hkdf(sharedSecret.value(), salt, info, 32);
+    optional<vector<uint8_t>> derivedKey =
+            support::hkdf(sharedSecretWithSessionTranscriptBytes, salt, info, 32);
     ASSERT_TRUE(derivedKey);
     optional<vector<uint8_t>> calculatedMac =
-            support::coseMac0(derivedKey.value(), {},        // payload
-                              encodedDeviceAuthentication);  // detached content
+            support::coseMac0(derivedKey.value(), {},      // payload
+                              deviceAuthenticationBytes);  // detached content
     ASSERT_TRUE(calculatedMac);
     EXPECT_EQ(mac, calculatedMac);
 }
