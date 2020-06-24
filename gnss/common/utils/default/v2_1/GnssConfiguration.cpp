@@ -16,14 +16,10 @@
 
 #define LOG_TAG "GnssConfiguration"
 
-#include "GnssConfiguration.h"
+#include "v2_1/GnssConfiguration.h"
 #include <log/log.h>
 
-namespace android {
-namespace hardware {
-namespace gnss {
-namespace V2_1 {
-namespace implementation {
+namespace android::hardware::gnss::V2_1::implementation {
 
 // Methods from ::android::hardware::gnss::V1_0::IGnssConfiguration follow.
 Return<bool> GnssConfiguration::setSuplEs(bool enable) {
@@ -99,8 +95,4 @@ Return<bool> GnssConfiguration::isBlacklistedV2_1(const GnssSvInfoV2_1& gnssSvIn
     return (mBlacklistedSourceSet.find(source) != mBlacklistedSourceSet.end());
 }
 
-}  // namespace implementation
-}  // namespace V2_1
-}  // namespace gnss
-}  // namespace hardware
-}  // namespace android
+}  // namespace android::hardware::gnss::V2_1::implementation

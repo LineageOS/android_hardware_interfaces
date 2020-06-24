@@ -19,15 +19,11 @@
 #include <log/log.h>
 
 #include "Constants.h"
-#include "GnssDebug.h"
+#include "v2_1/GnssDebug.h"
 
 using namespace ::android::hardware::gnss::common;
 
-namespace android {
-namespace hardware {
-namespace gnss {
-namespace V1_1 {
-namespace implementation {
+namespace android::hardware::gnss::V1_1::implementation {
 
 // Methods from ::android::hardware::gnss::V1_0::IGnssDebug follow.
 Return<void> GnssDebug::getDebugData(V1_0::IGnssDebug::getDebugData_cb _hidl_cb) {
@@ -55,8 +51,4 @@ Return<void> GnssDebug::getDebugData(V1_0::IGnssDebug::getDebugData_cb _hidl_cb)
     return Void();
 }
 
-}  // namespace implementation
-}  // namespace V1_1
-}  // namespace gnss
-}  // namespace hardware
-}  // namespace android
+}  // namespace android::hardware::gnss::V1_1::implementation
