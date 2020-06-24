@@ -18,6 +18,15 @@
 
 #define ASSERT_OK(ret) ASSERT_TRUE(ret.isOk())
 
+namespace {
+const RadioAccessSpecifier GERAN_SPECIFIER_P900 = {.radioAccessNetwork = RadioAccessNetworks::GERAN,
+                                                   .geranBands = {GeranBands::BAND_P900},
+                                                   .channels = {1, 2}};
+const RadioAccessSpecifier GERAN_SPECIFIER_850 = {.radioAccessNetwork = RadioAccessNetworks::GERAN,
+                                                  .geranBands = {GeranBands::BAND_850},
+                                                  .channels = {128, 129}};
+}  // namespace
+
 /*
  * Test IRadio.emergencyDial() for the response returned.
  */
@@ -199,14 +208,10 @@ TEST_P(RadioHidlTest_v1_4, setPreferredNetworkTypeBitmap) {
 TEST_P(RadioHidlTest_v1_4, startNetworkScan) {
     serial = GetRandomSerialNumber();
 
-    RadioAccessSpecifier specifier = {.radioAccessNetwork = RadioAccessNetworks::GERAN,
-                                      .geranBands = {GeranBands::BAND_450, GeranBands::BAND_480},
-                                      .channels = {1, 2}};
-
     ::android::hardware::radio::V1_2::NetworkScanRequest request = {
             .type = ScanType::ONE_SHOT,
             .interval = 60,
-            .specifiers = {specifier},
+            .specifiers = {::GERAN_SPECIFIER_P900, ::GERAN_SPECIFIER_850},
             .maxSearchTime = 60,
             .incrementalResults = false,
             .incrementalResultsPeriodicity = 1};
@@ -233,6 +238,11 @@ TEST_P(RadioHidlTest_v1_4, startNetworkScan) {
           CheckAnyOfErrors(radioRsp_v1_4->rspInfo.error,
                            {RadioError::NONE, RadioError::OPERATION_NOT_ALLOWED,
                             RadioError::REQUEST_NOT_SUPPORTED}));
+    }
+
+    if (radioRsp_v1_4->rspInfo.error == RadioError::NONE) {
+        ALOGI("Stop Network Scan");
+        stopNetworkScan();
     }
 }
 
@@ -270,14 +280,10 @@ TEST_P(RadioHidlTest_v1_4, startNetworkScan_InvalidArgument) {
 TEST_P(RadioHidlTest_v1_4, startNetworkScan_InvalidInterval1) {
     serial = GetRandomSerialNumber();
 
-    RadioAccessSpecifier specifier = {.radioAccessNetwork = RadioAccessNetworks::GERAN,
-                                      .geranBands = {GeranBands::BAND_450, GeranBands::BAND_480},
-                                      .channels = {1, 2}};
-
     ::android::hardware::radio::V1_2::NetworkScanRequest request = {
             .type = ScanType::ONE_SHOT,
             .interval = 4,
-            .specifiers = {specifier},
+            .specifiers = {::GERAN_SPECIFIER_P900, ::GERAN_SPECIFIER_850},
             .maxSearchTime = 60,
             .incrementalResults = false,
             .incrementalResultsPeriodicity = 1};
@@ -307,14 +313,10 @@ TEST_P(RadioHidlTest_v1_4, startNetworkScan_InvalidInterval1) {
 TEST_P(RadioHidlTest_v1_4, startNetworkScan_InvalidInterval2) {
     serial = GetRandomSerialNumber();
 
-    RadioAccessSpecifier specifier = {.radioAccessNetwork = RadioAccessNetworks::GERAN,
-                                      .geranBands = {GeranBands::BAND_450, GeranBands::BAND_480},
-                                      .channels = {1, 2}};
-
     ::android::hardware::radio::V1_2::NetworkScanRequest request = {
             .type = ScanType::ONE_SHOT,
             .interval = 301,
-            .specifiers = {specifier},
+            .specifiers = {::GERAN_SPECIFIER_P900, ::GERAN_SPECIFIER_850},
             .maxSearchTime = 60,
             .incrementalResults = false,
             .incrementalResultsPeriodicity = 1};
@@ -343,14 +345,10 @@ TEST_P(RadioHidlTest_v1_4, startNetworkScan_InvalidInterval2) {
 TEST_P(RadioHidlTest_v1_4, startNetworkScan_InvalidMaxSearchTime1) {
     serial = GetRandomSerialNumber();
 
-    RadioAccessSpecifier specifier = {.radioAccessNetwork = RadioAccessNetworks::GERAN,
-                                      .geranBands = {GeranBands::BAND_450, GeranBands::BAND_480},
-                                      .channels = {1, 2}};
-
     ::android::hardware::radio::V1_2::NetworkScanRequest request = {
             .type = ScanType::ONE_SHOT,
             .interval = 60,
-            .specifiers = {specifier},
+            .specifiers = {::GERAN_SPECIFIER_P900, ::GERAN_SPECIFIER_850},
             .maxSearchTime = 59,
             .incrementalResults = false,
             .incrementalResultsPeriodicity = 1};
@@ -379,14 +377,10 @@ TEST_P(RadioHidlTest_v1_4, startNetworkScan_InvalidMaxSearchTime1) {
 TEST_P(RadioHidlTest_v1_4, startNetworkScan_InvalidMaxSearchTime2) {
     serial = GetRandomSerialNumber();
 
-    RadioAccessSpecifier specifier = {.radioAccessNetwork = RadioAccessNetworks::GERAN,
-                                      .geranBands = {GeranBands::BAND_450, GeranBands::BAND_480},
-                                      .channels = {1, 2}};
-
     ::android::hardware::radio::V1_2::NetworkScanRequest request = {
             .type = ScanType::ONE_SHOT,
             .interval = 60,
-            .specifiers = {specifier},
+            .specifiers = {::GERAN_SPECIFIER_P900, ::GERAN_SPECIFIER_850},
             .maxSearchTime = 3601,
             .incrementalResults = false,
             .incrementalResultsPeriodicity = 1};
@@ -415,14 +409,10 @@ TEST_P(RadioHidlTest_v1_4, startNetworkScan_InvalidMaxSearchTime2) {
 TEST_P(RadioHidlTest_v1_4, startNetworkScan_InvalidPeriodicity1) {
     serial = GetRandomSerialNumber();
 
-    RadioAccessSpecifier specifier = {.radioAccessNetwork = RadioAccessNetworks::GERAN,
-                                      .geranBands = {GeranBands::BAND_450, GeranBands::BAND_480},
-                                      .channels = {1, 2}};
-
     ::android::hardware::radio::V1_2::NetworkScanRequest request = {
             .type = ScanType::ONE_SHOT,
             .interval = 60,
-            .specifiers = {specifier},
+            .specifiers = {::GERAN_SPECIFIER_P900, ::GERAN_SPECIFIER_850},
             .maxSearchTime = 600,
             .incrementalResults = true,
             .incrementalResultsPeriodicity = 0};
@@ -451,14 +441,10 @@ TEST_P(RadioHidlTest_v1_4, startNetworkScan_InvalidPeriodicity1) {
 TEST_P(RadioHidlTest_v1_4, startNetworkScan_InvalidPeriodicity2) {
     serial = GetRandomSerialNumber();
 
-    RadioAccessSpecifier specifier = {.radioAccessNetwork = RadioAccessNetworks::GERAN,
-                                      .geranBands = {GeranBands::BAND_450, GeranBands::BAND_480},
-                                      .channels = {1, 2}};
-
     ::android::hardware::radio::V1_2::NetworkScanRequest request = {
             .type = ScanType::ONE_SHOT,
             .interval = 60,
-            .specifiers = {specifier},
+            .specifiers = {::GERAN_SPECIFIER_P900, ::GERAN_SPECIFIER_850},
             .maxSearchTime = 600,
             .incrementalResults = true,
             .incrementalResultsPeriodicity = 11};
@@ -487,14 +473,10 @@ TEST_P(RadioHidlTest_v1_4, startNetworkScan_InvalidPeriodicity2) {
 TEST_P(RadioHidlTest_v1_4, startNetworkScan_GoodRequest1) {
     serial = GetRandomSerialNumber();
 
-    RadioAccessSpecifier specifier = {.radioAccessNetwork = RadioAccessNetworks::GERAN,
-                                      .geranBands = {GeranBands::BAND_450, GeranBands::BAND_480},
-                                      .channels = {1, 2}};
-
     ::android::hardware::radio::V1_2::NetworkScanRequest request = {
             .type = ScanType::ONE_SHOT,
             .interval = 60,
-            .specifiers = {specifier},
+            .specifiers = {::GERAN_SPECIFIER_P900, ::GERAN_SPECIFIER_850},
             // Some vendor may not support max search time of 360s.
             // This issue is tracked in b/112205669.
             .maxSearchTime = 300,
@@ -518,6 +500,11 @@ TEST_P(RadioHidlTest_v1_4, startNetworkScan_GoodRequest1) {
                            {RadioError::NONE, RadioError::INVALID_ARGUMENTS,
                             RadioError::REQUEST_NOT_SUPPORTED}));
     }
+
+    if (radioRsp_v1_4->rspInfo.error == RadioError::NONE) {
+        ALOGI("Stop Network Scan");
+        stopNetworkScan();
+    }
 }
 
 /*
@@ -526,14 +513,10 @@ TEST_P(RadioHidlTest_v1_4, startNetworkScan_GoodRequest1) {
 TEST_P(RadioHidlTest_v1_4, startNetworkScan_GoodRequest2) {
     serial = GetRandomSerialNumber();
 
-    RadioAccessSpecifier specifier = {.radioAccessNetwork = RadioAccessNetworks::GERAN,
-                                      .geranBands = {GeranBands::BAND_450, GeranBands::BAND_480},
-                                      .channels = {1, 2}};
-
     ::android::hardware::radio::V1_2::NetworkScanRequest request = {
             .type = ScanType::ONE_SHOT,
             .interval = 60,
-            .specifiers = {specifier},
+            .specifiers = {::GERAN_SPECIFIER_P900, ::GERAN_SPECIFIER_850},
             // Some vendor may not support max search time of 360s.
             // This issue is tracked in b/112205669.
             .maxSearchTime = 300,
@@ -558,6 +541,11 @@ TEST_P(RadioHidlTest_v1_4, startNetworkScan_GoodRequest2) {
           CheckAnyOfErrors(radioRsp_v1_4->rspInfo.error,
                            {RadioError::NONE, RadioError::INVALID_ARGUMENTS,
                             RadioError::REQUEST_NOT_SUPPORTED}));
+    }
+
+    if (radioRsp_v1_4->rspInfo.error == RadioError::NONE) {
+        ALOGI("Stop Network Scan");
+        stopNetworkScan();
     }
 }
 
