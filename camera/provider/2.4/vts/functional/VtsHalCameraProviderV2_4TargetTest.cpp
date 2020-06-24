@@ -843,7 +843,7 @@ public:
 
     void verifyRequestTemplate(const camera_metadata_t* metadata, RequestTemplate requestTemplate);
 
-    bool isDepthOnly(camera_metadata_t* staticMeta);
+    static bool isDepthOnly(const camera_metadata_t* staticMeta);
 
     static Status getAvailableOutputStreams(const camera_metadata_t *staticMeta,
             std::vector<AvailableStream> &outputStreams,
@@ -5537,9 +5537,22 @@ static Size getMinSize(Size a, Size b) {
 // TODO: Add more combinations
 Status CameraHidlTest::getMandatoryConcurrentStreams(const camera_metadata_t* staticMeta,
                                                      std::vector<AvailableStream>* outputStreams) {
-    if (nullptr == staticMeta) {
+    if (nullptr == staticMeta || nullptr == outputStreams) {
         return Status::ILLEGAL_ARGUMENT;
     }
+
+    if (isDepthOnly(staticMeta)) {
+        Size y16MaxSize(640, 480);
+        Size maxAvailableY16Size;
+        getMaxOutputSizeForFormat(staticMeta, PixelFormat::Y16, &maxAvailableY16Size);
+        Size y16ChosenSize = getMinSize(y16MaxSize, maxAvailableY16Size);
+        AvailableStream y16Stream = {.width = y16ChosenSize.width,
+                                     .height = y16ChosenSize.height,
+                                     .format = static_cast<int32_t>(PixelFormat::Y16)};
+        outputStreams->push_back(y16Stream);
+        return Status::OK;
+    }
+
     Size yuvMaxSize(1280, 720);
     Size jpegMaxSize(1920, 1440);
     Size maxAvailableYuvSize;
@@ -6296,7 +6309,7 @@ void CameraHidlTest::configureOfflineStillStream(const std::string &name,
     ASSERT_TRUE(ret.isOk());
 }
 
-bool CameraHidlTest::isDepthOnly(camera_metadata_t* staticMeta) {
+bool CameraHidlTest::isDepthOnly(const camera_metadata_t* staticMeta) {
     camera_metadata_ro_entry scalarEntry;
     camera_metadata_ro_entry depthEntry;
 
