@@ -99,7 +99,7 @@ import android.hardware.identity.CipherSuite;
  * Various fields need to be encoded as precisely-specified byte arrays.  Where existing standards
  * define appropriate encodings, those are used.  For example, X.509 certificates.  Where new
  * encodings are needed, CBOR is used.  CBOR maps are described in CDDL notation
- * (https://tools.ietf.org/html/draft-ietf-cbor-cddl-06).
+ * (https://tools.ietf.org/html/rfc8610).
  *
  * All binder calls in the HAL may return a ServiceSpecificException with statuses from the
  * STATUS_* integers defined in this interface. Each method states which status can be returned
