@@ -60,7 +60,10 @@ class RebootEscrowAidlTest : public testing::TestWithParam<std::string> {
     };
 };
 
-TEST_P(RebootEscrowAidlTest, StoreAndRetrieve_Success) {
+// This test assumes that it can retrieve keys immediately, but some
+// implementations use the TEE's EARLY_BOOT_ONLY keys. This means that the
+// earlyBootEnded() calls will need to be disabled to test this correctly.
+TEST_P(RebootEscrowAidlTest, DISABLED_StoreAndRetrieve_Success) {
     SKIP_UNSUPPORTED;
 
     ASSERT_TRUE(rebootescrow->storeKey(KEY_1).isOk());
@@ -70,7 +73,10 @@ TEST_P(RebootEscrowAidlTest, StoreAndRetrieve_Success) {
     EXPECT_EQ(actualKey, KEY_1);
 }
 
-TEST_P(RebootEscrowAidlTest, StoreAndRetrieve_SecondRetrieveSucceeds) {
+// This test assumes that it can retrieve keys immediately, but some
+// implementations use the TEE's EARLY_BOOT_ONLY keys. This means that the
+// earlyBootEnded() calls will need to be disabled to test this correctly.
+TEST_P(RebootEscrowAidlTest, DISABLED_StoreAndRetrieve_SecondRetrieveSucceeds) {
     SKIP_UNSUPPORTED;
 
     ASSERT_TRUE(rebootescrow->storeKey(KEY_1).isOk());
@@ -83,7 +89,10 @@ TEST_P(RebootEscrowAidlTest, StoreAndRetrieve_SecondRetrieveSucceeds) {
     EXPECT_EQ(actualKey, KEY_1);
 }
 
-TEST_P(RebootEscrowAidlTest, StoreTwiceOverwrites_Success) {
+// This test assumes that it can retrieve keys immediately, but some
+// implementations use the TEE's EARLY_BOOT_ONLY keys. This means that the
+// earlyBootEnded() calls will need to be disabled to test this correctly.
+TEST_P(RebootEscrowAidlTest, DISABLED_StoreTwiceOverwrites_Success) {
     SKIP_UNSUPPORTED;
 
     ASSERT_TRUE(rebootescrow->storeKey(KEY_1).isOk());
@@ -94,7 +103,10 @@ TEST_P(RebootEscrowAidlTest, StoreTwiceOverwrites_Success) {
     EXPECT_EQ(actualKey, KEY_2);
 }
 
-TEST_P(RebootEscrowAidlTest, StoreEmpty_AfterGetEmptyKey_Success) {
+// This test assumes that it can retrieve keys immediately, but some
+// implementations use the TEE's EARLY_BOOT_ONLY keys. This means that the
+// earlyBootEnded() calls will need to be disabled to test this correctly.
+TEST_P(RebootEscrowAidlTest, DISABLED_StoreEmpty_AfterGetEmptyKey_Success) {
     SKIP_UNSUPPORTED;
 
     rebootescrow->storeKey(KEY_1);
@@ -103,6 +115,12 @@ TEST_P(RebootEscrowAidlTest, StoreEmpty_AfterGetEmptyKey_Success) {
     std::vector<uint8_t> actualKey;
     ASSERT_TRUE(rebootescrow->retrieveKey(&actualKey).isOk());
     EXPECT_EQ(actualKey, EMPTY_KEY);
+}
+
+TEST_P(RebootEscrowAidlTest, Store_Success) {
+    SKIP_UNSUPPORTED;
+
+    rebootescrow->storeKey(KEY_1);
 }
 
 INSTANTIATE_TEST_SUITE_P(
