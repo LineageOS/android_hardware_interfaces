@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,17 @@
  * limitations under the License.
  */
 
-#pragma once
-
-#include <android/hardware/gnss/2.1/IGnss.h>
-#include "v2_1/gnss_hal_test_template.h"
-
-using android::hardware::gnss::V2_1::IGnss;
-
-// The main test class for GNSS HAL.
-class GnssHalTest : public GnssHalTestTemplate<IGnss> {};
+cc_test {
+    name: "VtsHalBiometricsFingerprintV2_3TargetTest",
+    defaults: ["VtsHalTargetTestDefaults"],
+    srcs: ["VtsHalBiometricsFingerprintV2_3TargetTest.cpp"],
+    static_libs: [
+        "android.hardware.biometrics.fingerprint@2.1",
+        "android.hardware.biometrics.fingerprint@2.2",
+        "android.hardware.biometrics.fingerprint@2.3",
+    ],
+    test_suites: [
+        "general-tests",
+        "vts",
+    ],
+}

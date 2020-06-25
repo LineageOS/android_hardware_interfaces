@@ -14,12 +14,8 @@
  * limitations under the License.
  */
 
-#pragma once
+package android.hardware.tests.lazy@1.1;
 
-#include <android/hardware/gnss/2.1/IGnss.h>
-#include "v2_1/gnss_hal_test_template.h"
+import android.hardware.tests.lazy@1.0;
 
-using android::hardware::gnss::V2_1::IGnss;
-
-// The main test class for GNSS HAL.
-class GnssHalTest : public GnssHalTestTemplate<IGnss> {};
+interface ILazy extends @1.0::ILazy {};

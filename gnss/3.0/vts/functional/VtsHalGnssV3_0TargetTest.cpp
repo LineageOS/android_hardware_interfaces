@@ -13,13 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#define LOG_TAG "VtsHalGnssV3_0TargetTest"
 
-#pragma once
+#include <gtest/gtest.h>
+#include <hidl/GtestPrinter.h>
+#include <hidl/ServiceManagement.h>
 
-#include <android/hardware/gnss/2.1/IGnss.h>
-#include "v2_1/gnss_hal_test_template.h"
+#include "gnss_hal_test.h"
 
-using android::hardware::gnss::V2_1::IGnss;
+using android::hardware::gnss::V3_0::IGnss;
 
-// The main test class for GNSS HAL.
-class GnssHalTest : public GnssHalTestTemplate<IGnss> {};
+INSTANTIATE_TEST_SUITE_P(
+        PerInstance, GnssHalTest,
+        testing::ValuesIn(android::hardware::getAllHalInstanceNames(IGnss::descriptor)),
+        android::hardware::PrintInstanceNameToString);

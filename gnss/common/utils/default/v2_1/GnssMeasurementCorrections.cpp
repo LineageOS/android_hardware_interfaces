@@ -16,15 +16,14 @@
 
 #define LOG_TAG "GnssMeasurementCorrections"
 
-#include "GnssMeasurementCorrections.h"
+#include "v2_1/GnssMeasurementCorrections.h"
 #include <log/log.h>
 
-namespace android {
-namespace hardware {
-namespace gnss {
-namespace measurement_corrections {
-namespace V1_1 {
-namespace implementation {
+namespace android::hardware::gnss::measurement_corrections::V1_1::implementation {
+
+GnssMeasurementCorrections::GnssMeasurementCorrections() {}
+
+GnssMeasurementCorrections::~GnssMeasurementCorrections() {}
 
 // Methods from V1_0::IMeasurementCorrections follow.
 Return<bool> GnssMeasurementCorrections::setCorrections(
@@ -101,9 +100,4 @@ Return<bool> GnssMeasurementCorrections::setCorrections_1_1(
     return true;
 }
 
-}  // namespace implementation
-}  // namespace V1_1
-}  // namespace measurement_corrections
-}  // namespace gnss
-}  // namespace hardware
-}  // namespace android
+}  // namespace android::hardware::gnss::measurement_corrections::V1_1::implementation

@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_GNSS_V2_1_GNSSCONFIGURATION_H
-#define ANDROID_HARDWARE_GNSS_V2_1_GNSSCONFIGURATION_H
+#pragma once
 
 #include <android/hardware/gnss/2.1/IGnssCallback.h>
 #include <android/hardware/gnss/2.1/IGnssConfiguration.h>
@@ -24,11 +23,7 @@
 #include <mutex>
 #include <unordered_set>
 
-namespace android {
-namespace hardware {
-namespace gnss {
-namespace V2_1 {
-namespace implementation {
+namespace android::hardware::gnss::V2_1::implementation {
 
 using ::android::sp;
 using ::android::hardware::hidl_array;
@@ -92,10 +87,4 @@ struct GnssConfiguration : public IGnssConfiguration {
     BlacklistedConstellationSetV2_1 mBlacklistedConstellationSet;
 };
 
-}  // namespace implementation
-}  // namespace V2_1
-}  // namespace gnss
-}  // namespace hardware
-}  // namespace android
-
-#endif  // ANDROID_HARDWARE_GNSS_V2_1_GNSSCONFIGURATION_H
+}  // namespace android::hardware::gnss::V2_1::implementation

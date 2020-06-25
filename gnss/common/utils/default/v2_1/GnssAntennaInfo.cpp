@@ -16,18 +16,14 @@
 
 #define LOG_TAG "GnssAntennaInfo"
 
-#include "GnssAntennaInfo.h"
+#include "v2_1/GnssAntennaInfo.h"
 #include "Utils.h"
 
 #include <log/log.h>
 
 using ::android::hardware::gnss::common::Utils;
 
-namespace android {
-namespace hardware {
-namespace gnss {
-namespace V2_1 {
-namespace implementation {
+namespace android::hardware::gnss::V2_1::implementation {
 
 sp<IGnssAntennaInfoCallback> GnssAntennaInfo::sCallback = nullptr;
 
@@ -102,8 +98,4 @@ void GnssAntennaInfo::reportAntennaInfo(
     }
 }
 
-}  // namespace implementation
-}  // namespace V2_1
-}  // namespace gnss
-}  // namespace hardware
-}  // namespace android
+}  // namespace android::hardware::gnss::V2_1::implementation

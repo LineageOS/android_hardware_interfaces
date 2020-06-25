@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,25 +15,27 @@
  */
 
 cc_binary {
-    name: "android.hardware.gnss@2.1-service",
-    init_rc: ["android.hardware.gnss@2.1-service.rc"],
+    name: "android.hardware.gnss@3.0-service",
+    init_rc: ["android.hardware.gnss@3.0-service.rc"],
     relative_install_path: "hw",
     vendor: true,
-    vintf_fragments: ["android.hardware.gnss@2.1-service.xml"],
+    vintf_fragments: ["android.hardware.gnss@3.0-service.xml"],
     srcs: [
+        "Gnss.cpp",
+        "GnssPsds.cpp",
         "service.cpp",
     ],
     shared_libs: [
         "libhidlbase",
         "libutils",
         "liblog",
-        "android.hardware.gnss.measurement_corrections@1.1",
-        "android.hardware.gnss.measurement_corrections@1.0",
-        "android.hardware.gnss.visibility_control@1.0",
-        "android.hardware.gnss@2.1",
         "android.hardware.gnss@1.0",
         "android.hardware.gnss@1.1",
         "android.hardware.gnss@2.0",
+        "android.hardware.gnss@2.1",
+        "android.hardware.gnss@3.0",
+        "android.hardware.gnss.measurement_corrections@1.1",
+        "android.hardware.gnss.measurement_corrections@1.0",
     ],
     static_libs: [
         "android.hardware.gnss@common-default-lib",

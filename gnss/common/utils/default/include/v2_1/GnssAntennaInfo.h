@@ -14,23 +14,20 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_GNSS_V2_1_GNSSANTENNAINFO_H
-#define ANDROID_HARDWARE_GNSS_V2_1_GNSSANTENNAINFO_H
+#pragma once
 
 #include <android/hardware/gnss/2.1/IGnssAntennaInfo.h>
 
 #include <mutex>
 #include <thread>
 
-namespace android {
-namespace hardware {
-namespace gnss {
-namespace V2_1 {
-namespace implementation {
+namespace android::hardware::gnss::V2_1::implementation {
 
 using ::android::sp;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
+using IGnssAntennaInfo = ::android::hardware::gnss::V2_1::IGnssAntennaInfo;
+using IGnssAntennaInfoCallback = ::android::hardware::gnss::V2_1::IGnssAntennaInfoCallback;
 
 struct GnssAntennaInfo : public IGnssAntennaInfo {
     GnssAntennaInfo();
@@ -58,10 +55,4 @@ struct GnssAntennaInfo : public IGnssAntennaInfo {
     mutable std::mutex mMutex;
 };
 
-}  // namespace implementation
-}  // namespace V2_1
-}  // namespace gnss
-}  // namespace hardware
-}  // namespace android
-
-#endif  // ANDROID_HARDWARE_GNSS_V2_1_GNSSCONFIGURATION_H
+}  // namespace android::hardware::gnss::V2_1::implementation

@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2019 The Android Open Source Project
+// Copyright (C) 2020 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,11 +15,11 @@
 //
 
 cc_test {
-    name: "VtsHalGnssV2_1TargetTest",
+    name: "VtsHalGnssV3_0TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: [
         "gnss_hal_test_cases.cpp",
-        "VtsHalGnssV2_1TargetTest.cpp",
+        "VtsHalGnssV3_0TargetTest.cpp",
     ],
     static_libs: [
         "android.hardware.gnss.measurement_corrections@1.0",
@@ -29,6 +29,7 @@ cc_test {
         "android.hardware.gnss@1.1",
         "android.hardware.gnss@2.0",
         "android.hardware.gnss@2.1",
+        "android.hardware.gnss@3.0",
         "android.hardware.gnss@common-vts-lib",
     ],
     test_suites: [

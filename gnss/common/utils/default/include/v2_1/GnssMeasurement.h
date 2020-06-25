@@ -23,11 +23,7 @@
 #include <mutex>
 #include <thread>
 
-namespace android {
-namespace hardware {
-namespace gnss {
-namespace V2_1 {
-namespace implementation {
+namespace android::hardware::gnss::V2_1::implementation {
 
 using GnssDataV2_1 = V2_1::IGnssMeasurementCallback::GnssData;
 using GnssDataV2_0 = V2_0::IGnssMeasurementCallback::GnssData;
@@ -80,8 +76,4 @@ struct GnssMeasurement : public IGnssMeasurement {
     mutable std::mutex mMutex;
 };
 
-}  // namespace implementation
-}  // namespace V2_1
-}  // namespace gnss
-}  // namespace hardware
-}  // namespace android
+}  // namespace android::hardware::gnss::V2_1::implementation
