@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <android-base/properties.h>
 #include <radio_hidl_hal_utils_v1_5.h>
 
 #define ASSERT_OK(ret) ASSERT_TRUE(ret.isOk())
@@ -1173,6 +1174,17 @@ TEST_P(RadioHidlTest_v1_5, getBarringInfo) {
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_5->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_v1_5->rspInfo.serial);
+
+    int32_t firstApiLevel = android::base::GetIntProperty<int32_t>("ro.product.first_api_level", 0);
+    // Allow devices shipping with Radio::1_5 and Android 11 to not support barring info.
+    if (firstApiLevel > 0 && firstApiLevel <= 30) {
+        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_5->rspInfo.error,
+                                     {RadioError::NONE, RadioError::REQUEST_NOT_SUPPORTED}));
+        // Early exit for devices that don't support barring info.
+        if (radioRsp_v1_5->rspInfo.error != RadioError::NONE) {
+            return;
+        }
+    }
 
     ASSERT_TRUE(radioRsp_v1_5->barringInfos.size() > 0);
 
