@@ -90,6 +90,16 @@ std::optional<hwaddr_t> getHwAddr(const std::string& ifname) {
     return hwaddr;
 }
 
+bool setHwAddr(const std::string& ifname, hwaddr_t hwaddr) {
+    auto ifr = ifreqs::fromName(ifname);
+
+    // fetch sa_family
+    if (!ifreqs::send(SIOCGIFHWADDR, ifr)) return false;
+
+    memcpy(ifr.ifr_hwaddr.sa_data, hwaddr.data(), hwaddr.size());
+    return ifreqs::send(SIOCSIFHWADDR, ifr);
+}
+
 }  // namespace android::netdevice
 
 bool operator==(const android::netdevice::hwaddr_t lhs, const unsigned char rhs[ETH_ALEN]) {
