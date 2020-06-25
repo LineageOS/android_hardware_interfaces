@@ -81,4 +81,18 @@ bool del(std::string dev) {
     return sock.send(req) && sock.receiveAck();
 }
 
+std::optional<hwaddr_t> getHwAddr(const std::string& ifname) {
+    auto ifr = ifreqs::fromName(ifname);
+    if (!ifreqs::send(SIOCGIFHWADDR, ifr)) return std::nullopt;
+
+    hwaddr_t hwaddr;
+    memcpy(hwaddr.data(), ifr.ifr_hwaddr.sa_data, hwaddr.size());
+    return hwaddr;
+}
+
 }  // namespace android::netdevice
+
+bool operator==(const android::netdevice::hwaddr_t lhs, const unsigned char rhs[ETH_ALEN]) {
+    static_assert(lhs.size() == ETH_ALEN);
+    return 0 == memcmp(lhs.data(), rhs, lhs.size());
+}
