@@ -16,10 +16,15 @@
 
 #pragma once
 
+#include <linux/if_ether.h>
+
+#include <array>
 #include <optional>
 #include <string>
 
 namespace android::netdevice {
+
+typedef std::array<uint8_t, ETH_ALEN> hwaddr_t;
 
 /**
  * Configures libnetdevice to use PF_CAN sockets instead of AF_INET,
@@ -91,4 +96,14 @@ bool add(std::string dev, std::string type);
  */
 bool del(std::string dev);
 
+/**
+ * Fetches interface's hardware address.
+ *
+ * \param ifname Interface name
+ * \return Hardware address (MAC address) or nullopt if the lookup failed
+ */
+std::optional<hwaddr_t> getHwAddr(const std::string& ifname);
+
 }  // namespace android::netdevice
+
+bool operator==(const android::netdevice::hwaddr_t lhs, const unsigned char rhs[ETH_ALEN]);
