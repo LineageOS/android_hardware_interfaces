@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
+#include <android-base/logging.h>
 #include <radio_hidl_hal_utils_v1_0.h>
 
 /*
  * Test IRadio.getCurrentCalls() for the response returned.
  */
 TEST_P(RadioHidlTest, getCurrentCalls) {
+    LOG(DEBUG) << "getCurrentCalls";
     serial = GetRandomSerialNumber();
 
     radio->getCurrentCalls(serial);
@@ -30,12 +32,14 @@ TEST_P(RadioHidlTest, getCurrentCalls) {
     if (cardStatus.cardState == CardState::ABSENT) {
         EXPECT_EQ(RadioError::NONE, radioRsp->rspInfo.error);
     }
+    LOG(DEBUG) << "getCurrentCalls finished";
 }
 
 /*
  * Test IRadio.dial() for the response returned.
  */
 TEST_P(RadioHidlTest, dial) {
+    LOG(DEBUG) << "dial";
     serial = GetRandomSerialNumber();
 
     Dial dialInfo;
@@ -57,12 +61,14 @@ TEST_P(RadioHidlTest, dial) {
              RadioError::OPERATION_NOT_ALLOWED},
             CHECK_GENERAL_ERROR));
     }
+    LOG(DEBUG) << "dial finished";
 }
 
 /*
  * Test IRadio.hangup() for the response returned.
  */
 TEST_P(RadioHidlTest, hangup) {
+    LOG(DEBUG) << "hangup";
     serial = GetRandomSerialNumber();
 
     radio->hangup(serial, 1);
@@ -76,12 +82,14 @@ TEST_P(RadioHidlTest, hangup) {
             {RadioError::INVALID_ARGUMENTS, RadioError::INVALID_STATE, RadioError::MODEM_ERR},
             CHECK_GENERAL_ERROR));
     }
+    LOG(DEBUG) << "hangup finished";
 }
 
 /*
  * Test IRadio.hangupWaitingOrBackground() for the response returned.
  */
 TEST_P(RadioHidlTest, hangupWaitingOrBackground) {
+    LOG(DEBUG) << "hangupWaitingOrBackground";
     serial = GetRandomSerialNumber();
 
     radio->hangupWaitingOrBackground(serial);
@@ -94,12 +102,14 @@ TEST_P(RadioHidlTest, hangupWaitingOrBackground) {
                                      {RadioError::INVALID_STATE, RadioError::MODEM_ERR},
                                      CHECK_GENERAL_ERROR));
     }
+    LOG(DEBUG) << "hangupWaitingOrBackground finished";
 }
 
 /*
  * Test IRadio.hangupForegroundResumeBackground() for the response returned.
  */
 TEST_P(RadioHidlTest, hangupForegroundResumeBackground) {
+    LOG(DEBUG) << "hangupForegroundResumeBackground";
     serial = GetRandomSerialNumber();
 
     radio->hangupForegroundResumeBackground(serial);
@@ -112,12 +122,14 @@ TEST_P(RadioHidlTest, hangupForegroundResumeBackground) {
                                      {RadioError::INVALID_STATE, RadioError::MODEM_ERR},
                                      CHECK_GENERAL_ERROR));
     }
+    LOG(DEBUG) << "hangupForegroundResumeBackground finished";
 }
 
 /*
  * Test IRadio.switchWaitingOrHoldingAndActive() for the response returned.
  */
 TEST_P(RadioHidlTest, switchWaitingOrHoldingAndActive) {
+    LOG(DEBUG) << "switchWaitingOrHoldingAndActive";
     serial = GetRandomSerialNumber();
 
     radio->switchWaitingOrHoldingAndActive(serial);
@@ -130,12 +142,14 @@ TEST_P(RadioHidlTest, switchWaitingOrHoldingAndActive) {
                                      {RadioError::INVALID_STATE, RadioError::MODEM_ERR},
                                      CHECK_GENERAL_ERROR));
     }
+    LOG(DEBUG) << "switchWaitingOrHoldingAndActive finished";
 }
 
 /*
  * Test IRadio.conference() for the response returned.
  */
 TEST_P(RadioHidlTest, conference) {
+    LOG(DEBUG) << "conference";
     serial = GetRandomSerialNumber();
 
     radio->conference(serial);
@@ -148,12 +162,14 @@ TEST_P(RadioHidlTest, conference) {
                                      {RadioError::INVALID_STATE, RadioError::MODEM_ERR},
                                      CHECK_GENERAL_ERROR));
     }
+    LOG(DEBUG) << "conference finished";
 }
 
 /*
  * Test IRadio.rejectCall() for the response returned.
  */
 TEST_P(RadioHidlTest, rejectCall) {
+    LOG(DEBUG) << "rejectCall";
     serial = GetRandomSerialNumber();
 
     radio->rejectCall(serial);
@@ -166,12 +182,14 @@ TEST_P(RadioHidlTest, rejectCall) {
                                      {RadioError::INVALID_STATE, RadioError::MODEM_ERR},
                                      CHECK_GENERAL_ERROR));
     }
+    LOG(DEBUG) << "rejectCall finished";
 }
 
 /*
  * Test IRadio.getLastCallFailCause() for the response returned.
  */
 TEST_P(RadioHidlTest, getLastCallFailCause) {
+    LOG(DEBUG) << "getLastCallFailCause";
     serial = GetRandomSerialNumber();
 
     radio->getLastCallFailCause(serial);
@@ -183,12 +201,14 @@ TEST_P(RadioHidlTest, getLastCallFailCause) {
         ASSERT_TRUE(
             CheckAnyOfErrors(radioRsp->rspInfo.error, {RadioError::NONE}, CHECK_GENERAL_ERROR));
     }
+    LOG(DEBUG) << "getLastCallFailCause finished";
 }
 
 /*
  * Test IRadio.sendUssd() for the response returned.
  */
 TEST_P(RadioHidlTest, sendUssd) {
+    LOG(DEBUG) << "sendUssd";
     serial = GetRandomSerialNumber();
     radio->sendUssd(serial, hidl_string("test"));
     EXPECT_EQ(std::cv_status::no_timeout, wait());
@@ -201,12 +221,14 @@ TEST_P(RadioHidlTest, sendUssd) {
             {RadioError::INVALID_ARGUMENTS, RadioError::INVALID_STATE, RadioError::MODEM_ERR},
             CHECK_GENERAL_ERROR));
     }
+    LOG(DEBUG) << "sendUssd finished";
 }
 
 /*
  * Test IRadio.cancelPendingUssd() for the response returned.
  */
 TEST_P(RadioHidlTest, cancelPendingUssd) {
+    LOG(DEBUG) << "cancelPendingUssd";
     serial = GetRandomSerialNumber();
 
     radio->cancelPendingUssd(serial);
@@ -220,12 +242,14 @@ TEST_P(RadioHidlTest, cancelPendingUssd) {
                              {RadioError::NONE, RadioError::INVALID_STATE, RadioError::MODEM_ERR},
                              CHECK_GENERAL_ERROR));
     }
+    LOG(DEBUG) << "cancelPendingUssd finished";
 }
 
 /*
  * Test IRadio.getCallForwardStatus() for the response returned.
  */
 TEST_P(RadioHidlTest, getCallForwardStatus) {
+    LOG(DEBUG) << "getCallForwardStatus";
     serial = GetRandomSerialNumber();
     CallForwardInfo callInfo;
     memset(&callInfo, 0, sizeof(callInfo));
@@ -242,12 +266,14 @@ TEST_P(RadioHidlTest, getCallForwardStatus) {
             {RadioError::INVALID_ARGUMENTS, RadioError::INVALID_STATE, RadioError::MODEM_ERR},
             CHECK_GENERAL_ERROR));
     }
+    LOG(DEBUG) << "getCallForwardStatus finished";
 }
 
 /*
  * Test IRadio.setCallForward() for the response returned.
  */
 TEST_P(RadioHidlTest, setCallForward) {
+    LOG(DEBUG) << "setCallForward";
     serial = GetRandomSerialNumber();
     CallForwardInfo callInfo;
     memset(&callInfo, 0, sizeof(callInfo));
@@ -264,12 +290,14 @@ TEST_P(RadioHidlTest, setCallForward) {
             {RadioError::INVALID_ARGUMENTS, RadioError::INVALID_STATE, RadioError::MODEM_ERR},
             CHECK_GENERAL_ERROR));
     }
+    LOG(DEBUG) << "setCallForward finished";
 }
 
 /*
  * Test IRadio.getCallWaiting() for the response returned.
  */
 TEST_P(RadioHidlTest, getCallWaiting) {
+    LOG(DEBUG) << "getCallWaiting";
     serial = GetRandomSerialNumber();
 
     radio->getCallWaiting(serial, 1);
@@ -283,12 +311,14 @@ TEST_P(RadioHidlTest, getCallWaiting) {
             {RadioError::NONE, RadioError::INVALID_ARGUMENTS, RadioError::MODEM_ERR},
             CHECK_GENERAL_ERROR));
     }
+    LOG(DEBUG) << "getCallWaiting finished";
 }
 
 /*
  * Test IRadio.setCallWaiting() for the response returned.
  */
 TEST_P(RadioHidlTest, setCallWaiting) {
+    LOG(DEBUG) << "setCallWaiting";
     serial = GetRandomSerialNumber();
 
     radio->setCallWaiting(serial, true, 1);
@@ -302,12 +332,14 @@ TEST_P(RadioHidlTest, setCallWaiting) {
             {RadioError::INVALID_ARGUMENTS, RadioError::INVALID_STATE, RadioError::MODEM_ERR},
             CHECK_GENERAL_ERROR));
     }
+    LOG(DEBUG) << "setCallWaiting finished";
 }
 
 /*
  * Test IRadio.acceptCall() for the response returned.
  */
 TEST_P(RadioHidlTest, acceptCall) {
+    LOG(DEBUG) << "acceptCall";
     serial = GetRandomSerialNumber();
 
     radio->acceptCall(serial);
@@ -320,12 +352,14 @@ TEST_P(RadioHidlTest, acceptCall) {
                                      {RadioError::INVALID_STATE, RadioError::MODEM_ERR},
                                      CHECK_GENERAL_ERROR));
     }
+    LOG(DEBUG) << "acceptCall finished";
 }
 
 /*
  * Test IRadio.separateConnection() for the response returned.
  */
 TEST_P(RadioHidlTest, separateConnection) {
+    LOG(DEBUG) << "separateConnection";
     serial = GetRandomSerialNumber();
 
     radio->separateConnection(serial, 1);
@@ -339,12 +373,14 @@ TEST_P(RadioHidlTest, separateConnection) {
             {RadioError::INVALID_ARGUMENTS, RadioError::INVALID_STATE, RadioError::MODEM_ERR},
             CHECK_GENERAL_ERROR));
     }
+    LOG(DEBUG) << "separateConnection finished";
 }
 
 /*
  * Test IRadio.explicitCallTransfer() for the response returned.
  */
 TEST_P(RadioHidlTest, explicitCallTransfer) {
+    LOG(DEBUG) << "explicitCallTransfer";
     serial = GetRandomSerialNumber();
 
     radio->explicitCallTransfer(serial);
@@ -357,12 +393,14 @@ TEST_P(RadioHidlTest, explicitCallTransfer) {
                                      {RadioError::INVALID_STATE, RadioError::MODEM_ERR},
                                      CHECK_GENERAL_ERROR));
     }
+    LOG(DEBUG) << "explicitCallTransfer finished";
 }
 
 /*
  * Test IRadio.sendCDMAFeatureCode() for the response returned.
  */
 TEST_P(RadioHidlTest, sendCDMAFeatureCode) {
+    LOG(DEBUG) << "sendCDMAFeatureCode";
     serial = GetRandomSerialNumber();
 
     radio->sendCDMAFeatureCode(serial, hidl_string());
@@ -377,12 +415,14 @@ TEST_P(RadioHidlTest, sendCDMAFeatureCode) {
                                       RadioError::MODEM_ERR, RadioError::OPERATION_NOT_ALLOWED},
                                      CHECK_GENERAL_ERROR));
     }
+    LOG(DEBUG) << "sendCDMAFeatureCode finished";
 }
 
 /*
  * Test IRadio.sendDtmf() for the response returned.
  */
 TEST_P(RadioHidlTest, sendDtmf) {
+    LOG(DEBUG) << "sendDtmf";
     serial = GetRandomSerialNumber();
 
     radio->sendDtmf(serial, "1");
@@ -397,12 +437,14 @@ TEST_P(RadioHidlTest, sendDtmf) {
              RadioError::INVALID_MODEM_STATE, RadioError::MODEM_ERR},
             CHECK_GENERAL_ERROR));
     }
+    LOG(DEBUG) << "sendDtmf finished";
 }
 
 /*
  * Test IRadio.startDtmf() for the response returned.
  */
 TEST_P(RadioHidlTest, startDtmf) {
+    LOG(DEBUG) << "startDtmf";
     serial = GetRandomSerialNumber();
 
     radio->startDtmf(serial, "1");
@@ -417,12 +459,14 @@ TEST_P(RadioHidlTest, startDtmf) {
              RadioError::INVALID_MODEM_STATE, RadioError::MODEM_ERR},
             CHECK_GENERAL_ERROR));
     }
+    LOG(DEBUG) << "startDtmf finished";
 }
 
 /*
  * Test IRadio.stopDtmf() for the response returned.
  */
 TEST_P(RadioHidlTest, stopDtmf) {
+    LOG(DEBUG) << "stopDtmf";
     serial = GetRandomSerialNumber();
 
     radio->stopDtmf(serial);
@@ -436,12 +480,14 @@ TEST_P(RadioHidlTest, stopDtmf) {
                                       RadioError::INVALID_MODEM_STATE, RadioError::MODEM_ERR},
                                      CHECK_GENERAL_ERROR));
     }
+    LOG(DEBUG) << "stopDtmf finished";
 }
 
 /*
  * Test IRadio.setMute() for the response returned.
  */
 TEST_P(RadioHidlTest, setMute) {
+    LOG(DEBUG) << "setMute";
     serial = GetRandomSerialNumber();
 
     radio->setMute(serial, true);
@@ -454,12 +500,14 @@ TEST_P(RadioHidlTest, setMute) {
                                      {RadioError::NONE, RadioError::INVALID_ARGUMENTS},
                                      CHECK_GENERAL_ERROR));
     }
+    LOG(DEBUG) << "setMute finished";
 }
 
 /*
  * Test IRadio.getMute() for the response returned.
  */
 TEST_P(RadioHidlTest, getMute) {
+    LOG(DEBUG) << "getMute";
     serial = GetRandomSerialNumber();
 
     radio->getMute(serial);
@@ -470,12 +518,14 @@ TEST_P(RadioHidlTest, getMute) {
     if (cardStatus.cardState == CardState::ABSENT) {
         EXPECT_EQ(RadioError::NONE, radioRsp->rspInfo.error);
     }
+    LOG(DEBUG) << "getMute finished";
 }
 
 /*
  * Test IRadio.sendBurstDtmf() for the response returned.
  */
 TEST_P(RadioHidlTest, sendBurstDtmf) {
+    LOG(DEBUG) << "sendBurstDtmf";
     serial = GetRandomSerialNumber();
 
     radio->sendBurstDtmf(serial, "1", 0, 0);
@@ -489,4 +539,5 @@ TEST_P(RadioHidlTest, sendBurstDtmf) {
                                       RadioError::MODEM_ERR, RadioError::OPERATION_NOT_ALLOWED},
                                      CHECK_GENERAL_ERROR));
     }
+    LOG(DEBUG) << "sendBurstDtmf finished";
 }
