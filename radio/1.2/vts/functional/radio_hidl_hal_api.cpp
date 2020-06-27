@@ -735,7 +735,7 @@ TEST_P(RadioHidlTest_v1_2, getDataRegistrationState) {
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_2->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_v1_2->rspInfo.serial);
 
-    ALOGI("getVoiceRegistrationStateResponse_1_2, rspInfo.error = %s\n",
+    ALOGI("getDataRegistrationStateResponse_1_2, rspInfo.error = %s\n",
           toString(radioRsp_v1_2->rspInfo.error).c_str());
     ASSERT_TRUE(CheckAnyOfErrors(
         radioRsp_v1_2->rspInfo.error,
