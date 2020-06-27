@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
+#include <android-base/logging.h>
 #include <radio_hidl_hal_utils_v1_0.h>
 
 void RadioHidlTest::SetUp() {
     radio = IRadio::getService(GetParam());
     if (radio == NULL) {
+        LOG(DEBUG) << "Radio is NULL, waiting 1 minute to retry";
         sleep(60);
         radio = IRadio::getService(GetParam());
     }

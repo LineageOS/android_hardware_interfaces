@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <android-base/logging.h>
 #include <radio_hidl_hal_utils_v1_0.h>
 
 using namespace ::android::hardware::radio::V1_0;
@@ -22,6 +23,7 @@ using namespace ::android::hardware::radio::V1_0;
  * Test IRadio.sendSms() for the response returned.
  */
 TEST_P(RadioHidlTest, sendSms) {
+    LOG(DEBUG) << "sendSms";
     serial = GetRandomSerialNumber();
     GsmSmsMessage msg;
     msg.smscPdu = "";
@@ -40,12 +42,14 @@ TEST_P(RadioHidlTest, sendSms) {
             CHECK_GENERAL_ERROR));
         EXPECT_EQ(0, radioRsp->sendSmsResult.errorCode);
     }
+    LOG(DEBUG) << "sendSms finished";
 }
 
 /*
  * Test IRadio.sendSMSExpectMore() for the response returned.
  */
 TEST_P(RadioHidlTest, sendSMSExpectMore) {
+    LOG(DEBUG) << "sendSMSExpectMore";
     serial = GetRandomSerialNumber();
     GsmSmsMessage msg;
     msg.smscPdu = "";
@@ -66,12 +70,14 @@ TEST_P(RadioHidlTest, sendSMSExpectMore) {
             {RadioError::INVALID_ARGUMENTS, RadioError::INVALID_STATE, RadioError::SIM_ABSENT},
             CHECK_GENERAL_ERROR));
     }
+    LOG(DEBUG) << "sendSMSExpectMore finished";
 }
 
 /*
  * Test IRadio.acknowledgeLastIncomingGsmSms() for the response returned.
  */
 TEST_P(RadioHidlTest, acknowledgeLastIncomingGsmSms) {
+    LOG(DEBUG) << "acknowledgeLastIncomingGsmSms";
     serial = GetRandomSerialNumber();
     bool success = true;
 
@@ -87,12 +93,14 @@ TEST_P(RadioHidlTest, acknowledgeLastIncomingGsmSms) {
                                      {RadioError::INVALID_ARGUMENTS, RadioError::INVALID_STATE},
                                      CHECK_GENERAL_ERROR));
     }
+    LOG(DEBUG) << "acknowledgeLastIncomingGsmSms finished";
 }
 
 /*
  * Test IRadio.acknowledgeIncomingGsmSmsWithPdu() for the response returned.
  */
 TEST_P(RadioHidlTest, acknowledgeIncomingGsmSmsWithPdu) {
+    LOG(DEBUG) << "acknowledgeIncomingGsmSmsWithPdu";
     serial = GetRandomSerialNumber();
     bool success = true;
     std::string ackPdu = "";
@@ -106,12 +114,14 @@ TEST_P(RadioHidlTest, acknowledgeIncomingGsmSmsWithPdu) {
     if (cardStatus.cardState == CardState::ABSENT) {
         // TODO(shuoq): Will add error check when we know the expected error from QC
     }
+    LOG(DEBUG) << "acknowledgeIncomingGsmSmsWithPdu finished";
 }
 
 /*
  * Test IRadio.sendCdmaSms() for the response returned.
  */
 TEST_P(RadioHidlTest, sendCdmaSms) {
+    LOG(DEBUG) << "sendCdmaSms";
     serial = GetRandomSerialNumber();
 
     // Create a CdmaSmsAddress
@@ -150,12 +160,14 @@ TEST_P(RadioHidlTest, sendCdmaSms) {
             {RadioError::INVALID_ARGUMENTS, RadioError::INVALID_STATE, RadioError::SIM_ABSENT},
             CHECK_GENERAL_ERROR));
     }
+    LOG(DEBUG) << "sendCdmaSms finished";
 }
 
 /*
  * Test IRadio.acknowledgeLastIncomingCdmaSms() for the response returned.
  */
 TEST_P(RadioHidlTest, acknowledgeLastIncomingCdmaSms) {
+    LOG(DEBUG) << "acknowledgeLastIncomingCdmaSms";
     serial = GetRandomSerialNumber();
 
     // Create a CdmaSmsAck
@@ -174,12 +186,14 @@ TEST_P(RadioHidlTest, acknowledgeLastIncomingCdmaSms) {
                                      {RadioError::INVALID_ARGUMENTS, RadioError::NO_SMS_TO_ACK},
                                      CHECK_GENERAL_ERROR));
     }
+    LOG(DEBUG) << "acknowledgeLastIncomingCdmaSms finished";
 }
 
 /*
  * Test IRadio.sendImsSms() for the response returned.
  */
 TEST_P(RadioHidlTest, sendImsSms) {
+    LOG(DEBUG) << "sendImsSms";
     serial = GetRandomSerialNumber();
 
     // Create a CdmaSmsAddress
@@ -224,12 +238,14 @@ TEST_P(RadioHidlTest, sendImsSms) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp->rspInfo.error, {RadioError::INVALID_ARGUMENTS},
                                      CHECK_GENERAL_ERROR));
     }
+    LOG(DEBUG) << "sendImsSms finished";
 }
 
 /*
  * Test IRadio.getSmscAddress() for the response returned.
  */
 TEST_P(RadioHidlTest, getSmscAddress) {
+    LOG(DEBUG) << "getSmscAddress";
     serial = GetRandomSerialNumber();
 
     radio->getSmscAddress(serial);
@@ -244,12 +260,14 @@ TEST_P(RadioHidlTest, getSmscAddress) {
             {RadioError::INVALID_MODEM_STATE, RadioError::INVALID_STATE, RadioError::SIM_ABSENT},
             CHECK_GENERAL_ERROR));
     }
+    LOG(DEBUG) << "getSmscAddress finished";
 }
 
 /*
  * Test IRadio.setSmscAddress() for the response returned.
  */
 TEST_P(RadioHidlTest, setSmscAddress) {
+    LOG(DEBUG) << "setSmscAddress";
     serial = GetRandomSerialNumber();
     hidl_string address = hidl_string("smscAddress");
 
@@ -265,12 +283,14 @@ TEST_P(RadioHidlTest, setSmscAddress) {
             {RadioError::INVALID_ARGUMENTS, RadioError::INVALID_SMS_FORMAT, RadioError::SIM_ABSENT},
             CHECK_GENERAL_ERROR));
     }
+    LOG(DEBUG) << "setSmscAddress finished";
 }
 
 /*
  * Test IRadio.writeSmsToSim() for the response returned.
  */
 TEST_P(RadioHidlTest, writeSmsToSim) {
+    LOG(DEBUG) << "writeSmsToSim";
     serial = GetRandomSerialNumber();
     SmsWriteArgs smsWriteArgs;
     smsWriteArgs.status = SmsWriteArgsStatus::REC_UNREAD;
@@ -291,12 +311,14 @@ TEST_P(RadioHidlTest, writeSmsToSim) {
              RadioError::NO_RESOURCES, RadioError::SIM_ABSENT},
             CHECK_GENERAL_ERROR));
     }
+    LOG(DEBUG) << "writeSmsToSim finished";
 }
 
 /*
  * Test IRadio.deleteSmsOnSim() for the response returned.
  */
 TEST_P(RadioHidlTest, deleteSmsOnSim) {
+    LOG(DEBUG) << "deleteSmsOnSim";
     serial = GetRandomSerialNumber();
     int index = 1;
 
@@ -314,12 +336,14 @@ TEST_P(RadioHidlTest, deleteSmsOnSim) {
              RadioError::SIM_ABSENT},
             CHECK_GENERAL_ERROR));
     }
+    LOG(DEBUG) << "deleteSmsOnSim finished";
 }
 
 /*
  * Test IRadio.writeSmsToRuim() for the response returned.
  */
 TEST_P(RadioHidlTest, writeSmsToRuim) {
+    LOG(DEBUG) << "writeSmsToRuim";
     serial = GetRandomSerialNumber();
 
     // Create a CdmaSmsAddress
@@ -365,12 +389,14 @@ TEST_P(RadioHidlTest, writeSmsToRuim) {
              RadioError::NO_SUCH_ENTRY, RadioError::SIM_ABSENT},
             CHECK_GENERAL_ERROR));
     }
+    LOG(DEBUG) << "writeSmsToRuim finished";
 }
 
 /*
  * Test IRadio.deleteSmsOnRuim() for the response returned.
  */
 TEST_P(RadioHidlTest, deleteSmsOnRuim) {
+    LOG(DEBUG) << "deleteSmsOnRuim";
     serial = GetRandomSerialNumber();
     int index = 1;
 
@@ -416,12 +442,14 @@ TEST_P(RadioHidlTest, deleteSmsOnRuim) {
              RadioError::MODEM_ERR, RadioError::NO_SUCH_ENTRY, RadioError::SIM_ABSENT},
             CHECK_GENERAL_ERROR));
     }
+    LOG(DEBUG) << "deleteSmsOnRuim finished";
 }
 
 /*
  * Test IRadio.reportSmsMemoryStatus() for the response returned.
  */
 TEST_P(RadioHidlTest, reportSmsMemoryStatus) {
+    LOG(DEBUG) << "reportSmsMemoryStatus";
     serial = GetRandomSerialNumber();
     bool available = true;
 
@@ -437,4 +465,5 @@ TEST_P(RadioHidlTest, reportSmsMemoryStatus) {
                                       RadioError::MODEM_ERR, RadioError::SIM_ABSENT},
                                      CHECK_GENERAL_ERROR));
     }
+    LOG(DEBUG) << "reportSmsMemoryStatus finished";
 }
