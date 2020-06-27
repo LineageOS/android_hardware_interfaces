@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <android-base/logging.h>
 #include <radio_hidl_hal_utils_v1_0.h>
 
 using namespace ::android::hardware::radio::V1_0;
@@ -22,6 +23,7 @@ using namespace ::android::hardware::radio::V1_0;
  * Test IRadio.getDataRegistrationState() for the response returned.
  */
 TEST_P(RadioHidlTest, getDataRegistrationState) {
+    LOG(DEBUG) << "getDataRegistrationState";
     serial = GetRandomSerialNumber();
 
     radio->getDataRegistrationState(serial);
@@ -94,12 +96,14 @@ TEST_P(RadioHidlTest, getDataRegistrationState) {
             }
         }
     }
+    LOG(DEBUG) << "getDataRegistrationState finished";
 }
 
 /*
  * Test IRadio.setupDataCall() for the response returned.
  */
 TEST_P(RadioHidlTest, setupDataCall) {
+    LOG(DEBUG) << "setupDataCall";
     serial = GetRandomSerialNumber();
 
     RadioTechnology radioTechnology = RadioTechnology::LTE;
@@ -142,12 +146,14 @@ TEST_P(RadioHidlTest, setupDataCall) {
                                       RadioError::RADIO_NOT_AVAILABLE, RadioError::SIM_ABSENT},
                                      CHECK_OEM_ERROR));
     }
+    LOG(DEBUG) << "setupDataCall finished";
 }
 
 /*
  * Test IRadio.deactivateDataCall() for the response returned.
  */
 TEST_P(RadioHidlTest, deactivateDataCall) {
+    LOG(DEBUG) << "deactivateDataCall";
     serial = GetRandomSerialNumber();
     int cid = 1;
     bool reasonRadioShutDown = false;
@@ -164,12 +170,14 @@ TEST_P(RadioHidlTest, deactivateDataCall) {
                                       RadioError::SIM_ABSENT, RadioError::INVALID_CALL_ID},
                                      CHECK_OEM_ERROR));
     }
+    LOG(DEBUG) << "deactivateDataCall finished";
 }
 
 /*
  * Test IRadio.getDataCallList() for the response returned.
  */
 TEST_P(RadioHidlTest, getDataCallList) {
+    LOG(DEBUG) << "getDataCallList";
     serial = GetRandomSerialNumber();
 
     radio->getDataCallList(serial);
@@ -183,12 +191,14 @@ TEST_P(RadioHidlTest, getDataCallList) {
             radioRsp->rspInfo.error,
             {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::SIM_ABSENT}));
     }
+    LOG(DEBUG) << "getDataCallList finished";
 }
 
 /*
  * Test IRadio.setInitialAttachApn() for the response returned.
  */
 TEST_P(RadioHidlTest, setInitialAttachApn) {
+    LOG(DEBUG) << "setInitialAttachApn";
     serial = GetRandomSerialNumber();
 
     DataProfileInfo dataProfileInfo;
@@ -226,12 +236,14 @@ TEST_P(RadioHidlTest, setInitialAttachApn) {
                                       RadioError::SUBSCRIPTION_NOT_AVAILABLE},
                                      CHECK_OEM_ERROR));
     }
+    LOG(DEBUG) << "setInitialAttachApn finished";
 }
 
 /*
  * Test IRadio.setDataAllowed() for the response returned.
  */
 TEST_P(RadioHidlTest, setDataAllowed) {
+    LOG(DEBUG) << "setDataAllowed";
     serial = GetRandomSerialNumber();
     bool allow = true;
 
@@ -244,12 +256,14 @@ TEST_P(RadioHidlTest, setDataAllowed) {
     if (cardStatus.cardState == CardState::ABSENT) {
         EXPECT_EQ(RadioError::NONE, radioRsp->rspInfo.error);
     }
+    LOG(DEBUG) << "setDataAllowed finished";
 }
 
 /*
  * Test IRadio.setDataProfile() for the response returned.
  */
 TEST_P(RadioHidlTest, setDataProfile) {
+    LOG(DEBUG) << "setDataProfile";
     serial = GetRandomSerialNumber();
 
     // Create a dataProfileInfo
@@ -289,4 +303,5 @@ TEST_P(RadioHidlTest, setDataProfile) {
                                      {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE,
                                       RadioError::SIM_ABSENT, RadioError::REQUEST_NOT_SUPPORTED}));
     }
+    LOG(DEBUG) << "setDataProfile finished";
 }
