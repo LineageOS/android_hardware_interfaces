@@ -4,11 +4,11 @@ cc_binary {
     init_rc: ["android.hardware.audio.service.rc"],
     relative_install_path: "hw",
     vendor: true,
-    // Only support 32 bit  as the binary must always be installed at the same
+    // Prefer 32 bit as the binary must always be installed at the same
     // location for init to start it and the build system does not support
     // having two binaries installable to the same location even if they are
     // not installed in the same build.
-    compile_multilib: "32",
+    compile_multilib: "prefer32",
     srcs: ["service.cpp"],
 
     cflags: [
