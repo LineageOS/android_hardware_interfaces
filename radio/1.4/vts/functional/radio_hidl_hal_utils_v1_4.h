@@ -721,7 +721,10 @@ class RadioHidlTest_v1_4 : public ::testing::TestWithParam<std::string> {
     /* Update Sim Card Status */
     void updateSimCardStatus();
 
-   public:
+    /* Stop Network Scan Command */
+    void stopNetworkScan();
+
+  public:
     virtual void SetUp() override;
 
     /* Used as a mechanism to inform the test about data/event callback */
