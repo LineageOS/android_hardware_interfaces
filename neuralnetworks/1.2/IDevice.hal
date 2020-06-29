@@ -40,7 +40,7 @@ interface IDevice extends @1.1::IDevice {
      * NNAPI applications filter devices based on their needs:
      *     - An application demands a certain level of performance, but a specific version of
      *       the driver cannot meet that requirement because of a performance regression.
-     *       The application can blacklist the driver based on the version provided.
+     *       The application can disallow the driver based on the version provided.
      *     - An application has a minimum precision requirement, but certain versions of
      *       the driver cannot meet that requirement because of bugs or certain optimizations.
      *       The application can filter out versions of these drivers.
