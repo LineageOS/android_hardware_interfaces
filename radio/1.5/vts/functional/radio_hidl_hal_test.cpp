@@ -78,3 +78,9 @@ void RadioHidlTest_v1_5::updateSimCardStatus() {
     radio_v1_5->getIccCardStatus(serial);
     EXPECT_EQ(std::cv_status::no_timeout, wait());
 }
+
+void RadioHidlTest_v1_5::stopNetworkScan() {
+    serial = GetRandomSerialNumber();
+    radio_v1_5->stopNetworkScan(serial);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+}
