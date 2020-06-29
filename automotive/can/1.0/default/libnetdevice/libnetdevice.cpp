@@ -16,12 +16,12 @@
 
 #include <libnetdevice/libnetdevice.h>
 
-#include "NetlinkRequest.h"
-#include "NetlinkSocket.h"
 #include "common.h"
 #include "ifreqs.h"
 
 #include <android-base/logging.h>
+#include <libnetdevice/NetlinkRequest.h>
+#include <libnetdevice/NetlinkSocket.h>
 
 #include <linux/can.h>
 #include <net/if.h>

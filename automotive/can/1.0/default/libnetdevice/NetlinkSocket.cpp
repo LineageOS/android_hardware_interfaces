@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "NetlinkSocket.h"
+#include <libnetdevice/NetlinkSocket.h>
 
 #include <libnetdevice/printer.h>
 
