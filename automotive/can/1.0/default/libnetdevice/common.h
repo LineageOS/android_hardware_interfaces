@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "nlbuf.h"
+#include <libnetdevice/nlbuf.h>
 
 #include <linux/can.h>
 #include <net/if.h>

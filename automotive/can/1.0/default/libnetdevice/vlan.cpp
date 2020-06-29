@@ -16,11 +16,11 @@
 
 #include <libnetdevice/vlan.h>
 
-#include "NetlinkRequest.h"
-#include "NetlinkSocket.h"
 #include "common.h"
 
 #include <android-base/logging.h>
+#include <libnetdevice/NetlinkRequest.h>
+#include <libnetdevice/NetlinkSocket.h>
 
 namespace android::netdevice::vlan {
 
