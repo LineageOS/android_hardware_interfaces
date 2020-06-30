@@ -16,12 +16,12 @@
 
 #include <libnetdevice/libnetdevice.h>
 
-#include "NetlinkRequest.h"
-#include "NetlinkSocket.h"
 #include "common.h"
 #include "ifreqs.h"
 
 #include <android-base/logging.h>
+#include <libnetdevice/NetlinkRequest.h>
+#include <libnetdevice/NetlinkSocket.h>
 
 #include <linux/can.h>
 #include <net/if.h>
@@ -88,6 +88,16 @@ std::optional<hwaddr_t> getHwAddr(const std::string& ifname) {
     hwaddr_t hwaddr;
     memcpy(hwaddr.data(), ifr.ifr_hwaddr.sa_data, hwaddr.size());
     return hwaddr;
+}
+
+bool setHwAddr(const std::string& ifname, hwaddr_t hwaddr) {
+    auto ifr = ifreqs::fromName(ifname);
+
+    // fetch sa_family
+    if (!ifreqs::send(SIOCGIFHWADDR, ifr)) return false;
+
+    memcpy(ifr.ifr_hwaddr.sa_data, hwaddr.data(), hwaddr.size());
+    return ifreqs::send(SIOCSIFHWADDR, ifr);
 }
 
 }  // namespace android::netdevice
