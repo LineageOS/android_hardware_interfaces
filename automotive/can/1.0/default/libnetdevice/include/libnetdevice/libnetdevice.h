@@ -104,6 +104,14 @@ bool del(std::string dev);
  */
 std::optional<hwaddr_t> getHwAddr(const std::string& ifname);
 
+/**
+ * Changes interface's hardware address.
+ *
+ * \param ifname Interface name
+ * \param hwaddr New hardware address to set
+ */
+bool setHwAddr(const std::string& ifname, hwaddr_t hwaddr);
+
 }  // namespace android::netdevice
 
 bool operator==(const android::netdevice::hwaddr_t lhs, const unsigned char rhs[ETH_ALEN]);
