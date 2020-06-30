@@ -22,22 +22,45 @@ import @2.2::IBiometricsFingerprint;
  * The interface for biometric fingerprint authentication.
  */
 interface IBiometricsFingerprint extends @2.2::IBiometricsFingerprint {
-  /**
-   * Notifies about a finger touching the sensor area.
-   *
-   * @param x The screen x-coordinate of the center of the touch contact area, in
-   * display pixels.
-   * @param y The screen y-coordinate of the center of the touch contact area, in
-   * display pixels.
-   * @param minor The length of the minor axis of an ellipse that describes the
-   * touch area, in display pixels.
-   * @param major The length of the major axis of an ellipse that describes the
-   * touch area, in display pixels.
-   */
-  oneway onFingerDown(uint32_t x, uint32_t y, float minor, float major);
+    /**
+     * Returns whether the fingerprint sensor is an under-display fingerprint
+     * sensor.
+     * @param sensorId the unique sensor ID for which the operation should be
+     * performed.
+     * @return isUdfps indicating whether the specified sensor is an
+     * under-display fingerprint sensor.
+     */
+    isUdfps(uint32_t sensorId) generates (bool isUdfps);
 
-  /**
-   * Notifies about a finger leaving the sensor area.
-   */
-  oneway onFingerUp();
+    /**
+     * Notifies about a touch occurring within the under-display fingerprint
+     * sensor area.
+     *
+     * It it assumed that the device can only have one active under-display
+     * fingerprint sensor at a time.
+     *
+     * If multiple fingers are detected within the sensor area, only the
+     * chronologically first event will be reported.
+     *
+     * @param x The screen x-coordinate of the center of the touch contact area, in
+     * display pixels.
+     * @param y The screen y-coordinate of the center of the touch contact area, in
+     * display pixels.
+     * @param minor The length of the minor axis of an ellipse that describes the
+     * touch area, in display pixels.
+     * @param major The length of the major axis of an ellipse that describes the
+     * touch area, in display pixels.
+     */
+    onFingerDown(uint32_t x, uint32_t y, float minor, float major);
+
+    /**
+     * Notifies about a finger leaving the under-display fingerprint sensor area.
+     *
+     * It it assumed that the device can only have one active under-display
+     * fingerprint sensor at a time.
+     *
+     * If multiple fingers have left the sensor area, only the finger which
+     * previously caused a "finger down" event will be reported.
+     */
+    onFingerUp();
 };
