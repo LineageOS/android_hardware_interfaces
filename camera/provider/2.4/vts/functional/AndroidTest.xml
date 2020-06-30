@@ -28,6 +28,6 @@
     <test class="com.android.tradefed.testtype.GTest" >
         <option name="native-test-device-path" value="/data/local/tmp" />
         <option name="module-name" value="VtsHalCameraProviderV2_4TargetTest" />
-        <option name="native-test-timeout" value="180000"/>
+        <option name="native-test-timeout" value="1800000"/> <!-- 30 min -->
     </test>
 </configuration>
