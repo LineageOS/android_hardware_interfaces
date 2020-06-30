@@ -2532,16 +2532,17 @@ enum VehicleProperty : int32_t {
      *
      * int32[0]: 42      // must match the request id from the request
      * int32[1]:  2      // action = InitialUserInfoResponseAction::CREATE
-     * int32[2]: -1      // userToSwitchOrCreate.userId (not used as user will be created)
+     * int32[2]: -10000  // userToSwitchOrCreate.userId (not used as user will be created)
      * int32[3]:  8      // userToSwitchOrCreate.flags = ADMIN
-     * string: "||Owner"  // userLocales + separator + userNameToCreate
+     * string: "||Owner" // userLocales + separator + userNameToCreate
      *
      * Notice the string value represents multiple values, separated by ||. The first value is the
      * (optional) system locales for the user to be created (in this case, it's empty, meaning it
      * will use Android's default value), while the second value is the (also optional) name of the
      * to user to be created (when the type of response is InitialUserInfoResponseAction:CREATE).
      * For example, to create the same "Owner" user with "en-US" and "pt-BR" locales, the string
-     * value of the response would be "en-US,pt-BR||Owner".
+     * value of the response would be "en-US,pt-BR||Owner". As such, neither the locale nor the
+     * name can have || on it, although a single | is fine.
      *
      * NOTE: if the HAL doesn't support user management, then it should not define this property,
      * which in turn would disable the other user-related properties (for example, the Android
@@ -2626,7 +2627,7 @@ enum VehicleProperty : int32_t {
      * int32[5]:  0   // current user flags (none)
      * int32[6]:  3   // number of users
      * int32[7]:  0   // 1st user (user 0)
-     * int32[8]:  0   // 1st user flags (none)
+     * int32[8]:  1   // 1st user flags (SYSTEM)
      * int32[9]:  10  // 2nd user (user 10)
      * int32[10]: 0   // 2nd user flags (none)
      * int32[11]: 11  // 3rd user (user 11)
@@ -2660,7 +2661,7 @@ enum VehicleProperty : int32_t {
      * identified the user as A.
      *
      * The HAL makes this request by a property change event (passing a negative request id), and
-     * the Android system will response by issuye an ANDROID_POST_SWITCH call which the same
+     * the Android system will response by issue an ANDROID_POST_SWITCH call which the same
      * request id.
      *
      * For example, if the current foreground Android user is 10 and the HAL asked it to switch to
@@ -2704,7 +2705,7 @@ enum VehicleProperty : int32_t {
      *    in the response are different (as the current user didn't change to the target).
      * 3. If a new switch request is made before the HAL responded to the previous one or before
      *    the user was unlocked, then the ANDROID_POST_SWITCH request is not made. For example,
-     *    the driver could accidentally switch to the wrong user which has lock crentials, then
+     *    the driver could accidentally switch to the wrong user which has lock credentials, then
      *    switch to the right one before entering the credentials.
      *
      * The HAL can update its internal state once it receives this request, but it doesn't need to
@@ -4390,15 +4391,15 @@ struct InitialUserInfoResponse {
     UserInfo userToSwitchOrCreate;
 
     /**
-     * Name of the user that should be created.
-     */
-    string userNameToCreate;
-
-    /**
      * System locales of the initial user (value will be passed as-is to
      * android.provider.Settings.System.SYSTEM_LOCALES)
      */
     string userLocales;
+
+    /**
+     * Name of the user that should be created.
+     */
+    string userNameToCreate;
 };
 
 /**
