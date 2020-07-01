@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#define ASSERT_OK(v) ASSERT_TRUE(v.isOk())
+
 #include <android/hardware/biometrics/fingerprint/2.3/IBiometricsFingerprint.h>
 #include <gtest/gtest.h>
 #include <hidl/GtestPrinter.h>
@@ -41,14 +43,21 @@ class FingerprintHidlTest : public ::testing::TestWithParam<std::string> {
     sp<IBiometricsFingerprint> mService;
 };
 
-// This is a one-way method that doesn't return anything.
-TEST_P(FingerprintHidlTest, onFingerDownTest) {
-    mService->onFingerDown(1, 2, 3.0f, 4.0f);
+// This method returns true or false depending on the implementation.
+TEST_P(FingerprintHidlTest, isUdfpsTest) {
+    // Arbitrary ID
+    uint32_t sensorId = 1234;
+    ASSERT_OK(mService->isUdfps(sensorId));
 }
 
-// This is a one-way method that doesn't return anything.
+// This method that doesn't return anything.
+TEST_P(FingerprintHidlTest, onFingerDownTest) {
+    ASSERT_OK(mService->onFingerDown(1, 2, 3.0f, 4.0f));
+}
+
+// This method that doesn't return anything.
 TEST_P(FingerprintHidlTest, onFingerUp) {
-    mService->onFingerUp();
+    ASSERT_OK(mService->onFingerUp());
 }
 
 }  // anonymous namespace
