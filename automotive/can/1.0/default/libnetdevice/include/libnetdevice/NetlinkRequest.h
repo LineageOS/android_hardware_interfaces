@@ -16,9 +16,9 @@
 
 #pragma once
 
-#include "types.h"
-
 #include <android-base/macros.h>
+#include <libnetdevice/types.h>
+
 #include <linux/rtnetlink.h>
 
 #include <string>
