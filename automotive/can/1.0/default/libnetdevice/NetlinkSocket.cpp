@@ -118,7 +118,7 @@ bool NetlinkSocket::receiveAck() {
         // Found error/ack message, return status.
         auto nlerr = reinterpret_cast<struct nlmsgerr*>(NLMSG_DATA(nlmsg));
         if (nlerr->error != 0) {
-            LOG(ERROR) << "Received Netlink error message: " << nlerr->error;
+            LOG(ERROR) << "Received Netlink error message: " << strerror(-nlerr->error);
             return false;
         }
         return true;
