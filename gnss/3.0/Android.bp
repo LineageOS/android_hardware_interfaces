@@ -3,9 +3,6 @@
 hidl_interface {
     name: "android.hardware.gnss@3.0",
     root: "android.hardware",
-    vndk: {
-        enabled: true,
-    },
     srcs: [
         "IGnss.hal",
         "IGnssPsds.hal",
