@@ -16,9 +16,8 @@
 
 #pragma once
 
-#include "types.h"
-
 #include <libnetdevice/nlbuf.h>
+#include <libnetdevice/types.h>
 
 #include <map>
 #include <sstream>
