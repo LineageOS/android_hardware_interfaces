@@ -3,9 +3,6 @@
 hidl_interface {
     name: "android.hardware.secure_element@1.2",
     root: "android.hardware",
-    vndk: {
-        enabled: true,
-    },
     srcs: [
         "ISecureElement.hal",
     ],

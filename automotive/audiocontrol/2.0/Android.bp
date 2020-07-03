@@ -3,9 +3,6 @@
 hidl_interface {
     name: "android.hardware.automotive.audiocontrol@2.0",
     root: "android.hardware",
-    vndk: {
-        enabled: true,
-    },
     srcs: [
         "types.hal",
         "IAudioControl.hal",
@@ -13,8 +10,9 @@ hidl_interface {
         "IFocusListener.hal",
     ],
     interfaces: [
-        "android.hidl.base@1.0",
         "android.hardware.audio.common@6.0",
+        "android.hidl.base@1.0",
+        "android.hidl.safe_union@1.0",
     ],
     gen_java: true,
 }
