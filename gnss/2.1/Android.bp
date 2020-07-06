@@ -3,22 +3,19 @@
 hidl_interface {
     name: "android.hardware.gnss@2.1",
     root: "android.hardware",
-    vndk: {
-        enabled: true,
-    },
     srcs: [
         "types.hal",
         "IGnss.hal",
         "IGnssAntennaInfo.hal",
         "IGnssAntennaInfoCallback.hal",
         "IGnssCallback.hal",
+        "IGnssConfiguration.hal",
         "IGnssMeasurement.hal",
         "IGnssMeasurementCallback.hal",
-        "IGnssConfiguration.hal",
     ],
     interfaces: [
-        "android.hardware.gnss.measurement_corrections@1.1",
         "android.hardware.gnss.measurement_corrections@1.0",
+        "android.hardware.gnss.measurement_corrections@1.1",
         "android.hardware.gnss.visibility_control@1.0",
         "android.hardware.gnss@1.0",
         "android.hardware.gnss@1.1",
@@ -26,4 +23,5 @@ hidl_interface {
         "android.hidl.base@1.0",
     ],
     gen_java: true,
+    gen_java_constants: true,
 }

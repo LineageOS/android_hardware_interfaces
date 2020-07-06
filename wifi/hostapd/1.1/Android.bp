@@ -3,9 +3,6 @@
 hidl_interface {
     name: "android.hardware.wifi.hostapd@1.1",
     root: "android.hardware",
-    vndk: {
-        enabled: true,
-    },
     srcs: [
         "IHostapd.hal",
         "IHostapdCallback.hal",
