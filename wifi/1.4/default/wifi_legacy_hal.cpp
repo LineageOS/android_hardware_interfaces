@@ -162,6 +162,15 @@ void onAsyncRadioModeChange(wifi_request_id id, uint32_t num_macs,
     }
 }
 
+// Callback to be invoked to report subsystem restart
+std::function<void(const char*)> on_subsystem_restart_internal_callback;
+void onAsyncSubsystemRestart(const char* error) {
+    const auto lock = hidl_sync_util::acquireGlobalLock();
+    if (on_subsystem_restart_internal_callback) {
+        on_subsystem_restart_internal_callback(error);
+    }
+}
+
 // Callback to be invoked for rtt results results.
 std::function<void(wifi_request_id, unsigned num_results,
                    wifi_rtt_result* rtt_results[])>
@@ -1049,6 +1058,23 @@ wifi_error WifiLegacyHal::registerRadioModeChangeCallbackHandler(
     return status;
 }
 
+wifi_error WifiLegacyHal::registerSubsystemRestartCallbackHandler(
+    const on_subsystem_restart_callback& on_restart_callback) {
+    if (on_subsystem_restart_internal_callback) {
+        return WIFI_ERROR_NOT_AVAILABLE;
+    }
+    on_subsystem_restart_internal_callback =
+        [on_restart_callback](const char* error) {
+            on_restart_callback(error);
+        };
+    wifi_error status = global_func_table_.wifi_set_subsystem_restart_handler(
+        global_handle_, {onAsyncSubsystemRestart});
+    if (status != WIFI_SUCCESS) {
+        on_subsystem_restart_internal_callback = nullptr;
+    }
+    return status;
+}
+
 wifi_error WifiLegacyHal::startRttRangeRequest(
     const std::string& iface_name, wifi_request_id id,
     const std::vector<wifi_rtt_config>& rtt_configs,
@@ -1471,6 +1497,7 @@ void WifiLegacyHal::invalidate() {
     on_ring_buffer_data_internal_callback = nullptr;
     on_error_alert_internal_callback = nullptr;
     on_radio_mode_change_internal_callback = nullptr;
+    on_subsystem_restart_internal_callback = nullptr;
     on_rtt_results_internal_callback = nullptr;
     on_nan_notify_response_user_callback = nullptr;
     on_nan_event_publish_terminated_user_callback = nullptr;
