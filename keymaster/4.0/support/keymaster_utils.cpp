@@ -121,8 +121,8 @@ void appendUint64(std::vector<uint8_t>& vec, uint64_t value) {
 uint64_t extractUint64(const std::vector<uint8_t>& data, size_t offset) {
     uint64_t value = 0;
     for (size_t n = 0; n < sizeof(uint64_t); n++) {
-        uint8_t byte = data[offset + n];
-        value |= byte << (n * 8);
+        uint64_t tmp = data[offset + n];
+        value |= (tmp << (n * 8));
     }
     return value;
 }
@@ -137,8 +137,8 @@ void appendUint32(std::vector<uint8_t>& vec, uint32_t value) {
 uint32_t extractUint32(const std::vector<uint8_t>& data, size_t offset) {
     uint32_t value = 0;
     for (size_t n = 0; n < sizeof(uint32_t); n++) {
-        uint8_t byte = data[offset + n];
-        value |= byte << (n * 8);
+        uint32_t tmp = data[offset + n];
+        value |= (tmp << (n * 8));
     }
     return value;
 }
