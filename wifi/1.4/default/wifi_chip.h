@@ -50,13 +50,14 @@ using namespace android::hardware::wifi::V1_0;
  */
 class WifiChip : public V1_4::IWifiChip {
    public:
-    WifiChip(
-        ChipId chip_id,
-        const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal,
-        const std::weak_ptr<mode_controller::WifiModeController>
-            mode_controller,
-        const std::weak_ptr<iface_util::WifiIfaceUtil> iface_util,
-        const std::weak_ptr<feature_flags::WifiFeatureFlags> feature_flags);
+    WifiChip(ChipId chip_id,
+             const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal,
+             const std::weak_ptr<mode_controller::WifiModeController>
+                 mode_controller,
+             const std::weak_ptr<iface_util::WifiIfaceUtil> iface_util,
+             const std::weak_ptr<feature_flags::WifiFeatureFlags> feature_flags,
+             const std::function<void(const std::string&)>&
+                 subsystemCallbackHandler);
     // HIDL does not provide a built-in mechanism to let the server invalidate
     // a HIDL interface object after creation. If any client process holds onto
     // a reference to the object in their context, any method calls on that
@@ -281,6 +282,8 @@ class WifiChip : public V1_4::IWifiChip {
     bool debug_ring_buffer_cb_registered_;
     hidl_callback_util::HidlCallbackHandler<IWifiChipEventCallback>
         event_cb_handler_;
+
+    const std::function<void(const std::string&)> subsystemCallbackHandler_;
 
     DISALLOW_COPY_AND_ASSIGN(WifiChip);
 };
