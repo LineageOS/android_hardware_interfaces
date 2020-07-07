@@ -263,6 +263,8 @@ class WifiChipTest : public Test {
         return success;
     }
 
+    static void subsystemRestartHandler(const std::string& /*error*/) {}
+
     sp<WifiChip> chip_;
     ChipId chip_id_ = kFakeChipId;
     std::shared_ptr<NiceMock<wifi_system::MockInterfaceTool>> iface_tool_{
@@ -278,8 +280,9 @@ class WifiChipTest : public Test {
 
    public:
     void SetUp() override {
-        chip_ = new WifiChip(chip_id_, legacy_hal_, mode_controller_,
-                             iface_util_, feature_flags_);
+        chip_ =
+            new WifiChip(chip_id_, legacy_hal_, mode_controller_, iface_util_,
+                         feature_flags_, subsystemRestartHandler);
 
         EXPECT_CALL(*mode_controller_, changeFirmwareMode(testing::_))
             .WillRepeatedly(testing::Return(true));
