@@ -19,7 +19,7 @@ cc_library {
     relative_install_path: "hw",
     srcs: [
         "TestMsgQ.cpp",
-        "BenchmarkMsgQ.cpp"
+        "BenchmarkMsgQ.cpp",
     ],
     shared_libs: [
         "libbase",
@@ -34,7 +34,7 @@ cc_library {
     // libs should be used on device.
     static_libs: [
         "android.hardware.tests.msgq@1.0",
-    ]
+    ],
 }
 
 cc_test {
@@ -49,7 +49,7 @@ cc_test {
         "libhidlbase",
         "liblog",
         "libutils",
-        "android.hardware.tests.msgq@1.0"
+        "android.hardware.tests.msgq@1.0",
     ],
     test_suites: ["general-tests"],
 }
@@ -67,6 +67,7 @@ cc_test {
         "libhidlbase",
         "liblog",
         "libutils",
+        "libbinder_ndk",
     ],
 
     // Allow dlsym'ing self for statically linked passthrough implementations
@@ -74,7 +75,14 @@ cc_test {
 
     // These are static libs only for testing purposes and portability. Shared
     // libs should be used on device.
-    static_libs: ["android.hardware.tests.msgq@1.0"],
-    whole_static_libs: ["android.hardware.tests.msgq@1.0-impl"],
+    static_libs: [
+        "android.hardware.tests.msgq@1.0",
+        "android.fmq.test-ndk_platform",
+        "android.hardware.common-unstable-ndk_platform",
+    ],
+    whole_static_libs: [
+        "android.hardware.tests.msgq@1.0-impl",
+        "android.fmq.test-impl",
+    ],
     test_suites: ["general-tests"],
 }
