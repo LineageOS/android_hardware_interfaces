@@ -24,5 +24,6 @@ using android::hardware::tests::msgq::V1_0::ITestMsgQ;
 using android::hardware::defaultPassthroughServiceImplementation;
 
 int main() {
+    android::hardware::details::setTrebleTestingOverride(true);
     return defaultPassthroughServiceImplementation<ITestMsgQ>();
 }
