@@ -249,7 +249,7 @@ TEST_P(RadioHidlTest_v1_5, setSignalStrengthReportingCriteria_1_5_NGRAN_SSRSRQ) 
     signalThresholdInfo.signalMeasurement = SignalMeasurementType::SSRSRQ;
     signalThresholdInfo.hysteresisMs = 5000;
     signalThresholdInfo.hysteresisDb = 0;
-    signalThresholdInfo.thresholds = {-15, -10, -5, -4};
+    signalThresholdInfo.thresholds = {-43, -20, 0, 20};
     signalThresholdInfo.isEnabled = true;
 
     Return<void> res = radio_v1_5->setSignalStrengthReportingCriteria_1_5(
