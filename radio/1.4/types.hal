@@ -1847,9 +1847,9 @@ struct NrSignalStrength {
     /**
      * SS reference signal received quality, multipled by -1.
      *
-     * Reference: 3GPP TS 38.215.
+     * Reference: 3GPP TS 38.215, 3GPP TS 38.133 section 10.
      *
-     * Range [3, 20], INT_MAX means invalid/unreported.
+     * Range [-20 dB, 43 dB], INT_MAX means invalid/unreported.
      */
     int32_t ssRsrq;
 
