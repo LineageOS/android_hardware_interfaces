@@ -251,7 +251,7 @@ TEST_P(MasterHidlTest, ListRoles) {
     };
 
     // Matching rules for node names and owners
-    const testing::internal::RE nodeNamePattern = "[a-zA-Z0-9.-]+";
+    const testing::internal::RE nodeNamePattern = "[a-zA-Z0-9._-]+";
     const testing::internal::RE nodeOwnerPattern = "[a-zA-Z0-9._-]+";
 
     std::set<const std::string> roleKeys;
