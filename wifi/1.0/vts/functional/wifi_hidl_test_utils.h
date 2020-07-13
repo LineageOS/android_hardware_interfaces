@@ -31,6 +31,8 @@
 // Note: We only have a single instance of each of these objects currently.
 // These helper functions should be modified to return vectors if we support
 // multiple instances.
+android::sp<android::hardware::wifi::V1_0::IWifi> getWifi(
+    const std::string& instance_name);
 android::sp<android::hardware::wifi::V1_0::IWifiChip> getWifiChip(
     const std::string& instance_name);
 android::sp<android::hardware::wifi::V1_0::IWifiApIface> getWifiApIface(
