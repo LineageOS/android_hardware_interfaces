@@ -107,9 +107,9 @@ enum SignalMeasurementType : int32_t {
     SSRSRP = 6,
     /**
      * 5G SS reference signal received quality.
-     * Range: -20 dB to -3 dB.
+     * Range: -43 dB to 20 dB.
      * Used RAN: NGRAN
-     * Reference: 3GPP TS 38.215.
+     * Reference: 3GPP TS 38.215, 3GPP TS 38.133 section 10
      */
     SSRSRQ = 7,
     /**
