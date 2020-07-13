@@ -386,7 +386,7 @@ TEST_P(IdentityAidl, createAndRetrieveCredential) {
 
     vector<RequestNamespace> requestedNamespaces = test_utils::buildRequestNamespaces(testEntries);
     // OK to fail, not available in v1 HAL
-    credential->setRequestedNamespaces(requestedNamespaces).isOk();
+    credential->setRequestedNamespaces(requestedNamespaces);
     // OK to fail, not available in v1 HAL
     credential->setVerificationToken(verificationToken);
     ASSERT_TRUE(credential
@@ -446,7 +446,6 @@ TEST_P(IdentityAidl, createAndRetrieveCredential) {
     deviceAuthentication.add(cppbor::Semantic(24, deviceNameSpacesBytes));
     vector<uint8_t> deviceAuthenticationBytes =
             cppbor::Semantic(24, deviceAuthentication.encode()).encode();
-
     // Derive the key used for MACing.
     optional<vector<uint8_t>> readerEphemeralPrivateKey =
             support::ecKeyPairGetPrivateKey(readerEphemeralKeyPair.value());
@@ -467,6 +466,58 @@ TEST_P(IdentityAidl, createAndRetrieveCredential) {
     optional<vector<uint8_t>> calculatedMac =
             support::coseMac0(derivedKey.value(), {},      // payload
                               deviceAuthenticationBytes);  // detached content
+    ASSERT_TRUE(calculatedMac);
+    EXPECT_EQ(mac, calculatedMac);
+
+    // Also perform an additional empty request. This is what mDL applications
+    // are envisioned to do - one call to get the data elements, another to get
+    // an empty DeviceSignedItems and corresponding MAC.
+    //
+    credential->setRequestedNamespaces({});  // OK to fail, not available in v1 HAL
+    ASSERT_TRUE(credential
+                        ->startRetrieval(
+                                secureProfiles.value(), authToken, {},         // itemsRequestBytes
+                                signingKeyBlob, sessionTranscriptEncoded, {},  // readerSignature,
+                                testEntriesEntryCounts)
+                        .isOk());
+    ASSERT_TRUE(credential->finishRetrieval(&mac, &deviceNameSpacesBytes).isOk());
+    cborPretty = support::cborPrettyPrint(deviceNameSpacesBytes, 32, {});
+    ASSERT_EQ("{}", cborPretty);
+    // Calculate DeviceAuthentication and MAC (MACing key hasn't changed)
+    deviceAuthentication = cppbor::Array();
+    deviceAuthentication.add("DeviceAuthentication");
+    deviceAuthentication.add(sessionTranscript.clone());
+    deviceAuthentication.add(docType);
+    deviceAuthentication.add(cppbor::Semantic(24, deviceNameSpacesBytes));
+    deviceAuthenticationBytes = cppbor::Semantic(24, deviceAuthentication.encode()).encode();
+    calculatedMac = support::coseMac0(derivedKey.value(), {},      // payload
+                                      deviceAuthenticationBytes);  // detached content
+    ASSERT_TRUE(calculatedMac);
+    EXPECT_EQ(mac, calculatedMac);
+
+    // Some mDL apps might send a request but with a single empty
+    // namespace. Check that too.
+    RequestNamespace emptyRequestNS;
+    emptyRequestNS.namespaceName = "PersonalData";
+    credential->setRequestedNamespaces({emptyRequestNS});  // OK to fail, not available in v1 HAL
+    ASSERT_TRUE(credential
+                        ->startRetrieval(
+                                secureProfiles.value(), authToken, {},         // itemsRequestBytes
+                                signingKeyBlob, sessionTranscriptEncoded, {},  // readerSignature,
+                                testEntriesEntryCounts)
+                        .isOk());
+    ASSERT_TRUE(credential->finishRetrieval(&mac, &deviceNameSpacesBytes).isOk());
+    cborPretty = support::cborPrettyPrint(deviceNameSpacesBytes, 32, {});
+    ASSERT_EQ("{}", cborPretty);
+    // Calculate DeviceAuthentication and MAC (MACing key hasn't changed)
+    deviceAuthentication = cppbor::Array();
+    deviceAuthentication.add("DeviceAuthentication");
+    deviceAuthentication.add(sessionTranscript.clone());
+    deviceAuthentication.add(docType);
+    deviceAuthentication.add(cppbor::Semantic(24, deviceNameSpacesBytes));
+    deviceAuthenticationBytes = cppbor::Semantic(24, deviceAuthentication.encode()).encode();
+    calculatedMac = support::coseMac0(derivedKey.value(), {},      // payload
+                                      deviceAuthenticationBytes);  // detached content
     ASSERT_TRUE(calculatedMac);
     EXPECT_EQ(mac, calculatedMac);
 }
