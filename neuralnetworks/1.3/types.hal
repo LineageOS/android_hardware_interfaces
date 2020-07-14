@@ -5103,8 +5103,8 @@ enum OperationType : int32_t {
      * signature of this operation. That is, if the operation has (3 + n) inputs
      * and m outputs, both subgraphs must have n inputs and m outputs with the same
      * types, ranks, dimensions, scales,
-     * zeroPoints, and extraParams as the corresponding operation inputs and
-     * outputs.
+     * zeroPoints, and extraParams as the corresponding operation
+     * inputs and outputs.
      * All of the operands mentioned must have fully specified dimensions.
      *
      * Inputs:
@@ -5170,15 +5170,15 @@ enum OperationType : int32_t {
      * * 0: A {@link OperandType::SUBGRAPH} reference to the condition
      *      subgraph. The subgraph must have (m + k + n) inputs with
      *      the same types, ranks, dimensions,
-     *      scales, zeroPoints, and extraParams as the corresponding inputs of
-     *      the WHILE operation and exactly one output of
-     *      {@link OperandType::TENSOR_BOOL8} and shape [1].
+     *      scales, zeroPoints, and extraParams as the
+     *      corresponding inputs of the WHILE operation and exactly one output
+     *      of {@link OperandType::TENSOR_BOOL8} and shape [1].
      *      All of the operands mentioned must have fully specified dimensions.
      * * 1: A {@link OperandType::SUBGRAPH} reference to the body subgraph.
      *      The subgraph must have (m + k + n) inputs and (m + k) outputs with
      *      the same types, ranks, dimensions,
-     *      scales, zeroPoints, and extraParams as the corresponding inputs and
-     *      outputs of the WHILE operation.
+     *      scales, zeroPoints, and extraParams as the
+     *      corresponding inputs and outputs of the WHILE operation.
      *      All of the operands mentioned must have fully specified dimensions.
      * * (m inputs): Initial values for input-output operands.
      * * (k inputs): Initial values for state-only operands.
@@ -5538,15 +5538,18 @@ struct Operand {
     /**
      * Quantized scale of the operand.
      *
-     * Only applicable if the operand is of type TENSOR_QUANT8_ASYMM or
-     * TENSOR_INT32.
+     * Must be 0 when not applicable to an operand type.
+     *
+     * See {@link OperandType}.
      */
     float scale;
 
     /**
      * Quantized zero-point offset of the operand.
      *
-     * Only applicable if the operand is of type TENSOR_QUANT8_ASYMM.
+     * Must be 0 when not applicable to an operand type.
+     *
+     * See {@link OperandType}.
      */
     int32_t zeroPoint;
 
@@ -5740,8 +5743,8 @@ struct Request {
      * Input data and information to be used in the execution of a prepared
      * model.
      *
-     * The index of the input corresponds to the index in Model.inputIndexes.
-     *   E.g., input[i] corresponds to Model.inputIndexes[i].
+     * The index of the input corresponds to the index in Model.main.inputIndexes.
+     *   E.g., input[i] corresponds to Model.main.inputIndexes[i].
      */
     vec<RequestArgument> inputs;
 
@@ -5749,8 +5752,8 @@ struct Request {
      * Output data and information to be used in the execution of a prepared
      * model.
      *
-     * The index of the output corresponds to the index in Model.outputIndexes.
-     *   E.g., output[i] corresponds to Model.outputIndexes[i].
+     * The index of the output corresponds to the index in Model.main.outputIndexes.
+     *   E.g., output[i] corresponds to Model.main.outputIndexes[i].
      */
     vec<RequestArgument> outputs;
 
