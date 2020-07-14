@@ -493,16 +493,16 @@ void GraphicsComposerHidlCommandTest::Test_setActiveConfigWithConstraints(
             // At this point the refresh rate should have changed already, however in rare
             // cases the implementation might have missed the deadline. In this case a new
             // timeline should have been provided.
-            auto newTimelime = mComposerCallback->takeLastVsyncPeriodChangeTimeline();
+            auto newTimeline = mComposerCallback->takeLastVsyncPeriodChangeTimeline();
             if (timeline.refreshRequired && refreshMiss) {
-                EXPECT_TRUE(newTimelime.has_value());
+                EXPECT_TRUE(newTimeline.has_value());
             }
 
-            if (newTimelime.has_value()) {
-                if (timeline.refreshRequired) {
-                    sendRefreshFrame(&newTimelime.value());
+            if (newTimeline.has_value()) {
+                if (newTimeline->refreshRequired) {
+                    sendRefreshFrame(&newTimeline.value());
                 }
-                waitForVsyncPeriodChange(display, newTimelime.value(), constraints.desiredTimeNanos,
+                waitForVsyncPeriodChange(display, newTimeline.value(), constraints.desiredTimeNanos,
                                          vsyncPeriod1, vsyncPeriod2);
             }
 
