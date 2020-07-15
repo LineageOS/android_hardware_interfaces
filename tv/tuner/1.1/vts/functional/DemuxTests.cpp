@@ -39,3 +39,33 @@ AssertionResult DemuxTests::closeDemux() {
     mDemux = nullptr;
     return AssertionResult(status.isOk());
 }
+
+AssertionResult DemuxTests::getAvSyncId_64bit(sp<IFilter> filter, uint64_t& avSyncHwId) {
+    EXPECT_TRUE(mDemux) << "Demux is not opened yet.";
+    Result status;
+
+    sp<android::hardware::tv::tuner::V1_1::IDemux> demux_v1_1 =
+            android::hardware::tv::tuner::V1_1::IDemux::castFrom(mDemux);
+    if (demux_v1_1 != NULL) {
+        demux_v1_1->getAvSyncHwId64Bit(filter, [&](Result result, uint64_t id) {
+            status = result;
+            avSyncHwId = id;
+        });
+    } else {
+        ALOGW("[vts] Can't cast IDemux into v1_1.");
+        return failure();
+    }
+
+    return AssertionResult(status == Result::SUCCESS);
+}
+
+AssertionResult DemuxTests::getAvSyncTime(uint32_t avSyncId) {
+    EXPECT_TRUE(mDemux) << "Demux is not opened yet.";
+    Result status;
+    uint64_t syncTime;
+    mDemux->getAvSyncTime(avSyncId, [&](Result result, uint64_t time) {
+        status = result;
+        syncTime = time;
+    });
+    return AssertionResult(status == Result::SUCCESS);
+}

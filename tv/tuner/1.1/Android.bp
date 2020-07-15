@@ -6,6 +6,7 @@ hidl_interface {
     srcs: [
         "IFilter.hal",
         "ITuner.hal",
+        "IDemux.hal",
     ],
     interfaces: [
         "android.hidl.base@1.0",
