@@ -23,8 +23,6 @@
 
 #include <android/hardware/graphics/bufferqueue/1.0/IGraphicBufferProducer.h>
 #include <android/hardware/graphics/bufferqueue/1.0/IProducerListener.h>
-#include <android/hardware/graphics/mapper/2.0/IMapper.h>
-#include <android/hardware/graphics/mapper/2.0/types.h>
 #include <android/hardware/media/omx/1.0/IGraphicBufferSource.h>
 #include <android/hardware/media/omx/1.0/IOmx.h>
 #include <android/hardware/media/omx/1.0/IOmxBufferSource.h>
@@ -364,61 +362,6 @@ Return<void> DummyBufferSource::onInputBufferEmptied(
     return Void();
 };
 
-// Variant of mappers
-struct MapperV2 : public GrallocV2 {
-    sp<IMapper> mMapper;
-    MapperV2(sp<IMapper>&& mapper): mMapper{std::move(mapper)} {}
-    MapperV2() = default;
-    android::hardware::Return<void> lock(
-            void* buffer,
-            Usage usage,
-            const Rect& rect,
-            const android::hardware::hidl_handle& handle,
-            Error* error,
-            void** data) {
-        return mMapper->lock(buffer, usage, rect, handle,
-                             [error, data](Error e, void* d) {
-                                *error = e;
-                                *data = d;
-                             });
-    }
-};
-struct MapperV3 : public GrallocV3 {
-    sp<IMapper> mMapper;
-    MapperV3(sp<IMapper>&& mapper): mMapper{std::move(mapper)} {}
-    MapperV3() = default;
-    android::hardware::Return<void> lock(
-            void* buffer,
-            Usage usage,
-            const Rect& rect,
-            const android::hardware::hidl_handle& handle,
-            Error* error,
-            void** data) {
-        return mMapper->lock(buffer, usage, rect, handle,
-                             [error, data](Error e, void* d, int32_t, int32_t) {
-                                *error = e;
-                                *data = d;
-                             });
-    }
-};
-using MapperVar = std::variant<MapperV2, MapperV3>;
-// Initializes the MapperVar by trying services of different versions.
-bool initialize(MapperVar& mapperVar) {
-    sp<android::hardware::graphics::mapper::V3_0::IMapper> mapper3 =
-        android::hardware::graphics::mapper::V3_0::IMapper::getService();
-    if (mapper3) {
-        mapperVar.emplace<MapperV3>(std::move(mapper3));
-        return true;
-    }
-    sp<android::hardware::graphics::mapper::V2_0::IMapper> mapper2 =
-        android::hardware::graphics::mapper::V2_0::IMapper::getService();
-    if (mapper2) {
-        mapperVar.emplace<MapperV2>(std::move(mapper2));
-        return true;
-    }
-    return false;
-}
-
 // request VOP refresh
 void requestIDR(sp<IOmxNode> omxNode, OMX_U32 portIndex) {
     android::hardware::media::omx::V1_0::Status status;
@@ -627,168 +570,113 @@ void waitOnInputConsumption(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
     }
 }
 
-int colorFormatConversion(BufferInfo* buffer, void* buff, PixelFormat format,
+int colorFormatConversion(BufferInfo* buffer, buffer_handle_t buff, PixelFormat format,
                           std::ifstream& eleStream) {
-    MapperVar mapperVar;
-    if (!initialize(mapperVar)) {
-        EXPECT_TRUE(false) << "failed to obtain mapper service";
-        return 1;
+    android::GraphicBufferMapper& gbmapper = android::GraphicBufferMapper::get();
+
+    android::Rect rect(0, 0, buffer->omxBuffer.attr.anwBuffer.width,
+                       buffer->omxBuffer.attr.anwBuffer.height);
+    android_ycbcr ycbcrLayout;
+    android::status_t error = android::NO_ERROR;
+
+    if (format == PixelFormat::YV12 || format == PixelFormat::YCRCB_420_SP ||
+        format == PixelFormat::YCBCR_420_888) {
+        error = gbmapper.lockYCbCr(buff, buffer->omxBuffer.attr.anwBuffer.usage, rect,
+                                   &ycbcrLayout);
+        EXPECT_EQ(error, android::NO_ERROR);
+        if (error != android::NO_ERROR) return 1;
+
+        int size = ((rect.getWidth() * rect.getHeight() * 3) >> 1);
+        char* img = new char[size];
+        if (img == nullptr) return 1;
+        eleStream.read(img, size);
+        if (eleStream.gcount() != size) {
+            delete[] img;
+            return 1;
+        }
+
+        char* imgTmp = img;
+        char* ipBuffer = static_cast<char*>(ycbcrLayout.y);
+        for (size_t y = rect.getHeight(); y > 0; --y) {
+            memcpy(ipBuffer, imgTmp, rect.getWidth());
+            ipBuffer += ycbcrLayout.ystride;
+            imgTmp += rect.getWidth();
+        }
+
+        if (format == PixelFormat::YV12)
+            EXPECT_EQ(ycbcrLayout.chroma_step, 1U);
+        else if (format == PixelFormat::YCRCB_420_SP)
+            EXPECT_EQ(ycbcrLayout.chroma_step, 2U);
+
+        ipBuffer = static_cast<char*>(ycbcrLayout.cb);
+        for (size_t y = rect.getHeight() >> 1; y > 0; --y) {
+            for (int32_t x = 0; x < (rect.getWidth() >> 1); ++x) {
+                ipBuffer[ycbcrLayout.chroma_step * x] = *imgTmp++;
+            }
+            ipBuffer += ycbcrLayout.cstride;
+        }
+        ipBuffer = static_cast<char*>(ycbcrLayout.cr);
+        for (size_t y = rect.getHeight() >> 1; y > 0; --y) {
+            for (int32_t x = 0; x < (rect.getWidth() >> 1); ++x) {
+                ipBuffer[ycbcrLayout.chroma_step * x] = *imgTmp++;
+            }
+            ipBuffer += ycbcrLayout.cstride;
+        }
+
+        delete[] img;
+
+        error = gbmapper.unlock(buff);
+        EXPECT_EQ(error, android::NO_ERROR);
+        if (error != android::NO_ERROR) return 1;
+    } else {
+        void* data;
+        int32_t outBytesPerPixel;
+        int32_t outBytesPerStride;
+        error = gbmapper.lock(buff, buffer->omxBuffer.attr.anwBuffer.usage, rect, &data,
+                              &outBytesPerPixel, &outBytesPerStride);
+        EXPECT_EQ(error, android::NO_ERROR);
+        if (error != android::NO_ERROR) return 1;
+
+        if (format == PixelFormat::BGRA_8888) {
+            char* ipBuffer = static_cast<char*>(data);
+            for (size_t y = rect.getHeight(); y > 0; --y) {
+                eleStream.read(ipBuffer, rect.getWidth() * 4);
+                if (eleStream.gcount() != rect.getWidth() * 4) return 1;
+                ipBuffer += buffer->omxBuffer.attr.anwBuffer.stride * 4;
+            }
+        } else {
+            EXPECT_TRUE(false) << "un expected pixel format";
+            return 1;
+        }
+
+        error = gbmapper.unlock(buff);
+        EXPECT_EQ(error, android::NO_ERROR);
+        if (error != android::NO_ERROR) return 1;
     }
 
-    return std::visit([buffer, buff, format, &eleStream](auto&& mapper) -> int {
-            using Gralloc = std::remove_reference_t<decltype(mapper)>;
-            using Error = typename Gralloc::Error;
-            using Rect = typename Gralloc::Rect;
-            using Usage = typename Gralloc::Usage;
-            using YCbCrLayout = typename Gralloc::YCbCrLayout;
-
-            android::hardware::hidl_handle fence;
-            Rect rect;
-            YCbCrLayout ycbcrLayout;
-            Error error;
-            rect.left = 0;
-            rect.top = 0;
-            rect.width = buffer->omxBuffer.attr.anwBuffer.width;
-            rect.height = buffer->omxBuffer.attr.anwBuffer.height;
-
-            if (format == PixelFormat::YV12 || format == PixelFormat::YCRCB_420_SP ||
-                format == PixelFormat::YCBCR_420_888) {
-                mapper.mMapper->lockYCbCr(
-                        buff,
-                        static_cast<Usage>(
-                            buffer->omxBuffer.attr.anwBuffer.usage),
-                        rect,
-                        fence,
-                        [&](Error _e,
-                            const YCbCrLayout& _n1) {
-                            error = _e;
-                            ycbcrLayout = _n1;
-                        });
-                EXPECT_EQ(error, Error::NONE);
-                if (error != Error::NONE)
-                    return 1;
-
-                int size = ((rect.width * rect.height * 3) >> 1);
-                char* img = new char[size];
-                if (img == nullptr) return 1;
-                eleStream.read(img, size);
-                if (eleStream.gcount() != size) {
-                    delete[] img;
-                    return 1;
-                }
-
-                char* imgTmp = img;
-                char* ipBuffer = static_cast<char*>(ycbcrLayout.y);
-                for (size_t y = rect.height; y > 0; --y) {
-                    memcpy(ipBuffer, imgTmp, rect.width);
-                    ipBuffer += ycbcrLayout.yStride;
-                    imgTmp += rect.width;
-                }
-
-                if (format == PixelFormat::YV12)
-                    EXPECT_EQ(ycbcrLayout.chromaStep, 1U);
-                else if (format == PixelFormat::YCRCB_420_SP)
-                    EXPECT_EQ(ycbcrLayout.chromaStep, 2U);
-
-                ipBuffer = static_cast<char*>(ycbcrLayout.cb);
-                for (size_t y = rect.height >> 1; y > 0; --y) {
-                    for (int32_t x = 0; x < (rect.width >> 1); ++x) {
-                        ipBuffer[ycbcrLayout.chromaStep * x] = *imgTmp++;
-                    }
-                    ipBuffer += ycbcrLayout.cStride;
-                }
-                ipBuffer = static_cast<char*>(ycbcrLayout.cr);
-                for (size_t y = rect.height >> 1; y > 0; --y) {
-                    for (int32_t x = 0; x < (rect.width >> 1); ++x) {
-                        ipBuffer[ycbcrLayout.chromaStep * x] = *imgTmp++;
-                    }
-                    ipBuffer += ycbcrLayout.cStride;
-                }
-
-                delete[] img;
-
-                mapper.mMapper->unlock(buff,
-                               [&](Error _e,
-                                   const android::hardware::hidl_handle& _n1) {
-                                   error = _e;
-                                   fence = _n1;
-                               });
-                EXPECT_EQ(error, Error::NONE);
-                if (error != Error::NONE)
-                    return 1;
-            } else {
-                void* data;
-                mapper.lock(
-                        buff,
-                        buffer->omxBuffer.attr.anwBuffer.usage,
-                        rect,
-                        fence,
-                        &error,
-                        &data);
-                EXPECT_EQ(error, Error::NONE);
-                if (error != Error::NONE)
-                    return 1;
-
-                if (format == PixelFormat::BGRA_8888) {
-                    char* ipBuffer = static_cast<char*>(data);
-                    for (size_t y = rect.height; y > 0; --y) {
-                        eleStream.read(ipBuffer, rect.width * 4);
-                        if (eleStream.gcount() != rect.width * 4) return 1;
-                        ipBuffer += buffer->omxBuffer.attr.anwBuffer.stride * 4;
-                    }
-                } else {
-                    EXPECT_TRUE(false) << "un expected pixel format";
-                    return 1;
-                }
-
-                mapper.mMapper->unlock(
-                        buff,
-                        [&](Error _e, const android::hardware::hidl_handle& _n1) {
-                            error = _e;
-                            fence = _n1;
-                        });
-                EXPECT_EQ(error, Error::NONE);
-                if (error != Error::NONE)
-                    return 1;
-            }
-
-            return 0;
-        }, mapperVar);
+    return 0;
 }
 
 int fillGraphicBuffer(BufferInfo* buffer, PixelFormat format,
                       std::ifstream& eleStream) {
-    MapperVar mapperVar;
-    if (!initialize(mapperVar)) {
-        EXPECT_TRUE(false) << "failed to obtain mapper service";
-        return 1;
-    }
+    android::GraphicBufferMapper& gbmapper = android::GraphicBufferMapper::get();
+    buffer_handle_t buff;
+    android::status_t error = android::NO_ERROR;
+    gbmapper.importBuffer(
+            buffer->omxBuffer.nativeHandle, buffer->omxBuffer.attr.anwBuffer.width,
+            buffer->omxBuffer.attr.anwBuffer.height, buffer->omxBuffer.attr.anwBuffer.layerCount,
+            static_cast<android::PixelFormat>(format), buffer->omxBuffer.attr.anwBuffer.usage,
+            buffer->omxBuffer.attr.anwBuffer.stride, &buff);
+    EXPECT_EQ(error, android::NO_ERROR);
+    if (error != android::NO_ERROR) return 1;
 
-    return std::visit([buffer, format, &eleStream](auto&& mapper) -> int {
-            using Gralloc = std::remove_reference_t<decltype(mapper)>;
-            using Error = typename Gralloc::Error;
+    if (colorFormatConversion(buffer, buff, format, eleStream)) return 1;
 
-            void* buff = nullptr;
-            Error error;
-            mapper.mMapper->importBuffer(
-                buffer->omxBuffer.nativeHandle,
-                [&](Error _e, void* _n1) {
-                    error = _e;
-                    buff = _n1;
-                });
-            EXPECT_EQ(error, Error::NONE);
-            if (error != Error::NONE)
-                return 1;
+    error = gbmapper.freeBuffer(buff);
+    EXPECT_EQ(error, android::NO_ERROR);
+    if (error != android::NO_ERROR) return 1;
 
-            if (colorFormatConversion(buffer, buff, format, eleStream)) return 1;
-
-            error = mapper.mMapper->freeBuffer(buff);
-            EXPECT_EQ(error, Error::NONE);
-            if (error != Error::NONE)
-                return 1;
-
-            return 0;
-        }, mapperVar);
+    return 0;
 }
 
 int dispatchGraphicBuffer(sp<IOmxNode> omxNode,

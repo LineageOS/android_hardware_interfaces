@@ -21,12 +21,6 @@
 
 #include <android-base/logging.h>
 
-#include <android/hardware/graphics/allocator/2.0/IAllocator.h>
-#include <android/hardware/graphics/allocator/3.0/IAllocator.h>
-#include <android/hardware/graphics/mapper/2.0/IMapper.h>
-#include <android/hardware/graphics/mapper/2.0/types.h>
-#include <android/hardware/graphics/mapper/3.0/IMapper.h>
-#include <android/hardware/graphics/mapper/3.0/types.h>
 #include <android/hardware/media/omx/1.0/IOmx.h>
 #include <android/hardware/media/omx/1.0/IOmxNode.h>
 #include <android/hardware/media/omx/1.0/IOmxObserver.h>
@@ -199,42 +193,6 @@ void allocateGraphicBuffers(sp<IOmxNode> omxNode, OMX_U32 portIndex,
                             BufferInfo* buffer, uint32_t nFrameWidth,
                             uint32_t nFrameHeight, int32_t* nStride,
                             int format) {
-    struct AllocatorV2 : public GrallocV2 {
-        sp<IAllocator> mAllocator;
-        sp<IMapper> mMapper;
-        AllocatorV2(sp<IAllocator>&& allocator, sp<IMapper>&& mapper)
-              : mAllocator{std::move(allocator)}, mMapper{std::move(mapper)} {}
-        AllocatorV2() = default;
-    };
-    struct AllocatorV3 : public GrallocV3 {
-        sp<IAllocator> mAllocator;
-        sp<IMapper> mMapper;
-        AllocatorV3(sp<IAllocator>&& allocator, sp<IMapper>&& mapper)
-              : mAllocator{std::move(allocator)}, mMapper{std::move(mapper)} {}
-        AllocatorV3() = default;
-    };
-    std::variant<AllocatorV2, AllocatorV3> grallocVar;
-
-    sp<android::hardware::graphics::mapper::V2_0::IMapper> mapper2{};
-    sp<android::hardware::graphics::mapper::V3_0::IMapper> mapper3{};
-    sp<android::hardware::graphics::allocator::V2_0::IAllocator> allocator2{};
-    sp<android::hardware::graphics::allocator::V3_0::IAllocator> allocator3 =
-        android::hardware::graphics::allocator::V3_0::IAllocator::getService();
-    if (allocator3) {
-        mapper3 =
-            android::hardware::graphics::mapper::V3_0::IMapper::getService();
-        ASSERT_NE(nullptr, mapper3.get());
-        grallocVar.emplace<AllocatorV3>(std::move(allocator3), std::move(mapper3));
-    } else {
-        allocator2 =
-            android::hardware::graphics::allocator::V2_0::IAllocator::getService();
-        ASSERT_NE(nullptr, allocator2.get());
-        mapper2 =
-            android::hardware::graphics::mapper::V2_0::IMapper::getService();
-        ASSERT_NE(nullptr, allocator2.get());
-        grallocVar.emplace<AllocatorV2>(std::move(allocator2), std::move(mapper2));
-    }
-
     android::hardware::media::omx::V1_0::Status status{};
     uint64_t usage{};
     ASSERT_TRUE(omxNode->getGraphicBufferUsage(
@@ -246,57 +204,27 @@ void allocateGraphicBuffers(sp<IOmxNode> omxNode, OMX_U32 portIndex,
         }).isOk());
     ASSERT_EQ(status, android::hardware::media::omx::V1_0::Status::OK);
 
+    uint32_t stride;
+    buffer_handle_t handle = nullptr;
+    android::GraphicBufferAllocator& allocator = android::GraphicBufferAllocator::get();
+    android::status_t error = allocator.allocate(
+            nFrameWidth, nFrameHeight, static_cast<android::PixelFormat>(format), 1,
+            usage | BufferUsage::CPU_READ_OFTEN, &handle, &stride, "omx_vts_common");
+
+    ASSERT_EQ(error, android::NO_ERROR);
+    ASSERT_NE(handle, nullptr);
+
+    *nStride = static_cast<int32_t>(stride);
+    buffer->omxBuffer.nativeHandle = handle;
+    buffer->omxBuffer.attr.anwBuffer.width = nFrameWidth;
+    buffer->omxBuffer.attr.anwBuffer.height = nFrameHeight;
+    buffer->omxBuffer.attr.anwBuffer.stride = stride;
+    buffer->omxBuffer.attr.anwBuffer.format = static_cast<PixelFormat>(format);
+    buffer->omxBuffer.attr.anwBuffer.usage = usage | BufferUsage::CPU_READ_OFTEN;
+    buffer->omxBuffer.attr.anwBuffer.layerCount = 1;
     static std::atomic_int32_t bufferIdCounter{0};
-
-    std::visit([buffer, nFrameWidth, nFrameHeight, format, usage, nStride](auto&& gralloc) {
-            using Gralloc = std::remove_reference_t<decltype(gralloc)>;
-            using Descriptor = typename Gralloc::Descriptor;
-            using DescriptorInfo = typename Gralloc::DescriptorInfo;
-            using Error = typename Gralloc::Error;
-            using Format = typename Gralloc::Format;
-            using Usage = typename Gralloc::Usage;
-
-            Error error{};
-            Descriptor descriptor{};
-
-            DescriptorInfo descriptorInfo{};
-            descriptorInfo.width = nFrameWidth;
-            descriptorInfo.height = nFrameHeight;
-            descriptorInfo.layerCount = 1;
-            descriptorInfo.format = static_cast<Format>(format);
-            descriptorInfo.usage = usage | Usage(BufferUsage::CPU_READ_OFTEN);
-
-            gralloc.mMapper->createDescriptor(descriptorInfo,
-                    [&error, &descriptor](
-                        Error _s,
-                        const Descriptor& _n1) {
-                    error = _s;
-                    descriptor = _n1;
-                });
-            ASSERT_EQ(error, Error::NONE);
-
-            gralloc.mAllocator->allocate(
-                descriptor, 1,
-                [&](Error _s, uint32_t _n1,
-                    const ::android::hardware::hidl_vec<
-                        ::android::hardware::hidl_handle>& _n2) {
-                    ASSERT_EQ(Error::NONE, _s);
-                    *nStride = _n1;
-                    buffer->omxBuffer.nativeHandle = _n2[0];
-                    buffer->omxBuffer.attr.anwBuffer.width = nFrameWidth;
-                    buffer->omxBuffer.attr.anwBuffer.height = nFrameHeight;
-                    buffer->omxBuffer.attr.anwBuffer.stride = _n1;
-                    buffer->omxBuffer.attr.anwBuffer.format =
-                        static_cast<PixelFormat>(descriptorInfo.format);
-                    buffer->omxBuffer.attr.anwBuffer.usage =
-                        static_cast<uint32_t>(descriptorInfo.usage);
-                    buffer->omxBuffer.attr.anwBuffer.layerCount =
-                        descriptorInfo.layerCount;
-                    buffer->omxBuffer.attr.anwBuffer.id =
-                        (static_cast<uint64_t>(getpid()) << 32) |
-                        bufferIdCounter.fetch_add(1, std::memory_order_relaxed);
-                });
-        }, grallocVar);
+    buffer->omxBuffer.attr.anwBuffer.id = (static_cast<uint64_t>(getpid()) << 32) |
+                                          bufferIdCounter.fetch_add(1, std::memory_order_relaxed);
 }
 
 // allocate buffers needed on a component port
