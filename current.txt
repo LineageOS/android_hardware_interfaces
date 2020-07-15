@@ -652,6 +652,8 @@ b809193970a91ca637a4b0184767315601d32e3ef3d5992ffbc7a8d14a14f015 android.hardwar
 
 # ABI preserving changes to HALs during Android S
 cd84ab19c590e0e73dd2307b591a3093ee18147ef95e6d5418644463a6620076 android.hardware.neuralnetworks@1.2::IDevice
+38d65fb20c60a5b823298560fc0825457ecdc49603a4b4e94bf81511790737da android.hardware.radio@1.4::types
+954c334efd80e8869b66d1ce5fe2755712d96ba4b3c38d415739c330af5fb4cb android.hardware.radio@1.5::types
 
 # HALs released in Android S
 # NOTE: waiting to freeze HALs until later in the release
