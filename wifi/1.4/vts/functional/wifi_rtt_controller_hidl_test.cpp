@@ -225,8 +225,8 @@ TEST_P(WifiRttControllerHidlTest, EnableResponder_1_4) {
     int cmdId = 55;
     WifiChannelInfo channelInfo;
     channelInfo.width = WifiChannelWidthInMhz::WIDTH_80;
-    channelInfo.centerFreq = 5690;
-    channelInfo.centerFreq0 = 5690;
+    channelInfo.centerFreq = 5660;
+    channelInfo.centerFreq0 = 5660;
     channelInfo.centerFreq1 = 0;
 
     // Get the responder first
