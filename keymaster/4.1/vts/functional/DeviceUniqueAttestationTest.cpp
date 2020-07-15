@@ -184,9 +184,11 @@ TEST_P(DeviceUniqueAttestationTest, StrongBoxOnly) {
     EXPECT_EQ(ErrorCode::UNIMPLEMENTED,
               convert(AttestKey(
                       AuthorizationSetBuilder()
+                              .Authorization(TAG_DEVICE_UNIQUE_ATTESTATION)
                               .Authorization(TAG_ATTESTATION_CHALLENGE, HidlBuf("challenge"))
                               .Authorization(TAG_ATTESTATION_APPLICATION_ID, HidlBuf("foo")),
                       &cert_chain)));
+    CheckedDeleteKey();
 }
 
 TEST_P(DeviceUniqueAttestationTest, Rsa) {
