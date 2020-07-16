@@ -201,8 +201,12 @@ class GraphicsComposerHidlCommandTest : public GraphicsComposerHidlTest {
 
     void execute() { mComposerClient->execute(mReader.get(), mWriter.get()); }
 
-    void Test_setActiveConfigWithConstraints(
-            const IComposerClient::VsyncPeriodChangeConstraints& constraints, bool refreshMiss);
+    struct TestParameters {
+        nsecs_t delayForChange;
+        bool refreshMiss;
+    };
+
+    void Test_setActiveConfigWithConstraints(const TestParameters& params);
 
     void sendRefreshFrame(const VsyncPeriodChangeTimeline*);
 
@@ -453,9 +457,7 @@ void GraphicsComposerHidlCommandTest::waitForVsyncPeriodChange(
 }
 
 void GraphicsComposerHidlCommandTest::Test_setActiveConfigWithConstraints(
-        const IComposerClient::VsyncPeriodChangeConstraints& constraints, bool refreshMiss) {
-    VsyncPeriodChangeTimeline timeline = {};
-
+        const TestParameters& params) {
     for (Display display : mComposerCallback->getDisplays()) {
         forEachTwoConfigs(display, [&](Config config1, Config config2) {
             mComposerClient->setActiveConfig(display, config1);
@@ -470,6 +472,10 @@ void GraphicsComposerHidlCommandTest::Test_setActiveConfigWithConstraints(
                 return;  // continue
             }
 
+            VsyncPeriodChangeTimeline timeline;
+            IComposerClient::VsyncPeriodChangeConstraints constraints = {
+                    .desiredTimeNanos = systemTime() + params.delayForChange,
+                    .seamlessRequired = false};
             EXPECT_EQ(Error::NONE, mComposerClient->setActiveConfigWithConstraints(
                                            display, config2, constraints, &timeline));
 
@@ -480,7 +486,7 @@ void GraphicsComposerHidlCommandTest::Test_setActiveConfigWithConstraints(
                         kReasonableTimeForChange.count());
 
             if (timeline.refreshRequired) {
-                if (refreshMiss) {
+                if (params.refreshMiss) {
                     // Miss the refresh frame on purpose to make sure the implementation sends a
                     // callback
                     std::this_thread::sleep_until(toTimePoint(timeline.refreshTimeNanos) + 100ms);
@@ -494,7 +500,7 @@ void GraphicsComposerHidlCommandTest::Test_setActiveConfigWithConstraints(
             // cases the implementation might have missed the deadline. In this case a new
             // timeline should have been provided.
             auto newTimeline = mComposerCallback->takeLastVsyncPeriodChangeTimeline();
-            if (timeline.refreshRequired && refreshMiss) {
+            if (timeline.refreshRequired && params.refreshMiss) {
                 EXPECT_TRUE(newTimeline.has_value());
             }
 
@@ -515,28 +521,16 @@ void GraphicsComposerHidlCommandTest::Test_setActiveConfigWithConstraints(
 }
 
 TEST_P(GraphicsComposerHidlCommandTest, setActiveConfigWithConstraints) {
-    IComposerClient::VsyncPeriodChangeConstraints constraints;
-
-    constraints.seamlessRequired = false;
-    constraints.desiredTimeNanos = systemTime();
-    Test_setActiveConfigWithConstraints(constraints, false);
+    Test_setActiveConfigWithConstraints({.delayForChange = 0, .refreshMiss = false});
 }
 
 TEST_P(GraphicsComposerHidlCommandTest, setActiveConfigWithConstraints_Delayed) {
-    IComposerClient::VsyncPeriodChangeConstraints constraints;
-
-    constexpr nsecs_t kDelayForChange = 300'000'000;  // 300ms
-    constraints.seamlessRequired = false;
-    constraints.desiredTimeNanos = systemTime() + kDelayForChange;
-    Test_setActiveConfigWithConstraints(constraints, false);
+    Test_setActiveConfigWithConstraints({.delayForChange = 300'000'000,  // 300ms
+                                         .refreshMiss = false});
 }
 
 TEST_P(GraphicsComposerHidlCommandTest, setActiveConfigWithConstraints_MissRefresh) {
-    IComposerClient::VsyncPeriodChangeConstraints constraints;
-
-    constraints.seamlessRequired = false;
-    constraints.desiredTimeNanos = systemTime();
-    Test_setActiveConfigWithConstraints(constraints, true);
+    Test_setActiveConfigWithConstraints({.delayForChange = 0, .refreshMiss = true});
 }
 
 TEST_P(GraphicsComposerHidlTest, setAutoLowLatencyModeBadDisplay) {
