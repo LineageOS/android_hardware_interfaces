@@ -149,6 +149,44 @@ AssertionResult FilterTests::openFilterInDemux(DemuxFilterType type, uint32_t bu
     return AssertionResult(status == Result::SUCCESS);
 }
 
+AssertionResult FilterTests::openTimeFilterInDemux() {
+    if (!mDemux) {
+        ALOGW("[vts] Test with openDemux first.");
+        return failure();
+    }
+
+    // Add time filter to the local demux
+    Result status;
+    mDemux->openTimeFilter([&](Result result, const sp<ITimeFilter>& filter) {
+        mTimeFilter = filter;
+        status = result;
+    });
+
+    return AssertionResult(status == Result::SUCCESS);
+}
+
+AssertionResult FilterTests::setTimeStamp(uint64_t timeStamp) {
+    if (!mTimeFilter) {
+        ALOGW("[vts] Test with openTimeFilterInDemux first.");
+        return failure();
+    }
+
+    mBeginTimeStamp = timeStamp;
+    return AssertionResult(mTimeFilter->setTimeStamp(timeStamp) == Result::SUCCESS);
+}
+
+AssertionResult FilterTests::getTimeStamp() {
+    if (!mTimeFilter) {
+        ALOGW("[vts] Test with openTimeFilterInDemux first.");
+        return failure();
+    }
+
+    Result status;
+    mTimeFilter->getTimeStamp([&](Result result, uint64_t /*timeStamp*/) { status = result; });
+
+    return AssertionResult(status == Result::SUCCESS);
+}
+
 AssertionResult FilterTests::getNewlyOpenedFilterId(uint32_t& filterId) {
     Result status;
     EXPECT_TRUE(mDemux) << "Test with openDemux first.";
@@ -197,6 +235,26 @@ AssertionResult FilterTests::getFilterMQDescriptor(uint32_t filterId) {
     return AssertionResult(status == Result::SUCCESS);
 }
 
+AssertionResult FilterTests::setFilterDataSource(uint32_t sourceFilterId, uint32_t sinkFilterId) {
+    if (!mFilters[sourceFilterId] || !mFilters[sinkFilterId]) {
+        ALOGE("[vts] setFilterDataSource filter not opened.");
+        return failure();
+    }
+
+    auto status = mFilters[sinkFilterId]->setDataSource(mFilters[sourceFilterId]);
+    return AssertionResult(status == Result::SUCCESS);
+}
+
+AssertionResult FilterTests::setFilterDataSourceToDemux(uint32_t filterId) {
+    if (!mFilters[filterId]) {
+        ALOGE("[vts] setFilterDataSourceToDemux filter not opened.");
+        return failure();
+    }
+
+    auto status = mFilters[filterId]->setDataSource(NULL);
+    return AssertionResult(status == Result::SUCCESS);
+}
+
 AssertionResult FilterTests::startFilter(uint32_t filterId) {
     EXPECT_TRUE(mFilters[filterId]) << "Test with getNewlyOpenedFilterId first.";
     Result status = mFilters[filterId]->start();
@@ -207,6 +265,15 @@ AssertionResult FilterTests::stopFilter(uint32_t filterId) {
     EXPECT_TRUE(mFilters[filterId]) << "Test with getNewlyOpenedFilterId first.";
     Result status = mFilters[filterId]->stop();
     return AssertionResult(status == Result::SUCCESS);
+}
+
+AssertionResult FilterTests::clearTimeStamp() {
+    if (!mTimeFilter) {
+        ALOGW("[vts] Test with openTimeFilterInDemux first.");
+        return failure();
+    }
+
+    return AssertionResult(mTimeFilter->clearTimeStamp() == Result::SUCCESS);
 }
 
 AssertionResult FilterTests::closeFilter(uint32_t filterId) {
@@ -223,4 +290,13 @@ AssertionResult FilterTests::closeFilter(uint32_t filterId) {
         mFilters.erase(filterId);
     }
     return AssertionResult(status == Result::SUCCESS);
+}
+
+AssertionResult FilterTests::closeTimeFilter() {
+    if (!mTimeFilter) {
+        ALOGW("[vts] Test with openTimeFilterInDemux first.");
+        return failure();
+    }
+
+    return AssertionResult(mTimeFilter->close() == Result::SUCCESS);
 }

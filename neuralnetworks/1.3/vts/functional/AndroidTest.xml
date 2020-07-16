@@ -26,10 +26,6 @@
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.GTest" >
-        <!-- b/156691406, b/155577050, b/155674368, b/153876253, temporarily disable the test.
-             Must be deleted after corresponding driver issues are fixed.
-        -->
-        <option name="native-test-flag" value="--gtest_filter=-*Validation*:*DynamicOutputShapeTest*:*FencedComputeTest*:*MemoryDomain*:*QuantizationCouplingTest*:*DeadlineTest*:*resize_*_v1_3*:*squeeze*_all*_inputs*:*strided_slice*_all*_inputs*:*transpose*_all*_inputs*:*l2_normalization_axis_corner_case*:*sample_float_fast*:*sample_float_slow*:*sample_minimal*:*sample_quant*" />
         <option name="native-test-device-path" value="/data/local/tmp" />
         <option name="module-name" value="VtsHalNeuralnetworksV1_3TargetTest" />
     </test>

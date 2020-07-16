@@ -39,6 +39,10 @@ using ::std::optional;
 using namespace ::android::hardware::identity;
 
 int IdentityCredential::initialize() {
+    if (credentialData_.size() == 0) {
+        LOG(ERROR) << "CredentialData is empty";
+        return IIdentityCredentialStore::STATUS_INVALID_DATA;
+    }
     auto [item, _, message] = cppbor::parse(credentialData_);
     if (item == nullptr) {
         LOG(ERROR) << "CredentialData is not valid CBOR: " << message;
@@ -164,6 +168,7 @@ ndk::ScopedAStatus IdentityCredential::createAuthChallenge(int64_t* outChallenge
     }
 
     *outChallenge = challenge;
+    authChallenge_ = challenge;
     return ndk::ScopedAStatus::ok();
 }
 
@@ -223,7 +228,8 @@ bool checkUserAuthentication(const SecureAccessControlProfile& profile,
         }
 
         if (authToken.challenge != int64_t(authChallenge)) {
-            LOG(ERROR) << "Challenge in authToken doesn't match the challenge we created";
+            LOG(ERROR) << "Challenge in authToken (" << uint64_t(authToken.challenge) << ") "
+                       << "doesn't match the challenge we created (" << authChallenge << ")";
             return false;
         }
         return true;
@@ -314,13 +320,16 @@ ndk::ScopedAStatus IdentityCredential::startRetrieval(
         }
 
         const vector<uint8_t>& itemsRequestBytes = itemsRequest;
-        vector<uint8_t> dataThatWasSigned = cppbor::Array()
-                                                    .add("ReaderAuthentication")
-                                                    .add(sessionTranscriptItem_->clone())
-                                                    .add(cppbor::Semantic(24, itemsRequestBytes))
-                                                    .encode();
+        vector<uint8_t> encodedReaderAuthentication =
+                cppbor::Array()
+                        .add("ReaderAuthentication")
+                        .add(sessionTranscriptItem_->clone())
+                        .add(cppbor::Semantic(24, itemsRequestBytes))
+                        .encode();
+        vector<uint8_t> encodedReaderAuthenticationBytes =
+                cppbor::Semantic(24, encodedReaderAuthentication).encode();
         if (!support::coseCheckEcDsaSignature(readerSignature,
-                                              dataThatWasSigned,  // detached content
+                                              encodedReaderAuthenticationBytes,  // detached content
                                               readerPublicKey.value())) {
             return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
                     IIdentityCredentialStore::STATUS_READER_SIGNATURE_CHECK_FAILED,
@@ -341,28 +350,6 @@ ndk::ScopedAStatus IdentityCredential::startRetrieval(
     //
     // We do this by just searching for the X and Y coordinates.
     if (sessionTranscript.size() > 0) {
-        const cppbor::Array* array = sessionTranscriptItem_->asArray();
-        if (array == nullptr || array->size() != 2) {
-            return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
-                    IIdentityCredentialStore::STATUS_EPHEMERAL_PUBLIC_KEY_NOT_FOUND,
-                    "SessionTranscript is not an array with two items"));
-        }
-        const cppbor::Semantic* taggedEncodedDE = (*array)[0]->asSemantic();
-        if (taggedEncodedDE == nullptr || taggedEncodedDE->value() != 24) {
-            return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
-                    IIdentityCredentialStore::STATUS_EPHEMERAL_PUBLIC_KEY_NOT_FOUND,
-                    "First item in SessionTranscript array is not a "
-                    "semantic with value 24"));
-        }
-        const cppbor::Bstr* encodedDE = (taggedEncodedDE->child())->asBstr();
-        if (encodedDE == nullptr) {
-            return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
-                    IIdentityCredentialStore::STATUS_EPHEMERAL_PUBLIC_KEY_NOT_FOUND,
-                    "Child of semantic in first item in SessionTranscript "
-                    "array is not a bstr"));
-        }
-        const vector<uint8_t>& bytesDE = encodedDE->value();
-
         auto [getXYSuccess, ePubX, ePubY] = support::ecPublicKeyGetXandY(ephemeralPublicKey_);
         if (!getXYSuccess) {
             return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
@@ -370,8 +357,10 @@ ndk::ScopedAStatus IdentityCredential::startRetrieval(
                     "Error extracting X and Y from ePub"));
         }
         if (sessionTranscript.size() > 0 &&
-            !(memmem(bytesDE.data(), bytesDE.size(), ePubX.data(), ePubX.size()) != nullptr &&
-              memmem(bytesDE.data(), bytesDE.size(), ePubY.data(), ePubY.size()) != nullptr)) {
+            !(memmem(sessionTranscript.data(), sessionTranscript.size(), ePubX.data(),
+                     ePubX.size()) != nullptr &&
+              memmem(sessionTranscript.data(), sessionTranscript.size(), ePubY.data(),
+                     ePubY.size()) != nullptr)) {
             return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
                     IIdentityCredentialStore::STATUS_EPHEMERAL_PUBLIC_KEY_NOT_FOUND,
                     "Did not find ephemeral public key's X and Y coordinates in "
@@ -478,9 +467,10 @@ ndk::ScopedAStatus IdentityCredential::startRetrieval(
     }
 
     // Validate all the access control profiles in the requestData.
-    bool haveAuthToken = (authToken.mac.size() > 0);
+    bool haveAuthToken = (authToken.timestamp.milliSeconds != int64_t(0));
     for (const auto& profile : accessControlProfiles) {
         if (!secureAccessControlProfileCheckMac(profile, storageKey_)) {
+            LOG(ERROR) << "Error checking MAC for profile";
             return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
                     IIdentityCredentialStore::STATUS_INVALID_DATA,
                     "Error checking MAC for profile"));
@@ -796,7 +786,7 @@ ndk::ScopedAStatus IdentityCredential::finishRetrieval(vector<int8_t>* outMac,
         array.add(sessionTranscriptItem_->clone());
         array.add(docType_);
         array.add(cppbor::Semantic(24, encodedDeviceNameSpaces));
-        vector<uint8_t> encodedDeviceAuthentication = array.encode();
+        vector<uint8_t> deviceAuthenticationBytes = cppbor::Semantic(24, array.encode()).encode();
 
         vector<uint8_t> docTypeAsBlob(docType_.begin(), docType_.end());
         optional<vector<uint8_t>> signingKey =
@@ -814,17 +804,24 @@ ndk::ScopedAStatus IdentityCredential::finishRetrieval(vector<int8_t>* outMac,
                     IIdentityCredentialStore::STATUS_FAILED, "Error doing ECDH"));
         }
 
+        // Mix-in SessionTranscriptBytes
+        vector<uint8_t> sessionTranscriptBytes = cppbor::Semantic(24, sessionTranscript_).encode();
+        vector<uint8_t> sharedSecretWithSessionTranscriptBytes = sharedSecret.value();
+        std::copy(sessionTranscriptBytes.begin(), sessionTranscriptBytes.end(),
+                  std::back_inserter(sharedSecretWithSessionTranscriptBytes));
+
         vector<uint8_t> salt = {0x00};
         vector<uint8_t> info = {};
-        optional<vector<uint8_t>> derivedKey = support::hkdf(sharedSecret.value(), salt, info, 32);
+        optional<vector<uint8_t>> derivedKey =
+                support::hkdf(sharedSecretWithSessionTranscriptBytes, salt, info, 32);
         if (!derivedKey) {
             return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
                     IIdentityCredentialStore::STATUS_FAILED,
                     "Error deriving key from shared secret"));
         }
 
-        mac = support::coseMac0(derivedKey.value(), {},        // payload
-                                encodedDeviceAuthentication);  // additionalData
+        mac = support::coseMac0(derivedKey.value(), {},      // payload
+                                deviceAuthenticationBytes);  // detached content
         if (!mac) {
             return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
                     IIdentityCredentialStore::STATUS_FAILED, "Error MACing data"));

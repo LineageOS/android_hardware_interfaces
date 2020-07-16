@@ -91,13 +91,23 @@ class Demux : public IDemux {
     void setIsRecording(bool isRecording);
     void startFrontendInputLoop();
 
+    /**
+     * A dispatcher to read and dispatch input data to all the started filters.
+     * Each filter handler handles the data filtering/output writing/filterEvent updating.
+     * Note that recording filters are not included.
+     */
+    bool startBroadcastFilterDispatcher();
+    void startBroadcastTsFilter(vector<uint8_t> data);
+
+    void sendFrontendInputToRecord(vector<uint8_t> data);
+    bool startRecordFilterDispatcher();
+
   private:
     // Tuner service
     sp<Tuner> mTunerService;
 
     // Frontend source
     sp<Frontend> mFrontend;
-    string mFrontendSourceFile;
 
     // A struct that passes the arguments to a newly created filter thread
     struct ThreadArgs {
@@ -117,16 +127,6 @@ class Demux : public IDemux {
      */
     void deleteEventFlag();
     bool readDataFromMQ();
-    /**
-     * A dispatcher to read and dispatch input data to all the started filters.
-     * Each filter handler handles the data filtering/output writing/filterEvent updating.
-     * Note that recording filters are not included.
-     */
-    bool startBroadcastFilterDispatcher();
-    void startBroadcastTsFilter(vector<uint8_t> data);
-
-    void sendFrontendInputToRecord(vector<uint8_t> data);
-    bool startRecordFilterDispatcher();
 
     uint32_t mDemuxId;
     uint32_t mCiCamId;
@@ -137,25 +137,31 @@ class Demux : public IDemux {
      */
     uint32_t mLastUsedFilterId = -1;
     /**
-     * Record all the used filter Ids.
+     * Record all the used playback filter Ids.
      * Any removed filter id should be removed from this set.
      */
-    set<uint32_t> mUsedFilterIds;
+    set<uint32_t> mPlaybackFilterIds;
     /**
      * Record all the attached record filter Ids.
      * Any removed filter id should be removed from this set.
      */
     set<uint32_t> mRecordFilterIds;
     /**
-     * A list of created FilterMQ ptrs.
+     * A list of created Filter sp.
      * The array number is the filter ID.
      */
     std::map<uint32_t, sp<Filter>> mFilters;
 
     /**
+     * Local reference to the opened Timer Filter instance.
+     */
+    sp<TimeFilter> mTimeFilter;
+
+    /**
      * Local reference to the opened DVR object.
      */
-    sp<Dvr> mDvr;
+    sp<Dvr> mDvrPlayback;
+    sp<Dvr> mDvrRecord;
 
     // Thread handlers
     pthread_t mFrontendInputThread;

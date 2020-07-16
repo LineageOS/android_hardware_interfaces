@@ -2532,23 +2532,23 @@ enum VehicleProperty : int32_t {
      *
      * int32[0]: 42      // must match the request id from the request
      * int32[1]:  2      // action = InitialUserInfoResponseAction::CREATE
-     * int32[2]: -1      // userToSwitchOrCreate.userId (not used as user will be created)
+     * int32[2]: -10000  // userToSwitchOrCreate.userId (not used as user will be created)
      * int32[3]:  8      // userToSwitchOrCreate.flags = ADMIN
-     * string: "||Owner"  // userLocales + separator + userNameToCreate
+     * string: "||Owner" // userLocales + separator + userNameToCreate
      *
      * Notice the string value represents multiple values, separated by ||. The first value is the
      * (optional) system locales for the user to be created (in this case, it's empty, meaning it
      * will use Android's default value), while the second value is the (also optional) name of the
      * to user to be created (when the type of response is InitialUserInfoResponseAction:CREATE).
      * For example, to create the same "Owner" user with "en-US" and "pt-BR" locales, the string
-     * value of the response would be "en-US,pt-BR||Owner".
+     * value of the response would be "en-US,pt-BR||Owner". As such, neither the locale nor the
+     * name can have || on it, although a single | is fine.
      *
      * NOTE: if the HAL doesn't support user management, then it should not define this property,
      * which in turn would disable the other user-related properties (for example, the Android
      * system would never issue them and user-related requests from the HAL layer would be ignored
-     * by the Android System). But if it supports user management, then it must support all
-     * user-related properties (INITIAL_USER_INFO, SWITCH_USER, CREATE_USER, REMOVE_USER,
-     *       and USER_IDENTIFICATION_ASSOCIATION).
+     * by the Android System). But if it supports user management, then it must support all core
+     * user-related properties (INITIAL_USER_INFO, SWITCH_USER, CREATE_USER, and REMOVE_USER).
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
@@ -2627,7 +2627,7 @@ enum VehicleProperty : int32_t {
      * int32[5]:  0   // current user flags (none)
      * int32[6]:  3   // number of users
      * int32[7]:  0   // 1st user (user 0)
-     * int32[8]:  0   // 1st user flags (none)
+     * int32[8]:  1   // 1st user flags (SYSTEM)
      * int32[9]:  10  // 2nd user (user 10)
      * int32[10]: 0   // 2nd user flags (none)
      * int32[11]: 11  // 3rd user (user 11)
@@ -2661,7 +2661,7 @@ enum VehicleProperty : int32_t {
      * identified the user as A.
      *
      * The HAL makes this request by a property change event (passing a negative request id), and
-     * the Android system will response by issuye an ANDROID_POST_SWITCH call which the same
+     * the Android system will response by issue an ANDROID_POST_SWITCH call which the same
      * request id.
      *
      * For example, if the current foreground Android user is 10 and the HAL asked it to switch to
@@ -2705,7 +2705,7 @@ enum VehicleProperty : int32_t {
      *    in the response are different (as the current user didn't change to the target).
      * 3. If a new switch request is made before the HAL responded to the previous one or before
      *    the user was unlocked, then the ANDROID_POST_SWITCH request is not made. For example,
-     *    the driver could accidentally switch to the wrong user which has lock crentials, then
+     *    the driver could accidentally switch to the wrong user which has lock credentials, then
      *    switch to the right one before entering the credentials.
      *
      * The HAL can update its internal state once it receives this request, but it doesn't need to
@@ -2817,6 +2817,10 @@ enum VehicleProperty : int32_t {
     /**
      * Property used to associate (or query the association) the current user with vehicle-specific
      * identification mechanisms (such as key FOB).
+     *
+     * This is an optional user management property - the OEM could still support user management
+     * without defining it. In fact, this property could be used without supporting the core
+     * user-related functions described on INITIAL_USER_INFO.
      *
      * To query the association, the Android system gets the property, passing a VehiclePropValue
      * containing the types of associations are being queried, as defined by
@@ -4277,6 +4281,16 @@ enum UserFlags: int32_t {
      * Admin users have additional privileges such as permission to create other users.
      */
     ADMIN = 0x08,
+
+    /**
+     * Disabled users are marked for deletion.
+     */
+    DISABLED = 0x10,
+
+     /**
+     * Profile user is a profile of another user.
+     */
+    PROFILE = 0x20,
 };
 
 /**
@@ -4291,10 +4305,16 @@ struct UsersInfo {
     /** The current foreground user. */
     UserInfo currentUser;
 
-    /** Number of existing users (includes the current user). */
+    /**
+     * Number of existing users; includes the current user, recently removed users (with DISABLED
+     * flag), and profile users (with PROFILE flag).
+     */
     int32_t numberUsers;
 
-    /** List of existing users (includes the current user). */
+    /**
+     * List of existing users; includes the current user, recently removed users (with DISABLED
+     * flag), and profile users (with PROFILE flag).
+     */
     vec<UserInfo> existingUsers;
  };
 
@@ -4371,15 +4391,15 @@ struct InitialUserInfoResponse {
     UserInfo userToSwitchOrCreate;
 
     /**
-     * Name of the user that should be created.
-     */
-    string userNameToCreate;
-
-    /**
      * System locales of the initial user (value will be passed as-is to
      * android.provider.Settings.System.SYSTEM_LOCALES)
      */
     string userLocales;
+
+    /**
+     * Name of the user that should be created.
+     */
+    string userNameToCreate;
 };
 
 /**
