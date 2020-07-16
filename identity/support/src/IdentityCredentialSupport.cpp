@@ -24,6 +24,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <time.h>
+#include <chrono>
 #include <iomanip>
 
 #include <openssl/aes.h>
@@ -684,6 +685,48 @@ static bool parseX509Certificates(const vector<uint8_t>& certificateChain,
     return true;
 }
 
+bool certificateSignedByPublicKey(const vector<uint8_t>& certificate,
+                                  const vector<uint8_t>& publicKey) {
+    const unsigned char* p = certificate.data();
+    auto x509 = X509_Ptr(d2i_X509(nullptr, &p, certificate.size()));
+    if (x509 == nullptr) {
+        LOG(ERROR) << "Error parsing X509 certificate";
+        return false;
+    }
+
+    auto group = EC_GROUP_Ptr(EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1));
+    auto point = EC_POINT_Ptr(EC_POINT_new(group.get()));
+    if (EC_POINT_oct2point(group.get(), point.get(), publicKey.data(), publicKey.size(), nullptr) !=
+        1) {
+        LOG(ERROR) << "Error decoding publicKey";
+        return false;
+    }
+    auto ecKey = EC_KEY_Ptr(EC_KEY_new());
+    auto pkey = EVP_PKEY_Ptr(EVP_PKEY_new());
+    if (ecKey.get() == nullptr || pkey.get() == nullptr) {
+        LOG(ERROR) << "Memory allocation failed";
+        return false;
+    }
+    if (EC_KEY_set_group(ecKey.get(), group.get()) != 1) {
+        LOG(ERROR) << "Error setting group";
+        return false;
+    }
+    if (EC_KEY_set_public_key(ecKey.get(), point.get()) != 1) {
+        LOG(ERROR) << "Error setting point";
+        return false;
+    }
+    if (EVP_PKEY_set1_EC_KEY(pkey.get(), ecKey.get()) != 1) {
+        LOG(ERROR) << "Error setting key";
+        return false;
+    }
+
+    if (X509_verify(x509.get(), pkey.get()) != 1) {
+        return false;
+    }
+
+    return true;
+}
+
 // TODO: Right now the only check we perform is to check that each certificate
 //       is signed by its successor. We should - but currently don't - also check
 //       things like valid dates etc.
@@ -770,7 +813,8 @@ vector<uint8_t> sha256(const vector<uint8_t>& data) {
     return ret;
 }
 
-optional<vector<uint8_t>> signEcDsa(const vector<uint8_t>& key, const vector<uint8_t>& data) {
+optional<vector<uint8_t>> signEcDsaDigest(const vector<uint8_t>& key,
+                                          const vector<uint8_t>& dataDigest) {
     auto bn = BIGNUM_Ptr(BN_bin2bn(key.data(), key.size(), nullptr));
     if (bn.get() == nullptr) {
         LOG(ERROR) << "Error creating BIGNUM";
@@ -783,8 +827,7 @@ optional<vector<uint8_t>> signEcDsa(const vector<uint8_t>& key, const vector<uin
         return {};
     }
 
-    auto digest = sha256(data);
-    ECDSA_SIG* sig = ECDSA_do_sign(digest.data(), digest.size(), ec_key.get());
+    ECDSA_SIG* sig = ECDSA_do_sign(dataDigest.data(), dataDigest.size(), ec_key.get());
     if (sig == nullptr) {
         LOG(ERROR) << "Error signing digest";
         return {};
@@ -796,6 +839,10 @@ optional<vector<uint8_t>> signEcDsa(const vector<uint8_t>& key, const vector<uin
     i2d_ECDSA_SIG(sig, &p);
     ECDSA_SIG_free(sig);
     return signature;
+}
+
+optional<vector<uint8_t>> signEcDsa(const vector<uint8_t>& key, const vector<uint8_t>& data) {
+    return signEcDsaDigest(key, sha256(data));
 }
 
 optional<vector<uint8_t>> hmacSha256(const vector<uint8_t>& key, const vector<uint8_t>& data) {
@@ -955,6 +1002,51 @@ optional<std::pair<vector<uint8_t>, vector<vector<uint8_t>>>> createEcKeyPairAnd
     return make_pair(keyPair, attestationCert.value());
 }
 
+optional<vector<vector<uint8_t>>> createAttestationForEcPublicKey(
+        const vector<uint8_t>& publicKey, const vector<uint8_t>& challenge,
+        const vector<uint8_t>& applicationId) {
+    auto group = EC_GROUP_Ptr(EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1));
+    auto point = EC_POINT_Ptr(EC_POINT_new(group.get()));
+    if (EC_POINT_oct2point(group.get(), point.get(), publicKey.data(), publicKey.size(), nullptr) !=
+        1) {
+        LOG(ERROR) << "Error decoding publicKey";
+        return {};
+    }
+    auto ecKey = EC_KEY_Ptr(EC_KEY_new());
+    auto pkey = EVP_PKEY_Ptr(EVP_PKEY_new());
+    if (ecKey.get() == nullptr || pkey.get() == nullptr) {
+        LOG(ERROR) << "Memory allocation failed";
+        return {};
+    }
+    if (EC_KEY_set_group(ecKey.get(), group.get()) != 1) {
+        LOG(ERROR) << "Error setting group";
+        return {};
+    }
+    if (EC_KEY_set_public_key(ecKey.get(), point.get()) != 1) {
+        LOG(ERROR) << "Error setting point";
+        return {};
+    }
+    if (EVP_PKEY_set1_EC_KEY(pkey.get(), ecKey.get()) != 1) {
+        LOG(ERROR) << "Error setting key";
+        return {};
+    }
+
+    uint64_t now = (std::chrono::duration_cast<std::chrono::nanoseconds>(
+                    std::chrono::system_clock::now().time_since_epoch()).
+                    count()/ 1000000000);
+    uint64_t secondsInOneYear = 365 * 24 * 60 * 60;
+    uint64_t expireTimeMs = (now + secondsInOneYear) * 1000;
+
+    optional<vector<vector<uint8_t>>> attestationCert =
+            createAttestation(pkey.get(), applicationId, challenge, now * 1000, expireTimeMs);
+    if (!attestationCert) {
+        LOG(ERROR) << "Error create attestation from key and challenge";
+        return {};
+    }
+
+    return attestationCert.value();
+}
+
 optional<vector<uint8_t>> createEcKeyPair() {
     auto ec_key = EC_KEY_Ptr(EC_KEY_new());
     auto pkey = EVP_PKEY_Ptr(EVP_PKEY_new());
@@ -1045,6 +1137,42 @@ optional<vector<uint8_t>> ecKeyPairGetPrivateKey(const vector<uint8_t>& keyPair)
     privateKey.resize(BN_num_bytes(bignum));
     BN_bn2bin(bignum, privateKey.data());
     return privateKey;
+}
+
+optional<vector<uint8_t>> ecPrivateKeyToKeyPair(const vector<uint8_t>& privateKey) {
+    auto bn = BIGNUM_Ptr(BN_bin2bn(privateKey.data(), privateKey.size(), nullptr));
+    if (bn.get() == nullptr) {
+        LOG(ERROR) << "Error creating BIGNUM";
+        return {};
+    }
+
+    auto ecKey = EC_KEY_Ptr(EC_KEY_new_by_curve_name(NID_X9_62_prime256v1));
+    if (EC_KEY_set_private_key(ecKey.get(), bn.get()) != 1) {
+        LOG(ERROR) << "Error setting private key from BIGNUM";
+        return {};
+    }
+
+    auto pkey = EVP_PKEY_Ptr(EVP_PKEY_new());
+    if (pkey.get() == nullptr) {
+        LOG(ERROR) << "Memory allocation failed";
+        return {};
+    }
+
+    if (EVP_PKEY_set1_EC_KEY(pkey.get(), ecKey.get()) != 1) {
+        LOG(ERROR) << "Error getting private key";
+        return {};
+    }
+
+    int size = i2d_PrivateKey(pkey.get(), nullptr);
+    if (size == 0) {
+        LOG(ERROR) << "Error generating public key encoding";
+        return {};
+    }
+    vector<uint8_t> keyPair;
+    keyPair.resize(size);
+    unsigned char* p = keyPair.data();
+    i2d_PrivateKey(pkey.get(), &p);
+    return keyPair;
 }
 
 optional<vector<uint8_t>> ecKeyPairGetPkcs12(const vector<uint8_t>& keyPair, const string& name,
@@ -1441,6 +1569,120 @@ optional<vector<uint8_t>> certificateChainGetTopMostKey(const vector<uint8_t>& c
     return publicKey;
 }
 
+optional<pair<size_t, size_t>> certificateFindPublicKey(const vector<uint8_t>& x509Certificate) {
+    vector<X509_Ptr> certs;
+    if (!parseX509Certificates(x509Certificate, certs)) {
+        return {};
+    }
+    if (certs.size() < 1) {
+        LOG(ERROR) << "No certificates in chain";
+        return {};
+    }
+
+    auto pkey = EVP_PKEY_Ptr(X509_get_pubkey(certs[0].get()));
+    if (pkey.get() == nullptr) {
+        LOG(ERROR) << "No public key";
+        return {};
+    }
+
+    auto ecKey = EC_KEY_Ptr(EVP_PKEY_get1_EC_KEY(pkey.get()));
+    if (ecKey.get() == nullptr) {
+        LOG(ERROR) << "Failed getting EC key";
+        return {};
+    }
+
+    auto ecGroup = EC_KEY_get0_group(ecKey.get());
+    auto ecPoint = EC_KEY_get0_public_key(ecKey.get());
+    int size = EC_POINT_point2oct(ecGroup, ecPoint, POINT_CONVERSION_UNCOMPRESSED, nullptr, 0,
+                                  nullptr);
+    if (size == 0) {
+        LOG(ERROR) << "Error generating public key encoding";
+        return {};
+    }
+    vector<uint8_t> publicKey;
+    publicKey.resize(size);
+    EC_POINT_point2oct(ecGroup, ecPoint, POINT_CONVERSION_UNCOMPRESSED, publicKey.data(),
+                       publicKey.size(), nullptr);
+
+    size_t publicKeyOffset = 0;
+    size_t publicKeySize = (size_t)size;
+    void* location = memmem((const void*)x509Certificate.data(), x509Certificate.size(),
+                            (const void*)publicKey.data(), publicKey.size());
+
+    if (location == NULL) {
+        LOG(ERROR) << "Error finding publicKey from x509Certificate";
+        return {};
+    }
+    publicKeyOffset = (size_t)((const char*)location - (const char*)x509Certificate.data());
+
+    return std::make_pair(publicKeyOffset, publicKeySize);
+}
+
+optional<pair<size_t, size_t>> certificateTbsCertificate(const vector<uint8_t>& x509Certificate) {
+    vector<X509_Ptr> certs;
+    if (!parseX509Certificates(x509Certificate, certs)) {
+        return {};
+    }
+    if (certs.size() < 1) {
+        LOG(ERROR) << "No certificates in chain";
+        return {};
+    }
+
+    unsigned char* buf = NULL;
+    int len = i2d_re_X509_tbs(certs[0].get(), &buf);
+    if ((len < 0) || (buf == NULL)) {
+        LOG(ERROR) << "fail to extract tbsCertificate in x509Certificate";
+        return {};
+    }
+
+    vector<uint8_t> tbsCertificate(len);
+    memcpy(tbsCertificate.data(), buf, len);
+
+    size_t tbsCertificateOffset = 0;
+    size_t tbsCertificateSize = (size_t)len;
+    void* location = memmem((const void*)x509Certificate.data(), x509Certificate.size(),
+                            (const void*)tbsCertificate.data(), tbsCertificate.size());
+
+    if (location == NULL) {
+        LOG(ERROR) << "Error finding tbsCertificate from x509Certificate";
+        return {};
+    }
+    tbsCertificateOffset = (size_t)((const char*)location - (const char*)x509Certificate.data());
+
+    return std::make_pair(tbsCertificateOffset, tbsCertificateSize);
+}
+
+optional<pair<size_t, size_t>> certificateFindSignature(const vector<uint8_t>& x509Certificate) {
+    vector<X509_Ptr> certs;
+    if (!parseX509Certificates(x509Certificate, certs)) {
+        return {};
+    }
+    if (certs.size() < 1) {
+        LOG(ERROR) << "No certificates in chain";
+        return {};
+    }
+
+    ASN1_BIT_STRING* psig;
+    X509_ALGOR* palg;
+    X509_get0_signature((const ASN1_BIT_STRING**)&psig, (const X509_ALGOR**)&palg, certs[0].get());
+
+    vector<char> signature(psig->length);
+    memcpy(signature.data(), psig->data, psig->length);
+
+    size_t signatureOffset = 0;
+    size_t signatureSize = (size_t)psig->length;
+    void* location = memmem((const void*)x509Certificate.data(), x509Certificate.size(),
+                            (const void*)signature.data(), signature.size());
+
+    if (location == NULL) {
+        LOG(ERROR) << "Error finding signature from x509Certificate";
+        return {};
+    }
+    signatureOffset = (size_t)((const char*)location - (const char*)x509Certificate.data());
+
+    return std::make_pair(signatureOffset, signatureSize);
+}
+
 // ---------------------------------------------------------------------------
 // COSE Utility Functions
 // ---------------------------------------------------------------------------
@@ -1536,6 +1778,55 @@ bool ecdsaSignatureDerToCose(const vector<uint8_t>& ecdsaDerSignature,
         return false;
     }
     return true;
+}
+
+optional<vector<uint8_t>> coseSignEcDsaWithSignature(const vector<uint8_t>& signatureToBeSigned,
+                                                     const vector<uint8_t>& data,
+                                                     const vector<uint8_t>& certificateChain) {
+    if (signatureToBeSigned.size() != 64) {
+        LOG(ERROR) << "Invalid size for signatureToBeSigned, expected 64 got "
+                   << signatureToBeSigned.size();
+        return {};
+    }
+
+    cppbor::Map unprotectedHeaders;
+    cppbor::Map protectedHeaders;
+
+    protectedHeaders.add(COSE_LABEL_ALG, COSE_ALG_ECDSA_256);
+
+    if (certificateChain.size() != 0) {
+        optional<vector<vector<uint8_t>>> certs = support::certificateChainSplit(certificateChain);
+        if (!certs) {
+            LOG(ERROR) << "Error splitting certificate chain";
+            return {};
+        }
+        if (certs.value().size() == 1) {
+            unprotectedHeaders.add(COSE_LABEL_X5CHAIN, certs.value()[0]);
+        } else {
+            cppbor::Array certArray;
+            for (const vector<uint8_t>& cert : certs.value()) {
+                certArray.add(cert);
+            }
+            unprotectedHeaders.add(COSE_LABEL_X5CHAIN, std::move(certArray));
+        }
+    }
+
+    vector<uint8_t> encodedProtectedHeaders = coseEncodeHeaders(protectedHeaders);
+
+    cppbor::Array coseSign1;
+    coseSign1.add(encodedProtectedHeaders);
+    coseSign1.add(std::move(unprotectedHeaders));
+    if (data.size() == 0) {
+        cppbor::Null nullValue;
+        coseSign1.add(std::move(nullValue));
+    } else {
+        coseSign1.add(data);
+    }
+    coseSign1.add(signatureToBeSigned);
+    vector<uint8_t> signatureCoseSign1;
+    signatureCoseSign1 = coseSign1.encode();
+
+    return signatureCoseSign1;
 }
 
 optional<vector<uint8_t>> coseSignEcDsa(const vector<uint8_t>& key, const vector<uint8_t>& data,
@@ -1673,6 +1964,35 @@ bool coseCheckEcDsaSignature(const vector<uint8_t>& signatureCoseSign1,
     return true;
 }
 
+// Extracts the signature (of the ToBeSigned CBOR) from a COSE_Sign1.
+optional<vector<uint8_t>> coseSignGetSignature(const vector<uint8_t>& signatureCoseSign1) {
+    auto [item, _, message] = cppbor::parse(signatureCoseSign1);
+    if (item == nullptr) {
+        LOG(ERROR) << "Passed-in COSE_Sign1 is not valid CBOR: " << message;
+        return {};
+    }
+    const cppbor::Array* array = item->asArray();
+    if (array == nullptr) {
+        LOG(ERROR) << "Value for COSE_Sign1 is not an array";
+        return {};
+    }
+    if (array->size() != 4) {
+        LOG(ERROR) << "Value for COSE_Sign1 is not an array of size 4";
+        return {};
+    }
+
+    vector<uint8_t> signature;
+    const cppbor::Bstr* signatureAsBstr = (*array)[3]->asBstr();
+    if (signatureAsBstr == nullptr) {
+        LOG(ERROR) << "Value for signature is not a bstr";
+        return {};
+    }
+    // Copy payload into |data|
+    signature = signatureAsBstr->value();
+
+    return signature;
+}
+
 optional<vector<uint8_t>> coseSignGetPayload(const vector<uint8_t>& signatureCoseSign1) {
     auto [item, _, message] = cppbor::parse(signatureCoseSign1);
     if (item == nullptr) {
@@ -1708,6 +2028,59 @@ optional<vector<uint8_t>> coseSignGetPayload(const vector<uint8_t>& signatureCos
     }
 
     return data;
+}
+
+optional<int> coseSignGetAlg(const vector<uint8_t>& signatureCoseSign1) {
+    auto [item, _, message] = cppbor::parse(signatureCoseSign1);
+    if (item == nullptr) {
+        LOG(ERROR) << "Passed-in COSE_Sign1 is not valid CBOR: " << message;
+        return {};
+    }
+    const cppbor::Array* array = item->asArray();
+    if (array == nullptr) {
+        LOG(ERROR) << "Value for COSE_Sign1 is not an array";
+        return {};
+    }
+    if (array->size() != 4) {
+        LOG(ERROR) << "Value for COSE_Sign1 is not an array of size 4";
+        return {};
+    }
+
+    const cppbor::Bstr* protectedHeadersBytes = (*array)[0]->asBstr();
+    if (protectedHeadersBytes == nullptr) {
+        LOG(ERROR) << "Value for protectedHeaders is not a bstr";
+        return {};
+    }
+    auto [item2, _2, message2] = cppbor::parse(protectedHeadersBytes->value());
+    if (item2 == nullptr) {
+        LOG(ERROR) << "Error parsing protectedHeaders: " << message2;
+        return {};
+    }
+    const cppbor::Map* protectedHeaders = item2->asMap();
+    if (protectedHeaders == nullptr) {
+        LOG(ERROR) << "Decoded CBOR for protectedHeaders is not a map";
+        return {};
+    }
+
+    for (size_t n = 0; n < protectedHeaders->size(); n++) {
+        auto [keyItem, valueItem] = (*protectedHeaders)[n];
+        const cppbor::Int* number = keyItem->asInt();
+        if (number == nullptr) {
+            LOG(ERROR) << "Key item in top-level map is not a number";
+            return {};
+        }
+        int label = number->value();
+        if (label == COSE_LABEL_ALG) {
+            const cppbor::Int* number = valueItem->asInt();
+            if (number != nullptr) {
+                return number->value();
+            }
+            LOG(ERROR) << "Value for COSE_LABEL_ALG label is not a number";
+            return {};
+        }
+    }
+    LOG(ERROR) << "Did not find COSE_LABEL_ALG label in protected headers";
+    return {};
 }
 
 optional<vector<uint8_t>> coseSignGetX5Chain(const vector<uint8_t>& signatureCoseSign1) {
@@ -1822,6 +2195,28 @@ optional<vector<uint8_t>> coseMac0(const vector<uint8_t>& key, const vector<uint
         array.add(data);
     }
     array.add(mac.value());
+    return array.encode();
+}
+
+optional<vector<uint8_t>> coseMacWithDigest(const vector<uint8_t>& digestToBeMaced,
+                                            const vector<uint8_t>& data) {
+    cppbor::Map unprotectedHeaders;
+    cppbor::Map protectedHeaders;
+
+    protectedHeaders.add(COSE_LABEL_ALG, COSE_ALG_HMAC_256_256);
+
+    vector<uint8_t> encodedProtectedHeaders = coseEncodeHeaders(protectedHeaders);
+
+    cppbor::Array array;
+    array.add(encodedProtectedHeaders);
+    array.add(std::move(unprotectedHeaders));
+    if (data.size() == 0) {
+        cppbor::Null nullValue;
+        array.add(std::move(nullValue));
+    } else {
+        array.add(data);
+    }
+    array.add(digestToBeMaced);
     return array.encode();
 }
 

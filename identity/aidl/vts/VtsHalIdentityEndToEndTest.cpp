@@ -27,15 +27,18 @@
 #include <gtest/gtest.h>
 #include <future>
 #include <map>
+#include <tuple>
 
 #include "VtsIdentityTestUtils.h"
 
 namespace android::hardware::identity {
 
 using std::endl;
+using std::make_tuple;
 using std::map;
 using std::optional;
 using std::string;
+using std::tuple;
 using std::vector;
 
 using ::android::sp;
@@ -64,6 +67,61 @@ TEST_P(IdentityAidl, hardwareInformation) {
     ASSERT_GT(info.credentialStoreName.size(), 0);
     ASSERT_GT(info.credentialStoreAuthorName.size(), 0);
     ASSERT_GE(info.dataChunkSize, 256);
+}
+
+tuple<bool, string, vector<uint8_t>, vector<uint8_t>> extractFromTestCredentialData(
+        const vector<uint8_t>& credentialData) {
+    string docType;
+    vector<uint8_t> storageKey;
+    vector<uint8_t> credentialPrivKey;
+
+    auto [item, _, message] = cppbor::parse(credentialData);
+    if (item == nullptr) {
+        return make_tuple(false, docType, storageKey, credentialPrivKey);
+    }
+
+    const cppbor::Array* arrayItem = item->asArray();
+    if (arrayItem == nullptr || arrayItem->size() != 3) {
+        return make_tuple(false, docType, storageKey, credentialPrivKey);
+    }
+
+    const cppbor::Tstr* docTypeItem = (*arrayItem)[0]->asTstr();
+    const cppbor::Bool* testCredentialItem =
+            ((*arrayItem)[1]->asSimple() != nullptr ? ((*arrayItem)[1]->asSimple()->asBool())
+                                                    : nullptr);
+    const cppbor::Bstr* encryptedCredentialKeysItem = (*arrayItem)[2]->asBstr();
+    if (docTypeItem == nullptr || testCredentialItem == nullptr ||
+        encryptedCredentialKeysItem == nullptr) {
+        return make_tuple(false, docType, storageKey, credentialPrivKey);
+    }
+
+    docType = docTypeItem->value();
+
+    vector<uint8_t> hardwareBoundKey = support::getTestHardwareBoundKey();
+    const vector<uint8_t>& encryptedCredentialKeys = encryptedCredentialKeysItem->value();
+    const vector<uint8_t> docTypeVec(docType.begin(), docType.end());
+    optional<vector<uint8_t>> decryptedCredentialKeys =
+            support::decryptAes128Gcm(hardwareBoundKey, encryptedCredentialKeys, docTypeVec);
+    if (!decryptedCredentialKeys) {
+        return make_tuple(false, docType, storageKey, credentialPrivKey);
+    }
+
+    auto [dckItem, dckPos, dckMessage] = cppbor::parse(decryptedCredentialKeys.value());
+    if (dckItem == nullptr) {
+        return make_tuple(false, docType, storageKey, credentialPrivKey);
+    }
+    const cppbor::Array* dckArrayItem = dckItem->asArray();
+    if (dckArrayItem == nullptr || dckArrayItem->size() != 2) {
+        return make_tuple(false, docType, storageKey, credentialPrivKey);
+    }
+    const cppbor::Bstr* storageKeyItem = (*dckArrayItem)[0]->asBstr();
+    const cppbor::Bstr* credentialPrivKeyItem = (*dckArrayItem)[1]->asBstr();
+    if (storageKeyItem == nullptr || credentialPrivKeyItem == nullptr) {
+        return make_tuple(false, docType, storageKey, credentialPrivKey);
+    }
+    storageKey = storageKeyItem->value();
+    credentialPrivKey = credentialPrivKeyItem->value();
+    return make_tuple(true, docType, storageKey, credentialPrivKey);
 }
 
 TEST_P(IdentityAidl, createAndRetrieveCredential) {
@@ -155,6 +213,7 @@ TEST_P(IdentityAidl, createAndRetrieveCredential) {
             writableCredential->finishAddingEntries(&credentialData, &proofOfProvisioningSignature)
                     .isOk());
 
+    // Validate the proofOfProvisioning which was returned
     optional<vector<uint8_t>> proofOfProvisioning =
             support::coseSignGetPayload(proofOfProvisioningSignature);
     ASSERT_TRUE(proofOfProvisioning);
@@ -215,6 +274,22 @@ TEST_P(IdentityAidl, createAndRetrieveCredential) {
                                                  credentialPubKey.value()));
     writableCredential = nullptr;
 
+    // Extract doctype, storage key, and credentialPrivKey from credentialData... this works
+    // only because we asked for a test-credential meaning that the HBK is all zeroes.
+    auto [exSuccess, exDocType, exStorageKey, exCredentialPrivKey] =
+            extractFromTestCredentialData(credentialData);
+    ASSERT_TRUE(exSuccess);
+    ASSERT_EQ(exDocType, "org.iso.18013-5.2019.mdl");
+    // ... check that the public key derived from the private key matches what was
+    // in the certificate.
+    optional<vector<uint8_t>> exCredentialKeyPair =
+            support::ecPrivateKeyToKeyPair(exCredentialPrivKey);
+    ASSERT_TRUE(exCredentialKeyPair);
+    optional<vector<uint8_t>> exCredentialPubKey =
+            support::ecKeyPairGetPublicKey(exCredentialKeyPair.value());
+    ASSERT_TRUE(exCredentialPubKey);
+    ASSERT_EQ(exCredentialPubKey.value(), credentialPubKey.value());
+
     // Now that the credential has been provisioned, read it back and check the
     // correct data is returned.
     sp<IIdentityCredential> credential;
@@ -244,7 +319,7 @@ TEST_P(IdentityAidl, createAndRetrieveCredential) {
     cppbor::Array sessionTranscript = cppbor::Array()
                                               .add(cppbor::Semantic(24, deviceEngagementBytes))
                                               .add(cppbor::Semantic(24, eReaderPubBytes));
-    vector<uint8_t> sessionTranscriptBytes = sessionTranscript.encode();
+    vector<uint8_t> sessionTranscriptEncoded = sessionTranscript.encode();
 
     vector<uint8_t> itemsRequestBytes =
             cppbor::Map("nameSpaces",
@@ -272,14 +347,17 @@ TEST_P(IdentityAidl, createAndRetrieveCredential) {
             "  },\n"
             "}",
             cborPretty);
-    vector<uint8_t> dataToSign = cppbor::Array()
-                                         .add("ReaderAuthentication")
-                                         .add(sessionTranscript.clone())
-                                         .add(cppbor::Semantic(24, itemsRequestBytes))
-                                         .encode();
+    vector<uint8_t> encodedReaderAuthentication =
+            cppbor::Array()
+                    .add("ReaderAuthentication")
+                    .add(sessionTranscript.clone())
+                    .add(cppbor::Semantic(24, itemsRequestBytes))
+                    .encode();
+    vector<uint8_t> encodedReaderAuthenticationBytes =
+            cppbor::Semantic(24, encodedReaderAuthentication).encode();
     optional<vector<uint8_t>> readerSignature =
-            support::coseSignEcDsa(readerKey, {},  // content
-                                   dataToSign,     // detached content
+            support::coseSignEcDsa(readerKey, {},                     // content
+                                   encodedReaderAuthenticationBytes,  // detached content
                                    readerCertificate.value());
     ASSERT_TRUE(readerSignature);
 
@@ -287,15 +365,33 @@ TEST_P(IdentityAidl, createAndRetrieveCredential) {
     vector<uint8_t> signingKeyBlob;
     Certificate signingKeyCertificate;
     ASSERT_TRUE(credential->generateSigningKeyPair(&signingKeyBlob, &signingKeyCertificate).isOk());
+    optional<vector<uint8_t>> signingPubKey =
+            support::certificateChainGetTopMostKey(signingKeyCertificate.encodedCertificate);
+    EXPECT_TRUE(signingPubKey);
+
+    // Since we're using a test-credential we know storageKey meaning we can get the
+    // private key. Do this, derive the public key from it, and check this matches what
+    // is in the certificate...
+    const vector<uint8_t> exDocTypeVec(exDocType.begin(), exDocType.end());
+    optional<vector<uint8_t>> exSigningPrivKey =
+            support::decryptAes128Gcm(exStorageKey, signingKeyBlob, exDocTypeVec);
+    ASSERT_TRUE(exSigningPrivKey);
+    optional<vector<uint8_t>> exSigningKeyPair =
+            support::ecPrivateKeyToKeyPair(exSigningPrivKey.value());
+    ASSERT_TRUE(exSigningKeyPair);
+    optional<vector<uint8_t>> exSigningPubKey =
+            support::ecKeyPairGetPublicKey(exSigningKeyPair.value());
+    ASSERT_TRUE(exSigningPubKey);
+    ASSERT_EQ(exSigningPubKey.value(), signingPubKey.value());
 
     vector<RequestNamespace> requestedNamespaces = test_utils::buildRequestNamespaces(testEntries);
     // OK to fail, not available in v1 HAL
-    credential->setRequestedNamespaces(requestedNamespaces).isOk();
+    credential->setRequestedNamespaces(requestedNamespaces);
     // OK to fail, not available in v1 HAL
     credential->setVerificationToken(verificationToken);
     ASSERT_TRUE(credential
                         ->startRetrieval(secureProfiles.value(), authToken, itemsRequestBytes,
-                                         signingKeyBlob, sessionTranscriptBytes,
+                                         signingKeyBlob, sessionTranscriptEncoded,
                                          readerSignature.value(), testEntriesEntryCounts)
                         .isOk());
 
@@ -316,6 +412,9 @@ TEST_P(IdentityAidl, createAndRetrieveCredential) {
             content.insert(content.end(), chunk.begin(), chunk.end());
         }
         EXPECT_EQ(content, entry.valueCbor);
+
+        // TODO: also use |exStorageKey| to decrypt data and check it's the same as whatt
+        // the HAL returns...
     }
 
     vector<uint8_t> mac;
@@ -336,7 +435,7 @@ TEST_P(IdentityAidl, createAndRetrieveCredential) {
             "  },\n"
             "}",
             cborPretty);
-    // The data that is MACed is ["DeviceAuthentication", sessionTranscriptBytes, docType,
+    // The data that is MACed is ["DeviceAuthentication", sessionTranscript, docType,
     // deviceNameSpacesBytes] so build up that structure
     cppbor::Array deviceAuthentication;
     deviceAuthentication.add("DeviceAuthentication");
@@ -345,24 +444,80 @@ TEST_P(IdentityAidl, createAndRetrieveCredential) {
     string docType = "org.iso.18013-5.2019.mdl";
     deviceAuthentication.add(docType);
     deviceAuthentication.add(cppbor::Semantic(24, deviceNameSpacesBytes));
-    vector<uint8_t> encodedDeviceAuthentication = deviceAuthentication.encode();
-    optional<vector<uint8_t>> signingPublicKey =
-            support::certificateChainGetTopMostKey(signingKeyCertificate.encodedCertificate);
-    EXPECT_TRUE(signingPublicKey);
-
+    vector<uint8_t> deviceAuthenticationBytes =
+            cppbor::Semantic(24, deviceAuthentication.encode()).encode();
     // Derive the key used for MACing.
     optional<vector<uint8_t>> readerEphemeralPrivateKey =
             support::ecKeyPairGetPrivateKey(readerEphemeralKeyPair.value());
     optional<vector<uint8_t>> sharedSecret =
-            support::ecdh(signingPublicKey.value(), readerEphemeralPrivateKey.value());
+            support::ecdh(signingPubKey.value(), readerEphemeralPrivateKey.value());
     ASSERT_TRUE(sharedSecret);
+    // Mix-in SessionTranscriptBytes
+    vector<uint8_t> sessionTranscriptBytes =
+            cppbor::Semantic(24, sessionTranscript.encode()).encode();
+    vector<uint8_t> sharedSecretWithSessionTranscriptBytes = sharedSecret.value();
+    std::copy(sessionTranscriptBytes.begin(), sessionTranscriptBytes.end(),
+              std::back_inserter(sharedSecretWithSessionTranscriptBytes));
     vector<uint8_t> salt = {0x00};
     vector<uint8_t> info = {};
-    optional<vector<uint8_t>> derivedKey = support::hkdf(sharedSecret.value(), salt, info, 32);
+    optional<vector<uint8_t>> derivedKey =
+            support::hkdf(sharedSecretWithSessionTranscriptBytes, salt, info, 32);
     ASSERT_TRUE(derivedKey);
     optional<vector<uint8_t>> calculatedMac =
-            support::coseMac0(derivedKey.value(), {},        // payload
-                              encodedDeviceAuthentication);  // detached content
+            support::coseMac0(derivedKey.value(), {},      // payload
+                              deviceAuthenticationBytes);  // detached content
+    ASSERT_TRUE(calculatedMac);
+    EXPECT_EQ(mac, calculatedMac);
+
+    // Also perform an additional empty request. This is what mDL applications
+    // are envisioned to do - one call to get the data elements, another to get
+    // an empty DeviceSignedItems and corresponding MAC.
+    //
+    credential->setRequestedNamespaces({});  // OK to fail, not available in v1 HAL
+    ASSERT_TRUE(credential
+                        ->startRetrieval(
+                                secureProfiles.value(), authToken, {},         // itemsRequestBytes
+                                signingKeyBlob, sessionTranscriptEncoded, {},  // readerSignature,
+                                testEntriesEntryCounts)
+                        .isOk());
+    ASSERT_TRUE(credential->finishRetrieval(&mac, &deviceNameSpacesBytes).isOk());
+    cborPretty = support::cborPrettyPrint(deviceNameSpacesBytes, 32, {});
+    ASSERT_EQ("{}", cborPretty);
+    // Calculate DeviceAuthentication and MAC (MACing key hasn't changed)
+    deviceAuthentication = cppbor::Array();
+    deviceAuthentication.add("DeviceAuthentication");
+    deviceAuthentication.add(sessionTranscript.clone());
+    deviceAuthentication.add(docType);
+    deviceAuthentication.add(cppbor::Semantic(24, deviceNameSpacesBytes));
+    deviceAuthenticationBytes = cppbor::Semantic(24, deviceAuthentication.encode()).encode();
+    calculatedMac = support::coseMac0(derivedKey.value(), {},      // payload
+                                      deviceAuthenticationBytes);  // detached content
+    ASSERT_TRUE(calculatedMac);
+    EXPECT_EQ(mac, calculatedMac);
+
+    // Some mDL apps might send a request but with a single empty
+    // namespace. Check that too.
+    RequestNamespace emptyRequestNS;
+    emptyRequestNS.namespaceName = "PersonalData";
+    credential->setRequestedNamespaces({emptyRequestNS});  // OK to fail, not available in v1 HAL
+    ASSERT_TRUE(credential
+                        ->startRetrieval(
+                                secureProfiles.value(), authToken, {},         // itemsRequestBytes
+                                signingKeyBlob, sessionTranscriptEncoded, {},  // readerSignature,
+                                testEntriesEntryCounts)
+                        .isOk());
+    ASSERT_TRUE(credential->finishRetrieval(&mac, &deviceNameSpacesBytes).isOk());
+    cborPretty = support::cborPrettyPrint(deviceNameSpacesBytes, 32, {});
+    ASSERT_EQ("{}", cborPretty);
+    // Calculate DeviceAuthentication and MAC (MACing key hasn't changed)
+    deviceAuthentication = cppbor::Array();
+    deviceAuthentication.add("DeviceAuthentication");
+    deviceAuthentication.add(sessionTranscript.clone());
+    deviceAuthentication.add(docType);
+    deviceAuthentication.add(cppbor::Semantic(24, deviceNameSpacesBytes));
+    deviceAuthenticationBytes = cppbor::Semantic(24, deviceAuthentication.encode()).encode();
+    calculatedMac = support::coseMac0(derivedKey.value(), {},      // payload
+                                      deviceAuthenticationBytes);  // detached content
     ASSERT_TRUE(calculatedMac);
     EXPECT_EQ(mac, calculatedMac);
 }

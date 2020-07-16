@@ -139,6 +139,8 @@ Return<void> Tuner::getDemuxCaps(getDemuxCaps_cb _hidl_cb) {
 
     DemuxCapabilities caps;
 
+    // IP filter can be an MMTP filter's data source.
+    caps.linkCaps = {0x00, 0x00, 0x02, 0x00, 0x00};
     _hidl_cb(Result::SUCCESS, caps);
     return Void();
 }
@@ -229,6 +231,9 @@ Return<void> Tuner::openLnbByName(const hidl_string& /*lnbName*/, openLnbByName_
 
 void Tuner::setFrontendAsDemuxSource(uint32_t frontendId, uint32_t demuxId) {
     mFrontendToDemux[frontendId] = demuxId;
+    if (mFrontends[frontendId] != nullptr && mFrontends[frontendId]->isLocked()) {
+        mDemuxes[demuxId]->startFrontendInputLoop();
+    }
 }
 
 void Tuner::frontendStopTune(uint32_t frontendId) {

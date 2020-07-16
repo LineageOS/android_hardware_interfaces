@@ -57,6 +57,7 @@ using android::hardware::tv::tuner::V1_0::DemuxTsFilterType;
 using android::hardware::tv::tuner::V1_0::IDemux;
 using android::hardware::tv::tuner::V1_0::IFilter;
 using android::hardware::tv::tuner::V1_0::IFilterCallback;
+using android::hardware::tv::tuner::V1_0::ITimeFilter;
 using android::hardware::tv::tuner::V1_0::ITuner;
 using android::hardware::tv::tuner::V1_0::Result;
 
@@ -151,12 +152,19 @@ class FilterTests {
     std::map<uint32_t, sp<FilterCallback>> getFilterCallbacks() { return mFilterCallbacks; }
 
     AssertionResult openFilterInDemux(DemuxFilterType type, uint32_t bufferSize);
+    AssertionResult openTimeFilterInDemux();
+    AssertionResult setTimeStamp(uint64_t timeStamp);
+    AssertionResult getTimeStamp();
     AssertionResult getNewlyOpenedFilterId(uint32_t& filterId);
     AssertionResult configFilter(DemuxFilterSettings setting, uint32_t filterId);
     AssertionResult getFilterMQDescriptor(uint32_t filterId);
+    AssertionResult setFilterDataSource(uint32_t sourceFilterId, uint32_t sinkFilterId);
+    AssertionResult setFilterDataSourceToDemux(uint32_t filterId);
     AssertionResult startFilter(uint32_t filterId);
+    AssertionResult clearTimeStamp();
     AssertionResult stopFilter(uint32_t filterId);
     AssertionResult closeFilter(uint32_t filterId);
+    AssertionResult closeTimeFilter();
 
     FilterEventType getFilterEventType(DemuxFilterType type) {
         FilterEventType eventType = FilterEventType::UNDEFINED;
@@ -212,6 +220,7 @@ class FilterTests {
 
     sp<ITuner> mService;
     sp<IFilter> mFilter;
+    sp<ITimeFilter> mTimeFilter;
     sp<IDemux> mDemux;
     std::map<uint32_t, sp<IFilter>> mFilters;
     std::map<uint32_t, sp<FilterCallback>> mFilterCallbacks;
@@ -221,4 +230,5 @@ class FilterTests {
     vector<uint32_t> mUsedFilterIds;
 
     uint32_t mFilterId = -1;
+    uint64_t mBeginTimeStamp;
 };

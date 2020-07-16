@@ -61,6 +61,12 @@ interface ICameraProvider extends @2.5::ICameraProvider {
      * outputs, stream combinations mentioned above, where YUV is substituted by
      * Y8 must be also supported.
      *
+     * Devices whose capabilities do not include
+     * ANDROID_REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE, must support
+     * at least a single Y16 stream, Dataspace::DEPTH with sVGA resolution,
+     * during concurrent operation.
+     * Where sVGA -  min (max output resolution for the given format, 640 X 480)
+     *
      * The camera framework must call this method whenever it gets a
      * cameraDeviceStatusChange callback adding a new camera device or removing
      * a camera device known to it. This is so that the camera framework can get new combinations
@@ -76,12 +82,16 @@ interface ICameraProvider extends @2.5::ICameraProvider {
      * configuration settings exposed through camera metadata), should the sum
      * of resource costs for the combination be <= 100.
      *
-     * The lists of camera id combinations returned by this method may contain
-     * hidden physical camera ids. If a combination does contain hidden physical
-     * camera ids, the camera framework must be able to open any logical cameras
-     * that contain these hidden physical camera ids in their
-     * ANDROID_LOGICAL_MULTI_CAMERA_PHYSICAL_IDS list, in addition to the other
-     * camera ids advertised in the combination, for concurrent operation.
+     * For guaranteed concurrent camera operation, the camera framework must call
+     * ICameraDevice.open() on all devices (intended for concurrent operation), before configuring
+     * any streams on them. This gives the camera HAL process an opportunity to potentially
+     * distribute hardware resources better before stream configuration.
+     *
+     * Due to potential hardware constraints around internal switching of physical camera devices,
+     * a device's complete ZOOM_RATIO_RANGE(if supported), may not apply during concurrent
+     * operation. If ZOOM_RATIO is supported, camera HALs must ensure ZOOM_RATIO_RANGE of
+     * [1.0, ANDROID_SCALER_AVAILABLE_MAX_DIGITAL_ZOOM] is supported by that device, during
+     * concurrent operation.
      *
      * @return status Status code for the operation
      * @return cameraIds a list of camera id combinations that support

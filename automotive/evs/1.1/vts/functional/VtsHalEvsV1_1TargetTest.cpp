@@ -2262,6 +2262,7 @@ TEST_P(EvsHidlTest, CameraStreamExternalBuffering) {
 
     // Allocate buffers to use
     hidl_vec<BufferDesc> buffers;
+    buffers.resize(kBuffersToHold);
     for (auto i = 0; i < kBuffersToHold; ++i) {
         unsigned pixelsPerLine;
         buffer_handle_t memHandle = nullptr;

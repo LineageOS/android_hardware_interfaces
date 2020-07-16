@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-#include <VtsHalHidlTargetTestBase.h>
-#include <VtsHalHidlTargetTestEnvBase.h>
 #include <android-base/logging.h>
 #include <android/hardware/tv/tuner/1.0/IDvr.h>
 #include <android/hardware/tv/tuner/1.0/IDvrCallback.h>
 #include <android/hardware/tv/tuner/1.0/ITuner.h>
 #include <android/hardware/tv/tuner/1.0/types.h>
+#include <fcntl.h>
 #include <fmq/MessageQueue.h>
+#include <gtest/gtest.h>
+#include <hidl/HidlSupport.h>
 #include <hidl/Status.h>
 #include <utils/Condition.h>
 #include <utils/Mutex.h>
@@ -51,6 +52,8 @@ using android::hardware::tv::tuner::V1_0::PlaybackStatus;
 using android::hardware::tv::tuner::V1_0::RecordSettings;
 using android::hardware::tv::tuner::V1_0::RecordStatus;
 using android::hardware::tv::tuner::V1_0::Result;
+
+using namespace std;
 
 #define WAIT_TIMEOUT 3000000000
 
@@ -149,25 +152,31 @@ class DvrTests {
     void setDemux(sp<IDemux> demux) { mDemux = demux; }
 
     void startPlaybackInputThread(string& dataInputFile, PlaybackSettings& settings) {
-        mDvrCallback->startPlaybackInputThread(dataInputFile, settings, mDvrMQDescriptor);
+        mDvrPlaybackCallback->startPlaybackInputThread(dataInputFile, settings,
+                                                       mDvrPlaybackMQDescriptor);
     };
 
     void startRecordOutputThread(RecordSettings settings) {
-        mDvrCallback->startRecordOutputThread(settings, mDvrMQDescriptor);
+        mDvrRecordCallback->startRecordOutputThread(settings, mDvrRecordMQDescriptor);
     };
 
-    void stopPlaybackThread() { mDvrCallback->stopPlaybackThread(); }
-    void testRecordOutput() { mDvrCallback->testRecordOutput(); }
-    void stopRecordThread() { mDvrCallback->stopPlaybackThread(); }
+    void stopPlaybackThread() { mDvrPlaybackCallback->stopPlaybackThread(); }
+    void testRecordOutput() { mDvrRecordCallback->testRecordOutput(); }
+    void stopRecordThread() { mDvrRecordCallback->stopRecordThread(); }
 
     AssertionResult openDvrInDemux(DvrType type, uint32_t bufferSize);
-    AssertionResult configDvr(DvrSettings setting);
-    AssertionResult getDvrMQDescriptor();
+    AssertionResult configDvrPlayback(DvrSettings setting);
+    AssertionResult configDvrRecord(DvrSettings setting);
+    AssertionResult getDvrPlaybackMQDescriptor();
+    AssertionResult getDvrRecordMQDescriptor();
     AssertionResult attachFilterToDvr(sp<IFilter> filter);
     AssertionResult detachFilterToDvr(sp<IFilter> filter);
-    AssertionResult stopDvr();
-    AssertionResult startDvr();
-    void closeDvr();
+    AssertionResult stopDvrPlayback();
+    AssertionResult startDvrPlayback();
+    AssertionResult stopDvrRecord();
+    AssertionResult startDvrRecord();
+    void closeDvrPlayback();
+    void closeDvrRecord();
 
   protected:
     static AssertionResult failure() { return ::testing::AssertionFailure(); }
@@ -175,11 +184,11 @@ class DvrTests {
     static AssertionResult success() { return ::testing::AssertionSuccess(); }
 
     sp<ITuner> mService;
-    sp<IDvr> mDvr;
+    sp<IDvr> mDvrPlayback;
+    sp<IDvr> mDvrRecord;
     sp<IDemux> mDemux;
-    sp<DvrCallback> mDvrCallback;
-    MQDesc mDvrMQDescriptor;
-
-    pthread_t mPlaybackshread;
-    bool mPlaybackThreadRunning;
+    sp<DvrCallback> mDvrPlaybackCallback;
+    sp<DvrCallback> mDvrRecordCallback;
+    MQDesc mDvrPlaybackMQDescriptor;
+    MQDesc mDvrRecordMQDescriptor;
 };
