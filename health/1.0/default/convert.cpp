@@ -79,7 +79,7 @@ void convertFromHealthConfig(const HealthConfig& c, struct healthd_config *hc) {
 
     hc->batteryCurrentAvgPath =
         android::String8(c.batteryCurrentAvgPath.c_str(),
-                         c.batteryCurrentNowPath.size());
+                         c.batteryCurrentAvgPath.size());
 
     hc->batteryChargeCounterPath =
         android::String8(c.batteryChargeCounterPath.c_str(),
