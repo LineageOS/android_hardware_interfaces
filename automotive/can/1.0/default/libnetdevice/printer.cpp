@@ -62,13 +62,20 @@ static void flagsToStream(std::stringstream& ss, __u16 nlmsg_flags) {
 }
 
 static void toStream(std::stringstream& ss, const nlbuf<uint8_t> data) {
+    const auto rawData = data.getRaw();
+    const auto dataLen = rawData.len();
     ss << std::hex;
+    if (dataLen > 16) ss << std::endl << " 0000 ";
     int i = 0;
-    for (const auto byte : data.getRaw()) {
+    for (const auto byte : rawData) {
         if (i++ > 0) ss << ' ';
         ss << std::setw(2) << unsigned(byte);
+        if (i % 16 == 0) {
+            ss << std::endl << ' ' << std::dec << std::setw(4) << i << std::hex;
+        }
     }
     ss << std::dec;
+    if (dataLen > 16) ss << std::endl;
 }
 
 static void toStream(std::stringstream& ss, const nlbuf<nlattr> attr,
@@ -105,7 +112,7 @@ static void toStream(std::stringstream& ss, const nlbuf<nlattr> attr,
     }
 }
 
-static std::string toString(const nlbuf<nlmsghdr> hdr, int protocol) {
+std::string toString(const nlbuf<nlmsghdr> hdr, int protocol, bool printPayload) {
     if (!hdr.firstOk()) return "nlmsg{buffer overflow}";
 
     std::stringstream ss;
@@ -133,9 +140,12 @@ static std::string toString(const nlbuf<nlmsghdr> hdr, int protocol) {
     }
     if (hdr->nlmsg_seq != 0) ss << ", seq=" << hdr->nlmsg_seq;
     if (hdr->nlmsg_pid != 0) ss << ", pid=" << hdr->nlmsg_pid;
+    ss << ", len=" << hdr->nlmsg_len;
 
     ss << ", crc=" << std::hex << std::setw(4) << crc16(hdr.data<uint8_t>()) << std::dec;
     ss << "} ";
+
+    if (!printPayload) return ss.str();
 
     if (!msgDescMaybe.has_value()) {
         toStream(ss, hdr.data<uint8_t>());
@@ -159,10 +169,6 @@ static std::string toString(const nlbuf<nlmsghdr> hdr, int protocol) {
     ss << "}";
 
     return ss.str();
-}
-
-std::string toString(const nlmsghdr* hdr, size_t bufLen, int protocol) {
-    return toString({hdr, bufLen}, protocol);
 }
 
 }  // namespace android::netdevice

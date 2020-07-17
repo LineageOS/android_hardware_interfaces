@@ -30,7 +30,7 @@ Error::Error(int protocol) : MessageDefinition<nlmsgerr>("nlmsg", {
 
 void Error::toStream(std::stringstream& ss, const nlmsgerr& data) const {
     ss << "nlmsgerr{error=" << data.error
-       << ", msg=" << toString(&data.msg, sizeof(data.msg), mProtocol) << "}";
+       << ", msg=" << toString({&data.msg, sizeof(data.msg)}, mProtocol) << "}";
 }
 
 }  // namespace android::netdevice::protocols::base

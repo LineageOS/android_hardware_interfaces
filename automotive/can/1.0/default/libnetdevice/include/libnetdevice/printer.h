@@ -16,12 +16,22 @@
 
 #pragma once
 
+#include <libnetdevice/nlbuf.h>
+
 #include <linux/netlink.h>
 
 #include <string>
 
 namespace android::netdevice {
 
-std::string toString(const nlmsghdr* hdr, size_t bufLen, int protocol);
+/**
+ * Stringify a Netlink message.
+ *
+ * \param hdr Pointer to the message(s) to print.
+ * \param protocol Which Netlink protocol hdr uses.
+ * \param printPayload True will stringify message data, false will only stringify the header(s).
+ * \return Stringified message.
+ */
+std::string toString(const nlbuf<nlmsghdr> hdr, int protocol, bool printPayload = false);
 
 }  // namespace android::netdevice
