@@ -87,12 +87,14 @@ static std::unique_ptr<Obd2SensorStore> fillDefaultObd2Frame(size_t numVendorInt
     return sensorStore;
 }
 
-EmulatedVehicleHal::EmulatedVehicleHal(VehiclePropertyStore* propStore, VehicleHalClient* client)
+EmulatedVehicleHal::EmulatedVehicleHal(VehiclePropertyStore* propStore, VehicleHalClient* client,
+                                       EmulatedUserHal* emulatedUserHal)
     : mPropStore(propStore),
       mHvacPowerProps(std::begin(kHvacPowerProperties), std::end(kHvacPowerProperties)),
       mRecurrentTimer(std::bind(&EmulatedVehicleHal::onContinuousPropertyTimer, this,
                                 std::placeholders::_1)),
-      mVehicleClient(client) {
+      mVehicleClient(client),
+      mEmulatedUserHal(emulatedUserHal) {
     initStaticConfig();
     for (size_t i = 0; i < arraysize(kVehicleProperties); i++) {
         mPropStore->registerProperty(kVehicleProperties[i].config);
@@ -105,6 +107,8 @@ EmulatedVehicleHal::EmulatedVehicleHal(VehiclePropertyStore* propStore, VehicleH
 VehicleHal::VehiclePropValuePtr EmulatedVehicleHal::get(
         const VehiclePropValue& requestedPropValue, StatusCode* outStatus) {
     auto propId = requestedPropValue.prop;
+    ALOGV("get(%d)", propId);
+
     auto& pool = *getValuePool();
     VehiclePropValuePtr v = nullptr;
 
@@ -118,6 +122,26 @@ VehicleHal::VehiclePropValuePtr EmulatedVehicleHal::get(
             *outStatus = fillObd2DtcInfo(v.get());
             break;
         default:
+            if (mEmulatedUserHal != nullptr && mEmulatedUserHal->isSupported(propId)) {
+                ALOGI("get(): getting value for prop %d from User HAL", propId);
+                const auto& ret = mEmulatedUserHal->onGetProperty(requestedPropValue);
+                if (!ret.ok()) {
+                    ALOGE("get(): User HAL returned error: %s", ret.error().message().c_str());
+                    *outStatus = StatusCode(ret.error().code());
+                } else {
+                    auto value = ret.value().get();
+                    if (value != nullptr) {
+                        ALOGI("get(): User HAL returned value: %s", toString(*value).c_str());
+                        v = getValuePool()->obtain(*value);
+                        *outStatus = StatusCode::OK;
+                    } else {
+                        ALOGE("get(): User HAL returned null value");
+                        *outStatus = StatusCode::INTERNAL_ERROR;
+                    }
+                }
+                break;
+            }
+
             auto internalPropValue = mPropStore->readValueOrNull(requestedPropValue);
             if (internalPropValue != nullptr) {
                 v = getValuePool()->obtain(*internalPropValue);
