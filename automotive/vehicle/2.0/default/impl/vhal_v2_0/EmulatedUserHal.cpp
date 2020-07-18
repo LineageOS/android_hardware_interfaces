@@ -102,6 +102,15 @@ android::base::Result<std::unique_ptr<VehiclePropValue>> EmulatedUserHal::onSetS
     }
 
     if (value.areaId != 0) {
+        if (value.value.int32Values.size() >= 2 &&
+            static_cast<SwitchUserMessageType>(value.value.int32Values[1]) ==
+                    SwitchUserMessageType::VEHICLE_REQUEST) {
+            // User HAL can also request a user switch, so we need to check it first
+            ALOGD("set(SWITCH_USER) called from lshal to emulate a vehicle request: %s",
+                  toString(value).c_str());
+            return std::unique_ptr<VehiclePropValue>(new VehiclePropValue(value));
+        }
+        // Otherwise, we store it
         ALOGD("set(SWITCH_USER) called from lshal; storing it: %s", toString(value).c_str());
         mSwitchUserResponseFromCmd.reset(new VehiclePropValue(value));
         return {};
