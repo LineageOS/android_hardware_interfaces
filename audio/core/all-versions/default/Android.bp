@@ -1,8 +1,5 @@
-cc_defaults {
-    name: "android.hardware.audio-impl_default",
-    relative_install_path: "hw",
-    proprietary: true,
-    vendor: true,
+filegroup {
+    name: "android.hardware.audio-impl_srcs",
     srcs: [
         "Conversions.cpp",
         "Device.cpp",
@@ -13,10 +10,23 @@ cc_defaults {
         "StreamIn.cpp",
         "StreamOut.cpp",
     ],
+}
+
+cc_library_headers {
+    name: "android.hardware.audio-impl_headers",
+    proprietary: true,
+    vendor: true,
+    export_include_dirs: ["include"],
+}
+
+cc_defaults {
+    name: "android.hardware.audio-impl_default",
+    relative_install_path: "hw",
+    proprietary: true,
+    vendor: true,
+    srcs: [":android.hardware.audio-impl_srcs"],
 
     defaults: ["hidl_defaults"],
-
-    export_include_dirs: ["include"],
 
     static_libs: [
         "libaudiofoundation",
@@ -35,11 +45,16 @@ cc_defaults {
     ],
 
     header_libs: [
+        "android.hardware.audio-impl_headers",
         "android.hardware.audio.common.util@all-versions",
         "libaudioclient_headers",
         "libaudio_system_headers",
         "libhardware_headers",
         "libmedia_headers",
+    ],
+
+    export_header_lib_headers: [
+        "android.hardware.audio-impl_headers",
     ],
 }
 
@@ -89,8 +104,8 @@ cc_library_shared {
     ],
 }
 
-cc_library_shared {
-    name: "android.hardware.audio@6.0-impl",
+cc_defaults {
+    name: "android.hardware.audio@6.0-impl_default",
     defaults: ["android.hardware.audio-impl_default"],
     shared_libs: [
         "android.hardware.audio@6.0",
@@ -102,4 +117,9 @@ cc_library_shared {
         "-DMINOR_VERSION=0",
         "-include common/all-versions/VersionMacro.h",
     ],
+}
+
+cc_library_shared {
+    name: "android.hardware.audio@6.0-impl",
+    defaults: ["android.hardware.audio@6.0-impl_default"],
 }
