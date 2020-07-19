@@ -53,6 +53,12 @@ class nlbuf {
     static constexpr size_t hdrlen = align(sizeof(T));
 
   public:
+    /**
+     * Constructor for nlbuf.
+     *
+     * \param data A pointer to the data the nlbuf wraps.
+     * \param bufferLen Length of buffer.
+     */
     nlbuf(const T* data, size_t bufferLen) : mData(data), mBufferEnd(pointerAdd(data, bufferLen)) {}
 
     const T* operator->() const {
