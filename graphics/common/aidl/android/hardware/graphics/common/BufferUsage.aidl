@@ -110,5 +110,5 @@ enum BufferUsage {
 
     /** bits 32-47 must be zero and are reserved for future versions */
     /** bits 48-63 are reserved for vendor extensions */
-    VENDOR_MASK_HI                     = 0xffff << 48,
+    VENDOR_MASK_HI                     = (1L * 0xffff) << 48,
 }
