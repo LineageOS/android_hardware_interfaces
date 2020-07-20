@@ -22,8 +22,6 @@
 
 namespace android::netdevice {
 
-socketparams::Params socketparams::current = general;
-
 unsigned int nametoindex(const std::string& ifname) {
     const auto ifidx = if_nametoindex(ifname.c_str());
     if (ifidx != 0) return ifidx;
