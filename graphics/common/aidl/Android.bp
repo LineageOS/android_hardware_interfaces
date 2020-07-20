@@ -1,0 +1,24 @@
+aidl_interface {
+    name: "vintf-graphics-common",
+    host_supported: true,
+    vendor_available: true,
+    vndk: {
+        enabled: true,
+        support_system_process: true,
+    },
+    srcs: [
+        "android/hardware/graphics/common/*.aidl",
+    ],
+    stability: "vintf",
+    imports: [
+        "vintf-common",
+    ],
+    backend: {
+        java: {
+            enabled: false,
+        },
+        cpp: {
+            enabled: false,
+        },
+    },
+}
