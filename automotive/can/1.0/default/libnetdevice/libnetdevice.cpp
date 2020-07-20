@@ -28,8 +28,8 @@
 
 namespace android::netdevice {
 
-void useCanSockets(bool yes) {
-    socketparams::current = yes ? socketparams::can : socketparams::general;
+void useSocketDomain(int domain) {
+    ifreqs::socketDomain = domain;
 }
 
 bool exists(std::string ifname) {

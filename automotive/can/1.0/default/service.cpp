@@ -28,7 +28,7 @@ static void canControllerService() {
     configureRpcThreadpool(16, true);
     LOG(DEBUG) << "CAN controller service starting...";
 
-    netdevice::useCanSockets(true);
+    netdevice::useSocketDomain(AF_CAN);
 
     sp<CanController> canController(new CanController);
     if (canController->registerAsService("socketcan") != OK) {

@@ -23,6 +23,11 @@
 namespace android::netdevice::ifreqs {
 
 /**
+ * \see useSocketDomain()
+ */
+extern std::atomic_int socketDomain;
+
+/**
  * Sends ioctl interface request.
  *
  * \param request Request type (such as SIOCGIFFLAGS)

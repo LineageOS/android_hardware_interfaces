@@ -25,21 +25,6 @@
 
 namespace android::netdevice {
 
-namespace socketparams {
-
-struct Params {
-    int domain;
-    int type;
-    int protocol;
-};
-
-constexpr Params general = {AF_INET, SOCK_DGRAM, 0};
-constexpr Params can = {PF_CAN, SOCK_RAW, CAN_RAW};
-
-extern Params current;
-
-}  // namespace socketparams
-
 /**
  * Returns the index of a given network interface.
  *

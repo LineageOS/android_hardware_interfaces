@@ -21,11 +21,35 @@
 #include <android-base/logging.h>
 #include <android-base/unique_fd.h>
 
+#include <map>
+
 namespace android::netdevice::ifreqs {
 
+static constexpr int defaultSocketDomain = AF_INET;
+std::atomic_int socketDomain = defaultSocketDomain;
+
+struct SocketParams {
+    int domain;
+    int type;
+    int protocol;
+};
+
+static const std::map<int, SocketParams> socketParams = {
+        {AF_INET, {AF_INET, SOCK_DGRAM, 0}},
+        {AF_CAN, {AF_CAN, SOCK_RAW, CAN_RAW}},
+};
+
+static SocketParams getSocketParams(int domain) {
+    if (socketParams.count(domain)) return socketParams.find(domain)->second;
+
+    auto params = socketParams.find(defaultSocketDomain)->second;
+    params.domain = domain;
+    return params;
+}
+
 bool send(unsigned long request, struct ifreq& ifr) {
-    base::unique_fd sock(socket(socketparams::current.domain, socketparams::current.type,
-                                socketparams::current.protocol));
+    const auto sp = getSocketParams(socketDomain);
+    base::unique_fd sock(socket(sp.domain, sp.type, sp.protocol));
     if (!sock.ok()) {
         LOG(ERROR) << "Can't create socket";
         return false;
