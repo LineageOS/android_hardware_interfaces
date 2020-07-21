@@ -27,15 +27,14 @@ namespace android::netdevice {
 typedef std::array<uint8_t, ETH_ALEN> hwaddr_t;
 
 /**
- * Configures libnetdevice to use PF_CAN sockets instead of AF_INET,
+ * Configures libnetdevice to use other socket domain than AF_INET,
  * what requires less permissive SEPolicy rules for a given process.
  *
- * In such case, the process would only be able to control CAN interfaces.
- *
- * TODO(b/158011272): consider less hacky solution
- * \param yes true to use CAN sockets, false for general sockets
+ * In such case, the process would only be able to control interfaces of a given kind.
+
+ * \param domain Socket domain to use (e.g. AF_CAN), see socket(2) for details
  */
-void useCanSockets(bool yes);
+void useSocketDomain(int domain);
 
 /**
  * Checks, if the network interface exists.
