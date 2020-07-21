@@ -303,15 +303,18 @@ struct Operand {
     /**
      * Quantized scale of the operand.
      *
-     * Only applicable if the operand is of type TENSOR_QUANT8_ASYMM or
-     * TENSOR_INT32.
+     * Must be 0 when not applicable to an operand type.
+     *
+     * See {@link OperandType}.
      */
     float scale;
 
     /**
      * Quantized zero-point offset of the operand.
      *
-     * Only applicable if the operand is of type TENSOR_QUANT8_ASYMM.
+     * Must be 0 when not applicable to an operand type.
+     *
+     * See {@link OperandType}.
      */
     int32_t zeroPoint;
 
@@ -505,8 +508,8 @@ struct Request {
      * Input data and information to be used in the execution of a prepared
      * model.
      *
-     * The index of the input corresponds to the index in Model.inputIndexes.
-     *   E.g., input[i] corresponds to Model.inputIndexes[i].
+     * The index of the input corresponds to the index in Model.main.inputIndexes.
+     *   E.g., input[i] corresponds to Model.main.inputIndexes[i].
      */
     vec<RequestArgument> inputs;
 
@@ -514,8 +517,8 @@ struct Request {
      * Output data and information to be used in the execution of a prepared
      * model.
      *
-     * The index of the output corresponds to the index in Model.outputIndexes.
-     *   E.g., output[i] corresponds to Model.outputIndexes[i].
+     * The index of the output corresponds to the index in Model.main.outputIndexes.
+     *   E.g., output[i] corresponds to Model.main.outputIndexes[i].
      */
     vec<RequestArgument> outputs;
 
