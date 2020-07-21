@@ -18,7 +18,6 @@
 #include <cutils/properties.h>
 
 #include <android/hidl/manager/1.0/IServiceManager.h>
-#include <android/hidl/manager/1.0/IServiceNotification.h>
 #include <hidl/HidlTransportSupport.h>
 
 #include <wifi_system/interface_tool.h>
@@ -45,7 +44,6 @@ using ::android::hardware::wifi::supplicant::V1_0::ISupplicantP2pIface;
 using ::android::hardware::wifi::supplicant::V1_0::IfaceType;
 using ::android::hardware::wifi::supplicant::V1_0::SupplicantStatus;
 using ::android::hardware::wifi::supplicant::V1_0::SupplicantStatusCode;
-using ::android::hidl::manager::V1_0::IServiceNotification;
 using ::android::wifi_system::InterfaceTool;
 using ::android::wifi_system::SupplicantManager;
 
@@ -114,55 +112,6 @@ std::string getP2pIfaceName() {
 }
 }  // namespace
 
-// Utility class to wait for wpa_supplicant's HIDL service registration.
-class ServiceNotificationListener : public IServiceNotification {
-   public:
-    Return<void> onRegistration(const hidl_string& fully_qualified_name,
-                                const hidl_string& instance_name,
-                                bool pre_existing) override {
-        if (pre_existing) {
-            return Void();
-        }
-        std::unique_lock<std::mutex> lock(mutex_);
-        registered_.push_back(std::string(fully_qualified_name.c_str()) + "/" +
-                              instance_name.c_str());
-        lock.unlock();
-        condition_.notify_one();
-        return Void();
-    }
-
-    bool registerForHidlServiceNotifications(const std::string& instance_name) {
-        if (!ISupplicant::registerForNotifications(instance_name, this)) {
-            return false;
-        }
-        configureRpcThreadpool(2, false);
-        return true;
-    }
-
-    bool waitForHidlService(uint32_t timeout_in_millis,
-                            const std::string& instance_name) {
-        std::unique_lock<std::mutex> lock(mutex_);
-        condition_.wait_for(lock, std::chrono::milliseconds(timeout_in_millis),
-                            [&]() { return registered_.size() >= 1; });
-        if (registered_.size() != 1) {
-            return false;
-        }
-        std::string exptected_registered =
-            std::string(ISupplicant::descriptor) + "/" + instance_name;
-        if (registered_[0] != exptected_registered) {
-            LOG(ERROR) << "Expected: " << exptected_registered
-                       << ", Got: " << registered_[0];
-            return false;
-        }
-        return true;
-    }
-
-   private:
-    std::vector<std::string> registered_{};
-    std::mutex mutex_;
-    std::condition_variable condition_;
-};
-
 void stopSupplicant() { stopSupplicant(""); }
 
 void stopSupplicant(const std::string& wifi_instance_name) {
@@ -178,17 +127,12 @@ void startSupplicantAndWaitForHidlService(
     const std::string& supplicant_instance_name) {
     initilializeDriverAndFirmware(wifi_instance_name);
 
-    android::sp<ServiceNotificationListener> notification_listener =
-        new ServiceNotificationListener();
-    ASSERT_TRUE(notification_listener->registerForHidlServiceNotifications(
-        supplicant_instance_name));
-
     SupplicantManager supplicant_manager;
     ASSERT_TRUE(supplicant_manager.StartSupplicant());
     ASSERT_TRUE(supplicant_manager.IsSupplicantRunning());
 
-    ASSERT_TRUE(notification_listener->waitForHidlService(
-        500, supplicant_instance_name));
+    // Wait for supplicant service to come up.
+    ISupplicant::getService(supplicant_instance_name);
 }
 
 bool is_1_1(const sp<ISupplicant>& supplicant) {
