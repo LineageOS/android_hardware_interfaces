@@ -85,7 +85,7 @@ bool FilterCallback::readFilterEventData() {
             case FilterEventType::MEDIA:
                 return dumpAvData(filterEvent.events[i].media());
             case FilterEventType::RECORD:
-                break;
+                return readRecordData(filterEvent.events[i].tsRecord());
             case FilterEventType::MMTPRECORD:
                 break;
             case FilterEventType::DOWNLOAD:
@@ -125,6 +125,11 @@ bool FilterCallback::dumpAvData(DemuxFilterMediaEvent event) {
     memcpy(output, buffer, length);
     // print buffer and check with golden output.
     EXPECT_TRUE(mFilter->releaseAvHandle(handle, dataId) == Result::SUCCESS);
+    return true;
+}
+
+bool FilterCallback::readRecordData(DemuxFilterTsRecordEvent event) {
+    ALOGD("[vts] got DemuxFilterTsRecordEvent with pid=%d.", event.pid.tPid());
     return true;
 }
 

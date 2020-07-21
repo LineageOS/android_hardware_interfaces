@@ -4,14 +4,14 @@ cc_defaults {
     vendor: true,
     relative_install_path: "hw",
     srcs: [
+        "Demux.cpp",
+        "Descrambler.cpp",
+        "Dvr.cpp",
         "Filter.cpp",
         "Frontend.cpp",
-        "Descrambler.cpp",
-        "Demux.cpp",
-        "Dvr.cpp",
+        "Lnb.cpp",
         "TimeFilter.cpp",
         "Tuner.cpp",
-        "Lnb.cpp",
         "service.cpp",
     ],
 

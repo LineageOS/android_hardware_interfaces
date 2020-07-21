@@ -21,8 +21,8 @@
 #include <hidl/Status.h>
 #include <hidlmemory/FrameworkUtils.h>
 
+using android::hardware::tv::tuner::V1_0::DataFormat;
 using android::hardware::tv::tuner::V1_0::DemuxAlpFilterType;
-using android::hardware::tv::tuner::V1_0::DemuxFilterEvent;
 using android::hardware::tv::tuner::V1_0::DemuxFilterMainType;
 using android::hardware::tv::tuner::V1_0::DemuxFilterSettings;
 using android::hardware::tv::tuner::V1_0::DemuxFilterType;
@@ -30,6 +30,8 @@ using android::hardware::tv::tuner::V1_0::DemuxIpFilterType;
 using android::hardware::tv::tuner::V1_0::DemuxMmtpFilterType;
 using android::hardware::tv::tuner::V1_0::DemuxRecordScIndexType;
 using android::hardware::tv::tuner::V1_0::DemuxTsFilterType;
+using android::hardware::tv::tuner::V1_0::DvrSettings;
+using android::hardware::tv::tuner::V1_0::DvrType;
 using android::hardware::tv::tuner::V1_0::FrontendDvbtBandwidth;
 using android::hardware::tv::tuner::V1_0::FrontendDvbtCoderate;
 using android::hardware::tv::tuner::V1_0::FrontendDvbtConstellation;
@@ -42,6 +44,8 @@ using android::hardware::tv::tuner::V1_0::FrontendSettings;
 using android::hardware::tv::tuner::V1_0::FrontendStatus;
 using android::hardware::tv::tuner::V1_0::FrontendStatusType;
 using android::hardware::tv::tuner::V1_0::FrontendType;
+using android::hardware::tv::tuner::V1_0::PlaybackSettings;
+using android::hardware::tv::tuner::V1_0::RecordSettings;
 
 using namespace std;
 
@@ -68,6 +72,12 @@ typedef enum {
     FRONTEND_MAX,
 } Frontend;
 
+typedef enum {
+    DVR_RECORD0,
+    DVR_PLAYBACK0,
+    DVR_MAX,
+} Dvr;
+
 struct FilterConfig {
     uint32_t bufferSize;
     DemuxFilterType type;
@@ -84,8 +94,16 @@ struct FrontendConfig {
     vector<FrontendStatus> expectTuneStatuses;
 };
 
+struct DvrConfig {
+    DvrType type;
+    uint32_t bufferSize;
+    DvrSettings settings;
+    string playbackInputFile;
+};
+
 static FrontendConfig frontendArray[FILTER_MAX];
 static FilterConfig filterArray[FILTER_MAX];
+static DvrConfig dvrArray[DVR_MAX];
 
 /** Configuration array for the frontend tune test */
 inline void initFrontendConfig() {
@@ -171,8 +189,33 @@ inline void initFilterConfig() {
     // TS RECORD filter setting
     filterArray[TS_RECORD0].type.mainType = DemuxFilterMainType::TS;
     filterArray[TS_RECORD0].type.subType.tsFilterType(DemuxTsFilterType::RECORD);
-    filterArray[TS_RECORD0].settings.ts().tpid = 81;
+    filterArray[TS_RECORD0].settings.ts().tpid = 256;
     filterArray[TS_RECORD0].settings.ts().filterSettings.record({
             .scIndexType = DemuxRecordScIndexType::NONE,
     });
+};
+
+/** Configuration array for the dvr test */
+inline void initDvrConfig() {
+    RecordSettings recordSettings{
+            .statusMask = 0xf,
+            .lowThreshold = 0x1000,
+            .highThreshold = 0x07fff,
+            .dataFormat = DataFormat::TS,
+            .packetSize = 188,
+    };
+    dvrArray[DVR_RECORD0].type = DvrType::RECORD;
+    dvrArray[DVR_RECORD0].bufferSize = FMQ_SIZE_4M;
+    dvrArray[DVR_RECORD0].settings.record(recordSettings);
+    PlaybackSettings playbackSettings{
+            .statusMask = 0xf,
+            .lowThreshold = 0x1000,
+            .highThreshold = 0x07fff,
+            .dataFormat = DataFormat::TS,
+            .packetSize = 188,
+    };
+    dvrArray[DVR_PLAYBACK0].type = DvrType::PLAYBACK;
+    dvrArray[DVR_PLAYBACK0].playbackInputFile = "/data/local/tmp/segment000000.ts";
+    dvrArray[DVR_PLAYBACK0].bufferSize = FMQ_SIZE_4M;
+    dvrArray[DVR_PLAYBACK0].settings.playback(playbackSettings);
 };
