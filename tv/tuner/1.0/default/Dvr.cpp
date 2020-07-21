@@ -364,7 +364,7 @@ bool Dvr::processEsDataOnPlayback(bool isVirtualFrontend, bool isRecording) {
     for (int i = 0; i < totalFrames; i++) {
         frameData.resize(esMeta[i].len);
         pid = esMeta[i].isAudio ? audioPid : videoPid;
-        memcpy(dataOutputBuffer.data() + esMeta[i].startIndex, frameData.data(), esMeta[i].len);
+        memcpy(frameData.data(), dataOutputBuffer.data() + esMeta[i].startIndex, esMeta[i].len);
         // Send to the media filter
         if (isVirtualFrontend && isRecording) {
             // TODO validate record
