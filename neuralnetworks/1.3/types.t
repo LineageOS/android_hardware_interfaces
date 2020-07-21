@@ -508,8 +508,8 @@ struct Request {
      * Input data and information to be used in the execution of a prepared
      * model.
      *
-     * The index of the input corresponds to the index in Model.inputIndexes.
-     *   E.g., input[i] corresponds to Model.inputIndexes[i].
+     * The index of the input corresponds to the index in Model.main.inputIndexes.
+     *   E.g., input[i] corresponds to Model.main.inputIndexes[i].
      */
     vec<RequestArgument> inputs;
 
@@ -517,8 +517,8 @@ struct Request {
      * Output data and information to be used in the execution of a prepared
      * model.
      *
-     * The index of the output corresponds to the index in Model.outputIndexes.
-     *   E.g., output[i] corresponds to Model.outputIndexes[i].
+     * The index of the output corresponds to the index in Model.main.outputIndexes.
+     *   E.g., output[i] corresponds to Model.main.outputIndexes[i].
      */
     vec<RequestArgument> outputs;
 
