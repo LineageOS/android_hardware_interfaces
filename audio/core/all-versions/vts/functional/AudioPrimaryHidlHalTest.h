@@ -329,6 +329,9 @@ TEST_P(AudioPolicyConfigTest, HasPrimaryModule) {
 INSTANTIATE_TEST_CASE_P(AudioHidl, AudioPolicyConfigTest,
                         ::testing::ValuesIn(getDeviceParametersForFactoryTests()),
                         &DeviceParameterToString);
+// When the VTS test runs on a device lacking the corresponding HAL version the parameter
+// list is empty, this isn't a problem.
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AudioPolicyConfigTest);
 
 //////////////////////////////////////////////////////////////////////////////
 ////////////////////// getService audio_devices_factory //////////////////////
@@ -364,6 +367,9 @@ TEST_P(AudioHidlTest, OpenDeviceInvalidParameter) {
 INSTANTIATE_TEST_CASE_P(AudioHidl, AudioHidlTest,
                         ::testing::ValuesIn(getDeviceParametersForFactoryTests()),
                         &DeviceParameterToString);
+// When the VTS test runs on a device lacking the corresponding HAL version the parameter
+// list is empty, this isn't a problem.
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AudioHidlTest);
 
 //////////////////////////////////////////////////////////////////////////////
 /////////////////////////////// openDevice ///////////////////////////////////
@@ -389,6 +395,9 @@ TEST_P(AudioHidlDeviceTest, Init) {
 
 INSTANTIATE_TEST_CASE_P(AudioHidlDevice, AudioHidlDeviceTest,
                         ::testing::ValuesIn(getDeviceParameters()), &DeviceParameterToString);
+// When the VTS test runs on a device lacking the corresponding HAL version the parameter
+// list is empty, this isn't a problem.
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AudioHidlDeviceTest);
 
 //////////////////////////////////////////////////////////////////////////////
 /////////////////////////////// openDevice primary ///////////////////////////
@@ -415,6 +424,9 @@ TEST_P(AudioPrimaryHidlTest, OpenPrimaryDevice) {
 INSTANTIATE_TEST_CASE_P(AudioPrimaryHidl, AudioPrimaryHidlTest,
                         ::testing::ValuesIn(getDeviceParametersForPrimaryDeviceTests()),
                         &DeviceParameterToString);
+// When the VTS test runs on a device lacking the corresponding HAL version the parameter
+// list is empty, this isn't a problem.
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AudioPrimaryHidlTest);
 
 //////////////////////////////////////////////////////////////////////////////
 ///////////////////// {set,get}{Master,Mic}{Mute,Volume} /////////////////////
@@ -503,6 +515,10 @@ INSTANTIATE_TEST_CASE_P(BoolAccessorHidl, BoolAccessorHidlTest,
 INSTANTIATE_TEST_CASE_P(BoolAccessorPrimaryHidl, BoolAccessorPrimaryHidlTest,
                         ::testing::ValuesIn(getDeviceParametersForPrimaryDeviceTests()),
                         &DeviceParameterToString);
+// When the VTS test runs on a device lacking the corresponding HAL version the parameter
+// list is empty, this isn't a problem.
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(BoolAccessorHidlTest);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(BoolAccessorPrimaryHidlTest);
 
 using FloatAccessorHidlTest = AccessorHidlTest<float>;
 TEST_P(FloatAccessorHidlTest, MasterVolumeTest) {
@@ -515,6 +531,9 @@ TEST_P(FloatAccessorHidlTest, MasterVolumeTest) {
 
 INSTANTIATE_TEST_CASE_P(FloatAccessorHidl, FloatAccessorHidlTest,
                         ::testing::ValuesIn(getDeviceParameters()), &DeviceParameterToString);
+// When the VTS test runs on a device lacking the corresponding HAL version the parameter
+// list is empty, this isn't a problem.
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(FloatAccessorHidlTest);
 
 //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////// AudioPatches ////////////////////////////////
@@ -537,6 +556,9 @@ TEST_P(AudioPatchHidlTest, AudioPatches) {
 
 INSTANTIATE_TEST_CASE_P(AudioPatchHidl, AudioPatchHidlTest,
                         ::testing::ValuesIn(getDeviceParameters()), &DeviceParameterToString);
+// When the VTS test runs on a device lacking the corresponding HAL version the parameter
+// list is empty, this isn't a problem.
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AudioPatchHidlTest);
 
 // Nesting a tuple in another tuple allows to use GTest Combine function to generate
 // all combinations of devices and configs.
@@ -707,11 +729,15 @@ INSTANTIATE_TEST_CASE_P(
                 ::testing::ValuesIn(ConfigHelper::getRecommendedSupportCaptureAudioConfig()),
                 ::testing::Values(AudioInputFlag::NONE)),
         &DeviceConfigParameterToString);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(OptionalInputBufferSizeTest);
 #elif MAJOR_VERSION >= 6
 INSTANTIATE_TEST_CASE_P(SupportedInputBufferSize, RequiredInputBufferSizeTest,
                         ::testing::ValuesIn(getInputDeviceConfigParameters()),
                         &DeviceConfigParameterToString);
 #endif
+// When the VTS test runs on a device lacking the corresponding HAL version the parameter
+// list is empty, this isn't a problem.
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(RequiredInputBufferSizeTest);
 
 //////////////////////////////////////////////////////////////////////////////
 /////////////////////////////// setScreenState ///////////////////////////////
@@ -945,6 +971,9 @@ INSTANTIATE_TEST_CASE_P(DeclaredOutputStreamConfigSupport, OutputStreamTest,
                         ::testing::ValuesIn(getOutputDeviceConfigParameters()),
                         &DeviceConfigParameterToString);
 #endif
+// When the VTS test runs on a device lacking the corresponding HAL version the parameter
+// list is empty, this isn't a problem.
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(OutputStreamTest);
 
 ////////////////////////////// openInputStream //////////////////////////////
 
@@ -1000,6 +1029,9 @@ INSTANTIATE_TEST_CASE_P(DeclaredInputStreamConfigSupport, InputStreamTest,
                         ::testing::ValuesIn(getInputDeviceConfigParameters()),
                         &DeviceConfigParameterToString);
 #endif
+// When the VTS test runs on a device lacking the corresponding HAL version the parameter
+// list is empty, this isn't a problem.
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(InputStreamTest);
 
 //////////////////////////////////////////////////////////////////////////////
 ////////////////////////////// IStream getters ///////////////////////////////
@@ -1538,6 +1570,9 @@ TEST_P(TtyModeAccessorPrimaryHidlTest, setGetTtyMode) {
 INSTANTIATE_TEST_CASE_P(TtyModeAccessorPrimaryHidl, TtyModeAccessorPrimaryHidlTest,
                         ::testing::ValuesIn(getDeviceParametersForPrimaryDeviceTests()),
                         &DeviceParameterToString);
+// When the VTS test runs on a device lacking the corresponding HAL version the parameter
+// list is empty, this isn't a problem.
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(TtyModeAccessorPrimaryHidlTest);
 
 TEST_P(BoolAccessorPrimaryHidlTest, setGetHac) {
     doc::test("Query and set the HAC state");
