@@ -845,3 +845,9 @@ INSTANTIATE_TEST_SUITE_P(
                                    IEffectsFactory::descriptor)),
                            ::testing::Values(LOUDNESS_ENHANCER_EFFECT_TYPE)),
         EffectParameterToString);
+// When the VTS test runs on a device lacking the corresponding HAL version the parameter
+// list is empty, this isn't a problem.
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AudioEffectsFactoryHidlTest);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AudioEffectHidlTest);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(EqualizerAudioEffectHidlTest);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(LoudnessEnhancerAudioEffectHidlTest);
