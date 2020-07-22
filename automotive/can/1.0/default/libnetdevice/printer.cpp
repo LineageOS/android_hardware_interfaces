@@ -65,14 +65,13 @@ static void toStream(std::stringstream& ss, const nlbuf<uint8_t> data) {
     const auto rawData = data.getRaw();
     const auto dataLen = rawData.len();
     ss << std::hex;
-    if (dataLen > 16) ss << std::endl << " 0000 ";
     int i = 0;
     for (const auto byte : rawData) {
-        if (i++ > 0) ss << ' ';
-        ss << std::setw(2) << unsigned(byte);
-        if (i % 16 == 0) {
+        if (i % 16 == 0 && dataLen > 16) {
             ss << std::endl << ' ' << std::dec << std::setw(4) << i << std::hex;
         }
+        if (i++ > 0 || dataLen > 16) ss << ' ';
+        ss << std::setw(2) << unsigned(byte);
     }
     ss << std::dec;
     if (dataLen > 16) ss << std::endl;
