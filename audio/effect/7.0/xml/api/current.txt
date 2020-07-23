@@ -1,0 +1,208 @@
+// Signature format: 2.0
+package audio.effects.V7_0 {
+
+  public class AudioEffectsConf {
+    ctor public AudioEffectsConf();
+    method public audio.effects.V7_0.AudioEffectsConf.DeviceEffects getDeviceEffects();
+    method public audio.effects.V7_0.EffectsType getEffects();
+    method public audio.effects.V7_0.LibrariesType getLibraries();
+    method public audio.effects.V7_0.AudioEffectsConf.Postprocess getPostprocess();
+    method public audio.effects.V7_0.AudioEffectsConf.Preprocess getPreprocess();
+    method public audio.effects.V7_0.VersionType getVersion();
+    method public void setDeviceEffects(audio.effects.V7_0.AudioEffectsConf.DeviceEffects);
+    method public void setEffects(audio.effects.V7_0.EffectsType);
+    method public void setLibraries(audio.effects.V7_0.LibrariesType);
+    method public void setPostprocess(audio.effects.V7_0.AudioEffectsConf.Postprocess);
+    method public void setPreprocess(audio.effects.V7_0.AudioEffectsConf.Preprocess);
+    method public void setVersion(audio.effects.V7_0.VersionType);
+  }
+
+  public static class AudioEffectsConf.DeviceEffects {
+    ctor public AudioEffectsConf.DeviceEffects();
+    method public java.util.List<audio.effects.V7_0.DeviceProcessType> getDevicePort();
+  }
+
+  public static class AudioEffectsConf.Postprocess {
+    ctor public AudioEffectsConf.Postprocess();
+    method public java.util.List<audio.effects.V7_0.StreamPostprocessType> getStream();
+  }
+
+  public static class AudioEffectsConf.Preprocess {
+    ctor public AudioEffectsConf.Preprocess();
+    method public java.util.List<audio.effects.V7_0.StreamPreprocessType> getStream();
+  }
+
+  public class DeviceProcessType extends audio.effects.V7_0.StreamProcessingType {
+    ctor public DeviceProcessType();
+    method public String getAddress();
+    method public audio.effects.V7_0.DeviceType getType();
+    method public void setAddress(String);
+    method public void setType(audio.effects.V7_0.DeviceType);
+  }
+
+  public enum DeviceType {
+    method public String getRawName();
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_IN_AUX_DIGITAL;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_IN_BACK_MIC;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_IN_BLUETOOTH_A2DP;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_IN_BLUETOOTH_BLE;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_IN_BLUETOOTH_SCO_HEADSET;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_IN_BUILTIN_MIC;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_IN_BUS;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_IN_COMMUNICATION;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_IN_DGTL_DOCK_HEADSET;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_IN_ECHO_REFERENCE;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_IN_FM_TUNER;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_IN_HDMI;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_IN_HDMI_ARC;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_IN_IP;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_IN_LINE;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_IN_LOOPBACK;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_IN_PROXY;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_IN_REMOTE_SUBMIX;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_IN_SPDIF;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_IN_TELEPHONY_RX;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_IN_TV_TUNER;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_IN_USB_ACCESSORY;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_IN_USB_DEVICE;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_IN_USB_HEADSET;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_IN_VOICE_CALL;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_IN_WIRED_HEADSET;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_OUT_AUX_DIGITAL;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_OUT_AUX_LINE;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_OUT_BLUETOOTH_A2DP;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_OUT_BLUETOOTH_A2DP_HEADPHONES;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_OUT_BLUETOOTH_A2DP_SPEAKER;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_OUT_BLUETOOTH_SCO;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_OUT_BLUETOOTH_SCO_CARKIT;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_OUT_BLUETOOTH_SCO_HEADSET;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_OUT_BUS;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_OUT_EARPIECE;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_OUT_ECHO_CANCELLER;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_OUT_FM;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_OUT_HDMI;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_OUT_HDMI_ARC;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_OUT_HEARING_AID;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_OUT_IP;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_OUT_LINE;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_OUT_PROXY;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_OUT_REMOTE_SUBMIX;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_OUT_SPDIF;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_OUT_SPEAKER;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_OUT_SPEAKER_SAFE;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_OUT_TELEPHONY_TX;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_OUT_USB_ACCESSORY;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_OUT_USB_DEVICE;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_OUT_USB_HEADSET;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_OUT_WIRED_HEADPHONE;
+    enum_constant public static final audio.effects.V7_0.DeviceType AUDIO_DEVICE_OUT_WIRED_HEADSET;
+  }
+
+  public class EffectImplType {
+    ctor public EffectImplType();
+    method public String getLibrary();
+    method public String getUuid();
+    method public void setLibrary(String);
+    method public void setUuid(String);
+  }
+
+  public class EffectProxyType extends audio.effects.V7_0.EffectType {
+    ctor public EffectProxyType();
+    method public audio.effects.V7_0.EffectImplType getLibhw();
+    method public audio.effects.V7_0.EffectImplType getLibsw();
+    method public void setLibhw(audio.effects.V7_0.EffectImplType);
+    method public void setLibsw(audio.effects.V7_0.EffectImplType);
+  }
+
+  public class EffectType extends audio.effects.V7_0.EffectImplType {
+    ctor public EffectType();
+    method public String getName();
+    method public void setName(String);
+  }
+
+  public class EffectsType {
+    ctor public EffectsType();
+    method public java.util.List<audio.effects.V7_0.EffectProxyType> getEffectProxy_optional();
+    method public java.util.List<audio.effects.V7_0.EffectType> getEffect_optional();
+  }
+
+  public class LibrariesType {
+    ctor public LibrariesType();
+    method public java.util.List<audio.effects.V7_0.LibrariesType.Library> getLibrary();
+  }
+
+  public static class LibrariesType.Library {
+    ctor public LibrariesType.Library();
+    method public String getName();
+    method public String getPath();
+    method public void setName(String);
+    method public void setPath(String);
+  }
+
+  public enum StreamInputType {
+    method public String getRawName();
+    enum_constant public static final audio.effects.V7_0.StreamInputType camcorder;
+    enum_constant public static final audio.effects.V7_0.StreamInputType echo_reference;
+    enum_constant public static final audio.effects.V7_0.StreamInputType fm_tuner;
+    enum_constant public static final audio.effects.V7_0.StreamInputType mic;
+    enum_constant public static final audio.effects.V7_0.StreamInputType unprocessed;
+    enum_constant public static final audio.effects.V7_0.StreamInputType voice_call;
+    enum_constant public static final audio.effects.V7_0.StreamInputType voice_communication;
+    enum_constant public static final audio.effects.V7_0.StreamInputType voice_downlink;
+    enum_constant public static final audio.effects.V7_0.StreamInputType voice_performance;
+    enum_constant public static final audio.effects.V7_0.StreamInputType voice_recognition;
+    enum_constant public static final audio.effects.V7_0.StreamInputType voice_uplink;
+  }
+
+  public enum StreamOutputType {
+    method public String getRawName();
+    enum_constant public static final audio.effects.V7_0.StreamOutputType alarm;
+    enum_constant public static final audio.effects.V7_0.StreamOutputType assistant;
+    enum_constant public static final audio.effects.V7_0.StreamOutputType bluetooth_sco;
+    enum_constant public static final audio.effects.V7_0.StreamOutputType dtmf;
+    enum_constant public static final audio.effects.V7_0.StreamOutputType enforced_audible;
+    enum_constant public static final audio.effects.V7_0.StreamOutputType music;
+    enum_constant public static final audio.effects.V7_0.StreamOutputType notification;
+    enum_constant public static final audio.effects.V7_0.StreamOutputType ring;
+    enum_constant public static final audio.effects.V7_0.StreamOutputType system;
+    enum_constant public static final audio.effects.V7_0.StreamOutputType tts;
+    enum_constant public static final audio.effects.V7_0.StreamOutputType voice_call;
+  }
+
+  public class StreamPostprocessType extends audio.effects.V7_0.StreamProcessingType {
+    ctor public StreamPostprocessType();
+    method public audio.effects.V7_0.StreamOutputType getType();
+    method public void setType(audio.effects.V7_0.StreamOutputType);
+  }
+
+  public class StreamPreprocessType extends audio.effects.V7_0.StreamProcessingType {
+    ctor public StreamPreprocessType();
+    method public audio.effects.V7_0.StreamInputType getType();
+    method public void setType(audio.effects.V7_0.StreamInputType);
+  }
+
+  public class StreamProcessingType {
+    ctor public StreamProcessingType();
+    method public java.util.List<audio.effects.V7_0.StreamProcessingType.Apply> getApply();
+  }
+
+  public static class StreamProcessingType.Apply {
+    ctor public StreamProcessingType.Apply();
+    method public String getEffect();
+    method public void setEffect(String);
+  }
+
+  public enum VersionType {
+    method public String getRawName();
+    enum_constant public static final audio.effects.V7_0.VersionType _2_0;
+  }
+
+  public class XmlParser {
+    ctor public XmlParser();
+    method public static audio.effects.V7_0.AudioEffectsConf read(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
+    method public static String readText(org.xmlpull.v1.XmlPullParser) throws java.io.IOException, org.xmlpull.v1.XmlPullParserException;
+    method public static void skip(org.xmlpull.v1.XmlPullParser) throws java.io.IOException, org.xmlpull.v1.XmlPullParserException;
+  }
+
+}
+
