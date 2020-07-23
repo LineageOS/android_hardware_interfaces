@@ -419,7 +419,8 @@ TEST_P(SupplicantStaIfaceHidlTest, StartDppEnrolleeInitiator) {
     }
 
     hidl_string uri =
-        "DPP:C:81/1;M:48d6d5bd1de1;I:G1197843;K:MDkwEwYHKoZIzj0CAQYIKoZIzj"
+        "DPP:C:81/1,117/"
+        "40;M:48d6d5bd1de1;I:G1197843;K:MDkwEwYHKoZIzj0CAQYIKoZIzj"
         "0DAQcDIgAD0edY4X3N//HhMFYsZfMbQJTiNFtNIWF/cIwMB/gzqOM=;;";
     uint32_t peer_id = 0;
 
@@ -470,7 +471,8 @@ TEST_P(SupplicantStaIfaceHidlTest, StartDppConfiguratorInitiator) {
     }
 
     hidl_string uri =
-        "DPP:C:81/1;M:48d6d5bd1de1;I:G1197843;K:MDkwEwYHKoZIzj0CAQYIKoZIzj"
+        "DPP:C:81/1,117/"
+        "40;M:48d6d5bd1de1;I:G1197843;K:MDkwEwYHKoZIzj0CAQYIKoZIzj"
         "0DAQcDIgAD0edY4X3N//HhMFYsZfMbQJTiNFtNIWF/cIwMB/gzqOM=;;";
     uint32_t peer_id = 0;
 
