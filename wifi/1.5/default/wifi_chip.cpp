@@ -626,6 +626,15 @@ Return<void> WifiChip::getCapabilities_1_3(getCapabilities_cb hidl_status_cb) {
 Return<void> WifiChip::debug(const hidl_handle& handle,
                              const hidl_vec<hidl_string>&) {
     if (handle != nullptr && handle->numFds >= 1) {
+        {
+            std::unique_lock<std::mutex> lk(lock_t);
+            for (const auto& item : ringbuffer_map_) {
+                forceDumpToDebugRingBufferInternal(item.first);
+            }
+            // unique_lock unlocked here
+        }
+        usleep(100 * 1000);  // sleep for 100 milliseconds to wait for
+                             // ringbuffer updates.
         int fd = handle->data[0];
         if (!writeRingbufferFilesInternal()) {
             LOG(ERROR) << "Error writing files to flash";
@@ -1127,6 +1136,9 @@ WifiStatus WifiChip::stopLoggingToDebugRingBufferInternal() {
     legacy_hal::wifi_error legacy_status =
         legacy_hal_.lock()->deregisterRingBufferCallbackHandler(
             getFirstActiveWlanIfaceName());
+    if (legacy_status == legacy_hal::WIFI_SUCCESS) {
+        debug_ring_buffer_cb_registered_ = false;
+    }
     return createWifiStatusFromLegacyError(legacy_status);
 }
 
@@ -1342,7 +1354,7 @@ WifiStatus WifiChip::registerDebugRingBufferCallback() {
                     LOG(ERROR) << "Ringname " << name << " not found";
                     return;
                 }
-                // unlock
+                // unique_lock unlocked here
             }
         };
     legacy_hal::wifi_error legacy_status =
@@ -1644,7 +1656,7 @@ bool WifiChip::writeRingbufferFilesInternal() {
                 }
             }
         }
-        // unlock
+        // unique_lock unlocked here
     }
     return true;
 }
