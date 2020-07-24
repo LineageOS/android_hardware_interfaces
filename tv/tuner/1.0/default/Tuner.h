@@ -65,14 +65,16 @@ class Tuner : public ITuner {
 
     void frontendStartTune(uint32_t frontendId);
     void frontendStopTune(uint32_t frontendId);
+    void removeDemux(uint32_t demuxId);
+    void removeFrontend(uint32_t frontendId);
 
   private:
     virtual ~Tuner();
     // Static mFrontends array to maintain local frontends information
-    vector<sp<Frontend>> mFrontends;
-    vector<FrontendInfo::FrontendCapabilities> mFrontendCaps;
-    std::map<uint32_t, uint32_t> mFrontendToDemux;
-    std::map<uint32_t, sp<Demux>> mDemuxes;
+    map<uint32_t, sp<Frontend>> mFrontends;
+    map<uint32_t, FrontendInfo::FrontendCapabilities> mFrontendCaps;
+    map<uint32_t, uint32_t> mFrontendToDemux;
+    map<uint32_t, sp<Demux>> mDemuxes;
     // To maintain how many Frontends we have
     int mFrontendSize;
     // The last used demux id. Initial value is -1.
