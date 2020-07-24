@@ -16,10 +16,28 @@
 
 package android.hardware.radio@1.6;
 
+import @1.0::RadioIndicationType;
 import @1.5::IRadioIndication;
 
 /**
  * Interface declaring unsolicited radio indications.
  */
 interface IRadioIndication extends @1.5::IRadioIndication {
+
+    /**
+     * Indicates data call contexts have changed.
+     *
+     * This indication is updated from IRadioIndication@1.5 to report the @1.6 version of
+     * SetupDataCallResult.
+     *
+     * @param type Type of radio indication
+     * @param dcList Array of SetupDataCallResult identical to that returned by
+     *        IRadio.getDataCallList(). It is the complete list of current data contexts including
+     *        new contexts that have been activated. A data call is only removed from this list
+     *        when any of the below conditions is matched.
+     *        1. The framework sends a IRadio.deactivateDataCall().
+     *        2. The radio is powered off/on.
+     *        3. Unsolicited disconnect from either modem or network side.
+     */
+    oneway dataCallListChanged_1_6(RadioIndicationType type, vec<SetupDataCallResult> dcList);
 };

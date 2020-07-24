@@ -15,3 +15,176 @@
  */
 
 package android.hardware.radio@1.6;
+
+import @1.5::SetupDataCallResult;
+
+import android.hidl.safe_union@1.0::Monostate;
+
+struct QosBandwidth {
+    /** Maximum bit rate possible on the bearer */
+    int32_t maxBitrateKbps;
+    /** Minimum bit rate that is guaranteed to be provided by the network */
+    int32_t guaranteedBitrateKbps;
+};
+
+/** LTE/EPS Quality of Service parameters as per 3gpp spec 24.301 sec 9.9.4.3. */
+struct EpsQos {
+    /**
+     * Quality of Service Class Identifier (QCI), see 3GPP TS 23.203 and 29.212.
+     * The allowed values are standard values(1-9, 65-68, 69-70, 75, 79-80, 82-85)
+     * defined in the spec and operator specific values in the range 128-254.
+     */
+    uint16_t qci;
+    QosBandwidth downlink;
+    QosBandwidth uplink;
+};
+
+/** 5G Quality of Service parameters as per 3gpp spec 24.501 sec 9.11.4.12 */
+struct NrQos {
+    /**
+     * 5G QOS Identifier (5QI), see 3GPP TS 24.501 and 23.501.
+     * The allowed values are standard values(1-9, 65-68, 69-70, 75, 79-80, 82-85)
+     * defined in the spec and operator specific values in the range 128-254.
+     */
+    uint16_t fiveQi;
+    QosBandwidth downlink;
+    QosBandwidth uplink;
+    /**
+     * QOS flow identifier of the QOS flow description in the
+     * range of QosFlowIdRange::MIN to QosFlowIdRange::MAX
+     */
+    uint8_t qfi;
+    uint16_t averagingWindowMs;
+};
+
+/** Allowed values for 5G QOS flow identifier */
+enum QosFlowIdRange : uint8_t {
+    MIN = 1,
+    MAX = 63
+};
+
+/** EPS or NR QOS parameters */
+safe_union Qos {
+    Monostate noinit;
+    EpsQos eps;
+    NrQos nr;
+};
+
+/**
+ * Next header protocol numbers defined by IANA, RFC 5237
+ */
+enum QosProtocol : int32_t {
+    /** No protocol specified */
+    UNSPECIFIED = -1,
+    /** Transmission Control Protocol */
+    TCP = 6,
+    /** User Datagram Protocol */
+    UDP = 17,
+    /** Encapsulating Security Payload Protocol */
+    ESP = 50,
+    /** Authentication Header */
+    AH = 51,
+};
+
+enum QosFilterDirection : int32_t {
+    DOWNLINK = 0,
+    UPLINK = 1,
+    BIDIRECTIONAL = 2,
+};
+
+/** Allowed port numbers */
+enum QosPortRange : int32_t {
+    MIN = 20,
+    MAX = 65535
+};
+
+/**
+ * Defines range of ports. start and end are the first and last port numbers
+ * (inclusive) in the range. Both start and end are in QosPortRange.MIN to
+ * QosPortRange.MAX range. A single port shall be represented by the same
+ * start and end value.
+ */
+struct PortRange {
+    int32_t start;
+    int32_t end;
+};
+
+/** Port is optional, contains either single port or range of ports */
+safe_union MaybePort {
+    Monostate noinit;
+    PortRange range;
+};
+
+/** See 3gpp 24.008 10.5.6.12 and 3gpp 24.501 9.11.4.13 */
+struct QosFilter {
+    /**
+     * Local and remote IP addresses, typically one IPv4 or one IPv6
+     * or one of each. Addresses could be with optional "/" prefix
+     * length, e.g.,"192.0.1.3" or "192.0.1.11/16 2001:db8::1/64".
+     * If the prefix length is absent the addresses are assumed to be
+     * point to point with IPv4 having a prefix length of 32 and
+     * IPv6 128.
+     */
+    vec<string> localAddresses;
+    vec<string> remoteAddresses;
+
+    /** Local and remote port/ranges */
+    MaybePort localPort;
+    MaybePort remotePort;
+
+    /** QoS protocol */
+    QosProtocol protocol;
+
+    /** Type of service value or mask as defined in RFC 1349 */
+    safe_union TypeOfService {
+         Monostate noinit;
+         uint8_t value;
+    } tos;
+
+    /** IPv6 flow label as defined in RFC 6437 */
+    safe_union Ipv6FlowLabel {
+         Monostate noinit;
+         uint32_t value;
+    } flowLabel;
+
+    /** IPSec security parameter index */
+    safe_union IpsecSpi {
+         Monostate noinit;
+         uint32_t value;
+    } spi;
+
+    /** Filter direction */
+    QosFilterDirection direction;
+
+    /**
+     * Specified the order in which the filter needs to be matched.
+     * A lower numerical(positive) value has a higher precedence.
+     * Set -1 when unspecified.
+     */
+    int32_t precedence;
+};
+
+/** QOS session associated with a dedicated bearer */
+struct QosSession {
+    /** Unique ID of the QoS session within the data call */
+    int32_t qosSessionId;
+
+    /** QOS attributes */
+    Qos qos;
+
+    /** List of QOS filters associated with this session */
+    vec<QosFilter> qosFilters;
+};
+
+struct SetupDataCallResult {
+    @1.5::SetupDataCallResult base;
+
+    /** Default bearer QoS. Applicable to LTE and NR */
+    Qos defaultQos;
+
+    /**
+     * Active QOS sessions of the dedicated bearers. Applicable to
+     * PDNs that support dedicated bearers.
+     */
+    vec<QosSession> qosSessions;
+};

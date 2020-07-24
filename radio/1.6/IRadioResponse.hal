@@ -16,10 +16,42 @@
 
 package android.hardware.radio@1.6;
 
+import @1.0::RadioResponseInfo;
 import @1.5::IRadioResponse;
+import @1.6::SetupDataCallResult;
 
 /**
  * Interface declaring response functions to solicited radio requests.
  */
 interface IRadioResponse extends @1.5::IRadioResponse {
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     * @param dcResponse SetupDataCallResult defined in types.hal
+     *
+     * Valid errors returned:
+     *   RadioError:NONE must be returned on both success and failure of setup with the
+     *              DataCallResponse.status containing the actual status
+     *              For all other errors the DataCallResponse is ignored.
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:OP_NOT_ALLOWED_BEFORE_REG_TO_NW
+     *   RadioError:OP_NOT_ALLOWED_DURING_VOICE_CALL
+     *   RadioError:INVALID_ARGUMENTS
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:NO_RESOURCES if the vendor is unable handle due to resources
+     *              are full.
+     *   RadioError:SIM_ABSENT
+     */
+    oneway setupDataCallResponse_1_6(RadioResponseInfo info, SetupDataCallResult dcResponse);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     * @param dcResponse List of SetupDataCallResult as defined in types.hal
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:SIM_ABSENT
+     */
+    oneway getDataCallListResponse_1_6(RadioResponseInfo info, vec<SetupDataCallResult> dcResponse);
 };
