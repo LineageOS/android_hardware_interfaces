@@ -247,8 +247,10 @@ TEST_P(GnssHalTest, TestGnssSvInfoFields) {
     ALOGD("Observed %d GnssSvStatus, while awaiting one location (%d received)",
           sv_info_list_cbq_size, location_called_count);
 
-    hidl_vec<IGnssCallback_2_1::GnssSvInfo> last_sv_info_list;
-    ASSERT_TRUE(gnss_cb_->sv_info_list_cbq_.retrieve(last_sv_info_list, 1));
+    // Get the last sv_info_list
+    std::list<hidl_vec<IGnssCallback_2_1::GnssSvInfo>> sv_info_vec_list;
+    gnss_cb_->sv_info_list_cbq_.retrieve(sv_info_vec_list, sv_info_list_cbq_size, 1);
+    hidl_vec<IGnssCallback_2_1::GnssSvInfo> last_sv_info_list = sv_info_vec_list.back();
 
     bool nonZeroCn0Found = false;
     for (auto sv_info : last_sv_info_list) {
