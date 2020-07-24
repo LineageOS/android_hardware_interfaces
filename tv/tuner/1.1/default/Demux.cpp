@@ -34,6 +34,49 @@ Demux::Demux(uint32_t demuxId, sp<Tuner> tuner) {
 
 Demux::~Demux() {}
 
+Return<void> Demux::getAvSyncHwId64Bit(const sp<IFilter>& filter, getAvSyncHwId64Bit_cb _hidl_cb) {
+    ALOGV("%s", __FUNCTION__);
+
+    uint64_t avSyncHwId = -1;
+    uint64_t id;
+    Result status;
+
+    sp<V1_1::IFilter> filter_v1_1 = V1_1::IFilter::castFrom(filter);
+    if (filter_v1_1 != NULL) {
+        filter_v1_1->getId64Bit([&](Result result, uint64_t filterId) {
+            id = filterId;
+            status = result;
+        });
+    } else {
+        filter->getId([&](Result result, uint32_t filterId) {
+            id = filterId;
+            status = result;
+        });
+    }
+
+    if (status != Result::SUCCESS) {
+        ALOGE("[Demux] Can't get 64-bit filter Id.");
+        _hidl_cb(Result::INVALID_STATE, avSyncHwId);
+        return Void();
+    }
+
+    if (!mFilters[id]->isMediaFilter()) {
+        ALOGE("[Demux] Given filter is not a media filter.");
+        _hidl_cb(Result::INVALID_ARGUMENT, avSyncHwId);
+        return Void();
+    }
+
+    if (!mPcrFilterIds.empty()) {
+        // Return the lowest pcr filter id in the default implementation as the av sync id
+        _hidl_cb(Result::SUCCESS, *mPcrFilterIds.begin());
+        return Void();
+    }
+
+    ALOGE("[Demux] No PCR filter opened.");
+    _hidl_cb(Result::INVALID_STATE, avSyncHwId);
+    return Void();
+}
+
 Return<Result> Demux::setFrontendDataSource(uint32_t frontendId) {
     ALOGV("%s", __FUNCTION__);
 
@@ -170,6 +213,7 @@ Return<Result> Demux::close() {
     mRecordFilterIds.clear();
     mFilters.clear();
     mLastUsedFilterId = -1;
+    mTunerService->removeDemux(mDemuxId);
 
     return Result::SUCCESS;
 }
@@ -324,6 +368,12 @@ void* Demux::__threadLoopFrontend(void* user) {
 void Demux::frontendInputThreadLoop() {
     std::lock_guard<std::mutex> lock(mFrontendInputThreadLock);
     mFrontendInputThreadRunning = true;
+
+    if (!mDvrPlayback) {
+        ALOGW("[Demux] No software Frontend input configured. Ending Frontend thread loop.");
+        mFrontendInputThreadRunning = false;
+        return;
+    }
 
     while (mFrontendInputThreadRunning) {
         uint32_t efState = 0;

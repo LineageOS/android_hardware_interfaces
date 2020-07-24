@@ -17,6 +17,7 @@
 #ifndef ANDROID_HARDWARE_TV_TUNER_V1_1_DEMUX_H_
 #define ANDROID_HARDWARE_TV_TUNER_V1_1_DEMUX_H_
 
+#include <android/hardware/tv/tuner/1.1/IDemux.h>
 #include <fmq/MessageQueue.h>
 #include <math.h>
 #include <set>
@@ -48,11 +49,14 @@ class Frontend;
 class TimeFilter;
 class Tuner;
 
-class Demux : public IDemux {
+class Demux : public V1_1::IDemux {
   public:
     Demux(uint32_t demuxId, sp<Tuner> tuner);
 
     ~Demux();
+
+    virtual Return<void> getAvSyncHwId64Bit(const sp<IFilter>& filter,
+                                            getAvSyncHwId64Bit_cb _hidl_cb) override;
 
     virtual Return<Result> setFrontendDataSource(uint32_t frontendId) override;
 
