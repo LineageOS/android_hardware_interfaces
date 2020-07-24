@@ -292,18 +292,18 @@ void TunerDescramblerHidlTest::scrambledBroadcastTest(set<struct FilterConfig> m
         ASSERT_TRUE(mFilterTests.configFilter((*config).settings, filterId));
         filterIds.insert(filterId);
     }
-    mDescramblerTests.openDescrambler(demuxId);
+    ASSERT_TRUE(mDescramblerTests.openDescrambler(demuxId));
     TunerKeyToken token;
     ASSERT_TRUE(mDescramblerTests.getKeyToken(descConfig.casSystemId, descConfig.provisionStr,
                                               descConfig.hidlPvtData, token));
-    mDescramblerTests.setKeyToken(token);
+    ASSERT_TRUE(mDescramblerTests.setKeyToken(token));
     vector<DemuxPid> pids;
     DemuxPid pid;
     for (config = mediaFilterConfs.begin(); config != mediaFilterConfs.end(); config++) {
         ASSERT_TRUE(mDescramblerTests.getDemuxPidFromFilterSettings((*config).type,
                                                                     (*config).settings, pid));
         pids.push_back(pid);
-        mDescramblerTests.addPid(pid, nullptr);
+        ASSERT_TRUE(mDescramblerTests.addPid(pid, nullptr));
     }
     for (id = filterIds.begin(); id != filterIds.end(); id++) {
         ASSERT_TRUE(mFilterTests.startFilter(*id));
@@ -316,9 +316,9 @@ void TunerDescramblerHidlTest::scrambledBroadcastTest(set<struct FilterConfig> m
         ASSERT_TRUE(mFilterTests.stopFilter(*id));
     }
     for (auto pid : pids) {
-        mDescramblerTests.removePid(pid, nullptr);
+        ASSERT_TRUE(mDescramblerTests.removePid(pid, nullptr));
     }
-    mDescramblerTests.closeDescrambler();
+    ASSERT_TRUE(mDescramblerTests.closeDescrambler());
     for (id = filterIds.begin(); id != filterIds.end(); id++) {
         ASSERT_TRUE(mFilterTests.closeFilter(*id));
     }
@@ -410,9 +410,9 @@ TEST_P(TunerDemuxHidlTest, getAvSyncTime) {
                                                filterArray[TS_PCR0].bufferSize));
     ASSERT_TRUE(mFilterTests.getNewlyOpenedFilterId(pcrFilterId));
     ASSERT_TRUE(mFilterTests.configFilter(filterArray[TS_PCR0].settings, pcrFilterId));
-    mDemuxTests.getAvSyncId(mediaFilter, avSyncHwId);
+    ASSERT_TRUE(mDemuxTests.getAvSyncId(mediaFilter, avSyncHwId));
     ASSERT_TRUE(pcrFilterId == avSyncHwId);
-    mDemuxTests.getAvSyncTime(pcrFilterId);
+    ASSERT_TRUE(mDemuxTests.getAvSyncTime(pcrFilterId));
     ASSERT_TRUE(mFilterTests.closeFilter(pcrFilterId));
     ASSERT_TRUE(mFilterTests.closeFilter(mediaFilterId));
     ASSERT_TRUE(mDemuxTests.closeDemux());
@@ -519,8 +519,8 @@ TEST_P(TunerDescramblerHidlTest, CreateDescrambler) {
     ASSERT_TRUE(mFrontendTests.setFrontendCallback());
     ASSERT_TRUE(mDemuxTests.openDemux(demux, demuxId));
     ASSERT_TRUE(mDemuxTests.setDemuxFrontendDataSource(feId));
-    mDescramblerTests.openDescrambler(demuxId);
-    mDescramblerTests.closeDescrambler();
+    ASSERT_TRUE(mDescramblerTests.openDescrambler(demuxId));
+    ASSERT_TRUE(mDescramblerTests.closeDescrambler());
     ASSERT_TRUE(mDemuxTests.closeDemux());
     ASSERT_TRUE(mFrontendTests.closeFrontend());
 }
