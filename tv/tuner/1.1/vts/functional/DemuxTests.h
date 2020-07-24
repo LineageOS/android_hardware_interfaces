@@ -17,6 +17,7 @@
 #include <android-base/logging.h>
 #include <android/hardware/tv/tuner/1.0/IDemux.h>
 #include <android/hardware/tv/tuner/1.0/types.h>
+#include <android/hardware/tv/tuner/1.1/IDemux.h>
 #include <android/hardware/tv/tuner/1.1/IFilter.h>
 #include <android/hardware/tv/tuner/1.1/ITuner.h>
 #include <binder/MemoryDealer.h>
@@ -44,6 +45,8 @@ class DemuxTests {
 
     AssertionResult openDemux(sp<IDemux>& demux, uint32_t& demuxId);
     AssertionResult setDemuxFrontendDataSource(uint32_t frontendId);
+    AssertionResult getAvSyncId_64bit(sp<IFilter> filter, uint64_t& avSyncHwId);
+    AssertionResult getAvSyncTime(uint32_t avSyncId);
     AssertionResult closeDemux();
 
   protected:
