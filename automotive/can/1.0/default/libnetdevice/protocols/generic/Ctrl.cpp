@@ -37,14 +37,14 @@ Ctrl::Ctrl() : GenericMessageBase(GENL_ID_CTRL, "ID_CTRL", {
     {CTRL_ATTR_VERSION, {"VERSION", DataType::Uint}},
     {CTRL_ATTR_HDRSIZE, {"HDRSIZE", DataType::Uint}},
     {CTRL_ATTR_MAXATTR, {"MAXATTR", DataType::Uint}},
-    {CTRL_ATTR_OPS, {"OPS", DataType::Nested, {
-        {std::nullopt, {"OP", DataType::Nested, {
+    {CTRL_ATTR_OPS, {"OPS", DataType::Nested, AttributeMap{
+        {std::nullopt, {"OP", DataType::Nested, AttributeMap{
             {CTRL_ATTR_OP_ID, {"ID", DataType::Uint}},
             {CTRL_ATTR_OP_FLAGS, {"FLAGS", DataType::Uint}},
         }}},
     }}},
-    {CTRL_ATTR_MCAST_GROUPS, {"MCAST_GROUPS", DataType::Nested, {
-        {std::nullopt, {"GRP", DataType::Nested, {
+    {CTRL_ATTR_MCAST_GROUPS, {"MCAST_GROUPS", DataType::Nested, AttributeMap{
+        {std::nullopt, {"GRP", DataType::Nested, AttributeMap{
             {CTRL_ATTR_MCAST_GRP_NAME, {"NAME", DataType::String}},
             {CTRL_ATTR_MCAST_GRP_ID, {"ID", DataType::Uint}},
         }}},

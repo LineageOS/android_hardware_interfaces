@@ -529,7 +529,7 @@
     </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.wifi</name>
-        <version>1.0-4</version>
+        <version>1.0-5</version>
         <interface>
             <name>IWifi</name>
             <instance>default</instance>
