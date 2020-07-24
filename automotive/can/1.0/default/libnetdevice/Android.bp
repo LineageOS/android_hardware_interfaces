@@ -28,6 +28,7 @@ cc_library_static {
         "protocols/generic/Unknown.cpp",
         "protocols/route/Link.cpp",
         "protocols/route/Route.cpp",
+        "protocols/route/structs.cpp",
         "protocols/MessageDefinition.cpp",
         "protocols/NetlinkProtocol.cpp",
         "protocols/all.cpp",
