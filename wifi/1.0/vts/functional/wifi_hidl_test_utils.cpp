@@ -89,8 +89,12 @@ bool configureChipToSupportIfaceTypeInternal(const sp<IWifiChip>& wifi_chip,
 }
 }  // namespace
 
+sp<IWifi> getWifi(const std::string& instance_name) {
+    return IWifi::getService(instance_name);
+}
+
 sp<IWifiChip> getWifiChip(const std::string& instance_name) {
-    sp<IWifi> wifi = IWifi::getService(instance_name);
+    sp<IWifi> wifi = getWifi(instance_name);
     if (!wifi.get()) {
         return nullptr;
     }
