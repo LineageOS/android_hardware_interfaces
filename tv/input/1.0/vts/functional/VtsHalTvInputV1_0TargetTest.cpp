@@ -337,6 +337,3 @@ INSTANTIATE_TEST_SUITE_P(
         PerInstance, TvInputHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(ITvInput::descriptor)),
         android::hardware::PrintInstanceNameToString);
-
-// TODO remove from the allow list once the cf tv target is enabled for testing
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(TvInputHidlTest);

@@ -628,14 +628,4 @@ INSTANTIATE_TEST_SUITE_P(
         PerInstance, TunerDescramblerHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(ITuner::descriptor)),
         android::hardware::PrintInstanceNameToString);
-
-// TODO remove from the allow list once the cf tv target is enabled for testing
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(TunerFrontendHidlTest);
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(TunerLnbHidlTest);
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(TunerDemuxHidlTest);
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(TunerFilterHidlTest);
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(TunerBroadcastHidlTest);
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(TunerPlaybackHidlTest);
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(TunerRecordHidlTest);
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(TunerDescramblerHidlTest);
 }  // namespace
