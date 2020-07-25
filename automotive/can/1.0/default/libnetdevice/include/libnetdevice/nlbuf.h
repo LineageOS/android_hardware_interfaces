@@ -66,9 +66,12 @@ class nlbuf {
         return mData;
     }
 
-    std::optional<std::reference_wrapper<const T>> getFirst() const {
-        if (!ok()) return std::nullopt;
-        return *mData;
+    std::pair<bool, const T&> getFirst() const {
+        if (!ok()) {
+            static const T dummy = {};
+            return {false, dummy};
+        }
+        return {true, *mData};
     }
 
     /**
@@ -141,7 +144,7 @@ class nlbuf {
         size_t len() const { return mBuffer.remainingLength(); }
 
       private:
-        const nlbuf<T>& mBuffer;
+        const nlbuf<T> mBuffer;
     };
 
     raw_view getRaw() const { return {*this}; }
@@ -160,8 +163,12 @@ class nlbuf {
     size_t declaredLength() const {
         // We can't even fit a header, so let's return some absurd high value to trip off
         // buffer overflow checks.
-        if (sizeof(T) > remainingLength()) return std::numeric_limits<size_t>::max() / 2;
-        return declaredLengthImpl();
+        static constexpr size_t badHeaderLength = std::numeric_limits<size_t>::max() / 2;
+
+        if (sizeof(T) > remainingLength()) return badHeaderLength;
+        const auto len = declaredLengthImpl();
+        if (sizeof(T) > len) return badHeaderLength;
+        return len;
     }
 
     size_t remainingLength() const {

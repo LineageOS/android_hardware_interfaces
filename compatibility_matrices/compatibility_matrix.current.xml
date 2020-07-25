@@ -372,7 +372,7 @@
     </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.radio</name>
-        <version>1.5</version>
+        <version>1.6</version>
         <interface>
             <name>IRadio</name>
             <instance>slot1</instance>
@@ -482,7 +482,7 @@
     </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.tv.tuner</name>
-        <version>1.0</version>
+        <version>1.0-1</version>
         <interface>
             <name>ITuner</name>
             <instance>default</instance>
@@ -529,7 +529,7 @@
     </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.wifi</name>
-        <version>1.0-4</version>
+        <version>1.0-5</version>
         <interface>
             <name>IWifi</name>
             <instance>default</instance>
