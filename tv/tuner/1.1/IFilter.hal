@@ -1,0 +1,43 @@
+/*
+ * Copyright 2020 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.tv.tuner@1.1;
+
+import @1.0::IFilter;
+import @1.0::Result;
+
+/**
+ * The Filter is used to filter wanted data according to the filter's
+ * configuration.
+ *
+ * To access the v1.1 IFilter APIs, the implementation can cast the IFilter
+ * interface returned from the @1.0::IDemux openFilter into a v1.1 IFiler
+ * using V1_1::IFilter::castFrom(V1_0::IFilter).
+ */
+interface IFilter extends @1.0::IFilter {
+    /**
+     * Get the 64-bit filter Id. This id is 32-bit in Tuner HAL 1.0.
+     *
+     * It is used by the client to ask the hardware resource id for the filter.
+     *
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_STATE if failed for wrong state.
+     *         UNKNOWN_ERROR if failed for other reasons.
+     * @return filterId the hardware resource Id for the filter.
+     */
+    getId64Bit() generates (Result result, uint64_t filterId);
+};

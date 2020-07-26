@@ -1,0 +1,41 @@
+/*
+ * Copyright 2020 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.tv.tuner@1.1;
+
+import @1.0::IDemux;
+import @1.0::Result;
+import @1.0::IFilter;
+
+/**
+ * Demultiplexer(Demux) takes a single multiplexed input and splits it into
+ * one or more output.
+ */
+interface IDemux extends @1.0::IDemux {
+    /**
+     * Get a 64-bit hardware sync ID for audio and video.
+     *
+     * It is used by the client to get the hardware sync ID for audio and video.
+     *
+     * @param filter the filter instance.
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_ARGUMENT if failed for a wrong filter ID.
+     *         UNKNOWN_ERROR if failed for other reasons.
+     * @return avSyncHwId the id of hardware A/V sync.
+     */
+    getAvSyncHwId64Bit(IFilter filter) generates (Result result, uint64_t avSyncHwId);
+};
