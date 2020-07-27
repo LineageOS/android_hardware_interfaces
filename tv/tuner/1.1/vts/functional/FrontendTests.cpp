@@ -16,13 +16,40 @@
 
 #include "FrontendTests.h"
 
-Return<void> FrontendCallback::onEvent(FrontendEventType /*frontendEventType*/) {
-    return Void();
+Return<void> FrontendCallback::onEvent(FrontendEventType frontendEventType) {
+    android::Mutex::Autolock autoLock(mMsgLock);
+    ALOGD("[vts] frontend event received. Type: %d", frontendEventType);
+    mEventReceived = true;
+    mMsgCondition.signal();
+    switch (frontendEventType) {
+        case FrontendEventType::LOCKED:
+            mLockMsgReceived = true;
+            mLockMsgCondition.signal();
+            return Void();
+        default:
+            // do nothing
+            return Void();
+    }
 }
 
 Return<void> FrontendCallback::onScanMessage(FrontendScanMessageType /*type*/,
                                              const FrontendScanMessage& /*message*/) {
     return Void();
+}
+
+void FrontendCallback::tuneTestOnLock(sp<IFrontend>& frontend, FrontendSettings settings) {
+    Result result = frontend->tune(settings);
+    EXPECT_TRUE(result == Result::SUCCESS);
+
+    android::Mutex::Autolock autoLock(mMsgLock);
+    while (!mLockMsgReceived) {
+        if (-ETIMEDOUT == mLockMsgCondition.waitRelative(mMsgLock, WAIT_TIMEOUT)) {
+            EXPECT_TRUE(false) << "Event LOCKED not received within timeout";
+            mLockMsgReceived = false;
+            return;
+        }
+    }
+    mLockMsgReceived = false;
 }
 
 AssertionResult FrontendTests::getFrontendIds() {
@@ -57,6 +84,41 @@ AssertionResult FrontendTests::setFrontendCallback() {
     mFrontendCallback = new FrontendCallback();
     auto callbackStatus = mFrontend->setCallback(mFrontendCallback);
     return AssertionResult(callbackStatus.isOk());
+}
+
+AssertionResult FrontendTests::tuneFrontend(FrontendConfig config, bool testWithDemux) {
+    EXPECT_TRUE(mFrontendCallback)
+            << "test with openFrontendById/setFrontendCallback/getFrontendInfo first.";
+
+    EXPECT_TRUE(mFrontendInfo.type == config.type)
+            << "FrontendConfig does not match the frontend info of the given id.";
+
+    mIsSoftwareFe = config.isSoftwareFe;
+    bool result = true;
+    if (mIsSoftwareFe && testWithDemux) {
+        result &= mDvrTests.openDvrInDemux(mDvrConfig.type, mDvrConfig.bufferSize) == success();
+        result &= mDvrTests.configDvrPlayback(mDvrConfig.settings) == success();
+        result &= mDvrTests.getDvrPlaybackMQDescriptor() == success();
+        mDvrTests.startPlaybackInputThread(mDvrConfig.playbackInputFile,
+                                           mDvrConfig.settings.playback());
+        if (!result) {
+            ALOGW("[vts] Software frontend dvr configure failed.");
+            return failure();
+        }
+    }
+    mFrontendCallback->tuneTestOnLock(mFrontend, config.settings);
+    return AssertionResult(true);
+}
+
+AssertionResult FrontendTests::stopTuneFrontend(bool testWithDemux) {
+    EXPECT_TRUE(mFrontend) << "Test with openFrontendById first.";
+    Result status;
+    status = mFrontend->stopTune();
+    if (mIsSoftwareFe && testWithDemux) {
+        mDvrTests.stopPlaybackThread();
+        mDvrTests.closeDvrPlayback();
+    }
+    return AssertionResult(status == Result::SUCCESS);
 }
 
 AssertionResult FrontendTests::closeFrontend() {

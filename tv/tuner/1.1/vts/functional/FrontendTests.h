@@ -31,6 +31,7 @@
 #include <utils/Mutex.h>
 #include <map>
 
+#include "DvrTests.h"
 #include "VtsHalTvTunerV1_1TestConfigurations.h"
 
 #define WAIT_TIMEOUT 3000000000
@@ -61,36 +62,73 @@ using ::testing::AssertionResult;
 using namespace std;
 
 #define INVALID_ID -1
+#define WAIT_TIMEOUT 3000000000
 
 class FrontendCallback : public IFrontendCallback {
   public:
     virtual Return<void> onEvent(FrontendEventType frontendEventType) override;
     virtual Return<void> onScanMessage(FrontendScanMessageType type,
                                        const FrontendScanMessage& message) override;
+
+    void tuneTestOnLock(sp<IFrontend>& frontend, FrontendSettings settings);
+
+  private:
+    bool mEventReceived = false;
+    bool mLockMsgReceived = false;
+    hidl_vec<uint8_t> mEventMessage;
+    android::Mutex mMsgLock;
+    android::Condition mMsgCondition;
+    android::Condition mLockMsgCondition;
 };
 
 class FrontendTests {
   public:
     sp<ITuner> mService;
 
-    void setService(sp<ITuner> tuner) { mService = tuner; }
+    void setService(sp<ITuner> tuner) {
+        mService = tuner;
+        mDvrTests.setService(tuner);
+        getDefaultSoftwareFrontendPlaybackConfig(mDvrConfig);
+    }
 
     AssertionResult getFrontendIds();
     AssertionResult getFrontendInfo(uint32_t frontendId);
     AssertionResult openFrontendById(uint32_t frontendId);
     AssertionResult setFrontendCallback();
+    AssertionResult tuneFrontend(FrontendConfig config, bool testWithDemux);
+    AssertionResult stopTuneFrontend(bool testWithDemux);
     AssertionResult closeFrontend();
 
     void getFrontendIdByType(FrontendType feType, uint32_t& feId);
 
+    void setDvrTests(DvrTests dvrTests) { mDvrTests = dvrTests; }
+    void setDemux(sp<IDemux> demux) { mDvrTests.setDemux(demux); }
+    void setSoftwareFrontendDvrConfig(DvrConfig conf) { mDvrConfig = conf; }
+
   protected:
     static AssertionResult failure() { return ::testing::AssertionFailure(); }
     static AssertionResult success() { return ::testing::AssertionSuccess(); }
+
+    void getDefaultSoftwareFrontendPlaybackConfig(DvrConfig& dvrConfig) {
+        PlaybackSettings playbackSettings{
+                .statusMask = 0xf,
+                .lowThreshold = 0x1000,
+                .highThreshold = 0x07fff,
+                .dataFormat = DataFormat::ES,
+                .packetSize = 188,
+        };
+        dvrConfig.type = DvrType::PLAYBACK;
+        dvrConfig.playbackInputFile = "/data/local/tmp/test.es";
+        dvrConfig.bufferSize = FMQ_SIZE_4M;
+        dvrConfig.settings.playback(playbackSettings);
+    }
 
     sp<IFrontend> mFrontend;
     FrontendInfo mFrontendInfo;
     sp<FrontendCallback> mFrontendCallback;
     hidl_vec<FrontendId> mFeIds;
 
+    DvrTests mDvrTests;
     bool mIsSoftwareFe = false;
+    DvrConfig mDvrConfig;
 };
