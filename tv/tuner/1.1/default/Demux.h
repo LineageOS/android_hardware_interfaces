@@ -100,6 +100,7 @@ class Demux : public V1_1::IDemux {
     void startBroadcastTsFilter(vector<uint8_t> data);
 
     void sendFrontendInputToRecord(vector<uint8_t> data);
+    void sendFrontendInputToRecord(vector<uint8_t> data, uint16_t pid, uint64_t pts);
     bool startRecordFilterDispatcher();
 
   private:

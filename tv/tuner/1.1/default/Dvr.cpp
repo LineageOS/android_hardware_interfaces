@@ -217,9 +217,11 @@ void Dvr::playbackThreadLoop() {
                 break;
             }
             maySendPlaybackStatusCallback();
+            continue;
         }
         // Our current implementation filter the data and write it into the filter FMQ immediately
         // after the DATA_READY from the VTS/framework
+        // This is for the non-ES data source, real playback use case handling.
         if (!readPlaybackFMQ(false /*isVirtualFrontend*/, false /*isRecording*/) ||
             !startFilterDispatcher(false /*isVirtualFrontend*/, false /*isRecording*/)) {
             ALOGE("[Dvr] playback data failed to be filtered. Ending thread");
@@ -380,20 +382,19 @@ bool Dvr::processEsDataOnPlayback(bool isVirtualFrontend, bool isRecording) {
     for (int i = 0; i < totalFrames; i++) {
         frameData.resize(esMeta[i].len);
         pid = esMeta[i].isAudio ? audioPid : videoPid;
-        memcpy(dataOutputBuffer.data() + esMeta[i].startIndex, frameData.data(), esMeta[i].len);
-        // Send to the media filter
-        if (isVirtualFrontend && isRecording) {
-            // TODO validate record
-            mDemux->sendFrontendInputToRecord(frameData);
-        } else {
+        memcpy(frameData.data(), dataOutputBuffer.data() + esMeta[i].startIndex, esMeta[i].len);
+        // Send to the media filters or record filters
+        if (!isRecording) {
             for (it = mFilters.begin(); it != mFilters.end(); it++) {
                 if (pid == mDemux->getFilterTpid(it->first)) {
                     mDemux->updateMediaFilterOutput(it->first, frameData,
                                                     static_cast<uint64_t>(esMeta[i].pts));
-                    startFilterDispatcher(isVirtualFrontend, isRecording);
                 }
             }
+        } else {
+            mDemux->sendFrontendInputToRecord(frameData, pid, static_cast<uint64_t>(esMeta[i].pts));
         }
+        startFilterDispatcher(isVirtualFrontend, isRecording);
     }
 
     return true;

@@ -18,10 +18,11 @@ cc_test {
     name: "VtsHalTvTunerV1_1TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: [
-        "VtsHalTvTunerV1_1TargetTest.cpp",
-        "FrontendTests.cpp",
         "DemuxTests.cpp",
+        "DvrTests.cpp",
         "FilterTests.cpp",
+        "FrontendTests.cpp",
+        "VtsHalTvTunerV1_1TargetTest.cpp",
     ],
     static_libs: [
         "android.hardware.cas@1.0",
