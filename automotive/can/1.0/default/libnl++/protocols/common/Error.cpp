@@ -14,24 +14,23 @@
  * limitations under the License.
  */
 
-#pragma once
+#include "Error.h"
 
-#include <libnetdevice/nlbuf.h>
+#include "../MessageDefinition.h"
 
-#include <linux/netlink.h>
+#include <libnl++/printer.h>
 
-#include <string>
+namespace android::netdevice::protocols::base {
 
-namespace android::netdevice {
+// clang-format off
+Error::Error(int protocol) : MessageDefinition<nlmsgerr>("nlmsg", {
+    {NLMSG_ERROR, "ERROR"},
+}), mProtocol(protocol) {}
+// clang-format on
 
-/**
- * Stringify a Netlink message.
- *
- * \param hdr Pointer to the message(s) to print.
- * \param protocol Which Netlink protocol hdr uses.
- * \param printPayload True will stringify message data, false will only stringify the header(s).
- * \return Stringified message.
- */
-std::string toString(const nlbuf<nlmsghdr> hdr, int protocol, bool printPayload = false);
+void Error::toStream(std::stringstream& ss, const nlmsgerr& data) const {
+    ss << "nlmsgerr{error=" << data.error
+       << ", msg=" << toString({&data.msg, sizeof(data.msg)}, mProtocol) << "}";
+}
 
-}  // namespace android::netdevice
+}  // namespace android::netdevice::protocols::base

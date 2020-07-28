@@ -18,8 +18,8 @@
 
 #include <android-base/macros.h>
 #include <android-base/unique_fd.h>
-#include <libnetdevice/NetlinkRequest.h>
-#include <libnetdevice/nlbuf.h>
+#include <libnl++/NetlinkRequest.h>
+#include <libnl++/nlbuf.h>
 
 #include <linux/netlink.h>
 
