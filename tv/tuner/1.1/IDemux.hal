@@ -17,8 +17,8 @@
 package android.hardware.tv.tuner@1.1;
 
 import @1.0::IDemux;
-import @1.0::Result;
 import @1.0::IFilter;
+import @1.0::Result;
 
 /**
  * Demultiplexer(Demux) takes a single multiplexed input and splits it into
@@ -30,7 +30,7 @@ interface IDemux extends @1.0::IDemux {
      *
      * It is used by the client to get the hardware sync ID for audio and video.
      *
-     * @param filter the filter instance.
+     * @param filter the v1_1 filter instance.
      * @return result Result status of the operation.
      *         SUCCESS if successful,
      *         INVALID_ARGUMENT if failed for a wrong filter ID.

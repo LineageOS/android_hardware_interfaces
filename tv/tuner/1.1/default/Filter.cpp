@@ -35,7 +35,6 @@ Filter::Filter(DemuxFilterType type, uint64_t filterId, uint32_t bufferSize,
     mType = type;
     mFilterId = filterId;
     mBufferSize = bufferSize;
-    mCallback = cb;
     mDemux = demux;
 
     switch (mType.mainType) {
@@ -69,6 +68,13 @@ Filter::Filter(DemuxFilterType type, uint64_t filterId, uint32_t bufferSize,
         default:
             break;
     }
+
+    sp<V1_1::IFilterCallback> filterCallback_v1_1 = V1_1::IFilterCallback::castFrom(cb);
+    if (filterCallback_v1_1 != NULL) {
+        mCallback_1_1 = filterCallback_v1_1;
+    } else {
+        mCallback = cb;
+    }
 }
 
 Filter::~Filter() {}
@@ -99,7 +105,7 @@ Return<Result> Filter::setDataSource(const sp<V1_0::IFilter>& filter) {
 Return<void> Filter::getQueueDesc(getQueueDesc_cb _hidl_cb) {
     ALOGV("%s", __FUNCTION__);
 
-    mIsUsingFMQ = true;
+    mIsUsingFMQ = mIsRecordFilter ? false : true;
 
     _hidl_cb(Result::SUCCESS, *mFilterMQ->getDesc());
     return Void();
@@ -214,7 +220,7 @@ void Filter::filterThreadLoop() {
     // For the first time of filter output, implementation needs to send the filter
     // Event Callback without waiting for the DATA_CONSUMED to init the process.
     while (mFilterThreadRunning) {
-        if (mFilterEvent.events.size() == 0) {
+        if (mFilterEvent.events.size() == 0 && mFilterEvent_1_1.events.size() == 0) {
             if (DEBUG_FILTER) {
                 ALOGD("[Filter] wait for filter data output.");
             }
@@ -222,15 +228,26 @@ void Filter::filterThreadLoop() {
             continue;
         }
         // After successfully write, send a callback and wait for the read to be done
-        mCallback->onFilterEvent(mFilterEvent);
-        freeAvHandle();
-        mFilterEvent.events.resize(0);
-        mFilterStatus = DemuxFilterStatus::DATA_READY;
-        if (mCallback == nullptr) {
-            ALOGD("[Filter] filter %" PRIu64 " does not hava callback. Ending thread", mFilterId);
-            break;
+        if (mFilterEvent_1_1.events.size() > 0) {
+            if (mCallback_1_1 == nullptr) {
+                ALOGE("[Filter] IFilterCallback_1_1 has not been configured yet. Can't send event");
+                mFilterThreadRunning = false;
+                break;
+            }
+            mCallback_1_1->onFilterEvent_1_1(mFilterEvent_1_1);
+            mFilterEvent_1_1.events.resize(0);
+        } else {
+            mCallback->onFilterEvent(mFilterEvent);
+            mFilterEvent.events.resize(0);
         }
-        mCallback->onFilterStatus(mFilterStatus);
+
+        freeAvHandle();
+        mFilterStatus = DemuxFilterStatus::DATA_READY;
+        if (mCallback != nullptr) {
+            mCallback->onFilterStatus(mFilterStatus);
+        } else if (mCallback_1_1 != nullptr) {
+            mCallback_1_1->onFilterStatus(mFilterStatus);
+        }
         break;
     }
 
@@ -258,8 +275,13 @@ void Filter::filterThreadLoop() {
                     continue;
                 }
                 // After successfully write, send a callback and wait for the read to be done
-                mCallback->onFilterEvent(mFilterEvent);
-                mFilterEvent.events.resize(0);
+                if (mCallback != nullptr) {
+                    mCallback->onFilterEvent(mFilterEvent);
+                    mFilterEvent.events.resize(0);
+                } else if (mCallback_1_1 != nullptr) {
+                    mCallback_1_1->onFilterEvent_1_1(mFilterEvent_1_1);
+                    mFilterEvent_1_1.events.resize(0);
+                }
                 break;
             }
             // We do not wait for the last read to be done
@@ -297,7 +319,11 @@ void Filter::maySendFilterStatusCallback() {
     DemuxFilterStatus newStatus = checkFilterStatusChange(
             availableToWrite, availableToRead, ceil(fmqSize * 0.75), ceil(fmqSize * 0.25));
     if (mFilterStatus != newStatus) {
-        mCallback->onFilterStatus(newStatus);
+        if (mCallback != nullptr) {
+            mCallback->onFilterStatus(newStatus);
+        } else if (mCallback_1_1 != nullptr) {
+            mCallback_1_1->onFilterStatus(newStatus);
+        }
         mFilterStatus = newStatus;
     }
 }
@@ -575,6 +601,27 @@ Result Filter::startRecordFilterHandler() {
     if (mDvr == nullptr || !mDvr->writeRecordFMQ(mRecordFilterOutput)) {
         ALOGD("[Filter] dvr fails to write into record FMQ.");
         return Result::UNKNOWN_ERROR;
+    }
+
+    V1_0::DemuxFilterTsRecordEvent recordEvent;
+    recordEvent = {
+            .byteNumber = mRecordFilterOutput.size(),
+    };
+    V1_1::DemuxFilterTsRecordEvent recordEvent_1_1;
+    recordEvent_1_1 = {
+            .tsRecordEvent_1_0 = recordEvent,
+            .pts = (mPts == 0) ? time(NULL) * 900000 : mPts,
+    };
+
+    int size;
+    if (mCallback_1_1 != nullptr) {
+        size = mFilterEvent_1_1.events.size();
+        mFilterEvent_1_1.events.resize(size + 1);
+        mFilterEvent_1_1.events[size].tsRecord(recordEvent_1_1);
+    } else if (mCallback != nullptr) {
+        size = mFilterEvent.events.size();
+        mFilterEvent.events.resize(size + 1);
+        mFilterEvent.events[size].tsRecord(recordEvent);
     }
 
     mRecordFilterOutput.clear();

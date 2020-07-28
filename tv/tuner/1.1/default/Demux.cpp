@@ -312,6 +312,16 @@ void Demux::sendFrontendInputToRecord(vector<uint8_t> data) {
     }
 }
 
+void Demux::sendFrontendInputToRecord(vector<uint8_t> data, uint16_t pid, uint64_t pts) {
+    sendFrontendInputToRecord(data);
+    set<uint64_t>::iterator it;
+    for (it = mRecordFilterIds.begin(); it != mRecordFilterIds.end(); it++) {
+        if (pid == mFilters[*it]->getTpid()) {
+            mFilters[*it]->updatePts(pts);
+        }
+    }
+}
+
 bool Demux::startBroadcastFilterDispatcher() {
     set<uint64_t>::iterator it;
 
@@ -389,9 +399,11 @@ void Demux::frontendInputThreadLoop() {
                 ALOGE("[Demux] playback es data failed to be filtered. Ending thread");
                 break;
             }
+            continue;
         }
         // Our current implementation filter the data and write it into the filter FMQ immediately
         // after the DATA_READY from the VTS/framework
+        // This is for the non-ES data source, real playback use case handling.
         if (!mDvrPlayback->readPlaybackFMQ(true /*isVirtualFrontend*/, mIsRecording) ||
             !mDvrPlayback->startFilterDispatcher(true /*isVirtualFrontend*/, mIsRecording)) {
             ALOGE("[Demux] playback data failed to be filtered. Ending thread");
