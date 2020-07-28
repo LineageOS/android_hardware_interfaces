@@ -108,6 +108,7 @@ TEST_P(VibratorHidlTest_1_1, PerformEffect_1_1_BadStrength_BelowValidRange) {
     EXPECT_OK(vibrator->perform_1_1(Effect_1_1::CLICK, badStrength, validatePerformEffectBadInput));
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(VibratorHidlTest_1_1);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, VibratorHidlTest_1_1,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(IVibrator::descriptor)),

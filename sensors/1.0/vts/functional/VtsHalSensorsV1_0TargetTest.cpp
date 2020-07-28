@@ -449,6 +449,7 @@ TEST_P(SensorsHidlTest, MagnetometerGrallocDirectReportOperationVeryFast) {
                               RateLevel::VERY_FAST, NullChecker());
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SensorsHidlTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, SensorsHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(ISensors::descriptor)),

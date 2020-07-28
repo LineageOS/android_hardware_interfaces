@@ -19,6 +19,7 @@
 #include <hidl/ServiceManagement.h>
 #include <radio_hidl_hal_utils_v1_0.h>
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(RadioHidlTest);
 INSTANTIATE_TEST_SUITE_P(PerInstance, RadioHidlTest,
                          testing::ValuesIn(android::hardware::getAllHalInstanceNames(
                                  ::android::hardware::radio::V1_0::IRadio::descriptor)),

@@ -160,6 +160,7 @@ TEST_P(MemtrackHidlTest, GetMemoryTest) {
                   static_cast<uint32_t>(MemtrackType::NUM_TYPES));
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(MemtrackHidlTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, MemtrackHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(IMemtrack::descriptor)),

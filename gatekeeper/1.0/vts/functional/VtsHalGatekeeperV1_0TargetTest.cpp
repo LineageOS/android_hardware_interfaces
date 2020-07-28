@@ -433,6 +433,7 @@ TEST_P(GatekeeperHidlTest, DeleteAllUsersTest) {
   ALOGI("Testing deleteAllUsers done: rsp=%" PRIi32, delAllRsp.code);
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GatekeeperHidlTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, GatekeeperHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(IGatekeeper::descriptor)),

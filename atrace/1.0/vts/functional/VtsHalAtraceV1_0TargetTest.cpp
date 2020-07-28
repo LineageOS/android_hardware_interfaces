@@ -93,6 +93,7 @@ TEST_P(AtraceHidlTest, disableAllCategories) {
     EXPECT_EQ(Status::SUCCESS, ret);
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AtraceHidlTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, AtraceHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(IAtraceDevice::descriptor)),

@@ -41,6 +41,7 @@ TEST_P(PowerHidlTest, PowerHintAsync_1_3) {
     ASSERT_TRUE(power->powerHintAsync_1_3(PowerHint::EXPENSIVE_RENDERING, 0).isOk());
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(PowerHidlTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, PowerHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(IPower::descriptor)),

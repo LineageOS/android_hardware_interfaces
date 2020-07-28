@@ -178,6 +178,7 @@ TEST_P(PowerHidlTest, GetPlatformLowPowerStats) {
   ASSERT_TRUE(s == Status::SUCCESS || s == Status::FILESYSTEM_ERROR);
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(PowerHidlTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, PowerHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(IPower::descriptor)),
