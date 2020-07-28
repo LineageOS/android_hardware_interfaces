@@ -15,7 +15,6 @@
  */
 
 #include "DemuxTests.h"
-#include "FilterTests.h"
 #include "FrontendTests.h"
 
 namespace {
@@ -23,6 +22,7 @@ namespace {
 void initConfiguration() {
     initFrontendConfig();
     initFilterConfig();
+    initDvrConfig();
 }
 
 class TunerFilterHidlTest : public testing::TestWithParam<std::string> {
@@ -71,5 +71,33 @@ class TunerDemuxHidlTest : public testing::TestWithParam<std::string> {
     FrontendTests mFrontendTests;
     DemuxTests mDemuxTests;
     FilterTests mFilterTests;
+};
+
+class TunerRecordHidlTest : public testing::TestWithParam<std::string> {
+  public:
+    virtual void SetUp() override {
+        mService = ITuner::getService(GetParam());
+        ASSERT_NE(mService, nullptr);
+        initConfiguration();
+
+        mFrontendTests.setService(mService);
+        mDemuxTests.setService(mService);
+        mFilterTests.setService(mService);
+        mDvrTests.setService(mService);
+    }
+
+  protected:
+    static void description(const std::string& description) {
+        RecordProperty("description", description);
+    }
+
+    void recordSingleFilterTest(FilterConfig filterConf, FrontendConfig frontendConf,
+                                DvrConfig dvrConf);
+
+    sp<ITuner> mService;
+    FrontendTests mFrontendTests;
+    DemuxTests mDemuxTests;
+    FilterTests mFilterTests;
+    DvrTests mDvrTests;
 };
 }  // namespace

@@ -233,11 +233,10 @@ void Tuner::setFrontendAsDemuxSource(uint32_t frontendId, uint32_t demuxId) {
 
 void Tuner::removeDemux(uint32_t demuxId) {
     map<uint32_t, uint32_t>::iterator it;
-    for (it = mFrontendToDemux.begin(); it != mFrontendToDemux.end();) {
+    for (it = mFrontendToDemux.begin(); it != mFrontendToDemux.end(); it++) {
         if (it->second == demuxId) {
             it = mFrontendToDemux.erase(it);
-        } else {
-            it++;
+            break;
         }
     }
     mDemuxes.erase(demuxId);
