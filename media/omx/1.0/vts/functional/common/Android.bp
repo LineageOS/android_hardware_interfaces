@@ -22,28 +22,24 @@ cc_library_static {
     export_header_lib_headers: ["media_plugin_headers"],
     export_include_dirs: ["."],
 
+    shared_libs: [
+        "libui",
+    ],
+
     static_libs: [
         "libgtest",
         "libhidlmemory",
         "android.hidl.allocator@1.0",
         "android.hidl.memory@1.0",
         "android.hardware.media.omx@1.0",
-        "android.hardware.graphics.allocator@2.0",
-        "android.hardware.graphics.allocator@3.0",
         "android.hardware.graphics.common@1.0",
         "android.hardware.graphics.common@1.1",
         "android.hardware.graphics.common@1.2",
-        "android.hardware.graphics.mapper@2.0",
-        "android.hardware.graphics.mapper@3.0",
     ],
     export_static_lib_headers: [
-        "android.hardware.graphics.allocator@2.0",
-        "android.hardware.graphics.allocator@3.0",
         "android.hardware.graphics.common@1.0",
         "android.hardware.graphics.common@1.1",
         "android.hardware.graphics.common@1.2",
-        "android.hardware.graphics.mapper@2.0",
-        "android.hardware.graphics.mapper@3.0",
     ],
 }
 
@@ -54,15 +50,10 @@ cc_defaults {
     // Link to these statically as they are not guaranteed to be on the device.
     static_libs: [
         "VtsHalMediaOmxV1_0CommonUtil",
-        "android.hardware.graphics.allocator@2.0",
-        "android.hardware.graphics.allocator@3.0",
         "android.hardware.graphics.common@1.0",
         "android.hardware.graphics.common@1.1",
         "android.hardware.graphics.common@1.2",
-        "android.hardware.graphics.mapper@2.0",
-        "android.hardware.graphics.mapper@3.0",
         "android.hardware.graphics.bufferqueue@1.0",
-        "android.hardware.graphics.common@1.0",
         "android.hardware.media.omx@1.0",
         "android.hardware.media@1.0",
         "android.hidl.allocator@1.0",
@@ -73,6 +64,7 @@ cc_defaults {
 
     // TODO(b/64437680): Assume these libs are always available on the device.
     shared_libs: [
+        "libui",
         "libstagefright_foundation",
         "libstagefright_omx_utils",
     ],
