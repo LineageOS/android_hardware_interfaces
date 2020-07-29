@@ -1152,6 +1152,7 @@ TEST_P(AudioDecHidlTest, FlushTest) {
                                                     kPortIndexOutput));
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AudioDecHidlTest);
 INSTANTIATE_TEST_SUITE_P(PerInstance, AudioDecHidlTest, testing::ValuesIn(kTestParameters),
                          android::hardware::PrintInstanceTupleNameToString<>);
 

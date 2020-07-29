@@ -57,8 +57,10 @@ static const std::vector<DrmHalTestParam> kAllInstances = [] {
     return allInstanceUuidCombos;
 }();
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(DrmHalTest);
 INSTANTIATE_TEST_SUITE_P(PerInstance, DrmHalTest, testing::ValuesIn(kAllInstances),
                          PrintParamInstanceToString);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(DrmHalClearkeyTestV1_2);
 INSTANTIATE_TEST_SUITE_P(PerInstance, DrmHalClearkeyTestV1_2, testing::ValuesIn(kAllInstances),
                          PrintParamInstanceToString);
 

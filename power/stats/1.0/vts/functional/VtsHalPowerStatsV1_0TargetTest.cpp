@@ -556,6 +556,7 @@ TEST_P(PowerStatsHidlTest, StreamEnergyData) {
     thread1.join();
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(PowerStatsHidlTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, PowerStatsHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(IPowerStats::descriptor)),

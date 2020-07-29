@@ -262,6 +262,7 @@ TEST_P(HostapdHidlTest, AddInvalidPskAccessPointWithoutAcs) {
  */
 TEST_P(HostapdHidlTest, Terminate) { hostapd_->terminate(); }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(HostapdHidlTest);
 INSTANTIATE_TEST_SUITE_P(
     PerInstance, HostapdHidlTest,
     testing::Combine(

@@ -63,6 +63,7 @@ TEST_P(VrHidlTest, ReInit) {
   EXPECT_TRUE(vr->setVrMode(false).isOk());
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(VrHidlTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, VrHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(IVr::descriptor)),

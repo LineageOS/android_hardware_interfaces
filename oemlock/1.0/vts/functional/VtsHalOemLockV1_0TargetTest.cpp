@@ -188,6 +188,7 @@ TEST_P(OemLockHidlTest, CarrierUnlock) {
     ASSERT_EQ(allowed, originallyAllowed);
 };
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(OemLockHidlTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, OemLockHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(IOemLock::descriptor)),

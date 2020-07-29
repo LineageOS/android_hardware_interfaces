@@ -4179,39 +4179,51 @@ TEST_P(KeyDeletionTest, DeleteAllKeys) {
 static const auto kKeymasterDeviceChoices =
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(IKeymasterDevice::descriptor));
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(NewKeyGenerationTest);
 INSTANTIATE_TEST_SUITE_P(PerInstance, NewKeyGenerationTest, kKeymasterDeviceChoices,
                          android::hardware::PrintInstanceNameToString);
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(KeymasterVersionTest);
 INSTANTIATE_TEST_SUITE_P(PerInstance, KeymasterVersionTest, kKeymasterDeviceChoices,
                          android::hardware::PrintInstanceNameToString);
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GetKeyCharacteristicsTest);
 INSTANTIATE_TEST_SUITE_P(PerInstance, GetKeyCharacteristicsTest, kKeymasterDeviceChoices,
                          android::hardware::PrintInstanceNameToString);
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SigningOperationsTest);
 INSTANTIATE_TEST_SUITE_P(PerInstance, SigningOperationsTest, kKeymasterDeviceChoices,
                          android::hardware::PrintInstanceNameToString);
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(VerificationOperationsTest);
 INSTANTIATE_TEST_SUITE_P(PerInstance, VerificationOperationsTest, kKeymasterDeviceChoices,
                          android::hardware::PrintInstanceNameToString);
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(ExportKeyTest);
 INSTANTIATE_TEST_SUITE_P(PerInstance, ExportKeyTest, kKeymasterDeviceChoices,
                          android::hardware::PrintInstanceNameToString);
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(ImportKeyTest);
 INSTANTIATE_TEST_SUITE_P(PerInstance, ImportKeyTest, kKeymasterDeviceChoices,
                          android::hardware::PrintInstanceNameToString);
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(EncryptionOperationsTest);
 INSTANTIATE_TEST_SUITE_P(PerInstance, EncryptionOperationsTest, kKeymasterDeviceChoices,
                          android::hardware::PrintInstanceNameToString);
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(MaxOperationsTest);
 INSTANTIATE_TEST_SUITE_P(PerInstance, MaxOperationsTest, kKeymasterDeviceChoices,
                          android::hardware::PrintInstanceNameToString);
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AddEntropyTest);
 INSTANTIATE_TEST_SUITE_P(PerInstance, AddEntropyTest, kKeymasterDeviceChoices,
                          android::hardware::PrintInstanceNameToString);
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AttestationTest);
 INSTANTIATE_TEST_SUITE_P(PerInstance, AttestationTest, kKeymasterDeviceChoices,
                          android::hardware::PrintInstanceNameToString);
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(KeyDeletionTest);
 INSTANTIATE_TEST_SUITE_P(PerInstance, KeyDeletionTest, kKeymasterDeviceChoices,
                          android::hardware::PrintInstanceNameToString);
 

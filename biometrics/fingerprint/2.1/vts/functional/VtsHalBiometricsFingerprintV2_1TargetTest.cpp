@@ -472,6 +472,7 @@ TEST_P(FingerprintHidlTest, CancelRemoveAllTest) {
 }
 }  // anonymous namespace
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(FingerprintHidlTest);
 INSTANTIATE_TEST_SUITE_P(PerInstance, FingerprintHidlTest,
                          testing::ValuesIn(android::hardware::getAllHalInstanceNames(
                                  IBiometricsFingerprint::descriptor)),

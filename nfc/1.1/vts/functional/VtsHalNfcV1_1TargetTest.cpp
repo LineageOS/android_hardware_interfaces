@@ -211,6 +211,7 @@ TEST_P(NfcHidlTest, GetConfig) {
     });
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(NfcHidlTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, NfcHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(INfc::descriptor)),
