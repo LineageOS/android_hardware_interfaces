@@ -321,6 +321,7 @@ TEST_P(DumpstateHidl1_1GeneralTest, TestRepeatedToggle) {
     DisableVerboseLogging();
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(DumpstateHidl1_1GeneralTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, DumpstateHidl1_1GeneralTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(IDumpstateDevice::descriptor)),
@@ -334,6 +335,7 @@ static inline std::string PrintInstanceNameToStringWithMode(
            "_" + toString(std::get<1>(info.param));
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(DumpstateHidl1_1PerModeTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstanceAndMode, DumpstateHidl1_1PerModeTest,
         testing::Combine(testing::ValuesIn(android::hardware::getAllHalInstanceNames(

@@ -549,6 +549,7 @@ TEST_P(MediaCasHidlTest, TestClearKeyApisWithSession) {
 
 }  // anonymous namespace
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(MediaCasHidlTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, MediaCasHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(IMediaCasService::descriptor)),

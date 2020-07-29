@@ -2471,7 +2471,7 @@ TEST_P(EvsHidlTest, UltrasonicsSetFramesInFlight) {
     }
 }
 
-
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(EvsHidlTest);
 INSTANTIATE_TEST_SUITE_P(
     PerInstance,
     EvsHidlTest,
