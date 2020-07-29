@@ -123,6 +123,7 @@ TEST_P(RebootEscrowAidlTest, Store_Success) {
     rebootescrow->storeKey(KEY_1);
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(RebootEscrowAidlTest);
 INSTANTIATE_TEST_SUITE_P(
         RebootEscrow, RebootEscrowAidlTest,
         testing::ValuesIn(android::getAidlHalInstanceNames(IRebootEscrow::descriptor)),

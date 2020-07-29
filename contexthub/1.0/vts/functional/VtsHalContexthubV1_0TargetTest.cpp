@@ -261,9 +261,11 @@ TEST_P(ContexthubTxnTest, TestDisableNonexistentNanoApp) {
     EXPECT_TRUE(checkFailureSyncOrAsync(result, Result::BAD_PARAMS, cb->promise.get_future()));
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(ContexthubHidlTest);
 INSTANTIATE_TEST_SUITE_P(HubIdSpecificTests, ContexthubHidlTest, testing::ValuesIn(kTestParameters),
                          android::hardware::PrintInstanceTupleNameToString<>);
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(ContexthubTxnTest);
 INSTANTIATE_TEST_SUITE_P(HubIdSpecificTests, ContexthubTxnTest, testing::ValuesIn(kTestParameters),
                          android::hardware::PrintInstanceTupleNameToString<>);
 

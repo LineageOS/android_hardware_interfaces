@@ -293,9 +293,9 @@ TEST_P(CanControllerHalTest, FailBadSlcanAddress) {
  * Example manual invocation:
  * adb shell /data/nativetest64/VtsHalCanControllerV1_0TargetTest/VtsHalCanControllerV1_0TargetTest
  */
-INSTANTIATE_TEST_SUITE_P(  //
-        PerInstance, CanControllerHalTest,
-        testing::ValuesIn(getAllHalInstanceNames(ICanController::descriptor)),
-        PrintInstanceNameToString);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(CanControllerHalTest);
+INSTANTIATE_TEST_SUITE_P(PerInstance, CanControllerHalTest,
+                         testing::ValuesIn(getAllHalInstanceNames(ICanController::descriptor)),
+                         PrintInstanceNameToString);
 
 }  // namespace android::hardware::automotive::can::V1_0::vts
