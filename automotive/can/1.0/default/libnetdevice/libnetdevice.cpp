@@ -20,8 +20,8 @@
 #include "ifreqs.h"
 
 #include <android-base/logging.h>
-#include <libnetdevice/NetlinkRequest.h>
-#include <libnetdevice/NetlinkSocket.h>
+#include <libnl++/NetlinkRequest.h>
+#include <libnl++/NetlinkSocket.h>
 
 #include <linux/can.h>
 #include <net/if.h>

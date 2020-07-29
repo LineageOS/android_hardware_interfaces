@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <libnetdevice/nlbuf.h>
+#include <libnl++/nlbuf.h>
 
 #include <linux/rtnetlink.h>
 

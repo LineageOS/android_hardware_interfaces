@@ -19,8 +19,8 @@
 #include "common.h"
 
 #include <android-base/logging.h>
-#include <libnetdevice/NetlinkRequest.h>
-#include <libnetdevice/NetlinkSocket.h>
+#include <libnl++/NetlinkRequest.h>
+#include <libnl++/NetlinkSocket.h>
 
 namespace android::netdevice::vlan {
 

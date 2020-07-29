@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include <libnetdevice/NetlinkSocket.h>
+#include <libnl++/NetlinkSocket.h>
 
-#include <libnetdevice/printer.h>
+#include <libnl++/printer.h>
 
 #include <android-base/logging.h>
 
