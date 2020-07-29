@@ -52,16 +52,16 @@ Return<void> Radio::getIccCardStatus(int32_t serial) {
     /**
      * IRadio-defined request is called from the client and talk to the radio to get
      * IRadioResponse-defined response or/and IRadioIndication-defined indication back to the
-     * client. This dummy implementation omits and replaces the design and implementation of vendor
+     * client. This implementation omits and replaces the design and implementation of vendor
      * codes that needs to handle the receipt of the request and the return of the response from the
-     * radio; this just directly returns a dummy response back to the client.
+     * radio; this just directly returns a fake response back to the client.
      */
 
     ALOGD("Radio Request: getIccCardStatus is entering");
 
     if (mRadioResponse != nullptr || mRadioResponseV1_1 != nullptr ||
         mRadioResponseV1_2 != nullptr) {
-        // Dummy RadioResponseInfo as part of response to return in 1.0, 1.1 and 1.2
+        // Fake RadioResponseInfo as part of response to return in 1.0, 1.1 and 1.2
         ::android::hardware::radio::V1_0::RadioResponseInfo info;
         info.serial = serial;
         info.type = ::android::hardware::radio::V1_0::RadioResponseType::SOLICITED;
@@ -72,7 +72,7 @@ Return<void> Radio::getIccCardStatus(int32_t serial) {
          * return getIccCardStatusResponse.
          */
         if (mRadioResponseV1_2 != nullptr) {
-            // Dummy CardStatus as part of getIccCardStatusResponse_1_2 response to return
+            // Fake CardStatus as part of getIccCardStatusResponse_1_2 response to return
             ::android::hardware::radio::V1_2::CardStatus card_status;
             card_status.base.cardState = ::android::hardware::radio::V1_0::CardState::ABSENT;
             card_status.base.gsmUmtsSubscriptionAppIndex = 0;
@@ -80,7 +80,7 @@ Return<void> Radio::getIccCardStatus(int32_t serial) {
             mRadioResponseV1_2->getIccCardStatusResponse_1_2(info, card_status);
             ALOGD("Radio Response: getIccCardStatusResponse_1_2 is sent");
         } else if (mRadioResponseV1_1 != nullptr) {
-            // Dummy CardStatus as part of getIccCardStatusResponse response to return
+            // Fake CardStatus as part of getIccCardStatusResponse response to return
             ::android::hardware::radio::V1_0::CardStatus card_status_V1_0;
             card_status_V1_0.cardState = ::android::hardware::radio::V1_0::CardState::ABSENT;
             card_status_V1_0.gsmUmtsSubscriptionAppIndex = 0;
@@ -88,7 +88,7 @@ Return<void> Radio::getIccCardStatus(int32_t serial) {
             mRadioResponseV1_1->getIccCardStatusResponse(info, card_status_V1_0);
             ALOGD("Radio Response: getIccCardStatusResponse is sent");
         } else {
-            // Dummy CardStatus as part of getIccCardStatusResponse response to return
+            // Fake CardStatus as part of getIccCardStatusResponse response to return
             ::android::hardware::radio::V1_0::CardStatus card_status_V1_0;
             card_status_V1_0.cardState = ::android::hardware::radio::V1_0::CardState::ABSENT;
             card_status_V1_0.gsmUmtsSubscriptionAppIndex = 0;
