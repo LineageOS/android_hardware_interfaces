@@ -1890,8 +1890,8 @@ struct Carrier {
 };
 
 struct CarrierRestrictions {
-    vec<Carrier> allowedCarriers;         // whitelist for allowed carriers
-    vec<Carrier> excludedCarriers;        // blacklist for explicitly excluded carriers
+    vec<Carrier> allowedCarriers;         // Allowed carriers
+    vec<Carrier> excludedCarriers;        // Explicitly excluded carriers
                                           // which match allowed_carriers. Eg. allowedCarriers
                                           // match mcc/mnc, excludedCarriers has same mcc/mnc and
                                           // gid1 is ABCD. It means except the carrier whose gid1
