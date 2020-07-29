@@ -54,6 +54,7 @@ TEST_P(WifiP2pIfaceHidlTest, Create) {
     EXPECT_NE(nullptr, getWifiP2pIface(GetInstanceName()).get());
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WifiP2pIfaceHidlTest);
 INSTANTIATE_TEST_SUITE_P(
     PerInstance, WifiP2pIfaceHidlTest,
     testing::ValuesIn(

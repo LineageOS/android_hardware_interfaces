@@ -868,9 +868,9 @@ TEST_P(CanBusVirtualHalTest, FilterMixed) {
  * Example manual invocation:
  * adb shell /data/nativetest64/VtsHalCanBusVirtualV1_0TargetTest/VtsHalCanBusVirtualV1_0TargetTest
  */
-INSTANTIATE_TEST_SUITE_P(  //
-        PerInstance, CanBusVirtualHalTest,
-        testing::ValuesIn(getAllHalInstanceNames(ICanController::descriptor)),
-        PrintInstanceNameToString);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(CanBusVirtualHalTest);
+INSTANTIATE_TEST_SUITE_P(PerInstance, CanBusVirtualHalTest,
+                         testing::ValuesIn(getAllHalInstanceNames(ICanController::descriptor)),
+                         PrintInstanceNameToString);
 
 }  // namespace android::hardware::automotive::can::V1_0::vts

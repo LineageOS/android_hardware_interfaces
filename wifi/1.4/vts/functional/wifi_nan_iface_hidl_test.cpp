@@ -549,6 +549,7 @@ TEST_P(WifiNanIfaceHidlTest, configRequest_1_4ShimInvalidArgs) {
                   .code);
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WifiNanIfaceHidlTest);
 INSTANTIATE_TEST_SUITE_P(
     PerInstance, WifiNanIfaceHidlTest,
     testing::ValuesIn(android::hardware::getAllHalInstanceNames(

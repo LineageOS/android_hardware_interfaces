@@ -552,6 +552,7 @@ TEST_P(WifiChipHidlTest, CreateRttController) {
     }
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WifiChipHidlTest);
 INSTANTIATE_TEST_SUITE_P(
     PerInstance, WifiChipHidlTest,
     testing::ValuesIn(

@@ -84,6 +84,7 @@ TEST_P(SoundTriggerHidlTest, GetProperties_2_3) {
                 (AudioCapabilities::ECHO_CANCELLATION | AudioCapabilities::NOISE_SUPPRESSION));
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SoundTriggerHidlTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, SoundTriggerHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(ISoundTriggerHw::descriptor)),

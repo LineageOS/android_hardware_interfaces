@@ -176,8 +176,9 @@ TEST_P(CanBusHalTest, DontCloseErrorListener) {
  * adb shell /data/nativetest64/VtsHalCanBusV1_0TargetTest/VtsHalCanBusV1_0TargetTest\
  *     --gtest_filter=*_<NAME_OF_VALID_BUS>
  */
-INSTANTIATE_TEST_SUITE_P(  //
-        PerInstance, CanBusHalTest, testing::ValuesIn(getAllHalInstanceNames(ICanBus::descriptor)),
-        PrintInstanceNameToString);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(CanBusHalTest);
+INSTANTIATE_TEST_SUITE_P(PerInstance, CanBusHalTest,
+                         testing::ValuesIn(getAllHalInstanceNames(ICanBus::descriptor)),
+                         PrintInstanceNameToString);
 
 }  // namespace android::hardware::automotive::can::V1_0::vts

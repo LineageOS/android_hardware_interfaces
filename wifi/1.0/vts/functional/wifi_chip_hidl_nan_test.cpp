@@ -181,6 +181,7 @@ TEST_P(WifiChipHidlNanTest, RemoveNanIface) {
     EXPECT_EQ(WifiStatusCode::ERROR_INVALID_ARGS, removeNanIface(iface_name));
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WifiChipHidlNanTest);
 INSTANTIATE_TEST_SUITE_P(
     PerInstance, WifiChipHidlNanTest,
     testing::ValuesIn(

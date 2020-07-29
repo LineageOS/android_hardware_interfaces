@@ -240,6 +240,7 @@ TEST_P(WifiRttControllerHidlTest, EnableResponder_1_4) {
     EXPECT_EQ(WifiStatusCode::SUCCESS, status.code);
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WifiRttControllerHidlTest);
 INSTANTIATE_TEST_SUITE_P(
     PerInstance, WifiRttControllerHidlTest,
     testing::ValuesIn(android::hardware::getAllHalInstanceNames(
