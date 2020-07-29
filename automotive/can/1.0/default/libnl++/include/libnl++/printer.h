@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,22 +18,20 @@
 
 #include <libnl++/nlbuf.h>
 
-#include <linux/can.h>
-#include <net/if.h>
+#include <linux/netlink.h>
 
 #include <string>
 
-namespace android::netdevice {
+namespace android::nl {
 
 /**
- * Returns the index of a given network interface.
+ * Stringify a Netlink message.
  *
- * If the syscall to check the index fails with other error than ENODEV, it gets logged and the
- * return value indicates the interface doesn't exists.
- *
- * \param ifname Interface to check
- * \return Interface index, or 0 if the interface doesn't exist
+ * \param hdr Pointer to the message(s) to print.
+ * \param protocol Which Netlink protocol hdr uses.
+ * \param printPayload True will stringify message data, false will only stringify the header(s).
+ * \return Stringified message.
  */
-unsigned int nametoindex(const std::string& ifname);
+std::string toString(const nlbuf<nlmsghdr> hdr, int protocol, bool printPayload = false);
 
-}  // namespace android::netdevice
+}  // namespace android::nl

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,24 +16,17 @@
 
 #pragma once
 
-#include <libnl++/nlbuf.h>
+#include "../MessageDefinition.h"
 
-#include <linux/can.h>
-#include <net/if.h>
+namespace android::nl::protocols::base {
 
-#include <string>
+class Error : public MessageDefinition<nlmsgerr> {
+  public:
+    Error(int protocol);
+    void toStream(std::stringstream& ss, const nlmsgerr& data) const override;
 
-namespace android::netdevice {
+  private:
+    const int mProtocol;
+};
 
-/**
- * Returns the index of a given network interface.
- *
- * If the syscall to check the index fails with other error than ENODEV, it gets logged and the
- * return value indicates the interface doesn't exists.
- *
- * \param ifname Interface to check
- * \return Interface index, or 0 if the interface doesn't exist
- */
-unsigned int nametoindex(const std::string& ifname);
-
-}  // namespace android::netdevice
+}  // namespace android::nl::protocols::base

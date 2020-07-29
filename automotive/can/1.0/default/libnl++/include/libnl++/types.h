@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,24 +16,12 @@
 
 #pragma once
 
-#include <libnl++/nlbuf.h>
+#include <linux/types.h>
 
-#include <linux/can.h>
-#include <net/if.h>
+namespace android::nl {
 
-#include <string>
+typedef __u16 nlmsgtype_t;            // nlmsghdr::nlmsg_type
+typedef __u16 nlattrtype_t;           // nlattr::nla_type
+typedef unsigned short rtattrtype_t;  // rtattr::rta_type
 
-namespace android::netdevice {
-
-/**
- * Returns the index of a given network interface.
- *
- * If the syscall to check the index fails with other error than ENODEV, it gets logged and the
- * return value indicates the interface doesn't exists.
- *
- * \param ifname Interface to check
- * \return Interface index, or 0 if the interface doesn't exist
- */
-unsigned int nametoindex(const std::string& ifname);
-
-}  // namespace android::netdevice
+}  // namespace android::nl

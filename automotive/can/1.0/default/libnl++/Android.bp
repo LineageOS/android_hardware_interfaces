@@ -15,19 +15,26 @@
 //
 
 cc_library_static {
-    name: "android.hardware.automotive.can@libnetdevice",
+    name: "libnl++",
     defaults: ["android.hardware.automotive.can@defaults"],
     vendor_available: true,
     srcs: [
-        "can.cpp",
+        "protocols/common/Empty.cpp",
+        "protocols/common/Error.cpp",
+        "protocols/generic/Ctrl.cpp",
+        "protocols/generic/Generic.cpp",
+        "protocols/generic/GenericMessageBase.cpp",
+        "protocols/generic/Unknown.cpp",
+        "protocols/route/Link.cpp",
+        "protocols/route/Route.cpp",
+        "protocols/route/structs.cpp",
+        "protocols/MessageDefinition.cpp",
+        "protocols/NetlinkProtocol.cpp",
+        "protocols/all.cpp",
+        "NetlinkRequest.cpp",
+        "NetlinkSocket.cpp",
         "common.cpp",
-        "ethtool.cpp",
-        "ifreqs.cpp",
-        "libnetdevice.cpp",
-        "vlan.cpp",
+        "printer.cpp",
     ],
     export_include_dirs: ["include"],
-    static_libs: [
-        "libnl++",
-    ],
 }
