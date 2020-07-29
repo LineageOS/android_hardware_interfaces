@@ -160,6 +160,7 @@ TEST_P(HealthStorageHidlTest, GcNonNullCallback) {
     cb->waitForResult(kDevGcTimeout + kDevGcTolerance + kRpcTime, Result::SUCCESS);
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(HealthStorageHidlTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, HealthStorageHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(IStorage::descriptor)),

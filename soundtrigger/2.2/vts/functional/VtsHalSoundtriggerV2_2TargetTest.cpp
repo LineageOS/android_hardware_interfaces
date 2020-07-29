@@ -67,6 +67,7 @@ TEST_P(SoundTriggerHidlTest, GetModelStateInvalidModel) {
     EXPECT_TRUE(hidlReturn.isOk());
     EXPECT_EQ(-ENOSYS, hidlReturn);
 }
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SoundTriggerHidlTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, SoundTriggerHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(ISoundTriggerHw::descriptor)),

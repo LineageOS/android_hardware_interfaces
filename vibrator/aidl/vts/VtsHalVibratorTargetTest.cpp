@@ -518,6 +518,7 @@ TEST_P(VibratorAidl, AlwaysOn) {
     }
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(VibratorAidl);
 INSTANTIATE_TEST_SUITE_P(Vibrator, VibratorAidl,
                          testing::ValuesIn(android::getAidlHalInstanceNames(IVibrator::descriptor)),
                          android::PrintInstanceNameToString);

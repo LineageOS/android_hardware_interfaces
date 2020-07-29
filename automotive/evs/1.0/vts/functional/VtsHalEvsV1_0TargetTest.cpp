@@ -579,7 +579,7 @@ TEST_P(EvsHidlTest, MultiCameraStream) {
     }
 }
 
-
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(EvsHidlTest);
 INSTANTIATE_TEST_SUITE_P(
     PerInstance,
     EvsHidlTest,
