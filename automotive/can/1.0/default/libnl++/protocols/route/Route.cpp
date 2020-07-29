@@ -18,8 +18,8 @@
 
 #include "Link.h"
 
-namespace android::netdevice::protocols::route {
+namespace android::nl::protocols::route {
 
 Route::Route() : NetlinkProtocol(NETLINK_ROUTE, "ROUTE", {std::make_shared<Link>()}) {}
 
-}  // namespace android::netdevice::protocols::route
+}  // namespace android::nl::protocols::route

@@ -18,7 +18,7 @@
 
 #include "../MessageDefinition.h"
 
-namespace android::netdevice::protocols::base {
+namespace android::nl::protocols::base {
 
 class Error : public MessageDefinition<nlmsgerr> {
   public:
@@ -29,4 +29,4 @@ class Error : public MessageDefinition<nlmsgerr> {
     const int mProtocol;
 };
 
-}  // namespace android::netdevice::protocols::base
+}  // namespace android::nl::protocols::base

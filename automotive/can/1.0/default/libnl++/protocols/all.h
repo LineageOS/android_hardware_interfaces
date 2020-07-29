@@ -18,7 +18,7 @@
 
 #include "NetlinkProtocol.h"
 
-namespace android::netdevice::protocols {
+namespace android::nl::protocols {
 
 /**
  * Protocol definition lookup.
@@ -28,4 +28,4 @@ namespace android::netdevice::protocols {
  */
 std::optional<std::reference_wrapper<NetlinkProtocol>> get(int protocol);
 
-}  // namespace android::netdevice::protocols
+}  // namespace android::nl::protocols

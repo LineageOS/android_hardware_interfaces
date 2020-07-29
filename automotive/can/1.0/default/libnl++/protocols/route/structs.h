@@ -22,7 +22,7 @@
 
 #include <sstream>
 
-namespace android::netdevice::protocols::route {
+namespace android::nl::protocols::route {
 
 // rtnl_link_ifmap
 void mapToStream(std::stringstream& ss, const nlbuf<nlattr> attr);
@@ -75,4 +75,4 @@ void statsToStream(std::stringstream& ss, const nlbuf<nlattr> attr) {
        << data.rx_nohandler << '}';
 }
 
-}  // namespace android::netdevice::protocols::route
+}  // namespace android::nl::protocols::route

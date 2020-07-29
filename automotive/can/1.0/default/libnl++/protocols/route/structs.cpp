@@ -16,7 +16,7 @@
 
 #include "structs.h"
 
-namespace android::netdevice::protocols::route {
+namespace android::nl::protocols::route {
 
 void mapToStream(std::stringstream& ss, const nlbuf<nlattr> attr) {
     const auto& [ok, data] = attr.data<rtnl_link_ifmap>().getFirst();
@@ -46,4 +46,4 @@ void ifla_cacheinfoToStream(std::stringstream& ss, const nlbuf<nlattr> attr) {
        << data.retrans_time << '}';
 }
 
-}  // namespace android::netdevice::protocols::route
+}  // namespace android::nl::protocols::route

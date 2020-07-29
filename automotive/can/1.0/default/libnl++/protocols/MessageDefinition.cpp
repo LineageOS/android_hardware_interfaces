@@ -16,7 +16,7 @@
 
 #include "MessageDefinition.h"
 
-namespace android::netdevice::protocols {
+namespace android::nl::protocols {
 
 AttributeMap::AttributeMap(const std::initializer_list<value_type> attrTypes)
     : std::map<std::optional<nlattrtype_t>, AttributeDefinition>(attrTypes) {}
@@ -59,4 +59,4 @@ const std::string MessageDescriptor::getMessageName(nlmsgtype_t msgtype) const {
     return it->second;
 }
 
-}  // namespace android::netdevice::protocols
+}  // namespace android::nl::protocols

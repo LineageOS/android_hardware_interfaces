@@ -18,7 +18,7 @@
 
 #include <android-base/logging.h>
 
-namespace android::netdevice::impl {
+namespace android::nl::impl {
 
 static struct rtattr* nlmsg_tail(struct nlmsghdr* n) {
     return reinterpret_cast<struct rtattr*>(  //
@@ -51,4 +51,4 @@ void addattr_nest_end(struct nlmsghdr* n, struct rtattr* nest) {
     nest->rta_len = nestLen;
 }
 
-}  // namespace android::netdevice::impl
+}  // namespace android::nl::impl

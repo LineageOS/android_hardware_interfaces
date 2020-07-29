@@ -16,7 +16,7 @@
 
 #include "GenericMessageBase.h"
 
-namespace android::netdevice::protocols::generic {
+namespace android::nl::protocols::generic {
 
 GenericMessageBase::GenericMessageBase(
         nlmsgtype_t msgtype, std::string msgname,
@@ -37,4 +37,4 @@ void GenericMessageBase::toStream(std::stringstream& ss, const struct genlmsghdr
     ss << "}";
 }
 
-}  // namespace android::netdevice::protocols::generic
+}  // namespace android::nl::protocols::generic

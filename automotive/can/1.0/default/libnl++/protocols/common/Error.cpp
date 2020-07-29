@@ -20,7 +20,7 @@
 
 #include <libnl++/printer.h>
 
-namespace android::netdevice::protocols::base {
+namespace android::nl::protocols::base {
 
 // clang-format off
 Error::Error(int protocol) : MessageDefinition<nlmsgerr>("nlmsg", {
@@ -33,4 +33,4 @@ void Error::toStream(std::stringstream& ss, const nlmsgerr& data) const {
        << ", msg=" << toString({&data.msg, sizeof(data.msg)}, mProtocol) << "}";
 }
 
-}  // namespace android::netdevice::protocols::base
+}  // namespace android::nl::protocols::base

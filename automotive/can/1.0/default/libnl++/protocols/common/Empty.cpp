@@ -16,7 +16,7 @@
 
 #include "Empty.h"
 
-namespace android::netdevice::protocols::base {
+namespace android::nl::protocols::base {
 
 // clang-format off
 Empty::Empty() : MessageDefinition<char>("nlmsg", {
@@ -28,4 +28,4 @@ Empty::Empty() : MessageDefinition<char>("nlmsg", {
 
 void Empty::toStream(std::stringstream&, const char&) const {}
 
-}  // namespace android::netdevice::protocols::base
+}  // namespace android::nl::protocols::base

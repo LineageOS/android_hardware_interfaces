@@ -16,7 +16,7 @@
 
 #include "NetlinkProtocol.h"
 
-namespace android::netdevice::protocols {
+namespace android::nl::protocols {
 
 NetlinkProtocol::NetlinkProtocol(int protocol, const std::string name,
                                  const MessageDescriptorList&& messageDescrs)
@@ -61,4 +61,4 @@ NetlinkProtocol::MessageDescriptorMap NetlinkProtocol::toMap(
     return map;
 }
 
-}  // namespace android::netdevice::protocols
+}  // namespace android::nl::protocols

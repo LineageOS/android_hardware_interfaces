@@ -22,7 +22,7 @@
 
 #include <string>
 
-namespace android::netdevice {
+namespace android::nl {
 
 /**
  * Stringify a Netlink message.
@@ -34,4 +34,4 @@ namespace android::netdevice {
  */
 std::string toString(const nlbuf<nlmsghdr> hdr, int protocol, bool printPayload = false);
 
-}  // namespace android::netdevice
+}  // namespace android::nl

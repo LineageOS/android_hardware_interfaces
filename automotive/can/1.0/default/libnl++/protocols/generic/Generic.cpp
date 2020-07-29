@@ -19,7 +19,7 @@
 #include "Ctrl.h"
 #include "Unknown.h"
 
-namespace android::netdevice::protocols::generic {
+namespace android::nl::protocols::generic {
 
 Generic::Generic() : NetlinkProtocol(NETLINK_GENERIC, "GENERIC", {std::make_shared<Ctrl>()}) {}
 
@@ -33,4 +33,4 @@ const std::optional<std::reference_wrapper<const MessageDescriptor>> Generic::ge
     return *(mFamilyRegister[nlmsg_type] = std::make_shared<Unknown>(nlmsg_type));
 }
 
-}  // namespace android::netdevice::protocols::generic
+}  // namespace android::nl::protocols::generic

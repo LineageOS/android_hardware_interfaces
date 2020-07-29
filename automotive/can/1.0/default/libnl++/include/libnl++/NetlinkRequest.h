@@ -23,7 +23,7 @@
 
 #include <string>
 
-namespace android::netdevice {
+namespace android::nl {
 
 /** Implementation details, do not use outside NetlinkRequest template. */
 namespace impl {
@@ -154,4 +154,4 @@ struct NetlinkRequest {
     }
 };
 
-}  // namespace android::netdevice
+}  // namespace android::nl

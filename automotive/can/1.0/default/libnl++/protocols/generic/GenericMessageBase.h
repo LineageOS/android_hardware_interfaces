@@ -20,7 +20,7 @@
 
 #include <linux/genetlink.h>
 
-namespace android::netdevice::protocols::generic {
+namespace android::nl::protocols::generic {
 
 class GenericMessageBase : public MessageDefinition<struct genlmsghdr> {
   public:
@@ -37,4 +37,4 @@ class GenericMessageBase : public MessageDefinition<struct genlmsghdr> {
     const GenericCommandNameMap mCommandNames;
 };
 
-}  // namespace android::netdevice::protocols::generic
+}  // namespace android::nl::protocols::generic

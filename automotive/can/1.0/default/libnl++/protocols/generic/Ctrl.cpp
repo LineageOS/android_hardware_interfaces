@@ -16,7 +16,7 @@
 
 #include "Ctrl.h"
 
-namespace android::netdevice::protocols::generic {
+namespace android::nl::protocols::generic {
 
 using DataType = AttributeDefinition::DataType;
 
@@ -52,4 +52,4 @@ Ctrl::Ctrl() : GenericMessageBase(GENL_ID_CTRL, "ID_CTRL", {
 }) {}
 // clang-format on
 
-}  // namespace android::netdevice::protocols::generic
+}  // namespace android::nl::protocols::generic

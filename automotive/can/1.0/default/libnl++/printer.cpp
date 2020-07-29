@@ -26,7 +26,7 @@
 #include <iomanip>
 #include <sstream>
 
-namespace android::netdevice {
+namespace android::nl {
 
 static void flagsToStream(std::stringstream& ss, __u16 nlmsg_flags) {
     bool first = true;
@@ -174,4 +174,4 @@ std::string toString(const nlbuf<nlmsghdr> hdr, int protocol, bool printPayload)
     return ss.str();
 }
 
-}  // namespace android::netdevice
+}  // namespace android::nl

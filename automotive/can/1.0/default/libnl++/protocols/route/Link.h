@@ -20,7 +20,7 @@
 
 #include <linux/rtnetlink.h>
 
-namespace android::netdevice::protocols::route {
+namespace android::nl::protocols::route {
 
 class Link : public MessageDefinition<struct ifinfomsg> {
   public:
@@ -28,4 +28,4 @@ class Link : public MessageDefinition<struct ifinfomsg> {
     void toStream(std::stringstream& ss, const struct ifinfomsg& data) const override;
 };
 
-}  // namespace android::netdevice::protocols::route
+}  // namespace android::nl::protocols::route
