@@ -23,7 +23,7 @@
 #include <sstream>
 #include <variant>
 
-namespace android::netdevice::protocols {
+namespace android::nl::protocols {
 
 struct AttributeDefinition;
 
@@ -123,4 +123,4 @@ class MessageDefinition : public MessageDescriptor {
     virtual void toStream(std::stringstream& ss, const T& data) const = 0;
 };
 
-}  // namespace android::netdevice::protocols
+}  // namespace android::nl::protocols

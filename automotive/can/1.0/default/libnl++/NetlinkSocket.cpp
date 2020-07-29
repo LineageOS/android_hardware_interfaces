@@ -20,7 +20,7 @@
 
 #include <android-base/logging.h>
 
-namespace android::netdevice {
+namespace android::nl {
 
 /**
  * Print all outbound/inbound Netlink messages.
@@ -190,4 +190,4 @@ std::optional<unsigned int> NetlinkSocket::getSocketPid() {
     return sa.nl_pid;
 }
 
-}  // namespace android::netdevice
+}  // namespace android::nl

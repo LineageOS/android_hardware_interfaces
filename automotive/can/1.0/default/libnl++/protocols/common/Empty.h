@@ -20,7 +20,7 @@
 
 #include <libnl++/printer.h>
 
-namespace android::netdevice::protocols::base {
+namespace android::nl::protocols::base {
 
 // no-payload (like NLMSG_NOOP) messages can't be defined with T=void, so let's use char
 class Empty : public MessageDefinition<char> {
@@ -29,4 +29,4 @@ class Empty : public MessageDefinition<char> {
     void toStream(std::stringstream&, const char&) const override;
 };
 
-}  // namespace android::netdevice::protocols::base
+}  // namespace android::nl::protocols::base

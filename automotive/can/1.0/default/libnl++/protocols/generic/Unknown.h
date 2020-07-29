@@ -18,11 +18,11 @@
 
 #include "GenericMessageBase.h"
 
-namespace android::netdevice::protocols::generic {
+namespace android::nl::protocols::generic {
 
 class Unknown : public GenericMessageBase {
   public:
     Unknown(nlmsgtype_t msgtype);
 };
 
-}  // namespace android::netdevice::protocols::generic
+}  // namespace android::nl::protocols::generic

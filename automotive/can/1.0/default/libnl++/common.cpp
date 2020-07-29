@@ -20,7 +20,7 @@
 
 #include <net/if.h>
 
-namespace android::netdevice {
+namespace android::nl {
 
 unsigned int nametoindex(const std::string& ifname) {
     const auto ifidx = if_nametoindex(ifname.c_str());
@@ -55,4 +55,4 @@ uint16_t crc16(const nlbuf<uint8_t> data, uint16_t crc) {
     return crc;
 }
 
-}  // namespace android::netdevice
+}  // namespace android::nl

@@ -18,7 +18,7 @@
 
 #include "../NetlinkProtocol.h"
 
-namespace android::netdevice::protocols::generic {
+namespace android::nl::protocols::generic {
 
 /**
  * Definition of NETLINK_GENERIC protocol.
@@ -34,4 +34,4 @@ class Generic : public NetlinkProtocol {
     std::map<nlmsgtype_t, std::shared_ptr<const MessageDescriptor>> mFamilyRegister;
 };
 
-}  // namespace android::netdevice::protocols::generic
+}  // namespace android::nl::protocols::generic

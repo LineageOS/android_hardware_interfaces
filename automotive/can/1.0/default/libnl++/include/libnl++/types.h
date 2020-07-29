@@ -18,10 +18,10 @@
 
 #include <linux/types.h>
 
-namespace android::netdevice {
+namespace android::nl {
 
 typedef __u16 nlmsgtype_t;            // nlmsghdr::nlmsg_type
 typedef __u16 nlattrtype_t;           // nlattr::nla_type
 typedef unsigned short rtattrtype_t;  // rtattr::rta_type
 
-}  // namespace android::netdevice
+}  // namespace android::nl

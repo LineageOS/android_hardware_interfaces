@@ -25,7 +25,7 @@
 #include <string>
 #include <vector>
 
-namespace android::netdevice::protocols {
+namespace android::nl::protocols {
 
 /**
  * Netlink-based protocol definition.
@@ -59,4 +59,4 @@ class NetlinkProtocol {
     static MessageDescriptorMap toMap(const MessageDescriptorList& descrs, int protocol);
 };
 
-}  // namespace android::netdevice::protocols
+}  // namespace android::nl::protocols

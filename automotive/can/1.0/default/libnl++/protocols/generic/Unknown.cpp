@@ -16,9 +16,9 @@
 
 #include "Unknown.h"
 
-namespace android::netdevice::protocols::generic {
+namespace android::nl::protocols::generic {
 
 Unknown::Unknown(nlmsgtype_t msgtype)
     : GenericMessageBase(msgtype, "Unknown(" + std::to_string(msgtype) + ")") {}
 
-}  // namespace android::netdevice::protocols::generic
+}  // namespace android::nl::protocols::generic

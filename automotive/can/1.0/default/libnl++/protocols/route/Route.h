@@ -18,7 +18,7 @@
 
 #include "../NetlinkProtocol.h"
 
-namespace android::netdevice::protocols::route {
+namespace android::nl::protocols::route {
 
 /**
  * Definition of NETLINK_ROUTE protocol.
@@ -28,4 +28,4 @@ class Route : public NetlinkProtocol {
     Route();
 };
 
-}  // namespace android::netdevice::protocols::route
+}  // namespace android::nl::protocols::route

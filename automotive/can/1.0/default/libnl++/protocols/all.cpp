@@ -21,7 +21,7 @@
 
 #include <map>
 
-namespace android::netdevice::protocols {
+namespace android::nl::protocols {
 
 // This should be a map of unique_ptr, but it's not trivial to uniformly initialize such a map
 static std::map<int, std::shared_ptr<NetlinkProtocol>> toMap(
@@ -43,4 +43,4 @@ std::optional<std::reference_wrapper<NetlinkProtocol>> get(int protocol) {
     return *all.find(protocol)->second.get();
 }
 
-}  // namespace android::netdevice::protocols
+}  // namespace android::nl::protocols

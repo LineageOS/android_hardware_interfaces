@@ -22,7 +22,7 @@
 
 #include <optional>
 
-namespace android::netdevice {
+namespace android::nl {
 
 /**
  * Buffer containing netlink structure (e.g. struct nlmsghdr, struct nlattr).
@@ -199,4 +199,4 @@ inline size_t nlbuf<nlattr>::declaredLengthImpl() const {
     return mData->nla_len;
 }
 
-}  // namespace android::netdevice
+}  // namespace android::nl

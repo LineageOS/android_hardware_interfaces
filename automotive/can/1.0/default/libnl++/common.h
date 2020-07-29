@@ -23,7 +23,7 @@
 
 #include <string>
 
-namespace android::netdevice {
+namespace android::nl {
 
 /**
  * Returns the index of a given network interface.
@@ -56,4 +56,4 @@ std::string sanitize(std::string str);
  */
 uint16_t crc16(const nlbuf<uint8_t> data, uint16_t crc = 0);
 
-}  // namespace android::netdevice
+}  // namespace android::nl

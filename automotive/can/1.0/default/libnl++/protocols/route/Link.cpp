@@ -20,7 +20,7 @@
 
 #include <net/if.h>
 
-namespace android::netdevice::protocols::route {
+namespace android::nl::protocols::route {
 
 using DataType = AttributeDefinition::DataType;
 
@@ -114,4 +114,4 @@ void Link::toStream(std::stringstream& ss, const struct ifinfomsg& data) const {
        << ", change=" << data.ifi_change << "}";
 }
 
-}  // namespace android::netdevice::protocols::route
+}  // namespace android::nl::protocols::route

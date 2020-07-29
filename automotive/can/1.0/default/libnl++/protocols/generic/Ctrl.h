@@ -18,11 +18,11 @@
 
 #include "GenericMessageBase.h"
 
-namespace android::netdevice::protocols::generic {
+namespace android::nl::protocols::generic {
 
 class Ctrl : public GenericMessageBase {
   public:
     Ctrl();
 };
 
-}  // namespace android::netdevice::protocols::generic
+}  // namespace android::nl::protocols::generic
