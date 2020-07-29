@@ -88,6 +88,7 @@ TEST_P(SecureElementHidlTest, isCardPresent) {
     EXPECT_TRUE(se_->isCardPresent());
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SecureElementHidlTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, SecureElementHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(ISecureElement::descriptor)),

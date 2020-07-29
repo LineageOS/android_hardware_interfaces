@@ -169,6 +169,7 @@ TEST_P(UsbHidlTest, queryPortStatus) {
     EXPECT_EQ(PortMode::NONE, res.args->usb_last_port_status.status.supportedModes);
     EXPECT_EQ(Status::SUCCESS, res.args->usb_last_status);
 }
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(UsbHidlTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, UsbHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(IUsb::descriptor)),

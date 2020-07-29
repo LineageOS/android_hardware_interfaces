@@ -813,6 +813,7 @@ TEST_P(BroadcastRadioHalTest, AnnouncementListenerRegistration) {
     closeHandle->close();
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(BroadcastRadioHalTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, BroadcastRadioHalTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(IBroadcastRadio::descriptor)),

@@ -134,6 +134,7 @@ TEST_P(VibratorHidlTest, SetAmplitudeReturnUnsupportedOperationIfNotSupported) {
   }
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(VibratorHidlTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, VibratorHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(IVibrator::descriptor)),

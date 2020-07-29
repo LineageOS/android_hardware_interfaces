@@ -150,6 +150,7 @@ TEST_P(LightHidlTest, TestUnsupported) {
     }
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(LightHidlTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, LightHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(ILight::descriptor)),
