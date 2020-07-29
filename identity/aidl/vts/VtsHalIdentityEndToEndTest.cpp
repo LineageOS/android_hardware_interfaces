@@ -522,6 +522,7 @@ TEST_P(IdentityAidl, createAndRetrieveCredential) {
     EXPECT_EQ(mac, calculatedMac);
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(IdentityAidl);
 INSTANTIATE_TEST_SUITE_P(
         Identity, IdentityAidl,
         testing::ValuesIn(android::getAidlHalInstanceNames(IIdentityCredentialStore::descriptor)),

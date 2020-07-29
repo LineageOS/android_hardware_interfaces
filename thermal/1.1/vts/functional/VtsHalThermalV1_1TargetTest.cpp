@@ -100,6 +100,7 @@ TEST_P(ThermalHidlTest, NotifyThrottlingTest) {
     EXPECT_EQ(kThrottleTemp, res.args->temperature);
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(ThermalHidlTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, ThermalHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(IThermal::descriptor)),

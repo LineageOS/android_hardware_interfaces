@@ -58,6 +58,7 @@ TEST_P(HealthHidlTest, TestEnergyCounter) {
     ASSERT_TRUE(result != Result::SUCCESS || energy > 0);
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(HealthHidlTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, HealthHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(IHealth::descriptor)),

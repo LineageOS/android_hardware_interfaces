@@ -19,6 +19,7 @@
 #include <hidl/ServiceManagement.h>
 #include <sap_hidl_hal_utils.h>
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SapHidlTest);
 INSTANTIATE_TEST_SUITE_P(PerInstance, SapHidlTest,
                          testing::ValuesIn(android::hardware::getAllHalInstanceNames(
                                  ::android::hardware::radio::V1_0::ISap::descriptor)),

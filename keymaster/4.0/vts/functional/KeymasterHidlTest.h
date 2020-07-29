@@ -234,6 +234,7 @@ class KeymasterHidlTest : public ::testing::TestWithParam<std::string> {
 };
 
 #define INSTANTIATE_KEYMASTER_HIDL_TEST(name)                                      \
+    GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(name);                           \
     INSTANTIATE_TEST_SUITE_P(PerInstance, name,                                    \
                              testing::ValuesIn(KeymasterHidlTest::build_params()), \
                              android::hardware::PrintInstanceNameToString)
