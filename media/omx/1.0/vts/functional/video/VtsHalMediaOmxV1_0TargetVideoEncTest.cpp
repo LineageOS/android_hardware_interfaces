@@ -289,11 +289,11 @@ struct CodecProducerListener : public IProducerListener {
 };
 
 // Mock IOmxBufferSource class. GraphicBufferSource.cpp in libstagefright/omx/
-// implements this class. Below is dummy class introduced to test if callback
+// implements this class. Below class is introduced to test if callback
 // functions are actually being called or not
-struct DummyBufferSource : public IOmxBufferSource {
+struct MockBufferSource : public IOmxBufferSource {
    public:
-    DummyBufferSource(sp<IOmxNode> node) {
+    MockBufferSource(sp<IOmxNode> node) {
         callback = 0;
         executing = false;
         omxNode = node;
@@ -311,7 +311,7 @@ struct DummyBufferSource : public IOmxBufferSource {
     android::Vector<BufferInfo> iBuffer, oBuffer;
 };
 
-Return<void> DummyBufferSource::onOmxExecuting() {
+Return<void> MockBufferSource::onOmxExecuting() {
     executing = true;
     callback |= 0x1;
     size_t index;
@@ -332,25 +332,25 @@ Return<void> DummyBufferSource::onOmxExecuting() {
     return Void();
 };
 
-Return<void> DummyBufferSource::onOmxIdle() {
+Return<void> MockBufferSource::onOmxIdle() {
     callback |= 0x2;
     executing = false;
     return Void();
 };
 
-Return<void> DummyBufferSource::onOmxLoaded() {
+Return<void> MockBufferSource::onOmxLoaded() {
     callback |= 0x4;
     return Void();
 };
 
-Return<void> DummyBufferSource::onInputBufferAdded(uint32_t buffer) {
+Return<void> MockBufferSource::onInputBufferAdded(uint32_t buffer) {
     (void)buffer;
     EXPECT_EQ(executing, false);
     callback |= 0x8;
     return Void();
 };
 
-Return<void> DummyBufferSource::onInputBufferEmptied(
+Return<void> MockBufferSource::onInputBufferEmptied(
     uint32_t buffer, const ::android::hardware::hidl_handle& fence) {
     (void)fence;
     callback |= 0x10;
@@ -1143,7 +1143,7 @@ TEST_P(VideoEncHidlTest, BufferSourceCallBacks) {
     setupRAWPort(omxNode, kPortIndexInput, nFrameWidth, nFrameHeight, 0,
                  xFramerate, eColorFormat);
 
-    sp<DummyBufferSource> buffersource = new DummyBufferSource(omxNode);
+    sp<MockBufferSource> buffersource = new MockBufferSource(omxNode);
     ASSERT_NE(buffersource, nullptr);
     status = omxNode->setInputSurface(buffersource);
     ASSERT_EQ(status, ::android::hardware::media::omx::V1_0::Status::OK);

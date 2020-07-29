@@ -785,8 +785,8 @@ const std::vector<std::tuple<std::string, std::string, std::string>>& getTestPar
         for (IOmx::ComponentInfo info : componentInfos) {
             for (std::string role : info.mRoles) {
                 if (filter.empty()) {
-                    if (kWhiteListRoles.find(role.c_str()) == kWhiteListRoles.end()) {
-                        // This is for component test and the role is not in the white list.
+                    if (kKnownRoles.find(role.c_str()) == kKnownRoles.end()) {
+                        // This is for component test and the role is not supported.
                         continue;
                     }
                 } else if (role.find(filter) == std::string::npos) {
