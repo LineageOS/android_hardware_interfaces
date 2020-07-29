@@ -336,6 +336,7 @@ TEST_P(WeaverHidlTest, ReadWithTooLargeKeyFails) {
     EXPECT_EQ(timeout, 0u);
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WeaverHidlTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, WeaverHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(IWeaver::descriptor)),

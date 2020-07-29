@@ -47,6 +47,7 @@ std::vector<NamedModel> getNamedModels(const FilterNameFn& filter);
 std::string printGeneratedTest(const testing::TestParamInfo<GeneratedTestParam>& info);
 
 #define INSTANTIATE_GENERATED_TEST(TestSuite, filter)                                     \
+    GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(TestSuite);                             \
     INSTANTIATE_TEST_SUITE_P(TestGenerated, TestSuite,                                    \
                              testing::Combine(testing::ValuesIn(getNamedDevices()),       \
                                               testing::ValuesIn(getNamedModels(filter))), \

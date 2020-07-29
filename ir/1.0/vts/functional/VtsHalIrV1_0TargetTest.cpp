@@ -77,6 +77,7 @@ TEST_P(ConsumerIrHidlTest, BadFreqTest) {
   EXPECT_FALSE(ir->transmit(-1, vec));
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(ConsumerIrHidlTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, ConsumerIrHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(IConsumerIr::descriptor)),

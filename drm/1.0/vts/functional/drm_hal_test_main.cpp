@@ -63,9 +63,12 @@ INSTANTIATE_TEST_CASE_P(DrmHalVendorDecryptTestCases, DrmHalVendorDecryptTest,
                         testing::ValuesIn(kAllInstances),
                         drm_vts::PrintParamInstanceToString);
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(DrmHalClearkeyFactoryTest);
 INSTANTIATE_TEST_SUITE_P(PerInstance, DrmHalClearkeyFactoryTest, testing::ValuesIn(kAllInstances),
                          drm_vts::PrintParamInstanceToString);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(DrmHalClearkeyPluginTest);
 INSTANTIATE_TEST_SUITE_P(PerInstance, DrmHalClearkeyPluginTest, testing::ValuesIn(kAllInstances),
                          drm_vts::PrintParamInstanceToString);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(DrmHalClearkeyDecryptTest);
 INSTANTIATE_TEST_SUITE_P(PerInstance, DrmHalClearkeyDecryptTest, testing::ValuesIn(kAllInstances),
                          drm_vts::PrintParamInstanceToString);

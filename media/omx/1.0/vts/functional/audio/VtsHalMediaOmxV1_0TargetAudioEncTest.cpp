@@ -486,6 +486,7 @@ TEST_P(AudioEncHidlTest, SimpleEncodeTest) {
                                                     kPortIndexOutput));
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AudioEncHidlTest);
 INSTANTIATE_TEST_SUITE_P(PerInstance, AudioEncHidlTest, testing::ValuesIn(kTestParameters),
                          android::hardware::PrintInstanceTupleNameToString<>);
 
