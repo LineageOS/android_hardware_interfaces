@@ -594,6 +594,7 @@ TEST_P(ReaderAuthTests, ephemeralKeyNotInSessionTranscript) {
               status.serviceSpecificErrorCode());
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(ReaderAuthTests);
 INSTANTIATE_TEST_SUITE_P(
         Identity, ReaderAuthTests,
         testing::ValuesIn(android::getAidlHalInstanceNames(IIdentityCredentialStore::descriptor)),

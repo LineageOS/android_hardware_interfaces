@@ -888,20 +888,28 @@ static const std::vector<std::string> kAudioInstances =
     android::hardware::getAllHalInstanceNames(
         IBluetoothAudioProvidersFactory::descriptor);
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(
+    BluetoothAudioProvidersFactoryHidlTest);
 INSTANTIATE_TEST_SUITE_P(PerInstance, BluetoothAudioProvidersFactoryHidlTest,
                          testing::ValuesIn(kAudioInstances),
                          android::hardware::PrintInstanceNameToString);
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(
+    BluetoothAudioProviderA2dpSoftwareHidlTest);
 INSTANTIATE_TEST_SUITE_P(PerInstance,
                          BluetoothAudioProviderA2dpSoftwareHidlTest,
                          testing::ValuesIn(kAudioInstances),
                          android::hardware::PrintInstanceNameToString);
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(
+    BluetoothAudioProviderA2dpHardwareHidlTest);
 INSTANTIATE_TEST_SUITE_P(PerInstance,
                          BluetoothAudioProviderA2dpHardwareHidlTest,
                          testing::ValuesIn(kAudioInstances),
                          android::hardware::PrintInstanceNameToString);
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(
+    BluetoothAudioProviderHearingAidSoftwareHidlTest);
 INSTANTIATE_TEST_SUITE_P(PerInstance,
                          BluetoothAudioProviderHearingAidSoftwareHidlTest,
                          testing::ValuesIn(kAudioInstances),

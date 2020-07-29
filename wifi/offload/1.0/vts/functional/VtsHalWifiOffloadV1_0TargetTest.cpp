@@ -210,6 +210,7 @@ TEST_P(WifiOffloadHidlTest, getError) {
     ASSERT_EQ(true, res.no_timeout);
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WifiOffloadHidlTest);
 INSTANTIATE_TEST_SUITE_P(
     PerInstance, WifiOffloadHidlTest,
     testing::ValuesIn(

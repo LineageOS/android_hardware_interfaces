@@ -151,6 +151,7 @@ bool contains(hidl_vec<KeyParameter>& set, TypedTag typedTag) {
 }
 
 #define INSTANTIATE_KEYMASTER_4_1_HIDL_TEST(name)                                     \
+    GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(name);                              \
     INSTANTIATE_TEST_SUITE_P(PerInstance, name,                                       \
                              testing::ValuesIn(Keymaster4_1HidlTest::build_params()), \
                              android::hardware::PrintInstanceNameToString)
