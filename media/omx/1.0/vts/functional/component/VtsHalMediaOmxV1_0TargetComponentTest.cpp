@@ -1264,6 +1264,7 @@ TEST_P(ComponentHidlTest, DISABLED_PortEnableDisable_M) {
     }
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(ComponentHidlTest);
 INSTANTIATE_TEST_SUITE_P(PerInstance, ComponentHidlTest, testing::ValuesIn(kTestParameters),
                          android::hardware::PrintInstanceTupleNameToString<>);
 

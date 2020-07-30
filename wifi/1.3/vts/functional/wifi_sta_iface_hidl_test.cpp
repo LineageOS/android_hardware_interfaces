@@ -104,6 +104,7 @@ TEST_P(WifiStaIfaceHidlTest, GetLinkLayerStats_1_3) {
         HIDL_INVOKE(wifi_sta_iface_, disableLinkLayerStatsCollection).code);
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WifiStaIfaceHidlTest);
 INSTANTIATE_TEST_SUITE_P(
     PerInstance, WifiStaIfaceHidlTest,
     testing::ValuesIn(android::hardware::getAllHalInstanceNames(

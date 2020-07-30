@@ -37,7 +37,7 @@ class PowerHidlTest : public testing::TestWithParam<std::string> {
     sp<IPower> power;
 };
 
-// Sanity check Power::PowerHintAsync_1_2 on good and bad inputs.
+// Validate Power::PowerHintAsync_1_2 on good and bad inputs.
 TEST_P(PowerHidlTest, PowerHintAsync_1_2) {
     std::vector<PowerHint> hints;
     for (uint32_t i = static_cast<uint32_t>(PowerHint::VSYNC);
@@ -76,6 +76,7 @@ TEST_P(PowerHidlTest, PowerHintAsync_1_2) {
     } while (std::next_permutation(hints2.begin(), hints2.end(), compareHints));
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(PowerHidlTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, PowerHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(IPower::descriptor)),

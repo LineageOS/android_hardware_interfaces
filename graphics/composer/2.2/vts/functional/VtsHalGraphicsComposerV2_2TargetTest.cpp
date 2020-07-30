@@ -681,11 +681,13 @@ TEST_P(GraphicsComposerHidlTest, SetColorMode_2_2BadParameter) {
     EXPECT_EQ(Error::BAD_PARAMETER, renderIntentError);
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GraphicsComposerHidlTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, GraphicsComposerHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(IComposer::descriptor)),
         android::hardware::PrintInstanceNameToString);
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GraphicsComposerHidlCommandTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, GraphicsComposerHidlCommandTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(IComposer::descriptor)),

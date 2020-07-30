@@ -100,6 +100,7 @@ TEST_P(DumpstateHidlTest, TestHandleWithTwoFds) {
     native_handle_delete(handle);
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(DumpstateHidlTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, DumpstateHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(IDumpstateDevice::descriptor)),

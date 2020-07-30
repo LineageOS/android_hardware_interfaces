@@ -84,6 +84,7 @@ TEST_P(BootHidlTest, SetSnapshotMergeStatus) {
     }
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(BootHidlTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, BootHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(IBootControl::descriptor)),

@@ -578,6 +578,7 @@ TEST_P(NfcHidlTest, OpenAfterOpen) {
   EXPECT_EQ(NfcStatus::OK, nfc_->open(nfc_cb_));
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(NfcHidlTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, NfcHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(INfc::descriptor)),
