@@ -27,6 +27,7 @@
 #include <linux/can/error.h>
 #include <linux/can/netlink.h>
 #include <linux/can/raw.h>
+#include <linux/rtnetlink.h>
 
 namespace android::netdevice::can {
 
