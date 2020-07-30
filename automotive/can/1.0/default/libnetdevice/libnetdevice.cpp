@@ -24,6 +24,7 @@
 #include <libnl++/NetlinkSocket.h>
 
 #include <linux/can.h>
+#include <linux/rtnetlink.h>
 #include <net/if.h>
 
 namespace android::netdevice {
