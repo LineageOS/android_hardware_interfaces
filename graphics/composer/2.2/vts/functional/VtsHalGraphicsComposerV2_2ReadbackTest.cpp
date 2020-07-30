@@ -1381,6 +1381,7 @@ TEST_P(GraphicsTransformCompositionTest, ROT_180) {
     }
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GraphicsCompositionTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, GraphicsCompositionTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(IComposer::descriptor)),
@@ -1393,6 +1394,7 @@ INSTANTIATE_TEST_CASE_P(
                 testing::Values("0.2", "1.0")),
         android::hardware::PrintInstanceTupleNameToString<>);
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GraphicsTransformCompositionTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, GraphicsTransformCompositionTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(IComposer::descriptor)),

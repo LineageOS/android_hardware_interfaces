@@ -125,6 +125,7 @@ TEST_P(WifiChipHidlTest, GetCapabilities_1_3) {
     EXPECT_NE(0u, status_and_caps.second);
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WifiChipHidlTest);
 INSTANTIATE_TEST_SUITE_P(
     PerInstance, WifiChipHidlTest,
     testing::ValuesIn(android::hardware::getAllHalInstanceNames(

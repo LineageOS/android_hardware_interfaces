@@ -23,6 +23,7 @@
 
 using android::hardware::gnss::V2_0::IGnss;
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GnssHalTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, GnssHalTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(IGnss::descriptor)),

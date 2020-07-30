@@ -41,7 +41,7 @@ class PowerHidlTest : public testing::TestWithParam<std::string> {
   sp<IPower> power;
 };
 
-// Sanity check Power::getSubsystemLowPowerStats().
+// Validate Power::getSubsystemLowPowerStats().
 TEST_P(PowerHidlTest, GetSubsystemLowPowerStats) {
   hidl_vec<PowerStateSubsystem> vec;
   Status s;
@@ -56,7 +56,7 @@ TEST_P(PowerHidlTest, GetSubsystemLowPowerStats) {
   ASSERT_TRUE(s == Status::SUCCESS || s == Status::FILESYSTEM_ERROR);
 }
 
-// Sanity check Power::powerHintAsync on good and bad inputs.
+// Validate Power::powerHintAsync on good and bad inputs.
 TEST_P(PowerHidlTest, PowerHintAsync) {
     PowerHint badHint = static_cast<PowerHint>(0xA);
     auto hints = {PowerHint::VSYNC,        PowerHint::INTERACTION, PowerHint::VIDEO_ENCODE,
@@ -91,6 +91,7 @@ TEST_P(PowerHidlTest, PowerHintAsync) {
     } while (std::next_permutation(hints2.begin(), hints2.end(), compareHints));
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(PowerHidlTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, PowerHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(IPower::descriptor)),

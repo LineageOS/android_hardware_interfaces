@@ -159,6 +159,7 @@ TEST_P(LightsAidl, TestInvalidLightIdUnsupported) {
     EXPECT_TRUE(status.exceptionCode() == Status::EX_UNSUPPORTED_OPERATION);
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(LightsAidl);
 INSTANTIATE_TEST_SUITE_P(Lights, LightsAidl,
                          testing::ValuesIn(android::getAidlHalInstanceNames(ILights::descriptor)),
                          android::PrintInstanceNameToString);

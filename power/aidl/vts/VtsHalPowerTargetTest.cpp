@@ -126,6 +126,7 @@ TEST_P(PowerAidl, hasFixedPerformance) {
     }
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(PowerAidl);
 INSTANTIATE_TEST_SUITE_P(Power, PowerAidl,
                          testing::ValuesIn(android::getAidlHalInstanceNames(IPower::descriptor)),
                          android::PrintInstanceNameToString);

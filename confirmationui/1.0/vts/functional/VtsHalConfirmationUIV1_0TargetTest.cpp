@@ -473,6 +473,7 @@ TEST(ConfirmationUITestSelfTest, HMAC256SelfTest) {
     ASSERT_EQ(expected, result.value());
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(ConfirmationUIHidlTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, ConfirmationUIHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(IConfirmationUI::descriptor)),

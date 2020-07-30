@@ -258,6 +258,7 @@ TEST_P(HealthHidlTest, shouldKeepScreenOn) {
     })));
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(HealthHidlTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, HealthHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(IHealth::descriptor)),

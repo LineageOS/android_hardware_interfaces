@@ -204,6 +204,7 @@ TEST_P(SecureElementHidlTest, openCloseLogicalChannel) {
     EXPECT_EQ(SecureElementStatus::SUCCESS, se_->closeChannel(response.channelNumber));
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SecureElementHidlTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, SecureElementHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(ISecureElement::descriptor)),

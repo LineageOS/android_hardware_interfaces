@@ -465,6 +465,7 @@ TEST_P(UserAuthTests, MultipleRequestsSessionTranscriptChanges) {
                  true /* useSessionTranscript */);
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(UserAuthTests);
 INSTANTIATE_TEST_SUITE_P(
         Identity, UserAuthTests,
         testing::ValuesIn(android::getAidlHalInstanceNames(IIdentityCredentialStore::descriptor)),
