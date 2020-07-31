@@ -19,7 +19,7 @@
 #include <android-base/macros.h>
 #include <libnl++/types.h>
 
-#include <linux/rtnetlink.h>
+#include <linux/netlink.h>
 
 #include <string>
 
@@ -28,11 +28,10 @@ namespace android::nl {
 /** Implementation details, do not use outside NetlinkRequest template. */
 namespace impl {
 
-// TODO(twasilczyk): use nlattr instead of rtattr
-struct rtattr* addattr_l(struct nlmsghdr* n, size_t maxLen, rtattrtype_t type, const void* data,
+struct nlattr* addattr_l(struct nlmsghdr* n, size_t maxLen, nlattrtype_t type, const void* data,
                          size_t dataLen);
-struct rtattr* addattr_nest(struct nlmsghdr* n, size_t maxLen, rtattrtype_t type);
-void addattr_nest_end(struct nlmsghdr* n, struct rtattr* nest);
+struct nlattr* addattr_nest(struct nlmsghdr* n, size_t maxLen, nlattrtype_t type);
+void addattr_nest_end(struct nlmsghdr* n, struct nlattr* nest);
 
 }  // namespace impl
 
@@ -82,14 +81,14 @@ struct NetlinkRequest {
      * \param attr attribute data
      */
     template <class A>
-    void addattr(rtattrtype_t type, const A& attr) {
+    void addattr(nlattrtype_t type, const A& attr) {
         if (!mIsGood) return;
         auto ap = impl::addattr_l(&mRequest.nlmsg, sizeof(mRequest), type, &attr, sizeof(attr));
         if (ap == nullptr) mIsGood = false;
     }
 
     template <>
-    void addattr(rtattrtype_t type, const std::string& s) {
+    void addattr(nlattrtype_t type, const std::string& s) {
         if (!mIsGood) return;
         auto ap = impl::addattr_l(&mRequest.nlmsg, sizeof(mRequest), type, s.c_str(), s.size() + 1);
         if (ap == nullptr) mIsGood = false;
@@ -97,12 +96,12 @@ struct NetlinkRequest {
 
     /** Guard class to frame nested attributes. See nest(int). */
     struct Nest {
-        Nest(NetlinkRequest& req, rtattrtype_t type) : mReq(req), mAttr(req.nestStart(type)) {}
+        Nest(NetlinkRequest& req, nlattrtype_t type) : mReq(req), mAttr(req.nestStart(type)) {}
         ~Nest() { mReq.nestEnd(mAttr); }
 
       private:
         NetlinkRequest& mReq;
-        struct rtattr* mAttr;
+        struct nlattr* mAttr;
 
         DISALLOW_COPY_AND_ASSIGN(Nest);
     };
@@ -142,14 +141,14 @@ struct NetlinkRequest {
     bool mIsGood = true;
     RequestData mRequest = {};
 
-    struct rtattr* nestStart(rtattrtype_t type) {
+    struct nlattr* nestStart(nlattrtype_t type) {
         if (!mIsGood) return nullptr;
         auto attr = impl::addattr_nest(&mRequest.nlmsg, sizeof(mRequest), type);
         if (attr == nullptr) mIsGood = false;
         return attr;
     }
 
-    void nestEnd(struct rtattr* nest) {
+    void nestEnd(struct nlattr* nest) {
         if (mIsGood && nest != nullptr) impl::addattr_nest_end(&mRequest.nlmsg, nest);
     }
 };
