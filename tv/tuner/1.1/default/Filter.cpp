@@ -500,7 +500,12 @@ Result Filter::startMediaFilterHandler() {
     }
 
     if (mPts) {
-        return createMediaFilterEventWithIon(mFilterOutput);
+        Result result;
+        result = createMediaFilterEventWithIon(mFilterOutput);
+        if (result == Result::SUCCESS) {
+            mFilterOutput.clear();
+        }
+        return result;
     }
 
     for (int i = 0; i < mFilterOutput.size(); i += 188) {
