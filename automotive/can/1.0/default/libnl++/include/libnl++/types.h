@@ -16,12 +16,11 @@
 
 #pragma once
 
-#include <linux/types.h>
+#include <linux/netlink.h>
 
 namespace android::nl {
 
-typedef __u16 nlmsgtype_t;            // nlmsghdr::nlmsg_type
-typedef __u16 nlattrtype_t;           // nlattr::nla_type
-typedef unsigned short rtattrtype_t;  // rtattr::rta_type
+typedef decltype(nlmsghdr::nlmsg_type) nlmsgtype_t;
+typedef decltype(nlattr::nla_type) nlattrtype_t;
 
 }  // namespace android::nl

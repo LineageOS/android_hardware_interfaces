@@ -22,6 +22,8 @@
 #include <libnl++/NetlinkRequest.h>
 #include <libnl++/NetlinkSocket.h>
 
+#include <linux/rtnetlink.h>
+
 namespace android::netdevice::vlan {
 
 bool add(const std::string& eth, const std::string& vlan, uint16_t id) {

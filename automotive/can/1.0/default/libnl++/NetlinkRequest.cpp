@@ -18,14 +18,17 @@
 
 #include <android-base/logging.h>
 
+// for RTA_ macros missing from NLA_ definitions
+#include <linux/rtnetlink.h>
+
 namespace android::nl::impl {
 
-static struct rtattr* nlmsg_tail(struct nlmsghdr* n) {
-    return reinterpret_cast<struct rtattr*>(  //
+static struct nlattr* nlmsg_tail(struct nlmsghdr* n) {
+    return reinterpret_cast<struct nlattr*>(  //
             reinterpret_cast<uintptr_t>(n) + NLMSG_ALIGN(n->nlmsg_len));
 }
 
-struct rtattr* addattr_l(struct nlmsghdr* n, size_t maxLen, rtattrtype_t type, const void* data,
+struct nlattr* addattr_l(struct nlmsghdr* n, size_t maxLen, nlattrtype_t type, const void* data,
                          size_t dataLen) {
     size_t newLen = NLMSG_ALIGN(n->nlmsg_len) + RTA_SPACE(dataLen);
     if (newLen > maxLen) {
@@ -34,21 +37,21 @@ struct rtattr* addattr_l(struct nlmsghdr* n, size_t maxLen, rtattrtype_t type, c
     }
 
     auto attr = nlmsg_tail(n);
-    attr->rta_len = RTA_SPACE(dataLen);
-    attr->rta_type = type;
+    attr->nla_len = RTA_SPACE(dataLen);
+    attr->nla_type = type;
     if (dataLen > 0) memcpy(RTA_DATA(attr), data, dataLen);
 
     n->nlmsg_len = newLen;
     return attr;
 }
 
-struct rtattr* addattr_nest(struct nlmsghdr* n, size_t maxLen, rtattrtype_t type) {
+struct nlattr* addattr_nest(struct nlmsghdr* n, size_t maxLen, nlattrtype_t type) {
     return addattr_l(n, maxLen, type, nullptr, 0);
 }
 
-void addattr_nest_end(struct nlmsghdr* n, struct rtattr* nest) {
+void addattr_nest_end(struct nlmsghdr* n, struct nlattr* nest) {
     size_t nestLen = reinterpret_cast<uintptr_t>(nlmsg_tail(n)) - reinterpret_cast<uintptr_t>(nest);
-    nest->rta_len = nestLen;
+    nest->nla_len = nestLen;
 }
 
 }  // namespace android::nl::impl
