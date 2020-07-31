@@ -15,10 +15,11 @@
 //
 
 cc_test {
-    name: "VtsHalMediaOmxV1_0TargetMasterTest",
+    name: "VtsHalMediaOmxV1_0TargetStoreTest",
     defaults: ["VtsHalMediaOmxV1_0Defaults"],
-    srcs: ["VtsHalMediaOmxV1_0TargetMasterTest.cpp"],
+    srcs: ["VtsHalMediaOmxV1_0TargetStoreTest.cpp"],
     test_suites: [
+        "general-tests",
         "vts",
     ],
 }
