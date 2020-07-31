@@ -54,6 +54,11 @@ class nlbuf {
 
   public:
     /**
+     * Constructs empty buffer of size 0.
+     */
+    nlbuf() : mData(nullptr), mBufferEnd(nullptr) {}
+
+    /**
      * Constructor for nlbuf.
      *
      * \param data A pointer to the data the nlbuf wraps.
@@ -68,8 +73,8 @@ class nlbuf {
 
     std::pair<bool, const T&> getFirst() const {
         if (!ok()) {
-            static const T dummy = {};
-            return {false, dummy};
+            static const T empty = {};
+            return {false, empty};
         }
         return {true, *mData};
     }
@@ -78,7 +83,8 @@ class nlbuf {
      * Copy the first element of the buffer.
      *
      * This is a memory-safe cast operation, useful for reading e.g. uint32_t values
-     * from 1-byte buffer.
+     * from 1-byte buffer. If the buffer is smaller than the copied type, the rest is
+     * padded with default constructor output (usually zeros).
      */
     T copyFirst() const {
         T val = {};

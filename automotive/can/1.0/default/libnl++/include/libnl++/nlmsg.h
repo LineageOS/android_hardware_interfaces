@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <libnl++/Attributes.h>
 #include <libnl++/nlbuf.h>
 
 namespace android::nl {
@@ -26,6 +27,9 @@ namespace android::nl {
  * This is a C++-style, memory safe(r) implementation of linux/netlink.h macros accessing Netlink
  * message contents. The class doesn't own the underlying data, so the instance is valid as long as
  * the source buffer is allocated and unmodified.
+ *
+ * WARNING: this class is NOT thread-safe (it's safe to be used in multithreaded application, but
+ * a single instance can only be used by a single thread - the one owning the underlying buffer).
  */
 template <typename T>
 class nlmsg {
@@ -82,12 +86,12 @@ class nlmsg {
     /**
      * Netlink message attributes.
      */
-    const nlbuf<nlattr> attributes;
+    const Attributes attributes;
 
     const T* operator->() const { return &data; }
 
   private:
-    nlmsg(const nlmsghdr& nlHeader, const T& dataHeader, nlbuf<nlattr> attributes)
+    nlmsg(const nlmsghdr& nlHeader, const T& dataHeader, Attributes attributes)
         : header(nlHeader), data(dataHeader), attributes(attributes) {}
 };
 

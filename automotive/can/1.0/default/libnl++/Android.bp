@@ -31,6 +31,7 @@ cc_library_static {
         "protocols/MessageDefinition.cpp",
         "protocols/NetlinkProtocol.cpp",
         "protocols/all.cpp",
+        "Attributes.cpp",
         "NetlinkRequest.cpp",
         "NetlinkSocket.cpp",
         "common.cpp",
