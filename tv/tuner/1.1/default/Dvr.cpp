@@ -395,6 +395,7 @@ bool Dvr::processEsDataOnPlayback(bool isVirtualFrontend, bool isRecording) {
             mDemux->sendFrontendInputToRecord(frameData, pid, static_cast<uint64_t>(esMeta[i].pts));
         }
         startFilterDispatcher(isVirtualFrontend, isRecording);
+        frameData.clear();
     }
 
     return true;
