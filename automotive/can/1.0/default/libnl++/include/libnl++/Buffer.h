@@ -25,7 +25,7 @@
 namespace android::nl {
 
 /**
- * Buffer containing netlink structure (e.g. struct nlmsghdr, struct nlattr).
+ * Buffer wrapper containing netlink structure (e.g. struct nlmsghdr, struct nlattr).
  *
  * This is a C++-style, memory safe(r) and generic implementation of linux/netlink.h macros.
  *
@@ -33,7 +33,7 @@ namespace android::nl {
  * not be trusted - the value may either be larger than the buffer message is allocated in or
  * smaller than the header itself (so it couldn't even fit itself).
  *
- * As a solution, nlbuf<> keeps track of two lengths (both attribute for header with payload):
+ * As a solution, Buffer<> keeps track of two lengths (both attribute for header with payload):
  * - buffer length - how much memory was allocated to a given structure
  * - declared length - what nlmsg_len or nla_len says how long the structure is
  *
@@ -42,7 +42,7 @@ namespace android::nl {
  * this template attempts to protect against.
  */
 template <typename T>
-class nlbuf {
+class Buffer {
     // The following definitions are C++ equivalents of NLMSG_* macros from linux/netlink.h
 
     static constexpr size_t alignto = NLMSG_ALIGNTO;
@@ -56,15 +56,15 @@ class nlbuf {
     /**
      * Constructs empty buffer of size 0.
      */
-    nlbuf() : mData(nullptr), mBufferEnd(nullptr) {}
+    Buffer() : mData(nullptr), mBufferEnd(nullptr) {}
 
     /**
-     * Constructor for nlbuf.
+     * Buffer constructor.
      *
-     * \param data A pointer to the data the nlbuf wraps.
-     * \param bufferLen Length of buffer.
+     * \param data A pointer to the data the Buffer wraps.
+     * \param bufLen Length of the buffer.
      */
-    nlbuf(const T* data, size_t bufferLen) : mData(data), mBufferEnd(pointerAdd(data, bufferLen)) {}
+    Buffer(const T* data, size_t bufLen) : mData(data), mBufferEnd(pointerAdd(data, bufLen)) {}
 
     const T* operator->() const {
         CHECK(firstOk()) << "buffer can't fit the first element's header";
@@ -95,7 +95,7 @@ class nlbuf {
     bool firstOk() const { return sizeof(T) <= remainingLength(); }
 
     template <typename D>
-    const nlbuf<D> data(size_t offset = 0) const {
+    const Buffer<D> data(size_t offset = 0) const {
         // Equivalent to NLMSG_DATA(hdr) + NLMSG_ALIGN(offset)
         const D* dptr = reinterpret_cast<const D*>(uintptr_t(mData) + hdrlen + align(offset));
         return {dptr, dataEnd()};
@@ -106,7 +106,7 @@ class nlbuf {
         iterator() : mCurrent(nullptr, size_t(0)) {
             CHECK(!mCurrent.ok()) << "end() iterator should indicate it's beyond end";
         }
-        iterator(const nlbuf<T>& buf) : mCurrent(buf) {}
+        iterator(const Buffer<T>& buf) : mCurrent(buf) {}
 
         iterator operator++() {
             // mBufferEnd stays the same
@@ -123,10 +123,10 @@ class nlbuf {
             return uintptr_t(other.mCurrent.mData) == uintptr_t(mCurrent.mData);
         }
 
-        const nlbuf<T>& operator*() const { return mCurrent; }
+        const Buffer<T>& operator*() const { return mCurrent; }
 
       protected:
-        nlbuf<T> mCurrent;
+        Buffer<T> mCurrent;
     };
     iterator begin() const { return {*this}; }
     iterator end() const { return {}; }
@@ -142,7 +142,7 @@ class nlbuf {
 
     class raw_view {
       public:
-        raw_view(const nlbuf<T>& buffer) : mBuffer(buffer) {}
+        raw_view(const Buffer<T>& buffer) : mBuffer(buffer) {}
         raw_iterator begin() const { return {mBuffer}; }
         raw_iterator end() const { return {}; }
 
@@ -150,7 +150,7 @@ class nlbuf {
         size_t len() const { return mBuffer.remainingLength(); }
 
       private:
-        const nlbuf<T> mBuffer;
+        const Buffer<T> mBuffer;
     };
 
     raw_view getRaw() const { return {*this}; }
@@ -159,7 +159,7 @@ class nlbuf {
     const T* mData;
     const void* mBufferEnd;
 
-    nlbuf(const T* data, const void* bufferEnd) : mData(data), mBufferEnd(bufferEnd) {}
+    Buffer(const T* data, const void* bufferEnd) : mData(data), mBufferEnd(bufferEnd) {}
 
     bool ok() const { return declaredLength() <= remainingLength(); }
 
@@ -192,16 +192,16 @@ class nlbuf {
     }
 
     template <typename D>
-    friend class nlbuf;  // calling private constructor of data buffers
+    friend class Buffer;  // calling private constructor of data buffers
 };
 
 template <>
-inline size_t nlbuf<nlmsghdr>::declaredLengthImpl() const {
+inline size_t Buffer<nlmsghdr>::declaredLengthImpl() const {
     return mData->nlmsg_len;
 }
 
 template <>
-inline size_t nlbuf<nlattr>::declaredLengthImpl() const {
+inline size_t Buffer<nlattr>::declaredLengthImpl() const {
     return mData->nla_len;
 }
 

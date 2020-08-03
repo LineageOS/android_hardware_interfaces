@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <libnl++/NetlinkSocket.h>
+#include <libnl++/Socket.h>
 
 #include <libnl++/printer.h>
 
@@ -27,8 +27,7 @@ namespace android::nl {
  */
 static constexpr bool kSuperVerbose = false;
 
-NetlinkSocket::NetlinkSocket(int protocol, unsigned int pid, uint32_t groups)
-    : mProtocol(protocol) {
+Socket::Socket(int protocol, unsigned int pid, uint32_t groups) : mProtocol(protocol) {
     mFd.reset(socket(AF_NETLINK, SOCK_RAW, protocol));
     if (!mFd.ok()) {
         PLOG(ERROR) << "Can't open Netlink socket";
@@ -48,7 +47,7 @@ NetlinkSocket::NetlinkSocket(int protocol, unsigned int pid, uint32_t groups)
     }
 }
 
-bool NetlinkSocket::send(nlmsghdr* nlmsg, size_t totalLen) {
+bool Socket::send(nlmsghdr* nlmsg, size_t totalLen) {
     if constexpr (kSuperVerbose) {
         nlmsg->nlmsg_seq = mSeq;
         LOG(VERBOSE) << (mFailed ? "(not) " : "")
@@ -79,7 +78,7 @@ bool NetlinkSocket::send(nlmsghdr* nlmsg, size_t totalLen) {
     return true;
 }
 
-bool NetlinkSocket::send(const nlbuf<nlmsghdr>& msg, const sockaddr_nl& sa) {
+bool Socket::send(const Buffer<nlmsghdr>& msg, const sockaddr_nl& sa) {
     if constexpr (kSuperVerbose) {
         LOG(VERBOSE) << (mFailed ? "(not) " : "")
                      << "sending Netlink message: " << toString(msg, mProtocol);
@@ -96,12 +95,12 @@ bool NetlinkSocket::send(const nlbuf<nlmsghdr>& msg, const sockaddr_nl& sa) {
     return true;
 }
 
-std::optional<nlbuf<nlmsghdr>> NetlinkSocket::receive(void* buf, size_t bufLen) {
+std::optional<Buffer<nlmsghdr>> Socket::receive(void* buf, size_t bufLen) {
     sockaddr_nl sa = {};
     return receive(buf, bufLen, sa);
 }
 
-std::optional<nlbuf<nlmsghdr>> NetlinkSocket::receive(void* buf, size_t bufLen, sockaddr_nl& sa) {
+std::optional<Buffer<nlmsghdr>> Socket::receive(void* buf, size_t bufLen, sockaddr_nl& sa) {
     if (mFailed) return std::nullopt;
 
     socklen_t saLen = sizeof(sa);
@@ -120,7 +119,7 @@ std::optional<nlbuf<nlmsghdr>> NetlinkSocket::receive(void* buf, size_t bufLen, 
         return std::nullopt;
     }
 
-    nlbuf<nlmsghdr> msg(reinterpret_cast<nlmsghdr*>(buf), bytesReceived);
+    Buffer<nlmsghdr> msg(reinterpret_cast<nlmsghdr*>(buf), bytesReceived);
     if constexpr (kSuperVerbose) {
         LOG(VERBOSE) << "received " << toString(msg, mProtocol);
     }
@@ -128,8 +127,8 @@ std::optional<nlbuf<nlmsghdr>> NetlinkSocket::receive(void* buf, size_t bufLen, 
 }
 
 /* TODO(161389935): Migrate receiveAck to use nlmsg<> internally. Possibly reuse
- * NetlinkSocket::receive(). */
-bool NetlinkSocket::receiveAck() {
+ * Socket::receive(). */
+bool Socket::receiveAck() {
     if (mFailed) return false;
 
     char buf[8192];
@@ -180,7 +179,7 @@ bool NetlinkSocket::receiveAck() {
     return false;
 }
 
-std::optional<unsigned int> NetlinkSocket::getSocketPid() {
+std::optional<unsigned int> Socket::getSocketPid() {
     sockaddr_nl sa = {};
     socklen_t sasize = sizeof(sa);
     if (getsockname(mFd.get(), reinterpret_cast<sockaddr*>(&sa), &sasize) < 0) {

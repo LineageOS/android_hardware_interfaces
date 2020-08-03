@@ -17,7 +17,7 @@
 #pragma once
 
 #include <android-base/logging.h>
-#include <libnl++/nlbuf.h>
+#include <libnl++/Buffer.h>
 #include <libnl++/types.h>
 #include <utils/Mutex.h>
 
@@ -35,7 +35,7 @@ namespace android::nl {
  * WARNING: this class is NOT thread-safe (it's safe to be used in multithreaded application, but
  * a single instance can only be used by a single thread - the one owning the underlying buffer).
  */
-class Attributes : private nlbuf<nlattr> {
+class Attributes : private Buffer<nlattr> {
   public:
     /**
      * Constructs empty attribute map.
@@ -47,7 +47,7 @@ class Attributes : private nlbuf<nlattr> {
      *
      * \param buffer Source buffer pointing at the first attribute.
      */
-    Attributes(nlbuf<nlattr> buffer);
+    Attributes(Buffer<nlattr> buffer);
 
     /**
      * Checks, if the map contains given attribute type (key).
@@ -131,7 +131,7 @@ class Attributes : private nlbuf<nlattr> {
     }
 
   private:
-    using Index = std::map<nlattrtype_t, nlbuf<nlattr>>;
+    using Index = std::map<nlattrtype_t, Buffer<nlattr>>;
 
     /**
      * Attribute index.
@@ -164,7 +164,7 @@ class Attributes : private nlbuf<nlattr> {
      * \return Parsed data.
      */
     template <typename T>
-    static T parse(nlbuf<nlattr> buf);
+    static T parse(Buffer<nlattr> buf);
 };
 
 }  // namespace android::nl

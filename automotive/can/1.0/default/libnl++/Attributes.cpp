@@ -20,7 +20,7 @@ namespace android::nl {
 
 Attributes::Attributes() {}
 
-Attributes::Attributes(nlbuf<nlattr> buffer) : nlbuf<nlattr>(buffer) {}
+Attributes::Attributes(Buffer<nlattr> buffer) : Buffer<nlattr>(buffer) {}
 
 const Attributes::Index& Attributes::index() const {
     if (mIndex.has_value()) return *mIndex;
@@ -28,7 +28,7 @@ const Attributes::Index& Attributes::index() const {
     mIndex = Index();
     auto& index = *mIndex;
 
-    for (auto attr : static_cast<nlbuf<nlattr>>(*this)) {
+    for (auto attr : static_cast<Buffer<nlattr>>(*this)) {
         index.emplace(attr->nla_type, attr);
     }
 
@@ -42,38 +42,38 @@ bool Attributes::contains(nlattrtype_t attrtype) const {
 /* Parser specializations for selected types (more to come if necessary). */
 
 template <>
-Attributes Attributes::parse(nlbuf<nlattr> buf) {
+Attributes Attributes::parse(Buffer<nlattr> buf) {
     return buf.data<nlattr>();
 }
 
 template <>
-std::string Attributes::parse(nlbuf<nlattr> buf) {
+std::string Attributes::parse(Buffer<nlattr> buf) {
     const auto rawString = buf.data<char>().getRaw();
     return std::string(rawString.ptr(), rawString.len());
 }
 
 template <typename T>
-static T parseUnsigned(nlbuf<nlattr> buf) {
+static T parseUnsigned(Buffer<nlattr> buf) {
     return buf.data<T>().copyFirst();
 }
 
 template <>
-uint8_t Attributes::parse(nlbuf<nlattr> buf) {
+uint8_t Attributes::parse(Buffer<nlattr> buf) {
     return parseUnsigned<uint8_t>(buf);
 }
 
 template <>
-uint16_t Attributes::parse(nlbuf<nlattr> buf) {
+uint16_t Attributes::parse(Buffer<nlattr> buf) {
     return parseUnsigned<uint16_t>(buf);
 }
 
 template <>
-uint32_t Attributes::parse(nlbuf<nlattr> buf) {
+uint32_t Attributes::parse(Buffer<nlattr> buf) {
     return parseUnsigned<uint32_t>(buf);
 }
 
 template <>
-uint64_t Attributes::parse(nlbuf<nlattr> buf) {
+uint64_t Attributes::parse(Buffer<nlattr> buf) {
     return parseUnsigned<uint64_t>(buf);
 }
 

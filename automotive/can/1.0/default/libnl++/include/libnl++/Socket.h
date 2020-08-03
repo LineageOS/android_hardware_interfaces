@@ -18,8 +18,8 @@
 
 #include <android-base/macros.h>
 #include <android-base/unique_fd.h>
-#include <libnl++/NetlinkRequest.h>
-#include <libnl++/nlbuf.h>
+#include <libnl++/Buffer.h>
+#include <libnl++/MessageFactory.h>
 
 #include <linux/netlink.h>
 
@@ -33,9 +33,9 @@ namespace android::nl {
  * This class is not thread safe to use a single instance between multiple threads, but it's fine to
  * use multiple instances over multiple threads.
  */
-struct NetlinkSocket {
+struct Socket {
     /**
-     * NetlinkSocket constructor.
+     * Socket constructor.
      *
      * \param protocol the Netlink protocol to use.
      * \param pid port id. Default value of 0 allows the kernel to assign us a unique pid. (NOTE:
@@ -44,7 +44,7 @@ struct NetlinkSocket {
      * bit is a different group. Default value of 0 means no groups are selected. See man netlink.7
      * for more details.
      */
-    NetlinkSocket(int protocol, unsigned int pid = 0, uint32_t groups = 0);
+    Socket(int protocol, unsigned int pid = 0, uint32_t groups = 0);
 
     /**
      * Send Netlink message to Kernel. The sequence number will be automatically incremented, and
@@ -54,7 +54,7 @@ struct NetlinkSocket {
      * \return true, if succeeded
      */
     template <class T, unsigned int BUFSIZE>
-    bool send(NetlinkRequest<T, BUFSIZE>& req) {
+    bool send(MessageFactory<T, BUFSIZE>& req) {
         if (!req.isGood()) return false;
         return send(req.header(), req.totalLength);
     }
@@ -66,16 +66,16 @@ struct NetlinkSocket {
      * \param sa Destination address.
      * \return true, if succeeded
      */
-    bool send(const nlbuf<nlmsghdr>& msg, const sockaddr_nl& sa);
+    bool send(const Buffer<nlmsghdr>& msg, const sockaddr_nl& sa);
 
     /**
      * Receive Netlink data.
      *
      * \param buf buffer to hold message data.
      * \param bufLen length of buf.
-     * \return nlbuf with message data, std::nullopt on error.
+     * \return Buffer with message data, std::nullopt on error.
      */
-    std::optional<nlbuf<nlmsghdr>> receive(void* buf, size_t bufLen);
+    std::optional<Buffer<nlmsghdr>> receive(void* buf, size_t bufLen);
 
     /**
      * Receive Netlink data with address info.
@@ -83,9 +83,9 @@ struct NetlinkSocket {
      * \param buf buffer to hold message data.
      * \param bufLen length of buf.
      * \param sa Blank struct that recvfrom will populate with address info.
-     * \return nlbuf with message data, std::nullopt on error.
+     * \return Buffer with message data, std::nullopt on error.
      */
-    std::optional<nlbuf<nlmsghdr>> receive(void* buf, size_t bufLen, sockaddr_nl& sa);
+    std::optional<Buffer<nlmsghdr>> receive(void* buf, size_t bufLen, sockaddr_nl& sa);
 
     /**
      * Receive Netlink ACK message from Kernel.
@@ -110,7 +110,7 @@ struct NetlinkSocket {
 
     bool send(nlmsghdr* msg, size_t totalLen);
 
-    DISALLOW_COPY_AND_ASSIGN(NetlinkSocket);
+    DISALLOW_COPY_AND_ASSIGN(Socket);
 };
 
 }  // namespace android::nl

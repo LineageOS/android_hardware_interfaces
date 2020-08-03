@@ -17,7 +17,7 @@
 #pragma once
 
 #include <libnl++/Attributes.h>
-#include <libnl++/nlbuf.h>
+#include <libnl++/Buffer.h>
 
 namespace android::nl {
 
@@ -32,15 +32,15 @@ namespace android::nl {
  * a single instance can only be used by a single thread - the one owning the underlying buffer).
  */
 template <typename T>
-class nlmsg {
+class Message {
   public:
     /**
-     * Validate buffer contents as a message carrying T data and create instance of nlmsg.
+     * Validate buffer contents as a message carrying T data and create instance of parsed message.
      *
      * \param buf Buffer containing the message.
      * \return Parsed message or nullopt, if the buffer data is invalid.
      */
-    static std::optional<nlmsg<T>> parse(nlbuf<nlmsghdr> buf) {
+    static std::optional<Message<T>> parse(Buffer<nlmsghdr> buf) {
         const auto& [nlOk, nlHeader] = buf.getFirst();
         if (!nlOk) return std::nullopt;
 
@@ -49,18 +49,18 @@ class nlmsg {
 
         const auto attributes = buf.data<nlattr>(sizeof(T));
 
-        return nlmsg<T>(nlHeader, dataHeader, attributes);
+        return Message<T>(nlHeader, dataHeader, attributes);
     }
 
     /**
-     * Validate buffer contents as a message of a given type and create instance of nlmsg.
+     * Validate buffer contents as a message of a given type and create instance of parsed message.
      *
      * \param buf Buffer containing the message.
      * \param msgtypes Acceptable message types (within a specific Netlink protocol)
      * \return Parsed message or nullopt, if the buffer data is invalid or message type
      *         doesn't match.
      */
-    static std::optional<nlmsg<T>> parse(nlbuf<nlmsghdr> buf, std::set<nlmsgtype_t> msgtypes) {
+    static std::optional<Message<T>> parse(Buffer<nlmsghdr> buf, std::set<nlmsgtype_t> msgtypes) {
         const auto& [nlOk, nlHeader] = buf.getFirst();  // we're doing it twice, but it's fine
         if (!nlOk) return std::nullopt;
 
@@ -91,7 +91,7 @@ class nlmsg {
     const T* operator->() const { return &data; }
 
   private:
-    nlmsg(const nlmsghdr& nlHeader, const T& dataHeader, Attributes attributes)
+    Message(const nlmsghdr& nlHeader, const T& dataHeader, Attributes attributes)
         : header(nlHeader), data(dataHeader), attributes(attributes) {}
 };
 

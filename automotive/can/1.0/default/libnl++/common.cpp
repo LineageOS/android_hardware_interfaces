@@ -41,7 +41,7 @@ std::string sanitize(std::string str) {
     return str;
 }
 
-uint16_t crc16(const nlbuf<uint8_t> data, uint16_t crc) {
+uint16_t crc16(const Buffer<uint8_t> data, uint16_t crc) {
     for (const auto byte : data.getRaw()) {
         crc ^= byte;
         for (unsigned i = 0; i < 8; i++) {
