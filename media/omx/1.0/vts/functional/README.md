@@ -1,12 +1,12 @@
 ## Omx Hal @ 1.0 tests ##
 ---
 ## Overview :
-The scope of the tests presented here is not restricted solely to testing omx hal @ 1.0 API but also test to omx core functionality and to an extent omx components as well. The current directory contains the following folders: audio, common, component, master and video. Besides common all other folders contain test fixtures for testing AV decoder, encoder components. Common constitutes files that are used across by these test applications.
+The scope of the tests presented here is not restricted solely to testing omx hal @ 1.0 API but also test to omx core functionality and to an extent omx components as well. The current directory contains the following folders: audio, common, component, store and video. Besides common all other folders contain test fixtures for testing AV decoder, encoder components. Common constitutes files that are used across by these test applications.
 
-#### master :
-Functionality of master is to enumerate all the omx components (and the roles it supports) available in android media framework.
+#### store :
+Functionality of store is to enumerate all the omx components (and the roles it supports) available in android media framework.
 
-usage: atest VtsHalMediaOmxV1\_0TargetMasterTest
+usage: atest VtsHalMediaOmxV1\_0TargetStoreTest
 
 #### component :
 This folder includes test fixtures that tests aspects common to all omx compatible components. For instance, port enabling/disabling, enumerating port formats, state transitions, flush, ..., stay common to all components irrespective of the service they offer. Test fixtures here are directed towards testing these (omx core). Every standard OMX compatible component is expected to pass these tests.
