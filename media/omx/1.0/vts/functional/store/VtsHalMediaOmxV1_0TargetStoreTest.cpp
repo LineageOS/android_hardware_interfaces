@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "media_omx_hidl_master_test"
+#define LOG_TAG "media_omx_hidl_store_test"
 #ifdef __LP64__
 #define OMX_ANDROID_COMPILE_AS_32BIT_ON_64BIT_PLATFORMS
 #endif
@@ -55,7 +55,7 @@ using ::android::hidl::memory::V1_0::IMemory;
 #include <getopt.h>
 #include <media_hidl_test_common.h>
 
-class MasterHidlTest : public ::testing::TestWithParam<std::string> {
+class StoreHidlTest : public ::testing::TestWithParam<std::string> {
   public:
     virtual void SetUp() override {
         omxStore = IOmxStore::getService(GetParam());
@@ -127,7 +127,7 @@ void validateAttributes(
 }
 
 // Make sure IOmx and IOmxStore have the same set of instances.
-TEST(MasterHidlTest, instanceMatchValidation) {
+TEST(StoreHidlTest, instanceMatchValidation) {
     auto omxInstances = android::hardware::getAllHalInstanceNames(IOmx::descriptor);
     auto omxStoreInstances = android::hardware::getAllHalInstanceNames(IOmxStore::descriptor);
     ASSERT_EQ(omxInstances.size(), omxInstances.size());
@@ -138,7 +138,7 @@ TEST(MasterHidlTest, instanceMatchValidation) {
 }
 
 // list service attributes and verify expected formats
-TEST_P(MasterHidlTest, ListServiceAttr) {
+TEST_P(StoreHidlTest, ListServiceAttr) {
     description("list service attributes");
     android::hardware::media::omx::V1_0::Status status;
     hidl_vec<IOmxStore::Attribute> attributes;
@@ -184,7 +184,7 @@ TEST_P(MasterHidlTest, ListServiceAttr) {
 }
 
 // get node prefix
-TEST_P(MasterHidlTest, getNodePrefix) {
+TEST_P(StoreHidlTest, getNodePrefix) {
     description("get node prefix");
     hidl_string prefix;
     omxStore->getNodePrefix(
@@ -193,7 +193,7 @@ TEST_P(MasterHidlTest, getNodePrefix) {
 }
 
 // list roles and validate all RoleInfo objects
-TEST_P(MasterHidlTest, ListRoles) {
+TEST_P(StoreHidlTest, ListRoles) {
     description("list roles");
     hidl_vec<IOmxStore::RoleInfo> roleList;
     omxStore->listRoles([&roleList](hidl_vec<IOmxStore::RoleInfo> const& _nl) {
@@ -370,7 +370,7 @@ TEST_P(MasterHidlTest, ListRoles) {
 }
 
 // list components and roles.
-TEST_P(MasterHidlTest, ListNodes) {
+TEST_P(StoreHidlTest, ListNodes) {
     description("enumerate component and roles");
     android::hardware::media::omx::V1_0::Status status;
     hidl_vec<IOmx::ComponentInfo> nodeList;
@@ -419,6 +419,6 @@ TEST_P(MasterHidlTest, ListNodes) {
 }
 
 INSTANTIATE_TEST_CASE_P(
-        PerInstance, MasterHidlTest,
+        PerInstance, StoreHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(IOmxStore::descriptor)),
         android::hardware::PrintInstanceNameToString);
