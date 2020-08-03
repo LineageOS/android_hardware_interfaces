@@ -16,6 +16,7 @@
 
 package android.hardware.tv.tuner@1.1;
 
+import @1.0::Constant;
 import @1.0::DemuxFilterDownloadEvent;
 import @1.0::DemuxFilterIpPayloadEvent;
 import @1.0::DemuxFilterMediaEvent;
@@ -25,6 +26,30 @@ import @1.0::DemuxFilterSectionEvent;
 import @1.0::DemuxFilterTemiEvent;
 import @1.0::DemuxFilterTsRecordEvent;
 import android.hidl.safe_union@1.0;
+
+@export
+enum Constant : @1.0::Constant {
+    /**
+     * An invalid mpuSequenceNumber in DemuxFilterMmtpRecordEvent.
+     */
+    INVALID_MMTP_RECORD_EVENT_MPT_SEQUENCE_NUM = 0xFFFFFFFF,
+};
+
+@export
+enum Constant64Bit : uint64_t {
+    /**
+     * An invalid 64-bit Filter ID.
+     */
+    INVALID_FILTER_ID_64BIT = 0xFFFFFFFFFFFFFFFF,
+    /**
+     * An invalid 64-bit AV sync hardware ID.
+     */
+    INVALID_AV_SYNC_ID_64BIT = 0xFFFFFFFFFFFFFFFF,
+    /**
+     * An invalid pts in the DemuxFilterTsRecordEvent or DemuxFilterMmtpRecordEvent.
+     */
+    INVALID_PRESENTATION_TIME_STAMP = 0xFFFFFFFFFFFFFFFF,
+};
 
 /**
  * Filter Event for TS Record data.
@@ -56,6 +81,13 @@ struct DemuxFilterMmtpRecordEvent {
      * MPU sequence number of the filtered data. This is only used for MMTP.
      */
     uint32_t mpuSequenceNumber;
+
+    /**
+     * The Presentation Time Stamp(PTS) for the audio or video frame. It is based on 90KHz
+     * and has the same format as the PTS in ISO/IEC 13818-1. It is used only for the SC and
+     * the SC_HEVC.
+     */
+    uint64_t pts;
 };
 
 /**
