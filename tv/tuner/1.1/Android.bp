@@ -16,4 +16,5 @@ hidl_interface {
         "android.hardware.tv.tuner@1.0",
     ],
     gen_java: false,
+    gen_java_constants: true,
 }
