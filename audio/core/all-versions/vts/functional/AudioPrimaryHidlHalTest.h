@@ -729,7 +729,6 @@ INSTANTIATE_TEST_CASE_P(
                 ::testing::ValuesIn(ConfigHelper::getRecommendedSupportCaptureAudioConfig()),
                 ::testing::Values(AudioInputFlag::NONE)),
         &DeviceConfigParameterToString);
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(OptionalInputBufferSizeTest);
 #elif MAJOR_VERSION >= 6
 INSTANTIATE_TEST_CASE_P(SupportedInputBufferSize, RequiredInputBufferSizeTest,
                         ::testing::ValuesIn(getInputDeviceConfigParameters()),
@@ -737,6 +736,7 @@ INSTANTIATE_TEST_CASE_P(SupportedInputBufferSize, RequiredInputBufferSizeTest,
 #endif
 // When the VTS test runs on a device lacking the corresponding HAL version the parameter
 // list is empty, this isn't a problem.
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(OptionalInputBufferSizeTest);
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(RequiredInputBufferSizeTest);
 
 //////////////////////////////////////////////////////////////////////////////
