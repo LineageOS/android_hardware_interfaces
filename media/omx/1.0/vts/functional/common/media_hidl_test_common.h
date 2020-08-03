@@ -78,8 +78,8 @@ enum bufferOwner {
     unknown,
 };
 
-// White list audio/video roles to be tested.
-static std::set<std::string> kWhiteListRoles{
+// List known and thus tested audio/video roles.
+static std::set<std::string> kKnownRoles{
         "audio_encoder.aac",      "audio_encoder.amrnb", "audio_encoder.amrwb",
         "audio_encoder.flac",     "audio_decoder.aac",   "audio_decoder.amrnb",
         "audio_decoder.amrwb",    "audio_decoder.flac",  "audio_decoder.g711alaw",
