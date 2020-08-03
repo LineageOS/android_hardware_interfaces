@@ -63,7 +63,7 @@ bool down(std::string ifname) {
 
 bool add(std::string dev, std::string type) {
     nl::MessageFactory<struct ifinfomsg> req(RTM_NEWLINK,
-                                             NLM_F_REQUEST | NLM_F_CREATE | NLM_F_EXCL);
+                                             NLM_F_REQUEST | NLM_F_CREATE | NLM_F_EXCL | NLM_F_ACK);
     req.addattr(IFLA_IFNAME, dev);
 
     {
@@ -76,7 +76,7 @@ bool add(std::string dev, std::string type) {
 }
 
 bool del(std::string dev) {
-    nl::MessageFactory<struct ifinfomsg> req(RTM_DELLINK, NLM_F_REQUEST);
+    nl::MessageFactory<struct ifinfomsg> req(RTM_DELLINK, NLM_F_REQUEST | NLM_F_ACK);
     req.addattr(IFLA_IFNAME, dev);
 
     nl::Socket sock(NETLINK_ROUTE);

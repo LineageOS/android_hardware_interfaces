@@ -34,7 +34,7 @@ bool add(const std::string& eth, const std::string& vlan, uint16_t id) {
     }
 
     nl::MessageFactory<struct ifinfomsg> req(RTM_NEWLINK,
-                                             NLM_F_REQUEST | NLM_F_CREATE | NLM_F_EXCL);
+                                             NLM_F_REQUEST | NLM_F_CREATE | NLM_F_EXCL | NLM_F_ACK);
     req.addattr(IFLA_IFNAME, vlan);
     req.addattr<uint32_t>(IFLA_LINK, ethidx);
 

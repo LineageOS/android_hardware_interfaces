@@ -35,7 +35,6 @@ void addattr_nest_end(struct nlmsghdr* n, struct nlattr* nest);
 
 }  // namespace impl
 
-// TODO(twasilczyk): rename to NetlinkMessage
 /**
  * Wrapper around NETLINK_ROUTE messages, to build them in C++ style.
  *

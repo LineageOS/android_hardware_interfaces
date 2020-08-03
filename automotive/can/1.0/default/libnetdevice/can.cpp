@@ -70,7 +70,7 @@ bool setBitrate(std::string ifname, uint32_t bitrate) {
     struct can_bittiming bt = {};
     bt.bitrate = bitrate;
 
-    nl::MessageFactory<struct ifinfomsg> req(RTM_NEWLINK, NLM_F_REQUEST);
+    nl::MessageFactory<struct ifinfomsg> req(RTM_NEWLINK, NLM_F_REQUEST | NLM_F_ACK);
 
     const auto ifidx = nametoindex(ifname);
     if (ifidx == 0) {

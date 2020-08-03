@@ -24,6 +24,7 @@
 #include <linux/netlink.h>
 
 #include <optional>
+#include <vector>
 
 namespace android::nl {
 
@@ -33,59 +34,88 @@ namespace android::nl {
  * This class is not thread safe to use a single instance between multiple threads, but it's fine to
  * use multiple instances over multiple threads.
  */
-struct Socket {
+class Socket {
+  public:
+    static constexpr size_t defaultReceiveSize = 8192;
+
     /**
      * Socket constructor.
      *
      * \param protocol the Netlink protocol to use.
-     * \param pid port id. Default value of 0 allows the kernel to assign us a unique pid. (NOTE:
-     * this is NOT the same as process id!)
+     * \param pid port id. Default value of 0 allows the kernel to assign us a unique pid.
+     *        (NOTE: this is NOT the same as process id).
      * \param groups Netlink multicast groups to listen to. This is a 32-bit bitfield, where each
-     * bit is a different group. Default value of 0 means no groups are selected. See man netlink.7
+     *        bit is a different group. Default value of 0 means no groups are selected.
+     *        See man netlink.7.
      * for more details.
      */
-    Socket(int protocol, unsigned int pid = 0, uint32_t groups = 0);
+    Socket(int protocol, unsigned pid = 0, uint32_t groups = 0);
 
     /**
-     * Send Netlink message to Kernel. The sequence number will be automatically incremented, and
-     * the NLM_F_ACK (request ACK) flag will be set.
+     * Send Netlink message with incremented sequence number to the Kernel.
      *
-     * \param msg Message to send.
-     * \return true, if succeeded
+     * \param msg Message to send. Its sequence number will be updated.
+     * \return true, if succeeded.
      */
-    template <class T, unsigned int BUFSIZE>
+    template <class T, unsigned BUFSIZE>
     bool send(MessageFactory<T, BUFSIZE>& req) {
-        if (!req.isGood()) return false;
-        return send(req.header(), req.totalLength);
+        sockaddr_nl sa = {};
+        sa.nl_family = AF_NETLINK;
+        sa.nl_pid = 0;  // Kernel
+        return send(req, sa);
     }
 
     /**
-     * Send Netlink message. The message will be sent as is, without any modification.
+     * Send Netlink message with incremented sequence number.
+     *
+     * \param msg Message to send. Its sequence number will be updated.
+     * \param sa Destination address.
+     * \return true, if succeeded.
+     */
+    template <class T, unsigned BUFSIZE>
+    bool send(MessageFactory<T, BUFSIZE>& req, const sockaddr_nl& sa) {
+        if (!req.isGood()) return false;
+
+        const auto nlmsg = req.header();
+        nlmsg->nlmsg_seq = mSeq + 1;
+
+        // With MessageFactory<>, we trust nlmsg_len to be correct.
+        return send({nlmsg, nlmsg->nlmsg_len}, sa);
+    }
+
+    /**
+     * Send Netlink message.
      *
      * \param msg Message to send.
      * \param sa Destination address.
-     * \return true, if succeeded
+     * \return true, if succeeded.
      */
     bool send(const Buffer<nlmsghdr>& msg, const sockaddr_nl& sa);
 
     /**
-     * Receive Netlink data.
+     * Receive one or multiple Netlink messages.
      *
-     * \param buf buffer to hold message data.
-     * \param bufLen length of buf.
-     * \return Buffer with message data, std::nullopt on error.
+     * WARNING: the underlying buffer is owned by Socket class and the data is valid until the next
+     * call to the read function or until deallocation of Socket instance.
+     *
+     * \param maxSize Maximum total size of received messages
+     * \return Buffer view with message data, std::nullopt on error.
      */
-    std::optional<Buffer<nlmsghdr>> receive(void* buf, size_t bufLen);
+    std::optional<Buffer<nlmsghdr>> receive(size_t maxSize = defaultReceiveSize);
 
     /**
-     * Receive Netlink data with address info.
+     * Receive one or multiple Netlink messages and the sender process address.
      *
-     * \param buf buffer to hold message data.
-     * \param bufLen length of buf.
-     * \param sa Blank struct that recvfrom will populate with address info.
-     * \return Buffer with message data, std::nullopt on error.
+     * WARNING: the underlying buffer is owned by Socket class and the data is valid until the next
+     * call to the read function or until deallocation of Socket instance.
+     *
+     * \param maxSize Maximum total size of received messages
+     * \return A pair (for use with structured binding) containing:
+     *         - buffer view with message data, std::nullopt on error;
+     *         - sender process address.
      */
-    std::optional<Buffer<nlmsghdr>> receive(void* buf, size_t bufLen, sockaddr_nl& sa);
+    std::pair<std::optional<Buffer<nlmsghdr>>, sockaddr_nl> receiveFrom(
+            size_t maxSize = defaultReceiveSize);
 
     /**
      * Receive Netlink ACK message from Kernel.
@@ -95,11 +125,11 @@ struct Socket {
     bool receiveAck();
 
     /**
-     * Gets the PID assigned to mFd.
+     * Fetches the socket PID.
      *
-     * \return pid that mSocket is bound to.
+     * \return PID that socket is bound to.
      */
-    std::optional<unsigned int> getSocketPid();
+    std::optional<unsigned> getPid();
 
   private:
     const int mProtocol;
@@ -107,8 +137,7 @@ struct Socket {
     uint32_t mSeq = 0;
     base::unique_fd mFd;
     bool mFailed = false;
-
-    bool send(nlmsghdr* msg, size_t totalLen);
+    std::vector<uint8_t> mReceiveBuffer;
 
     DISALLOW_COPY_AND_ASSIGN(Socket);
 };
