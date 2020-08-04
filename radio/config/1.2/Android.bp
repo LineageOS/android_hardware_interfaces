@@ -15,4 +15,5 @@ hidl_interface {
         "android.hidl.base@1.0",
     ],
     gen_java: true,
+    system_ext_specific: true,
 }
