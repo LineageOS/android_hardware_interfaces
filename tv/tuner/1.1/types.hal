@@ -37,6 +37,7 @@ import @1.0::FrontendIsdbtBandwidth;
 import @1.0::FrontendIsdbtGuardInterval;
 import @1.0::FrontendIsdbtMode;
 import @1.0::FrontendIsdbtModulation;
+import @1.0::FrontendScanMessageType;
 import @1.0::FrontendStatusType;
 import @1.0::FrontendType;
 import android.hidl.safe_union@1.0;
@@ -522,3 +523,9 @@ safe_union FrontendStatusExt1_1 {
      */
     vec<uint32_t> tsDataRate;
 };
+
+enum FrontendScanMessageTypeExt1_1 : uint32_t {
+    MODULATION = @1.0::FrontendScanMessageType:ATSC3_PLP_INFO + 1,
+};
+
+typedef FrontendModulation FrontendScanMessageExt1_1;

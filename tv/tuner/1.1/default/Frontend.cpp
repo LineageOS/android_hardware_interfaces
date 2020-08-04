@@ -17,7 +17,7 @@
 #define LOG_TAG "android.hardware.tv.tuner@1.1-Frontend"
 
 #include "Frontend.h"
-#include <android/hardware/tv/tuner/1.0/IFrontendCallback.h>
+#include <android/hardware/tv/tuner/1.1/IFrontendCallback.h>
 #include <utils/Log.h>
 
 namespace android {
@@ -117,6 +117,17 @@ Return<Result> Frontend::scan(const FrontendSettings& settings, FrontendScanType
     msg.isLocked(true);
     mCallback->onScanMessage(FrontendScanMessageType::LOCKED, msg);
     mIsLocked = true;
+
+    sp<V1_1::IFrontendCallback> frontendCallback_v1_1 =
+            V1_1::IFrontendCallback::castFrom(mCallback);
+    if (frontendCallback_v1_1 != NULL) {
+        V1_1::FrontendScanMessageExt1_1 msg;
+        msg.dvbc(FrontendDvbcModulation::MOD_16QAM);
+        frontendCallback_v1_1->onScanMessageExt1_1(V1_1::FrontendScanMessageTypeExt1_1::MODULATION,
+                                                   msg);
+    } else {
+        ALOGD("[Filter] Couldn't cast to V1_1 IFrontendCallback");
+    }
 
     return Result::SUCCESS;
 }
