@@ -355,3 +355,58 @@ struct PlaybackRate {
      */
     TimestretchFallbackMode fallbackMode;
 };
+
+/**
+ * The audio output flags serve two purposes:
+ *
+ *  - when an output stream is created they indicate its attributes;
+ *
+ *  - when present in an output profile descriptor listed for a particular audio
+ *    hardware module, they indicate that an output stream can be opened that
+ *    supports the attributes indicated by the flags.
+ */
+@export(name="audio_output_flags_t", value_prefix="AUDIO_OUTPUT_FLAG_")
+enum AudioOutputFlag : int32_t {
+    NONE    = 0x0, // no attributes
+    DIRECT  = 0x1, // this output directly connects a track
+                   // to one output stream: no software mixer
+    PRIMARY = 0x2, // this output is the primary output of the device. It is
+                   // unique and must be present. It is opened by default and
+                   // receives routing, audio mode and volume controls related
+                   // to voice calls.
+    FAST    = 0x4,    // output supports "fast tracks", defined elsewhere
+    DEEP_BUFFER      = 0x8,   // use deep audio buffers
+    COMPRESS_OFFLOAD = 0x10,  // offload playback of compressed streams to
+                              // hardware codec
+    NON_BLOCKING     = 0x20,  // use non-blocking write
+    HW_AV_SYNC = 0x40,   // output uses a hardware A/V sync
+    TTS        = 0x80,   // output for streams transmitted through speaker at a
+                         // sample rate high enough to accommodate lower-range
+                         // ultrasonic p/b
+    RAW        = 0x100,  // minimize signal processing
+    SYNC       = 0x200,  // synchronize I/O streams
+    IEC958_NONAUDIO = 0x400, // Audio stream contains compressed audio in SPDIF
+                             // data bursts, not PCM.
+    DIRECT_PCM = 0x2000,     // Audio stream containing PCM data that needs
+                             // to pass through compress path for DSP post proc.
+    MMAP_NOIRQ = 0x4000, // output operates in MMAP no IRQ mode.
+    VOIP_RX = 0x8000,    // preferred output for VoIP calls.
+    /** preferred output for call music */
+    INCALL_MUSIC = 0x10000,
+};
+
+/**
+ * The audio input flags are analogous to audio output flags.
+ */
+@export(name="audio_input_flags_t", value_prefix="AUDIO_INPUT_FLAG_")
+enum AudioInputFlag : int32_t {
+    NONE         = 0x0,  // no attributes
+    FAST         = 0x1,  // prefer an input that supports "fast tracks"
+    HW_HOTWORD   = 0x2,  // prefer an input that captures from hw hotword source
+    RAW          = 0x4,  // minimize signal processing
+    SYNC         = 0x8,  // synchronize I/O streams
+    MMAP_NOIRQ   = 0x10, // input operates in MMAP no IRQ mode.
+    VOIP_TX      = 0x20, // preferred input for VoIP calls.
+    HW_AV_SYNC   = 0x40, // input connected to an output that uses a hardware A/V sync
+    DIRECT       = 0x80, // for acquiring encoded streams
+};
