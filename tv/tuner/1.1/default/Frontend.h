@@ -17,6 +17,7 @@
 #ifndef ANDROID_HARDWARE_TV_TUNER_V1_1_FRONTEND_H_
 #define ANDROID_HARDWARE_TV_TUNER_V1_1_FRONTEND_H_
 
+#include <android/hardware/tv/tuner/1.1/IFrontend.h>
 #include <fstream>
 #include <iostream>
 #include "Tuner.h"
@@ -32,7 +33,7 @@ namespace implementation {
 
 class Tuner;
 
-class Frontend : public IFrontend {
+class Frontend : public V1_1::IFrontend {
   public:
     Frontend(FrontendType type, FrontendId id, sp<Tuner> tuner);
 
@@ -42,9 +43,15 @@ class Frontend : public IFrontend {
 
     virtual Return<Result> tune(const FrontendSettings& settings) override;
 
+    virtual Return<Result> tune_1_1(const FrontendSettings& settings,
+                                    const V1_1::FrontendSettingsExt& settingsExt) override;
+
     virtual Return<Result> stopTune() override;
 
     virtual Return<Result> scan(const FrontendSettings& settings, FrontendScanType type) override;
+
+    virtual Return<Result> scan_1_1(const FrontendSettings& settings, FrontendScanType type,
+                                    const V1_1::FrontendSettingsExt& settingsExt) override;
 
     virtual Return<Result> stopScan() override;
 

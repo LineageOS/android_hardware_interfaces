@@ -15,9 +15,9 @@
  */
 
 #include <android-base/logging.h>
-#include <android/hardware/tv/tuner/1.0/IFrontend.h>
 #include <android/hardware/tv/tuner/1.0/IFrontendCallback.h>
 #include <android/hardware/tv/tuner/1.0/types.h>
+#include <android/hardware/tv/tuner/1.1/IFrontend.h>
 #include <android/hardware/tv/tuner/1.1/ITuner.h>
 #include <binder/MemoryDealer.h>
 #include <gtest/gtest.h>
@@ -52,6 +52,7 @@ using android::hardware::tv::tuner::V1_0::FrontendId;
 using android::hardware::tv::tuner::V1_0::FrontendInfo;
 using android::hardware::tv::tuner::V1_0::FrontendScanMessage;
 using android::hardware::tv::tuner::V1_0::FrontendScanMessageType;
+using android::hardware::tv::tuner::V1_0::FrontendScanType;
 using android::hardware::tv::tuner::V1_0::IFrontend;
 using android::hardware::tv::tuner::V1_0::IFrontendCallback;
 using android::hardware::tv::tuner::V1_0::Result;
@@ -70,11 +71,21 @@ class FrontendCallback : public IFrontendCallback {
     virtual Return<void> onScanMessage(FrontendScanMessageType type,
                                        const FrontendScanMessage& message) override;
 
-    void tuneTestOnLock(sp<IFrontend>& frontend, FrontendSettings settings);
+    void tuneTestOnLock(sp<IFrontend>& frontend, FrontendSettings settings,
+                        FrontendSettingsExt settingsExt);
+    void scanTest(sp<IFrontend>& frontend, FrontendConfig config, FrontendScanType type);
+
+    // Helper methods
+    uint32_t getTargetFrequency(FrontendSettings settings, FrontendType type);
+    void resetBlindScanStartingFrequency(FrontendConfig& config, uint32_t resetingFreq);
 
   private:
     bool mEventReceived = false;
+    bool mScanMessageReceived = false;
     bool mLockMsgReceived = false;
+    bool mScanMsgProcessed = true;
+    FrontendScanMessageType mScanMessageType;
+    FrontendScanMessage mScanMessage;
     hidl_vec<uint8_t> mEventMessage;
     android::Mutex mMsgLock;
     android::Condition mMsgCondition;
@@ -95,11 +106,17 @@ class FrontendTests {
     AssertionResult getFrontendInfo(uint32_t frontendId);
     AssertionResult openFrontendById(uint32_t frontendId);
     AssertionResult setFrontendCallback();
+    AssertionResult scanFrontend(FrontendConfig config, FrontendScanType type);
+    AssertionResult stopScanFrontend();
     AssertionResult tuneFrontend(FrontendConfig config, bool testWithDemux);
+    void verifyFrontendStatus(vector<FrontendStatusType> statusTypes,
+                              vector<FrontendStatus> expectStatuses);
     AssertionResult stopTuneFrontend(bool testWithDemux);
     AssertionResult closeFrontend();
 
     void getFrontendIdByType(FrontendType feType, uint32_t& feId);
+    void tuneTest(FrontendConfig frontendConf);
+    void scanTest(FrontendConfig frontend, FrontendScanType type);
 
     void setDvrTests(DvrTests dvrTests) { mDvrTests = dvrTests; }
     void setDemux(sp<IDemux> demux) { mDvrTests.setDemux(demux); }
