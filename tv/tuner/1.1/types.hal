@@ -17,15 +17,10 @@
 package android.hardware.tv.tuner@1.1;
 
 import @1.0::Constant;
-import @1.0::DemuxFilterDownloadEvent;
-import @1.0::DemuxFilterIpPayloadEvent;
-import @1.0::DemuxFilterMediaEvent;
 import @1.0::DemuxFilterMmtpRecordEvent;
-import @1.0::DemuxFilterPesEvent;
-import @1.0::DemuxFilterSectionEvent;
-import @1.0::DemuxFilterTemiEvent;
 import @1.0::DemuxFilterTsRecordEvent;
 import android.hidl.safe_union@1.0;
+import android.hidl.safe_union@1.0::Monostate;
 
 @export
 enum Constant : @1.0::Constant {
@@ -52,64 +47,36 @@ enum Constant64Bit : uint64_t {
 };
 
 /**
- * Filter Event for TS Record data.
+ * Extended Demux Filter Record Event.
  */
-struct DemuxFilterTsRecordEvent {
-    /**
-     * V1_0 Filter Event for TS Record data.
-     */
-    @1.0::DemuxFilterTsRecordEvent tsRecordEvent_1_0;
-
+struct DemuxFilterRecordEventExt {
     /**
      * The Presentation Time Stamp(PTS) for the audio or video frame. It is based on 90KHz
      * and has the same format as the PTS in ISO/IEC 13818-1. It is used only for the SC and
      * the SC_HEVC.
      */
     uint64_t pts;
-};
-
-/**
- * Filter Event for MMTP Record data.
- */
-struct DemuxFilterMmtpRecordEvent {
-    /**
-     * V1_0 Filter Event for MMTP Record data.
-     */
-    @1.0::DemuxFilterMmtpRecordEvent mmtpRecordEvent_1_0;
 
     /**
      * MPU sequence number of the filtered data. This is only used for MMTP.
      */
     uint32_t mpuSequenceNumber;
-
-    /**
-     * The Presentation Time Stamp(PTS) for the audio or video frame. It is based on 90KHz
-     * and has the same format as the PTS in ISO/IEC 13818-1. It is used only for the SC and
-     * the SC_HEVC.
-     */
-    uint64_t pts;
 };
 
 /**
- * Filter Event.
+ * Extended Demux Filter Event.
  */
-struct DemuxFilterEvent {
+struct DemuxFilterEventExt {
     safe_union Event {
-        DemuxFilterSectionEvent section;
+        /**
+         * No extended record filter Event. This is used by the tsRecord or mmtpRecord filter event
+         * that does not contain the DemuxFilterRecordEventExt information.
+         */
+        Monostate noinit;
 
-        DemuxFilterMediaEvent media;
+        DemuxFilterRecordEventExt tsRecord;
 
-        DemuxFilterPesEvent pes;
-
-        @1.1::DemuxFilterTsRecordEvent tsRecord;
-
-        @1.1::DemuxFilterMmtpRecordEvent mmtpRecord;
-
-        DemuxFilterDownloadEvent download;
-
-        DemuxFilterIpPayloadEvent ipPayload;
-
-        DemuxFilterTemiEvent temi;
+        DemuxFilterRecordEventExt mmtpRecord;
     };
 
     /**
