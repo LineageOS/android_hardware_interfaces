@@ -20,7 +20,7 @@
 #include "protocols/all.h"
 
 #include <android-base/logging.h>
-#include <libnl++/nlbuf.h>
+#include <libnl++/Buffer.h>
 
 #include <algorithm>
 #include <iomanip>
@@ -61,7 +61,7 @@ static void flagsToStream(std::stringstream& ss, __u16 nlmsg_flags) {
     }
 }
 
-static void toStream(std::stringstream& ss, const nlbuf<uint8_t> data) {
+static void toStream(std::stringstream& ss, const Buffer<uint8_t> data) {
     const auto rawData = data.getRaw();
     const auto dataLen = rawData.len();
     ss << std::hex;
@@ -77,7 +77,7 @@ static void toStream(std::stringstream& ss, const nlbuf<uint8_t> data) {
     if (dataLen > 16) ss << std::endl;
 }
 
-static void toStream(std::stringstream& ss, const nlbuf<nlattr> attr,
+static void toStream(std::stringstream& ss, const Buffer<nlattr> attr,
                      const protocols::AttributeMap& attrMap) {
     using DataType = protocols::AttributeDefinition::DataType;
     const auto attrtype = attrMap[attr->nla_type];
@@ -115,7 +115,7 @@ static void toStream(std::stringstream& ss, const nlbuf<nlattr> attr,
     }
 }
 
-std::string toString(const nlbuf<nlmsghdr> hdr, int protocol, bool printPayload) {
+std::string toString(const Buffer<nlmsghdr> hdr, int protocol, bool printPayload) {
     if (!hdr.firstOk()) return "nlmsg{buffer overflow}";
 
     std::stringstream ss;

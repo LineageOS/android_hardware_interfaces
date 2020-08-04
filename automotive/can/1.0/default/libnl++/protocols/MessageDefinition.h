@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <libnl++/nlbuf.h>
+#include <libnl++/Buffer.h>
 #include <libnl++/types.h>
 
 #include <map>
@@ -60,7 +60,7 @@ struct AttributeDefinition {
         Uint,
         Struct,
     };
-    using ToStream = std::function<void(std::stringstream& ss, const nlbuf<nlattr> attr)>;
+    using ToStream = std::function<void(std::stringstream& ss, const Buffer<nlattr> attr)>;
 
     std::string name;
     DataType dataType = DataType::Raw;
@@ -86,7 +86,7 @@ class MessageDescriptor {
     const MessageTypeMap& getMessageTypeMap() const;
     const AttributeMap& getAttributeMap() const;
     const std::string getMessageName(nlmsgtype_t msgtype) const;
-    virtual void dataToStream(std::stringstream& ss, const nlbuf<nlmsghdr> hdr) const = 0;
+    virtual void dataToStream(std::stringstream& ss, const Buffer<nlmsghdr> hdr) const = 0;
 
   private:
     const std::string mName;
@@ -109,7 +109,7 @@ class MessageDefinition : public MessageDescriptor {
             const std::initializer_list<AttributeMap::value_type> attrTypes = {})
         : MessageDescriptor(name, messageTypes, attrTypes, sizeof(T)) {}
 
-    void dataToStream(std::stringstream& ss, const nlbuf<nlmsghdr> hdr) const override {
+    void dataToStream(std::stringstream& ss, const Buffer<nlmsghdr> hdr) const override {
         const auto& [ok, msg] = hdr.data<T>().getFirst();
         if (!ok) {
             ss << "{incomplete payload}";

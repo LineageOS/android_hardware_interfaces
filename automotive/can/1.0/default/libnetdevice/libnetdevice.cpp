@@ -20,8 +20,8 @@
 #include "ifreqs.h"
 
 #include <android-base/logging.h>
-#include <libnl++/NetlinkRequest.h>
-#include <libnl++/NetlinkSocket.h>
+#include <libnl++/MessageFactory.h>
+#include <libnl++/Socket.h>
 
 #include <linux/can.h>
 #include <linux/rtnetlink.h>
@@ -62,8 +62,8 @@ bool down(std::string ifname) {
 }
 
 bool add(std::string dev, std::string type) {
-    nl::NetlinkRequest<struct ifinfomsg> req(RTM_NEWLINK,
-                                             NLM_F_REQUEST | NLM_F_CREATE | NLM_F_EXCL);
+    nl::MessageFactory<struct ifinfomsg> req(RTM_NEWLINK,
+                                             NLM_F_REQUEST | NLM_F_CREATE | NLM_F_EXCL | NLM_F_ACK);
     req.addattr(IFLA_IFNAME, dev);
 
     {
@@ -71,15 +71,15 @@ bool add(std::string dev, std::string type) {
         req.addattr(IFLA_INFO_KIND, type);
     }
 
-    nl::NetlinkSocket sock(NETLINK_ROUTE);
+    nl::Socket sock(NETLINK_ROUTE);
     return sock.send(req) && sock.receiveAck();
 }
 
 bool del(std::string dev) {
-    nl::NetlinkRequest<struct ifinfomsg> req(RTM_DELLINK, NLM_F_REQUEST);
+    nl::MessageFactory<struct ifinfomsg> req(RTM_DELLINK, NLM_F_REQUEST | NLM_F_ACK);
     req.addattr(IFLA_IFNAME, dev);
 
-    nl::NetlinkSocket sock(NETLINK_ROUTE);
+    nl::Socket sock(NETLINK_ROUTE);
     return sock.send(req) && sock.receiveAck();
 }
 
