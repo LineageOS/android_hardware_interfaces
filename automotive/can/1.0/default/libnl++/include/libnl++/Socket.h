@@ -19,11 +19,13 @@
 #include <android-base/macros.h>
 #include <android-base/unique_fd.h>
 #include <libnl++/Buffer.h>
+#include <libnl++/Message.h>
 #include <libnl++/MessageFactory.h>
 
 #include <linux/netlink.h>
 
 #include <optional>
+#include <set>
 #include <vector>
 
 namespace android::nl {
@@ -57,7 +59,7 @@ class Socket {
      * \param msg Message to send. Its sequence number will be updated.
      * \return true, if succeeded.
      */
-    template <class T, unsigned BUFSIZE>
+    template <typename T, unsigned BUFSIZE>
     bool send(MessageFactory<T, BUFSIZE>& req) {
         sockaddr_nl sa = {};
         sa.nl_family = AF_NETLINK;
@@ -72,7 +74,7 @@ class Socket {
      * \param sa Destination address.
      * \return true, if succeeded.
      */
-    template <class T, unsigned BUFSIZE>
+    template <typename T, unsigned BUFSIZE>
     bool send(MessageFactory<T, BUFSIZE>& req, const sockaddr_nl& sa) {
         if (!req.isGood()) return false;
 
@@ -109,7 +111,7 @@ class Socket {
      * WARNING: the underlying buffer is owned by Socket class and the data is valid until the next
      * call to the read function or until deallocation of Socket instance.
      *
-     * \param maxSize Maximum total size of received messages
+     * \param maxSize Maximum total size of received messages.
      * \return A pair (for use with structured binding) containing:
      *         - buffer view with message data, std::nullopt on error;
      *         - sender process address.
@@ -118,26 +120,69 @@ class Socket {
             size_t maxSize = defaultReceiveSize);
 
     /**
-     * Receive Netlink ACK message from Kernel.
+     * Receive matching Netlink message of a given payload type.
      *
-     * \return true if received ACK message, false in case of error
+     * This method should be used if the caller expects exactly one incoming message of exactly
+     * given type (such as ACK). If there is a use case to handle multiple types of messages,
+     * please use receive(size_t) directly and iterate through potential multipart messages.
+     *
+     * If this method is used in such an environment, it will only return the first matching message
+     * from multipart packet and will issue warnings on messages that do not match.
+     *
+     * \param msgtypes Expected message types (such as NLMSG_ERROR).
+     * \param maxSize Maximum total size of received messages.
+     * \return Parsed message or std::nullopt in case of error.
      */
-    bool receiveAck();
+    template <typename T>
+    std::optional<Message<T>> receive(const std::set<nlmsgtype_t>& msgtypes,
+                                      size_t maxSize = defaultReceiveSize) {
+        const auto msg = receive(msgtypes, maxSize);
+        if (!msg.has_value()) return std::nullopt;
+
+        const auto parsed = Message<T>::parse(*msg);
+        if (!parsed.has_value()) {
+            LOG(WARNING) << "Received matching Netlink message, but couldn't parse it";
+            return std::nullopt;
+        }
+
+        return parsed;
+    }
+
+    /**
+     * Receive Netlink ACK message.
+     *
+     * \param req Message to match sequence number against.
+     * \return true if received ACK message, false in case of error.
+     */
+    template <typename T, unsigned BUFSIZE>
+    bool receiveAck(MessageFactory<T, BUFSIZE>& req) {
+        return receiveAck(req.header()->nlmsg_seq);
+    }
+
+    /**
+     * Receive Netlink ACK message.
+     *
+     * \param seq Sequence number of message to ACK.
+     * \return true if received ACK message, false in case of error.
+     */
+    bool receiveAck(uint32_t seq);
 
     /**
      * Fetches the socket PID.
      *
-     * \return PID that socket is bound to.
+     * \return PID that socket is bound to or std::nullopt.
      */
     std::optional<unsigned> getPid();
 
   private:
     const int mProtocol;
-
-    uint32_t mSeq = 0;
     base::unique_fd mFd;
-    bool mFailed = false;
     std::vector<uint8_t> mReceiveBuffer;
+
+    bool mFailed = false;
+    uint32_t mSeq = 0;
+
+    std::optional<Buffer<nlmsghdr>> receive(const std::set<nlmsgtype_t>& msgtypes, size_t maxSize);
 
     DISALLOW_COPY_AND_ASSIGN(Socket);
 };

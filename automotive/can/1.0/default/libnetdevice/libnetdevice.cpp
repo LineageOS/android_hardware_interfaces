@@ -72,7 +72,7 @@ bool add(std::string dev, std::string type) {
     }
 
     nl::Socket sock(NETLINK_ROUTE);
-    return sock.send(req) && sock.receiveAck();
+    return sock.send(req) && sock.receiveAck(req);
 }
 
 bool del(std::string dev) {
@@ -80,7 +80,7 @@ bool del(std::string dev) {
     req.addattr(IFLA_IFNAME, dev);
 
     nl::Socket sock(NETLINK_ROUTE);
-    return sock.send(req) && sock.receiveAck();
+    return sock.send(req) && sock.receiveAck(req);
 }
 
 std::optional<hwaddr_t> getHwAddr(const std::string& ifname) {
