@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <libnl++/nlbuf.h>
+#include <libnl++/Buffer.h>
 
 #include <linux/can.h>
 #include <net/if.h>
@@ -54,6 +54,6 @@ std::string sanitize(std::string str);
  * \param crc Previous CRC16 value to continue calculating running checksum
  * \return CRC16 checksum
  */
-uint16_t crc16(const nlbuf<uint8_t> data, uint16_t crc = 0);
+uint16_t crc16(const Buffer<uint8_t> data, uint16_t crc = 0);
 
 }  // namespace android::nl

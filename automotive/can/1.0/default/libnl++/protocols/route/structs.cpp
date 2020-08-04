@@ -18,7 +18,7 @@
 
 namespace android::nl::protocols::route {
 
-void mapToStream(std::stringstream& ss, const nlbuf<nlattr> attr) {
+void mapToStream(std::stringstream& ss, const Buffer<nlattr> attr) {
     const auto& [ok, data] = attr.data<rtnl_link_ifmap>().getFirst();
     if (!ok) {
         ss << "invalid structure";
@@ -33,7 +33,7 @@ void mapToStream(std::stringstream& ss, const nlbuf<nlattr> attr) {
        << unsigned(data.port) << '}';
 }
 
-void ifla_cacheinfoToStream(std::stringstream& ss, const nlbuf<nlattr> attr) {
+void ifla_cacheinfoToStream(std::stringstream& ss, const Buffer<nlattr> attr) {
     const auto& [ok, data] = attr.data<ifla_cacheinfo>().getFirst();
     if (!ok) {
         ss << "invalid structure";
