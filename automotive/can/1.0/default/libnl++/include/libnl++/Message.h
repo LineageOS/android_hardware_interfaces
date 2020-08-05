@@ -19,6 +19,8 @@
 #include <libnl++/Attributes.h>
 #include <libnl++/Buffer.h>
 
+#include <set>
+
 namespace android::nl {
 
 /**
@@ -60,7 +62,8 @@ class Message {
      * \return Parsed message or nullopt, if the buffer data is invalid or message type
      *         doesn't match.
      */
-    static std::optional<Message<T>> parse(Buffer<nlmsghdr> buf, std::set<nlmsgtype_t> msgtypes) {
+    static std::optional<Message<T>> parse(Buffer<nlmsghdr> buf,
+                                           const std::set<nlmsgtype_t>& msgtypes) {
         const auto& [nlOk, nlHeader] = buf.getFirst();  // we're doing it twice, but it's fine
         if (!nlOk) return std::nullopt;
 

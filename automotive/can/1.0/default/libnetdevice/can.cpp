@@ -91,7 +91,7 @@ bool setBitrate(std::string ifname, uint32_t bitrate) {
     }
 
     nl::Socket sock(NETLINK_ROUTE);
-    return sock.send(req) && sock.receiveAck();
+    return sock.send(req) && sock.receiveAck(req);
 }
 
 }  // namespace android::netdevice::can
