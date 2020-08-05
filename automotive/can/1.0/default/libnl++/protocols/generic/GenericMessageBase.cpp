@@ -22,10 +22,10 @@ GenericMessageBase::GenericMessageBase(
         nlmsgtype_t msgtype, std::string msgname,
         const std::initializer_list<GenericCommandNameMap::value_type> commandNames,
         const std::initializer_list<AttributeMap::value_type> attrTypes)
-    : MessageDefinition<struct genlmsghdr>(msgname, {{msgtype, msgname}}, attrTypes),
+    : MessageDefinition<genlmsghdr>(msgname, {{msgtype, msgname}}, attrTypes),
       mCommandNames(commandNames) {}
 
-void GenericMessageBase::toStream(std::stringstream& ss, const struct genlmsghdr& data) const {
+void GenericMessageBase::toStream(std::stringstream& ss, const genlmsghdr& data) const {
     ss << "genlmsghdr{";
     if (mCommandNames.count(data.cmd) == 0) {
         ss << "cmd=" << unsigned(data.cmd);

@@ -22,7 +22,7 @@
 
 namespace android::nl::protocols::generic {
 
-class GenericMessageBase : public MessageDefinition<struct genlmsghdr> {
+class GenericMessageBase : public MessageDefinition<genlmsghdr> {
   public:
     typedef std::map<uint8_t, std::string> GenericCommandNameMap;
 
@@ -31,7 +31,7 @@ class GenericMessageBase : public MessageDefinition<struct genlmsghdr> {
             const std::initializer_list<GenericCommandNameMap::value_type> commandNames = {},
             const std::initializer_list<AttributeMap::value_type> attrTypes = {});
 
-    void toStream(std::stringstream& ss, const struct genlmsghdr& data) const override;
+    void toStream(std::stringstream& ss, const genlmsghdr& data) const override;
 
   private:
     const GenericCommandNameMap mCommandNames;

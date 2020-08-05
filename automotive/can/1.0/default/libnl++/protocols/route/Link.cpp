@@ -25,7 +25,7 @@ namespace android::nl::protocols::route {
 using DataType = AttributeDefinition::DataType;
 
 // clang-format off
-Link::Link() : MessageDefinition<struct ifinfomsg>("link", {
+Link::Link() : MessageDefinition<ifinfomsg>("link", {
     {RTM_NEWLINK, "NEWLINK"},
     {RTM_DELLINK, "DELLINK"},
     {RTM_GETLINK, "GETLINK"},
@@ -107,7 +107,7 @@ Link::Link() : MessageDefinition<struct ifinfomsg>("link", {
 }) {}
 // clang-format off
 
-void Link::toStream(std::stringstream& ss, const struct ifinfomsg& data) const {
+void Link::toStream(std::stringstream& ss, const ifinfomsg& data) const {
     ss << "ifinfomsg{"
        << "family=" << unsigned(data.ifi_family) << ", type=" << data.ifi_type
        << ", index=" << data.ifi_index << ", flags=" << data.ifi_flags
