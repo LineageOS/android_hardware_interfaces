@@ -293,6 +293,7 @@ TEST_P(SoundTriggerHidlTest, StopRecognitionNoAStartFail) {
     EXPECT_NE(0, hidlReturn);
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SoundTriggerHidlTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, SoundTriggerHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(ISoundTriggerHw::descriptor)),
