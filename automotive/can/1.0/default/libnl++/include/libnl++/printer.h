@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <libnl++/nlbuf.h>
+#include <libnl++/Buffer.h>
 
 #include <linux/netlink.h>
 
@@ -32,6 +32,6 @@ namespace android::nl {
  * \param printPayload True will stringify message data, false will only stringify the header(s).
  * \return Stringified message.
  */
-std::string toString(const nlbuf<nlmsghdr> hdr, int protocol, bool printPayload = false);
+std::string toString(const Buffer<nlmsghdr> hdr, int protocol, bool printPayload = false);
 
 }  // namespace android::nl
