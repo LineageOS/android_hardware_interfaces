@@ -20,8 +20,8 @@
 
 #include <android-base/logging.h>
 #include <android-base/unique_fd.h>
-#include <libnl++/NetlinkRequest.h>
-#include <libnl++/NetlinkSocket.h>
+#include <libnl++/MessageFactory.h>
+#include <libnl++/Socket.h>
 
 #include <linux/can.h>
 #include <linux/can/error.h>
@@ -70,7 +70,7 @@ bool setBitrate(std::string ifname, uint32_t bitrate) {
     struct can_bittiming bt = {};
     bt.bitrate = bitrate;
 
-    nl::NetlinkRequest<struct ifinfomsg> req(RTM_NEWLINK, NLM_F_REQUEST);
+    nl::MessageFactory<struct ifinfomsg> req(RTM_NEWLINK, NLM_F_REQUEST | NLM_F_ACK);
 
     const auto ifidx = nametoindex(ifname);
     if (ifidx == 0) {
@@ -90,8 +90,8 @@ bool setBitrate(std::string ifname, uint32_t bitrate) {
         }
     }
 
-    nl::NetlinkSocket sock(NETLINK_ROUTE);
-    return sock.send(req) && sock.receiveAck();
+    nl::Socket sock(NETLINK_ROUTE);
+    return sock.send(req) && sock.receiveAck(req);
 }
 
 }  // namespace android::netdevice::can

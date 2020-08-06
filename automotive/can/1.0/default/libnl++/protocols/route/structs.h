@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <libnl++/nlbuf.h>
+#include <libnl++/Buffer.h>
 
 #include <linux/rtnetlink.h>
 
@@ -25,13 +25,13 @@
 namespace android::nl::protocols::route {
 
 // rtnl_link_ifmap
-void mapToStream(std::stringstream& ss, const nlbuf<nlattr> attr);
+void mapToStream(std::stringstream& ss, const Buffer<nlattr> attr);
 
 // ifla_cacheinfo
-void ifla_cacheinfoToStream(std::stringstream& ss, const nlbuf<nlattr> attr);
+void ifla_cacheinfoToStream(std::stringstream& ss, const Buffer<nlattr> attr);
 
 template <typename T>
-void arrayToStream(std::stringstream& ss, const nlbuf<nlattr> attr) {
+void arrayToStream(std::stringstream& ss, const Buffer<nlattr> attr) {
     ss << '{';
     for (const auto it : attr.data<T>().getRaw()) {
         ss << it << ',';
@@ -42,7 +42,7 @@ void arrayToStream(std::stringstream& ss, const nlbuf<nlattr> attr) {
 
 // rtnl_link_stats or rtnl_link_stats64
 template <typename T>
-void statsToStream(std::stringstream& ss, const nlbuf<nlattr> attr) {
+void statsToStream(std::stringstream& ss, const Buffer<nlattr> attr) {
     const auto& [ok, data] = attr.data<T>().getFirst();
     if (!ok) {
         ss << "invalid structure";
