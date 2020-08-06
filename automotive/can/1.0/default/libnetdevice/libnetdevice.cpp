@@ -62,13 +62,13 @@ bool down(std::string ifname) {
 }
 
 bool add(std::string dev, std::string type) {
-    nl::MessageFactory<struct ifinfomsg> req(RTM_NEWLINK,
-                                             NLM_F_REQUEST | NLM_F_CREATE | NLM_F_EXCL | NLM_F_ACK);
-    req.addattr(IFLA_IFNAME, dev);
+    nl::MessageFactory<ifinfomsg> req(RTM_NEWLINK,
+                                      NLM_F_REQUEST | NLM_F_CREATE | NLM_F_EXCL | NLM_F_ACK);
+    req.add(IFLA_IFNAME, dev);
 
     {
-        auto linkinfo = req.nest(IFLA_LINKINFO);
-        req.addattr(IFLA_INFO_KIND, type);
+        auto linkinfo = req.addNested(IFLA_LINKINFO);
+        req.add(IFLA_INFO_KIND, type);
     }
 
     nl::Socket sock(NETLINK_ROUTE);
@@ -76,8 +76,8 @@ bool add(std::string dev, std::string type) {
 }
 
 bool del(std::string dev) {
-    nl::MessageFactory<struct ifinfomsg> req(RTM_DELLINK, NLM_F_REQUEST | NLM_F_ACK);
-    req.addattr(IFLA_IFNAME, dev);
+    nl::MessageFactory<ifinfomsg> req(RTM_DELLINK, NLM_F_REQUEST | NLM_F_ACK);
+    req.add(IFLA_IFNAME, dev);
 
     nl::Socket sock(NETLINK_ROUTE);
     return sock.send(req) && sock.receiveAck(req);
