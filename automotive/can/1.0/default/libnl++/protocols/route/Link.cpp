@@ -26,9 +26,9 @@ using DataType = AttributeDefinition::DataType;
 
 // clang-format off
 Link::Link() : MessageDefinition<ifinfomsg>("link", {
-    {RTM_NEWLINK, "NEWLINK"},
-    {RTM_DELLINK, "DELLINK"},
-    {RTM_GETLINK, "GETLINK"},
+    {RTM_NEWLINK, {"NEWLINK", MessageGenre::NEW}},
+    {RTM_DELLINK, {"DELLINK", MessageGenre::DELETE}},
+    {RTM_GETLINK, {"GETLINK", MessageGenre::GET}},
 }, {
     {IFLA_ADDRESS, {"ADDRESS"}},
     {IFLA_BROADCAST, {"BROADCAST"}},
