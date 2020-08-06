@@ -130,6 +130,7 @@ cc_test {
 }
 
 cc_test {
+    enabled: false,
     name: "VtsHalAudioV7_0TargetTest",
     defaults: ["VtsHalAudioTargetTest_defaults"],
     srcs: [
