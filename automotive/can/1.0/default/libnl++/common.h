@@ -37,11 +37,14 @@ namespace android::nl {
 unsigned int nametoindex(const std::string& ifname);
 
 /**
- * Sanitize a string of unknown contents.
+ * Filter a string against non-printable characters.
  *
- * Trims the string to the first '\0' character and replaces all non-printable characters with '?'.
+ * Replaces all non-printable characters with '?'.
+ *
+ * \param str String to filter.
+ * \return Filtered string.
  */
-std::string sanitize(std::string str);
+std::string printableOnly(std::string str);
 
 /**
  * Calculates a (optionally running) CRC16 checksum.

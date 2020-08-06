@@ -119,7 +119,7 @@ static void toStream(std::stringstream& ss, const Buffer<nlattr> attr,
         }
         case DataType::String: {
             const auto str = attr.data<char>().getRaw();
-            ss << '"' << sanitize({str.ptr(), str.len()}) << '"';
+            ss << '"' << printableOnly({str.ptr(), str.len()}) << '"';
             break;
         }
         case DataType::Uint:
