@@ -49,8 +49,8 @@ Socket::Socket(int protocol, unsigned pid, uint32_t groups) : mProtocol(protocol
 
 bool Socket::send(const Buffer<nlmsghdr>& msg, const sockaddr_nl& sa) {
     if constexpr (kSuperVerbose) {
-        LOG(VERBOSE) << (mFailed ? "(not) " : "") << "sending Netlink message ("  //
-                     << msg->nlmsg_pid << " -> " << sa.nl_pid << "): " << toString(msg, mProtocol);
+        LOG(VERBOSE) << (mFailed ? "(not) " : "") << "sending to " << sa.nl_pid << ": "
+                     << toString(msg, mProtocol);
     }
     if (mFailed) return false;
 
@@ -97,8 +97,7 @@ std::pair<std::optional<Buffer<nlmsghdr>>, sockaddr_nl> Socket::receiveFrom(size
 
     Buffer<nlmsghdr> msg(reinterpret_cast<nlmsghdr*>(mReceiveBuffer.data()), bytesReceived);
     if constexpr (kSuperVerbose) {
-        LOG(VERBOSE) << "received (" << sa.nl_pid << " -> " << msg->nlmsg_pid << "):"  //
-                     << toString(msg, mProtocol);
+        LOG(VERBOSE) << "received from " << sa.nl_pid << ": " << toString(msg, mProtocol);
     }
     return {msg, sa};
 }

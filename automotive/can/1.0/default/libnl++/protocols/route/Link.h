@@ -22,10 +22,10 @@
 
 namespace android::nl::protocols::route {
 
-class Link : public MessageDefinition<struct ifinfomsg> {
+class Link : public MessageDefinition<ifinfomsg> {
   public:
     Link();
-    void toStream(std::stringstream& ss, const struct ifinfomsg& data) const override;
+    void toStream(std::stringstream& ss, const ifinfomsg& data) const override;
 };
 
 }  // namespace android::nl::protocols::route

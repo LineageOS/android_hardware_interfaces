@@ -28,10 +28,10 @@
 
 namespace android::nl {
 
-static void flagsToStream(std::stringstream& ss, __u16 nlmsg_flags) {
+static void flagsToStream(std::stringstream& ss, __u16 nlmsg_flags, protocols::MessageGenre genre) {
     bool first = true;
     auto printFlag = [&ss, &first, &nlmsg_flags](__u16 flag, const std::string& name) {
-        if (!(nlmsg_flags & flag)) return;
+        if ((nlmsg_flags & flag) != flag) return;
         nlmsg_flags &= ~flag;
 
         if (first) {
@@ -42,6 +42,7 @@ static void flagsToStream(std::stringstream& ss, __u16 nlmsg_flags) {
 
         ss << name;
     };
+
     printFlag(NLM_F_REQUEST, "REQUEST");
     printFlag(NLM_F_MULTI, "MULTI");
     printFlag(NLM_F_ACK, "ACK");
@@ -49,11 +50,29 @@ static void flagsToStream(std::stringstream& ss, __u16 nlmsg_flags) {
     printFlag(NLM_F_DUMP_INTR, "DUMP_INTR");
     printFlag(NLM_F_DUMP_FILTERED, "DUMP_FILTERED");
 
-    // TODO(twasilczyk): print flags depending on request type
-    printFlag(NLM_F_ROOT, "ROOT-REPLACE");
-    printFlag(NLM_F_MATCH, "MATCH-EXCL");
-    printFlag(NLM_F_ATOMIC, "ATOMIC-CREATE");
-    printFlag(NLM_F_APPEND, "APPEND");
+    switch (genre) {
+        case protocols::MessageGenre::UNKNOWN:
+            break;
+        case protocols::MessageGenre::GET:
+            printFlag(NLM_F_DUMP, "DUMP");  // ROOT | MATCH
+            printFlag(NLM_F_ROOT, "ROOT");
+            printFlag(NLM_F_MATCH, "MATCH");
+            printFlag(NLM_F_ATOMIC, "ATOMIC");
+            break;
+        case protocols::MessageGenre::NEW:
+            printFlag(NLM_F_REPLACE, "REPLACE");
+            printFlag(NLM_F_EXCL, "EXCL");
+            printFlag(NLM_F_CREATE, "CREATE");
+            printFlag(NLM_F_APPEND, "APPEND");
+            break;
+        case protocols::MessageGenre::DELETE:
+            printFlag(NLM_F_NONREC, "NONREC");
+            break;
+        case protocols::MessageGenre::ACK:
+            printFlag(NLM_F_CAPPED, "CAPPED");
+            printFlag(NLM_F_ACK_TLVS, "ACK_TLVS");
+            break;
+    }
 
     if (nlmsg_flags != 0) {
         if (!first) ss << '|';
@@ -100,7 +119,7 @@ static void toStream(std::stringstream& ss, const Buffer<nlattr> attr,
         }
         case DataType::String: {
             const auto str = attr.data<char>().getRaw();
-            ss << '"' << sanitize({str.ptr(), str.len()}) << '"';
+            ss << '"' << printableOnly({str.ptr(), str.len()}) << '"';
             break;
         }
         case DataType::Uint:
@@ -128,27 +147,26 @@ std::string toString(const Buffer<nlmsghdr> hdr, int protocol, bool printPayload
     }
     protocols::NetlinkProtocol& protocolDescr = *protocolMaybe;
 
-    auto msgDescMaybe = protocolDescr.getMessageDescriptor(hdr->nlmsg_type);
-    const auto msgTypeName = msgDescMaybe.has_value()
-                                     ? msgDescMaybe->get().getMessageName(hdr->nlmsg_type)
-                                     : std::to_string(hdr->nlmsg_type);
+    const auto msgDescMaybe = protocolDescr.getMessageDescriptor(hdr->nlmsg_type);
+    const auto msgDetails =
+            protocols::MessageDescriptor::getMessageDetails(msgDescMaybe, hdr->nlmsg_type);
 
     ss << "nlmsg{" << protocolDescr.getName() << " ";
 
     ss << "hdr={";
-    ss << "type=" << msgTypeName;
+    ss << "type=" << msgDetails.name;
     if (hdr->nlmsg_flags != 0) {
         ss << ", flags=";
-        flagsToStream(ss, hdr->nlmsg_flags);
+        flagsToStream(ss, hdr->nlmsg_flags, msgDetails.genre);
     }
     if (hdr->nlmsg_seq != 0) ss << ", seq=" << hdr->nlmsg_seq;
     if (hdr->nlmsg_pid != 0) ss << ", pid=" << hdr->nlmsg_pid;
     ss << ", len=" << hdr->nlmsg_len;
-
     ss << ", crc=" << std::hex << std::setw(4) << crc16(hdr.data<uint8_t>()) << std::dec;
-    ss << "} ";
+    ss << '}';
 
     if (!printPayload) return ss.str();
+    ss << ' ';
 
     if (!msgDescMaybe.has_value()) {
         toStream(ss, hdr.data<uint8_t>());
