@@ -31,6 +31,11 @@ namespace V2_0 {
 
 namespace user_hal_helper {
 
+// Verify whether the |value| can be casted to the type |T| and return the casted value on success.
+// Otherwise, return the error.
+template <typename T>
+android::base::Result<T> verifyAndCast(int32_t value);
+
 // Below functions parse VehiclePropValues to the respective User HAL request structs. On success,
 // these functions return the User HAL struct. Otherwise, they return the error.
 android::base::Result<InitialUserInfoRequest> toInitialUserInfoRequest(
