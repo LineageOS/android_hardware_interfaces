@@ -103,60 +103,45 @@ std::pair<std::optional<Buffer<nlmsghdr>>, sockaddr_nl> Socket::receiveFrom(size
     return {msg, sa};
 }
 
-/* TODO(161389935): Migrate receiveAck to use nlmsg<> internally. Possibly reuse
- * Socket::receive(). */
-bool Socket::receiveAck() {
-    if (mFailed) return false;
+bool Socket::receiveAck(uint32_t seq) {
+    const auto nlerr = receive<nlmsgerr>({NLMSG_ERROR});
+    if (!nlerr.has_value()) return false;
 
-    char buf[8192];
-
-    sockaddr_nl sa;
-    iovec iov = {buf, sizeof(buf)};
-
-    msghdr msg = {};
-    msg.msg_name = &sa;
-    msg.msg_namelen = sizeof(sa);
-    msg.msg_iov = &iov;
-    msg.msg_iovlen = 1;
-
-    const ssize_t status = recvmsg(mFd.get(), &msg, 0);
-    if (status < 0) {
-        PLOG(ERROR) << "Failed to receive Netlink message";
-        return false;
-    }
-    size_t remainingLen = status;
-
-    if (msg.msg_flags & MSG_TRUNC) {
-        LOG(ERROR) << "Failed to receive Netlink message: truncated";
+    if (nlerr->data.msg.nlmsg_seq != seq) {
+        LOG(ERROR) << "Received ACK for a different message (" << nlerr->data.msg.nlmsg_seq
+                   << ", expected " << seq << "). Multi-message tracking is not implemented.";
         return false;
     }
 
-    for (auto nlmsg = reinterpret_cast<nlmsghdr*>(buf); NLMSG_OK(nlmsg, remainingLen);
-         nlmsg = NLMSG_NEXT(nlmsg, remainingLen)) {
-        if constexpr (kSuperVerbose) {
-            LOG(VERBOSE) << "received Netlink response: "
-                         << toString({nlmsg, nlmsg->nlmsg_len}, mProtocol);
-        }
+    if (nlerr->data.error == 0) return true;
 
-        // We're looking for error/ack message only, ignoring others.
-        if (nlmsg->nlmsg_type != NLMSG_ERROR) {
-            LOG(WARNING) << "Received unexpected Netlink message (ignored): " << nlmsg->nlmsg_type;
-            continue;
-        }
-
-        // Found error/ack message, return status.
-        const auto nlerr = reinterpret_cast<nlmsgerr*>(NLMSG_DATA(nlmsg));
-        if (nlerr->error != 0) {
-            LOG(ERROR) << "Received Netlink error message: " << strerror(-nlerr->error);
-            return false;
-        }
-        return true;
-    }
-    // Couldn't find any error/ack messages.
+    LOG(WARNING) << "Received Netlink error message: " << strerror(-nlerr->data.error);
     return false;
 }
 
+std::optional<Buffer<nlmsghdr>> Socket::receive(const std::set<nlmsgtype_t>& msgtypes,
+                                                size_t maxSize) {
+    while (!mFailed) {
+        const auto msgBuf = receive(maxSize);
+        if (!msgBuf.has_value()) return std::nullopt;
+
+        for (const auto rawMsg : *msgBuf) {
+            if (msgtypes.count(rawMsg->nlmsg_type) == 0) {
+                LOG(WARNING) << "Received (and ignored) unexpected Netlink message of type "
+                             << rawMsg->nlmsg_type;
+                continue;
+            }
+
+            return rawMsg;
+        }
+    }
+
+    return std::nullopt;
+}
+
 std::optional<unsigned> Socket::getPid() {
+    if (mFailed) return std::nullopt;
+
     sockaddr_nl sa = {};
     socklen_t sasize = sizeof(sa);
     if (getsockname(mFd.get(), reinterpret_cast<sockaddr*>(&sa), &sasize) < 0) {

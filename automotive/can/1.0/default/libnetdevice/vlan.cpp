@@ -49,7 +49,7 @@ bool add(const std::string& eth, const std::string& vlan, uint16_t id) {
     }
 
     nl::Socket sock(NETLINK_ROUTE);
-    return sock.send(req) && sock.receiveAck();
+    return sock.send(req) && sock.receiveAck(req);
 }
 
 }  // namespace android::netdevice::vlan
