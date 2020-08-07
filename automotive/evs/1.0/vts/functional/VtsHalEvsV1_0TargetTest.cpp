@@ -369,7 +369,7 @@ TEST_P(EvsHidlTest, CameraStreamPerformance) {
 TEST_P(EvsHidlTest, CameraStreamBuffering) {
     ALOGI("Starting CameraStreamBuffering test");
 
-    // Arbitrary constant (should be > 1 and less than crazy)
+    // Arbitrary constant (should be > 1 and not too big)
     static const unsigned int kBuffersToHold = 6;
 
     // Get the camera list
@@ -381,7 +381,7 @@ TEST_P(EvsHidlTest, CameraStreamBuffering) {
         sp<IEvsCamera> pCam = pEnumerator->openCamera(cam.cameraId);
         ASSERT_NE(pCam, nullptr);
 
-        // Ask for a crazy number of buffers in flight to ensure it errors correctly
+        // Ask for a very large number of buffers in flight to ensure it errors correctly
         Return<EvsResult> badResult = pCam->setMaxFramesInFlight(0xFFFFFFFF);
         EXPECT_EQ(EvsResult::BUFFER_NOT_AVAILABLE, badResult);
 

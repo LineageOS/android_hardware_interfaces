@@ -49,7 +49,7 @@ EvsCamera::EvsCamera(const char *id) :
 
     mDescription.cameraId = id;
 
-    // Set up dummy data for testing
+    // Set up mock data for testing
     if (mDescription.cameraId == kCameraName_Backup) {
         mWidth  = 640;          // full NTSC/VGA
         mHeight = 480;          // full NTSC/VGA
