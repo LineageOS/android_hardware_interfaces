@@ -45,7 +45,7 @@ const int kTargetFrameRate = 10;
 
 namespace {
 
-void fillDummyArrayDesc(UltrasonicsArrayDesc& arrayDesc) {
+void fillMockArrayDesc(UltrasonicsArrayDesc& arrayDesc) {
     arrayDesc.maxReadingsPerSensorCount = kMaxReadingsPerSensor;
     arrayDesc.maxReceiversCount = kMaxReceiversCount;
 
@@ -99,8 +99,8 @@ void SerializeWaveformData(const std::vector<WaveformData>& waveformDataList, ui
     }
 }
 
-// Fills dataFrameDesc with dummy data.
-bool fillDummyDataFrame(UltrasonicsDataFrameDesc& dataFrameDesc, sp<IMemory> pIMemory) {
+// Fills dataFrameDesc with mock data.
+bool fillMockDataFrame(UltrasonicsDataFrameDesc& dataFrameDesc, sp<IMemory> pIMemory) {
     dataFrameDesc.timestampNs = elapsedRealtimeNano();
 
     const std::vector<uint8_t> transmittersIdList = {0};
@@ -137,9 +137,9 @@ EvsUltrasonicsArray::EvsUltrasonicsArray(const char* deviceName)
     : mFramesAllowed(0), mFramesInUse(0), mStreamState(STOPPED) {
     LOG(DEBUG) << "EvsUltrasonicsArray instantiated";
 
-    // Set up dummy data for description.
+    // Set up mock data for description.
     mArrayDesc.ultrasonicsArrayId = deviceName;
-    fillDummyArrayDesc(mArrayDesc);
+    fillMockArrayDesc(mArrayDesc);
 
     // Assign allocator.
     mShmemAllocator = IAllocator::getService("ashmem");
@@ -182,10 +182,10 @@ void EvsUltrasonicsArray::forceShutdown() {
     mStreamState = DEAD;
 }
 
-UltrasonicsArrayDesc EvsUltrasonicsArray::GetDummyArrayDesc(const char* deviceName) {
+UltrasonicsArrayDesc EvsUltrasonicsArray::GetMockArrayDesc(const char* deviceName) {
     UltrasonicsArrayDesc ultrasonicsArrayDesc;
     ultrasonicsArrayDesc.ultrasonicsArrayId = deviceName;
-    fillDummyArrayDesc(ultrasonicsArrayDesc);
+    fillMockArrayDesc(ultrasonicsArrayDesc);
     return ultrasonicsArrayDesc;
 }
 
@@ -497,17 +497,17 @@ void EvsUltrasonicsArray::generateDataFrames() {
 
         if (timeForFrame) {
             // Assemble the buffer description we'll transmit below
-            UltrasonicsDataFrameDesc dummyDataFrameDesc;
-            dummyDataFrameDesc.dataFrameId = idx;
-            dummyDataFrameDesc.waveformsData = mDataFrames[idx].sharedMemory.hidlMemory;
+            UltrasonicsDataFrameDesc mockDataFrameDesc;
+            mockDataFrameDesc.dataFrameId = idx;
+            mockDataFrameDesc.waveformsData = mDataFrames[idx].sharedMemory.hidlMemory;
 
-            // Fill dummy waveform data.
-            fillDummyDataFrame(dummyDataFrameDesc, mDataFrames[idx].sharedMemory.pIMemory);
+            // Fill mock waveform data.
+            fillMockDataFrame(mockDataFrameDesc, mDataFrames[idx].sharedMemory.pIMemory);
 
             // Issue the (asynchronous) callback to the client -- can't be holding the lock
-            auto result = mStream->deliverDataFrame(dummyDataFrameDesc);
+            auto result = mStream->deliverDataFrame(mockDataFrameDesc);
             if (result.isOk()) {
-                LOG(DEBUG) << "Delivered data frame id: " << dummyDataFrameDesc.dataFrameId;
+                LOG(DEBUG) << "Delivered data frame id: " << mockDataFrameDesc.dataFrameId;
             } else {
                 // This can happen if the client dies and is likely unrecoverable.
                 // To avoid consuming resources generating failing calls, we stop sending

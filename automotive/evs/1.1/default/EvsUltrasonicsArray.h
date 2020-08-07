@@ -58,7 +58,7 @@ class EvsUltrasonicsArray : public IEvsUltrasonicsArray {
     static sp<EvsUltrasonicsArray> Create(const char* deviceName);
 
     // Returns a ultrasonics array descriptor filled with sample data.
-    static UltrasonicsArrayDesc GetDummyArrayDesc(const char* id);
+    static UltrasonicsArrayDesc GetMockArrayDesc(const char* id);
 
     DISALLOW_COPY_AND_ASSIGN(EvsUltrasonicsArray);
     virtual ~EvsUltrasonicsArray() override;
