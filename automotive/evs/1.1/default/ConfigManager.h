@@ -76,7 +76,7 @@ public:
         }
 
         /*
-         * List of supported controls that the master client can program.
+         * List of supported controls that the primary client can program.
          * Paraemters are stored with its valid range
          */
         unordered_map<CameraParam,

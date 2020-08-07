@@ -32,9 +32,7 @@ unsigned int nametoindex(const std::string& ifname) {
     return 0;
 }
 
-std::string sanitize(std::string str) {
-    str.erase(std::find(str.begin(), str.end(), '\0'), str.end());
-
+std::string printableOnly(std::string str) {
     const auto isInvalid = [](char c) { return !isprint(c); };
     std::replace_if(str.begin(), str.end(), isInvalid, '?');
 
