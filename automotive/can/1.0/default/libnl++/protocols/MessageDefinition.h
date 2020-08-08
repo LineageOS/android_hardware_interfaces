@@ -68,30 +68,53 @@ struct AttributeDefinition {
 };
 
 /**
+ * General message type's kind.
+ *
+ * For example, RTM_NEWLINK is a NEW kind. For details, please see "Flags values"
+ * section in linux/netlink.h.
+ */
+enum class MessageGenre {
+    UNKNOWN,
+    GET,
+    NEW,
+    DELETE,
+    ACK,
+};
+
+/**
  * Message family descriptor.
  *
  * Describes the structure of all message types with the same header and attributes.
  */
 class MessageDescriptor {
-  protected:
-    typedef std::map<nlmsgtype_t, std::string> MessageTypeMap;
-
-    MessageDescriptor(const std::string& name, const MessageTypeMap&& messageTypes,
-                      const AttributeMap&& attrTypes, size_t contentsSize);
+  public:
+    struct MessageDetails {
+        std::string name;
+        MessageGenre genre;
+    };
+    typedef std::map<nlmsgtype_t, MessageDetails> MessageDetailsMap;
 
   public:
     virtual ~MessageDescriptor();
 
     size_t getContentsSize() const;
-    const MessageTypeMap& getMessageTypeMap() const;
+    const MessageDetailsMap& getMessageDetailsMap() const;
     const AttributeMap& getAttributeMap() const;
-    const std::string getMessageName(nlmsgtype_t msgtype) const;
+    MessageDetails getMessageDetails(nlmsgtype_t msgtype) const;
     virtual void dataToStream(std::stringstream& ss, const Buffer<nlmsghdr> hdr) const = 0;
+
+    static MessageDetails getMessageDetails(
+            const std::optional<std::reference_wrapper<const MessageDescriptor>>& msgDescMaybe,
+            nlmsgtype_t msgtype);
+
+  protected:
+    MessageDescriptor(const std::string& name, const MessageDetailsMap&& messageDetails,
+                      const AttributeMap&& attrTypes, size_t contentsSize);
 
   private:
     const std::string mName;
     const size_t mContentsSize;
-    const MessageTypeMap mMessageTypes;
+    const MessageDetailsMap mMessageDetails;
     const AttributeMap mAttributeMap;
 };
 
@@ -103,11 +126,11 @@ class MessageDescriptor {
 template <typename T>
 class MessageDefinition : public MessageDescriptor {
   public:
-    MessageDefinition(
+    MessageDefinition(  //
             const std::string& name,
-            const std::initializer_list<MessageDescriptor::MessageTypeMap::value_type> messageTypes,
+            const std::initializer_list<MessageDescriptor::MessageDetailsMap::value_type> msgDet,
             const std::initializer_list<AttributeMap::value_type> attrTypes = {})
-        : MessageDescriptor(name, messageTypes, attrTypes, sizeof(T)) {}
+        : MessageDescriptor(name, msgDet, attrTypes, sizeof(T)) {}
 
     void dataToStream(std::stringstream& ss, const Buffer<nlmsghdr> hdr) const override {
         const auto& [ok, msg] = hdr.data<T>().getFirst();

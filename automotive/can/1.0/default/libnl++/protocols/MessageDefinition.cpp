@@ -32,11 +32,12 @@ const AttributeDefinition AttributeMap::operator[](nlattrtype_t nla_type) const 
     return find(nla_type)->second;
 }
 
-MessageDescriptor::MessageDescriptor(const std::string& name, const MessageTypeMap&& messageTypes,
+MessageDescriptor::MessageDescriptor(const std::string& name,
+                                     const MessageDetailsMap&& messageDetails,
                                      const AttributeMap&& attrTypes, size_t contentsSize)
     : mName(name),
       mContentsSize(contentsSize),
-      mMessageTypes(messageTypes),
+      mMessageDetails(messageDetails),
       mAttributeMap(attrTypes) {}
 
 MessageDescriptor::~MessageDescriptor() {}
@@ -45,18 +46,25 @@ size_t MessageDescriptor::getContentsSize() const {
     return mContentsSize;
 }
 
-const MessageDescriptor::MessageTypeMap& MessageDescriptor::getMessageTypeMap() const {
-    return mMessageTypes;
+const MessageDescriptor::MessageDetailsMap& MessageDescriptor::getMessageDetailsMap() const {
+    return mMessageDetails;
 }
 
 const AttributeMap& MessageDescriptor::getAttributeMap() const {
     return mAttributeMap;
 }
 
-const std::string MessageDescriptor::getMessageName(nlmsgtype_t msgtype) const {
-    const auto it = mMessageTypes.find(msgtype);
-    if (it == mMessageTypes.end()) return "?";
+MessageDescriptor::MessageDetails MessageDescriptor::getMessageDetails(nlmsgtype_t msgtype) const {
+    const auto it = mMessageDetails.find(msgtype);
+    if (it == mMessageDetails.end()) return {std::to_string(msgtype), MessageGenre::UNKNOWN};
     return it->second;
+}
+
+MessageDescriptor::MessageDetails MessageDescriptor::getMessageDetails(
+        const std::optional<std::reference_wrapper<const MessageDescriptor>>& msgDescMaybe,
+        nlmsgtype_t msgtype) {
+    if (msgDescMaybe.has_value()) return msgDescMaybe->get().getMessageDetails(msgtype);
+    return {std::to_string(msgtype), protocols::MessageGenre::UNKNOWN};
 }
 
 }  // namespace android::nl::protocols

@@ -20,9 +20,9 @@ namespace android::nl::protocols::base {
 
 // clang-format off
 Empty::Empty() : MessageDefinition<char>("nlmsg", {
-    {NLMSG_NOOP, "NOOP"},
-    {NLMSG_DONE, "DONE"},
-    {NLMSG_OVERRUN, "OVERRUN"},
+    {NLMSG_NOOP, {"NOOP", MessageGenre::UNKNOWN}},
+    {NLMSG_DONE, {"DONE", MessageGenre::UNKNOWN}},
+    {NLMSG_OVERRUN, {"OVERRUN", MessageGenre::UNKNOWN}},
 }) {}
 // clang-format on
 

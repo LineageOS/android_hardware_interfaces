@@ -20,6 +20,7 @@
 
 #include <array>
 #include <optional>
+#include <set>
 #include <string>
 
 namespace android::netdevice {
@@ -53,14 +54,34 @@ bool exists(std::string ifname);
 std::optional<bool> isUp(std::string ifname);
 
 /**
- * Checks, if the network interface exists and is up.
- *
- * This is a convenience function to call both exists() and isUp().
- *
- * \param ifname Interface to check
- * \return true if the interface is up, false otherwise
+ * Interface condition to wait for.
  */
-bool existsAndIsUp(const std::string& ifname);
+enum class WaitCondition {
+    /**
+     * Interface is present (but not necessarily up).
+     */
+    PRESENT,
+
+    /**
+     * Interface is up.
+     */
+    PRESENT_AND_UP,
+
+    /**
+     * Interface is down or not present (disconnected) at all.
+     */
+    DOWN_OR_GONE,
+};
+
+/**
+ * Listens for interface changes until anticipated condition takes place.
+ *
+ * \param ifnames List of interfaces to watch for.
+ * \param cnd Awaited condition.
+ * \param allOf true if all interfaces need to satisfy the condition, false if only one satistying
+ *        interface should stop the wait.
+ */
+void waitFor(std::set<std::string> ifnames, WaitCondition cnd, bool allOf = true);
 
 /**
  * Brings network interface up.
