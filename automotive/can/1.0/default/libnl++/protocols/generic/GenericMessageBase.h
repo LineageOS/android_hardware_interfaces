@@ -27,7 +27,7 @@ class GenericMessageBase : public MessageDefinition<genlmsghdr> {
     typedef std::map<uint8_t, std::string> GenericCommandNameMap;
 
     GenericMessageBase(
-            nlmsgtype_t msgtype, std::string msgname,
+            nlmsgtype_t msgtype, const std::string&& msgname,
             const std::initializer_list<GenericCommandNameMap::value_type> commandNames = {},
             const std::initializer_list<AttributeMap::value_type> attrTypes = {});
 
