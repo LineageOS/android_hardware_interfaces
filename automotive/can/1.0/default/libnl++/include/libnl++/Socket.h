@@ -173,6 +173,42 @@ class Socket {
      */
     std::optional<unsigned> getPid();
 
+    /**
+     * Live iterator continuously receiving messages from Netlink socket.
+     *
+     * Iteration ends when socket fails to receive a buffer.
+     *
+     * Example:
+     * ```
+     *     nl::Socket sock(NETLINK_ROUTE, 0, RTMGRP_LINK);
+     *     for (const auto rawMsg : sock) {
+     *         const auto msg = nl::Message<ifinfomsg>::parse(rawMsg, {RTM_NEWLINK, RTM_DELLINK});
+     *         if (!msg.has_value()) continue;
+     *
+     *         LOG(INFO) << msg->attributes.get<std::string>(IFLA_IFNAME)
+     *                   << " is " << ((msg->data.ifi_flags & IFF_UP) ? "up" : "down");
+     *     }
+     *     LOG(FATAL) << "Failed to read from Netlink socket";
+     * ```
+     */
+    class receive_iterator {
+      public:
+        receive_iterator(Socket& socket, bool end);
+
+        receive_iterator operator++();
+        bool operator==(const receive_iterator& other) const;
+        const Buffer<nlmsghdr>& operator*() const;
+
+      private:
+        Socket& mSocket;
+        bool mIsEnd;
+        Buffer<nlmsghdr>::iterator mCurrent;
+
+        void receive();
+    };
+    receive_iterator begin();
+    receive_iterator end();
+
   private:
     const int mProtocol;
     base::unique_fd mFd;
@@ -181,6 +217,7 @@ class Socket {
     bool mFailed = false;
     uint32_t mSeq = 0;
 
+    bool increaseReceiveBuffer(size_t maxSize);
     std::optional<Buffer<nlmsghdr>> receive(const std::set<nlmsgtype_t>& msgtypes, size_t maxSize);
 
     DISALLOW_COPY_AND_ASSIGN(Socket);

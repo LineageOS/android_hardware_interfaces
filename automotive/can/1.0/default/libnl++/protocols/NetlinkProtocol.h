@@ -46,7 +46,7 @@ class NetlinkProtocol {
   protected:
     typedef std::vector<std::shared_ptr<const MessageDescriptor>> MessageDescriptorList;
 
-    NetlinkProtocol(int protocol, const std::string name,
+    NetlinkProtocol(int protocol, const std::string& name,
                     const MessageDescriptorList&& messageDescrs);
 
   private:

@@ -19,7 +19,7 @@
 namespace android::nl::protocols::generic {
 
 GenericMessageBase::GenericMessageBase(
-        nlmsgtype_t msgtype, std::string msgname,
+        nlmsgtype_t msgtype, const std::string&& msgname,
         const std::initializer_list<GenericCommandNameMap::value_type> commandNames,
         const std::initializer_list<AttributeMap::value_type> attrTypes)
     : MessageDefinition<genlmsghdr>(msgname, {{msgtype, {msgname, MessageGenre::UNKNOWN}}},
