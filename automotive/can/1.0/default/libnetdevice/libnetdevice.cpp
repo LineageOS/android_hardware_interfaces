@@ -27,6 +27,8 @@
 #include <linux/rtnetlink.h>
 #include <net/if.h>
 
+#include <sstream>
+
 namespace android::netdevice {
 
 void useSocketDomain(int domain) {
@@ -35,16 +37,6 @@ void useSocketDomain(int domain) {
 
 bool exists(std::string ifname) {
     return nametoindex(ifname) != 0;
-}
-
-std::optional<bool> isUp(std::string ifname) {
-    auto ifr = ifreqs::fromName(ifname);
-    if (!ifreqs::send(SIOCGIFFLAGS, ifr)) return std::nullopt;
-    return ifr.ifr_flags & IFF_UP;
-}
-
-bool existsAndIsUp(const std::string& ifname) {
-    return exists(ifname) && isUp(ifname).value_or(false);
 }
 
 bool up(std::string ifname) {
@@ -100,6 +92,97 @@ bool setHwAddr(const std::string& ifname, hwaddr_t hwaddr) {
 
     memcpy(ifr.ifr_hwaddr.sa_data, hwaddr.data(), hwaddr.size());
     return ifreqs::send(SIOCSIFHWADDR, ifr);
+}
+
+std::optional<bool> isUp(std::string ifname) {
+    auto ifr = ifreqs::fromName(ifname);
+    if (!ifreqs::send(SIOCGIFFLAGS, ifr)) return std::nullopt;
+    return ifr.ifr_flags & IFF_UP;
+}
+
+struct WaitState {
+    bool present;
+    bool up;
+
+    bool satisfied(WaitCondition cnd) const {
+        switch (cnd) {
+            case WaitCondition::PRESENT:
+                if (present) return true;
+                break;
+            case WaitCondition::PRESENT_AND_UP:
+                if (present && up) return true;
+                break;
+            case WaitCondition::DOWN_OR_GONE:
+                if (!present || !up) return true;
+                break;
+        }
+        return false;
+    }
+};
+
+static std::string toString(WaitCondition cnd) {
+    switch (cnd) {
+        case WaitCondition::PRESENT:
+            return "become present";
+        case WaitCondition::PRESENT_AND_UP:
+            return "come up";
+        case WaitCondition::DOWN_OR_GONE:
+            return "go down";
+    }
+}
+
+static std::string toString(const std::set<std::string>& ifnames) {
+    std::stringstream ss;
+    std::copy(ifnames.begin(), ifnames.end(), std::ostream_iterator<std::string>(ss, ","));
+    auto str = ss.str();
+    str.pop_back();
+    return str;
+}
+
+void waitFor(std::set<std::string> ifnames, WaitCondition cnd, bool allOf) {
+    nl::Socket sock(NETLINK_ROUTE, 0, RTMGRP_LINK);
+
+    using StatesMap = std::map<std::string, WaitState>;
+    StatesMap states = {};
+    for (const auto ifname : ifnames) {
+        const auto present = exists(ifname);
+        const auto up = present && isUp(ifname).value_or(false);
+        states[ifname] = {present, up};
+    }
+
+    const auto mapConditionChecker = [cnd](const StatesMap::iterator::value_type& it) {
+        return it.second.satisfied(cnd);
+    };
+    const auto isFullySatisfied = [&states, allOf, mapConditionChecker]() {
+        if (allOf) {
+            return std::all_of(states.begin(), states.end(), mapConditionChecker);
+        } else {
+            return std::any_of(states.begin(), states.end(), mapConditionChecker);
+        }
+    };
+
+    if (isFullySatisfied()) return;
+
+    LOG(DEBUG) << "Waiting for " << (allOf ? "" : "any of ") << toString(ifnames) << " to "
+               << toString(cnd);
+    for (const auto rawMsg : sock) {
+        const auto msg = nl::Message<ifinfomsg>::parse(rawMsg, {RTM_NEWLINK, RTM_DELLINK});
+        if (!msg.has_value()) continue;
+
+        const auto ifname = msg->attributes.get<std::string>(IFLA_IFNAME);
+        if (ifnames.count(ifname) == 0) continue;
+
+        const bool present = (msg->header.nlmsg_type != RTM_DELLINK);
+        const bool up = present && (msg->data.ifi_flags & IFF_UP) != 0;
+        states[ifname] = {present, up};
+
+        if (isFullySatisfied()) {
+            LOG(DEBUG) << "Finished waiting for " << (allOf ? "" : "some of ") << toString(ifnames)
+                       << " to " << toString(cnd);
+            return;
+        }
+    }
+    LOG(FATAL) << "Can't read Netlink socket";
 }
 
 }  // namespace android::netdevice

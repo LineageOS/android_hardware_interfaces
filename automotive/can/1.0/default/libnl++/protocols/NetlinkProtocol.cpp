@@ -18,7 +18,7 @@
 
 namespace android::nl::protocols {
 
-NetlinkProtocol::NetlinkProtocol(int protocol, const std::string name,
+NetlinkProtocol::NetlinkProtocol(int protocol, const std::string& name,
                                  const MessageDescriptorList&& messageDescrs)
     : mProtocol(protocol), mName(name), mMessageDescrs(toMap(messageDescrs, protocol)) {}
 

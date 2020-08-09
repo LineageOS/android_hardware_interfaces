@@ -68,6 +68,16 @@ bool Socket::send(const Buffer<nlmsghdr>& msg, const sockaddr_nl& sa) {
     return true;
 }
 
+bool Socket::increaseReceiveBuffer(size_t maxSize) {
+    if (maxSize == 0) {
+        LOG(ERROR) << "Maximum receive size should not be zero";
+        return false;
+    }
+
+    if (mReceiveBuffer.size() < maxSize) mReceiveBuffer.resize(maxSize);
+    return true;
+}
+
 std::optional<Buffer<nlmsghdr>> Socket::receive(size_t maxSize) {
     return receiveFrom(maxSize).first;
 }
@@ -75,11 +85,7 @@ std::optional<Buffer<nlmsghdr>> Socket::receive(size_t maxSize) {
 std::pair<std::optional<Buffer<nlmsghdr>>, sockaddr_nl> Socket::receiveFrom(size_t maxSize) {
     if (mFailed) return {std::nullopt, {}};
 
-    if (maxSize == 0) {
-        LOG(ERROR) << "Maximum receive size should not be zero";
-        return {std::nullopt, {}};
-    }
-    if (mReceiveBuffer.size() < maxSize) mReceiveBuffer.resize(maxSize);
+    if (!increaseReceiveBuffer(maxSize)) return {std::nullopt, {}};
 
     sockaddr_nl sa = {};
     socklen_t saLen = sizeof(sa);
@@ -120,19 +126,16 @@ bool Socket::receiveAck(uint32_t seq) {
 
 std::optional<Buffer<nlmsghdr>> Socket::receive(const std::set<nlmsgtype_t>& msgtypes,
                                                 size_t maxSize) {
-    while (!mFailed) {
-        const auto msgBuf = receive(maxSize);
-        if (!msgBuf.has_value()) return std::nullopt;
+    if (mFailed || !increaseReceiveBuffer(maxSize)) return std::nullopt;
 
-        for (const auto rawMsg : *msgBuf) {
-            if (msgtypes.count(rawMsg->nlmsg_type) == 0) {
-                LOG(WARNING) << "Received (and ignored) unexpected Netlink message of type "
-                             << rawMsg->nlmsg_type;
-                continue;
-            }
-
-            return rawMsg;
+    for (const auto rawMsg : *this) {
+        if (msgtypes.count(rawMsg->nlmsg_type) == 0) {
+            LOG(WARNING) << "Received (and ignored) unexpected Netlink message of type "
+                         << rawMsg->nlmsg_type;
+            continue;
         }
+
+        return rawMsg;
     }
 
     return std::nullopt;
@@ -148,6 +151,49 @@ std::optional<unsigned> Socket::getPid() {
         return std::nullopt;
     }
     return sa.nl_pid;
+}
+
+Socket::receive_iterator::receive_iterator(Socket& socket, bool end)
+    : mSocket(socket), mIsEnd(end) {
+    if (!end) receive();
+}
+
+Socket::receive_iterator Socket::receive_iterator::operator++() {
+    CHECK(!mIsEnd) << "Trying to increment end iterator";
+    ++mCurrent;
+    if (mCurrent.isEnd()) receive();
+    return *this;
+}
+
+bool Socket::receive_iterator::operator==(const receive_iterator& other) const {
+    if (mIsEnd != other.mIsEnd) return false;
+    if (mIsEnd && other.mIsEnd) return true;
+    return mCurrent == other.mCurrent;
+}
+
+const Buffer<nlmsghdr>& Socket::receive_iterator::operator*() const {
+    CHECK(!mIsEnd) << "Trying to dereference end iterator";
+    return *mCurrent;
+}
+
+void Socket::receive_iterator::receive() {
+    CHECK(!mIsEnd) << "Trying to receive on end iterator";
+    CHECK(mCurrent.isEnd()) << "Trying to receive without draining previous read";
+
+    const auto buf = mSocket.receive();
+    if (buf.has_value()) {
+        mCurrent = buf->begin();
+    } else {
+        mIsEnd = true;
+    }
+}
+
+Socket::receive_iterator Socket::begin() {
+    return {*this, false};
+}
+
+Socket::receive_iterator Socket::end() {
+    return {*this, true};
 }
 
 }  // namespace android::nl
