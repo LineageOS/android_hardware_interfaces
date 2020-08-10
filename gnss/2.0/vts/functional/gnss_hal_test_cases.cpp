@@ -61,6 +61,13 @@ TEST_F(GnssHalTest, TestGnssMeasurementExtension) {
     auto gnssMeasurement_1_0 = gnss_hal_->getExtensionGnssMeasurement();
     ASSERT_TRUE(gnssMeasurement_2_0.isOk() && gnssMeasurement_1_1.isOk() &&
                 gnssMeasurement_1_0.isOk());
+
+    // CDD does not require Android Automotive OS devices to support
+    // GnssMeasurements.
+    if(Utils::isAutomotiveDevice()) {
+        return;
+    }
+
     sp<IGnssMeasurement_2_0> iGnssMeas_2_0 = gnssMeasurement_2_0;
     sp<IGnssMeasurement_1_1> iGnssMeas_1_1 = gnssMeasurement_1_1;
     sp<IGnssMeasurement_1_0> iGnssMeas_1_0 = gnssMeasurement_1_0;
