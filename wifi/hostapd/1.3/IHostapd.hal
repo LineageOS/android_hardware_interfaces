@@ -18,8 +18,8 @@ package android.hardware.wifi.hostapd@1.3;
 
 import @1.2::IHostapd;
 import @1.2::HostapdStatus;
-
 import IHostapdCallback;
+
 /**
  * Top-level object for managing SoftAPs.
  */
@@ -39,6 +39,5 @@ interface IHostapd extends @1.2::IHostapd {
      *     |HostapdStatusCode.SUCCESS|,
      *     |HostapdStatusCode.FAILURE_UNKNOWN|
      */
-    registerCallback_1_3(IHostapdCallback callback)
-        generates (HostapdStatus status);
+    registerCallback_1_3(IHostapdCallback callback) generates (HostapdStatus status);
 };
