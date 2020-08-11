@@ -18,6 +18,10 @@ based on an existing one.
    - `2.0` -- version 2.0 of the common types HIDL API.
    - `4.0` -- version 4.0.
    - ...
+   - `7.0` -- version 7.0.
+      - `example` -- example implementation of the core and effect
+        V7.0 API. It represents a "fake" audio HAL that doesn't
+        actually communicate with hardware.
    - `all-versions` -- code common to all version of both core and effect API.
       - `default` -- shared code of the default implementation.
          - `service` -- vendor HAL service for hosting the default
