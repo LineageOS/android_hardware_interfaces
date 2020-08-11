@@ -1200,9 +1200,9 @@ std::string printCompilationCachingTest(
     return gtestCompliantName(getName(namedDevice) + "_" + type);
 }
 
-INSTANTIATE_TEST_CASE_P(TestCompilationCaching, CompilationCachingTest,
-                        testing::Combine(kNamedDeviceChoices, kOperandTypeChoices),
-                        printCompilationCachingTest);
+INSTANTIATE_TEST_SUITE_P(TestCompilationCaching, CompilationCachingTest,
+                         testing::Combine(kNamedDeviceChoices, kOperandTypeChoices),
+                         printCompilationCachingTest);
 
 using CompilationCachingSecurityTestParam = std::tuple<NamedDevice, OperandType, uint32_t>;
 
@@ -1356,9 +1356,9 @@ std::string printCompilationCachingSecurityTest(
     return gtestCompliantName(getName(namedDevice) + "_" + type + "_" + std::to_string(seed));
 }
 
-INSTANTIATE_TEST_CASE_P(TestCompilationCaching, CompilationCachingSecurityTest,
-                        testing::Combine(kNamedDeviceChoices, kOperandTypeChoices,
-                                         testing::Range(0U, 10U)),
-                        printCompilationCachingSecurityTest);
+INSTANTIATE_TEST_SUITE_P(TestCompilationCaching, CompilationCachingSecurityTest,
+                         testing::Combine(kNamedDeviceChoices, kOperandTypeChoices,
+                                          testing::Range(0U, 10U)),
+                         printCompilationCachingSecurityTest);
 
 }  // namespace android::hardware::neuralnetworks::V1_3::vts::functional
