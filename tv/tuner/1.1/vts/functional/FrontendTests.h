@@ -110,8 +110,8 @@ class FrontendTests {
     AssertionResult scanFrontend(FrontendConfig config, FrontendScanType type);
     AssertionResult stopScanFrontend();
     AssertionResult tuneFrontend(FrontendConfig config, bool testWithDemux);
-    void verifyFrontendStatus(vector<FrontendStatusType> statusTypes,
-                              vector<FrontendStatus> expectStatuses);
+    void verifyFrontendStatusExt1_1(vector<FrontendStatusTypeExt1_1> statusTypes,
+                                    vector<FrontendStatusExt1_1> expectStatuses);
     AssertionResult stopTuneFrontend(bool testWithDemux);
     AssertionResult closeFrontend();
     AssertionResult getFrontendDtmbCaps(uint32_t);

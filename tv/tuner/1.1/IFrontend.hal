@@ -82,4 +82,20 @@ interface IFrontend extends @1.0::IFrontend {
      *         UNKNOWN_ERROR if failed for other reasons.
      */
     linkCiCam(uint32_t ciCamId) generates (Result result);
+
+    /**
+     * Get the v1_1 extended statuses of the frontend.
+     *
+     * This retrieve the extended statuses of the frontend for given extended status types.
+     *
+     * @param statusTypes an array of the extended status types which the caller request.
+     *
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_STATE if tuning can't be applied at current stage,
+     *         UNKNOWN_ERROR if tuning failed for other reasons.
+     * @return statuses an array of extended statuses the caller requests for.
+     */
+    getStatusExt1_1(vec<FrontendStatusTypeExt1_1> statusTypes)
+        generates (Result result, vec<FrontendStatusExt1_1> statuses);
 };
