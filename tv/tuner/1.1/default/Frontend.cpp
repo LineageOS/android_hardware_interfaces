@@ -72,7 +72,7 @@ Return<Result> Frontend::tune(const FrontendSettings& /* settings */) {
 }
 
 Return<Result> Frontend::tune_1_1(const FrontendSettings& settings,
-                                  const V1_1::FrontendSettingsExt& settingsExt) {
+                                  const V1_1::FrontendSettingsExt& /*settingsExt*/) {
     ALOGV("%s", __FUNCTION__);
     return tune(settings);
 }
