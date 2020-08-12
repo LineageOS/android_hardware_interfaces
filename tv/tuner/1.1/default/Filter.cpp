@@ -220,7 +220,7 @@ void Filter::filterThreadLoop() {
     // For the first time of filter output, implementation needs to send the filter
     // Event Callback without waiting for the DATA_CONSUMED to init the process.
     while (mFilterThreadRunning) {
-        if (mFilterEvent.events.size() == 0 && mFilterEvent_1_1.events.size() == 0) {
+        if (mFilterEvent.events.size() == 0 && mFilterEventExt.events.size() == 0) {
             if (DEBUG_FILTER) {
                 ALOGD("[Filter] wait for filter data output.");
             }
@@ -228,18 +228,17 @@ void Filter::filterThreadLoop() {
             continue;
         }
         // After successfully write, send a callback and wait for the read to be done
-        if (mFilterEvent_1_1.events.size() > 0) {
-            if (mCallback_1_1 == nullptr) {
-                ALOGE("[Filter] IFilterCallback_1_1 has not been configured yet. Can't send event");
-                mFilterThreadRunning = false;
-                break;
-            }
-            mCallback_1_1->onFilterEvent_1_1(mFilterEvent_1_1);
-            mFilterEvent_1_1.events.resize(0);
-        } else {
+        if (mCallback_1_1 != nullptr) {
+            mCallback_1_1->onFilterEvent_1_1(mFilterEvent, mFilterEventExt);
+            mFilterEventExt.events.resize(0);
+        } else if (mCallback != nullptr) {
             mCallback->onFilterEvent(mFilterEvent);
-            mFilterEvent.events.resize(0);
+        } else {
+            ALOGD("[Filter] filter callback is not configured yet.");
+            mFilterThreadRunning = false;
+            return;
         }
+        mFilterEvent.events.resize(0);
 
         freeAvHandle();
         mFilterStatus = DemuxFilterStatus::DATA_READY;
@@ -279,8 +278,8 @@ void Filter::filterThreadLoop() {
                     mCallback->onFilterEvent(mFilterEvent);
                     mFilterEvent.events.resize(0);
                 } else if (mCallback_1_1 != nullptr) {
-                    mCallback_1_1->onFilterEvent_1_1(mFilterEvent_1_1);
-                    mFilterEvent_1_1.events.resize(0);
+                    mCallback_1_1->onFilterEvent_1_1(mFilterEvent, mFilterEventExt);
+                    mFilterEventExt.events.resize(0);
                 }
                 break;
             }
@@ -612,22 +611,18 @@ Result Filter::startRecordFilterHandler() {
     recordEvent = {
             .byteNumber = mRecordFilterOutput.size(),
     };
-    V1_1::DemuxFilterTsRecordEvent recordEvent_1_1;
-    recordEvent_1_1 = {
-            .tsRecordEvent_1_0 = recordEvent,
+    V1_1::DemuxFilterRecordEventExt recordEventExt;
+    recordEventExt = {
             .pts = (mPts == 0) ? time(NULL) * 900000 : mPts,
     };
 
     int size;
-    if (mCallback_1_1 != nullptr) {
-        size = mFilterEvent_1_1.events.size();
-        mFilterEvent_1_1.events.resize(size + 1);
-        mFilterEvent_1_1.events[size].tsRecord(recordEvent_1_1);
-    } else if (mCallback != nullptr) {
-        size = mFilterEvent.events.size();
-        mFilterEvent.events.resize(size + 1);
-        mFilterEvent.events[size].tsRecord(recordEvent);
-    }
+    size = mFilterEventExt.events.size();
+    mFilterEventExt.events.resize(size + 1);
+    mFilterEventExt.events[size].tsRecord(recordEventExt);
+    size = mFilterEvent.events.size();
+    mFilterEvent.events.resize(size + 1);
+    mFilterEvent.events[size].tsRecord(recordEvent);
 
     mRecordFilterOutput.clear();
     return Result::SUCCESS;

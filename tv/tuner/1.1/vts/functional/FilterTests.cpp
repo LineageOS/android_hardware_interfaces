@@ -20,11 +20,12 @@ bool FilterCallback::readFilterEventData() {
     bool result = false;
     ALOGW("[vts] reading from filter FMQ or buffer %d", mFilterId);
     // todo separate filter handlers
-    for (int i = 0; i < mFilterEvent.events.size(); i++) {
-        switch (mFilterEventType) {
-            case FilterEventType::RECORD:
-                ALOGW("[vts] Record filter event, pts=%" PRIu64 ".",
-                      mFilterEvent.events[0].tsRecord().pts);
+    for (int i = 0; i < mFilterEventExt.events.size(); i++) {
+        auto eventExt = mFilterEventExt.events[i];
+        switch (eventExt.getDiscriminator()) {
+            case DemuxFilterEventExt::Event::hidl_discriminator::tsRecord:
+                ALOGW("[vts] Extended TS record filter event, pts=%" PRIu64 ".",
+                      eventExt.tsRecord().pts);
                 break;
             default:
                 break;
