@@ -281,9 +281,6 @@ size_t cpioArchiveFilesInDir(int out_fd, const char* input_dir) {
             continue;
         }
         std::string cur_file_name(dp->d_name);
-        // string.size() does not include the null terminator. The cpio FreeBSD
-        // file header expects the null character to be included in the length.
-        const size_t file_name_len = cur_file_name.size() + 1;
         struct stat st;
         const std::string cur_file_path = kTombstoneFolderPath + cur_file_name;
         if (stat(cur_file_path.c_str(), &st) == -1) {
@@ -297,8 +294,15 @@ size_t cpioArchiveFilesInDir(int out_fd, const char* input_dir) {
             n_error++;
             continue;
         }
+        std::string file_name_with_last_modified_time =
+            cur_file_name + "-" + std::to_string(st.st_mtime);
+        // string.size() does not include the null terminator. The cpio FreeBSD
+        // file header expects the null character to be included in the length.
+        const size_t file_name_len =
+            file_name_with_last_modified_time.size() + 1;
         unique_fd file_auto_closer(fd_read);
-        if (!cpioWriteHeader(out_fd, st, cur_file_name.c_str(),
+        if (!cpioWriteHeader(out_fd, st,
+                             file_name_with_last_modified_time.c_str(),
                              file_name_len)) {
             return ++n_error;
         }
