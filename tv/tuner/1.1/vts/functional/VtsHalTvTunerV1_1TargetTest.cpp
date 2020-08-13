@@ -132,6 +132,21 @@ TEST_P(TunerRecordHidlTest, RecordDataFlowWithTsRecordFilterTest) {
     recordSingleFilterTest(filterArray[TS_RECORD0], frontendArray[DVBT], dvrArray[DVR_RECORD0]);
 }
 
+TEST_P(TunerFrontendHidlTest, TuneFrontendWithFrontendSettingsExt) {
+    description("Tune one Frontend with specific setting and check Lock event");
+    mFrontendTests.tuneTest(frontendArray[DVBT]);
+}
+
+TEST_P(TunerFrontendHidlTest, BlindScanFrontendWithEndFrequency) {
+    description("Run an blind frontend scan with specific setting and check lock scanMessage");
+    mFrontendTests.scanTest(frontendScanArray[SCAN_DVBT], FrontendScanType::SCAN_BLIND);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+        PerInstance, TunerFrontendHidlTest,
+        testing::ValuesIn(android::hardware::getAllHalInstanceNames(ITuner::descriptor)),
+        android::hardware::PrintInstanceNameToString);
+
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, TunerFilterHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(ITuner::descriptor)),
@@ -146,8 +161,4 @@ INSTANTIATE_TEST_SUITE_P(
         PerInstance, TunerRecordHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(ITuner::descriptor)),
         android::hardware::PrintInstanceNameToString);
-
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(TunerFilterHidlTest);
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(TunerDemuxHidlTest);
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(TunerRecordHidlTest);
 }  // namespace

@@ -17,15 +17,12 @@
 package android.hardware.tv.tuner@1.1;
 
 import @1.0::Constant;
-import @1.0::DemuxFilterDownloadEvent;
-import @1.0::DemuxFilterIpPayloadEvent;
-import @1.0::DemuxFilterMediaEvent;
 import @1.0::DemuxFilterMmtpRecordEvent;
-import @1.0::DemuxFilterPesEvent;
-import @1.0::DemuxFilterSectionEvent;
-import @1.0::DemuxFilterTemiEvent;
 import @1.0::DemuxFilterTsRecordEvent;
+import @1.0::FrontendDvbcSpectralInversion;
+import @1.0::FrontendDvbtTransmissionMode;
 import android.hidl.safe_union@1.0;
+import android.hidl.safe_union@1.0::Monostate;
 
 @export
 enum Constant : @1.0::Constant {
@@ -33,6 +30,10 @@ enum Constant : @1.0::Constant {
      * An invalid mpuSequenceNumber in DemuxFilterMmtpRecordEvent.
      */
     INVALID_MMTP_RECORD_EVENT_MPT_SEQUENCE_NUM = 0xFFFFFFFF,
+    /**
+     * An invalid frenquency that can be used as the default value of the frontend setting.
+     */
+    INVALID_FRONTEND_SETTING_FREQUENCY = 0xFFFFFFFF,
 };
 
 @export
@@ -52,68 +53,128 @@ enum Constant64Bit : uint64_t {
 };
 
 /**
- * Filter Event for TS Record data.
+ * Extended Demux Filter Record Event.
  */
-struct DemuxFilterTsRecordEvent {
-    /**
-     * V1_0 Filter Event for TS Record data.
-     */
-    @1.0::DemuxFilterTsRecordEvent tsRecordEvent_1_0;
-
+struct DemuxFilterRecordEventExt {
     /**
      * The Presentation Time Stamp(PTS) for the audio or video frame. It is based on 90KHz
      * and has the same format as the PTS in ISO/IEC 13818-1. It is used only for the SC and
      * the SC_HEVC.
      */
     uint64_t pts;
-};
-
-/**
- * Filter Event for MMTP Record data.
- */
-struct DemuxFilterMmtpRecordEvent {
-    /**
-     * V1_0 Filter Event for MMTP Record data.
-     */
-    @1.0::DemuxFilterMmtpRecordEvent mmtpRecordEvent_1_0;
 
     /**
      * MPU sequence number of the filtered data. This is only used for MMTP.
      */
     uint32_t mpuSequenceNumber;
-
-    /**
-     * The Presentation Time Stamp(PTS) for the audio or video frame. It is based on 90KHz
-     * and has the same format as the PTS in ISO/IEC 13818-1. It is used only for the SC and
-     * the SC_HEVC.
-     */
-    uint64_t pts;
 };
 
 /**
- * Filter Event.
+ * Extended Demux Filter Event.
  */
-struct DemuxFilterEvent {
+struct DemuxFilterEventExt {
     safe_union Event {
-        DemuxFilterSectionEvent section;
+        /**
+         * No extended record filter Event. This is used by the tsRecord or mmtpRecord filter event
+         * that does not contain the DemuxFilterRecordEventExt information.
+         */
+        Monostate noinit;
 
-        DemuxFilterMediaEvent media;
+        DemuxFilterRecordEventExt tsRecord;
 
-        DemuxFilterPesEvent pes;
-
-        @1.1::DemuxFilterTsRecordEvent tsRecord;
-
-        @1.1::DemuxFilterMmtpRecordEvent mmtpRecord;
-
-        DemuxFilterDownloadEvent download;
-
-        DemuxFilterIpPayloadEvent ipPayload;
-
-        DemuxFilterTemiEvent temi;
+        DemuxFilterRecordEventExt mmtpRecord;
     };
 
     /**
      * An array of events
      */
     vec<Event> events;
+};
+
+typedef FrontendDvbcSpectralInversion FrontendSpectralInversion;
+
+/**
+ *  Scan type for a DVBS Frontend.
+ */
+@export
+enum FrontendDvbsScanType : uint32_t {
+    UNDEFINED = 0,
+    DIRECT,
+    DISEQC,
+    UNICABLE,
+    JESS,
+};
+
+/**
+ *  Rotation status for a DVBT Frontend.
+ */
+@export
+enum FrontendDvbtRotation : uint32_t {
+    UNDEFINED,
+    NOT_ROTATED,
+    ROTATED,
+};
+
+/**
+ * AFT flag for an Analog Frontend.
+ */
+@export
+enum FrontendAnalogAftFlag : uint32_t {
+    UNDEFINED,
+    AFT_TRUE,
+    AFT_FALSE,
+};
+
+/**
+ *  Extended Transmission Mode for DVBT.
+ */
+@export
+enum FrontendDvbtTransmissionMode : @1.0::FrontendDvbtTransmissionMode {
+    MODE_8K_E = 1 << 7,
+
+    MODE_16K_E = 1 << 8,
+
+    MODE_32K_E = 1 << 9,
+};
+
+/**
+ *  Extended Signal Settings for a DVBS Frontend.
+ */
+struct FrontendDvbsSettingsExt {
+    FrontendDvbsScanType scanType;
+};
+
+/**
+ *  Extended Signal Settings for a DVBT Frontend.
+ */
+struct FrontendDvbtSettingsExt {
+    FrontendDvbtRotation rotation;
+
+    FrontendDvbtTransmissionMode transmissionMode;
+};
+
+/**
+ *  Extended Signal Settings for an Analog Frontend.
+ */
+struct FrontendAnalogSettingsExt {
+    FrontendAnalogAftFlag aftFlag;
+};
+
+/**
+ *  Extended Signal Settings for Frontend.
+ */
+struct FrontendSettingsExt {
+    uint32_t endFrequency;
+
+    FrontendSpectralInversion inversion;
+
+    safe_union SettingsExt {
+        Monostate noinit;
+
+        FrontendAnalogSettingsExt analog;
+
+        FrontendDvbsSettingsExt dvbs;
+
+        FrontendDvbtSettingsExt dvbt;
+    } settingExt;
 };

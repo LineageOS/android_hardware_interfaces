@@ -128,7 +128,7 @@ class Filter : public V1_1::IFilter {
     bool mIsUsingFMQ = false;
     EventFlag* mFilterEventFlag;
     DemuxFilterEvent mFilterEvent;
-    V1_1::DemuxFilterEvent mFilterEvent_1_1;
+    V1_1::DemuxFilterEventExt mFilterEventExt;
 
     // Thread handlers
     pthread_t mFilterThread;
