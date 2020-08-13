@@ -21,6 +21,7 @@ namespace {
 
 void initConfiguration() {
     initFrontendConfig();
+    initFrontendScanConfig();
     initFilterConfig();
     initDvrConfig();
 }
@@ -50,6 +51,8 @@ class TunerFilterHidlTest : public testing::TestWithParam<std::string> {
     FilterTests mFilterTests;
 };
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(TunerFilterHidlTest);
+
 class TunerDemuxHidlTest : public testing::TestWithParam<std::string> {
   public:
     virtual void SetUp() override {
@@ -72,6 +75,8 @@ class TunerDemuxHidlTest : public testing::TestWithParam<std::string> {
     DemuxTests mDemuxTests;
     FilterTests mFilterTests;
 };
+
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(TunerDemuxHidlTest);
 
 class TunerRecordHidlTest : public testing::TestWithParam<std::string> {
   public:
@@ -100,4 +105,27 @@ class TunerRecordHidlTest : public testing::TestWithParam<std::string> {
     FilterTests mFilterTests;
     DvrTests mDvrTests;
 };
+
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(TunerRecordHidlTest);
+
+class TunerFrontendHidlTest : public testing::TestWithParam<std::string> {
+  public:
+    virtual void SetUp() override {
+        mService = ITuner::getService(GetParam());
+        ASSERT_NE(mService, nullptr);
+        initConfiguration();
+
+        mFrontendTests.setService(mService);
+    }
+
+  protected:
+    static void description(const std::string& description) {
+        RecordProperty("description", description);
+    }
+
+    sp<ITuner> mService;
+    FrontendTests mFrontendTests;
+};
+
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(TunerFrontendHidlTest);
 }  // namespace

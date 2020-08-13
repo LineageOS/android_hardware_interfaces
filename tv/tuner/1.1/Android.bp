@@ -6,6 +6,7 @@ hidl_interface {
     srcs: [
         "IDemux.hal",
         "IFilter.hal",
+        "IFrontend.hal",
         "IFilterCallback.hal",
         "ITuner.hal",
         "types.hal",
