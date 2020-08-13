@@ -266,6 +266,20 @@ const ConfigDeclaration kVehicleProperties[]{
          .initialValue = {.stringValue = "Toy Vehicle"}},
         {.config =
                  {
+                         .prop = toInt(VehicleProperty::INFO_MODEL),
+                         .access = VehiclePropertyAccess::READ,
+                         .changeMode = VehiclePropertyChangeMode::STATIC,
+                 },
+         .initialValue = {.stringValue = "Speedy Model"}},
+        {.config =
+                 {
+                         .prop = toInt(VehicleProperty::INFO_MODEL_YEAR),
+                         .access = VehiclePropertyAccess::READ,
+                         .changeMode = VehiclePropertyChangeMode::STATIC,
+                 },
+         .initialValue = {.int32Values = {2020}}},
+        {.config =
+                 {
                          .prop = toInt(VehicleProperty::INFO_EXTERIOR_DIMENSIONS),
                          .access = VehiclePropertyAccess::READ,
                          .changeMode = VehiclePropertyChangeMode::STATIC,
