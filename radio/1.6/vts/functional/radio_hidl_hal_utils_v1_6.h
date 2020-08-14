@@ -78,6 +78,7 @@ class RadioResponse_v1_6 : public ::android::hardware::radio::V1_6::IRadioRespon
     // Modem
     bool isModemEnabled;
     bool enableModemResponseToggle;
+    bool isNRDualConnectivityEnabled;
 
     ::android::hardware::hidl_bitfield<::android::hardware::radio::V1_4::RadioAccessFamily>
             networkTypeBitmapResponse;
@@ -765,6 +766,11 @@ class RadioResponse_v1_6 : public ::android::hardware::radio::V1_6::IRadioRespon
     Return<void> sendCdmaSmsExpectMoreResponse_1_6(
             const ::android::hardware::radio::V1_6::RadioResponseInfo& info,
             const SendSmsResult& sms);
+
+    Return<void> enableNrDualConnectivityResponse(
+            const ::android::hardware::radio::V1_6::RadioResponseInfo& info);
+    Return<void> isNrDualConnectivityEnabledResponse(
+            const ::android::hardware::radio::V1_6::RadioResponseInfo& info, bool isEnabled);
 };
 
 /* Callback class for radio indication */
