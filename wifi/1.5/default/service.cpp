@@ -23,6 +23,7 @@
 #include "wifi.h"
 #include "wifi_feature_flags.h"
 #include "wifi_legacy_hal.h"
+#include "wifi_legacy_hal_factory.h"
 #include "wifi_mode_controller.h"
 
 using android::hardware::configureRpcThreadpool;
@@ -32,6 +33,8 @@ using android::hardware::wifi::V1_5::implementation::feature_flags::
     WifiFeatureFlags;
 using android::hardware::wifi::V1_5::implementation::iface_util::WifiIfaceUtil;
 using android::hardware::wifi::V1_5::implementation::legacy_hal::WifiLegacyHal;
+using android::hardware::wifi::V1_5::implementation::legacy_hal::
+    WifiLegacyHalFactory;
 using android::hardware::wifi::V1_5::implementation::mode_controller::
     WifiModeController;
 
@@ -50,10 +53,13 @@ int main(int /*argc*/, char** argv) {
 
     const auto iface_tool =
         std::make_shared<android::wifi_system::InterfaceTool>();
+    const auto legacy_hal_factory =
+        std::make_shared<WifiLegacyHalFactory>(iface_tool);
+
     // Setup hwbinder service
     android::sp<android::hardware::wifi::V1_5::IWifi> service =
         new android::hardware::wifi::V1_5::implementation::Wifi(
-            iface_tool, std::make_shared<WifiLegacyHal>(iface_tool),
+            iface_tool, legacy_hal_factory,
             std::make_shared<WifiModeController>(),
             std::make_shared<WifiIfaceUtil>(iface_tool),
             std::make_shared<WifiFeatureFlags>());

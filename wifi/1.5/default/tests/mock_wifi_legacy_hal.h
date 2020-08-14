@@ -31,7 +31,8 @@ namespace legacy_hal {
 class MockWifiLegacyHal : public WifiLegacyHal {
    public:
     MockWifiLegacyHal(
-        const std::weak_ptr<wifi_system::InterfaceTool> iface_tool);
+        const std::weak_ptr<wifi_system::InterfaceTool> iface_tool,
+        const wifi_hal_fn& fn, bool is_primary);
     MOCK_METHOD0(initialize, wifi_error());
     MOCK_METHOD0(start, wifi_error());
     MOCK_METHOD2(stop, wifi_error(std::unique_lock<std::recursive_mutex>*,
