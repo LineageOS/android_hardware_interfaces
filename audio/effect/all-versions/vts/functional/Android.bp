@@ -118,7 +118,6 @@ cc_test {
 }
 
 cc_test {
-    enabled: false,
     name: "VtsHalAudioEffectV7_0TargetTest",
     defaults: ["VtsHalAudioEffectTargetTest_default"],
     // Use test_config for vts suite.
@@ -126,6 +125,7 @@ cc_test {
     test_config: "VtsHalAudioEffectV7_0TargetTest.xml",
     static_libs: [
         "android.hardware.audio.common@7.0",
+        "android.hardware.audio.common@7.0-enums",
         "android.hardware.audio.effect@7.0",
     ],
     data: [
