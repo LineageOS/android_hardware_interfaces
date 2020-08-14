@@ -36,7 +36,8 @@ static constexpr uint32_t kMaxGscanFrequenciesForBand = 64;
 static constexpr uint32_t kLinkLayerStatsDataMpduSizeThreshold = 128;
 static constexpr uint32_t kMaxWakeReasonStatsArraySize = 32;
 static constexpr uint32_t kMaxRingBuffers = 10;
-static constexpr uint32_t kMaxStopCompleteWaitMs = 100;
+// need a long timeout (1000ms) for chips that unload their driver.
+static constexpr uint32_t kMaxStopCompleteWaitMs = 1000;
 static constexpr char kDriverPropName[] = "wlan.driver.status";
 
 // Helper function to create a non-const char* for legacy Hal API's.
@@ -54,6 +55,7 @@ namespace wifi {
 namespace V1_5 {
 namespace implementation {
 namespace legacy_hal {
+
 // Legacy HAL functions accept "C" style function pointers, so use global
 // functions to pass to the legacy HAL function and store the corresponding
 // std::function methods to be invoked.
@@ -344,26 +346,20 @@ void onAsyncNanEventScheduleUpdate(NanDataPathScheduleUpdateInd* event) {
 // End of the free-standing "C" style callbacks.
 
 WifiLegacyHal::WifiLegacyHal(
-    const std::weak_ptr<wifi_system::InterfaceTool> iface_tool)
-    : global_handle_(nullptr),
+    const std::weak_ptr<wifi_system::InterfaceTool> iface_tool,
+    const wifi_hal_fn& fn, bool is_primary)
+    : global_func_table_(fn),
+      global_handle_(nullptr),
       awaiting_event_loop_termination_(false),
       is_started_(false),
-      iface_tool_(iface_tool) {}
+      iface_tool_(iface_tool),
+      is_primary_(is_primary) {}
 
 wifi_error WifiLegacyHal::initialize() {
     LOG(DEBUG) << "Initialize legacy HAL";
-    // TODO: Add back the HAL Tool if we need to. All we need from the HAL tool
-    // for now is this function call which we can directly call.
-    if (!initHalFuncTableWithStubs(&global_func_table_)) {
-        LOG(ERROR)
-            << "Failed to initialize legacy hal function table with stubs";
-        return WIFI_ERROR_UNKNOWN;
-    }
-    wifi_error status = init_wifi_vendor_hal_func_table(&global_func_table_);
-    if (status != WIFI_SUCCESS) {
-        LOG(ERROR) << "Failed to initialize legacy hal function table";
-    }
-    return status;
+    // this now does nothing, since HAL function table is provided
+    // to the constructor
+    return WIFI_SUCCESS;
 }
 
 wifi_error WifiLegacyHal::start() {
@@ -380,13 +376,17 @@ wifi_error WifiLegacyHal::start() {
         LOG(ERROR) << "Timed out awaiting driver ready";
         return status;
     }
-    property_set(kDriverPropName, "ok");
+
+    if (is_primary_) {
+        property_set(kDriverPropName, "ok");
+
+        if (!iface_tool_.lock()->SetWifiUpState(true)) {
+            LOG(ERROR) << "Failed to set WiFi interface up";
+            return WIFI_ERROR_UNKNOWN;
+        }
+    }
 
     LOG(DEBUG) << "Starting legacy HAL";
-    if (!iface_tool_.lock()->SetWifiUpState(true)) {
-        LOG(ERROR) << "Failed to set WiFi interface up";
-        return WIFI_ERROR_UNKNOWN;
-    }
     status = global_func_table_.wifi_initialize(&global_handle_);
     if (status != WIFI_SUCCESS || !global_handle_) {
         LOG(ERROR) << "Failed to retrieve global handle";
@@ -419,7 +419,7 @@ wifi_error WifiLegacyHal::stop(
         // Invalidate all the internal pointers now that the HAL is
         // stopped.
         invalidate();
-        iface_tool_.lock()->SetWifiUpState(false);
+        if (is_primary_) iface_tool_.lock()->SetWifiUpState(false);
         on_stop_complete_user_callback();
         is_started_ = false;
     };
@@ -488,12 +488,21 @@ WifiLegacyHal::requestFirmwareMemoryDump(const std::string& iface_name) {
 
 std::pair<wifi_error, uint32_t> WifiLegacyHal::getSupportedFeatureSet(
     const std::string& iface_name) {
-    feature_set set;
+    feature_set set = 0, chip_set = 0;
+    wifi_error status = WIFI_SUCCESS;
+
     static_assert(sizeof(set) == sizeof(uint64_t),
                   "Some feature_flags can not be represented in output");
-    wifi_error status = global_func_table_.wifi_get_supported_feature_set(
-        getIfaceHandle(iface_name), &set);
-    return {status, static_cast<uint32_t>(set)};
+    wifi_interface_handle iface_handle = getIfaceHandle(iface_name);
+
+    global_func_table_.wifi_get_chip_feature_set(
+        global_handle_, &chip_set); /* ignore error, chip_set will stay 0 */
+
+    if (iface_handle) {
+        status = global_func_table_.wifi_get_supported_feature_set(iface_handle,
+                                                                   &set);
+    }
+    return {status, static_cast<uint32_t>(set | chip_set)};
 }
 
 std::pair<wifi_error, PacketFilterCapabilities>
@@ -845,10 +854,15 @@ wifi_error WifiLegacyHal::resetDscpToAccessCategoryMapping() {
 
 std::pair<wifi_error, uint32_t> WifiLegacyHal::getLoggerSupportedFeatureSet(
     const std::string& iface_name) {
-    uint32_t supported_feature_flags;
-    wifi_error status =
-        global_func_table_.wifi_get_logger_supported_feature_set(
-            getIfaceHandle(iface_name), &supported_feature_flags);
+    uint32_t supported_feature_flags = 0;
+    wifi_error status = WIFI_SUCCESS;
+
+    wifi_interface_handle iface_handle = getIfaceHandle(iface_name);
+
+    if (iface_handle) {
+        status = global_func_table_.wifi_get_logger_supported_feature_set(
+            iface_handle, &supported_feature_flags);
+    }
     return {status, supported_feature_flags};
 }
 
@@ -1483,6 +1497,17 @@ wifi_error WifiLegacyHal::handleVirtualInterfaceCreateOrDeleteStatus(
         }
     }
     return status;
+}
+
+wifi_error WifiLegacyHal::getSupportedIfaceName(uint32_t iface_type,
+                                                std::string& ifname) {
+    std::array<char, IFNAMSIZ> buffer;
+
+    wifi_error res = global_func_table_.wifi_get_supported_iface_name(
+        global_handle_, (uint32_t)iface_type, buffer.data(), buffer.size());
+    if (res == WIFI_SUCCESS) ifname = buffer.data();
+
+    return res;
 }
 
 void WifiLegacyHal::invalidate() {

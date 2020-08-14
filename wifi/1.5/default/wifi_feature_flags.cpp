@@ -139,6 +139,13 @@ static const std::vector<IWifiChip::ChipMode> kChipModes{
      ChipIfaceCombination::make_vec({WIFI_HAL_INTERFACE_COMBINATIONS_AP})},
 #endif
 };
+
+static const std::vector<IWifiChip::ChipMode> kChipModesSecondary{
+#ifdef WIFI_HAL_INTERFACE_COMBINATIONS_SECONDARY_CHIP
+    {chip_mode_ids::kV3, ChipIfaceCombination::make_vec(
+                             {WIFI_HAL_INTERFACE_COMBINATIONS_SECONDARY_CHIP})},
+#endif
+};
 #undef STA
 #undef AP
 #undef P2P
@@ -154,8 +161,9 @@ static const std::vector<IWifiChip::ChipMode> kChipModes{
 
 WifiFeatureFlags::WifiFeatureFlags() {}
 
-std::vector<IWifiChip::ChipMode> WifiFeatureFlags::getChipModes() {
-    return kChipModes;
+std::vector<IWifiChip::ChipMode> WifiFeatureFlags::getChipModes(
+    bool is_primary) {
+    return (is_primary) ? kChipModes : kChipModesSecondary;
 }
 
 }  // namespace feature_flags

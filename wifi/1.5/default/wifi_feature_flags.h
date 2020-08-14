@@ -42,7 +42,8 @@ class WifiFeatureFlags {
     WifiFeatureFlags();
     virtual ~WifiFeatureFlags() = default;
 
-    virtual std::vector<V1_0::IWifiChip::ChipMode> getChipModes();
+    virtual std::vector<V1_0::IWifiChip::ChipMode> getChipModes(
+        bool is_primary);
 };
 
 }  // namespace feature_flags

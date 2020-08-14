@@ -332,7 +332,8 @@ using hidl_return_util::validateAndCall;
 using hidl_return_util::validateAndCallWithLock;
 
 WifiChip::WifiChip(
-    ChipId chip_id, const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal,
+    ChipId chip_id, bool is_primary,
+    const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal,
     const std::weak_ptr<mode_controller::WifiModeController> mode_controller,
     const std::weak_ptr<iface_util::WifiIfaceUtil> iface_util,
     const std::weak_ptr<feature_flags::WifiFeatureFlags> feature_flags,
@@ -343,7 +344,7 @@ WifiChip::WifiChip(
       iface_util_(iface_util),
       is_valid_(true),
       current_mode_id_(feature_flags::chip_mode_ids::kInvalid),
-      modes_(feature_flags.lock()->getChipModes()),
+      modes_(feature_flags.lock()->getChipModes(is_primary)),
       debug_ring_buffer_cb_registered_(false),
       subsystemCallbackHandler_(handler) {
     setActiveWlanIfaceNameProperty(kNoActiveWlanIfaceNamePropertyValue);
@@ -1599,15 +1600,16 @@ std::string WifiChip::getFirstActiveWlanIfaceName() {
     // This could happen if the chip call is made before any STA/AP
     // iface is created. Default to wlan0 for such cases.
     LOG(WARNING) << "No active wlan interfaces in use! Using default";
-    return getWlanIfaceName(0);
+    return getWlanIfaceNameWithType(IfaceType::STA, 0);
 }
 
 // Return the first wlan (wlan0, wlan1 etc.) starting from |start_idx|
 // not already in use.
 // Note: This doesn't check the actual presence of these interfaces.
-std::string WifiChip::allocateApOrStaIfaceName(uint32_t start_idx) {
+std::string WifiChip::allocateApOrStaIfaceName(IfaceType type,
+                                               uint32_t start_idx) {
     for (unsigned idx = start_idx; idx < kMaxWlanIfaces; idx++) {
-        const auto ifname = getWlanIfaceName(idx);
+        const auto ifname = getWlanIfaceNameWithType(type, idx);
         if (findUsingName(ap_ifaces_, ifname)) continue;
         if (findUsingName(sta_ifaces_, ifname)) continue;
         return ifname;
@@ -1625,7 +1627,8 @@ std::string WifiChip::allocateApIfaceName() {
     if (!ifname.empty()) {
         return ifname;
     }
-    return allocateApOrStaIfaceName((isStaApConcurrencyAllowedInCurrentMode() &&
+    return allocateApOrStaIfaceName(IfaceType::AP,
+                                    (isStaApConcurrencyAllowedInCurrentMode() &&
                                      !isDualApAllowedInCurrentMode())
                                         ? 1
                                         : 0);
@@ -1634,7 +1637,7 @@ std::string WifiChip::allocateApIfaceName() {
 // STA iface names start with idx 0.
 // Primary STA iface will always be 0.
 std::string WifiChip::allocateStaIfaceName() {
-    return allocateApOrStaIfaceName(0);
+    return allocateApOrStaIfaceName(IfaceType::STA, 0);
 }
 
 bool WifiChip::writeRingbufferFilesInternal() {
@@ -1668,6 +1671,17 @@ bool WifiChip::writeRingbufferFilesInternal() {
         // unique_lock unlocked here
     }
     return true;
+}
+
+std::string WifiChip::getWlanIfaceNameWithType(IfaceType type, unsigned idx) {
+    std::string ifname;
+
+    // let the legacy hal override the interface name
+    legacy_hal::wifi_error err =
+        legacy_hal_.lock()->getSupportedIfaceName((uint32_t)type, ifname);
+    if (err == legacy_hal::WIFI_SUCCESS) return ifname;
+
+    return getWlanIfaceName(idx);
 }
 
 }  // namespace implementation
