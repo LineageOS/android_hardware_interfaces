@@ -59,7 +59,7 @@ class WifiChipTest : public Test {
             {feature_flags::chip_mode_ids::kV1Ap, combinationsAp}
         };
         // clang-format on
-        EXPECT_CALL(*feature_flags_, getChipModes())
+        EXPECT_CALL(*feature_flags_, getChipModes(true))
             .WillRepeatedly(testing::Return(modes));
     }
 
@@ -76,7 +76,7 @@ class WifiChipTest : public Test {
             {feature_flags::chip_mode_ids::kV1Ap, combinationsAp}
         };
         // clang-format on
-        EXPECT_CALL(*feature_flags_, getChipModes())
+        EXPECT_CALL(*feature_flags_, getChipModes(true))
             .WillRepeatedly(testing::Return(modes));
     }
 
@@ -89,7 +89,7 @@ class WifiChipTest : public Test {
             {feature_flags::chip_mode_ids::kV1Sta, combinationsSta}
         };
         // clang-format on
-        EXPECT_CALL(*feature_flags_, getChipModes())
+        EXPECT_CALL(*feature_flags_, getChipModes(true))
             .WillRepeatedly(testing::Return(modes));
     }
 
@@ -103,7 +103,7 @@ class WifiChipTest : public Test {
             {feature_flags::chip_mode_ids::kV3, combinations}
         };
         // clang-format on
-        EXPECT_CALL(*feature_flags_, getChipModes())
+        EXPECT_CALL(*feature_flags_, getChipModes(true))
             .WillRepeatedly(testing::Return(modes));
     }
 
@@ -116,7 +116,7 @@ class WifiChipTest : public Test {
             {feature_flags::chip_mode_ids::kV3, combinations}
         };
         // clang-format on
-        EXPECT_CALL(*feature_flags_, getChipModes())
+        EXPECT_CALL(*feature_flags_, getChipModes(true))
             .WillRepeatedly(testing::Return(modes));
     }
 
@@ -129,7 +129,7 @@ class WifiChipTest : public Test {
             {feature_flags::chip_mode_ids::kV3, combinations}
         };
         // clang-format on
-        EXPECT_CALL(*feature_flags_, getChipModes())
+        EXPECT_CALL(*feature_flags_, getChipModes(true))
             .WillRepeatedly(testing::Return(modes));
     }
 
@@ -267,10 +267,12 @@ class WifiChipTest : public Test {
 
     sp<WifiChip> chip_;
     ChipId chip_id_ = kFakeChipId;
+    legacy_hal::wifi_hal_fn fake_func_table_;
     std::shared_ptr<NiceMock<wifi_system::MockInterfaceTool>> iface_tool_{
         new NiceMock<wifi_system::MockInterfaceTool>};
     std::shared_ptr<NiceMock<legacy_hal::MockWifiLegacyHal>> legacy_hal_{
-        new NiceMock<legacy_hal::MockWifiLegacyHal>(iface_tool_)};
+        new NiceMock<legacy_hal::MockWifiLegacyHal>(iface_tool_,
+                                                    fake_func_table_, true)};
     std::shared_ptr<NiceMock<mode_controller::MockWifiModeController>>
         mode_controller_{new NiceMock<mode_controller::MockWifiModeController>};
     std::shared_ptr<NiceMock<iface_util::MockWifiIfaceUtil>> iface_util_{
@@ -281,8 +283,8 @@ class WifiChipTest : public Test {
    public:
     void SetUp() override {
         chip_ =
-            new WifiChip(chip_id_, legacy_hal_, mode_controller_, iface_util_,
-                         feature_flags_, subsystemRestartHandler);
+            new WifiChip(chip_id_, true, legacy_hal_, mode_controller_,
+                         iface_util_, feature_flags_, subsystemRestartHandler);
 
         EXPECT_CALL(*mode_controller_, changeFirmwareMode(testing::_))
             .WillRepeatedly(testing::Return(true));

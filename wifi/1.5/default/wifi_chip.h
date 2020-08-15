@@ -50,7 +50,7 @@ using namespace android::hardware::wifi::V1_0;
  */
 class WifiChip : public V1_4::IWifiChip {
    public:
-    WifiChip(ChipId chip_id,
+    WifiChip(ChipId chip_id, bool is_primary,
              const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal,
              const std::weak_ptr<mode_controller::WifiModeController>
                  mode_controller,
@@ -256,10 +256,11 @@ class WifiChip : public V1_4::IWifiChip {
     bool isStaApConcurrencyAllowedInCurrentMode();
     bool isDualApAllowedInCurrentMode();
     std::string getFirstActiveWlanIfaceName();
-    std::string allocateApOrStaIfaceName(uint32_t start_idx);
+    std::string allocateApOrStaIfaceName(IfaceType type, uint32_t start_idx);
     std::string allocateApIfaceName();
     std::string allocateStaIfaceName();
     bool writeRingbufferFilesInternal();
+    std::string getWlanIfaceNameWithType(IfaceType type, unsigned idx);
 
     ChipId chip_id_;
     std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal_;
