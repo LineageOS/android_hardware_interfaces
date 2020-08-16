@@ -27,6 +27,7 @@
 #include "wifi_chip.h"
 #include "wifi_feature_flags.h"
 #include "wifi_legacy_hal.h"
+#include "wifi_legacy_hal_factory.h"
 #include "wifi_mode_controller.h"
 
 namespace android {
@@ -41,7 +42,8 @@ namespace implementation {
 class Wifi : public V1_5::IWifi {
    public:
     Wifi(const std::shared_ptr<wifi_system::InterfaceTool> iface_tool,
-         const std::shared_ptr<legacy_hal::WifiLegacyHal> legacy_hal,
+         const std::shared_ptr<legacy_hal::WifiLegacyHalFactory>
+             legacy_hal_factory,
          const std::shared_ptr<mode_controller::WifiModeController>
              mode_controller,
          const std::shared_ptr<iface_util::WifiIfaceUtil> iface_util,
@@ -75,16 +77,18 @@ class Wifi : public V1_5::IWifi {
     WifiStatus initializeModeControllerAndLegacyHal();
     WifiStatus stopLegacyHalAndDeinitializeModeController(
         std::unique_lock<std::recursive_mutex>* lock);
+    ChipId getChipIdFromWifiChip(sp<WifiChip>& chip);
 
     // Instance is created in this root level |IWifi| HIDL interface object
     // and shared with all the child HIDL interface objects.
     std::shared_ptr<wifi_system::InterfaceTool> iface_tool_;
-    std::shared_ptr<legacy_hal::WifiLegacyHal> legacy_hal_;
+    std::shared_ptr<legacy_hal::WifiLegacyHalFactory> legacy_hal_factory_;
     std::shared_ptr<mode_controller::WifiModeController> mode_controller_;
+    std::vector<std::shared_ptr<legacy_hal::WifiLegacyHal>> legacy_hals_;
     std::shared_ptr<iface_util::WifiIfaceUtil> iface_util_;
     std::shared_ptr<feature_flags::WifiFeatureFlags> feature_flags_;
     RunState run_state_;
-    sp<WifiChip> chip_;
+    std::vector<sp<WifiChip>> chips_;
     hidl_callback_util::HidlCallbackHandler<IWifiEventCallback>
         event_cb_handler_;
 

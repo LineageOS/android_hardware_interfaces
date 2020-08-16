@@ -173,7 +173,8 @@ using on_radio_mode_change_callback =
  */
 class WifiLegacyHal {
    public:
-    WifiLegacyHal(const std::weak_ptr<wifi_system::InterfaceTool> iface_tool);
+    WifiLegacyHal(const std::weak_ptr<wifi_system::InterfaceTool> iface_tool,
+                  const wifi_hal_fn& fn, bool is_primary);
     virtual ~WifiLegacyHal() = default;
 
     // Initialize the legacy HAL function table.
@@ -379,6 +380,7 @@ class WifiLegacyHal {
     virtual wifi_error createVirtualInterface(const std::string& ifname,
                                               wifi_interface_type iftype);
     virtual wifi_error deleteVirtualInterface(const std::string& ifname);
+    wifi_error getSupportedIfaceName(uint32_t iface_type, std::string& ifname);
 
    private:
     // Retrieve interface handles for all the available interfaces.
@@ -408,6 +410,11 @@ class WifiLegacyHal {
     // Flag to indicate if the legacy HAL has been started.
     bool is_started_;
     std::weak_ptr<wifi_system::InterfaceTool> iface_tool_;
+    // flag to indicate if this HAL is for the primary chip. This is used
+    // in order to avoid some hard-coded behavior used with older HALs,
+    // such as bring wlan0 interface up/down on start/stop HAL.
+    // it may be removed once vendor HALs are updated.
+    bool is_primary_;
 };
 
 }  // namespace legacy_hal
