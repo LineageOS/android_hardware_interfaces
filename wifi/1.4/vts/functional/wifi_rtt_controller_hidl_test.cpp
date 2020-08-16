@@ -148,6 +148,51 @@ TEST_P(WifiRttControllerHidlTest, RegisterEventCallback_1_4) {
 }
 
 /*
+ * Request2SidedRangeMeasurement
+ * This test case tests the two sided ranging - 802.11mc FTM protocol.
+ */
+TEST_P(WifiRttControllerHidlTest, Request2SidedRangeMeasurement) {
+    std::pair<WifiStatus, RttCapabilities> status_and_caps;
+
+    // Get the Capabilities
+    status_and_caps = HIDL_INVOKE(wifi_rtt_controller_, getCapabilities_1_4);
+    EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_caps.first.code);
+    if (!status_and_caps.second.rttFtmSupported) {
+        GTEST_SKIP()
+            << "Skipping two sided RTT since driver/fw doesn't support";
+    }
+    std::vector<RttConfig> configs;
+    RttConfig config;
+    int cmdId = 55;
+    // Set the config with test data
+    for (int i = 0; i < 6; i++) {
+        config.addr[i] = i;
+    }
+    config.type = RttType::TWO_SIDED;
+    config.peer = RttPeerType::AP;
+    config.channel.width = WifiChannelWidthInMhz::WIDTH_80;
+    config.channel.centerFreq = 5180;
+    config.channel.centerFreq0 = 5210;
+    config.channel.centerFreq1 = 0;
+    config.bw = RttBw::BW_20MHZ;
+    config.preamble = RttPreamble::HT;
+    config.mustRequestLci = false;
+    config.mustRequestLcr = false;
+    config.burstPeriod = 0;
+    config.numBurst = 0;
+    config.numFramesPerBurst = 8;
+    config.numRetriesPerRttFrame = 0;
+    config.numRetriesPerFtmr = 0;
+    config.burstDuration = 9;
+    // Insert config in the vector
+    configs.push_back(config);
+
+    // Invoke the call
+    const auto& status =
+        HIDL_INVOKE(wifi_rtt_controller_, rangeRequest_1_4, cmdId, configs);
+    EXPECT_EQ(WifiStatusCode::SUCCESS, status.code);
+}
+/*
  * rangeRequest_1_4
  */
 TEST_P(WifiRttControllerHidlTest, RangeRequest_1_4) {
@@ -156,6 +201,10 @@ TEST_P(WifiRttControllerHidlTest, RangeRequest_1_4) {
     // Get the Capabilities
     status_and_caps = HIDL_INVOKE(wifi_rtt_controller_, getCapabilities_1_4);
     EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_caps.first.code);
+    if (!status_and_caps.second.rttOneSidedSupported) {
+        GTEST_SKIP()
+            << "Skipping one sided RTT since driver/fw doesn't support";
+    }
     // Get the highest support preamble
     int preamble = 1;
     status_and_caps.second.preambleSupport >>= 1;
