@@ -62,6 +62,8 @@ class Frontend : public V1_1::IFrontend {
 
     virtual Return<Result> setLnb(uint32_t lnb) override;
 
+    virtual Return<Result> linkCiCam(uint32_t ciCamId) override;
+
     FrontendType getFrontendType();
 
     FrontendId getFrontendId();
@@ -78,6 +80,7 @@ class Frontend : public V1_1::IFrontend {
     FrontendType mType = FrontendType::UNDEFINED;
     FrontendId mId = 0;
     bool mIsLocked = false;
+    uint32_t mCiCamId;
 
     std::ifstream mFrontendData;
 };
