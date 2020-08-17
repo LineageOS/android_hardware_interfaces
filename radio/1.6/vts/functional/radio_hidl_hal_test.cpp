@@ -72,3 +72,9 @@ std::cv_status RadioHidlTest_v1_6::wait() {
     count_--;
     return status;
 }
+
+void RadioHidlTest_v1_6::getDataCallList() {
+    serial = GetRandomSerialNumber();
+    radio_v1_6->getDataCallList_1_6(serial);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+}
