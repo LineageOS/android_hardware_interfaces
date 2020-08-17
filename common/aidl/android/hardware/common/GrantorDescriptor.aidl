@@ -16,10 +16,17 @@
 
 package android.hardware.common;
 
+/*
+ * Included in MQDescriptor, for use with libfmq.
+ */
 @VintfStability
 parcelable GrantorDescriptor {
-    int flags;
-    int fdIndex;
+    /*
+     * The offset of this descriptor in the shared memory in bytes.
+     */
     int offset;
+    /*
+     * The size of this descriptor in bytes.
+     */
     long extent;
 }
