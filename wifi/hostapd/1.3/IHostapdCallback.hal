@@ -18,18 +18,34 @@ package android.hardware.wifi.hostapd@1.3;
 
 import @1.1::IHostapdCallback;
 import @1.2::MacAddress;
+import Bandwidth;
 import Generation;
 
 /**
  * Top-level callback object for managing SoftAPs.
  */
 interface IHostapdCallback extends @1.1::IHostapdCallback {
-    oneway onInterfaceInfoChanged(string ifaceName, Generation generation);
+    /**
+     * Invoked when information changes for one of the AP instances.
+     *
+     * @param ifaceName Name of the interface which was added via
+     * |IHostapd.addAccessPoint|.
+     * @param apIfaceInstance The identity of the AP instance. The interface
+     * will have two instances (e.q. 2.4 Ghz AP and 5 GHz AP) in dual AP mode.
+     * The apIfaceInstance can be used to identify which instance the callback
+     * is from.
+     * Note: The apIfaceInstance must be same as ifaceName in single AP mode.
+     * @param freq The operational frequency of the AP.
+     * @param bandwidth The operational bandwidth of the AP.
+     * @param generation The operational mode of the AP (e.g. 11ac, 11ax).
+     */
+    oneway onApInstanceInfoChanged(string ifaceName, string apIfaceInstance, uint32_t freq,
+        Bandwidth bandwidth, Generation generation);
 
     /**
      * Invoked when a client connects/disconnects from the hotspot.
      *
-     * @param ifaceName Name of the interface which is added via
+     * @param ifaceName Name of the interface which was added via
      * |IHostapd.addAccessPoint|.
      * @param apIfaceInstance The identity of the AP instance. The interface
      * will have two instances in dual AP mode. The apIfaceInstance can be used
