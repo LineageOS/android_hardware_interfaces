@@ -36,22 +36,6 @@ static constexpr const char* kSeparator = "||";
 static const size_t kNumFieldsPerUserInfo = 2;
 static const size_t kNumFieldsPerSetAssociation = 2;
 
-template <typename T>
-Result<T> verifyAndCast(int32_t value) {
-    T castValue = static_cast<T>(value);
-    const auto iter = hidl_enum_range<T>();
-    if (castValue < *iter.begin() || castValue > *std::prev(iter.end())) {
-        return Error() << "Value " << value << " not in range [" << toString(*iter.begin()) << ", "
-                       << toString(*std::prev(iter.end())) << "]";
-    }
-    for (const auto& v : hidl_enum_range<T>()) {
-        if (castValue == v) {
-            return castValue;
-        }
-    }
-    return Error() << "Value " << value << " not in enum values";
-}
-
 Result<void> verifyPropValue(const VehiclePropValue& propValue, VehicleProperty vehicleProperty,
                              size_t minInt32Values) {
     auto prop = verifyAndCast<VehicleProperty>(propValue.prop);
@@ -154,6 +138,22 @@ Result<void> parseUserAssociations(const hidl_vec<int32_t>& int32Values, size_t 
 
 }  // namespace
 
+template <typename T>
+Result<T> verifyAndCast(int32_t value) {
+    T castValue = static_cast<T>(value);
+    const auto iter = hidl_enum_range<T>();
+    if (castValue < *iter.begin() || castValue > *std::prev(iter.end())) {
+        return Error() << "Value " << value << " not in range [" << toString(*iter.begin()) << ", "
+                       << toString(*std::prev(iter.end())) << "]";
+    }
+    for (const auto& v : hidl_enum_range<T>()) {
+        if (castValue == v) {
+            return castValue;
+        }
+    }
+    return Error() << "Value " << value << " not in enum values";
+}
+
 Result<InitialUserInfoRequest> toInitialUserInfoRequest(const VehiclePropValue& propValue) {
     auto ret = verifyPropValue(propValue, VehicleProperty::INITIAL_USER_INFO, 2);
     if (!ret.ok()) {
@@ -186,7 +186,8 @@ Result<SwitchUserRequest> toSwitchUserRequest(const VehiclePropValue& propValue)
     if (*messageType != SwitchUserMessageType::LEGACY_ANDROID_SWITCH &&
         *messageType != SwitchUserMessageType::ANDROID_SWITCH &&
         *messageType != SwitchUserMessageType::ANDROID_POST_SWITCH) {
-        return Error() << "Invalid " << toString(*messageType) << " from Android System";
+        return Error() << "Invalid " << toString(*messageType)
+                       << " message type from Android System";
     }
     request.requestId = propValue.value.int32Values[0];
     request.messageType = *messageType;
