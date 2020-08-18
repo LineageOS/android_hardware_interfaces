@@ -16,6 +16,7 @@ fi
 readonly HAL_DIRECTORY=hardware/interfaces/audio
 readonly HAL_VTS_DIRECTORY=core/all-versions/vts/functional
 readonly HAL_VTS_FILE=AudioPrimaryHidlHalTest.cpp
+readonly HAL_EFFECT_VTS_DIRECTORY=effect/all-versions/vts/functional
 readonly HAL_SERVICE_DIRECTORY=common/all-versions/default/service/
 readonly HAL_SERVICE_CPP=service.cpp
 
@@ -25,7 +26,7 @@ readonly IMPL_FACTORYHAL=FactoryHalHidl.cpp
 
 readonly VTS_DIRECTORY=test/vts-testcase/hal/audio
 readonly VTS_LIST=test/vts/tools/build/tasks/list/vts_test_lib_hidl_package_list.mk
-readonly WATCHDOG=frameworks/base/services/core/java/com/android/server/Watchdog.cpp
+readonly WATCHDOG=frameworks/base/services/core/java/com/android/server/Watchdog.java
 readonly DUMP_UTILS=frameworks/native/libs/dumputils/dump_utils.cpp
 readonly GSI_CURRENT=build/make/target/product/gsi/current.txt
 
@@ -45,6 +46,9 @@ readonly NEW_VERSION_REGEX="${NEW_MAJOR_VERSION}[._]${NEW_MINOR_VERSION}"
 readonly BASE_VERSION_ESCAPE="${BASE_MAJOR_VERSION}\.${BASE_MINOR_VERSION}"
 readonly BASE_VERSION_UNDERSCORE="${BASE_MAJOR_VERSION}_${BASE_MINOR_VERSION}"
 readonly NEW_VERSION_UNDERSCORE="${NEW_MAJOR_VERSION}_${NEW_MINOR_VERSION}"
+
+readonly HAL_VTS_CONFIG_FILE_GLOB="*Audio*V${BASE_VERSION_UNDERSCORE}*Test.xml"
+
 updateVersion() {
     if [ $1 == "-e" ]; then
         local -r REGEX="$2"; shift 2
@@ -69,6 +73,10 @@ updateVersion() {
 
 updateAudioVersion() {
     updateVersion -e "audio.*$BASE_VERSION_REGEX" "$@"
+}
+
+updateAudioVtsTargetVersion() {
+    updateVersion -e "Audio.*V$BASE_VERSION_REGEX" "$@"
 }
 
 updateLicenceDates() {
@@ -101,9 +109,16 @@ createHALVersion() {
         cp -Tar $DIR/$BASE_VERSION $DIR/$NEW_VERSION
         COPY+=" $DIR/$NEW_VERSION"
     done
+    local COPY_FILES_TO=
+    for FILE_FROM in $(find . -type f -name "$HAL_VTS_CONFIG_FILE_GLOB"); do
+        local FILE_TO=${FILE_FROM/$BASE_VERSION_UNDERSCORE/$NEW_VERSION_UNDERSCORE}
+        cp "$FILE_FROM" "$FILE_TO"
+        COPY_FILES_TO+=" $FILE_TO"
+    done
 
     echo "Replacing $BASE_VERSION by $NEW_VERSION in the copied files"
     updateVersion $(find $COPY -type f)
+    updateVersion $COPY_FILES_TO
     updateLicenceDates $(find $COPY -type f)
 
     echo "Update implementation and VTS generic code"
@@ -156,18 +171,12 @@ createFrameworkAdapter() {
 echo "Now creating the framework adapter version"
 runIfNeeded $FWK_DIRECTORY createFrameworkAdapter
 
-createVTSXML() {
-    cp -Tar V$BASE_VERSION_UNDERSCORE V$NEW_VERSION_UNDERSCORE
-    cp -Tar effect/{V$BASE_VERSION_UNDERSCORE,V$NEW_VERSION_UNDERSCORE}
-    local -r FILES=$(find {.,effect}/V$NEW_VERSION_UNDERSCORE -type f)
-    updateVersion $FILES
-    updateLicenceDates $FILES
-}
-echo "Now update VTS XML"
-runIfNeeded $VTS_DIRECTORY createVTSXML
-
 echo "Now register new VTS"
+PREV_MODIFIED="$MODIFIED"
 runIfNeeded $(dirname $VTS_LIST) updateAudioVersion -v original_before=1 $(basename $VTS_LIST)
+if [[ "$PREV_MODIFIED" != "$MODIFIED" ]]; then
+    updateAudioVtsTargetVersion -v original_after=1 $(basename $VTS_LIST)
+fi
 
 echo "Now update watchdog"
 runIfNeeded $(dirname $WATCHDOG) updateAudioVersion -v original_before=1 $(basename $WATCHDOG)
