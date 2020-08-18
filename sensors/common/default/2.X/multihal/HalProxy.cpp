@@ -693,6 +693,10 @@ void HalProxy::decrementRefCountAndMaybeReleaseWakelock(size_t delta,
                                                         int64_t timeoutStart /* = -1 */) {
     if (!mThreadsRun.load()) return;
     std::lock_guard<std::recursive_mutex> lockGuard(mWakelockMutex);
+    if (delta > mWakelockRefCount) {
+        ALOGE("Decrementing wakelock ref count by %zu when count is %zu",
+              delta, mWakelockRefCount);
+    }
     if (timeoutStart == -1) timeoutStart = mWakelockTimeoutResetTime;
     if (mWakelockRefCount == 0 || timeoutStart < mWakelockTimeoutResetTime) return;
     mWakelockRefCount -= std::min(mWakelockRefCount, delta);
