@@ -64,6 +64,7 @@ class RadioResponse_v1_4 : public ::android::hardware::radio::V1_4::IRadioRespon
 
     // Call
     hidl_vec<::android::hardware::radio::V1_2::Call> currentCalls;
+    ::android::hardware::radio::V1_2::VoiceRegStateResult voiceRegResp;
 
     // Modem
     bool isModemEnabled;
