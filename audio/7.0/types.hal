@@ -1,0 +1,412 @@
+/*
+ * Copyright (C) 2020 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.audio@7.0;
+
+import android.hardware.audio.common@7.0;
+
+enum Result : int32_t {
+    OK,
+    NOT_INITIALIZED,
+    INVALID_ARGUMENTS,
+    INVALID_STATE,
+    /**
+     * Methods marked as "Optional method" must return this result value
+     * if the operation is not supported by HAL.
+     */
+    NOT_SUPPORTED
+};
+
+@export(name="audio_drain_type_t", value_prefix="AUDIO_DRAIN_")
+enum AudioDrain : int32_t {
+    /** drain() returns when all data has been played. */
+    ALL,
+    /**
+     * drain() returns a short time before all data from the current track has
+     * been played to give time for gapless track switch.
+     */
+    EARLY_NOTIFY
+};
+
+/**
+ * A substitute for POSIX timespec.
+ */
+struct TimeSpec {
+    uint64_t tvSec;   // seconds
+    uint64_t tvNSec;  // nanoseconds
+};
+
+struct ParameterValue {
+    string key;
+    string value;
+};
+
+enum MmapBufferFlag : uint32_t {
+    NONE    = 0x0,
+    /**
+     * If the buffer can be securely shared to untrusted applications
+     * through the AAudio exclusive mode.
+     * Only set this flag if applications are restricted from accessing the
+     * memory surrounding the audio data buffer by a kernel mechanism.
+     * See Linux kernel's dma_buf.
+     */
+    APPLICATION_SHAREABLE    = 0x1,
+};
+
+/**
+ * Mmap buffer descriptor returned by IStream.createMmapBuffer().
+ * Used by streams opened in mmap mode.
+ */
+struct MmapBufferInfo {
+    /** Mmap memory buffer */
+    memory  sharedMemory;
+    /** Total buffer size in frames */
+    uint32_t bufferSizeFrames;
+    /** Transfer size granularity in frames */
+    uint32_t burstSizeFrames;
+    /** Attributes describing the buffer. */
+    bitfield<MmapBufferFlag> flags;
+};
+
+/**
+ * Mmap buffer read/write position returned by IStream.getMmapPosition().
+ * Used by streams opened in mmap mode.
+ */
+struct MmapPosition {
+    int64_t  timeNanoseconds; // time stamp in ns, CLOCK_MONOTONIC
+    int32_t  positionFrames;  // increasing 32 bit frame count reset when IStream.stop() is called
+};
+
+/**
+ * The message queue flags used to synchronize reads and writes from
+ * message queues used by StreamIn and StreamOut.
+ */
+enum MessageQueueFlagBits : uint32_t {
+    NOT_EMPTY = 1 << 0,
+    NOT_FULL = 1 << 1
+};
+
+/*
+ * Microphone information
+ *
+ */
+
+/**
+ * A 3D point used to represent position or orientation of a microphone.
+ *
+ * Position: Coordinates of the microphone's capsule, in meters, from the
+ * bottom-left-back corner of the bounding box of android device in natural
+ * orientation (PORTRAIT for phones, LANDSCAPE for tablets, tvs, etc).
+ * The orientation musth match the reported by the api Display.getRotation().
+ *
+ * Orientation: Normalized vector to signal the main orientation of the
+ * microphone's capsule. Magnitude = sqrt(x^2 + y^2 + z^2) = 1
+ */
+struct AudioMicrophoneCoordinate {
+    float x;
+    float y;
+    float z;
+};
+
+/**
+ * Enum to identify the type of channel mapping for active microphones.
+ * Used channels further identify if the microphone has any significative
+ * process (e.g. High Pass Filtering, dynamic compression)
+ * Simple processing as constant gain adjustment must be DIRECT.
+ */
+enum AudioMicrophoneChannelMapping : uint32_t {
+    UNUSED      = 0, /* Channel not used */
+    DIRECT      = 1, /* Channel used and signal not processed */
+    PROCESSED   = 2, /* Channel used and signal has some process */
+};
+
+/**
+ * Enum to identify locations of microphones in regards to the body of the
+ * android device.
+ */
+enum AudioMicrophoneLocation : uint32_t {
+    UNKNOWN             = 0,
+    MAINBODY            = 1,
+    MAINBODY_MOVABLE    = 2,
+    PERIPHERAL          = 3,
+};
+
+/**
+ * Identifier to help group related microphones together
+ * e.g. microphone arrays should belong to the same group
+ */
+typedef int32_t AudioMicrophoneGroup;
+
+/**
+ * Enum with standard polar patterns of microphones
+ */
+enum AudioMicrophoneDirectionality : uint32_t {
+    UNKNOWN         = 0,
+    OMNI            = 1,
+    BI_DIRECTIONAL  = 2,
+    CARDIOID        = 3,
+    HYPER_CARDIOID  = 4,
+    SUPER_CARDIOID  = 5,
+};
+
+/**
+ * A (frequency, level) pair. Used to represent frequency response.
+ */
+struct AudioFrequencyResponsePoint {
+    /** In Hz */
+    float frequency;
+    /** In dB */
+    float level;
+};
+
+/**
+ * Structure used by the HAL to describe microphone's characteristics
+ * Used by StreamIn and Device
+ */
+struct MicrophoneInfo {
+    /** Unique alphanumeric id for microphone. Guaranteed to be the same
+     * even after rebooting.
+     */
+    string                                  deviceId;
+    /**
+     * Device specific information
+     */
+    DeviceAddress                           deviceAddress;
+    /** Each element of the vector must describe the channel with the same
+     *  index.
+     */
+    vec<AudioMicrophoneChannelMapping>      channelMapping;
+    /** Location of the microphone in regard to the body of the device */
+    AudioMicrophoneLocation                 location;
+    /** Identifier to help group related microphones together
+     *  e.g. microphone arrays should belong to the same group
+     */
+    AudioMicrophoneGroup                    group;
+    /** Index of this microphone within the group.
+     *  (group, index) must be unique within the same device.
+     */
+    uint32_t                                indexInTheGroup;
+    /** Level in dBFS produced by a 1000 Hz tone at 94 dB SPL */
+    float                                   sensitivity;
+    /** Level in dB of the max SPL supported at 1000 Hz */
+    float                                   maxSpl;
+    /** Level in dB of the min SPL supported at 1000 Hz */
+    float                                   minSpl;
+    /** Standard polar pattern of the microphone */
+    AudioMicrophoneDirectionality           directionality;
+    /** Vector with ordered frequency responses (from low to high frequencies)
+     *  with the frequency response of the microphone.
+     *  Levels are in dB, relative to level at 1000 Hz
+     */
+    vec<AudioFrequencyResponsePoint>        frequencyResponse;
+    /** Position of the microphone's capsule in meters, from the
+     *  bottom-left-back corner of the bounding box of device.
+     */
+    AudioMicrophoneCoordinate               position;
+    /** Normalized point to signal the main orientation of the microphone's
+     *  capsule. sqrt(x^2 + y^2 + z^2) = 1
+     */
+    AudioMicrophoneCoordinate               orientation;
+};
+
+/**
+ * Constants used by the HAL to determine how to select microphones and process those inputs in
+ * order to optimize for capture in the specified direction.
+ *
+ * MicrophoneDirection Constants are defined in MicrophoneDirection.java.
+ */
+@export(name="audio_microphone_direction_t", value_prefix="MIC_DIRECTION_")
+enum MicrophoneDirection : int32_t {
+    /**
+     * Don't do any directionality processing of the activated microphone(s).
+     */
+    UNSPECIFIED = 0,
+    /**
+     * Optimize capture for audio coming from the screen-side of the device.
+     */
+    FRONT = 1,
+    /**
+     * Optimize capture for audio coming from the side of the device opposite the screen.
+     */
+    BACK = 2,
+    /**
+     * Optimize capture for audio coming from an off-device microphone.
+     */
+    EXTERNAL = 3,
+};
+
+
+/* Dual Mono handling is used when a stereo audio stream
+ * contains separate audio content on the left and right channels.
+ * Such information about the content of the stream may be found, for example,
+ * in ITU T-REC-J.94-201610 A.6.2.3 Component descriptor.
+ */
+@export(name="audio_dual_mono_mode_t", value_prefix="AUDIO_DUAL_MONO_MODE_")
+enum DualMonoMode : int32_t {
+    // Need to be in sync with DUAL_MONO_MODE* constants in
+    // frameworks/base/media/java/android/media/AudioTrack.java
+    /**
+     * Disable any Dual Mono presentation effect.
+     *
+     */
+    OFF = 0,
+    /**
+     * This mode indicates that a stereo stream should be presented
+     * with the left and right audio channels blended together
+     * and delivered to both channels.
+     *
+     * Behavior for non-stereo streams is implementation defined.
+     * A suggested guideline is that the left-right stereo symmetric
+     * channels are pairwise blended, the other channels such as center
+     * are left alone.
+     */
+    LR = 1,
+    /**
+     * This mode indicates that a stereo stream should be presented
+     * with the left audio channel replicated into the right audio channel.
+     *
+     * Behavior for non-stereo streams is implementation defined.
+     * A suggested guideline is that all channels with left-right
+     * stereo symmetry will have the left channel position replicated
+     * into the right channel position. The center channels (with no
+     * left/right symmetry) or unbalanced channels are left alone.
+     */
+    LL = 2,
+    /**
+     * This mode indicates that a stereo stream should be presented
+     * with the right audio channel replicated into the left audio channel.
+     *
+     * Behavior for non-stereo streams is implementation defined.
+     * A suggested guideline is that all channels with left-right
+     * stereo symmetry will have the right channel position replicated
+     * into the left channel position. The center channels (with no
+     * left/right symmetry) or unbalanced channels are left alone.
+     */
+    RR = 3,
+};
+
+/**
+ * Algorithms used for timestretching (preserving pitch while playing audio
+ * content at different speed).
+ */
+@export(name="audio_timestretch_stretch_mode_t", value_prefix="AUDIO_TIMESTRETCH_STRETCH_")
+enum TimestretchMode : int32_t {
+    // Need to be in sync with AUDIO_STRETCH_MODE_* constants in
+    // frameworks/base/media/java/android/media/PlaybackParams.java
+    DEFAULT = 0,
+    /** Selects timestretch algorithm best suitable for voice (speech) content. */
+    VOICE = 1,
+};
+
+/**
+ * Behavior when the values for speed and / or pitch are out
+ * of applicable range.
+ */
+@export(name="audio_timestretch_fallback_mode_t", value_prefix="AUDIO_TIMESTRETCH_FALLBACK_")
+enum TimestretchFallbackMode : int32_t {
+    // Need to be in sync with AUDIO_FALLBACK_MODE_* constants in
+    // frameworks/base/media/java/android/media/PlaybackParams.java
+    /** Play silence for parameter values that are out of range. */
+    MUTE = 1,
+    /** Return an error while trying to set the parameters. */
+    FAIL = 2,
+};
+
+/**
+ * Parameters determining playback behavior. They are used to speed up or
+ * slow down playback and / or change the tonal frequency of the audio content
+ * (pitch).
+ */
+struct PlaybackRate {
+    /**
+     * Speed factor (multiplier). Normal speed has the value of 1.0f.
+     * Values less than 1.0f slow down playback, value greater than 1.0f
+     * speed it up.
+     */
+    float speed;
+    /**
+     * Pitch factor (multiplier). Setting pitch value to 1.0f together
+     * with changing playback speed preserves the pitch, this is often
+     * called "timestretching." Setting the pitch value equal to speed produces
+     * the same effect as playing audio content at different sampling rate.
+     */
+    float pitch;
+    /**
+     * Selects the algorithm used for timestretching (preserving pitch while
+     * playing audio at different speed).
+     */
+    TimestretchMode timestretchMode;
+    /**
+     * Selects the behavior when the specified values for speed and / or pitch
+     * are out of applicable range.
+     */
+    TimestretchFallbackMode fallbackMode;
+};
+
+/**
+ * The audio output flags serve two purposes:
+ *
+ *  - when an output stream is created they indicate its attributes;
+ *
+ *  - when present in an output profile descriptor listed for a particular audio
+ *    hardware module, they indicate that an output stream can be opened that
+ *    supports the attributes indicated by the flags.
+ */
+@export(name="audio_output_flags_t", value_prefix="AUDIO_OUTPUT_FLAG_")
+enum AudioOutputFlag : int32_t {
+    NONE    = 0x0, // no attributes
+    DIRECT  = 0x1, // this output directly connects a track
+                   // to one output stream: no software mixer
+    PRIMARY = 0x2, // this output is the primary output of the device. It is
+                   // unique and must be present. It is opened by default and
+                   // receives routing, audio mode and volume controls related
+                   // to voice calls.
+    FAST    = 0x4,    // output supports "fast tracks", defined elsewhere
+    DEEP_BUFFER      = 0x8,   // use deep audio buffers
+    COMPRESS_OFFLOAD = 0x10,  // offload playback of compressed streams to
+                              // hardware codec
+    NON_BLOCKING     = 0x20,  // use non-blocking write
+    HW_AV_SYNC = 0x40,   // output uses a hardware A/V sync
+    TTS        = 0x80,   // output for streams transmitted through speaker at a
+                         // sample rate high enough to accommodate lower-range
+                         // ultrasonic p/b
+    RAW        = 0x100,  // minimize signal processing
+    SYNC       = 0x200,  // synchronize I/O streams
+    IEC958_NONAUDIO = 0x400, // Audio stream contains compressed audio in SPDIF
+                             // data bursts, not PCM.
+    DIRECT_PCM = 0x2000,     // Audio stream containing PCM data that needs
+                             // to pass through compress path for DSP post proc.
+    MMAP_NOIRQ = 0x4000, // output operates in MMAP no IRQ mode.
+    VOIP_RX = 0x8000,    // preferred output for VoIP calls.
+    /** preferred output for call music */
+    INCALL_MUSIC = 0x10000,
+};
+
+/**
+ * The audio input flags are analogous to audio output flags.
+ */
+@export(name="audio_input_flags_t", value_prefix="AUDIO_INPUT_FLAG_")
+enum AudioInputFlag : int32_t {
+    NONE         = 0x0,  // no attributes
+    FAST         = 0x1,  // prefer an input that supports "fast tracks"
+    HW_HOTWORD   = 0x2,  // prefer an input that captures from hw hotword source
+    RAW          = 0x4,  // minimize signal processing
+    SYNC         = 0x8,  // synchronize I/O streams
+    MMAP_NOIRQ   = 0x10, // input operates in MMAP no IRQ mode.
+    VOIP_TX      = 0x20, // preferred input for VoIP calls.
+    HW_AV_SYNC   = 0x40, // input connected to an output that uses a hardware A/V sync
+    DIRECT       = 0x80, // for acquiring encoded streams
+};
