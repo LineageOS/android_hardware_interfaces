@@ -18,6 +18,11 @@ package android.hardware.common;
 
 import android.hardware.common.GrantorDescriptor;
 
+/*
+ * For use with libfmq. This is created from an instance of AidlMessageQueue,
+ * and is used to pass information required to create another instance of that
+ * queue for fast communication.
+ */
 @VintfStability
 parcelable MQDescriptor {
     /*
