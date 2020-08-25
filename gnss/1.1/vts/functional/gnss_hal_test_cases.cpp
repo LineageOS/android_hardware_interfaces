@@ -35,9 +35,9 @@ using android::hardware::gnss::V1_1::IGnssConfiguration;
 using android::hardware::gnss::V1_1::IGnssMeasurement;
 
 static bool IsAutomotiveDevice() {
-  char buffer[PROPERTY_VALUE_MAX] = {0};
-  property_get("ro.hardware.type", buffer, "");
-  return strncmp(buffer, "automotive", PROPERTY_VALUE_MAX) == 0;
+    char buffer[PROPERTY_VALUE_MAX] = {0};
+    property_get("ro.hardware.type", buffer, "");
+    return strncmp(buffer, "automotive", PROPERTY_VALUE_MAX) == 0;
 }
 
 /*

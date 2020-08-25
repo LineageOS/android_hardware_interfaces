@@ -17,6 +17,8 @@
 #include <Utils.h>
 #include "gtest/gtest.h"
 
+#include <cutils/properties.h>
+
 namespace android {
 namespace hardware {
 namespace gnss {
@@ -162,6 +164,12 @@ GnssConstellationType_1_0 Utils::mapConstellationType(GnssConstellationType_2_0 
         default:
             return GnssConstellationType_1_0::UNKNOWN;
     }
+}
+
+bool Utils::isAutomotiveDevice() {
+    char buffer[PROPERTY_VALUE_MAX] = {0};
+    property_get("ro.hardware.type", buffer, "");
+    return strncmp(buffer, "automotive", PROPERTY_VALUE_MAX) == 0;
 }
 
 }  // namespace common
