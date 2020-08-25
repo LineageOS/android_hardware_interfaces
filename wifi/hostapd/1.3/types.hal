@@ -34,4 +34,3 @@ enum Generation : uint32_t {
     WIFI_STANDARD_11AC = 2,
     WIFI_STANDARD_11AX = 3,
 };
-

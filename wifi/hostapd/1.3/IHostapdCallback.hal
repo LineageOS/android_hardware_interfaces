@@ -17,6 +17,7 @@
 package android.hardware.wifi.hostapd@1.3;
 
 import @1.1::IHostapdCallback;
+import @1.2::MacAddress;
 import Generation;
 
 /**
@@ -24,4 +25,20 @@ import Generation;
  */
 interface IHostapdCallback extends @1.1::IHostapdCallback {
     oneway onInterfaceInfoChanged(string ifaceName, Generation generation);
+
+    /**
+     * Invoked when a client connects/disconnects from the hotspot.
+     *
+     * @param ifaceName Name of the interface which is added via
+     * |IHostapd.addAccessPoint|.
+     * @param apIfaceInstance The identity of the AP instance. The interface
+     * will have two instances in dual AP mode. The apIfaceInstance can be used
+     * to identify which instance the callback is from.
+     * Note: The apIfaceInstance must be same as ifaceName in single AP mode.
+     * @param clientAddress Mac Address of hotspot client.
+     * @param isConnected true when client connected, false when client
+     * disconnected.
+     */
+    oneway onConnectedClientsChanged(string ifaceName, string apIfaceInstance,
+        MacAddress clientAddress, bool isConnected);
 };
