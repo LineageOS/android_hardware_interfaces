@@ -762,8 +762,9 @@ Return<void> RadioResponse_v1_4::getCellInfoListResponse_1_2(
 
 Return<void> RadioResponse_v1_4::getVoiceRegistrationStateResponse_1_2(
         const RadioResponseInfo& info,
-        const ::android::hardware::radio::V1_2::VoiceRegStateResult& /*voiceRegResponse*/) {
+        const ::android::hardware::radio::V1_2::VoiceRegStateResult& voiceRegResponse) {
     rspInfo = info;
+    voiceRegResp = voiceRegResponse;
     parent_v1_4.notify(info.serial);
     return Void();
 }
