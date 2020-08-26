@@ -56,7 +56,21 @@ TEST_P(RadioHidlTest_v1_4, emergencyDial) {
     EXPECT_EQ(serial, radioRsp_v1_4->rspInfo.serial);
 
     ALOGI("emergencyDial, rspInfo.error = %s\n", toString(radioRsp_v1_4->rspInfo.error).c_str());
-    EXPECT_EQ(RadioError::NONE, radioRsp_v1_4->rspInfo.error);
+
+    ::android::hardware::radio::V1_0::RadioError rspEmergencyDial = radioRsp_v1_4->rspInfo.error;
+    // In DSDS or TSTS, we only check the result if the current slot is IN_SERVICE
+    // or Emergency_Only.
+    if (isDsDsEnabled() || isTsTsEnabled()) {
+        serial = GetRandomSerialNumber();
+        radio_v1_4->getVoiceRegistrationState(serial);
+        EXPECT_EQ(std::cv_status::no_timeout, wait());
+        if (isVoiceEmergencyOnly(radioRsp_v1_4->voiceRegResp.regState) ||
+            isVoiceInService(radioRsp_v1_4->voiceRegResp.regState)) {
+            EXPECT_EQ(RadioError::NONE, rspEmergencyDial);
+        }
+    } else {
+        EXPECT_EQ(RadioError::NONE, rspEmergencyDial);
+    }
 
     // Give some time for modem to establish the emergency call channel.
     sleep(MODEM_EMERGENCY_CALL_ESTABLISH_TIME);
@@ -95,8 +109,21 @@ TEST_P(RadioHidlTest_v1_4, emergencyDial_withServices) {
 
     ALOGI("emergencyDial_withServices, rspInfo.error = %s\n",
           toString(radioRsp_v1_4->rspInfo.error).c_str());
-    EXPECT_EQ(RadioError::NONE, radioRsp_v1_4->rspInfo.error);
+    ::android::hardware::radio::V1_0::RadioError rspEmergencyDial = radioRsp_v1_4->rspInfo.error;
 
+    // In DSDS or TSTS, we only check the result if the current slot is IN_SERVICE
+    // or Emergency_Only.
+    if (isDsDsEnabled() || isTsTsEnabled()) {
+        serial = GetRandomSerialNumber();
+        radio_v1_4->getVoiceRegistrationState(serial);
+        EXPECT_EQ(std::cv_status::no_timeout, wait());
+        if (isVoiceEmergencyOnly(radioRsp_v1_4->voiceRegResp.regState) ||
+            isVoiceInService(radioRsp_v1_4->voiceRegResp.regState)) {
+            EXPECT_EQ(RadioError::NONE, rspEmergencyDial);
+        }
+    } else {
+        EXPECT_EQ(RadioError::NONE, rspEmergencyDial);
+    }
     // Give some time for modem to establish the emergency call channel.
     sleep(MODEM_EMERGENCY_CALL_ESTABLISH_TIME);
 
@@ -134,7 +161,21 @@ TEST_P(RadioHidlTest_v1_4, emergencyDial_withEmergencyRouting) {
 
     ALOGI("emergencyDial_withEmergencyRouting, rspInfo.error = %s\n",
           toString(radioRsp_v1_4->rspInfo.error).c_str());
-    EXPECT_EQ(RadioError::NONE, radioRsp_v1_4->rspInfo.error);
+    ::android::hardware::radio::V1_0::RadioError rspEmergencyDial = radioRsp_v1_4->rspInfo.error;
+
+    // In DSDS or TSTS, we only check the result if the current slot is IN_SERVICE
+    // or Emergency_Only.
+    if (isDsDsEnabled() || isTsTsEnabled()) {
+        serial = GetRandomSerialNumber();
+        radio_v1_4->getVoiceRegistrationState(serial);
+        EXPECT_EQ(std::cv_status::no_timeout, wait());
+        if (isVoiceEmergencyOnly(radioRsp_v1_4->voiceRegResp.regState) ||
+            isVoiceInService(radioRsp_v1_4->voiceRegResp.regState)) {
+            EXPECT_EQ(RadioError::NONE, rspEmergencyDial);
+        }
+    } else {
+        EXPECT_EQ(RadioError::NONE, rspEmergencyDial);
+    }
 
     // Give some time for modem to establish the emergency call channel.
     sleep(MODEM_EMERGENCY_CALL_ESTABLISH_TIME);
