@@ -1444,12 +1444,6 @@ optional<vector<uint8_t>> certificateChainGetTopMostKey(const vector<uint8_t>& c
         return {};
     }
 
-    int algoId = OBJ_obj2nid(certs[0]->cert_info->key->algor->algorithm);
-    if (algoId != NID_X9_62_id_ecPublicKey) {
-        LOG(ERROR) << "Expected NID_X9_62_id_ecPublicKey, got " << OBJ_nid2ln(algoId);
-        return {};
-    }
-
     auto pkey = EVP_PKEY_Ptr(X509_get_pubkey(certs[0].get()));
     if (pkey.get() == nullptr) {
         LOG(ERROR) << "No public key";
@@ -1563,11 +1557,11 @@ bool ecdsaSignatureDerToCose(const vector<uint8_t>& ecdsaDerSignature,
 
     ecdsaCoseSignature.clear();
     ecdsaCoseSignature.resize(64);
-    if (BN_bn2binpad(sig->r, ecdsaCoseSignature.data(), 32) != 32) {
+    if (BN_bn2binpad(ECDSA_SIG_get0_r(sig), ecdsaCoseSignature.data(), 32) != 32) {
         LOG(ERROR) << "Error encoding r";
         return false;
     }
-    if (BN_bn2binpad(sig->s, ecdsaCoseSignature.data() + 32, 32) != 32) {
+    if (BN_bn2binpad(ECDSA_SIG_get0_s(sig), ecdsaCoseSignature.data() + 32, 32) != 32) {
         LOG(ERROR) << "Error encoding s";
         return false;
     }
