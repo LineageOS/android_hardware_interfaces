@@ -72,7 +72,7 @@ class HostapdHidlTest
             "wifi_softap_wpa3_sae_supported");
     }
 
-    virtual void TearDown() override { stopHostapd(hostapd_instance_name_); }
+    virtual void TearDown() override { stopHostapd(wifi_instance_name_); }
 
    protected:
     bool isWpa3SaeSupport_ = false;
