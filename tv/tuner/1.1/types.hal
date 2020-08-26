@@ -22,6 +22,7 @@ import @1.0::DemuxFilterTsRecordEvent;
 import @1.0::FrontendDvbcSpectralInversion;
 import @1.0::FrontendDvbtConstellation;
 import @1.0::FrontendDvbtTransmissionMode;
+import @1.0::FrontendType;
 import android.hidl.safe_union@1.0;
 import android.hidl.safe_union@1.0::Monostate;
 
@@ -181,5 +182,146 @@ struct FrontendSettingsExt1_1 {
         FrontendDvbsSettingsExt1_1 dvbs;
 
         FrontendDvbtSettingsExt1_1 dvbt;
+
+        FrontendDtmbSettings dtmb;
     } settingExt;
+};
+
+/**
+ *  Extended Frontend Type.
+ */
+@export
+enum FrontendType : @1.0::FrontendType {
+    /**
+     * DTMB (Digital Terrestrial Multimedia Broadcast) standard.
+     */
+    DTMB,
+};
+
+/**
+ *  Bandwidth Type for DTMB.
+ */
+@export
+enum FrontendDtmbBandwidth : uint32_t {
+    UNDEFINED = 0,
+    /**
+     * hardware is able to detect and set Bandwidth automatically
+     */
+    AUTO = 1 << 0,
+    BANDWIDTH_8MHZ = 1 << 1,
+    BANDWIDTH_6MHZ = 1 << 2,
+};
+
+/**
+ *  TimeInterleaveMode Type for DTMB.
+ */
+@export
+enum FrontendDtmbTimeInterleaveMode : uint32_t {
+    UNDEFINED = 0,
+    /**
+     * hardware is able to detect and set time interleave mode automatically
+     */
+    AUTO = 1 << 0,
+    TIMER_INT_240 = 1 << 1,
+    TIMER_INT_720 = 1 << 2,
+};
+
+/**
+ *  FrontendDtmbModulation Type for DTMB.
+ */
+@export
+enum FrontendDtmbModulation : uint32_t {
+    UNDEFINED = 0,
+    /**
+     * hardware is able to detect and set Constellation automatically
+     */
+    AUTO = 1 << 0,
+    CONSTELLATION_4QAM = 1 << 1,
+    CONSTELLATION_4QAM_NR = 1 << 2,
+    CONSTELLATION_16QAM = 1 << 3,
+    CONSTELLATION_32QAM = 1 << 4,
+    CONSTELLATION_64QAM = 1 << 5,
+};
+
+/**
+ *  CODERATE Type for DTMB.
+ */
+@export
+enum FrontendDtmbCodeRate : uint32_t {
+    UNDEFINED = 0,
+    /**
+     * hardware is able to detect and set code rate automatically
+     */
+    AUTO = 1 << 0,
+    CODERATE_2_5 = 1 << 1,
+    CODERATE_3_5 = 1 << 2,
+    CODERATE_4_5 = 1 << 3,
+};
+
+/**
+ *  Guard Interval Type for DTMB.
+ */
+@export
+enum FrontendDtmbGuardInterval : uint32_t {
+    UNDEFINED = 0,
+    /**
+     * hardware is able to detect and set Guard Interval automatically
+     */
+    AUTO = 1 << 0,
+    PN_420_VARIOUS = 1 << 1,
+    PN_595_CONST = 1 << 2,
+    PN_945_VARIOUS = 1 << 3,
+    PN_420_CONST = 1 << 4,
+    PN_945_CONST = 1 << 5,
+    PN_RESERVED = 1 << 6,
+};
+
+/**
+ *  Transmission Mode for DTMB.
+ */
+@export
+enum FrontendDtmbTransmissionMode : uint32_t {
+    UNDEFINED = 0,
+    /**
+     * hardware is able to detect and set Transmission Mode automatically
+     */
+    AUTO = 1 << 0,
+    C1 = 1 << 1,
+    C3780 = 1 << 2,
+};
+
+/**
+ *  Signal Setting for DTMB Frontend.
+ */
+struct FrontendDtmbSettings {
+    uint32_t frequency;
+
+    FrontendDtmbTransmissionMode transmissionMode;
+
+    FrontendDtmbBandwidth bandwidth;
+
+    FrontendDtmbModulation modulation;
+
+    FrontendDtmbCodeRate codeRate;
+
+    FrontendDtmbGuardInterval guardInterval;
+
+    FrontendDtmbTimeInterleaveMode interleaveMode;
+};
+
+/**
+ *  Capabilities for DTMB Frontend.
+ */
+struct FrontendDtmbCapabilities {
+    bitfield<FrontendDtmbTransmissionMode> transmissionModeCap;
+
+    bitfield<FrontendDtmbBandwidth> bandwidthCap;
+
+    bitfield<FrontendDtmbModulation> modulationCap;
+
+    bitfield<FrontendDtmbCodeRate> codeRateCap;
+
+    bitfield<FrontendDtmbGuardInterval> guardIntervalCap;
+
+    bitfield<FrontendDtmbTimeInterleaveMode> interleaveModeCap;
 };

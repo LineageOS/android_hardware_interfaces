@@ -56,6 +56,7 @@ using android::hardware::tv::tuner::V1_0::FrontendScanType;
 using android::hardware::tv::tuner::V1_0::IFrontend;
 using android::hardware::tv::tuner::V1_0::IFrontendCallback;
 using android::hardware::tv::tuner::V1_0::Result;
+using android::hardware::tv::tuner::V1_1::FrontendDtmbCapabilities;
 using android::hardware::tv::tuner::V1_1::ITuner;
 
 using ::testing::AssertionResult;
@@ -113,10 +114,12 @@ class FrontendTests {
                               vector<FrontendStatus> expectStatuses);
     AssertionResult stopTuneFrontend(bool testWithDemux);
     AssertionResult closeFrontend();
+    AssertionResult getFrontendDtmbCaps(uint32_t);
 
     void getFrontendIdByType(FrontendType feType, uint32_t& feId);
     void tuneTest(FrontendConfig frontendConf);
     void scanTest(FrontendConfig frontend, FrontendScanType type);
+    void getFrontendDtmbCapsTest();
 
     void setDvrTests(DvrTests dvrTests) { mDvrTests = dvrTests; }
     void setDemux(sp<IDemux> demux) { mDvrTests.setDemux(demux); }

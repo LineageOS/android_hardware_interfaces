@@ -243,6 +243,14 @@ AssertionResult FrontendTests::stopScanFrontend() {
     EXPECT_TRUE(mFrontend) << "Test with openFrontendById first.";
     Result status;
     status = mFrontend->stopScan();
+
+    return AssertionResult(status == Result::SUCCESS);
+}
+
+AssertionResult FrontendTests::getFrontendDtmbCaps(uint32_t id) {
+    Result status;
+    mService->getFrontendDtmbCapabilities(
+            id, [&](Result result, const FrontendDtmbCapabilities& /*caps*/) { status = result; });
     return AssertionResult(status == Result::SUCCESS);
 }
 
@@ -439,4 +447,15 @@ void FrontendTests::scanTest(FrontendConfig frontendConf, FrontendScanType scanT
     ASSERT_TRUE(scanFrontend(frontendConf, scanType));
     ASSERT_TRUE(stopScanFrontend());
     ASSERT_TRUE(closeFrontend());
+}
+
+void FrontendTests::getFrontendDtmbCapsTest() {
+    uint32_t feId;
+    getFrontendIdByType(
+            static_cast<FrontendType>(android::hardware::tv::tuner::V1_1::FrontendType::DTMB),
+            feId);
+    if (feId != INVALID_ID) {
+        ALOGD("[vts] Found DTMB Frontend");
+        ASSERT_TRUE(getFrontendDtmbCaps(feId));
+    }
 }

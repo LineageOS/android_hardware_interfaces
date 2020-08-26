@@ -157,6 +157,11 @@ TEST_P(TunerBroadcastHidlTest, MediaFilterWithSharedMemoryHandle) {
     mediaFilterUsingSharedMemoryTest(filterArray[TS_VIDEO0], frontendArray[DVBT]);
 }
 
+TEST_P(TunerFrontendHidlTest, GetFrontendDtmbCaps) {
+    description("Test to query Dtmb frontend caps if exists");
+    mFrontendTests.getFrontendDtmbCapsTest();
+}
+
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, TunerBroadcastHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(ITuner::descriptor)),
