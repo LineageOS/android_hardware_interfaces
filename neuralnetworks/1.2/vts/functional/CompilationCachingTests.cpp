@@ -251,7 +251,7 @@ class CompilationCachingTestBase : public testing::Test {
         for (uint32_t i = 0; i < mNumDataCache; i++) {
             mDataCache.push_back({mCacheDir + "data" + std::to_string(i)});
         }
-        // Dummy handles, use AccessMode::WRITE_ONLY for createCacheHandles to create files.
+        // Sample handles, use AccessMode::WRITE_ONLY for createCacheHandles to create files.
         hidl_vec<hidl_handle> modelHandle, dataHandle, tmpHandle;
         createCacheHandles(mModelCache, AccessMode::WRITE_ONLY, &modelHandle);
         createCacheHandles(mDataCache, AccessMode::WRITE_ONLY, &dataHandle);
@@ -469,18 +469,18 @@ TEST_P(CompilationCachingTest, CacheSavingAndRetrievalNonZeroOffset) {
         hidl_vec<hidl_handle> modelCache, dataCache;
         createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
         createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
-        uint8_t dummyBytes[] = {0, 0};
-        // Write a dummy integer to the cache.
+        uint8_t sampleBytes[] = {0, 0};
+        // Write a sample integer to the cache.
         // The driver should be able to handle non-empty cache and non-zero fd offset.
         for (uint32_t i = 0; i < modelCache.size(); i++) {
-            ASSERT_EQ(write(modelCache[i].getNativeHandle()->data[0], &dummyBytes,
-                            sizeof(dummyBytes)),
-                      sizeof(dummyBytes));
+            ASSERT_EQ(write(modelCache[i].getNativeHandle()->data[0], &sampleBytes,
+                            sizeof(sampleBytes)),
+                      sizeof(sampleBytes));
         }
         for (uint32_t i = 0; i < dataCache.size(); i++) {
             ASSERT_EQ(
-                    write(dataCache[i].getNativeHandle()->data[0], &dummyBytes, sizeof(dummyBytes)),
-                    sizeof(dummyBytes));
+                    write(dataCache[i].getNativeHandle()->data[0], &sampleBytes, sizeof(sampleBytes)),
+                    sizeof(sampleBytes));
         }
         saveModelToCache(model, modelCache, dataCache);
     }
@@ -492,14 +492,14 @@ TEST_P(CompilationCachingTest, CacheSavingAndRetrievalNonZeroOffset) {
         hidl_vec<hidl_handle> modelCache, dataCache;
         createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
         createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
-        uint8_t dummyByte = 0;
+        uint8_t sampleByte = 0;
         // Advance the offset of each handle by one byte.
         // The driver should be able to handle non-zero fd offset.
         for (uint32_t i = 0; i < modelCache.size(); i++) {
-            ASSERT_GE(read(modelCache[i].getNativeHandle()->data[0], &dummyByte, 1), 0);
+            ASSERT_GE(read(modelCache[i].getNativeHandle()->data[0], &sampleByte, 1), 0);
         }
         for (uint32_t i = 0; i < dataCache.size(); i++) {
-            ASSERT_GE(read(dataCache[i].getNativeHandle()->data[0], &dummyByte, 1), 0);
+            ASSERT_GE(read(dataCache[i].getNativeHandle()->data[0], &sampleByte, 1), 0);
         }
         prepareModelFromCache(modelCache, dataCache, &preparedModel, &status);
         if (!mIsCachingSupported) {
