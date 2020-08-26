@@ -602,6 +602,13 @@ class RadioResponse_v1_6 : public ::android::hardware::radio::V1_6::IRadioRespon
             const ::android::hardware::radio::V1_5::CardStatus& card_status);
 
     /* 1.6 Api */
+    Return<void> setupDataCallResponse_1_6(
+            const RadioResponseInfo& info,
+            const android::hardware::radio::V1_6::SetupDataCallResult& dcResponse);
+
+    Return<void> getDataCallListResponse_1_6(
+            const RadioResponseInfo& info,
+            const hidl_vec<::android::hardware::radio::V1_6::SetupDataCallResult>& dcResponse);
 };
 
 /* Callback class for radio indication */
@@ -614,6 +621,9 @@ class RadioIndication_v1_6 : public ::android::hardware::radio::V1_6::IRadioIndi
     virtual ~RadioIndication_v1_6() = default;
 
     /* 1.6 Api */
+    Return<void> dataCallListChanged_1_6(
+            RadioIndicationType type,
+            const hidl_vec<::android::hardware::radio::V1_6::SetupDataCallResult>& dcList);
 
     /* 1.5 Api */
     Return<void> uiccApplicationsEnablementChanged(RadioIndicationType type, bool enabled);

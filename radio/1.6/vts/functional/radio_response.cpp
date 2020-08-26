@@ -1041,4 +1041,18 @@ Return<void> RadioResponse_v1_6::getIccCardStatusResponse_1_5(
 }
 
 /* 1.6 Apis */
+Return<void> RadioResponse_v1_6::setupDataCallResponse_1_6(
+        const RadioResponseInfo& info,
+        const android::hardware::radio::V1_6::SetupDataCallResult& /* dcResponse */) {
+    rspInfo = info;
+    parent_v1_6.notify(info.serial);
+    return Void();
+}
 
+Return<void> RadioResponse_v1_6::getDataCallListResponse_1_6(
+        const RadioResponseInfo& info,
+        const hidl_vec<::android::hardware::radio::V1_6::SetupDataCallResult>& /* dcResponse */) {
+    rspInfo = info;
+    parent_v1_6.notify(info.serial);
+    return Void();
+}
