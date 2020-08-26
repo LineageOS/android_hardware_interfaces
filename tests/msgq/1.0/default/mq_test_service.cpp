@@ -16,7 +16,13 @@
 
 #define LOG_TAG "FMQ_UnitTests"
 
+#include <TestAidlMsgQ.h>
+#include <android-base/logging.h>
+#include <android/binder_manager.h>
+#include <android/binder_process.h>
 #include <android/hardware/tests/msgq/1.0/ITestMsgQ.h>
+
+using aidl::android::fmq::test::TestAidlMsgQ;
 
 #include <hidl/LegacySupport.h>
 
@@ -25,5 +31,17 @@ using android::hardware::defaultPassthroughServiceImplementation;
 
 int main() {
     android::hardware::details::setTrebleTestingOverride(true);
-    return defaultPassthroughServiceImplementation<ITestMsgQ>();
+    // Register AIDL service
+    ABinderProcess_startThreadPool();
+    std::shared_ptr<TestAidlMsgQ> store = ndk::SharedRefBase::make<TestAidlMsgQ>();
+
+    const std::string instance = std::string() + TestAidlMsgQ::descriptor + "/default";
+    LOG(INFO) << "instance: " << instance;
+    CHECK(AServiceManager_addService(store->asBinder().get(), instance.c_str()) == STATUS_OK);
+
+    // Register HIDL service
+    CHECK(defaultPassthroughServiceImplementation<ITestMsgQ>() == android::OK);
+    ABinderProcess_joinThreadPool();
+
+    return EXIT_FAILURE;  // should not reach
 }
