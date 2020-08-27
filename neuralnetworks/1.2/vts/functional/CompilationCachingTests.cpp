@@ -251,7 +251,7 @@ class CompilationCachingTestBase : public testing::Test {
         for (uint32_t i = 0; i < mNumDataCache; i++) {
             mDataCache.push_back({mCacheDir + "data" + std::to_string(i)});
         }
-        // Dummy handles, use AccessMode::WRITE_ONLY for createCacheHandles to create files.
+        // Sample handles, use AccessMode::WRITE_ONLY for createCacheHandles to create files.
         hidl_vec<hidl_handle> modelHandle, dataHandle, tmpHandle;
         createCacheHandles(mModelCache, AccessMode::WRITE_ONLY, &modelHandle);
         createCacheHandles(mDataCache, AccessMode::WRITE_ONLY, &dataHandle);
@@ -469,18 +469,18 @@ TEST_P(CompilationCachingTest, CacheSavingAndRetrievalNonZeroOffset) {
         hidl_vec<hidl_handle> modelCache, dataCache;
         createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
         createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
-        uint8_t dummyBytes[] = {0, 0};
-        // Write a dummy integer to the cache.
+        uint8_t sampleBytes[] = {0, 0};
+        // Write a sample integer to the cache.
         // The driver should be able to handle non-empty cache and non-zero fd offset.
         for (uint32_t i = 0; i < modelCache.size(); i++) {
-            ASSERT_EQ(write(modelCache[i].getNativeHandle()->data[0], &dummyBytes,
-                            sizeof(dummyBytes)),
-                      sizeof(dummyBytes));
+            ASSERT_EQ(write(modelCache[i].getNativeHandle()->data[0], &sampleBytes,
+                            sizeof(sampleBytes)),
+                      sizeof(sampleBytes));
         }
         for (uint32_t i = 0; i < dataCache.size(); i++) {
             ASSERT_EQ(
-                    write(dataCache[i].getNativeHandle()->data[0], &dummyBytes, sizeof(dummyBytes)),
-                    sizeof(dummyBytes));
+                    write(dataCache[i].getNativeHandle()->data[0], &sampleBytes, sizeof(sampleBytes)),
+                    sizeof(sampleBytes));
         }
         saveModelToCache(model, modelCache, dataCache);
     }
@@ -492,14 +492,14 @@ TEST_P(CompilationCachingTest, CacheSavingAndRetrievalNonZeroOffset) {
         hidl_vec<hidl_handle> modelCache, dataCache;
         createCacheHandles(mModelCache, AccessMode::READ_WRITE, &modelCache);
         createCacheHandles(mDataCache, AccessMode::READ_WRITE, &dataCache);
-        uint8_t dummyByte = 0;
+        uint8_t sampleByte = 0;
         // Advance the offset of each handle by one byte.
         // The driver should be able to handle non-zero fd offset.
         for (uint32_t i = 0; i < modelCache.size(); i++) {
-            ASSERT_GE(read(modelCache[i].getNativeHandle()->data[0], &dummyByte, 1), 0);
+            ASSERT_GE(read(modelCache[i].getNativeHandle()->data[0], &sampleByte, 1), 0);
         }
         for (uint32_t i = 0; i < dataCache.size(); i++) {
-            ASSERT_GE(read(dataCache[i].getNativeHandle()->data[0], &dummyByte, 1), 0);
+            ASSERT_GE(read(dataCache[i].getNativeHandle()->data[0], &sampleByte, 1), 0);
         }
         prepareModelFromCache(modelCache, dataCache, &preparedModel, &status);
         if (!mIsCachingSupported) {
@@ -1209,9 +1209,9 @@ std::string printCompilationCachingTest(
     return gtestCompliantName(getName(namedDevice) + "_" + type);
 }
 
-INSTANTIATE_TEST_CASE_P(TestCompilationCaching, CompilationCachingTest,
-                        testing::Combine(kNamedDeviceChoices, kOperandTypeChoices),
-                        printCompilationCachingTest);
+INSTANTIATE_TEST_SUITE_P(TestCompilationCaching, CompilationCachingTest,
+                         testing::Combine(kNamedDeviceChoices, kOperandTypeChoices),
+                         printCompilationCachingTest);
 
 using CompilationCachingSecurityTestParam = std::tuple<NamedDevice, OperandType, uint32_t>;
 
@@ -1365,9 +1365,9 @@ std::string printCompilationCachingSecurityTest(
     return gtestCompliantName(getName(namedDevice) + "_" + type + "_" + std::to_string(seed));
 }
 
-INSTANTIATE_TEST_CASE_P(TestCompilationCaching, CompilationCachingSecurityTest,
-                        testing::Combine(kNamedDeviceChoices, kOperandTypeChoices,
-                                         testing::Range(0U, 10U)),
-                        printCompilationCachingSecurityTest);
+INSTANTIATE_TEST_SUITE_P(TestCompilationCaching, CompilationCachingSecurityTest,
+                         testing::Combine(kNamedDeviceChoices, kOperandTypeChoices,
+                                          testing::Range(0U, 10U)),
+                         printCompilationCachingSecurityTest);
 
 }  // namespace android::hardware::neuralnetworks::V1_2::vts::functional

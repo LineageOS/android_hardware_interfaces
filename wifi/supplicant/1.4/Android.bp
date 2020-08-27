@@ -4,7 +4,9 @@ hidl_interface {
     name: "android.hardware.wifi.supplicant@1.4",
     root: "android.hardware",
     srcs: [
+        "types.hal",
         "ISupplicant.hal",
+        "ISupplicantStaIface.hal",
     ],
     interfaces: [
         "android.hardware.wifi.supplicant@1.0",
