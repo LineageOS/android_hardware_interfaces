@@ -363,6 +363,12 @@ IGnssConfiguration::BlacklistedSource FindStrongFrequentNonGpsSource(
  * formerly strongest satellite
  */
 TEST_P(GnssHalTest, BlacklistIndividualSatellites) {
+    if (!(gnss_cb_->last_capabilities_ & IGnssCallback_2_1::Capabilities::SATELLITE_BLACKLIST)) {
+        ALOGI("Test BlacklistIndividualSatellites skipped. SATELLITE_BLACKLIST capability not "
+              "supported.");
+        return;
+    }
+
     const int kLocationsToAwait = 3;
     const int kRetriesToUnBlacklist = 10;
 
@@ -504,6 +510,12 @@ TEST_P(GnssHalTest, BlacklistIndividualSatellites) {
  * 4a & b) Clean up by turning off location, and send in empty blacklist.
  */
 TEST_P(GnssHalTest, BlacklistConstellationLocationOff) {
+    if (!(gnss_cb_->last_capabilities_ & IGnssCallback_2_1::Capabilities::SATELLITE_BLACKLIST)) {
+        ALOGI("Test BlacklistConstellationLocationOff skipped. SATELLITE_BLACKLIST capability not "
+              "supported.");
+        return;
+    }
+
     const int kLocationsToAwait = 3;
     const int kGnssSvInfoListTimeout = 2;
 
@@ -580,6 +592,12 @@ TEST_P(GnssHalTest, BlacklistConstellationLocationOff) {
  * 4a & b) Clean up by turning off location, and send in empty blacklist.
  */
 TEST_P(GnssHalTest, BlacklistConstellationLocationOn) {
+    if (!(gnss_cb_->last_capabilities_ & IGnssCallback_2_1::Capabilities::SATELLITE_BLACKLIST)) {
+        ALOGI("Test BlacklistConstellationLocationOn skipped. SATELLITE_BLACKLIST capability not "
+              "supported.");
+        return;
+    }
+
     const int kLocationsToAwait = 3;
     const int kGnssSvInfoListTimeout = 2;
 
