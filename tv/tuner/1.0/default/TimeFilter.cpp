@@ -34,24 +34,32 @@ TimeFilter::TimeFilter(sp<Demux> demux) {
 
 TimeFilter::~TimeFilter() {}
 
-Return<Result> TimeFilter::setTimeStamp(uint64_t /* timeStamp */) {
+Return<Result> TimeFilter::setTimeStamp(uint64_t timeStamp) {
     ALOGV("%s", __FUNCTION__);
+    if (timeStamp == INVALID_TIME_STAMP) {
+        return Result::INVALID_ARGUMENT;
+    }
+    mTimeStamp = timeStamp;
+    mBeginTime = time(NULL);
 
     return Result::SUCCESS;
 }
 
 Return<Result> TimeFilter::clearTimeStamp() {
     ALOGV("%s", __FUNCTION__);
+    mTimeStamp = INVALID_TIME_STAMP;
 
     return Result::SUCCESS;
 }
 
 Return<void> TimeFilter::getTimeStamp(getTimeStamp_cb _hidl_cb) {
     ALOGV("%s", __FUNCTION__);
+    if (mTimeStamp == INVALID_TIME_STAMP) {
+        _hidl_cb(Result::INVALID_STATE, mTimeStamp);
+    }
 
-    uint64_t timeStamp = 0;
-
-    _hidl_cb(Result::SUCCESS, timeStamp);
+    uint64_t currentTimeStamp = mTimeStamp + difftime(time(NULL), mBeginTime) * 900000;
+    _hidl_cb(Result::SUCCESS, currentTimeStamp);
     return Void();
 }
 
@@ -66,6 +74,7 @@ Return<void> TimeFilter::getSourceTime(getSourceTime_cb _hidl_cb) {
 
 Return<Result> TimeFilter::close() {
     ALOGV("%s", __FUNCTION__);
+    mTimeStamp = INVALID_TIME_STAMP;
 
     return Result::SUCCESS;
 }

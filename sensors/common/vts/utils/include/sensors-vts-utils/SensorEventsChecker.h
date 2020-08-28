@@ -17,26 +17,26 @@
 #ifndef ANDROID_SENSOR_EVENTS_CHECKER_H
 #define ANDROID_SENSOR_EVENTS_CHECKER_H
 
-#include <android/hardware/sensors/1.0/types.h>
-
 #include <cmath>
 
+template <class EventType>
 class SensorEventsChecker {
-   public:
-    using Event = ::android::hardware::sensors::V1_0::Event;
-    virtual bool check(const std::vector<Event>& events, std::string* out) const = 0;
+  public:
+    virtual bool check(const std::vector<EventType>& events, std::string* out) const = 0;
     virtual ~SensorEventsChecker() {}
 };
 
-class NullChecker : public SensorEventsChecker {
-   public:
-    virtual bool check(const std::vector<Event>&, std::string*) const { return true; }
+template <class EventType>
+class NullChecker : public SensorEventsChecker<EventType> {
+  public:
+    virtual bool check(const std::vector<EventType>&, std::string*) const { return true; }
 };
 
-class SensorEventPerEventChecker : public SensorEventsChecker {
-   public:
-    virtual bool checkEvent(const Event& event, std::string* out) const = 0;
-    virtual bool check(const std::vector<Event>& events, std::string* out) const {
+template <class EventType>
+class SensorEventPerEventChecker : public SensorEventsChecker<EventType> {
+  public:
+    virtual bool checkEvent(const EventType& event, std::string* out) const = 0;
+    virtual bool check(const std::vector<EventType>& events, std::string* out) const {
         for (const auto& e : events) {
             if (!checkEvent(e, out)) {
                 return false;
@@ -46,14 +46,15 @@ class SensorEventPerEventChecker : public SensorEventsChecker {
     }
 };
 
-class Vec3NormChecker : public SensorEventPerEventChecker {
-   public:
+template <class EventType>
+class Vec3NormChecker : public SensorEventPerEventChecker<EventType> {
+  public:
     Vec3NormChecker(float min, float max) : mLowerLimit(min), mUpperLimit(max) {}
-    static Vec3NormChecker byNominal(float nominal, float allowedError) {
-        return Vec3NormChecker(nominal - allowedError, nominal + allowedError);
+    static Vec3NormChecker<EventType> byNominal(float nominal, float allowedError) {
+        return Vec3NormChecker<EventType>(nominal - allowedError, nominal + allowedError);
     }
 
-    virtual bool checkEvent(const Event& event, std::string* out) const {
+    virtual bool checkEvent(const EventType& event, std::string* out) const {
         android::hardware::sensors::V1_0::Vec3 v = event.u.vec3;
         float norm = std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
         if (norm < mLowerLimit || norm > mUpperLimit) {

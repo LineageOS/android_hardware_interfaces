@@ -1,0 +1,91 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!-- Copyright (C) 2019 The Android Open Source Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+
+<!-- Exterior View System Example Configuration
+
+     Android Automotive axes are used to define coordinates.
+     See https://source.android.com/devices/sensors/sensor-types#auto_axes
+
+     Use evs_configuration.dtd with xmllint tool, to validate XML configuration file
+-->
+
+<configuration>
+    <!-- system configuration -->
+    <system>
+        <!-- number of cameras available to EVS -->
+        <num_cameras value='1'/>
+    </system>
+
+    <!-- camera information -->
+    <camera>
+        <!-- camera group starts -->
+        <group id='group1' synchronized='APPROXIMATE'>
+            <caps>
+                <stream id='0' width='640'  height='360'  format='RGBA_8888' framerate='30'/>
+            </caps>
+
+            <!-- list of parameters -->
+            <characteristics>
+                <parameter
+                    name='REQUEST_AVAILABLE_CAPABILITIES'
+                    type='enum'
+                    size='1'
+                    value='LOGICAL_MULTI_CAMERA'
+                />
+                <parameter
+                    name='LOGICAL_MULTI_CAMERA_PHYSICAL_IDS'
+                    type='byte[]'
+                    size='1'
+                    value='/dev/video1'
+                />
+            </characteristics>
+        </group>
+
+        <!-- camera device starts -->
+        <device id='/dev/video1' position='rear'>
+            <caps>
+                <!-- list of supported controls -->
+                <supported_controls>
+                    <control name='BRIGHTNESS' min='0' max='255'/>
+                    <control name='CONTRAST' min='0' max='255'/>
+                </supported_controls>
+
+                <stream id='0' width='640'  height='360'  format='RGBA_8888' framerate='30'/>
+            </caps>
+
+            <!-- list of parameters -->
+            <characteristics>
+                <!-- Camera intrinsic calibration matrix. See
+                     https://developer.android.com/reference/android/hardware/camera2/CameraCharacteristics.html#LENS_INTRINSIC_CALIBRATION
+                -->
+                <parameter
+                    name='LENS_INTRINSIC_CALIBRATION'
+                    type='float'
+                    size='5'
+                    value='0.0,0.0,0.0,0.0,0.0'
+                />
+            </characteristics>
+        </device>
+    </camera>
+    <display>
+        <device id='display0' position='driver'>
+            <caps>
+                <!-- list of supported inpu stream configurations -->
+                <stream id='0' width='1280' height='720' format='RGBA_8888' framerate='30'/>
+            </caps>
+        </device>
+    </display>
+</configuration>
+

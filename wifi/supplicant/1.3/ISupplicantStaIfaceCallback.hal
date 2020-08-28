@@ -1,0 +1,222 @@
+/*
+ * Copyright 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.wifi.supplicant@1.3;
+
+import @1.2::ISupplicantStaIfaceCallback;
+import @1.0::ISupplicantStaIfaceCallback.State;
+import @1.0::Bssid;
+import @1.0::SupplicantNetworkId;
+import @1.0::Ssid;
+
+/**
+ * Callback Interface exposed by the supplicant service
+ * for each station mode interface (ISupplicantStaIface).
+ *
+ * Clients need to host an instance of this HIDL interface object and
+ * pass a reference of the object to the supplicant via the
+ * corresponding |ISupplicantStaIface.registerCallback_1_3| method.
+ */
+interface ISupplicantStaIfaceCallback extends @1.2::ISupplicantStaIfaceCallback {
+    /**
+     * IEEE Std 802.11-2016 - Table 9-357.
+     * BTM status code filled in BSS transition management response frame.
+     */
+    enum BssTmStatusCode : uint8_t {
+        ACCEPT = 0,
+        REJECT_UNSPECIFIED = 1,
+        REJECT_INSUFFICIENT_BEACON = 2,
+        REJECT_INSUFFICIENT_CAPABITY = 3,
+        REJECT_BSS_TERMINATION_UNDESIRED = 4,
+        REJECT_BSS_TERMINATION_DELAY_REQUEST = 5,
+        REJECT_STA_CANDIDATE_LIST_PROVIDED = 6,
+        REJECT_NO_SUITABLE_CANDIDATES = 7,
+        REJECT_LEAVING_ESS = 8,
+    };
+
+    /**
+     * Bitmask of various information retrieved from BSS transition management request frame.
+     */
+    enum BssTmDataFlagsMask : uint32_t {
+        /**
+         * Preferred candidate list included.
+         */
+        WNM_MODE_PREFERRED_CANDIDATE_LIST_INCLUDED = 1 << 0,
+        /**
+         * Abridged.
+         */
+        WNM_MODE_ABRIDGED = 1 << 1,
+        /**
+         * Disassociation Imminent.
+         */
+        WNM_MODE_DISASSOCIATION_IMMINENT = 1 << 2,
+        /**
+         * BSS termination included.
+         */
+        WNM_MODE_BSS_TERMINATION_INCLUDED = 1 << 3,
+        /**
+         * ESS Disassociation Imminent.
+         */
+        WNM_MODE_ESS_DISASSOCIATION_IMMINENT = 1 << 4,
+        /**
+         * MBO transition reason code included.
+         */
+        MBO_TRANSITION_REASON_CODE_INCLUDED = 1 << 5,
+        /**
+         * MBO retry delay time included.
+         */
+        MBO_ASSOC_RETRY_DELAY_INCLUDED = 1 << 6,
+        /**
+         * MBO cellular data connection preference value included.
+         */
+        MBO_CELLULAR_DATA_CONNECTION_PREFERENCE_INCLUDED = 1 << 7,
+    };
+
+    /**
+     *  MBO spec v1.2, 4.2.6 Table 18: MBO transition reason code attribute
+     *  values.
+     */
+    enum MboTransitionReasonCode : uint8_t {
+        UNSPECIFIED = 0,
+        EXCESSIVE_FRAME_LOSS = 1,
+        EXCESSIVE_TRAFFIC_DELAY = 2,
+        INSUFFICIENT_BANDWIDTH = 3,
+        LOAD_BALANCING = 4,
+        LOW_RSSI = 5,
+        RX_EXCESSIVE_RETRIES = 6,
+        HIGH_INTERFERENCE = 7,
+        GRAY_ZONE = 8,
+        TRANSITION_TO_PREMIUM_AP = 9,
+    };
+
+    /**
+     *  MBO spec v1.2, 4.2.5 Table 16: MBO Cellular Data connection preference
+     *  attribute values. AP use this to indicate STA, its preference for the
+     *  STA to move from BSS to cellular network.
+     */
+    enum MboCellularDataConnectionPrefValue : uint8_t {
+        EXCLUDED = 0,
+        NOT_PREFERRED = 1,
+        /*
+         * 2-254 Reserved.
+         */
+        PREFERRED = 255,
+    };
+
+    /**
+     * Data retrieved from received BSS transition management request frame.
+     */
+    struct BssTmData {
+        /*
+         * Status code filled in BSS transition management response frame
+         */
+        BssTmStatusCode status;
+
+        /*
+         * Bitmask of BssTmDataFlagsMask
+         */
+        bitfield<BssTmDataFlagsMask> flags;
+
+        /*
+         * Duration for which STA shouldn't try to re-associate.
+         */
+        uint32_t assocRetryDelayMs;
+
+        /*
+         * Reason for BSS transition request.
+         */
+        MboTransitionReasonCode mboTransitionReason;
+
+        /*
+         * Cellular Data Connection preference value.
+         */
+        MboCellularDataConnectionPrefValue mboCellPreference;
+    };
+
+    /**
+     * Indicates pairwise master key (PMK) cache added event.
+     *
+     * @param expirationTimeInSec expiration time in seconds
+     * @param serializedEntry is serialized PMK cache entry, the content is
+     *              opaque for the framework and depends on the native implementation.
+     */
+    oneway onPmkCacheAdded(int64_t expirationTimeInSec, vec<uint8_t> serializedEntry);
+
+    /**
+     * Indicates a DPP success event.
+     */
+    oneway onDppSuccess(DppSuccessCode code);
+
+    /**
+     * Indicates a DPP progress event.
+     */
+    oneway onDppProgress_1_3(DppProgressCode code);
+
+    /**
+     * Indicates a DPP failure event.
+     *
+     * ssid: A string indicating the SSID for the AP that the Enrollee attempted to connect.
+     * channelList: A string containing a list of operating channels and operating classes
+     *     indicating the channels that the Enrollee scanned in attempting to discover the AP.
+     *     The list conforms to the following ABNF syntax:
+     *         channel-list2 = class-and-channels *(“,” class-and-channels)
+     *         class-and-channels = class “/” channel *(“,” channel)
+     *         class = 1*3DIGIT
+     *         channel = 1*3DIGIT
+     * bandList: A list of band parameters that are supported by the Enrollee expressed as the
+     *     Operating Class.
+     */
+    oneway onDppFailure_1_3(DppFailureCode code, string ssid, string channelList,
+        vec<uint16_t> bandList);
+
+    /**
+     * Indicates BTM request frame handling status.
+     *
+     * @param BssTmData Data retrieved from received BSS transition management
+     * request frame.
+     */
+    oneway onBssTmHandlingDone(BssTmData tmData);
+
+    /**
+     * Indicates an EAP authentication failure.
+     * @param errorCode Error code for EAP authentication failure.
+     *        Either standard error code (enum EapErrorCode) or
+     *        private error code defined by network provider.
+     */
+    oneway onEapFailure_1_3(uint32_t errorCode);
+
+    /**
+     * Used to indicate a state change event on this particular iface. If this
+     * event is triggered by a particular network, the |SupplicantNetworkId|,
+     * |ssid|, |bssid| parameters must indicate the parameters of the network/AP
+     * which caused this state transition.
+     *
+     * @param newState New State of the interface. This must be one of the |State|
+     *        values above.
+     * @param bssid BSSID of the corresponding AP which caused this state
+     *        change event. This must be zero'ed if this event is not
+     *        specific to a particular network.
+     * @param id ID of the corresponding network which caused this
+     *        state change event. This must be invalid (UINT32_MAX) if this
+     *        event is not specific to a particular network.
+     * @param ssid SSID of the corresponding network which caused this state
+     *        change event. This must be empty if this event is not specific
+     *        to a particular network.
+     * @param filsHlpSent If FILS HLP IEs were included in this association.
+     */
+    oneway onStateChanged_1_3(State newState, Bssid bssid, SupplicantNetworkId id, Ssid ssid,
+        bool filsHlpSent);
+};

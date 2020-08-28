@@ -19,7 +19,6 @@
 #include "Gnss.h"
 
 #include <log/log.h>
-#include <utils/SystemClock.h>
 
 #include "AGnss.h"
 #include "AGnssRil.h"
@@ -47,24 +46,6 @@ using GnssSvFlags = IGnssCallback::GnssSvFlags;
 sp<V2_0::IGnssCallback> Gnss::sGnssCallback_2_0 = nullptr;
 sp<V1_1::IGnssCallback> Gnss::sGnssCallback_1_1 = nullptr;
 
-namespace {
-
-V2_0::GnssLocation getMockLocationV2_0() {
-    const ElapsedRealtime timestamp = {
-            .flags = ElapsedRealtimeFlags::HAS_TIMESTAMP_NS |
-                     ElapsedRealtimeFlags::HAS_TIME_UNCERTAINTY_NS,
-            .timestampNs = static_cast<uint64_t>(::android::elapsedRealtimeNano()),
-            // This is an hardcoded value indicating a 1ms of uncertainty between the two clocks.
-            // In an actual implementation provide an estimate of the synchronization uncertainty
-            // or don't set the field.
-            .timeUncertaintyNs = 1000000};
-
-    V2_0::GnssLocation location = {.v1_0 = Utils::getMockLocation(), .elapsedRealtime = timestamp};
-    return location;
-}
-
-}  // namespace
-
 Gnss::Gnss() : mMinIntervalMs(1000) {}
 
 Gnss::~Gnss() {
@@ -86,7 +67,7 @@ Return<bool> Gnss::start() {
     mIsActive = true;
     mThread = std::thread([this]() {
         while (mIsActive == true) {
-            const auto location = getMockLocationV2_0();
+            const auto location = Utils::getMockLocationV2_0();
             this->reportLocation(location);
 
             std::this_thread::sleep_for(std::chrono::milliseconds(mMinIntervalMs));

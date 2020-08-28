@@ -44,7 +44,7 @@ Return<bool> Gnss::start() {
             auto svStatus = this->getMockSvStatus();
             this->reportSvStatus(svStatus);
 
-            auto location = Utils::getMockLocation();
+            auto location = Utils::getMockLocationV1_0();
             this->reportLocation(location);
 
             std::this_thread::sleep_for(std::chrono::milliseconds(mMinIntervalMs));
@@ -197,14 +197,14 @@ Return<bool> Gnss::injectBestLocation(const GnssLocation&) {
 Return<GnssSvStatus> Gnss::getMockSvStatus() const {
     std::unique_lock<std::recursive_mutex> lock(mGnssConfiguration->getMutex());
     GnssSvInfo mockGnssSvInfoList[] = {
-            Utils::getSvInfo(3, GnssConstellationType::GPS, 32.5, 59.1, 166.5),
-            Utils::getSvInfo(5, GnssConstellationType::GPS, 27.0, 29.0, 56.5),
-            Utils::getSvInfo(17, GnssConstellationType::GPS, 30.5, 71.0, 77.0),
-            Utils::getSvInfo(26, GnssConstellationType::GPS, 24.1, 28.0, 253.0),
-            Utils::getSvInfo(5, GnssConstellationType::GLONASS, 20.5, 11.5, 116.0),
-            Utils::getSvInfo(17, GnssConstellationType::GLONASS, 21.5, 28.5, 186.0),
-            Utils::getSvInfo(18, GnssConstellationType::GLONASS, 28.3, 38.8, 69.0),
-            Utils::getSvInfo(10, GnssConstellationType::GLONASS, 25.0, 66.0, 247.0)};
+            Utils::getMockSvInfoV1_0(3, GnssConstellationType::GPS, 32.5, 59.1, 166.5),
+            Utils::getMockSvInfoV1_0(5, GnssConstellationType::GPS, 27.0, 29.0, 56.5),
+            Utils::getMockSvInfoV1_0(17, GnssConstellationType::GPS, 30.5, 71.0, 77.0),
+            Utils::getMockSvInfoV1_0(26, GnssConstellationType::GPS, 24.1, 28.0, 253.0),
+            Utils::getMockSvInfoV1_0(5, GnssConstellationType::GLONASS, 20.5, 11.5, 116.0),
+            Utils::getMockSvInfoV1_0(17, GnssConstellationType::GLONASS, 21.5, 28.5, 186.0),
+            Utils::getMockSvInfoV1_0(18, GnssConstellationType::GLONASS, 28.3, 38.8, 69.0),
+            Utils::getMockSvInfoV1_0(10, GnssConstellationType::GLONASS, 25.0, 66.0, 247.0)};
 
     GnssSvStatus svStatus = {.numSvs = sizeof(mockGnssSvInfoList) / sizeof(GnssSvInfo)};
     for (uint32_t i = 0; i < svStatus.numSvs; i++) {

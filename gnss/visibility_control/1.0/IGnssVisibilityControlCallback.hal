@@ -82,6 +82,9 @@ interface IGnssVisibilityControlCallback {
         /**
          * Package name of the Android proxy application representing the non-framework
          * entity that requested location. Set to empty string if unknown.
+         *
+         * For user-initiated emergency use cases, this field must be set to empty string
+         * and the inEmergencyMode field must be set to true.
          */
         string proxyAppPackageName;
 

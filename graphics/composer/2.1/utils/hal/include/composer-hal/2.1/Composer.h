@@ -67,6 +67,14 @@ class ComposerImpl : public Interface {
             }
         }
 
+        // we do not have HWC2_CAPABILITY_SKIP_VALIDATE defined in
+        // IComposer::Capability.  However, this is defined in hwcomposer2.h,
+        // so if the device returns it, add it manually to be returned to the
+        // client
+        if (mHal->hasCapability(HWC2_CAPABILITY_SKIP_VALIDATE)) {
+            caps.push_back(static_cast<IComposer::Capability>(HWC2_CAPABILITY_SKIP_VALIDATE));
+        }
+
         hidl_vec<IComposer::Capability> caps_reply;
         caps_reply.setToExternal(caps.data(), caps.size());
         hidl_cb(caps_reply);
@@ -80,8 +88,7 @@ class ComposerImpl : public Interface {
 
     Return<void> createClient(IComposer::createClient_cb hidl_cb) override {
         std::unique_lock<std::mutex> lock(mClientMutex);
-        bool destroyed = waitForClientDestroyedLocked(lock);
-        if (!destroyed) {
+        if (!waitForClientDestroyedLocked(lock)) {
             hidl_cb(Error::NO_RESOURCES, nullptr);
             return Void();
         }

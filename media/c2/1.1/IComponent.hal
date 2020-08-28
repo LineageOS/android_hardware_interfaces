@@ -1,0 +1,72 @@
+/*
+ * Copyright 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.media.c2@1.1;
+
+import android.hardware.media.c2@1.0::IComponent;
+import android.hardware.media.c2@1.0::Status;
+
+/**
+ * Interface for a Codec2 component corresponding to API level 1.0 or below.
+ * Components have two states: stopped and running. The running state has three
+ * sub-states: executing, tripped and error.
+ *
+ * All methods in `IComponent` must not block. If a method call cannot be
+ * completed in a timely manner, it must return `TIMED_OUT` in the return
+ * status.
+ *
+ * @note This is an extension of version 1.0 of `IComponent`. The purpose of the
+ * extension is to add support for tunneling.
+ */
+interface IComponent extends @1.0::IComponent {
+    /**
+      * Configures a component for a tunneled playback mode.
+      *
+      * A successful call to this method puts the component in the *tunneled*
+      * mode. In this mode, the output `Worklet`s returned in
+      * IComponentListener::onWorkDone() may not contain any buffers. The output
+      * buffers are passed directly to the consumer end of a buffer queue whose
+      * producer side is configured with the returned @p sidebandStream passed
+      * to IGraphicBufferProducer::setSidebandStream().
+      *
+      * The component is initially in the non-tunneled mode by default. The
+      * tunneled mode can be toggled on only before the component starts
+      * processing. Once the component is put into the tunneled mode, it shall
+      * stay in the tunneled mode until and only until reset() is called.
+      *
+      * @param avSyncHwId A resource ID for hardware sync. The generator of sync
+      *     IDs must ensure that this number is unique among all services at any
+      *     given time. For example, if both the audio HAL and the tuner HAL
+      *     support this feature, sync IDs from the audio HAL must not clash
+      *     with sync IDs from the tuner HAL.
+      * @return status Status of the call, which may be
+      *   - `OK`        - The operation completed successfully. In this case,
+      *                   @p sidebandHandle shall not be a null handle.
+      *   - `OMITTED`   - The component does not support video tunneling.
+      *   - `BAD_STATE` - The component is already running.
+      *   - `TIMED_OUT` - The operation cannot be finished in a timely manner.
+      *   - `CORRUPTED` - Some unknown error occurred.
+      * @return sidebandHandle Codec-allocated sideband stream handle. This can
+      *     be passed to IGraphicBufferProducer::setSidebandStream() to
+      *     establish a direct channel to the consumer.
+      */
+     configureVideoTunnel(
+             uint32_t avSyncHwId
+         ) generates (
+             Status status,
+             handle sidebandHandle
+         );
+};

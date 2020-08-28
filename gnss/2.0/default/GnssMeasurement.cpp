@@ -16,6 +16,7 @@
 #define LOG_TAG "GnssMeasurement"
 
 #include "GnssMeasurement.h"
+#include "Utils.h"
 
 #include <log/log.h>
 #include <utils/SystemClock.h>
@@ -29,6 +30,7 @@ namespace implementation {
 using GnssConstellationType = V2_0::GnssConstellationType;
 using GnssMeasurementFlags = V1_0::IGnssMeasurementCallback::GnssMeasurementFlags;
 using GnssMeasurementState = V2_0::IGnssMeasurementCallback::GnssMeasurementState;
+using Utils = common::Utils;
 
 sp<V2_0::IGnssMeasurementCallback> GnssMeasurement::sCallback = nullptr;
 
@@ -47,8 +49,8 @@ Return<V1_0::IGnssMeasurement::GnssMeasurementStatus> GnssMeasurement::setCallba
 
 Return<void> GnssMeasurement::close() {
     ALOGD("close");
-    std::unique_lock<std::mutex> lock(mMutex);
     stop();
+    std::unique_lock<std::mutex> lock(mMutex);
     sCallback = nullptr;
     return Void();
 }
@@ -81,7 +83,7 @@ void GnssMeasurement::start() {
     mIsActive = true;
     mThread = std::thread([this]() {
         while (mIsActive == true) {
-            auto measurement = this->getMockMeasurement();
+            auto measurement = Utils::getMockMeasurementV2_0();
             this->reportMeasurement(measurement);
 
             std::this_thread::sleep_for(std::chrono::milliseconds(mMinIntervalMillis));
@@ -95,60 +97,6 @@ void GnssMeasurement::stop() {
     if (mThread.joinable()) {
         mThread.join();
     }
-}
-
-GnssData GnssMeasurement::getMockMeasurement() {
-    V1_0::IGnssMeasurementCallback::GnssMeasurement measurement_1_0 = {
-            .flags = (uint32_t)GnssMeasurementFlags::HAS_CARRIER_FREQUENCY,
-            .svid = (int16_t)6,
-            .constellation = V1_0::GnssConstellationType::UNKNOWN,
-            .timeOffsetNs = 0.0,
-            .receivedSvTimeInNs = 8195997131077,
-            .receivedSvTimeUncertaintyInNs = 15,
-            .cN0DbHz = 30.0,
-            .pseudorangeRateMps = -484.13739013671875,
-            .pseudorangeRateUncertaintyMps = 1.0379999876022339,
-            .accumulatedDeltaRangeState = (uint32_t)V1_0::IGnssMeasurementCallback::
-                    GnssAccumulatedDeltaRangeState::ADR_STATE_UNKNOWN,
-            .accumulatedDeltaRangeM = 0.0,
-            .accumulatedDeltaRangeUncertaintyM = 0.0,
-            .carrierFrequencyHz = 1.59975e+09,
-            .multipathIndicator =
-                    V1_0::IGnssMeasurementCallback::GnssMultipathIndicator::INDICATOR_UNKNOWN};
-    V1_1::IGnssMeasurementCallback::GnssMeasurement measurement_1_1 = {.v1_0 = measurement_1_0};
-    V2_0::IGnssMeasurementCallback::GnssMeasurement measurement_2_0 = {
-            .v1_1 = measurement_1_1,
-            .codeType = "C",
-            .state = GnssMeasurementState::STATE_CODE_LOCK | GnssMeasurementState::STATE_BIT_SYNC |
-                     GnssMeasurementState::STATE_SUBFRAME_SYNC |
-                     GnssMeasurementState::STATE_TOW_DECODED |
-                     GnssMeasurementState::STATE_GLO_STRING_SYNC |
-                     GnssMeasurementState::STATE_GLO_TOD_DECODED,
-            .constellation = GnssConstellationType::GLONASS,
-    };
-
-    hidl_vec<IGnssMeasurementCallback::GnssMeasurement> measurements(1);
-    measurements[0] = measurement_2_0;
-    V1_0::IGnssMeasurementCallback::GnssClock clock = {.timeNs = 2713545000000,
-                                                       .fullBiasNs = -1226701900521857520,
-                                                       .biasNs = 0.59689998626708984,
-                                                       .biasUncertaintyNs = 47514.989972114563,
-                                                       .driftNsps = -51.757811607455452,
-                                                       .driftUncertaintyNsps = 310.64968328491528,
-                                                       .hwClockDiscontinuityCount = 1};
-
-    ElapsedRealtime timestamp = {
-            .flags = ElapsedRealtimeFlags::HAS_TIMESTAMP_NS |
-                     ElapsedRealtimeFlags::HAS_TIME_UNCERTAINTY_NS,
-            .timestampNs = static_cast<uint64_t>(::android::elapsedRealtimeNano()),
-            // This is an hardcoded value indicating a 1ms of uncertainty between the two clocks.
-            // In an actual implementation provide an estimate of the synchronization uncertainty
-            // or don't set the field.
-            .timeUncertaintyNs = 1000000};
-
-    GnssData gnssData = {
-            .measurements = measurements, .clock = clock, .elapsedRealtime = timestamp};
-    return gnssData;
 }
 
 void GnssMeasurement::reportMeasurement(const GnssData& data) {

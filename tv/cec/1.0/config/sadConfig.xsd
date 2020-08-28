@@ -1,0 +1,86 @@
+<?xml version="1.0"?>
+<!-- Copyright (C) 2019 The Android Open Source Project
+
+         Licensed under the Apache License, Version 2.0 (the "License");
+         you may not use this file except in compliance with the License.
+         You may obtain a copy of the License at
+
+                    http://www.apache.org/licenses/LICENSE-2.0
+
+         Unless required by applicable law or agreed to in writing, software
+         distributed under the License is distributed on an "AS IS" BASIS,
+         WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+         See the License for the specific language governing permissions and
+         limitations under the License.
+-->
+<xs:schema version="1.0"
+           xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    <xs:include schemaLocation="../../../../audio/4.0/config/audio_policy_configuration.xsd"/>
+    <xs:complexType name="config">
+        <xs:annotation>
+            <xs:documentation xml:lang="en">
+                List the config versions supported by Short Audio Descriptor(SAD) config.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="device" type="device" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+        <xs:attribute name="version" type="version"/>
+    </xs:complexType>
+    <xs:complexType name="device">
+        <xs:annotation>
+            <xs:documentation xml:lang="en">
+                Device section:
+                There is a list of configurations in this SAD config for all the input audio
+                devices that the current Android device supports.
+                Each device has the following attributes:
+                    "type": type of the audio device.
+                And the following element
+                    <supportedFormat/>: the supported format info of the device. There can be
+                                        multiple formats supported by one audio device.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="supportedFormat" type="supportedFormat" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+        <xs:attribute name="type" type="extendableAudioDevice" use="required"/>
+    </xs:complexType>
+    <xs:complexType name="supportedFormat">
+        <xs:annotation>
+            <xs:documentation xml:lang="en">
+                SupportedFormat section:
+                The details of the short audio descriptor of a specific audio format
+                supported by the audio device. Attributes as follows:
+                    "format": format enum of the current supported format.
+                    "descriptor": three-byte short audio descriptor for the given format in hex.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:attribute name="format" type="hdmiAudioFormat" use="required"/>
+        <xs:attribute name="descriptor" type="descriptor" use="required"/>
+    </xs:complexType>
+    <xs:simpleType name="descriptor">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="[a-fA-F0-9]{6}"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="hdmiAudioFormat">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="AUDIO_FORMAT_NONE"/>
+            <xs:enumeration value="AUDIO_FORMAT_LPCM"/>
+            <xs:enumeration value="AUDIO_FORMAT_DD"/>
+            <xs:enumeration value="AUDIO_FORMAT_MPEG1"/>
+            <xs:enumeration value="AUDIO_FORMAT_MP3"/>
+            <xs:enumeration value="AUDIO_FORMAT_MPEG2"/>
+            <xs:enumeration value="AUDIO_FORMAT_AAC"/>
+            <xs:enumeration value="AUDIO_FORMAT_DTS"/>
+            <xs:enumeration value="AUDIO_FORMAT_ATRAC"/>
+            <xs:enumeration value="AUDIO_FORMAT_ONEBITAUDIO"/>
+            <xs:enumeration value="AUDIO_FORMAT_DDP"/>
+            <xs:enumeration value="AUDIO_FORMAT_DTSHD"/>
+            <xs:enumeration value="AUDIO_FORMAT_TRUEHD"/>
+            <xs:enumeration value="AUDIO_FORMAT_DST"/>
+            <xs:enumeration value="AUDIO_FORMAT_WMAPRO"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:element name="config" type="config"/>
+</xs:schema>

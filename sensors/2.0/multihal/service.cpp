@@ -23,12 +23,12 @@
 using android::hardware::configureRpcThreadpool;
 using android::hardware::joinRpcThreadpool;
 using android::hardware::sensors::V2_0::ISensors;
-using android::hardware::sensors::V2_0::implementation::HalProxy;
+using android::hardware::sensors::V2_1::implementation::HalProxyV2_0;
 
 int main(int /* argc */, char** /* argv */) {
     configureRpcThreadpool(1, true);
 
-    android::sp<ISensors> halProxy = new HalProxy();
+    android::sp<ISensors> halProxy = new HalProxyV2_0();
     if (halProxy->registerAsService() != ::android::OK) {
         ALOGE("Failed to register Sensors HAL instance");
         return -1;

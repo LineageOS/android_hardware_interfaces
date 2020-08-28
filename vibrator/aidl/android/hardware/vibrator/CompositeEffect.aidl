@@ -23,6 +23,9 @@ parcelable CompositeEffect {
     /* Period of silence preceding primitive. */
     int delayMs;
     CompositePrimitive primitive;
-    /* 0.0 (exclusive) - 1.0 (inclusive) */
+    /*
+     * 0.0 (inclusive) - 1.0 (inclusive),
+     * where 0.0 is minimum "feelable" amplitude.
+     */
     float scale;
 }

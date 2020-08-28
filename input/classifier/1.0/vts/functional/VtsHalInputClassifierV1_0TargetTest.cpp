@@ -16,11 +16,12 @@
 
 #define LOG_TAG "input_classifier_hal_test"
 
-#include <VtsHalHidlTargetTestBase.h>
-#include <VtsHalHidlTargetTestEnvBase.h>
 #include <android-base/logging.h>
 #include <android/hardware/input/classifier/1.0/IInputClassifier.h>
 #include <android/hardware/input/common/1.0/types.h>
+#include <gtest/gtest.h>
+#include <hidl/GtestPrinter.h>
+#include <hidl/ServiceManagement.h>
 #include <input/InputDevice.h>
 #include <unistd.h>
 
@@ -72,27 +73,11 @@ static MotionEvent getSimpleMotionEvent() {
     return event;
 }
 
-// Test environment for Input Classifier HIDL HAL.
-class InputClassifierHidlEnvironment : public ::testing::VtsHalHidlTargetTestEnvBase {
-  public:
-    // get the test environment singleton
-    static InputClassifierHidlEnvironment* Instance() {
-        static InputClassifierHidlEnvironment* instance = new InputClassifierHidlEnvironment;
-        return instance;
-    }
-
-    virtual void registerTestServices() override { registerTestService<IInputClassifier>(); }
-
-  private:
-    InputClassifierHidlEnvironment() {}
-};
-
 // The main test class for INPUT CLASSIFIER HIDL HAL 1.0.
-class InputClassifierHidlTest_1_0 : public ::testing::VtsHalHidlTargetTestBase {
+class InputClassifierHidlTest_1_0 : public ::testing::TestWithParam<std::string> {
   public:
     virtual void SetUp() override {
-        classifier = ::testing::VtsHalHidlTargetTestBase::getService<IInputClassifier>(
-                InputClassifierHidlEnvironment::Instance()->getServiceName<IInputClassifier>());
+        classifier = IInputClassifier::getService(GetParam());
         ASSERT_NE(classifier, nullptr);
     }
 
@@ -105,7 +90,7 @@ class InputClassifierHidlTest_1_0 : public ::testing::VtsHalHidlTargetTestBase {
  * Call resetDevice(..) for a few common device id values, and make sure that the HAL
  * can handle the resets gracefully.
  */
-TEST_F(InputClassifierHidlTest_1_0, ResetDevice) {
+TEST_P(InputClassifierHidlTest_1_0, ResetDevice) {
     EXPECT_TRUE(classifier->resetDevice(ReservedInputDeviceId::VIRTUAL_KEYBOARD_ID).isOk());
     EXPECT_TRUE(classifier->resetDevice(ReservedInputDeviceId::BUILT_IN_KEYBOARD_ID).isOk());
     EXPECT_TRUE(classifier->resetDevice(1).isOk());
@@ -115,14 +100,14 @@ TEST_F(InputClassifierHidlTest_1_0, ResetDevice) {
 /**
  * Call reset() on the HAL to ensure no fatal failure there.
  */
-TEST_F(InputClassifierHidlTest_1_0, ResetHal) {
+TEST_P(InputClassifierHidlTest_1_0, ResetHal) {
     EXPECT_TRUE(classifier->reset().isOk());
 }
 
 /**
  * Classify an event without any video frames.
  */
-TEST_F(InputClassifierHidlTest_1_0, Classify_NoVideoFrame) {
+TEST_P(InputClassifierHidlTest_1_0, Classify_NoVideoFrame) {
     // Create a MotionEvent that does not have any video data
     MotionEvent event = getSimpleMotionEvent();
 
@@ -137,7 +122,7 @@ TEST_F(InputClassifierHidlTest_1_0, Classify_NoVideoFrame) {
 /**
  * Classify an event with one video frame. Should be the most common scenario.
  */
-TEST_F(InputClassifierHidlTest_1_0, Classify_OneVideoFrame) {
+TEST_P(InputClassifierHidlTest_1_0, Classify_OneVideoFrame) {
     MotionEvent event = getSimpleMotionEvent();
     VideoFrame frame;
     frame.data = {1, 2, 3, 4};
@@ -163,7 +148,7 @@ TEST_F(InputClassifierHidlTest_1_0, Classify_OneVideoFrame) {
  * monotonically increasing timestamps. Still, we provide consistent timestamps here since that
  * is the most realistic mode of operation.
  */
-TEST_F(InputClassifierHidlTest_1_0, Classify_TwoVideoFrames) {
+TEST_P(InputClassifierHidlTest_1_0, Classify_TwoVideoFrames) {
     MotionEvent event = getSimpleMotionEvent();
     VideoFrame frame1;
     frame1.data = {1, 2, 3, 4};
@@ -183,11 +168,7 @@ TEST_F(InputClassifierHidlTest_1_0, Classify_TwoVideoFrames) {
     classifier->reset();
 }
 
-int main(int argc, char** argv) {
-    ::testing::AddGlobalTestEnvironment(InputClassifierHidlEnvironment::Instance());
-    ::testing::InitGoogleTest(&argc, argv);
-    InputClassifierHidlEnvironment::Instance()->init(&argc, argv);
-    int status = RUN_ALL_TESTS();
-    LOG(INFO) << "Test result = " << status;
-    return status;
-}
+INSTANTIATE_TEST_SUITE_P(
+        PerInstance, InputClassifierHidlTest_1_0,
+        testing::ValuesIn(android::hardware::getAllHalInstanceNames(IInputClassifier::descriptor)),
+        android::hardware::PrintInstanceNameToString);

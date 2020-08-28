@@ -410,7 +410,7 @@ enum CameraMetadataTag : uint32_t {
      *
      * <p>List of the maximum number of regions that can be used for metering in
      * auto-exposure (AE), auto-white balance (AWB), and auto-focus (AF);
-     * this corresponds to the the maximum number of elements in
+     * this corresponds to the maximum number of elements in
      * ANDROID_CONTROL_AE_REGIONS, ANDROID_CONTROL_AWB_REGIONS,
      * and ANDROID_CONTROL_AF_REGIONS.</p>
      *
@@ -1343,8 +1343,8 @@ enum CameraMetadataTag : uint32_t {
 
     /** android.sensor.rollingShutterSkew [dynamic, int64, public]
      *
-     * <p>Duration between the start of first row exposure
-     * and the start of last row exposure.</p>
+     * <p>Duration between the start of exposure for the first row of the image sensor,
+     * and the start of exposure for one past the last row of the image sensor.</p>
      */
     ANDROID_SENSOR_ROLLING_SHUTTER_SKEW,
 

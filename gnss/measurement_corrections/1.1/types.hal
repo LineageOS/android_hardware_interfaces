@@ -1,0 +1,91 @@
+/*
+ * Copyright (C) 2020 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.gnss.measurement_corrections@1.1;
+
+import @1.0::MeasurementCorrections;
+import @1.0::SingleSatCorrection;
+import android.hardware.gnss@2.0::GnssConstellationType;
+
+/**
+ * A struct containing a set of measurement corrections for all used GNSS satellites at the location
+ * specified by latitudeDegrees, longitudeDegrees, altitudeMeters and at the time of week specified
+ * toaGpsNanosecondsOfWeek. The v1_0.satCorrections field is deprecated and is no longer used by
+ * framework.
+ */
+struct MeasurementCorrections {
+    @1.0::MeasurementCorrections v1_0;
+
+    /**
+     * Boolean indicating if environment bearing is available.
+     */
+    bool hasEnvironmentBearing;
+
+    /**
+     * Environment bearing in degrees clockwise from true North (0.0 to 360.0], in direction of
+     * user motion. Environment bearing is provided when it is known with high probability that
+     * velocity is aligned with an environment feature, such as a building or road.
+     *
+     * If user speed is zero, environmentBearingDegrees represents bearing of most recent speed
+     * that was > 0.
+     *
+     * As position approaches another road, environmentBearingUncertaintyDegrees will grow, and at
+     * some stage hasEnvironmentBearing = false.
+     *
+     * As position moves towards an open area, environmentBearingUncertaintyDegrees will grow, and
+     * at some stage hasEnvironmentBearing = false.
+     *
+     * If the road is curved in the vicinity of the user location, then
+     * environmentBearingUncertaintyDegrees will include the amount by which the road direction
+     * changes in the area of position uncertainty.
+     *
+     * hasEnvironmentBearing should be checked to verify the environment bearing is available
+     * before calling this method. The value is undefined if hasEnvironmentBearing is false.
+     */
+    float environmentBearingDegrees;
+
+    /**
+     * Environment bearing uncertainty [0 to 180]. It represents the standard deviation of the
+     * physical structure in the circle of position uncertainty. hasEnvironmentBearing becomes false
+     * as the uncertainty value passes a predefined threshold depending on the physical structure
+     * around the user.
+     *
+     * hasEnvironmentBearing should be checked to verify the environment bearing is available
+     * before calling this method. The value is undefined if hasEnvironmentBearing is false.
+     */
+    float environmentBearingUncertaintyDegrees;
+
+    /**
+     * A set of SingleSatCorrection each containing measurement corrections for a satellite in view
+     */
+    vec<SingleSatCorrection> satCorrections;
+};
+
+/**
+ * A struct with measurement corrections for a single visible satellites, updating the
+ * GnssConstellationType to 2.0, which supports IRNSS. The v1_0.constellation is deprecated and is
+ * no longer used by framework.
+ *
+ * The bit mask singleSatCorrectionFlags indicates which correction values are valid in the struct
+ */
+struct SingleSatCorrection {
+    @1.0::SingleSatCorrection v1_0;
+
+    /**
+     * Defines the constellation of the given satellite.
+     */
+    GnssConstellationType constellation;
+};

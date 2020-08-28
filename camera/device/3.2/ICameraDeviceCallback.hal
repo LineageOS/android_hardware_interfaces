@@ -87,15 +87,19 @@ interface ICameraDeviceCallback {
      * ERROR_RESULT message.
      *
      * If an output buffer cannot be filled, its status field must be set to
-     * STATUS_ERROR. In addition, notify() must be called with a ERROR_BUFFER
-     * message.
+     * STATUS_ERROR. In this case, notify() isn't required to be called with
+     * an ERROR_BUFFER message. The framework will simply treat the notify()
+     * call with ERROR_BUFFER as a no-op, and derive whether and when to notify
+     * the application of buffer loss based on the buffer status and whether or not
+     * the entire capture has failed.
      *
      * If the entire capture has failed, then this method still needs to be
      * called to return the output buffers to the framework. All the buffer
      * statuses must be STATUS_ERROR, and the result metadata must be an
      * empty buffer. In addition, notify() must be called with a ERROR_REQUEST
      * message. In this case, individual ERROR_RESULT/ERROR_BUFFER messages
-     * must not be sent.
+     * must not be sent. Note that valid partial results are still allowed
+     * as long as the final result metadata fails to be generated.
      *
      * Performance requirements:
      *

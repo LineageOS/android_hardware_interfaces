@@ -129,6 +129,7 @@ package audio.policy.V1_0 {
     enum_constant public static final audio.policy.V1_0.FlagType AUDIO_FLAG_BEACON;
     enum_constant public static final audio.policy.V1_0.FlagType AUDIO_FLAG_BYPASS_INTERRUPTION_POLICY;
     enum_constant public static final audio.policy.V1_0.FlagType AUDIO_FLAG_BYPASS_MUTE;
+    enum_constant public static final audio.policy.V1_0.FlagType AUDIO_FLAG_CAPTURE_PRIVATE;
     enum_constant public static final audio.policy.V1_0.FlagType AUDIO_FLAG_DEEP_BUFFER;
     enum_constant public static final audio.policy.V1_0.FlagType AUDIO_FLAG_HW_AV_SYNC;
     enum_constant public static final audio.policy.V1_0.FlagType AUDIO_FLAG_HW_HOTWORD;
@@ -212,6 +213,7 @@ package audio.policy.V1_0 {
     enum_constant public static final audio.policy.V1_0.UsageEnumType AUDIO_USAGE_ASSISTANCE_NAVIGATION_GUIDANCE;
     enum_constant public static final audio.policy.V1_0.UsageEnumType AUDIO_USAGE_ASSISTANCE_SONIFICATION;
     enum_constant public static final audio.policy.V1_0.UsageEnumType AUDIO_USAGE_ASSISTANT;
+    enum_constant public static final audio.policy.V1_0.UsageEnumType AUDIO_USAGE_CALL_ASSISTANT;
     enum_constant public static final audio.policy.V1_0.UsageEnumType AUDIO_USAGE_GAME;
     enum_constant public static final audio.policy.V1_0.UsageEnumType AUDIO_USAGE_MEDIA;
     enum_constant public static final audio.policy.V1_0.UsageEnumType AUDIO_USAGE_NOTIFICATION;

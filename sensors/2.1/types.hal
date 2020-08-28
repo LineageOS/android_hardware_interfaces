@@ -1,0 +1,160 @@
+/*
+ * Copyright (C) 2020 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.sensors@2.1;
+
+import @1.0::EventPayload;
+import @1.0::SensorType;
+import @1.0::SensorFlagBits;
+
+@export(name="", value_prefix="SENSOR_TYPE_")
+enum SensorType : @1.0::SensorType {
+    /**
+     * HINGE_ANGLE
+     * reporting-mode: on-change
+     * wake-up sensor: yes
+     *
+     * A sensor of this type measures the angle, in degrees, between two
+     * integral parts of the device. Movement of a hinge measured by this sensor
+     * type is expected to alter the ways in which the user may interact with
+     * the device, for example by unfolding or revealing a display.
+     *
+     * Sensor data is output using @1.0::EventPayload.scalar.
+     *
+     * Implement wake-up proximity sensor before implementing a non wake-up
+     * proximity sensor.
+     */
+    HINGE_ANGLE                     = 36,
+};
+
+struct Event {
+    /** Time measured in nanoseconds, in "elapsedRealtimeNano()'s" timebase. */
+    int64_t timestamp;
+
+    /** sensor identifier */
+    int32_t sensorHandle;
+
+    @2.1::SensorType sensorType;
+
+    /** Union discriminated on sensorType */
+    EventPayload u;
+};
+
+struct SensorInfo {
+    /**
+     * handle that identifies this sensors. This handle is used to reference
+     * this sensor throughout the HAL API.
+     */
+    int32_t sensorHandle;
+
+    /**
+     * Name of this sensor.
+     * All sensors of the same "type" must have a different "name".
+     */
+    string name;
+
+    /** vendor of the hardware part */
+    string vendor;
+
+    /**
+     * version of the hardware part + driver. The value of this field
+     * must increase when the driver is updated in a way that changes the
+     * output of this sensor. This is important for fused sensors when the
+     * fusion algorithm is updated.
+     */
+    int32_t version;
+
+    /** this sensor's type. */
+    @2.1::SensorType type;
+
+    /**
+     * type of this sensor as a string.
+     *
+     * When defining an OEM specific sensor or sensor manufacturer specific
+     * sensor, use your reserve domain name as a prefix.
+     * e.g. com.google.glass.onheaddetector
+     *
+     * For sensors of known type defined in SensorType (value <
+     * SensorType::DEVICE_PRIVATE_BASE), this can be an empty string.
+     */
+    string typeAsString;
+
+    /** maximum range of this sensor's value in SI units */
+    float maxRange;
+
+    /** smallest difference between two values reported by this sensor */
+    float resolution;
+
+    /** rough estimate of this sensor's power consumption in mA */
+    float power;
+
+    /**
+     * this value depends on the reporting mode:
+     *
+     *   continuous: minimum sample period allowed in microseconds
+     *   on-change : 0
+     *   one-shot  :-1
+     *   special   : 0, unless otherwise noted
+     */
+    int32_t minDelay;
+
+    /**
+     * number of events reserved for this sensor in the batch mode FIFO.
+     * If there is a dedicated FIFO for this sensor, then this is the
+     * size of this FIFO. If the FIFO is shared with other sensors,
+     * this is the size reserved for that sensor and it can be zero.
+     */
+    uint32_t fifoReservedEventCount;
+
+    /**
+     * maximum number of events of this sensor that could be batched.
+     * This is especially relevant when the FIFO is shared between
+     * several sensors; this value is then set to the size of that FIFO.
+     */
+    uint32_t fifoMaxEventCount;
+
+    /**
+     * permission required to see this sensor, register to it and receive data.
+     * Set to "" if no permission is required. Some sensor types like the
+     * heart rate monitor have a mandatory require_permission.
+     * For sensors that always require a specific permission, like the heart
+     * rate monitor, the android framework might overwrite this string
+     * automatically.
+     */
+    string requiredPermission;
+
+    /**
+     * This value is defined only for continuous mode and on-change sensors.
+     * It is the delay between two sensor events corresponding to the lowest
+     * frequency that this sensor supports. When lower frequencies are requested
+     * through batch()/setDelay() the events will be generated at this frequency
+     * instead.
+     * It can be used by the framework or applications to estimate when the
+     * batch FIFO may be full.
+     *
+     * NOTE: periodNs is in nanoseconds where as maxDelay/minDelay are in
+     *       microseconds.
+     *
+     *       continuous, on-change: maximum sampling period allowed in
+     *                              microseconds.
+     *
+     *          one-shot, special : 0
+     */
+    int32_t maxDelay;
+
+    /** Bitmask of SensorFlagBits */
+    bitfield<SensorFlagBits> flags;
+};

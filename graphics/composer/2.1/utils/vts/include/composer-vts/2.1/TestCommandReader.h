@@ -29,12 +29,16 @@ namespace vts {
 // returned.
 class TestCommandReader : public CommandReaderBase {
    public:
-    // Parse all commands in the return command queue.  Call GTEST_FAIL() for
-    // unexpected errors or commands.
-    void parse();
+     virtual ~TestCommandReader() = default;
+     // Parse all commands in the return command queue.  Call GTEST_FAIL() for
+     // unexpected errors or commands.
+     void parse();
 
-    std::vector<std::pair<uint32_t, uint32_t>> mErrors;
-    std::vector<std::pair<uint64_t, uint32_t>> mCompositionChanges;
+     std::vector<std::pair<uint32_t, uint32_t>> mErrors;
+     std::vector<std::pair<uint64_t, uint32_t>> mCompositionChanges;
+
+   protected:
+     virtual void parseSingleCommand(int32_t commandRaw, uint16_t length);
 };
 
 }  // namespace vts

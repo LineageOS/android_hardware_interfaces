@@ -40,7 +40,7 @@ namespace android::hardware::keymaster::V4_1::support {
  */
 class Keymaster : public IKeymasterDevice {
   public:
-    using KeymasterSet = std::vector<std::unique_ptr<Keymaster>>;
+    using KeymasterSet = std::vector<android::sp<Keymaster>>;
 
     Keymaster(const hidl_string& descriptor, const hidl_string& instanceName)
         : descriptor_(descriptor), instanceName_(instanceName) {}

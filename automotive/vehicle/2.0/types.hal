@@ -35,6 +35,21 @@ enum VehiclePropertyType : int32_t {
     /**
      * Any combination of scalar or vector types. The exact format must be
      * provided in the description of the property.
+     *
+     * For vendor MIXED type properties, configArray needs to be formatted in this
+     * structure.
+     * configArray[0], 1 indicates the property has a String value
+     * configArray[1], 1 indicates the property has a Boolean value .
+     * configArray[2], 1 indicates the property has an Integer value.
+     * configArray[3], the number indicates the size of Integer[] in the property.
+     * configArray[4], 1 indicates the property has a Long value.
+     * configArray[5], the number indicates the size of Long[] in the property.
+     * configArray[6], 1 indicates the property has a Float value.
+     * configArray[7], the number indicates the size of Float[] in the property.
+     * configArray[8], the number indicates the size of byte[] in the property.
+     * For example:
+     * {@code configArray = {1, 1, 1, 3, 0, 0, 0, 0, 0}} indicates the property has
+     * a String value, a Boolean value, an Integer value and an array with 3 integers.
      */
     MIXED           = 0x00e00000,
 
@@ -50,8 +65,8 @@ enum VehiclePropertyType : int32_t {
  * particular door, thus this property must be marked with
  * VehicleArea:DOOR flag.
  *
- * Other properties may not be associated with particular vehicle area,
- * these kind of properties must have VehicleArea:GLOBAL flag.
+ * Other properties may not be associated with particular vehicle area.
+ * These kinds of properties must have VehicleArea:GLOBAL flag.
  *
  * [Definition] Area: An area represents a unique element of an AreaType.
  *   For instance, if AreaType is WINDOW, then an area may be FRONT_WINDSHIELD.
@@ -64,9 +79,9 @@ enum VehiclePropertyType : int32_t {
  * Rules for mapping a zoned property to AreaIDs:
  *  - A property must be mapped to an array of AreaIDs that are impacted when
  *    the property value changes.
- *  - Each element in the array must represent an AreaID, in which, the
+ *  - Each element in the array must represent an AreaID, in which the
  *    property value can only be changed together in all the areas within
- *    an AreaID and never independently. That is, when the property value
+ *    the AreaID and never independently. That is, when the property value
  *    changes in one of the areas in an AreaID in the array, then it must
  *    automatically change in all other areas in the AreaID.
  *  - The property value must be independently controllable in any two
@@ -125,7 +140,7 @@ enum VehiclePropertyGroup : int32_t {
  *  - vehicle area (VehicleArea)
  *
  * Vendors are allowed to extend this enum with their own properties. In this
- * case they must use VehiclePropertyGroup:VENDOR flag when property is
+ * case they must use VehiclePropertyGroup:VENDOR flag when the property is
  * declared.
  *
  * When a property's status field is not set to AVAILABLE:
@@ -283,6 +298,47 @@ enum VehicleProperty : int32_t {
         | VehicleArea:SEAT),
 
     /**
+     * Exterior dimensions of vehicle.
+     *
+     *  int32Values[0] = height
+     *  int32Values[1] = length
+     *  int32Values[2] = width
+     *  int32Values[3] = width including mirrors
+     *  int32Values[4] = wheel base
+     *  int32Values[5] = track width front
+     *  int32Values[6] = track width rear
+     *  int32Values[7] = curb to curb turning radius
+     *
+     * @change_mode VehiclePropertyChangeMode:STATIC
+     * @access VehiclePropertyAccess:READ
+     * @unit VehicleUnit:MILLIMETER
+     */
+    INFO_EXTERIOR_DIMENSIONS = (
+        0x010B
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:INT32_VEC
+        | VehicleArea:GLOBAL),
+
+    /**
+     * Multiple EV port locations
+     *
+     * Implement this property if the vehicle has multiple EV ports.
+     * Port locations are defined in PortLocationType.
+     * For example, a car has one port in front left and one port in rear left:
+     *   int32Values[0] = PortLocationType::FRONT_LEFT
+     *   int32Values[0] = PortLocationType::REAR_LEFT
+     *
+     * @change_mode VehiclePropertyChangeMode:STATIC
+     * @access VehiclePropertyAccess:READ
+     * @data_enum PortLocationType
+     */
+    INFO_MULTI_EV_PORT_LOCATIONS = (
+        0x010C
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:INT32_VEC
+        | VehicleArea:GLOBAL),
+
+    /**
      * Current odometer value of the vehicle
      *
      * @change_mode VehiclePropertyChangeMode:CONTINUOUS
@@ -325,7 +381,7 @@ enum VehicleProperty : int32_t {
         | VehicleArea:GLOBAL),
 
     /**
-     * Steering angle of the vehicle
+     * Front bicycle model steering angle for vehicle
      *
      * Angle is in degrees.  Left is negative.
      *
@@ -335,6 +391,21 @@ enum VehicleProperty : int32_t {
      */
     PERF_STEERING_ANGLE = (
         0x0209
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:FLOAT
+        | VehicleArea:GLOBAL),
+
+    /**
+     * Rear bicycle model steering angle for vehicle
+     *
+     * Angle is in degrees.  Left is negative.
+     *
+     * @change_mode VehiclePropertyChangeMode:CONTINUOUS
+     * @access VehiclePropertyAccess:READ
+     * @unit VehicleUnit:DEGREES
+     */
+    PERF_REAR_STEERING_ANGLE = (
+        0x0210
         | VehiclePropertyGroup:SYSTEM
         | VehiclePropertyType:FLOAT
         | VehicleArea:GLOBAL),
@@ -535,8 +606,23 @@ enum VehicleProperty : int32_t {
     /**
      * Tire pressure
      *
-     * min/max value indicates tire pressure sensor range.  Each tire will have a separate min/max
-     * value denoted by its areaConfig.areaId.
+     * Each tires is identified by its areaConfig.areaId config and their
+     * minFloatValue/maxFloatValue are used to store OEM recommended pressure
+     * range.
+     * The Min value in the areaConfig data represents the lower bound of
+     * the recommended tire pressure.
+     * The Max value in the areaConfig data represents the upper bound of
+     * the recommended tire pressure.
+     * For example:
+     * The following areaConfig indicates the recommended tire pressure
+     * of left_front tire is from 200.0 KILOPASCAL to 240.0 KILOPASCAL.
+     * .areaConfigs = {
+     *      VehicleAreaConfig {
+     *          .areaId = VehicleAreaWheel::LEFT_FRONT,
+     *          .minFloatValue = 200.0,
+     *          .maxFloatValue = 240.0,
+     *      }
+     * },
      *
      * @change_mode VehiclePropertyChangeMode:CONTINUOUS
      * @access VehiclePropertyAccess:READ
@@ -715,7 +801,8 @@ enum VehicleProperty : int32_t {
     /*
      * HVAC Properties
      *
-     * Additional rules for mapping a zoned HVAC property to AreaIDs:
+     * Additional rules for mapping a zoned HVAC property (except
+     * HVAC_MAX_DEFROST_ON) to AreaIDs:
      *  - Every seat in VehicleAreaSeat that is available in the car, must be
      *    part of an AreaID in the AreaID array.
      *
@@ -799,7 +886,7 @@ enum VehicleProperty : int32_t {
         | VehicleArea:SEAT),
 
     /**
-     * On/off defrost for designated window
+     * Fan-based defrost for designated window.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
@@ -848,6 +935,11 @@ enum VehicleProperty : int32_t {
      * possible.  Any parameters modified as a side effect of turning on/off
      * the MAX DEFROST parameter shall generate onPropertyEvent() callbacks to
      * the VHAL.
+     * The AreaIDs for HVAC_MAX_DEFROST_ON indicate MAX DEFROST can be controlled
+     * in the area.
+     * For example:
+     * areaConfig.areaId = {ROW_1_LEFT | ROW_1_RIGHT} indicates HVAC_MAX_DEFROST_ON
+     * only can be controlled for the front rows.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
@@ -1076,6 +1168,7 @@ enum VehicleProperty : int32_t {
      *
      * @change_mode VehiclePropertyChangeMode:STATIC
      * @access VehiclePropertyAccess:READ
+     * @data_enum VehicleHvacFanDirection
      */
     HVAC_FAN_DIRECTION_AVAILABLE = (
         0x0511
@@ -1117,6 +1210,18 @@ enum VehicleProperty : int32_t {
         | VehiclePropertyGroup:SYSTEM
         | VehiclePropertyType:INT32
         | VehicleArea:SEAT),
+
+    /**
+     * Electric defrosters' status
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
+     */
+    HVAC_ELECTRIC_DEFROSTER_ON = (
+        0x0514
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:BOOLEAN
+        | VehicleArea:WINDOW),
 
    /**
      * Distance units for display
@@ -1344,6 +1449,33 @@ enum VehicleProperty : int32_t {
      */
     HW_KEY_INPUT = (
         0x0A10
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:INT32_VEC
+        | VehicleArea:GLOBAL),
+
+    /**
+     * Property to feed H/W rotary events to android
+     *
+     * int32Values[0] : RotaryInputType identifying which rotary knob rotated
+     * int32Values[1] : number of detents (clicks), positive for clockwise,
+     *                  negative for counterclockwise
+     * int32Values[2] : target display defined in VehicleDisplay. Events not
+     *                  tied to specific display must be sent to
+     *                  VehicleDisplay#MAIN.
+     * int32values[3 .. 3 + abs(number of detents) - 2]:
+     *                  nanosecond deltas between pairs of consecutive detents,
+     *                  if the number of detents is > 1 or < -1
+     *
+     * VehiclePropValue.timestamp: when the rotation occurred. If the number of
+     *                             detents is > 1 or < -1, this is when the
+     *                             first detent of rotation occurred.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @data_enum RotaryInputType
+     * @access VehiclePropertyAccess:READ
+     */
+    HW_ROTARY_INPUT = (
+        0x0A20
         | VehiclePropertyGroup:SYSTEM
         | VehiclePropertyType:INT32_VEC
         | VehicleArea:GLOBAL),
@@ -2321,6 +2453,503 @@ enum VehicleProperty : int32_t {
         | VehiclePropertyType:INT32
         | VehicleArea:SEAT),
 
+    /**
+     * Support customize permissions for vendor properties
+     *
+     * Implement this property if vehicle hal support customize vendor permissions feature.
+     * VehiclePropConfig.configArray is used to indicate vendor properties and permissions
+     * which selected for this vendor property. The permission must be one of enum in
+     * VehicleVendorPermission.
+     * The configArray is set as follows:
+     *      configArray[n] = propId : property ID for the vendor property
+     *      configArray[n+1] = one of enums in VehicleVendorPermission. It indicates the permission
+     *      for reading value of the property.
+     *      configArray[n+2] = one of enums in VehicleVendorPermission. It indicates the permission
+     *      for writing value of the property.
+     *
+     * For example:
+     * configArray = {
+     *      vendor_prop_1, PERMISSION_VENDOR_SEAT_READ, PERMISSION_VENDOR_SEAT_WRITE,
+     *      vendor_prop_2, PERMISSION_VENDOR_INFO, PERMISSION_NOT_ACCESSIBLE,
+     * }
+     * If vendor properties are not in this array, they will have the default vendor permission.
+     * If vendor chose PERMISSION_NOT_ACCESSIBLE, android will not have access to the property. In
+     * the example, Android can not write value for vendor_prop_2.
+     *
+     * @change_mode VehiclePropertyChangeMode:STATIC
+     * @access VehiclePropertyAccess:READ
+     */
+    SUPPORT_CUSTOMIZE_VENDOR_PERMISSION = (
+        0x0F05
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:BOOLEAN
+        | VehicleArea:GLOBAL),
+
+    /**
+     * Allow disabling optional featurs from vhal.
+     *
+     * This property reports optional features that should be disabled.
+     * All allowed optional features for the system is declared in Car service overlay,
+     * config_allowed_optional_car_features.
+     * This property allows disabling features defined in the overlay. Without this property,
+     * all the features declared in the overlay will be enabled.
+     *
+     * Value read should include all features disabled with ',' separation.
+     * ex) "com.android.car.user.CarUserNoticeService,storage_monitoring"
+     * @change_mode VehiclePropertyChangeMode:STATIC
+     * @access VehiclePropertyAccess:READ
+     */
+    DISABLED_OPTIONAL_FEATURES = (
+        0x0F06
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:STRING
+        | VehicleArea:GLOBAL),
+
+    /**
+     * Defines the initial Android user to be used during initialization.
+     *
+     * This property is called by the Android system when it initializes and it lets the HAL
+     * define which Android user should be started.
+     *
+     * This request is made by setting a VehiclePropValue (defined by InitialUserInfoRequest),
+     * and the HAL must respond with a property change event (defined by InitialUserInfoResponse).
+     * If the HAL doesn't respond after some time (defined by the Android system), the Android
+     * system will proceed as if HAL returned a response of action
+     * InitialUserInfoResponseAction:DEFAULT.
+     *
+     * For example, on first boot, the request could be:
+     *
+     * int32[0]: 42  // request id (arbitrary number set by Android system)
+     * int32[1]: 1   // InitialUserInfoRequestType::FIRST_BOOT
+     * int32[2]: 0   // id of current user (usersInfo.currentUser.userId)
+     * int32[3]: 1   // flag of current user (usersInfo.currentUser.flags = SYSTEM)
+     * int32[4]: 1   // number of existing users (usersInfo.numberUsers);
+     * int32[5]: 0   // user #0  (usersInfo.existingUsers[0].userId)
+     * int32[6]: 1   // flags of user #0  (usersInfo.existingUsers[0].flags)
+     *
+     * And if the HAL want to respond with the creation of an admin user called "Owner", the
+     * response would be:
+     *
+     * int32[0]: 42      // must match the request id from the request
+     * int32[1]:  2      // action = InitialUserInfoResponseAction::CREATE
+     * int32[2]: -10000  // userToSwitchOrCreate.userId (not used as user will be created)
+     * int32[3]:  8      // userToSwitchOrCreate.flags = ADMIN
+     * string: "||Owner" // userLocales + separator + userNameToCreate
+     *
+     * Notice the string value represents multiple values, separated by ||. The first value is the
+     * (optional) system locales for the user to be created (in this case, it's empty, meaning it
+     * will use Android's default value), while the second value is the (also optional) name of the
+     * to user to be created (when the type of response is InitialUserInfoResponseAction:CREATE).
+     * For example, to create the same "Owner" user with "en-US" and "pt-BR" locales, the string
+     * value of the response would be "en-US,pt-BR||Owner". As such, neither the locale nor the
+     * name can have || on it, although a single | is fine.
+     *
+     * NOTE: if the HAL doesn't support user management, then it should not define this property,
+     * which in turn would disable the other user-related properties (for example, the Android
+     * system would never issue them and user-related requests from the HAL layer would be ignored
+     * by the Android System). But if it supports user management, then it must support all core
+     * user-related properties (INITIAL_USER_INFO, SWITCH_USER, CREATE_USER, and REMOVE_USER).
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
+     */
+    INITIAL_USER_INFO = (
+        0x0F07
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:MIXED
+        | VehicleArea:GLOBAL),
+
+    /**
+     * Defines a request to switch the foreground Android user.
+     *
+     * This property is used primarily by the Android System to inform the HAL that the
+     * current foreground Android user is switching, but it could also be used by the HAL to request
+     * the Android system to switch users - the
+     *
+     * When the request is made by Android, it sets a VehiclePropValue and the HAL must responde
+     * with a property change event; when the HAL is making the request, it must also do it through
+     * a property change event (the main difference is that the request id will be positive in the
+     * former case, and negative in the latter; the SwitchUserMessageType will also be different).
+     *
+     * The format of both request is defined by SwitchUserRequest and the format of the response
+     * (when needed) is defined by SwitchUserResponse. How the HAL (or Android System) should
+     * proceed depends on the message type (which is defined by the SwitchUserMessageType
+     * parameter), as defined below.
+     *
+     * 1.LEGACY_ANDROID_SWITCH
+     * -----------------------
+     *
+     * Called by the Android System to indicate the Android user is about to change, when the change
+     * request was made in a way that is not integrated with the HAL (for example, through
+     * adb shell am switch-user).
+     *
+     * The HAL can switch its internal user once it receives this request, but it doesn't need to
+     * reply back to the Android System. If its internal user cannot be changed for some reason,
+     * then it must wait for the SWITCH_USER(type=ANDROID_POST_SWITCH) call to recover
+     * (for example, it could issue a SWITCH_USER(type=VEHICLE_REQUEST) to switch back to
+     * the previous user), but ideally it should never fail (as switching back could result in a
+     * confusing experience for the end user).
+     *
+     * For example, if the system have users (0, 10, 11) and it's switching from 0 to 11 (where none
+     * of them have any special flag), the request would be:
+     *
+     * int32[0]:  42  // request id
+     * int32[1]:  1   // SwitchUserMessageType::LEGACY_ANDROID_SWITCH
+     * int32[2]:  11  // target user id
+     * int32[3]:  0   // target user flags (none)
+     * int32[4]:  10  // current user
+     * int32[5]:  0   // current user flags (none)
+     * int32[6]:  3   // number of users
+     * int32[7]:  0   // user #0 (Android user id 0)
+     * int32[8]:  0   // flags of user #0 (none)
+     * int32[9]:  10  // user #1 (Android user id 10)
+     * int32[10]: 0   // flags of user #1 (none)
+     * int32[11]: 11  // user #2 (Android user id 11)
+     * int32[12]: 0   // flags of user #2 (none)
+     *
+     * 2.ANDROID_SWITCH
+     * ----------------
+     * Called by the Android System to indicate the Android user is about to change, but Android
+     * will wait for the HAL's response (up to some time) before proceeding.
+     *
+     * The HAL must switch its internal user once it receives this request, then respond back to
+     * Android with a SWITCH_USER(type=VEHICLE_RESPONSE) indicating whether its internal
+     * user was switched or not (through the SwitchUserStatus enum).
+     *
+     * For example, if Android has users (0, 10, 11) and it's switching from 10 to 11 (where
+     * none of them have any special flag), the request would be:
+     *
+     * int32[0]:  42  // request id
+     * int32[1]:  2   // SwitchUserMessageType::ANDROID_SWITCH
+     * int32[2]:  11  // target user id
+     * int32[3]:  0   // target user flags (none)
+     * int32[4]:  10  // current user
+     * int32[5]:  0   // current user flags (none)
+     * int32[6]:  3   // number of users
+     * int32[7]:  0   // 1st user (user 0)
+     * int32[8]:  1   // 1st user flags (SYSTEM)
+     * int32[9]:  10  // 2nd user (user 10)
+     * int32[10]: 0   // 2nd user flags (none)
+     * int32[11]: 11  // 3rd user (user 11)
+     * int32[12]: 0   // 3rd user flags (none)
+     *
+     * If the request succeeded, the HAL must update the propery with:
+     *
+     * int32[0]: 42  // request id
+     * int32[1]: 3   // messageType = SwitchUserMessageType::VEHICLE_RESPONSE
+     * int32[2]: 1   // status = SwitchUserStatus::SUCCESS
+     *
+     * But if it failed, the response would be something like:
+     *
+     * int32[0]: 42   // request id
+     * int32[1]: 3    // messageType = SwitchUserMessageType::VEHICLE_RESPONSE
+     * int32[2]: 2    // status = SwitchUserStatus::FAILURE
+     * string: "108-D'OH!" // OEM-spefic error message
+     *
+     * 3.VEHICLE_RESPONSE
+     * ------------------
+     * Called by the HAL to indicate whether a request of type ANDROID_SWITCH should proceed or
+     * abort - see the ANDROID_SWITCH section above for more info.
+     *
+     * 4.VEHICLE_REQUEST
+     * ------------------
+     * Called by the HAL to request that the current foreground Android user is switched.
+     *
+     * This is useful in situations where Android started as one user, but the vehicle identified
+     * the driver as another user. For example, user A unlocked the car using the key fob of user B;
+     * the INITIAL_USER_INFO request returned user B, but then a face recognition subsubsystem
+     * identified the user as A.
+     *
+     * The HAL makes this request by a property change event (passing a negative request id), and
+     * the Android system will response by issue an ANDROID_POST_SWITCH call which the same
+     * request id.
+     *
+     * For example, if the current foreground Android user is 10 and the HAL asked it to switch to
+     * 11, the request would be:
+     *
+     * int32[0]: -108  // request id
+     * int32[1]: 4     // messageType = SwitchUserMessageType::VEHICLE_REQUEST
+     * int32[2]: 11    // Android user id
+     *
+     * If the request succeeded and Android has 3 users (0, 10, 11), the response would be:
+     *
+     * int32[0]: -108 // request id
+     * int32[1]:  5   // messageType = SwitchUserMessageType::ANDROID_POST_SWITCH
+     * int32[2]:  11  // target user id
+     * int32[3]:  0   // target user id flags (none)
+     * int32[4]:  11  // current user
+     * int32[5]:  0   // current user flags (none)
+     * int32[6]:  3   // number of users
+     * int32[7]:  0   // 1st user (user 0)
+     * int32[8]:  0   // 1st user flags (none)
+     * int32[9]:  10  // 2nd user (user 10)
+     * int32[10]: 4   // 2nd user flags (none)
+     * int32[11]: 11  // 3rd user (user 11)
+     * int32[12]: 3   // 3rd user flags (none)
+     *
+     * Notice that both the current and target user ids are the same - if the request failed, then
+     * they would be different (i.e, target user would be 11, but current user would still be 10).
+     *
+     * 5.ANDROID_POST_SWITCH
+     * ---------------------
+     * Called by the Android System after a request to switch a user was made.
+     *
+     * This property is called after switch requests of any type (i.e., LEGACY_ANDROID_SWITCH,
+     * ANDROID_SWITCH, or VEHICLE_REQUEST) and can be used to determine if the request succeeded or
+     * failed:
+     *
+     * 1. When it succeeded, it's called when the Android user is in the unlocked state and the
+     *    value of the current and target users ids in the response are the same. This would be
+     *    equivalent to receiving an Intent.ACTION_USER_UNLOCKED in an Android app.
+     * 2. When it failed it's called right away and the value of the current and target users ids
+     *    in the response are different (as the current user didn't change to the target).
+     * 3. If a new switch request is made before the HAL responded to the previous one or before
+     *    the user was unlocked, then the ANDROID_POST_SWITCH request is not made. For example,
+     *    the driver could accidentally switch to the wrong user which has lock credentials, then
+     *    switch to the right one before entering the credentials.
+     *
+     * The HAL can update its internal state once it receives this request, but it doesn't need to
+     * reply back to the Android System.
+     *
+     * Request: the first N values as defined by INITIAL_USER_INFO (where the request-specific
+     * value at index 1 is SwitchUserMessageType::ANDROID_POST_SWITCH), then 2 more values for the
+     * target user id (i.e., the Android user id that was requested to be switched to) and its flags
+     * (as defined by  UserFlags).
+     *
+     * Response: none.
+     *
+     * Example: see VEHICLE_REQUEST section above.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
+     */
+    SWITCH_USER = (
+        0x0F08
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:MIXED
+        | VehicleArea:GLOBAL),
+
+    /**
+     * Called by the Android System after an Android user was created.
+     *
+     * The HAL can use this property to create its equivalent user.
+     *
+     * This is an async request: Android makes the request by setting a VehiclePropValue, and HAL
+     * must respond with a property change indicating whether the request succeeded or failed. If
+     * it failed, the Android system will remove the user.
+     *
+     * The format of the request is defined by CreateUserRequest and the format of the response by
+     * CreateUserResponse.
+     *
+     * For example, if system had 2 users (0 and 10) and a 3rd one (which is an ephemeral guest) was
+     * created, the request would be:
+     *
+     * int32[0]: 42  // request id
+     * int32[1]: 11  // Android id of the created user
+     * int32[2]: 3   // Android flags (ephemeral guest) of the created user
+     * int32[3]: 10  // current user
+     * int32[4]: 0   // current user flags (none)
+     * int32[5]: 3   // number of users
+     * int32[6]: 0   // 1st user (user 0)
+     * int32[7]: 0   // 1st user flags (none)
+     * int32[8]: 10  // 2nd user (user 10)
+     * int32[9]: 0   // 2nd user flags (none)
+     * int32[19]: 11 // 3rd user (user 11)
+     * int32[11]: 3  // 3rd user flags (ephemeral guest)
+     * string: "ElGuesto" // name of the new user
+     *
+     * Then if the request succeeded, the HAL would return:
+     *
+     * int32[0]: 42  // request id
+     * int32[1]: 1   // CreateUserStatus::SUCCESS
+     *
+     * But if it failed:
+     *
+     * int32[0]: 42  // request id
+     * int32[1]: 2   // CreateUserStatus::FAILURE
+     * string: "D'OH!" // The meaning is a blackbox - it's passed to the caller (like Settings UI),
+     *                 // which in turn can take the proper action.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
+     */
+    CREATE_USER = (
+        0x0F09
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:MIXED
+        | VehicleArea:GLOBAL),
+
+    /**
+     * Called by the Android System after an Android user was removed.
+     *
+     * The HAL can use this property to remove its equivalent user.
+     *
+     * This is write-only call - the Android System is not expecting a reply from the HAL. Hence,
+     * this request should not fail - if the equivalent HAL user cannot be removed, then HAL should
+     * mark it as inactive or recover in some other way.
+     *
+     * The request is made by setting the VehiclePropValue with the contents defined by
+     * RemoveUserRequest.
+     *
+     * For example, if system had 3 users (0, 10, and 11) and user 11 was removed, the request
+     * would be:
+     *
+     * int32[0]: 42  // request id
+     * int32[1]: 11  // (Android user id of the removed user)
+     * int32[2]: 0   // (Android user flags of the removed user)
+     * int32[3]: 10  // current user
+     * int32[4]: 0   // current user flags (none)
+     * int32[5]: 2   // number of users
+     * int32[6]: 0   // 1st user (user 0)
+     * int32[7]: 0   // 1st user flags (none)
+     * int32[8]: 10  // 2nd user (user 10)
+     * int32[9]: 0   // 2nd user flags (none)
+     *
+     * @change_mode VehiclePropertyChangeMode:STATIC
+     * @access VehiclePropertyAccess:WRITE
+     */
+    REMOVE_USER = (
+        0x0F0A
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:MIXED
+        | VehicleArea:GLOBAL),
+
+    /**
+     * Property used to associate (or query the association) the current user with vehicle-specific
+     * identification mechanisms (such as key FOB).
+     *
+     * This is an optional user management property - the OEM could still support user management
+     * without defining it. In fact, this property could be used without supporting the core
+     * user-related functions described on INITIAL_USER_INFO.
+     *
+     * To query the association, the Android system gets the property, passing a VehiclePropValue
+     * containing the types of associations are being queried, as defined by
+     * UserIdentificationGetRequest. The HAL must return right away, returning a VehiclePropValue
+     * with a UserIdentificationResponse. Notice that user identification should have already
+     * happened while system is booting up and the VHAL implementation should only return the
+     * already identified association (like the key FOB used to unlock the car), instead of starting
+     * a new association from the get call.
+     *
+     * To associate types, the Android system sets the property, passing a VehiclePropValue
+     * containing the types and values of associations being set, as defined by the
+     * UserIdentificationSetRequest. The HAL will then use a property change event (whose
+     * VehiclePropValue is defined by UserIdentificationResponse) indicating the current status of
+     * the types after the request.
+     *
+     * For example, to query if the current user (10) is associated with the FOB that unlocked the
+     * car and a custom mechanism provided by the OEM, the request would be:
+     *
+     * int32[0]: 42  // request id
+     * int32[1]: 10  (Android user id)
+     * int32[2]: 0   (Android user flags)
+     * int32[3]: 2   (number of types queried)
+     * int32[4]: 1   (1st type queried, UserIdentificationAssociationType::KEY_FOB)
+     * int32[5]: 101 (2nd type queried, UserIdentificationAssociationType::CUSTOM_1)
+     *
+     * If the user is associated with the FOB but not with the custom mechanism, the response would
+     * be:
+     *
+     * int32[0]: 42  // request id
+     * int32[1]: 2   (number of associations in the response)
+     * int32[2]: 1   (1st type: UserIdentificationAssociationType::KEY_FOB)
+     * int32[3]: 2   (1st value: UserIdentificationAssociationValue::ASSOCIATED_CURRENT_USER)
+     * int32[4]: 101 (2st type: UserIdentificationAssociationType::CUSTOM_1)
+     * int32[5]: 4   (2nd value: UserIdentificationAssociationValue::NOT_ASSOCIATED_ANY_USER)
+     *
+     * Then to associate the user with the custom mechanism, a set request would be made:
+     *
+     * int32[0]: 43  // request id
+     * int32[1]: 10  (Android user id)
+     * int32[2]: 0   (Android user flags)
+     * int32[3]: 1   (number of associations being set)
+     * int32[4]: 101 (1st type: UserIdentificationAssociationType::CUSTOM_1)
+     * int32[5]: 1   (1st value: UserIdentificationAssociationSetValue::ASSOCIATE_CURRENT_USER)
+     *
+     * If the request succeeded, the response would be simply:
+     *
+     * int32[0]: 43  // request id
+     * int32[1]: 1   (number of associations in the response)
+     * int32[2]: 101 (1st type: UserIdentificationAssociationType::CUSTOM_1)
+     * int32[3]: 1   (1st value: UserIdentificationAssociationValue::ASSOCIATED_CURRENT_USER)
+     *
+     * Notice that the set request adds associations, but doesn't remove the existing ones. In the
+     * example above, the end state would be 2 associations (FOB and CUSTOM_1). If we wanted to
+     * associate the user with just CUSTOM_1 but not FOB, then the request should have been:
+     *
+     * int32[0]: 43  // request id
+     * int32[1]: 10  (Android user id)
+     * int32[2]: 2   (number of types set)
+     * int32[3]: 1   (1st type: UserIdentificationAssociationType::KEY_FOB)
+     * int32[4]: 2   (1st value: UserIdentificationAssociationValue::DISASSOCIATE_CURRENT_USER)
+     * int32[5]: 101 (2nd type: UserIdentificationAssociationType::CUSTOM_1)
+     * int32[6]: 1   (2nd value: UserIdentificationAssociationValue::ASSOCIATE_CURRENT_USER)
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
+     */
+    USER_IDENTIFICATION_ASSOCIATION = (
+        0x0F0B
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:MIXED
+        | VehicleArea:GLOBAL),
+};
+
+/**
+ * Used by SUPPORT_CUSTOMIZE_VENDOR_PERMISSION to indicate the permission of vendor properties.
+ */
+enum VehicleVendorPermission : int32_t {
+    PERMISSION_DEFAULT = 0x00000000,
+
+    // permissions for the property related with window
+    PERMISSION_SET_VENDOR_CATEGORY_WINDOW= 0X00000001,
+    PERMISSION_GET_VENDOR_CATEGORY_WINDOW = 0x00000002,
+    // permissions for the property related with door
+    PERMISSION_SET_VENDOR_CATEGORY_DOOR  = 0x00000003,
+    PERMISSION_GET_VENDOR_CATEGORY_DOOR   = 0x00000004,
+    // permissions for the property related with seat
+    PERMISSION_SET_VENDOR_CATEGORY_SEAT  = 0x00000005,
+    PERMISSION_GET_VENDOR_CATEGORY_SEAT   = 0x00000006,
+    // permissions for the property related with mirror
+    PERMISSION_SET_VENDOR_CATEGORY_MIRROR= 0x00000007,
+    PERMISSION_GET_VENDOR_CATEGORY_MIRROR = 0x00000008,
+
+    // permissions for the property related with car's information
+    PERMISSION_SET_VENDOR_CATEGORY_INFO  = 0x00000009,
+    PERMISSION_GET_VENDOR_CATEGORY_INFO   = 0x0000000A,
+    // permissions for the property related with car's engine
+    PERMISSION_SET_VENDOR_CATEGORY_ENGINE= 0x0000000B,
+    PERMISSION_GET_VENDOR_CATEGORY_ENGINE = 0x0000000C,
+    // permissions for the property related with car's HVAC
+    PERMISSION_SET_VENDOR_CATEGORY_HVAC  = 0x0000000D,
+    PERMISSION_GET_VENDOR_CATEGORY_HVAC   = 0x0000000E,
+    // permissions for the property related with car's light
+    PERMISSION_SET_VENDOR_CATEGORY_LIGHT = 0x0000000F,
+    PERMISSION_GET_VENDOR_CATEGORY_LIGHT  = 0x00000010,
+
+    // permissions reserved for other vendor permission
+    PERMISSION_SET_VENDOR_CATEGORY_1  = 0x00010000,
+    PERMISSION_GET_VENDOR_CATEGORY_1   = 0x00011000,
+    PERMISSION_SET_VENDOR_CATEGORY_2  = 0x00020000,
+    PERMISSION_GET_VENDOR_CATEGORY_2   = 0x00021000,
+    PERMISSION_SET_VENDOR_CATEGORY_3  = 0x00030000,
+    PERMISSION_GET_VENDOR_CATEGORY_3   = 0x00031000,
+    PERMISSION_SET_VENDOR_CATEGORY_4  = 0x00040000,
+    PERMISSION_GET_VENDOR_CATEGORY_4   = 0x00041000,
+    PERMISSION_SET_VENDOR_CATEGORY_5  = 0x00050000,
+    PERMISSION_GET_VENDOR_CATEGORY_5   = 0x00051000,
+    PERMISSION_SET_VENDOR_CATEGORY_6  = 0x00060000,
+    PERMISSION_GET_VENDOR_CATEGORY_6   = 0x00061000,
+    PERMISSION_SET_VENDOR_CATEGORY_7  = 0x00070000,
+    PERMISSION_GET_VENDOR_CATEGORY_7   = 0x00071000,
+    PERMISSION_SET_VENDOR_CATEGORY_8  = 0x00080000,
+    PERMISSION_GET_VENDOR_CATEGORY_8   = 0x00081000,
+    PERMISSION_SET_VENDOR_CATEGORY_9  = 0x00090000,
+    PERMISSION_GET_VENDOR_CATEGORY_9   = 0x00091000,
+    PERMISSION_SET_VENDOR_CATEGORY_10 = 0x000A0000,
+    PERMISSION_GET_VENDOR_CATEGORY_10  = 0x000A1000,
+
+    // Indicate not available for android to access.
+    PERMISSION_NOT_ACCESSIBLE = 0xF0000000
 };
 
 /**
@@ -2458,9 +3087,19 @@ enum FuelType : int32_t {
  * Bit flags for fan direction
  */
 enum VehicleHvacFanDirection : int32_t {
+    UNKNOWN = 0x0,
+
     FACE = 0x1,
     FLOOR = 0x2,
+    /**
+     * FACE_AND_FLOOR = FACE | FLOOR
+     */
+    FACE_AND_FLOOR = 0x3,
     DEFROST = 0x4,
+    /**
+     * DEFROST_AND_FLOOR = DEFROST | FLOOR
+     */
+    DEFROST_AND_FLOOR = 0x06,
 };
 
 enum VehicleOilLevel : int32_t {
@@ -2489,26 +3128,52 @@ enum VehicleApPowerStateConfigFlag : int32_t {
 };
 
 enum VehicleApPowerStateReq : int32_t {
-    /** Transition Android from WAIT_FOR_VHAL to ON state */
+    /**
+     * This requests Android to enter its normal operating state.
+     * This may be sent after the AP has reported
+     * VehicleApPowerStateReport#DEEP_SLEEP_EXIT,
+     * VehicleApPowerStateReport#SHUTDOWN_CANCELLED, or
+     * VehicleApPowerStateReport#WAIT_FOR_VHAL.
+     */
     ON = 0,
 
     /**
-     * The power controller has requested AP to shutdown. AP can either enter
-     * sleep state or start full shutdown. AP can also request postponing
-     * shutdown by sending VehicleApPowerSetState#SHUTDOWN_POSTPONE message. The
-     * power controller must change power state to this state to shutdown
-     * system.
+     * The power controller issues this request to shutdown the system.
+     * This may be sent after the AP has reported
+     * VehicleApPowerStateReport#DEEP_SLEEP_EXIT,
+     * VehicleApPowerStateReport#ON,
+     * VehicleApPowerStateReport#SHUTDOWN_CANCELLED,
+     * VehicleApPowerStateReport#SHUTDOWN_POSTPONE,
+     * VehicleApPowerStateReport#SHUTDOWN_PREPARE, or
+     * VehicleApPowerStateReport#WAIT_FOR_VHAL.
      *
-     * int32Values[1] : one of enum_vehicle_ap_power_state_shutdown_param_type
-     *
-     * SHUTDOWN_PRPARE may be requested from either WAIT_FOR_VHAL or ON states.
+     * int32Values[1] : One of VehicleApPowerStateShutdownParam.
+     *                  This parameter indicates if the AP should shut
+     *                  down fully or sleep. This parameter also
+     *                  indicates if the shutdown should be immediate
+     *                  or if it can be postponed. If the shutdown can
+     *                  be postponed, AP requests postponing by sending
+     *                  VehicleApPowerStateReport#SHUTDOWN_POSTPONE.
      */
     SHUTDOWN_PREPARE = 1,
 
-    /** Cancel the shutdown and transition from SHUTDOWN_PREPARE to WAIT_FOR_VHAL state */
+    /**
+     * Cancel the shutdown.
+     * This may be sent after the AP has reported
+     * VehicleApPowerStateReport#SHUTDOWN_POSTPONE or
+     * VehicleApPowerStateReport#SHUTDOWN_PREPARE.
+     * After receiving this request, the AP will report
+     * VehicleApPowerStateReport#WAIT_FOR_VHAL in preparation to going ON.
+     */
     CANCEL_SHUTDOWN = 2,
 
-    /** VHAL is finished with shutdown procedures and ready for Android to suspend/shutdown */
+    /**
+     * Completes the shutdown process.
+     * This may be sent after the AP has reported
+     * VehicleApPowerStateReport#DEEP_SLEEP_ENTRY or
+     * VehicleApPowerStateReport#SHUTDOWN_START. The AP will not report new
+     * state information after receiving this request.
+     */
     FINISHED = 3,
 };
 
@@ -2531,65 +3196,89 @@ enum VehicleApPowerStateShutdownParam : int32_t {
 
     /** AP can only shutdown with postponing allowed. */
     SHUTDOWN_ONLY = 3,
+
+    /**
+     * AP may enter deep sleep, but must either sleep or shut down immediately.
+     * Postponing is not allowed. */
+    SLEEP_IMMEDIATELY = 4,
 };
 
 enum VehicleApPowerStateReport : int32_t {
     /**
-     * Device has booted, CarService has initialized and is ready to accept commands from VHAL.
-     * Device starts in WAIT_FOR_VHAL state.  The user is not logged in, and vendor apps/services
-     * are expected to control the display and audio.
+     * The device has booted. CarService has initialized and is ready to accept commands
+     * from VHAL. The user is not logged in, and vendor apps and services are expected to
+     * control the display and audio.
+     * After reporting this state, AP will accept VehicleApPowerStateReq#ON or
+     * VehicleApPowerStateReq#SHUTDOWN_PREPARE. Other power state requests are ignored.
      */
     WAIT_FOR_VHAL = 0x1,
 
     /**
-     * AP is ready to suspend and has entered WAIT_FOR_FINISHED state.
+     * AP is ready to suspend.
+     * The AP will not send any more state reports after this.
+     * After reporting this state, AP will accept VehicleApPowerStateReq#FINISHED.
+     * Other power state requests are ignored.
      *
-     * int32Values[1]: Time to turn on AP in secs. Power controller may turn on
-     *                 AP after specified time so that AP can run tasks like
-     *                 update. If it is set to 0, there is no wake up, and power
-     *                 controller may not necessarily support wake-up.
+     * int32Values[1]: Time to turn AP back on, in seconds. Power controller should turn on
+     *                 AP after the specified time has elapsed, so AP can run tasks like
+     *                 update. If this value is 0, no wake up is requested. The power
+     *                 controller may not necessarily support timed wake-up.
      */
     DEEP_SLEEP_ENTRY = 0x2,
 
     /**
-     * AP is exiting from deep sleep state, and is in WAIT_FOR_VHAL state.
+     * AP is exiting from deep sleep state.
+     * After reporting this state, AP will accept VehicleApPowerStateReq#ON or
+     * VehicleApPowerStateReq#SHUTDOWN_PREPARE. Other power state requests are ignored.
      */
     DEEP_SLEEP_EXIT = 0x3,
 
     /**
-     * AP remains in SHUTDOWN_PREPARE state as idle and cleanup tasks execute.
+     * AP sends this message repeatedly while cleanup and idle tasks execute.
+     * After reporting this state, AP will accept VehicleApPowerStateReq#SHUTDOWN_PREPARE
+     * requesting immediate shutdown or VehicleApPowerStateReq#CANCEL_SHUTDOWN. Other
+     * power state requests are ignored.
      *
-     * int32Values[1]: Time to postpone shutdown in ms. Maximum value can be
+     * int32Values[1]: Time to postpone shutdown in ms. Maximum value is
      *                 5000 ms.
-     *                 If AP needs more time, it will send another POSTPONE
+     *                 If AP needs more time, it will send another SHUTDOWN_POSTPONE
      *                 message before the previous one expires.
      */
     SHUTDOWN_POSTPONE = 0x4,
 
     /**
-     * AP is ready to shutdown and has entered WAIT_FOR_FINISHED state.
+     * AP is ready to shutdown.
+     * The AP will not send any more state reports after this.
+     * After reporting this state, AP will accept VehicleApPowerStateReq#FINISHED.
+     * Other power state requests are ignored.
      *
-     * int32Values[1]: Time to turn on AP in secs. Power controller may turn on
-     *                 AP after specified time so that AP can run tasks like
-     *                 update. If it is set to 0, there is no wake up, and power
-     *                 controller may not necessarily support wake-up.
+     * int32Values[1]: Time to turn AP back on, in seconds. Power controller should turn on
+     *                 AP after the specified time has elapsed so AP can run tasks like
+     *                 update. If this value is 0, no wake up is specified. The power
+     *                 controller may not necessarily support timed wake-up.
      */
     SHUTDOWN_START = 0x5,
 
     /**
-     * AP has transitioned from WAIT_FOR_VHAL state to ON.
+     * AP is entering its normal operating state.
+     * After reporting this state, AP will accept VehicleApPowerStateReq#SHUTDOWN_PREPARE.
+     * Other power state requests are ignored.
      */
     ON = 0x6,
 
     /**
-     * AP has transitions to SHUTDOWN_PREPARE state.  In this state, Garage Mode will execute idle
-     * tasks, and other services that have registered for this state transition may execute
-     * cleanup activities.
+     * AP is preparing to shut down. In this state, Garage Mode is active and idle
+     * tasks are allowed to run.
+     * After reporting this state, AP will accept VehicleApPowerStateReq#SHUTDOWN_PREPARE
+     * requesting immediate shutdown or VehicleApPowerStateReq#CANCEL_SHUTDOWN. Other
+     * power state requests are ignored.
      */
     SHUTDOWN_PREPARE = 0x7,
 
     /**
-     * AP has transitioned from SHUTDOWN_PREPARE state to WAIT_FOR_VHAL.
+     * AP has stopped preparing to shut down.
+     * After reporting this state, AP will accept VehicleApPowerStateReq#ON or
+     * VehicleApPowerStateReq#SHUTDOWN_PREPARE. Other power state requests are ignored.
      */
     SHUTDOWN_CANCELLED = 0x8,
 };
@@ -2723,6 +3412,8 @@ enum VehiclePropertyStatus : int32_t {
  * Various gears which can be selected by user and chosen in system.
  */
 enum VehicleGear : int32_t {
+    GEAR_UNKNOWN = 0x0000,
+
     GEAR_NEUTRAL = 0x0001,
     GEAR_REVERSE = 0x0002,
     GEAR_PARK = 0x0004,
@@ -3540,5 +4231,562 @@ enum VmsAvailabilityStateIntegerValuesIndex : VmsBaseMessageIntegerValuesIndex {
  */
 enum VmsPublisherInformationIntegerValuesIndex : VmsBaseMessageIntegerValuesIndex {
     PUBLISHER_ID = 1,
+};
+
+/**
+ * Information about a specific Android user.
+ */
+struct UserInfo {
+
+    UserId userId;
+
+    UserFlags flags;
+};
+
+/**
+ * Id of an Android user.
+ *
+ * Must be > 0 for valid ids, or -10000 (which is the same as Android.UserHandle.USER_NULL) when
+ * it's not used.
+ */
+typedef int32_t UserId;
+
+/**
+ * Flags used to define the characteristics of an Android user.
+ */
+enum UserFlags: int32_t {
+    /**
+     * No flags.
+     */
+    NONE = 0x0,
+
+    /**
+     * System user.
+     * On automotive, that user is always running, although never on foreground (except during
+     * boot or exceptional circumstances).
+     */
+    SYSTEM = 0x01,
+
+    /**
+     * Guest users have restrictions.
+     */
+    GUEST = 0x02,
+
+    /**
+     * Ephemeral users have non-persistent state.
+     */
+    EPHEMERAL = 0x04,
+
+    /**
+     * Admin users have additional privileges such as permission to create other users.
+     */
+    ADMIN = 0x08,
+
+    /**
+     * Disabled users are marked for deletion.
+     */
+    DISABLED = 0x10,
+
+     /**
+     * Profile user is a profile of another user.
+     */
+    PROFILE = 0x20,
+};
+
+/**
+ * Information about all Android users.
+ *
+ * NOTE: this struct is not used in the HAL properties directly, it's part of other structs, which
+ * in turn are converted to a VehiclePropValue.RawValue through libraries provided by the default
+ * Vehicle HAL implementation.
+ */
+struct UsersInfo {
+
+    /** The current foreground user. */
+    UserInfo currentUser;
+
+    /**
+     * Number of existing users; includes the current user, recently removed users (with DISABLED
+     * flag), and profile users (with PROFILE flag).
+     */
+    int32_t numberUsers;
+
+    /**
+     * List of existing users; includes the current user, recently removed users (with DISABLED
+     * flag), and profile users (with PROFILE flag).
+     */
+    vec<UserInfo> existingUsers;
+ };
+
+/**
+ * Id of a request related to user management.
+ *
+ * This id can be used by the Android system to map responses sent by the HAL, and vice-versa.
+ *
+ * For requests originated by Android, the value is positive (> 0), while for requests originated by
+ * the HAL it must be negative (< 0).
+ */
+typedef int32_t UserRequestId;
+
+/**
+ * Defines the format of a INITIAL_USER_INFO request made by the Android system.
+ *
+ * NOTE: this struct is not used in the HAL properties directly, it must be converted to
+ * VehiclePropValue.RawValue through libraries provided by the default Vehicle HAL implementation.
+ */
+struct InitialUserInfoRequest {
+    /**
+     * Arbitrary id used to map the HAL response to the request.
+     */
+    UserRequestId requestId;
+
+    /**
+     * Type of request.
+     */
+    InitialUserInfoRequestType requestType;
+
+    /**
+     * Information about the current state of the Android system.
+     */
+    UsersInfo usersInfo;
+};
+
+/**
+ * Defines when a INITIAL_USER_INFO request was made.
+ */
+enum InitialUserInfoRequestType : int32_t {
+  /** At the first time Android was booted (or after a factory reset). */
+  FIRST_BOOT = 1,
+
+  /** At the first time Android was booted after the system was updated. */
+  FIRST_BOOT_AFTER_OTA = 2,
+
+  /** When Android was booted "from scratch". */
+  COLD_BOOT = 3,
+
+  /** When Android was resumed after the system was suspended to memory. */
+  RESUME = 4,
+};
+
+/**
+ * Defines the format of a HAL response to a INITIAL_USER_INFO request.
+ *
+ * NOTE: this struct is not used in the HAL properties directly, it must be converted to
+ * VehiclePropValue.RawValue through libraries provided by the default Vehicle HAL implementation.
+ */
+struct InitialUserInfoResponse {
+    /**
+     * Id of the request being responded.
+     */
+    UserRequestId requestId;
+
+    /**
+     * which action the Android system should take.
+     */
+    InitialUserInfoResponseAction action;
+
+    /**
+     * Information about the user that should be switched to or created.
+     */
+    UserInfo userToSwitchOrCreate;
+
+    /**
+     * System locales of the initial user (value will be passed as-is to
+     * android.provider.Settings.System.SYSTEM_LOCALES)
+     */
+    string userLocales;
+
+    /**
+     * Name of the user that should be created.
+     */
+    string userNameToCreate;
+};
+
+/**
+ * Defines which action the Android system should take in an INITIAL_USER_INFO request.
+ */
+enum InitialUserInfoResponseAction : int32_t {
+   /**
+    * Let the Android System decide what to do.
+    *
+    * For example, it might create a new user on first boot, and switch to the last
+    * active user afterwards.
+    */
+   DEFAULT = 0,
+
+   /**
+    * Switch to an existing Android user.
+    */
+   SWITCH = 1,
+
+   /**
+    * Create a new Android user (and switch to it).
+    */
+   CREATE = 2,
+};
+
+/**
+ * Defines the format of a SWITCH_USER property.
+ *
+ * NOTE: this struct is not used in the HAL properties directly, it must be converted to
+ * VehiclePropValue.RawValue through libraries provided by the default Vehicle HAL implementation.
+ */
+struct SwitchUserRequest {
+    /**
+     * Arbitrary id used to map the response to the request.
+     */
+    UserRequestId requestId;
+
+    /**
+     * Type of message.
+     */
+    SwitchUserMessageType messageType;
+
+    /**
+     * Information about the Android user being switched to.
+     *
+     * Only the user id (but not the flags) should be set when the request is made by HAL.
+     */
+    UserInfo targetUser;
+
+    /**
+     * Information about the current state of the Android system.
+     *
+     * Should not be set when the request is made by HAL.
+     */
+    UsersInfo usersInfo;
+};
+
+/**
+ * Defines the reason a SWITCH_USER call was made.
+ *
+ * The meaning of each constant is explained in that property.
+ */
+enum SwitchUserMessageType: int32_t {
+   LEGACY_ANDROID_SWITCH = 1,
+   ANDROID_SWITCH = 2,
+   VEHICLE_RESPONSE = 3,
+   VEHICLE_REQUEST = 4,
+   ANDROID_POST_SWITCH = 5,
+};
+
+/**
+ * Defines the result of a SwitchUserRequest.
+ *
+ * NOTE: this struct is not used in the HAL properties directly, it must be converted to
+ * VehiclePropValue.RawValue through libraries provided by the default Vehicle HAL implementation.
+ */
+struct SwitchUserResponse {
+    /**
+     * Id of the request being responded.
+     */
+    UserRequestId requestId;
+
+    /**
+     * Type of message.
+     */
+    SwitchUserMessageType messageType;
+
+    /**
+     * Status of the request.
+     */
+    SwitchUserStatus status;
+
+    /**
+     * HAL-specific error message.
+     *
+     * This argument is optional, and when defined, it's passed "as-is" to the caller. It could be
+     * used to show custom error messages to the end user.
+     */
+    string errorMessage;
+};
+
+/**
+ * Status of the response to a SwitchUserRequest.
+ */
+enum SwitchUserStatus : int32_t {
+   /** The request succeeded and the HAL user was switched. */
+   SUCCESS = 1,
+   /** The request failed and the HAL user remained the same. */
+   FAILURE = 2,
+};
+
+/**
+ * Defines the format of a CREATE_USER property.
+ *
+ * NOTE: this struct is not used in the HAL properties directly, it must be converted to
+ * VehiclePropValue.RawValue through libraries provided by the default Vehicle HAL implementation.
+ */
+struct CreateUserRequest {
+    /**
+     * Arbitrary id used to map the response to the request.
+     */
+    UserRequestId requestId;
+
+    /**
+     * Basic information about Android user that was created.
+     */
+    UserInfo newUserInfo;
+
+    /**
+     * Name of the new Android user.
+     */
+     string newUserName;
+
+    /**
+     * Information about the current state of the Android system.
+     */
+    UsersInfo usersInfo;
+};
+
+/**
+ * Defines the result of a CreateUserRequest.
+ *
+ * NOTE: this struct is not used in the HAL properties directly, it must be converted to
+ * VehiclePropValue.RawValue through libraries provided by the default Vehicle HAL implementation.
+ */
+struct CreateUserResponse {
+    /**
+     * Id of the request being responded.
+     */
+    UserRequestId requestId;
+
+    /**
+     * Status of the request.
+     */
+    CreateUserStatus status;
+
+    /**
+     * HAL-specific error message.
+     *
+     * This argument is optional, and when defined, it's passed "as-is" to the caller. It could be
+     * used to show custom error messages to the end user.
+     */
+    string errorMessage;
+};
+
+/**
+ * Status of the response to a CreateUserRequest.
+ */
+enum CreateUserStatus : int32_t {
+   /**
+    * The request succeeded (for example, HAL created a new internal user, or associated the
+    * Android user to an existing internal user).
+    */
+   SUCCESS = 1,
+
+   /**
+     * The request failed (and Android will remove the Android user).
+     */
+   FAILURE = 2,
+};
+
+/**
+ * Defines the format of a REMOVE_USER property.
+ *
+ * NOTE: this struct is not used in the HAL properties directly, it must be converted to
+ * VehiclePropValue.RawValue through libraries provided by the default Vehicle HAL implementation.
+ */
+struct RemoveUserRequest {
+    /**
+     * Arbitrary id used to map the response to the request.
+     */
+    UserRequestId requestId;
+
+    /**
+     * Information about the Android user that was removed.
+     */
+    UserInfo removedUserInfo;
+
+    /**
+     * Information about the current state of the Android system.
+     */
+    UsersInfo usersInfo;
+};
+
+/**
+  * Types of mechanisms used to identify an Android user.
+  *
+  * See USER_IDENTIFICATION_ASSOCIATION for more details and example.
+  */
+enum UserIdentificationAssociationType: int32_t {
+   /** Key used to unlock the car. */
+   KEY_FOB = 1,
+   /** Custom mechanism defined by the OEM. */
+   CUSTOM_1 = 101,
+   /** Custom mechanism defined by the OEM. */
+   CUSTOM_2 = 102,
+   /** Custom mechanism defined by the OEM. */
+   CUSTOM_3 = 103,
+   /** Custom mechanism defined by the OEM. */
+   CUSTOM_4 = 104,
+};
+
+/**
+ * Whether a UserIdentificationAssociationType is associate with an Android user.
+ */
+enum UserIdentificationAssociationValue : int32_t {
+   /**
+    * Used when the status of an association could not be determined.
+    *
+    * For example, in a set() request, it would indicate a failure to set the given type.
+    */
+   UNKNOWN = 1,
+
+   /**
+    * The identification type is associated with the current foreground Android user.
+    */
+   ASSOCIATED_CURRENT_USER = 2,
+
+   /**
+    * The identification type is associated with another Android user.
+    */
+   ASSOCIATED_ANOTHER_USER = 3,
+
+   /**
+    * The identification type is not associated with any Android user.
+    */
+   NOT_ASSOCIATED_ANY_USER = 4,
+};
+
+/**
+ * Used to set a UserIdentificationAssociationType with an Android user.
+ */
+enum UserIdentificationAssociationSetValue : int32_t {
+   /**
+    * Associate the identification type with the current foreground Android user.
+    */
+   ASSOCIATE_CURRENT_USER = 1,
+
+   /**
+    * Disassociate the identification type from the current foreground Android user.
+    */
+   DISASSOCIATE_CURRENT_USER = 2,
+
+   /**
+    * Disassociate the identification type from all Android users.
+    */
+   DISASSOCIATE_ALL_USERS = 3,
+};
+
+/**
+ * Defines the format of a get() call to USER_IDENTIFICATION_ASSOCIATION.
+ *
+ * NOTE: this struct is not used in the HAL properties directly, it must be converted to
+ * VehiclePropValue.RawValue through libraries provided by the default Vehicle HAL implementation.
+ */
+struct UserIdentificationGetRequest {
+    /**
+     * Id of the request being responded.
+     */
+    UserRequestId requestId;
+
+    /**
+     * Information about the current foreground Android user.
+     */
+    UserInfo userInfo;
+
+    /**
+     * Number of association being queried.
+     */
+    int32_t numberAssociationTypes;
+
+    /**
+     * Types of association being queried.
+     */
+    vec<UserIdentificationAssociationType> associationTypes;
+};
+
+/**
+ * Defines the format of a set() call to USER_IDENTIFICATION_ASSOCIATION.
+ *
+ * NOTE: this struct is not used in the HAL properties directly, it must be converted to
+ * VehiclePropValue.RawValue through libraries provided by the default Vehicle HAL implementation.
+ */
+struct UserIdentificationSetRequest {
+    /**
+     * Id of the request being responded.
+     */
+    UserRequestId requestId;
+
+    /**
+     * Information about the current foreground Android user.
+     */
+    UserInfo userInfo;
+
+    /**
+     * Number of association being set.
+     */
+    int32_t numberAssociations;
+
+    /**
+     * Associations being set.
+     */
+    vec<UserIdentificationSetAssociation> associations;
+};
+
+/**
+ * Defines the result of a USER_IDENTIFICATION_ASSOCIATION - both for get() and set().
+ *
+ * NOTE: this struct is not used in the HAL properties directly, it must be converted to
+ * VehiclePropValue.RawValue through libraries provided by the default Vehicle HAL implementation.
+ */
+struct UserIdentificationResponse {
+    /**
+     * Id of the request being responded.
+     */
+    UserRequestId requestId;
+
+    /**
+     * Number of associations being returned.
+     */
+    int32_t numberAssociation;
+
+    /**
+     * Values associated with the user.
+     */
+    vec<UserIdentificationAssociation> associations;
+
+    /**
+     * HAL-specific error message.
+     *
+     * This argument is optional, and when defined, it's passed "as-is" to the caller. It could be
+     * used to show custom error messages to the end user.
+     */
+    string errorMessage;
+};
+
+/**
+ * Helper struct used when getting a user/identification association type.
+ */
+struct UserIdentificationAssociation {
+
+    UserIdentificationAssociationType type;
+
+    UserIdentificationAssociationValue value;
+};
+
+/**
+ * Helper struct used when setting a user/identification association type.
+ */
+struct UserIdentificationSetAssociation {
+
+    UserIdentificationAssociationType type;
+
+    UserIdentificationAssociationSetValue value;
+};
+
+/**
+ * A rotary control which can rotate without limits. These controls use HW_ROTARY_INPUT to report
+ * relative clockwise or counterclockwise motion. They have no absolute position.
+ */
+enum RotaryInputType : int32_t {
+    /**
+      * Main rotary control, typically in the center console, used to navigate the user interface.
+      */
+    ROTARY_INPUT_TYPE_SYSTEM_NAVIGATION = 0,
+
+    /** Volume control for adjusting audio volume. */
+    ROTARY_INPUT_TYPE_AUDIO_VOLUME = 1,
 };
 

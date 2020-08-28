@@ -157,6 +157,10 @@ Return<void> StreamMmap<T>::createMmapBuffer(int32_t minSizeFrames, size_t frame
     native_handle_t* hidlHandle = nullptr;
 
     if (mStream->create_mmap_buffer != NULL) {
+        if (minSizeFrames <= 0) {
+            retval = Result::INVALID_ARGUMENTS;
+            goto exit;
+        }
         struct audio_mmap_buffer_info halInfo;
         retval = Stream::analyzeStatus(
             "create_mmap_buffer", mStream->create_mmap_buffer(mStream, minSizeFrames, &halInfo));
@@ -184,6 +188,7 @@ Return<void> StreamMmap<T>::createMmapBuffer(int32_t minSizeFrames, size_t frame
             info.burstSizeFrames = halInfo.burst_size_frames;
         }
     }
+exit:
     _hidl_cb(retval, info);
     if (hidlHandle != nullptr) {
         native_handle_delete(hidlHandle);

@@ -20,11 +20,22 @@
 #include <android/hardware/gnss/1.0/IGnss.h>
 #include <android/hardware/gnss/2.0/IGnss.h>
 #include <android/hardware/gnss/measurement_corrections/1.0/IMeasurementCorrections.h>
+#include <android/hardware/gnss/measurement_corrections/1.1/IMeasurementCorrections.h>
 
 using GnssConstellationType_1_0 = android::hardware::gnss::V1_0::GnssConstellationType;
 using GnssConstellationType_2_0 = android::hardware::gnss::V2_0::GnssConstellationType;
 using GnssLocation = ::android::hardware::gnss::V1_0::GnssLocation;
 using namespace android::hardware::gnss::measurement_corrections::V1_0;
+
+using MeasurementCorrections_1_0 =
+        android::hardware::gnss::measurement_corrections::V1_0::MeasurementCorrections;
+using MeasurementCorrections_1_1 =
+        android::hardware::gnss::measurement_corrections::V1_1::MeasurementCorrections;
+
+using SingleSatCorrection_V1_0 =
+        android::hardware::gnss::measurement_corrections::V1_0::SingleSatCorrection;
+using SingleSatCorrection_V1_1 =
+        android::hardware::gnss::measurement_corrections::V1_1::SingleSatCorrection;
 
 namespace android {
 namespace hardware {
@@ -34,7 +45,8 @@ namespace common {
 struct Utils {
     static void checkLocation(const GnssLocation& location, bool check_speed,
                               bool check_more_accuracies);
-    static const MeasurementCorrections getMockMeasurementCorrections();
+    static const MeasurementCorrections_1_0 getMockMeasurementCorrections();
+    static const MeasurementCorrections_1_1 getMockMeasurementCorrections_1_1();
 
     static GnssConstellationType_1_0 mapConstellationType(GnssConstellationType_2_0 constellation);
 };

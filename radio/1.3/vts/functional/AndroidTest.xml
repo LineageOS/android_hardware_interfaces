@@ -17,9 +17,10 @@
     <option name="test-suite-tag" value="apct" />
     <option name="test-suite-tag" value="apct-native" />
 
+    <!-- TODO: b/154638140, b/152655658: bad interactions -->
+    <target_preparer class="com.android.tradefed.targetprep.RootTargetPreparer" />
     <target_preparer class="com.android.tradefed.targetprep.MultiSimPreparer" />
-    <target_preparer class="com.android.tradefed.targetprep.RootTargetPreparer">
-    </target_preparer>
+    <target_preparer class="com.android.tradefed.targetprep.RootTargetPreparer" />
 
     <target_preparer class="com.android.tradefed.targetprep.PushFilePreparer">
         <option name="cleanup" value="true" />

@@ -1,0 +1,151 @@
+/*
+ * Copyright (C) 2020 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.camera.provider@2.6;
+
+import @2.5::ICameraProvider;
+import android.hardware.camera.common@1.0::Status;
+import android.hardware.camera.device@3.4::StreamConfiguration;
+
+/**
+ * Camera provider HAL
+ *
+ * @2.6::adds support for the getConcurrentStreamingCameraIds() and
+ * isConcurrentStreamCombinationSupported()
+ * @2.6::ICameraProviderCallback to receive physical camera availability
+ * callbacks for logical multi-cameras.
+ */
+interface ICameraProvider extends @2.5::ICameraProvider {
+    /**
+     * getConcurrentStreamingCameraIds
+     *
+     * Get a vector of combinations of camera device ids that are able to
+     * configure streams concurrently. Each camera device advertised in a
+     * combination MUST at the very least support the following streams while
+     * streaming concurrently with the other camera ids in the combination.
+     *
+     *       Target 1                  Target 2
+     * -----------------------------------------------------
+     * | Type         |   Size   |   Type       |   Size   |
+     * -----------------------------------------------------
+     * | YUV          |  s1440p  |                         |
+     * -----------------------------------------------------
+     * | JPEG         |  s1440p  |                         |
+     * -----------------------------------------------------
+     * | PRIV         |  s1440p  |                         |
+     * -----------------------------------------------------
+     * | YUV / PRIV   |  s720p   |  YUV / PRIV   | s1440p  |
+     * -----------------------------------------------------
+     * | YUV / PRIV   |  s720p   |  JPEG         | s1440p  |
+     * -----------------------------------------------------
+     *
+     * where:
+     * s720p - min (max output resolution for the given format, 1280 X 720)
+     * s1440p - min (max output resolution for the given format, 1920 X 1440)
+     *
+     * If a device has MONOCHROME capability (device's capabilities include
+     * ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MONOCHROME) and therefore supports Y8
+     * outputs, stream combinations mentioned above, where YUV is substituted by
+     * Y8 must be also supported.
+     *
+     * Devices whose capabilities do not include
+     * ANDROID_REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE, must support
+     * at least a single Y16 stream, Dataspace::DEPTH with sVGA resolution,
+     * during concurrent operation.
+     * Where sVGA -  min (max output resolution for the given format, 640 X 480)
+     *
+     * The camera framework must call this method whenever it gets a
+     * cameraDeviceStatusChange callback adding a new camera device or removing
+     * a camera device known to it. This is so that the camera framework can get new combinations
+     * of camera ids that can stream concurrently, that might have potentially appeared.
+     *
+     * For each combination (and their subsets) of camera device ids returned by
+     * getConcurrentStreamingCameraIds(): If only the mandatory combinations can
+     * be supported concurrently by each device, then the resource costs must
+     * sum up to > 100 for the concurrent set, to ensure arbitration between
+     * camera applications work as expected. Only if resources are sufficient
+     * to run a set of cameras at full capability (maximally
+     * resource-consuming framerate and stream size settings available in the
+     * configuration settings exposed through camera metadata), should the sum
+     * of resource costs for the combination be <= 100.
+     *
+     * For guaranteed concurrent camera operation, the camera framework must call
+     * ICameraDevice.open() on all devices (intended for concurrent operation), before configuring
+     * any streams on them. This gives the camera HAL process an opportunity to potentially
+     * distribute hardware resources better before stream configuration.
+     *
+     * Due to potential hardware constraints around internal switching of physical camera devices,
+     * a device's complete ZOOM_RATIO_RANGE(if supported), may not apply during concurrent
+     * operation. If ZOOM_RATIO is supported, camera HALs must ensure ZOOM_RATIO_RANGE of
+     * [1.0, ANDROID_SCALER_AVAILABLE_MAX_DIGITAL_ZOOM] is supported by that device, during
+     * concurrent operation.
+     *
+     * @return status Status code for the operation
+     * @return cameraIds a list of camera id combinations that support
+     *         concurrent stream configurations with the minimum guarantees
+     *         specified.
+     */
+    getConcurrentStreamingCameraIds() generates (Status status, vec<vec<string>> cameraIds);
+
+    /**
+     * isConcurrentStreamCombinationSupported:
+     *
+     * Check for device support of specific camera stream combinations while
+     * streaming concurrently with other devices.
+     *
+     * The per device streamList must contain at least one output-capable stream, and may
+     * not contain more than one input-capable stream.
+     * In contrast to regular stream configuration the framework does not create
+     * or initialize any actual streams. This means that Hal must not use or
+     * consider the stream "id" value.
+     *
+     * ------------------------------------------------------------------------
+     *
+     * Preconditions:
+     *
+     * The framework can call this method at any time before, during and
+     * after active session configuration per device. This means that calls must not
+     * impact the performance of pending camera requests in any way. In
+     * particular there must not be any glitches or delays during normal
+     * camera streaming.
+     *
+     * The framework must not call this method with any combination of camera
+     * ids that is not a subset of the camera ids advertised by getConcurrentStreamingCameraIds of
+     * the same provider.
+     *
+     * Performance requirements:
+     * This call is expected to be significantly faster than stream
+     * configuration. In general HW and SW camera settings must not be
+     * changed and there must not be a user-visible impact on camera performance.
+     *
+     * @param configs a vector of camera ids and their corresponding stream
+     *                configurations that need to be queried for support.
+     *
+     * @return status Status code for the operation, one of:
+     *     OK:
+     *          On successful stream combination query.
+     *     METHOD_NOT_SUPPORTED:
+     *          The camera provider does not support stream combination query.
+     *     INTERNAL_ERROR:
+     *          The stream combination query cannot complete due to internal
+     *          error.
+     * @return true in case the stream combination is supported, false otherwise.
+     *
+     *
+     */
+    isConcurrentStreamCombinationSupported(vec<CameraIdAndStreamCombination> configs)
+        generates (Status status, bool queryStatus);
+};

@@ -1,0 +1,119 @@
+/*
+ * Copyright 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.wifi.supplicant@1.3;
+
+import @1.2::DppProgressCode;
+import @1.2::DppFailureCode;
+
+import android.hardware.wifi@1.0::WifiChannelWidthInMhz;
+
+/**
+ * OcspType: The type of OCSP request.
+ */
+enum OcspType : uint32_t {
+    NONE,
+    REQUEST_CERT_STATUS,
+    REQUIRE_CERT_STATUS,
+    REQUIRE_ALL_CERTS_STATUS,
+};
+
+/**
+ * Wifi Technologies
+ */
+enum WifiTechnology : uint32_t {
+    UNKNOWN = 0,
+    /**
+     * For 802.11a/b/g
+     */
+    LEGACY = 1,
+    /**
+     * For 802.11n
+     */
+    HT = 2,
+    /**
+     * For 802.11ac
+     */
+    VHT = 3,
+    /**
+     * For 802.11ax
+     */
+    HE = 4,
+};
+
+/**
+ * Connection Capabilities supported by current network and device
+ */
+struct ConnectionCapabilities {
+    /**
+     * Wifi Technology
+     */
+    WifiTechnology technology;
+    /**
+     * channel bandwidth
+     */
+    WifiChannelWidthInMhz channelBandwidth;
+    /**
+     * max number of Tx spatial streams
+     */
+    uint32_t maxNumberTxSpatialStreams;
+    /**
+     * max number of Rx spatial streams
+     */
+    uint32_t maxNumberRxSpatialStreams;
+};
+
+/**
+ * WPA Driver capability.
+ */
+enum WpaDriverCapabilitiesMask : uint32_t {
+    /**
+     * Multi Band Operation.
+     */
+    MBO = 1 << 0,
+    /**
+     * Optimized Connectivity Experience.
+     */
+    OCE = 1 << 1,
+};
+
+/**
+ * DppProgressCode: Progress codes for DPP (Easy Connect)
+ */
+enum DppProgressCode : @1.2::DppProgressCode {
+    CONFIGURATION_SENT_WAITING_RESPONSE,
+    CONFIGURATION_ACCEPTED,
+};
+
+/**
+ * DppSuccessCode: Success codes for DPP (Easy Connect) Configurator
+ */
+enum DppSuccessCode : uint32_t {
+    /*
+     * Replaces @1.2::onDppSuccessConfigSent()
+     */
+    CONFIGURATION_SENT,
+    CONFIGURATION_APPLIED,
+};
+
+/**
+ * DppFailureCode: Error codes for DPP (Easy Connect)
+ */
+enum DppFailureCode : @1.2::DppFailureCode {
+    CONFIGURATION_REJECTED,
+    CANNOT_FIND_NETWORK,
+    ENROLLEE_AUTHENTICATION,
+};

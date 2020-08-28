@@ -1,0 +1,38 @@
+/*
+ * Copyright 2020 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.automotive.sv@1.0;
+
+/**
+ * Interface representing a surround view stream.
+ *
+ * This interface is to be implemented by client to receive callback for output frames and events.
+ */
+interface ISurroundViewStream {
+    /**
+     * Receives callback of surround view 2d/3d frames.
+     *
+     * @param svFramesDesc Frames descriptor containing the output frames.
+     */
+    oneway receiveFrames(SvFramesDesc svFramesDesc);
+
+    /**
+     * Receives callback for surround view events.
+     *
+     * @param svEvent Surround view event.
+    */
+    oneway notify(SvEvent svEvent);
+};

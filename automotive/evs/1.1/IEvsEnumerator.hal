@@ -1,0 +1,109 @@
+/*
+ * Copyright (C) 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.automotive.evs@1.1;
+
+import IEvsCamera;
+import IEvsDisplay;
+import IEvsUltrasonicsArray;
+import @1.0::IEvsEnumerator;
+import @1.0::EvsResult;
+import android.hardware.camera.device@3.2::Stream;
+
+/**
+ * Provides the mechanism for EVS camera and ultrasonics array discovery
+ */
+interface IEvsEnumerator extends @1.0::IEvsEnumerator {
+    /**
+     * Returns a list of all EVS cameras available to the system
+     *
+     * @return cameras A list of cameras availale for EVS service.
+     */
+    getCameraList_1_1() generates (vec<CameraDesc> cameras);
+
+    /**
+     * Gets the IEvsCamera associated with a cameraId from a CameraDesc
+     *
+     * Given a camera's unique cameraId from CameraDesc, returns the
+     * IEvsCamera interface associated with the specified camera. When
+     * done using the camera, the caller may release it by calling closeCamera().
+     *
+     * @param  cameraId  A unique identifier of the camera.
+     * @param  streamCfg A stream configuration the client wants to use.
+     * @return evsCamera EvsCamera object associated with a given cameraId.
+     *                   Returned object would be null if a camera device does
+     *                   not support a given stream configuration or is already
+     *                   configured differently by another client.
+     */
+    openCamera_1_1(string cameraId, Stream streamCfg) generates (IEvsCamera evsCamera);
+
+    /**
+     * Tells whether this is EVS manager or HAL implementation.
+     *
+     * @return result False for EVS manager implementations and true for all others.
+     */
+    isHardware() generates (bool result);
+
+    /**
+     * Returns a list of all EVS displays available to the system
+     *
+     * @return displayIds Identifiers of available displays.
+     */
+    getDisplayIdList() generates (vec<uint8_t> displayIds);
+
+    /**
+     * Get exclusive access to IEvsDisplay for the system
+     *
+     * There can be more than one EVS display objects for the system and this function
+     * requests access to the display identified by a given ID. If the target EVS display
+     * is not available or is already in use the old instance shall be closed and give
+     * the new caller exclusive access.
+     * When done using the display, the caller may release it by calling closeDisplay().
+     *
+     * @param  id      Target display identifier.
+     * @return display EvsDisplay object to be used.
+     */
+    openDisplay_1_1(uint8_t id) generates (IEvsDisplay display);
+
+    /**
+     * Returns a list of all ultrasonics array available to the system.
+     * Will return an empty vector if ultrasonics is not supported.
+     *
+     * @return ultrasonicsArrays A list of ultrasonics available for EVS service.
+     */
+    getUltrasonicsArrayList() generates (vec<UltrasonicsArrayDesc> ultrasonicsArrays);
+
+    /**
+     * Gets the IEvsUltrasonicsArray associated with a ultrasonicsArrayId from a
+     * UltrasonicsDataDesc
+     *
+     * @param  ultrasonicsArrayId  A unique identifier of the ultrasonic array.
+     * @return evsUltrasonicsArray IEvsUltrasonicsArray object associated with a
+     *                             given ultrasonicsArrayId.
+     */
+    openUltrasonicsArray(string ultrasonicsArrayId) generates (
+            IEvsUltrasonicsArray evsUltrasonicsArray);
+
+    /**
+     * Return the specified IEvsUltrasonicsArray interface as no longer in use
+     *
+     * When the IEvsUltrasonicsArray object is no longer required, it must be released.
+     * NOTE: Data streaming must be cleanly stopped before making this call.
+     *
+     * @param  evsUltrasonicsArray EvsUltrasonics array object to be closed.
+     */
+    closeUltrasonicsArray(IEvsUltrasonicsArray evsUltrasonicsArray);
+};

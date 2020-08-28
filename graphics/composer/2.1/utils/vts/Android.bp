@@ -23,12 +23,22 @@ cc_library_static {
         "TestCommandReader.cpp",
     ],
     static_libs: [
-        "VtsHalHidlTargetTestBase",
         "android.hardware.graphics.composer@2.1",
         "android.hardware.graphics.mapper@2.0-vts",
         "android.hardware.graphics.mapper@3.0-vts",
+        "android.hardware.graphics.mapper@4.0-vts",
+        "libgtest",
+    ],
+    export_static_lib_headers: [
+        "android.hardware.graphics.composer@2.1",
+        "android.hardware.graphics.mapper@2.0-vts",
+        "android.hardware.graphics.mapper@3.0-vts",
+        "android.hardware.graphics.mapper@4.0-vts",
     ],
     header_libs: [
+        "android.hardware.graphics.composer@2.1-command-buffer",
+    ],
+    export_header_lib_headers: [
         "android.hardware.graphics.composer@2.1-command-buffer",
     ],
     cflags: [

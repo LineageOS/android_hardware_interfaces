@@ -16,10 +16,12 @@
 
 #include <android-base/logging.h>
 
+#include <android/hardware/wifi/1.0/IWifi.h>
 #include <android/hardware/wifi/1.0/IWifiChip.h>
 #include <android/hardware/wifi/1.3/IWifiChip.h>
-
-#include <VtsHalHidlTargetTestBase.h>
+#include <gtest/gtest.h>
+#include <hidl/GtestPrinter.h>
+#include <hidl/ServiceManagement.h>
 
 #include "wifi_hidl_call_util.h"
 #include "wifi_hidl_test_utils.h"
@@ -27,23 +29,20 @@
 using ::android::sp;
 using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
-using ::android::hardware::wifi::V1_0::IfaceType;
 using ::android::hardware::wifi::V1_0::ChipId;
 using ::android::hardware::wifi::V1_0::ChipModeId;
-using ::android::hardware::wifi::V1_0::WifiDebugRingBufferStatus;
-using ::android::hardware::wifi::V1_0::WifiDebugRingBufferVerboseLevel;
-using ::android::hardware::wifi::V1_0::WifiDebugHostWakeReasonStats;
-using ::android::hardware::wifi::V1_0::WifiStatus;
-using ::android::hardware::wifi::V1_0::WifiStatusCode;
+using ::android::hardware::wifi::V1_0::IfaceType;
+using ::android::hardware::wifi::V1_0::IWifi;
 using ::android::hardware::wifi::V1_0::IWifiChip;
-using ::android::hardware::wifi::V1_0::IWifiApIface;
 using ::android::hardware::wifi::V1_0::IWifiIface;
-using ::android::hardware::wifi::V1_0::IWifiNanIface;
 using ::android::hardware::wifi::V1_0::IWifiP2pIface;
 using ::android::hardware::wifi::V1_0::IWifiRttController;
 using ::android::hardware::wifi::V1_0::IWifiStaIface;
-
-extern WifiHidlEnvironment* gEnv;
+using ::android::hardware::wifi::V1_0::WifiDebugHostWakeReasonStats;
+using ::android::hardware::wifi::V1_0::WifiDebugRingBufferStatus;
+using ::android::hardware::wifi::V1_0::WifiDebugRingBufferVerboseLevel;
+using ::android::hardware::wifi::V1_0::WifiStatus;
+using ::android::hardware::wifi::V1_0::WifiStatusCode;
 
 namespace {
 constexpr WifiDebugRingBufferVerboseLevel kDebugRingBufferVerboseLvl =
@@ -64,16 +63,22 @@ bool hasAnyRingBufferCapabilities(uint32_t caps) {
 }  // namespace
 
 /**
- * Fixture to use for all Wifi chip HIDL interface tests.
+ * Fixture for IWifiChip tests.
+ *
+ * Tests that require SoftAP or NAN support should go into WifiChipHidlApTest or
+ * WifiChipHidlNanTest respectively.
  */
-class WifiChipHidlTest : public ::testing::VtsHalHidlTargetTestBase {
+class WifiChipHidlTest : public ::testing::TestWithParam<std::string> {
    public:
     virtual void SetUp() override {
-        wifi_chip_ = getWifiChip();
+        // Make sure test starts with a clean state
+        stopWifi(GetInstanceName());
+
+        wifi_chip_ = getWifiChip(GetInstanceName());
         ASSERT_NE(nullptr, wifi_chip_.get());
     }
 
-    virtual void TearDown() override { stopWifi(); }
+    virtual void TearDown() override { stopWifi(GetInstanceName()); }
 
    protected:
     // Helper function to configure the Chip in one of the supported modes.
@@ -114,26 +119,6 @@ class WifiChipHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         return status_and_name.second;
     }
 
-    WifiStatusCode createApIface(sp<IWifiApIface>* ap_iface) {
-        const auto& status_and_iface = HIDL_INVOKE(wifi_chip_, createApIface);
-        *ap_iface = status_and_iface.second;
-        return status_and_iface.first.code;
-    }
-
-    WifiStatusCode removeApIface(const std::string& name) {
-        return HIDL_INVOKE(wifi_chip_, removeApIface, name).code;
-    }
-
-    WifiStatusCode createNanIface(sp<IWifiNanIface>* nan_iface) {
-        const auto& status_and_iface = HIDL_INVOKE(wifi_chip_, createNanIface);
-        *nan_iface = status_and_iface.second;
-        return status_and_iface.first.code;
-    }
-
-    WifiStatusCode removeNanIface(const std::string& name) {
-        return HIDL_INVOKE(wifi_chip_, removeNanIface, name).code;
-    }
-
     WifiStatusCode createP2pIface(sp<IWifiP2pIface>* p2p_iface) {
         const auto& status_and_iface = HIDL_INVOKE(wifi_chip_, createP2pIface);
         *p2p_iface = status_and_iface.second;
@@ -155,6 +140,9 @@ class WifiChipHidlTest : public ::testing::VtsHalHidlTargetTestBase {
     }
 
     sp<IWifiChip> wifi_chip_;
+
+   protected:
+    std::string GetInstanceName() { return GetParam(); }
 };
 
 /*
@@ -162,15 +150,14 @@ class WifiChipHidlTest : public ::testing::VtsHalHidlTargetTestBase {
  * Ensures that an instance of the IWifiChip proxy object is
  * successfully created.
  */
-TEST(WifiChipHidlTestNoFixture, Create) {
-    EXPECT_NE(nullptr, getWifiChip().get());
-    stopWifi();
+TEST_P(WifiChipHidlTest, Create) {
+    // The creation of a proxy object is tested as part of SetUp method.
 }
 
 /*
  * GetId:
  */
-TEST_F(WifiChipHidlTest, GetId) {
+TEST_P(WifiChipHidlTest, GetId) {
     EXPECT_EQ(WifiStatusCode::SUCCESS,
               HIDL_INVOKE(wifi_chip_, getId).first.code);
 }
@@ -178,7 +165,7 @@ TEST_F(WifiChipHidlTest, GetId) {
 /*
  * GetAvailableMode:
  */
-TEST_F(WifiChipHidlTest, GetAvailableModes) {
+TEST_P(WifiChipHidlTest, GetAvailableModes) {
     const auto& status_and_modes = HIDL_INVOKE(wifi_chip_, getAvailableModes);
     EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_modes.first.code);
     EXPECT_LT(0u, status_and_modes.second.size());
@@ -187,17 +174,17 @@ TEST_F(WifiChipHidlTest, GetAvailableModes) {
 /*
  * ConfigureChip:
  */
-TEST_F(WifiChipHidlTest, ConfigureChip) {
+TEST_P(WifiChipHidlTest, ConfigureChip) {
     const auto& status_and_modes = HIDL_INVOKE(wifi_chip_, getAvailableModes);
     EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_modes.first.code);
     EXPECT_LT(0u, status_and_modes.second.size());
     for (const auto& mode : status_and_modes.second) {
         // configureChip() requires to be called with a fresh IWifiChip object.
-        wifi_chip_ = getWifiChip();
+        wifi_chip_ = getWifiChip(GetInstanceName());
         ASSERT_NE(nullptr, wifi_chip_.get());
         EXPECT_EQ(WifiStatusCode::SUCCESS,
                   HIDL_INVOKE(wifi_chip_, configureChip, mode.id).code);
-        stopWifi();
+        stopWifi(GetInstanceName());
         // Sleep for 5 milliseconds between each wifi state toggle.
         usleep(5000);
     }
@@ -206,7 +193,7 @@ TEST_F(WifiChipHidlTest, ConfigureChip) {
 /*
  * GetCapabilities:
  */
-TEST_F(WifiChipHidlTest, GetCapabilities) {
+TEST_P(WifiChipHidlTest, GetCapabilities) {
     configureChipForIfaceType(IfaceType::STA, true);
     const auto& status_and_caps = HIDL_INVOKE(wifi_chip_, getCapabilities);
     if (status_and_caps.first.code != WifiStatusCode::SUCCESS) {
@@ -219,7 +206,7 @@ TEST_F(WifiChipHidlTest, GetCapabilities) {
 /*
  * GetMode:
  */
-TEST_F(WifiChipHidlTest, GetMode) {
+TEST_P(WifiChipHidlTest, GetMode) {
     ChipModeId chip_mode_id = configureChipForIfaceType(IfaceType::STA, true);
     const auto& status_and_mode = HIDL_INVOKE(wifi_chip_, getMode);
     EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_mode.first.code);
@@ -229,7 +216,7 @@ TEST_F(WifiChipHidlTest, GetMode) {
 /*
  * RequestChipDebugInfo:
  */
-TEST_F(WifiChipHidlTest, RequestChipDebugInfo) {
+TEST_P(WifiChipHidlTest, RequestChipDebugInfo) {
     configureChipForIfaceType(IfaceType::STA, true);
     const auto& status_and_chip_info =
         HIDL_INVOKE(wifi_chip_, requestChipDebugInfo);
@@ -241,7 +228,7 @@ TEST_F(WifiChipHidlTest, RequestChipDebugInfo) {
 /*
  * RequestFirmwareDebugDump
  */
-TEST_F(WifiChipHidlTest, RequestFirmwareDebugDump) {
+TEST_P(WifiChipHidlTest, RequestFirmwareDebugDump) {
     uint32_t caps = configureChipForStaIfaceAndGetCapabilities();
     const auto& status_and_firmware_dump =
         HIDL_INVOKE(wifi_chip_, requestFirmwareDebugDump);
@@ -256,7 +243,7 @@ TEST_F(WifiChipHidlTest, RequestFirmwareDebugDump) {
 /*
  * RequestDriverDebugDump
  */
-TEST_F(WifiChipHidlTest, RequestDriverDebugDump) {
+TEST_P(WifiChipHidlTest, RequestDriverDebugDump) {
     uint32_t caps = configureChipForStaIfaceAndGetCapabilities();
     const auto& status_and_driver_dump =
         HIDL_INVOKE(wifi_chip_, requestDriverDebugDump);
@@ -273,7 +260,7 @@ TEST_F(WifiChipHidlTest, RequestDriverDebugDump) {
 /*
  * GetDebugRingBuffersStatus
  */
-TEST_F(WifiChipHidlTest, GetDebugRingBuffersStatus) {
+TEST_P(WifiChipHidlTest, GetDebugRingBuffersStatus) {
     uint32_t caps = configureChipForStaIfaceAndGetCapabilities();
     const auto& status_and_ring_buffer_status =
         HIDL_INVOKE(wifi_chip_, getDebugRingBuffersStatus);
@@ -292,7 +279,7 @@ TEST_F(WifiChipHidlTest, GetDebugRingBuffersStatus) {
 /*
  * StartLoggingToDebugRingBuffer
  */
-TEST_F(WifiChipHidlTest, StartLoggingToDebugRingBuffer) {
+TEST_P(WifiChipHidlTest, StartLoggingToDebugRingBuffer) {
     uint32_t caps = configureChipForStaIfaceAndGetCapabilities();
     std::string ring_name;
     const auto& status_and_ring_buffer_status =
@@ -320,7 +307,7 @@ TEST_F(WifiChipHidlTest, StartLoggingToDebugRingBuffer) {
 /*
  * ForceDumpToDebugRingBuffer
  */
-TEST_F(WifiChipHidlTest, ForceDumpToDebugRingBuffer) {
+TEST_P(WifiChipHidlTest, ForceDumpToDebugRingBuffer) {
     uint32_t caps = configureChipForStaIfaceAndGetCapabilities();
     std::string ring_name;
     const auto& status_and_ring_buffer_status =
@@ -346,7 +333,7 @@ TEST_F(WifiChipHidlTest, ForceDumpToDebugRingBuffer) {
 /*
  * GetDebugHostWakeReasonStats
  */
-TEST_F(WifiChipHidlTest, GetDebugHostWakeReasonStats) {
+TEST_P(WifiChipHidlTest, GetDebugHostWakeReasonStats) {
     uint32_t caps = configureChipForStaIfaceAndGetCapabilities();
     const auto& status_and_debug_wake_reason =
         HIDL_INVOKE(wifi_chip_, getDebugHostWakeReasonStats);
@@ -360,206 +347,11 @@ TEST_F(WifiChipHidlTest, GetDebugHostWakeReasonStats) {
 }
 
 /*
- * CreateApIface
- * Configures the chip in AP mode and ensures that at least 1 iface creation
- * succeeds.
- */
-TEST_F(WifiChipHidlTest, CreateApIface) {
-    if (!gEnv->isSoftApOn) return;
-    configureChipForIfaceType(IfaceType::AP, true);
-
-    sp<IWifiApIface> iface;
-    EXPECT_EQ(WifiStatusCode::SUCCESS, createApIface(&iface));
-    EXPECT_NE(nullptr, iface.get());
-}
-
-/*
- * GetApIfaceNames
- * Configures the chip in AP mode and ensures that the iface list is empty
- * before creating the iface. Then, create the iface and ensure that
- * iface name is returned via the list.
- */
-TEST_F(WifiChipHidlTest, GetApIfaceNames) {
-    if (!gEnv->isSoftApOn) return;
-    configureChipForIfaceType(IfaceType::AP, true);
-
-    const auto& status_and_iface_names1 =
-        HIDL_INVOKE(wifi_chip_, getApIfaceNames);
-    EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_iface_names1.first.code);
-    EXPECT_EQ(0u, status_and_iface_names1.second.size());
-
-    sp<IWifiApIface> iface;
-    EXPECT_EQ(WifiStatusCode::SUCCESS, createApIface(&iface));
-    EXPECT_NE(nullptr, iface.get());
-
-    std::string iface_name = getIfaceName(iface);
-    const auto& status_and_iface_names2 =
-        HIDL_INVOKE(wifi_chip_, getApIfaceNames);
-    EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_iface_names2.first.code);
-    EXPECT_EQ(1u, status_and_iface_names2.second.size());
-    EXPECT_EQ(iface_name, status_and_iface_names2.second[0]);
-
-    EXPECT_EQ(WifiStatusCode::SUCCESS, removeApIface(iface_name));
-    const auto& status_and_iface_names3 =
-        HIDL_INVOKE(wifi_chip_, getApIfaceNames);
-    EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_iface_names3.first.code);
-    EXPECT_EQ(0u, status_and_iface_names3.second.size());
-}
-
-/*
- * GetApIface
- * Configures the chip in AP mode and create an iface. Then, retrieve
- * the iface object using the correct name and ensure any other name
- * doesn't retrieve an iface object.
- */
-TEST_F(WifiChipHidlTest, GetApIface) {
-    if (!gEnv->isSoftApOn) return;
-    configureChipForIfaceType(IfaceType::AP, true);
-
-    sp<IWifiApIface> ap_iface;
-    EXPECT_EQ(WifiStatusCode::SUCCESS, createApIface(&ap_iface));
-    EXPECT_NE(nullptr, ap_iface.get());
-
-    std::string iface_name = getIfaceName(ap_iface);
-    const auto& status_and_iface1 =
-        HIDL_INVOKE(wifi_chip_, getApIface, iface_name);
-    EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_iface1.first.code);
-    EXPECT_NE(nullptr, status_and_iface1.second.get());
-
-    std::string invalid_name = iface_name + "0";
-    const auto& status_and_iface2 =
-        HIDL_INVOKE(wifi_chip_, getApIface, invalid_name);
-    EXPECT_EQ(WifiStatusCode::ERROR_INVALID_ARGS, status_and_iface2.first.code);
-    EXPECT_EQ(nullptr, status_and_iface2.second.get());
-}
-
-/*
- * RemoveApIface
- * Configures the chip in AP mode and create an iface. Then, remove
- * the iface object using the correct name and ensure any other name
- * doesn't remove the iface.
- */
-TEST_F(WifiChipHidlTest, RemoveApIface) {
-    if (!gEnv->isSoftApOn) return;
-    configureChipForIfaceType(IfaceType::AP, true);
-
-    sp<IWifiApIface> ap_iface;
-    EXPECT_EQ(WifiStatusCode::SUCCESS, createApIface(&ap_iface));
-    EXPECT_NE(nullptr, ap_iface.get());
-
-    std::string iface_name = getIfaceName(ap_iface);
-    std::string invalid_name = iface_name + "0";
-    EXPECT_EQ(WifiStatusCode::ERROR_INVALID_ARGS, removeApIface(invalid_name));
-    EXPECT_EQ(WifiStatusCode::SUCCESS, removeApIface(iface_name));
-
-    // No such iface exists now. So, this should return failure.
-    EXPECT_EQ(WifiStatusCode::ERROR_INVALID_ARGS, removeApIface(iface_name));
-}
-
-/*
- * CreateNanIface
- * Configures the chip in NAN mode and ensures that at least 1 iface creation
- * succeeds.
- */
-TEST_F(WifiChipHidlTest, CreateNanIface) {
-    if (!gEnv->isNanOn) return;
-    configureChipForIfaceType(IfaceType::NAN, gEnv->isNanOn);
-
-    sp<IWifiNanIface> iface;
-    ASSERT_EQ(WifiStatusCode::SUCCESS, createNanIface(&iface));
-    EXPECT_NE(nullptr, iface.get());
-}
-
-/*
- * GetNanIfaceNames
- * Configures the chip in NAN mode and ensures that the iface list is empty
- * before creating the iface. Then, create the iface and ensure that
- * iface name is returned via the list.
- */
-TEST_F(WifiChipHidlTest, GetNanIfaceNames) {
-    if (!gEnv->isNanOn) return;
-    configureChipForIfaceType(IfaceType::NAN, gEnv->isNanOn);
-
-    const auto& status_and_iface_names1 =
-        HIDL_INVOKE(wifi_chip_, getNanIfaceNames);
-    ASSERT_EQ(WifiStatusCode::SUCCESS, status_and_iface_names1.first.code);
-    EXPECT_EQ(0u, status_and_iface_names1.second.size());
-
-    sp<IWifiNanIface> iface;
-    EXPECT_EQ(WifiStatusCode::SUCCESS, createNanIface(&iface));
-    EXPECT_NE(nullptr, iface.get());
-
-    std::string iface_name = getIfaceName(iface);
-    const auto& status_and_iface_names2 =
-        HIDL_INVOKE(wifi_chip_, getNanIfaceNames);
-    EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_iface_names2.first.code);
-    EXPECT_EQ(1u, status_and_iface_names2.second.size());
-    EXPECT_EQ(iface_name, status_and_iface_names2.second[0]);
-
-    EXPECT_EQ(WifiStatusCode::SUCCESS, removeNanIface(iface_name));
-    const auto& status_and_iface_names3 =
-        HIDL_INVOKE(wifi_chip_, getNanIfaceNames);
-    EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_iface_names3.first.code);
-    EXPECT_EQ(0u, status_and_iface_names3.second.size());
-}
-
-/*
- * GetNanIface
- * Configures the chip in NAN mode and create an iface. Then, retrieve
- * the iface object using the correct name and ensure any other name
- * doesn't retrieve an iface object.
- */
-TEST_F(WifiChipHidlTest, GetNanIface) {
-    if (!gEnv->isNanOn) return;
-    configureChipForIfaceType(IfaceType::NAN, gEnv->isNanOn);
-
-    sp<IWifiNanIface> nan_iface;
-    EXPECT_EQ(WifiStatusCode::SUCCESS, createNanIface(&nan_iface));
-    EXPECT_NE(nullptr, nan_iface.get());
-
-    std::string iface_name = getIfaceName(nan_iface);
-    const auto& status_and_iface1 =
-        HIDL_INVOKE(wifi_chip_, getNanIface, iface_name);
-    EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_iface1.first.code);
-    EXPECT_NE(nullptr, status_and_iface1.second.get());
-
-    std::string invalid_name = iface_name + "0";
-    const auto& status_and_iface2 =
-        HIDL_INVOKE(wifi_chip_, getNanIface, invalid_name);
-    EXPECT_EQ(WifiStatusCode::ERROR_INVALID_ARGS, status_and_iface2.first.code);
-    EXPECT_EQ(nullptr, status_and_iface2.second.get());
-}
-
-/*
- * RemoveNanIface
- * Configures the chip in NAN mode and create an iface. Then, remove
- * the iface object using the correct name and ensure any other name
- * doesn't remove the iface.
- */
-TEST_F(WifiChipHidlTest, RemoveNanIface) {
-    if (!gEnv->isNanOn) return;
-    configureChipForIfaceType(IfaceType::NAN, gEnv->isNanOn);
-
-    sp<IWifiNanIface> nan_iface;
-    EXPECT_EQ(WifiStatusCode::SUCCESS, createNanIface(&nan_iface));
-    EXPECT_NE(nullptr, nan_iface.get());
-
-    std::string iface_name = getIfaceName(nan_iface);
-    std::string invalid_name = iface_name + "0";
-    EXPECT_EQ(WifiStatusCode::ERROR_INVALID_ARGS, removeNanIface(invalid_name));
-
-    EXPECT_EQ(WifiStatusCode::SUCCESS, removeNanIface(iface_name));
-
-    // No such iface exists now. So, this should return failure.
-    EXPECT_EQ(WifiStatusCode::ERROR_INVALID_ARGS, removeNanIface(iface_name));
-}
-
-/*
  * CreateP2pIface
  * Configures the chip in P2P mode and ensures that at least 1 iface creation
  * succeeds.
  */
-TEST_F(WifiChipHidlTest, CreateP2pIface) {
+TEST_P(WifiChipHidlTest, CreateP2pIface) {
     configureChipForIfaceType(IfaceType::P2P, true);
 
     sp<IWifiP2pIface> iface;
@@ -573,7 +365,7 @@ TEST_F(WifiChipHidlTest, CreateP2pIface) {
  * before creating the iface. Then, create the iface and ensure that
  * iface name is returned via the list.
  */
-TEST_F(WifiChipHidlTest, GetP2pIfaceNames) {
+TEST_P(WifiChipHidlTest, GetP2pIfaceNames) {
     configureChipForIfaceType(IfaceType::P2P, true);
 
     const auto& status_and_iface_names1 =
@@ -583,7 +375,7 @@ TEST_F(WifiChipHidlTest, GetP2pIfaceNames) {
 
     sp<IWifiP2pIface> iface;
     EXPECT_EQ(WifiStatusCode::SUCCESS, createP2pIface(&iface));
-    EXPECT_NE(nullptr, iface.get());
+    ASSERT_NE(nullptr, iface.get());
 
     std::string iface_name = getIfaceName(iface);
     const auto& status_and_iface_names2 =
@@ -605,12 +397,12 @@ TEST_F(WifiChipHidlTest, GetP2pIfaceNames) {
  * the iface object using the correct name and ensure any other name
  * doesn't retrieve an iface object.
  */
-TEST_F(WifiChipHidlTest, GetP2pIface) {
+TEST_P(WifiChipHidlTest, GetP2pIface) {
     configureChipForIfaceType(IfaceType::P2P, true);
 
     sp<IWifiP2pIface> p2p_iface;
     EXPECT_EQ(WifiStatusCode::SUCCESS, createP2pIface(&p2p_iface));
-    EXPECT_NE(nullptr, p2p_iface.get());
+    ASSERT_NE(nullptr, p2p_iface.get());
 
     std::string iface_name = getIfaceName(p2p_iface);
     const auto& status_and_iface1 =
@@ -631,12 +423,12 @@ TEST_F(WifiChipHidlTest, GetP2pIface) {
  * the iface object using the correct name and ensure any other name
  * doesn't remove the iface.
  */
-TEST_F(WifiChipHidlTest, RemoveP2pIface) {
+TEST_P(WifiChipHidlTest, RemoveP2pIface) {
     configureChipForIfaceType(IfaceType::P2P, true);
 
     sp<IWifiP2pIface> p2p_iface;
     EXPECT_EQ(WifiStatusCode::SUCCESS, createP2pIface(&p2p_iface));
-    EXPECT_NE(nullptr, p2p_iface.get());
+    ASSERT_NE(nullptr, p2p_iface.get());
 
     std::string iface_name = getIfaceName(p2p_iface);
     std::string invalid_name = iface_name + "0";
@@ -652,7 +444,7 @@ TEST_F(WifiChipHidlTest, RemoveP2pIface) {
  * Configures the chip in STA mode and ensures that at least 1 iface creation
  * succeeds.
  */
-TEST_F(WifiChipHidlTest, CreateStaIface) {
+TEST_P(WifiChipHidlTest, CreateStaIface) {
     configureChipForIfaceType(IfaceType::STA, true);
 
     sp<IWifiStaIface> iface;
@@ -666,7 +458,7 @@ TEST_F(WifiChipHidlTest, CreateStaIface) {
  * before creating the iface. Then, create the iface and ensure that
  * iface name is returned via the list.
  */
-TEST_F(WifiChipHidlTest, GetStaIfaceNames) {
+TEST_P(WifiChipHidlTest, GetStaIfaceNames) {
     configureChipForIfaceType(IfaceType::STA, true);
 
     const auto& status_and_iface_names1 =
@@ -676,7 +468,7 @@ TEST_F(WifiChipHidlTest, GetStaIfaceNames) {
 
     sp<IWifiStaIface> iface;
     EXPECT_EQ(WifiStatusCode::SUCCESS, createStaIface(&iface));
-    EXPECT_NE(nullptr, iface.get());
+    ASSERT_NE(nullptr, iface.get());
 
     std::string iface_name = getIfaceName(iface);
     const auto& status_and_iface_names2 =
@@ -698,12 +490,12 @@ TEST_F(WifiChipHidlTest, GetStaIfaceNames) {
  * the iface object using the correct name and ensure any other name
  * doesn't retrieve an iface object.
  */
-TEST_F(WifiChipHidlTest, GetStaIface) {
+TEST_P(WifiChipHidlTest, GetStaIface) {
     configureChipForIfaceType(IfaceType::STA, true);
 
     sp<IWifiStaIface> sta_iface;
     EXPECT_EQ(WifiStatusCode::SUCCESS, createStaIface(&sta_iface));
-    EXPECT_NE(nullptr, sta_iface.get());
+    ASSERT_NE(nullptr, sta_iface.get());
 
     std::string iface_name = getIfaceName(sta_iface);
     const auto& status_and_iface1 =
@@ -724,12 +516,12 @@ TEST_F(WifiChipHidlTest, GetStaIface) {
  * the iface object using the correct name and ensure any other name
  * doesn't remove the iface.
  */
-TEST_F(WifiChipHidlTest, RemoveStaIface) {
+TEST_P(WifiChipHidlTest, RemoveStaIface) {
     configureChipForIfaceType(IfaceType::STA, true);
 
     sp<IWifiStaIface> sta_iface;
     EXPECT_EQ(WifiStatusCode::SUCCESS, createStaIface(&sta_iface));
-    EXPECT_NE(nullptr, sta_iface.get());
+    ASSERT_NE(nullptr, sta_iface.get());
 
     std::string iface_name = getIfaceName(sta_iface);
     std::string invalid_name = iface_name + "0";
@@ -743,15 +535,25 @@ TEST_F(WifiChipHidlTest, RemoveStaIface) {
 /*
  * CreateRttController
  */
-TEST_F(WifiChipHidlTest, CreateRttController) {
+TEST_P(WifiChipHidlTest, CreateRttController) {
     configureChipForIfaceType(IfaceType::STA, true);
 
     sp<IWifiStaIface> iface;
     EXPECT_EQ(WifiStatusCode::SUCCESS, createStaIface(&iface));
-    EXPECT_NE(nullptr, iface.get());
+    ASSERT_NE(nullptr, iface.get());
 
     const auto& status_and_rtt_controller =
         HIDL_INVOKE(wifi_chip_, createRttController, iface);
-    EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_rtt_controller.first.code);
-    EXPECT_NE(nullptr, status_and_rtt_controller.second.get());
+    if (status_and_rtt_controller.first.code !=
+        WifiStatusCode::ERROR_NOT_SUPPORTED) {
+        EXPECT_EQ(WifiStatusCode::SUCCESS,
+                  status_and_rtt_controller.first.code);
+        EXPECT_NE(nullptr, status_and_rtt_controller.second.get());
+    }
 }
+
+INSTANTIATE_TEST_SUITE_P(
+    PerInstance, WifiChipHidlTest,
+    testing::ValuesIn(
+        android::hardware::getAllHalInstanceNames(IWifi::descriptor)),
+    android::hardware::PrintInstanceNameToString);

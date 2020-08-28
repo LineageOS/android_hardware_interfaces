@@ -11,8 +11,8 @@ LOCAL_HEADER_LIBRARIES := android.hardware.graphics.composer@2.2-passthrough
 LOCAL_SHARED_LIBRARIES := \
         android.hardware.graphics.composer@2.1 \
         android.hardware.graphics.composer@2.2 \
-        android.hardware.graphics.mapper@2.0 \
-        android.hardware.graphics.mapper@3.0 \
+        android.hardware.graphics.composer@2.1-resources \
+        android.hardware.graphics.composer@2.2-resources \
         libbase \
         libbinder \
         libcutils \

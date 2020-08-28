@@ -27,4 +27,8 @@ cc_binary {
         "-O0",
         "-g",
     ],
+
+    vintf_fragments: [
+        "manifest_android.hardware.automotive.evs@1.0-service.xml",
+    ],
 }

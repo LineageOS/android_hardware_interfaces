@@ -1,0 +1,52 @@
+/*
+ * Copyright (C) 2020 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+syntax = "proto3";
+
+package android.hardware.automotive.can.config;
+
+message IfaceNative {
+    string ifname = 1;
+    repeated string serialno = 2;
+};
+
+message IfaceSlcan {
+    string ttyname = 1;
+    repeated string serialno = 2;
+};
+
+message IfaceVirtual {
+    string ifname = 1;
+};
+
+message IfaceIndexed {
+    uint32 index = 1;
+};
+
+message Bus {
+    string name = 1;  // this is the name presented in the HAL
+    oneof iface_type {
+        IfaceNative native = 2;
+        IfaceSlcan slcan = 3;
+        IfaceVirtual virtual = 4;
+        IfaceIndexed indexed = 5;
+    }
+    uint32 bitrate = 6;
+};
+
+message CanBusConfig {
+    repeated Bus buses = 1;
+};

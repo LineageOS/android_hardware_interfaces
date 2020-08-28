@@ -1,0 +1,351 @@
+/*
+ * Copyright 2020 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.automotive.sv@1.0;
+
+import android.hardware.graphics.common@1.2::HardwareBuffer;
+
+/** Structure for translation with x, y and z units. */
+struct Translation {
+    float x;
+    float y;
+    float z;
+};
+
+/**
+ * Structure for rotation expressed as quaternions.
+ * Convention used: Unit quaternion with hamilton convention.
+ */
+struct RotationQuat {
+    float x;
+    float y;
+    float z;
+    float w;
+};
+
+/** Structure representing a 2D point with integers. Units are pixels. */
+struct Point2dInt {
+    uint32_t x;
+    uint32_t y;
+};
+
+/** Structure representing a 2D point with floats. */
+struct Point2dFloat {
+    /** Boolean flag to indicate the (x, y) data is valid. */
+    bool isValid;
+
+    /** (x, y) data is only valid if isValid is true. Units are pixels or milli-meters. */
+    float x;
+    float y;
+};
+
+/** Structure representing a 3D point with floats. */
+struct Point3dFloat {
+    /** Boolean flag to indicate the (x, y, z) data is valid. */
+    bool isValid;
+
+    /**
+     * (x, y, z) data is only valid if isValid is true. Units are milli-meters.
+     */
+    float x;
+    float y;
+    float z;
+};
+
+/**
+ * Structure defining the pose in 3D space.
+ */
+struct Pose {
+    /**
+     * Rotation part of the pose, expressed as a unit quaternion.
+     */
+    RotationQuat rotation;
+
+    /**
+     * Translation part of the pose, in (x, y, z) format with milli-meter units.
+     */
+    Translation translation;
+};
+
+/**
+ * Struct defining a virtual view in the 3d space around the car.
+ */
+struct View3d {
+    /**
+     * Id to identify each custom view, this is passed along in each result SvBuffer.
+     * Recommend client to have a unique id for each different view.
+     */
+    uint32_t viewId;
+
+    /**
+     * Pose of the view. Describes the orientation and location of a virtual view relative to the
+     * android automotive coordinate system:
+     * https://source.android.com/devices/sensors/sensor-types#auto_axes
+     * The virtual view axes are defined as +Y as look-at direction, +X as right direction and
+     * +Z as up direction.
+     * The rotation and translation of the virtual view axes w.r.t the android automotive axes is
+     * specified by the rotation and tranlation component of the pose respectively.
+     * Example: A virtual view points to the right face of the car, located on right side of
+     * the car at (4, 2, 0) and is upright w.r.t the ground :
+     *         ______
+     *  front |      |
+     *        | car  |    ↑X
+     *        |  ↑Y  |  Y←∘  view
+     *  rear  |  ∘→X |  (4,2)
+     *        |(0,0) |
+     *        |______|
+     *
+     * Here the view axes are rotated by 90 counter-clockwise w.r.t android automotive axes.
+     * For this example the rotation and translation will be:
+     * Rotation = + 90 degrees around Z axis = (0.7071, 0, 0, 0.7071) as a unit quaternion.
+     * Translation = (4, 2, 0) in meters = (2000, 4000, 0) in milli-meters.
+     */
+    Pose pose;
+
+    /**
+     * Horizontal field of view of the virtual view in degrees. Vertical fov is scaled accordingly
+     * to maintain the aspect ratio of the output frame. Must be in range (20,
+     */
+    float horizontalFov;
+};
+
+/**
+ * Memory Buffer that stores the output of a single view from 2d/3d surround view.
+ */
+struct SvBuffer {
+    /**
+     * viewId identifying the view as passed by the client in setViews() call for
+     * surround view 3d. Id value is 0 for 2d surround view frame.
+     */
+    uint32_t viewId;
+
+    /** Hardware buffer containing the surround view 2d/3d result. */
+    HardwareBuffer hardwareBuffer;
+};
+
+/**
+ * Structure describing a set of frames to be returned as output from 2d/3d surround view.
+ */
+struct SvFramesDesc {
+    /**
+     * Elapsed real-time nanoseconds of earliest camera frame from the set of camera
+     * frames used to generate the view.
+     */
+    uint64_t timestampNs;
+
+    /**
+     * Incremental counter for client to keep track of frames.
+     */
+    uint32_t sequenceId;
+
+    /**
+     * Frames generated with different views.
+     * 2d surround view has only a single svBuffer with Id 0.
+     */
+    vec<SvBuffer> svBuffers;
+};
+
+/**
+ * Enumerator for list of result returns by surround view .
+ */
+enum SvResult : uint32_t {
+    /** Operation was successful. */
+    OK = 0,
+
+    /** Invalid argument to function was provided. */
+    INVALID_ARG,
+
+    /** Error indicating the particular operation is not supported. */
+    NOT_SUPPORTED,
+
+    /** Error indicating view not set before starting stream. */
+    VIEW_NOT_SET,
+
+    /**
+     * Error indicating system does not currently have enough resources to
+     * allocate for a new requested session.
+     * Clients may retry request for session if resources become available.
+     */
+    NO_RESOURCE,
+
+    /** Internal error in surround view service. */
+    INTERNAL_ERROR,
+};
+
+/**
+ * Enumerator listing events for surround view.
+ */
+enum SvEvent : uint32_t {
+    STREAM_STARTED = 1,
+
+    STREAM_STOPPED,
+
+    /**
+     * Event sent after service switches to an updated config, all frames
+     * streamed after this event are of the updated config.
+     */
+    CONFIG_UPDATED,
+
+    /** Each frame dropped will be notified with this event. */
+    FRAME_DROPPED,
+
+    /**
+     * Timeout event occurs if any individual camera stream has a timeout.
+     * Frames will not be delivered and clients must stop the stream.
+     */
+    TIMEOUT,
+};
+
+/**
+ * Structure defining the mapping information for 2d surround view.
+ *
+ * Mapping information provides the area on ground (width and height) and
+ * position w.r.t the car that the surround view 2d covers. This can be used for
+ * mapping (linear transformation) with other sensors whose data is available in
+ * the car coordinate system (eg. Ultrasonics).
+ * Axes and origin are as per the android automotive axes:
+ * https://source.android.com/devices/sensors/sensor-types#auto_axes
+ */
+struct Sv2dMappingInfo {
+    /** Width in milli-meters of the 2d surround view along the ground plane. */
+    float width;
+
+    /** Height in milli-meters of the 2d surround view along the ground plane. */
+    float height;
+
+    /**
+     * Coordinates (x, y) of the center of the view in android automotive coordinate system on the
+     * ground plane. Units are milli-meters.
+     */
+    Point2dFloat center;
+};
+
+/**
+ * Enumerator for quality presets for 2d/3d surround view.
+ * Details of each preset are specified in the respective 2d/3d config structures.
+ */
+enum SvQuality : uint32_t {
+    HIGH = 0,
+    LOW,
+};
+
+/** Structure for surround view 2d configuration. */
+struct Sv2dConfig {
+    /**
+     * Desired output width in pixels. Must be in range (0, 4096].
+     * Height is computed keeping the aspect ratio of the mapping info,
+     * Example: If width = 1080 px and mapping_width = 5000 mm, mapping_height = 10000 mm.
+     *          then, height = width * (mapping_height / mapping_width) = 2160 px.
+     * Height is set to the floor value in case of (mapping_height / mapping_width) is not integer.
+     * Mapping width, height is fixed for a car and is based on camera parameters and their ground
+     * coverage.
+     */
+    uint32_t width;
+
+    /**
+     * Blending quality preset to use.
+     * HIGH: High quality blending (eg. multiband blending) that consumes more resources.
+     * LOW: Low quality blending (eg. alpha blending) that consumes less resources.
+     */
+    SvQuality blending;
+};
+
+/** Structure for surround view 3d configuration. */
+struct Sv3dConfig {
+    /** Desired output width in pixels. Must be in range (0, 4096]. */
+    uint32_t width;
+
+    /** Desired output height in pixels. Must be in range (0, 4096]. */
+    uint32_t height;
+
+    /**
+     * Car model rendering details level.
+     * HIGH: Rendering includes shadows and reflections. Default option.
+     * LOW: Rendering with no shadows and reflections.
+     */
+    SvQuality carDetails;
+};
+
+/**
+ * Enumerator for a list of overlay primitives.
+ *
+ * Given a list of vertices for an overlay, a primitive type defines which vertices are used to form
+ * the surfaces of the overlay object.
+ */
+enum OverlayPrimitive : uint32_t {
+    /**
+     * Consecutive vertices picked in order 3 at a time form a triangle.
+     * Eg: In a list of vertices (V1, V2, V3, V4, V5, V6)
+     * (V1, V2, V3) form a triangle and (V4, V5, V6) form a triangle.
+     */
+    TRIANGLES = 0,
+
+    /**
+     * Every 3 consecutive vertices form a triangle.
+     * Example in a list of vertices V1, V2, V3, V4, V5, V6
+     * (V1, V2, V3), (V2, V3, V4), (V3, V4, V5) and (V4, V5, V6) form triangles.
+     */
+    TRIANGLES_STRIP,
+};
+
+/**
+ * Structure identifying an overlay and describing the size and arrangement of its data in
+ * shared memory.
+ */
+struct OverlayMemoryDesc {
+    /** Identifier of the overlay. */
+    uint16_t id;
+
+    /** Number of vertices in the overlay. */
+    uint32_t verticesCount;
+
+    /** Primitive for the overlay. */
+    OverlayPrimitive overlayPrimitive;
+};
+
+/**
+ *  Structure containing the overlays data in shared memory.
+ */
+struct OverlaysData {
+    /** List of overlay memory descriptors, describing the data in the shared memory */
+    vec<OverlayMemoryDesc> overlaysMemoryDesc;
+
+    /**
+     * Shared memory object containing a list of vertices for each overlay as described by
+     * overlaysMemoryDesc.
+     *
+     * Each vertex comprises of:
+     * | PositionX | PositionY | PositionZ |   RGBA       |
+     * |   float   |   float   |   float   |  4 * uint8_t |
+     *
+     * Each vertex is of 3 floats and 4 bytes = 16 bytes.
+     *
+     * Layout of vertices in shared memory is in order:
+     *
+     * Bytes: | 0-1 | 2-18 | 19-34 | 35-50 | 51-66 | 67-68 | 69-84 | 85-100 | 101-116  |...
+     * Data:  | id1 |  V1  |  V2   |   V3  |   V4  |  id2  |   V1  |   V2   |  V3      |...
+     *        |           overlay1                 |          overlay 2                |
+     *
+     * The order of overlays must match the order as specified in the overlaysMemoryDesc.
+     * The number of vertices each overlay has must match the verticesCount in overlaysMemoryDesc.
+     * The id must match the id specificed in the OverlayMemoryDesc. This is used for verification.
+     * For each overlay the number of vertices must be 3 or greater.
+     * For TRIANGLES primitive the number of vertices must be a multiple of 3.
+     * The overlay vertices are grouped as per the overlayPrimitive specified in overlaysMemoryDesc,
+     * eg: If primitive is TRIANGLES, (V1, V2, V3) and (V4, V5, V6) form a triangle.
+     */
+    memory overlaysMemory;
+};

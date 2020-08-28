@@ -1,0 +1,348 @@
+/*
+ * Copyright 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.graphics.composer@2.4;
+
+import android.hardware.graphics.common@1.2::PixelFormat;
+import android.hardware.graphics.common@1.2::Dataspace;
+import android.hardware.graphics.composer@2.1::IComposerClient.Command;
+import IComposerCallback;
+import @2.1::Config;
+import @2.1::Display;
+import @2.1::Error;
+import @2.1::IComposerClient;
+import @2.3::IComposerClient;
+
+interface IComposerClient extends @2.3::IComposerClient {
+    /**
+     * Display attributes queryable through getDisplayAttribute_2_4.
+     */
+    enum Attribute : @2.1::IComposerClient.Attribute {
+        /**
+         * The configuration group ID (as int32_t) this config is associated to.
+         * Switching between configurations within the same group may be done seamlessly
+         * in some conditions via setActiveConfigWithConstraints.
+         */
+        CONFIG_GROUP = 7,
+    };
+
+    /**
+     * Required capabilities which are supported by the display. The
+     * particular set of supported capabilities for a given display may be
+     * retrieved using getDisplayCapabilities.
+     */
+    enum DisplayCapability : @2.3::IComposerClient.DisplayCapability {
+        /**
+         * Indicates that the display supports protected contents.
+         * When returned, hardware composer must be able to accept client target
+         * with protected buffers.
+         */
+        PROTECTED_CONTENTS = 4,
+
+        /**
+         * Indicates that both the composer HAL implementation and the given display
+         * support a low latency mode, such as HDMI 2.1 Auto Low Latency Mode.
+         */
+        AUTO_LOW_LATENCY_MODE = 5,
+    };
+
+    enum Command : @2.3::IComposerClient.Command {
+        /**
+         * SET_CLIENT_TARGET_PROPERTY has this pseudo prototype
+         *
+         * This command has the following binary layout in bytes:
+         *
+         *     0 - 3: clientTargetProperty.pixelFormat
+         *     4 - 7: clientTargetProperty.dataspace
+         *
+         *   setClientTargetProperty(ClientTargetProperty clientTargetProperty);
+         */
+         SET_CLIENT_TARGET_PROPERTY = 0x105 << @2.1::IComposerClient.Command:OPCODE_SHIFT,
+
+        /**
+         * SET_LAYER_GENERIC_METADATA has this pseudo prototype
+         *
+         *   setLayerGenericMetadata(string key, bool mandatory, vec<uint8_t> value);
+         *
+         * Sets a piece of generic metadata for the given layer. If this
+         * function is called twice with the same key but different values, the
+         * newer value must override the older one. Calling this function with a
+         * 0-length value must reset that key's metadata as if it had not been
+         * set.
+         *
+         * A given piece of metadata may either be mandatory or a hint
+         * (non-mandatory) as indicated by the second parameter. Mandatory
+         * metadata may affect the composition result, which is to say that it
+         * may cause a visible change in the final image. By contrast, hints may
+         * only affect the composition strategy, such as which layers are
+         * composited by the client, but must not cause a visible change in the
+         * final image. The value of the mandatory flag shall match the value
+         * returned from getLayerGenericMetadataKeys for the given key.
+         *
+         * Only keys which have been returned from getLayerGenericMetadataKeys()
+         * shall be accepted. Any other keys must result in an UNSUPPORTED error.
+         *
+         * The value passed into this function shall be the binary
+         * representation of a HIDL type corresponding to the given key. For
+         * example, a key of 'com.example.V1_3.Foo' shall be paired with a
+         * value of type com.example@1.3::Foo, which would be defined in a
+         * vendor HAL extension.
+         *
+         * This function will be encoded in the command buffer in this order:
+         *   1) The key length, stored as a uint32_t
+         *   2) The key itself, padded to a uint32_t boundary if necessary
+         *   3) The mandatory flag, stored as a uint32_t
+         *   4) The value length in bytes, stored as a uint32_t
+         *   5) The value itself, padded to a uint32_t boundary if necessary
+         *
+         * @param key indicates which metadata value should be set on this layer
+         * @param mandatory indicates whether this particular key represents
+         *        mandatory metadata or a hint (non-mandatory metadata), as
+         *        described above
+         * @param value is a binary representation of a HIDL struct
+         *        corresponding to the key as described above
+         */
+        SET_LAYER_GENERIC_METADATA = 0x40e << @2.1::IComposerClient.Command:OPCODE_SHIFT,
+    };
+
+    /**
+     * Supersedes {@link @2.1::IComposerClient.DisplayType}.
+     */
+    enum DisplayConnectionType : uint32_t {
+        /**
+         * Display is connected through internal port, e.g. DSI, eDP.
+         */
+        INTERNAL = 0,
+        /**
+         * Display is connected through external port, e.g. HDMI, DisplayPort.
+         */
+        EXTERNAL = 1,
+    };
+
+    enum ContentType : uint32_t {
+        NONE = 0,
+
+        /**
+         * These modes correspond to those found in the HDMI 1.4 specification.
+         */
+        GRAPHICS = 1,
+        PHOTO = 2,
+        CINEMA = 3,
+        GAME = 4,
+    };
+
+    /**
+     * Constraints for changing vsync period.
+     */
+    struct VsyncPeriodChangeConstraints {
+        /**
+         * Time in CLOCK_MONOTONIC after which the vsync period may change
+         * (i.e., the vsync period must not change before this time).
+         */
+        int64_t desiredTimeNanos;
+
+        /**
+         * If true, requires that the vsync period change must happen seamlessly without
+         * a noticeable visual artifact.
+         */
+        bool seamlessRequired;
+    };
+
+    struct ClientTargetProperty {
+        PixelFormat pixelFormat;
+        Dataspace dataspace;
+    };
+
+    /**
+     * Provides a IComposerCallback object for the device to call.
+     *
+     * This function must be called only once.
+     *
+     * @param callback is the IComposerCallback object.
+     */
+    registerCallback_2_4(IComposerCallback callback);
+
+    /**
+     * Provides a list of supported capabilities (as described in the
+     * definition of DisplayCapability above). This list must not change after
+     * initialization.
+     *
+     * @return error is NONE upon success. Otherwise,
+     *     BAD_DISPLAY when an invalid display handle was passed in.
+     * @return capabilities is a list of supported capabilities.
+     */
+    getDisplayCapabilities_2_4(Display display)
+        generates (Error error, vec<DisplayCapability> capabilities);
+
+    /**
+     * Returns whether the given physical display is internal or external.
+     *
+     * @return error is NONE upon success. Otherwise,
+     *     BAD_DISPLAY when the given display is invalid or virtual.
+     * @return type is the connection type of the display.
+     */
+    getDisplayConnectionType(Display display) generates (Error error, DisplayConnectionType type);
+
+    /**
+     * Returns a display attribute value for a particular display
+     * configuration.
+     *
+     * @param display is the display to query.
+     * @param config is the display configuration for which to return
+     *        attribute values.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     *         BAD_CONFIG when config does not name a valid configuration for
+     *                    this display.
+     *         BAD_PARAMETER when attribute is unrecognized.
+     *         UNSUPPORTED when attribute cannot be queried for the config.
+     * @return value is the value of the attribute.
+     */
+    getDisplayAttribute_2_4(Display display, Config config, Attribute attribute)
+        generates (Error error, int32_t value);
+
+    /**
+     * Retrieves which vsync period the display is currently using.
+     *
+     * If no display configuration is currently active, this function must
+     * return BAD_CONFIG. If the vsync period is about to change due to a
+     * setActiveConfigWithConstraints call, this function must return the current vsync period
+     * until the change takes place.
+     *
+     * @param display is the display for which the vsync period is queried.
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     *         BAD_CONFIG when no configuration is currently active.
+     * @return vsyncPeriodNanos is the current vsync period of the display.
+     */
+    getDisplayVsyncPeriod(Display display)
+        generates (Error error, VsyncPeriodNanos vsyncPeriodNanos);
+
+    /**
+     * Sets the active configuration and the refresh rate for this display.
+     * If the new config shares the same config group as the current config,
+     * only the vsync period shall change.
+     * Upon returning, the given display configuration, except vsync period, must be active and
+     * remain so until either this function is called again or the display is disconnected.
+     * When the display starts to refresh at the new vsync period, onVsync_2_4 callback must be
+     * called with the new vsync period.
+     *
+     * @param display is the display for which the active config is set.
+     * @param config is the new display configuration.
+     * @param vsyncPeriodChangeConstraints are the constraints required for changing vsync period.
+     *
+     * @return error is NONE upon success. Otherwise,
+     *         BAD_DISPLAY when an invalid display handle was passed in.
+     *         BAD_CONFIG when the configuration handle passed in is not valid
+     *                    for this display.
+     *         SEAMLESS_NOT_ALLOWED when seamlessRequired was true but config provided doesn't
+     *                              share the same config group as the current config.
+     *         SEAMLESS_NOT_POSSIBLE when seamlessRequired was true but the display cannot achieve
+     *                               the vsync period change without a noticeable visual artifact.
+     *                               When the conditions change and it may be possible to change
+     *                               the vsync period seamlessly, onSeamlessPossible callback
+     *                               must be called to indicate that caller should retry.
+     * @return timeline is the timeline for the vsync period change.
+     */
+    setActiveConfigWithConstraints(Display display, Config config,
+        VsyncPeriodChangeConstraints vsyncPeriodChangeConstraints)
+        generates (Error error, VsyncPeriodChangeTimeline timeline);
+
+    /**
+     * Requests the display to enable/disable its low latency mode.
+     *
+     * If the display is connected via HDMI 2.1, then Auto Low Latency Mode should be triggered. If
+     * the display is internally connected and a custom low latency mode is available, that should
+     * be triggered.
+     *
+     * This function should only be called if the display reports support for
+     * DisplayCapability::AUTO_LOW_LATENCY_MODE from getDisplayCapabilities_2_4.
+     *
+     * @return error is NONE upon success. Otherwise,
+     *     BAD_DISPLAY when an invalid display handle was passed in.
+     *     UNSUPPORTED when AUTO_LOW_LATENCY_MODE is not supported by the composer
+     *         implementation or the given display
+     */
+    setAutoLowLatencyMode(Display display, bool on)
+        generates (Error error);
+
+    /**
+     * Provides a list of all the content types supported by this display (any of
+     * ContentType::{GRAPHICS, PHOTO, CINEMA, GAME}). This list must not change after
+     * initialization.
+     *
+     * Content types are introduced in HDMI 1.4 and supporting them is optional. The
+     * ContentType::NONE is always supported and will not be returned by this method..
+     *
+     * @return error is NONE upon success. Otherwise,
+     *     BAD_DISPLAY when an invalid display handle was passed in.
+     * @return supportedContentTypes is a list of supported content types.
+     */
+    getSupportedContentTypes(Display display)
+        generates(Error error, vec<ContentType> supportedContentTypes);
+
+    /**
+     * Instructs the connected display that the content being shown is of the given type - one of
+     * GRAPHICS, PHOTO, CINEMA, GAME.
+     *
+     * Content types are introduced in HDMI 1.4 and supporting them is optional. If they are
+     * supported, this signal should switch the display to a mode that is optimal for the given
+     * type of content. See HDMI 1.4 specification for more information.
+     *
+     * If the display is internally connected (not through HDMI), and such modes are available,
+     * this method should trigger them.
+     *
+     * This function should only be called if the display reports support for the corresponding
+     * content type (ContentType::{GRAPHICS, PHOTO, CINEMA, GAME}) from getSupportedContentTypes.
+     * ContentType::NONE is supported by default and can always be set.
+     *
+     * @return error is NONE upon success. Otherwise,
+     *     BAD_DISPLAY when an invalid display handle was passed in.
+     *     UNSUPPORTED when the given content type is not supported by the composer
+     *         implementation or the given display
+     */
+    setContentType(Display display, ContentType type)
+        generates (Error error);
+
+    struct LayerGenericMetadataKey {
+        /**
+         * Key names must comply with the requirements specified for
+         * getLayerGenericMetadataKeys below
+         */
+        string name;
+
+        /**
+         * The mandatory flag is defined in the description of
+         * setLayerGenericMetadata above
+         */
+        bool mandatory;
+    };
+
+    /**
+     * Retrieves the set of keys that may be passed into setLayerGenericMetadata
+     *
+     * Key names must meet the following requirements:
+     * - Must be specified in reverse domain name notation
+     * - Must not start with 'com.android' or 'android'
+     * - Must be unique within the returned vector
+     * - Must correspond to a matching HIDL struct type, which defines the
+     *   structure of its values. For example, the key 'com.example.V1-3.Foo'
+     *   should correspond to a value of type com.example@1.3::Foo, which is
+     *   defined in a vendor HAL extension
+     */
+    getLayerGenericMetadataKeys()
+        generates(Error error, vec<LayerGenericMetadataKey> keys);
+};
