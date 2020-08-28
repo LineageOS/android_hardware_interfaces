@@ -16,6 +16,7 @@
 <configuration description="Runs VtsHalDrmV1_3TargetTest.">
     <option name="test-suite-tag" value="apct" />
     <option name="test-suite-tag" value="apct-native" />
+    <option name="not-shardable" value="true" />
 
     <target_preparer class="com.android.tradefed.targetprep.RootTargetPreparer"/>
 
