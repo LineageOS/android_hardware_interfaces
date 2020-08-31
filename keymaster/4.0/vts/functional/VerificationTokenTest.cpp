@@ -111,19 +111,19 @@ TEST_P(VerificationTokenTest, TestCreation) {
 
     EXPECT_GE(host_time_delta, time_to_sleep)
         << "We slept for " << time_to_sleep << " ms, the clock must have advanced by that much";
-    EXPECT_LE(host_time_delta, time_to_sleep + 20)
+    EXPECT_LE(host_time_delta, time_to_sleep + 100)
         << "The verifyAuthorization call took " << (host_time_delta - time_to_sleep)
         << " ms?  That's awful!";
 
     auto km_time_delta = result2.token.timestamp - result1.token.timestamp;
 
     // If not too much else is going on on the system, the time delta should be quite close.  Allow
-    // 2 ms of slop just to avoid test flakiness.
+    // 20 ms of slop just to avoid test flakiness.
     //
     // TODO(swillden): see if we can output values so they can be gathered across many runs and
     // report if times aren't nearly always <1ms apart.
-    EXPECT_LE(host_time_delta, km_time_delta + 2);
-    EXPECT_LE(km_time_delta, host_time_delta + 2);
+    EXPECT_LE(host_time_delta, km_time_delta + 20);
+    EXPECT_LE(km_time_delta, host_time_delta + 20);
     ASSERT_EQ(result1.token.mac.size(), result2.token.mac.size());
     ASSERT_NE(0,
               memcmp(result1.token.mac.data(), result2.token.mac.data(), result1.token.mac.size()));
@@ -172,14 +172,14 @@ TEST_P(VerificationTokenTest, MacChangesOnChangingTimestamp) {
 
     EXPECT_GE(host_time_delta, time_to_sleep)
             << "We slept for " << time_to_sleep << " ms, the clock must have advanced by that much";
-    EXPECT_LE(host_time_delta, time_to_sleep + 20)
+    EXPECT_LE(host_time_delta, time_to_sleep + 100)
             << "The verifyAuthorization call took " << (host_time_delta - time_to_sleep)
             << " ms?  That's awful!";
 
     auto km_time_delta = result2.token.timestamp - result1.token.timestamp;
 
-    EXPECT_LE(host_time_delta, km_time_delta + 2);
-    EXPECT_LE(km_time_delta, host_time_delta + 2);
+    EXPECT_LE(host_time_delta, km_time_delta + 20);
+    EXPECT_LE(km_time_delta, host_time_delta + 20);
     ASSERT_EQ(result1.token.mac.size(), result2.token.mac.size());
     ASSERT_NE(0,
               memcmp(result1.token.mac.data(), result2.token.mac.data(), result1.token.mac.size()));
