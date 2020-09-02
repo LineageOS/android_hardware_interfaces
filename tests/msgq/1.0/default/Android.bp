@@ -70,6 +70,17 @@ cc_test {
         "libbinder_ndk",
     ],
 
+    compile_multilib: "both",
+    multilib: {
+        lib32: {
+            suffix: "32",
+        },
+        lib64: {
+            suffix: "64",
+        },
+    },
+    test_suites: ["device-tests"],
+
     // Allow dlsym'ing self for statically linked passthrough implementations
     ldflags: ["-rdynamic"],
 
@@ -84,5 +95,4 @@ cc_test {
         "android.hardware.tests.msgq@1.0-impl",
         "android.fmq.test-impl",
     ],
-    test_suites: ["general-tests"],
 }
