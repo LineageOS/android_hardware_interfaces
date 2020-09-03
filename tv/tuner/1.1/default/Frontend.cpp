@@ -273,6 +273,14 @@ Return<Result> Frontend::setLnb(uint32_t /* lnb */) {
     return Result::SUCCESS;
 }
 
+Return<Result> Frontend::linkCiCam(uint32_t ciCamId) {
+    ALOGV("%s", __FUNCTION__);
+
+    mCiCamId = ciCamId;
+
+    return Result::SUCCESS;
+}
+
 FrontendType Frontend::getFrontendType() {
     return mType;
 }
