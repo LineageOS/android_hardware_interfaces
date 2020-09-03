@@ -17,8 +17,11 @@
 #define LOG_TAG "keymaster_hidl_hal_test"
 #include <cutils/log.h>
 
-#include <iostream>
 #include <signal.h>
+
+#include <functional>
+#include <iostream>
+#include <string>
 
 #include <openssl/evp.h>
 #include <openssl/mem.h>
@@ -31,6 +34,8 @@
 #include <keymasterV4_0/openssl_utils.h>
 
 #include "KeymasterHidlTest.h"
+
+using namespace std::string_literals;
 
 static bool arm_deleteAllKeys = false;
 static bool dump_Attestations = false;
@@ -315,6 +320,12 @@ bool avb_verification_enabled() {
     return property_get("ro.boot.vbmeta.device_state", value, "") != 0;
 }
 
+bool is_gsi() {
+    char property_value[PROPERTY_VALUE_MAX] = {};
+    EXPECT_NE(property_get("ro.product.system.name", property_value, ""), 0);
+    return "mainline"s == property_value;
+}
+
 }  // namespace
 
 bool verify_attestation_record(const string& challenge, const string& app_id,
@@ -512,9 +523,25 @@ class NewKeyGenerationTest : public KeymasterHidlTest {
         EXPECT_TRUE(auths.Contains(TAG_OS_VERSION, os_version()))
             << "OS version is " << os_version() << " key reported "
             << auths.GetTagValue(TAG_OS_VERSION);
-        EXPECT_TRUE(auths.Contains(TAG_OS_PATCHLEVEL, os_patch_level()))
-            << "OS patch level is " << os_patch_level() << " key reported "
-            << auths.GetTagValue(TAG_OS_PATCHLEVEL);
+
+        if (is_gsi()) {
+            // In general, TAG_OS_PATCHLEVEL should be equal to os_patch_level()
+            // reported from the system.img in use. But it is allowed to boot a
+            // GSI system.img with newer patch level, which means TAG_OS_PATCHLEVEL
+            // might be less than or equal to os_patch_level() in this case.
+            EXPECT_TRUE(auths.Contains(TAG_OS_PATCHLEVEL,  // vbmeta.img patch level
+                                       os_patch_level(),   // system.img patch level
+                                       std::less_equal<>()))
+                    << "OS patch level is " << os_patch_level()
+                    << ", which is less than key reported " << auths.GetTagValue(TAG_OS_PATCHLEVEL);
+        } else {
+            EXPECT_TRUE(auths.Contains(TAG_OS_PATCHLEVEL,  // vbmeta.img patch level
+                                       os_patch_level(),   // system.img patch level
+                                       std::equal_to<>()))
+                    << "OS patch level is " << os_patch_level()
+                    << ", which is not equal to key reported "
+                    << auths.GetTagValue(TAG_OS_PATCHLEVEL);
+        }
     }
 
     void CheckCharacteristics(const HidlBuf& key_blob,
