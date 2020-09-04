@@ -67,4 +67,18 @@ interface IFrontend extends @1.0::IFrontend {
      */
     scan_1_1(FrontendSettings settings, FrontendScanType type, FrontendSettingsExt settingsExt)
             generates (Result result);
+
+    /**
+     * Link Conditional Access Modules (CAM) to Frontend support Common Interface (CI) bypass mode.
+     *
+     * The client may use this to link CI-CAM to a frontend. CI bypass mode requires that the
+     * CICAM also receives the TS concurrently from the frontend when the Demux is receiving the TS
+     * directly from the frontend.
+     *
+     * @param ciCamId specify CI-CAM Id to link.
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    linkCiCam(uint32_t ciCamId) generates (Result result);
 };
