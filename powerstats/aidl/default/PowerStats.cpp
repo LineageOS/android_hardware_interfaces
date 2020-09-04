@@ -34,13 +34,7 @@ ndk::ScopedAStatus PowerStats::getPowerEntityInfo(std::vector<PowerEntityInfo>* 
     (void)_aidl_return;
     return ndk::ScopedAStatus::ok();
 }
-ndk::ScopedAStatus PowerStats::getPowerEntityStateInfo(
-        const std::vector<int32_t>& in_powerEntityIds,
-        std::vector<PowerEntityStateSpace>* _aidl_return) {
-    (void)in_powerEntityIds;
-    (void)_aidl_return;
-    return ndk::ScopedAStatus::ok();
-}
+
 ndk::ScopedAStatus PowerStats::getPowerEntityStateResidencyData(
         const std::vector<int32_t>& in_powerEntityIds,
         std::vector<PowerEntityStateResidencyResult>* _aidl_return) {
@@ -48,6 +42,7 @@ ndk::ScopedAStatus PowerStats::getPowerEntityStateResidencyData(
     (void)_aidl_return;
     return ndk::ScopedAStatus::ok();
 }
+
 ndk::ScopedAStatus PowerStats::getRailInfo(std::vector<RailInfo>* _aidl_return) {
     (void)_aidl_return;
     return ndk::ScopedAStatus::ok();

@@ -20,5 +20,5 @@ package android.hardware.powerstats;
 parcelable PowerEntityInfo {
   int powerEntityId;
   String powerEntityName;
-  android.hardware.powerstats.PowerEntityType type;
+  android.hardware.powerstats.PowerEntityStateInfo[] states;
 }
