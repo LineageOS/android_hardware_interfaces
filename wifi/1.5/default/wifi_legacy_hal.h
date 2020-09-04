@@ -196,7 +196,7 @@ class WifiLegacyHal {
         const std::string& iface_name);
     std::pair<wifi_error, std::vector<uint8_t>> requestFirmwareMemoryDump(
         const std::string& iface_name);
-    std::pair<wifi_error, uint32_t> getSupportedFeatureSet(
+    std::pair<wifi_error, uint64_t> getSupportedFeatureSet(
         const std::string& iface_name);
     // APF functions.
     std::pair<wifi_error, PacketFilterCapabilities> getPacketFilterCapabilities(

@@ -486,7 +486,7 @@ WifiLegacyHal::requestFirmwareMemoryDump(const std::string& iface_name) {
     return {status, std::move(firmware_dump)};
 }
 
-std::pair<wifi_error, uint32_t> WifiLegacyHal::getSupportedFeatureSet(
+std::pair<wifi_error, uint64_t> WifiLegacyHal::getSupportedFeatureSet(
     const std::string& iface_name) {
     feature_set set = 0, chip_set = 0;
     wifi_error status = WIFI_SUCCESS;
@@ -502,7 +502,7 @@ std::pair<wifi_error, uint32_t> WifiLegacyHal::getSupportedFeatureSet(
         status = global_func_table_.wifi_get_supported_feature_set(iface_handle,
                                                                    &set);
     }
-    return {status, static_cast<uint32_t>(set | chip_set)};
+    return {status, static_cast<uint64_t>(set | chip_set)};
 }
 
 std::pair<wifi_error, PacketFilterCapabilities>

@@ -22,10 +22,10 @@
 #include <android/hardware/wifi/1.0/IWifiChip.h>
 #include <android/hardware/wifi/1.0/types.h>
 #include <android/hardware/wifi/1.2/types.h>
-#include <android/hardware/wifi/1.3/IWifiChip.h>
 #include <android/hardware/wifi/1.3/types.h>
 #include <android/hardware/wifi/1.4/IWifiChipEventCallback.h>
 #include <android/hardware/wifi/1.4/types.h>
+#include <android/hardware/wifi/1.5/IWifiChip.h>
 
 #include "wifi_legacy_hal.h"
 
@@ -45,7 +45,7 @@ using namespace android::hardware::wifi::V1_0;
 
 // Chip conversion methods.
 bool convertLegacyFeaturesToHidlChipCapabilities(
-    uint32_t legacy_feature_set, uint32_t legacy_logger_feature_set,
+    uint64_t legacy_feature_set, uint32_t legacy_logger_feature_set,
     uint32_t* hidl_caps);
 bool convertLegacyDebugRingBufferStatusToHidl(
     const legacy_hal::wifi_ring_buffer_status& legacy_status,
