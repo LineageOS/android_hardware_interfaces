@@ -69,9 +69,9 @@ convertLegacyLoggerFeatureToHidlStaIfaceCapability(uint32_t feature) {
     return {};
 }
 
-V1_3::IWifiChip::ChipCapabilityMask convertLegacyFeatureToHidlChipCapability(
-    uint32_t feature) {
-    using HidlChipCaps = V1_3::IWifiChip::ChipCapabilityMask;
+V1_5::IWifiChip::ChipCapabilityMask convertLegacyFeatureToHidlChipCapability(
+    uint64_t feature) {
+    using HidlChipCaps = V1_5::IWifiChip::ChipCapabilityMask;
     switch (feature) {
         case WIFI_FEATURE_SET_TX_POWER_LIMIT:
             return HidlChipCaps::SET_TX_POWER_LIMIT;
@@ -81,6 +81,8 @@ V1_3::IWifiChip::ChipCapabilityMask convertLegacyFeatureToHidlChipCapability(
             return HidlChipCaps::D2D_RTT;
         case WIFI_FEATURE_D2AP_RTT:
             return HidlChipCaps::D2AP_RTT;
+        case WIFI_FEATURE_INFRA_60G:
+            return HidlChipCaps::WIGIG;
         case WIFI_FEATURE_SET_LATENCY_MODE:
             return HidlChipCaps::SET_LATENCY_MODE;
         case WIFI_FEATURE_P2P_RAND_MAC:
@@ -126,7 +128,7 @@ convertLegacyFeatureToHidlStaIfaceCapability(uint64_t feature) {
 }
 
 bool convertLegacyFeaturesToHidlChipCapabilities(
-    uint32_t legacy_feature_set, uint32_t legacy_logger_feature_set,
+    uint64_t legacy_feature_set, uint32_t legacy_logger_feature_set,
     uint32_t* hidl_caps) {
     if (!hidl_caps) {
         return false;
@@ -143,10 +145,11 @@ bool convertLegacyFeaturesToHidlChipCapabilities(
                 convertLegacyLoggerFeatureToHidlChipCapability(feature);
         }
     }
-    std::vector<uint32_t> features = {WIFI_FEATURE_SET_TX_POWER_LIMIT,
+    std::vector<uint64_t> features = {WIFI_FEATURE_SET_TX_POWER_LIMIT,
                                       WIFI_FEATURE_USE_BODY_HEAD_SAR,
                                       WIFI_FEATURE_D2D_RTT,
                                       WIFI_FEATURE_D2AP_RTT,
+                                      WIFI_FEATURE_INFRA_60G,
                                       WIFI_FEATURE_SET_LATENCY_MODE,
                                       WIFI_FEATURE_P2P_RAND_MAC};
     for (const auto feature : features) {
