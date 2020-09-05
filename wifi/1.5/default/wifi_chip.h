@@ -22,8 +22,8 @@
 #include <mutex>
 
 #include <android-base/macros.h>
-#include <android/hardware/wifi/1.4/IWifiChip.h>
 #include <android/hardware/wifi/1.4/IWifiRttController.h>
+#include <android/hardware/wifi/1.5/IWifiChip.h>
 
 #include "hidl_callback_util.h"
 #include "ringbuffer.h"
@@ -48,7 +48,7 @@ using namespace android::hardware::wifi::V1_0;
  * Since there is only a single chip instance used today, there is no
  * identifying handle information stored here.
  */
-class WifiChip : public V1_4::IWifiChip {
+class WifiChip : public V1_5::IWifiChip {
    public:
     WifiChip(ChipId chip_id, bool is_primary,
              const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal,
@@ -153,6 +153,8 @@ class WifiChip : public V1_4::IWifiChip {
         selectTxPowerScenario_cb hidl_status_cb) override;
     Return<void> getCapabilities_1_3(
         getCapabilities_cb hidl_status_cb) override;
+    Return<void> getCapabilities_1_5(
+        getCapabilities_1_5_cb hidl_status_cb) override;
     Return<void> debug(const hidl_handle& handle,
                        const hidl_vec<hidl_string>& options) override;
     Return<void> createRttController_1_4(
@@ -226,6 +228,7 @@ class WifiChip : public V1_4::IWifiChip {
         const sp<V1_2::IWifiChipEventCallback>& event_callback);
     WifiStatus selectTxPowerScenarioInternal_1_2(TxPowerScenario scenario);
     std::pair<WifiStatus, uint32_t> getCapabilitiesInternal_1_3();
+    std::pair<WifiStatus, uint32_t> getCapabilitiesInternal_1_5();
     std::pair<WifiStatus, sp<V1_4::IWifiRttController>>
     createRttControllerInternal_1_4(const sp<IWifiIface>& bound_iface);
     WifiStatus registerEventCallbackInternal_1_4(

@@ -20,12 +20,6 @@ package android.hardware.powerstats;
 interface IPowerStats {
   android.hardware.powerstats.EnergyData[] getEnergyData(in int[] railIndices);
   android.hardware.powerstats.PowerEntityInfo[] getPowerEntityInfo();
-  android.hardware.powerstats.PowerEntityStateSpace[] getPowerEntityStateInfo(in int[] powerEntityIds);
   android.hardware.powerstats.PowerEntityStateResidencyResult[] getPowerEntityStateResidencyData(in int[] powerEntityIds);
   android.hardware.powerstats.RailInfo[] getRailInfo();
-  const int SUCCESS = 0;
-  const int NOT_SUPPORTED = 1;
-  const int INVALID_INPUT = 2;
-  const int FILESYSTEM_ERROR = 3;
-  const int INSUFFICIENT_RESOURCES = 4;
 }

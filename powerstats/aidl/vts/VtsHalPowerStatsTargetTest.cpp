@@ -25,7 +25,6 @@ using aidl::android::hardware::powerstats::EnergyData;
 using aidl::android::hardware::powerstats::IPowerStats;
 using aidl::android::hardware::powerstats::PowerEntityInfo;
 using aidl::android::hardware::powerstats::PowerEntityStateResidencyResult;
-using aidl::android::hardware::powerstats::PowerEntityStateSpace;
 using aidl::android::hardware::powerstats::RailInfo;
 using ndk::SpAIBinder;
 
@@ -45,14 +44,74 @@ TEST_P(PowerStatsAidl, TestGetEnergyData) {
     ASSERT_TRUE(powerstats->getEnergyData({}, &data).isOk());
 }
 
-TEST_P(PowerStatsAidl, TestGetPowerEntityInfo) {
-    std::vector<PowerEntityInfo> info;
-    ASSERT_TRUE(powerstats->getPowerEntityInfo(&info).isOk());
+// Each PowerEntity must have a valid name
+TEST_P(PowerStatsAidl, ValidatePowerEntityNames) {
+    std::vector<PowerEntityInfo> infos;
+    ASSERT_TRUE(powerstats->getPowerEntityInfo(&infos).isOk());
+
+    for (auto info : infos) {
+        EXPECT_NE(info.powerEntityName, "");
+    }
 }
 
-TEST_P(PowerStatsAidl, TestGetPowerEntityStateInfo) {
-    std::vector<PowerEntityStateSpace> info;
-    ASSERT_TRUE(powerstats->getPowerEntityStateInfo({}, &info).isOk());
+// Each power entity must have a unique name
+TEST_P(PowerStatsAidl, ValidatePowerEntityUniqueNames) {
+    std::vector<PowerEntityInfo> infos;
+    ASSERT_TRUE(powerstats->getPowerEntityInfo(&infos).isOk());
+
+    std::set<std::string> names;
+    for (auto info : infos) {
+        EXPECT_TRUE(names.insert(info.powerEntityName).second);
+    }
+}
+
+// Each PowerEntity must have a unique ID
+TEST_P(PowerStatsAidl, ValidatePowerEntityIds) {
+    std::vector<PowerEntityInfo> infos;
+    ASSERT_TRUE(powerstats->getPowerEntityInfo(&infos).isOk());
+
+    std::set<int32_t> ids;
+    for (auto info : infos) {
+        EXPECT_TRUE(ids.insert(info.powerEntityId).second);
+    }
+}
+
+// Each state must have a valid name
+TEST_P(PowerStatsAidl, ValidateStateNames) {
+    std::vector<PowerEntityInfo> infos;
+    ASSERT_TRUE(powerstats->getPowerEntityInfo(&infos).isOk());
+
+    for (auto info : infos) {
+        for (auto state : info.states) {
+            EXPECT_NE(state.powerEntityStateName, "");
+        }
+    }
+}
+
+// Each state must have a name that is unique to the given PowerEntity
+TEST_P(PowerStatsAidl, ValidateStateUniqueNames) {
+    std::vector<PowerEntityInfo> infos;
+    ASSERT_TRUE(powerstats->getPowerEntityInfo(&infos).isOk());
+
+    for (auto info : infos) {
+        std::set<std::string> stateNames;
+        for (auto state : info.states) {
+            EXPECT_TRUE(stateNames.insert(state.powerEntityStateName).second);
+        }
+    }
+}
+
+// Each state must have an ID that is unique to the given PowerEntity
+TEST_P(PowerStatsAidl, ValidateStateUniqueIds) {
+    std::vector<PowerEntityInfo> infos;
+    ASSERT_TRUE(powerstats->getPowerEntityInfo(&infos).isOk());
+
+    for (auto info : infos) {
+        std::set<uint32_t> stateIds;
+        for (auto state : info.states) {
+            EXPECT_TRUE(stateIds.insert(state.powerEntityStateId).second);
+        }
+    }
 }
 
 TEST_P(PowerStatsAidl, TestGetPowerEntityStateResidencyData) {
