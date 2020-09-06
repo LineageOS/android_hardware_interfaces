@@ -19,17 +19,10 @@ package android.hardware.powerstats;
 import android.hardware.powerstats.EnergyData;
 import android.hardware.powerstats.PowerEntityInfo;
 import android.hardware.powerstats.PowerEntityStateResidencyResult;
-import android.hardware.powerstats.PowerEntityStateSpace;
 import android.hardware.powerstats.RailInfo;
 
 @VintfStability
 interface IPowerStats {
-    const int SUCCESS = 0;
-    const int NOT_SUPPORTED = 1;
-    const int INVALID_INPUT = 2;
-    const int FILESYSTEM_ERROR = 3;
-    const int INSUFFICIENT_RESOURCES = 4;
-
     /**
      * Rail level energy measurements for low frequency clients:
      * Reports accumulated energy since boot on each rail.
@@ -51,21 +44,6 @@ interface IPowerStats {
      * @return List of information on each PowerEntity
      */
     PowerEntityInfo[] getPowerEntityInfo();
-
-    /**
-     * PowerEntity state information:
-     * Reports the set of power states for which the specified
-     * PowerEntity(s) provide residency data.
-     *
-     * @param powerEntityIds collection of IDs of PowerEntity(s) for which
-     *     state information is requested. PowerEntity name to ID mapping may
-     *     be queried from getPowerEntityInfo(). To get state space
-     *     information for all PowerEntity(s) pass an empty vector.
-     *
-     * @return PowerEntity state space information for
-     *     each specified PowerEntity that provides state space information.
-     */
-    PowerEntityStateSpace[] getPowerEntityStateInfo(in int[] powerEntityIds);
 
     /**
      * PowerEntity residencies for low frequency clients:

@@ -29,9 +29,6 @@ class PowerStats : public BnPowerStats {
     ndk::ScopedAStatus getEnergyData(const std::vector<int32_t>& in_railIndices,
                                      std::vector<EnergyData>* _aidl_return) override;
     ndk::ScopedAStatus getPowerEntityInfo(std::vector<PowerEntityInfo>* _aidl_return) override;
-    ndk::ScopedAStatus getPowerEntityStateInfo(
-            const std::vector<int32_t>& in_powerEntityIds,
-            std::vector<PowerEntityStateSpace>* _aidl_return) override;
     ndk::ScopedAStatus getPowerEntityStateResidencyData(
             const std::vector<int32_t>& in_powerEntityIds,
             std::vector<PowerEntityStateResidencyResult>* _aidl_return) override;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,24 +14,24 @@
  * limitations under the License.
  */
 
-package android.hardware.powerstats;
+package android.hardware.wifi@1.5;
 
-import android.hardware.powerstats.PowerEntityStateInfo;
+import @1.0::WifiBand;
 
 /**
- * PowerEntityStateSpace contains the state space information of a given
- * PowerEntity. The state space, is the set of possible states that a given
- * PowerEntity provides residency data for.
+ * Wifi bands defined in 80211 spec.
  */
-@VintfStability
-parcelable PowerEntityStateSpace {
+enum WifiBand : @1.0::WifiBand {
     /**
-     * Unique ID of the corresponding PowerEntity
+     * 60 GHz.
      */
-    int powerEntityId;
+    BAND_60GHZ = 16,
     /**
-     * List of states that the PowerEntity may reside in
+     * 2.4 GHz + 5 GHz no DFS + 6 GHz + 60 GHz.
      */
-    PowerEntityStateInfo[] states;
-}
-
+    BAND_24GHZ_5GHZ_6GHZ_60GHZ = 27,
+    /**
+     * 2.4 GHz + 5 GHz with DFS + 6 GHz + 60 GHz.
+     */
+    BAND_24GHZ_5GHZ_WITH_DFS_6GHZ_60GHZ = 31,
+};
