@@ -51,7 +51,10 @@ class HostapdHidlTest : public ::testing::VtsHalHidlTargetTestBase {
         ASSERT_NE(hostapd_.get(), nullptr);
     }
 
-    virtual void TearDown() override { stopHostapd(); }
+    virtual void TearDown() override {
+        HIDL_INVOKE_VOID_WITHOUT_ARGUMENTS(hostapd_, terminate);
+        stopHostapd();
+    }
 
    protected:
     std::string getPrimaryWlanIfaceName() {
