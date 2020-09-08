@@ -93,6 +93,7 @@ TEST_P(SupplicantStaNetworkHidlTest, SendNetworkEapIdentityResponse_1_1) {
         });
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SupplicantStaNetworkHidlTest);
 INSTANTIATE_TEST_CASE_P(
     PerInstance, SupplicantStaNetworkHidlTest,
     testing::Combine(

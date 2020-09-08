@@ -418,6 +418,7 @@ TEST_P(StoreHidlTest, ListNodes) {
     EXPECT_TRUE(isPass);
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(StoreHidlTest);
 INSTANTIATE_TEST_CASE_P(
         PerInstance, StoreHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(IOmxStore::descriptor)),
