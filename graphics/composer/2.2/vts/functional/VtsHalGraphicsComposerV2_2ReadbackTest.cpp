@@ -1387,6 +1387,7 @@ INSTANTIATE_TEST_SUITE_P(
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(IComposer::descriptor)),
         android::hardware::PrintInstanceNameToString);
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GraphicsBlendModeCompositionTest);
 INSTANTIATE_TEST_CASE_P(
         BlendModeTest, GraphicsBlendModeCompositionTest,
         testing::Combine(

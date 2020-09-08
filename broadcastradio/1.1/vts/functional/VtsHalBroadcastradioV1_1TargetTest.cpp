@@ -600,6 +600,7 @@ TEST_P(BroadcastRadioHalTest, VerifyIdentifiersFormat) {
     } while (nextBand());
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(BroadcastRadioHalTest);
 INSTANTIATE_TEST_CASE_P(
         PerInstance, BroadcastRadioHalTest,
         testing::Combine(testing::ValuesIn(android::hardware::getAllHalInstanceNames(
