@@ -552,6 +552,7 @@ TEST_P(SupplicantStaIfaceHidlTest, RemoveExtRadioWork) {
         HIDL_INVOKE(sta_iface_, removeExtRadioWork, kTestRadioWorkId).code);
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SupplicantStaIfaceHidlTest);
 INSTANTIATE_TEST_CASE_P(
     PerInstance, SupplicantStaIfaceHidlTest,
     testing::Combine(

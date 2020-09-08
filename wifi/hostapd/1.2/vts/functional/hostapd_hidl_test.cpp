@@ -414,6 +414,7 @@ TEST_P(HostapdHidlTest, SetDebugParams) {
     EXPECT_EQ(HostapdStatusCode::SUCCESS, status.code);
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(HostapdHidlTest);
 INSTANTIATE_TEST_CASE_P(
     PerInstance, HostapdHidlTest,
     testing::Combine(
