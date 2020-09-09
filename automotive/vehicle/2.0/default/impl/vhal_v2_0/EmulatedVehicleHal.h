@@ -82,6 +82,8 @@ private:
                                    VehiclePropValue* outValue);
     StatusCode fillObd2DtcInfo(VehiclePropValue* outValue);
     StatusCode clearObd2FreezeFrames(const VehiclePropValue& propValue);
+    VehicleHal::VehiclePropValuePtr doInternalHealthCheck();
+    VehicleHal::VehiclePropValuePtr createVhalHeartBeatProp();
 
     /* Private members */
     VehiclePropertyStore* mPropStore;
