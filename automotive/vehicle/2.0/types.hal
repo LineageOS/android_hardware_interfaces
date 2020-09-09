@@ -2892,6 +2892,52 @@ enum VehicleProperty : int32_t {
         | VehiclePropertyGroup:SYSTEM
         | VehiclePropertyType:MIXED
         | VehicleArea:GLOBAL),
+
+    /**
+     * Defines an event that car watchdog updates to tell it's alive.
+     *
+     * Car watchdog sets this property to system uptime in milliseconds at every 3 second.
+     * During the boot, the update may take longer time.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:WRITE
+     */
+    WATCHDOG_ALIVE = (
+        0xF31
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:INT64
+        | VehicleArea:GLOBAL),
+
+    /**
+     * Defines a process terminated by car watchdog and the reason of termination.
+     *
+     * int32Values[0]: 1         // ProcessTerminationReason showing why a process is terminated.
+     * string: "/system/bin/log" // Process execution command.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:WRITE
+     */
+    WATCHDOG_TERMINATED_PROCESS = (
+        0x0F32
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:MIXED
+        | VehicleArea:GLOBAL),
+
+    /**
+     * Defines an event that VHAL signals to the car watchdog as a heartbeat.
+     *
+     * VHAL is supposed to write system uptime to this property at every 3 second.
+     * Car watchdog subscribes to this property and checks if the property is updated at every 3
+     * second. If it isn’t, car watchdog considers VHAL unhealthy and terminates it.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ
+     */
+     VHAL_HEARTBEAT = (
+         0x0F33
+         | VehiclePropertyGroup:SYSTEM
+         | VehiclePropertyType:INT64
+         | VehicleArea:GLOBAL),
 };
 
 /**
@@ -4790,3 +4836,23 @@ enum RotaryInputType : int32_t {
     ROTARY_INPUT_TYPE_AUDIO_VOLUME = 1,
 };
 
+/**
+ * The reason why a process is terminated by car watchdog.
+ * This is used with WATCHDOG_TERMINATED_PROCESS property.
+ */
+enum ProcessTerminationReason : int32_t {
+   /**
+    * A process doesn't respond to car watchdog within the timeout.
+    */
+   NOT_RESPONDING = 1,
+
+   /**
+    * A process uses more IO operations than what is allowed.
+    */
+   IO_OVERUSE = 2,
+
+   /**
+    * A process uses more memory space than what is allowed.
+    */
+   MEMORY_OVERUSE = 3,
+};
