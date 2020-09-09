@@ -2924,11 +2924,14 @@ enum VehicleProperty : int32_t {
         | VehicleArea:GLOBAL),
 
     /**
-     * Defines an event that VHAL signals to the car watchdog as a heartbeat.
+     * Defines an event that VHAL signals to car watchdog as a heartbeat.
      *
-     * VHAL is supposed to write system uptime to this property at every 3 second.
-     * Car watchdog subscribes to this property and checks if the property is updated at every 3
-     * second. If it isn’t, car watchdog considers VHAL unhealthy and terminates it.
+     * If VHAL supports this property, VHAL should write system uptime to this property at every 3
+     * second. Car watchdog subscribes to this property and checks if the property is updated at
+     * every 3 second. With the buffer time of 3 second, car watchdog waits for a heart beat to be
+     * signaled up to 6 seconds from the last heart beat. If it isn’t, car watchdog considers
+     * VHAL unhealthy and terminates it.
+     * If this property is not supported by VHAL, car watchdog doesn't check VHAL health status.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ
