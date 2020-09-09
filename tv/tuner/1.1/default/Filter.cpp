@@ -163,8 +163,17 @@ Return<Result> Filter::flush() {
     return Result::SUCCESS;
 }
 
-Return<Result> Filter::releaseAvHandle(const hidl_handle& /*avMemory*/, uint64_t avDataId) {
+Return<Result> Filter::releaseAvHandle(const hidl_handle& avMemory, uint64_t avDataId) {
     ALOGV("%s", __FUNCTION__);
+
+    if ((avMemory.getNativeHandle()->numFds > 0) &&
+        (mSharedAvMemHandle.getNativeHandle()->numFds > 0) &&
+        (sameFile(avMemory.getNativeHandle()->data[0],
+                  mSharedAvMemHandle.getNativeHandle()->data[0]))) {
+        freeSharedAvHandle();
+        return Result::SUCCESS;
+    }
+
     if (mDataId2Avfd.find(avDataId) == mDataId2Avfd.end()) {
         return Result::INVALID_ARGUMENT;
     }
@@ -188,6 +197,35 @@ Return<Result> Filter::configureIpCid(uint32_t ipCid) {
 
     mCid = ipCid;
     return Result::SUCCESS;
+}
+
+Return<void> Filter::getAvSharedHandle(getAvSharedHandle_cb _hidl_cb) {
+    ALOGV("%s", __FUNCTION__);
+
+    if (!mIsMediaFilter) {
+        _hidl_cb(Result::INVALID_STATE, NULL, BUFFER_SIZE_16M);
+        return Void();
+    }
+
+    if (mSharedAvMemHandle.getNativeHandle() != nullptr) {
+        _hidl_cb(Result::SUCCESS, mSharedAvMemHandle, BUFFER_SIZE_16M);
+        return Void();
+    }
+
+    int av_fd = createAvIonFd(BUFFER_SIZE_16M);
+    if (av_fd == -1) {
+        _hidl_cb(Result::UNKNOWN_ERROR, NULL, 0);
+    }
+
+    native_handle_t* nativeHandle = createNativeHandle(av_fd);
+    if (nativeHandle == NULL) {
+        _hidl_cb(Result::UNKNOWN_ERROR, NULL, 0);
+    }
+    mSharedAvMemHandle.setTo(nativeHandle, /*shouldOwn=*/true);
+    ::close(av_fd);
+
+    _hidl_cb(Result::SUCCESS, mSharedAvMemHandle, BUFFER_SIZE_16M);
+    return Void();
 }
 
 bool Filter::createFilterMQ() {
@@ -313,8 +351,17 @@ void Filter::freeAvHandle() {
     }
     for (int i = 0; i < mFilterEvent.events.size(); i++) {
         ::close(mFilterEvent.events[i].media().avMemory.getNativeHandle()->data[0]);
-        native_handle_close(mFilterEvent.events[i].media().avMemory.getNativeHandle());
+        native_handle_delete(const_cast<native_handle_t*>(
+                mFilterEvent.events[i].media().avMemory.getNativeHandle()));
     }
+}
+
+void Filter::freeSharedAvHandle() {
+    if (!mIsMediaFilter) {
+        return;
+    }
+    ::close(mSharedAvMemHandle.getNativeHandle()->data[0]);
+    native_handle_delete(const_cast<native_handle_t*>(mSharedAvMemHandle.getNativeHandle()));
 }
 
 void Filter::maySendFilterStatusCallback() {
@@ -509,8 +556,8 @@ Result Filter::startMediaFilterHandler() {
         return Result::SUCCESS;
     }
 
+    Result result;
     if (mPts) {
-        Result result;
         result = createMediaFilterEventWithIon(mFilterOutput);
         if (result == Result::SUCCESS) {
             mFilterOutput.clear();
@@ -551,7 +598,10 @@ Result Filter::startMediaFilterHandler() {
             continue;
         }
 
-        createMediaFilterEventWithIon(mPesOutput);
+        result = createMediaFilterEventWithIon(mPesOutput);
+        if (result != Result::SUCCESS) {
+            return result;
+        }
     }
 
     mFilterOutput.clear();
@@ -560,51 +610,14 @@ Result Filter::startMediaFilterHandler() {
 }
 
 Result Filter::createMediaFilterEventWithIon(vector<uint8_t> output) {
-    int av_fd = createAvIonFd(output.size());
-    if (av_fd == -1) {
-        return Result::UNKNOWN_ERROR;
+    if (mUsingSharedAvMem) {
+        if (mSharedAvMemHandle.getNativeHandle() == nullptr) {
+            return Result::UNKNOWN_ERROR;
+        }
+        return createShareMemMediaEvents(output);
     }
-    // copy the filtered data to the buffer
-    uint8_t* avBuffer = getIonBuffer(av_fd, output.size());
-    if (avBuffer == NULL) {
-        return Result::UNKNOWN_ERROR;
-    }
-    memcpy(avBuffer, output.data(), output.size() * sizeof(uint8_t));
 
-    native_handle_t* nativeHandle = createNativeHandle(av_fd);
-    if (nativeHandle == NULL) {
-        return Result::UNKNOWN_ERROR;
-    }
-    hidl_handle handle;
-    handle.setTo(nativeHandle, /*shouldOwn=*/true);
-
-    // Create a dataId and add a <dataId, av_fd> pair into the dataId2Avfd map
-    uint64_t dataId = mLastUsedDataId++ /*createdUID*/;
-    mDataId2Avfd[dataId] = dup(av_fd);
-
-    // Create mediaEvent and send callback
-    DemuxFilterMediaEvent mediaEvent;
-    mediaEvent = {
-            .avMemory = std::move(handle),
-            .dataLength = static_cast<uint32_t>(output.size()),
-            .avDataId = dataId,
-    };
-    if (mPts) {
-        mediaEvent.pts = mPts;
-        mPts = 0;
-    }
-    int size = mFilterEvent.events.size();
-    mFilterEvent.events.resize(size + 1);
-    mFilterEvent.events[size].media(mediaEvent);
-
-    // Clear and log
-    output.clear();
-    mAvBufferCopyCount = 0;
-    ::close(av_fd);
-    if (DEBUG_FILTER) {
-        ALOGD("[Filter] av data length %d", mediaEvent.dataLength);
-    }
-    return Result::SUCCESS;
+    return createIndependentMediaEvents(output);
 }
 
 Result Filter::startRecordFilterHandler() {
@@ -713,14 +726,118 @@ uint8_t* Filter::getIonBuffer(int fd, int size) {
 }
 
 native_handle_t* Filter::createNativeHandle(int fd) {
-    // Create a native handle to pass the av fd via the callback event.
-    native_handle_t* nativeHandle = native_handle_create(/*numFd*/ 1, 0);
+    native_handle_t* nativeHandle;
+    if (fd < 0) {
+        nativeHandle = native_handle_create(/*numFd*/ 0, 0);
+    } else {
+        // Create a native handle to pass the av fd via the callback event.
+        nativeHandle = native_handle_create(/*numFd*/ 1, 0);
+    }
     if (nativeHandle == NULL) {
         ALOGE("[Filter] Failed to create native_handle %d", errno);
         return NULL;
     }
-    nativeHandle->data[0] = dup(fd);
+    if (nativeHandle->numFds > 0) {
+        nativeHandle->data[0] = dup(fd);
+    }
     return nativeHandle;
+}
+
+Result Filter::createIndependentMediaEvents(vector<uint8_t> output) {
+    int av_fd = createAvIonFd(output.size());
+    if (av_fd == -1) {
+        return Result::UNKNOWN_ERROR;
+    }
+    // copy the filtered data to the buffer
+    uint8_t* avBuffer = getIonBuffer(av_fd, output.size());
+    if (avBuffer == NULL) {
+        return Result::UNKNOWN_ERROR;
+    }
+    memcpy(avBuffer, output.data(), output.size() * sizeof(uint8_t));
+
+    native_handle_t* nativeHandle = createNativeHandle(av_fd);
+    if (nativeHandle == NULL) {
+        return Result::UNKNOWN_ERROR;
+    }
+    hidl_handle handle;
+    handle.setTo(nativeHandle, /*shouldOwn=*/true);
+
+    // Create a dataId and add a <dataId, av_fd> pair into the dataId2Avfd map
+    uint64_t dataId = mLastUsedDataId++ /*createdUID*/;
+    mDataId2Avfd[dataId] = dup(av_fd);
+
+    // Create mediaEvent and send callback
+    DemuxFilterMediaEvent mediaEvent;
+    mediaEvent = {
+            .avMemory = std::move(handle),
+            .dataLength = static_cast<uint32_t>(output.size()),
+            .avDataId = dataId,
+    };
+    if (mPts) {
+        mediaEvent.pts = mPts;
+        mPts = 0;
+    }
+    int size = mFilterEvent.events.size();
+    mFilterEvent.events.resize(size + 1);
+    mFilterEvent.events[size].media(mediaEvent);
+
+    // Clear and log
+    output.clear();
+    mAvBufferCopyCount = 0;
+    ::close(av_fd);
+    if (DEBUG_FILTER) {
+        ALOGD("[Filter] av data length %d", mediaEvent.dataLength);
+    }
+    return Result::SUCCESS;
+}
+
+Result Filter::createShareMemMediaEvents(vector<uint8_t> output) {
+    // copy the filtered data to the shared buffer
+    uint8_t* sharedAvBuffer = getIonBuffer(mSharedAvMemHandle.getNativeHandle()->data[0],
+                                           output.size() + mSharedAvMemOffset);
+    if (sharedAvBuffer == NULL) {
+        return Result::UNKNOWN_ERROR;
+    }
+    memcpy(sharedAvBuffer + mSharedAvMemOffset, output.data(), output.size() * sizeof(uint8_t));
+
+    // Create a memory handle with numFds == 0
+    native_handle_t* nativeHandle = createNativeHandle(-1);
+    if (nativeHandle == NULL) {
+        return Result::UNKNOWN_ERROR;
+    }
+    hidl_handle handle;
+    handle.setTo(nativeHandle, /*shouldOwn=*/true);
+
+    // Create mediaEvent and send callback
+    DemuxFilterMediaEvent mediaEvent;
+    mediaEvent = {
+            .offset = static_cast<uint32_t>(mSharedAvMemOffset),
+            .dataLength = static_cast<uint32_t>(output.size()),
+            .avMemory = handle,
+    };
+    mSharedAvMemOffset += output.size();
+    if (mPts) {
+        mediaEvent.pts = mPts;
+        mPts = 0;
+    }
+    int size = mFilterEvent.events.size();
+    mFilterEvent.events.resize(size + 1);
+    mFilterEvent.events[size].media(mediaEvent);
+
+    // Clear and log
+    output.clear();
+    if (DEBUG_FILTER) {
+        ALOGD("[Filter] shared av data length %d", mediaEvent.dataLength);
+    }
+    return Result::SUCCESS;
+}
+
+bool Filter::sameFile(int fd1, int fd2) {
+    struct stat stat1, stat2;
+    if (fstat(fd1, &stat1) < 0 || fstat(fd2, &stat2) < 0) {
+        return false;
+    }
+    return (stat1.st_dev == stat2.st_dev) && (stat1.st_ino == stat2.st_ino);
 }
 }  // namespace implementation
 }  // namespace V1_0
