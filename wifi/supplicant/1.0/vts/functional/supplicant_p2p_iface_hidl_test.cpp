@@ -647,6 +647,7 @@ TEST_P(SupplicantP2pIfaceHidlTest, SetWfdDeviceInfo) {
         HIDL_INVOKE(p2p_iface_, setWfdDeviceInfo, kTestWfdDeviceInfo).code);
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SupplicantP2pIfaceHidlTest);
 INSTANTIATE_TEST_CASE_P(
     PerInstance, SupplicantP2pIfaceHidlTest,
     testing::Combine(

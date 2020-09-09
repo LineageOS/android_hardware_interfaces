@@ -17,7 +17,7 @@
 package android.hardware.wifi.hostapd@1.3;
 
 /**
- * The wifi generation which AP reside on.
+ * The wifi operational mode of the AP.
  * It depends on hw mode and HT/VHT capabilities in hostapd.
  *
  * WIFI_STANDARD_LEGACY = (hw_mode is HOSTAPD_MODE_IEEE80211B) or
@@ -33,4 +33,17 @@ enum Generation : uint32_t {
     WIFI_STANDARD_11N = 1,
     WIFI_STANDARD_11AC = 2,
     WIFI_STANDARD_11AX = 3,
+};
+
+/**
+ * The channel bandwidth of the AP.
+ */
+enum Bandwidth : uint32_t {
+    WIFI_BANDWIDTH_INVALID = 0,
+    WIFI_BANDWIDTH_20_NOHT = 1,
+    WIFI_BANDWIDTH_20 = 2,
+    WIFI_BANDWIDTH_40 = 3,
+    WIFI_BANDWIDTH_80 = 4,
+    WIFI_BANDWIDTH_80P80 = 5,
+    WIFI_BANDWIDTH_160 = 6,
 };
