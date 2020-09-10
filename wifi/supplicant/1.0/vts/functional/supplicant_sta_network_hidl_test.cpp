@@ -839,6 +839,7 @@ TEST_P(SupplicantStaNetworkHidlTest, GetWpsNfcConfigurationToken) {
     EXPECT_FALSE(0 == status_and_token.second.size());
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SupplicantStaNetworkHidlTest);
 INSTANTIATE_TEST_CASE_P(
     PerInstance, SupplicantStaNetworkHidlTest,
     testing::Combine(
