@@ -23,6 +23,7 @@
 #include <libnl++/MessageFactory.h>
 
 #include <linux/netlink.h>
+#include <poll.h>
 
 #include <optional>
 #include <set>
@@ -172,6 +173,14 @@ class Socket {
      * \return PID that socket is bound to or std::nullopt.
      */
     std::optional<unsigned> getPid();
+
+    /**
+     * Creates a pollfd object for the socket.
+     *
+     * \param events Value for pollfd.events.
+     * \return A populated pollfd object.
+     */
+    pollfd preparePoll(short events = 0);
 
     /**
      * Live iterator continuously receiving messages from Netlink socket.

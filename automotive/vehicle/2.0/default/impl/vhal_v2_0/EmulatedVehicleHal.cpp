@@ -15,11 +15,13 @@
  */
 #define LOG_TAG "DefaultVehicleHal_v2_0"
 
+#include <android-base/chrono_utils.h>
 #include <android-base/macros.h>
 #include <android-base/properties.h>
 #include <android/log.h>
 #include <dirent.h>
 #include <sys/system_properties.h>
+#include <utils/SystemClock.h>
 #include <fstream>
 #include <regex>
 
@@ -35,6 +37,8 @@ namespace vehicle {
 namespace V2_0 {
 
 namespace impl {
+
+static constexpr std::chrono::nanoseconds kHeartBeatIntervalNs = 3s;
 
 static std::unique_ptr<Obd2SensorStore> fillDefaultObd2Frame(size_t numVendorIntegerSensors,
                                                              size_t numVendorFloatSensors) {
@@ -342,6 +346,8 @@ void EmulatedVehicleHal::onCreate() {
     initObd2FreezeFrame(*mPropStore->getConfigOrDie(OBD2_FREEZE_FRAME));
     mInEmulator = isInEmulator();
     ALOGD("mInEmulator=%s", mInEmulator ? "true" : "false");
+    mRecurrentTimer.registerRecurrentEvent(kHeartBeatIntervalNs,
+                                           static_cast<int32_t>(VehicleProperty::VHAL_HEARTBEAT));
 }
 
 std::vector<VehiclePropConfig> EmulatedVehicleHal::listProperties()  {
@@ -359,6 +365,10 @@ void EmulatedVehicleHal::onContinuousPropertyTimer(const std::vector<int32_t>& p
             if (internalPropValue != nullptr) {
                 v = pool.obtain(*internalPropValue);
             }
+        } else if (property == static_cast<int32_t>(VehicleProperty::VHAL_HEARTBEAT)) {
+            // VHAL_HEARTBEAT is not a continuous value, but it needs to be updated periodically.
+            // So, the update is done through onContinuousPropertyTimer.
+            v = doInternalHealthCheck();
         } else {
             ALOGE("Unexpected onContinuousPropertyTimer for property: 0x%x", property);
         }
@@ -510,6 +520,31 @@ StatusCode EmulatedVehicleHal::fillObd2DtcInfo(VehiclePropValue* outValue) {
     outValue->value.int64Values = timestamps;
     outValue->prop = OBD2_FREEZE_FRAME_INFO;
     return StatusCode::OK;
+}
+
+VehicleHal::VehiclePropValuePtr EmulatedVehicleHal::doInternalHealthCheck() {
+    VehicleHal::VehiclePropValuePtr v = nullptr;
+
+    // This is an example of very simpe health checking. VHAL is considered healthy if we can read
+    // PERF_VEHICLE_SPEED. The more comprehensive health checking is required.
+    VehiclePropValue propValue = {
+            .prop = static_cast<int32_t>(VehicleProperty::PERF_VEHICLE_SPEED),
+    };
+    auto internalPropValue = mPropStore->readValueOrNull(propValue);
+    if (internalPropValue != nullptr) {
+        v = createVhalHeartBeatProp();
+    } else {
+        ALOGW("VHAL health check failed");
+    }
+    return v;
+}
+
+VehicleHal::VehiclePropValuePtr EmulatedVehicleHal::createVhalHeartBeatProp() {
+    VehicleHal::VehiclePropValuePtr v = getValuePool()->obtainInt64(uptimeMillis());
+    v->prop = static_cast<int32_t>(VehicleProperty::VHAL_HEARTBEAT);
+    v->areaId = 0;
+    v->status = VehiclePropertyStatus::AVAILABLE;
+    return v;
 }
 
 }  // impl

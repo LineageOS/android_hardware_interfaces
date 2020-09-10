@@ -153,6 +153,10 @@ std::optional<unsigned> Socket::getPid() {
     return sa.nl_pid;
 }
 
+pollfd Socket::preparePoll(short events) {
+    return {mFd.get(), events, 0};
+}
+
 Socket::receive_iterator::receive_iterator(Socket& socket, bool end)
     : mSocket(socket), mIsEnd(end) {
     if (!end) receive();
