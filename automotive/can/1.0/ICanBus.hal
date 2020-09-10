@@ -1,0 +1,72 @@
+/*
+ * Copyright (C) 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package android.hardware.automotive.can@1.0;
+
+import ICanErrorListener;
+import ICanMessageListener;
+import ICloseHandle;
+
+/**
+ * Represents a CAN bus interface that's up and configured.
+ *
+ * Configuration part is done in ICanController.
+ */
+interface ICanBus {
+    /**
+     * Send CAN message.
+     *
+     * @param message CAN message to send out
+     * @return result OK in the case of success
+     *                PAYLOAD_TOO_LONG if the payload is too long
+     *                INTERFACE_DOWN if the bus is down
+     *                TRANSMISSION_FAILURE in case of transmission failure
+     */
+    send(CanMessage message) generates (Result result);
+
+    /**
+     * Requests HAL implementation to listen for specific CAN messages.
+     *
+     * HAL is responsible for maintaining listener set and sending out messages
+     * to each listener that matches given filter against received message.
+     *
+     * Empty filter list means no filtering. If two or more listeners requested
+     * different filters, HAL server must merge these to fulfill the superset of
+     * these filters. HAL must not send out a message to a listener which filter
+     * doesn't match given message id.
+     *
+     * If filtering is not supported at the hardware level (what's strongly
+     * recommended), it must be covered in the HAL.
+     *
+     * @param filter The set of requested filters
+     * @param listener The interface to receive the messages on
+     * @return result OK in the case of success
+     *                INTERFACE_DOWN if the bus is down
+     * @return close A handle to call in order to remove the listener
+     */
+    listen(vec<CanMessageFilter> filter, ICanMessageListener listener)
+            generates (Result result, ICloseHandle close);
+
+    /**
+     * Adds a new listener for CAN bus or interface errors.
+     *
+     * If the error is fatal, the client is supposed to drop any references to
+     * this specific ICanBus instance (see ICanErrorListener).
+     *
+     * @param listener The interface to receive the error events on
+     * @return close A handle to call in order to remove the listener
+     */
+    listenForErrors(ICanErrorListener listener) generates (ICloseHandle close);
+};

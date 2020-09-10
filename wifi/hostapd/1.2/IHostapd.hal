@@ -1,0 +1,217 @@
+/*
+ * Copyright 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.wifi.hostapd@1.2;
+
+import @1.0::IHostapd.EncryptionType;
+import @1.0::IHostapd.NetworkParams;
+import @1.1::IHostapd;
+import HostapdStatus;
+import MacAddress;
+import Ieee80211ReasonCode;
+import DebugLevel;
+
+/**
+ * Top-level object for managing SoftAPs.
+ */
+interface IHostapd extends @1.1::IHostapd {
+    /** Possible Security types. */
+    enum EncryptionType : @1.0::IHostapd.EncryptionType {
+        WPA3_SAE_TRANSITION,
+        WPA3_SAE,
+    };
+
+    /**
+     * Band bitmMask to use for the SoftAp operations.
+     * A combinatoin of these bits are used to identify the allowed bands
+     * to start the softAp
+     */
+    enum BandMask : uint32_t {
+        /**
+         * 2.4 GHz band.
+         */
+        BAND_2_GHZ = 1 << 0,
+        /**
+         * 5 GHz band.
+         */
+        BAND_5_GHZ = 1 << 1,
+        /**
+         * 6 GHz band.
+         */
+        BAND_6_GHZ = 1 << 2,
+    };
+
+    /**
+     * Parameters to control the HW mode for the interface.
+     */
+    struct HwModeParams {
+        /**
+         * Whether IEEE 802.11ax (HE) is enabled or not.
+         * Note: hw_mode=a is used to specify that 5 GHz band or 6 GHz band is
+         * used with HE.
+         */
+        bool enable80211AX;
+
+        /**
+         * Whether 6GHz band enabled or not on softAp.
+         * Note: hw_mode=a is used to specify that 5 GHz band or 6 GHz band is
+         * used.
+         */
+        bool enable6GhzBand;
+
+        /**
+         * Whether HE single user beamformer in enabled or not on softAp.
+         * Note: this is only applicable if 802.11ax is supported for softAp
+         */
+        bool enableHeSingleUserBeamformer;
+
+        /**
+         * Whether HE single user beamformee is enabled or not on softAp.
+         * Note: this is only applicable if 802.11ax is supported for softAp
+         */
+        bool enableHeSingleUserBeamformee;
+
+        /**
+         * Whether HE multiple user beamformer is enabled or not on softAp.
+         * Note: this is only applicable if 802.11ax is supported for softAp
+         */
+        bool enableHeMultiUserBeamformer;
+
+        /**
+         * Whether HE Target Wait Time (TWT) is enabled or not on softAp.
+         * Note: this is only applicable if 802.11ax is supported for softAp
+         */
+        bool enableHeTargetWakeTime;
+    };
+
+    /**
+     * Parameters to specify the channel frequency range for ACS.
+     */
+    struct AcsFrequencyRange {
+        /**
+         * Channel Frequency (in MHz) at the start of the range.
+         */
+        uint32_t start;
+
+        /**
+         * Channel Frequency (in MHz) at the end of the range.
+         */
+        uint32_t end;
+    };
+
+    /**
+     * Parameters to control the channel selection for the interface.
+     */
+    struct ChannelParams {
+        /**
+         * Band to use for the SoftAp operations.
+         */
+        bitfield<BandMask> bandMask;
+
+        /**
+         * This option can be used to specify the channel frequencies (in MHz) selected by ACS.
+         * If this is an empty list, all channels allowed in selected HW mode
+         * are specified implicitly.
+         * Note: channels may be overridden by firmware.
+         * Note: this option is ignored if ACS is disabled.
+         */
+        vec<AcsFrequencyRange> acsChannelFreqRangesMhz;
+    };
+
+    /**
+     * Parameters to use for setting up the access point interface.
+     */
+    struct IfaceParams {
+        /**
+         * Baseline information as defined in HAL 1.1.
+         */
+        @1.1::IHostapd.IfaceParams V1_1;
+
+        /**
+         * Additional Hw mode params for the interface
+         */
+        HwModeParams hwModeParams;
+
+        /**
+         * Additional Channel params for the interface
+         */
+        ChannelParams channelParams;
+    };
+
+    /**
+     * Parameters to use for setting up the access point network.
+     */
+    struct NetworkParams {
+        /**
+         * Baseline information as defined in HAL 1.0.
+         */
+        @1.0::IHostapd.NetworkParams V1_0;
+        /** Key management mask for the replace V1_0.encryptionType. */
+        EncryptionType encryptionType;
+        /**
+         * Passphrase for WPA3_SAE network, WPA3_SAE_TRANSITION and
+         * WPA2_PSK. Replaces @1.0::IHostapd.NetworkParams.pskPassphrase.
+         */
+        string passphrase;
+    };
+
+
+    /**
+     * Adds a new access point for hostapd to control.
+     *
+     * This should trigger the setup of an access point with the specified
+     * interface and network params.
+     *
+     * @param ifaceParams AccessPoint Params for the access point.
+     * @param nwParams Network Params for the access point.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |HostapdStatusCode.SUCCESS|,
+     *         |HostapdStatusCode.FAILURE_ARGS_INVALID|,
+     *         |HostapdStatusCode.FAILURE_UNKNOWN|,
+     *         |HostapdStatusCode.FAILURE_IFACE_EXISTS|
+     */
+    addAccessPoint_1_2(IfaceParams ifaceParams, NetworkParams nwParams)
+        generates (HostapdStatus status);
+
+    /**
+     * force one of the hotspot clients disconnect..
+     *
+     * @param ifaceName Name of the interface.
+     * @param clientAddress Mac Address of the hotspot client.
+     * @param reasonCode One of disconnect reason code which defined by 802.11.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |HostapdStatusCode.SUCCESS|,
+     *         |HostapdStatusCode.FAILURE_IFACE_UNKNOWN|
+     *         |HostapdStatusCode.FAILURE_CLIENT_UNKNOWN|
+     */
+    forceClientDisconnect(string ifaceName, MacAddress clientAddress,
+        Ieee80211ReasonCode reasonCode) generates (HostapdStatus status);
+
+    /**
+     * Set debug parameters for the hostapd.
+     *
+     * @param level Debug logging level for the hostapd.
+     *        (one of |DebugLevel| values).
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |HostapdStatusCode.SUCCESS|,
+     *         |HostapdStatusCode.FAILURE_UNKNOWN|
+     */
+    setDebugParams(DebugLevel level)
+        generates (HostapdStatus status);
+};

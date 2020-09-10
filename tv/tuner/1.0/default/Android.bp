@@ -24,6 +24,7 @@ cc_defaults {
         "libfmq",
         "libhidlbase",
         "libhidlmemory",
+        "libion",
         "liblog",
         "libstagefright_foundation",
         "libutils",

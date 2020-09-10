@@ -35,8 +35,11 @@ namespace implementation {
 using namespace ::android::hardware::audio::common::CPP_VERSION;
 
 class HidlUtils {
-   public:
-    static void audioConfigFromHal(const audio_config_t& halConfig, AudioConfig* config);
+  public:
+    // A failure here indicates a platform config that is incompatible with
+    // the compiled HIDL interface version.
+    static status_t audioConfigFromHal(const audio_config_t& halConfig, AudioConfig* config);
+
     static void audioConfigToHal(const AudioConfig& config, audio_config_t* halConfig);
     static void audioGainConfigFromHal(const struct audio_gain_config& halConfig,
                                        AudioGainConfig* config);
@@ -46,8 +49,10 @@ class HidlUtils {
     static void audioGainToHal(const AudioGain& gain, struct audio_gain* halGain);
     static AudioUsage audioUsageFromHal(const audio_usage_t halUsage);
     static audio_usage_t audioUsageToHal(const AudioUsage usage);
-    static void audioOffloadInfoFromHal(const audio_offload_info_t& halOffload,
-                                        AudioOffloadInfo* offload);
+    // A failure here indicates a platform offload info that is incompatible with
+    // the compiled HIDL interface version.
+    static status_t audioOffloadInfoFromHal(const audio_offload_info_t& halOffload,
+                                            AudioOffloadInfo* offload);
     static void audioOffloadInfoToHal(const AudioOffloadInfo& offload,
                                       audio_offload_info_t* halOffload);
     static void audioPortConfigFromHal(const struct audio_port_config& halConfig,
@@ -58,7 +63,7 @@ class HidlUtils {
                                         const struct audio_port_config* halConfigs,
                                         hidl_vec<AudioPortConfig>* configs);
     static std::unique_ptr<audio_port_config[]> audioPortConfigsToHal(
-        const hidl_vec<AudioPortConfig>& configs);
+            const hidl_vec<AudioPortConfig>& configs);
     static void audioPortFromHal(const struct audio_port& halPort, AudioPort* port);
     static void audioPortToHal(const AudioPort& port, struct audio_port* halPort);
     static void uuidFromHal(const audio_uuid_t& halUuid, Uuid* uuid);

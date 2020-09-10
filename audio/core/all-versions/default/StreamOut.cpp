@@ -22,6 +22,8 @@
 //#define LOG_NDEBUG 0
 #define ATRACE_TAG ATRACE_TAG_AUDIO
 
+#include <string.h>
+
 #include <memory>
 
 #include <android/log.h>
@@ -453,20 +455,22 @@ int StreamOut::asyncCallback(stream_callback_event_t event, void*, void* cookie)
     sp<IStreamOutCallback> callback = self->mCallback;
     if (callback.get() == nullptr) return 0;
     ALOGV("asyncCallback() event %d", event);
+    Return<void> result;
     switch (event) {
         case STREAM_CBK_EVENT_WRITE_READY:
-            callback->onWriteReady();
+            result = callback->onWriteReady();
             break;
         case STREAM_CBK_EVENT_DRAIN_READY:
-            callback->onDrainReady();
+            result = callback->onDrainReady();
             break;
         case STREAM_CBK_EVENT_ERROR:
-            callback->onError();
+            result = callback->onError();
             break;
         default:
             ALOGW("asyncCallback() unknown event %d", event);
             break;
     }
+    ALOGW_IF(!result.isOk(), "Client callback failed: %s", result.description().c_str());
     return 0;
 }
 
@@ -579,6 +583,67 @@ Return<void> StreamOut::updateSourceMetadata(const SourceMetadata& sourceMetadat
 }
 Return<Result> StreamOut::selectPresentation(int32_t /*presentationId*/, int32_t /*programId*/) {
     return Result::NOT_SUPPORTED;  // TODO: propagate to legacy
+}
+#endif
+
+#if MAJOR_VERSION >= 6
+Return<void> StreamOut::getDualMonoMode(getDualMonoMode_cb _hidl_cb) {
+    _hidl_cb(Result::NOT_SUPPORTED, DualMonoMode::OFF);
+    return Void();
+}
+
+Return<Result> StreamOut::setDualMonoMode(DualMonoMode /*mode*/) {
+    return Result::NOT_SUPPORTED;
+}
+
+Return<void> StreamOut::getAudioDescriptionMixLevel(getAudioDescriptionMixLevel_cb _hidl_cb) {
+    _hidl_cb(Result::NOT_SUPPORTED, -std::numeric_limits<float>::infinity());
+    return Void();
+}
+
+Return<Result> StreamOut::setAudioDescriptionMixLevel(float /*leveldB*/) {
+    return Result::NOT_SUPPORTED;
+}
+
+Return<void> StreamOut::getPlaybackRateParameters(getPlaybackRateParameters_cb _hidl_cb) {
+    _hidl_cb(Result::NOT_SUPPORTED,
+             // Same as AUDIO_PLAYBACK_RATE_INITIALIZER
+             PlaybackRate{1.0f, 1.0f, TimestretchMode::DEFAULT, TimestretchFallbackMode::FAIL});
+    return Void();
+}
+
+Return<Result> StreamOut::setPlaybackRateParameters(const PlaybackRate& /*playbackRate*/) {
+    return Result::NOT_SUPPORTED;
+}
+
+Return<Result> StreamOut::setEventCallback(const sp<IStreamOutEventCallback>& callback) {
+    if (mStream->set_event_callback == nullptr) return Result::NOT_SUPPORTED;
+    int result = mStream->set_event_callback(mStream, StreamOut::asyncEventCallback, this);
+    if (result == 0) {
+        mEventCallback = callback;
+    }
+    return Stream::analyzeStatus("set_stream_out_callback", result, {ENOSYS} /*ignore*/);
+}
+
+// static
+int StreamOut::asyncEventCallback(stream_event_callback_type_t event, void* param, void* cookie) {
+    StreamOut* self = reinterpret_cast<StreamOut*>(cookie);
+    sp<IStreamOutEventCallback> eventCallback = self->mEventCallback;
+    if (eventCallback.get() == nullptr) return 0;
+    ALOGV("%s event %d", __func__, event);
+    Return<void> result;
+    switch (event) {
+        case STREAM_EVENT_CBK_TYPE_CODEC_FORMAT_CHANGED: {
+            hidl_vec<uint8_t> audioMetadata;
+            audioMetadata.setToExternal((uint8_t*)param, strlen((char*)param));
+            result = eventCallback->onCodecFormatChanged(audioMetadata);
+        } break;
+        default:
+            ALOGW("%s unknown event %d", __func__, event);
+            break;
+    }
+    ALOGW_IF(!result.isOk(), "Client callback failed: %s", result.description().c_str());
+    return 0;
 }
 #endif
 

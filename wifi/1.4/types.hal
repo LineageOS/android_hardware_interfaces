@@ -1,0 +1,593 @@
+/*
+ * Copyright 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.wifi@1.4;
+
+import @1.0::MacAddress;
+import @1.0::NanBandIndex;
+import @1.0::NanBandSpecificConfig;
+import @1.0::Rssi;
+import @1.0::RttBw;
+import @1.0::RttConfig;
+import @1.0::RttPeerType;
+import @1.0::RttPreamble;
+import @1.0::RttStatus;
+import @1.0::RttType;
+import @1.0::TimeSpanInPs;
+import @1.0::TimeStampInUs;
+import @1.0::WifiBand;
+import @1.0::WifiChannelInfo;
+import @1.0::WifiChannelInMhz;
+import @1.0::WifiChannelWidthInMhz;
+import @1.0::WifiInformationElement;
+import @1.0::WifiRateNss;
+import @1.0::WifiRatePreamble;
+
+/**
+ * Wifi bands defined in 80211 spec.
+ */
+enum WifiBand : @1.0::WifiBand {
+    /**
+     * 6 GHz.
+     */
+    BAND_6GHZ = 8,
+    /**
+     * 5 GHz no DFS + 6 GHz.
+     */
+    BAND_5GHZ_6GHZ = 10,
+    /**
+     * 2.4 GHz + 5 GHz no DFS + 6 GHz.
+     */
+    BAND_24GHZ_5GHZ_6GHZ = 11,
+    /**
+     * 2.4 GHz + 5 GHz with DFS + 6 GHz.
+     */
+    BAND_24GHZ_5GHZ_WITH_DFS_6GHZ = 15,
+};
+
+/**
+ * The discovery bands supported by NAN.
+ */
+enum NanBandIndex : @1.0::NanBandIndex {
+    /**
+     * Index for 6 GHz band.
+     */
+    NAN_BAND_6GHZ = 2,
+};
+
+/**
+ * Wifi Rate Preamble
+ */
+enum WifiRatePreamble : @1.0::WifiRatePreamble {
+    /**
+     * Preamble type for 11ax
+     */
+    HE = 5,
+};
+
+/**
+ * RTT Measurement Preamble.
+ */
+enum RttPreamble : @1.0::RttPreamble {
+    /**
+     * Preamble type for 11ax
+     */
+    HE = 0x8,
+};
+
+/**
+ * Debug configuration parameters. Many of these allow non-standard-compliant operation and are
+ * not intended for normal operational mode.
+ */
+struct NanDebugConfig {
+    /**
+     * Specification of the lower 2 bytes of the cluster ID. The cluster ID is 50-60-9a-01-00-00 to
+     * 50-60-9a-01-FF-FF. Configuration of the bottom and top values of the range (which defaults to
+     * 0x0000 and 0xFFFF respectively).
+     * Configuration is only used if |validClusterIdVals| is set to true.
+     */
+    bool validClusterIdVals;
+
+    uint16_t clusterIdBottomRangeVal;
+
+    uint16_t clusterIdTopRangeVal;
+
+    /**
+     * NAN management interface address, if specified (|validIntfAddrVal| is true) then overrides any
+     * other configuration (specifically the default randomization configured by
+     * |NanConfigRequest.macAddressRandomizationIntervalSec|).
+     */
+    bool validIntfAddrVal;
+
+    MacAddress intfAddrVal;
+
+    /**
+     * Combination of the 24 bit Organizationally Unique ID (OUI) and the 8 bit OUI Type.
+     * Used if |validOuiVal| is set to true.
+     */
+    bool validOuiVal;
+
+    uint32_t ouiVal;
+
+    /**
+     * Force the Random Factor to the specified value for all transmitted Sync/Discovery beacons.
+     * Used if |validRandomFactorForceVal| is set to true.
+     * NAN Spec: Master Indication Attribute / Random Factor
+     */
+    bool validRandomFactorForceVal;
+
+    uint8_t randomFactorForceVal;
+
+    /**
+     * Forces the hop-count for all transmitted Sync and Discovery Beacons NO matter the real
+     * hop-count being received over the air. Used if the |validHopCountForceVal}| flag is set to
+     * true.
+     * NAN Spec: Cluster Attribute / Anchor Master Information / Hop Count to Anchor Master
+     */
+    bool validHopCountForceVal;
+
+    uint8_t hopCountForceVal;
+
+    /**
+     * Frequency in MHz to of the discovery channel in the specified band. Indexed by |NanBandIndex|.
+     * Used if the |validDiscoveryChannelVal| is set to true.
+     */
+    bool validDiscoveryChannelVal;
+
+    WifiChannelInMhz[3] discoveryChannelMhzVal;
+
+    /**
+     * Specifies whether sync/discovery beacons are transmitted in the specified band. Indexed by
+     * |NanBandIndex|. Used if the |validUseBeaconsInBandVal| is set to true.
+     */
+    bool validUseBeaconsInBandVal;
+
+    bool[3] useBeaconsInBandVal;
+
+    /**
+     * Specifies whether SDF (service discovery frames) are transmitted in the specified band. Indexed
+     * by |NanBandIndex|. Used if the |validUseSdfInBandVal| is set to true.
+     */
+    bool validUseSdfInBandVal;
+
+    bool[3] useSdfInBandVal;
+};
+
+/**
+ * Configuration parameters of NAN: used when enabling and re-configuring a NAN cluster.
+ */
+struct NanConfigRequest {
+    /**
+     * Master preference of this device.
+     * NAN Spec: Master Indication Attribute / Master Preference
+     */
+    uint8_t masterPref;
+
+    /**
+     * Controls whether or not the |IWifiNanIfaceEventCallback.eventClusterEvent| will be delivered
+     * for |NanClusterEventType.DISCOVERY_MAC_ADDRESS_CHANGED|.
+     */
+    bool disableDiscoveryAddressChangeIndication;
+
+    /**
+     * Controls whether or not the |IWifiNanIfaceEventCallback.eventClusterEvent| will be delivered
+     * for |NanClusterEventType.STARTED_CLUSTER|.
+     */
+    bool disableStartedClusterIndication;
+
+    /**
+     * Controls whether or not the |IWifiNanIfaceEventCallback.eventClusterEvent| will be delivered
+     * for |NanClusterEventType.JOINED_CLUSTER|.
+     */
+    bool disableJoinedClusterIndication;
+
+    /**
+     * Control whether publish service IDs are included in Sync/Discovery beacons.
+     * NAN Spec: Service ID List Attribute
+     */
+    bool includePublishServiceIdsInBeacon;
+
+    /**
+     * If |includePublishServiceIdsInBeacon| is true then specifies the number of publish service IDs
+     * to include in the Sync/Discovery beacons:
+     *  Value = 0: include as many service IDs as will fit into the maximum allowed beacon frame size.
+     *  Value must fit within 7 bits - i.e. <= 127.
+     */
+    uint8_t numberOfPublishServiceIdsInBeacon;
+
+    /**
+     * Control whether subscribe service IDs are included in Sync/Discovery beacons.
+     * Spec: Subscribe Service ID List Attribute
+     */
+    bool includeSubscribeServiceIdsInBeacon;
+
+    /**
+     * If |includeSubscribeServiceIdsInBeacon| is true then specifies the number of subscribe service
+     * IDs to include in the Sync/Discovery beacons:
+     *  Value = 0: include as many service IDs as will fit into the maximum allowed beacon frame size.
+     *  Value must fit within 7 bits - i.e. <= 127.
+     */
+    uint8_t numberOfSubscribeServiceIdsInBeacon;
+
+    /**
+     * Number of samples used to calculate RSSI.
+     */
+    uint16_t rssiWindowSize;
+
+    /**
+     * Specifies the interval in seconds that the NAN management interface MAC address is randomized.
+     * A value of 0 is used to disable the MAC address randomization
+     */
+    uint32_t macAddressRandomizationIntervalSec;
+
+    /**
+     * Additional configuration provided per band: indexed by |NanBandIndex|.
+     */
+    NanBandSpecificConfig[3] bandSpecificConfig;
+};
+
+/**
+ * Enable requests for NAN: start-up configuration |IWifiNanIface.enableRequest|.
+ */
+struct NanEnableRequest {
+    /**
+     * Enable operation in a specific band: indexed by |NanBandIndex|.
+     */
+    bool[3] operateInBand;
+
+    /**
+     * Specify extent of cluster by specifying the max hop count.
+     */
+    uint8_t hopCountMax;
+
+    /**
+     * Configurations of NAN cluster operation. Can also be modified at run-time using
+     * |IWifiNanIface.configRequest|.
+     */
+    NanConfigRequest configParams;
+
+    /**
+     * Non-standard configurations of NAN cluster operation - useful for debugging operations.
+     */
+    NanDebugConfig debugConfigs;
+};
+
+/**
+ * RTT configuration.
+ */
+struct RttConfig {
+    /**
+     * Peer device mac address.
+     */
+    MacAddress addr;
+
+    /**
+     * 1-sided or 2-sided RTT.
+     */
+    RttType type;
+
+    /**
+     * Optional - peer device hint (STA, P2P, AP).
+     */
+    RttPeerType peer;
+
+    /**
+     * Required for STA-AP mode, optional for P2P, NBD etc.
+     */
+    WifiChannelInfo channel;
+
+    /**
+     * Time interval between bursts (units: 100 ms).
+     * Applies to 1-sided and 2-sided RTT multi-burst requests.
+     * Range: 0-31, 0: no preference by initiator (2-sided RTT).
+     */
+    uint32_t burstPeriod;
+
+    /**
+     * Total number of RTT bursts to be executed. It will be
+     * specified in the same way as the parameter "Number of
+     * Burst Exponent" found in the FTM frame format. It
+     * applies to both: 1-sided RTT and 2-sided RTT. Valid
+     * values are 0 to 15 as defined in 802.11mc std.
+     * 0 means single shot
+     * The implication of this parameter on the maximum
+     * number of RTT results is the following:
+     * for 1-sided RTT: max num of RTT results = (2^num_burst)*(num_frames_per_burst)
+     * for 2-sided RTT: max num of RTT results = (2^num_burst)*(num_frames_per_burst - 1)
+     */
+    uint32_t numBurst;
+
+    /**
+     * Num of frames per burst.
+     * Minimum value = 1, Maximum value = 31
+     * For 2-sided this equals the number of FTM frames
+     * to be attempted in a single burst. This also
+     * equals the number of FTM frames that the
+     * initiator will request that the responder send
+     * in a single frame.
+     */
+    uint32_t numFramesPerBurst;
+
+    /**
+     * Number of retries for a failed RTT frame.
+     * Applies to 1-sided RTT only. Minimum value = 0, Maximum value = 3
+     */
+    uint32_t numRetriesPerRttFrame;
+
+    /**
+     * Following fields are only valid for 2-side RTT.
+     *
+     *
+     * Maximum number of retries that the initiator can
+     * retry an FTMR frame.
+     * Minimum value = 0, Maximum value = 3
+     */
+    uint32_t numRetriesPerFtmr;
+
+    /**
+     * Whether to request location civic info or not.
+     */
+    bool mustRequestLci;
+
+    /**
+     * Whether to request location civic records or not.
+     */
+    bool mustRequestLcr;
+
+    /**
+     * Applies to 1-sided and 2-sided RTT. Valid values will
+     * be 2-11 and 15 as specified by the 802.11mc std for
+     * the FTM parameter burst duration. In a multi-burst
+     * request, if responder overrides with larger value,
+     * the initiator will return failure. In a single-burst
+     * request if responder overrides with larger value,
+     * the initiator will sent TMR_STOP to terminate RTT
+     * at the end of the burst_duration it requested.
+     */
+    uint32_t burstDuration;
+
+    /**
+     * RTT preamble to be used in the RTT frames.
+     */
+    RttPreamble preamble;
+
+    /**
+     * RTT BW to be used in the RTT frames.
+     */
+    RttBw bw;
+};
+
+/**
+ * RTT Capabilities.
+ */
+struct RttCapabilities {
+    /**
+     * if 1-sided rtt data collection is supported.
+     */
+    bool rttOneSidedSupported;
+
+    /**
+     * if ftm rtt data collection is supported.
+     */
+    bool rttFtmSupported;
+
+    /**
+     * if initiator supports LCI request. Applies to 2-sided RTT.
+     */
+    bool lciSupported;
+
+    /**
+     * if initiator supports LCR request. Applies to 2-sided RTT.
+     */
+    bool lcrSupported;
+
+    /**
+     * if 11mc responder mode is supported.
+     */
+    bool responderSupported;
+
+    /**
+     * Bit mask indicates what preamble is supported by initiator.
+     * Combination of |RttPreamble| values.
+     */
+    bitfield<RttPreamble> preambleSupport;
+
+    /**
+     * Bit mask indicates what BW is supported by initiator.
+     * Combination of |RttBw| values.
+     */
+    bitfield<RttBw> bwSupport;
+
+    /**
+     * Draft 11mc spec version supported by chip.
+     * For instance, version 4.0 must be 40 and version 4.3 must be 43 etc.
+     */
+    uint8_t mcVersion;
+};
+
+/**
+ * RTT Responder information
+ */
+struct RttResponder {
+    WifiChannelInfo channel;
+
+    RttPreamble preamble;
+};
+
+/**
+ * Wifi rate info.
+ */
+struct WifiRateInfo {
+    /**
+     * Preamble used for RTT measurements.
+     */
+    WifiRatePreamble preamble;
+
+    /**
+     * Number of spatial streams.
+     */
+    WifiRateNss nss;
+
+    /**
+     * Bandwidth of channel.
+     */
+    WifiChannelWidthInMhz bw;
+
+    /**
+     * OFDM/CCK rate code would be as per ieee std in the units of 0.5mbps.
+     * HT/VHT/HE it would be mcs index.
+     */
+    uint8_t rateMcsIdx;
+
+    /**
+     * Bitrate in units of 100 Kbps.
+     */
+    uint32_t bitRateInKbps;
+};
+
+/**
+ * RTT results.
+ */
+struct RttResult {
+    /**
+     * Peer device mac address.
+     */
+    MacAddress addr;
+
+    /**
+     * Burst number in a multi-burst request.
+     */
+    uint32_t burstNum;
+
+    /**
+     * Total RTT measurement frames attempted.
+     */
+    uint32_t measurementNumber;
+
+    /**
+     * Total successful RTT measurement frames.
+     */
+    uint32_t successNumber;
+
+    /**
+     * Maximum number of "FTM frames per burst" supported by
+     * the responder STA. Applies to 2-sided RTT only.
+     * If reponder overrides with larger value:
+     * - for single-burst request initiator will truncate the
+     * larger value and send a TMR_STOP after receiving as
+     * many frames as originally requested.
+     * - for multi-burst request, initiator will return
+     * failure right away.
+     */
+    uint8_t numberPerBurstPeer;
+
+    /**
+     * Ranging status.
+     */
+    RttStatus status;
+
+    /**
+     * When status == RTT_STATUS_FAIL_BUSY_TRY_LATER,
+     * this will be the time provided by the responder as to
+     * when the request can be tried again. Applies to 2-sided
+     * RTT only. In sec, 1-31sec.
+     */
+    uint8_t retryAfterDuration;
+
+    /**
+     * RTT type.
+     */
+    RttType type;
+
+    /**
+     * Average rssi in 0.5 dB steps e.g. 143 implies -71.5 dB.
+     */
+    Rssi rssi;
+
+    /**
+     * Rssi spread in 0.5 dB steps e.g. 5 implies 2.5 dB spread (optional).
+     */
+    Rssi rssiSpread;
+
+    /**
+     * 1-sided RTT: TX rate of RTT frame.
+     * 2-sided RTT: TX rate of initiator's Ack in response to FTM frame.
+     */
+    WifiRateInfo txRate;
+
+    /**
+     * 1-sided RTT: TX rate of Ack from other side.
+     * 2-sided RTT: TX rate of FTM frame coming from responder.
+     */
+    WifiRateInfo rxRate;
+
+    /**
+     * Round trip time in picoseconds
+     */
+    TimeSpanInPs rtt;
+
+    /**
+     * Rtt standard deviation in picoseconds.
+     */
+    TimeSpanInPs rttSd;
+
+    /**
+     * Difference between max and min rtt times recorded in picoseconds.
+     */
+    TimeSpanInPs rttSpread;
+
+    /**
+     * Distance in mm (optional).
+     */
+    int32_t distanceInMm;
+
+    /**
+     * Standard deviation in mm (optional).
+     */
+    int32_t distanceSdInMm;
+
+    /**
+     * Difference between max and min distance recorded in mm (optional).
+     */
+    int32_t distanceSpreadInMm;
+
+    /**
+     * Time of the measurement (in microseconds since boot).
+     */
+    TimeStampInUs timeStampInUs;
+
+    /**
+     * in ms, actual time taken by the FW to finish one burst
+     * measurement. Applies to 1-sided and 2-sided RTT.
+     */
+    uint32_t burstDurationInMs;
+
+    /**
+     * Number of bursts allowed by the responder. Applies
+     * to 2-sided RTT only.
+     */
+    uint32_t negotiatedBurstNum;
+
+    /**
+     * for 11mc only.
+     */
+    WifiInformationElement lci;
+
+    /**
+     * for 11mc only.
+     */
+    WifiInformationElement lcr;
+};

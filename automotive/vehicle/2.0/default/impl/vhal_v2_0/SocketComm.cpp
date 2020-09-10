@@ -60,7 +60,7 @@ void SocketComm::stop() {
     }
 }
 
-void SocketComm::sendMessage(emulator::EmulatorMessage const& msg) {
+void SocketComm::sendMessage(vhal_proto::EmulatorMessage const& msg) {
     std::lock_guard<std::mutex> lock(mMutex);
     for (std::unique_ptr<SocketConn> const& conn : mOpenConnections) {
         conn->sendMessage(msg);
@@ -92,7 +92,10 @@ bool SocketComm::listen() {
     }
 
     ALOGI("%s: Listening for connections on port %d", __FUNCTION__, DEBUG_SOCKET);
-    ::listen(mListenFd, 1);
+    if (::listen(mListenFd, 1) == -1) {
+        ALOGE("%s: Error on listening: errno: %d: %s", __FUNCTION__, errno, strerror(errno));
+        return false;
+    }
     return true;
 }
 

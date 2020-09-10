@@ -31,6 +31,8 @@ interface IEvsCameraStream {
      * When the last frame in the stream has been delivered, a NULL bufferHandle
      * must be delivered, signifying the end of the stream. No further frame
      * deliveries may happen thereafter.
+     *
+     * @param buffer a buffer descriptor of a delivered image frame.
      */
     oneway deliverFrame(BufferDesc buffer);
 };

@@ -342,6 +342,7 @@
             <xs:enumeration value="AUDIO_USAGE_GAME"/>
             <xs:enumeration value="AUDIO_USAGE_VIRTUAL_SOURCE"/>
             <xs:enumeration value="AUDIO_USAGE_ASSISTANT"/>
+            <xs:enumeration value="AUDIO_USAGE_CALL_ASSISTANT"/>
         </xs:restriction>
     </xs:simpleType>
 
@@ -370,6 +371,7 @@
             <xs:enumeration value="AUDIO_FLAG_NO_MEDIA_PROJECTION"/>
             <xs:enumeration value="AUDIO_FLAG_MUTE_HAPTIC"/>
             <xs:enumeration value="AUDIO_FLAG_NO_SYSTEM_CAPTURE"/>
+            <xs:enumeration value="AUDIO_FLAG_CAPTURE_PRIVATE"/>
         </xs:restriction>
     </xs:simpleType>
 

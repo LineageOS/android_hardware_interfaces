@@ -16,8 +16,6 @@
 
 #include <android/log.h>
 
-#include <VtsHalHidlTargetTestBase.h>
-
 #include <wifi_system/interface_tool.h>
 
 #include "wifi_hidl_call_util.h"
@@ -40,8 +38,6 @@ using ::android::sp;
 using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
 using ::android::wifi_system::InterfaceTool;
-
-extern WifiHidlEnvironment* gEnv;
 
 namespace {
 constexpr uint32_t kHalStartRetryMaxCount = 5;
@@ -93,21 +89,8 @@ bool configureChipToSupportIfaceTypeInternal(const sp<IWifiChip>& wifi_chip,
 }
 }  // namespace
 
-sp<IWifi> getWifi(const std::string& instance_name) {
-    if ((!gEnv && instance_name.empty()) || (gEnv && !instance_name.empty())) {
-        ALOGE("instance_name and gEnv must have one and only one set.");
-        return nullptr;
-    }
-    if (gEnv) {
-        return ::testing::VtsHalHidlTargetTestBase::getService<IWifi>(
-            gEnv->getServiceName<IWifi>());
-    } else {
-        return IWifi::getService(instance_name);
-    }
-}
-
 sp<IWifiChip> getWifiChip(const std::string& instance_name) {
-    sp<IWifi> wifi = getWifi(instance_name);
+    sp<IWifi> wifi = IWifi::getService(instance_name);
     if (!wifi.get()) {
         return nullptr;
     }
@@ -209,23 +192,6 @@ sp<IWifiStaIface> getWifiStaIface(const std::string& instance_name) {
     return status_and_iface.second;
 }
 
-sp<IWifiRttController> getWifiRttController(const std::string& instance_name) {
-    sp<IWifiChip> wifi_chip = getWifiChip(instance_name);
-    if (!wifi_chip.get()) {
-        return nullptr;
-    }
-    sp<IWifiStaIface> wifi_sta_iface = getWifiStaIface(instance_name);
-    if (!wifi_sta_iface.get()) {
-        return nullptr;
-    }
-    const auto& status_and_controller =
-        HIDL_INVOKE(wifi_chip, createRttController, wifi_sta_iface);
-    if (status_and_controller.first.code != WifiStatusCode::SUCCESS) {
-        return nullptr;
-    }
-    return status_and_controller.second;
-}
-
 bool configureChipToSupportIfaceType(const sp<IWifiChip>& wifi_chip,
                                      IfaceType type,
                                      ChipModeId* configured_mode_id) {
@@ -234,7 +200,7 @@ bool configureChipToSupportIfaceType(const sp<IWifiChip>& wifi_chip,
 }
 
 void stopWifi(const std::string& instance_name) {
-    sp<IWifi> wifi = getWifi(instance_name);
+    sp<IWifi> wifi = IWifi::getService(instance_name);
     ASSERT_NE(wifi, nullptr);
     HIDL_INVOKE(wifi, stop);
 }

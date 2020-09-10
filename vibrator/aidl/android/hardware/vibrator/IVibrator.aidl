@@ -161,8 +161,8 @@ interface IVibrator {
      * List of supported effect primitive.
      *
      * Return the effect primitives which are supported by the compose API.
-     * Implementations are expected to support all primitives of the interface
-     * version that they implement.
+     * Implementations are expected to support all required primitives of the
+     * interface version that they implement (see primitive definitions).
      */
     CompositePrimitive[] getSupportedPrimitives();
 

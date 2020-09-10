@@ -49,7 +49,7 @@ static const uint32_t kTimeout = 3;
 static const std::chrono::seconds kTimeoutInSeconds = std::chrono::seconds(kTimeout);
 static const uint32_t kGroupId = 99;
 static std::string kTmpDir = "";
-static const uint32_t kIterations = 1000;
+static const uint32_t kIterations = 10;
 
 // Wait for a callback to occur (signaled by the given future) up to the
 // provided timeout. If the future is invalid or the callback does not come

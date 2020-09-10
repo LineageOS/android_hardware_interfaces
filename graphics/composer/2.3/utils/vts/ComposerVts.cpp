@@ -16,8 +16,6 @@
 
 #include <composer-vts/2.3/ComposerVts.h>
 
-#include <VtsHalHidlTargetTestBase.h>
-
 namespace android {
 namespace hardware {
 namespace graphics {
@@ -26,11 +24,6 @@ namespace V2_3 {
 namespace vts {
 
 using V2_1::Error;
-
-Composer::Composer() : Composer(::testing::VtsHalHidlTargetTestBase::getService<IComposer>()) {}
-
-Composer::Composer(const std::string& name)
-    : Composer(::testing::VtsHalHidlTargetTestBase::getService<IComposer>(name)) {}
 
 Composer::Composer(const sp<IComposer>& composer)
     : V2_2::vts::Composer(composer), mComposer(composer) {}

@@ -1,0 +1,61 @@
+//
+// Copyright (C) 2020 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+// TODO(152067309): Stop building this yourself once it's ABI stable and has
+// been made vendor available. Just use libc++fs instead of this.
+
+cc_defaults {
+    name: "android.hardware.automotive@libc++fsdefaults",
+    local_include_dirs: ["include"],
+    export_include_dirs: ["include"],
+    cflags: [
+        "-Wall",
+        "-Werror",
+        "-Wno-unused-parameter",
+    ],
+    cppflags: [
+        "-std=c++17",
+        "-fexceptions",
+        "-DLIBCXX_BUILDING_LIBCXXABI",
+        "-D_LIBCPP_BUILDING_LIBRARY",
+    ],
+    rtti: true,
+}
+
+cc_library_static {
+    name: "android.hardware.automotive@libc++fs",
+    recovery_available: true,
+    vendor: true,
+    defaults: ["android.hardware.automotive@libc++fsdefaults"],
+    srcs: [
+        "src/filesystem/directory_iterator.cpp",
+        "src/filesystem/operations.cpp",
+    ],
+    multilib: {
+        lib32: {
+            // off_t usage is constrained to within the libc++ source (not the
+            // headers), so we can build the filesystem library with a 64-bit
+            // off_t on LP32 to get large file support without needing all users
+            // of the library to match.
+            cflags: ["-D_FILE_OFFSET_BITS=64"],
+        },
+    },
+    target: {
+        windows: {
+            enabled: false,
+        },
+    },
+}

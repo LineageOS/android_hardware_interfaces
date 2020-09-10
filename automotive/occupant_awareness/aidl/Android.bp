@@ -1,0 +1,19 @@
+aidl_interface {
+    name: "android.hardware.automotive.occupant_awareness",
+    vendor_available: true,
+    srcs: [
+        "android/hardware/automotive/occupant_awareness/*.aidl",
+    ],
+    stability: "vintf",
+    backend: {
+        java: {
+            platform_apis: true,
+        },
+        ndk: {
+            vndk: {
+                enabled: true,
+            },
+        },
+    },
+    versions: ["1"],
+}

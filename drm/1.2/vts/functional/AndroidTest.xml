@@ -19,6 +19,10 @@
 
     <target_preparer class="com.android.tradefed.targetprep.RootTargetPreparer"/>
 
+    <target_preparer class="com.android.tradefed.targetprep.WifiPreparer" >
+        <option name="verify-only" value="true" />
+    </target_preparer>
+
     <target_preparer class="com.android.tradefed.targetprep.PushFilePreparer">
         <option name="cleanup" value="true" />
         <option name="push-file" key="VtsHalDrmV1_2TargetTest" value="/data/local/tmp/VtsHalDrmV1_2TargetTest" />

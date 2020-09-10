@@ -1,0 +1,142 @@
+/*
+ * Copyright (C) 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package android.hardware.automotive.can@1.0;
+
+/**
+ * CAN message ID.
+ *
+ * Does not include any flags like RTR nor ERR, only a plain 11-bit
+ * or 29-bit identifier, as defined in CAN 1.x/2.0x.
+ *
+ * Unused bits must be set to zero.
+ */
+typedef uint32_t CanMessageId;
+
+/**
+ * CAN message being sent or received.
+ */
+struct CanMessage {
+    CanMessageId id;
+
+    /**
+     * CAN message payload, as defined in CAN 1.x and CAN 2.x standards.
+     *
+     * The length of the payload vector directly translates to the length
+     * of the data frame (i.e. includes any padding bytes), so it may be in
+     * a range of:
+     *  - 0-8 bytes for standard CAN;
+     *  - up to 64 bytes for CAN FD.
+     * ISO TP is not supported directly for now.
+     */
+    vec<uint8_t> payload;
+
+    /**
+     * Time in nanoseconds since boot.
+     *
+     * Ignored for outgoing messages.
+     */
+    uint64_t timestamp;
+
+    /**
+     * A request to proactively pull certain data from other ECU in CAN network.
+     *
+     * For details please refer to CAN standard.
+     *
+     * If this flag is set, payload must be empty.
+     */
+    bool remoteTransmissionRequest;
+
+    /**
+     * Flag indicating if the message has an extended ID.
+     *
+     * Extended ID's are 29 bits long, as opposed to the standard 11 bit ID.
+     * It can not simply be inferred from the length of the ID itself, as the
+     * message ID 0x00000123 !=  message ID 0x123.
+     */
+    bool isExtendedId;
+};
+
+/**
+ * Single filter rule for CAN messages.
+ *
+ * A filter is satisfied if:
+ * ((receivedId & mask) == (id & mask)) == !exclude
+ *
+ * In order for set of filters to match, at least one non-exclude filters must match (if there is
+ * one) and all exclude filters must match. In other words:
+ *  - a single matching non-exclude filter makes the whole set matching;
+ *  - a single non-matching excluded filter makes the whole set non-matching.
+ */
+struct CanMessageFilter {
+    CanMessageId id;
+    uint32_t mask;
+    /** Remote Transmission Request; another ECU requests <DLC> bytes of data on this message ID */
+    FilterFlag rtr;
+    /** 29 bit message ID is used instead of 11 bits */
+    FilterFlag extendedFormat;
+    /** 'exclude' *DOES* apply to rtr and extendedFormat! */
+    bool exclude;
+};
+
+
+/**
+ * Types of filter that can be applied to a CanMessageFilter
+ */
+enum FilterFlag : uint8_t {
+    /** Default, FilterFlag doesn't effect what messages filtered */
+    DONT_CARE = 0,
+    /** This FilterFlag MUST be present in received messages to pass though the filter */
+    SET,
+    /** This FilterFlag must NOT be present in received messages to pass though the filter */
+    NOT_SET,
+};
+
+enum Result : uint8_t {
+    OK,
+    UNKNOWN_ERROR,
+    PAYLOAD_TOO_LONG,
+    INTERFACE_DOWN,
+    TRANSMISSION_FAILURE,
+    INVALID_ARGUMENTS,
+};
+
+/**
+ * @see ICanMessageListener#onError
+ */
+enum ErrorEvent : uint8_t {
+    UNKNOWN_ERROR,
+
+    /** A problem with CAN interface HW. */
+    HARDWARE_ERROR,
+
+    /** CAN interface is down. */
+    INTERFACE_DOWN,
+
+    /** TX buffer overflow: client is sending too many packets. */
+    TX_OVERFLOW,
+
+    /** RX buffer overflow: client is not reading packets fast enough. */
+    RX_OVERFLOW,
+
+    /** Received malformed input. */
+    MALFORMED_INPUT,
+
+    /** Bus overload: there is too much traffic on the bus. */
+    BUS_OVERLOAD,
+
+    /** Bus error: shorted Hi/Lo line, bus off etc. */
+    BUS_ERROR,
+};

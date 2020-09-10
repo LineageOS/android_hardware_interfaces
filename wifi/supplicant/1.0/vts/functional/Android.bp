@@ -36,7 +36,6 @@ cc_test {
     name: "VtsHalWifiSupplicantV1_0TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: [
-        "VtsHalWifiSupplicantV1_0TargetTest.cpp",
         "supplicant_hidl_test.cpp",
         "supplicant_sta_iface_hidl_test.cpp",
         "supplicant_sta_network_hidl_test.cpp",
@@ -46,6 +45,8 @@ cc_test {
         "VtsHalWifiSupplicantV1_0TargetTestUtil",
         "android.hardware.wifi.supplicant@1.0",
         "android.hardware.wifi.supplicant@1.1",
+        "android.hardware.wifi.supplicant@1.2",
+        "android.hardware.wifi.supplicant@1.3",
         "android.hardware.wifi@1.0",
         "libgmock",
         "libwifi-system",

@@ -1,0 +1,86 @@
+/*
+ * Copyright (C) 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.gnss@2.1;
+
+import android.hardware.gnss.measurement_corrections@1.1::IMeasurementCorrections;
+import @2.0::IGnss;
+import IGnssCallback;
+import IGnssMeasurement;
+import IGnssConfiguration;
+import IGnssAntennaInfo;
+
+/**
+ * Represents the standard GNSS (Global Navigation Satellite System) interface.
+ */
+interface IGnss extends @2.0::IGnss {
+    /**
+     * Opens the interface and provides the callback routines to the implementation of this
+     * interface.
+     *
+     * The framework calls this method to instruct the GPS engine to prepare for serving requests
+     * from the framework. The GNSS HAL implementation must respond to all GNSS requests from the
+     * framework upon successful return from this method until cleanup() method is called to
+     * close this interface.
+     *
+     * @param callback Callback interface for IGnss.
+     *
+     * @return success Returns true on success.
+     */
+    setCallback_2_1(IGnssCallback callback) generates (bool success);
+
+    /**
+     * This method returns the IGnssMeasurement interface.
+     *
+     * getExtensionGnssMeasurement(), getExtensionGnssMeasurement_1_1(),
+     * getExtensionGnssMeasurement_2_0(), and getExtensionGnssMeasurement_2_1() methods must return
+     * non-null. They can all return the same, latest version of IGnssMeasurement.
+     *
+     * @return gnssMeasurementIface Handle to the IGnssMeasurement interface.
+     */
+    getExtensionGnssMeasurement_2_1() generates (IGnssMeasurement gnssMeasurementIface);
+
+    /**
+     * This method returns the IGnssConfiguration interface.
+     *
+     * getExtensionGnssConfiguration(), getExtensionGnssConfiguration_1_1(),
+     * getExtensionGnssConfiguration_2_0(), and getExtensionGnssConfiguration_2_1() methods must
+     * return non-null. They can all return the same, latest version of IGnssConfiguration.
+     *
+     * @return gnssConfigurationIface Handle to the IGnssConfiguration interface.
+     */
+    getExtensionGnssConfiguration_2_1() generates (IGnssConfiguration gnssConfigurationIface);
+
+    /**
+     * This method returns the IMeasurementCorrections interface.
+     *
+     * Both getExtensionMeasurementCorrections and getExtensionMeasurementCorrections_1_1 must
+     * return non-null. Both methods can return the same V1.1 IMeasurementCorrections object.
+     *
+     * @return measurementCorrectionsIface Handle to the IMeasurementCorrections interface.
+     */
+    getExtensionMeasurementCorrections_1_1()
+        generates (IMeasurementCorrections measurementCorrectionsIface);
+
+    /**
+     * This method returns the IGnssAntennaInfo interface.
+     *
+     * This method must return non-null.
+     *
+     * @return gnssAntennaInfoIface Handle to the IGnssAntennaInfo interface.
+     */
+    getExtensionGnssAntennaInfo() generates (IGnssAntennaInfo gnssAntennaInfoIface);
+};

@@ -16,12 +16,11 @@
 
 #pragma once
 
+#include <gtest/gtest.h>
 #include <functional>
 #include <tuple>
 #include <type_traits>
 #include <utility>
-
-#include <VtsHalHidlTargetTestBase.h>
 
 namespace {
 namespace detail {

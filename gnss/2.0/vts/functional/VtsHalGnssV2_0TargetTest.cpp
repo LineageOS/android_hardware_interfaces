@@ -15,15 +15,15 @@
  */
 #define LOG_TAG "VtsHalGnssV2_0TargetTest"
 
-#include <VtsHalHidlTargetTestBase.h>
+#include <gtest/gtest.h>
+#include <hidl/GtestPrinter.h>
+#include <hidl/ServiceManagement.h>
 
 #include "gnss_hal_test.h"
 
-int main(int argc, char** argv) {
-    ::testing::AddGlobalTestEnvironment(GnssHidlEnvironment::Instance());
-    ::testing::InitGoogleTest(&argc, argv);
-    GnssHidlEnvironment::Instance()->init(&argc, argv);
-    int status = RUN_ALL_TESTS();
-    ALOGI("Test result = %d", status);
-    return status;
-}
+using android::hardware::gnss::V2_0::IGnss;
+
+INSTANTIATE_TEST_SUITE_P(
+        PerInstance, GnssHalTest,
+        testing::ValuesIn(android::hardware::getAllHalInstanceNames(IGnss::descriptor)),
+        android::hardware::PrintInstanceNameToString);

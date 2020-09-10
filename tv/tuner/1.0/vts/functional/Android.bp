@@ -17,8 +17,19 @@
 cc_test {
     name: "VtsHalTvTunerV1_0TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
-    srcs: ["VtsHalTvTunerV1_0TargetTest.cpp"],
+    srcs: [
+        "VtsHalTvTunerV1_0TargetTest.cpp",
+        "FrontendTests.cpp",
+        "DemuxTests.cpp",
+        "FilterTests.cpp",
+        "DvrTests.cpp",
+        "DescramblerTests.cpp",
+        "LnbTests.cpp",
+    ],
     static_libs: [
+        "android.hardware.cas@1.0",
+        "android.hardware.cas@1.1",
+        "android.hardware.cas@1.2",
         "android.hardware.tv.tuner@1.0",
         "android.hidl.allocator@1.0",
         "android.hidl.memory@1.0",

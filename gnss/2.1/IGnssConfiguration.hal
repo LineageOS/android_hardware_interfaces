@@ -1,0 +1,68 @@
+/*
+ * Copyright (C) 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.gnss@2.1;
+
+import @2.0::IGnssConfiguration;
+import @2.0::GnssConstellationType;
+
+/**
+ * Extended interface for GNSS Configuration support.
+ */
+interface IGnssConfiguration extends @2.0::IGnssConfiguration {
+    /**
+     * Represents a blacklisted source, updating the GnssConstellationType to 2.0, which supports
+     * IRNSS.
+     */
+    struct BlacklistedSource {
+        /**
+         * Defines the constellation of the given satellite(s).
+         */
+        GnssConstellationType constellation;
+
+        /**
+         * Satellite (space vehicle) ID number, as defined in GnssSvInfo::svid
+         *
+         * Or 0 to blacklist all svid's for the specified constellation
+         */
+        int16_t svid;
+    };
+
+    /**
+     * Injects a vector of BlacklistedSource(s) which the HAL must not use to calculate the
+     * GNSS location output.
+     *
+     * The superset of all satellite sources provided, including wildcards, in the latest call
+     * to this method, is the set of satellites sources that must not be used in calculating
+     * location.
+     *
+     * All measurements from the specified satellites, across frequency bands, are blacklisted
+     * together.
+     *
+     * If this method is never called after the IGnssConfiguration.hal connection is made on boot,
+     * or is called with an empty vector, then no satellites are to be blacklisted as a result of
+     * this API.
+     *
+     * This blacklist must be considered as an additional source of which satellites
+     * should not be trusted for location on top of existing sources of similar information
+     * such as satellite broadcast health being unhealthy and measurement outlier removal.
+     *
+     * @param blacklist The BlacklistedSource(s) of satellites the HAL must not use.
+     *
+     * @return success Whether the HAL accepts and abides by the provided blacklist.
+     */
+    setBlacklist_2_1(vec<BlacklistedSource> blacklist) generates (bool success);
+};

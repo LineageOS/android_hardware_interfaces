@@ -1,0 +1,291 @@
+/*
+ * Copyright 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.wifi.supplicant@1.3;
+
+import @1.0::ISupplicantStaNetwork;
+import @1.0::SupplicantStatus;
+import @1.2::ISupplicantStaNetwork;
+
+/**
+ * Interface exposed by the supplicant for each station mode network
+ * configuration it controls.
+ */
+interface ISupplicantStaNetwork extends @1.2::ISupplicantStaNetwork {
+    /**
+     * Possible mask of values for Proto param.
+     */
+    enum ProtoMask : @1.0::ISupplicantStaNetwork.ProtoMask {
+        WAPI = 1 << 2,
+    };
+
+    /**
+     * Possible mask of values for KeyMgmt param.
+     */
+    enum KeyMgmtMask : @1.2::ISupplicantStaNetwork.KeyMgmtMask {
+        /*
+         * WAPI Psk
+         */
+        WAPI_PSK = 1 << 12,
+        /**
+         * WAPI Cert
+         */
+        WAPI_CERT = 1 << 13,
+        /**
+         * FILS shared key authentication with sha-256
+         */
+        FILS_SHA256 = 1 << 18,
+        /**
+         * FILS shared key authentication with sha-384
+         */
+        FILS_SHA384 = 1 << 19,
+    };
+
+    /**
+     * Possible mask of values for PairwiseCipher param.
+     */
+    enum PairwiseCipherMask : @1.2::ISupplicantStaNetwork.PairwiseCipherMask {
+        /**
+         * SMS4 Pairwise Cipher
+         */
+        SMS4 = 1 << 7,
+    };
+
+    /**
+     * Possible mask of values for GroupCipher param.
+     */
+    enum GroupCipherMask : @1.2::ISupplicantStaNetwork.GroupCipherMask {
+        /**
+         * SMS4 Group Cipher
+         */
+        SMS4 = 1 << 7,
+    };
+
+    /**
+     * Possible mask of values for AuthAlg param.
+     */
+    enum AuthAlgMask : @1.0::ISupplicantStaNetwork.AuthAlgMask {
+        SAE = 1 << 4,
+    };
+
+    /**
+     * Set OCSP (Online Certificate Status Protocol) type for this network.
+     *
+     * @param ocspType value to set.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     */
+    setOcsp(OcspType ocspType) generates (SupplicantStatus status);
+
+    /**
+     * Get OCSP (Online Certificate Status Protocol) type for this network.
+     *
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     * @return ocspType ocsp type.
+     */
+    getOcsp() generates (SupplicantStatus status, OcspType ocspType);
+
+    /**
+     * Set key management mask for the network.
+     *
+     * @param keyMgmtMask value to set.
+     *        Combination of |KeyMgmtMask| values.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+     */
+    setKeyMgmt_1_3(bitfield<KeyMgmtMask> keyMgmtMask) generates (SupplicantStatus status);
+
+    /**
+     * Get the key mgmt mask set for the network.
+     *
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+     * @return keyMgmtMask Combination of |KeyMgmtMask| values.
+     */
+    getKeyMgmt_1_3() generates (SupplicantStatus status, bitfield<KeyMgmtMask> keyMgmtMask);
+
+    /**
+     * Set proto mask for the network.
+     *
+     * @param protoMask value to set.
+     *        Combination of |ProtoMask| values.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+     */
+    setProto_1_3(bitfield<ProtoMask> protoMask) generates (SupplicantStatus status);
+
+    /**
+     * Get the proto mask set for the network.
+     *
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+     * @return protoMask Combination of |ProtoMask| values.
+     */
+    getProto_1_3() generates (SupplicantStatus status, bitfield<ProtoMask> protoMask);
+
+    /**
+     * Set group cipher mask for the network.
+     *
+     * @param groupCipherMask value to set.
+     *        Combination of |ProtoMask| values.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+     */
+    setGroupCipher_1_3(bitfield<GroupCipherMask> groupCipherMask)
+        generates (SupplicantStatus status);
+
+    /**
+     * Get the pairwise cipher mask set for the network.
+     *
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+     * @return pairwiseCipherMask Combination of |PairwiseCipherMask| values.
+     */
+    getPairwiseCipher_1_3()
+        generates (SupplicantStatus status, bitfield<PairwiseCipherMask> pairwiseCipherMask);
+
+    /**
+     * Set pairwise cipher mask for the network.
+     *
+     * @param pairwiseCipherMask value to set.
+     *        Combination of |ProtoMask| values.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+     */
+    setPairwiseCipher_1_3(bitfield<PairwiseCipherMask> pairwiseCipherMask)
+        generates (SupplicantStatus status);
+
+    /**
+     * Get the group cipher mask set for the network.
+     *
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+     * @return groupCipherMask Combination of |GroupCipherMask| values.
+     */
+    getGroupCipher_1_3()
+        generates (SupplicantStatus status, bitfield<GroupCipherMask> groupCipherMask);
+
+    /**
+     * Set WAPI certificate suite name for this network.
+     *
+     * @param suite value to set.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+     */
+    setWapiCertSuite(string suite) generates (SupplicantStatus status);
+
+    /**
+     * Get WAPI certificate suite name set for this network.
+     *
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+     * @return suite The name of a suite.
+     */
+    getWapiCertSuite() generates (SupplicantStatus status, string suite);
+
+    /**
+     * Add a pairwise master key (PMK) into supplicant PMK cache.
+     *
+     * @param serializedEntry is serialized PMK cache entry, the content is
+     *              opaque for the framework and depends on the native implementation.
+     * @return status Status of the operation
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     */
+    setPmkCache(vec<uint8_t> serializedEntry) generates (SupplicantStatus status);
+
+    /**
+     * Set auth alg mask for the network.
+     *
+     * @param authAlgMask value to set.
+     *        Combination of |ProtoMask| values.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     */
+    setAuthAlg_1_3(bitfield<AuthAlgMask> authAlgMask) generates (SupplicantStatus status);
+
+    /**
+     * Get the auth alg mask set for the network.
+     *
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     * @return authAlgMask Combination of |AuthAlgMask| values.
+     */
+    getAuthAlg_1_3() generates (SupplicantStatus status, bitfield<AuthAlgMask> authAlgMask);
+
+    /**
+     * Enable Extensible Authentication (EAP) - Re-authentication Protocol (ERP) for this network.
+     *
+     * @param enable true to set, false otherwise.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     */
+    setEapErp(bool enable) generates (SupplicantStatus status);
+};

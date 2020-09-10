@@ -1,0 +1,55 @@
+/*
+ * Copyright 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.graphics.composer@2.4;
+
+import @2.1::Display;
+import @2.1::IComposerCallback;
+
+interface IComposerCallback extends @2.1::IComposerCallback {
+    /**
+     * Notifies the client that a vsync event has occurred. This callback must
+     * only be triggered when vsync is enabled for this display (through
+     * setVsyncEnabled).
+     *
+     * @param display is the display which has received a vsync event
+     * @param timestamp is the CLOCK_MONOTONIC time at which the vsync event
+     *        occurred, in nanoseconds.
+     * @param vsyncPeriodNanos is the display vsync period in nanoseconds i.e. the next onVsync_2_4
+     *        is expected to be called vsyncPeriodNanos nanoseconds after this call.
+     */
+    oneway onVsync_2_4(Display display, int64_t timestamp, VsyncPeriodNanos vsyncPeriodNanos);
+
+    /**
+     * Notifies the client that the previously reported timing for vsync period change has been
+     * updated. This may occur if the composer missed the deadline for changing the vsync period
+     * or the client submitted a refresh frame too late.
+     *
+     * @param display is the display which vsync period change is in progress
+     * @param updatedTimeline is the new timeline for the vsync period change.
+     */
+    oneway onVsyncPeriodTimingChanged(Display display, VsyncPeriodChangeTimeline updatedTimeline);
+
+    /**
+     * Notifies the client that the conditions which previously led to returning
+     * SEAMLESS_NOT_POSSIBLE from setActiveConfigWithConstraints have changed and now seamless may
+     * be possible. Client should retry calling setActiveConfigWithConstraints.
+     *
+     * @param display is a display setActiveConfigWithConstraints previously failed with
+     * SEAMLESS_NOT_POSSIBLE.
+     */
+    oneway onSeamlessPossible(Display display);
+};

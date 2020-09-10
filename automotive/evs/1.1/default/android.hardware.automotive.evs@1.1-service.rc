@@ -1,0 +1,5 @@
+service vendor.evs-hal-mock /vendor/bin/hw/android.hardware.automotive.evs@1.1-service
+    class hal
+    user automotive_evs
+    group automotive_evs
+    disabled

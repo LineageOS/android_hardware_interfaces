@@ -18,9 +18,11 @@
 
 #include <android/hardware/graphics/allocator/2.0/IAllocator.h>
 #include <android/hardware/graphics/allocator/3.0/IAllocator.h>
+#include <android/hardware/graphics/allocator/4.0/IAllocator.h>
 #include <android/hardware/graphics/mapper/2.0/IMapper.h>
 #include <android/hardware/graphics/mapper/2.1/IMapper.h>
 #include <android/hardware/graphics/mapper/3.0/IMapper.h>
+#include <android/hardware/graphics/mapper/4.0/IMapper.h>
 
 #include <utils/Log.h>
 
@@ -29,18 +31,18 @@
 
 using IAllocator2 = ::android::hardware::graphics::allocator::V2_0::IAllocator;
 using IAllocator3 = ::android::hardware::graphics::allocator::V3_0::IAllocator;
+using IAllocator4 = ::android::hardware::graphics::allocator::V4_0::IAllocator;
 using IMapper2 = ::android::hardware::graphics::mapper::V2_0::IMapper;
 using IMapper2_1 = ::android::hardware::graphics::mapper::V2_1::IMapper;
 using IMapper3 = ::android::hardware::graphics::mapper::V3_0::IMapper;
+using IMapper4 = ::android::hardware::graphics::mapper::V4_0::IMapper;
 
 using Error2 = ::android::hardware::graphics::mapper::V2_0::Error;
 using Error3 = ::android::hardware::graphics::mapper::V3_0::Error;
+using Error4 = ::android::hardware::graphics::mapper::V4_0::Error;
 
 using ::android::hardware::graphics::common::V1_0::BufferUsage;
 using ::android::hardware::graphics::common::V1_0::PixelFormat;
-
-// This is a typedef to the same underlying type across v2.0 and v3.0
-using ::android::hardware::graphics::mapper::V2_0::BufferDescriptor;
 
 using ::android::hardware::hidl_handle;
 using ::android::hardware::hidl_string;
@@ -58,7 +60,6 @@ class IGrallocHalWrapper {
     virtual ~IGrallocHalWrapper() = default;
 
     // IAllocator
-    virtual std::string dumpDebugInfo() = 0;
     virtual native_handle_t* allocate(uint32_t size) = 0;
     virtual void freeBuffer(native_handle_t* bufferHandle) = 0;
 
@@ -75,6 +76,24 @@ bool failed(Error2 error) {
 bool failed(Error3 error) {
     return (error != Error3::NONE);
 }
+bool failed(Error4 error) {
+    return (error != Error4::NONE);
+}
+
+template <typename>
+struct FirstArg;
+
+// Template specialization for pointer to a non-static member function, which exposes
+// the type of the first argument given to said function
+template <typename ReturnType, typename ClassT, typename Arg1, typename... OtherArgs>
+struct FirstArg<ReturnType (ClassT::*)(Arg1, OtherArgs...)> {
+    using type = Arg1;
+};
+
+// Alias to FirstArg which also removes any reference type and const associated
+template <typename T>
+using BaseTypeOfFirstArg = typename std::remove_const<
+        typename std::remove_reference<typename FirstArg<T>::type>::type>::type;
 
 // Since all the type and function names are the same for the things we use across the major HAL
 // versions, we use template magic to avoid repeating ourselves.
@@ -88,7 +107,6 @@ class GrallocHalWrapper : public IGrallocHalWrapper {
         }
     }
 
-    virtual std::string dumpDebugInfo() override;
     virtual native_handle_t* allocate(uint32_t size) override;
     virtual void freeBuffer(native_handle_t* bufferHandle) override;
 
@@ -101,21 +119,19 @@ class GrallocHalWrapper : public IGrallocHalWrapper {
     sp<AllocatorT> mAllocator;
     sp<MapperT> mMapper;
 
-    BufferDescriptor getDescriptor(uint32_t size);
+    // v2.0 and v3.0 use vec<uint32_t> for BufferDescriptor, but v4.0 uses vec<uint8_t>, so use
+    // some template magic to deduce the right type based off of the first argument to allocate(),
+    // which is always the version-specific BufferDescriptor type
+    typedef BaseTypeOfFirstArg<decltype(&AllocatorT::allocate)> BufferDescriptorT;
+
+    BufferDescriptorT getDescriptor(uint32_t size);
     native_handle_t* importBuffer(const hidl_handle& rawHandle);
 };
 
 template <typename AllocatorT, typename MapperT>
-std::string GrallocHalWrapper<AllocatorT, MapperT>::dumpDebugInfo() {
-    std::string debugInfo;
-    mAllocator->dumpDebugInfo([&](const hidl_string& tmpDebugInfo) { debugInfo = tmpDebugInfo; });
-    return debugInfo;
-}
-
-template <typename AllocatorT, typename MapperT>
 native_handle_t* GrallocHalWrapper<AllocatorT, MapperT>::allocate(uint32_t size) {
     constexpr uint32_t kBufferCount = 1;
-    BufferDescriptor descriptor = getDescriptor(size);
+    BufferDescriptorT descriptor = getDescriptor(size);
     native_handle_t* bufferHandle = nullptr;
 
     auto callback = [&](auto error, uint32_t /*stride*/, const hidl_vec<hidl_handle>& buffers) {
@@ -142,7 +158,8 @@ void GrallocHalWrapper<AllocatorT, MapperT>::freeBuffer(native_handle_t* bufferH
 }
 
 template <typename AllocatorT, typename MapperT>
-BufferDescriptor GrallocHalWrapper<AllocatorT, MapperT>::getDescriptor(uint32_t size) {
+typename GrallocHalWrapper<AllocatorT, MapperT>::BufferDescriptorT
+GrallocHalWrapper<AllocatorT, MapperT>::getDescriptor(uint32_t size) {
     typename MapperT::BufferDescriptorInfo descriptorInfo = {
             .width = size,
             .height = 1,
@@ -151,8 +168,8 @@ BufferDescriptor GrallocHalWrapper<AllocatorT, MapperT>::getDescriptor(uint32_t 
             .usage = kBufferUsage,
     };
 
-    BufferDescriptor descriptor;
-    auto callback = [&](auto error, const BufferDescriptor& tmpDescriptor) {
+    BufferDescriptorT descriptor;
+    auto callback = [&](auto error, const BufferDescriptorT& tmpDescriptor) {
         if (failed(error)) {
             ALOGE("Failed to create descriptor: %" PRId32, static_cast<int32_t>(error));
         } else {
@@ -189,7 +206,7 @@ void* GrallocHalWrapper<AllocatorT, MapperT>::lock(native_handle_t* bufferHandle
 
     void* data = nullptr;
     mMapper->lock(bufferHandle, kBufferUsage, accessRegion, acquireFenceHandle,
-                  [&](auto error, void* tmpData, ...) {  // V3_0 passes extra args we don't use
+                  [&](auto error, void* tmpData, ...) {  // V3/4 pass extra args we don't use
                       if (failed(error)) {
                           ALOGE("Failed to lock buffer %p: %" PRId32, bufferHandle,
                                 static_cast<int32_t>(error));
@@ -214,28 +231,40 @@ void GrallocHalWrapper<AllocatorT, MapperT>::unlock(native_handle_t* bufferHandl
 }  // anonymous namespace
 
 GrallocWrapper::GrallocWrapper() {
-    sp<IAllocator3> allocator3 = IAllocator3::getService();
-    sp<IMapper3> mapper3 = IMapper3::getService();
+    sp<IAllocator4> allocator4 = IAllocator4::getService();
+    sp<IMapper4> mapper4 = IMapper4::getService();
 
-    if (allocator3 != nullptr && mapper3 != nullptr) {
+    if (allocator4 != nullptr && mapper4 != nullptr) {
+        ALOGD("Using IAllocator/IMapper v4.0");
         mGrallocHal = std::unique_ptr<IGrallocHalWrapper>(
-                new GrallocHalWrapper<IAllocator3, IMapper3>(allocator3, mapper3));
+                new GrallocHalWrapper<IAllocator4, IMapper4>(allocator4, mapper4));
     } else {
-        ALOGD("Graphics HALs 3.0 not found (allocator %d mapper %d), falling back to 2.x",
-              (allocator3 != nullptr), (mapper3 != nullptr));
+        ALOGD("Graphics HALs 4.0 not found (allocator %d mapper %d), falling back to 3.0",
+              (allocator4 != nullptr), (mapper4 != nullptr));
 
-        sp<IAllocator2> allocator2 = IAllocator2::getService();
-        sp<IMapper2> mapper2 = IMapper2_1::getService();
-        if (mapper2 == nullptr) {
-            mapper2 = IMapper2::getService();
-        }
+        sp<IAllocator3> allocator3 = IAllocator3::getService();
+        sp<IMapper3> mapper3 = IMapper3::getService();
 
-        if (allocator2 != nullptr && mapper2 != nullptr) {
+        if (allocator3 != nullptr && mapper3 != nullptr) {
             mGrallocHal = std::unique_ptr<IGrallocHalWrapper>(
-                    new GrallocHalWrapper<IAllocator2, IMapper2>(allocator2, mapper2));
+                    new GrallocHalWrapper<IAllocator3, IMapper3>(allocator3, mapper3));
         } else {
-            ALOGE("Couldn't open 2.x/3.0 graphics HALs (2.x allocator %d mapper %d)",
-                  (allocator2 != nullptr), (mapper2 != nullptr));
+            ALOGD("Graphics HALs 3.0 not found (allocator %d mapper %d), falling back to 2.x",
+                  (allocator3 != nullptr), (mapper3 != nullptr));
+
+            sp<IAllocator2> allocator2 = IAllocator2::getService();
+            sp<IMapper2> mapper2 = IMapper2_1::getService();
+            if (mapper2 == nullptr) {
+                mapper2 = IMapper2::getService();
+            }
+
+            if (allocator2 != nullptr && mapper2 != nullptr) {
+                mGrallocHal = std::unique_ptr<IGrallocHalWrapper>(
+                        new GrallocHalWrapper<IAllocator2, IMapper2>(allocator2, mapper2));
+            } else {
+                ALOGE("Couldn't open graphics HALs (2.x allocator %d mapper %d)",
+                      (allocator2 != nullptr), (mapper2 != nullptr));
+            }
         }
     }
 }
@@ -246,10 +275,6 @@ GrallocWrapper::~GrallocWrapper() {
         mGrallocHal->freeBuffer(bufferHandle);
     }
     mAllocatedBuffers.clear();
-}
-
-std::string GrallocWrapper::dumpDebugInfo() {
-    return mGrallocHal->dumpDebugInfo();
 }
 
 std::pair<native_handle_t*, void*> GrallocWrapper::allocate(uint32_t size) {

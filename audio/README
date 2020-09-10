@@ -1,5 +1,8 @@
 Directory structure of the audio HIDL related code.
 
+Run `common/all-versions/copyHAL.sh` to create a new version of the audio HAL
+based on an existing one.
+
 audio
 |-- 2.0              <== core 2.0 HIDL API. .hal can not be moved into the core directory
 |                        because that would change its namespace and include path
@@ -11,13 +14,13 @@ audio
 |   |-- 2.0          <== HIDL API of V2
 |   |-- 4.0
 |   |-- ...
-|   `-- all_versions <== code common to all version of both core and effect API
+|   `-- all-versions <== code common to all version of both core and effect API
 |       |-- default  <== implementation shared code between core and effect impl
 |       |-- test     <== utilities used by tests
 |       `-- util     <== utilities used by both implementation and tests
 |
 |-- core             <== VTS and default implementation of the core API (not HIDL, see /audio/2.0))
-|   `-- all_versions <== Code is version independent through #if and separate files
+|   `-- all-versions <== Code is version independent through #if and separate files
 |       |-- default  <== code that wraps the legacy API
 |       `-- vts      <== vts of core API
 |           |-- 2.0  <== 2.0 specific tests and helpers
@@ -28,6 +31,6 @@ audio
     |-- 2.0
     |-- 4.0
     |-- ...
-    `-- all_versions
+    `-- all-versions
         |-- default
         `-- vts

@@ -45,6 +45,10 @@ enum Status : @1.0::Status {
      *  ERROR_CAS_BLACKOUT is used to report geographical blackout.
      */
     ERROR_CAS_BLACKOUT,
+    /**
+     * ERROR_CAS_REBOOTING is used to report CAS is during rebooting.
+     */
+    ERROR_CAS_REBOOTING,
 };
 
 /**

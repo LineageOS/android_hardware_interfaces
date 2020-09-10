@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-#include <VtsHalHidlTargetTestBase.h>
 #include <android-base/logging.h>
 #include <cutils/properties.h>
 
 #include <android/hidl/manager/1.0/IServiceManager.h>
-#include <android/hidl/manager/1.0/IServiceNotification.h>
 #include <hidl/HidlTransportSupport.h>
 
 #include <wifi_system/interface_tool.h>
@@ -46,17 +44,19 @@ using ::android::hardware::wifi::supplicant::V1_0::ISupplicantP2pIface;
 using ::android::hardware::wifi::supplicant::V1_0::IfaceType;
 using ::android::hardware::wifi::supplicant::V1_0::SupplicantStatus;
 using ::android::hardware::wifi::supplicant::V1_0::SupplicantStatusCode;
-using ::android::hidl::manager::V1_0::IServiceNotification;
 using ::android::wifi_system::InterfaceTool;
 using ::android::wifi_system::SupplicantManager;
-
-extern WifiSupplicantHidlEnvironment* gEnv;
 
 namespace {
 
 // Helper function to initialize the driver and firmware to STA mode
 // using the vendor HAL HIDL interface.
 void initilializeDriverAndFirmware(const std::string& wifi_instance_name) {
+    // Skip if wifi instance is not set.
+    if (wifi_instance_name == "") {
+        return;
+    }
+
     sp<IWifiChip> wifi_chip = getWifiChip(wifi_instance_name);
     ChipModeId mode_id;
     EXPECT_TRUE(configureChipToSupportIfaceType(
@@ -66,6 +66,11 @@ void initilializeDriverAndFirmware(const std::string& wifi_instance_name) {
 // Helper function to deinitialize the driver and firmware
 // using the vendor HAL HIDL interface.
 void deInitilializeDriverAndFirmware(const std::string& wifi_instance_name) {
+    // Skip if wifi instance is not set.
+    if (wifi_instance_name == "") {
+        return;
+    }
+
     stopWifi(wifi_instance_name);
 }
 
@@ -107,55 +112,6 @@ std::string getP2pIfaceName() {
 }
 }  // namespace
 
-// Utility class to wait for wpa_supplicant's HIDL service registration.
-class ServiceNotificationListener : public IServiceNotification {
-   public:
-    Return<void> onRegistration(const hidl_string& fully_qualified_name,
-                                const hidl_string& instance_name,
-                                bool pre_existing) override {
-        if (pre_existing) {
-            return Void();
-        }
-        std::unique_lock<std::mutex> lock(mutex_);
-        registered_.push_back(std::string(fully_qualified_name.c_str()) + "/" +
-                              instance_name.c_str());
-        lock.unlock();
-        condition_.notify_one();
-        return Void();
-    }
-
-    bool registerForHidlServiceNotifications(const std::string& instance_name) {
-        if (!ISupplicant::registerForNotifications(instance_name, this)) {
-            return false;
-        }
-        configureRpcThreadpool(2, false);
-        return true;
-    }
-
-    bool waitForHidlService(uint32_t timeout_in_millis,
-                            const std::string& instance_name) {
-        std::unique_lock<std::mutex> lock(mutex_);
-        condition_.wait_for(lock, std::chrono::milliseconds(timeout_in_millis),
-                            [&]() { return registered_.size() >= 1; });
-        if (registered_.size() != 1) {
-            return false;
-        }
-        std::string exptected_registered =
-            std::string(ISupplicant::descriptor) + "/" + instance_name;
-        if (registered_[0] != exptected_registered) {
-            LOG(ERROR) << "Expected: " << exptected_registered
-                       << ", Got: " << registered_[0];
-            return false;
-        }
-        return true;
-    }
-
-   private:
-    std::vector<std::string> registered_{};
-    std::mutex mutex_;
-    std::condition_variable condition_;
-};
-
 void stopSupplicant() { stopSupplicant(""); }
 
 void stopSupplicant(const std::string& wifi_instance_name) {
@@ -166,28 +122,17 @@ void stopSupplicant(const std::string& wifi_instance_name) {
     ASSERT_FALSE(supplicant_manager.IsSupplicantRunning());
 }
 
-// TODO(b/143892896): Remove old APIs after all supplicant tests are updated.
-void startSupplicantAndWaitForHidlService() {
-    startSupplicantAndWaitForHidlService("",
-                                         gEnv->getServiceName<ISupplicant>());
-}
-
 void startSupplicantAndWaitForHidlService(
     const std::string& wifi_instance_name,
     const std::string& supplicant_instance_name) {
     initilializeDriverAndFirmware(wifi_instance_name);
 
-    android::sp<ServiceNotificationListener> notification_listener =
-        new ServiceNotificationListener();
-    ASSERT_TRUE(notification_listener->registerForHidlServiceNotifications(
-        supplicant_instance_name));
-
     SupplicantManager supplicant_manager;
     ASSERT_TRUE(supplicant_manager.StartSupplicant());
     ASSERT_TRUE(supplicant_manager.IsSupplicantRunning());
 
-    ASSERT_TRUE(notification_listener->waitForHidlService(
-        500, supplicant_instance_name));
+    // Wait for supplicant service to come up.
+    ISupplicant::getService(supplicant_instance_name);
 }
 
 bool is_1_1(const sp<ISupplicant>& supplicant) {
@@ -230,21 +175,6 @@ void addSupplicantP2pIface_1_1(const sp<ISupplicant>& supplicant) {
         });
 }
 
-// TODO(b/143892896): Remove old APIs after all supplicant tests are updated.
-sp<ISupplicant> getSupplicant() {
-    sp<ISupplicant> supplicant =
-        ::testing::VtsHalHidlTargetTestBase::getService<ISupplicant>(
-            gEnv->getServiceName<ISupplicant>());
-    // For 1.1 supplicant, we need to add interfaces at initialization.
-    if (is_1_1(supplicant)) {
-        addSupplicantStaIface_1_1(supplicant);
-        if (gEnv->isP2pOn) {
-            addSupplicantP2pIface_1_1(supplicant);
-        }
-    }
-    return supplicant;
-}
-
 sp<ISupplicant> getSupplicant(const std::string& supplicant_instance_name,
                               bool isP2pOn) {
     sp<ISupplicant> supplicant =
@@ -257,12 +187,6 @@ sp<ISupplicant> getSupplicant(const std::string& supplicant_instance_name,
         }
     }
     return supplicant;
-}
-
-// TODO(b/143892896): Remove old APIs after all supplicant tests are updated.
-sp<ISupplicantStaIface> getSupplicantStaIface() {
-    sp<ISupplicant> supplicant = getSupplicant();
-    return getSupplicantStaIface(supplicant);
 }
 
 sp<ISupplicantStaIface> getSupplicantStaIface(
@@ -290,11 +214,6 @@ sp<ISupplicantStaIface> getSupplicantStaIface(
     return sta_iface;
 }
 
-// TODO(b/143892896): Remove old APIs after all supplicant tests are updated.
-sp<ISupplicantStaNetwork> createSupplicantStaNetwork() {
-    return createSupplicantStaNetwork(getSupplicant());
-}
-
 sp<ISupplicantStaNetwork> createSupplicantStaNetwork(
     const sp<ISupplicant>& supplicant) {
     sp<ISupplicantStaIface> sta_iface = getSupplicantStaIface(supplicant);
@@ -315,11 +234,6 @@ sp<ISupplicantStaNetwork> createSupplicantStaNetwork(
         return nullptr;
     }
     return sta_network;
-}
-
-// TODO(b/143892896): Remove old APIs after all supplicant tests are updated.
-sp<ISupplicantP2pIface> getSupplicantP2pIface() {
-    return getSupplicantP2pIface(getSupplicant());
 }
 
 sp<ISupplicantP2pIface> getSupplicantP2pIface(
@@ -345,11 +259,6 @@ sp<ISupplicantP2pIface> getSupplicantP2pIface(
         return nullptr;
     }
     return p2p_iface;
-}
-
-// TODO(b/143892896): Remove old APIs after all supplicant tests are updated.
-bool turnOnExcessiveLogging() {
-    return turnOnExcessiveLogging(getSupplicant());
 }
 
 bool turnOnExcessiveLogging(const sp<ISupplicant>& supplicant) {

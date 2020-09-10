@@ -1,0 +1,124 @@
+/*
+ * Copyright 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.soundtrigger@2.3;
+
+import @2.0::SoundModelHandle;
+import @2.0::ISoundTriggerHwCallback.CallbackCookie;
+import @2.2::ISoundTriggerHw;
+import @2.1::ISoundTriggerHwCallback;
+
+/**
+ * SoundTrigger HAL interface. Used for hardware recognition of hotwords
+ * and other sounds.
+ */
+interface ISoundTriggerHw extends @2.2::ISoundTriggerHw {
+
+    /**
+     * Retrieve extended implementation properties.
+     * The returned properties includes what is returned from the
+     * getProperties along with expanded implementation details.
+     *
+     * @return retval Operation completion status: 0 in case of success,
+     *                -ENODEV in case of initialization error.
+     * @return properties A Properties structure containing implementation
+     *                    description and capabilities.
+     */
+    getProperties_2_3() generates (int32_t retval, Properties properties);
+
+    /**
+     * Start recognition on a given model. Only one recognition active
+     * at a time per model. Once recognition succeeds or fails, the callback
+     * associated with the model handle is called.
+     *
+     * Must have the exact same semantics as startRecognition from
+     * ISoundTriggerHw@2.1 except that the RecognitionConfig includes audio
+     * capabilities applied when the recognition is active.
+     *
+     * @param modelHandle the handle of the sound model to use for recognition
+     * @param config A RecognitionConfig structure containing attributes of the
+     *     recognition to perform
+     * @return retval Operation completion status: 0 in case of success,
+     *     -EINVAL in case of invalid recognition attributes,
+     *     -ENOSYS in case of invalid model handle,
+     *     -ENOMEM in case of memory allocation failure,
+     *     -ENODEV in case of initialization error.
+     */
+    startRecognition_2_3(SoundModelHandle modelHandle, RecognitionConfig config)
+            generates (int32_t retval);
+
+    /**
+     * Set a model specific parameter with the given value. This parameter
+     * will keep its value for the duration the model is loaded regardless of starting and stopping
+     * recognition. Once the model is unloaded, the value will be lost.
+     * It is expected to check if the handle supports the parameter via the queryParameter
+     * API prior to calling this method.
+     *
+     * @param modelHandle The sound model handle indicating which model to modify parameters
+     * @param modelParam Parameter to set which will be validated against the
+     *                   ModelParameter type. Not putting ModelParameter type
+     *                   directly in the definition and validating internally
+     *                   allows for forward compatibility.
+     * @param value The value to set for the given model parameter
+     * @return status Operation completion status: 0 in case of success,
+     *                -ENODEV if the native service cannot be reached
+     *                -EINVAL invalid input parameter
+     */
+    setParameter(SoundModelHandle modelHandle, ModelParameter modelParam, int32_t value)
+            generates (int32_t status);
+
+    /**
+     * Get a model specific parameter. This parameter will keep its value
+     * for the duration the model is loaded regardless of starting and stopping recognition.
+     * Once the model is unloaded, the value will be lost. If the value is not set, a default
+     * value is returned. See ModelParameter for parameter default values.
+     * It is expected to check if the handle supports the parameter via the queryParameter
+     * API prior to calling this method.
+     *
+     * @param modelHandle The sound model associated with given modelParam
+     * @param modelParam Parameter to set which will be validated against the
+     *                   ModelParameter type. Not putting ModelParameter type
+     *                   directly in the definition and validating internally
+     *                   allows for forward compatibility.
+     * @return status Operation completion status: 0 in case of success,
+     *                -ENODEV if the native service cannot be reached
+     *                -EINVAL invalid input parameter
+     * @return value Value set to the requested parameter. Value is only set when status
+     *                indicates success.
+     */
+    getParameter(SoundModelHandle modelHandle, ModelParameter modelParam)
+            generates (int32_t status, int32_t value);
+
+    /**
+     * Get supported parameter attributes with respect to the provided model
+     * handle. Along with determining the valid range, this API is also used
+     * to determine if a given parameter ID is supported at all by the
+     * modelHandle for use with getParameter and setParameter APIs.
+     *
+     * @param modelHandle The sound model handle indicating which model to query
+     * @param modelParam Parameter to set which will be validated against the
+     *                   ModelParameter type
+     * @return status Operation completion status: 0 in case of success
+     *                -ENODEV if the native service cannot be reached
+     *                -EINVAL invalid input parameter
+     * @return retval OptionalModelParameterRange safe union structure wrapping
+     *                ModelParameterRange. This structure indicates supported attributes
+     *                of the parameter for the given model handle. If the parameter is not
+     *                supported the Monostate of the union is used.
+     */
+    queryParameter(SoundModelHandle modelHandle, ModelParameter modelParam)
+            generates (int32_t status, OptionalModelParameterRange retval);
+};

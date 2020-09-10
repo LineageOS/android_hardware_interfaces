@@ -44,8 +44,8 @@ class MessageProcessor {
      * Process a single message received over a CommConn. Populate the given respMsg with the reply
      * message we should send.
      */
-    virtual void processMessage(emulator::EmulatorMessage const& rxMsg,
-                                emulator::EmulatorMessage& respMsg) = 0;
+    virtual void processMessage(vhal_proto::EmulatorMessage const& rxMsg,
+                                vhal_proto::EmulatorMessage& respMsg) = 0;
 };
 
 /**
@@ -93,7 +93,7 @@ class CommConn {
     /**
      * Serialized and send the given message to the other side.
      */
-    void sendMessage(emulator::EmulatorMessage const& msg);
+    void sendMessage(vhal_proto::EmulatorMessage const& msg);
 
    protected:
     std::unique_ptr<std::thread> mReadThread;

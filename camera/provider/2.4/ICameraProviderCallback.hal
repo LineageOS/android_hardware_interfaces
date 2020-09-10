@@ -39,7 +39,7 @@ interface ICameraProviderCallback {
      * are already present, as soon as the callbacks are available through
      * setCallback.
      *
-     * @param cameraDeviceServiceName The name of the camera device that has a
+     * @param cameraDeviceName The name of the camera device that has a
      *     new status.
      * @param newStatus The new status that device is in.
      *
@@ -57,7 +57,7 @@ interface ICameraProviderCallback {
      * android.flash.info.available is reported as true via the
      * ICameraDevice::getCameraCharacteristics call.
      *
-     * @param cameraDeviceServiceName The name of the camera device that has a
+     * @param cameraDeviceName The name of the camera device that has a
      *     new status.
      * @param newStatus The new status that device is in.
      *

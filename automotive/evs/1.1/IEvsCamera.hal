@@ -1,0 +1,236 @@
+/*
+ * Copyright (C) 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.automotive.evs@1.1;
+
+import @1.0::IEvsCamera;
+import @1.0::IEvsDisplay;
+import @1.0::EvsResult;
+import IEvsCameraStream;
+
+/**
+ * Represents a single camera and is the primary interface for capturing images.
+ */
+interface IEvsCamera extends @1.0::IEvsCamera {
+    /**
+     * Returns the description of this camera.
+     *
+     * @return info The description of this camera.  This must be the same value as
+     *              reported by EvsEnumerator::getCameraList_1_1().
+     */
+    getCameraInfo_1_1() generates (CameraDesc info);
+
+    /**
+     * Returns the description of the physical camera device that backs this
+     * logical camera.
+     *
+     * If a requested device does not either exist or back this logical device,
+     * this method returns a null camera descriptor.  And, if this is called on
+     * a physical camera device, this method is the same as getCameraInfo_1_1()
+     * method if a given device ID is matched.  Otherwise, this will return a
+     * null camera descriptor.
+     *
+     * @param  deviceId Physical camera device identifier string.
+     * @return info     The description of a member physical camera device.
+     *                  This must be the same value as reported by
+     *                  EvsEnumerator::getCameraList_1_1().
+     */
+    getPhysicalCameraInfo(string deviceId) generates (CameraDesc info);
+
+    /**
+     * Requests to pause EVS camera stream events.
+     *
+     * Like stopVideoStream(), events may continue to arrive for some time
+     * after this call returns. Delivered frame buffers must be returned.
+     *
+     * @return result EvsResult::OK is returned if this call is successful.
+     */
+    pauseVideoStream() generates (EvsResult result);
+
+    /**
+     * Requests to resume EVS camera stream.
+     *
+     * @return result EvsResult::OK is returned if this call is successful.
+     */
+    resumeVideoStream() generates (EvsResult result);
+
+    /**
+     * Returns frame that were delivered by to the IEvsCameraStream.
+     *
+     * When done consuming a frame delivered to the IEvsCameraStream
+     * interface, it must be returned to the IEvsCamera for reuse.
+     * A small, finite number of buffers are available (possibly as small
+     * as one), and if the supply is exhausted, no further frames may be
+     * delivered until a buffer is returned.
+     *
+     * @param  buffer Buffers to be returned.
+     * @return result Return EvsResult::OK if this call is successful.
+     */
+    doneWithFrame_1_1(vec<BufferDesc> buffer) generates (EvsResult result);
+
+    /**
+     * Requests to be a master client.
+     *
+     * When multiple clients subscribe to a single camera hardware and one of
+     * them adjusts a camera parameter such as the contrast, it may disturb
+     * other clients' operations.  Therefore, the client must call this method
+     * to be a master client.  Once it becomes a master, it will be able to
+     * change camera parameters until either it dies or explicitly gives up the
+     * role.
+     *
+     * @return result EvsResult::OK if a master role is granted.
+     *                EvsResult::OWNERSHIP_LOST if there is already a
+     *                master client.
+     */
+    setMaster() generates (EvsResult result);
+
+    /**
+     * Sets to be a master client forcibly.
+     *
+     * The client, which owns the display, has a high priority and can take over
+     * a master role from other clients without the display.
+     *
+     * @param  display IEvsDisplay handle.  If a given display is in either
+     *                 NOT_VISIBLE, VISIBLE_ON_NEXT_FRAME, or VISIBLE state, the
+     *                 calling client is considered as the high priority client
+     *                 and therefore allowed to take over a master role from
+     *                 existing master client.
+     *
+     * @return result  EvsResult::OK if a master role is granted.
+     *                 EvsResult::INVALID_ARG if a given display handle is null
+     *                 or in valid states.
+     */
+    forceMaster(IEvsDisplay display) generates (EvsResult result);
+
+    /**
+     * Retires from a master client role.
+     *
+     * @return result EvsResult::OK if this call is successful.
+     *                EvsResult::INVALID_ARG if the caller client is not a
+     *                master client.
+     */
+    unsetMaster() generates (EvsResult result);
+
+    /**
+     * Retrieves a list of parameters this camera supports.
+     *
+     * @return params A list of CameraParam that this camera supports.
+     */
+    getParameterList() generates (vec<CameraParam> params);
+
+    /**
+     * Requests a valid value range of a camera parameter
+     *
+     * @param  id    The identifier of camera parameter, CameraParam enum.
+     *
+     * @return min   The lower bound of valid parameter value range.
+     * @return max   The upper bound of valid parameter value range.
+     * @return step  The resolution of values in valid range.
+     */
+    getIntParameterRange(CameraParam id)
+        generates (int32_t min, int32_t max, int32_t step);
+
+    /**
+     * Requests to set a camera parameter.
+     *
+     * Only a request from the master client will be processed successfully.
+     * When this method is called on a logical camera device, it will be forwarded
+     * to each physical device and, if it fails to program any physical device,
+     * it will return an error code with the same number of effective values as
+     * the number of backing camera devices.
+     *
+     * @param  id             The identifier of camera parameter, CameraParam enum.
+     *         value          A desired parameter value.
+     * @return result         EvsResult::OK if it succeeds to set a parameter.
+     *                        EvsResult::INVALID_ARG if either the request is
+     *                        not made by a master client, or a requested
+     *                        parameter is not supported.
+     *                        EvsResult::UNDERLYING_SERVICE_ERROR if it fails to
+     *                        program a value by any other reason.
+     *         effectiveValue Programmed parameter values.  This may differ
+     *                        from what the client gives if, for example, the
+     *                        driver does not support a target parameter.
+     */
+    setIntParameter(CameraParam id, int32_t value)
+        generates (EvsResult result, vec<int32_t> effectiveValue);
+
+    /**
+     * Retrieves values of given camera parameter.
+     *
+     * @param  id     The identifier of camera parameter, CameraParam enum.
+     * @return result EvsResult::OK if it succeeds to read a parameter.
+     *                EvsResult::INVALID_ARG if either a requested parameter is
+     *                not supported.
+     *         value  Values of requested camera parameter, the same number of
+     *                values as backing camera devices.
+     */
+    getIntParameter(CameraParam id) generates(EvsResult result, vec<int32_t> value);
+
+    /**
+     * Request driver specific information from the HAL implementation.
+     *
+     * The values allowed for opaqueIdentifier are driver specific,
+     * but no value passed in may crash the driver. The driver should
+     * return EvsResult::INVALID_ARG for any unrecognized opaqueIdentifier.
+     *
+     * @param  opaqueIdentifier An unique identifier of the information to
+     *                          request.
+     * @return result           EvsResult::OK if the driver recognizes a given
+     *                          identifier.
+     *                          EvsResult::INVALID_ARG, otherwise.
+     * @return value            Requested information.  Zero-size vector is
+     *                          returned if the driver does not recognize a
+     *                          given identifier.
+     */
+    getExtendedInfo_1_1(uint32_t opaqueIdentifier)
+        generates (EvsResult result, vec<uint8_t> value);
+
+    /**
+     * Send a driver specific value to the HAL implementation.
+     *
+     * This extension is provided to facilitate car specific
+     * extensions, but no HAL implementation may require this call
+     * in order to function in a default state.
+     * INVALID_ARG is returned if the opaqueValue is not meaningful to
+     * the driver implementation.
+     *
+     * @param  opaqueIdentifier An unique identifier of the information to
+     *                          program.
+     *         opaqueValue      A value to program.
+     * @return result           EvsResult::OK is returned if this call is successful.
+     *                          EvsResult::INVALID_ARG, otherwise.
+     */
+    setExtendedInfo_1_1(uint32_t opaqueIdentifier, vec<uint8_t> opaqueValue)
+        generates (EvsResult result);
+
+    /**
+     * Import external buffers to capture frames
+     *
+     * This API must be called with a physical camera device identifier.
+     *
+     * @param  buffers  A list of buffers allocated by the caller.  EvsCamera
+     *                  will use these buffers to capture frames, in addition to
+     *                  other buffers already in its buffer pool.
+     * @return result   EvsResult::OK if it succeeds to import buffers.
+     *                  EvsResult::UNDERLYING_SERVICE_ERROR if this is called
+     *                  for logical camera devices or EVS fails to import
+     *                  buffers.
+     *         delta    The amount of buffer pool size changes after importing
+     *                  given buffers.
+     */
+    importExternalBuffers(vec<BufferDesc> buffers)
+        generates (EvsResult result, int32_t delta);
+};

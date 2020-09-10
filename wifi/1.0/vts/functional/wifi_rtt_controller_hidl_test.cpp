@@ -16,25 +16,39 @@
 
 #include <android-base/logging.h>
 
+#include <VtsCoreUtil.h>
+#include <android/hardware/wifi/1.0/IWifi.h>
 #include <android/hardware/wifi/1.0/IWifiRttController.h>
+#include <gtest/gtest.h>
+#include <hidl/GtestPrinter.h>
+#include <hidl/ServiceManagement.h>
 
-#include <VtsHalHidlTargetTestBase.h>
-
+#include "wifi_hidl_call_util.h"
 #include "wifi_hidl_test_utils.h"
 
-using ::android::hardware::wifi::V1_0::IWifiRttController;
 using ::android::sp;
+using ::android::hardware::wifi::V1_0::IWifi;
+using ::android::hardware::wifi::V1_0::IWifiChip;
+using ::android::hardware::wifi::V1_0::IWifiRttController;
+using ::android::hardware::wifi::V1_0::IWifiStaIface;
+using ::android::hardware::wifi::V1_0::WifiStatusCode;
 
 /**
  * Fixture to use for all RTT controller HIDL interface tests.
  */
-class WifiRttControllerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
+class WifiRttControllerHidlTest : public ::testing::TestWithParam<std::string> {
    public:
-    virtual void SetUp() override {}
+    virtual void SetUp() override {
+        if (!::testing::deviceSupportsFeature("android.hardware.wifi.rtt"))
+            GTEST_SKIP() << "Skipping this test since RTT is not supported.";
+        // Make sure test starts with a clean state
+        stopWifi(GetInstanceName());
+    }
 
-    virtual void TearDown() override { stopWifi(); }
+    virtual void TearDown() override { stopWifi(GetInstanceName()); }
 
    protected:
+    std::string GetInstanceName() { return GetParam(); }
 };
 
 /*
@@ -42,7 +56,28 @@ class WifiRttControllerHidlTest : public ::testing::VtsHalHidlTargetTestBase {
  * Ensures that an instance of the IWifiRttController proxy object is
  * successfully created.
  */
-TEST(WifiRttControllerHidlTestNoFixture, Create) {
-    EXPECT_NE(nullptr, getWifiRttController().get());
-    stopWifi();
+TEST_P(WifiRttControllerHidlTest, Create) {
+    stopWifi(GetInstanceName());
+
+    const std::string& instance_name = GetInstanceName();
+
+    sp<IWifiChip> wifi_chip = getWifiChip(instance_name);
+    ASSERT_NE(nullptr, wifi_chip.get());
+
+    sp<IWifiStaIface> wifi_sta_iface = getWifiStaIface(instance_name);
+    ASSERT_NE(nullptr, wifi_sta_iface.get());
+
+    const auto& status_and_controller =
+        HIDL_INVOKE(wifi_chip, createRttController, wifi_sta_iface);
+    if (status_and_controller.first.code !=
+        WifiStatusCode::ERROR_NOT_SUPPORTED) {
+        EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_controller.first.code);
+        EXPECT_NE(nullptr, status_and_controller.second.get());
+    }
 }
+
+INSTANTIATE_TEST_SUITE_P(
+    PerInstance, WifiRttControllerHidlTest,
+    testing::ValuesIn(
+        android::hardware::getAllHalInstanceNames(IWifi::descriptor)),
+    android::hardware::PrintInstanceNameToString);

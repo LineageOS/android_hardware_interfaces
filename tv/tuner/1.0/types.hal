@@ -63,7 +63,7 @@ enum FrontendType : uint32_t {
     DVBS,
     /**
      * Digital Video Broadcasting - Terrestrial
-     * DVB Terresttrial Frontend Standard ETSI EN 300 468 V1.15.1 and
+     * DVB Terrestrial Frontend Standard ETSI EN 300 468 V1.15.1 and
      * ETSI EN 302 755 V1.4.1.
      */
     DVBT,
@@ -255,7 +255,7 @@ enum FrontendAtscModulation : uint32_t {
 };
 
 /**
- *  Signal Setting for ATSC Frontend.
+ *  Signal Settings for an ATSC Frontend.
  */
 struct FrontendAtscSettings {
     /**
@@ -881,7 +881,7 @@ enum FrontendIsdbsRolloff : uint32_t {
 };
 
 /**
- *  Modulaltion Type for ISDBS.
+ *  Modulation Type for ISDBS.
  */
 @export
 enum FrontendIsdbsModulation : uint32_t {
@@ -1337,18 +1337,15 @@ safe_union FrontendScanMessage {
 @export
 enum FrontendEventType : uint32_t {
     /**
-     * If frontend locked the signal which is specified by tune method, HAL sends
-     * Locked event.
+     * The frontend has locked to the signal specified by the tune method.
      */
     LOCKED,
     /**
-     * If frontend can't locked the signal which is specified by tune method,
-     * HAL sends NO_SIGNAL event.
+     * The frontend is unable to lock to the signal specified by the tune method.
      */
     NO_SIGNAL,
     /**
-     * If frontend detect that the locked signal get lost, HAL sends LOST_LOCK
-     * event.
+     * The frontend has lost the lock to the signal specified by the tune method.
      */
     LOST_LOCK,
 };

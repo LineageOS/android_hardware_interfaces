@@ -29,6 +29,11 @@ interface IAudioControl {
      *
      * For every context, a valid bus number (0 - num busses-1) must be returned. If an
      * unrecognized contextNumber is encountered, then -1 shall be returned.
+     *
+     * Deprecated: usage of this API and car_volume_groups.xml has been replaced with
+     * car_audio_configuration.xml. If using car_audio_configuration.xml, then the framework
+     * will not call this method. If it doesn't, then it will load car_volume_groups.xml and
+     * call this method.
      */
     getBusForContext(ContextNumber contextNumber)
         generates (int32_t busNumber);
