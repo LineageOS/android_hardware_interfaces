@@ -45,7 +45,8 @@ interface IFrontend extends @1.0::IFrontend {
      *         INVALID_STATE if tuning can't be applied at current stage,
      *         UNKNOWN_ERROR if tuning failed for other reasons.
      */
-    tune_1_1(FrontendSettings settings, FrontendSettingsExt settingsExt) generates (Result result);
+    tune_1_1(FrontendSettings settings, FrontendSettingsExt settingsExt)
+        generates (Result result);
 
     /**
      * Scan the frontend to use the settings given.
@@ -66,7 +67,7 @@ interface IFrontend extends @1.0::IFrontend {
      *         UNKNOWN_ERROR if tuning failed for other reasons.
      */
     scan_1_1(FrontendSettings settings, FrontendScanType type, FrontendSettingsExt settingsExt)
-            generates (Result result);
+        generates (Result result);
 
     /**
      * Link Conditional Access Modules (CAM) to Frontend support Common Interface (CI) bypass mode.

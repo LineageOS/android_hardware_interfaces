@@ -18,7 +18,7 @@ package android.hardware.tv.tuner@1.1;
 
 import @1.0::IFilterCallback;
 import @1.0::DemuxFilterEvent;
-import @1.1::DemuxFilterEventExt;
+import DemuxFilterEventExt;
 
 interface IFilterCallback extends @1.0::IFilterCallback {
     /**
