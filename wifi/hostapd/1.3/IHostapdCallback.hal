@@ -38,9 +38,10 @@ interface IHostapdCallback extends @1.1::IHostapdCallback {
      * @param freq The operational frequency of the AP.
      * @param bandwidth The operational bandwidth of the AP.
      * @param generation The operational mode of the AP (e.g. 11ac, 11ax).
+     * @param apIfaceInstanceMacAddress MAC Address of the apIfaceInstance.
      */
     oneway onApInstanceInfoChanged(string ifaceName, string apIfaceInstance, uint32_t freq,
-        Bandwidth bandwidth, Generation generation);
+        Bandwidth bandwidth, Generation generation, MacAddress apIfaceInstanceMacAddress);
 
     /**
      * Invoked when a client connects/disconnects from the hotspot.
@@ -51,7 +52,7 @@ interface IHostapdCallback extends @1.1::IHostapdCallback {
      * will have two instances in dual AP mode. The apIfaceInstance can be used
      * to identify which instance the callback is from.
      * Note: The apIfaceInstance must be same as ifaceName in single AP mode.
-     * @param clientAddress Mac Address of hotspot client.
+     * @param clientAddress MAC Address of hotspot client.
      * @param isConnected true when client connected, false when client
      * disconnected.
      */
