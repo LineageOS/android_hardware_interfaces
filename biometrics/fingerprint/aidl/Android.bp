@@ -1,0 +1,19 @@
+aidl_interface {
+    name: "android.hardware.biometrics.fingerprint",
+    vendor_available: true,
+    srcs: [
+        "android/hardware/biometrics/fingerprint/**/*.aidl",
+    ],
+    imports: [
+        "android.hardware.keymaster",
+    ],
+    stability: "vintf",
+    backend: {
+        java: {
+            platform_apis: true,
+        },
+        cpp: {
+            enabled: false,
+        },
+    },
+}
