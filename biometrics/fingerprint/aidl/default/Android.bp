@@ -1,0 +1,17 @@
+cc_binary {
+    name: "android.hardware.biometrics.fingerprint-service.example",
+    relative_install_path: "hw",
+    init_rc: ["fingerprint-default.rc"],
+    vintf_fragments: ["fingerprint-default.xml"],
+    vendor: true,
+    shared_libs: [
+        "libbase",
+        "libbinder_ndk",
+        "android.hardware.biometrics.fingerprint-ndk_platform",
+    ],
+    srcs: [
+        "main.cpp",
+        "Fingerprint.cpp",
+        "Session.cpp",
+    ],
+}
