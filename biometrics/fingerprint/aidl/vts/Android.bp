@@ -1,0 +1,16 @@
+cc_test {
+    name: "VtsHalBiometricsFingerprintTargetTest",
+    defaults: [
+        "VtsHalTargetTestDefaults",
+        "use_libaidlvintf_gtest_helper_static",
+    ],
+    srcs: ["VtsHalBiometricsFingerprintTargetTest.cpp"],
+    shared_libs: [
+        "libbinder_ndk",
+        "android.hardware.biometrics.fingerprint-ndk_platform",
+    ],
+    test_suites: [
+        "general-tests",
+        "vts",
+    ],
+}
