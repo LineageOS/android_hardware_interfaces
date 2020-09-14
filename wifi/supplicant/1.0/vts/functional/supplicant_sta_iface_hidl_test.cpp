@@ -66,42 +66,22 @@ constexpr uint8_t kTestWpsDeviceType[] = {[0 ... 7] = 0x01};
 constexpr uint16_t kTestWpsConfigMethods = 0xffff;
 }  // namespace
 
-class SupplicantStaIfaceHidlTest
-    : public ::testing::TestWithParam<std::tuple<std::string, std::string>> {
+class SupplicantStaIfaceHidlTest : public SupplicantHidlTestBaseV1_0 {
    public:
     virtual void SetUp() override {
-        wifi_instance_name_ = std::get<0>(GetParam());
-        supplicant_instance_name_ = std::get<1>(GetParam());
-        isP2pOn_ =
-            testing::deviceSupportsFeature("android.hardware.wifi.direct");
-        // Stop Framework
-        std::system("/system/bin/stop");
-        stopSupplicant(wifi_instance_name_);
-        startSupplicantAndWaitForHidlService(wifi_instance_name_,
-                                             supplicant_instance_name_);
-        supplicant_ = getSupplicant(supplicant_instance_name_, isP2pOn_);
-        EXPECT_TRUE(turnOnExcessiveLogging(supplicant_));
+        SupplicantHidlTestBaseV1_0::SetUp();
         sta_iface_ = getSupplicantStaIface(supplicant_);
         ASSERT_NE(sta_iface_.get(), nullptr);
 
         memcpy(mac_addr_.data(), kTestMacAddr, mac_addr_.size());
     }
 
-    virtual void TearDown() override {
-        stopSupplicant(wifi_instance_name_);
-        // Start Framework
-        std::system("/system/bin/start");
-    }
-
    protected:
     bool isP2pOn_ = false;
-    sp<ISupplicant> supplicant_;
     // ISupplicantStaIface object used for all tests in this fixture.
     sp<ISupplicantStaIface> sta_iface_;
     // MAC address to use for various tests.
     std::array<uint8_t, 6> mac_addr_;
-    std::string wifi_instance_name_;
-    std::string supplicant_instance_name_;
 };
 
 class IfaceCallback : public ISupplicantStaIfaceCallback {
@@ -183,8 +163,8 @@ class IfaceCallback : public ISupplicantStaIfaceCallback {
  * successfully created.
  */
 TEST_P(SupplicantStaIfaceHidlTest, Create) {
-    stopSupplicant(wifi_instance_name_);
-    startSupplicantAndWaitForHidlService(wifi_instance_name_,
+    stopSupplicant(wifi_v1_0_instance_name_);
+    startSupplicantAndWaitForHidlService(wifi_v1_0_instance_name_,
                                          supplicant_instance_name_);
     EXPECT_NE(nullptr, getSupplicantStaIface(
                            getSupplicant(supplicant_instance_name_, isP2pOn_))

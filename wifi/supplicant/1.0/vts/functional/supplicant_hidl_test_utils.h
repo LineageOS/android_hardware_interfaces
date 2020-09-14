@@ -17,6 +17,8 @@
 #ifndef SUPPLICANT_HIDL_TEST_UTILS_H
 #define SUPPLICANT_HIDL_TEST_UTILS_H
 
+#include <VtsCoreUtil.h>
+#include <android-base/logging.h>
 #include <android/hardware/wifi/supplicant/1.0/ISupplicant.h>
 #include <android/hardware/wifi/supplicant/1.0/ISupplicantP2pIface.h>
 #include <android/hardware/wifi/supplicant/1.0/ISupplicantStaIface.h>
@@ -62,4 +64,51 @@ bool turnOnExcessiveLogging(
 
 bool turnOnExcessiveLogging();
 
+bool waitForFrameworkReady();
+
+class SupplicantHidlTestBase
+    : public ::testing::TestWithParam<std::tuple<std::string, std::string>> {
+   public:
+    virtual void SetUp() override {
+        // should always be v1.0 wifi
+        wifi_v1_0_instance_name_ = std::get<0>(GetParam());
+        supplicant_instance_name_ = std::get<1>(GetParam());
+        std::system("/system/bin/start");
+        ASSERT_TRUE(waitForFrameworkReady());
+
+        isP2pOn_ =
+            testing::deviceSupportsFeature("android.hardware.wifi.direct");
+        // Stop Framework
+        std::system("/system/bin/stop");
+        stopSupplicant(wifi_v1_0_instance_name_);
+        startSupplicantAndWaitForHidlService(wifi_v1_0_instance_name_,
+                                             supplicant_instance_name_);
+        LOG(INFO) << "SupplicantHidlTestBase isP2pOn_: " << isP2pOn_;
+    }
+
+    virtual void TearDown() override {
+        stopSupplicant(wifi_v1_0_instance_name_);
+        // Start Framework
+        std::system("/system/bin/start");
+    }
+
+   protected:
+    bool isP2pOn_ = false;
+    std::string wifi_v1_0_instance_name_;
+    std::string supplicant_instance_name_;
+};
+
+class SupplicantHidlTestBaseV1_0 : public SupplicantHidlTestBase {
+   public:
+    virtual void SetUp() override {
+        SupplicantHidlTestBase::SetUp();
+        supplicant_ = getSupplicant(supplicant_instance_name_, isP2pOn_);
+        ASSERT_NE(supplicant_.get(), nullptr);
+        EXPECT_TRUE(turnOnExcessiveLogging(supplicant_));
+    }
+
+   protected:
+    android::sp<android::hardware::wifi::supplicant::V1_0::ISupplicant>
+        supplicant_;
+};
 #endif /* SUPPLICANT_HIDL_TEST_UTILS_H */

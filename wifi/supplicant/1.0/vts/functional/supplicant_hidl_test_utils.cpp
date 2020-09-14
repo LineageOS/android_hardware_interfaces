@@ -283,3 +283,17 @@ bool turnOnExcessiveLogging(const sp<ISupplicant>& supplicant) {
         });
     return !operation_failed;
 }
+
+bool waitForFrameworkReady() {
+    int waitCount = 10;
+    do {
+        // Check whether package service is ready or not.
+        if (!testing::checkSubstringInCommandOutput(
+                "/system/bin/service check package", ": not found")) {
+            return true;
+        }
+        LOG(INFO) << "Framework is not ready";
+        sleep(1);
+    } while (waitCount-- > 0);
+    return false;
+}
