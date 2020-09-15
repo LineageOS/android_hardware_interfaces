@@ -457,6 +457,7 @@ TEST_P(SupplicantStaIfaceHidlTest, StartDppConfiguratorInitiator) {
     });
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SupplicantStaIfaceHidlTest);
 INSTANTIATE_TEST_CASE_P(
     PerInstance, SupplicantStaIfaceHidlTest,
     testing::Combine(

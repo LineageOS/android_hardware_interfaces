@@ -728,6 +728,7 @@ TEST_P(BroadcastRadioHidlTest, IbImagesOnly) {
     }
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(BroadcastRadioHidlTest);
 INSTANTIATE_TEST_CASE_P(
         PerInstance, BroadcastRadioHidlTest,
         testing::Combine(testing::ValuesIn(android::hardware::getAllHalInstanceNames(
