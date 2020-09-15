@@ -13,7 +13,7 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<configuration description="Runs VtsHalRadioV1_3TargetTest.">
+<configuration description="Runs VtsHalRadioV1_4TargetTest.">
     <option name="test-suite-tag" value="apct" />
     <option name="test-suite-tag" value="apct-native" />
 
@@ -24,11 +24,11 @@
 
     <target_preparer class="com.android.tradefed.targetprep.PushFilePreparer">
         <option name="cleanup" value="true" />
-        <option name="push" value="VtsHalRadioV1_3TargetTest->/data/local/tmp/VtsHalRadioV1_3TargetTest" />
+        <option name="push" value="VtsHalRadioV1_4TargetTest->/data/local/tmp/VtsHalRadioV1_4TargetTest" />
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.GTest" >
         <option name="native-test-device-path" value="/data/local/tmp" />
-        <option name="module-name" value="VtsHalRadioV1_3TargetTest" />
+        <option name="module-name" value="VtsHalRadioV1_4TargetTest" />
     </test>
 </configuration>
