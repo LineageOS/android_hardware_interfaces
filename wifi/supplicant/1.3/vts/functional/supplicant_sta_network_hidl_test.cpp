@@ -344,6 +344,7 @@ TEST_P(SupplicantStaNetworkHidlTest, SetEapErp) {
         EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
     });
 }
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SupplicantStaNetworkHidlTest);
 INSTANTIATE_TEST_CASE_P(
     PerInstance, SupplicantStaNetworkHidlTest,
     testing::Combine(

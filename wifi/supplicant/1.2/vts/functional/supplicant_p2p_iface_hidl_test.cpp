@@ -162,6 +162,7 @@ TEST_P(SupplicantP2pIfaceHidlTest, EnableMacRandomization) {
     });
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SupplicantP2pIfaceHidlTest);
 INSTANTIATE_TEST_CASE_P(
     PerInstance, SupplicantP2pIfaceHidlTest,
     testing::Combine(
