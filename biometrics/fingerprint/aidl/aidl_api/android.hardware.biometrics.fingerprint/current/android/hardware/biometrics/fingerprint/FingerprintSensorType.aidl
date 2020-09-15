@@ -17,7 +17,7 @@
 
 package android.hardware.biometrics.fingerprint;
 @Backing(type="byte") @VintfStability
-enum SensorType {
+enum FingerprintSensorType {
   UNKNOWN = 0,
   REAR = 1,
   UNDER_DISPLAY_ULTRASONIC = 2,

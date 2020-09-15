@@ -15,9 +15,10 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.biometrics.fingerprint;
+package android.hardware.biometrics.common;
 @VintfStability
-parcelable SensorProps {
-  android.hardware.biometrics.common.CommonProps commonProps;
-  android.hardware.biometrics.fingerprint.FingerprintSensorType sensorType;
+parcelable CommonProps {
+  int sensorId;
+  android.hardware.biometrics.common.SensorStrength sensorStrength;
+  int maxEnrollmentsPerUser;
 }

@@ -16,14 +16,20 @@
 
 package android.hardware.biometrics.fingerprint;
 
-import android.hardware.biometrics.fingerprint.SensorType;
+import android.hardware.biometrics.common.CommonProps;
+import android.hardware.biometrics.fingerprint.FingerprintSensorType;
 
 @VintfStability
 parcelable SensorProps {
-    int sensorId;
+    /**
+     * Statically configured properties that apply to this fingerprint sensor.
+     */
+    CommonProps commonProps;
 
-    SensorType sensorType;
-
-    boolean resetLockoutRequiresHardwareAuthToken;
+    /**
+     * A statically configured sensor type representing this fingerprint
+     * sensor.
+     */
+    FingerprintSensorType sensorType;
 }
 
