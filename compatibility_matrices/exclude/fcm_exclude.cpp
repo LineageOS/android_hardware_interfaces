@@ -44,8 +44,6 @@ bool ShouldCheckMissingHalsInFcm(const std::string& package) {
 
     static std::vector<std::string> excluded_exact{
             // TODO(b/110261831): reduce items in this list
-            "android.hardware.audio@7.0",
-            "android.hardware.audio.effect@7.0",
             "android.hardware.fastboot@1.0",
             "android.hardware.media.bufferpool@1.0",
             "android.hardware.media.bufferpool@2.0",
