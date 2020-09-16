@@ -81,12 +81,15 @@ static const std::vector<DrmHalTestParam> kAllInstances = [] {
     return allInstanceUuidCombos;
 }();
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(DrmHalVendorFactoryTest);
 INSTANTIATE_TEST_CASE_P(PerInstanceUuidV1_0, DrmHalVendorFactoryTest,
                         testing::ValuesIn(kAllInstances),
                         drm_vts::PrintParamInstanceToString);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(DrmHalVendorPluginTest);
 INSTANTIATE_TEST_CASE_P(PerInstanceUuidV1_0, DrmHalVendorPluginTest,
                         testing::ValuesIn(kAllInstances),
                         drm_vts::PrintParamInstanceToString);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(DrmHalVendorDecryptTest);
 INSTANTIATE_TEST_CASE_P(PerInstanceUuidV1_0, DrmHalVendorDecryptTest,
                         testing::ValuesIn(kAllInstances),
                         drm_vts::PrintParamInstanceToString);
