@@ -32,7 +32,7 @@ class Fingerprint : public BnFingerprint {
             const std::shared_ptr<IResetLockoutCallback>& cb) override;
 
     ndk::ScopedAStatus generateChallenge(
-            int32_t sensorId, int32_t userId, int64_t keystoreOperationId, int32_t timeoutSec,
+            int32_t sensorId, int32_t userId, int32_t timeoutSec,
             const std::shared_ptr<IGenerateChallengeCallback>& cb) override;
 
     ndk::ScopedAStatus revokeChallenge(
