@@ -19,7 +19,19 @@
 
 namespace aidl::android::hardware::biometrics::fingerprint {
 
-ndk::ScopedAStatus Fingerprint::getSensorProps(std::vector<SensorProps>* /*return_val*/) {
+const int kSensorId = 0;
+const common::SensorStrength kSensorStrength = common::SensorStrength::STRONG;
+const int kMaxEnrollmentsPerUser = 5;
+const FingerprintSensorType kSensorType = FingerprintSensorType::REAR;
+
+ndk::ScopedAStatus Fingerprint::getSensorProps(std::vector<SensorProps>* return_val) {
+    *return_val = std::vector<SensorProps>();
+    common::CommonProps commonProps = {kSensorId,
+            kSensorStrength,
+            kMaxEnrollmentsPerUser};
+    SensorProps props = {commonProps,
+            kSensorType};
+    return_val->push_back(props);
     return ndk::ScopedAStatus::ok();
 }
 

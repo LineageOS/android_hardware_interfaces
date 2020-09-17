@@ -1,0 +1,16 @@
+aidl_interface {
+    name: "android.hardware.biometrics.common",
+    vendor_available: true,
+    srcs: [
+        "android/hardware/biometrics/common/*.aidl",
+    ],
+    stability: "vintf",
+    backend: {
+        java: {
+            platform_apis: true,
+        },
+        cpp: {
+            enabled: false,
+        },
+    }
+}

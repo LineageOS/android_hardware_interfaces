@@ -23,6 +23,7 @@
 using aidl::android::hardware::biometrics::fingerprint::Fingerprint;
 
 int main() {
+    LOG(INFO) << "Fingerprint HAL started";
     ABinderProcess_setThreadPoolMaxThreadCount(0);
     std::shared_ptr<Fingerprint> hal = ndk::SharedRefBase::make<Fingerprint>();
 
