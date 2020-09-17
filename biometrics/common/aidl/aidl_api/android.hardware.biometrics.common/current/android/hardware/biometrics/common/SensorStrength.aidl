@@ -15,9 +15,10 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.biometrics.fingerprint;
-@VintfStability
-parcelable SensorProps {
-  android.hardware.biometrics.common.CommonProps commonProps;
-  android.hardware.biometrics.fingerprint.FingerprintSensorType sensorType;
+package android.hardware.biometrics.common;
+@Backing(type="byte") @VintfStability
+enum SensorStrength {
+  CONVENIENCE = 0,
+  WEAK = 1,
+  STRONG = 2,
 }
