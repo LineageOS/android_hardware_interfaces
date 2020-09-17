@@ -53,31 +53,6 @@ class TunerFilterHidlTest : public testing::TestWithParam<std::string> {
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(TunerFilterHidlTest);
 
-class TunerDemuxHidlTest : public testing::TestWithParam<std::string> {
-  public:
-    virtual void SetUp() override {
-        mService = ITuner::getService(GetParam());
-        ASSERT_NE(mService, nullptr);
-        initConfiguration();
-
-        mFrontendTests.setService(mService);
-        mDemuxTests.setService(mService);
-        mFilterTests.setService(mService);
-    }
-
-  protected:
-    static void description(const std::string& description) {
-        RecordProperty("description", description);
-    }
-
-    sp<ITuner> mService;
-    FrontendTests mFrontendTests;
-    DemuxTests mDemuxTests;
-    FilterTests mFilterTests;
-};
-
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(TunerDemuxHidlTest);
-
 class TunerRecordHidlTest : public testing::TestWithParam<std::string> {
   public:
     virtual void SetUp() override {
