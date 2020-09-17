@@ -48,8 +48,8 @@ ndk::ScopedAStatus Fingerprint::setResetLockoutCallback(
 }
 
 ndk::ScopedAStatus Fingerprint::generateChallenge(
-        int32_t /*sensorId*/, int32_t /*userId*/, int64_t /*keystoreOperationId*/,
-        int32_t /*timeoutSec*/, const std::shared_ptr<IGenerateChallengeCallback>& /*cb*/) {
+        int32_t /*sensorId*/, int32_t /*userId*/, int32_t /*timeoutSec*/,
+        const std::shared_ptr<IGenerateChallengeCallback>& /*cb*/) {
     return ndk::ScopedAStatus::ok();
 }
 

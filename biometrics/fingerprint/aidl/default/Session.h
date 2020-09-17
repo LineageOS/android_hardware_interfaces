@@ -43,6 +43,9 @@ class Session : public BnSession {
 
     ndk::ScopedAStatus getAuthenticatorId(int32_t cookie) override;
 
+    ndk::ScopedAStatus invalidateAuthenticatorId(int32_t cookie,
+                                    const keymaster::HardwareAuthToken& hat) override;
+
     ndk::ScopedAStatus resetLockout(int32_t cookie,
                                     const keymaster::HardwareAuthToken& hat) override;
 

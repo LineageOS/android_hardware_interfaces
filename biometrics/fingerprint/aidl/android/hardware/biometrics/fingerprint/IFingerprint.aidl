@@ -31,7 +31,7 @@ interface IFingerprint {
 
     void setResetLockoutCallback(in IResetLockoutCallback cb);
 
-    void generateChallenge(in int sensorId, in int userId, in long keystoreOperationId, in int timeoutSec, in IGenerateChallengeCallback cb);
+    void generateChallenge(in int sensorId, in int userId, in int timeoutSec, in IGenerateChallengeCallback cb);
 
     void revokeChallenge(in int sensorId, in int userId, in IRevokeChallengeCallback cb);
 }
