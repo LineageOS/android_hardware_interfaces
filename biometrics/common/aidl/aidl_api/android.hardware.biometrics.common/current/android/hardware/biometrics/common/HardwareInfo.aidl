@@ -17,9 +17,9 @@
 
 package android.hardware.biometrics.common;
 @VintfStability
-parcelable CommonProps {
-  int sensorId;
-  android.hardware.biometrics.common.SensorStrength sensorStrength;
-  int maxEnrollmentsPerUser;
-  android.hardware.biometrics.common.HardwareInfo[] hardwareInfo;
+parcelable HardwareInfo {
+  String deviceName;
+  String hardwareVersion;
+  String firmwareVersion;
+  String serialNumber;
 }

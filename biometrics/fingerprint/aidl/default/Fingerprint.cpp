@@ -23,12 +23,25 @@ const int kSensorId = 0;
 const common::SensorStrength kSensorStrength = common::SensorStrength::STRONG;
 const int kMaxEnrollmentsPerUser = 5;
 const FingerprintSensorType kSensorType = FingerprintSensorType::REAR;
+const std::string kHwDeviceName = "fingerprintSensor";
+const std::string kHardwareVersion = "vendor/model/revision";
+const std::string kFirmwareVersion = "1.01";
+const std::string kSerialNumber = "00000001";
 
 ndk::ScopedAStatus Fingerprint::getSensorProps(std::vector<SensorProps>* return_val) {
     *return_val = std::vector<SensorProps>();
+
+    std::vector<common::HardwareInfo> hardwareInfos = std::vector<common::HardwareInfo>();
+    common::HardwareInfo sensorInfo = {kHwDeviceName,
+            kHardwareVersion,
+            kFirmwareVersion,
+            kSerialNumber
+    };
+    hardwareInfos.push_back(sensorInfo);
     common::CommonProps commonProps = {kSensorId,
             kSensorStrength,
-            kMaxEnrollmentsPerUser};
+            kMaxEnrollmentsPerUser,
+            hardwareInfos};
     SensorProps props = {commonProps,
             kSensorType,
             0 /* sensorLocationX */,
