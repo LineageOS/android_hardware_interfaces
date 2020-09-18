@@ -16,7 +16,7 @@
 
 package android.hardware.biometrics.fingerprint;
 
-import android.hardware.biometrics.fingerprint.ICancellationSignal;
+import android.hardware.biometrics.common.ICancellationSignal;
 import android.hardware.keymaster.HardwareAuthToken;
 
 @VintfStability

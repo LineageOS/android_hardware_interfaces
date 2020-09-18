@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#include <aidl/android/hardware/biometrics/fingerprint/BnCancellationSignal.h>
+#include <aidl/android/hardware/biometrics/common/BnCancellationSignal.h>
 
 #include "Session.h"
 
 namespace aidl::android::hardware::biometrics::fingerprint {
 
-class CancellationSignal : public BnCancellationSignal {
+class CancellationSignal : public common::BnCancellationSignal {
   public:
     ndk::ScopedAStatus cancel() override { return ndk::ScopedAStatus::ok(); }
 };
@@ -28,12 +28,12 @@ class CancellationSignal : public BnCancellationSignal {
 Session::Session(std::shared_ptr<ISessionCallback> cb) : cb_(std::move(cb)) {}
 
 ndk::ScopedAStatus Session::enroll(int32_t /*cookie*/, const keymaster::HardwareAuthToken& /*hat*/,
-                                   std::shared_ptr<ICancellationSignal>* /*return_val*/) {
+                                   std::shared_ptr<common::ICancellationSignal>* /*return_val*/) {
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Session::authenticate(int32_t /*cookie*/, int64_t /*keystoreOperationId*/,
-                                         std::shared_ptr<ICancellationSignal>* return_val) {
+                                         std::shared_ptr<common::ICancellationSignal>* return_val) {
     if (cb_) {
         cb_->onStateChanged(0, SessionState::AUTHENTICATING);
     }
@@ -42,7 +42,7 @@ ndk::ScopedAStatus Session::authenticate(int32_t /*cookie*/, int64_t /*keystoreO
 }
 
 ndk::ScopedAStatus Session::detectInteraction(
-        int32_t /*cookie*/, std::shared_ptr<ICancellationSignal>* /*return_val*/) {
+        int32_t /*cookie*/, std::shared_ptr<common::ICancellationSignal>* /*return_val*/) {
     return ndk::ScopedAStatus::ok();
 }
 

@@ -33,6 +33,12 @@ parcelable SensorProps {
     FingerprintSensorType sensorType;
 
     /**
+     * Must be set to true for sensors that support "swipe" gestures via
+     * android.view.KeyEvent#KEYCODE_SYSTEM_NAVIGATION_*.
+     */
+    boolean supportsNavigationGestures;
+
+    /**
      * The location of the center of the sensor if applicable. For example,
      * sensors of FingerprintSensorType::UNDER_DISPLAY_* would report this
      * value as the distance in pixels, measured from the left edge of the
