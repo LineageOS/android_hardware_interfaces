@@ -114,7 +114,7 @@ TEST_P(Fingerprint, AuthenticateTest) {
     std::shared_ptr<ISession> session;
     ASSERT_TRUE(hal_->createSession(kSensorId, kUserId, session_cb, &session).isOk());
 
-    std::shared_ptr<ICancellationSignal> cancel_cb;
+    std::shared_ptr<common::ICancellationSignal> cancel_cb;
     ASSERT_TRUE(session->authenticate(0, 0, &cancel_cb).isOk());
     ASSERT_EQ(invocation_future.wait_for(kCallbackTimeout), std::future_status::ready);
 

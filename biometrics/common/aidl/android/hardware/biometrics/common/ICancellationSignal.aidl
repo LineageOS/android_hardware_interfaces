@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.hardware.biometrics.fingerprint;
+package android.hardware.biometrics.common;
 
 @VintfStability
 oneway interface ICancellationSignal {

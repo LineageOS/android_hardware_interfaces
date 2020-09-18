@@ -18,9 +18,9 @@
 package android.hardware.biometrics.fingerprint;
 @VintfStability
 interface ISession {
-  android.hardware.biometrics.fingerprint.ICancellationSignal enroll(in int cookie, in android.hardware.keymaster.HardwareAuthToken hat);
-  android.hardware.biometrics.fingerprint.ICancellationSignal authenticate(in int cookie, in long keystoreOperationId);
-  android.hardware.biometrics.fingerprint.ICancellationSignal detectInteraction(in int cookie);
+  android.hardware.biometrics.common.ICancellationSignal enroll(in int cookie, in android.hardware.keymaster.HardwareAuthToken hat);
+  android.hardware.biometrics.common.ICancellationSignal authenticate(in int cookie, in long keystoreOperationId);
+  android.hardware.biometrics.common.ICancellationSignal detectInteraction(in int cookie);
   void enumerateEnrollments(in int cookie);
   void removeEnrollments(in int cookie, in int[] enrollmentIds);
   void getAuthenticatorId(in int cookie);

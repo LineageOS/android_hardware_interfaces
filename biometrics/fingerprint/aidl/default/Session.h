@@ -21,20 +21,21 @@
 
 namespace aidl::android::hardware::biometrics::fingerprint {
 
-namespace aidl::android::hardware::keymaster = keymaster;
+namespace common = aidl::android::hardware::biometrics::common;
+namespace keymaster = aidl::android::hardware::keymaster;
 
 class Session : public BnSession {
   public:
     explicit Session(std::shared_ptr<ISessionCallback> cb);
 
     ndk::ScopedAStatus enroll(int32_t cookie, const keymaster::HardwareAuthToken& hat,
-                              std::shared_ptr<ICancellationSignal>* return_val) override;
+                              std::shared_ptr<common::ICancellationSignal>* return_val) override;
 
     ndk::ScopedAStatus authenticate(int32_t cookie, int64_t keystoreOperationId,
-                                    std::shared_ptr<ICancellationSignal>* return_val) override;
+                                    std::shared_ptr<common::ICancellationSignal>* return_val) override;
 
     ndk::ScopedAStatus detectInteraction(int32_t cookie,
-                                         std::shared_ptr<ICancellationSignal>* return_val) override;
+                                         std::shared_ptr<common::ICancellationSignal>* return_val) override;
 
     ndk::ScopedAStatus enumerateEnrollments(int32_t cookie) override;
 
