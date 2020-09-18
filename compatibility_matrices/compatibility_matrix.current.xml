@@ -9,7 +9,9 @@
     </hal>
     <hal format="hidl" optional="false">
         <name>android.hardware.audio</name>
+        <!-- TODO(b/142480271): remove 6.0 when implemented on reference device. -->
         <version>6.0</version>
+        <version>7.0</version>
         <interface>
             <name>IDevicesFactory</name>
             <instance>default</instance>
@@ -17,7 +19,9 @@
     </hal>
     <hal format="hidl" optional="false">
         <name>android.hardware.audio.effect</name>
+        <!-- TODO(b/142480271): remove 6.0 when implemented on reference device. -->
         <version>6.0</version>
+        <version>7.0</version>
         <interface>
             <name>IEffectsFactory</name>
             <instance>default</instance>
