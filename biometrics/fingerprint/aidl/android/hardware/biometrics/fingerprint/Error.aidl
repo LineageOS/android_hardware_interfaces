@@ -19,14 +19,55 @@ package android.hardware.biometrics.fingerprint;
 @VintfStability
 @Backing(type="byte")
 enum Error {
+    /**
+     * A hardware error has occurred that cannot be resolved. For example, I2C failure or a broken
+     * sensor.
+     */
     HW_UNAVAILABLE,
+
+    /**
+     * The implementation is unable to process the request. For example, invalid arguments were
+     * supplied.
+     */
     UNABLE_TO_PROCESS,
+
+    /**
+     * The current operation took too long to complete.
+     */
     TIMEOUT,
+
+    /**
+     * No space available to store additional enrollments.
+     */
     NO_SPACE,
+
+    /**
+     * The operation was canceled. See common::ICancellationSignal.
+     */
     CANCELED,
+
+    /**
+     * The implementation was unable to remove an enrollment.
+     * See ISession#removeEnrollments.
+     */
     UNABLE_TO_REMOVE,
+
+    /**
+     * Authentication is locked out due to too many unsuccessful attempts. This is a rate-limiting
+     * lockout, and authentication can be restarted after a period of time. See the Android CDD for
+     * the full set of lockout and rate-limiting requirements.
+     */
     LOCKOUT,
+
+    /**
+     * Authenticatio nis disabled until the user unlocks with their device credential
+     * (PIN/Pattern/Password). See ISession#resetLockout.
+     */
     LOCKOUT_PERMANENT,
-    VENDOR
+
+    /**
+     * Used to enable vendor-specific error messages.
+     */
+    VENDOR,
 }
 

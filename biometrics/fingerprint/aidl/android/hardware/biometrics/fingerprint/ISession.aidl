@@ -19,12 +19,75 @@ package android.hardware.biometrics.fingerprint;
 import android.hardware.biometrics.common.ICancellationSignal;
 import android.hardware.keymaster.HardwareAuthToken;
 
+/**
+ * Operations that can be performed for unique sessions retrieved via IFingerprint#createSession.
+ * Methods defined within this interface can be split into the following categories:
+ *   1) Methods associated with a state (see the SessionState enum). State-based operations are
+ *      handled by the HAL in FIFO order.
+ *   1a) Cancellable state-based operations. If a cancellable operation is in-progress and the
+ *       framework requests a subsequent state-based operation, the implementation should finish
+ *       the operation via ISessionCallback#onError with Error::CANCELED.
+ *   1b) Non-cancellable state-based operations. These operations should fully complete before the
+ *       next state-based operation can be started.
+ *   2) Methods without a state. These methods may be invoked by the framework depending on its
+ *      use case. For example on devices with sensors of FingerprintSensorType::UNDER_DISPLAY_*,
+ *      ISession#onFingerDown may be invoked while the HAL is in SessionState::ENROLLING,
+ *      SessionState::AUTHENTICATING, or SessionState::DETECTING_INTERACTION.
+ *
+ * If the HAL has multiple operations in its queue, it is not required to notify the framework
+ * of SessionState::IDLING between each operation. However, it must notify the framework when all
+ * work is completed. See ISessionCallback#onStateChanged. For example, the following is a valid
+ * sequence of ISessionCallback#onStateChanged invocations: SessionState::IDLING -->
+ * SessionState::ENROLLING --> SessionState::ENUMERATING_ENROLLMENTS --> SessionState::IDLING.
+ */
 @VintfStability
 interface ISession {
     /**
      * Methods applicable to any fingerprint type.
      */
 
+    /**
+     * enroll:
+     *
+     * A request to add a fingerprint enrollment.
+     *
+     * Once the HAL is able to start processing the enrollment request, it must
+     * notify the framework via ISessionCallback#onStateChanged with
+     * SessionState::ENROLLING.
+     *
+     * At any point during enrollment, if a non-recoverable error occurs,
+     * the HAL must notify the framework via ISessionCallback#onError with
+     * the applicable enrollment-specific error, and then send
+     * ISessionCallback#onStateChanged(cookie, SessionState::IDLING) if no
+     * subsequent operation is in the queue.
+     *
+     * Before capturing fingerprint data, the implementation must first
+     * verify the authenticity and integrity of the provided HardwareAuthToken.
+     * In addition, it must check that the challenge within the provided
+     * HardwareAuthToken is valid. See IFingerprint#generateChallenge.
+     * If any of the above checks fail, the framework must be notified
+     * via ISessionCallback#onError and the HAL must notify the framework when
+     * it returns to the idle state. See Error::UNABLE_TO_PROCESS.
+     *
+     * During enrollment, the implementation may notify the framework
+     * via ISessionCallback#onAcquired with messages that may be used to guide
+     * the user. This callback can be invoked multiple times if necessary.
+     * Similarly, the framework may be notified of enrollment progress changes
+     * via ISessionCallback#onEnrollmentProgress. Once the framework is notified
+     * that there are 0 "remaining" steps, the framework may cache the
+     * "enrollmentId". See ISessionCallback#onEnrollmentProgress for more info.
+     * The HAL must notify the framework once it returns to the idle state.
+     *
+     * When a finger is successfully added and before the framework is notified
+     * of remaining=0, the implementation MUST update and associate this
+     * (sensorId, user) pair with a new new entropy-encoded random identifier.
+     * See ISession#getAuthenticatorId for more information.
+     *
+     * @param cookie An identifier used to track subsystem operations related
+     *               to this call path. The client must guarantee that it is
+     *               unique per ISession.
+     * @param hat See above documentation.
+     */
     ICancellationSignal enroll(in int cookie, in HardwareAuthToken hat);
 
     /**
@@ -39,7 +102,8 @@ interface ISession {
      * At any point during authentication, if a non-recoverable error occurs,
      * the HAL must notify the framework via ISessionCallback#onError with
      * the applicable authentication-specific error, and then send
-     * ISessionCallback#onStateChanged(cookie, SessionState::IDLING).
+     * ISessionCallback#onStateChanged(cookie, SessionState::IDLING) if no
+     * subsequent operation is in the queue.
      *
      * During authentication, the implementation may notify the framework
      * via ISessionCallback#onAcquired with messages that may be used to guide
@@ -66,7 +130,7 @@ interface ISession {
      * HardwareAuthToken MUST be null.
      *
      * @param cookie An identifier used to track subsystem operations related
-     *               to this call path. The framework will guarantee that it is
+     *               to this call path. The client must guarantee that it is
      *               unique per ISession.
      * @param operationId For sensors configured as SensorStrength::STRONG,
      *                    this must be used ONLY upon successful authentication
@@ -99,9 +163,10 @@ interface ISession {
      * The following only applies to sensors that are configured as
      * SensorStrength::STRONG.
      *
-     * The authenticatorId is used during key generation and key import to to
-     * associate a key (in KeyStore / KeyMaster) with the current set of
-     * enrolled fingerprints. For example, the following public Android APIs
+     * The authenticatorId is a (sensorId, user)-specific identifier which
+     * can be used during key generation and key import to to associate a
+     * key (in KeyStore / KeyMaster) with the current set of enrolled
+     * fingerprints. For example, the following public Android APIs
      * allow for keys to be invalidated when the user adds a new enrollment
      * after the key was created:
      * KeyGenParameterSpec.Builder.setInvalidatedByBiometricEnrollment and
@@ -120,7 +185,7 @@ interface ISession {
      *   4) MUST be an entropy-encoded random number
      *
      * @param cookie An identifier used to track subsystem operations related
-     *               to this call path. The framework will guarantee that it is
+     *               to this call path. The client must guarantee that it is
      *               unique per ISession.
      */
     void getAuthenticatorId(in int cookie);
@@ -138,9 +203,15 @@ interface ISession {
      *
      * When invoked by the framework, the implementation must perform the
      * following sequence of events:
-     *   1) Verify the authenticity and integrity of the provided HAT
+     *   1) Verify the authenticity and integrity of the provided HAT. If this
+     *      check fails, the HAL must invoke ISessionCallback#onError with
+     *      Error::UNABLE_TO_PROCESS and return to
+     *      SessionState::IDLING if no subsequent work is in the queue.
      *   2) Verify that the timestamp provided within the HAT is relatively
-     *      recent (e.g. on the order of minutes, not hours).
+     *      recent (e.g. on the order of minutes, not hours). If this check fails,
+     *      the HAL must invoke ISessionCallback#onError with
+     *      Error::UNABLE_TO_PROCESS and return to SessionState::IDLING
+     *      if no subsequent work is in the queue.
      *   3) Update the authenticatorId with a new entropy-encoded random number
      *   4) Persist the new authenticatorId to non-ephemeral storage
      *   5) Notify the framework that the above is completed, via
@@ -154,7 +225,7 @@ interface ISession {
      * across multiple biometric HALs as necessary.
      *
      * @param cookie An identifier used to track subsystem operations related
-     *               to this call path. The framework will guarantee that it is
+     *               to this call path. The client must guarantee that it is
      *               unique per ISession.
      * @param hat HardwareAuthToken that must be validated before proceeding
      *            with this operation.
@@ -169,15 +240,15 @@ interface ISession {
      *   1) Verify the authenticity and integrity of the provided HAT
      *   2) Verify that the timestamp provided within the HAT is relatively
      *      recent (e.g. on the order of minutes, not hours).
+     * If either of the checks fail, the HAL must invoke ISessionCallback#onError
+     * with Error::UNABLE_TO_PROCESS and return to SessionState::IDLING
+     * if no subsequent work is in the queue.
      *
-     * Upon successful verification, the HAL must notify the framework via
-     * ILockoutCallback#onLockoutChanged(sensorId, userId, 0).
-     *
-     * If verification was uncessful, the HAL must notify the framework via
-     * ILockoutCallback#onLockoutChanged(sensorId, userId, remaining_time).
+     * Upon successful verification, the HAL must clear the lockout counter
+     * and notify the framework via ILockoutCallback#onLockoutChanged(sensorId, userId, 0).
      *
      * @param cookie An identifier used to track subsystem operations related
-     *               to this call path. The framework will guarantee that it is
+     *               to this call path. The client must guarantee that it is
      *               unique per ISession.
      * @param hat HardwareAuthToken See above documentation.
      */

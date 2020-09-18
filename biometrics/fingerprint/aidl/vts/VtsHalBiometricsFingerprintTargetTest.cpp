@@ -60,8 +60,8 @@ class SessionCallback : public BnSessionCallback {
         return ndk::ScopedAStatus::ok();
     }
 
-    ndk::ScopedAStatus onEnrollmentProgress(int32_t /*enrollmentId*/, int32_t /*remaining*/,
-                                            int32_t /*vendorCode*/) override {
+    ndk::ScopedAStatus onEnrollmentProgress(int32_t /*enrollmentId*/,
+                                            int32_t /*remaining*/) override {
         return ndk::ScopedAStatus::ok();
     }
 

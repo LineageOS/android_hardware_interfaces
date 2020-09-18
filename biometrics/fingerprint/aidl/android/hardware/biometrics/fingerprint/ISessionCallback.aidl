@@ -29,7 +29,14 @@ interface ISessionCallback {
 
     void onError(in Error error, in int vendorCode);
 
-    void onEnrollmentProgress(in int enrollmentId, int remaining, int vendorCode);
+    /**
+     * Used to notify the framework of enrollment progress. Enrollment completes when remaining==0,
+     *
+     * @param enrollmentId Unique stable identifier for the enrollment that's being added by this
+     *                     ISession#enroll invocation.
+     * @param remaining Remaining number of steps before enrollment is complete.
+     */
+    void onEnrollmentProgress(in int enrollmentId, int remaining);
 
     /**
      * Used to notify the framework upon successful authentication. Note that the authentication
