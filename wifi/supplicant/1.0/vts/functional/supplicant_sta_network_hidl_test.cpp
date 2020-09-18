@@ -79,21 +79,10 @@ constexpr uint32_t kTestPairwiseCipher =
      ISupplicantStaNetwork::PairwiseCipherMask::TKIP);
 }  // namespace
 
-class SupplicantStaNetworkHidlTest
-    : public ::testing::TestWithParam<std::tuple<std::string, std::string>> {
+class SupplicantStaNetworkHidlTest : public SupplicantHidlTestBaseV1_0 {
    public:
     virtual void SetUp() override {
-        wifi_instance_name_ = std::get<0>(GetParam());
-        supplicant_instance_name_ = std::get<1>(GetParam());
-        isP2pOn_ =
-            testing::deviceSupportsFeature("android.hardware.wifi.direct");
-        // Stop Framework
-        std::system("/system/bin/stop");
-        stopSupplicant(wifi_instance_name_);
-        startSupplicantAndWaitForHidlService(wifi_instance_name_,
-                                             supplicant_instance_name_);
-        supplicant_ = getSupplicant(supplicant_instance_name_, isP2pOn_);
-        EXPECT_TRUE(turnOnExcessiveLogging(supplicant_));
+        SupplicantHidlTestBaseV1_0::SetUp();
         sta_network_ = createSupplicantStaNetwork(supplicant_);
         ASSERT_NE(sta_network_.get(), nullptr);
         /* variable used to check if the underlying HAL version is 1.3 or
@@ -103,12 +92,6 @@ class SupplicantStaNetworkHidlTest
             ISupplicantStaNetwork::castFrom(sta_network_);
 
         ssid_.assign(kTestSsidStr, kTestSsidStr + strlen(kTestSsidStr));
-    }
-
-    virtual void TearDown() override {
-        stopSupplicant(wifi_instance_name_);
-        // Start Framework
-        std::system("/system/bin/start");
     }
 
    protected:
@@ -128,14 +111,10 @@ class SupplicantStaNetworkHidlTest
 
     sp<::android::hardware::wifi::supplicant::V1_3::ISupplicantStaNetwork>
         v1_3 = nullptr;
-    bool isP2pOn_ = false;
-    sp<ISupplicant> supplicant_;
     // ISupplicantStaNetwork object used for all tests in this fixture.
     sp<ISupplicantStaNetwork> sta_network_;
     // SSID to use for various tests.
     std::vector<uint8_t> ssid_;
-    std::string wifi_instance_name_;
-    std::string supplicant_instance_name_;
 };
 
 class NetworkCallback : public ISupplicantStaNetworkCallback {
@@ -158,8 +137,8 @@ class NetworkCallback : public ISupplicantStaNetworkCallback {
  * successfully created.
  */
 TEST_P(SupplicantStaNetworkHidlTest, Create) {
-    stopSupplicant(wifi_instance_name_);
-    startSupplicantAndWaitForHidlService(wifi_instance_name_,
+    stopSupplicant(wifi_v1_0_instance_name_);
+    startSupplicantAndWaitForHidlService(wifi_v1_0_instance_name_,
                                          supplicant_instance_name_);
     sp<ISupplicant> supplicant =
         getSupplicant(supplicant_instance_name_, isP2pOn_);
