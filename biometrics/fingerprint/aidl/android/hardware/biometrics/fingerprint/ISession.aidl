@@ -35,7 +35,75 @@ interface ISession {
 
     void removeEnrollments(in int cookie, in int[] enrollmentIds);
 
+    /**
+     * getAuthenticatorId:
+     *
+     * MUST return 0 via ISessionCallback#onAuthenticatorIdRetrieved for
+     * sensors that are configured as SensorStrength::WEAK or
+     * SensorStrength::CONVENIENCE.
+     *
+     * The following only applies to sensors that are configured as
+     * SensorStrength::STRONG.
+     *
+     * The authenticatorId is used during key generation and key import to to
+     * associate a key (in KeyStore / KeyMaster) with the current set of
+     * enrolled fingerprints. For example, the following public Android APIs
+     * allow for keys to be invalidated when the user adds a new enrollment
+     * after the key was created:
+     * KeyGenParameterSpec.Builder.setInvalidatedByBiometricEnrollment and
+     * KeyProtection.Builder.setInvalidatedByBiometricEnrollment.
+     *
+     * In addition, upon successful fingerprint authentication, the signed HAT
+     * that is returned to the framework via ISessionCallback#onAuthenticated
+     * must contain this identifier in the authenticatorId field.
+     *
+     * Returns an entropy-encoded random identifier associated with the current
+     * set of enrollments via ISessionCallback#onAuthenticatorIdRetrieved. The
+     * authenticatorId
+     *   1) MUST change whenever a new fingerprint is enrolled
+     *   2) MUST return 0 if no fingerprints are enrolled
+     *   3) MUST not change if a fingerprint is deleted.
+     *   4) MUST be an entropy-encoded random number
+     *
+     * @param cookie An identifier used to track subsystem operations related
+     *               to this call path. The framework will guarantee that it is
+     *               unique per ISession.
+     */
     void getAuthenticatorId(in int cookie);
+
+    /**
+     * invalidateAuthenticatorId:
+     *
+     * This method only applies to sensors that are configured as
+     * SensorStrength::STRONG. If invoked erroneously by the framework for
+     * sensor of other strengths, the HAL should immediately invoke
+     * ISessionCallback#onAuthenticatorIdInvalidated.
+     *
+     * The following only applies to sensors that are configured as
+     * SensorStrength::STRONG.
+     *
+     * When invoked by the framework, the HAL implementation must perform the
+     * following sequence of events:
+     *   1) Verify the authenticity and integrity of the provided HAT
+     *   2) Update the authenticatorId with a new entropy-encoded random number
+     *   3) Persist the new authenticatorId to non-ephemeral storage
+     *   4) Notify the framework that the above is completed, via
+     *      ISessionCallback#onAuthenticatorInvalidated
+     *
+     * A practical use case of invalidation would be when the user adds a new
+     * enrollment to a sensor managed by a different HAL instance. The
+     * public android.security.keystore APIs bind keys to "all biometrics"
+     * rather than "fingerprint-only" or "face-only" (see #getAuthenticatorId
+     * for more details). As such, the framework would coordinate invalidation
+     * across multiple biometric HALs as necessary.
+     *
+     * @param cookie An identifier used to track subsystem operations related
+     *               to this call path. The framework will guarantee that it is
+     *               unique per ISession.
+     * @param hat HardwareAuthToken that must be validated before proceeding
+     *            with this operation.
+     */
+    void invalidateAuthenticatorId(in int cookie, in HardwareAuthToken hat);
 
     void resetLockout(in int cookie, in HardwareAuthToken hat);
 

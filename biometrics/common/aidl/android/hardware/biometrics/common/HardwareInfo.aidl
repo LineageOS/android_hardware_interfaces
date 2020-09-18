@@ -14,16 +14,27 @@
  * limitations under the License.
  */
 
-package android.hardware.biometrics.fingerprint;
+package android.hardware.biometrics.common;
 
 @VintfStability
-@Backing(type="byte")
-enum SensorType {
-    UNKNOWN,
-    REAR,
-    UNDER_DISPLAY_ULTRASONIC,
-    UNDER_DISPLAY_OPTICAL,
-    POWER_BUTTON,
-    HOME_BUTTON
-}
+parcelable HardwareInfo {
+    /**
+     * An identifier uniquely identifying a subsystem.
+     */
+    String deviceName;
 
+    /**
+     * The hardware version. For example, <vendor>/<model>/<revision>.
+     */
+    String hardwareVersion;
+
+    /**
+     * The firmware version.
+     */
+    String firmwareVersion;
+
+    /**
+     * The sensor's serial number.
+     */
+    String serialNumber;
+}

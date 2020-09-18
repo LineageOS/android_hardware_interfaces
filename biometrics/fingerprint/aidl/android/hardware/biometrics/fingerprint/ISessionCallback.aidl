@@ -38,4 +38,14 @@ interface ISessionCallback {
     void onEnrollmentsEnumerated(in int[] enrollmentIds);
 
     void onEnrollmentsRemoved(in int[] enrollmentIds);
+
+    /**
+     * A callback invoked when ISession#getAuthenticatorId is invoked.
+     */
+    void onAuthenticatorIdRetrieved(in long authenticatorId);
+
+    /**
+     * A callback invoked when ISession#invalidateAuthenticatorId has completed.
+     */
+    void onAuthenticatorIdInvalidated();
 }

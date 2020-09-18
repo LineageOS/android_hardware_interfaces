@@ -18,7 +18,10 @@
 package android.hardware.biometrics.fingerprint;
 @VintfStability
 parcelable SensorProps {
-  int sensorId;
-  android.hardware.biometrics.fingerprint.SensorType sensorType;
-  boolean resetLockoutRequiresHardwareAuthToken;
+  android.hardware.biometrics.common.CommonProps commonProps;
+  android.hardware.biometrics.fingerprint.FingerprintSensorType sensorType;
+  int sensorLocationX;
+  int sensorLocationY;
+  int sensorRadius;
+  int displayId;
 }

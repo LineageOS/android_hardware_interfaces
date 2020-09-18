@@ -16,14 +16,50 @@
 
 package android.hardware.biometrics.fingerprint;
 
-import android.hardware.biometrics.fingerprint.SensorType;
+import android.hardware.biometrics.common.CommonProps;
+import android.hardware.biometrics.fingerprint.FingerprintSensorType;
 
 @VintfStability
 parcelable SensorProps {
-    int sensorId;
+    /**
+     * Statically configured properties that apply to this fingerprint sensor.
+     */
+    CommonProps commonProps;
 
-    SensorType sensorType;
+    /**
+     * A statically configured sensor type representing this fingerprint
+     * sensor.
+     */
+    FingerprintSensorType sensorType;
 
-    boolean resetLockoutRequiresHardwareAuthToken;
+    /**
+     * The location of the center of the sensor if applicable. For example,
+     * sensors of FingerprintSensorType::UNDER_DISPLAY_* would report this
+     * value as the distance in pixels, measured from the left edge of the
+     * screen.
+     */
+    int sensorLocationX;
+
+    /**
+     * The location of the center of the sensor if applicable. For example,
+     * sensors of FingerprintSensorType::UNDER_DISPLAY_* would report this
+     * value as the distance in pixels, measured from the top edge of the
+     * screen.
+     */
+    int sensorLocationY;
+
+    /**
+     * The radius of the sensor if applicable. For example, sensors of
+     * FingerprintSensorType::UNDER_DISPLAY_* would report this value as
+     * the radius of the sensor, in pixels.
+     */
+    int sensorRadius;
+
+    /**
+     * For sensors of FingerprintSensorType::UNDER_DISPLAY_*, this must
+     * correspond to the android.hardware.DisplayManager#getDisplay Android
+     * API.
+     */
+    int displayId;
 }
 

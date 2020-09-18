@@ -15,17 +15,10 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.biometrics.fingerprint;
-@VintfStability
-interface ISessionCallback {
-  void onStateChanged(in int cookie, in android.hardware.biometrics.fingerprint.SessionState state);
-  void onAcquired(in android.hardware.biometrics.fingerprint.AcquiredInfo info, in int vendorCode);
-  void onError(in android.hardware.biometrics.fingerprint.Error error, in int vendorCode);
-  void onEnrollmentProgress(in int enrollmentId, int remaining, int vendorCode);
-  void onAuthenticated(in int enrollmentId, in android.hardware.keymaster.HardwareAuthToken hat);
-  void onInteractionDetected();
-  void onEnrollmentsEnumerated(in int[] enrollmentIds);
-  void onEnrollmentsRemoved(in int[] enrollmentIds);
-  void onAuthenticatorIdRetrieved(in long authenticatorId);
-  void onAuthenticatorIdInvalidated();
+package android.hardware.biometrics.common;
+@Backing(type="byte") @VintfStability
+enum SensorStrength {
+  CONVENIENCE = 0,
+  WEAK = 1,
+  STRONG = 2,
 }

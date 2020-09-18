@@ -19,7 +19,36 @@
 
 namespace aidl::android::hardware::biometrics::fingerprint {
 
-ndk::ScopedAStatus Fingerprint::getSensorProps(std::vector<SensorProps>* /*return_val*/) {
+const int kSensorId = 0;
+const common::SensorStrength kSensorStrength = common::SensorStrength::STRONG;
+const int kMaxEnrollmentsPerUser = 5;
+const FingerprintSensorType kSensorType = FingerprintSensorType::REAR;
+const std::string kHwDeviceName = "fingerprintSensor";
+const std::string kHardwareVersion = "vendor/model/revision";
+const std::string kFirmwareVersion = "1.01";
+const std::string kSerialNumber = "00000001";
+
+ndk::ScopedAStatus Fingerprint::getSensorProps(std::vector<SensorProps>* return_val) {
+    *return_val = std::vector<SensorProps>();
+
+    std::vector<common::HardwareInfo> hardwareInfos = std::vector<common::HardwareInfo>();
+    common::HardwareInfo sensorInfo = {kHwDeviceName,
+            kHardwareVersion,
+            kFirmwareVersion,
+            kSerialNumber
+    };
+    hardwareInfos.push_back(sensorInfo);
+    common::CommonProps commonProps = {kSensorId,
+            kSensorStrength,
+            kMaxEnrollmentsPerUser,
+            hardwareInfos};
+    SensorProps props = {commonProps,
+            kSensorType,
+            0 /* sensorLocationX */,
+            0 /* sensorLocationY */,
+            0 /* sensorRadius */,
+            0 /* displayId */};
+    return_val->push_back(props);
     return ndk::ScopedAStatus::ok();
 }
 
@@ -36,8 +65,8 @@ ndk::ScopedAStatus Fingerprint::setResetLockoutCallback(
 }
 
 ndk::ScopedAStatus Fingerprint::generateChallenge(
-        int32_t /*sensorId*/, int32_t /*userId*/, int64_t /*keystoreOperationId*/,
-        int32_t /*timeoutSec*/, const std::shared_ptr<IGenerateChallengeCallback>& /*cb*/) {
+        int32_t /*sensorId*/, int32_t /*userId*/, int32_t /*timeoutSec*/,
+        const std::shared_ptr<IGenerateChallengeCallback>& /*cb*/) {
     return ndk::ScopedAStatus::ok();
 }
 
