@@ -78,6 +78,7 @@ Return<void> VehicleHalManager::getPropConfigs(const hidl_vec<int32_t> &properti
         } else {
             ALOGW("Requested config for undefined property: 0x%x", prop);
             _hidl_cb(StatusCode::INVALID_ARG, hidl_vec<VehiclePropConfig>());
+            return Void();
         }
     }
 
