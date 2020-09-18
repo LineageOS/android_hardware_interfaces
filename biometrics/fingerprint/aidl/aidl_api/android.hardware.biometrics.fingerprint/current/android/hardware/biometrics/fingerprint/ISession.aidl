@@ -24,6 +24,7 @@ interface ISession {
   void enumerateEnrollments(in int cookie);
   void removeEnrollments(in int cookie, in int[] enrollmentIds);
   void getAuthenticatorId(in int cookie);
+  void invalidateAuthenticatorId(in int cookie, in android.hardware.keymaster.HardwareAuthToken hat);
   void resetLockout(in int cookie, in android.hardware.keymaster.HardwareAuthToken hat);
   void onPointerDown(in int pointerId, in int x, in int y, in float minor, in float major);
   void onPointerUp(in int pointerId);

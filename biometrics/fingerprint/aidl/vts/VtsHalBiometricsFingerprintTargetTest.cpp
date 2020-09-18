@@ -82,6 +82,14 @@ class SessionCallback : public BnSessionCallback {
         return ndk::ScopedAStatus::ok();
     }
 
+    ndk::ScopedAStatus onAuthenticatorIdRetrieved(int64_t /*authenticatorId*/) override {
+        return ndk::ScopedAStatus::ok();
+    }
+
+    ndk::ScopedAStatus onAuthenticatorIdInvalidated() override {
+        return ndk::ScopedAStatus::ok();
+    }
+
   private:
     std::promise<SessionCallbackInvocation> invocation_promise_;
 };
