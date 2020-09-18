@@ -55,31 +55,12 @@ using ::android::hardware::wifi::supplicant::V1_3::WpaDriverCapabilitiesMask;
 #define TIMEOUT_PERIOD 60
 class IfaceDppCallback;
 
-class SupplicantStaIfaceHidlTest
-    : public ::testing::TestWithParam<std::tuple<std::string, std::string>> {
+class SupplicantStaIfaceHidlTest : public SupplicantHidlTestBaseV1_3 {
    public:
     virtual void SetUp() override {
-        wifi_v1_0_instance_name_ = std::get<0>(GetParam());
-        supplicant_v1_3_instance_name_ = std::get<1>(GetParam());
-        isP2pOn_ =
-            testing::deviceSupportsFeature("android.hardware.wifi.direct");
-        // Stop Framework
-        std::system("/system/bin/stop");
-
-        stopSupplicant(wifi_v1_0_instance_name_);
-        startSupplicantAndWaitForHidlService(wifi_v1_0_instance_name_,
-                                             supplicant_v1_3_instance_name_);
-        supplicant_ =
-            getSupplicant_1_3(supplicant_v1_3_instance_name_, isP2pOn_);
-        EXPECT_TRUE(turnOnExcessiveLogging(supplicant_));
+        SupplicantHidlTestBaseV1_3::SetUp();
         sta_iface_ = getSupplicantStaIface_1_3(supplicant_);
         ASSERT_NE(sta_iface_.get(), nullptr);
-    }
-
-    virtual void TearDown() override {
-        stopSupplicant(wifi_v1_0_instance_name_);
-        // Start Framework
-        std::system("/system/bin/start");
     }
 
     int64_t pmkCacheExpirationTimeInSec;
@@ -127,10 +108,6 @@ class SupplicantStaIfaceHidlTest
    protected:
     // ISupplicantStaIface object used for all tests in this fixture.
     sp<ISupplicantStaIface> sta_iface_;
-    sp<ISupplicant> supplicant_;
-    bool isP2pOn_ = false;
-    std::string wifi_v1_0_instance_name_;
-    std::string supplicant_v1_3_instance_name_;
 
     bool isDppSupported() {
         uint32_t keyMgmtMask = 0;

@@ -40,36 +40,17 @@ using ::android::hardware::wifi::supplicant::V1_4::ConnectionCapabilities;
 using ::android::hardware::wifi::supplicant::V1_4::ISupplicant;
 using ::android::hardware::wifi::supplicant::V1_4::ISupplicantStaIface;
 
-class SupplicantStaIfaceHidlTest
-    : public ::testing::TestWithParam<std::tuple<std::string, std::string>> {
+class SupplicantStaIfaceHidlTest : public SupplicantHidlTestBaseV1_4 {
    public:
     virtual void SetUp() override {
-        wifi_v1_0_instance_name_ = std::get<0>(GetParam());
-        supplicant_v1_4_instance_name_ = std::get<1>(GetParam());
-        isP2pOn_ =
-            testing::deviceSupportsFeature("android.hardware.wifi.direct");
-
-        stopSupplicant(wifi_v1_0_instance_name_);
-        startSupplicantAndWaitForHidlService(wifi_v1_0_instance_name_,
-                                             supplicant_v1_4_instance_name_);
-        supplicant_ =
-            getSupplicant_1_4(supplicant_v1_4_instance_name_, isP2pOn_);
-        EXPECT_TRUE(turnOnExcessiveLogging(supplicant_));
+        SupplicantHidlTestBaseV1_4::SetUp();
         sta_iface_ = getSupplicantStaIface_1_4(supplicant_);
         ASSERT_NE(sta_iface_.get(), nullptr);
-    }
-
-    virtual void TearDown() override {
-        stopSupplicant(wifi_v1_0_instance_name_);
     }
 
    protected:
     // ISupplicantStaIface object used for all tests in this fixture.
     sp<ISupplicantStaIface> sta_iface_;
-    sp<ISupplicant> supplicant_;
-    bool isP2pOn_ = false;
-    std::string wifi_v1_0_instance_name_;
-    std::string supplicant_v1_4_instance_name_;
 };
 
 /*
