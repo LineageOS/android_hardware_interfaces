@@ -8,6 +8,7 @@ cc_binary {
         "libbase",
         "libbinder_ndk",
         "android.hardware.biometrics.fingerprint-ndk_platform",
+        "android.hardware.biometrics.common-unstable-ndk_platform",
     ],
     srcs: [
         "main.cpp",
